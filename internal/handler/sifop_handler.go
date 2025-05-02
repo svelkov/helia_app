@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"helia/internal/domain"
+	"helia/internal/infrastructure"
 	"helia/internal/service"
 	"helia/pkg/utils"
 )
@@ -64,12 +65,12 @@ func (h *SifopHandler) GetAllSifop(w http.ResponseWriter, r *http.Request) {
 
 func (h *SifopHandler) AddRoutes(r *http.ServeMux) {
 	//define routes for sifop
-	r.HandleFunc("POST /api/sifop", h.CreateSifop)
-	r.HandleFunc("GET /api/sifop/all", h.GetAllSifop)
-	r.HandleFunc("GET /api/sifop/confirm-delete", h.confirmDeleteHandler)
-	r.HandleFunc("GET /api/sifop/confirm-update", h.confirmUpdateHandler)
-	r.HandleFunc("GET /api/sifop/confirm-add", h.confirmAddHandler)
-	r.HandleFunc("GET /api/sifop/{id}", h.GetSifop)
-	r.HandleFunc("PUT /api/sifop/{id}", h.UpdateSifop)
-	r.HandleFunc("DELETE /api/sifop/{id}", h.DeleteSifop)
+	r.HandleFunc("POST /api/sifop", infrastructure.AuthMiddleware(h.CreateSifop))
+	r.HandleFunc("GET /api/sifop/all", infrastructure.AuthMiddleware(h.GetAllSifop))
+	r.HandleFunc("GET /api/sifop/confirm-delete", infrastructure.AuthMiddleware(h.confirmDeleteHandler))
+	r.HandleFunc("GET /api/sifop/confirm-update", infrastructure.AuthMiddleware(h.confirmUpdateHandler))
+	r.HandleFunc("GET /api/sifop/confirm-add", infrastructure.AuthMiddleware(h.confirmAddHandler))
+	r.HandleFunc("GET /api/sifop/{id}", infrastructure.AuthMiddleware(h.GetSifop))
+	r.HandleFunc("PUT /api/sifop/{id}", infrastructure.AuthMiddleware(h.UpdateSifop))
+	r.HandleFunc("DELETE /api/sifop/{id}", infrastructure.AuthMiddleware(h.DeleteSifop))
 }

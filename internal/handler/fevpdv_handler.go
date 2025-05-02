@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"helia/internal/domain"
+	"helia/internal/infrastructure"
 	"helia/internal/service"
 	"helia/pkg/utils"
 )
@@ -66,12 +67,12 @@ func (h *FvepdvHandler) GetAllFvepdv(w http.ResponseWriter, r *http.Request) {
 
 func (h *FvepdvHandler) AddRoutes(r *http.ServeMux) {
 	//define routes for Fvepdv
-	r.HandleFunc("POST /api/fvepdv", h.CreateFvepdv)
-	r.HandleFunc("GET /api/fvepdv/all", h.GetAllFvepdv)
-	r.HandleFunc("GET /api/fvepdv/confirm-delete", h.confirmDeleteHandler)
-	r.HandleFunc("GET /api/fvepdv/confirm-update", h.confirmUpdateHandler)
-	r.HandleFunc("GET /api/fvepdv/confirm-add", h.confirmAddHandler)
-	r.HandleFunc("GET /api/fvepdv/{id}", h.GetFvepdv)
-	r.HandleFunc("PUT /api/fvepdv/{id}", h.UpdateFvepdv)
-	r.HandleFunc("DELETE /api/fvepdv/{id}", h.DeleteFvepdv)
+	r.HandleFunc("POST /api/fvepdv", infrastructure.AuthMiddleware(h.CreateFvepdv))
+	r.HandleFunc("GET /api/fvepdv/all", infrastructure.AuthMiddleware(h.GetAllFvepdv))
+	r.HandleFunc("GET /api/fvepdv/confirm-delete", infrastructure.AuthMiddleware(h.confirmDeleteHandler))
+	r.HandleFunc("GET /api/fvepdv/confirm-update", infrastructure.AuthMiddleware(h.confirmUpdateHandler))
+	r.HandleFunc("GET /api/fvepdv/confirm-add", infrastructure.AuthMiddleware(h.confirmAddHandler))
+	r.HandleFunc("GET /api/fvepdv/{id}", infrastructure.AuthMiddleware(h.GetFvepdv))
+	r.HandleFunc("PUT /api/fvepdv/{id}", infrastructure.AuthMiddleware(h.UpdateFvepdv))
+	r.HandleFunc("DELETE /api/fvepdv/{id}", infrastructure.AuthMiddleware(h.DeleteFvepdv))
 }

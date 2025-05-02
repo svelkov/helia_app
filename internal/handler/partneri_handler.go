@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"helia/internal/domain"
+	"helia/internal/infrastructure"
 	"helia/internal/service"
 	"helia/pkg/utils"
 )
@@ -84,12 +85,12 @@ func (h *PartneriHandler) GetAllPartneri(w http.ResponseWriter, r *http.Request)
 
 func (h *PartneriHandler) AddRoutes(r *http.ServeMux) {
 	//define routes for partneri
-	r.HandleFunc("POST /api/partneri", h.CreatePartneri)
-	r.HandleFunc("GET /api/partneri/all", h.GetAllPartneri)
-	r.HandleFunc("GET /api/partneri/confirm-delete", h.confirmDeleteHandler)
-	r.HandleFunc("GET /api/partneri/confirm-update", h.confirmUpdateHandler)
-	r.HandleFunc("GET /api/partneri/confirm-add", h.confirmAddHandler)
-	r.HandleFunc("GET /api/partneri/{id}", h.GetPartneri)
-	r.HandleFunc("PUT /api/partneri/{id}", h.UpdatePartneri)
-	r.HandleFunc("DELETE /api/partneri/{id}", h.DeletePartneri)
+	r.HandleFunc("POST /api/partneri", infrastructure.AuthMiddleware(h.CreatePartneri))
+	r.HandleFunc("GET /api/partneri/all", infrastructure.AuthMiddleware(h.GetAllPartneri))
+	r.HandleFunc("GET /api/partneri/confirm-delete", infrastructure.AuthMiddleware(h.confirmDeleteHandler))
+	r.HandleFunc("GET /api/partneri/confirm-update", infrastructure.AuthMiddleware(h.confirmUpdateHandler))
+	r.HandleFunc("GET /api/partneri/confirm-add", infrastructure.AuthMiddleware(h.confirmAddHandler))
+	r.HandleFunc("GET /api/partneri/{id}", infrastructure.AuthMiddleware(h.GetPartneri))
+	r.HandleFunc("PUT /api/partneri/{id}", infrastructure.AuthMiddleware(h.UpdatePartneri))
+	r.HandleFunc("DELETE /api/partneri/{id}", infrastructure.AuthMiddleware(h.DeletePartneri))
 }

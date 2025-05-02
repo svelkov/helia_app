@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"helia/internal/domain"
+	"helia/internal/infrastructure"
 	"helia/internal/service"
 	"helia/pkg/utils"
 )
@@ -66,12 +67,12 @@ func (h *MestotroskaHandler) GetAllMestotroska(w http.ResponseWriter, r *http.Re
 
 func (h *MestotroskaHandler) AddRoutes(r *http.ServeMux) {
 	//define routes for Mestotroska
-	r.HandleFunc("POST /api/mestotroska", h.CreateMestotroska)
-	r.HandleFunc("GET /api/mestotroska/all", h.GetAllMestotroska)
-	r.HandleFunc("GET /api/mestotroska/confirm-delete", h.confirmDeleteHandler)
-	r.HandleFunc("GET /api/mestotroska/confirm-update", h.confirmUpdateHandler)
-	r.HandleFunc("GET /api/mestotroska/confirm-add", h.confirmAddHandler)
-	r.HandleFunc("GET /api/mestotroska/{id}", h.GetMestotroska)
-	r.HandleFunc("PUT /api/mestotroska/{id}", h.UpdateMestotroska)
-	r.HandleFunc("DELETE /api/mestotroska/{id}", h.DeleteMestotroska)
+	r.HandleFunc("POST /api/mestotroska", infrastructure.AuthMiddleware(h.CreateMestotroska))
+	r.HandleFunc("GET /api/mestotroska/all", infrastructure.AuthMiddleware(h.GetAllMestotroska))
+	r.HandleFunc("GET /api/mestotroska/confirm-delete", infrastructure.AuthMiddleware(h.confirmDeleteHandler))
+	r.HandleFunc("GET /api/mestotroska/confirm-update", infrastructure.AuthMiddleware(h.confirmUpdateHandler))
+	r.HandleFunc("GET /api/mestotroska/confirm-add", infrastructure.AuthMiddleware(h.confirmAddHandler))
+	r.HandleFunc("GET /api/mestotroska/{id}", infrastructure.AuthMiddleware(h.GetMestotroska))
+	r.HandleFunc("PUT /api/mestotroska/{id}", infrastructure.AuthMiddleware(h.UpdateMestotroska))
+	r.HandleFunc("DELETE /api/mestotroska/{id}", infrastructure.AuthMiddleware(h.DeleteMestotroska))
 }

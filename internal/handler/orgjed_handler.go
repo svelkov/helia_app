@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"helia/internal/domain"
+	"helia/internal/infrastructure"
 	"helia/internal/service"
 	"helia/pkg/utils"
 )
@@ -65,12 +66,12 @@ func (h *OrgjedHandler) GetAllOrgjed(w http.ResponseWriter, r *http.Request) {
 
 func (h *OrgjedHandler) AddRoutes(r *http.ServeMux) {
 	//define routes for orgjed
-	r.HandleFunc("POST /api/orgjed", h.CreateOrgjed)
-	r.HandleFunc("GET /api/orgjed/all", h.GetAllOrgjed)
-	r.HandleFunc("GET /api/orgjed/confirm-delete", h.confirmDeleteHandler)
-	r.HandleFunc("GET /api/orgjed/confirm-update", h.confirmUpdateHandler)
-	r.HandleFunc("GET /api/orgjed/confirm-add", h.confirmAddHandler)
-	r.HandleFunc("GET /api/orgjed/{id}", h.GetOrgjed)
-	r.HandleFunc("PUT /api/orgjed/{id}", h.UpdateOrgjed)
-	r.HandleFunc("DELETE /api/orgjed/{id}", h.DeleteOrgjed)
+	r.HandleFunc("POST /api/orgjed", infrastructure.AuthMiddleware(h.CreateOrgjed))
+	r.HandleFunc("GET /api/orgjed/all", infrastructure.AuthMiddleware(h.GetAllOrgjed))
+	r.HandleFunc("GET /api/orgjed/confirm-delete", infrastructure.AuthMiddleware(h.confirmDeleteHandler))
+	r.HandleFunc("GET /api/orgjed/confirm-update", infrastructure.AuthMiddleware(h.confirmUpdateHandler))
+	r.HandleFunc("GET /api/orgjed/confirm-add", infrastructure.AuthMiddleware(h.confirmAddHandler))
+	r.HandleFunc("GET /api/orgjed/{id}", infrastructure.AuthMiddleware(h.GetOrgjed))
+	r.HandleFunc("PUT /api/orgjed/{id}", infrastructure.AuthMiddleware(h.UpdateOrgjed))
+	r.HandleFunc("DELETE /api/orgjed/{id}", infrastructure.AuthMiddleware(h.DeleteOrgjed))
 }

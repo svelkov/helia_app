@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"helia/internal/domain"
+	"helia/internal/infrastructure"
 	"helia/internal/service"
 	"helia/pkg/utils"
 )
@@ -67,12 +68,12 @@ func (h *FkplHandler) GetAllFkpl(w http.ResponseWriter, r *http.Request) {
 
 func (h *FkplHandler) AddRoutes(r *http.ServeMux) {
 	// Define routes for fkpl
-	r.HandleFunc("POST /api/fkpl", h.CreateFkpl)
-	r.HandleFunc("GET /api/fkpl/all", h.GetAllFkpl)
-	r.HandleFunc("GET /api/fkpl/confirm-delete", h.confirmDeleteHandler)
-	r.HandleFunc("GET /api/fkpl/confirm-update", h.confirmUpdateHandler)
-	r.HandleFunc("GET /api/fkpl/confirm-add", h.confirmAddHandler)
-	r.HandleFunc("GET /api/fkpl/{id}", h.GetFkpl)
-	r.HandleFunc("PUT /api/fkpl/{id}", h.UpdateFkpl)
-	r.HandleFunc("DELETE /api/fkpl/{id}", h.DeleteFkpl)
+	r.HandleFunc("POST /api/fkpl", infrastructure.AuthMiddleware(h.CreateFkpl))
+	r.HandleFunc("GET /api/fkpl/all", infrastructure.AuthMiddleware(h.GetAllFkpl))
+	r.HandleFunc("GET /api/fkpl/confirm-delete", infrastructure.AuthMiddleware(h.confirmDeleteHandler))
+	r.HandleFunc("GET /api/fkpl/confirm-update", infrastructure.AuthMiddleware(h.confirmUpdateHandler))
+	r.HandleFunc("GET /api/fkpl/confirm-add", infrastructure.AuthMiddleware(h.confirmAddHandler))
+	r.HandleFunc("GET /api/fkpl/{id}", infrastructure.AuthMiddleware(h.GetFkpl))
+	r.HandleFunc("PUT /api/fkpl/{id}", infrastructure.AuthMiddleware(h.UpdateFkpl))
+	r.HandleFunc("DELETE /api/fkpl/{id}", infrastructure.AuthMiddleware(h.DeleteFkpl))
 }

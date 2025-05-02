@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"helia/internal/domain"
+	"helia/internal/infrastructure"
 	"helia/internal/service"
 	"helia/pkg/utils"
 )
@@ -67,12 +68,12 @@ func (h *SifmestoHandler) GetAllSifmesto(w http.ResponseWriter, r *http.Request)
 
 func (h *SifmestoHandler) AddRoutes(r *http.ServeMux) {
 	//define routes for sifmesto
-	r.HandleFunc("POST /api/sifmesto", h.CreateSifmesto)
-	r.HandleFunc("GET /api/sifmesto/all", h.GetAllSifmesto)
-	r.HandleFunc("GET /api/sifmesto/confirm-delete", h.confirmDeleteHandler)
-	r.HandleFunc("GET /api/sifmesto/confirm-update", h.confirmUpdateHandler)
-	r.HandleFunc("GET /api/sifmesto/confirm-add", h.confirmAddHandler)
-	r.HandleFunc("GET /api/sifmesto/{id}", h.GetSifmesto)
-	r.HandleFunc("PUT /api/sifmesto/{id}", h.UpdateSifmesto)
-	r.HandleFunc("DELETE /api/sifmesto/{id}", h.DeleteSifmesto)
+	r.HandleFunc("POST /api/sifmesto", infrastructure.AuthMiddleware(h.CreateSifmesto))
+	r.HandleFunc("GET /api/sifmesto/all", infrastructure.AuthMiddleware(h.GetAllSifmesto))
+	r.HandleFunc("GET /api/sifmesto/confirm-delete", infrastructure.AuthMiddleware(h.confirmDeleteHandler))
+	r.HandleFunc("GET /api/sifmesto/confirm-update", infrastructure.AuthMiddleware(h.confirmUpdateHandler))
+	r.HandleFunc("GET /api/sifmesto/confirm-add", infrastructure.AuthMiddleware(h.confirmAddHandler))
+	r.HandleFunc("GET /api/sifmesto/{id}", infrastructure.AuthMiddleware(h.GetSifmesto))
+	r.HandleFunc("PUT /api/sifmesto/{id}", infrastructure.AuthMiddleware(h.UpdateSifmesto))
+	r.HandleFunc("DELETE /api/sifmesto/{id}", infrastructure.AuthMiddleware(h.DeleteSifmesto))
 }

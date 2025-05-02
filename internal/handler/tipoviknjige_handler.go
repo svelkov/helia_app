@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"helia/internal/domain"
+	"helia/internal/infrastructure"
 	"helia/internal/service"
 	"helia/pkg/utils"
 )
@@ -66,12 +67,12 @@ func (h *FvknjracHandler) GetAllFvknjrac(w http.ResponseWriter, r *http.Request)
 
 func (h *FvknjracHandler) AddRoutes(r *http.ServeMux) {
 	//define routes for fvknjrac
-	r.HandleFunc("POST /api/fvknjrac", h.CreateFvknjrac)
-	r.HandleFunc("GET /api/fvknjrac/all", h.GetAllFvknjrac)
-	r.HandleFunc("GET /api/fvknjrac/confirm-delete", h.confirmDeleteHandler)
-	r.HandleFunc("GET /api/fvknjrac/confirm-update", h.confirmUpdateHandler)
-	r.HandleFunc("GET /api/fvknjrac/confirm-add", h.confirmAddHandler)
-	r.HandleFunc("GET /api/fvknjrac/{id}", h.GetFvknjrac)
-	r.HandleFunc("PUT /api/fvknjrac/{id}", h.UpdateFvknjrac)
-	r.HandleFunc("DELETE /api/fvknjrac/{id}", h.DeleteFvknjrac)
+	r.HandleFunc("POST /api/fvknjrac", infrastructure.AuthMiddleware(h.CreateFvknjrac))
+	r.HandleFunc("GET /api/fvknjrac/all", infrastructure.AuthMiddleware(h.GetAllFvknjrac))
+	r.HandleFunc("GET /api/fvknjrac/confirm-delete", infrastructure.AuthMiddleware(h.confirmDeleteHandler))
+	r.HandleFunc("GET /api/fvknjrac/confirm-update", infrastructure.AuthMiddleware(h.confirmUpdateHandler))
+	r.HandleFunc("GET /api/fvknjrac/confirm-add", infrastructure.AuthMiddleware(h.confirmAddHandler))
+	r.HandleFunc("GET /api/fvknjrac/{id}", infrastructure.AuthMiddleware(h.GetFvknjrac))
+	r.HandleFunc("PUT /api/fvknjrac/{id}", infrastructure.AuthMiddleware(h.UpdateFvknjrac))
+	r.HandleFunc("DELETE /api/fvknjrac/{id}", infrastructure.AuthMiddleware(h.DeleteFvknjrac))
 }

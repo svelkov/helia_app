@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"helia/internal/domain"
+	"helia/internal/infrastructure"
 	"helia/internal/service"
 	"helia/pkg/utils"
 )
@@ -69,12 +70,12 @@ func (h *SifplizvHandler) GetAllSifplizv(w http.ResponseWriter, r *http.Request)
 
 func (h *SifplizvHandler) AddRoutes(r *http.ServeMux) {
 	//define routes for sifplizv
-	r.HandleFunc("POST /api/sifplizvodi", h.CreateSifplizv)
-	r.HandleFunc("GET /api/sifplizvodi/all", h.GetAllSifplizv)
-	r.HandleFunc("GET /api/sifplizvodi/confirm-delete", h.confirmDeleteHandler)
-	r.HandleFunc("GET /api/sifplizvodi/confirm-update", h.confirmUpdateHandler)
-	r.HandleFunc("GET /api/sifplizvodi/confirm-add", h.confirmAddHandler)
-	r.HandleFunc("GET /api/sifplizvodi/{id}", h.GetSifplizv)
-	r.HandleFunc("PUT /api/sifplizvodi/{id}", h.UpdateSifplizv)
-	r.HandleFunc("DELETE /api/sifplizvodi/{id}", h.DeleteSifplizv)
+	r.HandleFunc("POST /api/sifplizvodi", infrastructure.AuthMiddleware(h.CreateSifplizv))
+	r.HandleFunc("GET /api/sifplizvodi/all", infrastructure.AuthMiddleware(h.GetAllSifplizv))
+	r.HandleFunc("GET /api/sifplizvodi/confirm-delete", infrastructure.AuthMiddleware(h.confirmDeleteHandler))
+	r.HandleFunc("GET /api/sifplizvodi/confirm-update", infrastructure.AuthMiddleware(h.confirmUpdateHandler))
+	r.HandleFunc("GET /api/sifplizvodi/confirm-add", infrastructure.AuthMiddleware(h.confirmAddHandler))
+	r.HandleFunc("GET /api/sifplizvodi/{id}", infrastructure.AuthMiddleware(h.GetSifplizv))
+	r.HandleFunc("PUT /api/sifplizvodi/{id}", infrastructure.AuthMiddleware(h.UpdateSifplizv))
+	r.HandleFunc("DELETE /api/sifplizvodi/{id}", infrastructure.AuthMiddleware(h.DeleteSifplizv))
 }

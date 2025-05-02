@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"helia/frontend/templates"
 	"helia/internal/domain"
+	"helia/internal/infrastructure"
 	"net/http"
 	"time"
 
@@ -170,9 +171,9 @@ func GenerateJWT(username string) (string, error) {
 
 // Handlers
 func (h *BasicHandler) AddRoutes(r *http.ServeMux) {
-	r.HandleFunc("/login", h.LoginHandler)
-	r.HandleFunc("/register", h.RegisterHandler)
-	r.HandleFunc("/logout", h.LogoutHandler)
-	r.HandleFunc("/home", h.AuthMiddleware(h.HomeHandler))
-	r.HandleFunc("/", h.AuthMiddleware(h.indexHandler))
+	r.HandleFunc("/login", infrastructure.AuthMiddleware(h.LoginHandler))
+	r.HandleFunc("/register", infrastructure.AuthMiddleware(h.RegisterHandler))
+	r.HandleFunc("/logout", infrastructure.AuthMiddleware(h.LogoutHandler))
+	r.HandleFunc("/home", infrastructure.AuthMiddleware(h.AuthMiddleware(h.HomeHandler)))
+	r.HandleFunc("/", infrastructure.AuthMiddleware(h.AuthMiddleware(h.indexHandler)))
 }

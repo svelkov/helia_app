@@ -34,9 +34,9 @@ func factory() {
 	user := "postgres"
 	pwd := "postgres"
 	dbname := "helia"
-	search_path := "baza"
+	searchPath := "baza"
 
-	db, err := sqlx.Open("postgres", fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s search_path=%s sslmode=disable", host, port, user, pwd, dbname, search_path))
+	db, err := sqlx.Open("postgres", fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s search_path=%s sslmode=disable", host, port, user, pwd, dbname, searchPath))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -102,97 +102,97 @@ func setEntities(db *sqlx.DB, r *http.ServeMux, cfg config.Config) {
 	drzavahandler.AddRoutes(r)
 
 	// Create repository, validator, service and handler for tipdok
-	tipdok_repo := repository.NewBaseRepository[domain.Tipdok](db, "tipdok", cfg)
-	tipdok_validator := validation.NewRuleBasedValidator[domain.Tipdok](validation.TipdokValidationRules())
-	tipdok_service := service.NewBaseService(*tipdok_repo, *tipdok_validator)
-	tipdok_handler := handler.NewTipdokHandler(tipdok_service)
-	tipdok_handler.AddRoutes(r)
+	tipdokRepo := repository.NewBaseRepository[domain.Tipdok](db, "tipdok", cfg)
+	tipdokValidator := validation.NewRuleBasedValidator[domain.Tipdok](validation.TipdokValidationRules())
+	tipdokService := service.NewBaseService(*tipdokRepo, *tipdokValidator)
+	tipdokHandler := handler.NewTipdokHandler(tipdokService)
+	tipdokHandler.AddRoutes(r)
 
 	// Create repository, validator, service and handler for dokvrsta
-	dokvrsta_repo := repository.NewBaseRepository[domain.Dokvrsta](db, "dokvrsta", cfg)
-	dokvrsta_validator := validation.NewRuleBasedValidator[domain.Dokvrsta](validation.DokvrstaValidationRules())
-	dokvrsta_service := service.NewBaseService(*dokvrsta_repo, *dokvrsta_validator)
-	dokvrsta_handler := handler.NewDokvrstaHandler(dokvrsta_service)
-	dokvrsta_handler.AddRoutes(r)
+	dokvrstaRepo := repository.NewBaseRepository[domain.Dokvrsta](db, "dokvrsta", cfg)
+	dokvrstaValidator := validation.NewRuleBasedValidator[domain.Dokvrsta](validation.DokvrstaValidationRules())
+	dokvrstaService := service.NewBaseService(*dokvrstaRepo, *dokvrstaValidator)
+	dokvrstaHandler := handler.NewDokvrstaHandler(dokvrstaService)
+	dokvrstaHandler.AddRoutes(r)
 
 	// Create repository, validator, service and handler for opstine
-	opstine_repo := repository.NewBaseRepository[domain.Sifop](db, "sifop", cfg)
-	opstine_validator := validation.NewRuleBasedValidator[domain.Sifop](validation.OpstineValidationRules())
-	opstine_service := service.NewBaseService(*opstine_repo, *opstine_validator)
-	opstine_handler := handler.NewOpstineHandler(opstine_service)
-	opstine_handler.AddRoutes(r)
+	opstineRepo := repository.NewBaseRepository[domain.Sifop](db, "sifop", cfg)
+	opstineValidator := validation.NewRuleBasedValidator[domain.Sifop](validation.OpstineValidationRules())
+	opstineService := service.NewBaseService(*opstineRepo, *opstineValidator)
+	opstineHandler := handler.NewOpstineHandler(opstineService)
+	opstineHandler.AddRoutes(r)
 
 	// Create repository, validator, service and handler for opstine
-	sifmesto_repo := repository.NewBaseRepository[domain.Sifmesto](db, "sifmesto", cfg)
-	sifmesto_validator := validation.NewRuleBasedValidator[domain.Sifmesto](validation.SifmestoValidationRules())
-	sifmesto_service := service.NewBaseService(*sifmesto_repo, *sifmesto_validator)
-	sifmesto_handler := handler.NewSifmestoHandler(sifmesto_service)
-	sifmesto_handler.AddRoutes(r)
+	sifmestoRepo := repository.NewBaseRepository[domain.Sifmesto](db, "sifmesto", cfg)
+	sifmestoValidator := validation.NewRuleBasedValidator[domain.Sifmesto](validation.SifmestoValidationRules())
+	sifmestoService := service.NewBaseService(*sifmestoRepo, *sifmestoValidator)
+	sifmestoHandler := handler.NewSifmestoHandler(sifmestoService)
+	sifmestoHandler.AddRoutes(r)
 	// Create repository, validator, service and handler for opstine
-	mestotroska_repo := repository.NewBaseRepository[domain.Mestotr](db, "mestotr", cfg)
-	mestotroska_validator := validation.NewRuleBasedValidator[domain.Mestotr](validation.MestotroskaValidationRules())
-	mestotroska_service := service.NewBaseService(*mestotroska_repo, *mestotroska_validator)
-	mestoroska_handler := handler.NewMestotroskaHandler(mestotroska_service)
-	mestoroska_handler.AddRoutes(r)
+	mestotroskaRepo := repository.NewBaseRepository[domain.Mestotr](db, "mestotr", cfg)
+	mestotroskaValidator := validation.NewRuleBasedValidator[domain.Mestotr](validation.MestotroskaValidationRules())
+	mestotroskaService := service.NewBaseService(*mestotroskaRepo, *mestotroskaValidator)
+	mestoroskaHandler := handler.NewMestotroskaHandler(mestotroskaService)
+	mestoroskaHandler.AddRoutes(r)
 
 	// Create repository, validator, service and handler for organizacione jedinice
-	orgjed_repo := repository.NewBaseRepository[domain.Orgjed](db, "orgjed", cfg)
-	orgjed_validator := validation.NewRuleBasedValidator[domain.Orgjed](validation.OrgjedValidationRules())
-	orgjed_service := service.NewBaseService(*orgjed_repo, *orgjed_validator)
-	orgjed_handler := handler.NewOrgjedHandler(orgjed_service)
-	orgjed_handler.AddRoutes(r)
+	orgjedRepo := repository.NewBaseRepository[domain.Orgjed](db, "orgjed", cfg)
+	orgjedValidator := validation.NewRuleBasedValidator[domain.Orgjed](validation.OrgjedValidationRules())
+	orgjedService := service.NewBaseService(*orgjedRepo, *orgjedValidator)
+	orgjedHandler := handler.NewOrgjedHandler(orgjedService)
+	orgjedHandler.AddRoutes(r)
 
 	// Create repository, validator, service and handler for banke
-	banke_repo := repository.NewBaseRepository[domain.Banke](db, "banke", cfg)
-	banke_validator := validation.NewRuleBasedValidator[domain.Banke](validation.BankeValidationRules())
-	banke_service := service.NewBaseService(*banke_repo, *banke_validator)
-	banke_handler := handler.NewBankeHandler(banke_service)
-	banke_handler.AddRoutes(r)
+	bankeRepo := repository.NewBaseRepository[domain.Banke](db, "banke", cfg)
+	bankeValidator := validation.NewRuleBasedValidator[domain.Banke](validation.BankeValidationRules())
+	bankeService := service.NewBaseService(*bankeRepo, *bankeValidator)
+	bankeHandler := handler.NewBankeHandler(bankeService)
+	bankeHandler.AddRoutes(r)
 
 	// Create repository, validator, service and handler for banke
-	sifplizv_repo := repository.NewBaseRepository[domain.Sifplizv](db, "sifplizv", cfg)
-	sifplizv_validator := validation.NewRuleBasedValidator[domain.Sifplizv](validation.SifplizvValidationRules())
-	sifplizv_service := service.NewBaseService(*sifplizv_repo, *sifplizv_validator)
-	sifplizv_handler := handler.NewSifplizvHandler(sifplizv_service)
-	sifplizv_handler.AddRoutes(r)
+	sifplizvRepo := repository.NewBaseRepository[domain.Sifplizv](db, "sifplizv", cfg)
+	sifplizvValidator := validation.NewRuleBasedValidator[domain.Sifplizv](validation.SifplizvValidationRules())
+	sifplizvService := service.NewBaseService(*sifplizvRepo, *sifplizvValidator)
+	sifplizvHandler := handler.NewSifplizvHandler(sifplizvService)
+	sifplizvHandler.AddRoutes(r)
 
 	// Create repository, validator, service and handler for tipove knjige
-	fvknjrac_repo := repository.NewBaseRepository[domain.Fvknjrac](db, "fvknjrac", cfg)
-	fvknjrac_validator := validation.NewRuleBasedValidator[domain.Fvknjrac](validation.FvknjracValidationRules())
-	fvknjrac_service := service.NewBaseService(*fvknjrac_repo, *fvknjrac_validator)
-	fvknjrac_handler := handler.NewFvknjracHandler(fvknjrac_service)
-	fvknjrac_handler.AddRoutes(r)
+	fvknjracRepo := repository.NewBaseRepository[domain.Fvknjrac](db, "fvknjrac", cfg)
+	fvknjracValidator := validation.NewRuleBasedValidator[domain.Fvknjrac](validation.FvknjracValidationRules())
+	fvknjracService := service.NewBaseService(*fvknjracRepo, *fvknjracValidator)
+	fvknjracHandler := handler.NewFvknjracHandler(fvknjracService)
+	fvknjracHandler.AddRoutes(r)
 
 	// Create repository, validator, service and handler for banke za izvozne fakture
-	bnkizv_repo := repository.NewBaseRepository[domain.Bnkizv](db, "bnkizv", cfg)
-	bnkizv_validator := validation.NewRuleBasedValidator[domain.Bnkizv](validation.BnkizvValidationRules())
-	bnkizv_service := service.NewBaseService(*bnkizv_repo, *bnkizv_validator)
-	bnkizv_handler := handler.NewBnkizvHandler(bnkizv_service)
-	bnkizv_handler.AddRoutes(r)
+	bnkizvRepo := repository.NewBaseRepository[domain.Bnkizv](db, "bnkizv", cfg)
+	bnkizvValidator := validation.NewRuleBasedValidator[domain.Bnkizv](validation.BnkizvValidationRules())
+	bnkizvService := service.NewBaseService(*bnkizvRepo, *bnkizvValidator)
+	bnkizvHandler := handler.NewBnkizvHandler(bnkizvService)
+	bnkizvHandler.AddRoutes(r)
 
 	// Create repository, validator, service and handler for vrste evidencije PDV
-	fvepdv_repo := repository.NewBaseRepository[domain.Fvepdv](db, "fvepdv", cfg)
-	fvepdv_validator := validation.NewRuleBasedValidator[domain.Fvepdv](validation.FvepdvValidationRules())
-	fvepdv_service := service.NewBaseService(*fvepdv_repo, *fvepdv_validator)
-	fvepdv_handler := handler.NewFvepdvHandler(fvepdv_service)
-	fvepdv_handler.AddRoutes(r)
+	fvepdvRepo := repository.NewBaseRepository[domain.Fvepdv](db, "fvepdv", cfg)
+	fvepdvValidator := validation.NewRuleBasedValidator[domain.Fvepdv](validation.FvepdvValidationRules())
+	fvepdvService := service.NewBaseService(*fvepdvRepo, *fvepdvValidator)
+	fvepdvHandler := handler.NewFvepdvHandler(fvepdvService)
+	fvepdvHandler.AddRoutes(r)
 
 	basicHandler := handler.NewBasicHandler(IsLoggedIn, []domain.SubMenuItem{})
 	basicHandler.AddRoutes(r)
 
 	// Create repository, validator, service and handler for vrste evidencije PDV
-	fkpl_repo := repository.NewBaseRepository[domain.Fkpl](db, "fkpl", cfg)
-	fkpl_validator := validation.NewRuleBasedValidator[domain.Fkpl](finval.FkplValidationRules())
-	fkpl_service := service.NewBaseService(*fkpl_repo, *fkpl_validator)
-	fkpl_handler := fin.NewFkplHandler(fkpl_service)
-	fkpl_handler.AddRoutes(r)
+	fkplRepo := repository.NewBaseRepository[domain.Fkpl](db, "fkpl", cfg)
+	fkplValidator := validation.NewRuleBasedValidator[domain.Fkpl](finval.FkplValidationRules())
+	fkplService := service.NewBaseService(*fkplRepo, *fkplValidator)
+	fkplHandler := fin.NewFkplHandler(fkplService)
+	fkplHandler.AddRoutes(r)
 
 	// Create repository, validator, service and handler for vrste evidencije PDV
-	fnal_repo := repository.NewBaseRepository[domain.Fnal](db, "fnal", cfg)
-	fnal_validator := validation.NewRuleBasedValidator[domain.Fnal](finval.FnalValidationRules())
-	fnal_service := service.NewBaseService(*fnal_repo, *fnal_validator)
-	fnal_handler := fin.NewFnalHandler(fnal_service, tipdok_service)
-	fnal_handler.AddRoutes(r)
+	fnalRepo := repository.NewBaseRepository[domain.Fnal](db, "fnal", cfg)
+	fnalValidator := validation.NewRuleBasedValidator[domain.Fnal](finval.FnalValidationRules())
+	fnalService := service.NewBaseService(*fnalRepo, *fnalValidator)
+	fnalHandler := fin.NewFnalHandler(fnalService, tipdokService)
+	fnalHandler.AddRoutes(r)
 }
 
 // In your factory:

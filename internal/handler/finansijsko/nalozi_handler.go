@@ -10,6 +10,7 @@ import (
 	tmpl "helia/frontend/templates"
 	tmpl_fin "helia/frontend/templates/finansijsko"
 	"helia/internal/domain"
+	"helia/internal/infrastructure"
 	"helia/internal/service"
 	"helia/pkg/utils"
 )
@@ -301,17 +302,17 @@ func (h *FnalHandler) GetAllFnal(w http.ResponseWriter, r *http.Request) {
 
 func (h *FnalHandler) AddRoutes(r *http.ServeMux) {
 	// Define routes for nalozi
-	r.HandleFunc("POST /api/nalozi", h.CreateNalog)
-	r.HandleFunc("GET /api/nalozi/all", h.GetAllFnal)
-	r.HandleFunc("GET /api/nalozi/all/tipdok", h.GetAllFnalTipdok)
-	r.HandleFunc("GET /api/nalozi/confirm-delete", h.confirmDeleteHandler)
-	r.HandleFunc("GET /api/nalozi/confirm-update", h.confirmUpdateHandler)
-	r.HandleFunc("GET /api/nalozi/confirm-add", h.confirmAddHandler)
-	r.HandleFunc("GET /api/nalozi/{id}", h.GetNalog)
-	r.HandleFunc("PUT /api/nalozi/{id}", h.UpdateNalog)
-	r.HandleFunc("DELETE /api/nalozi/{id}", h.DeleteNalog)
-	r.HandleFunc("GET /api/nalozi/knjizenje", h.GetAllFnal)
-	r.HandleFunc("GET /api/nalozi/prepis", h.GetAllFnal)
-	r.HandleFunc("GET /api/nalozi/storniranje", h.GetAllFnal)
-	r.HandleFunc("GET /api/nalozi/prikaz", h.GetAllFnal)
+	r.HandleFunc("POST /api/nalozi", infrastructure.AuthMiddleware(h.CreateNalog))
+	r.HandleFunc("GET /api/nalozi/all", infrastructure.AuthMiddleware(h.GetAllFnal))
+	r.HandleFunc("GET /api/nalozi/all/tipdok", infrastructure.AuthMiddleware(h.GetAllFnalTipdok))
+	r.HandleFunc("GET /api/nalozi/confirm-delete", infrastructure.AuthMiddleware(h.confirmDeleteHandler))
+	r.HandleFunc("GET /api/nalozi/confirm-update", infrastructure.AuthMiddleware(h.confirmUpdateHandler))
+	r.HandleFunc("GET /api/nalozi/confirm-add", infrastructure.AuthMiddleware(h.confirmAddHandler))
+	r.HandleFunc("GET /api/nalozi/{id}", infrastructure.AuthMiddleware(h.GetNalog))
+	r.HandleFunc("PUT /api/nalozi/{id}", infrastructure.AuthMiddleware(h.UpdateNalog))
+	r.HandleFunc("DELETE /api/nalozi/{id}", infrastructure.AuthMiddleware(h.DeleteNalog))
+	r.HandleFunc("GET /api/nalozi/knjizenje", infrastructure.AuthMiddleware(h.GetAllFnal))
+	r.HandleFunc("GET /api/nalozi/prepis", infrastructure.AuthMiddleware(h.GetAllFnal))
+	r.HandleFunc("GET /api/nalozi/storniranje", infrastructure.AuthMiddleware(h.GetAllFnal))
+	r.HandleFunc("GET /api/nalozi/prikaz", infrastructure.AuthMiddleware(h.GetAllFnal))
 }

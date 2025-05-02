@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"helia/internal/domain"
+	"helia/internal/infrastructure"
 	"helia/internal/service"
 	"helia/pkg/utils"
 )
@@ -65,12 +66,12 @@ func (h *DrzavaHandler) GetAllDrzave(w http.ResponseWriter, r *http.Request) {
 
 func (h *DrzavaHandler) AddRoutes(r *http.ServeMux) {
 
-	r.HandleFunc("POST /api/drzava", h.CreateDrzava)
-	r.HandleFunc("GET /api/drzava/all", h.GetAllDrzave)
-	r.HandleFunc("GET /api/drzava/confirm-delete", h.confirmDeleteHandler)
-	r.HandleFunc("GET /api/drzava/confirm-update", h.confirmUpdateHandler)
-	r.HandleFunc("GET /api/drzava/confirm-add", h.confirmAddHandler)
-	r.HandleFunc("GET /api/drzava/{id}", h.GetDrzava)
-	r.HandleFunc("PUT /api/drzava/{id}", h.UpdateDrzava)
-	r.HandleFunc("DELETE /api/drzava/{id}", h.DeleteDrzava)
+	r.HandleFunc("POST /api/drzava", infrastructure.AuthMiddleware(h.CreateDrzava))
+	r.HandleFunc("GET /api/drzava/all", infrastructure.AuthMiddleware(h.GetAllDrzave))
+	r.HandleFunc("GET /api/drzava/confirm-delete", infrastructure.AuthMiddleware(h.confirmDeleteHandler))
+	r.HandleFunc("GET /api/drzava/confirm-update", infrastructure.AuthMiddleware(h.confirmUpdateHandler))
+	r.HandleFunc("GET /api/drzava/confirm-add", infrastructure.AuthMiddleware(h.confirmAddHandler))
+	r.HandleFunc("GET /api/drzava/{id}", infrastructure.AuthMiddleware(h.GetDrzava))
+	r.HandleFunc("PUT /api/drzava/{id}", infrastructure.AuthMiddleware(h.UpdateDrzava))
+	r.HandleFunc("DELETE /api/drzava/{id}", infrastructure.AuthMiddleware(h.DeleteDrzava))
 }

@@ -2,6 +2,7 @@ package handler
 
 import (
 	"helia/internal/domain"
+	"helia/internal/infrastructure"
 	"helia/internal/service"
 	"helia/pkg/utils"
 	"net/http"
@@ -68,12 +69,12 @@ func (h *PopdvHandler) GetAllPopdv(w http.ResponseWriter, r *http.Request) {
 
 func (h *PopdvHandler) AddRoutes(r *http.ServeMux) {
 	//define routes for popdv
-	r.HandleFunc("POST /api/popdv", h.CreatePopdv)
-	r.HandleFunc("GET /api/popdv/all", h.GetAllPopdv)
-	r.HandleFunc("GET /api/popdv/confirm-delete", h.confirmDeleteHandler)
-	r.HandleFunc("GET /api/popdv/confirm-update", h.confirmUpdateHandler)
-	r.HandleFunc("GET /api/popdv/confirm-add", h.confirmAddHandler)
-	r.HandleFunc("GET /api/popdv/{id}", h.GetPopdv)
-	r.HandleFunc("PUT /api/popdv/{id}", h.UpdatePopdv)
-	r.HandleFunc("DELETE /api/popdv/{id}", h.DeletePopdv)
+	r.HandleFunc("POST /api/popdv", infrastructure.AuthMiddleware(h.CreatePopdv))
+	r.HandleFunc("GET /api/popdv/all", infrastructure.AuthMiddleware(h.GetAllPopdv))
+	r.HandleFunc("GET /api/popdv/confirm-delete", infrastructure.AuthMiddleware(h.confirmDeleteHandler))
+	r.HandleFunc("GET /api/popdv/confirm-update", infrastructure.AuthMiddleware(h.confirmUpdateHandler))
+	r.HandleFunc("GET /api/popdv/confirm-add", infrastructure.AuthMiddleware(h.confirmAddHandler))
+	r.HandleFunc("GET /api/popdv/{id}", infrastructure.AuthMiddleware(h.GetPopdv))
+	r.HandleFunc("PUT /api/popdv/{id}", infrastructure.AuthMiddleware(h.UpdatePopdv))
+	r.HandleFunc("DELETE /api/popdv/{id}", infrastructure.AuthMiddleware(h.DeletePopdv))
 }

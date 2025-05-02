@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"helia/internal/domain"
+	"helia/internal/infrastructure"
 	"helia/internal/service"
 	"helia/pkg/utils"
 )
@@ -71,12 +72,12 @@ func (h *DokvrstaHandler) GetAllDokvrsta(w http.ResponseWriter, r *http.Request)
 
 func (h *DokvrstaHandler) AddRoutes(r *http.ServeMux) {
 	//define routes for Dokvrsta
-	r.HandleFunc("POST /api/dokvrsta", h.CreateDokvrsta)
-	r.HandleFunc("GET /api/dokvrsta/all", h.GetAllDokvrsta)
-	r.HandleFunc("GET /api/dokvrsta/confirm-delete", h.confirmDeleteHandler)
-	r.HandleFunc("GET /api/dokvrsta/confirm-update", h.confirmUpdateHandler)
-	r.HandleFunc("GET /api/dokvrsta/confirm-add", h.confirmAddHandler)
-	r.HandleFunc("GET /api/dokvrsta/{id}", h.GetDokvrsta)
-	r.HandleFunc("PUT /api/dokvrsta/{id}", h.UpdateDokvrsta)
-	r.HandleFunc("DELETE /api/dokvrsta/{id}", h.DeleteDokvrsta)
+	r.HandleFunc("POST /api/dokvrsta", infrastructure.AuthMiddleware(h.CreateDokvrsta))
+	r.HandleFunc("GET /api/dokvrsta/all", infrastructure.AuthMiddleware(h.GetAllDokvrsta))
+	r.HandleFunc("GET /api/dokvrsta/confirm-delete", infrastructure.AuthMiddleware(h.confirmDeleteHandler))
+	r.HandleFunc("GET /api/dokvrsta/confirm-update", infrastructure.AuthMiddleware(h.confirmUpdateHandler))
+	r.HandleFunc("GET /api/dokvrsta/confirm-add", infrastructure.AuthMiddleware(h.confirmAddHandler))
+	r.HandleFunc("GET /api/dokvrsta/{id}", infrastructure.AuthMiddleware(h.GetDokvrsta))
+	r.HandleFunc("PUT /api/dokvrsta/{id}", infrastructure.AuthMiddleware(h.UpdateDokvrsta))
+	r.HandleFunc("DELETE /api/dokvrsta/{id}", infrastructure.AuthMiddleware(h.DeleteDokvrsta))
 }

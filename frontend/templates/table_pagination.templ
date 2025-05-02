@@ -1,0 +1,128 @@
+
+package templates
+
+import (
+	"fmt"
+	"helia/internal/domain"
+)
+
+templ TablePagination(tbl domain.TableData) {
+	<nav class="flex justify-between items-center w-full">
+		<div class="flex items-center space-x-3">
+			<label for="pageSize" class="text-sm text-gray-700">Prikaz po stranici:</label>
+			<select
+				id="pageSize"
+				class="block w-auto px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring focus:border-blue-300"
+				hx-get={ fmt.Sprintf("%sall", tbl.URLPrefix) }
+				hx-target="#table-body"
+				hx-trigger="change"
+				name="pageSize"
+			>
+				<option
+					value="20"
+					if tbl.PageSize == 20 {
+						selected
+					}
+				>20</option>
+				<option
+					value="30"
+					if tbl.PageSize == 30 {
+						selected
+					}
+				>30</option>
+				<option
+					value="50"
+					if tbl.PageSize == 50 {
+						selected
+					}
+				>50</option>
+				<option
+					value="100"
+					if tbl.PageSize == 100 {
+						selected
+					}
+				>100</option>
+			</select>
+			<span class="text-sm text-gray-700">Prikazano { fmt.Sprintf("%d", tbl.StartRecord) }-{ fmt.Sprintf("%d", tbl.EndRecord) } od { fmt.Sprintf("%d", tbl.TotalRecords) } slogova</span>
+		</div>
+		<ul class="inline-flex items-center -space-x-px h-8 text-sm">
+			if tbl.CurrentPage > 1 {
+				<li>
+					<a
+						hx-get={ fmt.Sprintf("%sall?page=%d&pageSize=%d", tbl.URLPrefix, tbl.CurrentPage-1, tbl.PageSize) }
+						hx-target="#table-body"
+						class="block px-3 py-2 leading-tight text-gray-500 bg-white border border-gray-300 rounded-r-lg hover:bg-gray-100 hover:text-gray-700"
+					>
+						Prethodna
+					</a>
+				</li>
+			}
+			if tbl.CurrentPage > 3 {
+				<li>
+					<a
+						hx-get={ fmt.Sprintf("%sall?page=%d&pageSize=%d", tbl.URLPrefix, 1, tbl.PageSize) }
+						hx-target="#table-body"
+						class="block px-3 py-2 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700"
+					>
+						1
+					</a>
+				</li>
+				if tbl.CurrentPage > 4 {
+					<li>
+						<span class="block px-3 py-2 leading-tight text-gray-500 bg-white border border-gray-300">...</span>
+					</li>
+				}
+			}
+			for i := max(1, tbl.CurrentPage-2); i <= min(tbl.TotalPages, tbl.CurrentPage+2); i++ {
+				if i == tbl.CurrentPage {
+					<li>
+						<a
+							hx-get={ fmt.Sprintf("%sall?page=%d&pageSize=%d", tbl.URLPrefix, i, tbl.PageSize) }
+							hx-target="#table-body"
+							class="block px-3 py-2 leading-tight text-blue-700 bg-blue-100 border border-gray-300"
+						>
+							{ fmt.Sprintf("%d", i) }
+						</a>
+					</li>
+				} else {
+					<li>
+						<a
+							hx-get={ fmt.Sprintf("%sall?page=%d&pageSize=%d", tbl.URLPrefix, i, tbl.PageSize) }
+							hx-target="#table-body"
+							class="block px-3 py-2 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700"
+						>
+							{ fmt.Sprintf("%d", i) }
+						</a>
+					</li>
+				}
+			}
+			if tbl.CurrentPage < tbl.TotalPages-2 {
+				if tbl.CurrentPage < tbl.TotalPages-3 {
+					<li>
+						<span class="block px-3 py-2 leading-tight text-gray-500 bg-white border border-gray-300">...</span>
+					</li>
+				}
+				<li>
+					<a
+						hx-get={ fmt.Sprintf("%sall?page=%d&pageSize=%d", tbl.URLPrefix, tbl.TotalPages, tbl.PageSize) }
+						hx-target="#table-body"
+						class="block px-3 py-2 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700"
+					>
+						{ fmt.Sprintf("%d", tbl.TotalPages) }
+					</a>
+				</li>
+			}
+			if tbl.CurrentPage < tbl.TotalPages {
+				<li>
+					<a
+						hx-get={ fmt.Sprintf("%sall?page=%d&pageSize=%d", tbl.URLPrefix, tbl.CurrentPage+1, tbl.PageSize) }
+						hx-target="#table-body"
+						class="block px-3 py-2 leading-tight text-gray-500 bg-white border border-gray-300 rounded-r-lg hover:bg-gray-100 hover:text-gray-700"
+					>
+						Sledeća
+					</a>
+				</li>
+			}
+		</ul>
+	</nav>
+}

@@ -1,0 +1,126 @@
+package templates
+
+templ DeactivateActionsColumn() {
+	<script>
+    	function deactivateActionsColumn() {
+			document.querySelectorAll(".actions-column").forEach(el => {
+				el.classList.remove("right-0", "z-10");
+			});
+		}
+		function selectRow(row) {
+		   // Deselect any previously selected row by removing the 'bg-blue-300' class
+			const selectedRow = document.querySelector('.bg-blue-300');
+			if (selectedRow) {
+			selectedRow.classList.remove('bg-blue-300');
+			}
+
+			// Select the clicked row
+			row.classList.add('bg-blue-300');
+		}
+    </script>
+}
+
+templ ShowMessage() {
+	<script>
+		function showMessage(message, isError = false) {
+			const infoMessage = document.getElementById('info-message');
+			// Set the message text
+			infoMessage.textContent = message;
+			// Reset previous styles
+			infoMessage.classList.remove('hidden', 'bg-green-500', 'bg-red-500', 'text-white');
+			// Add appropriate styles based on success or error
+			if (isError) {
+				infoMessage.classList.add('bg-red-500', 'text-white');
+			} else {
+				infoMessage.classList.add('bg-green-500', 'text-white');
+			}
+			// Show the message
+			infoMessage.classList.remove('hidden');
+			// Hide the message after 3 seconds
+			setTimeout(() => {
+				infoMessage.classList.add('hidden');
+			}, 3000);
+		}
+
+		function handleDialogResponse(dialogName) {
+			// Check if the response is an error (400 Bad Request)
+				//console.log("handleFieldErrors:", event.detail)
+			try {
+					// Parse the JSON response from the backend
+				const response = JSON.parse(event.detail.xhr.responseText);
+				// Clear previous error messages
+				document.querySelectorAll('.input-error').forEach(el => el.remove());
+				document.querySelectorAll('input').forEach(input => {
+					input.classList.remove('border-red-500');
+				});
+				if (response.errors && response.errors.length > 0) {
+					//console.log("errors:", response.errors)
+					// Loop through errors and show error messages for each field
+					response.errors.forEach(error => {
+						const field = document.querySelector(`input[name="${error.field}"]`);
+						if (field) {
+							field.classList.add('border-red-500'); // Add red border to invalid field
+							// Add error message below the input field
+							const errorMessage = document.createElement('p');
+							errorMessage.className = 'text-red-500 text-xs mt-1 input-error';
+							errorMessage.textContent = error.message;
+							field.insertAdjacentElement('afterend', errorMessage);
+						}
+					});
+					return
+				}
+				if (response.success) {
+					showMessage(response.message);
+					closeDialog(dialogName);
+				}
+				if (!response.success) {
+					showMessage(response.message, !response.succes);
+				}	
+					//close the dialog that is sent as parameter
+				
+				return
+				 
+			} catch (e) {
+				console.error("Invalid JSON response", e);
+			}
+		}	
+	</script>
+}
+
+templ CloseDialogScript() {
+	<script>
+		function closeDialog(id) {
+			const dialogElm = document.getElementById(id);
+			if (dialogElm) {
+				dialogElm.classList.add("opacity-0"); // Fade-out effect
+				setTimeout(() => {
+					dialogElm.classList.add("hidden");
+				}, 300); // Delay to allow fade-out animation
+
+				// Restore the style of actions column if needed
+				document.querySelectorAll(".actions-column").forEach(el => {
+					el.classList.add("right-0", "z-10");
+				});
+			}
+		}
+		// Close dialog when pressing "Escape"
+		document.addEventListener("keydown", function(event) {
+			if (event.key === "Escape") {
+				const openDialog = document.querySelector(".fixed:not(.hidden)");
+				if (openDialog) {
+					closeDialog(openDialog.id);
+				}
+			}
+		}); 
+    </script>
+}
+
+templ OpenDialogScript() {
+	<!-- JavaScript Functions -->
+	<script>
+		function openDialog(id) {
+			document.getElementById(id).classList.remove("hidden");
+		}
+	</script>
+}
+

@@ -1,0 +1,112 @@
+package templates
+
+import "helia/internal/domain"
+
+// modalConfirmButton returns a button with the appropriate hx-attribute.
+// The default is hx-post.
+templ ModalConfirmButton(method string, dialog domain.Dialog) {
+	if (method == "hx-delete") {
+		<button
+			id="modal-confirm-btn"
+			class="px-4 py-1 bg-red-600 rounded-lg text-white text-xs flex items-center"
+			hx-delete={ dialog.HxActionURL }
+			hx-target={ dialog.HxTarget }
+			hx-swap={ dialog.HxSwap }
+			hx-on::after-request="handleDialogResponse('delete-dialog')"
+		>
+			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6 mr-4">
+				<path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clip-rule="evenodd"></path>
+			</svg>
+			{ dialog.OkText }
+		</button>
+	}
+	if (method == "hx-put") {
+		<button
+			id="modal-confirm-btn"
+			hx-put={ dialog.HxActionURL }
+			hx-target={ dialog.HxTarget }
+			hx-swap={ dialog.HxSwap }
+			hx-on::after-request="handleDialogResponse('addupdate-dialog')"
+			class="px-4 py-1 bg-green-600 rounded-lg text-white text-xs flex items-center"
+		>
+			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6 mr-4">
+				<path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clip-rule="evenodd"></path>
+			</svg>
+			{ dialog.SaveText }
+		</button>
+	}
+	if  (method == "hx-post") {
+		<button
+			id="modal-confirm-btn"
+			hx-post={ dialog.HxActionURL }
+			hx-target={ dialog.HxTarget }
+			hx-swap={ dialog.HxSwap }
+			hx-on::after-request="handleDialogResponse('addupdate-dialog')"
+			class="px-4 py-1 bg-green-600 rounded-lg text-white text-xs flex items-center"
+		>
+			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6 mr-4">
+				<path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clip-rule="evenodd"></path>
+			</svg>
+			{ dialog.SaveText }
+		</button>
+	}
+}
+
+templ ModalCancelButton(dialogName string, btn domain.Dialog) {
+	<button
+		id="modal-cancel-btn"
+		type="button"
+		onclick={ templ.JSFuncCall("closeDialog", dialogName) }
+		class="px-4 py-1 bg-gray-500 rounded-lg text-white text-xs flex items-center"
+	>
+		<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6 mr-4">
+			<path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25Zm-1.72 6.97a.75.75 0 1 0-1.06 1.06L10.94 12l-1.72 1.72a.75.75 0 1 0 1.06 1.06L12 13.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L13.06 12l1.72-1.72a.75.75 0 1 0-1.06-1.06L12 10.94l-1.72-1.72Z" clip-rule="evenodd"></path>
+		</svg>
+		{ btn.CancelText }
+	</button>
+}
+
+templ ModalCloseButton(dialogName string) {
+	<button
+		id="modal-close-btn"
+		type="button"
+		onclick={ templ.JSFuncCall("closeDialog", dialogName) }
+		class="text-white hover:text-gray-300 mr-4"
+	>
+		<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+			<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+		</svg>
+	</button>
+}
+
+templ FormSaveButton(btn domain.Button) {
+	<button
+		id={ btn.Id }
+		class="px-4 py-1 bg-green-600 rounded-lg text-white text-xs flex items-center"
+		hx-delete={ btn.HxActionURL }
+		hx-target={ btn.HxTarget }
+		hx-swap={ btn.HxSwap }
+		hx-on::after-request={ templ.JSFuncCall("handleDialogResponse", btn.IdDialog) }
+	>
+		<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6 mr-4">
+			<path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clip-rule="evenodd"></path>
+		</svg>
+		{ btn.LabelText }
+	</button>
+}
+
+templ FormAddButton(btn domain.Button) {
+	<button
+		id={ btn.Id }
+		class="px-4 py-1 bg-blue-600 rounded-lg text-white text-xs flex items-center"
+		hx-delete={ btn.HxActionURL }
+		hx-target={ btn.HxTarget }
+		hx-swap={ btn.HxSwap }
+		hx-on::after-request={ templ.JSFuncCall("handleDialogResponse", btn.IdDialog) }
+	>
+		<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6 mr-2">
+			<path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25ZM12.75 9a.75.75 0 0 0-1.5 0v2.25H9a.75.75 0 0 0 0 1.5h2.25V15a.75.75 0 0 0 1.5 0v-2.25H15a.75.75 0 0 0 0-1.5h-2.25V9Z" clip-rule="evenodd"></path>
+		</svg>
+		{ btn.LabelText }
+	</button>
+}

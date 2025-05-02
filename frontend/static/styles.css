@@ -1,0 +1,342 @@
+/* Top Menu */
+#id-app {
+    display: flex;
+    font-size: 23;
+    background-color: #b2ede3;
+    border-bottom: 1px solid #4cbb91;
+    overflow-x: auto;
+}
+
+/* Reset and basic styling */
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+/* Layout structure */
+#layout {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+/* Top Menu */
+#top-menu {
+    display: flex;
+    background-color: #b2ede3;
+    border-bottom: 1px solid #4cbb91;
+    padding: 5px;
+    /* Remove padding from container */
+    gap: 0;
+    /* No space between menu items */
+    overflow-x: auto;
+}
+
+#top-menu div {
+    padding: 10px;
+    border: 1px solid #b2ede3;
+    background-color: #b2ede3;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+    text-align: center;
+}
+
+#top-menu div:hover {
+    background-color: #4cbb91;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Main Body */
+#main-body {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* Side Menu */
+#side-menu {
+    width: 250px;
+    background-color: #f9f9f9;
+    border-right: 1px solid #ccc;
+    padding: 0;
+    /* Remove padding from container */
+    overflow-y: none;
+}
+
+#side-menu ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    /* Remove margins around list */
+}
+
+#side-menu li {
+    padding: 2px;
+    border: 1px solid #eee;
+    background-color: #fff;
+    cursor: pointer;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+#side-menu li:hover {
+    background-color: #4cbb91;
+    font: bold;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+#sidebar {
+    height: 60px;
+    width: 100%;
+    border-right: none;
+    border-top: 1px solid var(--line-clr);
+    padding: 0;
+    position: fixed;
+    top: unset;
+    bottom: 0;
+
+    >ul {
+        padding: 0;
+        display: grid;
+        grid-auto-columns: 60px;
+        grid-auto-flow: column;
+        align-items: center;
+        overflow-x: scroll;
+    }
+
+    ul li {
+        height: 100%;
+    }
+
+    ul a,
+    ul .dropdown-btn {
+        width: 60px;
+        height: 60px;
+        padding: 0;
+        border-radius: 0;
+        justify-content: center;
+    }
+
+    ul li span,
+    ul li:first-child,
+    .dropdown-btn svg:last-child {
+        display: none;
+    }
+
+    ul li .sub-menu.show {
+        position: fixed;
+        bottom: 60px;
+        left: 0;
+        box-sizing: border-box;
+        height: 60px;
+        width: 100%;
+        background-color: var(--hover-clr);
+        border-top: 1px solid var(--line-clr);
+        display: flex;
+        justify-content: center;
+
+        >div {
+            overflow-x: auto;
+        }
+
+        li {
+            display: inline-flex;
+        }
+
+        a {
+            box-sizing: border-box;
+            padding: 1em;
+            width: auto;
+            justify-content: center;
+        }
+    }
+}
+
+
+/* Content Area */
+#content {
+    flex: 1;
+    background-color: #fff;
+    width: 100%;
+    /* Ensure the div spans the full width */
+    height: auto;
+    /* Adjust height to accommodate content */
+    overflow-x: auto;
+    /* Horizontal scroll if the table overflows */
+    overflow-y: auto;
+    /* Horizontal scroll if the table overflows */
+    padding: 10px;
+}
+
+/* Top menu Area */
+#top-menu div {
+    display: inline-block;
+    padding: 8px 15px;
+    cursor: pointer;
+    color: #000;
+    text-align: center;
+}
+
+#top-menu div:hover {
+    background-color: #f0f0f0;
+    /* Add a hover effect */
+}
+
+#top-menu div.active {
+    background-color: #007bff;
+    /* Blue background for the active item */
+    color: white;
+    /* White text for contrast */
+    font-weight: bold;
+    /* Optional: Make it bold */
+}
+
+nav.small {
+    gap: 1rem;
+    /* Adjust spacing if necessary */
+}
+
+
+/* Table styling */
+/* Container for the table to enable horizontal scrolling */
+.table-container {
+    width: 100%;
+    /* Adjust as needed */
+    overflow-x: auto;
+    position: relative;
+}
+
+
+/* Table styling */
+table {
+    table-layout: fixed;
+    border-collapse: collapse;
+    /* Optional: for better table styling */
+    width: max-content;
+    border: 2px solid #007bff;
+    /* Vertical border */
+    white-space: nowrap;
+    /* Prevents text wrapping */
+}
+
+/* Fixed column styling */
+.fixed-column-head {
+    position: sticky;
+    width: 5%;
+    text-align: center;
+    background-color: white;
+    border: 1px solid #83b2e4;
+    border-collapse: collapse;
+    /* Vertical border */
+    /* Ensure the background matches the table */
+    z-index: 1;
+    /* Ensure the fixed column stays on top */
+}
+
+/* Fixed column styling */
+.fixed-column {
+    position: sticky;
+    width: 5%;
+    text-align: right;
+    right: 0;
+    background-color: white;
+    border: 1px solid #83b2e4;
+    border-collapse: collapse;
+    /* Vertical border */
+    /* Ensure the background matches the table */
+    z-index: 1;
+    /* Ensure the fixed column stays on top */
+}
+
+th,
+td {
+    white-space: nowrap;
+    /* Prevents text wrapping */
+    border: 1px solid blue;
+    /* Borders for all cells */
+    /*border: 1px solid #83b2e4; /* Vertical border */
+    padding: 1px;
+    /* Optional: Add padding for better spacing */
+    text-align: left;
+    /* Optional: Align text to the left */
+}
+
+th {
+    border: 2px solid darkblue;
+    /* Thicker border for headers */
+    background-color: #f0f0f0;
+    /* Optional: Add background color */
+}
+
+#table-thead {
+    background-color: #007bff;
+}
+
+.search-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    background-color: #f0f0f0;
+    border: none;
+}
+
+.search-input {
+    display: none;
+    /* Hide input initially */
+    width: 100px;
+    padding: 1px;
+    box-sizing: border-box solid #f0f0f0;
+}
+
+
+/* Footer */
+#footer {
+    background-color: #f9f9f9;
+    text-align: center;
+    padding: 10px;
+    border-top: 1px solid #ccc;
+    font-size: 14px;
+}
+
+.nav-link {
+    padding: 5px 10px;
+    /* Adjust padding to control spacing within the menu item */
+    font-size: 0.9rem;
+    /* Ensure the font 
+    size stays small */
+}
+
+.nav-pills {
+    --bs-nav-pills-border-radius: var(--bs-border-radius);
+    --bs-nav-pills-link-active-color: #fff;
+    --bs-nav-pills-link-active-bg: #4cbb91;
+}
+
+#login-form {
+    background-color: #f8f9fa;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 20px;
+    max-width: 40%;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    #main-body {
+        flex-direction: column;
+    }
+
+    #side-menu {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid #ccc;
+    }
+
+    #top-menu {
+        flex-wrap: wrap;
+    }
+}

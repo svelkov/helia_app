@@ -1,0 +1,89 @@
+package templates
+
+import "helia/internal/domain"
+
+templ Base(isLoggedIn bool, content templ.Component, menuItems []domain.SubMenuItem, title string, userName, year string) {
+	<!DOCTYPE html>
+	<html lang="en">
+		@Head()
+		<body class="flex flex-col h-screen bg-gray-100 text-sm dark:bg-gray-900 dark:text-gray-100">
+			<!-- Header -->
+			@Header(isLoggedIn, userName)
+			<!-- Secondary Menu (Conditional) -->
+			if isLoggedIn {
+				@HeaderMenu()
+				<div id="info-message" class="hidden bg-green-500 text-white rounded flex h-18 text-xl justify-center items-center text-center"></div>
+			}
+			<!-- Main Content -->
+			<div class="flex flex-1">
+				<!-- Sidebar (Conditional) -->
+				if isLoggedIn {
+					@Side_nav(menuItems)
+				}
+				<!-- Content Area -->
+				<main id="content" class="flex-1 p-4 overflow-hidden text-sm">
+					@content
+				</main>
+			</div>
+			<!-- Footer content area -->
+			@Footer(year)
+			<!-- Theme Toggle Script -->
+			<script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const themeToggle = document.getElementById('theme-toggle');
+                const themeIcon = document.getElementById('theme-icon');
+                const htmlElement = document.documentElement;
+
+                console.log("Theme toggle script loaded"); // Debugging
+
+                // Check for saved theme in localStorage
+                const savedTheme = localStorage.getItem('theme');
+                console.log("Saved theme:", savedTheme); // Debugging
+
+                if (savedTheme === 'dark') {
+                    htmlElement.classList.add('dark');
+                    themeIcon.textContent = '☀️';
+                } else {
+                    htmlElement.classList.remove('dark');
+                    themeIcon.textContent = '🌙';
+                }
+
+                themeToggle.addEventListener('click', () => {
+                    console.log("Theme toggle button clicked"); // Debugging
+                    if (htmlElement.classList.contains('dark')) {
+                        console.log("Switching to light mode"); // Debugging
+                        htmlElement.classList.remove('dark');
+                        localStorage.setItem('theme', 'light');
+                        themeIcon.textContent = '🌙';
+                    } else {
+                        console.log("Switching to dark mode"); // Debugging
+                        htmlElement.classList.add('dark');
+                        localStorage.setItem('theme', 'dark');
+                        themeIcon.textContent = '☀️';
+                    }
+                });
+                <!-- Active Nav Item Script -->
+                    const navItems = document.querySelectorAll('.nav-item');
+
+                    navItems.forEach(item => {
+                        item.addEventListener('click', (e) => {
+                            // Remove 'active' class from all nav items
+                            navItems.forEach(nav => nav.classList.remove('active'));
+                            // Add 'active' class to the clicked nav item
+                            e.target.classList.add('active');
+                        });
+                    });
+
+                    // Set the initial active nav item based on the current URL
+                    const currentPath = window.location.pathname;
+                    navItems.forEach(item => {
+                        if (item.getAttribute('href') === currentPath) {
+                            item.classList.add('active');
+                        }
+                    });
+            });
+
+        </script>
+		</body>
+	</html>
+}

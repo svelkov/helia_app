@@ -1,0 +1,48 @@
+package templates
+
+import (
+	"fmt"
+	"helia/internal/domain"
+)
+
+templ Side_nav(submenu []domain.SubMenuItem) {
+	// Side menu navigation area
+	<div id="side-menu" class="bg-gray-800 text-white w-64 p-4 text-sm">
+		<ul class="flex flex-col mb-auto gap-1">
+			<!-- Use 'gap-1' for tighter spacing -->
+			for _, item := range submenu {
+				<li class="nav-item">
+					<a
+						href={ item.URL }
+						hx-get={ fmt.Sprintf("%s", item.URL) }
+						hx-target="#content"
+						hx-swap="innerHTML"
+						class="side-nav-item flex items-center py-2 px-3 hover:bg-gray-700 rounded-md"
+					>
+						// Replace with your Tailwind icon or text
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d={ fmt.Sprintf("%s", item.Icon) }></path>
+						</svg>
+						<span class="medium">{ item.Name }</span>
+					</a>
+				</li>
+			}
+		</ul>
+	</div>
+	<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const sideNavItems = document.querySelectorAll('.side-nav-item');
+
+        function handleSideNavItemClick(event) {
+            sideNavItems.forEach(item => {
+                item.classList.remove('bg-gray-400');
+            });
+            event.currentTarget.classList.add('bg-gray-400');
+        }
+
+        sideNavItems.forEach(item => {
+            item.addEventListener('click', handleSideNavItemClick);
+        });
+    });
+</script>
+}

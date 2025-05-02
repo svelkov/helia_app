@@ -1,0 +1,77 @@
+package templates
+
+import "helia/internal/domain"
+
+templ ContentContainer(tbl domain.TableData) {
+	@Search_Part(tbl)
+	@Table(tbl)
+	<script>
+	    document.addEventListener('htmx:afterSwap', (event) => {
+	        if (event.detail.target.id === 'table') {
+	            const currentPage = event.detail.xhr.responseURL.match(/page=(\d+)/);
+	            if (currentPage) {
+	                const page = parseInt(currentPage[1], 10);
+	                document.querySelectorAll('.pagination .page-item').forEach((item) => {
+	                    item.classList.remove('active');
+	                });
+	                const activeLink = document.querySelector(`.pagination .page-link[hx-get*="?page=${page}"]`);
+	                if (activeLink) {
+	                    activeLink.closest('.page-item').classList.add('active');
+	                }
+	            }
+	        }
+	    });
+		function toggleSearch(button) {
+			const elements = document.querySelectorAll('.search-input'); // Select all elements with the given class
+		 	elements.forEach(element => {
+				element.style.display = 'none';
+			});
+			if (button) {
+				let searchField = button.previousElementSibling
+				let fullId = searchField.id;
+				let prefix = "search-";
+				let prefixLength = prefix.length;
+				let thElement;
+				if (fullId.startsWith(prefix)) {
+					thElement = document.getElementById(fullId.slice(prefixLength));
+				}
+				if (searchField) {  
+					if (searchField.style.display === "none" || searchField.style.display === "") {
+						// Show search field, hide caption
+						thElement.style.display = 'none';
+						searchField.style.display = 'inline-block';
+						searchField.focus(); // Focus the search field
+					} else {
+						// Hide search field, show caption
+						thElement.style.display = 'inline';
+						searchField.style.display = 'none';
+					}
+				}
+			}else{
+				console.error("No previous sibling found for search icon.");
+			}
+        }
+		// Function to handle search trigger based on input
+		function handleSearch(event, url) {
+			let input = event.target;
+			let query = input.value.trim();
+			console.log("Search query:", query); // Log the search query for debugging
+			//let column = input.closest("th").dataset.column; // Remove this line.
+
+			// Check if the Enter key was pressed
+			if (event.key === "Enter") {
+				event.preventDefault(); // Prevent default form submission if needed
+			}
+
+			// Set hx-get dynamically with the search term
+			// input.setAttribute('hx-get', `/filter?search=${encodeURIComponent(query)}`);
+			// input.setAttribute('hx-target', '#table-body');
+			// input.setAttribute('hx-include', 'this');
+
+			// Trigger htmx request on enter key press
+			if (event.key === "Enter" || event.type === 'keyup'){
+			input.dispatchEvent(new Event('htmx:load'));
+			}
+		}
+	</script>
+}

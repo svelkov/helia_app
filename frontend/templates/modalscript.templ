@@ -1,0 +1,17 @@
+package templates
+
+
+// showModalScript shows the modal when it is loaded into the DOM.
+script showModalScript() {
+    const modal = document.querySelector("#modal-container #modal");
+    modal.showModal();
+}
+
+// closeModalScript closes the modal when the confirm button is clicked.
+script closeModalScript() {
+    const btn = document.getElementById("modal-confirm-btn");
+    btn.addEventListener("click", function(e) {
+        const modal = document.getElementById("confirm-modal");
+        modal.close();
+    });
+}

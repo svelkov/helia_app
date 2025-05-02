@@ -1,0 +1,80 @@
+package templates
+
+templ HeaderMenu() {
+	<div class="menu-item bg-blue-800 text-white p-2">
+		<nav class="flex space-x-4">
+			<div
+				hx-get="/get-menu?menuName=Opšti podaci"
+				hx-trigger="click"
+				hx-target="#side-menu"
+				hx-swap="outerHTML"
+				class="hover:text-blue-200 {{if eq .CurrentMenu `Opšti podaci`}}active{{end}}"
+			>
+				Opšti podaci/Sifarnici
+			</div>
+			<div
+				hx-get="/get-menu?menuName=Finansijsko"
+				hx-trigger="click"
+				hx-target="#side-menu"
+				hx-swap="outerHTML"
+				class="hover:text-blue-200 {{if eq .CurrentMenu `Finansijsko`}}active{{end}}"
+			>
+				Finansijsko
+			</div>
+			<div
+				hx-get="/get-menu?menuName=Komercijalno%20poslovanje"
+				hx-trigger="click"
+				hx-target="#side-menu"
+				hx-swap="outerHTML"
+				class="hover:text-blue-200 {{if eq .CurrentMenu `Komercijalno poslovanje`}}active{{end}}"
+			>
+				Komercijalno poslovanje
+			</div>
+			<div
+				hx-get="/get-menu?menuName=Robno"
+				hx-trigger="click"
+				hx-target="#side-menu"
+				hx-swap="outerHTML"
+				class="hover:text-blue-200 {{if eq .CurrentMenu `Robno`}}active{{end}}"
+			>
+				Robno
+			</div>
+			<div
+				hx-get="/get-menu?menuName=Plate"
+				hx-trigger="click"
+				hx-target="#side-menu"
+				hx-swap="outerHTML"
+				class="hover:text-blue-200 {{if eq .CurrentMenu `Plate`}}active{{end}}"
+			>
+				Plate
+			</div>
+			<div
+				hx-get="/get-menu?menuName=Proizvodnja"
+				hx-trigger="click"
+				hx-target="#side-menu"
+				hx-swap="outerHTML"
+				class="hover:text-blue-200 {{if eq .CurrentMenu `Proizvodnja`}}active{{end}}"
+			>
+				Proizvodnja
+			</div>
+			<div
+				hx-get="/get-menu?menuName=Blagajna"
+				hx-trigger="click"
+				hx-target="#side-menu"
+				hx-swap="outerHTML"
+				class="hover:text-blue-200 {{if eq .CurrentMenu `Blagajna`}}active{{end}}"
+			>
+				Blagajna
+			</div>
+			<div
+				hx-get="/get-menu?menuName=Osnovna%20sredstva"
+				hx-trigger="click"
+				hx-target="#side-menu"
+				hx-swap="outerHTML"
+				class="hover:text-blue-200 {{if eq .CurrentMenu `Osnovna sredstva`}}active{{end}}"
+			>
+				Osnovna sredstva
+			</div>
+		</nav>
+	</div>
+}

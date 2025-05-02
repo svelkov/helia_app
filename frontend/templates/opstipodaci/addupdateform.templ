@@ -1,0 +1,94 @@
+package opstipodaci
+
+import (
+	"fmt"
+	tmpl "helia/frontend/templates"
+	"helia/internal/domain"
+)
+
+templ AddUpdateForm(dialog domain.Dialog, fields []domain.Fields) {
+	<div id="addupdate-dialog" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+		<div class="bg-white rounded-lg shadow-2xl relative animate-fade-in max-w-full w-auto">
+			<!-- Title Bar (Flush on Left, Top, Right) -->
+			<div class="bg-blue-600 text-white h-10 flex justify-between items-center rounded-t-lg">
+				<h2 class="text-lg font-semibold ml-4">{ dialog.Title }</h2>
+				@tmpl.ModalCloseButton("addupdate-dialog")
+			</div>
+			<form
+				if dialog.HxRequestType == "hx-put" {
+					hx-put={ dialog.HxActionURL }
+				} else {
+					hx-post={ dialog.HxActionURL }
+				}
+				hx-target="#info-message"
+				hx-boost="false"
+				onsubmit="return false;"
+				class="grid grid-cols-1 md:grid-cols-[auto,auto] gap-2 gap-x-4 p-3 bg-white shadow-lg rounded-lg w-auto"
+			>
+				for i, field  := range fields {
+					<div class="flex flex-col">
+						<label class="block text-sm font-sm text-blue-700">{ field.Label }</label>
+						<input
+							class={ fmt.Sprintf("mt-1 block p-1 w-[%sch] border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 w-full min-w-0", field.Width) }
+							type={ field.Type }
+							maxlength={ field.Width }
+							tabindex={ fmt.Sprintf("%d", i) }
+							name={ field.Name }
+							value={ field.Value }
+						/>
+					</div>
+				}
+				<div class="bg-white col-span-2 px-3 py-3 flex justify-end space-x-2 pt-4">
+					@tmpl.ModalConfirmButton(dialog.HxRequestType, dialog)
+					@tmpl.ModalCancelButton("addupdate-dialog", dialog)
+				</div>
+			</form>
+		</div>
+	</div>
+	@tmpl.CloseDialogScript()
+	@tmpl.ShowMessage()
+	<script>
+		// document.addEventListener('showMessage', function(event) {
+		// 	const message = event.detail;
+		// 	console.log("message:",message)
+		// 	showMessage(message);
+		// });
+
+		document.addEventListener("keydown", function (event) {
+			if (event.key === "Enter") {
+				event.preventDefault();
+
+				// Find all input fields inside the dialog
+				const inputs = Array.from(document.querySelectorAll("#addupdate-dialog input"));
+				// Filter out any non-focusable elements (just in case)
+				const focusableInputs = inputs.filter(input => 
+					!input.disabled && 
+					input.getAttribute('tabindex') !== '-1' && 
+					input.offsetParent !== null // checks if element is visible
+				);
+
+				// Sort inputs by `tabindex` (if defined), else use DOM order
+				focusableInputs.sort((a, b) => {
+					const aIndex = parseInt(a.getAttribute("tabindex") || "9999", 10);
+					const bIndex = parseInt(b.getAttribute("tabindex") || "9999", 10);
+					return aIndex - bIndex;
+				});
+
+				// Get the currently focused element
+				const currentInput = document.activeElement;
+
+				// Find the current input's index in the sorted list
+				const currentIndex = focusableInputs.indexOf(currentInput);
+
+				if (currentIndex !== -1) {
+					// Move to next input or wrap around
+					const nextIndex = (currentIndex + 1) % focusableInputs.length;
+					focusableInputs[nextIndex].focus();
+				} else if (focusableInputs.length > 0) {
+					// If no input currently focused, focus the first one
+					focusableInputs[0].focus();
+				}
+			}
+		});
+	</script>
+}

@@ -1,0 +1,33 @@
+package templates
+
+import "helia/internal/domain"
+
+templ Dialog(id string, content templ.Component, dialog domain.Dialog) {
+	<div id="delete-dialog" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+		<div class="bg-white rounded-lg shadow-2xl w-full max-w-md relative animate-fade-in">
+			<!-- Title Bar (Flush on Left, Top, Right) -->
+			<div class="bg-red-600 text-white h-10 flex justify-between items-center rounded-t-lg">
+				<h2 class="text-lg font-semibold ml-4">{ dialog.Title }</h2>
+				@ModalCloseButton("delete-dialog")
+			</div>
+			<!-- Content -->
+			<div class="px-4 py-6">
+				@content
+			</div>
+			<div class="flex justify-end space-x-2 px-4 pb-6">
+				@ModalConfirmButton(dialog.HxRequestType, dialog)
+				@ModalCancelButton("delete-dialog", dialog)
+			</div>
+		</div>
+	</div>
+	@CloseDialogScript()
+	@ShowMessage()
+}
+
+templ DeleteDialog(dialog domain.Dialog) {
+	@Dialog("delete-dialog", DeleteDialogContent(dialog.Id), dialog)
+}
+
+templ DeleteDialogContent(rowID string) {
+	<p class="mb-6">Da li zelite da obrišete slog sa ID: { rowID }?</p>
+}

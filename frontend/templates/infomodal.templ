@@ -1,0 +1,23 @@
+package templates
+
+import "helia/internal/domain"
+
+
+// Create the template for the modal.
+// Note that there is no action button on this one.
+templ InfoModal(m domain.ModalDetail) {
+    <dialog id="modal" class="modal">
+       <div class="modal-box">
+          <h3 class="font-bold text-lg">{ m.Heading }</h3>
+          <p class="py-4">{ m.Text }</p>
+          <div class="modal-action flex items-center justify-end">
+             <form method="dialog">
+                <button class="btn btn-neutral">{ m.ConfirmText }</button>
+             </form>
+          </div>
+       </div>
+    </dialog>
+    // Don't forget the scripts
+    @showModalScript()
+    @closeModalScript()
+}

@@ -211,14 +211,14 @@ func NaloziHeader(tipdokValues *[]domain.Tipdok, ukObrada domain.UkupnaObrada, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</div></div><div class=\"p-1 flex flex-col space-y-1\"><label class=\"block text-sm font-medium text-blue-700 mb-2\">Prikaz ukupne obrade</label><div class=\"box-content flex flex-col space-y-1 p-2 border-2 border-gray-300 rounded-md\"><div class=\"flex items-center space-x-2\"><label for=\"ukupnoNaloga\" class=\"inline-block w-1/3 text-sm font-medium text-gray-700\">Ukupno Naloga</label> <input type=\"number\">Test <input type=\"number\" id=\"ukupnoNaloga\" name=\"ukupnoNaloga\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</div></div><div class=\"p-1 flex flex-col space-y-1\"><label class=\"block text-sm font-medium text-blue-700 mb-2\">Prikaz ukupne obrade</label><div class=\"box-content flex flex-col space-y-1 p-2 border-2 border-gray-300 rounded-md\"><div class=\"flex items-center space-x-2\"><label for=\"ukupnoNaloga\" class=\"inline-block w-1/3 text-sm font-medium text-gray-700\">Ukupno Naloga</label> <input type=\"number\" id=\"ukupnoNaloga\" name=\"ukupnoNaloga\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", ukObrada.UkNaloga))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 117, Col: 108}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 116, Col: 108}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
@@ -231,7 +231,7 @@ func NaloziHeader(tipdokValues *[]domain.Tipdok, ukObrada domain.UkupnaObrada, b
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", ukObrada.UkStavki))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 121, Col: 108}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 120, Col: 108}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
@@ -244,7 +244,7 @@ func NaloziHeader(tipdokValues *[]domain.Tipdok, ukObrada domain.UkupnaObrada, b
 		var templ_7745c5c3_Var11 string
 		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.2f", ukObrada.Duguje))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 125, Col: 96}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 124, Col: 96}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {
@@ -257,7 +257,7 @@ func NaloziHeader(tipdokValues *[]domain.Tipdok, ukObrada domain.UkupnaObrada, b
 		var templ_7745c5c3_Var12 string
 		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.2f", ukObrada.Potrazuje))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 129, Col: 105}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 128, Col: 105}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 		if templ_7745c5c3_Err != nil {

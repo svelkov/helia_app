@@ -255,7 +255,7 @@ func (r *BaseRepository[T]) CreateBasicWhere(tableFields []domain.Fields, args *
 					continue
 				}
 				switch field.Type.Name() {
-				case "int", "int64":
+				case "int", "int64", "int32", "float32", "float64":
 					likeString += fmt.Sprintf(" OR (%s::TEXT ILIKE $%d)", strings.ToLower(field.Name), paramNr)
 				case "string":
 					likeString += fmt.Sprintf(" OR (%s::TEXT ILIKE $%d)", strings.ToLower(field.Name), paramNr)

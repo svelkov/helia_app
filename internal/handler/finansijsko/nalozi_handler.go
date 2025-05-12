@@ -63,12 +63,14 @@ var btnNoviNalog = domain.Button{
 type FnalHandler struct {
 	Service        *service.BaseService[domain.Fnal]
 	tipdok_service *service.BaseService[domain.Tipdok]
+	sf_service     *service.BaseService[domain.Sf]
 }
 
-func NewFnalHandler(service *service.BaseService[domain.Fnal], tipdok_service *service.BaseService[domain.Tipdok]) *FnalHandler {
+func NewFnalHandler(service *service.BaseService[domain.Fnal], tipdok_service *service.BaseService[domain.Tipdok], sf_service *service.BaseService[domain.Sf]) *FnalHandler {
 	return &FnalHandler{
 		Service:        service,
 		tipdok_service: tipdok_service,
+		sf_service:     sf_service,
 	}
 }
 
@@ -209,6 +211,21 @@ func (h *FnalHandler) GetAllFnalTipdok(w http.ResponseWriter, r *http.Request) {
 
 	} else {
 		ukObrada := domain.UkupnaObrada{}
+		//get totals from SF
+		args = []interface{}{}
+		hasGod, hasKar = h.sf_service.Repo.CheckGogKar()
+		basicWhere = h.sf_service.Repo.CreateBasicWhere(sfTableFields, &args, hasGod, hasKar)
+		qryText = `SELECT brst, brna, dug, pot, brst FROM sf `
+		tot_obrade, err := h.sf_service.GetAllCustom(qryText, basicWhere, args, "", "")
+		if err != nil {
+			response := utils.CreateResponse(w, false, []domain.FieldError{}, utils.RenderTemplateErr, http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(response)
+			return
+		}
+		ukObrada.Duguje = (*tot_obrade)[0].Dug
+		ukObrada.Potrazuje = (*tot_obrade)[0].Pot
+		ukObrada.UkStavki = int64((*tot_obrade)[0].Brst)
+		ukObrada.UkNaloga = int64((*tot_obrade)[0].Brna)
 		// Render the template for nalozi with the data
 		err = tmpl_fin.NaloziContent(tabData, tipdokValues, ukObrada, btnSave, btnNoviNalog, *table).Render(r.Context(), w)
 		if err != nil {

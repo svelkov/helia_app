@@ -113,7 +113,6 @@ templ NaloziHeader(tipdokValues *[]domain.Tipdok, ukObrada domain.UkupnaObrada, 
 			<div class="box-content flex flex-col space-y-1 p-2 border-2 border-gray-300 rounded-md">
 				<div class="flex items-center space-x-2">
 					<label for="ukupnoNaloga" class="inline-block w-1/3 text-sm font-medium text-gray-700">Ukupno Naloga</label>
-					<input type="number"/>Test
 					<input type="number" id="ukupnoNaloga" name="ukupnoNaloga" value={ fmt.Sprintf("%d", ukObrada.UkNaloga) } disabled class="mt-1 block p-1 w-[50ch] border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 w-full min-w-0"/>
 				</div>
 				<div class="flex items-center space-x-2">

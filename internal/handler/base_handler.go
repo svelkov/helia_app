@@ -36,6 +36,11 @@ func NewBasicHandler(isLoggedIn bool, subMeniItems []domain.SubMenuItem) *BasicH
 }
 
 func (h *BasicHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method == http.MethodGet {
+		templates.Base(false, templates.Login(), h.subMenuItems, "Helia", "", fmt.Sprintf("%d", time.Now().Year())).Render(r.Context(), w) // Render login page on failure.
+		return
+	}
 	username := r.FormValue("username")
 	password := r.FormValue("password")
 
@@ -129,7 +134,8 @@ func (h *BasicHandler) AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 // Handler for the main index page
 func (h *BasicHandler) indexHandler(w http.ResponseWriter, r *http.Request) {
 	// Get username from context
-	username, ok := r.Context().Value(usernameKey).(string)
+
+	username, ok := getUsernameFromToken(r)
 
 	// Check if user is authenticated
 	IsLoggedIn := ok && username != ""
@@ -150,12 +156,25 @@ func (h *BasicHandler) indexHandler(w http.ResponseWriter, r *http.Request) {
 	year := fmt.Sprintf("%d", time.Now().Year())
 	c := tmpl.Content(IsLoggedIn)
 	err := tmpl.Base(IsLoggedIn, c, submenu, "HELIA", username, year).Render(r.Context(), w)
-
 	if err != nil {
 		http.Error(w, "Error rendering template", http.StatusInternalServerError)
 		return
 	}
 
+}
+
+func getUsernameFromToken(r *http.Request) (string, bool) {
+	// Get the auth_token cookie
+	cookie, err := r.Cookie("auth_token")
+	if err != nil {
+		return "", false // No cookie found, user is not authenticated
+	}
+	username, err := infrastructure.VerifyJWT(cookie.Value)
+
+	if err != nil {
+		return "", false // Invalid token, user is not authenticated
+	}
+	return username.Username, true // User is authenticated
 }
 
 // Generate JWT token
@@ -171,9 +190,9 @@ func GenerateJWT(username string) (string, error) {
 
 // Handlers
 func (h *BasicHandler) AddRoutes(r *http.ServeMux) {
-	r.HandleFunc("/login", infrastructure.AuthMiddleware(h.LoginHandler))
-	r.HandleFunc("/register", infrastructure.AuthMiddleware(h.RegisterHandler))
-	r.HandleFunc("/logout", infrastructure.AuthMiddleware(h.LogoutHandler))
-	r.HandleFunc("/home", infrastructure.AuthMiddleware(h.AuthMiddleware(h.HomeHandler)))
-	r.HandleFunc("/", infrastructure.AuthMiddleware(h.AuthMiddleware(h.indexHandler)))
+	r.HandleFunc("/login", h.LoginHandler)
+	r.HandleFunc("/register", h.RegisterHandler)
+	r.HandleFunc("/logout", h.LogoutHandler)
+	r.HandleFunc("/home", h.HomeHandler)
+	r.HandleFunc("/", h.indexHandler)
 }

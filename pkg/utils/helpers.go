@@ -173,7 +173,7 @@ func UpdateHelper[T any](w http.ResponseWriter, r *http.Request, entity *T, serv
 	http.Redirect(w, r, redirectURL, http.StatusSeeOther)
 }
 
-func GetAllEntityHelper[T any](w http.ResponseWriter, r *http.Request, entity *T, service service.Service[T], tableFields []domain.Fields, entityContentTitle, entityTableID, entityURLPrefix, idField string, hasUpdateDelete ...bool) {
+func GetAllEntityHelper[T any](w http.ResponseWriter, r *http.Request, entity *T, service service.Service[T], tableFields []domain.Fields, entityContentTitle, entityTableID, entityURLPrefix, idField string, hasUpdateDelete ...bool) *domain.TableData {
 
 	// Parse query parameters from the URL
 	searchValue := r.URL.Query().Get("query")
@@ -182,7 +182,7 @@ func GetAllEntityHelper[T any](w http.ResponseWriter, r *http.Request, entity *T
 	if err != nil {
 		response := CreateResponse(w, false, []domain.FieldError{}, ReadDataErrMsg, http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(response)
-		return
+		return nil
 	}
 
 	currentPage, pageSize, totalPages := GetPaginationData(r, totRecords)
@@ -190,7 +190,7 @@ func GetAllEntityHelper[T any](w http.ResponseWriter, r *http.Request, entity *T
 	if err != nil {
 		response := CreateResponse(w, false, []domain.FieldError{}, ReadDataErrMsg, http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(response)
-		return
+		return nil
 	}
 
 	// Convert the fetched data into the format expected by the template
@@ -220,7 +220,7 @@ func GetAllEntityHelper[T any](w http.ResponseWriter, r *http.Request, entity *T
 					FormatValueErrMsg := fmt.Sprintf("Error formatting value: %s", fieldValue)
 					response := CreateResponse(w, false, []domain.FieldError{}, fmt.Sprintf(FormatValueErrMsg, err.Error()), http.StatusInternalServerError)
 					json.NewEncoder(w).Encode(response)
-					return
+					return nil
 				}
 				fields = append(fields, value)
 				continue
@@ -236,8 +236,8 @@ func GetAllEntityHelper[T any](w http.ResponseWriter, r *http.Request, entity *T
 		}
 		table.Rows = append(table.Rows, row)
 	}
-
-	RenderContent(w, r, *table)
+	return table
+	// RenderContent(w, r, *table)
 }
 
 func GetFormattedValue(fieldType string, fieldValue reflect.Value) (string, error) {

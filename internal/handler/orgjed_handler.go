@@ -61,7 +61,8 @@ func (h *OrgjedHandler) GetOrgjed(w http.ResponseWriter, r *http.Request) {
 
 func (h *OrgjedHandler) GetAllOrgjed(w http.ResponseWriter, r *http.Request) {
 	var orgjed domain.Orgjed
-	utils.GetAllEntityHelper(w, r, &orgjed, h.Service, orgjedTableFields, orgjedContentTitle, orgjedTableID, orgjedURLPrefix, utils.IDorgjed)
+	tbl := utils.GetAllEntityHelper(w, r, &orgjed, h.Service, orgjedTableFields, orgjedContentTitle, orgjedTableID, orgjedURLPrefix, utils.IDorgjed)
+	utils.RenderContent(w, r, *tbl)
 }
 
 func (h *OrgjedHandler) AddRoutes(r *http.ServeMux) {

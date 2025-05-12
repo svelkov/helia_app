@@ -69,7 +69,8 @@ func (h *BnkizvHandler) GetBnkizv(w http.ResponseWriter, r *http.Request) {
 
 func (h *BnkizvHandler) GetAllBnkizv(w http.ResponseWriter, r *http.Request) {
 	var bnkizv domain.Bnkizv
-	utils.GetAllEntityHelper(w, r, &bnkizv, h.Service, bnkizvTableFields, bnkizvContentTitle, bnkizvTableID, bnkizvURLPrefix, utils.IDbnkizv)
+	tbl := utils.GetAllEntityHelper(w, r, &bnkizv, h.Service, bnkizvTableFields, bnkizvContentTitle, bnkizvTableID, bnkizvURLPrefix, utils.IDbnkizv)
+	utils.RenderContent(w, r, *tbl)
 }
 
 func (h *BnkizvHandler) AddRoutes(r *http.ServeMux) {

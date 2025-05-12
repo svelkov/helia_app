@@ -63,7 +63,8 @@ func (h *SifmestoHandler) GetSifmesto(w http.ResponseWriter, r *http.Request) {
 
 func (h *SifmestoHandler) GetAllSifmesto(w http.ResponseWriter, r *http.Request) {
 	var sifmesto domain.Sifmesto
-	utils.GetAllEntityHelper(w, r, &sifmesto, h.Service, sifmestoTableFields, sifmestoContentTitle, sifmestoTableID, sifmestoURLPrefix, utils.IDsifmesto)
+	tbl := utils.GetAllEntityHelper(w, r, &sifmesto, h.Service, sifmestoTableFields, sifmestoContentTitle, sifmestoTableID, sifmestoURLPrefix, utils.IDsifmesto)
+	utils.RenderContent(w, r, *tbl)
 }
 
 func (h *SifmestoHandler) AddRoutes(r *http.ServeMux) {

@@ -67,7 +67,8 @@ func (h *DokvrstaHandler) GetDokvrsta(w http.ResponseWriter, r *http.Request) {
 
 func (h *DokvrstaHandler) GetAllDokvrsta(w http.ResponseWriter, r *http.Request) {
 	var dokvrsta domain.Dokvrsta
-	utils.GetAllEntityHelper(w, r, &dokvrsta, h.Service, dokvrstaTableFields, dokvrstaContentTitle, dokvrstaTableID, dokvrstaURLPrefix, utils.IDdokvrsta)
+	tbl := utils.GetAllEntityHelper(w, r, &dokvrsta, h.Service, dokvrstaTableFields, dokvrstaContentTitle, dokvrstaTableID, dokvrstaURLPrefix, utils.IDdokvrsta)
+	utils.RenderContent(w, r, *tbl)
 }
 
 func (h *DokvrstaHandler) AddRoutes(r *http.ServeMux) {

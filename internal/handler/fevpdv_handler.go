@@ -62,7 +62,8 @@ func (h *FvepdvHandler) GetFvepdv(w http.ResponseWriter, r *http.Request) {
 
 func (h *FvepdvHandler) GetAllFvepdv(w http.ResponseWriter, r *http.Request) {
 	var Fvepdv domain.Fvepdv
-	utils.GetAllEntityHelper(w, r, &Fvepdv, h.Service, fvepdvTableFields, fvepdvContentTitle, fvepdvTableID, fvepdvURLPrefix, utils.IDfvepdv)
+	tbl := utils.GetAllEntityHelper(w, r, &Fvepdv, h.Service, fvepdvTableFields, fvepdvContentTitle, fvepdvTableID, fvepdvURLPrefix, utils.IDfvepdv)
+	utils.RenderContent(w, r, *tbl)
 }
 
 func (h *FvepdvHandler) AddRoutes(r *http.ServeMux) {

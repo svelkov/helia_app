@@ -61,7 +61,8 @@ func (h *DrzavaHandler) GetDrzava(w http.ResponseWriter, r *http.Request) {
 
 func (h *DrzavaHandler) GetAllDrzave(w http.ResponseWriter, r *http.Request) {
 	var Drzava domain.Drzave
-	utils.GetAllEntityHelper(w, r, &Drzava, h.Service, drzavaTableFields, drzavaContentTitle, drzavaTableID, drzavaURLPrefix, utils.IDdrzave)
+	tbl := utils.GetAllEntityHelper(w, r, &Drzava, h.Service, drzavaTableFields, drzavaContentTitle, drzavaTableID, drzavaURLPrefix, utils.IDdrzave)
+	utils.RenderContent(w, r, *tbl)
 }
 
 func (h *DrzavaHandler) AddRoutes(r *http.ServeMux) {

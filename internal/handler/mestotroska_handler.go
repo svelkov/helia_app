@@ -62,7 +62,8 @@ func (h *MestotroskaHandler) GetMestotroska(w http.ResponseWriter, r *http.Reque
 
 func (h *MestotroskaHandler) GetAllMestotroska(w http.ResponseWriter, r *http.Request) {
 	var mestotroska domain.Mestotr
-	utils.GetAllEntityHelper(w, r, &mestotroska, h.Service, mestotroskaTableFields, mestotroskaContentTitle, mestotroskaTableID, mestotroskaURLPrefix, utils.IDmestotr)
+	tbl := utils.GetAllEntityHelper(w, r, &mestotroska, h.Service, mestotroskaTableFields, mestotroskaContentTitle, mestotroskaTableID, mestotroskaURLPrefix, utils.IDmestotr)
+	utils.RenderContent(w, r, *tbl)
 }
 
 func (h *MestotroskaHandler) AddRoutes(r *http.ServeMux) {

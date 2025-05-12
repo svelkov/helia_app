@@ -33,6 +33,19 @@ var naloziTableFields = []domain.Fields{
 	{Name: "brst", Label: "Br.Stavki", Width: "5"},
 	{Name: "nalsts", Label: "Status naloga", Width: "10"},
 }
+var naloziStavkeTableFields = []domain.Fields{
+	{Name: "rbr", Label: "R. Broj", Width: "4"},
+	{Name: "konto", Label: "Konto", Width: "6"},
+	{Name: "sifra", Label: "Sifra", Width: "6"},
+	{Name: "naziv", Label: "Naziv Konta", Width: "60"},
+	{Name: "vrd", Label: "Vrsta Dok.", Width: "10"},
+	{Name: "opis", Label: "Opis", Width: "60"},
+	{Name: "dug", Label: "Duguje", Width: "14"},
+	{Name: "pot", Label: "Potrazuje", Width: "14"},
+	{Name: "dokum", Label: "Br. Dokum", Width: "12"},
+	{Name: "dadok", Label: "Datum Dok.", Width: "12"},
+}
+
 var tabData = domain.TabData{
 	Tabs: []domain.TabItem{
 		{ID: "knjizenje", Label: "Knjiženje Naloga", HXRequestUrl: fmt.Sprintf("%sknjizenje", naloziURLPrefix), IsActive: true},
@@ -53,6 +66,25 @@ var btnSave = domain.Button{
 var btnNoviNalog = domain.Button{
 	Id:            "btn-novi-nalog",
 	LabelText:     "Novi Nalog",
+	HxActionURL:   naloziURLPrefix,
+	HxTarget:      "this",
+	HxSwap:        "innerHTML",
+	HxOn:          "click: this.trigger('save')",
+	HxRequestType: "POST",
+}
+var btnKopiraj = domain.Button{
+	Id:            "btn-copy",
+	LabelText:     "Kopiranje Naloga",
+	HxActionURL:   naloziURLPrefix,
+	HxTarget:      "this",
+	HxSwap:        "innerHTML",
+	HxOn:          "click: this.trigger('save')",
+	HxRequestType: "POST",
+}
+
+var btnStorniraj = domain.Button{
+	Id:            "btn-storniraj",
+	LabelText:     "Storniranje Naloga",
 	HxActionURL:   naloziURLPrefix,
 	HxTarget:      "this",
 	HxSwap:        "innerHTML",
@@ -114,6 +146,11 @@ func (h *FnalHandler) GetAllFnalTipdok(w http.ResponseWriter, r *http.Request) {
 	tipdokValues := &[]domain.Tipdok{}
 	isSearch := true
 	args := []interface{}{}
+	tabData.Tabs[0].IsActive = true
+	tabData.Tabs[1].IsActive = false
+	tabData.Tabs[2].IsActive = false
+	tabData.Tabs[3].IsActive = false
+
 	//check if the tipdok is selected from the dropdown
 	// If not, set the default value to the first item in the list
 	hasGod, hasKar := h.tipdok_service.Repo.CheckGogKar()
@@ -216,16 +253,16 @@ func (h *FnalHandler) GetAllFnalTipdok(w http.ResponseWriter, r *http.Request) {
 		hasGod, hasKar = h.sf_service.Repo.CheckGogKar()
 		basicWhere = h.sf_service.Repo.CreateBasicWhere(sfTableFields, &args, hasGod, hasKar)
 		qryText = `SELECT brst, brna, dug, pot, brst FROM sf `
-		tot_obrade, err := h.sf_service.GetAllCustom(qryText, basicWhere, args, "", "")
+		totObrade, err := h.sf_service.GetAllCustom(qryText, basicWhere, args, "", "")
 		if err != nil {
 			response := utils.CreateResponse(w, false, []domain.FieldError{}, utils.RenderTemplateErr, http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(response)
 			return
 		}
-		ukObrada.Duguje = (*tot_obrade)[0].Dug
-		ukObrada.Potrazuje = (*tot_obrade)[0].Pot
-		ukObrada.UkStavki = int64((*tot_obrade)[0].Brst)
-		ukObrada.UkNaloga = int64((*tot_obrade)[0].Brna)
+		ukObrada.Duguje = (*totObrade)[0].Dug
+		ukObrada.Potrazuje = (*totObrade)[0].Pot
+		ukObrada.UkStavki = int64((*totObrade)[0].Brst)
+		ukObrada.UkNaloga = int64((*totObrade)[0].Brna)
 		// Render the template for nalozi with the data
 		err = tmpl_fin.NaloziContent(tabData, tipdokValues, ukObrada, btnSave, btnNoviNalog, *table).Render(r.Context(), w)
 		if err != nil {
@@ -240,7 +277,6 @@ func (h *FnalHandler) GetAllFnal(w http.ResponseWriter, r *http.Request) {
 	searchValue := r.URL.Query().Get("query")
 	tipdok := r.URL.Query().Get("tipdok")
 
-	fmt.Println("searchValue", searchValue)
 	args := []interface{}{}
 	hasGod, hasKar := h.Service.Repo.CheckGogKar()
 	basicWhere := h.Service.Repo.CreateBasicWhere(naloziTableFields, &args, hasGod, hasKar, searchValue)
@@ -316,6 +352,45 @@ func (h *FnalHandler) GetAllFnal(w http.ResponseWriter, r *http.Request) {
 	}
 
 }
+func (h *FnalHandler) FnalStorniranje(w http.ResponseWriter, r *http.Request) {
+	// Render the template for nalozi with the data
+	var fnal = domain.Fnal{}
+	tabData.Tabs[0].IsActive = false
+	tabData.Tabs[1].IsActive = false
+	tabData.Tabs[2].IsActive = true
+	tabData.Tabs[3].IsActive = false
+	hdrTable := utils.GetAllEntityHelper(w, r, &fnal, h.Service, naloziTableFields, "NALOZI", naloziTableID, naloziURLPrefix, utils.IDfnal, false, false)
+	err := tmpl_fin.NaloziStorniranje(tabData, *hdrTable, domain.TableData{}, btnStorniraj).Render(r.Context(), w)
+	if err != nil {
+		response := utils.CreateResponse(w, false, []domain.FieldError{}, utils.RenderTemplateErr, http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+}
+
+func (h *FnalHandler) FnalPrepis(w http.ResponseWriter, r *http.Request) {
+	// Render the template for nalozi with the data
+	tabData.Tabs[0].IsActive = false
+	tabData.Tabs[1].IsActive = true
+	tabData.Tabs[2].IsActive = false
+	tabData.Tabs[3].IsActive = false
+	err := tmpl_fin.NaloziKopiranje(tabData, domain.TableData{}, domain.TableData{}, btnKopiraj).Render(r.Context(), w)
+	if err != nil {
+		response := utils.CreateResponse(w, false, []domain.FieldError{}, utils.RenderTemplateErr, http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+}
+
+func (h *FnalHandler) FnalPrikaz(w http.ResponseWriter, r *http.Request) {
+	// Render the template for nalozi with the data
+	err := tmpl_fin.NaloziContent(tabData, nil, domain.UkupnaObrada{}, btnSave, btnNoviNalog, domain.TableData{}).Render(r.Context(), w)
+	if err != nil {
+		response := utils.CreateResponse(w, false, []domain.FieldError{}, utils.RenderTemplateErr, http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+}
 
 func (h *FnalHandler) AddRoutes(r *http.ServeMux) {
 	// Define routes for nalozi
@@ -328,8 +403,8 @@ func (h *FnalHandler) AddRoutes(r *http.ServeMux) {
 	r.HandleFunc("GET /api/nalozi/{id}", infrastructure.AuthMiddleware(h.GetNalog))
 	r.HandleFunc("PUT /api/nalozi/{id}", infrastructure.AuthMiddleware(h.UpdateNalog))
 	r.HandleFunc("DELETE /api/nalozi/{id}", infrastructure.AuthMiddleware(h.DeleteNalog))
-	r.HandleFunc("GET /api/nalozi/knjizenje", infrastructure.AuthMiddleware(h.GetAllFnal))
-	r.HandleFunc("GET /api/nalozi/prepis", infrastructure.AuthMiddleware(h.GetAllFnal))
-	r.HandleFunc("GET /api/nalozi/storniranje", infrastructure.AuthMiddleware(h.GetAllFnal))
-	r.HandleFunc("GET /api/nalozi/prikaz", infrastructure.AuthMiddleware(h.GetAllFnal))
+	r.HandleFunc("GET /api/nalozi/knjizenje", infrastructure.AuthMiddleware(h.GetAllFnalTipdok))
+	r.HandleFunc("GET /api/nalozi/prepis", infrastructure.AuthMiddleware(h.FnalPrepis))
+	r.HandleFunc("GET /api/nalozi/storniranje", infrastructure.AuthMiddleware(h.FnalStorniranje))
+	r.HandleFunc("GET /api/nalozi/prikaz", infrastructure.AuthMiddleware(h.FnalPrikaz))
 }

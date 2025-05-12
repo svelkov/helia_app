@@ -65,7 +65,8 @@ func (h *SifplizvHandler) GetSifplizv(w http.ResponseWriter, r *http.Request) {
 
 func (h *SifplizvHandler) GetAllSifplizv(w http.ResponseWriter, r *http.Request) {
 	var sifplizv domain.Sifplizv
-	utils.GetAllEntityHelper(w, r, &sifplizv, h.Service, sifplizvTableFields, sifplizvContentTitle, sifplizvTableID, sifplizvURLPrefix, utils.IDsifplizv)
+	tbl := utils.GetAllEntityHelper(w, r, &sifplizv, h.Service, sifplizvTableFields, sifplizvContentTitle, sifplizvTableID, sifplizvURLPrefix, utils.IDsifplizv)
+	utils.RenderContent(w, r, *tbl)
 }
 
 func (h *SifplizvHandler) AddRoutes(r *http.ServeMux) {

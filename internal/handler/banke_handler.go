@@ -68,7 +68,8 @@ func (h *BankeHandler) GetBanke(w http.ResponseWriter, r *http.Request) {
 
 func (h *BankeHandler) GetAllBanke(w http.ResponseWriter, r *http.Request) {
 	var banke domain.Banke
-	utils.GetAllEntityHelper(w, r, &banke, h.Service, bankeTableFields, bankeContentTitle, bankeTableID, bankeURLPrefix, utils.IDbanke)
+	tbl := utils.GetAllEntityHelper(w, r, &banke, h.Service, bankeTableFields, bankeContentTitle, bankeTableID, bankeURLPrefix, utils.IDbanke)
+	utils.RenderContent(w, r, *tbl)
 }
 
 func (h *BankeHandler) AddRoutes(r *http.ServeMux) {

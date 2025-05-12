@@ -9,38 +9,46 @@ import (
 var tabClasses string
 
 templ NaloziContent(tabs domain.TabData, tipdokValues *[]domain.Tipdok, ukObrada domain.UkupnaObrada, btnSave, btnNoviNalog domain.Button, tbl domain.TableData) {
-	<h2 class="text-xl font-semibold">NALOZI ZA KNJIZENJE</h2>
-	<div class="border-b border-gray-200">
-		<nav class="-mb-px flex space-x-4" aria-label="Tabs">
-			for _, item := range tabs.Tabs {
-				<button
-					id={ item.ID }
-					if item.IsActive {
-						class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm text-blue-600 border-blue-600 focus:outline-none"
-					} else {
-						class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300 focus:outline-none"
-					}
-					hx-get={ item.HXRequestUrl }
-					hx-target="#content"
-					hx-swap="innerHTML"
-					aria-controls="knjizenje-panel"
-					aria-selected={ fmt.Sprintf("%v", item.IsActive) }
-				>
-					{ item.Label }
-				</button>
-			}
-		</nav>
-	</div>
-	<div id="tab-content">
-		@NaloziHeader(tipdokValues, ukObrada, btnSave, btnNoviNalog)
-		@tmpl.Search_Part(tbl)
-		<div id="table-container" class="mt-1">
-			@tmpl.Table(tbl)
+	<div id="main-content" class="border-b border-gray-200">
+		@NaloziNav(tabs)
+		<div id="main-content">
+			@NaloziKnjizenjeContent(tipdokValues, ukObrada, btnSave, btnNoviNalog, tbl)
 		</div>
 	</div>
 }
 
-templ NaloziHeader(tipdokValues *[]domain.Tipdok, ukObrada domain.UkupnaObrada, btnSave, btnNoviNalog domain.Button) {
+templ NaloziNav(tabs domain.TabData) {
+	<h2 class="text-xl font-semibold">NALOZI ZA KNJIZENJE</h2>
+	<nav class="-mb-px flex space-x-4" aria-label="Tabs">
+		for _, item := range tabs.Tabs {
+			<button
+				id={ item.ID }
+				if item.IsActive {
+					class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm text-blue-600 border-blue-600 focus:outline-none"
+				} else {
+					class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300 focus:outline-none"
+				}
+				hx-get={ item.HXRequestUrl }
+				hx-target="#main-content"
+				hx-swap="innerHTML"
+				aria-controls="knjizenje-panel"
+				aria-selected={ fmt.Sprintf("%v", item.IsActive) }
+			>
+				{ item.Label }
+			</button>
+		}
+	</nav>
+}
+
+templ NaloziKnjizenjeContent(tipdokValues *[]domain.Tipdok, ukObrada domain.UkupnaObrada, btnSave, btnNoviNalog domain.Button, tbl domain.TableData) {
+	@NaloziKnjizenjeHeader(tipdokValues, ukObrada, btnSave, btnNoviNalog)
+	@tmpl.Search_Part(tbl)
+	<div id="table-container" class="mt-1">
+		@tmpl.Table(tbl)
+	</div>
+}
+
+templ NaloziKnjizenjeHeader(tipdokValues *[]domain.Tipdok, ukObrada domain.UkupnaObrada, btnSave, btnNoviNalog domain.Button) {
 	<div class="grid grid-cols-3 gap-6 py-2">
 		<div class="col-span-2 grid grid-cols-2 gap-1">
 			<div class="flex flex-col space-y-1">
@@ -138,6 +146,57 @@ templ NaloziSave() {
 		<div class="flex space-x-2">
 			<button class="btn btn-primary" hx-get="/nalozi/create" hx-target="#dialog-container" hx-swap="innerHTML">Dodaj</button>
 			<button class="btn btn-secondary" onclick="toggleSearch(this)">Pretraga</button>
+		</div>
+	</div>
+}
+
+templ NaloziKopiranje(tabs domain.TabData, tblHeader, tblStavke domain.TableData, btnKopiraj domain.Button) {
+	@NaloziNav(tabs)
+	<div>
+		<h3 class="text-xl font-semibold mb-2">NALOZI ZAGLAVLJE</h3>
+		<div class="flex items-end justify-end col-span-2 py-1 space-x-1">
+			@tmpl.FormSaveButton(btnKopiraj)
+		</div>
+		<div class="border-b border-gray-200 mb-4">
+			@tmpl.Table(tblHeader)
+		</div>
+		<h3 class="text-xl font-semibold mb-2">NALOZI STAVKE</h3>
+		<div class="border-b border-gray-200">
+			@tmpl.Table(tblStavke)
+		</div>
+	</div>
+}
+
+templ NaloziStorniranje(tabs domain.TabData, tblHeader, tblStavke domain.TableData, btnStorniraj domain.Button) {
+	@NaloziNav(tabs)
+	<div>
+		<h2 class="text-xl font-semibold mb-2">NALOZI ZAGLAVLJE</h2>
+		<div class="flex items-end justify-end col-span-2 py-1 space-x-1">
+			@tmpl.FormSaveButton(btnStorniraj)
+		</div>
+		<div class="border-b border-gray-200 mb-4">
+			@tmpl.Table(tblHeader)
+		</div>
+		<h2 class="text-xl font-semibold mb-2">NALOZI STAVKE</h2>
+		<div class="border-b border-gray-200">
+			@tmpl.Table(tblStavke)
+		</div>
+	</div>
+}
+
+templ NaloziStampanje(tabs domain.TabData, tblHeader, tblStavke domain.TableData, btnStampaj domain.Button) {
+	@NaloziNav(tabs)
+	<div>
+		<h2 class="text-xl font-semibold mb-2">NALOZI ZAGLAVLJE</h2>
+		<div class="flex items-end justify-end col-span-2 py-1 space-x-1">
+			@tmpl.FormSaveButton(btnStampaj)
+		</div>
+		<div class="border-b border-gray-200 mb-4">
+			@tmpl.Table(tblHeader)
+		</div>
+		<h2 class="text-xl font-semibold mb-2">NALOZI STAVKE</h2>
+		<div class="border-b border-gray-200">
+			@tmpl.Table(tblStavke)
 		</div>
 	</div>
 }

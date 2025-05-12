@@ -7,27 +7,27 @@ import (
 
 // FKPL represents the "baza.fkpl" table.
 type Fkpl struct {
-	IDFKPL      int       `db:"idfkpl"`
-	God         int       `db:"god"`
-	Kar         int       `db:"kar"`
-	Vkonta      int16     `db:"vkonta"`
-	Konto       string    `db:"konto"`
-	Sifra       string    `db:"sifra"`
-	Naziv       string    `db:"naziv"`
-	Devizni     bool      `db:"devizni"`
-	Xdatunosa   time.Time `db:"xdatunosa"`
-	Xdatizmene  time.Time `db:"xdatizmene"`
-	Xopunos     string    `db:"xopunos"`
-	Xopizmene   string    `db:"xopizmene"`
-	IDPartneri  *int      `db:"idpartneri"`
-	Novikonto   string    `db:"novikonto"`
-	Starikonto  string    `db:"starikonto"`
-	Stariidpart *float64  `db:"stariidpart"`
-	Kolicinski  bool      `db:"kolicinski"`
-	Spcojid     *int      `db:"spcojid"`
-	Stariidspc  *int      `db:"stariidspc"`
-	NazivEng    string    `db:"naziv_eng"`
-	Kursirati   bool      `db:"kursirati"`
+	IDFKPL      int            `db:"idfkpl"`
+	God         int            `db:"god"`
+	Kar         int            `db:"kar"`
+	Vkonta      int16          `db:"vkonta"`
+	Konto       string         `db:"konto"`
+	Sifra       string         `db:"sifra"`
+	Naziv       string         `db:"naziv"`
+	Devizni     bool           `db:"devizni"`
+	Xdatunosa   time.Time      `db:"xdatunosa"`
+	Xopunos     string         `db:"xopunos"`
+	Xdatizmene  sql.NullTime   `db:"xdatizmene"`
+	Xopizmene   sql.NullString `db:"xopizmene"`
+	IDPartneri  *int           `db:"idpartneri"`
+	Novikonto   string         `db:"novikonto"`
+	Starikonto  string         `db:"starikonto"`
+	Stariidpart *float64       `db:"stariidpart"`
+	Kolicinski  bool           `db:"kolicinski"`
+	Spcojid     *int           `db:"spcojid"`
+	Stariidspc  *int           `db:"stariidspc"`
+	NazivEng    string         `db:"naziv_eng"`
+	Kursirati   bool           `db:"kursirati"`
 }
 
 // FNAL represents the "baza.fnal" table.

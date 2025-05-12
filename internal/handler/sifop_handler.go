@@ -60,7 +60,8 @@ func (h *SifopHandler) GetSifop(w http.ResponseWriter, r *http.Request) {
 
 func (h *SifopHandler) GetAllSifop(w http.ResponseWriter, r *http.Request) {
 	var sifop domain.Sifop
-	utils.GetAllEntityHelper(w, r, &sifop, h.Service, sifopTableFields, sifopContentTitle, sifopTableID, sifopURLPrefix, utils.IDsifop)
+	tbl := utils.GetAllEntityHelper(w, r, &sifop, h.Service, sifopTableFields, sifopContentTitle, sifopTableID, sifopURLPrefix, utils.IDsifop)
+	utils.RenderContent(w, r, *tbl)
 }
 
 func (h *SifopHandler) AddRoutes(r *http.ServeMux) {

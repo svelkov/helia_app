@@ -64,7 +64,8 @@ func (h *PopdvHandler) GetPopdv(w http.ResponseWriter, r *http.Request) {
 
 func (h *PopdvHandler) GetAllPopdv(w http.ResponseWriter, r *http.Request) {
 	var popdv domain.Popdv
-	utils.GetAllEntityHelper(w, r, &popdv, h.Service, popdvTableFields, popdvContentTitle, popdvTableID, popdvURLPrefix, utils.IDpopdv)
+	tbl := utils.GetAllEntityHelper(w, r, &popdv, h.Service, popdvTableFields, popdvContentTitle, popdvTableID, popdvURLPrefix, utils.IDpopdv)
+	utils.RenderContent(w, r, *tbl)
 }
 
 func (h *PopdvHandler) AddRoutes(r *http.ServeMux) {

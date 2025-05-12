@@ -80,7 +80,8 @@ func (h *PartneriHandler) GetPartneri(w http.ResponseWriter, r *http.Request) {
 
 func (h *PartneriHandler) GetAllPartneri(w http.ResponseWriter, r *http.Request) {
 	var partneri domain.Partneri
-	utils.GetAllEntityHelper(w, r, &partneri, h.Service, partneriTableFields, partneriContentTitle, partneriTableID, partneriURLPrefix, utils.IDpartneri)
+	tbl := utils.GetAllEntityHelper(w, r, &partneri, h.Service, partneriTableFields, partneriContentTitle, partneriTableID, partneriURLPrefix, utils.IDpartneri)
+	utils.RenderContent(w, r, *tbl)
 }
 
 func (h *PartneriHandler) AddRoutes(r *http.ServeMux) {

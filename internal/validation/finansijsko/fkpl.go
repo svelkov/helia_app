@@ -16,18 +16,17 @@ func FkplValidationRules() []validation.ValidationRule {
 			Field:   "Konto",
 			Message: "Morate uneti konto...",
 			Check: func(value any) bool {
-				val, ok := value.(int64)
-				return ok && val > 0
+				val, ok := value.(string)
+				return ok && len(val) > 0
 			},
 		},
 		{
 			Field:   "Naziv",
 			Message: "Morate uneti naziv konta...",
 			Check: func(value any) bool {
-				val, ok := value.(int64)
-				return ok && val > 0
+				val, ok := value.(string)
+				return ok && len(val) > 0
 			},
 		},
 	}
-	//TODO SV add all vlidation rules!
 }

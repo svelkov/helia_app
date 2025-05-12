@@ -105,7 +105,7 @@ func Side_nav(submenu []domain.SubMenuItem) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</ul></div><script>\r\n    document.addEventListener('DOMContentLoaded', () => {\r\n        const sideNavItems = document.querySelectorAll('.side-nav-item');\r\n\r\n        function handleSideNavItemClick(event) {\r\n            sideNavItems.forEach(item => {\r\n                item.classList.remove('bg-gray-400');\r\n            });\r\n            event.currentTarget.classList.add('bg-gray-400');\r\n        }\r\n\r\n        sideNavItems.forEach(item => {\r\n            item.addEventListener('click', handleSideNavItemClick);\r\n        });\r\n    });\r\n</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</ul></div><script>\n    document.addEventListener('DOMContentLoaded', () => {\n        const sideNavItems = document.querySelectorAll('.side-nav-item');\n\n        function handleSideNavItemClick(event) {\n            sideNavItems.forEach(item => {\n                item.classList.remove('bg-gray-400');\n            });\n            event.currentTarget.classList.add('bg-gray-400');\n        }\n\n        sideNavItems.forEach(item => {\n            item.addEventListener('click', handleSideNavItemClick);\n        });\n    });\n</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

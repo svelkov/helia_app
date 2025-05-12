@@ -11,27 +11,27 @@ import templruntime "github.com/a-h/templ/runtime"
 // showModalScript shows the modal when it is loaded into the DOM.
 func showModalScript() templ.ComponentScript {
 	return templ.ComponentScript{
-		Name: `__templ_showModalScript_19ba`,
-		Function: `function __templ_showModalScript_19ba(){const modal = document.querySelector("#modal-container #modal");
+		Name: `__templ_showModalScript_cba1`,
+		Function: `function __templ_showModalScript_cba1(){const modal = document.querySelector("#modal-container #modal");
     modal.showModal();
 }`,
-		Call:       templ.SafeScript(`__templ_showModalScript_19ba`),
-		CallInline: templ.SafeScriptInline(`__templ_showModalScript_19ba`),
+		Call:       templ.SafeScript(`__templ_showModalScript_cba1`),
+		CallInline: templ.SafeScriptInline(`__templ_showModalScript_cba1`),
 	}
 }
 
 // closeModalScript closes the modal when the confirm button is clicked.
 func closeModalScript() templ.ComponentScript {
 	return templ.ComponentScript{
-		Name: `__templ_closeModalScript_ebdf`,
-		Function: `function __templ_closeModalScript_ebdf(){const btn = document.getElementById("modal-confirm-btn");
+		Name: `__templ_closeModalScript_d976`,
+		Function: `function __templ_closeModalScript_d976(){const btn = document.getElementById("modal-confirm-btn");
     btn.addEventListener("click", function(e) {
         const modal = document.getElementById("confirm-modal");
         modal.close();
     });
 }`,
-		Call:       templ.SafeScript(`__templ_closeModalScript_ebdf`),
-		CallInline: templ.SafeScriptInline(`__templ_closeModalScript_ebdf`),
+		Call:       templ.SafeScript(`__templ_closeModalScript_d976`),
+		CallInline: templ.SafeScriptInline(`__templ_closeModalScript_d976`),
 	}
 }
 

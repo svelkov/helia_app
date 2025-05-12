@@ -62,7 +62,8 @@ func (h *FvknjracHandler) GetFvknjrac(w http.ResponseWriter, r *http.Request) {
 
 func (h *FvknjracHandler) GetAllFvknjrac(w http.ResponseWriter, r *http.Request) {
 	var fvknjrac domain.Fvknjrac
-	utils.GetAllEntityHelper(w, r, &fvknjrac, h.Service, fvknjracTableFields, fvknjracContentTitle, fvknjracTableID, fvknjracURLPrefix, utils.IDfvknjrac)
+	tbl := utils.GetAllEntityHelper(w, r, &fvknjrac, h.Service, fvknjracTableFields, fvknjracContentTitle, fvknjracTableID, fvknjracURLPrefix, utils.IDfvknjrac)
+	utils.RenderContent(w, r, *tbl)
 }
 
 func (h *FvknjracHandler) AddRoutes(r *http.ServeMux) {

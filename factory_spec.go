@@ -15,10 +15,12 @@ import (
 	"helia/internal/domain"
 	"helia/internal/handler"
 	fin "helia/internal/handler/finansijsko"
+	os "helia/internal/handler/os"
 	"helia/internal/repository"
 	"helia/internal/service"
 	"helia/internal/validation"
 	finval "helia/internal/validation/finansijsko"
+	osval "helia/internal/validation/os"
 )
 
 func factory() {
@@ -43,6 +45,9 @@ func factory() {
 	r := http.NewServeMux()
 	//r := mux.NewRouter()
 	setEntities(db, r, cfg)
+	// Correct static file serving
+	fs := http.FileServer(http.Dir("./frontend/static"))
+	http.Handle("/frontend/static/", http.StripPrefix("/frontend/static/", fs))
 
 	r.Handle("/frontend/static/", http.StripPrefix("/frontend/static/", http.FileServer(http.Dir("./frontend/static"))))
 	// API endpoint
@@ -187,15 +192,27 @@ func setEntities(db *sqlx.DB, r *http.ServeMux, cfg config.Config) {
 	fkplHandler := fin.NewFkplHandler(fkplService)
 	fkplHandler.AddRoutes(r)
 
+	// Create repository, validator, service and handler for ukpune obrade
+	sfRepo := repository.NewBaseRepository[domain.Sf](db, "sf", cfg)
+	sfService := service.NewBaseService(*sfRepo, validation.RuleBasedValidator[domain.Sf]{})
+	_ = fin.NewSfHandler(sfService)
+
 	// Create repository, validator, service and handler for vrste evidencije PDV
 	fnalRepo := repository.NewBaseRepository[domain.Fnal](db, "fnal", cfg)
 	fnalValidator := validation.NewRuleBasedValidator[domain.Fnal](finval.FnalValidationRules())
 	fnalService := service.NewBaseService(*fnalRepo, *fnalValidator)
-	fnalHandler := fin.NewFnalHandler(fnalService, tipdokService)
+	fnalHandler := fin.NewFnalHandler(fnalService, tipdokService, sfService)
 	fnalHandler.AddRoutes(r)
+
+	// Create repository, validator, service and handler for vrste evidencije PDV
+	oamgrpRepo := repository.NewBaseRepository[domain.Oamgrp](db, "oamgrp", cfg)
+	oamgrpValidator := validation.NewRuleBasedValidator[domain.Oamgrp](osval.OamgrpValidationRules())
+	oamgrpService := service.NewBaseService(*oamgrpRepo, *oamgrpValidator)
+	oamgrpHandler := os.NewOamgrpHandler(oamgrpService)
+	oamgrpHandler.AddRoutes(r)
+
 }
 
-// In your factory:
 func NewBankeHandler(r *http.ServeMux, db *sqlx.DB, cfg config.Config) { // Added r, db, cfg
 	// Create repository, validator, service and handler for banke
 	bankeRepo := repository.NewBaseRepository[domain.Banke](db, "banke", cfg)

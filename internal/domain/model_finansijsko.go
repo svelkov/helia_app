@@ -54,6 +54,20 @@ type Fnal struct {
 	IDTipdok   *int           `db:"idtipdok"` // Nullable foreign key
 }
 
+// Sf represents the 'sf' table in the 'baza' schema.
+type Sf struct {
+	God        int            `db:"god"`
+	Kar        int            `db:"kar"`
+	Brst       int            `db:"brst"`
+	Brna       int            `db:"brna"`
+	Dug        float64        `db:"dug"`
+	Pot        float64        `db:"pot"`
+	Rbr        int64          `db:"rbr"`
+	Xdatunosa  time.Time      `db:"xdatunosa"`
+	Xdatizmene sql.NullTime   `db:"xdatizmene"`
+	Xopunos    string         `db:"xopunos"`
+	Xopizmene  sql.NullString `db:"xopizmene"`
+}
 type UkupnaObrada struct {
 	UkNaloga  int64
 	UkStavki  int64

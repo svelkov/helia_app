@@ -11,7 +11,12 @@ import (
 	"strings"
 	"time"
 
+	"log"
+
 	"github.com/gorilla/schema"
+	"github.com/jeandeaual/go-locale"
+	"golang.org/x/text/language"
+	"golang.org/x/text/message"
 )
 
 func DeleteHelper[T any](w http.ResponseWriter, r *http.Request, service service.Service[T], idType string) {
@@ -238,9 +243,9 @@ func GetAllEntityHelper[T any](w http.ResponseWriter, r *http.Request, entity *T
 func GetFormattedValue(fieldType string, fieldValue reflect.Value) (string, error) {
 	switch fieldType {
 	case "int", "int64", "int32":
-		return fmt.Sprintf("%d", fieldValue.Int()), nil
+		return FormatNumberWithLocale(fieldValue.Int(), "int"), nil
 	case "float64":
-		return fmt.Sprintf("%.2f", fieldValue.Float()), nil
+		return FormatNumberWithLocale(fieldValue.Float(), "float"), nil
 	case "string":
 		return fmt.Sprintf("%s", fieldValue.String()), nil
 	case "bool":
@@ -287,4 +292,42 @@ func GetFieldByNameCaseInsensitive(val reflect.Value, fieldName string) (reflect
 		}
 	}
 	return reflect.Value{}, "", false
+}
+
+func FormatNumberWithLocale(numbertoConvert interface{}, numberType string) string {
+	var err error
+	var langTag language.Tag
+	localeString := "en-US"
+
+	parsedTag, _ := language.Parse(localeString)
+	userLocales, _ := locale.GetLocales()
+
+	if len(userLocales) > 0 {
+		langTag, err = language.Parse(userLocales[0])
+		if err != nil {
+			log.Println("Error parsing language:", err)
+			langTag = parsedTag //set default locale if parsing fails
+		}
+		if err == nil {
+			printer := message.NewPrinter(langTag)
+			if numberType == "int" {
+				number := int64(numbertoConvert.(int64))
+				return printer.Sprintf("%d", number)
+			}
+			if numberType == "float" {
+				number := numbertoConvert.(float64)
+				return printer.Sprintf("%.2f", number)
+			}
+		}
+	}
+
+	if numberType == "int" {
+		number := int64(numbertoConvert.(int))
+		return fmt.Sprintf("%d", number)
+	}
+	if numberType == "float" {
+		number := numbertoConvert.(float64)
+		return fmt.Sprintf("%.2f", number)
+	}
+	return fmt.Sprintf("%v", numbertoConvert)
 }

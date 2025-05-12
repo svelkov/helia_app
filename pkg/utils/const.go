@@ -17,6 +17,7 @@ const (
 	IDfvepdv   = "fvepdvid"
 	IDfkpl     = "idfkpl"
 	IDfnal     = "idfnal"
+	IDoamgrp   = "oamgrpid"
 )
 const (
 	ActionDelete = "DELETE"

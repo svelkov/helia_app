@@ -7,7 +7,7 @@ import (
 
 templ Side_nav(submenu []domain.SubMenuItem) {
 	// Side menu navigation area
-	<div id="side-menu" class="bg-gray-800 text-white w-64 p-4 text-sm">
+	<div id="side-menu" class="bg-gray-700 text-white w-64 p-4 text-sm">
 		<ul class="flex flex-col mb-auto gap-1">
 			<!-- Use 'gap-1' for tighter spacing -->
 			for _, item := range submenu {
@@ -19,11 +19,15 @@ templ Side_nav(submenu []domain.SubMenuItem) {
 						hx-swap="innerHTML"
 						class="side-nav-item flex items-center py-2 px-3 hover:bg-gray-700 rounded-md"
 					>
-						// Replace with your Tailwind icon or text
-						<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d={ fmt.Sprintf("%s", item.Icon) }></path>
+						<svg class="h-5 w-5 mr-2">
+							<use href={ fmt.Sprintf("/frontend/static/icons/allicons.svg#%s", item.Icon) } xlink:href={ fmt.Sprintf("/frontend/static/icons/allicons.svg#%s", item.Icon) }></use>
 						</svg>
 						<span class="medium">{ item.Name }</span>
+						// Replace with your Tailwind icon or text
+						// <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+						// 	<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d={ fmt.Sprintf("%s", item.Icon) }></path>
+						// </svg>
+						// <span class="medium">{ item.Name }</span>
 					</a>
 				</li>
 			}

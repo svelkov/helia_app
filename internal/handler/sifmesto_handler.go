@@ -11,9 +11,10 @@ import (
 )
 
 const (
-	sifmestoContentTitle = "MESTA"
-	sifmestoTableID      = "sifmesto-table"
-	sifmestoURLPrefix    = "/api/sifmesto/"
+	sifmestoContentTitle string = "MESTA"
+	sifmestoTableID      string = "sifmesto-table"
+	sifmestoURLPrefix    string = "/api/sifmesto/"
+	sifmestoURLGetAll    string = "/api/sifmesto/all"
 )
 
 var sifmestoTableFields = []domain.Fields{
@@ -33,7 +34,7 @@ func NewSifmestoHandler(service *service.BaseService[domain.Sifmesto]) *Sifmesto
 }
 func (h *SifmestoHandler) CreateSifmesto(w http.ResponseWriter, r *http.Request) {
 	var sifmesto domain.Sifmesto
-	utils.CreateHelper(w, r, &sifmesto, h.Service, sifmestoTableFields)
+	utils.CreateHelper(w, r, &sifmesto, h.Service, utils.IDsifmesto, sifmestoTableFields)
 }
 
 func (h *SifmestoHandler) UpdateSifmesto(w http.ResponseWriter, r *http.Request) {
@@ -42,7 +43,7 @@ func (h *SifmestoHandler) UpdateSifmesto(w http.ResponseWriter, r *http.Request)
 }
 
 func (h *SifmestoHandler) DeleteSifmesto(w http.ResponseWriter, r *http.Request) {
-	utils.DeleteHelper(w, r, h.Service, utils.IDsifmesto)
+	utils.DeleteHelper[domain.Sifmesto](w, r, h.Service, utils.IDsifmesto)
 }
 
 func (h *SifmestoHandler) confirmDeleteHandler(w http.ResponseWriter, r *http.Request) {
@@ -54,16 +55,16 @@ func (h *SifmestoHandler) confirmAddHandler(w http.ResponseWriter, r *http.Reque
 }
 
 func (h *SifmestoHandler) confirmUpdateHandler(w http.ResponseWriter, r *http.Request) {
-	utils.ConfirmUpdateHelper(w, r, h.Service, sifmestoTableFields, utils.IDsifmesto)
+	utils.ConfirmUpdateHelper[domain.Sifmesto](w, r, h.Service, sifmestoTableFields, utils.IDsifmesto)
 }
 
 func (h *SifmestoHandler) GetSifmesto(w http.ResponseWriter, r *http.Request) {
-	utils.GetEntityHelper(w, r, h.Service, sifmestoTableFields, utils.IDsifmesto)
+	utils.GetEntityHelper[domain.Sifmesto](w, r, h.Service, sifmestoTableFields, utils.IDsifmesto)
 }
 
 func (h *SifmestoHandler) GetAllSifmesto(w http.ResponseWriter, r *http.Request) {
 	var sifmesto domain.Sifmesto
-	tbl := utils.GetAllEntityHelper(w, r, &sifmesto, h.Service, sifmestoTableFields, sifmestoContentTitle, sifmestoTableID, sifmestoURLPrefix, utils.IDsifmesto)
+	tbl := utils.GetAllEntityHelper(w, r, &sifmesto, h.Service, sifmestoTableFields, sifmestoContentTitle, sifmestoTableID, sifmestoURLPrefix, bankeURLGetAll, utils.IDsifmesto)
 	utils.RenderContent(w, r, *tbl)
 }
 

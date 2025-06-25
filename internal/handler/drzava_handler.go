@@ -11,9 +11,10 @@ import (
 )
 
 const (
-	drzavaContentTitle = "DRZAVE"
-	drzavaTableID      = "drzave-table"
-	drzavaURLPrefix    = "/api/drzava/"
+	drzavaContentTitle string = "DRZAVE"
+	drzavaTableID      string = "drzave-table"
+	drzavaURLPrefix    string = "/api/drzava/"
+	drzavaURLGetAll    string = "/api/drzava/all"
 )
 
 var drzavaTableFields = []domain.Fields{
@@ -31,7 +32,7 @@ func NewDrzavaHandler(service *service.BaseService[domain.Drzave]) *DrzavaHandle
 
 func (h *DrzavaHandler) CreateDrzava(w http.ResponseWriter, r *http.Request) {
 	var drzava domain.Drzave
-	utils.CreateHelper(w, r, &drzava, h.Service, drzavaTableFields)
+	utils.CreateHelper(w, r, &drzava, h.Service, utils.IDdrzave, drzavaTableFields)
 }
 
 func (h *DrzavaHandler) UpdateDrzava(w http.ResponseWriter, r *http.Request) {
@@ -40,7 +41,7 @@ func (h *DrzavaHandler) UpdateDrzava(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *DrzavaHandler) DeleteDrzava(w http.ResponseWriter, r *http.Request) {
-	utils.DeleteHelper(w, r, h.Service, utils.IDdrzave)
+	utils.DeleteHelper[domain.Drzave](w, r, h.Service, utils.IDdrzave)
 }
 
 func (h *DrzavaHandler) confirmDeleteHandler(w http.ResponseWriter, r *http.Request) {
@@ -52,16 +53,16 @@ func (h *DrzavaHandler) confirmAddHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (h *DrzavaHandler) confirmUpdateHandler(w http.ResponseWriter, r *http.Request) {
-	utils.ConfirmUpdateHelper(w, r, h.Service, drzavaTableFields, utils.IDdrzave)
+	utils.ConfirmUpdateHelper[domain.Drzave](w, r, h.Service, drzavaTableFields, utils.IDdrzave)
 }
 
 func (h *DrzavaHandler) GetDrzava(w http.ResponseWriter, r *http.Request) {
-	utils.GetEntityHelper(w, r, h.Service, drzavaTableFields, utils.IDdrzave)
+	utils.GetEntityHelper[domain.Drzave](w, r, h.Service, drzavaTableFields, utils.IDdrzave)
 }
 
 func (h *DrzavaHandler) GetAllDrzave(w http.ResponseWriter, r *http.Request) {
 	var Drzava domain.Drzave
-	tbl := utils.GetAllEntityHelper(w, r, &Drzava, h.Service, drzavaTableFields, drzavaContentTitle, drzavaTableID, drzavaURLPrefix, utils.IDdrzave)
+	tbl := utils.GetAllEntityHelper(w, r, &Drzava, h.Service, drzavaTableFields, drzavaContentTitle, drzavaTableID, drzavaURLPrefix, drzavaURLGetAll, utils.IDdrzave)
 	utils.RenderContent(w, r, *tbl)
 }
 

@@ -16,6 +16,7 @@ require (
 require golang.org/x/sys v0.28.0 // indirect
 
 require (
+	github.com/gorilla/mux v1.8.1
 	github.com/gorilla/securecookie v1.1.2 // indirect
 	github.com/jeandeaual/go-locale v0.0.0-20250421151639-a9d6ed1b3d45
 	golang.org/x/text v0.24.0

@@ -3,11 +3,13 @@ package templates
 templ DeactivateActionsColumn() {
 	<script>
     	function deactivateActionsColumn() {
+			console.log("in Deactivating actions column function");
 			document.querySelectorAll(".actions-column").forEach(el => {
 				el.classList.remove("right-0", "z-10");
 			});
 		}
 		function selectRow(row) {
+			console.log("Row clicked:", row);
 		   // Deselect any previously selected row by removing the 'bg-blue-300' class
 			const selectedRow = document.querySelector('.bg-blue-300');
 			if (selectedRow) {
@@ -90,6 +92,7 @@ templ ShowMessage() {
 templ CloseDialogScript() {
 	<script>
 		function closeDialog(id) {
+			console.log("Closing dialog with ID:", id);
 			const dialogElm = document.getElementById(id);
 			if (dialogElm) {
 				dialogElm.classList.add("opacity-0"); // Fade-out effect
@@ -115,9 +118,10 @@ templ CloseDialogScript() {
     </script>
 }
 
-templ OpenDialogScript() {
+templ OpenDialogScript(id string) {
 	<!-- JavaScript Functions -->
 	<script>
+	console.log("OpenDialogScript called with ID:", id);
 		function openDialog(id) {
 			document.getElementById(id).classList.remove("hidden");
 		}

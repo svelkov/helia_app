@@ -13,7 +13,6 @@ templ Side_nav(submenu []domain.SubMenuItem) {
 			for _, item := range submenu {
 				<li class="nav-item">
 					<a
-						href={ item.URL }
 						hx-get={ fmt.Sprintf("%s", item.URL) }
 						hx-target="#content"
 						hx-swap="innerHTML"

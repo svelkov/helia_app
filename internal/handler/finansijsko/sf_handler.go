@@ -30,5 +30,5 @@ func (h *SfHandler) UpdateSf(w http.ResponseWriter, r *http.Request) {
 
 func (h *SfHandler) GetAllSf(w http.ResponseWriter, r *http.Request) {
 	var sf domain.Sf
-	utils.GetAllEntityHelper(w, r, &sf, h.Service, sfTableFields, "", "", "", "")
+	utils.GetAllEntityHelper(w, r, &sf, h.Service, sfTableFields, "", "", "", "", "")
 }

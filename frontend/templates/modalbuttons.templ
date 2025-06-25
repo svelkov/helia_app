@@ -82,10 +82,22 @@ templ ModalCloseButton(dialogName string) {
 templ FormSaveButton(btn domain.Button) {
 	<button
 		id={ btn.Id }
-		class="px-4 py-1 bg-green-600 rounded-lg text-white text-xs flex items-center"
-		hx-delete={ btn.HxActionURL }
+		class="bg-green-600 rounded h-6 px-1 py-1 mr-1 rounded text-xs flex text-white items-center"
+		if btn.HxRequestType == "POST" {
+			hx-post={ btn.HxActionURL }
+		}
+		if btn.HxRequestType == "GET" {
+			hx-get={ btn.HxActionURL }
+		}
+		if btn.HxRequestType == "DELETE" {
+			hx-delete={ btn.HxActionURL }
+		}
+		if btn.HxRequestType == "PUT" {
+			hx-put={ btn.HxActionURL }
+		}
 		hx-target={ btn.HxTarget }
 		hx-swap={ btn.HxSwap }
+		hx-include={ btn.HxInclude }
 		hx-on::after-request={ templ.JSFuncCall("handleDialogResponse", btn.IdDialog) }
 	>
 		<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6 mr-4">
@@ -98,10 +110,22 @@ templ FormSaveButton(btn domain.Button) {
 templ FormAddButton(btn domain.Button) {
 	<button
 		id={ btn.Id }
-		class="px-4 py-1 bg-blue-600 rounded-lg text-white text-xs flex items-center"
-		hx-delete={ btn.HxActionURL }
+		class="bg-blue-600 rounded h-6 px-1 py-1 mr-1 rounded text-xs flex text-white items-center"
+		if btn.HxRequestType == "POST" {
+			hx-post={ btn.HxActionURL }
+		}
+		if btn.HxRequestType == "GET" {
+			hx-get={ btn.HxActionURL }
+		}
+		if btn.HxRequestType == "DELETE" {
+			hx-delete={ btn.HxActionURL }
+		}
+		if btn.HxRequestType == "PUT" {
+			hx-put={ btn.HxActionURL }
+		}
 		hx-target={ btn.HxTarget }
 		hx-swap={ btn.HxSwap }
+		hx-include={ btn.HxInclude }
 		hx-on::after-request={ templ.JSFuncCall("handleDialogResponse", btn.IdDialog) }
 	>
 		<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6 mr-2">

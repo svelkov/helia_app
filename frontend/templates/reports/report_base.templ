@@ -1,0 +1,162 @@
+package reports
+
+import (
+	"fmt"
+	"helia/internal/domain"
+	"time"
+)
+
+templ ReportPage(tbl domain.TableData, params map[string]interface{}, company string) {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<title>{ tbl.ContentTitle }</title>
+			<script src="https://cdn.tailwindcss.com"></script>
+			<script src="https://unpkg.com/htmx.org@1.9.6"></script>
+			<style>
+				/* Base styles for the report container (screen display) */
+				#report-container {
+					max-width: 7xl; /* This is illustrative, Tailwind handles this */
+					margin-left: auto;
+					margin-right: auto;
+					background-color: white;
+					border-radius: 0.5rem; /* rounded-lg */
+					box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadow-md */
+					overflow: hidden;
+				}
+
+                @media print {
+                    /* ... existing print styles ... */
+                    
+                    /* Ensure footer stays at bottom in print */
+                    #report-container {
+                        display: flex !important;
+                        flex-direction: column !important;
+                        min-height: 100vh !important;
+                    }
+                    
+                    .report-footer {
+                        position: fixed !important;
+                        bottom: 0 !important;
+                        left: 0 !important;
+                        right: 10 !important;
+                        width: 100% !important;
+                        margin-top: 0 !important;
+                    }
+                    
+                    /* Add padding to content to prevent overlap with fixed footer */
+                    .flex-grow {
+                        padding-bottom: 2cm !important; /* Adjust based on your footer height */
+                    }
+                        /* Add page counter reset at the body */
+                    body {
+                        counter-reset: page totalpages;
+                    }
+
+                    /* Count pages - this requires a print preview to calculate properly */
+                    #report-container {
+                        counter-increment: totalpages;
+                    }
+
+                    /* Display page numbers in footer */
+                    .report-footer .page:after {
+                        counter-increment: page;
+                        content: counter(page);
+                    }
+
+                    .report-footer .topage:after {
+                        content: counter(totalpages);
+                    }
+
+                    /* Position the footer on each printed page */
+                    .report-footer {
+                        position: fixed;
+                        bottom: 0;
+                        left: 0;
+                        right: 0;
+                        display: flex;
+                        justify-content: space-between;
+                        padding: 10px 10px;
+                        background-color: #f0f0f0 !important;
+                        -webkit-print-color-adjust: exact;
+                        color-adjust: exact;
+                    }    
+                }
+			</style>
+		</head>
+		<body class="bg-gray-50 p-6">
+			<div id="report-container" class="max-w-7xl mx-auto bg-white rounded-lg shadow-md overflow-hidden">
+				<div class="flex justify-end space-x-4 p-2 print-button-group print:hidden">
+					<button
+						onclick="window.print()"
+						class="bg-blue-500 hover:bg-blue-700 text-white h-6 px-1 py-1 rounded text-xs flex items-center"
+					>
+						Print Report
+					</button>
+				</div>
+				@ReportHeader(tbl, params, company)
+				@ReportDetail(tbl)
+				@ReportFooter(company, time.Now().Year(), time.Now())
+			</div>
+		</body>
+	</html>
+}
+
+// ReportHeader, ReportDetail, ReportFooter remain unchanged as per your original code.
+// (Only the template for ReportPage was modified above)
+templ ReportHeader(tbl domain.TableData, params map[string]interface{}, company string) {
+	<div class="bg-gray-100 p-6 border-b border-gray-200 report-header">
+		<h1 class="text-2xl font-bold text-gray-800">{ tbl.ContentTitle }</h1>
+		<div class="mt-2 flex flex-wrap gap-4 text-sm text-gray-600">
+			<p><span class="font-medium">Company:</span> { company }</p>
+			for key, value := range params {
+				<p><span class="font-medium">{ key }:</span> { fmt.Sprintf("%v", value) }</p>
+			}
+		</div>
+	</div>
+}
+
+templ ReportDetail(tbl domain.TableData) {
+	<div class="overflow-x-auto px-6 py-4">
+		<table class="min-w-full divide-y divide-gray-200 border border-gray-200">
+			<thead class="bg-gray-50">
+				<tr>
+					<th scope="col" class="px-1 py-1 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+						#
+					</th>
+					for _, field := range tbl.Headers {
+						<th scope="col" class="px-1 py-1 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+							{ field.Label }
+						</th>
+					}
+				</tr>
+			</thead>
+			<tbody class="bg-white divide-y divide-gray-200">
+				for i, row := range tbl.Rows {
+					<tr class={ "odd:bg-white even:bg-gray-10 hover:bg-gray-100" }>
+						<td class="whitespace-nowrap px-1 py-1 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+							{ fmt.Sprintf("%d", i+1) }
+						</td>
+						for _, field := range row.Fields {
+							<td class="whitespace-nowrap px-1 py-1 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+								{ field }
+							</td>
+						}
+					</tr>
+				}
+			</tbody>
+		</table>
+	</div>
+}
+
+templ ReportFooter(company string, year int, generatedTime time.Time) {
+	<div class="bg-gray-100 p-4 border-t border-gray-200 report-footer mt-auto overflow-x-auto px-6 py-4">
+		<div class="flex justify-between items-center text-xs text-gray-600">
+			<p><span class="font-medium">Generated on:</span> { generatedTime.Format("2006-01-02 15:04:05") }</p>
+			<p>© { fmt.Sprintf("%d", year) } { company }. Sva prava zadržana.</p>
+			<p class="print:hidden">Page 1 of 1</p>
+		</div>
+	</div>
+}

@@ -39,18 +39,22 @@
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.242 5.992h12m-12 6.003H20.24m-12 5.999h12M4.117 7.495v-3.75H2.99m1.125 3.75H2.99m1.125 0H5.24m-1.92 2.577a1.125 1.125 0 1 1 1.591 1.59l-1.83 1.83h2.16M2.99 15.745h1.125a1.125 1.125 0 0 1 0 2.25H3.74m0-.002h.375a1.125 1.125 0 0 1 0 2.25H2.99"/>
     </symbol>
     <symbol id="kontniplan" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+	<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 19V4a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v13H7a2 2 0 0 	0-2 2Zm0 0a2 2 0 0 0 2 2h12M9 3v14m7 0v4"/>
+  	<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 9h6m-6 3h6m-6 3h6M6.996 9h.01m-.01 3h.01m-.01 	3h.01M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z"/>
     </symbol>
     <symbol id="fin_nalozi" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+	<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 	6.03v13m0-13c-2.819-.831-4.715-1.076-8.029-1.023A.99.99 0 0 0 3 6v11c0 .563.466 1.014 1.03 1.007 3.122-.043 5.018.212 7.97 1.023m0-13c2.819-.831 	4.715-1.076 8.029-1.023A.99.99 0 0 1 21 6v11c0 .563-.466 1.014-1.03 1.007-3.122-.043-5.018.212-7.97 1.023"/>
     </symbol>
-    <symbol id="fin_nalozi1" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m4 6a2.982 2.982 0 0 1 -2.122-.879l-1.544-1.374a1 1 0 0 1 1.332-1.494l1.585 1.414a1 1 0 0 0 1.456.04l3.604-3.431a1 1 0 0 1 1.378 1.448l-3.589 3.414a2.964 2.964 0 0 1 -2.1.862zm20-2a1 1 0 0 0 -1-1h-10a1 1 0 0 0 0 2h10a1 1 0 0 0 1-1zm-17.9 9.138 3.589-3.414a1 1 0 1 0 -1.378-1.448l-3.6 3.431a1.023 1.023 0 0 1 -1.414 0l-1.59-1.585a1 1 0 0 0 -1.414 1.414l1.585 1.585a3 3 0 0 0 4.226.017zm17.9-1.138a1 1 0 0 0 -1-1h-10a1 1 0 0 0 0 2h10a1 1 0 0 0 1-1zm-17.9 9.138 3.585-3.414a1 1 0 1 0 -1.378-1.448l-3.6 3.431a1 1 0 0 1 -1.456-.04l-1.585-1.414a1 1 0 0 0 -1.332 1.494l1.544 1.374a3 3 0 0 0 4.226.017zm17.9-1.138a1 1 0 0 0 -1-1h-10a1 1 0 0 0 0 2h10a1 1 0 0 0 1-1z"/>
+    <symbol id="fin_promet" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+  	<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 3v4a1 1 0 0 1-1 1H5m4 10v-2m3 2v-6m3 	6v-3m4-11v16a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V7.914a1 1 0 0 1 .293-.707l3.914-3.914A1 1 0 0 1 9.914 3H18a1 1 0 0 1 1 1Z"/>      
     </symbol>
-    <symbol id="fin_nalozi2" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" fill="currentColor" d="m115.87,400l84.13,0l0,-8.4l-84.13,0q-5.11,0 -5.11,-4.1t5.11,-4.1l84.13,0l0,-83.4l-84.13,0q-6.51,0 -10.69,3.61t-4.18,8.89l0,70.9l0.93,0q-0.93,2.34 -0.93,4.1q0,5.27 4.18,8.89t10.69,3.61zm-5.11,-87.5q0,-4.1 5.11,-4.1l74.37,0l0,66.6l-74.37,0q-1.86,0 -5.11,0.78l0,-63.28zm19.99,20.9l44.62,0l0,8.2l-44.62,0l0,-8.2zm0,-16.8l44.62,0l0,8.4l-44.62,0l0,-8.4z"/>
+    <symbol id="fin_saldakonta" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+  	<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7h1v12a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V5a1 1 0 0 	0-1-1H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h11.5M7 14h6m-6 3h6m0-10h.5m-.5 3h.5M7 7h3v3H7V7Z"/>        
     </symbol>
-     <symbol id="fin_nalozi3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+     <symbol id="fin_kompenzacije" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+  	<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 18v2h6V4H4v2m16 12v2h-6V4h6v2M6.49545 14.4954 	4.00003 12m0 0 2.49542-2.49543M4.00003 12h5.94809m7.49798 2.5539L20 12m0 0-2.5539-2.55392M20 12h-5.8319"/>
+    </symbol>
+     <symbol id="fin_kompenzacije3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
         <path d="m-0.25,23.94l22.28,0c1.06,0 1.93,-0.75 1.93,-1.68l0,-16.74l-24.21,0l0,18.42zm9.81,-4.19c0.33,0.29 0.33,0.75 0,1.04c-0.17,0.14 -0.38,0.21 -0.6,0.21s-0.43,-0.07 -0.6,-0.21l-1.71,-1.49l-1.71,1.49c-0.17,0.14 -0.38,0.21 -0.6,0.21c-0.22,0 -0.43,-0.07 -0.6,-0.21c-0.33,-0.29 -0.33,-0.75 0,-1.04l1.71,-1.49l-1.71,-1.49c-0.33,-0.29 -0.33,-0.75 0,-1.04c0.33,-0.29 0.87,-0.29 1.19,0l1.71,1.49l1.71,-1.49c0.33,-0.29 0.87,-0.29 1.2,0c0.33,0.29 0.33,0.75 0,1.04l-1.71,1.49l1.71,1.49zm8,1.35l-0.59,0c-0.47,0 -0.84,-0.33 -0.84,-0.73s0.38,-0.73 0.84,-0.73l0.59,0c0.47,0 0.85,0.33 0.85,0.73s-0.38,0.73 -0.85,0.73zm-2.99,-11.27l5.4,0c0.47,0 0.85,0.33 0.85,0.73s-0.38,0.73 -0.85,0.73l-5.4,0c-0.47,0 -0.84,-0.33 -0.84,-0.73s0.38,-0.73 0.84,-0.73zm3.84,6.33c0,0.41 -0.38,0.73 -0.85,0.73l-0.59,0c-0.47,0 -0.84,-0.33 -0.84,-0.73c0,-0.41 0.38,-0.73 0.84,-0.73l0.59,0c0.47,0 0.85,0.33 0.85,0.73zm-3.84,1.37l5.4,0c0.47,0 0.85,0.33 0.85,0.73s-0.38,0.73 -0.85,0.73l-5.4,0c-0.47,0 -0.84,-0.33 -0.84,-0.73s0.38,-0.73 0.84,-0.73zm-10.61,-7.7l1.85,0l0,-1.61c0,-0.41 0.38,-0.73 0.84,-0.73c0.47,0 0.84,0.33 0.84,0.73l0,1.61l1.86,0c0.47,0 0.84,0.33 0.84,0.73s-0.38,0.73 -0.84,0.73l-1.86,0l0,1.61c0,0.41 -0.38,0.74 -0.84,0.74c-0.46,0 -0.84,-0.33 -0.84,-0.74l0,-1.61l-1.85,0c-0.47,0 -0.85,-0.33 -0.85,-0.73s0.38,-0.73 0.85,-0.73z"/>
     </symbol> <!-- Add more symbols as needed -->
 </svg>

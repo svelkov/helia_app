@@ -11,9 +11,10 @@ import (
 )
 
 const (
-	sifopContentTitle = "OPSTINE"
-	sifopTableID      = "sifop-table"
-	sifopURLPrefix    = "/api/sifop/"
+	sifopContentTitle string = "OPSTINE"
+	sifopTableID      string = "sifop-table"
+	sifopURLPrefix    string = "/api/sifop/"
+	sifopURLGetAll    string = "/api/sifop/all"
 )
 
 var sifopTableFields = []domain.Fields{
@@ -30,7 +31,7 @@ func NewOpstineHandler(service *service.BaseService[domain.Sifop]) *SifopHandler
 }
 func (h *SifopHandler) CreateSifop(w http.ResponseWriter, r *http.Request) {
 	var sifop domain.Sifop
-	utils.CreateHelper(w, r, &sifop, h.Service, sifopTableFields)
+	utils.CreateHelper(w, r, &sifop, h.Service, utils.IDsifop, sifopTableFields)
 }
 
 func (h *SifopHandler) UpdateSifop(w http.ResponseWriter, r *http.Request) {
@@ -39,7 +40,7 @@ func (h *SifopHandler) UpdateSifop(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *SifopHandler) DeleteSifop(w http.ResponseWriter, r *http.Request) {
-	utils.DeleteHelper(w, r, h.Service, utils.IDsifop)
+	utils.DeleteHelper[domain.Sifop](w, r, h.Service, utils.IDsifop)
 }
 
 func (h *SifopHandler) confirmDeleteHandler(w http.ResponseWriter, r *http.Request) {
@@ -51,16 +52,16 @@ func (h *SifopHandler) confirmAddHandler(w http.ResponseWriter, r *http.Request)
 }
 
 func (h *SifopHandler) confirmUpdateHandler(w http.ResponseWriter, r *http.Request) {
-	utils.ConfirmUpdateHelper(w, r, h.Service, sifopTableFields, utils.IDsifop)
+	utils.ConfirmUpdateHelper[domain.Sifop](w, r, h.Service, sifopTableFields, utils.IDsifop)
 }
 
 func (h *SifopHandler) GetSifop(w http.ResponseWriter, r *http.Request) {
-	utils.GetEntityHelper(w, r, h.Service, sifopTableFields, utils.IDsifop)
+	utils.GetEntityHelper[domain.Sifop](w, r, h.Service, sifopTableFields, utils.IDsifop)
 }
 
 func (h *SifopHandler) GetAllSifop(w http.ResponseWriter, r *http.Request) {
 	var sifop domain.Sifop
-	tbl := utils.GetAllEntityHelper(w, r, &sifop, h.Service, sifopTableFields, sifopContentTitle, sifopTableID, sifopURLPrefix, utils.IDsifop)
+	tbl := utils.GetAllEntityHelper(w, r, &sifop, h.Service, sifopTableFields, sifopContentTitle, sifopTableID, sifopURLPrefix, sifopURLGetAll, utils.IDsifop)
 	utils.RenderContent(w, r, *tbl)
 }
 

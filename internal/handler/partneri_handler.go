@@ -11,9 +11,10 @@ import (
 )
 
 const (
-	partneriContentTitle = "POSLOVNI PARTNERI"
-	partneriTableID      = "partneri-table"
-	partneriURLPrefix    = "/api/partneri/"
+	partneriContentTitle string = "POSLOVNI PARTNERI"
+	partneriTableID      string = "partneri-table"
+	partneriURLPrefix    string = "/api/partneri/"
+	partneriURLGetAll    string = "/api/partneri/all"
 )
 
 var partneriTableFields = []domain.Fields{
@@ -50,7 +51,7 @@ func NewPartneriHandler(service *service.BaseService[domain.Partneri]) *Partneri
 }
 func (h *PartneriHandler) CreatePartneri(w http.ResponseWriter, r *http.Request) {
 	var partneri domain.Partneri
-	utils.CreateHelper(w, r, &partneri, h.Service, partneriTableFields)
+	utils.CreateHelper(w, r, &partneri, h.Service, utils.IDpartneri, partneriTableFields)
 }
 
 func (h *PartneriHandler) UpdatePartneri(w http.ResponseWriter, r *http.Request) {
@@ -59,7 +60,7 @@ func (h *PartneriHandler) UpdatePartneri(w http.ResponseWriter, r *http.Request)
 }
 
 func (h *PartneriHandler) DeletePartneri(w http.ResponseWriter, r *http.Request) {
-	utils.DeleteHelper(w, r, h.Service, utils.IDpartneri)
+	utils.DeleteHelper[domain.Partneri](w, r, h.Service, utils.IDpartneri)
 }
 
 func (h *PartneriHandler) confirmDeleteHandler(w http.ResponseWriter, r *http.Request) {
@@ -71,16 +72,16 @@ func (h *PartneriHandler) confirmAddHandler(w http.ResponseWriter, r *http.Reque
 }
 
 func (h *PartneriHandler) confirmUpdateHandler(w http.ResponseWriter, r *http.Request) {
-	utils.ConfirmUpdateHelper(w, r, h.Service, partneriTableFields, utils.IDpartneri)
+	utils.ConfirmUpdateHelper[domain.Partneri](w, r, h.Service, partneriTableFields, utils.IDpartneri)
 }
 
 func (h *PartneriHandler) GetPartneri(w http.ResponseWriter, r *http.Request) {
-	utils.GetEntityHelper(w, r, h.Service, partneriTableFields, utils.IDpartneri)
+	utils.GetEntityHelper[domain.Partneri](w, r, h.Service, partneriTableFields, utils.IDpartneri)
 }
 
 func (h *PartneriHandler) GetAllPartneri(w http.ResponseWriter, r *http.Request) {
 	var partneri domain.Partneri
-	tbl := utils.GetAllEntityHelper(w, r, &partneri, h.Service, partneriTableFields, partneriContentTitle, partneriTableID, partneriURLPrefix, utils.IDpartneri)
+	tbl := utils.GetAllEntityHelper(w, r, &partneri, h.Service, partneriTableFields, partneriContentTitle, partneriTableID, partneriURLPrefix, partneriURLGetAll, utils.IDpartneri)
 	utils.RenderContent(w, r, *tbl)
 }
 

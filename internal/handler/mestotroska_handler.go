@@ -11,9 +11,10 @@ import (
 )
 
 const (
-	mestotroskaContentTitle = "MESTO TROSKA"
-	mestotroskaTableID      = "mestotroska-table"
-	mestotroskaURLPrefix    = "/api/mestotroska/"
+	mestotroskaContentTitle string = "MESTO TROSKA"
+	mestotroskaTableID      string = "mestotroska-table"
+	mestotroskaURLPrefix    string = "/api/mestotroska/"
+	mestrtroskaURLGetAll    string = "/api/mestotroska/all"
 )
 
 var mestotroskaTableFields = []domain.Fields{
@@ -32,7 +33,7 @@ func NewMestotroskaHandler(service *service.BaseService[domain.Mestotr]) *Mestot
 
 func (h *MestotroskaHandler) CreateMestotroska(w http.ResponseWriter, r *http.Request) {
 	var mestotroska domain.Mestotr
-	utils.CreateHelper(w, r, &mestotroska, h.Service, mestotroskaTableFields)
+	utils.CreateHelper(w, r, &mestotroska, h.Service, utils.IDmestotr, mestotroskaTableFields)
 }
 
 func (h *MestotroskaHandler) UpdateMestotroska(w http.ResponseWriter, r *http.Request) {
@@ -41,7 +42,7 @@ func (h *MestotroskaHandler) UpdateMestotroska(w http.ResponseWriter, r *http.Re
 }
 
 func (h *MestotroskaHandler) DeleteMestotroska(w http.ResponseWriter, r *http.Request) {
-	utils.DeleteHelper(w, r, h.Service, utils.IDmestotr)
+	utils.DeleteHelper[domain.Mestotr](w, r, h.Service, utils.IDmestotr)
 }
 
 func (h *MestotroskaHandler) confirmDeleteHandler(w http.ResponseWriter, r *http.Request) {
@@ -53,16 +54,16 @@ func (h *MestotroskaHandler) confirmAddHandler(w http.ResponseWriter, r *http.Re
 }
 
 func (h *MestotroskaHandler) confirmUpdateHandler(w http.ResponseWriter, r *http.Request) {
-	utils.ConfirmUpdateHelper(w, r, h.Service, mestotroskaTableFields, utils.IDmestotr)
+	utils.ConfirmUpdateHelper[domain.Mestotr](w, r, h.Service, mestotroskaTableFields, utils.IDmestotr)
 }
 
 func (h *MestotroskaHandler) GetMestotroska(w http.ResponseWriter, r *http.Request) {
-	utils.GetEntityHelper(w, r, h.Service, mestotroskaTableFields, utils.IDmestotr)
+	utils.GetEntityHelper[domain.Mestotr](w, r, h.Service, mestotroskaTableFields, utils.IDmestotr)
 }
 
 func (h *MestotroskaHandler) GetAllMestotroska(w http.ResponseWriter, r *http.Request) {
 	var mestotroska domain.Mestotr
-	tbl := utils.GetAllEntityHelper(w, r, &mestotroska, h.Service, mestotroskaTableFields, mestotroskaContentTitle, mestotroskaTableID, mestotroskaURLPrefix, utils.IDmestotr)
+	tbl := utils.GetAllEntityHelper(w, r, &mestotroska, h.Service, mestotroskaTableFields, mestotroskaContentTitle, mestotroskaTableID, mestotroskaURLPrefix, mestrtroskaURLGetAll, utils.IDmestotr)
 	utils.RenderContent(w, r, *tbl)
 }
 

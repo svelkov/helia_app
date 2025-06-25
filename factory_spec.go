@@ -21,6 +21,7 @@ import (
 	"helia/internal/validation"
 	finval "helia/internal/validation/finansijsko"
 	osval "helia/internal/validation/os"
+	"helia/pkg/utils"
 )
 
 func factory() {
@@ -200,9 +201,18 @@ func setEntities(db *sqlx.DB, r *http.ServeMux, cfg config.Config) {
 	// Create repository, validator, service and handler for vrste evidencije PDV
 	fnalRepo := repository.NewBaseRepository[domain.Fnal](db, "fnal", cfg)
 	fnalValidator := validation.NewRuleBasedValidator[domain.Fnal](finval.FnalValidationRules())
-	fnalService := service.NewBaseService(*fnalRepo, *fnalValidator)
-	fnalHandler := fin.NewFnalHandler(fnalService, tipdokService, sfService)
+	fnalBaseService := service.NewBaseService(*fnalRepo, *fnalValidator)
+	fnalService := service.NewNalogService(fnalBaseService, *fnalRepo, *tipdokRepo, *sfRepo, "", []domain.Fields{}, []domain.Fields{})
+	fnalHandler := fin.NewFnalHandler(fnalService)
 	fnalHandler.AddRoutes(r)
+
+	// Create repository, validator, service and handler for vrste evidencije PDV
+	fproRepo := repository.NewBaseRepository[domain.Fpro](db, "fpro", cfg)
+	fproValidator := validation.NewRuleBasedValidator[domain.Fpro](finval.FnalValidationRules())
+	fproBaseService := service.NewBaseService(*fproRepo, *fproValidator)
+	fproService := service.NewFproService(fproBaseService, *fproRepo, utils.IDfpro, []domain.Fields{}, []domain.Fields{})
+	fproHandler := fin.NewFproHandler(fproService)
+	fproHandler.AddRoutes(r)
 
 	// Create repository, validator, service and handler for vrste evidencije PDV
 	oamgrpRepo := repository.NewBaseRepository[domain.Oamgrp](db, "oamgrp", cfg)

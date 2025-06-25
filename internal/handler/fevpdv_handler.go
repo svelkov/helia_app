@@ -11,9 +11,10 @@ import (
 )
 
 const (
-	fvepdvContentTitle = "VRSTE EVIDENCIJE PDV"
-	fvepdvTableID      = "fvepdv-table"
-	fvepdvURLPrefix    = "/api/fvepdv/"
+	fvepdvContentTitle string = "VRSTE EVIDENCIJE PDV"
+	fvepdvTableID      string = "fvepdv-table"
+	fvepdvURLPrefix    string = "/api/fvepdv/"
+	fvepdvURLGetAll    string = "/api/fvepdv/all"
 )
 
 var fvepdvTableFields = []domain.Fields{
@@ -32,7 +33,7 @@ func NewFvepdvHandler(service *service.BaseService[domain.Fvepdv]) *FvepdvHandle
 }
 func (h *FvepdvHandler) CreateFvepdv(w http.ResponseWriter, r *http.Request) {
 	var Fvepdv domain.Fvepdv
-	utils.CreateHelper(w, r, &Fvepdv, h.Service, fvepdvTableFields)
+	utils.CreateHelper(w, r, &Fvepdv, h.Service, utils.IDfvepdv, fvepdvTableFields)
 }
 
 func (h *FvepdvHandler) UpdateFvepdv(w http.ResponseWriter, r *http.Request) {
@@ -41,7 +42,7 @@ func (h *FvepdvHandler) UpdateFvepdv(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *FvepdvHandler) DeleteFvepdv(w http.ResponseWriter, r *http.Request) {
-	utils.DeleteHelper(w, r, h.Service, utils.IDfvepdv)
+	utils.DeleteHelper[domain.Fvepdv](w, r, h.Service, utils.IDfvepdv)
 }
 
 func (h *FvepdvHandler) confirmDeleteHandler(w http.ResponseWriter, r *http.Request) {
@@ -53,16 +54,16 @@ func (h *FvepdvHandler) confirmAddHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (h *FvepdvHandler) confirmUpdateHandler(w http.ResponseWriter, r *http.Request) {
-	utils.ConfirmUpdateHelper(w, r, h.Service, fvepdvTableFields, utils.IDfvepdv)
+	utils.ConfirmUpdateHelper[domain.Fvepdv](w, r, h.Service, fvepdvTableFields, utils.IDfvepdv)
 }
 
 func (h *FvepdvHandler) GetFvepdv(w http.ResponseWriter, r *http.Request) {
-	utils.GetEntityHelper(w, r, h.Service, fvepdvTableFields, utils.IDfvepdv)
+	utils.GetEntityHelper[domain.Fvepdv](w, r, h.Service, fvepdvTableFields, utils.IDfvepdv)
 }
 
 func (h *FvepdvHandler) GetAllFvepdv(w http.ResponseWriter, r *http.Request) {
 	var Fvepdv domain.Fvepdv
-	tbl := utils.GetAllEntityHelper(w, r, &Fvepdv, h.Service, fvepdvTableFields, fvepdvContentTitle, fvepdvTableID, fvepdvURLPrefix, utils.IDfvepdv)
+	tbl := utils.GetAllEntityHelper(w, r, &Fvepdv, h.Service, fvepdvTableFields, fvepdvContentTitle, fvepdvTableID, fvepdvURLPrefix, fvepdvURLGetAll, utils.IDfvepdv)
 	utils.RenderContent(w, r, *tbl)
 }
 

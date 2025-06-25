@@ -11,9 +11,10 @@ import (
 )
 
 const (
-	dokvrstaContentTitle = "VRSTE DOKUMENATA"
-	dokvrstaTableID      = "dokvrsta-table"
-	dokvrstaURLPrefix    = "/api/dokvrsta/"
+	dokvrstaContentTitle string = "VRSTE DOKUMENATA"
+	dokvrstaTableID      string = "dokvrsta-table"
+	dokvrstaURLPrefix    string = "/api/dokvrsta/"
+	dokvrstaURLGetAll    string = "/api/dokvrsta/all"
 )
 
 var dokvrstaTableFields = []domain.Fields{
@@ -37,7 +38,7 @@ func NewDokvrstaHandler(service *service.BaseService[domain.Dokvrsta]) *Dokvrsta
 
 func (h *DokvrstaHandler) CreateDokvrsta(w http.ResponseWriter, r *http.Request) {
 	var dokvrsta domain.Dokvrsta
-	utils.CreateHelper(w, r, &dokvrsta, h.Service, dokvrstaTableFields)
+	utils.CreateHelper(w, r, &dokvrsta, h.Service, utils.IDdokvrsta, dokvrstaTableFields)
 }
 
 func (h *DokvrstaHandler) UpdateDokvrsta(w http.ResponseWriter, r *http.Request) {
@@ -67,7 +68,7 @@ func (h *DokvrstaHandler) GetDokvrsta(w http.ResponseWriter, r *http.Request) {
 
 func (h *DokvrstaHandler) GetAllDokvrsta(w http.ResponseWriter, r *http.Request) {
 	var dokvrsta domain.Dokvrsta
-	tbl := utils.GetAllEntityHelper(w, r, &dokvrsta, h.Service, dokvrstaTableFields, dokvrstaContentTitle, dokvrstaTableID, dokvrstaURLPrefix, utils.IDdokvrsta)
+	tbl := utils.GetAllEntityHelper(w, r, &dokvrsta, h.Service, dokvrstaTableFields, dokvrstaContentTitle, dokvrstaTableID, dokvrstaURLPrefix, dokvrstaURLGetAll, utils.IDdokvrsta)
 	utils.RenderContent(w, r, *tbl)
 }
 

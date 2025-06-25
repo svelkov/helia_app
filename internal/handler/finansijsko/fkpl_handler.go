@@ -11,15 +11,16 @@ import (
 )
 
 const (
-	fkplContentTitle = "KONTNI PLAN"
-	fkplTableID      = "fkpl-table"
-	fkplURLPrefix    = "/api/fkpl/"
+	fkplContentTitle string = "KONTNI PLAN"
+	fkplTableID      string = "fkpl-table"
+	fkplURLPrefix    string = "/api/fkpl/"
+	fkplURLGetAll    string = "/api/fkpl/all"
 )
 
 var fkplTableFields = []domain.Fields{
 	{Name: "konto", Label: "Konto", Width: "10"},
-	{Name: "naziv", Label: "Naziv", Width: "60"},
 	{Name: "sifra", Label: "Sifra", Width: "10"},
+	{Name: "naziv", Label: "Naziv", Width: "120"},
 	{Name: "vkonta", Label: "Vrsta konta", Width: "4"},
 }
 
@@ -33,7 +34,7 @@ func NewFkplHandler(service *service.BaseService[domain.Fkpl]) *FkplHandler {
 
 func (h *FkplHandler) CreateFkpl(w http.ResponseWriter, r *http.Request) {
 	var fkpl domain.Fkpl
-	utils.CreateHelper(w, r, &fkpl, h.Service, fkplTableFields)
+	utils.CreateHelper(w, r, &fkpl, h.Service, utils.IDfkpl, fkplTableFields)
 }
 
 func (h *FkplHandler) UpdateFkpl(w http.ResponseWriter, r *http.Request) {
@@ -42,7 +43,7 @@ func (h *FkplHandler) UpdateFkpl(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *FkplHandler) DeleteFkpl(w http.ResponseWriter, r *http.Request) {
-	utils.DeleteHelper(w, r, h.Service, utils.IDfkpl)
+	utils.DeleteHelper[domain.Fkpl](w, r, h.Service, utils.IDfkpl)
 }
 
 func (h *FkplHandler) confirmDeleteHandler(w http.ResponseWriter, r *http.Request) {
@@ -54,16 +55,17 @@ func (h *FkplHandler) confirmAddHandler(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h *FkplHandler) confirmUpdateHandler(w http.ResponseWriter, r *http.Request) {
-	utils.ConfirmUpdateHelper(w, r, h.Service, fkplTableFields, utils.IDfkpl)
+	utils.ConfirmUpdateHelper[domain.Fkpl](w, r, h.Service, fkplTableFields, utils.IDfkpl)
 }
 
 func (h *FkplHandler) GetFkpl(w http.ResponseWriter, r *http.Request) {
-	utils.GetEntityHelper(w, r, h.Service, fkplTableFields, utils.IDfkpl)
+	utils.GetEntityHelper[domain.Fkpl](w, r, h.Service, fkplTableFields, utils.IDfkpl)
 }
 
 func (h *FkplHandler) GetAllFkpl(w http.ResponseWriter, r *http.Request) {
 	var fkpl domain.Fkpl
-	utils.GetAllEntityHelper(w, r, &fkpl, h.Service, fkplTableFields, fkplContentTitle, fkplTableID, fkplURLPrefix, utils.IDfkpl)
+	tbl := utils.GetAllEntityHelper(w, r, &fkpl, h.Service, fkplTableFields, fkplContentTitle, fkplTableID, fkplURLPrefix, fkplURLGetAll, utils.IDfkpl)
+	utils.RenderContent(w, r, *tbl)
 }
 
 func (h *FkplHandler) AddRoutes(r *http.ServeMux) {

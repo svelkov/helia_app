@@ -19,9 +19,9 @@ var MenuData = map[string][]SubMenuItem{
 	"Finansijsko": {
 		SubMenuItem{URL: "api/fkpl/all", Name: "Kontni plan", Icon: "kontniplan"},
 		SubMenuItem{URL: "api/nalozi/all/tipdok", Name: "Nalozi", Icon: "fin_nalozi"},
-		SubMenuItem{URL: "", Name: "Promet", Icon: "fin_nalozi1"},
-		SubMenuItem{URL: "", Name: "Salda konta", Icon: "fin_nalozi2"},
-		SubMenuItem{URL: "", Name: "Kompenzacije", Icon: "fin_nalozi3"},
+		SubMenuItem{URL: "", Name: "Promet", Icon: "fin_promet"},
+		SubMenuItem{URL: "", Name: "Salda konta", Icon: "fin_saldakonta"},
+		SubMenuItem{URL: "", Name: "Kompenzacije", Icon: "fin_kompenzacije"},
 		SubMenuItem{URL: "", Name: "Otvorene stavke", Icon: ""},
 		SubMenuItem{URL: "", Name: "Obračun kamate", Icon: ""},
 		SubMenuItem{URL: "", Name: "Bilansi", Icon: ""},

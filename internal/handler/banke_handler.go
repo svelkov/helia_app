@@ -11,39 +11,32 @@ import (
 )
 
 const (
-	bankeContentTitle = "BANKE"
-	bankeTableID      = "banke-table"
-	bankeURLPrefix    = "/api/banke/"
+	bankeContentTitle string = "BANKE"
+	bankeTableID      string = "banke-table"
+	bankeURLPrefix    string = "/api/banke/"
+	bankeURLGetAll    string = "/api/banke/all"
 )
 
-var bankeTableFields = []domain.Fields{
-	{Name: "brrac", Label: "Broj Racuna", Width: "45"},
-	{Name: "banka", Label: "Banka", Width: "60"},
-	{Name: "konto", Label: "Konto", Width: "8"},
-	{Name: "sifra", Label: "Sifra", Width: "8"},
-	{Name: "bnkcod", Label: "Kod Banke", Width: "4"},
-	{Name: "ebank", Label: "E-Banking", Width: "60"},
-	{Name: "pocnazfajl", Label: "Poc. Naz. Fajla", Width: "10"},
-	{Name: "tipdok", Label: "Tip Dokumenta", Width: "6"},
-	{Name: "nafakne", Label: "Na Fakt Ne", Width: "1"},
-}
-
 type BankeHandler struct {
-	Service service.Service[domain.Banke] // Use the interface
+	Service          service.Service[domain.Banke] // Use the interface
+	bankeTableFields []domain.Fields
 }
 
 func NewBankeHandler(service service.Service[domain.Banke]) *BankeHandler {
-	return &BankeHandler{Service: service}
+	rs := &BankeHandler{Service: service}
+
+	rs.bankeTableFields = setBankeFileds()
+	return rs
 }
 
 func (h *BankeHandler) CreateBanke(w http.ResponseWriter, r *http.Request) {
 	var banke domain.Banke
-	utils.CreateHelper(w, r, &banke, h.Service, bankeTableFields)
+	utils.CreateHelper(w, r, &banke, h.Service, utils.IDbanke, h.bankeTableFields)
 }
 
 func (h *BankeHandler) UpdateBanke(w http.ResponseWriter, r *http.Request) {
 	var banke domain.Banke
-	utils.UpdateHelper(w, r, &banke, h.Service, bankeTableFields, utils.IDbanke)
+	utils.UpdateHelper(w, r, &banke, h.Service, h.bankeTableFields, utils.IDbanke)
 }
 
 func (h *BankeHandler) DeleteBanke(w http.ResponseWriter, r *http.Request) {
@@ -51,24 +44,24 @@ func (h *BankeHandler) DeleteBanke(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *BankeHandler) confirmDeleteHandler(w http.ResponseWriter, r *http.Request) {
-	utils.ConfirmDeleteHelper(w, r, bankeTableFields)
+	utils.ConfirmDeleteHelper(w, r, h.bankeTableFields)
 }
 
 func (h *BankeHandler) confirmAddHandler(w http.ResponseWriter, r *http.Request) {
-	utils.ConfirmAddHelper(w, r, strings.TrimSuffix(bankeURLPrefix, "/"), bankeTableFields)
+	utils.ConfirmAddHelper(w, r, strings.TrimSuffix(bankeURLPrefix, "/"), h.bankeTableFields)
 }
 
 func (h *BankeHandler) confirmUpdateHandler(w http.ResponseWriter, r *http.Request) {
-	utils.ConfirmUpdateHelper(w, r, h.Service, bankeTableFields, utils.IDbanke)
+	utils.ConfirmUpdateHelper(w, r, h.Service, h.bankeTableFields, utils.IDbanke)
 }
 
 func (h *BankeHandler) GetBanke(w http.ResponseWriter, r *http.Request) {
-	utils.GetEntityHelper(w, r, h.Service, bankeTableFields, utils.IDbanke)
+	utils.GetEntityHelper(w, r, h.Service, h.bankeTableFields, utils.IDbanke)
 }
 
 func (h *BankeHandler) GetAllBanke(w http.ResponseWriter, r *http.Request) {
 	var banke domain.Banke
-	tbl := utils.GetAllEntityHelper(w, r, &banke, h.Service, bankeTableFields, bankeContentTitle, bankeTableID, bankeURLPrefix, utils.IDbanke)
+	tbl := utils.GetAllEntityHelper(w, r, &banke, h.Service, h.bankeTableFields, bankeContentTitle, bankeTableID, bankeURLPrefix, bankeURLGetAll, utils.IDbanke)
 	utils.RenderContent(w, r, *tbl)
 }
 
@@ -82,4 +75,18 @@ func (h *BankeHandler) AddRoutes(r *http.ServeMux) {
 	r.HandleFunc("GET /api/banke/{id}", infrastructure.AuthMiddleware(h.GetBanke))
 	r.HandleFunc("PUT /api/banke/{id}", infrastructure.AuthMiddleware(h.UpdateBanke))
 	r.HandleFunc("DELETE /api/banke/{id}", infrastructure.AuthMiddleware(h.DeleteBanke))
+}
+
+func setBankeFileds() []domain.Fields {
+	return []domain.Fields{
+		{Name: "brrac", Label: "Broj Racuna", Width: "45"},
+		{Name: "banka", Label: "Banka", Width: "60"},
+		{Name: "konto", Label: "Konto", Width: "8"},
+		{Name: "sifra", Label: "Sifra", Width: "8"},
+		{Name: "bnkcod", Label: "Kod Banke", Width: "4"},
+		{Name: "ebank", Label: "E-Banking", Width: "60"},
+		{Name: "pocnazfajl", Label: "Poc. Naz. Fajla", Width: "10"},
+		{Name: "tipdok", Label: "Tip Dokumenta", Width: "6"},
+		{Name: "nafakne", Label: "Na Fakt Ne", Width: "1"},
+	}
 }

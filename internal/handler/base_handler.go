@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"helia/frontend/templates"
 	"helia/internal/domain"
@@ -94,6 +95,19 @@ func (h *BasicHandler) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 }
 func (h *BasicHandler) HomeHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusSeeOther) // Redirect to home page
+}
+
+func (h *BasicHandler) getCurrentDate(w http.ResponseWriter, r *http.Request) {
+	currentDate := time.Now().Format("2006-01-02")
+	w.Header().Set("Content-Type", "application/json")
+	response := map[string]string{"currentDate": currentDate}
+	jsonResponse, err := json.Marshal(response)
+	if err != nil {
+		http.Error(w, "Error generating JSON response", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write(jsonResponse) // Write the JSON response
 }
 
 // Middleware to check if the user is logged in.
@@ -195,4 +209,6 @@ func (h *BasicHandler) AddRoutes(r *http.ServeMux) {
 	r.HandleFunc("/logout", h.LogoutHandler)
 	r.HandleFunc("/home", h.HomeHandler)
 	r.HandleFunc("/", h.indexHandler)
+	r.HandleFunc("api/get-current-date", h.getCurrentDate)
+
 }

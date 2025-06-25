@@ -17,6 +17,7 @@ const (
 	IDfvepdv   = "fvepdvid"
 	IDfkpl     = "idfkpl"
 	IDfnal     = "idfnal"
+	IDfpro     = "idfpro"
 	IDoamgrp   = "oamgrpid"
 )
 const (
@@ -38,4 +39,5 @@ const (
 	ReadDataErrMsg     = "Greška prilikom čitanja podataka"
 	ReadDataOkMsg      = "Uspešno učitani podaci"
 	RenderTemplateErr  = "Error rendering template"
+	InvalidIDErrMsg    = "Invalid ID provided in request"
 )

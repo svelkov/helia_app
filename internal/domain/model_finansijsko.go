@@ -47,9 +47,9 @@ type Fnal struct {
 	Brst       int            `db:"brst"`
 	Abr        int            `db:"abr"`
 	Nalsts     string         `db:"nalsts"`
-	Xdatunosa  time.Time      `db:"xdatunosa"`
+	Xdatunosa  sql.NullTime   `db:"xdatunosa"`
 	Xdatizmene sql.NullTime   `db:"xdatizmene"`
-	Xopunos    string         `db:"xopunos"`
+	Xopunos    sql.NullString `db:"xopunos"`
 	Xopizmene  sql.NullString `db:"xopizmene"`
 	IDTipdok   *int           `db:"idtipdok"` // Nullable foreign key
 }
@@ -68,9 +68,81 @@ type Sf struct {
 	Xopunos    string         `db:"xopunos"`
 	Xopizmene  sql.NullString `db:"xopizmene"`
 }
+
+type Fpro struct {
+	IDFpro        int64         `db:"idfpro"`
+	God           int           `db:"god"`
+	Kar           int           `db:"kar"`
+	Nalog         float64       `db:"nalog"`
+	Tipdok        string        `db:"tipdok"`
+	Rbr           int64         `db:"rbr"`
+	Danal         *time.Time    `db:"danal"`
+	Brst          int           `db:"brst"`
+	Iznos         float64       `db:"iznos"`
+	Kat           int16         `db:"kat"`
+	Opis          string        `db:"opis"`
+	Dadok         *time.Time    `db:"dadok"`
+	Rok           int           `db:"rok"`
+	Vrd           int           `db:"vrd"`
+	Vkonta        int16         `db:"vkonta"`
+	Konto         string        `db:"konto"`
+	Sifra         string        `db:"sifra"`
+	Tra           int           `db:"tra"`
+	Deviznos      float64       `db:"deviznos"`
+	Kurs          float64       `db:"kurs"`
+	Sifval        int           `db:"sifval"`
+	Mi            *int          `db:"mi"`
+	Ostatak       float64       `db:"ostatak"`
+	Dokum         string        `db:"dokum"`
+	Vkrbr         int           `db:"vkrbr"`
+	Vktip         string        `db:"vktip"`
+	Xdatunosa     *sql.NullTime `db:"xdatunosa"`
+	Xdatizmene    *sql.NullTime `db:"xdatizmene"`
+	Xopunos       string        `db:"xopunos"`
+	Xopizmene     string        `db:"xopizmene"`
+	IDFnal        *int          `db:"idfnal"`
+	IDFvknjrac    *int          `db:"idfvknjrac"`
+	IDOrgjed      *int          `db:"idorgjed"`
+	IDFkpl        *int          `db:"idfkpl"`
+	Mag           int16         `db:"mag"`
+	Komid         *int          `db:"komid"`
+	Rdokid        *int          `db:"rdokid"`
+	Mtroska       string        `db:"mtroska"`
+	Mestotrid     *int          `db:"mestotrid"`
+	Flegkomp      int16         `db:"flegkomp"`
+	Dokumv        string        `db:"dokumv"`
+	Dadokv        *time.Time    `db:"dadokv"`
+	Travez        int           `db:"travez"`
+	Starikonto    string        `db:"starikonto"`
+	Ojozn         string        `db:"ojozn"`
+	Sifkom        int           `db:"sifkom"`
+	Kolic         float64       `db:"kolic"`
+	Cena          float64       `db:"cena"`
+	IDKir         *int          `db:"idkir"`
+	IDKpr         int           `db:"idkpr"`
+	Dug           float64       `db:"dug"`
+	Pot           float64       `db:"pot"`
+	NazivKonta    string        `db:"nazivkonta"`
+	NazivPartnera string        `db:"nazivpartnera"`
+}
+
+type KopirajNalog struct {
+	IDFnal    int64     `db:"idfnal"`
+	TipdokOld string    `db:"tipdok"`
+	NalogOld  string    `db:"nalodold"`
+	DanalOld  time.Time `db:"danalold"`
+	DatKnjOld time.Time `db:"datknjold"`
+	OpisOld   string    `db:"opisold"`
+	TipdokNew string    `db:"tipdoknew"`
+	NalogNew  string    `db:"nalognew"`
+	DanalNew  time.Time `db:"danalnew"`
+	DatknjNew time.Time `db:"datknjnew"`
+	OpisNew   string    `db:"opisnew"`
+}
+
 type UkupnaObrada struct {
-	UkNaloga  int64
-	UkStavki  int64
-	Duguje    float64
-	Potrazuje float64
+	UkNaloga  string
+	UkStavki  string
+	Duguje    string
+	Potrazuje string
 }

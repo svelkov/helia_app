@@ -1,52 +1,36 @@
-package opstipodaci
+package templates
 
-import (
-	"fmt"
-	tmpl "helia/frontend/templates"
-	"helia/internal/domain"
-)
+import "helia/internal/domain"
 
-templ AddUpdateForm(dialog domain.Dialog, fields []domain.Fields) {
-	<div id="addupdate-dialog" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+templ Dialog(id string, content templ.Component, dialog domain.Dialog) {
+	<div id={ dialog.Id } class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
 		<div class="bg-white rounded-lg shadow-2xl relative animate-fade-in max-w-full w-auto">
 			<!-- Title Bar (Flush on Left, Top, Right) -->
 			<div class="bg-blue-600 text-white h-10 flex justify-between items-center rounded-t-lg">
 				<h2 class="text-lg font-semibold ml-4">{ dialog.Title }</h2>
-				@tmpl.ModalCloseButton("addupdate-dialog")
+				@ModalCloseButton(dialog.Id)
 			</div>
+			<!-- Content -->
 			<form
-				if dialog.HxRequestType == "hx-put" {
-					hx-put={ dialog.HxActionURL }
-				} else {
-					hx-post={ dialog.HxActionURL }
-				}
+				hx-post={ dialog.HxActionURL }
 				hx-target="#info-message"
 				hx-boost="false"
 				onsubmit="return false;"
 				class="grid grid-cols-1 md:grid-cols-[auto,auto] gap-2 gap-x-4 p-3 bg-white shadow-lg rounded-lg w-auto"
 			>
-				for i, field  := range fields {
-					<div class="flex flex-col">
-						<label class="block text-sm font-sm text-blue-700">{ field.Label }</label>
-						<input
-							class={ fmt.Sprintf("mt-1 block p-1 w-[%sch] border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 w-full min-w-0", field.Width) }
-							type={ field.Type }
-							maxlength={ field.Width }
-							tabindex={ fmt.Sprintf("%d", i) }
-							name={ field.Name }
-							value={ field.Value }
-						/>
-					</div>
-				}
+				<div class="px-4 py-6">
+					@content
+				</div>
 				<div class="bg-white col-span-2 px-3 py-3 flex justify-end space-x-2 pt-4">
-					@tmpl.ModalConfirmButton(dialog.HxRequestType, dialog)
-					@tmpl.ModalCancelButton("addupdate-dialog", dialog)
+					@ModalConfirmButton(dialog.HxRequestType, dialog)
+					@ModalCancelButton(dialog.Id, dialog)
 				</div>
 			</form>
 		</div>
 	</div>
-	@tmpl.CloseDialogScript()
-	@tmpl.ShowMessage()
+	@CloseDialogScript()
+	@ShowMessage()
+	@DeactivateActionsColumn()
 	<script>
 		document.addEventListener("keydown", function (event) {
 			if (event.key === "Enter") {

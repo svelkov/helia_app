@@ -11,9 +11,10 @@ import (
 )
 
 const (
-	bnkizvContentTitle = "BANKE ZA IZVOZNE FAKTURE"
-	bnkizvTableID      = "bnkizv-table"
-	bnkizvURLPrefix    = "/api/bnkizv/"
+	bnkizvContentTitle string = "BANKE ZA IZVOZNE FAKTURE"
+	bnkizvTableID      string = "bnkizv-table"
+	bnkizvURLPrefix    string = "/api/bnkizv/"
+	bnkizvURLGetAll    string = "/api/bnkizv/all"
 )
 
 var bnkizvTableFields = []domain.Fields{
@@ -39,7 +40,7 @@ func NewBnkizvHandler(service *service.BaseService[domain.Bnkizv]) *BnkizvHandle
 
 func (h *BnkizvHandler) CreateBnkizv(w http.ResponseWriter, r *http.Request) {
 	var bnkizv domain.Bnkizv
-	utils.CreateHelper(w, r, &bnkizv, h.Service, bnkizvTableFields)
+	utils.CreateHelper(w, r, &bnkizv, h.Service, utils.IDbnkizv, bnkizvTableFields)
 }
 
 func (h *BnkizvHandler) UpdateBnkizv(w http.ResponseWriter, r *http.Request) {
@@ -69,7 +70,7 @@ func (h *BnkizvHandler) GetBnkizv(w http.ResponseWriter, r *http.Request) {
 
 func (h *BnkizvHandler) GetAllBnkizv(w http.ResponseWriter, r *http.Request) {
 	var bnkizv domain.Bnkizv
-	tbl := utils.GetAllEntityHelper(w, r, &bnkizv, h.Service, bnkizvTableFields, bnkizvContentTitle, bnkizvTableID, bnkizvURLPrefix, utils.IDbnkizv)
+	tbl := utils.GetAllEntityHelper(w, r, &bnkizv, h.Service, bnkizvTableFields, bnkizvContentTitle, bnkizvTableID, bnkizvURLPrefix, bnkizvURLGetAll, utils.IDbnkizv)
 	utils.RenderContent(w, r, *tbl)
 }
 

@@ -18,6 +18,15 @@ import (
 // 	GetTotalRecords() (int, error)
 // }
 
+const (
+	// ActionTypeInsert is used for insert operations
+	ActionTypeInsert = "insert"
+	// ActionTypeUpdate is used for update operations
+	ActionTypeUpdate = "update"
+	// ActionTypeDelete is used for delete operations
+	ActionTypeDelete = "delete"
+)
+
 // Base implementation
 type BaseRepository[T any] struct {
 	DB        *sqlx.DB
@@ -70,6 +79,7 @@ func (r *BaseRepository[T]) GetAllCustom(queryText, whereText string, args []int
 
 	queryText = fmt.Sprintf("%s %s %s %s", queryText, whereText, sortBy, limitOffset)
 	// Execute the query
+	//fmt.Println(queryText)
 	err := r.DB.Select(&entity, queryText, args...)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching entity records, error: %w", err)
@@ -104,39 +114,49 @@ func (r *BaseRepository[T]) GetTotalRecordsCustom(queryText, whereText string, a
 	return countRec, nil
 }
 
-func (r *BaseRepository[T]) Create(entity *T, tableFields []domain.Fields) error {
+func (r *BaseRepository[T]) Create(entity *T, idField string, tableFields []domain.Fields) (int64, error) {
 	query, values := r.CreateInsertStatement(entity, tableFields)
-	err := doTransaction(r.DB, query, values...)
-	return err
+	lastInsertedID, err := doTransaction(r.DB, ActionTypeInsert, idField, query, values...)
+	return lastInsertedID, err
 }
 
 func (r *BaseRepository[T]) Update(entity *T, idField string, idValue interface{}, tableFields []domain.Fields) error {
 	query, values := r.CreateUpdateStatement(entity, idField, idValue, tableFields)
-	err := doTransaction(r.DB, query, values...)
+	_, err := doTransaction(r.DB, ActionTypeUpdate, idField, query, values...)
 	return err
 }
 
 func (r *BaseRepository[T]) Delete(idField string, id int) error {
 	query := fmt.Sprintf(`DELETE FROM  %s WHERE %s = $1`, r.TableName, idField)
-	err := doTransaction(r.DB, query, id)
+	_, err := doTransaction(r.DB, ActionTypeDelete, idField, query, id)
 	return err
 }
 
 // doTransaction executes a query within a transaction
-func doTransaction(db *sqlx.DB, query string, values ...interface{}) error {
+func doTransaction(db *sqlx.DB, actionType, idField, query string, values ...interface{}) (int64, error) {
 	// Start a transaction
+	lastInsertedID := int64(0)
 	tx, err := db.Beginx()
 	if err != nil {
-		return fmt.Errorf("could not begin transaction: %v", err)
+		return 0, fmt.Errorf("could not begin transaction: %v", err)
 	}
 	defer tx.Rollback() // Ensures rollback if commit isn't reached
 
 	// Execute the query with provided values
-	_, err = tx.Exec(query, values...)
-	if err != nil {
-		return fmt.Errorf("query execution failed: %v", err)
+	if actionType == ActionTypeDelete || actionType == ActionTypeUpdate {
+		_, err := tx.Exec(query, values...)
+		if err != nil {
+			return 0, fmt.Errorf("query execution failed: %v", err)
+		}
+		err = tx.Commit() // Commit if successful
+		return lastInsertedID, err
 	}
-
+	query = fmt.Sprintf("%s RETURNING %s", query, idField) // Append RETURNING clause for insert
+	err = tx.QueryRow(query, values...).Scan(&lastInsertedID)
+	if err != nil {
+		return 0, fmt.Errorf("query execution failed: %v", err)
+	}
 	// Commit if successful
-	return tx.Commit()
+	err = tx.Commit()
+	return lastInsertedID, err
 }

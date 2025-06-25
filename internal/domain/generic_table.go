@@ -12,17 +12,29 @@ type TableData struct {
 	TableID      string
 	Headers      []Fields
 	Rows         []TableRow
+	Pagination   PaginationData
+	URLPrefix    string
+	URLGetAll    string
+	HxInclude    string
+	HxTarget     string
+	BtnAdd       Button
+	BtnUpdate    Button
+	BtnDelete    Button
+	BtnPrint     Button
+	ShowActions  bool
+	DetailTarget string
+	DetailURL    string
+}
+
+type PaginationData struct {
 	PageSize     int
 	CurrentPage  int
 	TotalPages   int
 	TotalRecords int
 	StartRecord  int
 	EndRecord    int
-	URLPrefix    string
-	HXInclude    string
-	ShowActions  bool
-	ShowAdd      bool
-	ShowUpdate   bool
+	PageSizes    []int
+	HxInclude    string
 }
 
 // Data structures for rendering templates
@@ -41,4 +53,19 @@ type PageData struct {
 type ContentData struct {
 	ContentTitle string
 	Content      interface{}
+}
+
+type InputControl struct {
+	ID           string
+	Label        string
+	Type         string
+	Placeholder  string
+	Value        string
+	HxActionURL  string
+	HxTarget     string
+	HxSwap       string
+	HxTrigger    string
+	HxInclude    string
+	Autocomplete string
+	OnKeyUp      string
 }

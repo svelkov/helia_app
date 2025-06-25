@@ -11,9 +11,10 @@ import (
 )
 
 const (
-	sifplizvContentTitle = "SIFRE PLACANJA ZA IZVODE"
-	sifplizvTableID      = "sifplizv-table"
-	sifplizvURLPrefix    = "/api/sifplizvodi/"
+	sifplizvContentTitle string = "SIFRE PLACANJA ZA IZVODE"
+	sifplizvTableID      string = "sifplizv-table"
+	sifplizvURLPrefix    string = "/api/sifplizvodi/"
+	sifplizvURLGetAll    string = "/api/sifplizvodi/all"
 )
 
 var sifplizvTableFields = []domain.Fields{
@@ -35,7 +36,7 @@ func NewSifplizvHandler(service *service.BaseService[domain.Sifplizv]) *Sifplizv
 
 func (h *SifplizvHandler) CreateSifplizv(w http.ResponseWriter, r *http.Request) {
 	var sifplizv domain.Sifplizv
-	utils.CreateHelper(w, r, &sifplizv, h.Service, sifplizvTableFields)
+	utils.CreateHelper(w, r, &sifplizv, h.Service, utils.IDsifplizv, sifplizvTableFields)
 }
 
 func (h *SifplizvHandler) UpdateSifplizv(w http.ResponseWriter, r *http.Request) {
@@ -44,7 +45,7 @@ func (h *SifplizvHandler) UpdateSifplizv(w http.ResponseWriter, r *http.Request)
 }
 
 func (h *SifplizvHandler) DeleteSifplizv(w http.ResponseWriter, r *http.Request) {
-	utils.DeleteHelper(w, r, h.Service, utils.IDsifplizv)
+	utils.DeleteHelper[domain.Sifplizv](w, r, h.Service, utils.IDsifplizv)
 }
 
 func (h *SifplizvHandler) confirmDeleteHandler(w http.ResponseWriter, r *http.Request) {
@@ -56,16 +57,16 @@ func (h *SifplizvHandler) confirmAddHandler(w http.ResponseWriter, r *http.Reque
 }
 
 func (h *SifplizvHandler) confirmUpdateHandler(w http.ResponseWriter, r *http.Request) {
-	utils.ConfirmUpdateHelper(w, r, h.Service, sifplizvTableFields, utils.IDsifplizv)
+	utils.ConfirmUpdateHelper[domain.Sifplizv](w, r, h.Service, sifplizvTableFields, utils.IDsifplizv)
 }
 
 func (h *SifplizvHandler) GetSifplizv(w http.ResponseWriter, r *http.Request) {
-	utils.GetEntityHelper(w, r, h.Service, sifplizvTableFields, utils.IDsifplizv)
+	utils.GetEntityHelper[domain.Sifplizv](w, r, h.Service, sifplizvTableFields, utils.IDsifplizv)
 }
 
 func (h *SifplizvHandler) GetAllSifplizv(w http.ResponseWriter, r *http.Request) {
 	var sifplizv domain.Sifplizv
-	tbl := utils.GetAllEntityHelper(w, r, &sifplizv, h.Service, sifplizvTableFields, sifplizvContentTitle, sifplizvTableID, sifplizvURLPrefix, utils.IDsifplizv)
+	tbl := utils.GetAllEntityHelper(w, r, &sifplizv, h.Service, sifplizvTableFields, sifplizvContentTitle, sifplizvTableID, sifplizvURLPrefix, sifplizvURLGetAll, utils.IDsifplizv)
 	utils.RenderContent(w, r, *tbl)
 }
 

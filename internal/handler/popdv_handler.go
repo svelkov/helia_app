@@ -10,9 +10,10 @@ import (
 )
 
 const (
-	popdvContentTitle = "VRSTE NALOGA"
-	popdvTableID      = "popdv-table"
-	popdvURLPrefix    = "/api/popdv/"
+	popdvContentTitle string = "VRSTE NALOGA"
+	popdvTableID      string = "popdv-table"
+	popdvURLPrefix    string = "/api/popdv/"
+	popdvURLGetAll    string = "/api/popdv/all"
 )
 
 // key of the map must be the name of filed in the table in db (we need it for mapping)
@@ -34,7 +35,7 @@ func NewPopdvHandler(service *service.BaseService[domain.Popdv]) *PopdvHandler {
 
 func (h *PopdvHandler) CreatePopdv(w http.ResponseWriter, r *http.Request) {
 	var popdv domain.Popdv
-	utils.CreateHelper(w, r, &popdv, h.Service, popdvTableFields)
+	utils.CreateHelper(w, r, &popdv, h.Service, utils.IDpopdv, popdvTableFields)
 }
 
 func (h *PopdvHandler) UpdatePopdv(w http.ResponseWriter, r *http.Request) {
@@ -43,7 +44,7 @@ func (h *PopdvHandler) UpdatePopdv(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *PopdvHandler) DeletePopdv(w http.ResponseWriter, r *http.Request) {
-	utils.DeleteHelper(w, r, h.Service, utils.IDpopdv)
+	utils.DeleteHelper[domain.Popdv](w, r, h.Service, utils.IDpopdv)
 }
 
 func (h *PopdvHandler) confirmDeleteHandler(w http.ResponseWriter, r *http.Request) {
@@ -55,16 +56,16 @@ func (h *PopdvHandler) confirmAddHandler(w http.ResponseWriter, r *http.Request)
 }
 
 func (h *PopdvHandler) confirmUpdateHandler(w http.ResponseWriter, r *http.Request) {
-	utils.ConfirmUpdateHelper(w, r, h.Service, popdvTableFields, utils.IDpopdv)
+	utils.ConfirmUpdateHelper[domain.Popdv](w, r, h.Service, popdvTableFields, utils.IDpopdv)
 }
 
 func (h *PopdvHandler) GetPopdv(w http.ResponseWriter, r *http.Request) {
-	utils.GetEntityHelper(w, r, h.Service, popdvTableFields, utils.IDpopdv)
+	utils.GetEntityHelper[domain.Popdv](w, r, h.Service, popdvTableFields, utils.IDpopdv)
 }
 
 func (h *PopdvHandler) GetAllPopdv(w http.ResponseWriter, r *http.Request) {
 	var popdv domain.Popdv
-	tbl := utils.GetAllEntityHelper(w, r, &popdv, h.Service, popdvTableFields, popdvContentTitle, popdvTableID, popdvURLPrefix, utils.IDpopdv)
+	tbl := utils.GetAllEntityHelper(w, r, &popdv, h.Service, popdvTableFields, popdvContentTitle, popdvTableID, popdvURLPrefix, popdvURLGetAll, utils.IDpopdv)
 	utils.RenderContent(w, r, *tbl)
 }
 

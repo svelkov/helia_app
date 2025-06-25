@@ -14,6 +14,7 @@ const (
 	oamgrpContentTitle = "AMORTIZACIONE GRUPE"
 	oamgrpTableID      = "oamgrupe-table"
 	oamgrpURLPrefix    = "/api/oamgrp/"
+	oamgrpURLGetAll    = "/api/oamgrp/all"
 )
 
 var oamgrpTableFields = []domain.Fields{
@@ -33,7 +34,7 @@ func NewOamgrpHandler(service *service.BaseService[domain.Oamgrp]) *oamgrpHandle
 
 func (h *oamgrpHandler) CreateOamgrp(w http.ResponseWriter, r *http.Request) {
 	var oamgrp domain.Oamgrp
-	utils.CreateHelper(w, r, &oamgrp, h.Service, oamgrpTableFields)
+	utils.CreateHelper(w, r, &oamgrp, h.Service, utils.IDoamgrp, oamgrpTableFields)
 }
 
 func (h *oamgrpHandler) UpdateOamgrp(w http.ResponseWriter, r *http.Request) {
@@ -63,7 +64,7 @@ func (h *oamgrpHandler) Getoamgrp(w http.ResponseWriter, r *http.Request) {
 
 func (h *oamgrpHandler) GetAllOamgrp(w http.ResponseWriter, r *http.Request) {
 	var oamgrp domain.Oamgrp
-	utils.GetAllEntityHelper(w, r, &oamgrp, h.Service, oamgrpTableFields, oamgrpContentTitle, oamgrpTableID, oamgrpURLPrefix, utils.IDoamgrp)
+	utils.GetAllEntityHelper(w, r, &oamgrp, h.Service, oamgrpTableFields, oamgrpContentTitle, oamgrpTableID, oamgrpURLPrefix, oamgrpURLGetAll, utils.IDoamgrp)
 }
 
 func (h *oamgrpHandler) AddRoutes(r *http.ServeMux) {

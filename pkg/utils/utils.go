@@ -19,35 +19,11 @@ import (
 var God = 2024
 var Kar = 1
 
-const DefaultPageSize = 20
+const DefaultPageSize = 10
 
 func SetGodKar(god, kar int) {
 	God = god
 	Kar = kar
-}
-
-func GetPaginationData(r *http.Request, totalRecords int) (currentPage, pageSize, totalPages int) {
-
-	pageParam := r.URL.Query().Get("page")
-	pageSizeParam := r.URL.Query().Get("pageSize")
-	pageSize, err := strconv.Atoi(pageSizeParam)
-	if err != nil || pageSizeParam == "" {
-		pageSize = DefaultPageSize //default page size
-	}
-	if pageParam == "" {
-		currentPage = 1
-	} else {
-		currentPage, _ = strconv.Atoi(pageParam)
-		if currentPage < 1 {
-			currentPage = 1
-		}
-	}
-	totalPages = (totalRecords + pageSize - 1) / pageSize // Calculate total pages
-	if (currentPage > totalPages) && (totalPages > 0) {
-		currentPage = totalPages
-	}
-
-	return currentPage, pageSize, totalPages
 }
 
 // add returns the sum of two integers
@@ -126,7 +102,18 @@ func RenderContent(w http.ResponseWriter, r *http.Request, table domain.TableDat
 	case "Table":
 		err = tmpl.Table(table).Render(r.Context(), w)
 	case "ContentContainer":
-		err = tmpl.ContentContainer(table).Render(r.Context(), w)
+		searchControl := domain.InputControl{
+			ID:           "search-control",
+			Label:        "Pretraži",
+			Type:         "search",
+			Placeholder:  "Unesite tekst za pretragu",
+			HxActionURL:  table.URLGetAll,
+			HxTarget:     "#table-body",
+			HxSwap:       "innerHTML",
+			HxInclude:    "#tipdokSelect",
+			Autocomplete: "off",
+		}
+		err = tmpl.ContentContainer(table, searchControl).Render(r.Context(), w)
 	default:
 		http.Error(w, fmt.Sprintf("Template '%s' not found", templateName), http.StatusBadRequest)
 		return
@@ -183,57 +170,36 @@ func ExtractHTML(component string, targetID string, tagType string) string {
 	return "" // Or handle the error as you see fit.
 }
 
-func SetTableBasicData(ContentTitle string, tableID string, tableFields []domain.Fields, URLPrefix string, pageSize, currentPage, totalPages, totRecords int) *domain.TableData {
-
-	// Convert the fetched data into the format expected by the template
-	table := &domain.TableData{
-		ContentTitle: ContentTitle,
-		TableID:      tableID,
-		Headers:      tableFields,
-		Rows:         []domain.TableRow{},
-		URLPrefix:    URLPrefix,
-		PageSize:     pageSize,
-		CurrentPage:  currentPage,
-		TotalPages:   totalPages,
-		TotalRecords: totRecords,
-		StartRecord:  currentPage*pageSize - pageSize + 1,
-		EndRecord:    currentPage * pageSize,
-		ShowActions:  true,
+// GetIDFromRequest extracts ID from URL path parameters.
+func GetIDFromRequest(r *http.Request, idParamName string) (int, error) {
+	idStr := r.PathValue(idParamName) // Assuming chi router for URL params
+	if idStr == "" {
+		return 0, fmt.Errorf("ID parameter '%s' is missing in URL", idParamName)
 	}
-	if currentPage*pageSize > totRecords {
-		table.EndRecord = totRecords
-	} else {
-		table.EndRecord = currentPage * pageSize
-	}
-	return table
-}
-
-func GetIdFromUrl(r *http.Request) (int, error) {
-	// Get the `id` from the URL path
-	idStr := r.PathValue("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		return id, err
+		return 0, fmt.Errorf("invalid ID format for '%s': %w", idParamName, err)
 	}
-	return id, err
+	return id, nil
 }
 
+// CreateResponse creates a standardized JSON response.
+func CreateResponse(w http.ResponseWriter, success bool, errors []domain.FieldError, message string, statusCode int) domain.Response {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(statusCode)
+	return domain.Response{
+		Success:   success,
+		Errors:    errors,
+		Message:   message,
+		HxTrigger: "showMessage",
+	}
+}
 func SendResponse(w http.ResponseWriter, statusCode int, response domain.Response) {
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(statusCode)
 	json.NewEncoder(w).Encode(response)
 
-}
-func CreateResponse(w http.ResponseWriter, success bool, errors []domain.FieldError, message string, statusCode int) domain.Response {
-	w.WriteHeader(statusCode)
-	return domain.Response{
-		Success:    success,
-		StatusCode: statusCode,
-		Message:    message,
-		Errors:     errors,
-		HxTrigger:  "showMessage",
-	}
 }
 
 // Helper function to dynamically get the template rendering function by name
@@ -248,5 +214,36 @@ func getTemplateFunc(tmpl *domain.MyTemplates, tmplName string) (func(domain.Tab
 		// Add more cases for your other template names
 	default:
 		return nil, false
+	}
+}
+
+// WithHxInclude is an option for SetTableBasicData to set HxInclude.
+func WithHxInclude(hxInclude string) func(*domain.TableData) {
+	return func(t *domain.TableData) {
+		t.HxInclude = hxInclude
+	}
+}
+
+// WithPagination is an option for SetTableBasicData to enable/configure pagination.
+func WithPagination(currentPage, pageSize, totalPages int) func(*domain.TableData) {
+	return func(t *domain.TableData) {
+		//t.ShowPagination = true
+		t.Pagination.CurrentPage = currentPage
+		t.Pagination.PageSize = pageSize
+		t.Pagination.TotalPages = totalPages
+	}
+}
+
+// WithUpdate is an option for SetTableBasicData to set show update actions.
+func WithUpdate() func(*domain.TableData) {
+	return func(t *domain.TableData) {
+		t.BtnUpdate.IsVisible = true
+	}
+}
+
+// WithDelete is an option for SetTableBasicData to set show delete actions.
+func WithDelete() func(*domain.TableData) {
+	return func(t *domain.TableData) {
+		t.BtnDelete.IsVisible = true
 	}
 }

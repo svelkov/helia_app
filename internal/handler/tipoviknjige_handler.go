@@ -11,9 +11,10 @@ import (
 )
 
 const (
-	fvknjracContentTitle = "VRSTE PORESKIH KNJIGA (KPR i KIR)"
-	fvknjracTableID      = "fvknjrac-table"
-	fvknjracURLPrefix    = "/api/fvknjrac/"
+	fvknjracContentTitle string = "VRSTE PORESKIH KNJIGA (KPR i KIR)"
+	fvknjracTableID      string = "fvknjrac-table"
+	fvknjracURLPrefix    string = "/api/fvknjrac/"
+	fvknjracURLGetAll    string = "/api/fvknjrac/all"
 )
 
 var fvknjracTableFields = []domain.Fields{
@@ -32,7 +33,7 @@ func NewFvknjracHandler(service *service.BaseService[domain.Fvknjrac]) *Fvknjrac
 }
 func (h *FvknjracHandler) CreateFvknjrac(w http.ResponseWriter, r *http.Request) {
 	var fvknjrac domain.Fvknjrac
-	utils.CreateHelper(w, r, &fvknjrac, h.Service, fvknjracTableFields)
+	utils.CreateHelper(w, r, &fvknjrac, h.Service, utils.IDfvknjrac, fvknjracTableFields)
 }
 
 func (h *FvknjracHandler) UpdateFvknjrac(w http.ResponseWriter, r *http.Request) {
@@ -41,7 +42,7 @@ func (h *FvknjracHandler) UpdateFvknjrac(w http.ResponseWriter, r *http.Request)
 }
 
 func (h *FvknjracHandler) DeleteFvknjrac(w http.ResponseWriter, r *http.Request) {
-	utils.DeleteHelper(w, r, h.Service, utils.IDfvknjrac)
+	utils.DeleteHelper[domain.Fvknjrac](w, r, h.Service, utils.IDfvknjrac)
 }
 
 func (h *FvknjracHandler) confirmDeleteHandler(w http.ResponseWriter, r *http.Request) {
@@ -53,16 +54,16 @@ func (h *FvknjracHandler) confirmAddHandler(w http.ResponseWriter, r *http.Reque
 }
 
 func (h *FvknjracHandler) confirmUpdateHandler(w http.ResponseWriter, r *http.Request) {
-	utils.ConfirmUpdateHelper(w, r, h.Service, fvknjracTableFields, utils.IDfvknjrac)
+	utils.ConfirmUpdateHelper[domain.Fvknjrac](w, r, h.Service, fvknjracTableFields, utils.IDfvknjrac)
 }
 
 func (h *FvknjracHandler) GetFvknjrac(w http.ResponseWriter, r *http.Request) {
-	utils.GetEntityHelper(w, r, h.Service, fvknjracTableFields, utils.IDfvknjrac)
+	utils.GetEntityHelper[domain.Fvknjrac](w, r, h.Service, fvknjracTableFields, utils.IDfvknjrac)
 }
 
 func (h *FvknjracHandler) GetAllFvknjrac(w http.ResponseWriter, r *http.Request) {
 	var fvknjrac domain.Fvknjrac
-	tbl := utils.GetAllEntityHelper(w, r, &fvknjrac, h.Service, fvknjracTableFields, fvknjracContentTitle, fvknjracTableID, fvknjracURLPrefix, utils.IDfvknjrac)
+	tbl := utils.GetAllEntityHelper(w, r, &fvknjrac, h.Service, fvknjracTableFields, fvknjracContentTitle, fvknjracTableID, fvknjracURLPrefix, fvknjracURLGetAll, utils.IDfvknjrac)
 	utils.RenderContent(w, r, *tbl)
 }
 

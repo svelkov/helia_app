@@ -11,8 +11,8 @@ import (
 
 // Generic service interface
 type Service[T any] interface {
-	Create(entity *T, tableFields []domain.Fields) ([]domain.FieldError, error)
-	GetByID(idField string, idValue int) (*T, error)
+	Create(entity *T, idField string, tableFields []domain.Fields) ([]domain.FieldError, int64, error)
+	GetByID(idField string, idValue int64) (*T, error)
 	GetAll(page int, offset int, tableFields []domain.Fields, idField string, searchParams ...string) (*[]T, error)
 	GetAllCustom(queryText, whereText string, args []interface{}, limitOffset, orderBy string) (*[]T, error)
 	GetTotalRecordsCustom(queryText, whereText string, args []interface{}, limitOffset, orderBy string) (int, error)
@@ -20,34 +20,55 @@ type Service[T any] interface {
 	Update(entity *T, idField string, idValue interface{}, tableFields []domain.Fields) ([]domain.FieldError, error)
 	Delete(idField string, id int) error
 	MapEntityToValues(entity *T, tableFields []domain.Fields) []domain.Fields
+	GetFieldCache() map[string]reflect.StructField
 }
 
 type BaseService[T any] struct {
-	Repo      repository.BaseRepository[T]
-	Validator validation.RuleBasedValidator[T]
+	Repo       repository.BaseRepository[T]
+	Validator  validation.RuleBasedValidator[T]
+	fieldCache map[string]reflect.StructField
 }
 
 // NewBaseService creates a new instance of BaseService.
 func NewBaseService[T any](repository repository.BaseRepository[T], validator validation.RuleBasedValidator[T]) *BaseService[T] {
-	return &BaseService[T]{
-		Repo:      repository,
-		Validator: validator,
+	r := &BaseService[T]{
+		Repo:       repository,
+		Validator:  validator,
+		fieldCache: make(map[string]reflect.StructField),
 	}
+	// Initialize cache using generic type
+	var entity T
+	entityType := reflect.TypeOf(entity)
+	if entityType.Kind() == reflect.Ptr {
+		entityType = entityType.Elem()
+	}
+
+	for i := 0; i < entityType.NumField(); i++ {
+		field := entityType.Field(i)
+		r.fieldCache[strings.ToLower(field.Name)] = field
+	}
+
+	return r
 }
 
-func (s *BaseService[T]) Create(entity *T, tableFields []domain.Fields) ([]domain.FieldError, error) {
+func (s *BaseService[T]) Create(entity *T, idField string, tableFields []domain.Fields) ([]domain.FieldError, int64, error) {
 	fieldErrors, err := s.Validator.Validate(entity)
 
 	if err != nil {
-		return []domain.FieldError{}, err
+		return []domain.FieldError{}, 0, err
 	}
 	if len(fieldErrors) > 0 {
-		return fieldErrors, nil
+		return fieldErrors, 0, nil
 	}
-	return []domain.FieldError{}, s.Repo.Create(entity, tableFields)
+	lastInsertedID, err := s.Repo.Create(entity, idField, tableFields)
+	return []domain.FieldError{}, lastInsertedID, err
 }
 
-func (s *BaseService[T]) GetByID(idField string, idValue int) (*T, error) {
+func (s *BaseService[T]) GetFieldCache() map[string]reflect.StructField {
+	return s.fieldCache
+}
+
+func (s *BaseService[T]) GetByID(idField string, idValue int64) (*T, error) {
 	return s.Repo.GetByID(idField, idValue)
 }
 

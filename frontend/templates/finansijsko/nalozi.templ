@@ -8,11 +8,11 @@ import (
 
 var tabClasses string
 
-templ NaloziContent(tabs domain.TabData, tipdokValues *[]domain.Tipdok, ukObrada domain.UkupnaObrada, btnSave, btnNoviNalog domain.Button, tbl domain.TableData) {
+templ NaloziContent(tabs domain.TabData, tipdokValues *[]domain.Tipdok, ukObrada domain.UkupnaObrada, btnSave, btnNoviNalog domain.Button, tbl domain.TableData, searchControl domain.InputControl) {
 	<div id="main-content" class="border-b border-gray-200">
 		@NaloziNav(tabs)
 		<div id="main-content">
-			@NaloziKnjizenjeContent(tipdokValues, ukObrada, btnSave, btnNoviNalog, tbl)
+			@NaloziKnjizenjeContent(tipdokValues, ukObrada, btnSave, btnNoviNalog, tbl, searchControl)
 		</div>
 	</div>
 }
@@ -21,6 +21,7 @@ templ NaloziNav(tabs domain.TabData) {
 	<h2 class="text-xl font-semibold">NALOZI ZA KNJIZENJE</h2>
 	<nav class="-mb-px flex space-x-4" aria-label="Tabs">
 		for _, item := range tabs.Tabs {
+			<input id={ fmt.Sprintf("tab%s", item.Name) } type="hidden" name="sourceTab" value={ item.Name }/>
 			<button
 				id={ item.ID }
 				if item.IsActive {
@@ -40,11 +41,12 @@ templ NaloziNav(tabs domain.TabData) {
 	</nav>
 }
 
-templ NaloziKnjizenjeContent(tipdokValues *[]domain.Tipdok, ukObrada domain.UkupnaObrada, btnSave, btnNoviNalog domain.Button, tbl domain.TableData) {
+templ NaloziKnjizenjeContent(tipdokValues *[]domain.Tipdok, ukObrada domain.UkupnaObrada, btnSave, btnNoviNalog domain.Button, tbl domain.TableData, searchControl domain.InputControl) {
 	@NaloziKnjizenjeHeader(tipdokValues, ukObrada, btnSave, btnNoviNalog)
-	@tmpl.Search_Part(tbl)
+	@tmpl.Search_Part(tbl, searchControl)
 	<div id="table-container" class="mt-1">
 		@tmpl.Table(tbl)
+		<div id="nalozi_stavke" class="border-b border-gray-200"></div>
 	</div>
 }
 
@@ -52,7 +54,7 @@ templ NaloziKnjizenjeHeader(tipdokValues *[]domain.Tipdok, ukObrada domain.Ukupn
 	<div class="grid grid-cols-3 gap-6 py-2">
 		<div class="col-span-2 grid grid-cols-2 gap-1">
 			<div class="flex flex-col space-y-1">
-				<label for="vrstaNaloga" class="block text-sm font-sm text-blue-700">Vrsta Naloga za knjiženje</label>
+				<label id="vrstanaloga" class="block text-sm font-sm text-blue-700">Vrsta Naloga za knjiženje</label>
 				<select
 					class="mt-1 block p-1 w-[50ch] border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 w-full min-w-0"
 					id="tipdokSelect"
@@ -77,6 +79,9 @@ templ NaloziKnjizenjeHeader(tipdokValues *[]domain.Tipdok, ukObrada domain.Ukupn
 					maxlength="50"
 					tabindex="2"
 					name="datumObrade"
+					hx-get="/api/get-current-date"
+					hx-trigger="load"
+					hx-target="#datumObrade"
 				/>
 			</div>
 			<div class="flex flex-col">
@@ -121,23 +126,24 @@ templ NaloziKnjizenjeHeader(tipdokValues *[]domain.Tipdok, ukObrada domain.Ukupn
 			<div class="box-content flex flex-col space-y-1 p-2 border-2 border-gray-300 rounded-md">
 				<div class="flex items-center space-x-2">
 					<label for="ukupnoNaloga" class="inline-block w-1/3 text-sm font-medium text-gray-700">Ukupno Naloga</label>
-					<input type="number" id="ukupnoNaloga" name="ukupnoNaloga" value={ fmt.Sprintf("%d", ukObrada.UkNaloga) } disabled class="mt-1 block p-1 w-[50ch] border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 w-full min-w-0"/>
+					<input id="ukupnoNaloga" name="ukupnoNaloga" value={ ukObrada.UkNaloga } disabled class="mt-1 block p-1 w-[50ch] border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 w-full min-w-0"/>
 				</div>
 				<div class="flex items-center space-x-2">
 					<label for="ukupnoStavki" class="inline-block w-1/3 text-sm font-medium text-gray-700">Ukupno Stavki</label>
-					<input type="number" id="ukupnoStavki" name="ukupnoStavki" value={ fmt.Sprintf("%d", ukObrada.UkStavki) } disabled class="mt-1 block p-1 w-[50ch] border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 w-full min-w-0"/>
+					<input id="ukupnoStavki" name="ukupnoStavki" value={ ukObrada.UkStavki } disabled class="mt-1 block p-1 w-[50ch] border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 w-full min-w-0"/>
 				</div>
 				<div class="flex items-center space-x-2">
 					<label for="duguje" class="inline-block w-1/3 text-sm font-medium text-gray-700">Duguje</label>
-					<input type="number" id="duguje" name="duguje" value={ fmt.Sprintf("%.2f", ukObrada.Duguje) } disabled class="mt-1 block p-1 w-[50ch] border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 w-full min-w-0"/>
+					<input id="duguje" name="duguje" value={ ukObrada.Duguje } disabled class="mt-1 block p-1 w-[50ch] border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 w-full min-w-0"/>
 				</div>
 				<div class="flex items-center space-x-2">
 					<label for="potrazuje" class="inline-block w-1/3 text-sm font-medium text-gray-700">Potražuje</label>
-					<input type="number" id="potrazuje" name="potrazuje" value={ fmt.Sprintf("%.2f", ukObrada.Potrazuje) } disabled class="mt-1 block p-1 w-[50ch] border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 w-full min-w-0"/>
+					<input id="potrazuje" name="potrazuje" value={ ukObrada.Potrazuje } disabled class="mt-1 block p-1 w-[50ch] border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 w-full min-w-0"/>
 				</div>
 			</div>
 		</div>
 	</div>
+	@tmpl.ShowMessage()
 }
 
 templ NaloziSave() {
@@ -150,55 +156,91 @@ templ NaloziSave() {
 	</div>
 }
 
-templ NaloziKopiranje(tabs domain.TabData, tblHeader, tblStavke domain.TableData, btnKopiraj domain.Button) {
-	@NaloziNav(tabs)
-	<div>
-		<h3 class="text-xl font-semibold mb-2">NALOZI ZAGLAVLJE</h3>
-		<div class="flex items-end justify-end col-span-2 py-1 space-x-1">
-			@tmpl.FormSaveButton(btnKopiraj)
-		</div>
-		<div class="border-b border-gray-200 mb-4">
-			@tmpl.Table(tblHeader)
-		</div>
-		<h3 class="text-xl font-semibold mb-2">NALOZI STAVKE</h3>
-		<div class="border-b border-gray-200">
-			@tmpl.Table(tblStavke)
-		</div>
+templ NaloziHeader(tblHeader domain.TableData) {
+	<div class="border-b border-gray-200 mb-4">
+		@tmpl.Table(tblHeader)
 	</div>
 }
 
-templ NaloziStorniranje(tabs domain.TabData, tblHeader, tblStavke domain.TableData, btnStorniraj domain.Button) {
-	@NaloziNav(tabs)
-	<div>
-		<h2 class="text-xl font-semibold mb-2">NALOZI ZAGLAVLJE</h2>
-		<div class="flex items-end justify-end col-span-2 py-1 space-x-1">
-			@tmpl.FormSaveButton(btnStorniraj)
-		</div>
-		<div class="border-b border-gray-200 mb-4">
-			@tmpl.Table(tblHeader)
-		</div>
-		<h2 class="text-xl font-semibold mb-2">NALOZI STAVKE</h2>
-		<div class="border-b border-gray-200">
-			@tmpl.Table(tblStavke)
-		</div>
+templ NaloziDetail(tblStavke domain.TableData, searchControl domain.InputControl) {
+	@tmpl.Search_Part(tblStavke, searchControl)
+	<div id="table-container" class="mt-1">
+		@tmpl.Table(tblStavke)
+		<div id="nalozi_stavke" class="border-b border-gray-200"></div>
 	</div>
 }
 
-templ NaloziStampanje(tabs domain.TabData, tblHeader, tblStavke domain.TableData, btnStampaj domain.Button) {
+templ NaloziKopiranje(tabs domain.TabData, tblHeader, tblStavke domain.TableData, searchControl domain.InputControl) {
 	@NaloziNav(tabs)
 	<div>
-		<h2 class="text-xl font-semibold mb-2">NALOZI ZAGLAVLJE</h2>
-		<div class="flex items-end justify-end col-span-2 py-1 space-x-1">
-			@tmpl.FormSaveButton(btnStampaj)
+		@tmpl.Search_Part(tblHeader, searchControl)
+		@NaloziHeader(tblHeader)
+		<div id="nalozi_kopiranje_stavke" class="border-b border-gray-200"></div>
+	</div>
+}
+
+templ NaloziStorniranje(tabs domain.TabData, tblHeader, tblStavke domain.TableData, searchControl domain.InputControl) {
+	@NaloziNav(tabs)
+	<div>
+		@tmpl.Search_Part(tblHeader, searchControl)
+		@NaloziHeader(tblHeader)
+		<div id="nalozi_storniranje_stavke" class="border-b border-gray-200"></div>
+	</div>
+}
+
+templ NaloziStampanje(tabs domain.TabData, tblHeader, tblStavke domain.TableData, btnStampaj domain.Button, searchControl domain.InputControl) {
+	@NaloziNav(tabs)
+	<div>
+		@tmpl.Search_Part(tblHeader, searchControl)
+		@NaloziHeader(tblHeader)
+		<div id="nalozi_kopiranje_stavke" class="border-b border-gray-200"></div>
+	</div>
+}
+
+templ NaloziKopiranjeDialog(model domain.KopirajNalog) {
+	<h2 class="form-title">Podaci o nalogu koji se kopira</h2>
+	<div class="col-span-2 grid grid-cols-2 gap-1">
+		<div class="flex flex-col">
+			<label for="vista-naloga" class="block text-sm font-sm text-blue-700">Vista naloga</label>
+			<input
+				class="mt-1 block p-1 w-[8ch] border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 w-full min-w-0"
+				type="text"
+				id="vrstaNalogaold"
+				name="vrstaNalogaold"
+			/>
 		</div>
-		<div class="border-b border-gray-200 mb-4">
-			@tmpl.Table(tblHeader)
+		<div class="flex flex-col">
+			<label for="broj-naloga" class="block text-sm font-sm text-blue-700">Broj naloga</label>
+			<input
+				class="mt-1 block p-1 w-[8ch] border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 w-full min-w-0"
+				type="text"
+				id="brojnalogaold"
+				name="brojnalogaold"
+			/>
 		</div>
-		<h2 class="text-xl font-semibold mb-2">NALOZI STAVKE</h2>
-		<div class="border-b border-gray-200">
-			@tmpl.Table(tblStavke)
+		<div class="flex flex-col">
+			<label for="datum-naloga" class="block text-sm font-sm text-blue-700">Datum naloga</label>
+			<input
+				class="mt-1 block p-1 w-[10ch] border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 w-full min-w-0"
+				type="text"
+				id="datumnalogaold"
+				disabled="true"
+				name="datumalogaold"
+			/>
+		</div>
+		<div class="flex flex-col">
+			<label for="opis-knjizenjaold" class="block text-sm font-sm text-blue-700">Opis knjizenja</label>
+			<input
+				class="mt-1 block p-1 w-[50ch] border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 w-full min-w-0"
+				type="text"
+				id="opisknjizenjaold"
+				disabled="true"
+				name="opisknjizenjaold"
+			/>
 		</div>
 	</div>
+	<!-- Full-width Description Section -->
+	<hr class="horizontal-line"/>
 }
 
 templ NaloziScript() {

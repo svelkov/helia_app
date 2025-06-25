@@ -3,25 +3,20 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
+	"helia/internal/common"
 	"helia/internal/domain"
 	"helia/internal/service"
+
 	"net/http"
-	"reflect"
 	"strconv"
 	"strings"
-	"time"
-
-	"log"
 
 	"github.com/gorilla/schema"
-	"github.com/jeandeaual/go-locale"
-	"golang.org/x/text/language"
-	"golang.org/x/text/message"
 )
 
 func DeleteHelper[T any](w http.ResponseWriter, r *http.Request, service service.Service[T], idType string) {
 	// Get the `id` from the URL path
-	id, err := GetIdFromUrl(r)
+	id, err := GetIDFromRequest(r, "id")
 	if err != nil {
 		response := CreateResponse(w, false, []domain.FieldError{}, GetIdFromUrlErrMsg, http.StatusBadRequest)
 		json.NewEncoder(w).Encode(response)
@@ -78,7 +73,7 @@ func ConfirmUpdateHelper[T any](w http.ResponseWriter, r *http.Request, service 
 		json.NewEncoder(w).Encode(response)
 		return
 	}
-	entity, err := service.GetByID(idField, id)
+	entity, err := service.GetByID(idField, int64(id))
 	if err != nil {
 		http.Error(w, "No record for update is available", http.StatusBadRequest)
 		return
@@ -89,9 +84,9 @@ func ConfirmUpdateHelper[T any](w http.ResponseWriter, r *http.Request, service 
 	RenderDialogContent(w, r, dialog, fields, ActionUpdate)
 }
 
-func CreateHelper[T any](w http.ResponseWriter, r *http.Request, entity *T, service service.Service[T], tableFields []domain.Fields) {
+func CreateHelper[T any](w http.ResponseWriter, r *http.Request, entity *T, service service.Service[T], idField string, tableFields []domain.Fields) (insertedId int64, err error) {
 	// Parse the form data
-	err := r.ParseForm()
+	err = r.ParseForm()
 	if err != nil {
 		response := CreateResponse(w, false, []domain.FieldError{}, ParseFormErrMsg, http.StatusBadRequest)
 		json.NewEncoder(w).Encode(response)
@@ -109,7 +104,7 @@ func CreateHelper[T any](w http.ResponseWriter, r *http.Request, entity *T, serv
 		return
 	}
 	tableFields = service.MapEntityToValues(entity, tableFields)
-	fieldErrors, err := service.Create(entity, tableFields)
+	fieldErrors, lastInsertedID, err := service.Create(entity, idField, tableFields)
 	if err != nil {
 		response := CreateResponse(w, false, fieldErrors, SaveDataErrMsg, http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(response)
@@ -122,12 +117,13 @@ func CreateHelper[T any](w http.ResponseWriter, r *http.Request, entity *T, serv
 	}
 	response := CreateResponse(w, true, fieldErrors, SaveDataOkMsg, http.StatusCreated)
 	json.NewEncoder(w).Encode(response)
+	return lastInsertedID, err
 }
 
 func UpdateHelper[T any](w http.ResponseWriter, r *http.Request, entity *T, service service.Service[T], tableFields []domain.Fields, idField string) {
 	// Get the `id` from the URL path
 	redirectURL := fmt.Sprintf("%s/all", r.URL.Path[:strings.LastIndex(r.URL.Path, "/")])
-	id, err := GetIdFromUrl(r)
+	id, err := GetIDFromRequest(r, "id")
 	if err != nil {
 		response := CreateResponse(w, false, []domain.FieldError{}, GetIdFromUrlErrMsg, http.StatusBadRequest)
 		json.NewEncoder(w).Encode(response)
@@ -173,7 +169,7 @@ func UpdateHelper[T any](w http.ResponseWriter, r *http.Request, entity *T, serv
 	http.Redirect(w, r, redirectURL, http.StatusSeeOther)
 }
 
-func GetAllEntityHelper[T any](w http.ResponseWriter, r *http.Request, entity *T, service service.Service[T], tableFields []domain.Fields, entityContentTitle, entityTableID, entityURLPrefix, idField string, hasUpdateDelete ...bool) *domain.TableData {
+func GetAllEntityHelper[T any](w http.ResponseWriter, r *http.Request, entity *T, service service.Service[T], tableFields []domain.Fields, entityContentTitle, entityTableID, entityURLPrefix, entityURLGetall, idField string, hasUpdateDelete ...bool) *domain.TableData {
 
 	// Parse query parameters from the URL
 	searchValue := r.URL.Query().Get("query")
@@ -185,7 +181,7 @@ func GetAllEntityHelper[T any](w http.ResponseWriter, r *http.Request, entity *T
 		return nil
 	}
 
-	currentPage, pageSize, totalPages := GetPaginationData(r, totRecords)
+	currentPage, pageSize, totalPages := common.GetPaginationData(r, totRecords)
 	allEntities, err := service.GetAll(pageSize, (currentPage-1)*pageSize, tableFields, idField, searchValue)
 	if err != nil {
 		response := CreateResponse(w, false, []domain.FieldError{}, ReadDataErrMsg, http.StatusInternalServerError)
@@ -194,83 +190,23 @@ func GetAllEntityHelper[T any](w http.ResponseWriter, r *http.Request, entity *T
 	}
 
 	// Convert the fetched data into the format expected by the template
-	table := SetTableBasicData(entityContentTitle, entityTableID, tableFields, entityURLPrefix, pageSize, currentPage, totalPages, totRecords)
+	table := common.SetTableBasicData(entityContentTitle, entityTableID, tableFields, entityURLPrefix, entityURLGetall, pageSize, currentPage, totalPages, totRecords)
+	common.SetTableRows(&table, *allEntities, tableFields, idField, entityURLPrefix, service.GetFieldCache())
 
-	for _, entity := range *allEntities {
-		val := reflect.ValueOf(entity)
-		if val.Kind() == reflect.Ptr {
-			val = val.Elem() // Handle pointer case
-		}
-
-		// Get ID field value dynamically
-		idValue, _, found := GetFieldByNameCaseInsensitive(val, idField)
-		id := ""
-		if found {
-
-			id = fmt.Sprintf("%v", idValue)
-		}
-
-		// Extract specified fields dynamically
-		var fields []string
-		for _, fieldName := range tableFields {
-			fieldValue, filedType, found := GetFieldByNameCaseInsensitive(val, fieldName.Name)
-			if found {
-				value, err := GetFormattedValue(filedType, fieldValue)
-				if err != nil {
-					FormatValueErrMsg := fmt.Sprintf("Error formatting value: %s", fieldValue)
-					response := CreateResponse(w, false, []domain.FieldError{}, fmt.Sprintf(FormatValueErrMsg, err.Error()), http.StatusInternalServerError)
-					json.NewEncoder(w).Encode(response)
-					return nil
-				}
-				fields = append(fields, value)
-				continue
-			}
-		}
-		// Create table row
-		row := domain.TableRow{ID: id, Fields: fields, HasUpdate: true, HasDelete: true}
-		if len(hasUpdateDelete) > 0 {
-			row.HasUpdate = hasUpdateDelete[0]
-		}
-		if len(hasUpdateDelete) > 1 {
-			row.HasDelete = hasUpdateDelete[1]
-		}
-		table.Rows = append(table.Rows, row)
-	}
-	return table
+	return &table
 	// RenderContent(w, r, *table)
-}
-
-func GetFormattedValue(fieldType string, fieldValue reflect.Value) (string, error) {
-	switch fieldType {
-	case "int", "int64", "int32":
-		return FormatNumberWithLocale(fieldValue.Int(), "int"), nil
-	case "float64":
-		return FormatNumberWithLocale(fieldValue.Float(), "float"), nil
-	case "string":
-		return fmt.Sprintf("%s", fieldValue.String()), nil
-	case "bool":
-		return strconv.FormatBool(fieldValue.Bool()), nil
-	case "time", "date", "datetime", "timestamp":
-		t, ok := fieldValue.Interface().(time.Time)
-		if !ok {
-			return "", fmt.Errorf("fieldValue is not of type time.Time")
-		}
-		return t.Format("2006-01-02"), nil
-	default:
-		return fmt.Sprintf("%v", fieldValue), nil
-	}
 }
 
 func GetEntityHelper[T any](w http.ResponseWriter, r *http.Request, service service.Service[T], tableFields []domain.Fields, idField string) {
 	// Get the `id` from the URL path
-	id, err := GetIdFromUrl(r)
+	id, err := GetIDFromRequest(r, "id")
 	if err != nil {
 		response := CreateResponse(w, false, []domain.FieldError{}, GetIdFromUrlErrMsg, http.StatusBadRequest)
 		json.NewEncoder(w).Encode(response)
 		return
 	}
 
-	entity, err := service.GetByID(idField, id)
+	entity, err := service.GetByID(idField, int64(id))
 	if err != nil {
 		response := CreateResponse(w, false, []domain.FieldError{}, ReadDataErrMsg, http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(response)
@@ -278,56 +214,4 @@ func GetEntityHelper[T any](w http.ResponseWriter, r *http.Request, service serv
 	}
 
 	json.NewEncoder(w).Encode(entity)
-}
-
-// getFieldByNameCaseInsensitive searches for a field name case-insensitively
-func GetFieldByNameCaseInsensitive(val reflect.Value, fieldName string) (reflect.Value, string, bool) {
-	fieldNameLower := strings.ToLower(fieldName)
-
-	// Iterate over struct fields
-	for i := 0; i < val.NumField(); i++ {
-		structField := val.Type().Field(i)
-		if strings.ToLower(structField.Name) == fieldNameLower {
-			return val.Field(i), strings.ToLower(val.Field(i).Type().Name()), true
-		}
-	}
-	return reflect.Value{}, "", false
-}
-
-func FormatNumberWithLocale(numbertoConvert interface{}, numberType string) string {
-	var err error
-	var langTag language.Tag
-	localeString := "en-US"
-
-	parsedTag, _ := language.Parse(localeString)
-	userLocales, _ := locale.GetLocales()
-
-	if len(userLocales) > 0 {
-		langTag, err = language.Parse(userLocales[0])
-		if err != nil {
-			log.Println("Error parsing language:", err)
-			langTag = parsedTag //set default locale if parsing fails
-		}
-		if err == nil {
-			printer := message.NewPrinter(langTag)
-			if numberType == "int" {
-				number := int64(numbertoConvert.(int64))
-				return printer.Sprintf("%d", number)
-			}
-			if numberType == "float" {
-				number := numbertoConvert.(float64)
-				return printer.Sprintf("%.2f", number)
-			}
-		}
-	}
-
-	if numberType == "int" {
-		number := int64(numbertoConvert.(int))
-		return fmt.Sprintf("%d", number)
-	}
-	if numberType == "float" {
-		number := numbertoConvert.(float64)
-		return fmt.Sprintf("%.2f", number)
-	}
-	return fmt.Sprintf("%v", numbertoConvert)
 }

@@ -231,13 +231,17 @@ func (r *BaseRepository[T]) GetFieldType(val reflect.Value, fieldName string) (i
 func (r *BaseRepository[T]) CreateBasicWhere(tableFields []domain.Fields, args *[]interface{}, hasGod, hasKar bool, searchParams ...string) string {
 	sqlWhereBasic := " WHERE 1=1 "
 	paramNr := 1
+	entityName := r.GetTypeName()
+	if entityName != "" {
+		entityName = fmt.Sprintf("%s.", strings.ToLower(entityName))
+	}
 	if hasGod {
-		sqlWhereBasic = fmt.Sprintf("%s AND god = $1 ", sqlWhereBasic)
+		sqlWhereBasic = fmt.Sprintf("%s AND %sgod = $1 ", sqlWhereBasic, entityName)
 		*args = append(*args, r.cfg.God)
 		paramNr = 2
 	}
 	if hasKar {
-		sqlWhereBasic = fmt.Sprintf("%s AND kar = $2 ", sqlWhereBasic)
+		sqlWhereBasic = fmt.Sprintf("%s AND %skar = $2 ", sqlWhereBasic, entityName)
 		*args = append(*args, r.cfg.Kar)
 		paramNr = 3
 	}
@@ -251,6 +255,9 @@ func (r *BaseRepository[T]) CreateBasicWhere(tableFields []domain.Fields, args *
 			field := entityType.Field(i)
 			//no search on god and kar
 			for _, tblField := range tableFields {
+				if tblField.SkipInSearch {
+					continue
+				}
 				if !strings.EqualFold(tblField.Name, field.Name) || strings.ToLower(field.Name) == "god" || strings.ToLower(field.Name) == "kar" {
 					continue
 				}
@@ -299,4 +306,9 @@ func (r *BaseRepository[T]) GetHasGodHasKar() (bool, bool) {
 		}
 	}
 	return hasGod, hasKar
+}
+
+func (r *BaseRepository[T]) GetTypeName() string {
+	entityType := reflect.TypeOf(new(T)).Elem()
+	return entityType.Name()
 }

@@ -11,9 +11,10 @@ import (
 )
 
 const (
-	orgjedContentTitle = "ORGANIZACIONE JEDINICE"
-	orgjedTableID      = "orgjed-table"
-	orgjedURLPrefix    = "/api/orgjed/"
+	orgjedContentTitle string = "ORGANIZACIONE JEDINICE"
+	orgjedTableID      string = "orgjed-table"
+	orgjedURLPrefix    string = "/api/orgjed/"
+	orgjedURLGetAll    string = "/api/orgjed/all"
 )
 
 var orgjedTableFields = []domain.Fields{
@@ -31,7 +32,7 @@ func NewOrgjedHandler(service *service.BaseService[domain.Orgjed]) *OrgjedHandle
 
 func (h *OrgjedHandler) CreateOrgjed(w http.ResponseWriter, r *http.Request) {
 	var orgjed domain.Orgjed
-	utils.CreateHelper(w, r, &orgjed, h.Service, orgjedTableFields)
+	utils.CreateHelper(w, r, &orgjed, h.Service, utils.IDorgjed, orgjedTableFields)
 }
 
 func (h *OrgjedHandler) UpdateOrgjed(w http.ResponseWriter, r *http.Request) {
@@ -40,7 +41,7 @@ func (h *OrgjedHandler) UpdateOrgjed(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *OrgjedHandler) DeleteOrgjed(w http.ResponseWriter, r *http.Request) {
-	utils.DeleteHelper(w, r, h.Service, utils.IDorgjed)
+	utils.DeleteHelper[domain.Orgjed](w, r, h.Service, utils.IDorgjed)
 }
 
 func (h *OrgjedHandler) confirmDeleteHandler(w http.ResponseWriter, r *http.Request) {
@@ -52,16 +53,16 @@ func (h *OrgjedHandler) confirmAddHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (h *OrgjedHandler) confirmUpdateHandler(w http.ResponseWriter, r *http.Request) {
-	utils.ConfirmUpdateHelper(w, r, h.Service, orgjedTableFields, utils.IDorgjed)
+	utils.ConfirmUpdateHelper[domain.Orgjed](w, r, h.Service, orgjedTableFields, utils.IDorgjed)
 }
 
 func (h *OrgjedHandler) GetOrgjed(w http.ResponseWriter, r *http.Request) {
-	utils.GetEntityHelper(w, r, h.Service, orgjedTableFields, utils.IDorgjed)
+	utils.GetEntityHelper[domain.Orgjed](w, r, h.Service, orgjedTableFields, utils.IDorgjed)
 }
 
 func (h *OrgjedHandler) GetAllOrgjed(w http.ResponseWriter, r *http.Request) {
 	var orgjed domain.Orgjed
-	tbl := utils.GetAllEntityHelper(w, r, &orgjed, h.Service, orgjedTableFields, orgjedContentTitle, orgjedTableID, orgjedURLPrefix, utils.IDorgjed)
+	tbl := utils.GetAllEntityHelper(w, r, &orgjed, h.Service, orgjedTableFields, orgjedContentTitle, orgjedTableID, orgjedURLPrefix, orgjedURLGetAll, utils.IDorgjed)
 	utils.RenderContent(w, r, *tbl)
 }
 

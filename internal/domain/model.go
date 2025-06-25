@@ -14,6 +14,15 @@ type SubMenuItem struct {
 	Icon string        `json:"icon,omitempty"`
 }
 
+type TableOptions struct {
+	HasUpdate  bool
+	HasDelete  bool
+	Pagination []int // [page, pageSize]
+	HxInclude  string
+}
+
+type TableOption func(*TableOptions)
+
 type Dialog struct {
 	Id            string
 	Title         string
@@ -34,8 +43,12 @@ type Button struct {
 	HxTarget      string
 	HxSwap        string
 	HxOn          string
+	HxInclude     string
 	HxRequestType string
 	IdDialog      string
+	ActionMethod  string
+	Icon          string
+	IsVisible     bool
 }
 type Fields struct {
 	Name           string
@@ -45,6 +58,7 @@ type Fields struct {
 	Value          string
 	Width          string
 	TabIndex       string
+	SkipInSearch   bool
 }
 type FieldError struct {
 	Field        string `json:"field"`
@@ -83,10 +97,12 @@ type MyTemplates struct {
 }
 
 type TabItem struct {
-	ID           string `json:"id"`            // Unique ID for the tab (used in the HTML)
-	Label        string `json:"label"`         // Text displayed on the tab button
-	HXRequestUrl string `json:"hx_requestUrl"` // The HTMX GET endpoint for this tab's content
-	IsActive     bool   `json:"is_active"`     // Optional: To mark the initially active tab
+	ID           string `json:"id"`             // Unique ID for the tab (used in the HTML)
+	Label        string `json:"label"`          // Text displayed on the tab button
+	HXRequestUrl string `json:"hx_requestUrl"`  // The HTMX GET endpoint for this tab's content
+	IsActive     bool   `json:"is_active"`      // Optional: To mark the initially active tab
+	Name         string `json:"name"`           // Optional: Name of the tab, if needed for identification
+	Icon         string `json:"icon,omitempty"` // Optional: Icon for the tab, if needed
 }
 
 type TabData struct {

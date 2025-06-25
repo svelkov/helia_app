@@ -2,10 +2,10 @@ package templates
 
 import "helia/internal/domain"
 
-templ ContentContainer(tbl domain.TableData) {
-	@Search_Part(tbl)
+templ ContentContainer(tbl domain.TableData, inputControl domain.InputControl) {
+	@Search_Part(tbl, inputControl)
 	@Table(tbl)
-	<script>
+	 <script>
 	    document.addEventListener('htmx:afterSwap', (event) => {
 	        if (event.detail.target.id === 'table') {
 	            const currentPage = event.detail.xhr.responseURL.match(/page=(\d+)/);
@@ -73,5 +73,6 @@ templ ContentContainer(tbl domain.TableData) {
 			input.dispatchEvent(new Event('htmx:load'));
 			}
 		}
+		// htmx.logAll();
 	</script>
 }

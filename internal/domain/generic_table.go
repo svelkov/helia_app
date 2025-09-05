@@ -8,22 +8,23 @@ type TableRow struct {
 }
 
 type TableData struct {
-	ContentTitle string
-	TableID      string
-	Headers      []Fields
-	Rows         []TableRow
-	Pagination   PaginationData
-	URLPrefix    string
-	URLGetAll    string
-	HxInclude    string
-	HxTarget     string
-	BtnAdd       Button
-	BtnUpdate    Button
-	BtnDelete    Button
-	BtnPrint     Button
-	ShowActions  bool
-	DetailTarget string
-	DetailURL    string
+	ContentTitle   string
+	TableID        string
+	Headers        []Fields
+	Rows           []TableRow
+	Pagination     PaginationData
+	URLPrefix      string
+	URLGetAll      string
+	HxInclude      string
+	HxTarget       string
+	BtnAdd         Button
+	BtnUpdate      Button
+	BtnDelete      Button
+	BtnPrint       Button
+	ShowActions    bool
+	ShowPagination bool
+	DetailTarget   string
+	DetailURL      string
 }
 
 type PaginationData struct {

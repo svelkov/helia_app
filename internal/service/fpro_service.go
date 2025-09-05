@@ -180,7 +180,7 @@ func (s *FproResource) GetNaloziStavke(r *http.Request, idFnal int64, searchQuer
 
 	//viewData = *entities
 	// Prepare TableData for UI
-	table = common.SetTableBasicData("STAVKE NALOGA", "nalozi-table", s.naloziStavkeTableFields, "", "", calculatedPageSize, currentPage, totalPages, totRecords)
+	table = common.SetTableBasicData("STAVKE NALOGA", "nalozi-tablestavke", s.naloziStavkeTableFields, "", "", calculatedPageSize, currentPage, totalPages, totRecords)
 
 	// Prepare TableData for UI
 	tbl, err := common.SetTableRows(&table, *entities, s.GetTableStavkeFields(), s.fproIDFieldName, "", s.service.fieldCache)

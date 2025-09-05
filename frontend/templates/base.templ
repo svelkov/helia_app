@@ -25,11 +25,12 @@ templ Base(isLoggedIn bool, content templ.Component, menuItems []domain.SubMenuI
 					@content
 				</main>
 			</div>
-            <div id="report-container"></div>
+			<div id="report-container"></div>
 			<!-- Footer content area -->
 			@Footer(year)
 			<!-- Theme Toggle Script -->
-			<script>
+		</body>
+		<script>
             document.addEventListener('DOMContentLoaded', () => {
                 const themeToggle = document.getElementById('theme-toggle');
                 const themeIcon = document.getElementById('theme-icon');
@@ -85,6 +86,6 @@ templ Base(isLoggedIn bool, content templ.Component, menuItems []domain.SubMenuI
             });
 
         </script>
-		</body>
+		@SearchPopupScript()
 	</html>
 }

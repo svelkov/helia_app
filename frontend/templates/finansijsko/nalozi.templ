@@ -19,15 +19,15 @@ templ NaloziContent(tabs domain.TabData, tipdokValues *[]domain.Tipdok, ukObrada
 
 templ NaloziNav(tabs domain.TabData) {
 	<h2 class="text-xl font-semibold">NALOZI ZA KNJIZENJE</h2>
-	<nav class="-mb-px flex space-x-4" aria-label="Tabs">
+	<nav class="py-1 h-8 text-sm font-medium text-gray-700 flex items-center whitespace-nowrap" aria-label="Tabs">
 		for _, item := range tabs.Tabs {
 			<input id={ fmt.Sprintf("tab%s", item.Name) } type="hidden" name="sourceTab" value={ item.Name }/>
 			<button
 				id={ item.ID }
 				if item.IsActive {
-					class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm text-blue-600 border-blue-600 focus:outline-none"
+					class="whitespace-nowrap rounded-t-lg py-1 px-1 font-medium text-sm rounded-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
 				} else {
-					class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300 focus:outline-none"
+					class="whitespace-nowrap rounded-t-lg py-1 px-1 font-medium text-sm rounded-sm text-gray-600 bg-white border border-gray-300 hover:text-blue-700 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
 				}
 				hx-get={ item.HXRequestUrl }
 				hx-target="#main-content"
@@ -48,6 +48,7 @@ templ NaloziKnjizenjeContent(tipdokValues *[]domain.Tipdok, ukObrada domain.Ukup
 		@tmpl.Table(tbl)
 		<div id="nalozi_stavke" class="border-b border-gray-200"></div>
 	</div>
+	<div id="dialog-stavkenaloga"></div>
 }
 
 templ NaloziKnjizenjeHeader(tipdokValues *[]domain.Tipdok, ukObrada domain.UkupnaObrada, btnSave, btnNoviNalog domain.Button) {
@@ -133,12 +134,12 @@ templ NaloziKnjizenjeHeader(tipdokValues *[]domain.Tipdok, ukObrada domain.Ukupn
 					<input id="ukupnoStavki" name="ukupnoStavki" value={ ukObrada.UkStavki } disabled class="mt-1 block p-1 w-[50ch] border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 w-full min-w-0"/>
 				</div>
 				<div class="flex items-center space-x-2">
-					<label for="duguje" class="inline-block w-1/3 text-sm font-medium text-gray-700">Duguje</label>
-					<input id="duguje" name="duguje" value={ ukObrada.Duguje } disabled class="mt-1 block p-1 w-[50ch] border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 w-full min-w-0"/>
+					<label for="fnalduguje" class="inline-block w-1/3 text-sm font-medium text-gray-700">Duguje</label>
+					<input id="fnalduguje" name="fnalduguje" value={ ukObrada.Duguje } disabled class="mt-1 block p-1 w-[50ch] border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 w-full min-w-0"/>
 				</div>
 				<div class="flex items-center space-x-2">
-					<label for="potrazuje" class="inline-block w-1/3 text-sm font-medium text-gray-700">Potražuje</label>
-					<input id="potrazuje" name="potrazuje" value={ ukObrada.Potrazuje } disabled class="mt-1 block p-1 w-[50ch] border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 w-full min-w-0"/>
+					<label for="fnalpotrazuje" class="inline-block w-1/3 text-sm font-medium text-gray-700">Potražuje</label>
+					<input id="fnalpotrazuje" name="fnalpotrazuje" value={ ukObrada.Potrazuje } disabled class="mt-1 block p-1 w-[50ch] border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 w-full min-w-0"/>
 				</div>
 			</div>
 		</div>

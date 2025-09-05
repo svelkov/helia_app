@@ -1,6 +1,9 @@
 package templates
 
-import "helia/internal/domain"
+import (
+	"fmt"
+	"helia/internal/domain"
+)
 
 // modalConfirmButton returns a button with the appropriate hx-attribute.
 // The default is hx-post.
@@ -82,7 +85,7 @@ templ ModalCloseButton(dialogName string) {
 templ FormSaveButton(btn domain.Button) {
 	<button
 		id={ btn.Id }
-		class="bg-green-600 rounded h-6 px-1 py-1 mr-1 rounded text-xs flex text-white items-center"
+		class="bg-green-600 rounded h-7 px-1 py-1 mr-1 rounded text-xs flex text-white items-center"
 		if btn.HxRequestType == "POST" {
 			hx-post={ btn.HxActionURL }
 		}
@@ -98,7 +101,9 @@ templ FormSaveButton(btn domain.Button) {
 		hx-target={ btn.HxTarget }
 		hx-swap={ btn.HxSwap }
 		hx-include={ btn.HxInclude }
-		hx-on::after-request={ templ.JSFuncCall("handleDialogResponse", btn.IdDialog) }
+		if btn.HxOn != "" {
+			hx-on::after-request={ templ.JSFuncCall("handleDialogResponse", btn.IdDialog) }
+		}
 	>
 		<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6 mr-4">
 			<path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clip-rule="evenodd"></path>
@@ -110,7 +115,7 @@ templ FormSaveButton(btn domain.Button) {
 templ FormAddButton(btn domain.Button) {
 	<button
 		id={ btn.Id }
-		class="bg-blue-600 rounded h-6 px-1 py-1 mr-1 rounded text-xs flex text-white items-center"
+		class="bg-blue-600 rounded h-7 px-1 py-1 mr-1 rounded text-xs flex text-white items-center"
 		if btn.HxRequestType == "POST" {
 			hx-post={ btn.HxActionURL }
 		}
@@ -130,6 +135,67 @@ templ FormAddButton(btn domain.Button) {
 	>
 		<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6 mr-2">
 			<path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25ZM12.75 9a.75.75 0 0 0-1.5 0v2.25H9a.75.75 0 0 0 0 1.5h2.25V15a.75.75 0 0 0 1.5 0v-2.25H15a.75.75 0 0 0 0-1.5h-2.25V9Z" clip-rule="evenodd"></path>
+		</svg>
+		{ btn.LabelText }
+	</button>
+}
+
+templ FormObradaButton(btn domain.Button) {
+	<button
+		id={ btn.Id }
+		class="h-7 text-sm bg-blue-600 hover:bg-blue-700 text-white font-medium py-0 px-2 rounded-sm flex items-center space-x-1"
+		if btn.HxRequestType == "POST" {
+			hx-post={ btn.HxActionURL }
+		}
+		if btn.HxRequestType == "GET" {
+			hx-get={ btn.HxActionURL }
+		}
+		if btn.HxRequestType == "DELETE" {
+			hx-delete={ btn.HxActionURL }
+		}
+		if btn.HxRequestType == "PUT" {
+			hx-put={ btn.HxActionURL }
+		}
+		hx-target={ btn.HxTarget }
+		hx-swap={ btn.HxSwap }
+		hx-include={ btn.HxInclude }
+		hx-headers='{"X-Request-Source": "btnobrada"}'
+		hx-on::after-request={ templ.JSFuncCall("handleDialogResponse", btn.IdDialog) }
+		_="on htmx:afterRequest trigger totalsUpdate"
+	>
+		<!-- Gear icon -->
+		<svg class="h-5 w-5">
+			<use href={ fmt.Sprintf("/frontend/static/icons/allicons.svg#%s", btn.Icon) } xlink:href={ fmt.Sprintf("/frontend/static/icons/allicons.svg#%s", btn.Icon) }></use>
+		</svg>
+		{ btn.LabelText }
+	</button>
+}
+
+templ FormPrintButton(btn domain.Button) {
+	<button
+		id={ btn.Id }
+		class="h-7 text-sm bg-blue-600 hover:bg-blue-700 text-white font-medium py-0 px-2 rounded-sm flex items-center space-x-1"
+		if btn.HxRequestType == "POST" {
+			hx-post={ btn.HxActionURL }
+		}
+		if btn.HxRequestType == "GET" {
+			hx-get={ btn.HxActionURL }
+		}
+		if btn.HxRequestType == "DELETE" {
+			hx-delete={ btn.HxActionURL }
+		}
+		if btn.HxRequestType == "PUT" {
+			hx-put={ btn.HxActionURL }
+		}
+		hx-target={ btn.HxTarget }
+		hx-swap={ btn.HxSwap }
+		hx-include={ btn.HxInclude }
+		hx-headers='{"X-Request-Source": "btnobrada"}'
+		hx-on::after-request={ templ.JSFuncCall("handleDialogResponse", btn.IdDialog) }
+	>
+		<!-- Print icon -->
+		<svg class="h-6 w-6">
+			<use href={ fmt.Sprintf("/frontend/static/icons/allicons.svg#%s", btn.Icon) } xlink:href={ fmt.Sprintf("/frontend/static/icons/allicons.svg#%s", btn.Icon) }></use>
 		</svg>
 		{ btn.LabelText }
 	</button>

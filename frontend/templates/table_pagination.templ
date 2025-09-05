@@ -14,9 +14,10 @@ templ TablePagination(tbl domain.TableData) {
 				id="pageSize"
 				class="block w-auto px-1 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring focus:border-blue-300"
 				hx-get={ fmt.Sprintf("%s", tbl.URLGetAll) }
-				hx-target="#table-body"
+				hx-target={ fmt.Sprintf("#%s", tbl.TableID) }
 				hx-trigger="change"
 				hx-include={ tbl.Pagination.HxInclude }
+				hx-headers='{"X-Request-Source": "btnpage"}'
 				name="pageSize"
 			>
 				for _, pSize := range tbl.Pagination.PageSizes {
@@ -35,8 +36,9 @@ templ TablePagination(tbl domain.TableData) {
 				<li>
 					<a
 						hx-get={ fmt.Sprintf("%s?page=%d&pageSize=%d", tbl.URLGetAll, tbl.Pagination.CurrentPage-1, tbl.Pagination.PageSize) }
-						hx-target="#table-body"
+						hx-target={ fmt.Sprintf("#%s", tbl.TableID) }
 						hx-include={ tbl.Pagination.HxInclude }
+						hx-headers='{"X-Request-Source": "btnpage"}'
 						class="block px-3 py-1 leading-tight text-gray-500 bg-white border border-gray-300 rounded-r-lg hover:bg-gray-100 hover:text-gray-700"
 					>
 						Prethodna
@@ -47,7 +49,8 @@ templ TablePagination(tbl domain.TableData) {
 				<li>
 					<a
 						hx-get={ fmt.Sprintf("%s?page=%d&pageSize=%d", tbl.URLGetAll, 1, tbl.Pagination.PageSize) }
-						hx-target="#table-body"
+						hx-target={ fmt.Sprintf("#%s", tbl.TableID) }
+						hx-headers='{"X-Request-Source": "btnpage"}'
 						class="block px-3 py-1 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700"
 					>
 						1
@@ -58,6 +61,7 @@ templ TablePagination(tbl domain.TableData) {
 						<span
 							class="block px-3 py-1 leading-tight text-gray-500 bg-white border border-gray-300"
 							hx-include={ tbl.Pagination.HxInclude }
+							hx-headers='{"X-Request-Source": "btnpage"}'
 						>...</span>
 					</li>
 				}
@@ -67,8 +71,9 @@ templ TablePagination(tbl domain.TableData) {
 					<li>
 						<a
 							hx-get={ fmt.Sprintf("%s?page=%d&pageSize=%d", tbl.URLGetAll, i, tbl.Pagination.PageSize) }
-							hx-target="#table-body"
+							hx-target={ fmt.Sprintf("#%s", tbl.TableID) }
 							hx-include={ tbl.Pagination.HxInclude }
+							hx-headers='{"X-Request-Source": "btnpage"}'
 							class="block px-3 py-1 leading-tight text-blue-700 bg-blue-100 border border-gray-300"
 						>
 							{ fmt.Sprintf("%d", i) }
@@ -78,8 +83,9 @@ templ TablePagination(tbl domain.TableData) {
 					<li>
 						<a
 							hx-get={ fmt.Sprintf("%s?page=%d&pageSize=%d", tbl.URLGetAll, i, tbl.Pagination.PageSize) }
-							hx-target="#table-body"
+							hx-target={ fmt.Sprintf("#%s", tbl.TableID) }
 							hx-include={ tbl.Pagination.HxInclude }
+							hx-headers='{"X-Request-Source": "btnpage"}'
 							class="block px-3 py-1 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700"
 						>
 							{ fmt.Sprintf("%d", i) }
@@ -93,14 +99,16 @@ templ TablePagination(tbl domain.TableData) {
 						<span
 							class="block px-3 py-1 leading-tight text-gray-500 bg-white border border-gray-300"
 							hx-include={ tbl.Pagination.HxInclude }
+							hx-headers='{"X-Request-Source": "btnpage"}'
 						>...</span>
 					</li>
 				}
 				<li>
 					<a
 						hx-get={ fmt.Sprintf("%s?page=%d&pageSize=%d", tbl.URLGetAll, tbl.Pagination.TotalPages, tbl.Pagination.PageSize) }
-						hx-target="#table-body"
+						hx-target={ fmt.Sprintf("#%s", tbl.TableID) }
 						hx-include={ tbl.Pagination.HxInclude }
+						hx-headers='{"X-Request-Source": "btnpage"}'
 						class="block px-3 py-1 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700"
 					>
 						{ fmt.Sprintf("%d", tbl.Pagination.TotalPages) }
@@ -111,8 +119,9 @@ templ TablePagination(tbl domain.TableData) {
 				<li>
 					<a
 						hx-get={ fmt.Sprintf("%s?page=%d&pageSize=%d", tbl.URLGetAll, tbl.Pagination.CurrentPage+1, tbl.Pagination.PageSize) }
-						hx-target="#table-body"
+						hx-target={ fmt.Sprintf("#%s", tbl.TableID) }
 						hx-include={ tbl.Pagination.HxInclude }
+						hx-headers='{"X-Request-Source": "btnpage"}'
 						class="block px-3 py-1 leading-tight text-gray-500 bg-white border border-gray-300 rounded-r-lg hover:bg-gray-100 hover:text-gray-700"
 					>
 						Sledeća

@@ -146,3 +146,61 @@ type UkupnaObrada struct {
 	Duguje    string
 	Potrazuje string
 }
+
+// PrometHDR represents the structure for PROMETHDR records
+type PrometTotalValues struct {
+	DugDo    float64 `json:"dugDo" db:"dugdo"`
+	PotDo    float64 `json:"potDo" db:"potdo"`
+	SaldoDo  float64 `json:"saldoDo" db:"saldodo"`
+	DugPer   float64 `json:"dugPer" db:"dugper"`
+	PotPer   float64 `json:"potPer" db:"potper"`
+	SaldoPer float64 `json:"saldoPer" db:"saldoper"`
+	DugTot   float64 `json:"dugTot" db:"dugtot"`
+	PotTot   float64 `json:"potTot" db:"pottot"`
+	SaldoTot float64 `json:"saldoTot" db:"saldotot"`
+}
+type PrometResponse struct {
+	TotalRecords int               `json:"totalRecords"`
+	Data         []PrometDto       `json:"data"`
+	Totals       PrometTotalValues `json:"totals"`
+}
+type PrometDto struct {
+	God          int          `db:"god"`
+	Kar          int          `db:"kar"`
+	Tipdok       string       `db:"tipdok"`
+	Nalog        string       `db:"nalog"`
+	Danal        sql.NullTime `db:"danal"`
+	Vrd          string       `db:"vrd"`
+	Dokum        string       `db:"dokum"`
+	Dadok        sql.NullTime `db:"dadok"`
+	Rok          string       `db:"rok"`
+	Tra          string       `db:"tra"`
+	OJ           string       `db:"oj"`
+	Opis         string       `db:"opis"`
+	Duguje       float64      `db:"duguje"`
+	Potrazuje    float64      `db:"potrazuje"`
+	Saldo        float64      `db:"saldo"`
+	Sifval       string       `db:"sifval"`
+	Kurs         float64      `db:"kurs"`
+	Deviznos     float64      `db:"deviznos"`
+	Kolduguje    float64      `db:"kolduguje"`
+	Kolpotrazuje float64      `db:"kolpotrazuje"`
+	Cena         float64      `db:"cena"`
+	Stanje       float64      `db:"stanje"`
+	Dokumv       string       `db:"dokumv"`
+	Dadokv       sql.NullTime `db:"dadokv"`
+	Travez       string       `db:"travez"`
+	Rdokid       int          `db:"rdokid"`
+	MI           string       `db:"mi"`
+	Devduguje    float64      `db:"devduguje"`
+	Devpotrazuje float64      `db:"devpotrazuje"`
+	Iznos        float64      `db:"iznos"`
+	Kolic        float64      `db:"kolic"`
+	Ojozn        string       `db:"ojozn"`
+	Kat          string       `db:"kat"`
+	Konto        string       `db:"konto"`
+	Sifra        string       `db:"sifra"`
+	Idfpro       int          `db:"idfpro"`
+	Idfnal       int          `db:"idfnal"`
+	Idfkpl       int          `db:"idfkpl"`
+}

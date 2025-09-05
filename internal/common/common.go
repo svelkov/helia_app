@@ -1,6 +1,7 @@
 package common
 
 import (
+	"database/sql"
 	"fmt"
 	"helia/internal/domain"
 	"net/http"
@@ -82,7 +83,7 @@ func SetTableBasicData(title, tableID string, headers []domain.Fields, urlPrefix
 			TotalPages:   totalPages,
 			TotalRecords: totalRecords,
 			PageSizes:    []int{10, 15, 25, 50, 100},
-			StartRecord:  1,
+			StartRecord:  currentPage*pageSize - pageSize + 1,
 			EndRecord:    currentPage * pageSize,
 		},
 		ShowActions: true,                                                 // Default, can be overridden
@@ -151,6 +152,20 @@ func SetTableButtons(table *domain.TableData, entityURLPrefix string) *domain.Ta
 	return table
 }
 
+func SetButton(Id, LabelText, Icon, HxActionURL, HxTarget, HxSwap, HxRequestType, HxInclude string, IsVisible bool) domain.Button {
+	return domain.Button{
+		Id:            Id,
+		LabelText:     LabelText,
+		Icon:          Icon,
+		HxActionURL:   HxActionURL,
+		HxTarget:      HxTarget,
+		HxSwap:        HxSwap,
+		HxRequestType: HxRequestType,
+		HxInclude:     HxInclude,
+		IsVisible:     IsVisible,
+	}
+}
+
 // getFieldByNameCaseInsensitive searches for a field name case-insensitively
 func GetFieldByNameCaseInsensitive(val reflect.Value, fieldName string) (reflect.Value, string, bool) {
 	fieldNameLower := strings.ToLower(fieldName)
@@ -170,6 +185,15 @@ func GetFormattedValue(fieldInfo reflect.StructField, fieldValue reflect.Value) 
 	switch fieldInfo.Type.Kind() {
 	case reflect.Struct:
 		// Special handling for time.Time
+		if fieldInfo.Type == reflect.TypeOf(sql.NullTime{}) {
+			fmt.Println(fieldInfo.Type)
+			t, ok := fieldValue.Interface().(sql.NullTime)
+			if !ok {
+				return fmt.Sprintf("%v", fieldValue.Interface())
+			}
+			return t.Time.Format("2006-01-02")
+		}
+
 		if fieldInfo.Type == reflect.TypeOf(time.Time{}) {
 			t, ok := fieldValue.Interface().(time.Time)
 			if !ok {

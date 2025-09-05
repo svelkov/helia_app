@@ -108,9 +108,9 @@ func RenderContent(w http.ResponseWriter, r *http.Request, table domain.TableDat
 			Type:         "search",
 			Placeholder:  "Unesite tekst za pretragu",
 			HxActionURL:  table.URLGetAll,
-			HxTarget:     "#table-body",
+			HxTarget:     fmt.Sprintf("#%s", table.TableID),
 			HxSwap:       "innerHTML",
-			HxInclude:    "#tipdokSelect",
+			HxTrigger:    "keyup changed delay:500ms",
 			Autocomplete: "off",
 		}
 		err = tmpl.ContentContainer(table, searchControl).Render(r.Context(), w)

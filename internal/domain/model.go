@@ -36,6 +36,41 @@ type Dialog struct {
 	HxRequestType string
 }
 
+// SearchPopupConfig holds configuration for the search popup
+type SearchPopupConfig struct {
+	FieldID         string
+	SearchURL       string
+	Placeholder     string
+	InitialValue    string
+	DisplayFieldID  string // Optional: ID of the display field (e.g., "naziv")
+	Width           string // Optional: custom width class
+	MaxHeight       string // Optional: custom max height for results
+	ClearButtonText string // Optional: custom clear button text
+	Position        string // Optional: positioning class (default: "left-0 top-full")
+}
+
+// NewSearchPopupConfig creates a new config with sensible defaults
+func NewSearchPopupConfig(fieldID, searchURL, placeholder string) SearchPopupConfig {
+	return SearchPopupConfig{
+		FieldID:         fieldID,
+		SearchURL:       searchURL,
+		Placeholder:     placeholder,
+		DisplayFieldID:  fieldID + "naziv", // Default naming convention
+		Width:           "w-80",            // Default width
+		MaxHeight:       "max-h-60",        // Default max height
+		ClearButtonText: "Clear ❌",         // Default clear text
+		Position:        "left-0 top-full", // Default position
+	}
+}
+
+// SearchResultRow represents a single row of data in the search results table
+type SearchResultRow struct {
+	Value        string   // The actual value to be stored in the field
+	DisplayValue string   // The main display value (usually the first column)
+	Cells        []string // All cell values including the display value
+	IsClickable  bool     // Whether this row should be selectable
+}
+
 type Button struct {
 	Id            string
 	LabelText     string

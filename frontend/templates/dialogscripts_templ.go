@@ -29,7 +29,7 @@ func DeactivateActionsColumn() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<script>\r\n    \tfunction deactivateActionsColumn() {\r\n\t\t\tconsole.log(\"in Deactivating actions column function\");\r\n\t\t\tdocument.querySelectorAll(\".actions-column\").forEach(el => {\r\n\t\t\t\tel.classList.remove(\"right-0\", \"z-10\");\r\n\t\t\t});\r\n\t\t}\r\n\t\tfunction selectRow(row) {\r\n\t\t\tconsole.log(\"Row clicked:\", row);\r\n\t\t   // Deselect any previously selected row by removing the 'bg-blue-300' class\r\n\t\t\tconst selectedRow = document.querySelector('.bg-blue-300');\r\n\t\t\tif (selectedRow) {\r\n\t\t\tselectedRow.classList.remove('bg-blue-300');\r\n\t\t\t}\r\n\r\n\t\t\t// Select the clicked row\r\n\t\t\trow.classList.add('bg-blue-300');\r\n\t\t}\r\n    </script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<script>\r\n    \tfunction deactivateActionsColumn() {\r\n\t\t\tconsole.log(\"in Deactivating actions column function\");\r\n\t\t\t// Restore the style of actions column if needed\r\n\t\t\tdocument.querySelectorAll(\".actions-column\").forEach(el => {\r\n\t\t\t\tel.classList.add('static');\r\n        \t\tel.classList.remove('sticky', 'right-0', 'z-10');\r\n\t\t\t});\r\n\t\t}\r\n\t\tfunction selectRow(row) {\r\n\t\t\tconsole.log(\"Row clicked:\", row);\r\n\t\t   // Deselect any previously selected row by removing the 'bg-blue-300' class\r\n\t\t\tconst selectedRow = document.querySelector('.bg-blue-300');\r\n\t\t\tif (selectedRow) {\r\n\t\t\tselectedRow.classList.remove('bg-blue-300');\r\n\t\t\t}\r\n\r\n\t\t\t// Select the clicked row\r\n\t\t\trow.classList.add('bg-blue-300');\r\n\t\t}\r\n    </script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -87,7 +87,7 @@ func CloseDialogScript() templ.Component {
 			templ_7745c5c3_Var3 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<script>\r\n\t\tfunction closeDialog(id) {\r\n\t\t\tconsole.log(\"Closing dialog with ID:\", id);\r\n\t\t\tconst dialogElm = document.getElementById(id);\r\n\t\t\tif (dialogElm) {\r\n\t\t\t\tdialogElm.classList.add(\"opacity-0\"); // Fade-out effect\r\n\t\t\t\tsetTimeout(() => {\r\n\t\t\t\t\tdialogElm.classList.add(\"hidden\");\r\n\t\t\t\t}, 300); // Delay to allow fade-out animation\r\n\r\n\t\t\t\t// Restore the style of actions column if needed\r\n\t\t\t\tdocument.querySelectorAll(\".actions-column\").forEach(el => {\r\n\t\t\t\t\tel.classList.add(\"right-0\", \"z-10\");\r\n\t\t\t\t});\r\n\t\t\t}\r\n\t\t}\r\n\t\t// Close dialog when pressing \"Escape\"\r\n\t\tdocument.addEventListener(\"keydown\", function(event) {\r\n\t\t\tif (event.key === \"Escape\") {\r\n\t\t\t\tconst openDialog = document.querySelector(\".fixed:not(.hidden)\");\r\n\t\t\t\tif (openDialog) {\r\n\t\t\t\t\tcloseDialog(openDialog.id);\r\n\t\t\t\t}\r\n\t\t\t}\r\n\t\t}); \r\n    </script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<script>\r\n\t\tfunction closeDialog(id) {\r\n\t\t\tconsole.log(\"Closing dialog with ID:\", id);\r\n\t\t\tconst dialogElm = document.getElementById(id);\r\n\t\t\tif (dialogElm) {\r\n\t\t\t\tdialogElm.classList.add(\"opacity-0\"); // Fade-out effect\r\n\t\t\t\tsetTimeout(() => {\r\n\t\t\t\t\tdialogElm.classList.add(\"hidden\");\r\n\t\t\t\t}, 300); // Delay to allow fade-out animation\r\n\r\n\t\t\t\t// Restore the style of actions column if needed\r\n\t\t\t\tdocument.querySelectorAll(\".actions-column\").forEach(el => {\r\n\t\t\t\t\tel.classList.remove('static');\r\n        \t\t\tel.classList.add('sticky', 'right-0', 'z-10');\r\n\t\t\t\t});\r\n\t\t\t}\r\n\t\t}\r\n\t\t// Close dialog when pressing \"Escape\"\r\n\t\tdocument.addEventListener(\"keydown\", function(event) {\r\n\t\t\tif (event.key === \"Escape\") {\r\n\t\t\t\tconst openDialog = document.querySelector(\".fixed:not(.hidden)\");\r\n\t\t\t\tif (openDialog) {\r\n\t\t\t\t\tcloseDialog(openDialog.id);\r\n\t\t\t\t}\r\n\t\t\t}\r\n\t\t}); \r\n    </script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -116,7 +116,7 @@ func OpenDialogScript(id string) templ.Component {
 			templ_7745c5c3_Var4 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<!-- JavaScript Functions --><script>\r\n\tconsole.log(\"OpenDialogScript called with ID:\", id);\r\n\t\tfunction openDialog(id) {\r\n\t\t\tdocument.getElementById(id).classList.remove(\"hidden\");\r\n\t\t}\r\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<!-- JavaScript Functions --><script>\r\n\t\tfunction openDialog() {\r\n\t\t\tdocument.querySelectorAll('.actions-column').forEach(el => {\r\n\t\t\t\tel.classList.remove('sticky', 'right-0', 'z-10');\r\n\t\t\t\tel.classList.add('static');\r\n\t\t\t});\r\n\t\t}\r\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

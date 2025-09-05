@@ -1,0 +1,449 @@
+package finansijsko
+
+import (
+	"fmt"
+	tmpl "helia/frontend/templates"
+	"helia/internal/domain"
+	"helia/pkg/utils"
+)
+
+templ PrometMain(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.PrometTotalValues) {
+	<!-- Tab Content -->
+	<div id="tab-content" class="flex flex-col h-full">
+		@PrometAnalitickihKonta(tabs, tbl, btnPrint, btnObrada, total)
+	</div>
+	<script>
+        // Tab switching functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set first tab as active
+            document.querySelector('[hx-get="/promet/analitickakonta"]').classList.remove('bg-gray-200', 'text-gray-700');
+            document.querySelector('[hx-get="/promet/analitickakonta"]').classList.add('bg-blue-600', 'text-white');
+            
+            // Tab click handler
+            document.querySelectorAll('[hx-get^="/promet"]').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // Update tab styles
+                    document.querySelectorAll('[hx-get^="/promet"]').forEach(t => {
+                        t.classList.remove('bg-blue-600', 'text-white');
+                        t.classList.add('bg-gray-200', 'text-gray-700');
+                    });
+                    this.classList.remove('bg-gray-200', 'text-gray-700');
+                    this.classList.add('bg-blue-600', 'text-white');
+                });
+            });
+        });
+    </script>
+}
+
+templ PrometNav(tabs domain.TabData) {
+	<h2 class="text-xl font-semibold">PROMET</h2>
+	<nav class="py-1 h-8 text-sm font-medium text-gray-700 flex items-center whitespace-nowrap" aria-label="Tabs">
+		for _, item := range tabs.Tabs {
+			<input id={ fmt.Sprintf("tab%s", item.Name) } type="hidden" name="sourceTab" value={ item.Name }/>
+			<button
+				id={ item.ID }
+				if item.IsActive {
+					class="whitespace-nowrap rounded-t-lg py-1 px-1 font-medium text-sm rounded-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+				} else {
+					class="whitespace-nowrap rounded-t-lg py-1 px-1 font-medium text-sm rounded-sm text-gray-600 bg-white border border-gray-300 hover:text-blue-700 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+				}
+				hx-get={ item.HXRequestUrl }
+				hx-target="#tab-content"
+				hx-swap="innerHTML"
+				hx-headers='{"X-Request-Source": "tab"}'
+				aria-controls="promet-panel"
+				aria-selected={ fmt.Sprintf("%v", item.IsActive) }
+			>
+				{ item.Label }
+			</button>
+		}
+	</nav>
+}
+
+// Tab 1 - Promet analitickih konta
+templ PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.PrometTotalValues) {
+	<!-- Tab Navigation -->
+	@PrometNav(tabs)
+	<!-- Tab 1 Content -->
+	<div id="tab1">
+		<!-- First Row - Two divs side by side -->
+		<div class="grid grid-cols-2 gap-1">
+			<!-- Parameters Div - Left Aligned -->
+			<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg">
+				<div class="flex items-center gap-2 mb-1">
+					@tmpl.TextInputField("konto", "", "Konto", "text", true, false, utils.ClassInputTextEnabled, utils.ClassLabel, "api/fkpl/trazikonto", "kontonaziv", `{"vkonta": "2"}`)
+					@tmpl.SearchButton("konto", "konto", "/api/promet/searchbutton", "#search-dropdown", "innerHTML", "2")
+					@tmpl.TextInputField("kontonaziv", "", "", "text", false, true, utils.ClassInputTextDisabled, "", "", "", "")
+				</div>
+				<div class="flex items-center gap-2 mb-1">
+					@tmpl.TextInputField("sifra", "", "Sifra", "text", true, false, utils.ClassInputTextEnabled, utils.ClassLabel, "api/fkpl/trazikonto", "sifranaziv", `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`)
+					@tmpl.SearchButton("sifra", "sifra", "/api/promet/searchbutton", "#search-dropdown", "innerHTML", "1")
+					@tmpl.TextInputField("sifranaziv", "", "", "text", false, true, utils.ClassInputTextDisabled, "", "", "", "")
+				</div>
+				@tmpl.InputField("oddatuma", "Od datuma", "date")
+				@tmpl.InputField("dodatuma", "Do datuma", "date")
+				<div class="mb-1 flex items-center justify-between h-6">
+					<!-- Checkbox group on the left -->
+					<div class="flex items-center">
+						<input type="checkbox" class="h-4 w-4 rounded border border-blue-400 text-blue-600 focus:ring-blue-500"/>
+						<span class="ml-1 text-sm text-gray-700">Dodatni parametri</span>
+					</div>
+					<!-- Buttons on the right -->
+					<div class="flex items-center space-x-1">
+						@tmpl.FormObradaButton(btnObrada)
+						@tmpl.FormPrintButton(btnPrint)
+					</div>
+				</div>
+			</div>
+			<!-- Values Div - Numeric Right Aligned -->
+			<div class="border mt-1 mb-1 bg-blue-100 border border-blue-400 p-1 rounded-lg">
+				@TotalValues(total)
+			</div>
+		</div>
+		<div class="flex flex-col">
+			<!-- Parent should have: class="flex flex-col" -->
+			<!-- Table Section -->
+			<div id="promettable" class="flex-1 rounded-t-lg overflow-x-auto overflow-y-auto border border-gray-200 rounded-lg">
+				@tmpl.Table(tbl)
+			</div>
+		</div>
+	</div>
+}
+
+// Tab 2 - Analiticka kartica po mestama isporuke
+templ AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.PrometTotalValues) {
+	<!-- Tab Navigation -->
+	@PrometNav(tabs)
+	<div id="tab2">
+		<!-- Two divs side by side -->
+		<!-- First Row - Two divs side by side -->
+		<div class="grid grid-cols-2 gap-1">
+			<!-- Parameters Div - Left Aligned -->
+			<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg">
+				<div class="flex items-center gap-2 mb-1">
+					@tmpl.TextInputField("konto", "", "Konto", "text", true, false, utils.ClassInputTextEnabled, utils.ClassLabel, "api/fkpl/trazikonto", "kontonaziv", `{"vkonta": "2"}`)
+					@tmpl.SearchButton("konto", "konto", "/api/promet/searchbutton", "#search-dropdown", "innerHTML", "2")
+					@tmpl.TextInputField("kontonaziv", "", "", "text", false, true, utils.ClassInputTextDisabled, "", "", "", "")
+				</div>
+				<div class="flex items-center gap-2 mb-1">
+					@tmpl.TextInputField("sifra", "", "Sifra", "text", true, false, utils.ClassInputTextEnabled, utils.ClassLabel, "api/fkpl/trazikonto", "sifranaziv", `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`)
+					@tmpl.SearchButton("sifra", "sifra", "/api/promet/searchbutton", "#search-dropdown", "innerHTML", "1")
+					@tmpl.TextInputField("sifranaziv", "", "", "text", false, true, utils.ClassInputTextDisabled, "", "", "", "")
+				</div>
+				@tmpl.InputField("oddatuma", "Od datuma", "date")
+				@tmpl.InputField("dodatuma", "Do datuma", "date")
+				<div class="flex items-center gap-2 mb-1">
+					@tmpl.TextInputField("odmi", "", "Od Mesta Isp.", "text", true, false, utils.ClassInputTextEnabled, utils.ClassLabel, "api/mi/trazimi", "odminaziv", "")
+					@tmpl.SearchButton("odmi", "odmi", "/api/promet/searchbutton", "#search-dropdown", "innerHTML", "1")
+					@tmpl.TextInputField("odminaziv", "", "", "text", false, true, utils.ClassInputTextDisabled, "", "", "", "")
+				</div>
+				<div class="flex items-center gap-2 mb-1">
+					@tmpl.TextInputField("domi", "999", "Do Mesta Isp.", "text", true, false, utils.ClassInputTextEnabled, utils.ClassLabel, "api/mi/trazimi", "dominaziv", "")
+					@tmpl.SearchButton("domi", "domi", "/api/promet/searchbutton", "#search-dropdown", "innerHTML", "1")
+					@tmpl.TextInputField("dominaziv", "", "", "text", false, true, utils.ClassInputTextDisabled, "", "", "", "")
+				</div>
+				<div class="mb-1 flex items-center justify-between h-6">
+					<!-- Checkbox group on the left -->
+					<div class="flex items-center">
+						<input type="checkbox" class="h-4 w-4 rounded border border-blue-400 text-blue-600 focus:ring-blue-500"/>
+						<span class="ml-1 text-sm text-gray-700">Dodatni parametri</span>
+					</div>
+					<!-- Buttons on the right -->
+					<div class="flex items-center space-x-1">
+						@tmpl.FormObradaButton(btnObrada)
+						@tmpl.FormPrintButton(btnPrint)
+					</div>
+				</div>
+			</div>
+			<!-- Values Div - Numeric Right Aligned -->
+			<div class="border mt-1 mb-1 bg-blue-100 border border-blue-400 p-1 rounded-lg">
+				@TotalValues(total)
+			</div>
+		</div>
+		<div class="flex flex-col h-full">
+			<!-- Parent should have: class="flex flex-col" -->
+			<!-- Table Section -->
+			<div id="promettable" class="flex-1 overflow-x-auto overflow-y-auto border border-gray-200 rounded-lg">
+				@tmpl.Table(tbl)
+			</div>
+		</div>
+	</div>
+}
+
+// Tab 3 - Promet deviznih analitickih konta
+templ PrometDeviznihAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, tblDevizni domain.TableData, btnPrint, btnObrada domain.Button, total domain.PrometTotalValues) {
+	<!-- Tab Navigation -->
+	@PrometNav(tabs)
+	<div id="tab3">
+		<!-- First Row - Two divs side by side -->
+		<div class="grid grid-cols-2 gap-1">
+			<!-- Parameters Div - Left Aligned -->
+			<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg">
+				<div class="flex items-center gap-2 mb-1">
+					@tmpl.TextInputField("konto", "", "Konto", "text", true, false, utils.ClassInputTextEnabled, utils.ClassLabel, "api/fkpl/trazikonto", "kontonaziv", `{"vkonta": "2"}`)
+					@tmpl.SearchButton("konto", "konto", "/api/promet/searchbutton", "#search-dropdown", "innerHTML", "2")
+					@tmpl.TextInputField("kontonaziv", "", "", "text", false, true, utils.ClassInputTextDisabled, "", "", "", "")
+				</div>
+				<div class="flex items-center gap-2 mb-1">
+					@tmpl.TextInputField("sifra", "", "Sifra", "text", true, false, utils.ClassInputTextEnabled, utils.ClassLabel, "api/fkpl/trazikonto", "sifranaziv", `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`)
+					@tmpl.SearchButton("sifra", "sifra", "/api/promet/searchbutton", "#search-dropdown", "innerHTML", "1")
+					@tmpl.TextInputField("sifranaziv", "", "", "text", false, true, utils.ClassInputTextDisabled, "", "", "", "")
+				</div>
+				@tmpl.InputField("oddatuma", "Od datuma", "date")
+				@tmpl.InputField("dodatuma", "Do datuma", "date")
+				<div class="mb-1 flex items-center justify-between h-6">
+					<!-- Checkbox group on the left -->
+					<div class="flex items-center">
+						<input type="checkbox" class="h-4 w-4 rounded border border-blue-400 text-blue-600 focus:ring-blue-500"/>
+						<span class="ml-1 text-sm text-gray-700">Dodatni parametri</span>
+					</div>
+					<!-- Buttons on the right -->
+					<div class="flex items-center space-x-1">
+						@tmpl.FormObradaButton(btnObrada)
+						@tmpl.FormPrintButton(btnPrint)
+					</div>
+				</div>
+			</div>
+			<!-- Values Div - Numeric Right Aligned -->
+			<div class="border mt-1 mb-1 bg-blue-100 border border-blue-400 p-1 rounded-lg">
+				@TotalValues(total)
+			</div>
+		</div>
+		<div class="flex flex-col h-full">
+			<!-- Parent should have: class="flex flex-col" -->
+			<!-- Table Section -->
+			<div id="promettable" class="flex-1 overflow-x-auto overflow-y-auto border border-gray-200 rounded-lg">
+				@tmpl.Table(tbl)
+			</div>
+		</div>
+		<div class="flex flex-col h-full">
+			<!-- Parent should have: class="flex flex-col" -->
+			<!-- Table Section -->
+			<div id="promettable" class="flex-1 overflow-x-auto overflow-y-auto border border-gray-200 rounded-lg">
+				@tmpl.Table(tbl)
+			</div>
+		</div>
+	</div>
+}
+
+templ PrometSubsintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.PrometTotalValues) {
+	<!-- Tab Navigation -->
+	@PrometNav(tabs)
+	<div id="tab4">
+		<!-- First Row - Two divs side by side -->
+		<div class="grid grid-cols-2 gap-1">
+			<!-- Parameters Div - Left Aligned -->
+			<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg">
+				<div class="flex items-center gap-2 mb-1">
+					@tmpl.TextInputField("konto", "", "Konto", "text", true, false, utils.ClassInputTextEnabled, utils.ClassLabel, "api/fkpl/trazikonto", "kontonaziv", `{"vkonta": "2"}`)
+					@tmpl.SearchButton("konto", "konto", "/api/promet/searchbutton", "#search-dropdown", "innerHTML", "2")
+					@tmpl.TextInputField("kontonaziv", "", "", "text", false, true, utils.ClassInputTextDisabled, "", "", "", "")
+				</div>
+				@tmpl.InputField("oddatuma", "Od datuma", "date")
+				@tmpl.InputField("dodatuma", "Do datuma", "date")
+				<div class="mb-1 flex items-center justify-between h-6">
+					<!-- Checkbox group on the left -->
+					<div class="flex items-center">
+						<input type="checkbox" class="h-4 w-4 rounded border border-blue-400 text-blue-600 focus:ring-blue-500"/>
+						<span class="ml-1 text-sm text-gray-700">Dodatni parametri</span>
+					</div>
+					<!-- Buttons on the right -->
+					<div class="flex items-center space-x-1">
+						@tmpl.FormObradaButton(btnObrada)
+						@tmpl.FormPrintButton(btnPrint)
+					</div>
+				</div>
+			</div>
+			<!-- Values Div - Numeric Right Aligned -->
+			<div class="border mt-1 mb-1 bg-blue-100 border border-blue-400 p-1 rounded-lg">
+				@TotalValues(total)
+			</div>
+		</div>
+		<div class="flex flex-col h-full">
+			<!-- Parent should have: class="flex flex-col" -->
+			<!-- Table Section -->
+			<div id="promettable" class="flex-1 overflow-x-auto overflow-y-auto border border-gray-200 rounded-lg">
+				@tmpl.Table(tbl)
+			</div>
+		</div>
+	</div>
+}
+
+templ PrometSintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.PrometTotalValues) {
+	<!-- Tab Navigation -->
+	@PrometNav(tabs)
+	<div id="tab5">
+		<!-- First Row - Two divs side by side -->
+		<div class="grid grid-cols-2 gap-1">
+			<!-- Parameters Div - Left Aligned -->
+			<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg">
+				<div class="flex items-center gap-2 mb-1">
+					@tmpl.TextInputField("konto", "", "Konto", "text", true, false, utils.ClassInputTextEnabled, utils.ClassLabel, "api/fkpl/trazikonto", "kontonaziv", `{"vkonta": "3"}`)
+					@tmpl.SearchButton("konto", "konto", "/api/promet/searchbutton", "#search-dropdown", "innerHTML", "2")
+					@tmpl.TextInputField("kontonaziv", "", "", "text", false, true, utils.ClassInputTextDisabled, "", "", "", "")
+				</div>
+				@tmpl.InputField("oddatuma", "Od datuma", "date")
+				@tmpl.InputField("dodatuma", "Do datuma", "date")
+				<div class="mb-2 flex items-center justify-between h-6">
+					<!-- Checkbox group on the left -->
+					<div class="flex items-center">
+						<input type="checkbox" class="h-4 w-4 rounded border border-blue-400 text-blue-600 focus:ring-blue-500"/>
+						<span class="ml-1 text-sm text-gray-700">Prikazi analitiku</span>
+					</div>
+					<!-- Buttons on the right -->
+					<div class="flex items-center space-x-1">
+						@tmpl.FormObradaButton(btnObrada)
+						@tmpl.FormPrintButton(btnPrint)
+					</div>
+				</div>
+			</div>
+			<!-- Values Div - Numeric Right Aligned -->
+			<div class="border mt-1 mb-1 bg-blue-100 border border-blue-400 p-1 rounded-lg">
+				@TotalValues(total)
+			</div>
+		</div>
+		<div class="flex flex-col h-full">
+			<!-- Parent should have: class="flex flex-col" -->
+			<!-- Table Section -->
+			<div id="promettable" class="flex-1 overflow-x-auto overflow-y-auto border border-gray-200 rounded-lg">
+				@tmpl.Table(tbl)
+			</div>
+		</div>
+	</div>
+}
+
+templ KarticaSintetickiKonta(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.PrometTotalValues) {
+	<!-- Tab Navigation -->
+	@PrometNav(tabs)
+	<div id="tab6">
+		<!-- First Row - Two divs side by side -->
+		<div class="grid grid-cols-2 gap-1">
+			<!-- Parameters Div - Left Aligned -->
+			<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg">
+				<div class="flex items-center gap-2 mb-1">
+					@tmpl.TextInputField("konto", "", "Konto", "text", true, false, utils.ClassInputTextEnabled, utils.ClassLabel, "api/fkpl/trazikonto", "kontonaziv", `{"vkonta": "2"}`)
+					@tmpl.SearchButton("konto", "konto", "/api/promet/searchbutton", "#search-dropdown", "innerHTML", "2")
+					@tmpl.TextInputField("kontonaziv", "", "", "text", false, true, utils.ClassInputTextDisabled, "", "", "", "")
+				</div>
+				@tmpl.InputField("oddatuma", "Od datuma", "date")
+				@tmpl.InputField("dodatuma", "Do datuma", "date")
+				<div class="mb-2 flex items-center justify-between h-6">
+					<!-- Checkbox group on the left -->
+					<div class="flex items-center">
+						<input type="checkbox" class="h-4 w-4 rounded border border-blue-400 text-blue-600 focus:ring-blue-500"/>
+						<span class="ml-1 text-sm text-gray-700">Prikazi analitiku</span>
+					</div>
+					<!-- Buttons on the right -->
+					<div class="flex items-center space-x-1">
+						@tmpl.FormObradaButton(btnObrada)
+						@tmpl.FormPrintButton(btnPrint)
+					</div>
+				</div>
+			</div>
+			<!-- Values Div - Numeric Right Aligned -->
+			<div class="border mt-1 mb-1 bg-blue-100 border border-blue-400 p-1 rounded-lg">
+				@TotalValues(total)
+			</div>
+		</div>
+		<div class="flex flex-col h-full">
+			<!-- Parent should have: class="flex flex-col" -->
+			<!-- Table Section -->
+			<div id="promettable" class="flex-1 overflow-x-auto overflow-y-auto border border-gray-200 rounded-lg">
+				@tmpl.Table(tbl)
+			</div>
+		</div>
+	</div>
+}
+
+templ PrometKontaPoVRD(tabs domain.TabData, tbl domain.TableData) {
+	<!-- Tab Navigation -->
+	@PrometNav(tabs)
+	<div id="tab7"></div>
+}
+
+templ PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.PrometTotalValues) {
+	<!-- Tab Navigation -->
+	@PrometNav(tabs)
+	<div id="tab8">
+		<!-- First Row - Two divs side by side -->
+		<div class="grid grid-cols-2 gap-1">
+			<!-- Parameters Div - Left Aligned -->
+			<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg">
+				<div class="flex items-center gap-2 mb-1">
+					@tmpl.TextInputField("konto", "", "Konto", "text", true, false, utils.ClassInputTextEnabled, utils.ClassLabel, "api/fkpl/trazikonto", "kontonaziv", `{"vkonta": "2"}`)
+					@tmpl.SearchButton("konto", "konto", "/api/promet/searchbutton", "#search-dropdown", "innerHTML", "2")
+					@tmpl.TextInputField("kontonaziv", "", "", "text", false, true, utils.ClassInputTextDisabled, "", "", "", "")
+				</div>
+				<div class="flex items-center gap-2 mb-1">
+					@tmpl.TextInputField("odsifre", "", "Od Sifre", "text", true, false, utils.ClassInputTextEnabled, utils.ClassLabel, "api/fkpl/trazikonto", "sifranaziv", `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`)
+					@tmpl.SearchButton("odsifre", "odsifre", "/api/promet/searchbutton", "#search-dropdown", "innerHTML", "1")
+					@tmpl.TextInputField("odsifrenaziv", "", "", "text", false, true, utils.ClassInputTextDisabled, "", "", "", "")
+				</div>
+				<div class="flex items-center gap-2 mb-1">
+					@tmpl.TextInputField("dosifre", "", "Do Sifre", "text", true, false, utils.ClassInputTextEnabled, utils.ClassLabel, "api/fkpl/trazikonto", "sifranaziv", `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`)
+					@tmpl.SearchButton("dosifre", "dosifre", "/api/promet/searchbutton", "#search-dropdown", "innerHTML", "1")
+					@tmpl.TextInputField("dosifrenaziv", "", "", "text", false, true, utils.ClassInputTextDisabled, "", "", "", "")
+				</div>
+				@tmpl.InputField("odnaloga", "Od Naloga", "text")
+				@tmpl.InputField("odnaloga", "Do Naloga", "text")
+				<div class="mb-2 flex items-center justify-between h-6">
+					<!-- Checkbox group on the left -->
+					<div class="flex items-center"></div>
+					<!-- Buttons on the right -->
+					<div class="flex items-center space-x-1">
+						@tmpl.FormObradaButton(btnObrada)
+						@tmpl.FormPrintButton(btnPrint)
+					</div>
+				</div>
+			</div>
+			<!-- Values Div - Numeric Right Aligned -->
+			<div class="border mt-1 mb-1 bg-blue-100 border border-blue-400 p-1 rounded-lg">
+				@TotalValues(total)
+			</div>
+		</div>
+		<div class="flex flex-col h-full">
+			<!-- Parent should have: class="flex flex-col" -->
+			<!-- Table Section -->
+			<div id="promettable" class="flex-1 overflow-x-auto overflow-y-auto border border-gray-200 rounded-lg">
+				@tmpl.Table(tbl)
+			</div>
+		</div>
+	</div>
+}
+
+templ TotalValues(total domain.PrometTotalValues) {
+	<div id="totalvalues" class="border p-1 rounded-lg">
+		<div class="grid grid-cols-4 gap-1 mb-px text-sm font-medium text-gray-700 h-6 items-center">
+			<div class="text-center"></div>
+			<div class="text-center">Duguje</div>
+			<div class="text-center">Potražuje</div>
+			<div class="text-center">Saldo</div>
+		</div>
+		<div
+			class="grid grid-cols-4 gap-1 mb-1 h-6 items-center"
+			hx-get="/api/promet/totalvalues"
+			hx-trigger="click from:#obrada-btn"
+			hx-target="#totalvalues"
+			hx-swap="innerHTML"
+			hx-include="#konto, #sifra, #oddatuma, #dodatuma"
+			hx-vals='{"konto": document.getElementById("konto").value, "sifra": document.getElementById("sifra").value, "oddatuma": document.getElementById("oddatuma").value, "dodatuma": document.getElementById("dodatuma").value }'
+		>
+			<div class="text-sm text-gray-600">Promet do:</div>
+			@tmpl.NumericInputField("dugujedo", total.DugDo, 2, true, utils.ClassInputNumericDisabled)
+			@tmpl.NumericInputField("potrazujedo", total.PotDo, 2, true, utils.ClassInputNumericDisabled)
+			@tmpl.NumericInputField("saldodo", total.SaldoDo, 2, true, utils.ClassInputNumericDisabled)
+		</div>
+		<div class="grid grid-cols-4 gap-1 mb-1 h-6 items-center">
+			<div class="text-sm text-gray-600">Promet za period:</div>
+			@tmpl.NumericInputField("dugujeperiod", total.DugPer, 2, true, utils.ClassInputNumericDisabled)
+			@tmpl.NumericInputField("potrazujeperiod", total.PotPer, 2, true, utils.ClassInputNumericDisabled)
+			@tmpl.NumericInputField("saldoperiod", total.SaldoPer, 2, true, utils.ClassInputNumericDisabled)
+		</div>
+		<div class="grid grid-cols-4 gap-1 h-6 items-center">
+			<div class="text-sm text-gray-600">Ukupan promet:</div>
+			@tmpl.NumericInputField("dugujeukupno", total.DugTot, 2, true, utils.ClassInputNumericDisabled)
+			@tmpl.NumericInputField("potrazujeukupno", total.PotTot, 2, true, utils.ClassInputNumericDisabled)
+			@tmpl.NumericInputField("saldoukupno", total.SaldoTot, 2, true, utils.ClassInputNumericDisabled)
+		</div>
+	</div>
+}

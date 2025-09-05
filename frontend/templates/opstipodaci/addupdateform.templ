@@ -27,8 +27,8 @@ templ AddUpdateForm(dialog domain.Dialog, fields []domain.Fields) {
 			>
 				for i, field  := range fields {
 					<div class="flex flex-col">
-						<label class="block text-sm font-sm text-blue-700">{ field.Label }</label>
-						<input
+						<label for={field.Name} class="block text-sm font-sm text-blue-700">{ field.Label }</label>
+						<input id={field.Name}
 							class={ fmt.Sprintf("mt-1 block p-1 w-[%sch] border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 w-full min-w-0", field.Width) }
 							type={ field.Type }
 							maxlength={ field.Width }

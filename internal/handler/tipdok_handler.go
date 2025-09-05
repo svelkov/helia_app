@@ -15,7 +15,7 @@ const (
 	tipdokContentTitle string = "VRSTE NALOGA"
 	tipdokTableID      string = "tipdok-table"
 	tipdokURLPrefix    string = "/api/tipdok/"
-	tipdokURLGetAll    string = "/api/tipdok/all1"
+	tipdokURLGetAll    string = "/api/tipdok/all"
 )
 
 // key of the map must be the name of filed in the table in db (we need it for mapping)

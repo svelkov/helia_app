@@ -6,24 +6,24 @@ import (
 )
 
 templ Table(tbl domain.TableData) {
-	<div id={ fmt.Sprintf("%s", tbl.TableID) }>
-		<div class="overflow-x-auto overflow-y-hidden relative">
-			<table class="min-w-full border-r">
+	<div id={ tbl.TableID } class="w-full h-full border-collapse">
+		<div class="overflow-x-auto overflow-y-hidden rounded-t-lg relative">
+			<table class="w-full h-full border-collapse border-r">
 				@TableHeader(tbl)
 				@TableBody(tbl, tbl.URLPrefix)
 			</table>
 		</div>
-		<div class="mt-2 flex justify-center items-center">
-			@TablePagination(tbl)
-		</div>
+		if tbl.ShowPagination {
+			<div class="mt-2 flex justify-center items-center">
+				@TablePagination(tbl)
+			</div>
+		}
 		<!-- Container for HTMX-loaded dialog -->
-		<div
-			id="dialog-container"
-			hx-on:htmx:afterSwap="this.classList.remove('hidden')"
-			class="fixed inset-0 z-[1000] flex items-center justify-center hidden"
-		></div>
+		<div id="dialog-container" hx-on="htmx:afterSwap:deactivateActionsColumn()"></div>
 	</div>
 	@DeactivateActionsColumn()
+	@ShowMessage()
+	@OpenDialogScript(tbl.TableID)
 }
 
 templ TableHeader(tbl domain.TableData) {
@@ -44,7 +44,7 @@ templ TableHeader(tbl domain.TableData) {
 }
 
 templ TableBody(tbl domain.TableData, urlPrefix string) {
-	<tbody class="bg-white divide-y divide-gray-200">
+	<tbody id={ fmt.Sprintf("%s-body", tbl.TableID) } class="bg-white divide-y divide-gray-200">
 		for i, row := range tbl.Rows {
 			<tr
 				class={ fmt.Sprintf("hover:bg-blue-100 cursor-pointer %s", func() string {
@@ -75,7 +75,7 @@ templ TableBody(tbl domain.TableData, urlPrefix string) {
 									hx-get={ tbl.BtnUpdate.HxActionURL }
 									hx-target="#dialog-container"
 									hx-swap="innerHTML"
-									onclick="event.stopPropagation()"
+									onclick="event.stopPropagation(); openDialog()"
 									hx-vals={ fmt.Sprintf(`{"url": "%s", "id": "%s"}`, tbl.URLPrefix, row.ID) }
 									class="bg-indigo-500 hover:bg-indigo-700 text-white py-1 px-1 rounded text-xs flex items-center"
 								>
@@ -91,7 +91,7 @@ templ TableBody(tbl domain.TableData, urlPrefix string) {
 									hx-get={ tbl.BtnDelete.HxActionURL }
 									hx-target="#dialog-container"
 									hx-swap="innerHTML"
-									onclick="event.stopPropagation()"
+									onclick="event.stopPropagation(); openDialog()"
 									hx-vals={ fmt.Sprintf(`{"url": "%s", "id": "%s"}`, tbl.URLPrefix, row.ID) }
 									class="bg-red-500 hover:bg-red-700 text-white py-1 px-2 rounded text-xs flex items-center"
 								>

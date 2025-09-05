@@ -1,0 +1,279 @@
+package templates
+
+import (
+	"fmt"
+	"helia/internal/domain"
+)
+
+// SearchPopup renders a searchable popup component
+templ SearchPopup(config domain.SearchPopupConfig) {
+	<!-- Popup Container - positioned relative to parent -->
+	<div
+		id={ config.FieldID + "-popup" }
+		class={ fmt.Sprintf("absolute %s bg-white rounded-md shadow-lg border border-gray-300 z-50 hidden %s", config.Position, config.Width) }
+		role="dialog"
+		aria-labelledby={ config.FieldID + "-search-label" }
+		aria-hidden="true"
+	>
+		<!-- Search Input Section -->
+		<div class="p-2 border-b border-gray-200">
+			<div class="flex">
+				<label for={ "search-input-" + config.FieldID } class="sr-only" id={ config.FieldID + "-search-label" }>
+					{ config.Placeholder }
+				</label>
+				<input
+					type="text"
+					id={ "search-input-" + config.FieldID }
+					name="query"
+					hx-get={ config.SearchURL }
+					hx-trigger="keyup changed delay:300ms"
+					hx-target="#search-results"
+					hx-include="this"
+					if config.InitialValue != "" {
+						hx-vals={ fmt.Sprintf(`{"query": "%s"}`, config.InitialValue) }
+					}
+					class="flex-1 p-2 text-sm border border-gray-300 rounded-l-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+					placeholder={ config.Placeholder }
+					autocomplete="off"
+					aria-describedby={ config.FieldID + "-search-help" }
+				/>
+				<button
+					type="button"
+					onclick="resetSearch(this.dataset.fieldId)"
+					data-field-id={ config.FieldID }
+					class="bg-gray-100 hover:bg-gray-200 px-3 py-2 border-t border-r border-b border-gray-300 rounded-r-md text-sm transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500"
+					aria-label="Clear search"
+					title="Clear search"
+				>
+					{ config.ClearButtonText }
+				</button>
+			</div>
+			<div id={ config.FieldID + "-search-help" } class="sr-only">
+				Use arrow keys to navigate, Enter to select, Escape to close
+			</div>
+		</div>
+		<!-- Results Section - Table Format -->
+		<div
+			id={ "search-results-" + config.FieldID }
+			class={ fmt.Sprintf("overflow-x-auto overflow-y-auto text-sm %s", config.MaxHeight) }
+			role="listbox"
+			aria-live="polite"
+		>
+			<!-- Results table will be loaded here via HTMX -->
+			<div class="p-4 text-gray-500 text-center">
+				Type to search...
+			</div>
+		</div>
+	</div>
+}
+
+// SearchResultsTable renders a complete table with search results
+templ SearchResultsTable(fieldID string, headers []string, rows []domain.SearchResultRow) {
+	<table class="min-w-full divide-y divide-gray-200">
+		<thead class="bg-gray-50 sticky top-0">
+			<tr>
+				for _, header := range headers {
+					<th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+						{ header }
+					</th>
+				}
+			</tr>
+		</thead>
+		<tbody class="bg-white divide-y divide-gray-200" role="listbox">
+			for _, row := range rows {
+				@SearchResultTableRow(fieldID, row)
+			}
+		</tbody>
+	</table>
+}
+
+// SearchResultTableRow renders a single table row
+templ SearchResultTableRow(fieldID string, row domain.SearchResultRow) {
+	if row.IsClickable {
+		<tr
+			class="hover:bg-blue-50 cursor-pointer transition-colors duration-150"
+			onclick="selectItem(this.dataset.fieldId, this.dataset.value, this.dataset.displayValue)"
+			data-field-id={ fieldID }
+			data-value={ row.Value }
+			data-display-value={ row.DisplayValue }
+			role="option"
+			tabindex="0"
+			onkeydown="if(event.key==='Enter' || event.key===' '){selectItem(this.dataset.fieldId, this.dataset.value, this.dataset.displayValue)}"
+			aria-label={ fmt.Sprintf("Select %s", row.DisplayValue) }
+		>
+			for _, cell := range row.Cells {
+				<td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+					{ cell }
+				</td>
+			}
+		</tr>
+	} else {
+		<tr class="bg-gray-50">
+			for _, cell := range row.Cells {
+				<td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">
+					{ cell }
+				</td>
+			}
+		</tr>
+	}
+}
+
+// SearchResultsTableEmpty renders an empty state for the table
+templ SearchResultsTableEmpty(headers []string, message string) {
+	<table class="min-w-full divide-y divide-gray-200">
+		<thead class="bg-gray-50">
+			<tr>
+				for _, header := range headers {
+					<th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+						{ header }
+					</th>
+				}
+			</tr>
+		</thead>
+		<tbody class="bg-white">
+			<tr>
+				<td colspan={ fmt.Sprintf("%d", len(headers)) } class="px-3 py-8 text-center text-gray-500">
+					if message != "" {
+						{ message }
+					} else {
+						No results found
+					}
+				</td>
+			</tr>
+		</tbody>
+	</table>
+}
+
+// SearchResultsTableLoading renders a loading state for the table
+templ SearchResultsTableLoading(headers []string) {
+	<table class="min-w-full divide-y divide-gray-200">
+		<thead class="bg-gray-50">
+			<tr>
+				for _, header := range headers {
+					<th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+						{ header }
+					</th>
+				}
+			</tr>
+		</thead>
+		<tbody class="bg-white">
+			<tr>
+				<td colspan={ fmt.Sprintf("%d", len(headers)) } class="px-3 py-8 text-center text-gray-500">
+					<div class="flex items-center justify-center">
+						<div class="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+						<span class="ml-2">Searching...</span>
+					</div>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+}
+
+// SearchPopupScript renders the JavaScript needed for the search popup
+// This should be included once per page, not per popup instance
+templ SearchPopupScript() {
+	<script>
+		function showSearchDialog(fieldId) {
+			const dialog = document.getElementById('search-dropdown');
+			const contentDiv = document.getElementById('dialog-content');
+			const button = document.getElementById('search-button-' + fieldId);
+			
+			console.log('Showing dialog for field:', fieldId,  button);
+			if (!dialog || !button) {
+				console.error('Dialog or button not found');
+				return;
+			}
+			
+			if (dialog.classList.contains('hidden')) {
+				dialog.classList.remove('hidden');
+			}		 
+			// Store current field ID for later use
+			currentFieldId = fieldId;
+			
+			// Position dialog below the button
+			if (button && dialog) {
+			const rect = button.getBoundingClientRect();
+			// Reset any previous positioning
+			dialog.style.position = 'fixed';
+			dialog.style.top = '';
+			dialog.style.left = '';
+			dialog.style.right = '';
+			dialog.style.bottom = '';
+			
+			// Calculate position relative to viewport (accounting for scroll)
+			const scrollX = window.scrollX || window.pageXOffset;
+			const scrollY = window.scrollY || window.pageYOffset;
+			
+			dialog.style.position = 'fixed';
+			dialog.style.top = (rect.bottom + scrollY) + 'px';
+			dialog.style.left = (rect.left + scrollX) + 'px';
+			dialog.style.zIndex = '1000';
+			
+			console.log('Positioning dialog:', {
+				buttonRect: rect,
+				scrollX: scrollX,
+				scrollY: scrollY,
+				finalTop: rect.bottom + scrollY,
+				finalLeft: rect.left + scrollX,
+				viewport: { width: window.innerWidth, height: window.innerHeight }
+			});
+				
+			}
+		}
+		// Position dropdown below the button that opened it
+		function positionDropdown(dropdownId, buttonId) {
+			const button = document.getElementById(buttonId);
+			const dropdown = document.getElementById(dropdownId);
+			
+			if (button && dropdown) {
+				const rect = button.getBoundingClientRect();
+				dropdown.style.position = 'absolute';
+				dropdown.style.top = (rect.bottom + window.scrollY) + 'px';
+				dropdown.style.left = (rect.left + window.scrollX) + 'px';
+				dropdown.style.zIndex = '1000';
+			}
+		}
+		
+		// Close dropdown when clicking outside
+		document.addEventListener('click', function(event) {
+			const dropdowns = document.querySelectorAll('[id^="search-dropdown"]');
+			dropdowns.forEach(dropdown => {
+				if (!dropdown.contains(event.target) && !event.target.closest('[onclick*="showDropdown"]')) {
+					dropdown.classList.add('hidden');
+				}
+			});
+		});
+
+		// Generic function to select item and close dialog
+		function selectItem(dropdownId, valueFieldId, nameFieldId, value, name) {
+			document.getElementById(valueFieldId).value = value;
+			document.getElementById(nameFieldId).value = name;
+			hideDropdown(dropdownId);
+			
+			// Trigger blur event to update other fields
+			document.getElementById(valueFieldId).dispatchEvent(new Event('blur'));
+		}
+		
+		// Show dropdown function
+		function showDropdown(dropdownId, buttonId) {
+			// First hide any other open dropdowns
+			const dropdowns = document.querySelectorAll('[id^="search-dropdown"]');
+			dropdowns.forEach(dropdown => {
+				dropdown.classList.add('hidden');
+			});
+			
+			// Show the requested dropdown
+			const dropdown = document.getElementById(dropdownId);
+			dropdown.classList.remove('hidden');
+			
+			// Position it below the button
+			positionDropdown(dropdownId, buttonId);
+		}
+		
+		// Hide dropdown function
+		function hideDropdown(dropdownId) {
+			document.getElementById(dropdownId).classList.add('hidden');
+		}
+
+	</script>
+}

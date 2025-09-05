@@ -1,0 +1,108 @@
+package finansijsko
+
+import "fmt"
+
+templ SearchPopup1(fieldID, searchURL, placeholder, value string) {
+	<!-- Popup Container - positioned under the target field -->
+	<div
+		id={ fmt.Sprintf("%s-popup", fieldID) }
+		class="absolute left-20 top-full bg-white rounded-md shadow-lg border border-gray-300 z-50 hidden"
+	>
+		<div class="p-1 border-b">
+			<div class="flex">
+				<input
+					type="text"
+					id={ fmt.Sprintf("search-input-%s", fieldID) }
+					hx-get={ searchURL }
+					hx-trigger="keyup changed delay:200ms"
+					hx-target="#search-results"
+					hx-include="this"
+					hx-vals={ fmt.Sprintf(`{"query": "%s"}`, value) }
+					name="query"
+					class="flex-1 h-6 p-1 text-sm border border-gray-300 rounded-l focus:ring-blue-500 focus:border-blue-500"
+					placeholder={ placeholder }
+				/>
+				<button
+					onclick="resetSearch('{ fieldID }')"
+					class="bg-gray-200 h-6 hover:bg-gray-300 px-2 border-t border-r border-b border-gray-300 rounded-r text-sm"
+				>
+					Obrisi ❌
+				</button>
+			</div>
+		</div>
+		<div id="#search-results" class="overflow-x-auto overflow-y-auto text-sm">
+			<!-- Results will be loaded here -->
+		</div>
+	</div>
+}
+
+templ SearchPopupScript(fieldID, resultFieldID string) {
+	<script>
+        // Toggle popup visibility
+        function togglePopup(fieldId) {
+            const popup = document.getElementById(`${fieldId}-popup`);
+            const isHidden = popup.classList.contains('hidden');
+            
+            // Close all other popups first
+            document.querySelectorAll('.absolute.z-50').forEach(el => {
+                if (el !== popup) el.classList.add('hidden');
+            });
+            
+            // Toggle this popup
+            popup.classList.toggle('hidden');
+            
+            if (!isHidden) {
+                setTimeout(() => document.getElementById(`search-input-${fieldId}`).focus(), 10);
+            }
+        }
+
+        // Reset search input
+        function resetSearch(fieldId) {
+            document.getElementById(`search-input-${fieldId}`).value = '';
+            htmx.trigger(`#search-input-${fieldId}`, 'keyup');
+        }
+
+        // Select an item from the results
+        function selectItem(fieldId, value, displayValue) {
+            // Update the target field
+            document.getElementById(fieldId).value = value;
+            
+            // If a corresponding display field exists, update it too
+            const displayField = document.getElementById(`${fieldId}naziv`);
+            if (displayField) {
+                displayField.value = displayValue;
+            }
+            
+            // Close the popup
+            document.getElementById(`${fieldId}-popup`).classList.add('hidden');
+            
+            console.log(`Selected value for ${fieldId}:`, value, displayValue);
+        }
+
+        // Close popup when clicking outside
+        document.addEventListener('click', function(event) {
+            // Check all popups
+            document.querySelectorAll('[id$="-popup"]').forEach(popup => {
+                const fieldId = popup.id.replace('-popup', '');
+                const field = document.getElementById(fieldId);
+                const searchButton = document.querySelector(`button[onclick="togglePopup('${fieldId}')"]`);
+                
+                if (field && searchButton && 
+                    !popup.contains(event.target) && 
+                    !field.contains(event.target) && 
+                    !searchButton.contains(event.target)) {
+                    popup.classList.add('hidden');
+                }
+            });
+        });
+
+        // Close popup on Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                document.querySelectorAll('[id$="-popup"]').forEach(popup => {
+                    popup.classList.add('hidden');
+                });
+            }
+        });
+    </script>
+}

@@ -2,7 +2,6 @@ package repository
 
 import (
 	"fmt"
-	"helia/config"
 	"helia/internal/domain"
 
 	"github.com/jmoiron/sqlx"
@@ -31,18 +30,32 @@ const (
 type BaseRepository[T any] struct {
 	DB        *sqlx.DB
 	TableName string
-	cfg       config.Config
+	gnGod     int
+	gnKar     int
 }
 
 // NewBaseRepository creates a new instance of BaseRepository.
-func NewBaseRepository[T any](db *sqlx.DB, tableName string, cfg config.Config) *BaseRepository[T] {
+func NewBaseRepository[T any](db *sqlx.DB, tableName string, gnGod, gnKar int) *BaseRepository[T] {
 	return &BaseRepository[T]{
 		DB:        db,
 		TableName: tableName,
-		cfg:       cfg,
+		gnGod:     gnGod,
+		gnKar:     gnKar,
 	}
 }
 
+func (r *BaseRepository[T]) GetGnGod() int {
+	return r.gnGod
+}
+func (r *BaseRepository[T]) GetGnKar() int {
+	return r.gnKar
+}
+func (r *BaseRepository[T]) SetGnGod(gnGod int) {
+	r.gnGod = gnGod
+}
+func (r *BaseRepository[T]) SetGnKar(gnKar int) {
+	r.gnKar = gnKar
+}
 func (r *BaseRepository[T]) GetByID(idField string, idValue interface{}) (*T, error) {
 	var entity T
 	query := r.CreateGetByID(idField, idValue)

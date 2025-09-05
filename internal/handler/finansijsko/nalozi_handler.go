@@ -47,7 +47,7 @@ func NewFnalHandler(nalogService service.NalogService) *FnalHandler {
 }
 
 func (h *FnalHandler) GetNalog(w http.ResponseWriter, r *http.Request) {
-	utils.GetEntityHelper[domain.Fnal](w, r, h.naloziService, h.naloziService.GetNaloziTableFields(), utils.IDfnal)
+	utils.GetEntityHelper(w, r, h.naloziService, h.naloziService.GetNaloziTableFields(), utils.IDfnal)
 }
 
 func (h *FnalHandler) GetNextNalog(w http.ResponseWriter, r *http.Request) {
@@ -73,15 +73,20 @@ func (h *FnalHandler) GetNextNalog(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *FnalHandler) CreateNalog(w http.ResponseWriter, r *http.Request) {
-	var nalog domain.Fnal
-	lastInsertedID, err := utils.CreateHelper(w, r, &nalog, h.naloziService, utils.IDfnal, h.naloziService.GetNaloziTableFields())
+	// var nalog domain.Fnal
+	// lastInsertedID, err := utils.CreateHelper(w, r, &nalog, h.naloziService, utils.IDfnal, h.naloziService.GetNaloziTableFields())
+	// if err != nil {
+	// 	return
+	// }
+	// // Lock the header
+	// mu, _ := headerLocks.LoadOrStore(lastInsertedID, &sync.Mutex{})
+	// mutex := mu.(*sync.Mutex)
+	// mutex.Lock()
+	err := tmpl_fin.NalogKnjizenjeStavke().Render(r.Context(), w)
 	if err != nil {
+		respondWithError(w, utils.ReadDataErrMsg, err, http.StatusInternalServerError)
 		return
 	}
-	// Lock the header
-	mu, _ := headerLocks.LoadOrStore(lastInsertedID, &sync.Mutex{})
-	mutex := mu.(*sync.Mutex)
-	mutex.Lock()
 }
 
 func (h *FnalHandler) UpdateNalog(w http.ResponseWriter, r *http.Request) {
@@ -96,7 +101,7 @@ func (h *FnalHandler) UpdateNalog(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *FnalHandler) DeleteNalog(w http.ResponseWriter, r *http.Request) {
-	utils.DeleteHelper[domain.Fnal](w, r, h.naloziService, utils.IDfnal)
+	utils.DeleteHelper(w, r, h.naloziService, utils.IDfnal)
 }
 
 func (h *FnalHandler) confirmDeleteHandler(w http.ResponseWriter, r *http.Request) {
@@ -405,8 +410,8 @@ func (h *FnalHandler) setHanlderFieldValues() {
 	h.btnSave = domain.Button{
 		Id:            "btn-save",
 		LabelText:     "Snimi Nalog",
-		HxActionURL:   naloziURLPrefix,
-		HxTarget:      "this",
+		HxActionURL:   "/api/nalozi",
+		HxTarget:      "#dialog-stavkenaloga",
 		HxSwap:        "innerHTML",
 		HxRequestType: "POST",
 	}

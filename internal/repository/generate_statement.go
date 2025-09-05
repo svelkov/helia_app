@@ -47,13 +47,13 @@ func (r *BaseRepository[T]) CreateInsertStatement(entity *T, tableFields []domai
 		if strings.ToLower(column) == "god" {
 			columns = append(columns, strings.ToLower(column))
 			placeholders = append(placeholders, fmt.Sprintf("$%d", len(columns)))
-			values = append(values, r.cfg.God)
+			values = append(values, r.gnGod)
 			continue
 		}
 		if strings.ToLower(column) == "kar" {
 			columns = append(columns, strings.ToLower(column))
 			placeholders = append(placeholders, fmt.Sprintf("$%d", len(columns)))
-			values = append(values, r.cfg.Kar)
+			values = append(values, r.gnKar)
 			continue
 		}
 		if strings.ToLower(column) == xdatunosa {
@@ -237,12 +237,12 @@ func (r *BaseRepository[T]) CreateBasicWhere(tableFields []domain.Fields, args *
 	}
 	if hasGod {
 		sqlWhereBasic = fmt.Sprintf("%s AND %sgod = $1 ", sqlWhereBasic, entityName)
-		*args = append(*args, r.cfg.God)
+		*args = append(*args, r.gnGod)
 		paramNr = 2
 	}
 	if hasKar {
 		sqlWhereBasic = fmt.Sprintf("%s AND %skar = $2 ", sqlWhereBasic, entityName)
-		*args = append(*args, r.cfg.Kar)
+		*args = append(*args, r.gnKar)
 		paramNr = 3
 	}
 	likeString := ""

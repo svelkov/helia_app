@@ -1,0 +1,143 @@
+
+please create in go+htmx+tailwindcss the following:
+
+first tab should be "Promet analitickih konta"
+with the following content :
+on the top should be two div's one for the parameters and the second one with the values.
+the first div should contain:
+in the first row: field konto the button search konto and date field od datuma
+in th second row: field sifra the button search sifra and date field do datuma
+the third row: checkbox for additional parameters
+the foruth row: button for "Obrada"
+the fileds should be left aligned and should contain clas "h-6"
+
+the second div should have i the first ro the following labels: duguje, potrazuje, saldo
+in the second row the following labels: promet do and in the same row fields for duguje, potrazuje, saldo
+in the third row the following labels: promet za period and in the same row fields for duguje, potrazuje, saldo
+in the fourth row the following labels: ukupanpromet  and in the same row fields for duguje, potrazuje, saldo
+the fileds should be right aligned nad should contain clas "h-6"
+after tho tow divs should be created a table with the following columns:
+Broj Nalioga, Datum Naloga, VD, Br. Dokumenta, Rok, Poslovna godina, OJ, OPIS, Duguje, Potrazuje, Saldo, Sifra Valute, Kurs, Devizni iznos, Kolicina duguje, Kolicina potrazuje, Cena, Stanje
+
+
+
+the second tab should have label "analiticka kartica po mestima isporuke"
+should contains 2 div in one row , the first div should contains the following:
+in first row label konto, input filed konto button search and input filed as date with label od datuma
+in the second row label sifra, input filed sifra button search and input filed as date with label do datuma
+in the third row od mesta isporuke, input filed odmestaisporuke aligned with filed od datuma and do datuma
+in the fourth row do mesta isporuke, input filed domestaisporuke aligned with filed od datuma and do datuma
+on the fifht row button obradi right alligned with fileds "od datuma" and "do datuma"
+the fileds should be left aligned and should contain clas "h-6"
+
+the second div should contiains:
+the second div should have i the first ro the following labels: duguje, potrazuje, saldo
+in the second row the following labels: promet do and in the same row fields for duguje, potrazuje, saldo
+in the third row the following labels: promet za period and in the same row fields for duguje, potrazuje, saldo
+in the fourth row the following labels: ukupanpromet  and in the same row fields for duguje, potrazuje, saldo
+the fileds should be right aligned nad should contain clas "h-6"
+after the tow divs should be created a table with the following columns:
+Mesto Isporuke, Broj Nalioga, Datum Naloga, VD, Br. Dokumenta, Rok, Poslovna godina, OJ, OPIS, Duguje, Potrazuje, Saldo, Sifra Valute, Kurs, Devizni iznos, Kolicina duguje, Kolicina potrazuje, Cena, Stanje
+
+the third tab should have label "promet deviznih analitickih konta"
+should contains 2 div in one row , the first div should contains the following:
+in first row label konto, input filed konto button search and input filed as date with label od datuma
+in the second row label sifra, input filed sifra button search and input filed as date with label do datuma
+on the fifht row button obradi right alligned with fileds "od datuma" and "do datuma"
+the fileds should be left aligned and should contain clas "h-6"
+
+the second div should contiains:
+the second div should have i the first ro the following labels: duguje, potrazuje, saldo
+in the second row the following labels: promet do and in the same row fields for duguje, potrazuje, saldo
+in the third row the following labels: promet za period and in the same row fields for duguje, potrazuje, saldo
+in the fourth row the following labels: ukupanpromet  and in the same row fields for duguje, potrazuje, saldo
+the fileds should be right aligned nad should contain clas "h-6"
+after the tow divs should be created a table with the following columns:
+Mesto Isporuke, Broj Nalioga, Datum Naloga, VD, Br. Dokumenta, Rok, Poslovna godina, OJ, OPIS, Duguje, Potrazuje, Saldo, Sifra Valute, Kurs, Devizni iznos, Kolicina duguje, Kolicina potrazuje, Cena, Stanje
+after the first table should be created another table with this columns:
+Valuta, Duguje, Potrazuje, Saldo, Devizni duguje, devizni potrazuje, devizni saldo
+
+the fourth tab should have label "promet subsintetickih konta"
+should contains 2 div in one row , the first div should contains the following:
+in first row label konto, input filed konto button search and input filed as date with label od datuma
+in the second row label sifra, input filed sifra button search and input filed as date with label do datuma
+on the fifht row button obradi right alligned with fileds "od datuma" and "do datuma"
+the fileds should be left aligned and should contain clas "h-6"
+
+the second div should contiains:
+the second div should have i the first ro the following labels: duguje, potrazuje, saldo
+in the second row the following labels: promet do and in the same row fields for duguje, potrazuje, saldo
+in the third row the following labels: promet za period and in the same row fields for duguje, potrazuje, saldo
+in the fourth row the following labels: ukupanpromet  and in the same row fields for duguje, potrazuje, saldo
+the fileds should be right aligned nad should contain clas "h-6"
+after the tow divs should be created a table with the following columns:
+Konto, Vrsta Naloga, Broj Nalioga, Datum Naloga, OPIS, Duguje, Potrazuje, Saldo
+
+
+the fifth tab should have label "promet sintetickih konta"
+should contains 2 div in one row , the first div should contains the following:
+in first row label konto, input filed konto button search
+in the second row label od datuma input filed oddatuma as date
+in the third row label do datuma input filed dodatuma as date
+on the fourth row button obradi right alligned in div
+the fileds should be left aligned and should contain clas "h-6"
+
+the second div should contiains:
+the second div should have i the first ro the following labels: duguje, potrazuje, saldo
+in the second row the following labels: promet do and in the same row fields for duguje, potrazuje, saldo
+in the third row the following labels: promet za period and in the same row fields for duguje, potrazuje, saldo
+in the fourth row the following labels: ukupanpromet  and in the same row fields for duguje, potrazuje, saldo
+the fileds should be right aligned nad should contain clas "h-6"
+after the tow divs should be created a table with the following columns:
+Konto, Vrsta Naloga, Broj Nalioga, Datum Naloga, OPIS, Duguje, Potrazuje, Saldo
+
+the sixth tab should have label "kartica sintetickih konta"
+should contains 2 div in one row , the first div should contains the following:
+in first row label konto, input filed konto button search
+in the second row label od datuma input filed oddatuma as date
+in the third row label do datuma input filed dodatuma as date and after this field check box "prikazi analitiku"
+on the fourth row button obradi right alligned in div
+the fileds should be left aligned and should contain clas "h-6"
+
+the second div should contiains:
+the second div should have i the first ro the following labels: duguje, potrazuje, saldo
+in the second row the following labels: promet do and in the same row fields for duguje, potrazuje, saldo
+in the third row the following labels: promet za period and in the same row fields for duguje, potrazuje, saldo
+in the fourth row the following labels: ukupanpromet  and in the same row fields for duguje, potrazuje, saldo
+the fileds should be right aligned nad should contain clas "h-6"
+after the tow divs should be created a table with the following columns:
+Konto, Sifra, OPIS, Duguje, Potrazuje, Saldo
+
+the seventh tab should have label "kartica sintetickih konta"
+should contains 2 div in one row , the first div should contains the following:
+in first row label konto, input filed konto button search
+in the second row label od datuma input filed oddatuma as date
+in the third row label do datuma input filed dodatuma as date and after this field check box "prikazi analitiku"
+on the fourth row button obradi right alligned in div
+the fileds should be left aligned and should contain clas "h-6"
+
+the second div should contiains:
+the second div should have i the first ro the following labels: duguje, potrazuje, saldo
+in the second row the following labels: promet do and in the same row fields for duguje, potrazuje, saldo
+in the third row the following labels: promet za period and in the same row fields for duguje, potrazuje, saldo
+in the fourth row the following labels: ukupanpromet  and in the same row fields for duguje, potrazuje, saldo
+the fileds should be right aligned nad should contain clas "h-6"
+after the tow divs should be created a table with the following columns:
+Konto, Sifra, OPIS, Duguje, Potrazuje, Saldo
+
+the eight tab should have label "promet konta analiticki"
+should contains 2 div in one row , the first div should contains the following:
+in first row label konto, input filed konto button search then input filed od naloga 
+in the second row label od sifre ,button search input filed do naloga
+in the third row label do sifra input field, buton search
+on the fourth row button obradi right alligned in div
+the fileds should be left aligned and should contain clas "h-6"
+
+the second div should contiains:
+the second div should have i the first ro the following labels: duguje, potrazuje, saldo
+in the second row the following labels: promet do and in the same row fields for duguje, potrazuje, saldo
+in the third row the following labels: promet za period and in the same row fields for duguje, potrazuje, saldo
+in the fourth row the following labels: ukupanpromet  and in the same row fields for duguje, potrazuje, saldo
+the fileds should be right aligned nad should contain clas "h-6"
+after the tow divs should be created a table with the following columns:
+Sifra, Naziv, Broj Nalioga, Datum Naloga, VD, Br. Dokumenta, Rok, Poslovna godina, OJ, OPIS, Duguje, Potrazuje, Saldo, Sifra Valute, Kurs, Devizni iznos, Kolicina duguje, Kolicina potrazuje, Cena, Stanje

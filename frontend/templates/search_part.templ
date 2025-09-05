@@ -16,10 +16,13 @@ templ Search_Part(tbl domain.TableData, searchControl domain.InputControl) {
 					hx-get={ searchControl.HxActionURL }
 					hx-target={ searchControl.HxTarget }
 					hx-swap={ searchControl.HxSwap }
-					hx-trigger={ searchControl.HxTrigger }
-					hx-include={ searchControl.HxInclude }
-					autocomplete={ searchControl.Autocomplete }
-					onkeyp={ templ.JSFuncCall("handleSearch", "event", searchControl.HxActionURL) }
+					hx-trigger="keyup changed delay:500ms"
+					if searchControl.HxInclude != "" {
+						hx-include={ searchControl.HxInclude }
+					}
+					if searchControl.Autocomplete != "" {
+						autocomplete={ searchControl.Autocomplete }
+					}
 				/>
 				<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
@@ -41,6 +44,7 @@ templ Search_PartAddButton(tbl domain.TableData) {
 		hx-get={ tbl.BtnAdd.HxActionURL }
 		hx-target="#dialog-container"
 		hx-swap="innerHTML"
+		onclick="deactivateActionsColumn()"
 	>
 		<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6 mr-1">
 			<path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25ZM12.75 9a.75.75 0 0 0-1.5 0v2.25H9a.75.75 0 0 0 0 1.5h2.25V15a.75.75 0 0 0 1.5 0v-2.25H15a.75.75 0 0 0 0-1.5h-2.25V9Z" clip-rule="evenodd"></path>
@@ -56,8 +60,8 @@ templ Search_PartPrintButton(tbl domain.TableData) {
 		rel="noopener noreferrer"
 		class="bg-blue-500 hover:bg-blue-700 text-white h-6 px-1 py-1 rounded text-xs flex items-center"
 	>
-		<svg class="w-6 h-6 text-white dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-			<path stroke="currentColor" stroke-linejoin="round" stroke-width="2" d="M16.444 18H19a1 1 0 0 0 1-1v-5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v5a1 1 0 0 0 1 1h2.556M17 11V5a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v6h10ZM7 15h10v4a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1v-4Z"></path>
+		<svg class="h-6 w-6">
+			<use href="/frontend/static/icons/allicons.svg#stampa" xlink:href="/frontend/static/icons/allicons.svg#stampa"></use>
 		</svg>
 		{ tbl.BtnPrint.LabelText }
 	</a>

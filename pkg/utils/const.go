@@ -41,3 +41,11 @@ const (
 	RenderTemplateErr  = "Error rendering template"
 	InvalidIDErrMsg    = "Invalid ID provided in request"
 )
+
+// constants for styling of inputs
+const (
+	ClassInputNumericDisabled = "h-6 px-1 py-1 text-sm text-right border border-blue-400 rounded focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed "
+	ClassInputTextEnabled     = "h-6 w-24 text-sm rounded border border-blue-400 focus:border-blue-500 focus:ring-blue-500 px-1 border text-left"
+	ClassInputTextDisabled    = "h-6 px-1 text-sm flex-1 min-w-0 text-left rounded border border-blue-400 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed"
+	ClassLabel                = "text-sm text-gray-700 whitespace-nowrap w-20 flex-shrink-0"
+)

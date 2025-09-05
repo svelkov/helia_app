@@ -4,8 +4,10 @@ templ DeactivateActionsColumn() {
 	<script>
     	function deactivateActionsColumn() {
 			console.log("in Deactivating actions column function");
+			// Restore the style of actions column if needed
 			document.querySelectorAll(".actions-column").forEach(el => {
-				el.classList.remove("right-0", "z-10");
+				el.classList.add('static');
+        		el.classList.remove('sticky', 'right-0', 'z-10');
 			});
 		}
 		function selectRow(row) {
@@ -102,7 +104,8 @@ templ CloseDialogScript() {
 
 				// Restore the style of actions column if needed
 				document.querySelectorAll(".actions-column").forEach(el => {
-					el.classList.add("right-0", "z-10");
+					el.classList.remove('static');
+        			el.classList.add('sticky', 'right-0', 'z-10');
 				});
 			}
 		}
@@ -121,9 +124,11 @@ templ CloseDialogScript() {
 templ OpenDialogScript(id string) {
 	<!-- JavaScript Functions -->
 	<script>
-	console.log("OpenDialogScript called with ID:", id);
-		function openDialog(id) {
-			document.getElementById(id).classList.remove("hidden");
+		function openDialog() {
+			document.querySelectorAll('.actions-column').forEach(el => {
+				el.classList.remove('sticky', 'right-0', 'z-10');
+				el.classList.add('static');
+			});
 		}
 	</script>
 }

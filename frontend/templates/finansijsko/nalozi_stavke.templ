@@ -1,5 +1,11 @@
 package finansijsko
 
+import (
+	tmpl "helia/frontend/templates"
+	"helia/internal/domain"
+	"helia/pkg/utils"
+)
+
 templ NalogKnjizenjeStavke() {
 	<div id="large-dialog" class="fixed inset-0 flex items-center justify-center p-4 bg-black bg-opacity-50 z-50">
 		<div class="bg-white rounded-lg shadow-xl max-w-fit w-full max-h-[90vh] overflow-y-auto">
@@ -63,30 +69,15 @@ templ NalogKnjizenjeStavke() {
 						<div class="flex flex-col gap-1">
 							<div class="flex items-center text-xs gap-1">
 								<span class="block text-xs font-sm text-blue-700 w-20 flex-shrink-0">Duguje:</span>
-								<input
-									id="nalogduguje"
-									class="block px-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 flex-1 min-w-0 h-6 text-right"
-									disabled
-									value="0,00"
-								/>
+								@tmpl.NumericInputField("duguje", 0, 2, true, utils.ClassInputNumericDisabled)
 							</div>
 							<div class="flex items-center text-xs gap-1">
 								<span class="block text-xs font-sm text-blue-700 w-20 flex-shrink-0">Potražuje:</span>
-								<input
-									id="nalogpotrazuje"
-									class="block px-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 flex-1 min-w-0 h-6 text-right"
-									disabled
-									value="0,00"
-								/>
+								@tmpl.NumericInputField("potrazuje", 0, 2, true, utils.ClassInputNumericDisabled)
 							</div>
 							<div class="flex items-center text-xs gap-1">
 								<span class="text-blue-700 w-20 flex-shrink-0">Saldo:</span>
-								<input
-									id="stavkesaldo"
-									class="block px-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 flex-1 min-w-0 h-6 text-right"
-									disabled
-									value="0,00"
-								/>
+								@tmpl.NumericInputField("saldo", 0, 2, true, utils.ClassInputNumericDisabled)
 							</div>
 						</div>
 					</div>
@@ -101,96 +92,130 @@ templ NalogKnjizenjeStavke() {
 						<div class="grid grid-cols-2 mb-1">
 							<!-- Left Column -->
 							<div class="border border-blue-400 space-y-1 pt-1 px-1">
-								<div class="flex items-center gap-2">
-									<label for="konto" class="text-xs text-gray-700 w-20 flex-shrink-0">Konto</label>
-									<input
-										class="border border-gray-400 px-2 py-1 text-xs w-24 h-6"
-										id="konto"
-										hx-post="/api/validate-konto"
-										hx-trigger="blur"
-										hx-target="#konto-validation"
-									/>
-									<button class="bg-gray-200 border border-gray-400 px-2 py-1 text-xs h-6 hover:bg-gray-300">🔍</button>
-									<input
-										class="border border-gray-400 px-2 py-1 text-xs flex-1 h-6"
-										id="nazivkonta"
-										disabled
-									/>
+								<div class="flex items-center gap-1 mb-1">
+									@KontoField()
+									@tmpl.SearchButton(domain.SearchButtonConfig{
+										ID:          "konto",
+										Name:        "search-konto",
+										HxUrl:       "/api/promet/searchbutton",
+										HxTarget:    "#search-dropdown",
+										HxSwap:      "innerHTML",
+										HxVals:      `{"vkonta": "2"}`,
+										ClassButton: utils.ClassButton,
+									})
+									@NazivField("kontonaziv")
 								</div>
-								<div class="flex items-center gap-2">
-									<label for="sifra" class="text-xs text-gray-700 w-20 flex-shrink-0">Šifra</label>
-									<input
-										class="border border-gray-400 px-2 py-1 text-xs w-24 h-6"
-										id="sifra"
-									/>
-									<button class="bg-gray-200 border border-gray-400 px-2 py-1 text-xs h-6 hover:bg-gray-300">🔍</button>
-									<input
-										class="border border-gray-400 px-2 py-1 text-xs flex-1 h-6"
-										id="nazivanalitike"
-										disabled
-									/>
+								<div class="flex items-center gap-1 mb-1">
+									@SifraField()
+									@tmpl.SearchButton(domain.SearchButtonConfig{
+										ID:          "sifra",
+										Name:        "search-sifra",
+										HxUrl:       "/api/promet/searchbutton",
+										HxTarget:    "#search-dropdown",
+										HxSwap:      "innerHTML",
+										HxVals:      `{"vkonta": "1"}`,
+										ClassButton: utils.ClassButton,
+									})
+									@NazivField("sifranaziv")
 								</div>
-								<div class="flex items-center gap-2">
-									<label for="magacin" class="text-xs text-gray-700 w-20 flex-shrink-0">Magacin</label>
-									<input
-										class="border border-gray-400 px-2 py-1 text-xs w-12 h-6"
-										id="magacin"
-										hx-post="/api/validate-magacin"
-										hx-trigger="blur"
-									/>
-									<button class="bg-gray-200 border border-gray-400 px-2 py-1 text-xs h-6 hover:bg-gray-300">🔍</button>
-									<input
-										class="border border-gray-400 px-2 py-1 text-xs flex-1 h-6"
-										id="nazivmagacina"
-										disabled
-									/>
+								<div class="flex items-center gap-1">
+									@tmpl.ComboBoxField(domain.ComboFieldConfig{
+										ID:          "vrstadokum",
+										Name:        "vrstadokum",
+										Placeholder: "Izaberite vrstu dokumenta",
+										LabelText:   "Vrsta dokum.",
+										HasLabel:    true,
+										Disabled:    false,
+										ClassSelect: utils.ClassInputTextEnabled + " min-w-[80px]",
+										ClassLabel:  utils.ClassLabel + " w-24",
+										TabIndex:    "5",
+										OptionValues: []domain.ComboItem{
+											{Key: "10", Value: "10-IZDAT RACUN KUPCU"},
+											{Key: "20", Value: "20-PRIMLJEN RACUN OD DOBAVLJACA"},
+											{Key: "30", Value: "30-IZVRSENA UPLATA"},
+											{Key: "40", Value: "40-PRIMLJENA UPLATA"},
+											{Key: "90", Value: "90-OPSTO KNJIZENJE"},
+										},
+									})
 								</div>
-								<div class="flex items-center gap-2">
-									<label for="mestoisporuke" class="text-xs text-gray-700 w-20 flex-shrink-0 whitespace-nowrap">Mesto isporuke</label>
-									<input
-										class="border border-gray-400 px-2 py-1 text-xs w-12 h-6"
-										id="mestoisporuke"
-									/>
-									<button class="bg-gray-200 border border-gray-400 px-2 py-1 text-xs h-6 hover:bg-gray-300">🔍</button>
-									<input
-										class="border border-gray-400 px-2 py-1 text-xs flex-1 h-6"
-										id="nazivmestaisporuke"
-										disabled
-									/>
+								<div class="flex items-center gap-1 mb-1">
+									@tmpl.TextInputField(domain.InputFieldConfig{
+										ID:          "opisknjizenja",
+										Name:        "opisknjizenja",
+										Placeholder: "unesite opis knjizenja",
+										LabelText:   "Opis knjizenja",
+										FieldType:   "text",
+										HasLabel:    true,
+										Disabled:    false,
+										ClassInput:  utils.ClassInputTextEnabled + " w-full ",
+										ClassLabel:  utils.ClassLabel + " w-24",
+									})
 								</div>
-								<div class="flex items-center gap-2">
-									<label for="vrstadokum" class="text-xs text-gray-700 w-20 flex-shrink-0 whitespace-nowrap">Vrsta dokumenta</label>
-									<select
-										class="border border-gray-400 px-2 py-1 text-xs h-6 bg-white"
-										id="vrstadokum"
-									>
-										<option value="10">10-IZDAT RACUN KUPC</option>
-										<option value="20">20-PRIMLJEN RACUN OD DOBAVLJACA</option>
-										<option value="30">30-IZVRSENA UPLATA</option>
-										<option value="40">40-PRIMLJENA UPLATA</option>
-										<option value="90">90-OPSTO KNJIZENJE</option>
-									</select>
+								<div class="flex items-center gap-1 mb-1">
+									@tmpl.TextInputField(domain.InputFieldConfig{
+										ID:         "magacin",
+										LabelText:  "Magacin",
+										FieldType:  "text",
+										HasLabel:   true,
+										Disabled:   false,
+										ClassInput: utils.ClassInputTextEnabled + "  w-[50px] min-w-[50px]",
+										ClassLabel: utils.ClassLabel + " w-24",
+										MinLength:  "1",
+										MaxLength:  "4",
+										TabIndex:   "6"})
+									@tmpl.SearchButton(domain.SearchButtonConfig{
+										ID:          "magacin",
+										Name:        "search-magacin",
+										HxUrl:       "/api/promet/searchbutton",
+										HxTarget:    "#search-dropdown",
+										HxSwap:      "innerHTML",
+										ClassButton: utils.ClassButton,
+									})
+									@NazivField("magacinnaziv")
 								</div>
-								<div class="flex items-center gap-2">
-									<label for="opisknjizenjafpro" class="text-xs text-gray-700 w-20 flex-shrink-0">Opis</label>
-									<input
-										class="border border-gray-400 px-2 py-1 text-xs flex-1 h-6"
-										id="opisknjizenjafpro"
-										placeholder="Unesite opis knjiženja"
-									/>
+								<div class="flex items-center gap-1">
+									@tmpl.TextInputField(domain.InputFieldConfig{
+										ID:         "mestoisporuke",
+										LabelText:  "Mesto isporuke",
+										FieldType:  "text",
+										HasLabel:   true,
+										Disabled:   false,
+										ClassInput: utils.ClassInputTextEnabled + " w-[50px] min-w-[50px]",
+										ClassLabel: utils.ClassLabel + " w-24",
+										MinLength:  "1",
+										MaxLength:  "4",
+										TabIndex:   "6"})
+									@tmpl.SearchButton(domain.SearchButtonConfig{
+										ID:          "mestoisporuke-btn",
+										Name:        "search-mestoisporuke",
+										HxUrl:       "/api/mi/searchbutton",
+										HxTarget:    "#search-dropdown",
+										HxSwap:      "innerHTML",
+										ClassButton: utils.ClassButton,
+									})
+									@NazivField("minaziv")
 								</div>
-								<div class="flex items-center gap-2">
-									<label for="komercijalista" class="text-xs text-gray-700 w-20 flex-shrink-0">Komercijalista</label>
-									<input
-										class="border border-gray-400 px-2 py-1 text-xs w-24 h-6"
-										id="komercijalista"
-									/>
-									<button class="bg-gray-200 border border-gray-400 px-2 py-1 text-xs h-6 hover:bg-gray-300">🔍</button>
-									<input
-										class="border border-gray-400 px-2 py-1 text-xs flex-1 h-6"
-										id="nazivkomercijaliste"
-										disabled
-									/>
+								<div class="flex items-center gap-1">
+									@tmpl.TextInputField(domain.InputFieldConfig{
+										ID:         "komercijalista",
+										LabelText:  "Komercijalista",
+										FieldType:  "text",
+										HasLabel:   true,
+										Disabled:   false,
+										ClassInput: utils.ClassInputTextEnabled + "  w-[50px] min-w-[50px]",
+										ClassLabel: utils.ClassLabel + " w-24",
+										MinLength:  "1",
+										MaxLength:  "4",
+										TabIndex:   "6"})
+									@tmpl.SearchButton(domain.SearchButtonConfig{
+										ID:          "komercijalista-btn",
+										Name:        "search-komercijalista",
+										HxUrl:       "/api/komercijalisti/searchbutton",
+										HxTarget:    "#search-dropdown",
+										HxSwap:      "innerHTML",
+										ClassButton: utils.ClassButton,
+									})
+									@NazivField("komnaziv")
 								</div>
 								<!-- Amount Section -->
 								<div class="flex justify-center gap-8 mb-4">
@@ -232,25 +257,33 @@ templ NalogKnjizenjeStavke() {
 							<!-- Right Column -->
 							<div class="space-y-1 px-1">
 								<div class="bg-blue-50 border border-blue-400 flex-1 px-2 py-1 space-y-1">
-									<div class="flex items-center gap-2">
-										<label for="orgjedinica" class="text-xs text-gray-700 w-20 flex-shrink-0">Org. jedinica</label>
-										<input
-											class="border border-gray-400 px-2 py-1 text-xs flex-1 h-6"
-											id="orgjedinica"
-											hx-post="/api/update-org-jedinica"
-											hx-trigger="blur"
-										/>
-										<button class="bg-gray-200 border border-gray-400 px-2 py-1 text-xs h-6 hover:bg-gray-300">▼</button>
+									<div class="flex items-center gap-1">
+										@tmpl.ComboBoxField(domain.ComboFieldConfig{
+											ID:           "oj",
+											Name:         "oj",
+											Placeholder:  "izaberite organizacionu jedinicu...",
+											LabelText:    "Org. Jedinica",
+											HasLabel:     true,
+											Disabled:     false,
+											ClassSelect:  utils.ClassInputTextEnabled + " min-w-[80px] w-full",
+											ClassLabel:   utils.ClassLabel + " w-24",
+											TabIndex:     "5",
+											OptionValues: []domain.ComboItem{},
+										})
 									</div>
-									<div class="flex items-center gap-2">
-										<label for="mestotroska" class="text-xs text-gray-700 w-20 flex-shrink-0">Mesto troška</label>
-										<input
-											class="border border-gray-400 px-2 py-1 text-xs flex-1 h-6"
-											id="mestotroska"
-											hx-post="/api/update-mesto-troska"
-											hx-trigger="blur"
-										/>
-										<button class="bg-gray-200 border border-gray-400 px-2 py-1 text-xs h-6 hover:bg-gray-300">▼</button>
+									<div class="flex items-center gap-1">
+										@tmpl.ComboBoxField(domain.ComboFieldConfig{
+											ID:           "mtroska",
+											Name:         "mtroska",
+											Placeholder:  "izaberite mesto troska...",
+											LabelText:    "Mesto troska",
+											HasLabel:     true,
+											Disabled:     false,
+											ClassSelect:  utils.ClassInputTextEnabled + " min-w-[80px] w-full",
+											ClassLabel:   utils.ClassLabel + " w-24",
+											TabIndex:     "5",
+											OptionValues: []domain.ComboItem{},
+										})
 									</div>
 								</div>
 								<!-- Document Section -->
@@ -260,104 +293,129 @@ templ NalogKnjizenjeStavke() {
 									<div class="grid grid-cols-1 md:grid-cols-2">
 										<!-- Document Field -->
 										<div class="grid grid-cols-2 gap-2 mb-1 items-center">
-											<label for="dokument" class="text-xs text-gray-700">
-												Dokument:
-											</label>
-											<input
-												type="text"
-												id="dokument"
-												name="dokument"
-												class="px-2 border border-gray-400 text-xs flex-1 h-6"
-											/>
+											@tmpl.TextInputField(domain.InputFieldConfig{
+												ID:         "brojdokum",
+												Name:       "brojdokum",
+												LabelText:  "Broj Dokumenta",
+												FieldType:  "text",
+												HasLabel:   true,
+												Disabled:   false,
+												ClassInput: utils.ClassInputTextEnabled + " min-w-[50px]",
+												ClassLabel: utils.ClassLabel + " w-24",
+												MinLength:  "0",
+												MaxLength:  "10",
+												TabIndex:   "6"})
 										</div>
 										<!-- Broj godina Field -->
-										<div class="grid grid-cols-2 gap-2 mb-1 items-center">
-											<label for="godinadokum" class="text-xs px-2 text-gray-700">
-												Godina:
-											</label>
-											<input
-												type="text"
-												id="godinadokum"
-												name="godinadokum"
-												class="px-2 border border-gray-400 px-2 text-xs flex-1 h-6"
-											/>
+										<div class="grid grid-cols-2 gap-2 mb-1 pl-2 items-center">
+											@tmpl.TextInputField(domain.InputFieldConfig{
+												ID:         "goddokum",
+												Name:       "goddokum",
+												LabelText:  "Godina dokum.",
+												FieldType:  "text",
+												HasLabel:   true,
+												Disabled:   false,
+												ClassInput: utils.ClassInputTextEnabled + "  min-w-[50px]",
+												ClassLabel: utils.ClassLabel + " w-24",
+												MinLength:  "4",
+												MaxLength:  "4",
+												TabIndex:   "6"})
 										</div>
 										<!-- Datum dokumenta Field -->
 										<div class="grid grid-cols-2 gap-2 mb-1 items-center">
-											<label for="datumdokumenta" class="text-xs text-gray-700">
-												Datum dokumenta:
-											</label>
-											<input
-												type="date"
-												id="datumdokumenta"
-												name="datumdokumenta"
-												class="px-2 border border-gray-400 px-2 py-1 text-xs flex-1 h-6"
-											/>
+											@tmpl.TextInputField(domain.InputFieldConfig{
+												ID:         "datdokum",
+												Name:       "datdokum",
+												LabelText:  "Datum dokum.",
+												FieldType:  "date",
+												HasLabel:   true,
+												Disabled:   false,
+												ClassInput: utils.ClassInputTextEnabled + " min-w-[50px]",
+												ClassLabel: utils.ClassLabel + " w-24",
+												MinLength:  "4",
+												MaxLength:  "10",
+												TabIndex:   "6"})
 										</div>
 										<!-- Rok Field -->
-										<div class="grid grid-cols-2 gap-2 mb-1 items-center">
-											<label for="rok" class="text-xs px-2 text-gray-700">
-												Rok:
-											</label>
-											<input
-												type="date"
-												id="rok"
-												name="rok"
-												class="px-2 border border-gray-400 px-2 py-1 text-xs flex-1 h-6"
-											/>
+										<div class="grid grid-cols-2 gap-1 mb-1 pl-2 items-center">
+											@tmpl.TextInputField(domain.InputFieldConfig{
+												ID:         "rok",
+												LabelText:  "Rok",
+												FieldType:  "text",
+												HasLabel:   true,
+												Disabled:   false,
+												ClassInput: utils.ClassInputTextEnabled + " min-w-[50px]",
+												ClassLabel: utils.ClassLabel + " w-24",
+												MinLength:  "4",
+												MaxLength:  "4",
+												TabIndex:   "6"})
 										</div>
 									</div>
 									<!-- Description -->
-									<div class="text-sm text-gray-600 italic py-1 border-t border-gray-300">
-										Unose se podaci o vezi. dokum. za koji se odnosi storno dokument
+									<div class="text-xs text-gray-600 italic py-1 border-t border-gray-300">
+										Unose se podaci o veznog dokumenta za koji se odnosi storno dokument
 									</div>
 									<!-- Second Section - Two Column Grid -->
 									<div class="grid grid-cols-1 md:grid-cols-2">
 										<!-- Br. vezn. dokum. Field -->
 										<div class="grid grid-cols-2 gap-2 mb-1 items-center">
-											<label for="brvezndokum" class="text-xs text-gray-700">
-												Br. vezn. dokum.:
-											</label>
-											<input
-												type="text"
-												id="brvezndokum"
-												name="brvezndokum"
-												class="px-2 border border-gray-400 px-2 text-xs flex-1 h-6"
-											/>
+											@tmpl.TextInputField(domain.InputFieldConfig{
+												ID:         "brvezndokum",
+												Name:       "brvezndokum",
+												LabelText:  "Br. Vezn. Dokum.",
+												FieldType:  "text",
+												HasLabel:   true,
+												Disabled:   false,
+												ClassInput: utils.ClassInputTextEnabled + " min-w-[50px]",
+												ClassLabel: utils.ClassLabel + " w-24",
+												MinLength:  "0",
+												MaxLength:  "10",
+												TabIndex:   "6"})
 										</div>
 										<!-- God. godina Field -->
-										<div class="grid grid-cols-2 gap-2 mb-1 items-center">
-											<label for="godvezndokum" class="px-2 text-xs text-gray-700">
-												Godina:
-											</label>
-											<input
-												type="text"
-												id="godvezndokum"
-												name="godvezndokum"
-												class="px-2 border border-gray-400 px-2 text-xs flex-1 h-6"
-											/>
+										<div class="grid grid-cols-2 gap-2 pl-2 mb-1 items-center">
+											@tmpl.TextInputField(domain.InputFieldConfig{
+												ID:         "godinavezndokum",
+												Name:       "godinavezndokum",
+												LabelText:  "God. Vezn. Dokum.",
+												FieldType:  "text",
+												HasLabel:   true,
+												Disabled:   false,
+												ClassInput: utils.ClassInputTextEnabled + " min-w-[50px]",
+												ClassLabel: utils.ClassLabel + " w-24",
+												MinLength:  "0",
+												MaxLength:  "10",
+												TabIndex:   "6"})
 										</div>
 										<!-- Dat. vezn. dokum. Field -->
 										<div class="grid grid-cols-2 gap-2 mb-1 items-center">
-											<label for="datvezndokum" class="text-xs text-gray-700">
-												Dat. vezn. dokum.:
-											</label>
-											<input
-												type="date"
-												id="datvezndokum"
-												name="datvezndokum"
-												class="px-2 border border-gray-400 px-2 text-xs flex-1 h-6 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-											/>
+											@tmpl.TextInputField(domain.InputFieldConfig{
+												ID:         "datveznogdokum",
+												Name:       "datveznogdokum",
+												LabelText:  "Datum veznog dokum.",
+												FieldType:  "date",
+												HasLabel:   true,
+												Disabled:   false,
+												ClassInput: utils.ClassInputTextEnabled + " min-w-[50px]",
+												ClassLabel: utils.ClassLabel + " w-24",
+												MinLength:  "4",
+												MaxLength:  "10",
+												TabIndex:   "6"})
 										</div>
 										<!-- Napomena/Help Field -->
-										<div class="grid grid-cols-2 gap-2 mb-1 items-start">
-											<label for="napomena" class="px-2 text-xs text-gray-700">Napomena:</label>
-											<textarea
-												id="napomena"
-												name="napomena"
-												rows="3"
-												class="px-2 border border-gray-400 px-2 text-xs flex-1 h-6"
-											></textarea>
+										<div class="grid grid-cols-2 gap-2 mb-1 pl-2 items-start">
+											@tmpl.TextInputField(domain.InputFieldConfig{
+												ID:         "napomena",
+												Name:       "napomena",
+												LabelText:  "Napomena",
+												FieldType:  "text",
+												HasLabel:   true,
+												Disabled:   false,
+												ClassInput: utils.ClassInputTextEnabled + " min-w-[50px]",
+												ClassLabel: utils.ClassLabel + " w-24",
+												MinLength:  "0",
+												MaxLength:  "1000",
+												TabIndex:   "6"})
 										</div>
 									</div>
 								</div>

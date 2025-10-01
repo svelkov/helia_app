@@ -2,6 +2,7 @@ package repository
 
 import (
 	"fmt"
+	"helia/global"
 	"helia/internal/domain"
 	"reflect"
 	"strings"
@@ -47,13 +48,13 @@ func (r *BaseRepository[T]) CreateInsertStatement(entity *T, tableFields []domai
 		if strings.ToLower(column) == "god" {
 			columns = append(columns, strings.ToLower(column))
 			placeholders = append(placeholders, fmt.Sprintf("$%d", len(columns)))
-			values = append(values, r.gnGod)
+			values = append(values, global.GetGnGod())
 			continue
 		}
 		if strings.ToLower(column) == "kar" {
 			columns = append(columns, strings.ToLower(column))
 			placeholders = append(placeholders, fmt.Sprintf("$%d", len(columns)))
-			values = append(values, r.gnKar)
+			values = append(values, global.GetGnKar())
 			continue
 		}
 		if strings.ToLower(column) == xdatunosa {
@@ -237,12 +238,12 @@ func (r *BaseRepository[T]) CreateBasicWhere(tableFields []domain.Fields, args *
 	}
 	if hasGod {
 		sqlWhereBasic = fmt.Sprintf("%s AND %sgod = $1 ", sqlWhereBasic, entityName)
-		*args = append(*args, r.gnGod)
+		*args = append(*args, global.GetGnGod())
 		paramNr = 2
 	}
 	if hasKar {
 		sqlWhereBasic = fmt.Sprintf("%s AND %skar = $2 ", sqlWhereBasic, entityName)
-		*args = append(*args, r.gnKar)
+		*args = append(*args, global.GetGnKar())
 		paramNr = 3
 	}
 	likeString := ""

@@ -92,7 +92,7 @@ func SetTableBasicData(title, tableID string, headers []domain.Fields, urlPrefix
 		BtnDelete:   domain.Button{LabelText: "Obriši", IsVisible: true},  // Default, can be overridden
 		BtnPrint:    domain.Button{LabelText: "Stampaj", IsVisible: true}, // Default, can be overridden
 	}
-
+	table.ShowPagination = totalRecords > 0 // Show pagination only if there are records
 	for _, opt := range opts {
 		opt(&table)
 	}
@@ -152,7 +152,7 @@ func SetTableButtons(table *domain.TableData, entityURLPrefix string) *domain.Ta
 	return table
 }
 
-func SetButton(Id, LabelText, Icon, HxActionURL, HxTarget, HxSwap, HxRequestType, HxInclude string, IsVisible bool) domain.Button {
+func SetButton(Id, LabelText, Icon, HxActionURL, HxTarget, HxSwap, HxRequestType, HxInclude, HxVals string, IsVisible bool) domain.Button {
 	return domain.Button{
 		Id:            Id,
 		LabelText:     LabelText,
@@ -160,6 +160,7 @@ func SetButton(Id, LabelText, Icon, HxActionURL, HxTarget, HxSwap, HxRequestType
 		HxActionURL:   HxActionURL,
 		HxTarget:      HxTarget,
 		HxSwap:        HxSwap,
+		HxVals:        HxVals,
 		HxRequestType: HxRequestType,
 		HxInclude:     HxInclude,
 		IsVisible:     IsVisible,
@@ -191,7 +192,7 @@ func GetFormattedValue(fieldInfo reflect.StructField, fieldValue reflect.Value) 
 			if !ok {
 				return fmt.Sprintf("%v", fieldValue.Interface())
 			}
-			return t.Time.Format("2006-01-02")
+			return t.Time.Format("02.01.2006")
 		}
 
 		if fieldInfo.Type == reflect.TypeOf(time.Time{}) {
@@ -199,7 +200,7 @@ func GetFormattedValue(fieldInfo reflect.StructField, fieldValue reflect.Value) 
 			if !ok {
 				return fmt.Sprintf("%v", fieldValue.Interface())
 			}
-			return t.Format("2006-01-02")
+			return t.Format("02.01.2006")
 		}
 
 	case reflect.Float32, reflect.Float64:
@@ -301,4 +302,13 @@ func StringToBool(str string, defaultValue bool) bool {
 		return defaultValue
 	}
 	return val
+}
+
+func GetSubMenus(menuData domain.MenuDataItems, targetMenu string) []domain.SubMenuItem {
+	for _, menuItem := range menuData.MenuItems {
+		if menuItem.Name == targetMenu {
+			return menuItem.SubMenus
+		}
+	}
+	return nil // or empty slice if menu not found
 }

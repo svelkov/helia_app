@@ -51,7 +51,7 @@ func (h *FnalHandler) GetNalog(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *FnalHandler) GetNextNalog(w http.ResponseWriter, r *http.Request) {
-	tipdok := r.URL.Query().Get("tipdok")
+	tipdok := r.URL.Query().Get("tipdokSelect")
 
 	nextNalog, err := h.naloziService.GetNextNalog(tipdok)
 	if err != nil {
@@ -60,14 +60,7 @@ func (h *FnalHandler) GetNextNalog(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Set headers and return JSON
-	tmpl := `<input class="mt-1 block p-1 w-[10ch] border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 w-full min-w-0" 
-                  type="text" 
-                  id="brojNaloga" 
-                  maxlength="10" 
-                  tabindex="3" 
-                  name="brojNaloga" 
-                  value="%d">`
-
+	tmpl := `<input id="brojnaloga" name="brojnaloga" type="text" value="%d" class="h-6 text-sm rounded border border-blue-400 focus:border-blue-500 focus:ring-blue-500 px-1 text-left">`
 	w.Header().Set("Content-Type", "text/html")
 	fmt.Fprintf(w, tmpl, nextNalog)
 }
@@ -121,7 +114,7 @@ func (h *FnalHandler) getNalogStavkeHandler(w http.ResponseWriter, r *http.Reque
 
 func (h *FnalHandler) GetNalogMainView(w http.ResponseWriter, r *http.Request) {
 	searchQuery := r.URL.Query().Get("query")
-	selectedTipdok := r.URL.Query().Get("tipdok")
+	selectedTipdok := r.URL.Query().Get("tipdokSelect")
 
 	page, pageSize := common.GetPageAndPageSizeFromRequest(r)
 
@@ -151,10 +144,10 @@ func (h *FnalHandler) GetNalogMainView(w http.ResponseWriter, r *http.Request) {
 		ID:           "search-control",
 		Label:        "Pretraži Naloge",
 		Type:         "search",
-		Placeholder:  "Unesite broj naloga ili druge podatke",
+		Placeholder:  "Unesite podatak za pretragu",
 		HxActionURL:  naloziURLGetAllSearch,
-		HxTarget:     "#table-body",
-		HxSwap:       "innerHTML",
+		HxTarget:     "#nalozi-table",
+		HxSwap:       "outerHTML",
 		HxInclude:    "#tipdokSelect",
 		Autocomplete: "off",
 	}
@@ -162,7 +155,7 @@ func (h *FnalHandler) GetNalogMainView(w http.ResponseWriter, r *http.Request) {
 	if viewData.IsInitialLoad {
 		err = tmpl_fin.NaloziContent(
 			currentTabData,
-			viewData.TipdokOptions,
+			viewData.TipdokComboItems,
 			*viewData.UkupnaObrada, // Dereference as template expects value
 			h.btnSave,
 			h.btnNoviNalog,
@@ -420,7 +413,7 @@ func (h *FnalHandler) setHanlderFieldValues() {
 		LabelText:     "Novi Nalog",
 		HxActionURL:   naloziURLNextNalog,
 		HxInclude:     "#tipdokSelect",
-		HxTarget:      "#brojNaloga",
+		HxTarget:      "#brojnaloga",
 		HxSwap:        "outerHTML",
 		HxRequestType: "GET",
 	}

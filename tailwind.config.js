@@ -1,4 +1,12 @@
+/** @type {import('tailwindcss').Config} */
 module.exports = {
-  darkMode: 'class', // Enable dark mode using the 'class' strategy
-  // Other configurations...
-};
+  content: [
+    "./frontend/templates/**/*.{html,templ}",
+    "./internal/**/*.{go,templ}",
+    "./**/*.{go,templ}",
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+}

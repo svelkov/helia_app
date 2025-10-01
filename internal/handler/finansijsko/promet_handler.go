@@ -37,9 +37,14 @@ func (h *PrometHandler) PrometMain(w http.ResponseWriter, r *http.Request) {
 	// popupConfig := domain.NewSearchPopupConfig("konto", "/api/fkpl/trazikonto", "Trazi konto...")
 	// popupConfig.Width = "w-296"         // Custom width
 	// popupConfig.MaxHeight = "max-h-280" // Custom height
-
-	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", true)
-	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/analitickakonta", "#promettable", "innerHTML", "GET", "#konto, #sifra, #oddatuma, #dodatuma", true)
+	hxVals := `js:{
+            konto: document.getElementById("konto")?.value,
+            sifra: document.getElementById("sifra")?.value,
+            oddatuma: document.getElementById("oddatuma")?.value,
+            dodatuma: document.getElementById("dodatuma")?.value
+        }`
+	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true)
+	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/analitickakonta", "#promettable", "innerHTML", "GET", "", hxVals, true)
 
 	tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetAnkontaTableFields(), "", "", 0, 0, 0, 0)
 	tbl.ShowActions = false
@@ -56,12 +61,17 @@ func (h *PrometHandler) PrometMain(w http.ResponseWriter, r *http.Request) {
 func (h *PrometHandler) PrometAnalitickihKonta(w http.ResponseWriter, r *http.Request) {
 	// Get our custom header
 	requestSource := r.Header.Get("X-Request-Source")
-
-	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", true)
-	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/analitickakonta", "#promettable", "innerHTML", "GET", "#konto, #sifra, #oddatuma, #dodatuma", true)
+	if requestSource == "menu" || requestSource == "tab" {
+	hxVals := `js:{
+            konto: document.getElementById("konto")?.value,
+            sifra: document.getElementById("sifra")?.value,
+            oddatuma: document.getElementById("oddatuma")?.value,
+            dodatuma: document.getElementById("dodatuma")?.value
+        }`
+	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true)
+	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/analitickakonta", "#promettable", "innerHTML", "GET", "", hxVals, true)
 
 	//if the call come from menu click or tab click then render the page with parameters and empty table
-	if requestSource == "menu" || requestSource == "tab" {
 		tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetAnkontaTableFields(), "", "", 0, 0, 0, 0)
 		tbl.ShowActions = false
 
@@ -109,8 +119,8 @@ func (h *PrometHandler) PrometAnalitickihKonta(w http.ResponseWriter, r *http.Re
 }
 
 func (h *PrometHandler) PrometAnalitickihKontaPoMI(w http.ResponseWriter, r *http.Request) {
-	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", true)
-	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/analitickakontami", "#promettable", "innerHTML", "POST", "", true)
+	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true)
+	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/analitickakontami", "#promettable", "innerHTML", "POST", "", "", true)
 
 	tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetAnKontaMiTableFields(), "", "", 0, 0, 0, 0)
 	tbl.ShowActions = false
@@ -123,8 +133,8 @@ func (h *PrometHandler) PrometAnalitickihKontaPoMI(w http.ResponseWriter, r *htt
 	}
 }
 func (h *PrometHandler) PrometDeviznihAnalitickihKonta(w http.ResponseWriter, r *http.Request) {
-	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", true)
-	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/deviznihanalitickihkonta", "#promettable", "innerHTML", "POST", "", true)
+	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true)
+	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/deviznihanalitickihkonta", "#promettable", "innerHTML", "POST", "", "", true)
 
 	tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetAnDeviznaKontaTableFields(), "", "", 0, 0, 0, 0)
 	tbl.ShowActions = false
@@ -138,8 +148,8 @@ func (h *PrometHandler) PrometDeviznihAnalitickihKonta(w http.ResponseWriter, r 
 }
 
 func (h *PrometHandler) PrometSubsintetickihKonta(w http.ResponseWriter, r *http.Request) {
-	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", true)
-	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/subsintetickakonta", "#promettable", "innerHTML", "POST", "", true)
+	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true)
+	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/subsintetickakonta", "#promettable", "innerHTML", "POST", "", "", true)
 
 	tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetSubsintetickihKontaTableFields(), "", "", 0, 0, 0, 0)
 	tbl.ShowActions = false
@@ -152,8 +162,8 @@ func (h *PrometHandler) PrometSubsintetickihKonta(w http.ResponseWriter, r *http
 	}
 }
 func (h *PrometHandler) PrometSintetickihKonta(w http.ResponseWriter, r *http.Request) {
-	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", true)
-	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/sintetickakonta", "#promet-table", "innerHTML", "POST", "", true)
+	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true)
+	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/sintetickakonta", "#promet-table", "innerHTML", "POST", "", "", true)
 
 	tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetSintetickihKontaTableFields(), "", "", 0, 0, 0, 0)
 	tbl.ShowActions = false
@@ -166,8 +176,8 @@ func (h *PrometHandler) PrometSintetickihKonta(w http.ResponseWriter, r *http.Re
 	}
 }
 func (h *PrometHandler) KarticaSintetickihKonta(w http.ResponseWriter, r *http.Request) {
-	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", true)
-	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/karticasintetickihkonta", "#promettable", "innerHTML", "POST", "", true)
+	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true)
+	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/karticasintetickihkonta", "#promettable", "innerHTML", "POST", "", "", true)
 
 	tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetKarticaSintetickihKontaTableFields(), "", "", 0, 0, 0, 0)
 	tbl.ShowActions = false
@@ -181,8 +191,8 @@ func (h *PrometHandler) KarticaSintetickihKonta(w http.ResponseWriter, r *http.R
 }
 
 func (h *PrometHandler) PrometKontaAnaliticki(w http.ResponseWriter, r *http.Request) {
-	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", true)
-	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/kontaanaliticki", "#promettable", "innerHTML", "POST", "", true)
+	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true)
+	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/kontaanaliticki", "#promettable", "innerHTML", "POST", "", "", true)
 
 	tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetKontaAnalitickiTableFields(), "", "", 0, 0, 0, 0)
 	tbl.ShowActions = false
@@ -208,7 +218,7 @@ func (h *PrometHandler) PrometTotalValues(w http.ResponseWriter, r *http.Request
 
 }
 func (h *PrometHandler) SearchButtonDialog(w http.ResponseWriter, r *http.Request) {
-
+	hxVals := ""
 	vkonta := r.URL.Query().Get("vkonta")
 	values := r.URL.Query()
 	id := ""
@@ -225,7 +235,11 @@ func (h *PrometHandler) SearchButtonDialog(w http.ResponseWriter, r *http.Reques
 		placeholder = "trazi sifru..."
 	}
 	w.Header().Set("Content-Type", "text/html")
-	tmpl.SearchButtonDialog(id, id, placeholder, "/api/fkpl/trazikontosearchtable", "#search-results", "innerHTML", vkonta).Render(r.Context(), w)
+
+	if vkonta != "" {
+		hxVals = fmt.Sprintf(`{"vkonta": "%s"}`, vkonta)
+	}
+	tmpl.SearchButtonDialog(id, id, placeholder, "/api/fkpl/trazikontosearchtable", "#search-results", "innerHTML", hxVals).Render(r.Context(), w)
 
 }
 

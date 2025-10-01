@@ -5,6 +5,12 @@ import (
 	"time"
 )
 
+type Fvr struct {
+	God   int    `json:"god" db:"god"`
+	Kar   int    `json:"kar" db:"kar"`
+	Naziv string `json:"naziv" db:"naziv"`
+}
+
 // Drzave Model
 type Drzave struct {
 	God        int            `json:"god" db:"god"`

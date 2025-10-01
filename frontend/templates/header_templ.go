@@ -29,7 +29,7 @@ func Header(isLoggedIn bool, username string) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<header class=\"bg-blue-600 text-white p-2 flex justify-between items-center\"><div class=\"text-2xl font-bold\">HELIA</div><nav class=\"flex items-center space-x-4\"><a href=\"/\" class=\"hover:text-blue-200\">Home</a> ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<header class=\"bg-blue-600 text-white p-2 flex justify-between items-center\"><div class=\"flex items-center space-x-4\"><img src=\"/frontend/static/lav_logo.png\" alt=\"HELIA Logo\" class=\"h-10 w-auto\"><h1 class=\"text-2xl font-bold text-gold-800\">HELIA</h1></div><nav class=\"flex items-center space-x-4\"><a href=\"/\" class=\"hover:text-blue-200\">Home</a> ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -46,7 +46,7 @@ func Header(isLoggedIn bool, username string) templ.Component {
 			var templ_7745c5c3_Var2 string
 			templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(username)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/header.templ`, Line: 13, Col: 43}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/header.templ`, Line: 17, Col: 42}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 			if templ_7745c5c3_Err != nil {

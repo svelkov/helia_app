@@ -5,6 +5,7 @@ import (
 	"helia/internal/common"
 	"helia/internal/domain"
 	"helia/internal/repository"
+
 	"net/http"
 	"reflect"
 	"strings"
@@ -12,13 +13,14 @@ import (
 
 // NalogViewData encapsulates all data needed for the Nalog display page.
 type NalogViewData struct {
-	FnalEntities  []domain.Fnal
-	TableData     domain.TableData
-	TipdokOptions *[]domain.Tipdok     // Pointer to allow nil if not needed
-	UkupnaObrada  *domain.UkupnaObrada // Pointer to allow nil if not needed
-	IsInitialLoad bool                 // True if it's the first full page load, false for HTMX partials
-	DefaultTipdok string               // The default tipdok if none is selected
-	TypeView      string               // Type of view, e.g., "knjizenje", "izvrsenje", etc.
+	FnalEntities     []domain.Fnal
+	TableData        domain.TableData
+	TipdokOptions    *[]domain.Tipdok     // Pointer to allow nil if not needed
+	UkupnaObrada     *domain.UkupnaObrada // Pointer to allow nil if not needed
+	IsInitialLoad    bool                 // True if it's the first full page load, false for HTMX partials
+	DefaultTipdok    string               // The default tipdok if none is selected
+	TypeView         string               // Type of view, e.g., "knjizenje", "izvrsenje", etc.
+	TipdokComboItems []domain.ComboItem   // Map of tipdok values for combo box
 }
 
 // NalogService defines the interface for operations related to Fnal (Nalogs).
@@ -137,13 +139,9 @@ func (s *NalogResource) GetNextNalog(tipdok string) (int64, error) {
 	// Use viewData.DefaultTipdok for the actual Fnal query
 	whereText := s.buildFnalWhere("", "", &args)
 	paramNbr := len(args)
-	selectQuery := fmt.Sprintf(`SELECT f.idfnal, f.tipdok, f.nalog, f.danal, f.opis, f.dug, f.pot, f.datob, f.brst, f.nalsts
-					FROM fnal f
-					INNER JOIN (
-						SELECT fnal.tipdok, MAX(fnal.nalog) as max_nalog
-						FROM fnal %s
-						GROUP BY fnal.tipdok
-					) m ON f.tipdok = m.tipdok AND f.nalog = m.max_nalog AND f.tipdok = $%d`, whereText, paramNbr+1)
+	selectQuery := `SELECT COALESCE(MAX(nalog), 0) + 1 as nalog FROM fnal `
+
+	whereText = fmt.Sprintf(`%s AND fnal.tipdok = $%d `, whereText, paramNbr+1)
 	args = append(args, tipdok)
 	entities, err := s.fnalRepo.GetAllCustom(selectQuery, whereText, args, "", "")
 	if err != nil {
@@ -153,7 +151,7 @@ func (s *NalogResource) GetNextNalog(tipdok string) (int64, error) {
 		return 1, nil
 	}
 
-	return (*entities)[0].Nalog + 1, nil
+	return (*entities)[0].Nalog, nil
 
 }
 
@@ -193,6 +191,9 @@ func (s *NalogResource) GetNalogsViewData(r *http.Request, searchQuery, selected
 			return viewData, fmt.Errorf("failed to get tipdok options: %w", err)
 		}
 		viewData.TipdokOptions = &tipdokOptions
+		for _, td := range tipdokOptions {
+			viewData.TipdokComboItems = append(viewData.TipdokComboItems, domain.ComboItem{Key: td.TipDok, Value: td.TipDok + " - " + td.Opis})
+		}
 
 		if selectedTipdok == "" && len(tipdokOptions) > 0 {
 			viewData.DefaultTipdok = tipdokOptions[0].TipDok

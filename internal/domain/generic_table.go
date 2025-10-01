@@ -38,12 +38,6 @@ type PaginationData struct {
 	HxInclude    string
 }
 
-// Data structures for rendering templates
-type MenuItem struct {
-	Name string
-	Path string
-}
-
 type PageData struct {
 	Title    string
 	MainMenu []MenuItem
@@ -69,4 +63,5 @@ type InputControl struct {
 	HxInclude    string
 	Autocomplete string
 	OnKeyUp      string
+	Class        string
 }

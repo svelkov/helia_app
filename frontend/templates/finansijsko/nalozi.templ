@@ -4,11 +4,13 @@ import (
 	"fmt"
 	tmpl "helia/frontend/templates"
 	"helia/internal/domain"
+	"helia/pkg/utils"
+	"time"
 )
 
 var tabClasses string
 
-templ NaloziContent(tabs domain.TabData, tipdokValues *[]domain.Tipdok, ukObrada domain.UkupnaObrada, btnSave, btnNoviNalog domain.Button, tbl domain.TableData, searchControl domain.InputControl) {
+templ NaloziContent(tabs domain.TabData, tipdokValues []domain.ComboItem, ukObrada domain.UkupnaObrada, btnSave, btnNoviNalog domain.Button, tbl domain.TableData, searchControl domain.InputControl) {
 	<div id="main-content" class="border-b border-gray-200">
 		@NaloziNav(tabs)
 		<div id="main-content">
@@ -41,7 +43,7 @@ templ NaloziNav(tabs domain.TabData) {
 	</nav>
 }
 
-templ NaloziKnjizenjeContent(tipdokValues *[]domain.Tipdok, ukObrada domain.UkupnaObrada, btnSave, btnNoviNalog domain.Button, tbl domain.TableData, searchControl domain.InputControl) {
+templ NaloziKnjizenjeContent(tipdokValues []domain.ComboItem, ukObrada domain.UkupnaObrada, btnSave, btnNoviNalog domain.Button, tbl domain.TableData, searchControl domain.InputControl) {
 	@NaloziKnjizenjeHeader(tipdokValues, ukObrada, btnSave, btnNoviNalog)
 	@tmpl.Search_Part(tbl, searchControl)
 	<div id="table-container" class="mt-1">
@@ -51,95 +53,133 @@ templ NaloziKnjizenjeContent(tipdokValues *[]domain.Tipdok, ukObrada domain.Ukup
 	<div id="dialog-stavkenaloga"></div>
 }
 
-templ NaloziKnjizenjeHeader(tipdokValues *[]domain.Tipdok, ukObrada domain.UkupnaObrada, btnSave, btnNoviNalog domain.Button) {
+templ NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.UkupnaObrada, btnSave, btnNoviNalog domain.Button) {
 	<div class="grid grid-cols-3 gap-6 py-2">
-		<div class="col-span-2 grid grid-cols-2 gap-1">
-			<div class="flex flex-col space-y-1">
-				<label id="vrstanaloga" class="block text-sm font-sm text-blue-700">Vrsta Naloga za knjiženje</label>
-				<select
-					class="mt-1 block p-1 w-[50ch] border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 w-full min-w-0"
-					id="tipdokSelect"
-					name="tipdok"
-					hx-trigger="change"
-					hx-get="/api/nalozi/all/tipdok"
-					hx-target="#table-container"
-					hx-vals="{'selected_id': this.value}"
-					hx-swap="innerHTML"
-				>
-					for _, tipDok := range *tipdokValues {
-						<option value={ fmt.Sprintf("%s", tipDok.TipDok) }>{ fmt.Sprintf("%s - %s", tipDok.TipDok, tipDok.Opis) }</option>
-					}
-				</select>
+		<div class="pt-2 col-span-2 flex flex-col gap-1">
+			<!-- First row: Combo for Vrsta naloga za knjiženje -->
+			<div class="flex items-center gap-3">
+				@tmpl.ComboBoxField(domain.ComboFieldConfig{
+					ID:             "tipdokSelect",
+					Name:           "tipdokSelect",
+					Placeholder:    "Select...",
+					LabelText:      "Vrsta Naloga za knjiženje",
+					HasLabel:       true,
+					Disabled:       false,
+					ClassSelect:    utils.ClassSelect + " flex-1 ",
+					ClassLabel:     utils.ClassLabel + " w-[150px] ",
+					HxSwap:         "innerHTML",
+					HxChangeTarget: "nalozi-table",
+					HxVals:         `{"tipdokSelect": document.getElementById("tipdokSelect").value}`,
+					OptionValues:   tipdokValues,
+					ChangeEndpoint: "/api/nalozi/all/tipdok",
+				})
 			</div>
-			<div class="flex flex-col space-y-1">
-				<label for="datumObrade" class="block text-sm font-sm text-blue-700">Datum Obrade</label>
-				<input
-					class="mt-1 block p-1 w-[20ch] border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 w-full min-w-0"
-					type="date"
-					id="datumObrade"
-					maxlength="50"
-					tabindex="2"
-					name="datumObrade"
-					hx-get="/api/get-current-date"
-					hx-trigger="load"
-					hx-target="#datumObrade"
-				/>
+			<!-- Second row: Broj naloga, Datum naloga, Datum obrade -->
+			<div class="grid grid-cols-6 gap-1">
+				@tmpl.TextInputField(domain.InputFieldConfig{
+					ID:         "brojnaloga",
+					LabelText:  "Broj Naloga",
+					FieldType:  "text",
+					HasLabel:   true,
+					Disabled:   false,
+					ClassInput: utils.ClassInputTextEnabled,
+					ClassLabel: utils.ClassLabel + " w-20",
+					HxTarget:   "brojnaloga",
+					MinLength:  "1",
+					MaxLength:  "10",
+					TabIndex:   "1"})
+				@tmpl.TextInputField(domain.InputFieldConfig{
+					ID:         "datumnaloga",
+					Value:      time.Now().Format("2006-01-02"),
+					LabelText:  "Datum Naloga",
+					FieldType:  "date",
+					HasLabel:   true,
+					Disabled:   false,
+					ClassInput: utils.ClassInputTextEnabled,
+					ClassLabel: utils.ClassLabel + " pl-4",
+					TabIndex:   "2"})
+				@tmpl.TextInputField(domain.InputFieldConfig{
+					ID:         "datumobrade",
+					Value:      time.Now().Format("2006-01-02"),
+					LabelText:  "Datum Obrade",
+					FieldType:  "date",
+					HasLabel:   true,
+					Disabled:   false,
+					ClassInput: utils.ClassInputTextEnabled,
+					ClassLabel: utils.ClassLabel + " pl-4",
+					TabIndex:   "3"})
 			</div>
-			<div class="flex flex-col">
-				<label for="brojNaloga" class="block text-sm font-sm text-blue-700">Broj Naloga</label>
-				<input
-					class="mt-1 block p-1 w-[10ch] border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 w-full min-w-0"
-					type="text"
-					id="brojNaloga"
-					maxlength="10"
-					tabindex="3"
-					name="brojNaloga"
-				/>
+			<!-- Third row: Opis knjiženja -->
+			<div class="flex items-center gap-3">
+				@tmpl.TextInputField(domain.InputFieldConfig{
+					ID:         "opisKnjizenja",
+					LabelText:  "Opis Knjiženja",
+					FieldType:  "text",
+					HasLabel:   true,
+					Disabled:   false,
+					ClassInput: utils.ClassInputTextEnabled + " w-full",
+					ClassLabel: utils.ClassLabel + " w-[150px]",
+					HxTarget:   "opisKnjizenja",
+					MinLength:  "0",
+					MaxLength:  "120",
+					TabIndex:   "4"})
 			</div>
-			<div class="flex flex-col">
-				<label for="datumNaloga" class="block text-sm font-sm text-blue-700">Datum Naloga</label>
-				<input
-					class="mt-1 block p-1 w-[20ch] border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 w-full min-w-0"
-					type="date"
-					id="datumNaloga"
-					maxlength="50"
-					tabindex="4"
-					name="datumNaloga"
-				/>
-			</div>
-			<div class="flex flex-col col-span-2">
-				<label for="opisKnjizenja" class="block text-sm font-sm text-blue-700">Opis Knjiženja</label>
-				<input
-					class="mt-1 block p-1 w-[50ch] border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 w-full min-w-0"
-					id="opisKnjizenja"
-					maxlength="10"
-					tabindex="5"
-					name="opisKnjizenja"
-				/>
-			</div>
-			<div class="flex items-end justify-end col-span-2 py-1 space-x-1">
+			<!-- Fourth row: Buttons -->
+			<div class="flex items-center justify-end pt-8">
 				@tmpl.FormAddButton(btnNoviNalog)
 				@tmpl.FormSaveButton(btnSave)
 			</div>
 		</div>
-		<div class="p-1 flex flex-col space-y-1">
-			<label class="block text-sm font-medium text-blue-700 mb-2">Prikaz ukupne obrade</label>
-			<div class="box-content flex flex-col space-y-1 p-2 border-2 border-gray-300 rounded-md">
-				<div class="flex items-center space-x-2">
-					<label for="ukupnoNaloga" class="inline-block w-1/3 text-sm font-medium text-gray-700">Ukupno Naloga</label>
-					<input id="ukupnoNaloga" name="ukupnoNaloga" value={ ukObrada.UkNaloga } disabled class="mt-1 block p-1 w-[50ch] border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 w-full min-w-0"/>
+		<div class="p-1 flex flex-col">
+			<p class="block text-sm font-medium text-blue-700 mb-1">Prikaz ukupne obrade</p>
+			<div class="box-content flex flex-col p-1 border-2 border-gray-300 rounded-md">
+				<div class="flex items-center space-x-2 mb-1">
+					@tmpl.TextInputField(domain.InputFieldConfig{
+						ID:         "ukupnoNaloga",
+						Value:      ukObrada.UkNaloga,
+						LabelText:  "Ukupno Naloga",
+						FieldType:  "text",
+						HasLabel:   true,
+						Disabled:   true,
+						ClassInput: utils.ClassInputTextDisabled,
+						ClassLabel: utils.ClassLabel + " w-[25%]",
+					})
 				</div>
-				<div class="flex items-center space-x-2">
-					<label for="ukupnoStavki" class="inline-block w-1/3 text-sm font-medium text-gray-700">Ukupno Stavki</label>
-					<input id="ukupnoStavki" name="ukupnoStavki" value={ ukObrada.UkStavki } disabled class="mt-1 block p-1 w-[50ch] border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 w-full min-w-0"/>
+				<div class="flex items-center space-x-2 mb-1">
+					@tmpl.TextInputField(domain.InputFieldConfig{
+						ID:         "ukupnoStavki",
+						Value:      ukObrada.UkStavki,
+						LabelText:  "Ukupno Stavki",
+						FieldType:  "text",
+						HasLabel:   true,
+						Disabled:   true,
+						ClassInput: utils.ClassInputTextDisabled,
+						ClassLabel: utils.ClassLabel + " w-[25%]",
+					})
 				</div>
-				<div class="flex items-center space-x-2">
-					<label for="fnalduguje" class="inline-block w-1/3 text-sm font-medium text-gray-700">Duguje</label>
-					<input id="fnalduguje" name="fnalduguje" value={ ukObrada.Duguje } disabled class="mt-1 block p-1 w-[50ch] border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 w-full min-w-0"/>
+				<div class="flex items-center space-x-2 mb-1">
+					@tmpl.TextInputField(domain.InputFieldConfig{
+						ID:         "duguje",
+						Value:      ukObrada.Duguje,
+						LabelText:  "Duguje",
+						FieldType:  "text",
+						HasLabel:   true,
+						Disabled:   true,
+						ClassInput: utils.ClassInputTextDisabled,
+						ClassLabel: utils.ClassLabel + " w-[25%]",
+					})
 				</div>
-				<div class="flex items-center space-x-2">
-					<label for="fnalpotrazuje" class="inline-block w-1/3 text-sm font-medium text-gray-700">Potražuje</label>
-					<input id="fnalpotrazuje" name="fnalpotrazuje" value={ ukObrada.Potrazuje } disabled class="mt-1 block p-1 w-[50ch] border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 w-full min-w-0"/>
+				<div class="flex items-center space-x-2 mb-1">
+					@tmpl.TextInputField(domain.InputFieldConfig{
+						ID:         "potrazuje",
+						Value:      ukObrada.Potrazuje,
+						LabelText:  "Potrazuje",
+						FieldType:  "text",
+						HasLabel:   true,
+						Disabled:   true,
+						ClassInput: utils.ClassInputTextDisabled,
+						ClassLabel: utils.ClassLabel + " w-[25%]",
+					})
 				</div>
 			</div>
 		</div>

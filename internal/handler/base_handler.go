@@ -5,9 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"helia/frontend/templates"
+	"helia/global"
+	"helia/internal/common"
 	"helia/internal/domain"
 	"helia/internal/infrastructure"
+	"helia/internal/service"
+	"helia/pkg/utils"
 	"net/http"
+	"strconv"
 	"time"
 
 	tmpl "helia/frontend/templates"
@@ -29,17 +34,39 @@ var sessionStore = sessions.NewCookieStore([]byte("3285f0d71eed0c41fded2115c9cc8
 
 type BasicHandler struct {
 	isLoggedIn   bool
+	menuItems    domain.MenuDataItems
 	subMenuItems []domain.SubMenuItem
+	fvrService   service.FvrService
+	store        *sessions.CookieStore
 }
 
-func NewBasicHandler(isLoggedIn bool, subMeniItems []domain.SubMenuItem) *BasicHandler {
-	return &BasicHandler{isLoggedIn: isLoggedIn, subMenuItems: subMeniItems}
+func NewBasicHandler(isLoggedIn bool, menuItems domain.MenuDataItems, subMenuItems []domain.SubMenuItem, fvrService service.FvrService) *BasicHandler {
+	return &BasicHandler{
+		isLoggedIn:   isLoggedIn,
+		menuItems:    menuItems,
+		subMenuItems: subMenuItems,
+		fvrService:   fvrService,
+		store:        sessionStore,
+	}
 }
 
 func (h *BasicHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
+	fvrData, poslGodina, err := h.fvrService.GetAllFvr()
+	if err != nil {
+		http.Error(w, "Error rendering template", http.StatusInternalServerError)
+		return
+	}
 
 	if r.Method == http.MethodGet {
-		templates.Base(false, templates.Login(), h.subMenuItems, "Helia", "", fmt.Sprintf("%d", time.Now().Year())).Render(r.Context(), w) // Render login page on failure.
+		selectedKomintent := 0
+		selectedPoslGodina := 0
+		if len(fvrData) > 0 {
+			selectedKomintent = fvrData[0].Kar
+		}
+		if len(poslGodina) > 0 {
+			selectedPoslGodina = poslGodina[0]
+		}
+		templates.Base(false, templates.Login(), h.menuItems, h.subMenuItems, "Helia", "", fmt.Sprintf("%d", time.Now().Year()), "", setComboKomintent(fvrData, selectedKomintent), setComboPoslGodConfig(poslGodina, selectedPoslGodina)).Render(r.Context(), w) // Render login page on failure.
 		return
 	}
 	username := r.FormValue("username")
@@ -66,8 +93,15 @@ func (h *BasicHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
-
-	templates.Base(false, templates.Login(), h.subMenuItems, "Helia", "", fmt.Sprintf("%d", time.Now().Year())).Render(r.Context(), w) // Render login page on failure.
+	selectedKomintent := 0
+	selectedPoslGodina := 0
+	if len(fvrData) > 0 {
+		selectedKomintent = fvrData[0].Kar
+	}
+	if len(poslGodina) > 0 {
+		selectedPoslGodina = poslGodina[0]
+	}
+	templates.Base(false, templates.Login(), h.menuItems, h.subMenuItems, "Helia", "", fmt.Sprintf("%d", time.Now().Year()), "", setComboKomintent(fvrData, selectedKomintent), setComboPoslGodConfig(poslGodina, selectedPoslGodina)).Render(r.Context(), w) // Render login page on failure.
 }
 
 func (h *BasicHandler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
@@ -76,7 +110,20 @@ func (h *BasicHandler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/login", http.StatusSeeOther) // Redirect to login page
 		return
 	}
-	templates.Base(h.isLoggedIn, templates.Register(), h.subMenuItems, "Helia", "", fmt.Sprintf("%d", time.Now().Year())).Render(r.Context(), w)
+	fvrData, poslGodina, err := h.fvrService.GetAllFvr()
+	if err != nil {
+		http.Error(w, "Error rendering template", http.StatusInternalServerError)
+		return
+	}
+	selectedKomintent := -1
+	selectedPoslGodina := -1
+	if len(fvrData) > 0 {
+		selectedKomintent = fvrData[0].Kar
+	}
+	if len(poslGodina) > 0 {
+		selectedPoslGodina = poslGodina[0]
+	}
+	templates.Base(h.isLoggedIn, templates.Register(), h.menuItems, h.subMenuItems, "Helia", "", fmt.Sprintf("%d", time.Now().Year()), "", setComboKomintent(fvrData, selectedKomintent), setComboPoslGodConfig(poslGodina, selectedPoslGodina)).Render(r.Context(), w)
 }
 
 func (h *BasicHandler) LogoutHandler(w http.ResponseWriter, r *http.Request) {
@@ -155,26 +202,172 @@ func (h *BasicHandler) indexHandler(w http.ResponseWriter, r *http.Request) {
 	IsLoggedIn := ok && username != ""
 
 	menuName := r.URL.Query().Get("menuName")
-	var submenu []domain.SubMenuItem
 	if menuName == "" {
-		menuName = "Opšti podaci"
+		menuName = "opsti_podaci" // Default menu name
 	}
+	subMenus := common.GetSubMenus(domain.MenuData, menuName)
 	// Get submenu items
-	if val, exists := domain.MenuData[menuName]; exists {
-		submenu = val
-	} else {
+	if subMenus == nil {
 		http.Error(w, "Menu not found", http.StatusNotFound)
 		return
 	}
-
+	h.subMenuItems = subMenus
+	h.menuItems.CurrentMenu = menuName
 	year := fmt.Sprintf("%d", time.Now().Year())
 	c := tmpl.Content(IsLoggedIn)
-	err := tmpl.Base(IsLoggedIn, c, submenu, "HELIA", username, year).Render(r.Context(), w)
+	fvrData, _, err := h.fvrService.GetAllFvr()
 	if err != nil {
 		http.Error(w, "Error rendering template", http.StatusInternalServerError)
 		return
 	}
 
+	// Get user session
+	session, err := h.store.Get(r, "app-session")
+	if err != nil {
+		http.Error(w, "Session error", http.StatusInternalServerError)
+		return
+	}
+
+	// Get values from session with defaults
+	currentGod, _ := session.Values["poslovnagodina"].(int)
+	currentKomintent, _ := session.Values["komintent"].(int)
+	poslGodina, err := h.fvrService.GetAllGod(currentKomintent)
+	if err != nil {
+		http.Error(w, "Error while getting years", http.StatusInternalServerError)
+		return
+	}
+
+	err = tmpl.Base(IsLoggedIn, c, h.menuItems, h.subMenuItems, "HELIA", username, year, "", setComboKomintent(fvrData, currentKomintent), setComboPoslGodConfig(poslGodina, currentGod)).Render(r.Context(), w)
+	if err != nil {
+		http.Error(w, "Error rendering template", http.StatusInternalServerError)
+		return
+	}
+
+}
+
+func (h *BasicHandler) SetPoslovnaGod(w http.ResponseWriter, r *http.Request) {
+	// Get komintent ID from request
+	komintentID := r.URL.Query().Get("komintent")
+	if komintentID == "" {
+		komintentID = r.FormValue("komintent")
+	}
+
+	// Get user session
+	session, err := h.store.Get(r, "app-session")
+	if err != nil {
+		http.Error(w, "Session error", http.StatusInternalServerError)
+		return
+	}
+
+	if komintentID != "" {
+		if gnKar, err := strconv.Atoi(komintentID); err == nil {
+			session.Values["komintent"] = gnKar
+			global.SetGnKar(gnKar)
+		}
+	}
+
+	if err := session.Save(r, w); err != nil {
+		http.Error(w, "Failed to save session", http.StatusInternalServerError)
+		return
+	}
+
+	// Instead of redirecting, re-render the full page
+	h.renderFullPage(w, r)
+}
+
+func (h *BasicHandler) SelectPoslovnaGodina(w http.ResponseWriter, r *http.Request) {
+	poslGod := r.URL.Query().Get("poslovnagodina")
+	komintent := r.URL.Query().Get("komintent")
+
+	// Get user session
+	session, err := h.store.Get(r, "app-session")
+	if err != nil {
+		http.Error(w, "Session error", http.StatusInternalServerError)
+		return
+	}
+
+	// Store in session
+	if poslGod != "" {
+		if gnGod, err := strconv.Atoi(poslGod); err == nil {
+			session.Values["poslovnagodina"] = gnGod
+			global.SetGnGod(gnGod)
+		}
+	}
+
+	if komintent != "" {
+		if gnKar, err := strconv.Atoi(komintent); err == nil {
+			session.Values["komintent"] = gnKar
+			global.SetGnKar(gnKar)
+		}
+	}
+
+	if err := session.Save(r, w); err != nil {
+		http.Error(w, "Failed to save session", http.StatusInternalServerError)
+		return
+	}
+
+	// Instead of redirecting, re-render the full page
+	h.renderFullPage(w, r)
+}
+
+// Helper function to render the full page
+func (h *BasicHandler) renderFullPage(w http.ResponseWriter, r *http.Request) {
+	// Get username from context
+	username, ok := getUsernameFromToken(r)
+	IsLoggedIn := ok && username != ""
+
+	menuName := r.URL.Query().Get("menuName")
+	if menuName == "" {
+		menuName = "opsti_podaci" // Default menu name
+	}
+
+	subMenus := common.GetSubMenus(domain.MenuData, menuName)
+	if subMenus == nil {
+		http.Error(w, "Menu not found", http.StatusNotFound)
+		return
+	}
+
+	h.subMenuItems = subMenus
+	h.menuItems.CurrentMenu = menuName
+	year := fmt.Sprintf("%d", time.Now().Year())
+	c := tmpl.Content(IsLoggedIn)
+
+	fvrData, _, err := h.fvrService.GetAllFvr()
+	if err != nil {
+		http.Error(w, "Error rendering template", http.StatusInternalServerError)
+		return
+	}
+
+	// Get user session
+	session, err := h.store.Get(r, "app-session")
+	if err != nil {
+		http.Error(w, "Session error", http.StatusInternalServerError)
+		return
+	}
+
+	// Get values from session with defaults
+	currentGod, _ := session.Values["poslovnagodina"].(int)
+	currentKomintent, _ := session.Values["komintent"].(int)
+
+	poslGodina, err := h.fvrService.GetAllGod(currentKomintent)
+	if err != nil {
+		http.Error(w, "Error while getting years", http.StatusInternalServerError)
+		return
+	}
+
+	// Create combo configs with current values
+	komintentConfig := setComboKomintent(fvrData, currentKomintent)
+	poslGodConfig := setComboPoslGodConfig(poslGodina, currentGod)
+
+	err = tmpl.Base(
+		IsLoggedIn, c, h.menuItems, h.subMenuItems, "HELIA", username, year, "",
+		komintentConfig,
+		poslGodConfig).Render(r.Context(), w)
+
+	if err != nil {
+		http.Error(w, "Error rendering template", http.StatusInternalServerError)
+		return
+	}
 }
 
 func getUsernameFromToken(r *http.Request) (string, bool) {
@@ -210,5 +403,73 @@ func (h *BasicHandler) AddRoutes(r *http.ServeMux) {
 	r.HandleFunc("/home", h.HomeHandler)
 	r.HandleFunc("/", h.indexHandler)
 	r.HandleFunc("api/get-current-date", h.getCurrentDate)
+	r.HandleFunc("/api/selectposlgod", h.SelectPoslovnaGodina)
+	r.HandleFunc("/api/setposlgod", h.SetPoslovnaGod)
+}
 
+func populateComboIntItems(poslGodina []int) []domain.ComboItem {
+	poslGodComboItems := []domain.ComboItem{}
+	for i := 0; i < len(poslGodina); i++ {
+		poslGodComboItems = append(poslGodComboItems, domain.ComboItem{
+			Key:   fmt.Sprintf("%d", poslGodina[i]),
+			Value: fmt.Sprintf("%d", poslGodina[i]),
+		})
+	}
+	return poslGodComboItems
+}
+
+func setComboPoslGodConfig(poslovnaGod []int, selectedValue int) domain.ComboFieldConfig {
+	config := domain.ComboFieldConfig{
+		ID:             "poslovnagodina",
+		Name:           "poslovnagodina",
+		LabelText:      "Poslovna Godina",
+		HasLabel:       true,
+		Disabled:       false,
+		ClassSelect:    utils.ClassSelect + " min-w-[80px] ",
+		ClassLabel:     utils.ClassLabel + " font-medium text-white text-sm whitespace-nowrap",
+		HxVals:         `js:{"komintent": document.getElementById("komintent").value, "poslovnagodina": this.value}`,
+		ChangeEndpoint: "/api/selectposlgod",
+		HxSwap:         "outerHTML", // Change to outerHTML to replace the entire select
+		HxChangeTarget: "body",      // Target the entire body to replace the whole page
+	}
+
+	optionItems := []domain.ComboItem{}
+	for _, item := range poslovnaGod {
+		key := fmt.Sprintf("%d", item) // Convert to string to match selectedValue
+		optionItems = append(optionItems, domain.ComboItem{
+			Key:   key,
+			Value: key, // Use the number as both key and value
+		})
+	}
+	config.OptionValues = optionItems
+	config.SelectedValue = fmt.Sprintf("%d", selectedValue)
+	return config
+}
+
+func setComboKomintent(items []domain.Fvr, selectedValue int) domain.ComboFieldConfig {
+	config := domain.ComboFieldConfig{
+		ID:             "komintent",
+		Name:           "komintent",
+		LabelText:      "Komintent",
+		HasLabel:       true,
+		Disabled:       false,
+		ClassSelect:    utils.ClassSelect + " min-w-[80px] ",
+		ClassLabel:     utils.ClassLabel + " font-medium text-white text-sm whitespace-nowrap ",
+		HxVals:         `{"komintent": document.getElementById("komintent").value}`,
+		ChangeEndpoint: "/api/setposlgod",
+		HxSwap:         "outerHTML", // Change to outerHTML to replace the entire select
+		HxChangeTarget: "body",      // Target the entire body to replace the whole page
+	}
+
+	optionItems := []domain.ComboItem{}
+	for _, item := range items {
+		key := fmt.Sprintf("%d", item.Kar) // Convert to string to match selectedValue
+		optionItems = append(optionItems, domain.ComboItem{
+			Key:   key,
+			Value: item.Naziv,
+		})
+	}
+	config.OptionValues = optionItems
+	config.SelectedValue = fmt.Sprintf("%d", selectedValue)
+	return config
 }

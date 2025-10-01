@@ -48,7 +48,7 @@ func ReportPage(tbl domain.TableData, params map[string]interface{}, company str
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</title><script src=\"https://cdn.tailwindcss.com\"></script><script src=\"https://unpkg.com/htmx.org@1.9.6\"></script><style>\r\n\t\t\t\t/* Base styles for the report container (screen display) */\r\n\t\t\t\t#report-container {\r\n\t\t\t\t\tmax-width: 7xl; /* This is illustrative, Tailwind handles this */\r\n\t\t\t\t\tmargin-left: auto;\r\n\t\t\t\t\tmargin-right: auto;\r\n\t\t\t\t\tbackground-color: white;\r\n\t\t\t\t\tborder-radius: 0.5rem; /* rounded-lg */\r\n\t\t\t\t\tbox-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadow-md */\r\n\t\t\t\t\toverflow: hidden;\r\n\t\t\t\t}\r\n\r\n                @media print {\r\n                    /* ... existing print styles ... */\r\n                    \r\n                    /* Ensure footer stays at bottom in print */\r\n                    #report-container {\r\n                        display: flex !important;\r\n                        flex-direction: column !important;\r\n                        min-height: 100vh !important;\r\n                    }\r\n                    \r\n                    .report-footer {\r\n                        position: fixed !important;\r\n                        bottom: 0 !important;\r\n                        left: 0 !important;\r\n                        right: 10 !important;\r\n                        width: 100% !important;\r\n                        margin-top: 0 !important;\r\n                    }\r\n                    \r\n                    /* Add padding to content to prevent overlap with fixed footer */\r\n                    .flex-grow {\r\n                        padding-bottom: 2cm !important; /* Adjust based on your footer height */\r\n                    }\r\n                        /* Add page counter reset at the body */\r\n                    body {\r\n                        counter-reset: page totalpages;\r\n                    }\r\n\r\n                    /* Count pages - this requires a print preview to calculate properly */\r\n                    #report-container {\r\n                        counter-increment: totalpages;\r\n                    }\r\n\r\n                    /* Display page numbers in footer */\r\n                    .report-footer .page:after {\r\n                        counter-increment: page;\r\n                        content: counter(page);\r\n                    }\r\n\r\n                    .report-footer .topage:after {\r\n                        content: counter(totalpages);\r\n                    }\r\n\r\n                    /* Position the footer on each printed page */\r\n                    .report-footer {\r\n                        position: fixed;\r\n                        bottom: 0;\r\n                        left: 0;\r\n                        right: 0;\r\n                        display: flex;\r\n                        justify-content: space-between;\r\n                        padding: 10px 10px;\r\n                        background-color: #f0f0f0 !important;\r\n                        -webkit-print-color-adjust: exact;\r\n                        color-adjust: exact;\r\n                    }    \r\n                }\r\n\t\t\t</style></head><body class=\"bg-gray-50 p-6\"><div id=\"report-container\" class=\"max-w-7xl mx-auto bg-white rounded-lg shadow-md overflow-hidden\"><div class=\"flex justify-end space-x-4 p-2 print-button-group print:hidden\"><button onclick=\"window.print()\" class=\"bg-blue-500 hover:bg-blue-700 text-white h-6 px-1 py-1 rounded text-xs flex items-center\">Print Report</button></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</title><script src=\"https://cdn.tailwindcss.com\"></script><script src=\"https://unpkg.com/htmx.org@1.9.6\"></script><style>\r\n       \t\t\t@media print {\r\n\t\t\t\t\t@page {\r\n\t\t\t\t\t\tmargin: 1cm;\r\n\t\t\t\t\t\t@bottom-right {\r\n\t\t\t\t\t\t\tcontent: \"Page \" counter(page) \" of \" counter(pages);\r\n\t\t\t\t\t\t\tfont-size: 10pt;\r\n\t\t\t\t\t\t\tcolor: #666;\r\n\t\t\t\t\t\t\tmargin-bottom: 5px;\r\n\t\t\t\t\t\t}\r\n\t\t\t\t\t\t@top-left {\r\n\t\t\t\t\t\t\tcontent: \"-\";\r\n\t\t\t\t\t\t\tfont-size: 10pt;\r\n\t\t\t\t\t\t\tcolor: #666;\r\n\t\t\t\t\t\t}\r\n\t\t\t\t\t}\r\n\t\t\t\t\t.no-print {\r\n\t\t\t\t\t\tdisplay: none !important;\r\n\t\t\t\t\t}\r\n\t\t\t\t}\r\n\t\t\t</style></head><body class=\"bg-gray-50 p-6 \"><!-- Print Controls --><div class=\"fixed top-15 right-6 z-50 bg-white p-3 rounded shadow-xl flex gap-1 no-print\"><button onclick=\"window.print()\" class=\"bg-blue-600 text-white px-3 h-6 rounded hover:bg-blue-700 flex items-center gap-1 font-semibold\"><span>🖨️</span> <span>Stampaj</span></button> <button onclick=\"window.close()\" class=\"bg-gray-600 text-white px-3 h-6 rounded hover:bg-gray-700 flex items-center gap-1 font-semibold\"><span>❌</span> <span>Zatvori</span></button></div><div id=\"report-container\" class=\" max-w-full mx-auto bg-white rounded-lg shadow-md overflow-hidden\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -74,7 +74,7 @@ func ReportPage(tbl domain.TableData, params map[string]interface{}, company str
 
 // ReportHeader, ReportDetail, ReportFooter remain unchanged as per your original code.
 // (Only the template for ReportPage was modified above)
-func ReportHeader(tbl domain.TableData, params map[string]interface{}, company string) templ.Component {
+func ReportHeader(tbl domain.TableData, params map[string]interface{}, companyName string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -95,69 +95,43 @@ func ReportHeader(tbl domain.TableData, params map[string]interface{}, company s
 			templ_7745c5c3_Var3 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<div class=\"bg-gray-100 p-6 border-b border-gray-200 report-header\"><h1 class=\"text-2xl font-bold text-gray-800\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var4 string
-		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(tbl.ContentTitle)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report_base.templ`, Line: 111, Col: 65}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</h1><div class=\"mt-2 flex flex-wrap gap-4 text-sm text-gray-600\"><p><span class=\"font-medium\">Company:</span> ")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var5 string
-		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(company)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report_base.templ`, Line: 113, Col: 57}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</p>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<div class=\"bg-gray-100 border-b border-gray-200 report-header p-4\"><div class=\"flex justify-between items-start mb-4\"><!-- Left side: Logo and Company Name --><div class=\"flex items-center gap-2\"><div class=\"w-8 h-8 bg-blue-100 rounded flex items-center justify-center border-2 border-blue-300\"><span class=\"text-sm font-bold text-blue-600\">🏢</span></div><h1 class=\"text-lg font-bold text-gray-900\">Company Name Inc.</h1></div><!-- Right side: Date and User info --><div class=\"text-right\"><p class=\"text-xs text-gray-700\"><span class=\"font-xs\">📅 Datum izvestaja:</span> 05.09.2023 14:30:45</p><p class=\"text-xs text-gray-700\"><span class=\"font-xs\">👤 Kreiran od:</span></p></div></div><!-- Second Row: Generated info --><div class=\"flex justify-between items-center mb-1\"><div class=\"text-xs text-gray-600 space-y-1\"><p class=\"font-small\"></p></div></div><div class=\"mt-2 flex flex-wrap gap-4 text-sm text-gray-600\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		for key, value := range params {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<p><span class=\"font-medium\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<p><span class=\"font-medium\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var6 string
-			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(key)
+			var templ_7745c5c3_Var4 string
+			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(key)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report_base.templ`, Line: 115, Col: 38}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report_base.templ`, Line: 97, Col: 38}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, ":</span> ")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var7 string
-			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%v", value))
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report_base.templ`, Line: 115, Col: 75}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, ":</span> ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</p>")
+			var templ_7745c5c3_Var5 string
+			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%v", value))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report_base.templ`, Line: 97, Col: 75}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</p>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -181,99 +155,99 @@ func ReportDetail(tbl domain.TableData) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var8 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var8 == nil {
-			templ_7745c5c3_Var8 = templ.NopComponent
+		templ_7745c5c3_Var6 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var6 == nil {
+			templ_7745c5c3_Var6 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<div class=\"overflow-x-auto px-6 py-4\"><table class=\"min-w-full divide-y divide-gray-200 border border-gray-200\"><thead class=\"bg-gray-50\"><tr><th scope=\"col\" class=\"px-1 py-1 text-left text-sm font-medium text-gray-500 uppercase tracking-wider\">#</th>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<div class=\"overflow-x-auto px-1 py-1\"><table class=\"min-w-full max-w-full divide-y divide-gray-200 border border-gray-200\"><thead class=\"bg-gray-50\"><tr><th scope=\"col\" class=\"px-1 py-1 text-left text-sm font-medium text-gray-500 uppercase tracking-wider\">#</th>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		for _, field := range tbl.Headers {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<th scope=\"col\" class=\"px-1 py-1 text-left text-sm font-medium text-gray-500 uppercase tracking-wider\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<th scope=\"col\" class=\"px-1 py-1 text-left text-sm font-medium text-gray-500 uppercase tracking-wider\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var7 string
+			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(field.Label)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report_base.templ`, Line: 113, Col: 20}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</th>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</tr></thead> <tbody class=\"bg-white divide-y divide-gray-200\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		for i, row := range tbl.Rows {
+			var templ_7745c5c3_Var8 = []any{"odd:bg-white even:bg-gray-10 hover:bg-gray-100"}
+			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var8...)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "<tr class=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var9 string
-			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(field.Label)
+			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var8).String())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report_base.templ`, Line: 131, Col: 20}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report_base.templ`, Line: 1, Col: 0}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</th>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "\"><td class=\"whitespace-nowrap px-1 py-1 border-r border-gray-200 text-left text-sm font-medium text-gray-500 uppercase tracking-wider\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</tr></thead> <tbody class=\"bg-white divide-y divide-gray-200\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		for i, row := range tbl.Rows {
-			var templ_7745c5c3_Var10 = []any{"odd:bg-white even:bg-gray-10 hover:bg-gray-100"}
-			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var10...)
+			var templ_7745c5c3_Var10 string
+			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", i+1))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report_base.templ`, Line: 122, Col: 31}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<tr class=\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var11 string
-			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var10).String())
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report_base.templ`, Line: 1, Col: 0}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "\"><td class=\"whitespace-nowrap px-1 py-1 text-left text-sm font-medium text-gray-500 uppercase tracking-wider\">")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var12 string
-			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", i+1))
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report_base.templ`, Line: 140, Col: 31}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</td>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</td>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			for _, field := range row.Fields {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "<td class=\"whitespace-nowrap px-1 py-1 text-left text-sm font-medium text-gray-500 uppercase tracking-wider\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<td class=\"whitespace-nowrap px-1 py-1 border-r border-gray-200 text-left text-sm font-medium text-gray-500 uppercase tracking-wider\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var13 string
-				templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(field)
+				var templ_7745c5c3_Var11 string
+				templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(field)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report_base.templ`, Line: 144, Col: 15}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report_base.templ`, Line: 126, Col: 15}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</td>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</td>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</tr>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</tr>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</tbody></table></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</tbody></table></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -297,51 +271,38 @@ func ReportFooter(company string, year int, generatedTime time.Time) templ.Compo
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var14 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var14 == nil {
-			templ_7745c5c3_Var14 = templ.NopComponent
+		templ_7745c5c3_Var12 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var12 == nil {
+			templ_7745c5c3_Var12 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "<div class=\"bg-gray-100 p-4 border-t border-gray-200 report-footer mt-auto overflow-x-auto px-6 py-4\"><div class=\"flex justify-between items-center text-xs text-gray-600\"><p><span class=\"font-medium\">Generated on:</span> ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "<div class=\"bg-gray-100 p-4 border-t border-gray-200 report-footer mt-auto overflow-x-auto px-6 py-4\"><div class=\"flex justify-between items-center text-xs text-gray-600\"><p>© ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var15 string
-		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(generatedTime.Format("2006-01-02 15:04:05"))
+		var templ_7745c5c3_Var13 string
+		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", year))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report_base.templ`, Line: 157, Col: 98}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report_base.templ`, Line: 139, Col: 34}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "</p><p>© ")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var16 string
-		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", year))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report_base.templ`, Line: 158, Col: 34}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, " ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, " ")
+		var templ_7745c5c3_Var14 string
+		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(company)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report_base.templ`, Line: 139, Col: 46}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var17 string
-		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(company)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report_base.templ`, Line: 158, Col: 46}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, ". Sva prava zadržana.</p><p class=\"print:hidden\">Page 1 of 1</p></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, ". Sva prava zadržana.</p></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

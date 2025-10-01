@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"helia/internal/common"
+	"helia/internal/domain"
 )
 
 // Then in template:
@@ -12,7 +13,7 @@ templ NumericInputField(id string, value float64, decimals int, disabled bool, c
 		id={ id }
 		name={ id }
 		type="text"
-        pattern="[0-9]*"
+		pattern="[0-9]*"
 		if disabled {
 			disabled
 		}
@@ -21,66 +22,72 @@ templ NumericInputField(id string, value float64, decimals int, disabled bool, c
 	/>
 }
 
-templ TextInputField(id string, value string, labelText, fieldType string, hasLabel, disabled bool, classInput, classLabel, blurEndpoint, hxTarget, hxVals string) {
-	if hasLabel {
-		<!-- Label - fixed width -->
-		<label for={ id } class={ classLabel }>{ labelText }</label>
+templ TextInputField(config domain.InputFieldConfig) {
+	if config.HasLabel && config.LabelText != "" {
+		<label class={ config.ClassLabel } for={ config.ID }>{ config.LabelText }</label>
 	}
 	<input
-		id={ id }
-		name={ id }
-		type={ fieldType }
-		if disabled {
+		type={ config.FieldType }
+		id={ config.ID }
+		value={ config.Value }
+		class={ config.ClassInput }
+		if config.Disabled {
 			disabled
 		}
-		if blurEndpoint != "" {
+		if config.BlurEndpoint != "" {
 			hx-trigger="blur"
-			hx-get={ blurEndpoint }
-			if hxTarget != "" {
-				hx-target={ fmt.Sprintf("#%s", hxTarget) }
-				hx-swap="none"
-				hx-on--after-request={ fmt.Sprintf("document.getElementById('%s').value = event.detail.xhr.responseText", hxTarget) }
+			hx-get={ config.BlurEndpoint }
+			if config.HxTarget != "" {
+				hx-target={ fmt.Sprintf("#%s", config.HxTarget) }
+				hx-swap="innerHTML"
+				hx-on--after-request={ fmt.Sprintf("document.getElementById('%s').value = event.detail.xhr.responseText", config.HxTarget) }
 			}
 		}
-		if hxVals != "" {
-			hx-vals={ hxVals }
+		if config.HxVals != "" {
+			hx-vals={ config.HxVals }
 		}
-		class={ classInput }
+		if config.HxInclude != "" {
+			hx-include={ config.HxInclude }
+		}
+		if config.MinLength != "" {
+			minlength={ config.MinLength }
+		}
+		if config.MaxLength != "" {
+			maxlength={ config.MaxLength }
+		}
+		if config.TabIndex != "" {
+			tabindex={ config.TabIndex }
+		}
 	/>
 }
 
-templ InputField(fieldName, label string, fieldType string) {
-	<!-- Date inputs od datuma-->
-	<div class="flex items-center gap-2 mb-1">
-		<!-- Label - fixed width -->
-		<label for={ fieldName } class="text-sm text-gray-700 whitespace-nowrap w-20 flex-shrink-0">{ label }</label>
-		<!-- First input - fixed width -->
-		<input
-			id={ fieldName }
-			name={ fieldName }
-			type={ fieldType }
-			class="h-6 w-30 text-sm rounded-l-sm border border-blue-400 focus:border-blue-500 focus:ring-blue-500 px-1 border text-left"
-		/>
-	</div>
-}
-
-templ SearchButton(fieldId, name, hxUrl, hxTarget, hxSwap, vkonta string) {
+templ SearchButton(config domain.SearchButtonConfig) {
 	<!-- Search button with relative positioning -->
-	<div class="relative">
+	<div class="">
 		<button
-			id={ "search-button-" + fieldId }
-			name={ name }
-			class="h-6 text-sm bg-gray-200 hover:bg-gray-300 px-1 rounded border border-blue-400 flex items-center justify-center flex-shrink-0"
-			hx-get={ hxUrl }
-			hx-target="#search-dropdown"
-			hx-swap="innerHTML"
+			id={ "search-button-" + config.ID }
+			name={ config.Name }
+			if config.ClassButton != "" {
+				class={ config.ClassButton }
+			} else {
+				class="h-6 text-sm bg-gray-200 hover:bg-gray-300 px-1 rounded border border-blue-400 flex items-center justify-center flex-shrink-0"
+			}
+			if config.HxUrl !="" {
+				hx-get={ config.HxUrl }
+			}
+			if config.HxTarget !="" {
+				hx-target={ config.HxTarget }
+			}
+			if config.HxSwap !="" {
+				hx-swap={ config.HxSwap }
+			}
+			if config.HxVals !="" {
+				hx-vals={ config.HxVals }
+			}
 			hx-include="this"
-			hx-vals={ fmt.Sprintf(`{"vkonta": "%s"}`, vkonta) }
-			hx-on::after-request={ templ.JSFuncCall("showSearchDialog", fieldId) }
+			hx-on::after-request={ templ.JSFuncCall("showSearchDialog", config.ID) }
 		>
-			<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-				<path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"></path>
-			</svg>
+			🔍
 		</button>
 		<!-- Dropdown container positioned below button -->
 		<div
@@ -93,7 +100,48 @@ templ SearchButton(fieldId, name, hxUrl, hxTarget, hxSwap, vkonta string) {
 	</div>
 }
 
-templ SearchButtonDialog(id, name, placeholder, hxUrl, hxTarget, hxSwap, vkonta string) {
+templ ComboBoxField(comboConfig domain.ComboFieldConfig) {
+	if comboConfig.HasLabel {
+		<!-- Label - fixed width -->
+		<label for={ comboConfig.ID } class={ comboConfig.ClassLabel }>{ comboConfig.LabelText }</label>
+	}
+	<select
+		id={ comboConfig.ID }
+		name={ comboConfig.Name }
+		if comboConfig.Disabled {
+			disabled
+		}
+		if comboConfig.ChangeEndpoint != "" {
+			hx-trigger="change"
+			hx-get={ comboConfig.ChangeEndpoint }
+			if comboConfig.HxChangeTarget != "" {
+				if comboConfig.HxChangeTarget == "body" {
+					hx-target={ fmt.Sprintf("%s", comboConfig.HxChangeTarget) }
+				} else {
+					hx-target={ fmt.Sprintf("#%s", comboConfig.HxChangeTarget) }
+				}
+				hx-swap={ comboConfig.HxSwap }
+			}
+		}
+		if comboConfig.HxParams != "" {
+			hx-params={ comboConfig.HxParams }
+		}
+		if comboConfig.HxVals != "" {
+			hx-vals={ comboConfig.HxVals }
+		}
+		class={ comboConfig.ClassSelect }
+	>
+		for _, item := range comboConfig.OptionValues {
+			if fmt.Sprintf("%v",item.Key) == comboConfig.SelectedValue {
+				<option value={ item.Key } selected>{ item.Value }</option>
+			} else {
+				<option value={ item.Key }>{ item.Value }</option>
+			}
+		}
+	</select>
+}
+
+templ SearchButtonDialog(id, name, placeholder, hxUrl, hxTarget, hxSwap, hxVals string) {
 	<!-- Backend returns this HTML structure: -->
 	<div class="p-2 text-sm rounded focus:border-blue-500">
 		<!-- Search input field -->
@@ -105,11 +153,21 @@ templ SearchButtonDialog(id, name, placeholder, hxUrl, hxTarget, hxSwap, vkonta 
 				placeholder={ placeholder }
 				class="w-full p-2 h-6 text-sm border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
 				hx-trigger="keyup changed delay:300ms"
-				hx-get={ hxUrl }
-				hx-target={ hxTarget }
-				hx-swap={ hxSwap }
+				if hxUrl !="" {
+					hx-get={ hxUrl }
+				}
+				if hxTarget !="" {
+					hx-target={ hxTarget }
+				}
+				if hxSwap !="" {
+					hx-swap={ hxSwap }
+				} else {
+					hx-swap="innerHTML"
+				}
+				if hxVals !="" {
+					hx-vals={ hxVals }
+				}
 				autocomplete="false"
-				hx-vals={ fmt.Sprintf(`{"vkonta": "%s"}`, vkonta) }
 				autofocus
 			/>
 		</div>
@@ -117,7 +175,7 @@ templ SearchButtonDialog(id, name, placeholder, hxUrl, hxTarget, hxSwap, vkonta 
 		<div id="search-results" class="max-h-64 overflow-auto">
 			<!-- Initial results or "Type to search" message -->
 			<div class="text-gray-500 text-sm p-2 text-center">
-				Type to search for konto...
+				{ placeholder }
 			</div>
 		</div>
 		<!-- Close button -->
@@ -130,4 +188,15 @@ templ SearchButtonDialog(id, name, placeholder, hxUrl, hxTarget, hxSwap, vkonta 
 			</button>
 		</div>
 	</div>
+}
+
+// components/godineOptions.templ
+templ ComboIntOptions(options []int, selectedOption string) {
+	for _, opt := range options {
+		if fmt.Sprintf("%d",opt) == selectedOption {
+			<option value={ fmt.Sprintf("%d", opt) } selected>{ fmt.Sprintf("%d", opt) }</option>
+		} else {
+			<option value={ fmt.Sprintf("%d", opt) }>{ fmt.Sprintf("%d", opt) }</option>
+		}
+	}
 }

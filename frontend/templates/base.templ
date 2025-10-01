@@ -2,7 +2,7 @@ package templates
 
 import "helia/internal/domain"
 
-templ Base(isLoggedIn bool, content templ.Component, menuItems []domain.SubMenuItem, title string, userName, year string) {
+templ Base(isLoggedIn bool, content templ.Component, menuItems domain.MenuDataItems, subMenuItems []domain.SubMenuItem,  title string, userName, year string, currentMenu string, comboKomintent, comboPoslGod domain.ComboFieldConfig) {
 	<!DOCTYPE html>
 	<html lang="en">
 		@Head()
@@ -11,14 +11,14 @@ templ Base(isLoggedIn bool, content templ.Component, menuItems []domain.SubMenuI
 			@Header(isLoggedIn, userName)
 			<!-- Secondary Menu (Conditional) -->
 			if isLoggedIn {
-				@HeaderMenu()
+				@TopMenu(menuItems, currentMenu, comboKomintent, comboPoslGod)
 				<div id="info-message" class="hidden bg-green-500 text-white rounded flex h-18 text-xl justify-center items-center text-center"></div>
 			}
 			<!-- Main Content -->
 			<div class="flex flex-1">
 				<!-- Sidebar (Conditional) -->
 				if isLoggedIn {
-					@Side_nav(menuItems)
+					@Side_nav(subMenuItems)
 				}
 				<!-- Content Area -->
 				<main id="content" class="flex-1 p-4 overflow-hidden text-sm">

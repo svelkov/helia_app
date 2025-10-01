@@ -112,6 +112,7 @@ func RenderContent(w http.ResponseWriter, r *http.Request, table domain.TableDat
 			HxSwap:       "innerHTML",
 			HxTrigger:    "keyup changed delay:500ms",
 			Autocomplete: "off",
+			Class:        ClassSearchInput,
 		}
 		err = tmpl.ContentContainer(table, searchControl).Render(r.Context(), w)
 	default:

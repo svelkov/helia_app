@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	"helia/global"
 	"helia/internal/common"
 	"helia/internal/domain"
 	"helia/internal/infrastructure"
@@ -80,11 +81,11 @@ func (h *FkplHandler) TraziKonto(w http.ResponseWriter, r *http.Request) {
 
 	args := []interface{}{}
 	// Parse query parameters from the URL
-	searchValue := r.URL.Query().Get("query")
+
 	konto := r.URL.Query().Get("konto")
 	sifra := r.URL.Query().Get("sifra")
 	vkonta := r.URL.Query().Get("vkonta")
-	if searchValue == "" && vkonta == "" && konto == "" && sifra == "" {
+	if vkonta == "" && konto == "" && sifra == "" {
 		w.Header().Set("Content-Type", "text/plain")
 		w.Write([]byte("Nedostaje parametar query ili vkonta"))
 
@@ -100,17 +101,18 @@ func (h *FkplHandler) TraziKonto(w http.ResponseWriter, r *http.Request) {
 	if hasGod {
 		whereText += fmt.Sprintf(" AND f.god = $%d ", param)
 		param++
-		args = append(args, h.Service.Repo.GetGnGod())
+		args = append(args, global.GetGnGod())
 	}
 	if hasKAr {
 		whereText += fmt.Sprintf(" AND f.kar = $%d ", param)
 		param++
-		args = append(args, h.Service.Repo.GetGnKar())
+		args = append(args, global.GetGnKar())
 	}
-
-	whereText += fmt.Sprintf(" AND f.konto = $%d ", param)
-	param++
-	args = append(args, konto)
+	if konto != "" {
+		whereText += fmt.Sprintf(" AND f.konto = $%d ", param)
+		param++
+		args = append(args, konto)
+	}
 
 	if sifra != "" {
 		whereText += fmt.Sprintf(" AND f.sifra = $%d ", param)
@@ -122,6 +124,7 @@ func (h *FkplHandler) TraziKonto(w http.ResponseWriter, r *http.Request) {
 		param++
 		args = append(args, vkonta)
 	}
+
 	entities, err := h.Service.GetAllCustom(sqlQuery, whereText, args, "", "")
 	if err != nil {
 		w.Header().Set("Content-Type", "text/plain")
@@ -166,7 +169,7 @@ func (h *FkplHandler) TraziKontoSearchTable(w http.ResponseWriter, r *http.Reque
 										OR f.sifra ILIKE '%' || $5 || '%' 
 										OR f.naziv ILIKE '%' || $6 || '%' ) ORDER BY konto LIMIT 20`
 
-	args = append(args, h.Service.Repo.GetGnGod(), h.Service.Repo.GetGnKar(), vkonta, searchValue, searchValue, searchValue)
+	args = append(args, global.GetGnGod(), global.GetGnKar(), vkonta, searchValue, searchValue, searchValue)
 	entities, err := h.Service.GetAllCustom(sqlQuery, whereText, args, "", "")
 	if err != nil {
 		response := utils.CreateResponse(w, false, []domain.FieldError{}, utils.ReadDataErrMsg, http.StatusInternalServerError)

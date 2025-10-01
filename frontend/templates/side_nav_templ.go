@@ -34,7 +34,7 @@ func Side_nav(submenu []domain.SubMenuItem) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div id=\"side-menu\" class=\"bg-gray-700 text-white w-64 p-4 text-sm\"><ul class=\"flex flex-col mb-auto gap-1\"><!-- Use 'gap-1' for tighter spacing -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div id=\"side-menu\" class=\"bg-gray-700 text-white w-64text-sm\"><ul class=\"flex flex-col mb-auto gap-1\"><!-- Use 'gap-1' for tighter spacing -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -52,14 +52,14 @@ func Side_nav(submenu []domain.SubMenuItem) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\" hx-target=\"#content\" hx-swap=\"innerHTML\" class=\"side-nav-item flex items-center py-2 px-3 hover:bg-gray-700 rounded-md\"><svg class=\"h-5 w-5 mr-2\"><use href=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\" hx-target=\"#content\" hx-swap=\"innerHTML\" class=\"side-nav-item flex items-center py-2 px-3 hover:bg-blue-600 rounded-md\" onclick=\"\r\n                        document.querySelectorAll(&#39;#side-menu .side-nav-item&#39;).forEach(function(a) {\r\n                            a.className = &#39;side-nav-item flex items-center py-2 px-3 hover:bg-gray-700 rounded-md text-gray-300&#39;;\r\n                        });\r\n                        this.className = &#39;side-nav-item flex items-center py-2 px-3 bg-white text-blue-800&#39;;\r\n                    \"><svg class=\"h-5 w-5 mr-2\"><use href=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("/frontend/static/icons/allicons.svg#%s", item.Icon))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/side_nav.templ`, Line: 22, Col: 83}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/side_nav.templ`, Line: 28, Col: 83}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -72,7 +72,7 @@ func Side_nav(submenu []domain.SubMenuItem) templ.Component {
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("/frontend/static/icons/allicons.svg#%s", item.Icon))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/side_nav.templ`, Line: 22, Col: 163}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/side_nav.templ`, Line: 28, Col: 163}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
@@ -85,7 +85,7 @@ func Side_nav(submenu []domain.SubMenuItem) templ.Component {
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(item.Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/side_nav.templ`, Line: 24, Col: 38}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/side_nav.templ`, Line: 30, Col: 38}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
@@ -96,7 +96,7 @@ func Side_nav(submenu []domain.SubMenuItem) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</ul></div><script>\r\n    document.addEventListener('DOMContentLoaded', () => {\r\n        const sideNavItems = document.querySelectorAll('.side-nav-item');\r\n\r\n        function handleSideNavItemClick(event) {\r\n            sideNavItems.forEach(item => {\r\n                item.classList.remove('bg-gray-400');\r\n            });\r\n            event.currentTarget.classList.add('bg-gray-400');\r\n        }\r\n\r\n        sideNavItems.forEach(item => {\r\n            item.addEventListener('click', handleSideNavItemClick);\r\n        });\r\n    });\r\n</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</ul></div><script>\r\n    document.addEventListener('DOMContentLoaded', () => {\r\n        const sideNavItems = document.querySelectorAll('.side-nav-item');\r\n\r\n        function handleSideNavItemClick(event) {\r\n            sideNavItems.forEach(item => {\r\n                item.classList.remove('bg-blue-600');\r\n            });\r\n            event.currentTarget.classList.add('bg-blue-600');\r\n        }\r\n\r\n        sideNavItems.forEach(item => {\r\n            item.addEventListener('click', handleSideNavItemClick);\r\n        });\r\n    });\r\n</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

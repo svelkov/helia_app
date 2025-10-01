@@ -10,7 +10,7 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import "helia/internal/domain"
 
-func Base(isLoggedIn bool, content templ.Component, menuItems []domain.SubMenuItem, title string, userName, year string) templ.Component {
+func Base(isLoggedIn bool, content templ.Component, menuItems domain.MenuDataItems, subMenuItems []domain.SubMenuItem, title string, userName, year string, currentMenu string, comboKomintent, comboPoslGod domain.ComboFieldConfig) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -52,7 +52,7 @@ func Base(isLoggedIn bool, content templ.Component, menuItems []domain.SubMenuIt
 			return templ_7745c5c3_Err
 		}
 		if isLoggedIn {
-			templ_7745c5c3_Err = HeaderMenu().Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = TopMenu(menuItems, currentMenu, comboKomintent, comboPoslGod).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -66,7 +66,7 @@ func Base(isLoggedIn bool, content templ.Component, menuItems []domain.SubMenuIt
 			return templ_7745c5c3_Err
 		}
 		if isLoggedIn {
-			templ_7745c5c3_Err = Side_nav(menuItems).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = Side_nav(subMenuItems).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

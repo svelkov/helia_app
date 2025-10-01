@@ -7,7 +7,7 @@ import (
 
 templ Side_nav(submenu []domain.SubMenuItem) {
 	// Side menu navigation area
-	<div id="side-menu" class="bg-gray-700 text-white w-64 p-4 text-sm">
+	<div id="side-menu" class="bg-gray-700 text-white w-64text-sm">
 		<ul class="flex flex-col mb-auto gap-1">
 			<!-- Use 'gap-1' for tighter spacing -->
 			for _, item := range submenu {
@@ -16,7 +16,13 @@ templ Side_nav(submenu []domain.SubMenuItem) {
 						hx-get={ fmt.Sprintf("%s", item.URL) }
 						hx-target="#content"
 						hx-swap="innerHTML"
-						class="side-nav-item flex items-center py-2 px-3 hover:bg-gray-700 rounded-md"
+						class="side-nav-item flex items-center py-2 px-3 hover:bg-blue-600 rounded-md"
+						onclick="
+                        document.querySelectorAll('#side-menu .side-nav-item').forEach(function(a) {
+                            a.className = 'side-nav-item flex items-center py-2 px-3 hover:bg-gray-700 rounded-md text-gray-300';
+                        });
+                        this.className = 'side-nav-item flex items-center py-2 px-3 bg-white text-blue-800';
+                    "
 					>
 						<svg class="h-5 w-5 mr-2">
 							<use href={ fmt.Sprintf("/frontend/static/icons/allicons.svg#%s", item.Icon) } xlink:href={ fmt.Sprintf("/frontend/static/icons/allicons.svg#%s", item.Icon) }></use>
@@ -38,9 +44,9 @@ templ Side_nav(submenu []domain.SubMenuItem) {
 
         function handleSideNavItemClick(event) {
             sideNavItems.forEach(item => {
-                item.classList.remove('bg-gray-400');
+                item.classList.remove('bg-blue-600');
             });
-            event.currentTarget.classList.add('bg-gray-400');
+            event.currentTarget.classList.add('bg-blue-600');
         }
 
         sideNavItems.forEach(item => {

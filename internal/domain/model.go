@@ -5,15 +5,6 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-type MenuResponse struct {
-	Submenu []string `json:"submenu"`
-}
-type SubMenuItem struct {
-	Name string        `json:"name"`
-	URL  templ.SafeURL `json:"url,omitempty"`
-	Icon string        `json:"icon,omitempty"`
-}
-
 type TableOptions struct {
 	HasUpdate  bool
 	HasDelete  bool
@@ -72,18 +63,20 @@ type SearchResultRow struct {
 }
 
 type Button struct {
-	Id            string
-	LabelText     string
-	HxActionURL   string
-	HxTarget      string
-	HxSwap        string
-	HxOn          string
-	HxInclude     string
-	HxRequestType string
-	IdDialog      string
-	ActionMethod  string
-	Icon          string
-	IsVisible     bool
+	Id               string
+	LabelText        string
+	HxActionURL      string
+	HxTarget         string
+	HxSwap           string
+	HxOn             string
+	HxInclude        string
+	HxVals           string
+	HxRequestType    string
+	HxOnAfterRequest string
+	IdDialog         string
+	ActionMethod     string
+	Icon             string
+	IsVisible        bool
 }
 type Fields struct {
 	Name           string
@@ -146,7 +139,81 @@ type TabData struct {
 }
 
 // New struct containing only the desired fields for the JSON response
-type TipdokComboItem struct {
-	TipDok string `json:"tip_dok"`
-	Opis   string `json:"opis"`
+type ComboItem struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+type InputFieldConfig struct {
+	ID           string
+	Name         string
+	Required     bool
+	Placeholder  string
+	Pattern      string
+	Value        string
+	LabelText    string
+	FieldType    string
+	HasLabel     bool
+	Disabled     bool
+	ClassInput   string
+	ClassLabel   string
+	BlurEndpoint string
+	HxTarget     string
+	HxVals       string
+	HxInclude    string
+	MinLength    string
+	MaxLength    string
+	TabIndex     string
+}
+
+type ComboFieldConfig struct {
+	ID              string
+	Name            string
+	Required        bool
+	Placeholder     string
+	Pattern         string
+	Value           string
+	LabelText       string
+	FieldType       string
+	HasLabel        bool
+	Disabled        bool
+	ClassSelect     string
+	ClassLabel      string
+	BlurEndpoint    string
+	OptionsEndpoint string
+	OptionValues    []ComboItem
+	SelectedValue   string
+	ChangeEndpoint  string
+	HxTarget        string
+	HxChangeTarget  string
+	HxVals          string
+	HxInclude       string
+	HxSwap          string
+	HxParams        string
+	MinLength       string
+	MaxLength       string
+	TabIndex        string
+}
+
+type SearchButtonConfig struct {
+	ID          string
+	Name        string
+	HxUrl       string
+	HxTarget    string
+	HxSwap      string
+	HxVals      string
+	ClassButton string
+	Icon        string
+}
+
+type ReportParameters struct {
+	ReportName  string
+	CompanyName string
+	CompanyLogo string
+	UserName    string
+	Parameters  map[string]interface{}
+}
+
+type Komintent struct {
+	Kar   int
+	Naziv string
 }

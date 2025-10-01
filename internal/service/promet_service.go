@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"helia/global"
 	"helia/internal/domain"
 	"helia/internal/repository"
 	"net/http"
@@ -65,7 +66,7 @@ func (s *PrometResource) GetPrometTotals(r *http.Request) (domain.PrometResponse
 		return response, fmt.Errorf("missing required parameters")
 	}
 
-	baseArgs := []interface{}{s.prometRepo.GetGnGod(), s.prometRepo.GetGnKar(), konto, sifra}
+	baseArgs := []interface{}{global.GetGnGod(), global.GetGnKar(), konto, sifra}
 
 	//Get totals values
 	// Get "promet do" totals (up to start date)
@@ -135,10 +136,10 @@ func (s *PrometResource) GetPrometAnalitickihKonta(r *http.Request, getTotalReco
 	if konto == "" || sifra == "" || odDatuma == "" || doDatuma == "" {
 		return response, fmt.Errorf("missing required parameters")
 	}
-	args = append(args, s.prometRepo.GetGnGod(), s.prometRepo.GetGnKar(), konto, sifra, odDatuma, doDatuma)
+	args = append(args, global.GetGnGod(), global.GetGnKar(), konto, sifra, odDatuma, doDatuma)
 	limitOffset := fmt.Sprintf(" LIMIT %d OFFSET %d", calculatedPageSize, (currentPage-1)*calculatedPageSize)
 
-	baseArgs := []interface{}{s.prometRepo.GetGnGod(), s.prometRepo.GetGnKar(), konto, sifra}
+	baseArgs := []interface{}{global.GetGnGod(), global.GetGnKar(), konto, sifra}
 	//if we need to get only total records we chec the bool gettotalrecords
 	if getTotalRecords {
 		sqlQuery := `SELECT count(*)

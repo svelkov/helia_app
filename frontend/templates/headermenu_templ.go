@@ -8,7 +8,14 @@ package templates
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-func HeaderMenu() templ.Component {
+import (
+	"fmt"
+	"helia/internal/domain"
+	"net/url"
+	"strings"
+)
+
+func TopMenu(menuItems domain.MenuDataItems, currentMenu string, comboKomintent, comboPoslGod domain.ComboFieldConfig) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -29,7 +36,85 @@ func HeaderMenu() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"menu-item bg-blue-800 text-white p-2\"><nav class=\"flex space-x-4\"><div hx-get=\"/get-menu?menuName=Opšti podaci\" hx-trigger=\"click\" hx-target=\"#side-menu\" hx-swap=\"outerHTML\" class=\"hover:text-blue-200 {{if eq .CurrentMenu `Opšti podaci`}}active{{end}}\">Opšti podaci/Sifarnici</div><div hx-get=\"/get-menu?menuName=Finansijsko\" hx-trigger=\"click\" hx-target=\"#side-menu\" hx-swap=\"outerHTML\" class=\"hover:text-blue-200 {{if eq .CurrentMenu `Finansijsko`}}active{{end}}\">Finansijsko</div><div hx-get=\"/get-menu?menuName=Komercijalno%20poslovanje\" hx-trigger=\"click\" hx-target=\"#side-menu\" hx-swap=\"outerHTML\" class=\"hover:text-blue-200 {{if eq .CurrentMenu `Komercijalno poslovanje`}}active{{end}}\">Komercijalno poslovanje</div><div hx-get=\"/get-menu?menuName=Robno\" hx-trigger=\"click\" hx-target=\"#side-menu\" hx-swap=\"outerHTML\" class=\"hover:text-blue-200 {{if eq .CurrentMenu `Robno`}}active{{end}}\">Robno</div><div hx-get=\"/get-menu?menuName=Plate\" hx-trigger=\"click\" hx-target=\"#side-menu\" hx-swap=\"outerHTML\" class=\"hover:text-blue-200 {{if eq .CurrentMenu `Plate`}}active{{end}}\">Plate</div><div hx-get=\"/get-menu?menuName=Proizvodnja\" hx-trigger=\"click\" hx-target=\"#side-menu\" hx-swap=\"outerHTML\" class=\"hover:text-blue-200 {{if eq .CurrentMenu `Proizvodnja`}}active{{end}}\">Proizvodnja</div><div hx-get=\"/get-menu?menuName=Blagajna\" hx-trigger=\"click\" hx-target=\"#side-menu\" hx-swap=\"outerHTML\" class=\"hover:text-blue-200 {{if eq .CurrentMenu `Blagajna`}}active{{end}}\">Blagajna</div><div hx-get=\"/get-menu?menuName=Osnovna%20sredstva\" hx-trigger=\"click\" hx-target=\"#side-menu\" hx-swap=\"outerHTML\" class=\"hover:text-blue-200 {{if eq .CurrentMenu `Osnovna sredstva`}}active{{end}}\">Osnovna sredstva</div></nav></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"bg-gradient-to-r from-blue-400 to-blue-400 text-white shadow-xl\"><nav class=\"flex flex-wrap\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		for _, item := range menuItems.MenuItems {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<button id=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var2 string
+			templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("menu-%s", strings.ReplaceAll(strings.ToLower(item.Name), " ", "-")))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/headermenu.templ`, Line: 15, Col: 90}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\" name=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var3 string
+			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(item.Name)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/headermenu.templ`, Line: 16, Col: 21}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "\" hx-get=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var4 string
+			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("/get-menu?menuName=%s", url.QueryEscape(item.Name)))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/headermenu.templ`, Line: 17, Col: 78}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\" hx-trigger=\"click\" hx-target=\"#side-menu\" hx-swap=\"outerHTML\" class=\"menu-btn px-3 py-2 font-medium text-sm focus:outline-none bg-blue-400 text-white transition-colors duration-200\" type=\"button\" onclick=\"document.querySelectorAll(&#39;nav button&#39;).forEach(b =&gt; b.className = &#39;px-3 py-2 font-medium text-sm bg-blue-400 text-white&#39;);\r\n                this.className = &#39;px-3 py-2 font-medium text-sm bg-white text-blue-800&#39;;\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var5 string
+			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(item.DisplayName)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/headermenu.templ`, Line: 26, Col: 23}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</button>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<!-- Right-aligned Combo Boxes --><div class=\"ml-auto flex items-center space-x-4 pr-4\"><!-- Company Select --><div class=\"flex items-center space-x-2\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = ComboBoxField(comboKomintent).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</div><!-- Poslovna Godina Select --><div class=\"flex items-center space-x-2\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = ComboBoxField(comboPoslGod).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</div></div></nav></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

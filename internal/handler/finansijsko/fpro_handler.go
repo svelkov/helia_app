@@ -92,9 +92,10 @@ func (h *FproHandler) GetNalogStavke(w http.ResponseWriter, r *http.Request) {
 		Type:         "search",
 		Placeholder:  "Unesite broj naloga ili druge podatke",
 		HxActionURL:  fmt.Sprintf("/api/fpro/nalog/%s", idFnalParam),
-		HxTarget:     "#nalozi_stavketablebody",
+		HxTarget:     "#nalozi_kopiranje_stavke",
 		HxSwap:       "innerHTML",
 		HxInclude:    "#search-controldetail",
+		Class:        utils.ClassSearchInput,
 		Autocomplete: "off",
 	}
 	if idFnalParam == "" && searchQuery == "" {
@@ -118,7 +119,9 @@ func (h *FproHandler) GetNalogStavke(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, utils.ReadDataErrMsg, err, http.StatusInternalServerError)
 		return
 	}
-	tbl.TableID = "nalozi_stavketablebody"
+	tbl.TableID = "nalozi_kopiranje_stavke"
+	tbl.URLGetAll = "/api/fpro/nalog/" + idFnalParam
+
 	err = tmpl.NaloziDetail(tbl, searchControl).Render(r.Context(), w)
 	if err != nil {
 		respondWithError(w, utils.ReadDataErrMsg, err, http.StatusInternalServerError)

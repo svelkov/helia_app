@@ -127,17 +127,18 @@ type Fpro struct {
 }
 
 type KopirajNalog struct {
-	IDFnal    int64     `db:"idfnal"`
-	TipdokOld string    `db:"tipdok"`
-	NalogOld  string    `db:"nalodold"`
-	DanalOld  time.Time `db:"danalold"`
-	DatKnjOld time.Time `db:"datknjold"`
-	OpisOld   string    `db:"opisold"`
-	TipdokNew string    `db:"tipdoknew"`
-	NalogNew  string    `db:"nalognew"`
-	DanalNew  time.Time `db:"danalnew"`
-	DatknjNew time.Time `db:"datknjnew"`
-	OpisNew   string    `db:"opisnew"`
+	IDFnal       int64     `db:"idfnal"`
+	TipdokOld    string    `db:"tipdok"`
+	NalogOld     string    `db:"nalodold"`
+	DanalOld     string    `db:"danalold"`
+	DatKnjOld    string    `db:"datknjold"`
+	OpisOld      string    `db:"opisold"`
+	TipdokNew    string    `db:"tipdoknew"`
+	NalogNew     string    `db:"nalognew"`
+	DanalNew     time.Time `db:"danalnew"`
+	DatknjNew    time.Time `db:"datknjnew"`
+	OpisNew      string    `db:"opisnew"`
+	TipdokValues []ComboItem
 }
 
 type UkupnaObrada struct {

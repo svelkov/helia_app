@@ -150,6 +150,7 @@ func (h *FnalHandler) GetNalogMainView(w http.ResponseWriter, r *http.Request) {
 		HxSwap:       "outerHTML",
 		HxInclude:    "#tipdokSelect",
 		Autocomplete: "off",
+		Class:        utils.ClassSearchInput,
 	}
 	// Render the appropriate template based on whether it's an initial load or HTMX swap
 	if viewData.IsInitialLoad {
@@ -197,10 +198,11 @@ func (h *FnalHandler) FnalPrepis(w http.ResponseWriter, r *http.Request) {
 		Type:         "search",
 		Placeholder:  "Unesite broj naloga ili druge podatke",
 		HxActionURL:  "/api/nalozi/prepis",
-		HxTarget:     "#table-body",
+		HxTarget:     "#nalozi-table",
 		HxSwap:       "innerHTML",
 		HxInclude:    "#search-prepishdr, #idfnal",
 		Autocomplete: "off",
+		Class:        utils.ClassSearchInput,
 	}
 	if r.Header["Hx-Trigger"] != nil && r.Header["Hx-Trigger"][0] == "prepis" {
 		err = tmpl_fin.NaloziKopiranje(currentTabData, viewData.TableData, domain.TableData{}, searchControl).Render(r.Context(), w)
@@ -242,13 +244,25 @@ func (h *FnalHandler) FnalPrepisDialog(w http.ResponseWriter, r *http.Request) {
 		HxTarget:      "#nalozi_kopiranje_stavke",
 		HxSwap:        "innerHTML",
 		HxRequestType: "POST",
+		HxActionURL:   "/api/fpro/nalog/kopiraj?idfnal=" + fmt.Sprintf("%d", idFnal),
 	}
 	modelView := domain.KopirajNalog{
-		IDFnal:    idFnal,
-		NalogOld:  fmt.Sprintf("%d", result.Nalog),
-		TipdokOld: result.Tipdok,
-		DanalOld:  result.Danal,
+		IDFnal:   idFnal,
+		NalogOld: fmt.Sprintf("%d", result.Nalog),
+		DanalOld:  result.Danal.Format("01.01.2006"),
+		DatKnjOld: result.Datob.Format("02.01.2006"),
 		OpisOld:   result.Opis,
+	}
+	tipdokValues, err := h.naloziService.GetTipdokOptions()
+	if err != nil {
+		respondWithError(w, "Failed to get Tipdok options", err, http.StatusInternalServerError)
+		return
+	}
+	for _, item := range tipdokValues {
+		if strings.Trim(strings.ToLower(item.TipDok), " ") == strings.Trim(strings.ToLower(result.Tipdok), " ") {
+			modelView.TipdokOld = fmt.Sprintf("%s-%s", result.Tipdok, item.Opis)
+		}
+		modelView.TipdokValues = append(modelView.TipdokValues, domain.ComboItem{Key: item.TipDok, Value: item.TipDok + "-" + item.Opis})
 	}
 	content := tmpl_fin.NaloziKopiranjeDialog(modelView)
 
@@ -288,6 +302,7 @@ func (h *FnalHandler) FnalStorniranje(w http.ResponseWriter, r *http.Request) {
 		HxSwap:       "innerHTML",
 		HxInclude:    "#tipdokSelect",
 		Autocomplete: "off",
+		Class:        utils.ClassSearchInput,
 	}
 
 	if r.Header["Hx-Trigger"] != nil && r.Header["Hx-Trigger"][0] == "storniranje" {
@@ -318,6 +333,7 @@ func (h *FnalHandler) FnalPrikaz(w http.ResponseWriter, r *http.Request) {
 		HxSwap:       "innerHTML",
 		HxInclude:    "#tipdokSelect",
 		Autocomplete: "off",
+		Class:        utils.ClassSearchInput,
 	}
 	err := tmpl_fin.NaloziContent(h.tabData, nil, domain.UkupnaObrada{}, h.btnSave, h.btnNoviNalog, domain.TableData{}, searchControl).Render(r.Context(), w)
 	if err != nil {
@@ -386,6 +402,7 @@ func (h *FnalHandler) AddRoutes(r *http.ServeMux) {
 	r.HandleFunc("DELETE /api/nalozi/{id}", infrastructure.AuthMiddleware(h.DeleteNalog))
 	r.HandleFunc("GET /api/nalozi/prepis", infrastructure.AuthMiddleware(h.FnalPrepis))
 	r.HandleFunc("GET /api/nalozi/confirm-prepis", infrastructure.AuthMiddleware(h.FnalPrepisDialog))
+	r.HandleFunc("GET /api/nalozi/confirm-storniraj", infrastructure.AuthMiddleware(h.FnalPrepisDialog))
 	r.HandleFunc("GET /api/nalozi/storniranje", infrastructure.AuthMiddleware(h.FnalStorniranje))
 	r.HandleFunc("GET /api/nalozi/prikaz", infrastructure.AuthMiddleware(h.FnalPrikaz))
 }

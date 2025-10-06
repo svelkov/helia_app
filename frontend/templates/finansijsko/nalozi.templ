@@ -2,10 +2,10 @@ package finansijsko
 
 import (
 	"fmt"
+	"time"
 	tmpl "helia/frontend/templates"
 	"helia/internal/domain"
 	"helia/pkg/utils"
-	"time"
 )
 
 var tabClasses string
@@ -76,38 +76,9 @@ templ NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Uku
 			</div>
 			<!-- Second row: Broj naloga, Datum naloga, Datum obrade -->
 			<div class="grid grid-cols-6 gap-1">
-				@tmpl.TextInputField(domain.InputFieldConfig{
-					ID:         "brojnaloga",
-					LabelText:  "Broj Naloga",
-					FieldType:  "text",
-					HasLabel:   true,
-					Disabled:   false,
-					ClassInput: utils.ClassInputTextEnabled,
-					ClassLabel: utils.ClassLabel + " w-20",
-					HxTarget:   "brojnaloga",
-					MinLength:  "1",
-					MaxLength:  "10",
-					TabIndex:   "1"})
-				@tmpl.TextInputField(domain.InputFieldConfig{
-					ID:         "datumnaloga",
-					Value:      time.Now().Format("2006-01-02"),
-					LabelText:  "Datum Naloga",
-					FieldType:  "date",
-					HasLabel:   true,
-					Disabled:   false,
-					ClassInput: utils.ClassInputTextEnabled,
-					ClassLabel: utils.ClassLabel + " pl-4",
-					TabIndex:   "2"})
-				@tmpl.TextInputField(domain.InputFieldConfig{
-					ID:         "datumobrade",
-					Value:      time.Now().Format("2006-01-02"),
-					LabelText:  "Datum Obrade",
-					FieldType:  "date",
-					HasLabel:   true,
-					Disabled:   false,
-					ClassInput: utils.ClassInputTextEnabled,
-					ClassLabel: utils.ClassLabel + " pl-4",
-					TabIndex:   "3"})
+				@tmpl.TextInputField(BrojNaloga)
+				@tmpl.TextInputField(DatumNaloga)
+				@tmpl.TextInputField(DatumObrade)
 			</div>
 			<!-- Third row: Opis knjiženja -->
 			<div class="flex items-center gap-3">
@@ -239,49 +210,146 @@ templ NaloziStampanje(tabs domain.TabData, tblHeader, tblStavke domain.TableData
 }
 
 templ NaloziKopiranjeDialog(model domain.KopirajNalog) {
-	<h2 class="form-title">Podaci o nalogu koji se kopira</h2>
-	<div class="col-span-2 grid grid-cols-2 gap-1">
-		<div class="flex flex-col">
-			<label for="vista-naloga" class="block text-sm font-sm text-blue-700">Vista naloga</label>
-			<input
-				class="mt-1 block p-1 w-[8ch] border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 w-full min-w-0"
-				type="text"
-				id="vrstaNalogaold"
-				name="vrstaNalogaold"
-			/>
+	<div class="text-blue-800 font-bold text-sm mb-1">
+		Podaci o nalogu iz kojeg se kopira
+	</div>
+	<div class="box-content flex flex-col p-2 border-2 border-gray-300 rounded-md">
+		<div class="flex items-center space-x-2 mb-1">
+			@tmpl.TextInputField(domain.InputFieldConfig{
+				ID:         "vrstanalogaold",
+				Name:       "vrstanalogaold",
+				Value:      model.TipdokOld,
+				LabelText:  "Vrsta naloga",
+				FieldType:  "text",
+				HasLabel:   true,
+				Disabled:   true,
+				ClassInput: utils.ClassInputTextDisabled + " w-full",
+				ClassLabel: utils.ClassLabel + " w-24",
+			})
 		</div>
-		<div class="flex flex-col">
-			<label for="broj-naloga" class="block text-sm font-sm text-blue-700">Broj naloga</label>
-			<input
-				class="mt-1 block p-1 w-[8ch] border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 w-full min-w-0"
-				type="text"
-				id="brojnalogaold"
-				name="brojnalogaold"
-			/>
+		<div class="flex items-center space-x-2 mb-1">
+			@tmpl.TextInputField(domain.InputFieldConfig{
+				ID:         "brojnalogaold",
+				Name:       "brojnalogaold",
+				Value:      model.NalogOld,
+				LabelText:  "Broj naloga",
+				FieldType:  "text",
+				HasLabel:   true,
+				Disabled:   true,
+				ClassInput: utils.ClassInputTextDisabled + " w-42",
+				ClassLabel: utils.ClassLabel + " w-24",
+			})
 		</div>
-		<div class="flex flex-col">
-			<label for="datum-naloga" class="block text-sm font-sm text-blue-700">Datum naloga</label>
-			<input
-				class="mt-1 block p-1 w-[10ch] border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 w-full min-w-0"
-				type="text"
-				id="datumnalogaold"
-				disabled="true"
-				name="datumalogaold"
-			/>
+		<div class="flex items-center space-x-2 mb-1">
+			@tmpl.TextInputField(domain.InputFieldConfig{
+				ID:         "datumknjold",
+				Name:       "datumnknjold",
+				Value:      model.DatKnjOld,
+				LabelText:  "Datum naloga",
+				FieldType:  "text",
+				HasLabel:   true,
+				Disabled:   true,
+				ClassInput: utils.ClassInputTextDisabled,
+				ClassLabel: utils.ClassLabel + " w-24",
+			})
+			@tmpl.TextInputField(domain.InputFieldConfig{
+				ID:         "datumobradeold",
+				Name:       "datumobradeold",
+				Value:      model.DanalOld,
+				LabelText:  "Datum Obrade",
+				FieldType:  "text",
+				HasLabel:   true,
+				Disabled:   true,
+				ClassInput: utils.ClassInputTextDisabled,
+				ClassLabel: utils.ClassLabel + " w-24",
+			})
 		</div>
-		<div class="flex flex-col">
-			<label for="opis-knjizenjaold" class="block text-sm font-sm text-blue-700">Opis knjizenja</label>
-			<input
-				class="mt-1 block p-1 w-[50ch] border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 w-full min-w-0"
-				type="text"
-				id="opisknjizenjaold"
-				disabled="true"
-				name="opisknjizenjaold"
-			/>
+		<div class="flex items-center space-x-2 mb-1">
+			@tmpl.TextInputField(domain.InputFieldConfig{
+				ID:         "opisknjizenjaold",
+				Name:       "opisknjizenjaold",
+				Value:      model.OpisOld,
+				LabelText:  "Opis knjizenja",
+				FieldType:  "text",
+				HasLabel:   true,
+				Disabled:   true,
+				ClassInput: utils.ClassInputTextDisabled + " w-full",
+				ClassLabel: utils.ClassLabel + " w-24",
+			})
 		</div>
 	</div>
 	<!-- Full-width Description Section -->
-	<hr class="horizontal-line"/>
+	<div class="text-blue-800 font-bold text-sm mb-1">
+		Podaci o novom nalogu
+	</div>
+	<div class="box-content flex flex-col p-2 border-2 border-gray-300 rounded-md">
+		<div class="flex items-center space-x-2 mb-1">
+			@tmpl.ComboBoxField(domain.ComboFieldConfig{
+				ID:             "vrstanaloganew",
+				Name:           "vrstanaloganew",
+				Placeholder:    "Select...",
+				LabelText:      "Vrsta Naloga",
+				HasLabel:       true,
+				Disabled:       false,
+				ClassSelect:    utils.ClassSelect + " w-full ",
+				ClassLabel:     utils.ClassLabel + " w-24 ",
+				HxSwap:         "innerHTML",
+				HxChangeTarget: "vrstanaloganew",
+				HxVals:         `{"tipdoknew": document.getElementById("tipdoknew").value}`,
+				OptionValues:   model.TipdokValues,
+			})
+		</div>
+		<div class="flex items-center space-x-2 mb-1">
+			@tmpl.TextInputField(domain.InputFieldConfig{
+				ID:         "brojnaloganew",
+				Name:       "brojnaloganew",
+				Value:      model.NalogNew,
+				LabelText:  "Broj naloga",
+				FieldType:  "text",
+				HasLabel:   true,
+				Disabled:   false,
+				ClassInput: utils.ClassInputTextEnabled,
+				ClassLabel: utils.ClassLabel + " w-24",
+			})
+		</div>
+		<div class="flex items-center space-x-2 mb-1">
+			@tmpl.TextInputField(domain.InputFieldConfig{
+				ID:         "datumknjnew",
+				Name:       "datumnknjnew",
+				Value:      time.Now().Format("02.01.2006"),
+				LabelText:  "Datum naloga",
+				FieldType:  "date",
+				HasLabel:   true,
+				Disabled:   false,
+				ClassInput: utils.ClassInputTextEnabled+" w-full",
+				ClassLabel: utils.ClassLabel + " w-24",
+			})
+			@tmpl.TextInputField(domain.InputFieldConfig{
+				ID:         "datumobradenew",
+				Name:       "datumobradenew",
+				Value:      time.Now().Format("02.01.2006"),
+				LabelText:  "Datum Obrade",
+				FieldType:  "date",
+				HasLabel:   true,
+				Disabled:   false,
+				ClassInput: utils.ClassInputTextDisabled+" w-full",
+				ClassLabel: utils.ClassLabel + " w-24",
+			})
+		</div>
+		<div class="flex items-center space-x-2 mb-1">
+			@tmpl.TextInputField(domain.InputFieldConfig{
+				ID:         "opisknjizenjanew",
+				Name:       "opisknjizenjanew",
+				Value:      model.OpisNew,
+				LabelText:  "Opis knjizenja",
+				FieldType:  "text",
+				HasLabel:   true,
+				Disabled:   false,
+				ClassInput: utils.ClassInputTextEnabled + " w-full",
+				ClassLabel: utils.ClassLabel + " w-24",
+			})
+		</div>
+	</div>
 }
 
 templ NaloziScript() {

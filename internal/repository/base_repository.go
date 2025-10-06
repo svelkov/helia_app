@@ -123,7 +123,7 @@ func (r *BaseRepository[T]) Update(entity *T, idField string, idValue interface{
 	return err
 }
 
-func (r *BaseRepository[T]) Delete(idField string, id int) error {
+func (r *BaseRepository[T]) Delete(idField string, id int64) error {
 	query := fmt.Sprintf(`DELETE FROM  %s WHERE %s = $1`, r.TableName, idField)
 	_, err := doTransaction(r.DB, ActionTypeDelete, idField, query, id)
 	return err

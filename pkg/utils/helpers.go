@@ -2,11 +2,11 @@ package utils
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"helia/internal/common"
 	"helia/internal/domain"
 	"helia/internal/service"
-
 	"net/http"
 	"strconv"
 	"strings"
@@ -14,202 +14,257 @@ import (
 	"github.com/gorilla/schema"
 )
 
-func DeleteHelper[T any](w http.ResponseWriter, r *http.Request, service service.Service[T], idType string) {
-	// Get the `id` from the URL path
-	id, err := GetIDFromRequest(r, "id")
-	if err != nil {
-		response := CreateResponse(w, false, []domain.FieldError{}, GetIdFromUrlErrMsg, http.StatusBadRequest)
-		json.NewEncoder(w).Encode(response)
-		return
-	}
+// Error messages (should be moved to a separate file if used across packages)
+const (
+	ErrMsgInvalidID    = "invalid ID provided"
+	ErrMsgGetIDFromURL = "failed to get ID from URL"
+	ErrMsgParseForm    = "failed to parse form"
+	ErrMsgFormDecode   = "failed to decode form"
+	ErrMsgReadData     = "failed to read data"
+	ErrMsgSaveData     = "failed to save data"
+	ErrMsgDeleteData   = "failed to delete data"
+	ErrMsgValidation   = "validation failed"
+	ErrMsgDataOk       = "operation successful"
+)
 
-	// Call the delete method
-	err = service.Delete(idType, id)
-	if err != nil {
-		response := CreateResponse(w, false, []domain.FieldError{}, fmt.Sprintf(DeleteDataErrMsg, err.Error()), http.StatusBadRequest)
-		json.NewEncoder(w).Encode(response)
-		return
-	}
-
-	// Success response
-	response := CreateResponse(w, true, []domain.FieldError{}, DeleteDataOkMsg, http.StatusOK)
-	json.NewEncoder(w).Encode(response)
+// WriteJSONResponse writes a JSON response with the given status, success, errors, and message.
+func WriteJSONResponse(
+	w http.ResponseWriter,
+	status int,
+	success bool,
+	errors []domain.FieldError,
+	message string,
+) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	json.NewEncoder(w).Encode(domain.Response{
+		Success: success,
+		Errors:  errors,
+		Message: message,
+	})
 }
 
-func ConfirmDeleteHelper(w http.ResponseWriter, r *http.Request, tableFields []domain.Fields) {
+// parseAndDecode parses the form and decodes it into the provided entity.
+func parseAndDecode(r *http.Request, entity any) error {
+	if err := r.ParseForm(); err != nil {
+		return fmt.Errorf("%s: %w", ErrMsgParseForm, err)
+	}
+	decoder := schema.NewDecoder()
+	if err := decoder.Decode(entity, r.PostForm); err != nil {
+		return fmt.Errorf("%s: %w", ErrMsgFormDecode, err)
+	}
+	return nil
+}
+
+// GetIDFromRequest extracts the ID from the request URL path.
+func GetIDFromRequest(r *http.Request, key string) (int64, error) {
+	idStr := r.URL.Query().Get(key)
+	if idStr == "" {
+		return 0, errors.New(ErrMsgGetIDFromURL)
+	}
+	return strconv.ParseInt(idStr, 10, 64)
+}
+
+// DeleteHelper handles HTTP DELETE requests for a resource.
+// It expects the resource ID in the URL path and uses the provided service to delete the resource.
+func DeleteHelper[T any](
+	w http.ResponseWriter,
+	r *http.Request,
+	service service.Service[T],
+	idType string,
+) {
+	id, err := GetIDFromRequest(r, "id")
+	if err != nil {
+		WriteJSONResponse(w, http.StatusBadRequest, false, nil, err.Error())
+		return
+	}
+
+	if err := service.Delete(idType, id); err != nil {
+		WriteJSONResponse(w, http.StatusBadRequest, false, nil, fmt.Sprintf("%s: %v", ErrMsgDeleteData, err))
+		return
+	}
+
+	WriteJSONResponse(w, http.StatusOK, true, nil, ErrMsgDataOk)
+}
+
+// ConfirmDeleteHelper renders a confirmation dialog for resource deletion.
+func ConfirmDeleteHelper(
+	w http.ResponseWriter,
+	r *http.Request,
+	tableFields []domain.Fields,
+) {
 	idStr := r.URL.Query().Get("id")
 	url := r.URL.Query().Get("url")
 
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		response := CreateResponse(w, false, []domain.FieldError{}, InvalidIdErrMsg, http.StatusBadRequest)
-		json.NewEncoder(w).Encode(response)
+		WriteJSONResponse(w, http.StatusBadRequest, false, nil, ErrMsgInvalidID)
 		return
 	}
 
-	url = fmt.Sprintf("%s%d", url, id)
+	url = fmt.Sprintf("%s/%d", url, id)
 	dialog := SetDialogValues(idStr, url, "Brisanje podataka", "hx-delete")
 	RenderDialogContent(w, r, dialog, tableFields, ActionDelete)
 }
 
-func ConfirmAddHelper(w http.ResponseWriter, r *http.Request, url string, tableFields []domain.Fields) {
-	for i, field := range tableFields {
-		field.Value = ""
-		tableFields[i] = field
+// ConfirmAddHelper renders a dialog for adding a new resource.
+func ConfirmAddHelper(
+	w http.ResponseWriter,
+	r *http.Request,
+	url string,
+	tableFields []domain.Fields,
+) {
+	for i := range tableFields {
+		tableFields[i].Value = ""
 	}
 	dialog := SetDialogValues("", url, "Unos novih podataka", "hx-post")
 	RenderDialogContent(w, r, dialog, tableFields, ActionAdd)
-
 }
 
-func ConfirmUpdateHelper[T any](w http.ResponseWriter, r *http.Request, service service.Service[T], tableFields []domain.Fields, idField string) {
-
+// ConfirmUpdateHelper renders a dialog for updating a resource.
+func ConfirmUpdateHelper[T any](
+	w http.ResponseWriter,
+	r *http.Request,
+	service service.Service[T],
+	tableFields []domain.Fields,
+	idField string,
+) {
 	idStr := r.URL.Query().Get("id")
 	url := r.URL.Query().Get("url")
 
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		response := CreateResponse(w, false, []domain.FieldError{}, InvalidIdErrMsg, http.StatusBadRequest)
-		json.NewEncoder(w).Encode(response)
+		WriteJSONResponse(w, http.StatusBadRequest, false, nil, ErrMsgInvalidID)
 		return
 	}
+
 	entity, err := service.GetByID(idField, int64(id))
 	if err != nil {
-		http.Error(w, "No record for update is available", http.StatusBadRequest)
+		WriteJSONResponse(w, http.StatusBadRequest, false, nil, ErrMsgReadData)
 		return
 	}
-	url = fmt.Sprintf("%s%d", url, id)
+
+	url = fmt.Sprintf("%s/%d", url, id)
 	fields := service.MapEntityToValues(entity, tableFields)
 	dialog := SetDialogValues(idStr, url, "Izmena podataka", "hx-put")
 	RenderDialogContent(w, r, dialog, fields, ActionUpdate)
 }
 
-func CreateHelper[T any](w http.ResponseWriter, r *http.Request, entity *T, service service.Service[T], idField string, tableFields []domain.Fields) (insertedId int64, err error) {
-	// Parse the form data
-	err = r.ParseForm()
-	if err != nil {
-		response := CreateResponse(w, false, []domain.FieldError{}, ParseFormErrMsg, http.StatusBadRequest)
-		json.NewEncoder(w).Encode(response)
-		return
+// CreateHelper handles HTTP POST requests for creating a new resource.
+func CreateHelper[T any](
+	w http.ResponseWriter,
+	r *http.Request,
+	entity *T,
+	service service.Service[T],
+	idField string,
+	tableFields []domain.Fields,
+) (insertedId int64, err error) {
+	if err := parseAndDecode(r, entity); err != nil {
+		WriteJSONResponse(w, http.StatusBadRequest, false, nil, err.Error())
+		return 0, err
 	}
 
-	// Create a decoder
-	decoder := schema.NewDecoder()
-
-	// Decode the form data into the struct
-	err = decoder.Decode(entity, r.PostForm)
-	if err != nil {
-		response := CreateResponse(w, false, []domain.FieldError{}, FormDecodeErrMsg, http.StatusBadRequest)
-		json.NewEncoder(w).Encode(response)
-		return
-	}
 	tableFields = service.MapEntityToValues(entity, tableFields)
 	fieldErrors, lastInsertedID, err := service.Create(entity, idField, tableFields)
 	if err != nil {
-		response := CreateResponse(w, false, fieldErrors, SaveDataErrMsg, http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(response)
-		return
+		WriteJSONResponse(w, http.StatusInternalServerError, false, fieldErrors, ErrMsgSaveData)
+		return 0, err
 	}
 	if len(fieldErrors) > 0 {
-		response := CreateResponse(w, false, fieldErrors, ValidationErrMsg, http.StatusUnprocessableEntity)
-		json.NewEncoder(w).Encode(response)
-		return
+		WriteJSONResponse(w, http.StatusUnprocessableEntity, false, fieldErrors, ErrMsgValidation)
+		return 0, nil
 	}
-	response := CreateResponse(w, true, fieldErrors, SaveDataOkMsg, http.StatusCreated)
-	json.NewEncoder(w).Encode(response)
-	return lastInsertedID, err
+
+	WriteJSONResponse(w, http.StatusCreated, true, nil, ErrMsgDataOk)
+	return lastInsertedID, nil
 }
 
-func UpdateHelper[T any](w http.ResponseWriter, r *http.Request, entity *T, service service.Service[T], tableFields []domain.Fields, idField string) {
-	// Get the `id` from the URL path
+// UpdateHelper handles HTTP PUT requests for updating a resource.
+func UpdateHelper[T any](
+	w http.ResponseWriter,
+	r *http.Request,
+	entity *T,
+	service service.Service[T],
+	tableFields []domain.Fields,
+	idField string,
+) {
 	redirectURL := fmt.Sprintf("%s/all", r.URL.Path[:strings.LastIndex(r.URL.Path, "/")])
 	id, err := GetIDFromRequest(r, "id")
 	if err != nil {
-		response := CreateResponse(w, false, []domain.FieldError{}, GetIdFromUrlErrMsg, http.StatusBadRequest)
-		json.NewEncoder(w).Encode(response)
-		return
-	}
-	// Parse the form data
-	err = r.ParseForm()
-	if err != nil {
-		response := CreateResponse(w, false, []domain.FieldError{}, ParseFormErrMsg, http.StatusBadRequest)
-		json.NewEncoder(w).Encode(response)
+		WriteJSONResponse(w, http.StatusBadRequest, false, nil, err.Error())
 		return
 	}
 
-	// Create a decoder
-	decoder := schema.NewDecoder()
-
-	// Decode the form data into the struct
-	err = decoder.Decode(entity, r.PostForm)
-	if err != nil {
-		response := CreateResponse(w, false, []domain.FieldError{}, FormDecodeErrMsg, http.StatusBadRequest)
-		json.NewEncoder(w).Encode(response)
+	if err := parseAndDecode(r, entity); err != nil {
+		WriteJSONResponse(w, http.StatusBadRequest, false, nil, err.Error())
 		return
 	}
 
 	tableFields = service.MapEntityToValues(entity, tableFields)
-
 	fieldErrors, err := service.Update(entity, idField, id, tableFields)
 	if len(fieldErrors) > 0 {
-		response := CreateResponse(w, false, fieldErrors, ValidationErrMsg, http.StatusUnprocessableEntity)
-		json.NewEncoder(w).Encode(response)
+		WriteJSONResponse(w, http.StatusUnprocessableEntity, false, fieldErrors, ErrMsgValidation)
 		return
 	}
 	if err != nil {
-		response := CreateResponse(w, false, fieldErrors, SaveDataErrMsg, http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(response)
+		WriteJSONResponse(w, http.StatusInternalServerError, false, nil, ErrMsgSaveData)
 		return
 	}
 
-	response := CreateResponse(w, true, fieldErrors, SaveDataOkMsg, http.StatusCreated)
-	json.NewEncoder(w).Encode(response)
-
-	// redirect to the preview site
+	WriteJSONResponse(w, http.StatusOK, true, nil, ErrMsgDataOk)
 	http.Redirect(w, r, redirectURL, http.StatusSeeOther)
 }
 
-func GetAllEntityHelper[T any](w http.ResponseWriter, r *http.Request, entity *T, service service.Service[T], tableFields []domain.Fields, entityContentTitle, entityTableID, entityURLPrefix, entityURLGetall, idField string, hasUpdateDelete ...bool) *domain.TableData {
-
-	// Parse query parameters from the URL
+// GetAllEntityHelper fetches and returns paginated data for a resource.
+func GetAllEntityHelper[T any](
+	w http.ResponseWriter,
+	r *http.Request,
+	service service.Service[T],
+	tableFields []domain.Fields,
+	entityContentTitle, entityTableID, entityURLPrefix, entityURLGetall, idField string,
+	hasUpdateDelete ...bool,
+) *domain.TableData {
 	searchValue := r.URL.Query().Get("query")
-	// Fetch all "drzava" entities from the service layer
+
 	totRecords, err := service.GetTotalRecords(tableFields, searchValue)
 	if err != nil {
-		response := CreateResponse(w, false, []domain.FieldError{}, ReadDataErrMsg, http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(response)
+		WriteJSONResponse(w, http.StatusInternalServerError, false, nil, ErrMsgReadData)
 		return nil
 	}
 
 	currentPage, pageSize, totalPages := common.GetPaginationData(r, totRecords)
 	allEntities, err := service.GetAll(pageSize, (currentPage-1)*pageSize, tableFields, idField, searchValue)
 	if err != nil {
-		response := CreateResponse(w, false, []domain.FieldError{}, ReadDataErrMsg, http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(response)
+		WriteJSONResponse(w, http.StatusInternalServerError, false, nil, ErrMsgReadData)
 		return nil
 	}
 
-	// Convert the fetched data into the format expected by the template
-	table := common.SetTableBasicData(entityContentTitle, entityTableID, tableFields, entityURLPrefix, entityURLGetall, pageSize, currentPage, totalPages, totRecords)
+	table := common.SetTableBasicData(
+		entityContentTitle, entityTableID, tableFields,
+		entityURLPrefix, entityURLGetall,
+		pageSize, currentPage, totalPages, totRecords,
+	)
 	common.SetTableRows(&table, *allEntities, tableFields, idField, entityURLPrefix, service.GetFieldCache())
-
 	return &table
-	// RenderContent(w, r, *table)
 }
 
-func GetEntityHelper[T any](w http.ResponseWriter, r *http.Request, service service.Service[T], tableFields []domain.Fields, idField string) {
-	// Get the `id` from the URL path
+// GetEntityHelper fetches and returns a single resource by ID.
+func GetEntityHelper[T any](
+	w http.ResponseWriter,
+	r *http.Request,
+	service service.Service[T],
+	tableFields []domain.Fields,
+	idField string,
+) {
 	id, err := GetIDFromRequest(r, "id")
 	if err != nil {
-		response := CreateResponse(w, false, []domain.FieldError{}, GetIdFromUrlErrMsg, http.StatusBadRequest)
-		json.NewEncoder(w).Encode(response)
+		WriteJSONResponse(w, http.StatusBadRequest, false, nil, err.Error())
 		return
 	}
 
-	entity, err := service.GetByID(idField, int64(id))
+	entity, err := service.GetByID(idField, id)
 	if err != nil {
-		response := CreateResponse(w, false, []domain.FieldError{}, ReadDataErrMsg, http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(response)
+		WriteJSONResponse(w, http.StatusInternalServerError, false, nil, ErrMsgReadData)
 		return
 	}
 

@@ -75,7 +75,7 @@ func (s *FproResource) Create(Fpro *domain.Fpro, idField string, fields []domain
 }
 
 // Delete implements NalogService.
-func (s *FproResource) Delete(idField string, id int) error {
+func (s *FproResource) Delete(idField string, id int64) error {
 	return s.service.Delete(idField, id)
 }
 
@@ -159,7 +159,7 @@ func (s *FproResource) GetNaloziStavke(r *http.Request, idFnal int64, searchQuer
 	}
 
 	limitOffset := fmt.Sprintf(" LIMIT %d OFFSET %d", calculatedPageSize, (currentPage-1)*calculatedPageSize)
-	orderBy := " ORDER BY danal DESC"
+	orderBy := " ORDER BY rbr "
 	selectQuery := `SELECT idFpro, rbr, fpro.konto, fpro.sifra, fkpl.naziv as nazivkonta, vrd, opis, dokum, dadok, rok, fpro.vkonta,
 	 CASE 
         WHEN fpro.kat = 1 THEN fpro.iznos

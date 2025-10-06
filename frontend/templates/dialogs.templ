@@ -18,10 +18,10 @@ templ Dialog(id string, content templ.Component, dialog domain.Dialog) {
 				onsubmit="return false;"
 				class="grid grid-cols-1 md:grid-cols-[auto,auto] gap-2 gap-x-4 p-3 bg-white shadow-lg rounded-lg w-auto"
 			>
-				<div class="px-4 py-6">
+				<div class="px-1 py-1 col-span-2 max-h-[70vh] overflow-y-auto">
 					@content
 				</div>
-				<div class="bg-white col-span-2 px-3 py-3 flex justify-end space-x-2 pt-4">
+				<div class="bg-white col-span-2 px-3 py-3 flex justify-end space-x-1 pt-4">
 					@ModalConfirmButton(dialog.HxRequestType, dialog)
 					@ModalCancelButton(dialog.Id, dialog)
 				</div>

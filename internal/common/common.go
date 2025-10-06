@@ -142,13 +142,13 @@ func SetTableRows[T any](table *domain.TableData, entities []T, tableFields []do
 
 func SetTableButtons(table *domain.TableData, entityURLPrefix string) *domain.TableData {
 	table.BtnAdd.IsVisible = true                                                  // Show Add button in the table header
-	table.BtnAdd.HxActionURL = fmt.Sprintf("%sconfirm-add", entityURLPrefix)       // Set the URL for Add button
+	table.BtnAdd.HxActionURL = fmt.Sprintf("%s/confirm-add", entityURLPrefix)       // Set the URL for Add button
 	table.BtnUpdate.IsVisible = true                                               // Show Update button in the table header
-	table.BtnUpdate.HxActionURL = fmt.Sprintf("%sconfirm-update", entityURLPrefix) // Set the URL for Update button
+	table.BtnUpdate.HxActionURL = fmt.Sprintf("%s/confirm-update", entityURLPrefix) // Set the URL for Update button
 	table.BtnDelete.IsVisible = true                                               // Show Delete button in the table header
-	table.BtnDelete.HxActionURL = fmt.Sprintf("%sconfirm-delete", entityURLPrefix) // Set the URL for Delete button
+	table.BtnDelete.HxActionURL = fmt.Sprintf("%s/confirm-delete", entityURLPrefix) // Set the URL for Delete button
 	table.BtnPrint.IsVisible = true                                                // Show Print button in the table header
-	table.BtnPrint.HxActionURL = fmt.Sprintf("%sreport", entityURLPrefix)          // Show Print button in the table header
+	table.BtnPrint.HxActionURL = fmt.Sprintf("%s/report", entityURLPrefix)          // Show Print button in the table header
 	return table
 }
 

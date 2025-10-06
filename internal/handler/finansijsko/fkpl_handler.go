@@ -21,12 +21,15 @@ const (
 	fkplURLGetAll    string = "/api/fkpl/all"
 )
 
-var fkplTableFields = []domain.Fields{
-	{Name: "konto", Label: "Konto", Width: "10"},
-	{Name: "sifra", Label: "Sifra", Width: "10"},
-	{Name: "naziv", Label: "Naziv", Width: "120"},
-	{Name: "vkonta", Label: "Vrsta konta", Width: "4"},
+func SetFkplFields() []domain.Fields {
+	return []domain.Fields{
+		{Name: "konto", Label: "Konto", Width: "10"},
+		{Name: "sifra", Label: "Sifra", Width: "10"},
+		{Name: "naziv", Label: "Naziv", Width: "120"},
+		{Name: "vkonta", Label: "Vrsta konta", Width: "4"},
+	}
 }
+
 var fkplSearchTableFields = []domain.Fields{
 	{Name: "konto", Label: "Konto", Width: "10"},
 	{Name: "sifra", Label: "Sifra", Width: "10"},
@@ -43,12 +46,12 @@ func NewFkplHandler(service *service.BaseService[domain.Fkpl]) *FkplHandler {
 
 func (h *FkplHandler) CreateFkpl(w http.ResponseWriter, r *http.Request) {
 	var fkpl domain.Fkpl
-	utils.CreateHelper(w, r, &fkpl, h.Service, utils.IDfkpl, fkplTableFields)
+	utils.CreateHelper(w, r, &fkpl, h.Service, utils.IDfkpl, SetFkplFields())
 }
 
 func (h *FkplHandler) UpdateFkpl(w http.ResponseWriter, r *http.Request) {
 	var fkpl domain.Fkpl
-	utils.UpdateHelper(w, r, &fkpl, h.Service, fkplTableFields, utils.IDfkpl)
+	utils.UpdateHelper(w, r, &fkpl, h.Service, SetFkplFields(), utils.IDfkpl)
 }
 
 func (h *FkplHandler) DeleteFkpl(w http.ResponseWriter, r *http.Request) {
@@ -56,24 +59,24 @@ func (h *FkplHandler) DeleteFkpl(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *FkplHandler) confirmDeleteHandler(w http.ResponseWriter, r *http.Request) {
-	utils.ConfirmDeleteHelper(w, r, fkplTableFields)
+	utils.ConfirmDeleteHelper(w, r, SetFkplFields())
 }
 
 func (h *FkplHandler) confirmAddHandler(w http.ResponseWriter, r *http.Request) {
-	utils.ConfirmAddHelper(w, r, strings.TrimSuffix(fkplURLPrefix, "/"), fkplTableFields)
+	utils.ConfirmAddHelper(w, r, strings.TrimSuffix(fkplURLPrefix, "/"), SetFkplFields())
 }
 
 func (h *FkplHandler) confirmUpdateHandler(w http.ResponseWriter, r *http.Request) {
-	utils.ConfirmUpdateHelper[domain.Fkpl](w, r, h.Service, fkplTableFields, utils.IDfkpl)
+	utils.ConfirmUpdateHelper[domain.Fkpl](w, r, h.Service, SetFkplFields(), utils.IDfkpl)
 }
 
 func (h *FkplHandler) GetFkpl(w http.ResponseWriter, r *http.Request) {
-	utils.GetEntityHelper(w, r, h.Service, fkplTableFields, utils.IDfkpl)
+	utils.GetEntityHelper(w, r, h.Service, SetFkplFields(), utils.IDfkpl)
 }
 
 func (h *FkplHandler) GetAllFkpl(w http.ResponseWriter, r *http.Request) {
-	var fkpl domain.Fkpl
-	tbl := utils.GetAllEntityHelper(w, r, &fkpl, h.Service, fkplTableFields, fkplContentTitle, fkplTableID, fkplURLPrefix, fkplURLGetAll, utils.IDfkpl)
+
+	tbl := utils.GetAllEntityHelper(w, r, h.Service, SetFkplFields(), fkplContentTitle, fkplTableID, fkplURLPrefix, fkplURLGetAll, utils.IDfkpl)
 	utils.RenderContent(w, r, *tbl)
 }
 

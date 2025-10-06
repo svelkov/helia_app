@@ -18,7 +18,11 @@ templ TopMenu(menuItems domain.MenuDataItems, currentMenu string, comboKomintent
 					hx-trigger="click"
 					hx-target="#side-menu"
 					hx-swap="outerHTML"
-					class="menu-btn px-3 py-2 font-medium text-sm focus:outline-none bg-blue-400 text-white transition-colors duration-200"
+					if item.Name == currentMenu {
+						class="menu-btn px-3 py-2 font-medium text-sm bg-white text-blue-800 focus:outline-none transition-colors duration-200"
+					} else {
+						class="menu-btn px-3 py-2 font-medium text-sm focus:outline-none bg-blue-400 text-white transition-colors duration-200"
+					}
 					type="button"
 					onclick="document.querySelectorAll('nav button').forEach(b => b.className = 'px-3 py-2 font-medium text-sm bg-blue-400 text-white');
                 this.className = 'px-3 py-2 font-medium text-sm bg-white text-blue-800';"

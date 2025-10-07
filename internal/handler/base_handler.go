@@ -101,6 +101,8 @@ func (h *BasicHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	if len(poslGodina) > 0 {
 		selectedPoslGodina = poslGodina[0]
 	}
+	global.SetGnGod(selectedPoslGodina)
+	global.SetGnKar(selectedKomintent)
 	templates.Base(false, templates.Login(), h.menuItems, h.subMenuItems, "Helia", "", fmt.Sprintf("%d", time.Now().Year()), "", setComboKomintent(fvrData, selectedKomintent), setComboPoslGodConfig(poslGodina, selectedPoslGodina)).Render(r.Context(), w) // Render login page on failure.
 }
 
@@ -123,6 +125,8 @@ func (h *BasicHandler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	if len(poslGodina) > 0 {
 		selectedPoslGodina = poslGodina[0]
 	}
+	global.SetGnGod(selectedPoslGodina)
+	global.SetGnKar(selectedKomintent)
 	templates.Base(h.isLoggedIn, templates.Register(), h.menuItems, h.subMenuItems, "Helia", "", fmt.Sprintf("%d", time.Now().Year()), "", setComboKomintent(fvrData, selectedKomintent), setComboPoslGodConfig(poslGodina, selectedPoslGodina)).Render(r.Context(), w)
 }
 
@@ -236,8 +240,9 @@ func (h *BasicHandler) indexHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error while getting years", http.StatusInternalServerError)
 		return
 	}
-
-	err = tmpl.Base(IsLoggedIn, c, h.menuItems, h.subMenuItems, "HELIA", username, year, "", setComboKomintent(fvrData, currentKomintent), setComboPoslGodConfig(poslGodina, currentGod)).Render(r.Context(), w)
+	global.SetGnGod(currentGod)
+	global.SetGnKar(currentKomintent)
+	err = tmpl.Base(IsLoggedIn, c, h.menuItems, h.subMenuItems, "HELIA", username, year, menuName, setComboKomintent(fvrData, currentKomintent), setComboPoslGodConfig(poslGodina, currentGod)).Render(r.Context(), w)
 	if err != nil {
 		http.Error(w, "Error rendering template", http.StatusInternalServerError)
 		return

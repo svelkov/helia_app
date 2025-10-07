@@ -18,7 +18,7 @@ type Service[T any] interface {
 	GetTotalRecordsCustom(queryText, whereText string, args []interface{}, limitOffset, orderBy string) (int, error)
 	GetTotalRecords(tableFields []domain.Fields, searchParams ...string) (int, error)
 	Update(entity *T, idField string, idValue interface{}, tableFields []domain.Fields) ([]domain.FieldError, error)
-	Delete(idField string, id int) error
+	Delete(idField string, id int64) error
 	MapEntityToValues(entity *T, tableFields []domain.Fields) []domain.Fields
 	GetFieldCache() map[string]reflect.StructField
 }
@@ -96,7 +96,7 @@ func (s *BaseService[T]) Update(entity *T, idField string, idValue interface{}, 
 	return fieldErrors, s.Repo.Update(entity, idField, idValue, tableFields)
 }
 
-func (s *BaseService[T]) Delete(idField string, id int) error {
+func (s *BaseService[T]) Delete(idField string, id int64) error {
 	return s.Repo.Delete(idField, id)
 }
 

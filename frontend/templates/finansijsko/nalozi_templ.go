@@ -287,44 +287,15 @@ func NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Ukup
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "brojnaloga",
-			LabelText:  "Broj Naloga",
-			FieldType:  "text",
-			HasLabel:   true,
-			Disabled:   false,
-			ClassInput: utils.ClassInputTextEnabled,
-			ClassLabel: utils.ClassLabel + " w-20",
-			HxTarget:   "brojnaloga",
-			MinLength:  "1",
-			MaxLength:  "10",
-			TabIndex:   "1"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.TextInputField(BrojNaloga).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "datumnaloga",
-			Value:      time.Now().Format("2006-01-02"),
-			LabelText:  "Datum Naloga",
-			FieldType:  "date",
-			HasLabel:   true,
-			Disabled:   false,
-			ClassInput: utils.ClassInputTextEnabled,
-			ClassLabel: utils.ClassLabel + " pl-4",
-			TabIndex:   "2"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.TextInputField(DatumNaloga).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "datumobrade",
-			Value:      time.Now().Format("2006-01-02"),
-			LabelText:  "Datum Obrade",
-			FieldType:  "date",
-			HasLabel:   true,
-			Disabled:   false,
-			ClassInput: utils.ClassInputTextEnabled,
-			ClassLabel: utils.ClassLabel + " pl-4",
-			TabIndex:   "3"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.TextInputField(DatumObrade).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -702,7 +673,182 @@ func NaloziKopiranjeDialog(model domain.KopirajNalog) templ.Component {
 			templ_7745c5c3_Var17 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "<h2 class=\"form-title\">Podaci o nalogu koji se kopira</h2><div class=\"col-span-2 grid grid-cols-2 gap-1\"><div class=\"flex flex-col\"><label for=\"vista-naloga\" class=\"block text-sm font-sm text-blue-700\">Vista naloga</label> <input class=\"mt-1 block p-1 w-[8ch] border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 w-full min-w-0\" type=\"text\" id=\"vrstaNalogaold\" name=\"vrstaNalogaold\"></div><div class=\"flex flex-col\"><label for=\"broj-naloga\" class=\"block text-sm font-sm text-blue-700\">Broj naloga</label> <input class=\"mt-1 block p-1 w-[8ch] border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 w-full min-w-0\" type=\"text\" id=\"brojnalogaold\" name=\"brojnalogaold\"></div><div class=\"flex flex-col\"><label for=\"datum-naloga\" class=\"block text-sm font-sm text-blue-700\">Datum naloga</label> <input class=\"mt-1 block p-1 w-[10ch] border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 w-full min-w-0\" type=\"text\" id=\"datumnalogaold\" disabled=\"true\" name=\"datumalogaold\"></div><div class=\"flex flex-col\"><label for=\"opis-knjizenjaold\" class=\"block text-sm font-sm text-blue-700\">Opis knjizenja</label> <input class=\"mt-1 block p-1 w-[50ch] border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 w-full min-w-0\" type=\"text\" id=\"opisknjizenjaold\" disabled=\"true\" name=\"opisknjizenjaold\"></div></div><!-- Full-width Description Section --><hr class=\"horizontal-line\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "<div class=\"text-blue-800 font-bold text-sm mb-1\">Podaci o nalogu iz kojeg se kopira</div><div class=\"box-content flex flex-col p-2 border-2 border-gray-300 rounded-md\"><div class=\"flex items-center space-x-2 mb-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "vrstanalogaold",
+			Name:       "vrstanalogaold",
+			Value:      model.TipdokOld,
+			LabelText:  "Vrsta naloga",
+			FieldType:  "text",
+			HasLabel:   true,
+			Disabled:   true,
+			ClassInput: utils.ClassInputTextDisabled + " w-full",
+			ClassLabel: utils.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "</div><div class=\"flex items-center space-x-2 mb-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "brojnalogaold",
+			Name:       "brojnalogaold",
+			Value:      model.NalogOld,
+			LabelText:  "Broj naloga",
+			FieldType:  "text",
+			HasLabel:   true,
+			Disabled:   true,
+			ClassInput: utils.ClassInputTextDisabled + " w-42",
+			ClassLabel: utils.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "</div><div class=\"flex items-center space-x-2 mb-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "datumknjold",
+			Name:       "datumnknjold",
+			Value:      model.DatKnjOld,
+			LabelText:  "Datum naloga",
+			FieldType:  "text",
+			HasLabel:   true,
+			Disabled:   true,
+			ClassInput: utils.ClassInputTextDisabled,
+			ClassLabel: utils.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "datumobradeold",
+			Name:       "datumobradeold",
+			Value:      model.DanalOld,
+			LabelText:  "Datum Obrade",
+			FieldType:  "text",
+			HasLabel:   true,
+			Disabled:   true,
+			ClassInput: utils.ClassInputTextDisabled,
+			ClassLabel: utils.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "</div><div class=\"flex items-center space-x-2 mb-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "opisknjizenjaold",
+			Name:       "opisknjizenjaold",
+			Value:      model.OpisOld,
+			LabelText:  "Opis knjizenja",
+			FieldType:  "text",
+			HasLabel:   true,
+			Disabled:   true,
+			ClassInput: utils.ClassInputTextDisabled + " w-full",
+			ClassLabel: utils.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "</div></div><!-- Full-width Description Section --><div class=\"text-blue-800 font-bold text-sm mb-1\">Podaci o novom nalogu</div><div class=\"box-content flex flex-col p-2 border-2 border-gray-300 rounded-md\"><div class=\"flex items-center space-x-2 mb-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.ComboBoxField(domain.ComboFieldConfig{
+			ID:             "vrstanaloganew",
+			Name:           "vrstanaloganew",
+			Placeholder:    "Select...",
+			LabelText:      "Vrsta Naloga",
+			HasLabel:       true,
+			Disabled:       false,
+			ClassSelect:    utils.ClassSelect + " w-full ",
+			ClassLabel:     utils.ClassLabel + " w-24 ",
+			HxSwap:         "innerHTML",
+			HxChangeTarget: "vrstanaloganew",
+			HxVals:         `{"tipdoknew": document.getElementById("tipdoknew").value}`,
+			OptionValues:   model.TipdokValues,
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "</div><div class=\"flex items-center space-x-2 mb-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "brojnaloganew",
+			Name:       "brojnaloganew",
+			Value:      model.NalogNew,
+			LabelText:  "Broj naloga",
+			FieldType:  "text",
+			HasLabel:   true,
+			Disabled:   false,
+			ClassInput: utils.ClassInputTextEnabled,
+			ClassLabel: utils.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "</div><div class=\"flex items-center space-x-2 mb-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "datumknjnew",
+			Name:       "datumnknjnew",
+			Value:      time.Now().Format("02.01.2006"),
+			LabelText:  "Datum naloga",
+			FieldType:  "date",
+			HasLabel:   true,
+			Disabled:   false,
+			ClassInput: utils.ClassInputTextEnabled + " w-full",
+			ClassLabel: utils.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "datumobradenew",
+			Name:       "datumobradenew",
+			Value:      time.Now().Format("02.01.2006"),
+			LabelText:  "Datum Obrade",
+			FieldType:  "date",
+			HasLabel:   true,
+			Disabled:   false,
+			ClassInput: utils.ClassInputTextDisabled + " w-full",
+			ClassLabel: utils.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "</div><div class=\"flex items-center space-x-2 mb-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "opisknjizenjanew",
+			Name:       "opisknjizenjanew",
+			Value:      model.OpisNew,
+			LabelText:  "Opis knjizenja",
+			FieldType:  "text",
+			HasLabel:   true,
+			Disabled:   false,
+			ClassInput: utils.ClassInputTextEnabled + " w-full",
+			ClassLabel: utils.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "</div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -731,7 +877,7 @@ func NaloziScript() templ.Component {
 			templ_7745c5c3_Var18 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "<script>\r\n        document.addEventListener('htmx:afterSwap', function(event) {\r\n    \t\tconsole.log('HTMX After Swap:', event.detail.target);\r\n\t\t\tconst tabs = document.querySelectorAll('nav button');\r\n            const tabContent = document.getElementById('tab-content');\r\n\r\n            tabs.forEach(tab => {\r\n                tab.addEventListener('click', () => {\r\n                    // Remove active classes from all tabs\r\n                    tabs.forEach(t => {\r\n                        t.classList.remove('text-blue-600', 'border-blue-600');\r\n                        t.classList.add('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');\r\n                        t.setAttribute('aria-selected', 'false');\r\n                    });\r\n\r\n                    // Add active classes to the clicked tab\r\n                    tab.classList.add('text-blue-600', 'border-blue-600');\r\n                    tab.classList.remove('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');\r\n                    tab.setAttribute('aria-selected', 'true');\r\n                });\r\n            });\r\n\r\n            // Trigger click on the first tab to load its content on page load\r\n            document.getElementById('knjizenje-tab').click();\r\n        });\r\n    </script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "<script>\r\n        document.addEventListener('htmx:afterSwap', function(event) {\r\n    \t\tconsole.log('HTMX After Swap:', event.detail.target);\r\n\t\t\tconst tabs = document.querySelectorAll('nav button');\r\n            const tabContent = document.getElementById('tab-content');\r\n\r\n            tabs.forEach(tab => {\r\n                tab.addEventListener('click', () => {\r\n                    // Remove active classes from all tabs\r\n                    tabs.forEach(t => {\r\n                        t.classList.remove('text-blue-600', 'border-blue-600');\r\n                        t.classList.add('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');\r\n                        t.setAttribute('aria-selected', 'false');\r\n                    });\r\n\r\n                    // Add active classes to the clicked tab\r\n                    tab.classList.add('text-blue-600', 'border-blue-600');\r\n                    tab.classList.remove('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');\r\n                    tab.setAttribute('aria-selected', 'true');\r\n                });\r\n            });\r\n\r\n            // Trigger click on the first tab to load its content on page load\r\n            document.getElementById('knjizenje-tab').click();\r\n        });\r\n    </script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

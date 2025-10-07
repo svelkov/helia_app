@@ -47,7 +47,7 @@ func Table(tbl domain.TableData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\" class=\"w-full h-full border-collapse\"><div class=\"overflow-x-auto overflow-y-hidden rounded-t-lg relative\"><table class=\"w-full h-full border-collapse border-r\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\" class=\"w-full h-full border-collapse\"><div class=\"overflow-x-auto overflow-y-hidden rounded-t-lg\"><table class=\"w-full h-full border-collapse border-r\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -195,6 +195,10 @@ func TableBody(tbl domain.TableData, urlPrefix string) templ.Component {
 		}
 		for i, row := range tbl.Rows {
 			var templ_7745c5c3_Var7 = []any{fmt.Sprintf("hover:bg-blue-100 cursor-pointer %s", func() string {
+				if i == 0 {
+					return "bg-gray-50 selected"
+				}
+
 				if i%2 == 1 {
 					return "bg-gray-50"
 				} else {
@@ -230,7 +234,7 @@ func TableBody(tbl domain.TableData, urlPrefix string) templ.Component {
 				var templ_7745c5c3_Var9 string
 				templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%s%s", tbl.DetailURL, row.ID))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 59, Col: 56}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 63, Col: 56}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 				if templ_7745c5c3_Err != nil {
@@ -243,7 +247,7 @@ func TableBody(tbl domain.TableData, urlPrefix string) templ.Component {
 				var templ_7745c5c3_Var10 string
 				templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%s", tbl.DetailTarget))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 60, Col: 52}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 64, Col: 52}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 				if templ_7745c5c3_Err != nil {
@@ -256,7 +260,7 @@ func TableBody(tbl domain.TableData, urlPrefix string) templ.Component {
 				var templ_7745c5c3_Var11 string
 				templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf(`{"idfnal": "%s"}`, row.ID))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 62, Col: 54}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 66, Col: 54}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 				if templ_7745c5c3_Err != nil {
@@ -279,7 +283,7 @@ func TableBody(tbl domain.TableData, urlPrefix string) templ.Component {
 				var templ_7745c5c3_Var12 string
 				templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(cell)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 67, Col: 47}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 71, Col: 47}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 				if templ_7745c5c3_Err != nil {
@@ -291,7 +295,7 @@ func TableBody(tbl domain.TableData, urlPrefix string) templ.Component {
 				}
 			}
 			if tbl.ShowActions && (tbl.BtnUpdate.IsVisible || tbl.BtnDelete.IsVisible) {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "<td class=\"actions-column px-3 py-1 whitespace-nowrap text-right text-sm font-medium bg-white w-0 sticky right-0  z-10\"><div class=\"flex space-x-1 justify-end\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "<td class=\"actions-column px-3 py-0.5 whitespace-nowrap text-right text-sm font-medium bg-white w-0 sticky right-0  z-10\"><div class=\"flex space-x-1 justify-end\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -303,7 +307,7 @@ func TableBody(tbl domain.TableData, urlPrefix string) templ.Component {
 					var templ_7745c5c3_Var13 string
 					templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(tbl.BtnUpdate.HxActionURL)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 75, Col: 43}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 79, Col: 43}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 					if templ_7745c5c3_Err != nil {
@@ -316,20 +320,20 @@ func TableBody(tbl domain.TableData, urlPrefix string) templ.Component {
 					var templ_7745c5c3_Var14 string
 					templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf(`{"url": "%s", "id": "%s"}`, tbl.URLPrefix, row.ID))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 79, Col: 82}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 83, Col: 82}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "\" class=\"bg-indigo-500 hover:bg-indigo-700 text-white py-1 px-1 rounded text-xs flex items-center\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"currentColor\" class=\"size-4\"><path d=\"M21.731 2.269a2.625 2.625 0 0 0-3.712 0l-1.157 1.157 3.712 3.712 1.157-1.157a2.625 2.625 0 0 0 0-3.712ZM19.513 8.199l-3.712-3.712-8.4 8.4a5.25 5.25 0 0 0-1.32 2.214l-.8 2.685a.75.75 0 0 0 .933.933l2.685-.8a5.25 5.25 0 0 0 2.214-1.32l8.4-8.4Z\"></path> <path d=\"M5.25 5.25a3 3 0 0 0-3 3v10.5a3 3 0 0 0 3 3h10.5a3 3 0 0 0 3-3V13.5a.75.75 0 0 0-1.5 0v5.25a1.5 1.5 0 0 1-1.5 1.5H5.25a1.5 1.5 0 0 1-1.5-1.5V8.25a1.5 1.5 0 0 1 1.5-1.5h5.25a.75.75 0 0 0 0-1.5H5.25Z\"></path></svg> ")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "\" class=\"bg-indigo-500 hover:bg-indigo-700 text-white py-1 px-1 rounded text-xs flex items-center\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"currentColor\" class=\"size-4 mr-1\"><path d=\"M21.731 2.269a2.625 2.625 0 0 0-3.712 0l-1.157 1.157 3.712 3.712 1.157-1.157a2.625 2.625 0 0 0 0-3.712ZM19.513 8.199l-3.712-3.712-8.4 8.4a5.25 5.25 0 0 0-1.32 2.214l-.8 2.685a.75.75 0 0 0 .933.933l2.685-.8a5.25 5.25 0 0 0 2.214-1.32l8.4-8.4Z\"></path> <path d=\"M5.25 5.25a3 3 0 0 0-3 3v10.5a3 3 0 0 0 3 3h10.5a3 3 0 0 0 3-3V13.5a.75.75 0 0 0-1.5 0v5.25a1.5 1.5 0 0 1-1.5 1.5H5.25a1.5 1.5 0 0 1-1.5-1.5V8.25a1.5 1.5 0 0 1 1.5-1.5h5.25a.75.75 0 0 0 0-1.5H5.25Z\"></path></svg> ")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 					var templ_7745c5c3_Var15 string
 					templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(tbl.BtnUpdate.LabelText)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 86, Col: 34}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 90, Col: 34}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 					if templ_7745c5c3_Err != nil {
@@ -348,7 +352,7 @@ func TableBody(tbl domain.TableData, urlPrefix string) templ.Component {
 					var templ_7745c5c3_Var16 string
 					templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(tbl.BtnDelete.HxActionURL)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 91, Col: 43}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 95, Col: 43}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 					if templ_7745c5c3_Err != nil {
@@ -361,7 +365,7 @@ func TableBody(tbl domain.TableData, urlPrefix string) templ.Component {
 					var templ_7745c5c3_Var17 string
 					templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf(`{"url": "%s", "id": "%s"}`, tbl.URLPrefix, row.ID))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 95, Col: 82}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 99, Col: 82}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 					if templ_7745c5c3_Err != nil {
@@ -374,7 +378,7 @@ func TableBody(tbl domain.TableData, urlPrefix string) templ.Component {
 					var templ_7745c5c3_Var18 string
 					templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(tbl.BtnDelete.LabelText)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 101, Col: 34}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 105, Col: 34}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 					if templ_7745c5c3_Err != nil {

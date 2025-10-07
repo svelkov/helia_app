@@ -5,6 +5,27 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+// AppConfig holds application configuration
+type AppConfig struct {
+	DBConfig DB_Connection `json:"db_connection"`
+	PageSize int           `json:"page_size"`
+}
+type DB_Connection struct {
+	DBHost       string `json:"db_host"`
+	DBPort       int    `json:"db_port"`
+	DBUser       string `json:"db_user"`
+	DBPassword   string `json:"db_password"`
+	DBName       string `json:"db_name"`
+	DBSearchPath string `json:"db_search_path"`
+}
+
+// Config holds handler configuration
+type HandlerConfig struct {
+	ContentTitle string
+	TableID      string
+	APIPrefix    string
+	IDField      string
+}
 type TableOptions struct {
 	HasUpdate  bool
 	HasDelete  bool

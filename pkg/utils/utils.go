@@ -7,7 +7,6 @@ import (
 	"helia/internal/domain"
 	"html/template"
 	"net/http"
-	"strconv"
 	"strings"
 
 	tmpl "helia/frontend/templates"
@@ -169,19 +168,6 @@ func ExtractHTML(component string, targetID string, tagType string) string {
 		}
 	}
 	return "" // Or handle the error as you see fit.
-}
-
-// GetIDFromRequest extracts ID from URL path parameters.
-func GetIDFromRequest(r *http.Request, idParamName string) (int, error) {
-	idStr := r.PathValue(idParamName) // Assuming chi router for URL params
-	if idStr == "" {
-		return 0, fmt.Errorf("ID parameter '%s' is missing in URL", idParamName)
-	}
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		return 0, fmt.Errorf("invalid ID format for '%s': %w", idParamName, err)
-	}
-	return id, nil
 }
 
 // CreateResponse creates a standardized JSON response.

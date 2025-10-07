@@ -1,22 +1,22 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
-	"html/template"
 	"log"
 	"net/http"
+	"os"
 
 	_ "github.com/lib/pq" // PostgreSQL driver
 
 	"github.com/jmoiron/sqlx"
 
-	"helia/config"
-	tmpl "helia/frontend/templates"
+	"helia/frontend/templates"
 	"helia/internal/common"
 	"helia/internal/domain"
 	"helia/internal/handler"
 	fin "helia/internal/handler/finansijsko"
-	os "helia/internal/handler/os"
+	oshandler "helia/internal/handler/os"
 	"helia/internal/repository"
 	"helia/internal/service"
 	"helia/internal/validation"
@@ -25,216 +25,358 @@ import (
 	"helia/pkg/utils"
 )
 
+// factory initializes and starts the application
 func factory() {
-	//config should come from config.json, god and kar from combo box.
-	cfg := config.Config{}
-	//ovo treba da dodje iz combo-box na prvom ekranu
-	cfg.PageSize = 20
-
-	// Initialize database connection
-	host := "localhost"
-	port := 5432
-	user := "postgres"
-	pwd := "postgres"
-	dbname := "helia"
-	searchPath := "baza"
-
-	db, err := sqlx.Open("postgres", fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s search_path=%s sslmode=disable", host, port, user, pwd, dbname, searchPath))
+	cfg := loadConfig()
+	db, err := connectDB(cfg)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Failed to connect to database: %v", err)
 	}
-	r := http.NewServeMux()
-	//r := mux.NewRouter()
-	setEntities(db, r)
-	// Correct static file serving
-	fs := http.FileServer(http.Dir("./frontend/static"))
-	http.Handle("/frontend/static/", http.StripPrefix("/frontend/static/", fs))
+	defer db.Close()
 
-	r.Handle("/frontend/static/", http.StripPrefix("/frontend/static/", http.FileServer(http.Dir("./frontend/static"))))
-	// API endpoint
-	r.HandleFunc("/get-menu", getMenuHandler)
+	r := http.NewServeMux()
+	registerRoutes(r, db)
+
+	// srv := &http.Server{
+	// 	Addr:    ":8080",
+	// 	Handler: r,
+	// }
 
 	// Start server
 	http.ListenAndServe(":8080", r)
+	// 	// Graceful shutdown
+	// go func() {
+	// 	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+	// 		log.Fatalf("Server failed: %v", err)
+	// 	}
+	// }()
+
 }
 
+// loadConfig loads configuration from environment or config file
+func loadConfig() domain.AppConfig {
+	// Read the file
+	data, err := os.ReadFile("config/config.json")
+	if err != nil {
+		fmt.Printf("Error reading file: %v\n", err)
+		return domain.AppConfig{}
+	}
+
+	// Parse JSON into struct
+	var config domain.AppConfig
+	err = json.Unmarshal(data, &config)
+	if err != nil {
+		fmt.Printf("Error parsing JSON: %v\n", err)
+		return domain.AppConfig{}
+	}
+	return config
+}
+
+// connectDB establishes a database connection
+func connectDB(cfg domain.AppConfig) (*sqlx.DB, error) {
+	dsn := fmt.Sprintf(
+		"host=%s port=%d user=%s password=%s dbname=%s search_path=%s sslmode=disable",
+		cfg.DBConfig.DBHost, cfg.DBConfig.DBPort, cfg.DBConfig.DBUser, cfg.DBConfig.DBPassword, cfg.DBConfig.DBName, cfg.DBConfig.DBSearchPath,
+	)
+	db, err := sqlx.Open("postgres", dsn)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to database: %v", err)
+	}
+	if err = db.Ping(); err != nil {
+		return nil, fmt.Errorf("failed to ping database: %v", err)
+	}
+	return db, nil
+}
+
+// registerRoutes registers all routes
+func registerRoutes(r *http.ServeMux, db *sqlx.DB) {
+	// Static files
+	fs := http.FileServer(http.Dir("./frontend/static"))
+	r.Handle("/frontend/static/", http.StripPrefix("/frontend/static/", fs))
+
+	// API routes
+	r.HandleFunc("/get-menu", getMenuHandler)
+
+	// Entity routes
+	setEntities(db, r)
+}
+
+// getMenuHandler handles menu requests
 func getMenuHandler(w http.ResponseWriter, r *http.Request) {
 	menuName := r.URL.Query().Get("menuName")
-
-	// Get submenu items
 	subMenus := common.GetSubMenus(domain.MenuData, menuName)
 	if subMenus == nil {
 		http.Error(w, "Menu not found", http.StatusNotFound)
 		return
 	}
-
-	err := tmpl.Side_nav(subMenus).Render(r.Context(), w)
-
-	if err != nil {
-		http.Error(w, "Error rendering template", http.StatusInternalServerError)
-		return
-	}
-}
-
-func RenderBootstrapSideNav(w http.ResponseWriter, submenu []domain.SubMenuItem) {
-
-	tmpl, err := template.ParseFiles("frontend/templates/bootstrap_side_nav.html")
-	if err != nil {
-		http.Error(w, "Error loading template", http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "text/html")
-	if err := tmpl.Execute(w, submenu); err != nil {
+	if err := templates.Side_nav(subMenus).Render(r.Context(), w); err != nil {
 		http.Error(w, "Error rendering template", http.StatusInternalServerError)
 	}
 }
 
+// registerGenericEntity registers a generic entity's routes
+func registerGenericEntity[T any](
+	r *http.ServeMux,
+	db *sqlx.DB,
+	tableName string,
+	validationRules []validation.ValidationRule,
+	fields []domain.Fields,
+	config domain.HandlerConfig,
+) {
+	repo := repository.NewBaseRepository[T](db, tableName)
+	validator := validation.NewRuleBasedValidator[T](validationRules)
+	svc := service.NewBaseService(*repo, *validator)
+	h := handler.NewGenericHandler(svc, fields, config)
+	h.RegisterRoutes(r)
+}
+
+// setEntities registers all entity routes
 func setEntities(db *sqlx.DB, r *http.ServeMux) {
+	// Partneri
+	registerGenericEntity[domain.Partneri](
+		r, db, "partneri",
+		validation.PartneriValidationRules(),
+		handler.SetPartneriFields(),
+		domain.HandlerConfig{
+			ContentTitle: "PARTNERI",
+			TableID:      "partneri-table",
+			APIPrefix:    "/api/partneri",
+			IDField:      utils.IDpartneri,
+		},
+	)
 
-	// Create repository, validator, service and handler for drzave
-	partnerirepo := repository.NewBaseRepository[domain.Partneri](db, "partneri")
-	partnerivalidator := validation.NewRuleBasedValidator[domain.Partneri](validation.PartneriValidationRules())
-	partneriservice := service.NewBaseService(*partnerirepo, *partnerivalidator)
-	partnerihandler := handler.NewPartneriHandler(partneriservice)
-	partnerihandler.AddRoutes(r)
-	// Create repository, validator, service and handler for drzave
-	drzavarepo := repository.NewBaseRepository[domain.Drzave](db, "drzave")
-	drzavavalidator := validation.NewRuleBasedValidator[domain.Drzave](validation.DrzavaValidationRules())
-	drzavaservice := service.NewBaseService(*drzavarepo, *drzavavalidator)
-	drzavahandler := handler.NewDrzavaHandler(drzavaservice)
-	drzavahandler.AddRoutes(r)
+	// Drzave
+	registerGenericEntity[domain.Drzave](
+		r, db, "drzave",
+		validation.DrzavaValidationRules(),
+		handler.SetDrzaveFields(),
+		domain.HandlerConfig{
+			ContentTitle: "DRZAVE",
+			TableID:      "drzave-table",
+			APIPrefix:    "/api/drzave",
+			IDField:      utils.IDdrzave,
+		},
+	)
 
-	// Create repository, validator, service and handler for tipdok
-	tipdokRepo := repository.NewBaseRepository[domain.Tipdok](db, "tipdok")
-	tipdokValidator := validation.NewRuleBasedValidator[domain.Tipdok](validation.TipdokValidationRules())
-	tipdokService := service.NewBaseService(*tipdokRepo, *tipdokValidator)
-	tipdokHandler := handler.NewTipdokHandler(tipdokService)
-	tipdokHandler.AddRoutes(r)
+	// Tipdok
+	registerGenericEntity[domain.Tipdok](
+		r, db, "tipdok",
+		validation.TipdokValidationRules(),
+		handler.SetTipdokFields(),
+		domain.HandlerConfig{
+			ContentTitle: "VRSTE NALOGA",
+			TableID:      "tipdok-table",
+			APIPrefix:    "/api/tipdok",
+			IDField:      utils.IDtipdok,
+		},
+	)
 
-	// Create repository, validator, service and handler for dokvrsta
-	dokvrstaRepo := repository.NewBaseRepository[domain.Dokvrsta](db, "dokvrsta")
-	dokvrstaValidator := validation.NewRuleBasedValidator[domain.Dokvrsta](validation.DokvrstaValidationRules())
-	dokvrstaService := service.NewBaseService(*dokvrstaRepo, *dokvrstaValidator)
-	dokvrstaHandler := handler.NewDokvrstaHandler(dokvrstaService)
-	dokvrstaHandler.AddRoutes(r)
+	// Dokvrsta
+	registerGenericEntity[domain.Dokvrsta](
+		r, db, "dokvrsta",
+		validation.DokvrstaValidationRules(),
+		handler.SetDokvrstaFields(),
+		domain.HandlerConfig{
+			ContentTitle: "VRSTE DOKUMENATA",
+			TableID:      "dokvrsta-table",
+			APIPrefix:    "/api/dokvrsta",
+			IDField:      utils.IDdokvrsta,
+		},
+	)
 
-	// Create repository, validator, service and handler for opstine
-	opstineRepo := repository.NewBaseRepository[domain.Sifop](db, "sifop")
-	opstineValidator := validation.NewRuleBasedValidator[domain.Sifop](validation.OpstineValidationRules())
-	opstineService := service.NewBaseService(*opstineRepo, *opstineValidator)
-	opstineHandler := handler.NewOpstineHandler(opstineService)
-	opstineHandler.AddRoutes(r)
+	// Opstine
+	registerGenericEntity[domain.Sifop](
+		r, db, "sifop",
+		validation.OpstineValidationRules(),
+		handler.SetSifopFields(),
+		domain.HandlerConfig{
+			ContentTitle: "OPSTINE",
+			TableID:      "opstine-table",
+			APIPrefix:    "/api/opstine",
+			IDField:      utils.IDsifop,
+		},
+	)
 
-	// Create repository, validator, service and handler for opstine
-	sifmestoRepo := repository.NewBaseRepository[domain.Sifmesto](db, "sifmesto")
-	sifmestoValidator := validation.NewRuleBasedValidator[domain.Sifmesto](validation.SifmestoValidationRules())
-	sifmestoService := service.NewBaseService(*sifmestoRepo, *sifmestoValidator)
-	sifmestoHandler := handler.NewSifmestoHandler(sifmestoService)
-	sifmestoHandler.AddRoutes(r)
-	// Create repository, validator, service and handler for opstine
-	mestotroskaRepo := repository.NewBaseRepository[domain.Mestotr](db, "mestotr")
-	mestotroskaValidator := validation.NewRuleBasedValidator[domain.Mestotr](validation.MestotroskaValidationRules())
-	mestotroskaService := service.NewBaseService(*mestotroskaRepo, *mestotroskaValidator)
-	mestoroskaHandler := handler.NewMestotroskaHandler(mestotroskaService)
-	mestoroskaHandler.AddRoutes(r)
+	// Sifmesto
+	registerGenericEntity[domain.Sifmesto](
+		r, db, "sifmesto",
+		validation.SifmestoValidationRules(),
+		handler.SetSifmestoFileds(),
+		domain.HandlerConfig{
+			ContentTitle: "MESTA",
+			TableID:      "sifmesto-table",
+			APIPrefix:    "/api/sifmesto",
+			IDField:      utils.IDsifmesto,
+		},
+	)
 
-	// Create repository, validator, service and handler for organizacione jedinice
-	orgjedRepo := repository.NewBaseRepository[domain.Orgjed](db, "orgjed")
-	orgjedValidator := validation.NewRuleBasedValidator[domain.Orgjed](validation.OrgjedValidationRules())
-	orgjedService := service.NewBaseService(*orgjedRepo, *orgjedValidator)
-	orgjedHandler := handler.NewOrgjedHandler(orgjedService)
-	orgjedHandler.AddRoutes(r)
+	// Mestotr
+	registerGenericEntity[domain.Mestotr](
+		r, db, "mestotr",
+		validation.MestotroskaValidationRules(),
+		handler.SetMestotroskaFields(),
+		domain.HandlerConfig{
+			ContentTitle: "MESTA TROSKA",
+			TableID:      "mestotr-table",
+			APIPrefix:    "/api/mestotr",
+			IDField:      utils.IDmestotr,
+		},
+	)
 
-	// Create repository, validator, service and handler for banke
-	bankeRepo := repository.NewBaseRepository[domain.Banke](db, "banke")
-	bankeValidator := validation.NewRuleBasedValidator[domain.Banke](validation.BankeValidationRules())
-	bankeService := service.NewBaseService(*bankeRepo, *bankeValidator)
-	bankeHandler := handler.NewBankeHandler(bankeService)
-	bankeHandler.AddRoutes(r)
+	// Orgjed
+	registerGenericEntity[domain.Orgjed](
+		r, db, "orgjed",
+		validation.OrgjedValidationRules(),
+		handler.SetOrgjedFields(),
+		domain.HandlerConfig{
+			ContentTitle: "ORGANIZACIONE JEDINICE",
+			TableID:      "orgjed-table",
+			APIPrefix:    "/api/orgjed",
+			IDField:      utils.IDorgjed,
+		},
+	)
 
-	// Create repository, validator, service and handler for banke
-	sifplizvRepo := repository.NewBaseRepository[domain.Sifplizv](db, "sifplizv")
-	sifplizvValidator := validation.NewRuleBasedValidator[domain.Sifplizv](validation.SifplizvValidationRules())
-	sifplizvService := service.NewBaseService(*sifplizvRepo, *sifplizvValidator)
-	sifplizvHandler := handler.NewSifplizvHandler(sifplizvService)
-	sifplizvHandler.AddRoutes(r)
+	// Banke
+	registerGenericEntity[domain.Banke](
+		r, db, "banke",
+		validation.BankeValidationRules(),
+		handler.SetBankeFields(),
+		domain.HandlerConfig{
+			ContentTitle: "BANKE",
+			TableID:      "banke-table",
+			APIPrefix:    "/api/banke",
+			IDField:      utils.IDbanke,
+		},
+	)
 
-	// Create repository, validator, service and handler for tipove knjige
-	fvknjracRepo := repository.NewBaseRepository[domain.Fvknjrac](db, "fvknjrac")
-	fvknjracValidator := validation.NewRuleBasedValidator[domain.Fvknjrac](validation.FvknjracValidationRules())
-	fvknjracService := service.NewBaseService(*fvknjracRepo, *fvknjracValidator)
-	fvknjracHandler := handler.NewFvknjracHandler(fvknjracService)
-	fvknjracHandler.AddRoutes(r)
+	// Sifplizv
+	registerGenericEntity[domain.Sifplizv](
+		r, db, "sifplizv",
+		validation.SifplizvValidationRules(),
+		handler.SetSifplizvFields(),
+		domain.HandlerConfig{
+			ContentTitle: "SIFRE PLACANJA",
+			TableID:      "sifplizv-table",
+			APIPrefix:    "/api/sifplizv",
+			IDField:      utils.IDsifplizv,
+		},
+	)
 
-	// Create repository, validator, service and handler for banke za izvozne fakture
-	bnkizvRepo := repository.NewBaseRepository[domain.Bnkizv](db, "bnkizv")
-	bnkizvValidator := validation.NewRuleBasedValidator[domain.Bnkizv](validation.BnkizvValidationRules())
-	bnkizvService := service.NewBaseService(*bnkizvRepo, *bnkizvValidator)
-	bnkizvHandler := handler.NewBnkizvHandler(bnkizvService)
-	bnkizvHandler.AddRoutes(r)
+	// Fvknjrac
+	registerGenericEntity[domain.Fvknjrac](
+		r, db, "fvknjrac",
+		validation.FvknjracValidationRules(),
+		handler.SetFvknjracFields(),
+		domain.HandlerConfig{
+			ContentTitle: "FINANSIJSKI RACUNI",
+			TableID:      "fvknjrac-table",
+			APIPrefix:    "/api/fvknjrac",
+			IDField:      utils.IDfvknjrac,
+		},
+	)
 
-	// Create repository, validator, service and handler for vrste evidencije PDV
-	fvepdvRepo := repository.NewBaseRepository[domain.Fvepdv](db, "fvepdv")
-	fvepdvValidator := validation.NewRuleBasedValidator[domain.Fvepdv](validation.FvepdvValidationRules())
-	fvepdvService := service.NewBaseService(*fvepdvRepo, *fvepdvValidator)
-	fvepdvHandler := handler.NewFvepdvHandler(fvepdvService)
-	fvepdvHandler.AddRoutes(r)
+	// Bnkizv
+	registerGenericEntity[domain.Bnkizv](
+		r, db, "bnkizv",
+		validation.BnkizvValidationRules(),
+		handler.SetBnkizvFields(),
+		domain.HandlerConfig{
+			ContentTitle: "BANKOVNI IZVODI",
+			TableID:      "bnkizv-table",
+			APIPrefix:    "/api/bnkizv",
+			IDField:      utils.IDbnkizv,
+		},
+	)
 
-	fvrRepo := repository.NewBaseRepository[domain.Fvr](db, "fvr")
-	fvrService := service.NewFvrService(fvrRepo)
+	// Fvepdv
+	registerGenericEntity[domain.Fvepdv](
+		r, db, "fvepdv",
+		validation.FvepdvValidationRules(),
+		handler.SetFevpdvFields(),
+		domain.HandlerConfig{
+			ContentTitle: "EVIDENCIJA PDV",
+			TableID:      "fvepdv-table",
+			APIPrefix:    "/api/fvepdv",
+			IDField:      utils.IDfvepdv,
+		},
+	)
 
-	basicHandler := handler.NewBasicHandler(IsLoggedIn, domain.MenuData, []domain.SubMenuItem{}, fvrService)
-	basicHandler.AddRoutes(r)
+	// Fkpl
+	registerGenericEntity[domain.Fkpl](
+		r, db, "fkpl",
+		finval.FkplValidationRules(),
+		fin.SetFkplFields(),
+		domain.HandlerConfig{
+			ContentTitle: "PLAN KNJIZENJA",
+			TableID:      "fkpl-table",
+			APIPrefix:    "/api/fkpl",
+			IDField:      utils.IDfkpl,
+		},
+	)
 
-	// Create repository, validator, service and handler for vrste evidencije PDV
-	fkplRepo := repository.NewBaseRepository[domain.Fkpl](db, "fkpl")
-	fkplValidator := validation.NewRuleBasedValidator[domain.Fkpl](finval.FkplValidationRules())
-	fkplService := service.NewBaseService(*fkplRepo, *fkplValidator)
-	fkplHandler := fin.NewFkplHandler(fkplService)
-	fkplHandler.AddRoutes(r)
+	// Oamgrp
+	registerGenericEntity[domain.Oamgrp](
+		r, db, "oamgrp",
+		osval.OamgrpValidationRules(),
+		oshandler.SetOamgrpFields(),
+		domain.HandlerConfig{
+			ContentTitle: "GRUPE OSNOVNIH SREDSTAVA",
+			TableID:      "oamgrp-table",
+			APIPrefix:    "/api/oamgrp",
+			IDField:      utils.IDoamgrp,
+		},
+	)
 
-	// Create repository, validator, service and handler for ukpune obrade
-	sfRepo := repository.NewBaseRepository[domain.Sf](db, "sf")
-	sfService := service.NewBaseService(*sfRepo, validation.RuleBasedValidator[domain.Sf]{})
-	_ = fin.NewSfHandler(sfService)
+	// Complex entities with custom services (non-generic)
 
-	// Create repository, validator, service and handler for vrste evidencije PDV
+	// Fnal
 	fnalRepo := repository.NewBaseRepository[domain.Fnal](db, "fnal")
 	fnalValidator := validation.NewRuleBasedValidator[domain.Fnal](finval.FnalValidationRules())
 	fnalBaseService := service.NewBaseService(*fnalRepo, *fnalValidator)
-	fnalService := service.NewNalogService(fnalBaseService, *fnalRepo, *tipdokRepo, *sfRepo, "", []domain.Fields{}, []domain.Fields{})
+	fnalService := service.NewNalogService(
+		fnalBaseService,
+		*fnalRepo,
+		*repository.NewBaseRepository[domain.Tipdok](db, "tipdok"),
+		*repository.NewBaseRepository[domain.Sf](db, "sf"),
+		"",
+		[]domain.Fields{},
+		[]domain.Fields{},
+	)
 	fnalHandler := fin.NewFnalHandler(fnalService)
 	fnalHandler.AddRoutes(r)
 
-	// Create repository, validator, service and handler for vrste evidencije PDV
+	// Fpro
 	fproRepo := repository.NewBaseRepository[domain.Fpro](db, "fpro")
 	fproValidator := validation.NewRuleBasedValidator[domain.Fpro](finval.FnalValidationRules())
 	fproBaseService := service.NewBaseService(*fproRepo, *fproValidator)
-	fproService := service.NewFproService(fproBaseService, *fproRepo, utils.IDfpro, []domain.Fields{}, []domain.Fields{})
+	fproService := service.NewFproService(
+		fproBaseService,
+		*fproRepo,
+		utils.IDfpro,
+		[]domain.Fields{},
+		[]domain.Fields{},
+	)
 	fproHandler := fin.NewFproHandler(fproService)
 	fproHandler.AddRoutes(r)
 
-	// Create repository, validator, service and handler for vrste evidencije PDV
-	oamgrpRepo := repository.NewBaseRepository[domain.Oamgrp](db, "oamgrp")
-	oamgrpValidator := validation.NewRuleBasedValidator[domain.Oamgrp](osval.OamgrpValidationRules())
-	oamgrpService := service.NewBaseService(*oamgrpRepo, *oamgrpValidator)
-	oamgrpHandler := os.NewOamgrpHandler(oamgrpService)
-	oamgrpHandler.AddRoutes(r)
-
+	// Promet
 	prometRepo := repository.NewBaseRepository[domain.PrometDto](db, "prometdto")
 	prometValidator := validation.NewRuleBasedValidator[domain.PrometDto](finval.PrometValidationRules())
-	prometService := service.NewPrometService(service.NewBaseService(*prometRepo, *prometValidator), prometRepo)
+	prometService := service.NewPrometService(
+		service.NewBaseService(*prometRepo, *prometValidator),
+		prometRepo,
+	)
 	prometHandler := fin.NewPrometHandler(prometService)
 	prometHandler.AddRoutes(r)
 
-}
-
-func NewBankeHandler(r *http.ServeMux, db *sqlx.DB) { // Added r, db,gnGod, gnKar
-	// Create repository, validator, service and handler for banke
-	bankeRepo := repository.NewBaseRepository[domain.Banke](db, "banke")
-	bankeValidator := validation.NewRuleBasedValidator[domain.Banke](validation.BankeValidationRules())
-	bankeService := service.NewBaseService(*bankeRepo, *bankeValidator)
-	bankeHandler := handler.NewBankeHandler(bankeService) // Call the handler constructor
-	bankeHandler.AddRoutes(r)
+	// BasicHandler
+	fvrRepo := repository.NewBaseRepository[domain.Fvr](db, "fvr")
+	fvrService := service.NewFvrService(fvrRepo)
+	basicHandler := handler.NewBasicHandler(
+		IsLoggedIn,
+		domain.MenuData,
+		[]domain.SubMenuItem{},
+		fvrService,
+	)
+	basicHandler.AddRoutes(r)
 }

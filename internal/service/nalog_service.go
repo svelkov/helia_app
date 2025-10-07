@@ -34,6 +34,7 @@ type NalogService interface {
 	GetNalogsPrepisData(r *http.Request, searchQuery string, page, pageSize int) (NalogViewData, error)
 	GetNalogsStorniranjeData(r *http.Request, searchQuery string, page, pageSize int) (NalogViewData, error)
 	GetNextNalog(tipdok string) (int64, error)
+	GetTipdokOptions() ([]domain.Tipdok, error)
 }
 
 // NalogResource implements the NalogService interface.
@@ -93,7 +94,7 @@ func (s *NalogResource) Create(fnal *domain.Fnal, idField string, fields []domai
 }
 
 // Delete implements NalogService.
-func (s *NalogResource) Delete(idField string, id int) error {
+func (s *NalogResource) Delete(idField string, id int64) error {
 	return s.service.Delete(idField, id)
 }
 
@@ -311,6 +312,16 @@ func (s *NalogResource) GetNalogsPrepisData(r *http.Request, searchQuery string,
 		return viewData, fmt.Errorf("failed to get Fnal entities: %w", err)
 	}
 	viewData.FnalEntities = *entities
+
+	//get tipdok options
+	tipdokOptions, err := s.GetTipdokOptions()
+	if err != nil {
+		return viewData, fmt.Errorf("failed to get tipdok options: %w", err)
+	}
+	viewData.TipdokOptions = &tipdokOptions
+	for _, td := range tipdokOptions {
+		viewData.TipdokComboItems = append(viewData.TipdokComboItems, domain.ComboItem{Key: td.TipDok, Value: td.TipDok + " - " + td.Opis})
+	}
 
 	// Prepare TableData for UI
 	table := common.SetTableBasicData("NALOZI ZAGLAVLJE", "nalozi-table", s.naloziTableFields, "/api/nalozi/", "/api/nalozi/", calculatedPageSize, currentPage, totalPages, totRecords)

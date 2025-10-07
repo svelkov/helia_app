@@ -80,25 +80,40 @@ func TopMenu(menuItems domain.MenuDataItems, currentMenu string, comboKomintent,
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\" hx-trigger=\"click\" hx-target=\"#side-menu\" hx-swap=\"outerHTML\" class=\"menu-btn px-3 py-2 font-medium text-sm focus:outline-none bg-blue-400 text-white transition-colors duration-200\" type=\"button\" onclick=\"document.querySelectorAll(&#39;nav button&#39;).forEach(b =&gt; b.className = &#39;px-3 py-2 font-medium text-sm bg-blue-400 text-white&#39;);\r\n                this.className = &#39;px-3 py-2 font-medium text-sm bg-white text-blue-800&#39;;\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\" hx-trigger=\"click\" hx-target=\"#side-menu\" hx-swap=\"outerHTML\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			if item.Name == currentMenu {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, " class=\"menu-btn px-3 py-2 font-medium text-sm bg-white text-blue-800 focus:outline-none transition-colors duration-200\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			} else {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, " class=\"menu-btn px-3 py-2 font-medium text-sm focus:outline-none bg-blue-400 text-white transition-colors duration-200\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, " type=\"button\" onclick=\"document.querySelectorAll(&#39;nav button&#39;).forEach(b =&gt; b.className = &#39;px-3 py-2 font-medium text-sm bg-blue-400 text-white&#39;);\r\n                this.className = &#39;px-3 py-2 font-medium text-sm bg-white text-blue-800&#39;;\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(item.DisplayName)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/headermenu.templ`, Line: 26, Col: 23}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/headermenu.templ`, Line: 30, Col: 23}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</button>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</button>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<!-- Right-aligned Combo Boxes --><div class=\"ml-auto flex items-center space-x-4 pr-4\"><!-- Company Select --><div class=\"flex items-center space-x-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<!-- Right-aligned Combo Boxes --><div class=\"ml-auto flex items-center space-x-4 pr-4\"><!-- Company Select --><div class=\"flex items-center space-x-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -106,7 +121,7 @@ func TopMenu(menuItems domain.MenuDataItems, currentMenu string, comboKomintent,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</div><!-- Poslovna Godina Select --><div class=\"flex items-center space-x-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</div><!-- Poslovna Godina Select --><div class=\"flex items-center space-x-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -114,7 +129,7 @@ func TopMenu(menuItems domain.MenuDataItems, currentMenu string, comboKomintent,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</div></div></nav></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</div></div></nav></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

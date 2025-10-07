@@ -70,7 +70,7 @@ templ PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 		<div class="grid grid-cols-2 gap-1">
 			<!-- Parameters Div - Left Aligned -->
 			<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg">
-				<div class="flex items-center gap-2 mb-1">
+				<div class="flex items-center gap-1 mb-1">
 					@KontoField()
 					@tmpl.SearchButton(domain.SearchButtonConfig{
 						ID:          "konto",
@@ -83,7 +83,7 @@ templ PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 					})
 					@NazivField("kontonaziv")
 				</div>
-				<div class="flex items-center gap-2 mb-1">
+				<div class="flex items-center gap-1 mb-1">
 					@SifraField()
 					@tmpl.SearchButton(domain.SearchButtonConfig{
 						ID:          "sifra",
@@ -96,7 +96,7 @@ templ PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 					})
 					@NazivField("sifranaziv")
 				</div>
-				<div class="flex items-center gap-2 mb-1">
+				<div class="flex items-center gap-1 mb-1">
 					@tmpl.TextInputField(domain.InputFieldConfig{
 						ID:         "oddatuma",
 						Name:       "oddatuma",
@@ -105,11 +105,11 @@ templ PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 						HasLabel:   true,
 						Disabled:   false,
 						ClassInput: utils.ClassInputTextEnabled + " w-28",
-						ClassLabel: utils.ClassLabel + " w-20",
+						ClassLabel: utils.ClassLabel + " w-24",
 						TabIndex:   "3",
 					})
 				</div>
-				<div class="flex items-center gap-2 mb-1">
+				<div class="flex items-center gap-1 mb-1">
 					@tmpl.TextInputField(domain.InputFieldConfig{
 						ID:         "dodatuma",
 						Name:       "dodatuma",
@@ -118,7 +118,7 @@ templ PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 						HasLabel:   true,
 						Disabled:   false,
 						ClassInput: utils.ClassInputTextEnabled + " w-28",
-						ClassLabel: utils.ClassLabel + " w-20",
+						ClassLabel: utils.ClassLabel + " w-24 ",
 						TabIndex:   "4",
 					})
 				</div>
@@ -160,7 +160,7 @@ templ AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint,
 		<div class="grid grid-cols-2 gap-1">
 			<!-- Parameters Div - Left Aligned -->
 			<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg">
-				<div class="flex items-center gap-2 mb-1">
+				<div class="flex items-center gap-1 mb-1">
 					@KontoField()
 					@tmpl.SearchButton(domain.SearchButtonConfig{
 						ID:          "konto",
@@ -173,7 +173,7 @@ templ AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint,
 					})
 					@NazivField("kontonaziv")
 				</div>
-				<div class="flex items-center gap-2 mb-1">
+				<div class="flex items-center gap-1 mb-1">
 					@SifraField()
 					@tmpl.SearchButton(domain.SearchButtonConfig{
 						ID:          "sifra",
@@ -186,7 +186,7 @@ templ AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint,
 					})
 					@NazivField("sifranaziv")
 				</div>
-				<div class="flex items-center gap-2 mb-1">
+				<div class="flex items-center gap-1 mb-1">
 					@tmpl.TextInputField(domain.InputFieldConfig{
 						ID:         "oddatuma",
 						Name:       "oddatuma",
@@ -195,11 +195,11 @@ templ AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint,
 						HasLabel:   true,
 						Disabled:   false,
 						ClassInput: utils.ClassInputTextEnabled + " w-28",
-						ClassLabel: utils.ClassLabel + " w-20",
+						ClassLabel: utils.ClassLabel + " w-24",
 						TabIndex:   "3",
 					})
 				</div>
-				<div class="flex items-center gap-2 mb-1">
+				<div class="flex items-center gap-1 mb-1">
 					@tmpl.TextInputField(domain.InputFieldConfig{
 						ID:         "dodatuma",
 						Name:       "dodatuma",
@@ -208,11 +208,11 @@ templ AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint,
 						HasLabel:   true,
 						Disabled:   false,
 						ClassInput: utils.ClassInputTextEnabled + " w-28",
-						ClassLabel: utils.ClassLabel + " w-20",
+						ClassLabel: utils.ClassLabel + " w-24",
 						TabIndex:   "4",
 					})
 				</div>
-				<div class="flex items-center gap-2 mb-1">
+				<div class="flex items-center gap-1 mb-1">
 					@tmpl.TextInputField(domain.InputFieldConfig{
 						ID:           "odmi",
 						Name:         "odmi",
@@ -221,7 +221,7 @@ templ AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint,
 						HasLabel:     true,
 						Disabled:     false,
 						ClassInput:   utils.ClassInputTextEnabled + " w-24",
-						ClassLabel:   utils.ClassLabel + " w-20",
+						ClassLabel:   utils.ClassLabel + " w-24",
 						BlurEndpoint: "api/mi/trazimi",
 						HxTarget:     "odminaziv",
 						MinLength:    "1",
@@ -238,7 +238,7 @@ templ AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint,
 					})
 					@NazivField("odminaziv")
 				</div>
-				<div class="flex items-center gap-2 mb-1">
+				<div class="flex items-center gap-1 mb-1">
 					@tmpl.TextInputField(domain.InputFieldConfig{
 						ID:           "domi",
 						Name:         "domi",
@@ -248,7 +248,7 @@ templ AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint,
 						HasLabel:     true,
 						Disabled:     false,
 						ClassInput:   utils.ClassInputTextEnabled + " w-24",
-						ClassLabel:   utils.ClassLabel + " w-20",
+						ClassLabel:   utils.ClassLabel + " w-24",
 						BlurEndpoint: "api/mi/trazimi",
 						HxTarget:     "dominaziv",
 						MinLength:    "1",
@@ -302,7 +302,7 @@ templ PrometDeviznihAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, 
 		<div class="grid grid-cols-2 gap-1">
 			<!-- Parameters Div - Left Aligned -->
 			<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg">
-				<div class="flex items-center gap-2 mb-1">
+				<div class="flex items-center gap-1 mb-1">
 					@KontoField()
 					@tmpl.SearchButton(domain.SearchButtonConfig{
 						ID:          "konto",
@@ -315,7 +315,7 @@ templ PrometDeviznihAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, 
 					})
 					@NazivField("kontonaziv")
 				</div>
-				<div class="flex items-center gap-2 mb-1">
+				<div class="flex items-center gap-1 mb-1">
 					@SifraField()
 					@tmpl.SearchButton(domain.SearchButtonConfig{
 						ID:          "sifra",
@@ -328,7 +328,7 @@ templ PrometDeviznihAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, 
 					})
 					@NazivField("sifranaziv")
 				</div>
-				<div class="flex items-center gap-2 mb-1">
+				<div class="flex items-center gap-1 mb-1">
 					@tmpl.TextInputField(domain.InputFieldConfig{
 						ID:         "oddatuma",
 						Name:       "oddatuma",
@@ -337,11 +337,11 @@ templ PrometDeviznihAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, 
 						HasLabel:   true,
 						Disabled:   false,
 						ClassInput: utils.ClassInputTextEnabled + " w-28",
-						ClassLabel: utils.ClassLabel + " w-20",
+						ClassLabel: utils.ClassLabel + " w-24",
 						TabIndex:   "3",
 					})
 				</div>
-				<div class="flex items-center gap-2 mb-1">
+				<div class="flex items-center gap-1 mb-1">
 					@tmpl.TextInputField(domain.InputFieldConfig{
 						ID:         "dodatuma",
 						Name:       "dodatuma",
@@ -350,7 +350,7 @@ templ PrometDeviznihAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, 
 						HasLabel:   true,
 						Disabled:   false,
 						ClassInput: utils.ClassInputTextEnabled + " w-28",
-						ClassLabel: utils.ClassLabel + " w-20",
+						ClassLabel: utils.ClassLabel + " w-24",
 						TabIndex:   "4",
 					})
 				</div>
@@ -397,7 +397,7 @@ templ PrometSubsintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPr
 		<div class="grid grid-cols-2 gap-1">
 			<!-- Parameters Div - Left Aligned -->
 			<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg">
-				<div class="flex items-center gap-2 mb-1">
+				<div class="flex items-center gap-1 mb-1">
 					@KontoField()
 					@tmpl.SearchButton(domain.SearchButtonConfig{
 						ID:          "konto",
@@ -410,7 +410,7 @@ templ PrometSubsintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPr
 					})
 					@NazivField("kontonaziv")
 				</div>
-				<div class="flex items-center gap-2 mb-1">
+				<div class="flex items-center gap-1 mb-1">
 					@tmpl.TextInputField(domain.InputFieldConfig{
 						ID:         "oddatuma",
 						Name:       "oddatuma",
@@ -419,11 +419,11 @@ templ PrometSubsintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPr
 						HasLabel:   true,
 						Disabled:   false,
 						ClassInput: utils.ClassInputTextEnabled + " w-28",
-						ClassLabel: utils.ClassLabel + " w-20",
+						ClassLabel: utils.ClassLabel + " w-24",
 						TabIndex:   "3",
 					})
 				</div>
-				<div class="flex items-center gap-2 mb-1">
+				<div class="flex items-center gap-1 mb-1">
 					@tmpl.TextInputField(domain.InputFieldConfig{
 						ID:         "dodatuma",
 						Name:       "dodatuma",
@@ -432,7 +432,7 @@ templ PrometSubsintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPr
 						HasLabel:   true,
 						Disabled:   false,
 						ClassInput: utils.ClassInputTextEnabled + " w-28",
-						ClassLabel: utils.ClassLabel + " w-20",
+						ClassLabel: utils.ClassLabel + " w-24",
 						TabIndex:   "4",
 					})
 				</div>
@@ -472,7 +472,7 @@ templ PrometSintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 		<div class="grid grid-cols-2 gap-1">
 			<!-- Parameters Div - Left Aligned -->
 			<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg">
-				<div class="flex items-center gap-2 mb-1">
+				<div class="flex items-center gap-1 mb-1">
 					@KontoField()
 					@tmpl.SearchButton(domain.SearchButtonConfig{
 						ID:          "konto",
@@ -485,7 +485,7 @@ templ PrometSintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 					})
 					@NazivField("kontonaziv")
 				</div>
-				<div class="flex items-center gap-2 mb-1">
+				<div class="flex items-center gap-1 mb-1">
 					@tmpl.TextInputField(domain.InputFieldConfig{
 						ID:         "oddatuma",
 						Name:       "oddatuma",
@@ -494,11 +494,11 @@ templ PrometSintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 						HasLabel:   true,
 						Disabled:   false,
 						ClassInput: utils.ClassInputTextEnabled + " w-28",
-						ClassLabel: utils.ClassLabel + " w-20",
+						ClassLabel: utils.ClassLabel + " w-24",
 						TabIndex:   "3",
 					})
 				</div>
-				<div class="flex items-center gap-2 mb-1">
+				<div class="flex items-center gap-1 mb-1">
 					@tmpl.TextInputField(domain.InputFieldConfig{
 						ID:         "dodatuma",
 						Name:       "dodatuma",
@@ -507,7 +507,7 @@ templ PrometSintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 						HasLabel:   true,
 						Disabled:   false,
 						ClassInput: utils.ClassInputTextEnabled + " w-28",
-						ClassLabel: utils.ClassLabel + " w-20",
+						ClassLabel: utils.ClassLabel + " w-24",
 						TabIndex:   "4",
 					})
 				</div>
@@ -547,7 +547,7 @@ templ KarticaSintetickiKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 		<div class="grid grid-cols-2 gap-1">
 			<!-- Parameters Div - Left Aligned -->
 			<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg">
-				<div class="flex items-center gap-2 mb-1">
+				<div class="flex items-center gap-1 mb-1">
 					@KontoField()
 					@tmpl.SearchButton(domain.SearchButtonConfig{
 						ID:          "konto",
@@ -560,7 +560,7 @@ templ KarticaSintetickiKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 					})
 					@NazivField("kontonaziv")
 				</div>
-				<div class="flex items-center gap-2 mb-1">
+				<div class="flex items-center gap-1 mb-1">
 					@tmpl.TextInputField(domain.InputFieldConfig{
 						ID:         "oddatuma",
 						Name:       "oddatuma",
@@ -569,11 +569,11 @@ templ KarticaSintetickiKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 						HasLabel:   true,
 						Disabled:   false,
 						ClassInput: utils.ClassInputTextEnabled + " w-28",
-						ClassLabel: utils.ClassLabel + " w-20",
+						ClassLabel: utils.ClassLabel + " w-24",
 						TabIndex:   "3",
 					})
 				</div>
-				<div class="flex items-center gap-2 mb-1">
+				<div class="flex items-center gap-1 mb-1">
 					@tmpl.TextInputField(domain.InputFieldConfig{
 						ID:         "dodatuma",
 						Name:       "dodatuma",
@@ -582,7 +582,7 @@ templ KarticaSintetickiKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 						HasLabel:   true,
 						Disabled:   false,
 						ClassInput: utils.ClassInputTextEnabled + " w-28",
-						ClassLabel: utils.ClassLabel + " w-20",
+						ClassLabel: utils.ClassLabel + " w-24",
 						TabIndex:   "4",
 					})
 				</div>
@@ -628,7 +628,7 @@ templ PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint,
 		<div class="grid grid-cols-2 gap-1">
 			<!-- Parameters Div - Left Aligned -->
 			<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg">
-				<div class="flex items-center gap-2 mb-1">
+				<div class="flex items-center gap-1 mb-1">
 					@KontoField()
 					@tmpl.SearchButton(domain.SearchButtonConfig{
 						ID:          "konto",
@@ -641,7 +641,7 @@ templ PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint,
 					})
 					@NazivField("kontonaziv")
 				</div>
-				<div class="flex items-center gap-2 mb-1">
+				<div class="flex items-center gap-1 mb-1">
 					@tmpl.TextInputField(domain.InputFieldConfig{
 						ID:           "odsifre",
 						Value:        "",
@@ -650,7 +650,7 @@ templ PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint,
 						HasLabel:     true,
 						Disabled:     false,
 						ClassInput:   utils.ClassInputTextEnabled + " w-24",
-						ClassLabel:   utils.ClassLabel + " w-20",
+						ClassLabel:   utils.ClassLabel + " w-24",
 						BlurEndpoint: "api/fkpl/trazikonto",
 						HxTarget:     "sifranaziv",
 						HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`,
@@ -669,7 +669,7 @@ templ PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint,
 					})
 					@NazivField("odsifrenaziv")
 				</div>
-				<div class="flex items-center gap-2 mb-1">
+				<div class="flex items-center gap-1 mb-1">
 					@tmpl.TextInputField(domain.InputFieldConfig{
 						ID:           "dosifre",
 						LabelText:    "Do Sifre",
@@ -677,7 +677,7 @@ templ PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint,
 						HasLabel:     true,
 						Disabled:     false,
 						ClassInput:   utils.ClassInputTextEnabled + " w-24",
-						ClassLabel:   utils.ClassLabel + " w-20",
+						ClassLabel:   utils.ClassLabel + " w-24",
 						BlurEndpoint: "api/fkpl/trazikonto",
 						HxTarget:     "sifranaziv",
 						HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`,
@@ -696,7 +696,7 @@ templ PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint,
 					})
 					@NazivField("dosifrenaziv")
 				</div>
-				<div class="flex items-center gap-2 mb-1">
+				<div class="flex items-center gap-1 mb-1">
 					@tmpl.TextInputField(domain.InputFieldConfig{
 						ID:         "odnaloga",
 						Name:       "odnaloga",
@@ -705,13 +705,13 @@ templ PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint,
 						HasLabel:   true,
 						Disabled:   false,
 						ClassInput: utils.ClassInputTextEnabled + " w-24",
-						ClassLabel: utils.ClassLabel + " w-20",
+						ClassLabel: utils.ClassLabel + " w-24",
 						MinLength:  "1",
 						MaxLength:  "10",
 						TabIndex:   "4",
 					})
 				</div>
-				<div class="flex items-center gap-2 mb-1">
+				<div class="flex items-center gap-1 mb-1">
 					@tmpl.TextInputField(domain.InputFieldConfig{
 						ID:         "donaloga",
 						Name:       "donaloga",
@@ -720,7 +720,7 @@ templ PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint,
 						HasLabel:   true,
 						Disabled:   false,
 						ClassInput: utils.ClassInputTextEnabled + " w-24",
-						ClassLabel: utils.ClassLabel + " w-20",
+						ClassLabel: utils.ClassLabel + " w-24",
 						MinLength:  "1",
 						MaxLength:  "10",
 						TabIndex:   "5",

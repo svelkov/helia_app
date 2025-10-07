@@ -9,14 +9,24 @@ templ Search_Part(tbl domain.TableData, searchControl domain.InputControl) {
 			<div class="relative">
 				<input
 					name="query"
-					class={ searchControl.Class }
+					if searchControl.Class != "" {
+						class={ searchControl.Class }
+					}
 					id={ searchControl.ID }
 					type={ searchControl.Type }
-					placeholder={ searchControl.Placeholder }
-					hx-get={ searchControl.HxActionURL }
-					hx-target={ searchControl.HxTarget }
-					hx-swap={ searchControl.HxSwap }
-					hx-trigger="keyup changed delay:500ms"
+					if searchControl.Placeholder != "" {
+						placeholder={ searchControl.Placeholder }
+					}
+					if searchControl.HxActionURL != "" {
+						hx-get={ searchControl.HxActionURL }
+					}
+					if searchControl.HxTarget != "" {
+						hx-target={ searchControl.HxTarget }
+					}
+					if searchControl.HxSwap != "" {
+						hx-swap={ searchControl.HxSwap }
+					}
+					hx-trigger="keyup changed delay:500ms, search"
 					if searchControl.HxInclude != "" {
 						hx-include={ searchControl.HxInclude }
 					}

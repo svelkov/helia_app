@@ -1,13 +1,24 @@
 // global/vars.go
 package global
 
-import "sync"
+import (
+	"helia/config"
+	"sync"
+)
 
 var (
-	gnGod int
-	gnKar int
-	mu    sync.RWMutex
+	gnFirma string
+	gnGod   int
+	gnKar   int
+	mu      sync.RWMutex
+	cfg     config.Config
 )
+
+func SetGnFirma(firma string) {
+	mu.Lock()
+	defer mu.Unlock()
+	gnFirma = firma
+}
 
 func SetGnGod(god int) {
 	mu.Lock()
@@ -20,6 +31,16 @@ func SetGnKar(kar int) {
 	defer mu.Unlock()
 	gnKar = kar
 }
+func SetConfig(config config.Config) {
+	mu.Lock()
+	defer mu.Unlock()
+	cfg = config
+}
+func GetGnFirma() string {
+	mu.RLock()
+	defer mu.RUnlock()
+	return gnFirma
+}
 
 func GetGnGod() int {
 	mu.RLock()
@@ -31,4 +52,9 @@ func GetGnKar() int {
 	mu.RLock()
 	defer mu.RUnlock()
 	return gnKar
+}
+func GetConfig() config.Config {
+	mu.RLock()
+	defer mu.RUnlock()
+	return cfg
 }

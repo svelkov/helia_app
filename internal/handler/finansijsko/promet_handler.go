@@ -8,9 +8,11 @@ import (
 	tmpl_fin "helia/frontend/templates/finansijsko"
 	"helia/internal/common"
 	"helia/internal/domain"
-	"helia/internal/infrastructure"
+	"helia/internal/middleware"
 	"helia/internal/service"
 	"helia/pkg/utils"
+
+	"github.com/gin-gonic/gin"
 )
 
 const (
@@ -24,7 +26,14 @@ type PrometHandler struct {
 	tabData domain.TabData
 	service *service.PrometResource
 }
-
+const (
+	hxVals = `js:{
+            konto: document.getElementById("konto")?.value,
+            sifra: document.getElementById("sifra")?.value,
+            oddatuma: document.getElementById("oddatuma")?.value,
+            dodatuma: document.getElementById("dodatuma")?.value
+        }`
+)
 func NewPrometHandler(service *service.PrometResource) *PrometHandler {
 	handler := &PrometHandler{}
 	handler.tabData = GetTabData()
@@ -32,229 +41,216 @@ func NewPrometHandler(service *service.PrometResource) *PrometHandler {
 	return handler
 }
 
-func (h *PrometHandler) PrometMain(w http.ResponseWriter, r *http.Request) {
+func (h *PrometHandler) PrometMain(c *gin.Context) {
 	// Create configuration
-	// popupConfig := domain.NewSearchPopupConfig("konto", "/api/fkpl/trazikonto", "Trazi konto...")
-	// popupConfig.Width = "w-296"         // Custom width
-	// popupConfig.MaxHeight = "max-h-280" // Custom height
-	hxVals := `js:{
-            konto: document.getElementById("konto")?.value,
-            sifra: document.getElementById("sifra")?.value,
-            oddatuma: document.getElementById("oddatuma")?.value,
-            dodatuma: document.getElementById("dodatuma")?.value
-        }`
-	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true)
-	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/analitickakonta", "#promettable", "innerHTML", "GET", "", hxVals, true)
+
+	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/analitickakonta", "#promettable", "innerHTML", "GET", "#konto, #sifra, #oddatuma, #dodatuma", hxVals, true, common.ClassSaveButton)
+	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton)
 
 	tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetAnkontaTableFields(), "", "", 0, 0, 0, 0)
 	tbl.ShowActions = false
-
-	w.Header().Set("Content-Type", "text/html")
-
-	err := tmpl_fin.PrometMain(h.tabData, tbl, btnPrint, btnObrada, domain.PrometTotalValues{}).Render(r.Context(), w)
+	err := tmpl_fin.PrometMain(h.tabData, tbl, btnPrint, btnObrada, domain.PrometTotalValues{}).Render(c.Request.Context(), c.Writer)
 	if err != nil {
-		http.Error(w, "Failed to render template", http.StatusInternalServerError)
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 		return
 	}
 }
 
-func (h *PrometHandler) PrometAnalitickihKonta(w http.ResponseWriter, r *http.Request) {
+func (h *PrometHandler) PrometAnalitickihKonta(c *gin.Context) {
 	// Get our custom header
-	requestSource := r.Header.Get("X-Request-Source")
+	requestSource := c.Request.Header.Get("X-Request-Source")
 	if requestSource == "menu" || requestSource == "tab" {
-	hxVals := `js:{
-            konto: document.getElementById("konto")?.value,
-            sifra: document.getElementById("sifra")?.value,
-            oddatuma: document.getElementById("oddatuma")?.value,
-            dodatuma: document.getElementById("dodatuma")?.value
-        }`
-	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true)
-	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/analitickakonta", "#promettable", "innerHTML", "GET", "", hxVals, true)
+		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/analitickakonta", "#promettable", "innerHTML", "GET", "", hxVals, true, common.ClassSaveButton)
+		btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton)
 
-	//if the call come from menu click or tab click then render the page with parameters and empty table
+		//if the call come from menu click or tab click then render the page with parameters and empty table
 		tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetAnkontaTableFields(), "", "", 0, 0, 0, 0)
 		tbl.ShowActions = false
-
-		w.Header().Set("Content-Type", "text/html")
 		h.tabData = setActiveTab(h.tabData, "analitickakonta")
-		err := tmpl_fin.PrometAnalitickihKonta(h.tabData, tbl, btnPrint, btnObrada, domain.PrometTotalValues{}).Render(r.Context(), w)
+		err := tmpl_fin.PrometAnalitickihKonta(h.tabData, tbl, btnPrint, btnObrada, domain.PrometTotalValues{}).Render(c.Request.Context(), c.Writer)
 		if err != nil {
-			http.Error(w, "Failed to render template", http.StatusInternalServerError)
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
 		}
 	}
 	// If it's a POST request, the make obrada
 	if requestSource == "btnobrada" || requestSource == "btnpage" {
-		page, pageSize := common.GetPageAndPageSizeFromRequest(r)
-		response, err := h.service.GetPrometAnalitickihKonta(r, true, 0, 0)
+		page, pageSize := common.GetPageAndPageSizeFromRequest(c)
+		response, err := h.service.GetPrometAnalitickihKonta(c, true, 0, 0)
 		if err != nil {
-			http.Error(w, "Failed to get total records", http.StatusInternalServerError)
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
 			return
 		}
 		totalRecords := response.TotalRecords
 		totalPages := (totalRecords + pageSize - 1) / pageSize
 		// Get paginated data
-		response, err = h.service.GetPrometAnalitickihKonta(r, false, pageSize, page)
+		response, err = h.service.GetPrometAnalitickihKonta(c, false, pageSize, page)
 		if err != nil {
-			http.Error(w, "Failed to render template", http.StatusInternalServerError)
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
 		}
 		tbl := common.SetTableBasicData("", prometTableID, h.service.GetAnkontaTableFields(), "", "/api/promet/analitickakonta", pageSize, page, totalPages, totalRecords)
 		tbl.ShowActions = false
 		tbl.ShowPagination = true
-		tbl.Pagination.HxInclude = "#konto, #sifra, #oddatuma, #dodatuma"
+		tbl.Pagination.HxVals = hxVals
 		// Prepare TableData for UI
 		tblRows, err := common.SetTableRows(&tbl, response.Data, h.service.GetAnkontaTableFields(), "idfpro", "", h.service.GetFieldCache())
 		if err != nil {
-			http.Error(w, "Failed to set table rows", http.StatusInternalServerError)
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgFailedToSetTableRow)
 			return
 		}
 		tbl.Rows = tblRows.Rows
 		tbl.BtnAdd = domain.Button{IsVisible: false}   // Hide Add button in this view
 		tbl.BtnPrint = domain.Button{IsVisible: false} // Hide Print button in this view
 
-		w.Header().Set("Content-Type", "text/html")
-		utils.RenderContent(w, r, tbl)
+		utils.RenderContent(c, tbl)
 	}
 }
 
-func (h *PrometHandler) PrometAnalitickihKontaPoMI(w http.ResponseWriter, r *http.Request) {
-	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true)
-	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/analitickakontami", "#promettable", "innerHTML", "POST", "", "", true)
+func (h *PrometHandler) PrometAnalitickihKontaPoMI(c *gin.Context) {
+	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/analitickakontami", "#promettable", "innerHTML", "POST", "", "", true, common.ClassObradaButton)
+	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton)
 
 	tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetAnKontaMiTableFields(), "", "", 0, 0, 0, 0)
 	tbl.ShowActions = false
-	w.Header().Set("Content-Type", "text/html")
+
 	h.tabData = setActiveTab(h.tabData, "analitickakontami")
-	err := tmpl_fin.AnalitickaKarticaPoMI(h.tabData, tbl, btnPrint, btnObrada, domain.PrometTotalValues{}).Render(r.Context(), w)
+	err := tmpl_fin.AnalitickaKarticaPoMI(h.tabData, tbl, btnPrint, btnObrada, domain.PrometTotalValues{}).Render(c.Request.Context(), c.Writer)
 	if err != nil {
-		http.Error(w, "Failed to render template", http.StatusInternalServerError)
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 		return
 	}
 }
-func (h *PrometHandler) PrometDeviznihAnalitickihKonta(w http.ResponseWriter, r *http.Request) {
-	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true)
-	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/deviznihanalitickihkonta", "#promettable", "innerHTML", "POST", "", "", true)
+func (h *PrometHandler) PrometDeviznihAnalitickihKonta(c *gin.Context) {
+	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/deviznihanalitickihkonta", "#promettable", "innerHTML", "POST", "", "", true, common.ClassObradaButton)
+	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton)
 
 	tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetAnDeviznaKontaTableFields(), "", "", 0, 0, 0, 0)
 	tbl.ShowActions = false
-	w.Header().Set("Content-Type", "text/html")
+
 	h.tabData = setActiveTab(h.tabData, "deviznihanalitickihkonta")
-	err := tmpl_fin.PrometDeviznihAnalitickihKonta(h.tabData, tbl, tbl, btnPrint, btnObrada, domain.PrometTotalValues{}).Render(r.Context(), w)
+	err := tmpl_fin.PrometDeviznihAnalitickihKonta(h.tabData, tbl, tbl, btnPrint, btnObrada, domain.PrometTotalValues{}).Render(c.Request.Context(), c.Writer)
 	if err != nil {
-		http.Error(w, "Failed to render template", http.StatusInternalServerError)
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 		return
 	}
 }
 
-func (h *PrometHandler) PrometSubsintetickihKonta(w http.ResponseWriter, r *http.Request) {
-	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true)
-	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/subsintetickakonta", "#promettable", "innerHTML", "POST", "", "", true)
+func (h *PrometHandler) PrometSubsintetickihKonta(c *gin.Context) {
+	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/subsintetickakonta", "#promettable", "innerHTML", "POST", "", "", true, common.ClassObradaButton)
+	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton)
 
 	tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetSubsintetickihKontaTableFields(), "", "", 0, 0, 0, 0)
 	tbl.ShowActions = false
-	w.Header().Set("Content-Type", "text/html")
+
 	h.tabData = setActiveTab(h.tabData, "subsintetickakonta")
-	err := tmpl_fin.PrometSubsintetickihKonta(h.tabData, tbl, btnPrint, btnObrada, domain.PrometTotalValues{}).Render(r.Context(), w)
+	err := tmpl_fin.PrometSubsintetickihKonta(h.tabData, tbl, btnPrint, btnObrada, domain.PrometTotalValues{}).Render(c.Request.Context(), c.Writer)
 	if err != nil {
-		http.Error(w, "Failed to render template", http.StatusInternalServerError)
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 		return
 	}
 }
-func (h *PrometHandler) PrometSintetickihKonta(w http.ResponseWriter, r *http.Request) {
-	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true)
-	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/sintetickakonta", "#promet-table", "innerHTML", "POST", "", "", true)
+func (h *PrometHandler) PrometSintetickihKonta(c *gin.Context) {
+	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/sintetickakonta", "#promet-table", "innerHTML", "POST", "", "", true, common.ClassObradaButton)
+	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton)
 
 	tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetSintetickihKontaTableFields(), "", "", 0, 0, 0, 0)
 	tbl.ShowActions = false
-	w.Header().Set("Content-Type", "text/html")
+
 	h.tabData = setActiveTab(h.tabData, "sintetickakonta")
-	err := tmpl_fin.PrometSintetickihKonta(h.tabData, tbl, btnPrint, btnObrada, domain.PrometTotalValues{}).Render(r.Context(), w)
+	err := tmpl_fin.PrometSintetickihKonta(h.tabData, tbl, btnPrint, btnObrada, domain.PrometTotalValues{}).Render(c.Request.Context(), c.Writer)
 	if err != nil {
-		http.Error(w, "Failed to render template", http.StatusInternalServerError)
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 		return
 	}
 }
-func (h *PrometHandler) KarticaSintetickihKonta(w http.ResponseWriter, r *http.Request) {
-	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true)
-	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/karticasintetickihkonta", "#promettable", "innerHTML", "POST", "", "", true)
+func (h *PrometHandler) KarticaSintetickihKonta(c *gin.Context) {
+	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/karticasintetickihkonta", "#promettable", "innerHTML", "POST", "", "", true, common.ClassObradaButton)
+	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton)
 
 	tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetKarticaSintetickihKontaTableFields(), "", "", 0, 0, 0, 0)
 	tbl.ShowActions = false
-	w.Header().Set("Content-Type", "text/html")
+
 	h.tabData = setActiveTab(h.tabData, "karticasintetickihkonta")
-	err := tmpl_fin.KarticaSintetickiKonta(h.tabData, tbl, btnPrint, btnObrada, domain.PrometTotalValues{}).Render(r.Context(), w)
+	err := tmpl_fin.KarticaSintetickiKonta(h.tabData, tbl, btnPrint, btnObrada, domain.PrometTotalValues{}).Render(c.Request.Context(), c.Writer)
 	if err != nil {
-		http.Error(w, "Failed to render template", http.StatusInternalServerError)
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 		return
 	}
 }
 
-func (h *PrometHandler) PrometKontaAnaliticki(w http.ResponseWriter, r *http.Request) {
-	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true)
-	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/kontaanaliticki", "#promettable", "innerHTML", "POST", "", "", true)
+func (h *PrometHandler) PrometKontaAnaliticki(c *gin.Context) {
+	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/kontaanaliticki", "#promettable", "innerHTML", "POST", "", "", true, common.ClassObradaButton)
+	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton)
 
 	tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetKontaAnalitickiTableFields(), "", "", 0, 0, 0, 0)
 	tbl.ShowActions = false
-	w.Header().Set("Content-Type", "text/html")
+
 	h.tabData = setActiveTab(h.tabData, "kontaanaliticki") // Activate the "Promet konta analitički" tab
-	err := tmpl_fin.PrometKontaAnaliticki(h.tabData, tbl, btnPrint, btnObrada, domain.PrometTotalValues{}).Render(r.Context(), w)
+	err := tmpl_fin.PrometKontaAnaliticki(h.tabData, tbl, btnPrint, btnObrada, domain.PrometTotalValues{}).Render(c.Request.Context(), c.Writer)
 	if err != nil {
-		http.Error(w, "Failed to render template", http.StatusInternalServerError)
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 		return
 	}
 }
 
-func (h *PrometHandler) PrometTotalValues(w http.ResponseWriter, r *http.Request) {
+func (h *PrometHandler) PrometTotalValues(c *gin.Context) {
 
 	// Get totals data
-	response, err := h.service.GetPrometTotals(r)
+	response, err := h.service.GetPrometTotals(c)
 	if err != nil {
-		http.Error(w, "Failed to render template", http.StatusInternalServerError)
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData)
 		return
 	}
-	w.Header().Set("Content-Type", "text/html")
-	tmpl_fin.TotalValues(response.Totals).Render(r.Context(), w)
+
+	err = tmpl_fin.TotalValues(response.Totals).Render(c.Request.Context(), c.Writer)
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
+		return
+	}
 
 }
-func (h *PrometHandler) SearchButtonDialog(w http.ResponseWriter, r *http.Request) {
+func (h *PrometHandler) SearchButtonDialog(c *gin.Context) {
 	hxVals := ""
-	vkonta := r.URL.Query().Get("vkonta")
-	values := r.URL.Query()
+	vkonta := c.Query("vkonta")
+	queryParams := c.Request.URL.Query()
 	id := ""
 	placeholder := "trazi konto..."
-	if _, exists := values["konto"]; exists {
+	if _, exists := queryParams["konto"]; exists {
 		// Parameter exists (even if empty)
 		id = "konto"
 		placeholder = "trazi konto..."
 
 	}
-	if _, exists := values["sifra"]; exists {
+	if _, exists := queryParams["sifra"]; exists {
 		// Parameter exists (even if empty)
 		id = "sifra"
 		placeholder = "trazi sifru..."
 	}
-	w.Header().Set("Content-Type", "text/html")
 
 	if vkonta != "" {
 		hxVals = fmt.Sprintf(`{"vkonta": "%s"}`, vkonta)
 	}
-	tmpl.SearchButtonDialog(id, id, placeholder, "/api/fkpl/trazikontosearchtable", "#search-results", "innerHTML", hxVals).Render(r.Context(), w)
+	tmpl.SearchButtonDialog(id, id, placeholder, "/api/fkpl/trazikontosearchtable", "#search-results", "innerHTML", hxVals).Render(c.Request.Context(), c.Writer)
 
 }
 
-func (h *PrometHandler) AddRoutes(r *http.ServeMux) {
-	// Define routes for fkpl
-	r.HandleFunc("GET /api/promet", infrastructure.AuthMiddleware(h.PrometMain))
-	r.HandleFunc("GET /api/promet/analitickakonta", infrastructure.AuthMiddleware(h.PrometAnalitickihKonta))
-	r.HandleFunc("GET /api/promet/analitickakontami", infrastructure.AuthMiddleware(h.PrometAnalitickihKontaPoMI))
-	r.HandleFunc("GET /api/promet/deviznihanalitickihkonta", infrastructure.AuthMiddleware(h.PrometDeviznihAnalitickihKonta))
-	r.HandleFunc("GET /api/promet/subsintetickakonta", infrastructure.AuthMiddleware(h.PrometSubsintetickihKonta))
-	r.HandleFunc("GET /api/promet/sintetickakonta", infrastructure.AuthMiddleware(h.PrometSintetickihKonta))
-	r.HandleFunc("GET /api/promet/karticasintetickihkonta", infrastructure.AuthMiddleware(h.KarticaSintetickihKonta))
-	r.HandleFunc("GET /api/promet/kontaanaliticki", infrastructure.AuthMiddleware(h.PrometKontaAnaliticki))
-	r.HandleFunc("GET /api/promet/totalvalues", infrastructure.AuthMiddleware(h.PrometTotalValues))
-	r.HandleFunc("GET /api/promet/searchbutton", infrastructure.AuthMiddleware(h.SearchButtonDialog))
+func (h *PrometHandler) AddRoutes(r *gin.Engine) {
+	// Create API group with prefix
+	//api := r.Group(prometURLPrefix)
+	r.Use(middleware.Auth()) // Apply auth middleware to all routes in group
+
+	// Define routes for promet
+	r.GET("/api/promet", h.PrometMain)
+	r.GET("/api/promet/analitickakonta", h.PrometAnalitickihKonta)
+	r.GET("/api/promet/analitickakontami", h.PrometAnalitickihKontaPoMI)
+	r.GET("/api/promet/deviznihanalitickihkonta", h.PrometDeviznihAnalitickihKonta)
+	r.GET("/api/promet/subsintetickakonta", h.PrometSubsintetickihKonta)
+	r.GET("/api/promet/sintetickakonta", h.PrometSintetickihKonta)
+	r.GET("/api/promet/karticasintetickihkonta", h.KarticaSintetickihKonta)
+	r.GET("/api/promet/kontaanaliticki", h.PrometKontaAnaliticki)
+	r.GET("/api/promet/totalvalues", h.PrometTotalValues)
+	r.GET("/api/promet/searchbutton", h.SearchButtonDialog)
 
 }
 

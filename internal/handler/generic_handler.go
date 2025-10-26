@@ -2,10 +2,11 @@ package handler
 
 import (
 	"helia/internal/domain"
-	"helia/internal/infrastructure"
+	"helia/internal/middleware"
 	"helia/internal/service"
 	"helia/pkg/utils"
-	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 // GenericHandler provides CRUD operations for any entity
@@ -24,55 +25,58 @@ func NewGenericHandler[T any](svc service.Service[T], fields []domain.Fields, cf
 	}
 }
 
-func (h *GenericHandler[T]) Create(w http.ResponseWriter, r *http.Request) {
+func (h *GenericHandler[T]) Create(c *gin.Context) {
 	var entity T
-	utils.CreateHelper(w, r, &entity, h.service, h.config.IDField, h.fields)
+	utils.CreateHelper(c, &entity, h.service, h.config.IDField, h.fields)
 }
 
-func (h *GenericHandler[T]) Update(w http.ResponseWriter, r *http.Request) {
+func (h *GenericHandler[T]) Update(c *gin.Context) {
 	var entity T
-	utils.UpdateHelper(w, r, &entity, h.service, h.fields, h.config.IDField)
+	utils.UpdateHelper(c, &entity, h.service, h.fields, h.config.IDField)
 }
 
-func (h *GenericHandler[T]) Delete(w http.ResponseWriter, r *http.Request) {
-	utils.DeleteHelper(w, r, h.service, h.config.IDField)
+func (h *GenericHandler[T]) Delete(c *gin.Context) {
+	utils.DeleteHelper(c, h.service, h.config.IDField)
 }
 
-func (h *GenericHandler[T]) Get(w http.ResponseWriter, r *http.Request) {
-	utils.GetEntityHelper(w, r, h.service, h.fields, h.config.IDField)
+func (h *GenericHandler[T]) Get(c *gin.Context) {
+	utils.GetEntityHelper(c, h.service, h.fields, h.config.IDField)
 }
-func (h *GenericHandler[T]) GetAll(w http.ResponseWriter, r *http.Request) {
+func (h *GenericHandler[T]) GetAll(c *gin.Context) {
 	tbl := utils.GetAllEntityHelper(
-		w, r, h.service, h.fields,
+		c, h.service, h.fields,
 		h.config.ContentTitle, h.config.TableID,
 		h.config.APIPrefix, h.config.APIPrefix+"/all",
 		h.config.IDField,
 	)
-	utils.RenderContent(w, r, *tbl)
+	utils.RenderContent(c, *tbl)
 }
 
-func (h *GenericHandler[T]) confirmDeleteHandler(w http.ResponseWriter, r *http.Request) {
-	utils.ConfirmDeleteHelper(w, r, h.fields)
+func (h *GenericHandler[T]) confirmDeleteHandler(c *gin.Context) {
+	utils.ConfirmDeleteHelper(c, h.fields)
 }
 
-func (h *GenericHandler[T]) confirmAddHandler(w http.ResponseWriter, r *http.Request) {
-	utils.ConfirmAddHelper(w, r, h.config.APIPrefix, h.fields)
+func (h *GenericHandler[T]) confirmAddHandler(c *gin.Context) {
+	utils.ConfirmAddHelper(c, h.config.APIPrefix, h.fields)
 }
 
-func (h *GenericHandler[T]) confirmUpdateHandler(w http.ResponseWriter, r *http.Request) {
-	utils.ConfirmUpdateHelper(w, r, h.service, h.fields, h.config.IDField)
+func (h *GenericHandler[T]) confirmUpdateHandler(c *gin.Context) {
+	utils.ConfirmUpdateHelper(c, h.service, h.fields, h.config.IDField)
 }
 
-func (h *GenericHandler[T]) RegisterRoutes(r *http.ServeMux) {
+func (h *GenericHandler[T]) RegisterRoutes(r *gin.Engine) {
 	prefix := h.config.APIPrefix
-	auth := infrastructure.AuthMiddleware
 
-	r.HandleFunc("POST "+prefix, auth(h.Create))
-	r.HandleFunc("GET "+prefix+"/all", auth(h.GetAll))
-	r.HandleFunc("GET "+prefix+"/{id}", auth(h.Get))
-	r.HandleFunc("PUT "+prefix+"/{id}", auth(h.Update))
-	r.HandleFunc("DELETE "+prefix+"/{id}", auth(h.Delete))
-	r.HandleFunc("GET "+prefix+"/confirm-delete", auth(h.confirmDeleteHandler))
-	r.HandleFunc("GET "+prefix+"/confirm-update", auth(h.confirmUpdateHandler))
-	r.HandleFunc("GET "+prefix+"/confirm-add", auth(h.confirmAddHandler))
+	// Create API group with prefix
+	//api := r.Group(prefix)
+	r.Use(middleware.Auth()) // Apply auth middleware to all routes in group
+
+	r.POST(prefix, h.Create)
+	r.GET(prefix+"/all", h.GetAll)
+	r.GET(prefix+"/:id", h.Get)
+	r.PUT(prefix+"/:id", h.Update)
+	r.DELETE(prefix+"/:id", h.Delete)
+	r.GET(prefix+"/confirm-delete", h.confirmDeleteHandler)
+	r.GET(prefix+"/confirm-update", h.confirmUpdateHandler)
+	r.GET(prefix+"/confirm-add", h.confirmAddHandler)
 }

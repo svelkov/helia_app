@@ -7,8 +7,9 @@ import (
 	"helia/internal/repository"
 	"reflect"
 
-	"net/http"
 	"strings"
+
+	"github.com/gin-gonic/gin"
 )
 
 // FproViewData encapsulates all data needed for the Nalog display page.
@@ -24,7 +25,7 @@ type FproService interface {
 	SetNalogIDFieldName(string)
 	GetTableStavkeFields() []domain.Fields
 	GetTableNalogFields() []domain.Fields
-	GetNaloziStavke(r *http.Request, nalogID int64, searchQuery string, page int, offset int, tableFields []domain.Fields) (domain.TableData, error)
+	GetNaloziStavke(c *gin.Context, nalogID int64, searchQuery string, page int, offset int, tableFields []domain.Fields) (domain.TableData, error)
 	GetFieldCache() map[string]reflect.StructField
 }
 
@@ -134,10 +135,7 @@ func (s *FproResource) buildFproWhere(idfnal int64, args *[]interface{}, searchQ
 }
 
 // GetNalogsViewData fetches all data required to render the Nalog list page.
-func (s *FproResource) GetNaloziStavke(r *http.Request, idFnal int64, searchQuery string, page int, offset int, tableFields []domain.Fields) (domain.TableData, error) {
-
-	//(r *http.Request, searchQuery, selectedTipdok string, page, pageSize int, isInitialRequest bool) (FproViewData, error) {
-
+func (s *FproResource) GetNaloziStavke(c *gin.Context, idFnal int64, searchQuery string, page int, offset int, tableFields []domain.Fields) (domain.TableData, error) {
 	table := domain.TableData{}
 	// 2. Fetch Fpro Entities
 	args := []interface{}{}
@@ -153,7 +151,7 @@ func (s *FproResource) GetNaloziStavke(r *http.Request, idFnal int64, searchQuer
 	}
 
 	// Calculate pagination details
-	currentPage, calculatedPageSize, totalPages := common.GetPaginationData(r, totRecords) // Pass nil for req
+	currentPage, calculatedPageSize, totalPages := common.GetPaginationData(c, totRecords) // Pass nil for req
 	if page > 0 {                                                                          // Override current page if provided from handler
 		currentPage = page
 	}

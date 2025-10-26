@@ -2,8 +2,8 @@ package finansijsko
 
 import (
 	tmpl "helia/frontend/templates"
+	"helia/internal/common"
 	"helia/internal/domain"
-	"helia/pkg/utils"
 )
 
 templ NalogKnjizenjeStavke() {
@@ -69,15 +69,15 @@ templ NalogKnjizenjeStavke() {
 						<div class="flex flex-col gap-1">
 							<div class="flex items-center text-xs gap-1">
 								<span class="block text-xs font-sm text-blue-700 w-20 flex-shrink-0">Duguje:</span>
-								@tmpl.NumericInputField("duguje", 0, 2, true, utils.ClassInputNumericDisabled)
+								@tmpl.NumericInputField("duguje", 0, 2, true, common.ClassInputNumericDisabled)
 							</div>
 							<div class="flex items-center text-xs gap-1">
 								<span class="block text-xs font-sm text-blue-700 w-20 flex-shrink-0">Potražuje:</span>
-								@tmpl.NumericInputField("potrazuje", 0, 2, true, utils.ClassInputNumericDisabled)
+								@tmpl.NumericInputField("potrazuje", 0, 2, true, common.ClassInputNumericDisabled)
 							</div>
 							<div class="flex items-center text-xs gap-1">
 								<span class="text-blue-700 w-20 flex-shrink-0">Saldo:</span>
-								@tmpl.NumericInputField("saldo", 0, 2, true, utils.ClassInputNumericDisabled)
+								@tmpl.NumericInputField("saldo", 0, 2, true, common.ClassInputNumericDisabled)
 							</div>
 						</div>
 					</div>
@@ -101,7 +101,7 @@ templ NalogKnjizenjeStavke() {
 										HxTarget:    "#search-dropdown",
 										HxSwap:      "innerHTML",
 										HxVals:      `{"vkonta": "2"}`,
-										ClassButton: utils.ClassButton,
+										ClassButton: common.ClassButton,
 									})
 									@NazivField("kontonaziv")
 								</div>
@@ -114,20 +114,22 @@ templ NalogKnjizenjeStavke() {
 										HxTarget:    "#search-dropdown",
 										HxSwap:      "innerHTML",
 										HxVals:      `{"vkonta": "1"}`,
-										ClassButton: utils.ClassButton,
+										ClassButton: common.ClassButton,
 									})
 									@NazivField("sifranaziv")
 								</div>
 								<div class="flex items-center gap-1">
+									@tmpl.LabelField(domain.LabelFieldConfig{
+										ID:         "vrstadokum",
+										LabelText:  "Vrsta dokum.",
+										ClassLabel: common.ClassLabel + " w-24",
+									})
 									@tmpl.ComboBoxField(domain.ComboFieldConfig{
 										ID:          "vrstadokum",
 										Name:        "vrstadokum",
 										Placeholder: "Izaberite vrstu dokumenta",
-										LabelText:   "Vrsta dokum.",
-										HasLabel:    true,
 										Disabled:    false,
-										ClassSelect: utils.ClassInputTextEnabled + " min-w-[80px]",
-										ClassLabel:  utils.ClassLabel + " w-24",
+										ClassSelect: common.ClassInputTextEnabled + " min-w-[80px]",
 										TabIndex:    "5",
 										OptionValues: []domain.ComboItem{
 											{Key: "10", Value: "10-IZDAT RACUN KUPCU"},
@@ -139,27 +141,31 @@ templ NalogKnjizenjeStavke() {
 									})
 								</div>
 								<div class="flex items-center gap-1 mb-1">
+									@tmpl.LabelField(domain.LabelFieldConfig{
+										ID:         "opisknjizenja",
+										LabelText:  "Opis knjizenja",
+										ClassLabel: common.ClassLabel + " w-24",
+									})
 									@tmpl.TextInputField(domain.InputFieldConfig{
 										ID:          "opisknjizenja",
 										Name:        "opisknjizenja",
 										Placeholder: "unesite opis knjizenja",
-										LabelText:   "Opis knjizenja",
 										FieldType:   "text",
-										HasLabel:    true,
 										Disabled:    false,
-										ClassInput:  utils.ClassInputTextEnabled + " w-full ",
-										ClassLabel:  utils.ClassLabel + " w-24",
+										ClassInput:  common.ClassInputTextEnabled + " w-full ",
 									})
 								</div>
 								<div class="flex items-center gap-1 mb-1">
-									@tmpl.TextInputField(domain.InputFieldConfig{
+									@tmpl.LabelField(domain.LabelFieldConfig{
 										ID:         "magacin",
 										LabelText:  "Magacin",
+										ClassLabel: common.ClassLabel + " w-24",
+									})
+									@tmpl.TextInputField(domain.InputFieldConfig{
+										ID:         "magacin",
 										FieldType:  "text",
-										HasLabel:   true,
 										Disabled:   false,
-										ClassInput: utils.ClassInputTextEnabled + "  w-[50px] min-w-[50px]",
-										ClassLabel: utils.ClassLabel + " w-24",
+										ClassInput: common.ClassInputTextEnabled + "  w-[50px] min-w-[50px]",
 										MinLength:  "1",
 										MaxLength:  "4",
 										TabIndex:   "6"})
@@ -169,19 +175,21 @@ templ NalogKnjizenjeStavke() {
 										HxUrl:       "/api/promet/searchbutton",
 										HxTarget:    "#search-dropdown",
 										HxSwap:      "innerHTML",
-										ClassButton: utils.ClassButton,
+										ClassButton: common.ClassButton,
 									})
 									@NazivField("magacinnaziv")
 								</div>
 								<div class="flex items-center gap-1">
-									@tmpl.TextInputField(domain.InputFieldConfig{
+									@tmpl.LabelField(domain.LabelFieldConfig{
 										ID:         "mestoisporuke",
 										LabelText:  "Mesto isporuke",
+										ClassLabel: common.ClassLabel + " w-24",
+									})
+									@tmpl.TextInputField(domain.InputFieldConfig{
+										ID:         "mestoisporuke",
 										FieldType:  "text",
-										HasLabel:   true,
 										Disabled:   false,
-										ClassInput: utils.ClassInputTextEnabled + " w-[50px] min-w-[50px]",
-										ClassLabel: utils.ClassLabel + " w-24",
+										ClassInput: common.ClassInputTextEnabled + " w-[50px] min-w-[50px]",
 										MinLength:  "1",
 										MaxLength:  "4",
 										TabIndex:   "6"})
@@ -191,19 +199,21 @@ templ NalogKnjizenjeStavke() {
 										HxUrl:       "/api/mi/searchbutton",
 										HxTarget:    "#search-dropdown",
 										HxSwap:      "innerHTML",
-										ClassButton: utils.ClassButton,
+										ClassButton: common.ClassButton,
 									})
 									@NazivField("minaziv")
 								</div>
 								<div class="flex items-center gap-1">
-									@tmpl.TextInputField(domain.InputFieldConfig{
+									@tmpl.LabelField(domain.LabelFieldConfig{
 										ID:         "komercijalista",
 										LabelText:  "Komercijalista",
+										ClassLabel: common.ClassLabel + " w-24",
+									})
+									@tmpl.TextInputField(domain.InputFieldConfig{
+										ID:         "komercijalista",
 										FieldType:  "text",
-										HasLabel:   true,
 										Disabled:   false,
-										ClassInput: utils.ClassInputTextEnabled + "  w-[50px] min-w-[50px]",
-										ClassLabel: utils.ClassLabel + " w-24",
+										ClassInput: common.ClassInputTextEnabled + "  w-[50px] min-w-[50px]",
 										MinLength:  "1",
 										MaxLength:  "4",
 										TabIndex:   "6"})
@@ -213,7 +223,7 @@ templ NalogKnjizenjeStavke() {
 										HxUrl:       "/api/komercijalisti/searchbutton",
 										HxTarget:    "#search-dropdown",
 										HxSwap:      "innerHTML",
-										ClassButton: utils.ClassButton,
+										ClassButton: common.ClassButton,
 									})
 									@NazivField("komnaziv")
 								</div>
@@ -258,29 +268,33 @@ templ NalogKnjizenjeStavke() {
 							<div class="space-y-1 px-1">
 								<div class="bg-blue-50 border border-blue-400 flex-1 px-2 py-1 space-y-1">
 									<div class="flex items-center gap-1">
+										@tmpl.LabelField(domain.LabelFieldConfig{
+											ID:         "oj",
+											LabelText:  "Org. Jedinica",
+											ClassLabel: common.ClassLabel + " w-24",
+										})
 										@tmpl.ComboBoxField(domain.ComboFieldConfig{
 											ID:           "oj",
 											Name:         "oj",
 											Placeholder:  "izaberite organizacionu jedinicu...",
-											LabelText:    "Org. Jedinica",
-											HasLabel:     true,
 											Disabled:     false,
-											ClassSelect:  utils.ClassInputTextEnabled + " min-w-[80px] w-full",
-											ClassLabel:   utils.ClassLabel + " w-24",
+											ClassSelect:  common.ClassInputTextEnabled + " min-w-[80px] w-full",
 											TabIndex:     "5",
 											OptionValues: []domain.ComboItem{},
 										})
 									</div>
 									<div class="flex items-center gap-1">
+										@tmpl.LabelField(domain.LabelFieldConfig{
+											ID:         "mtroska",
+											LabelText:  "Mesto troska",
+											ClassLabel: common.ClassLabel + " w-24",
+										})
 										@tmpl.ComboBoxField(domain.ComboFieldConfig{
 											ID:           "mtroska",
 											Name:         "mtroska",
 											Placeholder:  "izaberite mesto troska...",
-											LabelText:    "Mesto troska",
-											HasLabel:     true,
 											Disabled:     false,
-											ClassSelect:  utils.ClassInputTextEnabled + " min-w-[80px] w-full",
-											ClassLabel:   utils.ClassLabel + " w-24",
+											ClassSelect:  common.ClassInputTextEnabled + " min-w-[80px] w-full",
 											TabIndex:     "5",
 											OptionValues: []domain.ComboItem{},
 										})
@@ -293,59 +307,67 @@ templ NalogKnjizenjeStavke() {
 									<div class="grid grid-cols-1 md:grid-cols-2">
 										<!-- Document Field -->
 										<div class="grid grid-cols-2 gap-2 mb-1 items-center">
+											@tmpl.LabelField(domain.LabelFieldConfig{
+												ID:         "brojdokum",
+												LabelText:  "Broj Dokumenta",
+												ClassLabel: common.ClassLabel + " w-24",
+											})
 											@tmpl.TextInputField(domain.InputFieldConfig{
 												ID:         "brojdokum",
 												Name:       "brojdokum",
-												LabelText:  "Broj Dokumenta",
 												FieldType:  "text",
-												HasLabel:   true,
 												Disabled:   false,
-												ClassInput: utils.ClassInputTextEnabled + " min-w-[50px]",
-												ClassLabel: utils.ClassLabel + " w-24",
+												ClassInput: common.ClassInputTextEnabled + " min-w-[50px]",
 												MinLength:  "0",
 												MaxLength:  "10",
 												TabIndex:   "6"})
 										</div>
 										<!-- Broj godina Field -->
 										<div class="grid grid-cols-2 gap-2 mb-1 pl-2 items-center">
+											@tmpl.LabelField(domain.LabelFieldConfig{
+												ID:         "goddokum",
+												LabelText:  "Godina dokum.",
+												ClassLabel: common.ClassLabel + " w-24",
+											})
 											@tmpl.TextInputField(domain.InputFieldConfig{
 												ID:         "goddokum",
 												Name:       "goddokum",
-												LabelText:  "Godina dokum.",
 												FieldType:  "text",
-												HasLabel:   true,
 												Disabled:   false,
-												ClassInput: utils.ClassInputTextEnabled + "  min-w-[50px]",
-												ClassLabel: utils.ClassLabel + " w-24",
+												ClassInput: common.ClassInputTextEnabled + "  min-w-[50px]",
 												MinLength:  "4",
 												MaxLength:  "4",
 												TabIndex:   "6"})
 										</div>
 										<!-- Datum dokumenta Field -->
 										<div class="grid grid-cols-2 gap-2 mb-1 items-center">
+											@tmpl.LabelField(domain.LabelFieldConfig{
+												ID:         "datdokum",
+												LabelText:  "Datum dokum.",
+												ClassLabel: common.ClassLabel + " w-24",
+											})
 											@tmpl.TextInputField(domain.InputFieldConfig{
 												ID:         "datdokum",
 												Name:       "datdokum",
-												LabelText:  "Datum dokum.",
 												FieldType:  "date",
-												HasLabel:   true,
 												Disabled:   false,
-												ClassInput: utils.ClassInputTextEnabled + " min-w-[50px]",
-												ClassLabel: utils.ClassLabel + " w-24",
+												ClassInput: common.ClassInputTextEnabled + " min-w-[50px]",
 												MinLength:  "4",
 												MaxLength:  "10",
 												TabIndex:   "6"})
 										</div>
 										<!-- Rok Field -->
 										<div class="grid grid-cols-2 gap-1 mb-1 pl-2 items-center">
-											@tmpl.TextInputField(domain.InputFieldConfig{
+											@tmpl.LabelField(domain.LabelFieldConfig{
 												ID:         "rok",
 												LabelText:  "Rok",
+												ClassLabel: common.ClassLabel + " w-24",
+											})
+											@tmpl.TextInputField(domain.InputFieldConfig{
+												ID:         "rok",
 												FieldType:  "text",
-												HasLabel:   true,
 												Disabled:   false,
-												ClassInput: utils.ClassInputTextEnabled + " min-w-[50px]",
-												ClassLabel: utils.ClassLabel + " w-24",
+												ClassInput: common.ClassInputTextEnabled + " min-w-[50px]",
 												MinLength:  "4",
 												MaxLength:  "4",
 												TabIndex:   "6"})
@@ -359,60 +381,68 @@ templ NalogKnjizenjeStavke() {
 									<div class="grid grid-cols-1 md:grid-cols-2">
 										<!-- Br. vezn. dokum. Field -->
 										<div class="grid grid-cols-2 gap-2 mb-1 items-center">
+											@tmpl.LabelField(domain.LabelFieldConfig{
+												ID:         "brvezndokum",
+												LabelText:  "Br. Vezn. Dokum.",
+												ClassLabel: common.ClassLabel + " w-24",
+											})
 											@tmpl.TextInputField(domain.InputFieldConfig{
 												ID:         "brvezndokum",
 												Name:       "brvezndokum",
-												LabelText:  "Br. Vezn. Dokum.",
 												FieldType:  "text",
-												HasLabel:   true,
 												Disabled:   false,
-												ClassInput: utils.ClassInputTextEnabled + " min-w-[50px]",
-												ClassLabel: utils.ClassLabel + " w-24",
+												ClassInput: common.ClassInputTextEnabled + " min-w-[50px]",
 												MinLength:  "0",
 												MaxLength:  "10",
 												TabIndex:   "6"})
 										</div>
 										<!-- God. godina Field -->
 										<div class="grid grid-cols-2 gap-2 pl-2 mb-1 items-center">
+											@tmpl.LabelField(domain.LabelFieldConfig{
+												ID:         "godinavezndokum",
+												LabelText:  "God. Vezn. Dokum.",
+												ClassLabel: common.ClassLabel + " w-24",
+											})
 											@tmpl.TextInputField(domain.InputFieldConfig{
 												ID:         "godinavezndokum",
 												Name:       "godinavezndokum",
-												LabelText:  "God. Vezn. Dokum.",
 												FieldType:  "text",
-												HasLabel:   true,
 												Disabled:   false,
-												ClassInput: utils.ClassInputTextEnabled + " min-w-[50px]",
-												ClassLabel: utils.ClassLabel + " w-24",
+												ClassInput: common.ClassInputTextEnabled + " min-w-[50px]",
 												MinLength:  "0",
 												MaxLength:  "10",
 												TabIndex:   "6"})
 										</div>
 										<!-- Dat. vezn. dokum. Field -->
 										<div class="grid grid-cols-2 gap-2 mb-1 items-center">
+											@tmpl.LabelField(domain.LabelFieldConfig{
+												ID:         "datveznogdokum",
+												LabelText:  "Datum veznog dokum.",
+												ClassLabel: common.ClassLabel + " w-24",
+											})
 											@tmpl.TextInputField(domain.InputFieldConfig{
 												ID:         "datveznogdokum",
 												Name:       "datveznogdokum",
-												LabelText:  "Datum veznog dokum.",
 												FieldType:  "date",
-												HasLabel:   true,
 												Disabled:   false,
-												ClassInput: utils.ClassInputTextEnabled + " min-w-[50px]",
-												ClassLabel: utils.ClassLabel + " w-24",
+												ClassInput: common.ClassInputTextEnabled + " min-w-[50px]",
 												MinLength:  "4",
 												MaxLength:  "10",
 												TabIndex:   "6"})
 										</div>
 										<!-- Napomena/Help Field -->
 										<div class="grid grid-cols-2 gap-2 mb-1 pl-2 items-start">
+											@tmpl.LabelField(domain.LabelFieldConfig{
+												ID:         "napomena",
+												LabelText:  "Napomena",
+												ClassLabel: common.ClassLabel + " w-24",
+											})
 											@tmpl.TextInputField(domain.InputFieldConfig{
 												ID:         "napomena",
 												Name:       "napomena",
-												LabelText:  "Napomena",
 												FieldType:  "text",
-												HasLabel:   true,
 												Disabled:   false,
-												ClassInput: utils.ClassInputTextEnabled + " min-w-[50px]",
-												ClassLabel: utils.ClassLabel + " w-24",
+												ClassInput: common.ClassInputTextEnabled + " min-w-[50px]",
 												MinLength:  "0",
 												MaxLength:  "1000",
 												TabIndex:   "6"})

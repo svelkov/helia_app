@@ -5,20 +5,6 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// AppConfig holds application configuration
-type AppConfig struct {
-	DBConfig DB_Connection `json:"db_connection"`
-	PageSize int           `json:"page_size"`
-}
-type DB_Connection struct {
-	DBHost       string `json:"db_host"`
-	DBPort       int    `json:"db_port"`
-	DBUser       string `json:"db_user"`
-	DBPassword   string `json:"db_password"`
-	DBName       string `json:"db_name"`
-	DBSearchPath string `json:"db_search_path"`
-}
-
 // Config holds handler configuration
 type HandlerConfig struct {
 	ContentTitle string
@@ -98,6 +84,7 @@ type Button struct {
 	ActionMethod     string
 	Icon             string
 	IsVisible        bool
+	BtnClass         string
 }
 type Fields struct {
 	Name           string
@@ -108,6 +95,8 @@ type Fields struct {
 	Width          string
 	TabIndex       string
 	SkipInSearch   bool
+	Field          string
+	Sortable       bool
 }
 type FieldError struct {
 	Field        string `json:"field"`
@@ -164,26 +153,34 @@ type ComboItem struct {
 	Key   string `json:"key"`
 	Value string `json:"value"`
 }
+
+type LabelFieldConfig struct {
+	ID         string
+	LabelText  string
+	ClassLabel string
+}
+
 type InputFieldConfig struct {
-	ID           string
-	Name         string
-	Required     bool
-	Placeholder  string
-	Pattern      string
-	Value        string
-	LabelText    string
-	FieldType    string
-	HasLabel     bool
-	Disabled     bool
-	ClassInput   string
-	ClassLabel   string
-	BlurEndpoint string
-	HxTarget     string
-	HxVals       string
-	HxInclude    string
-	MinLength    string
-	MaxLength    string
-	TabIndex     string
+	ID               string
+	Name             string
+	Required         bool
+	Placeholder      string
+	Value            string
+	FieldType        string
+	Disabled         bool
+	ClassInput       string
+	BlurEndpoint     string
+	HxTarget         string
+	HxGet            string
+	HxTrigger        string
+	HxSwap           string
+	HxVals           string
+	HxInclude        string
+	MinLength        string
+	MaxLength        string
+	Pattern          string
+	TabIndex         string
+	HxOnAfterRequest string
 }
 
 type ComboFieldConfig struct {
@@ -210,6 +207,8 @@ type ComboFieldConfig struct {
 	HxInclude       string
 	HxSwap          string
 	HxParams        string
+	HxGet           string
+	HxTrigger       string
 	MinLength       string
 	MaxLength       string
 	TabIndex        string

@@ -14,10 +14,20 @@ type Router struct {
 
 // Config struct for passing configuration
 type Config struct {
-	BasePath string
-	God      int
-	Kar      int
-	PageSize int
+	BasePath string        `json:"base_path"`
+	DBConfig DB_Connection `json:"db_connection"`
+	PageSize int           `json:"page_size"`
+	Env      string        `json:"env"`
+	Port     string        `json:"port"`
+}
+
+type DB_Connection struct {
+	DBHost       string `json:"db_host"`
+	DBPort       int    `json:"db_port"`
+	DBUser       string `json:"db_user"`
+	DBPassword   string `json:"db_password"`
+	DBName       string `json:"db_name"`
+	DBSearchPath string `json:"db_search_path"`
 }
 
 func (c *Config) GetPageSize() int {

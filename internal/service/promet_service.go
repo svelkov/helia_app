@@ -5,8 +5,9 @@ import (
 	"helia/global"
 	"helia/internal/domain"
 	"helia/internal/repository"
-	"net/http"
 	"reflect"
+
+	"github.com/gin-gonic/gin"
 )
 
 // FproViewData encapsulates all data needed for the Nalog display page.
@@ -20,16 +21,16 @@ type PrometViewData struct {
 type PrometService interface {
 	GetTableStavkeFields() []domain.Fields
 	GetTableNalogFields() []domain.Fields
-	GetNaloziStavke(r *http.Request, nalogID int64, searchQuery string, page int, offset int, tableFields []domain.Fields) (domain.TableData, error)
+	GetNaloziStavke(c *gin.Context, nalogID int64, searchQuery string, page int, offset int, tableFields []domain.Fields) (domain.TableData, error)
 	GetFieldCache() map[string]reflect.StructField
-	GetPrometAnalitickihKonta(r *http.Request) (domain.TableData, error)
-	GetPrometAnalitickihKotnaMi(r *http.Request, searchQuery string, page int, offset int) (domain.TableData, error)
-	GetPrometDeviznihAnalitickihKonta(r *http.Request, searchQuery string, page int, offset int) (domain.TableData, error)
-	GetPrometSubsintetickhKonta(r *http.Request, searchQuery string, page int, offset int) (domain.TableData, error)
-	GetPrometSintetickihKonta(r *http.Request, searchQuery string, page int, offset int) (domain.TableData, error)
-	GetPrometKarticaSintetickihKonta(r *http.Request, searchQuery string, page int, offset int) (domain.TableData, error)
-	GetPrometAnKontaVrd(r *http.Request, searchQuery string, page int, offset int) (domain.TableData, error)
-	GetPrometKontaAnaliticki(r *http.Request, searchQuery string, page int, offset int) (domain.TableData, error)
+	GetPrometAnalitickihKonta(c *gin.Context) (domain.TableData, error)
+	GetPrometAnalitickihKotnaMi(c *gin.Context, searchQuery string, page int, offset int) (domain.TableData, error)
+	GetPrometDeviznihAnalitickihKonta(c *gin.Context, searchQuery string, page int, offset int) (domain.TableData, error)
+	GetPrometSubsintetickhKonta(c *gin.Context, searchQuery string, page int, offset int) (domain.TableData, error)
+	GetPrometSintetickihKonta(c *gin.Context, searchQuery string, page int, offset int) (domain.TableData, error)
+	GetPrometKarticaSintetickihKonta(c *gin.Context, searchQuery string, page int, offset int) (domain.TableData, error)
+	GetPrometAnKontaVrd(c *gin.Context, searchQuery string, page int, offset int) (domain.TableData, error)
+	GetPrometKontaAnaliticki(c *gin.Context, searchQuery string, page int, offset int) (domain.TableData, error)
 	GetTotalRecordsCustom(queryText, whereText string, args []interface{}, limitOffset, orderBy string) (int, error)
 }
 
@@ -55,14 +56,15 @@ func NewPrometService(service *BaseService[domain.PrometDto], prometRepo *reposi
 	rs.setServiceFieldValues()
 	return rs
 }
-func (s *PrometResource) GetPrometTotals(r *http.Request) (domain.PrometResponse, error) {
+func (s *PrometResource) GetPrometTotals(c *gin.Context) (domain.PrometResponse, error) {
 	var response domain.PrometResponse
 
-	konto := r.FormValue("konto")
-	sifra := r.FormValue("sifra")
-	odDatuma := r.FormValue("oddatuma")
-	doDatuma := r.FormValue("dodatuma")
+	konto := c.Query("konto")
+	sifra := c.Query("sifra")
+	odDatuma := c.Query("oddatuma")
+	doDatuma := c.Query("dodatuma")
 	if konto == "" || sifra == "" || odDatuma == "" || doDatuma == "" {
+
 		return response, fmt.Errorf("missing required parameters")
 	}
 
@@ -126,13 +128,13 @@ func (s *PrometResource) GetPrometTotals(r *http.Request) (domain.PrometResponse
 	return response, err
 }
 
-func (s *PrometResource) GetPrometAnalitickihKonta(r *http.Request, getTotalRecords bool, calculatedPageSize, currentPage int) (domain.PrometResponse, error) {
+func (s *PrometResource) GetPrometAnalitickihKonta(c *gin.Context, getTotalRecords bool, calculatedPageSize, currentPage int) (domain.PrometResponse, error) {
 	var response domain.PrometResponse
 	args := []interface{}{}
-	konto := r.FormValue("konto")
-	sifra := r.FormValue("sifra")
-	odDatuma := r.FormValue("oddatuma")
-	doDatuma := r.FormValue("dodatuma")
+	konto := c.Query("konto")
+	sifra := c.Query("sifra")
+	odDatuma := c.Query("oddatuma")
+	doDatuma := c.Query("dodatuma")
 	if konto == "" || sifra == "" || odDatuma == "" || doDatuma == "" {
 		return response, fmt.Errorf("missing required parameters")
 	}

@@ -15,7 +15,7 @@ import (
 	"strings"
 )
 
-func TopMenu(menuItems domain.MenuDataItems, currentMenu string, comboKomintent, comboPoslGod domain.ComboFieldConfig) templ.Component {
+func TopMenu(menuItems domain.MenuDataItems, currentMenu string, comboCompany, comboPoslGod, comboKar domain.ComboFieldConfig) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -36,7 +36,7 @@ func TopMenu(menuItems domain.MenuDataItems, currentMenu string, comboKomintent,
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"bg-gradient-to-r from-blue-400 to-blue-400 text-white shadow-xl\"><nav class=\"flex flex-wrap\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"bg-gradient-to-r from-blue-400 to-blue-900 text-white shadow-xl shadow-blue-600/50\"><nav class=\"flex flex-wrap\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -85,17 +85,17 @@ func TopMenu(menuItems domain.MenuDataItems, currentMenu string, comboKomintent,
 				return templ_7745c5c3_Err
 			}
 			if item.Name == currentMenu {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, " class=\"menu-btn px-3 py-2 font-medium text-sm bg-white text-blue-800 focus:outline-none transition-colors duration-200\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, " class=\"menu-btn px-2 py-2 font-medium border-r border-b rounded--t-md text-sm bg-white text-blue-800 focus:outline-none transition-colors duration-200\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			} else {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, " class=\"menu-btn px-3 py-2 font-medium text-sm focus:outline-none bg-blue-400 text-white transition-colors duration-200\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, " class=\"menu-btn px-2 py-2 font-medium border-r border-b rounded-t-md text-sm focus:outline-none bg-blue-900 text-white transition-colors duration-200\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, " type=\"button\" onclick=\"document.querySelectorAll(&#39;nav button&#39;).forEach(b =&gt; b.className = &#39;px-3 py-2 font-medium text-sm bg-blue-400 text-white&#39;);\r\n                this.className = &#39;px-3 py-2 font-medium text-sm bg-white text-blue-800&#39;;\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, " type=\"button\" onclick=\"document.querySelectorAll(&#39;nav button&#39;).forEach(b =&gt; b.className = &#39;px-2 py-2 border-r border-b rounded-t-md font-medium text-sm bg-blue-900 text-white&#39;);\r\n                this.className = &#39;px-2 py-2 border-r border-b rounded-t-md font-medium text-sm bg-white text-blue-800&#39;;\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -117,7 +117,7 @@ func TopMenu(menuItems domain.MenuDataItems, currentMenu string, comboKomintent,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = ComboBoxField(comboKomintent).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = ComboBoxField(comboCompany).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -129,7 +129,15 @@ func TopMenu(menuItems domain.MenuDataItems, currentMenu string, comboKomintent,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</div></div></nav></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</div><div class=\"flex items-center space-x-2\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = ComboBoxField(comboKar).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</div></div></nav></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

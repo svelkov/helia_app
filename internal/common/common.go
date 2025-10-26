@@ -3,32 +3,33 @@ package common
 import (
 	"database/sql"
 	"fmt"
+	"helia/global"
 	"helia/internal/domain"
-	"net/http"
 	"os"
 	"reflect"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
 )
 
 // GetPaginationData calculates pagination details (totalPages, etc.).
 // This function can be used by both handler (initial page load) and service (query construction).
-func GetPaginationData(r *http.Request, totalRecords int) (currentPage, pageSize, totalPages int) {
+func GetPaginationData(c *gin.Context, totalRecords int) (currentPage, pageSize, totalPages int) {
 	// Default values
-	pageSize = 10
+	pageSize = global.GetConfig().PageSize
 	currentPage = 1
 
-	if r != nil { // Allow calling without request for service side
-		if psStr := r.URL.Query().Get("pageSize"); psStr != "" {
+	if c != nil { // Allow calling without request for service side
+		if psStr := c.Query("pageSize"); psStr != "" {
 			if ps, err := strconv.Atoi(psStr); err == nil && ps > 0 {
 				pageSize = ps
 			}
 		}
-		if pageStr := r.URL.Query().Get("page"); pageStr != "" {
+		if pageStr := c.Query("page"); pageStr != "" {
 			if p, err := strconv.Atoi(pageStr); err == nil && p > 0 {
 				currentPage = p
 			}
@@ -52,18 +53,20 @@ func GetPaginationData(r *http.Request, totalRecords int) (currentPage, pageSize
 }
 
 // GetPageAndPageSizeFromRequest extracts "page" and "pageSize" query parameters.
-func GetPageAndPageSizeFromRequest(r *http.Request) (page, pageSize int) {
-	pageStr := r.URL.Query().Get("page")
-	pageSizeStr := r.URL.Query().Get("pageSize")
+func GetPageAndPageSizeFromRequest(c *gin.Context) (page, pageSize int) {
+	pageStr := c.Query("page")
+	pageSizeStr := c.Query("pageSize")
 
 	page = 1 // Default
 	if p, err := strconv.Atoi(pageStr); err == nil && p > 0 {
 		page = p
 	}
 
-	pageSize = 10 // Default
 	if ps, err := strconv.Atoi(pageSizeStr); err == nil && ps > 0 {
 		pageSize = ps
+	}
+	if pageSize == 0 {
+		pageSize = global.GetConfig().PageSize // Default
 	}
 	return page, pageSize
 }
@@ -71,6 +74,9 @@ func GetPageAndPageSizeFromRequest(r *http.Request) (page, pageSize int) {
 // SetTableBasicData initializes a domain.TableData struct with common values.
 // This is used by the service to build the TableData, and can be customized with options.
 func SetTableBasicData(title, tableID string, headers []domain.Fields, urlPrefix, URLGetAll string, pageSize, currentPage, totalPages, totalRecords int, opts ...func(*domain.TableData)) domain.TableData {
+	if pageSize == 0 {
+		pageSize = global.GetConfig().PageSize
+	}
 	table := domain.TableData{
 		ContentTitle: title,
 		TableID:      tableID,
@@ -86,11 +92,11 @@ func SetTableBasicData(title, tableID string, headers []domain.Fields, urlPrefix
 			StartRecord:  currentPage*pageSize - pageSize + 1,
 			EndRecord:    currentPage * pageSize,
 		},
-		ShowActions: true,                                                 // Default, can be overridden
-		BtnAdd:      domain.Button{LabelText: "Dodaj", IsVisible: true},   // Default, can be overridden
-		BtnUpdate:   domain.Button{LabelText: "Izmeni", IsVisible: true},  // Default, can be overridden
-		BtnDelete:   domain.Button{LabelText: "Obriši", IsVisible: true},  // Default, can be overridden
-		BtnPrint:    domain.Button{LabelText: "Stampaj", IsVisible: true}, // Default, can be overridden
+		ShowActions: true,                                                                                                         // Default, can be overridden
+		BtnAdd:      domain.Button{LabelText: "Dodaj", BtnClass: ClassAddButton, IsVisible: true},                                 // Default, can be overridden
+		BtnUpdate:   domain.Button{LabelText: "Izmeni", BtnClass: ClassConfirmButton, IdDialog: "dialog-update", IsVisible: true}, // Default, can be overridden
+		BtnDelete:   domain.Button{LabelText: "Obriši", BtnClass: ClassDeleteButton, IdDialog: "dialog-delete", IsVisible: true},  // Default, can be overridden
+		BtnPrint:    domain.Button{LabelText: "Stampaj", BtnClass: ClassPrintButton, IsVisible: true},                             // Default, can be overridden
 	}
 	table.ShowPagination = totalRecords > 0 // Show pagination only if there are records
 	for _, opt := range opts {
@@ -141,18 +147,18 @@ func SetTableRows[T any](table *domain.TableData, entities []T, tableFields []do
 }
 
 func SetTableButtons(table *domain.TableData, entityURLPrefix string) *domain.TableData {
-	table.BtnAdd.IsVisible = true                                                  // Show Add button in the table header
+	table.BtnAdd.IsVisible = true                                                   // Show Add button in the table header
 	table.BtnAdd.HxActionURL = fmt.Sprintf("%s/confirm-add", entityURLPrefix)       // Set the URL for Add button
-	table.BtnUpdate.IsVisible = true                                               // Show Update button in the table header
+	table.BtnUpdate.IsVisible = true                                                // Show Update button in the table header
 	table.BtnUpdate.HxActionURL = fmt.Sprintf("%s/confirm-update", entityURLPrefix) // Set the URL for Update button
-	table.BtnDelete.IsVisible = true                                               // Show Delete button in the table header
+	table.BtnDelete.IsVisible = true                                                // Show Delete button in the table header
 	table.BtnDelete.HxActionURL = fmt.Sprintf("%s/confirm-delete", entityURLPrefix) // Set the URL for Delete button
-	table.BtnPrint.IsVisible = true                                                // Show Print button in the table header
+	table.BtnPrint.IsVisible = true                                                 // Show Print button in the table header
 	table.BtnPrint.HxActionURL = fmt.Sprintf("%s/report", entityURLPrefix)          // Show Print button in the table header
 	return table
 }
 
-func SetButton(Id, LabelText, Icon, HxActionURL, HxTarget, HxSwap, HxRequestType, HxInclude, HxVals string, IsVisible bool) domain.Button {
+func SetButton(Id, LabelText, Icon, HxActionURL, HxTarget, HxSwap, HxRequestType, HxInclude, HxVals string, IsVisible bool, class string) domain.Button {
 	return domain.Button{
 		Id:            Id,
 		LabelText:     LabelText,
@@ -164,6 +170,7 @@ func SetButton(Id, LabelText, Icon, HxActionURL, HxTarget, HxSwap, HxRequestType
 		HxRequestType: HxRequestType,
 		HxInclude:     HxInclude,
 		IsVisible:     IsVisible,
+		BtnClass:      class,
 	}
 }
 
@@ -275,35 +282,6 @@ func detectSystemLanguage() language.Tag {
 	return language.English // Fallback
 }
 
-func StringToFloat64(str string, defaultValue float64) float64 {
-	val, err := strconv.ParseFloat(str, 64)
-	if err != nil {
-		return defaultValue
-	}
-	return val
-}
-func StringToInt(str string, defaultValue int) int {
-	val, err := strconv.Atoi(str)
-	if err != nil {
-		return defaultValue
-	}
-	return val
-}
-func StringToInt64(str string, defaultValue int64) int64 {
-	val, err := strconv.ParseInt(str, 10, 64)
-	if err != nil {
-		return defaultValue
-	}
-	return val
-}
-func StringToBool(str string, defaultValue bool) bool {
-	val, err := strconv.ParseBool(str)
-	if err != nil {
-		return defaultValue
-	}
-	return val
-}
-
 func GetSubMenus(menuData domain.MenuDataItems, targetMenu string) []domain.SubMenuItem {
 	for _, menuItem := range menuData.MenuItems {
 		if menuItem.Name == targetMenu {
@@ -311,4 +289,28 @@ func GetSubMenus(menuData domain.MenuDataItems, targetMenu string) []domain.SubM
 		}
 	}
 	return nil // or empty slice if menu not found
+}
+
+// WriteJSONResponse writes a JSON response with the given status, success, errors, and message.
+func WriteJSONResponse(
+	c *gin.Context,
+	status int,
+	success bool,
+	errors []domain.FieldError,
+	message string,
+) {
+	c.JSON(status, domain.Response{
+		Success: success,
+		Errors:  errors,
+		Message: message,
+	})
+}
+
+// GetIconSVG returns the SVG path for a given icon name
+func GetIconSVG(iconName string) string {
+	if svg, ok := IconSVG[iconName]; ok {
+		return svg
+	}
+	// Return a default icon if not found
+	return `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />`
 }

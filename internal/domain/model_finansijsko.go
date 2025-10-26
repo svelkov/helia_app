@@ -35,14 +35,14 @@ type Fnal struct {
 	IDFnal     int            `db:"idfnal"`
 	God        int            `db:"god"`
 	Kar        int            `db:"kar"`
-	Nalog      int64          `db:"nalog"`
-	Tipdok     string         `db:"tipdok"`
-	Danal      time.Time      `db:"danal"`
-	Opis       string         `db:"opis"`
+	Nalog      int64          `db:"nalog" schema:"nalog" `
+	Tipdok     string         `db:"tipdok" schema:"tipdok" `
+	Danal      time.Time      `db:"danal" schema:"danal"`
+	Opis       string         `db:"opis" schema:"opis"`
 	Dug        float64        `db:"dug"`
 	Pot        float64        `db:"pot"`
 	Rbr        int64          `db:"rbr"`
-	Datob      time.Time      `db:"datob"`
+	Datob      time.Time      `db:"datob" schema:"datob"`
 	Oper       string         `db:"oper"`
 	Brst       int            `db:"brst"`
 	Abr        int            `db:"abr"`
@@ -204,4 +204,13 @@ type PrometDto struct {
 	Idfpro       int          `db:"idfpro"`
 	Idfnal       int          `db:"idfnal"`
 	Idfkpl       int          `db:"idfkpl"`
+}
+
+type FnalPayload struct {
+	// IDFnal    int64  `schema:"idfnal"`
+	Nalog  string `form:"nalog" binding:"required"`
+	Danal  string `form:"danal" binding:"required"`
+	Datob  string `form:"datob" binding:"required"`
+	Tipdok string `form:"tipdok" binding:"required"`
+	Opis   string `form:"opis"`
 }

@@ -22,13 +22,15 @@ templ NumericInputField(id string, value float64, decimals int, disabled bool, c
 	/>
 }
 
-templ TextInputField(config domain.InputFieldConfig) {
-	if config.HasLabel && config.LabelText != "" {
+templ LabelField(config domain.LabelFieldConfig){
 		<label class={ config.ClassLabel } for={ config.ID }>{ config.LabelText }</label>
-	}
+}
+
+templ TextInputField(config domain.InputFieldConfig) {
 	<input
 		type={ config.FieldType }
 		id={ config.ID }
+		name={ config.Name }
 		value={ config.Value }
 		class={ config.ClassInput }
 		if config.Disabled {
@@ -43,6 +45,21 @@ templ TextInputField(config domain.InputFieldConfig) {
 				hx-on--after-request={ fmt.Sprintf("document.getElementById('%s').value = event.detail.xhr.responseText", config.HxTarget) }
 			}
 		}
+		if config.HxGet != "" {
+			hx-get={ config.HxGet }
+		}
+		if config.HxTarget != "" {
+			hx-target={ fmt.Sprintf("#%s", config.HxTarget) }
+		}
+		if config.HxTrigger != "" {
+			hx-trigger={ config.HxTrigger }
+		}
+		if config.HxInclude != "" {
+			hx-include={ config.HxInclude }
+		}
+		if config.HxSwap != "" {
+			hx-swap={ config.HxSwap }
+		}
 		if config.HxVals != "" {
 			hx-vals={ config.HxVals }
 		}
@@ -55,10 +72,18 @@ templ TextInputField(config domain.InputFieldConfig) {
 		if config.MaxLength != "" {
 			maxlength={ config.MaxLength }
 		}
+		if config.HxOnAfterRequest != "" {
+			hx-on--after-request="this.value = event.detail.xhr.responseText"
+		}
 		if config.TabIndex != "" {
 			tabindex={ config.TabIndex }
 		}
 	/>
+}
+
+templ ValidationField(id, className string) {
+	<!-- Error Container -->
+	<div id={ fmt.Sprintf("%s-error", id) } class={ className }></div>
 }
 
 templ SearchButton(config domain.SearchButtonConfig) {
@@ -138,6 +163,7 @@ templ ComboBoxField(comboConfig domain.ComboFieldConfig) {
 				<option value={ item.Key }>{ item.Value }</option>
 			}
 		}
+		hx-on--after-request={ "document.getElementById('nalog').value = event.detail.xhr.responseText" }
 	</select>
 }
 
@@ -188,15 +214,4 @@ templ SearchButtonDialog(id, name, placeholder, hxUrl, hxTarget, hxSwap, hxVals 
 			</button>
 		</div>
 	</div>
-}
-
-// components/godineOptions.templ
-templ ComboIntOptions(options []int, selectedOption string) {
-	for _, opt := range options {
-		if fmt.Sprintf("%d",opt) == selectedOption {
-			<option value={ fmt.Sprintf("%d", opt) } selected>{ fmt.Sprintf("%d", opt) }</option>
-		} else {
-			<option value={ fmt.Sprintf("%d", opt) }>{ fmt.Sprintf("%d", opt) }</option>
-		}
-	}
 }

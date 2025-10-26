@@ -1,79 +1,214 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"strings"
+	"syscall"
+	"time"
 
+	"github.com/gin-contrib/gzip"
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-contrib/sessions/cookie"
 	_ "github.com/lib/pq" // PostgreSQL driver
 
 	"github.com/jmoiron/sqlx"
 
+	"helia/config"
 	"helia/frontend/templates"
+	"helia/global"
 	"helia/internal/common"
 	"helia/internal/domain"
 	"helia/internal/handler"
 	fin "helia/internal/handler/finansijsko"
 	oshandler "helia/internal/handler/os"
+	"helia/internal/i18n"
+	"helia/internal/middleware"
 	"helia/internal/repository"
 	"helia/internal/service"
 	"helia/internal/validation"
 	finval "helia/internal/validation/finansijsko"
 	osval "helia/internal/validation/os"
-	"helia/pkg/utils"
+
+	"github.com/gin-gonic/gin"
+)
+
+const (
+	contextTimeout = 30 * time.Second
+	tokenExpiry    = 24 * time.Hour
+)
+
+// Configuration loaded from environment
+var (
+	// Secret key for signing the JWT (keep this secure!)
+	SESSION_SECRET = "3285f0d71eed0c41fded2115c9cc8ac09a0ab5a519565df10afdb20f8013c5268f2c19948b6af096c1cfc2921ab086be21fa5407b9d91aeb08eeeeef3c2e16c9ae30ae15f27d340f17c450468fef50795e58bb7351a94602bc045aea1a1ff3b03039081208cf067b44fd913b98b712e34ba080941f5ff8545b0eac26824f0ef4a93109939d8f917e1fac1eb588f4272ebac415975bcdc994c3a0fea7c3805d601443ad71dd9043858de5c2bfe64106683d9eaebce28442ce7bb22298d5b85cc3cc41e6f81f9c0f8f678cce559f745645edc5a5009ba20f8b5a16be4ee7dada7791913c90e3629a44b88a17d3d107bd3a6c0f3000b4865b2c015c0875901a028e" // Replace with your secret key
 )
 
 // factory initializes and starts the application
 func factory() {
 	cfg := loadConfig()
+	global.SetConfig(cfg)
 	db, err := connectDB(cfg)
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 	defer db.Close()
 
-	r := http.NewServeMux()
-	registerRoutes(r, db)
+	// Initialize translator
+	translator := i18n.NewTranslator("en")
+	if err := translator.LoadTranslations("./translations", []string{"en", "sr", "ср"}); err != nil {
+		log.Fatal("Failed to load translations:", err)
+	}
 
-	// srv := &http.Server{
-	// 	Addr:    ":8080",
-	// 	Handler: r,
-	// }
+	// Set Gin mode
+	if cfg.Env == "production" {
+		gin.SetMode(gin.ReleaseMode)
+	}
 
-	// Start server
-	http.ListenAndServe(":8080", r)
-	// 	// Graceful shutdown
-	// go func() {
-	// 	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-	// 		log.Fatalf("Server failed: %v", err)
-	// 	}
-	// }()
+	// Create router
+	router := setupRouter(translator)
+
+	// Entity settings
+	setEntities(db, router)
+
+	// Create server
+	srv := &http.Server{
+		Addr:           ":" + cfg.Port,
+		Handler:        router,
+		ReadTimeout:    10 * time.Second,
+		WriteTimeout:   10 * time.Second,
+		MaxHeaderBytes: 1 << 20,
+	}
+
+	// Start server in goroutine
+	go func() {
+		log.Printf("Server starting on port %s", cfg.Port)
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Failed to start server: %v", err)
+		}
+	}()
+
+	// Graceful shutdown
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	log.Println("Shutting down server...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Fatal("Server forced to shutdown:", err)
+	}
+
+	log.Println("Server exited")
+}
+
+func setupRouter(translator *i18n.Translator) *gin.Engine {
+	router := gin.Default()
+	// Configure sessions
+	store := configureSessionStore()
+	router.Use(sessions.Sessions("heliasession", store))
+	// Global middleware
+	router.Use(middleware.CORS())
+	router.Use(middleware.I18n(translator))
+	router.Use(gzip.Gzip(gzip.DefaultCompression)) // Compression
+	// Add request logging to debug
+	// router.Use(func(c *gin.Context) {
+	// 	log.Printf("Request: %s %s", c.Request.Method, c.Request.URL.Path)
+	// 	c.Next()
+	// })
+
+	// Static files
+	//router.StaticFS("/frontend/static", http.Dir("./frontend/static"))
+	// Additional static directories
+	router.Static("/css", "./frontend/static/css")
+	router.Static("/js", "./frontend/static/js")
+	//router.StaticFile("/favicon.ico", "./frontend/static/favicon.ico")
+
+	// Serve static files with cache control
+	router.Static("/frontend/static", "./frontend/static")
+
+	// Or for more control
+	router.Use(func(c *gin.Context) {
+		if strings.HasPrefix(c.Request.URL.Path, "/frontend/static/") {
+			c.Header("Cache-Control", "public, max-age=3600")
+		}
+		c.Next()
+	})
+
+	// Load HTML templates
+	//router.LoadHTMLGlob("./frontend/templates/*")
+	// API routes
+	router.Handle("GET", "/get-menu", getMenuHandler)
+
+	return router
 
 }
 
+func configureSessionStore() sessions.Store {
+	secret := getSessionSecret()
+
+	store := cookie.NewStore([]byte(secret))
+
+	store.Options(sessions.Options{
+		Path:     "/",
+		MaxAge:   int(tokenExpiry.Seconds()),
+		HttpOnly: true,
+		Secure:   gin.Mode() == gin.ReleaseMode,
+		SameSite: getSameSitePolicy(),
+	})
+
+	return store
+}
+
+func getSessionSecret() string {
+	if secret := os.Getenv("SESSION_SECRET"); secret != "" {
+		return secret
+	}
+
+	if gin.Mode() == gin.ReleaseMode {
+		log.Fatal("SESSION_SECRET environment variable is required in production")
+	}
+
+	log.Println("Warning: Using default session secret for development")
+	return SESSION_SECRET
+}
+func getSameSitePolicy() http.SameSite {
+	switch gin.Mode() {
+	case gin.ReleaseMode:
+		return http.SameSiteStrictMode
+	default:
+		return http.SameSiteLaxMode
+	}
+}
+
 // loadConfig loads configuration from environment or config file
-func loadConfig() domain.AppConfig {
+func loadConfig() config.Config {
 	// Read the file
 	data, err := os.ReadFile("config/config.json")
 	if err != nil {
 		fmt.Printf("Error reading file: %v\n", err)
-		return domain.AppConfig{}
+		return config.Config{}
 	}
 
 	// Parse JSON into struct
-	var config domain.AppConfig
+	var config config.Config
 	err = json.Unmarshal(data, &config)
 	if err != nil {
 		fmt.Printf("Error parsing JSON: %v\n", err)
-		return domain.AppConfig{}
+		return config
 	}
 	return config
 }
 
 // connectDB establishes a database connection
-func connectDB(cfg domain.AppConfig) (*sqlx.DB, error) {
+func connectDB(cfg config.Config) (*sqlx.DB, error) {
 	dsn := fmt.Sprintf(
 		"host=%s port=%d user=%s password=%s dbname=%s search_path=%s sslmode=disable",
 		cfg.DBConfig.DBHost, cfg.DBConfig.DBPort, cfg.DBConfig.DBUser, cfg.DBConfig.DBPassword, cfg.DBConfig.DBName, cfg.DBConfig.DBSearchPath,
@@ -88,35 +223,26 @@ func connectDB(cfg domain.AppConfig) (*sqlx.DB, error) {
 	return db, nil
 }
 
-// registerRoutes registers all routes
-func registerRoutes(r *http.ServeMux, db *sqlx.DB) {
-	// Static files
-	fs := http.FileServer(http.Dir("./frontend/static"))
-	r.Handle("/frontend/static/", http.StripPrefix("/frontend/static/", fs))
-
-	// API routes
-	r.HandleFunc("/get-menu", getMenuHandler)
-
-	// Entity routes
-	setEntities(db, r)
-}
-
 // getMenuHandler handles menu requests
-func getMenuHandler(w http.ResponseWriter, r *http.Request) {
-	menuName := r.URL.Query().Get("menuName")
+func getMenuHandler(c *gin.Context) {
+	menuName := c.Query("menuName")
 	subMenus := common.GetSubMenus(domain.MenuData, menuName)
 	if subMenus == nil {
-		http.Error(w, "Menu not found", http.StatusNotFound)
+		c.JSON(404, gin.H{"error": "Menu not found"})
 		return
 	}
-	if err := templates.Side_nav(subMenus).Render(r.Context(), w); err != nil {
-		http.Error(w, "Error rendering template", http.StatusInternalServerError)
+
+	// Render templ component directly
+	component := templates.Side_nav(subMenus)
+	if err := component.Render(c.Request.Context(), c.Writer); err != nil {
+		c.JSON(500, gin.H{"error": "Error rendering template"})
+		return
 	}
 }
 
 // registerGenericEntity registers a generic entity's routes
 func registerGenericEntity[T any](
-	r *http.ServeMux,
+	r *gin.Engine,
 	db *sqlx.DB,
 	tableName string,
 	validationRules []validation.ValidationRule,
@@ -131,7 +257,7 @@ func registerGenericEntity[T any](
 }
 
 // setEntities registers all entity routes
-func setEntities(db *sqlx.DB, r *http.ServeMux) {
+func setEntities(db *sqlx.DB, r *gin.Engine) {
 	// Partneri
 	registerGenericEntity[domain.Partneri](
 		r, db, "partneri",
@@ -141,7 +267,7 @@ func setEntities(db *sqlx.DB, r *http.ServeMux) {
 			ContentTitle: "PARTNERI",
 			TableID:      "partneri-table",
 			APIPrefix:    "/api/partneri",
-			IDField:      utils.IDpartneri,
+			IDField:      common.IDpartneri,
 		},
 	)
 
@@ -153,8 +279,8 @@ func setEntities(db *sqlx.DB, r *http.ServeMux) {
 		domain.HandlerConfig{
 			ContentTitle: "DRZAVE",
 			TableID:      "drzave-table",
-			APIPrefix:    "/api/drzave",
-			IDField:      utils.IDdrzave,
+			APIPrefix:    "/api/drzava",
+			IDField:      common.IDdrzave,
 		},
 	)
 
@@ -167,7 +293,7 @@ func setEntities(db *sqlx.DB, r *http.ServeMux) {
 			ContentTitle: "VRSTE NALOGA",
 			TableID:      "tipdok-table",
 			APIPrefix:    "/api/tipdok",
-			IDField:      utils.IDtipdok,
+			IDField:      common.IDtipdok,
 		},
 	)
 
@@ -180,7 +306,7 @@ func setEntities(db *sqlx.DB, r *http.ServeMux) {
 			ContentTitle: "VRSTE DOKUMENATA",
 			TableID:      "dokvrsta-table",
 			APIPrefix:    "/api/dokvrsta",
-			IDField:      utils.IDdokvrsta,
+			IDField:      common.IDdokvrsta,
 		},
 	)
 
@@ -192,8 +318,8 @@ func setEntities(db *sqlx.DB, r *http.ServeMux) {
 		domain.HandlerConfig{
 			ContentTitle: "OPSTINE",
 			TableID:      "opstine-table",
-			APIPrefix:    "/api/opstine",
-			IDField:      utils.IDsifop,
+			APIPrefix:    "/api/sifop",
+			IDField:      common.IDsifop,
 		},
 	)
 
@@ -206,7 +332,7 @@ func setEntities(db *sqlx.DB, r *http.ServeMux) {
 			ContentTitle: "MESTA",
 			TableID:      "sifmesto-table",
 			APIPrefix:    "/api/sifmesto",
-			IDField:      utils.IDsifmesto,
+			IDField:      common.IDsifmesto,
 		},
 	)
 
@@ -218,8 +344,8 @@ func setEntities(db *sqlx.DB, r *http.ServeMux) {
 		domain.HandlerConfig{
 			ContentTitle: "MESTA TROSKA",
 			TableID:      "mestotr-table",
-			APIPrefix:    "/api/mestotr",
-			IDField:      utils.IDmestotr,
+			APIPrefix:    "/api/mestotroska",
+			IDField:      common.IDmestotr,
 		},
 	)
 
@@ -232,7 +358,7 @@ func setEntities(db *sqlx.DB, r *http.ServeMux) {
 			ContentTitle: "ORGANIZACIONE JEDINICE",
 			TableID:      "orgjed-table",
 			APIPrefix:    "/api/orgjed",
-			IDField:      utils.IDorgjed,
+			IDField:      common.IDorgjed,
 		},
 	)
 
@@ -245,7 +371,7 @@ func setEntities(db *sqlx.DB, r *http.ServeMux) {
 			ContentTitle: "BANKE",
 			TableID:      "banke-table",
 			APIPrefix:    "/api/banke",
-			IDField:      utils.IDbanke,
+			IDField:      common.IDbanke,
 		},
 	)
 
@@ -257,8 +383,8 @@ func setEntities(db *sqlx.DB, r *http.ServeMux) {
 		domain.HandlerConfig{
 			ContentTitle: "SIFRE PLACANJA",
 			TableID:      "sifplizv-table",
-			APIPrefix:    "/api/sifplizv",
-			IDField:      utils.IDsifplizv,
+			APIPrefix:    "/api/sifplizvodi",
+			IDField:      common.IDsifplizv,
 		},
 	)
 
@@ -271,7 +397,7 @@ func setEntities(db *sqlx.DB, r *http.ServeMux) {
 			ContentTitle: "FINANSIJSKI RACUNI",
 			TableID:      "fvknjrac-table",
 			APIPrefix:    "/api/fvknjrac",
-			IDField:      utils.IDfvknjrac,
+			IDField:      common.IDfvknjrac,
 		},
 	)
 
@@ -284,7 +410,7 @@ func setEntities(db *sqlx.DB, r *http.ServeMux) {
 			ContentTitle: "BANKOVNI IZVODI",
 			TableID:      "bnkizv-table",
 			APIPrefix:    "/api/bnkizv",
-			IDField:      utils.IDbnkizv,
+			IDField:      common.IDbnkizv,
 		},
 	)
 
@@ -297,20 +423,7 @@ func setEntities(db *sqlx.DB, r *http.ServeMux) {
 			ContentTitle: "EVIDENCIJA PDV",
 			TableID:      "fvepdv-table",
 			APIPrefix:    "/api/fvepdv",
-			IDField:      utils.IDfvepdv,
-		},
-	)
-
-	// Fkpl
-	registerGenericEntity[domain.Fkpl](
-		r, db, "fkpl",
-		finval.FkplValidationRules(),
-		fin.SetFkplFields(),
-		domain.HandlerConfig{
-			ContentTitle: "PLAN KNJIZENJA",
-			TableID:      "fkpl-table",
-			APIPrefix:    "/api/fkpl",
-			IDField:      utils.IDfkpl,
+			IDField:      common.IDfvepdv,
 		},
 	)
 
@@ -323,11 +436,17 @@ func setEntities(db *sqlx.DB, r *http.ServeMux) {
 			ContentTitle: "GRUPE OSNOVNIH SREDSTAVA",
 			TableID:      "oamgrp-table",
 			APIPrefix:    "/api/oamgrp",
-			IDField:      utils.IDoamgrp,
+			IDField:      common.IDoamgrp,
 		},
 	)
 
 	// Complex entities with custom services (non-generic)
+	// Fkpl
+	fkplRepo := repository.NewBaseRepository[domain.Fkpl](db, "fkpl")
+	fkplValidator := validation.NewRuleBasedValidator[domain.Fkpl](finval.FkplValidationRules())
+	fkplService := service.NewBaseService(*fkplRepo, *fkplValidator)
+	fkplHandler := fin.NewFkplHandler(fkplService)
+	fkplHandler.AddRoutes(r)
 
 	// Fnal
 	fnalRepo := repository.NewBaseRepository[domain.Fnal](db, "fnal")
@@ -341,6 +460,7 @@ func setEntities(db *sqlx.DB, r *http.ServeMux) {
 		"",
 		[]domain.Fields{},
 		[]domain.Fields{},
+		fnalValidator,
 	)
 	fnalHandler := fin.NewFnalHandler(fnalService)
 	fnalHandler.AddRoutes(r)
@@ -352,7 +472,7 @@ func setEntities(db *sqlx.DB, r *http.ServeMux) {
 	fproService := service.NewFproService(
 		fproBaseService,
 		*fproRepo,
-		utils.IDfpro,
+		common.IDfpro,
 		[]domain.Fields{},
 		[]domain.Fields{},
 	)

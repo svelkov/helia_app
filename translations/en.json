@@ -1,0 +1,25 @@
+{
+  "app": {
+    "title": "My Application",
+    "welcome": "Welcome to our app!"
+  },
+  "message": {
+    "description": "This is a description",
+    "greeting": "Hello, {{name}}!",
+    "info": "You have {{count}} new messages"
+  },
+  "content": {
+    "title": "Dynamic Content",
+    "body": "This content is loaded via HTMX"
+  },
+  "form": {
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "email": "Email Address",
+    "password": "Password"
+  },
+  "errors": {
+    "required": "This field is required",
+    "invalid": "Invalid input"
+  }
+}

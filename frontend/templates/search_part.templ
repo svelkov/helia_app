@@ -1,6 +1,7 @@
 package templates
 
 import "helia/internal/domain"
+import "helia/internal/common"
 
 templ Search_Part(tbl domain.TableData, searchControl domain.InputControl) {
 	<div class="flex justify-between items-center mb-2">
@@ -50,7 +51,7 @@ templ Search_Part(tbl domain.TableData, searchControl domain.InputControl) {
 
 templ Search_PartAddButton(tbl domain.TableData) {
 	<button
-		class="bg-green-500 hover:bg-green-700 text-white h-6 px-1 py-1 mr-1 rounded text-xs flex items-center"
+		class="bg-green-500 hover:bg-green-700 text-white h-6 px-1 py-1 mr-1 rounded text-xs flex items-center justify-center w-20"
 		hx-get={ tbl.BtnAdd.HxActionURL }
 		hx-target="#dialog-container"
 		hx-swap="innerHTML"
@@ -68,11 +69,8 @@ templ Search_PartPrintButton(tbl domain.TableData) {
 		href={ templ.URL(tbl.BtnPrint.HxActionURL) }
 		target="_blank"
 		rel="noopener noreferrer"
-		class="bg-blue-500 hover:bg-blue-700 text-white h-6 px-1 py-1 rounded text-xs flex items-center"
-	>
-		<svg class="h-6 w-6">
-			<use href="/frontend/static/icons/allicons.svg#stampa" xlink:href="/frontend/static/icons/allicons.svg#stampa"></use>
-		</svg>
+		class={ common.ClassPrintButton}>
+		@Icon("stampa")
 		{ tbl.BtnPrint.LabelText }
 	</a>
 }

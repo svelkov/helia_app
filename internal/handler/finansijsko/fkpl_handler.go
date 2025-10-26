@@ -1,7 +1,6 @@
 package finansijsko
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -9,9 +8,11 @@ import (
 	"helia/global"
 	"helia/internal/common"
 	"helia/internal/domain"
-	"helia/internal/infrastructure"
+	"helia/internal/middleware"
 	"helia/internal/service"
 	"helia/pkg/utils"
+
+	"github.com/gin-gonic/gin"
 )
 
 const (
@@ -44,56 +45,52 @@ func NewFkplHandler(service *service.BaseService[domain.Fkpl]) *FkplHandler {
 	return &FkplHandler{Service: service}
 }
 
-func (h *FkplHandler) CreateFkpl(w http.ResponseWriter, r *http.Request) {
+func (h *FkplHandler) CreateFkpl(c *gin.Context) {
 	var fkpl domain.Fkpl
-	utils.CreateHelper(w, r, &fkpl, h.Service, utils.IDfkpl, SetFkplFields())
+	utils.CreateHelper(c, &fkpl, h.Service, common.IDfkpl, SetFkplFields())
 }
 
-func (h *FkplHandler) UpdateFkpl(w http.ResponseWriter, r *http.Request) {
+func (h *FkplHandler) UpdateFkpl(c *gin.Context) {
 	var fkpl domain.Fkpl
-	utils.UpdateHelper(w, r, &fkpl, h.Service, SetFkplFields(), utils.IDfkpl)
+	utils.UpdateHelper(c, &fkpl, h.Service, SetFkplFields(), common.IDfkpl)
 }
 
-func (h *FkplHandler) DeleteFkpl(w http.ResponseWriter, r *http.Request) {
-	utils.DeleteHelper[domain.Fkpl](w, r, h.Service, utils.IDfkpl)
+func (h *FkplHandler) DeleteFkpl(c *gin.Context) {
+	utils.DeleteHelper[domain.Fkpl](c, h.Service, common.IDfkpl)
 }
 
-func (h *FkplHandler) confirmDeleteHandler(w http.ResponseWriter, r *http.Request) {
-	utils.ConfirmDeleteHelper(w, r, SetFkplFields())
+func (h *FkplHandler) confirmDeleteHandler(c *gin.Context) {
+	utils.ConfirmDeleteHelper(c, SetFkplFields())
 }
 
-func (h *FkplHandler) confirmAddHandler(w http.ResponseWriter, r *http.Request) {
-	utils.ConfirmAddHelper(w, r, strings.TrimSuffix(fkplURLPrefix, "/"), SetFkplFields())
+func (h *FkplHandler) confirmAddHandler(c *gin.Context) {
+	utils.ConfirmAddHelper(c, strings.TrimSuffix(fkplURLPrefix, "/"), SetFkplFields())
 }
 
-func (h *FkplHandler) confirmUpdateHandler(w http.ResponseWriter, r *http.Request) {
-	utils.ConfirmUpdateHelper[domain.Fkpl](w, r, h.Service, SetFkplFields(), utils.IDfkpl)
+func (h *FkplHandler) confirmUpdateHandler(c *gin.Context) {
+	utils.ConfirmUpdateHelper[domain.Fkpl](c, h.Service, SetFkplFields(), common.IDfkpl)
 }
 
-func (h *FkplHandler) GetFkpl(w http.ResponseWriter, r *http.Request) {
-	utils.GetEntityHelper(w, r, h.Service, SetFkplFields(), utils.IDfkpl)
+func (h *FkplHandler) GetFkpl(c *gin.Context) {
+	utils.GetEntityHelper(c, h.Service, SetFkplFields(), common.IDfkpl)
 }
 
-func (h *FkplHandler) GetAllFkpl(w http.ResponseWriter, r *http.Request) {
+func (h *FkplHandler) GetAllFkpl(c *gin.Context) {
 
-	tbl := utils.GetAllEntityHelper(w, r, h.Service, SetFkplFields(), fkplContentTitle, fkplTableID, fkplURLPrefix, fkplURLGetAll, utils.IDfkpl)
-	utils.RenderContent(w, r, *tbl)
+	tbl := utils.GetAllEntityHelper(c, h.Service, SetFkplFields(), fkplContentTitle, fkplTableID, fkplURLPrefix, fkplURLGetAll, common.IDfkpl)
+	utils.RenderContent(c, *tbl)
 }
 
-func (h *FkplHandler) TraziKonto(w http.ResponseWriter, r *http.Request) {
-
+func (h *FkplHandler) TraziKonto(c *gin.Context) {
 	args := []interface{}{}
 	// Parse query parameters from the URL
 
-	konto := r.URL.Query().Get("konto")
-	sifra := r.URL.Query().Get("sifra")
-	vkonta := r.URL.Query().Get("vkonta")
+	konto := c.Query("konto")
+	sifra := c.Query("sifra")
+	vkonta := c.Query("vkonta")
 	if vkonta == "" && konto == "" && sifra == "" {
-		w.Header().Set("Content-Type", "text/plain")
-		w.Write([]byte("Nedostaje parametar query ili vkonta"))
-
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, "Nedostaje parametar konto ili vkonta")
 		return
-
 	}
 	// Custom SQL query for searching konto, sifra, or naziv
 	sqlQuery := `SELECT f.naziv
@@ -130,38 +127,35 @@ func (h *FkplHandler) TraziKonto(w http.ResponseWriter, r *http.Request) {
 
 	entities, err := h.Service.GetAllCustom(sqlQuery, whereText, args, "", "")
 	if err != nil {
-		w.Header().Set("Content-Type", "text/plain")
-		w.Write([]byte("Greška prilikom pretrage konta"))
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, "Greška prilikom pretrage konta")
 		return
 	}
 	// Check if pointer is not nil and slice is not empty
 	if entities != nil && len(*entities) > 0 {
 		firstElement := (*entities)[0].Naziv
-		w.Header().Set("Content-Type", "text/plain")
-		w.Write([]byte(firstElement))
+		c.Writer.Header().Set("Content-Type", "text/plain")
+		c.Writer.Write([]byte(firstElement))
 		return
 	}
-	w.Header().Set("Content-Type", "text/plain")
+	c.Writer.Header().Set("Content-Type", "text/plain")
 	if vkonta == "2" {
-		w.Write([]byte("Nije pronađen konto"))
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, "Nije pronađen konto")
 		return
 	}
 	if vkonta == "1" {
-		w.Write([]byte("Nije pronađena šifra"))
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, "Nije pronađena šifra")
 		return
 	}
 
 }
-func (h *FkplHandler) TraziKontoSearchTable(w http.ResponseWriter, r *http.Request) {
+func (h *FkplHandler) TraziKontoSearchTable(c *gin.Context) {
 
 	args := []interface{}{}
 	// Parse query parameters from the URL
-	searchValue := r.URL.Query().Get("query")
-	vkonta := r.URL.Query().Get("vkonta")
+	searchValue := c.Query("query")
+	vkonta := c.Query("vkonta")
 	if searchValue == "" {
-		w.Header().Set("Content-Type", "text/plain")
-		w.Write([]byte("Nedostaje parametar za pretrazivanje"))
-
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, "Nedostaje parametar za pretrazivanje")
 		return
 
 	}
@@ -175,8 +169,7 @@ func (h *FkplHandler) TraziKontoSearchTable(w http.ResponseWriter, r *http.Reque
 	args = append(args, global.GetGnGod(), global.GetGnKar(), vkonta, searchValue, searchValue, searchValue)
 	entities, err := h.Service.GetAllCustom(sqlQuery, whereText, args, "", "")
 	if err != nil {
-		response := utils.CreateResponse(w, false, []domain.FieldError{}, utils.ReadDataErrMsg, http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(response)
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, common.ErrMsgReadData)
 		return
 	}
 	// Convert the fetched data into the format expected by the template
@@ -186,26 +179,29 @@ func (h *FkplHandler) TraziKontoSearchTable(w http.ResponseWriter, r *http.Reque
 	// Prepare TableData for UI
 	tblRows, err := common.SetTableRows(&tbl, *entities, fkplSearchTableFields, "idfkpl", "", h.Service.GetFieldCache())
 	if err != nil {
-		http.Error(w, "Failed to set table rows", http.StatusInternalServerError)
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, "Failed to set table rows")
 		return
 	}
 	tbl.Rows = tblRows.Rows
 	tbl.BtnAdd = domain.Button{IsVisible: false}   // Hide Add button in this view
 	tbl.BtnPrint = domain.Button{IsVisible: false} // Hide Print button in this view
 
-	w.Header().Set("Content-Type", "text/html")
-	utils.RenderContent(w, r, tbl)
+	utils.RenderContent(c, tbl)
 }
-func (h *FkplHandler) AddRoutes(r *http.ServeMux) {
+func (h *FkplHandler) AddRoutes(r *gin.Engine) {
+	// Create API group with prefix
+	//api := r.Group(fkplURLPrefix)
+	r.Use(middleware.Auth()) // Apply auth middleware to all routes in group
+
 	// Define routes for fkpl
-	r.HandleFunc("POST /api/fkpl", infrastructure.AuthMiddleware(h.CreateFkpl))
-	r.HandleFunc("GET /api/fkpl/all", infrastructure.AuthMiddleware(h.GetAllFkpl))
-	r.HandleFunc("GET /api/fkpl/confirm-delete", infrastructure.AuthMiddleware(h.confirmDeleteHandler))
-	r.HandleFunc("GET /api/fkpl/confirm-update", infrastructure.AuthMiddleware(h.confirmUpdateHandler))
-	r.HandleFunc("GET /api/fkpl/confirm-add", infrastructure.AuthMiddleware(h.confirmAddHandler))
-	r.HandleFunc("GET /api/fkpl/{id}", infrastructure.AuthMiddleware(h.GetFkpl))
-	r.HandleFunc("PUT /api/fkpl/{id}", infrastructure.AuthMiddleware(h.UpdateFkpl))
-	r.HandleFunc("DELETE /api/fkpl/{id}", infrastructure.AuthMiddleware(h.DeleteFkpl))
-	r.HandleFunc("GET /api/fkpl/trazikonto", infrastructure.AuthMiddleware(h.TraziKonto))
-	r.HandleFunc("GET /api/fkpl/trazikontosearchtable", infrastructure.AuthMiddleware(h.TraziKontoSearchTable))
+	r.POST("/api/fkpl", h.CreateFkpl)
+	r.GET("/api/fkpl/all", h.GetAllFkpl)
+	r.GET("/api/fkpl/confirm-delete", h.confirmDeleteHandler)
+	r.GET("/api/fkpl/confirm-update", h.confirmUpdateHandler)
+	r.GET("/api/fkpl/confirm-add", h.confirmAddHandler)
+	r.GET("/api/fkpl/:id", h.GetFkpl)
+	r.PUT("/api/fkpl/:id", h.UpdateFkpl)
+	r.DELETE("/api/fkpl/:id", h.DeleteFkpl)
+	r.GET("/api/fkpl/trazikonto", h.TraziKonto)
+	r.GET("/api/fkpl/trazikontosearchtable", h.TraziKontoSearchTable)
 }

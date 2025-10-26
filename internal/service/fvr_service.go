@@ -20,9 +20,9 @@ var fvrTableFields = []domain.Fields{
 }
 
 type FvrService interface {
-	GetAllFvr() ([]domain.Fvr, []int, error)
-	GetAllKar(god int) ([]int, error)
-	GetAllGod(kar int) ([]int, error)
+	GetAllFvr() (*domain.Firma, error)
+	GetAllGod(nazivFirme string) ([]int, error)
+	GetAllKar(nazivFirme string, god int) ([]int, error)
 }
 type FvrResource struct {
 	fvrRepo *repository.BaseRepository[domain.Fvr]
@@ -34,51 +34,53 @@ func NewFvrService(fvrRepo *repository.BaseRepository[domain.Fvr]) *FvrResource 
 	}
 }
 
-func (s *FvrResource) GetAllFvr() ([]domain.Fvr, []int, error) {
+func (s *FvrResource) GetAllFvr() (*domain.Firma, error) {
 	args := []interface{}{}
+	firma := &domain.Firma{}
 
-	selectQuery := `SELECT DISTINCT ON (naziv) god, kar, naziv FROM fvr
+	selectQuery := `SELECT DISTINCT ON (naziv) naziv FROM fvr
 					WHERE god > 0
-					order by fvr.naziv, fvr.god `
+					order by fvr.naziv`
 
 	entities, err := s.fvrRepo.GetAllCustom(selectQuery, "", args, "", "")
 	if err != nil {
-		return *entities, []int{}, err
+		return firma, err
 	}
 	if len(*entities) == 0 {
-		return nil, []int{}, errors.New("no available config data")
-	}
-	poslGodina, err := s.GetAllGod((*entities)[0].God)
-	if err != nil {
-		return nil, []int{}, errors.New("no available config data")
-	}
-	return *entities, poslGodina, nil
-}
-func (s *FvrResource) GetAllKar(god int) ([]int, error) {
-	args := []interface{}{}
-	args = append(args, god)
-	result := []int{}
-	selectQuery := `SELECT DISTINCT ON (kar) god, kar, naziv FROM fvr
-					WHERE god = $1
-					order by fvr.kar `
-
-	entities, err := s.fvrRepo.GetAllCustom(selectQuery, "", args, "", "")
-	if err != nil {
-		return []int{}, err
+		return nil, errors.New("no available config data")
 	}
 	for _, item := range *entities {
-		result = append(result, item.Kar)
+		poslGodina, err := s.GetAllGod(item.Naziv)
+		if err != nil {
+			return nil, errors.New("no available config data")
+		}
+		poslGodine := []domain.Godina{}
+		for _, god := range poslGodina {
+			knjigovodstvo, err := s.GetAllKar(item.Naziv, god)
+			if err != nil {
+				return nil, errors.New("no available config data")
+			}
+			poslGodine = append(poslGodine, domain.Godina{
+				God: god,
+				Kar: knjigovodstvo,
+			})
+		}
+		firma.Firme = append(firma.Firme, domain.FvrFirma{
+			Naziv:  item.Naziv,
+			Godine: poslGodine,
+		},
+		)
 	}
 
-	return result, nil
+	return firma, nil
 }
 
-func (s *FvrResource) GetAllGod(kar int) ([]int, error) {
+func (s *FvrResource) GetAllGod(nazivFirme string) ([]int, error) {
 	args := []interface{}{}
-	args = append(args, kar)
+	args = append(args, nazivFirme)
 	result := []int{}
-	selectQuery := `SELECT DISTINCT ON (god) god, kar, naziv FROM fvr
-					WHERE god > 0 AND kar = $1
+	selectQuery := `SELECT DISTINCT ON (god) god FROM fvr
+					WHERE fvr.naziv = $1
 					order by fvr.god desc`
 
 	entities, err := s.fvrRepo.GetAllCustom(selectQuery, "", args, "", "")
@@ -87,6 +89,25 @@ func (s *FvrResource) GetAllGod(kar int) ([]int, error) {
 	}
 	for _, item := range *entities {
 		result = append(result, item.God)
+	}
+
+	return result, nil
+}
+
+func (s *FvrResource) GetAllKar(nazivFirme string, god int) ([]int, error) {
+	args := []interface{}{}
+	args = append(args, nazivFirme, god)
+	result := []int{}
+	selectQuery := `SELECT kar FROM fvr
+					WHERE fvr.naziv = $1 AND god = $2
+					order by fvr.kar`
+
+	entities, err := s.fvrRepo.GetAllCustom(selectQuery, "", args, "", "")
+	if err != nil {
+		return []int{}, err
+	}
+	for _, item := range *entities {
+		result = append(result, item.Kar)
 	}
 
 	return result, nil

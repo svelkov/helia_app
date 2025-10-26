@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Direct Icon Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        svg { border: 1px solid blue; margin: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Direct Icon Loading Test</h1>
+    
+    <div class="test">
+        <h2>Test 1: Direct SVG Use</h2>
+        <svg width="40" height="40" style="color: red;">
+            <use href="/frontend/static/icons/allicons.svg#fin_obrada"></use>
+        </svg>
+        <div>Using: /frontend/static/icons/allicons.svg#fin_obrada</div>
+    </div>
+
+    <div class="test">
+        <h2>Test 2: With full URL</h2>
+        <svg width="40" height="40" style="color: blue;">
+            <use href="http://localhost:8080/frontend/static/icons/allicons.svg#fin_obrada"></use>
+        </svg>
+        <div>Using full URL</div>
+    </div>
+
+    <div class="test">
+        <h2>Test 3: Simple inline SVG (control test)</h2>
+        <svg width="40" height="40" style="color: green;">
+            <circle cx="20" cy="20" r="15" fill="currentColor"/>
+        </svg>
+        <div>This should work - if not, SVG support is broken</div>
+    </div>
+
+    <div class="test">
+        <h2>Test 4: Load via JavaScript</h2>
+        <div id="js-loaded-icon"></div>
+        <button onclick="loadIconViaJS()">Load Icon via JavaScript</button>
+    </div>
+
+    <div class="test">
+        <h2>Debug Info</h2>
+        <div id="debug-info"></div>
+    </div>
+
+    <script>
+        function loadIconViaJS() {
+            const container = document.getElementById('js-loaded-icon');
+            container.innerHTML = `
+                <svg width="40" height="40" style="color: purple;">
+                    <use href="/frontend/static/icons/allicons.svg#fin_obrada"></use>
+                </svg>
+                <div>Loaded via JavaScript</div>
+            `;
+        }
+
+        // Check if SVG is actually loading
+        fetch('/frontend/static/icons/allicons.svg')
+            .then(response => response.text())
+            .then(svgText => {
+                const debugInfo = document.getElementById('debug-info');
+                debugInfo.innerHTML = `
+                    <div>✅ SVG file loaded successfully</div>
+                    <div>File size: ${svgText.length} bytes</div>
+                    <div>Contains fin_obrada: ${svgText.includes('id="fin_obrada"') ? '✅ Yes' : '❌ No'}</div>
+                    <div>First 200 chars: ${svgText.substring(0, 200)}...</div>
+                `;
+            })
+            .catch(error => {
+                document.getElementById('debug-info').innerHTML = `
+                    <div>❌ Failed to load SVG: ${error}</div>
+                `;
+            });
+    </script>
+</body>
+</html>

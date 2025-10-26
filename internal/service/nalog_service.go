@@ -5,10 +5,12 @@ import (
 	"helia/internal/common"
 	"helia/internal/domain"
 	"helia/internal/repository"
+	"helia/internal/validation"
 
-	"net/http"
 	"reflect"
 	"strings"
+
+	"github.com/gin-gonic/gin"
 )
 
 // NalogViewData encapsulates all data needed for the Nalog display page.
@@ -21,25 +23,29 @@ type NalogViewData struct {
 	DefaultTipdok    string               // The default tipdok if none is selected
 	TypeView         string               // Type of view, e.g., "knjizenje", "izvrsenje", etc.
 	TipdokComboItems []domain.ComboItem   // Map of tipdok values for combo box
+	NextNalog        string               // Next available nalog number as string
 }
 
 // NalogService defines the interface for operations related to Fnal (Nalogs).
 type NalogService interface {
 	Service[domain.Fnal]
 	//GetNalogsViewData fetches all data required to render the Nalog list page.
-	GetNalogsViewData(r *http.Request, searchQuery, selectedTipdok string, page, pageSize int, isInitialRequest bool) (NalogViewData, error)
+	GetNalogsViewData(c *gin.Context, searchQuery, selectedTipdok string, page, pageSize int, isInitialRequest bool) (NalogViewData, error)
 	SetNalogIDFieldName(string)
 	SetSfTableFields([]domain.Fields)
 	GetNaloziTableFields() []domain.Fields
-	GetNalogsPrepisData(r *http.Request, searchQuery string, page, pageSize int) (NalogViewData, error)
-	GetNalogsStorniranjeData(r *http.Request, searchQuery string, page, pageSize int) (NalogViewData, error)
+	GetNalogsPrepisData(c *gin.Context, searchQuery string, page, pageSize int) (NalogViewData, error)
+	GetNalogsStorniranjeData(c *gin.Context, searchQuery string, page, pageSize int) (NalogViewData, error)
 	GetNextNalog(tipdok string) (int64, error)
 	GetTipdokOptions() ([]domain.Tipdok, error)
+	Validation(entity domain.Fnal) ([]domain.FieldError, error)
+	GetByTipdokNalog(tipdok string, nalog int64) (domain.Fnal, error)
 }
 
 // NalogResource implements the NalogService interface.
 type NalogResource struct {
 	service                 *BaseService[domain.Fnal]
+	validator               validation.RuleBasedValidator[domain.Fnal]
 	fnalRepo                repository.BaseRepository[domain.Fnal]
 	tipdokRepo              repository.BaseRepository[domain.Tipdok]
 	sfRepo                  repository.BaseRepository[domain.Sf]
@@ -50,16 +56,17 @@ type NalogResource struct {
 }
 
 func NewNalogService(
-	Service *BaseService[domain.Fnal],
+	service *BaseService[domain.Fnal],
 	fnalRepo repository.BaseRepository[domain.Fnal],
 	tipdokRepo repository.BaseRepository[domain.Tipdok],
 	sfRepo repository.BaseRepository[domain.Sf],
 	nalogIDFieldName string,
 	naloziTableFields []domain.Fields,
 	sfTableFields []domain.Fields,
+	validator *validation.RuleBasedValidator[domain.Fnal],
 ) *NalogResource {
 	rs := &NalogResource{
-		service:           Service,
+		service:           service,
 		fnalRepo:          fnalRepo,
 		tipdokRepo:        tipdokRepo,
 		sfRepo:            sfRepo,
@@ -86,6 +93,13 @@ func (s *NalogResource) GetFieldCache() map[string]reflect.StructField {
 		s.service.fieldCache = make(map[string]reflect.StructField)
 	}
 	return s.service.fieldCache
+}
+func (s *NalogResource) Validation(entity domain.Fnal) ([]domain.FieldError, error) {
+	fieldErrors, err := s.service.Validator.Validate(&entity)
+	if err != nil {
+		return fieldErrors, err
+	}
+	return fieldErrors, nil
 }
 
 // Create implements NalogService.
@@ -155,6 +169,23 @@ func (s *NalogResource) GetNextNalog(tipdok string) (int64, error) {
 	return (*entities)[0].Nalog, nil
 
 }
+func (s *NalogResource) GetByTipdokNalog(tipdok string, nalog int64) (domain.Fnal, error) {
+	entity := domain.Fnal{}
+	args := []interface{}{}
+	hasGod, hasKar := s.fnalRepo.CheckGogKar()
+	basicWhere := s.fnalRepo.CreateBasicWhere(s.naloziTableFields, &args, hasGod, hasKar, "")
+	selectQuery := `SELECT idfnal, tipdok, nalog, danal, opis, dug, pot, datob, brst, nalsts FROM fnal`
+	whereText := fmt.Sprintf("%s AND tipdok = $%d AND nalog = $%d", basicWhere, len(args)+1, len(args)+2)
+	args = append(args, tipdok, nalog)
+	entities, err := s.fnalRepo.GetAllCustom(selectQuery, whereText, args, "", "")
+	if err != nil {
+		return entity, fmt.Errorf("failed to get Fnal entities: %w", err)
+	}
+	if len(*entities) > 0 {
+		entity = (*entities)[0]
+	}
+	return entity, nil
+}
 
 // Helper to construct common WHERE clauses and arguments for Fnal queries
 func (s *NalogResource) buildFnalWhere(searchQuery, tipdok string, args *[]interface{}) string {
@@ -179,7 +210,7 @@ func (s *NalogResource) buildFnalWhere(searchQuery, tipdok string, args *[]inter
 }
 
 // GetNalogsViewData fetches all data required to render the Nalog list page.
-func (s *NalogResource) GetNalogsViewData(r *http.Request, searchQuery, selectedTipdok string, page, pageSize int, isInitialRequest bool) (NalogViewData, error) {
+func (s *NalogResource) GetNalogsViewData(c *gin.Context, searchQuery, selectedTipdok string, page, pageSize int, isInitialRequest bool) (NalogViewData, error) {
 	viewData := NalogViewData{
 		IsInitialLoad: isInitialRequest,
 	}
@@ -204,7 +235,8 @@ func (s *NalogResource) GetNalogsViewData(r *http.Request, searchQuery, selected
 	} else {
 		viewData.DefaultTipdok = selectedTipdok // Use the provided one directly
 	}
-
+	noviNalogBr, _ := s.GetNextNalog(viewData.DefaultTipdok)
+	viewData.NextNalog = fmt.Sprintf("%d", noviNalogBr)
 	// 2. Fetch Fnal Entities
 	args := []interface{}{}
 	// Use viewData.DefaultTipdok for the actual Fnal query
@@ -219,7 +251,7 @@ func (s *NalogResource) GetNalogsViewData(r *http.Request, searchQuery, selected
 	}
 
 	// Calculate pagination details
-	currentPage, calculatedPageSize, totalPages := common.GetPaginationData(r, totRecords) // Pass nil for req
+	currentPage, calculatedPageSize, totalPages := common.GetPaginationData(c, totRecords) // Pass nil for req
 	if page > 0 {                                                                          // Override current page if provided from handler
 		currentPage = page
 	}
@@ -245,8 +277,8 @@ func (s *NalogResource) GetNalogsViewData(r *http.Request, searchQuery, selected
 	} else {
 		table.URLGetAll = "/api/nalozi/all/tipdok" // For tipdok specific updates
 	}
-	table.Pagination.HxInclude = "#tipdokSelect, #search-input"
-	table.HxInclude = "#tipdokSelect, #search-input"
+	table.Pagination.HxInclude = "#tipdok, #search-input"
+	table.HxInclude = "#tipdok, #search-input"
 	table.ShowActions = false // Default, can be overridden by specific handler needs
 	table.BtnAdd.IsVisible = false
 	table.BtnUpdate.IsVisible = false
@@ -278,7 +310,7 @@ func (s *NalogResource) GetNalogsViewData(r *http.Request, searchQuery, selected
 }
 
 // GetNalogsPrepisData fetches all data required to render the Nalog list page.
-func (s *NalogResource) GetNalogsPrepisData(r *http.Request, searchQuery string, page, pageSize int) (NalogViewData, error) {
+func (s *NalogResource) GetNalogsPrepisData(c *gin.Context, searchQuery string, page, pageSize int) (NalogViewData, error) {
 	viewData := NalogViewData{
 		DefaultTipdok: "",
 	}
@@ -295,7 +327,7 @@ func (s *NalogResource) GetNalogsPrepisData(r *http.Request, searchQuery string,
 	}
 
 	// Calculate pagination details
-	currentPage, calculatedPageSize, totalPages := common.GetPaginationData(r, totRecords) // Pass nil for req
+	currentPage, calculatedPageSize, totalPages := common.GetPaginationData(c, totRecords) // Pass nil for req
 	if page > 0 {                                                                          // Override current page if provided from handler
 		currentPage = page
 	}
@@ -354,7 +386,7 @@ func (s *NalogResource) GetNalogsPrepisData(r *http.Request, searchQuery string,
 }
 
 // GetNalogsViewData fetches all data required to render the Nalog list page.
-func (s *NalogResource) GetNalogsStorniranjeData(r *http.Request, searchQuery string, page, pageSize int) (NalogViewData, error) {
+func (s *NalogResource) GetNalogsStorniranjeData(c *gin.Context, searchQuery string, page, pageSize int) (NalogViewData, error) {
 	viewData := NalogViewData{
 		DefaultTipdok: "",
 	}
@@ -371,7 +403,7 @@ func (s *NalogResource) GetNalogsStorniranjeData(r *http.Request, searchQuery st
 	}
 
 	// Calculate pagination details
-	currentPage, calculatedPageSize, totalPages := common.GetPaginationData(r, totRecords) // Pass nil for req
+	currentPage, calculatedPageSize, totalPages := common.GetPaginationData(c, totRecords) // Pass nil for req
 	if page > 0 {                                                                          // Override current page if provided from handler
 		currentPage = page
 	}
@@ -468,18 +500,19 @@ func (s *NalogResource) GetNaloziTableFields() []domain.Fields {
 	}
 	return s.naloziTableFields
 }
+
 func (s *NalogResource) setServiceFieldValues() {
 	s.naloziTableFields = []domain.Fields{
-		{Name: "rbr", Label: "R. Broj", Width: "4"},
-		{Name: "tipdok", Label: "Vrsta Naloga", Width: "6"},
-		{Name: "nalog", Label: "Br. Naloga", Width: "12"},
-		{Name: "danal", Label: "Datum naloga", Width: "12"},
-		{Name: "opis", Label: "opis ", Width: "60"},
-		{Name: "dug", Label: "Duguje", Width: "14"},
-		{Name: "pot", Label: "Potrazuje", Width: "14"},
-		{Name: "datob", Label: "Datum obrade", Width: "12"},
-		{Name: "brst", Label: "Br.Stavki", Width: "5"},
-		{Name: "nalsts", Label: "Status naloga", Width: "10"},
+		{Name: "rbr", Label: "R. Broj", Width: "4", Field: "rbr", Sortable: true},
+		{Name: "tipdok", Label: "Vrsta Naloga", Width: "6", Field: "tipdok", Sortable: true},
+		{Name: "nalog", Label: "Br. Naloga", Width: "12", Field: "nalog", Sortable: true},
+		{Name: "danal", Label: "Datum naloga", Width: "12", Field: "danal", Sortable: true},
+		{Name: "opis", Label: "opis ", Width: "60", Field: "opis"},
+		{Name: "dug", Label: "Duguje", Width: "14", Field: "dug"},
+		{Name: "pot", Label: "Potrazuje", Width: "14", Field: "pot"},
+		{Name: "datob", Label: "Datum obrade", Width: "12", Field: "datob"},
+		{Name: "brst", Label: "Br.Stavki", Width: "5", Field: "brst"},
+		{Name: "nalsts", Label: "Status naloga", Width: "10", Field: "nalsts"},
 	}
 	s.naloziStavkeTableFields = []domain.Fields{
 		{Name: "rbr", Label: "R. Broj", Width: "4"},

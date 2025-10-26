@@ -2,7 +2,7 @@ package templates
 
 import "helia/internal/domain"
 
-templ Base(isLoggedIn bool, content templ.Component, menuItems domain.MenuDataItems, subMenuItems []domain.SubMenuItem,  title string, userName, year string, currentMenu string, comboKomintent, comboPoslGod domain.ComboFieldConfig) {
+templ Base(isLoggedIn bool, content templ.Component, menuItems domain.MenuDataItems, subMenuItems []domain.SubMenuItem,  title string, userName, year string, currentMenu string, comboCompany, comboPoslGod, comboKar domain.ComboFieldConfig) {
 	<!DOCTYPE html>
 	<html lang="en">
 		@Head()
@@ -11,7 +11,7 @@ templ Base(isLoggedIn bool, content templ.Component, menuItems domain.MenuDataIt
 			@Header(isLoggedIn, userName)
 			<!-- Secondary Menu (Conditional) -->
 			if isLoggedIn {
-				@TopMenu(menuItems, currentMenu, comboKomintent, comboPoslGod)
+				@TopMenu(menuItems, currentMenu, comboCompany, comboPoslGod, comboKar)
 				<div id="info-message" class="hidden bg-green-500 text-white rounded flex h-18 text-xl justify-center items-center text-center"></div>
 			}
 			<!-- Main Content -->
@@ -31,6 +31,7 @@ templ Base(isLoggedIn bool, content templ.Component, menuItems domain.MenuDataIt
 			<!-- Theme Toggle Script -->
 		</body>
 		<script>
+        htmx.logAll();
             document.addEventListener('DOMContentLoaded', () => {
                 const themeToggle = document.getElementById('theme-toggle');
                 const themeIcon = document.getElementById('theme-icon');

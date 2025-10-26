@@ -1,0 +1,226 @@
+package templates
+
+import (
+	"fmt"
+	"helia/internal/domain"
+)
+
+templ TTable(tbl domain.TableData) {
+	<div id={ tbl.TableID } class="w-full h-full border-collapse">
+		<!-- Export Buttons -->
+		<div class="mb-2 flex justify-end gap-2">
+			<button
+				hx-get={ fmt.Sprintf("%s?format=excel", tbl.URLGetAll) }
+				hx-trigger="click"
+				class="bg-green-600 hover:bg-green-700 text-white py-1 px-3 rounded text-sm flex items-center"
+			>
+				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 mr-1">
+					<path fill-rule="evenodd" d="M5.625 1.5H9a3.75 3.75 0 0 1 3.75 3.75v1.875c0 1.036.84 1.875 1.875 1.875H16.5a3.75 3.75 0 0 1 3.75 3.75v7.875c0 1.035-.84 1.875-1.875 1.875H5.625a1.875 1.875 0 0 1-1.875-1.875V3.375c0-1.036.84-1.875 1.875-1.875Zm6.905 9.97a.75.75 0 0 0-1.06 0l-3 3a.75.75 0 1 0 1.06 1.06l1.72-1.72V18a.75.75 0 0 0 1.5 0v-4.19l1.72 1.72a.75.75 0 1 0 1.06-1.06l-3-3Z" clip-rule="evenodd"></path>
+					<path d="M14.25 5.25a5.23 5.23 0 0 0-1.279-3.434 9.768 9.768 0 0 1 6.963 6.963A5.23 5.23 0 0 0 16.5 7.5h-1.875a.375.375 0 0 1-.375-.375V5.25Z"></path>
+				</svg>
+				<span class="htmx-indicator">
+					<svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+						<circle class="opacity-40" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+						<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+					</svg>
+				</span>
+				Export Excel
+			</button>
+			<button
+				hx-get={ fmt.Sprintf("%s?format=pdf", tbl.URLGetAll) }
+				hx-trigger="click"
+				class="bg-red-600 hover:bg-red-700 text-white py-1 px-3 rounded text-sm flex items-center"
+			>
+				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 mr-1">
+					<path fill-rule="evenodd" d="M5.625 1.5H9a3.75 3.75 0 0 1 3.75 3.75v1.875c0 1.036.84 1.875 1.875 1.875H16.5a3.75 3.75 0 0 1 3.75 3.75v7.875c0 1.035-.84 1.875-1.875 1.875H5.625a1.875 1.875 0 0 1-1.875-1.875V3.375c0-1.036.84-1.875 1.875-1.875Zm6.905 9.97a.75.75 0 0 0-1.06 0l-3 3a.75.75 0 1 0 1.06 1.06l1.72-1.72V18a.75.75 0 0 0 1.5 0v-4.19l1.72 1.72a.75.75 0 1 0 1.06-1.06l-3-3Z" clip-rule="evenodd"></path>
+					<path d="M14.25 5.25a5.23 5.23 0 0 0-1.279-3.434 9.768 9.768 0 0 1 6.963 6.963A5.23 5.23 0 0 0 16.5 7.5h-1.875a.375.375 0 0 1-.375-.375V5.25Z"></path>
+				</svg>
+				<span class="htmx-indicator">
+					<svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+						<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+						<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+					</svg>
+				</span>
+				Export PDF
+			</button>
+		</div>
+		<div class="overflow-x-auto overflow-y-hidden rounded-t-lg">
+			<table id={ fmt.Sprintf("%s-table", tbl.TableID) } class="w-full h-full border-collapse border-r">
+				@TTableHeader(tbl)
+				@TTableBody(tbl, tbl.URLPrefix)
+			</table>
+		</div>
+		if tbl.ShowPagination {
+			<div class="mt-2 flex justify-center items-center">
+				@TablePagination(tbl)
+			</div>
+		}
+		<!-- Container for HTMX-loaded dialog -->
+		<div id="dialog-container" hx-on="htmx:afterSwap:deactivateActionsColumn()"></div>
+	</div>
+	@TableSortingScript(tbl)
+	@DeactivateActionsColumn()
+	@ShowMessage()
+	@OpenDialogScript(tbl.TableID)
+}
+
+templ TTableHeader(tbl domain.TableData) {
+	<thead class="bg-blue-500 text-white border-b border-white">
+		<tr>
+			for _, header := range tbl.Headers {
+				<th
+					scope="col"
+					class={ fmt.Sprintf("px-3 py-1 text-left text-xs font-medium text-white uppercase tracking-wider border-r border-white %s", 
+						func() string {
+							if header.Sortable {
+								return "cursor-pointer hover:bg-blue-600 select-none"
+							}
+							return ""
+						}()) }
+					if header.Sortable {
+						hx-get={ fmt.Sprintf("%s?sortBy=%s&sortOrder={sortOrder}", tbl.URLGetAll, header.Field) }
+						hx-target={ fmt.Sprintf("#%s-body", tbl.TableID) }
+						hx-swap="innerHTML"
+						hx-trigger="click"
+						hx-vals={ fmt.Sprintf(`js:{sortOrder: getSortOrder('%s', '%s')}`, tbl.TableID, header.Field) }
+						onclick={ templ.JSFuncCall("toggleSort", tbl.TableID, header.Field, "this") }
+					}
+				>
+					<div class="flex items-center justify-between">
+						<span>{ header.Label }</span>
+						if header.Sortable {
+							<span class={ fmt.Sprintf("sort-indicator-%s ml-2", header.Field) }>
+								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 opacity-90">
+									<path fill-rule="evenodd" d="M11.47 4.72a.75.75 0 0 1 1.06 0l3.75 3.75a.75.75 0 0 1-1.06 1.06L12 6.31 8.78 9.53a.75.75 0 0 1-1.06-1.06l3.75-3.75Zm-3.75 9.75a.75.75 0 0 1 1.06 0L12 17.69l3.22-3.22a.75.75 0 1 1 1.06 1.06l-3.75 3.75a.75.75 0 0 1-1.06 0l-3.75-3.75a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd"></path>
+								</svg>
+							</span>
+						}
+					</div>
+				</th>
+			}
+			if tbl.ShowActions {
+				<th scope="col" class="actions-column px-3 py-2 text-center text-xs font-medium text-white uppercase tracking-wider w-0 whitespace-nowrap border-r border-white bg-blue-500 sticky right-0 z-10">
+					Actions
+				</th>
+			}
+		</tr>
+	</thead>
+}
+
+templ TTableBody(tbl domain.TableData, urlPrefix string) {
+	<tbody id={ fmt.Sprintf("%s-body", tbl.TableID) } class="bg-white divide-y divide-gray-200">
+		for i, row := range tbl.Rows {
+			<tr
+				class={ fmt.Sprintf("hover:bg-blue-100 cursor-pointer %s", func() string {
+						if i == 0 {
+								return "bg-gray-50 selected" 
+							}
+                            if i%2 == 1 {
+                                return "bg-gray-50"
+                            } else {
+                                return ""
+                            }
+                        }()) }
+				onclick="selectRow(this)"
+				if tbl.DetailTarget != "" && tbl.DetailURL != "" {
+					hx-get={ fmt.Sprintf("%s%s", tbl.DetailURL, row.ID) }
+					hx-target={ fmt.Sprintf("%s", tbl.DetailTarget) }
+					hx-swap="innerHTML"
+					hx-vals={ fmt.Sprintf(`{"idfnal": "%s"}`, row.ID) }
+				}
+			>
+				for _, cell := range row.Fields {
+					<td class="px-3 py-1 whitespace-nowrap border-r">
+						<div class="text-sm text-gray-900">{ cell }</div>
+					</td>
+				}
+				if tbl.ShowActions && ( tbl.BtnUpdate.IsVisible || tbl.BtnDelete.IsVisible ) {
+					<td class="actions-column px-3 py-0.5 whitespace-nowrap text-right text-sm font-medium bg-white w-0 sticky right-0 z-10">
+						<div class="flex space-x-1 justify-end">
+							if tbl.BtnUpdate.IsVisible {
+								<button
+									hx-get={ tbl.BtnUpdate.HxActionURL }
+									hx-target="#dialog-container"
+									hx-swap="innerHTML"
+									onclick="event.stopPropagation(); openDialog()"
+									hx-vals={ fmt.Sprintf(`{"url": "%s", "id": "%s"}`, tbl.URLPrefix, row.ID) }
+									class="bg-indigo-500 hover:bg-indigo-700 text-white py-1 px-1 rounded text-xs flex items-center"
+								>
+									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-4 mr-1">
+										<path d="M21.731 2.269a2.625 2.625 0 0 0-3.712 0l-1.157 1.157 3.712 3.712 1.157-1.157a2.625 2.625 0 0 0 0-3.712ZM19.513 8.199l-3.712-3.712-8.4 8.4a5.25 5.25 0 0 0-1.32 2.214l-.8 2.685a.75.75 0 0 0 .933.933l2.685-.8a5.25 5.25 0 0 0 2.214-1.32l8.4-8.4Z"></path>
+										<path d="M5.25 5.25a3 3 0 0 0-3 3v10.5a3 3 0 0 0 3 3h10.5a3 3 0 0 0 3-3V13.5a.75.75 0 0 0-1.5 0v5.25a1.5 1.5 0 0 1-1.5 1.5H5.25a1.5 1.5 0 0 1-1.5-1.5V8.25a1.5 1.5 0 0 1 1.5-1.5h5.25a.75.75 0 0 0 0-1.5H5.25Z"></path>
+									</svg>
+									{ tbl.BtnUpdate.LabelText }
+								</button>
+							}
+							if row.HasDelete {
+								<button
+									hx-get={ tbl.BtnDelete.HxActionURL }
+									hx-target="#dialog-container"
+									hx-swap="innerHTML"
+									onclick="event.stopPropagation(); openDialog()"
+									hx-vals={ fmt.Sprintf(`{"url": "%s", "id": "%s"}`, tbl.URLPrefix, row.ID) }
+									class="bg-red-500 hover:bg-red-700 text-white py-1 px-2 rounded text-xs flex items-center"
+								>
+									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-4 mr-1">
+										<path fill-rule="evenodd" d="M16.5 4.478v.227a48.816 48.816 0 0 1 3.878.512.75.75 0 1 1-.256 1.478l-.209-.035-1.005 13.07a3 3 0 0 1-2.991 2.77H8.084a3 3 0 0 1-2.991-2.77L4.087 6.66l-.209.035a.75.75 0 0 1-.256-1.478A48.567 48.567 0 0 1 7.5 4.705v-.227c0-1.564 1.213-2.9 2.816-2.951a52.662 52.662 0 0 1 3.369 0c1.603.051 2.815 1.387 2.815 2.951Zm-6.136-1.452a51.196 51.196 0 0 1 3.273 0C14.39 3.05 15 3.684 15 4.478v.113a49.488 49.488 0 0 0-6 0v-.113c0-.794.609-1.428 1.364-1.452Zm-.355 5.945a.75.75 0 1 0-1.5.058l.347 9a.75.75 0 1 0 1.499-.058l-.346-9Zm5.48.058a.75.75 0 1 0-1.498-.058l-.347 9a.75.75 0 0 0 1.5.058l.345-9Z" clip-rule="evenodd"></path>
+									</svg>
+									{ tbl.BtnDelete.LabelText }
+								</button>
+							}
+						</div>
+					</td>
+				}
+			</tr>
+		}
+	</tbody>
+}
+
+templ TableSortingScript(tbl domain.TableData) {
+	<script>
+		(function() {
+			// Store sort states per table
+			if (!window.tableSortStates) {
+				window.tableSortStates = {};
+			}
+			
+			const tableId = { tbl.TableID };
+			if (!window.tableSortStates[tableId]) {
+				window.tableSortStates[tableId] = {};
+			}
+			
+			window.getSortOrder = function(tableId, field) {
+				const state = window.tableSortStates[tableId][field] || 'none';
+				// Cycle: none -> asc -> desc -> asc -> ...
+				if (state === 'none' || state === 'desc') return 'asc';
+				return 'desc';
+			};
+			
+			window.toggleSort = function(tableId, field, headerElement) {
+				// Get current state
+				const currentState = window.tableSortStates[tableId][field] || 'none';
+				const newState = currentState === 'asc' ? 'desc' : 'asc';
+				
+				// Update state
+				window.tableSortStates[tableId][field] = newState;
+				
+				// Reset all other column indicators
+				const table = headerElement.closest('table');
+				table.querySelectorAll('thead th .sort-indicator').forEach(indicator => {
+					const svg = indicator.querySelector('svg');
+					if (svg) {
+						svg.style.opacity = '0.5';
+						svg.style.transform = 'rotate(0deg)';
+					}
+				});
+				
+				// Update current column indicator
+				const indicator = headerElement.querySelector(`.sort-indicator-${field} svg`);
+				if (indicator) {
+					indicator.style.opacity = '1';
+					indicator.style.transform = newState === 'desc' ? 'rotate(0deg)' : 'rotate(180deg)';
+				}
+			};
+		})();
+	</script>
+}

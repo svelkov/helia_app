@@ -4,6 +4,7 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
+	"helia/internal/common"
 	"helia/internal/domain"
 	"html/template"
 	"net/http"
@@ -13,17 +14,8 @@ import (
 	tmpl_opsti "helia/frontend/templates/opstipodaci"
 
 	"github.com/a-h/templ"
+	"github.com/gin-gonic/gin"
 )
-
-var God = 2024
-var Kar = 1
-
-const DefaultPageSize = 10
-
-func SetGodKar(god, kar int) {
-	God = god
-	Kar = kar
-}
 
 // add returns the sum of two integers
 func Add(a, b int) int {
@@ -77,11 +69,17 @@ func CreateFuncMap() template.FuncMap {
 		"ge":  func(a, b int) bool { return a >= b },
 		"le":  func(a, b int) bool { return a <= b },
 		"con": func(a, b string) bool { return strings.Contains(a, b) },
+		"icon": func(name string) template.HTML {
+			if svg, exists := common.IconSVG[name]; exists {
+				return template.HTML(svg)
+			}
+			return template.HTML("")
+		},
 	}
 }
 
-func RenderContent(w http.ResponseWriter, r *http.Request, table domain.TableData, tmplName ...string) {
-	reqURI := r.URL.RequestURI()
+func RenderContent(c *gin.Context, table domain.TableData, tmplName ...string) {
+	reqURI := c.Request.URL.RequestURI()
 	templateName := ""
 
 	if len(tmplName) == 0 {
@@ -94,12 +92,15 @@ func RenderContent(w http.ResponseWriter, r *http.Request, table domain.TableDat
 		templateName = tmplName[0]
 	}
 
-	w.Header().Set("Content-Type", "text/html")
-
 	var err error
 	switch templateName {
 	case "Table":
-		err = tmpl.Table(table).Render(r.Context(), w)
+		err = tmpl.Table(table).Render(c.Request.Context(), c.Writer)
+		if err != nil {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
+			return
+		}
+		return
 	case "ContentContainer":
 		searchControl := domain.InputControl{
 			ID:           "search-control",
@@ -111,31 +112,35 @@ func RenderContent(w http.ResponseWriter, r *http.Request, table domain.TableDat
 			HxSwap:       "innerHTML",
 			HxTrigger:    "keyup changed delay:500ms",
 			Autocomplete: "off",
-			Class:        ClassSearchInput,
+			Class:        common.ClassSearchInput,
 		}
-		err = tmpl.ContentContainer(table, searchControl).Render(r.Context(), w)
+		err = tmpl.ContentContainer(table, searchControl).Render(c.Request.Context(), c.Writer)
+		if err != nil {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
+			return
+		}
+		return
 	default:
-		http.Error(w, fmt.Sprintf("Template '%s' not found", templateName), http.StatusBadRequest)
+		c.JSON(400, gin.H{"error": fmt.Sprintf("Template '%s' not found", templateName)})
 		return
 	}
 
-	if err != nil {
-		http.Error(w, "Error rendering template", http.StatusInternalServerError)
-		return
-	}
 }
 
-func RenderDialogContent(w http.ResponseWriter, r *http.Request, dialog domain.Dialog, fields []domain.Fields, actionType string) {
-	if actionType == "DELETE" {
-		component := tmpl.DeleteDialog(dialog) //use the component
-		component.Render(r.Context(), w)
-	}
-	if actionType == "ADD" || actionType == "UPDATE" {
-		component := tmpl_opsti.AddUpdateForm(dialog, fields) //use the component
-		component.Render(r.Context(), w)
-	}
-}
+func RenderDialogContent(c *gin.Context, dialog domain.Dialog, fields []domain.Fields, actionType string, btnSave, btnCancel, btnClose domain.Button) error {
+	var component templ.Component
 
+	switch actionType {
+	case "DELETE":
+		component = tmpl.DeleteDialog(dialog, btnSave, btnCancel, btnClose)
+	case "ADD", "UPDATE":
+		component = tmpl_opsti.AddUpdateForm(dialog, fields, btnSave, btnCancel, btnClose)
+	default:
+		return fmt.Errorf("unknown action type: %s", actionType)
+	}
+
+	return component.Render(c.Request.Context(), c.Writer)
+}
 func SetDialogValues(id string, actionURL, title, requestType string) domain.Dialog {
 	return domain.Dialog{
 		Id:            id,
@@ -147,6 +152,25 @@ func SetDialogValues(id string, actionURL, title, requestType string) domain.Dia
 		HxTarget:      "#info-message",
 		HxSwap:        "innerHTML",
 		HxRequestType: requestType,
+	}
+}
+func SetButton(id, labelText, actionUrl, hxTarget, hxSwap, hxOn, hxInclude, hxVals, hxRequestType, hxOnAfterRequest, idDialog, actionMethod, icon, class string, isVisible bool) domain.Button {
+	return domain.Button{
+		Id:               id,
+		LabelText:        labelText,
+		HxActionURL:      actionUrl,
+		HxTarget:         hxTarget,
+		HxSwap:           hxSwap,
+		HxOn:             hxOn,
+		HxInclude:        hxInclude,
+		HxVals:           hxVals,
+		HxRequestType:    hxRequestType,
+		HxOnAfterRequest: hxOnAfterRequest,
+		IdDialog:         idDialog,
+		ActionMethod:     actionMethod,
+		Icon:             icon,
+		BtnClass:         class,
+		IsVisible:        isVisible,
 	}
 }
 
@@ -170,17 +194,6 @@ func ExtractHTML(component string, targetID string, tagType string) string {
 	return "" // Or handle the error as you see fit.
 }
 
-// CreateResponse creates a standardized JSON response.
-func CreateResponse(w http.ResponseWriter, success bool, errors []domain.FieldError, message string, statusCode int) domain.Response {
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(statusCode)
-	return domain.Response{
-		Success:   success,
-		Errors:    errors,
-		Message:   message,
-		HxTrigger: "showMessage",
-	}
-}
 func SendResponse(w http.ResponseWriter, statusCode int, response domain.Response) {
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")

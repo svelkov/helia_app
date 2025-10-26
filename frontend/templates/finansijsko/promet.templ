@@ -3,8 +3,8 @@ package finansijsko
 import (
 	"fmt"
 	tmpl "helia/frontend/templates"
+	"helia/internal/common"
 	"helia/internal/domain"
-	"helia/pkg/utils"
 )
 
 templ PrometMain(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.PrometTotalValues) {
@@ -79,7 +79,7 @@ templ PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 						HxTarget:    "#search-dropdown",
 						HxSwap:      "innerHTML",
 						HxVals:      `{"vkonta": "2"}`,
-						ClassButton: utils.ClassButton,
+						ClassButton: common.ClassButton,
 					})
 					@NazivField("kontonaziv")
 				</div>
@@ -92,33 +92,37 @@ templ PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 						HxTarget:    "#search-dropdown",
 						HxSwap:      "innerHTML",
 						HxVals:      `{"vkonta": "1"}`,
-						ClassButton: utils.ClassButton,
+						ClassButton: common.ClassButton,
 					})
 					@NazivField("sifranaziv")
 				</div>
 				<div class="flex items-center gap-1 mb-1">
+					@tmpl.LabelField(domain.LabelFieldConfig{
+						ID:         "oddatuma",
+						ClassLabel: common.ClassLabel + " w-24",
+						LabelText:  "Od datuma",
+					})
 					@tmpl.TextInputField(domain.InputFieldConfig{
 						ID:         "oddatuma",
 						Name:       "oddatuma",
-						LabelText:  "Od datuma",
 						FieldType:  "date",
-						HasLabel:   true,
 						Disabled:   false,
-						ClassInput: utils.ClassInputTextEnabled + " w-28",
-						ClassLabel: utils.ClassLabel + " w-24",
+						ClassInput: common.ClassInputTextEnabled + " w-28",
 						TabIndex:   "3",
 					})
 				</div>
 				<div class="flex items-center gap-1 mb-1">
+					@tmpl.LabelField(domain.LabelFieldConfig{
+						ID:         "dodatuma",
+						LabelText:  "Do datuma",
+						ClassLabel: common.ClassLabel + " w-24 ",
+					})
 					@tmpl.TextInputField(domain.InputFieldConfig{
 						ID:         "dodatuma",
 						Name:       "dodatuma",
-						LabelText:  "Do datuma",
 						FieldType:  "date",
-						HasLabel:   true,
 						Disabled:   false,
-						ClassInput: utils.ClassInputTextEnabled + " w-28",
-						ClassLabel: utils.ClassLabel + " w-24 ",
+						ClassInput: common.ClassInputTextEnabled + " w-28",
 						TabIndex:   "4",
 					})
 				</div>
@@ -169,7 +173,7 @@ templ AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint,
 						HxTarget:    "#search-dropdown",
 						HxSwap:      "innerHTML",
 						HxVals:      `{"vkonta": "2"}`,
-						ClassButton: utils.ClassButton,
+						ClassButton: common.ClassButton,
 					})
 					@NazivField("kontonaziv")
 				</div>
@@ -182,46 +186,52 @@ templ AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint,
 						HxTarget:    "#search-dropdown",
 						HxSwap:      "innerHTML",
 						HxVals:      `{"vkonta": "1"}`,
-						ClassButton: utils.ClassButton,
+						ClassButton: common.ClassButton,
 					})
 					@NazivField("sifranaziv")
 				</div>
 				<div class="flex items-center gap-1 mb-1">
+					@tmpl.LabelField(domain.LabelFieldConfig{
+						ID:         "oddatuma",
+						LabelText:  "Od Datuma",
+						ClassLabel: common.ClassLabel + " w-24",
+					})
 					@tmpl.TextInputField(domain.InputFieldConfig{
 						ID:         "oddatuma",
 						Name:       "oddatuma",
-						LabelText:  "Od Datuma",
 						FieldType:  "date",
-						HasLabel:   true,
 						Disabled:   false,
-						ClassInput: utils.ClassInputTextEnabled + " w-28",
-						ClassLabel: utils.ClassLabel + " w-24",
+						ClassInput: common.ClassInputTextEnabled + " w-28",
 						TabIndex:   "3",
 					})
 				</div>
 				<div class="flex items-center gap-1 mb-1">
+					@tmpl.LabelField(domain.LabelFieldConfig{
+						ID:         "dodatuma",
+						LabelText:  "Do Datuma",
+						ClassLabel: common.ClassLabel + " w-24",
+					})
 					@tmpl.TextInputField(domain.InputFieldConfig{
 						ID:         "dodatuma",
 						Name:       "dodatuma",
-						LabelText:  "Do Datuma",
 						FieldType:  "date",
-						HasLabel:   true,
 						Disabled:   false,
-						ClassInput: utils.ClassInputTextEnabled + " w-28",
-						ClassLabel: utils.ClassLabel + " w-24",
+						ClassInput: common.ClassInputTextEnabled + " w-28",
 						TabIndex:   "4",
 					})
 				</div>
 				<div class="flex items-center gap-1 mb-1">
+					@tmpl.LabelField(domain.LabelFieldConfig{
+						ID:         "odmi",
+						LabelText:  "Od Mesta Isp.",
+						ClassLabel: common.ClassLabel + " w-24",
+					})
 					@tmpl.TextInputField(domain.InputFieldConfig{
 						ID:           "odmi",
 						Name:         "odmi",
-						LabelText:    "Od Mesta Isp.",
 						FieldType:    "text",
-						HasLabel:     true,
 						Disabled:     false,
-						ClassInput:   utils.ClassInputTextEnabled + " w-24",
-						ClassLabel:   utils.ClassLabel + " w-24",
+						ClassInput:   common.ClassInputTextEnabled + " w-24",
 						BlurEndpoint: "api/mi/trazimi",
 						HxTarget:     "odminaziv",
 						MinLength:    "1",
@@ -234,21 +244,23 @@ templ AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint,
 						HxUrl:       "/api/promet/searchbutton",
 						HxTarget:    "#search-dropdown",
 						HxSwap:      "innerHTML",
-						ClassButton: utils.ClassButton,
+						ClassButton: common.ClassButton,
 					})
 					@NazivField("odminaziv")
 				</div>
 				<div class="flex items-center gap-1 mb-1">
+					@tmpl.LabelField(domain.LabelFieldConfig{
+						ID:         "domi",
+						LabelText:  "Do Mesta Isp.",
+						ClassLabel: common.ClassLabel + " w-24",
+					})
 					@tmpl.TextInputField(domain.InputFieldConfig{
 						ID:           "domi",
 						Name:         "domi",
 						Value:        "999",
-						LabelText:    "Do Mesta Isp.",
 						FieldType:    "text",
-						HasLabel:     true,
 						Disabled:     false,
-						ClassInput:   utils.ClassInputTextEnabled + " w-24",
-						ClassLabel:   utils.ClassLabel + " w-24",
+						ClassInput:   common.ClassInputTextEnabled + " w-24",
 						BlurEndpoint: "api/mi/trazimi",
 						HxTarget:     "dominaziv",
 						MinLength:    "1",
@@ -261,7 +273,7 @@ templ AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint,
 						HxUrl:       "/api/promet/searchbutton",
 						HxTarget:    "#search-dropdown",
 						HxSwap:      "innerHTML",
-						ClassButton: utils.ClassButton,
+						ClassButton: common.ClassButton,
 					})
 					@NazivField("dominaziv")
 				</div>
@@ -311,7 +323,7 @@ templ PrometDeviznihAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, 
 						HxTarget:    "#search-dropdown",
 						HxSwap:      "innerHTML",
 						HxVals:      `{"vkonta": "2"}`,
-						ClassButton: utils.ClassButton,
+						ClassButton: common.ClassButton,
 					})
 					@NazivField("kontonaziv")
 				</div>
@@ -324,33 +336,37 @@ templ PrometDeviznihAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, 
 						HxTarget:    "#search-dropdown",
 						HxSwap:      "innerHTML",
 						HxVals:      `{"vkonta": "1"}`,
-						ClassButton: utils.ClassButton,
+						ClassButton: common.ClassButton,
 					})
 					@NazivField("sifranaziv")
 				</div>
 				<div class="flex items-center gap-1 mb-1">
+					@tmpl.LabelField(domain.LabelFieldConfig{
+						ID:         "oddatuma",
+						LabelText:  "Od datuma",
+						ClassLabel: common.ClassLabel + " w-24",
+					})
 					@tmpl.TextInputField(domain.InputFieldConfig{
 						ID:         "oddatuma",
 						Name:       "oddatuma",
-						LabelText:  "Od datuma",
 						FieldType:  "date",
-						HasLabel:   true,
 						Disabled:   false,
-						ClassInput: utils.ClassInputTextEnabled + " w-28",
-						ClassLabel: utils.ClassLabel + " w-24",
+						ClassInput: common.ClassInputTextEnabled + " w-28",
 						TabIndex:   "3",
 					})
 				</div>
 				<div class="flex items-center gap-1 mb-1">
+					@tmpl.LabelField(domain.LabelFieldConfig{
+						ID:         "nalog",
+						LabelText:  "Do datuma",
+						ClassLabel: common.ClassLabel + " w-24",
+					})
 					@tmpl.TextInputField(domain.InputFieldConfig{
 						ID:         "dodatuma",
 						Name:       "dodatuma",
-						LabelText:  "Do datuma",
 						FieldType:  "date",
-						HasLabel:   true,
 						Disabled:   false,
-						ClassInput: utils.ClassInputTextEnabled + " w-28",
-						ClassLabel: utils.ClassLabel + " w-24",
+						ClassInput: common.ClassInputTextEnabled + " w-28",
 						TabIndex:   "4",
 					})
 				</div>
@@ -406,33 +422,37 @@ templ PrometSubsintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPr
 						HxTarget:    "#search-dropdown",
 						HxSwap:      "innerHTML",
 						HxVals:      `{"vkonta": "2"}`,
-						ClassButton: utils.ClassButton,
+						ClassButton: common.ClassButton,
 					})
 					@NazivField("kontonaziv")
 				</div>
 				<div class="flex items-center gap-1 mb-1">
+					@tmpl.LabelField(domain.LabelFieldConfig{
+						ID:         "oddatuma",
+						LabelText:  "Od datuma",
+						ClassLabel: common.ClassLabel + " w-24",
+					})
 					@tmpl.TextInputField(domain.InputFieldConfig{
 						ID:         "oddatuma",
 						Name:       "oddatuma",
-						LabelText:  "Od datuma",
 						FieldType:  "date",
-						HasLabel:   true,
 						Disabled:   false,
-						ClassInput: utils.ClassInputTextEnabled + " w-28",
-						ClassLabel: utils.ClassLabel + " w-24",
+						ClassInput: common.ClassInputTextEnabled + " w-28",
 						TabIndex:   "3",
 					})
 				</div>
 				<div class="flex items-center gap-1 mb-1">
+					@tmpl.LabelField(domain.LabelFieldConfig{
+						ID:         "dodatuma",
+						LabelText:  "Do datuma",
+						ClassLabel: common.ClassLabel + " w-24",
+					})
 					@tmpl.TextInputField(domain.InputFieldConfig{
 						ID:         "dodatuma",
 						Name:       "dodatuma",
-						LabelText:  "Do datuma",
 						FieldType:  "date",
-						HasLabel:   true,
 						Disabled:   false,
-						ClassInput: utils.ClassInputTextEnabled + " w-28",
-						ClassLabel: utils.ClassLabel + " w-24",
+						ClassInput: common.ClassInputTextEnabled + " w-28",
 						TabIndex:   "4",
 					})
 				</div>
@@ -481,33 +501,37 @@ templ PrometSintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 						HxTarget:    "#search-dropdown",
 						HxSwap:      "innerHTML",
 						HxVals:      `{"vkonta": "2"}`,
-						ClassButton: utils.ClassButton,
+						ClassButton: common.ClassButton,
 					})
 					@NazivField("kontonaziv")
 				</div>
 				<div class="flex items-center gap-1 mb-1">
+					@tmpl.LabelField(domain.LabelFieldConfig{
+						ID:         "oddatuma",
+						LabelText:  "Od datuma",
+						ClassLabel: common.ClassLabel + " w-24",
+					})
 					@tmpl.TextInputField(domain.InputFieldConfig{
 						ID:         "oddatuma",
 						Name:       "oddatuma",
-						LabelText:  "Od datuma",
 						FieldType:  "date",
-						HasLabel:   true,
 						Disabled:   false,
-						ClassInput: utils.ClassInputTextEnabled + " w-28",
-						ClassLabel: utils.ClassLabel + " w-24",
+						ClassInput: common.ClassInputTextEnabled + " w-28",
 						TabIndex:   "3",
 					})
 				</div>
 				<div class="flex items-center gap-1 mb-1">
+					@tmpl.LabelField(domain.LabelFieldConfig{
+						ID:         "dodatuma",
+						LabelText:  "Do datuma",
+						ClassLabel: common.ClassLabel + " w-24",
+					})
 					@tmpl.TextInputField(domain.InputFieldConfig{
 						ID:         "dodatuma",
 						Name:       "dodatuma",
-						LabelText:  "Do datuma",
 						FieldType:  "date",
-						HasLabel:   true,
 						Disabled:   false,
-						ClassInput: utils.ClassInputTextEnabled + " w-28",
-						ClassLabel: utils.ClassLabel + " w-24",
+						ClassInput: common.ClassInputTextEnabled + " w-28",
 						TabIndex:   "4",
 					})
 				</div>
@@ -556,33 +580,37 @@ templ KarticaSintetickiKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 						HxTarget:    "#search-dropdown",
 						HxSwap:      "innerHTML",
 						HxVals:      `{"vkonta": "2"}`,
-						ClassButton: utils.ClassButton,
+						ClassButton: common.ClassButton,
 					})
 					@NazivField("kontonaziv")
 				</div>
 				<div class="flex items-center gap-1 mb-1">
+					@tmpl.LabelField(domain.LabelFieldConfig{
+						ID:         "oddatuma",
+						LabelText:  "Od datuma",
+						ClassLabel: common.ClassLabel + " w-24",
+					})
 					@tmpl.TextInputField(domain.InputFieldConfig{
 						ID:         "oddatuma",
 						Name:       "oddatuma",
-						LabelText:  "Od datuma",
 						FieldType:  "date",
-						HasLabel:   true,
 						Disabled:   false,
-						ClassInput: utils.ClassInputTextEnabled + " w-28",
-						ClassLabel: utils.ClassLabel + " w-24",
+						ClassInput: common.ClassInputTextEnabled + " w-28",
 						TabIndex:   "3",
 					})
 				</div>
 				<div class="flex items-center gap-1 mb-1">
+					@tmpl.LabelField(domain.LabelFieldConfig{
+						ID:         "dodatuma",
+						LabelText:  "Do datuma",
+						ClassLabel: common.ClassLabel + " w-24",
+					})
 					@tmpl.TextInputField(domain.InputFieldConfig{
 						ID:         "dodatuma",
 						Name:       "dodatuma",
-						LabelText:  "Do datuma",
 						FieldType:  "date",
-						HasLabel:   true,
 						Disabled:   false,
-						ClassInput: utils.ClassInputTextEnabled + " w-28",
-						ClassLabel: utils.ClassLabel + " w-24",
+						ClassInput: common.ClassInputTextEnabled + " w-28",
 						TabIndex:   "4",
 					})
 				</div>
@@ -637,20 +665,23 @@ templ PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint,
 						HxTarget:    "#search-dropdown",
 						HxSwap:      "innerHTML",
 						HxVals:      `{"vkonta": "2"}`,
-						ClassButton: utils.ClassButton,
+						ClassButton: common.ClassButton,
 					})
 					@NazivField("kontonaziv")
 				</div>
 				<div class="flex items-center gap-1 mb-1">
+					đ
+					@tmpl.LabelField(domain.LabelFieldConfig{
+						ID:         "odsifre",
+						LabelText:  "Od Sifre",
+						ClassLabel: common.ClassLabel + " w-24",
+					})
 					@tmpl.TextInputField(domain.InputFieldConfig{
 						ID:           "odsifre",
 						Value:        "",
-						LabelText:    "Od Sifre",
 						FieldType:    "text",
-						HasLabel:     true,
 						Disabled:     false,
-						ClassInput:   utils.ClassInputTextEnabled + " w-24",
-						ClassLabel:   utils.ClassLabel + " w-24",
+						ClassInput:   common.ClassInputTextEnabled + " w-24",
 						BlurEndpoint: "api/fkpl/trazikonto",
 						HxTarget:     "sifranaziv",
 						HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`,
@@ -665,19 +696,21 @@ templ PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint,
 						HxTarget:    "#search-dropdown",
 						HxSwap:      "innerHTML",
 						HxVals:      `{"vkonta": "1"}`,
-						ClassButton: utils.ClassButton,
+						ClassButton: common.ClassButton,
 					})
 					@NazivField("odsifrenaziv")
 				</div>
 				<div class="flex items-center gap-1 mb-1">
+					@tmpl.LabelField(domain.LabelFieldConfig{
+						ID:         "dosifre",
+						LabelText:  "Do Sifre",
+						ClassLabel: common.ClassLabel + " w-24",
+					})
 					@tmpl.TextInputField(domain.InputFieldConfig{
 						ID:           "dosifre",
-						LabelText:    "Do Sifre",
 						FieldType:    "text",
-						HasLabel:     true,
 						Disabled:     false,
-						ClassInput:   utils.ClassInputTextEnabled + " w-24",
-						ClassLabel:   utils.ClassLabel + " w-24",
+						ClassInput:   common.ClassInputTextEnabled + " w-24",
 						BlurEndpoint: "api/fkpl/trazikonto",
 						HxTarget:     "sifranaziv",
 						HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`,
@@ -692,35 +725,39 @@ templ PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint,
 						HxTarget:    "#search-dropdown",
 						HxSwap:      "innerHTML",
 						HxVals:      `{"vkonta": "1"}`,
-						ClassButton: utils.ClassButton,
+						ClassButton: common.ClassButton,
 					})
 					@NazivField("dosifrenaziv")
 				</div>
 				<div class="flex items-center gap-1 mb-1">
+					@tmpl.LabelField(domain.LabelFieldConfig{
+						ID:         "odnaloga",
+						LabelText:  "Od Naloga",
+						ClassLabel: common.ClassLabel + " w-24",
+					})
 					@tmpl.TextInputField(domain.InputFieldConfig{
 						ID:         "odnaloga",
 						Name:       "odnaloga",
-						LabelText:  "Od Naloga",
 						FieldType:  "text",
-						HasLabel:   true,
 						Disabled:   false,
-						ClassInput: utils.ClassInputTextEnabled + " w-24",
-						ClassLabel: utils.ClassLabel + " w-24",
+						ClassInput: common.ClassInputTextEnabled + " w-24",
 						MinLength:  "1",
 						MaxLength:  "10",
 						TabIndex:   "4",
 					})
 				</div>
 				<div class="flex items-center gap-1 mb-1">
+					@tmpl.LabelField(domain.LabelFieldConfig{
+						ID:         "donaloga",
+						LabelText:  "Do Naloga",
+						ClassLabel: common.ClassLabel + " w-24",
+					})
 					@tmpl.TextInputField(domain.InputFieldConfig{
 						ID:         "donaloga",
 						Name:       "donaloga",
-						LabelText:  "Do Naloga",
 						FieldType:  "text",
-						HasLabel:   true,
 						Disabled:   false,
-						ClassInput: utils.ClassInputTextEnabled + " w-24",
-						ClassLabel: utils.ClassLabel + " w-24",
+						ClassInput: common.ClassInputTextEnabled + " w-24",
 						MinLength:  "1",
 						MaxLength:  "10",
 						TabIndex:   "5",
@@ -752,7 +789,20 @@ templ PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint,
 }
 
 templ TotalValues(total domain.PrometTotalValues) {
-	<div id="totalvalues" class="border p-1 rounded-lg">
+	<div
+		id="totalvalues"
+		class="border p-1 rounded-lg"
+		hx-get="/api/promet/totalvalues"
+		hx-trigger="click from:#obrada-btn"
+		hx-target="#totalvalues"
+		hx-swap="innerHTML"
+		hx-vals="js:{
+            konto: document.getElementById('konto')?.value,
+            sifra: document.getElementById('sifra')?.value,
+            oddatuma: document.getElementById('oddatuma')?.value,
+            dodatuma: document.getElementById('dodatuma')?.value
+        }"
+	>
 		<div class="grid grid-cols-4 gap-1 mb-px text-sm font-medium text-gray-700 h-6 items-center">
 			<div class="text-center"></div>
 			<div class="text-center">Duguje</div>
@@ -761,41 +811,38 @@ templ TotalValues(total domain.PrometTotalValues) {
 		</div>
 		<div
 			class="grid grid-cols-4 gap-1 mb-1 h-6 items-center"
-			hx-get="/api/promet/totalvalues"
-			hx-trigger="click from:#obrada-btn"
-			hx-target="#totalvalues"
-			hx-swap="innerHTML"
-			hx-include="#konto, #sifra, #oddatuma, #dodatuma"
-			>
+		>
 			<div class="text-sm text-gray-600">Promet do:</div>
-			@tmpl.NumericInputField("dugujedo", total.DugDo, 2, true, utils.ClassInputNumericDisabled)
-			@tmpl.NumericInputField("potrazujedo", total.PotDo, 2, true, utils.ClassInputNumericDisabled)
-			@tmpl.NumericInputField("saldodo", total.SaldoDo, 2, true, utils.ClassInputNumericDisabled)
+			@tmpl.NumericInputField("dugujedo", total.DugDo, 2, true, common.ClassInputNumericDisabled)
+			@tmpl.NumericInputField("potrazujedo", total.PotDo, 2, true, common.ClassInputNumericDisabled)
+			@tmpl.NumericInputField("saldodo", total.SaldoDo, 2, true, common.ClassInputNumericDisabled)
 		</div>
 		<div class="grid grid-cols-4 gap-1 mb-1 h-6 items-center">
 			<div class="text-sm text-gray-600">Promet za period:</div>
-			@tmpl.NumericInputField("dugujeperiod", total.DugPer, 2, true, utils.ClassInputNumericDisabled)
-			@tmpl.NumericInputField("potrazujeperiod", total.PotPer, 2, true, utils.ClassInputNumericDisabled)
-			@tmpl.NumericInputField("saldoperiod", total.SaldoPer, 2, true, utils.ClassInputNumericDisabled)
+			@tmpl.NumericInputField("dugujeperiod", total.DugPer, 2, true, common.ClassInputNumericDisabled)
+			@tmpl.NumericInputField("potrazujeperiod", total.PotPer, 2, true, common.ClassInputNumericDisabled)
+			@tmpl.NumericInputField("saldoperiod", total.SaldoPer, 2, true, common.ClassInputNumericDisabled)
 		</div>
 		<div class="grid grid-cols-4 gap-1 h-6 items-center">
 			<div class="text-sm text-gray-600">Ukupan promet:</div>
-			@tmpl.NumericInputField("dugujeukupno", total.DugTot, 2, true, utils.ClassInputNumericDisabled)
-			@tmpl.NumericInputField("potrazujeukupno", total.PotTot, 2, true, utils.ClassInputNumericDisabled)
-			@tmpl.NumericInputField("saldoukupno", total.SaldoTot, 2, true, utils.ClassInputNumericDisabled)
+			@tmpl.NumericInputField("dugujeukupno", total.DugTot, 2, true, common.ClassInputNumericDisabled)
+			@tmpl.NumericInputField("potrazujeukupno", total.PotTot, 2, true, common.ClassInputNumericDisabled)
+			@tmpl.NumericInputField("saldoukupno", total.SaldoTot, 2, true, common.ClassInputNumericDisabled)
 		</div>
 	</div>
 }
 
 templ KontoField() {
+	@tmpl.LabelField(domain.LabelFieldConfig{
+		ID:         "nalog",
+		LabelText:  "Konto",
+		ClassLabel: common.ClassLabel + " w-24",
+	})
 	@tmpl.TextInputField(domain.InputFieldConfig{
 		ID:           "konto",
-		LabelText:    "Konto",
 		FieldType:    "text",
-		HasLabel:     true,
 		Disabled:     false,
-		ClassInput:   utils.ClassInputTextEnabled + " w-24",
-		ClassLabel:   utils.ClassLabel + " w-24",
+		ClassInput:   common.ClassInputTextEnabled + " w-24",
 		BlurEndpoint: "api/fkpl/trazikonto",
 		HxTarget:     "kontonaziv",
 		HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "2"}`,
@@ -809,21 +856,22 @@ templ NazivField(id string) {
 	@tmpl.TextInputField(domain.InputFieldConfig{
 		ID:         id,
 		FieldType:  "text",
-		HasLabel:   false,
 		Disabled:   true,
-		ClassInput: utils.ClassInputTextDisabled,
+		ClassInput: common.ClassInputTextDisabled + " w-full",
 	})
 }
 
 templ SifraField() {
+	@tmpl.LabelField(domain.LabelFieldConfig{
+		ID:         "nalog",
+		LabelText:  "Sifra",
+		ClassLabel: common.ClassLabel + " w-24",
+	})
 	@tmpl.TextInputField(domain.InputFieldConfig{
 		ID:           "sifra",
-		LabelText:    "Sifra",
 		FieldType:    "text",
-		HasLabel:     true,
 		Disabled:     false,
-		ClassInput:   utils.ClassInputTextEnabled + " w-24",
-		ClassLabel:   utils.ClassLabel + " w-24",
+		ClassInput:   common.ClassInputTextEnabled + " w-24",
 		BlurEndpoint: "api/fkpl/trazikonto",
 		HxTarget:     "sifranaziv",
 		HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('sifra').value, "vkonta": "1"}`,

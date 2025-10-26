@@ -1,31 +1,27 @@
 package infrastructure
 
-import (
-	"context"
-	"net/http"
-)
+import "github.com/gin-gonic/gin"
 
 type contextKey string
 
 const usernameKey contextKey = "username"
 
 // AuthMiddleware checks for a valid JWT and passes user data to context.
-func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		cookie, err := r.Cookie("auth_token")
+func AuthMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		tokenString, err := c.Cookie("auth_token")
 		if err != nil {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			c.AbortWithStatusJSON(401, gin.H{"error": "Unauthorized"})
 			return
 		}
 
-		username, err := VerifyJWT(cookie.Value)
+		username, err := VerifyJWT(tokenString)
 		if err != nil {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			c.AbortWithStatusJSON(401, gin.H{"error": "Unauthorized"})
 			return
 		}
 
-		// Add username to request context
-		ctx := context.WithValue(r.Context(), usernameKey, username)
-		next.ServeHTTP(w, r.WithContext(ctx))
+		c.Set("username", username)
+		c.Next()
 	}
 }

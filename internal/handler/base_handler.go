@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"helia/frontend/templates"
@@ -9,471 +8,889 @@ import (
 	"helia/internal/common"
 	"helia/internal/domain"
 	"helia/internal/infrastructure"
+	"helia/internal/middleware"
 	"helia/internal/service"
-	"helia/pkg/utils"
+	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
 	tmpl "helia/frontend/templates"
 
+	"github.com/a-h/templ"
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/gorilla/sessions"
 )
 
-// Context key for username
+// Helper struct for default selections
+type defaultSelections struct {
+	firma string
+	god   int
+	kar   int
+}
+
+// Constants for configuration and business logic
+const (
+	contextTimeout = 30 * time.Second
+	tokenExpiry    = 24 * time.Hour
+	sessionName    = "app-session"
+
+	// Session keys
+	firma = "firma"
+	god   = "god"
+	kar   = "kar"
+
+	// Default values
+	defaultMenu = "opsti_podaci"
+)
+
+// Context keys
 type contextKey string
 
 const usernameKey contextKey = "username"
 
-// Secret key for signing the JWT (keep this secure!)
-var jwtSecret = []byte("3285f0d71eed0c41fded2115c9cc8ac09a0ab5a519565df10afdb20f8013c5268f2c19948b6af096c1cfc2921ab086be21fa5407b9d91aeb08eeeeef3c2e16c9ae30ae15f27d340f17c450468fef50795e58bb7351a94602bc045aea1a1ff3b03039081208cf067b44fd913b98b712e34ba080941f5ff8545b0eac26824f0ef4a93109939d8f917e1fac1eb588f4272ebac415975bcdc994c3a0fea7c3805d601443ad71dd9043858de5c2bfe64106683d9eaebce28442ce7bb22298d5b85cc3cc41e6f81f9c0f8f678cce559f745645edc5a5009ba20f8b5a16be4ee7dada7791913c90e3629a44b88a17d3d107bd3a6c0f3000b4865b2c015c0875901a028e")
+// Configuration loaded from environment
+var (
 
-// Secret key for signing the JWT (keep this secure!)
-var sessionStore = sessions.NewCookieStore([]byte("3285f0d71eed0c41fded2115c9cc8ac09a0ab5a519565df10afdb20f8013c5268f2c19948b6af096c1cfc2921ab086be21fa5407b9d91aeb08eeeeef3c2e16c9ae30ae15f27d340f17c450468fef50795e58bb7351a94602bc045aea1a1ff3b03039081208cf067b44fd913b98b712e34ba080941f5ff8545b0eac26824f0ef4a93109939d8f917e1fac1eb588f4272ebac415975bcdc994c3a0fea7c3805d601443ad71dd9043858de5c2bfe64106683d9eaebce28442ce7bb22298d5b85cc3cc41e6f81f9c0f8f678cce559f745645edc5a5009ba20f8b5a16be4ee7dada7791913c90e3629a44b88a17d3d107bd3a6c0f3000b4865b2c015c0875901a028e")) // Replace with your secret key
+	// Secret key for signing the JWT (keep this secure!)
+	SESSION_SECRET = "3285f0d71eed0c41fded2115c9cc8ac09a0ab5a519565df10afdb20f8013c5268f2c19948b6af096c1cfc2921ab086be21fa5407b9d91aeb08eeeeef3c2e16c9ae30ae15f27d340f17c450468fef50795e58bb7351a94602bc045aea1a1ff3b03039081208cf067b44fd913b98b712e34ba080941f5ff8545b0eac26824f0ef4a93109939d8f917e1fac1eb588f4272ebac415975bcdc994c3a0fea7c3805d601443ad71dd9043858de5c2bfe64106683d9eaebce28442ce7bb22298d5b85cc3cc41e6f81f9c0f8f678cce559f745645edc5a5009ba20f8b5a16be4ee7dada7791913c90e3629a44b88a17d3d107bd3a6c0f3000b4865b2c015c0875901a028e" // Replace with your secret key
 
+/*
+	jwtSecret = []byte(os.Getenv("JWT_SECRET"))
+
+	if len(jwtSecret) == 0 {
+	    log.Fatal("JWT_SECRET environment variable not set")
+	}
+
+sessionKey = []byte(os.Getenv("SESSION_KEY"))
+
+	if len(sessionKey) == 0 {
+	    log.Fatal("SESSION_KEY environment variable not set")
+	}
+
+sessionStore = sessions.NewCookieStore(sessionKey)
+*/
+)
+
+// responseWriter wraps http.ResponseWriter to capture the status code
+type responseWriter struct {
+	http.ResponseWriter
+	status int
+}
+
+// BasicHandler handles base application functionality
 type BasicHandler struct {
 	isLoggedIn   bool
 	menuItems    domain.MenuDataItems
 	subMenuItems []domain.SubMenuItem
 	fvrService   service.FvrService
-	store        *sessions.CookieStore
+	firma        domain.Firma
+	logger       *log.Logger
 }
 
+// NewBasicHandler creates and initializes a new BasicHandler
 func NewBasicHandler(isLoggedIn bool, menuItems domain.MenuDataItems, subMenuItems []domain.SubMenuItem, fvrService service.FvrService) *BasicHandler {
-	return &BasicHandler{
+	handler := &BasicHandler{
 		isLoggedIn:   isLoggedIn,
 		menuItems:    menuItems,
 		subMenuItems: subMenuItems,
 		fvrService:   fvrService,
-		store:        sessionStore,
+		firma:        domain.Firma{},
+		logger:       log.New(os.Stdout, "[BasicHandler] ", log.LstdFlags|log.Lshortfile),
+	}
+
+	// Initialize firma data
+	if err := handler.setFirma(); err != nil {
+		handler.logger.Printf("Failed to initialize firma data: %v", err)
+	}
+
+	return handler
+}
+
+// Error response helper with log levels
+func (h *BasicHandler) respondWithError(c *gin.Context, code int, message string) {
+	// Log with appropriate level based on status code
+	switch {
+	case code >= 500:
+		h.logger.Printf("SERVER ERROR %d: %s", code, message)
+	case code >= 400:
+		h.logger.Printf("CLIENT ERROR %d: %s", code, message)
+	default:
+		h.logger.Printf("Error %d: %s", code, message)
+	}
+
+	c.JSON(code, gin.H{"error": message})
+}
+
+// If you want to use Gin's session middleware instead
+
+func (h *BasicHandler) renderLoginPage(c *gin.Context, fvrData domain.Firma, selections defaultSelections) {
+	c.Header("content-type", "text/html")
+	err := templates.Base(false,
+		templates.Login(),
+		h.menuItems,
+		h.subMenuItems,
+		"Helia",
+		"",
+		fmt.Sprintf("%d", time.Now().Year()),
+		"",
+		setComboFirmaConfig(fvrData, selections.firma),
+		setComboPoslGodConfig(fvrData, selections.firma, selections.god),
+		setComboKarConfig(fvrData, selections.firma, selections.god, selections.kar),
+	).Render(c.Request.Context(), c.Writer)
+
+	if err != nil {
+		h.respondWithError(c, http.StatusInternalServerError, "Error rendering login page")
+		return
 	}
 }
 
-func (h *BasicHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
-	fvrData, poslGodina, err := h.fvrService.GetAllFvr()
+// LoginHandler manages user authentication
+func (h *BasicHandler) LoginHandler(c *gin.Context) {
+	fvrData := h.getFirma()
+	selections := h.getDefaultSelections(fvrData)
+
+	if c.Request.Method == http.MethodGet {
+		h.renderLoginPage(c, fvrData, selections)
+		return
+	}
+
+	// Handle POST request
+	h.handleLoginPost(c, selections)
+}
+
+func (h *BasicHandler) handleLoginPost(c *gin.Context, selections defaultSelections) {
+	var loginData struct {
+		Username string `form:"username" binding:"required"`
+		Password string `form:"password" binding:"required"`
+	}
+
+	if err := c.ShouldBind(&loginData); err != nil {
+		h.respondWithError(c, http.StatusBadRequest, "Username and password are required")
+		return
+	}
+
+	if !h.validateCredentials(loginData.Username, loginData.Password) {
+		h.logger.Printf("Failed login attempt for user: %s", loginData.Username)
+		h.respondWithError(c, http.StatusUnauthorized, "Invalid credentials")
+		return
+	}
+
+	token, err := h.generateToken(loginData.Username)
 	if err != nil {
-		http.Error(w, "Error rendering template", http.StatusInternalServerError)
+		h.logger.Printf("Error generating token for user %s: %v", loginData.Username, err)
+		h.respondWithError(c, http.StatusInternalServerError, "Error generating authentication token")
+		return
+	}
+	
+	// Save session
+	if err := h.saveSession(c, selections); err != nil {
+		h.respondWithError(c, http.StatusInternalServerError, "Session error")
 		return
 	}
 
-	if r.Method == http.MethodGet {
-		selectedKomintent := 0
-		selectedPoslGodina := 0
-		if len(fvrData) > 0 {
-			selectedKomintent = fvrData[0].Kar
-		}
-		if len(poslGodina) > 0 {
-			selectedPoslGodina = poslGodina[0]
-		}
-		templates.Base(false, templates.Login(), h.menuItems, h.subMenuItems, "Helia", "", fmt.Sprintf("%d", time.Now().Year()), "", setComboKomintent(fvrData, selectedKomintent), setComboPoslGodConfig(poslGodina, selectedPoslGodina)).Render(r.Context(), w) // Render login page on failure.
-		return
-	}
-	username := r.FormValue("username")
-	password := r.FormValue("password")
+	// Set auth cookie
+	h.setAuthCookie(c, token)
 
-	// Dummy authentication (replace with actual logic)
-	if username == "testuser" && password == "123" {
-		token, err := GenerateJWT(username)
-		if err != nil {
-			http.Error(w, "Error generating token", http.StatusInternalServerError)
-			return
-		}
+	// Update global settings
+	h.updateGlobalSettings(selections)
 
-		// Set JWT token as an HTTP-only cookie
-		http.SetCookie(w, &http.Cookie{
-			Name:     "auth_token",
-			Value:    token,
-			HttpOnly: true,
-			Path:     "/",
-			Expires:  time.Now().Add(24 * time.Hour),
+	// Handle response based on request type
+	if c.GetHeader("HX-Request") == "true" {
+		c.JSON(200, gin.H{
+			"success":  true,
+			"message":  "Login successful",
+			"redirect": "/",
 		})
-
-		// Redirect to the index page
-		http.Redirect(w, r, "/", http.StatusSeeOther)
-		return
-	}
-	selectedKomintent := 0
-	selectedPoslGodina := 0
-	if len(fvrData) > 0 {
-		selectedKomintent = fvrData[0].Kar
-	}
-	if len(poslGodina) > 0 {
-		selectedPoslGodina = poslGodina[0]
-	}
-	global.SetGnGod(selectedPoslGodina)
-	global.SetGnKar(selectedKomintent)
-	templates.Base(false, templates.Login(), h.menuItems, h.subMenuItems, "Helia", "", fmt.Sprintf("%d", time.Now().Year()), "", setComboKomintent(fvrData, selectedKomintent), setComboPoslGodConfig(poslGodina, selectedPoslGodina)).Render(r.Context(), w) // Render login page on failure.
-}
-
-func (h *BasicHandler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodPost {
-		// Simulate a successful registration
-		http.Redirect(w, r, "/login", http.StatusSeeOther) // Redirect to login page
-		return
-	}
-	fvrData, poslGodina, err := h.fvrService.GetAllFvr()
-	if err != nil {
-		http.Error(w, "Error rendering template", http.StatusInternalServerError)
-		return
-	}
-	selectedKomintent := -1
-	selectedPoslGodina := -1
-	if len(fvrData) > 0 {
-		selectedKomintent = fvrData[0].Kar
-	}
-	if len(poslGodina) > 0 {
-		selectedPoslGodina = poslGodina[0]
-	}
-	global.SetGnGod(selectedPoslGodina)
-	global.SetGnKar(selectedKomintent)
-	templates.Base(h.isLoggedIn, templates.Register(), h.menuItems, h.subMenuItems, "Helia", "", fmt.Sprintf("%d", time.Now().Year()), "", setComboKomintent(fvrData, selectedKomintent), setComboPoslGodConfig(poslGodina, selectedPoslGodina)).Render(r.Context(), w)
-}
-
-func (h *BasicHandler) LogoutHandler(w http.ResponseWriter, r *http.Request) {
-
-	http.SetCookie(w, &http.Cookie{
-		Name:     "auth_token",
-		Value:    "",
-		Expires:  time.Now().Add(-1 * time.Hour),
-		HttpOnly: true,
-		Path:     "/",
-	})
-
-	// Simulate a logout
-	h.isLoggedIn = false
-	http.Redirect(w, r, "/", http.StatusSeeOther) // Redirect to home page
-}
-func (h *BasicHandler) HomeHandler(w http.ResponseWriter, r *http.Request) {
-	http.Redirect(w, r, "/", http.StatusSeeOther) // Redirect to home page
-}
-
-func (h *BasicHandler) getCurrentDate(w http.ResponseWriter, r *http.Request) {
-	currentDate := time.Now().Format("2006-01-02")
-	w.Header().Set("Content-Type", "application/json")
-	response := map[string]string{"currentDate": currentDate}
-	jsonResponse, err := json.Marshal(response)
-	if err != nil {
-		http.Error(w, "Error generating JSON response", http.StatusInternalServerError)
-		return
-	}
-	w.WriteHeader(http.StatusOK)
-	w.Write(jsonResponse) // Write the JSON response
-}
-
-// Middleware to check if the user is logged in.
-func (h *BasicHandler) AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		// Get token from cookie
-		cookie, err := r.Cookie("auth_token")
-		if err != nil {
-			http.Redirect(w, r, "/login", http.StatusSeeOther)
-			return
-		}
-
-		tokenString := cookie.Value
-
-		// Parse and validate token
-		claims := jwt.MapClaims{}
-		token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
-			return jwtSecret, nil
-		})
-
-		if err != nil || !token.Valid {
-			http.Redirect(w, r, "/login", http.StatusSeeOther)
-			return
-		}
-
-		// Extract username and store in context
-		username, ok := claims["username"].(string)
-		if !ok {
-			http.Redirect(w, r, "/login", http.StatusSeeOther)
-			return
-		}
-
-		ctx := context.WithValue(r.Context(), usernameKey, username)
-		next.ServeHTTP(w, r.WithContext(ctx))
+	} else {
+		c.Redirect(http.StatusSeeOther, "/")
 	}
 }
 
-// Handler for the main index page
-func (h *BasicHandler) indexHandler(w http.ResponseWriter, r *http.Request) {
-	// Get username from context
+func (h *BasicHandler) saveSession(c *gin.Context, selections defaultSelections) error {
+	// Get session
+	session := sessions.Default(c)
+	session.Set("firma", selections.firma)
+	session.Set("god", selections.god)
+	session.Set("kar", selections.kar)
+	session.Set("username", c.PostForm("username"))
 
-	username, ok := getUsernameFromToken(r)
-
-	// Check if user is authenticated
-	IsLoggedIn := ok && username != ""
-
-	menuName := r.URL.Query().Get("menuName")
-	if menuName == "" {
-		menuName = "opsti_podaci" // Default menu name
-	}
-	subMenus := common.GetSubMenus(domain.MenuData, menuName)
-	// Get submenu items
-	if subMenus == nil {
-		http.Error(w, "Menu not found", http.StatusNotFound)
-		return
-	}
-	h.subMenuItems = subMenus
-	h.menuItems.CurrentMenu = menuName
-	year := fmt.Sprintf("%d", time.Now().Year())
-	c := tmpl.Content(IsLoggedIn)
-	fvrData, _, err := h.fvrService.GetAllFvr()
-	if err != nil {
-		http.Error(w, "Error rendering template", http.StatusInternalServerError)
-		return
-	}
-
-	// Get user session
-	session, err := h.store.Get(r, "app-session")
-	if err != nil {
-		http.Error(w, "Session error", http.StatusInternalServerError)
-		return
-	}
-
-	// Get values from session with defaults
-	currentGod, _ := session.Values["poslovnagodina"].(int)
-	currentKomintent, _ := session.Values["komintent"].(int)
-	poslGodina, err := h.fvrService.GetAllGod(currentKomintent)
-	if err != nil {
-		http.Error(w, "Error while getting years", http.StatusInternalServerError)
-		return
-	}
-	global.SetGnGod(currentGod)
-	global.SetGnKar(currentKomintent)
-	err = tmpl.Base(IsLoggedIn, c, h.menuItems, h.subMenuItems, "HELIA", username, year, menuName, setComboKomintent(fvrData, currentKomintent), setComboPoslGodConfig(poslGodina, currentGod)).Render(r.Context(), w)
-	if err != nil {
-		http.Error(w, "Error rendering template", http.StatusInternalServerError)
-		return
-	}
-
+	return session.Save()
 }
 
-func (h *BasicHandler) SetPoslovnaGod(w http.ResponseWriter, r *http.Request) {
-	// Get komintent ID from request
-	komintentID := r.URL.Query().Get("komintent")
-	if komintentID == "" {
-		komintentID = r.FormValue("komintent")
-	}
+func (h *BasicHandler) setAuthCookie(c *gin.Context, token string) {
+	c.SetCookie("auth_token", token, int(tokenExpiry/time.Second), "/", "", true, true)
+}
 
-	// Get user session
-	session, err := h.store.Get(r, "app-session")
-	if err != nil {
-		http.Error(w, "Session error", http.StatusInternalServerError)
-		return
-	}
+func (h *BasicHandler) updateGlobalSettings(selections defaultSelections) {
+	global.SetGnFirma(selections.firma)
+	global.SetGnGod(selections.god)
+	global.SetGnKar(selections.kar)
+}
 
-	if komintentID != "" {
-		if gnKar, err := strconv.Atoi(komintentID); err == nil {
-			session.Values["komintent"] = gnKar
-			global.SetGnKar(gnKar)
+// getDefaultSelections returns default values for firma, god, and kar
+func (h *BasicHandler) getDefaultSelections(fvrData domain.Firma) defaultSelections {
+	selections := defaultSelections{}
+
+	if len(fvrData.Firme) > 0 {
+		selections.firma = fvrData.Firme[0].Naziv
+
+		if len(fvrData.Firme[0].Godine) > 0 {
+			selections.god = fvrData.Firme[0].Godine[0].God
+
+			if len(fvrData.Firme[0].Godine[0].Kar) > 0 {
+				selections.kar = fvrData.Firme[0].Godine[0].Kar[0]
+			}
 		}
 	}
 
-	if err := session.Save(r, w); err != nil {
-		http.Error(w, "Failed to save session", http.StatusInternalServerError)
-		return
-	}
-
-	// Instead of redirecting, re-render the full page
-	h.renderFullPage(w, r)
+	return selections
 }
 
-func (h *BasicHandler) SelectPoslovnaGodina(w http.ResponseWriter, r *http.Request) {
-	poslGod := r.URL.Query().Get("poslovnagodina")
-	komintent := r.URL.Query().Get("komintent")
-
-	// Get user session
-	session, err := h.store.Get(r, "app-session")
-	if err != nil {
-		http.Error(w, "Session error", http.StatusInternalServerError)
-		return
-	}
-
-	// Store in session
-	if poslGod != "" {
-		if gnGod, err := strconv.Atoi(poslGod); err == nil {
-			session.Values["poslovnagodina"] = gnGod
-			global.SetGnGod(gnGod)
-		}
-	}
-
-	if komintent != "" {
-		if gnKar, err := strconv.Atoi(komintent); err == nil {
-			session.Values["komintent"] = gnKar
-			global.SetGnKar(gnKar)
-		}
-	}
-
-	if err := session.Save(r, w); err != nil {
-		http.Error(w, "Failed to save session", http.StatusInternalServerError)
-		return
-	}
-
-	// Instead of redirecting, re-render the full page
-	h.renderFullPage(w, r)
+// validateCredentials checks if the provided credentials are valid
+func (h *BasicHandler) validateCredentials(username, password string) bool {
+	// TODO: Replace with actual authentication logic
+	return username == "testuser" && password == "123"
 }
 
-// Helper function to render the full page
-func (h *BasicHandler) renderFullPage(w http.ResponseWriter, r *http.Request) {
-	// Get username from context
-	username, ok := getUsernameFromToken(r)
-	IsLoggedIn := ok && username != ""
-
-	menuName := r.URL.Query().Get("menuName")
-	if menuName == "" {
-		menuName = "opsti_podaci" // Default menu name
-	}
-
-	subMenus := common.GetSubMenus(domain.MenuData, menuName)
-	if subMenus == nil {
-		http.Error(w, "Menu not found", http.StatusNotFound)
-		return
-	}
-
-	h.subMenuItems = subMenus
-	h.menuItems.CurrentMenu = menuName
-	year := fmt.Sprintf("%d", time.Now().Year())
-	c := tmpl.Content(IsLoggedIn)
-
-	fvrData, _, err := h.fvrService.GetAllFvr()
-	if err != nil {
-		http.Error(w, "Error rendering template", http.StatusInternalServerError)
-		return
-	}
-
-	// Get user session
-	session, err := h.store.Get(r, "app-session")
-	if err != nil {
-		http.Error(w, "Session error", http.StatusInternalServerError)
-		return
-	}
-
-	// Get values from session with defaults
-	currentGod, _ := session.Values["poslovnagodina"].(int)
-	currentKomintent, _ := session.Values["komintent"].(int)
-
-	poslGodina, err := h.fvrService.GetAllGod(currentKomintent)
-	if err != nil {
-		http.Error(w, "Error while getting years", http.StatusInternalServerError)
-		return
-	}
-
-	// Create combo configs with current values
-	komintentConfig := setComboKomintent(fvrData, currentKomintent)
-	poslGodConfig := setComboPoslGodConfig(poslGodina, currentGod)
-
-	err = tmpl.Base(
-		IsLoggedIn, c, h.menuItems, h.subMenuItems, "HELIA", username, year, "",
-		komintentConfig,
-		poslGodConfig).Render(r.Context(), w)
-
-	if err != nil {
-		http.Error(w, "Error rendering template", http.StatusInternalServerError)
-		return
-	}
-}
-
-func getUsernameFromToken(r *http.Request) (string, bool) {
-	// Get the auth_token cookie
-	cookie, err := r.Cookie("auth_token")
-	if err != nil {
-		return "", false // No cookie found, user is not authenticated
-	}
-	username, err := infrastructure.VerifyJWT(cookie.Value)
-
-	if err != nil {
-		return "", false // Invalid token, user is not authenticated
-	}
-	return username.Username, true // User is authenticated
-}
-
-// Generate JWT token
-func GenerateJWT(username string) (string, error) {
+// generateToken creates a new JWT token for the authenticated user
+func (h *BasicHandler) generateToken(username string) (string, error) {
 	claims := jwt.MapClaims{
 		"username": username,
-		"exp":      time.Now().Add(time.Hour * 24).Unix(), // Token expires in 24 hours
+		"exp":      time.Now().Add(tokenExpiry).Unix(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(jwtSecret)
+	return token.SignedString(middleware.JwtSecret)
 }
 
-// Handlers
-func (h *BasicHandler) AddRoutes(r *http.ServeMux) {
-	r.HandleFunc("/login", h.LoginHandler)
-	r.HandleFunc("/register", h.RegisterHandler)
-	r.HandleFunc("/logout", h.LogoutHandler)
-	r.HandleFunc("/home", h.HomeHandler)
-	r.HandleFunc("/", h.indexHandler)
-	r.HandleFunc("api/get-current-date", h.getCurrentDate)
-	r.HandleFunc("/api/selectposlgod", h.SelectPoslovnaGodina)
-	r.HandleFunc("/api/setposlgod", h.SetPoslovnaGod)
-}
+// --- Authentication Handlers: Register and Logout ---
 
-func populateComboIntItems(poslGodina []int) []domain.ComboItem {
-	poslGodComboItems := []domain.ComboItem{}
-	for i := 0; i < len(poslGodina); i++ {
-		poslGodComboItems = append(poslGodComboItems, domain.ComboItem{
-			Key:   fmt.Sprintf("%d", poslGodina[i]),
-			Value: fmt.Sprintf("%d", poslGodina[i]),
-		})
+// RegisterHandler manages user registration
+// RegisterHandler manages user registration
+func (h *BasicHandler) RegisterHandler(c *gin.Context) {
+	fvrData := h.getFirma()
+	selections := h.getDefaultSelections(fvrData)
+
+	if c.Request.Method == http.MethodGet {
+		err := templates.Base(
+			false,
+			templates.Register(),
+			h.menuItems,
+			h.subMenuItems,
+			"Helia - Registration",
+			"",
+			fmt.Sprintf("%d", time.Now().Year()),
+			"",
+			setComboFirmaConfig(fvrData, selections.firma),
+			setComboPoslGodConfig(fvrData, selections.firma, selections.god),
+			setComboKarConfig(fvrData, selections.firma, selections.god, selections.kar),
+		).Render(c.Request.Context(), c.Writer)
+
+		if err != nil {
+			h.logger.Printf("Error rendering registration page: %v", err)
+			h.respondWithError(c, http.StatusInternalServerError, "Error rendering registration page")
+			return
+		}
+		return
 	}
-	return poslGodComboItems
+
+	// Handle POST - process registration
+	username := c.PostForm("username")
+	password := c.PostForm("password")
+	confirmPassword := c.PostForm("confirm_password")
+
+	// Validate input
+	if err := h.validateRegistration(username, password, confirmPassword); err != nil {
+		h.logger.Printf("Registration validation failed: %v", err)
+		h.respondWithError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	// TODO: Add actual user registration logic here
+	// For now, just redirect to login page
+	c.Redirect(http.StatusSeeOther, "/login")
 }
 
-func setComboPoslGodConfig(poslovnaGod []int, selectedValue int) domain.ComboFieldConfig {
+// LogoutHandler manages user logout
+func (h *BasicHandler) LogoutHandler(c *gin.Context) {
+	// Clear the auth cookie
+	c.SetCookie(
+		"auth_token",
+		"",
+		-1,
+		"/",
+		"",
+		true, // Secure
+		true, // HttpOnly
+	)
+
+	// Clear the session
+	// Get session
+	session := sessions.Default(c)
+	session.Options(sessions.Options{
+		MaxAge: -1, // Configures cookie expiration
+	})
+	if err := session.Save(); err != nil {
+		h.logger.Printf("Error clearing session during logout: %v", err)
+	}
+
+	// Clear global values
+	global.SetGnFirma("")
+	global.SetGnGod(0)
+	global.SetGnKar(0)
+
+	h.isLoggedIn = false
+	c.Redirect(http.StatusSeeOther, "/login")
+}
+
+// Helper functions for registration
+func (h *BasicHandler) validateRegistration(username, password, confirmPassword string) error {
+	if username == "" {
+		return fmt.Errorf("username is required")
+	}
+	if len(username) < 3 {
+		return fmt.Errorf("username must be at least 3 characters long")
+	}
+	if password == "" {
+		return fmt.Errorf("password is required")
+	}
+	if len(password) < 6 {
+		return fmt.Errorf("password must be at least 6 characters long")
+	}
+	if password != confirmPassword {
+		return fmt.Errorf("passwords do not match")
+	}
+	return nil
+}
+
+// --- Main Page Handlers ---
+
+// indexHandler handles the main page rendering
+func (h *BasicHandler) indexHandler(c *gin.Context) {
+	username, ok := h.getUsernameFromToken(c)
+	fvrData := h.getFirma()
+	isLoggedIn := ok && username != ""
+	// Get session data
+	session := sessions.Default(c)
+
+	// Get firma data and selections
+	selections := h.getSessionSelections(session, fvrData)
+
+	// if !isLoggedIn {
+	// 	h.renderLoginPage(c, fvrData, selections)
+	// 	return
+	// }
+	menuName := c.Query("menuName")
+	if menuName == "" {
+		menuName = defaultMenu
+	}
+
+	// Get submenu items
+	subMenus := common.GetSubMenus(domain.MenuData, menuName)
+	if subMenus == nil {
+		h.logger.Printf("Menu not found: %s", menuName)
+		h.respondWithError(c, http.StatusNotFound, "Menu not found")
+		return
+	}
+
+	// Update handler state
+	h.subMenuItems = subMenus
+	h.menuItems.CurrentMenu = menuName
+
+	// Update global state
+	h.updateGlobalState(selections)
+
+	// Render the page
+	err := tmpl.Base(
+		isLoggedIn,
+		tmpl.Content(isLoggedIn),
+		h.menuItems,
+		h.subMenuItems,
+		"HELIA",
+		username,
+		fmt.Sprintf("%d", time.Now().Year()),
+		menuName,
+		setComboFirmaConfig(fvrData, selections.firma),
+		setComboPoslGodConfig(fvrData, selections.firma, selections.god),
+		setComboKarConfig(fvrData, selections.firma, selections.god, selections.kar),
+	).Render(c.Request.Context(), c.Writer)
+
+	if err != nil {
+		h.logger.Printf("Error rendering template: %v", err)
+		h.respondWithError(c, http.StatusInternalServerError, "Error rendering template")
+		return
+	}
+}
+
+// HomeHandler redirects to the index page
+func (h *BasicHandler) HomeHandler(c *gin.Context) {
+	c.Redirect(http.StatusSeeOther, "/")
+}
+
+// getCurrentDate returns the current date in JSON format
+func (h *BasicHandler) getCurrentDate(c *gin.Context) {
+	currentDate := time.Now().Format("2006-01-02")
+
+	response := struct {
+		CurrentDate string `json:"currentDate"`
+	}{
+		CurrentDate: currentDate,
+	}
+	// Manually encode JSON and handle errors
+	c.Header("Content-Type", "application/json")
+	c.Status(200)
+	if err := json.NewEncoder(c.Writer).Encode(response); err != nil {
+		h.logger.Printf("Error encoding response: %v", err)
+		h.respondWithError(c, http.StatusInternalServerError, "Error generating response")
+		return
+	}
+}
+
+// Helper functions
+
+func (h *BasicHandler) getSessionSelections(session sessions.Session, fvrData domain.Firma) defaultSelections {
+	firmaVal := session.Get("firma")
+	godVal := session.Get("god")
+	karVal := session.Get("kar")
+	firma, ok1 := firmaVal.(string)
+	god, ok2 := godVal.(int)
+	kar, ok3 := karVal.(int)
+
+	if !ok1 || !ok2 || !ok3 {
+		return defaultSelections{firma: "", god: 0, kar: 0}
+	}
+	selections := defaultSelections{
+		firma: firma,
+		god:   god,
+		kar:   kar,
+	}
+
+	// Set defaults if session values are empty
+	if selections.firma == "" && len(fvrData.Firme) > 0 {
+		selections.firma = fvrData.Firme[0].Naziv
+	}
+	if selections.god == 0 && len(fvrData.Firme) > 0 && len(fvrData.Firme[0].Godine) > 0 {
+		selections.god = fvrData.Firme[0].Godine[0].God
+	}
+	if selections.kar == 0 && len(fvrData.Firme) > 0 && len(fvrData.Firme[0].Godine) > 0 &&
+		len(fvrData.Firme[0].Godine[0].Kar) > 0 {
+		selections.kar = fvrData.Firme[0].Godine[0].Kar[0]
+	}
+
+	return selections
+}
+
+func (h *BasicHandler) updateGlobalState(selections defaultSelections) {
+	global.SetGnFirma(selections.firma)
+	global.SetGnGod(selections.god)
+	global.SetGnKar(selections.kar)
+}
+
+func (h *BasicHandler) getUsernameFromToken(c *gin.Context) (string, bool) {
+	tokenString, err := c.Cookie("auth_token")
+	if err != nil {
+		return "", false
+	}
+
+	username, err := infrastructure.VerifyJWT(tokenString)
+	if err != nil {
+		return "", false
+	}
+
+	return username.Username, true
+}
+
+// --- Combo Box Handlers ---
+
+// ComboBox handlers for firma, godina, and knjigovodstvo selection
+func (h *BasicHandler) setComboFirma(c *gin.Context) {
+	firma := c.Query("firma")
+	if firma == "" {
+		firma = c.PostForm("firma")
+	}
+
+	session := sessions.Default(c)
+	if firma != "" {
+		session.Set("firma", firma)
+		global.SetGnFirma(firma)
+
+		// Reset dependent fields
+		session.Set("god", 0)
+		session.Set("kar", 0)
+	}
+
+	if err := session.Save(); err != nil {
+		h.logger.Printf("Failed to save session in setComboFirma: %v", err)
+		h.respondWithError(c, http.StatusInternalServerError, "Failed to save session")
+		return
+	}
+
+	h.renderComboResponse(c)
+}
+
+func (h *BasicHandler) SelectComboFirma(c *gin.Context) {
+	session := sessions.Default(c)
+
+	if firma, ok := session.Get("firma").(string); ok {
+		global.SetGnFirma(firma)
+	}
+
+	h.renderFullPage(c)
+}
+
+func (h *BasicHandler) SetComboGod(c *gin.Context) {
+	god := c.Query("god")
+	if god == "" {
+		god = c.PostForm("god")
+	}
+
+	session := sessions.Default(c)
+
+	if god != "" {
+		if gnGod, err := strconv.Atoi(god); err == nil {
+			session.Set("god", gnGod)
+			global.SetGnGod(gnGod)
+
+			// Reset dependent fields
+			session.Set("kar", 0)
+			session.Save()
+		}
+	}
+
+	h.renderComboResponse(c)
+}
+
+func (h *BasicHandler) SelectComboGod(c *gin.Context) {
+	session := sessions.Default(c)
+
+	if godVal, ok := session.Get("god").(int); ok {
+		global.SetGnGod(godVal)
+	}
+
+	h.renderFullPage(c)
+}
+
+func (h *BasicHandler) SetComboKar(c *gin.Context) {
+	kar := c.Query("kar")
+	if kar == "" {
+		kar = c.PostForm("kar")
+	}
+
+	session := sessions.Default(c)
+	if kar != "" {
+		if gnKar, err := strconv.Atoi(kar); err == nil {
+			session.Set("kar", gnKar)
+			global.SetGnKar(gnKar)
+			session.Save()
+		}
+	}
+
+	h.renderComboResponse(c)
+}
+
+func (h *BasicHandler) SelectComboKar(c *gin.Context) {
+	session := sessions.Default(c)
+
+	if karVal, ok := session.Get("kar").(int); ok {
+		global.SetGnKar(karVal)
+	}
+
+	h.renderFullPage(c)
+}
+
+// Helper functions for combo box handlers
+func (h *BasicHandler) renderComboResponse(c *gin.Context) {
+	fvrData := h.getFirma()
+	session := sessions.Default(c)
+
+	selections := h.getSessionSelections(session, fvrData)
+	response := struct {
+		FirmaConfig domain.ComboFieldConfig `json:"firmaConfig"`
+		GodConfig   domain.ComboFieldConfig `json:"godConfig"`
+		KarConfig   domain.ComboFieldConfig `json:"karConfig"`
+	}{
+		FirmaConfig: setComboFirmaConfig(fvrData, selections.firma),
+		GodConfig:   setComboPoslGodConfig(fvrData, selections.firma, selections.god),
+		KarConfig:   setComboKarConfig(fvrData, selections.firma, selections.god, selections.kar),
+	}
+
+	// Manually encode JSON and handle errors
+	c.Header("Content-Type", "application/json")
+	c.Status(200)
+	if err := json.NewEncoder(c.Writer).Encode(response); err != nil {
+		h.logger.Printf("Error encoding response: %v", err)
+		h.respondWithError(c, http.StatusInternalServerError, "Error generating response")
+		return
+	}
+}
+
+// renderFullPage handles the full page rendering with all components
+func (h *BasicHandler) renderFullPage(c *gin.Context) {
+	// Get user session
+	session := sessions.Default(c)
+
+	currentFirma := c.Query("firma")
+	if currentFirma != "" {
+		global.SetGnFirma(currentFirma)
+		session.Set("firma", currentFirma)
+	}
+	currentGod := c.Query("god")
+	if currentGod != "" {
+		if gnGod, err := strconv.Atoi(currentGod); err == nil {
+			global.SetGnGod(gnGod)
+			session.Set("god", gnGod)
+		}
+	}
+	currentKar := c.Query("kar")
+	if currentKar != "" {
+		if gnKar, err := strconv.Atoi(currentKar); err == nil {
+			global.SetGnGod(gnKar)
+			session.Set("kar", gnKar)
+		}
+	}
+	username, ok := h.getUsernameFromToken(c)
+	if !ok {
+		h.logger.Print("No valid user token found")
+		c.Redirect(http.StatusSeeOther, "/login")
+		return
+	}
+
+	// Get menu information
+	menuName := c.Query("menuName")
+	if menuName == "" {
+		menuName = defaultMenu
+	}
+
+	// Get submenu items
+	subMenus := common.GetSubMenus(domain.MenuData, menuName)
+	if subMenus == nil {
+		h.logger.Printf("Menu not found: %s", menuName)
+		h.respondWithError(c, http.StatusNotFound, "Menu not found")
+		return
+	}
+
+	// Update handler state
+	h.subMenuItems = subMenus
+	h.menuItems.CurrentMenu = menuName
+
+	fvrData := h.getFirma()
+	selections := h.getSessionSelections(session, fvrData)
+
+	// Update global state
+	h.updateGlobalState(selections)
+
+	// Prepare page data
+	pageData := struct {
+		IsLoggedIn bool
+		Content    templ.Component
+		MenuItems  domain.MenuDataItems
+		SubMenus   []domain.SubMenuItem
+		Title      string
+		Username   string
+		Year       string
+		MenuName   string
+		FirmaConf  domain.ComboFieldConfig
+		GodConf    domain.ComboFieldConfig
+		KarConf    domain.ComboFieldConfig
+	}{
+		IsLoggedIn: true,
+		Content:    tmpl.Content(true),
+		MenuItems:  h.menuItems,
+		SubMenus:   h.subMenuItems,
+		Title:      "HELIA",
+		Username:   username,
+		Year:       fmt.Sprintf("%d", time.Now().Year()),
+		MenuName:   menuName,
+		FirmaConf:  setComboFirmaConfig(fvrData, selections.firma),
+		GodConf:    setComboPoslGodConfig(fvrData, selections.firma, selections.god),
+		KarConf:    setComboKarConfig(fvrData, selections.firma, selections.god, selections.kar),
+	}
+
+	// Render the page
+	err := tmpl.Base(
+		pageData.IsLoggedIn,
+		pageData.Content,
+		pageData.MenuItems,
+		pageData.SubMenus,
+		pageData.Title,
+		pageData.Username,
+		pageData.Year,
+		pageData.MenuName,
+		pageData.FirmaConf,
+		pageData.GodConf,
+		pageData.KarConf,
+	).Render(c.Request.Context(), c.Writer)
+
+	if err != nil {
+		h.logger.Printf("Error rendering template: %v", err)
+		h.respondWithError(c, http.StatusInternalServerError, "Error rendering template")
+		return
+	}
+}
+
+func (rw *responseWriter) WriteHeader(code int) {
+	rw.status = code
+	rw.ResponseWriter.WriteHeader(code)
+}
+
+// AuthMiddleware verifies the user is authenticated
+
+// AddRoutes registers all HTTP routes for the BasicHandler
+func (h *BasicHandler) AddRoutes(r *gin.Engine) {
+	// Authentication routes
+	// Create API group with prefix
+
+	//r.Use(middleware.Auth()) // Apply auth middleware to all routes in group
+
+	// Handle favicon to prevent auto-requests
+	r.GET("/favicon.ico", func(c *gin.Context) {
+		c.Status(204) // No content
+	})
+
+	r.GET("/login", h.LoginHandler)
+	r.POST("/login", h.LoginHandler)
+	r.GET("/register", h.RegisterHandler)
+	r.GET("/logout", h.LogoutHandler)
+
+	// Main page routes
+	r.GET("/", h.indexHandler)
+	r.GET("/home", h.HomeHandler)
+
+	// r routes
+	r.GET("/api/get-current-date", h.getCurrentDate)
+
+	// Combo box routes
+	r.GET("/api/setfirma", h.setComboFirma)
+	r.GET("/api/selectfirma", h.SelectComboFirma)
+	r.GET("/api/setgod", h.SetComboGod)
+	r.GET("/api/selectgod", h.SelectComboGod)
+	r.GET("/api/selectkar", h.SelectComboKar)
+	r.GET("/api/setkar", h.SetComboKar)
+}
+
+// setFirma initializes the firma data from the service
+func (h *BasicHandler) setFirma() error {
+	fvrData, err := h.fvrService.GetAllFvr()
+	if err != nil {
+		h.logger.Printf("Error fetching firma data: %v", err)
+		return fmt.Errorf("failed to fetch firma data: %w", err)
+	}
+
+	if fvrData == nil || len(fvrData.Firme) == 0 {
+		return fmt.Errorf("no firma data available")
+	}
+
+	h.firma = *fvrData
+	return nil
+}
+
+// getFirma returns the cached firma data
+func (h *BasicHandler) getFirma() domain.Firma {
+	return h.firma
+}
+
+// setComboFirmaConfig creates configuration for the firma combo box
+func setComboFirmaConfig(fvrData domain.Firma, selectedValue string) domain.ComboFieldConfig {
 	config := domain.ComboFieldConfig{
-		ID:             "poslovnagodina",
-		Name:           "poslovnagodina",
-		LabelText:      "Poslovna Godina",
+		ID:             "firma",
+		Name:           "firma",
+		LabelText:      "Preduzece/Komintent",
 		HasLabel:       true,
 		Disabled:       false,
-		ClassSelect:    utils.ClassSelect + " min-w-[80px] ",
-		ClassLabel:     utils.ClassLabel + " font-medium text-white text-sm whitespace-nowrap",
-		HxVals:         `js:{"komintent": document.getElementById("komintent").value, "poslovnagodina": this.value}`,
-		ChangeEndpoint: "/api/selectposlgod",
-		HxSwap:         "outerHTML", // Change to outerHTML to replace the entire select
-		HxChangeTarget: "body",      // Target the entire body to replace the whole page
+		ClassSelect:    common.ClassSelect + " min-w-[80px]",
+		ClassLabel:     common.ClassLabel + " font-medium text-white text-sm whitespace-nowrap",
+		HxVals:         `js:{"firma": this.value}`,
+		ChangeEndpoint: "/api/selectfirma",
+		HxSwap:         "outerHTML",
+		HxChangeTarget: "body",
 	}
 
-	optionItems := []domain.ComboItem{}
-	for _, item := range poslovnaGod {
-		key := fmt.Sprintf("%d", item) // Convert to string to match selectedValue
+	var optionItems []domain.ComboItem
+	for _, firma := range fvrData.Firme {
 		optionItems = append(optionItems, domain.ComboItem{
-			Key:   key,
-			Value: key, // Use the number as both key and value
+			Key:   firma.Naziv,
+			Value: firma.Naziv,
 		})
 	}
+
+	config.OptionValues = optionItems
+	config.SelectedValue = selectedValue
+	return config
+}
+
+// setComboPoslGodConfig creates configuration for the poslovna godina combo box
+func setComboPoslGodConfig(fvrData domain.Firma, selectedFirma string, selectedValue int) domain.ComboFieldConfig {
+	config := domain.ComboFieldConfig{
+		ID:             "god",
+		Name:           "god",
+		LabelText:      "Poslovna Godina",
+		HasLabel:       true,
+		Disabled:       selectedFirma == "",
+		ClassSelect:    common.ClassSelect + " min-w-[80px]",
+		ClassLabel:     common.ClassLabel + " font-medium text-white text-sm whitespace-nowrap",
+		HxVals:         `js:{"firma": document.getElementById("firma").value, "god": this.value}`,
+		ChangeEndpoint: "/api/selectgod",
+		HxSwap:         "outerHTML",
+		HxChangeTarget: "body",
+	}
+
+	var optionItems []domain.ComboItem
+	for _, firma := range fvrData.Firme {
+		if firma.Naziv == selectedFirma {
+			for _, god := range firma.Godine {
+				key := fmt.Sprintf("%d", god.God)
+				optionItems = append(optionItems, domain.ComboItem{
+					Key:   key,
+					Value: key,
+				})
+			}
+			break
+		}
+	}
+
 	config.OptionValues = optionItems
 	config.SelectedValue = fmt.Sprintf("%d", selectedValue)
 	return config
 }
 
-func setComboKomintent(items []domain.Fvr, selectedValue int) domain.ComboFieldConfig {
+// setComboKarConfig creates configuration for the knjigovodstvo combo box
+func setComboKarConfig(fvrData domain.Firma, selectedFirma string, selectedGod, selectedValue int) domain.ComboFieldConfig {
 	config := domain.ComboFieldConfig{
-		ID:             "komintent",
-		Name:           "komintent",
-		LabelText:      "Komintent",
+		ID:             "kar",
+		Name:           "kar",
+		LabelText:      "Knjigovodstvo",
 		HasLabel:       true,
-		Disabled:       false,
-		ClassSelect:    utils.ClassSelect + " min-w-[80px] ",
-		ClassLabel:     utils.ClassLabel + " font-medium text-white text-sm whitespace-nowrap ",
-		HxVals:         `{"komintent": document.getElementById("komintent").value}`,
-		ChangeEndpoint: "/api/setposlgod",
-		HxSwap:         "outerHTML", // Change to outerHTML to replace the entire select
-		HxChangeTarget: "body",      // Target the entire body to replace the whole page
+		Disabled:       selectedFirma == "" || selectedGod == 0,
+		ClassSelect:    common.ClassSelect + " min-w-[80px]",
+		ClassLabel:     common.ClassLabel + " font-medium text-white text-sm whitespace-nowrap",
+		HxVals:         `js:{"firma": document.getElementById("firma").value, "god": document.getElementById("god").value, "kar": this.value}`,
+		ChangeEndpoint: "/api/selectkar",
+		HxSwap:         "outerHTML",
+		HxChangeTarget: "body",
 	}
 
-	optionItems := []domain.ComboItem{}
-	for _, item := range items {
-		key := fmt.Sprintf("%d", item.Kar) // Convert to string to match selectedValue
-		optionItems = append(optionItems, domain.ComboItem{
-			Key:   key,
-			Value: item.Naziv,
-		})
+	var optionItems []domain.ComboItem
+	for _, firma := range fvrData.Firme {
+		if firma.Naziv == selectedFirma {
+			for _, god := range firma.Godine {
+				if god.God == selectedGod {
+					for _, kar := range god.Kar {
+						key := fmt.Sprintf("%d", kar)
+						optionItems = append(optionItems, domain.ComboItem{
+							Key:   key,
+							Value: key,
+						})
+					}
+					break
+				}
+			}
+			break
+		}
 	}
+
 	config.OptionValues = optionItems
 	config.SelectedValue = fmt.Sprintf("%d", selectedValue)
 	return config

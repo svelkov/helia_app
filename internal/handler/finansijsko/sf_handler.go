@@ -1,11 +1,12 @@
 package finansijsko
 
 import (
-	"net/http"
-
+	"helia/internal/common"
 	"helia/internal/domain"
 	"helia/internal/service"
 	"helia/pkg/utils"
+
+	"github.com/gin-gonic/gin"
 )
 
 var sfTableFields = []domain.Fields{
@@ -23,11 +24,11 @@ func NewSfHandler(service *service.BaseService[domain.Sf]) *SfHandler {
 	return &SfHandler{Service: service}
 }
 
-func (h *SfHandler) UpdateSf(w http.ResponseWriter, r *http.Request) {
+func (h *SfHandler) UpdateSf(c *gin.Context) {
 	var sf domain.Sf
-	utils.UpdateHelper(w, r, &sf, h.Service, sfTableFields, utils.IDfkpl)
+	utils.UpdateHelper(c, &sf, h.Service, sfTableFields, common.IDfkpl)
 }
 
-func (h *SfHandler) GetAllSf(w http.ResponseWriter, r *http.Request) {
-	utils.GetAllEntityHelper(w, r,  h.Service, sfTableFields, "", "", "", "", "")
+func (h *SfHandler) GetAllSf(c *gin.Context) {
+	utils.GetAllEntityHelper(c, h.Service, sfTableFields, "", "", "", "", "")
 }

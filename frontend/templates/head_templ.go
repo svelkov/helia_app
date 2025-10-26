@@ -29,7 +29,7 @@ func Head() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>HELIA</title><link rel=\"icon\" type=\"image/png\" href=\"/frontend/static/lav_logo.png\"><link rel=\"shortcut icon\" href=\"/frontend/static/lav_logo.png\"><!-- Include your local Tailwind CSS output file --><link rel=\"stylesheet\" href=\"frontend/static/css/output.css\"><script src=\"https://cdn.tailwindcss.com\"></script><!-- HTMX --><script src=\"https://unpkg.com/htmx.org\"></script></head>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>HELIA</title><link rel=\"icon\" type=\"image/png\" href=\"/frontend/static/lav_logo.png\"><link rel=\"shortcut icon\" href=\"/frontend/static/lav_logo.png\"><!-- Include your local Tailwind CSS output file --><link rel=\"stylesheet\" href=\"frontend/static/css/output.css\"><script src=\"https://cdn.tailwindcss.com\"></script><!-- HTMX --><script src=\"https://unpkg.com/htmx.org\"></script><!-- Include Tabulator JS --><script src=\"https://unpkg.com/tabulator-tables@5.5.2/dist/js/tabulator.min.js\"></script><!-- Include Tabulator CSS --><link href=\"https://unpkg.com/tabulator-tables@5.5.2/dist/css/tabulator.min.css\" rel=\"stylesheet\"><!-- In your base template head --><script src=\"https://unpkg.com/lucide@latest\"></script></head>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

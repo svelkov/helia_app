@@ -11,8 +11,8 @@ import templruntime "github.com/a-h/templ/runtime"
 import (
 	"fmt"
 	tmpl "helia/frontend/templates"
+	"helia/internal/common"
 	"helia/internal/domain"
-	"helia/pkg/utils"
 )
 
 func PrometMain(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.PrometTotalValues) templ.Component {
@@ -229,7 +229,7 @@ func PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint,
 			HxTarget:    "#search-dropdown",
 			HxSwap:      "innerHTML",
 			HxVals:      `{"vkonta": "2"}`,
-			ClassButton: utils.ClassButton,
+			ClassButton: common.ClassButton,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -253,7 +253,7 @@ func PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint,
 			HxTarget:    "#search-dropdown",
 			HxSwap:      "innerHTML",
 			HxVals:      `{"vkonta": "1"}`,
-			ClassButton: utils.ClassButton,
+			ClassButton: common.ClassButton,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -266,15 +266,20 @@ func PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "oddatuma",
+			ClassLabel: common.ClassLabel + " w-24",
+			LabelText:  "Od datuma",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
 		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
 			ID:         "oddatuma",
 			Name:       "oddatuma",
-			LabelText:  "Od datuma",
 			FieldType:  "date",
-			HasLabel:   true,
 			Disabled:   false,
-			ClassInput: utils.ClassInputTextEnabled + " w-28",
-			ClassLabel: utils.ClassLabel + " w-24",
+			ClassInput: common.ClassInputTextEnabled + " w-28",
 			TabIndex:   "3",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
@@ -284,15 +289,20 @@ func PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "dodatuma",
+			LabelText:  "Do datuma",
+			ClassLabel: common.ClassLabel + " w-24 ",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
 		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
 			ID:         "dodatuma",
 			Name:       "dodatuma",
-			LabelText:  "Do datuma",
 			FieldType:  "date",
-			HasLabel:   true,
 			Disabled:   false,
-			ClassInput: utils.ClassInputTextEnabled + " w-28",
-			ClassLabel: utils.ClassLabel + " w-24 ",
+			ClassInput: common.ClassInputTextEnabled + " w-28",
 			TabIndex:   "4",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
@@ -379,7 +389,7 @@ func AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint, 
 			HxTarget:    "#search-dropdown",
 			HxSwap:      "innerHTML",
 			HxVals:      `{"vkonta": "2"}`,
-			ClassButton: utils.ClassButton,
+			ClassButton: common.ClassButton,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -403,7 +413,7 @@ func AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint, 
 			HxTarget:    "#search-dropdown",
 			HxSwap:      "innerHTML",
 			HxVals:      `{"vkonta": "1"}`,
-			ClassButton: utils.ClassButton,
+			ClassButton: common.ClassButton,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -416,15 +426,20 @@ func AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "oddatuma",
+			LabelText:  "Od Datuma",
+			ClassLabel: common.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
 		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
 			ID:         "oddatuma",
 			Name:       "oddatuma",
-			LabelText:  "Od Datuma",
 			FieldType:  "date",
-			HasLabel:   true,
 			Disabled:   false,
-			ClassInput: utils.ClassInputTextEnabled + " w-28",
-			ClassLabel: utils.ClassLabel + " w-24",
+			ClassInput: common.ClassInputTextEnabled + " w-28",
 			TabIndex:   "3",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
@@ -434,15 +449,20 @@ func AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "dodatuma",
+			LabelText:  "Do Datuma",
+			ClassLabel: common.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
 		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
 			ID:         "dodatuma",
 			Name:       "dodatuma",
-			LabelText:  "Do Datuma",
 			FieldType:  "date",
-			HasLabel:   true,
 			Disabled:   false,
-			ClassInput: utils.ClassInputTextEnabled + " w-28",
-			ClassLabel: utils.ClassLabel + " w-24",
+			ClassInput: common.ClassInputTextEnabled + " w-28",
 			TabIndex:   "4",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
@@ -452,15 +472,20 @@ func AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "odmi",
+			LabelText:  "Od Mesta Isp.",
+			ClassLabel: common.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
 		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
 			ID:           "odmi",
 			Name:         "odmi",
-			LabelText:    "Od Mesta Isp.",
 			FieldType:    "text",
-			HasLabel:     true,
 			Disabled:     false,
-			ClassInput:   utils.ClassInputTextEnabled + " w-24",
-			ClassLabel:   utils.ClassLabel + " w-24",
+			ClassInput:   common.ClassInputTextEnabled + " w-24",
 			BlurEndpoint: "api/mi/trazimi",
 			HxTarget:     "odminaziv",
 			MinLength:    "1",
@@ -476,7 +501,7 @@ func AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint, 
 			HxUrl:       "/api/promet/searchbutton",
 			HxTarget:    "#search-dropdown",
 			HxSwap:      "innerHTML",
-			ClassButton: utils.ClassButton,
+			ClassButton: common.ClassButton,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -489,16 +514,21 @@ func AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "domi",
+			LabelText:  "Do Mesta Isp.",
+			ClassLabel: common.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
 		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
 			ID:           "domi",
 			Name:         "domi",
 			Value:        "999",
-			LabelText:    "Do Mesta Isp.",
 			FieldType:    "text",
-			HasLabel:     true,
 			Disabled:     false,
-			ClassInput:   utils.ClassInputTextEnabled + " w-24",
-			ClassLabel:   utils.ClassLabel + " w-24",
+			ClassInput:   common.ClassInputTextEnabled + " w-24",
 			BlurEndpoint: "api/mi/trazimi",
 			HxTarget:     "dominaziv",
 			MinLength:    "1",
@@ -514,7 +544,7 @@ func AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint, 
 			HxUrl:       "/api/promet/searchbutton",
 			HxTarget:    "#search-dropdown",
 			HxSwap:      "innerHTML",
-			ClassButton: utils.ClassButton,
+			ClassButton: common.ClassButton,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -604,7 +634,7 @@ func PrometDeviznihAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, t
 			HxTarget:    "#search-dropdown",
 			HxSwap:      "innerHTML",
 			HxVals:      `{"vkonta": "2"}`,
-			ClassButton: utils.ClassButton,
+			ClassButton: common.ClassButton,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -628,7 +658,7 @@ func PrometDeviznihAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, t
 			HxTarget:    "#search-dropdown",
 			HxSwap:      "innerHTML",
 			HxVals:      `{"vkonta": "1"}`,
-			ClassButton: utils.ClassButton,
+			ClassButton: common.ClassButton,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -641,15 +671,20 @@ func PrometDeviznihAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, t
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "oddatuma",
+			LabelText:  "Od datuma",
+			ClassLabel: common.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
 		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
 			ID:         "oddatuma",
 			Name:       "oddatuma",
-			LabelText:  "Od datuma",
 			FieldType:  "date",
-			HasLabel:   true,
 			Disabled:   false,
-			ClassInput: utils.ClassInputTextEnabled + " w-28",
-			ClassLabel: utils.ClassLabel + " w-24",
+			ClassInput: common.ClassInputTextEnabled + " w-28",
 			TabIndex:   "3",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
@@ -659,15 +694,20 @@ func PrometDeviznihAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, t
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "nalog",
+			LabelText:  "Do datuma",
+			ClassLabel: common.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
 		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
 			ID:         "dodatuma",
 			Name:       "dodatuma",
-			LabelText:  "Do datuma",
 			FieldType:  "date",
-			HasLabel:   true,
 			Disabled:   false,
-			ClassInput: utils.ClassInputTextEnabled + " w-28",
-			ClassLabel: utils.ClassLabel + " w-24",
+			ClassInput: common.ClassInputTextEnabled + " w-28",
 			TabIndex:   "4",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
@@ -761,7 +801,7 @@ func PrometSubsintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPri
 			HxTarget:    "#search-dropdown",
 			HxSwap:      "innerHTML",
 			HxVals:      `{"vkonta": "2"}`,
-			ClassButton: utils.ClassButton,
+			ClassButton: common.ClassButton,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -774,15 +814,20 @@ func PrometSubsintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPri
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "oddatuma",
+			LabelText:  "Od datuma",
+			ClassLabel: common.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
 		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
 			ID:         "oddatuma",
 			Name:       "oddatuma",
-			LabelText:  "Od datuma",
 			FieldType:  "date",
-			HasLabel:   true,
 			Disabled:   false,
-			ClassInput: utils.ClassInputTextEnabled + " w-28",
-			ClassLabel: utils.ClassLabel + " w-24",
+			ClassInput: common.ClassInputTextEnabled + " w-28",
 			TabIndex:   "3",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
@@ -792,15 +837,20 @@ func PrometSubsintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPri
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "dodatuma",
+			LabelText:  "Do datuma",
+			ClassLabel: common.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
 		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
 			ID:         "dodatuma",
 			Name:       "dodatuma",
-			LabelText:  "Do datuma",
 			FieldType:  "date",
-			HasLabel:   true,
 			Disabled:   false,
-			ClassInput: utils.ClassInputTextEnabled + " w-28",
-			ClassLabel: utils.ClassLabel + " w-24",
+			ClassInput: common.ClassInputTextEnabled + " w-28",
 			TabIndex:   "4",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
@@ -886,7 +936,7 @@ func PrometSintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint,
 			HxTarget:    "#search-dropdown",
 			HxSwap:      "innerHTML",
 			HxVals:      `{"vkonta": "2"}`,
-			ClassButton: utils.ClassButton,
+			ClassButton: common.ClassButton,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -899,15 +949,20 @@ func PrometSintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "oddatuma",
+			LabelText:  "Od datuma",
+			ClassLabel: common.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
 		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
 			ID:         "oddatuma",
 			Name:       "oddatuma",
-			LabelText:  "Od datuma",
 			FieldType:  "date",
-			HasLabel:   true,
 			Disabled:   false,
-			ClassInput: utils.ClassInputTextEnabled + " w-28",
-			ClassLabel: utils.ClassLabel + " w-24",
+			ClassInput: common.ClassInputTextEnabled + " w-28",
 			TabIndex:   "3",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
@@ -917,15 +972,20 @@ func PrometSintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "dodatuma",
+			LabelText:  "Do datuma",
+			ClassLabel: common.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
 		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
 			ID:         "dodatuma",
 			Name:       "dodatuma",
-			LabelText:  "Do datuma",
 			FieldType:  "date",
-			HasLabel:   true,
 			Disabled:   false,
-			ClassInput: utils.ClassInputTextEnabled + " w-28",
-			ClassLabel: utils.ClassLabel + " w-24",
+			ClassInput: common.ClassInputTextEnabled + " w-28",
 			TabIndex:   "4",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
@@ -1011,7 +1071,7 @@ func KarticaSintetickiKonta(tabs domain.TabData, tbl domain.TableData, btnPrint,
 			HxTarget:    "#search-dropdown",
 			HxSwap:      "innerHTML",
 			HxVals:      `{"vkonta": "2"}`,
-			ClassButton: utils.ClassButton,
+			ClassButton: common.ClassButton,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -1024,15 +1084,20 @@ func KarticaSintetickiKonta(tabs domain.TabData, tbl domain.TableData, btnPrint,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "oddatuma",
+			LabelText:  "Od datuma",
+			ClassLabel: common.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
 		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
 			ID:         "oddatuma",
 			Name:       "oddatuma",
-			LabelText:  "Od datuma",
 			FieldType:  "date",
-			HasLabel:   true,
 			Disabled:   false,
-			ClassInput: utils.ClassInputTextEnabled + " w-28",
-			ClassLabel: utils.ClassLabel + " w-24",
+			ClassInput: common.ClassInputTextEnabled + " w-28",
 			TabIndex:   "3",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
@@ -1042,15 +1107,20 @@ func KarticaSintetickiKonta(tabs domain.TabData, tbl domain.TableData, btnPrint,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "dodatuma",
+			LabelText:  "Do datuma",
+			ClassLabel: common.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
 		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
 			ID:         "dodatuma",
 			Name:       "dodatuma",
-			LabelText:  "Do datuma",
 			FieldType:  "date",
-			HasLabel:   true,
 			Disabled:   false,
-			ClassInput: utils.ClassInputTextEnabled + " w-28",
-			ClassLabel: utils.ClassLabel + " w-24",
+			ClassInput: common.ClassInputTextEnabled + " w-28",
 			TabIndex:   "4",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
@@ -1173,7 +1243,7 @@ func PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint, 
 			HxTarget:    "#search-dropdown",
 			HxSwap:      "innerHTML",
 			HxVals:      `{"vkonta": "2"}`,
-			ClassButton: utils.ClassButton,
+			ClassButton: common.ClassButton,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -1182,19 +1252,24 @@ func PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 73, "</div><div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 73, "</div><div class=\"flex items-center gap-1 mb-1\">đ")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "odsifre",
+			LabelText:  "Od Sifre",
+			ClassLabel: common.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
 			ID:           "odsifre",
 			Value:        "",
-			LabelText:    "Od Sifre",
 			FieldType:    "text",
-			HasLabel:     true,
 			Disabled:     false,
-			ClassInput:   utils.ClassInputTextEnabled + " w-24",
-			ClassLabel:   utils.ClassLabel + " w-24",
+			ClassInput:   common.ClassInputTextEnabled + " w-24",
 			BlurEndpoint: "api/fkpl/trazikonto",
 			HxTarget:     "sifranaziv",
 			HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`,
@@ -1212,7 +1287,7 @@ func PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint, 
 			HxTarget:    "#search-dropdown",
 			HxSwap:      "innerHTML",
 			HxVals:      `{"vkonta": "1"}`,
-			ClassButton: utils.ClassButton,
+			ClassButton: common.ClassButton,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -1225,14 +1300,19 @@ func PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "dosifre",
+			LabelText:  "Do Sifre",
+			ClassLabel: common.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
 		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
 			ID:           "dosifre",
-			LabelText:    "Do Sifre",
 			FieldType:    "text",
-			HasLabel:     true,
 			Disabled:     false,
-			ClassInput:   utils.ClassInputTextEnabled + " w-24",
-			ClassLabel:   utils.ClassLabel + " w-24",
+			ClassInput:   common.ClassInputTextEnabled + " w-24",
 			BlurEndpoint: "api/fkpl/trazikonto",
 			HxTarget:     "sifranaziv",
 			HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`,
@@ -1250,7 +1330,7 @@ func PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint, 
 			HxTarget:    "#search-dropdown",
 			HxSwap:      "innerHTML",
 			HxVals:      `{"vkonta": "1"}`,
-			ClassButton: utils.ClassButton,
+			ClassButton: common.ClassButton,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -1263,15 +1343,20 @@ func PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "odnaloga",
+			LabelText:  "Od Naloga",
+			ClassLabel: common.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
 		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
 			ID:         "odnaloga",
 			Name:       "odnaloga",
-			LabelText:  "Od Naloga",
 			FieldType:  "text",
-			HasLabel:   true,
 			Disabled:   false,
-			ClassInput: utils.ClassInputTextEnabled + " w-24",
-			ClassLabel: utils.ClassLabel + " w-24",
+			ClassInput: common.ClassInputTextEnabled + " w-24",
 			MinLength:  "1",
 			MaxLength:  "10",
 			TabIndex:   "4",
@@ -1283,15 +1368,20 @@ func PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "donaloga",
+			LabelText:  "Do Naloga",
+			ClassLabel: common.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
 		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
 			ID:         "donaloga",
 			Name:       "donaloga",
-			LabelText:  "Do Naloga",
 			FieldType:  "text",
-			HasLabel:   true,
 			Disabled:   false,
-			ClassInput: utils.ClassInputTextEnabled + " w-24",
-			ClassLabel: utils.ClassLabel + " w-24",
+			ClassInput: common.ClassInputTextEnabled + " w-24",
 			MinLength:  "1",
 			MaxLength:  "10",
 			TabIndex:   "5",
@@ -1356,19 +1446,19 @@ func TotalValues(total domain.PrometTotalValues) templ.Component {
 			templ_7745c5c3_Var17 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 81, "<div id=\"totalvalues\" class=\"border p-1 rounded-lg\"><div class=\"grid grid-cols-4 gap-1 mb-px text-sm font-medium text-gray-700 h-6 items-center\"><div class=\"text-center\"></div><div class=\"text-center\">Duguje</div><div class=\"text-center\">Potražuje</div><div class=\"text-center\">Saldo</div></div><div class=\"grid grid-cols-4 gap-1 mb-1 h-6 items-center\" hx-get=\"/api/promet/totalvalues\" hx-trigger=\"click from:#obrada-btn\" hx-target=\"#totalvalues\" hx-swap=\"innerHTML\" hx-include=\"#konto, #sifra, #oddatuma, #dodatuma\"><div class=\"text-sm text-gray-600\">Promet do:</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 81, "<div id=\"totalvalues\" class=\"border p-1 rounded-lg\" hx-get=\"/api/promet/totalvalues\" hx-trigger=\"click from:#obrada-btn\" hx-target=\"#totalvalues\" hx-swap=\"innerHTML\" hx-vals=\"js:{\r\n            konto: document.getElementById(&#39;konto&#39;)?.value,\r\n            sifra: document.getElementById(&#39;sifra&#39;)?.value,\r\n            oddatuma: document.getElementById(&#39;oddatuma&#39;)?.value,\r\n            dodatuma: document.getElementById(&#39;dodatuma&#39;)?.value\r\n        }\"><div class=\"grid grid-cols-4 gap-1 mb-px text-sm font-medium text-gray-700 h-6 items-center\"><div class=\"text-center\"></div><div class=\"text-center\">Duguje</div><div class=\"text-center\">Potražuje</div><div class=\"text-center\">Saldo</div></div><div class=\"grid grid-cols-4 gap-1 mb-1 h-6 items-center\"><div class=\"text-sm text-gray-600\">Promet do:</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField("dugujedo", total.DugDo, 2, true, utils.ClassInputNumericDisabled).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.NumericInputField("dugujedo", total.DugDo, 2, true, common.ClassInputNumericDisabled).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField("potrazujedo", total.PotDo, 2, true, utils.ClassInputNumericDisabled).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.NumericInputField("potrazujedo", total.PotDo, 2, true, common.ClassInputNumericDisabled).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField("saldodo", total.SaldoDo, 2, true, utils.ClassInputNumericDisabled).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.NumericInputField("saldodo", total.SaldoDo, 2, true, common.ClassInputNumericDisabled).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1376,15 +1466,15 @@ func TotalValues(total domain.PrometTotalValues) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField("dugujeperiod", total.DugPer, 2, true, utils.ClassInputNumericDisabled).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.NumericInputField("dugujeperiod", total.DugPer, 2, true, common.ClassInputNumericDisabled).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField("potrazujeperiod", total.PotPer, 2, true, utils.ClassInputNumericDisabled).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.NumericInputField("potrazujeperiod", total.PotPer, 2, true, common.ClassInputNumericDisabled).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField("saldoperiod", total.SaldoPer, 2, true, utils.ClassInputNumericDisabled).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.NumericInputField("saldoperiod", total.SaldoPer, 2, true, common.ClassInputNumericDisabled).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1392,15 +1482,15 @@ func TotalValues(total domain.PrometTotalValues) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField("dugujeukupno", total.DugTot, 2, true, utils.ClassInputNumericDisabled).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.NumericInputField("dugujeukupno", total.DugTot, 2, true, common.ClassInputNumericDisabled).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField("potrazujeukupno", total.PotTot, 2, true, utils.ClassInputNumericDisabled).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.NumericInputField("potrazujeukupno", total.PotTot, 2, true, common.ClassInputNumericDisabled).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField("saldoukupno", total.SaldoTot, 2, true, utils.ClassInputNumericDisabled).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.NumericInputField("saldoukupno", total.SaldoTot, 2, true, common.ClassInputNumericDisabled).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1433,14 +1523,19 @@ func KontoField() templ.Component {
 			templ_7745c5c3_Var18 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "nalog",
+			LabelText:  "Konto",
+			ClassLabel: common.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
 		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
 			ID:           "konto",
-			LabelText:    "Konto",
 			FieldType:    "text",
-			HasLabel:     true,
 			Disabled:     false,
-			ClassInput:   utils.ClassInputTextEnabled + " w-24",
-			ClassLabel:   utils.ClassLabel + " w-24",
+			ClassInput:   common.ClassInputTextEnabled + " w-24",
 			BlurEndpoint: "api/fkpl/trazikonto",
 			HxTarget:     "kontonaziv",
 			HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "2"}`,
@@ -1479,9 +1574,8 @@ func NazivField(id string) templ.Component {
 		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
 			ID:         id,
 			FieldType:  "text",
-			HasLabel:   false,
 			Disabled:   true,
-			ClassInput: utils.ClassInputTextDisabled,
+			ClassInput: common.ClassInputTextDisabled + " w-full",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -1511,14 +1605,19 @@ func SifraField() templ.Component {
 			templ_7745c5c3_Var20 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "nalog",
+			LabelText:  "Sifra",
+			ClassLabel: common.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
 		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
 			ID:           "sifra",
-			LabelText:    "Sifra",
 			FieldType:    "text",
-			HasLabel:     true,
 			Disabled:     false,
-			ClassInput:   utils.ClassInputTextEnabled + " w-24",
-			ClassLabel:   utils.ClassLabel + " w-24",
+			ClassInput:   common.ClassInputTextEnabled + " w-24",
 			BlurEndpoint: "api/fkpl/trazikonto",
 			HxTarget:     "sifranaziv",
 			HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('sifra').value, "vkonta": "1"}`,

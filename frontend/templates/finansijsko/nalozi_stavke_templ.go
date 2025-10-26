@@ -10,8 +10,8 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import (
 	tmpl "helia/frontend/templates"
+	"helia/internal/common"
 	"helia/internal/domain"
-	"helia/pkg/utils"
 )
 
 func NalogKnjizenjeStavke() templ.Component {
@@ -39,7 +39,7 @@ func NalogKnjizenjeStavke() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField("duguje", 0, 2, true, utils.ClassInputNumericDisabled).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.NumericInputField("duguje", 0, 2, true, common.ClassInputNumericDisabled).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -47,7 +47,7 @@ func NalogKnjizenjeStavke() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField("potrazuje", 0, 2, true, utils.ClassInputNumericDisabled).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.NumericInputField("potrazuje", 0, 2, true, common.ClassInputNumericDisabled).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -55,7 +55,7 @@ func NalogKnjizenjeStavke() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField("saldo", 0, 2, true, utils.ClassInputNumericDisabled).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.NumericInputField("saldo", 0, 2, true, common.ClassInputNumericDisabled).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -74,7 +74,7 @@ func NalogKnjizenjeStavke() templ.Component {
 			HxTarget:    "#search-dropdown",
 			HxSwap:      "innerHTML",
 			HxVals:      `{"vkonta": "2"}`,
-			ClassButton: utils.ClassButton,
+			ClassButton: common.ClassButton,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -98,7 +98,7 @@ func NalogKnjizenjeStavke() templ.Component {
 			HxTarget:    "#search-dropdown",
 			HxSwap:      "innerHTML",
 			HxVals:      `{"vkonta": "1"}`,
-			ClassButton: utils.ClassButton,
+			ClassButton: common.ClassButton,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -111,15 +111,20 @@ func NalogKnjizenjeStavke() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "vrstadokum",
+			LabelText:  "Vrsta dokum.",
+			ClassLabel: common.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
 		templ_7745c5c3_Err = tmpl.ComboBoxField(domain.ComboFieldConfig{
 			ID:          "vrstadokum",
 			Name:        "vrstadokum",
 			Placeholder: "Izaberite vrstu dokumenta",
-			LabelText:   "Vrsta dokum.",
-			HasLabel:    true,
 			Disabled:    false,
-			ClassSelect: utils.ClassInputTextEnabled + " min-w-[80px]",
-			ClassLabel:  utils.ClassLabel + " w-24",
+			ClassSelect: common.ClassInputTextEnabled + " min-w-[80px]",
 			TabIndex:    "5",
 			OptionValues: []domain.ComboItem{
 				{Key: "10", Value: "10-IZDAT RACUN KUPCU"},
@@ -136,16 +141,21 @@ func NalogKnjizenjeStavke() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "opisknjizenja",
+			LabelText:  "Opis knjizenja",
+			ClassLabel: common.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
 		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
 			ID:          "opisknjizenja",
 			Name:        "opisknjizenja",
 			Placeholder: "unesite opis knjizenja",
-			LabelText:   "Opis knjizenja",
 			FieldType:   "text",
-			HasLabel:    true,
 			Disabled:    false,
-			ClassInput:  utils.ClassInputTextEnabled + " w-full ",
-			ClassLabel:  utils.ClassLabel + " w-24",
+			ClassInput:  common.ClassInputTextEnabled + " w-full ",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -154,14 +164,19 @@ func NalogKnjizenjeStavke() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
 			ID:         "magacin",
 			LabelText:  "Magacin",
+			ClassLabel: common.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "magacin",
 			FieldType:  "text",
-			HasLabel:   true,
 			Disabled:   false,
-			ClassInput: utils.ClassInputTextEnabled + "  w-[50px] min-w-[50px]",
-			ClassLabel: utils.ClassLabel + " w-24",
+			ClassInput: common.ClassInputTextEnabled + "  w-[50px] min-w-[50px]",
 			MinLength:  "1",
 			MaxLength:  "4",
 			TabIndex:   "6"}).Render(ctx, templ_7745c5c3_Buffer)
@@ -174,7 +189,7 @@ func NalogKnjizenjeStavke() templ.Component {
 			HxUrl:       "/api/promet/searchbutton",
 			HxTarget:    "#search-dropdown",
 			HxSwap:      "innerHTML",
-			ClassButton: utils.ClassButton,
+			ClassButton: common.ClassButton,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -187,14 +202,19 @@ func NalogKnjizenjeStavke() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
 			ID:         "mestoisporuke",
 			LabelText:  "Mesto isporuke",
+			ClassLabel: common.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "mestoisporuke",
 			FieldType:  "text",
-			HasLabel:   true,
 			Disabled:   false,
-			ClassInput: utils.ClassInputTextEnabled + " w-[50px] min-w-[50px]",
-			ClassLabel: utils.ClassLabel + " w-24",
+			ClassInput: common.ClassInputTextEnabled + " w-[50px] min-w-[50px]",
 			MinLength:  "1",
 			MaxLength:  "4",
 			TabIndex:   "6"}).Render(ctx, templ_7745c5c3_Buffer)
@@ -207,7 +227,7 @@ func NalogKnjizenjeStavke() templ.Component {
 			HxUrl:       "/api/mi/searchbutton",
 			HxTarget:    "#search-dropdown",
 			HxSwap:      "innerHTML",
-			ClassButton: utils.ClassButton,
+			ClassButton: common.ClassButton,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -220,14 +240,19 @@ func NalogKnjizenjeStavke() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
 			ID:         "komercijalista",
 			LabelText:  "Komercijalista",
+			ClassLabel: common.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "komercijalista",
 			FieldType:  "text",
-			HasLabel:   true,
 			Disabled:   false,
-			ClassInput: utils.ClassInputTextEnabled + "  w-[50px] min-w-[50px]",
-			ClassLabel: utils.ClassLabel + " w-24",
+			ClassInput: common.ClassInputTextEnabled + "  w-[50px] min-w-[50px]",
 			MinLength:  "1",
 			MaxLength:  "4",
 			TabIndex:   "6"}).Render(ctx, templ_7745c5c3_Buffer)
@@ -240,7 +265,7 @@ func NalogKnjizenjeStavke() templ.Component {
 			HxUrl:       "/api/komercijalisti/searchbutton",
 			HxTarget:    "#search-dropdown",
 			HxSwap:      "innerHTML",
-			ClassButton: utils.ClassButton,
+			ClassButton: common.ClassButton,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -253,15 +278,20 @@ func NalogKnjizenjeStavke() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "oj",
+			LabelText:  "Org. Jedinica",
+			ClassLabel: common.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
 		templ_7745c5c3_Err = tmpl.ComboBoxField(domain.ComboFieldConfig{
 			ID:           "oj",
 			Name:         "oj",
 			Placeholder:  "izaberite organizacionu jedinicu...",
-			LabelText:    "Org. Jedinica",
-			HasLabel:     true,
 			Disabled:     false,
-			ClassSelect:  utils.ClassInputTextEnabled + " min-w-[80px] w-full",
-			ClassLabel:   utils.ClassLabel + " w-24",
+			ClassSelect:  common.ClassInputTextEnabled + " min-w-[80px] w-full",
 			TabIndex:     "5",
 			OptionValues: []domain.ComboItem{},
 		}).Render(ctx, templ_7745c5c3_Buffer)
@@ -272,15 +302,20 @@ func NalogKnjizenjeStavke() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "mtroska",
+			LabelText:  "Mesto troska",
+			ClassLabel: common.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
 		templ_7745c5c3_Err = tmpl.ComboBoxField(domain.ComboFieldConfig{
 			ID:           "mtroska",
 			Name:         "mtroska",
 			Placeholder:  "izaberite mesto troska...",
-			LabelText:    "Mesto troska",
-			HasLabel:     true,
 			Disabled:     false,
-			ClassSelect:  utils.ClassInputTextEnabled + " min-w-[80px] w-full",
-			ClassLabel:   utils.ClassLabel + " w-24",
+			ClassSelect:  common.ClassInputTextEnabled + " min-w-[80px] w-full",
 			TabIndex:     "5",
 			OptionValues: []domain.ComboItem{},
 		}).Render(ctx, templ_7745c5c3_Buffer)
@@ -291,15 +326,20 @@ func NalogKnjizenjeStavke() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "brojdokum",
+			LabelText:  "Broj Dokumenta",
+			ClassLabel: common.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
 		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
 			ID:         "brojdokum",
 			Name:       "brojdokum",
-			LabelText:  "Broj Dokumenta",
 			FieldType:  "text",
-			HasLabel:   true,
 			Disabled:   false,
-			ClassInput: utils.ClassInputTextEnabled + " min-w-[50px]",
-			ClassLabel: utils.ClassLabel + " w-24",
+			ClassInput: common.ClassInputTextEnabled + " min-w-[50px]",
 			MinLength:  "0",
 			MaxLength:  "10",
 			TabIndex:   "6"}).Render(ctx, templ_7745c5c3_Buffer)
@@ -310,15 +350,20 @@ func NalogKnjizenjeStavke() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "goddokum",
+			LabelText:  "Godina dokum.",
+			ClassLabel: common.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
 		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
 			ID:         "goddokum",
 			Name:       "goddokum",
-			LabelText:  "Godina dokum.",
 			FieldType:  "text",
-			HasLabel:   true,
 			Disabled:   false,
-			ClassInput: utils.ClassInputTextEnabled + "  min-w-[50px]",
-			ClassLabel: utils.ClassLabel + " w-24",
+			ClassInput: common.ClassInputTextEnabled + "  min-w-[50px]",
 			MinLength:  "4",
 			MaxLength:  "4",
 			TabIndex:   "6"}).Render(ctx, templ_7745c5c3_Buffer)
@@ -329,15 +374,20 @@ func NalogKnjizenjeStavke() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "datdokum",
+			LabelText:  "Datum dokum.",
+			ClassLabel: common.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
 		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
 			ID:         "datdokum",
 			Name:       "datdokum",
-			LabelText:  "Datum dokum.",
 			FieldType:  "date",
-			HasLabel:   true,
 			Disabled:   false,
-			ClassInput: utils.ClassInputTextEnabled + " min-w-[50px]",
-			ClassLabel: utils.ClassLabel + " w-24",
+			ClassInput: common.ClassInputTextEnabled + " min-w-[50px]",
 			MinLength:  "4",
 			MaxLength:  "10",
 			TabIndex:   "6"}).Render(ctx, templ_7745c5c3_Buffer)
@@ -348,14 +398,19 @@ func NalogKnjizenjeStavke() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
 			ID:         "rok",
 			LabelText:  "Rok",
+			ClassLabel: common.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "rok",
 			FieldType:  "text",
-			HasLabel:   true,
 			Disabled:   false,
-			ClassInput: utils.ClassInputTextEnabled + " min-w-[50px]",
-			ClassLabel: utils.ClassLabel + " w-24",
+			ClassInput: common.ClassInputTextEnabled + " min-w-[50px]",
 			MinLength:  "4",
 			MaxLength:  "4",
 			TabIndex:   "6"}).Render(ctx, templ_7745c5c3_Buffer)
@@ -366,15 +421,20 @@ func NalogKnjizenjeStavke() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "brvezndokum",
+			LabelText:  "Br. Vezn. Dokum.",
+			ClassLabel: common.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
 		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
 			ID:         "brvezndokum",
 			Name:       "brvezndokum",
-			LabelText:  "Br. Vezn. Dokum.",
 			FieldType:  "text",
-			HasLabel:   true,
 			Disabled:   false,
-			ClassInput: utils.ClassInputTextEnabled + " min-w-[50px]",
-			ClassLabel: utils.ClassLabel + " w-24",
+			ClassInput: common.ClassInputTextEnabled + " min-w-[50px]",
 			MinLength:  "0",
 			MaxLength:  "10",
 			TabIndex:   "6"}).Render(ctx, templ_7745c5c3_Buffer)
@@ -385,15 +445,20 @@ func NalogKnjizenjeStavke() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "godinavezndokum",
+			LabelText:  "God. Vezn. Dokum.",
+			ClassLabel: common.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
 		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
 			ID:         "godinavezndokum",
 			Name:       "godinavezndokum",
-			LabelText:  "God. Vezn. Dokum.",
 			FieldType:  "text",
-			HasLabel:   true,
 			Disabled:   false,
-			ClassInput: utils.ClassInputTextEnabled + " min-w-[50px]",
-			ClassLabel: utils.ClassLabel + " w-24",
+			ClassInput: common.ClassInputTextEnabled + " min-w-[50px]",
 			MinLength:  "0",
 			MaxLength:  "10",
 			TabIndex:   "6"}).Render(ctx, templ_7745c5c3_Buffer)
@@ -404,15 +469,20 @@ func NalogKnjizenjeStavke() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "datveznogdokum",
+			LabelText:  "Datum veznog dokum.",
+			ClassLabel: common.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
 		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
 			ID:         "datveznogdokum",
 			Name:       "datveznogdokum",
-			LabelText:  "Datum veznog dokum.",
 			FieldType:  "date",
-			HasLabel:   true,
 			Disabled:   false,
-			ClassInput: utils.ClassInputTextEnabled + " min-w-[50px]",
-			ClassLabel: utils.ClassLabel + " w-24",
+			ClassInput: common.ClassInputTextEnabled + " min-w-[50px]",
 			MinLength:  "4",
 			MaxLength:  "10",
 			TabIndex:   "6"}).Render(ctx, templ_7745c5c3_Buffer)
@@ -423,15 +493,20 @@ func NalogKnjizenjeStavke() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "napomena",
+			LabelText:  "Napomena",
+			ClassLabel: common.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
 		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
 			ID:         "napomena",
 			Name:       "napomena",
-			LabelText:  "Napomena",
 			FieldType:  "text",
-			HasLabel:   true,
 			Disabled:   false,
-			ClassInput: utils.ClassInputTextEnabled + " min-w-[50px]",
-			ClassLabel: utils.ClassLabel + " w-24",
+			ClassInput: common.ClassInputTextEnabled + " min-w-[50px]",
 			MinLength:  "0",
 			MaxLength:  "1000",
 			TabIndex:   "6"}).Render(ctx, templ_7745c5c3_Buffer)

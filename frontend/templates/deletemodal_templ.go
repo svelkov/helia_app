@@ -10,7 +10,7 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import "helia/internal/domain"
 
-func DeleteDialog(dialog domain.Dialog) templ.Component {
+func DeleteDialog(dialog domain.Dialog, btnConfirm, btnCancel, btnClose domain.Button) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -31,7 +31,7 @@ func DeleteDialog(dialog domain.Dialog) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = Dialog("delete-dialog", DeleteDialogContent(dialog.Id), dialog).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = Dialog("delete-dialog", DeleteDialogContent(dialog.Id), dialog, btnConfirm, btnCancel, btnClose).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -60,14 +60,14 @@ func DeleteDialogContent(rowID string) templ.Component {
 			templ_7745c5c3_Var2 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<p class=\"mb-6\">Da li zelite da obrišete slog sa ID: ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<p class=\"mt-3 mb-3 ml-3 text-xl flex items-center justify-center gap-2\">Da li zelite da obrišete slog sa ID: ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(rowID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/deletemodal.templ`, Line: 10, Col: 62}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/deletemodal.templ`, Line: 10, Col: 119}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {

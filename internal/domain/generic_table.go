@@ -25,6 +25,7 @@ type TableData struct {
 	ShowPagination bool
 	DetailTarget   string
 	DetailURL      string
+	ExportFilename string
 }
 
 type PaginationData struct {
@@ -36,6 +37,7 @@ type PaginationData struct {
 	EndRecord    int
 	PageSizes    []int
 	HxInclude    string
+	HxVals       string
 }
 
 type PageData struct {

@@ -1,80 +1,81 @@
 package templates
 
 import (
-	"fmt"
+	"helia/internal/common"
 	"helia/internal/domain"
 )
 
 // modalConfirmButton returns a button with the appropriate hx-attribute.
 // The default is hx-post.
-templ ModalConfirmButton(method string, dialog domain.Dialog) {
-	if (method == "DELETE") {
+templ ConfirmButton(btn domain.Button) {
+	if (btn.HxRequestType == "DELETE") {
 		<button
-			id="modal-confirm-btn"
-			class="px-3 py-1 bg-red-600  rounded h-7 rounded text-xs flex text-white items-center"
-			hx-delete={ dialog.HxActionURL }
-			hx-target={ dialog.HxTarget }
-			hx-swap={ dialog.HxSwap }
-			hx-on::after-request="handleDialogResponse('delete-dialog')"
+			id={ btn.Id }
+			class={ btn.BtnClass }
+			hx-delete={ btn.HxActionURL }
+			hx-target={ btn.HxTarget }
+			hx-swap={ btn.HxSwap }
+			hx-vals='{"id": ""}'
+			hx-on::after-request={ templ.JSFuncCall("handleDialogResponse", btn.IdDialog) }
 		>
-			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6 mr-3">
+			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6 mr-1">
 				<path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clip-rule="evenodd"></path>
 			</svg>
-			{ dialog.OkText }
+			{ btn.LabelText }
 		</button>
 	}
-	if (method == "PUT") {
+	if (btn.HxRequestType == "PUT") {
 		<button
-			id="modal-confirm-btn"
-			hx-put={ dialog.HxActionURL }
-			hx-target={ dialog.HxTarget }
-			hx-swap={ dialog.HxSwap }
-			hx-on::after-request="handleDialogResponse('addupdate-dialog')"
-			class="px-3 py-1 bg-green-600  rounded h-7 rounded text-xs flex text-white items-center"
+			id={ btn.Id }
+			class={ btn.BtnClass }
+			hx-put={ btn.HxActionURL }
+			hx-target={ btn.HxTarget }
+			hx-swap={ btn.HxSwap }
+			hx-on::after-request={ templ.JSFuncCall("handleDialogResponse", btn.IdDialog) }
 		>
-			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6 mr-3">
+			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6 mr-1">
 				<path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clip-rule="evenodd"></path>
 			</svg>
-			{ dialog.SaveText }
+			{ btn.LabelText }
 		</button>
 	}
-	if  (method == "POST") {
+	if  (btn.HxRequestType == "POST") {
 		<button
-			id="modal-confirm-btn"
-			hx-post={ dialog.HxActionURL }
-			hx-target={ dialog.HxTarget }
-			hx-swap={ dialog.HxSwap }
-			hx-on::after-request="handleDialogResponse('addupdate-dialog')"
-			class="px-3 py-1 bg-green-600 rounded h-7 rounded text-xs flex text-white items-center"
+			id={ btn.Id }
+			class={ btn.BtnClass }
+			hx-post={ btn.HxActionURL }
+			hx-target={ btn.HxTarget }
+			hx-swap={ btn.HxSwap }
+			hx-on::after-request={ templ.JSFuncCall("handleDialogResponse", btn.IdDialog) }
 		>
-			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6 mr-3">
+			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6 mr-1">
 				<path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clip-rule="evenodd"></path>
 			</svg>
-			{ dialog.SaveText }
+			{ btn.LabelText }
 		</button>
 	}
 }
 
-templ ModalCancelButton(dialogName string, btn domain.Dialog) {
+templ CancelButton(btn domain.Button) {
 	<button
-		id="modal-cancel-btn"
+		id={ btn.Id }
 		type="button"
-		onclick={ templ.JSFuncCall("closeDialog", dialogName) }
-		class="px-3 py-1 bg-gray-600 rounded h-7 rounded text-xs flex text-white items-center"
+		onclick={ templ.JSFuncCall("closeDialog", btn.IdDialog) }
+		class={ btn.BtnClass }
 	>
-		<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6 mr-3">
+		<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 mr-1">
 			<path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25Zm-1.72 6.97a.75.75 0 1 0-1.06 1.06L10.94 12l-1.72 1.72a.75.75 0 1 0 1.06 1.06L12 13.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L13.06 12l1.72-1.72a.75.75 0 1 0-1.06-1.06L12 10.94l-1.72-1.72Z" clip-rule="evenodd"></path>
 		</svg>
-		{ btn.CancelText }
+		{ btn.LabelText }
 	</button>
 }
 
-templ ModalCloseButton(dialogName string) {
+templ CloseButton(btn domain.Button) {
 	<button
-		id="modal-close-btn"
+		id={ btn.Id }
 		type="button"
-		onclick={ templ.JSFuncCall("closeDialog", dialogName) }
-		class="text-white hover:text-gray-300 mr-4"
+		onclick={ templ.JSFuncCall("closeDialog", btn.IdDialog) }
+		class={ btn.BtnClass }
 	>
 		<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 			<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -82,40 +83,10 @@ templ ModalCloseButton(dialogName string) {
 	</button>
 }
 
-templ FormSaveButton(btn domain.Button) {
+templ AddButton(btn domain.Button) {
 	<button
 		id={ btn.Id }
-		class="bg-green-600 rounded h-7 px-1 py-1 mr-1 rounded text-xs flex text-white items-center"
-		if btn.HxRequestType == "POST" {
-			hx-post={ btn.HxActionURL }
-		}
-		if btn.HxRequestType == "GET" {
-			hx-get={ btn.HxActionURL }
-		}
-		if btn.HxRequestType == "DELETE" {
-			hx-delete={ btn.HxActionURL }
-		}
-		if btn.HxRequestType == "PUT" {
-			hx-put={ btn.HxActionURL }
-		}
-		hx-target={ btn.HxTarget }
-		hx-swap={ btn.HxSwap }
-		hx-include={ btn.HxInclude }
-		if btn.HxOn != "" {
-			hx-on::after-request={ templ.JSFuncCall("handleDialogResponse", btn.IdDialog) }
-		}
-	>
-		<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6 mr-4">
-			<path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clip-rule="evenodd"></path>
-		</svg>
-		{ btn.LabelText }
-	</button>
-}
-
-templ FormAddButton(btn domain.Button) {
-	<button
-		id={ btn.Id }
-		class="bg-blue-600 rounded h-7 px-1 py-1 mr-1 rounded text-xs flex text-white items-center"
+		class={ btn.BtnClass }
 		if btn.HxRequestType == "POST" {
 			hx-post={ btn.HxActionURL }
 		}
@@ -138,7 +109,7 @@ templ FormAddButton(btn domain.Button) {
 			hx-include={ btn.HxInclude }
 		}
 		if btn.HxOnAfterRequest != "" {
-			hx-on::htmx:after-request={ templ.JSFuncCall(btn.HxOnAfterRequest) }
+			hx-on::htmx:after-request="templ.JSFuncCall(btn.HxOnAfterRequest)"
 		}
 	>
 		<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6 mr-2">
@@ -148,10 +119,43 @@ templ FormAddButton(btn domain.Button) {
 	</button>
 }
 
+templ SaveButton(btn domain.Button) {
+	<button
+		id={ btn.Id }
+		class={ btn.BtnClass }
+		if btn.HxRequestType == "POST" {
+			hx-post={ btn.HxActionURL }
+		}
+		if btn.HxRequestType == "GET" {
+			hx-get={ btn.HxActionURL }
+		}
+		if btn.HxRequestType == "DELETE" {
+			hx-delete={ btn.HxActionURL }
+		}
+		if btn.HxRequestType == "PUT" {
+			hx-put={ btn.HxActionURL }
+		}
+		if btn.HxTarget != "" {
+			hx-target={ btn.HxTarget }
+		}
+		if btn.HxSwap != "" {
+			hx-swap={ btn.HxSwap }
+		}
+		if btn.HxOnAfterRequest != "" {
+			hx-on::after-request={ templ.JSFuncCall("handleDialogResponse", btn.IdDialog) }
+		}
+	>
+		<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6 mr-2">
+			<path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clip-rule="evenodd"></path>
+		</svg>
+		{ btn.LabelText }
+	</button>
+}
+
 templ FormObradaButton(btn domain.Button) {
 	<button
 		id={ btn.Id }
-		class="h-7 text-sm bg-blue-600 hover:bg-blue-700 text-white font-medium py-0 px-2 rounded-sm flex items-center space-x-1"
+		class={ btn.BtnClass }
 		if btn.HxRequestType == "POST" {
 			hx-post={ btn.HxActionURL }
 		}
@@ -177,20 +181,31 @@ templ FormObradaButton(btn domain.Button) {
 			hx-vals={ btn.HxVals }
 		}
 		hx-headers='{"X-Request-Source": "btnobrada"}'
-		hx-on::after-request={ templ.JSFuncCall("handleDialogResponse", btn.IdDialog) }
 	>
 		<!-- Gear icon -->
-		<svg class="h-5 w-5">
-			<use href={ fmt.Sprintf("/frontend/static/icons/allicons.svg#%s", btn.Icon) } xlink:href={ fmt.Sprintf("/frontend/static/icons/allicons.svg#%s", btn.Icon) }></use>
-		</svg>
+		@Icon("fin_obrada")
 		{ btn.LabelText }
 	</button>
+}
+
+// Icon renders an SVG icon by name
+templ Icon(name string) {
+	if svg, ok := common.IconSVG[name]; ok {
+		<svg class="h-5 w-5 mr-2 inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+			@templ.Raw(svg)
+		</svg>
+	} else {
+		<!-- Fallback icon if not found -->
+		<svg class="h-5 w-5 mr-2 inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+			<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"></path>
+		</svg>
+	}
 }
 
 templ FormPrintButton(btn domain.Button) {
 	<button
 		id={ btn.Id }
-		class="h-7 text-sm bg-blue-600 hover:bg-blue-700 text-white font-medium py-0 px-2 rounded-sm flex items-center space-x-1"
+		class={ btn.BtnClass }
 		if btn.HxRequestType == "POST" {
 			hx-post={ btn.HxActionURL }
 		}
@@ -210,9 +225,7 @@ templ FormPrintButton(btn domain.Button) {
 		hx-on::after-request={ templ.JSFuncCall("handleDialogResponse", btn.IdDialog) }
 	>
 		<!-- Print icon -->
-		<svg class="h-6 w-6">
-			<use href={ fmt.Sprintf("/frontend/static/icons/allicons.svg#%s", btn.Icon) } xlink:href={ fmt.Sprintf("/frontend/static/icons/allicons.svg#%s", btn.Icon) }></use>
-		</svg>
+		@Icon("stampa")
 		{ btn.LabelText }
 	</button>
 }

@@ -6,9 +6,24 @@ import (
 )
 
 type Fvr struct {
-	God   int    `json:"god" db:"god"`
-	Kar   int    `json:"kar" db:"kar"`
-	Naziv string `json:"naziv" db:"naziv"`
+	God    int    `json:"god" db:"god"`
+	Kar    int    `json:"kar" db:"kar"`
+	Naziv  string `json:"naziv" db:"naziv"`
+	Adresa string `json:"adresa" db:"adresa"`
+}
+
+type Firma struct {
+	Firme []FvrFirma `json:"firme"`
+}
+type FvrFirma struct {
+	IDFirma int    `json:"idfirma" db:"idfvr"`
+	Godine     []Godina  `json:"god" db:"god"`
+	Naziv   string `json:"naziv" db:"naziv"`
+	Adresa  string `json:"adresa" db:"adresa"`
+}
+type Godina	 struct {
+	God int `json:"god" db:"god"`
+	Kar     []int  `json:"kar" db:"kar"`
 }
 
 // Drzave Model

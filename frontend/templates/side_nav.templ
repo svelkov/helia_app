@@ -7,7 +7,7 @@ import (
 
 templ Side_nav(submenu []domain.SubMenuItem) {
 	// Side menu navigation area
-	<div id="side-menu" class="bg-gray-700 text-white w-64text-sm">
+	<div id="side-menu" class="bg-gray-700 text-white w-64 text-sm border-b rounded-sm">
 		<ul class="flex flex-col mb-auto gap-1">
 			<!-- Use 'gap-1' for tighter spacing -->
 			for _, item := range submenu {
@@ -16,17 +16,18 @@ templ Side_nav(submenu []domain.SubMenuItem) {
 						hx-get={ fmt.Sprintf("%s", item.URL) }
 						hx-target="#content"
 						hx-swap="innerHTML"
-						class="side-nav-item flex items-center py-2 px-3 hover:bg-blue-600 rounded-md"
+						class="side-nav-item flex items-center py-1 px-3 hover:bg-blue-600  border-b rounded-md"
 						onclick="
                         document.querySelectorAll('#side-menu .side-nav-item').forEach(function(a) {
-                            a.className = 'side-nav-item flex items-center py-2 px-3 hover:bg-gray-700 rounded-md text-gray-300';
+                            a.className = 'side-nav-item flex items-center py-1 px-3  hover:bg-blue-600  border-b rounded-md text-gray-300';
                         });
-                        this.className = 'side-nav-item flex items-center py-2 px-3 bg-white text-blue-800';
+                        this.className = 'side-nav-item flex items-center py-1 px-3 bg-white border-b text-blue-800';
                     "
 					>
-						<svg class="h-5 w-5 mr-2">
-							<use href={ fmt.Sprintf("/frontend/static/icons/allicons.svg#%s", item.Icon) } xlink:href={ fmt.Sprintf("/frontend/static/icons/allicons.svg#%s", item.Icon) }></use>
-						</svg>
+						@Icon(item.Icon)
+						// <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor">
+						//	<use href={ fmt.Sprintf("/frontend/static/icons/allicons.svg#%s", item.Icon) } xlink:href={ fmt.Sprintf("/frontend/static/icons/allicons.svg#%s", item.Icon) }></use>
+						// </svg>
 						<span class="medium">{ item.Name }</span>
 						// Replace with your Tailwind icon or text
 						// <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">

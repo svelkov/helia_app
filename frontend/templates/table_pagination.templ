@@ -3,6 +3,7 @@ package templates
 
 import (
 	"fmt"
+	"helia/internal/common"
 	"helia/internal/domain"
 )
 
@@ -16,7 +17,12 @@ templ TablePagination(tbl domain.TableData) {
 				hx-get={ fmt.Sprintf("%s", tbl.URLGetAll) }
 				hx-target={ fmt.Sprintf("#%s", tbl.TableID) }
 				hx-trigger="change"
-				hx-include={ tbl.Pagination.HxInclude }
+				if tbl.Pagination.HxInclude !="" {
+					hx-include={ tbl.Pagination.HxInclude }
+				}
+				if tbl.Pagination.HxVals !="" {
+					hx-vals={ tbl.Pagination.HxVals }
+				}
 				hx-headers='{"X-Request-Source": "btnpage"}'
 				name="pageSize"
 			>
@@ -33,34 +39,20 @@ templ TablePagination(tbl domain.TableData) {
 		</div>
 		<ul class="inline-flex items-center -space-x-px h-8 text-sm">
 			if tbl.Pagination.CurrentPage > 1 {
-				<li>
-					<a
-						hx-get={ fmt.Sprintf("%s?page=%d&pageSize=%d", tbl.URLGetAll, tbl.Pagination.CurrentPage-1, tbl.Pagination.PageSize) }
-						hx-target={ fmt.Sprintf("#%s", tbl.TableID) }
-						hx-include={ tbl.Pagination.HxInclude }
-						hx-headers='{"X-Request-Source": "btnpage"}'
-						class="block px-3 py-1 leading-tight text-gray-500 bg-white border border-gray-300 rounded-r-lg hover:bg-gray-100 hover:text-gray-700"
-					>
-						Prethodna
-					</a>
-				</li>
+				@PagerElement(tbl, "Prethodna", tbl.Pagination.CurrentPage-1, common.ClassTablePageButton)
 			}
 			if tbl.Pagination.CurrentPage > 3 {
-				<li>
-					<a
-						hx-get={ fmt.Sprintf("%s?page=%d&pageSize=%d", tbl.URLGetAll, 1, tbl.Pagination.PageSize) }
-						hx-target={ fmt.Sprintf("#%s", tbl.TableID) }
-						hx-headers='{"X-Request-Source": "btnpage"}'
-						class="block px-3 py-1 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700"
-					>
-						1
-					</a>
-				</li>
+				@PagerElement(tbl, "1", 1, common.ClassTablePageButton)
 				if tbl.Pagination.CurrentPage > 4 {
 					<li>
 						<span
 							class="block px-3 py-1 leading-tight text-gray-500 bg-white border border-gray-300"
-							hx-include={ tbl.Pagination.HxInclude }
+							if tbl.Pagination.HxInclude !="" {
+								hx-include={ tbl.Pagination.HxInclude }
+							}
+							if tbl.Pagination.HxVals !="" {
+								hx-vals={ tbl.Pagination.HxVals }
+							}
 							hx-headers='{"X-Request-Source": "btnpage"}'
 						>...</span>
 					</li>
@@ -68,29 +60,9 @@ templ TablePagination(tbl domain.TableData) {
 			}
 			for i := max(1, tbl.Pagination.CurrentPage-2); i <= min(tbl.Pagination.TotalPages, tbl.Pagination.CurrentPage+2); i++ {
 				if i == tbl.Pagination.CurrentPage {
-					<li>
-						<a
-							hx-get={ fmt.Sprintf("%s?page=%d&pageSize=%d", tbl.URLGetAll, i, tbl.Pagination.PageSize) }
-							hx-target={ fmt.Sprintf("#%s", tbl.TableID) }
-							hx-include={ tbl.Pagination.HxInclude }
-							hx-headers='{"X-Request-Source": "btnpage"}'
-							class="block px-3 py-1 leading-tight text-blue-700 bg-blue-100 border border-gray-300"
-						>
-							{ fmt.Sprintf("%d", i) }
-						</a>
-					</li>
+					@PagerElement(tbl, fmt.Sprintf("%d", i), i, common.ClassTablePageButtonSelected)
 				} else {
-					<li>
-						<a
-							hx-get={ fmt.Sprintf("%s?page=%d&pageSize=%d", tbl.URLGetAll, i, tbl.Pagination.PageSize) }
-							hx-target={ fmt.Sprintf("#%s", tbl.TableID) }
-							hx-include={ tbl.Pagination.HxInclude }
-							hx-headers='{"X-Request-Source": "btnpage"}'
-							class="block px-3 py-1 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700"
-						>
-							{ fmt.Sprintf("%d", i) }
-						</a>
-					</li>
+					@PagerElement(tbl, fmt.Sprintf("%d", i), i, common.ClassTablePageButton)
 				}
 			}
 			if tbl.Pagination.CurrentPage < tbl.Pagination.TotalPages-2 {
@@ -98,36 +70,40 @@ templ TablePagination(tbl domain.TableData) {
 					<li>
 						<span
 							class="block px-3 py-1 leading-tight text-gray-500 bg-white border border-gray-300"
-							hx-include={ tbl.Pagination.HxInclude }
+							if tbl.Pagination.HxInclude !="" {
+								hx-include={ tbl.Pagination.HxInclude }
+							}
+							if tbl.Pagination.HxVals !="" {
+								hx-vals={ tbl.Pagination.HxVals }
+							}
 							hx-headers='{"X-Request-Source": "btnpage"}'
 						>...</span>
 					</li>
 				}
-				<li>
-					<a
-						hx-get={ fmt.Sprintf("%s?page=%d&pageSize=%d", tbl.URLGetAll, tbl.Pagination.TotalPages, tbl.Pagination.PageSize) }
-						hx-target={ fmt.Sprintf("#%s", tbl.TableID) }
-						hx-include={ tbl.Pagination.HxInclude }
-						hx-headers='{"X-Request-Source": "btnpage"}'
-						class="block px-3 py-1 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700"
-					>
-						{ fmt.Sprintf("%d", tbl.Pagination.TotalPages) }
-					</a>
-				</li>
+				@PagerElement(tbl, fmt.Sprintf("%d", tbl.Pagination.TotalPages), tbl.Pagination.TotalPages, common.ClassTablePageButton)
 			}
 			if tbl.Pagination.CurrentPage < tbl.Pagination.TotalPages {
-				<li>
-					<a
-						hx-get={ fmt.Sprintf("%s?page=%d&pageSize=%d", tbl.URLGetAll, tbl.Pagination.CurrentPage+1, tbl.Pagination.PageSize) }
-						hx-target={ fmt.Sprintf("#%s", tbl.TableID) }
-						hx-include={ tbl.Pagination.HxInclude }
-						hx-headers='{"X-Request-Source": "btnpage"}'
-						class="block px-3 py-1 leading-tight text-gray-500 bg-white border border-gray-300 rounded-r-lg hover:bg-gray-100 hover:text-gray-700"
-					>
-						Sledeća
-					</a>
-				</li>
+				@PagerElement(tbl, "Sledeća", tbl.Pagination.CurrentPage+1, common.ClassTablePageButton)
 			}
 		</ul>
 	</nav>
+}
+
+templ PagerElement(tbl domain.TableData, labelText string, pageNumber int, buttonClass string) {
+	<li>
+		<a
+			hx-get={ fmt.Sprintf("%s?page=%d&pageSize=%d", tbl.URLGetAll, pageNumber, tbl.Pagination.PageSize) }
+			hx-target={ fmt.Sprintf("#%s", tbl.TableID) }
+			if tbl.Pagination.HxInclude !="" {
+				hx-include={ tbl.Pagination.HxInclude }
+			}
+			if tbl.Pagination.HxVals !="" {
+				hx-vals={ tbl.Pagination.HxVals }
+			}
+			hx-headers='{"X-Request-Source": "btnpage"}'
+			class={ buttonClass }
+		>
+			{ labelText }
+		</a>
+	</li>
 }

@@ -40,37 +40,38 @@ templ Search_Part(tbl domain.TableData, searchControl domain.InputControl) {
 				</svg>
 			</div>
 			if tbl.BtnAdd.IsVisible {
-				@Search_PartAddButton(tbl)
+				@Search_PartAddButton(tbl.BtnAdd)
 			}
 			if tbl.BtnPrint.IsVisible {
-				@Search_PartPrintButton(tbl)
+				@Search_PartPrintButton(tbl.BtnPrint)
 			}
 		</div>
 	</div>
 }
 
-templ Search_PartAddButton(tbl domain.TableData) {
+templ Search_PartAddButton(btn domain.Button) {
 	<button
-		class="bg-green-500 hover:bg-green-700 text-white h-6 px-1 py-1 mr-1 rounded text-xs flex items-center justify-center w-20"
-		hx-get={ tbl.BtnAdd.HxActionURL }
+		class={ common.ClassAddButton }
+		if btn.HxActionURL != "" {
+			hx-get={ btn.HxActionURL }
+		}
 		hx-target="#dialog-container"
 		hx-swap="innerHTML"
 		onclick="deactivateActionsColumn()"
 	>
-		<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6 mr-1">
-			<path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25ZM12.75 9a.75.75 0 0 0-1.5 0v2.25H9a.75.75 0 0 0 0 1.5h2.25V15a.75.75 0 0 0 1.5 0v-2.25H15a.75.75 0 0 0 0-1.5h-2.25V9Z" clip-rule="evenodd"></path>
-		</svg>
-		{ tbl.BtnAdd.LabelText }
+		@Icon("add", common.ClassIcon)
+		{ btn.LabelText }
 	</button>
 }
 
-templ Search_PartPrintButton(tbl domain.TableData) {
+templ Search_PartPrintButton(btn domain.Button) {
 	<a
-		href={ templ.URL(tbl.BtnPrint.HxActionURL) }
+		href={ templ.URL(btn.HxActionURL) }
 		target="_blank"
 		rel="noopener noreferrer"
-		class={ common.ClassPrintButton}>
-		@Icon("stampa")
-		{ tbl.BtnPrint.LabelText }
+		class={ common.ClassPrintButton }
+	>
+		@Icon("stampa", common.ClassIcon)
+		{ btn.LabelText }
 	</a>
 }

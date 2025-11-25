@@ -11,11 +11,12 @@ import templruntime "github.com/a-h/templ/runtime"
 import (
 	"fmt"
 	"helia/internal/domain"
+	"helia/internal/i18n"
 	"net/url"
 	"strings"
 )
 
-func TopMenu(menuItems domain.MenuDataItems, currentMenu string, comboCompany, comboPoslGod, comboKar domain.ComboFieldConfig) templ.Component {
+func TopMenu(menuItems domain.MenuDataItems, currentMenu string, comboCompany, comboPoslGod, comboKar domain.ComboFieldConfig, translator *i18n.Service, lang string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -36,7 +37,7 @@ func TopMenu(menuItems domain.MenuDataItems, currentMenu string, comboCompany, c
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"bg-gradient-to-r from-blue-400 to-blue-900 text-white shadow-xl shadow-blue-600/50\"><nav class=\"flex flex-wrap\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"bg-gradient-to-r from-blue-900 to-blue-900 text-white shadow-xl shadow-blue-600/50\"><nav class=\"flex flex-wrap\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -48,7 +49,7 @@ func TopMenu(menuItems domain.MenuDataItems, currentMenu string, comboCompany, c
 			var templ_7745c5c3_Var2 string
 			templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("menu-%s", strings.ReplaceAll(strings.ToLower(item.Name), " ", "-")))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/headermenu.templ`, Line: 15, Col: 90}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/headermenu.templ`, Line: 16, Col: 90}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 			if templ_7745c5c3_Err != nil {
@@ -59,9 +60,9 @@ func TopMenu(menuItems domain.MenuDataItems, currentMenu string, comboCompany, c
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var3 string
-			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(item.Name)
+			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Menu(lang, item.Name))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/headermenu.templ`, Line: 16, Col: 21}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/headermenu.templ`, Line: 17, Col: 44}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -74,7 +75,7 @@ func TopMenu(menuItems domain.MenuDataItems, currentMenu string, comboCompany, c
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("/get-menu?menuName=%s", url.QueryEscape(item.Name)))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/headermenu.templ`, Line: 17, Col: 78}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/headermenu.templ`, Line: 18, Col: 78}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
@@ -102,7 +103,7 @@ func TopMenu(menuItems domain.MenuDataItems, currentMenu string, comboCompany, c
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(item.DisplayName)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/headermenu.templ`, Line: 30, Col: 23}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/headermenu.templ`, Line: 31, Col: 23}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {

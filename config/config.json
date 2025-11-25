@@ -7,7 +7,9 @@
         "db_name": "conto",
         "db_search_path": "baza"
     },
-    "page_size": 20,
+    "page_size": 15,
+    "page_sizes": [10, 15, 25, 50],
     "env": "dev",
-    "port": "8080"
+    "port": "8080",
+    "languages": ["SR", "СР", "EN"]
 }

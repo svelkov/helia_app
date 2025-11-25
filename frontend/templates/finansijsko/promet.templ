@@ -91,7 +91,7 @@ templ PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 						HxUrl:       "/api/promet/searchbutton",
 						HxTarget:    "#search-dropdown",
 						HxSwap:      "innerHTML",
-						HxVals:      `{"vkonta": "1"}`,
+						HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`,
 						ClassButton: common.ClassButton,
 					})
 					@NazivField("sifranaziv")
@@ -109,6 +109,7 @@ templ PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 						Disabled:   false,
 						ClassInput: common.ClassInputTextEnabled + " w-28",
 						TabIndex:   "3",
+						OnInput:    "clearFieldError",
 					})
 				</div>
 				<div class="flex items-center gap-1 mb-1">
@@ -124,6 +125,7 @@ templ PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 						Disabled:   false,
 						ClassInput: common.ClassInputTextEnabled + " w-28",
 						TabIndex:   "4",
+						OnInput:    "clearFieldError",
 					})
 				</div>
 				<div class="mb-1 flex items-center justify-between h-6">
@@ -152,6 +154,7 @@ templ PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 			</div>
 		</div>
 	</div>
+	@tmpl.ShowMessage()
 }
 
 // Tab 2 - Analiticka kartica po mestama isporuke
@@ -185,7 +188,7 @@ templ AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint,
 						HxUrl:       "/api/promet/searchbutton",
 						HxTarget:    "#search-dropdown",
 						HxSwap:      "innerHTML",
-						HxVals:      `{"vkonta": "1"}`,
+						HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`,
 						ClassButton: common.ClassButton,
 					})
 					@NazivField("sifranaziv")
@@ -203,6 +206,7 @@ templ AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint,
 						Disabled:   false,
 						ClassInput: common.ClassInputTextEnabled + " w-28",
 						TabIndex:   "3",
+						OnInput:    "clearFieldError",
 					})
 				</div>
 				<div class="flex items-center gap-1 mb-1">
@@ -218,6 +222,7 @@ templ AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint,
 						Disabled:   false,
 						ClassInput: common.ClassInputTextEnabled + " w-28",
 						TabIndex:   "4",
+						OnInput:    "clearFieldError",
 					})
 				</div>
 				<div class="flex items-center gap-1 mb-1">
@@ -237,6 +242,7 @@ templ AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint,
 						MinLength:    "1",
 						MaxLength:    "6",
 						TabIndex:     "5",
+						OnInput:      "clearFieldError",
 					})
 					@tmpl.SearchButton(domain.SearchButtonConfig{
 						ID:          "odmi",
@@ -266,6 +272,7 @@ templ AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint,
 						MinLength:    "1",
 						MaxLength:    "6",
 						TabIndex:     "6",
+						OnInput:      "clearFieldError",
 					})
 					@tmpl.SearchButton(domain.SearchButtonConfig{
 						ID:          "search-domi",
@@ -353,6 +360,7 @@ templ PrometDeviznihAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, 
 						Disabled:   false,
 						ClassInput: common.ClassInputTextEnabled + " w-28",
 						TabIndex:   "3",
+						OnInput:    "clearFieldError",
 					})
 				</div>
 				<div class="flex items-center gap-1 mb-1">
@@ -368,6 +376,7 @@ templ PrometDeviznihAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, 
 						Disabled:   false,
 						ClassInput: common.ClassInputTextEnabled + " w-28",
 						TabIndex:   "4",
+						OnInput:    "clearFieldError",
 					})
 				</div>
 				<div class="mb-1 flex items-center justify-between h-6">
@@ -398,7 +407,7 @@ templ PrometDeviznihAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, 
 		<div class="flex flex-col h-full">
 			<!-- Parent should have: class="flex flex-col" -->
 			<!-- Table Section -->
-			<div id="promettable" class="flex-1 overflow-x-auto overflow-y-auto border border-gray-200 rounded-lg">
+			<div id="promettable-dev" class="flex-1 overflow-x-auto overflow-y-auto border border-gray-200 rounded-lg">
 				@tmpl.Table(tbl)
 			</div>
 		</div>
@@ -670,7 +679,6 @@ templ PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint,
 					@NazivField("kontonaziv")
 				</div>
 				<div class="flex items-center gap-1 mb-1">
-					đ
 					@tmpl.LabelField(domain.LabelFieldConfig{
 						ID:         "odsifre",
 						LabelText:  "Od Sifre",
@@ -695,7 +703,7 @@ templ PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint,
 						HxUrl:       "/api/promet/searchbutton",
 						HxTarget:    "#search-dropdown",
 						HxSwap:      "innerHTML",
-						HxVals:      `{"vkonta": "1"}`,
+						HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`,
 						ClassButton: common.ClassButton,
 					})
 					@NazivField("odsifrenaziv")
@@ -840,6 +848,7 @@ templ KontoField() {
 	})
 	@tmpl.TextInputField(domain.InputFieldConfig{
 		ID:           "konto",
+		Name:         "konto",
 		FieldType:    "text",
 		Disabled:     false,
 		ClassInput:   common.ClassInputTextEnabled + " w-24",
@@ -849,12 +858,14 @@ templ KontoField() {
 		HxInclude:    "this",
 		MinLength:    "2",
 		MaxLength:    "6",
-		TabIndex:     "1"})
+		TabIndex:     "1",
+		OnInput:      "clearFieldError"})
 }
 
 templ NazivField(id string) {
 	@tmpl.TextInputField(domain.InputFieldConfig{
 		ID:         id,
+		Name:       id,
 		FieldType:  "text",
 		Disabled:   true,
 		ClassInput: common.ClassInputTextDisabled + " w-full",
@@ -863,12 +874,13 @@ templ NazivField(id string) {
 
 templ SifraField() {
 	@tmpl.LabelField(domain.LabelFieldConfig{
-		ID:         "nalog",
+		ID:         "sifra",
 		LabelText:  "Sifra",
 		ClassLabel: common.ClassLabel + " w-24",
 	})
 	@tmpl.TextInputField(domain.InputFieldConfig{
 		ID:           "sifra",
+		Name:         "sifra",
 		FieldType:    "text",
 		Disabled:     false,
 		ClassInput:   common.ClassInputTextEnabled + " w-24",
@@ -878,5 +890,6 @@ templ SifraField() {
 		HxInclude:    "this",
 		MinLength:    "2",
 		MaxLength:    "6",
-		TabIndex:     "2"})
+		TabIndex:     "2",
+		OnInput:      "clearFieldError"})
 }

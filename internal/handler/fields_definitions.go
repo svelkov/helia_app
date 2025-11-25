@@ -4,73 +4,73 @@ import "helia/internal/domain"
 
 func SetBankeFields() []domain.Fields {
 	return []domain.Fields{
-		{Name: "brrac", Label: "Broj Racuna", Width: "45"},
-		{Name: "banka", Label: "Banka", Width: "60"},
-		{Name: "konto", Label: "Konto", Width: "8"},
-		{Name: "sifra", Label: "Sifra", Width: "8"},
-		{Name: "bnkcod", Label: "Kod Banke", Width: "4"},
-		{Name: "ebank", Label: "E-Banking", Width: "60"},
-		{Name: "pocnazfajl", Label: "Poc. Naz. Fajla", Width: "10"},
-		{Name: "tipdok", Label: "Tip Dokumenta", Width: "6"},
-		{Name: "nafakne", Label: "Na Fakt Ne", Width: "1"},
+		{Name: "brrac", Label: "Broj Racuna", Width: "45", Sortable: true},
+		{Name: "banka", Label: "Banka", Width: "60", Sortable: true},
+		{Name: "konto", Label: "Konto", Width: "8", Sortable: true},
+		{Name: "sifra", Label: "Sifra", Width: "8", Sortable: true},
+		{Name: "bnkcod", Label: "Kod Banke", Width: "4", Sortable: true},
+		{Name: "ebank", Label: "E-Banking", Width: "60", Sortable: true},
+		{Name: "pocnazfajl", Label: "Poc. Naz. Fajla", Width: "10", Sortable: true},
+		{Name: "tipdok", Label: "Tip Dokumenta", Width: "6", Sortable: true},
+		{Name: "nafakne", Label: "Na Fakt Ne", Width: "1", Sortable: true},
 	}
 }
 
 func SetBnkizvFields() []domain.Fields {
 	return []domain.Fields{
-		{Name: "sifbank", Label: "Sifra Banke", Width: "6"},
-		{Name: "bnkdes", Label: "Naziv Banka", Width: "80"},
-		{Name: "swiftadr", Label: "Swift Adresa", Width: "80"},
-		{Name: "brojrac", Label: "Broj Racuna", Width: "55"},
-		{Name: "beneficiary", Label: "Beneficiary", Width: "70"},
-		{Name: "corrbank", Label: "Korespodentna banka", Width: "90"},
-		{Name: "tel", Label: "Telefon", Width: "25"},
-		{Name: "fax", Label: "Fax", Width: "30"},
-		{Name: "address", Label: "Adresa", Width: "40"},
-		{Name: "komentar", Label: "Komentar", Width: "70"},
+		{Name: "sifbank", Label: "Sifra Banke", Width: "6", Sortable: true},
+		{Name: "bnkdes", Label: "Naziv Banka", Width: "80", Sortable: true},
+		{Name: "swiftadr", Label: "Swift Adresa", Width: "80", Sortable: true},
+		{Name: "brojrac", Label: "Broj Racuna", Width: "55", Sortable: true},
+		{Name: "beneficiary", Label: "Beneficiary", Width: "70", Sortable: true},
+		{Name: "corrbank", Label: "Korespodentna banka", Width: "90", Sortable: true},
+		{Name: "tel", Label: "Telefon", Width: "25", Sortable: true},
+		{Name: "fax", Label: "Fax", Width: "30", Sortable: true},
+		{Name: "address", Label: "Adresa", Width: "40", Sortable: true},
+		{Name: "komentar", Label: "Komentar", Width: "70", Sortable: true},
 	}
 }
 
 func SetDokvrstaFields() []domain.Fields {
 	return []domain.Fields{
-		{Name: "vrd", Label: "Vrsta dokumenta", Type: "text", Width: "5"},
-		{Name: "opis", Label: "Opis vrste dokumenta", Type: "text", Width: "40"},
-		{Name: "kodknj", Label: "Nacin knjizenja (d,p,dp)", Type: "text", Width: "4"},
-		{Name: "predznak", Label: "Predznak", Type: "text", Width: "3"},
-		{Name: "grpdok", Label: "Grupa dokumenta", Type: "text", Width: "10"},
-		{Name: "dokozn", Label: "Oznaka dokumenta", Type: "text", Width: "5"},
-		{Name: "stornovrd", Label: "Storno vrsta dokumenta", Type: "text", Width: "6"},
-		{Name: "modul", Label: "Modul", Type: "text", Width: "8"},
+		{Name: "vrd", Label: "Vrsta dokumenta", Type: "text", Width: "5", Sortable: true},
+		{Name: "opis", Label: "Opis vrste dokumenta", Type: "text", Width: "40", Sortable: true},
+		{Name: "kodknj", Label: "Nacin knjizenja (d,p,dp)", Type: "text", Width: "4", Sortable: true},
+		{Name: "predznak", Label: "Predznak", Type: "text", Width: "3", Sortable: true},
+		{Name: "grpdok", Label: "Grupa dokumenta", Type: "text", Width: "10", Sortable: true},
+		{Name: "dokozn", Label: "Oznaka dokumenta", Type: "text", Width: "5", Sortable: true},
+		{Name: "stornovrd", Label: "Storno vrsta dokumenta", Type: "text", Width: "6", Sortable: true},
+		{Name: "modul", Label: "Modul", Type: "text", Width: "8", Sortable: true},
 	}
 }
 
 func SetDrzaveFields() []domain.Fields {
 	return []domain.Fields{
-		{Name: "naziv", Label: "Naziv drzave", Width: "40"},
-		{Name: "ozndrz", Label: "Oznaka", Width: "6"},
+		{Name: "naziv", Label: "Naziv drzave", Width: "40", Sortable: true},
+		{Name: "ozndrz", Label: "Oznaka", Width: "6", Sortable: true},
 	}
 }
 func SetFevpdvFields() []domain.Fields {
 	return []domain.Fields{
-		{Name: "vktip", Label: "Tip I/U", Width: "4"},
-		{Name: "opis", Label: "Opis", Width: "100"},
-		{Name: "vkrbr", Label: "Vrsta r.br.", Width: "3"},
-		{Name: "obrazac", Label: "Obrazac", Width: "6"},
+		{Name: "vktip", Label: "Tip I/U", Width: "4", Sortable: true},
+		{Name: "opis", Label: "Opis", Width: "100", Sortable: true},
+		{Name: "vkrbr", Label: "Vrsta r.br.", Width: "3", Sortable: true},
+		{Name: "obrazac", Label: "Obrazac", Width: "6", Sortable: true},
 	}
 }
 
 func SetMestotroskaFields() []domain.Fields {
 	return []domain.Fields{
-		{Name: "mtroska", Label: "Mestotroska", Width: "6"},
-		{Name: "opis", Label: "Opis", Width: "45"},
-		{Name: "idorgjed", Label: "Org. jedinica", Width: "20"},
+		{Name: "mtroska", Label: "Mestotroska", Width: "6", Sortable: true},
+		{Name: "opis", Label: "Opis", Width: "45", Sortable: true},
+		{Name: "idorgjed", Label: "Org. jedinica", Width: "20", Sortable: true},
 	}
 }
 
 func SetOrgjedFields() []domain.Fields {
 	return []domain.Fields{
-		{Name: "ojozn", Label: "Sifra Orgjed", Width: "6"},
-		{Name: "naziv", Label: "Naziv Orgjed", Width: "45"},
+		{Name: "ojozn", Label: "Sifra Orgjed", Width: "6", Sortable: true},
+		{Name: "naziv", Label: "Naziv Orgjed", Width: "45", Sortable: true},
 	}
 }
 
@@ -78,55 +78,55 @@ func SetOrgjedFields() []domain.Fields {
 
 func SetPopdvFields() []domain.Fields {
 	return []domain.Fields{
-		{Name: "popdv", Label: "Vrsta Naloga", ValidationText: "Morate uneti tip dokumenta...", Width: "10"},
-		{Name: "opis", Label: "Opis", ValidationText: "Morate uneti opis dokumenta...", Width: "60"},
-		{Name: "grpdok", Label: "Grupa Dok.", ValidationText: "Morate uneti grupu dokumenata...", Width: "20"},
-		{Name: "grpvrd", Label: "Grp. Vrste Dok.", ValidationText: "Morate uneti grupu vrste dokumenata...", Width: "20"},
-		{Name: "magacin", Label: "Magacin", ValidationText: "", Width: "10"},
+		{Name: "popdv", Label: "Vrsta Naloga", ValidationText: "Morate uneti tip dokumenta...", Width: "10", Sortable: true},
+		{Name: "opis", Label: "Opis", ValidationText: "Morate uneti opis dokumenta...", Width: "60", Sortable: true},
+		{Name: "grpdok", Label: "Grupa Dok.", ValidationText: "Morate uneti grupu dokumenata...", Width: "20", Sortable: true},
+		{Name: "grpvrd", Label: "Grp. Vrste Dok.", ValidationText: "Morate uneti grupu vrste dokumenata...", Width: "20", Sortable: true},
+		{Name: "magacin", Label: "Magacin", ValidationText: "", Width: "10", Sortable: true},
 	}
 }
 
 func SetSifmestoFileds() []domain.Fields {
 	return []domain.Fields{
-		{Name: "sifm", Label: "Sifra Mesta", Width: "4"},
-		{Name: "naziv", Label: "Naziv", Width: "80"},
-		{Name: "ops", Label: "Opstina", Width: "8"},
-		{Name: "pobro", Label: "Postanski broj", Width: "8"},
-		{Name: "km", Label: "Km", Width: "6"},
+		{Name: "sifm", Label: "Sifra Mesta", Width: "4", Sortable: true},
+		{Name: "naziv", Label: "Naziv", Width: "80", Sortable: true},
+		{Name: "ops", Label: "Opstina", Width: "8", Sortable: true},
+		{Name: "pobro", Label: "Postanski broj", Width: "8", Sortable: true},
+		{Name: "km", Label: "Km", Width: "6", Sortable: true},
 	}
 }
 
 func SetSifopFields() []domain.Fields {
 	return []domain.Fields{
-		{Name: "ops", Label: "Sifra Opstine", Width: "6"},
-		{Name: "naziv", Label: "Naziv Opstine", Width: "60"},
+		{Name: "ops", Label: "Sifra Opstine", Width: "6", Sortable: true},
+		{Name: "naziv", Label: "Naziv Opstine", Width: "60", Sortable: true},
 	}
 }
 func SetSifplizvFields() []domain.Fields {
 	return []domain.Fields{
-		{Name: "sifplac", Label: "Sifra Placanja", ValidationText: "morate uneti sifru placanja...", Width: "6"},
-		{Name: "oblik", Label: "Oblik", ValidationText: "morate uneti oblik placanja...", Width: "6"},
-		{Name: "osnov", Label: "Osnov placanja", ValidationText: "morate uneti osnov placanja", Width: "4"},
-		{Name: "opis", Label: "Opis", ValidationText: "morate uneti opis", Width: "80"},
-		{Name: "konto", Label: "Konto", Width: "8"},
-		{Name: "sifra", Label: "Sifra", Width: "8"},
+		{Name: "sifplac", Label: "Sifra Placanja", ValidationText: "morate uneti sifru placanja...", Width: "6", Sortable: true},
+		{Name: "oblik", Label: "Oblik", ValidationText: "morate uneti oblik placanja...", Width: "6", Sortable: true},
+		{Name: "osnov", Label: "Osnov placanja", ValidationText: "morate uneti osnov placanja", Width: "4", Sortable: true},
+		{Name: "opis", Label: "Opis", ValidationText: "morate uneti opis", Width: "80", Sortable: true},
+		{Name: "konto", Label: "Konto", Width: "8", Sortable: true},
+		{Name: "sifra", Label: "Sifra", Width: "8", Sortable: true},
 	}
 }
 func SetTipdokFields() []domain.Fields {
 	return []domain.Fields{
-		{Name: "tipdok", Label: "Vrsta Naloga", ValidationText: "Morate uneti tip dokumenta...", Width: "10"},
-		{Name: "opis", Label: "Opis", ValidationText: "Morate uneti opis dokumenta...", Width: "60"},
-		{Name: "grpdok", Label: "Grupa Dok.", ValidationText: "Morate uneti grupu dokumenata...", Width: "20"},
-		{Name: "grpvrd", Label: "Grp. Vrste Dok.", ValidationText: "Morate uneti grupu vrste dokumenata...", Width: "20"},
-		{Name: "magacin", Label: "Magacin", ValidationText: "", Width: "10"},
+		{Name: "tipdok", Label: "Vrsta Naloga", ValidationText: "Morate uneti tip dokumenta...", Width: "10", Sortable: true},
+		{Name: "opis", Label: "Opis", ValidationText: "Morate uneti opis dokumenta...", Width: "60", Sortable: true},
+		{Name: "grpdok", Label: "Grupa Dok.", ValidationText: "Morate uneti grupu dokumenata...", Width: "20", Sortable: true},
+		{Name: "grpvrd", Label: "Grp. Vrste Dok.", ValidationText: "Morate uneti grupu vrste dokumenata...", Width: "20", Sortable: true},
+		{Name: "magacin", Label: "Magacin", ValidationText: "", Width: "10", Sortable: true},
 	}
 }
 
 func SetFvknjracFields() []domain.Fields {
 	return []domain.Fields{
-		{Name: "vktip", Label: "Tip knjige (ulazni/izlazni racun)", Width: "2"},
-		{Name: "opis", Label: "Opis", Width: "50"},
-		{Name: "vkrbr", Label: "Vrsta knjige racuna", Width: "2"},
-		{Name: "konta", Label: "Konta", Width: "60"},
+		{Name: "vktip", Label: "Tip knjige (ulazni/izlazni racun)", Width: "2", Sortable: true},
+		{Name: "opis", Label: "Opis", Width: "50", Sortable: true},
+		{Name: "vkrbr", Label: "Vrsta knjige racuna", Width: "2", Sortable: true},
+		{Name: "konta", Label: "Konta", Width: "60", Sortable: true},
 	}
 }

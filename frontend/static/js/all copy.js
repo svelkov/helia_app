@@ -1,0 +1,344 @@
+
+console.log("?  is now working!");
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("DOM fully loaded");
+});
+
+(function(window, document) {
+  'use strict';
+
+  const App = {
+    init() {
+      this.initPrometTabsStyling();
+      this.initPrometTableHandlers();
+    },
+
+    // ==========================
+    // Tabs (finansijsko/promet.templ)
+    // ==========================
+    initPrometTabsStyling() {
+      const first = document.querySelector('[hx-get="/promet/analitickakonta"]');
+      if (first) {
+        first.classList.remove('bg-gray-200', 'text-gray-700');
+        first.classList.add('bg-blue-600', 'text-white');
+      }
+      document.querySelectorAll('[hx-get^="/promet"]').forEach(tab => {
+        tab.addEventListener('click', function() {
+          document.querySelectorAll('[hx-get^="/promet"]').forEach(t => {
+            t.classList.remove('bg-blue-600', 'text-white');
+            t.classList.add('bg-gray-200', 'text-gray-700');
+          });
+          this.classList.remove('bg-gray-200', 'text-gray-700');
+          this.classList.add('bg-blue-600', 'text-white');
+        });
+      });
+    },
+
+    // ==========================
+    // Dropdowns (trazi_konto.templ + popup_dialog.templ)
+    // ==========================
+    positionDropdown(dropdownId, buttonId) {
+      const button = document.getElementById(buttonId);
+      const dropdown = document.getElementById(dropdownId);
+      if (!(button && dropdown)) return;
+      const rect = button.getBoundingClientRect();
+      dropdown.style.position = 'absolute';
+      dropdown.style.top = (rect.bottom + window.scrollY) + 'px';
+      dropdown.style.left = (rect.left + window.scrollX) + 'px';
+      dropdown.style.zIndex = '1000';
+    },
+    openDropdown(dropdownId, buttonId, fixed = false) {
+      const dropdown = document.getElementById(dropdownId);
+      if (!dropdown) return;
+      dropdown.classList.remove('hidden');
+      if (fixed) {
+        const button = document.getElementById(buttonId);
+        if (button) {
+          const rect = button.getBoundingClientRect();
+          const scrollX = window.scrollX || window.pageXOffset;
+          const scrollY = window.scrollY || window.pageYOffset;
+          dropdown.style.position = 'fixed';
+          dropdown.style.top = (rect.bottom + scrollY) + 'px';
+          dropdown.style.left = (rect.left + scrollX) + 'px';
+          dropdown.style.zIndex = '1000';
+        }
+      } else {
+        this.positionDropdown(dropdownId, buttonId);
+      }
+    },
+    closeDropdown(dropdownId) {
+      const el = document.getElementById(dropdownId);
+      if (el) el.classList.add('hidden');
+    },
+    selectDropdownItem(dropdownId, valueFieldId, nameFieldId, value, name) {
+      const vf = document.getElementById(valueFieldId);
+      const nf = document.getElementById(nameFieldId);
+      if (vf) vf.value = value;
+      if (nf) nf.value = name;
+      this.closeDropdown(dropdownId);
+      if (vf) vf.dispatchEvent(new Event('blur'));
+    },
+    togglePopup(fieldId) {
+      const popup = document.getElementById(`${fieldId}-popup`);
+      if (!popup) return;
+      const isHidden = popup.classList.contains('hidden');
+      document.querySelectorAll('.absolute.z-50').forEach(el => { if (el !== popup) el.classList.add('hidden'); });
+      popup.classList.toggle('hidden');
+      if (!isHidden) setTimeout(() => document.getElementById(`search-input-${fieldId}`)?.focus(), 10);
+    },
+    resetSearch(fieldId) {
+      const input = document.getElementById(`search-input-${fieldId}`);
+      if (input) input.value = '';
+      if (typeof htmx !== 'undefined') {
+        const target = document.getElementById(`search-input-${fieldId}`);
+        if (target) htmx.trigger(target, 'keyup');
+      }
+    },
+
+    // Backward-compat wrappers used in templates
+    showSearchDialog(fieldId) { this.openDropdown('search-dropdown', 'search-button-' + fieldId, true); window.currentFieldId = fieldId; },
+    showDropdown(dropdownId, buttonId) { this.openDropdown(dropdownId, buttonId, false); },
+    hideDropdown(dropdownId) { this.closeDropdown(dropdownId); },
+    selectItemDropdown(dropdownId, valueFieldId, nameFieldId, value, name) { this.selectDropdownItem(dropdownId, valueFieldId, nameFieldId, value, name); },
+    selectItem(fieldId, value, displayValue) { // trazi_konto.templ variant
+      const field = document.getElementById(fieldId);
+      if (field) field.value = value;
+      const displayField = document.getElementById(`${fieldId}naziv`);
+      if (displayField) displayField.value = displayValue;
+      const popup = document.getElementById(`${fieldId}-popup`);
+      if (popup) popup.classList.add('hidden');
+    },
+
+    // ==========================
+    // Dialogs (dialogs.templ + dialogscripts.templ)
+    // ==========================
+    openDialog() {
+      document.querySelectorAll('.actions-column').forEach(el => {
+        el.classList.remove('sticky', 'right-0', 'z-10');
+        el.classList.add('static');
+      });
+    },
+    closeDialog(idOrElement) {
+      let dialogElm = null;
+      if (!idOrElement) {
+        dialogElm = document.querySelector('.fixed:not(.hidden), dialog[open]');
+      } else if (typeof idOrElement === 'string') {
+        dialogElm = document.getElementById(idOrElement);
+      } else if (idOrElement instanceof Element) {
+        dialogElm = idOrElement;
+      }
+      if (!dialogElm) return;
+      dialogElm.classList.add('opacity-0');
+      setTimeout(() => dialogElm.classList.add('hidden'), 300);
+      if (typeof dialogElm.close === 'function') { try { dialogElm.close(); } catch (_) {} }
+      document.querySelectorAll('.actions-column').forEach(el => {
+        el.classList.remove('static');
+        el.classList.add('sticky', 'right-0', 'z-10');
+      });
+    },
+    showMessage(message, isError = false) {
+      const infoMessage = document.getElementById('info-message');
+      if (!infoMessage) return;
+      infoMessage.textContent = message;
+      infoMessage.classList.remove('hidden', 'bg-green-500', 'bg-red-500', 'text-white');
+      infoMessage.classList.add(isError ? 'bg-red-500' : 'bg-green-500', 'text-white');
+      setTimeout(() => infoMessage.classList.add('hidden'), 3000);
+    },
+    handleDialogResponse(dialogName) {
+      try {
+        console.log("u handleDialogResponse in all copy.js")
+        const response = JSON.parse(event.detail.xhr.responseText);
+        document.querySelectorAll('.input-error').forEach(el => el.remove());
+        document.querySelectorAll('input').forEach(input => input.classList.remove('border-red-500'));
+        if (response.errors && response.errors.length > 0) {
+          response.errors.forEach(error => {
+            const field = document.querySelector(`input[name="${error.field}"]`);
+            if (field) {
+              field.classList.add('border-red-500');
+              const errorMessage = document.createElement('p');
+              errorMessage.className = 'text-red-500 text-xs mt-1 input-error';
+              errorMessage.textContent = error.message;
+              field.insertAdjacentElement('afterend', errorMessage);
+            }
+          });
+          return;
+        }
+        if (response.success) {
+          this.showMessage(response.message);
+          this.closeDialog(dialogName);
+        } else {
+          this.showMessage(response.message, true);
+        }
+      } catch (e) {
+        console.error('Invalid JSON response', e);
+      }
+    },
+
+    // ==========================
+    // Tables (table.templ)
+    // ==========================
+    initPrometTableHandlers() {
+      const tableBody = document.getElementById('promettable-body');
+      if (!tableBody) return;
+      tableBody.addEventListener('click', (e) => {
+        const row = e.target.closest('tr');
+        if (row) this.selectRow(row);
+      });
+      tableBody.addEventListener('dblclick', (e) => {
+        const row = e.target.closest('tr');
+        if (row) this.handleRowDoubleClick(row);
+      });
+    },
+    selectRow(row) {
+      const selectedRow = document.querySelector('.bg-blue-300');
+      if (selectedRow) selectedRow.classList.remove('bg-blue-300');
+      row.classList.add('bg-blue-300');
+    },
+    handleRowDoubleClick(row) {
+      const cells = row.querySelectorAll('td');
+      const rowData = {
+        konto: cells[0]?.textContent.trim(),
+        sifra: cells[1]?.textContent.trim(),
+        naziv: cells[2]?.textContent.trim()
+      };
+      const ev = new CustomEvent('recordSelected', { detail: rowData });
+      document.dispatchEvent(ev);
+      window.selectedRecord = rowData;
+      this.closeDialog();
+    },
+    useSelectedRecord(data) {
+      const ev = new CustomEvent('recordSelected', { detail: data });
+      document.dispatchEvent(ev);
+      window.selectedRecord = data;
+    },
+
+    showNotification(message, type = 'success') {
+      const notification = document.getElementById('notification');
+      if (!notification) return;
+      notification.textContent = message;
+      notification.className = `fixed top-5 right-5 px-4 py-3 text-white rounded block ${type === 'error' ? 'bg-red-500' : 'bg-green-500'}`;
+      setTimeout(() => {
+        notification.classList.add('hidden');
+        notification.classList.remove('block');
+      }, 3000);
+    },
+
+
+    // ==========================
+    // HTMX swap routing (content_container.templ + nalozi.templ + nalozi_stavke.templ)
+    // ==========================
+    updatePaginationFromSwap(event) {
+      if (!(event.detail && event.detail.target && event.detail.target.id === 'table')) return;
+      const match = event.detail.xhr && event.detail.xhr.responseURL ? event.detail.xhr.responseURL.match(/page=(\d+)/) : null;
+      if (!match) return;
+      const page = parseInt(match[1], 10);
+      document.querySelectorAll('.pagination .page-item').forEach((item) => item.classList.remove('active'));
+      const activeLink = document.querySelector(`.pagination .page-link[hx-get*="?page=${page}"]`);
+      activeLink?.closest('.page-item')?.classList.add('active');
+    },
+    initTabsAfterSwap(event) {
+      const tabs = document.querySelectorAll('nav button');
+      if (!tabs.length) return;
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          tabs.forEach(t => {
+            t.classList.remove('text-blue-600', 'border-blue-600');
+            t.classList.add('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');
+            t.setAttribute('aria-selected', 'false');
+          });
+          tab.classList.add('text-blue-600', 'border-blue-600');
+          tab.classList.remove('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');
+          tab.setAttribute('aria-selected', 'true');
+        });
+      });
+      const first = document.getElementById('knjizenje-tab');
+      if (first) first.click();
+    },
+  };
+
+  // ==========================
+  // Global event wiring
+  // ==========================
+  document.addEventListener('DOMContentLoaded', () => App.init());
+
+  document.addEventListener('keydown', function(event) {
+    // Enter navigation: only when inside #addupdate-dialog
+    if (event.key === 'Enter') {
+      const dialog = document.getElementById('addupdate-dialog');
+      if (dialog && dialog.contains(document.activeElement)) {
+        event.preventDefault();
+        const inputs = Array.from(document.querySelectorAll('#addupdate-dialog input'));
+        const focusableInputs = inputs.filter(input => !input.disabled && input.getAttribute('tabindex') !== '-1' && input.offsetParent !== null);
+        focusableInputs.sort((a, b) => {
+          const aIndex = parseInt(a.getAttribute('tabindex') || '9999', 10);
+          const bIndex = parseInt(b.getAttribute('tabindex') || '9999', 10);
+          return aIndex - bIndex;
+        });
+        const currentInput = document.activeElement;
+        const currentIndex = focusableInputs.indexOf(currentInput);
+        if (currentIndex !== -1) {
+          const nextIndex = (currentIndex + 1) % focusableInputs.length;
+          focusableInputs[nextIndex].focus();
+        } else if (focusableInputs.length > 0) {
+          focusableInputs[0].focus();
+        }
+        return;
+      }
+    }
+    // Escape: close popups and dialogs
+    if (event.key === 'Escape') {
+      document.querySelectorAll('[id$="-popup"]').forEach(popup => popup.classList.add('hidden'));
+      const openDialogElm = document.querySelector('.fixed:not(.hidden), dialog[open]');
+      if (openDialogElm) App.closeDialog(openDialogElm);
+      return;
+    }
+  });
+
+  document.addEventListener('click', function(event) {
+    // Close search-dropdown variants when clicking outside
+    const dropdowns = document.querySelectorAll('[id^="search-dropdown"]');
+    dropdowns.forEach(dropdown => {
+      if (!dropdown.contains(event.target) && !event.target.closest('[onclick*="showDropdown"]')) {
+        dropdown.classList.add('hidden');
+      }
+    });
+    // Close -popup variants when clicking outside associated controls
+    document.querySelectorAll('[id$="-popup"]').forEach(popup => {
+      const fieldId = popup.id.replace('-popup', '');
+      const field = document.getElementById(fieldId);
+      const searchButton = document.querySelector(`button[onclick="togglePopup('${fieldId}')"]`);
+      if (field && searchButton && !popup.contains(event.target) && !field.contains(event.target) && !searchButton.contains(event.target)) {
+        popup.classList.add('hidden');
+      }
+    });
+  });
+
+  document.addEventListener('htmx:afterSwap', function(event) {
+    App.updatePaginationFromSwap(event);
+    App.initTabsAfterSwap(event);
+  });
+
+  // ==========================
+  // Backward-compatible globals for template calls
+  // ==========================
+  window.togglePopup = App.togglePopup.bind(App);
+  window.resetSearch = App.resetSearch.bind(App);
+  window.selectItem = App.selectItem.bind(App);
+  window.showSearchDialog = App.showSearchDialog.bind(App);
+  window.positionDropdown = App.positionDropdown.bind(App);
+  window.showDropdown = App.showDropdown.bind(App);
+  window.hideDropdown = App.hideDropdown.bind(App);
+  window.selectItemDropdown = App.selectDropdownItem ? App.selectDropdownItem.bind(App) : App.selectDropdownItem;
+
+  window.openDialog = App.openDialog.bind(App);
+  window.closeDialog = App.closeDialog.bind(App);
+  window.showMessage = App.showMessage.bind(App);
+  window.handleDialogResponse = App.handleDialogResponse.bind(App);
+
+  window.selectRow = App.selectRow.bind(App);
+  window.handleRowDoubleClick = App.handleRowDoubleClick.bind(App);
+  window.useSelectedRecord = App.useSelectedRecord.bind(App);
+
+  window.showNotification = App.showNotification.bind(App);
+})(window, document);

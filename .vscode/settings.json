@@ -1,0 +1,19 @@
+{
+    "go-ollama-agent.enable": true,
+    "go-ollama-agent.autoExplain": false,
+    "go-ollama-agent.model": "codellama:13b",
+    
+    // Optional: Customize Ollama URL if different
+    "go-ollama-agent.ollamaUrl": "http://localhost:11434",
+    
+    // Integration with Go extension
+    "go.toolsManagement.autoUpdate": true,
+    "go.useLanguageServer": true,
+    
+    // File associations for generated files
+    "files.associations": {
+        "**/generated/*.go": "go",
+        "**/ai-*.go": "go"
+    },
+    "CodeGPT.apiKey": "Groq"
+}

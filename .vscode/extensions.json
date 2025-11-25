@@ -1,0 +1,8 @@
+{
+    "recommendations": [
+        "golang.Go",
+        "coder.ollama",
+        "continue.continue",
+        "ms-vscode.makefile-tools"
+    ]
+}

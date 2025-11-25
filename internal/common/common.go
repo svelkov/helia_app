@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"helia/global"
 	"helia/internal/domain"
+	"helia/internal/i18n"
 	"os"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -15,6 +17,8 @@ import (
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
 )
+
+var reg = regexp.MustCompile(`_+`)
 
 // GetPaginationData calculates pagination details (totalPages, etc.).
 // This function can be used by both handler (initial page load) and service (query construction).
@@ -88,7 +92,7 @@ func SetTableBasicData(title, tableID string, headers []domain.Fields, urlPrefix
 			CurrentPage:  currentPage,
 			TotalPages:   totalPages,
 			TotalRecords: totalRecords,
-			PageSizes:    []int{10, 15, 25, 50, 100},
+			PageSizes:    global.GetConfig().PageSizes,
 			StartRecord:  currentPage*pageSize - pageSize + 1,
 			EndRecord:    currentPage * pageSize,
 		},
@@ -158,19 +162,20 @@ func SetTableButtons(table *domain.TableData, entityURLPrefix string) *domain.Ta
 	return table
 }
 
-func SetButton(Id, LabelText, Icon, HxActionURL, HxTarget, HxSwap, HxRequestType, HxInclude, HxVals string, IsVisible bool, class string) domain.Button {
+func SetButton(Id, LabelText, Icon, HxActionURL, HxTarget, HxSwap, HxRequestType, HxInclude, HxVals string, IsVisible bool, class string, afterRequest string) domain.Button {
 	return domain.Button{
-		Id:            Id,
-		LabelText:     LabelText,
-		Icon:          Icon,
-		HxActionURL:   HxActionURL,
-		HxTarget:      HxTarget,
-		HxSwap:        HxSwap,
-		HxVals:        HxVals,
-		HxRequestType: HxRequestType,
-		HxInclude:     HxInclude,
-		IsVisible:     IsVisible,
-		BtnClass:      class,
+		Id:               Id,
+		LabelText:        LabelText,
+		Icon:             Icon,
+		HxActionURL:      HxActionURL,
+		HxTarget:         HxTarget,
+		HxSwap:           HxSwap,
+		HxVals:           HxVals,
+		HxRequestType:    HxRequestType,
+		HxInclude:        HxInclude,
+		IsVisible:        IsVisible,
+		BtnClass:         class,
+		HxOnAfterRequest: afterRequest,
 	}
 }
 
@@ -282,15 +287,80 @@ func detectSystemLanguage() language.Tag {
 	return language.English // Fallback
 }
 
+//***************************************
+
+// GetTranslatedSubMenus returns submenus with translated names
+func GetTranslatedSubMenus(menuData domain.MenuDataItems, menuName, lang string) []domain.SubMenuItem {
+	subMenus := GetSubMenus(menuData, menuName)
+	if subMenus == nil {
+		return nil
+	}
+
+	return translateSubMenus(subMenus, menuName, lang)
+}
+
+// GetSubMenus returns original submenus (your existing function)
 func GetSubMenus(menuData domain.MenuDataItems, targetMenu string) []domain.SubMenuItem {
 	for _, menuItem := range menuData.MenuItems {
 		if menuItem.Name == targetMenu {
 			return menuItem.SubMenus
 		}
 	}
-	return nil // or empty slice if menu not found
+	return nil
 }
 
+// translateSubMenus translates submenu names
+func translateSubMenus(subMenus []domain.SubMenuItem, menuName, lang string) []domain.SubMenuItem {
+	translated := make([]domain.SubMenuItem, len(subMenus))
+	for i, subMenu := range subMenus {
+		translated[i] = domain.SubMenuItem{
+			Name: i18n.GetInstance().T(lang, getSubmenuKey(menuName, subMenu.Name, lang)),
+			URL:  subMenu.URL,
+			Icon: subMenu.Icon,
+		}
+	}
+	return translated
+}
+
+// getSubmenuKey generates the translation key for a submenu item
+func getSubmenuKey(menuName, submenuName, lang string) string {
+	// Convert submenu name to key format (same as in JSON files)
+	key := "menu." + menuName + ".submenu." + toSnakeCase(submenuName)
+	itemName := i18n.T(key, lang)
+	return itemName
+}
+
+// ToSnakeCase safely converts text to snake_case for translation keys
+func toSnakeCase(s string) string {
+	// Convert to lowercase
+	result := strings.ToLower(s)
+
+	// Replace common special characters
+	result = strings.ReplaceAll(result, "/", "_")
+	result = strings.ReplaceAll(result, " ", "_")
+	result = strings.ReplaceAll(result, "-", "_")
+	result = strings.ReplaceAll(result, " - ", "_")
+	result = strings.ReplaceAll(result, ",", "")
+	result = strings.ReplaceAll(result, "(", "")
+	result = strings.ReplaceAll(result, ")", "")
+	result = strings.ReplaceAll(result, " i ", "_")
+	result = strings.ReplaceAll(result, "č", "c")
+	result = strings.ReplaceAll(result, "ž", "z")
+	result = strings.ReplaceAll(result, "š", "s")
+	result = strings.ReplaceAll(result, "đ", "d")
+	result = strings.ReplaceAll(result, "ć", "c")
+
+	// Remove multiple underscores
+
+	result = reg.ReplaceAllString(result, "_")
+
+	// Trim underscores from start and end
+	result = strings.Trim(result, "_")
+
+	return result
+}
+
+// **********************************************
 // WriteJSONResponse writes a JSON response with the given status, success, errors, and message.
 func WriteJSONResponse(
 	c *gin.Context,
@@ -313,4 +383,19 @@ func GetIconSVG(iconName string) string {
 	}
 	// Return a default icon if not found
 	return `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />`
+}
+
+func ValidateRequiredParams(c *gin.Context, paramNames []string) []domain.FieldError {
+	fieldsError := []domain.FieldError{}
+
+	for _, paramName := range paramNames {
+		if c.Query(paramName) == "" {
+			fieldsError = append(fieldsError, domain.FieldError{
+				Field:        paramName,
+				ErrorMessage: ErrMsgObavezanPodatak,
+			})
+		}
+	}
+
+	return fieldsError
 }

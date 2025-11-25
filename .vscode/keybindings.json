@@ -1,0 +1,27 @@
+[
+    {
+        "key": "ctrl+shift+e",
+        "command": "workbench.action.tasks.runTask",
+        "args": "🤖 Explain Go File with Ollama"
+    },
+    {
+        "key": "ctrl+shift+g",
+        "command": "workbench.action.tasks.runTask", 
+        "args": "🚀 Generate Go Handler with Ollama"
+    },
+    {
+        "key": "ctrl+shift+t",
+        "command": "workbench.action.tasks.runTask",
+        "args": "🧪 Generate Tests with Ollama"
+    },
+    {
+        "key": "ctrl+shift+d",
+        "command": "workbench.action.tasks.runTask",
+        "args": "🐛 Debug Go Code with Ollama"
+    },
+    {
+        "key": "ctrl+shift+s",
+        "command": "workbench.action.tasks.runTask",
+        "args": "🛡️ Security Analysis with Ollama"
+    }
+]

@@ -18,7 +18,7 @@ var (
 )
 
 // I18n middleware - detects and sets language
-func I18n(translator *i18n.Translator) gin.HandlerFunc {
+func I18n(translator *i18n.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		lang := getLangFromRequest(c)
 		c.Set("lang", lang)
@@ -51,7 +51,7 @@ func getLangFromRequest(c *gin.Context) string {
 	}
 
 	// 4. Default language
-	return "en"
+	return "sr"
 }
 func Auth() gin.HandlerFunc {
 	return func(c *gin.Context) {

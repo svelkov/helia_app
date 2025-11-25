@@ -14,11 +14,14 @@ type Router struct {
 
 // Config struct for passing configuration
 type Config struct {
-	BasePath string        `json:"base_path"`
-	DBConfig DB_Connection `json:"db_connection"`
-	PageSize int           `json:"page_size"`
-	Env      string        `json:"env"`
-	Port     string        `json:"port"`
+	BasePath        string        `json:"base_path"`
+	DBConfig        DB_Connection `json:"db_connection"`
+	PageSize        int           `json:"page_size"`
+	PageSizes       []int         `json:"page_sizes"`
+	Env             string        `json:"env"`
+	Port            string        `json:"port"`
+	Languages       []string      `json:"languages"`
+	DefaultLanguage string        `json:"defaultLanguage"`
 }
 
 type DB_Connection struct {

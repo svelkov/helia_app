@@ -8,7 +8,9 @@ package templates
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-func Header(isLoggedIn bool, username string) templ.Component {
+import "helia/internal/domain"
+
+func Header(isLoggedIn bool, username string, comboLanguage domain.ComboFieldConfig) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -29,24 +31,24 @@ func Header(isLoggedIn bool, username string) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<header class=\"bg-blue-600 text-white p-1 flex justify-between items-center shadow-xl shadow-blue-600/50\"><div class=\"flex items-center space-x-4\"><img src=\"/frontend/static/lav_logo.png\" alt=\"HELIA Logo\" class=\"h-10 w-auto\"><h1 class=\"text-2xl font-bold text-gold-800\">HELIA</h1></div><nav class=\"flex items-center space-x-4 \r\n\t\t\"><a href=\"/\" class=\"hover:text-blue-200\">Home</a> ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<header class=\"bg-blue-600 text-white p-1 flex justify-between items-center shadow-xl shadow-blue-600/50\"><div class=\"flex items-center ml-4\"><img src=\"/frontend/static/lav_logo.png\" alt=\"HELIA Logo\" class=\"h-10 w-auto\"> <img src=\"/frontend/static/helia.png\" alt=\"HELIA text\" class=\"h-9 w-auto\"></div><nav class=\"flex items-center space-x-4\"><a href=\"/\" class=\"hover:text-blue-200\">Home</a> ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if !isLoggedIn {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<a href=\"/login\" class=\"hover:text-blue-200\">Login</a> <a href=\"/register\" class=\"hover:text-blue-200\">Register</a>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<a href=\"/login\" class=\"hover:text-blue-200\">Prijava</a> <a href=\"/register\" class=\"hover:text-blue-200\">Registracija</a>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		} else {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<a href=\"/logout\" class=\"hover:text-blue-200\">Logout</a> <span class=\"ml-4\">Welcome, ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<a href=\"/logout\" class=\"hover:text-blue-200\">Prijava</a> <span class=\"ml-4\">Dobrodosli, ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var2 string
 			templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(username)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/header.templ`, Line: 18, Col: 42}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/header.templ`, Line: 18, Col: 45}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 			if templ_7745c5c3_Err != nil {
@@ -57,7 +59,15 @@ func Header(isLoggedIn bool, username string) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<!-- Theme Toggle Button --><button id=\"theme-toggle\" class=\"p-2 rounded-full hover:bg-blue-700 focus:outline-none\"><span id=\"theme-icon\">🌙</span><!-- Moon icon for dark mode --></button></nav></header>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<div class=\"flex items-center space-x-2\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = ComboBoxField(comboLanguage).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</div><!-- Theme Toggle Button --><button id=\"theme-toggle\" class=\"p-2 rounded-full hover:bg-blue-700 focus:outline-none\"><span id=\"theme-icon\">🌙</span><!-- Moon icon for dark mode --></button></nav></header>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

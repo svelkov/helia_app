@@ -26,6 +26,7 @@ type PrometHandler struct {
 	tabData domain.TabData
 	service *service.PrometResource
 }
+
 const (
 	hxVals = `js:{
             konto: document.getElementById("konto")?.value,
@@ -33,7 +34,16 @@ const (
             oddatuma: document.getElementById("oddatuma")?.value,
             dodatuma: document.getElementById("dodatuma")?.value
         }`
+	hxValsMI = `js:{
+            konto: document.getElementById("konto")?.value,
+            sifra: document.getElementById("sifra")?.value,
+            oddatuma: document.getElementById("oddatuma")?.value,
+            dodatuma: document.getElementById("dodatuma")?.value,
+			odmi: document.getElementById("odmi")?.value,
+			domi: document.getElementById("domi")?.value,
+        }`
 )
+
 func NewPrometHandler(service *service.PrometResource) *PrometHandler {
 	handler := &PrometHandler{}
 	handler.tabData = GetTabData()
@@ -44,11 +54,13 @@ func NewPrometHandler(service *service.PrometResource) *PrometHandler {
 func (h *PrometHandler) PrometMain(c *gin.Context) {
 	// Create configuration
 
-	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/analitickakonta", "#promettable", "innerHTML", "GET", "#konto, #sifra, #oddatuma, #dodatuma", hxVals, true, common.ClassSaveButton)
-	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton)
+	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/analitickakonta", "#promettable", "innerHTML", "GET", "#konto, #sifra, #oddatuma, #dodatuma", hxVals, true, common.ClassSaveButton, "handleDialogResponse")
+	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
 
 	tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetAnkontaTableFields(), "", "", 0, 0, 0, 0)
 	tbl.ShowActions = false
+	tbl.FuncClick = "selectRow"                             // naziv js function for Click
+	tbl.FuncDblClick = "handleDblClickKontoSelection(this)" // naziv js function for dblClick
 	err := tmpl_fin.PrometMain(h.tabData, tbl, btnPrint, btnObrada, domain.PrometTotalValues{}).Render(c.Request.Context(), c.Writer)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
@@ -60,8 +72,8 @@ func (h *PrometHandler) PrometAnalitickihKonta(c *gin.Context) {
 	// Get our custom header
 	requestSource := c.Request.Header.Get("X-Request-Source")
 	if requestSource == "menu" || requestSource == "tab" {
-		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/analitickakonta", "#promettable", "innerHTML", "GET", "", hxVals, true, common.ClassSaveButton)
-		btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton)
+		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/analitickakonta", "#promettable", "innerHTML", "GET", "", hxVals, true, common.ClassSaveButton, "handleDialogResponse")
+		btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
 
 		//if the call come from menu click or tab click then render the page with parameters and empty table
 		tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetAnkontaTableFields(), "", "", 0, 0, 0, 0)
@@ -75,6 +87,14 @@ func (h *PrometHandler) PrometAnalitickihKonta(c *gin.Context) {
 	}
 	// If it's a POST request, the make obrada
 	if requestSource == "btnobrada" || requestSource == "btnpage" {
+		//validacija input parametre:
+		fieldParameters := []string{"konto", "sifra", "oddatuma", "dodatuma"}
+		fieldsError := h.service.CheckPrometParameters(c, fieldParameters)
+		if len(fieldsError) > 0 {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldsError, common.ErrMsgValidation)
+			return
+		}
+
 		page, pageSize := common.GetPageAndPageSizeFromRequest(c)
 		response, err := h.service.GetPrometAnalitickihKonta(c, true, 0, 0)
 		if err != nil {
@@ -108,22 +128,66 @@ func (h *PrometHandler) PrometAnalitickihKonta(c *gin.Context) {
 }
 
 func (h *PrometHandler) PrometAnalitickihKontaPoMI(c *gin.Context) {
-	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/analitickakontami", "#promettable", "innerHTML", "POST", "", "", true, common.ClassObradaButton)
-	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton)
+	// Get our custom header
+	requestSource := c.Request.Header.Get("X-Request-Source")
+	if requestSource == "menu" || requestSource == "tab" {
+		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/analitickakontami", "#promettable", "innerHTML", "GET", "", hxValsMI, true, common.ClassSaveButton, "handleDialogResponse")
+		btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
 
-	tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetAnKontaMiTableFields(), "", "", 0, 0, 0, 0)
-	tbl.ShowActions = false
+		//if the call come from menu click or tab click then render the page with parameters and empty table
+		tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetAnKontaMiTableFields(), "", "", 0, 0, 0, 0)
+		tbl.ShowActions = false
+		h.tabData = setActiveTab(h.tabData, "analitickakontami")
+		err := tmpl_fin.AnalitickaKarticaPoMI(h.tabData, tbl, btnPrint, btnObrada, domain.PrometTotalValues{}).Render(c.Request.Context(), c.Writer)
+		if err != nil {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
+			return
+		}
+	}
+	// If it's a POST request, the make obrada
+	if requestSource == "btnobrada" || requestSource == "btnpage" {
+		//validacija input parametre:
+		fieldParameters := []string{"konto", "sifra", "oddatuma", "dodatuma", "odmi", "domi"}
+		fieldsError := h.service.CheckPrometParameters(c, fieldParameters)
+		if len(fieldsError) > 0 {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldsError, common.ErrMsgValidation)
+			return
+		}
 
-	h.tabData = setActiveTab(h.tabData, "analitickakontami")
-	err := tmpl_fin.AnalitickaKarticaPoMI(h.tabData, tbl, btnPrint, btnObrada, domain.PrometTotalValues{}).Render(c.Request.Context(), c.Writer)
-	if err != nil {
-		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
-		return
+		page, pageSize := common.GetPageAndPageSizeFromRequest(c)
+		response, err := h.service.GetPrometAnalitickihKontaMi(c, true, 0, 0)
+		if err != nil {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
+			return
+		}
+		totalRecords := response.TotalRecords
+		totalPages := (totalRecords + pageSize - 1) / pageSize
+		// Get paginated data
+		response, err = h.service.GetPrometAnalitickihKontaMi(c, false, pageSize, page)
+		if err != nil {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetData)
+			return
+		}
+		tbl := common.SetTableBasicData("", prometTableID, h.service.GetAnkontaTableFields(), "", "/api/promet/analitickakontami", pageSize, page, totalPages, totalRecords)
+		tbl.ShowActions = false
+		tbl.ShowPagination = true
+		tbl.Pagination.HxVals = hxVals
+		// Prepare TableData for UI
+		tblRows, err := common.SetTableRows(&tbl, response.Data, h.service.GetAnkontaTableFields(), "idfpro", "", h.service.GetFieldCache())
+		if err != nil {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgFailedToSetTableRow)
+			return
+		}
+		tbl.Rows = tblRows.Rows
+		tbl.BtnAdd = domain.Button{IsVisible: false}   // Hide Add button in this view
+		tbl.BtnPrint = domain.Button{IsVisible: false} // Hide Print button in this view
+
+		utils.RenderContent(c, tbl)
 	}
 }
 func (h *PrometHandler) PrometDeviznihAnalitickihKonta(c *gin.Context) {
-	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/deviznihanalitickihkonta", "#promettable", "innerHTML", "POST", "", "", true, common.ClassObradaButton)
-	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton)
+	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/deviznihanalitickihkonta", "#promettable", "innerHTML", "GET", "", hxVals, true, common.ClassSaveButton, "handleDialogResponse")
+	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
 
 	tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetAnDeviznaKontaTableFields(), "", "", 0, 0, 0, 0)
 	tbl.ShowActions = false
@@ -134,11 +198,49 @@ func (h *PrometHandler) PrometDeviznihAnalitickihKonta(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 		return
 	}
+	//validacija input parametre:
+	fieldParameters := []string{"konto", "sifra", "oddatuma", "dodatuma"}
+	fieldsError := h.service.CheckPrometParameters(c, fieldParameters)
+	if len(fieldsError) > 0 {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldsError, common.ErrMsgValidation)
+		return
+	}
+
+	page, pageSize := common.GetPageAndPageSizeFromRequest(c)
+	response, err := h.service.GetPrometAnalitickihKonta(c, true, 0, 0)
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
+		return
+	}
+	totalRecords := response.TotalRecords
+	totalPages := (totalRecords + pageSize - 1) / pageSize
+	// Get paginated data
+	response, err = h.service.GetPrometAnalitickihKonta(c, false, pageSize, page)
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
+		return
+	}
+	tbl = common.SetTableBasicData("", prometTableID, h.service.GetAnkontaTableFields(), "", "/api/promet/deviznihanalitickihkonta", pageSize, page, totalPages, totalRecords)
+	tbl.ShowActions = false
+	tbl.ShowPagination = true
+	tbl.Pagination.HxVals = hxVals
+	// Prepare TableData for UI
+	tblRows, err := common.SetTableRows(&tbl, response.Data, h.service.GetAnkontaTableFields(), "idfpro", "", h.service.GetFieldCache())
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgFailedToSetTableRow)
+		return
+	}
+	tbl.Rows = tblRows.Rows
+	tbl.BtnAdd = domain.Button{IsVisible: false}   // Hide Add button in this view
+	tbl.BtnPrint = domain.Button{IsVisible: false} // Hide Print button in this view
+
+	utils.RenderContent(c, tbl)
+
 }
 
 func (h *PrometHandler) PrometSubsintetickihKonta(c *gin.Context) {
-	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/subsintetickakonta", "#promettable", "innerHTML", "POST", "", "", true, common.ClassObradaButton)
-	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton)
+	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/subsintetickakonta", "#promettable", "innerHTML", "POST", "", "", true, common.ClassObradaButton, "handleDialogResponse('tab4')")
+	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
 
 	tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetSubsintetickihKontaTableFields(), "", "", 0, 0, 0, 0)
 	tbl.ShowActions = false
@@ -151,8 +253,8 @@ func (h *PrometHandler) PrometSubsintetickihKonta(c *gin.Context) {
 	}
 }
 func (h *PrometHandler) PrometSintetickihKonta(c *gin.Context) {
-	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/sintetickakonta", "#promet-table", "innerHTML", "POST", "", "", true, common.ClassObradaButton)
-	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton)
+	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/sintetickakonta", "#promet-table", "innerHTML", "POST", "", "", true, common.ClassObradaButton, "handleDialogResponse('tab5')")
+	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
 
 	tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetSintetickihKontaTableFields(), "", "", 0, 0, 0, 0)
 	tbl.ShowActions = false
@@ -165,8 +267,8 @@ func (h *PrometHandler) PrometSintetickihKonta(c *gin.Context) {
 	}
 }
 func (h *PrometHandler) KarticaSintetickihKonta(c *gin.Context) {
-	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/karticasintetickihkonta", "#promettable", "innerHTML", "POST", "", "", true, common.ClassObradaButton)
-	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton)
+	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/karticasintetickihkonta", "#promettable", "innerHTML", "POST", "", "", true, common.ClassObradaButton, "handleDialogResponse('tab6')")
+	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
 
 	tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetKarticaSintetickihKontaTableFields(), "", "", 0, 0, 0, 0)
 	tbl.ShowActions = false
@@ -180,8 +282,8 @@ func (h *PrometHandler) KarticaSintetickihKonta(c *gin.Context) {
 }
 
 func (h *PrometHandler) PrometKontaAnaliticki(c *gin.Context) {
-	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/kontaanaliticki", "#promettable", "innerHTML", "POST", "", "", true, common.ClassObradaButton)
-	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton)
+	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/kontaanaliticki", "#promettable", "innerHTML", "POST", "", "", true, common.ClassObradaButton, "handleDialogResponse('tab7')")
+	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
 
 	tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetKontaAnalitickiTableFields(), "", "", 0, 0, 0, 0)
 	tbl.ShowActions = false
@@ -213,24 +315,21 @@ func (h *PrometHandler) PrometTotalValues(c *gin.Context) {
 func (h *PrometHandler) SearchButtonDialog(c *gin.Context) {
 	hxVals := ""
 	vkonta := c.Query("vkonta")
+	konto := c.Query("konto")
 	queryParams := c.Request.URL.Query()
 	id := ""
 	placeholder := "trazi konto..."
-	if _, exists := queryParams["konto"]; exists {
+	if _, exists := queryParams["search-konto"]; exists {
 		// Parameter exists (even if empty)
 		id = "konto"
 		placeholder = "trazi konto..."
-
 	}
-	if _, exists := queryParams["sifra"]; exists {
+	if _, exists := queryParams["search-sifra"]; exists {
 		// Parameter exists (even if empty)
 		id = "sifra"
 		placeholder = "trazi sifru..."
 	}
-
-	if vkonta != "" {
-		hxVals = fmt.Sprintf(`{"vkonta": "%s"}`, vkonta)
-	}
+	hxVals = fmt.Sprintf(`{"konto": "%s", "vkonta": "%s"}`, konto, vkonta)
 	tmpl.SearchButtonDialog(id, id, placeholder, "/api/fkpl/trazikontosearchtable", "#search-results", "innerHTML", hxVals).Render(c.Request.Context(), c.Writer)
 
 }

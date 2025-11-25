@@ -9,8 +9,9 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import "helia/internal/domain"
+import "helia/internal/i18n"
 
-func Base(isLoggedIn bool, content templ.Component, menuItems domain.MenuDataItems, subMenuItems []domain.SubMenuItem, title string, userName, year string, currentMenu string, comboCompany, comboPoslGod, comboKar domain.ComboFieldConfig) templ.Component {
+func Base(isLoggedIn bool, content templ.Component, menuItems domain.MenuDataItems, subMenuItems []domain.SubMenuItem, title string, userName, year string, currentMenu string, comboCompany, comboPoslGod, comboKar, comboLanguage domain.ComboFieldConfig, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -43,7 +44,7 @@ func Base(isLoggedIn bool, content templ.Component, menuItems domain.MenuDataIte
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = Header(isLoggedIn, userName).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = Header(isLoggedIn, userName, comboLanguage).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -52,7 +53,7 @@ func Base(isLoggedIn bool, content templ.Component, menuItems domain.MenuDataIte
 			return templ_7745c5c3_Err
 		}
 		if isLoggedIn {
-			templ_7745c5c3_Err = TopMenu(menuItems, currentMenu, comboCompany, comboPoslGod, comboKar).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = TopMenu(menuItems, currentMenu, comboCompany, comboPoslGod, comboKar, translator, comboLanguage.SelectedValue).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -87,11 +88,11 @@ func Base(isLoggedIn bool, content templ.Component, menuItems domain.MenuDataIte
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<!-- Theme Toggle Script --></body><script>\r\n        htmx.logAll();\r\n            document.addEventListener('DOMContentLoaded', () => {\r\n                const themeToggle = document.getElementById('theme-toggle');\r\n                const themeIcon = document.getElementById('theme-icon');\r\n                const htmlElement = document.documentElement;\r\n\r\n                console.log(\"Theme toggle script loaded\"); // Debugging\r\n\r\n                // Check for saved theme in localStorage\r\n                const savedTheme = localStorage.getItem('theme');\r\n                console.log(\"Saved theme:\", savedTheme); // Debugging\r\n\r\n                if (savedTheme === 'dark') {\r\n                    htmlElement.classList.add('dark');\r\n                    themeIcon.textContent = '☀️';\r\n                } else {\r\n                    htmlElement.classList.remove('dark');\r\n                    themeIcon.textContent = '🌙';\r\n                }\r\n\r\n                themeToggle.addEventListener('click', () => {\r\n                    console.log(\"Theme toggle button clicked\"); // Debugging\r\n                    if (htmlElement.classList.contains('dark')) {\r\n                        console.log(\"Switching to light mode\"); // Debugging\r\n                        htmlElement.classList.remove('dark');\r\n                        localStorage.setItem('theme', 'light');\r\n                        themeIcon.textContent = '🌙';\r\n                    } else {\r\n                        console.log(\"Switching to dark mode\"); // Debugging\r\n                        htmlElement.classList.add('dark');\r\n                        localStorage.setItem('theme', 'dark');\r\n                        themeIcon.textContent = '☀️';\r\n                    }\r\n                });\r\n                <!-- Active Nav Item Script -->\r\n                    const navItems = document.querySelectorAll('.nav-item');\r\n\r\n                    navItems.forEach(item => {\r\n                        item.addEventListener('click', (e) => {\r\n                            // Remove 'active' class from all nav items\r\n                            navItems.forEach(nav => nav.classList.remove('active'));\r\n                            // Add 'active' class to the clicked nav item\r\n                            e.target.classList.add('active');\r\n                        });\r\n                    });\r\n\r\n                    // Set the initial active nav item based on the current URL\r\n                    const currentPath = window.location.pathname;\r\n                    navItems.forEach(item => {\r\n                        if (item.getAttribute('href') === currentPath) {\r\n                            item.classList.add('active');\r\n                        }\r\n                    });\r\n            });\r\n\r\n        </script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<!-- Theme Toggle Script --></body>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = SearchPopupScript().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = jsFunctions().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

@@ -5,15 +5,16 @@ import (
 	"helia/internal/domain"
 	"net/url"
 	"strings"
+	"helia/internal/i18n"
 )
 
-templ TopMenu(menuItems domain.MenuDataItems, currentMenu string, comboCompany, comboPoslGod, comboKar domain.ComboFieldConfig) {
-	<div class="bg-gradient-to-r from-blue-400 to-blue-900 text-white shadow-xl shadow-blue-600/50">
+templ TopMenu(menuItems domain.MenuDataItems, currentMenu string, comboCompany, comboPoslGod, comboKar domain.ComboFieldConfig, translator *i18n.Service, lang string) {
+	<div class="bg-gradient-to-r from-blue-900 to-blue-900 text-white shadow-xl shadow-blue-600/50">
 		<nav class="flex flex-wrap">
 			for _, item := range menuItems.MenuItems {
 				<button
 					id={ fmt.Sprintf("menu-%s", strings.ReplaceAll(strings.ToLower(item.Name), " ", "-")) }
-					name={ item.Name }
+					name={ translator.Menu(lang, item.Name) }
 					hx-get={ fmt.Sprintf("/get-menu?menuName=%s", url.QueryEscape(item.Name)) }
 					hx-trigger="click"
 					hx-target="#side-menu"

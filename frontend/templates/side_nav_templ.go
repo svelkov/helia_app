@@ -10,6 +10,7 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import (
 	"fmt"
+	"helia/internal/common"
 	"helia/internal/domain"
 )
 
@@ -46,17 +47,17 @@ func Side_nav(submenu []domain.SubMenuItem) templ.Component {
 			var templ_7745c5c3_Var2 string
 			templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%s", item.URL))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/side_nav.templ`, Line: 16, Col: 42}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/side_nav.templ`, Line: 17, Col: 42}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\" hx-target=\"#content\" hx-swap=\"innerHTML\" class=\"side-nav-item flex items-center py-1 px-3 hover:bg-blue-600  border-b rounded-md\" onclick=\"\r\n                        document.querySelectorAll(&#39;#side-menu .side-nav-item&#39;).forEach(function(a) {\r\n                            a.className = &#39;side-nav-item flex items-center py-1 px-3  hover:bg-blue-600  border-b rounded-md text-gray-300&#39;;\r\n                        });\r\n                        this.className = &#39;side-nav-item flex items-center py-1 px-3 bg-white border-b text-blue-800&#39;;\r\n                    \">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\" hx-target=\"#content\" hx-swap=\"innerHTML\" class=\"side-nav-item flex items-center py-2 px-3 hover:bg-blue-600  border-b rounded-md\" onclick=\"\r\n                        document.querySelectorAll(&#39;#side-menu .side-nav-item&#39;).forEach(function(a) {\r\n                            a.className = &#39;side-nav-item flex items-center py-2 px-3  hover:bg-blue-600  border-b rounded-md text-gray-300&#39;;\r\n                        });\r\n                        this.className = &#39;side-nav-item flex items-center py-2 px-3 bg-white border-b text-blue-800&#39;;\r\n                    \">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = Icon(item.Icon).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = Icon(item.Icon, common.ClassIcon).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -67,7 +68,7 @@ func Side_nav(submenu []domain.SubMenuItem) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(item.Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/side_nav.templ`, Line: 31, Col: 38}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/side_nav.templ`, Line: 32, Col: 38}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {

@@ -290,6 +290,67 @@ func GetAllEntityHelper[T any](
 	return &table
 }
 
+func GetAllPdfEntityHelper[T any](
+	c *gin.Context,
+	service service.Service[T],
+	tableFields []domain.Fields,
+	entityContentTitle, entityTableID, entityURLPrefix, entityURLGetall, idField string,
+	hasUpdateDelete ...bool,
+) *domain.TableData {
+	searchValue := c.DefaultQuery("query", "")
+
+	totRecords, err := service.GetTotalRecords(tableFields, searchValue)
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData)
+		return nil
+	}
+
+	currentPage, pageSize, totalPages := common.GetPaginationData(c, totRecords)
+	allEntities, err := service.GetAll(pageSize, (currentPage-1)*pageSize, tableFields, idField, searchValue)
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData)
+		return nil
+	}
+
+	table := common.SetTableBasicData(
+		entityContentTitle, entityTableID, tableFields,
+		entityURLPrefix, entityURLGetall,
+		pageSize, currentPage, totalPages, totRecords,
+	)
+	common.SetTableRows(&table, *allEntities, tableFields, idField, entityURLPrefix, service.GetFieldCache())
+	return &table
+}
+func GetAllExcelEntityHelper[T any](
+	c *gin.Context,
+	service service.Service[T],
+	tableFields []domain.Fields,
+	entityContentTitle, entityTableID, entityURLPrefix, entityURLGetall, idField string,
+	hasUpdateDelete ...bool,
+) *domain.TableData {
+	searchValue := c.DefaultQuery("query", "")
+
+	totRecords, err := service.GetTotalRecords(tableFields, searchValue)
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData)
+		return nil
+	}
+
+	currentPage, pageSize, totalPages := common.GetPaginationData(c, totRecords)
+	allEntities, err := service.GetAll(pageSize, (currentPage-1)*pageSize, tableFields, idField, searchValue)
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData)
+		return nil
+	}
+
+	table := common.SetTableBasicData(
+		entityContentTitle, entityTableID, tableFields,
+		entityURLPrefix, entityURLGetall,
+		pageSize, currentPage, totalPages, totRecords,
+	)
+	common.SetTableRows(&table, *allEntities, tableFields, idField, entityURLPrefix, service.GetFieldCache())
+	return &table
+}
+
 // GetEntityHelper fetches and returns a single resource by ID.
 func GetEntityHelper[T any](
 	c *gin.Context,

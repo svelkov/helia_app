@@ -16,10 +16,11 @@ import (
 )
 
 const (
-	fkplContentTitle string = "KONTNI PLAN"
-	fkplTableID      string = "fkpl-table"
-	fkplURLPrefix    string = "/api/fkpl/"
-	fkplURLGetAll    string = "/api/fkpl/all"
+	fkplContentTitle   string = "KONTNI PLAN"
+	fkplTableID        string = "fkpl-table"
+	searchKontoTableID string = "searchkonto-table"
+	fkplURLPrefix      string = "/api/fkpl/"
+	fkplURLGetAll      string = "/api/fkpl/all"
 )
 
 func SetFkplFields() []domain.Fields {
@@ -56,7 +57,7 @@ func (h *FkplHandler) UpdateFkpl(c *gin.Context) {
 }
 
 func (h *FkplHandler) DeleteFkpl(c *gin.Context) {
-	utils.DeleteHelper[domain.Fkpl](c, h.Service, common.IDfkpl)
+	utils.DeleteHelper(c, h.Service, common.IDfkpl)
 }
 
 func (h *FkplHandler) confirmDeleteHandler(c *gin.Context) {
@@ -68,7 +69,7 @@ func (h *FkplHandler) confirmAddHandler(c *gin.Context) {
 }
 
 func (h *FkplHandler) confirmUpdateHandler(c *gin.Context) {
-	utils.ConfirmUpdateHelper[domain.Fkpl](c, h.Service, SetFkplFields(), common.IDfkpl)
+	utils.ConfirmUpdateHelper(c, h.Service, SetFkplFields(), common.IDfkpl)
 }
 
 func (h *FkplHandler) GetFkpl(c *gin.Context) {
@@ -124,7 +125,11 @@ func (h *FkplHandler) TraziKonto(c *gin.Context) {
 		param++
 		args = append(args, vkonta)
 	}
-
+	if vkonta == "1" && sifra == "" {
+		c.Writer.Header().Set("Content-Type", "text/plain")
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, "Nije pronađena šifra")
+		return
+	}
 	entities, err := h.Service.GetAllCustom(sqlQuery, whereText, args, "", "")
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, "Greška prilikom pretrage konta")
@@ -153,29 +158,49 @@ func (h *FkplHandler) TraziKontoSearchTable(c *gin.Context) {
 	args := []interface{}{}
 	// Parse query parameters from the URL
 	searchValue := c.Query("query")
+	konto := c.Query("konto")
 	vkonta := c.Query("vkonta")
 	if searchValue == "" {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, "Nedostaje parametar za pretrazivanje")
 		return
 
 	}
+	whereKonto := ""
 	// Custom SQL query for searching konto, sifra, or naziv
+	args = append(args, global.GetGnGod(), global.GetGnKar())
 	sqlQuery := `SELECT idfkpl, f.konto, f.sifra, f.naziv
 				FROM baza.fkpl as f`
-	whereText := `WHERE f.god = $1 AND f.kar = $2 AND f.vkonta = $3 AND (f.konto ILIKE '%' || $4 || '%' 
+	if konto != "" {
+		whereKonto = ` AND konto = $3 AND f.vkonta = $4 AND (f.konto ILIKE '%' || $5 || '%' 
+										OR f.sifra ILIKE '%' || $6 || '%' 
+										OR f.naziv ILIKE '%' || $7 || '%' ) ORDER BY konto LIMIT 20 `
+		args = append(args, konto)
+	} else {
+		whereKonto = ` AND f.vkonta = $3 AND (f.konto ILIKE '%' || $4 || '%' 
 										OR f.sifra ILIKE '%' || $5 || '%' 
-										OR f.naziv ILIKE '%' || $6 || '%' ) ORDER BY konto LIMIT 20`
+										OR f.naziv ILIKE '%' || $6 || '%' ) ORDER BY konto LIMIT 20 `
 
-	args = append(args, global.GetGnGod(), global.GetGnKar(), vkonta, searchValue, searchValue, searchValue)
+	}
+	whereText := fmt.Sprintf(`WHERE f.god = $1 AND f.kar = $2  %s`, whereKonto)
+	args = append(args, vkonta, searchValue, searchValue, searchValue)
 	entities, err := h.Service.GetAllCustom(sqlQuery, whereText, args, "", "")
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, common.ErrMsgReadData)
 		return
 	}
 	// Convert the fetched data into the format expected by the template
-	tbl := common.SetTableBasicData("", prometTableID, fkplSearchTableFields, "", "", 0, 0, 0, 0)
+	tbl := common.SetTableBasicData("", searchKontoTableID, fkplSearchTableFields, "", "", 0, 0, 0, 0)
 	tbl.ShowActions = false
 	tbl.ShowPagination = false
+	tbl.FuncClick = "selectRow"                        // naziv js function for Click
+	tbl.FuncDblClick = "handleDblClickKontoSelection(this)" // naziv js function for dblClick
+	if vkonta == "2" {
+		tbl.DestField = "konto"
+	}
+	if vkonta == "1" {
+		tbl.DestField = "sifra"
+	}
+
 	// Prepare TableData for UI
 	tblRows, err := common.SetTableRows(&tbl, *entities, fkplSearchTableFields, "idfkpl", "", h.Service.GetFieldCache())
 	if err != nil {

@@ -44,6 +44,9 @@ const (
 	OkMsgDeleteData           = "Uspešno obrisani podaci"
 	OkMsgReadData             = "Uspešno učitani podaci"
 	OkMsgOperationSuccessfull = "operation successful"
+	ErrMsgObavezanPodatak     = "obavezan podatak..."
+	ErrMsgGetData             = "greska prilikom preuzimanja podataka"
+	ErrMsgGetKontoSifra       = "nepostojeci konto ili sifra"
 )
 
 // constants for styling of inputs
@@ -89,17 +92,22 @@ const (
 	// Search Input
 	ClassSearchInput = "search-input border rounded px-3 sm:px-2 h-9 sm:h-8 md:h-7 py-1 text-xs sm:text-sm w-full sm:w-72 md:w-64 pl-9 sm:pl-8"
 	// Action Buttons - Mobile optimized
-	ClassAddButton = "bg-blue-600 hover:bg-blue-700 rounded h-9 sm:h-8 md:h-7 px-2 sm:px-2 md:px-1 py-1 text-xs sm:text-sm flex text-white items-center justify-center whitespace-nowrap gap-1 min-w-max"
+	ClassAddButton = "bg-green-600 hover:bg-green-700 rounded h-9 sm:h-8 md:h-7 px-2 sm:px-2 md:px-1 py-1 text-xs sm:text-sm flex text-white items-center justify-center whitespace-nowrap gap-1 min-w-max sm:w-24 md:w-24"
+	ClassNewButton = "bg-blue-600 hover:bg-blue-700 rounded h-9 sm:h-8 md:h-7 px-2 sm:px-2 md:px-1 py-1 text-xs sm:text-sm flex text-white items-center justify-center whitespace-nowrap gap-1 min-w-max sm:w-24 md:w-24"
 	//	ClassSaveButton        = "bg-green-600 hover:bg-green-700 rounded h-9 sm:h-8 md:h-7 px-2 sm:px-2 md:px-1 py-1 text-xs sm:text-sm flex text-white items-center justify-center whitespace-nowrap gap-1 min-w-max"
 	ClassSaveButton        = "bg-green-600 hover:bg-green-700 rounded h-9 sm:h-8 md:h-7 md:px-1 sm:px py-1 text-xs sm:text-sm flex text-white items-center justify-center whitespace-nowrap min-w-max sm:w-24 md:w-24"
 	ClassDeleteButton      = "bg-red-600 hover:bg-red-700 rounded h-9 sm:h-8 md:h-7 px-2 sm:px-2 md:px-1 py-1 text-xs sm:text-sm flex text-white items-center justify-center whitespace-nowrap w-full sm:w-24 md:w-24"
 	ClassOdustaniButton    = "bg-gray-600 hover:bg-gray-700 rounded h-9 sm:h-8 md:h-7 px-2 sm:px-2 md:px-1 py-1 text-xs sm:text-sm flex text-white items-center justify-center whitespace-nowrap w-full sm:w-24 md:w-24"
 	ClassCloseButton       = "bg-gray-600 hover:bg-gray-700 rounded h-9 sm:h-8 md:h-7 px-2 sm:px-2 md:px-1 py-1 text-xs sm:text-sm flex text-white items-center justify-center whitespace-nowrap gap-2 min-w-max"
-	ClassObradaButton      = "bg-green-600 hover:bg-green-700 rounded h-8 sm:h-7 md:h-6 px-2 sm:px-2 md:px-1 py-1 text-xs sm:text-sm flex text-white items-center justify-center whitespace-nowrap w-full sm:w-24 md:w-24"
-	ClassPrintButton       = "bg-blue-500 hover:bg-blue-700 text-white h-8 sm:h-7 md:h-6 px-2 sm:px-2 md:px-1 py-1 rounded text-xs sm:text-sm flex items-center justify-center whitespace-nowrap w-full sm:w-24 md:w-24"
-	ClassDialogCloseButton = "text-white hover:text-gray-300 p-2 sm:p-1 transition-colors h-8 sm:h-7 md:h-6 px-2 sm:px-2 md:px-1 py-1 rounded text-xs sm:text-sm flex items-center justify-center"
+	ClassObradaButton      = "bg-green-600 hover:bg-green-700 rounded h-9 sm:h-7 md:h-7 px-2 sm:px-2 md:px-1 py-1 text-xs sm:text-sm flex text-white items-center justify-center whitespace-nowrap w-full sm:w-24 md:w-24"
+	ClassPrintButton       = "bg-blue-500 hover:bg-blue-900 text-white h-9 sm:h-7 md:h-7 px-2 sm:px-2 md:px-1 py-1 rounded text-xs sm:text-sm flex items-center justify-center whitespace-nowrap w-full sm:w-24 md:w-24"
+	ClassDialogCloseButton = "text-white hover:text-gray-300 p-2 sm:p-1 transition-colors h-9 sm:h-7 md:h-7 px-2 sm:px-2 md:px-1 py-1 rounded text-xs sm:text-sm flex items-center justify-center"
 	ClassConfirmButton     = "bg-red-600 hover:bg-red-700 rounded h-9 sm:h-8 md:h-7 px-2 sm:px-2 md:px-1 py-1 text-xs sm:text-sm flex text-white items-center justify-center whitespace-nowrap gap-1 min-w-max"
 	ClassErrorField        = "text-red-600 text-xs mt-1"
+	ClassIcon              = "h-5 w-5 mr-2 inline-block"
+	ClassPdfButton         = "bg-blue-500 hover:bg-blue-900 text-white h-9 sm:h-7 md:h-7 px-2 sm:px-2 md:px-1 py-1 rounded text-sm flex items-center whitespace-nowrap"
+	ClassExcelButton       = "bg-blue-500 hover:bg-blue-700 text-white h-9 sm:h-7 md:h-7 px-2 sm:px-2 md:px-1 py-1 rounded text-xs sm:text-sm flex items-center justify-center whitespace-nowrap w-full sm:w-12 md:w-12"
+
 	// Patterns (unchanged)
 	PatternLettersAndNumbers = "[A-Za-z0-9]+"
 	PatternNumbers           = "[0-9]+"
@@ -160,9 +168,13 @@ var IconSVG = map[string]string{
 	"fin_bilansi":        `<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 0 0-2 2v4m5-6h8M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m0 0h3a2 2 0 0 1 2 2v4m0 0v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-6m18 0s-4 2-9 2-9-2-9-2m9-2h.01"/>`,
 	"fin_obrada": `<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13v-2a1 1 0 0 0-1-1h-.757l-.707-1.707.535-.536a1 1 0 0 0 0-1.414l-1.414-1.414a1 1 0 0 0-1.414 0l-.536.535L14 4.757V4a1 1 0 0 0-1-1h-2a1 1 0 0 0-1 1v.757l-1.707.707-.536-.535a1 1 0 0 0-1.414 0L4.929 6.343a1 1 0 0 0 0 1.414l.536.536L4.757 10H4a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h.757l.707 1.707-.535.536a1 1 0 0 0 0 1.414l1.414 1.414a1 1 0 0 0 1.414 0l.536-.535 1.707.707V20a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-.757l1.707-.708.536.536a1 1 0 0 0 1.414 0l1.414-1.414a1 1 0 0 0 0-1.414l-.535-.536.707-1.707H20a1 1 0 0 0 1-1Z"/>
   					<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/>`,
-	"stampa":   `<path stroke="currentColor" stroke-linejoin="round" stroke-width="2" d="M16.444 18H19a1 1 0 0 0 1-1v-5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v5a1 1 0 0 0 1 1h2.556M17 11V5a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v6h10ZM7 15h10v4a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1v-4Z"/>`,
-	"odustani": `<path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25ZM12.75 9a.75.75 0 0 0-1.5 0v2.25H9a.75.75 0 0 0 0 1.5h2.25V15a.75.75 0 0 0 1.5 0v-2.25H15a.75.75 0 0 0 0-1.5h-2.25V9Z" clip-rule="evenodd"></path>`,
-	"file_pdf": `<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 17v-5h1.5a1.5 1.5 0 1 1 0 3H5m12 2v-5h2m-2 3h2M5 10V7.914a1 1 0 0 1 .293-.707l3.914-3.914A1 1 0 0 1 9.914 3H18a1 1 0 0 1 1 1v6M5 19v1a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-1M10 3v4a1 1 0 0 1-1 1H5m6 4v5h1.375A1.627 1.627 0 0 0 14 15.375v-1.75A1.627 1.627 0 0 0 12.375 12H11Z"/>`,
-	"file_csv": `<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10V7.914a1 1 0 0 1 .293-.707l3.914-3.914A1 1 0 0 1 9.914 3H18a1 1 0 0 1 1 1v6M5 19v1a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-1M10 3v4a1 1 0 0 1-1 1H5m2.665 9H6.647A1.647 1.647 0 0 1 5 15.353v-1.706A1.647 1.647 0 0 1 6.647 12h1.018M16 12l1.443 4.773L19 12m-6.057-.152-.943-.02a1.34 1.34 0 0 0-1.359 1.22 1.32 1.32 0 0 0 1.172 1.421l.536.059a1.273 1.273 0 0 1 1.226 1.718c-.2.571-.636.754-1.337.754h-1.13"/>`,
+	"stampa":      `<path stroke="currentColor" stroke-linejoin="round" stroke-width="2" d="M16.444 18H19a1 1 0 0 0 1-1v-5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v5a1 1 0 0 0 1 1h2.556M17 11V5a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v6h10ZM7 15h10v4a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1v-4Z"/>`,
+	"odustani":    `<path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25ZM12.75 9a.75.75 0 0 0-1.5 0v2.25H9a.75.75 0 0 0 0 1.5h2.25V15a.75.75 0 0 0 1.5 0v-2.25H15a.75.75 0 0 0 0-1.5h-2.25V9Z" clip-rule="evenodd"></path>`,
+	"file_export": `<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 10V4a1 1 0 0 0-1-1H9.914a1 1 0 0 0-.707.293L5.293 7.207A1 1 0 0 0 5 7.914V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2M10 3v4a1 1 0 0 1-1 1H5m5 6h9m0 0-2-2m2 2-2 2"/>`,
+	"file_csv":    `<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10V7.914a1 1 0 0 1 .293-.707l3.914-3.914A1 1 0 0 1 9.914 3H18a1 1 0 0 1 1 1v6M5 19v1a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-1M10 3v4a1 1 0 0 1-1 1H5m2.665 9H6.647A1.647 1.647 0 0 1 5 15.353v-1.706A1.647 1.647 0 0 1 6.647 12h1.018M16 12l1.443 4.773L19 12m-6.057-.152-.943-.02a1.34 1.34 0 0 0-1.359 1.22 1.32 1.32 0 0 0 1.172 1.421l.536.059a1.273 1.273 0 0 1 1.226 1.718c-.2.571-.636.754-1.337.754h-1.13"/>`,
+	"sort_down":   `<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7.119 8h9.762a1 1 0 0 1 .772 1.636l-4.881 5.927a1 1 0 0 1-1.544 0l-4.88-5.927A1 1 0 0 1 7.118 8Z"/>`,
+	"sort_up":     `<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16.881 16H7.119a1 1 0 0 1-.772-1.636l4.881-5.927a1 1 0 0 1 1.544 0l4.88 5.927a1 1 0 0 1-.77 1.636Z"/>`,
+	"sort":        `<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m8 10 4-6 4 6H8Zm8 4-4 6-4-6h8Z"/>`,
+	"add":         `<path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25ZM12.75 9a.75.75 0 0 0-1.5 0v2.25H9a.75.75 0 0 0 0 1.5h2.25V15a.75.75 0 0 0 1.5 0v-2.25H15a.75.75 0 0 0 0-1.5h-2.25V9Z" clip-rule="evenodd"></path>`,
 	//"kontniplan":         `<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 19V4a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v13H7a2 2 0 0 0-2 2Zm0 0a2 2 0 0 0 2 2h12M9 3v14m7 0v4" /><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 9h6m-6 3h6m-6 3h6M6.996 9h.01m-.01 3h.01m-.01 3h.01M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" />`,
 }

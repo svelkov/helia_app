@@ -59,11 +59,15 @@ func factory() {
 	}
 	defer db.Close()
 
-	// Initialize translator
-	translator := i18n.NewTranslator("en")
-	if err := translator.LoadTranslations("./translations", []string{"en", "sr", "ср"}); err != nil {
+	if err := i18n.Init("./translations", cfg.Languages, "sr"); err != nil {
 		log.Fatal("Failed to load translations:", err)
 	}
+	translator := i18n.GetInstance()
+	// Initialize translator
+	// translator := i18n.NewTranslator("sr")
+	// if err := translator.LoadTranslations("./translations", cfg.Languages); err != nil {
+	// 	log.Fatal("Failed to load translations:", err)
+	// }
 
 	// Set Gin mode
 	if cfg.Env == "production" {
@@ -109,7 +113,7 @@ func factory() {
 	log.Println("Server exited")
 }
 
-func setupRouter(translator *i18n.Translator) *gin.Engine {
+func setupRouter(translator *i18n.Service) *gin.Engine {
 	router := gin.Default()
 	// Configure sessions
 	store := configureSessionStore()
@@ -226,7 +230,7 @@ func connectDB(cfg config.Config) (*sqlx.DB, error) {
 // getMenuHandler handles menu requests
 func getMenuHandler(c *gin.Context) {
 	menuName := c.Query("menuName")
-	subMenus := common.GetSubMenus(domain.MenuData, menuName)
+	subMenus := common.GetTranslatedSubMenus(domain.MenuData, menuName, global.GetLanguage())
 	if subMenus == nil {
 		c.JSON(404, gin.H{"error": "Menu not found"})
 		return

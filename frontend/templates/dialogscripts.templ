@@ -10,8 +10,14 @@ templ DeactivateActionsColumn() {
         		el.classList.remove('sticky', 'right-0', 'z-10');
 			});
 		}
+		
+    </script>
+}
+
+templ ShowMessage() {
+	<script>
 		function selectRow(row) {
-			console.log("Row clicked:", row);
+		   // console.log("Row clicked:", row);
 		   // Deselect any previously selected row by removing the 'bg-blue-300' class
 			const selectedRow = document.querySelector('.bg-blue-300');
 			if (selectedRow) {
@@ -21,13 +27,45 @@ templ DeactivateActionsColumn() {
 			// Select the clicked row
 			row.classList.add('bg-blue-300');
 		}
-    </script>
-}
 
-templ ShowMessage() {
-	<script>
+  		function handleDblClickKontoSelection(element) {
+	        if (!element) return;
+			const destField = element.getAttribute('data-dest-field');
+			console.log("selectedrow:", element)
+			console.log(" destination field:",destField )
+    		// Get all table cells in this row
+			const cells = element.querySelectorAll('td');
+			
+			// Extract values by cell index
+			const firstVal = cells[0]?.querySelector('.text-sm')?.textContent?.trim() || '';
+			const secondVal = cells[1]?.querySelector('.text-sm')?.textContent?.trim() || '';
+			const thirdVal = cells[2]?.querySelector('.text-sm')?.textContent?.trim() || '';
+			
+			// Set values in form
+			if (destField == "konto") {
+				clearFieldError("konto")
+				const kontoInput = document.getElementById('konto');
+				const kontoNaziv = document.getElementById('kontonaziv');
+				if (kontoInput) kontoInput.value = firstVal;
+				if (kontoNaziv) kontoNaziv.value = thirdVal;
+			}
+			
+			if (destField == "sifra") {
+				clearFieldError("sifra")
+				const sifraInput = document.getElementById('sifra');
+				const sifraNaziv = document.getElementById('sifranaziv');
+				if (sifraInput) sifraInput.value = secondVal;
+				if (sifraNaziv) sifraNaziv.value = thirdVal;
+			}
+			
+			// Close the dialog
+            hideDropdown('search-dropdown');
+        }
+
+
 		function showMessage(message, isError = false) {
 			const infoMessage = document.getElementById('info-message');
+
 			// Set the message text
 			infoMessage.textContent = message;
 			// Reset previous styles
@@ -48,9 +86,10 @@ templ ShowMessage() {
 
 		function handleDialogResponse(dialogName) {
 			// Check if the response is an error (400 Bad Request)
-				//console.log("handleFieldErrors:", event.detail)
+			console.log("in handleDialogResponse()", dialogName)
+			console.log("handleFieldErrors:", event.detail)
 			try {
-					// Parse the JSON response from the backend
+				// Parse the JSON response from the backend
 				const response = JSON.parse(event.detail.xhr.responseText);
 				// Clear previous error messages
 				document.querySelectorAll('.input-error').forEach(el => el.remove());
@@ -83,11 +122,52 @@ templ ShowMessage() {
 					//close the dialog that is sent as parameter
 				
 				return
-				 
+			} catch (e) {
+				console.error("Invalid JSON response, funkcija handleDialogResponse()", e);
+			}
+		}
+			
+		function clearFieldError(inputElement) {
+			// If inputElement is already a DOM element
+			const elm = document.getElementById(inputElement);
+			if (elm) {
+				elm.classList.remove('border-red-500');
+
+				let nextSibling = elm.nextElementSibling;
+
+				while (nextSibling && nextSibling.classList.contains('input-error')) {
+					nextSibling.remove();
+					nextSibling = elm.nextElementSibling;
+				}
+			}
+		}	
+
+		function handleNextNalogResponse(dialogName) {
+			console.log("handleNextNalogResponse:", event.detail);
+			
+			try {
+				console.log("u handleNextNalogResponse() ")
+				const response = JSON.parse(event.detail.xhr.responseText);
+				
+				// Check if response has the expected structure
+				if (response && response.success && response.nalog) {
+					console.log("response", response.nalog);
+					
+					const nalogElement = document.getElementById('nalog');
+					if (nalogElement) {
+						nalogElement.value = response.nalog;
+					} else {
+						console.error("Element with id 'nalog' not found");
+					}
+				} else {
+					console.warn("Response missing expected data:", response);
+				}
+				
 			} catch (e) {
 				console.error("Invalid JSON response", e);
 			}
-		}	
+		}
+		
 	</script>
 }
 

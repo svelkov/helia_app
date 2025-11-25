@@ -5,10 +5,13 @@ import (
 	tmpl "helia/frontend/templates"
 	"helia/internal/common"
 	"helia/internal/domain"
-	"time"
 )
 
 var tabClasses string
+
+const (
+	dateLayout string = "02.01.2006"
+)
 
 templ NaloziContent(tabs domain.TabData, tipdokValues []domain.ComboItem, ukObrada domain.UkupnaObrada, btnSave, btnNoviNalog domain.Button, tbl domain.TableData, searchControl domain.InputControl, nalogPayload domain.FnalPayload) {
 	<div id="main-content" class="border-b border-gray-200">
@@ -65,11 +68,11 @@ templ NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Uku
 				onsubmit="return false;"
 			>
 				<!-- First row: Combo for Vrsta naloga za knjiženje -->
-				<div class="flex items-center gap-3">
+				<div class="flex items-center">
 					@tmpl.LabelField(domain.LabelFieldConfig{
 						ID:         "tipdok",
 						LabelText:  "Vrsta Naloga za knjiženje",
-						ClassLabel: common.ClassLabel + " w-[150px] ",
+						ClassLabel: common.ClassLabel + " w-40 ",
 					})
 					@tmpl.ComboBoxField(domain.ComboFieldConfig{
 						ID:             "tipdok",
@@ -80,17 +83,17 @@ templ NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Uku
 						ClassSelect:    common.ClassSelect + " flex-1 ",
 						HxSwap:         "innerHTML",
 						HxChangeTarget: "nalozi-table",
-						HxVals:         `{"tipdok": document.getElementById("tipdok").value}`,
+						HxVals:         `js:{"tipdok": document.getElementById("tipdok").value}`,
 						OptionValues:   tipdokValues,
 						ChangeEndpoint: "/api/nalozi/all/tipdok",
 					})
 				</div>
 				<!-- Second row: Broj naloga, Datum naloga, Datum obrade -->
-				<div class="flex items-center py-1 gap-3">
+				<div class="flex flex-1 items-center py-1">
 					@tmpl.LabelField(domain.LabelFieldConfig{
 						ID:         "nalog",
 						LabelText:  "Broj Naloga",
-						ClassLabel: common.ClassLabel + " w-[150px]",
+						ClassLabel: common.ClassLabel + " w-40",
 					})
 					@tmpl.TextInputField(domain.InputFieldConfig{
 						ID:               "nalog",
@@ -101,51 +104,48 @@ templ NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Uku
 						ClassInput:       common.ClassInputTextEnabled,
 						HxTarget:         "nalog",
 						HxGet:            "/api/nalozi/nextnalog",
-						HxTrigger:        "change from:select[name='tipdok'], click from:#btn-novi-nalog",
+						HxTrigger:        "change from:select[name='tipdok']",
 						HxInclude:        "select[name='tipdok']",
-						HxSwap:           "none",
-						HxOnAfterRequest: `js:{document.getElementById('nalog').value = event.detail.xhr.responseText}`,
+						HxOnAfterRequest: "handleNextNalogResponse",
 						MinLength:        "1",
 						MaxLength:        "10",
-						TabIndex:         "1"})
-					@tmpl.ValidationField("nalog", common.ClassErrorField)
+						TabIndex:         "1",
+						OnInput:          "clearFieldError"})
 					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "duanal",
+						ID:         "danal",
 						LabelText:  "Datum Naloga",
-						ClassLabel: common.ClassLabel + " pl-4",
+						ClassLabel: common.ClassLabel + " pl-4 pr-2 ",
 					})
 					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:        "danal",
-						Name:      "danal",
-						Value:     nalogPayload.Danal,
-						FieldType: "date",
-					
+						ID:         "danal",
+						Name:       "danal",
+						Value:      nalogPayload.Danal,
+						FieldType:  "date",
 						Disabled:   false,
-						ClassInput: common.ClassInputTextEnabled + " w-full",
-						TabIndex:   "2"})
-					@tmpl.ValidationField("danal", common.ClassErrorField)
+						ClassInput: common.ClassInputTextEnabled + " pl-2 w-full",
+						TabIndex:   "2",
+						OnInput:    "clearFieldError"})
 					@tmpl.LabelField(domain.LabelFieldConfig{
 						ID:         "datob",
 						LabelText:  "Datum Obrade",
-						ClassLabel: common.ClassLabel + " pl-4",
+						ClassLabel: common.ClassLabel + " pl-5 pr-2 ",
 					})
 					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:        "datob",
-						Name:      "datob",
-						Value:     nalogPayload.Datob,
-						FieldType: "date",
-					
+						ID:         "datob",
+						Name:       "datob",
+						Value:      nalogPayload.Datob,
+						FieldType:  "date",
 						Disabled:   false,
-						ClassInput: common.ClassInputTextEnabled + " w-full",
-						TabIndex:   "3"})
-					@tmpl.ValidationField("datob", common.ClassErrorField)
+						ClassInput: common.ClassInputTextEnabled + " pl-2 w-full",
+						TabIndex:   "3",
+						OnInput:    "clearFieldError"})
 				</div>
 				<!-- Third row: Opis knjiženja -->
-				<div class="flex items-center gap-3">
+				<div class="flex items-center">
 					@tmpl.LabelField(domain.LabelFieldConfig{
 						ID:         "opisKnjizenja",
 						LabelText:  "Opis Knjiženja",
-						ClassLabel: common.ClassLabel + " w-[150px]",
+						ClassLabel: common.ClassLabel + " w-40 ",
 					})
 					@tmpl.TextInputField(domain.InputFieldConfig{
 						ID:         "opisKnjizenja",
@@ -218,10 +218,9 @@ templ NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Uku
 						ClassLabel: common.ClassLabel + " w-[60%]",
 					})
 					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:        "potrazuje",
-						Value:     ukObrada.Potrazuje,
-						FieldType: "text",
-					
+						ID:         "potrazuje",
+						Value:      ukObrada.Potrazuje,
+						FieldType:  "text",
 						Disabled:   true,
 						ClassInput: common.ClassInputTextDisabled,
 					})
@@ -261,7 +260,7 @@ templ NaloziKopiranje(tabs domain.TabData, tblHeader, tblStavke domain.TableData
 	<div>
 		@tmpl.Search_Part(tblHeader, searchControl)
 		@NaloziHeader(tblHeader)
-		<div id="nalozi_kopiranje_stavke" class="border-b border-gray-200"></div>
+		<div id="nalozi_kopiranje" class="border-b border-gray-200"></div>
 	</div>
 }
 
@@ -270,7 +269,7 @@ templ NaloziStorniranje(tabs domain.TabData, tblHeader, tblStavke domain.TableDa
 	<div>
 		@tmpl.Search_Part(tblHeader, searchControl)
 		@NaloziHeader(tblHeader)
-		<div id="nalozi_storniranje_stavke" class="border-b border-gray-200"></div>
+		<div id="nalozi_storniranje" class="border-b border-gray-200"></div>
 	</div>
 }
 
@@ -283,7 +282,7 @@ templ NaloziStampanje(tabs domain.TabData, tblHeader, tblStavke domain.TableData
 	</div>
 }
 
-templ NaloziKopiranjeDialog(model domain.KopirajNalog) {
+templ NaloziKopiranjeDialog(model domain.KopirajNalog, btnSave domain.Button) {
 	<div class="text-blue-800 font-bold text-sm mb-1">
 		Podaci o nalogu iz kojeg se kopira
 	</div>
@@ -356,6 +355,7 @@ templ NaloziKopiranjeDialog(model domain.KopirajNalog) {
 				ID:         "opisknjizenjaold",
 				Name:       "opisknjizenjaold",
 				Value:      model.OpisOld,
+				Disabled:   true,
 				FieldType:  "text",
 				ClassInput: common.ClassInputTextDisabled + " w-full",
 			})
@@ -373,69 +373,76 @@ templ NaloziKopiranjeDialog(model domain.KopirajNalog) {
 				ClassLabel: common.ClassLabel + " w-24 ",
 			})
 			@tmpl.ComboBoxField(domain.ComboFieldConfig{
-				ID:             "vrstanaloganew",
-				Name:           "vrstanaloganew",
+				ID:             "tipdok",
+				Name:           "tipdok",
 				Placeholder:    "Select...",
 				Disabled:       false,
 				ClassSelect:    common.ClassSelect + " w-full ",
 				HxSwap:         "innerHTML",
 				HxChangeTarget: "vrstanaloganew",
-				HxVals:         `{"tipdoknew": document.getElementById("tipdoknew").value}`,
+				HxVals:         `js:{"tipdok": document.getElementById("tipdok").value}`,
 				OptionValues:   model.TipdokValues,
 			})
 		</div>
 		<div class="flex items-center space-x-2 mb-1">
 			@tmpl.LabelField(domain.LabelFieldConfig{
-				ID:         "brojnaloganew",
+				ID:         "nalog-label",
 				LabelText:  "Broj naloga",
 				ClassLabel: common.ClassLabel + " w-24",
 			})
 			@tmpl.TextInputField(domain.InputFieldConfig{
-				ID:         "brojnaloganew",
-				Name:       "brojnaloganew",
-				Value:      model.NalogNew,
-				FieldType:  "text",
-				Disabled:   false,
-				ClassInput: common.ClassInputTextEnabled,
+				ID:               "nalog",
+				Name:             "nalog",
+				Value:            model.NalogNew,
+				FieldType:        "text",
+				Disabled:         false,
+				ClassInput:       common.ClassInputTextEnabled,
+				HxGet:            "/api/nalozi/nextnalog",
+				HxTrigger:        "change from:select[name='tipdok']",
+				HxInclude:        "select[name='tipdok']",
+				HxOnAfterRequest: "handleNextNalogResponse",
+				OnInput:          "clearFieldError",
 			})
 		</div>
 		<div class="flex items-center space-x-2 mb-1">
 			@tmpl.LabelField(domain.LabelFieldConfig{
-				ID:         "datumknjnew",
+				ID:         "danal-label",
 				LabelText:  "Datum naloga",
 				ClassLabel: common.ClassLabel + " w-24",
 			})
 			@tmpl.TextInputField(domain.InputFieldConfig{
-				ID:         "datumknjnew",
-				Name:       "datumnknjnew",
-				Value:      time.Now().Format("02.01.2006"),
+				ID:         "danal",
+				Name:       "danal",
+				Value:      model.DanalNew,
 				FieldType:  "date",
 				Disabled:   false,
 				ClassInput: common.ClassInputTextEnabled + " w-full",
+				OnInput:    "clearFieldError",
 			})
 			@tmpl.LabelField(domain.LabelFieldConfig{
-				ID:         "datumobradenew",
+				ID:         "datob-label",
 				LabelText:  "Datum Obrade",
 				ClassLabel: common.ClassLabel + " w-24",
 			})
 			@tmpl.TextInputField(domain.InputFieldConfig{
-				ID:         "datumobradenew",
-				Name:       "datumobradenew",
-				Value:      time.Now().Format("02.01.2006"),
+				ID:         "datob",
+				Name:       "datob",
+				Value:      model.DatknjNew,
 				FieldType:  "date",
 				Disabled:   false,
 				ClassInput: common.ClassInputTextDisabled + " w-full",
+				OnInput:    "clearFieldError",
 			})
 		</div>
 		<div class="flex items-center space-x-2 mb-1">
 			@tmpl.LabelField(domain.LabelFieldConfig{
-				ID:         "opisknjizenjanew",
+				ID:         "opis-label",
 				LabelText:  "Opis knjizenja",
 				ClassLabel: common.ClassLabel + " w-24",
 			})
 			@tmpl.TextInputField(domain.InputFieldConfig{
-				ID:         "opisknjizenjanew",
-				Name:       "opisknjizenjanew",
+				ID:         "opis",
+				Name:       "opis",
 				Value:      model.OpisNew,
 				FieldType:  "text",
 				Disabled:   false,

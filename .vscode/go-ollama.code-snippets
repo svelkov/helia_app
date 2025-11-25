@@ -1,0 +1,29 @@
+{
+    "Ollama Explain": {
+        "scope": "go",
+        "prefix": "ollama-explain",
+        "body": [
+            "// OLLAMA:EXPLAIN - ${1:Ask Ollama to explain this code}",
+            "// Select this comment and run 'Explain Go File with Ollama' task"
+        ],
+        "description": "Insert Ollama explanation marker"
+    },
+    "Ollama Generate": {
+        "scope": "go",
+        "prefix": "ollama-generate",
+        "body": [
+            "// OLLAMA:GENERATE - ${1:handler|crud|middleware} for ${2:purpose}",
+            "// Run 'Generate Go Handler with Ollama' task"
+        ],
+        "description": "Insert Ollama generation marker"
+    },
+    "Ollama Debug": {
+        "scope": "go", 
+        "prefix": "ollama-debug",
+        "body": [
+            "// OLLAMA:DEBUG - ${1:error description}",
+            "// Run 'Debug Go Code with Ollama' task"
+        ],
+        "description": "Insert Ollama debug marker"
+    }
+}

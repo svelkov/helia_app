@@ -3,6 +3,7 @@ package service
 import (
 	"fmt"
 	"helia/global"
+	"helia/internal/common"
 	"helia/internal/domain"
 	"helia/internal/repository"
 	"reflect"
@@ -24,7 +25,7 @@ type PrometService interface {
 	GetNaloziStavke(c *gin.Context, nalogID int64, searchQuery string, page int, offset int, tableFields []domain.Fields) (domain.TableData, error)
 	GetFieldCache() map[string]reflect.StructField
 	GetPrometAnalitickihKonta(c *gin.Context) (domain.TableData, error)
-	GetPrometAnalitickihKotnaMi(c *gin.Context, searchQuery string, page int, offset int) (domain.TableData, error)
+	GetPrometAnalitickihKontaMi(c *gin.Context, searchQuery string, page int, offset int) (domain.TableData, error)
 	GetPrometDeviznihAnalitickihKonta(c *gin.Context, searchQuery string, page int, offset int) (domain.TableData, error)
 	GetPrometSubsintetickhKonta(c *gin.Context, searchQuery string, page int, offset int) (domain.TableData, error)
 	GetPrometSintetickihKonta(c *gin.Context, searchQuery string, page int, offset int) (domain.TableData, error)
@@ -32,6 +33,7 @@ type PrometService interface {
 	GetPrometAnKontaVrd(c *gin.Context, searchQuery string, page int, offset int) (domain.TableData, error)
 	GetPrometKontaAnaliticki(c *gin.Context, searchQuery string, page int, offset int) (domain.TableData, error)
 	GetTotalRecordsCustom(queryText, whereText string, args []interface{}, limitOffset, orderBy string) (int, error)
+	CheckParameters(c *gin.Context) []domain.FieldError
 }
 
 // NalogResource implements the NalogService interface.
@@ -128,6 +130,42 @@ func (s *PrometResource) GetPrometTotals(c *gin.Context) (domain.PrometResponse,
 	return response, err
 }
 
+func (s *PrometResource) CheckPrometParameters(c *gin.Context, requiredFields []string) (fieldsError []domain.FieldError) {
+
+	fieldsError = common.ValidateRequiredParams(c, requiredFields)
+	if len(fieldsError) > 0 {
+		return
+	}
+	// Build query dynamically
+	qb := common.NewQueryBuilder(`SELECT f.konto, f.sifra FROM baza.fkpl as f`)
+
+	// Add system conditions
+	hasGod, hasKAr := s.service.Repo.GetHasGodHasKar()
+	if hasGod {
+		qb.AddEqual("f.god", global.GetGnGod())
+	}
+	if hasKAr {
+		qb.AddEqual("f.kar", global.GetGnKar())
+	}
+
+	// Add user conditions
+	qb.AddEqual("f.konto", c.Query("konto"))
+	qb.AddEqual("f.sifra", c.Query("sifra"))
+	qb.AddEqual("f.vkonta", c.Query("vkonta"))
+
+	sqlQuery, args := qb.Build()
+
+	entities, err := s.service.GetAllCustom(sqlQuery, "", args, "", "")
+	if err != nil {
+		return []domain.FieldError{{Field: "konto", ErrorMessage: common.ErrMsgGetData}}
+	}
+	if len(*entities) == 0 {
+		return []domain.FieldError{{Field: "konto", ErrorMessage: common.ErrMsgGetKontoSifra}}
+	}
+
+	return nil
+}
+
 func (s *PrometResource) GetPrometAnalitickihKonta(c *gin.Context, getTotalRecords bool, calculatedPageSize, currentPage int) (domain.PrometResponse, error) {
 	var response domain.PrometResponse
 	args := []interface{}{}
@@ -135,9 +173,7 @@ func (s *PrometResource) GetPrometAnalitickihKonta(c *gin.Context, getTotalRecor
 	sifra := c.Query("sifra")
 	odDatuma := c.Query("oddatuma")
 	doDatuma := c.Query("dodatuma")
-	if konto == "" || sifra == "" || odDatuma == "" || doDatuma == "" {
-		return response, fmt.Errorf("missing required parameters")
-	}
+
 	args = append(args, global.GetGnGod(), global.GetGnKar(), konto, sifra, odDatuma, doDatuma)
 	limitOffset := fmt.Sprintf(" LIMIT %d OFFSET %d", calculatedPageSize, (currentPage-1)*calculatedPageSize)
 
@@ -235,6 +271,122 @@ func (s *PrometResource) GetPrometAnalitickihKonta(c *gin.Context, getTotalRecor
 		god = $1 AND kar = $2 AND konto = $3 AND sifra = $4 
 		      AND vkonta = 1 AND danal >= $5 AND danal <= $6
 		ORDER BY god, kar, danal, tipdok, nalog, idfpro`
+
+	entities, err := s.prometRepo.GetAllCustom(sqlQuery, "", args, limitOffset, "")
+	if err != nil {
+		return response, err
+	}
+	response.Data = *entities
+	return response, err
+}
+func (s *PrometResource) GetPrometAnalitickihKontaMi(c *gin.Context, getTotalRecords bool, calculatedPageSize, currentPage int) (domain.PrometResponse, error) {
+	var response domain.PrometResponse
+	args := []interface{}{}
+	konto := c.Query("konto")
+	sifra := c.Query("sifra")
+	odDatuma := c.Query("oddatuma")
+	doDatuma := c.Query("dodatuma")
+	odMI := c.Query("odmi")
+	doMI := c.Query("domi")
+
+	args = append(args, global.GetGnGod(), global.GetGnKar(), konto, sifra, odDatuma, doDatuma, odMI, doMI)
+	limitOffset := fmt.Sprintf(" LIMIT %d OFFSET %d", calculatedPageSize, (currentPage-1)*calculatedPageSize)
+
+	baseArgs := []interface{}{global.GetGnGod(), global.GetGnKar(), konto, sifra}
+	//if we need to get only total records we chec the bool gettotalrecords
+	if getTotalRecords {
+		sqlQuery := `SELECT count(*)
+		FROM fpro 
+		WHERE 1=1 AND
+		god = $1 AND kar = $2 AND konto = $3 AND sifra = $4 
+		      AND vkonta = 1 AND danal >= $5 AND danal <= $6 AND mi >= $7 AND mi <= $8`
+		totalRecords, err := s.prometRepo.GetTotalRecordsCustom(sqlQuery, "", args, "", "")
+		response.TotalRecords = totalRecords
+		return response, err
+	}
+
+	//Get totals values
+	// Get "promet do" totals (up to start date)
+	prometDoArgs := append(baseArgs, odDatuma, odMI, doMI) // danal < odDatuma
+	prometDoQuery := `select 
+        coalesce(sum(case when kat = 1 or kat = 2 then iznos else 0 end), 0) as duguje,
+        coalesce(sum(case when kat = 3 or kat = 4 then iznos else 0 end), 0) as potrazuje
+        from fpro  
+        where god = $1 and kar = $2 and konto = $3 and sifra = $4 
+              and vkonta = 1 and danal < $5 and mi >= $6 and mi <= $7`
+
+	prometDoResults, err := s.prometRepo.GetAllCustom(prometDoQuery, "", prometDoArgs, "", "")
+	if err != nil {
+		return response, fmt.Errorf("error getting promet do totals: %v", err)
+	}
+
+	var prometDoDuguje, prometDoPotrazuje float64
+	if len(*prometDoResults) > 0 {
+		// Assuming the result struct has Duguje and Potrazuje fields
+		prometDoDuguje = (*prometDoResults)[0].Duguje
+		prometDoPotrazuje = (*prometDoResults)[0].Potrazuje
+	}
+
+	response.Totals = domain.PrometTotalValues{
+		DugDo:   prometDoDuguje,
+		PotDo:   prometDoPotrazuje,
+		SaldoDo: prometDoDuguje - prometDoPotrazuje,
+	}
+
+	// Get "promet za period" totals (for the specified period)
+	prometPeriodArgs := append(baseArgs, odDatuma, doDatuma, odMI, doMI)
+	prometPeriodQuery := `select 
+        coalesce(sum(case when kat = 1 or kat = 2 then iznos else 0 end), 0) as duguje,
+        coalesce(sum(case when kat = 3 or kat = 4 then iznos else 0 end), 0) as potrazuje
+        from fpro  
+        where god = $1 and kar = $2 and konto = $3 and sifra = $4 
+              and vkonta = 1 and danal >= $5 and danal <= $6 and mi >= $7 and mi <= $8`
+
+	prometPeriodResults, err := s.prometRepo.GetAllCustom(prometPeriodQuery, "", prometPeriodArgs, "", "")
+	if err != nil {
+		return response, fmt.Errorf("error getting promet period totals: %v", err)
+	}
+
+	var prometPeriodDuguje, prometPeriodPotrazuje float64
+	if len(*prometPeriodResults) > 0 {
+		// Assuming the result struct has Duguje and Potrazuje fields
+		prometPeriodDuguje = (*prometPeriodResults)[0].Duguje
+		prometPeriodPotrazuje = (*prometPeriodResults)[0].Potrazuje
+	}
+
+	response.Totals.DugPer = prometPeriodDuguje
+	response.Totals.PotPer = prometPeriodPotrazuje
+	response.Totals.SaldoPer = prometPeriodDuguje - prometPeriodPotrazuje
+	response.Totals.DugTot = response.Totals.DugDo + response.Totals.DugPer
+	response.Totals.PotTot = response.Totals.PotDo + response.Totals.PotPer
+	response.Totals.SaldoTot = response.Totals.SaldoDo + response.Totals.SaldoPer
+
+	//Get data for the table
+	sqlQuery := `SELECT god, kar, danal, tipdok, concat(tipdok,'-',nalog) as nalog, idfpro, kat, iznos, kolic, 
+		       vrd, dokum, dadok, rok, tra, ojozn, opis, sifval, kurs, 
+		       deviznos, cena, konto, idfnal, idfkpl, dokumv, dadokv, travez, rdokid,
+			   CASE 
+					WHEN kat = 1 OR kat = 2 THEN iznos 
+					ELSE 0 
+				END as duguje,
+				CASE
+					WHEN kat = 3 OR kat = 4 THEN iznos 
+					ELSE 0 
+				END as potrazuje,
+				CASE 
+					WHEN kat = 1 OR kat = 2 THEN kolic 
+					ELSE 0 
+				END as kolduguje,
+				CASE
+					WHEN kat = 3 OR kat = 4 THEN kolic 
+					ELSE 0 
+				END as kolpotrazuje
+		FROM fpro 
+		WHERE 1=1 AND
+		god = $1 AND kar = $2 AND konto = $3 AND sifra = $4 
+		      AND vkonta = 1 AND danal >= $5 AND danal <= $6 
+			  AND mi >= $7 AND mi <= $8
+		ORDER BY god, kar, danal, tipdok, nalog`
 
 	entities, err := s.prometRepo.GetAllCustom(sqlQuery, "", args, limitOffset, "")
 	if err != nil {

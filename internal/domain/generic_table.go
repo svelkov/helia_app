@@ -21,11 +21,19 @@ type TableData struct {
 	BtnUpdate      Button
 	BtnDelete      Button
 	BtnPrint       Button
+	BtnExportExcel Button
+	BtnExportPDF   Button
+	SearchEnabled  bool
 	ShowActions    bool
 	ShowPagination bool
 	DetailTarget   string
 	DetailURL      string
 	ExportFilename string
+	HasExportExcel bool
+	HasExportPdf   bool
+	FuncClick      string
+	FuncDblClick   string
+	DestField      string //use for popup dialog to return the value in the control
 }
 
 type PaginationData struct {

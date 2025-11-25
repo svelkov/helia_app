@@ -127,17 +127,17 @@ type Fpro struct {
 }
 
 type KopirajNalog struct {
-	IDFnal       int64     `db:"idfnal"`
-	TipdokOld    string    `db:"tipdok"`
-	NalogOld     string    `db:"nalodold"`
-	DanalOld     string    `db:"danalold"`
-	DatKnjOld    string    `db:"datknjold"`
-	OpisOld      string    `db:"opisold"`
-	TipdokNew    string    `db:"tipdoknew"`
-	NalogNew     string    `db:"nalognew"`
-	DanalNew     time.Time `db:"danalnew"`
-	DatknjNew    time.Time `db:"datknjnew"`
-	OpisNew      string    `db:"opisnew"`
+	IDFnal       int64  `db:"idfnal"`
+	TipdokOld    string `db:"tipdok"`
+	NalogOld     string `db:"nalodold"`
+	DanalOld     string `db:"danalold"`
+	DatKnjOld    string `db:"datknjold"`
+	OpisOld      string `db:"opisold"`
+	TipdokNew    string `db:"tipdoknew"`
+	NalogNew     string `db:"nalognew"`
+	DanalNew     string `db:"danalnew"`
+	DatknjNew    string `db:"datknjnew"`
+	OpisNew      string `db:"opisnew"`
 	TipdokValues []ComboItem
 }
 
@@ -208,9 +208,9 @@ type PrometDto struct {
 
 type FnalPayload struct {
 	// IDFnal    int64  `schema:"idfnal"`
-	Nalog  string `form:"nalog" binding:"required"`
-	Danal  string `form:"danal" binding:"required"`
-	Datob  string `form:"datob" binding:"required"`
-	Tipdok string `form:"tipdok" binding:"required"`
+	Nalog  string `form:"nalog"`
+	Danal  string `form:"danal"`
+	Datob  string `form:"datob"`
+	Tipdok string `form:"tipdok"`
 	Opis   string `form:"opis"`
 }

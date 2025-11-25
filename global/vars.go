@@ -7,11 +7,12 @@ import (
 )
 
 var (
-	gnFirma string
-	gnGod   int
-	gnKar   int
-	mu      sync.RWMutex
-	cfg     config.Config
+	gnFirma    string
+	gnGod      int
+	gnKar      int
+	gnLanguage string
+	mu         sync.RWMutex
+	cfg        config.Config
 )
 
 func SetGnFirma(firma string) {
@@ -36,6 +37,12 @@ func SetConfig(config config.Config) {
 	defer mu.Unlock()
 	cfg = config
 }
+func SetGnLanguage(language string) {
+	mu.Lock()
+	defer mu.Unlock()
+	gnLanguage = language
+}
+
 func GetGnFirma() string {
 	mu.RLock()
 	defer mu.RUnlock()
@@ -57,4 +64,9 @@ func GetConfig() config.Config {
 	mu.RLock()
 	defer mu.RUnlock()
 	return cfg
+}
+func GetLanguage() string {
+	mu.RLock()
+	defer mu.RUnlock()
+	return gnLanguage
 }

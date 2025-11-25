@@ -71,8 +71,8 @@ func (h *FnalHandler) GetNextNalog(c *gin.Context) {
 	})
 }
 func (h *FnalHandler) CreateNalog(c *gin.Context) {
-	// var nalog domain.Fnal
-	// lastInsertedID, err := utils.CreateHelper(w, r, &nalog, h.naloziService, common.IDfnal, h.naloziService.GetNaloziTableFields())
+	//var nalog domain.Fnal
+	// fieldErrors, lastInsertedID, err := h.naloziService.Create(&nalog, common.IDfnal, h.naloziService.GetNaloziTableFields() )
 	// if err != nil {
 	// 	return
 	// }
@@ -161,6 +161,7 @@ func (h *FnalHandler) confirmAddHandler(c *gin.Context) {
 		Id:            "btn-sacuvaj",
 		IsVisible:     true,
 		LabelText:     "Sačuvaj",
+		HxActionURL:   "api/novi",
 		HxRequestType: "POST",
 		IdDialog:      dialog.Id,
 		BtnClass:      common.ClassSaveButton,
@@ -227,8 +228,8 @@ func (h *FnalHandler) GetNalogMainView(c *gin.Context) {
 	// Render the appropriate template based on whether it's an initial load or HTMX swap
 	nalogPayload := domain.FnalPayload{
 		Nalog: viewData.NextNalog,
-		Danal: time.Now().Format("02.01.2006"),
-		Datob: time.Now().Format("02.01.2006"),
+		Danal: time.Now().Format("2006-01-02"),
+		Datob: time.Now().Format("2006-01-02"),
 	}
 
 	if viewData.IsInitialLoad {
@@ -243,7 +244,8 @@ func (h *FnalHandler) GetNalogMainView(c *gin.Context) {
 			nalogPayload).Render(c.Request.Context(), c.Writer)
 	} else {
 		// HTMX request, just render the table component
-		err = tmpl.TTable(viewData.TableData).Render(c.Request.Context(), c.Writer)
+		c.Header("Content-Type", "text/html; charset=utf-8")
+		err = tmpl.Table(viewData.TableData).Render(c.Request.Context(), c.Writer)
 	}
 
 	if err != nil {
@@ -264,7 +266,7 @@ func (h *FnalHandler) FnalPrepis(c *gin.Context) {
 		return
 	}
 	viewData.TableData.Rows = h.populateTableRows(viewData.TableData, viewData.FnalEntities, h.naloziService.GetNaloziTableFields())
-	viewData.TableData.DetailTarget = "#nalozi_kopiranje_stavke"
+	viewData.TableData.DetailTarget = "#nalozi_kopiranje"
 	viewData.TableData.DetailURL = "/api/fpro/nalog/" // URL for fetching details
 	// Set active tab for prepis
 	currentTabData := h.tabData
@@ -292,12 +294,42 @@ func (h *FnalHandler) FnalPrepis(c *gin.Context) {
 		}
 	} else {
 		// If this is an HTMX request, we just render the table component
-		err = tmpl.TTable(viewData.TableData).Render(c.Request.Context(), c.Writer)
+		err = tmpl.Table(viewData.TableData).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, common.ErrMsgRenderTemplate)
 			return
 		}
 	}
+}
+
+func (h *FnalHandler) FnalPrepisSave(c *gin.Context) {
+	// modelView := domain.KopirajNalog{}
+	idFnalParam := c.Param("idfnal")
+	idFnal, err := strconv.ParseInt(idFnalParam, 10, 64)
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusBadRequest, false, []domain.FieldError{}, common.ErrMsgInvalidID)
+		return
+	}
+	var entity domain.Fnal
+	var req domain.FnalPayload
+	if err := c.ShouldBind(&req); err != nil {
+		common.WriteJSONResponse(c, http.StatusBadRequest, false, []domain.FieldError{}, common.ErrMsgFormDecode)
+		return
+	}
+	// map request to entity
+	mapReqToEntity(req, &entity)
+	fieldErrors, err := h.naloziService.ValidationKopirajNalog(entity)
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, common.ErrMsgReadData)
+		return
+	}
+	if len(fieldErrors) > 0 {
+		common.WriteJSONResponse(c, http.StatusUnprocessableEntity, false, fieldErrors, common.ErrMsgValidation)
+		return
+	}
+
+	fmt.Println(idFnal)
+
 }
 
 // FnalPrepis, FnalStorniranje, FnalPrikaz:
@@ -316,15 +348,15 @@ func (h *FnalHandler) FnalPrepisDialog(c *gin.Context) {
 		return
 	}
 	dialog := domain.Dialog{
-		Id:            "nalog_kopiraj",
+		Id:            "dialog_kopiraj",
 		Title:         "Kopiraj Nalog",
 		OkText:        "Kopiraj",
 		CancelText:    "Otkaži",
 		SaveText:      "Snimi",
-		HxTarget:      "#nalozi_kopiranje_stavke",
+		HxTarget:      "#nalozi_kopiranje",
 		HxSwap:        "innerHTML",
 		HxRequestType: "POST",
-		HxActionURL:   "/api/fpro/nalog/kopiraj?idfnal=" + fmt.Sprintf("%d", idFnal),
+		HxActionURL:   fmt.Sprintf("/api/nalozi/prepis/%d", idFnal),
 	}
 	modelView := domain.KopirajNalog{
 		IDFnal:    idFnal,
@@ -332,11 +364,19 @@ func (h *FnalHandler) FnalPrepisDialog(c *gin.Context) {
 		DanalOld:  result.Danal.Format("01.01.2006"),
 		DatKnjOld: result.Datob.Format("02.01.2006"),
 		OpisOld:   result.Opis,
+		DanalNew:  time.Now().Format("2006-01-02"), // it is important for frontend, format should be YYYY-MM-DD
+		DatknjNew: time.Now().Format("2006-01-02"),
 	}
+
 	tipdokValues, err := h.naloziService.GetTipdokOptions()
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, "Failed to get Tipdok options")
 		return
+	}
+	if len(tipdokValues) > 0 {
+		tipdok := tipdokValues[0].TipDok
+		nextNalog, _ := h.naloziService.GetNextNalog(tipdok)
+		modelView.NalogNew = fmt.Sprintf("%d", nextNalog)
 	}
 	for _, item := range tipdokValues {
 		if strings.Trim(strings.ToLower(item.TipDok), " ") == strings.Trim(strings.ToLower(result.Tipdok), " ") {
@@ -344,9 +384,20 @@ func (h *FnalHandler) FnalPrepisDialog(c *gin.Context) {
 		}
 		modelView.TipdokValues = append(modelView.TipdokValues, domain.ComboItem{Key: item.TipDok, Value: item.TipDok + "-" + item.Opis})
 	}
-	content := tmpl_fin.NaloziKopiranjeDialog(modelView)
+	btnSave := domain.Button{
+		Id:               "btn-save",
+		LabelText:        "Snimi nalog",
+		IsVisible:        true,
+		IdDialog:         dialog.Id,
+		BtnClass:         common.ClassSaveButton,
+		HxActionURL:      fmt.Sprintf("/api/nalozi/prepis/%d", idFnal),
+		HxVals:           fmt.Sprintf(`{"idfnal": '"%d"}`, idFnal),
+		HxRequestType:    "POST",
+		HxOnAfterRequest: "closeDialog",
+	}
 	btnCancel := domain.Button{
 		Id:        "btn-cancel",
+		LabelText: "Odustani ",
 		IsVisible: true,
 		IdDialog:  dialog.Id,
 		BtnClass:  common.ClassCloseButton,
@@ -357,7 +408,8 @@ func (h *FnalHandler) FnalPrepisDialog(c *gin.Context) {
 		IdDialog:  dialog.Id,
 		BtnClass:  common.ClassDialogCloseButton,
 	}
-	err = tmpl.Dialog("nalog_kopiraj", content, dialog, h.btnSave, btnCancel, btnClose).Render(c.Request.Context(), c.Writer)
+	content := tmpl_fin.NaloziKopiranjeDialog(modelView, btnSave)
+	err = tmpl.Dialog(dialog.Id, content, dialog, btnSave, btnCancel, btnClose).Render(c.Request.Context(), c.Writer)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, common.ErrMsgRenderTemplate)
 		return
@@ -404,7 +456,7 @@ func (h *FnalHandler) FnalStorniranje(c *gin.Context) {
 		}
 	} else {
 		// If this is an HTMX request, we just render the table component
-		err = tmpl.TTable(viewData.TableData).Render(c.Request.Context(), c.Writer)
+		err = tmpl.Table(viewData.TableData).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, common.ErrMsgRenderTemplate)
 			return
@@ -489,6 +541,7 @@ func (h *FnalHandler) AddRoutes(r *gin.Engine) {
 	r.PUT("/api/nalozi/:id", h.UpdateNalog)
 	r.DELETE("/api/nalozi/:id", h.DeleteNalog)
 	r.GET("/api/nalozi/prepis", h.FnalPrepis)
+	r.POST("/api/nalozi/prepis/:idfnal", h.FnalPrepisSave)
 	r.GET("/api/nalozi/confirm-prepis", h.FnalPrepisDialog)
 	r.GET("/api/nalozi/confirm-storniraj", h.FnalPrepisDialog)
 	r.GET("/api/nalozi/storniranje", h.FnalStorniranje)
@@ -518,20 +571,13 @@ func (h *FnalHandler) setHanlderFieldValues() {
 		BtnClass:         common.ClassSaveButton + " w-24",
 	}
 	h.btnNoviNalog = domain.Button{
-		Id:            "btn-novi-nalog",
-		LabelText:     "Novi Nalog",
-		HxActionURL:   naloziURLNextNalog,
-		HxInclude:     "#tipdok",
-		HxRequestType: "GET",
-		HxOnAfterRequest: `
-        if (event.detail.xhr.status === 200) {
-            const response = JSON.parse(event.detail.xhr.responseText);
-            if (response.success) {
-				console.log(response.nalog)
-                document.getElementById('nalog').value = response.nalog;
-            }
-        }">`,
-		BtnClass: common.ClassAddButton + " w-28",
+		Id:               "btn-novi-nalog",
+		LabelText:        "Novi Nalog",
+		HxActionURL:      naloziURLNextNalog,
+		HxInclude:        "#tipdok",
+		HxRequestType:    "GET",
+		HxOnAfterRequest: "handleNextNalogResponse",
+		BtnClass:         common.ClassNewButton + " w-28",
 	}
 }
 func mapReqToEntity(req domain.FnalPayload, entity *domain.Fnal) {

@@ -7,6 +7,7 @@ import (
 	"helia/global"
 	"helia/internal/common"
 	"helia/internal/domain"
+	"helia/internal/i18n"
 	"helia/internal/infrastructure"
 	"helia/internal/middleware"
 	"helia/internal/service"
@@ -26,9 +27,10 @@ import (
 
 // Helper struct for default selections
 type defaultSelections struct {
-	firma string
-	god   int
-	kar   int
+	firma    string
+	god      int
+	kar      int
+	language string
 }
 
 // Constants for configuration and business logic
@@ -139,6 +141,8 @@ func (h *BasicHandler) renderLoginPage(c *gin.Context, fvrData domain.Firma, sel
 		setComboFirmaConfig(fvrData, selections.firma),
 		setComboPoslGodConfig(fvrData, selections.firma, selections.god),
 		setComboKarConfig(fvrData, selections.firma, selections.god, selections.kar),
+		setComboLanguageConfig(global.GetLanguage()),
+		i18n.GetInstance(),
 	).Render(c.Request.Context(), c.Writer)
 
 	if err != nil {
@@ -184,7 +188,7 @@ func (h *BasicHandler) handleLoginPost(c *gin.Context, selections defaultSelecti
 		h.respondWithError(c, http.StatusInternalServerError, "Error generating authentication token")
 		return
 	}
-	
+
 	// Save session
 	if err := h.saveSession(c, selections); err != nil {
 		h.respondWithError(c, http.StatusInternalServerError, "Session error")
@@ -287,6 +291,8 @@ func (h *BasicHandler) RegisterHandler(c *gin.Context) {
 			setComboFirmaConfig(fvrData, selections.firma),
 			setComboPoslGodConfig(fvrData, selections.firma, selections.god),
 			setComboKarConfig(fvrData, selections.firma, selections.god, selections.kar),
+			setComboLanguageConfig(global.GetLanguage()),
+			i18n.GetInstance(),
 		).Render(c.Request.Context(), c.Writer)
 
 		if err != nil {
@@ -387,9 +393,9 @@ func (h *BasicHandler) indexHandler(c *gin.Context) {
 	if menuName == "" {
 		menuName = defaultMenu
 	}
-
+	currentLang := global.GetLanguage()
 	// Get submenu items
-	subMenus := common.GetSubMenus(domain.MenuData, menuName)
+	subMenus := common.GetTranslatedSubMenus(domain.MenuData, menuName, currentLang)
 	if subMenus == nil {
 		h.logger.Printf("Menu not found: %s", menuName)
 		h.respondWithError(c, http.StatusNotFound, "Menu not found")
@@ -416,6 +422,8 @@ func (h *BasicHandler) indexHandler(c *gin.Context) {
 		setComboFirmaConfig(fvrData, selections.firma),
 		setComboPoslGodConfig(fvrData, selections.firma, selections.god),
 		setComboKarConfig(fvrData, selections.firma, selections.god, selections.kar),
+		setComboLanguageConfig(global.GetLanguage()),
+		i18n.GetInstance(),
 	).Render(c.Request.Context(), c.Writer)
 
 	if err != nil {
@@ -455,17 +463,20 @@ func (h *BasicHandler) getSessionSelections(session sessions.Session, fvrData do
 	firmaVal := session.Get("firma")
 	godVal := session.Get("god")
 	karVal := session.Get("kar")
+	langVal := session.Get("language")
 	firma, ok1 := firmaVal.(string)
 	god, ok2 := godVal.(int)
 	kar, ok3 := karVal.(int)
+	lang, _ := langVal.(string)
 
 	if !ok1 || !ok2 || !ok3 {
 		return defaultSelections{firma: "", god: 0, kar: 0}
 	}
 	selections := defaultSelections{
-		firma: firma,
-		god:   god,
-		kar:   kar,
+		firma:    firma,
+		god:      god,
+		kar:      kar,
+		language: lang,
 	}
 
 	// Set defaults if session values are empty
@@ -479,7 +490,9 @@ func (h *BasicHandler) getSessionSelections(session sessions.Session, fvrData do
 		len(fvrData.Firme[0].Godine[0].Kar) > 0 {
 		selections.kar = fvrData.Firme[0].Godine[0].Kar[0]
 	}
-
+	if selections.language == "" {
+		selections.language = lang
+	}
 	return selections
 }
 
@@ -487,6 +500,7 @@ func (h *BasicHandler) updateGlobalState(selections defaultSelections) {
 	global.SetGnFirma(selections.firma)
 	global.SetGnGod(selections.god)
 	global.SetGnKar(selections.kar)
+	global.SetGnLanguage(selections.language)
 }
 
 func (h *BasicHandler) getUsernameFromToken(c *gin.Context) (string, bool) {
@@ -600,6 +614,16 @@ func (h *BasicHandler) SelectComboKar(c *gin.Context) {
 
 	h.renderFullPage(c)
 }
+func (h *BasicHandler) SelectComboLanguage(c *gin.Context) {
+	session := sessions.Default(c)
+	if langVal, ok := session.Get("language").(string); ok {
+		global.SetGnLanguage(langVal)
+		session.Set("language", langVal)
+		session.Save()
+	}
+
+	h.renderFullPage(c)
+}
 
 // Helper functions for combo box handlers
 func (h *BasicHandler) renderComboResponse(c *gin.Context) {
@@ -632,6 +656,11 @@ func (h *BasicHandler) renderFullPage(c *gin.Context) {
 	// Get user session
 	session := sessions.Default(c)
 
+	currentLanguage := c.Query("language")
+	if currentLanguage != "" {
+		global.SetGnLanguage(currentLanguage)
+		session.Set("language", currentLanguage)
+	}
 	currentFirma := c.Query("firma")
 	if currentFirma != "" {
 		global.SetGnFirma(currentFirma)
@@ -651,6 +680,7 @@ func (h *BasicHandler) renderFullPage(c *gin.Context) {
 			session.Set("kar", gnKar)
 		}
 	}
+	session.Save()
 	username, ok := h.getUsernameFromToken(c)
 	if !ok {
 		h.logger.Print("No valid user token found")
@@ -665,7 +695,7 @@ func (h *BasicHandler) renderFullPage(c *gin.Context) {
 	}
 
 	// Get submenu items
-	subMenus := common.GetSubMenus(domain.MenuData, menuName)
+	subMenus := common.GetTranslatedSubMenus(domain.MenuData, menuName, global.GetLanguage())
 	if subMenus == nil {
 		h.logger.Printf("Menu not found: %s", menuName)
 		h.respondWithError(c, http.StatusNotFound, "Menu not found")
@@ -684,29 +714,31 @@ func (h *BasicHandler) renderFullPage(c *gin.Context) {
 
 	// Prepare page data
 	pageData := struct {
-		IsLoggedIn bool
-		Content    templ.Component
-		MenuItems  domain.MenuDataItems
-		SubMenus   []domain.SubMenuItem
-		Title      string
-		Username   string
-		Year       string
-		MenuName   string
-		FirmaConf  domain.ComboFieldConfig
-		GodConf    domain.ComboFieldConfig
-		KarConf    domain.ComboFieldConfig
+		IsLoggedIn   bool
+		Content      templ.Component
+		MenuItems    domain.MenuDataItems
+		SubMenus     []domain.SubMenuItem
+		Title        string
+		Username     string
+		Year         string
+		MenuName     string
+		FirmaConf    domain.ComboFieldConfig
+		GodConf      domain.ComboFieldConfig
+		KarConf      domain.ComboFieldConfig
+		LanguageConf domain.ComboFieldConfig
 	}{
-		IsLoggedIn: true,
-		Content:    tmpl.Content(true),
-		MenuItems:  h.menuItems,
-		SubMenus:   h.subMenuItems,
-		Title:      "HELIA",
-		Username:   username,
-		Year:       fmt.Sprintf("%d", time.Now().Year()),
-		MenuName:   menuName,
-		FirmaConf:  setComboFirmaConfig(fvrData, selections.firma),
-		GodConf:    setComboPoslGodConfig(fvrData, selections.firma, selections.god),
-		KarConf:    setComboKarConfig(fvrData, selections.firma, selections.god, selections.kar),
+		IsLoggedIn:   true,
+		Content:      tmpl.Content(true),
+		MenuItems:    h.menuItems,
+		SubMenus:     h.subMenuItems,
+		Title:        "HELIA",
+		Username:     username,
+		Year:         fmt.Sprintf("%d", time.Now().Year()),
+		MenuName:     menuName,
+		FirmaConf:    setComboFirmaConfig(fvrData, selections.firma),
+		GodConf:      setComboPoslGodConfig(fvrData, selections.firma, selections.god),
+		KarConf:      setComboKarConfig(fvrData, selections.firma, selections.god, selections.kar),
+		LanguageConf: setComboLanguageConfig(global.GetLanguage()),
 	}
 
 	// Render the page
@@ -722,6 +754,8 @@ func (h *BasicHandler) renderFullPage(c *gin.Context) {
 		pageData.FirmaConf,
 		pageData.GodConf,
 		pageData.KarConf,
+		pageData.LanguageConf,
+		i18n.GetInstance(),
 	).Render(c.Request.Context(), c.Writer)
 
 	if err != nil {
@@ -769,6 +803,8 @@ func (h *BasicHandler) AddRoutes(r *gin.Engine) {
 	r.GET("/api/selectgod", h.SelectComboGod)
 	r.GET("/api/selectkar", h.SelectComboKar)
 	r.GET("/api/setkar", h.SetComboKar)
+	r.GET("/api/selectlanguage", h.SelectComboLanguage)
+	//r.GET("/api/setlanguage", h.SetComboLanguage)
 }
 
 // setFirma initializes the firma data from the service
@@ -794,7 +830,7 @@ func (h *BasicHandler) getFirma() domain.Firma {
 
 // setComboFirmaConfig creates configuration for the firma combo box
 func setComboFirmaConfig(fvrData domain.Firma, selectedValue string) domain.ComboFieldConfig {
-	config := domain.ComboFieldConfig{
+	configCombo := domain.ComboFieldConfig{
 		ID:             "firma",
 		Name:           "firma",
 		LabelText:      "Preduzece/Komintent",
@@ -816,14 +852,14 @@ func setComboFirmaConfig(fvrData domain.Firma, selectedValue string) domain.Comb
 		})
 	}
 
-	config.OptionValues = optionItems
-	config.SelectedValue = selectedValue
-	return config
+	configCombo.OptionValues = optionItems
+	configCombo.SelectedValue = selectedValue
+	return configCombo
 }
 
 // setComboPoslGodConfig creates configuration for the poslovna godina combo box
 func setComboPoslGodConfig(fvrData domain.Firma, selectedFirma string, selectedValue int) domain.ComboFieldConfig {
-	config := domain.ComboFieldConfig{
+	configCombo := domain.ComboFieldConfig{
 		ID:             "god",
 		Name:           "god",
 		LabelText:      "Poslovna Godina",
@@ -851,14 +887,14 @@ func setComboPoslGodConfig(fvrData domain.Firma, selectedFirma string, selectedV
 		}
 	}
 
-	config.OptionValues = optionItems
-	config.SelectedValue = fmt.Sprintf("%d", selectedValue)
-	return config
+	configCombo.OptionValues = optionItems
+	configCombo.SelectedValue = fmt.Sprintf("%d", selectedValue)
+	return configCombo
 }
 
 // setComboKarConfig creates configuration for the knjigovodstvo combo box
 func setComboKarConfig(fvrData domain.Firma, selectedFirma string, selectedGod, selectedValue int) domain.ComboFieldConfig {
-	config := domain.ComboFieldConfig{
+	configCombo := domain.ComboFieldConfig{
 		ID:             "kar",
 		Name:           "kar",
 		LabelText:      "Knjigovodstvo",
@@ -891,7 +927,37 @@ func setComboKarConfig(fvrData domain.Firma, selectedFirma string, selectedGod, 
 		}
 	}
 
-	config.OptionValues = optionItems
-	config.SelectedValue = fmt.Sprintf("%d", selectedValue)
-	return config
+	configCombo.OptionValues = optionItems
+	configCombo.SelectedValue = fmt.Sprintf("%d", selectedValue)
+	return configCombo
+}
+
+// setComboKarConfig creates configuration for the knjigovodstvo combo box
+func setComboLanguageConfig(selectedValue string) domain.ComboFieldConfig {
+
+	configCombo := domain.ComboFieldConfig{
+		ID:             "language",
+		Name:           "language",
+		LabelText:      "",
+		HasLabel:       false,
+		ClassSelect:    common.ClassSelect + " min-w-[40px]",
+		HxVals:         `js:{"language": document.getElementById("language").value}`,
+		ChangeEndpoint: "/api/selectlanguage",
+		HxSwap:         "outerHTML",
+		HxChangeTarget: "body",
+	}
+
+	var optionItems []domain.ComboItem
+	languages := global.GetConfig().Languages
+	for _, l := range languages {
+		key := fmt.Sprintf("%s", l)
+		optionItems = append(optionItems, domain.ComboItem{
+			Key:   key,
+			Value: key,
+		})
+	}
+
+	configCombo.OptionValues = optionItems
+	configCombo.SelectedValue = fmt.Sprintf("%s", selectedValue)
+	return configCombo
 }

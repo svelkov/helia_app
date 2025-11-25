@@ -2,11 +2,36 @@ package templates
 
 import (
 	"fmt"
+	"helia/internal/common"
 	"helia/internal/domain"
 )
 
 templ Table(tbl domain.TableData) {
 	<div id={ tbl.TableID } class="w-full h-full border-collapse">
+		if tbl.HasExportExcel || tbl.HasExportPdf {
+			<div class="mb-1 flex justify-end space-x-1">
+				if tbl.HasExportExcel {
+					<button
+						hx-get={ fmt.Sprintf("%s?format=excel", tbl.URLGetAll) }
+						hx-trigger="click"
+						class={ common.ClassPdfButton }
+					>
+						@Icon("file_export", "h-5 w-5 mr-1 inline-block")
+						Excel
+					</button>
+				}
+				if tbl.HasExportPdf {
+					<button
+						hx-get={ fmt.Sprintf("%s?format=pdf", tbl.URLGetAll) }
+						hx-trigger="click"
+						class={ common.ClassPdfButton }
+					>
+						@Icon("file_export", "h-5 w-5 mr-1 inline-block")
+						PDF
+					</button>
+				}
+			</div>
+		}
 		<div class="overflow-x-auto overflow-y-hidden rounded-t-lg">
 			<table class="w-full h-full border-collapse border-r">
 				@TableHeader(tbl)
@@ -30,8 +55,34 @@ templ TableHeader(tbl domain.TableData) {
 	<thead class="bg-blue-500 text-white border-b border-white">
 		<tr>
 			for _, header := range tbl.Headers {
-				<th scope="col" class="px-3 py-1 text-left text-xs font-medium text-white uppercase tracking-wider border-r border-white">
-					{ header.Label }
+				<th
+					scope="col"
+					class={ fmt.Sprintf("px-1 py-1 text-left text-xs font-medium text-white uppercase tracking-wider border-r border-white %s", 
+						func() string {
+							if header.Sortable {
+								return "cursor-pointer hover:bg-blue-600 select-none"
+							}
+							return ""
+						}()) }
+					if header.Sortable {
+						hx-get={ fmt.Sprintf("%s?sortBy=%s&sortOrder={sortOrder}", tbl.URLGetAll, header.Field) }
+						hx-target={ fmt.Sprintf("#%s-body", tbl.TableID) }
+						hx-swap="innerHTML"
+						hx-trigger="click"
+						hx-vals={ fmt.Sprintf(`js:{sortOrder: getSortOrder('%s', '%s')}`, tbl.TableID, header.Field) }
+						onclick={ templ.JSFuncCall("toggleSort", tbl.TableID, header.Field, "this") }
+					}
+				>
+					<div class="flex items-center justify-between">
+						<span>{ header.Label }</span>
+						if header.Sortable {
+							<span class={ fmt.Sprintf("sort-indicator-%s ml-2", header.Field) }>
+								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 opacity-90">
+									<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m8 10 4-6 4 6H8Zm8 4-4 6-4-6h8Z"></path>
+								</svg>
+							</span>
+						}
+					</div>
 				</th>
 			}
 			if tbl.ShowActions {
@@ -51,14 +102,19 @@ templ TableBody(tbl domain.TableData, urlPrefix string) {
 						if i == 0 {
 								return "bg-gray-50 selected" 
 							}
-
                             if i%2 == 1 {
                                 return "bg-gray-50"
                             } else {
                                 return ""
                             }
                         }()) }
-				onclick="selectRow(this)"
+				if tbl.FuncClick !="" {
+					onclick="selectRow(this)"
+				}
+				if tbl.FuncDblClick !="" {
+					data-dest-field={ tbl.DestField }
+					ondblclick="handleDblClickKontoSelection(this)"
+				}
 				if tbl.DetailTarget != "" && tbl.DetailURL != "" {
 					hx-get={ fmt.Sprintf("%s%s", tbl.DetailURL, row.ID) }
 					hx-target={ fmt.Sprintf("%s", tbl.DetailTarget) }
@@ -111,4 +167,104 @@ templ TableBody(tbl domain.TableData, urlPrefix string) {
 			</tr>
 		}
 	</tbody>
+}
+
+templ TableScript() {
+	// Add this to your script
+	<script>
+	document.addEventListener('DOMContentLoaded', function() {
+		const tableBody = document.getElementById('promettable-body');
+		
+		if (tableBody) {
+			// Single click for selection
+			tableBody.addEventListener('click', function(e) {
+				const row = e.target.closest('tr');
+				if (row) {
+					selectRow(row);
+				}
+			});
+			
+			// Double click for selection and closing dialog
+			tableBody.addEventListener('dblclick', function(e) {
+				const row = e.target.closest('tr');
+				if (row) {
+					handleRowDoubleClick(row);
+				}
+			});
+		}
+	});
+
+	// New function to handle double-click
+	function handleRowDoubleClick(row) {
+		// Get the selected row data
+		const cells = row.querySelectorAll('td');
+		const rowData = {
+			konto: cells[0].textContent.trim(),
+			sifra: cells[1].textContent.trim(),
+			naziv: cells[2].textContent.trim()
+		};
+		
+		console.log("Selected record:", rowData);
+		
+		// You can use this data as needed - for example:
+		// - Populate form fields
+		// - Update another table
+		// - Send to backend
+		useSelectedRecord(rowData);
+		
+		// Close the dialog
+		closeDialog();
+	}
+
+	function selectRow(row) {
+		console.log("Row clicked:", row);
+		// Deselect any previously selected row by removing the 'bg-blue-300' class
+		const selectedRow = document.querySelector('.bg-blue-300');
+		if (selectedRow) {
+			selectedRow.classList.remove('bg-blue-300');
+		}
+
+		// Select the clicked row
+		row.classList.add('bg-blue-300');
+	}
+
+	// Function to use the selected record data
+	function useSelectedRecord(data) {
+		// Example: Populate some input fields
+		// document.getElementById('some-input').value = data.konto;
+		// document.getElementById('another-input').value = data.naziv;
+		
+		// Or dispatch a custom event that other parts of your app can listen to
+		const event = new CustomEvent('recordSelected', { detail: data });
+		document.dispatchEvent(event);
+		
+		// Or store in a global variable
+		window.selectedRecord = data;
+		
+		console.log("Using selected record:", data);
+	}
+
+	// Function to close the dialog (you might need to adjust this based on your dialog implementation)
+	function closeDialog() {
+		// If using a modal/dialog element
+		const dialog = document.getElementById('your-dialog-id');
+		if (dialog) {
+			dialog.close();
+			dialog.style.display = 'none';
+		}
+		
+		// If using a div with display styles
+		const dialogDiv = document.querySelector('.dialog-container');
+		if (dialogDiv) {
+			dialogDiv.style.display = 'none';
+		}
+		
+		// Remove backdrop if exists
+		const backdrop = document.querySelector('.dialog-backdrop');
+		if (backdrop) {
+			backdrop.remove();
+		}
+	}
+
+</script>
 }

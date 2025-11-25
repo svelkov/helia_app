@@ -1,0 +1,75 @@
+{
+    "name": "go-ollama-helper",
+    "displayName": "Go Ollama Helper",
+    "version": "1.0.0",
+    "engines": {"vscode": "^1.60.0"},
+    "activationEvents": [
+        "onCommand:go-ollama-helper.explainFile",
+        "onCommand:go-ollama-helper.generateHandler"
+    ],
+    "main": "./extension.js",
+    "contributes": {
+        "commands": [
+            {
+                "command": "go-ollama-helper.explainFile",
+                "title": "Explain Go File with Ollama",
+                "category": "Go Ollama"
+            },
+            {
+                "command": "go-ollama-helper.generateHandler",
+                "title": "Generate Handler with Ollama", 
+                "category": "Go Ollama"
+            },
+            {
+                "command": "go-ollama-helper.generateTests",
+                "title": "Generate Tests with Ollama",
+                "category": "Go Ollama"
+            },
+            {
+                "command": "go-ollama-helper.debugCode",
+                "title": "Debug with Ollama",
+                "category": "Go Ollama"
+            }
+        ],
+        "menus": {
+            "editor/context": [
+                {
+                    "command": "go-ollama-helper.explainFile",
+                    "when": "resourceLangId == go",
+                    "group": "navigation"
+                },
+                {
+                    "command": "go-ollama-helper.generateTests", 
+                    "when": "resourceLangId == go",
+                    "group": "navigation"
+                }
+            ],
+            "commandPalette": [
+                {
+                    "command": "go-ollama-helper.explainFile"
+                },
+                {
+                    "command": "go-ollama-helper.generateHandler"
+                },
+                {
+                    "command": "go-ollama-helper.generateTests"
+                },
+                {
+                    "command": "go-ollama-helper.debugCode"
+                }
+            ]
+        },
+        "keybindings": [
+            {
+                "command": "go-ollama-helper.explainFile",
+                "key": "ctrl+alt+e",
+                "mac": "cmd+alt+e"
+            },
+            {
+                "command": "go-ollama-helper.generateHandler",
+                "key": "ctrl+alt+g", 
+                "mac": "cmd+alt+g"
+            }
+        ]
+    }
+}

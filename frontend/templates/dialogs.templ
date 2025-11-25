@@ -3,7 +3,7 @@ package templates
 import "helia/internal/domain"
 
 templ Dialog(id string, content templ.Component, dialog domain.Dialog, btnConfirm, btnCancel, btnClose domain.Button) {
-	<div id={ btnConfirm.IdDialog } class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+	<div id={ dialog.Id } class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
 		<div class="bg-white rounded-lg shadow-2xl relative animate-fade-in max-w-full w-auto">
 			<!-- Title Bar (Flush on Left, Top, Right) -->
 			if btnConfirm.Id == "btn-delete" {

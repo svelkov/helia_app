@@ -13,10 +13,13 @@ import (
 	tmpl "helia/frontend/templates"
 	"helia/internal/common"
 	"helia/internal/domain"
-	"time"
 )
 
 var tabClasses string
+
+const (
+	dateLayout string = "02.01.2006"
+)
 
 func NaloziContent(tabs domain.TabData, tipdokValues []domain.ComboItem, ukObrada domain.UkupnaObrada, btnSave, btnNoviNalog domain.Button, tbl domain.TableData, searchControl domain.InputControl, nalogPayload domain.FnalPayload) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
@@ -96,7 +99,7 @@ func NaloziNav(tabs domain.TabData) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("tab%s", item.Name))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 26, Col: 46}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 29, Col: 46}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -109,7 +112,7 @@ func NaloziNav(tabs domain.TabData) templ.Component {
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(item.Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 26, Col: 97}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 29, Col: 97}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
@@ -122,7 +125,7 @@ func NaloziNav(tabs domain.TabData) templ.Component {
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(item.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 28, Col: 16}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 31, Col: 16}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
@@ -150,7 +153,7 @@ func NaloziNav(tabs domain.TabData) templ.Component {
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(item.HXRequestUrl)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 34, Col: 30}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 37, Col: 30}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
@@ -163,7 +166,7 @@ func NaloziNav(tabs domain.TabData) templ.Component {
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%v", item.IsActive))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 38, Col: 52}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 41, Col: 52}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
@@ -176,7 +179,7 @@ func NaloziNav(tabs domain.TabData) templ.Component {
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(item.Label)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 40, Col: 16}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 43, Col: 16}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -268,20 +271,20 @@ func NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Ukup
 		var templ_7745c5c3_Var11 string
 		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(btnSave.HxActionURL)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 62, Col: 33}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 65, Col: 33}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "\" hx-target=\"#info-message\" hx-boost=\"false\" onsubmit=\"return false;\"><!-- First row: Combo for Vrsta naloga za knjiženje --><div class=\"flex items-center gap-3\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "\" hx-target=\"#info-message\" hx-boost=\"false\" onsubmit=\"return false;\"><!-- First row: Combo for Vrsta naloga za knjiženje --><div class=\"flex items-center\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
 			ID:         "tipdok",
 			LabelText:  "Vrsta Naloga za knjiženje",
-			ClassLabel: common.ClassLabel + " w-[150px] ",
+			ClassLabel: common.ClassLabel + " w-40 ",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -295,21 +298,21 @@ func NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Ukup
 			ClassSelect:    common.ClassSelect + " flex-1 ",
 			HxSwap:         "innerHTML",
 			HxChangeTarget: "nalozi-table",
-			HxVals:         `{"tipdok": document.getElementById("tipdok").value}`,
+			HxVals:         `js:{"tipdok": document.getElementById("tipdok").value}`,
 			OptionValues:   tipdokValues,
 			ChangeEndpoint: "/api/nalozi/all/tipdok",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</div><!-- Second row: Broj naloga, Datum naloga, Datum obrade --><div class=\"flex items-center py-1 gap-3\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</div><!-- Second row: Broj naloga, Datum naloga, Datum obrade --><div class=\"flex flex-1 items-center py-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
 			ID:         "nalog",
 			LabelText:  "Broj Naloga",
-			ClassLabel: common.ClassLabel + " w-[150px]",
+			ClassLabel: common.ClassLabel + " w-40",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -323,76 +326,64 @@ func NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Ukup
 			ClassInput:       common.ClassInputTextEnabled,
 			HxTarget:         "nalog",
 			HxGet:            "/api/nalozi/nextnalog",
-			HxTrigger:        "change from:select[name='tipdok'], click from:#btn-novi-nalog",
+			HxTrigger:        "change from:select[name='tipdok']",
 			HxInclude:        "select[name='tipdok']",
-			HxSwap:           "none",
-			HxOnAfterRequest: `js:{document.getElementById('nalog').value = event.detail.xhr.responseText}`,
+			HxOnAfterRequest: "handleNextNalogResponse",
 			MinLength:        "1",
 			MaxLength:        "10",
-			TabIndex:         "1"}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.ValidationField("nalog", common.ClassErrorField).Render(ctx, templ_7745c5c3_Buffer)
+			TabIndex:         "1",
+			OnInput:          "clearFieldError"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "duanal",
+			ID:         "danal",
 			LabelText:  "Datum Naloga",
-			ClassLabel: common.ClassLabel + " pl-4",
+			ClassLabel: common.ClassLabel + " pl-4 pr-2 ",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:        "danal",
-			Name:      "danal",
-			Value:     nalogPayload.Danal,
-			FieldType: "date",
-
+			ID:         "danal",
+			Name:       "danal",
+			Value:      nalogPayload.Danal,
+			FieldType:  "date",
 			Disabled:   false,
-			ClassInput: common.ClassInputTextEnabled + " w-full",
-			TabIndex:   "2"}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.ValidationField("danal", common.ClassErrorField).Render(ctx, templ_7745c5c3_Buffer)
+			ClassInput: common.ClassInputTextEnabled + " pl-2 w-full",
+			TabIndex:   "2",
+			OnInput:    "clearFieldError"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
 			ID:         "datob",
 			LabelText:  "Datum Obrade",
-			ClassLabel: common.ClassLabel + " pl-4",
+			ClassLabel: common.ClassLabel + " pl-5 pr-2 ",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:        "datob",
-			Name:      "datob",
-			Value:     nalogPayload.Datob,
-			FieldType: "date",
-
+			ID:         "datob",
+			Name:       "datob",
+			Value:      nalogPayload.Datob,
+			FieldType:  "date",
 			Disabled:   false,
-			ClassInput: common.ClassInputTextEnabled + " w-full",
-			TabIndex:   "3"}).Render(ctx, templ_7745c5c3_Buffer)
+			ClassInput: common.ClassInputTextEnabled + " pl-2 w-full",
+			TabIndex:   "3",
+			OnInput:    "clearFieldError"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.ValidationField("datob", common.ClassErrorField).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</div><!-- Third row: Opis knjiženja --><div class=\"flex items-center gap-3\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</div><!-- Third row: Opis knjiženja --><div class=\"flex items-center\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
 			ID:         "opisKnjizenja",
 			LabelText:  "Opis Knjiženja",
-			ClassLabel: common.ClassLabel + " w-[150px]",
+			ClassLabel: common.ClassLabel + " w-40 ",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -502,10 +493,9 @@ func NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Ukup
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:        "potrazuje",
-			Value:     ukObrada.Potrazuje,
-			FieldType: "text",
-
+			ID:         "potrazuje",
+			Value:      ukObrada.Potrazuje,
+			FieldType:  "text",
 			Disabled:   true,
 			ClassInput: common.ClassInputTextDisabled,
 		}).Render(ctx, templ_7745c5c3_Buffer)
@@ -668,7 +658,7 @@ func NaloziKopiranje(tabs domain.TabData, tblHeader, tblStavke domain.TableData,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "<div id=\"nalozi_kopiranje_stavke\" class=\"border-b border-gray-200\"></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "<div id=\"nalozi_kopiranje\" class=\"border-b border-gray-200\"></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -713,7 +703,7 @@ func NaloziStorniranje(tabs domain.TabData, tblHeader, tblStavke domain.TableDat
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "<div id=\"nalozi_storniranje_stavke\" class=\"border-b border-gray-200\"></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "<div id=\"nalozi_storniranje\" class=\"border-b border-gray-200\"></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -766,7 +756,7 @@ func NaloziStampanje(tabs domain.TabData, tblHeader, tblStavke domain.TableData,
 	})
 }
 
-func NaloziKopiranjeDialog(model domain.KopirajNalog) templ.Component {
+func NaloziKopiranjeDialog(model domain.KopirajNalog, btnSave domain.Button) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -891,6 +881,7 @@ func NaloziKopiranjeDialog(model domain.KopirajNalog) templ.Component {
 			ID:         "opisknjizenjaold",
 			Name:       "opisknjizenjaold",
 			Value:      model.OpisOld,
+			Disabled:   true,
 			FieldType:  "text",
 			ClassInput: common.ClassInputTextDisabled + " w-full",
 		}).Render(ctx, templ_7745c5c3_Buffer)
@@ -910,14 +901,14 @@ func NaloziKopiranjeDialog(model domain.KopirajNalog) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.ComboBoxField(domain.ComboFieldConfig{
-			ID:             "vrstanaloganew",
-			Name:           "vrstanaloganew",
+			ID:             "tipdok",
+			Name:           "tipdok",
 			Placeholder:    "Select...",
 			Disabled:       false,
 			ClassSelect:    common.ClassSelect + " w-full ",
 			HxSwap:         "innerHTML",
 			HxChangeTarget: "vrstanaloganew",
-			HxVals:         `{"tipdoknew": document.getElementById("tipdoknew").value}`,
+			HxVals:         `js:{"tipdok": document.getElementById("tipdok").value}`,
 			OptionValues:   model.TipdokValues,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
@@ -928,7 +919,7 @@ func NaloziKopiranjeDialog(model domain.KopirajNalog) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "brojnaloganew",
+			ID:         "nalog-label",
 			LabelText:  "Broj naloga",
 			ClassLabel: common.ClassLabel + " w-24",
 		}).Render(ctx, templ_7745c5c3_Buffer)
@@ -936,12 +927,17 @@ func NaloziKopiranjeDialog(model domain.KopirajNalog) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "brojnaloganew",
-			Name:       "brojnaloganew",
-			Value:      model.NalogNew,
-			FieldType:  "text",
-			Disabled:   false,
-			ClassInput: common.ClassInputTextEnabled,
+			ID:               "nalog",
+			Name:             "nalog",
+			Value:            model.NalogNew,
+			FieldType:        "text",
+			Disabled:         false,
+			ClassInput:       common.ClassInputTextEnabled,
+			HxGet:            "/api/nalozi/nextnalog",
+			HxTrigger:        "change from:select[name='tipdok']",
+			HxInclude:        "select[name='tipdok']",
+			HxOnAfterRequest: "handleNextNalogResponse",
+			OnInput:          "clearFieldError",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -951,7 +947,7 @@ func NaloziKopiranjeDialog(model domain.KopirajNalog) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "datumknjnew",
+			ID:         "danal-label",
 			LabelText:  "Datum naloga",
 			ClassLabel: common.ClassLabel + " w-24",
 		}).Render(ctx, templ_7745c5c3_Buffer)
@@ -959,18 +955,19 @@ func NaloziKopiranjeDialog(model domain.KopirajNalog) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "datumknjnew",
-			Name:       "datumnknjnew",
-			Value:      time.Now().Format("02.01.2006"),
+			ID:         "danal",
+			Name:       "danal",
+			Value:      model.DanalNew,
 			FieldType:  "date",
 			Disabled:   false,
 			ClassInput: common.ClassInputTextEnabled + " w-full",
+			OnInput:    "clearFieldError",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "datumobradenew",
+			ID:         "datob-label",
 			LabelText:  "Datum Obrade",
 			ClassLabel: common.ClassLabel + " w-24",
 		}).Render(ctx, templ_7745c5c3_Buffer)
@@ -978,12 +975,13 @@ func NaloziKopiranjeDialog(model domain.KopirajNalog) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "datumobradenew",
-			Name:       "datumobradenew",
-			Value:      time.Now().Format("02.01.2006"),
+			ID:         "datob",
+			Name:       "datob",
+			Value:      model.DatknjNew,
 			FieldType:  "date",
 			Disabled:   false,
 			ClassInput: common.ClassInputTextDisabled + " w-full",
+			OnInput:    "clearFieldError",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -993,7 +991,7 @@ func NaloziKopiranjeDialog(model domain.KopirajNalog) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "opisknjizenjanew",
+			ID:         "opis-label",
 			LabelText:  "Opis knjizenja",
 			ClassLabel: common.ClassLabel + " w-24",
 		}).Render(ctx, templ_7745c5c3_Buffer)
@@ -1001,8 +999,8 @@ func NaloziKopiranjeDialog(model domain.KopirajNalog) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "opisknjizenjanew",
-			Name:       "opisknjizenjanew",
+			ID:         "opis",
+			Name:       "opis",
 			Value:      model.OpisNew,
 			FieldType:  "text",
 			Disabled:   false,

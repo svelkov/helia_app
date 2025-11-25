@@ -39,6 +39,7 @@ type NalogService interface {
 	GetNextNalog(tipdok string) (int64, error)
 	GetTipdokOptions() ([]domain.Tipdok, error)
 	Validation(entity domain.Fnal) ([]domain.FieldError, error)
+	ValidationKopirajNalog(entity domain.Fnal) ([]domain.FieldError, error)
 	GetByTipdokNalog(tipdok string, nalog int64) (domain.Fnal, error)
 }
 
@@ -101,10 +102,25 @@ func (s *NalogResource) Validation(entity domain.Fnal) ([]domain.FieldError, err
 	}
 	return fieldErrors, nil
 }
+func (s *NalogResource) ValidationKopirajNalog(entity domain.Fnal) ([]domain.FieldError, error) {
+	fieldErrors, err := s.Validation(entity)
+	if err != nil {
+		return fieldErrors, err
+	}
+
+	return fieldErrors, nil
+}
 
 // Create implements NalogService.
 func (s *NalogResource) Create(fnal *domain.Fnal, idField string, fields []domain.Fields) ([]domain.FieldError, int64, error) {
-	return s.service.Create(fnal, idField, fields)
+	// args := []interface{}{}
+	// hasGod, hasKar := s.tipdokRepo.CheckGogKar()
+
+	// qryText := `INSERT INTO fnal (god, kar, nalog, danal, datob, opis, xdatunosa, xopunosa)
+	// 			VALUES () `
+	// s.fnalRepo.CreateInsertStatement()
+	return []domain.FieldError{}, 0, nil
+
 }
 
 // Delete implements NalogService.
@@ -423,6 +439,14 @@ func (s *NalogResource) GetNalogsStorniranjeData(c *gin.Context, searchQuery str
 
 	// Prepare TableData for UI
 	table := common.SetTableBasicData("NALOZI ZAGLAVLJE", "nalozi-table", s.naloziTableFields, "/api/nalozi/", "/api/nalozi/", calculatedPageSize, currentPage, totalPages, totRecords)
+	btnStorniraj := domain.Button{
+		LabelText:     "Storniraj",
+		HxActionURL:   "/api/nalozi/confirm-storniraj",
+		IsVisible:     true,
+		Id:            "btn-storniraj",
+		HxRequestType: "POST",
+	}
+
 	// Additional table data configuration can happen here
 	table.URLGetAll = "/api/nalozi/storniranje"
 	table.Pagination.HxInclude = "#search-input"
@@ -432,7 +456,7 @@ func (s *NalogResource) GetNalogsStorniranjeData(c *gin.Context, searchQuery str
 	table.BtnUpdate.IsVisible = true
 	table.BtnDelete.IsVisible = true
 	table.BtnPrint.IsVisible = false
-	table.BtnUpdate.LabelText = "Storniraj"
+	table.BtnUpdate = btnStorniraj
 	table.BtnDelete.LabelText = "Obriši"
 	//table.Pagination.PageSizes = []int{5, 10, 20, 30, 50} // Example sizes
 	table.Pagination.PageSize = calculatedPageSize

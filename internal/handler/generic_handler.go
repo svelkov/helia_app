@@ -51,7 +51,24 @@ func (h *GenericHandler[T]) GetAll(c *gin.Context) {
 	)
 	utils.RenderContent(c, *tbl)
 }
-
+func (h *GenericHandler[T]) GetAllPdf(c *gin.Context) {
+	tbl := utils.GetAllPdfEntityHelper(
+		c, h.service, h.fields,
+		h.config.ContentTitle, h.config.TableID,
+		h.config.APIPrefix, h.config.APIPrefix+"/all",
+		h.config.IDField,
+	)
+	utils.RenderContent(c, *tbl)
+}
+func (h *GenericHandler[T]) GetAllExcel(c *gin.Context) {
+	tbl := utils.GetAllExcelEntityHelper(
+		c, h.service, h.fields,
+		h.config.ContentTitle, h.config.TableID,
+		h.config.APIPrefix, h.config.APIPrefix+"/all",
+		h.config.IDField,
+	)
+	utils.RenderContent(c, *tbl)
+}
 func (h *GenericHandler[T]) confirmDeleteHandler(c *gin.Context) {
 	utils.ConfirmDeleteHelper(c, h.fields)
 }
@@ -79,4 +96,6 @@ func (h *GenericHandler[T]) RegisterRoutes(r *gin.Engine) {
 	r.GET(prefix+"/confirm-delete", h.confirmDeleteHandler)
 	r.GET(prefix+"/confirm-update", h.confirmUpdateHandler)
 	r.GET(prefix+"/confirm-add", h.confirmAddHandler)
+	r.GET(prefix+"/pdf", h.GetAllPdf)
+	r.GET(prefix+"/excel", h.GetAllExcel)
 }

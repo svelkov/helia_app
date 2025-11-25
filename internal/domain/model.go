@@ -181,6 +181,7 @@ type InputFieldConfig struct {
 	Pattern          string
 	TabIndex         string
 	HxOnAfterRequest string
+	OnInput          string
 }
 
 type ComboFieldConfig struct {

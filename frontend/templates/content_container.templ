@@ -1,10 +1,11 @@
 package templates
 
 import "helia/internal/domain"
+import "helia/internal/i18n"
 
-templ ContentContainer(tbl domain.TableData, inputControl domain.InputControl) {
+templ ContentContainer(tbl domain.TableData, inputControl domain.InputControl, translator *i18n.Service) {
 	@Search_Part(tbl, inputControl)
-	@Table(tbl)
+	@Table(tbl, translator)
 	 <script>
 	    document.addEventListener('htmx:afterSwap', (event) => {
 	        if (event.detail.target.id === 'table') {

@@ -1,19 +1,20 @@
 package templates
 
 import "helia/internal/domain"
+import "helia/internal/i18n"
 
-templ Dialog(id string, content templ.Component, dialog domain.Dialog, btnConfirm, btnCancel, btnClose domain.Button) {
+templ Dialog(id string, content templ.Component, dialog domain.Dialog, btnConfirm, btnCancel, btnClose domain.Button, translator *i18n.Service) {
 	<div id={ dialog.Id } class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
 		<div class="bg-white rounded-lg shadow-2xl relative animate-fade-in max-w-full w-auto">
 			<!-- Title Bar (Flush on Left, Top, Right) -->
 			if btnConfirm.Id == "btn-delete" {
 				<div class="bg-red-600 text-white h-9 flex justify-between items-center rounded-t-lg">
-					<h2 class="text-lg font-semibold ml-4">{ dialog.Title }</h2>
+					<h2 class="text-lg font-semibold ml-4">{ translator.Title(dialog.Title) }</h2>
 					@CloseButton(btnClose)
 				</div>
 			} else {
 				<div class="bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg">
-					<h2 class="text-lg font-semibold ml-4">{ dialog.Title }</h2>
+					<h2 class="text-lg font-semibold ml-4">{ translator.Title(dialog.Title) }</h2>
 					@CloseButton(btnClose)
 				</div>
 			}
@@ -29,8 +30,8 @@ templ Dialog(id string, content templ.Component, dialog domain.Dialog, btnConfir
 					@content
 				</div>
 				<div class="bg-white col-span-2 px-3 py-3 flex justify-end space-x-1 pt-4">
-					@ConfirmButton(btnConfirm)
-					@CancelButton(btnCancel)
+					@ConfirmButton(btnConfirm, translator)
+					@CancelButton(btnCancel, translator)
 				</div>
 			</form>
 		</div>
@@ -78,12 +79,12 @@ templ Dialog(id string, content templ.Component, dialog domain.Dialog, btnConfir
 	</script>
 }
 
-templ DialogConfirm(message []string, dialog domain.Dialog, btnClose, btnConfirm, btnCancel domain.Button) {
+templ DialogConfirm(message []string, dialog domain.Dialog, btnClose, btnConfirm, btnCancel domain.Button, translator *i18n.Service) {
 	<div id={ dialog.Id } class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
 		<div class="bg-white rounded-lg shadow-2xl w-[50vw] max-w-[220px] mx-auto sm:max-w-md md:max-w-sm relative animate-fade-in">
 			<!-- Title Bar (Flush on Left, Top, Right) -->
 			<div class="bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg">
-				<h2 class="text-lg font-semibold ml-4">{ dialog.Title }</h2>
+				<h2 class="text-lg font-semibold ml-4">{ translator.Title(dialog.Title) }</h2>
 				@CloseButton(btnClose)
 			</div>
 			<!-- Content -->
@@ -99,8 +100,8 @@ templ DialogConfirm(message []string, dialog domain.Dialog, btnClose, btnConfirm
 				</p>
 			</div>
 			<div class="bg-white col-span-2 px-3 py-3 flex justify-end space-x-1 pt-4">
-				@ConfirmButton(btnConfirm)
-				@CancelButton(btnCancel)
+				@ConfirmButton(btnConfirm, translator)
+				@CancelButton(btnCancel, translator)
 			</div>
 		</div>
 	</div>

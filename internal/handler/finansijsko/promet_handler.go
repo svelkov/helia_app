@@ -8,6 +8,7 @@ import (
 	tmpl_fin "helia/frontend/templates/finansijsko"
 	"helia/internal/common"
 	"helia/internal/domain"
+	"helia/internal/i18n"
 	"helia/internal/middleware"
 	"helia/internal/service"
 	"helia/pkg/utils"
@@ -61,7 +62,7 @@ func (h *PrometHandler) PrometMain(c *gin.Context) {
 	tbl.ShowActions = false
 	tbl.FuncClick = "selectRow"                             // naziv js function for Click
 	tbl.FuncDblClick = "handleDblClickKontoSelection(this)" // naziv js function for dblClick
-	err := tmpl_fin.PrometMain(h.tabData, tbl, btnPrint, btnObrada, domain.PrometTotalValues{}).Render(c.Request.Context(), c.Writer)
+	err := tmpl_fin.PrometMain(h.tabData, tbl, btnPrint, btnObrada, domain.PrometTotalValues{}, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 		return
@@ -79,7 +80,7 @@ func (h *PrometHandler) PrometAnalitickihKonta(c *gin.Context) {
 		tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetAnkontaTableFields(), "", "", 0, 0, 0, 0)
 		tbl.ShowActions = false
 		h.tabData = setActiveTab(h.tabData, "analitickakonta")
-		err := tmpl_fin.PrometAnalitickihKonta(h.tabData, tbl, btnPrint, btnObrada, domain.PrometTotalValues{}).Render(c.Request.Context(), c.Writer)
+		err := tmpl_fin.PrometAnalitickihKonta(h.tabData, tbl, btnPrint, btnObrada, domain.PrometTotalValues{}, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -138,7 +139,7 @@ func (h *PrometHandler) PrometAnalitickihKontaPoMI(c *gin.Context) {
 		tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetAnKontaMiTableFields(), "", "", 0, 0, 0, 0)
 		tbl.ShowActions = false
 		h.tabData = setActiveTab(h.tabData, "analitickakontami")
-		err := tmpl_fin.AnalitickaKarticaPoMI(h.tabData, tbl, btnPrint, btnObrada, domain.PrometTotalValues{}).Render(c.Request.Context(), c.Writer)
+		err := tmpl_fin.AnalitickaKarticaPoMI(h.tabData, tbl, btnPrint, btnObrada, domain.PrometTotalValues{}, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -193,7 +194,7 @@ func (h *PrometHandler) PrometDeviznihAnalitickihKonta(c *gin.Context) {
 	tbl.ShowActions = false
 
 	h.tabData = setActiveTab(h.tabData, "deviznihanalitickihkonta")
-	err := tmpl_fin.PrometDeviznihAnalitickihKonta(h.tabData, tbl, tbl, btnPrint, btnObrada, domain.PrometTotalValues{}).Render(c.Request.Context(), c.Writer)
+	err := tmpl_fin.PrometDeviznihAnalitickihKonta(h.tabData, tbl, tbl, btnPrint, btnObrada, domain.PrometTotalValues{}, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 		return
@@ -246,7 +247,7 @@ func (h *PrometHandler) PrometSubsintetickihKonta(c *gin.Context) {
 	tbl.ShowActions = false
 
 	h.tabData = setActiveTab(h.tabData, "subsintetickakonta")
-	err := tmpl_fin.PrometSubsintetickihKonta(h.tabData, tbl, btnPrint, btnObrada, domain.PrometTotalValues{}).Render(c.Request.Context(), c.Writer)
+	err := tmpl_fin.PrometSubsintetickihKonta(h.tabData, tbl, btnPrint, btnObrada, domain.PrometTotalValues{}, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 		return
@@ -260,7 +261,7 @@ func (h *PrometHandler) PrometSintetickihKonta(c *gin.Context) {
 	tbl.ShowActions = false
 
 	h.tabData = setActiveTab(h.tabData, "sintetickakonta")
-	err := tmpl_fin.PrometSintetickihKonta(h.tabData, tbl, btnPrint, btnObrada, domain.PrometTotalValues{}).Render(c.Request.Context(), c.Writer)
+	err := tmpl_fin.PrometSintetickihKonta(h.tabData, tbl, btnPrint, btnObrada, domain.PrometTotalValues{}, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 		return
@@ -274,7 +275,7 @@ func (h *PrometHandler) KarticaSintetickihKonta(c *gin.Context) {
 	tbl.ShowActions = false
 
 	h.tabData = setActiveTab(h.tabData, "karticasintetickihkonta")
-	err := tmpl_fin.KarticaSintetickiKonta(h.tabData, tbl, btnPrint, btnObrada, domain.PrometTotalValues{}).Render(c.Request.Context(), c.Writer)
+	err := tmpl_fin.KarticaSintetickiKonta(h.tabData, tbl, btnPrint, btnObrada, domain.PrometTotalValues{}, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 		return
@@ -289,7 +290,7 @@ func (h *PrometHandler) PrometKontaAnaliticki(c *gin.Context) {
 	tbl.ShowActions = false
 
 	h.tabData = setActiveTab(h.tabData, "kontaanaliticki") // Activate the "Promet konta analitički" tab
-	err := tmpl_fin.PrometKontaAnaliticki(h.tabData, tbl, btnPrint, btnObrada, domain.PrometTotalValues{}).Render(c.Request.Context(), c.Writer)
+	err := tmpl_fin.PrometKontaAnaliticki(h.tabData, tbl, btnPrint, btnObrada, domain.PrometTotalValues{}, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 		return
@@ -305,7 +306,7 @@ func (h *PrometHandler) PrometTotalValues(c *gin.Context) {
 		return
 	}
 
-	err = tmpl_fin.TotalValues(response.Totals).Render(c.Request.Context(), c.Writer)
+	err = tmpl_fin.TotalValues(response.Totals, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 		return
@@ -330,7 +331,7 @@ func (h *PrometHandler) SearchButtonDialog(c *gin.Context) {
 		placeholder = "trazi sifru..."
 	}
 	hxVals = fmt.Sprintf(`{"konto": "%s", "vkonta": "%s"}`, konto, vkonta)
-	tmpl.SearchButtonDialog(id, id, placeholder, "/api/fkpl/trazikontosearchtable", "#search-results", "innerHTML", hxVals).Render(c.Request.Context(), c.Writer)
+	tmpl.SearchButtonDialog(id, id, placeholder, "/api/fkpl/trazikontosearchtable", "#search-results", "innerHTML", hxVals, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 
 }
 

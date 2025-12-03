@@ -4,17 +4,21 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"regexp"
+	"strings"
 	"sync"
 )
 
 var (
 	instance *Service
 	once     sync.Once
+	reg      = regexp.MustCompile(`_+`)
 )
 
 type Service struct {
 	translations map[string]map[string]interface{}
 	fallbackLang string
+	currentLang  string
 	mu           sync.RWMutex
 }
 
@@ -25,6 +29,7 @@ func Init(translationsPath string, languages []string, fallbackLang string) erro
 		instance = &Service{
 			translations: make(map[string]map[string]interface{}),
 			fallbackLang: fallbackLang,
+			currentLang:  fallbackLang, // Set initial current language
 		}
 		initErr = instance.loadTranslations(translationsPath, languages, fallbackLang)
 	})
@@ -57,13 +62,33 @@ func (s *Service) loadTranslations(dir string, languages []string, fallbackLang 
 	return nil
 }
 
-// T returns translation for a key
-func (s *Service) T(lang, key string) string {
+// SetLanguage changes the current language at runtime
+func (s *Service) SetLanguage(lang string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if _, exists := s.translations[lang]; !exists {
+		return fmt.Errorf("language %s not loaded", lang)
+	}
+
+	s.currentLang = lang
+	return nil
+}
+
+// GetCurrentLanguage returns the current active language
+func (s *Service) GetCurrentLanguage() string {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
+	return s.currentLang
+}
 
+// T returns translation for a key
+func (s *Service) T(key string) string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	key = toSnakeCase(key)
 	// Try requested language
-	if trans, ok := s.translations[lang]; ok {
+	if trans, ok := s.translations[s.currentLang]; ok {
 		if val, exists := trans[key]; exists {
 			return val.(string)
 		}
@@ -75,31 +100,67 @@ func (s *Service) T(lang, key string) string {
 			return val.(string)
 		}
 	}
-
 	// Return key if not found
 	return key
 }
 
 // Convenience methods
-func (s *Service) Menu(lang, menuName string) string {
-	return s.T(lang, "menu."+menuName)
+func (s *Service) Menu(menuName string) string {
+	return s.T("menu." + menuName)
 }
 
-func (s *Service) Button(lang, buttonName string) string {
-	return s.T(lang, "button."+buttonName)
+func (s *Service) Title(labelName string) string {
+	return s.T("title." + labelName)
 }
 
-func (s *Service) Label(lang, labelName string) string {
-	return s.T(lang, "label."+labelName)
+func (s *Service) Button(buttonName string) string {
+	return s.T("button." + buttonName)
 }
 
-func (s *Service) Message(lang, messageName string) string {
-	return s.T(lang, "message."+messageName)
+func (s *Service) Label(labelName string) string {
+	return s.T("label." + labelName)
 }
-func (s *Service) Validation(lang, validationName string) string {
-	return s.T(lang, "validation."+validationName)
+func (s *Service) Placeholder(placeholder string) string {
+	return s.T("placeholder." + placeholder)
 }
 
-func (s *Service) Form(lang, formName string) string {
-	return s.T(lang, "form."+formName)
+func (s *Service) Message(messageName string) string {
+	return s.T("message." + messageName)
+}
+func (s *Service) Validation(validationName string) string {
+	return s.T("validation." + validationName)
+}
+
+func (s *Service) Form(formName string) string {
+	return s.T("form." + formName)
+}
+
+// toSnakeCase safely converts text to snake_case for translation keys
+func toSnakeCase(s string) string {
+	// Convert to lowercase
+	result := strings.ToLower(s)
+
+	// Replace common special characters
+	result = strings.ReplaceAll(result, "/", "_")
+	result = strings.ReplaceAll(result, " ", "_")
+	result = strings.ReplaceAll(result, "-", "_")
+	result = strings.ReplaceAll(result, " - ", "_")
+	result = strings.ReplaceAll(result, ",", "")
+	result = strings.ReplaceAll(result, "(", "")
+	result = strings.ReplaceAll(result, ")", "")
+	result = strings.ReplaceAll(result, " i ", "_")
+	result = strings.ReplaceAll(result, "č", "c")
+	result = strings.ReplaceAll(result, "ž", "z")
+	result = strings.ReplaceAll(result, "š", "s")
+	result = strings.ReplaceAll(result, "đ", "d")
+	result = strings.ReplaceAll(result, "ć", "c")
+
+	// Remove multiple underscores
+
+	result = reg.ReplaceAllString(result, "_")
+
+	// Trim underscores from start and end
+	result = strings.Trim(result, "_")
+
+	return result
 }

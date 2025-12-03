@@ -4,9 +4,10 @@ import (
 	"fmt"
 	tmpl "helia/frontend/templates"
 	"helia/internal/domain"
+	"helia/internal/i18n"
 )
 
-templ AddUpdateForm(dialog domain.Dialog, fields []domain.Fields, btnSave, btnCancel, btnClose domain.Button) {
+templ AddUpdateForm(dialog domain.Dialog, fields []domain.Fields, btnSave, btnCancel, btnClose domain.Button, translator *i18n.Service) {
 	<div id={ dialog.Id } class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
 		<div class="bg-white rounded-lg shadow-2xl relative animate-fade-in max-w-full w-auto">
 			<!-- Title Bar (Flush on Left, Top, Right) -->
@@ -28,7 +29,7 @@ templ AddUpdateForm(dialog domain.Dialog, fields []domain.Fields, btnSave, btnCa
 			>
 				for i, field  := range fields {
 					<div class="flex flex-col">
-						<label for={ field.Name } class="block text-sm font-sm text-blue-700">{ field.Label }</label>
+						<label for={ field.Name } class="block text-sm font-sm text-blue-700">{ translator.Label(field.Label) }</label>
 						<input
 							id={ field.Name }
 							class={ fmt.Sprintf("mt-1 block p-1 w-[%sch] border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 w-full min-w-0", field.Width) }
@@ -41,8 +42,8 @@ templ AddUpdateForm(dialog domain.Dialog, fields []domain.Fields, btnSave, btnCa
 					</div>
 				}
 				<div class="bg-white col-span-2 px-3 py-3 flex items-center justify-end pt-4 gap-1">
-					@tmpl.SaveButton(btnSave)
-					@tmpl.CancelButton(btnCancel)
+					@tmpl.SaveButton(btnSave, translator)
+					@tmpl.CancelButton(btnCancel, translator)
 				</div>
 			</form>
 		</div>

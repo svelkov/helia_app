@@ -1,29 +1,34 @@
 package templates
 
 import "helia/internal/domain"
+import "helia/internal/i18n"
 
-templ Header(isLoggedIn bool, username string, comboLanguage domain.ComboFieldConfig) {
+templ Header(isLoggedIn bool, comboCompany, comboPoslGod, comboKar, comboLanguage domain.ComboFieldConfig, translator *i18n.Service) {
 	<header class="bg-blue-600 text-white p-1 flex justify-between items-center shadow-xl shadow-blue-600/50">
 		<div class="flex items-center ml-4">
 			<img src="/frontend/static/lav_logo.png" alt="HELIA Logo" class="h-10 w-auto"/>
 			<img src="/frontend/static/helia.png" alt="HELIA text" class="h-9 w-auto"/>
 		</div>
 		<nav class="flex items-center space-x-4">
-			<a href="/" class="hover:text-blue-200">Home</a>
-			if !isLoggedIn {
-				<a href="/login" class="hover:text-blue-200">Prijava</a>
-				<a href="/register" class="hover:text-blue-200">Registracija</a>
-			} else {
-				<a href="/logout" class="hover:text-blue-200">Prijava</a>
-				<span class="ml-4">Dobrodosli, { username }</span>
-			}
-			<div class="flex items-center space-x-2">
-				@ComboBoxField(comboLanguage)
+			<!-- Right-aligned Combo Boxes -->
+			<div class="ml-auto flex items-center space-x-4 pr-4">
+				if isLoggedIn {
+					<!-- Company Select -->
+					<div class="flex items-center space-x-2">
+						@ComboBoxField(comboCompany, translator)
+					</div>
+					<!-- Poslovna Godina Select -->
+					<div class="flex items-center space-x-2">
+						@ComboBoxField(comboPoslGod, translator)
+					</div>
+					<div class="flex items-center space-x-2">
+						@ComboBoxField(comboKar, translator)
+					</div>
+				}
+				<div class="flex items-center space-x-2">
+					@ComboBoxField(comboLanguage, translator)
+				</div>
 			</div>
-			<!-- Theme Toggle Button -->
-			<button id="theme-toggle" class="p-2 rounded-full hover:bg-blue-700 focus:outline-none">
-				<span id="theme-icon">🌙</span> <!-- Moon icon for dark mode -->
-			</button>
 		</nav>
 	</header>
 }

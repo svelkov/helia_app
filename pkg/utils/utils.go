@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"helia/internal/common"
 	"helia/internal/domain"
+	"helia/internal/i18n"
 	"html/template"
 	"net/http"
 	"strings"
@@ -95,16 +96,17 @@ func RenderContent(c *gin.Context, table domain.TableData, tmplName ...string) {
 	var err error
 	switch templateName {
 	case "Table":
-		err = tmpl.Table(table).Render(c.Request.Context(), c.Writer)
+		err = tmpl.Table(table, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
 		}
 		return
 	case "ContentContainer":
+		translaotr := i18n.GetInstance()
 		searchControl := domain.InputControl{
 			ID:           "search-control",
-			Label:        "Pretraži",
+			Label:        translaotr.Label("Pretraži"),
 			Type:         "search",
 			Placeholder:  "Unesite tekst za pretragu",
 			HxActionURL:  table.URLGetAll,
@@ -114,7 +116,7 @@ func RenderContent(c *gin.Context, table domain.TableData, tmplName ...string) {
 			Autocomplete: "off",
 			Class:        common.ClassSearchInput,
 		}
-		err = tmpl.ContentContainer(table, searchControl).Render(c.Request.Context(), c.Writer)
+		err = tmpl.ContentContainer(table, searchControl, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -129,12 +131,12 @@ func RenderContent(c *gin.Context, table domain.TableData, tmplName ...string) {
 
 func RenderDialogContent(c *gin.Context, dialog domain.Dialog, fields []domain.Fields, actionType string, btnSave, btnCancel, btnClose domain.Button) error {
 	var component templ.Component
-
+	translator := i18n.GetInstance()
 	switch actionType {
 	case "DELETE":
-		component = tmpl.DeleteDialog(dialog, btnSave, btnCancel, btnClose)
+		component = tmpl.DeleteDialog(dialog, btnSave, btnCancel, btnClose, translator)
 	case "ADD", "UPDATE":
-		component = tmpl_opsti.AddUpdateForm(dialog, fields, btnSave, btnCancel, btnClose)
+		component = tmpl_opsti.AddUpdateForm(dialog, fields, btnSave, btnCancel, btnClose, translator)
 	default:
 		return fmt.Errorf("unknown action type: %s", actionType)
 	}

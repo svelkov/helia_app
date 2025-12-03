@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"helia/internal/common"
 	"helia/internal/domain"
+	"helia/internal/i18n"
 )
 
 // modalConfirmButton returns a button with the appropriate hx-attribute.
 // The default is hx-post.
-templ ConfirmButton(btn domain.Button) {
+templ ConfirmButton(btn domain.Button, translator *i18n.Service) {
 	if (btn.HxRequestType == "DELETE") {
 		<button
 			id={ btn.Id }
@@ -22,7 +23,7 @@ templ ConfirmButton(btn domain.Button) {
 			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6 mr-1">
 				<path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clip-rule="evenodd"></path>
 			</svg>
-			{ btn.LabelText }
+			{ translator.Button(btn.LabelText) }
 		</button>
 	}
 	if (btn.HxRequestType == "PUT") {
@@ -37,7 +38,7 @@ templ ConfirmButton(btn domain.Button) {
 			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6 mr-1">
 				<path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clip-rule="evenodd"></path>
 			</svg>
-			{ btn.LabelText }
+			{ translator.Button(btn.LabelText) }
 		</button>
 	}
 	if  (btn.HxRequestType == "POST") {
@@ -52,12 +53,12 @@ templ ConfirmButton(btn domain.Button) {
 			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6 mr-1">
 				<path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clip-rule="evenodd"></path>
 			</svg>
-			{ btn.LabelText }
+			{ translator.Button(btn.LabelText) }
 		</button>
 	}
 }
 
-templ CancelButton(btn domain.Button) {
+templ CancelButton(btn domain.Button, translator *i18n.Service) {
 	<button
 		id={ btn.Id }
 		type="button"
@@ -67,7 +68,7 @@ templ CancelButton(btn domain.Button) {
 		<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 mr-1">
 			<path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25Zm-1.72 6.97a.75.75 0 1 0-1.06 1.06L10.94 12l-1.72 1.72a.75.75 0 1 0 1.06 1.06L12 13.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L13.06 12l1.72-1.72a.75.75 0 1 0-1.06-1.06L12 10.94l-1.72-1.72Z" clip-rule="evenodd"></path>
 		</svg>
-		{ btn.LabelText }
+		{ translator.Button(btn.LabelText) }
 	</button>
 }
 
@@ -84,7 +85,7 @@ templ CloseButton(btn domain.Button) {
 	</button>
 }
 
-templ AddButton(btn domain.Button) {
+templ AddButton(btn domain.Button, translator *i18n.Service) {
 	<button
 		id={ btn.Id }
 		class={ btn.BtnClass }
@@ -116,11 +117,11 @@ templ AddButton(btn domain.Button) {
 		<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6 mr-2">
 			<path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25ZM12.75 9a.75.75 0 0 0-1.5 0v2.25H9a.75.75 0 0 0 0 1.5h2.25V15a.75.75 0 0 0 1.5 0v-2.25H15a.75.75 0 0 0 0-1.5h-2.25V9Z" clip-rule="evenodd"></path>
 		</svg>
-		{ btn.LabelText }
+		{ translator.Button(btn.LabelText) }
 	</button>
 }
 
-templ SaveButton(btn domain.Button) {
+templ SaveButton(btn domain.Button, translator *i18n.Service) {
 	<button
 		id={ btn.Id }
 		class={ btn.BtnClass }
@@ -149,11 +150,11 @@ templ SaveButton(btn domain.Button) {
 		<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6 mr-2">
 			<path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clip-rule="evenodd"></path>
 		</svg>
-		{ btn.LabelText }
+		{ translator.Button(btn.LabelText) }
 	</button>
 }
 
-templ FormObradaButton(btn domain.Button) {
+templ FormObradaButton(btn domain.Button, translator *i18n.Service) {
 	<button
 		id={ btn.Id }
 		class={ btn.BtnClass }
@@ -188,7 +189,7 @@ templ FormObradaButton(btn domain.Button) {
 	>
 		<!-- Gear icon -->
 		@Icon("fin_obrada", common.ClassIcon)
-		{ btn.LabelText }
+		{ translator.Button(btn.LabelText) }
 	</button>
 }
 
@@ -206,7 +207,7 @@ templ Icon(name, classIcon string) {
 	}
 }
 
-templ FormPrintButton(btn domain.Button) {
+templ FormPrintButton(btn domain.Button, translator *i18n.Service) {
 	<button
 		id={ btn.Id }
 		class={ btn.BtnClass }
@@ -240,6 +241,6 @@ templ FormPrintButton(btn domain.Button) {
 		}
 	>
 		@Icon("stampa", common.ClassIcon)
-		{ btn.LabelText }
+		{ translator.Button(btn.LabelText) }
 	</button>
 }

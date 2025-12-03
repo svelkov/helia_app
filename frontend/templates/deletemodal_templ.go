@@ -9,8 +9,9 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import "helia/internal/domain"
+import "helia/internal/i18n"
 
-func DeleteDialog(dialog domain.Dialog, btnConfirm, btnCancel, btnClose domain.Button) templ.Component {
+func DeleteDialog(dialog domain.Dialog, btnConfirm, btnCancel, btnClose domain.Button, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -31,7 +32,7 @@ func DeleteDialog(dialog domain.Dialog, btnConfirm, btnCancel, btnClose domain.B
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = Dialog("delete-dialog", DeleteDialogContent(dialog.Id), dialog, btnConfirm, btnCancel, btnClose).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = Dialog("delete-dialog", DeleteDialogContent(dialog.Id, translator), dialog, btnConfirm, btnCancel, btnClose, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -39,7 +40,7 @@ func DeleteDialog(dialog domain.Dialog, btnConfirm, btnCancel, btnClose domain.B
 	})
 }
 
-func DeleteDialogContent(rowID string) templ.Component {
+func DeleteDialogContent(rowID string, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -60,20 +61,33 @@ func DeleteDialogContent(rowID string) templ.Component {
 			templ_7745c5c3_Var2 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<p class=\"mt-3 mb-3 ml-3 text-xl flex items-center justify-center gap-2\">Da li zelite da obrišete slog sa ID: ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<p class=\"mt-3 mb-3 ml-3 text-xl flex items-center justify-center gap-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var3 string
-		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(rowID)
+		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Obrisi stavku"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/deletemodal.templ`, Line: 10, Col: 119}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/deletemodal.templ`, Line: 11, Col: 109}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "?</p>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, " ")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var4 string
+		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(rowID)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/deletemodal.templ`, Line: 11, Col: 119}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "?</p>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

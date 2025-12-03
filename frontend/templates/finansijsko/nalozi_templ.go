@@ -13,6 +13,7 @@ import (
 	tmpl "helia/frontend/templates"
 	"helia/internal/common"
 	"helia/internal/domain"
+	"helia/internal/i18n"
 )
 
 var tabClasses string
@@ -21,7 +22,7 @@ const (
 	dateLayout string = "02.01.2006"
 )
 
-func NaloziContent(tabs domain.TabData, tipdokValues []domain.ComboItem, ukObrada domain.UkupnaObrada, btnSave, btnNoviNalog domain.Button, tbl domain.TableData, searchControl domain.InputControl, nalogPayload domain.FnalPayload) templ.Component {
+func NaloziContent(tabs domain.TabData, tipdokValues []domain.ComboItem, ukObrada domain.UkupnaObrada, btnSave, btnNoviNalog domain.Button, tbl domain.TableData, searchControl domain.InputControl, nalogPayload domain.FnalPayload, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -46,7 +47,7 @@ func NaloziContent(tabs domain.TabData, tipdokValues []domain.ComboItem, ukObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = NaloziNav(tabs).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = NaloziNav(tabs, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -54,7 +55,7 @@ func NaloziContent(tabs domain.TabData, tipdokValues []domain.ComboItem, ukObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = NaloziKnjizenjeContent(tipdokValues, ukObrada, btnSave, btnNoviNalog, tbl, searchControl, nalogPayload).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = NaloziKnjizenjeContent(tipdokValues, ukObrada, btnSave, btnNoviNalog, tbl, searchControl, nalogPayload, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -66,7 +67,7 @@ func NaloziContent(tabs domain.TabData, tipdokValues []domain.ComboItem, ukObrad
 	})
 }
 
-func NaloziNav(tabs domain.TabData) templ.Component {
+func NaloziNav(tabs domain.TabData, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -87,110 +88,123 @@ func NaloziNav(tabs domain.TabData) templ.Component {
 			templ_7745c5c3_Var2 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<h2 class=\"text-xl font-semibold\">NALOZI ZA KNJIZENJE</h2><nav class=\"py-1 h-8 text-sm font-medium text-gray-700 flex items-center whitespace-nowrap\" aria-label=\"Tabs\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<h2 class=\"text-xl font-semibold\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var3 string
+		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("text.nalozi_za_knjizenje"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 27, Col: 81}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</h2><nav class=\"py-1 h-8 text-sm font-medium text-gray-700 flex items-center whitespace-nowrap\" aria-label=\"Tabs\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		for _, item := range tabs.Tabs {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<input id=\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var3 string
-			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("tab%s", item.Name))
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 29, Col: 46}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "\" type=\"hidden\" name=\"sourceTab\" value=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<input id=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var4 string
-			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(item.Name)
+			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("tab%s", item.Name))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 29, Col: 97}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 30, Col: 46}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "\"> <button id=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "\" type=\"hidden\" name=\"sourceTab\" value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var5 string
-			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(item.ID)
+			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(item.Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 31, Col: 16}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 30, Col: 97}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			if item.IsActive {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, " class=\"whitespace-nowrap rounded-t-lg py-1 px-1 font-medium text-sm rounded-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500\"")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-			} else {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, " class=\"whitespace-nowrap rounded-t-lg py-1 px-1 font-medium text-sm rounded-sm text-gray-600 bg-white border border-gray-300 hover:text-blue-700 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500\"")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, " hx-get=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "\"> <button id=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var6 string
-			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(item.HXRequestUrl)
+			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(item.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 37, Col: 30}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 32, Col: 16}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "\" hx-target=\"#main-content\" hx-swap=\"innerHTML\" aria-controls=\"knjizenje-panel\" aria-selected=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			if item.IsActive {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, " class=\"whitespace-nowrap rounded-t-lg py-1 px-1 font-medium text-sm rounded-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			} else {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, " class=\"whitespace-nowrap rounded-t-lg py-1 px-1 font-medium text-sm rounded-sm text-gray-600 bg-white border border-gray-300 hover:text-blue-700 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, " hx-get=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var7 string
-			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%v", item.IsActive))
+			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(item.HXRequestUrl)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 41, Col: 52}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 38, Col: 30}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "\" hx-target=\"#main-content\" hx-swap=\"innerHTML\" aria-controls=\"knjizenje-panel\" aria-selected=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var8 string
-			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(item.Label)
+			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%v", item.IsActive))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 43, Col: 16}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 42, Col: 52}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</button>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var9 string
+			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(item.Label)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 44, Col: 16}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</button>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</nav>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "</nav>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -198,52 +212,7 @@ func NaloziNav(tabs domain.TabData) templ.Component {
 	})
 }
 
-func NaloziKnjizenjeContent(tipdokValues []domain.ComboItem, ukObrada domain.UkupnaObrada, btnSave, btnNoviNalog domain.Button, tbl domain.TableData, searchControl domain.InputControl, nalogPayload domain.FnalPayload) templ.Component {
-	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
-		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
-		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
-			return templ_7745c5c3_CtxErr
-		}
-		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
-		if !templ_7745c5c3_IsBuffer {
-			defer func() {
-				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
-				if templ_7745c5c3_Err == nil {
-					templ_7745c5c3_Err = templ_7745c5c3_BufErr
-				}
-			}()
-		}
-		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var9 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var9 == nil {
-			templ_7745c5c3_Var9 = templ.NopComponent
-		}
-		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = NaloziKnjizenjeHeader(tipdokValues, ukObrada, btnSave, btnNoviNalog, nalogPayload).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.Search_Part(tbl, searchControl).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<div id=\"table-container\" class=\"mt-1\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.Table(tbl).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<div id=\"nalozi_stavke\" class=\"border-b border-gray-200\"></div></div><div id=\"dialog-confirm\"></div><div id=\"dialog-stavkenaloga\"></div>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		return nil
-	})
-}
-
-func NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.UkupnaObrada, btnSave, btnNoviNalog domain.Button, nalogPayload domain.FnalPayload) templ.Component {
+func NaloziKnjizenjeContent(tipdokValues []domain.ComboItem, ukObrada domain.UkupnaObrada, btnSave, btnNoviNalog domain.Button, tbl domain.TableData, searchControl domain.InputControl, nalogPayload domain.FnalPayload, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -264,20 +233,65 @@ func NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Ukup
 			templ_7745c5c3_Var10 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "<div class=\"grid grid-cols-3 gap-6 py-2\"><div id=\"fin-nalozi\" class=\"pt-2 col-span-2 flex flex-col gap-1\"><form id=\"form-nalozi\" hx-post=\"")
+		templ_7745c5c3_Err = NaloziKnjizenjeHeader(tipdokValues, ukObrada, btnSave, btnNoviNalog, nalogPayload, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var11 string
-		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(btnSave.HxActionURL)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 65, Col: 33}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
+		templ_7745c5c3_Err = tmpl.Search_Part(tbl, searchControl).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "\" hx-target=\"#info-message\" hx-boost=\"false\" onsubmit=\"return false;\"><!-- First row: Combo for Vrsta naloga za knjiženje --><div class=\"flex items-center\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<div id=\"table-container\" class=\"mt-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "<div id=\"nalozi_stavke\" class=\"border-b border-gray-200\"></div></div><div id=\"dialog-confirm\"></div><div id=\"dialog-stavkenaloga\"></div>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+func NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.UkupnaObrada, btnSave, btnNoviNalog domain.Button, nalogPayload domain.FnalPayload, translator *i18n.Service) templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var11 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var11 == nil {
+			templ_7745c5c3_Var11 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<div class=\"grid grid-cols-3 gap-6 py-2\"><div id=\"fin-nalozi\" class=\"pt-2 col-span-2 flex flex-col gap-1\"><form id=\"form-nalozi\" hx-post=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var12 string
+		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(btnSave.HxActionURL)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 66, Col: 33}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "\" hx-target=\"#info-message\" hx-boost=\"false\" onsubmit=\"return false;\"><!-- First row: Combo for Vrsta naloga za knjiženje --><div class=\"flex items-center\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -292,7 +306,7 @@ func NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Ukup
 		templ_7745c5c3_Err = tmpl.ComboBoxField(domain.ComboFieldConfig{
 			ID:             "tipdok",
 			Name:           "tipdok",
-			Placeholder:    "Select...",
+			Placeholder:    translator.Placeholder("Select"),
 			HasLabel:       true,
 			Disabled:       false,
 			ClassSelect:    common.ClassSelect + " flex-1 ",
@@ -301,11 +315,11 @@ func NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Ukup
 			HxVals:         `js:{"tipdok": document.getElementById("tipdok").value}`,
 			OptionValues:   tipdokValues,
 			ChangeEndpoint: "/api/nalozi/all/tipdok",
-		}).Render(ctx, templ_7745c5c3_Buffer)
+		}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</div><!-- Second row: Broj naloga, Datum naloga, Datum obrade --><div class=\"flex flex-1 items-center py-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</div><!-- Second row: Broj naloga, Datum naloga, Datum obrade --><div class=\"flex flex-1 items-center py-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -376,7 +390,7 @@ func NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Ukup
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</div><!-- Third row: Opis knjiženja --><div class=\"flex items-center\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</div><!-- Third row: Opis knjiženja --><div class=\"flex items-center\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -400,19 +414,19 @@ func NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Ukup
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</div><!-- Fourth row: Buttons --><div class=\"flex items-center justify-end pt-8 space-x-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "</div><!-- Fourth row: Buttons --><div class=\"flex items-center justify-end pt-8 space-x-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SaveButton(btnSave).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.SaveButton(btnSave, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.AddButton(btnNoviNalog).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.AddButton(btnNoviNalog, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "</div></form></div><div class=\"p-1 flex flex-col\"><p class=\"block text-sm font-medium text-blue-700 mb-1\">Prikaz ukupne obrade</p><div class=\"box-content flex flex-col p-1 border-2 border-gray-300 rounded-md\"><div class=\"flex items-center space-x-2 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "</div></form></div><div class=\"p-1 flex flex-col\"><p class=\"block text-sm font-medium text-blue-700 mb-1\">Prikaz ukupne obrade</p><div class=\"box-content flex flex-col p-1 border-2 border-gray-300 rounded-md\"><div class=\"flex items-center space-x-2 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -435,7 +449,7 @@ func NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Ukup
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "</div><div class=\"flex items-center space-x-2 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "</div><div class=\"flex items-center space-x-2 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -458,7 +472,7 @@ func NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Ukup
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "</div><div class=\"flex items-center space-x-2 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "</div><div class=\"flex items-center space-x-2 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -480,7 +494,7 @@ func NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Ukup
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "</div><div class=\"flex items-center space-x-2 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "</div><div class=\"flex items-center space-x-2 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -502,7 +516,7 @@ func NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Ukup
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "</div></div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "</div></div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -530,49 +544,12 @@ func NaloziSave() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var12 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var12 == nil {
-			templ_7745c5c3_Var12 = templ.NopComponent
-		}
-		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "<div class=\"flex justify-between items-center mb-4\"><h1 class=\"text-2xl font-bold\">Nalozi</h1><div class=\"flex space-x-2\"><button class=\"btn btn-primary\" hx-get=\"/nalozi/create\" hx-target=\"#dialog-container\" hx-swap=\"innerHTML\">Dodaj</button> <button class=\"btn btn-secondary\" onclick=\"toggleSearch(this)\">Pretraga</button></div></div>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		return nil
-	})
-}
-
-func NaloziHeader(tblHeader domain.TableData) templ.Component {
-	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
-		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
-		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
-			return templ_7745c5c3_CtxErr
-		}
-		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
-		if !templ_7745c5c3_IsBuffer {
-			defer func() {
-				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
-				if templ_7745c5c3_Err == nil {
-					templ_7745c5c3_Err = templ_7745c5c3_BufErr
-				}
-			}()
-		}
-		ctx = templ.InitializeContext(ctx)
 		templ_7745c5c3_Var13 := templ.GetChildren(ctx)
 		if templ_7745c5c3_Var13 == nil {
 			templ_7745c5c3_Var13 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "<div class=\"border-b border-gray-200 mb-4\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.Table(tblHeader).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "<div class=\"flex justify-between items-center mb-4\"><h1 class=\"text-2xl font-bold\">Nalozi</h1><div class=\"flex space-x-2\"><button class=\"btn btn-primary\" hx-get=\"/nalozi/create\" hx-target=\"#dialog-container\" hx-swap=\"innerHTML\">Dodaj</button> <button class=\"btn btn-secondary\" onclick=\"toggleSearch(this)\">Pretraga</button></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -580,7 +557,7 @@ func NaloziHeader(tblHeader domain.TableData) templ.Component {
 	})
 }
 
-func NaloziDetail(tblStavke domain.TableData, searchControl domain.InputControl) templ.Component {
+func NaloziHeader(tblHeader domain.TableData, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -601,19 +578,15 @@ func NaloziDetail(tblStavke domain.TableData, searchControl domain.InputControl)
 			templ_7745c5c3_Var14 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = tmpl.Search_Part(tblStavke, searchControl).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "<div class=\"border-b border-gray-200 mb-4\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "<div id=\"table-container\" class=\"mt-1\">")
+		templ_7745c5c3_Err = tmpl.Table(tblHeader, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Table(tblStavke).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "<div id=\"nalozi_stavke\" class=\"border-b border-gray-200\"></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -621,7 +594,7 @@ func NaloziDetail(tblStavke domain.TableData, searchControl domain.InputControl)
 	})
 }
 
-func NaloziKopiranje(tabs domain.TabData, tblHeader, tblStavke domain.TableData, searchControl domain.InputControl) templ.Component {
+func NaloziDetail(tblStavke domain.TableData, searchControl domain.InputControl, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -642,23 +615,19 @@ func NaloziKopiranje(tabs domain.TabData, tblHeader, tblStavke domain.TableData,
 			templ_7745c5c3_Var15 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = NaloziNav(tabs).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.Search_Part(tblStavke, searchControl).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "<div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "<div id=\"table-container\" class=\"mt-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Search_Part(tblHeader, searchControl).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.Table(tblStavke, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = NaloziHeader(tblHeader).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "<div id=\"nalozi_kopiranje\" class=\"border-b border-gray-200\"></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "<div id=\"nalozi_stavke\" class=\"border-b border-gray-200\"></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -666,7 +635,7 @@ func NaloziKopiranje(tabs domain.TabData, tblHeader, tblStavke domain.TableData,
 	})
 }
 
-func NaloziStorniranje(tabs domain.TabData, tblHeader, tblStavke domain.TableData, searchControl domain.InputControl) templ.Component {
+func NaloziKopiranje(tabs domain.TabData, tblHeader, tblStavke domain.TableData, searchControl domain.InputControl, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -687,11 +656,11 @@ func NaloziStorniranje(tabs domain.TabData, tblHeader, tblStavke domain.TableDat
 			templ_7745c5c3_Var16 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = NaloziNav(tabs).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = NaloziNav(tabs, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "<div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "<div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -699,11 +668,11 @@ func NaloziStorniranje(tabs domain.TabData, tblHeader, tblStavke domain.TableDat
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = NaloziHeader(tblHeader).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = NaloziHeader(tblHeader, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "<div id=\"nalozi_storniranje\" class=\"border-b border-gray-200\"></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "<div id=\"nalozi_kopiranje\" class=\"border-b border-gray-200\"></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -711,7 +680,7 @@ func NaloziStorniranje(tabs domain.TabData, tblHeader, tblStavke domain.TableDat
 	})
 }
 
-func NaloziStampanje(tabs domain.TabData, tblHeader, tblStavke domain.TableData, btnStampaj domain.Button, searchControl domain.InputControl) templ.Component {
+func NaloziStorniranje(tabs domain.TabData, tblHeader, tblStavke domain.TableData, searchControl domain.InputControl, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -732,11 +701,11 @@ func NaloziStampanje(tabs domain.TabData, tblHeader, tblStavke domain.TableData,
 			templ_7745c5c3_Var17 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = NaloziNav(tabs).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = NaloziNav(tabs, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "<div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "<div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -744,11 +713,11 @@ func NaloziStampanje(tabs domain.TabData, tblHeader, tblStavke domain.TableData,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = NaloziHeader(tblHeader).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = NaloziHeader(tblHeader, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "<div id=\"nalozi_kopiranje_stavke\" class=\"border-b border-gray-200\"></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "<div id=\"nalozi_storniranje\" class=\"border-b border-gray-200\"></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -756,7 +725,7 @@ func NaloziStampanje(tabs domain.TabData, tblHeader, tblStavke domain.TableData,
 	})
 }
 
-func NaloziKopiranjeDialog(model domain.KopirajNalog, btnSave domain.Button) templ.Component {
+func NaloziStampanje(tabs domain.TabData, tblHeader, tblStavke domain.TableData, btnStampaj domain.Button, searchControl domain.InputControl, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -777,13 +746,58 @@ func NaloziKopiranjeDialog(model domain.KopirajNalog, btnSave domain.Button) tem
 			templ_7745c5c3_Var18 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "<div class=\"text-blue-800 font-bold text-sm mb-1\">Podaci o nalogu iz kojeg se kopira</div><div class=\"box-content flex flex-col p-2 border-2 border-gray-300 rounded-md\"><div class=\"flex items-center space-x-2 mb-1\">")
+		templ_7745c5c3_Err = NaloziNav(tabs, translator).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "<div>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.Search_Part(tblHeader, searchControl).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = NaloziHeader(tblHeader, translator).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "<div id=\"nalozi_kopiranje_stavke\" class=\"border-b border-gray-200\"></div></div>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+func NaloziKopiranjeDialog(model domain.KopirajNalog, btnSave domain.Button, translator *i18n.Service) templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var19 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var19 == nil {
+			templ_7745c5c3_Var19 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "<div class=\"text-blue-800 font-bold text-sm mb-1\">Podaci o nalogu iz kojeg se kopira</div><div class=\"box-content flex flex-col p-2 border-2 border-gray-300 rounded-md\"><div class=\"flex items-center space-x-2 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
 			ID:         "vrstanalogaold",
-			LabelText:  "Vrsta naloga",
+			LabelText:  translator.Label("Vrsta naloga"),
 			ClassLabel: common.ClassLabel + " w-24",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
@@ -800,13 +814,13 @@ func NaloziKopiranjeDialog(model domain.KopirajNalog, btnSave domain.Button) tem
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "</div><div class=\"flex items-center space-x-2 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "</div><div class=\"flex items-center space-x-2 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
 			ID:         "brojnalogaold",
-			LabelText:  "Broj naloga",
+			LabelText:  translator.Label("Broj naloga"),
 			ClassLabel: common.ClassLabel + " w-24",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
@@ -823,13 +837,13 @@ func NaloziKopiranjeDialog(model domain.KopirajNalog, btnSave domain.Button) tem
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "</div><div class=\"flex items-center space-x-2 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "</div><div class=\"flex items-center space-x-2 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
 			ID:         "datumknjold",
-			LabelText:  "Datum naloga",
+			LabelText:  translator.Label("Datum naloga"),
 			ClassLabel: common.ClassLabel + " w-24",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
@@ -848,7 +862,7 @@ func NaloziKopiranjeDialog(model domain.KopirajNalog, btnSave domain.Button) tem
 		}
 		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
 			ID:         "datumobradeold",
-			LabelText:  "Datum Obrade",
+			LabelText:  translator.Label("Datum Obrade"),
 			ClassLabel: common.ClassLabel + " w-24",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
@@ -865,13 +879,13 @@ func NaloziKopiranjeDialog(model domain.KopirajNalog, btnSave domain.Button) tem
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "</div><div class=\"flex items-center space-x-2 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "</div><div class=\"flex items-center space-x-2 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
 			ID:         "opisknjizenjaold",
-			LabelText:  "Opis knjizenja",
+			LabelText:  translator.Label("Opis knjizenja"),
 			ClassLabel: common.ClassLabel + " w-24",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
@@ -888,13 +902,13 @@ func NaloziKopiranjeDialog(model domain.KopirajNalog, btnSave domain.Button) tem
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "</div></div><!-- Full-width Description Section --><div class=\"text-blue-800 font-bold text-sm mb-1\">Podaci o novom nalogu</div><div class=\"box-content flex flex-col p-2 border-2 border-gray-300 rounded-md\"><div class=\"flex items-center space-x-2 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "</div></div><!-- Full-width Description Section --><div class=\"text-blue-800 font-bold text-sm mb-1\">Podaci o novom nalogu</div><div class=\"box-content flex flex-col p-2 border-2 border-gray-300 rounded-md\"><div class=\"flex items-center space-x-2 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
 			ID:         "opisknjizenjaold",
-			LabelText:  "Vrsta Naloga",
+			LabelText:  translator.Label("Vrsta Naloga"),
 			ClassLabel: common.ClassLabel + " w-24 ",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
@@ -903,24 +917,24 @@ func NaloziKopiranjeDialog(model domain.KopirajNalog, btnSave domain.Button) tem
 		templ_7745c5c3_Err = tmpl.ComboBoxField(domain.ComboFieldConfig{
 			ID:             "tipdok",
 			Name:           "tipdok",
-			Placeholder:    "Select...",
+			Placeholder:    translator.Placeholder("Select"),
 			Disabled:       false,
 			ClassSelect:    common.ClassSelect + " w-full ",
 			HxSwap:         "innerHTML",
 			HxChangeTarget: "vrstanaloganew",
 			HxVals:         `js:{"tipdok": document.getElementById("tipdok").value}`,
 			OptionValues:   model.TipdokValues,
-		}).Render(ctx, templ_7745c5c3_Buffer)
+		}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "</div><div class=\"flex items-center space-x-2 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "</div><div class=\"flex items-center space-x-2 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
 			ID:         "nalog-label",
-			LabelText:  "Broj naloga",
+			LabelText:  translator.Label("Broj naloga"),
 			ClassLabel: common.ClassLabel + " w-24",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
@@ -942,13 +956,13 @@ func NaloziKopiranjeDialog(model domain.KopirajNalog, btnSave domain.Button) tem
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "</div><div class=\"flex items-center space-x-2 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "</div><div class=\"flex items-center space-x-2 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
 			ID:         "danal-label",
-			LabelText:  "Datum naloga",
+			LabelText:  translator.Label("Datum naloga"),
 			ClassLabel: common.ClassLabel + " w-24",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
@@ -968,7 +982,7 @@ func NaloziKopiranjeDialog(model domain.KopirajNalog, btnSave domain.Button) tem
 		}
 		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
 			ID:         "datob-label",
-			LabelText:  "Datum Obrade",
+			LabelText:  translator.Label("Datum Obrade"),
 			ClassLabel: common.ClassLabel + " w-24",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
@@ -986,13 +1000,13 @@ func NaloziKopiranjeDialog(model domain.KopirajNalog, btnSave domain.Button) tem
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "</div><div class=\"flex items-center space-x-2 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "</div><div class=\"flex items-center space-x-2 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
 			ID:         "opis-label",
-			LabelText:  "Opis knjizenja",
+			LabelText:  translator.Label("Opis knjizenja"),
 			ClassLabel: common.ClassLabel + " w-24",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
@@ -1009,7 +1023,7 @@ func NaloziKopiranjeDialog(model domain.KopirajNalog, btnSave domain.Button) tem
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "</div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "</div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1033,12 +1047,12 @@ func NaloziScript() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var19 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var19 == nil {
-			templ_7745c5c3_Var19 = templ.NopComponent
+		templ_7745c5c3_Var20 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var20 == nil {
+			templ_7745c5c3_Var20 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "<script>\r\n        document.addEventListener('htmx:afterSwap', function(event) {\r\n    \t\tconsole.log('HTMX After Swap:', event.detail.target);\r\n\t\t\tconst tabs = document.querySelectorAll('nav button');\r\n            const tabContent = document.getElementById('tab-content');\r\n\r\n            tabs.forEach(tab => {\r\n                tab.addEventListener('click', () => {\r\n                    // Remove active classes from all tabs\r\n                    tabs.forEach(t => {\r\n                        t.classList.remove('text-blue-600', 'border-blue-600');\r\n                        t.classList.add('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');\r\n                        t.setAttribute('aria-selected', 'false');\r\n                    });\r\n\r\n                    // Add active classes to the clicked tab\r\n                    tab.classList.add('text-blue-600', 'border-blue-600');\r\n                    tab.classList.remove('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');\r\n                    tab.setAttribute('aria-selected', 'true');\r\n                });\r\n            });\r\n\r\n            // Trigger click on the first tab to load its content on page load\r\n            document.getElementById('knjizenje-tab').click();\r\n        });\r\n    </script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "<script>\r\n        document.addEventListener('htmx:afterSwap', function(event) {\r\n    \t\tconsole.log('HTMX After Swap:', event.detail.target);\r\n\t\t\tconst tabs = document.querySelectorAll('nav button');\r\n            const tabContent = document.getElementById('tab-content');\r\n\r\n            tabs.forEach(tab => {\r\n                tab.addEventListener('click', () => {\r\n                    // Remove active classes from all tabs\r\n                    tabs.forEach(t => {\r\n                        t.classList.remove('text-blue-600', 'border-blue-600');\r\n                        t.classList.add('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');\r\n                        t.setAttribute('aria-selected', 'false');\r\n                    });\r\n\r\n                    // Add active classes to the clicked tab\r\n                    tab.classList.add('text-blue-600', 'border-blue-600');\r\n                    tab.classList.remove('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');\r\n                    tab.setAttribute('aria-selected', 'true');\r\n                });\r\n            });\r\n\r\n            // Trigger click on the first tab to load its content on page load\r\n            document.getElementById('knjizenje-tab').click();\r\n        });\r\n    </script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

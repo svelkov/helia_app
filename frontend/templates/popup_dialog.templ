@@ -3,6 +3,7 @@ package templates
 import (
 	"fmt"
 	"helia/internal/domain"
+	"helia/internal/i18n"
 )
 
 // SearchPopup renders a searchable popup component
@@ -145,7 +146,7 @@ templ SearchResultsTableEmpty(headers []string, message string) {
 }
 
 // SearchResultsTableLoading renders a loading state for the table
-templ SearchResultsTableLoading(headers []string) {
+templ SearchResultsTableLoading(headers []string, translator *i18n.Service) {
 	<table class="min-w-full divide-y divide-gray-200">
 		<thead class="bg-gray-50">
 			<tr>
@@ -161,7 +162,7 @@ templ SearchResultsTableLoading(headers []string) {
 				<td colspan={ fmt.Sprintf("%d", len(headers)) } class="px-3 py-8 text-center text-gray-500">
 					<div class="flex items-center justify-center">
 						<div class="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
-						<span class="ml-2">Searching...</span>
+						<span class="ml-2">{ translator.Label("Pretraga u toku") }</span>
 					</div>
 				</td>
 			</tr>

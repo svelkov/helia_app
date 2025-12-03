@@ -44,7 +44,7 @@ func Base(isLoggedIn bool, content templ.Component, menuItems domain.MenuDataIte
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = Header(isLoggedIn, userName, comboLanguage).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = Header(isLoggedIn, comboCompany, comboPoslGod, comboKar, comboLanguage, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -53,7 +53,7 @@ func Base(isLoggedIn bool, content templ.Component, menuItems domain.MenuDataIte
 			return templ_7745c5c3_Err
 		}
 		if isLoggedIn {
-			templ_7745c5c3_Err = TopMenu(menuItems, currentMenu, comboCompany, comboPoslGod, comboKar, translator, comboLanguage.SelectedValue).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = TopMenu(isLoggedIn, userName, menuItems, currentMenu, translator, comboLanguage.SelectedValue).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

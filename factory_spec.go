@@ -121,30 +121,30 @@ func setupRouter(translator *i18n.Service) *gin.Engine {
 	// Global middleware
 	router.Use(middleware.CORS())
 	router.Use(middleware.I18n(translator))
-	router.Use(gzip.Gzip(gzip.DefaultCompression)) // Compression
+	router.Use(gzip.Gzip(gzip.DefaultCompression)) // Compression¨
+
+	// Static files BEFORE CSRF middleware (so they bypass it)
+	router.Static("/css", "./frontend/static/css")
+	router.Static("/js", "./frontend/static/js")
+	router.Static("/frontend/static", "./frontend/static")
+
+	// Cache control for static files
+	router.Use(func(c *gin.Context) {
+		if strings.HasPrefix(c.Request.URL.Path, "/frontend/static/") ||
+			strings.HasPrefix(c.Request.URL.Path, "/css/") ||
+			strings.HasPrefix(c.Request.URL.Path, "/js/") {
+			c.Header("Cache-Control", "public, max-age=3600")
+		}
+		c.Next()
+	})
+
+	// CSRF middleware AFTER static files
+	router.Use(middleware.CSRFMiddleware()) // Apply to all routes except static
 	// Add request logging to debug
 	// router.Use(func(c *gin.Context) {
 	// 	log.Printf("Request: %s %s", c.Request.Method, c.Request.URL.Path)
 	// 	c.Next()
 	// })
-
-	// Static files
-	//router.StaticFS("/frontend/static", http.Dir("./frontend/static"))
-	// Additional static directories
-	router.Static("/css", "./frontend/static/css")
-	router.Static("/js", "./frontend/static/js")
-	//router.StaticFile("/favicon.ico", "./frontend/static/favicon.ico")
-
-	// Serve static files with cache control
-	router.Static("/frontend/static", "./frontend/static")
-
-	// Or for more control
-	router.Use(func(c *gin.Context) {
-		if strings.HasPrefix(c.Request.URL.Path, "/frontend/static/") {
-			c.Header("Cache-Control", "public, max-age=3600")
-		}
-		c.Next()
-	})
 
 	// Load HTML templates
 	//router.LoadHTMLGlob("./frontend/templates/*")

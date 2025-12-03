@@ -5,6 +5,7 @@ import (
 
 	"helia/internal/common"
 	"helia/internal/domain"
+	"helia/internal/i18n"
 )
 
 // Then in template:
@@ -134,10 +135,10 @@ templ SearchButton(config domain.SearchButtonConfig) {
 	</div>
 }
 
-templ ComboBoxField(comboConfig domain.ComboFieldConfig) {
+templ ComboBoxField(comboConfig domain.ComboFieldConfig, translator *i18n.Service) {
 	if comboConfig.HasLabel {
 		<!-- Label - fixed width -->
-		<label for={ comboConfig.ID } class={ comboConfig.ClassLabel }>{ comboConfig.LabelText }</label>
+		<label for={ comboConfig.ID } class={ comboConfig.ClassLabel }>{ translator.Label(comboConfig.LabelText) }</label>
 	}
 	<select
 		id={ comboConfig.ID }
@@ -174,7 +175,7 @@ templ ComboBoxField(comboConfig domain.ComboFieldConfig) {
 	</select>
 }
 
-templ SearchButtonDialog(id, name, placeholder, hxUrl, hxTarget, hxSwap, hxVals string) {
+templ SearchButtonDialog(id, name, placeholder, hxUrl, hxTarget, hxSwap, hxVals string, translator *i18n.Service) {
 	<!-- Backend returns this HTML structure: -->
 	<div class="p-2 text-sm rounded focus:border-blue-500">
 		<!-- Search input field -->
@@ -183,7 +184,7 @@ templ SearchButtonDialog(id, name, placeholder, hxUrl, hxTarget, hxSwap, hxVals 
 				type="text"
 				id="search-input"
 				name="query"
-				placeholder={ placeholder }
+				placeholder={ translator.Placeholder(placeholder) }
 				class="w-full p-2 h-6 text-sm border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
 				hx-trigger="keyup changed delay:300ms"
 				if hxUrl !="" {

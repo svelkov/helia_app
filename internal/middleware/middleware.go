@@ -63,7 +63,7 @@ func Auth() gin.HandlerFunc {
 				return
 			}
 		}
-		
+
 		// Get token from cookie
 		cookie, err := c.Cookie("auth_token")
 		if err != nil {

@@ -1,13 +1,15 @@
 package templates
 
-templ Content(isLoggedIn bool) {
+import "helia/internal/i18n"
+
+templ Content(isLoggedIn bool, translator *i18n.Service) {
 	<div class="bg-white p-6 rounded-lg shadow-md">
 		if isLoggedIn {
-			<h2 class="text-2xl font-bold mb-4">Content Area</h2>
-			<p class="text-gray-700">Please select a option from the menu on the left side.</p>
+			<h2 class="text-2xl font-bold mb-4">{ translator.Label("Pocetna") }</h2>
+			<p class="text-gray-700">{ translator.Label("Izaberite opciju iz menija") }</p>
 		} else {
-			<h2 class="text-2xl font-bold mb-4">Not logged in</h2>
-			<p class="text-gray-700">Please log in or register to use the application.</p>
+			<h2 class="text-2xl font-bold mb-4">{ translator.Label("Niste prijavljeni") }</h2>
+			<p class="text-gray-700">{ translator.Label("Prijavite se ili se registrujte") }</p>
 		}
 	</div>
 }

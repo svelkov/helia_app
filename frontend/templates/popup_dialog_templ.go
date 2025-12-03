@@ -11,6 +11,7 @@ import templruntime "github.com/a-h/templ/runtime"
 import (
 	"fmt"
 	"helia/internal/domain"
+	"helia/internal/i18n"
 )
 
 // SearchPopup renders a searchable popup component
@@ -51,7 +52,7 @@ func SearchPopup(config domain.SearchPopupConfig) templ.Component {
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(config.FieldID + "-popup")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/popup_dialog.templ`, Line: 12, Col: 32}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/popup_dialog.templ`, Line: 13, Col: 32}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
@@ -77,7 +78,7 @@ func SearchPopup(config domain.SearchPopupConfig) templ.Component {
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(config.FieldID + "-search-label")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/popup_dialog.templ`, Line: 15, Col: 52}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/popup_dialog.templ`, Line: 16, Col: 52}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
@@ -90,7 +91,7 @@ func SearchPopup(config domain.SearchPopupConfig) templ.Component {
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs("search-input-" + config.FieldID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/popup_dialog.templ`, Line: 21, Col: 49}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/popup_dialog.templ`, Line: 22, Col: 49}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
@@ -103,7 +104,7 @@ func SearchPopup(config domain.SearchPopupConfig) templ.Component {
 		var templ_7745c5c3_Var7 string
 		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(config.FieldID + "-search-label")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/popup_dialog.templ`, Line: 21, Col: 105}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/popup_dialog.templ`, Line: 22, Col: 105}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {
@@ -116,7 +117,7 @@ func SearchPopup(config domain.SearchPopupConfig) templ.Component {
 		var templ_7745c5c3_Var8 string
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(config.Placeholder)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/popup_dialog.templ`, Line: 22, Col: 25}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/popup_dialog.templ`, Line: 23, Col: 25}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {
@@ -129,7 +130,7 @@ func SearchPopup(config domain.SearchPopupConfig) templ.Component {
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs("search-input-" + config.FieldID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/popup_dialog.templ`, Line: 26, Col: 42}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/popup_dialog.templ`, Line: 27, Col: 42}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
@@ -142,7 +143,7 @@ func SearchPopup(config domain.SearchPopupConfig) templ.Component {
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(config.SearchURL)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/popup_dialog.templ`, Line: 28, Col: 30}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/popup_dialog.templ`, Line: 29, Col: 30}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
@@ -160,7 +161,7 @@ func SearchPopup(config domain.SearchPopupConfig) templ.Component {
 			var templ_7745c5c3_Var11 string
 			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf(`{"query": "%s"}`, config.InitialValue))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/popup_dialog.templ`, Line: 33, Col: 67}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/popup_dialog.templ`, Line: 34, Col: 67}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {
@@ -178,7 +179,7 @@ func SearchPopup(config domain.SearchPopupConfig) templ.Component {
 		var templ_7745c5c3_Var12 string
 		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(config.Placeholder)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/popup_dialog.templ`, Line: 36, Col: 37}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/popup_dialog.templ`, Line: 37, Col: 37}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 		if templ_7745c5c3_Err != nil {
@@ -191,7 +192,7 @@ func SearchPopup(config domain.SearchPopupConfig) templ.Component {
 		var templ_7745c5c3_Var13 string
 		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(config.FieldID + "-search-help")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/popup_dialog.templ`, Line: 38, Col: 55}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/popup_dialog.templ`, Line: 39, Col: 55}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 		if templ_7745c5c3_Err != nil {
@@ -204,7 +205,7 @@ func SearchPopup(config domain.SearchPopupConfig) templ.Component {
 		var templ_7745c5c3_Var14 string
 		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(config.FieldID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/popup_dialog.templ`, Line: 43, Col: 35}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/popup_dialog.templ`, Line: 44, Col: 35}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 		if templ_7745c5c3_Err != nil {
@@ -217,7 +218,7 @@ func SearchPopup(config domain.SearchPopupConfig) templ.Component {
 		var templ_7745c5c3_Var15 string
 		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(config.ClearButtonText)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/popup_dialog.templ`, Line: 48, Col: 29}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/popup_dialog.templ`, Line: 49, Col: 29}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 		if templ_7745c5c3_Err != nil {
@@ -230,7 +231,7 @@ func SearchPopup(config domain.SearchPopupConfig) templ.Component {
 		var templ_7745c5c3_Var16 string
 		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(config.FieldID + "-search-help")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/popup_dialog.templ`, Line: 51, Col: 44}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/popup_dialog.templ`, Line: 52, Col: 44}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 		if templ_7745c5c3_Err != nil {
@@ -252,7 +253,7 @@ func SearchPopup(config domain.SearchPopupConfig) templ.Component {
 		var templ_7745c5c3_Var18 string
 		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs("search-results-" + config.FieldID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/popup_dialog.templ`, Line: 57, Col: 42}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/popup_dialog.templ`, Line: 58, Col: 42}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
@@ -313,7 +314,7 @@ func SearchResultsTable(fieldID string, headers []string, rows []domain.SearchRe
 			var templ_7745c5c3_Var21 string
 			templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(header)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/popup_dialog.templ`, Line: 77, Col: 14}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/popup_dialog.templ`, Line: 78, Col: 14}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 			if templ_7745c5c3_Err != nil {
@@ -372,7 +373,7 @@ func SearchResultTableRow(fieldID string, row domain.SearchResultRow) templ.Comp
 			var templ_7745c5c3_Var23 string
 			templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(fieldID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/popup_dialog.templ`, Line: 96, Col: 26}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/popup_dialog.templ`, Line: 97, Col: 26}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 			if templ_7745c5c3_Err != nil {
@@ -385,7 +386,7 @@ func SearchResultTableRow(fieldID string, row domain.SearchResultRow) templ.Comp
 			var templ_7745c5c3_Var24 string
 			templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(row.Value)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/popup_dialog.templ`, Line: 97, Col: 25}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/popup_dialog.templ`, Line: 98, Col: 25}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 			if templ_7745c5c3_Err != nil {
@@ -398,7 +399,7 @@ func SearchResultTableRow(fieldID string, row domain.SearchResultRow) templ.Comp
 			var templ_7745c5c3_Var25 string
 			templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(row.DisplayValue)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/popup_dialog.templ`, Line: 98, Col: 40}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/popup_dialog.templ`, Line: 99, Col: 40}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
 			if templ_7745c5c3_Err != nil {
@@ -411,7 +412,7 @@ func SearchResultTableRow(fieldID string, row domain.SearchResultRow) templ.Comp
 			var templ_7745c5c3_Var26 string
 			templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("Select %s", row.DisplayValue))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/popup_dialog.templ`, Line: 102, Col: 58}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/popup_dialog.templ`, Line: 103, Col: 58}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
 			if templ_7745c5c3_Err != nil {
@@ -429,7 +430,7 @@ func SearchResultTableRow(fieldID string, row domain.SearchResultRow) templ.Comp
 				var templ_7745c5c3_Var27 string
 				templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinStringErrs(cell)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/popup_dialog.templ`, Line: 106, Col: 11}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/popup_dialog.templ`, Line: 107, Col: 11}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
 				if templ_7745c5c3_Err != nil {
@@ -457,7 +458,7 @@ func SearchResultTableRow(fieldID string, row domain.SearchResultRow) templ.Comp
 				var templ_7745c5c3_Var28 string
 				templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(cell)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/popup_dialog.templ`, Line: 114, Col: 11}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/popup_dialog.templ`, Line: 115, Col: 11}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
 				if templ_7745c5c3_Err != nil {
@@ -511,7 +512,7 @@ func SearchResultsTableEmpty(headers []string, message string) templ.Component {
 			var templ_7745c5c3_Var30 string
 			templ_7745c5c3_Var30, templ_7745c5c3_Err = templ.JoinStringErrs(header)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/popup_dialog.templ`, Line: 128, Col: 14}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/popup_dialog.templ`, Line: 129, Col: 14}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var30))
 			if templ_7745c5c3_Err != nil {
@@ -529,7 +530,7 @@ func SearchResultsTableEmpty(headers []string, message string) templ.Component {
 		var templ_7745c5c3_Var31 string
 		templ_7745c5c3_Var31, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", len(headers)))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/popup_dialog.templ`, Line: 135, Col: 49}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/popup_dialog.templ`, Line: 136, Col: 49}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var31))
 		if templ_7745c5c3_Err != nil {
@@ -543,7 +544,7 @@ func SearchResultsTableEmpty(headers []string, message string) templ.Component {
 			var templ_7745c5c3_Var32 string
 			templ_7745c5c3_Var32, templ_7745c5c3_Err = templ.JoinStringErrs(message)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/popup_dialog.templ`, Line: 137, Col: 15}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/popup_dialog.templ`, Line: 138, Col: 15}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var32))
 			if templ_7745c5c3_Err != nil {
@@ -564,7 +565,7 @@ func SearchResultsTableEmpty(headers []string, message string) templ.Component {
 }
 
 // SearchResultsTableLoading renders a loading state for the table
-func SearchResultsTableLoading(headers []string) templ.Component {
+func SearchResultsTableLoading(headers []string, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -597,7 +598,7 @@ func SearchResultsTableLoading(headers []string) templ.Component {
 			var templ_7745c5c3_Var34 string
 			templ_7745c5c3_Var34, templ_7745c5c3_Err = templ.JoinStringErrs(header)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/popup_dialog.templ`, Line: 154, Col: 14}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/popup_dialog.templ`, Line: 155, Col: 14}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var34))
 			if templ_7745c5c3_Err != nil {
@@ -615,13 +616,26 @@ func SearchResultsTableLoading(headers []string) templ.Component {
 		var templ_7745c5c3_Var35 string
 		templ_7745c5c3_Var35, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", len(headers)))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/popup_dialog.templ`, Line: 161, Col: 49}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/popup_dialog.templ`, Line: 162, Col: 49}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var35))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, "\" class=\"px-3 py-8 text-center text-gray-500\"><div class=\"flex items-center justify-center\"><div class=\"inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500\"></div><span class=\"ml-2\">Searching...</span></div></td></tr></tbody></table>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, "\" class=\"px-3 py-8 text-center text-gray-500\"><div class=\"flex items-center justify-center\"><div class=\"inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500\"></div><span class=\"ml-2\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var36 string
+		templ_7745c5c3_Var36, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Pretraga u toku"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/popup_dialog.templ`, Line: 165, Col: 62}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var36))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, "</span></div></td></tr></tbody></table>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -647,12 +661,12 @@ func SearchPopupScript() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var36 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var36 == nil {
-			templ_7745c5c3_Var36 = templ.NopComponent
+		templ_7745c5c3_Var37 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var37 == nil {
+			templ_7745c5c3_Var37 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, "<script>\r\n\t\tfunction showSearchDialog(fieldId) {\r\n\t\t\tconst dialog = document.getElementById('search-dropdown');\r\n\t\t\tconst contentDiv = document.getElementById('dialog-content');\r\n\t\t\tconst button = document.getElementById('search-button-' + fieldId);\r\n\t\t\t\r\n\t\t\tconsole.log('Showing dialog for field:', fieldId,  button);\r\n\t\t\tif (!dialog || !button) {\r\n\t\t\t\tconsole.error('Dialog or button not found');\r\n\t\t\t\treturn;\r\n\t\t\t}\r\n\t\t\t\r\n\t\t\tif (dialog.classList.contains('hidden')) {\r\n\t\t\t\tdialog.classList.remove('hidden');\r\n\t\t\t}\t\t \r\n\t\t\t// Store current field ID for later use\r\n\t\t\tcurrentFieldId = fieldId;\r\n\t\t\t\r\n\t\t\t// Position dialog below the button\r\n\t\t\tif (button && dialog) {\r\n\t\t\tconst rect = button.getBoundingClientRect();\r\n\t\t\t// Reset any previous positioning\r\n\t\t\tdialog.style.position = 'fixed';\r\n\t\t\tdialog.style.top = '';\r\n\t\t\tdialog.style.left = '';\r\n\t\t\tdialog.style.right = '';\r\n\t\t\tdialog.style.bottom = '';\r\n\t\t\t\r\n\t\t\t// Calculate position relative to viewport (accounting for scroll)\r\n\t\t\tconst scrollX = window.scrollX || window.pageXOffset;\r\n\t\t\tconst scrollY = window.scrollY || window.pageYOffset;\r\n\t\t\t\r\n\t\t\tdialog.style.position = 'fixed';\r\n\t\t\tdialog.style.top = (rect.bottom + scrollY) + 'px';\r\n\t\t\tdialog.style.left = (rect.left + scrollX) + 'px';\r\n\t\t\tdialog.style.zIndex = '1000';\r\n\t\t\t\r\n\t\t\tconsole.log('Positioning dialog:', {\r\n\t\t\t\tbuttonRect: rect,\r\n\t\t\t\tscrollX: scrollX,\r\n\t\t\t\tscrollY: scrollY,\r\n\t\t\t\tfinalTop: rect.bottom + scrollY,\r\n\t\t\t\tfinalLeft: rect.left + scrollX,\r\n\t\t\t\tviewport: { width: window.innerWidth, height: window.innerHeight }\r\n\t\t\t});\r\n\t\t\t\t\r\n\t\t\t}\r\n\t\t}\r\n\t\t// Position dropdown below the button that opened it\r\n\t\tfunction positionDropdown(dropdownId, buttonId) {\r\n\t\t\tconst button = document.getElementById(buttonId);\r\n\t\t\tconst dropdown = document.getElementById(dropdownId);\r\n\t\t\t\r\n\t\t\tif (button && dropdown) {\r\n\t\t\t\tconst rect = button.getBoundingClientRect();\r\n\t\t\t\tdropdown.style.position = 'absolute';\r\n\t\t\t\tdropdown.style.top = (rect.bottom + window.scrollY) + 'px';\r\n\t\t\t\tdropdown.style.left = (rect.left + window.scrollX) + 'px';\r\n\t\t\t\tdropdown.style.zIndex = '1000';\r\n\t\t\t}\r\n\t\t}\r\n\t\t\r\n\t\t// Close dropdown when clicking outside\r\n\t\tdocument.addEventListener('click', function(event) {\r\n\t\t\tconst dropdowns = document.querySelectorAll('[id^=\"search-dropdown\"]');\r\n\t\t\tdropdowns.forEach(dropdown => {\r\n\t\t\t\tif (!dropdown.contains(event.target) && !event.target.closest('[onclick*=\"showDropdown\"]')) {\r\n\t\t\t\t\tdropdown.classList.add('hidden');\r\n\t\t\t\t}\r\n\t\t\t});\r\n\t\t});\r\n\r\n\t\t// Generic function to select item and close dialog\r\n\t\tfunction selectItem(dropdownId, valueFieldId, nameFieldId, value, name) {\r\n\t\t\tdocument.getElementById(valueFieldId).value = value;\r\n\t\t\tdocument.getElementById(nameFieldId).value = name;\r\n\t\t\thideDropdown(dropdownId);\r\n\t\t\t\r\n\t\t\t// Trigger blur event to update other fields\r\n\t\t\tdocument.getElementById(valueFieldId).dispatchEvent(new Event('blur'));\r\n\t\t}\r\n\t\t\r\n\t\t// Show dropdown function\r\n\t\tfunction showDropdown(dropdownId, buttonId) {\r\n\t\t\t// First hide any other open dropdowns\r\n\t\t\tconst dropdowns = document.querySelectorAll('[id^=\"search-dropdown\"]');\r\n\t\t\tdropdowns.forEach(dropdown => {\r\n\t\t\t\tdropdown.classList.add('hidden');\r\n\t\t\t});\r\n\t\t\t\r\n\t\t\t// Show the requested dropdown\r\n\t\t\tconst dropdown = document.getElementById(dropdownId);\r\n\t\t\tdropdown.classList.remove('hidden');\r\n\t\t\t\r\n\t\t\t// Position it below the button\r\n\t\t\tpositionDropdown(dropdownId, buttonId);\r\n\t\t}\r\n\t\t\r\n\t\t// Hide dropdown function\r\n\t\tfunction hideDropdown(dropdownId) {\r\n\t\t\tdocument.getElementById(dropdownId).classList.add('hidden');\r\n\t\t}\r\n\r\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "<script>\r\n\t\tfunction showSearchDialog(fieldId) {\r\n\t\t\tconst dialog = document.getElementById('search-dropdown');\r\n\t\t\tconst contentDiv = document.getElementById('dialog-content');\r\n\t\t\tconst button = document.getElementById('search-button-' + fieldId);\r\n\t\t\t\r\n\t\t\tconsole.log('Showing dialog for field:', fieldId,  button);\r\n\t\t\tif (!dialog || !button) {\r\n\t\t\t\tconsole.error('Dialog or button not found');\r\n\t\t\t\treturn;\r\n\t\t\t}\r\n\t\t\t\r\n\t\t\tif (dialog.classList.contains('hidden')) {\r\n\t\t\t\tdialog.classList.remove('hidden');\r\n\t\t\t}\t\t \r\n\t\t\t// Store current field ID for later use\r\n\t\t\tcurrentFieldId = fieldId;\r\n\t\t\t\r\n\t\t\t// Position dialog below the button\r\n\t\t\tif (button && dialog) {\r\n\t\t\tconst rect = button.getBoundingClientRect();\r\n\t\t\t// Reset any previous positioning\r\n\t\t\tdialog.style.position = 'fixed';\r\n\t\t\tdialog.style.top = '';\r\n\t\t\tdialog.style.left = '';\r\n\t\t\tdialog.style.right = '';\r\n\t\t\tdialog.style.bottom = '';\r\n\t\t\t\r\n\t\t\t// Calculate position relative to viewport (accounting for scroll)\r\n\t\t\tconst scrollX = window.scrollX || window.pageXOffset;\r\n\t\t\tconst scrollY = window.scrollY || window.pageYOffset;\r\n\t\t\t\r\n\t\t\tdialog.style.position = 'fixed';\r\n\t\t\tdialog.style.top = (rect.bottom + scrollY) + 'px';\r\n\t\t\tdialog.style.left = (rect.left + scrollX) + 'px';\r\n\t\t\tdialog.style.zIndex = '1000';\r\n\t\t\t\r\n\t\t\tconsole.log('Positioning dialog:', {\r\n\t\t\t\tbuttonRect: rect,\r\n\t\t\t\tscrollX: scrollX,\r\n\t\t\t\tscrollY: scrollY,\r\n\t\t\t\tfinalTop: rect.bottom + scrollY,\r\n\t\t\t\tfinalLeft: rect.left + scrollX,\r\n\t\t\t\tviewport: { width: window.innerWidth, height: window.innerHeight }\r\n\t\t\t});\r\n\t\t\t\t\r\n\t\t\t}\r\n\t\t}\r\n\t\t// Position dropdown below the button that opened it\r\n\t\tfunction positionDropdown(dropdownId, buttonId) {\r\n\t\t\tconst button = document.getElementById(buttonId);\r\n\t\t\tconst dropdown = document.getElementById(dropdownId);\r\n\t\t\t\r\n\t\t\tif (button && dropdown) {\r\n\t\t\t\tconst rect = button.getBoundingClientRect();\r\n\t\t\t\tdropdown.style.position = 'absolute';\r\n\t\t\t\tdropdown.style.top = (rect.bottom + window.scrollY) + 'px';\r\n\t\t\t\tdropdown.style.left = (rect.left + window.scrollX) + 'px';\r\n\t\t\t\tdropdown.style.zIndex = '1000';\r\n\t\t\t}\r\n\t\t}\r\n\t\t\r\n\t\t// Close dropdown when clicking outside\r\n\t\tdocument.addEventListener('click', function(event) {\r\n\t\t\tconst dropdowns = document.querySelectorAll('[id^=\"search-dropdown\"]');\r\n\t\t\tdropdowns.forEach(dropdown => {\r\n\t\t\t\tif (!dropdown.contains(event.target) && !event.target.closest('[onclick*=\"showDropdown\"]')) {\r\n\t\t\t\t\tdropdown.classList.add('hidden');\r\n\t\t\t\t}\r\n\t\t\t});\r\n\t\t});\r\n\r\n\t\t// Generic function to select item and close dialog\r\n\t\tfunction selectItem(dropdownId, valueFieldId, nameFieldId, value, name) {\r\n\t\t\tdocument.getElementById(valueFieldId).value = value;\r\n\t\t\tdocument.getElementById(nameFieldId).value = name;\r\n\t\t\thideDropdown(dropdownId);\r\n\t\t\t\r\n\t\t\t// Trigger blur event to update other fields\r\n\t\t\tdocument.getElementById(valueFieldId).dispatchEvent(new Event('blur'));\r\n\t\t}\r\n\t\t\r\n\t\t// Show dropdown function\r\n\t\tfunction showDropdown(dropdownId, buttonId) {\r\n\t\t\t// First hide any other open dropdowns\r\n\t\t\tconst dropdowns = document.querySelectorAll('[id^=\"search-dropdown\"]');\r\n\t\t\tdropdowns.forEach(dropdown => {\r\n\t\t\t\tdropdown.classList.add('hidden');\r\n\t\t\t});\r\n\t\t\t\r\n\t\t\t// Show the requested dropdown\r\n\t\t\tconst dropdown = document.getElementById(dropdownId);\r\n\t\t\tdropdown.classList.remove('hidden');\r\n\t\t\t\r\n\t\t\t// Position it below the button\r\n\t\t\tpositionDropdown(dropdownId, buttonId);\r\n\t\t}\r\n\t\t\r\n\t\t// Hide dropdown function\r\n\t\tfunction hideDropdown(dropdownId) {\r\n\t\t\tdocument.getElementById(dropdownId).classList.add('hidden');\r\n\t\t}\r\n\r\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

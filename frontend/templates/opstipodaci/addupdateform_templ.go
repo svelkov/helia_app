@@ -12,9 +12,10 @@ import (
 	"fmt"
 	tmpl "helia/frontend/templates"
 	"helia/internal/domain"
+	"helia/internal/i18n"
 )
 
-func AddUpdateForm(dialog domain.Dialog, fields []domain.Fields, btnSave, btnCancel, btnClose domain.Button) templ.Component {
+func AddUpdateForm(dialog domain.Dialog, fields []domain.Fields, btnSave, btnCancel, btnClose domain.Button, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -42,7 +43,7 @@ func AddUpdateForm(dialog domain.Dialog, fields []domain.Fields, btnSave, btnCan
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.Id)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/addupdateform.templ`, Line: 10, Col: 20}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/addupdateform.templ`, Line: 11, Col: 20}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
@@ -55,7 +56,7 @@ func AddUpdateForm(dialog domain.Dialog, fields []domain.Fields, btnSave, btnCan
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.Title)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/addupdateform.templ`, Line: 14, Col: 57}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/addupdateform.templ`, Line: 15, Col: 57}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
@@ -81,7 +82,7 @@ func AddUpdateForm(dialog domain.Dialog, fields []domain.Fields, btnSave, btnCan
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.HxActionURL)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/addupdateform.templ`, Line: 19, Col: 32}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/addupdateform.templ`, Line: 20, Col: 32}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
@@ -100,7 +101,7 @@ func AddUpdateForm(dialog domain.Dialog, fields []domain.Fields, btnSave, btnCan
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.HxActionURL)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/addupdateform.templ`, Line: 22, Col: 33}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/addupdateform.templ`, Line: 23, Col: 33}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
@@ -123,7 +124,7 @@ func AddUpdateForm(dialog domain.Dialog, fields []domain.Fields, btnSave, btnCan
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(field.Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/addupdateform.templ`, Line: 31, Col: 29}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/addupdateform.templ`, Line: 32, Col: 29}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
@@ -134,9 +135,9 @@ func AddUpdateForm(dialog domain.Dialog, fields []domain.Fields, btnSave, btnCan
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var7 string
-			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(field.Label)
+			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label(field.Label))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/addupdateform.templ`, Line: 31, Col: 89}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/addupdateform.templ`, Line: 32, Col: 107}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
@@ -158,7 +159,7 @@ func AddUpdateForm(dialog domain.Dialog, fields []domain.Fields, btnSave, btnCan
 			var templ_7745c5c3_Var9 string
 			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(field.Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/addupdateform.templ`, Line: 33, Col: 22}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/addupdateform.templ`, Line: 34, Col: 22}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {
@@ -184,7 +185,7 @@ func AddUpdateForm(dialog domain.Dialog, fields []domain.Fields, btnSave, btnCan
 			var templ_7745c5c3_Var11 string
 			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(field.Type)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/addupdateform.templ`, Line: 35, Col: 24}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/addupdateform.templ`, Line: 36, Col: 24}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {
@@ -197,7 +198,7 @@ func AddUpdateForm(dialog domain.Dialog, fields []domain.Fields, btnSave, btnCan
 			var templ_7745c5c3_Var12 string
 			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(field.Width)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/addupdateform.templ`, Line: 36, Col: 30}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/addupdateform.templ`, Line: 37, Col: 30}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 			if templ_7745c5c3_Err != nil {
@@ -210,7 +211,7 @@ func AddUpdateForm(dialog domain.Dialog, fields []domain.Fields, btnSave, btnCan
 			var templ_7745c5c3_Var13 string
 			templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", i))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/addupdateform.templ`, Line: 37, Col: 38}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/addupdateform.templ`, Line: 38, Col: 38}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 			if templ_7745c5c3_Err != nil {
@@ -223,7 +224,7 @@ func AddUpdateForm(dialog domain.Dialog, fields []domain.Fields, btnSave, btnCan
 			var templ_7745c5c3_Var14 string
 			templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(field.Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/addupdateform.templ`, Line: 38, Col: 24}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/addupdateform.templ`, Line: 39, Col: 24}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 			if templ_7745c5c3_Err != nil {
@@ -236,7 +237,7 @@ func AddUpdateForm(dialog domain.Dialog, fields []domain.Fields, btnSave, btnCan
 			var templ_7745c5c3_Var15 string
 			templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(field.Value)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/addupdateform.templ`, Line: 39, Col: 26}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/addupdateform.templ`, Line: 40, Col: 26}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 			if templ_7745c5c3_Err != nil {
@@ -251,11 +252,11 @@ func AddUpdateForm(dialog domain.Dialog, fields []domain.Fields, btnSave, btnCan
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SaveButton(btnSave).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.SaveButton(btnSave, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.CancelButton(btnCancel).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.CancelButton(btnCancel, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

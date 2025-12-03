@@ -1,25 +1,28 @@
 package templates
 
-templ Login() {
+import "helia/internal/i18n"
+
+templ Login(translator *i18n.Service, csrfToken string) {
 	<div class="max-w-md mx-auto bg-white p-6 rounded-lg shadow-md">
-		<h2 class="text-2xl font-bold mb-4">Prijava</h2>
+		<h2 class="text-2xl font-bold mb-4">{ translator.Label("Prijava") }</h2>
 		<form action="/login" method="POST">
+			<input type="hidden" name="_csrf" value={ csrfToken }/>
 			<div class="mb-4">
-				<label for="username" class="block text-gray-700">Korisnicko ime:</label>
+				<label for="username" class="block text-gray-700">{ translator.Label("Korisnicko ime") }</label>
 				<input type="text" id="username" name="username" class="w-full px-3 py-2 border rounded-lg" required/>
 			</div>
 			<div class="mb-4">
-				<label for="password" class="block text-gray-700">Lozinka:</label>
+				<label for="password" class="block text-gray-700">{ translator.Label("Lozinka") }</label>
 				<input type="password" id="password" name="password" class="w-full px-3 py-2 border rounded-lg" required/>
 			</div>
-			<button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">Prijavi se</button>
+			<button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">{ translator.Label("Prijavi se") }</button>
 		</form>
 	</div>
 }
 
-templ ProtectedPage(username string) {
+templ ProtectedPage(username string, translator *i18n.Service) {
     <div class="max-w-md mx-auto bg-white p-6 rounded-lg shadow-md">
-        <h2 class="text-2xl font-bold mb-4">Protected Page</h2>
-        <p>Dobrodosli { username }</p>
+        <h2 class="text-2xl font-bold mb-4">{ translator.Label("Zastitena stranica") }</h2>
+        <p>{ translator.Label("Dobrodosli") } { username }</p>
     </div>
 }

@@ -1,15 +1,17 @@
 package templates
 
-templ Nav(isLoggedIn bool) {
+import "helia/internal/i18n"
+
+templ Nav(isLoggedIn bool, translator *i18n.Service) {
 	<header class="bg-blue-600 text-white p-4 flex justify-between items-center text-sm">
-		<div class="text-2xl font-bold">HELIA</div>
+		<div class="text-2xl font-bold">{ translator.Label("Helia") }</div>
 		<nav class="space-x-4">
-			<a href="/" class="hover:text-blue-200">Home</a>
+			<a href="/" class="hover:text-blue-200">{ translator.Label("Pocetna") }</a>
 			if !isLoggedIn {
-				<a href="/login" class="hover:text-blue-200">Login</a>
-				<a href="/register" class="hover:text-blue-200">Register</a>
+				<a href="/login" class="hover:text-blue-200">{ translator.Label("Prijava") }</a>
+				<a href="/register" class="hover:text-blue-200">{ translator.Label("Registracija") }</a>
 			} else {
-				<a href="/logout" class="hover:text-blue-200">Logout</a>
+				<a href="/logout" class="hover:text-blue-200">{ translator.Label("Odjava") }</a>
 			}
 		</nav>
 	</header>

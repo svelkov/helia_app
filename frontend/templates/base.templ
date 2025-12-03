@@ -9,10 +9,10 @@ templ Base(isLoggedIn bool, content templ.Component, menuItems domain.MenuDataIt
 		@Head()
 		<body class="flex flex-col h-screen bg-gray-100 text-sm dark:bg-gray-900 dark:text-gray-100">
 			<!-- Header -->
-			@Header(isLoggedIn, userName, comboLanguage)
+			@Header(isLoggedIn, comboCompany, comboPoslGod, comboKar, comboLanguage, translator)
 			<!-- Secondary Menu (Conditional) -->
 			if isLoggedIn {
-				@TopMenu(menuItems, currentMenu, comboCompany, comboPoslGod, comboKar, translator, comboLanguage.SelectedValue)
+				@TopMenu(isLoggedIn, userName, menuItems, currentMenu, translator, comboLanguage.SelectedValue)
 				<div id="info-message" class="hidden bg-green-500 text-white rounded flex h-18 text-xl justify-center items-center text-center"></div>
 			}
 			<!-- Main Content -->

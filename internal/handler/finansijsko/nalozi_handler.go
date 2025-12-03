@@ -15,6 +15,7 @@ import (
 	"helia/global"
 	"helia/internal/common"
 	"helia/internal/domain"
+	"helia/internal/i18n"
 	"helia/internal/middleware"
 	"helia/internal/service"
 	"helia/pkg/utils"
@@ -80,7 +81,7 @@ func (h *FnalHandler) CreateNalog(c *gin.Context) {
 	// mu, _ := headerLocks.LoadOrStore(lastInsertedID, &sync.Mutex{})
 	// mutex := mu.(*sync.Mutex)
 	// mutex.Lock()
-	err := tmpl_fin.NalogKnjizenjeStavke().Render(c.Request.Context(), c.Writer)
+	err := tmpl_fin.NalogKnjizenjeStavke(i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, common.ErrMsgReadData)
 		return
@@ -173,7 +174,7 @@ func (h *FnalHandler) confirmAddHandler(c *gin.Context) {
 		IdDialog:  dialog.Id,
 		BtnClass:  common.ClassOdustaniButton,
 	}
-	tmpl.DialogConfirm(msg, dialog, btnClose, btnSacuvaj, btnCancel).Render(c.Request.Context(), c.Writer)
+	tmpl.DialogConfirm(msg, dialog, btnClose, btnSacuvaj, btnCancel, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 
 	//utils.ConfirmAddHelper(w, r, strings.TrimSuffix(naloziURLPrefix, "/"), h.naloziService.GetNaloziTableFields())
 }
@@ -241,11 +242,11 @@ func (h *FnalHandler) GetNalogMainView(c *gin.Context) {
 			h.btnNoviNalog,
 			viewData.TableData,
 			searchControl,
-			nalogPayload).Render(c.Request.Context(), c.Writer)
+			nalogPayload, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 	} else {
 		// HTMX request, just render the table component
 		c.Header("Content-Type", "text/html; charset=utf-8")
-		err = tmpl.Table(viewData.TableData).Render(c.Request.Context(), c.Writer)
+		err = tmpl.Table(viewData.TableData, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 	}
 
 	if err != nil {
@@ -287,14 +288,14 @@ func (h *FnalHandler) FnalPrepis(c *gin.Context) {
 		Class:        common.ClassSearchInput,
 	}
 	if c.Request.Header["Hx-Trigger"] != nil && c.Request.Header["Hx-Trigger"][0] == "prepis" {
-		err = tmpl_fin.NaloziKopiranje(currentTabData, viewData.TableData, domain.TableData{}, searchControl).Render(c.Request.Context(), c.Writer)
+		err = tmpl_fin.NaloziKopiranje(currentTabData, viewData.TableData, domain.TableData{}, searchControl, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, common.ErrMsgRenderTemplate)
 			return
 		}
 	} else {
 		// If this is an HTMX request, we just render the table component
-		err = tmpl.Table(viewData.TableData).Render(c.Request.Context(), c.Writer)
+		err = tmpl.Table(viewData.TableData, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, common.ErrMsgRenderTemplate)
 			return
@@ -340,7 +341,6 @@ func (h *FnalHandler) FnalPrepisDialog(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusBadRequest, false, []domain.FieldError{}, common.ErrMsgInvalidID)
 		return
 	}
-
 	// Get data for the header table
 	result, err := h.naloziService.GetByID(common.IDfnal, idFnal)
 	if err != nil {
@@ -408,8 +408,8 @@ func (h *FnalHandler) FnalPrepisDialog(c *gin.Context) {
 		IdDialog:  dialog.Id,
 		BtnClass:  common.ClassDialogCloseButton,
 	}
-	content := tmpl_fin.NaloziKopiranjeDialog(modelView, btnSave)
-	err = tmpl.Dialog(dialog.Id, content, dialog, btnSave, btnCancel, btnClose).Render(c.Request.Context(), c.Writer)
+	content := tmpl_fin.NaloziKopiranjeDialog(modelView, btnSave, i18n.GetInstance())
+	err = tmpl.Dialog(dialog.Id, content, dialog, btnSave, btnCancel, btnClose, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, common.ErrMsgRenderTemplate)
 		return
@@ -449,19 +449,47 @@ func (h *FnalHandler) FnalStorniranje(c *gin.Context) {
 	}
 
 	if c.Request.Header["Hx-Trigger"] != nil && c.Request.Header["Hx-Trigger"][0] == "storniranje" {
-		err = tmpl_fin.NaloziStorniranje(currentTabData, viewData.TableData, domain.TableData{}, searchControl).Render(c.Request.Context(), c.Writer)
+		err = tmpl_fin.NaloziStorniranje(currentTabData, viewData.TableData, domain.TableData{}, searchControl, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, common.ErrMsgRenderTemplate)
 			return
 		}
 	} else {
 		// If this is an HTMX request, we just render the table component
-		err = tmpl.Table(viewData.TableData).Render(c.Request.Context(), c.Writer)
+		err = tmpl.Table(viewData.TableData, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, common.ErrMsgRenderTemplate)
 			return
 		}
 	}
+}
+
+// ValidacijaNalogStorniranje validates the nalozi copy form data and returns an array of errors
+func (h *FnalHandler) ValidacijaNalogStorniranje(danalStr, datobStr string, brNaloga int) []domain.FieldError {
+	var errors []domain.FieldError
+
+	// Parse and validate datal (naloga date)
+	dPomDate, err := time.Parse("02.01.2006", danalStr)
+	if err != nil {
+		errors = append(errors, domain.FieldError{Field: "danal", ErrorMessage: "morate uneti korektan datum naloga"})
+	} else if dPomDate.Year() != global.GetGnGod() {
+		errors = append(errors, domain.FieldError{Field: "danal", ErrorMessage: fmt.Sprintf("nekorektan datum naloga, godina mora biti jednaka poslovnoj %d", global.GetGnGod())})
+	}
+
+	// Parse and validate datob (obrade date)
+	dPomDate, err = time.Parse("02.01.2006", datobStr)
+	if err != nil {
+		errors = append(errors, domain.FieldError{Field: "datob", ErrorMessage: "morate uneti korektan datum obrade naloga"})
+	} else if dPomDate.Year() != global.GetGnGod() {
+		errors = append(errors, domain.FieldError{Field: "datob", ErrorMessage: fmt.Sprintf("nekorektan datum obrade, godina mora biti jednaka poslovnoj %d", global.GetGnGod())})
+	}
+
+	// Validate broj naloga (voucher number)
+	if brNaloga == 0 {
+		errors = append(errors, domain.FieldError{Field: "brNaloga", ErrorMessage: "morate uneti broj naloga"})
+	}
+
+	return errors
 }
 
 func (h *FnalHandler) FnalPrikaz(c *gin.Context) {
@@ -478,7 +506,7 @@ func (h *FnalHandler) FnalPrikaz(c *gin.Context) {
 		Autocomplete: "off",
 		Class:        common.ClassSearchInput,
 	}
-	err := tmpl_fin.NaloziContent(h.tabData, nil, domain.UkupnaObrada{}, h.btnSave, h.btnNoviNalog, domain.TableData{}, searchControl, domain.FnalPayload{}).Render(c.Request.Context(), c.Writer)
+	err := tmpl_fin.NaloziContent(h.tabData, nil, domain.UkupnaObrada{}, h.btnSave, h.btnNoviNalog, domain.TableData{}, searchControl, domain.FnalPayload{}, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, common.ErrMsgRenderTemplate)
 		return

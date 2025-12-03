@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"helia/internal/common"
 	"helia/internal/domain"
+	"helia/internal/i18n"
 )
 
-templ TablePagination(tbl domain.TableData) {
+templ TablePagination(tbl domain.TableData, translator *i18n.Service) {
 	<nav class="flex justify-between items-center w-full">
 		<div class="flex items-center space-x-3">
-			<label for="pageSize" class="text-sm text-gray-700">Prikaz po stranici:</label>
+			<label for="pageSize" class="text-sm text-gray-700">{ translator.Label("Prikaz po stranici") }</label>
 			<select
 				id="pageSize"
 				class="block w-auto px-1 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring focus:border-blue-300"
@@ -35,11 +36,11 @@ templ TablePagination(tbl domain.TableData) {
 					>{ fmt.Sprintf("%d",pSize) }</option>
 				}
 			</select>
-			<span class="text-sm text-gray-700">Prikazano { fmt.Sprintf("%d", tbl.Pagination.StartRecord) }-{ fmt.Sprintf("%d", tbl.Pagination.EndRecord) } od { fmt.Sprintf("%d", tbl.Pagination.TotalRecords) } slogova</span>
+			<span class="text-sm text-gray-700">{ translator.Label("Prikazano") } { fmt.Sprintf("%d", tbl.Pagination.StartRecord) }-{ fmt.Sprintf("%d", tbl.Pagination.EndRecord) } { translator.Label("od") } { fmt.Sprintf("%d", tbl.Pagination.TotalRecords) } { translator.Label("slogova") }</span>
 		</div>
 		<ul class="inline-flex items-center -space-x-px h-8 text-sm">
 			if tbl.Pagination.CurrentPage > 1 {
-				@PagerElement(tbl, "Prethodna", tbl.Pagination.CurrentPage-1, common.ClassTablePageButton)
+				@PagerElement(tbl, translator.Label("Prethodna"), tbl.Pagination.CurrentPage-1, common.ClassTablePageButton)
 			}
 			if tbl.Pagination.CurrentPage > 3 {
 				@PagerElement(tbl, "1", 1, common.ClassTablePageButton)
@@ -83,7 +84,7 @@ templ TablePagination(tbl domain.TableData) {
 				@PagerElement(tbl, fmt.Sprintf("%d", tbl.Pagination.TotalPages), tbl.Pagination.TotalPages, common.ClassTablePageButton)
 			}
 			if tbl.Pagination.CurrentPage < tbl.Pagination.TotalPages {
-				@PagerElement(tbl, "Sledeća", tbl.Pagination.CurrentPage+1, common.ClassTablePageButton)
+				@PagerElement(tbl, translator.Label("Sledeća"), tbl.Pagination.CurrentPage+1, common.ClassTablePageButton)
 			}
 		</ul>
 	</nav>

@@ -8,7 +8,6 @@ import (
 	"helia/internal/i18n"
 	"os"
 	"reflect"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -17,8 +16,6 @@ import (
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
 )
-
-var reg = regexp.MustCompile(`_+`)
 
 // GetPaginationData calculates pagination details (totalPages, etc.).
 // This function can be used by both handler (initial page load) and service (query construction).
@@ -81,8 +78,9 @@ func SetTableBasicData(title, tableID string, headers []domain.Fields, urlPrefix
 	if pageSize == 0 {
 		pageSize = global.GetConfig().PageSize
 	}
+	translator := i18n.GetInstance()
 	table := domain.TableData{
-		ContentTitle: title,
+		ContentTitle: translator.Title(title),
 		TableID:      tableID,
 		Headers:      headers,
 		URLPrefix:    urlPrefix,
@@ -97,10 +95,10 @@ func SetTableBasicData(title, tableID string, headers []domain.Fields, urlPrefix
 			EndRecord:    currentPage * pageSize,
 		},
 		ShowActions: true,                                                                                                         // Default, can be overridden
-		BtnAdd:      domain.Button{LabelText: "Dodaj", BtnClass: ClassAddButton, IsVisible: true},                                 // Default, can be overridden
+		BtnAdd:      domain.Button{LabelText: translator.Button("Dodaj"), BtnClass: ClassAddButton, IsVisible: true},              // Default, can be overridden
 		BtnUpdate:   domain.Button{LabelText: "Izmeni", BtnClass: ClassConfirmButton, IdDialog: "dialog-update", IsVisible: true}, // Default, can be overridden
 		BtnDelete:   domain.Button{LabelText: "Obriši", BtnClass: ClassDeleteButton, IdDialog: "dialog-delete", IsVisible: true},  // Default, can be overridden
-		BtnPrint:    domain.Button{LabelText: "Stampaj", BtnClass: ClassPrintButton, IsVisible: true},                             // Default, can be overridden
+		BtnPrint:    domain.Button{LabelText: translator.Button("Stampaj"), BtnClass: ClassPrintButton, IsVisible: true},          // Default, can be overridden
 	}
 	table.ShowPagination = totalRecords > 0 // Show pagination only if there are records
 	for _, opt := range opts {
@@ -314,7 +312,7 @@ func translateSubMenus(subMenus []domain.SubMenuItem, menuName, lang string) []d
 	translated := make([]domain.SubMenuItem, len(subMenus))
 	for i, subMenu := range subMenus {
 		translated[i] = domain.SubMenuItem{
-			Name: i18n.GetInstance().T(lang, getSubmenuKey(menuName, subMenu.Name, lang)),
+			Name: getSubmenuKey(menuName, subMenu.Name),
 			URL:  subMenu.URL,
 			Icon: subMenu.Icon,
 		}
@@ -323,41 +321,11 @@ func translateSubMenus(subMenus []domain.SubMenuItem, menuName, lang string) []d
 }
 
 // getSubmenuKey generates the translation key for a submenu item
-func getSubmenuKey(menuName, submenuName, lang string) string {
+func getSubmenuKey(menuName, submenuName string) string {
 	// Convert submenu name to key format (same as in JSON files)
-	key := "menu." + menuName + ".submenu." + toSnakeCase(submenuName)
-	itemName := i18n.T(key, lang)
+	key := "menu." + menuName + ".submenu." + submenuName
+	itemName := i18n.GetInstance().T(key)
 	return itemName
-}
-
-// ToSnakeCase safely converts text to snake_case for translation keys
-func toSnakeCase(s string) string {
-	// Convert to lowercase
-	result := strings.ToLower(s)
-
-	// Replace common special characters
-	result = strings.ReplaceAll(result, "/", "_")
-	result = strings.ReplaceAll(result, " ", "_")
-	result = strings.ReplaceAll(result, "-", "_")
-	result = strings.ReplaceAll(result, " - ", "_")
-	result = strings.ReplaceAll(result, ",", "")
-	result = strings.ReplaceAll(result, "(", "")
-	result = strings.ReplaceAll(result, ")", "")
-	result = strings.ReplaceAll(result, " i ", "_")
-	result = strings.ReplaceAll(result, "č", "c")
-	result = strings.ReplaceAll(result, "ž", "z")
-	result = strings.ReplaceAll(result, "š", "s")
-	result = strings.ReplaceAll(result, "đ", "d")
-	result = strings.ReplaceAll(result, "ć", "c")
-
-	// Remove multiple underscores
-
-	result = reg.ReplaceAllString(result, "_")
-
-	// Trim underscores from start and end
-	result = strings.Trim(result, "_")
-
-	return result
 }
 
 // **********************************************

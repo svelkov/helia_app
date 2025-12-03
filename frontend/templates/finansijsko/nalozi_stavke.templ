@@ -4,29 +4,30 @@ import (
 	tmpl "helia/frontend/templates"
 	"helia/internal/common"
 	"helia/internal/domain"
+	"helia/internal/i18n"
 )
 
-templ NalogKnjizenjeStavke() {
+templ NalogKnjizenjeStavke(translator *i18n.Service) {
 	<div id="large-dialog" class="fixed inset-0 flex items-center justify-center p-4 bg-black bg-opacity-50 z-50">
 		<div class="bg-white rounded-lg shadow-xl max-w-fit w-full max-h-[90vh] overflow-y-auto">
 			<div class="m-0 p-0 bg-gray-200 font-sans">
 				<div class="bg-gradient-to-r from-blue-300 to-blue-800 text-white px-4 py-2 font-bold text-sm relative">
-					Knjiženje naloga
+					{ translator.Title("Knjiženje naloga") }
 					<button
 						class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 border border-white border-opacity-30 text-white px-2 py-1 text-xs cursor-pointer hover:bg-opacity-30"
 						hx-get="api/nalozi/all/tipdok"
 						hx-target="#content"
 					>
-						Nazad
+						{ translator.Label("nazad") }
 					</button>
 				</div>
 				<div class="grid grid-cols-3 gap-1 px-1 pt-1 mb-1">
 					<div class="bg-blue-200 border border-blue-400 col-span-2 pt-1 min-h-20">
-						<div class="text-blue-800 font-bold text-xs mb-3 px-2">Podaci o nalogu u obradi</div>
+						<div class="text-blue-800 font-bold text-xs mb-3 px-2">{ translator.Label("text.podaci_o_nalogu_u_obradi") }</div>
 						<div class="flex flex-col gap-1 py-2 px-2">
 							<div class="flex gap-4">
 								<div class="flex items-center gap-4 flex-1">
-									<span class="block text-xs font-sm text-blue-700 w-20 flex-shrink-0">Nalog:</span>
+										<span class="block text-xs font-sm text-blue-700 w-20 flex-shrink-0">{ translator.Label("text.nalog") }:</span>
 									<input
 										id="nalog"
 										class="block px-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 min-w-0 h-6 w-24"
@@ -34,7 +35,7 @@ templ NalogKnjizenjeStavke() {
 									/>
 								</div>
 								<div class="flex items-center gap-4 flex-1">
-									<span class="block text-xs font-sm text-blue-700 w-20 flex-shrink-0">Opis:</span>
+										<span class="block text-xs font-sm text-blue-700 w-20 flex-shrink-0">{ translator.Label("text.opis") }:</span>
 									<input
 										id="opisknjizenjastavke"
 										class="block px-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 flex-1 min-w-0 h-6"
@@ -44,7 +45,7 @@ templ NalogKnjizenjeStavke() {
 							</div>
 							<div class="flex gap-4">
 								<div class="flex items-center gap-4 flex-1">
-									<span class="text-xs text-blue-700 w-20 flex-shrink-0">Datum obrade:</span>
+										<span class="text-xs text-blue-700 w-20 flex-shrink-0">{ translator.Label("label.datum_obrade") }:</span>
 									<input
 										id="datumobrade"
 										type="date"
@@ -53,7 +54,7 @@ templ NalogKnjizenjeStavke() {
 									/>
 								</div>
 								<div class="flex items-center gap-4 flex-1">
-									<span class="text-xs text-blue-700 w-20 flex-shrink-0">Datum naloga:</span>
+										<span class="text-xs text-blue-700 w-20 flex-shrink-0">{ translator.Label("label.datum_naloga") }:</span>
 									<input
 										type="date"
 										class="block px-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 min-w-0 h-6 w-32 disabled:bg-gray-200"
@@ -65,18 +66,18 @@ templ NalogKnjizenjeStavke() {
 						</div>
 					</div>
 					<div class="bg-blue-200 border border-blue-400 col-span-1 p-2">
-						<div class="text-blue-800 font-bold text-xs mb-3">Stanje naloga</div>
+									<div class="text-blue-800 font-bold text-xs mb-3">{ translator.Label("text.stanje_naloga") }</div>
 						<div class="flex flex-col gap-1">
 							<div class="flex items-center text-xs gap-1">
-								<span class="block text-xs font-sm text-blue-700 w-20 flex-shrink-0">Duguje:</span>
+										<span class="block text-xs font-sm text-blue-700 w-20 flex-shrink-0">{ translator.Label("text.duguje") }:</span>
 								@tmpl.NumericInputField("duguje", 0, 2, true, common.ClassInputNumericDisabled)
 							</div>
 							<div class="flex items-center text-xs gap-1">
-								<span class="block text-xs font-sm text-blue-700 w-20 flex-shrink-0">Potražuje:</span>
+										<span class="block text-xs font-sm text-blue-700 w-20 flex-shrink-0">{ translator.Label("text.potrazuje") }:</span>
 								@tmpl.NumericInputField("potrazuje", 0, 2, true, common.ClassInputNumericDisabled)
 							</div>
 							<div class="flex items-center text-xs gap-1">
-								<span class="text-blue-700 w-20 flex-shrink-0">Saldo:</span>
+										<span class="text-blue-700 w-20 flex-shrink-0">{ translator.Label("text.saldo") }:</span>
 								@tmpl.NumericInputField("saldo", 0, 2, true, common.ClassInputNumericDisabled)
 							</div>
 						</div>
@@ -86,14 +87,14 @@ templ NalogKnjizenjeStavke() {
 					<!-- Top Section -->
 					<div class="bg-blue-50 border border-blue-400 flex-1 pl-1 min-h-20">
 						<div class="text-blue-800 font-bold text-xs mb-1 border-b border-gray-400 pb-1">
-							Osnovni podaci o stavci naloga
+							{ translator.Label("text.osnovni_podaci_o_stavci_naloga") }
 						</div>
 						<!-- Form Fields -->
 						<div class="grid grid-cols-2 mb-1">
 							<!-- Left Column -->
 							<div class="border border-blue-400 space-y-1 pt-1 px-1">
 								<div class="flex items-center gap-1 mb-1">
-									@KontoField()
+									@KontoField(translator)
 									@tmpl.SearchButton(domain.SearchButtonConfig{
 										ID:          "konto",
 										Name:        "search-konto",
@@ -106,7 +107,7 @@ templ NalogKnjizenjeStavke() {
 									@NazivField("kontonaziv")
 								</div>
 								<div class="flex items-center gap-1 mb-1">
-									@SifraField()
+									@SifraField(translator)
 									@tmpl.SearchButton(domain.SearchButtonConfig{
 										ID:          "sifra",
 										Name:        "search-sifra",
@@ -138,12 +139,12 @@ templ NalogKnjizenjeStavke() {
 											{Key: "40", Value: "40-PRIMLJENA UPLATA"},
 											{Key: "90", Value: "90-OPSTO KNJIZENJE"},
 										},
-									})
+									}, translator)
 								</div>
 								<div class="flex items-center gap-1 mb-1">
 									@tmpl.LabelField(domain.LabelFieldConfig{
-										ID:         "opisknjizenja",
-										LabelText:  "Opis knjizenja",
+										ID:         "lblopisknjizenja",
+										LabelText:  translator.Label("Opis knjizenja"),
 										ClassLabel: common.ClassLabel + " w-24",
 									})
 									@tmpl.TextInputField(domain.InputFieldConfig{
@@ -281,7 +282,7 @@ templ NalogKnjizenjeStavke() {
 											ClassSelect:  common.ClassInputTextEnabled + " min-w-[80px] w-full",
 											TabIndex:     "5",
 											OptionValues: []domain.ComboItem{},
-										})
+										}, translator)
 									</div>
 									<div class="flex items-center gap-1">
 										@tmpl.LabelField(domain.LabelFieldConfig{
@@ -297,7 +298,7 @@ templ NalogKnjizenjeStavke() {
 											ClassSelect:  common.ClassInputTextEnabled + " min-w-[80px] w-full",
 											TabIndex:     "5",
 											OptionValues: []domain.ComboItem{},
-										})
+										}, translator)
 									</div>
 								</div>
 								<!-- Document Section -->

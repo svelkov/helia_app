@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"helia/global"
 	"helia/internal/common"
 	"helia/internal/domain"
 	"helia/internal/repository"
@@ -9,6 +10,7 @@ import (
 
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -523,6 +525,68 @@ func (s *NalogResource) GetNaloziTableFields() []domain.Fields {
 		s.setServiceFieldValues()
 	}
 	return s.naloziTableFields
+}
+
+// ValidateCopyNalog validates the data for copying a nalog (voucher)
+func (s *NalogResource) ValidateCopyNalog(danalStr, datobStr string, brNaloga int64) []domain.FieldError {
+	var fieldErrors []domain.FieldError
+
+	// Parse and validate danal (naloga date)
+	var dPomDate time.Time
+	var err error
+	
+	if strings.Contains(danalStr, ".") {
+		dPomDate, err = time.Parse("02.01.2006", danalStr)
+	} else {
+		dPomDate, err = time.Parse("2006-01-02", danalStr)
+	}
+	
+	if err != nil {
+		fieldErrors = append(fieldErrors, domain.FieldError{
+			Field:        "danal",
+			ErrorMessage: "morate uneti korektan datum naloga",
+		})
+	} else {
+		// Check if year matches current business year
+		if dPomDate.Year() != global.GetGnGod() {
+			fieldErrors = append(fieldErrors, domain.FieldError{
+				Field:        "danal",
+				ErrorMessage: fmt.Sprintf("nekorektan datum naloga, godina mora biti jednaka poslovnoj %d", global.GetGnGod()),
+			})
+		}
+	}
+
+	// Parse and validate datob (obrade date)
+	if strings.Contains(datobStr, ".") {
+		dPomDate, err = time.Parse("02.01.2006", datobStr)
+	} else {
+		dPomDate, err = time.Parse("2006-01-02", datobStr)
+	}
+	
+	if err != nil {
+		fieldErrors = append(fieldErrors, domain.FieldError{
+			Field:        "datob",
+			ErrorMessage: "morate uneti korektan datum obrade naloga",
+		})
+	} else {
+		// Check if year matches current business year
+		if dPomDate.Year() != global.GetGnGod() {
+			fieldErrors = append(fieldErrors, domain.FieldError{
+				Field:        "datob",
+				ErrorMessage: fmt.Sprintf("nekorektan datum obrade, godina mora biti jednaka poslovnoj %d", global.GetGnGod()),
+			})
+		}
+	}
+
+	// Validate broj naloga (voucher number)
+	if brNaloga == 0 {
+		fieldErrors = append(fieldErrors, domain.FieldError{
+			Field:        "nalog",
+			ErrorMessage: "morate uneti broj naloga",
+		})
+	}
+
+	return fieldErrors
 }
 
 func (s *NalogResource) setServiceFieldValues() {

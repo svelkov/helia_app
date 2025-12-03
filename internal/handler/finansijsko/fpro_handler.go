@@ -11,6 +11,7 @@ import (
 	tmpl "helia/frontend/templates/finansijsko"
 	"helia/internal/common"
 	"helia/internal/domain"
+	"helia/internal/i18n"
 	"helia/internal/middleware"
 	"helia/internal/service"
 	"helia/pkg/utils"
@@ -99,7 +100,7 @@ func (h *FproHandler) GetNalogStavke(c *gin.Context) {
 		Autocomplete: "off",
 	}
 	if idFnalParam == "" && searchQuery == "" {
-		err := tmpl.NaloziDetail(domain.TableData{}, searchControl).Render(c.Request.Context(), c.Writer)
+		err := tmpl.NaloziDetail(domain.TableData{}, searchControl, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -122,7 +123,7 @@ func (h *FproHandler) GetNalogStavke(c *gin.Context) {
 	tbl.TableID = "nalozi_kopiranje_stavke"
 	tbl.URLGetAll = "/api/fpro/nalog/" + idFnalParam
 
-	err = tmpl.NaloziDetail(tbl, searchControl).Render(c.Request.Context(), c.Writer)
+	err = tmpl.NaloziDetail(tbl, searchControl, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData)
 		return

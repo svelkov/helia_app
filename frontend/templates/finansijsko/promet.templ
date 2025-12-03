@@ -5,12 +5,13 @@ import (
 	tmpl "helia/frontend/templates"
 	"helia/internal/common"
 	"helia/internal/domain"
+	"helia/internal/i18n"
 )
 
-templ PrometMain(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.PrometTotalValues) {
+templ PrometMain(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.PrometTotalValues, translator *i18n.Service) {
 	<!-- Tab Content -->
 	<div id="tab-content" class="flex flex-col h-full">
-		@PrometAnalitickihKonta(tabs, tbl, btnPrint, btnObrada, total)
+		@PrometAnalitickihKonta(tabs, tbl, btnPrint, btnObrada, total, translator)
 	</div>
 	<script>
         // Tab switching functionality
@@ -35,8 +36,8 @@ templ PrometMain(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada 
     </script>
 }
 
-templ PrometNav(tabs domain.TabData) {
-	<h2 class="text-xl font-semibold">PROMET</h2>
+templ PrometNav(tabs domain.TabData, translator *i18n.Service) {
+	<h2 class="text-xl font-semibold">{ translator.Label("label.promet") }</h2>
 	<nav class="py-1 h-8 text-sm font-medium text-gray-700 flex items-center whitespace-nowrap" aria-label="Tabs">
 		for _, item := range tabs.Tabs {
 			<input id={ fmt.Sprintf("tab%s", item.Name) } type="hidden" name="sourceTab" value={ item.Name }/>
@@ -61,9 +62,9 @@ templ PrometNav(tabs domain.TabData) {
 }
 
 // Tab 1 - Promet analitickih konta
-templ PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.PrometTotalValues) {
+templ PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.PrometTotalValues, translator *i18n.Service) {
 	<!-- Tab Navigation -->
-	@PrometNav(tabs)
+	@PrometNav(tabs, translator)
 	<!-- Tab 1 Content -->
 	<div id="tab1">
 		<!-- First Row - Two divs side by side -->
@@ -71,7 +72,7 @@ templ PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 			<!-- Parameters Div - Left Aligned -->
 			<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg">
 				<div class="flex items-center gap-1 mb-1">
-					@KontoField()
+					@KontoField(translator)
 					@tmpl.SearchButton(domain.SearchButtonConfig{
 						ID:          "konto",
 						Name:        "search-konto",
@@ -84,7 +85,7 @@ templ PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 					@NazivField("kontonaziv")
 				</div>
 				<div class="flex items-center gap-1 mb-1">
-					@SifraField()
+					@SifraField(translator)
 					@tmpl.SearchButton(domain.SearchButtonConfig{
 						ID:          "sifra",
 						Name:        "search-sifra",
@@ -100,7 +101,7 @@ templ PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 					@tmpl.LabelField(domain.LabelFieldConfig{
 						ID:         "oddatuma",
 						ClassLabel: common.ClassLabel + " w-24",
-						LabelText:  "Od datuma",
+						LabelText:  translator.Label("Od datuma"),
 					})
 					@tmpl.TextInputField(domain.InputFieldConfig{
 						ID:         "oddatuma",
@@ -115,7 +116,7 @@ templ PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 				<div class="flex items-center gap-1 mb-1">
 					@tmpl.LabelField(domain.LabelFieldConfig{
 						ID:         "dodatuma",
-						LabelText:  "Do datuma",
+						LabelText:  translator.Label("Do datuma"),
 						ClassLabel: common.ClassLabel + " w-24 ",
 					})
 					@tmpl.TextInputField(domain.InputFieldConfig{
@@ -136,31 +137,31 @@ templ PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 					</div>
 					<!-- Buttons on the right -->
 					<div class="flex items-center space-x-1">
-						@tmpl.FormObradaButton(btnObrada)
-						@tmpl.FormPrintButton(btnPrint)
+						@tmpl.FormObradaButton(btnObrada, translator)
+						@tmpl.FormPrintButton(btnPrint, translator)
 					</div>
 				</div>
 			</div>
 			<!-- Values Div - Numeric Right Aligned -->
 			<div class="border mt-1 mb-1 bg-blue-100 border border-blue-400 p-1 rounded-lg">
-				@TotalValues(total)
+				@TotalValues(total, translator)
 			</div>
 		</div>
 		<div class="flex flex-col">
 			<!-- Parent should have: class="flex flex-col" -->
 			<!-- Table Section -->
 			<div id="promettable" class="flex-1 rounded-t-lg overflow-x-auto overflow-y-auto border border-gray-200 rounded-lg">
-				@tmpl.Table(tbl)
+				@tmpl.Table(tbl, translator)
 			</div>
 		</div>
 	</div>
 	@tmpl.ShowMessage()
 }
 
-// Tab 2 - Analiticka kartica po mestama isporuke
-templ AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.PrometTotalValues) {
+// Tab 2 - Analiticka kartica po mestima isporuke
+templ AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.PrometTotalValues, translator *i18n.Service) {
 	<!-- Tab Navigation -->
-	@PrometNav(tabs)
+	@PrometNav(tabs, translator)
 	<div id="tab2">
 		<!-- Two divs side by side -->
 		<!-- First Row - Two divs side by side -->
@@ -168,7 +169,7 @@ templ AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint,
 			<!-- Parameters Div - Left Aligned -->
 			<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg">
 				<div class="flex items-center gap-1 mb-1">
-					@KontoField()
+					@KontoField(translator)
 					@tmpl.SearchButton(domain.SearchButtonConfig{
 						ID:          "konto",
 						Name:        "search-konto",
@@ -181,7 +182,7 @@ templ AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint,
 					@NazivField("kontonaziv")
 				</div>
 				<div class="flex items-center gap-1 mb-1">
-					@SifraField()
+					@SifraField(translator)
 					@tmpl.SearchButton(domain.SearchButtonConfig{
 						ID:          "sifra",
 						Name:        "search-sifra",
@@ -292,37 +293,37 @@ templ AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint,
 					</div>
 					<!-- Buttons on the right -->
 					<div class="flex items-center space-x-1">
-						@tmpl.FormObradaButton(btnObrada)
-						@tmpl.FormPrintButton(btnPrint)
+						@tmpl.FormObradaButton(btnObrada, translator)
+						@tmpl.FormPrintButton(btnPrint, translator)
 					</div>
 				</div>
 			</div>
 			<!-- Values Div - Numeric Right Aligned -->
 			<div class="border mt-1 mb-1 bg-blue-100 border border-blue-400 p-1 rounded-lg">
-				@TotalValues(total)
+				@TotalValues(total, translator)
 			</div>
 		</div>
 		<div class="flex flex-col h-full">
 			<!-- Parent should have: class="flex flex-col" -->
 			<!-- Table Section -->
 			<div id="promettable" class="flex-1 overflow-x-auto overflow-y-auto border border-gray-200 rounded-lg">
-				@tmpl.Table(tbl)
+				@tmpl.Table(tbl, translator)
 			</div>
 		</div>
 	</div>
 }
 
 // Tab 3 - Promet deviznih analitickih konta
-templ PrometDeviznihAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, tblDevizni domain.TableData, btnPrint, btnObrada domain.Button, total domain.PrometTotalValues) {
+templ PrometDeviznihAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, tblDevizni domain.TableData, btnPrint, btnObrada domain.Button, total domain.PrometTotalValues, translator *i18n.Service) {
 	<!-- Tab Navigation -->
-	@PrometNav(tabs)
+	@PrometNav(tabs, translator)
 	<div id="tab3">
 		<!-- First Row - Two divs side by side -->
 		<div class="grid grid-cols-2 gap-1">
 			<!-- Parameters Div - Left Aligned -->
 			<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg">
 				<div class="flex items-center gap-1 mb-1">
-					@KontoField()
+					@KontoField(translator)
 					@tmpl.SearchButton(domain.SearchButtonConfig{
 						ID:          "konto",
 						Name:        "search-konto",
@@ -335,7 +336,7 @@ templ PrometDeviznihAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, 
 					@NazivField("kontonaziv")
 				</div>
 				<div class="flex items-center gap-1 mb-1">
-					@SifraField()
+					@SifraField(translator)
 					@tmpl.SearchButton(domain.SearchButtonConfig{
 						ID:          "sifra",
 						Name:        "search-sifra",
@@ -387,43 +388,43 @@ templ PrometDeviznihAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, 
 					</div>
 					<!-- Buttons on the right -->
 					<div class="flex items-center space-x-1">
-						@tmpl.FormObradaButton(btnObrada)
-						@tmpl.FormPrintButton(btnPrint)
+						@tmpl.FormObradaButton(btnObrada, translator)
+						@tmpl.FormPrintButton(btnPrint, translator)
 					</div>
 				</div>
 			</div>
 			<!-- Values Div - Numeric Right Aligned -->
 			<div class="border mt-1 mb-1 bg-blue-100 border border-blue-400 p-1 rounded-lg">
-				@TotalValues(total)
+				@TotalValues(total, translator)
 			</div>
 		</div>
 		<div class="flex flex-col h-full">
 			<!-- Parent should have: class="flex flex-col" -->
 			<!-- Table Section -->
 			<div id="promettable" class="flex-1 overflow-x-auto overflow-y-auto border border-gray-200 rounded-lg">
-				@tmpl.Table(tbl)
+				@tmpl.Table(tbl, translator)
 			</div>
 		</div>
 		<div class="flex flex-col h-full">
 			<!-- Parent should have: class="flex flex-col" -->
 			<!-- Table Section -->
 			<div id="promettable-dev" class="flex-1 overflow-x-auto overflow-y-auto border border-gray-200 rounded-lg">
-				@tmpl.Table(tbl)
+				@tmpl.Table(tbl, translator)
 			</div>
 		</div>
 	</div>
 }
 
-templ PrometSubsintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.PrometTotalValues) {
+templ PrometSubsintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.PrometTotalValues, translator *i18n.Service) {
 	<!-- Tab Navigation -->
-	@PrometNav(tabs)
+	@PrometNav(tabs, translator)
 	<div id="tab4">
 		<!-- First Row - Two divs side by side -->
 		<div class="grid grid-cols-2 gap-1">
 			<!-- Parameters Div - Left Aligned -->
 			<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg">
 				<div class="flex items-center gap-1 mb-1">
-					@KontoField()
+					@KontoField(translator)
 					@tmpl.SearchButton(domain.SearchButtonConfig{
 						ID:          "konto",
 						Name:        "search-konto",
@@ -473,36 +474,36 @@ templ PrometSubsintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPr
 					</div>
 					<!-- Buttons on the right -->
 					<div class="flex items-center space-x-1">
-						@tmpl.FormObradaButton(btnObrada)
-						@tmpl.FormPrintButton(btnPrint)
+						@tmpl.FormObradaButton(btnObrada, translator)
+						@tmpl.FormPrintButton(btnPrint, translator)
 					</div>
 				</div>
 			</div>
 			<!-- Values Div - Numeric Right Aligned -->
 			<div class="border mt-1 mb-1 bg-blue-100 border border-blue-400 p-1 rounded-lg">
-				@TotalValues(total)
+				@TotalValues(total, translator)
 			</div>
 		</div>
 		<div class="flex flex-col h-full">
 			<!-- Parent should have: class="flex flex-col" -->
 			<!-- Table Section -->
 			<div id="promettable" class="flex-1 overflow-x-auto overflow-y-auto border border-gray-200 rounded-lg">
-				@tmpl.Table(tbl)
+				@tmpl.Table(tbl, translator)
 			</div>
 		</div>
 	</div>
 }
 
-templ PrometSintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.PrometTotalValues) {
+templ PrometSintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.PrometTotalValues, translator *i18n.Service) {
 	<!-- Tab Navigation -->
-	@PrometNav(tabs)
+	@PrometNav(tabs, translator)
 	<div id="tab5">
 		<!-- First Row - Two divs side by side -->
 		<div class="grid grid-cols-2 gap-1">
 			<!-- Parameters Div - Left Aligned -->
 			<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg">
 				<div class="flex items-center gap-1 mb-1">
-					@KontoField()
+					@KontoField(translator)
 					@tmpl.SearchButton(domain.SearchButtonConfig{
 						ID:          "konto",
 						Name:        "search-konto",
@@ -552,36 +553,36 @@ templ PrometSintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 					</div>
 					<!-- Buttons on the right -->
 					<div class="flex items-center space-x-1">
-						@tmpl.FormObradaButton(btnObrada)
-						@tmpl.FormPrintButton(btnPrint)
+						@tmpl.FormObradaButton(btnObrada, translator)
+						@tmpl.FormPrintButton(btnPrint, translator)
 					</div>
 				</div>
 			</div>
 			<!-- Values Div - Numeric Right Aligned -->
 			<div class="border mt-1 mb-1 bg-blue-100 border border-blue-400 p-1 rounded-lg">
-				@TotalValues(total)
+				@TotalValues(total, translator)
 			</div>
 		</div>
 		<div class="flex flex-col h-full">
 			<!-- Parent should have: class="flex flex-col" -->
 			<!-- Table Section -->
 			<div id="promettable" class="flex-1 overflow-x-auto overflow-y-auto border border-gray-200 rounded-lg">
-				@tmpl.Table(tbl)
+				@tmpl.Table(tbl, translator)
 			</div>
 		</div>
 	</div>
 }
 
-templ KarticaSintetickiKonta(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.PrometTotalValues) {
+templ KarticaSintetickiKonta(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.PrometTotalValues, translator *i18n.Service) {
 	<!-- Tab Navigation -->
-	@PrometNav(tabs)
+	@PrometNav(tabs, translator)
 	<div id="tab6">
 		<!-- First Row - Two divs side by side -->
 		<div class="grid grid-cols-2 gap-1">
 			<!-- Parameters Div - Left Aligned -->
 			<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg">
 				<div class="flex items-center gap-1 mb-1">
-					@KontoField()
+					@KontoField(translator)
 					@tmpl.SearchButton(domain.SearchButtonConfig{
 						ID:          "konto",
 						Name:        "search-konto",
@@ -631,42 +632,42 @@ templ KarticaSintetickiKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 					</div>
 					<!-- Buttons on the right -->
 					<div class="flex items-center space-x-1">
-						@tmpl.FormObradaButton(btnObrada)
-						@tmpl.FormPrintButton(btnPrint)
+						@tmpl.FormObradaButton(btnObrada, translator)
+						@tmpl.FormPrintButton(btnPrint, translator)
 					</div>
 				</div>
 			</div>
 			<!-- Values Div - Numeric Right Aligned -->
 			<div class="border mt-1 mb-1 bg-blue-100 border border-blue-400 p-1 rounded-lg">
-				@TotalValues(total)
+				@TotalValues(total, translator)
 			</div>
 		</div>
 		<div class="flex flex-col h-full">
 			<!-- Parent should have: class="flex flex-col" -->
 			<!-- Table Section -->
 			<div id="promettable" class="flex-1 overflow-x-auto overflow-y-auto border border-gray-200 rounded-lg">
-				@tmpl.Table(tbl)
+				@tmpl.Table(tbl, translator)
 			</div>
 		</div>
 	</div>
 }
 
-templ PrometKontaPoVRD(tabs domain.TabData, tbl domain.TableData) {
+templ PrometKontaPoVRD(tabs domain.TabData, tbl domain.TableData, translator *i18n.Service) {
 	<!-- Tab Navigation -->
-	@PrometNav(tabs)
+	@PrometNav(tabs, translator)
 	<div id="tab7"></div>
 }
 
-templ PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.PrometTotalValues) {
+templ PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.PrometTotalValues, translator *i18n.Service) {
 	<!-- Tab Navigation -->
-	@PrometNav(tabs)
+	@PrometNav(tabs, translator)
 	<div id="tab8">
 		<!-- First Row - Two divs side by side -->
 		<div class="grid grid-cols-2 gap-1">
 			<!-- Parameters Div - Left Aligned -->
 			<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg">
 				<div class="flex items-center gap-1 mb-1">
-					@KontoField()
+					@KontoField(translator)
 					@tmpl.SearchButton(domain.SearchButtonConfig{
 						ID:          "konto",
 						Name:        "search-konto",
@@ -776,27 +777,27 @@ templ PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint,
 					<div class="flex items-center"></div>
 					<!-- Buttons on the right -->
 					<div class="flex items-center space-x-1">
-						@tmpl.FormObradaButton(btnObrada)
-						@tmpl.FormPrintButton(btnPrint)
+						@tmpl.FormObradaButton(btnObrada, translator)
+						@tmpl.FormPrintButton(btnPrint, translator)
 					</div>
 				</div>
 			</div>
 			<!-- Values Div - Numeric Right Aligned -->
 			<div class="border mt-1 mb-1 bg-blue-100 border border-blue-400 p-1 rounded-lg">
-				@TotalValues(total)
+				@TotalValues(total, translator)
 			</div>
 		</div>
 		<div class="flex flex-col h-full">
 			<!-- Parent should have: class="flex flex-col" -->
 			<!-- Table Section -->
 			<div id="promettable" class="flex-1 overflow-x-auto overflow-y-auto border border-gray-200 rounded-lg">
-				@tmpl.Table(tbl)
+				@tmpl.Table(tbl, translator)
 			</div>
 		</div>
 	</div>
 }
 
-templ TotalValues(total domain.PrometTotalValues) {
+templ TotalValues(total domain.PrometTotalValues, translator *i18n.Service) {
 	<div
 		id="totalvalues"
 		class="border p-1 rounded-lg"
@@ -813,26 +814,26 @@ templ TotalValues(total domain.PrometTotalValues) {
 	>
 		<div class="grid grid-cols-4 gap-1 mb-px text-sm font-medium text-gray-700 h-6 items-center">
 			<div class="text-center"></div>
-			<div class="text-center">Duguje</div>
-			<div class="text-center">Potražuje</div>
-			<div class="text-center">Saldo</div>
+			<div class="text-center">{ translator.Label("Duguje") }</div>
+			<div class="text-center">{ translator.Label("Potražuje") }</div>
+			<div class="text-center">{ translator.Label("Saldo") }</div>
 		</div>
 		<div
 			class="grid grid-cols-4 gap-1 mb-1 h-6 items-center"
 		>
-			<div class="text-sm text-gray-600">Promet do:</div>
+			<div class="text-sm text-gray-600">{ translator.Label("Promet do:") }</div>
 			@tmpl.NumericInputField("dugujedo", total.DugDo, 2, true, common.ClassInputNumericDisabled)
 			@tmpl.NumericInputField("potrazujedo", total.PotDo, 2, true, common.ClassInputNumericDisabled)
 			@tmpl.NumericInputField("saldodo", total.SaldoDo, 2, true, common.ClassInputNumericDisabled)
 		</div>
 		<div class="grid grid-cols-4 gap-1 mb-1 h-6 items-center">
-			<div class="text-sm text-gray-600">Promet za period:</div>
+			<div class="text-sm text-gray-600">{ translator.Label("Promet za period:") }</div>
 			@tmpl.NumericInputField("dugujeperiod", total.DugPer, 2, true, common.ClassInputNumericDisabled)
 			@tmpl.NumericInputField("potrazujeperiod", total.PotPer, 2, true, common.ClassInputNumericDisabled)
 			@tmpl.NumericInputField("saldoperiod", total.SaldoPer, 2, true, common.ClassInputNumericDisabled)
 		</div>
 		<div class="grid grid-cols-4 gap-1 h-6 items-center">
-			<div class="text-sm text-gray-600">Ukupan promet:</div>
+			<div class="text-sm text-gray-600">{ translator.Label("Ukupan promet:") }</div>
 			@tmpl.NumericInputField("dugujeukupno", total.DugTot, 2, true, common.ClassInputNumericDisabled)
 			@tmpl.NumericInputField("potrazujeukupno", total.PotTot, 2, true, common.ClassInputNumericDisabled)
 			@tmpl.NumericInputField("saldoukupno", total.SaldoTot, 2, true, common.ClassInputNumericDisabled)
@@ -840,10 +841,10 @@ templ TotalValues(total domain.PrometTotalValues) {
 	</div>
 }
 
-templ KontoField() {
+templ KontoField(translator *i18n.Service) {
 	@tmpl.LabelField(domain.LabelFieldConfig{
 		ID:         "nalog",
-		LabelText:  "Konto",
+		LabelText:  translator.Label("Konto"),
 		ClassLabel: common.ClassLabel + " w-24",
 	})
 	@tmpl.TextInputField(domain.InputFieldConfig{
@@ -872,10 +873,10 @@ templ NazivField(id string) {
 	})
 }
 
-templ SifraField() {
+templ SifraField(translator *i18n.Service) {
 	@tmpl.LabelField(domain.LabelFieldConfig{
 		ID:         "sifra",
-		LabelText:  "Sifra",
+		LabelText:  translator.Label("Sifra"),
 		ClassLabel: common.ClassLabel + " w-24",
 	})
 	@tmpl.TextInputField(domain.InputFieldConfig{

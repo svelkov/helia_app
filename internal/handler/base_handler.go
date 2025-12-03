@@ -23,6 +23,7 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 )
 
 // Helper struct for default selections
@@ -40,9 +41,10 @@ const (
 	sessionName    = "app-session"
 
 	// Session keys
-	firma = "firma"
-	god   = "god"
-	kar   = "kar"
+	firma        = "firma"
+	god          = "god"
+	kar          = "kar"
+	csrfTokenKey = "csrf_token"
 
 	// Default values
 	defaultMenu = "opsti_podaci"
@@ -127,11 +129,13 @@ func (h *BasicHandler) respondWithError(c *gin.Context, code int, message string
 }
 
 // If you want to use Gin's session middleware instead
-
 func (h *BasicHandler) renderLoginPage(c *gin.Context, fvrData domain.Firma, selections defaultSelections) {
+	// Generate CSRF token
+	csrfToken := h.generateCSRFToken(c)
+
 	c.Header("content-type", "text/html")
 	err := templates.Base(false,
-		templates.Login(),
+		templates.Login(i18n.GetInstance(), csrfToken),
 		h.menuItems,
 		h.subMenuItems,
 		"Helia",
@@ -193,9 +197,7 @@ func (h *BasicHandler) handleLoginPost(c *gin.Context, selections defaultSelecti
 	if err := h.saveSession(c, selections); err != nil {
 		h.respondWithError(c, http.StatusInternalServerError, "Session error")
 		return
-	}
-
-	// Set auth cookie
+	} // Set auth cookie
 	h.setAuthCookie(c, token)
 
 	// Update global settings
@@ -270,6 +272,47 @@ func (h *BasicHandler) generateToken(username string) (string, error) {
 	return token.SignedString(middleware.JwtSecret)
 }
 
+// generateCSRFToken creates a new CSRF token and stores it in session
+func (h *BasicHandler) generateCSRFToken(c *gin.Context) string {
+	csrfToken := uuid.New().String()
+	session := sessions.Default(c)
+	session.Set(csrfTokenKey, csrfToken)
+	if err := session.Save(); err != nil {
+		h.logger.Printf("Failed to save CSRF token to session: %v", err)
+	}
+	return csrfToken
+}
+
+// validateCSRFToken checks if the provided CSRF token is valid
+func (h *BasicHandler) validateCSRFToken(c *gin.Context) bool {
+	// Get CSRF token from form
+	formToken := c.PostForm("_csrf")
+
+	if formToken == "" {
+		return false
+	}
+
+	// Get CSRF token from session
+	session := sessions.Default(c)
+	sessionToken := session.Get(csrfTokenKey)
+
+	if sessionToken == nil {
+		return false
+	}
+
+	// Compare tokens
+	return formToken == sessionToken.(string)
+}
+
+// clearCSRFToken removes the CSRF token from session after use
+func (h *BasicHandler) clearCSRFToken(c *gin.Context) {
+	session := sessions.Default(c)
+	session.Delete(csrfTokenKey)
+	if err := session.Save(); err != nil {
+		h.logger.Printf("Failed to clear CSRF token from session: %v", err)
+	}
+}
+
 // --- Authentication Handlers: Register and Logout ---
 
 // RegisterHandler manages user registration
@@ -281,7 +324,7 @@ func (h *BasicHandler) RegisterHandler(c *gin.Context) {
 	if c.Request.Method == http.MethodGet {
 		err := templates.Base(
 			false,
-			templates.Register(),
+			templates.Register(i18n.GetInstance()),
 			h.menuItems,
 			h.subMenuItems,
 			"Helia - Registration",
@@ -384,7 +427,8 @@ func (h *BasicHandler) indexHandler(c *gin.Context) {
 
 	// Get firma data and selections
 	selections := h.getSessionSelections(session, fvrData)
-
+	//set the selected language
+	i18n.GetInstance().SetLanguage(selections.language)
 	// if !isLoggedIn {
 	// 	h.renderLoginPage(c, fvrData, selections)
 	// 	return
@@ -393,9 +437,8 @@ func (h *BasicHandler) indexHandler(c *gin.Context) {
 	if menuName == "" {
 		menuName = defaultMenu
 	}
-	currentLang := global.GetLanguage()
 	// Get submenu items
-	subMenus := common.GetTranslatedSubMenus(domain.MenuData, menuName, currentLang)
+	subMenus := common.GetTranslatedSubMenus(domain.MenuData, menuName, selections.language)
 	if subMenus == nil {
 		h.logger.Printf("Menu not found: %s", menuName)
 		h.respondWithError(c, http.StatusNotFound, "Menu not found")
@@ -412,7 +455,7 @@ func (h *BasicHandler) indexHandler(c *gin.Context) {
 	// Render the page
 	err := tmpl.Base(
 		isLoggedIn,
-		tmpl.Content(isLoggedIn),
+		tmpl.Content(isLoggedIn, i18n.GetInstance()),
 		h.menuItems,
 		h.subMenuItems,
 		"HELIA",
@@ -615,12 +658,13 @@ func (h *BasicHandler) SelectComboKar(c *gin.Context) {
 	h.renderFullPage(c)
 }
 func (h *BasicHandler) SelectComboLanguage(c *gin.Context) {
+	lang := c.Query("language")
 	session := sessions.Default(c)
-	if langVal, ok := session.Get("language").(string); ok {
-		global.SetGnLanguage(langVal)
-		session.Set("language", langVal)
-		session.Save()
-	}
+
+	global.SetGnLanguage(lang)
+	session.Set("language", lang)
+	session.Save()
+	i18n.GetInstance().SetLanguage(lang)
 
 	h.renderFullPage(c)
 }
@@ -728,7 +772,7 @@ func (h *BasicHandler) renderFullPage(c *gin.Context) {
 		LanguageConf domain.ComboFieldConfig
 	}{
 		IsLoggedIn:   true,
-		Content:      tmpl.Content(true),
+		Content:      tmpl.Content(true, i18n.GetInstance()),
 		MenuItems:    h.menuItems,
 		SubMenus:     h.subMenuItems,
 		Title:        "HELIA",

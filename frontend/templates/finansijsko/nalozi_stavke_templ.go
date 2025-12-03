@@ -12,9 +12,10 @@ import (
 	tmpl "helia/frontend/templates"
 	"helia/internal/common"
 	"helia/internal/domain"
+	"helia/internal/i18n"
 )
 
-func NalogKnjizenjeStavke() templ.Component {
+func NalogKnjizenjeStavke(translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -35,7 +36,124 @@ func NalogKnjizenjeStavke() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div id=\"large-dialog\" class=\"fixed inset-0 flex items-center justify-center p-4 bg-black bg-opacity-50 z-50\"><div class=\"bg-white rounded-lg shadow-xl max-w-fit w-full max-h-[90vh] overflow-y-auto\"><div class=\"m-0 p-0 bg-gray-200 font-sans\"><div class=\"bg-gradient-to-r from-blue-300 to-blue-800 text-white px-4 py-2 font-bold text-sm relative\">Knjiženje naloga <button class=\"absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 border border-white border-opacity-30 text-white px-2 py-1 text-xs cursor-pointer hover:bg-opacity-30\" hx-get=\"api/nalozi/all/tipdok\" hx-target=\"#content\">Nazad</button></div><div class=\"grid grid-cols-3 gap-1 px-1 pt-1 mb-1\"><div class=\"bg-blue-200 border border-blue-400 col-span-2 pt-1 min-h-20\"><div class=\"text-blue-800 font-bold text-xs mb-3 px-2\">Podaci o nalogu u obradi</div><div class=\"flex flex-col gap-1 py-2 px-2\"><div class=\"flex gap-4\"><div class=\"flex items-center gap-4 flex-1\"><span class=\"block text-xs font-sm text-blue-700 w-20 flex-shrink-0\">Nalog:</span> <input id=\"nalog\" class=\"block px-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 min-w-0 h-6 w-24\" disabled></div><div class=\"flex items-center gap-4 flex-1\"><span class=\"block text-xs font-sm text-blue-700 w-20 flex-shrink-0\">Opis:</span> <input id=\"opisknjizenjastavke\" class=\"block px-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 flex-1 min-w-0 h-6\" disabled></div></div><div class=\"flex gap-4\"><div class=\"flex items-center gap-4 flex-1\"><span class=\"text-xs text-blue-700 w-20 flex-shrink-0\">Datum obrade:</span> <input id=\"datumobrade\" type=\"date\" class=\"block px-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 min-w-0 h-6 w-32 disabled:bg-gray-200\" disabled></div><div class=\"flex items-center gap-4 flex-1\"><span class=\"text-xs text-blue-700 w-20 flex-shrink-0\">Datum naloga:</span> <input type=\"date\" class=\"block px-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 min-w-0 h-6 w-32 disabled:bg-gray-200\" id=\"datumnaloga\" disabled></div></div></div></div><div class=\"bg-blue-200 border border-blue-400 col-span-1 p-2\"><div class=\"text-blue-800 font-bold text-xs mb-3\">Stanje naloga</div><div class=\"flex flex-col gap-1\"><div class=\"flex items-center text-xs gap-1\"><span class=\"block text-xs font-sm text-blue-700 w-20 flex-shrink-0\">Duguje:</span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div id=\"large-dialog\" class=\"fixed inset-0 flex items-center justify-center p-4 bg-black bg-opacity-50 z-50\"><div class=\"bg-white rounded-lg shadow-xl max-w-fit w-full max-h-[90vh] overflow-y-auto\"><div class=\"m-0 p-0 bg-gray-200 font-sans\"><div class=\"bg-gradient-to-r from-blue-300 to-blue-800 text-white px-4 py-2 font-bold text-sm relative\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var2 string
+		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Title("Knjiženje naloga"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi_stavke.templ`, Line: 15, Col: 44}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, " <button class=\"absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 border border-white border-opacity-30 text-white px-2 py-1 text-xs cursor-pointer hover:bg-opacity-30\" hx-get=\"api/nalozi/all/tipdok\" hx-target=\"#content\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var3 string
+		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("nazad"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi_stavke.templ`, Line: 21, Col: 33}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</button></div><div class=\"grid grid-cols-3 gap-1 px-1 pt-1 mb-1\"><div class=\"bg-blue-200 border border-blue-400 col-span-2 pt-1 min-h-20\"><div class=\"text-blue-800 font-bold text-xs mb-3 px-2\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var4 string
+		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("text.podaci_o_nalogu_u_obradi"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi_stavke.templ`, Line: 26, Col: 112}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</div><div class=\"flex flex-col gap-1 py-2 px-2\"><div class=\"flex gap-4\"><div class=\"flex items-center gap-4 flex-1\"><span class=\"block text-xs font-sm text-blue-700 w-20 flex-shrink-0\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var5 string
+		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("text.nalog"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi_stavke.templ`, Line: 30, Col: 111}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, ":</span> <input id=\"nalog\" class=\"block px-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 min-w-0 h-6 w-24\" disabled></div><div class=\"flex items-center gap-4 flex-1\"><span class=\"block text-xs font-sm text-blue-700 w-20 flex-shrink-0\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var6 string
+		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("text.opis"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi_stavke.templ`, Line: 38, Col: 110}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, ":</span> <input id=\"opisknjizenjastavke\" class=\"block px-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 flex-1 min-w-0 h-6\" disabled></div></div><div class=\"flex gap-4\"><div class=\"flex items-center gap-4 flex-1\"><span class=\"text-xs text-blue-700 w-20 flex-shrink-0\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var7 string
+		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("label.datum_obrade"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi_stavke.templ`, Line: 48, Col: 105}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, ":</span> <input id=\"datumobrade\" type=\"date\" class=\"block px-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 min-w-0 h-6 w-32 disabled:bg-gray-200\" disabled></div><div class=\"flex items-center gap-4 flex-1\"><span class=\"text-xs text-blue-700 w-20 flex-shrink-0\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var8 string
+		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("label.datum_naloga"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi_stavke.templ`, Line: 57, Col: 105}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, ":</span> <input type=\"date\" class=\"block px-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 min-w-0 h-6 w-32 disabled:bg-gray-200\" id=\"datumnaloga\" disabled></div></div></div></div><div class=\"bg-blue-200 border border-blue-400 col-span-1 p-2\"><div class=\"text-blue-800 font-bold text-xs mb-3\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var9 string
+		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("text.stanje_naloga"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi_stavke.templ`, Line: 69, Col: 99}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</div><div class=\"flex flex-col gap-1\"><div class=\"flex items-center text-xs gap-1\"><span class=\"block text-xs font-sm text-blue-700 w-20 flex-shrink-0\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var10 string
+		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("text.duguje"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi_stavke.templ`, Line: 72, Col: 112}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, ":</span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -43,7 +161,20 @@ func NalogKnjizenjeStavke() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</div><div class=\"flex items-center text-xs gap-1\"><span class=\"block text-xs font-sm text-blue-700 w-20 flex-shrink-0\">Potražuje:</span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</div><div class=\"flex items-center text-xs gap-1\"><span class=\"block text-xs font-sm text-blue-700 w-20 flex-shrink-0\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var11 string
+		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("text.potrazuje"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi_stavke.templ`, Line: 76, Col: 115}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, ":</span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -51,7 +182,20 @@ func NalogKnjizenjeStavke() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</div><div class=\"flex items-center text-xs gap-1\"><span class=\"text-blue-700 w-20 flex-shrink-0\">Saldo:</span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</div><div class=\"flex items-center text-xs gap-1\"><span class=\"text-blue-700 w-20 flex-shrink-0\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var12 string
+		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("text.saldo"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi_stavke.templ`, Line: 80, Col: 89}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, ":</span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -59,11 +203,24 @@ func NalogKnjizenjeStavke() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</div></div></div></div><div class=\"m-0 bg-gray-200 font-sans\"><!-- Top Section --><div class=\"bg-blue-50 border border-blue-400 flex-1 pl-1 min-h-20\"><div class=\"text-blue-800 font-bold text-xs mb-1 border-b border-gray-400 pb-1\">Osnovni podaci o stavci naloga</div><!-- Form Fields --><div class=\"grid grid-cols-2 mb-1\"><!-- Left Column --><div class=\"border border-blue-400 space-y-1 pt-1 px-1\"><div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</div></div></div></div><div class=\"m-0 bg-gray-200 font-sans\"><!-- Top Section --><div class=\"bg-blue-50 border border-blue-400 flex-1 pl-1 min-h-20\"><div class=\"text-blue-800 font-bold text-xs mb-1 border-b border-gray-400 pb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = KontoField().Render(ctx, templ_7745c5c3_Buffer)
+		var templ_7745c5c3_Var13 string
+		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("text.osnovni_podaci_o_stavci_naloga"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi_stavke.templ`, Line: 90, Col: 64}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "</div><!-- Form Fields --><div class=\"grid grid-cols-2 mb-1\"><!-- Left Column --><div class=\"border border-blue-400 space-y-1 pt-1 px-1\"><div class=\"flex items-center gap-1 mb-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = KontoField(translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -83,11 +240,11 @@ func NalogKnjizenjeStavke() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</div><div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</div><div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = SifraField().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = SifraField(translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -107,7 +264,7 @@ func NalogKnjizenjeStavke() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -133,17 +290,17 @@ func NalogKnjizenjeStavke() templ.Component {
 				{Key: "40", Value: "40-PRIMLJENA UPLATA"},
 				{Key: "90", Value: "90-OPSTO KNJIZENJE"},
 			},
-		}).Render(ctx, templ_7745c5c3_Buffer)
+		}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</div><div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</div><div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "opisknjizenja",
-			LabelText:  "Opis knjizenja",
+			ID:         "lblopisknjizenja",
+			LabelText:  translator.Label("Opis knjizenja"),
 			ClassLabel: common.ClassLabel + " w-24",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
@@ -160,7 +317,7 @@ func NalogKnjizenjeStavke() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</div><div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</div><div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -198,7 +355,7 @@ func NalogKnjizenjeStavke() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -236,7 +393,7 @@ func NalogKnjizenjeStavke() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -274,7 +431,7 @@ func NalogKnjizenjeStavke() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</div><!-- Amount Section --><div class=\"flex justify-center gap-8 mb-4\"><div class=\"text-center\"><div class=\"text-xs font-bold text-gray-700 mb-1\">Duguje</div><input class=\"border border-gray-400 px-2 py-1 text-xs h-6 text-right\" id=\"stavkeduguje\" value=\"0,00\"></div><div class=\"text-center\"><div class=\"text-xs font-bold text-gray-700 mb-1\">Potražuje</div><input class=\"border border-gray-400 px-2 py-1 text-xs h-6 text-right\" id=\"stavkepotrazuje\" value=\"0,00\"></div></div><!-- Action Buttons --><div class=\"flex justify-end gap-4 bottom-4 right-4 \"><button class=\"bg-gray-200 border border-gray-400 px-2 py-1 text-xs hover:bg-gray-300\" hx-post=\"/api/sacuvaj\" hx-trigger=\"click\">💾 Sačuvaj (F2)</button> <button class=\"bg-gray-200 border border-gray-400 px-2 py-1 text-xs hover:bg-gray-300\" hx-post=\"/api/stampaj\" hx-trigger=\"click\">🖨️ Štampaj</button></div></div><!-- Right Column --><div class=\"space-y-1 px-1\"><div class=\"bg-blue-50 border border-blue-400 flex-1 px-2 py-1 space-y-1\"><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "</div><!-- Amount Section --><div class=\"flex justify-center gap-8 mb-4\"><div class=\"text-center\"><div class=\"text-xs font-bold text-gray-700 mb-1\">Duguje</div><input class=\"border border-gray-400 px-2 py-1 text-xs h-6 text-right\" id=\"stavkeduguje\" value=\"0,00\"></div><div class=\"text-center\"><div class=\"text-xs font-bold text-gray-700 mb-1\">Potražuje</div><input class=\"border border-gray-400 px-2 py-1 text-xs h-6 text-right\" id=\"stavkepotrazuje\" value=\"0,00\"></div></div><!-- Action Buttons --><div class=\"flex justify-end gap-4 bottom-4 right-4 \"><button class=\"bg-gray-200 border border-gray-400 px-2 py-1 text-xs hover:bg-gray-300\" hx-post=\"/api/sacuvaj\" hx-trigger=\"click\">💾 Sačuvaj (F2)</button> <button class=\"bg-gray-200 border border-gray-400 px-2 py-1 text-xs hover:bg-gray-300\" hx-post=\"/api/stampaj\" hx-trigger=\"click\">🖨️ Štampaj</button></div></div><!-- Right Column --><div class=\"space-y-1 px-1\"><div class=\"bg-blue-50 border border-blue-400 flex-1 px-2 py-1 space-y-1\"><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -294,11 +451,11 @@ func NalogKnjizenjeStavke() templ.Component {
 			ClassSelect:  common.ClassInputTextEnabled + " min-w-[80px] w-full",
 			TabIndex:     "5",
 			OptionValues: []domain.ComboItem{},
-		}).Render(ctx, templ_7745c5c3_Buffer)
+		}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "</div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -318,11 +475,11 @@ func NalogKnjizenjeStavke() templ.Component {
 			ClassSelect:  common.ClassInputTextEnabled + " min-w-[80px] w-full",
 			TabIndex:     "5",
 			OptionValues: []domain.ComboItem{},
-		}).Render(ctx, templ_7745c5c3_Buffer)
+		}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</div></div><!-- Document Section --><div class=\"bg-blue-50 border border-blue-400 flex-1 px-2 py-1 min-h-20\"><div class=\"text-blue-800 font-bold text-xs mb-1\">Podaci o dokum/uplati/isplati</div><!-- Two Column Grid --><div class=\"grid grid-cols-1 md:grid-cols-2\"><!-- Document Field --><div class=\"grid grid-cols-2 gap-2 mb-1 items-center\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "</div></div><!-- Document Section --><div class=\"bg-blue-50 border border-blue-400 flex-1 px-2 py-1 min-h-20\"><div class=\"text-blue-800 font-bold text-xs mb-1\">Podaci o dokum/uplati/isplati</div><!-- Two Column Grid --><div class=\"grid grid-cols-1 md:grid-cols-2\"><!-- Document Field --><div class=\"grid grid-cols-2 gap-2 mb-1 items-center\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -346,7 +503,7 @@ func NalogKnjizenjeStavke() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</div><!-- Broj godina Field --><div class=\"grid grid-cols-2 gap-2 mb-1 pl-2 items-center\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "</div><!-- Broj godina Field --><div class=\"grid grid-cols-2 gap-2 mb-1 pl-2 items-center\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -370,7 +527,7 @@ func NalogKnjizenjeStavke() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</div><!-- Datum dokumenta Field --><div class=\"grid grid-cols-2 gap-2 mb-1 items-center\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "</div><!-- Datum dokumenta Field --><div class=\"grid grid-cols-2 gap-2 mb-1 items-center\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -394,7 +551,7 @@ func NalogKnjizenjeStavke() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "</div><!-- Rok Field --><div class=\"grid grid-cols-2 gap-1 mb-1 pl-2 items-center\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "</div><!-- Rok Field --><div class=\"grid grid-cols-2 gap-1 mb-1 pl-2 items-center\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -417,7 +574,7 @@ func NalogKnjizenjeStavke() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</div></div><!-- Description --><div class=\"text-xs text-gray-600 italic py-1 border-t border-gray-300\">Unose se podaci o veznog dokumenta za koji se odnosi storno dokument</div><!-- Second Section - Two Column Grid --><div class=\"grid grid-cols-1 md:grid-cols-2\"><!-- Br. vezn. dokum. Field --><div class=\"grid grid-cols-2 gap-2 mb-1 items-center\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "</div></div><!-- Description --><div class=\"text-xs text-gray-600 italic py-1 border-t border-gray-300\">Unose se podaci o veznog dokumenta za koji se odnosi storno dokument</div><!-- Second Section - Two Column Grid --><div class=\"grid grid-cols-1 md:grid-cols-2\"><!-- Br. vezn. dokum. Field --><div class=\"grid grid-cols-2 gap-2 mb-1 items-center\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -441,7 +598,7 @@ func NalogKnjizenjeStavke() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</div><!-- God. godina Field --><div class=\"grid grid-cols-2 gap-2 pl-2 mb-1 items-center\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "</div><!-- God. godina Field --><div class=\"grid grid-cols-2 gap-2 pl-2 mb-1 items-center\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -465,7 +622,7 @@ func NalogKnjizenjeStavke() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</div><!-- Dat. vezn. dokum. Field --><div class=\"grid grid-cols-2 gap-2 mb-1 items-center\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "</div><!-- Dat. vezn. dokum. Field --><div class=\"grid grid-cols-2 gap-2 mb-1 items-center\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -489,7 +646,7 @@ func NalogKnjizenjeStavke() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</div><!-- Napomena/Help Field --><div class=\"grid grid-cols-2 gap-2 mb-1 pl-2 items-start\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "</div><!-- Napomena/Help Field --><div class=\"grid grid-cols-2 gap-2 mb-1 pl-2 items-start\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -513,7 +670,7 @@ func NalogKnjizenjeStavke() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</div></div></div><!-- Currency Section --><div class=\"bg-blue-50 border border-blue-400 flex-1 px-2 py-1 min-h-20\"><div class=\"text-blue-800 font-bold text-xs mb-1\">Devizna vrednost</div><div class=\"grid grid-cols-2 gap-2 mb-1 items-start\"><div class=\"grid grid-cols-2 flex items-center  gap-1\"><label for=\"sifradev\" class=\"text-xs text-gray-700\">Šifra dev.</label><div class=\"flex items-center px-1 gap-1\"><input class=\"border border-gray-400 px-1 py-1 text-xs h-6\" id=\"sifradev\" value=\"0\"> <button class=\"bg-gray-200 border border-gray-400 px-1 py-1 text-xs h-6 hover:bg-gray-300\">🔍</button></div></div><div class=\"grid grid-cols-2 gap-2 px-2 mb-1 items-center\"><label for=\"devizniiznos\" class=\"text-xs text-gray-700\">Devizni iznos</label> <input class=\"border border-gray-400 px-1 text-xs h-6 text-right\" id=\"devizniiznos\" value=\"0,00\"></div></div><div class=\"grid grid-cols-4 gap-2 mb-1 px-1 items-center\"><label for=\"kurs\" class=\"text-xs text-gray-700\">Kurs</label> <input class=\"border border-gray-400 px-1 py-1 text-xs h-6 text-right\" id=\"kurs\" value=\"0,0000\"></div></div></div></div></div><!-- Table Section --><div id=\"table_nalogstavke\" class=\"flex-1 border border-gray-400 m-1 bg-white\"><!-- Total Row --><div class=\"bg-gray-100 border-t border-gray-400\"><div class=\"grid grid-cols-12 gap-0 text-xs font-bold\"><div class=\"p-2 border-r border-gray-300 col-span-9\">Total:</div><div class=\"p-2 border-r border-gray-300 text-right\" id=\"total-duguje\">0,00</div><div class=\"p-2 border-r border-gray-300 text-right\" id=\"total-potrazuje\">0,00</div><div class=\"p-2\"></div></div></div></div></div></div></div><div id=\"notification\" class=\"fixed top-5 right-5 px-4 py-3 bg-green-500 text-white rounded hidden\"></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "</div></div></div><!-- Currency Section --><div class=\"bg-blue-50 border border-blue-400 flex-1 px-2 py-1 min-h-20\"><div class=\"text-blue-800 font-bold text-xs mb-1\">Devizna vrednost</div><div class=\"grid grid-cols-2 gap-2 mb-1 items-start\"><div class=\"grid grid-cols-2 flex items-center  gap-1\"><label for=\"sifradev\" class=\"text-xs text-gray-700\">Šifra dev.</label><div class=\"flex items-center px-1 gap-1\"><input class=\"border border-gray-400 px-1 py-1 text-xs h-6\" id=\"sifradev\" value=\"0\"> <button class=\"bg-gray-200 border border-gray-400 px-1 py-1 text-xs h-6 hover:bg-gray-300\">🔍</button></div></div><div class=\"grid grid-cols-2 gap-2 px-2 mb-1 items-center\"><label for=\"devizniiznos\" class=\"text-xs text-gray-700\">Devizni iznos</label> <input class=\"border border-gray-400 px-1 text-xs h-6 text-right\" id=\"devizniiznos\" value=\"0,00\"></div></div><div class=\"grid grid-cols-4 gap-2 mb-1 px-1 items-center\"><label for=\"kurs\" class=\"text-xs text-gray-700\">Kurs</label> <input class=\"border border-gray-400 px-1 py-1 text-xs h-6 text-right\" id=\"kurs\" value=\"0,0000\"></div></div></div></div></div><!-- Table Section --><div id=\"table_nalogstavke\" class=\"flex-1 border border-gray-400 m-1 bg-white\"><!-- Total Row --><div class=\"bg-gray-100 border-t border-gray-400\"><div class=\"grid grid-cols-12 gap-0 text-xs font-bold\"><div class=\"p-2 border-r border-gray-300 col-span-9\">Total:</div><div class=\"p-2 border-r border-gray-300 text-right\" id=\"total-duguje\">0,00</div><div class=\"p-2 border-r border-gray-300 text-right\" id=\"total-potrazuje\">0,00</div><div class=\"p-2\"></div></div></div></div></div></div></div><div id=\"notification\" class=\"fixed top-5 right-5 px-4 py-3 bg-green-500 text-white rounded hidden\"></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

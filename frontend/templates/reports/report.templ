@@ -3,10 +3,11 @@ package reports
 import (
 	"helia/internal/domain"
 	"time"
+	"helia/internal/i18n"
 )
 
 
-templ Report(parameters domain.ReportParameters) {
+templ Report(parameters domain.ReportParameters, translator *i18n.Service) {
 	<html lang="en">
 		<head>
 			<meta charset="UTF-8"/>
@@ -38,7 +39,7 @@ templ Report(parameters domain.ReportParameters) {
 		<body>
 			<!-- Your report content goes here -->
 			<h1>{ parameters.ReportName }</h1>
-			<button class="no-print" onclick="window.print()">Print/Generate PDF</button>
+			<button class="no-print" onclick="window.print()">{ translator.Label("Stampaj/Generi PDF") }</button>
 		</body>
 	</html>
 }
@@ -72,7 +73,7 @@ templ ReportHeader1(parameters domain.ReportParameters) {
 	</header>
 }
 
-templ ReportBody1(parameters domain.ReportParameters) {
+templ ReportBody1(parameters domain.ReportParameters, translator *i18n.Service) {
 	<!-- Body Section -->
 	<body class="bg-gray-50 print:bg-white">
 		<!-- Print Controls -->
@@ -82,14 +83,14 @@ templ ReportBody1(parameters domain.ReportParameters) {
 				class="bg-blue-600 text-white px-2 h-7 rounded hover:bg-blue-700 flex items-center gap-1 font-semibold"
 			>
 				<span>🖨️</span>
-				<span>Print</span>
+				<span>{ translator.Label("Stampaj") }</span>
 			</button>
 			<button
 				onclick="window.close()"
 				class="bg-gray-600 text-white px-2 h-7 rounded hover:bg-gray-700 flex items-center gap-1 font-semibold"
 			>
 				<span>❌</span>
-				<span>Close</span>
+				<span>{ translator.Label("Zatvori") }</span>
 			</button>
 		</div>
 		<!-- Main Report Container -->

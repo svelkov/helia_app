@@ -1,11 +1,12 @@
 package templates
 
 import "helia/internal/domain"
+import "helia/internal/i18n"
 
-templ DeleteDialog(dialog domain.Dialog, btnConfirm, btnCancel, btnClose domain.Button) {
-	@Dialog("delete-dialog", DeleteDialogContent(dialog.Id), dialog, btnConfirm, btnCancel, btnClose)
+templ DeleteDialog(dialog domain.Dialog, btnConfirm, btnCancel, btnClose domain.Button, translator *i18n.Service) {
+	@Dialog("delete-dialog", DeleteDialogContent(dialog.Id, translator), dialog, btnConfirm, btnCancel, btnClose, translator)
 }
 
-templ DeleteDialogContent(rowID string) {
-	<p class="mt-3 mb-3 ml-3 text-xl flex items-center justify-center gap-2">Da li zelite da obrišete slog sa ID: { rowID }?</p>
+templ DeleteDialogContent(rowID string, translator *i18n.Service) {
+	<p class="mt-3 mb-3 ml-3 text-xl flex items-center justify-center gap-2">{ translator.Label("Obrisi stavku") } { rowID }?</p>
 }

@@ -37,7 +37,7 @@ templ PrometMain(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada 
 }
 
 templ PrometNav(tabs domain.TabData, translator *i18n.Service) {
-	<h2 class="text-xl font-semibold">{ translator.Label("label.promet") }</h2>
+	<h2 class="text-xl font-semibold">{ translator.Title("Promet") }</h2>
 	<nav class="py-1 h-8 text-sm font-medium text-gray-700 flex items-center whitespace-nowrap" aria-label="Tabs">
 		for _, item := range tabs.Tabs {
 			<input id={ fmt.Sprintf("tab%s", item.Name) } type="hidden" name="sourceTab" value={ item.Name }/>
@@ -55,7 +55,7 @@ templ PrometNav(tabs domain.TabData, translator *i18n.Service) {
 				aria-controls="promet-panel"
 				aria-selected={ fmt.Sprintf("%v", item.IsActive) }
 			>
-				{ item.Label }
+				{ translator.Label(item.Label) }
 			</button>
 		}
 	</nav>
@@ -351,7 +351,7 @@ templ PrometDeviznihAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, 
 				<div class="flex items-center gap-1 mb-1">
 					@tmpl.LabelField(domain.LabelFieldConfig{
 						ID:         "oddatuma",
-						LabelText:  "Od datuma",
+						LabelText:  translator.Label("Od datuma"),
 						ClassLabel: common.ClassLabel + " w-24",
 					})
 					@tmpl.TextInputField(domain.InputFieldConfig{
@@ -367,7 +367,7 @@ templ PrometDeviznihAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, 
 				<div class="flex items-center gap-1 mb-1">
 					@tmpl.LabelField(domain.LabelFieldConfig{
 						ID:         "nalog",
-						LabelText:  "Do datuma",
+						LabelText:  translator.Label("Do datuma"),
 						ClassLabel: common.ClassLabel + " w-24",
 					})
 					@tmpl.TextInputField(domain.InputFieldConfig{
@@ -439,7 +439,7 @@ templ PrometSubsintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPr
 				<div class="flex items-center gap-1 mb-1">
 					@tmpl.LabelField(domain.LabelFieldConfig{
 						ID:         "oddatuma",
-						LabelText:  "Od datuma",
+						LabelText:  translator.Label("Od datuma"),
 						ClassLabel: common.ClassLabel + " w-24",
 					})
 					@tmpl.TextInputField(domain.InputFieldConfig{
@@ -454,7 +454,7 @@ templ PrometSubsintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPr
 				<div class="flex items-center gap-1 mb-1">
 					@tmpl.LabelField(domain.LabelFieldConfig{
 						ID:         "dodatuma",
-						LabelText:  "Do datuma",
+						LabelText:  translator.Label("Do datuma"),
 						ClassLabel: common.ClassLabel + " w-24",
 					})
 					@tmpl.TextInputField(domain.InputFieldConfig{
@@ -518,7 +518,7 @@ templ PrometSintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 				<div class="flex items-center gap-1 mb-1">
 					@tmpl.LabelField(domain.LabelFieldConfig{
 						ID:         "oddatuma",
-						LabelText:  "Od datuma",
+						LabelText:  translator.Label("Od datuma"),
 						ClassLabel: common.ClassLabel + " w-24",
 					})
 					@tmpl.TextInputField(domain.InputFieldConfig{
@@ -533,7 +533,7 @@ templ PrometSintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 				<div class="flex items-center gap-1 mb-1">
 					@tmpl.LabelField(domain.LabelFieldConfig{
 						ID:         "dodatuma",
-						LabelText:  "Do datuma",
+						LabelText:  translator.Label("Do datuma"),
 						ClassLabel: common.ClassLabel + " w-24",
 					})
 					@tmpl.TextInputField(domain.InputFieldConfig{
@@ -597,7 +597,7 @@ templ KarticaSintetickiKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 				<div class="flex items-center gap-1 mb-1">
 					@tmpl.LabelField(domain.LabelFieldConfig{
 						ID:         "oddatuma",
-						LabelText:  "Od datuma",
+						LabelText:  translator.Label("Od datuma"),
 						ClassLabel: common.ClassLabel + " w-24",
 					})
 					@tmpl.TextInputField(domain.InputFieldConfig{
@@ -612,7 +612,7 @@ templ KarticaSintetickiKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 				<div class="flex items-center gap-1 mb-1">
 					@tmpl.LabelField(domain.LabelFieldConfig{
 						ID:         "dodatuma",
-						LabelText:  "Do datuma",
+						LabelText:  translator.Label("Do datuma"),
 						ClassLabel: common.ClassLabel + " w-24",
 					})
 					@tmpl.TextInputField(domain.InputFieldConfig{
@@ -682,7 +682,7 @@ templ PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint,
 				<div class="flex items-center gap-1 mb-1">
 					@tmpl.LabelField(domain.LabelFieldConfig{
 						ID:         "odsifre",
-						LabelText:  "Od Sifre",
+						LabelText:  translator.Label("Od Sifre"),
 						ClassLabel: common.ClassLabel + " w-24",
 					})
 					@tmpl.TextInputField(domain.InputFieldConfig{
@@ -712,7 +712,7 @@ templ PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint,
 				<div class="flex items-center gap-1 mb-1">
 					@tmpl.LabelField(domain.LabelFieldConfig{
 						ID:         "dosifre",
-						LabelText:  "Do Sifre",
+						LabelText:  translator.Label("Do Sifre"),
 						ClassLabel: common.ClassLabel + " w-24",
 					})
 					@tmpl.TextInputField(domain.InputFieldConfig{
@@ -741,7 +741,7 @@ templ PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint,
 				<div class="flex items-center gap-1 mb-1">
 					@tmpl.LabelField(domain.LabelFieldConfig{
 						ID:         "odnaloga",
-						LabelText:  "Od Naloga",
+						LabelText:  translator.Label("Od Naloga"),
 						ClassLabel: common.ClassLabel + " w-24",
 					})
 					@tmpl.TextInputField(domain.InputFieldConfig{
@@ -758,7 +758,7 @@ templ PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint,
 				<div class="flex items-center gap-1 mb-1">
 					@tmpl.LabelField(domain.LabelFieldConfig{
 						ID:         "donaloga",
-						LabelText:  "Do Naloga",
+						LabelText:  translator.Label("Do Naloga"),
 						ClassLabel: common.ClassLabel + " w-24",
 					})
 					@tmpl.TextInputField(domain.InputFieldConfig{
@@ -821,19 +821,19 @@ templ TotalValues(total domain.PrometTotalValues, translator *i18n.Service) {
 		<div
 			class="grid grid-cols-4 gap-1 mb-1 h-6 items-center"
 		>
-			<div class="text-sm text-gray-600">{ translator.Label("Promet do:") }</div>
+			<div class="text-sm text-gray-600">{ translator.Label("Promet do") }</div>
 			@tmpl.NumericInputField("dugujedo", total.DugDo, 2, true, common.ClassInputNumericDisabled)
 			@tmpl.NumericInputField("potrazujedo", total.PotDo, 2, true, common.ClassInputNumericDisabled)
 			@tmpl.NumericInputField("saldodo", total.SaldoDo, 2, true, common.ClassInputNumericDisabled)
 		</div>
 		<div class="grid grid-cols-4 gap-1 mb-1 h-6 items-center">
-			<div class="text-sm text-gray-600">{ translator.Label("Promet za period:") }</div>
+			<div class="text-sm text-gray-600">{ translator.Label("Promet za period") }</div>
 			@tmpl.NumericInputField("dugujeperiod", total.DugPer, 2, true, common.ClassInputNumericDisabled)
 			@tmpl.NumericInputField("potrazujeperiod", total.PotPer, 2, true, common.ClassInputNumericDisabled)
 			@tmpl.NumericInputField("saldoperiod", total.SaldoPer, 2, true, common.ClassInputNumericDisabled)
 		</div>
 		<div class="grid grid-cols-4 gap-1 h-6 items-center">
-			<div class="text-sm text-gray-600">{ translator.Label("Ukupan promet:") }</div>
+			<div class="text-sm text-gray-600">{ translator.Label("Ukupan promet") }</div>
 			@tmpl.NumericInputField("dugujeukupno", total.DugTot, 2, true, common.ClassInputNumericDisabled)
 			@tmpl.NumericInputField("potrazujeukupno", total.PotTot, 2, true, common.ClassInputNumericDisabled)
 			@tmpl.NumericInputField("saldoukupno", total.SaldoTot, 2, true, common.ClassInputNumericDisabled)

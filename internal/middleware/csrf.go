@@ -10,6 +10,22 @@ import (
 
 const csrfTokenKey = "csrf_token"
 
+// getCsrfTokenFromSessionOrContext retrieves CSRF token from session, fallback to context
+func getCsrfTokenFromSessionOrContext(c *gin.Context) (string, bool) {
+	session := sessions.Default(c)
+	sessionToken := session.Get(csrfTokenKey)
+
+	if sessionToken == nil {
+		return "", false
+	}
+
+	if tokenStr, ok := sessionToken.(string); ok {
+		return tokenStr, true
+	}
+
+	return "", false
+}
+
 // CSRFMiddleware protects against CSRF attacks
 func CSRFMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -31,24 +47,26 @@ func CSRFMiddleware() gin.HandlerFunc {
 
 		// For POST/PUT/DELETE, validate CSRF token
 		if c.Request.Method == http.MethodPost || c.Request.Method == http.MethodPut || c.Request.Method == http.MethodDelete {
+			// Try to get token from form data first
 			formToken := c.PostForm("_csrf")
 
-			session := sessions.Default(c)
-			sessionToken := session.Get(csrfTokenKey)
+			// Get session token
+			sessionToken, exists := getCsrfTokenFromSessionOrContext(c)
 
-			if formToken == "" || sessionToken == nil || formToken != sessionToken.(string) {
+			if formToken == "" || !exists || formToken != sessionToken {
 				c.JSON(http.StatusForbidden, gin.H{"error": "Invalid CSRF token"})
 				c.Abort()
 				return
 			}
 
-			// Generate new token for next request (single-use pattern)
-			// but allow current handler to complete
-			c.Next()
-
-			// Clear token after handler completes to prevent reuse across requests
-			session.Delete(csrfTokenKey)
+			// Generate new token for next request
+			newToken := uuid.New().String()
+			session := sessions.Default(c)
+			session.Set(csrfTokenKey, newToken)
 			session.Save()
+			c.Set("csrf_token", newToken)
+
+			c.Next()
 			return
 		}
 

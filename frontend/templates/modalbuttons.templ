@@ -48,6 +48,9 @@ templ ConfirmButton(btn domain.Button, translator *i18n.Service) {
 			hx-post={ btn.HxActionURL }
 			hx-target={ btn.HxTarget }
 			hx-swap={ btn.HxSwap }
+			if btn.HxVals != "" {
+				hx-vals={ btn.HxVals }
+			}
 			hx-on::after-request={ templ.JSFuncCall("handleDialogResponse", btn.IdDialog) }
 		>
 			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6 mr-1">

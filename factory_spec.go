@@ -262,19 +262,6 @@ func registerGenericEntity[T any](
 
 // setEntities registers all entity routes
 func setEntities(db *sqlx.DB, r *gin.Engine) {
-	// Partneri
-	registerGenericEntity[domain.Partneri](
-		r, db, "partneri",
-		validation.PartneriValidationRules(),
-		handler.SetPartneriFields(),
-		domain.HandlerConfig{
-			ContentTitle: "PARTNERI",
-			TableID:      "partneri-table",
-			APIPrefix:    "/api/partneri",
-			IDField:      common.IDpartneri,
-		},
-	)
-
 	// Drzave
 	registerGenericEntity[domain.Drzave](
 		r, db, "drzave",
@@ -445,6 +432,12 @@ func setEntities(db *sqlx.DB, r *gin.Engine) {
 	)
 
 	// Complex entities with custom services (non-generic)
+	//partneri
+	partneriRepo := repository.NewBaseRepository[domain.Partneri](db, "partneri")
+	partneriValidator := validation.NewRuleBasedValidator[domain.Partneri](validation.PartneriValidationRules())
+	partneriService := service.NewBaseService(*partneriRepo, *partneriValidator)
+	partneriHandler := handler.NewPartneriHandler(partneriService)
+	partneriHandler.AddRoutes(r)
 	// Fkpl
 	fkplRepo := repository.NewBaseRepository[domain.Fkpl](db, "fkpl")
 	fkplValidator := validation.NewRuleBasedValidator[domain.Fkpl](finval.FkplValidationRules())

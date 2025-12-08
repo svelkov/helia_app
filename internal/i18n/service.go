@@ -113,6 +113,9 @@ func (s *Service) Title(labelName string) string {
 	return s.T("title." + labelName)
 }
 
+func (s *Service) Text(textName string) string {
+	return s.T("text." + textName)
+}
 func (s *Service) Button(buttonName string) string {
 	return s.T("button." + buttonName)
 }
@@ -154,6 +157,9 @@ func toSnakeCase(s string) string {
 	result = strings.ReplaceAll(result, "š", "s")
 	result = strings.ReplaceAll(result, "đ", "d")
 	result = strings.ReplaceAll(result, "ć", "c")
+	result = strings.ReplaceAll(result, "%", "")
+	result = strings.ReplaceAll(result, " ", "")
+	
 
 	// Remove multiple underscores
 

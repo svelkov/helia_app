@@ -14,17 +14,17 @@ const (
 	dateLayout string = "02.01.2006"
 )
 
-templ NaloziContent(tabs domain.TabData, tipdokValues []domain.ComboItem, ukObrada domain.UkupnaObrada, btnSave, btnNoviNalog domain.Button, tbl domain.TableData, searchControl domain.InputControl, nalogPayload domain.FnalPayload, translator *i18n.Service) {
+templ NaloziContent(tabs domain.TabData, tipdokValues []domain.ComboItem, ukObrada domain.UkupnaObrada, btnSave, btnNoviNalog domain.Button, tbl domain.TableData, searchControl domain.InputControl, nalogPayload domain.FnalPayload, translator *i18n.Service, csrfToken string) {
 	<div id="main-content" class="border-b border-gray-200">
 		@NaloziNav(tabs, translator)
 		<div id="main-content">
-			@NaloziKnjizenjeContent(tipdokValues, ukObrada, btnSave, btnNoviNalog, tbl, searchControl, nalogPayload, translator)
+			@NaloziKnjizenjeContent(tipdokValues, ukObrada, btnSave, btnNoviNalog, tbl, searchControl, nalogPayload, translator, csrfToken)
 		</div>
 	</div>
 }
 
 templ NaloziNav(tabs domain.TabData, translator *i18n.Service) {
-	<h2 class="text-xl font-semibold">{ translator.Label("text.nalozi_za_knjizenje") }</h2>
+	<h2 class="text-xl font-semibold">{ translator.Title("Nalozi za knjizenje") }</h2>
 	<nav class="py-1 h-8 text-sm font-medium text-gray-700 flex items-center whitespace-nowrap" aria-label="Tabs">
 		for _, item := range tabs.Tabs {
 			<input id={ fmt.Sprintf("tab%s", item.Name) } type="hidden" name="sourceTab" value={ item.Name }/>
@@ -41,14 +41,14 @@ templ NaloziNav(tabs domain.TabData, translator *i18n.Service) {
 				aria-controls="knjizenje-panel"
 				aria-selected={ fmt.Sprintf("%v", item.IsActive) }
 			>
-				{ item.Label }
+				{ translator.Label(item.Label) }
 			</button>
 		}
 	</nav>
 }
 
-templ NaloziKnjizenjeContent(tipdokValues []domain.ComboItem, ukObrada domain.UkupnaObrada, btnSave, btnNoviNalog domain.Button, tbl domain.TableData, searchControl domain.InputControl, nalogPayload domain.FnalPayload, translator *i18n.Service) {
-	@NaloziKnjizenjeHeader(tipdokValues, ukObrada, btnSave, btnNoviNalog, nalogPayload, translator)
+templ NaloziKnjizenjeContent(tipdokValues []domain.ComboItem, ukObrada domain.UkupnaObrada, btnSave, btnNoviNalog domain.Button, tbl domain.TableData, searchControl domain.InputControl, nalogPayload domain.FnalPayload, translator *i18n.Service, csrfToken string) {
+	@NaloziKnjizenjeHeader(tipdokValues, ukObrada, btnSave, btnNoviNalog, nalogPayload, translator, csrfToken)
 	@tmpl.Search_Part(tbl, searchControl)
 	<div id="table-container" class="mt-1">
 		@tmpl.Table(tbl, translator)
@@ -58,7 +58,7 @@ templ NaloziKnjizenjeContent(tipdokValues []domain.ComboItem, ukObrada domain.Uk
 	<div id="dialog-stavkenaloga"></div>
 }
 
-templ NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.UkupnaObrada, btnSave, btnNoviNalog domain.Button, nalogPayload domain.FnalPayload, translator *i18n.Service) {
+templ NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.UkupnaObrada, btnSave, btnNoviNalog domain.Button, nalogPayload domain.FnalPayload, translator *i18n.Service, csrfToken string) {
 	<div class="grid grid-cols-3 gap-6 py-2">
 		<div id="fin-nalozi" class="pt-2 col-span-2 flex flex-col gap-1">
 			<form
@@ -66,20 +66,22 @@ templ NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Uku
 				hx-post={ btnSave.HxActionURL }
 				hx-target="#info-message"
 				hx-boost="false"
+				hx-headers={ fmt.Sprintf(`{"X-CSRF-Token": "%s"}`, csrfToken) }
 				onsubmit="return false;"
 			>
+				<input type="hidden" name="_csrf" value={ csrfToken }/>
 				<!-- First row: Combo for Vrsta naloga za knjiženje -->
 				<div class="flex items-center">
 					@tmpl.LabelField(domain.LabelFieldConfig{
 						ID:         "tipdok",
-						LabelText:  "Vrsta Naloga za knjiženje",
-						ClassLabel: common.ClassLabel + " w-40 ",
+						LabelText:  translator.Label("Vrsta Naloga za knjiženje"),
+						ClassLabel: common.ClassLabel + " w-44 ",
 					})
 					@tmpl.ComboBoxField(domain.ComboFieldConfig{
 						ID:             "tipdok",
 						Name:           "tipdok",
 						Placeholder:    translator.Placeholder("Select"),
-						HasLabel:       true,
+						HasLabel:       false,
 						Disabled:       false,
 						ClassSelect:    common.ClassSelect + " flex-1 ",
 						HxSwap:         "innerHTML",
@@ -93,8 +95,8 @@ templ NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Uku
 				<div class="flex flex-1 items-center py-1">
 					@tmpl.LabelField(domain.LabelFieldConfig{
 						ID:         "nalog",
-						LabelText:  "Broj Naloga",
-						ClassLabel: common.ClassLabel + " w-40",
+						LabelText:  translator.Label("Broj Naloga"),
+						ClassLabel: common.ClassLabel + " w-44",
 					})
 					@tmpl.TextInputField(domain.InputFieldConfig{
 						ID:               "nalog",
@@ -114,7 +116,7 @@ templ NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Uku
 						OnInput:          "clearFieldError"})
 					@tmpl.LabelField(domain.LabelFieldConfig{
 						ID:         "danal",
-						LabelText:  "Datum Naloga",
+						LabelText:  translator.Label("Datum Naloga"),
 						ClassLabel: common.ClassLabel + " pl-4 pr-2 ",
 					})
 					@tmpl.TextInputField(domain.InputFieldConfig{
@@ -128,7 +130,7 @@ templ NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Uku
 						OnInput:    "clearFieldError"})
 					@tmpl.LabelField(domain.LabelFieldConfig{
 						ID:         "datob",
-						LabelText:  "Datum Obrade",
+						LabelText:  translator.Label("Datum Obrade"),
 						ClassLabel: common.ClassLabel + " pl-5 pr-2 ",
 					})
 					@tmpl.TextInputField(domain.InputFieldConfig{
@@ -145,8 +147,8 @@ templ NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Uku
 				<div class="flex items-center">
 					@tmpl.LabelField(domain.LabelFieldConfig{
 						ID:         "opisKnjizenja",
-						LabelText:  "Opis Knjiženja",
-						ClassLabel: common.ClassLabel + " w-40 ",
+						LabelText:  translator.Label("Opis Knjiženja"),
+						ClassLabel: common.ClassLabel + " w-44 ",
 					})
 					@tmpl.TextInputField(domain.InputFieldConfig{
 						ID:         "opisKnjizenja",
@@ -166,12 +168,12 @@ templ NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Uku
 			</form>
 		</div>
 		<div class="p-1 flex flex-col">
-			<p class="block text-sm font-medium text-blue-700 mb-1">Prikaz ukupne obrade</p>
+			<p class="block text-sm font-medium text-blue-700 mb-1">{ translator.Text("Prikaz ukupne obrade") }</p>
 			<div class="box-content flex flex-col p-1 border-2 border-gray-300 rounded-md">
 				<div class="flex items-center space-x-2 mb-1">
 					@tmpl.LabelField(domain.LabelFieldConfig{
 						ID:         "ukupnoNaloga",
-						LabelText:  "Ukupno Naloga",
+						LabelText:  translator.Label("Ukupno Naloga"),
 						ClassLabel: common.ClassLabel + " w-[60%]",
 					})
 					@tmpl.TextInputField(domain.InputFieldConfig{
@@ -186,14 +188,13 @@ templ NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Uku
 				<div class="flex items-center space-x-2 mb-1">
 					@tmpl.LabelField(domain.LabelFieldConfig{
 						ID:         "ukupnoStavki",
-						LabelText:  "Ukupno Stavki",
+						LabelText:  translator.Label("Ukupno Stavki"),
 						ClassLabel: common.ClassLabel + " w-[60%]",
 					})
 					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:        "ukupnoStavki",
-						Value:     ukObrada.UkStavki,
-						FieldType: "text",
-					
+						ID:         "ukupnoStavki",
+						Value:      ukObrada.UkStavki,
+						FieldType:  "text",
 						Disabled:   true,
 						ClassInput: common.ClassInputTextDisabled,
 					})
@@ -201,7 +202,7 @@ templ NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Uku
 				<div class="flex items-center space-x-2 mb-1">
 					@tmpl.LabelField(domain.LabelFieldConfig{
 						ID:         "duguje",
-						LabelText:  "Duguje",
+						LabelText:  translator.Label("Duguje"),
 						ClassLabel: common.ClassLabel + " w-[60%]",
 					})
 					@tmpl.TextInputField(domain.InputFieldConfig{
@@ -214,8 +215,8 @@ templ NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Uku
 				</div>
 				<div class="flex items-center space-x-2 mb-1">
 					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "duguje",
-						LabelText:  "Potrazuje",
+						ID:         "potrazuje",
+						LabelText:  translator.Label("Potrazuje"),
 						ClassLabel: common.ClassLabel + " w-[60%]",
 					})
 					@tmpl.TextInputField(domain.InputFieldConfig{
@@ -283,9 +284,10 @@ templ NaloziStampanje(tabs domain.TabData, tblHeader, tblStavke domain.TableData
 	</div>
 }
 
-templ NaloziKopiranjeDialog(model domain.KopirajNalog, btnSave domain.Button, translator *i18n.Service) {
+templ NaloziKopiranjeDialog(model domain.KopirajNalog, btnSave domain.Button, translator *i18n.Service, csrfToken string) {
+	<input type="hidden" name="_csrf" value={ csrfToken }/>
 	<div class="text-blue-800 font-bold text-sm mb-1">
-		Podaci o nalogu iz kojeg se kopira
+		{ translator.Text("Podaci o nalogu iz kojeg se kopira") }
 	</div>
 	<div class="box-content flex flex-col p-2 border-2 border-gray-300 rounded-md">
 		<div class="flex items-center space-x-2 mb-1">
@@ -364,7 +366,7 @@ templ NaloziKopiranjeDialog(model domain.KopirajNalog, btnSave domain.Button, tr
 	</div>
 	<!-- Full-width Description Section -->
 	<div class="text-blue-800 font-bold text-sm mb-1">
-		Podaci o novom nalogu
+		{ translator.Text("Podaci o novom nalogu") }
 	</div>
 	<div class="box-content flex flex-col p-2 border-2 border-gray-300 rounded-md">
 		<div class="flex items-center space-x-2 mb-1">
@@ -453,9 +455,10 @@ templ NaloziKopiranjeDialog(model domain.KopirajNalog, btnSave domain.Button, tr
 	</div>
 }
 
-templ NaloziStorniranjeDialog(model domain.KopirajNalog, btnSave domain.Button, translator *i18n.Service) {
+templ NaloziStorniranjeDialog(model domain.KopirajNalog, btnSave domain.Button, translator *i18n.Service, csrfToken string) {
+	<input type="hidden" name="_csrf" value={ csrfToken }/>
 	<div class="text-blue-800 font-bold text-sm mb-1">
-		Podaci o nalogu koji se stornira
+		{ translator.Text("Podaci o nalogu koji se stornira") }
 	</div>
 	<div class="box-content flex flex-col p-2 border-2 border-gray-300 rounded-md">
 		<div class="flex items-center space-x-2 mb-1">
@@ -534,39 +537,65 @@ templ NaloziStorniranjeDialog(model domain.KopirajNalog, btnSave domain.Button, 
 	</div>
 	<!-- Storniranje Details Section -->
 	<div class="text-blue-800 font-bold text-sm mb-1">
-		Podaci o storniranju naloga
+		{ translator.Text("Podaci o novom nalogu") }
 	</div>
 	<div class="box-content flex flex-col p-2 border-2 border-gray-300 rounded-md">
 		<div class="flex items-center space-x-2 mb-1">
 			@tmpl.LabelField(domain.LabelFieldConfig{
-				ID:         "datumstorniranja-label",
-				LabelText:  translator.Label("Datum storniranja"),
+				ID:         "lblnalog",
+				LabelText:  translator.Label("Broj naloga"),
 				ClassLabel: common.ClassLabel + " w-24",
 			})
 			@tmpl.TextInputField(domain.InputFieldConfig{
-				ID:         "datumstorniranja",
-				Name:       "datumstorniranja",
-				Value:      model.DanalNew,
-				FieldType:  "date",
+				ID:         "nalog",
+				Name:       "nalog",
+				Value:      model.NalogNew,
+				FieldType:  "text",
 				Disabled:   false,
-				ClassInput: common.ClassInputTextEnabled + " w-full",
-				OnInput:    "clearFieldError",
+				ClassInput: common.ClassInputTextDisabled + " w-42",
 			})
 		</div>
 		<div class="flex items-center space-x-2 mb-1">
 			@tmpl.LabelField(domain.LabelFieldConfig{
-				ID:         "razlogstorniranja-label",
-				LabelText:  translator.Label("Razlog storniranja"),
+				ID:         "lbldanal",
+				LabelText:  translator.Label("Datum naloga"),
 				ClassLabel: common.ClassLabel + " w-24",
 			})
 			@tmpl.TextInputField(domain.InputFieldConfig{
-				ID:         "razlogstorniranja",
-				Name:       "razlogstorniranja",
-				Value:      model.OpisNew,
+				ID:         "danal",
+				Name:       "danal",
+				Value:      model.DanalNew,
 				FieldType:  "text",
 				Disabled:   false,
-				ClassInput: common.ClassInputTextEnabled + " w-full",
-				OnInput:    "clearFieldError",
+				ClassInput: common.ClassInputTextDisabled,
+			})
+			@tmpl.LabelField(domain.LabelFieldConfig{
+				ID:         "lbldatob",
+				LabelText:  translator.Label("Datum Obrade"),
+				ClassLabel: common.ClassLabel + " w-24",
+			})
+			@tmpl.TextInputField(domain.InputFieldConfig{
+				ID:         "datob",
+				Name:       "datob",
+				Value:      model.DanalNew,
+				FieldType:  "text",
+				Disabled:   false,
+				ClassInput: common.ClassInputTextDisabled,
+			})
+		</div>
+		<div class="flex items-center space-x-2 mb-1">
+			@tmpl.LabelField(domain.LabelFieldConfig{
+				ID:         "lblopis",
+				LabelText:  translator.Label("Opis knjizenja"),
+				ClassLabel: common.ClassLabel + " w-24",
+			})
+			@tmpl.TextInputField(domain.InputFieldConfig{
+				ID:         "opis",
+				Name:       "opis",
+				Value:      model.OpisNew,
+				Disabled:   false,
+				FieldType:  "text",
+				ClassInput: common.ClassInputTextDisabled + " w-full",
 			})
 		</div>
 	</div>

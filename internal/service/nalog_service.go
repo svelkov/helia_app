@@ -31,13 +31,13 @@ type NalogViewData struct {
 // NalogService defines the interface for operations related to Fnal (Nalogs).
 type NalogService interface {
 	Service[domain.Fnal]
-	//GetNalogsViewData fetches all data required to render the Nalog list page.
-	GetNalogsViewData(c *gin.Context, searchQuery, selectedTipdok string, page, pageSize int, isInitialRequest bool) (NalogViewData, error)
+	//GetNalogViewData fetches all data required to render the Nalog list page.
+	GetNalogViewData(c *gin.Context, searchQuery, selectedTipdok string, page, pageSize int, isInitialRequest bool) (NalogViewData, error)
 	SetNalogIDFieldName(string)
 	SetSfTableFields([]domain.Fields)
 	GetNaloziTableFields() []domain.Fields
-	GetNalogsPrepisData(c *gin.Context, searchQuery string, page, pageSize int) (NalogViewData, error)
-	GetNalogsStorniranjeData(c *gin.Context, searchQuery string, page, pageSize int) (NalogViewData, error)
+	GetNalogPrepisData(c *gin.Context, searchQuery string, page, pageSize int) (NalogViewData, error)
+	GetNalogStornirajData(c *gin.Context, searchQuery string, page, pageSize int) (NalogViewData, error)
 	GetNextNalog(tipdok string) (int64, error)
 	GetTipdokOptions() ([]domain.Tipdok, error)
 	Validation(entity domain.Fnal) ([]domain.FieldError, error)
@@ -227,8 +227,8 @@ func (s *NalogResource) buildFnalWhere(searchQuery, tipdok string, args *[]inter
 	return strings.Join(conditions, " AND ")
 }
 
-// GetNalogsViewData fetches all data required to render the Nalog list page.
-func (s *NalogResource) GetNalogsViewData(c *gin.Context, searchQuery, selectedTipdok string, page, pageSize int, isInitialRequest bool) (NalogViewData, error) {
+// GetNalogViewData fetches all data required to render the Nalog list page.
+func (s *NalogResource) GetNalogViewData(c *gin.Context, searchQuery, selectedTipdok string, page, pageSize int, isInitialRequest bool) (NalogViewData, error) {
 	viewData := NalogViewData{
 		IsInitialLoad: isInitialRequest,
 	}
@@ -327,8 +327,8 @@ func (s *NalogResource) GetNalogsViewData(c *gin.Context, searchQuery, selectedT
 	return viewData, nil
 }
 
-// GetNalogsPrepisData fetches all data required to render the Nalog list page.
-func (s *NalogResource) GetNalogsPrepisData(c *gin.Context, searchQuery string, page, pageSize int) (NalogViewData, error) {
+// GetNalogPrepisData fetches all data required to render the Nalog list page.
+func (s *NalogResource) GetNalogPrepisData(c *gin.Context, searchQuery string, page, pageSize int) (NalogViewData, error) {
 	viewData := NalogViewData{
 		DefaultTipdok: "",
 	}
@@ -403,8 +403,8 @@ func (s *NalogResource) GetNalogsPrepisData(c *gin.Context, searchQuery string, 
 	return viewData, nil
 }
 
-// GetNalogsViewData fetches all data required to render the Nalog list page.
-func (s *NalogResource) GetNalogsStorniranjeData(c *gin.Context, searchQuery string, page, pageSize int) (NalogViewData, error) {
+// GetNalogStornirajData fetches all data required to render the Nalog list page.
+func (s *NalogResource) GetNalogStornirajData(c *gin.Context, searchQuery string, page, pageSize int) (NalogViewData, error) {
 	viewData := NalogViewData{
 		DefaultTipdok: "",
 	}
@@ -448,11 +448,11 @@ func (s *NalogResource) GetNalogsStorniranjeData(c *gin.Context, searchQuery str
 		Id:            "btn-storniraj",
 		HxRequestType: "POST",
 	}
-
 	// Additional table data configuration can happen here
 	table.URLGetAll = "/api/nalozi/storniranje"
 	table.Pagination.HxInclude = "#search-input"
 	table.HxInclude = "#search-input"
+	table.DetailTarget = "#nalozi_storniraj_stavke"
 	table.ShowActions = true // Default, can be overridden by specific handler needs
 	table.BtnAdd.IsVisible = false
 	table.BtnUpdate.IsVisible = true
@@ -460,6 +460,7 @@ func (s *NalogResource) GetNalogsStorniranjeData(c *gin.Context, searchQuery str
 	table.BtnPrint.IsVisible = false
 	table.BtnUpdate = btnStorniraj
 	table.BtnDelete.LabelText = "Obriši"
+	table.BtnUpdate.HxActionURL = "/api/nalozi/confirm-storniraj" // Set the HxActionURL for the update button
 	//table.Pagination.PageSizes = []int{5, 10, 20, 30, 50} // Example sizes
 	table.Pagination.PageSize = calculatedPageSize
 	table.Pagination.CurrentPage = currentPage
@@ -534,13 +535,13 @@ func (s *NalogResource) ValidateCopyNalog(danalStr, datobStr string, brNaloga in
 	// Parse and validate danal (naloga date)
 	var dPomDate time.Time
 	var err error
-	
+
 	if strings.Contains(danalStr, ".") {
 		dPomDate, err = time.Parse("02.01.2006", danalStr)
 	} else {
 		dPomDate, err = time.Parse("2006-01-02", danalStr)
 	}
-	
+
 	if err != nil {
 		fieldErrors = append(fieldErrors, domain.FieldError{
 			Field:        "danal",
@@ -562,7 +563,7 @@ func (s *NalogResource) ValidateCopyNalog(danalStr, datobStr string, brNaloga in
 	} else {
 		dPomDate, err = time.Parse("2006-01-02", datobStr)
 	}
-	
+
 	if err != nil {
 		fieldErrors = append(fieldErrors, domain.FieldError{
 			Field:        "datob",

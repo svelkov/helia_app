@@ -357,14 +357,14 @@ func (h *PrometHandler) AddRoutes(r *gin.Engine) {
 func GetTabData() domain.TabData {
 	return domain.TabData{
 		Tabs: []domain.TabItem{
-			{ID: "prometankonta", Label: "Promet an. konta", HXRequestUrl: fmt.Sprintf("%sanalitickakonta", prometURLPrefix), IsActive: true, Name: "analitickakonta"},
-			{ID: "prometankontami", Label: "Promet an. konta po MI", HXRequestUrl: fmt.Sprintf("%sanalitickakontami", prometURLPrefix), IsActive: false, Name: "analitickakontami"},
-			{ID: "deviznihanalitickihkonta", Label: "Promet deviznih an. konta", HXRequestUrl: fmt.Sprintf("%sdeviznihanalitickihkonta", prometURLPrefix), IsActive: false, Name: "deviznihanalitickihkonta"},
-			{ID: "subsintetickakonta", Label: "Promet subsintetičkih konta", HXRequestUrl: fmt.Sprintf("%ssubsintetickakonta", prometURLPrefix), IsActive: false, Name: "subsintetickakonta"},
-			{ID: "sintetickakonta", Label: "Promet sintetičkih konta", HXRequestUrl: fmt.Sprintf("%ssintetickakonta", prometURLPrefix), IsActive: false, Name: "sintetickakonta"},
+			{ID: "prometankonta", Label: "Analitičkih konta", HXRequestUrl: fmt.Sprintf("%sanalitickakonta", prometURLPrefix), IsActive: true, Name: "analitickakonta"},
+			{ID: "prometankontami", Label: "An. konta po MI", HXRequestUrl: fmt.Sprintf("%sanalitickakontami", prometURLPrefix), IsActive: false, Name: "analitickakontami"},
+			{ID: "deviznihanalitickihkonta", Label: "Deviznih an. konta", HXRequestUrl: fmt.Sprintf("%sdeviznihanalitickihkonta", prometURLPrefix), IsActive: false, Name: "deviznihanalitickihkonta"},
+			{ID: "subsintetickakonta", Label: "Subsintetičkih konta", HXRequestUrl: fmt.Sprintf("%ssubsintetickakonta", prometURLPrefix), IsActive: false, Name: "subsintetickakonta"},
+			{ID: "sintetickakonta", Label: "Sintetičkih konta", HXRequestUrl: fmt.Sprintf("%ssintetickakonta", prometURLPrefix), IsActive: false, Name: "sintetickakonta"},
 			{ID: "karticasintetickihkonta", Label: "Kartica sintetičkih konta", HXRequestUrl: fmt.Sprintf("%skarticasintetickihkonta", prometURLPrefix), IsActive: false, Name: "karticasintetickihkonta"},
-			{ID: "kontapovrd", Label: "Promet konta po VRD", HXRequestUrl: fmt.Sprintf("%skontapovrd", prometURLPrefix), IsActive: false, Name: "kontapovrd"},
-			{ID: "kontaanaliticki", Label: "Promet konta analitički", HXRequestUrl: fmt.Sprintf("%skontaanaliticki", prometURLPrefix), IsActive: false, Name: "kontaanaliticki"},
+			{ID: "kontapovrd", Label: "Konta po VRD", HXRequestUrl: fmt.Sprintf("%skontapovrd", prometURLPrefix), IsActive: false, Name: "kontapovrd"},
+			{ID: "kontaanaliticki", Label: "Konta analitički", HXRequestUrl: fmt.Sprintf("%skontaanaliticki", prometURLPrefix), IsActive: false, Name: "kontaanaliticki"},
 		},
 	}
 }

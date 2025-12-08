@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
@@ -366,4 +367,31 @@ func ValidateRequiredParams(c *gin.Context, paramNames []string) []domain.FieldE
 	}
 
 	return fieldsError
+}
+
+// GetCsrfToken retrieves the CSRF token from the Gin context
+func GetCsrfToken(c *gin.Context) string {
+	token, exists := c.Get("csrf_token")
+	if !exists {
+		return ""
+	}
+	if tokenStr, ok := token.(string); ok {
+		return tokenStr
+	}
+	return ""
+}
+
+// GetCsrfTokenFromSession retrieves the CSRF token from session first, then fallback to context
+func GetCsrfTokenFromSession(c *gin.Context) string {
+	session := sessions.Default(c)
+	csrfToken := ""
+	if token := session.Get("csrf_token"); token != nil {
+		if tokenStr, ok := token.(string); ok {
+			csrfToken = tokenStr
+		}
+	}
+	if csrfToken == "" {
+		csrfToken = GetCsrfToken(c)
+	}
+	return csrfToken
 }

@@ -13,12 +13,13 @@ templ NumericInputField(id string, value float64, decimals int, disabled bool, c
 	<input
 		id={ id }
 		name={ id }
-		type="text"
-		pattern="[0-9]*"
+		type="number"
+		step="0.01"
+		inputmode="decimal"
 		if disabled {
 			disabled
 		}
-		class={ classString }
+		class={ classString + " [&::-webkit-outer-spin-button]:hidden [&::-webkit-inner-spin-button]:hidden" }
 		value={ common.FormatNumberWithSystemLocale(value, decimals) }
 	/>
 }

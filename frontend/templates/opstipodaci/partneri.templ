@@ -404,7 +404,7 @@ templ PartneriForm(partneriData domain.Partneri, dialog domain.Dialog, btnSave, 
 										TabIndex:   "16",
 									})
 								</div>
-                                <!-- BPG -->
+								<!-- BPG -->
 								<div class="flex items-center gap-1">
 									@tmpl.LabelField(domain.LabelFieldConfig{
 										ID:         "indeks",
@@ -420,7 +420,7 @@ templ PartneriForm(partneriData domain.Partneri, dialog domain.Dialog, btnSave, 
 										MaxLength:  "20",
 										TabIndex:   "16",
 									})
-                                    @tmpl.LabelField(domain.LabelFieldConfig{
+									@tmpl.LabelField(domain.LabelFieldConfig{
 										ID:         "sifrakodpartnera",
 										LabelText:  translator.Label("Šifra kod partnera"),
 										ClassLabel: common.ClassLabel + " w-34 flex-shrink-0",
@@ -450,7 +450,16 @@ templ PartneriForm(partneriData domain.Partneri, dialog domain.Dialog, btnSave, 
 										LabelText:  translator.Label("Kredit limit"),
 										ClassLabel: common.ClassLabel + " w-52 flex-shrink-0",
 									})
-									@tmpl.NumericInputField("limitkredita", 0.00, 2, false, common.ClassInputTextEnabled+" flex-1 text-xs")
+									@tmpl.NumericInputField(domain.InputFieldConfig{
+										ID:            "limitkredita",
+										Name:          "limitkredita",
+										FieldType:     "number",
+										Disabled:      false,
+										ClassInput:    common.ClassInputTextEnabled,
+										Value:         "0.00",
+										DecimalPlaces: 2,
+										TabIndex:      "17",
+									})
 								</div>
 								<!-- Limit na dospela potraživa -->
 								<div class="flex items-center gap-1">
@@ -459,7 +468,16 @@ templ PartneriForm(partneriData domain.Partneri, dialog domain.Dialog, btnSave, 
 										LabelText:  translator.Label("Limit na dospela potraživanja"),
 										ClassLabel: common.ClassLabel + " w-52 flex-shrink-0",
 									})
-									@tmpl.NumericInputField("limitdospela", 0.00, 2, false, common.ClassInputTextEnabled)
+									@tmpl.NumericInputField(domain.InputFieldConfig{
+										ID:            "limitdospela",
+										Name:          "limitdospela",
+										FieldType:     "number",
+										Disabled:      false,
+										ClassInput:    common.ClassInputTextEnabled,
+										Value:         "0.00",
+										DecimalPlaces: 2,
+										TabIndex:      "18",
+									})
 								</div>
 								<!-- Valuta plaćanja prodaja + Rabat -->
 								<div class="flex items-center gap-1">
@@ -468,13 +486,31 @@ templ PartneriForm(partneriData domain.Partneri, dialog domain.Dialog, btnSave, 
 										LabelText:  translator.Label("Valuta placanja (prodaja)"),
 										ClassLabel: common.ClassLabel + " w-44 flex-shrink-0",
 									})
-									@tmpl.NumericInputField("valutaprodaja", 0.00, 2, false, common.ClassInputTextEnabled)
+									@tmpl.NumericInputField(domain.InputFieldConfig{
+										ID:            "valutaprodaja",
+										Name:          "valutaprodaja",
+										FieldType:     "number",
+										Disabled:      false,
+										ClassInput:    common.ClassInputTextEnabled,
+										Value:         "0.00",
+										DecimalPlaces: 2,
+										TabIndex:      "18",
+									})
 									@tmpl.LabelField(domain.LabelFieldConfig{
 										ID:         "rabatprodaja",
 										LabelText:  translator.Label("Ugovoreni Rabat %"),
 										ClassLabel: common.ClassLabel + " w-28 flex-shrink-0",
 									})
-									@tmpl.NumericInputField("rabatprodaja", 0.00, 2, false, common.ClassInputTextEnabled)
+									@tmpl.NumericInputField(domain.InputFieldConfig{
+										ID:            "rabatprodaja",
+										Name:          "rabatprodaja",
+										FieldType:     "number",
+										Disabled:      false,
+										ClassInput:    common.ClassInputTextEnabled,
+										Value:         "0.00",
+										DecimalPlaces: 2,
+										TabIndex:      "18",
+									})
 								</div>
 								<!-- Valuta plaćanja nabavka + Rabat -->
 								<div class="flex items-center gap-1">
@@ -483,13 +519,31 @@ templ PartneriForm(partneriData domain.Partneri, dialog domain.Dialog, btnSave, 
 										LabelText:  translator.Label("Valuta placanja (nabavka)"),
 										ClassLabel: common.ClassLabel + " w-44 flex-shrink-0",
 									})
-									@tmpl.NumericInputField("valutanabavka", 0.00, 2, false, common.ClassInputTextEnabled)
+									@tmpl.NumericInputField(domain.InputFieldConfig{
+										ID:            "valutanabavka",
+										Name:          "valutanabavka",
+										FieldType:     "number",
+										Disabled:      false,
+										ClassInput:    common.ClassInputTextEnabled,
+										Value:         "0.00",
+										DecimalPlaces: 2,
+										TabIndex:      "19",
+									})
 									@tmpl.LabelField(domain.LabelFieldConfig{
 										ID:         "rabatnaabavka",
 										LabelText:  translator.Label("Procenat marze %"),
 										ClassLabel: common.ClassLabel + " w-28",
 									})
-									@tmpl.NumericInputField("rabatnaabavka", 0.00, 2, false, common.ClassInputTextEnabled)
+									@tmpl.NumericInputField(domain.InputFieldConfig{
+										ID:            "rabatnaabavka",
+										Name:          "rabatnaabavka",
+										FieldType:     "number",
+										Disabled:      false,
+										ClassInput:    common.ClassInputTextEnabled,
+										Value:         "0.00",
+										DecimalPlaces: 2,
+										TabIndex:      "19",
+									})
 								</div>
 								<!-- Komercijalista -->
 								<div class="flex items-center gap-1">

@@ -5,35 +5,40 @@ type TableRow struct {
 	Fields    []string
 	HasUpdate bool
 	HasDelete bool
+	ClassRow  string
 }
 
 type TableData struct {
-	ContentTitle   string
-	TableID        string
-	Headers        []Fields
-	Rows           []TableRow
-	Pagination     PaginationData
-	URLPrefix      string
-	URLGetAll      string
-	HxInclude      string
-	HxTarget       string
-	BtnAdd         Button
-	BtnUpdate      Button
-	BtnDelete      Button
-	BtnPrint       Button
-	BtnExportExcel Button
-	BtnExportPDF   Button
-	SearchEnabled  bool
-	ShowActions    bool
-	ShowPagination bool
-	DetailTarget   string
-	DetailURL      string
-	ExportFilename string
-	HasExportExcel bool
-	HasExportPdf   bool
-	FuncClick      string
-	FuncDblClick   string
-	DestField      string //use for popup dialog to return the value in the control
+	ContentTitle        string
+	TableID             string
+	Headers             []Fields
+	Rows                []TableRow
+	Pagination          PaginationData
+	URLPrefix           string
+	URLGetAll           string
+	HxInclude           string
+	HxTarget            string
+	BtnAdd              Button
+	BtnUpdate           Button
+	BtnDelete           Button
+	BtnPrint            Button
+	BtnExportExcel      Button
+	BtnExportPDF        Button
+	SearchEnabled       bool
+	ShowActions         bool
+	ShowPagination      bool
+	HxVals              string
+	DetailTarget        string
+	DetailURL           string
+	DetailHxRequestType string
+	DetailHxTrigger     string
+	DetailHxSwap        string
+	ExportFilename      string
+	HasExportExcel      bool
+	HasExportPdf        bool
+	FuncClick           string
+	FuncDblClick        string
+	DestField           string //use for popup dialog to return the value in the control
 }
 
 type PaginationData struct {
@@ -71,6 +76,7 @@ type InputControl struct {
 	HxSwap       string
 	HxTrigger    string
 	HxInclude    string
+	HxVals       string
 	Autocomplete string
 	OnKeyUp      string
 	Class        string

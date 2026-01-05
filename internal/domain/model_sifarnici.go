@@ -16,14 +16,14 @@ type Firma struct {
 	Firme []FvrFirma `json:"firme"`
 }
 type FvrFirma struct {
-	IDFirma int    `json:"idfirma" db:"idfvr"`
-	Godine     []Godina  `json:"god" db:"god"`
-	Naziv   string `json:"naziv" db:"naziv"`
-	Adresa  string `json:"adresa" db:"adresa"`
+	IDFirma int      `json:"idfirma" db:"idfvr"`
+	Godine  []Godina `json:"god" db:"god"`
+	Naziv   string   `json:"naziv" db:"naziv"`
+	Adresa  string   `json:"adresa" db:"adresa"`
 }
-type Godina	 struct {
-	God int `json:"god" db:"god"`
-	Kar     []int  `json:"kar" db:"kar"`
+type Godina struct {
+	God int   `json:"god" db:"god"`
+	Kar []int `json:"kar" db:"kar"`
 }
 
 // Drzave Model
@@ -125,15 +125,15 @@ type Tipdok struct {
 	IDTipDok   int            `json:"id_tip_dok" db:"idtipdok"`
 	God        int            `json:"god" db:"god"`
 	Kar        int            `json:"kar" db:"kar"`
-	TipDok     string         `json:"tip_dok" db:"tipdok"`
-	Opis       string         `json:"opis" db:"opis"`
+	TipDok     string         `form:"tipdok" json:"tip_dok" db:"tipdok"`
+	Opis       string         `form:"opis" json:"opis" db:"opis"`
 	XDatUnosa  sql.NullTime   `json:"xdat_unosa" db:"xdatunosa"`
 	XDatIzmene sql.NullTime   `json:"xdat_izmene" db:"xdatizmene"`
 	XOpuNos    string         `json:"xop_unos" db:"xopunos"`
 	XOpIzmene  sql.NullString `json:"xop_izmene" db:"xopizmene"`
-	GrpDok     string         `json:"grp_dok" db:"grpdok"`
-	GrpVrd     string         `json:"grp_vrd" db:"grpvrd"`
-	Magacin    string         `json:"magacin" db:"magacin"`
+	GrpDok     string         `form:"grpdok" json:"grp_dok" db:"grpdok"`
+	GrpVrd     string         `form:"grpvrd" json:"grp_vrd" db:"grpvrd"`
+	Magacin    string         `form:"magacin" json:"magacin" db:"magacin"`
 }
 
 // Dokvrsta Model

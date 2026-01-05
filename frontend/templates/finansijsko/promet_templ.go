@@ -332,7 +332,7 @@ func PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.FormPrintButton(btnPrint, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.PrintButton(btnPrint, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -585,7 +585,7 @@ func AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.FormPrintButton(btnPrint, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.PrintButton(btnPrint, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -747,7 +747,7 @@ func PrometDeviznihAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, t
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.FormPrintButton(btnPrint, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.PrintButton(btnPrint, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -890,7 +890,7 @@ func PrometSubsintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPri
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.FormPrintButton(btnPrint, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.PrintButton(btnPrint, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1025,7 +1025,7 @@ func PrometSintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.FormPrintButton(btnPrint, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.PrintButton(btnPrint, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1160,7 +1160,7 @@ func KarticaSintetickiKonta(tabs domain.TabData, tbl domain.TableData, btnPrint,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.FormPrintButton(btnPrint, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.PrintButton(btnPrint, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1423,7 +1423,7 @@ func PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.FormPrintButton(btnPrint, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.PrintButton(btnPrint, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1528,15 +1528,33 @@ func TotalValues(total domain.PrometTotalValues, translator *i18n.Service) templ
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField("dugujedo", total.DugDo, 2, true, common.ClassInputNumericDisabled).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+			ID:            "dugujedo",
+			Value:         fmt.Sprintf("%.2f", total.DugDo),
+			DecimalPlaces: 2,
+			Disabled:      true,
+			ClassInput:    common.ClassInputNumericDisabled,
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField("potrazujedo", total.PotDo, 2, true, common.ClassInputNumericDisabled).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+			ID:            "potrazujedo",
+			Value:         fmt.Sprintf("%.2f", total.PotDo),
+			DecimalPlaces: 2,
+			Disabled:      true,
+			ClassInput:    common.ClassInputNumericDisabled,
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField("saldodo", total.SaldoDo, 2, true, common.ClassInputNumericDisabled).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+			ID:            "saldodo",
+			Value:         fmt.Sprintf("%.2f", total.SaldoDo),
+			DecimalPlaces: 2,
+			Disabled:      true,
+			ClassInput:    common.ClassInputNumericDisabled,
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1547,7 +1565,7 @@ func TotalValues(total domain.PrometTotalValues, translator *i18n.Service) templ
 		var templ_7745c5c3_Var23 string
 		templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Promet za period"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/promet.templ`, Line: 830, Col: 76}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/promet.templ`, Line: 848, Col: 76}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 		if templ_7745c5c3_Err != nil {
@@ -1557,15 +1575,33 @@ func TotalValues(total domain.PrometTotalValues, translator *i18n.Service) templ
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField("dugujeperiod", total.DugPer, 2, true, common.ClassInputNumericDisabled).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+			ID:            "dugujeperiod",
+			Value:         fmt.Sprintf("%.2f", total.DugPer),
+			DecimalPlaces: 2,
+			Disabled:      true,
+			ClassInput:    common.ClassInputNumericDisabled,
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField("potrazujeperiod", total.PotPer, 2, true, common.ClassInputNumericDisabled).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+			ID:            "potrazujeperiod",
+			Value:         fmt.Sprintf("%.2f", total.PotPer),
+			DecimalPlaces: 2,
+			Disabled:      true,
+			ClassInput:    common.ClassInputNumericDisabled,
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField("saldoperiod", total.SaldoPer, 2, true, common.ClassInputNumericDisabled).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+			ID:            "saldoperiod",
+			Value:         fmt.Sprintf("%.2f", total.SaldoPer),
+			DecimalPlaces: 2,
+			Disabled:      true,
+			ClassInput:    common.ClassInputNumericDisabled,
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1576,7 +1612,7 @@ func TotalValues(total domain.PrometTotalValues, translator *i18n.Service) templ
 		var templ_7745c5c3_Var24 string
 		templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Ukupan promet"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/promet.templ`, Line: 836, Col: 73}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/promet.templ`, Line: 872, Col: 73}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 		if templ_7745c5c3_Err != nil {
@@ -1586,15 +1622,33 @@ func TotalValues(total domain.PrometTotalValues, translator *i18n.Service) templ
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField("dugujeukupno", total.DugTot, 2, true, common.ClassInputNumericDisabled).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+			ID:            "dugujeukupno",
+			Value:         fmt.Sprintf("%.2f", total.DugTot),
+			DecimalPlaces: 2,
+			Disabled:      true,
+			ClassInput:    common.ClassInputNumericDisabled,
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField("potrazujeukupno", total.PotTot, 2, true, common.ClassInputNumericDisabled).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+			ID:            "potrazujeukupno",
+			Value:         fmt.Sprintf("%.2f", total.PotTot),
+			DecimalPlaces: 2,
+			Disabled:      true,
+			ClassInput:    common.ClassInputNumericDisabled,
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField("saldoukupno", total.SaldoTot, 2, true, common.ClassInputNumericDisabled).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+			ID:            "saldoukupno",
+			Value:         fmt.Sprintf("%.2f", total.SaldoTot),
+			DecimalPlaces: 2,
+			Disabled:      true,
+			ClassInput:    common.ClassInputNumericDisabled,
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

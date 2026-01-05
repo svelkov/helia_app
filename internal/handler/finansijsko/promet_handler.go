@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 
-	tmpl "helia/frontend/templates"
 	tmpl_fin "helia/frontend/templates/finansijsko"
 	"helia/internal/common"
 	"helia/internal/domain"
@@ -313,27 +312,6 @@ func (h *PrometHandler) PrometTotalValues(c *gin.Context) {
 	}
 
 }
-func (h *PrometHandler) SearchButtonDialog(c *gin.Context) {
-	hxVals := ""
-	vkonta := c.Query("vkonta")
-	konto := c.Query("konto")
-	queryParams := c.Request.URL.Query()
-	id := ""
-	placeholder := "trazi konto..."
-	if _, exists := queryParams["search-konto"]; exists {
-		// Parameter exists (even if empty)
-		id = "konto"
-		placeholder = "trazi konto..."
-	}
-	if _, exists := queryParams["search-sifra"]; exists {
-		// Parameter exists (even if empty)
-		id = "sifra"
-		placeholder = "trazi sifru..."
-	}
-	hxVals = fmt.Sprintf(`{"konto": "%s", "vkonta": "%s"}`, konto, vkonta)
-	tmpl.SearchButtonDialog(id, id, placeholder, "/api/fkpl/trazikontosearchtable", "#search-results", "innerHTML", hxVals, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
-
-}
 
 func (h *PrometHandler) AddRoutes(r *gin.Engine) {
 	// Create API group with prefix
@@ -350,7 +328,7 @@ func (h *PrometHandler) AddRoutes(r *gin.Engine) {
 	r.GET("/api/promet/karticasintetickihkonta", h.KarticaSintetickihKonta)
 	r.GET("/api/promet/kontaanaliticki", h.PrometKontaAnaliticki)
 	r.GET("/api/promet/totalvalues", h.PrometTotalValues)
-	r.GET("/api/promet/searchbutton", h.SearchButtonDialog)
+	r.GET("/api/promet/searchbutton", utils.SearchButtonDialog)
 
 }
 

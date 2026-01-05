@@ -5,10 +5,13 @@ import (
 	"fmt"
 	"helia/internal/common"
 	"helia/internal/domain"
+	"helia/internal/i18n"
 	"helia/internal/service"
 	"net/http"
 	"strconv"
 	"strings"
+
+	tmpl "helia/frontend/templates"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/schema"
@@ -226,7 +229,7 @@ func UpdateHelper[T any](
 		return
 	}
 	// Parse request body
-	if err := c.ShouldBindJSON(entity); err != nil {
+	if err := c.ShouldBind(entity); err != nil {
 		common.WriteJSONResponse(c, http.StatusBadRequest, false, nil, err.Error())
 		return
 	}
@@ -370,4 +373,21 @@ func GetEntityHelper[T any](
 		return
 	}
 	c.JSON(http.StatusOK, entity)
+}
+
+func SearchButtonDialog(c *gin.Context) {
+	hxVals := ""
+	vkonta := c.Query("vkonta")
+	konto := c.Query("konto")
+	queryParams := c.Request.URL.Query()
+	id := ""
+	placeholder := "trazi konto..."
+	if _, exists := queryParams["search-konto"]; exists {
+		// Parameter exists (even if empty)
+		id = "konto"
+		placeholder = "trazi konto..."
+	}
+	hxVals = fmt.Sprintf(`{"konto": "%s", "vkonta": "%s"}`, konto, vkonta)
+	tmpl.SearchButtonDialog(id, id, placeholder, "/api/fkpl/trazikontosearchtable", "#search-results", "innerHTML", hxVals, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+
 }

@@ -11,7 +11,7 @@ import templruntime "github.com/a-h/templ/runtime"
 import "helia/internal/domain"
 import "helia/internal/i18n"
 
-func Dialog(id string, content templ.Component, dialog domain.Dialog, btnConfirm, btnCancel, btnClose domain.Button, translator *i18n.Service) templ.Component {
+func Dialog(id, csrfToken string, content templ.Component, dialog domain.Dialog, btnConfirm, btnCancel, btnClose domain.Button, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -115,7 +115,20 @@ func Dialog(id string, content templ.Component, dialog domain.Dialog, btnConfirm
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "\" hx-target=\"#info-message\" hx-boost=\"false\" onsubmit=\"return false;\" class=\"grid grid-cols-1 md:grid-cols-[auto,auto] gap-2 gap-x-4 p-3 bg-white shadow-lg rounded-lg w-auto\"><div class=\"px-1 py-1 col-span-2 max-h-[70vh] overflow-y-auto\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "\" hx-target=\"#info-message\" hx-boost=\"false\" onsubmit=\"return false;\" class=\"grid grid-cols-1 md:grid-cols-[auto,auto] gap-2 gap-x-4 p-3 bg-white shadow-lg rounded-lg w-auto\"><input type=\"hidden\" name=\"_csrf\" value=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var6 string
+		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(csrfToken)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/dialogs.templ`, Line: 29, Col: 55}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "\"><div class=\"px-1 py-1 col-span-2 max-h-[70vh] overflow-y-auto\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -123,7 +136,7 @@ func Dialog(id string, content templ.Component, dialog domain.Dialog, btnConfirm
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</div><div class=\"bg-white col-span-2 px-3 py-3 flex justify-end space-x-1 pt-4\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</div><div class=\"bg-white col-span-2 px-3 py-3 flex justify-end space-x-1 pt-4\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -135,7 +148,7 @@ func Dialog(id string, content templ.Component, dialog domain.Dialog, btnConfirm
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</div></form></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</div></form></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -151,7 +164,7 @@ func Dialog(id string, content templ.Component, dialog domain.Dialog, btnConfirm
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "<script>\r\n\t\tdocument.addEventListener(\"keydown\", function (event) {\r\n\t\t\tif (event.key === \"Enter\") {\r\n\t\t\t\tevent.preventDefault();\r\n\r\n\t\t\t\t// Find all input fields inside the dialog\r\n\t\t\t\tconst inputs = Array.from(document.querySelectorAll(\"#addupdate-dialog input\"));\r\n\t\t\t\t// Filter out any non-focusable elements (just in case)\r\n\t\t\t\tconst focusableInputs = inputs.filter(input => \r\n\t\t\t\t\t!input.disabled && \r\n\t\t\t\t\tinput.getAttribute('tabindex') !== '-1' && \r\n\t\t\t\t\tinput.offsetParent !== null // checks if element is visible\r\n\t\t\t\t);\r\n\r\n\t\t\t\t// Sort inputs by `tabindex` (if defined), else use DOM order\r\n\t\t\t\tfocusableInputs.sort((a, b) => {\r\n\t\t\t\t\tconst aIndex = parseInt(a.getAttribute(\"tabindex\") || \"9999\", 10);\r\n\t\t\t\t\tconst bIndex = parseInt(b.getAttribute(\"tabindex\") || \"9999\", 10);\r\n\t\t\t\t\treturn aIndex - bIndex;\r\n\t\t\t\t});\r\n\r\n\t\t\t\t// Get the currently focused element\r\n\t\t\t\tconst currentInput = document.activeElement;\r\n\r\n\t\t\t\t// Find the current input's index in the sorted list\r\n\t\t\t\tconst currentIndex = focusableInputs.indexOf(currentInput);\r\n\r\n\t\t\t\tif (currentIndex !== -1) {\r\n\t\t\t\t\t// Move to next input or wrap around\r\n\t\t\t\t\tconst nextIndex = (currentIndex + 1) % focusableInputs.length;\r\n\t\t\t\t\tfocusableInputs[nextIndex].focus();\r\n\t\t\t\t} else if (focusableInputs.length > 0) {\r\n\t\t\t\t\t// If no input currently focused, focus the first one\r\n\t\t\t\t\tfocusableInputs[0].focus();\r\n\t\t\t\t}\r\n\t\t\t}\r\n\t\t});\r\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<script>\r\n\t\tdocument.addEventListener(\"keydown\", function (event) {\r\n\t\t\tif (event.key === \"Enter\") {\r\n\t\t\t\tevent.preventDefault();\r\n\r\n\t\t\t\t// Find all input fields inside the dialog\r\n\t\t\t\tconst inputs = Array.from(document.querySelectorAll(\"#addupdate-dialog input\"));\r\n\t\t\t\t// Filter out any non-focusable elements (just in case)\r\n\t\t\t\tconst focusableInputs = inputs.filter(input => \r\n\t\t\t\t\t!input.disabled && \r\n\t\t\t\t\tinput.getAttribute('tabindex') !== '-1' && \r\n\t\t\t\t\tinput.offsetParent !== null // checks if element is visible\r\n\t\t\t\t);\r\n\r\n\t\t\t\t// Sort inputs by `tabindex` (if defined), else use DOM order\r\n\t\t\t\tfocusableInputs.sort((a, b) => {\r\n\t\t\t\t\tconst aIndex = parseInt(a.getAttribute(\"tabindex\") || \"9999\", 10);\r\n\t\t\t\t\tconst bIndex = parseInt(b.getAttribute(\"tabindex\") || \"9999\", 10);\r\n\t\t\t\t\treturn aIndex - bIndex;\r\n\t\t\t\t});\r\n\r\n\t\t\t\t// Get the currently focused element\r\n\t\t\t\tconst currentInput = document.activeElement;\r\n\r\n\t\t\t\t// Find the current input's index in the sorted list\r\n\t\t\t\tconst currentIndex = focusableInputs.indexOf(currentInput);\r\n\r\n\t\t\t\tif (currentIndex !== -1) {\r\n\t\t\t\t\t// Move to next input or wrap around\r\n\t\t\t\t\tconst nextIndex = (currentIndex + 1) % focusableInputs.length;\r\n\t\t\t\t\tfocusableInputs[nextIndex].focus();\r\n\t\t\t\t} else if (focusableInputs.length > 0) {\r\n\t\t\t\t\t// If no input currently focused, focus the first one\r\n\t\t\t\t\tfocusableInputs[0].focus();\r\n\t\t\t\t}\r\n\t\t\t}\r\n\t\t});\r\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -175,51 +188,51 @@ func DialogConfirm(message []string, dialog domain.Dialog, btnClose, btnConfirm,
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var6 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var6 == nil {
-			templ_7745c5c3_Var6 = templ.NopComponent
+		templ_7745c5c3_Var7 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var7 == nil {
+			templ_7745c5c3_Var7 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<form><input type=\"hidden\" name=\"_csrf\" value=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var7 string
-		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(csrfToken)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/dialogs.templ`, Line: 84, Col: 53}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "\"><div id=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<form><input type=\"hidden\" name=\"_csrf\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var8 string
-		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.Id)
+		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(csrfToken)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/dialogs.templ`, Line: 85, Col: 21}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/dialogs.templ`, Line: 85, Col: 53}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "\" class=\"fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4\"><div class=\"bg-white rounded-lg shadow-2xl w-[50vw] max-w-[220px] mx-auto sm:max-w-md md:max-w-sm relative animate-fade-in\"><!-- Title Bar (Flush on Left, Top, Right) --><div class=\"bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg\"><h2 class=\"text-lg font-semibold ml-4\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "\"><div id=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var9 string
-		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Title(dialog.Title))
+		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.Id)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/dialogs.templ`, Line: 89, Col: 76}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/dialogs.templ`, Line: 86, Col: 21}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</h2>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "\" class=\"fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4\"><div class=\"bg-white rounded-lg shadow-2xl w-[50vw] max-w-[220px] mx-auto sm:max-w-md md:max-w-sm relative animate-fade-in\"><!-- Title Bar (Flush on Left, Top, Right) --><div class=\"bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg\"><h2 class=\"text-lg font-semibold ml-4\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var10 string
+		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Title(dialog.Title))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/dialogs.templ`, Line: 90, Col: 76}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</h2>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -227,26 +240,26 @@ func DialogConfirm(message []string, dialog domain.Dialog, btnClose, btnConfirm,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</div><!-- Content --><div class=\"px-1 py-1 col-span-2 max-h-[60vh] overflow-y-auto\"><p class=\"mt-3 mb-3 ml-3 text-xl flex items-center gap-2\"><svg class=\"w-[40px] h-[40px] text-gray-800 dark:text-white\" aria-hidden=\"true\" xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" fill=\"none\" viewBox=\"0 0 24 24\"><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M9.529 9.988a2.502 2.502 0 1 1 5 .191A2.441 2.441 0 0 1 12 12.582V14m-.01 3.008H12M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z\"></path></svg> ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</div><!-- Content --><div class=\"px-1 py-1 col-span-2 max-h-[60vh] overflow-y-auto\"><p class=\"mt-3 mb-3 ml-3 text-xl flex items-center gap-2\"><svg class=\"w-[40px] h-[40px] text-gray-800 dark:text-white\" aria-hidden=\"true\" xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" fill=\"none\" viewBox=\"0 0 24 24\"><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M9.529 9.988a2.502 2.502 0 1 1 5 .191A2.441 2.441 0 0 1 12 12.582V14m-.01 3.008H12M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z\"></path></svg> ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		for _, msg := range message {
-			var templ_7745c5c3_Var10 string
-			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(msg)
+			var templ_7745c5c3_Var11 string
+			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(msg)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/dialogs.templ`, Line: 99, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/dialogs.templ`, Line: 100, Col: 12}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<br>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "<br>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</p></div><div class=\"bg-white col-span-2 px-3 py-3 flex justify-end space-x-1 pt-4\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</p></div><div class=\"bg-white col-span-2 px-3 py-3 flex justify-end space-x-1 pt-4\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -258,7 +271,7 @@ func DialogConfirm(message []string, dialog domain.Dialog, btnClose, btnConfirm,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</div></div></div></form>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</div></div></div></form>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

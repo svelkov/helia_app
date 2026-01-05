@@ -3,6 +3,8 @@ package repository
 import (
 	"fmt"
 	"helia/internal/domain"
+	"reflect"
+	"strings"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -28,16 +30,34 @@ const (
 
 // Base implementation
 type BaseRepository[T any] struct {
-	DB        *sqlx.DB
-	TableName string
+	DB         *sqlx.DB
+	TableName  string
+	fieldCache map[string]reflect.StructField
 }
 
 // NewBaseRepository creates a new instance of BaseRepository.
 func NewBaseRepository[T any](db *sqlx.DB, tableName string) *BaseRepository[T] {
-	return &BaseRepository[T]{
-		DB:        db,
-		TableName: tableName,
+	br := &BaseRepository[T]{
+		DB:         db,
+		TableName:  tableName,
+		fieldCache: make(map[string]reflect.StructField),
 	}
+	// Initialize cache using generic type
+	var entity T
+	entityType := reflect.TypeOf(entity)
+	if entityType.Kind() == reflect.Ptr {
+		entityType = entityType.Elem()
+	}
+
+	for i := 0; i < entityType.NumField(); i++ {
+		field := entityType.Field(i)
+		br.fieldCache[strings.ToLower(field.Name)] = field
+	}
+
+	return br
+}
+func (r *BaseRepository[T]) GetFieldCache() map[string]reflect.StructField {
+	return r.fieldCache
 }
 
 func (r *BaseRepository[T]) GetByID(idField string, idValue interface{}) (*T, error) {
@@ -53,8 +73,7 @@ func (r *BaseRepository[T]) GetByID(idField string, idValue interface{}) (*T, er
 
 func (r *BaseRepository[T]) GetAll(pageSize int, offset int, tableFields []domain.Fields, idField string, searchParams ...string) (*[]T, error) {
 	var entity []T
-	args := []interface{}{}
-	query := r.CreateGetAll(&args, tableFields, idField, searchParams...)
+	query, args := r.CreateGetAll(tableFields, idField, searchParams...)
 	param := len(args) + 1
 
 	endPaging := ""
@@ -85,9 +104,8 @@ func (r *BaseRepository[T]) GetAllCustom(queryText, whereText string, args []int
 }
 
 func (r *BaseRepository[T]) GetTotalRecords(tableFields []domain.Fields, searchParams ...string) (int, error) {
-	args := []interface{}{}
 	countRec := 0
-	query := r.CreateGetCountRecords(tableFields, &args, searchParams...)
+	query, args := r.CreateGetCountRecords(tableFields, searchParams...)
 
 	// Execute the query
 	err := r.DB.Get(&countRec, query, args...)
@@ -138,7 +156,7 @@ func doTransaction(db *sqlx.DB, actionType, idField, query string, values ...int
 		return 0, fmt.Errorf("could not begin transaction: %v", err)
 	}
 	defer tx.Rollback() // Ensures rollback if commit isn't reached
-
+	fmt.Println(query, values)
 	// Execute the query with provided values
 	if actionType == ActionTypeDelete || actionType == ActionTypeUpdate {
 		_, err := tx.Exec(query, values...)

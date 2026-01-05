@@ -113,8 +113,14 @@ type Response struct {
 }
 
 // UserClaims defines the claims (data) stored in the JWT.
+// For access tokens: Contains username and CSRF hash
+// For refresh tokens: Contains username only with type="refresh" claim
 type UserClaims struct {
-	Username string `json:"username"`
+	Username  string `json:"username"`
+	UserID    int    `json:"user_id"`
+	Email     string `json:"email"`
+	TokenType string `json:"token_type"` // "access" or "refresh"
+	CSRFHash  string `json:"csrf_hash"`  // SHA256 hash of CSRF token (access tokens only)
 	jwt.RegisteredClaims
 }
 
@@ -182,37 +188,54 @@ type InputFieldConfig struct {
 	TabIndex         string
 	HxOnAfterRequest string
 	OnInput          string
+	DecimalPlaces    int
 }
 
 type ComboFieldConfig struct {
-	ID              string
-	Name            string
-	Required        bool
-	Placeholder     string
-	Pattern         string
-	Value           string
-	LabelText       string
-	FieldType       string
-	HasLabel        bool
-	Disabled        bool
-	ClassSelect     string
-	ClassLabel      string
-	BlurEndpoint    string
-	OptionsEndpoint string
-	OptionValues    []ComboItem
-	SelectedValue   string
-	ChangeEndpoint  string
-	HxTarget        string
-	HxChangeTarget  string
-	HxVals          string
-	HxInclude       string
-	HxSwap          string
-	HxParams        string
-	HxGet           string
-	HxTrigger       string
-	MinLength       string
-	MaxLength       string
-	TabIndex        string
+	ID               string
+	Name             string
+	Required         bool
+	Placeholder      string
+	Pattern          string
+	Value            string
+	LabelText        string
+	FieldType        string
+	HasLabel         bool
+	Disabled         bool
+	ClassSelect      string
+	ClassLabel       string
+	BlurEndpoint     string
+	OptionsEndpoint  string
+	OptionValues     []ComboItem
+	SelectedValue    string
+	ChangeEndpoint   string
+	HxTarget         string
+	HxChangeTarget   string
+	HxVals           string
+	HxInclude        string
+	HxOnAfterRequest string
+	HxSwap           string
+	HxParams         string
+	HxGet            string
+	HxTrigger        string
+	MinLength        string
+	MaxLength        string
+	TabIndex         string
+}
+type CheckboxConfig struct {
+	ID                string
+	Name              string
+	LabelText         string
+	ClassLabel        string
+	ClassCheckbox     string
+	ClassCheckboxSpan string
+	IsChecked         bool
+	Disabled          bool
+	OnChange          string
+	OnChangeEndpoint  string
+	HxTarget          string
+	HxSwap            string
+	HxVals            string
 }
 
 type SearchButtonConfig struct {
@@ -224,6 +247,7 @@ type SearchButtonConfig struct {
 	HxVals      string
 	ClassButton string
 	Icon        string
+	Disabled    bool
 }
 
 type ReportParameters struct {

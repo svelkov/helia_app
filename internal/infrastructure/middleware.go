@@ -15,7 +15,20 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		username, err := VerifyJWT(tokenString)
+		// Get JWT secret from context
+		var secret []byte
+		if s, exists := c.Get("jwtSecret"); exists {
+			if secretBytes, ok := s.([]byte); ok {
+				secret = secretBytes
+			}
+		}
+
+		if secret == nil {
+			c.AbortWithStatusJSON(401, gin.H{"error": "Unauthorized"})
+			return
+		}
+
+		username, err := VerifyJWT(tokenString, secret)
 		if err != nil {
 			c.AbortWithStatusJSON(401, gin.H{"error": "Unauthorized"})
 			return

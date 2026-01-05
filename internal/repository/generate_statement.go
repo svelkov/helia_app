@@ -1,315 +1,111 @@
 package repository
 
 import (
-	"fmt"
-	"helia/global"
+	"helia/internal/common"
 	"helia/internal/domain"
 	"reflect"
-	"strings"
-	"time"
-)
-
-const (
-	god        = "god"
-	kar        = "kar"
-	xopunos    = "xopunos"
-	xdatunosa  = "xdatunosa"
-	xopizmene  = "xopizmene"
-	xdatizmene = "xdatizmene"
 )
 
 type SqlGenerator[T any] interface {
 	CreateInsertStatement(entity *T, tableFields []domain.Fields) (string, []interface{})
 	CreateUpdateStatement(entity *T, idField string, idValue interface{}, tableFields []domain.Fields) (string, []interface{})
 	CreateGetByID(idField string, idValue interface{}) string
-	CreateGetAll(args *[]interface{}, tableFields []domain.Fields, idField string, searchParams ...string) string
-	CheckGogKar() (bool, bool)
-	CreateGetCountRecords(tableFields []domain.Fields, args *[]interface{}, searchParams ...string) string
-	GetFieldType(val reflect.Value, fieldName string) (interface{}, bool)
-	CreateBasicWhere(tableFields []domain.Fields, args *[]interface{}, hasGod, hasKar bool, searchParams ...string) string
-	GetHasGodHasKar() (bool, bool)
+	CreateGetAll(tableFields []domain.Fields, idField string, searchParams ...string) (string, []interface{})
+	CreateGetCountRecords(tableFields []domain.Fields, searchParams ...string) (string, []interface{})
 }
 
+// CreateInsertStatement generates an INSERT query using QueryBuilder
 func (r *BaseRepository[T]) CreateInsertStatement(entity *T, tableFields []domain.Fields) (string, []interface{}) {
-	// Get the type and value of the entity
-	entityType := reflect.TypeOf(*entity)
+	config := common.RepositoryConfig{
+		TableName:  r.TableName,
+		EntityType: reflect.TypeOf(*entity),
+	}
+	qb := common.NewRepositoryQueryBuilder(config)
 
-	// Prepare slices for columns and placeholders
-	var columns []string
-	var placeholders []string
-	var values []interface{}
-
-	for i := 0; i < entityType.NumField(); i++ {
-		field := entityType.Field(i)
-		column := field.Tag.Get("db") // Get the `db` tag value
-		if column == "" || column == "-" {
-			continue // Skip fields without `db` tags or explicitly ignored
-		}
-		if strings.ToLower(column) == "god" {
-			columns = append(columns, strings.ToLower(column))
-			placeholders = append(placeholders, fmt.Sprintf("$%d", len(columns)))
-			values = append(values, global.GetGnGod())
-			continue
-		}
-		if strings.ToLower(column) == "kar" {
-			columns = append(columns, strings.ToLower(column))
-			placeholders = append(placeholders, fmt.Sprintf("$%d", len(columns)))
-			values = append(values, global.GetGnKar())
-			continue
-		}
-		if strings.ToLower(column) == xdatunosa {
-			columns = append(columns, strings.ToLower(column))
-			placeholders = append(placeholders, fmt.Sprintf("$%d", len(columns)))
-			values = append(values, time.Now())
-			continue
+	// Extract ID field name from the entity
+	idField := "id"
+	for i := 0; i < reflect.TypeOf(*entity).NumField(); i++ {
+		field := reflect.TypeOf(*entity).Field(i)
+		if dbTag := field.Tag.Get("db"); dbTag == "id" {
+			idField = dbTag
+			break
 		}
 	}
-	// Extract specified fields dynamically
-	for _, fieldName := range tableFields {
-		columns = append(columns, fieldName.Name)
-		placeholders = append(placeholders, fmt.Sprintf("$%d", len(columns)))
-		values = append(values, fieldName.Value)
-	}
 
-	// Construct the SQL query
-	query := fmt.Sprintf(
-		`INSERT INTO %s (%s) VALUES (%s)`,
-		r.TableName,
-		strings.Join(columns, ", "),
-		strings.Join(placeholders, ", "),
-	)
-
-	return query, values
+	return qb.BuildInsert(tableFields, idField)
 }
 
+// CreateUpdateStatement generates an UPDATE query using QueryBuilder
 func (r *BaseRepository[T]) CreateUpdateStatement(entity *T, idField string, idValue interface{}, tableFields []domain.Fields) (string, []interface{}) {
-
-	// Prepare slices for columns and values
-	var columns []string
-	var values []interface{}
-
-	for _, field := range tableFields {
-		columns = append(columns, fmt.Sprintf(` %s = $%d`, field.Name, len(values)+1))
-		values = append(values, field.Value)
+	config := common.RepositoryConfig{
+		TableName:  r.TableName,
+		EntityType: reflect.TypeOf(*entity),
 	}
-	//add xupdatedate
-	columns = append(columns, fmt.Sprintf(` %s = $%d`, "xdatizmene", len(values)+1))
-	values = append(values, time.Now())
-
-	// Append the ID field for the WHERE clause
-	values = append(values, idValue)
-	query := fmt.Sprintf(
-		`UPDATE "%s" SET %s WHERE "%s" = $%d`,
-		r.TableName,
-		strings.Join(columns, ", "),
-		idField,
-		len(values),
-	)
-
-	// return the query
-	return query, values
+	qb := common.NewRepositoryQueryBuilder(config)
+	return qb.BuildUpdate(tableFields, idField, idValue)
 }
 
+// CreateGetByID generates a SELECT query for a single record by ID
 func (r *BaseRepository[T]) CreateGetByID(idField string, idValue interface{}) string {
-	// Get the type of the entity
-	entityType := reflect.TypeOf(new(T)).Elem()
-
-	// Prepare slices for columns and pointers
-	var columns []string
-
-	// Iterate over fields of the struct to build the SELECT clause
-	for i := 0; i < entityType.NumField(); i++ {
-		field := entityType.Field(i)
-		column := field.Tag.Get("db") // Get the `db` tag value
-		if column == "" || column == "-" {
-			continue // Skip fields without `db` tags or explicitly ignored
-		}
-		columns = append(columns, fmt.Sprintf(`"%s"`, column))
+	config := common.RepositoryConfig{
+		TableName:  r.TableName,
+		EntityType: reflect.TypeOf(new(T)).Elem(),
 	}
-
-	// Construct the SELECT query
-	query := fmt.Sprintf(
-		`SELECT %s FROM "%s" WHERE "%s" = $1`,
-		strings.Join(columns, ", "),
-		r.TableName,
-		idField,
-	)
-
-	return query
-}
-func (r *BaseRepository[T]) CreateGetAll(args *[]interface{}, tableFields []domain.Fields, idField string, searchParams ...string) string {
-	hasGod := false
-	hasKar := false
-	// Get the type of the entity
-	entityType := reflect.TypeOf(new(T)).Elem()
-
-	// Prepare slices for columns and pointers
-	var columns []string
-	columns = append(columns, idField)
-	// Iterate over fields of the struct to build the SELECT clause
-	for i := 0; i < entityType.NumField(); i++ {
-		field := entityType.Field(i)
-		column := field.Tag.Get("db") // Get the `db` tag value
-		if column == "" || column == "-" {
-			continue // Skip fields without `db` tags or explicitly ignored
-		}
-		if strings.ToLower(column) == "god" {
-			hasGod = true
-			columns = append(columns, column)
-		}
-		if strings.ToLower(column) == "kar" {
-			hasKar = true
-			columns = append(columns, strings.ToLower(column))
-		}
-		for _, field := range tableFields {
-			if strings.EqualFold(field.Name, column) {
-				columns = append(columns, strings.ToLower(column))
-				break
-			}
-		}
-
-	}
-
-	sqlWhereBasic := r.CreateBasicWhere(tableFields, args, hasGod, hasKar, searchParams...)
-	// Construct the SELECT query
-	query := fmt.Sprintf(`SELECT %s FROM %s  %s ORDER BY %s`, strings.Join(columns, ", "), r.TableName, sqlWhereBasic, idField)
-
-	return query
+	qb := common.NewRepositoryQueryBuilder(config)
+	return qb.BuildSelectByID(idField)
 }
 
+// CreateGetAll generates a SELECT query for multiple records with filtering
+func (r *BaseRepository[T]) CreateGetAll(tableFields []domain.Fields, idField string, searchParams ...string) (string, []interface{}) {
+	config := common.RepositoryConfig{
+		TableName:   r.TableName,
+		EntityType:  reflect.TypeOf(new(T)).Elem(),
+		TableFields: tableFields,
+	}
+	qb := common.NewRepositoryQueryBuilder(config)
+	query := qb.BuildSelectAll(tableFields, idField, searchParams...)
+	return query, qb.GetArgs()
+}
+
+// CreateGetCountRecords generates a COUNT query
+func (r *BaseRepository[T]) CreateGetCountRecords(tableFields []domain.Fields, searchParams ...string) (string, []interface{}) {
+	config := common.RepositoryConfig{
+		TableName:   r.TableName,
+		EntityType:  reflect.TypeOf(new(T)).Elem(),
+		TableFields: tableFields,
+	}
+	qb := common.NewRepositoryQueryBuilder(config)
+	query := qb.BuildCount(tableFields, searchParams...)
+	return query, qb.GetArgs()
+}
+
+// CheckGogKar checks if entity has god and kar fields
 func (r *BaseRepository[T]) CheckGogKar() (bool, bool) {
-	hasGod := false
-	hasKar := false
-	// Get the type of the entity
 	entityType := reflect.TypeOf(new(T)).Elem()
-
-	// Iterate over fields of the struct to build the SELECT clause
-	for i := 0; i < entityType.NumField(); i++ {
-		field := entityType.Field(i)
-		column := field.Tag.Get("db") // Get the `db` tag value
-		if column == "" || column == "-" {
-			continue // Skip fields without `db` tags or explicitly ignored
-		}
-		if strings.ToLower(column) == "god" {
-			hasGod = true
-			continue
-		}
-		if strings.ToLower(column) == "kar" {
-			hasKar = true
-			continue
-		}
+	config := common.RepositoryConfig{
+		TableName:  r.TableName,
+		EntityType: entityType,
 	}
-	return hasGod, hasKar
-
+	qb := common.NewRepositoryQueryBuilder(config)
+	return qb.CheckGodKarFields()
 }
 
-func (r *BaseRepository[T]) CreateGetCountRecords(tableFields []domain.Fields, args *[]interface{}, searchParams ...string) string {
-	hasGod, hasKar := r.GetHasGodHasKar()
-	sqlWhereBasic := r.CreateBasicWhere(tableFields, args, hasGod, hasKar, searchParams...)
-	// Construct the SELECT query
-	query := fmt.Sprintf(
-		`SELECT count(*) FROM %s  %s `,
-		r.TableName, sqlWhereBasic,
-	)
-
-	return query
-}
-
-func (r *BaseRepository[T]) GetFieldType(val reflect.Value, fieldName string) (interface{}, bool) {
-
-	fieldNameLower := strings.ToLower(fieldName)
-
-	// Iterate over struct fields
-	for i := 0; i < val.NumField(); i++ {
-		structField := val.Type().Field(i)
-		if strings.ToLower(structField.Name) == fieldNameLower {
-			return val.Field(i), true
-		}
-	}
-	return reflect.Value{}, false
-}
-
-func (r *BaseRepository[T]) CreateBasicWhere(tableFields []domain.Fields, args *[]interface{}, hasGod, hasKar bool, searchParams ...string) string {
-	sqlWhereBasic := " WHERE 1=1 "
-	paramNr := 1
-	entityName := r.GetTypeName()
-	if entityName != "" {
-		entityName = fmt.Sprintf("%s.", strings.ToLower(entityName))
-	}
-	if hasGod {
-		sqlWhereBasic = fmt.Sprintf("%s AND %sgod = $1 ", sqlWhereBasic, entityName)
-		*args = append(*args, global.GetGnGod())
-		paramNr = 2
-	}
-	if hasKar {
-		sqlWhereBasic = fmt.Sprintf("%s AND %skar = $2 ", sqlWhereBasic, entityName)
-		*args = append(*args, global.GetGnKar())
-		paramNr = 3
-	}
-	likeString := ""
-	if len(searchParams) >= 1 && len(searchParams[0]) > 0 {
-		// Get the type of the entity
-		entityType := reflect.TypeOf(new(T)).Elem()
-		likeString += ` AND ( `
-		// Iterate over fields of the struct to build the SELECT clause
-		for i := 0; i < entityType.NumField(); i++ {
-			field := entityType.Field(i)
-			//no search on god and kar
-			for _, tblField := range tableFields {
-				if tblField.SkipInSearch {
-					continue
-				}
-				if !strings.EqualFold(tblField.Name, field.Name) || strings.ToLower(field.Name) == "god" || strings.ToLower(field.Name) == "kar" {
-					continue
-				}
-				switch field.Type.Name() {
-				case "int", "int64", "int32", "float32", "float64":
-					likeString += fmt.Sprintf(" OR (%s::TEXT ILIKE $%d)", strings.ToLower(field.Name), paramNr)
-				case "string":
-					likeString += fmt.Sprintf(" OR (%s::TEXT ILIKE $%d)", strings.ToLower(field.Name), paramNr)
-				case "bool":
-					likeString += fmt.Sprintf(" OR (%s::TEXT ILIKE $%d)", strings.ToLower(field.Name), paramNr)
-				default:
-					continue
-				}
-				*args = append(*args, fmt.Sprintf("%%%s%%", searchParams[0]))
-				paramNr++
-			}
-		}
-		likeString += ` )`
-		likeString = strings.ReplaceAll(likeString, "AND (  OR", "AND ( ")
-	}
-	sqlWhereBasic = fmt.Sprintf("%s %s ", sqlWhereBasic, likeString)
-
-	return sqlWhereBasic
-}
-
+// GetHasGodHasKar checks if entity has god and kar fields (alias for CheckGogKar)
 func (r *BaseRepository[T]) GetHasGodHasKar() (bool, bool) {
-	hasGod := false
-	hasKar := false
-	// Get the type of the entity
-	entityType := reflect.TypeOf(new(T)).Elem()
-
-	// Iterate over fields of the struct to build the SELECT clause
-	for i := 0; i < entityType.NumField(); i++ {
-		field := entityType.Field(i)
-		column := field.Tag.Get("db") // Get the `db` tag value
-		if column == "" || column == "-" {
-			continue // Skip fields without `db` tags or explicitly ignored
-		}
-		if strings.ToLower(column) == "god" {
-			hasGod = true
-			continue
-		}
-		if strings.ToLower(column) == "kar" {
-			hasKar = true
-			continue
-		}
-	}
-	return hasGod, hasKar
+	return r.CheckGogKar()
 }
 
-func (r *BaseRepository[T]) GetTypeName() string {
+// CreateBasicWhere generates a WHERE clause with god/kar and search conditions
+func (r *BaseRepository[T]) CreateBasicWhere(tableFields []domain.Fields, args *[]interface{}, hasGod, hasKar bool, searchParams ...string) string {
 	entityType := reflect.TypeOf(new(T)).Elem()
-	return entityType.Name()
+	config := common.RepositoryConfig{
+		TableName:   r.TableName,
+		EntityType:  entityType,
+		TableFields: tableFields,
+	}
+	qb := common.NewRepositoryQueryBuilder(config)
+	qb.AddGodKarConditions(hasGod, hasKar)
+	qb.AddSearchConditions(tableFields, searchParams...)
+	*args = qb.GetArgs()
+	return qb.GetWhereClause()
 }

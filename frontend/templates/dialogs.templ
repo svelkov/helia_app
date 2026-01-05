@@ -3,7 +3,7 @@ package templates
 import "helia/internal/domain"
 import "helia/internal/i18n"
 
-templ Dialog(id string, content templ.Component, dialog domain.Dialog, btnConfirm, btnCancel, btnClose domain.Button, translator *i18n.Service) {
+templ Dialog(id, csrfToken string, content templ.Component, dialog domain.Dialog, btnConfirm, btnCancel, btnClose domain.Button, translator *i18n.Service) {
 	<div id={ dialog.Id } class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
 		<div class="bg-white rounded-lg shadow-2xl relative animate-fade-in max-w-full w-auto">
 			<!-- Title Bar (Flush on Left, Top, Right) -->
@@ -26,6 +26,7 @@ templ Dialog(id string, content templ.Component, dialog domain.Dialog, btnConfir
 				onsubmit="return false;"
 				class="grid grid-cols-1 md:grid-cols-[auto,auto] gap-2 gap-x-4 p-3 bg-white shadow-lg rounded-lg w-auto"
 			>
+				<input type="hidden" name="_csrf" value={ csrfToken }/>
 				<div class="px-1 py-1 col-span-2 max-h-[70vh] overflow-y-auto">
 					@content
 				</div>

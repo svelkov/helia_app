@@ -10,9 +10,10 @@ import (
 )
 
 var (
-	instance *Service
-	once     sync.Once
-	reg      = regexp.MustCompile(`_+`)
+	instance        *Service
+	once            sync.Once
+	reg             = regexp.MustCompile(`_+`)
+	regSpecialChars = regexp.MustCompile(`[/\-,()%?\s]+`)
 )
 
 type Service struct {
@@ -143,23 +144,19 @@ func toSnakeCase(s string) string {
 	// Convert to lowercase
 	result := strings.ToLower(s)
 
-	// Replace common special characters
-	result = strings.ReplaceAll(result, "/", "_")
-	result = strings.ReplaceAll(result, " ", "_")
-	result = strings.ReplaceAll(result, "-", "_")
-	result = strings.ReplaceAll(result, " - ", "_")
-	result = strings.ReplaceAll(result, ",", "")
-	result = strings.ReplaceAll(result, "(", "")
-	result = strings.ReplaceAll(result, ")", "")
+	// Replace Cyrillic characters
+	cyrillic := map[string]string{
+		"č": "c", "ž": "z", "š": "s", "đ": "d", "ć": "c",
+	}
+	for char, replacement := range cyrillic {
+		result = strings.ReplaceAll(result, char, replacement)
+	}
+
+	// Replace special characters and spaces with underscores
+	result = regSpecialChars.ReplaceAllString(result, "_")
+
+	// Handle special case for " i " (Serbian "and")
 	result = strings.ReplaceAll(result, " i ", "_")
-	result = strings.ReplaceAll(result, "č", "c")
-	result = strings.ReplaceAll(result, "ž", "z")
-	result = strings.ReplaceAll(result, "š", "s")
-	result = strings.ReplaceAll(result, "đ", "d")
-	result = strings.ReplaceAll(result, "ć", "c")
-	result = strings.ReplaceAll(result, "%", "")
-	result = strings.ReplaceAll(result, " ", "")
-	
 
 	// Remove multiple underscores
 

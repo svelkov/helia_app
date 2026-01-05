@@ -1,0 +1,3 @@
+- proveri zadnja vrednost ve sekvence nakon migracije zato sto su vrednosti setovani na 1
+- proveri id polja i postavi na autoincrement
+-FNAL dodaj index god, kar, tipdok, nalog kao unique index 

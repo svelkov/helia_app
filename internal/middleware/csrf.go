@@ -1,7 +1,9 @@
 package middleware
 
 import (
+	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -29,6 +31,15 @@ func getCsrfTokenFromSessionOrContext(c *gin.Context) (string, bool) {
 // CSRFMiddleware protects against CSRF attacks
 func CSRFMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// Skip CSRF validation for public routes (login, register, static)
+		publicPaths := []string{"/login", "/register", "/frontend/static"}
+		for _, path := range publicPaths {
+			if strings.HasPrefix(c.Request.URL.Path, path) {
+				c.Next()
+				return
+			}
+		}
+
 		// For GET/HEAD/OPTIONS requests, generate or return CSRF token
 		if c.Request.Method == http.MethodGet || c.Request.Method == http.MethodHead || c.Request.Method == http.MethodOptions {
 			session := sessions.Default(c)
@@ -53,18 +64,25 @@ func CSRFMiddleware() gin.HandlerFunc {
 			// Get session token
 			sessionToken, exists := getCsrfTokenFromSessionOrContext(c)
 
+			// Debug logging
+			if formToken == "" {
+				fmt.Printf("CSRF validation failed: no form token provided for %s\n", c.Request.RequestURI)
+			}
+			if !exists {
+				fmt.Printf("CSRF validation failed: no session token for %s\n", c.Request.RequestURI)
+			}
+			if exists && formToken != sessionToken {
+				fmt.Printf("CSRF token mismatch for %s: form=%s, session=%s\n", c.Request.RequestURI, formToken, sessionToken)
+			}
+
 			if formToken == "" || !exists || formToken != sessionToken {
 				c.JSON(http.StatusForbidden, gin.H{"error": "Invalid CSRF token"})
 				c.Abort()
 				return
 			}
 
-			// Generate new token for next request
-			newToken := uuid.New().String()
-			session := sessions.Default(c)
-			session.Set(csrfTokenKey, newToken)
-			session.Save()
-			c.Set("csrf_token", newToken)
+			// Token is valid - keep same token for session duration
+			c.Set("csrf_token", sessionToken)
 
 			c.Next()
 			return

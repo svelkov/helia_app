@@ -6,9 +6,9 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
-	"sync"
 
 	tmpl "helia/frontend/templates/finansijsko"
+	"helia/global"
 	"helia/internal/common"
 	"helia/internal/domain"
 	"helia/internal/i18n"
@@ -52,8 +52,7 @@ func (h *FproHandler) CreateFpro(c *gin.Context) {
 		return
 	}
 	// Lock the header
-	mu, _ := headerLocks.LoadOrStore(lastInsertedID, &sync.Mutex{})
-	mutex := mu.(*sync.Mutex)
+	mutex := global.GetHeaderLock(lastInsertedID)
 	mutex.Lock()
 }
 
@@ -61,14 +60,13 @@ func (h *FproHandler) UpdateFpro(c *gin.Context) {
 	var fpro domain.Fpro
 	fproID := c.Query("id")
 	// Lock the header
-	mu, _ := headerLocks.LoadOrStore(fproID, &sync.Mutex{})
-	mutex := mu.(*sync.Mutex)
+	mutex := global.GetHeaderLock(fproID)
 	mutex.Lock()
 	utils.UpdateHelper(c, &fpro, h.fproService, h.fproService.GetTableStavkeFields(), common.IDfpro)
 }
 
 func (h *FproHandler) DeleteFpro(c *gin.Context) {
-	utils.DeleteHelper[domain.Fpro](c, h.fproService, common.IDfpro)
+	utils.DeleteHelper(c, h.fproService, common.IDfpro)
 }
 
 func (h *FproHandler) confirmDeleteHandler(c *gin.Context) {

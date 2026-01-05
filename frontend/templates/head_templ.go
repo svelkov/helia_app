@@ -29,7 +29,7 @@ func Head() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>HELIA</title><link rel=\"shortcut icon\" href=\"/frontend/static/lav_logo.png\"><link rel=\"shortcut\" href=\"/frontend/static/helia.png\"><!-- Include your local Tailwind CSS output file --><link rel=\"stylesheet\" href=\"frontend/static/css/output.css\"><script src=\"https://cdn.tailwindcss.com\"></script><!-- HTMX --><script src=\"https://unpkg.com/htmx.org\"></script></head>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>HELIA</title><link rel=\"shortcut icon\" href=\"/frontend/static/lav_logo.png\"><link rel=\"shortcut\" href=\"/frontend/static/helia.png\"><!-- Include your local Tailwind CSS output file --><link rel=\"stylesheet\" href=\"frontend/static/css/output.css\"><script src=\"https://cdn.tailwindcss.com\"></script><!-- HTMX --><script src=\"https://unpkg.com/htmx.org\"></script><script src=\"/frontend/static/js/htmx-auth.js\"></script><!-- Chart.js --><script src=\"https://cdn.jsdelivr.net/npm/chart.js\"></script></head>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

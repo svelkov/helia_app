@@ -1,12 +1,23 @@
 package service
 
 import (
+	"database/sql"
 	"fmt"
 	"helia/internal/domain"
 	"helia/internal/repository"
 	"helia/internal/validation"
 	"reflect"
 	"strings"
+	"time"
+)
+
+// DateTimeFormat specifies how to format time.Time fields
+type DateTimeFormat string
+
+const (
+	DateOnly    DateTimeFormat = "2006.01.02"          // e.g., "2024.12.17"
+	TimeOnly    DateTimeFormat = "15:04:05"            // e.g., "14:30:45"
+	DateAndTime DateTimeFormat = "2006.01.02 15:04:05" // e.g., "2024.12.17 14:30:45"
 )
 
 // Generic service interface
@@ -100,6 +111,54 @@ func (s *BaseService[T]) Delete(idField string, id int64) error {
 	return s.Repo.Delete(idField, id)
 }
 
+// formatTime formats a time.Time with the specified format
+func (s *BaseService[T]) formatTime(t time.Time, format DateTimeFormat) string {
+	if t.IsZero() {
+		return ""
+	}
+	return t.Format(string(format))
+}
+
+func (s *BaseService[T]) formatFieldValue(fieldValue reflect.Value) string {
+	typeStr := fieldValue.Type().String()
+
+	// Handle time.Time - default to date only
+	if typeStr == "time.Time" {
+		t := fieldValue.Interface().(time.Time)
+		return s.formatTime(t, DateOnly)
+	}
+
+	// Handle sql.NullTime
+	if typeStr == "database/sql.NullTime" || typeStr == "sql.NullTime" {
+		nt := fieldValue.Interface().(sql.NullTime)
+		if nt.Valid {
+			return nt.Time.Format("02.01.2006")
+		}
+		return ""
+	}
+
+	// Handle sql.NullString
+	if typeStr == "database/sql.NullString" || typeStr == "sql.NullString" {
+		ns := fieldValue.Interface().(sql.NullString)
+		if ns.Valid {
+			return ns.String
+		}
+		return ""
+	}
+
+	// Handle sql.NullInt64
+	if typeStr == "database/sql.NullInt64" || typeStr == "sql.NullInt64" {
+		ni := fieldValue.Interface().(sql.NullInt64)
+		if ni.Valid {
+			return fmt.Sprintf("%d", ni.Int64)
+		}
+		return ""
+	}
+
+	// Default: convert to string
+	return fmt.Sprintf("%v", fieldValue.Interface())
+}
+
 func (s *BaseService[T]) MapEntityToValues(entity *T, tableFields []domain.Fields) []domain.Fields {
 	// Get the reflect value and type of the entity
 	entityValue := reflect.ValueOf(entity)
@@ -112,17 +171,20 @@ func (s *BaseService[T]) MapEntityToValues(entity *T, tableFields []domain.Field
 	}
 
 	// Iterate over struct fields
-	for i := range entityType.NumField() {
+	for i := 0; i < entityType.NumField(); i++ {
 		field := entityType.Field(i)
 		column := field.Tag.Get("db") // Get the `db` tag value
 		if column == "" || column == "-" {
 			continue // Skip fields without `db` tags or explicitly ignored
 		}
 
+		// Format the field value
+		displayValue := s.formatFieldValue(entityValue.Field(i))
+
 		// Check if the column exists in tableFields
-		for j, field := range tableFields {
-			if strings.EqualFold(field.Name, column) {
-				tableFields[j].Value = fmt.Sprintf("%v", entityValue.Field(i).Interface())
+		for j := range tableFields {
+			if strings.EqualFold(tableFields[j].Name, column) {
+				tableFields[j].Value = displayValue
 				break
 			}
 		}

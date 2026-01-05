@@ -59,12 +59,12 @@ func factory() {
 	}
 	defer db.Close()
 
-	if err := i18n.Init("./translations", cfg.Languages, "sr"); err != nil {
+	if err := i18n.Init("./translations", cfg.Languages, "SR"); err != nil {
 		log.Fatal("Failed to load translations:", err)
 	}
 	translator := i18n.GetInstance()
 	// Initialize translator
-	// translator := i18n.NewTranslator("sr")
+	// translator := i18n.NewTranslator("SR")
 	// if err := translator.LoadTranslations("./translations", cfg.Languages); err != nil {
 	// 	log.Fatal("Failed to load translations:", err)
 	// }
@@ -74,11 +74,17 @@ func factory() {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
+	// Get JWT secret
+	jwtSecret := getJwtSecret(cfg)
+
+	// Get Session secret
+	sessionSecret := getSessionSecret(cfg)
+
 	// Create router
-	router := setupRouter(translator)
+	router := setupRouter(translator, jwtSecret, sessionSecret)
 
 	// Entity settings
-	setEntities(db, router)
+	setEntities(db, router, jwtSecret)
 
 	// Create server
 	srv := &http.Server{
@@ -113,10 +119,17 @@ func factory() {
 	log.Println("Server exited")
 }
 
-func setupRouter(translator *i18n.Service) *gin.Engine {
+func setupRouter(translator *i18n.Service, jwtSecret []byte, sessionSecret string) *gin.Engine {
 	router := gin.Default()
+
+	// Store JWT secret in router engine so handlers can access it
+	router.Use(func(c *gin.Context) {
+		c.Set("jwtSecret", jwtSecret)
+		c.Next()
+	})
+
 	// Configure sessions
-	store := configureSessionStore()
+	store := configureSessionStore(sessionSecret)
 	router.Use(sessions.Sessions("heliasession", store))
 	// Global middleware
 	router.Use(middleware.CORS())
@@ -155,10 +168,8 @@ func setupRouter(translator *i18n.Service) *gin.Engine {
 
 }
 
-func configureSessionStore() sessions.Store {
-	secret := getSessionSecret()
-
-	store := cookie.NewStore([]byte(secret))
+func configureSessionStore(sessionSecret string) sessions.Store {
+	store := cookie.NewStore([]byte(sessionSecret))
 
 	store.Options(sessions.Options{
 		Path:     "/",
@@ -171,17 +182,38 @@ func configureSessionStore() sessions.Store {
 	return store
 }
 
-func getSessionSecret() string {
+func getSessionSecret(cfg config.Config) string {
 	if secret := os.Getenv("SESSION_SECRET"); secret != "" {
 		return secret
 	}
 
+	if cfg.SessionSecret != "" {
+		return cfg.SessionSecret
+	}
+
 	if gin.Mode() == gin.ReleaseMode {
-		log.Fatal("SESSION_SECRET environment variable is required in production")
+		log.Fatal("SESSION_SECRET environment variable or session_secret in config is required in production")
 	}
 
 	log.Println("Warning: Using default session secret for development")
 	return SESSION_SECRET
+}
+
+func getJwtSecret(cfg config.Config) []byte {
+	if secret := os.Getenv("JWT_SECRET"); secret != "" {
+		return []byte(secret)
+	}
+
+	if cfg.JwtSecret != "" {
+		return []byte(cfg.JwtSecret)
+	}
+
+	if gin.Mode() == gin.ReleaseMode {
+		log.Fatal("JWT_SECRET environment variable or jwt_secret in config is required in production")
+	}
+
+	log.Println("Warning: Using default JWT secret for development")
+	return []byte(SESSION_SECRET)
 }
 func getSameSitePolicy() http.SameSite {
 	switch gin.Mode() {
@@ -261,7 +293,7 @@ func registerGenericEntity[T any](
 }
 
 // setEntities registers all entity routes
-func setEntities(db *sqlx.DB, r *gin.Engine) {
+func setEntities(db *sqlx.DB, r *gin.Engine, jwtSecret []byte) {
 	// Drzave
 	registerGenericEntity[domain.Drzave](
 		r, db, "drzave",
@@ -445,23 +477,6 @@ func setEntities(db *sqlx.DB, r *gin.Engine) {
 	fkplHandler := fin.NewFkplHandler(fkplService)
 	fkplHandler.AddRoutes(r)
 
-	// Fnal
-	fnalRepo := repository.NewBaseRepository[domain.Fnal](db, "fnal")
-	fnalValidator := validation.NewRuleBasedValidator[domain.Fnal](finval.FnalValidationRules())
-	fnalBaseService := service.NewBaseService(*fnalRepo, *fnalValidator)
-	fnalService := service.NewNalogService(
-		fnalBaseService,
-		*fnalRepo,
-		*repository.NewBaseRepository[domain.Tipdok](db, "tipdok"),
-		*repository.NewBaseRepository[domain.Sf](db, "sf"),
-		"",
-		[]domain.Fields{},
-		[]domain.Fields{},
-		fnalValidator,
-	)
-	fnalHandler := fin.NewFnalHandler(fnalService)
-	fnalHandler.AddRoutes(r)
-
 	// Fpro
 	fproRepo := repository.NewBaseRepository[domain.Fpro](db, "fpro")
 	fproValidator := validation.NewRuleBasedValidator[domain.Fpro](finval.FnalValidationRules())
@@ -475,6 +490,25 @@ func setEntities(db *sqlx.DB, r *gin.Engine) {
 	)
 	fproHandler := fin.NewFproHandler(fproService)
 	fproHandler.AddRoutes(r)
+	// Fnal
+	fnalRepo := repository.NewBaseRepository[domain.Fnal](db, "fnal")
+	fnalValidator := validation.NewRuleBasedValidator[domain.Fnal](finval.FnalValidationRules())
+	fnalBaseService := service.NewBaseService(*fnalRepo, *fnalValidator)
+	fnalService := service.NewNalogService(
+		fnalBaseService,
+		fproService,
+		*fnalRepo,
+		*repository.NewBaseRepository[domain.Tipdok](db, "tipdok"),
+		*repository.NewBaseRepository[domain.Sf](db, "sf"),
+		*repository.NewBaseRepository[domain.Orgjed](db, "orgjed"),
+		*repository.NewBaseRepository[domain.Mestotr](db, "mestotr"),
+		"",
+		[]domain.Fields{},
+		[]domain.Fields{},
+		fnalValidator,
+	)
+	fnalHandler := fin.NewFnalHandler(fnalService, fnalBaseService)
+	fnalHandler.AddRoutes(r)
 
 	// Promet
 	prometRepo := repository.NewBaseRepository[domain.PrometDto](db, "prometdto")
@@ -482,9 +516,26 @@ func setEntities(db *sqlx.DB, r *gin.Engine) {
 	prometService := service.NewPrometService(
 		service.NewBaseService(*prometRepo, *prometValidator),
 		prometRepo,
+		fkplRepo,
 	)
 	prometHandler := fin.NewPrometHandler(prometService)
 	prometHandler.AddRoutes(r)
+
+	// Salda
+	saldaRepo := repository.NewBaseRepository[domain.SaldaDto](db, "saldadto")
+	saldaValidator := validation.NewRuleBasedValidator[domain.SaldaDto](finval.SaldaValidationRules())
+	saldaService := service.NewSaldaService(
+		service.NewBaseService(*saldaRepo, *saldaValidator),
+		saldaRepo,
+		fkplRepo,
+		fproRepo,
+		repository.NewBaseRepository[domain.Partneri](db, "partneri"),
+		repository.NewBaseRepository[domain.SaldaPartnerDto](db, "saldapartneridto"),
+		repository.NewBaseRepository[domain.SaldaKomercijalistiDto](db, "saldakomercijalistidto"),
+	)
+
+	saldaHandler := fin.NewSaldaHandler(saldaService)
+	saldaHandler.AddRoutes(r)
 
 	// BasicHandler
 	fvrRepo := repository.NewBaseRepository[domain.Fvr](db, "fvr")

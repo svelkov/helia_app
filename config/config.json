@@ -11,5 +11,7 @@
     "page_sizes": [10, 15, 25, 50],
     "env": "dev",
     "port": "8080",
-    "languages": ["SR", "СР", "EN"]
+    "languages": ["SR", "СР", "EN"],
+    "jwt_secret": "w5LcTezOXK5gttMOq2REZNwKstKKKoBuNlgkIkbk4SK",
+    "session_secret": "sMoq5uH5K4sAaSpKeYGTA9jFSlKY07ZiehQKO0iwogX"
 }

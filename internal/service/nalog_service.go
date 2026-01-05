@@ -1,18 +1,28 @@
 package service
 
 import (
+	"database/sql"
+	"errors"
 	"fmt"
 	"helia/global"
 	"helia/internal/common"
 	"helia/internal/domain"
 	"helia/internal/repository"
 	"helia/internal/validation"
+	"net/http"
+	"strconv"
 
 	"reflect"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
+)
+
+const (
+	naloziTableID string = "nalozi-table"
+	ActionAdd     string = "add"
+	ActionUpdate  string = "update"
 )
 
 // NalogViewData encapsulates all data needed for the Nalog display page.
@@ -36,6 +46,7 @@ type NalogService interface {
 	SetNalogIDFieldName(string)
 	SetSfTableFields([]domain.Fields)
 	GetNaloziTableFields() []domain.Fields
+	GetNaloziStavkeTableFields() []domain.Fields
 	GetNalogPrepisData(c *gin.Context, searchQuery string, page, pageSize int) (NalogViewData, error)
 	GetNalogStornirajData(c *gin.Context, searchQuery string, page, pageSize int) (NalogViewData, error)
 	GetNextNalog(tipdok string) (int64, error)
@@ -43,15 +54,24 @@ type NalogService interface {
 	Validation(entity domain.Fnal) ([]domain.FieldError, error)
 	ValidationKopirajNalog(entity domain.Fnal) ([]domain.FieldError, error)
 	GetByTipdokNalog(tipdok string, nalog int64) (domain.Fnal, error)
+	GetIdTipdokByTipdok(tipdok string) (int64, error)
+	GetOrgJedinice() ([]domain.ComboItem, error)
+	GetMestoTroska(idorgjed int64) ([]domain.ComboItem, error)
+	MapReqToEntity(c *gin.Context, req domain.FnalPayload, entity *domain.Fnal, action string)
+	MapToFproPayload(fproPayload *domain.FproPayload, entity domain.Fnal, lastInsertedID int64)
+	UpdateNalog(c *gin.Context) (fproPayload domain.FproPayload, tblStavke domain.TableData, err error, statusCode int, errMessage string, fieldErrors []domain.FieldError)
 }
 
 // NalogResource implements the NalogService interface.
 type NalogResource struct {
 	service                 *BaseService[domain.Fnal]
+	fproService             FproService
 	validator               validation.RuleBasedValidator[domain.Fnal]
 	fnalRepo                repository.BaseRepository[domain.Fnal]
 	tipdokRepo              repository.BaseRepository[domain.Tipdok]
 	sfRepo                  repository.BaseRepository[domain.Sf]
+	ojRepo                  repository.BaseRepository[domain.Orgjed]
+	mtroskaRepo             repository.BaseRepository[domain.Mestotr]
 	nalogIDFieldName        string
 	naloziTableFields       []domain.Fields
 	naloziStavkeTableFields []domain.Fields
@@ -60,9 +80,12 @@ type NalogResource struct {
 
 func NewNalogService(
 	service *BaseService[domain.Fnal],
+	fproService FproService,
 	fnalRepo repository.BaseRepository[domain.Fnal],
 	tipdokRepo repository.BaseRepository[domain.Tipdok],
 	sfRepo repository.BaseRepository[domain.Sf],
+	ojRepo repository.BaseRepository[domain.Orgjed],
+	mtroskaRepo repository.BaseRepository[domain.Mestotr],
 	nalogIDFieldName string,
 	naloziTableFields []domain.Fields,
 	sfTableFields []domain.Fields,
@@ -70,9 +93,12 @@ func NewNalogService(
 ) *NalogResource {
 	rs := &NalogResource{
 		service:           service,
+		fproService:       fproService,
 		fnalRepo:          fnalRepo,
 		tipdokRepo:        tipdokRepo,
 		sfRepo:            sfRepo,
+		ojRepo:            ojRepo,
+		mtroskaRepo:       mtroskaRepo,
 		nalogIDFieldName:  nalogIDFieldName,
 		naloziTableFields: naloziTableFields,
 		sfTableFields:     sfTableFields,
@@ -115,13 +141,9 @@ func (s *NalogResource) ValidationKopirajNalog(entity domain.Fnal) ([]domain.Fie
 
 // Create implements NalogService.
 func (s *NalogResource) Create(fnal *domain.Fnal, idField string, fields []domain.Fields) ([]domain.FieldError, int64, error) {
-	// args := []interface{}{}
-	// hasGod, hasKar := s.tipdokRepo.CheckGogKar()
 
-	// qryText := `INSERT INTO fnal (god, kar, nalog, danal, datob, opis, xdatunosa, xopunosa)
-	// 			VALUES () `
-	// s.fnalRepo.CreateInsertStatement()
-	return []domain.FieldError{}, 0, nil
+	lastinsertedID, err := s.fnalRepo.Create(fnal, idField, fields)
+	return []domain.FieldError{}, lastinsertedID, err
 
 }
 
@@ -165,6 +187,70 @@ func (s *NalogResource) Update(entity *domain.Fnal, idField string, idValue inte
 	return s.service.Update(entity, idField, idValue, tableFields)
 }
 
+func (s *NalogResource) UpdateNalog(c *gin.Context) (fproPayload domain.FproPayload, tblStavke domain.TableData, err error, statusCode int, errMessage string, fieldErrors []domain.FieldError) {
+	var entity *domain.Fnal
+	var nalog domain.FnalPayload
+
+	fnalStr := c.Param("id")
+	if err := c.ShouldBind(&nalog); err != nil {
+		return fproPayload, tblStavke, err, http.StatusBadRequest, common.ErrMsgFormDecode, []domain.FieldError{}
+	}
+
+	fnalID, err := strconv.ParseInt(fnalStr, 10, 64)
+	if err != nil {
+		return fproPayload, tblStavke, err, http.StatusBadRequest, common.ErrMsgInvalidID, []domain.FieldError{}
+	}
+	entity, err = s.service.GetByID(common.IDfnal, fnalID)
+	if err != nil {
+		return fproPayload, tblStavke, err, http.StatusInternalServerError, common.ErrMsgReadData, []domain.FieldError{}
+	}
+	// map request to entity
+	s.MapReqToEntity(c, nalog, entity, ActionUpdate)
+
+	// Lock the header using global resource lock
+	mutex := global.GetHeaderLock(fnalID)
+	// Try to lock without blocking
+	if !mutex.TryLock() {
+		return fproPayload, tblStavke, err, http.StatusConflict, common.ErrMsgStatusConflict, []domain.FieldError{}
+	}
+	defer mutex.Unlock()
+
+	fieldErrors, err = s.Update(entity, common.IDfnal, fnalID, s.MapEntityToValues(entity, s.GetNaloziTableFields()))
+	if err != nil {
+		return fproPayload, tblStavke, err, http.StatusInternalServerError, common.ErrMsgReadData, []domain.FieldError{}
+	}
+	if len(fieldErrors) > 0 {
+		return fproPayload, tblStavke, err, http.StatusUnprocessableEntity, common.ErrMsgValidation, fieldErrors
+	}
+
+	s.MapToFproPayload(&fproPayload, *entity, fnalID)
+
+	fproEntities, err := s.fproService.GetAllByFnalID(fnalID)
+	if err != nil {
+		return fproPayload, tblStavke, err, http.StatusInternalServerError, common.ErrMsgReadData, []domain.FieldError{}
+	}
+	arrOrgjed := []domain.ComboItem{{Key: "", Value: ""}} //add empty element in combo box
+	orgjed, err := s.GetOrgJedinice()
+	if err != nil {
+		return fproPayload, tblStavke, err, http.StatusInternalServerError, common.ErrMsgReadData, []domain.FieldError{}
+	}
+	arrOrgjed = append(arrOrgjed, orgjed...)
+	mtroska := []domain.ComboItem{{Key: "", Value: ""}}
+	fproPayload.Orgjed = arrOrgjed
+	fproPayload.Mtroska = mtroska
+	// because the stavke table is specific we could not use template helper for table and table rows
+	tblStavke = common.SetTableBasicData("Stavke Naloga", naloziTableID+"_stavke", s.GetNaloziStavkeTableFields(), "", "", 10, 0, 0, 0)
+	tblStavke.ShowPagination = true
+	tblStavke.SearchEnabled = true
+
+	tblRows, err := common.SetTableRows(&tblStavke, *fproEntities, s.GetNaloziStavkeTableFields(), "idfpro", "", s.fproService.GetFieldCache())
+	if err != nil {
+		return fproPayload, tblStavke, err, http.StatusInternalServerError, common.ErrMsgReadData, []domain.FieldError{}
+	}
+	tblStavke.Rows = tblRows.Rows
+	return fproPayload, tblStavke, nil, 0, "", nil
+}
+
 // Update implements NalogService.
 func (s *NalogResource) GetNextNalog(tipdok string) (int64, error) {
 	// 2. Fetch Fnal Entities
@@ -203,6 +289,34 @@ func (s *NalogResource) GetByTipdokNalog(tipdok string, nalog int64) (domain.Fna
 		entity = (*entities)[0]
 	}
 	return entity, nil
+}
+func (s *NalogResource) GetIdTipdokByTipdok(tipdok string) (int64, error) {
+	entity := domain.Tipdok{}
+	args := []interface{}{}
+	i := 0
+	whereText := " WHERE 1=1 "
+	hasGod, hasKar := s.fnalRepo.CheckGogKar()
+	if hasGod {
+		whereText += " and god = $1 "
+		args = append(args, global.GetGnGod())
+		i++
+	}
+	if hasKar {
+		whereText += " and kar = $2 "
+		args = append(args, global.GetGnKar())
+		i++
+	}
+	whereText = fmt.Sprintf("%s and tipdok = $%d", whereText, i+1)
+	args = append(args, tipdok)
+	tipdokEntities, err := s.tipdokRepo.GetAllCustom("SELECT idtipdok FROM tipdok ", whereText, args, "", "")
+	if err != nil {
+		return 0, errors.New(common.ErrMsgGetData)
+	}
+	if len(*tipdokEntities) > 0 {
+		entity = (*tipdokEntities)[0]
+		return int64(entity.IDTipDok), nil
+	}
+	return 0, errors.New(common.ErrNoDataFound)
 }
 
 // Helper to construct common WHERE clauses and arguments for Fnal queries
@@ -521,11 +635,59 @@ func (s *NalogResource) GetTipdokOptions() ([]domain.Tipdok, error) {
 	return *tipdokValues, nil
 }
 
+func (s *NalogResource) GetOrgJedinice() ([]domain.ComboItem, error) {
+	comboItems := []domain.ComboItem{}
+	args := []interface{}{}
+	hasGod, hasKar := s.ojRepo.CheckGogKar()
+	basicWhere := s.ojRepo.CreateBasicWhere(nil, &args, hasGod, hasKar) // No specific fields for tipdok
+
+	qryText := `SELECT idorgjed, ojozn, naziv FROM orgjed`
+
+	ojEntites, err := s.ojRepo.GetAllCustom(qryText, basicWhere, args, "", "")
+	if err != nil {
+		return comboItems, errors.New(common.ErrMsgGetData)
+	}
+	for _, oj := range *ojEntites {
+		comboItems = append(comboItems, domain.ComboItem{
+			Key:   fmt.Sprintf("%d", oj.IDOrgjed),
+			Value: fmt.Sprintf("%s - %s", oj.OjOzn, oj.Naziv),
+		})
+	}
+	return comboItems, nil
+}
+
+func (s *NalogResource) GetMestoTroska(idorgjed int64) ([]domain.ComboItem, error) {
+	comboItems := []domain.ComboItem{}
+	args := []interface{}{}
+	hasGod, hasKar := s.mtroskaRepo.CheckGogKar()
+	basicWhere := s.mtroskaRepo.CreateBasicWhere(nil, &args, hasGod, hasKar) // No specific fields for tipdok
+	whereText := fmt.Sprintf("%s AND idorgjed = $%d", basicWhere, len(args)+1)
+	qryText := `SELECT mestotrid, mtroska, opis, idorgjed FROM mestotr `
+
+	mtroskaEntites, err := s.mtroskaRepo.GetAllCustom(qryText, whereText, args, "", "")
+	if err != nil {
+		return comboItems, errors.New(common.ErrMsgGetData)
+	}
+	for _, mtroska := range *mtroskaEntites {
+		comboItems = append(comboItems, domain.ComboItem{
+			Key:   fmt.Sprintf("%d", mtroska.MestoTrID),
+			Value: fmt.Sprintf("%s - %s", mtroska.Mtroska, mtroska.Opis),
+		})
+	}
+	return comboItems, nil
+}
+
 func (s *NalogResource) GetNaloziTableFields() []domain.Fields {
 	if len(s.naloziTableFields) == 0 {
 		s.setServiceFieldValues()
 	}
 	return s.naloziTableFields
+}
+func (s *NalogResource) GetNaloziStavkeTableFields() []domain.Fields {
+	if len(s.naloziStavkeTableFields) == 0 {
+		s.setServiceFieldValues()
+	}
+	return s.naloziStavkeTableFields
 }
 
 // ValidateCopyNalog validates the data for copying a nalog (voucher)
@@ -596,12 +758,13 @@ func (s *NalogResource) setServiceFieldValues() {
 		{Name: "tipdok", Label: "Vrsta Naloga", Width: "6", Field: "tipdok", Sortable: true},
 		{Name: "nalog", Label: "Br. Naloga", Width: "12", Field: "nalog", Sortable: true},
 		{Name: "danal", Label: "Datum naloga", Width: "12", Field: "danal", Sortable: true},
-		{Name: "opis", Label: "opis ", Width: "60", Field: "opis"},
-		{Name: "dug", Label: "Duguje", Width: "14", Field: "dug"},
-		{Name: "pot", Label: "Potrazuje", Width: "14", Field: "pot"},
-		{Name: "datob", Label: "Datum obrade", Width: "12", Field: "datob"},
-		{Name: "brst", Label: "Br.Stavki", Width: "5", Field: "brst"},
-		{Name: "nalsts", Label: "Status naloga", Width: "10", Field: "nalsts"},
+		{Name: "opis", Label: "opis ", Width: "60", Field: "opis", Sortable: true},
+		{Name: "dug", Label: "Duguje", Width: "14", Field: "dug", Sortable: true},
+		{Name: "pot", Label: "Potrazuje", Width: "14", Field: "pot", Sortable: true},
+		{Name: "datob", Label: "Datum obrade", Width: "12", Field: "datob", Sortable: true},
+		{Name: "brst", Label: "Br.Stavki", Width: "5", Field: "brst", Sortable: true},
+		{Name: "nalsts", Label: "Status naloga", Width: "10", Field: "nalsts", Sortable: true},
+		{Name: "idtipdok", Label: "Id tipdok", Width: "10", Field: "idtipdok"},
 	}
 	s.naloziStavkeTableFields = []domain.Fields{
 		{Name: "rbr", Label: "R. Broj", Width: "4"},
@@ -614,5 +777,36 @@ func (s *NalogResource) setServiceFieldValues() {
 		{Name: "pot", Label: "Potrazuje", Width: "14"},
 		{Name: "dokum", Label: "Br. Dokum", Width: "12"},
 		{Name: "dadok", Label: "Datum Dok.", Width: "12"},
+		{Name: "idorgjed", Label: "Id orgjed", Width: "10", Field: "idorgjed"},
 	}
+}
+
+func (s *NalogResource) MapReqToEntity(c *gin.Context, req domain.FnalPayload, entity *domain.Fnal, action string) {
+	if action == "add" {
+		entity.God = global.GetGnGod()
+		entity.Kar = global.GetGnKar()
+		entity.Xdatunosa = sql.NullTime{Time: time.Now(), Valid: true}
+		entity.Xopunos = sql.NullString{String: global.GetCurrentUser(c), Valid: true}
+	}
+	if action == "update" {
+		entity.Xdatizmene = sql.NullTime{Time: time.Now(), Valid: true}
+		entity.Xopizmene = sql.NullString{String: global.GetCurrentUser(c), Valid: true}
+	}
+	entity.Nalog = common.StringToInt64(req.Nalog)
+	entity.Danal = common.StringToDate(req.Danal)
+	entity.Datob = common.StringToDate(req.Datob)
+	entity.Tipdok = req.Tipdok
+
+}
+func (s *NalogResource) MapToFproPayload(fproPayload *domain.FproPayload, entity domain.Fnal, lastInsertedID int64) {
+
+	fproPayload.IDFnal = entity.IDFnal
+	fproPayload.Tipdok = entity.Tipdok
+	fproPayload.Nalog = fmt.Sprintf("%d", entity.Nalog)
+	fproPayload.Danal = entity.Danal.Format("2006-01-02")
+	fproPayload.Datob = entity.Datob.Format("2006-01-02")
+	fproPayload.Opis = entity.Opis
+	fproPayload.Duguje = common.FormatNumberWithSystemLocale(entity.Dug, 2)
+	fproPayload.Potrazuje = common.FormatNumberWithSystemLocale(entity.Pot, 2)
+	fproPayload.Saldo = common.FormatNumberWithSystemLocale(entity.Dug-entity.Pot, 2)
 }

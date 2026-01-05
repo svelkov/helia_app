@@ -3,8 +3,8 @@ package templates
 import "helia/internal/domain"
 import "helia/internal/i18n"
 
-templ DeleteDialog(dialog domain.Dialog, btnConfirm, btnCancel, btnClose domain.Button, translator *i18n.Service) {
-	@Dialog("delete-dialog", DeleteDialogContent(dialog.Id, translator), dialog, btnConfirm, btnCancel, btnClose, translator)
+templ DeleteDialog(csrfToken string, dialog domain.Dialog, btnConfirm, btnCancel, btnClose domain.Button, translator *i18n.Service) {
+	@Dialog("delete-dialog", csrfToken, DeleteDialogContent(dialog.Id, translator), dialog, btnConfirm, btnCancel, btnClose, translator)
 }
 
 templ DeleteDialogContent(rowID string, translator *i18n.Service) {

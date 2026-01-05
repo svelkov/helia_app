@@ -40,6 +40,7 @@ type PrometService interface {
 type PrometResource struct {
 	service                                  *BaseService[domain.PrometDto]
 	prometRepo                               *repository.BaseRepository[domain.PrometDto]
+	fkplRepo                                 *repository.BaseRepository[domain.Fkpl]
 	prometAnKontaTableFields                 []domain.Fields
 	prometAnKontaMiTableFields               []domain.Fields
 	prometAnDeviznaKontaTableFields          []domain.Fields
@@ -50,10 +51,11 @@ type PrometResource struct {
 	prometKontaAnalitickiTableFields         []domain.Fields
 }
 
-func NewPrometService(service *BaseService[domain.PrometDto], prometRepo *repository.BaseRepository[domain.PrometDto]) *PrometResource {
+func NewPrometService(service *BaseService[domain.PrometDto], prometRepo *repository.BaseRepository[domain.PrometDto], fkplRepo *repository.BaseRepository[domain.Fkpl]) *PrometResource {
 	rs := &PrometResource{
 		service:    service,
 		prometRepo: prometRepo,
+		fkplRepo:   fkplRepo,
 	}
 	rs.setServiceFieldValues()
 	return rs

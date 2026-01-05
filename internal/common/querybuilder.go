@@ -2,7 +2,11 @@ package common
 
 import (
 	"fmt"
+	"helia/global"
+	"helia/internal/domain"
+	"reflect"
 	"strings"
+	"time"
 )
 
 type QueryBuilder struct {
@@ -15,7 +19,29 @@ type QueryBuilder struct {
 	groupBy     string
 	limit       string
 	offset      string
+	// Repository-specific fields
+	tableName    string
+	entityType   reflect.Type
+	selectFields []string
 }
+
+// RepositoryConfig holds configuration for repository operations
+type RepositoryConfig struct {
+	TableName     string
+	EntityType    reflect.Type
+	TableFields   []domain.Fields
+	IncludeGodKar bool
+}
+
+type QueryType string
+
+const (
+	SelectQuery QueryType = "select"
+	InsertQuery QueryType = "insert"
+	UpdateQuery QueryType = "update"
+	DeleteQuery QueryType = "delete"
+	CountQuery  QueryType = "count"
+)
 
 func NewQueryBuilder(baseQuery string) *QueryBuilder {
 	qb := &QueryBuilder{
@@ -24,6 +50,21 @@ func NewQueryBuilder(baseQuery string) *QueryBuilder {
 	}
 	qb.whereClause.WriteString(" WHERE 1 = 1 ")
 	return qb
+}
+
+// NewRepositoryQueryBuilder creates a query builder for repository operations
+func NewRepositoryQueryBuilder(config RepositoryConfig) *QueryBuilder {
+	qb := &QueryBuilder{
+		tableName:  config.TableName,
+		entityType: config.EntityType,
+		paramCount: 1,
+	}
+	qb.whereClause.WriteString(" WHERE 1 = 1 ")
+	return qb
+}
+
+func (qb *QueryBuilder) SetEntityType(entityType reflect.Type) {
+	qb.entityType = entityType
 }
 
 // AddCondition adds a simple condition with operator
@@ -99,9 +140,20 @@ func (qb *QueryBuilder) SetOffset(offset int) *QueryBuilder {
 	return qb
 }
 
-// AddCustomCondition for complex conditions
+// AddCustomCondition for complex conditions (joined with AND)
 func (qb *QueryBuilder) AddCustomCondition(condition string, values ...interface{}) *QueryBuilder {
 	qb.whereClause.WriteString(" AND " + condition)
+	for _, val := range values {
+		if val != nil && val != "" {
+			qb.args = append(qb.args, val)
+		}
+	}
+	return qb
+}
+
+// AddOrCondition for OR conditions
+func (qb *QueryBuilder) AddOrCondition(condition string, values ...interface{}) *QueryBuilder {
+	qb.whereClause.WriteString(" OR " + condition)
 	for _, val := range values {
 		if val != nil && val != "" {
 			qb.args = append(qb.args, val)
@@ -148,4 +200,426 @@ func (qb *QueryBuilder) Build() (string, []interface{}) {
 // GetArgs returns current arguments (useful for debugging)
 func (qb *QueryBuilder) GetArgs() []interface{} {
 	return qb.args
+}
+
+// ==================== Repository-Specific Methods ====================
+
+// BuildInsert constructs an INSERT query with RETURNING clause
+func (qb *QueryBuilder) BuildInsert(fields []domain.Fields, idField string) (string, []interface{}) {
+	if qb.tableName == "" {
+		return "", nil
+	}
+
+	var columns []string
+	var placeholders []string
+	var values []interface{}
+
+	// Add system fields
+	for i := 0; i < qb.entityType.NumField(); i++ {
+		field := qb.entityType.Field(i)
+		column := field.Tag.Get("db")
+		if column == "" || column == "-" {
+			continue
+		}
+
+		lowerCol := strings.ToLower(column)
+		if lowerCol == "god" {
+			columns = append(columns, lowerCol)
+			placeholders = append(placeholders, fmt.Sprintf("$%d", len(columns)))
+			values = append(values, global.GetGnGod())
+			continue
+		}
+		if lowerCol == "kar" {
+			columns = append(columns, lowerCol)
+			placeholders = append(placeholders, fmt.Sprintf("$%d", len(columns)))
+			values = append(values, global.GetGnKar())
+			continue
+		}
+		if lowerCol == "xdatunosa" {
+			columns = append(columns, lowerCol)
+			placeholders = append(placeholders, fmt.Sprintf("$%d", len(columns)))
+			values = append(values, time.Now())
+			continue
+		}
+	}
+
+	// Add provided fields
+	for _, field := range fields {
+		columns = append(columns, field.Name)
+		placeholders = append(placeholders, fmt.Sprintf("$%d", len(columns)))
+		values = append(values, field.Value)
+	}
+
+	query := fmt.Sprintf(
+		`INSERT INTO %s (%s) VALUES (%s) RETURNING %s`,
+		qb.tableName,
+		strings.Join(columns, ", "),
+		strings.Join(placeholders, ", "),
+		idField,
+	)
+
+	return query, values
+}
+
+// BuildUpdate constructs an UPDATE query
+func (qb *QueryBuilder) BuildUpdate(fields []domain.Fields, idField string, idValue interface{}) (string, []interface{}) {
+	if qb.tableName == "" {
+		return "", nil
+	}
+
+	var columns []string
+	var values []interface{}
+
+	// Add provided fields
+	for _, field := range fields {
+		columns = append(columns, fmt.Sprintf(` %s = $%d`, field.Name, len(values)+1))
+		values = append(values, field.Value)
+	}
+
+	// Add update timestamp
+	columns = append(columns, fmt.Sprintf(` %s = $%d`, "xdatizmene", len(values)+1))
+	values = append(values, time.Now())
+
+	// Add ID for WHERE clause
+	values = append(values, idValue)
+
+	query := fmt.Sprintf(
+		`UPDATE "%s" SET %s WHERE "%s" = $%d`,
+		qb.tableName,
+		strings.Join(columns, ", "),
+		idField,
+		len(values),
+	)
+
+	return query, values
+}
+
+// BuildSelectByID constructs a SELECT query for single record by ID
+func (qb *QueryBuilder) BuildSelectByID(idField string) string {
+	if qb.tableName == "" || qb.entityType == nil {
+		return ""
+	}
+
+	var columns []string
+	for i := 0; i < qb.entityType.NumField(); i++ {
+		field := qb.entityType.Field(i)
+		column := field.Tag.Get("db")
+		if column == "" || column == "-" {
+			continue
+		}
+		columns = append(columns, fmt.Sprintf(`"%s"`, column))
+	}
+
+	query := fmt.Sprintf(
+		`SELECT %s FROM "%s" WHERE "%s" = $1`,
+		strings.Join(columns, ", "),
+		qb.tableName,
+		idField,
+	)
+
+	return query
+}
+
+// BuildSelectAll constructs a SELECT query for multiple records with filtering
+func (qb *QueryBuilder) BuildSelectAll(fields []domain.Fields, idField string, searchParams ...string) string {
+	if qb.tableName == "" || qb.entityType == nil {
+		return ""
+	}
+
+	hasGod, hasKar := qb.CheckGodKarFields()
+	var columns []string
+	columns = append(columns, idField)
+
+	// Collect all columns
+	for i := 0; i < qb.entityType.NumField(); i++ {
+		field := qb.entityType.Field(i)
+		column := field.Tag.Get("db")
+		if column == "" || column == "-" {
+			continue
+		}
+
+		lowerCol := strings.ToLower(column)
+		if lowerCol == "god" || lowerCol == "kar" {
+			columns = append(columns, lowerCol)
+			continue
+		}
+
+		// Check if field is in tableFields
+		for _, f := range fields {
+			if strings.EqualFold(f.Name, column) {
+				columns = append(columns, lowerCol)
+				break
+			}
+		}
+	}
+
+	// Build WHERE clause
+	qb.AddGodKarConditions(hasGod, hasKar)
+	qb.AddSearchConditions(fields, searchParams...)
+
+	whereClause := qb.whereClause.String()
+	query := fmt.Sprintf(`SELECT %s FROM %s %s ORDER BY %s`,
+		strings.Join(columns, ", "),
+		qb.tableName,
+		whereClause,
+		idField)
+
+	return query
+}
+
+// BuildCount constructs a COUNT query
+func (qb *QueryBuilder) BuildCount(fields []domain.Fields, searchParams ...string) string {
+	if qb.tableName == "" || qb.entityType == nil {
+		return ""
+	}
+
+	hasGod, hasKar := qb.CheckGodKarFields()
+	qb.AddGodKarConditions(hasGod, hasKar)
+	qb.AddSearchConditions(fields, searchParams...)
+
+	whereClause := qb.whereClause.String()
+	query := fmt.Sprintf(`SELECT count(*) FROM %s %s`, qb.tableName, whereClause)
+
+	return query
+}
+
+// BuildDelete constructs a DELETE query
+func (qb *QueryBuilder) BuildDelete(idField string, idValue interface{}) (string, []interface{}) {
+	if qb.tableName == "" {
+		return "", nil
+	}
+
+	query := fmt.Sprintf(`DELETE FROM %s WHERE %s = $1`, qb.tableName, idField)
+	return query, []interface{}{idValue}
+}
+
+// Helper methods
+
+// CheckGodKarFields checks if entity has god and kar fields
+func (qb *QueryBuilder) CheckGodKarFields() (bool, bool) {
+	if qb.entityType == nil {
+		return false, false
+	}
+
+	hasGod, hasKar := false, false
+	for i := 0; i < qb.entityType.NumField(); i++ {
+		field := qb.entityType.Field(i)
+		column := field.Tag.Get("db")
+		if column == "" || column == "-" {
+			continue
+		}
+
+		lowerCol := strings.ToLower(column)
+		if lowerCol == "god" {
+			hasGod = true
+		} else if lowerCol == "kar" {
+			hasKar = true
+		}
+	}
+	return hasGod, hasKar
+}
+
+// AddGodKarConditions adds god and kar conditions to WHERE clause
+func (qb *QueryBuilder) AddGodKarConditions(hasGod, hasKar bool) {
+	entityName := ""
+	if qb.entityType != nil {
+		entityName = fmt.Sprintf("%s.", strings.ToLower(qb.entityType.Name()))
+	}
+
+	if hasGod {
+		qb.whereClause.WriteString(fmt.Sprintf(" AND %sgod = $%d ", entityName, qb.paramCount))
+		qb.args = append(qb.args, global.GetGnGod())
+		qb.paramCount++
+	}
+
+	if hasKar {
+		qb.whereClause.WriteString(fmt.Sprintf(" AND %skar = $%d ", entityName, qb.paramCount))
+		qb.args = append(qb.args, global.GetGnKar())
+		qb.paramCount++
+	}
+}
+
+// AddSearchConditions adds search/filter conditions to WHERE clause
+// Supports table-qualified column names when Field contains "table.column" format
+func (qb *QueryBuilder) AddSearchConditions(fields []domain.Fields, searchParams ...string) {
+	if len(searchParams) == 0 || len(searchParams[0]) == 0 {
+		return
+	}
+
+	if qb.entityType == nil {
+		return
+	}
+
+	likeString := " AND ( "
+	hasCondition := false
+
+	for i := 0; i < qb.entityType.NumField(); i++ {
+		field := qb.entityType.Field(i)
+		dbCol := field.Tag.Get("db")
+
+		// Skip fields not in tableFields or marked to skip in search
+		found := false
+		qualifiedCol := ""
+		for _, tblField := range fields {
+			if tblField.SkipInSearch {
+				continue
+			}
+			if strings.EqualFold(tblField.Name, field.Name) && strings.ToLower(field.Name) != "god" && strings.ToLower(field.Name) != "kar" {
+				found = true
+				// Use Field property if it contains table qualification (e.g., "partneri.sifra")
+				if tblField.Field != "" && strings.Contains(tblField.Field, ".") {
+					qualifiedCol = tblField.Field
+				} else {
+					qualifiedCol = strings.ToLower(dbCol)
+				}
+				break
+			}
+		}
+
+		if !found {
+			continue
+		}
+
+		switch field.Type.Name() {
+		case "int", "int64", "int32", "float32", "float64", "string", "bool":
+			likeString += fmt.Sprintf(" OR (%s::TEXT ILIKE $%d)", qualifiedCol, qb.paramCount)
+			qb.args = append(qb.args, fmt.Sprintf("%%%s%%", searchParams[0]))
+			qb.paramCount++
+			hasCondition = true
+		}
+	}
+
+	if hasCondition {
+		likeString += " )"
+		likeString = strings.ReplaceAll(likeString, "AND (  OR", "AND ( ")
+		qb.whereClause.WriteString(likeString)
+	}
+}
+
+// GetWhereClause returns the WHERE clause as a string
+func (qb *QueryBuilder) GetWhereClause() string {
+	return qb.whereClause.String()
+}
+
+// ==================== UNION Query Support ====================
+
+// UnionQueryBuilder handles UNION queries combining multiple QueryBuilders
+type UnionQueryBuilder struct {
+	queries   []*QueryBuilder
+	unionType string // "UNION" or "UNION ALL"
+	orderBy   string
+	limit     string
+	offset    string
+}
+
+// NewUnionQueryBuilder creates a new UNION query builder
+func NewUnionQueryBuilder(unionType string) *UnionQueryBuilder {
+	if unionType != "UNION" {
+		unionType = "UNION ALL"
+	}
+	return &UnionQueryBuilder{
+		queries:   make([]*QueryBuilder, 0),
+		unionType: unionType,
+	}
+}
+
+// AddQuery adds a query builder to the UNION
+func (uqb *UnionQueryBuilder) AddQuery(qb *QueryBuilder) *UnionQueryBuilder {
+	uqb.queries = append(uqb.queries, qb)
+	return uqb
+}
+
+// AddOrderBy adds ORDER BY clause to the UNION result
+func (uqb *UnionQueryBuilder) AddOrderBy(orderBy string) *UnionQueryBuilder {
+	uqb.orderBy = orderBy
+	return uqb
+}
+
+// SetLimit sets LIMIT for the UNION result
+func (uqb *UnionQueryBuilder) SetLimit(limit int) *UnionQueryBuilder {
+	if limit > 0 {
+		uqb.limit = fmt.Sprintf("LIMIT %d", limit)
+	}
+	return uqb
+}
+
+// SetOffset sets OFFSET for the UNION result
+func (uqb *UnionQueryBuilder) SetOffset(offset int) *UnionQueryBuilder {
+	if offset > 0 {
+		uqb.offset = fmt.Sprintf("OFFSET %d", offset)
+	}
+	return uqb
+}
+
+// adjustParameterPlaceholders replaces all $N placeholders with offset applied
+// Manually parses and replaces parameters without regex
+func adjustParameterPlaceholders(query string, offset int) string {
+	if offset == 0 {
+		return query
+	}
+
+	var result strings.Builder
+	i := 0
+	for i < len(query) {
+		if query[i] == '$' && i+1 < len(query) && query[i+1] >= '0' && query[i+1] <= '9' {
+			// Found a $ followed by a digit
+			j := i + 1
+			for j < len(query) && query[j] >= '0' && query[j] <= '9' {
+				j++
+			}
+			// Extract and convert number
+			numStr := query[i+1 : j]
+			oldNum := 0
+			fmt.Sscanf(numStr, "%d", &oldNum)
+			newNum := oldNum + offset
+			result.WriteString(fmt.Sprintf("$%d", newNum))
+			i = j
+		} else {
+			result.WriteByte(query[i])
+			i++
+		}
+	}
+	return result.String()
+}
+
+// Build constructs the final UNION query with proper parameter placeholders
+func (uqb *UnionQueryBuilder) Build() (string, []interface{}) {
+	var query strings.Builder
+	var allArgs []interface{}
+	var paramOffset int
+
+	for i, qb := range uqb.queries {
+		if i > 0 {
+			query.WriteString(" " + uqb.unionType + " ")
+		}
+
+		// Build individual query
+		q, args := qb.Build()
+
+		// Adjust parameter placeholders for union
+		// Use a single regex pass to replace all $N placeholders
+		adjustedQ := adjustParameterPlaceholders(q, paramOffset)
+
+		query.WriteString("(" + adjustedQ + ")")
+		allArgs = append(allArgs, args...)
+		paramOffset += len(args)
+	}
+
+	// Add final clauses
+	if uqb.orderBy != "" {
+		query.WriteString(" ORDER BY " + uqb.orderBy)
+	}
+	if uqb.limit != "" {
+		query.WriteString(" " + uqb.limit)
+	}
+	if uqb.offset != "" {
+		query.WriteString(" " + uqb.offset)
+	}
+
+	return query.String(), allArgs
+}
+
+// GetArgs returns all arguments from the union
+func (uqb *UnionQueryBuilder) GetArgs() []interface{} {
+	return nil // Args are included in Build() result
 }

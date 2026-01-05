@@ -18,6 +18,21 @@ import (
 	"golang.org/x/text/message"
 )
 
+var MonthComboItems = []domain.ComboItem{
+	{Key: "1", Value: "Januar"},
+	{Key: "2", Value: "Februar"},
+	{Key: "3", Value: "Mart"},
+	{Key: "4", Value: "April"},
+	{Key: "5", Value: "Maj"},
+	{Key: "6", Value: "Jun"},
+	{Key: "7", Value: "Jul"},
+	{Key: "8", Value: "Avgust"},
+	{Key: "9", Value: "Septembar"},
+	{Key: "10", Value: "Oktobar"},
+	{Key: "11", Value: "Novembar"},
+	{Key: "12", Value: "Decembar"},
+}
+
 // GetPaginationData calculates pagination details (totalPages, etc.).
 // This function can be used by both handler (initial page load) and service (query construction).
 func GetPaginationData(c *gin.Context, totalRecords int) (currentPage, pageSize, totalPages int) {
@@ -266,6 +281,13 @@ func FormatNumberWithSystemLocale(val interface{}, precision int) string {
 		return p.Sprintf("%v", val)
 	}
 }
+func FormatFloatNumber64WithSystemLocale(val interface{}, precision int) float64 {
+	switch v := val.(type) {
+	case float64:
+		return float64(v)
+	}
+	return val.(float64)
+}
 
 // detectSystemLanguage reads $LANG/$LC_ALL and returns a language.Tag.
 func detectSystemLanguage() language.Tag {
@@ -394,4 +416,23 @@ func GetCsrfTokenFromSession(c *gin.Context) string {
 		csrfToken = GetCsrfToken(c)
 	}
 	return csrfToken
+}
+
+func GetMontshName() []string {
+	translator := i18n.GetInstance()
+	months := []string{
+		translator.Label("januar"),
+		translator.Label("februar"),
+		translator.Label("mart"),
+		translator.Label("april"),
+		translator.Label("maj"),
+		translator.Label("jun"),
+		translator.Label("jul"),
+		translator.Label("avgust"),
+		translator.Label("septembar"),
+		translator.Label("oktobar"),
+		translator.Label("novembar"),
+		translator.Label("decembar"),
+	}
+	return months
 }

@@ -9,23 +9,37 @@ import (
 )
 
 // Then in template:
-templ NumericInputField(id string, value float64, decimals int, disabled bool, classString string) {
+templ NumericInputField(config domain.InputFieldConfig) {
 	<input
-		id={ id }
-		name={ id }
-		type="number"
-		step="0.01"
-		inputmode="decimal"
-		if disabled {
+		type={ config.FieldType }
+		id={ config.ID }
+		name={ config.Name }
+		value={ config.Value }
+		if config.Disabled {
 			disabled
 		}
-		class={ classString + " [&::-webkit-outer-spin-button]:hidden [&::-webkit-inner-spin-button]:hidden" }
-		value={ common.FormatNumberWithSystemLocale(value, decimals) }
+		if config.MinLength != "" {
+			minlength={ config.MinLength }
+		}
+		if config.MaxLength != "" {
+			maxlength={ config.MaxLength }
+		}
+		if config.Pattern != "" {
+			pattern={ config.Pattern }
+		}
+		if config.TabIndex != "" {
+			tabindex={ config.TabIndex }
+		}
+		type="number"
+		inputmode="numeric"
+		oninput="this.value = this.value.replace(/[^0-9.]/g, '');"
+		class={ config.ClassInput + " [&::-webkit-outer-spin-button]:hidden [&::-webkit-inner-spin-button]:hidden" }
+		value={ common.FormatNumberWithSystemLocale(config.Value, config.DecimalPlaces) }
 	/>
 }
 
 templ LabelField(config domain.LabelFieldConfig) {
-	<label class={ config.ClassLabel } for={ config.ID }>{ config.LabelText }</label>
+	<label for={ config.ID } class={ config.ClassLabel }>{ config.LabelText }</label>
 }
 
 templ TextInputField(config domain.InputFieldConfig) {
@@ -82,6 +96,9 @@ templ TextInputField(config domain.InputFieldConfig) {
 		if config.MaxLength != "" {
 			maxlength={ config.MaxLength }
 		}
+		if config.Pattern != "" {
+			pattern={ config.Pattern }
+		}
 		if config.HxOnAfterRequest != "" {
 			hx-on::after-request={ templ.JSFuncCall(fmt.Sprintf("%s", config.HxOnAfterRequest), config.ID) }
 		}
@@ -107,6 +124,9 @@ templ SearchButton(config domain.SearchButtonConfig) {
 			name={ config.Name }
 			if config.ClassButton != "" {
 				class={ config.ClassButton }
+			}
+			if config.Disabled {
+				disabled
 			}
 			if config.HxUrl !="" {
 				hx-get={ config.HxUrl }
@@ -164,6 +184,9 @@ templ ComboBoxField(comboConfig domain.ComboFieldConfig, translator *i18n.Servic
 		if comboConfig.HxVals != "" {
 			hx-vals={ comboConfig.HxVals }
 		}
+		if comboConfig.HxOnAfterRequest != "" {
+			hx-on::after-request={ templ.JSFuncCall(fmt.Sprintf("%s", comboConfig.HxOnAfterRequest), comboConfig.ID) }
+		}
 		class={ comboConfig.ClassSelect }
 	>
 		for _, item := range comboConfig.OptionValues {
@@ -174,6 +197,73 @@ templ ComboBoxField(comboConfig domain.ComboFieldConfig, translator *i18n.Servic
 			}
 		}
 	</select>
+}
+
+templ ComboBoxFieldAsTable(comboConfig domain.ComboFieldConfig, translator *i18n.Service) {
+	<!-- Container -->
+	<div class="flex items-center gap-1">
+		<!-- Label - optional -->
+		if comboConfig.HasLabel {
+			<label for={ comboConfig.ID } class={ comboConfig.ClassLabel }>{ translator.Label(comboConfig.LabelText) }</label>
+		}
+		<!-- Table-like Combo Box -->
+		<div class="relative flex-1">
+			<!-- Hidden input to store selected value -->
+			<input type="hidden" id={ comboConfig.ID } name={ comboConfig.Name }/>
+			<!-- Toggle Button -->
+			<button
+				type="button"
+				if comboConfig.Disabled {
+					disabled
+				}
+				onclick={ templ.JSFuncCall(fmt.Sprintf("document.getElementById('%s-dropdown').classList.toggle('hidden')", comboConfig.ID)) }
+				class={ fmt.Sprintf("%s %s", comboConfig.ClassSelect, "text-left flex items-center justify-between") }
+			>
+				<span id={ fmt.Sprintf("%s-display", comboConfig.ID) }>{ comboConfig.Placeholder }</span>
+				<span>▼</span>
+			</button>
+			<!-- Table-like Dropdown -->
+			<div id={ fmt.Sprintf("%s-dropdown", comboConfig.ID) } class="absolute top-full left-0 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg z-10 hidden overflow-hidden">
+				<!-- Header Row -->
+				<div class="grid grid-cols-3 gap-0 bg-blue-100 border-b border-gray-300">
+					<div class="px-3 py-2 text-xs font-bold text-blue-800 border-r border-gray-300">Šifra</div>
+					<div class="px-3 py-2 text-xs font-bold text-blue-800 border-r border-gray-300 flex-1">Opis</div>
+					<div class="px-3 py-2 text-xs font-bold text-blue-800">Tip</div>
+				</div>
+				<!-- Data Rows - Loop through OptionValues -->
+				for idx, item := range comboConfig.OptionValues {
+					<div
+						class={ fmt.Sprintf("grid grid-cols-3 gap-0 hover:bg-blue-100 cursor-pointer %s", map[bool]string{true: "border-b border-gray-200"}[idx < len(comboConfig.OptionValues)-1]) }
+						onclick={ templ.JSFuncCall(fmt.Sprintf("selectComboOption('%s', '%s', '%s')", comboConfig.ID, item.Key, item.Value)) }
+					>
+						<div class="px-3 py-2 text-sm border-r border-gray-200">{ item.Key }</div>
+						<div class="px-3 py-2 text-sm border-r border-gray-200">{ item.Value }</div>
+						<div class="px-3 py-2 text-sm">-</div>
+					</div>
+				}
+			</div>
+		</div>
+	</div>
+	<!-- Generic dropdown handler script -->
+	<script>
+		function selectComboOption(fieldId, key, value) {
+			document.getElementById(fieldId).value = key;
+			document.getElementById(fieldId + '-display').textContent = value;
+			document.getElementById(fieldId + '-dropdown').classList.add('hidden');
+		}
+		
+		// Close dropdown when clicking outside
+		document.addEventListener('click', function(event) {
+			const allDropdowns = document.querySelectorAll('[id*="-dropdown"]');
+			allDropdowns.forEach(dropdown => {
+				const fieldId = dropdown.id.replace('-dropdown', '');
+				const button = document.querySelector(`[onclick*="${fieldId}"]`);
+				if (!dropdown.contains(event.target) && event.target !== button) {
+					dropdown.classList.add('hidden');
+				}
+			});
+		});
+	</script>
 }
 
 templ SearchButtonDialog(id, name, placeholder, hxUrl, hxTarget, hxSwap, hxVals string, translator *i18n.Service) {
@@ -227,4 +317,25 @@ templ SearchButtonDialog(id, name, placeholder, hxUrl, hxTarget, hxSwap, hxVals 
 		</div>
 	</div>
 	@ShowMessage()
+}
+
+templ CheckboxField(cfg domain.CheckboxConfig, translator *i18n.Service) {
+	<label class={ cfg.ClassLabel }>
+		<input type="checkbox" 
+		name={ cfg.Name } 
+		id={ cfg.ID }
+		class={ cfg.ClassCheckbox }/>
+		<span class={ cfg.ClassCheckboxSpan }> 
+		{ translator.Label(cfg.LabelText) }</span>
+		if cfg.IsChecked {
+			checked = true
+		}
+		if cfg.OnChange != "" {
+			<script>
+				document.getElementById("{ cfg.ID }").addEventListener('change', function() {{
+					{ cfg.OnChange }
+				}});
+			</script>
+		}
+	</label>
 }

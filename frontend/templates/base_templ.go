@@ -32,7 +32,7 @@ func Base(isLoggedIn bool, content templ.Component, menuItems domain.MenuDataIte
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!doctype html><html lang=\"en\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!doctype html><html lang=\"en\" class=\"h-screen\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -40,7 +40,7 @@ func Base(isLoggedIn bool, content templ.Component, menuItems domain.MenuDataIte
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<body class=\"flex flex-col h-screen bg-gray-100 text-sm dark:bg-gray-900 dark:text-gray-100\"><!-- Header -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<body class=\"flex flex-col h-screen m-0 p-0 bg-gray-100 text-sm dark:bg-gray-900 dark:text-gray-100\"><!-- Header -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -62,7 +62,7 @@ func Base(isLoggedIn bool, content templ.Component, menuItems domain.MenuDataIte
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<!-- Main Content --><div class=\"flex flex-1\"><!-- Sidebar (Conditional) -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<!-- Main Content --><div class=\"flex flex-1 min-h-0\"><!-- Sidebar (Conditional) -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -72,7 +72,7 @@ func Base(isLoggedIn bool, content templ.Component, menuItems domain.MenuDataIte
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<!-- Content Area --><main id=\"content\" class=\"flex-1 p-4 overflow-hidden text-sm\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<!-- Content Area --><main id=\"content\" class=\"flex-1 p-2 overflow-auto text-sm w-full min-h-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -80,7 +80,7 @@ func Base(isLoggedIn bool, content templ.Component, menuItems domain.MenuDataIte
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</main></div><div id=\"report-container\"></div><!-- Footer content area -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</main></div><div id=\"report-container\" class=\"hidden\"></div><!-- Footer content area -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

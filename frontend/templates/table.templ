@@ -110,22 +110,45 @@ templ TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service
                             }
                         }()) }
 				if tbl.FuncClick !="" {
-					onclick="selectRow(this)"
+					onclick={ templ.JSUnsafeFuncCall(tbl.FuncClick) }
 				}
 				if tbl.FuncDblClick !="" {
-					data-dest-field={ tbl.DestField }
-					ondblclick="handleDblClickKontoSelection(this)"
+					if tbl.DestField != "" {
+						data-dest-field={ tbl.DestField }
+					}
+					ondblclick={ templ.JSUnsafeFuncCall(tbl.FuncDblClick) }
 				}
 				if tbl.DetailTarget != "" && tbl.DetailURL != "" {
-					hx-get={ fmt.Sprintf("%s%s", tbl.DetailURL, row.ID) }
-					hx-target={ fmt.Sprintf("%s", tbl.DetailTarget) }
-					hx.swap="innerHTML"
-					hx-vals={ fmt.Sprintf(`{"idfnal": "%s"}`, row.ID) }
+					if tbl.DetailTarget != "" {
+						hx-target={ tbl.DetailTarget }
+					}
+					if tbl.DetailHxRequestType == "GET" {
+						hx-get={ fmt.Sprintf("%s%s", tbl.DetailURL, row.ID) }
+					}
+					if tbl.DetailHxRequestType == "PUT" {
+						hx-put={ fmt.Sprintf("%s%s", tbl.DetailURL, row.ID) }
+					}
+					if tbl.DetailHxRequestType == "POST" {
+						hx-post={ fmt.Sprintf("%s%s", tbl.DetailURL, row.ID) }
+					}
+					if tbl.DetailHxSwap != "" {
+						hx-swap={ tbl.DetailHxSwap }
+					}
+					if tbl.DetailHxTrigger != "" {
+						hx-trigger={ tbl.DetailHxTrigger }
+					}
+					if tbl.HxVals != "" {
+						hx-vals={ tbl.HxVals }
+					}
 				}
 			>
-				for _, cell := range row.Fields {
-					<td class="px-3 py-1 whitespace-nowrap border-r">
-						<div class="text-sm text-gray-900">{ cell }</div>
+				for j, cell := range row.Fields {
+					<td name={ fmt.Sprintf("td-%d-%s", i, tbl.Headers[j].Name) } class="px-3 py-1 whitespace-nowrap border-r">
+						<div
+							name={ fmt.Sprintf("tdval-%d-%s", i, tbl.Headers[j].Name) }
+							class="text-sm text-gray-900"
+							title={ translator.Message("Double-click za selektovanje") }
+						>{ cell }</div>
 					</td>
 				}
 				if tbl.ShowActions && ( tbl.BtnUpdate.IsVisible || tbl.BtnDelete.IsVisible ) {

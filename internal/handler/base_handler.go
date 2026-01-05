@@ -9,7 +9,6 @@ import (
 	"helia/internal/domain"
 	"helia/internal/i18n"
 	"helia/internal/infrastructure"
-	"helia/internal/middleware"
 	"helia/internal/service"
 	"log"
 	"net/http"
@@ -186,7 +185,7 @@ func (h *BasicHandler) handleLoginPost(c *gin.Context, selections defaultSelecti
 		return
 	}
 
-	token, err := h.generateToken(loginData.Username)
+	token, err := h.generateToken(loginData.Username, h.getJwtSecretFromContext(c))
 	if err != nil {
 		h.logger.Printf("Error generating token for user %s: %v", loginData.Username, err)
 		h.respondWithError(c, http.StatusInternalServerError, "Error generating authentication token")
@@ -218,10 +217,19 @@ func (h *BasicHandler) handleLoginPost(c *gin.Context, selections defaultSelecti
 func (h *BasicHandler) saveSession(c *gin.Context, selections defaultSelections) error {
 	// Get session
 	session := sessions.Default(c)
+
+	// Preserve existing CSRF token
+	csrfToken := session.Get(csrfTokenKey)
+
 	session.Set("firma", selections.firma)
 	session.Set("god", selections.god)
 	session.Set("kar", selections.kar)
 	session.Set("username", c.PostForm("username"))
+
+	// Restore CSRF token
+	if csrfToken != nil {
+		session.Set(csrfTokenKey, csrfToken)
+	}
 
 	return session.Save()
 }
@@ -262,14 +270,24 @@ func (h *BasicHandler) validateCredentials(username, password string) bool {
 }
 
 // generateToken creates a new JWT token for the authenticated user
-func (h *BasicHandler) generateToken(username string) (string, error) {
+func (h *BasicHandler) generateToken(username string, jwtSecret []byte) (string, error) {
 	claims := jwt.MapClaims{
 		"username": username,
 		"exp":      time.Now().Add(tokenExpiry).Unix(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(middleware.JwtSecret)
+	return token.SignedString(jwtSecret)
+}
+
+// getJwtSecretFromContext retrieves the JWT secret from Gin context
+func (h *BasicHandler) getJwtSecretFromContext(c *gin.Context) []byte {
+	if s, exists := c.Get("jwtSecret"); exists {
+		if secretBytes, ok := s.([]byte); ok {
+			return secretBytes
+		}
+	}
+	return nil
 }
 
 // generateCSRFToken creates a new CSRF token and stores it in session
@@ -552,7 +570,19 @@ func (h *BasicHandler) getUsernameFromToken(c *gin.Context) (string, bool) {
 		return "", false
 	}
 
-	username, err := infrastructure.VerifyJWT(tokenString)
+	// Get JWT secret from context
+	var secret []byte
+	if s, exists := c.Get("jwtSecret"); exists {
+		if secretBytes, ok := s.([]byte); ok {
+			secret = secretBytes
+		}
+	}
+
+	if secret == nil {
+		return "", false
+	}
+
+	username, err := infrastructure.VerifyJWT(tokenString, secret)
 	if err != nil {
 		return "", false
 	}

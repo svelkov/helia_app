@@ -26,6 +26,7 @@ const (
 	ActionUpdate = "UPDATE"
 )
 
+
 const (
 	ErrMsgParseForm           = "Parsiranje forme nije uspelo."
 	ErrMsgGetIdFromUrl        = "Neuspešno preuzimanje ID-a iz URL-a."
@@ -47,6 +48,8 @@ const (
 	ErrMsgObavezanPodatak     = "obavezan podatak..."
 	ErrMsgGetData             = "greska prilikom preuzimanja podataka"
 	ErrMsgGetKontoSifra       = "nepostojeci konto ili sifra"
+	ErrNoDataFound            = "nema pronadjenih podataka"
+	ErrMsgStatusConflict      = "Nalog se trenutno obrađuje, pokušajte ponovo kasnije"
 )
 
 // constants for styling of inputs
@@ -87,6 +90,13 @@ const (
 
 	// Select/Dropdown
 	ClassSelect = "h-8 sm:h-7 md:h-6 px-2 sm:px-1.5 md:px-1 text-xs sm:text-sm text-black rounded border border-blue-400 focus:border-blue-500 focus:ring-blue-500 w-full"
+
+	//checkbox
+	ClassCheckbox = "h-4 w-4 rounded border-blue-400 text-blue-600 focus:ring-blue-500"
+	//Class span for checkbox label
+	ClassCheckboxSpan = "text-sm text-gray-700"
+	//	Class checkbox label container
+	ClassCheckboxLabel = "flex items-center gap-1"
 	// Generic Button
 	ClassButton = "h-8 sm:h-7 md:h-6 px-2 sm:px-1.5 md:px-1 text-xs sm:text-sm bg-gray-200 hover:bg-gray-300 rounded border border-blue-400 flex items-center justify-center flex-shrink-0 whitespace-nowrap"
 	// Search Input

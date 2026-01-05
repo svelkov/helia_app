@@ -16,6 +16,7 @@ templ DeactivateActionsColumn() {
 
 templ ShowMessage() {
 	<script>
+	// htmx.logAll();
 		function selectRow(row) {
 		   // console.log("Row clicked:", row);
 		   // Deselect any previously selected row by removing the 'bg-blue-300' class
@@ -62,6 +63,57 @@ templ ShowMessage() {
             hideDropdown('search-dropdown');
         }
 
+  		function handleDblClickNalogSelection(element) {
+		    if (!element) return;
+			// Get all table cells in this row
+			const cells = element.querySelectorAll('td');
+			// Extract values by div name attribute: tdval-index-fieldname
+			const nalogDiv = element.querySelector('div[name*="nalog"]');
+			const datobDiv = element.querySelector('div[name*="datob"]');
+			const danalDiv = element.querySelector('div[name*="danal"]');
+			const opisDiv = element.querySelector('div[name*="opis"]');
+			
+			// Get text content from divs
+			const nalogVal = nalogDiv?.textContent?.trim() || '';
+			let datobVal = datobDiv?.textContent?.trim() || '';
+			let danalVal = danalDiv?.textContent?.trim() || '';
+			const opisVal = opisDiv?.textContent?.trim() || '';
+			
+			// Convert date format from dd.mm.yyyy to yyyy-mm-dd for HTML date input
+			const convertDateFormat = (dateStr) => {
+				if (!dateStr) return '';
+				const parts = dateStr.split('.');
+				if (parts.length === 3) {
+					const day = parseInt(parts[0]);
+					const month = parseInt(parts[1]);
+					const year = parseInt(parts[2]);
+					// Create date object (month is 0-indexed in Date constructor)
+					const date = new Date(year, month - 1, day);
+					// Format as yyyy-mm-dd
+					const yyyy = date.getFullYear();
+					const mm = String(date.getMonth() + 1).padStart(2, '0');
+					const dd = String(date.getDate()).padStart(2, '0');
+					return `${yyyy}-${mm}-${dd}`;
+				}
+				return dateStr;
+			};
+			
+			datobVal = convertDateFormat(datobVal);
+			danalVal = convertDateFormat(danalVal);
+			
+			console.log("Extracted values - nalog:", nalogVal, "datob:", datobVal, "danal:", danalVal, "opis:", opisVal);
+			
+			// Set values in form
+			const nalogInput = document.getElementById('nalog');
+			const datobInput = document.getElementById('datob');
+			const danalInput = document.getElementById('danal');
+			const opisInput = document.getElementById('opis');
+			
+			if (nalogInput) nalogInput.value = nalogVal;
+			if (datobInput) datobInput.value = datobVal;
+			if (danalInput) danalInput.value = danalVal;
+			if (opisInput) opisInput.value = opisVal;
+		}
 
 		function showMessage(message, isError = false) {
 			const infoMessage = document.getElementById('info-message');
@@ -89,15 +141,39 @@ templ ShowMessage() {
 			console.log("in handleDialogResponse()", dialogName)
 			console.log("handleFieldErrors:", event.detail)
 			try {
-				// Parse the JSON response from the backend
-				const response = JSON.parse(event.detail.xhr.responseText);
+				// Get the response text from the backend
+				const responseText = event.detail.xhr.responseText;
+				console.log("Response text:", responseText)
+				
+				// Check if response is empty or not JSON
+				if (!responseText || responseText.trim() === '') {
+					console.log("Empty response, closing dialog");
+					closeDialog(dialogName);
+					return;
+				}
+				
+				// Try to parse as JSON
+				let response;
+				try {
+					response = JSON.parse(responseText);
+				} catch (parseError) {
+					console.error("Response is not valid JSON:", parseError);
+					console.log("Response text was:", responseText);
+					// If not JSON, assume it's HTML success response, close dialog
+					closeDialog(dialogName);
+					return;
+				}
+				
+				// If we get here, response is valid JSON
 				// Clear previous error messages
 				document.querySelectorAll('.input-error').forEach(el => el.remove());
 				document.querySelectorAll('input').forEach(input => {
 					input.classList.remove('border-red-500');
 				});
+				
+				// Handle validation errors
 				if (response.errors && response.errors.length > 0) {
-					//console.log("errors:", response.errors)
+					console.log("Errors found:", response.errors)
 					// Loop through errors and show error messages for each field
 					response.errors.forEach(error => {
 						const field = document.querySelector(`input[name="${error.field}"]`);
@@ -110,20 +186,25 @@ templ ShowMessage() {
 							field.insertAdjacentElement('afterend', errorMessage);
 						}
 					});
-					return
+					return;
 				}
+				
+				// Handle success response
 				if (response.success) {
 					showMessage(response.message);
 					closeDialog(dialogName);
+					return;
 				}
-				if (!response.success) {
-					showMessage(response.message, !response.succes);
-				}	
-					//close the dialog that is sent as parameter
 				
-				return
+				// Handle error response
+				if (!response.success) {
+					showMessage(response.message, true);
+					return;
+				}	
+				
 			} catch (e) {
-				console.error("Invalid JSON response, funkcija handleDialogResponse()", e);
+				console.error("Unexpected error in handleDialogResponse():", e);
+				closeDialog(dialogName);
 			}
 		}
 			
@@ -156,8 +237,10 @@ templ ShowMessage() {
 					const nalogElement = document.getElementById('nalog');
 					if (nalogElement) {
 						nalogElement.value = response.nalog;
-					} else {
-						console.error("Element with id 'nalog' not found");
+					}
+					const opisElement = document.getElementById('opis');
+					if (opisElement) {
+						opisElement.value =  '';
 					}
 				} else {
 					console.warn("Response missing expected data:", response);
@@ -167,7 +250,47 @@ templ ShowMessage() {
 				console.error("Invalid JSON response", e);
 			}
 		}
-		
+		function handleUpdateNalogDataResponse() {
+			console.log("handleUpdateNalogDataResponse:", event.detail);
+			
+			try {
+				console.log("u handleUpdateNalogDataResponse() ")
+				const response = JSON.parse(event.detail.xhr.responseText);
+				
+				// Check if response has the expected structure
+				if (response && response.success ) {
+					console.log("response", response.nalog);
+					
+					const datobElement = document.getElementById('datob');
+					const danalElement = document.getElementById('danal');
+					const opisElement = document.getElementById('opis');
+					if (datobElement) {
+						datobElement.value = response.datob || '';
+					} 
+					if (danalElement) {
+						danalElement.value = response.danal || '';
+					}
+					if (opisElement) {
+						opisElement.value = response.opis || '';
+					}
+				} else {
+					console.warn("Response missing expected data:", response);
+				}
+				
+			} catch (e) {
+				console.error("Invalid JSON response", e);
+			}
+		}
+		// Trigger next nalog fetch after tipdok combo changes
+        function handleTipdokAfterRequest(event) {
+			console.log("Tipdok changed, fetching next nalog...", event);
+            htmx.trigger('#nalog-trigger', 'tipdokChanged');
+        }
+
+		// Export functions to global scope
+		window.handleDblClickNalogSelection = handleDblClickNalogSelection;
+		window.handleTipdokAfterRequest = handleTipdokAfterRequest;
+
 	</script>
 }
 
@@ -197,7 +320,10 @@ templ CloseDialogScript() {
 					closeDialog(openDialog.id);
 				}
 			}
-		}); 
+		});
+		// Export functions to global scope
+		window.handleDblClickNalogSelection = handleDblClickNalogSelection;
+		window.handleTipdokAfterRequest = handleTipdokAfterRequest;
     </script>
 }
 
@@ -212,4 +338,3 @@ templ OpenDialogScript(id string) {
 		}
 	</script>
 }
-

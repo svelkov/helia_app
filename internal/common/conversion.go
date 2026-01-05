@@ -4,12 +4,13 @@ import (
 	"strconv"
 	"time"
 )
+
 var (
-	defaultInt int
-	defaultInt64 int64
+	defaultInt     int
+	defaultInt64   int64
 	defaultFloat64 float64
-	defaultTime time.Time
-	defaultBool bool
+	defaultTime    time.Time
+	defaultBool    bool
 )
 
 // StringToBool converts string to bool
@@ -74,4 +75,3 @@ func StringToInt64(str string) int64 {
 	}
 	return val
 }
-

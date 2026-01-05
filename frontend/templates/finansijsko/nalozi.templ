@@ -63,13 +63,13 @@ templ NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Uku
 		<div id="fin-nalozi" class="pt-2 col-span-2 flex flex-col gap-1">
 			<form
 				id="form-nalozi"
-				hx-post={ btnSave.HxActionURL }
 				hx-target="#info-message"
 				hx-boost="false"
 				hx-headers={ fmt.Sprintf(`{"X-CSRF-Token": "%s"}`, csrfToken) }
 				onsubmit="return false;"
 			>
 				<input type="hidden" name="_csrf" value={ csrfToken }/>
+				<div id="nalog-trigger" hx-get="/api/nalozi/nextnalog" hx-trigger="tipdokChanged" hx-vals='js:{"tipdok": document.getElementById("tipdok").value}' hx-on::after-request="handleNextNalogResponse('form-nalozi')" style="display:none;"></div>
 				<!-- First row: Combo for Vrsta naloga za knjiženje -->
 				<div class="flex items-center">
 					@tmpl.LabelField(domain.LabelFieldConfig{
@@ -77,19 +77,20 @@ templ NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Uku
 						LabelText:  translator.Label("Vrsta Naloga za knjiženje"),
 						ClassLabel: common.ClassLabel + " w-44 ",
 					})
-					@tmpl.ComboBoxField(domain.ComboFieldConfig{
-						ID:             "tipdok",
-						Name:           "tipdok",
-						Placeholder:    translator.Placeholder("Select"),
-						HasLabel:       false,
-						Disabled:       false,
-						ClassSelect:    common.ClassSelect + " flex-1 ",
-						HxSwap:         "innerHTML",
-						HxChangeTarget: "nalozi-table",
-						HxVals:         `js:{"tipdok": document.getElementById("tipdok").value}`,
-						OptionValues:   tipdokValues,
-						ChangeEndpoint: "/api/nalozi/all/tipdok",
-					}, translator)
+				@tmpl.ComboBoxField(domain.ComboFieldConfig{
+					ID:               "tipdok",
+					Name:             "tipdok",
+					Placeholder:      translator.Placeholder("Select"),
+					HasLabel:         false,
+					Disabled:         false,
+					ClassSelect:      common.ClassSelect + " flex-1 ",
+					HxSwap:           "innerHTML",
+					HxChangeTarget:   "nalozi-table",
+					HxVals:           `js:{"tipdok": document.getElementById("tipdok").value}`,
+					OptionValues:     tipdokValues,
+					ChangeEndpoint:   "/api/nalozi/all/tipdok",
+					HxOnAfterRequest: "handleTipdokAfterRequest",
+				}, translator)
 				</div>
 				<!-- Second row: Broj naloga, Datum naloga, Datum obrade -->
 				<div class="flex flex-1 items-center py-1">
@@ -105,15 +106,15 @@ templ NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Uku
 						Value:            nalogPayload.Nalog,
 						Disabled:         false,
 						ClassInput:       common.ClassInputTextEnabled,
-						HxTarget:         "nalog",
-						HxGet:            "/api/nalozi/nextnalog",
-						HxTrigger:        "change from:select[name='tipdok']",
+						HxGet:            "/api/nalozi/update-nalog-data",
+						HxTrigger:        "blur delay:100ms",
 						HxInclude:        "select[name='tipdok']",
-						HxOnAfterRequest: "handleNextNalogResponse",
+						HxVals:           `js:{"tipdok": document.getElementById('tipdok').value, "nalog": document.getElementById('nalog').value}`,
 						MinLength:        "1",
 						MaxLength:        "10",
 						TabIndex:         "1",
-						OnInput:          "clearFieldError"})
+						OnInput:          "clearFieldError",
+						HxOnAfterRequest: "handleUpdateNalogDataResponse"})
 					@tmpl.LabelField(domain.LabelFieldConfig{
 						ID:         "danal",
 						LabelText:  translator.Label("Datum Naloga"),
@@ -146,16 +147,17 @@ templ NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Uku
 				<!-- Third row: Opis knjiženja -->
 				<div class="flex items-center">
 					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "opisKnjizenja",
+						ID:         "opis",
 						LabelText:  translator.Label("Opis Knjiženja"),
 						ClassLabel: common.ClassLabel + " w-44 ",
 					})
 					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:         "opisKnjizenja",
+						ID:         "opis",
+						Name:       "opis",
 						FieldType:  "text",
 						Disabled:   false,
+						Value:      nalogPayload.Opis,
 						ClassInput: common.ClassInputTextEnabled + " w-full",
-						HxTarget:   "opisKnjizenja",
 						MinLength:  "0",
 						MaxLength:  "120",
 						TabIndex:   "4"})
@@ -177,10 +179,9 @@ templ NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Uku
 						ClassLabel: common.ClassLabel + " w-[60%]",
 					})
 					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:        "ukupnoNaloga",
-						Value:     ukObrada.UkNaloga,
-						FieldType: "text",
-					
+						ID:         "ukupnoNaloga",
+						Value:      ukObrada.UkNaloga,
+						FieldType:  "text",
 						Disabled:   true,
 						ClassInput: common.ClassInputTextDisabled,
 					})
@@ -371,7 +372,7 @@ templ NaloziKopiranjeDialog(model domain.KopirajNalog, btnSave domain.Button, tr
 	<div class="box-content flex flex-col p-2 border-2 border-gray-300 rounded-md">
 		<div class="flex items-center space-x-2 mb-1">
 			@tmpl.LabelField(domain.LabelFieldConfig{
-				ID:         "opisknjizenjaold",
+				ID:         "tipdok",
 				LabelText:  translator.Label("Vrsta Naloga"),
 				ClassLabel: common.ClassLabel + " w-24 ",
 			})
@@ -389,7 +390,7 @@ templ NaloziKopiranjeDialog(model domain.KopirajNalog, btnSave domain.Button, tr
 		</div>
 		<div class="flex items-center space-x-2 mb-1">
 			@tmpl.LabelField(domain.LabelFieldConfig{
-				ID:         "nalog-label",
+				ID:         "nalog",
 				LabelText:  translator.Label("Broj naloga"),
 				ClassLabel: common.ClassLabel + " w-24",
 			})
@@ -409,7 +410,7 @@ templ NaloziKopiranjeDialog(model domain.KopirajNalog, btnSave domain.Button, tr
 		</div>
 		<div class="flex items-center space-x-2 mb-1">
 			@tmpl.LabelField(domain.LabelFieldConfig{
-				ID:         "danal-label",
+				ID:         "danal",
 				LabelText:  translator.Label("Datum naloga"),
 				ClassLabel: common.ClassLabel + " w-24",
 			})
@@ -423,7 +424,7 @@ templ NaloziKopiranjeDialog(model domain.KopirajNalog, btnSave domain.Button, tr
 				OnInput:    "clearFieldError",
 			})
 			@tmpl.LabelField(domain.LabelFieldConfig{
-				ID:         "datob-label",
+				ID:         "datob",
 				LabelText:  translator.Label("Datum Obrade"),
 				ClassLabel: common.ClassLabel + " w-24",
 			})
@@ -439,7 +440,7 @@ templ NaloziKopiranjeDialog(model domain.KopirajNalog, btnSave domain.Button, tr
 		</div>
 		<div class="flex items-center space-x-2 mb-1">
 			@tmpl.LabelField(domain.LabelFieldConfig{
-				ID:         "opis-label",
+				ID:         "opis",
 				LabelText:  translator.Label("Opis knjizenja"),
 				ClassLabel: common.ClassLabel + " w-24",
 			})
@@ -542,7 +543,7 @@ templ NaloziStorniranjeDialog(model domain.KopirajNalog, btnSave domain.Button, 
 	<div class="box-content flex flex-col p-2 border-2 border-gray-300 rounded-md">
 		<div class="flex items-center space-x-2 mb-1">
 			@tmpl.LabelField(domain.LabelFieldConfig{
-				ID:         "lblnalog",
+				ID:         "nalog",
 				LabelText:  translator.Label("Broj naloga"),
 				ClassLabel: common.ClassLabel + " w-24",
 			})
@@ -557,7 +558,7 @@ templ NaloziStorniranjeDialog(model domain.KopirajNalog, btnSave domain.Button, 
 		</div>
 		<div class="flex items-center space-x-2 mb-1">
 			@tmpl.LabelField(domain.LabelFieldConfig{
-				ID:         "lbldanal",
+				ID:         "danal",
 				LabelText:  translator.Label("Datum naloga"),
 				ClassLabel: common.ClassLabel + " w-24",
 			})
@@ -570,7 +571,7 @@ templ NaloziStorniranjeDialog(model domain.KopirajNalog, btnSave domain.Button, 
 				ClassInput: common.ClassInputTextDisabled,
 			})
 			@tmpl.LabelField(domain.LabelFieldConfig{
-				ID:         "lbldatob",
+				ID:         "datob",
 				LabelText:  translator.Label("Datum Obrade"),
 				ClassLabel: common.ClassLabel + " w-24",
 			})
@@ -585,7 +586,7 @@ templ NaloziStorniranjeDialog(model domain.KopirajNalog, btnSave domain.Button, 
 		</div>
 		<div class="flex items-center space-x-2 mb-1">
 			@tmpl.LabelField(domain.LabelFieldConfig{
-				ID:         "lblopis",
+				ID:         "opis",
 				LabelText:  translator.Label("Opis knjizenja"),
 				ClassLabel: common.ClassLabel + " w-24",
 			})

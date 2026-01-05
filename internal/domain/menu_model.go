@@ -51,7 +51,7 @@ var MenuData = MenuDataItems{
 				{URL: "api/fkpl/all", Name: "Kontni plan", Icon: "kontniplan"},
 				{URL: "api/nalozi/all/tipdok", Name: "Nalozi", Icon: "fin_nalozi"},
 				{URL: "api/promet", Name: "Promet", Icon: "fin_promet"},
-				{URL: "", Name: "Salda konta", Icon: "fin_saldakonta"},
+				{URL: "api/salda", Name: "Salda konta", Icon: "fin_saldakonta"},
 				{URL: "", Name: "Kompenzacije", Icon: "fin_kompenzacije"},
 				{URL: "", Name: "Otvorene stavke", Icon: "fin_otvorenestavke"},
 				{URL: "", Name: "Obračun kamate", Icon: "fin_obracunkamate"},

@@ -832,7 +832,16 @@ func PartneriForm(partneriData domain.Partneri, dialog domain.Dialog, btnSave, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField("limitkredita", 0.00, 2, false, common.ClassInputTextEnabled+" flex-1 text-xs").Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+			ID:            "limitkredita",
+			Name:          "limitkredita",
+			FieldType:     "number",
+			Disabled:      false,
+			ClassInput:    common.ClassInputTextEnabled,
+			Value:         "0.00",
+			DecimalPlaces: 2,
+			TabIndex:      "17",
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -848,7 +857,16 @@ func PartneriForm(partneriData domain.Partneri, dialog domain.Dialog, btnSave, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField("limitdospela", 0.00, 2, false, common.ClassInputTextEnabled).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+			ID:            "limitdospela",
+			Name:          "limitdospela",
+			FieldType:     "number",
+			Disabled:      false,
+			ClassInput:    common.ClassInputTextEnabled,
+			Value:         "0.00",
+			DecimalPlaces: 2,
+			TabIndex:      "18",
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -864,7 +882,16 @@ func PartneriForm(partneriData domain.Partneri, dialog domain.Dialog, btnSave, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField("valutaprodaja", 0.00, 2, false, common.ClassInputTextEnabled).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+			ID:            "valutaprodaja",
+			Name:          "valutaprodaja",
+			FieldType:     "number",
+			Disabled:      false,
+			ClassInput:    common.ClassInputTextEnabled,
+			Value:         "0.00",
+			DecimalPlaces: 2,
+			TabIndex:      "18",
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -876,7 +903,16 @@ func PartneriForm(partneriData domain.Partneri, dialog domain.Dialog, btnSave, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField("rabatprodaja", 0.00, 2, false, common.ClassInputTextEnabled).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+			ID:            "rabatprodaja",
+			Name:          "rabatprodaja",
+			FieldType:     "number",
+			Disabled:      false,
+			ClassInput:    common.ClassInputTextEnabled,
+			Value:         "0.00",
+			DecimalPlaces: 2,
+			TabIndex:      "18",
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -892,7 +928,16 @@ func PartneriForm(partneriData domain.Partneri, dialog domain.Dialog, btnSave, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField("valutanabavka", 0.00, 2, false, common.ClassInputTextEnabled).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+			ID:            "valutanabavka",
+			Name:          "valutanabavka",
+			FieldType:     "number",
+			Disabled:      false,
+			ClassInput:    common.ClassInputTextEnabled,
+			Value:         "0.00",
+			DecimalPlaces: 2,
+			TabIndex:      "19",
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -904,7 +949,16 @@ func PartneriForm(partneriData domain.Partneri, dialog domain.Dialog, btnSave, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField("rabatnaabavka", 0.00, 2, false, common.ClassInputTextEnabled).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+			ID:            "rabatnaabavka",
+			Name:          "rabatnaabavka",
+			FieldType:     "number",
+			Disabled:      false,
+			ClassInput:    common.ClassInputTextEnabled,
+			Value:         "0.00",
+			DecimalPlaces: 2,
+			TabIndex:      "19",
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

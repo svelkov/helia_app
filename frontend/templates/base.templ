@@ -5,9 +5,9 @@ import "helia/internal/i18n"
 
 templ Base(isLoggedIn bool, content templ.Component, menuItems domain.MenuDataItems, subMenuItems []domain.SubMenuItem, title string, userName, year string, currentMenu string, comboCompany, comboPoslGod, comboKar, comboLanguage domain.ComboFieldConfig, translator *i18n.Service) {
 	<!DOCTYPE html>
-	<html lang="en">
+	<html lang="en" class="h-screen">
 		@Head()
-		<body class="flex flex-col h-screen bg-gray-100 text-sm dark:bg-gray-900 dark:text-gray-100">
+		<body class="flex flex-col h-screen m-0 p-0 bg-gray-100 text-sm dark:bg-gray-900 dark:text-gray-100">
 			<!-- Header -->
 			@Header(isLoggedIn, comboCompany, comboPoslGod, comboKar, comboLanguage, translator)
 			<!-- Secondary Menu (Conditional) -->
@@ -16,17 +16,17 @@ templ Base(isLoggedIn bool, content templ.Component, menuItems domain.MenuDataIt
 				<div id="info-message" class="hidden bg-green-500 text-white rounded flex h-18 text-xl justify-center items-center text-center"></div>
 			}
 			<!-- Main Content -->
-			<div class="flex flex-1">
+			<div class="flex flex-1 min-h-0">
 				<!-- Sidebar (Conditional) -->
 				if isLoggedIn {
 					@Side_nav(subMenuItems)
 				}
 				<!-- Content Area -->
-				<main id="content" class="flex-1 p-4 overflow-hidden text-sm">
+				<main id="content" class="flex-1 p-2 overflow-auto text-sm w-full min-h-0">
 					@content
 				</main>
 			</div>
-			<div id="report-container"></div>
+			<div id="report-container" class="hidden"></div>
 			<!-- Footer content area -->
 			@Footer(year)
 			<!-- Theme Toggle Script -->

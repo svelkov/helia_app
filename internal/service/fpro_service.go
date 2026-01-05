@@ -27,6 +27,7 @@ type FproService interface {
 	GetTableNalogFields() []domain.Fields
 	GetNaloziStavke(c *gin.Context, nalogID int64, searchQuery string, page int, offset int, tableFields []domain.Fields) (domain.TableData, error)
 	GetFieldCache() map[string]reflect.StructField
+	GetAllByFnalID(fnalID int64) (*[]domain.Fpro, error)
 }
 
 // FproResource implements the NalogService interface.
@@ -113,6 +114,24 @@ func (s *FproResource) MapEntityToValues(entity *domain.Fpro, tableFields []doma
 // Update implements NalogService.
 func (s *FproResource) Update(entity *domain.Fpro, idField string, idValue interface{}, tableFields []domain.Fields) ([]domain.FieldError, error) {
 	return s.service.Update(entity, idField, idValue, tableFields)
+}
+
+func (s *FproResource) GetAllByFnalID(fnalID int64) (*[]domain.Fpro, error) {
+	queryText := `select fp.*,  fk.naziv as naziv,
+	case when fp.kat = 1 then fp.iznos
+		 when fp.kat = 2 then fp.iznos
+		 else 0 end as dug,
+	case when fp.kat = 3 then fp.iznos
+		 when fp.kat = 4 then fp.iznos
+		 else 0 end as pot
+				  from fpro as fp
+			 	  left join fkpl fk on fk.idfkpl = fp.idfkpl`
+	whereText := " where idfnal = $1"
+	args := []interface{}{}
+	args = append(args, fnalID)
+
+	entities, err := s.fproRepo.GetAllCustom(queryText, whereText, args, "", " order by rbr desc ")
+	return entities, err
 }
 
 // Helper to construct common WHERE clauses and arguments for Fpro queries

@@ -138,7 +138,7 @@ templ PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 					<!-- Buttons on the right -->
 					<div class="flex items-center space-x-1">
 						@tmpl.FormObradaButton(btnObrada, translator)
-						@tmpl.FormPrintButton(btnPrint, translator)
+						@tmpl.PrintButton(btnPrint, translator)
 					</div>
 				</div>
 			</div>
@@ -294,7 +294,7 @@ templ AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint,
 					<!-- Buttons on the right -->
 					<div class="flex items-center space-x-1">
 						@tmpl.FormObradaButton(btnObrada, translator)
-						@tmpl.FormPrintButton(btnPrint, translator)
+						@tmpl.PrintButton(btnPrint, translator)
 					</div>
 				</div>
 			</div>
@@ -389,7 +389,7 @@ templ PrometDeviznihAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, 
 					<!-- Buttons on the right -->
 					<div class="flex items-center space-x-1">
 						@tmpl.FormObradaButton(btnObrada, translator)
-						@tmpl.FormPrintButton(btnPrint, translator)
+						@tmpl.PrintButton(btnPrint, translator)
 					</div>
 				</div>
 			</div>
@@ -475,7 +475,7 @@ templ PrometSubsintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPr
 					<!-- Buttons on the right -->
 					<div class="flex items-center space-x-1">
 						@tmpl.FormObradaButton(btnObrada, translator)
-						@tmpl.FormPrintButton(btnPrint, translator)
+						@tmpl.PrintButton(btnPrint, translator)
 					</div>
 				</div>
 			</div>
@@ -554,7 +554,7 @@ templ PrometSintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 					<!-- Buttons on the right -->
 					<div class="flex items-center space-x-1">
 						@tmpl.FormObradaButton(btnObrada, translator)
-						@tmpl.FormPrintButton(btnPrint, translator)
+						@tmpl.PrintButton(btnPrint, translator)
 					</div>
 				</div>
 			</div>
@@ -633,7 +633,7 @@ templ KarticaSintetickiKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 					<!-- Buttons on the right -->
 					<div class="flex items-center space-x-1">
 						@tmpl.FormObradaButton(btnObrada, translator)
-						@tmpl.FormPrintButton(btnPrint, translator)
+						@tmpl.PrintButton(btnPrint, translator)
 					</div>
 				</div>
 			</div>
@@ -778,7 +778,7 @@ templ PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint,
 					<!-- Buttons on the right -->
 					<div class="flex items-center space-x-1">
 						@tmpl.FormObradaButton(btnObrada, translator)
-						@tmpl.FormPrintButton(btnPrint, translator)
+						@tmpl.PrintButton(btnPrint, translator)
 					</div>
 				</div>
 			</div>
@@ -822,21 +822,75 @@ templ TotalValues(total domain.PrometTotalValues, translator *i18n.Service) {
 			class="grid grid-cols-4 gap-1 mb-1 h-6 items-center"
 		>
 			<div class="text-sm text-gray-600">{ translator.Label("Promet do") }</div>
-			@tmpl.NumericInputField("dugujedo", total.DugDo, 2, true, common.ClassInputNumericDisabled)
-			@tmpl.NumericInputField("potrazujedo", total.PotDo, 2, true, common.ClassInputNumericDisabled)
-			@tmpl.NumericInputField("saldodo", total.SaldoDo, 2, true, common.ClassInputNumericDisabled)
+			@tmpl.NumericInputField(domain.InputFieldConfig{
+				ID:            "dugujedo",
+				Value:         fmt.Sprintf("%.2f", total.DugDo),
+				DecimalPlaces: 2,
+				Disabled:      true,
+				ClassInput:    common.ClassInputNumericDisabled,
+			})
+			@tmpl.NumericInputField(domain.InputFieldConfig{
+				ID:            "potrazujedo",
+				Value:         fmt.Sprintf("%.2f", total.PotDo),
+				DecimalPlaces: 2,
+				Disabled:      true,
+				ClassInput:    common.ClassInputNumericDisabled,
+			})
+			@tmpl.NumericInputField(domain.InputFieldConfig{
+				ID:            "saldodo",
+				Value:         fmt.Sprintf("%.2f", total.SaldoDo),
+				DecimalPlaces: 2,
+				Disabled:      true,
+				ClassInput:    common.ClassInputNumericDisabled,
+			})
 		</div>
 		<div class="grid grid-cols-4 gap-1 mb-1 h-6 items-center">
 			<div class="text-sm text-gray-600">{ translator.Label("Promet za period") }</div>
-			@tmpl.NumericInputField("dugujeperiod", total.DugPer, 2, true, common.ClassInputNumericDisabled)
-			@tmpl.NumericInputField("potrazujeperiod", total.PotPer, 2, true, common.ClassInputNumericDisabled)
-			@tmpl.NumericInputField("saldoperiod", total.SaldoPer, 2, true, common.ClassInputNumericDisabled)
+			@tmpl.NumericInputField(domain.InputFieldConfig{
+				ID:            "dugujeperiod",
+				Value:         fmt.Sprintf("%.2f", total.DugPer),
+				DecimalPlaces: 2,
+				Disabled:      true,
+				ClassInput:    common.ClassInputNumericDisabled,
+			})
+			@tmpl.NumericInputField(domain.InputFieldConfig{
+				ID:            "potrazujeperiod",
+				Value:         fmt.Sprintf("%.2f", total.PotPer),
+				DecimalPlaces: 2,
+				Disabled:      true,
+				ClassInput:    common.ClassInputNumericDisabled,
+			})
+			@tmpl.NumericInputField(domain.InputFieldConfig{
+				ID:            "saldoperiod",
+				Value:         fmt.Sprintf("%.2f", total.SaldoPer),
+				DecimalPlaces: 2,
+				Disabled:      true,
+				ClassInput:    common.ClassInputNumericDisabled,
+			})
 		</div>
 		<div class="grid grid-cols-4 gap-1 h-6 items-center">
 			<div class="text-sm text-gray-600">{ translator.Label("Ukupan promet") }</div>
-			@tmpl.NumericInputField("dugujeukupno", total.DugTot, 2, true, common.ClassInputNumericDisabled)
-			@tmpl.NumericInputField("potrazujeukupno", total.PotTot, 2, true, common.ClassInputNumericDisabled)
-			@tmpl.NumericInputField("saldoukupno", total.SaldoTot, 2, true, common.ClassInputNumericDisabled)
+			@tmpl.NumericInputField(domain.InputFieldConfig{
+				ID:            "dugujeukupno",
+				Value:         fmt.Sprintf("%.2f", total.DugTot),
+				DecimalPlaces: 2,
+				Disabled:      true,
+				ClassInput:    common.ClassInputNumericDisabled,
+			})
+			@tmpl.NumericInputField(domain.InputFieldConfig{
+				ID:            "potrazujeukupno",
+				Value:         fmt.Sprintf("%.2f", total.PotTot),
+				DecimalPlaces: 2,
+				Disabled:      true,
+				ClassInput:    common.ClassInputNumericDisabled,
+			})
+			@tmpl.NumericInputField(domain.InputFieldConfig{
+				ID:            "saldoukupno",
+				Value:         fmt.Sprintf("%.2f", total.SaldoTot),
+				DecimalPlaces: 2,
+				Disabled:      true,
+				ClassInput:    common.ClassInputNumericDisabled,
+			})
 		</div>
 	</div>
 }

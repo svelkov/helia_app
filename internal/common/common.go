@@ -3,7 +3,7 @@ package common
 import (
 	"database/sql"
 	"fmt"
-	"helia/global"
+	"helia/config"
 	"helia/internal/domain"
 	"helia/internal/i18n"
 	"os"
@@ -35,9 +35,9 @@ var MonthComboItems = []domain.ComboItem{
 
 // GetPaginationData calculates pagination details (totalPages, etc.).
 // This function can be used by both handler (initial page load) and service (query construction).
-func GetPaginationData(c *gin.Context, totalRecords int) (currentPage, pageSize, totalPages int) {
+func GetPaginationData(c *gin.Context, totalRecords int, cfg config.Config) (currentPage, pageSize, totalPages int) {
 	// Default values
-	pageSize = global.GetConfig().PageSize
+	pageSize = cfg.PageSize
 	currentPage = 1
 
 	if c != nil { // Allow calling without request for service side
@@ -70,7 +70,7 @@ func GetPaginationData(c *gin.Context, totalRecords int) (currentPage, pageSize,
 }
 
 // GetPageAndPageSizeFromRequest extracts "page" and "pageSize" query parameters.
-func GetPageAndPageSizeFromRequest(c *gin.Context) (page, pageSize int) {
+func GetPageAndPageSizeFromRequest(c *gin.Context, cfg config.Config) (page, pageSize int) {
 	pageStr := c.Query("page")
 	pageSizeStr := c.Query("pageSize")
 
@@ -83,16 +83,16 @@ func GetPageAndPageSizeFromRequest(c *gin.Context) (page, pageSize int) {
 		pageSize = ps
 	}
 	if pageSize == 0 {
-		pageSize = global.GetConfig().PageSize // Default
+		pageSize = cfg.PageSize // Default
 	}
 	return page, pageSize
 }
 
 // SetTableBasicData initializes a domain.TableData struct with common values.
 // This is used by the service to build the TableData, and can be customized with options.
-func SetTableBasicData(title, tableID string, headers []domain.Fields, urlPrefix, URLGetAll string, pageSize, currentPage, totalPages, totalRecords int, opts ...func(*domain.TableData)) domain.TableData {
+func SetTableBasicData(title, tableID string, headers []domain.Fields, urlPrefix, URLGetAll string, pageSize, currentPage, totalPages, totalRecords int, cfg config.Config, opts ...func(*domain.TableData)) domain.TableData {
 	if pageSize == 0 {
-		pageSize = global.GetConfig().PageSize
+		pageSize = cfg.PageSize
 	}
 	translator := i18n.GetInstance()
 	table := domain.TableData{
@@ -106,7 +106,7 @@ func SetTableBasicData(title, tableID string, headers []domain.Fields, urlPrefix
 			CurrentPage:  currentPage,
 			TotalPages:   totalPages,
 			TotalRecords: totalRecords,
-			PageSizes:    global.GetConfig().PageSizes,
+			PageSizes:    cfg.PageSizes,
 			StartRecord:  currentPage*pageSize - pageSize + 1,
 			EndRecord:    currentPage * pageSize,
 		},
@@ -361,9 +361,10 @@ func WriteJSONResponse(
 	message string,
 ) {
 	c.JSON(status, domain.Response{
-		Success: success,
-		Errors:  errors,
-		Message: message,
+		StatusCode: status,
+		Success:    success,
+		Errors:     errors,
+		Message:    message,
 	})
 }
 

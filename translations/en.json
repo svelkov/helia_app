@@ -236,6 +236,7 @@
   "label.duguje_potrazuje": "Debit/Credit",
   "label.pocev_od_sifre": "From Code",
   "label.zakljucno_sa_sifrom": "To Code",
+  "label.brisanje_sloga_sa_id": "Deleting record with ID: ",
   "message.saved_success": "Data saved successfully",
   "message.deleted_success": "Data deleted successfully",
   "message.updated_success": "Data updated successfully",
@@ -472,5 +473,6 @@
   "title.dodaj_partnera": "Add Partner",
   "title.izmeni_partnera": "Edit Partner",
   "title.novi_nalog": "New Order",
-  "title.nastavak_knjizenja_naloga": "Continue Booking Order"
+  "title.nastavak_knjizenja_naloga": "Continue Booking Order",
+  "title.brisanje_podataka": "Data Deletion"
 }

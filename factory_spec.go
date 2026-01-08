@@ -15,13 +15,13 @@ import (
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
+	"github.com/golang-jwt/jwt/v5"
 	_ "github.com/lib/pq" // PostgreSQL driver
 
 	"github.com/jmoiron/sqlx"
 
 	"helia/config"
 	"helia/frontend/templates"
-	"helia/global"
 	"helia/internal/common"
 	"helia/internal/domain"
 	"helia/internal/handler"
@@ -52,7 +52,6 @@ var (
 // factory initializes and starts the application
 func factory() {
 	cfg := loadConfig()
-	global.SetConfig(cfg)
 	db, err := connectDB(cfg)
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
@@ -63,11 +62,6 @@ func factory() {
 		log.Fatal("Failed to load translations:", err)
 	}
 	translator := i18n.GetInstance()
-	// Initialize translator
-	// translator := i18n.NewTranslator("SR")
-	// if err := translator.LoadTranslations("./translations", cfg.Languages); err != nil {
-	// 	log.Fatal("Failed to load translations:", err)
-	// }
 
 	// Set Gin mode
 	if cfg.Env == "production" {
@@ -83,8 +77,10 @@ func factory() {
 	// Create router
 	router := setupRouter(translator, jwtSecret, sessionSecret)
 
+	// create empty context
+	c := gin.CreateTestContextOnly(nil, router)
 	// Entity settings
-	setEntities(db, router, jwtSecret)
+	setEntities(c, db, router, jwtSecret, cfg)
 
 	// Create server
 	srv := &http.Server{
@@ -131,6 +127,10 @@ func setupRouter(translator *i18n.Service, jwtSecret []byte, sessionSecret strin
 	// Configure sessions
 	store := configureSessionStore(sessionSecret)
 	router.Use(sessions.Sessions("heliasession", store))
+
+	// UserSession middleware - creates UserSession in context from JWT token on every request
+	router.Use(middleware.UserSession(jwtSecret))
+
 	// Global middleware
 	router.Use(middleware.CORS())
 	router.Use(middleware.I18n(translator))
@@ -153,6 +153,7 @@ func setupRouter(translator *i18n.Service, jwtSecret []byte, sessionSecret strin
 
 	// CSRF middleware AFTER static files
 	router.Use(middleware.CSRFMiddleware()) // Apply to all routes except static
+	router.Use(middleware.UserSession(jwtSecret))
 	// Add request logging to debug
 	// router.Use(func(c *gin.Context) {
 	// 	log.Printf("Request: %s %s", c.Request.Method, c.Request.URL.Path)
@@ -224,6 +225,24 @@ func getSameSitePolicy() http.SameSite {
 	}
 }
 
+// parseJWT parses and validates a JWT token, returning the user claims
+func parseJWT(tokenString string, jwtSecret []byte) (*domain.UserClaims, error) {
+	claims := &domain.UserClaims{}
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+		return jwtSecret, nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !token.Valid {
+		return nil, fmt.Errorf("invalid token")
+	}
+
+	return claims, nil
+}
+
 // loadConfig loads configuration from environment or config file
 func loadConfig() config.Config {
 	// Read the file
@@ -261,8 +280,15 @@ func connectDB(cfg config.Config) (*sqlx.DB, error) {
 
 // getMenuHandler handles menu requests
 func getMenuHandler(c *gin.Context) {
+	// Get user session from context
+	userSession := domain.GetSessionFromContext(c)
+	if userSession == nil {
+		c.JSON(401, gin.H{"error": "User session not found"})
+		return
+	}
+
 	menuName := c.Query("menuName")
-	subMenus := common.GetTranslatedSubMenus(domain.MenuData, menuName, global.GetLanguage())
+	subMenus := common.GetTranslatedSubMenus(domain.MenuData, menuName, userSession.Language)
 	if subMenus == nil {
 		c.JSON(404, gin.H{"error": "Menu not found"})
 		return
@@ -284,16 +310,17 @@ func registerGenericEntity[T any](
 	validationRules []validation.ValidationRule,
 	fields []domain.Fields,
 	config domain.HandlerConfig,
+	cfg config.Config,
 ) {
 	repo := repository.NewBaseRepository[T](db, tableName)
 	validator := validation.NewRuleBasedValidator[T](validationRules)
 	svc := service.NewBaseService(*repo, *validator)
-	h := handler.NewGenericHandler(svc, fields, config)
+	h := handler.NewGenericHandler(svc, fields, config, cfg)
 	h.RegisterRoutes(r)
 }
 
 // setEntities registers all entity routes
-func setEntities(db *sqlx.DB, r *gin.Engine, jwtSecret []byte) {
+func setEntities(c *gin.Context, db *sqlx.DB, r *gin.Engine, jwtSecret []byte, cfg config.Config) {
 	// Drzave
 	registerGenericEntity[domain.Drzave](
 		r, db, "drzave",
@@ -305,6 +332,7 @@ func setEntities(db *sqlx.DB, r *gin.Engine, jwtSecret []byte) {
 			APIPrefix:    "/api/drzava",
 			IDField:      common.IDdrzave,
 		},
+		cfg,
 	)
 
 	// Tipdok
@@ -318,6 +346,7 @@ func setEntities(db *sqlx.DB, r *gin.Engine, jwtSecret []byte) {
 			APIPrefix:    "/api/tipdok",
 			IDField:      common.IDtipdok,
 		},
+		cfg,
 	)
 
 	// Dokvrsta
@@ -331,6 +360,7 @@ func setEntities(db *sqlx.DB, r *gin.Engine, jwtSecret []byte) {
 			APIPrefix:    "/api/dokvrsta",
 			IDField:      common.IDdokvrsta,
 		},
+		cfg,
 	)
 
 	// Opstine
@@ -344,6 +374,7 @@ func setEntities(db *sqlx.DB, r *gin.Engine, jwtSecret []byte) {
 			APIPrefix:    "/api/sifop",
 			IDField:      common.IDsifop,
 		},
+		cfg,
 	)
 
 	// Sifmesto
@@ -357,6 +388,7 @@ func setEntities(db *sqlx.DB, r *gin.Engine, jwtSecret []byte) {
 			APIPrefix:    "/api/sifmesto",
 			IDField:      common.IDsifmesto,
 		},
+		cfg,
 	)
 
 	// Mestotr
@@ -370,6 +402,7 @@ func setEntities(db *sqlx.DB, r *gin.Engine, jwtSecret []byte) {
 			APIPrefix:    "/api/mestotroska",
 			IDField:      common.IDmestotr,
 		},
+		cfg,
 	)
 
 	// Orgjed
@@ -383,6 +416,7 @@ func setEntities(db *sqlx.DB, r *gin.Engine, jwtSecret []byte) {
 			APIPrefix:    "/api/orgjed",
 			IDField:      common.IDorgjed,
 		},
+		cfg,
 	)
 
 	// Banke
@@ -396,6 +430,7 @@ func setEntities(db *sqlx.DB, r *gin.Engine, jwtSecret []byte) {
 			APIPrefix:    "/api/banke",
 			IDField:      common.IDbanke,
 		},
+		cfg,
 	)
 
 	// Sifplizv
@@ -409,6 +444,7 @@ func setEntities(db *sqlx.DB, r *gin.Engine, jwtSecret []byte) {
 			APIPrefix:    "/api/sifplizvodi",
 			IDField:      common.IDsifplizv,
 		},
+		cfg,
 	)
 
 	// Fvknjrac
@@ -422,6 +458,7 @@ func setEntities(db *sqlx.DB, r *gin.Engine, jwtSecret []byte) {
 			APIPrefix:    "/api/fvknjrac",
 			IDField:      common.IDfvknjrac,
 		},
+		cfg,
 	)
 
 	// Bnkizv
@@ -435,6 +472,7 @@ func setEntities(db *sqlx.DB, r *gin.Engine, jwtSecret []byte) {
 			APIPrefix:    "/api/bnkizv",
 			IDField:      common.IDbnkizv,
 		},
+		cfg,
 	)
 
 	// Fvepdv
@@ -448,6 +486,7 @@ func setEntities(db *sqlx.DB, r *gin.Engine, jwtSecret []byte) {
 			APIPrefix:    "/api/fvepdv",
 			IDField:      common.IDfvepdv,
 		},
+		cfg,
 	)
 
 	// Oamgrp
@@ -461,6 +500,7 @@ func setEntities(db *sqlx.DB, r *gin.Engine, jwtSecret []byte) {
 			APIPrefix:    "/api/oamgrp",
 			IDField:      common.IDoamgrp,
 		},
+		cfg,
 	)
 
 	// Complex entities with custom services (non-generic)
@@ -468,13 +508,13 @@ func setEntities(db *sqlx.DB, r *gin.Engine, jwtSecret []byte) {
 	partneriRepo := repository.NewBaseRepository[domain.Partneri](db, "partneri")
 	partneriValidator := validation.NewRuleBasedValidator[domain.Partneri](validation.PartneriValidationRules())
 	partneriService := service.NewBaseService(*partneriRepo, *partneriValidator)
-	partneriHandler := handler.NewPartneriHandler(partneriService)
+	partneriHandler := handler.NewPartneriHandler(partneriService, cfg)
 	partneriHandler.AddRoutes(r)
 	// Fkpl
 	fkplRepo := repository.NewBaseRepository[domain.Fkpl](db, "fkpl")
 	fkplValidator := validation.NewRuleBasedValidator[domain.Fkpl](finval.FkplValidationRules())
 	fkplService := service.NewBaseService(*fkplRepo, *fkplValidator)
-	fkplHandler := fin.NewFkplHandler(fkplService)
+	fkplHandler := fin.NewFkplHandler(fkplService, cfg)
 	fkplHandler.AddRoutes(r)
 
 	// Fpro
@@ -487,8 +527,9 @@ func setEntities(db *sqlx.DB, r *gin.Engine, jwtSecret []byte) {
 		common.IDfpro,
 		[]domain.Fields{},
 		[]domain.Fields{},
+		cfg,
 	)
-	fproHandler := fin.NewFproHandler(fproService)
+	fproHandler := fin.NewFproHandler(fproService, cfg)
 	fproHandler.AddRoutes(r)
 	// Fnal
 	fnalRepo := repository.NewBaseRepository[domain.Fnal](db, "fnal")
@@ -506,8 +547,9 @@ func setEntities(db *sqlx.DB, r *gin.Engine, jwtSecret []byte) {
 		[]domain.Fields{},
 		[]domain.Fields{},
 		fnalValidator,
+		cfg,
 	)
-	fnalHandler := fin.NewFnalHandler(fnalService, fnalBaseService)
+	fnalHandler := fin.NewFnalHandler(fnalService, fnalBaseService, cfg)
 	fnalHandler.AddRoutes(r)
 
 	// Promet
@@ -518,7 +560,7 @@ func setEntities(db *sqlx.DB, r *gin.Engine, jwtSecret []byte) {
 		prometRepo,
 		fkplRepo,
 	)
-	prometHandler := fin.NewPrometHandler(prometService)
+	prometHandler := fin.NewPrometHandler(prometService, cfg)
 	prometHandler.AddRoutes(r)
 
 	// Salda
@@ -534,17 +576,19 @@ func setEntities(db *sqlx.DB, r *gin.Engine, jwtSecret []byte) {
 		repository.NewBaseRepository[domain.SaldaKomercijalistiDto](db, "saldakomercijalistidto"),
 	)
 
-	saldaHandler := fin.NewSaldaHandler(saldaService)
+	saldaHandler := fin.NewSaldaHandler(saldaService, cfg)
 	saldaHandler.AddRoutes(r)
 
 	// BasicHandler
 	fvrRepo := repository.NewBaseRepository[domain.Fvr](db, "fvr")
 	fvrService := service.NewFvrService(fvrRepo)
 	basicHandler := handler.NewBasicHandler(
+		c,
 		IsLoggedIn,
 		domain.MenuData,
 		[]domain.SubMenuItem{},
 		fvrService,
+		cfg,
 	)
 	basicHandler.AddRoutes(r)
 }

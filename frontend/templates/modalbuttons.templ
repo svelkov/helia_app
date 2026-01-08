@@ -17,6 +17,7 @@ templ ConfirmButton(btn domain.Button, translator *i18n.Service) {
 			hx-delete={ btn.HxActionURL }
 			hx-target={ btn.HxTarget }
 			hx-swap={ btn.HxSwap }
+			hx-include="closest form"
 			hx-vals='{"id": ""}'
 			hx-on::after-request={ templ.JSFuncCall("handleDialogResponse", btn.IdDialog) }
 		>
@@ -32,6 +33,7 @@ templ ConfirmButton(btn domain.Button, translator *i18n.Service) {
 			class={ btn.BtnClass }
 			hx-put={ btn.HxActionURL }
 			hx-target={ btn.HxTarget }
+			hx-include="closest form"
 			if btn.HxVals != "" {
 				hx-vals={ btn.HxVals }
 			}

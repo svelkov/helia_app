@@ -26,12 +26,11 @@ const (
 	ActionUpdate = "UPDATE"
 )
 
-
 const (
 	ErrMsgParseForm           = "Parsiranje forme nije uspelo."
 	ErrMsgGetIdFromUrl        = "Neuspešno preuzimanje ID-a iz URL-a."
 	ErrMsgFormDecode          = "Neuspešno dekodiranje forme."
-	ErrMsgValidation          = "Greške prilkom validacije"
+	ErrMsgValidation          = "Greška prilkom validacije"
 	ErrMsgSaveData            = "Greška prilikom upisa podataka"
 	ErrMsgDeleteData          = "Greška prilikom brisanja podataka. Greska: %s"
 	ErrMsgInvalidId           = "Invalid ID"

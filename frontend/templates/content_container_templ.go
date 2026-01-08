@@ -32,7 +32,15 @@ func ContentContainer(tbl domain.TableData, inputControl domain.InputControl, tr
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!-- Container with full height --><div class=\"flex flex-col h-full\"><!-- Tab Content --><div id=\"content\" class=\"flex-1 min-h-0 flex flex-col gap-1\"><div class=\"border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
 		templ_7745c5c3_Err = Search_Part(tbl, inputControl).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<div class=\"flex-1 overflow-x-auto overflow-y-auto min-h-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -40,7 +48,7 @@ func ContentContainer(tbl domain.TableData, inputControl domain.InputControl, tr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<script>\r\n\t    document.addEventListener('htmx:afterSwap', (event) => {\r\n\t        if (event.detail.target.id === 'table') {\r\n\t            const currentPage = event.detail.xhr.responseURL.match(/page=(\\d+)/);\r\n\t            if (currentPage) {\r\n\t                const page = parseInt(currentPage[1], 10);\r\n\t                document.querySelectorAll('.pagination .page-item').forEach((item) => {\r\n\t                    item.classList.remove('active');\r\n\t                });\r\n\t                const activeLink = document.querySelector(`.pagination .page-link[hx-get*=\"?page=${page}\"]`);\r\n\t                if (activeLink) {\r\n\t                    activeLink.closest('.page-item').classList.add('active');\r\n\t                }\r\n\t            }\r\n\t        }\r\n\t    });\r\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</div></div></div></div><script>\r\n\t    document.addEventListener('htmx:afterSwap', (event) => {\r\n\t        if (event.detail.target.id === 'table') {\r\n\t            const currentPage = event.detail.xhr.responseURL.match(/page=(\\d+)/);\r\n\t            if (currentPage) {\r\n\t                const page = parseInt(currentPage[1], 10);\r\n\t                document.querySelectorAll('.pagination .page-item').forEach((item) => {\r\n\t                    item.classList.remove('active');\r\n\t                });\r\n\t                const activeLink = document.querySelector(`.pagination .page-link[hx-get*=\"?page=${page}\"]`);\r\n\t                if (activeLink) {\r\n\t                    activeLink.closest('.page-item').classList.add('active');\r\n\t                }\r\n\t            }\r\n\t        }\r\n\t    });\r\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

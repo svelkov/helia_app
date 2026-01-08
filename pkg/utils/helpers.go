@@ -3,6 +3,7 @@ package utils
 import (
 	"errors"
 	"fmt"
+	"helia/config"
 	"helia/internal/common"
 	"helia/internal/domain"
 	"helia/internal/i18n"
@@ -14,20 +15,7 @@ import (
 	tmpl "helia/frontend/templates"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gorilla/schema"
 )
-
-// parseAndDecode parses the form and decodes it into the provided entity.
-func parseAndDecode(r *http.Request, entity any) error {
-	if err := r.ParseForm(); err != nil {
-		return fmt.Errorf("%s: %w", common.ErrMsgParseForm, err)
-	}
-	decoder := schema.NewDecoder()
-	if err := decoder.Decode(entity, r.PostForm); err != nil {
-		return fmt.Errorf("%s: %w", common.ErrMsgFormDecode, err)
-	}
-	return nil
-}
 
 // GetIDFromRequest extracts the ID from the request URL path.
 func GetIDFromRequest(c *gin.Context, key string) (int64, error) {
@@ -52,11 +40,11 @@ func DeleteHelper[T any](
 	}
 
 	if err := service.Delete(idType, id); err != nil {
-		common.WriteJSONResponse(c, http.StatusBadRequest, false, nil, fmt.Sprintf("%s: %v", common.ErrMsgDeleteData, err))
+		common.WriteJSONResponse(c, http.StatusBadRequest, false, nil, fmt.Sprintf("%s: %s", common.ErrMsgDeleteData, err.Error()))
 		return
 	}
 
-	common.WriteJSONResponse(c, http.StatusOK, true, nil, common.OkMsgSaveData)
+	common.WriteJSONResponse(c, http.StatusOK, true, nil, common.OkMsgDeleteData)
 }
 
 // ConfirmDeleteHelper renders a confirmation dialog for resource deletion.
@@ -64,10 +52,10 @@ func ConfirmDeleteHelper(
 	c *gin.Context,
 	tableFields []domain.Fields,
 ) {
-	idStr := c.Query("id")
+	rowID := c.Query("id")
 	url := c.Query("url")
 
-	id, err := strconv.Atoi(idStr)
+	id, err := strconv.Atoi(rowID)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusBadRequest, false, nil, common.ErrMsgInvalidID)
 		return
@@ -100,7 +88,7 @@ func ConfirmDeleteHelper(
 		BtnClass:  common.ClassDialogCloseButton,
 	}
 
-	RenderDialogContent(c, dialog, tableFields, common.ActionDelete, btnConfirm, btnCancel, btnClose)
+	RenderDialogContent(c, dialog, tableFields, common.ActionDelete, btnConfirm, btnCancel, btnClose, rowID)
 }
 
 // ConfirmAddHelper renders a dialog for adding a new resource.
@@ -108,6 +96,7 @@ func ConfirmAddHelper(c *gin.Context, url string, tableFields []domain.Fields) {
 	for i := range tableFields {
 		tableFields[i].Value = ""
 	}
+	rowID := ""
 	dialog := SetDialogValues("dialog-save", url, "Unos novih podataka", "POST")
 	btnSave := domain.Button{
 		Id:            "btn-save",
@@ -133,15 +122,15 @@ func ConfirmAddHelper(c *gin.Context, url string, tableFields []domain.Fields) {
 		IdDialog:  "dialog-save",
 		BtnClass:  common.ClassDialogCloseButton,
 	}
-	RenderDialogContent(c, dialog, tableFields, common.ActionAdd, btnSave, btnCancel, btnClose)
+	RenderDialogContent(c, dialog, tableFields, common.ActionAdd, btnSave, btnCancel, btnClose, rowID)
 }
 
 // ConfirmUpdateHelper renders a dialog for updating a resource.
 func ConfirmUpdateHelper[T any](c *gin.Context, service service.Service[T], tableFields []domain.Fields, idField string) {
-	idStr := c.Query("id")
+	rowID := c.Query("id")
 	url := c.Query("url")
 
-	id, err := strconv.Atoi(idStr)
+	id, err := strconv.Atoi(rowID)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusBadRequest, false, nil, common.ErrMsgInvalidID)
 		return
@@ -181,7 +170,7 @@ func ConfirmUpdateHelper[T any](c *gin.Context, service service.Service[T], tabl
 		IdDialog:  "dialog-izmeni",
 		BtnClass:  common.ClassDialogCloseButton,
 	}
-	RenderDialogContent(c, dialog, fields, common.ActionUpdate, btnSave, btnCancel, btnClose)
+	RenderDialogContent(c, dialog, fields, common.ActionUpdate, btnSave, btnCancel, btnClose, rowID)
 }
 
 // CreateHelper handles HTTP POST requests for creating a new resource.
@@ -191,28 +180,21 @@ func CreateHelper[T any](
 	service service.Service[T],
 	idField string,
 	tableFields []domain.Fields,
-) (insertedId int64, err error) {
-
+) (fieldsError []domain.FieldError, err error) {
+	fieldsError = []domain.FieldError{}
 	// Use Gin's JSON binding instead of custom parseAndDecode
-	if err := c.ShouldBindJSON(entity); err != nil {
+	if err := c.ShouldBind(entity); err != nil {
 		common.WriteJSONResponse(c, http.StatusBadRequest, false, nil, err.Error())
-		return 0, err
+		return nil, err
 	}
 
 	tableFields = service.MapEntityToValues(entity, tableFields)
-	fieldErrors, lastInsertedID, err := service.Create(entity, idField, tableFields)
-	if err != nil {
-		common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldErrors, common.ErrMsgSaveData)
-		return 0, err
+	fieldErrors, _, err := service.Create(c, entity, idField, tableFields)
+	if err != nil || len(fieldErrors) > 0 {
+		return fieldErrors, err
 	}
 
-	if len(fieldErrors) > 0 {
-		common.WriteJSONResponse(c, http.StatusUnprocessableEntity, false, fieldErrors, common.ErrMsgValidation)
-		return 0, nil
-	}
-
-	common.WriteJSONResponse(c, http.StatusCreated, true, nil, common.OkMsgSaveData)
-	return lastInsertedID, nil
+	return nil, nil
 }
 
 // UpdateHelper handles HTTP PUT requests for updating a resource.
@@ -235,7 +217,7 @@ func UpdateHelper[T any](
 	}
 
 	tableFields = service.MapEntityToValues(entity, tableFields)
-	fieldErrors, err := service.Update(entity, idField, id, tableFields)
+	fieldErrors, err := service.Update(c, entity, idField, id, tableFields)
 	if len(fieldErrors) > 0 {
 		common.WriteJSONResponse(c, http.StatusUnprocessableEntity, false, fieldErrors, common.ErrMsgValidation)
 		return
@@ -267,18 +249,19 @@ func GetAllEntityHelper[T any](
 	service service.Service[T],
 	tableFields []domain.Fields,
 	entityContentTitle, entityTableID, entityURLPrefix, entityURLGetall, idField string,
+	cfg config.Config,
 	hasUpdateDelete ...bool,
 ) *domain.TableData {
 	searchValue := c.DefaultQuery("query", "")
 
-	totRecords, err := service.GetTotalRecords(tableFields, searchValue)
+	totRecords, err := service.GetTotalRecords(c, tableFields, searchValue)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData)
 		return nil
 	}
 
-	currentPage, pageSize, totalPages := common.GetPaginationData(c, totRecords)
-	allEntities, err := service.GetAll(pageSize, (currentPage-1)*pageSize, tableFields, idField, searchValue)
+	currentPage, pageSize, totalPages := common.GetPaginationData(c, totRecords, cfg)
+	allEntities, err := service.GetAll(c, pageSize, (currentPage-1)*pageSize, tableFields, idField, searchValue)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData)
 		return nil
@@ -288,6 +271,7 @@ func GetAllEntityHelper[T any](
 		entityContentTitle, entityTableID, tableFields,
 		entityURLPrefix, entityURLGetall,
 		pageSize, currentPage, totalPages, totRecords,
+		cfg,
 	)
 	common.SetTableRows(&table, *allEntities, tableFields, idField, entityURLPrefix, service.GetFieldCache())
 	return &table
@@ -298,18 +282,19 @@ func GetAllPdfEntityHelper[T any](
 	service service.Service[T],
 	tableFields []domain.Fields,
 	entityContentTitle, entityTableID, entityURLPrefix, entityURLGetall, idField string,
+	cfg config.Config,
 	hasUpdateDelete ...bool,
 ) *domain.TableData {
 	searchValue := c.DefaultQuery("query", "")
 
-	totRecords, err := service.GetTotalRecords(tableFields, searchValue)
+	totRecords, err := service.GetTotalRecords(c, tableFields, searchValue)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData)
 		return nil
 	}
 
-	currentPage, pageSize, totalPages := common.GetPaginationData(c, totRecords)
-	allEntities, err := service.GetAll(pageSize, (currentPage-1)*pageSize, tableFields, idField, searchValue)
+	currentPage, pageSize, totalPages := common.GetPaginationData(c, totRecords, cfg)
+	allEntities, err := service.GetAll(c, pageSize, (currentPage-1)*pageSize, tableFields, idField, searchValue)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData)
 		return nil
@@ -318,7 +303,7 @@ func GetAllPdfEntityHelper[T any](
 	table := common.SetTableBasicData(
 		entityContentTitle, entityTableID, tableFields,
 		entityURLPrefix, entityURLGetall,
-		pageSize, currentPage, totalPages, totRecords,
+		pageSize, currentPage, totalPages, totRecords, cfg,
 	)
 	common.SetTableRows(&table, *allEntities, tableFields, idField, entityURLPrefix, service.GetFieldCache())
 	return &table
@@ -328,18 +313,19 @@ func GetAllExcelEntityHelper[T any](
 	service service.Service[T],
 	tableFields []domain.Fields,
 	entityContentTitle, entityTableID, entityURLPrefix, entityURLGetall, idField string,
+	cfg config.Config,
 	hasUpdateDelete ...bool,
 ) *domain.TableData {
 	searchValue := c.DefaultQuery("query", "")
 
-	totRecords, err := service.GetTotalRecords(tableFields, searchValue)
+	totRecords, err := service.GetTotalRecords(c, tableFields, searchValue)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData)
 		return nil
 	}
 
-	currentPage, pageSize, totalPages := common.GetPaginationData(c, totRecords)
-	allEntities, err := service.GetAll(pageSize, (currentPage-1)*pageSize, tableFields, idField, searchValue)
+	currentPage, pageSize, totalPages := common.GetPaginationData(c, totRecords, cfg)
+	allEntities, err := service.GetAll(c, pageSize, (currentPage-1)*pageSize, tableFields, idField, searchValue)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData)
 		return nil
@@ -348,7 +334,7 @@ func GetAllExcelEntityHelper[T any](
 	table := common.SetTableBasicData(
 		entityContentTitle, entityTableID, tableFields,
 		entityURLPrefix, entityURLGetall,
-		pageSize, currentPage, totalPages, totRecords,
+		pageSize, currentPage, totalPages, totRecords, cfg,
 	)
 	common.SetTableRows(&table, *allEntities, tableFields, idField, entityURLPrefix, service.GetFieldCache())
 	return &table

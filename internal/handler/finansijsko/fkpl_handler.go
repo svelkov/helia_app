@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"helia/global"
+	"helia/config"
 	"helia/internal/common"
 	"helia/internal/domain"
 	"helia/internal/middleware"
@@ -40,10 +40,11 @@ var fkplSearchTableFields = []domain.Fields{
 
 type FkplHandler struct {
 	Service *service.BaseService[domain.Fkpl]
+	cfg     config.Config
 }
 
-func NewFkplHandler(service *service.BaseService[domain.Fkpl]) *FkplHandler {
-	return &FkplHandler{Service: service}
+func NewFkplHandler(service *service.BaseService[domain.Fkpl], cfg config.Config) *FkplHandler {
+	return &FkplHandler{Service: service, cfg: cfg}
 }
 
 func (h *FkplHandler) CreateFkpl(c *gin.Context) {
@@ -78,7 +79,7 @@ func (h *FkplHandler) GetFkpl(c *gin.Context) {
 
 func (h *FkplHandler) GetAllFkpl(c *gin.Context) {
 
-	tbl := utils.GetAllEntityHelper(c, h.Service, SetFkplFields(), fkplContentTitle, fkplTableID, fkplURLPrefix, fkplURLGetAll, common.IDfkpl)
+	tbl := utils.GetAllEntityHelper(c, h.Service, SetFkplFields(), fkplContentTitle, fkplTableID, fkplURLPrefix, fkplURLGetAll, common.IDfkpl, h.cfg)
 	utils.RenderContent(c, *tbl)
 }
 
@@ -97,17 +98,23 @@ func (h *FkplHandler) TraziKonto(c *gin.Context) {
 	sqlQuery := `SELECT f.naziv
 				FROM baza.fkpl as f`
 	whereText := `WHERE 1 = 1  `
+	session := domain.GetSessionFromContext(c)
+	if session == nil {
+		common.WriteJSONResponse(c, http.StatusUnauthorized, false, []domain.FieldError{}, "User session not found")
+		return
+	}
+
 	hasGod, hasKAr := h.Service.Repo.GetHasGodHasKar()
 	param := 1
 	if hasGod {
 		whereText += fmt.Sprintf(" AND f.god = $%d ", param)
 		param++
-		args = append(args, global.GetGnGod())
+		args = append(args, session.SelectedGod)
 	}
 	if hasKAr {
 		whereText += fmt.Sprintf(" AND f.kar = $%d ", param)
 		param++
-		args = append(args, global.GetGnKar())
+		args = append(args, session.SelectedKar)
 	}
 	if konto != "" {
 		whereText += fmt.Sprintf(" AND f.konto = $%d ", param)
@@ -130,7 +137,7 @@ func (h *FkplHandler) TraziKonto(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, "Nije pronađena šifra")
 		return
 	}
-	entities, err := h.Service.GetAllCustom(sqlQuery, whereText, args, "", "")
+	entities, err := h.Service.GetAllCustom(c, sqlQuery, whereText, args, "", "")
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, "Greška prilikom pretrage konta")
 		return
@@ -165,9 +172,15 @@ func (h *FkplHandler) TraziKontoSearchTable(c *gin.Context) {
 		return
 
 	}
+	session := domain.GetSessionFromContext(c)
+	if session == nil {
+		common.WriteJSONResponse(c, http.StatusUnauthorized, false, []domain.FieldError{}, "User session not found")
+		return
+	}
+
 	whereKonto := ""
 	// Custom SQL query for searching konto, sifra, or naziv
-	args = append(args, global.GetGnGod(), global.GetGnKar())
+	args = append(args, session.SelectedGod, session.SelectedKar)
 	sqlQuery := `SELECT idfkpl, f.konto, f.sifra, f.naziv
 				FROM baza.fkpl as f`
 	if konto != "" {
@@ -183,16 +196,16 @@ func (h *FkplHandler) TraziKontoSearchTable(c *gin.Context) {
 	}
 	whereText := fmt.Sprintf(`WHERE f.god = $1 AND f.kar = $2  %s`, whereKonto)
 	args = append(args, vkonta, searchValue, searchValue, searchValue)
-	entities, err := h.Service.GetAllCustom(sqlQuery, whereText, args, "", "")
+	entities, err := h.Service.GetAllCustom(c, sqlQuery, whereText, args, "", "")
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, common.ErrMsgReadData)
 		return
 	}
 	// Convert the fetched data into the format expected by the template
-	tbl := common.SetTableBasicData("", searchKontoTableID, fkplSearchTableFields, "", "", 0, 0, 0, 0)
+	tbl := common.SetTableBasicData("", searchKontoTableID, fkplSearchTableFields, "", "", 0, 0, 0, 0, h.cfg)
 	tbl.ShowActions = false
 	tbl.ShowPagination = false
-	tbl.FuncClick = "selectRow"                        // naziv js function for Click
+	tbl.FuncClick = "selectRow"                             // naziv js function for Click
 	tbl.FuncDblClick = "handleDblClickKontoSelection(this)" // naziv js function for dblClick
 	if vkonta == "2" {
 		tbl.DestField = "konto"

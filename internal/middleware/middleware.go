@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"helia/internal/domain"
 	"helia/internal/i18n"
 
 	"github.com/gin-gonic/gin"
@@ -209,5 +210,34 @@ func getMethodColor(method string) string {
 		return "[DELETE]"
 	default:
 		return "[" + method + "]"
+	}
+}
+
+// UserSession middleware - creates UserSession in context from JWT token on every request
+func UserSession(jwtSecret []byte) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// Get auth token from cookie
+		tokenString, err := c.Cookie("auth_token")
+		if err == nil && tokenString != "" {
+			// Parse JWT to get user info
+			claims := &domain.UserClaims{}
+			token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+				return jwtSecret, nil
+			})
+
+			if err == nil && token.Valid {
+				// Create UserSession in context for this request
+				userSession := &domain.UserSession{
+					UserID:      int64(claims.UserID),
+					UserName:    claims.Username,
+					Firma:       claims.Firma,
+					SelectedGod: claims.SelectedGod,
+					SelectedKar: claims.SelectedKar,
+					Language:    claims.Language,
+				}
+				c.Set("userSession", userSession)
+			}
+		}
+		c.Next()
 	}
 }

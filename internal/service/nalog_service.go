@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"helia/config"
 	"helia/global"
 	"helia/internal/common"
 	"helia/internal/domain"
@@ -42,6 +43,7 @@ type NalogViewData struct {
 type NalogService interface {
 	Service[domain.Fnal]
 	//GetNalogViewData fetches all data required to render the Nalog list page.
+	CreateNalog(c *gin.Context, fnal *domain.Fnal, idField string, fields []domain.Fields) (frpoPaylad *domain.FproPayload, fieldsError []domain.FieldError, lastInsertedId int64, err error)
 	GetNalogViewData(c *gin.Context, searchQuery, selectedTipdok string, page, pageSize int, isInitialRequest bool) (NalogViewData, error)
 	SetNalogIDFieldName(string)
 	SetSfTableFields([]domain.Fields)
@@ -49,14 +51,14 @@ type NalogService interface {
 	GetNaloziStavkeTableFields() []domain.Fields
 	GetNalogPrepisData(c *gin.Context, searchQuery string, page, pageSize int) (NalogViewData, error)
 	GetNalogStornirajData(c *gin.Context, searchQuery string, page, pageSize int) (NalogViewData, error)
-	GetNextNalog(tipdok string) (int64, error)
-	GetTipdokOptions() ([]domain.Tipdok, error)
+	GetNextNalog(c *gin.Context, tipdok string) (int64, error)
+	GetTipdokOptions(c *gin.Context) ([]domain.Tipdok, error)
 	Validation(entity domain.Fnal) ([]domain.FieldError, error)
 	ValidationKopirajNalog(entity domain.Fnal) ([]domain.FieldError, error)
-	GetByTipdokNalog(tipdok string, nalog int64) (domain.Fnal, error)
-	GetIdTipdokByTipdok(tipdok string) (int64, error)
-	GetOrgJedinice() ([]domain.ComboItem, error)
-	GetMestoTroska(idorgjed int64) ([]domain.ComboItem, error)
+	GetByTipdokNalog(c *gin.Context, tipdok string, nalog int64) (domain.Fnal, error)
+	GetIdTipdokByTipdok(c *gin.Context, tipdok string) (int64, error)
+	GetOrgJedinice(c *gin.Context) ([]domain.ComboItem, error)
+	GetMestoTroska(c *gin.Context, idorgjed int64) ([]domain.ComboItem, error)
 	MapReqToEntity(c *gin.Context, req domain.FnalPayload, entity *domain.Fnal, action string)
 	MapToFproPayload(fproPayload *domain.FproPayload, entity domain.Fnal, lastInsertedID int64)
 	UpdateNalog(c *gin.Context) (fproPayload domain.FproPayload, tblStavke domain.TableData, err error, statusCode int, errMessage string, fieldErrors []domain.FieldError)
@@ -76,6 +78,7 @@ type NalogResource struct {
 	naloziTableFields       []domain.Fields
 	naloziStavkeTableFields []domain.Fields
 	sfTableFields           []domain.Fields
+	cfg                     config.Config
 }
 
 func NewNalogService(
@@ -90,6 +93,7 @@ func NewNalogService(
 	naloziTableFields []domain.Fields,
 	sfTableFields []domain.Fields,
 	validator *validation.RuleBasedValidator[domain.Fnal],
+	cfg config.Config,
 ) *NalogResource {
 	rs := &NalogResource{
 		service:           service,
@@ -102,6 +106,7 @@ func NewNalogService(
 		nalogIDFieldName:  nalogIDFieldName,
 		naloziTableFields: naloziTableFields,
 		sfTableFields:     sfTableFields,
+		cfg:               cfg,
 	}
 	rs.setServiceFieldValues()
 	return rs
@@ -140,11 +145,61 @@ func (s *NalogResource) ValidationKopirajNalog(entity domain.Fnal) ([]domain.Fie
 }
 
 // Create implements NalogService.
-func (s *NalogResource) Create(fnal *domain.Fnal, idField string, fields []domain.Fields) ([]domain.FieldError, int64, error) {
+func (s *NalogResource) Create(c *gin.Context, fnal *domain.Fnal, idField string, fields []domain.Fields) (fieldsError []domain.FieldError, lastInsertedID int64, err error) {
+	return s.service.Create(c, fnal, idField, fields)
+}
 
-	lastinsertedID, err := s.fnalRepo.Create(fnal, idField, fields)
-	return []domain.FieldError{}, lastinsertedID, err
+// Create implements NalogService.
+func (s *NalogResource) CreateNalog(c *gin.Context, fnal *domain.Fnal, idField string, fields []domain.Fields) (frpoPaylad *domain.FproPayload, fieldsError []domain.FieldError, lastInsertedID int64, err error) {
 
+	var nalog domain.FnalPayload
+	var fproPayload domain.FproPayload
+	if err := c.ShouldBind(&nalog); err != nil {
+		return &fproPayload, []domain.FieldError{}, 0, err
+	}
+	fieldErrors, err := s.service.Validator.Validate(fnal)
+	if err != nil {
+		return &fproPayload, []domain.FieldError{}, 0, err
+	}
+	if len(fieldErrors) > 0 {
+		return &fproPayload, fieldErrors, 0, nil
+	}
+
+	// map request to entity
+	s.MapReqToEntity(c, nalog, fnal, ActionAdd)
+	id, err := s.GetIdTipdokByTipdok(c, nalog.Tipdok)
+	if err != nil {
+		return &fproPayload, []domain.FieldError{}, 0, err
+	}
+	fnal.IDTipdok = id
+	fieldErrors, lastInsertedID, err = s.service.Create(c, fnal, common.IDfnal, s.MapEntityToValues(fnal, s.GetNaloziTableFields()))
+	if err != nil {
+		return &fproPayload, []domain.FieldError{}, 0, err
+	}
+	if len(fieldErrors) > 0 {
+		return &fproPayload, fieldErrors, lastInsertedID, nil
+	}
+	// Lock the header using global resource lock
+	mutex := global.GetHeaderLock(lastInsertedID)
+	// Try to lock without blocking
+	if !mutex.TryLock() {
+		return &fproPayload, []domain.FieldError{}, 0, errors.New(common.ErrMsgStatusConflict)
+	}
+	defer mutex.Unlock() // Ensure mutex is always unlocked, even if an error occurs
+	s.MapToFproPayload(&fproPayload, *fnal, lastInsertedID)
+
+	orgjed, err := s.GetOrgJedinice(c)
+	if err != nil {
+		return &fproPayload, []domain.FieldError{}, 0, err
+	}
+	mtroska, err := s.GetMestoTroska(c, 0) // No orgjed yet for new nalog
+	if err != nil {
+		return &fproPayload, []domain.FieldError{}, 0, err
+	}
+	fproPayload.Orgjed = orgjed
+	fproPayload.Mtroska = mtroska
+	lastinsertedID, err := s.fnalRepo.Create(c, fnal, idField, fields)
+	return &fproPayload, []domain.FieldError{}, lastinsertedID, err
 }
 
 // Delete implements NalogService.
@@ -153,13 +208,13 @@ func (s *NalogResource) Delete(idField string, id int64) error {
 }
 
 // GetAll implements NalogService.
-func (s *NalogResource) GetAll(page int, offset int, tableFields []domain.Fields, idField string, searchParams ...string) (*[]domain.Fnal, error) {
-	return s.service.GetAll(page, offset, tableFields, idField, searchParams...)
+func (s *NalogResource) GetAll(c *gin.Context, page int, offset int, tableFields []domain.Fields, idField string, searchParams ...string) (*[]domain.Fnal, error) {
+	return s.service.GetAll(c, page, offset, tableFields, idField, searchParams...)
 }
 
 // GetAllCustom implements NalogService.
-func (s *NalogResource) GetAllCustom(queryText string, whereText string, args []interface{}, limitOffset string, orderBy string) (*[]domain.Fnal, error) {
-	return s.service.GetAllCustom(queryText, whereText, args, limitOffset, orderBy)
+func (s *NalogResource) GetAllCustom(c *gin.Context, queryText string, whereText string, args []interface{}, limitOffset string, orderBy string) (*[]domain.Fnal, error) {
+	return s.service.GetAllCustom(c, queryText, whereText, args, limitOffset, orderBy)
 }
 
 // GetByID implements NalogService.
@@ -168,13 +223,13 @@ func (s *NalogResource) GetByID(idField string, idValue int64) (*domain.Fnal, er
 }
 
 // GetTotalRecords implements NalogService.
-func (s *NalogResource) GetTotalRecords(tableFields []domain.Fields, searchParams ...string) (int, error) {
-	return s.service.GetTotalRecords(tableFields, searchParams...)
+func (s *NalogResource) GetTotalRecords(c *gin.Context, tableFields []domain.Fields, searchParams ...string) (int, error) {
+	return s.service.GetTotalRecords(c, tableFields, searchParams...)
 }
 
 // GetTotalRecordsCustom implements NalogService.
-func (s *NalogResource) GetTotalRecordsCustom(queryText string, whereText string, args []interface{}, limitOffset string, orderBy string) (int, error) {
-	return s.service.GetTotalRecordsCustom(queryText, whereText, args, limitOffset, orderBy)
+func (s *NalogResource) GetTotalRecordsCustom(c *gin.Context, queryText string, whereText string, args []interface{}, limitOffset string, orderBy string) (int, error) {
+	return s.service.GetTotalRecordsCustom(c, queryText, whereText, args, limitOffset, orderBy)
 }
 
 // MapEntityToValues implements NalogService.
@@ -183,8 +238,8 @@ func (s *NalogResource) MapEntityToValues(entity *domain.Fnal, tableFields []dom
 }
 
 // Update implements NalogService.
-func (s *NalogResource) Update(entity *domain.Fnal, idField string, idValue interface{}, tableFields []domain.Fields) ([]domain.FieldError, error) {
-	return s.service.Update(entity, idField, idValue, tableFields)
+func (s *NalogResource) Update(c *gin.Context, entity *domain.Fnal, idField string, idValue interface{}, tableFields []domain.Fields) ([]domain.FieldError, error) {
+	return s.service.Update(c, entity, idField, idValue, tableFields)
 }
 
 func (s *NalogResource) UpdateNalog(c *gin.Context) (fproPayload domain.FproPayload, tblStavke domain.TableData, err error, statusCode int, errMessage string, fieldErrors []domain.FieldError) {
@@ -215,7 +270,7 @@ func (s *NalogResource) UpdateNalog(c *gin.Context) (fproPayload domain.FproPayl
 	}
 	defer mutex.Unlock()
 
-	fieldErrors, err = s.Update(entity, common.IDfnal, fnalID, s.MapEntityToValues(entity, s.GetNaloziTableFields()))
+	fieldErrors, err = s.Update(c, entity, common.IDfnal, fnalID, s.MapEntityToValues(entity, s.GetNaloziTableFields()))
 	if err != nil {
 		return fproPayload, tblStavke, err, http.StatusInternalServerError, common.ErrMsgReadData, []domain.FieldError{}
 	}
@@ -225,12 +280,19 @@ func (s *NalogResource) UpdateNalog(c *gin.Context) (fproPayload domain.FproPayl
 
 	s.MapToFproPayload(&fproPayload, *entity, fnalID)
 
-	fproEntities, err := s.fproService.GetAllByFnalID(fnalID)
+	fproEntities, err := s.fproService.GetAllByFnalID(c, fnalID)
 	if err != nil {
 		return fproPayload, tblStavke, err, http.StatusInternalServerError, common.ErrMsgReadData, []domain.FieldError{}
 	}
+
+	// Get session for god/kar values
+	session := domain.GetSessionFromContext(c)
+	if session == nil {
+		return fproPayload, tblStavke, fmt.Errorf("user session not found"), http.StatusUnauthorized, "User session not found", []domain.FieldError{}
+	}
+
 	arrOrgjed := []domain.ComboItem{{Key: "", Value: ""}} //add empty element in combo box
-	orgjed, err := s.GetOrgJedinice()
+	orgjed, err := s.GetOrgJedinice(c)
 	if err != nil {
 		return fproPayload, tblStavke, err, http.StatusInternalServerError, common.ErrMsgReadData, []domain.FieldError{}
 	}
@@ -239,7 +301,7 @@ func (s *NalogResource) UpdateNalog(c *gin.Context) (fproPayload domain.FproPayl
 	fproPayload.Orgjed = arrOrgjed
 	fproPayload.Mtroska = mtroska
 	// because the stavke table is specific we could not use template helper for table and table rows
-	tblStavke = common.SetTableBasicData("Stavke Naloga", naloziTableID+"_stavke", s.GetNaloziStavkeTableFields(), "", "", 10, 0, 0, 0)
+	tblStavke = common.SetTableBasicData("Stavke Naloga", naloziTableID+"_stavke", s.GetNaloziStavkeTableFields(), "", "", 10, 0, 0, 0, s.cfg)
 	tblStavke.ShowPagination = true
 	tblStavke.SearchEnabled = true
 
@@ -252,17 +314,22 @@ func (s *NalogResource) UpdateNalog(c *gin.Context) (fproPayload domain.FproPayl
 }
 
 // Update implements NalogService.
-func (s *NalogResource) GetNextNalog(tipdok string) (int64, error) {
+func (s *NalogResource) GetNextNalog(c *gin.Context, tipdok string) (int64, error) {
+	session := domain.GetSessionFromContext(c)
+	if session == nil {
+		return 0, fmt.Errorf("user session not found")
+	}
+
 	// 2. Fetch Fnal Entities
 	args := []interface{}{}
 	// Use viewData.DefaultTipdok for the actual Fnal query
-	whereText := s.buildFnalWhere("", "", &args)
+	whereText := s.buildFnalWhere("", "", session.SelectedGod, session.SelectedKar, &args)
 	paramNbr := len(args)
 	selectQuery := `SELECT COALESCE(MAX(nalog), 0) + 1 as nalog FROM fnal `
 
 	whereText = fmt.Sprintf(`%s AND fnal.tipdok = $%d `, whereText, paramNbr+1)
 	args = append(args, tipdok)
-	entities, err := s.fnalRepo.GetAllCustom(selectQuery, whereText, args, "", "")
+	entities, err := s.fnalRepo.GetAllCustom(c, selectQuery, whereText, args, "", "")
 	if err != nil {
 		return 0, fmt.Errorf("failed to get Fnal entities: %w", err)
 	}
@@ -273,15 +340,20 @@ func (s *NalogResource) GetNextNalog(tipdok string) (int64, error) {
 	return (*entities)[0].Nalog, nil
 
 }
-func (s *NalogResource) GetByTipdokNalog(tipdok string, nalog int64) (domain.Fnal, error) {
+func (s *NalogResource) GetByTipdokNalog(c *gin.Context, tipdok string, nalog int64) (domain.Fnal, error) {
+	session := domain.GetSessionFromContext(c)
+	if session == nil {
+		return domain.Fnal{}, fmt.Errorf("user session not found")
+	}
+
 	entity := domain.Fnal{}
 	args := []interface{}{}
-	hasGod, hasKar := s.fnalRepo.CheckGogKar()
-	basicWhere := s.fnalRepo.CreateBasicWhere(s.naloziTableFields, &args, hasGod, hasKar, "")
+	hasGod, hasKar := s.fnalRepo.GetHasGodHasKar()
+	basicWhere := s.fnalRepo.CreateBasicWhere(s.naloziTableFields, &args, hasGod, hasKar, session.SelectedGod, session.SelectedKar, "")
 	selectQuery := `SELECT idfnal, tipdok, nalog, danal, opis, dug, pot, datob, brst, nalsts FROM fnal`
 	whereText := fmt.Sprintf("%s AND tipdok = $%d AND nalog = $%d", basicWhere, len(args)+1, len(args)+2)
 	args = append(args, tipdok, nalog)
-	entities, err := s.fnalRepo.GetAllCustom(selectQuery, whereText, args, "", "")
+	entities, err := s.fnalRepo.GetAllCustom(c, selectQuery, whereText, args, "", "")
 	if err != nil {
 		return entity, fmt.Errorf("failed to get Fnal entities: %w", err)
 	}
@@ -290,25 +362,30 @@ func (s *NalogResource) GetByTipdokNalog(tipdok string, nalog int64) (domain.Fna
 	}
 	return entity, nil
 }
-func (s *NalogResource) GetIdTipdokByTipdok(tipdok string) (int64, error) {
+func (s *NalogResource) GetIdTipdokByTipdok(c *gin.Context, tipdok string) (int64, error) {
+	session := domain.GetSessionFromContext(c)
+	if session == nil {
+		return 0, fmt.Errorf("user session not found")
+	}
+
 	entity := domain.Tipdok{}
 	args := []interface{}{}
 	i := 0
 	whereText := " WHERE 1=1 "
-	hasGod, hasKar := s.fnalRepo.CheckGogKar()
+	hasGod, hasKar := s.fnalRepo.GetHasGodHasKar()
 	if hasGod {
 		whereText += " and god = $1 "
-		args = append(args, global.GetGnGod())
+		args = append(args, session.SelectedGod)
 		i++
 	}
 	if hasKar {
 		whereText += " and kar = $2 "
-		args = append(args, global.GetGnKar())
+		args = append(args, session.SelectedKar)
 		i++
 	}
 	whereText = fmt.Sprintf("%s and tipdok = $%d", whereText, i+1)
 	args = append(args, tipdok)
-	tipdokEntities, err := s.tipdokRepo.GetAllCustom("SELECT idtipdok FROM tipdok ", whereText, args, "", "")
+	tipdokEntities, err := s.tipdokRepo.GetAllCustom(c, "SELECT idtipdok FROM tipdok ", whereText, args, "", "")
 	if err != nil {
 		return 0, errors.New(common.ErrMsgGetData)
 	}
@@ -320,9 +397,9 @@ func (s *NalogResource) GetIdTipdokByTipdok(tipdok string) (int64, error) {
 }
 
 // Helper to construct common WHERE clauses and arguments for Fnal queries
-func (s *NalogResource) buildFnalWhere(searchQuery, tipdok string, args *[]interface{}) string {
-	hasGod, hasKar := s.fnalRepo.CheckGogKar()
-	basicWhere := s.fnalRepo.CreateBasicWhere(s.naloziTableFields, args, hasGod, hasKar, searchQuery)
+func (s *NalogResource) buildFnalWhere(searchQuery, tipdok string, god, kar int, args *[]interface{}) string {
+	hasGod, hasKar := s.fnalRepo.GetHasGodHasKar()
+	basicWhere := s.fnalRepo.CreateBasicWhere(s.naloziTableFields, args, hasGod, hasKar, god, kar, searchQuery)
 
 	var conditions []string
 	if basicWhere != "" {
@@ -347,10 +424,16 @@ func (s *NalogResource) GetNalogViewData(c *gin.Context, searchQuery, selectedTi
 		IsInitialLoad: isInitialRequest,
 	}
 
-	// 1. Fetch Tipdok Options if it's an initial load or if selectedTipdok is empty
+	// Get session for god/kar values at the start
+	session := domain.GetSessionFromContext(c)
+	if session == nil {
+		return viewData, fmt.Errorf("user session not found")
+	}
+
+	// 1. Fetch Tipdok Options on initial load or if selectedTipdok is empty
 	// to determine the default.
 	if isInitialRequest || selectedTipdok == "" {
-		tipdokOptions, err := s.GetTipdokOptions()
+		tipdokOptions, err := s.GetTipdokOptions(c)
 		if err != nil {
 			return viewData, fmt.Errorf("failed to get tipdok options: %w", err)
 		}
@@ -367,24 +450,25 @@ func (s *NalogResource) GetNalogViewData(c *gin.Context, searchQuery, selectedTi
 	} else {
 		viewData.DefaultTipdok = selectedTipdok // Use the provided one directly
 	}
-	noviNalogBr, _ := s.GetNextNalog(viewData.DefaultTipdok)
+	noviNalogBr, _ := s.GetNextNalog(c, viewData.DefaultTipdok)
 	viewData.NextNalog = fmt.Sprintf("%d", noviNalogBr)
 	// 2. Fetch Fnal Entities
 	args := []interface{}{}
+
 	// Use viewData.DefaultTipdok for the actual Fnal query
-	whereText := s.buildFnalWhere(searchQuery, viewData.DefaultTipdok, &args)
+	whereText := s.buildFnalWhere(searchQuery, viewData.DefaultTipdok, session.SelectedGod, session.SelectedKar, &args)
 
 	// Get total records
 	totalRecordsQuery := `SELECT count(*) FROM fnal `
 
-	totRecords, err := s.fnalRepo.GetTotalRecordsCustom(totalRecordsQuery, whereText, args, "", "")
+	totRecords, err := s.fnalRepo.GetTotalRecordsCustom(c, totalRecordsQuery, whereText, args, "", "")
 	if err != nil {
 		return viewData, fmt.Errorf("failed to get total records for Fnal: %w", err)
 	}
 
 	// Calculate pagination details
-	currentPage, calculatedPageSize, totalPages := common.GetPaginationData(c, totRecords) // Pass nil for req
-	if page > 0 {                                                                          // Override current page if provided from handler
+	currentPage, calculatedPageSize, totalPages := common.GetPaginationData(c, totRecords, s.cfg) // Pass nil for req
+	if page > 0 {                                                                                 // Override current page if provided from handler
 		currentPage = page
 	}
 	if pageSize > 0 { // Override page size if provided from handler
@@ -395,14 +479,14 @@ func (s *NalogResource) GetNalogViewData(c *gin.Context, searchQuery, selectedTi
 	orderBy := " ORDER BY danal DESC"
 	selectQuery := `SELECT idfnal, tipdok, nalog, danal, opis, dug, pot, datob, brst, nalsts FROM fnal`
 
-	entities, err := s.fnalRepo.GetAllCustom(selectQuery, whereText, args, limitOffset, orderBy)
+	entities, err := s.fnalRepo.GetAllCustom(c, selectQuery, whereText, args, limitOffset, orderBy)
 	if err != nil {
 		return viewData, fmt.Errorf("failed to get Fnal entities: %w", err)
 	}
 	viewData.FnalEntities = *entities
 
 	// Prepare TableData for UI
-	table := common.SetTableBasicData("NALOZI", "nalozi-table", s.naloziTableFields, "/api/nalozi/", "/api/nalozi/", calculatedPageSize, currentPage, totalPages, totRecords)
+	table := common.SetTableBasicData("NALOZI", "nalozi-table", s.naloziTableFields, "/api/nalozi/", "/api/nalozi/", calculatedPageSize, currentPage, totalPages, totRecords, s.cfg)
 	// Additional table data configuration can happen here
 	if searchQuery != "" { // If it's a search, the URL might change for HTMX
 		table.URLGetAll = "/api/nalozi/all/search"
@@ -431,7 +515,7 @@ func (s *NalogResource) GetNalogViewData(c *gin.Context, searchQuery, selectedTi
 
 	// 3. Fetch UkupnaObrada totals if it's an initial load
 	if isInitialRequest {
-		ukObrada, err := s.GetNalogTotals()
+		ukObrada, err := s.GetNalogTotals(c)
 		if err != nil {
 			return viewData, fmt.Errorf("failed to get Nalog totals: %w", err)
 		}
@@ -447,20 +531,27 @@ func (s *NalogResource) GetNalogPrepisData(c *gin.Context, searchQuery string, p
 		DefaultTipdok: "",
 	}
 	args := []interface{}{}
+
+	// Get session for god/kar values
+	session := domain.GetSessionFromContext(c)
+	if session == nil {
+		return viewData, fmt.Errorf("user session not found")
+	}
+
 	// Use viewData.DefaultTipdok for the actual Fnal query
-	whereText := s.buildFnalWhere(searchQuery, "", &args)
+	whereText := s.buildFnalWhere(searchQuery, "", session.SelectedGod, session.SelectedKar, &args)
 
 	// Get total records
 	totalRecordsQuery := `SELECT count(*) FROM fnal `
 
-	totRecords, err := s.fnalRepo.GetTotalRecordsCustom(totalRecordsQuery, whereText, args, "", "")
+	totRecords, err := s.fnalRepo.GetTotalRecordsCustom(c, totalRecordsQuery, whereText, args, "", "")
 	if err != nil {
 		return viewData, fmt.Errorf("failed to get total records for Fnal: %w", err)
 	}
 
 	// Calculate pagination details
-	currentPage, calculatedPageSize, totalPages := common.GetPaginationData(c, totRecords) // Pass nil for req
-	if page > 0 {                                                                          // Override current page if provided from handler
+	currentPage, calculatedPageSize, totalPages := common.GetPaginationData(c, totRecords, s.cfg) // Pass nil for req
+	if page > 0 {                                                                                 // Override current page if provided from handler
 		currentPage = page
 	}
 	if pageSize > 0 { // Override page size if provided from handler
@@ -471,14 +562,14 @@ func (s *NalogResource) GetNalogPrepisData(c *gin.Context, searchQuery string, p
 	orderBy := " ORDER BY danal DESC"
 	selectQuery := `SELECT idfnal, tipdok, nalog, danal, opis, dug, pot, datob, brst, nalsts FROM fnal`
 
-	entities, err := s.fnalRepo.GetAllCustom(selectQuery, whereText, args, limitOffset, orderBy)
+	entities, err := s.fnalRepo.GetAllCustom(c, selectQuery, whereText, args, limitOffset, orderBy)
 	if err != nil {
 		return viewData, fmt.Errorf("failed to get Fnal entities: %w", err)
 	}
 	viewData.FnalEntities = *entities
 
 	//get tipdok options
-	tipdokOptions, err := s.GetTipdokOptions()
+	tipdokOptions, err := s.GetTipdokOptions(c)
 	if err != nil {
 		return viewData, fmt.Errorf("failed to get tipdok options: %w", err)
 	}
@@ -488,7 +579,7 @@ func (s *NalogResource) GetNalogPrepisData(c *gin.Context, searchQuery string, p
 	}
 
 	// Prepare TableData for UI
-	table := common.SetTableBasicData("NALOZI ZAGLAVLJE", "nalozi-table", s.naloziTableFields, "/api/nalozi/", "/api/nalozi/", calculatedPageSize, currentPage, totalPages, totRecords)
+	table := common.SetTableBasicData("NALOZI ZAGLAVLJE", "nalozi-table", s.naloziTableFields, "/api/nalozi/", "/api/nalozi/", calculatedPageSize, currentPage, totalPages, totRecords, s.cfg)
 	// Additional table data configuration can happen here
 	table.URLGetAll = "/api/nalozi/prepis"
 	table.Pagination.HxInclude = "#search-input"
@@ -523,20 +614,27 @@ func (s *NalogResource) GetNalogStornirajData(c *gin.Context, searchQuery string
 		DefaultTipdok: "",
 	}
 	args := []interface{}{}
+
+	// Get session for god/kar values
+	session := domain.GetSessionFromContext(c)
+	if session == nil {
+		return viewData, fmt.Errorf("user session not found")
+	}
+
 	// Use viewData.DefaultTipdok for the actual Fnal query
-	whereText := s.buildFnalWhere(searchQuery, "", &args)
+	whereText := s.buildFnalWhere(searchQuery, "", session.SelectedGod, session.SelectedKar, &args)
 
 	// Get total records
 	totalRecordsQuery := `SELECT count(*) FROM fnal `
 
-	totRecords, err := s.fnalRepo.GetTotalRecordsCustom(totalRecordsQuery, whereText, args, "", "")
+	totRecords, err := s.fnalRepo.GetTotalRecordsCustom(c, totalRecordsQuery, whereText, args, "", "")
 	if err != nil {
 		return viewData, fmt.Errorf("failed to get total records for Fnal: %w", err)
 	}
 
 	// Calculate pagination details
-	currentPage, calculatedPageSize, totalPages := common.GetPaginationData(c, totRecords) // Pass nil for req
-	if page > 0 {                                                                          // Override current page if provided from handler
+	currentPage, calculatedPageSize, totalPages := common.GetPaginationData(c, totRecords, s.cfg) // Pass nil for req
+	if page > 0 {                                                                                 // Override current page if provided from handler
 		currentPage = page
 	}
 	if pageSize > 0 { // Override page size if provided from handler
@@ -547,14 +645,14 @@ func (s *NalogResource) GetNalogStornirajData(c *gin.Context, searchQuery string
 	orderBy := " ORDER BY danal DESC"
 	selectQuery := `SELECT idfnal, tipdok, nalog, danal, opis, dug, pot, datob, brst, nalsts FROM fnal`
 
-	entities, err := s.fnalRepo.GetAllCustom(selectQuery, whereText, args, limitOffset, orderBy)
+	entities, err := s.fnalRepo.GetAllCustom(c, selectQuery, whereText, args, limitOffset, orderBy)
 	if err != nil {
 		return viewData, fmt.Errorf("failed to get Fnal entities: %w", err)
 	}
 	viewData.FnalEntities = *entities
 
 	// Prepare TableData for UI
-	table := common.SetTableBasicData("NALOZI ZAGLAVLJE", "nalozi-table", s.naloziTableFields, "/api/nalozi/", "/api/nalozi/", calculatedPageSize, currentPage, totalPages, totRecords)
+	table := common.SetTableBasicData("NALOZI ZAGLAVLJE", "nalozi-table", s.naloziTableFields, "/api/nalozi/", "/api/nalozi/", calculatedPageSize, currentPage, totalPages, totRecords, s.cfg)
 	btnStorniraj := domain.Button{
 		LabelText:     "Storniraj",
 		HxActionURL:   "/api/nalozi/confirm-storniraj",
@@ -593,14 +691,19 @@ func (s *NalogResource) GetNalogStornirajData(c *gin.Context, searchQuery string
 
 // GetNalogTotals fetches aggregated data from the 'sf' table.
 // This method stays the same, as it's a specific business operation.
-func (s *NalogResource) GetNalogTotals() (domain.UkupnaObrada, error) {
+func (s *NalogResource) GetNalogTotals(c *gin.Context) (domain.UkupnaObrada, error) {
+	session := domain.GetSessionFromContext(c)
+	if session == nil {
+		return domain.UkupnaObrada{}, fmt.Errorf("user session not found")
+	}
+
 	args := []interface{}{}
 
-	hasGod, hasKar := s.sfRepo.CheckGogKar()
-	basicWhere := s.sfRepo.CreateBasicWhere(s.sfTableFields, &args, hasGod, hasKar)
+	hasGod, hasKar := s.sfRepo.GetHasGodHasKar()
+	basicWhere := s.sfRepo.CreateBasicWhere(s.sfTableFields, &args, hasGod, hasKar, session.SelectedGod, session.SelectedKar)
 	qryText := `SELECT COALESCE(SUM(brst), 0) as brst, COALESCE(SUM(brna), 0) as brna, COALESCE(SUM(dug), 0) as dug, COALESCE(SUM(pot), 0) as pot FROM sf` // Ensure these columns exist in domain.Sf
 	// Use sqlx.Get to directly map the aggregated row to Sf
-	totalsSf, err := s.sfRepo.GetAllCustom(qryText, basicWhere, args, "", "") // Assuming a GetCustom method for single row
+	totalsSf, err := s.sfRepo.GetAllCustom(c, qryText, basicWhere, args, "", "") // Assuming a GetCustom method for single row
 	if err != nil {
 		return domain.UkupnaObrada{}, fmt.Errorf("failed to get SF totals: %w", err)
 	}
@@ -619,31 +722,41 @@ func (s *NalogResource) GetNalogTotals() (domain.UkupnaObrada, error) {
 
 // GetTipdokOptions fetches the list of tipdok options for filtering.
 // This method stays the same.
-func (s *NalogResource) GetTipdokOptions() ([]domain.Tipdok, error) {
+func (s *NalogResource) GetTipdokOptions(c *gin.Context) ([]domain.Tipdok, error) {
+	session := domain.GetSessionFromContext(c)
+	if session == nil {
+		return nil, fmt.Errorf("user session not found")
+	}
+
 	args := []interface{}{}
-	hasGod, hasKar := s.tipdokRepo.CheckGogKar()
-	basicWhere := s.tipdokRepo.CreateBasicWhere(nil, &args, hasGod, hasKar) // No specific fields for tipdok
+	hasGod, hasKar := s.tipdokRepo.GetHasGodHasKar()
+	basicWhere := s.tipdokRepo.CreateBasicWhere(nil, &args, hasGod, hasKar, session.SelectedGod, session.SelectedKar) // No specific fields for tipdok
 
 	qryText := `SELECT idtipdok, tipdok, opis FROM tipdok`
 	whereText := fmt.Sprintf(" %s AND (grpdok = 'FIN' OR grpdok = 'SVI') ", basicWhere)
 	orderBy := " ORDER BY tipdok"
 
-	tipdokValues, err := s.tipdokRepo.GetAllCustom(qryText, whereText, args, "", orderBy)
+	tipdokValues, err := s.tipdokRepo.GetAllCustom(c, qryText, whereText, args, "", orderBy)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get tipdok options: %w", err)
 	}
 	return *tipdokValues, nil
 }
 
-func (s *NalogResource) GetOrgJedinice() ([]domain.ComboItem, error) {
+func (s *NalogResource) GetOrgJedinice(c *gin.Context) ([]domain.ComboItem, error) {
+	session := domain.GetSessionFromContext(c)
+	if session == nil {
+		return nil, fmt.Errorf("user session not found")
+	}
+
 	comboItems := []domain.ComboItem{}
 	args := []interface{}{}
-	hasGod, hasKar := s.ojRepo.CheckGogKar()
-	basicWhere := s.ojRepo.CreateBasicWhere(nil, &args, hasGod, hasKar) // No specific fields for tipdok
+	hasGod, hasKar := s.ojRepo.GetHasGodHasKar()
+	basicWhere := s.ojRepo.CreateBasicWhere(nil, &args, hasGod, hasKar, session.SelectedGod, session.SelectedKar) // No specific fields for tipdok
 
 	qryText := `SELECT idorgjed, ojozn, naziv FROM orgjed`
 
-	ojEntites, err := s.ojRepo.GetAllCustom(qryText, basicWhere, args, "", "")
+	ojEntites, err := s.ojRepo.GetAllCustom(c, qryText, basicWhere, args, "", "")
 	if err != nil {
 		return comboItems, errors.New(common.ErrMsgGetData)
 	}
@@ -656,15 +769,20 @@ func (s *NalogResource) GetOrgJedinice() ([]domain.ComboItem, error) {
 	return comboItems, nil
 }
 
-func (s *NalogResource) GetMestoTroska(idorgjed int64) ([]domain.ComboItem, error) {
+func (s *NalogResource) GetMestoTroska(c *gin.Context, idorgjed int64) ([]domain.ComboItem, error) {
+	session := domain.GetSessionFromContext(c)
+	if session == nil {
+		return nil, fmt.Errorf("user session not found")
+	}
+
 	comboItems := []domain.ComboItem{}
 	args := []interface{}{}
-	hasGod, hasKar := s.mtroskaRepo.CheckGogKar()
-	basicWhere := s.mtroskaRepo.CreateBasicWhere(nil, &args, hasGod, hasKar) // No specific fields for tipdok
+	hasGod, hasKar := s.mtroskaRepo.GetHasGodHasKar()
+	basicWhere := s.mtroskaRepo.CreateBasicWhere(nil, &args, hasGod, hasKar, session.SelectedGod, session.SelectedKar) // No specific fields for tipdok
 	whereText := fmt.Sprintf("%s AND idorgjed = $%d", basicWhere, len(args)+1)
 	qryText := `SELECT mestotrid, mtroska, opis, idorgjed FROM mestotr `
 
-	mtroskaEntites, err := s.mtroskaRepo.GetAllCustom(qryText, whereText, args, "", "")
+	mtroskaEntites, err := s.mtroskaRepo.GetAllCustom(c, qryText, whereText, args, "", "")
 	if err != nil {
 		return comboItems, errors.New(common.ErrMsgGetData)
 	}
@@ -691,7 +809,7 @@ func (s *NalogResource) GetNaloziStavkeTableFields() []domain.Fields {
 }
 
 // ValidateCopyNalog validates the data for copying a nalog (voucher)
-func (s *NalogResource) ValidateCopyNalog(danalStr, datobStr string, brNaloga int64) []domain.FieldError {
+func (s *NalogResource) ValidateCopyNalog(entity domain.Fnal, danalStr, datobStr string, brNaloga int64) []domain.FieldError {
 	var fieldErrors []domain.FieldError
 
 	// Parse and validate danal (naloga date)
@@ -711,10 +829,10 @@ func (s *NalogResource) ValidateCopyNalog(danalStr, datobStr string, brNaloga in
 		})
 	} else {
 		// Check if year matches current business year
-		if dPomDate.Year() != global.GetGnGod() {
+		if dPomDate.Year() != entity.God {
 			fieldErrors = append(fieldErrors, domain.FieldError{
 				Field:        "danal",
-				ErrorMessage: fmt.Sprintf("nekorektan datum naloga, godina mora biti jednaka poslovnoj %d", global.GetGnGod()),
+				ErrorMessage: fmt.Sprintf("nekorektan datum naloga, godina mora biti jednaka poslovnoj %d", entity.God),
 			})
 		}
 	}
@@ -733,10 +851,10 @@ func (s *NalogResource) ValidateCopyNalog(danalStr, datobStr string, brNaloga in
 		})
 	} else {
 		// Check if year matches current business year
-		if dPomDate.Year() != global.GetGnGod() {
+		if dPomDate.Year() != entity.God {
 			fieldErrors = append(fieldErrors, domain.FieldError{
 				Field:        "datob",
-				ErrorMessage: fmt.Sprintf("nekorektan datum obrade, godina mora biti jednaka poslovnoj %d", global.GetGnGod()),
+				ErrorMessage: fmt.Sprintf("nekorektan datum obrade, godina mora biti jednaka poslovnoj %d", entity.God),
 			})
 		}
 	}
@@ -782,15 +900,28 @@ func (s *NalogResource) setServiceFieldValues() {
 }
 
 func (s *NalogResource) MapReqToEntity(c *gin.Context, req domain.FnalPayload, entity *domain.Fnal, action string) {
+	// Get user session from context
+	userSession := domain.GetSessionFromContext(c)
+	if userSession == nil {
+		// This should not happen as middleware ensures session exists
+		return
+	}
+
+	userClaims := domain.GetCurrentUserClaims(c)
+	username := ""
+	if userClaims != nil {
+		username = userClaims.Username
+	}
+
 	if action == "add" {
-		entity.God = global.GetGnGod()
-		entity.Kar = global.GetGnKar()
+		entity.God = userSession.SelectedGod
+		entity.Kar = userSession.SelectedKar
 		entity.Xdatunosa = sql.NullTime{Time: time.Now(), Valid: true}
-		entity.Xopunos = sql.NullString{String: global.GetCurrentUser(c), Valid: true}
+		entity.Xopunos = sql.NullString{String: username, Valid: true}
 	}
 	if action == "update" {
 		entity.Xdatizmene = sql.NullTime{Time: time.Now(), Valid: true}
-		entity.Xopizmene = sql.NullString{String: global.GetCurrentUser(c), Valid: true}
+		entity.Xopizmene = sql.NullString{String: username, Valid: true}
 	}
 	entity.Nalog = common.StringToInt64(req.Nalog)
 	entity.Danal = common.StringToDate(req.Danal)

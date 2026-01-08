@@ -236,6 +236,7 @@
   "label.duguje_potrazuje": "Duguje/Potražuje",
   "label.pocev_od_sifre": "Počev od šifre",
   "label.zakljucno_sa_sifrom": "Zaključno sa šifrom",
+  "label.brisanje_sloga_sa_id": "Brisanje sloga sa ID: ",
   "message.saved_success": "Podaci su uspešno sačuvani",
   "message.deleted_success": "Podaci su uspešno obrisani",
   "message.updated_success": "Podaci su uspešno ažurirani",
@@ -472,5 +473,6 @@
   "title.dodaj_partnera": "Dodaj partnera",
   "title.izmeni_partnera": "Izmeni partnera",
   "title.novi_nalog": "Novi nalog",
-  "title.nastavak_knjizenja_naloga": "Nastavak knjiženja naloga"
+  "title.nastavak_knjizenja_naloga": "Nastavak knjiženja naloga",
+  "title.brisanje_podataka": "Brisanje podataka"
 }

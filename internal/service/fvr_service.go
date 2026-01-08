@@ -4,6 +4,8 @@ import (
 	"errors"
 	"helia/internal/domain"
 	"helia/internal/repository"
+
+	"github.com/gin-gonic/gin"
 )
 
 const (
@@ -20,9 +22,9 @@ var fvrTableFields = []domain.Fields{
 }
 
 type FvrService interface {
-	GetAllFvr() (*domain.Firma, error)
-	GetAllGod(nazivFirme string) ([]int, error)
-	GetAllKar(nazivFirme string, god int) ([]int, error)
+	GetAllFvr(c *gin.Context) (*domain.Firma, error)
+	GetAllGod(c *gin.Context, nazivFirme string) ([]int, error)
+	GetAllKar(c *gin.Context, nazivFirme string, god int) ([]int, error)
 }
 type FvrResource struct {
 	fvrRepo *repository.BaseRepository[domain.Fvr]
@@ -34,7 +36,7 @@ func NewFvrService(fvrRepo *repository.BaseRepository[domain.Fvr]) *FvrResource 
 	}
 }
 
-func (s *FvrResource) GetAllFvr() (*domain.Firma, error) {
+func (s *FvrResource) GetAllFvr(c *gin.Context) (*domain.Firma, error) {
 	args := []interface{}{}
 	firma := &domain.Firma{}
 
@@ -42,7 +44,7 @@ func (s *FvrResource) GetAllFvr() (*domain.Firma, error) {
 					WHERE god > 0
 					order by fvr.naziv`
 
-	entities, err := s.fvrRepo.GetAllCustom(selectQuery, "", args, "", "")
+	entities, err := s.fvrRepo.GetAllCustom(c, selectQuery, "", args, "", "")
 	if err != nil {
 		return firma, err
 	}
@@ -50,13 +52,13 @@ func (s *FvrResource) GetAllFvr() (*domain.Firma, error) {
 		return nil, errors.New("no available config data")
 	}
 	for _, item := range *entities {
-		poslGodina, err := s.GetAllGod(item.Naziv)
+		poslGodina, err := s.GetAllGod(c, item.Naziv)
 		if err != nil {
 			return nil, errors.New("no available config data")
 		}
 		poslGodine := []domain.Godina{}
 		for _, god := range poslGodina {
-			knjigovodstvo, err := s.GetAllKar(item.Naziv, god)
+			knjigovodstvo, err := s.GetAllKar(c, item.Naziv, god)
 			if err != nil {
 				return nil, errors.New("no available config data")
 			}
@@ -75,7 +77,7 @@ func (s *FvrResource) GetAllFvr() (*domain.Firma, error) {
 	return firma, nil
 }
 
-func (s *FvrResource) GetAllGod(nazivFirme string) ([]int, error) {
+func (s *FvrResource) GetAllGod(c *gin.Context, nazivFirme string) ([]int, error) {
 	args := []interface{}{}
 	args = append(args, nazivFirme)
 	result := []int{}
@@ -83,7 +85,7 @@ func (s *FvrResource) GetAllGod(nazivFirme string) ([]int, error) {
 					WHERE fvr.naziv = $1
 					order by fvr.god desc`
 
-	entities, err := s.fvrRepo.GetAllCustom(selectQuery, "", args, "", "")
+	entities, err := s.fvrRepo.GetAllCustom(c, selectQuery, "", args, "", "")
 	if err != nil {
 		return []int{}, err
 	}
@@ -94,7 +96,7 @@ func (s *FvrResource) GetAllGod(nazivFirme string) ([]int, error) {
 	return result, nil
 }
 
-func (s *FvrResource) GetAllKar(nazivFirme string, god int) ([]int, error) {
+func (s *FvrResource) GetAllKar(c *gin.Context, nazivFirme string, god int) ([]int, error) {
 	args := []interface{}{}
 	args = append(args, nazivFirme, god)
 	result := []int{}
@@ -102,7 +104,7 @@ func (s *FvrResource) GetAllKar(nazivFirme string, god int) ([]int, error) {
 					WHERE fvr.naziv = $1 AND god = $2
 					order by fvr.kar`
 
-	entities, err := s.fvrRepo.GetAllCustom(selectQuery, "", args, "", "")
+	entities, err := s.fvrRepo.GetAllCustom(c, selectQuery, "", args, "", "")
 	if err != nil {
 		return []int{}, err
 	}

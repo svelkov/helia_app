@@ -13,7 +13,7 @@ var (
 	instance        *Service
 	once            sync.Once
 	reg             = regexp.MustCompile(`_+`)
-	regSpecialChars = regexp.MustCompile(`[/\-,()%?\s]+`)
+	regSpecialChars = regexp.MustCompile(`[/\-,()%:?\s]+`)
 )
 
 type Service struct {

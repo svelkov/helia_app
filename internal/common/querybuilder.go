@@ -2,11 +2,12 @@ package common
 
 import (
 	"fmt"
-	"helia/global"
 	"helia/internal/domain"
 	"reflect"
 	"strings"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 type QueryBuilder struct {
@@ -205,7 +206,7 @@ func (qb *QueryBuilder) GetArgs() []interface{} {
 // ==================== Repository-Specific Methods ====================
 
 // BuildInsert constructs an INSERT query with RETURNING clause
-func (qb *QueryBuilder) BuildInsert(fields []domain.Fields, idField string) (string, []interface{}) {
+func (qb *QueryBuilder) BuildInsert(c *gin.Context, fields []domain.Fields, idField string) (string, []interface{}) {
 	if qb.tableName == "" {
 		return "", nil
 	}
@@ -214,37 +215,42 @@ func (qb *QueryBuilder) BuildInsert(fields []domain.Fields, idField string) (str
 	var placeholders []string
 	var values []interface{}
 
-	// Add system fields
-	for i := 0; i < qb.entityType.NumField(); i++ {
-		field := qb.entityType.Field(i)
-		column := field.Tag.Get("db")
-		if column == "" || column == "-" {
-			continue
-		}
+	// Check if entity has god/kar fields
+	hasGod, hasKar := qb.CheckGodKarFields()
 
-		lowerCol := strings.ToLower(column)
-		if lowerCol == "god" {
-			columns = append(columns, lowerCol)
-			placeholders = append(placeholders, fmt.Sprintf("$%d", len(columns)))
-			values = append(values, global.GetGnGod())
-			continue
-		}
-		if lowerCol == "kar" {
-			columns = append(columns, lowerCol)
-			placeholders = append(placeholders, fmt.Sprintf("$%d", len(columns)))
-			values = append(values, global.GetGnKar())
-			continue
-		}
-		if lowerCol == "xdatunosa" {
-			columns = append(columns, lowerCol)
-			placeholders = append(placeholders, fmt.Sprintf("$%d", len(columns)))
-			values = append(values, time.Now())
-			continue
-		}
+	// Build a map of field names from provided fields for quick lookup
+	fieldMap := make(map[string]domain.Fields)
+	for _, field := range fields {
+		fieldMap[strings.ToLower(field.Name)] = field
+	}
+	userSession := domain.GetSessionFromContext(c)
+	// Add god/kar first if entity has them
+	if hasGod {
+		columns = append(columns, "god")
+		placeholders = append(placeholders, fmt.Sprintf("$%d", len(columns)))
+		values = append(values, userSession.SelectedGod)
+	}
+	if hasKar {
+		columns = append(columns, "kar")
+		placeholders = append(placeholders, fmt.Sprintf("$%d", len(columns)))
+		values = append(values, userSession.SelectedKar)
 	}
 
-	// Add provided fields
+	// Add xopunos
+	columns = append(columns, "xopunos")
+	placeholders = append(placeholders, fmt.Sprintf("$%d", len(columns)))
+	values = append(values, userSession.UserName)
+	// Add xdatunosa
+	columns = append(columns, "xdatunosa")
+	placeholders = append(placeholders, fmt.Sprintf("$%d", len(columns)))
+	values = append(values, time.Now())
+
+	// Add remaining provided fields (skip god, kar, xdatunosa)
 	for _, field := range fields {
+		lowerName := strings.ToLower(field.Name)
+		if lowerName == "god" || lowerName == "kar" || lowerName == "xdatunosa" || lowerName == "xopunos" {
+			continue
+		}
 		columns = append(columns, field.Name)
 		placeholders = append(placeholders, fmt.Sprintf("$%d", len(columns)))
 		values = append(values, field.Value)
@@ -262,19 +268,23 @@ func (qb *QueryBuilder) BuildInsert(fields []domain.Fields, idField string) (str
 }
 
 // BuildUpdate constructs an UPDATE query
-func (qb *QueryBuilder) BuildUpdate(fields []domain.Fields, idField string, idValue interface{}) (string, []interface{}) {
+func (qb *QueryBuilder) BuildUpdate(c *gin.Context, fields []domain.Fields, idField string, idValue interface{}) (string, []interface{}) {
 	if qb.tableName == "" {
 		return "", nil
 	}
 
 	var columns []string
 	var values []interface{}
-
+	userSession := domain.GetSessionFromContext(c)
 	// Add provided fields
 	for _, field := range fields {
 		columns = append(columns, fmt.Sprintf(` %s = $%d`, field.Name, len(values)+1))
 		values = append(values, field.Value)
 	}
+
+	// Add update user
+	columns = append(columns, fmt.Sprintf(` %s = $%d`, "xopizmene", len(values)+1))
+	values = append(values, userSession.UserName)
 
 	// Add update timestamp
 	columns = append(columns, fmt.Sprintf(` %s = $%d`, "xdatizmene", len(values)+1))
@@ -326,7 +336,6 @@ func (qb *QueryBuilder) BuildSelectAll(fields []domain.Fields, idField string, s
 		return ""
 	}
 
-	hasGod, hasKar := qb.CheckGodKarFields()
 	var columns []string
 	columns = append(columns, idField)
 
@@ -354,7 +363,7 @@ func (qb *QueryBuilder) BuildSelectAll(fields []domain.Fields, idField string, s
 	}
 
 	// Build WHERE clause
-	qb.AddGodKarConditions(hasGod, hasKar)
+	// Note: god/kar filtering should be added explicitly in service layer
 	qb.AddSearchConditions(fields, searchParams...)
 
 	whereClause := qb.whereClause.String()
@@ -373,8 +382,7 @@ func (qb *QueryBuilder) BuildCount(fields []domain.Fields, searchParams ...strin
 		return ""
 	}
 
-	hasGod, hasKar := qb.CheckGodKarFields()
-	qb.AddGodKarConditions(hasGod, hasKar)
+	// Note: god/kar filtering should be added explicitly in service layer
 	qb.AddSearchConditions(fields, searchParams...)
 
 	whereClause := qb.whereClause.String()
@@ -420,7 +428,7 @@ func (qb *QueryBuilder) CheckGodKarFields() (bool, bool) {
 }
 
 // AddGodKarConditions adds god and kar conditions to WHERE clause
-func (qb *QueryBuilder) AddGodKarConditions(hasGod, hasKar bool) {
+func (qb *QueryBuilder) AddGodKarConditions(hasGod, hasKar bool, god, kar int) {
 	entityName := ""
 	if qb.entityType != nil {
 		entityName = fmt.Sprintf("%s.", strings.ToLower(qb.entityType.Name()))
@@ -428,13 +436,13 @@ func (qb *QueryBuilder) AddGodKarConditions(hasGod, hasKar bool) {
 
 	if hasGod {
 		qb.whereClause.WriteString(fmt.Sprintf(" AND %sgod = $%d ", entityName, qb.paramCount))
-		qb.args = append(qb.args, global.GetGnGod())
+		qb.args = append(qb.args, god)
 		qb.paramCount++
 	}
 
 	if hasKar {
 		qb.whereClause.WriteString(fmt.Sprintf(" AND %skar = $%d ", entityName, qb.paramCount))
-		qb.args = append(qb.args, global.GetGnKar())
+		qb.args = append(qb.args, kar)
 		qb.paramCount++
 	}
 }

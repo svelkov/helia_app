@@ -2,6 +2,7 @@ package finansijsko
 
 import (
 	"fmt"
+	"helia/config"
 	"net/http"
 
 	tmpl_fin "helia/frontend/templates/finansijsko"
@@ -25,6 +26,7 @@ const (
 type PrometHandler struct {
 	tabData domain.TabData
 	service *service.PrometResource
+	cfg     config.Config
 }
 
 const (
@@ -44,8 +46,10 @@ const (
         }`
 )
 
-func NewPrometHandler(service *service.PrometResource) *PrometHandler {
-	handler := &PrometHandler{}
+func NewPrometHandler(service *service.PrometResource, cfg config.Config) *PrometHandler {
+	handler := &PrometHandler{
+		cfg: cfg,
+	}
 	handler.tabData = GetTabData()
 	handler.service = service
 	return handler
@@ -57,7 +61,7 @@ func (h *PrometHandler) PrometMain(c *gin.Context) {
 	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/analitickakonta", "#promettable", "innerHTML", "GET", "#konto, #sifra, #oddatuma, #dodatuma", hxVals, true, common.ClassSaveButton, "handleDialogResponse")
 	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
 
-	tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetAnkontaTableFields(), "", "", 0, 0, 0, 0)
+	tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetAnkontaTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 	tbl.ShowActions = false
 	tbl.FuncClick = "selectRow"                             // naziv js function for Click
 	tbl.FuncDblClick = "handleDblClickKontoSelection(this)" // naziv js function for dblClick
@@ -76,7 +80,7 @@ func (h *PrometHandler) PrometAnalitickihKonta(c *gin.Context) {
 		btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
 
 		//if the call come from menu click or tab click then render the page with parameters and empty table
-		tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetAnkontaTableFields(), "", "", 0, 0, 0, 0)
+		tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetAnkontaTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 		tbl.ShowActions = false
 		h.tabData = setActiveTab(h.tabData, "analitickakonta")
 		err := tmpl_fin.PrometAnalitickihKonta(h.tabData, tbl, btnPrint, btnObrada, domain.PrometTotalValues{}, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
@@ -95,7 +99,7 @@ func (h *PrometHandler) PrometAnalitickihKonta(c *gin.Context) {
 			return
 		}
 
-		page, pageSize := common.GetPageAndPageSizeFromRequest(c)
+		page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
 		response, err := h.service.GetPrometAnalitickihKonta(c, true, 0, 0)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
@@ -109,7 +113,7 @@ func (h *PrometHandler) PrometAnalitickihKonta(c *gin.Context) {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
 		}
-		tbl := common.SetTableBasicData("", prometTableID, h.service.GetAnkontaTableFields(), "", "/api/promet/analitickakonta", pageSize, page, totalPages, totalRecords)
+		tbl := common.SetTableBasicData("", prometTableID, h.service.GetAnkontaTableFields(), "", "/api/promet/analitickakonta", pageSize, page, totalPages, totalRecords, h.cfg)
 		tbl.ShowActions = false
 		tbl.ShowPagination = true
 		tbl.Pagination.HxVals = hxVals
@@ -135,7 +139,7 @@ func (h *PrometHandler) PrometAnalitickihKontaPoMI(c *gin.Context) {
 		btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
 
 		//if the call come from menu click or tab click then render the page with parameters and empty table
-		tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetAnKontaMiTableFields(), "", "", 0, 0, 0, 0)
+		tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetAnKontaMiTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 		tbl.ShowActions = false
 		h.tabData = setActiveTab(h.tabData, "analitickakontami")
 		err := tmpl_fin.AnalitickaKarticaPoMI(h.tabData, tbl, btnPrint, btnObrada, domain.PrometTotalValues{}, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
@@ -154,7 +158,7 @@ func (h *PrometHandler) PrometAnalitickihKontaPoMI(c *gin.Context) {
 			return
 		}
 
-		page, pageSize := common.GetPageAndPageSizeFromRequest(c)
+		page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
 		response, err := h.service.GetPrometAnalitickihKontaMi(c, true, 0, 0)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
@@ -168,7 +172,7 @@ func (h *PrometHandler) PrometAnalitickihKontaPoMI(c *gin.Context) {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetData)
 			return
 		}
-		tbl := common.SetTableBasicData("", prometTableID, h.service.GetAnkontaTableFields(), "", "/api/promet/analitickakontami", pageSize, page, totalPages, totalRecords)
+		tbl := common.SetTableBasicData("", prometTableID, h.service.GetAnkontaTableFields(), "", "/api/promet/analitickakontami", pageSize, page, totalPages, totalRecords, h.cfg)
 		tbl.ShowActions = false
 		tbl.ShowPagination = true
 		tbl.Pagination.HxVals = hxVals
@@ -189,7 +193,7 @@ func (h *PrometHandler) PrometDeviznihAnalitickihKonta(c *gin.Context) {
 	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/deviznihanalitickihkonta", "#promettable", "innerHTML", "GET", "", hxVals, true, common.ClassSaveButton, "handleDialogResponse")
 	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
 
-	tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetAnDeviznaKontaTableFields(), "", "", 0, 0, 0, 0)
+	tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetAnDeviznaKontaTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 	tbl.ShowActions = false
 
 	h.tabData = setActiveTab(h.tabData, "deviznihanalitickihkonta")
@@ -206,7 +210,7 @@ func (h *PrometHandler) PrometDeviznihAnalitickihKonta(c *gin.Context) {
 		return
 	}
 
-	page, pageSize := common.GetPageAndPageSizeFromRequest(c)
+	page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
 	response, err := h.service.GetPrometAnalitickihKonta(c, true, 0, 0)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
@@ -220,7 +224,7 @@ func (h *PrometHandler) PrometDeviznihAnalitickihKonta(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 		return
 	}
-	tbl = common.SetTableBasicData("", prometTableID, h.service.GetAnkontaTableFields(), "", "/api/promet/deviznihanalitickihkonta", pageSize, page, totalPages, totalRecords)
+	tbl = common.SetTableBasicData("", prometTableID, h.service.GetAnkontaTableFields(), "", "/api/promet/deviznihanalitickihkonta", pageSize, page, totalPages, totalRecords, h.cfg)
 	tbl.ShowActions = false
 	tbl.ShowPagination = true
 	tbl.Pagination.HxVals = hxVals
@@ -242,7 +246,7 @@ func (h *PrometHandler) PrometSubsintetickihKonta(c *gin.Context) {
 	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/subsintetickakonta", "#promettable", "innerHTML", "POST", "", "", true, common.ClassObradaButton, "handleDialogResponse('tab4')")
 	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
 
-	tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetSubsintetickihKontaTableFields(), "", "", 0, 0, 0, 0)
+	tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetSubsintetickihKontaTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 	tbl.ShowActions = false
 
 	h.tabData = setActiveTab(h.tabData, "subsintetickakonta")
@@ -256,7 +260,7 @@ func (h *PrometHandler) PrometSintetickihKonta(c *gin.Context) {
 	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/sintetickakonta", "#promet-table", "innerHTML", "POST", "", "", true, common.ClassObradaButton, "handleDialogResponse('tab5')")
 	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
 
-	tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetSintetickihKontaTableFields(), "", "", 0, 0, 0, 0)
+	tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetSintetickihKontaTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 	tbl.ShowActions = false
 
 	h.tabData = setActiveTab(h.tabData, "sintetickakonta")
@@ -270,7 +274,7 @@ func (h *PrometHandler) KarticaSintetickihKonta(c *gin.Context) {
 	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/karticasintetickihkonta", "#promettable", "innerHTML", "POST", "", "", true, common.ClassObradaButton, "handleDialogResponse('tab6')")
 	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
 
-	tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetKarticaSintetickihKontaTableFields(), "", "", 0, 0, 0, 0)
+	tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetKarticaSintetickihKontaTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 	tbl.ShowActions = false
 
 	h.tabData = setActiveTab(h.tabData, "karticasintetickihkonta")
@@ -285,7 +289,7 @@ func (h *PrometHandler) PrometKontaAnaliticki(c *gin.Context) {
 	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/kontaanaliticki", "#promettable", "innerHTML", "POST", "", "", true, common.ClassObradaButton, "handleDialogResponse('tab7')")
 	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
 
-	tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetKontaAnalitickiTableFields(), "", "", 0, 0, 0, 0)
+	tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetKontaAnalitickiTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 	tbl.ShowActions = false
 
 	h.tabData = setActiveTab(h.tabData, "kontaanaliticki") // Activate the "Promet konta analitički" tab

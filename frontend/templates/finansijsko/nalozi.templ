@@ -15,11 +15,10 @@ const (
 )
 
 templ NaloziContent(tabs domain.TabData, tipdokValues []domain.ComboItem, ukObrada domain.UkupnaObrada, btnSave, btnNoviNalog domain.Button, tbl domain.TableData, searchControl domain.InputControl, nalogPayload domain.FnalPayload, translator *i18n.Service, csrfToken string) {
-	<div id="main-content" class="border-b border-gray-200">
+	<!-- Container with full height -->
+	<div id="main-content" class="flex flex-col h-full">
 		@NaloziNav(tabs, translator)
-		<div id="main-content">
-			@NaloziKnjizenjeContent(tipdokValues, ukObrada, btnSave, btnNoviNalog, tbl, searchControl, nalogPayload, translator, csrfToken)
-		</div>
+		@NaloziKnjizenjeContent(tipdokValues, ukObrada, btnSave, btnNoviNalog, tbl, searchControl, nalogPayload, translator, csrfToken)
 	</div>
 }
 
@@ -48,19 +47,24 @@ templ NaloziNav(tabs domain.TabData, translator *i18n.Service) {
 }
 
 templ NaloziKnjizenjeContent(tipdokValues []domain.ComboItem, ukObrada domain.UkupnaObrada, btnSave, btnNoviNalog domain.Button, tbl domain.TableData, searchControl domain.InputControl, nalogPayload domain.FnalPayload, translator *i18n.Service, csrfToken string) {
-	@NaloziKnjizenjeHeader(tipdokValues, ukObrada, btnSave, btnNoviNalog, nalogPayload, translator, csrfToken)
-	@tmpl.Search_Part(tbl, searchControl)
-	<div id="table-container" class="mt-1">
-		@tmpl.Table(tbl, translator)
-		<div id="nalozi_stavke" class="border-b border-gray-200"></div>
+	<!-- Tab Content -->
+	<div id="tab1" class="flex-1 min-h-0 flex flex-col gap-1">
+		@NaloziKnjizenjeHeader(tipdokValues, ukObrada, btnSave, btnNoviNalog, nalogPayload, translator, csrfToken)
+		<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
+			@tmpl.Search_Part(tbl, searchControl)
+			<!-- Table -->
+			<div class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+				@tmpl.Table(tbl, translator)
+			</div>
+		</div>
+		<div id="dialog-confirm"></div>
+		<div id="dialog-stavkenaloga"></div>
 	</div>
-	<div id="dialog-confirm"></div>
-	<div id="dialog-stavkenaloga"></div>
 }
 
 templ NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.UkupnaObrada, btnSave, btnNoviNalog domain.Button, nalogPayload domain.FnalPayload, translator *i18n.Service, csrfToken string) {
-	<div class="grid grid-cols-3 gap-6 py-2">
-		<div id="fin-nalozi" class="pt-2 col-span-2 flex flex-col gap-1">
+	<div class="grid grid-cols-3 gap-6">
+		<div id="fin-nalozi" class="pt-1 col-span-2 flex flex-col gap-1">
 			<form
 				id="form-nalozi"
 				hx-target="#info-message"
@@ -77,20 +81,20 @@ templ NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Uku
 						LabelText:  translator.Label("Vrsta Naloga za knjiženje"),
 						ClassLabel: common.ClassLabel + " w-44 ",
 					})
-				@tmpl.ComboBoxField(domain.ComboFieldConfig{
-					ID:               "tipdok",
-					Name:             "tipdok",
-					Placeholder:      translator.Placeholder("Select"),
-					HasLabel:         false,
-					Disabled:         false,
-					ClassSelect:      common.ClassSelect + " flex-1 ",
-					HxSwap:           "innerHTML",
-					HxChangeTarget:   "nalozi-table",
-					HxVals:           `js:{"tipdok": document.getElementById("tipdok").value}`,
-					OptionValues:     tipdokValues,
-					ChangeEndpoint:   "/api/nalozi/all/tipdok",
-					HxOnAfterRequest: "handleTipdokAfterRequest",
-				}, translator)
+					@tmpl.ComboBoxField(domain.ComboFieldConfig{
+						ID:               "tipdok",
+						Name:             "tipdok",
+						Placeholder:      translator.Placeholder("Select"),
+						HasLabel:         false,
+						Disabled:         false,
+						ClassSelect:      common.ClassSelect + " flex-1 ",
+						HxSwap:           "innerHTML",
+						HxChangeTarget:   "nalozi-table",
+						HxVals:           `js:{"tipdok": document.getElementById("tipdok").value}`,
+						OptionValues:     tipdokValues,
+						ChangeEndpoint:   "/api/nalozi/all/tipdok",
+						HxOnAfterRequest: "handleTipdokAfterRequest",
+					}, translator)
 				</div>
 				<!-- Second row: Broj naloga, Datum naloga, Datum obrade -->
 				<div class="flex flex-1 items-center py-1">
@@ -259,29 +263,59 @@ templ NaloziDetail(tblStavke domain.TableData, searchControl domain.InputControl
 }
 
 templ NaloziKopiranje(tabs domain.TabData, tblHeader, tblStavke domain.TableData, searchControl domain.InputControl, translator *i18n.Service) {
-	@NaloziNav(tabs, translator)
-	<div>
-		@tmpl.Search_Part(tblHeader, searchControl)
-		@NaloziHeader(tblHeader, translator)
-		<div id="nalozi_kopiranje" class="border-b border-gray-200"></div>
+	<!-- Container with full height -->
+	<div class="flex flex-col h-full">
+		<!-- Tab Content -->
+		<div id="tab2" class="flex-1 min-h-0 flex flex-col gap-1">
+			@NaloziNav(tabs, translator)
+			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
+				@tmpl.Search_Part(tblHeader, searchControl)
+				<!-- Table -->
+				<div class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+					@tmpl.Table(tblHeader, translator)
+				</div>
+			</div>
+			<div id="nalozi_kopiranje"></div>
+		</div>
 	</div>
 }
 
 templ NaloziStorniranje(tabs domain.TabData, tblHeader, tblStavke domain.TableData, searchControl domain.InputControl, translator *i18n.Service) {
-	@NaloziNav(tabs, translator)
-	<div>
-		@tmpl.Search_Part(tblHeader, searchControl)
-		@NaloziHeader(tblHeader, translator)
+	<!-- Container with full height -->
+	<div class="flex flex-col h-full">
+		<!-- Tab Content -->
+		<div id="tab3" class="flex-1 min-h-0 flex flex-col gap-1">
+			@NaloziNav(tabs, translator)
+			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
+				@tmpl.Search_Part(tblHeader, searchControl)
+				<!-- Table -->
+				<div class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+					@tmpl.Table(tblHeader, translator)
+				</div>
+			</div>
+		</div>
 		<div id="nalozi_storniranje" class="border-b border-gray-200"></div>
 	</div>
 }
 
 templ NaloziStampanje(tabs domain.TabData, tblHeader, tblStavke domain.TableData, btnStampaj domain.Button, searchControl domain.InputControl, translator *i18n.Service) {
-	@NaloziNav(tabs, translator)
-	<div>
-		@tmpl.Search_Part(tblHeader, searchControl)
-		@NaloziHeader(tblHeader, translator)
-		<div id="nalozi_kopiranje_stavke" class="border-b border-gray-200"></div>
+	<!-- Container with full height -->
+	<div class="flex flex-col h-full">
+		<!-- Tab Content -->
+		<div id="tab4" class="flex-1 min-h-0 flex flex-col gap-1">
+			@NaloziNav(tabs, translator)
+			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
+				@tmpl.Search_Part(tblHeader, searchControl)
+				<!-- Table -->
+				<div class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+					@tmpl.Table(tblHeader, translator)
+				</div>
+				<div class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+					@tmpl.Table(tblStavke, translator)
+				</div>
+			</div>
+		</div>
+		<div id="nalozi_stampanje" class="border-b border-gray-200"></div>
 	</div>
 }
 

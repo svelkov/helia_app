@@ -2,7 +2,6 @@ package service
 
 import (
 	"fmt"
-	"helia/global"
 	"helia/internal/common"
 	"helia/internal/domain"
 	"helia/internal/repository"
@@ -72,7 +71,12 @@ func (s *PrometResource) GetPrometTotals(c *gin.Context) (domain.PrometResponse,
 		return response, fmt.Errorf("missing required parameters")
 	}
 
-	baseArgs := []interface{}{global.GetGnGod(), global.GetGnKar(), konto, sifra}
+	session := domain.GetSessionFromContext(c)
+	if session == nil {
+		return response, fmt.Errorf("user session not found")
+	}
+
+	baseArgs := []interface{}{session.SelectedGod, session.SelectedKar, konto, sifra}
 
 	//Get totals values
 	// Get "promet do" totals (up to start date)
@@ -84,7 +88,7 @@ func (s *PrometResource) GetPrometTotals(c *gin.Context) (domain.PrometResponse,
         where god = $1 and kar = $2 and konto = $3 and sifra = $4 
               and vkonta = 1 and danal < $5`
 
-	prometDoResults, err := s.prometRepo.GetAllCustom(prometDoQuery, "", prometDoArgs, "", "")
+	prometDoResults, err := s.prometRepo.GetAllCustom(c, prometDoQuery, "", prometDoArgs, "", "")
 	if err != nil {
 		return response, fmt.Errorf("error getting promet do totals: %v", err)
 	}
@@ -111,7 +115,7 @@ func (s *PrometResource) GetPrometTotals(c *gin.Context) (domain.PrometResponse,
         where god = $1 and kar = $2 and konto = $3 and sifra = $4 
               and vkonta = 1 and danal >= $5 and danal <= $6`
 
-	prometPeriodResults, err := s.prometRepo.GetAllCustom(prometPeriodQuery, "", prometPeriodArgs, "", "")
+	prometPeriodResults, err := s.prometRepo.GetAllCustom(c, prometPeriodQuery, "", prometPeriodArgs, "", "")
 	if err != nil {
 		return response, fmt.Errorf("error getting promet period totals: %v", err)
 	}
@@ -141,13 +145,18 @@ func (s *PrometResource) CheckPrometParameters(c *gin.Context, requiredFields []
 	// Build query dynamically
 	qb := common.NewQueryBuilder(`SELECT f.konto, f.sifra FROM baza.fkpl as f`)
 
+	session := domain.GetSessionFromContext(c)
+	if session == nil {
+		return []domain.FieldError{{Field: "session", ErrorMessage: "User session not found"}}
+	}
+
 	// Add system conditions
 	hasGod, hasKAr := s.service.Repo.GetHasGodHasKar()
 	if hasGod {
-		qb.AddEqual("f.god", global.GetGnGod())
+		qb.AddEqual("f.god", session.SelectedGod)
 	}
 	if hasKAr {
-		qb.AddEqual("f.kar", global.GetGnKar())
+		qb.AddEqual("f.kar", session.SelectedKar)
 	}
 
 	// Add user conditions
@@ -157,7 +166,7 @@ func (s *PrometResource) CheckPrometParameters(c *gin.Context, requiredFields []
 
 	sqlQuery, args := qb.Build()
 
-	entities, err := s.service.GetAllCustom(sqlQuery, "", args, "", "")
+	entities, err := s.service.GetAllCustom(c, sqlQuery, "", args, "", "")
 	if err != nil {
 		return []domain.FieldError{{Field: "konto", ErrorMessage: common.ErrMsgGetData}}
 	}
@@ -171,15 +180,20 @@ func (s *PrometResource) CheckPrometParameters(c *gin.Context, requiredFields []
 func (s *PrometResource) GetPrometAnalitickihKonta(c *gin.Context, getTotalRecords bool, calculatedPageSize, currentPage int) (domain.PrometResponse, error) {
 	var response domain.PrometResponse
 	args := []interface{}{}
+	session := domain.GetSessionFromContext(c)
+	if session == nil {
+		return response, fmt.Errorf("user session not found")
+	}
+
 	konto := c.Query("konto")
 	sifra := c.Query("sifra")
 	odDatuma := c.Query("oddatuma")
 	doDatuma := c.Query("dodatuma")
 
-	args = append(args, global.GetGnGod(), global.GetGnKar(), konto, sifra, odDatuma, doDatuma)
+	args = append(args, session.SelectedGod, session.SelectedKar, konto, sifra, odDatuma, doDatuma)
 	limitOffset := fmt.Sprintf(" LIMIT %d OFFSET %d", calculatedPageSize, (currentPage-1)*calculatedPageSize)
 
-	baseArgs := []interface{}{global.GetGnGod(), global.GetGnKar(), konto, sifra}
+	baseArgs := []interface{}{session.SelectedGod, session.SelectedKar, konto, sifra}
 	//if we need to get only total records we chec the bool gettotalrecords
 	if getTotalRecords {
 		sqlQuery := `SELECT count(*)
@@ -187,7 +201,7 @@ func (s *PrometResource) GetPrometAnalitickihKonta(c *gin.Context, getTotalRecor
 		WHERE 1=1 AND
 		god = $1 AND kar = $2 AND konto = $3 AND sifra = $4 
 		      AND vkonta = 1 AND danal >= $5 AND danal <= $6`
-		totalRecords, err := s.prometRepo.GetTotalRecordsCustom(sqlQuery, "", args, "", "")
+		totalRecords, err := s.prometRepo.GetTotalRecordsCustom(c, sqlQuery, "", args, "", "")
 		response.TotalRecords = totalRecords
 		return response, err
 	}
@@ -202,7 +216,7 @@ func (s *PrometResource) GetPrometAnalitickihKonta(c *gin.Context, getTotalRecor
         where god = $1 and kar = $2 and konto = $3 and sifra = $4 
               and vkonta = 1 and danal < $5`
 
-	prometDoResults, err := s.prometRepo.GetAllCustom(prometDoQuery, "", prometDoArgs, "", "")
+	prometDoResults, err := s.prometRepo.GetAllCustom(c, prometDoQuery, "", prometDoArgs, "", "")
 	if err != nil {
 		return response, fmt.Errorf("error getting promet do totals: %v", err)
 	}
@@ -229,7 +243,7 @@ func (s *PrometResource) GetPrometAnalitickihKonta(c *gin.Context, getTotalRecor
         where god = $1 and kar = $2 and konto = $3 and sifra = $4 
               and vkonta = 1 and danal >= $5 and danal <= $6`
 
-	prometPeriodResults, err := s.prometRepo.GetAllCustom(prometPeriodQuery, "", prometPeriodArgs, "", "")
+	prometPeriodResults, err := s.prometRepo.GetAllCustom(c, prometPeriodQuery, "", prometPeriodArgs, "", "")
 	if err != nil {
 		return response, fmt.Errorf("error getting promet period totals: %v", err)
 	}
@@ -274,7 +288,7 @@ func (s *PrometResource) GetPrometAnalitickihKonta(c *gin.Context, getTotalRecor
 		      AND vkonta = 1 AND danal >= $5 AND danal <= $6
 		ORDER BY god, kar, danal, tipdok, nalog, idfpro`
 
-	entities, err := s.prometRepo.GetAllCustom(sqlQuery, "", args, limitOffset, "")
+	entities, err := s.prometRepo.GetAllCustom(c, sqlQuery, "", args, limitOffset, "")
 	if err != nil {
 		return response, err
 	}
@@ -286,15 +300,20 @@ func (s *PrometResource) GetPrometAnalitickihKontaMi(c *gin.Context, getTotalRec
 	args := []interface{}{}
 	konto := c.Query("konto")
 	sifra := c.Query("sifra")
+	session := domain.GetSessionFromContext(c)
+	if session == nil {
+		return response, fmt.Errorf("user session not found")
+	}
+
 	odDatuma := c.Query("oddatuma")
 	doDatuma := c.Query("dodatuma")
 	odMI := c.Query("odmi")
 	doMI := c.Query("domi")
 
-	args = append(args, global.GetGnGod(), global.GetGnKar(), konto, sifra, odDatuma, doDatuma, odMI, doMI)
+	args = append(args, session.SelectedGod, session.SelectedKar, konto, sifra, odDatuma, doDatuma, odMI, doMI)
 	limitOffset := fmt.Sprintf(" LIMIT %d OFFSET %d", calculatedPageSize, (currentPage-1)*calculatedPageSize)
 
-	baseArgs := []interface{}{global.GetGnGod(), global.GetGnKar(), konto, sifra}
+	baseArgs := []interface{}{session.SelectedGod, session.SelectedKar, konto, sifra}
 	//if we need to get only total records we chec the bool gettotalrecords
 	if getTotalRecords {
 		sqlQuery := `SELECT count(*)
@@ -302,7 +321,7 @@ func (s *PrometResource) GetPrometAnalitickihKontaMi(c *gin.Context, getTotalRec
 		WHERE 1=1 AND
 		god = $1 AND kar = $2 AND konto = $3 AND sifra = $4 
 		      AND vkonta = 1 AND danal >= $5 AND danal <= $6 AND mi >= $7 AND mi <= $8`
-		totalRecords, err := s.prometRepo.GetTotalRecordsCustom(sqlQuery, "", args, "", "")
+		totalRecords, err := s.prometRepo.GetTotalRecordsCustom(c, sqlQuery, "", args, "", "")
 		response.TotalRecords = totalRecords
 		return response, err
 	}
@@ -317,7 +336,7 @@ func (s *PrometResource) GetPrometAnalitickihKontaMi(c *gin.Context, getTotalRec
         where god = $1 and kar = $2 and konto = $3 and sifra = $4 
               and vkonta = 1 and danal < $5 and mi >= $6 and mi <= $7`
 
-	prometDoResults, err := s.prometRepo.GetAllCustom(prometDoQuery, "", prometDoArgs, "", "")
+	prometDoResults, err := s.prometRepo.GetAllCustom(c, prometDoQuery, "", prometDoArgs, "", "")
 	if err != nil {
 		return response, fmt.Errorf("error getting promet do totals: %v", err)
 	}
@@ -344,7 +363,7 @@ func (s *PrometResource) GetPrometAnalitickihKontaMi(c *gin.Context, getTotalRec
         where god = $1 and kar = $2 and konto = $3 and sifra = $4 
               and vkonta = 1 and danal >= $5 and danal <= $6 and mi >= $7 and mi <= $8`
 
-	prometPeriodResults, err := s.prometRepo.GetAllCustom(prometPeriodQuery, "", prometPeriodArgs, "", "")
+	prometPeriodResults, err := s.prometRepo.GetAllCustom(c, prometPeriodQuery, "", prometPeriodArgs, "", "")
 	if err != nil {
 		return response, fmt.Errorf("error getting promet period totals: %v", err)
 	}
@@ -390,7 +409,7 @@ func (s *PrometResource) GetPrometAnalitickihKontaMi(c *gin.Context, getTotalRec
 			  AND mi >= $7 AND mi <= $8
 		ORDER BY god, kar, danal, tipdok, nalog`
 
-	entities, err := s.prometRepo.GetAllCustom(sqlQuery, "", args, limitOffset, "")
+	entities, err := s.prometRepo.GetAllCustom(c, sqlQuery, "", args, limitOffset, "")
 	if err != nil {
 		return response, err
 	}

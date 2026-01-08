@@ -2,7 +2,6 @@ package service
 
 import (
 	"fmt"
-	"helia/global"
 	"helia/internal/common"
 	"helia/internal/domain"
 	"helia/internal/repository"
@@ -83,6 +82,11 @@ func NewSaldaService(service *BaseService[domain.SaldaDto],
 }
 
 func (s *SaldaResource) CheckSaldaParameters(c *gin.Context, requiredFields []string) (fieldsError []domain.FieldError) {
+	// Get user session from context
+	userSession := domain.GetSessionFromContext(c)
+	if userSession == nil {
+		return []domain.FieldError{{Field: "session", ErrorMessage: "user session not found"}}
+	}
 
 	fieldsError = common.ValidateRequiredParams(c, requiredFields)
 	if len(fieldsError) > 0 {
@@ -94,10 +98,10 @@ func (s *SaldaResource) CheckSaldaParameters(c *gin.Context, requiredFields []st
 	// Add system conditions
 	hasGod, hasKAr := s.fkplRepo.GetHasGodHasKar()
 	if hasGod {
-		qb.AddEqual("f.god", global.GetGnGod())
+		qb.AddEqual("f.god", userSession.SelectedGod)
 	}
 	if hasKAr {
-		qb.AddEqual("f.kar", global.GetGnKar())
+		qb.AddEqual("f.kar", userSession.SelectedKar)
 	}
 
 	// Add user conditions
@@ -109,7 +113,7 @@ func (s *SaldaResource) CheckSaldaParameters(c *gin.Context, requiredFields []st
 
 	sqlQuery, args := qb.Build()
 
-	entities, err := s.fkplRepo.GetAllCustom(sqlQuery, "", args, "", "")
+	entities, err := s.fkplRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
 	if err != nil {
 		return []domain.FieldError{{Field: "konto", ErrorMessage: common.ErrMsgGetData}}
 	}
@@ -121,7 +125,14 @@ func (s *SaldaResource) CheckSaldaParameters(c *gin.Context, requiredFields []st
 }
 func (s *SaldaResource) CheckSaldaGrupeParameters(c *gin.Context, requiredFields []string) (fieldsError []domain.FieldError) {
 	fieldsError = []domain.FieldError{}
-	nduzsin := global.GetGnDuzSin()
+
+	// Get user session from context
+	userSession := domain.GetSessionFromContext(c)
+	if userSession == nil {
+		return []domain.FieldError{{Field: "session", ErrorMessage: "user session not found"}}
+	}
+
+	nduzsin := 3 // Default length of synthetic account TODO should be get from config
 	comboTipIzv := c.Query("cbx_tipizvestaja")
 	od_konta := c.Query("od_konta")
 	do_konta := c.Query("do_konta")
@@ -202,6 +213,12 @@ func validateSifraFields(od_sifre, do_sifre string) []domain.FieldError {
 func (s *SaldaResource) GetSaldaPojedinacnihKonta(c *gin.Context) (domain.SaldaResponse, error) {
 	var response domain.SaldaResponse
 
+	// Get user session from context
+	userSession := domain.GetSessionFromContext(c)
+	if userSession == nil {
+		return response, fmt.Errorf("user session not found")
+	}
+
 	// Create first query (opening balance - tipdok = '00')
 	qb1 := common.NewQueryBuilder(`SELECT 0 as mesec,
     COALESCE(SUM(CASE WHEN kat = '1' OR kat = '2' THEN iznos ELSE 0 END), 0) as dug,
@@ -211,10 +228,10 @@ func (s *SaldaResource) GetSaldaPojedinacnihKonta(c *gin.Context) (domain.SaldaR
 	// Add conditions to first query
 	hasGod, hasKAr := s.fproRepo.GetHasGodHasKar()
 	if hasGod {
-		qb1.AddEqual("f.god", global.GetGnGod())
+		qb1.AddEqual("f.god", userSession.SelectedGod)
 	}
 	if hasKAr {
-		qb1.AddEqual("f.kar", global.GetGnKar())
+		qb1.AddEqual("f.kar", userSession.SelectedKar)
 	}
 	vkonta := c.Query("tipkonta")
 	if vkonta != "3" {
@@ -245,10 +262,10 @@ func (s *SaldaResource) GetSaldaPojedinacnihKonta(c *gin.Context) (domain.SaldaR
 
 	// Add same base conditions
 	if hasGod {
-		qb2.AddEqual("f.god", global.GetGnGod())
+		qb2.AddEqual("f.god", userSession.SelectedGod)
 	}
 	if hasKAr {
-		qb2.AddEqual("f.kar", global.GetGnKar())
+		qb2.AddEqual("f.kar", userSession.SelectedKar)
 	}
 	if vkonta != "3" {
 		qb2.AddEqual("f.konto", c.Query("konto"))
@@ -276,7 +293,7 @@ func (s *SaldaResource) GetSaldaPojedinacnihKonta(c *gin.Context) (domain.SaldaR
 
 	sqlQuery, args := uqb.Build()
 
-	entities, err := s.fproRepo.GetAllCustom(sqlQuery, "", args, "", "")
+	entities, err := s.fproRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
 	if err != nil {
 		return response, err
 	}
@@ -306,8 +323,14 @@ func (s *SaldaResource) GetSaldaPojedinacnihKonta(c *gin.Context) (domain.SaldaR
 	return response, nil
 }
 func (s *SaldaResource) GetSaldaGrupeKonta(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, currentPage int, pageSize int) error {
-	gnGod := global.GetGnGod()
-	gnKar := global.GetGnKar()
+	// Get user session from context
+	userSession := domain.GetSessionFromContext(c)
+	if userSession == nil {
+		return fmt.Errorf("user session not found")
+	}
+
+	gnGod := userSession.SelectedGod
+	gnKar := userSession.SelectedKar
 	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
 
 	// Get filter parameters with error handling
@@ -417,7 +440,7 @@ func (s *SaldaResource) GetSaldaGrupeKonta(c *gin.Context, tbl *domain.TableData
 		qb.SetOffset((currentPage - 1) * pageSize)
 	}
 	sqlQuery, args := qb.Build()
-	entities, err := s.saldaPartneriRepo.GetAllCustom(sqlQuery, "", args, "", "")
+	entities, err := s.saldaPartneriRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
 	if err != nil {
 		return err
 	}
@@ -441,8 +464,8 @@ func (s *SaldaResource) GetSaldaGrupeKonta(c *gin.Context, tbl *domain.TableData
 			// Build naziv with partner info
 			if entity.IDPartneri == 0 {
 				entity.Naziv = entity.NazivKonta
-			}else {
-			 entity.Naziv = buildNaziv(entity.Naziv, entity.PIB, entity.JMBG, entity.BPG, entity.BrIndex)
+			} else {
+				entity.Naziv = buildNaziv(entity.Naziv, entity.PIB, entity.JMBG, entity.BPG, entity.BrIndex)
 			}
 			fields := []string{
 				"+",
@@ -497,6 +520,13 @@ func (s *SaldaResource) extractGrupa(konto string, nDuzSin int) string {
 }
 func (s *SaldaResource) GetSaldaTotalValues(c *gin.Context) (domain.SaldaDto, error) {
 	var totals domain.SaldaDto
+
+	// Get user session from context
+	userSession := domain.GetSessionFromContext(c)
+	if userSession == nil {
+		return totals, fmt.Errorf("user session not found")
+	}
+
 	// Create first query (opening balance - tipdok = '00')
 	qb := common.NewQueryBuilder(`SELECT 
     COALESCE(SUM(CASE WHEN kat = '1' OR kat = '2' THEN iznos ELSE 0 END), 0) as dug,
@@ -505,7 +535,12 @@ func (s *SaldaResource) GetSaldaTotalValues(c *gin.Context) (domain.SaldaDto, er
 
 	// Add conditions to first query
 	hasGod, hasKAr := s.fproRepo.GetHasGodHasKar()
-	qb.AddGodKarConditions(hasGod, hasKAr)
+	if hasGod {
+		qb.AddEqual("f.god", userSession.SelectedGod)
+	}
+	if hasKAr {
+		qb.AddEqual("f.kar", userSession.SelectedKar)
+	}
 
 	vkonta := c.Query("tipkonta")
 	if vkonta != "3" {
@@ -527,7 +562,7 @@ func (s *SaldaResource) GetSaldaTotalValues(c *gin.Context) (domain.SaldaDto, er
 
 	sqlQuery, args := qb.Build()
 
-	entities, err := s.fproRepo.GetAllCustom(sqlQuery, "", args, "", "")
+	entities, err := s.fproRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
 	if err != nil {
 		return totals, err
 	}
@@ -542,7 +577,12 @@ func (s *SaldaResource) GetSaldaTotalValues(c *gin.Context) (domain.SaldaDto, er
     COALESCE(SUM(CASE WHEN kat = '3' OR kat = '4' THEN iznos ELSE 0 END), 0) as pot
     FROM fpro f`)
 
-	qb.AddGodKarConditions(hasGod, hasKAr)
+	if hasGod {
+		qb.AddEqual("f.god", userSession.SelectedGod)
+	}
+	if hasKAr {
+		qb.AddEqual("f.kar", userSession.SelectedKar)
+	}
 	if vkonta != "3" {
 		qb.AddEqual("f.konto", c.Query("konto"))
 		if c.Query("sifra") != "" {
@@ -561,7 +601,7 @@ func (s *SaldaResource) GetSaldaTotalValues(c *gin.Context) (domain.SaldaDto, er
 	qb.AddCondition("f.tipdok", "00", "!=")
 	sqlQuery, args = qb.Build()
 
-	entities, err = s.fproRepo.GetAllCustom(sqlQuery, "", args, "", "")
+	entities, err = s.fproRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
 	if err != nil {
 		return totals, err
 	}
@@ -596,6 +636,12 @@ func (s *SaldaResource) SetDefaultTableData(tbl *domain.TableData) {
 	}
 }
 func (s *SaldaResource) GetSaldaPartneriList(c *gin.Context, tblPartneri *domain.TableData, getTotRecords bool, currentPage int, pageSize int) error {
+	// Get user session from context
+	userSession := domain.GetSessionFromContext(c)
+	if userSession == nil {
+		return fmt.Errorf("user session not found")
+	}
+
 	// Build query dynamically
 	var qb *common.QueryBuilder
 	// if search text is not epmty, add search conditions
@@ -605,14 +651,19 @@ func (s *SaldaResource) GetSaldaPartneriList(c *gin.Context, tblPartneri *domain
 		qb = common.NewQueryBuilder(`SELECT COUNT(*) as total FROM partneri `)
 
 		// Add system conditions
-		qb.AddGodKarConditions(hasGod, hasKAr)
+		if hasGod {
+			qb.AddEqual("god", userSession.SelectedGod)
+		}
+		if hasKAr {
+			qb.AddEqual("kar", userSession.SelectedKar)
+		}
 		if searchText != "" {
 			qb.SetEntityType(reflect.TypeOf(domain.Partneri{}))
 			qb.AddSearchConditions(s.GetSaldaPartneriTableFields(), searchText)
 		}
 		sqlQuery, args := qb.Build()
 
-		totRecords, err := s.partneriRepo.GetTotalRecordsCustom(sqlQuery, "", args, "", "")
+		totRecords, err := s.partneriRepo.GetTotalRecordsCustom(c, sqlQuery, "", args, "", "")
 		tblPartneri.SearchEnabled = true
 		tblPartneri.ShowPagination = true
 		tblPartneri.ShowActions = false
@@ -634,7 +685,15 @@ func (s *SaldaResource) GetSaldaPartneriList(c *gin.Context, tblPartneri *domain
 	}
 
 	qb = common.NewQueryBuilder(`SELECT idpartneri, sifra, naziv, pib, pobro, adresa, mesto FROM partneri `)
-	qb.AddGodKarConditions(hasGod, hasKAr)
+
+	// Add system conditions using userSession instead of globals
+	if hasGod {
+		qb.AddEqual("god", userSession.SelectedGod)
+	}
+	if hasKAr {
+		qb.AddEqual("kar", userSession.SelectedKar)
+	}
+
 	if searchText != "" {
 		qb.SetEntityType(reflect.TypeOf(domain.Partneri{}))
 		qb.AddSearchConditions(s.GetSaldaPartneriTableFields(), searchText)
@@ -645,7 +704,7 @@ func (s *SaldaResource) GetSaldaPartneriList(c *gin.Context, tblPartneri *domain
 	qb.SetOffset((currentPage - 1) * pageSize)
 
 	sqlQuery, args := qb.Build()
-	entities, err := s.partneriRepo.GetAllCustom(sqlQuery, "", args, "", "")
+	entities, err := s.partneriRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
 	if err != nil {
 		return err
 	}
@@ -654,27 +713,39 @@ func (s *SaldaResource) GetSaldaPartneriList(c *gin.Context, tblPartneri *domain
 	return nil
 }
 func (s *SaldaResource) ProcessSaldaPartneriDetails(c *gin.Context, idPartneri int64, tblKonta, tblDetalji *domain.TableData) error {
+	// Get user session from context
+	userSession := domain.GetSessionFromContext(c)
+	if userSession == nil {
+		return fmt.Errorf("user session not found")
+	}
+
 	bBudzetsko := false
-	gnGod := global.GetGnGod()
-	gnKar := global.GetGnKar()
 
 	hasGod, hasKar := s.partneriRepo.GetHasGodHasKar()
 	qb := common.NewQueryBuilder(`SELECT budzetski FROM partneri`)
 	if hasGod {
-		qb.AddEqual("god", gnGod)
+		qb.AddEqual("god", userSession.SelectedGod)
 	}
 	if hasKar {
-		qb.AddEqual("kar", gnKar)
+		qb.AddEqual("kar", userSession.SelectedKar)
 	}
 	qb.AddEqual("idpartneri", idPartneri)
 	sqlQuery, args := qb.Build()
-	partneriEntities, err := s.partneriRepo.GetAllCustom(sqlQuery, "", args, "", "")
+	partneriEntities, err := s.partneriRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
 	if err != nil {
 		return err
 	}
 	if partneriEntities != nil && len(*partneriEntities) > 0 {
 		bBudzetsko = (*partneriEntities)[0].Budzetski == true //budzetski
 	}
+
+	// Get user session from context
+	userSession = domain.GetSessionFromContext(c)
+	if userSession == nil {
+		return fmt.Errorf("user session not found")
+	}
+	gnGod := userSession.SelectedGod
+	gnKar := userSession.SelectedKar
 
 	// Query 1: Get aggregated Konta/Salda data per FKPL
 	qbKonta := common.NewQueryBuilder(`
@@ -699,7 +770,7 @@ func (s *SaldaResource) ProcessSaldaPartneriDetails(c *gin.Context, idPartneri i
 	qbKonta.AddOrderBy("f.konto")
 
 	sqlQueryKonta, argsKonta := qbKonta.Build()
-	kontaEntities, err := s.fproRepo.GetAllCustom(sqlQueryKonta, "", argsKonta, "", "")
+	kontaEntities, err := s.fproRepo.GetAllCustom(c, sqlQueryKonta, "", argsKonta, "", "")
 	if err != nil {
 		return err
 	}
@@ -736,7 +807,7 @@ func (s *SaldaResource) ProcessSaldaPartneriDetails(c *gin.Context, idPartneri i
 	qbDetalji.AddOrderBy("fp.danal ASC")
 
 	sqlQueryDetalji, argsDetalji := qbDetalji.Build()
-	detaljiEntities, err := s.fproRepo.GetAllCustom(sqlQueryDetalji, "", argsDetalji, "", "")
+	detaljiEntities, err := s.fproRepo.GetAllCustom(c, sqlQueryDetalji, "", argsDetalji, "", "")
 	if err != nil {
 		return err
 	}
@@ -815,8 +886,14 @@ func (s *SaldaResource) ProcessSaldaPartneriDetails(c *gin.Context, idPartneri i
 	return nil
 }
 func (s *SaldaResource) GetSaldaPartneriPrelomljeno(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, currentPage, pageSize int) error {
-	gnGod := global.GetGnGod()
-	gnKar := global.GetGnKar()
+	// Get user session from context
+	userSession := domain.GetSessionFromContext(c)
+	if userSession == nil {
+		return fmt.Errorf("user session not found")
+	}
+
+	gnGod := userSession.SelectedGod
+	gnKar := userSession.SelectedKar
 	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
 	odSifra := c.Query("sifra_od")
 	doSifra := c.Query("sifra_do")
@@ -879,7 +956,7 @@ func (s *SaldaResource) GetSaldaPartneriPrelomljeno(c *gin.Context, tbl *domain.
 		qb.SetOffset((currentPage - 1) * pageSize)
 	}
 	sqlQuery, args := qb.Build()
-	entities, err := s.saldaPartneriRepo.GetAllCustom(sqlQuery, "", args, "", "")
+	entities, err := s.saldaPartneriRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
 	if err != nil {
 		return err
 	}
@@ -928,8 +1005,14 @@ func (s *SaldaResource) GetSaldaPartneriPrelomljeno(c *gin.Context, tbl *domain.
 	return nil
 }
 func (s *SaldaResource) SaldaPoKomercijalistima(c *gin.Context, tbl *domain.TableData, getTotRecords bool, currentPage int, pageSize int) error {
-	gnGod := global.GetGnGod()
-	gnKar := global.GetGnKar()
+	// Get user session from context
+	userSession := domain.GetSessionFromContext(c)
+	if userSession == nil {
+		return fmt.Errorf("user session not found")
+	}
+
+	gnGod := userSession.SelectedGod
+	gnKar := userSession.SelectedKar
 	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
 	podDatumom := c.Query("pod_datumom")
 	odKomercijaliste := c.Query("od_komercijaliste")
@@ -958,7 +1041,7 @@ func (s *SaldaResource) SaldaPoKomercijalistima(c *gin.Context, tbl *domain.Tabl
 		}
 
 		sqlQuery, args := qbCount.Build()
-		totRecords, err := s.fproRepo.GetTotalRecordsCustom(sqlQuery, "", args, "", "")
+		totRecords, err := s.fproRepo.GetTotalRecordsCustom(c, sqlQuery, "", args, "", "")
 		if err != nil {
 			return err
 		}
@@ -1021,7 +1104,7 @@ func (s *SaldaResource) SaldaPoKomercijalistima(c *gin.Context, tbl *domain.Tabl
 	qb.SetOffset((currentPage - 1) * pageSize)
 
 	sqlQuery, args := qb.Build()
-	entities, err := s.saldaKomRepo.GetAllCustom(sqlQuery, "", args, "", "")
+	entities, err := s.saldaKomRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
 	if err != nil {
 		return err
 	}
@@ -1047,8 +1130,14 @@ func (s *SaldaResource) SaldaPoKomercijalistima(c *gin.Context, tbl *domain.Tabl
 	return nil
 }
 func (s *SaldaResource) RealizacijaKomercijalisti(c *gin.Context, tbl *domain.TableData, getTotRecords bool, currentPage int, pageSize int) error {
-	gnGod := global.GetGnGod()
-	gnKar := global.GetGnKar()
+	// Get user session from context
+	userSession := domain.GetSessionFromContext(c)
+	if userSession == nil {
+		return fmt.Errorf("user session not found")
+	}
+
+	gnGod := userSession.SelectedGod
+	gnKar := userSession.SelectedKar
 	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
 	odDatuma := c.Query("od_datuma")
 	doDatuma := c.Query("do_datuma")
@@ -1079,7 +1168,7 @@ func (s *SaldaResource) RealizacijaKomercijalisti(c *gin.Context, tbl *domain.Ta
 		}
 
 		sqlQuery, args := qbCount.Build()
-		totRecords, err := s.fproRepo.GetTotalRecordsCustom(sqlQuery, "", args, "", "")
+		totRecords, err := s.fproRepo.GetTotalRecordsCustom(c, sqlQuery, "", args, "", "")
 		if err != nil {
 			return err
 		}
@@ -1141,7 +1230,7 @@ func (s *SaldaResource) RealizacijaKomercijalisti(c *gin.Context, tbl *domain.Ta
 	qb.SetOffset((currentPage - 1) * pageSize)
 
 	sqlQuery, args := qb.Build()
-	entities, err := s.saldaKomRepo.GetAllCustom(sqlQuery, "", args, "", "")
+	entities, err := s.saldaKomRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
 	if err != nil {
 		return err
 	}

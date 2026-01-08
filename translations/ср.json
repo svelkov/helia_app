@@ -236,6 +236,7 @@
   "label.duguje_potrazuje": "Дугује/Потражује",
   "label.pocev_od_sifre": "Почев од шифре",
   "label.zakljucno_sa_sifrom": "Закључно са шифром",
+  "label.brisanje_sloga_sa_id": "Брисање слога са ИД: ",
   "message.saved_success": "Подаци су успешно сачувани",
   "message.deleted_success": "Подаци су успешно обрисани",
   "message.updated_success": "Подаци су успешно ажурирани",
@@ -472,5 +473,6 @@
   "title.dodaj_partnera": "Додај партнера",
   "title.izmeni_partnera": "Измени партнера",
   "title.novi_nalog": "Нови налог",
-  "title.nastavak_knjizenja_naloga": "Наставак књижења налога"
+  "title.nastavak_knjizenja_naloga": "Наставак књижења налога",
+  "title.brisanje_podataka": "Брисање података"
 }

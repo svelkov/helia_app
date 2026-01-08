@@ -125,14 +125,14 @@ type Tipdok struct {
 	IDTipDok   int            `json:"id_tip_dok" db:"idtipdok"`
 	God        int            `json:"god" db:"god"`
 	Kar        int            `json:"kar" db:"kar"`
-	TipDok     string         `form:"tipdok" json:"tip_dok" db:"tipdok"`
-	Opis       string         `form:"opis" json:"opis" db:"opis"`
+	TipDok     string         `form:"tipdok" json:"tip_dok" db:"tipdok" form:"tipdok"`
+	Opis       string         `form:"opis" json:"opis" db:"opis" form:"opis"`
 	XDatUnosa  sql.NullTime   `json:"xdat_unosa" db:"xdatunosa"`
 	XDatIzmene sql.NullTime   `json:"xdat_izmene" db:"xdatizmene"`
 	XOpuNos    string         `json:"xop_unos" db:"xopunos"`
 	XOpIzmene  sql.NullString `json:"xop_izmene" db:"xopizmene"`
-	GrpDok     string         `form:"grpdok" json:"grp_dok" db:"grpdok"`
-	GrpVrd     string         `form:"grpvrd" json:"grp_vrd" db:"grpvrd"`
+	GrpDok     string         `form:"grpdok" json:"grp_dok" db:"grpdok" form:"grpdok"`
+	GrpVrd     string         `form:"grpvrd" json:"grp_vrd" db:"grpvrd" form:"grpvrd"`
 	Magacin    string         `form:"magacin" json:"magacin" db:"magacin"`
 }
 
@@ -141,20 +141,20 @@ type Dokvrsta struct {
 	DokVrstaID int            `json:"dok_vrsta_id" db:"dokvrstaid"`
 	God        int            `json:"god" db:"god"`
 	Kar        int            `json:"kar" db:"kar"`
-	Opis       string         `json:"opis" db:"opis"`
-	Predznak   string         `json:"predznak" db:"predznak"`
+	Opis       string         `json:"opis" db:"opis" form:"opis"`
+	Predznak   string         `json:"predznak" db:"predznak" form:"predznak"`
 	XDatUnosa  sql.NullTime   `json:"xdat_unosa" db:"xdatunosa"`
 	XDatIzmene sql.NullTime   `json:"xdat_izmene" db:"xdatizmene"`
 	XOpuNos    string         `json:"xop_unos" db:"xopunos"`
 	XOpIzmene  sql.NullString `json:"xop_izmene" db:"xopizmene"`
-	Vrd        int            `json:"vrd" db:"vrd"`
-	KodKnj     string         `json:"kod_knj" db:"kodknj"`
-	GrpDok     string         `json:"grp_dok" db:"grpdok"`
-	StornoVrd  int            `json:"storno_vrd" db:"stornovrd"`
-	Modul      string         `json:"modul" db:"modul"`
-	DokOzn     string         `json:"dok_ozn" db:"dokozn"`
+	Vrd        int            `json:"vrd" db:"vrd" form:"vrd"`
+	KodKnj     string         `json:"kod_knj" db:"kodknj" form:"kodknj"`
+	GrpDok     string         `json:"grp_dok" db:"grpdok" form:"grpdok"`
+	StornoVrd  int            `json:"storno_vrd" db:"stornovrd" form:"stornovrd"`
+	Modul      string         `json:"modul" db:"modul" form:"modul"`
+	DokOzn     string         `json:"dok_ozn" db:"dokozn" form:"dokozn"`
 	FlgKepu    bool           `json:"flg_kepu" db:"flgkepu"`
-	GrpNal     string         `json:"grp_nal" db:"grpnal"`
+	GrpNal     string         `json:"grp_nal" db:"grpnal" form:"grpnal"`
 	DodOznFak  string         `json:"dod_ozn_fak" db:"dodoznfak"`
 	DodOznKon  string         `json:"dod_ozn_kon" db:"dodoznkon"`
 	Polje      string         `json:"polje" db:"polje"`
@@ -214,12 +214,12 @@ type Orgjed struct {
 	IDOrgjed   int            `json:"idorgjed" db:"idorgjed"`
 	God        int            `json:"god" db:"god"`
 	Kar        int            `json:"kar" db:"kar"`
-	Naziv      string         `json:"naziv" db:"naziv"`
+	Naziv      string         `json:"naziv" db:"naziv" form:"naziv"`
 	XDatUnosa  sql.NullTime   `json:"xdat_unosa" db:"xdatunosa"`
 	XDatIzmene sql.NullTime   `json:"xdat_izmene" db:"xdatizmene"`
-	XOpUnos    string         `json:"xop_unos" db:"xopunos"`
+	XOpUnos    sql.NullString `json:"xop_unos" db:"xopunos"`
 	XOpIzmene  sql.NullString `json:"xop_izmene" db:"xopizmene"`
-	OjOzn      string         `json:"ojozn" db:"ojozn"`
+	OjOzn      string         `json:"ojozn" db:"ojozn" form:"ojozn"`
 }
 
 // MESTOTR Model

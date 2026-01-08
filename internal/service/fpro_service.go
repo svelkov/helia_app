@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"helia/config"
 	"helia/internal/common"
 	"helia/internal/domain"
 	"helia/internal/repository"
@@ -27,7 +28,7 @@ type FproService interface {
 	GetTableNalogFields() []domain.Fields
 	GetNaloziStavke(c *gin.Context, nalogID int64, searchQuery string, page int, offset int, tableFields []domain.Fields) (domain.TableData, error)
 	GetFieldCache() map[string]reflect.StructField
-	GetAllByFnalID(fnalID int64) (*[]domain.Fpro, error)
+	GetAllByFnalID(c *gin.Context, fnalID int64) (*[]domain.Fpro, error)
 }
 
 // FproResource implements the NalogService interface.
@@ -37,6 +38,7 @@ type FproResource struct {
 	fproIDFieldName         string
 	naloziTableFields       []domain.Fields
 	naloziStavkeTableFields []domain.Fields
+	cfg                     config.Config
 }
 
 func NewFproService(
@@ -45,6 +47,7 @@ func NewFproService(
 	fproIDFieldName string,
 	naloziTableFields []domain.Fields,
 	naloziStavkeTableFields []domain.Fields,
+	cfg config.Config,
 ) *FproResource {
 	rs := &FproResource{
 		service:                 Service,
@@ -52,6 +55,7 @@ func NewFproService(
 		fproIDFieldName:         fproIDFieldName,
 		naloziTableFields:       naloziTableFields,
 		naloziStavkeTableFields: naloziStavkeTableFields,
+		cfg:                     cfg,
 	}
 	rs.setServiceFieldValues()
 	return rs
@@ -72,8 +76,8 @@ func (s *FproResource) GetFieldCache() map[string]reflect.StructField {
 }
 
 // Create implements NalogService.
-func (s *FproResource) Create(Fpro *domain.Fpro, idField string, fields []domain.Fields) ([]domain.FieldError, int64, error) {
-	return s.service.Create(Fpro, idField, fields)
+func (s *FproResource) Create(c *gin.Context, Fpro *domain.Fpro, idField string, fields []domain.Fields) ([]domain.FieldError, int64, error) {
+	return s.service.Create(c, Fpro, idField, fields)
 }
 
 // Delete implements NalogService.
@@ -82,13 +86,13 @@ func (s *FproResource) Delete(idField string, id int64) error {
 }
 
 // GetAll implements NalogService.
-func (s *FproResource) GetAll(page int, offset int, tableFields []domain.Fields, idField string, searchParams ...string) (*[]domain.Fpro, error) {
-	return s.service.GetAll(page, offset, tableFields, idField, searchParams...)
+func (s *FproResource) GetAll(c *gin.Context, page int, offset int, tableFields []domain.Fields, idField string, searchParams ...string) (*[]domain.Fpro, error) {
+	return s.service.GetAll(c, page, offset, tableFields, idField, searchParams...)
 }
 
 // GetAllCustom implements NalogService.
-func (s *FproResource) GetAllCustom(queryText string, whereText string, args []interface{}, limitOffset string, orderBy string) (*[]domain.Fpro, error) {
-	return s.service.GetAllCustom(queryText, whereText, args, limitOffset, orderBy)
+func (s *FproResource) GetAllCustom(c *gin.Context, queryText string, whereText string, args []interface{}, limitOffset string, orderBy string) (*[]domain.Fpro, error) {
+	return s.service.GetAllCustom(c, queryText, whereText, args, limitOffset, orderBy)
 }
 
 // GetByID implements NalogService.
@@ -97,13 +101,13 @@ func (s *FproResource) GetByID(idField string, idValue int64) (*domain.Fpro, err
 }
 
 // GetTotalRecords implements NalogService.
-func (s *FproResource) GetTotalRecords(tableFields []domain.Fields, searchParams ...string) (int, error) {
-	return s.service.GetTotalRecords(tableFields, searchParams...)
+func (s *FproResource) GetTotalRecords(c *gin.Context, tableFields []domain.Fields, searchParams ...string) (int, error) {
+	return s.service.GetTotalRecords(c, tableFields, searchParams...)
 }
 
 // GetTotalRecordsCustom implements NalogService.
-func (s *FproResource) GetTotalRecordsCustom(queryText string, whereText string, args []interface{}, limitOffset string, orderBy string) (int, error) {
-	return s.service.GetTotalRecordsCustom(queryText, whereText, args, limitOffset, orderBy)
+func (s *FproResource) GetTotalRecordsCustom(c *gin.Context, queryText string, whereText string, args []interface{}, limitOffset string, orderBy string) (int, error) {
+	return s.service.GetTotalRecordsCustom(c, queryText, whereText, args, limitOffset, orderBy)
 }
 
 // MapEntityToValues implements NalogService.
@@ -112,11 +116,11 @@ func (s *FproResource) MapEntityToValues(entity *domain.Fpro, tableFields []doma
 }
 
 // Update implements NalogService.
-func (s *FproResource) Update(entity *domain.Fpro, idField string, idValue interface{}, tableFields []domain.Fields) ([]domain.FieldError, error) {
-	return s.service.Update(entity, idField, idValue, tableFields)
+func (s *FproResource) Update(c *gin.Context, entity *domain.Fpro, idField string, idValue interface{}, tableFields []domain.Fields) ([]domain.FieldError, error) {
+	return s.service.Update(c, entity, idField, idValue, tableFields)
 }
 
-func (s *FproResource) GetAllByFnalID(fnalID int64) (*[]domain.Fpro, error) {
+func (s *FproResource) GetAllByFnalID(c *gin.Context, fnalID int64) (*[]domain.Fpro, error) {
 	queryText := `select fp.*,  fk.naziv as naziv,
 	case when fp.kat = 1 then fp.iznos
 		 when fp.kat = 2 then fp.iznos
@@ -130,14 +134,14 @@ func (s *FproResource) GetAllByFnalID(fnalID int64) (*[]domain.Fpro, error) {
 	args := []interface{}{}
 	args = append(args, fnalID)
 
-	entities, err := s.fproRepo.GetAllCustom(queryText, whereText, args, "", " order by rbr desc ")
+	entities, err := s.fproRepo.GetAllCustom(c, queryText, whereText, args, "", " order by rbr desc ")
 	return entities, err
 }
 
 // Helper to construct common WHERE clauses and arguments for Fpro queries
-func (s *FproResource) buildFproWhere(idfnal int64, args *[]interface{}, searchQuery string) string {
-	hasGod, hasKar := s.fproRepo.CheckGogKar()
-	basicWhere := s.fproRepo.CreateBasicWhere(s.naloziStavkeTableFields, args, hasGod, hasKar, searchQuery)
+func (s *FproResource) buildFproWhere(idfnal int64, god, kar int, args *[]interface{}, searchQuery string) string {
+	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
+	basicWhere := s.fproRepo.CreateBasicWhere(s.naloziStavkeTableFields, args, hasGod, hasKar, god, kar, searchQuery)
 
 	var conditions []string
 	if basicWhere != "" {
@@ -158,20 +162,27 @@ func (s *FproResource) GetNaloziStavke(c *gin.Context, idFnal int64, searchQuery
 	table := domain.TableData{}
 	// 2. Fetch Fpro Entities
 	args := []interface{}{}
+
+	// Get session for god/kar values
+	session := domain.GetSessionFromContext(c)
+	if session == nil {
+		return table, fmt.Errorf("user session not found")
+	}
+
 	// Use viewData.DefaultTipdok for the actual Fpro query
-	whereText := s.buildFproWhere(idFnal, &args, searchQuery)
+	whereText := s.buildFproWhere(idFnal, session.SelectedGod, session.SelectedKar, &args, searchQuery)
 
 	// Get total records
 	totalRecordsQuery := `SELECT count(*) FROM Fpro `
 
-	totRecords, err := s.fproRepo.GetTotalRecordsCustom(totalRecordsQuery, whereText, args, "", "")
+	totRecords, err := s.fproRepo.GetTotalRecordsCustom(c, totalRecordsQuery, whereText, args, "", "")
 	if err != nil {
 		return table, fmt.Errorf("failed to get total records for Fpro: %w", err)
 	}
 
 	// Calculate pagination details
-	currentPage, calculatedPageSize, totalPages := common.GetPaginationData(c, totRecords) // Pass nil for req
-	if page > 0 {                                                                          // Override current page if provided from handler
+	currentPage, calculatedPageSize, totalPages := common.GetPaginationData(c, totRecords, s.cfg) // Pass nil for req
+	if page > 0 {                                                                                 // Override current page if provided from handler
 		currentPage = page
 	}
 
@@ -190,14 +201,14 @@ func (s *FproResource) GetNaloziStavke(c *gin.Context, idFnal int64, searchQuery
     END AS pot FROM Fpro
 	LEFT join fkpl ON fkpl.idfkpl = fpro.idfkpl`
 
-	entities, err := s.fproRepo.GetAllCustom(selectQuery, whereText, args, limitOffset, orderBy)
+	entities, err := s.fproRepo.GetAllCustom(c, selectQuery, whereText, args, limitOffset, orderBy)
 	if err != nil {
 		return table, fmt.Errorf("failed to get Fpro entities: %w", err)
 	}
 
 	//viewData = *entities
 	// Prepare TableData for UI
-	table = common.SetTableBasicData("STAVKE NALOGA", "nalozi-tablestavke", s.naloziStavkeTableFields, "", "", calculatedPageSize, currentPage, totalPages, totRecords)
+	table = common.SetTableBasicData("STAVKE NALOGA", "nalozi-tablestavke", s.naloziStavkeTableFields, "", "", calculatedPageSize, currentPage, totalPages, totRecords, s.cfg)
 
 	// Prepare TableData for UI
 	tbl, err := common.SetTableRows(&table, *entities, s.GetTableStavkeFields(), s.fproIDFieldName, "", s.service.fieldCache)

@@ -2,6 +2,7 @@ package finansijsko
 
 import (
 	"fmt"
+	"helia/config"
 	"net/http"
 
 	tmpl_fin "helia/frontend/templates/finansijsko"
@@ -34,6 +35,7 @@ const (
 type SaldaHandler struct {
 	tabData domain.TabData
 	service *service.SaldaResource
+	cfg     config.Config
 }
 
 const (
@@ -71,8 +73,10 @@ const (
 			"do_komercijaliste": document.getElementById("do_komercijaliste")?.value}`
 )
 
-func NewSaldaHandler(service *service.SaldaResource) *SaldaHandler {
-	handler := &SaldaHandler{}
+func NewSaldaHandler(service *service.SaldaResource, cfg config.Config) *SaldaHandler {
+	handler := &SaldaHandler{
+		cfg: cfg,
+	}
 	handler.tabData = GetSaldaTabData()
 	handler.service = service
 	return handler
@@ -120,7 +124,7 @@ func (h *SaldaHandler) SaldaMain(c *gin.Context) {
 	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/salda/pojedinacnihkonta", "#saldapojedinacnihkonta-table", "innerHTML", "GET", "#konto", hxValsSaldaPojedinacnihKonta, true, common.ClassSaveButton, "handleDialogResponse")
 	btnPrint := common.SetButton("stampa", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
 
-	tbl := common.SetTableBasicData(saldaContentTitle, saldaTableID, h.service.GetPojedKontaTableFields(), "", "", 0, 0, 0, 0)
+	tbl := common.SetTableBasicData(saldaContentTitle, saldaTableID, h.service.GetPojedKontaTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 	h.service.SetDefaultTableData(&tbl)
 	setActiveSaldaTab(&h.tabData, "saldapojedinacnihkonta")
 	tbl.ShowActions = false
@@ -141,7 +145,7 @@ func (h *SaldaHandler) SaldaPojedinacnihKonta(c *gin.Context) {
 		btnPrint := common.SetButton("stampa", "Štampa", "fin_print", "/api/salda/pojedinacnihkonta/print", "#saldapojedinacnihkonta-table", "innerHTML", "GET", "", hxValsSaldaPojedinacnihKonta, true, common.ClassPrintButton, "")
 		// if the call come from menu click or tab click then render the page with parameters and empty table
 		total := domain.SaldaDto{}
-		tbl := common.SetTableBasicData(saldaContentTitle, saldaTableID, h.service.GetPojedKontaTableFields(), "", "", 0, 0, 0, 0)
+		tbl := common.SetTableBasicData(saldaContentTitle, saldaTableID, h.service.GetPojedKontaTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 		tbl.ShowActions = false
 		h.service.SetDefaultTableData(&tbl)
 		setActiveSaldaTab(&h.tabData, "saldapojedinacnihkonta")
@@ -178,7 +182,7 @@ func (h *SaldaHandler) SaldaPojedinacnihKonta(c *gin.Context) {
 			return
 		}
 
-		tbl := common.SetTableBasicData("", saldaTableID, h.service.GetPojedKontaTableFields(), "", "/api/salda/pojedinacnihkonta", 0, 0, 0, 0)
+		tbl := common.SetTableBasicData("", saldaTableID, h.service.GetPojedKontaTableFields(), "", "/api/salda/pojedinacnihkonta", 0, 0, 0, 0, h.cfg)
 		tbl.ShowActions = false
 		tbl.ShowPagination = false
 		tbl.Pagination.HxVals = hxValsSaldaPojedinacnihKonta
@@ -207,7 +211,7 @@ func (h *SaldaHandler) SaldaGrupeKonta(c *gin.Context) {
 		Class:        common.ClassSearchInput,
 		HxVals:       hxValsSaldaGrupeKonta,
 	}
-	tbl := common.SetTableBasicData(saldaContentTitle, saldaGrupeKontaTableID, h.service.GetGrupeKontaTableFields(), "", "", 0, 0, 0, 0)
+	tbl := common.SetTableBasicData(saldaContentTitle, saldaGrupeKontaTableID, h.service.GetGrupeKontaTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 	tbl.ShowActions = false
 	tbl.ContentTitle = ""
 	tbl.URLPrefix = saldaURLSaldaGrupeKonta
@@ -234,7 +238,7 @@ func (h *SaldaHandler) SaldaGrupeKonta(c *gin.Context) {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldsError, common.ErrMsgValidation)
 			return
 		}
-		page, pageSize := common.GetPageAndPageSizeFromRequest(c)
+		page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
 		err := h.service.GetSaldaGrupeKonta(c, &tbl, true, page, pageSize)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
@@ -254,7 +258,7 @@ func (h *SaldaHandler) SaldaPartneri(c *gin.Context) {
 	requestSource := c.Request.Header.Get("X-Request-Source")
 	setActiveSaldaTab(&h.tabData, "saldapartneri")
 
-	tblPartneri := common.SetTableBasicData("", saldaPartneriTableID, h.service.GetSaldaPartneriTableFields(), "", "", 0, 0, 0, 0)
+	tblPartneri := common.SetTableBasicData("", saldaPartneriTableID, h.service.GetSaldaPartneriTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 	translator := i18n.GetInstance()
 	searchInput := domain.InputControl{
 		ID:           "search-control",
@@ -268,7 +272,7 @@ func (h *SaldaHandler) SaldaPartneri(c *gin.Context) {
 		Autocomplete: "off",
 		Class:        common.ClassSearchInput,
 	}
-	currentPage, pageSize := common.GetPageAndPageSizeFromRequest(c)
+	currentPage, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
 
 	err := h.service.GetSaldaPartneriList(c, &tblPartneri, true, currentPage, pageSize)
 	if err != nil {
@@ -306,11 +310,11 @@ func (h *SaldaHandler) SaldaPartneri(c *gin.Context) {
 func (h *SaldaHandler) SaldaPartneriDetalji(c *gin.Context) {
 	strPartnerID := c.Query("idpartneri")
 	idPartneri := common.StringToInt64(strPartnerID)
-	tblSalda := common.SetTableBasicData("", "saldapartneri-salda-table", h.service.GetSaldaPartneriHeaderTableFields(), "", "", 0, 0, 0, 0)
+	tblSalda := common.SetTableBasicData("", "saldapartneri-salda-table", h.service.GetSaldaPartneriHeaderTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 	tblSalda.ShowActions = false
 	tblSalda.ShowPagination = false
 
-	tblDetalji := common.SetTableBasicData("", "saldapartneri-detalji-table", h.service.GetSaldaPartneriDetailTableFields(), "", "", 0, 0, 0, 0)
+	tblDetalji := common.SetTableBasicData("", "saldapartneri-detalji-table", h.service.GetSaldaPartneriDetailTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 	tblDetalji.ShowActions = false
 	tblDetalji.ShowPagination = false
 
@@ -338,7 +342,7 @@ func (h *SaldaHandler) SaldaPartneriPrelomljeno(c *gin.Context) {
 		Autocomplete: "off",
 		Class:        common.ClassSearchInput,
 	}
-	tbl := common.SetTableBasicData(saldaContentTitle, saldaTablePrelomljenoID, h.service.GetSaldaPartneriPrelomljenoTableFields(), "", "", 0, 0, 0, 0)
+	tbl := common.SetTableBasicData(saldaContentTitle, saldaTablePrelomljenoID, h.service.GetSaldaPartneriPrelomljenoTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 	tbl.URLPrefix = saldaURLPartneriPrelomljeno
 	tbl.URLGetAll = saldaURLPartneriPrelomljeno
 	tbl.BtnAdd.IsVisible = false
@@ -359,7 +363,7 @@ func (h *SaldaHandler) SaldaPartneriPrelomljeno(c *gin.Context) {
 	}
 
 	if requestSource == "btnobrada" || requestSource == "btnpage" || requestSource == "searchinput" {
-		page, pageSize := common.GetPageAndPageSizeFromRequest(c)
+		page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
 		err := h.service.GetSaldaPartneriPrelomljeno(c, &tbl, true, page, pageSize)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
@@ -383,7 +387,7 @@ func (h *SaldaHandler) SaldaKlase5i6Analitika(c *gin.Context) {
 		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/salda/saldaklase56analitika", "#saldatable", "innerHTML", "GET", "", hxValsSaldaPojedinacnihKonta, true, common.ClassSaveButton, "handleDialogResponse")
 		btnPrint := common.SetButton("stampa", "Stampaj", "fin_print", "/api/salda/saldaklase56analitika/print", "#saldatable", "innerHTML", "GET", "", hxValsSaldaPojedinacnihKonta, true, common.ClassPrintButton, "")
 		total := domain.SaldaDto{}
-		tbl := common.SetTableBasicData(saldaContentTitle, saldaTableID, h.service.GetPojedKontaTableFields(), "", "", 0, 0, 0, 0)
+		tbl := common.SetTableBasicData(saldaContentTitle, saldaTableID, h.service.GetPojedKontaTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 		tbl.ShowActions = false
 		setActiveSaldaTab(&h.tabData, "saldaklase56")
 		err := tmpl_fin.SaldaPojedinacnihKonta(h.tabData, tbl, btnObrada, btnPrint, total, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
@@ -399,7 +403,7 @@ func (h *SaldaHandler) SaldaKlase5i6Analitika(c *gin.Context) {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldsError, common.ErrMsgValidation)
 			return
 		}
-		page, pageSize := common.GetPageAndPageSizeFromRequest(c)
+		page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
 		response, err := h.service.GetSaldaPojedinacnihKonta(c)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
@@ -412,7 +416,7 @@ func (h *SaldaHandler) SaldaKlase5i6Analitika(c *gin.Context) {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
 		}
-		tbl := common.SetTableBasicData("", saldaTableID, h.service.GetPojedKontaTableFields(), "", "/api/salda/saldaklase56analitika", pageSize, page, totalPages, totalRecords)
+		tbl := common.SetTableBasicData("", saldaTableID, h.service.GetPojedKontaTableFields(), "", "/api/salda/saldaklase56analitika", pageSize, page, totalPages, totalRecords, h.cfg)
 		tbl.ShowActions = false
 		tbl.ShowPagination = true
 		tbl.Pagination.HxVals = hxValsSaldaPojedinacnihKonta
@@ -447,7 +451,7 @@ func (h *SaldaHandler) SaldaKomercijalisti(c *gin.Context) {
 		Autocomplete: "off",
 		Class:        common.ClassSearchInput,
 	}
-	tbl := common.SetTableBasicData(saldaContentTitle, saldaTableID, h.service.GetKomercijalistiTableFields(), "", "", 0, 0, 0, 0)
+	tbl := common.SetTableBasicData(saldaContentTitle, saldaTableID, h.service.GetKomercijalistiTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 	if requestSource == "menu" || requestSource == "tab" {
 		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", saldaURLKomercijalisti, "#saldatable-komercijalisti", "innerHTML", "GET", "", hxValsSaldaKomercijalisti, true, common.ClassSaveButton, "handleDialogResponse")
 		btnPrint := common.SetButton("stampa", "Štampaj", "fin_print", saldaURLKomercijalisti+"/print", "#saldatable-komercijalisti", "innerHTML", "GET", "", hxValsSaldaKomercijalisti, true, common.ClassPrintButton, "")
@@ -471,7 +475,7 @@ func (h *SaldaHandler) SaldaKomercijalisti(c *gin.Context) {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldsError, common.ErrMsgValidation)
 			return
 		}
-		page, pageSize := common.GetPageAndPageSizeFromRequest(c)
+		page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
 		err := h.service.SaldaPoKomercijalistima(c, &tbl, true, page, pageSize)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
@@ -505,7 +509,7 @@ func (h *SaldaHandler) RealizacijaKomercijalisti(c *gin.Context) {
 		Autocomplete: "off",
 		Class:        common.ClassSearchInput,
 	}
-	tbl := common.SetTableBasicData(saldaContentTitle, saldaTableID, h.service.GetRealizacijaKomercijalistiTableFields(), "", "", 0, 0, 0, 0)
+	tbl := common.SetTableBasicData(saldaContentTitle, saldaTableID, h.service.GetRealizacijaKomercijalistiTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 	if requestSource == "menu" || requestSource == "tab" {
 		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", saldaURLrealizacijakomercijalisti, "#realizacija-komercijalisti-table", "innerHTML", "GET", "", hxValsSaldaRealizacijakomercijalisti, true, common.ClassSaveButton, "handleDialogResponse")
 		btnPrint := common.SetButton("stampa", "Štampaj", "fin_print", saldaURLrealizacijakomercijalisti+"/print", "#realizacija-komercijalisti-table", "innerHTML", "GET", "", hxValsSaldaRealizacijakomercijalisti, true, common.ClassPrintButton, "")
@@ -529,7 +533,7 @@ func (h *SaldaHandler) RealizacijaKomercijalisti(c *gin.Context) {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldsError, common.ErrMsgValidation)
 			return
 		}
-		page, pageSize := common.GetPageAndPageSizeFromRequest(c)
+		page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
 		err := h.service.RealizacijaKomercijalisti(c, &tbl, true, page, pageSize)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)

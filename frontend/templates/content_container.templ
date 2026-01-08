@@ -4,9 +4,19 @@ import "helia/internal/domain"
 import "helia/internal/i18n"
 
 templ ContentContainer(tbl domain.TableData, inputControl domain.InputControl, translator *i18n.Service) {
-	@Search_Part(tbl, inputControl)
-	@Table(tbl, translator)
-	 <script>
+	<!-- Container with full height -->
+	<div class="flex flex-col h-full">
+		<!-- Tab Content -->
+		<div id="content" class="flex-1 min-h-0 flex flex-col gap-1">
+			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
+				@Search_Part(tbl, inputControl)
+				<div class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+					@Table(tbl, translator)
+				</div>
+			</div>
+		</div>
+	</div>
+	<script>
 	    document.addEventListener('htmx:afterSwap', (event) => {
 	        if (event.detail.target.id === 'table') {
 	            const currentPage = event.detail.xhr.responseURL.match(/page=(\d+)/);

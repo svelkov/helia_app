@@ -118,10 +118,6 @@ func (h *FnalHandler) CreateNalog(c *gin.Context) {
 	defer mutex.Unlock() // Ensure mutex is always unlocked, even if an error occurs
 
 	tblStavke := common.SetTableBasicData("Stavke Naloga", naloziTableID+"_stavke", h.service.MapEntityToValues(&entity, h.naloziService.GetNaloziTableFields()), "", "", 10, 0, 0, 0, h.cfg)
-	if err != nil {
-		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, common.ErrMsgReadData)
-		return
-	}
 	btnSave, btnPrint := setStavkeButtons("POST")
 	err = tmpl_fin.NalogKnjizenjeStavke(*fproPayload, tblStavke, btnSave, btnPrint, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 	if err != nil {

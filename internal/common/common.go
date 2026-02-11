@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 	"helia/config"
+	"helia/i18n"
 	"helia/internal/domain"
-	"helia/internal/i18n"
 	"os"
 	"reflect"
 	"strconv"
@@ -156,11 +156,11 @@ func SetTableRows[T any](table *domain.TableData, entities []T, tableFields []do
 			value := GetFormattedValue(fieldInfo, val.FieldByName(fieldInfo.Name))
 			fields = append(fields, value)
 		}
-		table = SetTableButtons(table, entityURLPrefix) // Set buttons for the table
 		// Create table row
 		row := domain.TableRow{ID: id, Fields: fields, HasUpdate: true, HasDelete: true}
 		table.Rows = append(table.Rows, row)
 	}
+	table = SetTableButtons(table, entityURLPrefix) // Set buttons for the table
 	return table, nil
 }
 
@@ -218,7 +218,7 @@ func GetFormattedValue(fieldInfo reflect.StructField, fieldValue reflect.Value) 
 			if !ok {
 				return fmt.Sprintf("%v", fieldValue.Interface())
 			}
-			return t.Time.Format("02.01.2006")
+			return t.Time.Format(DateLayout)
 		}
 
 		if fieldInfo.Type == reflect.TypeOf(time.Time{}) {
@@ -226,7 +226,7 @@ func GetFormattedValue(fieldInfo reflect.StructField, fieldValue reflect.Value) 
 			if !ok {
 				return fmt.Sprintf("%v", fieldValue.Interface())
 			}
-			return t.Format("02.01.2006")
+			return t.Format(DateLayout)
 		}
 
 	case reflect.Float32, reflect.Float64:
@@ -436,4 +436,64 @@ func GetMontshName() []string {
 		translator.Label("decembar"),
 	}
 	return months
+}
+
+// SetTableConfig configures common table properties
+func SetTableConfig(tbl *domain.TableData, contentTitle, urlPrefix string, showActions, showAdd, showPrint bool) {
+	tbl.ShowActions = showActions
+	tbl.ContentTitle = contentTitle
+	tbl.URLPrefix = urlPrefix
+	tbl.URLGetAll = urlPrefix
+	tbl.BtnAdd.IsVisible = showAdd
+	tbl.BtnPrint.IsVisible = showPrint
+}
+
+// CreateSearchInput creates a search input control with common configuration
+func CreateSearchInput(translator *i18n.Service, hxActionURL, hxTarget, hxVals string) domain.InputControl {
+	return domain.InputControl{
+		ID:           "search-control",
+		Label:        translator.Label("Pretra\u017ei"),
+		Type:         "search",
+		Placeholder:  "Unesite tekst za pretragu",
+		HxActionURL:  hxActionURL,
+		HxTarget:     hxTarget,
+		HxSwap:       "innerHTML",
+		HxTrigger:    "keyup changed delay:500ms",
+		Autocomplete: "off",
+		Class:        ClassSearchInput,
+		HxVals:       hxVals,
+	}
+}
+
+// SetupTablePagination configures common table pagination and display settings
+// This function sets up search, pagination, actions visibility, and button visibility
+func SetupTablePagination(tbl *domain.TableData, currentPage, pageSize int) {
+	tbl.SearchEnabled = false
+	tbl.ShowPagination = true
+	tbl.ShowActions = false
+	tbl.BtnAdd.IsVisible = false
+	tbl.BtnPrint.IsVisible = false
+	tbl.Pagination.CurrentPage = currentPage
+	tbl.Pagination.StartRecord = (currentPage-1)*pageSize + 1
+	tbl.Pagination.EndRecord = tbl.Pagination.StartRecord + pageSize - 1
+	tbl.Pagination.PageSize = pageSize
+	if tbl.Pagination.EndRecord > tbl.Pagination.TotalRecords {
+		tbl.Pagination.EndRecord = tbl.Pagination.TotalRecords
+	}
+	if tbl.Pagination.StartRecord > tbl.Pagination.TotalRecords {
+		tbl.Pagination.StartRecord = tbl.Pagination.TotalRecords
+	}
+}
+
+// SetTableTotalRecords sets the total records and calculates pagination values
+// Returns true if the operation was to get total records only (no data processing needed)
+func SetTableTotalRecords(tbl *domain.TableData, totalRecords, pageSize int) {
+	tbl.Pagination.TotalRecords = totalRecords
+	tbl.Pagination.TotalPages = (totalRecords + pageSize - 1) / pageSize
+	if tbl.Pagination.EndRecord > totalRecords {
+		tbl.Pagination.EndRecord = totalRecords
+	}
+	if tbl.Pagination.StartRecord > totalRecords {
+		tbl.Pagination.StartRecord = totalRecords
+	}
 }

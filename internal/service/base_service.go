@@ -3,9 +3,11 @@ package service
 import (
 	"database/sql"
 	"fmt"
+	"helia/internal/common"
 	"helia/internal/domain"
 	"helia/internal/repository"
 	"helia/internal/validation"
+	"log"
 	"reflect"
 	"strings"
 	"time"
@@ -38,12 +40,12 @@ type Service[T any] interface {
 
 type BaseService[T any] struct {
 	Repo       repository.BaseRepository[T]
-	Validator  validation.RuleBasedValidator[T]
+	Validator  validation.Validator[T]
 	fieldCache map[string]reflect.StructField
 }
 
 // NewBaseService creates a new instance of BaseService.
-func NewBaseService[T any](repository repository.BaseRepository[T], validator validation.RuleBasedValidator[T]) *BaseService[T] {
+func NewBaseService[T any](repository repository.BaseRepository[T], validator validation.Validator[T]) *BaseService[T] {
 	r := &BaseService[T]{
 		Repo:       repository,
 		Validator:  validator,
@@ -74,11 +76,16 @@ func (s *BaseService[T]) Create(c *gin.Context, entity *T, idField string, table
 		return fieldErrors, 0, nil
 	}
 	lastInsertedID, err := s.Repo.Create(c, entity, idField, tableFields)
+	log.Println("BaseService Create: lastInsertedID =", lastInsertedID, " error =", err)
 	return []domain.FieldError{}, lastInsertedID, err
+
 }
 
 func (s *BaseService[T]) GetFieldCache() map[string]reflect.StructField {
 	return s.fieldCache
+}
+func (s *BaseService[T]) SetFieldCache(fieldCache map[string]reflect.StructField) {
+	s.fieldCache = fieldCache
 }
 
 func (s *BaseService[T]) GetByID(idField string, idValue int64) (*T, error) {
@@ -134,7 +141,7 @@ func (s *BaseService[T]) formatFieldValue(fieldValue reflect.Value) string {
 	if typeStr == "database/sql.NullTime" || typeStr == "sql.NullTime" {
 		nt := fieldValue.Interface().(sql.NullTime)
 		if nt.Valid {
-			return nt.Time.Format("02.01.2006")
+			return nt.Time.Format(common.DateLayout)
 		}
 		return ""
 	}

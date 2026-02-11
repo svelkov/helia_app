@@ -4,9 +4,9 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
+	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
-	"helia/internal/i18n"
 	"html/template"
 	"net/http"
 	"strings"
@@ -135,6 +135,7 @@ func RenderDialogContent(c *gin.Context, dialog domain.Dialog, fields []domain.F
 	csrfToken := common.GetCsrfToken(c)
 	switch actionType {
 	case "DELETE":
+		btnSave.HxOnAfterRequest = "handleDeleteResponse"
 		component = tmpl.DeleteDialog(csrfToken, dialog, btnSave, btnCancel, btnClose, rowID, translator)
 	case "ADD", "UPDATE":
 		component = tmpl_opsti.AddUpdateForm(csrfToken, dialog, fields, btnSave, btnCancel, btnClose, translator)

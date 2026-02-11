@@ -11,9 +11,9 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import (
 	"fmt"
+	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
-	"helia/internal/i18n"
 )
 
 func TablePagination(tbl domain.TableData, translator *i18n.Service) templ.Component {

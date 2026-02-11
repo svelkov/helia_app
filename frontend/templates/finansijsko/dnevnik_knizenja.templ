@@ -1,0 +1,78 @@
+package finansijsko
+
+import (
+	tmpl "helia/frontend/templates"
+	"helia/i18n"
+	"helia/internal/common"
+	"helia/internal/domain"
+	"time"
+)
+
+templ DnevnikKnjizenja(tbl domain.TableData, searchControl domain.InputControl, btnObrada, btnPrint domain.Button, translator *i18n.Service, gnGod int) {
+	<!-- Container with full height -->
+	<div class="flex flex-col h-full">
+		<!-- Tab Content -->
+		<div id="tab1" class="flex-1 min-h-0 flex flex-col gap-1 pt-1">
+			<!-- Title -->
+			<div class="text-xl font-semibold mb-1">
+				{ translator.Title("Dnevnik knjiženja") }
+			</div>
+			<!-- Parameters and buttons section -->
+			<div class="border bg-blue-100 border border-blue-400 p-2 rounded-lg">
+				<div class="flex items-center justify-between">
+					<div class="flex items-center gap-4">
+						<div class="flex items-center gap-2">
+							@tmpl.LabelField(domain.LabelFieldConfig{
+								ID:         "lbloddatuma",
+								LabelText:  translator.Label("Počev od datuma"),
+								ClassLabel: common.ClassLabel,
+							})
+							@tmpl.TextInputField(domain.InputFieldConfig{
+								ID:         "oddatuma",
+								Name:       "oddatuma",
+								FieldType:  "date",
+								Value:      time.Date(gnGod, time.Now().Month(), 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
+								ClassInput: common.ClassInputTextEnabled + " w-32",
+								TabIndex:   "1",
+							})
+						</div>
+						<div class="flex items-center gap-2">
+							@tmpl.LabelField(domain.LabelFieldConfig{
+								ID:         "lbldodatuma",
+								LabelText:  translator.Label("Zaključno sa datumom"),
+								ClassLabel: common.ClassLabel,
+							})
+							@tmpl.TextInputField(domain.InputFieldConfig{
+								ID:         "dodatuma",
+								Name:       "dodatuma",
+								FieldType:  "date",
+								Value:      time.Date(gnGod, time.Now().Month()+1, 0, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
+								ClassInput: common.ClassInputTextEnabled + " w-32",
+								TabIndex:   "2",
+							})
+						</div>
+					</div>
+					<div class="flex gap-1">
+						@tmpl.FormObradaButton(btnObrada, translator)
+						@tmpl.PrintButton(btnPrint, translator)
+					</div>
+				</div>
+			</div>
+			<!-- Table section -->
+			<div class="border bg-blue-100 border border-blue-400 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
+				@tmpl.Search_Part(tbl, searchControl)
+				<div class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+					@tmpl.Table(tbl, translator)
+				</div>
+			</div>
+		</div>
+	</div>
+	// <script>
+	// 	document.addEventListener('htmx:afterSettle', function(evt) {
+	// 		const firstInput = document.querySelector('input[tabindex="1"]:not(:disabled)');
+	// 		if (firstInput) {
+	// 			firstInput.focus();
+	// 		}
+	// 	});
+	// </script>
+}

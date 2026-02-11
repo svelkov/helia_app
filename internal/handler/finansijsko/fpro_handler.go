@@ -10,11 +10,11 @@ import (
 	"helia/config"
 	tmpl "helia/frontend/templates/finansijsko"
 	"helia/global"
+	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
-	"helia/internal/i18n"
 	"helia/internal/middleware"
-	"helia/internal/service"
+	finservice "helia/internal/service/finansijsko"
 	"helia/pkg/utils"
 
 	"github.com/gin-gonic/gin"
@@ -31,13 +31,13 @@ const (
 
 // FproHandler handles requests related to "fpro" entities.
 type FproHandler struct {
-	fproService service.FproService // Use the interface
+	fproService finservice.FproService // Use the interface
 	btnSave     domain.Button
 	btnNazad    domain.Button
 	cfg         config.Config
 }
 
-func NewFproHandler(service service.FproService, cfg config.Config) *FproHandler {
+func NewFproHandler(service finservice.FproService, cfg config.Config) *FproHandler {
 	handler := &FproHandler{fproService: service, cfg: cfg}
 	handler.setHandlerFieldValues()
 	return handler

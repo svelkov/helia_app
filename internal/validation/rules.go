@@ -7,6 +7,11 @@ import (
 	"strings"
 )
 
+// Validator is the interface that all validators must implement
+type Validator[T any] interface {
+	Validate(entity *T) ([]domain.FieldError, error)
+}
+
 // ValidationRule defines a single validation rule
 type ValidationRule struct {
 	Field   string
@@ -41,4 +46,17 @@ func (v *RuleBasedValidator[T]) Validate(entity *T) ([]domain.FieldError, error)
 	}
 
 	return fieldErrors, nil
+}
+
+// EmptyValidator is a generic validator with no validation rules (pass-through)
+type EmptyValidator[T any] struct{}
+
+// NewValidator creates a new empty validator (no validation rules)
+func NewValidator[T any]() *EmptyValidator[T] {
+	return &EmptyValidator[T]{}
+}
+
+// Validate always returns nil (no validation errors)
+func (v *EmptyValidator[T]) Validate(entity *T) ([]domain.FieldError, error) {
+	return []domain.FieldError{}, nil
 }

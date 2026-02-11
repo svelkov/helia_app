@@ -10,8 +10,8 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import (
 	"fmt"
+	"helia/i18n"
 	"helia/internal/domain"
-	"helia/internal/i18n"
 )
 
 // SearchPopup renders a searchable popup component

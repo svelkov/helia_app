@@ -4,7 +4,7 @@ import (
 	"fmt"
 	tmpl "helia/frontend/templates"
 	"helia/internal/domain"
-	"helia/internal/i18n"
+	"helia/i18n"
 )
 
 templ AddUpdateForm(csrfToken string, dialog domain.Dialog, fields []domain.Fields, btnSave, btnCancel, btnClose domain.Button, translator *i18n.Service) {
@@ -54,7 +54,6 @@ templ AddUpdateForm(csrfToken string, dialog domain.Dialog, fields []domain.Fiel
 			<div id="dialog-message" class="hidden"></div>
 		</div>
 	</div>
-	@tmpl.CloseDialogScript()
 	<script>
 		function handleFormResponse(event, requestType) {
 			const xhr = event.detail.xhr;
@@ -225,6 +224,5 @@ templ AddUpdateForm(csrfToken string, dialog domain.Dialog, fields []domain.Fiel
 			}
 		}	
 
-	
 	</script>
 }

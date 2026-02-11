@@ -2,6 +2,7 @@ package finansijsko
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"reflect"
 	"strconv"
@@ -12,11 +13,12 @@ import (
 	tmpl "helia/frontend/templates"
 	tmpl_fin "helia/frontend/templates/finansijsko"
 	"helia/global"
+	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
-	"helia/internal/i18n"
 	"helia/internal/middleware"
 	"helia/internal/service"
+	finservice "helia/internal/service/finansijsko"
 	"helia/pkg/utils"
 
 	"github.com/gin-gonic/gin"
@@ -38,7 +40,7 @@ const (
 
 // FnalHandler handles requests related to "fnal" entities.
 type FnalHandler struct {
-	naloziService service.NalogService
+	naloziService finservice.NalogService
 	service       service.BaseService[domain.Fnal]
 	tabData       domain.TabData
 	btnSave       domain.Button
@@ -47,7 +49,7 @@ type FnalHandler struct {
 	cfg           config.Config
 }
 
-func NewFnalHandler(nalogService service.NalogService, baseService *service.BaseService[domain.Fnal], cfg config.Config) *FnalHandler {
+func NewFnalHandler(nalogService finservice.NalogService, baseService *service.BaseService[domain.Fnal], cfg config.Config) *FnalHandler {
 	handler := &FnalHandler{
 		naloziService: nalogService,
 		service:       *baseService,
@@ -88,34 +90,83 @@ func (h *FnalHandler) GetUpdateDataNalog(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, "Failed to get next Nalog")
 		return
 	}
-
+	userSesion := domain.GetSessionFromContext(c)
+	if nalogEntity.Danal.IsZero() {
+		now := time.Now()
+		nalogEntity.Danal = time.Date(userSesion.SelectedGod, now.Month(), now.Day(), 0, 0, 0, 0, time.Local)
+	}
+	if nalogEntity.Datob.IsZero() {
+		now := time.Now()
+		nalogEntity.Datob = time.Date(userSesion.SelectedGod, now.Month(), now.Day(), 0, 0, 0, 0, time.Local)
+	}
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"datob":   nalogEntity.Datob.Format("2006-01-02"),
-		"danal":   nalogEntity.Danal.Format("2006-01-02"),
+		"datob":   nalogEntity.Datob.Format(common.HtmlLayout),
+		"danal":   nalogEntity.Danal.Format(common.HtmlLayout),
 		"opis":    nalogEntity.Opis,
 	})
 }
+
 func (h *FnalHandler) CreateNalog(c *gin.Context) {
 	var entity domain.Fnal
+	log.Println("FnalHandler CreateNalog called, caller:", c.Request.RequestURI)
+
+	// Parse request to get tipdok and nalog
+	var req domain.FnalPayload
+	if err := c.ShouldBind(&req); err != nil {
+		common.WriteJSONResponse(c, http.StatusBadRequest, false, []domain.FieldError{}, common.ErrMsgFormDecode)
+		return
+	}
+
+	// Check if nalog already exists - if so, redirect to update
+	existingNalog, err := h.naloziService.GetByTipdokNalog(c, req.Tipdok, common.StringToInt64(req.Nalog))
+	if err == nil && existingNalog.IDFnal != 0 {
+		log.Printf("Nalog already exists (IDFnal=%d), redirecting to update instead of create", existingNalog.IDFnal)
+		c.Request.Method = "PUT"
+		c.Params = append(c.Params, gin.Param{Key: "id", Value: fmt.Sprintf("%d", existingNalog.IDFnal)})
+		h.UpdateNalog(c)
+		return
+	}
 
 	fproPayload, fieldsErrors, lastInsertedID, err := h.naloziService.CreateNalog(c, &domain.Fnal{}, common.IDfnal, h.naloziService.GetNaloziTableFields())
 	if err != nil {
-		common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldsErrors, common.ErrMsgSaveData)
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldsErrors, common.ErrMsgSaveData+" error:"+err.Error())
 		return
 	}
 	if len(fieldsErrors) > 0 {
 		common.WriteJSONResponse(c, http.StatusUnprocessableEntity, false, fieldsErrors, common.ErrMsgValidation)
 		return
 	}
-	// Lock the header using global resource lock
-	mutex := global.GetHeaderLock(lastInsertedID)
-	// Try to lock without blocking
-	if !mutex.TryLock() {
-		common.WriteJSONResponse(c, http.StatusConflict, false, []domain.FieldError{}, common.ErrMsgStatusConflict)
+
+	// Acquire lock on the newly created nalog
+	// Use client ID (unique per browser tab) instead of session ID
+	clientID := c.GetHeader("X-Client-ID")
+	if clientID == "" {
+		clientID = c.Query("client_id")
+	}
+
+	userClaims := domain.GetCurrentUserClaims(c)
+	username := "unknown"
+	if userClaims != nil {
+		username = userClaims.Username
+	}
+
+	if clientID == "" {
+		// Generate one if not provided (fallback)
+		userSession := domain.GetSessionFromContext(c)
+		clientID = fmt.Sprintf("%s_%d_%d_%d", username, userSession.SelectedGod, userSession.SelectedKar, time.Now().UnixNano())
+	}
+
+	acquired, existingLock, err := global.TryLockNalog(lastInsertedID, username, clientID)
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, "Lock error: "+err.Error())
 		return
 	}
-	defer mutex.Unlock() // Ensure mutex is always unlocked, even if an error occurs
+	if !acquired {
+		errorMsg := global.FormatLockError(existingLock)
+		common.WriteJSONResponse(c, http.StatusConflict, false, []domain.FieldError{}, errorMsg)
+		return
+	}
 
 	tblStavke := common.SetTableBasicData("Stavke Naloga", naloziTableID+"_stavke", h.service.MapEntityToValues(&entity, h.naloziService.GetNaloziTableFields()), "", "", 10, 0, 0, 0, h.cfg)
 	btnSave, btnPrint := setStavkeButtons("POST")
@@ -128,9 +179,13 @@ func (h *FnalHandler) CreateNalog(c *gin.Context) {
 
 // UpdateNalog handles the update of an existing "fnal" entity.
 func (h *FnalHandler) UpdateNalog(c *gin.Context) {
-	fproPayload, tblStavke, err, errorCode, errMessage, fieldErrors := h.naloziService.UpdateNalog(c)
+	fproPayload, tblStavke, fieldErrors, err := h.naloziService.UpdateNalog(c)
 	if err != nil {
-		common.WriteJSONResponse(c, errorCode, false, fieldErrors, errMessage)
+		if strings.Contains(err.Error(), common.ErrMsgStatusConflict) {
+			common.WriteJSONResponse(c, http.StatusConflict, false, []domain.FieldError{}, common.ErrMsgStatusConflict)
+			return
+		}
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldErrors, common.ErrMsgReadData+" error:"+err.Error())
 		return
 	}
 	btnSave, btnPrint := setStavkeButtons("PUT")
@@ -141,31 +196,68 @@ func (h *FnalHandler) UpdateNalog(c *gin.Context) {
 	}
 }
 
-func setStavkeButtons(requestType string) (domain.Button, domain.Button) {
-	btnSave := domain.Button{
-		Id:            "btn-save-stavke",
-		IsVisible:     true,
-		LabelText:     "Sačuvaj ",
-		BtnClass:      common.ClassSaveButton,
-		HxTarget:      "#nalozi-table-stavke",
-		HxActionURL:   naloziURLSaveStavke,
-		HxRequestType: requestType,
-	}
-
-	btnPrint := domain.Button{
-		Id:            "btn-print-stavke",
-		IsVisible:     true,
-		LabelText:     "Štampa ",
-		BtnClass:      common.ClassPrintButton,
-		HxTarget:      "#nalozi-table-stavke",
-		HxActionURL:   naloziURLPrintStavke,
-		HxRequestType: "GET",
-	}
-	return btnSave, btnPrint
-}
-
 func (h *FnalHandler) DeleteNalog(c *gin.Context) {
 	utils.DeleteHelper(c, h.naloziService, common.IDfnal)
+}
+
+// UnlockNalog releases the lock on a nalog
+func (h *FnalHandler) UnlockNalog(c *gin.Context) {
+	idParam := c.Param("id")
+	nalogID, err := strconv.ParseInt(idParam, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Invalid nalog ID"})
+		return
+	}
+
+	// Get client ID (unique per browser tab)
+	clientID := c.GetHeader("X-Client-ID")
+	if clientID == "" {
+		clientID = c.Query("client_id")
+	}
+
+	if global.UnlockNalog(nalogID, clientID) {
+		c.JSON(http.StatusOK, gin.H{"success": true, "message": "Nalog unlocked"})
+	} else {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Failed to unlock or not owned"})
+	}
+}
+
+// RefreshNalogLock refreshes the lock timeout
+func (h *FnalHandler) RefreshNalogLock(c *gin.Context) {
+	idParam := c.Param("id")
+	nalogID, err := strconv.ParseInt(idParam, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false})
+		return
+	}
+
+	// Get client ID (unique per browser tab)
+	clientID := c.GetHeader("X-Client-ID")
+	if clientID == "" {
+		clientID = c.Query("client_id")
+	}
+
+	if global.RefreshLock(nalogID, clientID) {
+		c.JSON(http.StatusOK, gin.H{"success": true})
+	} else {
+		c.JSON(http.StatusForbidden, gin.H{"success": false, "message": "Lock expired or not owned"})
+	}
+}
+
+// CleanupClientLocks releases all locks owned by this client (for page refresh recovery)
+func (h *FnalHandler) CleanupClientLocks(c *gin.Context) {
+	clientID := c.GetHeader("X-Client-ID")
+	if clientID == "" {
+		clientID = c.Query("client_id")
+	}
+
+	if clientID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "No client ID provided"})
+		return
+	}
+
+	count := global.UnlockAllByClientID(clientID)
+	c.JSON(http.StatusOK, gin.H{"success": true, "released": count})
 }
 
 func (h *FnalHandler) confirmDeleteHandler(c *gin.Context) {
@@ -199,6 +291,25 @@ func (h *FnalHandler) confirmAddHandler(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldErrors, common.ErrMsgReadData)
 		return
 	}
+
+	// If nalog exists, check if it's locked by someone else (but don't acquire yet)
+	if nalogEntity.IDFnal != 0 {
+		clientID := c.GetHeader("X-Client-ID")
+		if clientID == "" {
+			clientID = c.Query("client_id")
+		}
+
+		// Check if locked by someone else
+		if lockInfo, isLocked := global.GetLockInfo(nalogEntity.IDFnal); isLocked {
+			if clientID != "" && lockInfo.SessionID != clientID {
+				// Locked by a different client
+				errorMsg := global.FormatLockError(lockInfo)
+				common.WriteJSONResponse(c, http.StatusConflict, false, []domain.FieldError{}, errorMsg)
+				return
+			}
+		}
+	}
+
 	dlgTitle := ""
 	hxVals := ""
 	translator := i18n.GetInstance()
@@ -256,8 +367,6 @@ func (h *FnalHandler) confirmAddHandler(c *gin.Context) {
 		btnSacuvaj.HxRequestType = "PUT"
 		btnSacuvaj.HxActionURL = fmt.Sprintf("%s/%d", naloziURLUpdate, nalogEntity.IDFnal)
 	}
-	btnCancel.HxOn = fmt.Sprintf("handleDialogResponse('%s')", dialog.Id)
-	btnClose.HxOnAfterRequest = fmt.Sprintf("handleDialogResponse('%s')", dialog.Id)
 	btnCancel.IdDialog = dialog.Id
 	btnClose.IdDialog = dialog.Id
 
@@ -267,10 +376,6 @@ func (h *FnalHandler) confirmAddHandler(c *gin.Context) {
 
 func (h *FnalHandler) GetIdTipdokByTipdok(c *gin.Context, tipdok string) (int64, error) {
 	return h.naloziService.GetIdTipdokByTipdok(c, tipdok)
-}
-func (h *FnalHandler) getNalogStavkeHandler(c *gin.Context) {
-	// Render update form with entity data.
-	utils.ConfirmUpdateHelper[domain.Fnal](c, nil, h.naloziService.GetNaloziTableFields(), common.IDfnal) // Placeholder
 }
 
 // --- CONSOLIDATED VIEW DATA HANDLER ---
@@ -316,10 +421,12 @@ func (h *FnalHandler) GetNalogMainView(c *gin.Context) {
 		Class:        common.ClassSearchInput,
 	}
 	// Render the appropriate template based on whether it's an initial load or HTMX swap
+	userSession := domain.GetSessionFromContext(c)
+
 	nalogPayload := domain.FnalPayload{
 		Nalog: viewData.NextNalog,
-		Danal: time.Now().Format("2006-01-02"),
-		Datob: time.Now().Format("2006-01-02"),
+		Danal: time.Date(userSession.SelectedGod, time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.Local).Format(common.HtmlLayout),
+		Datob: time.Date(userSession.SelectedGod, time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.Local).Format(common.HtmlLayout),
 	}
 
 	// Get CSRF token from context (set by middleware)
@@ -425,11 +532,11 @@ func (h *FnalHandler) FnalPrepisDialog(c *gin.Context) {
 	modelView := domain.KopirajNalog{
 		IDFnal:    idFnal,
 		NalogOld:  fmt.Sprintf("%d", result.Nalog),
-		DanalOld:  result.Danal.Format("02.01.2006"),
-		DatKnjOld: result.Datob.Format("01.01.2006"),
+		DanalOld:  result.Danal.Format(common.DateLayout),
+		DatKnjOld: result.Datob.Format(common.DateLayout),
 		OpisOld:   result.Opis,
-		DanalNew:  time.Now().Format("2006-01-02"), // it is important for frontend, format should be YYYY-MM-DD
-		DatknjNew: time.Now().Format("2006-01-02"),
+		DanalNew:  time.Now().Format(common.HtmlLayout),
+		DatknjNew: time.Now().Format(common.HtmlLayout),
 	}
 
 	tipdokValues, err := h.naloziService.GetTipdokOptions(c)
@@ -588,11 +695,11 @@ func (h *FnalHandler) FnalStornirajDialog(c *gin.Context) {
 	modelView := domain.KopirajNalog{
 		IDFnal:    idFnal,
 		NalogOld:  fmt.Sprintf("%d", result.Nalog),
-		DanalOld:  result.Danal.Format("02.01.2006"),
-		DatKnjOld: result.Datob.Format("02.01.2006"),
+		DanalOld:  result.Danal.Format(common.DateLayout),
+		DatKnjOld: result.Datob.Format(common.DateLayout),
 		OpisOld:   result.Opis,
-		DanalNew:  time.Now().Format("2006-01-02"), // it is important for frontend, format should be YYYY-MM-DD
-		DatknjNew: time.Now().Format("2006-01-02"),
+		DanalNew:  time.Now().Format(common.HtmlLayout),
+		DatknjNew: time.Now().Format(common.HtmlLayout),
 	}
 
 	tipdokValues, err := h.naloziService.GetTipdokOptions(c)
@@ -668,8 +775,6 @@ func (h *FnalHandler) FnalStornirajSave(c *gin.Context) {
 		return
 	}
 
-
-
 }
 
 // ValidacijaNalogStorniranje validates the nalozi copy form data and returns an array of errors
@@ -677,7 +782,7 @@ func (h *FnalHandler) ValidacijaNalogStorniranje(c *gin.Context, danalStr, datob
 	var errors []domain.FieldError
 
 	// Parse and validate datal (naloga date)
-	dPomDate, err := time.Parse("02.01.2006", danalStr)
+	dPomDate, err := time.Parse(common.DateLayout, danalStr)
 	if err != nil {
 		errors = append(errors, domain.FieldError{Field: "danal", ErrorMessage: "morate uneti korektan datum naloga"})
 	}
@@ -689,7 +794,7 @@ func (h *FnalHandler) ValidacijaNalogStorniranje(c *gin.Context, danalStr, datob
 	}
 
 	// Parse and validate datob (obrade date)
-	dPomDate, err = time.Parse("02.01.2006", datobStr)
+	dPomDate, err = time.Parse(common.DateLayout, datobStr)
 	if err != nil {
 		errors = append(errors, domain.FieldError{Field: "datob", ErrorMessage: "morate uneti korektan datum obrade naloga"})
 	}
@@ -769,6 +874,28 @@ func (h *FnalHandler) populateTableRows(tableData domain.TableData, entities []d
 	}
 	return tableRows
 }
+func setStavkeButtons(requestType string) (domain.Button, domain.Button) {
+	btnSave := domain.Button{
+		Id:            "btn-save-stavke",
+		IsVisible:     true,
+		LabelText:     "Sačuvaj ",
+		BtnClass:      common.ClassSaveButton,
+		HxTarget:      "#nalozi-table-stavke",
+		HxActionURL:   naloziURLSaveStavke,
+		HxRequestType: requestType,
+	}
+
+	btnPrint := domain.Button{
+		Id:            "btn-print-stavke",
+		IsVisible:     true,
+		LabelText:     "Štampa ",
+		BtnClass:      common.ClassPrintButton,
+		HxTarget:      "#nalozi-table-stavke",
+		HxActionURL:   naloziURLPrintStavke,
+		HxRequestType: "GET",
+	}
+	return btnSave, btnPrint
+}
 
 func (h *FnalHandler) AddRoutes(r *gin.Engine) {
 	// Create API group with prefix
@@ -791,6 +918,9 @@ func (h *FnalHandler) AddRoutes(r *gin.Engine) {
 	r.GET("/api/nalozi/:id", h.GetNalog)
 	r.PUT("/api/nalozi/update/:id", h.UpdateNalog)
 	r.DELETE("/api/nalozi/:id", h.DeleteNalog)
+	r.POST("/api/nalozi/unlock/:id", h.UnlockNalog)
+	r.POST("/api/nalozi/refresh-lock/:id", h.RefreshNalogLock)
+	r.POST("/api/locks/cleanup", h.CleanupClientLocks)
 	r.GET("/api/nalozi/prepis", h.FnalPrepis)
 	r.POST("/api/nalozi/prepis/:idfnal", h.FnalPrepisSave)
 	r.GET("/api/nalozi/confirm-prepis", h.FnalPrepisDialog)
@@ -801,15 +931,15 @@ func (h *FnalHandler) AddRoutes(r *gin.Engine) {
 }
 
 func (h *FnalHandler) setHandlerFieldValues() {
-		h.tabData = domain.TabData{
-			Tabs: []domain.TabItem{
-				{ID: "knjizenje", Label: "Knjiženje Naloga", HXRequestUrl: fmt.Sprintf("%sknjizenje", naloziURLPrefix), IsActive: true, Name: "knjizenje"},
-				{ID: "prepis", Label: "Prepis Naloga", HXRequestUrl: fmt.Sprintf("%sprepis", naloziURLPrefix), IsActive: false, Name: "prepis"},
-				{ID: "storniranje", Label: "Storniranje naloga", HXRequestUrl: fmt.Sprintf("%sstorniranje", naloziURLPrefix), IsActive: false, Name: "storniranje"},
-				{ID: "prikaz", Label: "Prikaz/Štampa naloga", HXRequestUrl: fmt.Sprintf("%sprikaz", naloziURLPrefix), IsActive: false, Name: "stampa"},
-			},
-		}
-	
+	h.tabData = domain.TabData{
+		Tabs: []domain.TabItem{
+			{ID: "knjizenje", Label: "Knjiženje Naloga", HXRequestUrl: fmt.Sprintf("%sknjizenje", naloziURLPrefix), IsActive: true, Name: "knjizenje"},
+			{ID: "prepis", Label: "Prepis Naloga", HXRequestUrl: fmt.Sprintf("%sprepis", naloziURLPrefix), IsActive: false, Name: "prepis"},
+			{ID: "storniranje", Label: "Storniranje naloga", HXRequestUrl: fmt.Sprintf("%sstorniranje", naloziURLPrefix), IsActive: false, Name: "storniranje"},
+			{ID: "prikaz", Label: "Prikaz/Štampa naloga", HXRequestUrl: fmt.Sprintf("%sprikaz", naloziURLPrefix), IsActive: false, Name: "stampa"},
+		},
+	}
+
 	h.btnSave = domain.Button{
 		Id:               "btn-save",
 		IdDialog:         "addupdate-dialog",

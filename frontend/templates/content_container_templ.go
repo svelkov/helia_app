@@ -9,7 +9,7 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import "helia/internal/domain"
-import "helia/internal/i18n"
+import "helia/i18n"
 
 func ContentContainer(tbl domain.TableData, inputControl domain.InputControl, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {

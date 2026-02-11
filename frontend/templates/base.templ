@@ -1,7 +1,7 @@
 package templates
 
 import "helia/internal/domain"
-import "helia/internal/i18n"
+import "helia/i18n"
 
 templ Base(isLoggedIn bool, content templ.Component, menuItems domain.MenuDataItems, subMenuItems []domain.SubMenuItem, title string, userName, year string, currentMenu string, comboCompany, comboPoslGod, comboKar, comboLanguage domain.ComboFieldConfig, translator *i18n.Service) {
 	<!DOCTYPE html>
@@ -31,6 +31,117 @@ templ Base(isLoggedIn bool, content templ.Component, menuItems domain.MenuDataIt
 			@Footer(year)
 			<!-- Theme Toggle Script -->
 		</body>
-		@jsFunctions()
+// /* 		<script>
+// 			document.addEventListener('keydown', function(evt) {
+// 				if (evt.key === 'Enter') {
+// 					const target = evt.target;
+					
+// 					// Only handle for input/textarea/select/button elements
+// 					if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.tagName === 'BUTTON') {
+// 						// Don't prevent enter in textareas (allow multi-line)
+// 						if (target.tagName === 'TEXTAREA') return;
+						
+// 						evt.preventDefault();
+						
+// 						// Set flag to prevent HTMX blur requests during navigation
+// 						window.skipHtmxBlur = true;
+						
+// 						// Get all enabled form controls (INPUT, TEXTAREA, SELECT, BUTTON)
+// 						const controls = document.querySelectorAll('input:not(:disabled), textarea:not(:disabled), select:not(:disabled), button:not(:disabled)');
+// 						const controlArray = Array.from(controls);
+// 						const currentIndex = controlArray.indexOf(target);
+						
+// 						// Move to next control, or wrap to first if at the end
+// 						if (currentIndex !== -1) {
+// 							if (currentIndex < controlArray.length - 1) {
+// 								controlArray[currentIndex + 1].focus();
+// 							} else {
+// 								// At last control, wrap to first
+// 								controlArray[0].focus();
+// 							}
+// 						}
+						
+// 						// Clear flag after a brief delay to allow focus to complete
+// 						setTimeout(() => {
+// 							window.skipHtmxBlur = false;
+// 						}, 100);
+// 					}
+// 				}
+// 			});
+			
+// 			// Prevent HTMX blur requests during Enter key navigation
+// 			document.addEventListener('htmx:configRequest', function(evt) {
+// 				if (window.skipHtmxBlur && evt.detail.verb === 'GET') {
+// 					// Check if this is a blur-triggered request
+// 					const fromElement = evt.detail.elt;
+// 					if (fromElement && document.activeElement !== fromElement) {
+// 						evt.preventDefault();
+// 					}
+// 				}
+// 			});
+
+// 			// Column Resizing for Tables
+// 			document.addEventListener('DOMContentLoaded', initializeColumnResize);
+// 			document.addEventListener('htmx:afterSettle', initializeColumnResize);
+
+// 			function initializeColumnResize() {
+// 				const resizeHandles = document.querySelectorAll('.resize-handle');
+				
+// 				resizeHandles.forEach(handle => {
+// 					handle.addEventListener('mousedown', startResize);
+// 				});
+// 			}
+
+// 			function startResize(e) {
+// 				e.preventDefault();
+// 				const th = e.target.closest('th');
+// 				const table = th.closest('table');
+// 				const startX = e.clientX;
+// 				const startWidth = th.offsetWidth;
+// 				const columnField = th.dataset.column;
+				
+// 				function doResize(e) {
+// 					const width = startWidth + (e.clientX - startX);
+// 					if (width > 80) {
+// 						th.style.width = width + 'px';
+// 						th.style.minWidth = width + 'px';
+// 						th.style.maxWidth = width + 'px';
+// 						// Store width in localStorage
+// 						if (columnField) {
+// 							const storageKey = 'col-width-' + columnField;
+// 							localStorage.setItem(storageKey, width);
+// 						}
+// 					}
+// 				}
+				
+// 				function stopResize() {
+// 					document.removeEventListener('mousemove', doResize);
+// 					document.removeEventListener('mouseup', stopResize);
+// 					th.style.userSelect = 'auto';
+// 				}
+				
+// 				th.style.userSelect = 'none';
+// 				document.addEventListener('mousemove', doResize);
+// 				document.addEventListener('mouseup', stopResize);
+// 			}
+
+// 			// Restore column widths from localStorage
+// 			function restoreColumnWidths() {
+// 				const ths = document.querySelectorAll('th[data-column]');
+// 				ths.forEach(th => {
+// 					const columnField = th.dataset.column;
+// 					const storageKey = 'col-width-' + columnField;
+// 					const savedWidth = localStorage.getItem(storageKey);
+// 					if (savedWidth) {
+// 						th.style.width = savedWidth + 'px';
+// 						th.style.minWidth = savedWidth + 'px';
+// 						th.style.maxWidth = savedWidth + 'px';
+// 					}
+// 				});
+// 			}
+
+// 			document.addEventListener('DOMContentLoaded', restoreColumnWidths);
+// 			document.addEventListener('htmx:afterSettle', restoreColumnWidths);
+// 		</script> */
 	</html>
 }

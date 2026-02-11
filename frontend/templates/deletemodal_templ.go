@@ -9,7 +9,7 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import "helia/internal/domain"
-import "helia/internal/i18n"
+import "helia/i18n"
 
 func DeleteDialog(csrfToken string, dialog domain.Dialog, btnConfirm, btnCancel, btnClose domain.Button, rowID string, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
@@ -166,15 +166,7 @@ func DeleteDialog(csrfToken string, dialog domain.Dialog, btnConfirm, btnCancel,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</div></form></div></div>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = CloseDialogScript().Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = ShowMessage().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</div></form></div></div><script>\r\n\t\tfunction closeDialog(dialogId) {\r\n\t\t\tconsole.log(\"Closing dialog with ID:\", dialogId);\r\n\t\t\tconst dialogElm = document.getElementById(dialogId);\r\n\t\t\tif (dialogElm) {\r\n\t\t\t\tdialogElm.classList.add(\"opacity-0\"); // Fade-out effect\r\n\t\t\t\tsetTimeout(() => {\r\n\t\t\t\t\tdialogElm.classList.add(\"hidden\");\r\n\t\t\t\t}, 300); // Delay to allow fade-out animation\r\n\r\n\t\t\t\t// Restore the style of actions column if needed\r\n\t\t\t\tdocument.querySelectorAll(\".actions-column\").forEach(el => {\r\n\t\t\t\t\tel.classList.remove('static');\r\n        \t\t\tel.classList.add('sticky', 'right-0', 'z-10');\r\n\t\t\t\t});\r\n\t\t\t}\r\n\t\t}\r\n\t\tfunction handleDeleteResponse(dialogId) {\r\n\t\t\t// Check if the response is an error (400 Bad Request)\r\n\t\t\tconsole.log(\"in handleDeleteResponse()\", dialogId)\r\n\t\t\t//console.log(\"handleFieldErrors:\", event.detail)\r\n\t\t\ttry {\r\n\t\t\t\t// Get the response text from the backend\r\n\t\t\t\tconst responseText = event.detail.xhr.responseText;\r\n\t\t\t\t//console.log(\"Response text:\", responseText)\r\n\t\t\t\t\r\n\t\t\t\t// Check if response is empty or not JSON\r\n\t\t\t\tif (!responseText || responseText.trim() === '') {\r\n\t\t\t\t\t//console.log(\"Empty response, closing dialog\");\r\n\t\t\t\t\tcloseDialog(dialogId);\r\n\t\t\t\t\treturn;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t// Try to parse as JSON\r\n\t\t\t\tlet response;\r\n\t\t\t\ttry {\r\n\t\t\t\t\tresponse = JSON.parse(responseText);\r\n\t\t\t\t} catch (parseError) {\r\n\t\t\t\t\tconsole.error(\"Response is not valid JSON:\", parseError);\r\n\t\t\t\t\t//console.log(\"Response text was:\", responseText);\r\n\t\t\t\t\t// If not JSON, assume it's HTML success response, close dialog\r\n\t\t\t\t\tcloseDialog(dialogId);\r\n\t\t\t\t\treturn;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t// If we get here, response is valid JSON\r\n\t\t\t\t// Clear previous error messages\r\n\t\t\t\tdocument.querySelectorAll('.input-error').forEach(el => el.remove());\r\n\t\t\t\tdocument.querySelectorAll('input').forEach(input => {\r\n\t\t\t\t\tinput.classList.remove('border-red-500');\r\n\t\t\t\t});\r\n\t\t\t\t\r\n\t\t\t\t// Handle validation errors\r\n\t\t\t\tif (response.errors && response.errors.length > 0) {\r\n\t\t\t\t\t//console.log(\"Errors found:\", response.errors)\r\n\t\t\t\t\t// Loop through errors and show error messages for each field\r\n\t\t\t\t\tresponse.errors.forEach(error => {\r\n\t\t\t\t\t\tconst field = document.querySelector(`input[name=\"${error.field}\"]`);\r\n\t\t\t\t\t\tif (field) {\r\n\t\t\t\t\t\t\tfield.classList.add('border-red-500'); // Add red border to invalid field\r\n\t\t\t\t\t\t\t// Add error message below the input field\r\n\t\t\t\t\t\t\tconst errorMessage = document.createElement('p');\r\n\t\t\t\t\t\t\terrorMessage.className = 'text-red-500 text-xs mt-1 input-error';\r\n\t\t\t\t\t\t\terrorMessage.textContent = error.message;\r\n\t\t\t\t\t\t\tfield.insertAdjacentElement('afterend', errorMessage);\r\n\t\t\t\t\t\t}\r\n\t\t\t\t\t});\r\n\t\t\t\t\treturn;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t// Handle success response\r\n\t\t\t\tif (response.success) {\r\n\t\t\t\t\tshowMessage(response.message);\r\n\t\t\t\t\tcloseDialog(dialogId);\r\n\t\t\t\t\treturn;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t// Handle error response\r\n\t\t\t\tif (!response.success) {\r\n\t\t\t\t\tshowMessage(response.message, true);\r\n\t\t\t\t\treturn;\r\n\t\t\t\t}\t\r\n\t\t\t\t\r\n\t\t\t} catch (e) {\r\n\t\t\t\tconsole.error(\"Unexpected error in handleDialogResponse():\", e);\r\n\t\t\t\tcloseDialog(dialogId);\r\n\t\t\t}\r\n\t\t}\r\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

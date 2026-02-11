@@ -10,9 +10,9 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import (
 	"fmt"
+	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
-	"helia/internal/i18n"
 )
 
 func Table(tbl domain.TableData, translator *i18n.Service) templ.Component {
@@ -369,7 +369,7 @@ func TableHeader(tbl domain.TableData, translator *i18n.Service) templ.Component
 			var templ_7745c5c3_Var19 string
 			templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Akcije"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 91, Col: 33}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 92, Col: 33}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 			if templ_7745c5c3_Err != nil {
@@ -416,7 +416,7 @@ func TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service)
 		var templ_7745c5c3_Var21 string
 		templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%s-body", tbl.TableID))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 99, Col: 48}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 100, Col: 48}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 		if templ_7745c5c3_Err != nil {
@@ -486,7 +486,7 @@ func TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service)
 					var templ_7745c5c3_Var25 string
 					templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(tbl.DestField)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 117, Col: 37}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 118, Col: 37}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
 					if templ_7745c5c3_Err != nil {
@@ -520,7 +520,7 @@ func TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service)
 					var templ_7745c5c3_Var27 string
 					templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinStringErrs(tbl.DetailTarget)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 123, Col: 34}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 124, Col: 34}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
 					if templ_7745c5c3_Err != nil {
@@ -539,7 +539,7 @@ func TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service)
 					var templ_7745c5c3_Var28 string
 					templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%s%s", tbl.DetailURL, row.ID))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 126, Col: 57}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 127, Col: 57}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
 					if templ_7745c5c3_Err != nil {
@@ -558,7 +558,7 @@ func TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service)
 					var templ_7745c5c3_Var29 string
 					templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%s%s", tbl.DetailURL, row.ID))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 129, Col: 57}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 130, Col: 57}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
 					if templ_7745c5c3_Err != nil {
@@ -577,7 +577,7 @@ func TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service)
 					var templ_7745c5c3_Var30 string
 					templ_7745c5c3_Var30, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%s%s", tbl.DetailURL, row.ID))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 132, Col: 58}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 133, Col: 58}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var30))
 					if templ_7745c5c3_Err != nil {
@@ -596,7 +596,7 @@ func TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service)
 					var templ_7745c5c3_Var31 string
 					templ_7745c5c3_Var31, templ_7745c5c3_Err = templ.JoinStringErrs(tbl.DetailHxSwap)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 135, Col: 32}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 136, Col: 32}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var31))
 					if templ_7745c5c3_Err != nil {
@@ -615,7 +615,7 @@ func TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service)
 					var templ_7745c5c3_Var32 string
 					templ_7745c5c3_Var32, templ_7745c5c3_Err = templ.JoinStringErrs(tbl.DetailHxTrigger)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 138, Col: 38}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 139, Col: 38}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var32))
 					if templ_7745c5c3_Err != nil {
@@ -634,7 +634,7 @@ func TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service)
 					var templ_7745c5c3_Var33 string
 					templ_7745c5c3_Var33, templ_7745c5c3_Err = templ.JoinStringErrs(tbl.HxVals)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 141, Col: 26}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 142, Col: 26}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var33))
 					if templ_7745c5c3_Err != nil {
@@ -658,7 +658,7 @@ func TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service)
 				var templ_7745c5c3_Var34 string
 				templ_7745c5c3_Var34, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("td-%d-%s", i, tbl.Headers[j].Name))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 146, Col: 63}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 147, Col: 63}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var34))
 				if templ_7745c5c3_Err != nil {
@@ -671,7 +671,7 @@ func TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service)
 				var templ_7745c5c3_Var35 string
 				templ_7745c5c3_Var35, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("tdval-%d-%s", i, tbl.Headers[j].Name))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 148, Col: 64}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 149, Col: 64}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var35))
 				if templ_7745c5c3_Err != nil {
@@ -684,7 +684,7 @@ func TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service)
 				var templ_7745c5c3_Var36 string
 				templ_7745c5c3_Var36, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Message("Double-click za selektovanje"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 150, Col: 65}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 151, Col: 65}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var36))
 				if templ_7745c5c3_Err != nil {
@@ -697,7 +697,7 @@ func TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service)
 				var templ_7745c5c3_Var37 string
 				templ_7745c5c3_Var37, templ_7745c5c3_Err = templ.JoinStringErrs(cell)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 151, Col: 13}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 152, Col: 13}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var37))
 				if templ_7745c5c3_Err != nil {
@@ -721,7 +721,7 @@ func TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service)
 					var templ_7745c5c3_Var38 string
 					templ_7745c5c3_Var38, templ_7745c5c3_Err = templ.JoinStringErrs(tbl.BtnUpdate.HxActionURL)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 159, Col: 43}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 160, Col: 43}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var38))
 					if templ_7745c5c3_Err != nil {
@@ -734,7 +734,7 @@ func TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service)
 					var templ_7745c5c3_Var39 string
 					templ_7745c5c3_Var39, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf(`{"url": "%s", "id": "%s"}`, tbl.URLPrefix, row.ID))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 163, Col: 82}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 164, Col: 82}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var39))
 					if templ_7745c5c3_Err != nil {
@@ -747,7 +747,7 @@ func TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service)
 					var templ_7745c5c3_Var40 string
 					templ_7745c5c3_Var40, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Button(tbl.BtnUpdate.LabelText))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 170, Col: 53}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 171, Col: 53}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var40))
 					if templ_7745c5c3_Err != nil {
@@ -766,7 +766,7 @@ func TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service)
 					var templ_7745c5c3_Var41 string
 					templ_7745c5c3_Var41, templ_7745c5c3_Err = templ.JoinStringErrs(tbl.BtnDelete.HxActionURL)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 175, Col: 43}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 176, Col: 43}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var41))
 					if templ_7745c5c3_Err != nil {
@@ -779,7 +779,7 @@ func TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service)
 					var templ_7745c5c3_Var42 string
 					templ_7745c5c3_Var42, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf(`{"url": "%s", "id": "%s"}`, tbl.URLPrefix, row.ID))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 179, Col: 82}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 180, Col: 82}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var42))
 					if templ_7745c5c3_Err != nil {
@@ -792,7 +792,7 @@ func TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service)
 					var templ_7745c5c3_Var43 string
 					templ_7745c5c3_Var43, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Button(tbl.BtnDelete.LabelText))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 185, Col: 53}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/table.templ`, Line: 186, Col: 53}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var43))
 					if templ_7745c5c3_Err != nil {

@@ -4,9 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"helia/config"
+	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
-	"helia/internal/i18n"
 	"helia/internal/service"
 	"net/http"
 	"strconv"
@@ -364,16 +364,27 @@ func GetEntityHelper[T any](
 func SearchButtonDialog(c *gin.Context) {
 	hxVals := ""
 	vkonta := c.Query("vkonta")
-	konto := c.Query("konto")
 	queryParams := c.Request.URL.Query()
 	id := ""
+	fieldName := "konto" // default
 	placeholder := "trazi konto..."
-	if _, exists := queryParams["search-konto"]; exists {
-		// Parameter exists (even if empty)
-		id = "konto"
-		placeholder = "trazi konto..."
+
+	// Detect which field is being searched by checking query parameters
+	searchFields := []string{"search-konto", "search-odkonta", "search-dokonta", "search-odmi", "search-domi", "search-sifra", "search-odsifre", "search-dosifre"}
+	for _, searchField := range searchFields {
+		if _, exists := queryParams[searchField]; exists {
+			// Extract field name from search-* parameter
+			fieldName = strings.TrimPrefix(searchField, "search-")
+			id = fieldName
+			placeholder = fmt.Sprintf("trazi %s...", fieldName)
+			break
+		}
 	}
-	hxVals = fmt.Sprintf(`{"konto": "%s", "vkonta": "%s"}`, konto, vkonta)
+
+	// Get the value for the detected field
+	fieldValue := c.Query(fieldName)
+
+	hxVals = fmt.Sprintf(`{"konto": "%s", "vkonta": "%s", "fieldName": "%s"}`, fieldValue, vkonta, fieldName)
 	tmpl.SearchButtonDialog(id, id, placeholder, "/api/fkpl/trazikontosearchtable", "#search-results", "innerHTML", hxVals, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 
 }

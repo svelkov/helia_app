@@ -5,11 +5,10 @@ import (
 	"fmt"
 	"helia/config"
 	"helia/frontend/templates"
+	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
-	"helia/internal/i18n"
 	"helia/internal/infrastructure"
-	"helia/internal/service"
 	"log"
 	"net/http"
 	"os"
@@ -17,6 +16,7 @@ import (
 	"time"
 
 	tmpl "helia/frontend/templates"
+	finservice "helia/internal/service/finansijsko"
 
 	"github.com/a-h/templ"
 	"github.com/gin-contrib/sessions"
@@ -88,14 +88,14 @@ type BasicHandler struct {
 	isLoggedIn   bool
 	menuItems    domain.MenuDataItems
 	subMenuItems []domain.SubMenuItem
-	fvrService   service.FvrService
+	fvrService   finservice.FvrService
 	firma        domain.Firma
 	cfg          config.Config
 	logger       *log.Logger
 }
 
 // NewBasicHandler creates and initializes a new BasicHandler
-func NewBasicHandler(c *gin.Context, isLoggedIn bool, menuItems domain.MenuDataItems, subMenuItems []domain.SubMenuItem, fvrService service.FvrService, cfg config.Config) *BasicHandler {
+func NewBasicHandler(c *gin.Context, isLoggedIn bool, menuItems domain.MenuDataItems, subMenuItems []domain.SubMenuItem, fvrService finservice.FvrService, cfg config.Config) *BasicHandler {
 	handler := &BasicHandler{
 		isLoggedIn:   isLoggedIn,
 		menuItems:    menuItems,
@@ -550,7 +550,7 @@ func (h *BasicHandler) HomeHandler(c *gin.Context) {
 
 // getCurrentDate returns the current date in JSON format
 func (h *BasicHandler) getCurrentDate(c *gin.Context) {
-	currentDate := time.Now().Format("2006-01-02")
+	currentDate := time.Now().Format(common.HtmlLayout)
 
 	response := struct {
 		CurrentDate string `json:"currentDate"`

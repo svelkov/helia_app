@@ -43,7 +43,7 @@ type Fnal struct {
 	Pot        float64        `db:"pot"`
 	Rbr        int64          `db:"rbr"`
 	Datob      time.Time      `db:"datob" form:"datob" format:"date"`
-	Oper       string         `db:"oper"`
+	Oper       sql.NullString `db:"oper"`
 	Brst       int            `db:"brst"`
 	Abr        int            `db:"abr"`
 	Nalsts     string         `db:"nalsts"`
@@ -127,6 +127,11 @@ type Fpro struct {
 	NazivPartnera string        `db:"nazivpartnera" addupdate:"false"`
 	Mesec         int           `db:"mesec" addupdate:"false"`
 }
+type FproDto struct {
+	Fpro
+	SubsinNaziv string `db:"subsin_naziv"`
+	SinNaziv    string `db:"sin_naziv"`
+}
 
 type KopirajNalog struct {
 	IDFnal       int64  `db:"idfnal"`
@@ -151,7 +156,7 @@ type UkupnaObrada struct {
 }
 
 // PrometHDR represents the structure for PROMETHDR records
-type PrometTotalValues struct {
+type TotalValues struct {
 	DugDo    float64 `json:"dugDo" db:"dugdo"`
 	PotDo    float64 `json:"potDo" db:"potdo"`
 	SaldoDo  float64 `json:"saldoDo" db:"saldodo"`
@@ -163,9 +168,9 @@ type PrometTotalValues struct {
 	SaldoTot float64 `json:"saldoTot" db:"saldotot"`
 }
 type PrometResponse struct {
-	TotalRecords int               `json:"totalRecords"`
-	Data         []PrometDto       `json:"data"`
-	Totals       PrometTotalValues `json:"totals"`
+	TotalRecords int         `json:"totalRecords"`
+	Data         []PrometDto `json:"data"`
+	Totals       TotalValues `json:"totals"`
 }
 type PrometDto struct {
 	God          int          `db:"god"`
@@ -203,6 +208,8 @@ type PrometDto struct {
 	Kat          string       `db:"kat"`
 	Konto        string       `db:"konto"`
 	Sifra        string       `db:"sifra"`
+	Naziv        string       `db:"naziv"`
+	Vkonta       string       `db:"vkonta"`
 	Idfpro       int          `db:"idfpro"`
 	Idfnal       int          `db:"idfnal"`
 	Idfkpl       int          `db:"idfkpl"`
@@ -337,4 +344,396 @@ type FproPayload struct {
 	Duguje         string
 	Potrazuje      string
 	Saldo          string
+}
+
+type KompenzacijeDto struct {
+	God                   int       `db:"god" json:"god"`
+	Kar                   int       `db:"kar" json:"kar"`
+	KompBr                int64     `db:"kompbr" json:"kompbr"`
+	Dokum                 string    `db:"dokum" json:"dokum"`
+	Dadok                 time.Time `db:"dadok" json:"dadok" format:"date"`
+	DatKomp               time.Time `db:"datkomp" json:"datkomp" format:"date"`
+	Iznos                 float64   `db:"iznos" json:"iznos"`
+	Status                string    `db:"status" json:"status"`
+	Partner               string    `db:"partner" json:"partner"`
+	KontoDuznika          string    `db:"konto_duznika" json:"konto_duznika"`
+	SifraDuznika          string    `db:"sifra_duznika" json:"sifra_duznika"`
+	KontoPoverioca        string    `db:"konto_poverioca" json:"konto_poverioca"`
+	SifraPoverioca        string    `db:"sifra_poverioca" json:"sifra_poverioca"`
+	Naziv                 string    `db:"naziv" json:"naziv"`
+	IznosDokumDuznika     float64   `db:"iznos_dokum_duznika" json:"iznos_dokum_duznika"`
+	IznosDokumPoverioca   float64   `db:"iznos_dokum_poverioca" json:"iznos_dokum_poverioca"`
+	KompenzacijeDuznik    float64   `db:"kompenzacije_duznik" json:"kompenzacije_duznik"`
+	KompenzacijePoverilac float64   `db:"kompenzacije_poverilac" json:"kompenzacije_poverilac"`
+	Mesto                 string    `db:"mesto" json:"mesto"`
+	Adresa                string    `db:"adresa" json:"adresa"`
+	Stsdok                int       `db:"stsdok" json:"stsdok"`
+	Odglicep              string    `db:"odglicep" json:"odglicep"`
+	Odgliced              string    `db:"odgliced" json:"odgliced"`
+	Kompenzhid            int64     `db:"kompenzhid" json:"kompenzacijhid"`
+}
+
+// DnevnikDto represents dnevnik knjizenja record with calculated fields
+type DnevnikDto struct {
+	Rbr       int          `db:"rbr" json:"rbr"`
+	Danal     sql.NullTime `db:"danal" json:"danal" format:"date"`
+	Tipdok    string       `db:"tipdok" json:"tipdok"`
+	Nalog     int          `db:"nalog" json:"nalog"`
+	Konto     string       `db:"konto" json:"konto"`
+	Sifra     string       `db:"sifra" json:"sifra"`
+	Naziv     string       `db:"naziv" json:"naziv"`
+	Duguje    float64      `db:"duguje" json:"duguje"`
+	Potrazuje float64      `db:"potrazuje" json:"potrazuje"`
+	Saldo     float64      `db:"saldo" json:"saldo"`
+	Opis      string       `db:"opis" json:"opis"`
+	Dokum     string       `db:"dokum" json:"dokum"`
+	Dadok     sql.NullTime `db:"dadok" json:"dadok" format:"date"`
+	Ojozn     string       `db:"ojozn" json:"ojozn"`
+	Sifval    string       `db:"sifval" json:"sifval"`
+	Devdug    float64      `db:"devdug" json:"devdug"`
+	Devpot    float64      `db:"devpot" json:"devpot"`
+}
+
+// Fizvzag represents the "baza.fizvzag" table (bank statement header).
+type Fizvzag struct {
+	IDFizvzag  int            `db:"idfizvzag"`
+	God        int            `db:"god"`
+	Kar        int            `db:"kar"`
+	Konto      string         `db:"konto"`
+	Sifra      string         `db:"sifra"`
+	Izvbr      int            `db:"izvbr"`
+	Datizv     sql.NullTime   `db:"datizv" format:"date"`
+	Prstanje   float64        `db:"prstanje"`
+	Ukdug      float64        `db:"ukdug"`
+	Ukpot      float64        `db:"ukpot"`
+	Nstanje    float64        `db:"nstanje"`
+	Ukbrst     int            `db:"ukbrst"`
+	Nalog      int64          `db:"nalog"`
+	Tipdok     string         `db:"tipdok"`
+	Izvsts     string         `db:"izvsts"`
+	Brrac      string         `db:"brrac"`
+	Xdatunosa  sql.NullTime   `db:"xdatunosa" format:"datetime"`
+	Xdatizmene sql.NullTime   `db:"xdatizmene" format:"datetime"`
+	Xopunos    sql.NullString `db:"xopunos"`
+	Xopizmene  sql.NullString `db:"xopizmene"`
+	IDbanke    sql.NullInt64  `db:"idbanke"`
+	Banka      sql.NullString `db:"banka"`
+}
+
+// Fizvdet represents the "baza.fizvdet" table (bank statement details).
+type Fizvdet struct {
+	IDFizvdet  int            `db:"idfizvdet"`
+	God        int            `db:"god"`
+	Kar        int            `db:"kar"`
+	Brrac      string         `db:"brrac"`
+	Izvbr      int            `db:"izvbr"`
+	Datizv     sql.NullTime   `db:"datizv" format:"date"`
+	Rbr        int64          `db:"rbr"`
+	Konto      string         `db:"konto"`
+	Sifra      string         `db:"sifra"`
+	Iznos      float64        `db:"iznos"`
+	Kat        int16          `db:"kat"`
+	IDOrgjed   int            `db:"idorgjed"`
+	Vrd        int            `db:"vrd"`
+	Konto1     string         `db:"konto1"`
+	Sifra1     string         `db:"sifra1"`
+	Nsedprim   string         `db:"nsedprim"`
+	Brracup    string         `db:"brracup"`
+	Osnplac    string         `db:"osnplac"`
+	Sdozn      string         `db:"sdozn"`
+	Sdozn1     string         `db:"sdozn1"`
+	Duguje     float64        `db:"duguje"`
+	Potrazuje  float64        `db:"potrazuje"`
+	Modelzad   string         `db:"modelzad"`
+	Pnabrzad   string         `db:"pnabrzad"`
+	Mododob    string         `db:"mododob"`
+	Pnabrodob  string         `db:"pnabrodob"`
+	Prekl      string         `db:"prekl"`
+	Xdatunosa  sql.NullTime   `db:"xdatunosa" format:"datetime"`
+	Xdatizmene sql.NullTime   `db:"xdatizmene" format:"datetime"`
+	Xopunos    sql.NullString `db:"xopunos"`
+	Xopizmene  sql.NullString `db:"xopizmene"`
+	IDFizvzag  sql.NullInt64  `db:"idfizvzag"`
+}
+
+// Kir represents the "baza.kir" table (issued invoices register).
+type Kir struct {
+	IDKir      int            `db:"idkir" gorm:"primaryKey"`
+	God        int            `db:"god"`
+	Kar        int            `db:"kar"`
+	Vktip      string         `db:"vktip"`
+	Vkrbr      int            `db:"vkrbr" form:"vkrbr"`
+	Krbr       int64          `db:"krbr" form:"krbr"`
+	IDPartneri int            `db:"idpartneri"`
+	Dknjiz     time.Time      `db:"dknjiz" format:"date" form:"datknjiz"`
+	Danal      time.Time      `db:"danal" format:"date" form:"danal"`
+	Dizd       time.Time      `db:"dizd" format:"date" form:"datizd"`
+	Kracun     string         `db:"kracun" form:"kracun"`
+	IznsaPDV   float64        `db:"iznsapdv" form:"iznosapdv"`
+	OslobCL24  float64        `db:"oslobcl24" form:"oslobcl24"`
+	OslobCL25  float64        `db:"oslobcl25" form:"oslobcl25"`
+	IzvozSaPr  float64        `db:"izvozsapr" form:"izvozsapr"`
+	IzvozBezPr float64        `db:"izvozbezpr" form:"izvozbezpr"`
+	Osn1       float64        `db:"osn1" form:"osn1"`
+	PDV1       float64        `db:"pdv1" form:"pdv1"`
+	Osn2       float64        `db:"osn2" form:"osn2"`
+	PDV2       float64        `db:"pdv2" form:"pdv2"`
+	Prom1      float64        `db:"prom1" form:"prom1"`
+	Prom2      float64        `db:"prom2" form:"prom2"`
+	Nalog      int64          `db:"nalog" form:"nalog"`
+	TipDok     string         `db:"tipdok" form:"tipdok"`
+	Vrd        int            `db:"vrd" `
+	Dokum      string         `db:"dokum" form:"dokum"`
+	Vpr        int            `db:"vpr"`
+	Rkar       int            `db:"rkar"`
+	Brst       int            `db:"brst"`
+	Konto      string         `db:"konto" form:"konto"`
+	Sifra      string         `db:"sifra" form:"sifra"`
+	PIB        string         `db:"pib" form:"pib"`
+	Naziv      string         `db:"naziv" form:"naziv"`
+	Xdatunosa  sql.NullTime   `db:"xdatunosa"`
+	Xdatizmene sql.NullTime   `db:"xdatizmene"`
+	Xopunos    sql.NullString `db:"xopunos"`
+	Xopizmene  sql.NullString `db:"xopizmene"`
+	IDFVknjrac *int           `db:"idfvknjrac"`
+	IDFpro     *int64         `db:"idfpro"`
+	Numdok     int            `db:"numdok"`
+	Datprometa sql.NullTime   `db:"datprometa" format:"date"`
+}
+type KirPayload struct {
+	Kir
+	NazivPartnera string `db:"naziv_pa"`
+	Mesto         string `db:"mesto_pa"`
+	Pib           string `db:"pib_pa"`
+	Adresa        string `db:"adresa_pa"`
+}
+type KprPayload struct {
+	Kpr
+	NazivPartnera string `db:"naziv_pa"`
+	Mesto         string `db:"mesto_pa"`
+	Pib           string `db:"pib_pa"`
+	Adresa        string `db:"adresa_pa"`
+}
+
+// Kpr represents the "baza.kpr" table (tax invoices register - received invoices).
+type Kpr struct {
+	IDKpr        int            `db:"idkpr" gorm:"primaryKey"`
+	God          int            `db:"god"`
+	Kar          int            `db:"kar"`
+	VKTip        string         `db:"vktip"`
+	VKRbr        int            `db:"vkrbr"`
+	DRbr         int            `db:"drbr"`
+	DKnjiz       sql.NullTime   `db:"dknjiz" format:"date"`
+	DUvoz        sql.NullTime   `db:"duvoz" format:"date"`
+	DIzd         sql.NullTime   `db:"dizd" format:"date"`
+	IznsAPDV     float64        `db:"iznsapdv"`
+	IznosLob     float64        `db:"iznoslob"`
+	NisuObvPDV   float64        `db:"nisuobvpdv"`
+	UvozBezPDV   float64        `db:"uvozbezpdv"`
+	PrethodPDV   float64        `db:"prethpdv"`
+	PretPDV1     float64        `db:"pretpdv1"`
+	PretPDV2     float64        `db:"pretpdv2"`
+	UvozPDV      float64        `db:"uvozpdv"`
+	PoljVred     float64        `db:"poljvred"`
+	PoljPDV      float64        `db:"poljpdv"`
+	Vrd          int            `db:"vrd"`
+	Konto        string         `db:"konto"`
+	Sifra        string         `db:"sifra"`
+	Ter          int            `db:"ter"`
+	UvozOsnPDV   float64        `db:"uvozosnpdv"`
+	Vpr          int            `db:"vpr"`
+	OsnBezPDV    float64        `db:"osnbezpdv"`
+	Brst         int            `db:"brst"`
+	RKar         int            `db:"rkar"`
+	Nalog        int64          `db:"nalog"`
+	Dokum        string         `db:"dokum"`
+	PIB          string         `db:"pib"`
+	Naziv        string         `db:"naziv"`
+	IDPartneri   int            `db:"idpartneri"`
+	DAnal        sql.NullTime   `db:"danal" format:"date"`
+	TipDok       string         `db:"tipdok"`
+	XDatUnosa    sql.NullTime   `db:"xdatunosa" format:"datetime"`
+	XDatIzmene   sql.NullTime   `db:"xdatizmene" format:"datetime"`
+	XOpUnos      sql.NullString `db:"xopunos"`
+	XOpIzmene    sql.NullString `db:"xopizmene"`
+	IDFPro       int64          `db:"idfpro"`
+	IDFVknJrac   *int           `db:"idfvknjrac"`
+	OsnBezPod    float64        `db:"osnbezpod"`
+	DatPrometa   sql.NullTime   `db:"datprometa" format:"date"`
+	OsnovicaVT   float64        `db:"osnovicavt"`
+	OsnovicaNT   float64        `db:"osnovicant"`
+	PrethodPDVVT float64        `db:"prethpdvvt"`
+	PrethodPDVNT float64        `db:"prethpdvnt"`
+	TKonto       string         `db:"tkonto"`
+	TSifra       string         `db:"tsifra"`
+}
+
+// PoreskaPrijavaData holds all tax form field values (EDT_001 through EDT_110)
+type PoreskaPrijavaData struct {
+	Edt001 float64 `json:"edt_001"`
+	Edt002 float64 `json:"edt_002"`
+	Edt003 float64 `json:"edt_003"`
+	Edt004 float64 `json:"edt_004"`
+	Edt005 float64 `json:"edt_005"`
+	Edt006 float64 `json:"edt_006"`
+	Edt007 float64 `json:"edt_007"`
+	Edt008 float64 `json:"edt_008"`
+	Edt009 float64 `json:"edt_009"`
+	Edt103 float64 `json:"edt_103"`
+	Edt104 float64 `json:"edt_104"`
+	Edt105 float64 `json:"edt_105"`
+	Edt106 float64 `json:"edt_106"`
+	Edt107 float64 `json:"edt_107"`
+	Edt108 float64 `json:"edt_108"`
+	Edt109 float64 `json:"edt_109"`
+	Edt110 float64 `json:"edt_110"`
+}
+
+// EppSekcija represents a section in the EPP (Electronic Public Procurement) system
+type EppSekcija struct {
+	IDFepp        int            `db:"idfepp" gorm:"primaryKey"`
+	Nivo          int            `db:"nivo"`
+	Sekcija       string         `db:"sekcija"`
+	Izvor         string         `db:"izvor"`
+	Naziv         string         `db:"naziv"`
+	Akt1          bool           `db:"akt1"`
+	Akt2          bool           `db:"akt2"`
+	Akt3          bool           `db:"akt3"`
+	Akt4          bool           `db:"akt4"`
+	KprPoc        string         `db:"kprpoc"`
+	KprDodatnaPDV string         `db:"krpdodatnap"`
+	KprPDV        string         `db:"kprpdv"`
+	XDatUnosa     sql.NullTime   `db:"xdatunosa" format:"datetime"`
+	XDatIzmene    sql.NullTime   `db:"xdatizmene" format:"datetime"`
+	XOpUnos       sql.NullString `db:"xopunos"`
+	XOpIzmene     sql.NullString `db:"xopizmene"`
+}
+
+// EppEvidencija represents an EPP evidence record
+type EppEvidencija struct {
+	FsepID     int            `db:"fsepid" gorm:"primaryKey"`
+	God        int            `db:"god"`
+	Kar        int            `db:"kar"`
+	Polje      string         `db:"polje"`
+	Opis       string         `db:"opis"`
+	Osn1       float64        `db:"osn1"`
+	Pdv1       float64        `db:"pdv1"`
+	Osn2       float64        `db:"osn2"`
+	Pdv2       float64        `db:"pdv2"`
+	Oddat      time.Time      `db:"oddat" format:"date"`
+	Dodat      time.Time      `db:"dodat" format:"date"`
+	Nipo       string         `db:"nipo"`
+	XDatUnosa  sql.NullTime   `db:"xdatunosa" format:"datetime"`
+	XDatIzmene sql.NullTime   `db:"xdatizmene" format:"datetime"`
+	XOpUnos    sql.NullString `db:"xopunos"`
+	XOpIzmene  sql.NullString `db:"xopizmene"`
+}
+
+// EppSefKpr represents EPP SEF KPR (received invoice) data
+type EppSefKpr struct {
+	IDFeppSef      int            `db:"idfeppsef" gorm:"primaryKey"`
+	God            int            `db:"god"`
+	Kar            int            `db:"kar"`
+	RedBroj        int            `db:"redbroj"`
+	DokumentTip    string         `db:"dokumenttip"`
+	BrDokumenta    string         `db:"brdokumenta"`
+	DatumDokumenta time.Time      `db:"datumdokumenta" format:"date"`
+	DatumLicnog    time.Time      `db:"datumlicnog" format:"date"`
+	Iznos          float64        `db:"iznos"`
+	PDV            float64        `db:"pdv"`
+	Konto          string         `db:"konto"`
+	Status         string         `db:"status"`
+	XDatUnosa      sql.NullTime   `db:"xdatunosa" format:"datetime"`
+	XDatIzmene     sql.NullTime   `db:"xdatizmene" format:"datetime"`
+	XOpUnos        sql.NullString `db:"xopunos"`
+	XOpIzmene      sql.NullString `db:"xopizmene"`
+}
+
+// Bils represents the "baza.bils" table (Balance Sheets).
+type Bils struct {
+	BilsID     int            `db:"bilsid" gorm:"primaryKey"`
+	God        int            `db:"god"`
+	Kar        int            `db:"kar"`
+	AOP        int            `db:"aop"`
+	NazP       string         `db:"nazp"`
+	Konta      string         `db:"konta"`
+	Rbr        float64        `db:"rbr"`
+	TGod       float64        `db:"tgod"`
+	PGod       float64        `db:"pgod"`
+	Grac       string         `db:"grac"`
+	NiPo       int16          `db:"nipo"`
+	TGodH      int            `db:"tgodh"`
+	PGodH      int            `db:"pgodh"`
+	Pozic1     int16          `db:"pozic_1"`
+	Pozic2     int16          `db:"pozic_2"`
+	Pozic3     int16          `db:"pozic_3"`
+	Pozic4     int16          `db:"pozic_4"`
+	Pozic5     int16          `db:"pozic_5"`
+	Pozic6     int16          `db:"pozic_6"`
+	Pozic7     int16          `db:"pozic_7"`
+	Pozic8     int16          `db:"pozic_8"`
+	Pozic9     int16          `db:"pozic_9"`
+	Pozic10    int16          `db:"pozic_10"`
+	Pozic11    int16          `db:"pozic_11"`
+	Pozic12    int16          `db:"pozic_12"`
+	Odm        int16          `db:"odm"`
+	Dom        int16          `db:"dom"`
+	XDatUnosa  sql.NullTime   `db:"xdatunosa" format:"datetime"`
+	XDatIzmene sql.NullTime   `db:"xdatizmene" format:"datetime"`
+	XOpUnos    sql.NullString `db:"xopunos"`
+	XOpIzmene  sql.NullString `db:"xopizmene"`
+	PGodPS     float64        `db:"pgodps"`
+	PGodHPS    int            `db:"pgodhps"`
+	TGodPS     float64        `db:"tgodps"`
+	TGodHPS    int            `db:"tgodhps"`
+	Napomena   string         `db:"napomena"`
+	Skraceni   int16          `db:"skraceni"`
+}
+
+// Bilu represents the "baza.bilu" table (Income Statements).
+type Bilu struct {
+	BiluID     int            `db:"biluid" gorm:"primaryKey"`
+	God        int            `db:"god"`
+	Kar        int            `db:"kar"`
+	AOP        int            `db:"aop"`
+	NazP       string         `db:"nazp"`
+	Konta      string         `db:"konta"`
+	Rbr        float64        `db:"rbr"`
+	TGod       float64        `db:"tgod"`
+	PGod       float64        `db:"pgod"`
+	Grac       string         `db:"grac"`
+	NiPo       int16          `db:"nipo"`
+	Pozic1     int16          `db:"pozic_1"`
+	Pozic2     int16          `db:"pozic_2"`
+	Pozic3     int16          `db:"pozic_3"`
+	Pozic4     int16          `db:"pozic_4"`
+	Pozic5     int16          `db:"pozic_5"`
+	Pozic6     int16          `db:"pozic_6"`
+	Pozic7     int16          `db:"pozic_7"`
+	Pozic8     int16          `db:"pozic_8"`
+	Pozic9     int16          `db:"pozic_9"`
+	Pozic10    int16          `db:"pozic_10"`
+	Pozic11    int16          `db:"pozic_11"`
+	Pozic12    int16          `db:"pozic_12"`
+	TGodH      int            `db:"tgodh"`
+	PGodH      int            `db:"pgodh"`
+	Odm        int16          `db:"odm"`
+	Dom        int16          `db:"dom"`
+	XDatUnosa  sql.NullTime   `db:"xdatunosa" format:"datetime"`
+	XDatIzmene sql.NullTime   `db:"xdatizmene" format:"datetime"`
+	XOpUnos    sql.NullString `db:"xopunos"`
+	XOpIzmene  sql.NullString `db:"xopizmene"`
+	Napomena   string         `db:"napomena"`
+	Skraceni   int16          `db:"skraceni"`
+}
+
+type BilsPayload struct {
+	Bils
+	Naziv  string `db:"naziv"`
+	Vkonta string `db:"vkonta"`
+}
+type BiluPayload struct {
+	Bilu
+	Naziv  string `db:"naziv"`
+	Vkonta string `db:"vkonta"`
 }

@@ -18,6 +18,7 @@ type QueryBuilder struct {
 	joins       []string
 	orderBy     string
 	groupBy     string
+	having      string
 	limit       string
 	offset      string
 	// Repository-specific fields
@@ -93,6 +94,16 @@ func (qb *QueryBuilder) AddLike(field string, value interface{}) *QueryBuilder {
 	return qb
 }
 
+// AddLike condition for partial matches
+func (qb *QueryBuilder) AddLikeBegin(field string, value interface{}) *QueryBuilder {
+	if value != nil && value != "" {
+		qb.whereClause.WriteString(fmt.Sprintf(" AND %s ILIKE $%d", field, qb.paramCount))
+		qb.args = append(qb.args, value.(string)+"%")
+		qb.paramCount++
+	}
+	return qb
+}
+
 // AddIn condition for multiple values
 func (qb *QueryBuilder) AddIn(field string, values []interface{}) *QueryBuilder {
 	if len(values) > 0 {
@@ -122,6 +133,12 @@ func (qb *QueryBuilder) AddOrderBy(orderBy string) *QueryBuilder {
 // AddGroupBy adds GROUP BY clause
 func (qb *QueryBuilder) AddGroupBy(groupBy string) *QueryBuilder {
 	qb.groupBy = groupBy
+	return qb
+}
+
+// AddHaving adds HAVING clause
+func (qb *QueryBuilder) AddHaving(having string) *QueryBuilder {
+	qb.having = having
 	return qb
 }
 
@@ -182,6 +199,11 @@ func (qb *QueryBuilder) Build() (string, []interface{}) {
 		query.WriteString(" GROUP BY " + qb.groupBy)
 	}
 
+	// Add HAVING
+	if qb.having != "" {
+		query.WriteString(" HAVING " + qb.having)
+	}
+
 	// Add ORDER BY
 	if qb.orderBy != "" {
 		query.WriteString(" ORDER BY " + qb.orderBy)
@@ -201,6 +223,11 @@ func (qb *QueryBuilder) Build() (string, []interface{}) {
 // GetArgs returns current arguments (useful for debugging)
 func (qb *QueryBuilder) GetArgs() []interface{} {
 	return qb.args
+}
+
+// GetArgs returns current arguments (useful for debugging)
+func (qb *QueryBuilder) GetArgsCount() int {
+	return len(qb.args)
 }
 
 // ==================== Repository-Specific Methods ====================
@@ -251,7 +278,7 @@ func (qb *QueryBuilder) BuildInsert(c *gin.Context, fields []domain.Fields, idFi
 		if lowerName == "god" || lowerName == "kar" || lowerName == "xdatunosa" || lowerName == "xopunos" {
 			continue
 		}
-		columns = append(columns, field.Name)
+		columns = append(columns, strings.ToLower(field.Name))
 		placeholders = append(placeholders, fmt.Sprintf("$%d", len(columns)))
 		values = append(values, field.Value)
 	}
@@ -278,7 +305,7 @@ func (qb *QueryBuilder) BuildUpdate(c *gin.Context, fields []domain.Fields, idFi
 	userSession := domain.GetSessionFromContext(c)
 	// Add provided fields
 	for _, field := range fields {
-		columns = append(columns, fmt.Sprintf(` %s = $%d`, field.Name, len(values)+1))
+		columns = append(columns, fmt.Sprintf(` %s = $%d`, strings.ToLower(field.Name), len(values)+1))
 		values = append(values, field.Value)
 	}
 
@@ -474,6 +501,7 @@ func (qb *QueryBuilder) AddSearchConditions(fields []domain.Fields, searchParams
 			}
 			if strings.EqualFold(tblField.Name, field.Name) && strings.ToLower(field.Name) != "god" && strings.ToLower(field.Name) != "kar" {
 				found = true
+				// in table definition fields
 				// Use Field property if it contains table qualification (e.g., "partneri.sifra")
 				if tblField.Field != "" && strings.Contains(tblField.Field, ".") {
 					qualifiedCol = tblField.Field

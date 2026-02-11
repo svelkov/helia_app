@@ -1,0 +1,545 @@
+package finansijsko
+
+import (
+	tmpl "helia/frontend/templates"
+	"helia/internal/common"
+	"helia/internal/domain"
+	"helia/i18n"
+)
+
+// Main Kompenzacije content with tabs
+templ KompenzacijeContent(tabs domain.TabData, tbl domain.TableData, searchControl domain.InputControl, btnObrada, btnPrint domain.Button, translator *i18n.Service, csrfToken string) {
+	<div id="tab-content" class="flex flex-col h-full">
+		@tmpl.TabNav(translator.Title("Kompenzacije"), tabs, "#tab-content", "kompenzacije-panel", translator)
+		<div id="kompenzacije-tab-content" class="flex-1 min-h-0">
+			@KompenzacijePregledPartnera(tabs, tbl, searchControl, btnObrada, btnPrint, translator, csrfToken)
+		</div>
+	</div>
+}
+
+// Tab 1: Pregled partnera za kompenzacije
+templ KompenzacijePregledPartnera(tabs domain.TabData, tbl domain.TableData, searchControl domain.InputControl, btnObrada, btnPrint domain.Button, translator *i18n.Service, csrfToken string) {
+	<!-- Container with full height -->
+	<div id="tab-content" class="flex flex-col h-full">
+		<!-- Tab Navigation -->
+		<div class="border-b border-blue-600">
+			@tmpl.TabNav(translator.Title("Kompenzacije"), tabs, "#tab-content", "kompenzacije-panel", translator)
+		</div>
+		<!-- Tab Content -->
+		<div id="tab1" class="flex-1 min-h-0 flex flex-col gap-1 pt-1">
+			<!-- Action buttons -->
+			<div class="flex gap-1 justify-end">
+				@tmpl.FormObradaButton(btnObrada, translator)
+				@tmpl.PrintButton(btnPrint, translator)
+			</div>
+			<div class="border bg-blue-100 border border-blue-400 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
+				@tmpl.Search_Part(tbl, searchControl)
+				<div class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+					@tmpl.Table(tbl, translator)
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+// Tab 2: Formiranje kompenzacije
+templ KompenzacijeFormiranje(tabs domain.TabData, duznikData, poverilacData domain.TableData, btnObrada, btnFormKomp domain.Button, translator *i18n.Service, csrfToken string) {
+	<!-- Container with full height -->
+	<div id="tab-content" class="flex flex-col h-full">
+		<!-- Tab Navigation -->
+		<div class="border-b border-blue-600">
+			@tmpl.TabNav(translator.Title("Kompenzacije"), tabs, "#tab-content", "kompenzacije-panel", translator)
+		</div>
+		<!-- Tab Content -->
+		<div id="tab2" class="flex flex-col h-full">
+			<!-- Main Grid - Three columns -->
+			<div class="grid grid-cols-3 gap-1">
+				<!-- Column 1: Dužnik -->
+				<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg flex flex-col">
+					<div class="text-blue-800 font-bold text-xs mb-1 border-b border-gray-400 pb-1">
+						{ translator.Text("Dužnik") }
+					</div>
+					<!-- Konto Field -->
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "konto-duznika",
+							LabelText:  translator.Label("Konto"),
+							ClassLabel: common.ClassLabel + " w-16",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:           "konto-duznika",
+							Name:         "konto-duznika",
+							FieldType:    "text",
+							ClassInput:   common.ClassInputTextEnabled + " w-20",
+							Value:        "2040",
+							BlurEndpoint: "api/fkpl/trazikonto",
+							HxTarget:     "opis-duznika",
+							HxVals:       `js:{"konto": document.getElementById('konto-duznika').value, "sifra": document.getElementById('sifra-duznika').value, "vkonta": "1"}`,
+							HxInclude:    "this",
+							TabIndex:     "1",
+						})
+						@tmpl.SearchButton(domain.SearchButtonConfig{
+							ID:          "konto-duznika",
+							Name:        "search-konto-duznika",
+							HxUrl:       "/api/promet/searchbutton",
+							HxTarget:    "#search-dropdown-duznik",
+							HxSwap:      "innerHTML",
+							HxVals:      `js:{"vkonta": "1"}`,
+							ClassButton: common.ClassButton,
+						})
+					</div>
+					<!-- Sifra Field -->
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "sifra-duznika",
+							LabelText:  translator.Label("Šifra"),
+							ClassLabel: common.ClassLabel + " w-16",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:           "sifra-duznika",
+							Name:         "sifra-duznika",
+							FieldType:    "text",
+							ClassInput:   common.ClassInputTextEnabled + " w-20",
+							Value:        "00",
+							BlurEndpoint: "api/fkpl/trazikonto",
+							HxTarget:     "opis-duznika",
+							HxVals:       `js:{"konto": document.getElementById('konto-duznika').value, "sifra": document.getElementById('sifra-duznika').value, "vkonta": "1"}`,
+							HxInclude:    "this",
+							TabIndex:     "2",
+						})
+						@tmpl.SearchButton(domain.SearchButtonConfig{
+							ID:          "sifra-duznika",
+							Name:        "search-sifra-duznika",
+							HxUrl:       "/api/promet/searchbutton",
+							HxTarget:    "#search-dropdown-duznik",
+							HxSwap:      "innerHTML",
+							HxVals:      `js:{"konto": document.getElementById('konto-duznika').value, "vkonta": "1"}`,
+							ClassButton: common.ClassButton,
+						})
+					</div>
+					<!-- Opis Field -->
+					<div class="flex items-center gap-1 mb-1">
+						<div class="w-16"></div>
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "opis-duznika",
+							Name:       "opis-duznika",
+							FieldType:  "text",
+							ClassInput: common.ClassInputTextDisabled + " flex-1",
+							Disabled:   true,
+							TabIndex:   "3",
+						})
+					</div>
+					<div id="search-dropdown-duznik"></div>
+				</div>
+				<!-- Column 2: Poverilac -->
+				<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg flex flex-col">
+					<div class="text-blue-800 font-bold text-xs mb-1 border-b border-gray-400 pb-1">
+						{ translator.Text("Poverilac") }
+					</div>
+					<!-- Konto Field -->
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "konto-poverioca",
+							LabelText:  translator.Label("Konto"),
+							ClassLabel: common.ClassLabel + " w-16",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:           "konto-poverioca",
+							Name:         "konto-poverioca",
+							FieldType:    "text",
+							ClassInput:   common.ClassInputTextEnabled + " w-20",
+							Value:        "4350",
+							BlurEndpoint: "api/fkpl/trazikonto",
+							HxTarget:     "opis-poverioca",
+							HxVals:       `js:{"konto": document.getElementById('konto-poverioca').value, "sifra": document.getElementById('sifra-poverioca').value, "vkonta": "1"}`,
+							HxInclude:    "this",
+							TabIndex:     "4",
+						})
+						@tmpl.SearchButton(domain.SearchButtonConfig{
+							ID:          "konto-poverioca",
+							Name:        "search-konto-poverioca",
+							HxUrl:       "/api/promet/searchbutton",
+							HxTarget:    "#search-dropdown-poverilac",
+							HxSwap:      "innerHTML",
+							HxVals:      `js:{"vkonta": "1"}`,
+							ClassButton: common.ClassButton,
+						})
+					</div>
+					<!-- Sifra Field -->
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "sifra-poverioca",
+							LabelText:  translator.Label("Šifra"),
+							ClassLabel: common.ClassLabel + " w-16",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:           "sifra-poverioca",
+							Name:         "sifra-poverioca",
+							FieldType:    "text",
+							ClassInput:   common.ClassInputTextEnabled + " w-20",
+							Value:        "00",
+							BlurEndpoint: "api/fkpl/trazikonto",
+							HxTarget:     "opis-poverioca",
+							HxVals:       `js:{"konto": document.getElementById('konto-poverioca').value, "sifra": document.getElementById('sifra-poverioca').value, "vkonta": "1"}`,
+							HxInclude:    "this",
+							TabIndex:     "5",
+						})
+						@tmpl.SearchButton(domain.SearchButtonConfig{
+							ID:          "sifra-poverioca",
+							Name:        "search-sifra-poverioca",
+							HxUrl:       "/api/promet/searchbutton",
+							HxTarget:    "#search-dropdown-poverilac",
+							HxSwap:      "innerHTML",
+							HxVals:      `js:{"konto": document.getElementById('konto-poverioca').value, "vkonta": "1"}`,
+							ClassButton: common.ClassButton,
+						})
+					</div>
+					<!-- Opis Field -->
+					<div class="flex items-center gap-1 mb-1">
+						<div class="w-16"></div>
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "opis-poverioca",
+							Name:       "opis-poverioca",
+							FieldType:  "text",
+							ClassInput: common.ClassInputTextDisabled + " flex-1",
+							Disabled:   true,
+							TabIndex:   "6",
+						})
+					</div>
+					<div id="search-dropdown-poverilac"></div>
+				</div>
+				<!-- Column 3: Parameters -->
+				<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg flex flex-col">
+					<div class="text-blue-800 font-bold text-xs mb-1 border-b border-gray-400 pb-1">
+						{ translator.Text("Parametri") }
+					</div>
+					<!-- Stanje na dan + Checkbox -->
+					<div class="flex items-center gap-2 mb-1">
+						<div class="flex items-center gap-1">
+							@tmpl.LabelField(domain.LabelFieldConfig{
+								ID:         "stanje-na-dan",
+								LabelText:  translator.Label("Stanje na dan"),
+								ClassLabel: common.ClassLabel + " w-32",
+							})
+							@tmpl.TextInputField(domain.InputFieldConfig{
+								ID:         "stanje-na-dan",
+								Name:       "stanje-na-dan",
+								FieldType:  "date",
+								Value:      "2026-01-09",
+								ClassInput: common.ClassInputTextEnabled + " w-32",
+								TabIndex:   "7",
+							})
+						</div>
+						<div class="flex items-center gap-1">
+							<input id="check-dospele" type="checkbox" class="h-4 w-4 rounded border-blue-400 text-blue-600 focus:ring-blue-500"/>
+							<label for="check-dospele" class="text-xs text-gray-700">{ translator.Label("Dospeli računi") }</label>
+						</div>
+					</div>
+					<!-- Datum kompenzacije -->
+					<div class="flex items-center gap-1 mb-2">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "datum-kompenzacije",
+							LabelText:  translator.Label("Datum kompenzacije"),
+							ClassLabel: common.ClassLabel + " w-32",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "datum-kompenzacije",
+							Name:       "datum-kompenzacije",
+							FieldType:  "date",
+							Value:      "2026-01-09",
+							ClassInput: common.ClassInputTextEnabled + " w-32",
+							TabIndex:   "8",
+						})
+					</div>
+					<!-- Action buttons -->
+					<div class="flex justify-end gap-1">
+						@tmpl.FormObradaButton(btnObrada, translator)
+						@tmpl.SaveButton(btnFormKomp, translator)
+					</div>
+				</div>
+			</div>
+			<!-- Warning message -->
+			<textarea readonly rows="2" class="w-full bg-red-50 border border-red-300 p-1 mb-1 rounded text-xs text-red-700 resize-none">{ translator.Message("napomena_kompenzacije") }</textarea>
+			<!-- Two tables side by side -->
+			<div class="grid grid-cols-2 gap-1 flex-1 min-h-0 overflow-hidden">
+				<!-- Left table: Dužničke obaveze -->
+				<div class="border bg-blue-100 border-blue-400 rounded-lg p-1 flex flex-col min-h-0">
+					<div class="flex justify-between items-center mb-1">
+						<h4 class="text-xs font-semibold text-blue-700">{ translator.Title("DUŽNIČKE OBAVEZE PREMA POVERIOCU") }</h4>
+					</div>
+					<div id="duznik-table" class="flex-1 overflow-auto">
+						@tmpl.Table(duznikData, translator)
+					</div>
+					<div class="mt-1 text-sm font-medium border-t border-blue-300 pt-1">TOTAL:</div>
+				</div>
+				<!-- Right table: Poverilačke obaveze -->
+				<div class="border bg-blue-100 border-blue-400 rounded-lg p-1 flex flex-col min-h-0">
+					<div class="flex justify-between items-center mb-1">
+						<h4 class="text-xs font-semibold text-blue-700">{ translator.Title("POVERILAČKE OBAVEZE PREMA DUŽNIKU") }</h4>
+					</div>
+					<div id="poverilac-table" class="flex-1 overflow-auto">
+						@tmpl.Table(poverilacData, translator)
+					</div>
+					<div class="mt-1 text-sm font-medium border-t border-blue-300 pt-1">TOTAL:</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- Global search dropdown for all search buttons -->
+	<div id="search-dropdown" class="hidden fixed bg-white border border-gray-300 rounded-lg shadow-xl z-[9999] max-w-2xl min-w-[400px] max-h-[500px] overflow-auto"></div>
+	@tmpl.SearchPopupScript()
+}
+
+// Tab 3: Pregled kompenzacija
+templ KompenzacijePregled(tabs domain.TabData, tbl domain.TableData, dokumentaData domain.TableData, searchControl domain.InputControl, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
+	<!-- Container with full height -->
+	<div id="tab-content" class="flex flex-col h-full">
+		<!-- Tab Navigation -->
+		<div class="border-b border-blue-600">
+			@tmpl.TabNav(translator.Title("Kompenzacije"), tabs, "#tab-content", "kompenzacije-panel", translator)
+		</div>
+		<!-- Tab Content -->
+		<div id="tab3" class="flex flex-col h-full">
+			<!-- Filter section -->
+			<div class="bg-blue-100 border border-blue-400 mt-1 p-2 rounded-lg">
+				<div class="flex items-center justify-between">
+					<div class="flex items-center gap-4">
+						<span class="text-sm font-semibold">{ translator.Label("KOMPENZACIJE - Prikaz dokumenata") }</span>
+						<div class="flex gap-3">
+							<label class="flex items-center gap-1">
+								<input type="radio" name="status-filter" value="nepotvrdjen" class="form-radio text-blue-600"/>
+								<span class="text-sm">{ translator.Label("Nepotvrdjeni") }</span>
+							</label>
+							<label class="flex items-center gap-1">
+								<input type="radio" name="status-filter" value="potvrđen" class="form-radio text-blue-600"/>
+								<span class="text-sm">{ translator.Label("Potvrdjeni") }</span>
+							</label>
+							<label class="flex items-center gap-1">
+								<input type="radio" name="status-filter" value="proknjizen" class="form-radio text-blue-600"/>
+								<span class="text-sm">{ translator.Label("Proknjiženi") }</span>
+							</label>
+							<label class="flex items-center gap-1">
+								<input type="radio" name="status-filter" value="svi" class="form-radio text-blue-600" checked/>
+								<span class="text-sm">{ translator.Label("Svi") }</span>
+							</label>
+						</div>
+					</div>
+					<div class="flex gap-1">
+						@tmpl.FormObradaButton(btnObrada, translator)
+						@tmpl.PrintButton(btnPrint, translator)
+					</div>
+				</div>
+			</div>
+			<!-- Two tables split 50/50 vertically -->
+			<div class="grid grid-rows-2 gap-1 flex-1 min-h-0 overflow-hidden mt-1">
+				<!-- Main kompenzacije table -->
+				<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
+					@tmpl.Search_Part(tbl, searchControl)
+					<div class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+						@tmpl.Table(tbl, translator)
+					</div>
+				</div>
+				<!-- Documents in kompenzacija table -->
+				<div class="border bg-blue-100 border-blue-400 rounded-lg p-1 flex flex-col min-h-0">
+					<h4 class="text-sm font-semibold text-blue-700 mb-1">{ translator.Title("DOKUMENTA SADRŽANA U KOMPENZACIJI") }</h4>
+					<div class="flex-1 overflow-auto">
+						@tmpl.Table(dokumentaData, translator)
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+// Tab 4: Knjiženje kompenzacija
+templ KompenzacijeKnjizenje(tabs domain.TabData, tbl domain.TableData, dokumentaData domain.TableData, tipdokValues []domain.ComboItem, btnPrikazi, btnRavnoteza, btnKnjizi domain.Button, translator *i18n.Service, csrfToken string) {
+	<!-- Container with full height -->
+	<div id="tab-content" class="flex flex-col h-full">
+		<!-- Tab Navigation -->
+		<div class="border-b border-blue-600">
+			@tmpl.TabNav(translator.Title("Kompenzacije"), tabs, "#tab-content", "kompenzacije-panel", translator)
+		</div>
+		<!-- Tab Content -->
+		<div id="tab4" class="flex flex-col h-full">
+			<!-- Main Grid - Two columns (1/3 vs 2/3) -->
+			<div class="grid grid-cols-3 gap-1">
+				<!-- Column 1: Date and Number Range -->
+				<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg flex flex-col">
+					<div class="text-blue-800 font-bold text-xs mb-1 border-b border-gray-400 pb-1">
+						{ translator.Text("Period") }
+					</div>
+					<!-- Od datuma Field -->
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "od-datuma-kompenz",
+							LabelText:  translator.Label("Od datuma kompenz."),
+							ClassLabel: common.ClassLabel + " w-32",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "od-datuma-kompenz",
+							Name:       "od-datuma-kompenz",
+							FieldType:  "date",
+							Value:      "2025-12-26",
+							ClassInput: common.ClassInputTextEnabled + " w-32",
+							TabIndex:   "1",
+						})
+					</div>
+					<!-- Do datuma Field -->
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "do-datuma-kompenz",
+							LabelText:  translator.Label("Do datuma kompenz."),
+							ClassLabel: common.ClassLabel + " w-32",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "do-datuma-kompenz",
+							Name:       "do-datuma-kompenz",
+							FieldType:  "date",
+							Value:      "2026-01-09",
+							ClassInput: common.ClassInputTextEnabled + " w-32",
+							TabIndex:   "2",
+						})
+					</div>
+					<!-- Od broja Field -->
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "od-broja-komp",
+							LabelText:  translator.Label("Od broja komp."),
+							ClassLabel: common.ClassLabel + " w-32",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "od-broja-komp",
+							Name:       "od-broja-komp",
+							FieldType:  "number",
+							Value:      "1",
+							ClassInput: common.ClassInputTextEnabled + " w-24",
+							TabIndex:   "3",
+						})
+					</div>
+					<!-- Do broja Field -->
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "do-broja-komp",
+							LabelText:  translator.Label("Do broja komp."),
+							ClassLabel: common.ClassLabel + " w-32",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "do-broja-komp",
+							Name:       "do-broja-komp",
+							FieldType:  "number",
+							Value:      "999999",
+							ClassInput: common.ClassInputTextEnabled + " w-24",
+							TabIndex:   "4",
+						})
+					</div>
+				</div>
+				<!-- Column 2: Parameters -->
+				<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg flex flex-col col-span-2">
+					<div class="text-blue-800 font-bold text-xs mb-1 border-b border-gray-400 pb-1">
+						{ translator.Text("Parametri") }
+					</div>
+					<!-- Vrsta naloga -->
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "tipdok-knjizenje",
+							LabelText:  translator.Label("Vrsta naloga za knjiženje"),
+							ClassLabel: common.ClassLabel + " w-40",
+						})
+						@tmpl.ComboBoxField(domain.ComboFieldConfig{
+							ID:           "tipdok-knjizenje",
+							Name:         "tipdok-knjizenje",
+							ClassSelect:  common.ClassSelect + " flex-1",
+							OptionValues: tipdokValues,
+							TabIndex:     "5",
+						}, translator)
+					</div>
+					<!-- Opis knjizenja -->
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "opis-knjizenja",
+							LabelText:  translator.Label("Opis knjiženja"),
+							ClassLabel: common.ClassLabel + " w-40",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "opis-knjizenja",
+							Name:       "opis-knjizenja",
+							FieldType:  "text",
+							ClassInput: common.ClassInputTextEnabled + " flex-1",
+							TabIndex:   "6",
+						})
+					</div>
+					<!-- Broj naloga, Datum naloga, Datum obrade in one row -->
+					<div class="flex items-center gap-2 mb-2">
+						<div class="flex items-center gap-1">
+							@tmpl.LabelField(domain.LabelFieldConfig{
+								ID:         "broj-naloga",
+								LabelText:  translator.Label("Broj naloga"),
+								ClassLabel: common.ClassLabel + " w-40",
+							})
+							@tmpl.TextInputField(domain.InputFieldConfig{
+								ID:         "broj-naloga",
+								Name:       "broj-naloga",
+								FieldType:  "text",
+								ClassInput: common.ClassInputTextEnabled + " w-20",
+								TabIndex:   "7",
+							})
+						</div>
+						<div class="flex items-center gap-1 flex-1">
+							@tmpl.LabelField(domain.LabelFieldConfig{
+								ID:         "datum-naloga",
+								LabelText:  translator.Label("Datum naloga"),
+								ClassLabel: common.ClassLabel + " w-32",
+							})
+							@tmpl.TextInputField(domain.InputFieldConfig{
+								ID:         "datum-naloga",
+								Name:       "datum-naloga",
+								FieldType:  "date",
+								Value:      "2026-01-16",
+								ClassInput: common.ClassInputTextEnabled + " w-32",
+								TabIndex:   "8",
+							})
+						</div>
+						<div class="flex items-center gap-1 flex-1">
+							@tmpl.LabelField(domain.LabelFieldConfig{
+								ID:         "datum-obrade",
+								LabelText:  translator.Label("Datum obrade"),
+								ClassLabel: common.ClassLabel + " w-36",
+							})
+							@tmpl.TextInputField(domain.InputFieldConfig{
+								ID:         "datum-obrade",
+								Name:       "datum-obrade",
+								FieldType:  "date",
+								Value:      "2026-01-16",
+								ClassInput: common.ClassInputTextEnabled,
+								TabIndex:   "9",
+							})
+						</div>
+					</div>
+					<!-- Action buttons -->
+					<div class="flex justify-end gap-1">
+						@tmpl.FormObradaButton(btnPrikazi, translator)
+						@tmpl.AddButton(btnRavnoteza, translator)
+						@tmpl.SaveButton(btnKnjizi, translator)
+					</div>
+				</div>
+			</div>
+			<!-- Two tables stacked vertically -->
+			<div class="grid grid-rows-2 gap-1 flex-1 min-h-0 overflow-hidden">
+				<!-- Main kompenzacije table -->
+				<div class="border bg-blue-100 border-blue-400 rounded-lg p-1 flex flex-col min-h-0">
+					<h4 class="text-xs font-semibold text-blue-700 mb-1">{ translator.Title("KOMPENZACIJE") }</h4>
+					<div class="flex-1 overflow-auto">
+						@tmpl.Table(tbl, translator)
+					</div>
+				</div>
+				<!-- Documents in kompenzacija table -->
+				<div class="border bg-blue-100 border-blue-400 rounded-lg p-1 flex flex-col min-h-0">
+					<h4 class="text-xs font-semibold text-blue-700 mb-1">{ translator.Title("DOKUMENTA SADRŽANA U KOMPENZACIJI") }</h4>
+					<div class="flex-1 overflow-auto">
+						@tmpl.Table(dokumentaData, translator)
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+}

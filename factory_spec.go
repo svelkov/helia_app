@@ -22,15 +22,18 @@ import (
 
 	"helia/config"
 	"helia/frontend/templates"
+	"helia/global"
+	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
 	"helia/internal/handler"
 	fin "helia/internal/handler/finansijsko"
 	oshandler "helia/internal/handler/os"
-	"helia/internal/i18n"
+	"helia/internal/infrastructure/db"
 	"helia/internal/middleware"
 	"helia/internal/repository"
 	"helia/internal/service"
+	finservice "helia/internal/service/finansijsko"
 	"helia/internal/validation"
 	finval "helia/internal/validation/finansijsko"
 	osval "helia/internal/validation/os"
@@ -58,7 +61,7 @@ func factory() {
 	}
 	defer db.Close()
 
-	if err := i18n.Init("./translations", cfg.Languages, "SR"); err != nil {
+	if err := i18n.Init("./i18n/translations", cfg.Languages, "SR"); err != nil {
 		log.Fatal("Failed to load translations:", err)
 	}
 	translator := i18n.GetInstance()
@@ -96,6 +99,19 @@ func factory() {
 		log.Printf("Server starting on port %s", cfg.Port)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Failed to start server: %v", err)
+		}
+	}()
+
+	// Start background lock cleanup (every 5 minutes, remove locks idle > 15 minutes)
+	go func() {
+		ticker := time.NewTicker(5 * time.Minute)
+		defer ticker.Stop()
+		for {
+			<-ticker.C
+			count := global.CleanupStaleLocks(15 * time.Minute)
+			if count > 0 {
+				log.Printf("Cleaned up %d stale nalog locks", count)
+			}
 		}
 	}()
 
@@ -263,18 +279,20 @@ func loadConfig() config.Config {
 }
 
 // connectDB establishes a database connection
-func connectDB(cfg config.Config) (*sqlx.DB, error) {
+func connectDB(cfg config.Config) (db.Database, error) {
 	dsn := fmt.Sprintf(
 		"host=%s port=%d user=%s password=%s dbname=%s search_path=%s sslmode=disable",
 		cfg.DBConfig.DBHost, cfg.DBConfig.DBPort, cfg.DBConfig.DBUser, cfg.DBConfig.DBPassword, cfg.DBConfig.DBName, cfg.DBConfig.DBSearchPath,
 	)
-	db, err := sqlx.Open("postgres", dsn)
+	conn, err := sqlx.Open("postgres", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to database: %v", err)
 	}
-	if err = db.Ping(); err != nil {
+	if err = conn.Ping(); err != nil {
 		return nil, fmt.Errorf("failed to ping database: %v", err)
 	}
+	// Wrap sqlx.DB with PostgresDB adapter
+	db := db.NewPostgresDB(conn)
 	return db, nil
 }
 
@@ -305,7 +323,7 @@ func getMenuHandler(c *gin.Context) {
 // registerGenericEntity registers a generic entity's routes
 func registerGenericEntity[T any](
 	r *gin.Engine,
-	db *sqlx.DB,
+	db db.Database,
 	tableName string,
 	validationRules []validation.ValidationRule,
 	fields []domain.Fields,
@@ -314,13 +332,13 @@ func registerGenericEntity[T any](
 ) {
 	repo := repository.NewBaseRepository[T](db, tableName)
 	validator := validation.NewRuleBasedValidator[T](validationRules)
-	svc := service.NewBaseService(*repo, *validator)
+	svc := service.NewBaseService(*repo, validator)
 	h := handler.NewGenericHandler(svc, fields, config, cfg)
 	h.RegisterRoutes(r)
 }
 
 // setEntities registers all entity routes
-func setEntities(c *gin.Context, db *sqlx.DB, r *gin.Engine, jwtSecret []byte, cfg config.Config) {
+func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte, cfg config.Config) {
 	// Drzave
 	registerGenericEntity[domain.Drzave](
 		r, db, "drzave",
@@ -507,21 +525,21 @@ func setEntities(c *gin.Context, db *sqlx.DB, r *gin.Engine, jwtSecret []byte, c
 	//partneri
 	partneriRepo := repository.NewBaseRepository[domain.Partneri](db, "partneri")
 	partneriValidator := validation.NewRuleBasedValidator[domain.Partneri](validation.PartneriValidationRules())
-	partneriService := service.NewBaseService(*partneriRepo, *partneriValidator)
+	partneriService := service.NewBaseService(*partneriRepo, partneriValidator)
 	partneriHandler := handler.NewPartneriHandler(partneriService, cfg)
 	partneriHandler.AddRoutes(r)
 	// Fkpl
 	fkplRepo := repository.NewBaseRepository[domain.Fkpl](db, "fkpl")
 	fkplValidator := validation.NewRuleBasedValidator[domain.Fkpl](finval.FkplValidationRules())
-	fkplService := service.NewBaseService(*fkplRepo, *fkplValidator)
+	fkplService := service.NewBaseService(*fkplRepo, fkplValidator)
 	fkplHandler := fin.NewFkplHandler(fkplService, cfg)
 	fkplHandler.AddRoutes(r)
 
 	// Fpro
 	fproRepo := repository.NewBaseRepository[domain.Fpro](db, "fpro")
 	fproValidator := validation.NewRuleBasedValidator[domain.Fpro](finval.FnalValidationRules())
-	fproBaseService := service.NewBaseService(*fproRepo, *fproValidator)
-	fproService := service.NewFproService(
+	fproBaseService := service.NewBaseService(*fproRepo, fproValidator)
+	fproService := finservice.NewFproService(
 		fproBaseService,
 		*fproRepo,
 		common.IDfpro,
@@ -533,11 +551,12 @@ func setEntities(c *gin.Context, db *sqlx.DB, r *gin.Engine, jwtSecret []byte, c
 	fproHandler.AddRoutes(r)
 	// Fnal
 	fnalRepo := repository.NewBaseRepository[domain.Fnal](db, "fnal")
-	fnalValidator := validation.NewRuleBasedValidator[domain.Fnal](finval.FnalValidationRules())
-	fnalBaseService := service.NewBaseService(*fnalRepo, *fnalValidator)
-	fnalService := service.NewNalogService(
+	fnalValidator := finval.NewFnalValidator()
+	fnalBaseService := service.NewBaseService(*fnalRepo, fnalValidator)
+	fnalService := finservice.NewNalogService(
 		fnalBaseService,
 		fproService,
+		fnalValidator,
 		*fnalRepo,
 		*repository.NewBaseRepository[domain.Tipdok](db, "tipdok"),
 		*repository.NewBaseRepository[domain.Sf](db, "sf"),
@@ -546,7 +565,6 @@ func setEntities(c *gin.Context, db *sqlx.DB, r *gin.Engine, jwtSecret []byte, c
 		"",
 		[]domain.Fields{},
 		[]domain.Fields{},
-		fnalValidator,
 		cfg,
 	)
 	fnalHandler := fin.NewFnalHandler(fnalService, fnalBaseService, cfg)
@@ -555,8 +573,8 @@ func setEntities(c *gin.Context, db *sqlx.DB, r *gin.Engine, jwtSecret []byte, c
 	// Promet
 	prometRepo := repository.NewBaseRepository[domain.PrometDto](db, "prometdto")
 	prometValidator := validation.NewRuleBasedValidator[domain.PrometDto](finval.PrometValidationRules())
-	prometService := service.NewPrometService(
-		service.NewBaseService(*prometRepo, *prometValidator),
+	prometService := finservice.NewPrometService(
+		service.NewBaseService(*prometRepo, prometValidator),
 		prometRepo,
 		fkplRepo,
 	)
@@ -566,8 +584,8 @@ func setEntities(c *gin.Context, db *sqlx.DB, r *gin.Engine, jwtSecret []byte, c
 	// Salda
 	saldaRepo := repository.NewBaseRepository[domain.SaldaDto](db, "saldadto")
 	saldaValidator := validation.NewRuleBasedValidator[domain.SaldaDto](finval.SaldaValidationRules())
-	saldaService := service.NewSaldaService(
-		service.NewBaseService(*saldaRepo, *saldaValidator),
+	saldaService := finservice.NewSaldaService(
+		service.NewBaseService(*saldaRepo, saldaValidator),
 		saldaRepo,
 		fkplRepo,
 		fproRepo,
@@ -579,9 +597,41 @@ func setEntities(c *gin.Context, db *sqlx.DB, r *gin.Engine, jwtSecret []byte, c
 	saldaHandler := fin.NewSaldaHandler(saldaService, cfg)
 	saldaHandler.AddRoutes(r)
 
+	// SaKompenzacije
+	kompRepo := repository.NewBaseRepository[domain.KompenzacijeDto](db, "kompenzacijedto")
+	kompValidator := validation.NewRuleBasedValidator[domain.KompenzacijeDto](finval.KompenzacijeValidationRules())
+	kompService := finservice.NewKompenzacijeService(
+		service.NewBaseService(*kompRepo, kompValidator),
+		fproRepo,
+		// fproRepo,
+		// repository.NewBaseRepository[domain.Partneri](db, "partneri"),
+		// repository.NewBaseRepository[domain.SaldaPartnerDto](db, "saldapartneridto"),
+		// repository.NewBaseRepository[domain.SaldaKomercijalistiDto](db, "saldakomercijalistidto"),
+	)
+
+	kompHandler := fin.NewKompenzacijeHandler(kompService, cfg)
+	kompHandler.AddRoutes(r)
+
+	// DnevnikHandler
+	dnevnikRepo := repository.NewBaseRepository[domain.DnevnikDto](db, "fpro")
+	dnevnikValidator := validation.NewValidator[domain.DnevnikDto]()
+	dnevnikService := finservice.NewDnevnikService(
+		service.NewBaseService(*dnevnikRepo, dnevnikValidator),
+		fproRepo,
+	)
+	dnevnikHandler := fin.NewDnevnikHandler(dnevnikService, cfg)
+	dnevnikHandler.AddRoutes(r)
+
+	// Izvodi
+	izvhdrRepo := repository.NewBaseRepository[domain.Fizvzag](db, "fizvzag")
+	izvdetRepo := repository.NewBaseRepository[domain.Fizvdet](db, "fizvdet")
+	izvodiService := finservice.NewIzvodiResource(izvhdrRepo, izvdetRepo, cfg)
+	izvodiHandler := fin.NewIzvodiHandler(izvodiService, cfg)
+	izvodiHandler.AddRoutes(r)
+
 	// BasicHandler
 	fvrRepo := repository.NewBaseRepository[domain.Fvr](db, "fvr")
-	fvrService := service.NewFvrService(fvrRepo)
+	fvrService := finservice.NewFvrService(fvrRepo)
 	basicHandler := handler.NewBasicHandler(
 		c,
 		IsLoggedIn,
@@ -591,4 +641,72 @@ func setEntities(c *gin.Context, db *sqlx.DB, r *gin.Engine, jwtSecret []byte, c
 		cfg,
 	)
 	basicHandler.AddRoutes(r)
+
+	// PoreskeKnjige
+	kirRepo := repository.NewBaseRepository[domain.KirPayload](db, "kirpayload")
+	kprRepo := repository.NewBaseRepository[domain.KprPayload](db, "kprpayload")
+	fvknjracRepo := repository.NewBaseRepository[domain.Fvknjrac](db, "fvknjrac")
+	kirValidator := validation.NewRuleBasedValidator[domain.KirPayload]([]validation.ValidationRule{})
+	kprValidator := validation.NewRuleBasedValidator[domain.KprPayload]([]validation.ValidationRule{})
+	kirService := service.NewBaseService(*kirRepo, kirValidator)
+	kprService := service.NewBaseService(*kprRepo, kprValidator)
+	poreskeKnjigeService := finservice.NewPoreskeKnjigeService(kirService, kprService, kirRepo, kprRepo, fvknjracRepo)
+	poreskeKnjigeHandler := fin.NewPoreskeKnjigeHandler(poreskeKnjigeService, cfg)
+	poreskeKnjigeHandler.RegisterRoutes(r)
+
+	//otvorene stavke
+	otvoreneStavkeService := finservice.NewOtvoreneStavkeService(*fkplRepo)
+	otvoreneStavkeHandler := fin.NewOtvoreneStavkeHandler(otvoreneStavkeService, cfg)
+	otvoreneStavkeHandler.RegisterRoutes(r)
+
+	//obracun kamate
+	kamataRepo := repository.NewBaseRepository[domain.Fkpl](db, "kamata")
+	kamataValidator := validation.NewRuleBasedValidator[domain.Fkpl]([]validation.ValidationRule{})
+	kamataBaseService := service.NewBaseService(*kamataRepo, kamataValidator)
+	kamateService := finservice.NewKamateService(kamataBaseService, kamataRepo)
+	kamateHandler := fin.NewKamateHandler(kamateService, cfg)
+	kamateHandler.RegisterRoutes(r)
+
+	// Bilansi
+	biluRepo := repository.NewBaseRepository[domain.BiluPayload](db, "bilu")
+	biluValidator := validation.NewRuleBasedValidator[domain.BiluPayload]([]validation.ValidationRule{})
+	biluService := service.NewBaseService(*biluRepo, biluValidator)
+	bilsRepo := repository.NewBaseRepository[domain.BilsPayload](db, "bils")
+	bilsValidator := validation.NewRuleBasedValidator[domain.BilsPayload]([]validation.ValidationRule{})
+	bilsService := service.NewBaseService(*bilsRepo, bilsValidator)
+
+	bilansiService := finservice.NewBilansiService(
+		biluService,
+		biluRepo,
+		bilsService,
+		bilsRepo,
+		repository.NewBaseRepository[domain.FproDto](db, "fprodto"),
+		cfg,
+	)
+	bilansiHandler := fin.NewBilansiHandler(bilansiService, cfg)
+	bilansiHandler.RegisterRoutes(r)
+
+	// EPP
+	eppSekcijeRepo := repository.NewBaseRepository[domain.EppSekcija](db, "epp_sekcije")
+	eppSekcijeValidator := validation.NewRuleBasedValidator[domain.EppSekcija]([]validation.ValidationRule{})
+	eppSekcijeService := service.NewBaseService(*eppSekcijeRepo, eppSekcijeValidator)
+
+	eppEvidencijaRepo := repository.NewBaseRepository[domain.EppEvidencija](db, "epp_evidencija")
+	eppEvidencijaValidator := validation.NewRuleBasedValidator[domain.EppEvidencija]([]validation.ValidationRule{})
+	eppEvidencijaService := service.NewBaseService(*eppEvidencijaRepo, eppEvidencijaValidator)
+
+	eppSefKprRepo := repository.NewBaseRepository[domain.EppSefKpr](db, "epp_sef_kpr")
+	eppSefKprValidator := validation.NewRuleBasedValidator[domain.EppSefKpr]([]validation.ValidationRule{})
+	eppSefKprService := service.NewBaseService(*eppSefKprRepo, eppSefKprValidator)
+
+	eppService := finservice.NewEppService(
+		eppSekcijeService,
+		eppEvidencijaService,
+		eppSefKprService,
+		eppSekcijeRepo,
+		eppEvidencijaRepo,
+		eppSefKprRepo,
+	)
+	eppHandler := fin.NewEppHandler(eppService, cfg)
+	eppHandler.RegisterRoutes(r)
 }

@@ -31,12 +31,12 @@ type Drzave struct {
 	God        int            `json:"god" db:"god"`
 	Kar        int            `json:"kar" db:"kar"`
 	IDDrzave   int            `json:"id_drzave" db:"iddrzave"`
-	Naziv      string         `json:"naziv" db:"naziv"`
+	Naziv      string         `json:"naziv" db:"naziv" form:"naziv"`
 	XDatUnosa  sql.NullTime   `json:"xdat_unosa" db:"xdatunosa"`
 	XDatIzmene sql.NullTime   `json:"xdat_izmene" db:"xdatizmene"`
 	XOpuNos    string         `json:"xop_unos" db:"xopunos"`
 	XOpIzmene  sql.NullString `json:"xop_izmene" db:"xopizmene"`
-	OznDrz     string         `json:"ozn_drz" db:"ozndrz"`
+	OznDrz     string         `json:"ozn_drz" db:"ozndrz" form:"ozndrz"`
 }
 
 // Banke Model

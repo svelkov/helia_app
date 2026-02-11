@@ -9,8 +9,8 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
+	"helia/i18n"
 	"helia/internal/domain"
-	"helia/internal/i18n"
 	"time"
 )
 

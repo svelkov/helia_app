@@ -3,11 +3,11 @@ package repository
 import (
 	"fmt"
 	"helia/internal/domain"
+	"helia/internal/infrastructure/db"
 	"reflect"
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jmoiron/sqlx"
 )
 
 // // Generic repository interface
@@ -31,15 +31,15 @@ const (
 
 // Base implementation
 type BaseRepository[T any] struct {
-	DB         *sqlx.DB
+	DB         db.Database
 	TableName  string
 	fieldCache map[string]reflect.StructField
 }
 
 // NewBaseRepository creates a new instance of BaseRepository.
-func NewBaseRepository[T any](db *sqlx.DB, tableName string) *BaseRepository[T] {
+func NewBaseRepository[T any](database db.Database, tableName string) *BaseRepository[T] {
 	br := &BaseRepository[T]{
-		DB:         db,
+		DB:         database,
 		TableName:  tableName,
 		fieldCache: make(map[string]reflect.StructField),
 	}
@@ -149,10 +149,10 @@ func (r *BaseRepository[T]) Delete(idField string, id int64) error {
 }
 
 // doTransaction executes a query within a transaction
-func doTransaction(db *sqlx.DB, actionType, query string, values ...interface{}) (int64, error) {
+func doTransaction(database db.Database, actionType, query string, values ...interface{}) (int64, error) {
 	// Start a transaction
 	lastInsertedID := int64(0)
-	tx, err := db.Beginx()
+	tx, err := database.Beginx()
 	if err != nil {
 		return 0, fmt.Errorf("could not begin transaction: %v", err)
 	}

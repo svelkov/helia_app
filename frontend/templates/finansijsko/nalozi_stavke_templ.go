@@ -10,9 +10,9 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import (
 	tmpl "helia/frontend/templates"
+	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
-	"helia/internal/i18n"
 )
 
 func NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData, btnSave, btnPrint domain.Button, translator *i18n.Service) templ.Component {
@@ -49,7 +49,7 @@ func NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, " <button class=\"absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 border border-white border-opacity-30 text-white px-2 py-1 text-xs cursor-pointer hover:bg-opacity-30\" hx-get=\"api/nalozi/all/tipdok\" hx-target=\"#content\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, " <button id=\"btn-close\" class=\"absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 border border-white border-opacity-30 text-white px-2 py-1 text-xs cursor-pointer hover:bg-opacity-30\" onclick=\"handleCloseWithUnlock(event, &#39;api/nalozi/all/tipdok&#39;, &#39;#content&#39;);\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -304,7 +304,14 @@ func NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = NazivField("kontonaziv").Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "kontonaziv",
+			Name:       "kontonaziv",
+			FieldType:  "text",
+			Disabled:   true,
+			ClassInput: common.ClassInputTextEnabled + " w-full",
+			TabIndex:   "-1",
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -349,7 +356,14 @@ func NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = NazivField("sifranaziv").Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "sifranaziv",
+			Name:       "sifranaziv",
+			FieldType:  "text",
+			Disabled:   true,
+			ClassInput: common.ClassInputTextEnabled + " w-full",
+			TabIndex:   "-1",
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -446,7 +460,14 @@ func NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = NazivField("magacinnaziv").Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "magacinnaziv",
+			Name:       "magacinnaziv",
+			FieldType:  "text",
+			Disabled:   true,
+			ClassInput: common.ClassInputTextEnabled + " w-full",
+			TabIndex:   "-1",
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -484,7 +505,14 @@ func NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = NazivField("minaziv").Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "minaziv",
+			Name:       "minaziv",
+			FieldType:  "text",
+			Disabled:   true,
+			ClassInput: common.ClassInputTextEnabled + " w-full",
+			TabIndex:   "-1",
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -522,7 +550,14 @@ func NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = NazivField("komnaziv").Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "komnaziv",
+			Name:       "komnaziv",
+			FieldType:  "text",
+			Disabled:   true,
+			ClassInput: common.ClassInputTextEnabled + " w-full",
+			TabIndex:   "-1",
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -533,7 +568,7 @@ func NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData
 		var templ_7745c5c3_Var7 string
 		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Duguje"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi_stavke.templ`, Line: 347, Col: 40}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi_stavke.templ`, Line: 382, Col: 40}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {
@@ -563,7 +598,7 @@ func NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData
 		var templ_7745c5c3_Var8 string
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Potražuje"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi_stavke.templ`, Line: 366, Col: 44}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi_stavke.templ`, Line: 401, Col: 44}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {
@@ -653,7 +688,7 @@ func NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Podaci o dokum/uplati/isplati"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi_stavke.templ`, Line: 425, Col: 109}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi_stavke.templ`, Line: 460, Col: 109}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
@@ -760,7 +795,7 @@ func NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("vezni_dokument_opis"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi_stavke.templ`, Line: 497, Col: 50}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi_stavke.templ`, Line: 532, Col: 50}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
@@ -866,7 +901,7 @@ func NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData
 		var templ_7745c5c3_Var11 string
 		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Devizna vrednost"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi_stavke.templ`, Line: 570, Col: 96}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi_stavke.templ`, Line: 605, Col: 96}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {
@@ -909,7 +944,14 @@ func NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = NazivField("sifravalutenaziv").Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "sifravalutenaziv",
+			Name:       "sifravalutenaziv",
+			FieldType:  "text",
+			Disabled:   true,
+			ClassInput: common.ClassInputTextEnabled + " w-full",
+			TabIndex:   "-1",
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -978,7 +1020,7 @@ func NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "<div class=\"bg-gray-100 border-t border-gray-400 sticky top-0\"><div class=\"grid grid-cols-12 gap-0 text-xs font-bold\"><div class=\"p-2 border-r border-gray-300 col-span-9\">Total:</div><div class=\"p-2 border-r border-gray-300 text-right\" id=\"total-duguje\">0,00</div><div class=\"p-2 border-r border-gray-300 text-right\" id=\"total-potrazuje\">0,00</div><div class=\"p-2\"></div></div></div></div></div></div></div><div id=\"notification\" class=\"fixed top-5 right-5 px-4 py-3 bg-green-500 text-white rounded hidden\"></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "<div class=\"bg-gray-100 border-t border-gray-400 sticky top-0\"><div class=\"grid grid-cols-12 gap-0 text-xs font-bold\"><div class=\"p-2 border-r border-gray-300 col-span-9\">Total:</div><div class=\"p-2 border-r border-gray-300 text-right\" id=\"total-duguje\">0,00</div><div class=\"p-2 border-r border-gray-300 text-right\" id=\"total-potrazuje\">0,00</div><div class=\"p-2\"></div></div></div></div></div></div></div><div id=\"notification\" class=\"fixed top-5 right-5 px-4 py-3 bg-green-500 text-white rounded hidden\"></div></div><script src=\"/js/entity_lock.js\"></script><script>\r\n\t\t// Start lock when form loads\r\n\t\t// Lock expires after 20 minutes of inactivity (no mouse/keyboard activity)\r\n\t\tstartEntityLock('nalozi', {{ .IDFnal }}, { \r\n\t\t\tentityName: 'naloga',\r\n\t\t\tinactivityTimeout: 20 * 60 * 1000  // 20 minutes (can be adjusted: 30 * 60 * 1000 for 30 min)\r\n\t\t});\r\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

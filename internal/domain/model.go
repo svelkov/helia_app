@@ -193,6 +193,7 @@ type InputFieldConfig struct {
 	TabIndex         string
 	HxOnAfterRequest string
 	OnInput          string
+	OnFocus          string
 	DecimalPlaces    int
 }
 
@@ -227,7 +228,7 @@ type ComboFieldConfig struct {
 	MaxLength        string
 	TabIndex         string
 }
-type CheckboxConfig struct {
+type CheckboxFieldConfig struct {
 	ID                string
 	Name              string
 	LabelText         string
@@ -241,6 +242,25 @@ type CheckboxConfig struct {
 	HxTarget          string
 	HxSwap            string
 	HxVals            string
+	TabIndex          string
+	Value             string
+	Checked           bool
+}
+type RadioFieldConfig struct {
+	ID               string
+	Name             string
+	LabelText        string
+	ClassLabel       string
+	ClassSelect      string
+	IsSelected       bool
+	Disabled         bool
+	OnChange         string
+	OnChangeEndpoint string
+	HxTarget         string
+	HxSwap           string
+	HxVals           string
+	TabIndex         string
+	Value            string
 }
 
 type SearchButtonConfig struct {

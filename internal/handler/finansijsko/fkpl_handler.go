@@ -1,7 +1,6 @@
 package finansijsko
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -94,50 +93,41 @@ func (h *FkplHandler) TraziKonto(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, "Nedostaje parametar konto ili vkonta")
 		return
 	}
+
 	// Custom SQL query for searching konto, sifra, or naziv
-	sqlQuery := `SELECT f.naziv
-				FROM baza.fkpl as f`
-	whereText := `WHERE 1 = 1  `
+	qb := common.NewQueryBuilder(`SELECT f.naziv FROM baza.fkpl as f`)
+
 	session := domain.GetSessionFromContext(c)
 	if session == nil {
 		common.WriteJSONResponse(c, http.StatusUnauthorized, false, []domain.FieldError{}, "User session not found")
 		return
 	}
 
-	hasGod, hasKAr := h.Service.Repo.GetHasGodHasKar()
-	param := 1
+	hasGod, hasKar := h.Service.Repo.GetHasGodHasKar()
 	if hasGod {
-		whereText += fmt.Sprintf(" AND f.god = $%d ", param)
-		param++
-		args = append(args, session.SelectedGod)
+		qb.AddEqual("god", session.SelectedGod)
 	}
-	if hasKAr {
-		whereText += fmt.Sprintf(" AND f.kar = $%d ", param)
-		param++
-		args = append(args, session.SelectedKar)
+	if hasKar {
+		qb.AddEqual("kar", session.SelectedKar)
 	}
 	if konto != "" {
-		whereText += fmt.Sprintf(" AND f.konto = $%d ", param)
-		param++
-		args = append(args, konto)
+		qb.AddEqual("konto", konto)
 	}
-
 	if sifra != "" {
-		whereText += fmt.Sprintf(" AND f.sifra = $%d ", param)
-		param++
-		args = append(args, sifra)
+		qb.AddEqual("sifra", sifra)
 	}
 	if vkonta != "" {
-		whereText += fmt.Sprintf(" AND f.vkonta = $%d", param)
-		param++
-		args = append(args, vkonta)
+		qb.AddEqual("vkonta", vkonta)
 	}
+
 	if vkonta == "1" && sifra == "" {
 		c.Writer.Header().Set("Content-Type", "text/plain")
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, "Nije pronađena šifra")
 		return
 	}
-	entities, err := h.Service.GetAllCustom(c, sqlQuery, whereText, args, "", "")
+
+	sqlQuery, args := qb.Build()
+	entities, err := h.Service.GetAllCustom(c, sqlQuery, "", args, "", "")
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, "Greška prilikom pretrage konta")
 		return
@@ -161,68 +151,80 @@ func (h *FkplHandler) TraziKonto(c *gin.Context) {
 
 }
 func (h *FkplHandler) TraziKontoSearchTable(c *gin.Context) {
-
-	args := []interface{}{}
-	// Parse query parameters from the URL
+	// Parse query parameters
 	searchValue := c.Query("query")
 	konto := c.Query("konto")
 	vkonta := c.Query("vkonta")
-	if searchValue == "" {
-		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, "Nedostaje parametar za pretrazivanje")
-		return
+	fieldName := c.DefaultQuery("fieldName", "konto")
 
+	if searchValue == "" {
+		common.WriteJSONResponse(c, http.StatusBadRequest, false, []domain.FieldError{}, "Nedostaje parametar za pretrazivanje")
+		return
 	}
+
 	session := domain.GetSessionFromContext(c)
 	if session == nil {
 		common.WriteJSONResponse(c, http.StatusUnauthorized, false, []domain.FieldError{}, "User session not found")
 		return
 	}
 
-	whereKonto := ""
-	// Custom SQL query for searching konto, sifra, or naziv
-	args = append(args, session.SelectedGod, session.SelectedKar)
-	sqlQuery := `SELECT idfkpl, f.konto, f.sifra, f.naziv
-				FROM baza.fkpl as f`
-	if konto != "" {
-		whereKonto = ` AND konto = $3 AND f.vkonta = $4 AND (f.konto ILIKE '%' || $5 || '%' 
-										OR f.sifra ILIKE '%' || $6 || '%' 
-										OR f.naziv ILIKE '%' || $7 || '%' ) ORDER BY konto LIMIT 20 `
-		args = append(args, konto)
-	} else {
-		whereKonto = ` AND f.vkonta = $3 AND (f.konto ILIKE '%' || $4 || '%' 
-										OR f.sifra ILIKE '%' || $5 || '%' 
-										OR f.naziv ILIKE '%' || $6 || '%' ) ORDER BY konto LIMIT 20 `
+	// Build query
+	qb := common.NewQueryBuilder(`SELECT f.idfkpl, f.konto, f.sifra, f.naziv FROM baza.fkpl as f`)
 
+	hasGod, hasKar := h.Service.Repo.GetHasGodHasKar()
+	if hasGod {
+		qb.AddEqual("f.god", session.SelectedGod)
 	}
-	whereText := fmt.Sprintf(`WHERE f.god = $1 AND f.kar = $2  %s`, whereKonto)
-	args = append(args, vkonta, searchValue, searchValue, searchValue)
-	entities, err := h.Service.GetAllCustom(c, sqlQuery, whereText, args, "", "")
+	if hasKar {
+		qb.AddEqual("f.kar", session.SelectedKar)
+	}
+
+	if konto != "" {
+		qb.AddEqual("f.konto", konto)
+	}
+
+	if vkonta != "" {
+		qb.AddEqual("f.vkonta", vkonta)
+	}
+
+	nbrArgs := qb.GetArgsCount()
+	qb.AddCustomCondition(`(f.konto ILIKE '%' || $%d || '%' OR f.sifra ILIKE '%' || $%d || '%' OR f.naziv ILIKE '%' || $%d || '%')`, nbrArgs+1, nbrArgs+2, nbrArgs+3)
+	qb.AddCustomCondition("ORDER BY f.konto LIMIT 20")
+
+	sqlQuery, args := qb.Build()
+	entities, err := h.Service.GetAllCustom(c, sqlQuery, "", args, "", "")
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, common.ErrMsgReadData)
 		return
 	}
-	// Convert the fetched data into the format expected by the template
+
+	// Prepare table data
 	tbl := common.SetTableBasicData("", searchKontoTableID, fkplSearchTableFields, "", "", 0, 0, 0, 0, h.cfg)
 	tbl.ShowActions = false
 	tbl.ShowPagination = false
-	tbl.FuncClick = "selectRow"                             // naziv js function for Click
-	tbl.FuncDblClick = "handleDblClickKontoSelection(this)" // naziv js function for dblClick
-	if vkonta == "2" {
-		tbl.DestField = "konto"
+	tbl.FuncClick = "selectRow"
+	tbl.FuncDblClick = "handleDblClickKontoSelection(this)"
+
+	// Determine destination field based on vkonta or fieldName
+	destFieldMap := map[string]string{
+		"2": "konto",
+		"1": "sifra",
 	}
-	if vkonta == "1" {
-		tbl.DestField = "sifra"
+	if destField, exists := destFieldMap[vkonta]; exists {
+		tbl.DestField = destField
+	} else {
+		tbl.DestField = fieldName
 	}
 
-	// Prepare TableData for UI
 	tblRows, err := common.SetTableRows(&tbl, *entities, fkplSearchTableFields, "idfkpl", "", h.Service.GetFieldCache())
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, "Failed to set table rows")
 		return
 	}
+
 	tbl.Rows = tblRows.Rows
-	tbl.BtnAdd = domain.Button{IsVisible: false}   // Hide Add button in this view
-	tbl.BtnPrint = domain.Button{IsVisible: false} // Hide Print button in this view
+	tbl.BtnAdd = domain.Button{IsVisible: false}
+	tbl.BtnPrint = domain.Button{IsVisible: false}
 
 	utils.RenderContent(c, tbl)
 }

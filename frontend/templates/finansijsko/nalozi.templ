@@ -5,45 +5,17 @@ import (
 	tmpl "helia/frontend/templates"
 	"helia/internal/common"
 	"helia/internal/domain"
-	"helia/internal/i18n"
+	"helia/i18n"
 )
 
 var tabClasses string
 
-const (
-	dateLayout string = "02.01.2006"
-)
-
 templ NaloziContent(tabs domain.TabData, tipdokValues []domain.ComboItem, ukObrada domain.UkupnaObrada, btnSave, btnNoviNalog domain.Button, tbl domain.TableData, searchControl domain.InputControl, nalogPayload domain.FnalPayload, translator *i18n.Service, csrfToken string) {
 	<!-- Container with full height -->
 	<div id="main-content" class="flex flex-col h-full">
-		@NaloziNav(tabs, translator)
+		@tmpl.TabNav(translator.Title("Nalozi za knjizenje"), tabs, "#main-content", "knjizenje-panel", translator)
 		@NaloziKnjizenjeContent(tipdokValues, ukObrada, btnSave, btnNoviNalog, tbl, searchControl, nalogPayload, translator, csrfToken)
 	</div>
-}
-
-templ NaloziNav(tabs domain.TabData, translator *i18n.Service) {
-	<h2 class="text-xl font-semibold">{ translator.Title("Nalozi za knjizenje") }</h2>
-	<nav class="py-1 h-8 text-sm font-medium text-gray-700 flex items-center whitespace-nowrap" aria-label="Tabs">
-		for _, item := range tabs.Tabs {
-			<input id={ fmt.Sprintf("tab%s", item.Name) } type="hidden" name="sourceTab" value={ item.Name }/>
-			<button
-				id={ item.ID }
-				if item.IsActive {
-					class="whitespace-nowrap rounded-t-lg py-1 px-1 font-medium text-sm rounded-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-				} else {
-					class="whitespace-nowrap rounded-t-lg py-1 px-1 font-medium text-sm rounded-sm text-gray-600 bg-white border border-gray-300 hover:text-blue-700 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-				}
-				hx-get={ item.HXRequestUrl }
-				hx-target="#main-content"
-				hx-swap="innerHTML"
-				aria-controls="knjizenje-panel"
-				aria-selected={ fmt.Sprintf("%v", item.IsActive) }
-			>
-				{ translator.Label(item.Label) }
-			</button>
-		}
-	</nav>
 }
 
 templ NaloziKnjizenjeContent(tipdokValues []domain.ComboItem, ukObrada domain.UkupnaObrada, btnSave, btnNoviNalog domain.Button, tbl domain.TableData, searchControl domain.InputControl, nalogPayload domain.FnalPayload, translator *i18n.Service, csrfToken string) {
@@ -118,6 +90,7 @@ templ NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Uku
 						MaxLength:        "10",
 						TabIndex:         "1",
 						OnInput:          "clearFieldError",
+						OnFocus:          "clearFieldError",
 						HxOnAfterRequest: "handleUpdateNalogDataResponse"})
 					@tmpl.LabelField(domain.LabelFieldConfig{
 						ID:         "danal",
@@ -132,7 +105,8 @@ templ NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Uku
 						Disabled:   false,
 						ClassInput: common.ClassInputTextEnabled + " pl-2 w-full",
 						TabIndex:   "2",
-						OnInput:    "clearFieldError"})
+						OnInput:    "clearFieldError",
+						OnFocus:    "clearFieldError"})
 					@tmpl.LabelField(domain.LabelFieldConfig{
 						ID:         "datob",
 						LabelText:  translator.Label("Datum Obrade"),
@@ -146,7 +120,8 @@ templ NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Uku
 						Disabled:   false,
 						ClassInput: common.ClassInputTextEnabled + " pl-2 w-full",
 						TabIndex:   "3",
-						OnInput:    "clearFieldError"})
+						OnInput:    "clearFieldError",
+						OnFocus:    "clearFieldError"})
 				</div>
 				<!-- Third row: Opis knjiženja -->
 				<div class="flex items-center">
@@ -238,16 +213,6 @@ templ NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Uku
 	@tmpl.ShowMessage()
 }
 
-templ NaloziSave() {
-	<div class="flex justify-between items-center mb-4">
-		<h1 class="text-2xl font-bold">Nalozi</h1>
-		<div class="flex space-x-2">
-			<button class="btn btn-primary" hx-get="/nalozi/create" hx-target="#dialog-container" hx-swap="innerHTML">Dodaj</button>
-			<button class="btn btn-secondary" onclick="toggleSearch(this)">Pretraga</button>
-		</div>
-	</div>
-}
-
 templ NaloziHeader(tblHeader domain.TableData, translator *i18n.Service) {
 	<div class="border-b border-gray-200 mb-4">
 		@tmpl.Table(tblHeader, translator)
@@ -267,7 +232,7 @@ templ NaloziKopiranje(tabs domain.TabData, tblHeader, tblStavke domain.TableData
 	<div class="flex flex-col h-full">
 		<!-- Tab Content -->
 		<div id="tab2" class="flex-1 min-h-0 flex flex-col gap-1">
-			@NaloziNav(tabs, translator)
+			@tmpl.TabNav(translator.Title("Nalozi za knjizenje"), tabs, "#main-content", "knjizenje-panel", translator)
 			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
 				@tmpl.Search_Part(tblHeader, searchControl)
 				<!-- Table -->
@@ -285,7 +250,7 @@ templ NaloziStorniranje(tabs domain.TabData, tblHeader, tblStavke domain.TableDa
 	<div class="flex flex-col h-full">
 		<!-- Tab Content -->
 		<div id="tab3" class="flex-1 min-h-0 flex flex-col gap-1">
-			@NaloziNav(tabs, translator)
+			@tmpl.TabNav(translator.Title("Nalozi za storniranje"), tabs, "#main-content", "storniranje-panel", translator)
 			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
 				@tmpl.Search_Part(tblHeader, searchControl)
 				<!-- Table -->
@@ -303,7 +268,7 @@ templ NaloziStampanje(tabs domain.TabData, tblHeader, tblStavke domain.TableData
 	<div class="flex flex-col h-full">
 		<!-- Tab Content -->
 		<div id="tab4" class="flex-1 min-h-0 flex flex-col gap-1">
-			@NaloziNav(tabs, translator)
+			@tmpl.TabNav(translator.Title("Nalozi za stampanje"), tabs, "#main-content", "stampanje-panel", translator)
 			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
 				@tmpl.Search_Part(tblHeader, searchControl)
 				<!-- Table -->

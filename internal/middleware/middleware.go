@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"helia/i18n"
 	"helia/internal/domain"
-	"helia/internal/i18n"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"

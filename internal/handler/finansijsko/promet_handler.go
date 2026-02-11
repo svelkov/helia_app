@@ -6,31 +6,39 @@ import (
 	"net/http"
 
 	tmpl_fin "helia/frontend/templates/finansijsko"
+	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
-	"helia/internal/i18n"
 	"helia/internal/middleware"
-	"helia/internal/service"
+	finservice "helia/internal/service/finansijsko"
 	"helia/pkg/utils"
 
 	"github.com/gin-gonic/gin"
 )
 
 const (
-	prometContentTitle string = "PROMET"
-	prometTableID      string = "promettable"
-	prometURLPrefix    string = "/api/promet/"
-	prometURLGetAll    string = "/api/promet/all"
+	prometContentTitle        string = "PROMET"
+	prometTableID             string = "promettable"
+	prometURLPrefix           string = "/api/promet/"
+	prometURLGetAll           string = "/api/promet/all"
+	prometURLAnKonta          string = "/api/promet/analitickakonta"
+	prometURLAnKontaMi        string = "/api/promet/analitickakontami"
+	prometURLDeviznaKonta     string = "/api/promet/deviznihanalitickihkonta"
+	prometURLSubsintetika     string = "/api/promet/subsintetickakonta"
+	prometURLSintetika        string = "/api/promet/sintetickakonta"
+	prometURLKarticaSintetika string = "/api/promet/karticasintetickihkonta"
+	prometURLSubsintetikaVrd  string = "/api/promet/subsintetickakontapovrd"
+	prometURLKontaAnaliticki  string = "/api/promet/kontaanaliticki"
 )
 
 type PrometHandler struct {
 	tabData domain.TabData
-	service *service.PrometResource
+	service finservice.PrometService
 	cfg     config.Config
 }
 
 const (
-	hxVals = `js:{
+	hxValsAnalitickihKonta = `js:{
             konto: document.getElementById("konto")?.value,
             sifra: document.getElementById("sifra")?.value,
             oddatuma: document.getElementById("oddatuma")?.value,
@@ -44,11 +52,49 @@ const (
 			odmi: document.getElementById("odmi")?.value,
 			domi: document.getElementById("domi")?.value,
         }`
+	hxValsDeviznaKonta = `js:{
+            konto: document.getElementById("konto")?.value,
+            sifra: document.getElementById("sifra")?.value,
+            oddatuma: document.getElementById("oddatuma")?.value,
+            dodatuma: document.getElementById("dodatuma")?.value,
+			odmi: document.getElementById("odmi")?.value,
+			domi: document.getElementById("domi")?.value,
+        }`
+	hxValsSubsintetika = `js:{
+            odkonta: document.getElementById("odkonta")?.value,
+			dokonta: document.getElementById("dokonta")?.value,
+            oddatuma: document.getElementById("oddatuma")?.value,
+            dodatuma: document.getElementById("dodatuma")?.value
+			}`
+	hxValsSintetika = `js:{
+            konto: document.getElementById("konto")?.value,
+            oddatuma: document.getElementById("oddatuma")?.value,
+            dodatuma: document.getElementById("dodatuma")?.value
+			}`
+	hxValsKarticaSintetika = `js:{
+            konto: document.getElementById("konto")?.value,
+            oddatuma: document.getElementById("oddatuma")?.value,
+            dodatuma: document.getElementById("dodatuma")?.value,
+			analitika: document.getElementById("analitika")?.checked
+			}`
+	hxValsSubsintetikaVrd = `js:{
+            konto: document.getElementById("konto")?.value,
+            oddatuma: document.getElementById("oddatuma")?.value,
+            dodatuma: document.getElementById("dodatuma")?.value
+			}`
+	hxValsKontaAnaliticki = `js:{
+            konto: document.getElementById("konto")?.value,
+			odsifre: document.getElementById("odsifre")?.value,
+			dosifre: document.getElementById("dosifre")?.value,
+            oddatuma: document.getElementById("oddatuma")?.value,
+            dodatuma: document.getElementById("dodatuma")?.value,
+			}`
 )
 
-func NewPrometHandler(service *service.PrometResource, cfg config.Config) *PrometHandler {
+func NewPrometHandler(service finservice.PrometService, cfg config.Config) *PrometHandler {
 	handler := &PrometHandler{
-		cfg: cfg,
+		service: service,
+		cfg:     cfg,
 	}
 	handler.tabData = GetTabData()
 	handler.service = service
@@ -57,15 +103,21 @@ func NewPrometHandler(service *service.PrometResource, cfg config.Config) *Prome
 
 func (h *PrometHandler) PrometMain(c *gin.Context) {
 	// Create configuration
+	session := domain.GetSessionFromContext(c)
+	gnGod := 0
+	if session != nil {
+		gnGod = session.SelectedGod
+	}
 
-	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/analitickakonta", "#promettable", "innerHTML", "GET", "#konto, #sifra, #oddatuma, #dodatuma", hxVals, true, common.ClassSaveButton, "handleDialogResponse")
+	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/analitickakonta", "#promettable", "innerHTML", "GET", "#konto, #sifra, #oddatuma, #dodatuma", hxValsAnalitickihKonta, true, common.ClassSaveButton, "handleDialogResponse")
 	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
+	searchInput := common.CreateSearchInput(i18n.GetInstance(), prometURLAnKonta, fmt.Sprintf("#%s", prometTableID), hxValsAnalitickihKonta)
 
 	tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetAnkontaTableFields(), "", "", 0, 0, 0, 0, h.cfg)
-	tbl.ShowActions = false
+	common.SetTableConfig(&tbl, prometContentTitle, "", false, false, false)
 	tbl.FuncClick = "selectRow"                             // naziv js function for Click
 	tbl.FuncDblClick = "handleDblClickKontoSelection(this)" // naziv js function for dblClick
-	err := tmpl_fin.PrometMain(h.tabData, tbl, btnPrint, btnObrada, domain.PrometTotalValues{}, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+	err := tmpl_fin.PrometMain(h.tabData, tbl, btnPrint, btnObrada, domain.TotalValues{}, searchInput, gnGod, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 		return
@@ -75,57 +127,54 @@ func (h *PrometHandler) PrometMain(c *gin.Context) {
 func (h *PrometHandler) PrometAnalitickihKonta(c *gin.Context) {
 	// Get our custom header
 	requestSource := c.Request.Header.Get("X-Request-Source")
+	translator := i18n.GetInstance()
 	if requestSource == "menu" || requestSource == "tab" {
-		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/analitickakonta", "#promettable", "innerHTML", "GET", "", hxVals, true, common.ClassSaveButton, "handleDialogResponse")
+		session := domain.GetSessionFromContext(c)
+		gnGod := 0
+		if session != nil {
+			gnGod = session.SelectedGod
+		}
+
+		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", prometURLAnKonta, "#promettable", "innerHTML", "GET", "", hxValsAnalitickihKonta, true, common.ClassSaveButton, "handleDialogResponse")
 		btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
+		searchInput := common.CreateSearchInput(translator, prometURLAnKonta, fmt.Sprintf("#%s", prometTableID), hxValsAnalitickihKonta)
 
 		//if the call come from menu click or tab click then render the page with parameters and empty table
 		tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetAnkontaTableFields(), "", "", 0, 0, 0, 0, h.cfg)
-		tbl.ShowActions = false
+		common.SetTableConfig(&tbl, prometContentTitle, "", false, false, false)
 		h.tabData = setActiveTab(h.tabData, "analitickakonta")
-		err := tmpl_fin.PrometAnalitickihKonta(h.tabData, tbl, btnPrint, btnObrada, domain.PrometTotalValues{}, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+		err := tmpl_fin.PrometAnalitickihKonta(h.tabData, tbl, btnPrint, btnObrada, domain.TotalValues{}, searchInput, gnGod, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
 		}
 	}
 	// If it's a POST request, the make obrada
-	if requestSource == "btnobrada" || requestSource == "btnpage" {
+	if requestSource == "btnobrada" || requestSource == "btnpage" || requestSource == "searchinput" {
 		//validacija input parametre:
 		fieldParameters := []string{"konto", "sifra", "oddatuma", "dodatuma"}
-		fieldsError := h.service.CheckPrometParameters(c, fieldParameters)
+		fieldsError := common.ValidateRequiredParams(c, fieldParameters)
 		if len(fieldsError) > 0 {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldsError, common.ErrMsgValidation)
 			return
 		}
 
 		page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
-		response, err := h.service.GetPrometAnalitickihKonta(c, true, 0, 0)
+		tbl := common.SetTableBasicData("", prometTableID, h.service.GetAnkontaTableFields(), "", prometURLAnKonta, 0, 0, 0, 0, h.cfg)
+		common.SetTableConfig(&tbl, "", prometURLAnKonta, false, false, false)
+		tbl.Pagination.HxVals = hxValsAnalitickihKonta
+
+		err := h.service.GetPrometAnalitickihKonta(c, &tbl, true, pageSize, page, false)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
 			return
 		}
-		totalRecords := response.TotalRecords
-		totalPages := (totalRecords + pageSize - 1) / pageSize
-		// Get paginated data
-		response, err = h.service.GetPrometAnalitickihKonta(c, false, pageSize, page)
+
+		err = h.service.GetPrometAnalitickihKonta(c, &tbl, false, pageSize, page, false)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
 		}
-		tbl := common.SetTableBasicData("", prometTableID, h.service.GetAnkontaTableFields(), "", "/api/promet/analitickakonta", pageSize, page, totalPages, totalRecords, h.cfg)
-		tbl.ShowActions = false
-		tbl.ShowPagination = true
-		tbl.Pagination.HxVals = hxVals
-		// Prepare TableData for UI
-		tblRows, err := common.SetTableRows(&tbl, response.Data, h.service.GetAnkontaTableFields(), "idfpro", "", h.service.GetFieldCache())
-		if err != nil {
-			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgFailedToSetTableRow)
-			return
-		}
-		tbl.Rows = tblRows.Rows
-		tbl.BtnAdd = domain.Button{IsVisible: false}   // Hide Add button in this view
-		tbl.BtnPrint = domain.Button{IsVisible: false} // Hide Print button in this view
 
 		utils.RenderContent(c, tbl)
 	}
@@ -134,173 +183,389 @@ func (h *PrometHandler) PrometAnalitickihKonta(c *gin.Context) {
 func (h *PrometHandler) PrometAnalitickihKontaPoMI(c *gin.Context) {
 	// Get our custom header
 	requestSource := c.Request.Header.Get("X-Request-Source")
+	translator := i18n.GetInstance()
+	tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetAnKontaMiTableFields(), "", prometURLAnKontaMi, 0, 0, 0, 0, h.cfg)
+
 	if requestSource == "menu" || requestSource == "tab" {
-		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/analitickakontami", "#promettable", "innerHTML", "GET", "", hxValsMI, true, common.ClassSaveButton, "handleDialogResponse")
+		session := domain.GetSessionFromContext(c)
+		gnGod := 0
+		if session != nil {
+			gnGod = session.SelectedGod
+		}
+
+		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", prometURLAnKontaMi, "#promettable", "innerHTML", "GET", "", hxValsMI, true, common.ClassSaveButton, "handleDialogResponse")
 		btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
+		searchInput := common.CreateSearchInput(translator, prometURLAnKontaMi, fmt.Sprintf("#%s", prometTableID), hxValsMI)
 
 		//if the call come from menu click or tab click then render the page with parameters and empty table
-		tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetAnKontaMiTableFields(), "", "", 0, 0, 0, 0, h.cfg)
-		tbl.ShowActions = false
+		common.SetTableConfig(&tbl, prometContentTitle, prometURLAnKontaMi, false, false, false)
 		h.tabData = setActiveTab(h.tabData, "analitickakontami")
-		err := tmpl_fin.AnalitickaKarticaPoMI(h.tabData, tbl, btnPrint, btnObrada, domain.PrometTotalValues{}, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+		err := tmpl_fin.AnalitickaKarticaPoMI(h.tabData, tbl, btnPrint, btnObrada, domain.TotalValues{}, searchInput, gnGod, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
 		}
 	}
 	// If it's a POST request, the make obrada
-	if requestSource == "btnobrada" || requestSource == "btnpage" {
+	if requestSource == "btnobrada" || requestSource == "btnpage" || requestSource == "searchinput" {
 		//validacija input parametre:
-		fieldParameters := []string{"konto", "sifra", "oddatuma", "dodatuma", "odmi", "domi"}
-		fieldsError := h.service.CheckPrometParameters(c, fieldParameters)
+		fieldParameters := []string{"konto", "sifra", "oddatuma", "dodatuma"}
+		fieldsError := common.ValidateRequiredParams(c, fieldParameters)
 		if len(fieldsError) > 0 {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldsError, common.ErrMsgValidation)
 			return
 		}
 
 		page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
-		response, err := h.service.GetPrometAnalitickihKontaMi(c, true, 0, 0)
+		tbl := common.SetTableBasicData("", prometTableID, h.service.GetAnKontaMiTableFields(), "", prometURLAnKontaMi, 0, 0, 0, 0, h.cfg)
+		common.SetTableConfig(&tbl, "", prometURLAnKontaMi, false, false, false)
+		tbl.Pagination.HxVals = hxValsMI
+
+		err := h.service.GetPrometAnalitickihKonta(c, &tbl, true, pageSize, page, true)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
 			return
 		}
-		totalRecords := response.TotalRecords
-		totalPages := (totalRecords + pageSize - 1) / pageSize
-		// Get paginated data
-		response, err = h.service.GetPrometAnalitickihKontaMi(c, false, pageSize, page)
+
+		err = h.service.GetPrometAnalitickihKonta(c, &tbl, false, pageSize, page, true)
 		if err != nil {
-			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetData)
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
 		}
-		tbl := common.SetTableBasicData("", prometTableID, h.service.GetAnkontaTableFields(), "", "/api/promet/analitickakontami", pageSize, page, totalPages, totalRecords, h.cfg)
-		tbl.ShowActions = false
-		tbl.ShowPagination = true
-		tbl.Pagination.HxVals = hxVals
-		// Prepare TableData for UI
-		tblRows, err := common.SetTableRows(&tbl, response.Data, h.service.GetAnkontaTableFields(), "idfpro", "", h.service.GetFieldCache())
-		if err != nil {
-			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgFailedToSetTableRow)
-			return
-		}
-		tbl.Rows = tblRows.Rows
-		tbl.BtnAdd = domain.Button{IsVisible: false}   // Hide Add button in this view
-		tbl.BtnPrint = domain.Button{IsVisible: false} // Hide Print button in this view
 
 		utils.RenderContent(c, tbl)
 	}
 }
 func (h *PrometHandler) PrometDeviznihAnalitickihKonta(c *gin.Context) {
-	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/deviznihanalitickihkonta", "#promettable", "innerHTML", "GET", "", hxVals, true, common.ClassSaveButton, "handleDialogResponse")
-	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
+	requestSource := c.Request.Header.Get("X-Request-Source")
 
-	tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetAnDeviznaKontaTableFields(), "", "", 0, 0, 0, 0, h.cfg)
-	tbl.ShowActions = false
+	if requestSource == "menu" || requestSource == "tab" {
+		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", prometURLDeviznaKonta, "#promettable", "innerHTML", "GET", "", hxValsDeviznaKonta, true, common.ClassSaveButton, "handleDialogResponse")
+		btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
 
-	h.tabData = setActiveTab(h.tabData, "deviznihanalitickihkonta")
-	err := tmpl_fin.PrometDeviznihAnalitickihKonta(h.tabData, tbl, tbl, btnPrint, btnObrada, domain.PrometTotalValues{}, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
-	if err != nil {
-		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
+		tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetAnDeviznaKontaTableFields(), "", "", 0, 0, 0, 0, h.cfg)
+		common.SetTableConfig(&tbl, "", "", false, false, false)
+
+		h.tabData = setActiveTab(h.tabData, "deviznihanalitickihkonta")
+		session := domain.GetSessionFromContext(c)
+		gnGod := 0
+		if session != nil {
+			gnGod = session.SelectedGod
+		}
+		err := tmpl_fin.PrometDeviznihAnalitickihKonta(h.tabData, tbl, tbl, btnPrint, btnObrada, domain.TotalValues{}, gnGod, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+		if err != nil {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
+			return
+		}
 		return
 	}
-	//validacija input parametre:
-	fieldParameters := []string{"konto", "sifra", "oddatuma", "dodatuma"}
-	fieldsError := h.service.CheckPrometParameters(c, fieldParameters)
-	if len(fieldsError) > 0 {
-		common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldsError, common.ErrMsgValidation)
-		return
-	}
 
-	page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
-	response, err := h.service.GetPrometAnalitickihKonta(c, true, 0, 0)
-	if err != nil {
-		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
-		return
-	}
-	totalRecords := response.TotalRecords
-	totalPages := (totalRecords + pageSize - 1) / pageSize
-	// Get paginated data
-	response, err = h.service.GetPrometAnalitickihKonta(c, false, pageSize, page)
-	if err != nil {
-		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
-		return
-	}
-	tbl = common.SetTableBasicData("", prometTableID, h.service.GetAnkontaTableFields(), "", "/api/promet/deviznihanalitickihkonta", pageSize, page, totalPages, totalRecords, h.cfg)
-	tbl.ShowActions = false
-	tbl.ShowPagination = true
-	tbl.Pagination.HxVals = hxVals
-	// Prepare TableData for UI
-	tblRows, err := common.SetTableRows(&tbl, response.Data, h.service.GetAnkontaTableFields(), "idfpro", "", h.service.GetFieldCache())
-	if err != nil {
-		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgFailedToSetTableRow)
-		return
-	}
-	tbl.Rows = tblRows.Rows
-	tbl.BtnAdd = domain.Button{IsVisible: false}   // Hide Add button in this view
-	tbl.BtnPrint = domain.Button{IsVisible: false} // Hide Print button in this view
+	if requestSource == "btnobrada" || requestSource == "btnpage" {
+		//validacija input parametre:
+		fieldParameters := []string{"konto", "sifra", "oddatuma", "dodatuma"}
+		fieldsError := common.ValidateRequiredParams(c, fieldParameters)
+		if len(fieldsError) > 0 {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldsError, common.ErrMsgValidation)
+			return
+		}
+		page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
+		tbl := common.SetTableBasicData("", prometTableID, h.service.GetAnkontaTableFields(), "", prometURLDeviznaKonta, 0, 0, 0, 0, h.cfg)
+		common.SetTableConfig(&tbl, "", prometURLDeviznaKonta, false, false, false)
+		tbl.Pagination.HxVals = hxValsDeviznaKonta
 
-	utils.RenderContent(c, tbl)
+		err := h.service.GetPrometAnalitickihKonta(c, &tbl, true, pageSize, page, false)
+		if err != nil {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
+			return
+		}
 
+		err = h.service.GetPrometAnalitickihKonta(c, &tbl, false, pageSize, page, false)
+		if err != nil {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
+			return
+		}
+
+		utils.RenderContent(c, tbl)
+	}
 }
-
 func (h *PrometHandler) PrometSubsintetickihKonta(c *gin.Context) {
-	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/subsintetickakonta", "#promettable", "innerHTML", "POST", "", "", true, common.ClassObradaButton, "handleDialogResponse('tab4')")
-	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
+	// Get our custom header
+	requestSource := c.Request.Header.Get("X-Request-Source")
+	translator := i18n.GetInstance()
+	if requestSource == "menu" || requestSource == "tab" {
+		session := domain.GetSessionFromContext(c)
+		gnGod := 0
+		if session != nil {
+			gnGod = session.SelectedGod
+		}
 
-	tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetSubsintetickihKontaTableFields(), "", "", 0, 0, 0, 0, h.cfg)
-	tbl.ShowActions = false
+		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", prometURLSubsintetika, "#promettable", "innerHTML", "GET", "", hxValsSubsintetika, true, common.ClassSaveButton, "handleDialogResponse")
+		btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
+		searchInput := common.CreateSearchInput(translator, prometURLSubsintetika, fmt.Sprintf("#%s", prometTableID), hxValsSubsintetika)
 
-	h.tabData = setActiveTab(h.tabData, "subsintetickakonta")
-	err := tmpl_fin.PrometSubsintetickihKonta(h.tabData, tbl, btnPrint, btnObrada, domain.PrometTotalValues{}, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
-	if err != nil {
-		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
-		return
+		//if the call come from menu click or tab click then render the page with parameters and empty table
+		tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetSubsintetickihKontaTableFields(), "", prometURLSubsintetika, 0, 0, 0, 0, h.cfg)
+		common.SetTableConfig(&tbl, prometContentTitle, prometURLSubsintetika, false, false, false)
+		h.tabData = setActiveTab(h.tabData, "subsintetickakonta")
+		err := tmpl_fin.PrometSubsintetickihKonta(h.tabData, tbl, btnPrint, btnObrada, domain.TotalValues{}, searchInput, gnGod, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+		if err != nil {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
+			return
+		}
+	}
+	// If it's a POST request, the make obrada
+	if requestSource == "btnobrada" || requestSource == "btnpage" || requestSource == "searchinput" {
+		//validacija input parametre:
+		fieldParameters := []string{"odkonta", "dokonta", "oddatuma", "dodatuma"}
+		fieldsError := common.ValidateRequiredParams(c, fieldParameters)
+		if len(fieldsError) > 0 {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldsError, common.ErrMsgValidation)
+			return
+		}
+
+		page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
+		tbl := common.SetTableBasicData("", prometTableID, h.service.GetSubsintetickihKontaTableFields(), "", prometURLSubsintetika, 0, 0, 0, 0, h.cfg)
+		common.SetTableConfig(&tbl, "", prometURLSubsintetika, false, false, false)
+		tbl.Pagination.HxVals = hxValsSubsintetika
+
+		err := h.service.GetPrometSubsintetickihKonta(c, &tbl, true, pageSize, page)
+		if err != nil {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
+			return
+		}
+
+		err = h.service.GetPrometSubsintetickihKonta(c, &tbl, false, pageSize, page)
+		if err != nil {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
+			return
+		}
+
+		utils.RenderContent(c, tbl)
 	}
 }
 func (h *PrometHandler) PrometSintetickihKonta(c *gin.Context) {
-	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/sintetickakonta", "#promet-table", "innerHTML", "POST", "", "", true, common.ClassObradaButton, "handleDialogResponse('tab5')")
-	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
+	// Get our custom header
+	requestSource := c.Request.Header.Get("X-Request-Source")
+	translator := i18n.GetInstance()
+	if requestSource == "menu" || requestSource == "tab" {
+		session := domain.GetSessionFromContext(c)
+		gnGod := 0
+		if session != nil {
+			gnGod = session.SelectedGod
+		}
 
-	tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetSintetickihKontaTableFields(), "", "", 0, 0, 0, 0, h.cfg)
-	tbl.ShowActions = false
+		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", prometURLSintetika, "#promettable", "innerHTML", "GET", "", hxValsSintetika, true, common.ClassSaveButton, "handleDialogResponse")
+		btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
+		searchInput := common.CreateSearchInput(translator, prometURLSintetika, fmt.Sprintf("#%s", prometTableID), hxValsSintetika)
 
-	h.tabData = setActiveTab(h.tabData, "sintetickakonta")
-	err := tmpl_fin.PrometSintetickihKonta(h.tabData, tbl, btnPrint, btnObrada, domain.PrometTotalValues{}, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
-	if err != nil {
-		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
-		return
+		//if the call come from menu click or tab click then render the page with parameters and empty table
+		tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetSintetickihKontaTableFields(), "", prometURLSintetika, 0, 0, 0, 0, h.cfg)
+		common.SetTableConfig(&tbl, prometContentTitle, prometURLSintetika, false, false, false)
+		h.tabData = setActiveTab(h.tabData, "sintetickakonta")
+		err := tmpl_fin.PrometSintetickihKonta(h.tabData, tbl, btnPrint, btnObrada, domain.TotalValues{}, searchInput, gnGod, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+		if err != nil {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
+			return
+		}
+	}
+	// If it's a POST request, the make obrada
+	if requestSource == "btnobrada" || requestSource == "btnpage" || requestSource == "searchinput" {
+		//validacija input parametre:
+		fieldParameters := []string{"konto", "oddatuma", "dodatuma"}
+		fieldsError := common.ValidateRequiredParams(c, fieldParameters)
+		if len(fieldsError) > 0 {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldsError, common.ErrMsgValidation)
+			return
+		}
+
+		page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
+		tbl := common.SetTableBasicData("", prometTableID, h.service.GetSintetickihKontaTableFields(), "", prometURLSintetika, 0, 0, 0, 0, h.cfg)
+		common.SetTableConfig(&tbl, "", prometURLSintetika, false, false, false)
+		tbl.Pagination.HxVals = hxValsSintetika
+
+		err := h.service.GetPrometSintetickihKonta(c, &tbl, true, pageSize, page)
+		if err != nil {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
+			return
+		}
+
+		err = h.service.GetPrometSintetickihKonta(c, &tbl, false, pageSize, page)
+		if err != nil {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
+			return
+		}
+
+		utils.RenderContent(c, tbl)
 	}
 }
-func (h *PrometHandler) KarticaSintetickihKonta(c *gin.Context) {
-	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/karticasintetickihkonta", "#promettable", "innerHTML", "POST", "", "", true, common.ClassObradaButton, "handleDialogResponse('tab6')")
-	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
+func (h *PrometHandler) PrometKarticaSintetickihKonta(c *gin.Context) {
+	// Get our custom header
+	requestSource := c.Request.Header.Get("X-Request-Source")
+	translator := i18n.GetInstance()
+	if requestSource == "menu" || requestSource == "tab" {
+		session := domain.GetSessionFromContext(c)
+		gnGod := 0
+		if session != nil {
+			gnGod = session.SelectedGod
+		}
 
-	tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetKarticaSintetickihKontaTableFields(), "", "", 0, 0, 0, 0, h.cfg)
-	tbl.ShowActions = false
+		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", prometURLKarticaSintetika, "#promettable", "innerHTML", "GET", "", hxValsKarticaSintetika, true, common.ClassSaveButton, "handleDialogResponse")
+		btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
+		searchInput := common.CreateSearchInput(translator, prometURLKarticaSintetika, fmt.Sprintf("#%s", prometTableID), hxValsKarticaSintetika)
 
-	h.tabData = setActiveTab(h.tabData, "karticasintetickihkonta")
-	err := tmpl_fin.KarticaSintetickiKonta(h.tabData, tbl, btnPrint, btnObrada, domain.PrometTotalValues{}, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
-	if err != nil {
-		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
-		return
+		//if the call come from menu click or tab click then render the page with parameters and empty table
+		tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetKarticaSintetikaTableFields(), "", prometURLKarticaSintetika, 0, 0, 0, 0, h.cfg)
+		common.SetTableConfig(&tbl, prometContentTitle, prometURLKarticaSintetika, false, false, false)
+		h.tabData = setActiveTab(h.tabData, "karticasintetickihkonta")
+		err := tmpl_fin.KarticaSintetickiKonta(h.tabData, tbl, btnPrint, btnObrada, domain.TotalValues{}, searchInput, gnGod, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+		if err != nil {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
+			return
+		}
+	}
+	// If it's a POST request, the make obrada
+	if requestSource == "btnobrada" || requestSource == "btnpage" || requestSource == "searchinput" {
+		//validacija input parametre:
+		fieldParameters := []string{"konto", "oddatuma", "dodatuma"}
+		fieldsError := common.ValidateRequiredParams(c, fieldParameters)
+		if len(fieldsError) > 0 {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldsError, common.ErrMsgValidation)
+			return
+		}
+
+		page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
+		tbl := common.SetTableBasicData("", prometTableID, h.service.GetKarticaSintetikaTableFields(), "", prometURLKarticaSintetika, 0, 0, 0, 0, h.cfg)
+		common.SetTableConfig(&tbl, "", prometURLKarticaSintetika, false, false, false)
+		tbl.Pagination.HxVals = hxValsKarticaSintetika
+
+		err := h.service.GetPrometKarticaSintetickihKonta(c, &tbl, true, pageSize, page)
+		if err != nil {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
+			return
+		}
+
+		err = h.service.GetPrometKarticaSintetickihKonta(c, &tbl, false, pageSize, page)
+		if err != nil {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
+			return
+		}
+
+		utils.RenderContent(c, tbl)
 	}
 }
+func (h *PrometHandler) PrometSubsintetickaKontaPoVRD(c *gin.Context) {
+	// Get our custom header
+	requestSource := c.Request.Header.Get("X-Request-Source")
+	translator := i18n.GetInstance()
+	if requestSource == "menu" || requestSource == "tab" {
+		session := domain.GetSessionFromContext(c)
+		gnGod := 0
+		if session != nil {
+			gnGod = session.SelectedGod
+		}
 
+		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", prometURLSubsintetikaVrd, "#promettable", "innerHTML", "GET", "", hxValsSubsintetikaVrd, true, common.ClassSaveButton, "handleDialogResponse")
+		btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
+		searchInput := common.CreateSearchInput(translator, prometURLSubsintetikaVrd, fmt.Sprintf("#%s", prometTableID), hxValsSubsintetikaVrd)
+
+		//if the call come from menu click or tab click then render the page with parameters and empty table
+		tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetSubsintetikaVrdTableFields(), "", prometURLSubsintetikaVrd, 0, 0, 0, 0, h.cfg)
+		common.SetTableConfig(&tbl, prometContentTitle, prometURLSubsintetikaVrd, false, false, false)
+		h.tabData = setActiveTab(h.tabData, "subsintetickakontapovrd")
+		err := tmpl_fin.PrometKontaPoVRD(h.tabData, tbl, btnPrint, btnObrada, domain.TotalValues{}, searchInput, gnGod, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+		if err != nil {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
+			return
+		}
+	}
+	// If it's a POST request, the make obrada
+	if requestSource == "btnobrada" || requestSource == "btnpage" || requestSource == "searchinput" {
+		//validacija input parametre:
+		fieldParameters := []string{"konto", "oddatuma", "dodatuma"}
+		fieldsError := common.ValidateRequiredParams(c, fieldParameters)
+		if len(fieldsError) > 0 {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldsError, common.ErrMsgValidation)
+			return
+		}
+
+		page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
+		tbl := common.SetTableBasicData("", prometTableID, h.service.GetSubsintetikaVrdTableFields(), "", prometURLSubsintetikaVrd, 0, 0, 0, 0, h.cfg)
+		common.SetTableConfig(&tbl, "", prometURLSubsintetikaVrd, false, false, false)
+		tbl.Pagination.HxVals = hxValsSubsintetikaVrd
+
+		err := h.service.GetPrometSubsintetikaVrd(c, &tbl, true, pageSize, page)
+		if err != nil {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
+			return
+		}
+
+		err = h.service.GetPrometSubsintetikaVrd(c, &tbl, false, pageSize, page)
+		if err != nil {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
+			return
+		}
+
+		utils.RenderContent(c, tbl)
+	}
+
+}
 func (h *PrometHandler) PrometKontaAnaliticki(c *gin.Context) {
-	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/kontaanaliticki", "#promettable", "innerHTML", "POST", "", "", true, common.ClassObradaButton, "handleDialogResponse('tab7')")
-	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
+	// Get our custom header
+	requestSource := c.Request.Header.Get("X-Request-Source")
+	translator := i18n.GetInstance()
+	if requestSource == "menu" || requestSource == "tab" {
+		session := domain.GetSessionFromContext(c)
+		gnGod := 0
+		if session != nil {
+			gnGod = session.SelectedGod
+		}
 
-	tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetKontaAnalitickiTableFields(), "", "", 0, 0, 0, 0, h.cfg)
-	tbl.ShowActions = false
+		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", prometURLKontaAnaliticki, "#promettable", "innerHTML", "GET", "", hxValsKontaAnaliticki, true, common.ClassSaveButton, "handleDialogResponse")
+		btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
+		searchInput := common.CreateSearchInput(translator, prometURLKontaAnaliticki, fmt.Sprintf("#%s", prometTableID), hxValsKontaAnaliticki)
 
-	h.tabData = setActiveTab(h.tabData, "kontaanaliticki") // Activate the "Promet konta analitički" tab
-	err := tmpl_fin.PrometKontaAnaliticki(h.tabData, tbl, btnPrint, btnObrada, domain.PrometTotalValues{}, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
-	if err != nil {
-		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
-		return
+		//if the call come from menu click or tab click then render the page with parameters and empty table
+		tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetKontaAnalitickiTableFields(), "", prometURLKontaAnaliticki, 0, 0, 0, 0, h.cfg)
+		common.SetTableConfig(&tbl, prometContentTitle, prometURLKontaAnaliticki, false, false, false)
+		h.tabData = setActiveTab(h.tabData, "kontaanaliticki")
+		err := tmpl_fin.PrometKontaAnaliticki(h.tabData, tbl, btnPrint, btnObrada, domain.TotalValues{}, searchInput, gnGod, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+		if err != nil {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
+			return
+		}
+	}
+	// If it's a POST request, the make obrada
+	if requestSource == "btnobrada" || requestSource == "btnpage" || requestSource == "searchinput" {
+		//validacija input parametre:
+		fieldParameters := []string{"konto", "oddatuma", "dodatuma", "odsifre", "dosifre"}
+		fieldsError := common.ValidateRequiredParams(c, fieldParameters)
+		if len(fieldsError) > 0 {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldsError, common.ErrMsgValidation)
+			return
+		}
+
+		page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
+		tbl := common.SetTableBasicData("", prometTableID, h.service.GetKontaAnalitickiTableFields(), "", prometURLKontaAnaliticki, 0, 0, 0, 0, h.cfg)
+		common.SetTableConfig(&tbl, "", prometURLKontaAnaliticki, false, false, false)
+		tbl.Pagination.HxVals = hxValsKontaAnaliticki
+
+		err := h.service.GetPrometKontaAnaliticki(c, &tbl, true, pageSize, page)
+		if err != nil {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
+			return
+		}
+
+		err = h.service.GetPrometKontaAnaliticki(c, &tbl, false, pageSize, page)
+		if err != nil {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
+			return
+		}
+
+		utils.RenderContent(c, tbl)
 	}
 }
 
-func (h *PrometHandler) PrometTotalValues(c *gin.Context) {
+func (h *PrometHandler) TotalValues(c *gin.Context) {
 
 	// Get totals data
 	response, err := h.service.GetPrometTotals(c)
@@ -309,7 +574,7 @@ func (h *PrometHandler) PrometTotalValues(c *gin.Context) {
 		return
 	}
 
-	err = tmpl_fin.TotalValues(response.Totals, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+	err = tmpl_fin.PrometTotalValues(response.Totals, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 		return
@@ -329,9 +594,10 @@ func (h *PrometHandler) AddRoutes(r *gin.Engine) {
 	r.GET("/api/promet/deviznihanalitickihkonta", h.PrometDeviznihAnalitickihKonta)
 	r.GET("/api/promet/subsintetickakonta", h.PrometSubsintetickihKonta)
 	r.GET("/api/promet/sintetickakonta", h.PrometSintetickihKonta)
-	r.GET("/api/promet/karticasintetickihkonta", h.KarticaSintetickihKonta)
+	r.GET("/api/promet/karticasintetickihkonta", h.PrometKarticaSintetickihKonta)
+	r.GET("/api/promet/subsintetickakontapovrd", h.PrometSubsintetickaKontaPoVRD)
 	r.GET("/api/promet/kontaanaliticki", h.PrometKontaAnaliticki)
-	r.GET("/api/promet/totalvalues", h.PrometTotalValues)
+	r.GET("/api/promet/totalvalues", h.TotalValues)
 	r.GET("/api/promet/searchbutton", utils.SearchButtonDialog)
 
 }
@@ -345,7 +611,7 @@ func GetTabData() domain.TabData {
 			{ID: "subsintetickakonta", Label: "Subsintetičkih konta", HXRequestUrl: fmt.Sprintf("%ssubsintetickakonta", prometURLPrefix), IsActive: false, Name: "subsintetickakonta"},
 			{ID: "sintetickakonta", Label: "Sintetičkih konta", HXRequestUrl: fmt.Sprintf("%ssintetickakonta", prometURLPrefix), IsActive: false, Name: "sintetickakonta"},
 			{ID: "karticasintetickihkonta", Label: "Kartica sintetičkih konta", HXRequestUrl: fmt.Sprintf("%skarticasintetickihkonta", prometURLPrefix), IsActive: false, Name: "karticasintetickihkonta"},
-			{ID: "kontapovrd", Label: "Konta po VRD", HXRequestUrl: fmt.Sprintf("%skontapovrd", prometURLPrefix), IsActive: false, Name: "kontapovrd"},
+			{ID: "subsintetickakontapovrd", Label: "Konta po VRD", HXRequestUrl: fmt.Sprintf("%ssubsintetickakontapovrd", prometURLPrefix), IsActive: false, Name: "subsintetickakontapovrd"},
 			{ID: "kontaanaliticki", Label: "Konta analitički", HXRequestUrl: fmt.Sprintf("%skontaanaliticki", prometURLPrefix), IsActive: false, Name: "kontaanaliticki"},
 		},
 	}

@@ -25,6 +25,7 @@ type Config struct {
 	DefaultLanguage string        `json:"defaultLanguage"`
 	JwtSecret       string        `json:"jwt_secret"`
 	SessionSecret   string        `json:"session_secret"`
+	NDuzSint        int           `json:"nDuzSint"`
 
 	// JWT Token Configuration (Option B - JWT-only authentication)
 	AccessTokenTTL       int  `json:"access_token_ttl"`       // In minutes, default 15

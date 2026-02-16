@@ -6,13 +6,14 @@ import "helia/internal/common"
 templ Search_Part(tbl domain.TableData, searchControl domain.InputControl) {
 	<div class="flex justify-between items-center mb-2">
 		if tbl.ContentTitle != "" {
-			<h2 class="text-xl font-semibold">{ tbl.ContentTitle }</h2>
-		}else{
+			<h4 class="text-sm font-semibold text-blue-700">{ tbl.ContentTitle }</h4>
+		} else {
 			<div></div>
 		}
-		<div class="flex space-x-1 items-center">
+		<div class="flex space-x-1 items-center pt-1 pr-1">
 			<div class="relative">
 				<input
+					id="search-input"
 					name="query"
 					if searchControl.Class != "" {
 						class={ searchControl.Class }

@@ -10,9 +10,9 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import (
 	tmpl "helia/frontend/templates"
+	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
-	"helia/internal/i18n"
 )
 
 func PartneriForm(partneriData domain.Partneri, dialog domain.Dialog, btnSave, btnCancel, btnClose domain.Button, translator *i18n.Service) templ.Component {

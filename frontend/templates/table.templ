@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"helia/internal/common"
 	"helia/internal/domain"
-	"helia/internal/i18n"
+	"helia/i18n"
 )
 
 templ Table(tbl domain.TableData, translator *i18n.Service) {
@@ -76,6 +76,7 @@ templ TableHeader(tbl domain.TableData, translator *i18n.Service) {
 				>
 					<div class="flex items-center justify-between">
 						<span>{ translator.Label(header.Label) }</span>
+						
 						if header.Sortable {
 							<span class={ fmt.Sprintf("sort-indicator-%s ml-2", header.Field) }>
 								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 opacity-90">

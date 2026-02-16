@@ -3,9 +3,9 @@ package common
 import (
 	"database/sql"
 	"fmt"
-	"helia/global"
+	"helia/config"
+	"helia/i18n"
 	"helia/internal/domain"
-	"helia/internal/i18n"
 	"os"
 	"reflect"
 	"strconv"
@@ -35,9 +35,9 @@ var MonthComboItems = []domain.ComboItem{
 
 // GetPaginationData calculates pagination details (totalPages, etc.).
 // This function can be used by both handler (initial page load) and service (query construction).
-func GetPaginationData(c *gin.Context, totalRecords int) (currentPage, pageSize, totalPages int) {
+func GetPaginationData(c *gin.Context, totalRecords int, cfg config.Config) (currentPage, pageSize, totalPages int) {
 	// Default values
-	pageSize = global.GetConfig().PageSize
+	pageSize = cfg.PageSize
 	currentPage = 1
 
 	if c != nil { // Allow calling without request for service side
@@ -70,7 +70,7 @@ func GetPaginationData(c *gin.Context, totalRecords int) (currentPage, pageSize,
 }
 
 // GetPageAndPageSizeFromRequest extracts "page" and "pageSize" query parameters.
-func GetPageAndPageSizeFromRequest(c *gin.Context) (page, pageSize int) {
+func GetPageAndPageSizeFromRequest(c *gin.Context, cfg config.Config) (page, pageSize int) {
 	pageStr := c.Query("page")
 	pageSizeStr := c.Query("pageSize")
 
@@ -83,16 +83,16 @@ func GetPageAndPageSizeFromRequest(c *gin.Context) (page, pageSize int) {
 		pageSize = ps
 	}
 	if pageSize == 0 {
-		pageSize = global.GetConfig().PageSize // Default
+		pageSize = cfg.PageSize // Default
 	}
 	return page, pageSize
 }
 
 // SetTableBasicData initializes a domain.TableData struct with common values.
 // This is used by the service to build the TableData, and can be customized with options.
-func SetTableBasicData(title, tableID string, headers []domain.Fields, urlPrefix, URLGetAll string, pageSize, currentPage, totalPages, totalRecords int, opts ...func(*domain.TableData)) domain.TableData {
+func SetTableBasicData(title, tableID string, headers []domain.Fields, urlPrefix, URLGetAll string, pageSize, currentPage, totalPages, totalRecords int, cfg config.Config, opts ...func(*domain.TableData)) domain.TableData {
 	if pageSize == 0 {
-		pageSize = global.GetConfig().PageSize
+		pageSize = cfg.PageSize
 	}
 	translator := i18n.GetInstance()
 	table := domain.TableData{
@@ -106,7 +106,7 @@ func SetTableBasicData(title, tableID string, headers []domain.Fields, urlPrefix
 			CurrentPage:  currentPage,
 			TotalPages:   totalPages,
 			TotalRecords: totalRecords,
-			PageSizes:    global.GetConfig().PageSizes,
+			PageSizes:    cfg.PageSizes,
 			StartRecord:  currentPage*pageSize - pageSize + 1,
 			EndRecord:    currentPage * pageSize,
 		},
@@ -156,11 +156,11 @@ func SetTableRows[T any](table *domain.TableData, entities []T, tableFields []do
 			value := GetFormattedValue(fieldInfo, val.FieldByName(fieldInfo.Name))
 			fields = append(fields, value)
 		}
-		table = SetTableButtons(table, entityURLPrefix) // Set buttons for the table
 		// Create table row
 		row := domain.TableRow{ID: id, Fields: fields, HasUpdate: true, HasDelete: true}
 		table.Rows = append(table.Rows, row)
 	}
+	table = SetTableButtons(table, entityURLPrefix) // Set buttons for the table
 	return table, nil
 }
 
@@ -218,7 +218,7 @@ func GetFormattedValue(fieldInfo reflect.StructField, fieldValue reflect.Value) 
 			if !ok {
 				return fmt.Sprintf("%v", fieldValue.Interface())
 			}
-			return t.Time.Format("02.01.2006")
+			return t.Time.Format(DateLayout)
 		}
 
 		if fieldInfo.Type == reflect.TypeOf(time.Time{}) {
@@ -226,7 +226,7 @@ func GetFormattedValue(fieldInfo reflect.StructField, fieldValue reflect.Value) 
 			if !ok {
 				return fmt.Sprintf("%v", fieldValue.Interface())
 			}
-			return t.Format("02.01.2006")
+			return t.Format(DateLayout)
 		}
 
 	case reflect.Float32, reflect.Float64:
@@ -361,9 +361,10 @@ func WriteJSONResponse(
 	message string,
 ) {
 	c.JSON(status, domain.Response{
-		Success: success,
-		Errors:  errors,
-		Message: message,
+		StatusCode: status,
+		Success:    success,
+		Errors:     errors,
+		Message:    message,
 	})
 }
 
@@ -435,4 +436,64 @@ func GetMontshName() []string {
 		translator.Label("decembar"),
 	}
 	return months
+}
+
+// SetTableConfig configures common table properties
+func SetTableConfig(tbl *domain.TableData, contentTitle, urlPrefix string, showActions, showAdd, showPrint bool) {
+	tbl.ShowActions = showActions
+	tbl.ContentTitle = contentTitle
+	tbl.URLPrefix = urlPrefix
+	tbl.URLGetAll = urlPrefix
+	tbl.BtnAdd.IsVisible = showAdd
+	tbl.BtnPrint.IsVisible = showPrint
+}
+
+// CreateSearchInput creates a search input control with common configuration
+func CreateSearchInput(translator *i18n.Service, hxActionURL, hxTarget, hxVals string) domain.InputControl {
+	return domain.InputControl{
+		ID:           "search-control",
+		Label:        translator.Label("Pretra\u017ei"),
+		Type:         "search",
+		Placeholder:  "Unesite tekst za pretragu",
+		HxActionURL:  hxActionURL,
+		HxTarget:     hxTarget,
+		HxSwap:       "innerHTML",
+		HxTrigger:    "keyup changed delay:500ms",
+		Autocomplete: "off",
+		Class:        ClassSearchInput,
+		HxVals:       hxVals,
+	}
+}
+
+// SetupTablePagination configures common table pagination and display settings
+// This function sets up search, pagination, actions visibility, and button visibility
+func SetupTablePagination(tbl *domain.TableData, currentPage, pageSize int) {
+	tbl.SearchEnabled = false
+	tbl.ShowPagination = true
+	tbl.ShowActions = false
+	tbl.BtnAdd.IsVisible = false
+	tbl.BtnPrint.IsVisible = false
+	tbl.Pagination.CurrentPage = currentPage
+	tbl.Pagination.StartRecord = (currentPage-1)*pageSize + 1
+	tbl.Pagination.EndRecord = tbl.Pagination.StartRecord + pageSize - 1
+	tbl.Pagination.PageSize = pageSize
+	if tbl.Pagination.EndRecord > tbl.Pagination.TotalRecords {
+		tbl.Pagination.EndRecord = tbl.Pagination.TotalRecords
+	}
+	if tbl.Pagination.StartRecord > tbl.Pagination.TotalRecords {
+		tbl.Pagination.StartRecord = tbl.Pagination.TotalRecords
+	}
+}
+
+// SetTableTotalRecords sets the total records and calculates pagination values
+// Returns true if the operation was to get total records only (no data processing needed)
+func SetTableTotalRecords(tbl *domain.TableData, totalRecords, pageSize int) {
+	tbl.Pagination.TotalRecords = totalRecords
+	tbl.Pagination.TotalPages = (totalRecords + pageSize - 1) / pageSize
+	if tbl.Pagination.EndRecord > totalRecords {
+		tbl.Pagination.EndRecord = totalRecords
+	}
+	if tbl.Pagination.StartRecord > totalRecords {
+		tbl.Pagination.StartRecord = totalRecords
+	}
 }

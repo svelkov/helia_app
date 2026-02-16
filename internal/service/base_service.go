@@ -3,12 +3,16 @@ package service
 import (
 	"database/sql"
 	"fmt"
+	"helia/internal/common"
 	"helia/internal/domain"
 	"helia/internal/repository"
 	"helia/internal/validation"
+	"log"
 	"reflect"
 	"strings"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 // DateTimeFormat specifies how to format time.Time fields
@@ -22,13 +26,13 @@ const (
 
 // Generic service interface
 type Service[T any] interface {
-	Create(entity *T, idField string, tableFields []domain.Fields) ([]domain.FieldError, int64, error)
+	Create(c *gin.Context, entity *T, idField string, tableFields []domain.Fields) ([]domain.FieldError, int64, error)
 	GetByID(idField string, idValue int64) (*T, error)
-	GetAll(page int, offset int, tableFields []domain.Fields, idField string, searchParams ...string) (*[]T, error)
-	GetAllCustom(queryText, whereText string, args []interface{}, limitOffset, orderBy string) (*[]T, error)
-	GetTotalRecordsCustom(queryText, whereText string, args []interface{}, limitOffset, orderBy string) (int, error)
-	GetTotalRecords(tableFields []domain.Fields, searchParams ...string) (int, error)
-	Update(entity *T, idField string, idValue interface{}, tableFields []domain.Fields) ([]domain.FieldError, error)
+	GetAll(c *gin.Context, page int, offset int, tableFields []domain.Fields, idField string, searchParams ...string) (*[]T, error)
+	GetAllCustom(c *gin.Context, queryText, whereText string, args []interface{}, limitOffset, orderBy string) (*[]T, error)
+	GetTotalRecordsCustom(c *gin.Context, queryText, whereText string, args []interface{}, limitOffset, orderBy string) (int, error)
+	GetTotalRecords(c *gin.Context, tableFields []domain.Fields, searchParams ...string) (int, error)
+	Update(c *gin.Context, entity *T, idField string, idValue interface{}, tableFields []domain.Fields) ([]domain.FieldError, error)
 	Delete(idField string, id int64) error
 	MapEntityToValues(entity *T, tableFields []domain.Fields) []domain.Fields
 	GetFieldCache() map[string]reflect.StructField
@@ -36,12 +40,12 @@ type Service[T any] interface {
 
 type BaseService[T any] struct {
 	Repo       repository.BaseRepository[T]
-	Validator  validation.RuleBasedValidator[T]
+	Validator  validation.Validator[T]
 	fieldCache map[string]reflect.StructField
 }
 
 // NewBaseService creates a new instance of BaseService.
-func NewBaseService[T any](repository repository.BaseRepository[T], validator validation.RuleBasedValidator[T]) *BaseService[T] {
+func NewBaseService[T any](repository repository.BaseRepository[T], validator validation.Validator[T]) *BaseService[T] {
 	r := &BaseService[T]{
 		Repo:       repository,
 		Validator:  validator,
@@ -62,7 +66,7 @@ func NewBaseService[T any](repository repository.BaseRepository[T], validator va
 	return r
 }
 
-func (s *BaseService[T]) Create(entity *T, idField string, tableFields []domain.Fields) ([]domain.FieldError, int64, error) {
+func (s *BaseService[T]) Create(c *gin.Context, entity *T, idField string, tableFields []domain.Fields) ([]domain.FieldError, int64, error) {
 	fieldErrors, err := s.Validator.Validate(entity)
 
 	if err != nil {
@@ -71,40 +75,45 @@ func (s *BaseService[T]) Create(entity *T, idField string, tableFields []domain.
 	if len(fieldErrors) > 0 {
 		return fieldErrors, 0, nil
 	}
-	lastInsertedID, err := s.Repo.Create(entity, idField, tableFields)
+	lastInsertedID, err := s.Repo.Create(c, entity, idField, tableFields)
+	log.Println("BaseService Create: lastInsertedID =", lastInsertedID, " error =", err)
 	return []domain.FieldError{}, lastInsertedID, err
+
 }
 
 func (s *BaseService[T]) GetFieldCache() map[string]reflect.StructField {
 	return s.fieldCache
+}
+func (s *BaseService[T]) SetFieldCache(fieldCache map[string]reflect.StructField) {
+	s.fieldCache = fieldCache
 }
 
 func (s *BaseService[T]) GetByID(idField string, idValue int64) (*T, error) {
 	return s.Repo.GetByID(idField, idValue)
 }
 
-func (s *BaseService[T]) GetAll(page int, offset int, tableFields []domain.Fields, idField string, searchParams ...string) (*[]T, error) {
-	return s.Repo.GetAll(page, offset, tableFields, idField, searchParams...)
+func (s *BaseService[T]) GetAll(c *gin.Context, page int, offset int, tableFields []domain.Fields, idField string, searchParams ...string) (*[]T, error) {
+	return s.Repo.GetAll(c, page, offset, tableFields, idField, searchParams...)
 }
 
-func (s *BaseService[T]) GetAllCustom(queryText, whereText string, args []interface{}, limitOffset, orderBy string) (*[]T, error) {
-	return s.Repo.GetAllCustom(queryText, whereText, args, limitOffset, orderBy)
+func (s *BaseService[T]) GetAllCustom(c *gin.Context, queryText, whereText string, args []interface{}, limitOffset, orderBy string) (*[]T, error) {
+	return s.Repo.GetAllCustom(c, queryText, whereText, args, limitOffset, orderBy)
 }
 
-func (s *BaseService[T]) GetTotalRecordsCustom(queryText, whereText string, args []interface{}, limitOffset, orderBy string) (int, error) {
-	return s.Repo.GetTotalRecordsCustom(queryText, whereText, args, limitOffset, orderBy)
+func (s *BaseService[T]) GetTotalRecordsCustom(c *gin.Context, queryText, whereText string, args []interface{}, limitOffset, orderBy string) (int, error) {
+	return s.Repo.GetTotalRecordsCustom(c, queryText, whereText, args, limitOffset, orderBy)
 }
 
-func (s *BaseService[T]) GetTotalRecords(tableFields []domain.Fields, searchParams ...string) (int, error) {
-	return s.Repo.GetTotalRecords(tableFields, searchParams...)
+func (s *BaseService[T]) GetTotalRecords(c *gin.Context, tableFields []domain.Fields, searchParams ...string) (int, error) {
+	return s.Repo.GetTotalRecords(c, tableFields, searchParams...)
 }
 
-func (s *BaseService[T]) Update(entity *T, idField string, idValue interface{}, tableFields []domain.Fields) ([]domain.FieldError, error) {
+func (s *BaseService[T]) Update(c *gin.Context, entity *T, idField string, idValue interface{}, tableFields []domain.Fields) ([]domain.FieldError, error) {
 	fieldErrors, err := s.Validator.Validate(entity)
 	if err != nil {
 		return fieldErrors, err
 	}
-	return fieldErrors, s.Repo.Update(entity, idField, idValue, tableFields)
+	return fieldErrors, s.Repo.Update(c, entity, idField, idValue, tableFields)
 }
 
 func (s *BaseService[T]) Delete(idField string, id int64) error {
@@ -132,7 +141,7 @@ func (s *BaseService[T]) formatFieldValue(fieldValue reflect.Value) string {
 	if typeStr == "database/sql.NullTime" || typeStr == "sql.NullTime" {
 		nt := fieldValue.Interface().(sql.NullTime)
 		if nt.Valid {
-			return nt.Time.Format("02.01.2006")
+			return nt.Time.Format(common.DateLayout)
 		}
 		return ""
 	}

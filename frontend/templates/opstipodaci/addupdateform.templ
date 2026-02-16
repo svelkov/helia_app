@@ -4,7 +4,7 @@ import (
 	"fmt"
 	tmpl "helia/frontend/templates"
 	"helia/internal/domain"
-	"helia/internal/i18n"
+	"helia/i18n"
 )
 
 templ AddUpdateForm(csrfToken string, dialog domain.Dialog, fields []domain.Fields, btnSave, btnCancel, btnClose domain.Button, translator *i18n.Service) {
@@ -16,13 +16,16 @@ templ AddUpdateForm(csrfToken string, dialog domain.Dialog, fields []domain.Fiel
 				@tmpl.CloseButton(btnClose)
 			</div>
 			<form
+				id="dialog-form"
 				if dialog.HxRequestType == "PUT" {
 					hx-put={ dialog.HxActionURL }
+					hx-on::after-request="handleFormResponse(event, 'PUT')"
 				}
 				if dialog.HxRequestType == "POST" {
 					hx-post={ dialog.HxActionURL }
+					hx-on::after-request="handleFormResponse(event, 'POST')"
 				}
-				hx-target="#info-message"
+				hx-target="#dialog-message"
 				hx-boost="false"
 				onsubmit="return false;"
 				class="grid grid-cols-1 md:grid-cols-[auto,auto] gap-2 gap-x-4 p-3 bg-white shadow-lg rounded-lg w-auto"
@@ -47,12 +50,112 @@ templ AddUpdateForm(csrfToken string, dialog domain.Dialog, fields []domain.Fiel
 					@tmpl.CancelButton(btnCancel, translator)
 				</div>
 			</form>
+			<!-- Message Display Area at Bottom -->
+			<div id="dialog-message" class="hidden"></div>
 		</div>
 	</div>
-	@tmpl.CloseDialogScript()
-	@tmpl.ShowMessage()
 	<script>
+		function handleFormResponse(event, requestType) {
+			const xhr = event.detail.xhr;
+			const messageDiv = document.getElementById('dialog-message');
+			const dialogId = '{ dialog.Id }';
+			// if there are validation errors, they will be handled by validation logic
+			// If we get here, response is valid JSON
+				// Clear previous error messages
+			document.querySelectorAll('.input-error').forEach(el => el.remove());
+			document.querySelectorAll('input').forEach(input => {
+				input.classList.remove('border-red-500');
+			});
+			console.log("XHR Response:", xhr.responseText);
+			const response = JSON.parse(xhr.responseText);
+			// Handle validation errors
+			if (response.errors && response.errors.length > 0) {
+				console.log("Errors found:", response.errors)
+				// Loop through errors and show error messages for each field
+				response.errors.forEach(error => {
+				const field = document.querySelector(`input[name="${error.field}"]`);
+					if (field) {
+						field.classList.add('border-red-500'); // Add red border to invalid field
+						// Add error message below the input field
+						const errorMessage = document.createElement('p');
+						errorMessage.className = 'text-red-500 text-xs mt-1 input-error';
+						errorMessage.textContent = error.message;
+						field.insertAdjacentElement('afterend', errorMessage);
+					}
+				});
+				return;
+			}
+			if (xhr.status === 200 || xhr.status === 201) {
+				// Success
+				messageDiv.className = 'p-2 text-sm text-green-800 bg-green-100 border border-green-300 rounded-lg';
+				messageDiv.textContent = 'Uspesno upisani podaci...';
+				messageDiv.classList.remove('hidden');
+				
+				if (requestType === 'POST') {
+					// For ADD operation: Clear all input fields
+					const form = document.getElementById('dialog-form');
+					const inputs = form.querySelectorAll('input:not([type="hidden"])');
+					inputs.forEach(input => {
+						input.value = '';
+					});
+					
+					// Auto-hide message after 3 seconds
+					setTimeout(() => {
+						messageDiv.classList.add('hidden');
+					}, 3000);
+				} else if (requestType === 'PUT') {
+					// For UPDATE operation: Close dialog after brief delay
+					setTimeout(() => {
+						closeDialog(dialogId);
+					}, 1000);
+				}
+			} else {
+				// Error
+				messageDiv.className = 'p-2 text-sm text-red-800 bg-red-100 border border-red-300 rounded-lg';
+				try {
+					const response = JSON.parse(xhr.responseText);
+					console.log('Error response:', response);
+					if (response.success === false && response.message) {
+						messageDiv.textContent = response.message;
+						return;
+					}
+					messageDiv.textContent = response.message || 'An error occurred';
+				} catch (e) {
+					messageDiv.textContent = 'An error occurred, error:' + response.message;
+				}
+				messageDiv.classList.remove('hidden');
+			}
+		}
+
+		function showMessage(message, isError = false) {
+			const infoMessage = document.getElementById('info-message');
+
+			// Set the message text
+			infoMessage.textContent = message;
+			// Reset previous styles
+			infoMessage.classList.remove('hidden', 'bg-green-500', 'bg-red-500', 'text-white');
+			// Add appropriate styles based on success or error
+			if (isError) {
+				infoMessage.classList.add('bg-red-500', 'text-white');
+			} else {
+				infoMessage.classList.add('bg-green-500', 'text-white');
+			}
+			// Show the message
+			infoMessage.classList.remove('hidden');
+			// Hide the message after 3 seconds
+			setTimeout(() => {
+				infoMessage.classList.add('hidden');
+			}, 3000);
+		}
+
 		document.addEventListener("keydown", function (event) {
+			// if escape key is pressed then close the open dialog
+			if (event.key === "Escape") {
+				const openDialog = document.querySelector(".fixed:not(.hidden)");
+				if (openDialog) {
+					closeDialog(openDialog.id);
+				}
+			};
 			if (event.key === "Enter") {
 				event.preventDefault();
 
@@ -88,5 +191,38 @@ templ AddUpdateForm(csrfToken string, dialog domain.Dialog, fields []domain.Fiel
 				}
 			}
 		});
+
+		function closeDialog(id) {
+			console.log("Closing dialog with ID:", id);
+			const dialogElm = document.getElementById(id);
+			if (dialogElm) {
+				dialogElm.classList.add("opacity-0"); // Fade-out effect
+				setTimeout(() => {
+					dialogElm.classList.add("hidden");
+				}, 300); // Delay to allow fade-out animation
+
+				// Restore the style of actions column if needed
+				document.querySelectorAll(".actions-column").forEach(el => {
+					el.classList.remove('static');
+        			el.classList.add('sticky', 'right-0', 'z-10');
+				});
+			}
+		}
+		
+		function clearFieldError(inputElement) {
+			// If inputElement is already a DOM element
+			const elm = document.getElementById(inputElement);
+			if (elm) {
+				elm.classList.remove('border-red-500');
+
+				let nextSibling = elm.nextElementSibling;
+
+				while (nextSibling && nextSibling.classList.contains('input-error')) {
+					nextSibling.remove();
+					nextSibling = elm.nextElementSibling;
+				}
+			}
+		}	
+
 	</script>
 }

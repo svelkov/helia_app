@@ -7,13 +7,14 @@ import (
 	"strconv"
 	"strings"
 
+	"helia/config"
 	tmpl "helia/frontend/templates/finansijsko"
 	"helia/global"
+	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
-	"helia/internal/i18n"
 	"helia/internal/middleware"
-	"helia/internal/service"
+	finservice "helia/internal/service/finansijsko"
 	"helia/pkg/utils"
 
 	"github.com/gin-gonic/gin"
@@ -30,13 +31,14 @@ const (
 
 // FproHandler handles requests related to "fpro" entities.
 type FproHandler struct {
-	fproService service.FproService // Use the interface
+	fproService finservice.FproService // Use the interface
 	btnSave     domain.Button
 	btnNazad    domain.Button
+	cfg         config.Config
 }
 
-func NewFproHandler(service service.FproService) *FproHandler {
-	handler := &FproHandler{fproService: service}
+func NewFproHandler(service finservice.FproService, cfg config.Config) *FproHandler {
+	handler := &FproHandler{fproService: service, cfg: cfg}
 	handler.setHandlerFieldValues()
 	return handler
 }
@@ -111,7 +113,7 @@ func (h *FproHandler) GetNalogStavke(c *gin.Context) {
 		return
 	}
 
-	page, pageSize := common.GetPageAndPageSizeFromRequest(c)
+	page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
 	// Call the service to get ALL necessary data for the view
 	tbl, err := h.fproService.GetNaloziStavke(c, idFnal, searchQuery, page, pageSize, h.fproService.GetTableStavkeFields())
 	if err != nil {

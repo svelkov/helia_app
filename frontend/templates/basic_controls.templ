@@ -3,9 +3,9 @@ package templates
 import (
 	"fmt"
 
+	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
-	"helia/internal/i18n"
 )
 
 // Then in template:
@@ -107,6 +107,9 @@ templ TextInputField(config domain.InputFieldConfig) {
 		}
 		if config.OnInput != "" {
 			oninput={ templ.JSFuncCall("clearFieldError", config.ID) }
+		}
+		if config.OnFocus != "" {
+			onfocus={ templ.JSFuncCall("clearFieldError", config.ID) }
 		}
 	/>
 }
@@ -319,14 +322,17 @@ templ SearchButtonDialog(id, name, placeholder, hxUrl, hxTarget, hxSwap, hxVals 
 	@ShowMessage()
 }
 
-templ CheckboxField(cfg domain.CheckboxConfig, translator *i18n.Service) {
+templ CheckboxField(cfg domain.CheckboxFieldConfig, translator *i18n.Service) {
 	<label class={ cfg.ClassLabel }>
-		<input type="checkbox" 
-		name={ cfg.Name } 
-		id={ cfg.ID }
-		class={ cfg.ClassCheckbox }/>
-		<span class={ cfg.ClassCheckboxSpan }> 
-		{ translator.Label(cfg.LabelText) }</span>
+		<input
+			type="checkbox"
+			name={ cfg.Name }
+			id={ cfg.ID }
+			class={ cfg.ClassCheckbox }
+		/>
+		<span class={ cfg.ClassCheckboxSpan }>
+			{ translator.Label(cfg.LabelText) }
+		</span>
 		if cfg.IsChecked {
 			checked = true
 		}
@@ -337,5 +343,24 @@ templ CheckboxField(cfg domain.CheckboxConfig, translator *i18n.Service) {
 				}});
 			</script>
 		}
+	</label>
+}
+
+templ RadioButtonField(cfg domain.RadioFieldConfig, translator *i18n.Service) {
+	<label class="flex items-center gap-2">
+		<input
+			type="radio"
+			name={ cfg.Name }
+			id={ cfg.ID }
+			value={ cfg.Value }
+			class={ cfg.ClassSelect }
+			if cfg.TabIndex != "" {
+				tabindex={ cfg.TabIndex }
+			}
+			if cfg.IsSelected {
+				checked="checked"
+			}
+		/>
+		<span class={cfg.ClassSelect}>{ translator.Label(cfg.LabelText) }</span>
 	</label>
 }

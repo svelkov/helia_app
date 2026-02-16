@@ -3,13 +3,12 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
+	"helia/config"
 	"helia/frontend/templates"
-	"helia/global"
+	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
-	"helia/internal/i18n"
 	"helia/internal/infrastructure"
-	"helia/internal/service"
 	"log"
 	"net/http"
 	"os"
@@ -17,6 +16,7 @@ import (
 	"time"
 
 	tmpl "helia/frontend/templates"
+	finservice "helia/internal/service/finansijsko"
 
 	"github.com/a-h/templ"
 	"github.com/gin-contrib/sessions"
@@ -88,13 +88,14 @@ type BasicHandler struct {
 	isLoggedIn   bool
 	menuItems    domain.MenuDataItems
 	subMenuItems []domain.SubMenuItem
-	fvrService   service.FvrService
+	fvrService   finservice.FvrService
 	firma        domain.Firma
+	cfg          config.Config
 	logger       *log.Logger
 }
 
 // NewBasicHandler creates and initializes a new BasicHandler
-func NewBasicHandler(isLoggedIn bool, menuItems domain.MenuDataItems, subMenuItems []domain.SubMenuItem, fvrService service.FvrService) *BasicHandler {
+func NewBasicHandler(c *gin.Context, isLoggedIn bool, menuItems domain.MenuDataItems, subMenuItems []domain.SubMenuItem, fvrService finservice.FvrService, cfg config.Config) *BasicHandler {
 	handler := &BasicHandler{
 		isLoggedIn:   isLoggedIn,
 		menuItems:    menuItems,
@@ -102,10 +103,11 @@ func NewBasicHandler(isLoggedIn bool, menuItems domain.MenuDataItems, subMenuIte
 		fvrService:   fvrService,
 		firma:        domain.Firma{},
 		logger:       log.New(os.Stdout, "[BasicHandler] ", log.LstdFlags|log.Lshortfile),
+		cfg:          cfg,
 	}
 
 	// Initialize firma data
-	if err := handler.setFirma(); err != nil {
+	if err := handler.setFirma(c); err != nil {
 		handler.logger.Printf("Failed to initialize firma data: %v", err)
 	}
 
@@ -144,7 +146,7 @@ func (h *BasicHandler) renderLoginPage(c *gin.Context, fvrData domain.Firma, sel
 		setComboFirmaConfig(fvrData, selections.firma),
 		setComboPoslGodConfig(fvrData, selections.firma, selections.god),
 		setComboKarConfig(fvrData, selections.firma, selections.god, selections.kar),
-		setComboLanguageConfig(global.GetLanguage()),
+		setComboLanguageConfig(selections.language, h.cfg),
 		i18n.GetInstance(),
 	).Render(c.Request.Context(), c.Writer)
 
@@ -185,22 +187,18 @@ func (h *BasicHandler) handleLoginPost(c *gin.Context, selections defaultSelecti
 		return
 	}
 
-	token, err := h.generateToken(loginData.Username, h.getJwtSecretFromContext(c))
+	token, err := h.generateToken(loginData.Username, selections, h.getJwtSecretFromContext(c))
 	if err != nil {
 		h.logger.Printf("Error generating token for user %s: %v", loginData.Username, err)
 		h.respondWithError(c, http.StatusInternalServerError, "Error generating authentication token")
 		return
 	}
 
-	// Save session
-	if err := h.saveSession(c, selections); err != nil {
-		h.respondWithError(c, http.StatusInternalServerError, "Session error")
-		return
-	} // Set auth cookie
+	// Set auth cookie
 	h.setAuthCookie(c, token)
 
-	// Update global settings
-	h.updateGlobalSettings(selections)
+	// Update user session in context (per-user, request-scoped)
+	h.updateUserSession(c, selections)
 
 	// Handle response based on request type
 	if c.GetHeader("HX-Request") == "true" {
@@ -214,39 +212,39 @@ func (h *BasicHandler) handleLoginPost(c *gin.Context, selections defaultSelecti
 	}
 }
 
-func (h *BasicHandler) saveSession(c *gin.Context, selections defaultSelections) error {
-	// Get session
-	session := sessions.Default(c)
-
-	// Preserve existing CSRF token
-	csrfToken := session.Get(csrfTokenKey)
-
-	session.Set("firma", selections.firma)
-	session.Set("god", selections.god)
-	session.Set("kar", selections.kar)
-	session.Set("username", c.PostForm("username"))
-
-	// Restore CSRF token
-	if csrfToken != nil {
-		session.Set(csrfTokenKey, csrfToken)
-	}
-
-	return session.Save()
-}
-
 func (h *BasicHandler) setAuthCookie(c *gin.Context, token string) {
 	c.SetCookie("auth_token", token, int(tokenExpiry/time.Second), "/", "", true, true)
 }
 
-func (h *BasicHandler) updateGlobalSettings(selections defaultSelections) {
-	global.SetGnFirma(selections.firma)
-	global.SetGnGod(selections.god)
-	global.SetGnKar(selections.kar)
+func (h *BasicHandler) updateUserSession(c *gin.Context, selections defaultSelections) {
+	// Get or create UserSession in context
+	session := domain.GetSessionFromContext(c)
+	if session == nil {
+		// Create new UserSession for newly logged-in user
+		userName := c.PostForm("username")
+		session = &domain.UserSession{
+			UserID:   0, // TODO: Set from user lookup
+			UserName: userName,
+		}
+	}
+
+	// Update session values
+	session.Firma = selections.firma
+	session.SelectedGod = selections.god
+	session.SelectedKar = selections.kar
+	if selections.language != "" {
+		session.Language = selections.language
+	}
+
+	// Store in context for this request and subsequent handlers
+	c.Set("userSession", session)
 }
 
-// getDefaultSelections returns default values for firma, god, and kar
+// getDefaultSelections returns default values for firma, god, kar, and language
 func (h *BasicHandler) getDefaultSelections(fvrData domain.Firma) defaultSelections {
-	selections := defaultSelections{}
+	selections := defaultSelections{
+		language: "sr", // Default language
+	}
 
 	if len(fvrData.Firme) > 0 {
 		selections.firma = fvrData.Firme[0].Naziv
@@ -269,11 +267,21 @@ func (h *BasicHandler) validateCredentials(username, password string) bool {
 	return username == "testuser" && password == "123"
 }
 
-// generateToken creates a new JWT token for the authenticated user
-func (h *BasicHandler) generateToken(username string, jwtSecret []byte) (string, error) {
-	claims := jwt.MapClaims{
-		"username": username,
-		"exp":      time.Now().Add(tokenExpiry).Unix(),
+// generateToken creates a new JWT token for the authenticated user with preferences
+func (h *BasicHandler) generateToken(username string, selections defaultSelections, jwtSecret []byte) (string, error) {
+	claims := domain.UserClaims{
+		Username:    username,
+		UserID:      0, // TODO: Set from user lookup
+		Firma:       selections.firma,
+		SelectedGod: selections.god,
+		SelectedKar: selections.kar,
+		Language:    selections.language,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(tokenExpiry)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			NotBefore: jwt.NewNumericDate(time.Now()),
+			Issuer:    "HELIA",
+		},
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -288,6 +296,52 @@ func (h *BasicHandler) getJwtSecretFromContext(c *gin.Context) []byte {
 		}
 	}
 	return nil
+}
+
+// regenerateToken creates a new JWT token with updated UserSession preferences
+func (h *BasicHandler) regenerateToken(c *gin.Context, userSession *domain.UserSession) {
+	if userSession == nil {
+		return
+	}
+
+	jwtSecret := h.getJwtSecretFromContext(c)
+	if jwtSecret == nil {
+		h.logger.Println("JWT secret not found, cannot regenerate token")
+		return
+	}
+
+	// Get username from current token
+	username, ok := h.getUsernameFromToken(c)
+	if !ok {
+		h.logger.Println("Cannot get username from token, cannot regenerate")
+		return
+	}
+
+	// Create new token with updated preferences
+	claims := domain.UserClaims{
+		Username:    username,
+		UserID:      int(userSession.UserID),
+		Firma:       userSession.Firma,
+		SelectedGod: userSession.SelectedGod,
+		SelectedKar: userSession.SelectedKar,
+		Language:    userSession.Language,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(tokenExpiry)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			NotBefore: jwt.NewNumericDate(time.Now()),
+			Issuer:    "HELIA",
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString(jwtSecret)
+	if err != nil {
+		h.logger.Printf("Error regenerating token: %v", err)
+		return
+	}
+
+	// Update auth cookie with new token
+	h.setAuthCookie(c, tokenString)
 }
 
 // generateCSRFToken creates a new CSRF token and stores it in session
@@ -352,7 +406,7 @@ func (h *BasicHandler) RegisterHandler(c *gin.Context) {
 			setComboFirmaConfig(fvrData, selections.firma),
 			setComboPoslGodConfig(fvrData, selections.firma, selections.god),
 			setComboKarConfig(fvrData, selections.firma, selections.god, selections.kar),
-			setComboLanguageConfig(global.GetLanguage()),
+			setComboLanguageConfig(selections.language, h.cfg),
 			i18n.GetInstance(),
 		).Render(c.Request.Context(), c.Writer)
 
@@ -404,10 +458,8 @@ func (h *BasicHandler) LogoutHandler(c *gin.Context) {
 		h.logger.Printf("Error clearing session during logout: %v", err)
 	}
 
-	// Clear global values
-	global.SetGnFirma("")
-	global.SetGnGod(0)
-	global.SetGnKar(0)
+	// Clear user session from context (it will be removed by middleware on next request)
+	c.Set("userSession", nil)
 
 	h.isLoggedIn = false
 	c.Redirect(http.StatusSeeOther, "/login")
@@ -440,11 +492,11 @@ func (h *BasicHandler) indexHandler(c *gin.Context) {
 	username, ok := h.getUsernameFromToken(c)
 	fvrData := h.getFirma()
 	isLoggedIn := ok && username != ""
-	// Get session data
-	session := sessions.Default(c)
+	// Get user session from context
+	userSession := domain.GetSessionFromContext(c)
 
 	// Get firma data and selections
-	selections := h.getSessionSelections(session, fvrData)
+	selections := h.getUserSessionSelections(userSession, fvrData)
 	//set the selected language
 	i18n.GetInstance().SetLanguage(selections.language)
 	// if !isLoggedIn {
@@ -467,9 +519,6 @@ func (h *BasicHandler) indexHandler(c *gin.Context) {
 	h.subMenuItems = subMenus
 	h.menuItems.CurrentMenu = menuName
 
-	// Update global state
-	h.updateGlobalState(selections)
-
 	// Render the page
 	err := tmpl.Base(
 		isLoggedIn,
@@ -483,7 +532,7 @@ func (h *BasicHandler) indexHandler(c *gin.Context) {
 		setComboFirmaConfig(fvrData, selections.firma),
 		setComboPoslGodConfig(fvrData, selections.firma, selections.god),
 		setComboKarConfig(fvrData, selections.firma, selections.god, selections.kar),
-		setComboLanguageConfig(global.GetLanguage()),
+		setComboLanguageConfig(selections.language, h.cfg),
 		i18n.GetInstance(),
 	).Render(c.Request.Context(), c.Writer)
 
@@ -501,7 +550,7 @@ func (h *BasicHandler) HomeHandler(c *gin.Context) {
 
 // getCurrentDate returns the current date in JSON format
 func (h *BasicHandler) getCurrentDate(c *gin.Context) {
-	currentDate := time.Now().Format("2006-01-02")
+	currentDate := time.Now().Format(common.HtmlLayout)
 
 	response := struct {
 		CurrentDate string `json:"currentDate"`
@@ -520,6 +569,38 @@ func (h *BasicHandler) getCurrentDate(c *gin.Context) {
 
 // Helper functions
 
+// getUserSessionSelections returns selections from UserSession in context
+func (h *BasicHandler) getUserSessionSelections(userSession *domain.UserSession, fvrData domain.Firma) defaultSelections {
+	if userSession == nil {
+		// Return defaults from fvrData
+		return h.getDefaultSelections(fvrData)
+	}
+
+	selections := defaultSelections{
+		firma:    userSession.Firma,
+		god:      userSession.SelectedGod,
+		kar:      userSession.SelectedKar,
+		language: userSession.Language,
+	}
+
+	// Set defaults if session values are empty
+	if selections.firma == "" && len(fvrData.Firme) > 0 {
+		selections.firma = fvrData.Firme[0].Naziv
+	}
+	if selections.god == 0 && len(fvrData.Firme) > 0 && len(fvrData.Firme[0].Godine) > 0 {
+		selections.god = fvrData.Firme[0].Godine[0].God
+	}
+	if selections.kar == 0 && len(fvrData.Firme) > 0 && len(fvrData.Firme[0].Godine) > 0 &&
+		len(fvrData.Firme[0].Godine[0].Kar) > 0 {
+		selections.kar = fvrData.Firme[0].Godine[0].Kar[0]
+	}
+	if selections.language == "" {
+		selections.language = "en" // default language
+	}
+	return selections
+}
+
+// getSessionSelections is deprecated - kept for backwards compatibility
 func (h *BasicHandler) getSessionSelections(session sessions.Session, fvrData domain.Firma) defaultSelections {
 	firmaVal := session.Get("firma")
 	godVal := session.Get("god")
@@ -557,13 +638,6 @@ func (h *BasicHandler) getSessionSelections(session sessions.Session, fvrData do
 	return selections
 }
 
-func (h *BasicHandler) updateGlobalState(selections defaultSelections) {
-	global.SetGnFirma(selections.firma)
-	global.SetGnGod(selections.god)
-	global.SetGnKar(selections.kar)
-	global.SetGnLanguage(selections.language)
-}
-
 func (h *BasicHandler) getUsernameFromToken(c *gin.Context) (string, bool) {
 	tokenString, err := c.Cookie("auth_token")
 	if err != nil {
@@ -599,32 +673,26 @@ func (h *BasicHandler) setComboFirma(c *gin.Context) {
 		firma = c.PostForm("firma")
 	}
 
-	session := sessions.Default(c)
 	if firma != "" {
-		session.Set("firma", firma)
-		global.SetGnFirma(firma)
+		// Update user session in context (per-user, request-scoped)
+		userSession := domain.GetSessionFromContext(c)
+		if userSession != nil {
+			userSession.Firma = firma
+			// Reset dependent fields
+			userSession.SelectedGod = 0
+			userSession.SelectedKar = 0
+			c.Set("userSession", userSession)
 
-		// Reset dependent fields
-		session.Set("god", 0)
-		session.Set("kar", 0)
-	}
-
-	if err := session.Save(); err != nil {
-		h.logger.Printf("Failed to save session in setComboFirma: %v", err)
-		h.respondWithError(c, http.StatusInternalServerError, "Failed to save session")
-		return
+			// Regenerate JWT token with new preferences
+			h.regenerateToken(c, userSession)
+		}
 	}
 
 	h.renderComboResponse(c)
 }
 
 func (h *BasicHandler) SelectComboFirma(c *gin.Context) {
-	session := sessions.Default(c)
-
-	if firma, ok := session.Get("firma").(string); ok {
-		global.SetGnFirma(firma)
-	}
-
+	// UserSession already has firma from context, just render
 	h.renderFullPage(c)
 }
 
@@ -634,16 +702,19 @@ func (h *BasicHandler) SetComboGod(c *gin.Context) {
 		god = c.PostForm("god")
 	}
 
-	session := sessions.Default(c)
-
 	if god != "" {
 		if gnGod, err := strconv.Atoi(god); err == nil {
-			session.Set("god", gnGod)
-			global.SetGnGod(gnGod)
+			// Update user session in context (per-user, request-scoped)
+			userSession := domain.GetSessionFromContext(c)
+			if userSession != nil {
+				userSession.SelectedGod = gnGod
 
-			// Reset dependent fields
-			session.Set("kar", 0)
-			session.Save()
+				// Regenerate JWT token with new preferences
+				h.regenerateToken(c, userSession)
+				// Reset dependent field
+				userSession.SelectedKar = 0
+				c.Set("userSession", userSession)
+			}
 		}
 	}
 
@@ -651,12 +722,7 @@ func (h *BasicHandler) SetComboGod(c *gin.Context) {
 }
 
 func (h *BasicHandler) SelectComboGod(c *gin.Context) {
-	session := sessions.Default(c)
-
-	if godVal, ok := session.Get("god").(int); ok {
-		global.SetGnGod(godVal)
-	}
-
+	// UserSession already has god from context, just render
 	h.renderFullPage(c)
 }
 
@@ -666,12 +732,17 @@ func (h *BasicHandler) SetComboKar(c *gin.Context) {
 		kar = c.PostForm("kar")
 	}
 
-	session := sessions.Default(c)
 	if kar != "" {
 		if gnKar, err := strconv.Atoi(kar); err == nil {
-			session.Set("kar", gnKar)
-			global.SetGnKar(gnKar)
-			session.Save()
+			// Update user session in context (per-user, request-scoped)
+			userSession := domain.GetSessionFromContext(c)
+
+			// Regenerate JWT token with new preferences
+			h.regenerateToken(c, userSession)
+			if userSession != nil {
+				userSession.SelectedKar = gnKar
+				c.Set("userSession", userSession)
+			}
 		}
 	}
 
@@ -679,21 +750,22 @@ func (h *BasicHandler) SetComboKar(c *gin.Context) {
 }
 
 func (h *BasicHandler) SelectComboKar(c *gin.Context) {
-	session := sessions.Default(c)
-
-	if karVal, ok := session.Get("kar").(int); ok {
-		global.SetGnKar(karVal)
-	}
-
+	// UserSession already has kar from context, just render
 	h.renderFullPage(c)
 }
 func (h *BasicHandler) SelectComboLanguage(c *gin.Context) {
 	lang := c.Query("language")
-	session := sessions.Default(c)
 
-	global.SetGnLanguage(lang)
-	session.Set("language", lang)
-	session.Save()
+	// Update user session in context (per-user, request-scoped)
+	userSession := domain.GetSessionFromContext(c)
+
+	// Regenerate JWT token with new preferences
+	h.regenerateToken(c, userSession)
+	if userSession != nil {
+		userSession.Language = lang
+		c.Set("userSession", userSession)
+	}
+
 	i18n.GetInstance().SetLanguage(lang)
 
 	h.renderFullPage(c)
@@ -702,9 +774,9 @@ func (h *BasicHandler) SelectComboLanguage(c *gin.Context) {
 // Helper functions for combo box handlers
 func (h *BasicHandler) renderComboResponse(c *gin.Context) {
 	fvrData := h.getFirma()
-	session := sessions.Default(c)
+	userSession := domain.GetSessionFromContext(c)
 
-	selections := h.getSessionSelections(session, fvrData)
+	selections := h.getUserSessionSelections(userSession, fvrData)
 	response := struct {
 		FirmaConfig domain.ComboFieldConfig `json:"firmaConfig"`
 		GodConfig   domain.ComboFieldConfig `json:"godConfig"`
@@ -727,34 +799,45 @@ func (h *BasicHandler) renderComboResponse(c *gin.Context) {
 
 // renderFullPage handles the full page rendering with all components
 func (h *BasicHandler) renderFullPage(c *gin.Context) {
-	// Get user session
-	session := sessions.Default(c)
+	// Get user session from context (per-user, request-scoped)
+	userSession := domain.GetSessionFromContext(c)
 
-	currentLanguage := c.Query("language")
-	if currentLanguage != "" {
-		global.SetGnLanguage(currentLanguage)
-		session.Set("language", currentLanguage)
-	}
-	currentFirma := c.Query("firma")
-	if currentFirma != "" {
-		global.SetGnFirma(currentFirma)
-		session.Set("firma", currentFirma)
-	}
-	currentGod := c.Query("god")
-	if currentGod != "" {
-		if gnGod, err := strconv.Atoi(currentGod); err == nil {
-			global.SetGnGod(gnGod)
-			session.Set("god", gnGod)
+	// Track if we need to regenerate token
+	needsTokenRegeneration := false
+
+	// Update session from query parameters if provided
+	if userSession != nil {
+		currentLanguage := c.Query("language")
+		if currentLanguage != "" && currentLanguage != userSession.Language {
+			userSession.Language = currentLanguage
+			needsTokenRegeneration = true
+		}
+		currentFirma := c.Query("firma")
+		if currentFirma != "" && currentFirma != userSession.Firma {
+			userSession.Firma = currentFirma
+			needsTokenRegeneration = true
+		}
+		currentGod := c.Query("god")
+		if currentGod != "" {
+			if gnGod, err := strconv.Atoi(currentGod); err == nil && gnGod != userSession.SelectedGod {
+				userSession.SelectedGod = gnGod
+				needsTokenRegeneration = true
+			}
+		}
+		currentKar := c.Query("kar")
+		if currentKar != "" {
+			if gnKar, err := strconv.Atoi(currentKar); err == nil && gnKar != userSession.SelectedKar {
+				userSession.SelectedKar = gnKar
+				needsTokenRegeneration = true
+			}
+		}
+		c.Set("userSession", userSession)
+
+		// Regenerate token if any preference changed
+		if needsTokenRegeneration {
+			h.regenerateToken(c, userSession)
 		}
 	}
-	currentKar := c.Query("kar")
-	if currentKar != "" {
-		if gnKar, err := strconv.Atoi(currentKar); err == nil {
-			global.SetGnGod(gnKar)
-			session.Set("kar", gnKar)
-		}
-	}
-	session.Save()
 	username, ok := h.getUsernameFromToken(c)
 	if !ok {
 		h.logger.Print("No valid user token found")
@@ -769,7 +852,7 @@ func (h *BasicHandler) renderFullPage(c *gin.Context) {
 	}
 
 	// Get submenu items
-	subMenus := common.GetTranslatedSubMenus(domain.MenuData, menuName, global.GetLanguage())
+	subMenus := common.GetTranslatedSubMenus(domain.MenuData, menuName, userSession.Language)
 	if subMenus == nil {
 		h.logger.Printf("Menu not found: %s", menuName)
 		h.respondWithError(c, http.StatusNotFound, "Menu not found")
@@ -781,10 +864,7 @@ func (h *BasicHandler) renderFullPage(c *gin.Context) {
 	h.menuItems.CurrentMenu = menuName
 
 	fvrData := h.getFirma()
-	selections := h.getSessionSelections(session, fvrData)
-
-	// Update global state
-	h.updateGlobalState(selections)
+	selections := h.getUserSessionSelections(userSession, fvrData)
 
 	// Prepare page data
 	pageData := struct {
@@ -812,7 +892,7 @@ func (h *BasicHandler) renderFullPage(c *gin.Context) {
 		FirmaConf:    setComboFirmaConfig(fvrData, selections.firma),
 		GodConf:      setComboPoslGodConfig(fvrData, selections.firma, selections.god),
 		KarConf:      setComboKarConfig(fvrData, selections.firma, selections.god, selections.kar),
-		LanguageConf: setComboLanguageConfig(global.GetLanguage()),
+		LanguageConf: setComboLanguageConfig(selections.language, h.cfg),
 	}
 
 	// Render the page
@@ -882,8 +962,8 @@ func (h *BasicHandler) AddRoutes(r *gin.Engine) {
 }
 
 // setFirma initializes the firma data from the service
-func (h *BasicHandler) setFirma() error {
-	fvrData, err := h.fvrService.GetAllFvr()
+func (h *BasicHandler) setFirma(c *gin.Context) error {
+	fvrData, err := h.fvrService.GetAllFvr(c)
 	if err != nil {
 		h.logger.Printf("Error fetching firma data: %v", err)
 		return fmt.Errorf("failed to fetch firma data: %w", err)
@@ -1007,7 +1087,7 @@ func setComboKarConfig(fvrData domain.Firma, selectedFirma string, selectedGod, 
 }
 
 // setComboKarConfig creates configuration for the knjigovodstvo combo box
-func setComboLanguageConfig(selectedValue string) domain.ComboFieldConfig {
+func setComboLanguageConfig(selectedValue string, cfg config.Config) domain.ComboFieldConfig {
 
 	configCombo := domain.ComboFieldConfig{
 		ID:             "language",
@@ -1022,7 +1102,7 @@ func setComboLanguageConfig(selectedValue string) domain.ComboFieldConfig {
 	}
 
 	var optionItems []domain.ComboItem
-	languages := global.GetConfig().Languages
+	languages := cfg.Languages
 	for _, l := range languages {
 		key := fmt.Sprintf("%s", l)
 		optionItems = append(optionItems, domain.ComboItem{

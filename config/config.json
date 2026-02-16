@@ -4,7 +4,7 @@
         "db_port": 5432,
         "db_user": "postgres",
         "db_password": "postgres",
-        "db_name": "conto",
+        "db_name": "agencija",
         "db_search_path": "baza"
     },
     "page_size": 15,
@@ -13,5 +13,6 @@
     "port": "8080",
     "languages": ["SR", "СР", "EN"],
     "jwt_secret": "w5LcTezOXK5gttMOq2REZNwKstKKKoBuNlgkIkbk4SK",
-    "session_secret": "sMoq5uH5K4sAaSpKeYGTA9jFSlKY07ZiehQKO0iwogX"
+    "session_secret": "sMoq5uH5K4sAaSpKeYGTA9jFSlKY07ZiehQKO0iwogX",
+    "nDuzSint": 3
 }

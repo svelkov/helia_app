@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"helia/internal/common"
 	"helia/internal/domain"
-	"helia/internal/i18n"
+	"helia/i18n"
 )
 
 // modalConfirmButton returns a button with the appropriate hx-attribute.
@@ -15,10 +15,16 @@ templ ConfirmButton(btn domain.Button, translator *i18n.Service) {
 			id={ btn.Id }
 			class={ btn.BtnClass }
 			hx-delete={ btn.HxActionURL }
-			hx-target={ btn.HxTarget }
-			hx-swap={ btn.HxSwap }
-			hx-vals='{"id": ""}'
-			hx-on::after-request={ templ.JSFuncCall("handleDialogResponse", btn.IdDialog) }
+			if btn.HxTarget != "" {
+				hx-target={ btn.HxTarget }
+			}
+			if btn.HxSwap != "" {
+				hx-swap={ btn.HxSwap }
+			}
+			hx-include="closest form"
+			if btn.HxOnAfterRequest != "" {
+				hx-on::after-request={ templ.JSFuncCall(fmt.Sprintf("%s", btn.HxOnAfterRequest), btn.IdDialog) }
+			}
 		>
 			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6 mr-1">
 				<path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clip-rule="evenodd"></path>
@@ -31,14 +37,16 @@ templ ConfirmButton(btn domain.Button, translator *i18n.Service) {
 			id={ btn.Id }
 			class={ btn.BtnClass }
 			hx-put={ btn.HxActionURL }
-			hx-target={ btn.HxTarget }
+			if btn.HxTarget != "" {
+				hx-target={ btn.HxTarget }
+			}
+			hx-include="closest form"
 			if btn.HxVals != "" {
 				hx-vals={ btn.HxVals }
 			}
 			if btn.HxSwap != "" {
 				hx-swap={ btn.HxSwap }
 			}
-			hx-on::after-request={ templ.JSFuncCall("handleDialogResponse", btn.IdDialog) }
 		>
 			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6 mr-1">
 				<path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clip-rule="evenodd"></path>
@@ -61,7 +69,6 @@ templ ConfirmButton(btn domain.Button, translator *i18n.Service) {
 			if btn.HxVals != "" {
 				hx-vals={ btn.HxVals }
 			}
-			hx-on::after-request={ templ.JSFuncCall("handleDialogResponse", btn.IdDialog) }
 		>
 			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6 mr-1">
 				<path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clip-rule="evenodd"></path>
@@ -257,6 +264,45 @@ templ PrintButton(btn domain.Button, translator *i18n.Service) {
 		}
 	>
 		@Icon("stampa", common.ClassIcon)
+		{ translator.Button(btn.LabelText) }
+	</button>
+}
+templ Button(btn domain.Button, translator *i18n.Service) {
+	<button
+		id={ btn.Id }
+		class={ btn.BtnClass }
+		if btn.HxRequestType == "POST" {
+			hx-post={ btn.HxActionURL }
+		}
+		if btn.HxRequestType == "GET" {
+			hx-get={ btn.HxActionURL }
+		}
+		if btn.HxRequestType == "DELETE" {
+			hx-delete={ btn.HxActionURL }
+		}
+		if btn.HxRequestType == "PUT" {
+			hx-put={ btn.HxActionURL }
+		}
+		if btn.HxTarget !="" {
+			hx-target={ btn.HxTarget }
+		}
+		if btn.HxSwap !="" {
+			hx-swap={ btn.HxSwap }
+		}
+		if btn.HxInclude !="" {
+			hx-include={ btn.HxInclude }
+		}
+		if btn.HxVals !="" {
+			hx-vals={ btn.HxVals }
+		}
+		hx-headers='{"X-Request-Source": "btn"}'
+		if btn.HxOnAfterRequest != "" {
+			hx-on::after-request={ templ.JSFuncCall("handleDialogResponse", btn.IdDialog) }
+		}
+	>
+		if btn.Icon != "" {
+				@Icon(btn.Icon, common.ClassIcon)
+		}
 		{ translator.Button(btn.LabelText) }
 	</button>
 }

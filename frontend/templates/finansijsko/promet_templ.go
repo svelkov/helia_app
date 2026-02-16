@@ -9,14 +9,14 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
-	"fmt"
 	tmpl "helia/frontend/templates"
+	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
-	"helia/internal/i18n"
+	"time"
 )
 
-func PrometMain(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.PrometTotalValues, translator *i18n.Service) templ.Component {
+func PrometMain(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.TotalValues, searchInput domain.InputControl, gnGod int, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -41,7 +41,7 @@ func PrometMain(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada d
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = PrometAnalitickihKonta(tabs, tbl, btnPrint, btnObrada, total, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = PrometAnalitickihKonta(tabs, tbl, btnPrint, btnObrada, total, searchInput, gnGod, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -53,7 +53,8 @@ func PrometMain(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada d
 	})
 }
 
-func PrometNav(tabs domain.TabData, translator *i18n.Service) templ.Component {
+// Tab 1 - Promet analitickih konta
+func PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.TotalValues, searchInput domain.InputControl, gnGod int, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -74,165 +75,41 @@ func PrometNav(tabs domain.TabData, translator *i18n.Service) templ.Component {
 			templ_7745c5c3_Var2 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<h2 class=\"text-xl font-semibold\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<!-- Container with full height --><div class=\"flex flex-col h-full\"><!-- Tab Navigation --><div class=\"border-b border-blue-600\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var3 string
-		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Title("Promet"))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/promet.templ`, Line: 40, Col: 63}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
+		templ_7745c5c3_Err = tmpl.TabNav(translator.Title("Promet"), tabs, "#tab-content", "promet-panel", translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</h2><nav class=\"py-1 h-8 text-sm font-medium text-gray-700 flex items-center whitespace-nowrap\" aria-label=\"Tabs\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</div><!-- Tab 1 Content --><div id=\"tab1\" class=\"flex-1 min-h-0 flex flex-col gap-1\"><!-- First Row - Two divs side by side --><div class=\"grid grid-cols-2 gap-1\"><!-- Parameters Div - Left Aligned --><div class=\"border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg\"><div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		for _, item := range tabs.Tabs {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<input id=\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var4 string
-			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("tab%s", item.Name))
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/promet.templ`, Line: 43, Col: 46}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "\" type=\"hidden\" name=\"sourceTab\" value=\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var5 string
-			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(item.Name)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/promet.templ`, Line: 43, Col: 97}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "\"> <button id=\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var6 string
-			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(item.ID)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/promet.templ`, Line: 45, Col: 16}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			if item.IsActive {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, " class=\"whitespace-nowrap rounded-t-lg py-1 px-1 font-medium text-sm rounded-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500\"")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-			} else {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, " class=\"whitespace-nowrap rounded-t-lg py-1 px-1 font-medium text-sm rounded-sm text-gray-600 bg-white border border-gray-300 hover:text-blue-700 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500\"")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, " hx-get=\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var7 string
-			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(item.HXRequestUrl)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/promet.templ`, Line: 51, Col: 30}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "\" hx-target=\"#tab-content\" hx-swap=\"innerHTML\" hx-headers=\"{&#34;X-Request-Source&#34;: &#34;tab&#34;}\" aria-controls=\"promet-panel\" aria-selected=\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var8 string
-			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%v", item.IsActive))
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/promet.templ`, Line: 56, Col: 52}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "\">")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var9 string
-			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label(item.Label))
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/promet.templ`, Line: 58, Col: 34}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</button>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</nav>")
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "konto",
+			LabelText:  translator.Label("Konto"),
+			ClassLabel: common.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		return nil
-	})
-}
-
-// Tab 1 - Promet analitickih konta
-func PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.PrometTotalValues, translator *i18n.Service) templ.Component {
-	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
-		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
-		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
-			return templ_7745c5c3_CtxErr
-		}
-		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
-		if !templ_7745c5c3_IsBuffer {
-			defer func() {
-				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
-				if templ_7745c5c3_Err == nil {
-					templ_7745c5c3_Err = templ_7745c5c3_BufErr
-				}
-			}()
-		}
-		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var10 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var10 == nil {
-			templ_7745c5c3_Var10 = templ.NopComponent
-		}
-		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<!-- Tab Navigation -->")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = PrometNav(tabs, translator).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<!-- Tab 1 Content --><div id=\"tab1\"><!-- First Row - Two divs side by side --><div class=\"grid grid-cols-2 gap-1\"><!-- Parameters Div - Left Aligned --><div class=\"border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg\"><div class=\"flex items-center gap-1 mb-1\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = KontoField(translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:           "konto",
+			Name:         "konto",
+			FieldType:    "text",
+			Disabled:     false,
+			ClassInput:   common.ClassInputTextEnabled + " w-24",
+			BlurEndpoint: "api/fkpl/trazikonto",
+			HxTarget:     "kontonaziv",
+			HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "2"}`,
+			HxInclude:    "this",
+			MinLength:    "2",
+			MaxLength:    "6",
+			TabIndex:     "1",
+			OnInput:      "clearFieldError",
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -248,15 +125,43 @@ func PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = NazivField("kontonaziv").Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "kontonaziv",
+			Name:       "kontonaziv",
+			FieldType:  "text",
+			Disabled:   true,
+			ClassInput: common.ClassInputTextDisabled + " w-full",
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</div><div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</div><div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = SifraField(translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "sifra",
+			LabelText:  translator.Label("Sifra"),
+			ClassLabel: common.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:           "sifra",
+			Name:         "sifra",
+			FieldType:    "text",
+			Disabled:     false,
+			ClassInput:   common.ClassInputTextEnabled + " w-24",
+			BlurEndpoint: "api/fkpl/trazikonto",
+			HxTarget:     "sifranaziv",
+			HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('sifra').value, "vkonta": "1"}`,
+			HxInclude:    "this",
+			MinLength:    "2",
+			MaxLength:    "6",
+			TabIndex:     "2",
+			OnInput:      "clearFieldError",
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -272,11 +177,17 @@ func PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = NazivField("sifranaziv").Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "sifranaziv",
+			Name:       "sifranaziv",
+			FieldType:  "text",
+			Disabled:   true,
+			ClassInput: common.ClassInputTextDisabled + " w-full",
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</div><div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</div><div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -292,15 +203,16 @@ func PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint,
 			ID:         "oddatuma",
 			Name:       "oddatuma",
 			FieldType:  "date",
+			Value:      time.Date(gnGod, 1, 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
 			Disabled:   false,
-			ClassInput: common.ClassInputTextEnabled + " w-28",
+			ClassInput: common.ClassInputTextEnabled + " w-32",
 			TabIndex:   "3",
 			OnInput:    "clearFieldError",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</div><div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</div><div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -316,15 +228,16 @@ func PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint,
 			ID:         "dodatuma",
 			Name:       "dodatuma",
 			FieldType:  "date",
+			Value:      time.Date(gnGod, 12, 31, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
 			Disabled:   false,
-			ClassInput: common.ClassInputTextEnabled + " w-28",
+			ClassInput: common.ClassInputTextEnabled + " w-32",
 			TabIndex:   "4",
 			OnInput:    "clearFieldError",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</div><div class=\"mb-1 flex items-center justify-between h-6\"><!-- Checkbox group on the left --><div class=\"flex items-center\"><input type=\"checkbox\" class=\"h-4 w-4 rounded border border-blue-400 text-blue-600 focus:ring-blue-500\"> <span class=\"ml-1 text-sm text-gray-700\">Dodatni parametri</span></div><!-- Buttons on the right --><div class=\"flex items-center space-x-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</div><div class=\"mb-1 flex items-center justify-between h-6\"><!-- Checkbox group on the left --><div class=\"flex items-center\"><input type=\"checkbox\" class=\"h-4 w-4 rounded border border-blue-400 text-blue-600 focus:ring-blue-500\"> <span class=\"ml-1 text-sm text-gray-700\">Dodatni parametri</span></div><!-- Buttons on the right --><div class=\"flex items-center space-x-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -336,15 +249,23 @@ func PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</div></div></div><!-- Values Div - Numeric Right Aligned --><div class=\"border mt-1 mb-1 bg-blue-100 border border-blue-400 p-1 rounded-lg\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</div></div></div><!-- Values Div - Numeric Right Aligned --><div class=\"border mt-1 mb-1 bg-blue-100 border border-blue-400 p-1 rounded-lg\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = TotalValues(total, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = PrometTotalValues(total, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "</div></div><div class=\"flex flex-col\"><!-- Parent should have: class=\"flex flex-col\" --><!-- Table Section --><div id=\"promettable\" class=\"flex-1 rounded-t-lg overflow-x-auto overflow-y-auto border border-gray-200 rounded-lg\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</div></div><!-- Group Data Table --><div class=\"border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.Search_Part(tbl, searchInput).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<!-- Table --><div id=\"promettable\" class=\"flex-1 overflow-x-auto overflow-y-auto min-h-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -352,7 +273,7 @@ func PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "</div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</div></div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -365,7 +286,7 @@ func PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint,
 }
 
 // Tab 2 - Analiticka kartica po mestima isporuke
-func AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.PrometTotalValues, translator *i18n.Service) templ.Component {
+func AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.TotalValues, searchInput domain.InputControl, gnGod int, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -381,24 +302,46 @@ func AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint, 
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var11 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var11 == nil {
-			templ_7745c5c3_Var11 = templ.NopComponent
+		templ_7745c5c3_Var3 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var3 == nil {
+			templ_7745c5c3_Var3 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "<!-- Tab Navigation -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "<!-- Tab Navigation --><div class=\"flex flex-col h-full\"><!-- Tab Navigation --><div class=\"border-b border-blue-600\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = PrometNav(tabs, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.TabNav(translator.Title("Promet"), tabs, "#tab-content", "promet-panel", translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "<div id=\"tab2\"><!-- Two divs side by side --><!-- First Row - Two divs side by side --><div class=\"grid grid-cols-2 gap-1\"><!-- Parameters Div - Left Aligned --><div class=\"border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg\"><div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</div><div id=\"tab2\" class=\"flex-1 min-h-0 flex flex-col gap-1\"><!-- Two divs side by side --><!-- First Row - Two divs side by side --><div class=\"grid grid-cols-2 gap-1\"><!-- Parameters Div - Left Aligned --><div class=\"border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg\"><div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = KontoField(translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "konto",
+			LabelText:  translator.Label("Konto"),
+			ClassLabel: common.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:           "konto",
+			Name:         "konto",
+			FieldType:    "text",
+			Disabled:     false,
+			ClassInput:   common.ClassInputTextEnabled + " w-24",
+			BlurEndpoint: "api/fkpl/trazikonto",
+			HxTarget:     "kontonaziv",
+			HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "2"}`,
+			HxInclude:    "this",
+			MinLength:    "2",
+			MaxLength:    "6",
+			TabIndex:     "1",
+			OnInput:      "clearFieldError",
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -414,15 +357,43 @@ func AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = NazivField("kontonaziv").Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "kontonaziv",
+			Name:       "kontonaziv",
+			FieldType:  "text",
+			Disabled:   true,
+			ClassInput: common.ClassInputTextDisabled + " w-full",
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "</div><div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</div><div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = SifraField(translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "sifra",
+			LabelText:  translator.Label("Sifra"),
+			ClassLabel: common.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:           "sifra",
+			Name:         "sifra",
+			FieldType:    "text",
+			Disabled:     false,
+			ClassInput:   common.ClassInputTextEnabled + " w-24",
+			BlurEndpoint: "api/fkpl/trazikonto",
+			HxTarget:     "sifranaziv",
+			HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('sifra').value, "vkonta": "1"}`,
+			HxInclude:    "this",
+			MinLength:    "2",
+			MaxLength:    "6",
+			TabIndex:     "2",
+			OnInput:      "clearFieldError",
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -438,11 +409,17 @@ func AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = NazivField("sifranaziv").Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "sifranaziv",
+			Name:       "sifranaziv",
+			FieldType:  "text",
+			Disabled:   true,
+			ClassInput: common.ClassInputTextDisabled + " w-full",
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "</div><div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "</div><div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -458,15 +435,16 @@ func AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint, 
 			ID:         "oddatuma",
 			Name:       "oddatuma",
 			FieldType:  "date",
+			Value:      time.Date(gnGod, 1, 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
 			Disabled:   false,
-			ClassInput: common.ClassInputTextEnabled + " w-28",
+			ClassInput: common.ClassInputTextEnabled + " w-32",
 			TabIndex:   "3",
 			OnInput:    "clearFieldError",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "</div><div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</div><div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -482,15 +460,16 @@ func AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint, 
 			ID:         "dodatuma",
 			Name:       "dodatuma",
 			FieldType:  "date",
+			Value:      time.Date(gnGod, 12, 31, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
 			Disabled:   false,
-			ClassInput: common.ClassInputTextEnabled + " w-28",
+			ClassInput: common.ClassInputTextEnabled + " w-32",
 			TabIndex:   "4",
 			OnInput:    "clearFieldError",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "</div><div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</div><div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -529,11 +508,17 @@ func AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = NazivField("odminaziv").Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "odminaziv",
+			Name:       "odminaziv",
+			FieldType:  "text",
+			Disabled:   true,
+			ClassInput: common.ClassInputTextDisabled + " w-full",
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "</div><div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</div><div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -573,11 +558,17 @@ func AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = NazivField("dominaziv").Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "dominaziv",
+			Name:       "dominaziv",
+			FieldType:  "text",
+			Disabled:   true,
+			ClassInput: common.ClassInputTextDisabled + " w-full",
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "</div><div class=\"mb-1 flex items-center justify-between h-6\"><!-- Checkbox group on the left --><div class=\"flex items-center\"><input type=\"checkbox\" class=\"h-4 w-4 rounded border border-blue-400 text-blue-600 focus:ring-blue-500\"> <span class=\"ml-1 text-sm text-gray-700\">Dodatni parametri</span></div><!-- Buttons on the right --><div class=\"flex items-center space-x-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</div><div class=\"mb-1 flex items-center justify-between h-6\"><!-- Checkbox group on the left --><div class=\"flex items-center\"><input type=\"checkbox\" class=\"h-4 w-4 rounded border border-blue-400 text-blue-600 focus:ring-blue-500\"> <span class=\"ml-1 text-sm text-gray-700\">Dodatni parametri</span></div><!-- Buttons on the right --><div class=\"flex items-center space-x-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -589,15 +580,23 @@ func AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "</div></div></div><!-- Values Div - Numeric Right Aligned --><div class=\"border mt-1 mb-1 bg-blue-100 border border-blue-400 p-1 rounded-lg\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</div></div></div><!-- Values Div - Numeric Right Aligned --><div class=\"border mt-1 mb-1 bg-blue-100 border border-blue-400 p-1 rounded-lg\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = TotalValues(total, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = PrometTotalValues(total, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "</div></div><div class=\"flex flex-col h-full\"><!-- Parent should have: class=\"flex flex-col\" --><!-- Table Section --><div id=\"promettable\" class=\"flex-1 overflow-x-auto overflow-y-auto border border-gray-200 rounded-lg\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</div></div><!-- Group Data Table --><div class=\"border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.Search_Part(tbl, searchInput).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "<!-- Table --><div id=\"prometable\" class=\"flex-1 overflow-x-auto overflow-y-auto min-h-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -605,7 +604,7 @@ func AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "</div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "</div></div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -614,7 +613,7 @@ func AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint, 
 }
 
 // Tab 3 - Promet deviznih analitickih konta
-func PrometDeviznihAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, tblDevizni domain.TableData, btnPrint, btnObrada domain.Button, total domain.PrometTotalValues, translator *i18n.Service) templ.Component {
+func PrometDeviznihAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, tblDevizni domain.TableData, btnPrint, btnObrada domain.Button, total domain.TotalValues, gnGod int, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -630,24 +629,46 @@ func PrometDeviznihAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, t
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var12 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var12 == nil {
-			templ_7745c5c3_Var12 = templ.NopComponent
+		templ_7745c5c3_Var4 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var4 == nil {
+			templ_7745c5c3_Var4 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "<!-- Tab Navigation -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "<!-- Tab Navigation --><div class=\"flex flex-col h-full\"><!-- Tab Navigation --><div class=\"border-b border-blue-600\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = PrometNav(tabs, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.TabNav(translator.Title("Promet"), tabs, "#tab-content", "promet-panel", translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "<div id=\"tab3\"><!-- First Row - Two divs side by side --><div class=\"grid grid-cols-2 gap-1\"><!-- Parameters Div - Left Aligned --><div class=\"border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg\"><div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "</div><div id=\"tab3\"><!-- First Row - Two divs side by side --><div class=\"grid grid-cols-2 gap-1\"><!-- Parameters Div - Left Aligned --><div class=\"border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg\"><div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = KontoField(translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "konto",
+			LabelText:  translator.Label("Konto"),
+			ClassLabel: common.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:           "konto",
+			Name:         "konto",
+			FieldType:    "text",
+			Disabled:     false,
+			ClassInput:   common.ClassInputTextEnabled + " w-24",
+			BlurEndpoint: "api/fkpl/trazikonto",
+			HxTarget:     "kontonaziv",
+			HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "2"}`,
+			HxInclude:    "this",
+			MinLength:    "2",
+			MaxLength:    "6",
+			TabIndex:     "1",
+			OnInput:      "clearFieldError",
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -663,15 +684,43 @@ func PrometDeviznihAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, t
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = NazivField("kontonaziv").Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "kontonaziv",
+			Name:       "kontonaziv",
+			FieldType:  "text",
+			Disabled:   true,
+			ClassInput: common.ClassInputTextDisabled + " w-full",
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "</div><div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "</div><div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = SifraField(translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "sifra",
+			LabelText:  translator.Label("Sifra"),
+			ClassLabel: common.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:           "sifra",
+			Name:         "sifra",
+			FieldType:    "text",
+			Disabled:     false,
+			ClassInput:   common.ClassInputTextEnabled + " w-24",
+			BlurEndpoint: "api/fkpl/trazikonto",
+			HxTarget:     "sifranaziv",
+			HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('sifra').value, "vkonta": "1"}`,
+			HxInclude:    "this",
+			MinLength:    "2",
+			MaxLength:    "6",
+			TabIndex:     "2",
+			OnInput:      "clearFieldError",
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -687,11 +736,17 @@ func PrometDeviznihAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, t
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = NazivField("sifranaziv").Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "sifranaziv",
+			Name:       "sifranaziv",
+			FieldType:  "text",
+			Disabled:   true,
+			ClassInput: common.ClassInputTextDisabled + " w-full",
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "</div><div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "</div><div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -707,6 +762,7 @@ func PrometDeviznihAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, t
 			ID:         "oddatuma",
 			Name:       "oddatuma",
 			FieldType:  "date",
+			Value:      time.Date(gnGod, 1, 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
 			Disabled:   false,
 			ClassInput: common.ClassInputTextEnabled + " w-28",
 			TabIndex:   "3",
@@ -715,7 +771,7 @@ func PrometDeviznihAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, t
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "</div><div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "</div><div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -731,6 +787,7 @@ func PrometDeviznihAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, t
 			ID:         "dodatuma",
 			Name:       "dodatuma",
 			FieldType:  "date",
+			Value:      time.Date(gnGod, 12, 31, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
 			Disabled:   false,
 			ClassInput: common.ClassInputTextEnabled + " w-28",
 			TabIndex:   "4",
@@ -739,7 +796,7 @@ func PrometDeviznihAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, t
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "</div><div class=\"mb-1 flex items-center justify-between h-6\"><!-- Checkbox group on the left --><div class=\"flex items-center\"><input type=\"checkbox\" class=\"h-4 w-4 rounded border border-blue-400 text-blue-600 focus:ring-blue-500\"> <span class=\"ml-1 text-sm text-gray-700\">Dodatni parametri</span></div><!-- Buttons on the right --><div class=\"flex items-center space-x-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "</div><div class=\"mb-1 flex items-center justify-between h-6\"><!-- Checkbox group on the left --><div class=\"flex items-center\"><input type=\"checkbox\" class=\"h-4 w-4 rounded border border-blue-400 text-blue-600 focus:ring-blue-500\"> <span class=\"ml-1 text-sm text-gray-700\">Dodatni parametri</span></div><!-- Buttons on the right --><div class=\"flex items-center space-x-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -751,23 +808,15 @@ func PrometDeviznihAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, t
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "</div></div></div><!-- Values Div - Numeric Right Aligned --><div class=\"border mt-1 mb-1 bg-blue-100 border border-blue-400 p-1 rounded-lg\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "</div></div></div><!-- Values Div - Numeric Right Aligned --><div class=\"border mt-1 mb-1 bg-blue-100 border border-blue-400 p-1 rounded-lg\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = TotalValues(total, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = PrometTotalValues(total, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "</div></div><div class=\"flex flex-col h-full\"><!-- Parent should have: class=\"flex flex-col\" --><!-- Table Section --><div id=\"promettable\" class=\"flex-1 overflow-x-auto overflow-y-auto border border-gray-200 rounded-lg\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "</div></div><div class=\"flex flex-col h-full\"><!-- Parent should have: class=\"flex flex-col\" --><!-- Table Section --><div id=\"promettable-dev\" class=\"flex-1 overflow-x-auto overflow-y-auto border border-gray-200 rounded-lg\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "</div></div><div class=\"flex flex-col h-full\"><!-- Parent should have: class=\"flex flex-col\" --><!-- Table Section --><div id=\"promettable\" class=\"flex-1 overflow-x-auto overflow-y-auto border border-gray-200 rounded-lg\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -775,7 +824,15 @@ func PrometDeviznihAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, t
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "</div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "</div></div><div class=\"flex flex-col h-full\"><!-- Parent should have: class=\"flex flex-col\" --><!-- Table Section --><div id=\"promettable-dev\" class=\"flex-1 overflow-x-auto overflow-y-auto border border-gray-200 rounded-lg\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "</div></div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -783,7 +840,7 @@ func PrometDeviznihAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, t
 	})
 }
 
-func PrometSubsintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.PrometTotalValues, translator *i18n.Service) templ.Component {
+func PrometSubsintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.TotalValues, searchInput domain.InputControl, gnGod int, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -799,44 +856,128 @@ func PrometSubsintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPri
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var13 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var13 == nil {
-			templ_7745c5c3_Var13 = templ.NopComponent
+		templ_7745c5c3_Var5 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var5 == nil {
+			templ_7745c5c3_Var5 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "<!-- Tab Navigation -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "<!-- Container with full height --><div class=\"flex flex-col h-full\"><!-- Tab Navigation --><div class=\"border-b border-blue-600\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = PrometNav(tabs, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.TabNav(translator.Title("Promet"), tabs, "#tab-content", "promet-panel", translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "<div id=\"tab4\"><!-- First Row - Two divs side by side --><div class=\"grid grid-cols-2 gap-1\"><!-- Parameters Div - Left Aligned --><div class=\"border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg\"><div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "</div><!-- Tab 4 Content --><div id=\"tab4\" class=\"flex-1 min-h-0 flex flex-col gap-1\"><!-- First Row - Two divs side by side --><div class=\"grid grid-cols-2 gap-1\"><!-- Parameters Div - Left Aligned --><div class=\"border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg\"><div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = KontoField(translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "odkonta",
+			LabelText:  translator.Label("Od konta"),
+			ClassLabel: common.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:           "odkonta",
+			Name:         "odkonta",
+			FieldType:    "text",
+			Disabled:     false,
+			ClassInput:   common.ClassInputTextEnabled + " w-24",
+			BlurEndpoint: "api/fkpl/trazikonto",
+			HxTarget:     "odkontanaziv",
+			HxVals:       `js:{"konto": document.getElementById('odkonta').value, "vkonta": "2"}`,
+			HxInclude:    "this",
+			Value:        "0000",
+			MinLength:    "4",
+			MaxLength:    "4",
+			TabIndex:     "1",
+			OnInput:      "clearFieldError",
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.SearchButton(domain.SearchButtonConfig{
-			ID:          "konto",
+			ID:          "odkonta",
 			Name:        "search-konto",
 			HxUrl:       "/api/promet/searchbutton",
 			HxTarget:    "#search-dropdown",
 			HxSwap:      "innerHTML",
-			HxVals:      `{"vkonta": "2"}`,
+			HxVals:      `js:{"konto": document.getElementById('odkonta').value, "vkonta": "2"}`,
 			ClassButton: common.ClassButton,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = NazivField("kontonaziv").Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "odkontanaziv",
+			Name:       "odkontanaziv",
+			FieldType:  "text",
+			Disabled:   true,
+			ClassInput: common.ClassInputTextDisabled + " w-full",
+			TabIndex:   "-1",
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "</div><div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "</div><div class=\"flex items-center gap-1 mb-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "dokonta",
+			LabelText:  translator.Label("Do konta"),
+			ClassLabel: common.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:           "dokonta",
+			Name:         "dokonta",
+			FieldType:    "text",
+			Disabled:     false,
+			ClassInput:   common.ClassInputTextEnabled + " w-24",
+			BlurEndpoint: "api/fkpl/trazikonto",
+			HxTarget:     "dokontanaziv",
+			HxVals:       `js:{"konto": document.getElementById('dokonta').value, "vkonta": "2"}`,
+			HxInclude:    "this",
+			Value:        "9999",
+			MinLength:    "4",
+			MaxLength:    "4",
+			TabIndex:     "2",
+			OnInput:      "clearFieldError",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.SearchButton(domain.SearchButtonConfig{
+			ID:          "dokonta",
+			Name:        "search-konto",
+			HxUrl:       "/api/promet/searchbutton",
+			HxTarget:    "#search-dropdown",
+			HxSwap:      "innerHTML",
+			HxVals:      `js:{"konto": document.getElementById('dokonta').value, "vkonta": "2"}`,
+			ClassButton: common.ClassButton,
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "dokontanaziv",
+			Name:       "dokontanaziv",
+			FieldType:  "text",
+			Disabled:   true,
+			ClassInput: common.ClassInputTextDisabled + " w-full",
+			TabIndex:   "-1",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "</div><div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -852,6 +993,7 @@ func PrometSubsintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPri
 			ID:         "oddatuma",
 			Name:       "oddatuma",
 			FieldType:  "date",
+			Value:      time.Date(gnGod, 1, 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
 			Disabled:   false,
 			ClassInput: common.ClassInputTextEnabled + " w-28",
 			TabIndex:   "3",
@@ -859,7 +1001,7 @@ func PrometSubsintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPri
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "</div><div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "</div><div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -875,6 +1017,7 @@ func PrometSubsintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPri
 			ID:         "dodatuma",
 			Name:       "dodatuma",
 			FieldType:  "date",
+			Value:      time.Date(gnGod, 12, 31, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
 			Disabled:   false,
 			ClassInput: common.ClassInputTextEnabled + " w-28",
 			TabIndex:   "4",
@@ -882,7 +1025,7 @@ func PrometSubsintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPri
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, "</div><div class=\"mb-1 flex items-center justify-between h-6\"><!-- Checkbox group on the left --><div class=\"flex items-center\"><input type=\"checkbox\" class=\"h-4 w-4 rounded border border-blue-400 text-blue-600 focus:ring-blue-500\"> <span class=\"ml-1 text-sm text-gray-700\">Dodatni parametri</span></div><!-- Buttons on the right --><div class=\"flex items-center space-x-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "</div><div class=\"mb-1 flex items-center justify-between h-6\"><div class=\"flex items-center\"></div><!-- Buttons on the right --><div class=\"flex items-center space-x-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -894,15 +1037,23 @@ func PrometSubsintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPri
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, "</div></div></div><!-- Values Div - Numeric Right Aligned --><div class=\"border mt-1 mb-1 bg-blue-100 border border-blue-400 p-1 rounded-lg\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "</div></div></div><!-- Values Div - Numeric Right Aligned --><div class=\"border mt-1 mb-1 bg-blue-100 border border-blue-400 p-1 rounded-lg\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = TotalValues(total, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = PrometTotalValues(total, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "</div></div><div class=\"flex flex-col h-full\"><!-- Parent should have: class=\"flex flex-col\" --><!-- Table Section --><div id=\"promettable\" class=\"flex-1 overflow-x-auto overflow-y-auto border border-gray-200 rounded-lg\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "</div></div><!-- Group Data Table --><div class=\"border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.Search_Part(tbl, searchInput).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "<!-- Table --><div id=\"promettable\" class=\"flex-1 overflow-x-auto overflow-y-auto min-h-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -910,7 +1061,7 @@ func PrometSubsintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPri
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 53, "</div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "</div></div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -918,7 +1069,7 @@ func PrometSubsintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPri
 	})
 }
 
-func PrometSintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.PrometTotalValues, translator *i18n.Service) templ.Component {
+func PrometSintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.TotalValues, searchInput domain.InputControl, gnGod int, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -934,24 +1085,46 @@ func PrometSintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint,
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var14 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var14 == nil {
-			templ_7745c5c3_Var14 = templ.NopComponent
+		templ_7745c5c3_Var6 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var6 == nil {
+			templ_7745c5c3_Var6 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 54, "<!-- Tab Navigation -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "<!-- Container with full height --><div class=\"flex flex-col h-full\"><!-- Tab Navigation --><div class=\"border-b border-blue-600\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = PrometNav(tabs, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.TabNav(translator.Title("Promet"), tabs, "#tab-content", "promet-panel", translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 55, "<div id=\"tab5\"><!-- First Row - Two divs side by side --><div class=\"grid grid-cols-2 gap-1\"><!-- Parameters Div - Left Aligned --><div class=\"border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg\"><div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "</div><!-- Tab 5 Content --><div id=\"tab5\" class=\"flex-1 min-h-0 flex flex-col gap-1\"><!-- First Row - Two divs side by side --><div class=\"grid grid-cols-2 gap-1\"><!-- Parameters Div - Left Aligned --><div class=\"border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg\"><div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = KontoField(translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "konto",
+			LabelText:  translator.Label("Konto"),
+			ClassLabel: common.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:           "konto",
+			Name:         "konto",
+			FieldType:    "text",
+			Disabled:     false,
+			ClassInput:   common.ClassInputTextEnabled + " w-24",
+			BlurEndpoint: "api/fkpl/trazikonto",
+			HxTarget:     "kontonaziv",
+			HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "3"}`,
+			HxInclude:    "this",
+			MinLength:    "3",
+			MaxLength:    "3",
+			TabIndex:     "1",
+			OnInput:      "clearFieldError",
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -961,13 +1134,191 @@ func PrometSintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint,
 			HxUrl:       "/api/promet/searchbutton",
 			HxTarget:    "#search-dropdown",
 			HxSwap:      "innerHTML",
-			HxVals:      `{"vkonta": "2"}`,
+			HxVals:      `{"vkonta": "3"}`,
 			ClassButton: common.ClassButton,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = NazivField("kontonaziv").Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "kontonaziv",
+			Name:       "kontonaziv",
+			FieldType:  "text",
+			Disabled:   true,
+			ClassInput: common.ClassInputTextDisabled + " w-full",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "</div><div class=\"flex items-center gap-1 mb-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "oddatuma",
+			LabelText:  translator.Label("Od datuma"),
+			ClassLabel: common.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "oddatuma",
+			Name:       "oddatuma",
+			FieldType:  "date",
+			Value:      time.Date(gnGod, 1, 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
+			Disabled:   false,
+			ClassInput: common.ClassInputTextEnabled + " w-28",
+			TabIndex:   "3",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "</div><div class=\"flex items-center gap-1 mb-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "dodatuma",
+			LabelText:  translator.Label("Do datuma"),
+			ClassLabel: common.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "dodatuma",
+			Name:       "dodatuma",
+			FieldType:  "date",
+			Value:      time.Date(gnGod, 12, 31, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
+			Disabled:   false,
+			ClassInput: common.ClassInputTextEnabled + " w-28",
+			TabIndex:   "4",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "</div><div class=\"mb-2 flex items-center justify-between h-6\"><!-- Checkbox group on the left --><div class=\"flex items-center\"></div><!-- Buttons on the right --><div class=\"flex items-center space-x-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.FormObradaButton(btnObrada, translator).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.PrintButton(btnPrint, translator).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, "</div></div></div><!-- Values Div - Numeric Right Aligned --><div class=\"border mt-1 mb-1 bg-blue-100 border border-blue-400 p-1 rounded-lg\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = PrometTotalValues(total, translator).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, "</div></div><!-- Group Data Table --><div class=\"border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.Search_Part(tbl, searchInput).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "<!-- Table --><div id=\"promettable\" class=\"flex-1 overflow-x-auto overflow-y-auto min-h-0\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 53, "</div></div></div></div>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+func KarticaSintetickiKonta(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.TotalValues, searchInput domain.InputControl, gnGod int, translator *i18n.Service) templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var7 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var7 == nil {
+			templ_7745c5c3_Var7 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 54, "<!-- Container with full height --><div class=\"flex flex-col h-full\"><!-- Tab Navigation --><div class=\"border-b border-blue-600\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.TabNav(translator.Title("Promet"), tabs, "#tab-content", "promet-panel", translator).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 55, "</div><div id=\"tab6\"><!-- First Row - Two divs side by side --><div class=\"grid grid-cols-2 gap-1\"><!-- Parameters Div - Left Aligned --><div class=\"border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg\"><div class=\"flex items-center gap-1 mb-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "konto",
+			LabelText:  translator.Label("Konto"),
+			ClassLabel: common.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:           "konto",
+			Name:         "konto",
+			FieldType:    "text",
+			Disabled:     false,
+			ClassInput:   common.ClassInputTextEnabled + " w-28",
+			BlurEndpoint: "api/fkpl/trazikonto",
+			HxTarget:     "kontonaziv",
+			HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "3"}`,
+			HxInclude:    "this",
+			MinLength:    "2",
+			MaxLength:    "3",
+			TabIndex:     "1",
+			OnInput:      "clearFieldError"}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.SearchButton(domain.SearchButtonConfig{
+			ID:          "konto",
+			Name:        "search-konto",
+			HxUrl:       "/api/promet/searchbutton",
+			HxTarget:    "#search-dropdown",
+			HxSwap:      "innerHTML",
+			HxVals:      `{"vkonta": "3"}`,
+			ClassButton: common.ClassButton,
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "kontonaziv",
+			Name:       "kontonaziv",
+			FieldType:  "text",
+			Disabled:   true,
+			ClassInput: common.ClassInputTextDisabled + " w-full",
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -987,6 +1338,7 @@ func PrometSintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint,
 			ID:         "oddatuma",
 			Name:       "oddatuma",
 			FieldType:  "date",
+			Value:      time.Date(gnGod, 1, 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
 			Disabled:   false,
 			ClassInput: common.ClassInputTextEnabled + " w-28",
 			TabIndex:   "3",
@@ -1010,6 +1362,7 @@ func PrometSintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint,
 			ID:         "dodatuma",
 			Name:       "dodatuma",
 			FieldType:  "date",
+			Value:      time.Date(gnGod, 12, 31, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
 			Disabled:   false,
 			ClassInput: common.ClassInputTextEnabled + " w-28",
 			TabIndex:   "4",
@@ -1017,7 +1370,7 @@ func PrometSintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 58, "</div><div class=\"mb-2 flex items-center justify-between h-6\"><!-- Checkbox group on the left --><div class=\"flex items-center\"><input type=\"checkbox\" class=\"h-4 w-4 rounded border border-blue-400 text-blue-600 focus:ring-blue-500\"> <span class=\"ml-1 text-sm text-gray-700\">Prikazi analitiku</span></div><!-- Buttons on the right --><div class=\"flex items-center space-x-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 58, "</div><div class=\"mb-2 flex items-center justify-between h-6\"><!-- Checkbox group on the left --><div class=\"flex items-center\"><input type=\"checkbox\" id=\"analitika\" name=\"analitika\" class=\"h-4 w-4 rounded border border-blue-400 text-blue-600 focus:ring-blue-500\"> <span class=\"ml-1 text-sm text-gray-700\">Prikazi analitiku</span></div><!-- Buttons on the right --><div class=\"flex items-center space-x-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1033,11 +1386,19 @@ func PrometSintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = TotalValues(total, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = PrometTotalValues(total, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 60, "</div></div><div class=\"flex flex-col h-full\"><!-- Parent should have: class=\"flex flex-col\" --><!-- Table Section --><div id=\"promettable\" class=\"flex-1 overflow-x-auto overflow-y-auto border border-gray-200 rounded-lg\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 60, "</div></div><!-- Group Data Table --><div class=\"border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.Search_Part(tbl, searchInput).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 61, "<!-- Table --><div id=\"promettable\" class=\"flex-1 overflow-x-auto overflow-y-auto min-h-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1045,7 +1406,7 @@ func PrometSintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 61, "</div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 62, "</div></div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1053,7 +1414,7 @@ func PrometSintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint,
 	})
 }
 
-func KarticaSintetickiKonta(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.PrometTotalValues, translator *i18n.Service) templ.Component {
+func PrometKontaPoVRD(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.TotalValues, searchInput domain.InputControl, gnGod int, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -1069,24 +1430,46 @@ func KarticaSintetickiKonta(tabs domain.TabData, tbl domain.TableData, btnPrint,
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var15 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var15 == nil {
-			templ_7745c5c3_Var15 = templ.NopComponent
+		templ_7745c5c3_Var8 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var8 == nil {
+			templ_7745c5c3_Var8 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 62, "<!-- Tab Navigation -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 63, "<!-- Container with full height --><div class=\"flex flex-col h-full\"><!-- Tab Navigation --><div class=\"border-b border-blue-600\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = PrometNav(tabs, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.TabNav(translator.Title("Promet"), tabs, "#tab-content", "promet-panel", translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 63, "<div id=\"tab6\"><!-- First Row - Two divs side by side --><div class=\"grid grid-cols-2 gap-1\"><!-- Parameters Div - Left Aligned --><div class=\"border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg\"><div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 64, "</div><!-- Tab 7 Content --><div id=\"tab7\" class=\"flex-1 min-h-0 flex flex-col gap-1\"><!-- First Row - Two divs side by side --><div class=\"grid grid-cols-2 gap-1\"><!-- Parameters Div - Left Aligned --><div class=\"border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg\"><div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = KontoField(translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "konto",
+			LabelText:  translator.Label("Konto"),
+			ClassLabel: common.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:           "konto",
+			Name:         "konto",
+			FieldType:    "text",
+			Disabled:     false,
+			ClassInput:   common.ClassInputTextEnabled + " w-24",
+			BlurEndpoint: "api/fkpl/trazikonto",
+			HxTarget:     "kontonaziv",
+			HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "3"}`,
+			HxInclude:    "this",
+			MinLength:    "4",
+			MaxLength:    "6",
+			TabIndex:     "1",
+			OnInput:      "clearFieldError",
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1096,17 +1479,23 @@ func KarticaSintetickiKonta(tabs domain.TabData, tbl domain.TableData, btnPrint,
 			HxUrl:       "/api/promet/searchbutton",
 			HxTarget:    "#search-dropdown",
 			HxSwap:      "innerHTML",
-			HxVals:      `{"vkonta": "2"}`,
+			HxVals:      `{"vkonta": "3"}`,
 			ClassButton: common.ClassButton,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = NazivField("kontonaziv").Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "kontonaziv",
+			Name:       "kontonaziv",
+			FieldType:  "text",
+			Disabled:   true,
+			ClassInput: common.ClassInputTextDisabled + " w-full",
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 64, "</div><div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 65, "</div><div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1122,6 +1511,7 @@ func KarticaSintetickiKonta(tabs domain.TabData, tbl domain.TableData, btnPrint,
 			ID:         "oddatuma",
 			Name:       "oddatuma",
 			FieldType:  "date",
+			Value:      time.Date(gnGod, 1, 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
 			Disabled:   false,
 			ClassInput: common.ClassInputTextEnabled + " w-28",
 			TabIndex:   "3",
@@ -1129,7 +1519,7 @@ func KarticaSintetickiKonta(tabs domain.TabData, tbl domain.TableData, btnPrint,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 65, "</div><div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 66, "</div><div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1145,6 +1535,7 @@ func KarticaSintetickiKonta(tabs domain.TabData, tbl domain.TableData, btnPrint,
 			ID:         "dodatuma",
 			Name:       "dodatuma",
 			FieldType:  "date",
+			Value:      time.Date(gnGod, 12, 31, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
 			Disabled:   false,
 			ClassInput: common.ClassInputTextEnabled + " w-28",
 			TabIndex:   "4",
@@ -1152,7 +1543,7 @@ func KarticaSintetickiKonta(tabs domain.TabData, tbl domain.TableData, btnPrint,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 66, "</div><div class=\"mb-2 flex items-center justify-between h-6\"><!-- Checkbox group on the left --><div class=\"flex items-center\"><input type=\"checkbox\" class=\"h-4 w-4 rounded border border-blue-400 text-blue-600 focus:ring-blue-500\"> <span class=\"ml-1 text-sm text-gray-700\">Prikazi analitiku</span></div><!-- Buttons on the right --><div class=\"flex items-center space-x-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 67, "</div><div class=\"mb-2 flex items-center justify-between h-6\"><!-- Checkbox group on the left --><div class=\"flex items-center\"></div><!-- Buttons on the right --><div class=\"flex items-center space-x-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1164,15 +1555,23 @@ func KarticaSintetickiKonta(tabs domain.TabData, tbl domain.TableData, btnPrint,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 67, "</div></div></div><!-- Values Div - Numeric Right Aligned --><div class=\"border mt-1 mb-1 bg-blue-100 border border-blue-400 p-1 rounded-lg\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 68, "</div></div></div><!-- Values Div - Numeric Right Aligned --><div class=\"border mt-1 mb-1 bg-blue-100 border border-blue-400 p-1 rounded-lg\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = TotalValues(total, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = PrometTotalValues(total, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 68, "</div></div><div class=\"flex flex-col h-full\"><!-- Parent should have: class=\"flex flex-col\" --><!-- Table Section --><div id=\"promettable\" class=\"flex-1 overflow-x-auto overflow-y-auto border border-gray-200 rounded-lg\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 69, "</div></div><!-- Group Data Table --><div class=\"border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.Search_Part(tbl, searchInput).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 70, "<!-- Table --><div id=\"promettable\" class=\"flex-1 overflow-x-auto overflow-y-auto min-h-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1180,7 +1579,7 @@ func KarticaSintetickiKonta(tabs domain.TabData, tbl domain.TableData, btnPrint,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 69, "</div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 71, "</div></div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1188,7 +1587,7 @@ func KarticaSintetickiKonta(tabs domain.TabData, tbl domain.TableData, btnPrint,
 	})
 }
 
-func PrometKontaPoVRD(tabs domain.TabData, tbl domain.TableData, translator *i18n.Service) templ.Component {
+func PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.TotalValues, searchInput domain.InputControl, gnGod int, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -1204,61 +1603,45 @@ func PrometKontaPoVRD(tabs domain.TabData, tbl domain.TableData, translator *i18
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var16 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var16 == nil {
-			templ_7745c5c3_Var16 = templ.NopComponent
+		templ_7745c5c3_Var9 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var9 == nil {
+			templ_7745c5c3_Var9 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 70, "<!-- Tab Navigation -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 72, "<!-- Container with full height --><div class=\"flex flex-col h-full\"><!-- Tab Navigation --><div class=\"border-b border-blue-600\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = PrometNav(tabs, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.TabNav(translator.Title("Promet"), tabs, "#tab-content", "promet-panel", translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 71, "<div id=\"tab7\"></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 73, "</div><!-- Tab 8 Content --><div id=\"tab8\" class=\"flex-1 min-h-0 flex flex-col gap-1\"><!-- First Row - Two divs side by side --><div class=\"grid grid-cols-2 gap-1\"><!-- Parameters Div - Left Aligned --><div class=\"border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg\"><div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		return nil
-	})
-}
-
-func PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.PrometTotalValues, translator *i18n.Service) templ.Component {
-	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
-		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
-		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
-			return templ_7745c5c3_CtxErr
-		}
-		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
-		if !templ_7745c5c3_IsBuffer {
-			defer func() {
-				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
-				if templ_7745c5c3_Err == nil {
-					templ_7745c5c3_Err = templ_7745c5c3_BufErr
-				}
-			}()
-		}
-		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var17 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var17 == nil {
-			templ_7745c5c3_Var17 = templ.NopComponent
-		}
-		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 72, "<!-- Tab Navigation -->")
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "konto",
+			LabelText:  translator.Label("Konto"),
+			ClassLabel: common.ClassLabel + " w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = PrometNav(tabs, translator).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 73, "<div id=\"tab8\"><!-- First Row - Two divs side by side --><div class=\"grid grid-cols-2 gap-1\"><!-- Parameters Div - Left Aligned --><div class=\"border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg\"><div class=\"flex items-center gap-1 mb-1\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = KontoField(translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:           "konto",
+			Name:         "konto",
+			FieldType:    "text",
+			Disabled:     false,
+			ClassInput:   common.ClassInputTextEnabled + " w-24",
+			BlurEndpoint: "api/fkpl/trazikonto",
+			HxTarget:     "kontonaziv",
+			HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "2"}`,
+			HxInclude:    "this",
+			MinLength:    "4",
+			MaxLength:    "6",
+			TabIndex:     "1",
+			OnInput:      "clearFieldError"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1274,7 +1657,13 @@ func PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = NazivField("kontonaziv").Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "kontonaziv",
+			Name:       "kontonaziv",
+			FieldType:  "text",
+			Disabled:   true,
+			ClassInput: common.ClassInputTextDisabled + " w-full",
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1292,13 +1681,13 @@ func PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint, 
 		}
 		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
 			ID:           "odsifre",
-			Value:        "",
 			FieldType:    "text",
 			Disabled:     false,
 			ClassInput:   common.ClassInputTextEnabled + " w-24",
 			BlurEndpoint: "api/fkpl/trazikonto",
 			HxTarget:     "sifranaziv",
 			HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`,
+			Value:        "00",
 			MinLength:    "2",
 			MaxLength:    "6",
 			TabIndex:     "2",
@@ -1318,7 +1707,13 @@ func PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = NazivField("odsifrenaziv").Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "odsifrenaziv",
+			Name:       "odsifrenaziv",
+			FieldType:  "text",
+			Disabled:   true,
+			ClassInput: common.ClassInputTextDisabled + " w-full",
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1342,6 +1737,7 @@ func PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint, 
 			BlurEndpoint: "api/fkpl/trazikonto",
 			HxTarget:     "sifranaziv",
 			HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`,
+			Value:        "999999",
 			MinLength:    "2",
 			MaxLength:    "6",
 			TabIndex:     "3",
@@ -1351,17 +1747,23 @@ func PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint, 
 		}
 		templ_7745c5c3_Err = tmpl.SearchButton(domain.SearchButtonConfig{
 			ID:          "dosifre",
-			Name:        "search-dodsfre",
+			Name:        "search-dosifre",
 			HxUrl:       "/api/promet/searchbutton",
 			HxTarget:    "#search-dropdown",
 			HxSwap:      "innerHTML",
-			HxVals:      `{"vkonta": "1"}`,
+			HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`,
 			ClassButton: common.ClassButton,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = NazivField("dosifrenaziv").Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "dosifrenaziv",
+			Name:       "dosifrenaziv",
+			FieldType:  "text",
+			Disabled:   true,
+			ClassInput: common.ClassInputTextDisabled + " w-full",
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1370,21 +1772,20 @@ func PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint, 
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "odnaloga",
-			LabelText:  translator.Label("Od Naloga"),
+			ID:         "oddatuma",
+			LabelText:  translator.Label("Od Datuma"),
 			ClassLabel: common.ClassLabel + " w-24",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "odnaloga",
-			Name:       "odnaloga",
-			FieldType:  "text",
+			ID:         "oddatuma",
+			Name:       "oddatuma",
+			FieldType:  "date",
 			Disabled:   false,
-			ClassInput: common.ClassInputTextEnabled + " w-24",
-			MinLength:  "1",
-			MaxLength:  "10",
+			ClassInput: common.ClassInputTextEnabled + " w-32",
+			Value:      time.Date(gnGod, 1, 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
 			TabIndex:   "4",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
@@ -1395,21 +1796,20 @@ func PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint, 
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "donaloga",
-			LabelText:  translator.Label("Do Naloga"),
+			ID:         "dodatuma",
+			LabelText:  translator.Label("Do Datuma"),
 			ClassLabel: common.ClassLabel + " w-24",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "donaloga",
-			Name:       "donaloga",
-			FieldType:  "text",
+			ID:         "dodatuma",
+			Name:       "dodatuma",
+			FieldType:  "date",
 			Disabled:   false,
-			ClassInput: common.ClassInputTextEnabled + " w-24",
-			MinLength:  "1",
-			MaxLength:  "10",
+			ClassInput: common.ClassInputTextEnabled + " w-32",
+			Value:      time.Date(gnGod, 12, 31, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
 			TabIndex:   "5",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
@@ -1431,11 +1831,19 @@ func PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = TotalValues(total, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = PrometTotalValues(total, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 80, "</div></div><div class=\"flex flex-col h-full\"><!-- Parent should have: class=\"flex flex-col\" --><!-- Table Section --><div id=\"promettable\" class=\"flex-1 overflow-x-auto overflow-y-auto border border-gray-200 rounded-lg\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 80, "</div></div><!-- Group Data Table --><div class=\"border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.Search_Part(tbl, searchInput).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 81, "<!-- Table --><div id=\"promettable\" class=\"flex-1 overflow-x-auto overflow-y-auto min-h-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1443,7 +1851,7 @@ func PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 81, "</div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 82, "</div></div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1451,7 +1859,7 @@ func PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint, 
 	})
 }
 
-func TotalValues(total domain.PrometTotalValues, translator *i18n.Service) templ.Component {
+func PrometTotalValues(total domain.TotalValues, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -1467,34 +1875,21 @@ func TotalValues(total domain.PrometTotalValues, translator *i18n.Service) templ
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var18 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var18 == nil {
-			templ_7745c5c3_Var18 = templ.NopComponent
+		templ_7745c5c3_Var10 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var10 == nil {
+			templ_7745c5c3_Var10 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 82, "<div id=\"totalvalues\" class=\"border p-1 rounded-lg\" hx-get=\"/api/promet/totalvalues\" hx-trigger=\"click from:#obrada-btn\" hx-target=\"#totalvalues\" hx-swap=\"innerHTML\" hx-vals=\"js:{\r\n            konto: document.getElementById(&#39;konto&#39;)?.value,\r\n            sifra: document.getElementById(&#39;sifra&#39;)?.value,\r\n            oddatuma: document.getElementById(&#39;oddatuma&#39;)?.value,\r\n            dodatuma: document.getElementById(&#39;dodatuma&#39;)?.value\r\n        }\"><div class=\"grid grid-cols-4 gap-1 mb-px text-sm font-medium text-gray-700 h-6 items-center\"><div class=\"text-center\"></div><div class=\"text-center\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 83, "<div id=\"totalvalues\" class=\"border p-1 rounded-lg\" hx-get=\"/api/promet/totalvalues\" hx-trigger=\"click from:#obrada-btn\" hx-target=\"#totalvalues\" hx-swap=\"innerHTML\" hx-vals=\"js:{\r\n            konto: document.getElementById(&#39;konto&#39;)?.value,\r\n            sifra: document.getElementById(&#39;sifra&#39;)?.value,\r\n            oddatuma: document.getElementById(&#39;oddatuma&#39;)?.value,\r\n            dodatuma: document.getElementById(&#39;dodatuma&#39;)?.value,\r\n\t\t\todmi: document.getElementById(&#39;odmi&#39;)?.value,\r\n\t\t\tdomi: document.getElementById(&#39;domi&#39;)?.value,\r\n\t\t\todkonta: document.getElementById(&#39;odkonta&#39;)?.value,\r\n\t\t\tdokonta: document.getElementById(&#39;dokonta&#39;)?.value,\r\n\t\t\todsifre: document.getElementById(&#39;odsifre&#39;)?.value,\r\n\t\t\tdosifre: document.getElementById(&#39;dosifre&#39;)?.value,\r\n\t\t\ttabname: document.querySelector(&#39;button[aria-selected=true]&#39;)?.id\r\n        }\"><div class=\"grid grid-cols-4 gap-1 mb-px text-sm font-medium text-gray-700 h-6 items-center\"><div class=\"text-center\"></div><div class=\"text-center\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var19 string
-		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Duguje"))
+		var templ_7745c5c3_Var11 string
+		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Duguje"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/promet.templ`, Line: 817, Col: 56}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/promet.templ`, Line: 1265, Col: 56}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 83, "</div><div class=\"text-center\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var20 string
-		templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Potražuje"))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/promet.templ`, Line: 818, Col: 60}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1502,35 +1897,48 @@ func TotalValues(total domain.PrometTotalValues, translator *i18n.Service) templ
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var21 string
-		templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Saldo"))
+		var templ_7745c5c3_Var12 string
+		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Potražuje"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/promet.templ`, Line: 819, Col: 55}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/promet.templ`, Line: 1266, Col: 60}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 85, "</div></div><div class=\"grid grid-cols-4 gap-1 mb-1 h-6 items-center\"><div class=\"text-sm text-gray-600\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var22 string
-		templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Promet do"))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/promet.templ`, Line: 824, Col: 69}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 85, "</div><div class=\"text-center\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 86, "</div>")
+		var templ_7745c5c3_Var13 string
+		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Saldo"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/promet.templ`, Line: 1267, Col: 55}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 86, "</div></div><div class=\"grid grid-cols-4 gap-1 mb-1 h-6 items-center\"><div class=\"text-sm text-gray-600\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var14 string
+		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Promet do"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/promet.templ`, Line: 1272, Col: 69}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 87, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
 			ID:            "dugujedo",
-			Value:         fmt.Sprintf("%.2f", total.DugDo),
+			Value:         common.FormatNumberWithSystemLocale(total.DugDo, 2),
 			DecimalPlaces: 2,
 			Disabled:      true,
 			ClassInput:    common.ClassInputNumericDisabled,
@@ -1540,7 +1948,7 @@ func TotalValues(total domain.PrometTotalValues, translator *i18n.Service) templ
 		}
 		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
 			ID:            "potrazujedo",
-			Value:         fmt.Sprintf("%.2f", total.PotDo),
+			Value:         common.FormatNumberWithSystemLocale(total.PotDo, 2),
 			DecimalPlaces: 2,
 			Disabled:      true,
 			ClassInput:    common.ClassInputNumericDisabled,
@@ -1550,7 +1958,7 @@ func TotalValues(total domain.PrometTotalValues, translator *i18n.Service) templ
 		}
 		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
 			ID:            "saldodo",
-			Value:         fmt.Sprintf("%.2f", total.SaldoDo),
+			Value:         common.FormatNumberWithSystemLocale(total.SaldoDo, 2),
 			DecimalPlaces: 2,
 			Disabled:      true,
 			ClassInput:    common.ClassInputNumericDisabled,
@@ -1558,26 +1966,26 @@ func TotalValues(total domain.PrometTotalValues, translator *i18n.Service) templ
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 87, "</div><div class=\"grid grid-cols-4 gap-1 mb-1 h-6 items-center\"><div class=\"text-sm text-gray-600\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 88, "</div><div class=\"grid grid-cols-4 gap-1 mb-1 h-6 items-center\"><div class=\"text-sm text-gray-600\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var23 string
-		templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Promet za period"))
+		var templ_7745c5c3_Var15 string
+		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Promet za period"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/promet.templ`, Line: 848, Col: 76}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/promet.templ`, Line: 1296, Col: 76}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 88, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 89, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
 			ID:            "dugujeperiod",
-			Value:         fmt.Sprintf("%.2f", total.DugPer),
+			Value:         common.FormatNumberWithSystemLocale(total.DugPer, 2),
 			DecimalPlaces: 2,
 			Disabled:      true,
 			ClassInput:    common.ClassInputNumericDisabled,
@@ -1587,7 +1995,7 @@ func TotalValues(total domain.PrometTotalValues, translator *i18n.Service) templ
 		}
 		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
 			ID:            "potrazujeperiod",
-			Value:         fmt.Sprintf("%.2f", total.PotPer),
+			Value:         common.FormatNumberWithSystemLocale(total.PotPer, 2),
 			DecimalPlaces: 2,
 			Disabled:      true,
 			ClassInput:    common.ClassInputNumericDisabled,
@@ -1597,7 +2005,7 @@ func TotalValues(total domain.PrometTotalValues, translator *i18n.Service) templ
 		}
 		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
 			ID:            "saldoperiod",
-			Value:         fmt.Sprintf("%.2f", total.SaldoPer),
+			Value:         common.FormatNumberWithSystemLocale(total.SaldoPer, 2),
 			DecimalPlaces: 2,
 			Disabled:      true,
 			ClassInput:    common.ClassInputNumericDisabled,
@@ -1605,26 +2013,26 @@ func TotalValues(total domain.PrometTotalValues, translator *i18n.Service) templ
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 89, "</div><div class=\"grid grid-cols-4 gap-1 h-6 items-center\"><div class=\"text-sm text-gray-600\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 90, "</div><div class=\"grid grid-cols-4 gap-1 h-6 items-center\"><div class=\"text-sm text-gray-600\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var24 string
-		templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Ukupan promet"))
+		var templ_7745c5c3_Var16 string
+		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Ukupan promet"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/promet.templ`, Line: 872, Col: 73}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/promet.templ`, Line: 1320, Col: 73}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 90, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 91, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
 			ID:            "dugujeukupno",
-			Value:         fmt.Sprintf("%.2f", total.DugTot),
+			Value:         common.FormatNumberWithSystemLocale(total.DugTot, 2),
 			DecimalPlaces: 2,
 			Disabled:      true,
 			ClassInput:    common.ClassInputNumericDisabled,
@@ -1634,7 +2042,7 @@ func TotalValues(total domain.PrometTotalValues, translator *i18n.Service) templ
 		}
 		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
 			ID:            "potrazujeukupno",
-			Value:         fmt.Sprintf("%.2f", total.PotTot),
+			Value:         common.FormatNumberWithSystemLocale(total.PotTot, 2),
 			DecimalPlaces: 2,
 			Disabled:      true,
 			ClassInput:    common.ClassInputNumericDisabled,
@@ -1644,7 +2052,7 @@ func TotalValues(total domain.PrometTotalValues, translator *i18n.Service) templ
 		}
 		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
 			ID:            "saldoukupno",
-			Value:         fmt.Sprintf("%.2f", total.SaldoTot),
+			Value:         common.FormatNumberWithSystemLocale(total.SaldoTot, 2),
 			DecimalPlaces: 2,
 			Disabled:      true,
 			ClassInput:    common.ClassInputNumericDisabled,
@@ -1652,142 +2060,7 @@ func TotalValues(total domain.PrometTotalValues, translator *i18n.Service) templ
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 91, "</div></div>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		return nil
-	})
-}
-
-func KontoField(translator *i18n.Service) templ.Component {
-	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
-		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
-		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
-			return templ_7745c5c3_CtxErr
-		}
-		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
-		if !templ_7745c5c3_IsBuffer {
-			defer func() {
-				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
-				if templ_7745c5c3_Err == nil {
-					templ_7745c5c3_Err = templ_7745c5c3_BufErr
-				}
-			}()
-		}
-		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var25 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var25 == nil {
-			templ_7745c5c3_Var25 = templ.NopComponent
-		}
-		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "nalog",
-			LabelText:  translator.Label("Konto"),
-			ClassLabel: common.ClassLabel + " w-24",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:           "konto",
-			Name:         "konto",
-			FieldType:    "text",
-			Disabled:     false,
-			ClassInput:   common.ClassInputTextEnabled + " w-24",
-			BlurEndpoint: "api/fkpl/trazikonto",
-			HxTarget:     "kontonaziv",
-			HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "2"}`,
-			HxInclude:    "this",
-			MinLength:    "2",
-			MaxLength:    "6",
-			TabIndex:     "1",
-			OnInput:      "clearFieldError"}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		return nil
-	})
-}
-
-func NazivField(id string) templ.Component {
-	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
-		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
-		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
-			return templ_7745c5c3_CtxErr
-		}
-		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
-		if !templ_7745c5c3_IsBuffer {
-			defer func() {
-				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
-				if templ_7745c5c3_Err == nil {
-					templ_7745c5c3_Err = templ_7745c5c3_BufErr
-				}
-			}()
-		}
-		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var26 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var26 == nil {
-			templ_7745c5c3_Var26 = templ.NopComponent
-		}
-		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         id,
-			Name:       id,
-			FieldType:  "text",
-			Disabled:   true,
-			ClassInput: common.ClassInputTextDisabled + " w-full",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		return nil
-	})
-}
-
-func SifraField(translator *i18n.Service) templ.Component {
-	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
-		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
-		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
-			return templ_7745c5c3_CtxErr
-		}
-		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
-		if !templ_7745c5c3_IsBuffer {
-			defer func() {
-				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
-				if templ_7745c5c3_Err == nil {
-					templ_7745c5c3_Err = templ_7745c5c3_BufErr
-				}
-			}()
-		}
-		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var27 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var27 == nil {
-			templ_7745c5c3_Var27 = templ.NopComponent
-		}
-		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "sifra",
-			LabelText:  translator.Label("Sifra"),
-			ClassLabel: common.ClassLabel + " w-24",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:           "sifra",
-			Name:         "sifra",
-			FieldType:    "text",
-			Disabled:     false,
-			ClassInput:   common.ClassInputTextEnabled + " w-24",
-			BlurEndpoint: "api/fkpl/trazikonto",
-			HxTarget:     "sifranaziv",
-			HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('sifra').value, "vkonta": "1"}`,
-			HxInclude:    "this",
-			MinLength:    "2",
-			MaxLength:    "6",
-			TabIndex:     "2",
-			OnInput:      "clearFieldError"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 92, "</div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

@@ -2,9 +2,9 @@ package finansijsko
 
 import (
 	tmpl "helia/frontend/templates"
+	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
-	"helia/internal/i18n"
 )
 
 templ NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData, btnSave, btnPrint domain.Button, translator *i18n.Service) {
@@ -14,9 +14,9 @@ templ NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableDat
 				<div class="bg-gradient-to-r from-blue-300 to-blue-800 text-white px-4 py-2 font-bold text-sm relative">
 					{ translator.Title("Knjiženje naloga") }
 					<button
+						id="btn-close"
 						class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 border border-white border-opacity-30 text-white px-2 py-1 text-xs cursor-pointer hover:bg-opacity-30"
-						hx-get="api/nalozi/all/tipdok"
-						hx-target="#content"
+						onclick="handleCloseWithUnlock(event, 'api/nalozi/all/tipdok', '#content');"
 					>
 						{ translator.Label("nazad") }
 					</button>
@@ -191,7 +191,14 @@ templ NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableDat
 										HxVals:      `{"vkonta": "2"}`,
 										ClassButton: common.ClassButton,
 									})
-									@NazivField("kontonaziv")
+									@tmpl.TextInputField(domain.InputFieldConfig{
+										ID:         "kontonaziv",
+										Name:       "kontonaziv",
+										FieldType:  "text",
+										Disabled:   true,
+										ClassInput: common.ClassInputTextEnabled + " w-full",
+										TabIndex:   "-1",
+									})
 								</div>
 								<div class="flex items-center gap-1 mb-1">
 									@tmpl.LabelField(domain.LabelFieldConfig{
@@ -222,7 +229,14 @@ templ NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableDat
 										HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`,
 										ClassButton: common.ClassButton,
 									})
-									@NazivField("sifranaziv")
+									@tmpl.TextInputField(domain.InputFieldConfig{
+										ID:         "sifranaziv",
+										Name:       "sifranaziv",
+										FieldType:  "text",
+										Disabled:   true,
+										ClassInput: common.ClassInputTextEnabled + " w-full",
+										TabIndex:   "-1",
+									})
 								</div>
 								<div class="flex items-center gap-1">
 									@tmpl.LabelField(domain.LabelFieldConfig{
@@ -289,7 +303,14 @@ templ NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableDat
 										HxSwap:      "innerHTML",
 										ClassButton: common.ClassButton,
 									})
-									@NazivField("magacinnaziv")
+									@tmpl.TextInputField(domain.InputFieldConfig{
+										ID:         "magacinnaziv",
+										Name:       "magacinnaziv",
+										FieldType:  "text",
+										Disabled:   true,
+										ClassInput: common.ClassInputTextEnabled + " w-full",
+										TabIndex:   "-1",
+									})
 								</div>
 								<div class="flex items-center gap-1">
 									@tmpl.LabelField(domain.LabelFieldConfig{
@@ -313,7 +334,14 @@ templ NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableDat
 										HxSwap:      "innerHTML",
 										ClassButton: common.ClassButton,
 									})
-									@NazivField("minaziv")
+									@tmpl.TextInputField(domain.InputFieldConfig{
+										ID:         "minaziv",
+										Name:       "minaziv",
+										FieldType:  "text",
+										Disabled:   true,
+										ClassInput: common.ClassInputTextEnabled + " w-full",
+										TabIndex:   "-1",
+									})
 								</div>
 								<div class="flex items-center gap-1">
 									@tmpl.LabelField(domain.LabelFieldConfig{
@@ -337,7 +365,14 @@ templ NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableDat
 										HxSwap:      "innerHTML",
 										ClassButton: common.ClassButton,
 									})
-									@NazivField("komnaziv")
+									@tmpl.TextInputField(domain.InputFieldConfig{
+										ID:         "komnaziv",
+										Name:       "komnaziv",
+										FieldType:  "text",
+										Disabled:   true,
+										ClassInput: common.ClassInputTextEnabled + " w-full",
+										TabIndex:   "-1",
+									})
 								</div>
 								<!-- Amount Section -->
 								<div class="flex flex-col gap-2 mb-4">
@@ -594,7 +629,14 @@ templ NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableDat
 													HxSwap:      "innerHTML",
 													ClassButton: common.ClassButton,
 												})
-												@NazivField("sifravalutenaziv")
+												@tmpl.TextInputField(domain.InputFieldConfig{
+													ID:         "sifravalutenaziv",
+													Name:       "sifravalutenaziv",
+													FieldType:  "text",
+													Disabled:   true,
+													ClassInput: common.ClassInputTextEnabled + " w-full",
+													TabIndex:   "-1",
+												})
 											</div>
 										</div>
 									</div>
@@ -660,4 +702,13 @@ templ NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableDat
 		</div>
 		<div id="notification" class="fixed top-5 right-5 px-4 py-3 bg-green-500 text-white rounded hidden"></div>
 	</div>
+	<script src="/js/entity_lock.js"></script>
+	<script>
+		// Start lock when form loads
+		// Lock expires after 20 minutes of inactivity (no mouse/keyboard activity)
+		startEntityLock('nalozi', {{ .IDFnal }}, { 
+			entityName: 'naloga',
+			inactivityTimeout: 20 * 60 * 1000  // 20 minutes (can be adjusted: 30 * 60 * 1000 for 30 min)
+		});
+	</script>
 }

@@ -1,10 +1,13 @@
 package handler
 
 import (
+	"helia/config"
+	"helia/internal/common"
 	"helia/internal/domain"
 	"helia/internal/middleware"
 	"helia/internal/service"
 	"helia/pkg/utils"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -14,20 +17,32 @@ type GenericHandler[T any] struct {
 	service service.Service[T]
 	fields  []domain.Fields
 	config  domain.HandlerConfig
+	cfg     config.Config
 }
 
 // NewGenericHandler creates a new generic handler
-func NewGenericHandler[T any](svc service.Service[T], fields []domain.Fields, cfg domain.HandlerConfig) *GenericHandler[T] {
+func NewGenericHandler[T any](svc service.Service[T], fields []domain.Fields, config domain.HandlerConfig, cfg config.Config) *GenericHandler[T] {
 	return &GenericHandler[T]{
 		service: svc,
 		fields:  fields,
-		config:  cfg,
+		config:  config,
+		cfg:     cfg,
 	}
 }
 
 func (h *GenericHandler[T]) Create(c *gin.Context) {
 	var entity T
-	utils.CreateHelper(c, &entity, h.service, h.config.IDField, h.fields)
+	fieldsError, err := utils.CreateHelper(c, &entity, h.service, h.config.IDField, h.fields)
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldsError, common.ErrMsgSaveData+", greska: "+err.Error())
+		return
+	}
+	if len(fieldsError) > 0 {
+		common.WriteJSONResponse(c, http.StatusUnprocessableEntity, false, fieldsError, common.ErrMsgValidation)
+		return
+	}
+	common.WriteJSONResponse(c, http.StatusCreated, true, nil, common.OkMsgSaveData)
+
 }
 
 func (h *GenericHandler[T]) Update(c *gin.Context) {
@@ -48,6 +63,7 @@ func (h *GenericHandler[T]) GetAll(c *gin.Context) {
 		h.config.ContentTitle, h.config.TableID,
 		h.config.APIPrefix, h.config.APIPrefix+"/all",
 		h.config.IDField,
+		h.cfg,
 	)
 	utils.RenderContent(c, *tbl)
 }
@@ -57,6 +73,7 @@ func (h *GenericHandler[T]) GetAllPdf(c *gin.Context) {
 		h.config.ContentTitle, h.config.TableID,
 		h.config.APIPrefix, h.config.APIPrefix+"/all",
 		h.config.IDField,
+		h.cfg,
 	)
 	utils.RenderContent(c, *tbl)
 }
@@ -66,6 +83,7 @@ func (h *GenericHandler[T]) GetAllExcel(c *gin.Context) {
 		h.config.ContentTitle, h.config.TableID,
 		h.config.APIPrefix, h.config.APIPrefix+"/all",
 		h.config.IDField,
+		h.cfg,
 	)
 	utils.RenderContent(c, *tbl)
 }

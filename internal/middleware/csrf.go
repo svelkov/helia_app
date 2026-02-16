@@ -58,15 +58,32 @@ func CSRFMiddleware() gin.HandlerFunc {
 
 		// For POST/PUT/DELETE, validate CSRF token
 		if c.Request.Method == http.MethodPost || c.Request.Method == http.MethodPut || c.Request.Method == http.MethodDelete {
-			// Try to get token from form data first
-			formToken := c.PostForm("_csrf")
+			// Try to get token from header first (HTMX often sends it here)
+			formToken := c.GetHeader("X-CSRF-Token")
+
+			// If not in header, try form data
+			if formToken == "" {
+				// Parse the request body as form data
+				if err := c.Request.ParseForm(); err != nil {
+					fmt.Printf("Failed to parse form for %s: %v\n", c.Request.RequestURI, err)
+				}
+				// Try multiple ways to get the token
+				formToken = c.Request.FormValue("_csrf")
+				if formToken == "" {
+					formToken = c.PostForm("_csrf")
+				}
+				if formToken == "" {
+					formToken = c.Request.PostFormValue("_csrf")
+				}
+			}
 
 			// Get session token
 			sessionToken, exists := getCsrfTokenFromSessionOrContext(c)
 
 			// Debug logging
 			if formToken == "" {
-				fmt.Printf("CSRF validation failed: no form token provided for %s\n", c.Request.RequestURI)
+				fmt.Printf("CSRF validation failed: no form token provided for %s (method: %s, Content-Type: %s)\n",
+					c.Request.RequestURI, c.Request.Method, c.ContentType())
 			}
 			if !exists {
 				fmt.Printf("CSRF validation failed: no session token for %s\n", c.Request.RequestURI)

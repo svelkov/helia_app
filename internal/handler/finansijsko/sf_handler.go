@@ -1,6 +1,7 @@
 package finansijsko
 
 import (
+	"helia/config"
 	"helia/internal/common"
 	"helia/internal/domain"
 	"helia/internal/service"
@@ -18,10 +19,11 @@ var sfTableFields = []domain.Fields{
 
 type SfHandler struct {
 	Service *service.BaseService[domain.Sf]
+	cfg     config.Config
 }
 
-func NewSfHandler(service *service.BaseService[domain.Sf]) *SfHandler {
-	return &SfHandler{Service: service}
+func NewSfHandler(service *service.BaseService[domain.Sf], cfg config.Config) *SfHandler {
+	return &SfHandler{Service: service, cfg: cfg}
 }
 
 func (h *SfHandler) UpdateSf(c *gin.Context) {
@@ -30,5 +32,5 @@ func (h *SfHandler) UpdateSf(c *gin.Context) {
 }
 
 func (h *SfHandler) GetAllSf(c *gin.Context) {
-	utils.GetAllEntityHelper(c, h.Service, sfTableFields, "", "", "", "", "")
+	utils.GetAllEntityHelper(c, h.Service, sfTableFields, "", "", "", "", "", h.cfg)
 }

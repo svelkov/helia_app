@@ -1,0 +1,41 @@
+package templates
+
+import (
+	"fmt"
+	"helia/internal/domain"
+	"helia/i18n"
+)
+
+// Reusable tab navigation component
+// Parameters:
+// - title: The translated title to display above tabs
+// - tabs: Tab data containing tab items
+// - targetId: HTMX target element ID (e.g., "#main-content", "#tab-content")
+// - ariaControls: ARIA controls attribute value (e.g., "kompenzacije-panel", "salda-panel")
+// - translator: i18n service for translations
+templ TabNav(title string, tabs domain.TabData, targetId string, ariaControls string, translator *i18n.Service) {
+	<h2 class="text-xl font-semibold">{ title }</h2>
+	<nav class="py-1 h-8 text-sm font-medium text-gray-700 flex items-center whitespace-nowrap" aria-label="Tabs">
+		for _, item := range tabs.Tabs {
+			<input id={ fmt.Sprintf("tab%s", item.Name) } type="hidden" name="sourceTab" value={ item.Name }/>
+			<button
+				id={ item.ID }
+				if item.IsActive {
+					class="whitespace-nowrap rounded-t-lg py-1 px-1 font-medium text-sm rounded-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+				} else {
+					class="whitespace-nowrap rounded-t-lg py-1 px-1 font-medium text-sm rounded-sm text-gray-600 bg-white border border-gray-300 hover:text-blue-700 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+				}
+				hx-get={ item.HXRequestUrl }
+				hx-target={ targetId }
+				hx-swap="innerHTML"
+				if targetId == "#tab-content" {
+					hx-headers='{"X-Request-Source": "tab"}'
+				}
+				aria-controls={ ariaControls }
+				aria-selected={ fmt.Sprintf("%v", item.IsActive) }
+			>
+				{ translator.Label(item.Label) }
+			</button>
+		}
+	</nav>
+}

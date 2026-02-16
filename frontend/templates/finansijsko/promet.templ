@@ -1,17 +1,17 @@
 package finansijsko
 
 import (
-	"fmt"
 	tmpl "helia/frontend/templates"
+	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
-	"helia/internal/i18n"
+	"time"
 )
 
-templ PrometMain(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.PrometTotalValues, translator *i18n.Service) {
+templ PrometMain(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.TotalValues, searchInput domain.InputControl, gnGod int, translator *i18n.Service) {
 	<!-- Tab Content -->
 	<div id="tab-content" class="flex flex-col h-full">
-		@PrometAnalitickihKonta(tabs, tbl, btnPrint, btnObrada, total, translator)
+		@PrometAnalitickihKonta(tabs, tbl, btnPrint, btnObrada, total, searchInput, gnGod, translator)
 	</div>
 	<script>
         // Tab switching functionality
@@ -36,122 +36,155 @@ templ PrometMain(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada 
     </script>
 }
 
-templ PrometNav(tabs domain.TabData, translator *i18n.Service) {
-	<h2 class="text-xl font-semibold">{ translator.Title("Promet") }</h2>
-	<nav class="py-1 h-8 text-sm font-medium text-gray-700 flex items-center whitespace-nowrap" aria-label="Tabs">
-		for _, item := range tabs.Tabs {
-			<input id={ fmt.Sprintf("tab%s", item.Name) } type="hidden" name="sourceTab" value={ item.Name }/>
-			<button
-				id={ item.ID }
-				if item.IsActive {
-					class="whitespace-nowrap rounded-t-lg py-1 px-1 font-medium text-sm rounded-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-				} else {
-					class="whitespace-nowrap rounded-t-lg py-1 px-1 font-medium text-sm rounded-sm text-gray-600 bg-white border border-gray-300 hover:text-blue-700 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-				}
-				hx-get={ item.HXRequestUrl }
-				hx-target="#tab-content"
-				hx-swap="innerHTML"
-				hx-headers='{"X-Request-Source": "tab"}'
-				aria-controls="promet-panel"
-				aria-selected={ fmt.Sprintf("%v", item.IsActive) }
-			>
-				{ translator.Label(item.Label) }
-			</button>
-		}
-	</nav>
-}
-
 // Tab 1 - Promet analitickih konta
-templ PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.PrometTotalValues, translator *i18n.Service) {
-	<!-- Tab Navigation -->
-	@PrometNav(tabs, translator)
-	<!-- Tab 1 Content -->
-	<div id="tab1">
-		<!-- First Row - Two divs side by side -->
-		<div class="grid grid-cols-2 gap-1">
-			<!-- Parameters Div - Left Aligned -->
-			<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg">
-				<div class="flex items-center gap-1 mb-1">
-					@KontoField(translator)
-					@tmpl.SearchButton(domain.SearchButtonConfig{
-						ID:          "konto",
-						Name:        "search-konto",
-						HxUrl:       "/api/promet/searchbutton",
-						HxTarget:    "#search-dropdown",
-						HxSwap:      "innerHTML",
-						HxVals:      `{"vkonta": "2"}`,
-						ClassButton: common.ClassButton,
-					})
-					@NazivField("kontonaziv")
-				</div>
-				<div class="flex items-center gap-1 mb-1">
-					@SifraField(translator)
-					@tmpl.SearchButton(domain.SearchButtonConfig{
-						ID:          "sifra",
-						Name:        "search-sifra",
-						HxUrl:       "/api/promet/searchbutton",
-						HxTarget:    "#search-dropdown",
-						HxSwap:      "innerHTML",
-						HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`,
-						ClassButton: common.ClassButton,
-					})
-					@NazivField("sifranaziv")
-				</div>
-				<div class="flex items-center gap-1 mb-1">
-					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "oddatuma",
-						ClassLabel: common.ClassLabel + " w-24",
-						LabelText:  translator.Label("Od datuma"),
-					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:         "oddatuma",
-						Name:       "oddatuma",
-						FieldType:  "date",
-						Disabled:   false,
-						ClassInput: common.ClassInputTextEnabled + " w-28",
-						TabIndex:   "3",
-						OnInput:    "clearFieldError",
-					})
-				</div>
-				<div class="flex items-center gap-1 mb-1">
-					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "dodatuma",
-						LabelText:  translator.Label("Do datuma"),
-						ClassLabel: common.ClassLabel + " w-24 ",
-					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:         "dodatuma",
-						Name:       "dodatuma",
-						FieldType:  "date",
-						Disabled:   false,
-						ClassInput: common.ClassInputTextEnabled + " w-28",
-						TabIndex:   "4",
-						OnInput:    "clearFieldError",
-					})
-				</div>
-				<div class="mb-1 flex items-center justify-between h-6">
-					<!-- Checkbox group on the left -->
-					<div class="flex items-center">
-						<input type="checkbox" class="h-4 w-4 rounded border border-blue-400 text-blue-600 focus:ring-blue-500"/>
-						<span class="ml-1 text-sm text-gray-700">Dodatni parametri</span>
-					</div>
-					<!-- Buttons on the right -->
-					<div class="flex items-center space-x-1">
-						@tmpl.FormObradaButton(btnObrada, translator)
-						@tmpl.PrintButton(btnPrint, translator)
-					</div>
-				</div>
-			</div>
-			<!-- Values Div - Numeric Right Aligned -->
-			<div class="border mt-1 mb-1 bg-blue-100 border border-blue-400 p-1 rounded-lg">
-				@TotalValues(total, translator)
-			</div>
+templ PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.TotalValues, searchInput domain.InputControl, gnGod int, translator *i18n.Service) {
+	<!-- Container with full height -->
+	<div class="flex flex-col h-full">
+		<!-- Tab Navigation -->
+		<div class="border-b border-blue-600">
+			@tmpl.TabNav(translator.Title("Promet"), tabs, "#tab-content", "promet-panel", translator)
 		</div>
-		<div class="flex flex-col">
-			<!-- Parent should have: class="flex flex-col" -->
-			<!-- Table Section -->
-			<div id="promettable" class="flex-1 rounded-t-lg overflow-x-auto overflow-y-auto border border-gray-200 rounded-lg">
-				@tmpl.Table(tbl, translator)
+		<!-- Tab 1 Content -->
+		<div id="tab1" class="flex-1 min-h-0 flex flex-col gap-1">
+			<!-- First Row - Two divs side by side -->
+			<div class="grid grid-cols-2 gap-1">
+				<!-- Parameters Div - Left Aligned -->
+				<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg">
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "konto",
+							LabelText:  translator.Label("Konto"),
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:           "konto",
+							Name:         "konto",
+							FieldType:    "text",
+							Disabled:     false,
+							ClassInput:   common.ClassInputTextEnabled + " w-24",
+							BlurEndpoint: "api/fkpl/trazikonto",
+							HxTarget:     "kontonaziv",
+							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "2"}`,
+							HxInclude:    "this",
+							MinLength:    "2",
+							MaxLength:    "6",
+							TabIndex:     "1",
+							OnInput:      "clearFieldError",
+						})
+						@tmpl.SearchButton(domain.SearchButtonConfig{
+							ID:          "konto",
+							Name:        "search-konto",
+							HxUrl:       "/api/promet/searchbutton",
+							HxTarget:    "#search-dropdown",
+							HxSwap:      "innerHTML",
+							HxVals:      `{"vkonta": "2"}`,
+							ClassButton: common.ClassButton,
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "kontonaziv",
+							Name:       "kontonaziv",
+							FieldType:  "text",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextDisabled + " w-full",
+						})
+					</div>
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "sifra",
+							LabelText:  translator.Label("Sifra"),
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:           "sifra",
+							Name:         "sifra",
+							FieldType:    "text",
+							Disabled:     false,
+							ClassInput:   common.ClassInputTextEnabled + " w-24",
+							BlurEndpoint: "api/fkpl/trazikonto",
+							HxTarget:     "sifranaziv",
+							HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('sifra').value, "vkonta": "1"}`,
+							HxInclude:    "this",
+							MinLength:    "2",
+							MaxLength:    "6",
+							TabIndex:     "2",
+							OnInput:      "clearFieldError",
+						})
+						@tmpl.SearchButton(domain.SearchButtonConfig{
+							ID:          "sifra",
+							Name:        "search-sifra",
+							HxUrl:       "/api/promet/searchbutton",
+							HxTarget:    "#search-dropdown",
+							HxSwap:      "innerHTML",
+							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`,
+							ClassButton: common.ClassButton,
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "sifranaziv",
+							Name:       "sifranaziv",
+							FieldType:  "text",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextDisabled + " w-full",
+						})
+					</div>
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "oddatuma",
+							ClassLabel: common.ClassLabel + " w-24",
+							LabelText:  translator.Label("Od datuma"),
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "oddatuma",
+							Name:       "oddatuma",
+							FieldType:  "date",
+							Value:      time.Date(gnGod, 1, 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " w-32",
+							TabIndex:   "3",
+							OnInput:    "clearFieldError",
+						})
+					</div>
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "dodatuma",
+							LabelText:  translator.Label("Do datuma"),
+							ClassLabel: common.ClassLabel + " w-24 ",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "dodatuma",
+							Name:       "dodatuma",
+							FieldType:  "date",
+							Value:      time.Date(gnGod, 12, 31, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " w-32",
+							TabIndex:   "4",
+							OnInput:    "clearFieldError",
+						})
+					</div>
+					<div class="mb-1 flex items-center justify-between h-6">
+						<!-- Checkbox group on the left -->
+						<div class="flex items-center">
+							<input type="checkbox" class="h-4 w-4 rounded border border-blue-400 text-blue-600 focus:ring-blue-500"/>
+							<span class="ml-1 text-sm text-gray-700">Dodatni parametri</span>
+						</div>
+						<!-- Buttons on the right -->
+						<div class="flex items-center space-x-1">
+							@tmpl.FormObradaButton(btnObrada, translator)
+							@tmpl.PrintButton(btnPrint, translator)
+						</div>
+					</div>
+				</div>
+				<!-- Values Div - Numeric Right Aligned -->
+				<div class="border mt-1 mb-1 bg-blue-100 border border-blue-400 p-1 rounded-lg">
+					@PrometTotalValues(total, translator)
+				</div>
+			</div>
+			<!-- Group Data Table -->
+			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
+				@tmpl.Search_Part(tbl, searchInput)
+				<!-- Table -->
+				<div id="promettable" class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+					@tmpl.Table(tbl, translator)
+				</div>
 			</div>
 		</div>
 	</div>
@@ -159,645 +192,1053 @@ templ PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 }
 
 // Tab 2 - Analiticka kartica po mestima isporuke
-templ AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.PrometTotalValues, translator *i18n.Service) {
+templ AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.TotalValues, searchInput domain.InputControl, gnGod int, translator *i18n.Service) {
 	<!-- Tab Navigation -->
-	@PrometNav(tabs, translator)
-	<div id="tab2">
-		<!-- Two divs side by side -->
-		<!-- First Row - Two divs side by side -->
-		<div class="grid grid-cols-2 gap-1">
-			<!-- Parameters Div - Left Aligned -->
-			<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg">
-				<div class="flex items-center gap-1 mb-1">
-					@KontoField(translator)
-					@tmpl.SearchButton(domain.SearchButtonConfig{
-						ID:          "konto",
-						Name:        "search-konto",
-						HxUrl:       "/api/promet/searchbutton",
-						HxTarget:    "#search-dropdown",
-						HxSwap:      "innerHTML",
-						HxVals:      `{"vkonta": "2"}`,
-						ClassButton: common.ClassButton,
-					})
-					@NazivField("kontonaziv")
-				</div>
-				<div class="flex items-center gap-1 mb-1">
-					@SifraField(translator)
-					@tmpl.SearchButton(domain.SearchButtonConfig{
-						ID:          "sifra",
-						Name:        "search-sifra",
-						HxUrl:       "/api/promet/searchbutton",
-						HxTarget:    "#search-dropdown",
-						HxSwap:      "innerHTML",
-						HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`,
-						ClassButton: common.ClassButton,
-					})
-					@NazivField("sifranaziv")
-				</div>
-				<div class="flex items-center gap-1 mb-1">
-					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "oddatuma",
-						LabelText:  "Od Datuma",
-						ClassLabel: common.ClassLabel + " w-24",
-					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:         "oddatuma",
-						Name:       "oddatuma",
-						FieldType:  "date",
-						Disabled:   false,
-						ClassInput: common.ClassInputTextEnabled + " w-28",
-						TabIndex:   "3",
-						OnInput:    "clearFieldError",
-					})
-				</div>
-				<div class="flex items-center gap-1 mb-1">
-					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "dodatuma",
-						LabelText:  "Do Datuma",
-						ClassLabel: common.ClassLabel + " w-24",
-					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:         "dodatuma",
-						Name:       "dodatuma",
-						FieldType:  "date",
-						Disabled:   false,
-						ClassInput: common.ClassInputTextEnabled + " w-28",
-						TabIndex:   "4",
-						OnInput:    "clearFieldError",
-					})
-				</div>
-				<div class="flex items-center gap-1 mb-1">
-					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "odmi",
-						LabelText:  "Od Mesta Isp.",
-						ClassLabel: common.ClassLabel + " w-24",
-					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:           "odmi",
-						Name:         "odmi",
-						FieldType:    "text",
-						Disabled:     false,
-						ClassInput:   common.ClassInputTextEnabled + " w-24",
-						BlurEndpoint: "api/mi/trazimi",
-						HxTarget:     "odminaziv",
-						MinLength:    "1",
-						MaxLength:    "6",
-						TabIndex:     "5",
-						OnInput:      "clearFieldError",
-					})
-					@tmpl.SearchButton(domain.SearchButtonConfig{
-						ID:          "odmi",
-						Name:        "search-odmi",
-						HxUrl:       "/api/promet/searchbutton",
-						HxTarget:    "#search-dropdown",
-						HxSwap:      "innerHTML",
-						ClassButton: common.ClassButton,
-					})
-					@NazivField("odminaziv")
-				</div>
-				<div class="flex items-center gap-1 mb-1">
-					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "domi",
-						LabelText:  "Do Mesta Isp.",
-						ClassLabel: common.ClassLabel + " w-24",
-					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:           "domi",
-						Name:         "domi",
-						Value:        "999",
-						FieldType:    "text",
-						Disabled:     false,
-						ClassInput:   common.ClassInputTextEnabled + " w-24",
-						BlurEndpoint: "api/mi/trazimi",
-						HxTarget:     "dominaziv",
-						MinLength:    "1",
-						MaxLength:    "6",
-						TabIndex:     "6",
-						OnInput:      "clearFieldError",
-					})
-					@tmpl.SearchButton(domain.SearchButtonConfig{
-						ID:          "search-domi",
-						Name:        "search-domi",
-						HxUrl:       "/api/promet/searchbutton",
-						HxTarget:    "#search-dropdown",
-						HxSwap:      "innerHTML",
-						ClassButton: common.ClassButton,
-					})
-					@NazivField("dominaziv")
-				</div>
-				<div class="mb-1 flex items-center justify-between h-6">
-					<!-- Checkbox group on the left -->
-					<div class="flex items-center">
-						<input type="checkbox" class="h-4 w-4 rounded border border-blue-400 text-blue-600 focus:ring-blue-500"/>
-						<span class="ml-1 text-sm text-gray-700">Dodatni parametri</span>
-					</div>
-					<!-- Buttons on the right -->
-					<div class="flex items-center space-x-1">
-						@tmpl.FormObradaButton(btnObrada, translator)
-						@tmpl.PrintButton(btnPrint, translator)
-					</div>
-				</div>
-			</div>
-			<!-- Values Div - Numeric Right Aligned -->
-			<div class="border mt-1 mb-1 bg-blue-100 border border-blue-400 p-1 rounded-lg">
-				@TotalValues(total, translator)
-			</div>
+	<div class="flex flex-col h-full">
+		<!-- Tab Navigation -->
+		<div class="border-b border-blue-600">
+			@tmpl.TabNav(translator.Title("Promet"), tabs, "#tab-content", "promet-panel", translator)
 		</div>
-		<div class="flex flex-col h-full">
-			<!-- Parent should have: class="flex flex-col" -->
-			<!-- Table Section -->
-			<div id="promettable" class="flex-1 overflow-x-auto overflow-y-auto border border-gray-200 rounded-lg">
-				@tmpl.Table(tbl, translator)
+		<div id="tab2" class="flex-1 min-h-0 flex flex-col gap-1">
+			<!-- Two divs side by side -->
+			<!-- First Row - Two divs side by side -->
+			<div class="grid grid-cols-2 gap-1">
+				<!-- Parameters Div - Left Aligned -->
+				<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg">
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "konto",
+							LabelText:  translator.Label("Konto"),
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:           "konto",
+							Name:         "konto",
+							FieldType:    "text",
+							Disabled:     false,
+							ClassInput:   common.ClassInputTextEnabled + " w-24",
+							BlurEndpoint: "api/fkpl/trazikonto",
+							HxTarget:     "kontonaziv",
+							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "2"}`,
+							HxInclude:    "this",
+							MinLength:    "2",
+							MaxLength:    "6",
+							TabIndex:     "1",
+							OnInput:      "clearFieldError",
+						})
+						@tmpl.SearchButton(domain.SearchButtonConfig{
+							ID:          "konto",
+							Name:        "search-konto",
+							HxUrl:       "/api/promet/searchbutton",
+							HxTarget:    "#search-dropdown",
+							HxSwap:      "innerHTML",
+							HxVals:      `{"vkonta": "2"}`,
+							ClassButton: common.ClassButton,
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "kontonaziv",
+							Name:       "kontonaziv",
+							FieldType:  "text",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextDisabled + " w-full",
+						})
+					</div>
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "sifra",
+							LabelText:  translator.Label("Sifra"),
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:           "sifra",
+							Name:         "sifra",
+							FieldType:    "text",
+							Disabled:     false,
+							ClassInput:   common.ClassInputTextEnabled + " w-24",
+							BlurEndpoint: "api/fkpl/trazikonto",
+							HxTarget:     "sifranaziv",
+							HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('sifra').value, "vkonta": "1"}`,
+							HxInclude:    "this",
+							MinLength:    "2",
+							MaxLength:    "6",
+							TabIndex:     "2",
+							OnInput:      "clearFieldError",
+						})
+						@tmpl.SearchButton(domain.SearchButtonConfig{
+							ID:          "sifra",
+							Name:        "search-sifra",
+							HxUrl:       "/api/promet/searchbutton",
+							HxTarget:    "#search-dropdown",
+							HxSwap:      "innerHTML",
+							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`,
+							ClassButton: common.ClassButton,
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "sifranaziv",
+							Name:       "sifranaziv",
+							FieldType:  "text",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextDisabled + " w-full",
+						})
+					</div>
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "oddatuma",
+							LabelText:  "Od Datuma",
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "oddatuma",
+							Name:       "oddatuma",
+							FieldType:  "date",
+							Value:      time.Date(gnGod, 1, 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " w-32",
+							TabIndex:   "3",
+							OnInput:    "clearFieldError",
+						})
+					</div>
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "dodatuma",
+							LabelText:  "Do Datuma",
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "dodatuma",
+							Name:       "dodatuma",
+							FieldType:  "date",
+							Value:      time.Date(gnGod, 12, 31, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " w-32",
+							TabIndex:   "4",
+							OnInput:    "clearFieldError",
+						})
+					</div>
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "odmi",
+							LabelText:  "Od Mesta Isp.",
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:           "odmi",
+							Name:         "odmi",
+							FieldType:    "text",
+							Disabled:     false,
+							ClassInput:   common.ClassInputTextEnabled + " w-24",
+							BlurEndpoint: "api/mi/trazimi",
+							HxTarget:     "odminaziv",
+							MinLength:    "1",
+							MaxLength:    "6",
+							TabIndex:     "5",
+							OnInput:      "clearFieldError",
+						})
+						@tmpl.SearchButton(domain.SearchButtonConfig{
+							ID:          "odmi",
+							Name:        "search-odmi",
+							HxUrl:       "/api/promet/searchbutton",
+							HxTarget:    "#search-dropdown",
+							HxSwap:      "innerHTML",
+							ClassButton: common.ClassButton,
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "odminaziv",
+							Name:       "odminaziv",
+							FieldType:  "text",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextDisabled + " w-full",
+						})
+					</div>
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "domi",
+							LabelText:  "Do Mesta Isp.",
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:           "domi",
+							Name:         "domi",
+							Value:        "999",
+							FieldType:    "text",
+							Disabled:     false,
+							ClassInput:   common.ClassInputTextEnabled + " w-24",
+							BlurEndpoint: "api/mi/trazimi",
+							HxTarget:     "dominaziv",
+							MinLength:    "1",
+							MaxLength:    "6",
+							TabIndex:     "6",
+							OnInput:      "clearFieldError",
+						})
+						@tmpl.SearchButton(domain.SearchButtonConfig{
+							ID:          "search-domi",
+							Name:        "search-domi",
+							HxUrl:       "/api/promet/searchbutton",
+							HxTarget:    "#search-dropdown",
+							HxSwap:      "innerHTML",
+							ClassButton: common.ClassButton,
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "dominaziv",
+							Name:       "dominaziv",
+							FieldType:  "text",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextDisabled + " w-full",
+						})
+					</div>
+					<div class="mb-1 flex items-center justify-between h-6">
+						<!-- Checkbox group on the left -->
+						<div class="flex items-center">
+							<input type="checkbox" class="h-4 w-4 rounded border border-blue-400 text-blue-600 focus:ring-blue-500"/>
+							<span class="ml-1 text-sm text-gray-700">Dodatni parametri</span>
+						</div>
+						<!-- Buttons on the right -->
+						<div class="flex items-center space-x-1">
+							@tmpl.FormObradaButton(btnObrada, translator)
+							@tmpl.PrintButton(btnPrint, translator)
+						</div>
+					</div>
+				</div>
+				<!-- Values Div - Numeric Right Aligned -->
+				<div class="border mt-1 mb-1 bg-blue-100 border border-blue-400 p-1 rounded-lg">
+					@PrometTotalValues(total, translator)
+				</div>
+			</div>
+			<!-- Group Data Table -->
+			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
+				@tmpl.Search_Part(tbl, searchInput)
+				<!-- Table -->
+				<div id="prometable" class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+					@tmpl.Table(tbl, translator)
+				</div>
 			</div>
 		</div>
 	</div>
 }
 
 // Tab 3 - Promet deviznih analitickih konta
-templ PrometDeviznihAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, tblDevizni domain.TableData, btnPrint, btnObrada domain.Button, total domain.PrometTotalValues, translator *i18n.Service) {
+templ PrometDeviznihAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, tblDevizni domain.TableData, btnPrint, btnObrada domain.Button, total domain.TotalValues, gnGod int, translator *i18n.Service) {
 	<!-- Tab Navigation -->
-	@PrometNav(tabs, translator)
-	<div id="tab3">
-		<!-- First Row - Two divs side by side -->
-		<div class="grid grid-cols-2 gap-1">
-			<!-- Parameters Div - Left Aligned -->
-			<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg">
-				<div class="flex items-center gap-1 mb-1">
-					@KontoField(translator)
-					@tmpl.SearchButton(domain.SearchButtonConfig{
-						ID:          "konto",
-						Name:        "search-konto",
-						HxUrl:       "/api/promet/searchbutton",
-						HxTarget:    "#search-dropdown",
-						HxSwap:      "innerHTML",
-						HxVals:      `{"vkonta": "2"}`,
-						ClassButton: common.ClassButton,
-					})
-					@NazivField("kontonaziv")
-				</div>
-				<div class="flex items-center gap-1 mb-1">
-					@SifraField(translator)
-					@tmpl.SearchButton(domain.SearchButtonConfig{
-						ID:          "sifra",
-						Name:        "search-sifra",
-						HxUrl:       "/api/promet/searchbutton",
-						HxTarget:    "#search-dropdown",
-						HxSwap:      "innerHTML",
-						HxVals:      `{"vkonta": "1"}`,
-						ClassButton: common.ClassButton,
-					})
-					@NazivField("sifranaziv")
-				</div>
-				<div class="flex items-center gap-1 mb-1">
-					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "oddatuma",
-						LabelText:  translator.Label("Od datuma"),
-						ClassLabel: common.ClassLabel + " w-24",
-					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:         "oddatuma",
-						Name:       "oddatuma",
-						FieldType:  "date",
-						Disabled:   false,
-						ClassInput: common.ClassInputTextEnabled + " w-28",
-						TabIndex:   "3",
-						OnInput:    "clearFieldError",
-					})
-				</div>
-				<div class="flex items-center gap-1 mb-1">
-					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "nalog",
-						LabelText:  translator.Label("Do datuma"),
-						ClassLabel: common.ClassLabel + " w-24",
-					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:         "dodatuma",
-						Name:       "dodatuma",
-						FieldType:  "date",
-						Disabled:   false,
-						ClassInput: common.ClassInputTextEnabled + " w-28",
-						TabIndex:   "4",
-						OnInput:    "clearFieldError",
-					})
-				</div>
-				<div class="mb-1 flex items-center justify-between h-6">
-					<!-- Checkbox group on the left -->
-					<div class="flex items-center">
-						<input type="checkbox" class="h-4 w-4 rounded border border-blue-400 text-blue-600 focus:ring-blue-500"/>
-						<span class="ml-1 text-sm text-gray-700">Dodatni parametri</span>
-					</div>
-					<!-- Buttons on the right -->
-					<div class="flex items-center space-x-1">
-						@tmpl.FormObradaButton(btnObrada, translator)
-						@tmpl.PrintButton(btnPrint, translator)
-					</div>
-				</div>
-			</div>
-			<!-- Values Div - Numeric Right Aligned -->
-			<div class="border mt-1 mb-1 bg-blue-100 border border-blue-400 p-1 rounded-lg">
-				@TotalValues(total, translator)
-			</div>
+	<div class="flex flex-col h-full">
+		<!-- Tab Navigation -->
+		<div class="border-b border-blue-600">
+			@tmpl.TabNav(translator.Title("Promet"), tabs, "#tab-content", "promet-panel", translator)
 		</div>
-		<div class="flex flex-col h-full">
-			<!-- Parent should have: class="flex flex-col" -->
-			<!-- Table Section -->
-			<div id="promettable" class="flex-1 overflow-x-auto overflow-y-auto border border-gray-200 rounded-lg">
-				@tmpl.Table(tbl, translator)
+		<div id="tab3">
+			<!-- First Row - Two divs side by side -->
+			<div class="grid grid-cols-2 gap-1">
+				<!-- Parameters Div - Left Aligned -->
+				<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg">
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "konto",
+							LabelText:  translator.Label("Konto"),
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:           "konto",
+							Name:         "konto",
+							FieldType:    "text",
+							Disabled:     false,
+							ClassInput:   common.ClassInputTextEnabled + " w-24",
+							BlurEndpoint: "api/fkpl/trazikonto",
+							HxTarget:     "kontonaziv",
+							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "2"}`,
+							HxInclude:    "this",
+							MinLength:    "2",
+							MaxLength:    "6",
+							TabIndex:     "1",
+							OnInput:      "clearFieldError",
+						})
+						@tmpl.SearchButton(domain.SearchButtonConfig{
+							ID:          "konto",
+							Name:        "search-konto",
+							HxUrl:       "/api/promet/searchbutton",
+							HxTarget:    "#search-dropdown",
+							HxSwap:      "innerHTML",
+							HxVals:      `{"vkonta": "2"}`,
+							ClassButton: common.ClassButton,
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "kontonaziv",
+							Name:       "kontonaziv",
+							FieldType:  "text",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextDisabled + " w-full",
+						})
+					</div>
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "sifra",
+							LabelText:  translator.Label("Sifra"),
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:           "sifra",
+							Name:         "sifra",
+							FieldType:    "text",
+							Disabled:     false,
+							ClassInput:   common.ClassInputTextEnabled + " w-24",
+							BlurEndpoint: "api/fkpl/trazikonto",
+							HxTarget:     "sifranaziv",
+							HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('sifra').value, "vkonta": "1"}`,
+							HxInclude:    "this",
+							MinLength:    "2",
+							MaxLength:    "6",
+							TabIndex:     "2",
+							OnInput:      "clearFieldError",
+						})
+						@tmpl.SearchButton(domain.SearchButtonConfig{
+							ID:          "sifra",
+							Name:        "search-sifra",
+							HxUrl:       "/api/promet/searchbutton",
+							HxTarget:    "#search-dropdown",
+							HxSwap:      "innerHTML",
+							HxVals:      `{"vkonta": "1"}`,
+							ClassButton: common.ClassButton,
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "sifranaziv",
+							Name:       "sifranaziv",
+							FieldType:  "text",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextDisabled + " w-full",
+						})
+					</div>
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "oddatuma",
+							LabelText:  translator.Label("Od datuma"),
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "oddatuma",
+							Name:       "oddatuma",
+							FieldType:  "date",
+							Value:      time.Date(gnGod, 1, 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " w-28",
+							TabIndex:   "3",
+							OnInput:    "clearFieldError",
+						})
+					</div>
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "nalog",
+							LabelText:  translator.Label("Do datuma"),
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "dodatuma",
+							Name:       "dodatuma",
+							FieldType:  "date",
+							Value:      time.Date(gnGod, 12, 31, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " w-28",
+							TabIndex:   "4",
+							OnInput:    "clearFieldError",
+						})
+					</div>
+					<div class="mb-1 flex items-center justify-between h-6">
+						<!-- Checkbox group on the left -->
+						<div class="flex items-center">
+							<input type="checkbox" class="h-4 w-4 rounded border border-blue-400 text-blue-600 focus:ring-blue-500"/>
+							<span class="ml-1 text-sm text-gray-700">Dodatni parametri</span>
+						</div>
+						<!-- Buttons on the right -->
+						<div class="flex items-center space-x-1">
+							@tmpl.FormObradaButton(btnObrada, translator)
+							@tmpl.PrintButton(btnPrint, translator)
+						</div>
+					</div>
+				</div>
+				<!-- Values Div - Numeric Right Aligned -->
+				<div class="border mt-1 mb-1 bg-blue-100 border border-blue-400 p-1 rounded-lg">
+					@PrometTotalValues(total, translator)
+				</div>
 			</div>
-		</div>
-		<div class="flex flex-col h-full">
-			<!-- Parent should have: class="flex flex-col" -->
-			<!-- Table Section -->
-			<div id="promettable-dev" class="flex-1 overflow-x-auto overflow-y-auto border border-gray-200 rounded-lg">
-				@tmpl.Table(tbl, translator)
+			<div class="flex flex-col h-full">
+				<!-- Parent should have: class="flex flex-col" -->
+				<!-- Table Section -->
+				<div id="promettable" class="flex-1 overflow-x-auto overflow-y-auto border border-gray-200 rounded-lg">
+					@tmpl.Table(tbl, translator)
+				</div>
+			</div>
+			<div class="flex flex-col h-full">
+				<!-- Parent should have: class="flex flex-col" -->
+				<!-- Table Section -->
+				<div id="promettable-dev" class="flex-1 overflow-x-auto overflow-y-auto border border-gray-200 rounded-lg">
+					@tmpl.Table(tbl, translator)
+				</div>
 			</div>
 		</div>
 	</div>
 }
 
-templ PrometSubsintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.PrometTotalValues, translator *i18n.Service) {
-	<!-- Tab Navigation -->
-	@PrometNav(tabs, translator)
-	<div id="tab4">
-		<!-- First Row - Two divs side by side -->
-		<div class="grid grid-cols-2 gap-1">
-			<!-- Parameters Div - Left Aligned -->
-			<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg">
-				<div class="flex items-center gap-1 mb-1">
-					@KontoField(translator)
-					@tmpl.SearchButton(domain.SearchButtonConfig{
-						ID:          "konto",
-						Name:        "search-konto",
-						HxUrl:       "/api/promet/searchbutton",
-						HxTarget:    "#search-dropdown",
-						HxSwap:      "innerHTML",
-						HxVals:      `{"vkonta": "2"}`,
-						ClassButton: common.ClassButton,
-					})
-					@NazivField("kontonaziv")
-				</div>
-				<div class="flex items-center gap-1 mb-1">
-					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "oddatuma",
-						LabelText:  translator.Label("Od datuma"),
-						ClassLabel: common.ClassLabel + " w-24",
-					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:         "oddatuma",
-						Name:       "oddatuma",
-						FieldType:  "date",
-						Disabled:   false,
-						ClassInput: common.ClassInputTextEnabled + " w-28",
-						TabIndex:   "3",
-					})
-				</div>
-				<div class="flex items-center gap-1 mb-1">
-					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "dodatuma",
-						LabelText:  translator.Label("Do datuma"),
-						ClassLabel: common.ClassLabel + " w-24",
-					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:         "dodatuma",
-						Name:       "dodatuma",
-						FieldType:  "date",
-						Disabled:   false,
-						ClassInput: common.ClassInputTextEnabled + " w-28",
-						TabIndex:   "4",
-					})
-				</div>
-				<div class="mb-1 flex items-center justify-between h-6">
-					<!-- Checkbox group on the left -->
-					<div class="flex items-center">
-						<input type="checkbox" class="h-4 w-4 rounded border border-blue-400 text-blue-600 focus:ring-blue-500"/>
-						<span class="ml-1 text-sm text-gray-700">Dodatni parametri</span>
-					</div>
-					<!-- Buttons on the right -->
-					<div class="flex items-center space-x-1">
-						@tmpl.FormObradaButton(btnObrada, translator)
-						@tmpl.PrintButton(btnPrint, translator)
-					</div>
-				</div>
-			</div>
-			<!-- Values Div - Numeric Right Aligned -->
-			<div class="border mt-1 mb-1 bg-blue-100 border border-blue-400 p-1 rounded-lg">
-				@TotalValues(total, translator)
-			</div>
+templ PrometSubsintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.TotalValues, searchInput domain.InputControl, gnGod int, translator *i18n.Service) {
+	<!-- Container with full height -->
+	<div class="flex flex-col h-full">
+		<!-- Tab Navigation -->
+		<div class="border-b border-blue-600">
+			@tmpl.TabNav(translator.Title("Promet"), tabs, "#tab-content", "promet-panel", translator)
 		</div>
-		<div class="flex flex-col h-full">
-			<!-- Parent should have: class="flex flex-col" -->
-			<!-- Table Section -->
-			<div id="promettable" class="flex-1 overflow-x-auto overflow-y-auto border border-gray-200 rounded-lg">
-				@tmpl.Table(tbl, translator)
+		<!-- Tab 4 Content -->
+		<div id="tab4" class="flex-1 min-h-0 flex flex-col gap-1">
+			<!-- First Row - Two divs side by side -->
+			<div class="grid grid-cols-2 gap-1">
+				<!-- Parameters Div - Left Aligned -->
+				<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg">
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "odkonta",
+							LabelText:  translator.Label("Od konta"),
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:           "odkonta",
+							Name:         "odkonta",
+							FieldType:    "text",
+							Disabled:     false,
+							ClassInput:   common.ClassInputTextEnabled + " w-24",
+							BlurEndpoint: "api/fkpl/trazikonto",
+							HxTarget:     "odkontanaziv",
+							HxVals:       `js:{"konto": document.getElementById('odkonta').value, "vkonta": "2"}`,
+							HxInclude:    "this",
+							Value:        "0000",
+							MinLength:    "4",
+							MaxLength:    "4",
+							TabIndex:     "1",
+							OnInput:      "clearFieldError",
+						})
+						@tmpl.SearchButton(domain.SearchButtonConfig{
+							ID:          "odkonta",
+							Name:        "search-konto",
+							HxUrl:       "/api/promet/searchbutton",
+							HxTarget:    "#search-dropdown",
+							HxSwap:      "innerHTML",
+							HxVals:      `js:{"konto": document.getElementById('odkonta').value, "vkonta": "2"}`,
+							ClassButton: common.ClassButton,
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "odkontanaziv",
+							Name:       "odkontanaziv",
+							FieldType:  "text",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextDisabled + " w-full",
+							TabIndex:   "-1",
+						})
+					</div>
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "dokonta",
+							LabelText:  translator.Label("Do konta"),
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:           "dokonta",
+							Name:         "dokonta",
+							FieldType:    "text",
+							Disabled:     false,
+							ClassInput:   common.ClassInputTextEnabled + " w-24",
+							BlurEndpoint: "api/fkpl/trazikonto",
+							HxTarget:     "dokontanaziv",
+							HxVals:       `js:{"konto": document.getElementById('dokonta').value, "vkonta": "2"}`,
+							HxInclude:    "this",
+							Value:        "9999",
+							MinLength:    "4",
+							MaxLength:    "4",
+							TabIndex:     "2",
+							OnInput:      "clearFieldError",
+						})
+						@tmpl.SearchButton(domain.SearchButtonConfig{
+							ID:          "dokonta",
+							Name:        "search-konto",
+							HxUrl:       "/api/promet/searchbutton",
+							HxTarget:    "#search-dropdown",
+							HxSwap:      "innerHTML",
+							HxVals:      `js:{"konto": document.getElementById('dokonta').value, "vkonta": "2"}`,
+							ClassButton: common.ClassButton,
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "dokontanaziv",
+							Name:       "dokontanaziv",
+							FieldType:  "text",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextDisabled + " w-full",
+							TabIndex:   "-1",
+						})
+					</div>
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "oddatuma",
+							LabelText:  translator.Label("Od datuma"),
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "oddatuma",
+							Name:       "oddatuma",
+							FieldType:  "date",
+							Value:      time.Date(gnGod, 1, 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " w-28",
+							TabIndex:   "3",
+						})
+					</div>
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "dodatuma",
+							LabelText:  translator.Label("Do datuma"),
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "dodatuma",
+							Name:       "dodatuma",
+							FieldType:  "date",
+							Value:      time.Date(gnGod, 12, 31, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " w-28",
+							TabIndex:   "4",
+						})
+					</div>
+					<div class="mb-1 flex items-center justify-between h-6">
+						<div class="flex items-center"></div>
+						<!-- Buttons on the right -->
+						<div class="flex items-center space-x-1">
+							@tmpl.FormObradaButton(btnObrada, translator)
+							@tmpl.PrintButton(btnPrint, translator)
+						</div>
+					</div>
+				</div>
+				<!-- Values Div - Numeric Right Aligned -->
+				<div class="border mt-1 mb-1 bg-blue-100 border border-blue-400 p-1 rounded-lg">
+					@PrometTotalValues(total, translator)
+				</div>
+			</div>
+			<!-- Group Data Table -->
+			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
+				@tmpl.Search_Part(tbl, searchInput)
+				<!-- Table -->
+				<div id="promettable" class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+					@tmpl.Table(tbl, translator)
+				</div>
 			</div>
 		</div>
 	</div>
 }
 
-templ PrometSintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.PrometTotalValues, translator *i18n.Service) {
-	<!-- Tab Navigation -->
-	@PrometNav(tabs, translator)
-	<div id="tab5">
-		<!-- First Row - Two divs side by side -->
-		<div class="grid grid-cols-2 gap-1">
-			<!-- Parameters Div - Left Aligned -->
-			<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg">
-				<div class="flex items-center gap-1 mb-1">
-					@KontoField(translator)
-					@tmpl.SearchButton(domain.SearchButtonConfig{
-						ID:          "konto",
-						Name:        "search-konto",
-						HxUrl:       "/api/promet/searchbutton",
-						HxTarget:    "#search-dropdown",
-						HxSwap:      "innerHTML",
-						HxVals:      `{"vkonta": "2"}`,
-						ClassButton: common.ClassButton,
-					})
-					@NazivField("kontonaziv")
-				</div>
-				<div class="flex items-center gap-1 mb-1">
-					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "oddatuma",
-						LabelText:  translator.Label("Od datuma"),
-						ClassLabel: common.ClassLabel + " w-24",
-					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:         "oddatuma",
-						Name:       "oddatuma",
-						FieldType:  "date",
-						Disabled:   false,
-						ClassInput: common.ClassInputTextEnabled + " w-28",
-						TabIndex:   "3",
-					})
-				</div>
-				<div class="flex items-center gap-1 mb-1">
-					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "dodatuma",
-						LabelText:  translator.Label("Do datuma"),
-						ClassLabel: common.ClassLabel + " w-24",
-					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:         "dodatuma",
-						Name:       "dodatuma",
-						FieldType:  "date",
-						Disabled:   false,
-						ClassInput: common.ClassInputTextEnabled + " w-28",
-						TabIndex:   "4",
-					})
-				</div>
-				<div class="mb-2 flex items-center justify-between h-6">
-					<!-- Checkbox group on the left -->
-					<div class="flex items-center">
-						<input type="checkbox" class="h-4 w-4 rounded border border-blue-400 text-blue-600 focus:ring-blue-500"/>
-						<span class="ml-1 text-sm text-gray-700">Prikazi analitiku</span>
-					</div>
-					<!-- Buttons on the right -->
-					<div class="flex items-center space-x-1">
-						@tmpl.FormObradaButton(btnObrada, translator)
-						@tmpl.PrintButton(btnPrint, translator)
-					</div>
-				</div>
-			</div>
-			<!-- Values Div - Numeric Right Aligned -->
-			<div class="border mt-1 mb-1 bg-blue-100 border border-blue-400 p-1 rounded-lg">
-				@TotalValues(total, translator)
-			</div>
+templ PrometSintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.TotalValues, searchInput domain.InputControl, gnGod int, translator *i18n.Service) {
+	<!-- Container with full height -->
+	<div class="flex flex-col h-full">
+		<!-- Tab Navigation -->
+		<div class="border-b border-blue-600">
+			@tmpl.TabNav(translator.Title("Promet"), tabs, "#tab-content", "promet-panel", translator)
 		</div>
-		<div class="flex flex-col h-full">
-			<!-- Parent should have: class="flex flex-col" -->
-			<!-- Table Section -->
-			<div id="promettable" class="flex-1 overflow-x-auto overflow-y-auto border border-gray-200 rounded-lg">
-				@tmpl.Table(tbl, translator)
+		<!-- Tab 5 Content -->
+		<div id="tab5" class="flex-1 min-h-0 flex flex-col gap-1">
+			<!-- First Row - Two divs side by side -->
+			<div class="grid grid-cols-2 gap-1">
+				<!-- Parameters Div - Left Aligned -->
+				<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg">
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "konto",
+							LabelText:  translator.Label("Konto"),
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:           "konto",
+							Name:         "konto",
+							FieldType:    "text",
+							Disabled:     false,
+							ClassInput:   common.ClassInputTextEnabled + " w-24",
+							BlurEndpoint: "api/fkpl/trazikonto",
+							HxTarget:     "kontonaziv",
+							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "3"}`,
+							HxInclude:    "this",
+							MinLength:    "3",
+							MaxLength:    "3",
+							TabIndex:     "1",
+							OnInput:      "clearFieldError",
+						})
+						@tmpl.SearchButton(domain.SearchButtonConfig{
+							ID:          "konto",
+							Name:        "search-konto",
+							HxUrl:       "/api/promet/searchbutton",
+							HxTarget:    "#search-dropdown",
+							HxSwap:      "innerHTML",
+							HxVals:      `{"vkonta": "3"}`,
+							ClassButton: common.ClassButton,
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "kontonaziv",
+							Name:       "kontonaziv",
+							FieldType:  "text",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextDisabled + " w-full",
+						})
+					</div>
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "oddatuma",
+							LabelText:  translator.Label("Od datuma"),
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "oddatuma",
+							Name:       "oddatuma",
+							FieldType:  "date",
+							Value:      time.Date(gnGod, 1, 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " w-28",
+							TabIndex:   "3",
+						})
+					</div>
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "dodatuma",
+							LabelText:  translator.Label("Do datuma"),
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "dodatuma",
+							Name:       "dodatuma",
+							FieldType:  "date",
+							Value:      time.Date(gnGod, 12, 31, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " w-28",
+							TabIndex:   "4",
+						})
+					</div>
+					<div class="mb-2 flex items-center justify-between h-6">
+						<!-- Checkbox group on the left -->
+						<div class="flex items-center"></div>
+						<!-- Buttons on the right -->
+						<div class="flex items-center space-x-1">
+							@tmpl.FormObradaButton(btnObrada, translator)
+							@tmpl.PrintButton(btnPrint, translator)
+						</div>
+					</div>
+				</div>
+				<!-- Values Div - Numeric Right Aligned -->
+				<div class="border mt-1 mb-1 bg-blue-100 border border-blue-400 p-1 rounded-lg">
+					@PrometTotalValues(total, translator)
+				</div>
+			</div>
+			<!-- Group Data Table -->
+			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
+				@tmpl.Search_Part(tbl, searchInput)
+				<!-- Table -->
+				<div id="promettable" class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+					@tmpl.Table(tbl, translator)
+				</div>
 			</div>
 		</div>
 	</div>
 }
 
-templ KarticaSintetickiKonta(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.PrometTotalValues, translator *i18n.Service) {
-	<!-- Tab Navigation -->
-	@PrometNav(tabs, translator)
-	<div id="tab6">
-		<!-- First Row - Two divs side by side -->
-		<div class="grid grid-cols-2 gap-1">
-			<!-- Parameters Div - Left Aligned -->
-			<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg">
-				<div class="flex items-center gap-1 mb-1">
-					@KontoField(translator)
-					@tmpl.SearchButton(domain.SearchButtonConfig{
-						ID:          "konto",
-						Name:        "search-konto",
-						HxUrl:       "/api/promet/searchbutton",
-						HxTarget:    "#search-dropdown",
-						HxSwap:      "innerHTML",
-						HxVals:      `{"vkonta": "2"}`,
-						ClassButton: common.ClassButton,
-					})
-					@NazivField("kontonaziv")
-				</div>
-				<div class="flex items-center gap-1 mb-1">
-					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "oddatuma",
-						LabelText:  translator.Label("Od datuma"),
-						ClassLabel: common.ClassLabel + " w-24",
-					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:         "oddatuma",
-						Name:       "oddatuma",
-						FieldType:  "date",
-						Disabled:   false,
-						ClassInput: common.ClassInputTextEnabled + " w-28",
-						TabIndex:   "3",
-					})
-				</div>
-				<div class="flex items-center gap-1 mb-1">
-					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "dodatuma",
-						LabelText:  translator.Label("Do datuma"),
-						ClassLabel: common.ClassLabel + " w-24",
-					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:         "dodatuma",
-						Name:       "dodatuma",
-						FieldType:  "date",
-						Disabled:   false,
-						ClassInput: common.ClassInputTextEnabled + " w-28",
-						TabIndex:   "4",
-					})
-				</div>
-				<div class="mb-2 flex items-center justify-between h-6">
-					<!-- Checkbox group on the left -->
-					<div class="flex items-center">
-						<input type="checkbox" class="h-4 w-4 rounded border border-blue-400 text-blue-600 focus:ring-blue-500"/>
-						<span class="ml-1 text-sm text-gray-700">Prikazi analitiku</span>
-					</div>
-					<!-- Buttons on the right -->
-					<div class="flex items-center space-x-1">
-						@tmpl.FormObradaButton(btnObrada, translator)
-						@tmpl.PrintButton(btnPrint, translator)
-					</div>
-				</div>
-			</div>
-			<!-- Values Div - Numeric Right Aligned -->
-			<div class="border mt-1 mb-1 bg-blue-100 border border-blue-400 p-1 rounded-lg">
-				@TotalValues(total, translator)
-			</div>
+templ KarticaSintetickiKonta(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.TotalValues, searchInput domain.InputControl, gnGod int, translator *i18n.Service) {
+	<!-- Container with full height -->
+	<div class="flex flex-col h-full">
+		<!-- Tab Navigation -->
+		<div class="border-b border-blue-600">
+			@tmpl.TabNav(translator.Title("Promet"), tabs, "#tab-content", "promet-panel", translator)
 		</div>
-		<div class="flex flex-col h-full">
-			<!-- Parent should have: class="flex flex-col" -->
-			<!-- Table Section -->
-			<div id="promettable" class="flex-1 overflow-x-auto overflow-y-auto border border-gray-200 rounded-lg">
-				@tmpl.Table(tbl, translator)
+		<div id="tab6">
+			<!-- First Row - Two divs side by side -->
+			<div class="grid grid-cols-2 gap-1">
+				<!-- Parameters Div - Left Aligned -->
+				<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg">
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "konto",
+							LabelText:  translator.Label("Konto"),
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:           "konto",
+							Name:         "konto",
+							FieldType:    "text",
+							Disabled:     false,
+							ClassInput:   common.ClassInputTextEnabled + " w-28",
+							BlurEndpoint: "api/fkpl/trazikonto",
+							HxTarget:     "kontonaziv",
+							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "3"}`,
+							HxInclude:    "this",
+							MinLength:    "2",
+							MaxLength:    "3",
+							TabIndex:     "1",
+							OnInput:      "clearFieldError"})
+						@tmpl.SearchButton(domain.SearchButtonConfig{
+							ID:          "konto",
+							Name:        "search-konto",
+							HxUrl:       "/api/promet/searchbutton",
+							HxTarget:    "#search-dropdown",
+							HxSwap:      "innerHTML",
+							HxVals:      `{"vkonta": "3"}`,
+							ClassButton: common.ClassButton,
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "kontonaziv",
+							Name:       "kontonaziv",
+							FieldType:  "text",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextDisabled + " w-full",
+						})
+					</div>
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "oddatuma",
+							LabelText:  translator.Label("Od datuma"),
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "oddatuma",
+							Name:       "oddatuma",
+							FieldType:  "date",
+							Value:      time.Date(gnGod, 1, 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " w-28",
+							TabIndex:   "3",
+						})
+					</div>
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "dodatuma",
+							LabelText:  translator.Label("Do datuma"),
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "dodatuma",
+							Name:       "dodatuma",
+							FieldType:  "date",
+							Value:      time.Date(gnGod, 12, 31, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " w-28",
+							TabIndex:   "4",
+						})
+					</div>
+					<div class="mb-2 flex items-center justify-between h-6">
+						<!-- Checkbox group on the left -->
+						<div class="flex items-center">
+							<input type="checkbox" id="analitika" name="analitika" class="h-4 w-4 rounded border border-blue-400 text-blue-600 focus:ring-blue-500"/>
+							<span class="ml-1 text-sm text-gray-700">Prikazi analitiku</span>
+						</div>
+						<!-- Buttons on the right -->
+						<div class="flex items-center space-x-1">
+							@tmpl.FormObradaButton(btnObrada, translator)
+							@tmpl.PrintButton(btnPrint, translator)
+						</div>
+					</div>
+				</div>
+				<!-- Values Div - Numeric Right Aligned -->
+				<div class="border mt-1 mb-1 bg-blue-100 border border-blue-400 p-1 rounded-lg">
+					@PrometTotalValues(total, translator)
+				</div>
+			</div>
+			<!-- Group Data Table -->
+			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
+				@tmpl.Search_Part(tbl, searchInput)
+				<!-- Table -->
+				<div id="promettable" class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+					@tmpl.Table(tbl, translator)
+				</div>
 			</div>
 		</div>
 	</div>
 }
 
-templ PrometKontaPoVRD(tabs domain.TabData, tbl domain.TableData, translator *i18n.Service) {
-	<!-- Tab Navigation -->
-	@PrometNav(tabs, translator)
-	<div id="tab7"></div>
-}
-
-templ PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.PrometTotalValues, translator *i18n.Service) {
-	<!-- Tab Navigation -->
-	@PrometNav(tabs, translator)
-	<div id="tab8">
-		<!-- First Row - Two divs side by side -->
-		<div class="grid grid-cols-2 gap-1">
-			<!-- Parameters Div - Left Aligned -->
-			<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg">
-				<div class="flex items-center gap-1 mb-1">
-					@KontoField(translator)
-					@tmpl.SearchButton(domain.SearchButtonConfig{
-						ID:          "konto",
-						Name:        "search-konto",
-						HxUrl:       "/api/promet/searchbutton",
-						HxTarget:    "#search-dropdown",
-						HxSwap:      "innerHTML",
-						HxVals:      `{"vkonta": "2"}`,
-						ClassButton: common.ClassButton,
-					})
-					@NazivField("kontonaziv")
-				</div>
-				<div class="flex items-center gap-1 mb-1">
-					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "odsifre",
-						LabelText:  translator.Label("Od Sifre"),
-						ClassLabel: common.ClassLabel + " w-24",
-					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:           "odsifre",
-						Value:        "",
-						FieldType:    "text",
-						Disabled:     false,
-						ClassInput:   common.ClassInputTextEnabled + " w-24",
-						BlurEndpoint: "api/fkpl/trazikonto",
-						HxTarget:     "sifranaziv",
-						HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`,
-						MinLength:    "2",
-						MaxLength:    "6",
-						TabIndex:     "2",
-					})
-					@tmpl.SearchButton(domain.SearchButtonConfig{
-						ID:          "odsifre",
-						Name:        "search-odsifre",
-						HxUrl:       "/api/promet/searchbutton",
-						HxTarget:    "#search-dropdown",
-						HxSwap:      "innerHTML",
-						HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`,
-						ClassButton: common.ClassButton,
-					})
-					@NazivField("odsifrenaziv")
-				</div>
-				<div class="flex items-center gap-1 mb-1">
-					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "dosifre",
-						LabelText:  translator.Label("Do Sifre"),
-						ClassLabel: common.ClassLabel + " w-24",
-					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:           "dosifre",
-						FieldType:    "text",
-						Disabled:     false,
-						ClassInput:   common.ClassInputTextEnabled + " w-24",
-						BlurEndpoint: "api/fkpl/trazikonto",
-						HxTarget:     "sifranaziv",
-						HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`,
-						MinLength:    "2",
-						MaxLength:    "6",
-						TabIndex:     "3",
-					})
-					@tmpl.SearchButton(domain.SearchButtonConfig{
-						ID:          "dosifre",
-						Name:        "search-dodsfre",
-						HxUrl:       "/api/promet/searchbutton",
-						HxTarget:    "#search-dropdown",
-						HxSwap:      "innerHTML",
-						HxVals:      `{"vkonta": "1"}`,
-						ClassButton: common.ClassButton,
-					})
-					@NazivField("dosifrenaziv")
-				</div>
-				<div class="flex items-center gap-1 mb-1">
-					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "odnaloga",
-						LabelText:  translator.Label("Od Naloga"),
-						ClassLabel: common.ClassLabel + " w-24",
-					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:         "odnaloga",
-						Name:       "odnaloga",
-						FieldType:  "text",
-						Disabled:   false,
-						ClassInput: common.ClassInputTextEnabled + " w-24",
-						MinLength:  "1",
-						MaxLength:  "10",
-						TabIndex:   "4",
-					})
-				</div>
-				<div class="flex items-center gap-1 mb-1">
-					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "donaloga",
-						LabelText:  translator.Label("Do Naloga"),
-						ClassLabel: common.ClassLabel + " w-24",
-					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:         "donaloga",
-						Name:       "donaloga",
-						FieldType:  "text",
-						Disabled:   false,
-						ClassInput: common.ClassInputTextEnabled + " w-24",
-						MinLength:  "1",
-						MaxLength:  "10",
-						TabIndex:   "5",
-					})
-				</div>
-				<div class="mb-2 flex items-center justify-between h-6">
-					<!-- Checkbox group on the left -->
-					<div class="flex items-center"></div>
-					<!-- Buttons on the right -->
-					<div class="flex items-center space-x-1">
-						@tmpl.FormObradaButton(btnObrada, translator)
-						@tmpl.PrintButton(btnPrint, translator)
+templ PrometKontaPoVRD(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.TotalValues, searchInput domain.InputControl, gnGod int, translator *i18n.Service) {
+	<!-- Container with full height -->
+	<div class="flex flex-col h-full">
+		<!-- Tab Navigation -->
+		<div class="border-b border-blue-600">
+			@tmpl.TabNav(translator.Title("Promet"), tabs, "#tab-content", "promet-panel", translator)
+		</div>
+		<!-- Tab 7 Content -->
+		<div id="tab7" class="flex-1 min-h-0 flex flex-col gap-1">
+			<!-- First Row - Two divs side by side -->
+			<div class="grid grid-cols-2 gap-1">
+				<!-- Parameters Div - Left Aligned -->
+				<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg">
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "konto",
+							LabelText:  translator.Label("Konto"),
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:           "konto",
+							Name:         "konto",
+							FieldType:    "text",
+							Disabled:     false,
+							ClassInput:   common.ClassInputTextEnabled + " w-24",
+							BlurEndpoint: "api/fkpl/trazikonto",
+							HxTarget:     "kontonaziv",
+							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "3"}`,
+							HxInclude:    "this",
+							MinLength:    "4",
+							MaxLength:    "6",
+							TabIndex:     "1",
+							OnInput:      "clearFieldError",
+						})
+						@tmpl.SearchButton(domain.SearchButtonConfig{
+							ID:          "konto",
+							Name:        "search-konto",
+							HxUrl:       "/api/promet/searchbutton",
+							HxTarget:    "#search-dropdown",
+							HxSwap:      "innerHTML",
+							HxVals:      `{"vkonta": "3"}`,
+							ClassButton: common.ClassButton,
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "kontonaziv",
+							Name:       "kontonaziv",
+							FieldType:  "text",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextDisabled + " w-full",
+						})
+					</div>
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "oddatuma",
+							LabelText:  translator.Label("Od datuma"),
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "oddatuma",
+							Name:       "oddatuma",
+							FieldType:  "date",
+							Value:      time.Date(gnGod, 1, 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " w-28",
+							TabIndex:   "3",
+						})
+					</div>
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "dodatuma",
+							LabelText:  translator.Label("Do datuma"),
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "dodatuma",
+							Name:       "dodatuma",
+							FieldType:  "date",
+							Value:      time.Date(gnGod, 12, 31, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " w-28",
+							TabIndex:   "4",
+						})
+					</div>
+					<div class="mb-2 flex items-center justify-between h-6">
+						<!-- Checkbox group on the left -->
+						<div class="flex items-center"></div>
+						<!-- Buttons on the right -->
+						<div class="flex items-center space-x-1">
+							@tmpl.FormObradaButton(btnObrada, translator)
+							@tmpl.PrintButton(btnPrint, translator)
+						</div>
 					</div>
 				</div>
+				<!-- Values Div - Numeric Right Aligned -->
+				<div class="border mt-1 mb-1 bg-blue-100 border border-blue-400 p-1 rounded-lg">
+					@PrometTotalValues(total, translator)
+				</div>
 			</div>
-			<!-- Values Div - Numeric Right Aligned -->
-			<div class="border mt-1 mb-1 bg-blue-100 border border-blue-400 p-1 rounded-lg">
-				@TotalValues(total, translator)
-			</div>
-		</div>
-		<div class="flex flex-col h-full">
-			<!-- Parent should have: class="flex flex-col" -->
-			<!-- Table Section -->
-			<div id="promettable" class="flex-1 overflow-x-auto overflow-y-auto border border-gray-200 rounded-lg">
-				@tmpl.Table(tbl, translator)
+			<!-- Group Data Table -->
+			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
+				@tmpl.Search_Part(tbl, searchInput)
+				<!-- Table -->
+				<div id="promettable" class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+					@tmpl.Table(tbl, translator)
+				</div>
 			</div>
 		</div>
 	</div>
 }
 
-templ TotalValues(total domain.PrometTotalValues, translator *i18n.Service) {
+templ PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.TotalValues, searchInput domain.InputControl, gnGod int, translator *i18n.Service) {
+	<!-- Container with full height -->
+	<div class="flex flex-col h-full">
+		<!-- Tab Navigation -->
+		<div class="border-b border-blue-600">
+			@tmpl.TabNav(translator.Title("Promet"), tabs, "#tab-content", "promet-panel", translator)
+		</div>
+		<!-- Tab 8 Content -->
+		<div id="tab8" class="flex-1 min-h-0 flex flex-col gap-1">
+			<!-- First Row - Two divs side by side -->
+			<div class="grid grid-cols-2 gap-1">
+				<!-- Parameters Div - Left Aligned -->
+				<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg">
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "konto",
+							LabelText:  translator.Label("Konto"),
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:           "konto",
+							Name:         "konto",
+							FieldType:    "text",
+							Disabled:     false,
+							ClassInput:   common.ClassInputTextEnabled + " w-24",
+							BlurEndpoint: "api/fkpl/trazikonto",
+							HxTarget:     "kontonaziv",
+							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "2"}`,
+							HxInclude:    "this",
+							MinLength:    "4",
+							MaxLength:    "6",
+							TabIndex:     "1",
+							OnInput:      "clearFieldError"})
+						@tmpl.SearchButton(domain.SearchButtonConfig{
+							ID:          "konto",
+							Name:        "search-konto",
+							HxUrl:       "/api/promet/searchbutton",
+							HxTarget:    "#search-dropdown",
+							HxSwap:      "innerHTML",
+							HxVals:      `{"vkonta": "2"}`,
+							ClassButton: common.ClassButton,
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "kontonaziv",
+							Name:       "kontonaziv",
+							FieldType:  "text",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextDisabled + " w-full",
+						})
+					</div>
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "odsifre",
+							LabelText:  translator.Label("Od Sifre"),
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:           "odsifre",
+							FieldType:    "text",
+							Disabled:     false,
+							ClassInput:   common.ClassInputTextEnabled + " w-24",
+							BlurEndpoint: "api/fkpl/trazikonto",
+							HxTarget:     "sifranaziv",
+							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`,
+							Value:        "00",
+							MinLength:    "2",
+							MaxLength:    "6",
+							TabIndex:     "2",
+						})
+						@tmpl.SearchButton(domain.SearchButtonConfig{
+							ID:          "odsifre",
+							Name:        "search-odsifre",
+							HxUrl:       "/api/promet/searchbutton",
+							HxTarget:    "#search-dropdown",
+							HxSwap:      "innerHTML",
+							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`,
+							ClassButton: common.ClassButton,
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "odsifrenaziv",
+							Name:       "odsifrenaziv",
+							FieldType:  "text",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextDisabled + " w-full",
+						})
+					</div>
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "dosifre",
+							LabelText:  translator.Label("Do Sifre"),
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:           "dosifre",
+							FieldType:    "text",
+							Disabled:     false,
+							ClassInput:   common.ClassInputTextEnabled + " w-24",
+							BlurEndpoint: "api/fkpl/trazikonto",
+							HxTarget:     "sifranaziv",
+							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`,
+							Value:        "999999",
+							MinLength:    "2",
+							MaxLength:    "6",
+							TabIndex:     "3",
+						})
+						@tmpl.SearchButton(domain.SearchButtonConfig{
+							ID:          "dosifre",
+							Name:        "search-dosifre",
+							HxUrl:       "/api/promet/searchbutton",
+							HxTarget:    "#search-dropdown",
+							HxSwap:      "innerHTML",
+							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`,
+							ClassButton: common.ClassButton,
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "dosifrenaziv",
+							Name:       "dosifrenaziv",
+							FieldType:  "text",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextDisabled + " w-full",
+						})
+					</div>
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "oddatuma",
+							LabelText:  translator.Label("Od Datuma"),
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "oddatuma",
+							Name:       "oddatuma",
+							FieldType:  "date",
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " w-32",
+							Value:      time.Date(gnGod, 1, 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
+							TabIndex:   "4",
+						})
+					</div>
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "dodatuma",
+							LabelText:  translator.Label("Do Datuma"),
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "dodatuma",
+							Name:       "dodatuma",
+							FieldType:  "date",
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " w-32",
+							Value:      time.Date(gnGod, 12, 31, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
+							TabIndex:   "5",
+						})
+					</div>
+					<div class="mb-2 flex items-center justify-between h-6">
+						<!-- Checkbox group on the left -->
+						<div class="flex items-center"></div>
+						<!-- Buttons on the right -->
+						<div class="flex items-center space-x-1">
+							@tmpl.FormObradaButton(btnObrada, translator)
+							@tmpl.PrintButton(btnPrint, translator)
+						</div>
+					</div>
+				</div>
+				<!-- Values Div - Numeric Right Aligned -->
+				<div class="border mt-1 mb-1 bg-blue-100 border border-blue-400 p-1 rounded-lg">
+					@PrometTotalValues(total, translator)
+				</div>
+			</div>
+			<!-- Group Data Table -->
+			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
+				@tmpl.Search_Part(tbl, searchInput)
+				<!-- Table -->
+				<div id="promettable" class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+					@tmpl.Table(tbl, translator)
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+templ PrometTotalValues(total domain.TotalValues, translator *i18n.Service) {
 	<div
 		id="totalvalues"
 		class="border p-1 rounded-lg"
@@ -809,7 +1250,14 @@ templ TotalValues(total domain.PrometTotalValues, translator *i18n.Service) {
             konto: document.getElementById('konto')?.value,
             sifra: document.getElementById('sifra')?.value,
             oddatuma: document.getElementById('oddatuma')?.value,
-            dodatuma: document.getElementById('dodatuma')?.value
+            dodatuma: document.getElementById('dodatuma')?.value,
+			odmi: document.getElementById('odmi')?.value,
+			domi: document.getElementById('domi')?.value,
+			odkonta: document.getElementById('odkonta')?.value,
+			dokonta: document.getElementById('dokonta')?.value,
+			odsifre: document.getElementById('odsifre')?.value,
+			dosifre: document.getElementById('dosifre')?.value,
+			tabname: document.querySelector('button[aria-selected=true]')?.id
         }"
 	>
 		<div class="grid grid-cols-4 gap-1 mb-px text-sm font-medium text-gray-700 h-6 items-center">
@@ -824,21 +1272,21 @@ templ TotalValues(total domain.PrometTotalValues, translator *i18n.Service) {
 			<div class="text-sm text-gray-600">{ translator.Label("Promet do") }</div>
 			@tmpl.NumericInputField(domain.InputFieldConfig{
 				ID:            "dugujedo",
-				Value:         fmt.Sprintf("%.2f", total.DugDo),
+				Value:         common.FormatNumberWithSystemLocale(total.DugDo, 2),
 				DecimalPlaces: 2,
 				Disabled:      true,
 				ClassInput:    common.ClassInputNumericDisabled,
 			})
 			@tmpl.NumericInputField(domain.InputFieldConfig{
 				ID:            "potrazujedo",
-				Value:         fmt.Sprintf("%.2f", total.PotDo),
+				Value:         common.FormatNumberWithSystemLocale(total.PotDo, 2),
 				DecimalPlaces: 2,
 				Disabled:      true,
 				ClassInput:    common.ClassInputNumericDisabled,
 			})
 			@tmpl.NumericInputField(domain.InputFieldConfig{
 				ID:            "saldodo",
-				Value:         fmt.Sprintf("%.2f", total.SaldoDo),
+				Value:         common.FormatNumberWithSystemLocale(total.SaldoDo, 2),
 				DecimalPlaces: 2,
 				Disabled:      true,
 				ClassInput:    common.ClassInputNumericDisabled,
@@ -848,21 +1296,21 @@ templ TotalValues(total domain.PrometTotalValues, translator *i18n.Service) {
 			<div class="text-sm text-gray-600">{ translator.Label("Promet za period") }</div>
 			@tmpl.NumericInputField(domain.InputFieldConfig{
 				ID:            "dugujeperiod",
-				Value:         fmt.Sprintf("%.2f", total.DugPer),
+				Value:         common.FormatNumberWithSystemLocale(total.DugPer, 2),
 				DecimalPlaces: 2,
 				Disabled:      true,
 				ClassInput:    common.ClassInputNumericDisabled,
 			})
 			@tmpl.NumericInputField(domain.InputFieldConfig{
 				ID:            "potrazujeperiod",
-				Value:         fmt.Sprintf("%.2f", total.PotPer),
+				Value:         common.FormatNumberWithSystemLocale(total.PotPer, 2),
 				DecimalPlaces: 2,
 				Disabled:      true,
 				ClassInput:    common.ClassInputNumericDisabled,
 			})
 			@tmpl.NumericInputField(domain.InputFieldConfig{
 				ID:            "saldoperiod",
-				Value:         fmt.Sprintf("%.2f", total.SaldoPer),
+				Value:         common.FormatNumberWithSystemLocale(total.SaldoPer, 2),
 				DecimalPlaces: 2,
 				Disabled:      true,
 				ClassInput:    common.ClassInputNumericDisabled,
@@ -872,79 +1320,25 @@ templ TotalValues(total domain.PrometTotalValues, translator *i18n.Service) {
 			<div class="text-sm text-gray-600">{ translator.Label("Ukupan promet") }</div>
 			@tmpl.NumericInputField(domain.InputFieldConfig{
 				ID:            "dugujeukupno",
-				Value:         fmt.Sprintf("%.2f", total.DugTot),
+				Value:         common.FormatNumberWithSystemLocale(total.DugTot, 2),
 				DecimalPlaces: 2,
 				Disabled:      true,
 				ClassInput:    common.ClassInputNumericDisabled,
 			})
 			@tmpl.NumericInputField(domain.InputFieldConfig{
 				ID:            "potrazujeukupno",
-				Value:         fmt.Sprintf("%.2f", total.PotTot),
+				Value:         common.FormatNumberWithSystemLocale(total.PotTot, 2),
 				DecimalPlaces: 2,
 				Disabled:      true,
 				ClassInput:    common.ClassInputNumericDisabled,
 			})
 			@tmpl.NumericInputField(domain.InputFieldConfig{
 				ID:            "saldoukupno",
-				Value:         fmt.Sprintf("%.2f", total.SaldoTot),
+				Value:         common.FormatNumberWithSystemLocale(total.SaldoTot, 2),
 				DecimalPlaces: 2,
 				Disabled:      true,
 				ClassInput:    common.ClassInputNumericDisabled,
 			})
 		</div>
 	</div>
-}
-
-templ KontoField(translator *i18n.Service) {
-	@tmpl.LabelField(domain.LabelFieldConfig{
-		ID:         "nalog",
-		LabelText:  translator.Label("Konto"),
-		ClassLabel: common.ClassLabel + " w-24",
-	})
-	@tmpl.TextInputField(domain.InputFieldConfig{
-		ID:           "konto",
-		Name:         "konto",
-		FieldType:    "text",
-		Disabled:     false,
-		ClassInput:   common.ClassInputTextEnabled + " w-24",
-		BlurEndpoint: "api/fkpl/trazikonto",
-		HxTarget:     "kontonaziv",
-		HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "2"}`,
-		HxInclude:    "this",
-		MinLength:    "2",
-		MaxLength:    "6",
-		TabIndex:     "1",
-		OnInput:      "clearFieldError"})
-}
-
-templ NazivField(id string) {
-	@tmpl.TextInputField(domain.InputFieldConfig{
-		ID:         id,
-		Name:       id,
-		FieldType:  "text",
-		Disabled:   true,
-		ClassInput: common.ClassInputTextDisabled + " w-full",
-	})
-}
-
-templ SifraField(translator *i18n.Service) {
-	@tmpl.LabelField(domain.LabelFieldConfig{
-		ID:         "sifra",
-		LabelText:  translator.Label("Sifra"),
-		ClassLabel: common.ClassLabel + " w-24",
-	})
-	@tmpl.TextInputField(domain.InputFieldConfig{
-		ID:           "sifra",
-		Name:         "sifra",
-		FieldType:    "text",
-		Disabled:     false,
-		ClassInput:   common.ClassInputTextEnabled + " w-24",
-		BlurEndpoint: "api/fkpl/trazikonto",
-		HxTarget:     "sifranaziv",
-		HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('sifra').value, "vkonta": "1"}`,
-		HxInclude:    "this",
-		MinLength:    "2",
-		MaxLength:    "6",
-		TabIndex:     "2",
-		OnInput:      "clearFieldError"})
 }

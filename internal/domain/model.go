@@ -116,11 +116,16 @@ type Response struct {
 // For access tokens: Contains username and CSRF hash
 // For refresh tokens: Contains username only with type="refresh" claim
 type UserClaims struct {
-	Username  string `json:"username"`
-	UserID    int    `json:"user_id"`
-	Email     string `json:"email"`
-	TokenType string `json:"token_type"` // "access" or "refresh"
-	CSRFHash  string `json:"csrf_hash"`  // SHA256 hash of CSRF token (access tokens only)
+	Username    string `json:"username"`
+	UserID      int    `json:"user_id"`
+	Email       string `json:"email"`
+	Firma       string `json:"firma"`        // Company identifier
+	SelectedGod int    `json:"selected_god"` // Fiscal year
+	SelectedKar int    `json:"selected_kar"` // Accounting period
+	DuzSin      int    `json:"duz_sin"`      // Length of synthetic account
+	Language    string `json:"language"`     // UI language
+	TokenType   string `json:"token_type"`   // "access" or "refresh"
+	CSRFHash    string `json:"csrf_hash"`    // SHA256 hash of CSRF token (access tokens only)
 	jwt.RegisteredClaims
 }
 
@@ -188,6 +193,7 @@ type InputFieldConfig struct {
 	TabIndex         string
 	HxOnAfterRequest string
 	OnInput          string
+	OnFocus          string
 	DecimalPlaces    int
 }
 
@@ -222,7 +228,7 @@ type ComboFieldConfig struct {
 	MaxLength        string
 	TabIndex         string
 }
-type CheckboxConfig struct {
+type CheckboxFieldConfig struct {
 	ID                string
 	Name              string
 	LabelText         string
@@ -236,6 +242,25 @@ type CheckboxConfig struct {
 	HxTarget          string
 	HxSwap            string
 	HxVals            string
+	TabIndex          string
+	Value             string
+	Checked           bool
+}
+type RadioFieldConfig struct {
+	ID               string
+	Name             string
+	LabelText        string
+	ClassLabel       string
+	ClassSelect      string
+	IsSelected       bool
+	Disabled         bool
+	OnChange         string
+	OnChangeEndpoint string
+	HxTarget         string
+	HxSwap           string
+	HxVals           string
+	TabIndex         string
+	Value            string
 }
 
 type SearchButtonConfig struct {

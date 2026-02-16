@@ -24,7 +24,7 @@ func StringToBool(boolStr string) bool {
 
 // StringToDate converts string to time.Time (date only)
 func StringToDate(dateStr string) time.Time {
-	val, err := time.Parse("2006-01-02", dateStr)
+	val, err := time.Parse(HtmlLayout, dateStr)
 	if err != nil {
 		return defaultTime
 	}

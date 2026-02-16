@@ -1,9 +1,10 @@
 package handler
 
 import (
+	"helia/config"
+	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
-	"helia/internal/i18n"
 	"helia/internal/middleware"
 	"helia/internal/service"
 	"helia/pkg/utils"
@@ -22,10 +23,11 @@ const (
 
 type PartneriHandler struct {
 	Service *service.BaseService[domain.Partneri]
+	cfg     config.Config
 }
 
-func NewPartneriHandler(service *service.BaseService[domain.Partneri]) *PartneriHandler {
-	return &PartneriHandler{Service: service}
+func NewPartneriHandler(service *service.BaseService[domain.Partneri], cfg config.Config) *PartneriHandler {
+	return &PartneriHandler{Service: service, cfg: cfg}
 }
 
 func (h *PartneriHandler) GetAllPartneri(c *gin.Context) {
@@ -34,6 +36,7 @@ func (h *PartneriHandler) GetAllPartneri(c *gin.Context) {
 		partneriContentTitle, partneriTableID,
 		partneriURLPrefix, partneriURLGetAll,
 		"IDPartneri",
+		h.cfg,
 	)
 	utils.RenderContent(c, *tbl)
 }

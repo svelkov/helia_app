@@ -3,10 +3,11 @@ package repository
 import (
 	"fmt"
 	"helia/internal/domain"
+	"helia/internal/infrastructure/db"
 	"reflect"
 	"strings"
 
-	"github.com/jmoiron/sqlx"
+	"github.com/gin-gonic/gin"
 )
 
 // // Generic repository interface
@@ -30,15 +31,15 @@ const (
 
 // Base implementation
 type BaseRepository[T any] struct {
-	DB         *sqlx.DB
+	DB         db.Database
 	TableName  string
 	fieldCache map[string]reflect.StructField
 }
 
 // NewBaseRepository creates a new instance of BaseRepository.
-func NewBaseRepository[T any](db *sqlx.DB, tableName string) *BaseRepository[T] {
+func NewBaseRepository[T any](database db.Database, tableName string) *BaseRepository[T] {
 	br := &BaseRepository[T]{
-		DB:         db,
+		DB:         database,
 		TableName:  tableName,
 		fieldCache: make(map[string]reflect.StructField),
 	}
@@ -62,7 +63,7 @@ func (r *BaseRepository[T]) GetFieldCache() map[string]reflect.StructField {
 
 func (r *BaseRepository[T]) GetByID(idField string, idValue interface{}) (*T, error) {
 	var entity T
-	query := r.CreateGetByID(idField, idValue)
+	query := r.CreateGetByIDStatement(idField, idValue)
 	// Execute the query
 	err := r.DB.Get(&entity, query, idValue)
 	if err != nil {
@@ -71,9 +72,9 @@ func (r *BaseRepository[T]) GetByID(idField string, idValue interface{}) (*T, er
 	return &entity, nil
 }
 
-func (r *BaseRepository[T]) GetAll(pageSize int, offset int, tableFields []domain.Fields, idField string, searchParams ...string) (*[]T, error) {
+func (r *BaseRepository[T]) GetAll(c *gin.Context, pageSize int, offset int, tableFields []domain.Fields, idField string, searchParams ...string) (*[]T, error) {
 	var entity []T
-	query, args := r.CreateGetAll(tableFields, idField, searchParams...)
+	query, args := r.CreateGetAllStatement(c, tableFields, idField, searchParams...)
 	param := len(args) + 1
 
 	endPaging := ""
@@ -90,7 +91,7 @@ func (r *BaseRepository[T]) GetAll(pageSize int, offset int, tableFields []domai
 	return &entity, nil
 }
 
-func (r *BaseRepository[T]) GetAllCustom(queryText, whereText string, args []interface{}, limitOffset, sortBy string) (*[]T, error) {
+func (r *BaseRepository[T]) GetAllCustom(c *gin.Context, queryText, whereText string, args []interface{}, limitOffset, sortBy string) (*[]T, error) {
 	var entity []T
 
 	queryText = fmt.Sprintf("%s %s %s %s", queryText, whereText, sortBy, limitOffset)
@@ -103,9 +104,9 @@ func (r *BaseRepository[T]) GetAllCustom(queryText, whereText string, args []int
 	return &entity, nil
 }
 
-func (r *BaseRepository[T]) GetTotalRecords(tableFields []domain.Fields, searchParams ...string) (int, error) {
+func (r *BaseRepository[T]) GetTotalRecords(c *gin.Context, tableFields []domain.Fields, searchParams ...string) (int, error) {
 	countRec := 0
-	query, args := r.CreateGetCountRecords(tableFields, searchParams...)
+	query, args := r.CreateGetCountRecordsStatement(c, tableFields, searchParams...)
 
 	// Execute the query
 	err := r.DB.Get(&countRec, query, args...)
@@ -116,7 +117,7 @@ func (r *BaseRepository[T]) GetTotalRecords(tableFields []domain.Fields, searchP
 	return countRec, nil
 }
 
-func (r *BaseRepository[T]) GetTotalRecordsCustom(queryText, whereText string, args []interface{}, limitOffset, sortBy string) (int, error) {
+func (r *BaseRepository[T]) GetTotalRecordsCustom(c *gin.Context, queryText, whereText string, args []interface{}, limitOffset, sortBy string) (int, error) {
 
 	countRec := 0
 
@@ -129,34 +130,33 @@ func (r *BaseRepository[T]) GetTotalRecordsCustom(queryText, whereText string, a
 	return countRec, nil
 }
 
-func (r *BaseRepository[T]) Create(entity *T, idField string, tableFields []domain.Fields) (int64, error) {
-	query, values := r.CreateInsertStatement(entity, tableFields)
-	lastInsertedID, err := doTransaction(r.DB, ActionTypeInsert, idField, query, values...)
+func (r *BaseRepository[T]) Create(c *gin.Context, entity *T, idField string, tableFields []domain.Fields) (int64, error) {
+	query, values := r.CreateInsertStatement(c, entity, tableFields, idField)
+	lastInsertedID, err := doTransaction(r.DB, ActionTypeInsert, query, values...)
 	return lastInsertedID, err
 }
 
-func (r *BaseRepository[T]) Update(entity *T, idField string, idValue interface{}, tableFields []domain.Fields) error {
-	query, values := r.CreateUpdateStatement(entity, idField, idValue, tableFields)
-	_, err := doTransaction(r.DB, ActionTypeUpdate, idField, query, values...)
+func (r *BaseRepository[T]) Update(c *gin.Context, entity *T, idField string, idValue interface{}, tableFields []domain.Fields) error {
+	query, values := r.CreateUpdateStatement(c, entity, idField, idValue, tableFields)
+	_, err := doTransaction(r.DB, ActionTypeUpdate, query, values...)
 	return err
 }
 
 func (r *BaseRepository[T]) Delete(idField string, id int64) error {
 	query := fmt.Sprintf(`DELETE FROM  %s WHERE %s = $1`, r.TableName, idField)
-	_, err := doTransaction(r.DB, ActionTypeDelete, idField, query, id)
+	_, err := doTransaction(r.DB, ActionTypeDelete, query, id)
 	return err
 }
 
 // doTransaction executes a query within a transaction
-func doTransaction(db *sqlx.DB, actionType, idField, query string, values ...interface{}) (int64, error) {
+func doTransaction(database db.Database, actionType, query string, values ...interface{}) (int64, error) {
 	// Start a transaction
 	lastInsertedID := int64(0)
-	tx, err := db.Beginx()
+	tx, err := database.Beginx()
 	if err != nil {
 		return 0, fmt.Errorf("could not begin transaction: %v", err)
 	}
 	defer tx.Rollback() // Ensures rollback if commit isn't reached
-	fmt.Println(query, values)
 	// Execute the query with provided values
 	if actionType == ActionTypeDelete || actionType == ActionTypeUpdate {
 		_, err := tx.Exec(query, values...)
@@ -166,7 +166,6 @@ func doTransaction(db *sqlx.DB, actionType, idField, query string, values ...int
 		err = tx.Commit() // Commit if successful
 		return lastInsertedID, err
 	}
-	query = fmt.Sprintf("%s RETURNING %s", query, idField) // Append RETURNING clause for insert
 	err = tx.QueryRow(query, values...).Scan(&lastInsertedID)
 	if err != nil {
 		return 0, fmt.Errorf("query execution failed: %v", err)

@@ -1,17 +1,19 @@
 package finansijsko
 
 import (
-	"fmt"
 	tmpl "helia/frontend/templates"
+	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
-	"helia/internal/i18n"
+	"time"
 )
 
-templ SaldaMain(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.SaldaDto, translator *i18n.Service) {
+
+
+templ SaldaMain(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.SaldaDto, saldaURLtotals string, translator *i18n.Service) {
 	<!-- Tab Content -->
 	<div id="tab-content" class="flex flex-col h-full">
-		@SaldaPojedinacnihKonta(tabs, tbl, btnObrada, btnPrint, total, translator)
+		@SaldaPojedinacnihKonta(tabs, tbl, btnObrada, btnPrint, total, saldaURLtotals, translator)
 	</div>
 	<script>
         // Tab switching functionality
@@ -36,35 +38,12 @@ templ SaldaMain(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada d
     </script>
 }
 
-templ SaldaNav(tabs domain.TabData, translator *i18n.Service) {
-	<h2 class="text-xl font-semibold">{ translator.Title("Salda konta") }</h2>
-	<nav class="py-1 h-8 text-sm font-medium text-gray-700 flex items-center whitespace-nowrap" aria-label="Tabs">
-		for _, item := range tabs.Tabs {
-			<input id={ fmt.Sprintf("tab%s", item.Name) } type="hidden" name="sourceTab" value={ item.Name }/>
-			<button
-				id={ item.ID }
-				if item.IsActive {
-					class="whitespace-nowrap rounded-t-lg py-1 px-1 font-medium text-sm rounded-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-				} else {
-					class="whitespace-nowrap rounded-t-lg py-1 px-1 font-medium text-sm rounded-sm text-gray-600 bg-white border border-gray-300 hover:text-blue-700 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-				}
-				hx-get={ item.HXRequestUrl }
-				hx-target="#tab-content"
-				hx-swap="innerHTML"
-				hx-headers='{"X-Request-Source": "tab"}'
-				aria-controls="salda-panel"
-				aria-selected={ fmt.Sprintf("%v", item.IsActive) }
-			>
-				{ translator.Label(item.Label) }
-			</button>
-		}
-	</nav>
-}
-
 // Tab 1 - Salda pojedinačnih konta
-templ SaldaPojedinacnihKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint domain.Button, total domain.SaldaDto, translator *i18n.Service) {
+templ SaldaPojedinacnihKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint domain.Button, total domain.SaldaDto, saldaURLtotals string, translator *i18n.Service) {
 	<!-- Tab Navigation -->
-	@SaldaNav(tabs, translator)
+	<div class="border-b border-blue-600">
+		@tmpl.TabNav(translator.Title("Salda konta"), tabs, "#tab-content", "salda-panel", translator)
+	</div>
 	<!-- Tab Content -->
 	<div id="tab1">
 		<!-- Main Grid - Two columns 1/2 to 1/2 -->
@@ -119,7 +98,14 @@ templ SaldaPojedinacnihKonta(tabs domain.TabData, tbl domain.TableData, btnObrad
 						HxVals:      `js:{"vkonta": getVkontaValue()}`,
 						ClassButton: common.ClassButton,
 					})
-					@NazivField("kontonaziv")
+					@tmpl.TextInputField(domain.InputFieldConfig{
+						ID:         "kontonaziv",
+						Name:       "kontonaziv",
+						FieldType:  "text",
+						Disabled:   true,
+						ClassInput: common.ClassInputTextEnabled + " w-full",
+						TabIndex:   "-1",
+					})
 				</div>
 				<div class="flex items-center gap-1 mb-1">
 					@tmpl.LabelField(domain.LabelFieldConfig{
@@ -150,15 +136,22 @@ templ SaldaPojedinacnihKonta(tabs domain.TabData, tbl domain.TableData, btnObrad
 						HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`,
 						ClassButton: common.ClassButton,
 					})
-					@NazivField("sifranaziv")
+					@tmpl.TextInputField(domain.InputFieldConfig{
+						ID:         "sifranaziv",
+						Name:       "sifranaziv",
+						FieldType:  "text",
+						Disabled:   true,
+						ClassInput: common.ClassInputTextEnabled + " w-full",
+						TabIndex:   "-1",
+					})
 				</div>
 				<!-- Obradi Button -->
 				<div class="flex justify-end gap-1">
 					@tmpl.FormObradaButton(btnObrada, translator)
 					@tmpl.PrintButton(btnPrint, translator)
 				</div>
-				<div class="border mt-auto mb-1 bg-blue-100 border border-blue-400 p-1 rounded-lg">
-					@SaldaTotalValues(total, translator)
+				<div class="border mt-auto mb-1 bg-blue-100 border border-blue-400 mt-2 p-1 rounded-lg">
+					@SaldaTotalValues(total, saldaURLtotals, translator)
 				</div>
 			</div>
 			<!-- Right Column - Monthly Data Table -->
@@ -191,13 +184,15 @@ templ SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnP
 	<!-- Container with full height -->
 	<div class="flex flex-col h-full">
 		<!-- Tab Navigation -->
-		@SaldaNav(tabs, translator)
+		<div class="border-b border-blue-600">
+			@tmpl.TabNav(translator.Title("Salda konta"), tabs, "#tab-content", "salda-panel", translator)
+		</div>
 		<!-- Tab Content -->
 		<div id="tab2" class="flex-1 min-h-0 flex flex-col gap-1">
 			<!-- Main Grid - Two columns -->
 			<div class="grid grid-cols-2 gap-1">
 				<!-- Left Column - Parameters -->
-				<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col">
+				<div class="border bg-blue-100 border border-blue-400 mt-1 p-1 rounded-lg flex flex-col">
 					<div class="text-blue-800 font-bold text-xs mb-1 border-b border-gray-400 pb-1">
 						{ translator.Text("Parametri") }
 					</div>
@@ -226,7 +221,14 @@ templ SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnP
 							HxVals:      `{"vkonta": "2"}`,
 							ClassButton: common.ClassButton,
 						})
-						@NazivField("nazivpocev_od_konta")
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "nazivpocev_od_konta",
+							Name:       "nazivpocev_od_konta",
+							FieldType:  "text",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextEnabled + " w-full",
+							TabIndex:   "-1",
+						})
 					</div>
 					<!-- Zakljucno sa kontom -->
 					<div class="flex items-center gap-1 mb-1">
@@ -253,7 +255,14 @@ templ SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnP
 							HxVals:      `{"vkonta": "2"}`,
 							ClassButton: common.ClassButton,
 						})
-						@NazivField("nazivzakljucno_sa_kontom")
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "nazivzakljucno_sa_kontom",
+							Name:       "nazivzakljucno_sa_kontom",
+							FieldType:  "text",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextEnabled + " w-full",
+							TabIndex:   "-1",
+						})
 					</div>
 					<!-- Počev od šifre -->
 					<div class="flex items-center gap-1 mb-1">
@@ -279,7 +288,14 @@ templ SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnP
 							HxSwap:      "innerHTML",
 							ClassButton: common.ClassButton,
 						})
-						@NazivField("nazivpocev_od_sifre")
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "nazivpocev_od_sifre",
+							Name:       "nazivpocev_od_sifre",
+							FieldType:  "text",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextEnabled + " w-full",
+							TabIndex:   "-1",
+						})
 					</div>
 					<!-- Zakljucno sa šifrom -->
 					<div class="flex items-center gap-1 mb-1">
@@ -305,10 +321,17 @@ templ SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnP
 							HxSwap:      "innerHTML",
 							ClassButton: common.ClassButton,
 						})
-						@NazivField("nazivzakljucno_sa_sifrom")
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "nazivzakljucno_sa_sifrom",
+							Name:       "nazivzakljucno_sa_sifrom",
+							FieldType:  "text",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextEnabled + " w-full",
+							TabIndex:   "-1",
+						})
 					</div>
 					<!-- Checkbox: Prikaz salda po valutama -->
-					@tmpl.CheckboxField(domain.CheckboxConfig{
+					@tmpl.CheckboxField(domain.CheckboxFieldConfig{
 						ID:                "chk_salda_valute",
 						Name:              "chk_salda_valute",
 						LabelText:         "Prikaz salda po valutama",
@@ -319,7 +342,7 @@ templ SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnP
 					}, translator)
 				</div>
 				<!-- Right Column - Report Type Selection -->
-				<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col">
+				<div class="border bg-blue-100 border border-blue-400 mt-1 p-1 rounded-lg flex flex-col">
 					<div class="text-blue-800 font-bold text-xs mb-1 border-b border-gray-400 pb-1">
 						{ translator.Label("Ime izveštaja") }
 					</div>
@@ -380,7 +403,7 @@ templ SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnP
 							OptionValues:  monthsComboItems,
 							SelectedValue: "1",
 						}, translator)
-						@tmpl.CheckboxField(domain.CheckboxConfig{
+						@tmpl.CheckboxField(domain.CheckboxFieldConfig{
 							ID:                "chk_saldo_razl_nula",
 							Name:              "chk_saldo_razl_nula",
 							LabelText:         "Prikazi konta sa saldom <> 0",
@@ -407,7 +430,7 @@ templ SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnP
 							OptionValues:  monthsComboItems,
 							SelectedValue: "12",
 						}, translator)
-						@tmpl.CheckboxField(domain.CheckboxConfig{
+						@tmpl.CheckboxField(domain.CheckboxFieldConfig{
 							ID:                "chk_saldo_vece_nula",
 							Name:              "chk_saldo_vece_nula",
 							LabelText:         "Prikazi konta sa saldom > 0",
@@ -432,7 +455,7 @@ templ SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnP
 							ClassInput: common.ClassInputTextEnabled + " w-40",
 							Value:      "0",
 						})
-						@tmpl.CheckboxField(domain.CheckboxConfig{
+						@tmpl.CheckboxField(domain.CheckboxFieldConfig{
 							ID:                "chk_saldo_manje_nula",
 							Name:              "chk_saldo_manje_nula",
 							LabelText:         "Prikazi konta sa saldom < 0",
@@ -457,7 +480,7 @@ templ SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnP
 							ClassInput: common.ClassInputTextEnabled + " w-40",
 							Value:      "0",
 						})
-						@tmpl.CheckboxField(domain.CheckboxConfig{
+						@tmpl.CheckboxField(domain.CheckboxFieldConfig{
 							ID:                "chk_saldo_nula",
 							Name:              "chk_saldo_nula",
 							LabelText:         "Prikazi konta sa saldom = 0",
@@ -494,13 +517,15 @@ templ SaldaPartneri(tabs domain.TabData, tblPartneri domain.TableData, inputCont
 	<!-- Container with full height -->
 	<div class="flex flex-col h-full">
 		<!-- Tab Navigation -->
-		@SaldaNav(tabs, translator)
+		<div class="border-b border-blue-600">
+			@tmpl.TabNav(translator.Title("Salda konta"), tabs, "#tab-content", "salda-panel", translator)
+		</div>
 		<!-- Tab Content -->
 		<div id="tab3" class="flex-1 min-h-0">
 			<!-- Main Grid - Two columns 1/2 to 1/2 with full height -->
 			<div class="grid grid-cols-2 gap-1 min-h-0 h-full">
 				<!-- Left Column - Partner List (Full Height) -->
-				<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col h-full overflow-hidden">
+				<div class="border bg-blue-100 border border-blue-400 mt-1 p-1 rounded-lg flex flex-col h-full overflow-hidden">
 					<div class="text-blue-800 font-bold text-xs mb-1 border-b border-gray-400 pb-1 flex-shrink-0">
 						{ translator.Title("Partneri") }
 					</div>
@@ -519,7 +544,7 @@ templ SaldaPartneri(tabs domain.TabData, tblPartneri domain.TableData, inputCont
 
 templ SaldaPartneriDetalji(tblKonta, tblDetalji domain.TableData, translator *i18n.Service) {
 	<!-- Salda po kontima Section -->
-	<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-[1]">
+	<div class="border bg-blue-100 border border-blue-400 mt-1 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-[1]">
 		<div class="text-blue-800 font-bold text-xs mb-1 border-b border-gray-400 pb-1 flex-shrink-0">
 			{ translator.Title("Salda po kontima") }
 		</div>
@@ -540,18 +565,108 @@ templ SaldaPartneriDetalji(tblKonta, tblDetalji domain.TableData, translator *i1
 	</div>
 }
 
-templ SaldaTotalValues(total domain.SaldaDto, translator *i18n.Service) {
+templ SaldaPartneriPrelomljeno(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
+	<!-- Container with full height -->
+	<div class="flex flex-col h-full">
+		<!-- Tab Navigation -->
+		<div class="border-b border-blue-600">
+			@tmpl.TabNav(translator.Title("Salda konta"), tabs, "#tab-content", "salda-panel", translator)
+		</div>
+		<!-- Tab Content -->
+		<div id="tab4" class="flex-1 min-h-0 flex flex-col gap-1">
+			<!-- Main Grid - Two columns 1/2 to 1/2 -->
+			<div class="grid grid-cols-2 gap-1">
+				<!-- Left Column - Parameters -->
+				<div class="border bg-blue-100 border border-blue-400 mt-1 p-1 rounded-lg flex flex-col">
+					<div class="text-blue-800 font-bold text-xs mb-1 border-b border-gray-400 pb-1">
+						{ translator.Text("Parametri") }
+					</div>
+					<!-- Sifra Range Fields -->
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "sifra_od",
+							LabelText:  translator.Label("Počev od sifre"),
+							ClassLabel: common.ClassLabel + " w-36",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "sifra_od",
+							Name:       "sifra_od",
+							FieldType:  "text",
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " w-24",
+							Value:      "000000",
+							MaxLength:  "6",
+						})
+					</div>
+					<div class="flex items-center gap-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "sifra_do",
+							LabelText:  translator.Label("Zakljucno sa sifrom"),
+							ClassLabel: common.ClassLabel + " w-36",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "sifra_do",
+							Name:       "sifra_do",
+							FieldType:  "text",
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " w-24",
+							Value:      "999999",
+							MaxLength:  "6",
+						})
+					</div>
+					<!-- Obradi Button -->
+					<div class="flex justify-end gap-1">
+						@tmpl.FormObradaButton(btnObrada, translator)
+						@tmpl.PrintButton(btnPrint, translator)
+					</div>
+				</div>
+				<!-- Right Column - Summary Totals -->
+				<div class="border bg-blue-100 border border-blue-400 mt-1 p-1 rounded-lg flex flex-col">
+					<div class="text-blue-800 font-bold text-xs border-b border-gray-400 pb-1">
+						{ translator.Text("Rezime") }
+					</div>
+					<div class="text-xs text-gray-700 space-y-1 flex-1">
+						<div><span class="font-semibold text-blue-600">{ translator.Label("Kupac") }:</span> <span id="total-kupac">200,201,202,203,204,205,206</span></div>
+						<div><span class="font-semibold text-blue-600">{ translator.Label("Dobavljač") }:</span> <span id="total-dobavljac">431,432,433,434,435,436</span></div>
+						<div><span class="font-semibold text-blue-600">{ translator.Label("Primijen avans") }:</span> <span id="total-primljen">430</span></div>
+						<div><span class="font-semibold text-blue-600">{ translator.Label("Dat avans") }:</span> <span id="total-dat">150,151,152,153,154,155</span></div>
+					</div>
+				</div>
+			</div>
+			<!-- Partner Balance Table -->
+			<div class="border bg-blue-100 border border-blue-400 mt-1 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
+				<div class="text-blue-800 font-bold text-xs">
+					{ translator.Text("Pregled salda partnera") }
+				</div>
+				@tmpl.Search_Part(tbl, searchInput)
+				<!-- Table -->
+				<div class="flex-1 overflow-x-auto overflow-y-auto min-h-0 h-full">
+					@tmpl.Table(tbl, translator)
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+templ SaldaTotalValues(total domain.SaldaDto, sourceUrl string, translator *i18n.Service) {
 	<div
 		id="totalvalues"
 		class="border p-1 rounded-lg flex flex-col"
-		hx-get="/api/salda/totalvalues"
+		hx-get={ sourceUrl }
 		hx-trigger="click from:#obrada-btn"
 		hx-target="#totalvalues"
 		hx-swap="innerHTML"
 		hx-vals="js:{
             konto: document.getElementById('konto')?.value,
             sifra: document.getElementById('sifra')?.value,
-            tipkonta: document.querySelector('input[name=\'tipkonta\']:checked')?.value
+            tipkonta: document.querySelector('input[name=\'tipkonta\']:checked')?.value,
+			odkonta: document.getElementById('odkonta')?.value,
+			dokonta: document.getElementById('dokonta')?.value,
+			odsifre: document.getElementById('odsifre')?.value,
+			dosifre: document.getElementById('dosifre')?.value,
+			oddatuma: document.getElementById('oddatuma')?.value,
+			dodatuma: document.getElementById('dodatuma')?.value,
+			klasa: document.getElementById('klasa')?.value
         }"
 	>
 		<div class="grid grid-cols-4 gap-1 mb-px text-sm font-medium text-gray-700 h-6 items-center">
@@ -635,95 +750,360 @@ templ SaldaTotalValues(total domain.SaldaDto, translator *i18n.Service) {
 	</div>
 }
 
-templ SaldaPartneriPrelomljeno(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
-	<!-- Container with full height -->
+templ SaldaKlase5i6analiticki(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, total domain.SaldaDto, gnGod int, saldaURLtotals string, translator *i18n.Service) {
 	<div class="flex flex-col h-full">
 		<!-- Tab Navigation -->
-		@SaldaNav(tabs, translator)
-		<!-- Tab Content -->
-		<div id="tab4" class="flex-1 min-h-0 flex flex-col gap-1">
-			<!-- Main Grid - Two columns 1/2 to 1/2 -->
+		<div class="border-b border-blue-600">
+			@tmpl.TabNav(translator.Title("Salda konta"), tabs, "#tab-content", "salda-panel", translator)
+		</div>
+		<!-- Tab 1 Content -->
+		<div id="tab1" class="flex-1 min-h-0 flex flex-col gap-1">
+			<!-- First Row - Two divs side by side -->
 			<div class="grid grid-cols-2 gap-1">
-				<!-- Left Column - Parameters -->
-				<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col">
-					<div class="text-blue-800 font-bold text-xs mb-1 border-b border-gray-400 pb-1">
-						{ translator.Text("Parametri") }
-					</div>
-					<!-- Sifra Range Fields -->
+				<!-- Parameters Div - Left Aligned -->
+				<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg">
 					<div class="flex items-center gap-1 mb-1">
 						@tmpl.LabelField(domain.LabelFieldConfig{
-							ID:         "sifra_od",
-							LabelText:  translator.Label("Počev od sifre"),
-							ClassLabel: common.ClassLabel + " w-36",
+							ID:         "lblodsifre",
+							LabelText:  translator.Label("Od sifre"),
+							ClassLabel: common.ClassLabel + " w-24",
 						})
 						@tmpl.TextInputField(domain.InputFieldConfig{
-							ID:         "sifra_od",
-							Name:       "sifra_od",
+							ID:           "odsifre",
+							Name:         "odsifre",
+							FieldType:    "text",
+							Disabled:     false,
+							ClassInput:   common.ClassInputTextEnabled + " w-24",
+							BlurEndpoint: "api/fkpl/trazikonto",
+							HxTarget:     "kontonaziv",
+							HxVals:       `js:{"odsifre": document.getElementById('odsifre').value, "vkonta": "1"}`,
+							HxInclude:    "this",
+							Value:        "00",
+							MinLength:    "2",
+							MaxLength:    "6",
+							TabIndex:     "1",
+							OnInput:      "clearFieldError",
+						})
+						@tmpl.SearchButton(domain.SearchButtonConfig{
+							ID:          "btnodsifre",
+							Name:        "search-odsifre",
+							HxUrl:       "/api/promet/searchbutton",
+							HxTarget:    "#search-dropdown",
+							HxSwap:      "innerHTML",
+							HxVals:      `{"vkonta": "2"}`,
+							ClassButton: common.ClassButton,
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "odsifrenaziv",
+							Name:       "odsifrenaziv",
 							FieldType:  "text",
-							Disabled:   false,
-							ClassInput: common.ClassInputTextEnabled + " w-24",
-							Value:      "000000",
-							MaxLength:  "6",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextDisabled + " w-full",
 						})
 					</div>
-					<div class="flex items-center gap-1">
+					<div class="flex items-center gap-1 mb-1">
 						@tmpl.LabelField(domain.LabelFieldConfig{
-							ID:         "sifra_do",
-							LabelText:  translator.Label("Zakljucno sa sifrom"),
-							ClassLabel: common.ClassLabel + " w-36",
+							ID:         "lbldosifre",
+							LabelText:  translator.Label("Do sifre"),
+							ClassLabel: common.ClassLabel + " w-24",
 						})
 						@tmpl.TextInputField(domain.InputFieldConfig{
-							ID:         "sifra_do",
-							Name:       "sifra_do",
+							ID:           "dosifre",
+							Name:         "dosifre",
+							FieldType:    "text",
+							Disabled:     false,
+							ClassInput:   common.ClassInputTextEnabled + " w-24",
+							BlurEndpoint: "api/fkpl/trazikonto",
+							HxTarget:     "sifranaziv",
+							HxVals:       `js:{"dosifre": document.getElementById('dosifre').value, "vkonta": "1"}`,
+							HxInclude:    "this",
+							Value:        "999999",
+							MinLength:    "2",
+							MaxLength:    "6",
+							TabIndex:     "2",
+							OnInput:      "clearFieldError",
+						})
+						@tmpl.SearchButton(domain.SearchButtonConfig{
+							ID:          "btndosifre",
+							Name:        "search-dosifre",
+							HxUrl:       "/api/promet/searchbutton",
+							HxTarget:    "#search-dropdown",
+							HxSwap:      "innerHTML",
+							HxVals:      `js:{"dosifre": document.getElementById('dosifre').value, "vkonta": "1"}`,
+							ClassButton: common.ClassButton,
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "dosifrenaziv",
+							Name:       "dosifrenaziv",
 							FieldType:  "text",
-							Disabled:   false,
-							ClassInput: common.ClassInputTextEnabled + " w-24",
-							Value:      "999999",
-							MaxLength:  "6",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextDisabled + " w-full",
 						})
 					</div>
-					<!-- Obradi Button -->
-					<div class="flex justify-end gap-1">
-						@tmpl.FormObradaButton(btnObrada, translator)
-						@tmpl.PrintButton(btnPrint, translator)
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "lbloddatuma",
+							ClassLabel: common.ClassLabel + " w-24",
+							LabelText:  translator.Label("Od datuma"),
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "oddatuma",
+							Name:       "oddatuma",
+							FieldType:  "date",
+							Value:      time.Date(gnGod, 1, 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " w-32",
+							TabIndex:   "3",
+							OnInput:    "clearFieldError",
+						})
+					</div>
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "lbldodatuma",
+							LabelText:  translator.Label("Do datuma"),
+							ClassLabel: common.ClassLabel + " w-24 ",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "dodatuma",
+							Name:       "dodatuma",
+							FieldType:  "date",
+							Value:      time.Date(gnGod, 12, 31, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " w-32",
+							TabIndex:   "4",
+							OnInput:    "clearFieldError",
+						})
+					</div>
+					<div class="mb-1 flex items-center justify-between h-6">
+						<div class="flex items-center gap-1">
+							<!-- radio set klase 5 i 6  on the left -->
+							@tmpl.LabelField(domain.LabelFieldConfig{
+								ID:         "lblklasa",
+								LabelText:  translator.Label("Klasa"),
+								ClassLabel: common.ClassLabel + " w-24",
+							})
+							<div class="flex gap-3">
+								@tmpl.RadioButtonField(domain.RadioFieldConfig{
+									ID:         "klasa",
+									Name:       "klasa",
+									Value:      "5",
+									LabelText:  translator.Label("Klasa 5"),
+									IsSelected: true,
+								}, translator)
+								@tmpl.RadioButtonField(domain.RadioFieldConfig{
+									ID:         "klasa",
+									Name:       "klasa",
+									Value:      "6",
+									LabelText:  translator.Label("Klasa 6"),
+									IsSelected: false,
+								}, translator)
+							</div>
+						</div>
+						<!-- Buttons on the right -->
+						<div class="flex items-center space-x-1">
+							@tmpl.FormObradaButton(btnObrada, translator)
+							@tmpl.PrintButton(btnPrint, translator)
+						</div>
 					</div>
 				</div>
-				<!-- Right Column - Summary Totals -->
-				<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col">
-					<div class="text-blue-800 font-bold text-xs border-b border-gray-400 pb-1">
-						{ translator.Text("Rezime") }
-					</div>
-					<div class="text-xs text-gray-700 space-y-1 flex-1">
-						<div><span class="font-semibold text-blue-600">{ translator.Label("Kupac") }:</span> <span id="total-kupac">200,201,202,203,204,205,206</span></div>
-						<div><span class="font-semibold text-blue-600">{ translator.Label("Dobavljač") }:</span> <span id="total-dobavljac">431,432,433,434,435,436</span></div>
-						<div><span class="font-semibold text-blue-600">{ translator.Label("Primijen avans") }:</span> <span id="total-primljen">430</span></div>
-						<div><span class="font-semibold text-blue-600">{ translator.Label("Dat avans") }:</span> <span id="total-dat">150,151,152,153,154,155</span></div>
-					</div>
+				<!-- Values Div - Numeric Right Aligned -->
+				<div class="border mt-1 mb-1 bg-blue-100 border border-blue-400 p-1 rounded-lg">
+					@SaldaTotalValues(total, saldaURLtotals, translator)
 				</div>
 			</div>
-			<!-- Partner Balance Table -->
+			<!-- Group Data Table -->
 			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
-				<div class="text-blue-800 font-bold text-xs">
-					{ translator.Text("Pregled salda partnera") }
-				</div>
 				@tmpl.Search_Part(tbl, searchInput)
 				<!-- Table -->
-				<div class="flex-1 overflow-x-auto overflow-y-auto min-h-0 h-full">
+				<div id="promettable" class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
 					@tmpl.Table(tbl, translator)
 				</div>
 			</div>
 		</div>
 	</div>
 }
-
+templ SaldaKlase5i6MT(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, total domain.SaldaDto, gnGod int, saldaURLtotals string, translator *i18n.Service) {
+	<div class="flex flex-col h-full">
+		<!-- Tab Navigation -->
+		<div class="border-b border-blue-600">
+			@tmpl.TabNav(translator.Title("Salda konta"), tabs, "#tab-content", "salda-panel", translator)
+		</div>
+		<!-- Tab 1 Content -->
+		<div id="tab1" class="flex-1 min-h-0 flex flex-col gap-1">
+			<!-- First Row - Two divs side by side -->
+			<div class="grid grid-cols-2 gap-1">
+				<!-- Parameters Div - Left Aligned -->
+				<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg">
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "lblodkonta",
+							LabelText:  translator.Label("Od konta"),
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:           "odkonta",
+							Name:         "odkonta",
+							FieldType:    "text",
+							Disabled:     false,
+							ClassInput:   common.ClassInputTextEnabled + " w-24",
+							BlurEndpoint: "api/fkpl/trazikonto",
+							HxTarget:     "kontonaziv",
+							HxVals:       `js:{"odkonta": document.getElementById('odkonta').value, "vkonta": "2"}`,
+							HxInclude:    "this",
+							Value:        "0000",
+							MinLength:    "4",
+							MaxLength:    "6",
+							TabIndex:     "1",
+							OnInput:      "clearFieldError",
+						})
+						@tmpl.SearchButton(domain.SearchButtonConfig{
+							ID:          "btnodkonta",
+							Name:        "search-odkonta",
+							HxUrl:       "/api/promet/searchbutton",
+							HxTarget:    "#search-dropdown",
+							HxSwap:      "innerHTML",
+							HxVals:      `{"vkonta": "2"}`,
+							ClassButton: common.ClassButton,
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "odkontanaziv",
+							Name:       "odkontanaziv",
+							FieldType:  "text",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextDisabled + " w-full",
+						})
+					</div>
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "lbldokonta",
+							LabelText:  translator.Label("Do konta"),
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:           "dokonta",
+							Name:         "dokonta",
+							FieldType:    "text",
+							Disabled:     false,
+							ClassInput:   common.ClassInputTextEnabled + " w-24",
+							BlurEndpoint: "api/fkpl/trazikonto",
+							HxTarget:     "kontonaziv",
+							HxVals:       `js:{"dokonta": document.getElementById('dokonta').value, "vkonta": "2"}`,
+							HxInclude:    "this",
+							Value:        "999999",
+							MinLength:    "4",
+							MaxLength:    "6",
+							TabIndex:     "2",
+							OnInput:      "clearFieldError",
+						})
+						@tmpl.SearchButton(domain.SearchButtonConfig{
+							ID:          "btndokonta",
+							Name:        "search-dokonta",
+							HxUrl:       "/api/promet/searchbutton",
+							HxTarget:    "#search-dropdown",
+							HxSwap:      "innerHTML",
+							HxVals:      `js:{"dokonta": document.getElementById('dokonta').value, "vkonta": "2"}`,
+							ClassButton: common.ClassButton,
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "dokontanaziv",
+							Name:       "dokontanaziv",
+							FieldType:  "text",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextDisabled + " w-full",
+						})
+					</div>
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "lbloddatuma",
+							ClassLabel: common.ClassLabel + " w-24",
+							LabelText:  translator.Label("Od datuma"),
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "oddatuma",
+							Name:       "oddatuma",
+							FieldType:  "date",
+							Value:      time.Date(gnGod, 1, 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " w-32",
+							TabIndex:   "3",
+							OnInput:    "clearFieldError",
+						})
+					</div>
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "lbldodatuma",
+							LabelText:  translator.Label("Do datuma"),
+							ClassLabel: common.ClassLabel + " w-24 ",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "dodatuma",
+							Name:       "dodatuma",
+							FieldType:  "date",
+							Value:      time.Date(gnGod, 12, 31, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " w-32",
+							TabIndex:   "4",
+							OnInput:    "clearFieldError",
+						})
+					</div>
+					<div class="mb-1 flex items-center justify-between h-6">
+						<div class="flex items-center gap-1">
+							<!-- radio set klase 5 i 6  on the left -->
+							@tmpl.LabelField(domain.LabelFieldConfig{
+								ID:         "lblklasa",
+								LabelText:  translator.Label("Klasa"),
+								ClassLabel: common.ClassLabel + " w-24",
+							})
+							<div class="flex gap-3">
+								@tmpl.RadioButtonField(domain.RadioFieldConfig{
+									ID:         "klasa",
+									Name:       "klasa",
+									Value:      "5",
+									LabelText:  translator.Label("Klasa 5"),
+									IsSelected: true,
+								}, translator)
+								@tmpl.RadioButtonField(domain.RadioFieldConfig{
+									ID:         "klasa",
+									Name:       "klasa",
+									Value:      "6",
+									LabelText:  translator.Label("Klasa 6"),
+									IsSelected: false,
+								}, translator)
+							</div>
+						</div>
+						<!-- Buttons on the right -->
+						<div class="flex items-center space-x-1">
+							@tmpl.FormObradaButton(btnObrada, translator)
+							@tmpl.PrintButton(btnPrint, translator)
+						</div>
+					</div>
+				</div>
+				<!-- Values Div - Numeric Right Aligned -->
+				<div class="border mt-1 mb-1 bg-blue-100 border border-blue-400 p-1 rounded-lg">
+					@SaldaTotalValues(total, saldaURLtotals, translator)
+				</div>
+			</div>
+			<!-- Group Data Table -->
+			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
+				@tmpl.Search_Part(tbl, searchInput)
+				<!-- Table -->
+				<div id="promettable" class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+					@tmpl.Table(tbl, translator)
+				</div>
+			</div>
+		</div>
+	</div>
+}
 templ SaldaPoKomercijalistima(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
 	<!-- Container with full height -->
 	<div class="flex flex-col h-full">
 		<!-- Tab Navigation -->
-		@SaldaNav(tabs, translator)
+		<div class="border-b border-blue-600">
+			@tmpl.TabNav(translator.Title("Salda konta"), tabs, "#tab-content", "salda-panel", translator)
+		</div>
 		<!-- Tab Content -->
 		<div id="tab5" class="flex-1 min-h-0 flex flex-col">
-			<!-- Main Grid - Two columns 1/2 to 1/2 -->
+			<!-- Main Grid -->
 			<div class="grid grid-cols-1 gap-1">
 				<!-- Left Column - Parameters -->
 				<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg flex flex-col">
@@ -771,7 +1151,14 @@ templ SaldaPoKomercijalistima(tabs domain.TabData, tbl domain.TableData, btnObra
 							HxSwap:      "innerHTML",
 							ClassButton: common.ClassButton,
 						})
-						@NazivField("nazivod_komercijaliste")
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "nazivod_komercijaliste",
+							Name:       "nazivod_komercijaliste",
+							FieldType:  "text",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextEnabled + " w-full",
+							TabIndex:   "-1",
+						})
 						@tmpl.LabelField(domain.LabelFieldConfig{
 							ID:         "do_komercijaliste",
 							LabelText:  translator.Label("Do komercijaliste"),
@@ -794,7 +1181,14 @@ templ SaldaPoKomercijalistima(tabs domain.TabData, tbl domain.TableData, btnObra
 							HxSwap:      "innerHTML",
 							ClassButton: common.ClassButton,
 						})
-						@NazivField("nazivod_komercijaliste")
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "nazivdo_komercijaliste",
+							Name:       "nazivdo_komercijaliste",
+							FieldType:  "text",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextEnabled + " w-full",
+							TabIndex:   "-1",
+						})
 					</div>
 					<!-- Obradi Button -->
 					<div class="flex justify-end mb-1 gap-1">
@@ -822,7 +1216,9 @@ templ RealizacijaKomercijalisti(tabs domain.TabData, tbl domain.TableData, btnOb
 	<!-- Container with full height -->
 	<div class="flex flex-col h-full">
 		<!-- Tab Navigation -->
-		@SaldaNav(tabs, translator)
+		<div class="border-b border-blue-600">
+			@tmpl.TabNav(translator.Title("Salda konta"), tabs, "#tab-content", "salda-panel", translator)
+		</div>
 		<!-- Tab Content -->
 		<div id="tab6" class="flex-1 min-h-0 flex flex-col">
 			<!-- Main Grid -->
@@ -868,7 +1264,14 @@ templ RealizacijaKomercijalisti(tabs domain.TabData, tbl domain.TableData, btnOb
 							HxSwap:      "innerHTML",
 							ClassButton: common.ClassButton,
 						})
-						@NazivField("nazivod_komercijaliste")
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "nazivod_komercijaliste",
+							Name:       "nazivod_komercijaliste",
+							FieldType:  "text",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextEnabled + " w-full",
+							TabIndex:   "-1",
+						})
 					</div>
 					<!-- To Date and To Commercialist -->
 					<div class="flex items-center gap-1 mb-2">
@@ -906,7 +1309,14 @@ templ RealizacijaKomercijalisti(tabs domain.TabData, tbl domain.TableData, btnOb
 							HxSwap:      "innerHTML",
 							ClassButton: common.ClassButton,
 						})
-						@NazivField("nazivdo_komercijaliste")
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "nazivdo_komercijaliste",
+							Name:       "nazivdo_komercijaliste",
+							FieldType:  "text",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextEnabled + " w-full",
+							TabIndex:   "-1",
+						})
 					</div>
 					<!-- Checkboxes -->
 					<div class="flex items-center gap-2">
@@ -972,23 +1382,33 @@ templ ChartScript() {
 			const ctx = document.getElementById('saldachart');
 			if (!ctx) return;
 
-			// Get table data from the page
+			// Get table data from the page - find the table in tab1
 			const months = [];
 			const duguje = [];
 			const potrazuje = [];
 			const saldo = [];
 
-			// Extract data from table rows
-			const tableRows = document.querySelectorAll('#saldatable tbody tr');
+			// Extract data from table rows in tab1
+			const tab1 = document.getElementById('tab1');
+			if (!tab1) return;
+			
+			const tableRows = tab1.querySelectorAll('table tbody tr');
+			
 			tableRows.forEach(row => {
 				const cells = row.querySelectorAll('td');
 				if (cells.length >= 4) {
 					months.push(cells[0].textContent.trim());
-					duguje.push(parseFloat(cells[1].textContent.replace(/,/g, '')) || 0);
-					potrazuje.push(parseFloat(cells[2].textContent.replace(/,/g, '')) || 0);
-					saldo.push(parseFloat(cells[3].textContent.replace(/,/g, '')) || 0);
+					duguje.push(parseFloat(cells[1].textContent.replace(/,/g, '').replace(/\./g, '')) || 0);
+					potrazuje.push(parseFloat(cells[2].textContent.replace(/,/g, '').replace(/\./g, '')) || 0);
+					saldo.push(parseFloat(cells[3].textContent.replace(/,/g, '').replace(/\./g, '')) || 0);
 				}
 			});
+
+			// Only create chart if we have data
+			if (months.length === 0) {
+				console.log('No data found for chart');
+				return;
+			}
 
 			// Destroy previous chart instance if it exists
 			if (saldaChartInstance) {
@@ -1047,14 +1467,15 @@ templ ChartScript() {
 
 		// Initialize chart when data changes (after obrada)
 		document.addEventListener('htmx:afterSwap', function(evt) {
-			console.log('HTMX afterSwap event detected for salda chart initialization: id', evt.detail.target.id);
-			if (evt.detail.target.id === 'saldatable' || evt.detail.target.closest('#tab1')) {
+			const target = evt.detail.target;
+			// Check if we're in tab1 or if table body was swapped
+			if (target.id === 'tab1' || target.closest('table') || target.parentElement?.querySelector('table')) {
 				setTimeout(initializeSaldaChart, 100);
 			}
-		    if (evt.detail.target.id === 'tab-content' || evt.detail.target.id === 'saldapartneri-table' || evt.detail.target.closest('#tab3')) {
+		    if (target.id === 'tab-content' || target.id === 'saldapartneri-detalji' || target.closest('#tab3')) {
 				console.log('Selecting first row in saldapartneri-table after HTMX swap');
         	    setTimeout(() => {
-            	    const firstRow = document.querySelector('#saldapartneri-table tbody tr');
+            	    const firstRow = document.querySelector('#tab3 table tbody tr');
                 	if (firstRow) firstRow.click();
             	}, 600);
         	}
@@ -1067,9 +1488,7 @@ templ ChartScript() {
 			
 			const isAnalitika = checkedRadio.value === '1';
 			const sifraInput = document.getElementById('sifra');
-			const sifraSearchBtn = document.getElementById('btn-sifra');
-			
-			console.log('Toggle sifra - isAnalitika:', isAnalitika, 'sifraInput:', sifraInput, 'button:', sifraSearchBtn);
+			const sifraSearchBtn = document.querySelector('[name="search-sifra"]');
 			
 			if (sifraInput) {
 				sifraInput.disabled = !isAnalitika;
@@ -1080,37 +1499,28 @@ templ ChartScript() {
 						sifraNaziv.value = '';
 					}
 				}
-				console.log('sifra disabled set to:', sifraInput.disabled);
 			}
 			if (sifraSearchBtn) {
 				sifraSearchBtn.disabled = !isAnalitika;
-				console.log('search button disabled set to:', sifraSearchBtn.disabled);
 			}
 		}
 		
 		// Initialize on page load
 		document.addEventListener('DOMContentLoaded', function() {
-            console.log('Document loaded, initializing salda chart.');
 			initializeSaldaChart();
-			console.log('Salda chart initialized');
 		});
 
 		// Use event delegation for radio button changes
 		document.addEventListener('change', function(evt) {
 			if (evt.target.name === 'tipkonta') {
-				console.log('Radio changed to:', evt.target.value);
 				toggleSifraField();
 			}
 		});
 
-		// Re-attach after HTMX swaps (single listener for all targets)
+		// Re-attach after HTMX swaps
 		document.addEventListener('htmx:afterSwap', function(evt) {
-			console.log('HTMX afterSwap fired, target:', evt.detail.target.id);
 			const targetId = evt.detail.target.id;
-			if (targetId === 'saldatable') {
-				setTimeout(initializeSaldaChart, 100);
-			} else if (targetId === 'tab-content' || targetId === 'tab1') {
-				console.log('Setting up sifra toggle after HTMX swap');
+			if (targetId === 'tab1') {
 				setTimeout(toggleSifraField, 50);
 			}
 		});

@@ -4,9 +4,9 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
+	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
-	"helia/internal/i18n"
 	"html/template"
 	"net/http"
 	"strings"
@@ -129,13 +129,14 @@ func RenderContent(c *gin.Context, table domain.TableData, tmplName ...string) {
 
 }
 
-func RenderDialogContent(c *gin.Context, dialog domain.Dialog, fields []domain.Fields, actionType string, btnSave, btnCancel, btnClose domain.Button) error {
+func RenderDialogContent(c *gin.Context, dialog domain.Dialog, fields []domain.Fields, actionType string, btnSave, btnCancel, btnClose domain.Button, rowID string) error {
 	var component templ.Component
 	translator := i18n.GetInstance()
 	csrfToken := common.GetCsrfToken(c)
 	switch actionType {
 	case "DELETE":
-		component = tmpl.DeleteDialog(csrfToken, dialog, btnSave, btnCancel, btnClose, translator)
+		btnSave.HxOnAfterRequest = "handleDeleteResponse"
+		component = tmpl.DeleteDialog(csrfToken, dialog, btnSave, btnCancel, btnClose, rowID, translator)
 	case "ADD", "UPDATE":
 		component = tmpl_opsti.AddUpdateForm(csrfToken, dialog, fields, btnSave, btnCancel, btnClose, translator)
 	default:

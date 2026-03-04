@@ -105,6 +105,20 @@ func (s *Service) T(key string) string {
 	return key
 }
 
+// TWithParams returns translation with dynamic parameter replacement
+// Example: TWithParams("label.dospeva", map[string]string{"days": "15"})
+// Translation: "Dospeva {{days}} dana" -> "Dospeva 15 dana"
+func (s *Service) TWithParams(key string, params map[string]string) string {
+	translation := s.T(key)
+
+	for k, v := range params {
+		placeholder := fmt.Sprintf("{{%s}}", k)
+		translation = strings.ReplaceAll(translation, placeholder, v)
+	}
+
+	return translation
+}
+
 // Convenience methods
 func (s *Service) Menu(menuName string) string {
 	return s.T("menu." + menuName)
@@ -113,17 +127,31 @@ func (s *Service) Menu(menuName string) string {
 func (s *Service) Title(labelName string) string {
 	return s.T("title." + labelName)
 }
-
+func (s *Service) TitleWithParams(labelName string, params map[string]string) string {
+	return s.TWithParams("title."+labelName, params)
+}
 func (s *Service) Text(textName string) string {
 	return s.T("text." + textName)
 }
+
+func (s *Service) TextWithParams(textName string, params map[string]string) string {
+	return s.TWithParams("text."+textName, params)
+}
+
 func (s *Service) Button(buttonName string) string {
 	return s.T("button." + buttonName)
 }
-
+func (s *Service) ButtonWithParams(buttonName string, params map[string]string) string {
+	return s.TWithParams("button."+buttonName, params)
+}
 func (s *Service) Label(labelName string) string {
 	return s.T("label." + labelName)
 }
+
+func (s *Service) LabelWithParams(labelName string, params map[string]string) string {
+	return s.TWithParams("label."+labelName, params)
+}
+
 func (s *Service) Placeholder(placeholder string) string {
 	return s.T("placeholder." + placeholder)
 }
@@ -131,12 +159,21 @@ func (s *Service) Placeholder(placeholder string) string {
 func (s *Service) Message(messageName string) string {
 	return s.T("message." + messageName)
 }
+
+func (s *Service) MessageWithParams(messageName string, params map[string]string) string {
+	return s.TWithParams("message."+messageName, params)
+}
+
 func (s *Service) Validation(validationName string) string {
 	return s.T("validation." + validationName)
 }
 
 func (s *Service) Form(formName string) string {
 	return s.T("form." + formName)
+}
+
+func (s *Service) FormWithParams(formName string, params map[string]string) string {
+	return s.TWithParams("form."+formName, params)
 }
 
 // toSnakeCase safely converts text to snake_case for translation keys

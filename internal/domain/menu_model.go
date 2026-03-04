@@ -55,12 +55,12 @@ var MenuData = MenuDataItems{
 				{URL: "api/salda", Name: "Salda konta", Icon: "fin_saldakonta"},
 				{URL: "api/kompenzacije", Name: "Kompenzacije", Icon: "fin_kompenzacije"},
 				{URL: "/api/otvorenestavke", Name: "Otvorene stavke", Icon: "fin_otvorenestavke"},
-				{URL: "/api/kamate", Name: "Obračun kamate", Icon: "fin_obracunkamate"},
 				{URL: "/api/bilansi", Name: "Bilansi", Icon: "fin_bilansi"},
 				{URL: "/api/poreskeknjige", Name: "Poreske knjige i prijava", Icon: ""},
 				{URL: "/api/poreskeprijave", Name: "POPDV, PPPDV i PPV prijave", Icon: ""},
 				{URL: "/api/epp", Name: "Evidencija predhodnog poreza EPP", Icon: ""},
 				{URL: "/api/izvodi", Name: "Učitavanje i knjiženje izvoda", Icon: ""},
+				{URL: "/api/kamate", Name: "Obračun kamate", Icon: "fin_obracunkamate"},
 			},
 		},
 		{

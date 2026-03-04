@@ -531,8 +531,9 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 	// Fkpl
 	fkplRepo := repository.NewBaseRepository[domain.Fkpl](db, "fkpl")
 	fkplValidator := validation.NewRuleBasedValidator[domain.Fkpl](finval.FkplValidationRules())
-	fkplService := service.NewBaseService(*fkplRepo, fkplValidator)
-	fkplHandler := fin.NewFkplHandler(fkplService, cfg)
+	baseService := service.NewBaseService(*fkplRepo, fkplValidator)
+	fkplService := finservice.NewFkplResource(baseService, *fkplRepo, cfg)
+	fkplHandler := fin.NewFkplHandler(baseService, fkplService, cfg)
 	fkplHandler.AddRoutes(r)
 
 	// Fpro
@@ -655,7 +656,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 	poreskeKnjigeHandler.RegisterRoutes(r)
 
 	//otvorene stavke
-	otvoreneStavkeService := finservice.NewOtvoreneStavkeService(*fkplRepo)
+	otvoreneStavkeService := finservice.NewOtvoreneStavkeService(*fproRepo)
 	otvoreneStavkeHandler := fin.NewOtvoreneStavkeHandler(otvoreneStavkeService, cfg)
 	otvoreneStavkeHandler.RegisterRoutes(r)
 
@@ -668,11 +669,11 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 	kamateHandler.RegisterRoutes(r)
 
 	// Bilansi
-	biluRepo := repository.NewBaseRepository[domain.BiluPayload](db, "bilu")
-	biluValidator := validation.NewRuleBasedValidator[domain.BiluPayload]([]validation.ValidationRule{})
+	biluRepo := repository.NewBaseRepository[domain.Bilu](db, "bilu")
+	biluValidator := validation.NewRuleBasedValidator[domain.Bilu]([]validation.ValidationRule{})
 	biluService := service.NewBaseService(*biluRepo, biluValidator)
-	bilsRepo := repository.NewBaseRepository[domain.BilsPayload](db, "bils")
-	bilsValidator := validation.NewRuleBasedValidator[domain.BilsPayload]([]validation.ValidationRule{})
+	bilsRepo := repository.NewBaseRepository[domain.Bils](db, "bils")
+	bilsValidator := validation.NewRuleBasedValidator[domain.Bils]([]validation.ValidationRule{})
 	bilsService := service.NewBaseService(*bilsRepo, bilsValidator)
 
 	bilansiService := finservice.NewBilansiService(

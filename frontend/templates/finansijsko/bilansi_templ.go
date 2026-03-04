@@ -9,6 +9,7 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
+	"fmt"
 	tmpl "helia/frontend/templates"
 	"helia/i18n"
 	"helia/internal/common"
@@ -84,7 +85,7 @@ func ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrin
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</div><!-- Tab 1 Content --><div id=\"tab1\" class=\"flex-1 min-h-0 flex flex-col gap-1\"><!-- Parameters Section - Two Column Layout --><div class=\"border bg-blue-100 border-blue-400 mt-1 p-2 rounded-lg\"><div class=\"flex gap-2\"><!-- Left Column --><div class=\"w-2/5\"><!-- Row 1: Tip zakljucnog lista --><div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</div><!-- Tab 1 Content --><div id=\"tab1\" class=\"flex-1 min-h-0 flex flex-col gap-1\"><!-- Parameters Sections - Horizontal Layout --><div class=\"flex gap-1\"><!-- Parameters Section - Left Column --><div class=\"w-2/5 border bg-blue-100 border-blue-400 mt-1 p-2 rounded-lg\"><!-- Row 1: Tip zakljucnog lista --><div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -154,6 +155,8 @@ func ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrin
 			MinLength:  "3",
 			MaxLength:  "6",
 			TabIndex:   "4",
+			OnInput:    "clearFieldError",
+			OnFocus:    "clearFieldError",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -164,7 +167,7 @@ func ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrin
 			HxUrl:       "/api/promet/searchbutton",
 			HxTarget:    "#search-dropdown",
 			HxSwap:      "innerHTML",
-			HxVals:      `{"vkonta": "2"}`,
+			HxVals:      `js:{"odkonta": document.getElementById('odkonta').value, "vkonta": "2"}`,
 			ClassButton: common.ClassButton,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
@@ -187,6 +190,8 @@ func ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrin
 			MinLength:  "2",
 			MaxLength:  "6",
 			TabIndex:   "6",
+			OnInput:    "clearFieldError",
+			OnFocus:    "clearFieldError",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -197,7 +202,7 @@ func ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrin
 			HxUrl:       "/api/promet/searchbutton",
 			HxTarget:    "#search-dropdown",
 			HxSwap:      "innerHTML",
-			HxVals:      `{"vkonta": "2"}`,
+			HxVals:      `js:{"konto": document.getElementById('odkonta').value, "vkonta": "1"}`,
 			ClassButton: common.ClassButton,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
@@ -224,6 +229,8 @@ func ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrin
 			MinLength:  "3",
 			MaxLength:  "6",
 			TabIndex:   "5",
+			OnInput:    "clearFieldError",
+			OnFocus:    "clearFieldError",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -234,7 +241,7 @@ func ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrin
 			HxUrl:       "/api/promet/searchbutton",
 			HxTarget:    "#search-dropdown",
 			HxSwap:      "innerHTML",
-			HxVals:      `{"vkonta": "2"}`,
+			HxVals:      `js:{"konto": document.getElementById('dokonta').value, "vkonta": "2"}`,
 			ClassButton: common.ClassButton,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
@@ -257,6 +264,8 @@ func ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrin
 			MinLength:  "2",
 			MaxLength:  "6",
 			TabIndex:   "7",
+			OnInput:    "clearFieldError",
+			OnFocus:    "clearFieldError",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -267,13 +276,13 @@ func ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrin
 			HxUrl:       "/api/promet/searchbutton",
 			HxTarget:    "#search-dropdown",
 			HxSwap:      "innerHTML",
-			HxVals:      `{"vkonta": "2"}`,
+			HxVals:      `js:{"konto": document.getElementById('dokonta').value, "vkonta": "1"}`,
 			ClassButton: common.ClassButton,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</div></div><!-- Right Column --><div class=\"w-3/5\"><!-- Row 1: Checkboxes for display variants --><div class=\"flex items-center gap-2 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</div></div><!-- Parameters Section - Right Column --><div class=\"w-3/5 border bg-blue-100 border-blue-400 mt-1 p-2 rounded-lg\"><!-- Row 1: Checkboxes for display variants --><div class=\"flex items-center gap-2 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -394,7 +403,11 @@ func ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrin
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</div></div></div></div></div><!-- Master Table --><div class=\"border bg-blue-100 border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</div></div></div></div><!-- Master Table --><div class=\"border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -410,407 +423,23 @@ func ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrin
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</div></div></div></div><!-- Dialog display container--><div id=\"dialog-content\"></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</div></div></div></div><!-- Dialog display container--><div id=\"dialog-container\"></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.ShowMessage().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.HandleDialogResponse("dialog-container").Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		return nil
-	})
-}
-
-// BilansStanjaForm is a separate form component for Bilans stanja
-func BilansStanjaForm(translator *i18n.Service, gnGod int) templ.Component {
-	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
-		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
-		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
-			return templ_7745c5c3_CtxErr
-		}
-		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
-		if !templ_7745c5c3_IsBuffer {
-			defer func() {
-				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
-				if templ_7745c5c3_Err == nil {
-					templ_7745c5c3_Err = templ_7745c5c3_BufErr
-				}
-			}()
-		}
-		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var3 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var3 == nil {
-			templ_7745c5c3_Var3 = templ.NopComponent
-		}
-		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<!-- Parameters Section --><div class=\"border bg-blue-100 border-blue-400 mt-1 p-2 rounded-lg\"><!-- Row 1: Redni broj, Grupa računa, Naziv pozicije --><div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = tmpl.ClearFieldError().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "bs_redni_broj",
-			LabelText:  translator.Label("Redni broj"),
-			ClassLabel: common.ClassLabel + " w-24",
-		}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.SearchPopupScript().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "bs_redni_broj",
-			Name:       "bs_redni_broj",
-			FieldType:  "text",
-			ClassInput: common.ClassInputTextEnabled + " w-20",
-			TabIndex:   "1",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "bs_grupa_racuna",
-			LabelText:  translator.Label("Grupa računa"),
-			ClassLabel: common.ClassLabel + " w-28",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "bs_grupa_racuna",
-			Name:       "bs_grupa_racuna",
-			FieldType:  "text",
-			ClassInput: common.ClassInputTextEnabled + " w-40",
-			TabIndex:   "2",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "bs_naziv_pozicije",
-			LabelText:  translator.Label("Naziv pozicije"),
-			ClassLabel: common.ClassLabel + " w-28",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "bs_naziv_pozicije",
-			Name:       "bs_naziv_pozicije",
-			FieldType:  "text",
-			ClassInput: common.ClassInputTextEnabled + " w-60",
-			TabIndex:   "3",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "</div><!-- Row 2: Oznaka za AOP, Spisak konta, Tekuća godina --><div class=\"flex items-center gap-1 mb-1\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "bs_oznaka_aop",
-			LabelText:  translator.Label("Oznaka za AOP"),
-			ClassLabel: common.ClassLabel + " w-24",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "bs_oznaka_aop",
-			Name:       "bs_oznaka_aop",
-			FieldType:  "text",
-			ClassInput: common.ClassInputTextEnabled + " w-20",
-			TabIndex:   "4",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "bs_spisak_konta",
-			LabelText:  translator.Label("Spisak konta"),
-			ClassLabel: common.ClassLabel + " w-28",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "bs_spisak_konta",
-			Name:       "bs_spisak_konta",
-			FieldType:  "text",
-			ClassInput: common.ClassInputTextEnabled + " w-60",
-			TabIndex:   "5",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "bs_tekuca_godina",
-			LabelText:  translator.Label("Tekuća godina"),
-			ClassLabel: common.ClassLabel + " w-28",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "bs_tekuca_godina",
-			Name:       "bs_tekuca_godina",
-			FieldType:  "text",
-			ClassInput: common.ClassInputTextEnabled + " w-32",
-			TabIndex:   "6",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</div><!-- Row 3: Prethodna godina, Nivo podataka, Tekuća u hiljadama --><div class=\"flex items-center gap-1 mb-1\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "bs_prethodna_godina",
-			LabelText:  translator.Label("Prethodna godina"),
-			ClassLabel: common.ClassLabel + " w-28",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "bs_prethodna_godina",
-			Name:       "bs_prethodna_godina",
-			FieldType:  "text",
-			ClassInput: common.ClassInputTextEnabled + " w-32",
-			TabIndex:   "7",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "bs_nivo_podataka",
-			LabelText:  translator.Label("Nivo podataka"),
-			ClassLabel: common.ClassLabel + " w-28",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "bs_nivo_podataka",
-			Name:       "bs_nivo_podataka",
-			FieldType:  "text",
-			ClassInput: common.ClassInputTextEnabled + " w-20",
-			TabIndex:   "8",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "bs_tekuca_hiljada",
-			LabelText:  translator.Label("Tekuća u hiljadama"),
-			ClassLabel: common.ClassLabel + " w-32",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "bs_tekuca_hiljada",
-			Name:       "bs_tekuca_hiljada",
-			FieldType:  "text",
-			ClassInput: common.ClassInputTextEnabled + " w-32",
-			TabIndex:   "9",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</div><!-- Input fields row with multiple inputs --><div class=\"flex gap-2 mt-2\"><div class=\"flex gap-1\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "bs_input_01",
-			Name:       "bs_input_01",
-			FieldType:  "text",
-			Value:      "0000",
-			ClassInput: common.ClassInputTextEnabled + " w-14 text-center",
-			TabIndex:   "10",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "bs_input_02",
-			Name:       "bs_input_02",
-			FieldType:  "text",
-			Value:      "0000",
-			ClassInput: common.ClassInputTextEnabled + " w-14 text-center",
-			TabIndex:   "11",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "bs_input_03",
-			Name:       "bs_input_03",
-			FieldType:  "text",
-			Value:      "0000",
-			ClassInput: common.ClassInputTextEnabled + " w-14 text-center",
-			TabIndex:   "12",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "bs_input_04",
-			Name:       "bs_input_04",
-			FieldType:  "text",
-			Value:      "0000",
-			ClassInput: common.ClassInputTextEnabled + " w-14 text-center",
-			TabIndex:   "13",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "bs_input_05",
-			Name:       "bs_input_05",
-			FieldType:  "text",
-			Value:      "0000",
-			ClassInput: common.ClassInputTextEnabled + " w-14 text-center",
-			TabIndex:   "14",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "bs_input_06",
-			Name:       "bs_input_06",
-			FieldType:  "text",
-			Value:      "0000",
-			ClassInput: common.ClassInputTextEnabled + " w-14 text-center",
-			TabIndex:   "15",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</div><button class=\"px-3 py-1 text-xs text-gray-600\">...</button></div><div class=\"flex gap-2 mt-1\"><div class=\"flex gap-1\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "bs_input_07",
-			Name:       "bs_input_07",
-			FieldType:  "text",
-			Value:      "0000",
-			ClassInput: common.ClassInputTextEnabled + " w-14 text-center",
-			TabIndex:   "16",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "bs_input_08",
-			Name:       "bs_input_08",
-			FieldType:  "text",
-			Value:      "0000",
-			ClassInput: common.ClassInputTextEnabled + " w-14 text-center",
-			TabIndex:   "17",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "bs_input_09",
-			Name:       "bs_input_09",
-			FieldType:  "text",
-			Value:      "0000",
-			ClassInput: common.ClassInputTextEnabled + " w-14 text-center",
-			TabIndex:   "18",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "bs_input_10",
-			Name:       "bs_input_10",
-			FieldType:  "text",
-			Value:      "0000",
-			ClassInput: common.ClassInputTextEnabled + " w-14 text-center",
-			TabIndex:   "19",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "bs_input_11",
-			Name:       "bs_input_11",
-			FieldType:  "text",
-			Value:      "0000",
-			ClassInput: common.ClassInputTextEnabled + " w-14 text-center",
-			TabIndex:   "20",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "bs_input_12",
-			Name:       "bs_input_12",
-			FieldType:  "text",
-			Value:      "0000",
-			ClassInput: common.ClassInputTextEnabled + " w-14 text-center",
-			TabIndex:   "21",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</div></div><!-- Buttons --><div class=\"flex gap-2 justify-center mt-2\"><button class=\"px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var4 string
-		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Novi"))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 501, Col: 112}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</button> <button class=\"px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var5 string
-		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Izmeni"))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 502, Col: 114}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</button> <button class=\"px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var6 string
-		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Kopiraj"))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 503, Col: 115}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "</button> <button class=\"px-3 py-1 bg-red-500 hover:bg-red-600 text-white text-sm rounded\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var7 string
-		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Briši"))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 504, Col: 112}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "</button></div></div>")
+		templ_7745c5c3_Err = tmpl.SpinnerScript().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -835,12 +464,12 @@ func BilansStanja(tabs domain.TabData, tbl domain.TableData, searchInput domain.
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var8 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var8 == nil {
-			templ_7745c5c3_Var8 = templ.NopComponent
+		templ_7745c5c3_Var3 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var3 == nil {
+			templ_7745c5c3_Var3 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "<!-- Container with full height --><div class=\"flex flex-col h-full\"><!-- Tab Navigation --><div class=\"border-b border-blue-600\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<!-- Container with full height --><div class=\"flex flex-col h-full\"><!-- Tab Navigation --><div class=\"border-b border-blue-600\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -848,7 +477,149 @@ func BilansStanja(tabs domain.TabData, tbl domain.TableData, searchInput domain.
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "</div><!-- Tab 2 Content --><div id=\"tab2\" class=\"flex-1 min-h-0 flex flex-col gap-1\"><!-- Search Section - Full width --><div class=\"border bg-blue-50 border-blue-400 mt-1 p-1 rounded-lg\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "</div><!-- Tab 2 Content --><div id=\"tab2\" class=\"flex-1 min-h-0 flex flex-col gap-1\"><!-- Summary panel --><div class=\"border bg-blue-100 border-blue-400 mt-1 p-1 rounded-lg\"><div class=\"grid grid-cols-4 gap-4 text-sm\"><!-- Column 1 and 2: Empty --><div></div><div></div><!-- Column 2: Main values --><div class=\"space-y-1\"><!-- Tekuća godina --><div class=\"flex justify-between items-center\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "lbl_tekuca_godina",
+			LabelText:  translator.Label("Tekuća godina"),
+			ClassLabel: common.ClassLabel + " w-42",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "tekuca_godina",
+			Name:       "tekuca_godina",
+			FieldType:  "text",
+			Value:      "0.00",
+			Disabled:   true,
+			ClassInput: common.ClassInputTextEnabled + " w-40 text-right font-bold",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</div><!-- Prethodna godina --><div class=\"flex justify-between items-center\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "lbl_prethodna_godina",
+			LabelText:  translator.Label("Prethodna godina"),
+			ClassLabel: common.ClassLabel + " w-42",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "prethodna_godina",
+			Name:       "prethodna_godina",
+			FieldType:  "text",
+			Value:      "0.00",
+			Disabled:   true,
+			ClassInput: common.ClassInputTextEnabled + " w-40 text-right font-bold",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</div><!-- Početno Stanje --><div class=\"flex justify-between items-center\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "lbl_pocetno_stanje",
+			LabelText:  translator.Label("Početno Stanje"),
+			ClassLabel: common.ClassLabel + " w-42",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "pocetno_stanje",
+			Name:       "pocetno_stanje",
+			FieldType:  "text",
+			Value:      "0.00",
+			Disabled:   true,
+			ClassInput: common.ClassInputTextEnabled + " w-40 text-right font-bold",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</div></div><!-- Column 3: Thousands values --><div class=\"space-y-1\"><!-- Tekuća u hiljadama --><div class=\"flex justify-between items-center\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "lbl_tekuca_hiljada",
+			LabelText:  translator.Label("Tekuća u hiljadama"),
+			ClassLabel: common.ClassLabel + " w-42",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "tekuca_hiljada",
+			Name:       "tekuca_hiljada",
+			FieldType:  "text",
+			Value:      "0",
+			Disabled:   true,
+			ClassInput: common.ClassInputTextEnabled + " w-40 text-right font-bold mr-2",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</div><!-- Prethodna u hiljadama --><div class=\"flex justify-between items-center\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "lbl_prethodna_hiljada",
+			LabelText:  translator.Label("Prethodna u hiljadama"),
+			ClassLabel: common.ClassLabel + " w-42",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "prethodna_hiljada",
+			Name:       "prethodna_hiljada",
+			FieldType:  "text",
+			Value:      "0",
+			Disabled:   true,
+			ClassInput: common.ClassInputTextEnabled + " w-40 text-right font-bold mr-2",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</div><!-- Početno u hiljadama --><div class=\"flex justify-between items-center\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "lbl_pocetno_hiljada",
+			LabelText:  translator.Label("Početno u hiljadama"),
+			ClassLabel: common.ClassLabel + " w-42",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "pocetno_hiljada",
+			Name:       "pocetno_hiljada",
+			FieldType:  "text",
+			Value:      "0",
+			Disabled:   true,
+			ClassInput: common.ClassInputTextEnabled + " w-40 text-right font-bold mr-2",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</div></div></div></div><!-- Table section --><div class=\"border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -856,7 +627,7 @@ func BilansStanja(tabs domain.TabData, tbl domain.TableData, searchInput domain.
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "</div><!-- Table and Summary Section --><div class=\"flex flex-row gap-1 flex-1 min-h-0 overflow-hidden\"><!-- Main data table --><div class=\"flex-1 border bg-blue-100 border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden\"><div class=\"flex-1 overflow-x-auto overflow-y-auto min-h-0\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "<div class=\"flex-1 overflow-x-auto overflow-y-auto min-h-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -864,85 +635,7 @@ func BilansStanja(tabs domain.TabData, tbl domain.TableData, searchInput domain.
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "</div></div><!-- Summary panel --><div class=\"border bg-white border-gray-300 p-2 rounded-lg w-48 overflow-y-auto\"><div class=\"space-y-2 text-sm\"><div class=\"flex justify-between\"><span class=\"font-medium\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var9 string
-		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Tekuća godina"))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 535, Col: 69}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, ":</span> <span class=\"font-bold text-right\">0.00</span></div><div class=\"flex justify-between\"><span class=\"font-medium\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var10 string
-		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Tekuća u hiljadama"))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 539, Col: 74}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, ":</span> <span class=\"font-bold text-right\">0</span></div><div class=\"flex justify-between\"><span class=\"font-medium\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var11 string
-		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Prethodna godina"))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 543, Col: 71}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, ":</span> <span class=\"font-bold text-right\">0.00</span></div><div class=\"flex justify-between\"><span class=\"font-medium\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var12 string
-		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Prethodna u hiljadama"))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 547, Col: 76}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, ":</span> <span class=\"font-bold text-right\">0</span></div><hr class=\"my-2\"><div class=\"flex justify-between\"><span class=\"font-medium\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var13 string
-		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Prethodna PS"))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 552, Col: 67}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, ":</span> <span class=\"font-bold text-right\">0.00</span></div><div class=\"flex justify-between\"><span class=\"font-medium\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var14 string
-		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Prethodna PS hiljada"))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 556, Col: 75}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, ":</span> <span class=\"font-bold text-right\">0.00</span></div></div></div></div></div></div><!-- Dialog display container--><div id=\"dialog-content\"></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "</div></div></div></div><!-- Dialog display container--><div id=\"dialog-container\"></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -950,12 +643,16 @@ func BilansStanja(tabs domain.TabData, tbl domain.TableData, searchInput domain.
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
+		templ_7745c5c3_Err = tmpl.SpinnerScript().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
 		return nil
 	})
 }
 
-// Tab 3 - Stampanje bilansa stanja (Print Balance Sheet)
-func StampanjeBilansStanja(tabs domain.TabData, tbl domain.TableData, translator *i18n.Service, gnGod int) templ.Component {
+// BilansStanjaForm is a separate form component for Bilans stanja
+func BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dialog, btnSave, btnCancel, btnClose domain.Button, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -971,12 +668,482 @@ func StampanjeBilansStanja(tabs domain.TabData, tbl domain.TableData, translator
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var15 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var15 == nil {
-			templ_7745c5c3_Var15 = templ.NopComponent
+		templ_7745c5c3_Var4 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var4 == nil {
+			templ_7745c5c3_Var4 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "<!-- Container with full height --><div class=\"flex flex-col h-full\"><!-- Tab Navigation --><div class=\"border-b border-blue-600\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "<div id=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var5 string
+		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.Id)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 421, Col: 20}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "\" class=\"fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4\"><div class=\"bg-white rounded-lg shadow-2xl relative animate-fade-in max-w-4xl w-full max-h-[90vh] overflow-y-auto\"><!-- Title Bar --><div class=\"bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg sticky top-0 z-10\"><h2 class=\"text-lg font-semibold ml-4\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var6 string
+		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Title(dialog.Title))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 425, Col: 75}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "</h2>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.CloseButton(btnClose).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "</div><form")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		if dialog.HxRequestType == "PUT" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, " hx-put=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var7 string
+			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.HxActionURL)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 430, Col: 32}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "\" hx-on::after-request=\"handleFormResponse(event, &#39;PUT&#39;)\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		if dialog.HxRequestType == "POST" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, " hx-post=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var8 string
+			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.HxActionURL)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 434, Col: 33}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "\" hx-on::after-request=\"handleFormResponse(event, &#39;POST&#39;)\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, " hx-target=\"#dialog-message\" hx-boost=\"false\" onsubmit=\"return false;\" class=\"p-3 bg-white rounded-b-lg flex flex-col\"><!-- Fields Section --><div class=\"p-1 flex-1 mb-3\"><input type=\"hidden\" name=\"_csrf\" value=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var9 string
+		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(csrfToken)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 444, Col: 56}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "\"><!-- Top Row: Redni broj, Oznaka za AOP --><div class=\"flex items-center gap-2 mb-1\"><div class=\"flex items-center gap-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "lblbs_redni_broj",
+			LabelText:  translator.Label("Redni broj"),
+			ClassLabel: common.ClassLabel + " w-40",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+			ID:         "bs_redni_broj",
+			Name:       "rbr",
+			FieldType:  "text",
+			Value:      fmt.Sprintf("%d", bilsData.Rbr),
+			ClassInput: common.ClassInputTextEnabled + " w-24",
+			MaxLength:  "4",
+			TabIndex:   "1",
+			OnInput:    "clearFieldError",
+			OnFocus:    "clearFieldError",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "</div><div class=\"flex items-center gap-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "lblbs_oznaka_aop",
+			LabelText:  translator.Label("Oznaka za AOP"),
+			ClassLabel: common.ClassLabel + " w-28",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+			ID:         "bs_oznaka_aop",
+			Name:       "aop",
+			FieldType:  "text",
+			Value:      fmt.Sprintf("%d", bilsData.AOP),
+			ClassInput: common.ClassInputTextEnabled + " w-24",
+			MaxLength:  "4",
+			TabIndex:   "2",
+			OnInput:    "clearFieldError",
+			OnFocus:    "clearFieldError",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "</div><!-- Nivo podataka checkbox --><div class=\"flex items-center gap-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.CheckboxField(domain.CheckboxFieldConfig{
+			ID:        "bs_skraceni",
+			Name:      "skraceni",
+			LabelText: "AOP skracenog bilansa",
+			Checked:   bilsData.Skraceni == 1,
+			TabIndex:  "3",
+		}, translator).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "</div></div><!-- Second Row: Grupa računa --><div class=\"flex items-center gap-1 mb-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "lblbs_grupa_racuna",
+			LabelText:  translator.Label("Grupa računa, račun"),
+			ClassLabel: common.ClassLabel + " w-40",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "bs_grupa_racuna",
+			Name:       "grac",
+			FieldType:  "text",
+			Value:      bilsData.Grac,
+			ClassInput: common.ClassInputTextEnabled + " flex-1",
+			MaxLength:  "50",
+			TabIndex:   "4",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "</div><!-- Third Row: Naziv pozicije --><div class=\"flex items-center gap-1 mb-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "lblbs_naziv_pozicije",
+			LabelText:  translator.Label("Naziv pozicije"),
+			ClassLabel: common.ClassLabel + " w-40",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "bs_naziv_pozicije",
+			Name:       "nazp",
+			FieldType:  "text",
+			Value:      bilsData.NazP,
+			ClassInput: common.ClassInputTextEnabled + " flex-1",
+			MaxLength:  "160",
+			TabIndex:   "5",
+			OnInput:    "clearFieldError",
+			OnFocus:    "clearFieldError",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "</div><!-- Fourth Row: Spisak konta --><div class=\"flex items-center gap-1 mb-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "lblbs_spisak_konta",
+			LabelText:  translator.Label("Spisak konta"),
+			ClassLabel: common.ClassLabel + " w-40",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "bs_spisak_konta",
+			Name:       "konta",
+			FieldType:  "text",
+			Value:      bilsData.Konta,
+			ClassInput: common.ClassInputTextEnabled + " flex-1",
+			MaxLength:  "90",
+			TabIndex:   "6",
+			OnInput:    "clearFieldError",
+			OnFocus:    "clearFieldError",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "</div><!-- Input fields row 1 - Pozicije controls --><div class=\"flex gap-1 mb-1\"><div class=\"flex gap-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "lblbs_spisak_konta",
+			LabelText:  translator.Label("Pozicije"),
+			ClassLabel: common.ClassLabel + " w-40",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+			ID:         "bs_input_01",
+			Name:       "pozic_1",
+			FieldType:  "text",
+			Value:      fmt.Sprintf("%04d", bilsData.Pozic1),
+			ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
+			MaxLength:  "4",
+			TabIndex:   "7",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+			ID:         "bs_input_02",
+			Name:       "pozic_2",
+			FieldType:  "text",
+			Value:      fmt.Sprintf("%04d", bilsData.Pozic2),
+			ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
+			MaxLength:  "4",
+			TabIndex:   "8",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+			ID:         "bs_input_03",
+			Name:       "pozic_3",
+			FieldType:  "text",
+			Value:      fmt.Sprintf("%04d", bilsData.Pozic3),
+			ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
+			MaxLength:  "4",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+			ID:         "bs_input_04",
+			Name:       "pozic_4",
+			FieldType:  "text",
+			Value:      fmt.Sprintf("%04d", bilsData.Pozic4),
+			ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
+			MaxLength:  "4",
+			TabIndex:   "10",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+			ID:         "bs_input_05",
+			Name:       "pozic_5",
+			FieldType:  "text",
+			Value:      fmt.Sprintf("%04d", bilsData.Pozic5),
+			ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
+			MaxLength:  "4",
+			TabIndex:   "11",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+			ID:         "bs_input_06",
+			Name:       "pozic_6",
+			FieldType:  "text",
+			Value:      fmt.Sprintf("%04d", bilsData.Pozic6),
+			ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
+			MaxLength:  "4",
+			TabIndex:   "12",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "</div></div><!-- Input fields row 2 - Additional Pozicije controls --><div class=\"flex gap-1 mb-1\"><div class=\"flex gap-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "lblbs_pozicije",
+			LabelText:  "",
+			ClassLabel: common.ClassLabel + " w-40",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+			ID:         "bs_input_07",
+			Name:       "pozic_7",
+			FieldType:  "text",
+			Value:      fmt.Sprintf("%04d", bilsData.Pozic7),
+			ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
+			MaxLength:  "4",
+			TabIndex:   "13",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+			ID:         "bs_input_08",
+			Name:       "pozic_8",
+			FieldType:  "text",
+			Value:      fmt.Sprintf("%04d", bilsData.Pozic8),
+			ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
+			MaxLength:  "4",
+			TabIndex:   "14",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+			ID:         "bs_input_09",
+			Name:       "pozic_9",
+			FieldType:  "text",
+			Value:      fmt.Sprintf("%04d", bilsData.Pozic9),
+			ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
+			MaxLength:  "4",
+			TabIndex:   "15",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+			ID:         "bs_input_10",
+			Name:       "pozic_10",
+			FieldType:  "text",
+			Value:      fmt.Sprintf("%04d", bilsData.Pozic10),
+			ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
+			MaxLength:  "4",
+			TabIndex:   "16",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+			ID:         "bs_input_11",
+			Name:       "pozic_11",
+			FieldType:  "text",
+			Value:      fmt.Sprintf("%04d", bilsData.Pozic11),
+			ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
+			MaxLength:  "4",
+			TabIndex:   "17",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+			ID:         "bs_input_12",
+			Name:       "pozic_12",
+			FieldType:  "text",
+			Value:      fmt.Sprintf("%04d", bilsData.Pozic12),
+			ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
+			MaxLength:  "4",
+			TabIndex:   "18",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "</div></div><!-- Nivo podataka checkbox --><div class=\"flex items-center gap-1 mb-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "lblbs_nivo_podataka",
+			LabelText:  translator.Label("Nivo podataka"),
+			ClassLabel: common.ClassLabel + " w-40",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+			ID:         "bs_nivo_podataka",
+			Name:       "nipo",
+			FieldType:  "text",
+			Value:      fmt.Sprintf("%d", bilsData.NiPo),
+			ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
+			MaxLength:  "2",
+			TabIndex:   "18",
+			OnInput:    "clearFieldError",
+			OnFocus:    "clearFieldError",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "</div></div><!-- Buttons - Bottom Right Aligned --><div class=\"flex gap-1 justify-end\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.SaveButton(btnSave, translator).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.CancelButton(btnCancel, translator).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "</div></form><!-- Message Display Area at Bottom --><div id=\"dialog-message\" class=\"hidden\"></div></div></div>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.HandleFormResponse().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+// Tab 3 - Stampanje bilansa stanja (Print Balance Sheet)
+func StampanjeBilansaStanja(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint, btnExportXML domain.Button, searchInput domain.InputControl, translator *i18n.Service, gnGod int) templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var10 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var10 == nil {
+			templ_7745c5c3_Var10 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "<!-- Container with full height --><div class=\"flex flex-col h-full\"><!-- Tab Navigation --><div class=\"border-b border-blue-600\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -984,7 +1151,7 @@ func StampanjeBilansStanja(tabs domain.TabData, tbl domain.TableData, translator
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "</div><!-- Tab 3 Content --><div id=\"tab3\" class=\"flex-1 min-h-0 flex flex-col gap-1\"><!-- Control Section --><div class=\"border bg-blue-100 border-blue-400 mt-1 p-2 rounded-lg\"><div class=\"flex items-center gap-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "</div><!-- Tab 3 Content --><div id=\"tab3\" class=\"flex-1 min-h-0 flex flex-col gap-1\"><!-- Control Section --><div class=\"border bg-blue-100 border-blue-400 mt-1 p-2 rounded-lg\"><div class=\"flex items-center gap-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -999,20 +1166,20 @@ func StampanjeBilansStanja(tabs domain.TabData, tbl domain.TableData, translator
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "<span class=\"text-sm font-medium ml-4\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "<span class=\"text-sm font-medium ml-4\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var16 string
-		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Stanje na dan"))
+		var templ_7745c5c3_Var11 string
+		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Stanje na dan"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 590, Col: 79}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 730, Col: 79}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, ":</span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, ":</span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1027,46 +1194,35 @@ func StampanjeBilansStanja(tabs domain.TabData, tbl domain.TableData, translator
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "<div class=\"flex-1\"></div><button class=\"px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "<div class=\"flex-1\"></div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var17 string
-		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Obradi"))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 600, Col: 116}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
+		templ_7745c5c3_Err = tmpl.FormObradaButton(btnObrada, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "</button> <button class=\"px-3 py-1 bg-green-500 hover:bg-green-600 text-white text-sm rounded\">")
+		templ_7745c5c3_Err = tmpl.PrintButton(btnPrint, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var18 string
-		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Štampaj"))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 601, Col: 120}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
+		templ_7745c5c3_Err = tmpl.Button(btnExportXML, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "</button> <button class=\"px-3 py-1 bg-purple-500 hover:bg-purple-600 text-white text-sm rounded\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, "</div></div></div><!-- Master Table --><div class=\"border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var19 string
-		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Export XML"))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 602, Col: 124}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
+		templ_7745c5c3_Err = tmpl.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "</button></div></div><!-- Data Table --><div class=\"border bg-blue-100 border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1\"><div class=\"flex-1 overflow-x-auto overflow-y-auto min-h-0\">")
+		templ_7745c5c3_Err = tmpl.Search_Part(tbl, searchInput).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, "<!-- Table --><div id=\"bilansi-table\" class=\"flex-1 overflow-x-auto overflow-y-auto min-h-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1074,389 +1230,11 @@ func StampanjeBilansStanja(tabs domain.TabData, tbl domain.TableData, translator
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "</div></div></div></div><!-- Dialog display container--><div id=\"dialog-content\"></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "</div></div></div></div><!-- Dialog display container--><div id=\"dialog-content\"></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.ShowMessage().Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		return nil
-	})
-}
-
-// BilansUspehaForm is a separate form component for Bilans uspeha
-func BilansUspehaForm(translator *i18n.Service, gnGod int) templ.Component {
-	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
-		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
-		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
-			return templ_7745c5c3_CtxErr
-		}
-		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
-		if !templ_7745c5c3_IsBuffer {
-			defer func() {
-				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
-				if templ_7745c5c3_Err == nil {
-					templ_7745c5c3_Err = templ_7745c5c3_BufErr
-				}
-			}()
-		}
-		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var20 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var20 == nil {
-			templ_7745c5c3_Var20 = templ.NopComponent
-		}
-		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "<!-- Parameters Section --><div class=\"border bg-blue-100 border-blue-400 mt-1 p-2 rounded-lg\"><!-- Row 1: Redni broj, Grupa računa, Naziv pozicije --><div class=\"flex items-center gap-1 mb-1\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "bu_redni_broj",
-			LabelText:  translator.Label("Redni broj"),
-			ClassLabel: common.ClassLabel + " w-24",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "bu_redni_broj",
-			Name:       "bu_redni_broj",
-			FieldType:  "text",
-			ClassInput: common.ClassInputTextEnabled + " w-20",
-			TabIndex:   "1",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "bu_grupa_racuna",
-			LabelText:  translator.Label("Grupa računa"),
-			ClassLabel: common.ClassLabel + " w-28",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "bu_grupa_racuna",
-			Name:       "bu_grupa_racuna",
-			FieldType:  "text",
-			ClassInput: common.ClassInputTextEnabled + " w-40",
-			TabIndex:   "2",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "bu_naziv_pozicije",
-			LabelText:  translator.Label("Naziv pozicije"),
-			ClassLabel: common.ClassLabel + " w-28",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "bu_naziv_pozicije",
-			Name:       "bu_naziv_pozicije",
-			FieldType:  "text",
-			ClassInput: common.ClassInputTextEnabled + " w-60",
-			TabIndex:   "3",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "</div><!-- Row 2: AOP, Spisak konta, Tekuća godina --><div class=\"flex items-center gap-1 mb-1\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "bu_aop",
-			LabelText:  translator.Label("AOP"),
-			ClassLabel: common.ClassLabel + " w-24",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "bu_aop",
-			Name:       "bu_aop",
-			FieldType:  "text",
-			ClassInput: common.ClassInputTextEnabled + " w-20",
-			TabIndex:   "4",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "bu_spisak_konta",
-			LabelText:  translator.Label("Spisak konta"),
-			ClassLabel: common.ClassLabel + " w-28",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "bu_spisak_konta",
-			Name:       "bu_spisak_konta",
-			FieldType:  "text",
-			ClassInput: common.ClassInputTextEnabled + " w-60",
-			TabIndex:   "5",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "bu_tekuca_godina",
-			LabelText:  translator.Label("Tekuća godina"),
-			ClassLabel: common.ClassLabel + " w-28",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "bu_tekuca_godina",
-			Name:       "bu_tekuca_godina",
-			FieldType:  "text",
-			ClassInput: common.ClassInputTextEnabled + " w-32",
-			TabIndex:   "6",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "</div><!-- Row 3: Prethodna godina, Nivo podataka --><div class=\"flex items-center gap-1 mb-1\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "bu_prethodna_godina",
-			LabelText:  translator.Label("Prethodna godina"),
-			ClassLabel: common.ClassLabel + " w-28",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "bu_prethodna_godina",
-			Name:       "bu_prethodna_godina",
-			FieldType:  "text",
-			ClassInput: common.ClassInputTextEnabled + " w-32",
-			TabIndex:   "7",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "bu_nivo_podataka",
-			LabelText:  translator.Label("Nivo podataka"),
-			ClassLabel: common.ClassLabel + " w-28",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "bu_nivo_podataka",
-			Name:       "bu_nivo_podataka",
-			FieldType:  "text",
-			ClassInput: common.ClassInputTextEnabled + " w-20",
-			TabIndex:   "8",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "</div><!-- Input fields row --><div class=\"flex gap-2 mt-2\"><div class=\"flex gap-1\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "bu_input_01",
-			Name:       "bu_input_01",
-			FieldType:  "text",
-			Value:      "0000",
-			ClassInput: common.ClassInputTextEnabled + " w-14 text-center",
-			TabIndex:   "9",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "bu_input_02",
-			Name:       "bu_input_02",
-			FieldType:  "text",
-			Value:      "0000",
-			ClassInput: common.ClassInputTextEnabled + " w-14 text-center",
-			TabIndex:   "10",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "bu_input_03",
-			Name:       "bu_input_03",
-			FieldType:  "text",
-			Value:      "0000",
-			ClassInput: common.ClassInputTextEnabled + " w-14 text-center",
-			TabIndex:   "11",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "bu_input_04",
-			Name:       "bu_input_04",
-			FieldType:  "text",
-			Value:      "0000",
-			ClassInput: common.ClassInputTextEnabled + " w-14 text-center",
-			TabIndex:   "12",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "bu_input_05",
-			Name:       "bu_input_05",
-			FieldType:  "text",
-			Value:      "0000",
-			ClassInput: common.ClassInputTextEnabled + " w-14 text-center",
-			TabIndex:   "13",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "bu_input_06",
-			Name:       "bu_input_06",
-			FieldType:  "text",
-			Value:      "0000",
-			ClassInput: common.ClassInputTextEnabled + " w-14 text-center",
-			TabIndex:   "14",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "</div><button class=\"px-3 py-1 text-xs text-gray-600\">...</button></div><div class=\"flex gap-2 mt-1\"><div class=\"flex gap-1\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "bu_input_07",
-			Name:       "bu_input_07",
-			FieldType:  "text",
-			Value:      "0000",
-			ClassInput: common.ClassInputTextEnabled + " w-14 text-center",
-			TabIndex:   "15",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "bu_input_08",
-			Name:       "bu_input_08",
-			FieldType:  "text",
-			Value:      "0000",
-			ClassInput: common.ClassInputTextEnabled + " w-14 text-center",
-			TabIndex:   "16",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "bu_input_09",
-			Name:       "bu_input_09",
-			FieldType:  "text",
-			Value:      "0000",
-			ClassInput: common.ClassInputTextEnabled + " w-14 text-center",
-			TabIndex:   "17",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "bu_input_10",
-			Name:       "bu_input_10",
-			FieldType:  "text",
-			Value:      "0000",
-			ClassInput: common.ClassInputTextEnabled + " w-14 text-center",
-			TabIndex:   "18",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "bu_input_11",
-			Name:       "bu_input_11",
-			FieldType:  "text",
-			Value:      "0000",
-			ClassInput: common.ClassInputTextEnabled + " w-14 text-center",
-			TabIndex:   "19",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "bu_input_12",
-			Name:       "bu_input_12",
-			FieldType:  "text",
-			Value:      "0000",
-			ClassInput: common.ClassInputTextEnabled + " w-14 text-center",
-			TabIndex:   "20",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "</div></div><!-- Buttons --><div class=\"flex gap-2 justify-center mt-2\"><button class=\"px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var21 string
-		templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Novi"))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 835, Col: 112}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, "</button> <button class=\"px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var22 string
-		templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Izmeni"))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 836, Col: 114}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, "</button> <button class=\"px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var23 string
-		templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Kopiraj"))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 837, Col: 115}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "</button> <button class=\"px-3 py-1 bg-red-500 hover:bg-red-600 text-white text-sm rounded\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var24 string
-		templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Briši"))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 838, Col: 112}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 53, "</button></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1465,7 +1243,7 @@ func BilansUspehaForm(translator *i18n.Service, gnGod int) templ.Component {
 }
 
 // Tab 4 - Bilans uspeha (Income Statement)
-func BilansUspeha(tabs domain.TabData, tbl domain.TableData, translator *i18n.Service, gnGod int) templ.Component {
+func BilansUspeha(tabs domain.TabData, tbl domain.TableData, searchInput domain.InputControl, totals *domain.BilansiTotals, translator *i18n.Service, gnGod int) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -1481,12 +1259,12 @@ func BilansUspeha(tabs domain.TabData, tbl domain.TableData, translator *i18n.Se
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var25 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var25 == nil {
-			templ_7745c5c3_Var25 = templ.NopComponent
+		templ_7745c5c3_Var12 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var12 == nil {
+			templ_7745c5c3_Var12 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 54, "<!-- Container with full height --><div class=\"flex flex-col h-full\"><!-- Tab Navigation --><div class=\"border-b border-blue-600\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 53, "<!-- Container with full height --><div class=\"flex flex-col h-full\"><!-- Tab Navigation --><div class=\"border-b border-blue-600\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1494,7 +1272,111 @@ func BilansUspeha(tabs domain.TabData, tbl domain.TableData, translator *i18n.Se
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 55, "</div><!-- Tab 4 Content --><div id=\"tab4\" class=\"flex-1 min-h-0 flex flex-col gap-1\"><!-- Right Panel - Summary values --><div class=\"flex flex-row gap-1 flex-1 mt-1 min-h-0\"><!-- Main data table --><div class=\"flex-1 border bg-blue-100 border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden\"><div class=\"flex-1 overflow-x-auto overflow-y-auto min-h-0\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 54, "</div><!-- Tab 2 Content --><div id=\"tab2\" class=\"flex-1 min-h-0 flex flex-col gap-1\"><!-- Summary panel --><div class=\"border bg-blue-100 border-blue-400 mt-1 p-1 rounded-lg\"><div class=\"grid grid-cols-4 gap-4 text-sm\"><!-- Column 1 and 2: Empty --><div></div><div></div><!-- Column 2: Main values --><div class=\"space-y-1\"><!-- Tekuća godina --><div class=\"flex justify-between items-center\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "lbl_tekuca_godina",
+			LabelText:  translator.Label("Tekuća godina"),
+			ClassLabel: common.ClassLabel + " w-42",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "tekuca_godina",
+			Name:       "tekuca_godina",
+			FieldType:  "text",
+			Value:      "0.00",
+			Disabled:   true,
+			ClassInput: common.ClassInputTextEnabled + " w-40 text-right font-bold",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 55, "</div><!-- Prethodna godina --><div class=\"flex justify-between items-center\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "lbl_prethodna_godina",
+			LabelText:  translator.Label("Prethodna godina"),
+			ClassLabel: common.ClassLabel + " w-42",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "prethodna_godina",
+			Name:       "prethodna_godina",
+			FieldType:  "text",
+			Value:      "0.00",
+			Disabled:   true,
+			ClassInput: common.ClassInputTextEnabled + " w-40 text-right font-bold",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 56, "</div></div><!-- Column 3: Thousands values --><div class=\"space-y-1\"><!-- Tekuća u hiljadama --><div class=\"flex justify-between items-center\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "lbl_tekuca_hiljada",
+			LabelText:  translator.Label("Tekuća u hiljadama"),
+			ClassLabel: common.ClassLabel + " w-42",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "tekuca_hiljada",
+			Name:       "tekuca_hiljada",
+			FieldType:  "text",
+			Value:      "0",
+			Disabled:   true,
+			ClassInput: common.ClassInputTextEnabled + " w-40 text-right font-bold mr-2",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 57, "</div><!-- Prethodna u hiljadama --><div class=\"flex justify-between items-center\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "lbl_prethodna_hiljada",
+			LabelText:  translator.Label("Prethodna u hiljadama"),
+			ClassLabel: common.ClassLabel + " w-42",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "prethodna_hiljada",
+			Name:       "prethodna_hiljada",
+			FieldType:  "text",
+			Value:      "0",
+			Disabled:   true,
+			ClassInput: common.ClassInputTextEnabled + " w-40 text-right font-bold mr-2",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 58, "</div></div></div></div><!-- Table section --><div class=\"border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.Search_Part(tbl, searchInput).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 59, "<div class=\"flex-1 overflow-x-auto overflow-y-auto min-h-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1502,63 +1384,485 @@ func BilansUspeha(tabs domain.TabData, tbl domain.TableData, translator *i18n.Se
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 56, "</div></div><!-- Summary panel --><div class=\"border bg-white border-gray-300 p-2 rounded-lg w-48 overflow-y-auto\"><div class=\"space-y-2 text-sm\"><div class=\"flex justify-between\"><span class=\"font-medium\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var26 string
-		templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Tekuća godina"))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 865, Col: 69}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 57, ":</span> <span class=\"font-bold text-right\">0.00</span></div><div class=\"flex justify-between\"><span class=\"font-medium\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var27 string
-		templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Tekuća u hiljadama"))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 869, Col: 74}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 58, ":</span> <span class=\"font-bold text-right\">0</span></div><div class=\"flex justify-between\"><span class=\"font-medium\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var28 string
-		templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Prethodna godina"))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 873, Col: 71}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 59, ":</span> <span class=\"font-bold text-right\">0.00</span></div><div class=\"flex justify-between\"><span class=\"font-medium\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var29 string
-		templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Prethodna u hiljadama"))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 877, Col: 76}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 60, ":</span> <span class=\"font-bold text-right\">0</span></div></div></div></div></div></div><!-- Dialog display container--><div id=\"dialog-content\"></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 60, "</div></div></div></div><!-- Dialog display container--><div id=\"dialog-container\"></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.ShowMessage().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.SpinnerScript().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+// BilansUspehaForm is a separate form component for Bilans uspeha
+func BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dialog, btnSave, btnCancel, btnClose domain.Button, translator *i18n.Service) templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var13 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var13 == nil {
+			templ_7745c5c3_Var13 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 61, "<div id=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var14 string
+		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.Id)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 869, Col: 20}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 62, "\" class=\"fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4\"><div class=\"bg-white rounded-lg shadow-2xl relative animate-fade-in max-w-4xl w-full max-h-[90vh] overflow-y-auto\"><!-- Title Bar --><div class=\"bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg sticky top-0 z-10\"><h2 class=\"text-lg font-semibold ml-4\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var15 string
+		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Title(dialog.Title))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 873, Col: 75}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 63, "</h2>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.CloseButton(btnClose).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 64, "</div><form")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		if dialog.HxRequestType == "PUT" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 65, " hx-put=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var16 string
+			templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.HxActionURL)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 878, Col: 32}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 66, "\" hx-on::after-request=\"handleFormResponse(event, &#39;PUT&#39;)\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		if dialog.HxRequestType == "POST" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 67, " hx-post=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var17 string
+			templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.HxActionURL)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 882, Col: 33}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 68, "\" hx-on::after-request=\"handleFormResponse(event, &#39;POST&#39;)\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 69, " hx-target=\"#dialog-message\" hx-boost=\"false\" onsubmit=\"return false;\" class=\"p-3 bg-white rounded-b-lg flex flex-col\"><!-- Fields Section --><div class=\"p-1 flex-1 mb-3\"><input type=\"hidden\" name=\"_csrf\" value=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var18 string
+		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(csrfToken)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 892, Col: 56}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 70, "\"><!-- Top Row: Redni broj, Oznaka za AOP --><div class=\"flex items-center gap-2 mb-1\"><div class=\"flex items-center gap-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "lblbs_redni_broj",
+			LabelText:  translator.Label("Redni broj"),
+			ClassLabel: common.ClassLabel + " w-40",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+			ID:         "bs_redni_broj",
+			Name:       "rbr",
+			FieldType:  "text",
+			Value:      fmt.Sprintf("%d", bilsData.Rbr),
+			ClassInput: common.ClassInputTextEnabled + " w-24",
+			MaxLength:  "4",
+			TabIndex:   "1",
+			OnInput:    "clearFieldError",
+			OnFocus:    "clearFieldError",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 71, "</div><div class=\"flex items-center gap-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "lblbs_oznaka_aop",
+			LabelText:  translator.Label("Oznaka za AOP"),
+			ClassLabel: common.ClassLabel + " w-28",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+			ID:         "bs_oznaka_aop",
+			Name:       "aop",
+			FieldType:  "text",
+			Value:      fmt.Sprintf("%d", bilsData.AOP),
+			ClassInput: common.ClassInputTextEnabled + " w-24",
+			MaxLength:  "4",
+			TabIndex:   "2",
+			OnInput:    "clearFieldError",
+			OnFocus:    "clearFieldError",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 72, "</div><!-- Nivo podataka checkbox --><div class=\"flex items-center gap-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.CheckboxField(domain.CheckboxFieldConfig{
+			ID:        "bs_skraceni",
+			Name:      "skraceni",
+			LabelText: "AOP skracenog bilansa",
+			Checked:   bilsData.Skraceni == 1,
+			TabIndex:  "3",
+		}, translator).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 73, "</div></div><!-- Second Row: Grupa računa --><div class=\"flex items-center gap-1 mb-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "lblbs_grupa_racuna",
+			LabelText:  translator.Label("Grupa računa, račun"),
+			ClassLabel: common.ClassLabel + " w-40",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "bs_grupa_racuna",
+			Name:       "grac",
+			FieldType:  "text",
+			Value:      bilsData.Grac,
+			ClassInput: common.ClassInputTextEnabled + " flex-1",
+			MaxLength:  "50",
+			TabIndex:   "4",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 74, "</div><!-- Third Row: Naziv pozicije --><div class=\"flex items-center gap-1 mb-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "lblbs_naziv_pozicije",
+			LabelText:  translator.Label("Naziv pozicije"),
+			ClassLabel: common.ClassLabel + " w-40",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "bs_naziv_pozicije",
+			Name:       "nazp",
+			FieldType:  "text",
+			Value:      bilsData.NazP,
+			ClassInput: common.ClassInputTextEnabled + " flex-1",
+			MaxLength:  "160",
+			TabIndex:   "5",
+			OnInput:    "clearFieldError",
+			OnFocus:    "clearFieldError",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 75, "</div><!-- Fourth Row: Spisak konta --><div class=\"flex items-center gap-1 mb-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "lblbs_spisak_konta",
+			LabelText:  translator.Label("Spisak konta"),
+			ClassLabel: common.ClassLabel + " w-40",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "bs_spisak_konta",
+			Name:       "konta",
+			FieldType:  "text",
+			Value:      bilsData.Konta,
+			ClassInput: common.ClassInputTextEnabled + " flex-1",
+			MaxLength:  "90",
+			TabIndex:   "6",
+			OnInput:    "clearFieldError",
+			OnFocus:    "clearFieldError",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 76, "</div><!-- Input fields row 1 - Pozicije controls --><div class=\"flex gap-1 mb-1\"><div class=\"flex gap-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "lblbs_spisak_konta",
+			LabelText:  translator.Label("Pozicije"),
+			ClassLabel: common.ClassLabel + " w-40",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+			ID:         "bs_input_01",
+			Name:       "pozic_1",
+			FieldType:  "text",
+			Value:      fmt.Sprintf("%04d", bilsData.Pozic1),
+			ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
+			MaxLength:  "4",
+			TabIndex:   "7",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+			ID:         "bs_input_02",
+			Name:       "pozic_2",
+			FieldType:  "text",
+			Value:      fmt.Sprintf("%04d", bilsData.Pozic2),
+			ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
+			MaxLength:  "4",
+			TabIndex:   "8",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+			ID:         "bs_input_03",
+			Name:       "pozic_3",
+			FieldType:  "text",
+			Value:      fmt.Sprintf("%04d", bilsData.Pozic3),
+			ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
+			MaxLength:  "4",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+			ID:         "bs_input_04",
+			Name:       "pozic_4",
+			FieldType:  "text",
+			Value:      fmt.Sprintf("%04d", bilsData.Pozic4),
+			ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
+			MaxLength:  "4",
+			TabIndex:   "10",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+			ID:         "bs_input_05",
+			Name:       "pozic_5",
+			FieldType:  "text",
+			Value:      fmt.Sprintf("%04d", bilsData.Pozic5),
+			ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
+			MaxLength:  "4",
+			TabIndex:   "11",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+			ID:         "bs_input_06",
+			Name:       "pozic_6",
+			FieldType:  "text",
+			Value:      fmt.Sprintf("%04d", bilsData.Pozic6),
+			ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
+			MaxLength:  "4",
+			TabIndex:   "12",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 77, "</div></div><!-- Input fields row 2 - Additional Pozicije controls --><div class=\"flex gap-1 mb-1\"><div class=\"flex gap-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "lblbs_pozicije",
+			LabelText:  "",
+			ClassLabel: common.ClassLabel + " w-40",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+			ID:         "bs_input_07",
+			Name:       "pozic_7",
+			FieldType:  "text",
+			Value:      fmt.Sprintf("%04d", bilsData.Pozic7),
+			ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
+			MaxLength:  "4",
+			TabIndex:   "13",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+			ID:         "bs_input_08",
+			Name:       "pozic_8",
+			FieldType:  "text",
+			Value:      fmt.Sprintf("%04d", bilsData.Pozic8),
+			ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
+			MaxLength:  "4",
+			TabIndex:   "14",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+			ID:         "bs_input_09",
+			Name:       "pozic_9",
+			FieldType:  "text",
+			Value:      fmt.Sprintf("%04d", bilsData.Pozic9),
+			ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
+			MaxLength:  "4",
+			TabIndex:   "15",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+			ID:         "bs_input_10",
+			Name:       "pozic_10",
+			FieldType:  "text",
+			Value:      fmt.Sprintf("%04d", bilsData.Pozic10),
+			ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
+			MaxLength:  "4",
+			TabIndex:   "16",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+			ID:         "bs_input_11",
+			Name:       "pozic_11",
+			FieldType:  "text",
+			Value:      fmt.Sprintf("%04d", bilsData.Pozic11),
+			ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
+			MaxLength:  "4",
+			TabIndex:   "17",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+			ID:         "bs_input_12",
+			Name:       "pozic_12",
+			FieldType:  "text",
+			Value:      fmt.Sprintf("%04d", bilsData.Pozic12),
+			ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
+			MaxLength:  "4",
+			TabIndex:   "18",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 78, "</div></div><!-- Nivo podataka checkbox --><div class=\"flex items-center gap-1 mb-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "lblbs_nivo_podataka",
+			LabelText:  translator.Label("Nivo podataka"),
+			ClassLabel: common.ClassLabel + " w-40",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+			ID:         "bs_nivo_podataka",
+			Name:       "nipo",
+			FieldType:  "text",
+			Value:      fmt.Sprintf("%d", bilsData.NiPo),
+			ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
+			MaxLength:  "2",
+			TabIndex:   "18",
+			OnInput:    "clearFieldError",
+			OnFocus:    "clearFieldError",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 79, "</div></div><!-- Buttons - Bottom Right Aligned --><div class=\"flex gap-1 justify-end\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.SaveButton(btnSave, translator).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.CancelButton(btnCancel, translator).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 80, "</div></form><!-- Message Display Area at Bottom --><div id=\"dialog-message\" class=\"hidden\"></div></div></div>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.HandleFormResponse().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1567,7 +1871,7 @@ func BilansUspeha(tabs domain.TabData, tbl domain.TableData, translator *i18n.Se
 }
 
 // Tab 5 - Stampanje bilansa uspeha (Print Income Statement)
-func StampanjeBilansUspeha(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint, btnExportXML domain.Button, translator *i18n.Service, gnGod int) templ.Component {
+func StampanjeBilansaUspeha(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint, btnExportXML domain.Button, translator *i18n.Service, gnGod int) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -1583,12 +1887,12 @@ func StampanjeBilansUspeha(tabs domain.TabData, tbl domain.TableData, btnObrada,
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var30 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var30 == nil {
-			templ_7745c5c3_Var30 = templ.NopComponent
+		templ_7745c5c3_Var19 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var19 == nil {
+			templ_7745c5c3_Var19 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 61, "<!-- Container with full height --><div class=\"flex flex-col h-full\"><!-- Tab Navigation --><div class=\"border-b border-blue-600\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 81, "<!-- Container with full height --><div class=\"flex flex-col h-full\"><!-- Tab Navigation --><div class=\"border-b border-blue-600\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1596,7 +1900,7 @@ func StampanjeBilansUspeha(tabs domain.TabData, tbl domain.TableData, btnObrada,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 62, "</div><!-- Tab 5 Content --><div id=\"tab5\" class=\"flex-1 min-h-0 flex flex-col gap-1\"><!-- Control Section --><div class=\"border bg-blue-100 border-blue-400 mt-1 p-2 rounded-lg\"><div class=\"flex items-center gap-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 82, "</div><!-- Tab 5 Content --><div id=\"tab5\" class=\"flex-1 min-h-0 flex flex-col gap-1\"><!-- Control Section --><div class=\"border bg-blue-100 border-blue-400 mt-1 p-2 rounded-lg\"><div class=\"flex items-center gap-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1649,7 +1953,7 @@ func StampanjeBilansUspeha(tabs domain.TabData, tbl domain.TableData, btnObrada,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 63, "<div class=\"flex-1\"></div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 83, "<div class=\"flex-1\"></div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1665,7 +1969,7 @@ func StampanjeBilansUspeha(tabs domain.TabData, tbl domain.TableData, btnObrada,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 64, "</div></div></div><!-- Data Table --><div class=\"border bg-blue-100 border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1\"><div class=\"flex-1 overflow-x-auto overflow-y-auto min-h-0\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 84, "</div></div></div><!-- Data Table --><div class=\"border bg-blue-100 border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1\"><div class=\"flex-1 overflow-x-auto overflow-y-auto min-h-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1673,7 +1977,7 @@ func StampanjeBilansUspeha(tabs domain.TabData, tbl domain.TableData, btnObrada,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 65, "</div></div></div></div><!-- Dialog display container--><div id=\"dialog-content\"></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 85, "</div></div></div></div><!-- Dialog display container--><div id=\"dialog-content\"></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

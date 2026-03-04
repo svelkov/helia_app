@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"fmt"
 	"helia/internal/common"
 	"helia/internal/domain"
 	"reflect"
@@ -55,13 +56,23 @@ func (r *BaseRepository[T]) CreateGetAllStatement(c *gin.Context, tableFields []
 		EntityType:  reflect.TypeOf(new(T)).Elem(),
 		TableFields: tableFields,
 	}
-	qb := common.NewRepositoryQueryBuilder(config)
+	orderBy := c.Query("sortBy")
+	sortOrder := c.Query("sortOrder")
+
+	qbRepo := common.NewRepositoryQueryBuilder(config)
 	userSession := domain.GetSessionFromContext(c)
 	hasGod, hasKar := r.GetHasGodHasKar()
+	qb := common.NewQueryBuilder(qbRepo.BuildSelectAll(tableFields, idField, searchParams...))
 	qb.AddGodKarConditions(hasGod, hasKar, userSession.SelectedGod, userSession.SelectedKar)
-	query := qb.BuildSelectAll(tableFields, idField, searchParams...)
+	if orderBy != "" {
+		qb.AddOrderBy(fmt.Sprintf("%s.%s", r.TableName, orderBy))
+	}
+	if sortOrder != "" && (sortOrder == "ASC" || sortOrder == "DESC") {
+		qb.AddSortOrder(sortOrder)
+	}
 
-	return query, qb.GetArgs()
+	return qb.Build()
+
 }
 
 // CreateGetCountRecords generates a COUNT query

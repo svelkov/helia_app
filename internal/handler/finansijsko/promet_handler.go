@@ -108,10 +108,10 @@ func (h *PrometHandler) PrometMain(c *gin.Context) {
 	if session != nil {
 		gnGod = session.SelectedGod
 	}
-
-	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/promet/analitickakonta", "#promettable", "innerHTML", "GET", "#konto, #sifra, #oddatuma, #dodatuma", hxValsAnalitickihKonta, true, common.ClassSaveButton, "handleDialogResponse")
+	common.SetActiveTab(&h.tabData, "analitickakonta")
+	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", prometURLAnKonta, "#promettable", "innerHTML", "GET", "#konto, #sifra, #oddatuma, #dodatuma", hxValsAnalitickihKonta, true, common.ClassSaveButton, "handleDialogResponse")
 	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
-	searchInput := common.CreateSearchInput(i18n.GetInstance(), prometURLAnKonta, fmt.Sprintf("#%s", prometTableID), hxValsAnalitickihKonta)
+	searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), prometURLAnKonta, fmt.Sprintf("#%s", prometTableID), hxValsAnalitickihKonta)
 
 	tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetAnkontaTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tbl, prometContentTitle, "", false, false, false)
@@ -137,12 +137,12 @@ func (h *PrometHandler) PrometAnalitickihKonta(c *gin.Context) {
 
 		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", prometURLAnKonta, "#promettable", "innerHTML", "GET", "", hxValsAnalitickihKonta, true, common.ClassSaveButton, "handleDialogResponse")
 		btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
-		searchInput := common.CreateSearchInput(translator, prometURLAnKonta, fmt.Sprintf("#%s", prometTableID), hxValsAnalitickihKonta)
+		searchInput := common.CreateSearchInput("search-input", translator, prometURLAnKonta, fmt.Sprintf("#%s", prometTableID), hxValsAnalitickihKonta)
 
 		//if the call come from menu click or tab click then render the page with parameters and empty table
 		tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetAnkontaTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 		common.SetTableConfig(&tbl, prometContentTitle, "", false, false, false)
-		h.tabData = setActiveTab(h.tabData, "analitickakonta")
+		common.SetActiveTab(&h.tabData, "analitickakonta")
 		err := tmpl_fin.PrometAnalitickihKonta(h.tabData, tbl, btnPrint, btnObrada, domain.TotalValues{}, searchInput, gnGod, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
@@ -195,11 +195,11 @@ func (h *PrometHandler) PrometAnalitickihKontaPoMI(c *gin.Context) {
 
 		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", prometURLAnKontaMi, "#promettable", "innerHTML", "GET", "", hxValsMI, true, common.ClassSaveButton, "handleDialogResponse")
 		btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
-		searchInput := common.CreateSearchInput(translator, prometURLAnKontaMi, fmt.Sprintf("#%s", prometTableID), hxValsMI)
+		searchInput := common.CreateSearchInput("search-input", translator, prometURLAnKontaMi, fmt.Sprintf("#%s", prometTableID), hxValsMI)
 
 		//if the call come from menu click or tab click then render the page with parameters and empty table
 		common.SetTableConfig(&tbl, prometContentTitle, prometURLAnKontaMi, false, false, false)
-		h.tabData = setActiveTab(h.tabData, "analitickakontami")
+		common.SetActiveTab(&h.tabData, "analitickakontami")
 		err := tmpl_fin.AnalitickaKarticaPoMI(h.tabData, tbl, btnPrint, btnObrada, domain.TotalValues{}, searchInput, gnGod, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
@@ -246,7 +246,7 @@ func (h *PrometHandler) PrometDeviznihAnalitickihKonta(c *gin.Context) {
 		tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetAnDeviznaKontaTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 		common.SetTableConfig(&tbl, "", "", false, false, false)
 
-		h.tabData = setActiveTab(h.tabData, "deviznihanalitickihkonta")
+		common.SetActiveTab(&h.tabData, "deviznihanalitickihkonta")
 		session := domain.GetSessionFromContext(c)
 		gnGod := 0
 		if session != nil {
@@ -301,12 +301,12 @@ func (h *PrometHandler) PrometSubsintetickihKonta(c *gin.Context) {
 
 		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", prometURLSubsintetika, "#promettable", "innerHTML", "GET", "", hxValsSubsintetika, true, common.ClassSaveButton, "handleDialogResponse")
 		btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
-		searchInput := common.CreateSearchInput(translator, prometURLSubsintetika, fmt.Sprintf("#%s", prometTableID), hxValsSubsintetika)
+		searchInput := common.CreateSearchInput("search-input", translator, prometURLSubsintetika, fmt.Sprintf("#%s", prometTableID), hxValsSubsintetika)
 
 		//if the call come from menu click or tab click then render the page with parameters and empty table
 		tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetSubsintetickihKontaTableFields(), "", prometURLSubsintetika, 0, 0, 0, 0, h.cfg)
 		common.SetTableConfig(&tbl, prometContentTitle, prometURLSubsintetika, false, false, false)
-		h.tabData = setActiveTab(h.tabData, "subsintetickakonta")
+		common.SetActiveTab(&h.tabData, "subsintetickakonta")
 		err := tmpl_fin.PrometSubsintetickihKonta(h.tabData, tbl, btnPrint, btnObrada, domain.TotalValues{}, searchInput, gnGod, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
@@ -356,12 +356,12 @@ func (h *PrometHandler) PrometSintetickihKonta(c *gin.Context) {
 
 		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", prometURLSintetika, "#promettable", "innerHTML", "GET", "", hxValsSintetika, true, common.ClassSaveButton, "handleDialogResponse")
 		btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
-		searchInput := common.CreateSearchInput(translator, prometURLSintetika, fmt.Sprintf("#%s", prometTableID), hxValsSintetika)
+		searchInput := common.CreateSearchInput("search-input", translator, prometURLSintetika, fmt.Sprintf("#%s", prometTableID), hxValsSintetika)
 
 		//if the call come from menu click or tab click then render the page with parameters and empty table
 		tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetSintetickihKontaTableFields(), "", prometURLSintetika, 0, 0, 0, 0, h.cfg)
 		common.SetTableConfig(&tbl, prometContentTitle, prometURLSintetika, false, false, false)
-		h.tabData = setActiveTab(h.tabData, "sintetickakonta")
+		common.SetActiveTab(&h.tabData, "sintetickakonta")
 		err := tmpl_fin.PrometSintetickihKonta(h.tabData, tbl, btnPrint, btnObrada, domain.TotalValues{}, searchInput, gnGod, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
@@ -411,13 +411,13 @@ func (h *PrometHandler) PrometKarticaSintetickihKonta(c *gin.Context) {
 
 		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", prometURLKarticaSintetika, "#promettable", "innerHTML", "GET", "", hxValsKarticaSintetika, true, common.ClassSaveButton, "handleDialogResponse")
 		btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
-		searchInput := common.CreateSearchInput(translator, prometURLKarticaSintetika, fmt.Sprintf("#%s", prometTableID), hxValsKarticaSintetika)
+		searchInput := common.CreateSearchInput("search-input", translator, prometURLKarticaSintetika, fmt.Sprintf("#%s", prometTableID), hxValsKarticaSintetika)
 
 		//if the call come from menu click or tab click then render the page with parameters and empty table
 		tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetKarticaSintetikaTableFields(), "", prometURLKarticaSintetika, 0, 0, 0, 0, h.cfg)
 		common.SetTableConfig(&tbl, prometContentTitle, prometURLKarticaSintetika, false, false, false)
-		h.tabData = setActiveTab(h.tabData, "karticasintetickihkonta")
-		err := tmpl_fin.KarticaSintetickiKonta(h.tabData, tbl, btnPrint, btnObrada, domain.TotalValues{}, searchInput, gnGod, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+		common.SetActiveTab(&h.tabData, "karticasintetickihkonta")
+		err := tmpl_fin.KarticaSintetickiKonta(h.tabData, tbl, btnPrint, btnObrada, domain.TotalValues{}, searchInput, gnGod, translator).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -466,12 +466,12 @@ func (h *PrometHandler) PrometSubsintetickaKontaPoVRD(c *gin.Context) {
 
 		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", prometURLSubsintetikaVrd, "#promettable", "innerHTML", "GET", "", hxValsSubsintetikaVrd, true, common.ClassSaveButton, "handleDialogResponse")
 		btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
-		searchInput := common.CreateSearchInput(translator, prometURLSubsintetikaVrd, fmt.Sprintf("#%s", prometTableID), hxValsSubsintetikaVrd)
+		searchInput := common.CreateSearchInput("search-input", translator, prometURLSubsintetikaVrd, fmt.Sprintf("#%s", prometTableID), hxValsSubsintetikaVrd)
 
 		//if the call come from menu click or tab click then render the page with parameters and empty table
 		tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetSubsintetikaVrdTableFields(), "", prometURLSubsintetikaVrd, 0, 0, 0, 0, h.cfg)
 		common.SetTableConfig(&tbl, prometContentTitle, prometURLSubsintetikaVrd, false, false, false)
-		h.tabData = setActiveTab(h.tabData, "subsintetickakontapovrd")
+		common.SetActiveTab(&h.tabData, "subsintetickakontapovrd")
 		err := tmpl_fin.PrometKontaPoVRD(h.tabData, tbl, btnPrint, btnObrada, domain.TotalValues{}, searchInput, gnGod, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
@@ -522,13 +522,13 @@ func (h *PrometHandler) PrometKontaAnaliticki(c *gin.Context) {
 
 		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", prometURLKontaAnaliticki, "#promettable", "innerHTML", "GET", "", hxValsKontaAnaliticki, true, common.ClassSaveButton, "handleDialogResponse")
 		btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
-		searchInput := common.CreateSearchInput(translator, prometURLKontaAnaliticki, fmt.Sprintf("#%s", prometTableID), hxValsKontaAnaliticki)
+		searchInput := common.CreateSearchInput("search-input", translator, prometURLKontaAnaliticki, fmt.Sprintf("#%s", prometTableID), hxValsKontaAnaliticki)
 
 		//if the call come from menu click or tab click then render the page with parameters and empty table
 		tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetKontaAnalitickiTableFields(), "", prometURLKontaAnaliticki, 0, 0, 0, 0, h.cfg)
 		common.SetTableConfig(&tbl, prometContentTitle, prometURLKontaAnaliticki, false, false, false)
-		h.tabData = setActiveTab(h.tabData, "kontaanaliticki")
-		err := tmpl_fin.PrometKontaAnaliticki(h.tabData, tbl, btnPrint, btnObrada, domain.TotalValues{}, searchInput, gnGod, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+		common.SetActiveTab(&h.tabData, "kontaanaliticki")
+		err := tmpl_fin.PrometKontaAnaliticki(h.tabData, tbl, btnPrint, btnObrada, domain.TotalValues{}, searchInput, gnGod, translator).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -615,15 +615,4 @@ func GetTabData() domain.TabData {
 			{ID: "kontaanaliticki", Label: "Konta analitički", HXRequestUrl: fmt.Sprintf("%skontaanaliticki", prometURLPrefix), IsActive: false, Name: "kontaanaliticki"},
 		},
 	}
-}
-
-func setActiveTab(tabs domain.TabData, tabName string) domain.TabData {
-	for i, tab := range tabs.Tabs {
-		if tab.Name == tabName {
-			tabs.Tabs[i].IsActive = true
-		} else {
-			tabs.Tabs[i].IsActive = false
-		}
-	}
-	return tabs
 }

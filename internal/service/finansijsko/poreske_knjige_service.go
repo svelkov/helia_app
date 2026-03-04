@@ -145,7 +145,7 @@ func (s *PoreskeKnjigeResource) GetKnjigaIzdatihRacuna(c *gin.Context, tbl *doma
 	if hasKar {
 		qb.AddEqual("kir.kar", session.SelectedKar)
 	}
-	if odKnjige == odKnjige {
+	if odKnjige == doKnjige {
 		qb.AddCondition("kir.vkrbr", odKnjige, "=")
 	} else {
 		qb.AddCondition("kir.vkrbr", odKnjige, ">=")

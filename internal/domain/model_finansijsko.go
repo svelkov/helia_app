@@ -7,7 +7,7 @@ import (
 
 // FKPL represents the "baza.fkpl" table.
 type Fkpl struct {
-	IDFKPL      int            `db:"idfkpl"`
+	IDFkpl      int            `db:"idfkpl"`
 	God         int            `db:"god"`
 	Kar         int            `db:"kar"`
 	Vkonta      int16          `db:"vkonta"`
@@ -126,17 +126,32 @@ type Fpro struct {
 	NazivKonta    string        `db:"nazivkonta" addupdate:"false"`
 	NazivPartnera string        `db:"nazivpartnera" addupdate:"false"`
 	Mesec         int           `db:"mesec" addupdate:"false"`
+	DocType       string        `db:"doctype" addupdate:"false"`
+	// Age bucket fields for PregledPotrazivanjaObaveze
+	Realizacija        float64 `db:"realizacija" addupdate:"false"`
+	Placeno            float64 `db:"placeno" addupdate:"false"`
+	DospelaRealizacija float64 `db:"dospelarealizacija" addupdate:"false"`
+	Dospece15          float64 `db:"dospece15" addupdate:"false"`
+	Dospece30          float64 `db:"dospece30" addupdate:"false"`
+	Dospece60          float64 `db:"dospece60" addupdate:"false"`
+	Dospece90          float64 `db:"dospece90" addupdate:"false"`
+	Dospece120         float64 `db:"dospece120" addupdate:"false"`
+	Dospece120Plus     float64 `db:"dospece120plus" addupdate:"false"`
 }
 type FproDto struct {
 	Fpro
-	SubsinNaziv string `db:"subsin_naziv"`
-	SinNaziv    string `db:"sin_naziv"`
+	SubsinNaziv  string  `db:"subsin_naziv"`
+	SinNaziv     string  `db:"sin_naziv"`
+	PocStanjeDug float64 `db:"pocstanjedug"`
+	PocStanjePot float64 `db:"pocstanjepot"`
+	PrometDug    float64 `db:"prometdug"`
+	PrometPot    float64 `db:"prometpot"`
 }
 
 type KopirajNalog struct {
 	IDFnal       int64  `db:"idfnal"`
 	TipdokOld    string `db:"tipdok"`
-	NalogOld     string `db:"nalodold"`
+	NalogOld     string `db:"nalogold"`
 	DanalOld     string `db:"danalold"`
 	DatKnjOld    string `db:"datknjold"`
 	OpisOld      string `db:"opisold"`
@@ -651,89 +666,91 @@ type EppSefKpr struct {
 
 // Bils represents the "baza.bils" table (Balance Sheets).
 type Bils struct {
-	BilsID     int            `db:"bilsid" gorm:"primaryKey"`
-	God        int            `db:"god"`
-	Kar        int            `db:"kar"`
-	AOP        int            `db:"aop"`
-	NazP       string         `db:"nazp"`
-	Konta      string         `db:"konta"`
-	Rbr        float64        `db:"rbr"`
-	TGod       float64        `db:"tgod"`
-	PGod       float64        `db:"pgod"`
-	Grac       string         `db:"grac"`
-	NiPo       int16          `db:"nipo"`
-	TGodH      int            `db:"tgodh"`
-	PGodH      int            `db:"pgodh"`
-	Pozic1     int16          `db:"pozic_1"`
-	Pozic2     int16          `db:"pozic_2"`
-	Pozic3     int16          `db:"pozic_3"`
-	Pozic4     int16          `db:"pozic_4"`
-	Pozic5     int16          `db:"pozic_5"`
-	Pozic6     int16          `db:"pozic_6"`
-	Pozic7     int16          `db:"pozic_7"`
-	Pozic8     int16          `db:"pozic_8"`
-	Pozic9     int16          `db:"pozic_9"`
-	Pozic10    int16          `db:"pozic_10"`
-	Pozic11    int16          `db:"pozic_11"`
-	Pozic12    int16          `db:"pozic_12"`
-	Odm        int16          `db:"odm"`
-	Dom        int16          `db:"dom"`
-	XDatUnosa  sql.NullTime   `db:"xdatunosa" format:"datetime"`
-	XDatIzmene sql.NullTime   `db:"xdatizmene" format:"datetime"`
-	XOpUnos    sql.NullString `db:"xopunos"`
-	XOpIzmene  sql.NullString `db:"xopizmene"`
-	PGodPS     float64        `db:"pgodps"`
-	PGodHPS    int            `db:"pgodhps"`
-	TGodPS     float64        `db:"tgodps"`
-	TGodHPS    int            `db:"tgodhps"`
-	Napomena   string         `db:"napomena"`
-	Skraceni   int16          `db:"skraceni"`
+	BilsID     int            `db:"bilsid" addupdate:"true"`
+	God        int            `db:"god" addupdate:"true"`
+	Kar        int            `db:"kar" addupdate:"true"`
+	AOP        int            `db:"aop" form:"aop" addupdate:"true"`
+	NazP       string         `db:"nazp" form:"nazp" addupdate:"true"`
+	Konta      string         `db:"konta" form:"konta" addupdate:"true"`
+	Rbr        int64          `db:"rbr" form:"rbr" addupdate:"true"`
+	TGod       float64        `db:"tgod" addupdate:"true"`
+	PGod       float64        `db:"pgod" addupdate:"true"`
+	Grac       string         `db:"grac" form:"grac" addupdate:"true"`
+	NiPo       int16          `db:"nipo" form:"nipo" addupdate:"true"`
+	TGodH      int64          `db:"tgodh" addupdate:"true"`
+	PGodH      int64          `db:"pgodh" addupdate:"true"`
+	Pozic1     int16          `db:"pozic_1" form:"pozic_1" addupdate:"true"`
+	Pozic2     int16          `db:"pozic_2" form:"pozic_2" addupdate:"true"`
+	Pozic3     int16          `db:"pozic_3" form:"pozic_3" addupdate:"true"`
+	Pozic4     int16          `db:"pozic_4" form:"pozic_4" addupdate:"true"`
+	Pozic5     int16          `db:"pozic_5" form:"pozic_5" addupdate:"true"`
+	Pozic6     int16          `db:"pozic_6" form:"pozic_6" addupdate:"true"`
+	Pozic7     int16          `db:"pozic_7" form:"pozic_7" addupdate:"true"`
+	Pozic8     int16          `db:"pozic_8" form:"pozic_8" addupdate:"true"`
+	Pozic9     int16          `db:"pozic_9" form:"pozic_9" addupdate:"true"`
+	Pozic10    int16          `db:"pozic_10" form:"pozic_10" addupdate:"true"`
+	Pozic11    int16          `db:"pozic_11" form:"pozic_11" addupdate:"true"`
+	Pozic12    int16          `db:"pozic_12" form:"pozic_12" addupdate:"true"`
+	Odm        int16          `db:"odm" addupdate:"true"`
+	Dom        int16          `db:"dom" addupdate:"true"`
+	XDatUnosa  sql.NullTime   `db:"xdatunosa" addupdate:"true" format:"datetime"`
+	XDatIzmene sql.NullTime   `db:"xdatizmene" addupdate:"true" format:"datetime"`
+	XOpUnos    sql.NullString `db:"xopunos" addupdate:"true"`
+	XOpIzmene  sql.NullString `db:"xopizmene" addupdate:"true"`
+	PGodPS     float64        `db:"pgodps" addupdate:"true"`
+	PGodHPS    int64          `db:"pgodhps" addupdate:"true"`
+	TGodPS     float64        `db:"tgodps" addupdate:"true"`
+	TGodHPS    int64          `db:"tgodhps" addupdate:"true"`
+	Napomena   string         `db:"napomena" addupdate:"true"`
+	Skraceni   int16          `db:"skraceni" form:"skraceni" addupdate:"true"`
+	Naziv      string         `db:"naziv" addupdate:"false"`
+	Vkonta     string         `db:"vkonta" addupdate:"false"`
 }
 
 // Bilu represents the "baza.bilu" table (Income Statements).
 type Bilu struct {
-	BiluID     int            `db:"biluid" gorm:"primaryKey"`
-	God        int            `db:"god"`
-	Kar        int            `db:"kar"`
-	AOP        int            `db:"aop"`
-	NazP       string         `db:"nazp"`
-	Konta      string         `db:"konta"`
-	Rbr        float64        `db:"rbr"`
-	TGod       float64        `db:"tgod"`
-	PGod       float64        `db:"pgod"`
-	Grac       string         `db:"grac"`
-	NiPo       int16          `db:"nipo"`
-	Pozic1     int16          `db:"pozic_1"`
-	Pozic2     int16          `db:"pozic_2"`
-	Pozic3     int16          `db:"pozic_3"`
-	Pozic4     int16          `db:"pozic_4"`
-	Pozic5     int16          `db:"pozic_5"`
-	Pozic6     int16          `db:"pozic_6"`
-	Pozic7     int16          `db:"pozic_7"`
-	Pozic8     int16          `db:"pozic_8"`
-	Pozic9     int16          `db:"pozic_9"`
-	Pozic10    int16          `db:"pozic_10"`
-	Pozic11    int16          `db:"pozic_11"`
-	Pozic12    int16          `db:"pozic_12"`
-	TGodH      int            `db:"tgodh"`
-	PGodH      int            `db:"pgodh"`
-	Odm        int16          `db:"odm"`
-	Dom        int16          `db:"dom"`
-	XDatUnosa  sql.NullTime   `db:"xdatunosa" format:"datetime"`
-	XDatIzmene sql.NullTime   `db:"xdatizmene" format:"datetime"`
-	XOpUnos    sql.NullString `db:"xopunos"`
-	XOpIzmene  sql.NullString `db:"xopizmene"`
-	Napomena   string         `db:"napomena"`
-	Skraceni   int16          `db:"skraceni"`
+	BiluID     int            `db:"biluid" addupdate:"true" `
+	God        int            `db:"god" addupdate:"true"`
+	Kar        int            `db:"kar" addupdate:"true"`
+	AOP        int            `db:"aop" form:"aop" addupdate:"true"`
+	NazP       string         `db:"nazp" form:"nazp" addupdate:"true"`
+	Konta      string         `db:"konta" form:"konta" addupdate:"true"`
+	Rbr        int64          `db:"rbr" form:"rbr" addupdate:"true"`
+	TGod       float64        `db:"tgod" addupdate:"true"`
+	PGod       float64        `db:"pgod" addupdate:"true"`
+	Grac       string         `db:"grac" addupdate:"true"`
+	NiPo       int16          `db:"nipo" form:"nipo" addupdate:"true"`
+	Pozic1     int16          `db:"pozic_1" form:"pozic_1" addupdate:"true"`
+	Pozic2     int16          `db:"pozic_2" form:"pozic_2" addupdate:"true"`
+	Pozic3     int16          `db:"pozic_3" form:"pozic_3" addupdate:"true"`
+	Pozic4     int16          `db:"pozic_4" form:"pozic_4" addupdate:"true"`
+	Pozic5     int16          `db:"pozic_5" form:"pozic_5" addupdate:"true"`
+	Pozic6     int16          `db:"pozic_6" form:"pozic_6" addupdate:"true"`
+	Pozic7     int16          `db:"pozic_7" form:"pozic_7" addupdate:"true"`
+	Pozic8     int16          `db:"pozic_8" form:"pozic_8" addupdate:"true"`
+	Pozic9     int16          `db:"pozic_9" form:"pozic_9" addupdate:"true"`
+	Pozic10    int16          `db:"pozic_10" form:"pozic_10" addupdate:"true"`
+	Pozic11    int16          `db:"pozic_11" form:"pozic_11" addupdate:"true"`
+	Pozic12    int16          `db:"pozic_12" form:"pozic_12" addupdate:"true"`
+	TGodH      int            `db:"tgodh" addupdate:"true"`
+	PGodH      int            `db:"pgodh" addupdate:"true"`
+	Odm        int16          `db:"odm" addupdate:"true"`
+	Dom        int16          `db:"dom" addupdate:"true"`
+	XDatUnosa  sql.NullTime   `db:"xdatunosa" addupdate:"true" format:"datetime"`
+	XDatIzmene sql.NullTime   `db:"xdatizmene" addupdate:"true" format:"datetime"`
+	XOpUnos    sql.NullString `db:"xopunos" addupdate:"true"`
+	XOpIzmene  sql.NullString `db:"xopizmene" addupdate:"true"`
+	Napomena   string         `db:"napomena" addupdate:"true"`
+	Skraceni   int16          `db:"skraceni" form:"skraceni" addupdate:"true"`
+	Naziv      string         `db:"naziv" addupdate:"false"`
+	Vkonta     string         `db:"vkonta" addupdate:"false"`
 }
 
-type BilsPayload struct {
-	Bils
-	Naziv  string `db:"naziv"`
-	Vkonta string `db:"vkonta"`
-}
-type BiluPayload struct {
-	Bilu
-	Naziv  string `db:"naziv"`
-	Vkonta string `db:"vkonta"`
+type BilansiTotals struct {
+	TekGod     string
+	TekGodH    string
+	PrethGod   string
+	PrethGodH  string
+	PocStanje  string
+	PocStanjeH string
 }

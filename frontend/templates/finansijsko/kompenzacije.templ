@@ -2,9 +2,9 @@ package finansijsko
 
 import (
 	tmpl "helia/frontend/templates"
+	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
-	"helia/i18n"
 )
 
 // Main Kompenzacije content with tabs
@@ -32,7 +32,8 @@ templ KompenzacijePregledPartnera(tabs domain.TabData, tbl domain.TableData, sea
 				@tmpl.FormObradaButton(btnObrada, translator)
 				@tmpl.PrintButton(btnPrint, translator)
 			</div>
-			<div class="border bg-blue-100 border border-blue-400 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
+			<div class="border bg-blue-100 border border-blue-400 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative">
+				@tmpl.LoadingSpinner()
 				@tmpl.Search_Part(tbl, searchControl)
 				<div class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
 					@tmpl.Table(tbl, translator)
@@ -40,6 +41,7 @@ templ KompenzacijePregledPartnera(tabs domain.TabData, tbl domain.TableData, sea
 			</div>
 		</div>
 	</div>
+	@tmpl.SpinnerScript()
 }
 
 // Tab 2: Formiranje kompenzacije
@@ -331,7 +333,19 @@ templ KompenzacijePregled(tabs domain.TabData, tbl domain.TableData, dokumentaDa
 				</div>
 			</div>
 			<!-- Two tables split 50/50 vertically -->
-			<div class="grid grid-rows-2 gap-1 flex-1 min-h-0 overflow-hidden mt-1">
+			<div class="grid grid-rows-2 gap-1 flex-1 min-h-0 overflow-hidden mt-1 relative">
+				<!-- Overlay spinner -->
+				<div id="loading-spinner" class="hidden absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 rounded-lg z-50">
+					<div class="flex flex-col items-center justify-center gap-3">
+						<div class="relative h-16 w-16">
+							<!-- Outer ring -->
+							<div class="absolute inset-0 rounded-full border-4 border-transparent border-t-blue-600 border-r-blue-400 animate-spin" style="animation-duration: 1.5s"></div>
+							<!-- Inner ring -->
+							<div class="absolute inset-2 rounded-full border-4 border-transparent border-b-blue-600 border-l-blue-400 animate-spin" style="animation-duration: 1s; animation-direction: reverse"></div>
+						</div>
+						<div class="text-white text-sm font-medium">loading...</div>
+					</div>
+				</div>
 				<!-- Main kompenzacije table -->
 				<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
 					@tmpl.Search_Part(tbl, searchControl)
@@ -349,6 +363,7 @@ templ KompenzacijePregled(tabs domain.TabData, tbl domain.TableData, dokumentaDa
 			</div>
 		</div>
 	</div>
+	@tmpl.SpinnerScript()
 }
 
 // Tab 4: Knjiženje kompenzacija
@@ -543,3 +558,4 @@ templ KompenzacijeKnjizenje(tabs domain.TabData, tbl domain.TableData, dokumenta
 		</div>
 	</div>
 }
+

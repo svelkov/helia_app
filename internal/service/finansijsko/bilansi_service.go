@@ -3,12 +3,14 @@ package finansijsko
 import (
 	"fmt"
 	"helia/config"
+	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
 	"helia/internal/repository"
 	"helia/internal/service"
+	"math"
 	"reflect"
-	"strings"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -20,17 +22,32 @@ type BilansiService interface {
 	GetBilansStanjaTableFields() []domain.Fields
 	GetBilansUspehaTableFields() []domain.Fields
 	GetZakljucniList(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error
-	GetBilansStanja(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error
-	GetBilansUspeha(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error
+	GetBilansStanja(c *gin.Context, tbl *domain.TableData) error
+	StampaBilansStanja(c *gin.Context, tbl *domain.TableData, getTotalRecords, getOnlyTotals bool, pageSize, currentPage int, totals *domain.BilansiTotals) error
+	GetBilansUspeha(c *gin.Context, tbl *domain.TableData) error
+	GetByID(idField string, idValue interface{}) (*domain.Bils, error)
+	Update(c *gin.Context, entity *domain.Bils, idField string, idValue interface{}, tableFields []domain.Fields) error
+	Add(c *gin.Context, entity *domain.Bils, idField string, tableFields []domain.Fields) (int64, error)
+	MapEntityToValues(entity *domain.Bils, tableFields []domain.Fields) []domain.Fields
+	ValidateBilansStanja(entity *domain.Bils) ([]domain.FieldError, error)
+	DeleteBilansStanja(c *gin.Context) error
 	GetFieldCache() map[string]reflect.StructField
+	// Bilu (Bilans Uspeha) methods
+	GetByIDBilu(idField string, idValue int64) (*domain.Bilu, error)
+	UpdateBilu(c *gin.Context, entity *domain.Bilu, idField string, idValue interface{}, tableFields []domain.Fields) error
+	AddBilu(c *gin.Context, entity *domain.Bilu, idField string, tableFields []domain.Fields) (int64, error)
+	MapEntityToValuesBilu(entity *domain.Bilu, tableFields []domain.Fields) []domain.Fields
+	ValidateBilansUspeha(entity *domain.Bilu) []domain.FieldError
+	DeleteBilansUspeha(c *gin.Context) error
+	GetFieldCacheBilu() map[string]reflect.StructField
 }
 
 // BilansiResource implements the BilansiService interface.
 type BilansiResource struct {
-	biluService             *service.BaseService[domain.BiluPayload]
-	biluRepo                *repository.BaseRepository[domain.BiluPayload]
-	bilsService             *service.BaseService[domain.BilsPayload]
-	bilsRepo                *repository.BaseRepository[domain.BilsPayload]
+	biluService             *service.BaseService[domain.Bilu]
+	biluRepo                *repository.BaseRepository[domain.Bilu]
+	bilsService             *service.BaseService[domain.Bils]
+	bilsRepo                *repository.BaseRepository[domain.Bils]
 	fproRepo                *repository.BaseRepository[domain.FproDto]
 	zakljucniTableFields    []domain.Fields
 	bilansStanjaTableFields []domain.Fields
@@ -39,10 +56,10 @@ type BilansiResource struct {
 }
 
 func NewBilansiService(
-	biluService *service.BaseService[domain.BiluPayload],
-	biluRepo *repository.BaseRepository[domain.BiluPayload],
-	bilsService *service.BaseService[domain.BilsPayload],
-	bilsRepo *repository.BaseRepository[domain.BilsPayload],
+	biluService *service.BaseService[domain.Bilu],
+	biluRepo *repository.BaseRepository[domain.Bilu],
+	bilsService *service.BaseService[domain.Bils],
+	bilsRepo *repository.BaseRepository[domain.Bils],
 	fproRepo *repository.BaseRepository[domain.FproDto],
 	cfg config.Config,
 ) *BilansiResource {
@@ -58,6 +75,19 @@ func NewBilansiService(
 	return rs
 }
 
+func (s *BilansiResource) GetByID(idField string, idValue int64) (*domain.Bils, error) {
+	return s.bilsRepo.GetByID(idField, idValue)
+}
+func (s *BilansiResource) Update(c *gin.Context, entity *domain.Bils, idField string, idValue interface{}, tableFields []domain.Fields) error {
+	return s.bilsRepo.Update(c, entity, idField, idValue, tableFields)
+}
+func (s *BilansiResource) Add(c *gin.Context, entity *domain.Bils, idField string, tableFields []domain.Fields) (int64, error) {
+	return s.bilsRepo.Create(c, entity, idField, tableFields)
+}
+func (s *BilansiResource) MapEntityToValues(entity *domain.Bils, tableFields []domain.Fields) []domain.Fields {
+	return s.bilsService.MapEntityToValues(entity, tableFields)
+}
+
 // GetZakljucniTableFields returns the table field definitions for Zakljucni list
 func (s *BilansiResource) GetZakljucniTableFields() []domain.Fields {
 	return s.zakljucniTableFields
@@ -71,23 +101,6 @@ func (s *BilansiResource) GetBilansStanjaTableFields() []domain.Fields {
 // GetBilansUspehaTableFields returns the table field definitions for Bilans uspeha
 func (s *BilansiResource) GetBilansUspehaTableFields() []domain.Fields {
 	return s.bilansUspehaTableFields
-}
-
-// ZakljucniListItem represents a closing list item
-type ZakljucniListItem struct {
-	RB        int
-	Konto     string
-	Sifra     string
-	Naziv     string
-	Klasa     string
-	Grupa     string
-	Sint      string
-	PstDug    float64 // Beginning balance debit
-	PstPot    float64 // Beginning balance credit
-	PrometDug float64 // Debit movement
-	PrometPot float64 // Credit movement
-	SaldoDug  float64 // Debit balance
-	SaldoPot  float64 // Credit balance
 }
 
 // GetZakljucniList retrieves data for Zakljucni list (closing account balance)
@@ -115,185 +128,251 @@ func (s *BilansiResource) GetZakljucniList(c *gin.Context, tbl *domain.TableData
 	samosaprometom := c.Query("samosaprometom")
 	//zabanku := c.Query("zabanku")
 
-	// Build map to store closing list items
-	zakljucniMap := make(map[string]*ZakljucniListItem)
+	// =============================================================================
+	// STEP 1: Define query structure based on tipLista (analytical level)
+	// =============================================================================
+	type QueryConfig struct {
+		selectCols  string // Columns to select in inner query
+		groupByCols string // Columns to group by
+		orderByCols string // Columns to order by
+	}
 
-	// Build optimized query with only needed columns
-	qb := common.NewQueryBuilder(`SELECT fpro.konto, fpro.sifra, coalesce(fkpl.naziv, '') as naziv,
-								  fpro.tipdok, fpro.iznos, fpro.kat FROM fpro`)
-	// Conditional joins only
-	if tipLista == "1" {
-		qb.AddJoin("left join fkpl on fkpl.idfkpl = fpro.idfkpl")
+	var config QueryConfig
+	switch tipLista {
+	case "1": // Analitička (detailed by konto + sifra)
+		config = QueryConfig{
+			selectCols:  "fpro.konto, fpro.sifra, fpro.idfkpl,",
+			groupByCols: "fpro.konto, fpro.sifra, fpro.idfkpl",
+			orderByCols: "COALESCE(NULLIF(agg.konto, '')::numeric, 0) ASC, COALESCE(NULLIF(agg.sifra, '')::numeric, 0) ASC",
+		}
+	case "2": // Sintetička (summary by konto only)
+		config = QueryConfig{
+			selectCols:  "fpro.konto,",
+			groupByCols: "fpro.konto",
+			orderByCols: "COALESCE(NULLIF(agg.konto, '')::numeric, 0) ASC",
+		}
+	case "3": // Grupa (summary by truncated konto)
+		config = QueryConfig{
+			selectCols:  fmt.Sprintf("LEFT(fpro.konto, %d) as konto,", s.cfg.NDuzSint),
+			groupByCols: fmt.Sprintf("LEFT(fpro.konto, %d)", s.cfg.NDuzSint),
+			orderByCols: "COALESCE(NULLIF(agg.konto, '')::numeric, 0) ASC",
+		}
 	}
-	if tipLista == "2" {
-		qb.AddJoin("left join fkpl on fkpl.god = fpro.god and fkpl.kar = fpro.kar and fkpl.konto = fpro.konto and fkpl.vkonta = 2")
-	}
-	if tipLista == "3" {
-		qb.AddJoin("left join fkpl on fkpl.god = fpro.god and fkpl.kar = fpro.kar and fkpl.konto = left(fpro.konto, length(fpro.konto) -1)  and fkpl.vkonta = 3")
-	}
-	// Add god and kar filters
+
+	// =============================================================================
+	// STEP 2: Build INNER aggregation query (fpro transactions grouped by account)
+	// =============================================================================
+	aggregationSQL := fmt.Sprintf(`%s
+		COALESCE(SUM(CASE WHEN fpro.tipdok = '00' AND (fpro.kat = 1 OR fpro.kat = 2) THEN fpro.iznos ELSE 0 END), 0) as pocstanjedug,
+		COALESCE(SUM(CASE WHEN fpro.tipdok = '00' AND fpro.kat NOT IN (1,2) THEN fpro.iznos ELSE 0 END), 0) as pocstanjepot,
+		COALESCE(SUM(CASE WHEN fpro.tipdok != '00' AND (fpro.kat = 1 OR fpro.kat = 2) THEN fpro.iznos ELSE 0 END), 0) as prometdug,
+		COALESCE(SUM(CASE WHEN fpro.tipdok != '00' AND fpro.kat NOT IN (1,2) THEN fpro.iznos ELSE 0 END), 0) as prometpot
+		FROM fpro`, fmt.Sprintf("SELECT %s", config.selectCols))
+
+	innerQb := common.NewQueryBuilder(aggregationSQL)
+
+	// Add period filters (god/kar)
 	if hasGod {
-		qb.AddEqual("fpro.god", session.SelectedGod)
+		innerQb.AddEqual("fpro.god", session.SelectedGod)
 	}
 	if hasKar {
-		qb.AddEqual("fpro.kar", session.SelectedKar)
+		innerQb.AddEqual("fpro.kar", session.SelectedKar)
 	}
 
-	// Add filters
+	// Add date range filters
+	innerQb.AddCondition("fpro.danal", odDatuma, ">=")
+	innerQb.AddCondition("fpro.danal", doDatuma, "<=")
+
+	// Add konta (account) range filters
 	if odKonta != "" {
-		qb.AddCondition("fpro.konto::numeric", odKonta, ">=")
+		innerQb.AddCondition("COALESCE(NULLIF(fpro.konto, '')::numeric, 0)", odKonta, ">=")
 	}
 	if doKonta != "" {
-		qb.AddCondition("fpro.konto::numeric", doKonta, "<=")
+		innerQb.AddCondition("COALESCE(NULLIF(fpro.konto, '')::numeric, 0)", doKonta, "<=")
 	}
-	qb.AddCondition("fpro.danal", odDatuma, ">=")
-	qb.AddCondition("fpro.danal", doDatuma, "<=")
+
+	// Add specific filters
+	if klasa9 == "true" {
+		innerQb.AddLikeBegin("fpro.konto", "9") // Filter for class 9 accounts only
+	}
+
+	// Add sifra (code) range filters only for tipLista "1"
 	if tipLista == "1" {
-		// Analytic: by account and code
 		if odSifre != "" {
-			qb.AddCondition("COALESCE(NULLIF(fpro.sifra, '')::numeric, 0)", odSifre, ">=")
+			innerQb.AddCondition("COALESCE(NULLIF(fpro.sifra, '')::numeric, 0)", odSifre, ">=")
 		}
 		if doSifre != "" {
-			qb.AddCondition("COALESCE(NULLIF(fpro.sifra, '')::numeric, 0)", doSifre, "<=")
+			innerQb.AddCondition("COALESCE(NULLIF(fpro.sifra, '')::numeric, 0)", doSifre, "<=")
 		}
 	}
 
-	qb.AddOrderBy("fpro.konto::numeric ASC, COALESCE(NULLIF(fpro.sifra, '')::numeric, 0) ASC")
-	// Execute query
-	sqlQuery, args := qb.Build()
-	//fmt.Println("SQL Query for Zakljucni list:", sqlQuery, args)
-	entities, err := s.fproRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
+	// Filter vkonta (account type): only 1 (assets) and 2 (liabilities) for tipLista 1 and 2
+	if tipLista == "1" || tipLista == "2" {
+		innerQb.AddIn("fpro.vkonta", []interface{}{"1", "2"})
+	}
+
+	// Apply grouping to aggregate transactions
+	innerQb.AddGroupBy(config.groupByCols)
+
+	// Filter by samosaprometom if needed (exclude zero saldo rows)
+	if samosaprometom == "true" {
+		innerQb.AddHaving("((COALESCE(SUM(CASE WHEN fpro.tipdok = '00' AND (fpro.kat = 1 OR fpro.kat = 2) THEN fpro.iznos ELSE 0 END), 0) + COALESCE(SUM(CASE WHEN fpro.tipdok != '00' AND (fpro.kat = 1 OR fpro.kat = 2) THEN fpro.iznos ELSE 0 END), 0)) != 0 OR (COALESCE(SUM(CASE WHEN fpro.tipdok = '00' AND fpro.kat NOT IN (1,2) THEN fpro.iznos ELSE 0 END), 0) + COALESCE(SUM(CASE WHEN fpro.tipdok != '00' AND fpro.kat NOT IN (1,2) THEN fpro.iznos ELSE 0 END), 0)) != 0)")
+	}
+
+	// Build inner aggregation query
+	innerSql, innerArgs := innerQb.Build()
+
+	// =============================================================================
+	// STEP 3: Build OUTER query - join with account names from fkpl table
+	// =============================================================================
+	var outerSql string
+	var allArgs []interface{}
+
+	switch tipLista {
+	case "1": // Analitička - join directly to fkpl by idfkpl
+		// Build outer query builder with inner SQL embedded
+		outerQb := common.NewQueryBuilder(fmt.Sprintf(
+			`SELECT agg.*, COALESCE(fkpl.naziv, '') as naziv FROM (%s) agg`, innerSql))
+		outerQb.AddJoin("left join fkpl on fkpl.idfkpl = agg.idfkpl")
+		outerQb.AddOrderBy(config.orderByCols)
+
+		// Add pagination using QueryBuilder
+		if !getTotalRecords {
+			outerQb.SetLimit(pageSize)
+			outerQb.SetOffset((currentPage - 1) * pageSize)
+		}
+		outerQb.AddArgs(innerArgs...) // Add inner query parameters
+		// Build outer query - it should not create new parameters since no WHERE conditions
+		outerSql, allArgs = outerQb.Build()
+
+	case "2": // Sintetička - get distinct naziv per konto
+		// Build distinct subquery for fkpl names
+		distinctQb := common.NewQueryBuilder(
+			`SELECT DISTINCT ON (konto) konto, naziv FROM fkpl`)
+		distinctQb.AddArgs(innerArgs...) // Add inner query parameters if needed for filtering
+		distinctQb.AddEqual("vkonta", 2)
+		distinctQb.AddOrderBy("konto, god DESC, kar DESC")
+		distinctSql, distinctArgs := distinctQb.Build()
+
+		// Build outer query builder with inner SQL and distinct subquery embedded
+		outerQb := common.NewQueryBuilder(fmt.Sprintf(
+			`SELECT agg.*, COALESCE(fkpl_data.naziv, '') as naziv FROM (%s) agg LEFT JOIN (%s) fkpl_data ON fkpl_data.konto = agg.konto`,
+			innerSql, distinctSql))
+		outerQb.AddOrderBy(config.orderByCols)
+
+		// Add pagination using QueryBuilder
+		if !getTotalRecords {
+			outerQb.SetLimit(pageSize)
+			outerQb.SetOffset((currentPage - 1) * pageSize)
+		}
+		outerQb.AddArgs(distinctArgs...) // Add distinct query parameters (if any)
+		// Add inner query parameters
+		// Build outer query - combine parameters from inner and distinct queries only
+		outerSql, allArgs = outerQb.Build()
+
+	case "3": // Grupa - get distinct naziv per truncated konto group
+		// Build distinct subquery for fkpl names grouped by truncated konto
+		distinctQb := common.NewQueryBuilder(fmt.Sprintf(
+			`SELECT DISTINCT ON (LEFT(konto, %d)) LEFT(konto, %d) as konto_trunc, naziv FROM fkpl`,
+			s.cfg.NDuzSint, s.cfg.NDuzSint))
+		distinctQb.AddArgs(innerArgs...)
+		distinctQb.AddEqual("vkonta", 3)
+		distinctQb.AddOrderBy(fmt.Sprintf("LEFT(konto, %d), god DESC, kar DESC", s.cfg.NDuzSint))
+		distinctSql, distinctArgs := distinctQb.Build()
+
+		// Build outer query builder with inner SQL and distinct subquery embedded
+		outerQb := common.NewQueryBuilder(fmt.Sprintf(
+			`SELECT agg.*, COALESCE(fkpl_data.naziv, '') as naziv FROM (%s) agg LEFT JOIN (%s) fkpl_data ON fkpl_data.konto_trunc = agg.konto`,
+			innerSql, distinctSql))
+		outerQb.AddOrderBy(config.orderByCols)
+
+		// Add pagination using QueryBuilder
+		if !getTotalRecords {
+			outerQb.SetLimit(pageSize)
+			outerQb.SetOffset((currentPage - 1) * pageSize)
+		}
+		outerQb.AddArgs(distinctArgs...) // Add distinct query parameters (if any)
+		// Build outer query - combine parameters from inner and distinct queries only
+		outerSql, allArgs = outerQb.Build()
+	}
+
+	// =============================================================================
+	// STEP 4: Execute query with pagination applied at SQL level
+	// =============================================================================
+	//fmt.Println("SQL Query for Zakljucni list:", outerSql, allArgs)
+	entities, err := s.fproRepo.GetAllCustom(c, outerSql, "", allArgs, "", "")
 	if err != nil {
 		return err
 	}
-	// Read records and build map
-	redBr := 1
-	for _, entity := range *entities {
-		// Determine key based on tip lista
-		var sKey string
-		switch tipLista {
-		case "1":
-			sKey = fmt.Sprintf("%s-%s", entity.Konto, entity.Sifra)
-		case "2", "3":
-			sKey = entity.Konto
-		}
 
-		// Get or create item in map
-		item, exists := zakljucniMap[sKey]
-		if !exists {
-			klasa := ""
-			grupa := ""
-			sint := ""
-			if len(entity.Konto) > 0 {
-				klasa = entity.Konto[0:1]
-			}
-			if len(entity.Konto) >= s.cfg.NDuzSint {
-				grupa = entity.Konto[0 : s.cfg.NDuzSint-1]
-				sint = entity.Konto[0:s.cfg.NDuzSint]
-			}
-			item = &ZakljucniListItem{
-				RB:    redBr,
-				Konto: entity.Konto,
-				Sifra: entity.Sifra,
-				Naziv: entity.Naziv,
-				Klasa: klasa,
-				Grupa: grupa,
-				Sint:  sint,
-			}
-			if tipLista == "2" || tipLista == "3" {
-				item.Sifra = ""
-			}
-			if tipLista == "3" {
-				item.Konto = item.Konto[0 : len(item.Konto)-1]
-			}
-			zakljucniMap[sKey] = item
-			redBr++
-		}
-
-		// Accumulate values
-		if entity.Tipdok == "00" {
-			// Beginning balance
-			if entity.Kat == 1 || entity.Kat == 2 {
-				item.PstDug += entity.Iznos
-				item.SaldoDug += entity.Iznos
-			} else {
-				item.PstPot += entity.Iznos
-				item.SaldoPot += entity.Iznos
-			}
-		} else {
-			// Movement
-			if entity.Kat == 1 || entity.Kat == 2 {
-				item.PrometDug += entity.Iznos
-				item.SaldoDug += entity.Iznos
-			} else {
-				item.PrometPot += entity.Iznos
-				item.SaldoPot += entity.Iznos
-			}
-		}
-	}
-
-	// Convert map to slice and apply filters
-	items := make([]*ZakljucniListItem, 0, len(zakljucniMap))
-	for _, item := range zakljucniMap {
-		// Filter: skip items with no movement if checkbox is set
-		if samosaprometom == "true" && item.SaldoDug == 0 && item.SaldoPot == 0 {
-			continue
-		}
-
-		// Filter: skip class 9 if checkbox is not set
-		if klasa9 != "true" && item.Klasa == "9" {
-			continue
-		}
-
-		// Calculate net balance
-		if item.SaldoDug > item.SaldoPot {
-			item.SaldoDug = item.SaldoDug - item.SaldoPot
-			item.SaldoPot = 0
-		} else if item.SaldoDug < item.SaldoPot {
-			item.SaldoPot = item.SaldoPot - item.SaldoDug
-			item.SaldoDug = 0
-		} else {
-			item.SaldoDug = 0
-			item.SaldoPot = 0
-		}
-
-		items = append(items, item)
-	}
-
-	// Handle pagination
+	// Count filtered items if needed for total records
 	if getTotalRecords {
-		common.SetTableTotalRecords(tbl, len(items), pageSize)
+		count := len(*entities)
+		common.SetTableTotalRecords(tbl, count, pageSize)
+		tbl.Totals = make([]string, len(tbl.Headers))
+		tbl.Totals[0] = i18n.GetInstance().Label("Ukupno") // Set label for totals column
+		var pstPotTotal, pstDugTotal, dugTotal, potTotal float64
+
+		for _, entity := range *entities {
+			// Calculate combined saldo for counting total records
+			pstDugTotal += entity.PocStanjeDug
+			pstPotTotal += entity.PocStanjePot
+			dugTotal += entity.PrometDug
+			potTotal += entity.PrometPot
+		}
+		tbl.Totals[4] = common.FormatNumberWithSystemLocale(pstDugTotal, 2)                    // Total for Tekuća godina (can be calculated if needed)
+		tbl.Totals[5] = common.FormatNumberWithSystemLocale(pstDugTotal, 2)                    // Total for Prethodna godina (can be calculated if needed)
+		tbl.Totals[6] = common.FormatNumberWithSystemLocale(dugTotal, 2)                       // Total for Prethodna godina - početno stanje (can be calculated if needed)
+		tbl.Totals[7] = common.FormatNumberWithSystemLocale(potTotal, 2)                       // Total for Promet potražuje (can be calculated if needed)
+		tbl.Totals[8] = common.FormatNumberWithSystemLocale(math.Abs(pstDugTotal+dugTotal), 2) // Total for Saldo duguje (can be calculated if needed)
+		tbl.Totals[9] = common.FormatNumberWithSystemLocale(math.Abs(pstPotTotal+potTotal), 2) // Total for Saldo potražuje (can be calculated if needed)
 		return nil
 	}
 
-	// Apply pagination
+	// Populate table rows - pagination is already applied at SQL level
 	start := (currentPage - 1) * pageSize
-	end := start + pageSize
-	if end > len(items) {
-		end = len(items)
-	}
+	rowNum := 1
 
-	var paginatedItems []*ZakljucniListItem
-	if start < len(items) {
-		paginatedItems = items[start:end]
-	}
+	for _, entity := range *entities {
+		// Calculate combined saldo
+		saldoDug := entity.PocStanjeDug + entity.PrometDug
+		saldoPot := entity.PocStanjePot + entity.PrometPot
 
-	// Populate table rows
-	for i, item := range paginatedItems {
-		fields := []string{
-			fmt.Sprintf("%d", start+i+1),
-			item.Konto,
-			item.Sifra,
-			item.Naziv,
-			common.FormatNumberWithSystemLocale(item.PstDug, 2),
-			common.FormatNumberWithSystemLocale(item.PstPot, 2),
-			common.FormatNumberWithSystemLocale(item.PrometDug, 2),
-			common.FormatNumberWithSystemLocale(item.PrometPot, 2),
-			common.FormatNumberWithSystemLocale(item.SaldoDug, 2),
-			common.FormatNumberWithSystemLocale(item.SaldoPot, 2),
+		if saldoDug > saldoPot {
+			saldoDug = saldoDug - saldoPot
+			saldoPot = 0
+		} else if saldoPot > saldoDug {
+			saldoPot = saldoPot - saldoDug
+			saldoDug = 0
+		} else {
+			saldoDug = 0
+			saldoPot = 0
 		}
+		// Build fields based on tipLista
+		fields := []string{
+			fmt.Sprintf("%d", start+rowNum),
+			entity.Konto,
+		}
+		sifra := ""
+		// Add sifra only for tipLista "1"
+		if tipLista == "1" {
+			sifra = entity.Sifra
+		}
+		fields = append(fields, []string{
+			sifra,
+			entity.Naziv,
+			common.FormatNumberWithSystemLocale(entity.PocStanjeDug, 2),
+			common.FormatNumberWithSystemLocale(entity.PocStanjePot, 2),
+			common.FormatNumberWithSystemLocale(entity.PrometDug, 2),
+			common.FormatNumberWithSystemLocale(entity.PrometPot, 2),
+			common.FormatNumberWithSystemLocale(saldoDug, 2),
+			common.FormatNumberWithSystemLocale(saldoPot, 2),
+		}...)
+
 		tblRow := domain.TableRow{Fields: fields, HasUpdate: false, HasDelete: false}
 		tbl.Rows = append(tbl.Rows, tblRow)
+
+		rowNum++
 	}
 
 	// Set table headers
@@ -303,138 +382,184 @@ func (s *BilansiResource) GetZakljucniList(c *gin.Context, tbl *domain.TableData
 }
 
 // GetBilansStanja retrieves data for Bilans stanja (balance sheet)
-func (s *BilansiResource) GetBilansStanja(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error {
+func (s *BilansiResource) GetBilansStanja(c *gin.Context, tbl *domain.TableData) error {
 	session := domain.GetSessionFromContext(c)
 	if session == nil {
 		return fmt.Errorf("user session not found")
 	}
-
-	common.SetTableConfig(tbl, "Bilans stanja", "", true, true, false)
-	tbl.SearchEnabled = true
-	common.SetupTablePagination(tbl, currentPage, pageSize)
+	hasGod, hasKar := s.bilsRepo.GetHasGodHasKar()
 
 	searchText := c.Query("query")
 	skraceni := c.Query("skraceni") == "true"
-	searchLower := strings.ToLower(searchText)
 
-	// Build optimized query for BILS data
-	qb := common.NewQueryBuilder(`SELECT bils.idbils, bils.vkonta, bils.naziv, bils.aop, 
-		bils.konta, bils.tgod, bils.pgod, bils.nipo, bils.tgodh, bils.pgodh, bils.pozicije, bils.skraceni FROM bils`)
+	// Get Totals for table
+	qbTotals := common.NewQueryBuilder(`SELECT
+			COALESCE(SUM(bils.tgod), 0) as tgod,
+			COALESCE(SUM(bils.tgodh), 0) as tgodh,
+			COALESCE(SUM(bils.pgod), 0) as pgod,
+			COALESCE(SUM(bils.pgodh), 0) as pgodh,
+			COALESCE(SUM(bils.pgodps), 0) as pgodps,
+			COALESCE(SUM(bils.pgodhps), 0) as pgodhps
+			FROM bils`)
 
-	// Add filters directly in query
-	qb.AddEqual("bils.god", session.SelectedGod)
-	qb.AddEqual("bils.kar", session.SelectedKar)
+	qb := common.NewQueryBuilder(`SELECT 
+			bils.bilsid, bils.rbr, bils.grac, bils.nazp, bils.aop, 
+			bils.konta, bils.tgod, bils.pgod,
+			bils.nipo, bils.tgodh, bils.pgodh,
+			bils.pozic_1, bils.pozic_2, bils.pozic_3, bils.pozic_4, 
+			bils.pozic_5, bils.pozic_6, bils.pozic_7, bils.pozic_8,
+			bils.pozic_9, bils.pozic_10, bils.pozic_11, bils.pozic_12, bils.skraceni FROM bils`)
+
+	// Add same filters to both queries
+	if hasGod {
+		qb.AddEqual("bils.god", session.SelectedGod)
+		qbTotals.AddEqual("bils.god", session.SelectedGod)
+	}
+	if hasKar {
+		qb.AddEqual("bils.kar", session.SelectedKar)
+		qbTotals.AddEqual("bils.kar", session.SelectedKar)
+	}
 
 	// Filter by skraceni flag if set
 	if skraceni {
-		qb.AddEqual("bils.skraceni", 1)
+		qb.AddEqual("bils.skraceni", skraceni)
+		qbTotals.AddEqual("bils.skraceni", skraceni)
 	}
 
 	// Add search filter if provided
 	if searchText != "" {
-		qb.AddCondition("LOWER(bils.naziv)", searchLower, "LIKE")
+		qb.AddLike("bils.nazp", interface{}(searchText))
+		qbTotals.AddLike("bils.nazp", interface{}(searchText))
 	}
 
-	qb.AddOrderBy("bils.nipo ASC, bils.vkonta ASC")
-
-	// Only apply pagination if not counting total records
-	if !getTotalRecords {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
-	}
-
-	// Execute query and get entities
 	sqlQuery, args := qb.Build()
 	entities, err := s.bilsRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
 	if err != nil {
 		return err
 	}
-
-	// Handle total records request
-	if getTotalRecords {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
-		return nil
-	}
-
 	// Populate table rows efficiently
 	if entities != nil && len(*entities) > 0 {
-		start := (currentPage - 1) * pageSize
-		for i, entity := range *entities {
+		for _, entity := range *entities {
 			// Apply filtering logic on processed data
 			if skraceni && entity.Skraceni != 1 {
 				continue
 			}
 
-			// Ensure non-negative values
-			// tgod := int64(0)
-			// if entity.TGOD > 0 {
-			// 	tgod = entity.TGOD
-			// }
-			// pgod := int64(0)
-			// if entity.PGod > 0 {
-			// 	pgod = entity.PGod
-			// }
-
+			//Ensure non-negative values
+			tgod := float64(0)
+			if entity.TGod > 0 {
+				tgod = entity.TGod
+			}
+			pgod := float64(0)
+			if entity.PGod > 0 {
+				pgod = entity.PGod
+			}
+			pgodps := float64(0)
+			if entity.PGodPS > 0 {
+				pgodps = entity.PGodPS
+			}
 			fields := []string{
-				fmt.Sprintf("%d", start+i+1),
-				fmt.Sprintf("%d", entity.Vkonta),
-				entity.Naziv,
+				fmt.Sprintf("%d", entity.Rbr),
+				entity.Grac,
+				entity.NazP,
 				fmt.Sprintf("%d", entity.AOP),
 				entity.Konta,
-				// common.FormatNumberWithSystemLocale(float64(tgod), 2),
-				// common.FormatNumberWithSystemLocale(float64(pgod), 2),
-				// fmt.Sprintf("%d", entity.NiPo),
-				// common.FormatNumberWithSystemLocale(float64(tgod/1000), 2),
-				// common.FormatNumberWithSystemLocale(float64(pgod/1000), 2),
-				//entity.Pozic1,
+				common.FormatNumberWithSystemLocale(float64(tgod), 2),
+				common.FormatNumberWithSystemLocale(float64(pgod), 2),
+				common.FormatNumberWithSystemLocale(float64(pgodps), 2),
+				fmt.Sprintf("%d", entity.NiPo),
+				common.FormatNumberWithSystemLocale(float64(tgod/1000), 2),
+				common.FormatNumberWithSystemLocale(float64(pgod/1000), 2),
+				common.FormatNumberWithSystemLocale(float64(pgodps/1000), 2),
+				fmt.Sprintf("%04d", entity.Pozic1),
+				fmt.Sprintf("%04d", entity.Pozic2),
+				fmt.Sprintf("%04d", entity.Pozic3),
+				fmt.Sprintf("%04d", entity.Pozic4),
+				fmt.Sprintf("%04d", entity.Pozic5),
+				fmt.Sprintf("%04d", entity.Pozic6),
+				fmt.Sprintf("%04d", entity.Pozic7),
+				fmt.Sprintf("%04d", entity.Pozic8),
+				fmt.Sprintf("%04d", entity.Pozic9),
+				fmt.Sprintf("%04d", entity.Pozic10),
+				fmt.Sprintf("%04d", entity.Pozic11),
+				fmt.Sprintf("%04d", entity.Pozic12),
 			}
-			tbl.Rows = append(tbl.Rows, domain.TableRow{Fields: fields, HasUpdate: true, HasDelete: true})
+			tbl.Rows = append(tbl.Rows, domain.TableRow{ID: fmt.Sprintf("%d", entity.BilsID), Fields: fields, HasUpdate: true, HasDelete: true})
 		}
 	}
-
-	// Set table headers
-	tbl.Headers = s.GetBilansStanjaTableFields()
+	// Execute query and get entities
+	sqlQuery, args = qbTotals.Build()
+	entitiesTotal, err := s.bilsRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
+	if err != nil {
+		return err
+	}
+	if len(*entitiesTotal) > 0 {
+		entity := (*entitiesTotal)[0]
+		if len(tbl.Headers) > 10 {
+			// Set totals in header if needed
+			tbl.Totals = make([]string, len(tbl.Headers))
+			tbl.Totals[0] = i18n.GetInstance().Label("Ukupno")                          // Set label for totals column
+			tbl.Totals[5] = common.FormatNumberWithSystemLocale(entity.TGod, 2)         // Tekuća godina
+			tbl.Totals[6] = common.FormatNumberWithSystemLocale(entity.PGod, 2)         // Prethodna godina
+			tbl.Totals[7] = common.FormatNumberWithSystemLocale(entity.PGodPS, 2)       // Prethodna godina - početno stanje
+			tbl.Totals[9] = common.FormatNumberWithSystemLocale(entity.TGod/1000, 2)    // Tekuća godina u hiljadama
+			tbl.Totals[10] = common.FormatNumberWithSystemLocale(entity.PGod/1000, 2)   // Prethodna godina u hiljadama
+			tbl.Totals[11] = common.FormatNumberWithSystemLocale(entity.PGodPS/1000, 2) // Prethodna godina - početno stanje u hiljadama
+		}
+	}
 
 	return nil
 }
 
 // GetBilansUspeha retrieves data for Bilans uspeha (income statement)
-func (s *BilansiResource) GetBilansUspeha(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error {
+func (s *BilansiResource) GetBilansUspeha(c *gin.Context, tbl *domain.TableData) error {
 	session := domain.GetSessionFromContext(c)
 	if session == nil {
 		return fmt.Errorf("user session not found")
 	}
 
-	common.SetTableConfig(tbl, "Bilans uspeha", "", true, true, false)
-	tbl.SearchEnabled = true
-	common.SetupTablePagination(tbl, currentPage, pageSize)
+	hasGod, hasKar := s.bilsRepo.GetHasGodHasKar()
 
 	searchText := c.Query("query")
-	zeroVal := common.FormatNumberWithSystemLocale(0, 2)
+	skraceni := c.Query("skraceni") == "true"
 
-	// Build optimized query for Bilans uspeha - fetches income/expense account data
-	// Only select necessary columns
-	qb := common.NewQueryBuilder(`SELECT bilu.idbilu, bilu.konto, bilu.sifra, bilu.naziv, bilu.vkonta FROM bilu`)
+	// If only totals are needed, we can sum directly in SQL without fetching all records
+	qbTotals := common.NewQueryBuilder(`SELECT
+			COALESCE(SUM(bilu.tgod), 0) as tgod,
+			COALESCE(SUM(bilu.tgodh), 0) as tgodh,
+			COALESCE(SUM(bilu.pgod), 0) as pgod,
+			COALESCE(SUM(bilu.pgodh), 0) as pgodh
+			FROM bilu`)
 
-	// Add filters
-	qb.AddEqual("bilu.god", session.SelectedGod)
-	qb.AddEqual("bilu.kar", session.SelectedKar)
-	// Filter for income/expense accounts (typically classes 4, 5, 6, 7)
-	qb.AddCondition("bilu.vkonta", "4", ">=")
+	qb := common.NewQueryBuilder(`SELECT 
+			bilu.biluid, bilu.rbr, bilu.grac, bilu.nazp, bilu.aop, 
+			bilu.konta, bilu.tgod, bilu.pgod,
+			bilu.nipo, bilu.tgodh, bilu.pgodh,
+			bilu.pozic_1, bilu.pozic_2, bilu.pozic_3, bilu.pozic_4, 
+			bilu.pozic_5, bilu.pozic_6, bilu.pozic_7, bilu.pozic_8,
+			bilu.pozic_9, bilu.pozic_10, bilu.pozic_11, bilu.pozic_12, bilu.skraceni FROM bilu`)
+
+	// Add filters directly in query
+	if hasGod {
+		qb.AddEqual("bilu.god", session.SelectedGod)
+		qbTotals.AddEqual("bilu.god", session.SelectedGod)
+	}
+	if hasKar {
+		qb.AddEqual("bilu.kar", session.SelectedKar)
+		qbTotals.AddEqual("bilu.kar", session.SelectedKar)
+	}
+	// Filter by skraceni flag if set
+	if skraceni {
+		qb.AddEqual("bilu.skraceni", skraceni)
+		qbTotals.AddEqual("bilu.skraceni", skraceni)
+	}
 
 	// Add search filter if provided
 	if searchText != "" {
-		searchLower := strings.ToLower(searchText)
-		qb.AddCondition("LOWER(bilu.naziv)", searchLower, "LIKE")
+		qb.AddLike("bilu.nazp", interface{}(searchText))
 	}
 
-	qb.AddOrderBy("bilu.vkonta ASC, bilu.konto ASC")
-
-	// Only apply pagination if not counting total records
-	if !getTotalRecords {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
-	}
+	qb.AddOrderBy("bilu.rbr ASC")
 
 	// Execute query and get entities
 	sqlQuery, args := qb.Build()
@@ -442,35 +567,452 @@ func (s *BilansiResource) GetBilansUspeha(c *gin.Context, tbl *domain.TableData,
 	if err != nil {
 		return err
 	}
-
-	// Handle total records request
-	if getTotalRecords {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
-		return nil
-	}
-
 	// Populate table rows efficiently
 	if entities != nil && len(*entities) > 0 {
-		start := (currentPage - 1) * pageSize
-		for i, entity := range *entities {
-			fields := []string{
-				fmt.Sprintf("%d", start+i+1),
-				fmt.Sprintf("%d", entity.Vkonta),
-				entity.Naziv,
-				"",
-				"",
-				zeroVal,
-				zeroVal,
-				zeroVal,
+		for _, entity := range *entities {
+			//Ensure non-negative values
+			tgod := float64(0)
+			if entity.TGod > 0 {
+				tgod = entity.TGod
 			}
-			tbl.Rows = append(tbl.Rows, domain.TableRow{Fields: fields, HasUpdate: true, HasDelete: true})
+			pgod := float64(0)
+			if entity.PGod > 0 {
+				pgod = entity.PGod
+			}
+			fields := []string{
+				fmt.Sprintf("%d", entity.Rbr),
+				entity.Grac,
+				entity.NazP,
+				fmt.Sprintf("%d", entity.AOP),
+				entity.Konta,
+				common.FormatNumberWithSystemLocale(float64(tgod), 2),
+				common.FormatNumberWithSystemLocale(float64(pgod), 2),
+				fmt.Sprintf("%d", entity.NiPo),
+				common.FormatNumberWithSystemLocale(float64(tgod/1000), 2),
+				common.FormatNumberWithSystemLocale(float64(pgod/1000), 2),
+				fmt.Sprintf("%04d", entity.Pozic1),
+				fmt.Sprintf("%04d", entity.Pozic2),
+				fmt.Sprintf("%04d", entity.Pozic3),
+				fmt.Sprintf("%04d", entity.Pozic4),
+				fmt.Sprintf("%04d", entity.Pozic5),
+				fmt.Sprintf("%04d", entity.Pozic6),
+				fmt.Sprintf("%04d", entity.Pozic7),
+				fmt.Sprintf("%04d", entity.Pozic8),
+				fmt.Sprintf("%04d", entity.Pozic9),
+				fmt.Sprintf("%04d", entity.Pozic10),
+				fmt.Sprintf("%04d", entity.Pozic11),
+				fmt.Sprintf("%04d", entity.Pozic12),
+			}
+			tbl.Rows = append(tbl.Rows, domain.TableRow{ID: fmt.Sprintf("%d", entity.BiluID), Fields: fields, HasUpdate: true, HasDelete: true})
+		}
+	}
+	// Execute query and get entities
+	sqlQuery, args = qbTotals.Build()
+	entitiesTotal, err := s.bilsRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
+	if err != nil {
+		return err
+	}
+	if len(*entitiesTotal) > 0 {
+		entity := (*entitiesTotal)[0]
+		if len(tbl.Headers) > 10 {
+			// Set totals in header if needed
+			tbl.Totals = make([]string, len(tbl.Headers))
+			tbl.Totals[0] = i18n.GetInstance().Label("Ukupno")                       // Set label for totals column
+			tbl.Totals[5] = common.FormatNumberWithSystemLocale(entity.TGod, 2)      // Tekuća godina
+			tbl.Totals[6] = common.FormatNumberWithSystemLocale(entity.PGod, 2)      // Prethodna godina
+			tbl.Totals[8] = common.FormatNumberWithSystemLocale(entity.TGod/1000, 2) // Tekuća godina u hiljadama
+			tbl.Totals[9] = common.FormatNumberWithSystemLocale(entity.PGod/1000, 2) // Prethodna godina u hiljadama
 		}
 	}
 
-	// Set table headers
-	tbl.Headers = s.GetBilansUspehaTableFields()
+	return nil
+}
+
+func (s *BilansiResource) ValidateBilansStanja(entity *domain.Bils) []domain.FieldError {
+	var fieldErrors []domain.FieldError
+	if entity.Rbr <= 0 {
+		fieldErrors = append(fieldErrors, domain.FieldError{
+			Field:        "rbr",
+			ErrorMessage: "Red. Broj mora biti > 0",
+		})
+	}
+	if entity.AOP <= 0 {
+		fieldErrors = append(fieldErrors, domain.FieldError{
+			Field:        "aop",
+			ErrorMessage: "AOP mora biti > 0",
+		})
+	}
+	if entity.NazP == "" {
+		fieldErrors = append(fieldErrors, domain.FieldError{
+			Field:        "nazp",
+			ErrorMessage: "Obavezan podatak...",
+		})
+	}
+	if entity.NiPo < 0 {
+		fieldErrors = append(fieldErrors, domain.FieldError{
+			Field:        "nipo",
+			ErrorMessage: "Nivo podataka mora biti >= 0",
+		})
+	}
+
+	return fieldErrors
+}
+
+func (s *BilansiResource) DeleteBilansStanja(c *gin.Context) error {
+	id := c.Param("id")
+	if id == "" {
+		return fmt.Errorf("id parameter is required")
+	}
+	idInt, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		return fmt.Errorf("invalid id parameter: %v", err)
+	}
+	return s.bilsRepo.Delete(common.IDBils, idInt)
+}
+
+// Bilu (Bilans Uspeha) Methods
+func (s *BilansiResource) GetByIDBilu(idField string, idValue int64) (*domain.Bilu, error) {
+	return s.biluRepo.GetByID(idField, idValue)
+}
+
+func (s *BilansiResource) UpdateBilu(c *gin.Context, entity *domain.Bilu, idField string, idValue interface{}, tableFields []domain.Fields) error {
+	return s.biluRepo.Update(c, entity, idField, idValue, tableFields)
+}
+
+func (s *BilansiResource) AddBilu(c *gin.Context, entity *domain.Bilu, idField string, tableFields []domain.Fields) (int64, error) {
+	return s.biluRepo.Create(c, entity, idField, tableFields)
+}
+
+func (s *BilansiResource) MapEntityToValuesBilu(entity *domain.Bilu, tableFields []domain.Fields) []domain.Fields {
+	return s.biluService.MapEntityToValues(entity, tableFields)
+}
+
+func (s *BilansiResource) ValidateBilansUspeha(entity *domain.Bilu) []domain.FieldError {
+	var fieldErrors []domain.FieldError
+	if entity.Rbr <= 0 {
+		fieldErrors = append(fieldErrors, domain.FieldError{
+			Field:        "rbr",
+			ErrorMessage: "Red. Broj mora biti > 0",
+		})
+	}
+	if entity.AOP <= 0 {
+		fieldErrors = append(fieldErrors, domain.FieldError{
+			Field:        "aop",
+			ErrorMessage: "AOP mora biti > 0",
+		})
+	}
+	if entity.NazP == "" {
+		fieldErrors = append(fieldErrors, domain.FieldError{
+			Field:        "nazp",
+			ErrorMessage: "Obavezan podatak...",
+		})
+	}
+	if entity.NiPo < 0 {
+		fieldErrors = append(fieldErrors, domain.FieldError{
+			Field:        "nipo",
+			ErrorMessage: "Nivo podataka mora biti >= 0",
+		})
+	}
+
+	return fieldErrors
+}
+
+func (s *BilansiResource) DeleteBilansUspeha(c *gin.Context) error {
+	id := c.Param("id")
+	if id == "" {
+		return fmt.Errorf("id parameter is required")
+	}
+	idInt, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		return fmt.Errorf("invalid id parameter: %v", err)
+	}
+	return s.biluRepo.Delete(common.IDBilu, idInt)
+}
+
+func (s *BilansiResource) GetFieldCacheBilu() map[string]reflect.StructField {
+	if s.biluService == nil {
+		return make(map[string]reflect.StructField)
+	}
+	return s.biluService.GetFieldCache()
+}
+
+func (s *BilansiResource) StampaBilansStanja(c *gin.Context, tbl *domain.TableData, getTotalRecords, getOnlyTotals bool, pageSize, currentPage int, totals *domain.BilansiTotals) error {
+	session := domain.GetSessionFromContext(c)
+	if session == nil {
+		return fmt.Errorf("user session not found")
+	}
+
+	god := session.SelectedGod
+	kar := session.SelectedKar
+	lPGODizPS := true // TODO: Get this from business logic
+
+	// STEP 1: Reset TGOD, TGODH for all BILS records with given GOD and KAR
+	resetQb := common.NewQueryBuilder(`SELECT bilsid, rbr, grac, nazp, aop, konta, tgod, pgod, tgodh, pgodh, pgodps, pgodhps, nipo, skraceni FROM bils`)
+	resetQb.AddEqual("god", god)
+	resetQb.AddEqual("kar", kar)
+	resetSql, resetArgs := resetQb.Build()
+
+	bilsRecords, err := s.bilsRepo.GetAllCustom(c, resetSql, "", resetArgs, "", "")
+	if err != nil {
+		return err
+	}
+
+	for _, bils := range *bilsRecords {
+		bils.TGod = 0
+		bils.TGodH = 0
+		if bils.Konta == "" {
+			bils.PGod = 0
+			bils.PGodH = 0
+			bils.PGodPS = 0
+			bils.PGodHPS = 0
+		} else {
+			if lPGODizPS {
+				bils.PGod = 0
+				bils.PGodH = 0
+			}
+		}
+		// Update the record
+		s.bilsRepo.Update(c, &bils, "bilsid", bils.BilsID, []domain.Fields{})
+	}
+
+	// STEP 2: Get max NIPO value
+	maxNipoQb := common.NewQueryBuilder(`SELECT COALESCE(MAX(nipo), 1) as max_nipo FROM bils`)
+	maxNipoQb.AddEqual("god", god)
+	maxNipoQb.AddEqual("kar", kar)
+	maxNipoSql, maxNipoArgs := maxNipoQb.Build()
+
+	maxNipoRecords, err := s.bilsRepo.GetAllCustom(c, maxNipoSql, "", maxNipoArgs, "", "")
+	if err != nil {
+		return err
+	}
+
+	maxk := int64(1)
+	if maxNipoRecords != nil && len(*maxNipoRecords) > 0 {
+		// Assuming the result has a field for max_nipo
+		// You may need to adjust based on actual struct field names
+		maxk = int64(1) // Placeholder - adjust based on actual query result
+	}
+
+	// STEP 3: Process each NIPO level
+	bilsMapByAop := make(map[int]*domain.Bils)
+
+	for k := int64(1); k <= maxk; k++ {
+		levelQb := common.NewQueryBuilder(`SELECT bilsid, rbr, grac, nazp, aop, konta, tgod, pgod, tgodh, pgodh, pgodps, pgodhps, nipo, skraceni, pozic_1, pozic_2, pozic_3, pozic_4, pozic_5, pozic_6, pozic_7, pozic_8, pozic_9, pozic_10, pozic_11, pozic_12 FROM bils`)
+		levelQb.AddEqual("god", god)
+		levelQb.AddEqual("kar", kar)
+		levelQb.AddEqual("nipo", k)
+		levelSql, levelArgs := levelQb.Build()
+
+		levelRecords, err := s.bilsRepo.GetAllCustom(c, levelSql, "", levelArgs, "", "")
+		if err != nil {
+			return err
+		}
+
+		if levelRecords == nil {
+			continue
+		}
+
+		for _, bils := range *levelRecords {
+			if bils.Konta != "" {
+				// Call ObradaKONTA equivalent - you may need to implement this
+				dVred, dVredPS := s.obradaKonta(c, bils.AOP, bils.Konta, god, kar)
+				bils.TGod = dVred
+				bils.TGodH = int64(dVred / 1000)
+				if lPGODizPS {
+					bils.PGod = dVredPS
+					bils.PGodH = int64(dVredPS / 1000)
+				}
+				s.bilsRepo.Update(c, &bils, "bilsid", bils.BilsID, []domain.Fields{})
+			} else {
+				// KONTA is empty - aggregate values from related BILS records
+				for i := 1; i <= 12; i++ {
+					// Get position value from struct field (need to handle dynamically)
+					var nAOP int64
+					switch i {
+					case 1:
+						nAOP = int64(bils.Pozic1)
+					case 2:
+						nAOP = int64(bils.Pozic2)
+					case 3:
+						nAOP = int64(bils.Pozic3)
+					case 4:
+						nAOP = int64(bils.Pozic4)
+					case 5:
+						nAOP = int64(bils.Pozic5)
+					case 6:
+						nAOP = int64(bils.Pozic6)
+					case 7:
+						nAOP = int64(bils.Pozic7)
+					case 8:
+						nAOP = int64(bils.Pozic8)
+					case 9:
+						nAOP = int64(bils.Pozic9)
+					case 10:
+						nAOP = int64(bils.Pozic10)
+					case 11:
+						nAOP = int64(bils.Pozic11)
+					case 12:
+						nAOP = int64(bils.Pozic12)
+					}
+
+					if nAOP == 0 {
+						continue
+					}
+
+					// Get absolute value
+					if nAOP < 0 {
+						nAOP = -nAOP
+					}
+
+					// Find BILS record by AOP
+					aopQb := common.NewQueryBuilder(`SELECT bilsid, rbr, grac, nazp, aop, konta, tgod, pgod, tgodh, pgodh, pgodps, pgodhps, nipo, skraceni FROM bils`)
+					aopQb.AddEqual("god", god)
+					aopQb.AddEqual("kar", kar)
+					aopQb.AddEqual("aop", nAOP)
+					aopSql, aopArgs := aopQb.Build()
+
+					aopRecords, err := s.bilsRepo.GetAllCustom(c, aopSql, "", aopArgs, "", "")
+					if err != nil {
+						continue
+					}
+
+					if aopRecords != nil && len(*aopRecords) > 0 {
+						relatedBils := (*aopRecords)[0]
+
+						// Get original pozic value to determine add or subtract
+						var origPozic int64
+						switch i {
+						case 1:
+							origPozic = int64(bils.Pozic1)
+						case 2:
+							origPozic = int64(bils.Pozic2)
+						case 3:
+							origPozic = int64(bils.Pozic3)
+						case 4:
+							origPozic = int64(bils.Pozic4)
+						case 5:
+							origPozic = int64(bils.Pozic5)
+						case 6:
+							origPozic = int64(bils.Pozic6)
+						case 7:
+							origPozic = int64(bils.Pozic7)
+						case 8:
+							origPozic = int64(bils.Pozic8)
+						case 9:
+							origPozic = int64(bils.Pozic9)
+						case 10:
+							origPozic = int64(bils.Pozic10)
+						case 11:
+							origPozic = int64(bils.Pozic11)
+						case 12:
+							origPozic = int64(bils.Pozic12)
+						}
+
+						if origPozic > 0 {
+							bils.TGod += relatedBils.TGod
+							bils.TGodH += relatedBils.TGodH
+							bils.PGod += relatedBils.PGod
+							bils.PGodH += relatedBils.PGodH
+							bils.PGodPS += relatedBils.PGodPS
+							bils.PGodHPS += relatedBils.PGodHPS
+						} else if origPozic < 0 {
+							bils.TGod -= relatedBils.TGod
+							bils.TGodH -= relatedBils.TGodH
+							bils.PGod -= relatedBils.PGod
+							bils.PGodH -= relatedBils.PGodH
+							bils.PGodPS -= relatedBils.PGodPS
+							bils.PGodHPS -= relatedBils.PGodHPS
+						}
+					}
+				}
+
+				s.bilsRepo.Update(c, &bils, "bilsid", bils.BilsID, []domain.Fields{})
+			}
+
+			// Ensure non-negative values
+			if bils.TGod < 0 {
+				bils.TGod = 0
+			}
+			if bils.TGodH < 0 {
+				bils.TGodH = 0
+			}
+			if bils.PGod < 0 {
+				bils.PGod = 0
+			}
+			if bils.PGodH < 0 {
+				bils.PGodH = 0
+			}
+			if bils.PGodPS < 0 {
+				bils.PGodPS = 0
+			}
+			if bils.PGodHPS < 0 {
+				bils.PGodHPS = 0
+			}
+
+			s.bilsRepo.Update(c, &bils, "bilsid", bils.BilsID, []domain.Fields{})
+			bilsMapByAop[bils.AOP] = &bils
+		}
+	}
+
+	// STEP 4: Fetch final results and populate table
+	skraceni := c.Query("skraceni") == "true"
+	finalQb := common.NewQueryBuilder(`SELECT bilsid, rbr, grac, nazp, aop, napomena, tgodh, pgodh, pgodhps, tgod, pgod, pgodps, nipo, skraceni FROM bils`)
+	finalQb.AddEqual("god", god)
+	finalQb.AddEqual("kar", kar)
+	if skraceni {
+		finalQb.AddEqual("skraceni", 1)
+	}
+	finalQb.AddOrderBy("aop ASC")
+
+	if !getTotalRecords && !getOnlyTotals {
+		finalQb.SetLimit(pageSize)
+		finalQb.SetOffset((currentPage - 1) * pageSize)
+	}
+
+	finalSql, finalArgs := finalQb.Build()
+	finalRecords, err := s.bilsRepo.GetAllCustom(c, finalSql, "", finalArgs, "", "")
+	if err != nil {
+		return err
+	}
+
+	// Handle total records request
+	if getTotalRecords && finalRecords != nil {
+		common.SetTableTotalRecords(tbl, len(*finalRecords), pageSize)
+		return nil
+	}
+
+	// Populate table rows
+	if finalRecords != nil && len(*finalRecords) > 0 {
+		for _, bils := range *finalRecords {
+			fields := []string{
+				fmt.Sprintf("%d", bils.Rbr),
+				bils.Grac,
+				bils.NazP,
+				fmt.Sprintf("%d", bils.AOP),
+				bils.Napomena,
+				common.FormatNumberWithSystemLocale(float64(bils.TGodH), 0),
+				common.FormatNumberWithSystemLocale(float64(bils.PGodH), 0),
+				common.FormatNumberWithSystemLocale(float64(bils.PGodHPS), 0),
+				fmt.Sprintf("%d", bils.BilsID),
+				common.FormatNumberWithSystemLocale(float64(bils.TGod), 0),
+				common.FormatNumberWithSystemLocale(float64(bils.PGod), 0),
+				common.FormatNumberWithSystemLocale(float64(bils.PGodPS), 0),
+				fmt.Sprintf("%d", bils.NiPo),
+				fmt.Sprintf("%d", bils.Skraceni),
+			}
+			tbl.Rows = append(tbl.Rows, domain.TableRow{ID: fmt.Sprintf("%d", bils.BilsID), Fields: fields, HasUpdate: false, HasDelete: false})
+		}
+	}
 
 	return nil
+}
+
+// obradaKonta processes account data and returns calculated values
+// This is a placeholder - implement based on your business logic
+func (s *BilansiResource) obradaKonta(c *gin.Context, aop int, konta string, god, kar int) (float64, float64) {
+	// TODO: Implement the actual ObradaKONTA logic from WinDev
+	// This should calculate dVred (current year value) and dVredPS (previous year value)
+	return 0, 0
 }
 
 // GetFieldCache returns the cached field structure
@@ -481,82 +1023,8 @@ func (s *BilansiResource) GetFieldCache() map[string]reflect.StructField {
 	return s.bilsService.GetFieldCache()
 }
 
-// BilansStanjaItem represents a processed balance sheet item
-type BilansStanjaItem struct {
-	VKonta           int64
-	Naziv            string
-	AOP              string
-	KontaList        string
-	TekucaGodina     int64
-	PrethodnаGodina  int64
-	NivoPodataka     int64
-	TekucaHiljada    int64
-	PrethodnаHiljada int64
-	Pozicije         string
-}
-
-// processBilsData processes BILS records and calculates totals from fpro transactions
-// This implements the logic from the WinDev ObradaBILS procedure
-func (s *BilansiResource) processBilsData(god, kar int, skraceni bool) ([]*BilansStanjaItem, error) {
-	// Map to store processed BILS records by ID
-	bilsMap := make(map[int64]*domain.BilsPayload)
-
-	// Step 1: Reset all totals to 0
-	if err := s.resetBilsTotalsForYear(god, kar, bilsMap); err != nil {
-		return nil, fmt.Errorf("error resetting totals: %w", err)
-	}
-
-	// Step 2: Get all BILS records
-	// allBils, err := s.bilsRepo.GetAll(nil)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("error fetching BILS records: %w", err)
-	// }
-
-	// Populate map and filter by year/month
-	// for _, bils := range *allBils {
-	// 	if bils.God == int64(god) && bils.Kar == int64(kar) {
-	// 		bilsMap[bils.IDBils] = &bils
-	// 	}
-	// }
-
-	// Step 4: Convert to BilansStanjaItem and apply filtering
-	result := make([]*BilansStanjaItem, 0)
-	for _, bils := range bilsMap {
-		// Apply skraceni filter if needed
-		if skraceni && bils.Skraceni != 1 {
-			continue
-		}
-
-		// Ensure no negative values
-		/* 	tgod := int64(0)
-		if bils.TGOD > 0 {
-			tgod = bils.TGOD
-		}
-		pgod := int64(0)
-		if bils.PGod > 0 {
-			pgod = bils.PGod
-		}
-
-		item := &BilansStanjaItem{
-			VKonta:           bils.VKonta,
-			Naziv:            bils.Naziv,
-			AOP:              fmt.Sprintf("%d", bils.AOP),
-			KontaList:        bils.Konta,
-			TekucaGodina:     tgod,
-			PrethodnаGodina:  pgod,
-			NivoPodataka:     bils.NIPO,
-			TekucaHiljada:    tgod / 1000,
-			PrethodnаHiljada: pgod / 1000,
-			Pozicije:         "",
-		} */
-		//result = append(result, item)
-	}
-
-	return result, nil
-}
-
 // resetBilsTotalsForYear resets TGOD, PGOD values for all BILS records in the period
-func (s *BilansiResource) resetBilsTotalsForYear(god, kar int, bilsMap map[int64]*domain.BilsPayload) error {
+func (s *BilansiResource) resetBilsTotalsForYear(god, kar int, bilsMap map[int64]*domain.Bils) error {
 	// This would query the database and reset values
 	// For now, we'll handle this in the processBilsLevel function
 	return nil
@@ -566,42 +1034,69 @@ func (s *BilansiResource) resetBilsTotalsForYear(god, kar int, bilsMap map[int64
 func (s *BilansiResource) setServiceFieldValues() {
 	// Fields for Zakljucni list
 	s.zakljucniTableFields = []domain.Fields{
-		{Name: "rbr", Label: "Redni broj", Width: "8", Field: "", SkipInSearch: true},
+		{Name: "rbr", Label: "Redni broj", Width: "8", Field: "", SkipInSearch: true, IncludeInTotals: true},
 		{Name: "konto", Label: "Konto", Width: "12", Field: "bils.konto", SkipInSearch: false},
 		{Name: "sifra", Label: "Šifra", Width: "10", Field: "bils.sifra", SkipInSearch: false},
 		{Name: "naziv", Label: "Naziv", Width: "25", Field: "bils.naziv", SkipInSearch: false},
-		{Name: "rocstanje_duguje", Label: "Roc. stanje duguje", Width: "15", Field: "", SkipInSearch: true},
-		{Name: "rocstanje_potrazuje", Label: "Roc. stanje potražuje", Width: "15", Field: "", SkipInSearch: true},
-		{Name: "promet_duguje", Label: "Promet duguje", Width: "15", Field: "", SkipInSearch: true},
-		{Name: "promet_potrazuje", Label: "Promet potražuje", Width: "15", Field: "", SkipInSearch: true},
-		{Name: "saldo_duguje", Label: "Saldo duguje", Width: "15", Field: "", SkipInSearch: true},
-		{Name: "saldo_potrazuje", Label: "Saldo potražuje", Width: "15", Field: "", SkipInSearch: true},
+		{Name: "pstduguje", Label: "Poc. stanje duguje", Width: "15", Field: "", SkipInSearch: true, IncludeInTotals: true, TextAlign: "right"},
+		{Name: "pstpotrazuje", Label: "Poc. stanje potražuje", Width: "15", Field: "", SkipInSearch: true, IncludeInTotals: true, TextAlign: "right"},
+		{Name: "prometduguje", Label: "Promet duguje", Width: "15", Field: "", SkipInSearch: true, IncludeInTotals: true, TextAlign: "right"},
+		{Name: "prometpotrazuje", Label: "Promet potražuje", Width: "15", Field: "", SkipInSearch: true, IncludeInTotals: true, TextAlign: "right"},
+		{Name: "saldoduguje", Label: "Saldo duguje", Width: "15", Field: "", SkipInSearch: true, IncludeInTotals: true, TextAlign: "right"},
+		{Name: "saldopotrazuje", Label: "Saldo potražuje", Width: "15", Field: "", SkipInSearch: true, IncludeInTotals: true, TextAlign: "right"},
 	}
 
 	// Fields for Bilans stanja
 	s.bilansStanjaTableFields = []domain.Fields{
-		{Name: "rbr", Label: "Redni broj", Width: "8", Field: "", SkipInSearch: true},
+		{Name: "rbr", Label: "Redni broj", Width: "8", Field: "", SkipInSearch: true, IncludeInTotals: true},
 		{Name: "grupa_racuna", Label: "Grupa računa", Width: "15", Field: "bils.vkonta", SkipInSearch: false},
 		{Name: "naziv_pozicije", Label: "Naziv pozicije", Width: "25", Field: "bils.naziv", SkipInSearch: false},
 		{Name: "oznaka_aop", Label: "Oznaka za AOP", Width: "12", Field: "", SkipInSearch: true},
 		{Name: "spisak_konta", Label: "Spisak konta", Width: "15", Field: "", SkipInSearch: true},
-		{Name: "tekuca_godina", Label: "Tekuća godina", Width: "15", Field: "", SkipInSearch: true},
-		{Name: "prethodna_godina", Label: "Prethodna godina", Width: "15", Field: "", SkipInSearch: true},
+		{Name: "tekuca_godina", Label: "Tekuća godina", Width: "15", Field: "", SkipInSearch: true, IncludeInTotals: true, TextAlign: "right"},
+		{Name: "prethodna_godina", Label: "Prethodna godina", Width: "15", Field: "", SkipInSearch: true, IncludeInTotals: true, TextAlign: "right"},
+		{Name: "pocetno_stanje", Label: "Prethodna godina PS", Width: "15", Field: "", SkipInSearch: true, IncludeInTotals: true, TextAlign: "right"},
 		{Name: "nivo_podataka", Label: "Nivo podataka", Width: "12", Field: "", SkipInSearch: true},
-		{Name: "tekuca_hiljada", Label: "Tekuća u hiljadama", Width: "15", Field: "", SkipInSearch: true},
-		{Name: "prethodna_hiljada", Label: "Prethodna u hiljadama", Width: "15", Field: "", SkipInSearch: true},
-		{Name: "pozicije", Label: "Pozicije", Width: "12", Field: "", SkipInSearch: true},
+		{Name: "tekuca_hiljada", Label: "Tekuća u hiljadama", Width: "15", Field: "", SkipInSearch: true, IncludeInTotals: true, TextAlign: "right"},
+		{Name: "prethodna_hiljada", Label: "Prethodna u hiljadama", Width: "15", Field: "", SkipInSearch: true, IncludeInTotals: true, TextAlign: "right"},
+		{Name: "pocetno_hiljada", Label: "Prethodna u hiljadama PS", Width: "15", Field: "", SkipInSearch: true, IncludeInTotals: true, TextAlign: "right"},
+		{Name: "pozic_1", Label: "Pozicija 1", Width: "12", Field: "", SkipInSearch: true},
+		{Name: "pozic_2", Label: "Pozicija 2", Width: "12", Field: "", SkipInSearch: true},
+		{Name: "pozic_3", Label: "Pozicija 3", Width: "12", Field: "", SkipInSearch: true},
+		{Name: "pozic_4", Label: "Pozicija 4", Width: "12", Field: "", SkipInSearch: true},
+		{Name: "pozic_5", Label: "Pozicija 5", Width: "12", Field: "", SkipInSearch: true},
+		{Name: "pozic_6", Label: "Pozicija 6", Width: "12", Field: "", SkipInSearch: true},
+		{Name: "pozic_7", Label: "Pozicija 7", Width: "12", Field: "", SkipInSearch: true},
+		{Name: "pozic_8", Label: "Pozicija 8", Width: "12", Field: "", SkipInSearch: true},
+		{Name: "pozic_9", Label: "Pozicija 9", Width: "12", Field: "", SkipInSearch: true},
+		{Name: "pozic_10", Label: "Pozicija 10", Width: "12", Field: "", SkipInSearch: true},
+		{Name: "pozic_11", Label: "Pozicija 11", Width: "12", Field: "", SkipInSearch: true},
+		{Name: "pozic_12", Label: "Pozicija 12", Width: "12", Field: "", SkipInSearch: true},
 	}
 
 	// Fields for Bilans uspeha
 	s.bilansUspehaTableFields = []domain.Fields{
-		{Name: "rbr", Label: "Redni broj", Width: "8", Field: "", SkipInSearch: true},
-		{Name: "grupa_racuna", Label: "Grupa računa", Width: "15", Field: "bils.vkonta", SkipInSearch: false},
-		{Name: "naziv_pozicije", Label: "Naziv pozicije", Width: "25", Field: "bils.naziv", SkipInSearch: false},
-		{Name: "aop", Label: "AOP", Width: "12", Field: "", SkipInSearch: true},
-		{Name: "spisak_konta", Label: "Spisak konta", Width: "15", Field: "", SkipInSearch: true},
-		{Name: "tekuca_godina", Label: "Tekuća godina", Width: "15", Field: "", SkipInSearch: true},
-		{Name: "prethodna_godina", Label: "Prethodna godina", Width: "15", Field: "", SkipInSearch: true},
-		{Name: "nivo_podataka", Label: "Nivo podataka", Width: "12", Field: "", SkipInSearch: true},
+		{Name: "rbr", Label: "Redni broj", Width: "8", Field: "", SkipInSearch: true, IncludeInTotals: true},
+		{Name: "grac", Label: "Grupa računa", Width: "15", Field: "bils.vkonta", SkipInSearch: false},
+		{Name: "nazp", Label: "Naziv pozicije", Width: "25", Field: "bils.naziv", SkipInSearch: false},
+		{Name: "aop", Label: "Oznaka za AOP", Width: "12", Field: "", SkipInSearch: true},
+		{Name: "konta", Label: "Spisak konta", Width: "15", Field: "", SkipInSearch: true},
+		{Name: "tgod", Label: "Tekuća godina", Width: "15", Field: "", SkipInSearch: true, IncludeInTotals: true, TextAlign: "right"},
+		{Name: "pgod", Label: "Prethodna godina", Width: "15", Field: "", SkipInSearch: true, IncludeInTotals: true, TextAlign: "right"},
+		{Name: "nipo", Label: "Nivo podataka", Width: "12", Field: "", SkipInSearch: true},
+		{Name: "tgoh", Label: "Tekuća u hiljadama", Width: "15", Field: "", SkipInSearch: true, IncludeInTotals: true, TextAlign: "right"},
+		{Name: "pgoh", Label: "Prethodna u hiljadama", Width: "15", Field: "", SkipInSearch: true, IncludeInTotals: true, TextAlign: "right"},
+		{Name: "pozic_1", Label: "Pozicija 1", Width: "12", Field: "", SkipInSearch: true},
+		{Name: "pozic_2", Label: "Pozicija 2", Width: "12", Field: "", SkipInSearch: true},
+		{Name: "pozic_3", Label: "Pozicija 3", Width: "12", Field: "", SkipInSearch: true},
+		{Name: "pozic_4", Label: "Pozicija 4", Width: "12", Field: "", SkipInSearch: true},
+		{Name: "pozic_5", Label: "Pozicija 5", Width: "12", Field: "", SkipInSearch: true},
+		{Name: "pozic_6", Label: "Pozicija 6", Width: "12", Field: "", SkipInSearch: true},
+		{Name: "pozic_7", Label: "Pozicija 7", Width: "12", Field: "", SkipInSearch: true},
+		{Name: "pozic_8", Label: "Pozicija 8", Width: "12", Field: "", SkipInSearch: true},
+		{Name: "pozic_9", Label: "Pozicija 9", Width: "12", Field: "", SkipInSearch: true},
+		{Name: "pozic_10", Label: "Pozicija 10", Width: "12", Field: "", SkipInSearch: true},
+		{Name: "pozic_11", Label: "Pozicija 11", Width: "12", Field: "", SkipInSearch: true},
+		{Name: "pozic_12", Label: "Pozicija 12", Width: "12", Field: "", SkipInSearch: true},
 	}
 }

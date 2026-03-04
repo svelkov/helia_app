@@ -9,620 +9,1204 @@ import (
 )
 
 // Main entry point for Otvorene stavke module
-templ OtvoreneStavkeMain(tabs domain.TabData, tbl domain.TableData, translator *i18n.Service, gnGod int) {
+templ OtvoreneStavkeMain(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObrada, btnStampaOpomena domain.Button, searchInput, searchInputDetalji domain.InputControl, translator *i18n.Service, gnGod int) {
 	<!-- Tab Content -->
 	<div id="tab-content" class="flex flex-col h-full">
-		@OtvoreneStavke(tabs, tbl, translator, gnGod)
+		@OtvoreneStavke(tabs, tblPartneri, tblDetalji, btnObrada, btnStampaOpomena, searchInput, searchInputDetalji, translator, gnGod)
 	</div>
 }
 
 // Tab 1 - Otvorene stavke (Open Items)
-templ OtvoreneStavke(tabs domain.TabData, tbl domain.TableData, translator *i18n.Service, gnGod int) {
+templ OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObrada, btnStampaOpomena domain.Button, searchInput, searchInputDetalji domain.InputControl, translator *i18n.Service, gnGod int) {
 	<!-- Container with full height -->
 	<div class="flex flex-col h-full">
 		<!-- Tab Navigation -->
 		<div class="border-b border-blue-600">
-			@tmpl.TabNav(translator.Title("Otvorene stavke"), tabs, "#tab-content", "otvorene-stavke-panel", translator)
+			@tmpl.TabNav(translator.Title("Otvorene stavke, dugovanja, potraživanja"), tabs, "#tab-content", "otvorene-stavke-panel", translator)
 		</div>
 		<!-- Tab 1 Content -->
 		<div id="tab1" class="flex-1 min-h-0 flex flex-col gap-1">
-			<!-- Parameters Section -->
-			<div class="border bg-yellow-100 border-yellow-400 p-2 rounded-lg">
-				<div class="flex items-center gap-2">
-					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "konto",
-						LabelText:  translator.Label("Konto"),
-						ClassLabel: "text-sm font-medium w-16",
-					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:         "konto",
-						Name:       "konto",
-						FieldType:  "text",
-						ClassInput: common.ClassInputTextEnabled + " w-32",
-						TabIndex:   "1",
-					})
-					<button class="px-2 py-1 bg-blue-500 text-white text-xs rounded">F3</button>
-					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "pocetakkonta",
-						LabelText:  translator.Label("Početak od šifre"),
-						ClassLabel: "text-sm font-medium w-28",
-					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:         "pocetakkonta",
-						Name:       "pocetakkonta",
-						FieldType:  "text",
-						Value:      "00",
-						ClassInput: common.ClassInputTextEnabled + " w-20",
-						TabIndex:   "2",
-					})
-					<button class="px-2 py-1 bg-blue-500 text-white text-xs rounded">F3</button>
-					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "zavrsenisifra",
-						LabelText:  translator.Label("Završeno sa šifrom"),
-						ClassLabel: "text-sm font-medium w-28",
-					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:         "zavrsenisifra",
-						Name:       "zavrsenisifra",
-						FieldType:  "text",
-						Value:      "999999",
-						ClassInput: common.ClassInputTextEnabled + " w-20",
-						TabIndex:   "3",
-					})
-					<button class="px-2 py-1 bg-blue-500 text-white text-xs rounded">F3</button>
-					<div class="flex-1"></div>
-					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "poddatumom",
-						LabelText:  translator.Label("Pod datumom"),
-						ClassLabel: "text-sm font-medium w-20",
-					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:         "poddatumom",
-						Name:       "poddatumom",
-						FieldType:  "date",
-						Value:      time.Date(gnGod, 12, 31, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
-						ClassInput: common.ClassInputTextEnabled + " w-32",
-						TabIndex:   "4",
-					})
+			<!-- Parameters Section - Two Columns -->
+			<div class="grid grid-cols-2 gap-1">
+				<!-- Left Column - Konto and Sifre -->
+				<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg flex flex-col">
+					<!-- Konto Field -->
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "konto",
+							LabelText:  translator.Label("Konto"),
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:           "konto",
+							Name:         "konto",
+							FieldType:    "text",
+							Disabled:     false,
+							ClassInput:   common.ClassInputTextEnabled + " w-24",
+							TabIndex:     "1",
+							OnInput:      "clearFieldError",
+							OnFocus:      "clearFieldError",
+							BlurEndpoint: "api/fkpl/trazikonto",
+							HxTarget:     "kontonaziv",
+							HxVals:       `js:{"konto": document.getElementById('konto').value,  "vkonta": "2"}`,
+							HxInclude:    "this",
+						})
+						@tmpl.SearchButton(domain.SearchButtonConfig{
+							ID:          "btnkonto",
+							Name:        "search-konto",
+							HxUrl:       "/api/promet/searchbutton",
+							HxTarget:    "#search-dropdown",
+							HxSwap:      "innerHTML",
+							HxVals:      `js:{"vkonta": "1"}`,
+							ClassButton: common.ClassButton,
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "kontonaziv",
+							Name:       "kontonaziv",
+							FieldType:  "text",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextEnabled + " w-full",
+							TabIndex:   "-1",
+						})
+					</div>
+					<!-- Od Šifre -->
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "lblodsifre",
+							LabelText:  translator.Label("Od šifre"),
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:           "odsifre",
+							Name:         "odsifre",
+							FieldType:    "text",
+							Disabled:     false,
+							ClassInput:   common.ClassInputTextEnabled + " w-24",
+							Value:        "00",
+							TabIndex:     "2",
+							OnInput:      "clearFieldError",
+							OnFocus:      "clearFieldError",
+							BlurEndpoint: "api/fkpl/trazikonto",
+							HxTarget:     "odsifrenaziv",
+							HxVals:       `js:{"konto": document.getElementById('konto-duznika').value, "sifra": document.getElementById('odsifre').value, "vkonta": "1"}`,
+							HxInclude:    "this",
+						})
+						@tmpl.SearchButton(domain.SearchButtonConfig{
+							ID:          "btnodsifre",
+							Name:        "search-odsifre",
+							HxUrl:       "/api/promet/searchbutton",
+							HxTarget:    "#search-dropdown",
+							HxSwap:      "innerHTML",
+							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`,
+							ClassButton: common.ClassButton,
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "odsifrenaziv",
+							Name:       "odsifrenaziv",
+							FieldType:  "text",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextEnabled + " w-full",
+							TabIndex:   "-1",
+						})
+					</div>
+					<!-- Do Šifre -->
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "lbldosifre",
+							LabelText:  translator.Label("Do šifre"),
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:           "dosifre",
+							Name:         "dosifre",
+							FieldType:    "text",
+							Disabled:     false,
+							ClassInput:   common.ClassInputTextEnabled + " w-24",
+							Value:        "999999",
+							TabIndex:     "3",
+							OnInput:      "clearFieldError",
+							OnFocus:      "clearFieldError",
+							BlurEndpoint: "api/fkpl/trazikonto",
+							HxTarget:     "dosifrenaziv",
+							HxVals:       `js:{"konto": document.getElementById('konto-duznika').value, "sifra": document.getElementById('dosifre').value, "vkonta": "1"}`,
+							HxInclude:    "this",
+						})
+						@tmpl.SearchButton(domain.SearchButtonConfig{
+							ID:          "btndosifre",
+							Name:        "search-dosifre",
+							HxUrl:       "/api/promet/searchbutton",
+							HxTarget:    "#search-dropdown",
+							HxSwap:      "innerHTML",
+							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`,
+							ClassButton: common.ClassButton,
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "dosifrenaziv",
+							Name:       "dosifrenaziv",
+							FieldType:  "text",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextEnabled + " w-full",
+							TabIndex:   "-1",
+						})
+					</div>
 				</div>
-				<div class="flex items-center gap-2 mt-2">
-					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "otv_stavke_dana",
-						LabelText:  translator.Label("Otv. stavke preko broja dana"),
-						ClassLabel: "text-sm font-medium w-40",
-					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:         "otv_stavke_dana",
-						Name:       "otv_stavke_dana",
-						FieldType:  "number",
-						Value:      "0",
-						ClassInput: common.ClassInputTextEnabled + " w-20",
-						TabIndex:   "5",
-					})
-					<div class="flex-1"></div>
-					<button class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded">{ translator.Label("Obradi (F4)") }</button>
-					<button class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded">{ translator.Label("St. Opomena") }</button>
+				<!-- Right Column - Date and Days -->
+				<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg flex flex-col">
+					<!-- Pod datumom -->
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "poddatumom",
+							LabelText:  translator.Label("Pod datumom"),
+							ClassLabel: common.ClassLabel + " w-44",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "poddatumom",
+							Name:       "poddatumom",
+							FieldType:  "date",
+							Value:      time.Date(gnGod, time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " w-28",
+							TabIndex:   "4",
+							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError",
+						})
+					</div>
+					<!-- Otv. stavke preko broja dana -->
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "otvstavkedana",
+							LabelText:  translator.Label("Otv. stavke preko broja dana"),
+							ClassLabel: common.ClassLabel + " w-44",
+						})
+						@tmpl.NumericInputField(domain.InputFieldConfig{
+							ID:         "otvstavkedana",
+							Name:       "otvstavkedana",
+							FieldType:  "text",
+							Value:      "0",
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " w-20",
+							TabIndex:   "5",
+							MaxLength:  "3",
+							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError",
+						})
+					</div>
+					<!-- Buttons -->
+					<div class="flex justify-end gap-1 mt-auto">
+						@tmpl.FormObradaButton(btnObrada, translator)
+						@tmpl.PrintButton(btnStampaOpomena, translator)
+					</div>
 				</div>
 			</div>
-			<!-- Two-column layout for Partners and Open Items Detail -->
-			<div class="flex flex-row gap-1 flex-1 min-h-0">
-				<!-- Partners Column -->
-				<div class="border bg-blue-100 border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden w-1/3">
-					<div class="text-sm font-bold mb-1 px-1">{ translator.Label("PARTNERI") }</div>
-					<div class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
-						<table class="w-full text-xs border-collapse">
-							<thead>
-								<tr class="bg-gray-700 text-white sticky top-0">
-									<th class="border border-gray-400 px-1 py-1 text-left">Konto</th>
-									<th class="border border-gray-400 px-1 py-1 text-left">Sifra</th>
-									<th class="border border-gray-400 px-1 py-1 text-left">Naziv</th>
-									<th class="border border-gray-400 px-1 py-1 text-right">Duguje</th>
-									<th class="border border-gray-400 px-1 py-1 text-right">Potrazuje</th>
-									<th class="border border-gray-400 px-1 py-1 text-right">Saldo</th>
-								</tr>
-							</thead>
-							<tbody>
-								<!-- Partner rows -->
-							</tbody>
-						</table>
-					</div>
-					<div class="border-t border-gray-400 p-1 bg-gray-100 font-bold text-xs">
-						<span>TOTAL:</span>
-					</div>
+			<!-- Group Data Table -->
+			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
+				@tmpl.LoadingSpinner()
+				@tmpl.Search_Part(tblPartneri, searchInput)
+				<!-- Table -->
+				<div id="otvorenestavketable" class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+					@tmpl.Table(tblPartneri, translator)
 				</div>
-				<!-- Open Items Detail Column -->
-				<div class="border bg-blue-100 border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
-					<div class="text-sm font-bold mb-1 px-1">{ translator.Label("OTVORENE STAVKE - DETALJИ") }</div>
-					<div class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
-						@tmpl.Table(tbl, translator)
-					</div>
-					<div class="border-t border-gray-400 p-1 bg-gray-100 font-bold text-xs">
-						<span>TOTAL:</span>
-					</div>
+			</div>
+			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
+				@tmpl.Search_Part(tblDetalji, searchInputDetalji)
+				<!-- Table -->
+				<div id="otvorenestavketabledetalji" class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+					@tmpl.Table(tblDetalji, translator)
 				</div>
 			</div>
 		</div>
 	</div>
 	<!-- Dialog display container-->
 	<div id="dialog-content"></div>
-	@tmpl.ShowMessage()
+	@tmpl.HandleDialogResponse("dialog-content")
+	@tmpl.ClearFieldError()
+	@tmpl.SpinnerScript()
+	<script>
+		// Listen for table data to be loaded via HTMX, then auto-click first row once
+		if (!window.otvoreneStavkeFirstRowListener) {
+			window.otvoreneStavkeFirstRowListener = true;
+			window.handleOtvoreneStavkeFirstRow = function(evt) {
+				const target = evt.detail.target;
+				// Trigger ONLY when partneri table is swapped, NOT when details table is swapped
+				if (target.id === 'otvorenestavketable') {
+					console.log('Selecting first row after table data loaded');
+					setTimeout(() => {
+						const firstRow = document.querySelector('#tab1 table tbody tr');
+						if (firstRow) {
+							// Prevent this listener from running again
+							document.removeEventListener('htmx:afterSwap', window.handleOtvoreneStavkeFirstRow);
+							firstRow.click();
+						}
+					}, 500);
+				}
+			};
+			
+			document.addEventListener('htmx:afterSwap', window.handleOtvoreneStavkeFirstRow);
+		}
+	</script>
 }
 
 // Tab 2 - Zatvorene stavke (Closed Items)
-templ ZatvoreneStavke(tabs domain.TabData, tbl domain.TableData, translator *i18n.Service, gnGod int) {
+templ ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObrada, btnStampaOpomena domain.Button, searchInput, searchInputDetalji domain.InputControl, translator *i18n.Service, gnGod int) {
 	<!-- Container with full height -->
 	<div class="flex flex-col h-full">
 		<!-- Tab Navigation -->
 		<div class="border-b border-blue-600">
-			@tmpl.TabNav(translator.Title("Otvorene stavke"), tabs, "#tab-content", "otvorene-stavke-panel", translator)
+			@tmpl.TabNav(translator.Title("Otvorene stavke, dugovanja, potraživanja"), tabs, "#tab-content", "otvorene-stavke-panel", translator)
 		</div>
 		<!-- Tab 2 Content -->
 		<div id="tab2" class="flex-1 min-h-0 flex flex-col gap-1">
-			<!-- Parameters Section -->
-			<div class="border bg-yellow-100 border-yellow-400 p-2 rounded-lg">
-				<div class="flex items-center gap-2">
-					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "konto2",
-						LabelText:  translator.Label("Konto"),
-						ClassLabel: "text-sm font-medium w-16",
-					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:         "konto2",
-						Name:       "konto2",
-						FieldType:  "text",
-						ClassInput: common.ClassInputTextEnabled + " w-32",
-						TabIndex:   "1",
-					})
-					<button class="px-2 py-1 bg-blue-500 text-white text-xs rounded">F3</button>
-					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "pocetakkonta2",
-						LabelText:  translator.Label("Početak od šifre"),
-						ClassLabel: "text-sm font-medium w-28",
-					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:         "pocetakkonta2",
-						Name:       "pocetakkonta2",
-						FieldType:  "text",
-						Value:      "00",
-						ClassInput: common.ClassInputTextEnabled + " w-20",
-						TabIndex:   "2",
-					})
-					<button class="px-2 py-1 bg-blue-500 text-white text-xs rounded">F3</button>
-					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "zavrsenisifra2",
-						LabelText:  translator.Label("Završeno sa šifrom"),
-						ClassLabel: "text-sm font-medium w-28",
-					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:         "zavrsenisifra2",
-						Name:       "zavrsenisifra2",
-						FieldType:  "text",
-						Value:      "999999",
-						ClassInput: common.ClassInputTextEnabled + " w-20",
-						TabIndex:   "3",
-					})
-					<button class="px-2 py-1 bg-blue-500 text-white text-xs rounded">F3</button>
+			<!-- Parameters Section - Two Columns -->
+			<div class="grid grid-cols-2 gap-1">
+				<!-- Left Column - Konto and Sifre -->
+				<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg flex flex-col">
+					<!-- Konto Field -->
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "konto",
+							LabelText:  translator.Label("Konto"),
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:           "konto",
+							Name:         "konto",
+							FieldType:    "text",
+							Disabled:     false,
+							ClassInput:   common.ClassInputTextEnabled + " w-24",
+							TabIndex:     "1",
+							OnInput:      "clearFieldError",
+							OnFocus:      "clearFieldError",
+							BlurEndpoint: "api/fkpl/trazikonto",
+							HxTarget:     "kontonaziv",
+							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "2"}`,
+							HxInclude:    "this",
+						})
+						@tmpl.SearchButton(domain.SearchButtonConfig{
+							ID:          "btnkonto",
+							Name:        "search-konto",
+							HxUrl:       "/api/promet/searchbutton",
+							HxTarget:    "#search-dropdown",
+							HxSwap:      "innerHTML",
+							HxVals:      `js:{"vkonta": "1"}`,
+							ClassButton: common.ClassButton,
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "kontonaziv",
+							Name:       "kontonaziv",
+							FieldType:  "text",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextEnabled + " w-full",
+							TabIndex:   "-1",
+						})
+					</div>
+					<!-- Od Šifre -->
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "lblodsifre",
+							LabelText:  translator.Label("Od šifre"),
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:           "odsifre",
+							Name:         "odsifre",
+							FieldType:    "text",
+							Disabled:     false,
+							ClassInput:   common.ClassInputTextEnabled + " w-24",
+							Value:        "00",
+							TabIndex:     "2",
+							OnInput:      "clearFieldError",
+							OnFocus:      "clearFieldError",
+							BlurEndpoint: "api/fkpl/trazikonto",
+							HxTarget:     "odsifrenaziv",
+							HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('odsifre').value, "vkonta": "1"}`,
+							HxInclude:    "this",
+						})
+						@tmpl.SearchButton(domain.SearchButtonConfig{
+							ID:          "btnodsifre",
+							Name:        "search-odsifre",
+							HxUrl:       "/api/promet/searchbutton",
+							HxTarget:    "#search-dropdown",
+							HxSwap:      "innerHTML",
+							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`,
+							ClassButton: common.ClassButton,
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "odsifrenaziv",
+							Name:       "odsifrenaziv",
+							FieldType:  "text",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextEnabled + " w-full",
+							TabIndex:   "-1",
+						})
+					</div>
+					<!-- Do Šifre -->
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "lbldosifre",
+							LabelText:  translator.Label("Do šifre"),
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:           "dosifre",
+							Name:         "dosifre",
+							FieldType:    "text",
+							Disabled:     false,
+							ClassInput:   common.ClassInputTextEnabled + " w-24",
+							Value:        "999999",
+							TabIndex:     "3",
+							OnInput:      "clearFieldError",
+							OnFocus:      "clearFieldError",
+							BlurEndpoint: "api/fkpl/trazikonto",
+							HxTarget:     "dosifrenaziv",
+							HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('dosifre').value, "vkonta": "1"}`,
+							HxInclude:    "this",
+						})
+						@tmpl.SearchButton(domain.SearchButtonConfig{
+							ID:          "btndosifre",
+							Name:        "search-dosifre",
+							HxUrl:       "/api/promet/searchbutton",
+							HxTarget:    "#search-dropdown",
+							HxSwap:      "innerHTML",
+							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`,
+							ClassButton: common.ClassButton,
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "dosifrenaziv",
+							Name:       "dosifrenaziv",
+							FieldType:  "text",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextEnabled + " w-full",
+							TabIndex:   "-1",
+						})
+					</div>
 				</div>
-				<div class="flex items-center gap-2 mt-2">
-					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "oddatuma2",
-						LabelText:  translator.Label("Od datuma"),
-						ClassLabel: "text-sm font-medium w-20",
-					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:         "oddatuma2",
-						Name:       "oddatuma2",
-						FieldType:  "date",
-						Value:      time.Date(gnGod, 1, 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
-						ClassInput: common.ClassInputTextEnabled + " w-32",
-						TabIndex:   "4",
-					})
-					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "dodatuma2",
-						LabelText:  translator.Label("Do datuma"),
-						ClassLabel: "text-sm font-medium w-20",
-					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:         "dodatuma2",
-						Name:       "dodatuma2",
-						FieldType:  "date",
-						Value:      time.Date(gnGod, 12, 31, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
-						ClassInput: common.ClassInputTextEnabled + " w-32",
-						TabIndex:   "5",
-					})
-					<div class="flex-1"></div>
-					<button class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded">{ translator.Label("Obradi") }</button>
+				<!-- Right Column - Date Range -->
+				<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg flex flex-col">
+					<!-- Od datuma -->
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "lbloddatuma",
+							LabelText:  translator.Label("Od datuma"),
+							ClassLabel: common.ClassLabel + " w-44",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "oddatuma",
+							Name:       "oddatuma",
+							FieldType:  "date",
+							Value:      time.Date(gnGod, 1, 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " w-28",
+							TabIndex:   "4",
+							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError",
+						})
+					</div>
+					<!-- Do datuma -->
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "lbldodatuma",
+							LabelText:  translator.Label("Do datuma"),
+							ClassLabel: common.ClassLabel + " w-44",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "dodatuma",
+							Name:       "dodatuma",
+							FieldType:  "date",
+							Value:      time.Date(gnGod, time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " w-28",
+							TabIndex:   "5",
+							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError",
+						})
+					</div>
+					<!-- Buttons -->
+					<div class="flex justify-end gap-1 mt-auto">
+						@tmpl.FormObradaButton(btnObrada, translator)
+						@tmpl.PrintButton(btnStampaOpomena, translator)
+					</div>
 				</div>
 			</div>
-			<!-- Two-column layout -->
-			<div class="flex flex-row gap-1 flex-1 min-h-0">
-				<!-- Partners Column -->
-				<div class="border bg-blue-100 border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden w-1/3">
-					<div class="text-sm font-bold mb-1 px-1">{ translator.Label("PARTNERI") }</div>
-					<div class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
-						<table class="w-full text-xs border-collapse">
-							<thead>
-								<tr class="bg-gray-700 text-white sticky top-0">
-									<th class="border border-gray-400 px-1 py-1 text-left">Konto</th>
-									<th class="border border-gray-400 px-1 py-1 text-left">Sifra</th>
-									<th class="border border-gray-400 px-1 py-1 text-left">Naziv</th>
-									<th class="border border-gray-400 px-1 py-1 text-right">Duguje</th>
-									<th class="border border-gray-400 px-1 py-1 text-right">Potrazuje</th>
-									<th class="border border-gray-400 px-1 py-1 text-right">Saldo</th>
-								</tr>
-							</thead>
-							<tbody>
-								<!-- Partner rows -->
-							</tbody>
-						</table>
-					</div>
-					<div class="border-t border-gray-400 p-1 bg-gray-100 font-bold text-xs">
-						<span>TOTAL:</span>
-					</div>
+			<!-- Group Data Table -->
+			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
+				@tmpl.LoadingSpinner()
+				@tmpl.Search_Part(tblPartneri, searchInput)
+				<!-- Table -->
+				<div id="zatvorenestavketable" class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+					@tmpl.Table(tblPartneri, translator)
 				</div>
-				<!-- Closed Items Detail Column -->
-				<div class="border bg-blue-100 border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
-					<div class="text-sm font-bold mb-1 px-1">{ translator.Label("ZATVORENE STAVKE - DETALJИ") }</div>
-					<div class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
-						@tmpl.Table(tbl, translator)
-					</div>
-					<div class="border-t border-gray-400 p-1 bg-gray-100 font-bold text-xs">
-						<span>TOTAL:</span>
-					</div>
+			</div>
+			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
+				@tmpl.Search_Part(tblDetalji, searchInputDetalji)
+				<!-- Table -->
+				<div id="zatvorenestavketabledetalji" class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+					@tmpl.Table(tblDetalji, translator)
 				</div>
 			</div>
 		</div>
 	</div>
 	<!-- Dialog display container-->
 	<div id="dialog-content"></div>
-	@tmpl.ShowMessage()
+	@tmpl.HandleDialogResponse("dialog-content")
+	@tmpl.ClearFieldError()
+	@tmpl.SpinnerScript()
+	<script>
+		// Listen for table data to be loaded via HTMX, then auto-click first row once
+		if (!window.zatvoreneStavkeFirstRowListener) {
+			window.zatvoreneStavkeFirstRowListener = true;
+			
+			window.handleZatvoreneStavkeFirstRow = function(evt) {
+				const target = evt.detail.target;
+				console.log('ZatvoreneStavke afterSwap event, target ID:', target?.id);
+				// Trigger ONLY when partneri table is swapped, NOT when details table is swapped
+				if (target.id === 'zatvorenestavketable') {
+					console.log('Selecting first row after table data loaded');
+					setTimeout(() => {
+						const firstRow = document.querySelector('#tab2 table tbody tr');
+						console.log('First row element:', firstRow);
+						if (firstRow) {
+							console.log('Clicking first row, row has hx attributes:', firstRow.attributes);
+							// Prevent this listener from running again
+							document.removeEventListener('htmx:afterSwap', window.handleZatvoreneStavkeFirstRow);
+							firstRow.click();
+						}
+					}, 100);
+				}
+			};
+			
+			document.addEventListener('htmx:afterSwap', window.handleZatvoreneStavkeFirstRow);
+		}
+	</script>
 }
 
 // Tab 3 - IOS (Izvod otvorenih stavki - Statement of Open Items)
-templ IOS(tabs domain.TabData, tbl domain.TableData, translator *i18n.Service, gnGod int) {
+templ IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObrada, btnStampaOpomena domain.Button, searchInput, searchInputDetalji domain.InputControl, translator *i18n.Service, gnGod int) {
 	<!-- Container with full height -->
 	<div class="flex flex-col h-full">
 		<!-- Tab Navigation -->
 		<div class="border-b border-blue-600">
-			@tmpl.TabNav(translator.Title("Otvorene stavke"), tabs, "#tab-content", "otvorene-stavke-panel", translator)
+			@tmpl.TabNav(translator.Title("Otvorene stavke, dugovanja, potraživanja"), tabs, "#tab-content", "otvorene-stavke-panel", translator)
 		</div>
 		<!-- Tab 3 Content -->
 		<div id="tab3" class="flex-1 min-h-0 flex flex-col gap-1">
-			<!-- Parameters Section -->
-			<div class="border bg-yellow-100 border-yellow-400 p-2 rounded-lg">
-				<div class="flex items-center gap-2">
-					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "konto3",
-						LabelText:  translator.Label("Konto"),
-						ClassLabel: "text-sm font-medium w-16",
-					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:         "konto3",
-						Name:       "konto3",
-						FieldType:  "text",
-						ClassInput: common.ClassInputTextEnabled + " w-32",
-						TabIndex:   "1",
-					})
-					<button class="px-2 py-1 bg-blue-500 text-white text-xs rounded">F3</button>
-					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "pocetakkonta3",
-						LabelText:  translator.Label("Početak od šifre"),
-						ClassLabel: "text-sm font-medium w-28",
-					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:         "pocetakkonta3",
-						Name:       "pocetakkonta3",
-						FieldType:  "text",
-						Value:      "00",
-						ClassInput: common.ClassInputTextEnabled + " w-20",
-						TabIndex:   "2",
-					})
-					<button class="px-2 py-1 bg-blue-500 text-white text-xs rounded">F3</button>
-					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "zavrsenisifra3",
-						LabelText:  translator.Label("Završeno sa šifrom"),
-						ClassLabel: "text-sm font-medium w-28",
-					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:         "zavrsenisifra3",
-						Name:       "zavrsenisifra3",
-						FieldType:  "text",
-						Value:      "999999",
-						ClassInput: common.ClassInputTextEnabled + " w-20",
-						TabIndex:   "3",
-					})
-					<button class="px-2 py-1 bg-blue-500 text-white text-xs rounded">F3</button>
-					<div class="flex-1"></div>
-					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "poddatumom3",
-						LabelText:  translator.Label("Pod datumom"),
-						ClassLabel: "text-sm font-medium w-20",
-					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:         "poddatumom3",
-						Name:       "poddatumom3",
-						FieldType:  "date",
-						Value:      time.Date(gnGod, 12, 31, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
-						ClassInput: common.ClassInputTextEnabled + " w-32",
-						TabIndex:   "4",
-					})
+			<!-- Parameters Section - Two Columns -->
+			<div class="grid grid-cols-2 gap-1">
+				<!-- Left Column - Konto and Sifre -->
+				<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg flex flex-col">
+					<!-- Konto Field -->
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "konto-ios",
+							LabelText:  translator.Label("Konto"),
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:           "konto",
+							Name:         "konto",
+							FieldType:    "text",
+							Disabled:     false,
+							ClassInput:   common.ClassInputTextEnabled + " w-24",
+							TabIndex:     "1",
+							OnInput:      "clearFieldError",
+							OnFocus:      "clearFieldError",
+							BlurEndpoint: "api/fkpl/trazikonto",
+							HxTarget:     "kontonaziv-ios",
+							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "2"}`,
+							HxInclude:    "this",
+							MinLength:    "2",
+							MaxLength:    "6",
+						})
+						@tmpl.SearchButton(domain.SearchButtonConfig{
+							ID:          "btnkonto",
+							Name:        "search-konto",
+							HxUrl:       "/api/promet/searchbutton",
+							HxTarget:    "#search-dropdown",
+							HxSwap:      "innerHTML",
+							HxVals:      `js:{"vkonta": "1"}`,
+							ClassButton: common.ClassButton,
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "kontonaziv",
+							Name:       "kontonaziv",
+							FieldType:  "text",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextEnabled + " w-full",
+							TabIndex:   "-1",
+						})
+					</div>
+					<!-- Od Šifre -->
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "lblodsifre",
+							LabelText:  translator.Label("Od šifre"),
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:           "odsifre",
+							Name:         "odsifre",
+							FieldType:    "text",
+							Disabled:     false,
+							ClassInput:   common.ClassInputTextEnabled + " w-24",
+							Value:        "00",
+							TabIndex:     "2",
+							OnInput:      "clearFieldError",
+							OnFocus:      "clearFieldError",
+							BlurEndpoint: "api/fkpl/trazikonto",
+							HxTarget:     "odsifrenaziv",
+							HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('odsifre').value, "vkonta": "1"}`,
+							HxInclude:    "this",
+							MinLength:    "2",
+							MaxLength:    "6",
+						})
+						@tmpl.SearchButton(domain.SearchButtonConfig{
+							ID:          "btnodsifre",
+							Name:        "search-odsifre",
+							HxUrl:       "/api/promet/searchbutton",
+							HxTarget:    "#search-dropdown",
+							HxSwap:      "innerHTML",
+							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`,
+							ClassButton: common.ClassButton,
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "odsifrenaziv",
+							Name:       "odsifrenaziv",
+							FieldType:  "text",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextEnabled + " w-full",
+							TabIndex:   "-1",
+						})
+					</div>
+					<!-- Do Šifre -->
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "lbldosifre",
+							LabelText:  translator.Label("Do šifre"),
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:           "dosifre",
+							Name:         "dosifre",
+							FieldType:    "text",
+							Disabled:     false,
+							ClassInput:   common.ClassInputTextEnabled + " w-24",
+							Value:        "999999",
+							TabIndex:     "3",
+							OnInput:      "clearFieldError",
+							OnFocus:      "clearFieldError",
+							BlurEndpoint: "api/fkpl/trazikonto",
+							HxTarget:     "dosifrenaziv",
+							HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('dosifre').value, "vkonta": "1"}`,
+							HxInclude:    "this",
+							MinLength:    "2",
+							MaxLength:    "6",
+						})
+						@tmpl.SearchButton(domain.SearchButtonConfig{
+							ID:          "btndosifre",
+							Name:        "search-dosifre",
+							HxUrl:       "/api/promet/searchbutton",
+							HxTarget:    "#search-dropdown",
+							HxSwap:      "innerHTML",
+							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`,
+							ClassButton: common.ClassButton,
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "dosifrenaziv",
+							Name:       "dosifrenaziv",
+							FieldType:  "text",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextEnabled + " w-full",
+							TabIndex:   "-1",
+						})
+					</div>
 				</div>
-				<div class="flex items-center gap-2 mt-2">
-					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "otv_stavke_dana3",
-						LabelText:  translator.Label("Otv. stavke preko broja dana"),
-						ClassLabel: "text-sm font-medium w-40",
-					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:         "otv_stavke_dana3",
-						Name:       "otv_stavke_dana3",
-						FieldType:  "number",
-						Value:      "0",
-						ClassInput: common.ClassInputTextEnabled + " w-20",
-						TabIndex:   "5",
-					})
-					@tmpl.CheckboxField(domain.CheckboxFieldConfig{
-						ID:        "saldo_partnera",
-						Name:      "saldo_partnera",
-						Value:     "Y",
-						LabelText: translator.Label("Saldo partnera <> 0"),
-						Checked:   false,
-						TabIndex:  "6",
-					}, translator)
-					<div class="flex-1"></div>
-					<button class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded">{ translator.Label("Obradi (F4)") }</button>
-					<button class="px-3 py-1 bg-green-500 hover:bg-green-600 text-white text-sm rounded">{ translator.Label("Štampaj") }</button>
+				<!-- Right Column - Date and Days -->
+				<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg flex flex-col">
+					<!-- Od datuma -->
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "lbloddatuma",
+							LabelText:  translator.Label("Od datuma"),
+							ClassLabel: common.ClassLabel + " w-44",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "poddatumom",
+							Name:       "poddatumom",
+							FieldType:  "date",
+							Value:      time.Date(gnGod, time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " w-28",
+							TabIndex:   "4",
+							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError",
+						})
+					</div>
+					<!-- Otv. stavke preko broja dana -->
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "otvstavkedana",
+							LabelText:  translator.Label("Otv. stavke preko broja dana"),
+							ClassLabel: common.ClassLabel + " w-44",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "otvstavkedana",
+							Name:       "otvstavkedana",
+							FieldType:  "number",
+							Value:      "0",
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " w-20",
+							TabIndex:   "5",
+							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError",
+							MaxLength:  "3",
+						})
+					</div>
+					<!-- Buttons -->
+					<div class="flex justify-end gap-1 mt-auto">
+						@tmpl.FormObradaButton(btnObrada, translator)
+						@tmpl.PrintButton(btnStampaOpomena, translator)
+					</div>
 				</div>
 			</div>
-			<!-- Two-column layout -->
-			<div class="flex flex-row gap-1 flex-1 min-h-0">
-				<!-- Partners Column -->
-				<div class="border bg-blue-100 border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden w-1/3">
-					<div class="text-sm font-bold mb-1 px-1">{ translator.Label("PARTNERI") }</div>
-					<div class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
-						<table class="w-full text-xs border-collapse">
-							<thead>
-								<tr class="bg-gray-700 text-white sticky top-0">
-									<th class="border border-gray-400 px-1 py-1 text-left">Konto</th>
-									<th class="border border-gray-400 px-1 py-1 text-left">Sifra</th>
-									<th class="border border-gray-400 px-1 py-1 text-left">Naziv</th>
-									<th class="border border-gray-400 px-1 py-1 text-right">Duguje</th>
-									<th class="border border-gray-400 px-1 py-1 text-right">Potrazuje</th>
-									<th class="border border-gray-400 px-1 py-1 text-right">Saldo</th>
-								</tr>
-							</thead>
-							<tbody>
-								<!-- Partner rows -->
-							</tbody>
-						</table>
-					</div>
-					<div class="border-t border-gray-400 p-1 bg-gray-100 font-bold text-xs">
-						<span>TOTAL:</span>
-					</div>
+			<!-- Group Data Table -->
+			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
+				@tmpl.Search_Part(tblPartneri, searchInput)
+				<!-- Table -->
+				<div id="iostable" class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+					@tmpl.Table(tblPartneri, translator)
 				</div>
-				<!-- Statement Detail Column -->
-				<div class="border bg-blue-100 border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
-					<div class="text-sm font-bold mb-1 px-1">{ translator.Label("OTVORENE STAVKE - DETALJИ") }</div>
-					<div class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
-						@tmpl.Table(tbl, translator)
-					</div>
-					<div class="border-t border-gray-400 p-1 bg-gray-100 font-bold text-xs">
-						<span>TOTAL:</span>
-					</div>
+			</div>
+			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
+				@tmpl.LoadingSpinner()
+				@tmpl.Search_Part(tblDetalji, searchInputDetalji)
+				<!-- Table -->
+				<div id="iostabledetalji" class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+					@tmpl.Table(tblDetalji, translator)
 				</div>
 			</div>
 		</div>
 	</div>
 	<!-- Dialog display container-->
 	<div id="dialog-content"></div>
-	@tmpl.ShowMessage()
+	@tmpl.HandleDialogResponse("dialog-content")
+	@tmpl.ClearFieldError()
+	@tmpl.SpinnerScript()
+	<script>
+		// Listen for table data to be loaded via HTMX, then auto-click first row once
+		if (!window.iosFirstRowListener) {
+			window.iosFirstRowListener = true;
+			window.handleIOSFirstRow = function(evt) {
+				const target = evt.detail.target;
+				console.log('IOS afterSwap event, target ID:', target?.id);
+				// Trigger ONLY when partneri table is swapped, NOT when details table is swapped
+				if (target.id === 'iostable') {
+					console.log('Selecting first row after table data loaded');
+					setTimeout(() => {
+						const firstRow = document.querySelector('#tab3 table tbody tr');
+						console.log('First row element:', firstRow);
+						if (firstRow) {
+							console.log('Clicking first row, row has hx attributes:', firstRow.attributes);
+							// Prevent this listener from running again
+							document.removeEventListener('htmx:afterSwap', window.handleIOSFirstRow);
+							firstRow.click();
+						}
+					}, 100);
+				}
+			};
+			
+			document.addEventListener('htmx:afterSwap', window.handleIOSFirstRow);
+		}
+	</script>
 }
 
-// Tab 4 - Opomene (Reminders/Notices)
-templ Opomene(tabs domain.TabData, tbl domain.TableData, translator *i18n.Service, gnGod int) {
+// Tab 4 - Dospela potraživanja/dugovanja (Due Receivables/Payables)
+templ DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObrada, btnPrint domain.Button, searchInput, searchInputDetalji domain.InputControl, translator *i18n.Service, gnGod int) {
 	<!-- Container with full height -->
 	<div class="flex flex-col h-full">
 		<!-- Tab Navigation -->
 		<div class="border-b border-blue-600">
-			@tmpl.TabNav(translator.Title("Otvorene stavke"), tabs, "#tab-content", "otvorene-stavke-panel", translator)
+			@tmpl.TabNav(translator.Title("Otvorene stavke, dugovanja, potraživanja"), tabs, "#tab-content", "dospela-potrazivanja-panel", translator)
 		</div>
 		<!-- Tab 4 Content -->
 		<div id="tab4" class="flex-1 min-h-0 flex flex-col gap-1">
-			<!-- Parameters Section -->
-			<div class="border bg-yellow-100 border-yellow-400 p-2 rounded-lg">
-				<div class="flex items-center gap-2">
-					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "konto4",
-						LabelText:  translator.Label("Konto"),
-						ClassLabel: "text-sm font-medium w-16",
-					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:         "konto4",
-						Name:       "konto4",
-						FieldType:  "text",
-						ClassInput: common.ClassInputTextEnabled + " w-32",
-						TabIndex:   "1",
-					})
-					<button class="px-2 py-1 bg-blue-500 text-white text-xs rounded">F3</button>
-					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "pocetakkonta4",
-						LabelText:  translator.Label("Početak od šifre"),
-						ClassLabel: "text-sm font-medium w-28",
-					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:         "pocetakkonta4",
-						Name:       "pocetakkonta4",
-						FieldType:  "text",
-						Value:      "00",
-						ClassInput: common.ClassInputTextEnabled + " w-20",
-						TabIndex:   "2",
-					})
-					<button class="px-2 py-1 bg-blue-500 text-white text-xs rounded">F3</button>
-					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "zavrsenisifra4",
-						LabelText:  translator.Label("Završeno sa šifrom"),
-						ClassLabel: "text-sm font-medium w-28",
-					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:         "zavrsenisifra4",
-						Name:       "zavrsenisifra4",
-						FieldType:  "text",
-						Value:      "999999",
-						ClassInput: common.ClassInputTextEnabled + " w-20",
-						TabIndex:   "3",
-					})
-					<button class="px-2 py-1 bg-blue-500 text-white text-xs rounded">F3</button>
+			<!-- Parameters Section - Two Columns -->
+			<div class="grid grid-cols-2 gap-1">
+				<!-- Left Column - Konto and Sifre -->
+				<div class="border bg-blue-100 border border-blue-400 mt-1 p-1 rounded-lg flex flex-col">
+					<!-- Konto Field -->
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "konto",
+							LabelText:  translator.Label("Konto"),
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:           "konto",
+							Name:         "konto",
+							FieldType:    "text",
+							Disabled:     false,
+							ClassInput:   common.ClassInputTextEnabled + " w-24",
+							TabIndex:     "1",
+							OnInput:      "clearFieldError",
+							OnFocus:      "clearFieldError",
+							BlurEndpoint: "api/fkpl/trazikonto",
+							HxTarget:     "kontonaziv",
+							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "2"}`,
+							HxInclude:    "this",
+							MinLength:    "2",
+							MaxLength:    "6",
+						})
+						@tmpl.SearchButton(domain.SearchButtonConfig{
+							ID:          "btnkonto",
+							Name:        "search-konto",
+							HxUrl:       "/api/promet/searchbutton",
+							HxTarget:    "#search-dropdown",
+							HxSwap:      "innerHTML",
+							HxVals:      `js:{"vkonta": "2"}`,
+							ClassButton: common.ClassButton,
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "kontonaziv",
+							Name:       "kontonaziv",
+							FieldType:  "text",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextEnabled + " w-full",
+							TabIndex:   "-1",
+						})
+					</div>
+					<!-- Od Šifre -->
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "lblodsifre",
+							LabelText:  translator.Label("Od šifre"),
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:           "odsifre",
+							Name:         "odsifre",
+							FieldType:    "text",
+							Disabled:     false,
+							ClassInput:   common.ClassInputTextEnabled + " w-24",
+							Value:        "00",
+							MinLength:    "2",
+							MaxLength:    "6",
+							TabIndex:     "2",
+							OnInput:      "clearFieldError",
+							OnFocus:      "clearFieldError",
+							BlurEndpoint: "api/fkpl/trazikonto",
+							HxTarget:     "odsifrenaziv",
+							HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('odsifre').value, "vkonta": "1"}`,
+							HxInclude:    "this",
+						})
+						@tmpl.SearchButton(domain.SearchButtonConfig{
+							ID:          "btnodsifre",
+							Name:        "search-odsifre",
+							HxUrl:       "/api/promet/searchbutton",
+							HxTarget:    "#search-dropdown",
+							HxSwap:      "innerHTML",
+							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`,
+							ClassButton: common.ClassButton,
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "odsifrenaziv",
+							Name:       "odsifrenaziv",
+							FieldType:  "text",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextEnabled + " w-full",
+							TabIndex:   "-1",
+						})
+					</div>
+					<!-- Do Šifre -->
+					<div class="flex items-center gap-1 mb-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "lbldosifre",
+							LabelText:  translator.Label("Do šifre"),
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:           "dosifre",
+							Name:         "dosifre",
+							FieldType:    "text",
+							Disabled:     false,
+							ClassInput:   common.ClassInputTextEnabled + " w-24",
+							Value:        "999999",
+							TabIndex:     "3",
+							MinLength:    "2",
+							MaxLength:    "6",
+							OnInput:      "clearFieldError",
+							OnFocus:      "clearFieldError",
+							BlurEndpoint: "api/fkpl/trazikonto",
+							HxTarget:     "dosifrenaziv",
+							HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('dosifre').value, "vkonta": "1"}`,
+							HxInclude:    "this",
+						})
+						@tmpl.SearchButton(domain.SearchButtonConfig{
+							ID:          "btndosifre",
+							Name:        "search-dosifre",
+							HxUrl:       "/api/promet/searchbutton",
+							HxTarget:    "#search-dropdown",
+							HxSwap:      "innerHTML",
+							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`,
+							ClassButton: common.ClassButton,
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "dosifrenaziv",
+							Name:       "dosifrenaziv",
+							FieldType:  "text",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextEnabled + " w-full",
+							TabIndex:   "-1",
+						})
+					</div>
 				</div>
-				<div class="flex items-center gap-2 mt-2">
-					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "poddatumom4",
-						LabelText:  translator.Label("Pod datumom"),
-						ClassLabel: "text-sm font-medium w-20",
-					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:         "poddatumom4",
-						Name:       "poddatumom4",
-						FieldType:  "date",
-						Value:      time.Date(gnGod, 12, 31, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
-						ClassInput: common.ClassInputTextEnabled + " w-32",
-						TabIndex:   "4",
-					})
-					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "otv_stavke_dana4",
-						LabelText:  translator.Label("Otv. stavke preko broja dana"),
-						ClassLabel: "text-sm font-medium w-40",
-					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:         "otv_stavke_dana4",
-						Name:       "otv_stavke_dana4",
-						FieldType:  "number",
-						Value:      "0",
-						ClassInput: common.ClassInputTextEnabled + " w-20",
-						TabIndex:   "5",
-					})
-					<div class="flex-1"></div>
-					<button class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded">{ translator.Label("Obradi (F4)") }</button>
-					<button class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded">{ translator.Label("St. opomena") }</button>
+				<!-- Right Column - Radio Buttons -->
+				<div class="border bg-blue-100 border border-blue-400 mt-1 p-1 rounded-lg flex flex-col">
+					<!-- First Radio Set - Display Type with Date -->
+					<div class="mb-2 flex items-center gap-1">
+						<div class="flex flex-row gap-4">
+							<label class="flex items-center gap-2 cursor-pointer">
+								<input type="radio" name="tip_pregleda" value="A" class="w-4 h-4" tabindex="4" checked/>
+								<span class="text-sm">{ translator.Label("Prikaz analitički") }</span>
+							</label>
+							<label class="flex items-center gap-2 cursor-pointer">
+								<input type="radio" name="tip_pregleda" value="S" class="w-4 h-4" tabindex="5"/>
+								<span class="text-sm">{ translator.Label("Prikaz sintetički") }</span>
+							</label>
+						</div>
+						<div class="flex-1"></div>
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "poddatumom",
+							LabelText:  translator.Label("Pod datumom"),
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "poddatumom",
+							Name:       "poddatumom",
+							FieldType:  "date",
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " w-32",
+							Value:      time.Date(gnGod, time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
+							TabIndex:   "6",
+							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError",
+						})
+					</div>
+					<!-- Second Radio Set - Date Filter -->
+					<div class="flex flex-col gap-1 mb-2">
+						<div class="flex items-center gap-1">
+							<label class="flex items-center gap-1 cursor-pointer">
+								<input type="radio" name="tip_potrazivanja" value="D" class="w-4 h-4" tabindex="7" checked/>
+								<span class="text-sm">{ translator.Label("Potraživanja koja dospevaju u narednih") }</span>
+							</label>
+						</div>
+						<div class="flex items-center justify-between gap-1">
+							<div class="flex items-center gap-1">
+								<label class="flex items-center gap-1 cursor-pointer">
+									<input type="radio" name="tip_potrazivanja" value="S" class="w-4 h-4" tabindex="8"/>
+									<span class="text-sm">{ translator.Label("Potraživanja koja su starija od") }</span>
+								</label>
+								@tmpl.NumericInputField(domain.InputFieldConfig{
+									ID:         "brojdana",
+									Name:       "brojdana",
+									FieldType:  "text",
+									Disabled:   false,
+									ClassInput: common.ClassInputTextEnabled + " ml-16 w-16",
+									MaxLength:  "3",
+									Value:      "30",
+									TabIndex:   "9",
+									OnInput:    "clearFieldError",
+									OnFocus:    "clearFieldError",
+								})
+								<span class="text-sm">{ translator.Label("dana") }</span>
+							</div>
+							<!-- Buttons -->
+							<div class="flex gap-1">
+								@tmpl.FormObradaButton(btnObrada, translator)
+								@tmpl.PrintButton(btnPrint, translator)
+							</div>
+						</div>
+					</div>
 				</div>
 			</div>
-			<!-- Data Table -->
-			<div class="border bg-blue-100 border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
-				<div class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
-					@tmpl.Table(tbl, translator)
+			<!-- Group Data Table -->
+			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative">
+				@tmpl.LoadingSpinner()
+				@tmpl.Search_Part(tblPartneri, searchInput)
+				<!-- Table -->
+				<div id="dospelatable" class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+					@tmpl.Table(tblPartneri, translator)
+				</div>
+			</div>
+			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
+				@tmpl.Search_Part(tblDetalji, searchInputDetalji)
+				<!-- Table -->
+				<div id="dospelatabledetalji" class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+					@tmpl.Table(tblDetalji, translator)
 				</div>
 			</div>
 		</div>
 	</div>
 	<!-- Dialog display container-->
 	<div id="dialog-content"></div>
-	@tmpl.ShowMessage()
+	@tmpl.HandleDialogResponse("dialog-content")
+	@tmpl.ClearFieldError()
+	@tmpl.SpinnerScript()
+	<script>
+		// Listen for table data to be loaded via HTMX, then auto-click first row once
+		if (!window.dospelaFirstRowListener) {
+			window.dospelaFirstRowListener = true;
+			window.handleDospelaFirstRow = function(evt) {
+				const target = evt.detail.target;
+				console.log('dospela potrazivanja/obaveze afterSwap event, target ID:', target?.id);
+				// Trigger ONLY when partneri table is swapped, NOT when details table is swapped
+				if (target.id === 'dospelatable') {
+					console.log('Selecting first row after table data loaded');
+					setTimeout(() => {
+						const firstRow = document.querySelector('#tab4 table tbody tr');
+						console.log('First row element:', firstRow);
+						if (firstRow) {
+							console.log('Clicking first row, row has hx attributes:', firstRow.attributes);
+							// Prevent this listener from running again
+							document.removeEventListener('htmx:afterSwap', window.handleDospelaFirstRow);
+							firstRow.click();
+						}
+					}, 100);
+				}
+			};
+			
+			document.addEventListener('htmx:afterSwap', window.handleDospelaFirstRow);
+		}
+	</script>
 }
 
-// Tab 5 - Dospela potraživanja/dugovanja (Due Receivables/Payables)
-templ DospelaPotraživanja(tabs domain.TabData, tbl domain.TableData, translator *i18n.Service, gnGod int) {
+// Tab 5 - Pregled Dugovanja/Obaveze po starosti (Overview of Payables by Age)
+templ PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service, gnGod int) {
 	<!-- Container with full height -->
 	<div class="flex flex-col h-full">
 		<!-- Tab Navigation -->
 		<div class="border-b border-blue-600">
-			@tmpl.TabNav(translator.Title("Otvorene stavke"), tabs, "#tab-content", "otvorene-stavke-panel", translator)
+			@tmpl.TabNav(translator.Title("Otvorene stavke, dugovanja, potraživanja"), tabs, "#tab-content", "pregled-dugovanja-panel", translator)
 		</div>
 		<!-- Tab 5 Content -->
 		<div id="tab5" class="flex-1 min-h-0 flex flex-col gap-1">
-			<!-- Parameters Section -->
-			<div class="border bg-yellow-100 border-yellow-400 p-2 rounded-lg">
-				<div class="flex items-center gap-2 mb-2">
-					@tmpl.RadioButtonField(domain.RadioFieldConfig{
-						ID:         "prikaz_analiticki",
-						Name:       "prikaz_tip",
-						Value:      "A",
-						LabelText:  translator.Label("Analitički prikaz"),
-						IsSelected: true,
-						TabIndex:   "1",
-					}, translator)
-					@tmpl.RadioButtonField(domain.RadioFieldConfig{
-						ID:         "prikaz_subsinteticki",
-						Name:       "prikaz_tip",
-						Value:      "S",
-						LabelText:  translator.Label("Subsintetički prikaz"),
-						IsSelected: false,
-						TabIndex:   "2",
-					}, translator)
-					<div class="flex-1"></div>
-					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "stanje_datum5",
-						LabelText:  translator.Label("Stanje na dan"),
-						ClassLabel: "text-sm font-medium w-24",
-					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:         "stanje_datum5",
-						Name:       "stanje_datum5",
-						FieldType:  "date",
-						Value:      time.Date(gnGod, 12, 31, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
-						ClassInput: common.ClassInputTextEnabled + " w-32",
-						TabIndex:   "3",
-					})
+			<!-- Parameters Section - Two Columns -->
+			<div class="grid grid-cols-2 gap-1">
+				<!-- Left Column - Radio Buttons, Konto and Sifre -->
+				<div class="border bg-blue-100 border border-blue-400 mt-1 p-1 rounded-lg flex flex-col gap-1">
+					<!-- Row 1: Radio Set - Display Type (Horizontal) -->
+					<div class="flex flex-row gap-4">
+						<label class="flex items-center gap-2 cursor-pointer">
+							<input type="radio" name="tip_pregleda" value="K" class="w-4 h-4" tabindex="1" checked/>
+							<span class="text-sm">{ translator.Label("Pregled dugovanja kupaca") }</span>
+						</label>
+						<label class="flex items-center gap-2 cursor-pointer">
+							<input type="radio" name="tip_pregleda" value="D" class="w-4 h-4" tabindex="2"/>
+							<span class="text-sm">{ translator.Label("Pregled obaveza prema dobavljačima") }</span>
+						</label>
+					</div>
+					<!-- Row 2: Od Konta and Od Šifre -->
+					<div class="flex gap-1">
+						<div class="flex items-center gap-1 flex-1">
+							@tmpl.LabelField(domain.LabelFieldConfig{
+								ID:         "lblodkonta",
+								LabelText:  translator.Label("Od konta"),
+								ClassLabel: common.ClassLabel + " w-24",
+							})
+							@tmpl.TextInputField(domain.InputFieldConfig{
+								ID:         "odkonta",
+								Name:       "odkonta",
+								FieldType:  "text",
+								Value:      "0000",
+								Disabled:   false,
+								ClassInput: common.ClassInputTextEnabled + " w-24",
+								TabIndex:   "3",
+								OnInput:    "clearFieldError",
+								OnFocus:    "clearFieldError",
+								MinLength:  "4",
+								MaxLength:  "6",
+							})
+						</div>
+						<div class="flex items-center gap-1 flex-1">
+							@tmpl.LabelField(domain.LabelFieldConfig{
+								ID:         "lblodsifre",
+								LabelText:  translator.Label("Od šifre"),
+								ClassLabel: common.ClassLabel + " w-24",
+							})
+							@tmpl.TextInputField(domain.InputFieldConfig{
+								ID:         "odsifre",
+								Name:       "odsifre",
+								FieldType:  "text",
+								Value:      "00",
+								Disabled:   false,
+								ClassInput: common.ClassInputTextEnabled + " w-24",
+								TabIndex:   "5",
+								OnInput:    "clearFieldError",
+								OnFocus:    "clearFieldError",
+								MinLength:  "2",
+								MaxLength:  "6",
+							})
+						</div>
+					</div>
+					<!-- Row 3: Do Konta and Do Šifre -->
+					<div class="flex gap-1">
+						<div class="flex items-center gap-1 flex-1">
+							@tmpl.LabelField(domain.LabelFieldConfig{
+								ID:         "lbldokonta",
+								LabelText:  translator.Label("Do konta"),
+								ClassLabel: common.ClassLabel + " w-24",
+							})
+							@tmpl.TextInputField(domain.InputFieldConfig{
+								ID:         "dokonta",
+								Name:       "dokonta",
+								FieldType:  "text",
+								Value:      "9999",
+								Disabled:   false,
+								ClassInput: common.ClassInputTextEnabled + " w-24",
+								TabIndex:   "4",
+								OnInput:    "clearFieldError",
+								OnFocus:    "clearFieldError",
+								MinLength:  "4",
+								MaxLength:  "6",
+							})
+						</div>
+						<div class="flex items-center gap-1 flex-1">
+							@tmpl.LabelField(domain.LabelFieldConfig{
+								ID:         "lbldosifre",
+								LabelText:  translator.Label("Do šifre"),
+								ClassLabel: common.ClassLabel + " w-24",
+							})
+							@tmpl.TextInputField(domain.InputFieldConfig{
+								ID:         "dosifre",
+								Name:       "dosifre",
+								FieldType:  "text",
+								Value:      "999999",
+								Disabled:   false,
+								ClassInput: common.ClassInputTextEnabled + " w-24",
+								TabIndex:   "6",
+								OnInput:    "clearFieldError",
+								OnFocus:    "clearFieldError",
+								MinLength:  "2",
+								MaxLength:  "6",
+							})
+						</div>
+					</div>
 				</div>
-				<div class="flex items-center gap-2">
-					@tmpl.RadioButtonField(domain.RadioFieldConfig{
-						ID:         "potrazivanja_dospevaju",
-						Name:       "potrazivanja_tip",
-						Value:      "D",
-						LabelText:  translator.Label("Potraživanja koja dospevaju u narednih"),
-						IsSelected: false,
-						TabIndex:   "4",
-					}, translator)
-					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:         "dana_broj",
-						Name:       "dana_broj",
-						FieldType:  "number",
-						Value:      "0",
-						ClassInput: common.ClassInputTextEnabled + " w-16",
-						TabIndex:   "5",
-					})
-					<span class="text-sm">{ translator.Label("dana") }</span>
-					@tmpl.RadioButtonField(domain.RadioFieldConfig{
-						ID:         "potrazivanja_starija",
-						Name:       "potrazivanja_tip",
-						Value:      "S",
-						LabelText:  translator.Label("Potraživanja koja su starija od"),
-						IsSelected: false,
-						TabIndex:   "6",
-					}, translator)
-					<div class="flex-1"></div>
-					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "konto5",
-						LabelText:  translator.Label("Konto"),
-						ClassLabel: "text-sm font-medium w-16",
-					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:         "konto5",
-						Name:       "konto5",
-						FieldType:  "text",
-						Value:      "2040",
-						ClassInput: common.ClassInputTextEnabled + " w-20",
-						TabIndex:   "7",
-					})
-					<button class="px-2 py-1 bg-blue-500 text-white text-xs rounded">F3</button>
-					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "pocetakkonta5",
-						LabelText:  translator.Label("Od šifre"),
-						ClassLabel: "text-sm font-medium w-16",
-					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:         "pocetakkonta5",
-						Name:       "pocetakkonta5",
-						FieldType:  "text",
-						Value:      "01",
-						ClassInput: common.ClassInputTextEnabled + " w-20",
-						TabIndex:   "8",
-					})
-					<button class="px-2 py-1 bg-blue-500 text-white text-xs rounded">F3</button>
-					<button class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded">{ translator.Label("Obradi (F4)") }</button>
+				<!-- Right Column - Date and Checkbox with Buttons -->
+				<div class="border bg-blue-100 border border-blue-400 mt-1 p-1 rounded-lg flex flex-col gap-1">
+					<!-- Row 1: Stanje na dan and Checkbox -->
+					<div class="flex items-center gap-1">
+						<div class="flex items-center gap-1">
+							@tmpl.LabelField(domain.LabelFieldConfig{
+								ID:         "lblstanjenadan",
+								LabelText:  translator.Label("Stanje na dan"),
+								ClassLabel: common.ClassLabel + " w-44",
+							})
+							@tmpl.TextInputField(domain.InputFieldConfig{
+								ID:         "stanjenadan",
+								Name:       "stanjenadan",
+								FieldType:  "date",
+								Value:      time.Date(gnGod, time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
+								Disabled:   false,
+								ClassInput: common.ClassInputTextEnabled + " w-28",
+								TabIndex:   "7",
+								OnInput:    "clearFieldError",
+								OnFocus:    "clearFieldError",
+							})
+						</div>
+						@tmpl.CheckboxField(domain.CheckboxFieldConfig{
+							ID:            "stampaj_samo_zbir",
+							Name:          "stampaj_samo_zbir",
+							LabelText:     "Štampaj samo zbir za partnera",
+							Disabled:      false,
+							ClassLabel:    common.ClassCheckboxLabel,
+							ClassCheckbox: common.ClassCheckbox + " ml-10",
+							TabIndex:      "8",
+						}, translator)
+					</div>
+					<!-- Row 2: Buttons - Bottom Right Aligned -->
+					<div class="flex items-center gap-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "lblbperiodi",
+							LabelText:  translator.Label("Periodi"),
+							ClassLabel: common.ClassLabel + " w-44",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "dospece15",
+							Name:       "dospece15",
+							FieldType:  "text",
+							Value:      "15",
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " w-8",
+							TabIndex:   "8",
+							MinLength:  "1",
+							MaxLength:  "3",
+							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "dospece30",
+							Name:       "dospece30",
+							FieldType:  "text",
+							Value:      "30",
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " w-8",
+							TabIndex:   "9",
+							MinLength:  "1",
+							MaxLength:  "3",
+							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "dospece60",
+							Name:       "dospece60",
+							FieldType:  "text",
+							Value:      "60",
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " w-8",
+							TabIndex:   "10",
+							MinLength:  "1",
+							MaxLength:  "3",
+							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "dospece90",
+							Name:       "dospece90",
+							FieldType:  "text",
+							Value:      "90",
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " w-8",
+							TabIndex:   "11",
+							MinLength:  "1",
+							MaxLength:  "3",
+							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "dospece120",
+							Name:       "dospece120",
+							FieldType:  "text",
+							Value:      "120",
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " w-8",
+							TabIndex:   "12",
+							MinLength:  "1",
+							MaxLength:  "3",
+							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError",
+						})
+					</div>
+					<div class="flex gap-1 justify-end mt-auto">
+						@tmpl.FormObradaButton(btnObrada, translator)
+						@tmpl.PrintButton(btnPrint, translator)
+					</div>
 				</div>
 			</div>
-			<!-- Data Table -->
-			<div class="border bg-blue-100 border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
-				<div class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+			<!-- Group Data Table -->
+			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative">
+				@tmpl.LoadingSpinner()
+				@tmpl.Search_Part(tbl, searchInput)
+				<!-- Table -->
+				<div id="dugovanjatable" class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
 					@tmpl.Table(tbl, translator)
 				</div>
 			</div>
@@ -630,111 +1214,266 @@ templ DospelaPotraživanja(tabs domain.TabData, tbl domain.TableData, translator
 	</div>
 	<!-- Dialog display container-->
 	<div id="dialog-content"></div>
-	@tmpl.ShowMessage()
+	<!-- Dialog display container-->
+	<div id="dialog-content"></div>
+	@tmpl.HandleDialogResponse("dialog-content")
+	@tmpl.ClearFieldError()
+	@tmpl.SpinnerScript()
+	<script>
+		// Listen for table data to be loaded via HTMX, then auto-click first row once
+		if (!window.dospelaFirstRowListener) {
+			window.dospelaFirstRowListener = true;
+			window.handleDospelaFirstRow = function(evt) {
+				const target = evt.detail.target;
+				console.log('dospela potrazivanja/obaveze afterSwap event, target ID:', target?.id);
+				// Trigger ONLY when partneri table is swapped, NOT when details table is swapped
+				if (target.id === 'dospelatable') {
+					console.log('Selecting first row after table data loaded');
+					setTimeout(() => {
+						const firstRow = document.querySelector('#tab4 table tbody tr');
+						console.log('First row element:', firstRow);
+						if (firstRow) {
+							console.log('Clicking first row, row has hx attributes:', firstRow.attributes);
+							// Prevent this listener from running again
+							document.removeEventListener('htmx:afterSwap', window.handleDospelaFirstRow);
+							firstRow.click();
+						}
+					}, 100);
+				}
+			};
+			
+			document.addEventListener('htmx:afterSwap', window.handleDospelaFirstRow);
+		}
+	</script>
 }
 
-// Tab 6 - Pregled Dugovanja/Obaveze po starosti (Overview of Payables by Age)
-templ PregledDugovanjaPredStarosti(tabs domain.TabData, tbl domain.TableData, translator *i18n.Service, gnGod int) {
+// Tab 6 - Pregled dospelog duga po starosti (Overview of Due Debt by Age)
+templ PregledDospelogDugaPoStarosti(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service, gnGod int) {
 	<!-- Container with full height -->
 	<div class="flex flex-col h-full">
 		<!-- Tab Navigation -->
 		<div class="border-b border-blue-600">
-			@tmpl.TabNav(translator.Title("Otvorene stavke"), tabs, "#tab-content", "otvorene-stavke-panel", translator)
+			@tmpl.TabNav(translator.Title("Otvorene stavke, dugovanja, potraživanja"), tabs, "#tab-content", "pregled-dospelog-duga-po-starosti-panel", translator)
 		</div>
 		<!-- Tab 6 Content -->
 		<div id="tab6" class="flex-1 min-h-0 flex flex-col gap-1">
-			<!-- Parameters Section -->
-			<div class="border bg-yellow-100 border-yellow-400 p-2 rounded-lg">
-				<div class="flex items-center gap-2 mb-2">
-					@tmpl.RadioButtonField(domain.RadioFieldConfig{
-						ID:         "prikaz_analiticki6",
-						Name:       "prikaz_tip6",
-						Value:      "A",
-						LabelText:  translator.Label("Analitički prikaz"),
-						IsSelected: false,
-						TabIndex:   "1",
-					}, translator)
-					@tmpl.RadioButtonField(domain.RadioFieldConfig{
-						ID:         "prikaz_subsinteticki6",
-						Name:       "prikaz_tip6",
-						Value:      "S",
-						LabelText:  translator.Label("Subsintetički prikaz"),
-						IsSelected: false,
-						TabIndex:   "2",
-					}, translator)
-					<div class="flex-1"></div>
-					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "stanje_datum6",
-						LabelText:  translator.Label("Stanje na dan"),
-						ClassLabel: "text-sm font-medium w-24",
-					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:         "stanje_datum6",
-						Name:       "stanje_datum6",
-						FieldType:  "date",
-						Value:      time.Date(gnGod, 1, 28, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
-						ClassInput: common.ClassInputTextEnabled + " w-32",
-						TabIndex:   "3",
-					})
-					@tmpl.CheckboxField(domain.CheckboxFieldConfig{
-						ID:        "stampaj_samo_zbirli",
-						Name:      "stampaj_samo_zbirli",
-						Value:     "Y",
-						LabelText: translator.Label("Stampaj samo zbirli za partnera"),
-						Checked:   false,
-						TabIndex:  "4",
-					}, translator)
+			<!-- Parameters Section - Two Columns -->
+			<div class="grid grid-cols-2 gap-1">
+				<!-- Left Column - Radio Buttons, Konto and Sifre -->
+				<div class="border bg-blue-100 border border-blue-400 mt-1 p-1 rounded-lg flex flex-col gap-1">
+					<!-- Row 1: Radio Set - Display Type (Horizontal) -->
+					<div class="flex flex-row gap-4">
+						<label class="flex items-center gap-2 cursor-pointer">
+							<input type="radio" name="tip_pregleda" value="K" class="w-4 h-4" tabindex="1" checked/>
+							<span class="text-sm">{ translator.Label("Pregled dugovanja kupaca") }</span>
+						</label>
+						<label class="flex items-center gap-2 cursor-pointer">
+							<input type="radio" name="tip_pregleda" value="D" class="w-4 h-4" tabindex="2"/>
+							<span class="text-sm">{ translator.Label("Pregled obaveza prema dobavljačima") }</span>
+						</label>
+					</div>
+					<!-- Row 2: Od Konta and Od Šifre -->
+					<div class="flex gap-1">
+						<div class="flex items-center gap-1 flex-1">
+							@tmpl.LabelField(domain.LabelFieldConfig{
+								ID:         "lblodkonta",
+								LabelText:  translator.Label("Od konta"),
+								ClassLabel: common.ClassLabel + " w-24",
+							})
+							@tmpl.TextInputField(domain.InputFieldConfig{
+								ID:         "odkonta",
+								Name:       "odkonta",
+								FieldType:  "text",
+								Value:      "0000",
+								Disabled:   false,
+								ClassInput: common.ClassInputTextEnabled + " w-24",
+								TabIndex:   "3",
+								OnInput:    "clearFieldError",
+								OnFocus:    "clearFieldError",
+								MinLength:  "4",
+								MaxLength:  "6",
+							})
+						</div>
+						<div class="flex items-center gap-1 flex-1">
+							@tmpl.LabelField(domain.LabelFieldConfig{
+								ID:         "lblodsifre",
+								LabelText:  translator.Label("Od šifre"),
+								ClassLabel: common.ClassLabel + " w-24",
+							})
+							@tmpl.TextInputField(domain.InputFieldConfig{
+								ID:         "odsifre",
+								Name:       "odsifre",
+								FieldType:  "text",
+								Value:      "00",
+								Disabled:   false,
+								ClassInput: common.ClassInputTextEnabled + " w-24",
+								TabIndex:   "5",
+								OnInput:    "clearFieldError",
+								OnFocus:    "clearFieldError",
+								MinLength:  "2",
+								MaxLength:  "6",
+							})
+						</div>
+					</div>
+					<!-- Row 3: Do Konta and Do Šifre -->
+					<div class="flex gap-1">
+						<div class="flex items-center gap-1 flex-1">
+							@tmpl.LabelField(domain.LabelFieldConfig{
+								ID:         "lbldokonta",
+								LabelText:  translator.Label("Do konta"),
+								ClassLabel: common.ClassLabel + " w-24",
+							})
+							@tmpl.TextInputField(domain.InputFieldConfig{
+								ID:         "dokonta",
+								Name:       "dokonta",
+								FieldType:  "text",
+								Value:      "9999",
+								Disabled:   false,
+								ClassInput: common.ClassInputTextEnabled + " w-24",
+								TabIndex:   "4",
+								OnInput:    "clearFieldError",
+								OnFocus:    "clearFieldError",
+								MinLength:  "4",
+								MaxLength:  "6",
+							})
+						</div>
+						<div class="flex items-center gap-1 flex-1">
+							@tmpl.LabelField(domain.LabelFieldConfig{
+								ID:         "lbldosifre",
+								LabelText:  translator.Label("Do šifre"),
+								ClassLabel: common.ClassLabel + " w-24",
+							})
+							@tmpl.TextInputField(domain.InputFieldConfig{
+								ID:         "dosifre",
+								Name:       "dosifre",
+								FieldType:  "text",
+								Value:      "999999",
+								Disabled:   false,
+								ClassInput: common.ClassInputTextEnabled + " w-24",
+								TabIndex:   "6",
+								OnInput:    "clearFieldError",
+								OnFocus:    "clearFieldError",
+								MinLength:  "2",
+								MaxLength:  "6",
+							})
+						</div>
+					</div>
 				</div>
-				<div class="flex items-center gap-2">
-					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "konto6",
-						LabelText:  translator.Label("Konto"),
-						ClassLabel: "text-sm font-medium w-16",
-					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:         "konto6",
-						Name:       "konto6",
-						FieldType:  "text",
-						Value:      "2040",
-						ClassInput: common.ClassInputTextEnabled + " w-20",
-						TabIndex:   "5",
-					})
-					<button class="px-2 py-1 bg-blue-500 text-white text-xs rounded">F3</button>
-					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "pocetakkonta6",
-						LabelText:  translator.Label("Od šifre"),
-						ClassLabel: "text-sm font-medium w-16",
-					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:         "pocetakkonta6",
-						Name:       "pocetakkonta6",
-						FieldType:  "text",
-						Value:      "01",
-						ClassInput: common.ClassInputTextEnabled + " w-20",
-						TabIndex:   "6",
-					})
-					<button class="px-2 py-1 bg-blue-500 text-white text-xs rounded">F3</button>
-					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "dosifre6",
-						LabelText:  translator.Label("Do šifre"),
-						ClassLabel: "text-sm font-medium w-16",
-					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:         "dosifre6",
-						Name:       "dosifre6",
-						FieldType:  "text",
-						Value:      "999999",
-						ClassInput: common.ClassInputTextEnabled + " w-20",
-						TabIndex:   "7",
-					})
-					<button class="px-2 py-1 bg-blue-500 text-white text-xs rounded">F3</button>
-					<div class="flex-1"></div>
-					<button class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded">{ translator.Label("Obradi (F4)") }</button>
+				<!-- Right Column - Date and Checkbox with Buttons -->
+				<div class="border bg-blue-100 border border-blue-400 mt-1 p-1 rounded-lg flex flex-col gap-1">
+					<!-- Row 1: Stanje na dan and Checkbox -->
+					<div class="flex items-center gap-1">
+						<div class="flex items-center gap-1">
+							@tmpl.LabelField(domain.LabelFieldConfig{
+								ID:         "lblstanjenadan",
+								LabelText:  translator.Label("Stanje na dan"),
+								ClassLabel: common.ClassLabel + " w-44",
+							})
+							@tmpl.TextInputField(domain.InputFieldConfig{
+								ID:         "stanjenadan",
+								Name:       "stanjenadan",
+								FieldType:  "date",
+								Value:      time.Date(gnGod, time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
+								Disabled:   false,
+								ClassInput: common.ClassInputTextEnabled + " w-28",
+								TabIndex:   "7",
+							})
+						</div>
+						@tmpl.CheckboxField(domain.CheckboxFieldConfig{
+							ID:            "stampaj_samo_zbir",
+							Name:          "stampaj_samo_zbir",
+							LabelText:     "Štampaj samo zbir za partnera",
+							Disabled:      false,
+							ClassLabel:    common.ClassCheckboxLabel,
+							ClassCheckbox: common.ClassCheckbox + " ml-10",
+							TabIndex:      "8",
+						}, translator)
+					</div>
+					<!-- Row 2: Buttons - Bottom Right Aligned -->
+					<div class="flex items-center gap-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "lblbperiodi",
+							LabelText:  translator.Label("Periodi"),
+							ClassLabel: common.ClassLabel + " w-44",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "dospece15",
+							Name:       "dospece15",
+							FieldType:  "text",
+							Value:      "15",
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " w-8",
+							TabIndex:   "8",
+							MinLength:  "1",
+							MaxLength:  "3",
+							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "dospece30",
+							Name:       "dospece30",
+							FieldType:  "text",
+							Value:      "30",
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " w-8",
+							TabIndex:   "9",
+							MinLength:  "1",
+							MaxLength:  "3",
+							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "dospece60",
+							Name:       "dospece60",
+							FieldType:  "text",
+							Value:      "60",
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " w-8",
+							TabIndex:   "10",
+							MinLength:  "1",
+							MaxLength:  "3",
+							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "dospece90",
+							Name:       "dospece90",
+							FieldType:  "text",
+							Value:      "90",
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " w-8",
+							TabIndex:   "11",
+							MinLength:  "1",
+							MaxLength:  "3",
+							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "dospece120",
+							Name:       "dospece120",
+							FieldType:  "text",
+							Value:      "120",
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " w-8",
+							TabIndex:   "12",
+							MinLength:  "1",
+							MaxLength:  "3",
+							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError",
+						})
+					</div>
+					<div class="flex gap-1 justify-end mt-auto">
+						@tmpl.FormObradaButton(btnObrada, translator)
+						@tmpl.PrintButton(btnPrint, translator)
+					</div>
 				</div>
 			</div>
-			<!-- Data Table -->
-			<div class="border bg-blue-100 border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
-				<div class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+			<!-- Group Data Table -->
+			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative">
+				@tmpl.LoadingSpinner()
+				@tmpl.Search_Part(tbl, searchInput)
+				<!-- Table -->
+				<div id="dugovanjatable" class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
 					@tmpl.Table(tbl, translator)
 				</div>
 			</div>
@@ -742,66 +1481,45 @@ templ PregledDugovanjaPredStarosti(tabs domain.TabData, tbl domain.TableData, tr
 	</div>
 	<!-- Dialog display container-->
 	<div id="dialog-content"></div>
-	@tmpl.ShowMessage()
+	@tmpl.HandleDialogResponse("dialog-content")
+	@tmpl.ClearFieldError()
+	@tmpl.SpinnerScript()
 }
 
-// Tab 7 - Pregled dospelog duga (Overview of Due Debt)
-templ PregledDospelogDuga(tabs domain.TabData, tbl domain.TableData, translator *i18n.Service, gnGod int) {
-	<!-- Container with full height -->
-	<div class="flex flex-col h-full">
-		<!-- Tab Navigation -->
-		<div class="border-b border-blue-600">
-			@tmpl.TabNav(translator.Title("Otvorene stavke"), tabs, "#tab-content", "otvorene-stavke-panel", translator)
-		</div>
-		<!-- Tab 7 Content -->
-		<div id="tab7" class="flex-1 min-h-0 flex flex-col gap-1">
-			<!-- Data Table -->
-			<div class="border bg-blue-100 border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
-				<div class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
-					@tmpl.Table(tbl, translator)
-				</div>
-			</div>
-		</div>
-	</div>
-	<!-- Dialog display container-->
-	<div id="dialog-content"></div>
-	@tmpl.ShowMessage()
-}
-
-// Tab 8 - Povezivanje računa i uplata (Account and Payment Linking)
+// Tab 7 - Povezivanje računa i uplata (Account and Payment Linking)
 templ PovezivanjRacunaIUplata(tabs domain.TabData, tbl domain.TableData, translator *i18n.Service, gnGod int) {
 	<!-- Container with full height -->
 	<div class="flex flex-col h-full">
 		<!-- Tab Navigation -->
 		<div class="border-b border-blue-600">
-			@tmpl.TabNav(translator.Title("Otvorene stavke"), tabs, "#tab-content", "otvorene-stavke-panel", translator)
+			@tmpl.TabNav(translator.Title("Otvorene stavke, dugovanja, potraživanja"), tabs, "#tab-content", "otvorene-stavke-panel", translator)
 		</div>
-		<!-- Tab 8 Content -->
-		<div id="tab8" class="flex-1 min-h-0 flex flex-col gap-1">
+		<!-- Tab 7 Content -->
+		<div id="tab7" class="flex-1 min-h-0 flex flex-col gap-1">
 			<!-- Parameters Section -->
 			<div class="border bg-yellow-100 border-yellow-400 p-2 rounded-lg">
 				<div class="flex items-center gap-2">
 					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "konto8",
+						ID:         "konto7",
 						LabelText:  translator.Label("Konto"),
 						ClassLabel: "text-sm font-medium w-16",
 					})
 					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:         "konto8",
-						Name:       "konto8",
+						ID:         "konto7",
+						Name:       "konto7",
 						FieldType:  "text",
 						ClassInput: common.ClassInputTextEnabled + " w-32",
 						TabIndex:   "1",
 					})
 					<button class="px-2 py-1 bg-blue-500 text-white text-xs rounded">F3</button>
 					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "pocetakkonta8",
+						ID:         "pocetakkonta7",
 						LabelText:  translator.Label("Početak od šifre"),
 						ClassLabel: "text-sm font-medium w-28",
 					})
 					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:         "pocetakkonta8",
-						Name:       "pocetakkonta8",
+						ID:         "pocetakkonta7",
+						Name:       "pocetakkonta7",
 						FieldType:  "text",
 						Value:      "00",
 						ClassInput: common.ClassInputTextEnabled + " w-20",
@@ -809,13 +1527,13 @@ templ PovezivanjRacunaIUplata(tabs domain.TabData, tbl domain.TableData, transla
 					})
 					<button class="px-2 py-1 bg-blue-500 text-white text-xs rounded">F3</button>
 					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "zavrsenisifra8",
+						ID:         "zavrsenisifra7",
 						LabelText:  translator.Label("Završeno sa šifrom"),
 						ClassLabel: "text-sm font-medium w-28",
 					})
 					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:         "zavrsenisifra8",
-						Name:       "zavrsenisifra8",
+						ID:         "zavrsenisifra7",
+						Name:       "zavrsenisifra7",
 						FieldType:  "text",
 						Value:      "999999",
 						ClassInput: common.ClassInputTextEnabled + " w-20",

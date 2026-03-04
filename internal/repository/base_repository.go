@@ -74,6 +74,7 @@ func (r *BaseRepository[T]) GetByID(idField string, idValue interface{}) (*T, er
 
 func (r *BaseRepository[T]) GetAll(c *gin.Context, pageSize int, offset int, tableFields []domain.Fields, idField string, searchParams ...string) (*[]T, error) {
 	var entity []T
+
 	query, args := r.CreateGetAllStatement(c, tableFields, idField, searchParams...)
 	param := len(args) + 1
 

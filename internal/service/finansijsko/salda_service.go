@@ -956,46 +956,39 @@ func (s *SaldaResource) GetSaldaTotalValues(c *gin.Context) (domain.SaldaDto, er
 	if userSession == nil {
 		return totals, fmt.Errorf("user session not found")
 	}
+	konto := c.Query("konto")
+	sifra := c.Query("sifra")
+	vkonta := c.Query("tipkonta")
+	if konto == "" || konto == "undefined" {
+		return totals, nil // Return empty totals if konto is not provided
+	}
 	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
-
-	// Get "promet do" totals (up to start date)
-	qbDo := common.NewQueryBuilder(`
-		select 
-			coalesce(sum(case when kat = 1 or kat = 2 then iznos else 0 end), 0) as duguje,
-			coalesce(sum(case when kat = 3 or kat = 4 then iznos else 0 end), 0) as potrazuje
-		from fpro`)
-
-	if hasGod {
-		qbDo.AddEqual("god", userSession.SelectedGod)
-	}
-	if hasKar {
-		qbDo.AddEqual("kar", userSession.SelectedKar)
-	}
-
-	odsifre := c.Query("odsifre")
-	dosifre := c.Query("dosifre")
-	oddatuma := c.Query("oddatuma")
-	dodatuma := c.Query("dodatuma")
-	klasa := c.Query("klasa")
 	// Create first query (opening balance - tipdok = '00')
 	qb := common.NewQueryBuilder(`SELECT 
     COALESCE(SUM(CASE WHEN kat = '1' OR kat = '2' THEN iznos ELSE 0 END), 0) as dug,
     COALESCE(SUM(CASE WHEN kat = '3' OR kat = '4' THEN iznos ELSE 0 END), 0) as pot
     FROM fpro f`)
 
-	// Add conditions to first query
-	hasGod, hasKAr := s.fproRepo.GetHasGodHasKar()
 	if hasGod {
 		qb.AddEqual("f.god", userSession.SelectedGod)
 	}
-	if hasKAr {
+	if hasKar {
 		qb.AddEqual("f.kar", userSession.SelectedKar)
 	}
-	qb.AddCondition("f.sifra::numeric", odsifre, ">=")
-	qb.AddCondition("f.sifra::numeric", dosifre, "<=")
-	qb.AddCondition("f.danal", oddatuma, ">=")
-	qb.AddCondition("f.danal", dodatuma, "<=")
-	qb.AddLikeBegin("f.konto", klasa)
+	// Add vkonta conditions.
+	switch vkonta {
+	case "1":
+		qb.AddEqual("f.konto", konto)
+		if sifra != "" && sifra != "undefined" {
+			qb.AddEqual("f.sifra", sifra)
+		}
+		qb.AddEqual("f.vkonta", vkonta)
+	case "2":
+		qb.AddEqual("f.konto", konto)
+		qb.AddIn("f.vkonta", []interface{}{"1", "2"})
+	case "3":
+		qb.AddLikeBegin("f.konto", konto)
+	}
 	qb.AddEqual("f.tipdok", "00")
 
 	sqlQuery, args := qb.Build()
@@ -1017,14 +1010,27 @@ func (s *SaldaResource) GetSaldaTotalValues(c *gin.Context) (domain.SaldaDto, er
 	if hasGod {
 		qb.AddEqual("f.god", userSession.SelectedGod)
 	}
-	if hasKAr {
+	if hasKar {
 		qb.AddEqual("f.kar", userSession.SelectedKar)
 	}
-	qb.AddCondition("f.sifra::numeric", odsifre, ">=")
-	qb.AddCondition("f.sifra::numeric", dosifre, "<=")
-	qb.AddCondition("f.danal", oddatuma, ">=")
-	qb.AddCondition("f.danal", dodatuma, "<=")
-	qb.AddLikeBegin("f.konto", klasa)
+
+	if sifra != "" && sifra != "undefined" {
+		qb.AddEqual("f.sifra", sifra)
+	}
+	// Add vkonta conditions.
+	switch vkonta {
+	case "1":
+		qb.AddEqual("f.konto", konto)
+		if sifra != "" && sifra != "undefined" {
+			qb.AddEqual("f.sifra", sifra)
+		}
+		qb.AddEqual("f.vkonta", vkonta)
+	case "2":
+		qb.AddEqual("f.konto", konto)
+		qb.AddIn("f.vkonta", []interface{}{"1", "2"})
+	case "3":
+		qb.AddLikeBegin("f.konto", konto)
+	}
 	qb.AddCondition("f.tipdok", "00", "!=")
 
 	sqlQuery, args = qb.Build()
@@ -1052,13 +1058,14 @@ func (s *SaldaResource) GetSaldaKlase5i6TotalValues(c *gin.Context) (domain.Sald
 	if userSession == nil {
 		return totals, fmt.Errorf("user session not found")
 	}
-
+	odkonta := c.Query("odkonta")
+	dokonta := c.Query("dokonta")
 	odsifre := c.Query("odsifre")
 	dosifre := c.Query("dosifre")
 	oddatuma := c.Query("oddatuma")
 	dodatuma := c.Query("dodatuma")
 	klasa := c.Query("klasa")
-	fmt.Println(klasa)
+
 	// Create first query (opening balance - tipdok = '00')
 	qb := common.NewQueryBuilder(`SELECT 
     COALESCE(SUM(CASE WHEN kat = '1' OR kat = '2' THEN iznos ELSE 0 END), 0) as dug,
@@ -1066,15 +1073,26 @@ func (s *SaldaResource) GetSaldaKlase5i6TotalValues(c *gin.Context) (domain.Sald
     FROM fpro f`)
 
 	// Add conditions to first query
-	hasGod, hasKAr := s.fproRepo.GetHasGodHasKar()
+	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
 	if hasGod {
 		qb.AddEqual("f.god", userSession.SelectedGod)
 	}
-	if hasKAr {
+	if hasKar {
 		qb.AddEqual("f.kar", userSession.SelectedKar)
 	}
-	qb.AddCondition("f.sifra", odsifre, ">=")
-	qb.AddCondition("f.sifra", dosifre, "<=")
+	if odkonta != "" && odkonta != "undefined" {
+		qb.AddCondition("f.konto::numeric", odkonta, ">=")
+	}
+	if dokonta != "" && dokonta != "undefined" {
+		qb.AddCondition("f.konto::numeric", dokonta, "<=")
+	}
+	if odsifre != "" && odsifre != "undefined" {
+		qb.AddCondition("COALESCE(NULLIF(f.sifra, '')::numeric, 0)", odsifre, ">=")
+	}
+	if dosifre != "" && dosifre != "undefined" {
+		qb.AddCondition("COALESCE(NULLIF(f.sifra, '')::numeric, 0)", dosifre, "<=")
+	}
+
 	qb.AddCondition("f.danal", oddatuma, ">=")
 	qb.AddCondition("f.danal", dodatuma, "<=")
 	qb.AddLikeBegin("f.konto", klasa)
@@ -1098,11 +1116,21 @@ func (s *SaldaResource) GetSaldaKlase5i6TotalValues(c *gin.Context) (domain.Sald
 	if hasGod {
 		qb.AddEqual("f.god", userSession.SelectedGod)
 	}
-	if hasKAr {
+	if hasKar {
 		qb.AddEqual("f.kar", userSession.SelectedKar)
 	}
-	qb.AddCondition("f.sifra", odsifre, ">=")
-	qb.AddCondition("f.sifra", dosifre, "<=")
+	if odkonta != "" && odkonta != "undefined" {
+		qb.AddCondition("f.konto::numeric", odkonta, ">=")
+	}
+	if dokonta != "" && dokonta != "undefined" {
+		qb.AddCondition("f.konto::numeric", dokonta, "<=")
+	}
+	if odsifre != "" && odsifre != "undefined" {
+		qb.AddCondition("COALESCE(NULLIF(f.sifra, '')::numeric, 0)", odsifre, ">=")
+	}
+	if dosifre != "" && dosifre != "undefined" {
+		qb.AddCondition("COALESCE(NULLIF(f.sifra, '')::numeric, 0)", dosifre, "<=")
+	}
 	qb.AddCondition("f.danal", oddatuma, ">=")
 	qb.AddCondition("f.danal", dodatuma, "<=")
 	qb.AddLikeBegin("f.konto", klasa)

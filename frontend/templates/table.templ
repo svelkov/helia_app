@@ -2,45 +2,20 @@ package templates
 
 import (
 	"fmt"
-	"helia/internal/common"
-	"helia/internal/domain"
 	"helia/i18n"
+	"helia/internal/domain"
 )
 
 templ Table(tbl domain.TableData, translator *i18n.Service) {
-	<div id={ tbl.TableID } class="w-full h-full border-collapse">
-		if tbl.HasExportExcel || tbl.HasExportPdf {
-			<div class="mb-1 flex justify-end space-x-1">
-				if tbl.HasExportExcel {
-					<button
-						hx-get={ fmt.Sprintf("%s?format=excel", tbl.URLGetAll) }
-						hx-trigger="click"
-						class={ common.ClassPdfButton }
-					>
-						@Icon("file_export", "h-5 w-5 mr-1 inline-block")
-						Excel
-					</button>
-				}
-				if tbl.HasExportPdf {
-					<button
-						hx-get={ fmt.Sprintf("%s?format=pdf", tbl.URLGetAll) }
-						hx-trigger="click"
-						class={ common.ClassPdfButton }
-					>
-						@Icon("file_export", "h-5 w-5 mr-1 inline-block")
-						PDF
-					</button>
-				}
-			</div>
-		}
-		<div class="overflow-x-auto overflow-y-hidden rounded-t-lg">
-			<table class="w-full h-full border-collapse border-r">
+	<div id={ tbl.TableID } class="w-full h-full flex flex-col border-collapse">
+		<div class="flex-1 overflow-x-auto overflow-y-auto rounded-t-lg">
+			<table class="w-full border-collapse border-r">
 				@TableHeader(tbl, translator)
 				@TableBody(tbl, tbl.URLPrefix, translator)
 			</table>
 		</div>
 		if tbl.ShowPagination {
-			<div class="mt-2 flex justify-center items-center">
+			<div class="mt-1 flex justify-center items-center">
 				@TablePagination(tbl, translator)
 			</div>
 		}
@@ -50,37 +25,43 @@ templ Table(tbl domain.TableData, translator *i18n.Service) {
 	@DeactivateActionsColumn()
 	@ShowMessage()
 	@OpenDialogScript(tbl.TableID)
+	@TableSortScript()
 }
 
 templ TableHeader(tbl domain.TableData, translator *i18n.Service) {
-	<thead class="bg-blue-500 text-white border-b border-white">
-		<tr>
+	<thead class="bg-blue-900 text-white border-b border-white sticky top-0 z-20">
+		<tr class="h-8">
 			for _, header := range tbl.Headers {
 				<th
 					scope="col"
-					class={ fmt.Sprintf("px-1 py-1 text-left text-xs font-medium text-white uppercase tracking-wider border-r border-white %s", 
+					class={ fmt.Sprintf("px-1 py-1 text-center text-xs font-medium text-white tracking-wider border border-white sticky top-0 z-20 bg-blue-900 %s", 
 						func() string {
 							if header.Sortable {
-								return "cursor-pointer hover:bg-blue-600 select-none"
+								return "cursor-pointer hover:bg-blue-900 select-none"
 							}
 							return ""
 						}()) }
 					if header.Sortable {
-						hx-get={ fmt.Sprintf("%s?sortBy=%s&sortOrder={sortOrder}", tbl.URLGetAll, header.Field) }
-						hx-target={ fmt.Sprintf("#%s-body", tbl.TableID) }
+						hx-get={ fmt.Sprintf("%s?sortBy=%s", tbl.URLGetAll, header.Name) }
+						hx-target={ fmt.Sprintf("#%s", tbl.TableID) }
 						hx-swap="innerHTML"
 						hx-trigger="click"
-						hx-vals={ fmt.Sprintf(`js:{sortOrder: getSortOrder('%s', '%s')}`, tbl.TableID, header.Field) }
-						onclick={ templ.JSFuncCall("toggleSort", tbl.TableID, header.Field, "this") }
+						hx-vals={ fmt.Sprintf(`js:{sortOrder: getSortOrder('%s', '%s')}`, tbl.TableID, header.Name) }
+						onclick={ templ.JSFuncCall("toggleSort", tbl.TableID, header.Name, "this") }
 					}
 				>
-					<div class="flex items-center justify-between">
-						<span>{ translator.Label(header.Label) }</span>
-						
+					<div class="flex items-center justify-start h-full gap-2">
+						<span class="flex-1 text-center">
+							if header.Params != nil {
+								{ translator.LabelWithParams(header.Label, header.Params) }
+							} else {
+								{ translator.Label(header.Label) }
+							}
+						</span>
 						if header.Sortable {
-							<span class={ fmt.Sprintf("sort-indicator-%s ml-2", header.Field) }>
-								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 opacity-90">
-									<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m8 10 4-6 4 6H8Zm8 4-4 6-4-6h8Z"></path>
+							<span class={ fmt.Sprintf("sort-indicator-%s flex-shrink-0 inline-block", header.Name) } style="transition: opacity 200ms ease-in-out, transform 200ms ease-in-out;">
+								<svg class="w-5 h-5 text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+									<path stroke="white" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="sort-path" d="M8 18V6m0 0L5 9m3 -3 3 3m5 -3v12m0 0 -3 -3m3 3 3 -3" style="opacity: 1; transition: stroke 200ms ease-in-out; height: 100%;"></path>
 								</svg>
 							</span>
 						}
@@ -88,7 +69,7 @@ templ TableHeader(tbl domain.TableData, translator *i18n.Service) {
 				</th>
 			}
 			if tbl.ShowActions {
-				<th scope="col" class=" actions-column px-3 py-2 text-center text-xs font-medium text-white uppercase tracking-wider w-0 whitespace-nowrap border-r border-white bg-blue-500 sticky right-0 z-10">
+				<th scope="col" class=" actions-column px-3 py-2 text-center text-xs font-medium text-white uppercase tracking-wider w-0 whitespace-nowrap border border-white bg-blue-900 sticky right-0 z-20">
 					{ translator.Label("Akcije") }
 				</th>
 			}
@@ -100,12 +81,9 @@ templ TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service
 	<tbody id={ fmt.Sprintf("%s-body", tbl.TableID) } class="bg-white divide-y divide-gray-200">
 		for i, row := range tbl.Rows {
 			<tr
-				class={ fmt.Sprintf("hover:bg-blue-100 cursor-pointer %s", func() string {
-						if i == 0 {
-								return "bg-gray-50 selected" 
-							}
-                            if i%2 == 1 {
-                                return "bg-gray-50"
+				class={ fmt.Sprintf("hover:bg-green-200 cursor-pointer %s", func() string {
+				            if i%2 == 1 {
+                                return "bg-green-50"
                             } else {
                                 return ""
                             }
@@ -144,16 +122,21 @@ templ TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service
 				}
 			>
 				for j, cell := range row.Fields {
-					<td name={ fmt.Sprintf("td-%d-%s", i, tbl.Headers[j].Name) } class="px-3 py-1 whitespace-nowrap border-r">
+					<td name={ fmt.Sprintf("td-%d-%s", i, tbl.Headers[j].Name) } class={ fmt.Sprintf("px-1 py-1 text-sm whitespace-nowrap border-r text-%s", tbl.Headers[j].TextAlign) }>
 						<div
 							name={ fmt.Sprintf("tdval-%d-%s", i, tbl.Headers[j].Name) }
-							class="text-sm text-gray-900"
+							class={ func() string {
+							if tbl.Headers[j].TextAlign != "" {
+								return fmt.Sprintf("px-1 text-sm text-black text-%s", tbl.Headers[j].TextAlign)
+							}
+							return "px-1 text-sm text-black"
+						}() }
 							title={ translator.Message("Double-click za selektovanje") }
 						>{ cell }</div>
 					</td>
 				}
 				if tbl.ShowActions && ( tbl.BtnUpdate.IsVisible || tbl.BtnDelete.IsVisible ) {
-					<td class="actions-column px-3 py-0.5 whitespace-nowrap text-right text-sm font-medium bg-white w-0 sticky right-0  z-10">
+					<td class="actions-column px-3 py-0.5 whitespace-nowrap text-right text-sm font-medium bg-white w-0 sticky right-0 z-10">
 						<div class="flex space-x-1 justify-end">
 							if tbl.BtnUpdate.IsVisible {
 								<button
@@ -192,6 +175,24 @@ templ TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service
 			</tr>
 		}
 	</tbody>
+	if tbl.HasTotals && len(tbl.Totals) > 0 {
+		<tfoot class="bg-green-200 font-bold border-t-2 border-blue-900 sticky bottom-0 z-20">
+			<tr>
+				for j, header := range tbl.Headers {
+					if header.IncludeInTotals && j < len(tbl.Totals) {
+						<td class="px-1 py-1 whitespace-nowrap border-r text-right text-sm font-bold bg-green-200 sticky bottom-0 z-20">
+							{ tbl.Totals[j] }
+						</td>
+					} else {
+						<td class="px-1 py-1 whitespace-nowrap border-r bg-green-200 sticky bottom-0 z-20"></td>
+					}
+				}
+				if tbl.ShowActions {
+					<td class="actions-column px-1 py-1 whitespace-nowrap bg-green-200 sticky right-0  bottom-0 z-20"></td>
+				}
+			</tr>
+		</tfoot>
+	}
 }
 
 templ TableScript() {
@@ -290,6 +291,198 @@ templ TableScript() {
 			backdrop.remove();
 		}
 	}
-
 </script>
+}
+
+templ TableSortScript() {
+	<script>
+	// Sort paths and state management - initialize globally only once
+	if (!window.sortStates) {
+		window.SORT_PATHS = {
+			DEFAULT: "M8 18V6m0 0L5 9m3 -3 3 3m5 -3v12m0 0 -3 -3m3 3 3 -3",
+			ASC: "M5 20V4m0 16 3-3m-3 3-3-3m9-13h4m-4 4h6m-6 4h8m-8 4h10m-10 4h12",
+			DESC: "M5 4v16M5 4l3 3M5 4 2 7m9-3h12M11 8h10m-10 4h8m-8 4h6m-6 4h4"
+		};
+		window.sortStates = {}; // Store sort state per table: { tableId: { field: 'ASC'/'DESC' } }
+		window.currentSortField = {}; // Track which field is currently sorted for each table
+	}
+
+	function toggleSort(tableId, field, headerElement) {
+		// Initialize sort state for this table if not already done
+		if (!window.sortStates[tableId]) {
+			window.sortStates[tableId] = {};
+		}
+		console.log(`Toggling sort for table: ${tableId}, field: ${field}, headerElement:`, headerElement);
+		// Get current sort direction for this field
+		const currentSort = window.sortStates[tableId][field];
+		let nextSort = currentSort === 'DESC' ? 'ASC' : 'DESC';
+
+		// Update sort state
+		window.sortStates[tableId][field] = nextSort;
+		window.currentSortField[tableId] = field; // Track current sorted field
+
+		// Animate the indicator with slide + scale effect
+		const table = document.getElementById(tableId);
+		if (table) {
+			const indicator = table.querySelector(`[class*="sort-indicator-${field}"]`);
+			if (indicator) {
+				// Start with scale small and slid to the left
+				indicator.style.transitionDuration = '0ms';
+				indicator.style.transform = `scale(0.5) translateX(-10px) rotate(0deg)`;
+				indicator.style.opacity = '0.5';
+				
+				// Slide in from left while scaling up and rotating
+				requestAnimationFrame(() => {
+					indicator.style.transitionDuration = '200ms';
+					indicator.style.transitionTimingFunction = 'cubic-bezier(0.34, 1.56, 0.64, 1)';
+					indicator.style.transform = `scale(1.2) translateX(0px) rotate(180deg)`;
+					indicator.style.opacity = '1';
+				});
+				
+				// Settle to final size
+				setTimeout(() => {
+					indicator.style.transitionDuration = '100ms';
+					indicator.style.transitionTimingFunction = 'ease-out';
+					indicator.style.transform = `scale(1) translateX(0px) rotate(0deg)`;
+				}, 200);
+			}
+		}
+
+		// Update sort indicators on all headers for this table
+		updateSortIndicators(tableId, field);
+
+		console.log(`Sorting ${tableId} by ${field}: ${nextSort}`);
+	}
+
+	function getSortOrder(tableId, field) {
+		// Initialize if needed
+		if (!window.sortStates[tableId]) {
+			window.sortStates[tableId] = {};
+		}
+		
+		// Return next sort order
+		const currentSort = window.sortStates[tableId][field];
+		return currentSort === 'DESC' ? 'DESC' : 'ASC';
+	}
+
+	function updateSortIndicators(tableId, activeField) {
+		// Get all sort indicator spans in this table
+		const table = document.getElementById(tableId);
+		if (!table) return;
+
+		const indicators = table.querySelectorAll('[class*="sort-indicator-"]');
+		console.log(`Found ${indicators.length} indicators in table ${tableId}`);
+		
+		indicators.forEach(indicator => {
+			// Extract field name from class name (e.g., "sort-indicator-fieldname")
+			const fieldMatch = indicator.className.match(/sort-indicator-(\w+)/);
+			if (fieldMatch) {
+				const field = fieldMatch[1];
+				const svg = indicator.querySelector('svg');
+				const path = svg ? svg.querySelector('.sort-path') : null;
+				console.log(`Processing field: ${field}, activeField: ${activeField}, svg exists: ${!!svg}, path exists: ${!!path}`);
+				
+				if (!svg || !path) return;
+				console.log(`Updating indicator for field: ${field}, activeField: ${activeField}`);
+				
+				if (field === activeField) {
+					// Active field: show green color and correct path
+					const sortDir = window.sortStates[tableId][field];
+					console.log(`Updating active field ${field} with sort ${sortDir}`);
+					
+					// Update stroke color to green using style
+					path.style.stroke = '#22c55e';
+					
+					// Update the path based on sort direction
+					const pathData = window.SORT_PATHS[sortDir] || window.SORT_PATHS.ASC;
+					path.setAttribute('d', pathData);
+					
+					// Set opacity to full
+					path.style.opacity = '1';
+					console.log(`Applied path for ${sortDir}`);
+				} else {
+					// Inactive field: white and show default path
+					path.style.stroke = 'white';
+					path.setAttribute('d', window.SORT_PATHS.DEFAULT); // Use default path for unselected columns
+					
+					// Set opacity to full but white color
+					path.style.opacity = '1';
+				}
+			}
+		});
+	}
+
+	// Re-apply sort indicators after HTMX swaps the table content
+	function reapplySortIndicators(tableId) {
+		// Get the currently sorted field for this table
+		const sortedField = window.currentSortField[tableId];
+		if (sortedField) {
+			console.log(`Reapplying sort indicators for table ${tableId}, field: ${sortedField}`);
+			updateSortIndicators(tableId, sortedField);
+		}
+	}
+
+	// Listen for HTMX swap completion
+	document.addEventListener('htmx:afterSettle', function(event) {
+		// Check if this is a table container being updated
+		const element = event.detail.target;
+		if (element && element.id) {
+			// Check for any of our table types
+			if (element.id.includes('table') || element.classList.contains('flex')) {
+				// Try to find the table ID - could be the element itself or a parent
+				let tableId = null;
+				if (element.id && (element.id.includes('tipdok') || element.id.includes('zakljucni') || element.id.includes('table'))) {
+					tableId = element.id;
+				} else {
+					// Look for parent with id containing 'table'
+					let parent = element.parentElement;
+					while (parent && !tableId) {
+						if (parent.id && (parent.id.includes('tipdok') || parent.id.includes('zakljucni') || parent.id.includes('table'))) {
+							tableId = parent.id;
+						}
+						parent = parent.parentElement;
+					}
+				}
+				
+				if (tableId) {
+					console.log(`HTMX settle event for table: ${tableId}`);
+					reapplySortIndicators(tableId);
+				}
+			}
+		}
+	});
+
+	// Add keyboard navigation for arrow up/down scrolling
+	document.addEventListener('keydown', function(event) {
+		// Only handle arrow keys
+		if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return;
+		
+		// Find the closest table container with id containing 'table'
+		let table = document.activeElement?.closest('[id*="table"]');
+		
+		// If no focused table, find any table on page
+		if (!table) {
+			table = document.querySelector('[id*="table"]');
+		}
+		
+		if (!table) return;
+		
+		// Find the scrollable container (the div with overflow-y-auto)
+		const scrollContainer = table.querySelector('.overflow-y-auto, [style*="overflow"]');
+		if (!scrollContainer) {
+			console.log('No scroll container found');
+			return;
+		}
+		
+		const scrollAmount = 40; // pixels to scroll per key press
+		
+		if (event.key === 'ArrowUp') {
+			event.preventDefault();
+			scrollContainer.scrollTop -= scrollAmount;
+		} else if (event.key === 'ArrowDown') {
+			event.preventDefault();
+			scrollContainer.scrollTop += scrollAmount;
+		}
+	});
+	</script>
 }

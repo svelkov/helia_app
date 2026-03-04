@@ -4,143 +4,235 @@ import (
 	"helia/internal/domain"
 	"time"
 	"helia/i18n"
+	"fmt"
 )
 
-
-templ Report(parameters domain.ReportParameters, translator *i18n.Service) {
+// Main Report Template
+templ Report(parameters domain.ReportParameters, tableData domain.TableData, translator *i18n.Service) {
 	<html lang="en">
 		<head>
 			<meta charset="UTF-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 			<script src="https://cdn.tailwindcss.com"></script>
-			<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-			<title>Report - { parameters.ReportName }</title>
+			<title>{ parameters.ReportName } - { parameters.CompanyName }</title>
 			<style>
+				@page {
+					size: A4;
+					margin: 12mm;
+				}
 				@media print {
-					@page {
-						margin: 1cm;
-						@bottom-right {
-							content: "Page " counter(page) " of " counter(pages);
-							font-size: 10pt;
-							color: #666;
-						}
-						@top-left {
-							content: "{ parameters.CompanyName }";
-							font-size: 10pt;
-							color: #666;
-						}
+					* {
+						box-sizing: border-box;
+					}
+					html, body {
+						margin: 0 !important;
+						padding: 0 !important;
+						width: 100% !important;
+						height: auto !important;
+						background: white !important;
+					}
+					body {
+						font-size: 10pt;
 					}
 					.no-print {
 						display: none !important;
 					}
+					.page-break {
+						page-break-after: always;
+					}
+					.print-container {
+						max-width: 100% !important;
+						width: 100% !important;
+						margin: 0 !important;
+						padding: 0 !important;
+						page-break-after: avoid;
+					}
+					table {
+						page-break-inside: auto;
+						width: 100%;
+						table-layout: auto;
+						border-collapse: collapse;
+						font-size: 9pt;
+					}
+					tr {
+						page-break-inside: avoid;
+					}
+					td, th {
+						word-wrap: break-word;
+						word-break: break-word;
+						white-space: normal;
+						padding: 4px 2px;
+						overflow-wrap: break-word;
+						page-break-inside: avoid;
+					}
+					th {
+						background-color: #f0f0f0;
+						font-weight: bold;
+					}
+				}
+				table {
+					width: 100%;
+					table-layout: auto;
+					border-collapse: collapse;
+				}
+				td, th {
+					word-wrap: break-word;
+					word-break: break-word;
+					white-space: normal;
+					overflow-wrap: break-word;
+				}
+				body {
+					font-family: Arial, sans-serif;
 				}
 			</style>
 		</head>
-		<body>
-			<!-- Your report content goes here -->
-			<h1>{ parameters.ReportName }</h1>
-			<button class="no-print" onclick="window.print()">{ translator.Label("Stampaj/Generi PDF") }</button>
+		<body class="bg-gray-100 print:bg-white">
+			<!-- Print Controls -->
+			<div class="fixed top-4 right-4 z-50 bg-white p-3 rounded shadow-lg flex gap-2 no-print">
+				<button
+					onclick="window.print()"
+					class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-sm font-semibold"
+				>
+					🖨️ { translator.Label("Stampaj") }
+				</button>
+				<button
+					onclick="window.close()"
+					class="bg-gray-600 text-white px-3 py-1 rounded hover:bg-gray-700 text-sm font-semibold"
+				>
+					❌ { translator.Label("Zatvori") }
+				</button>
+			</div>
+
+			<!-- Main Report Container -->
+			<div class="py-6 px-4 print:py-0 print:px-0 print-container">
+				<div class="bg-white rounded-lg shadow-lg p-8 print:shadow-none print:rounded-none print:p-6 max-w-6xl mx-auto print:mx-0 print:max-w-full">
+					<!-- Header: Company Info, Date/Time, Page -->
+					@ReportHeader(parameters)
+					
+					<!-- Report Title -->
+					@ReportTitle(parameters)
+					
+					<!-- Report Parameters as Headers (Two Columns) -->
+					@ReportParametersHeader(parameters)
+					
+					<!-- Report Data/Table -->
+					@ReportTableSection(tableData, translator)
+					
+					<!-- Footer -->
+					@ReportFooter(parameters)
+				</div>
+			</div>
 		</body>
 	</html>
 }
 
-templ ReportHeader1(parameters domain.ReportParameters) {
-	<!-- Header Section -->
-	<header class="mb-8">
-		<!-- First Row: Logo and Company Name -->
-		<div class="flex items-center gap-4 mb-6">
-			<!-- Company Logo Placeholder -->
-			<div
-				class="w-16 h-16 bg-blue-100 rounded-lg flex items-center justify-center border-2 border-blue-300 print:border-blue-200"
-			>
-				<span class="text-2xl font-bold text-blue-600">🏢</span>
+// Header with Company Info (Left), Date/Time and Page (Right)
+templ ReportHeader(parameters domain.ReportParameters) {
+	<div class="mb-6 border-b-2 border-gray-300 pb-4">
+		<div class="flex justify-between items-start">
+			<!-- Left: Company Info -->
+			<div class="text-xs text-gray-700 space-y-0.5">
+				<p class="font-bold text-sm">{ parameters.CompanyName }</p>
+				<p class="text-gray-600">Nov Sad - { fmt.Sprintf("%d", time.Now().Year()) } godine</p>
 			</div>
-			<h1 class="text-4xl font-bold text-gray-900">{ parameters.CompanyName }</h1>
-		</div>
-		<!-- Second Row: Generated info -->
-		<div class="flex justify-between items-center mb-1">
-			<div class="text-xs text-gray-600 space-y-1">
-				<p class="font-small">📅 Generated:  </p>
-				<p class="font-small">👤 Generated by: { parameters.UserName }</p>
+			
+			<!-- Right: Date/Time and Page Info -->
+			<div class="text-xs text-gray-700 text-right space-y-0.5">
+				<p>{ time.Now().Format("02.01.2006 15:04:05") }</p>
+				<p class="print:hidden page-info" id="page-info">Stranica 1 / </p>
 			</div>
 		</div>
-		<!-- Third Row: Report Title -->
-		<div class="flex justify-between items-center mb-8 border-b-2 border-gray-300 pb-4">
-			<h2 class="text-3xl font-bold text-gray-800 capitalize">
-				{ parameters.ReportName }
-			</h2>
+	</div>
+}
+
+// Report Title
+templ ReportTitle(parameters domain.ReportParameters) {
+	<div class="mb-6 text-center">
+		<h1 class="text-2xl font-bold text-gray-900 uppercase">
+			{ parameters.ReportName }
+		</h1>
+	</div>
+}
+
+// Report Parameters as Two-Column Headers
+templ ReportParametersHeader(parameters domain.ReportParameters) {
+	<div class="mb-6 grid grid-cols-2 gap-6">
+		<!-- Left Column -->
+		<div class="space-y-2 text-sm">
+			for key, value := range parameters.Parameters {
+				if key == "DateFrom" || key == "PlaceFrom" || key == "Department" {
+					<div class="flex">
+						<span class="font-semibold text-gray-700 w-24">{ key }:</span>
+						<span class="text-gray-600">{ fmt.Sprintf("%v", value) }</span>
+					</div>
+				}
+			}
 		</div>
-	</header>
-}
-
-templ ReportBody1(parameters domain.ReportParameters, translator *i18n.Service) {
-	<!-- Body Section -->
-	<body class="bg-gray-50 print:bg-white">
-		<!-- Print Controls -->
-		<div class="fixed pt-10 right-6 z-50 bg-white p-4 rounded shadow-xl flex gap-3 no-print">
-			<button
-				onclick="window.print()"
-				class="bg-blue-600 text-white px-2 h-7 rounded hover:bg-blue-700 flex items-center gap-1 font-semibold"
-			>
-				<span>🖨️</span>
-				<span>{ translator.Label("Stampaj") }</span>
-			</button>
-			<button
-				onclick="window.close()"
-				class="bg-gray-600 text-white px-2 h-7 rounded hover:bg-gray-700 flex items-center gap-1 font-semibold"
-			>
-				<span>❌</span>
-				<span>{ translator.Label("Zatvori") }</span>
-			</button>
+		
+		<!-- Right Column -->
+		<div class="space-y-2 text-sm">
+			for key, value := range parameters.Parameters {
+				if key != "DateFrom" && key != "PlaceFrom" && key != "Department" {
+					<div class="flex">
+						<span class="font-semibold text-gray-700 w-24">{ key }:</span>
+						<span class="text-gray-600">{ fmt.Sprintf("%v", value) }</span>
+					</div>
+				}
+			}
 		</div>
-		<!-- Main Report Container -->
-		<div class="min-h-screen max-w-full py-8 px-4 flex items-center justify-center print:py-0 print:px-0">
-			<div
-				class="bg-white rounded-xl shadow-xl p-8 w-[90%] print:w-full print:shadow-none print:rounded-none print:p-0"
-			>
-				<!-- Header Section -->
-				@ReportHeader1(parameters)
-				<!-- Parameters Section - Two Column Grid -->
-				@ReportParams1(parameters)
-				<!-- Report Data Section -->
-				@ReportData1()
-				<!-- Footer -->
-				@ReportFooter1(parameters)
-			</div>
-		</div>
-	</body>
+	</div>
 }
 
-templ ReportParams1(parameters domain.ReportParameters) {
-	<!-- Parameters Section -->
-	<!-- Parameters Section - Two Column Grid -->
-	<section class="mb-8">
-		<h3 class="text-xl font-semibold text-gray-800 mb-6">Report Parameters</h3>
-		<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-			<div class="space-y-4">
-				<div class="bg-gray-50 p-5 rounded-lg border border-gray-200 print:bg-transparent"></div>
-			</div>
-			<div class="space-y-1"></div>
-		</div>
-	</section>
+// Report Table Section - uses ReportTable from tablereport.templ
+templ ReportTableSection(tableData domain.TableData, translator *i18n.Service) {
+	<div class="mb-8">
+		@ReportTable(tableData, translator)
+	</div>
 }
 
-templ ReportData1() {
-	<!-- Data Section -->
-	<div></div>
+// Group Template (for grouped report data)
+templ ReportGroup(groupName string, groupData interface{}) {
+	<div class="mt-6 mb-4">
+		<h3 class="text-lg font-bold text-gray-800 bg-gray-100 px-3 py-2 border-l-4 border-blue-900">
+			{ groupName }
+		</h3>
+	</div>
 }
 
-templ ReportSummary() {
-	<!-- Summary Section -->
-	<div></div>
+// Subgroup Template (for nested grouping)
+templ ReportSubgroup(subgroupName string, subgroupData interface{}) {
+	<div class="mt-4 mb-2 ml-4">
+		<h4 class="text-base font-semibold text-gray-700 bg-gray-50 px-3 py-1 border-l-4 border-gray-400">
+			{ subgroupName }
+		</h4>
+	</div>
 }
 
-templ ReportFooter1(parameters domain.ReportParameters) {
-	<!-- Footer Section -->
-	<!-- Footer -->
-	<footer class="pt-8 border-t-2 border-gray-200">
-		<p class="text-sm text-gray-600 text-center">
-			Generated on { time.Now().Format( "January 2, 2006") } • { parameters.CompanyName } • Confidential
+// Footer
+templ ReportFooter(parameters domain.ReportParameters) {
+	<div class="mt-8 pt-6 border-t-2 border-gray-300 text-center text-xs text-gray-600 space-y-1">
+		<p>
+			Generated on { time.Now().Format("January 2, 2006") } at { time.Now().Format("15:04:05") }
+			 by { parameters.UserName }
 		</p>
-	</footer>
+		<p class="text-gray-500">
+			{ parameters.CompanyName } • Confidential
+		</p>
+	</div>
+}
+
+// Pagination script (add this to generate page info)
+templ ReportPaginationScript() {
+	<script>
+		function updatePageNumbers() {
+			const pageInfo = document.getElementById('page-info');
+			if (pageInfo && window.print) {
+				// This is a simplified version - in production, calculate actual page count
+				pageInfo.textContent = 'Stranica 1 / ' + Math.ceil(document.body.scrollHeight / window.innerHeight);
+			}
+		}
+		
+		window.addEventListener('beforeprint', updatePageNumbers);
+		window.addEventListener('load', updatePageNumbers);
+	</script>
 }

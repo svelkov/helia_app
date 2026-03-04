@@ -8,8 +8,6 @@ import (
 	"time"
 )
 
-
-
 templ SaldaMain(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.SaldaDto, saldaURLtotals string, translator *i18n.Service) {
 	<!-- Tab Content -->
 	<div id="tab-content" class="flex flex-col h-full">
@@ -160,8 +158,11 @@ templ SaldaPojedinacnihKonta(tabs domain.TabData, tbl domain.TableData, btnObrad
 					{ translator.Text("Mesečna salda") }
 				</div>
 				<!-- Monthly Data Table -->
-				<div class="flex-1 overflow-y-auto">
-					@tmpl.Table(tbl, translator)
+				<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative">
+					@tmpl.LoadingSpinner()
+					<div class="flex-1 overflow-y-auto">
+						@tmpl.Table(tbl, translator)
+					</div>
 				</div>
 			</div>
 		</div>
@@ -177,6 +178,7 @@ templ SaldaPojedinacnihKonta(tabs domain.TabData, tbl domain.TableData, btnObrad
 	</div>
 	@tmpl.ShowMessage()
 	@ChartScript()
+	@tmpl.SpinnerScript()
 }
 
 // Tab 2 - Salda grupe konta
@@ -498,10 +500,8 @@ templ SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnP
 				</div>
 			</div>
 			<!-- Group Data Table -->
-			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
-				<div class="text-blue-800 font-bold text-xs">
-					{ translator.Text("Salda grupe konta") }
-				</div>
+			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative">
+				@tmpl.LoadingSpinner()
 				@tmpl.Search_Part(tbl, searchInput)
 				<!-- Table -->
 				<div class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
@@ -510,6 +510,7 @@ templ SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnP
 			</div>
 		</div>
 	</div>
+	@tmpl.SpinnerScript()
 }
 
 // Tab 3 - Salda partneri
@@ -525,10 +526,11 @@ templ SaldaPartneri(tabs domain.TabData, tblPartneri domain.TableData, inputCont
 			<!-- Main Grid - Two columns 1/2 to 1/2 with full height -->
 			<div class="grid grid-cols-2 gap-1 min-h-0 h-full">
 				<!-- Left Column - Partner List (Full Height) -->
-				<div class="border bg-blue-100 border border-blue-400 mt-1 p-1 rounded-lg flex flex-col h-full overflow-hidden">
+				<div class="border bg-blue-100 border border-blue-400 p-1 mt-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative">
 					<div class="text-blue-800 font-bold text-xs mb-1 border-b border-gray-400 pb-1 flex-shrink-0">
 						{ translator.Title("Partneri") }
 					</div>
+					@tmpl.LoadingSpinner()
 					@tmpl.Search_Part(tblPartneri, inputControl)
 					<!-- Partner Table - Constrained height with scrollbar -->
 					<div class="flex-1 overflow-y-auto overflow-x-auto min-h-0">
@@ -540,6 +542,7 @@ templ SaldaPartneri(tabs domain.TabData, tblPartneri domain.TableData, inputCont
 			</div>
 		</div>
 	</div>
+	@tmpl.SpinnerScript()
 }
 
 templ SaldaPartneriDetalji(tblKonta, tblDetalji domain.TableData, translator *i18n.Service) {
@@ -634,10 +637,8 @@ templ SaldaPartneriPrelomljeno(tabs domain.TabData, tbl domain.TableData, btnObr
 				</div>
 			</div>
 			<!-- Partner Balance Table -->
-			<div class="border bg-blue-100 border border-blue-400 mt-1 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
-				<div class="text-blue-800 font-bold text-xs">
-					{ translator.Text("Pregled salda partnera") }
-				</div>
+			<div class="border bg-blue-100 border border-blue-400 mt-1p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative">
+				@tmpl.LoadingSpinner()
 				@tmpl.Search_Part(tbl, searchInput)
 				<!-- Table -->
 				<div class="flex-1 overflow-x-auto overflow-y-auto min-h-0 h-full">
@@ -646,6 +647,7 @@ templ SaldaPartneriPrelomljeno(tabs domain.TabData, tbl domain.TableData, btnObr
 			</div>
 		</div>
 	</div>
+	@tmpl.SpinnerScript()
 }
 
 templ SaldaTotalValues(total domain.SaldaDto, sourceUrl string, translator *i18n.Service) {
@@ -666,7 +668,7 @@ templ SaldaTotalValues(total domain.SaldaDto, sourceUrl string, translator *i18n
 			dosifre: document.getElementById('dosifre')?.value,
 			oddatuma: document.getElementById('oddatuma')?.value,
 			dodatuma: document.getElementById('dodatuma')?.value,
-			klasa: document.getElementById('klasa')?.value
+			klasa: document.querySelector('input[name=\'klasa\']:checked')?.value
         }"
 	>
 		<div class="grid grid-cols-4 gap-1 mb-px text-sm font-medium text-gray-700 h-6 items-center">
@@ -775,7 +777,7 @@ templ SaldaKlase5i6analiticki(tabs domain.TabData, tbl domain.TableData, btnObra
 							Disabled:     false,
 							ClassInput:   common.ClassInputTextEnabled + " w-24",
 							BlurEndpoint: "api/fkpl/trazikonto",
-							HxTarget:     "kontonaziv",
+							HxTarget:     "odsifre",
 							HxVals:       `js:{"odsifre": document.getElementById('odsifre').value, "vkonta": "1"}`,
 							HxInclude:    "this",
 							Value:        "00",
@@ -814,7 +816,7 @@ templ SaldaKlase5i6analiticki(tabs domain.TabData, tbl domain.TableData, btnObra
 							Disabled:     false,
 							ClassInput:   common.ClassInputTextEnabled + " w-24",
 							BlurEndpoint: "api/fkpl/trazikonto",
-							HxTarget:     "sifranaziv",
+							HxTarget:     "dosifre",
 							HxVals:       `js:{"dosifre": document.getElementById('dosifre').value, "vkonta": "1"}`,
 							HxInclude:    "this",
 							Value:        "999999",
@@ -912,16 +914,19 @@ templ SaldaKlase5i6analiticki(tabs domain.TabData, tbl domain.TableData, btnObra
 				</div>
 			</div>
 			<!-- Group Data Table -->
-			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
+			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative">
+				@tmpl.LoadingSpinner()
 				@tmpl.Search_Part(tbl, searchInput)
 				<!-- Table -->
-				<div id="promettable" class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+				<div id="saldatable" class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
 					@tmpl.Table(tbl, translator)
 				</div>
 			</div>
 		</div>
 	</div>
+	@tmpl.SpinnerScript()
 }
+
 templ SaldaKlase5i6MT(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, total domain.SaldaDto, gnGod int, saldaURLtotals string, translator *i18n.Service) {
 	<div class="flex flex-col h-full">
 		<!-- Tab Navigation -->
@@ -1084,17 +1089,20 @@ templ SaldaKlase5i6MT(tabs domain.TabData, tbl domain.TableData, btnObrada, btnP
 				</div>
 			</div>
 			<!-- Group Data Table -->
-			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
+			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative">
+				@tmpl.LoadingSpinner()
 				@tmpl.Search_Part(tbl, searchInput)
 				<!-- Table -->
-				<div id="promettable" class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+				<div id="saldatable" class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
 					@tmpl.Table(tbl, translator)
 				</div>
 			</div>
 		</div>
 	</div>
+	@tmpl.SpinnerScript()
 }
-templ SaldaPoKomercijalistima(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
+
+templ SaldaPoKomercijalistima(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, gnGod int, translator *i18n.Service) {
 	<!-- Container with full height -->
 	<div class="flex flex-col h-full">
 		<!-- Tab Navigation -->
@@ -1121,9 +1129,9 @@ templ SaldaPoKomercijalistima(tabs domain.TabData, tbl domain.TableData, btnObra
 							ID:         "pod_datumom",
 							Name:       "pod_datumom",
 							FieldType:  "date",
+							Value:      time.Date(gnGod, time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
 							Disabled:   false,
 							ClassInput: common.ClassInputTextEnabled + " w-28",
-							Value:      "0",
 							MaxLength:  "3",
 						})
 					</div>
@@ -1198,10 +1206,8 @@ templ SaldaPoKomercijalistima(tabs domain.TabData, tbl domain.TableData, btnObra
 				</div>
 			</div>
 			<!-- Balance Table -->
-			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
-				<div class="text-blue-800 font-bold text-xs">
-					{ translator.Text("Salda po komercijalistima") }
-				</div>
+			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative">
+				@tmpl.LoadingSpinner()
 				@tmpl.Search_Part(tbl, searchInput)
 				<!-- Table -->
 				<div id="saldatable-komercijalisti" class="flex-1 overflow-y-auto overflow-x-auto min-h-0">
@@ -1210,9 +1216,10 @@ templ SaldaPoKomercijalistima(tabs domain.TabData, tbl domain.TableData, btnObra
 			</div>
 		</div>
 	</div>
+	@tmpl.SpinnerScript()
 }
 
-templ RealizacijaKomercijalisti(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
+templ RealizacijaKomercijalisti(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, gnGod int, translator *i18n.Service) {
 	<!-- Container with full height -->
 	<div class="flex flex-col h-full">
 		<!-- Tab Navigation -->
@@ -1239,6 +1246,7 @@ templ RealizacijaKomercijalisti(tabs domain.TabData, tbl domain.TableData, btnOb
 							ID:         "od_datuma",
 							Name:       "od_datuma",
 							FieldType:  "date",
+							Value:      time.Date(gnGod, 1, 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
 							Disabled:   false,
 							ClassInput: common.ClassInputTextEnabled + " w-28",
 						})
@@ -1286,6 +1294,7 @@ templ RealizacijaKomercijalisti(tabs domain.TabData, tbl domain.TableData, btnOb
 							FieldType:  "date",
 							Disabled:   false,
 							ClassInput: common.ClassInputTextEnabled + " w-28",
+							Value:      time.Date(gnGod, 12, 31, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
 						})
 						@tmpl.LabelField(domain.LabelFieldConfig{
 							ID:         "do_komercijaliste",
@@ -1345,10 +1354,8 @@ templ RealizacijaKomercijalisti(tabs domain.TabData, tbl domain.TableData, btnOb
 				</div>
 			</div>
 			<!-- Commercialist Realization Table -->
-			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
-				<div class="text-blue-800 font-bold text-xs">
-					{ translator.Text("Realizacija po komercijalistima") }
-				</div>
+			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative">
+				@tmpl.LoadingSpinner()
 				@tmpl.Search_Part(tbl, searchInput)
 				<!-- Table -->
 				<div id="realizacija-komercijalisti-table" class="flex-1 overflow-y-auto overflow-x-auto min-h-0">
@@ -1357,6 +1364,7 @@ templ RealizacijaKomercijalisti(tabs domain.TabData, tbl domain.TableData, btnOb
 			</div>
 		</div>
 	</div>
+	@tmpl.SpinnerScript()
 }
 
 templ ChartScript() {
@@ -1472,8 +1480,10 @@ templ ChartScript() {
 			if (target.id === 'tab1' || target.closest('table') || target.parentElement?.querySelector('table')) {
 				setTimeout(initializeSaldaChart, 100);
 			}
-		    if (target.id === 'tab-content' || target.id === 'saldapartneri-detalji' || target.closest('#tab3')) {
+		    // Only auto-click first row on initial tab3 load, NOT on detail updates
+		    if (target.id === 'tab3' && !target.dataset.initialized) {
 				console.log('Selecting first row in saldapartneri-table after HTMX swap');
+		    	target.dataset.initialized = 'true';
         	    setTimeout(() => {
             	    const firstRow = document.querySelector('#tab3 table tbody tr');
                 	if (firstRow) firstRow.click();

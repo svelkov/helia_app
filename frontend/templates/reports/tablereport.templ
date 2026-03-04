@@ -1,0 +1,176 @@
+package reports
+
+import (
+	"fmt"
+	"helia/i18n"
+	"helia/internal/domain"
+)
+
+// ReportTable renders a table for reports with print-friendly styling
+templ ReportTable(tbl domain.TableData, translator *i18n.Service) {
+	@ReportTableInternal(tbl, translator)
+}
+
+templ ReportTableInternal(tbl domain.TableData, translator *i18n.Service) {
+	<table class="w-full border-collapse report-table">
+		@ReportTableHeader(tbl, translator)
+		@ReportTableBody(tbl, tbl.URLPrefix, translator)
+		if tbl.HasTotals && len(tbl.Totals) > 0 {
+			@ReportTableFooter(tbl)
+		}
+	</table>
+}
+
+// ReportTableHeader renders the table header
+templ ReportTableHeader(tbl domain.TableData, translator *i18n.Service) {
+	<thead>
+		<tr class="bg-blue-900 text-white print:bg-blue-900">
+			for _, header := range tbl.Headers {
+				<th
+					scope="col"
+					class={ fmt.Sprintf("border border-gray-300 px-3 py-2 text-left text-sm font-semibold print:text-sm %s",
+						func() string {
+							if header.TextAlign != "" {
+								return fmt.Sprintf("text-%s", header.TextAlign)
+							}
+							return ""
+						}()) }
+				>
+					if header.Params != nil {
+						{ translator.LabelWithParams(header.Label, header.Params) }
+					} else {
+						{ translator.Label(header.Label) }
+					}
+				</th>
+			}
+		</tr>
+	</thead>
+}
+
+// ReportTableBody renders the table body with support for groups/subgroups
+templ ReportTableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service) {
+	<tbody>
+		for i, row := range tbl.Rows {
+			<tr
+				class={ fmt.Sprintf("hover:bg-yellow-50 print:hover:bg-white %s",
+					func() string {
+						if i%2 == 1 {
+							return "bg-gray-50 print:bg-gray-50"
+						}
+						return "bg-white print:bg-white"
+					}()) }
+			>
+				for j, cell := range row.Fields {
+					<td
+						class={ fmt.Sprintf("border border-gray-300 px-3 py-2 text-sm print:text-sm whitespace-nowrap %s",
+							func() string {
+								if tbl.Headers[j].TextAlign != "" {
+									return fmt.Sprintf("text-%s", tbl.Headers[j].TextAlign)
+								}
+								return ""
+							}()) }
+					>
+						{ cell }
+					</td>
+				}
+			</tr>
+		}
+	</tbody>
+}
+
+// ReportTableFooter renders the totals row
+templ ReportTableFooter(tbl domain.TableData) {
+	<tfoot>
+		<tr class="bg-blue-50 font-bold border-t-2 border-blue-900 print:bg-blue-50">
+			for j, header := range tbl.Headers {
+				if header.IncludeInTotals && j < len(tbl.Totals) {
+					<td class="border border-gray-300 px-3 py-2 text-sm font-bold print:text-sm text-right">
+						{ tbl.Totals[j] }
+					</td>
+				} else {
+					<td class="border border-gray-300 px-3 py-2 text-sm print:text-sm bg-blue-50"></td>
+				}
+			}
+		</tr>
+	</tfoot>
+}
+
+// ReportTableWithGroups renders a table with grouping support
+templ ReportTableWithGroups(tbl domain.TableData, groupColumn string, translator *i18n.Service) {
+	<div class="mb-8">
+		<table class="w-full border-collapse report-table">
+			@ReportTableHeader(tbl, translator)
+			<tbody>
+				for i, row := range tbl.Rows {
+					<!-- Check if this is a group header (indicated by a special marker in the first cell) -->
+					if row.Fields[0] != "" && i == 0 {
+						<tr class="bg-gray-200 print:bg-gray-200">
+							<td colspan={ fmt.Sprintf("%d", len(tbl.Headers)) } class="border border-gray-300 px-3 py-2 font-bold text-sm print:text-sm">
+								Group: { row.Fields[0] }
+							</td>
+						</tr>
+					}
+					<tr
+						class={ fmt.Sprintf("hover:bg-yellow-50 print:hover:bg-white %s",
+							func() string {
+								if i%2 == 1 {
+									return "bg-gray-50 print:bg-gray-50"
+								}
+								return "bg-white print:bg-white"
+							}()) }
+					>
+						for j, cell := range row.Fields {
+							<td
+								class={ fmt.Sprintf("border border-gray-300 px-3 py-2 text-sm print:text-sm %s",
+									func() string {
+										if tbl.Headers[j].TextAlign != "" {
+											return fmt.Sprintf("text-%s", tbl.Headers[j].TextAlign)
+										}
+										return ""
+									}()) }
+							>
+								{ cell }
+							</td>
+						}
+					</tr>
+				}
+			</tbody>
+			if tbl.HasTotals && len(tbl.Totals) > 0 {
+				@ReportTableFooter(tbl)
+			}
+		</table>
+	</div>
+}
+
+// SimpleReportTable renders a minimal report table for static data
+templ SimpleReportTable(headers []string, rows [][]string) {
+	<table class="w-full border-collapse report-table">
+		<thead>
+			<tr class="bg-blue-900 text-white print:bg-blue-900">
+				for _, header := range headers {
+					<th class="border border-gray-300 px-3 py-2 text-left text-sm font-semibold print:text-sm">
+						{ header }
+					</th>
+				}
+			</tr>
+		</thead>
+		<tbody>
+			for i, row := range rows {
+				<tr
+					class={ func() string {
+						if i%2 == 1 {
+							return "bg-gray-50 print:bg-gray-50"
+						}
+						return "bg-white print:bg-white"
+					}() }
+				>
+					for _, cell := range row {
+						<td class="border border-gray-300 px-3 py-2 text-sm print:text-sm">
+							{ cell }
+						</td>
+					}
+				</tr>
+			}
+		</tbody>
+	</table>
+}

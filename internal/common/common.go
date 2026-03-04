@@ -172,7 +172,7 @@ func SetTableButtons(table *domain.TableData, entityURLPrefix string) *domain.Ta
 	table.BtnDelete.IsVisible = true                                                // Show Delete button in the table header
 	table.BtnDelete.HxActionURL = fmt.Sprintf("%s/confirm-delete", entityURLPrefix) // Set the URL for Delete button
 	table.BtnPrint.IsVisible = true                                                 // Show Print button in the table header
-	table.BtnPrint.HxActionURL = fmt.Sprintf("%s/report", entityURLPrefix)          // Show Print button in the table header
+	table.BtnPrint.HxActionURL = fmt.Sprintf("%s/print", entityURLPrefix)          // Show Print button in the table header
 	return table
 }
 
@@ -287,6 +287,22 @@ func FormatFloatNumber64WithSystemLocale(val interface{}, precision int) float64
 		return float64(v)
 	}
 	return val.(float64)
+}
+
+// FormatNullTime concisely in a helper:
+func FormatNullTime(nt sql.NullTime, layout string) string {
+	if !nt.Valid {
+		return ""
+	}
+	return nt.Time.Format(layout)
+}
+
+// AddDaysToNullTime  helper function:
+func AddDaysToNullTime(nt sql.NullTime, days int, layout string) string {
+	if !nt.Valid {
+		return ""
+	}
+	return nt.Time.AddDate(0, 0, days).Format(layout)
 }
 
 // detectSystemLanguage reads $LANG/$LC_ALL and returns a language.Tag.
@@ -449,10 +465,10 @@ func SetTableConfig(tbl *domain.TableData, contentTitle, urlPrefix string, showA
 }
 
 // CreateSearchInput creates a search input control with common configuration
-func CreateSearchInput(translator *i18n.Service, hxActionURL, hxTarget, hxVals string) domain.InputControl {
+func CreateSearchInput(id string, translator *i18n.Service, hxActionURL, hxTarget, hxVals string) domain.InputControl {
 	return domain.InputControl{
-		ID:           "search-control",
-		Label:        translator.Label("Pretra\u017ei"),
+		ID:           id,
+		Label:        translator.Label("Pretrazi"),
 		Type:         "search",
 		Placeholder:  "Unesite tekst za pretragu",
 		HxActionURL:  hxActionURL,
@@ -495,5 +511,15 @@ func SetTableTotalRecords(tbl *domain.TableData, totalRecords, pageSize int) {
 	}
 	if tbl.Pagination.StartRecord > totalRecords {
 		tbl.Pagination.StartRecord = totalRecords
+	}
+}
+
+func SetActiveTab(tabs *domain.TabData, tabName string) {
+	for i, tab := range tabs.Tabs {
+		if tab.Name == tabName {
+			tabs.Tabs[i].IsActive = true
+		} else {
+			tabs.Tabs[i].IsActive = false
+		}
 	}
 }

@@ -19,6 +19,8 @@ const (
 	IDfnal     = "idfnal"
 	IDfpro     = "idfpro"
 	IDoamgrp   = "oamgrpid"
+	IDBils     = "bilsid"
+	IDBilu     = "biluid"
 )
 
 const (
@@ -40,22 +42,27 @@ const (
 	ErrMsgValidation          = "Greška prilkom validacije"
 	ErrMsgSaveData            = "Greška prilikom upisa podataka"
 	ErrMsgDeleteData          = "Greška prilikom brisanja podataka. Greska: %s"
-	ErrMsgInvalidId           = "Invalid ID"
+	ErrMsgInvalidId           = "Nevažeći ID"
 	ErrMsgReadData            = "Greška prilikom čitanja podataka"
-	ErrMsgRenderTemplate      = "Error rendering template"
-	ErrMsgInvalidID           = "Invalid ID provided in request"
-	ErrMsgGetTotalRecords     = "Failed to get total records"
-	ErrMsgGetIDFromURL        = "failed to get ID from URL"
-	ErrMsgFailedToSetTableRow = "Failed to set table rows"
+	ErrMsgRenderTemplate      = "Greška prilikom renderovanja šablona"
+	ErrMsgInvalidID           = "Nevažeći ID prosleđen u zahtevu"
+	ErrMsgGetTotalRecords     = "Neuspešno preuzimanje ukupnog broja zapisa"
+	ErrMsgGetIDFromURL        = "Neuspešno preuzimanje ID-a iz URL-a"
+	ErrMsgFailedToSetTableRow = "Neuspešno postavljanje redova tabele"
 	OkMsgSaveData             = "Uspešno upisani podaci"
 	OkMsgDeleteData           = "Uspešno obrisani podaci"
 	OkMsgReadData             = "Uspešno učitani podaci"
-	OkMsgOperationSuccessfull = "operation successful"
+	OkMsgOperationSuccessfull = "Uspešno izvršena operacija"
 	ErrMsgObavezanPodatak     = "obavezan podatak..."
 	ErrMsgGetData             = "greska prilikom preuzimanja podataka"
 	ErrMsgGetKontoSifra       = "nepostojeci konto ili sifra"
 	ErrNoDataFound            = "nema pronadjenih podataka"
-	ErrMsgStatusConflict      = "Nalog trenutno obrađuje drugi korisnik, pokušajte ponovo kasnije"
+	ErrMsgStatusConflict      = "Podaci trenutno obrađuje drugi korisnik, pokušajte ponovo kasnije"
+	ErrMsgUnauthorized        = "Niste autorizovani za ovu akciju"
+	ErrMsgMissingParameter    = "Nedostaje parametar konto ili vkonta"
+	ErrMsgUserSessionNotFound = "User session not found"
+	ErrMsgNotFound            = "Nije pronađena šifra"
+	ErrMsgSearchKonto         = "Greška prilikom pretrage konta"
 )
 
 // constants for styling of inputs
@@ -88,19 +95,20 @@ const (
 	// Input - Numeric (Disabled)
 	ClassInputNumericDisabled = "h-8 sm:h-7 md:h-6 px-2 sm:px-1.5 md:px-1 py-1 text-xs sm:text-sm border border-blue-400 rounded focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed text-right w-full"
 	// Input - Text (Enabled)
-	ClassInputTextEnabled = "h-8 sm:h-7 md:h-6 px-2 sm:px-1.5 md:px-1 text-xs sm:text-sm rounded border border-blue-400 focus:bg-blue-100 focus:border-blue-500 focus:ring-blue-500 text-left w-full"
+	ClassInputTextEnabled = "h-8 sm:h-7 md:h-6 px-2 sm:px-1.5 md:px-1 text-xs sm:text-sm rounded border border-blue-400 focus:bg-green-50 focus:border-green-500 focus:ring-green-500 text-left w-full"
 	// Input - Text (Disabled)
 	ClassInputTextDisabled = "h-8 sm:h-7 md:h-6 px-2 sm:px-1.5 md:px-1 text-xs sm:text-sm min-w-0 text-left rounded border border-blue-400 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed w-full"
 	// Label
-	ClassLabel = "h-8 sm:h-7 md:h-6 text-xs sm:text-sm text-gray-700 whitespace-nowrap flex-shrink-0 flex items-center"
+	ClassLabel = "h-8 sm:h-7 md:h-6 text-xs sm:text-sm text-black whitespace-nowrap flex-shrink-0 flex items-center"
 
 	// Select/Dropdown
 	ClassSelect = "h-8 sm:h-7 md:h-6 px-2 sm:px-1.5 md:px-1 text-xs sm:text-sm text-black rounded border border-blue-400 focus:border-blue-500 focus:ring-blue-500 w-full"
 
+	ClassRadioSet = "w-4 h-4 rounded border-blue-400 text-blue-600 focus:ring-blue-500"
 	//checkbox
 	ClassCheckbox = "h-4 w-4 rounded border-blue-400 text-blue-600 focus:ring-blue-500"
 	//Class span for checkbox label
-	ClassCheckboxSpan = "text-sm text-gray-700"
+	ClassCheckboxSpan = "text-sm text-black"
 	//	Class checkbox label container
 	ClassCheckboxLabel = "flex items-center gap-1"
 	// Generic Button
@@ -111,18 +119,19 @@ const (
 	ClassAddButton = "bg-green-600 hover:bg-green-700 rounded h-9 sm:h-8 md:h-7 px-2 sm:px-2 md:px-1 py-1 text-xs sm:text-sm flex text-white items-center justify-center whitespace-nowrap gap-1 min-w-max sm:w-24 md:w-24"
 	ClassNewButton = "bg-blue-600 hover:bg-blue-700 rounded h-9 sm:h-8 md:h-7 px-2 sm:px-2 md:px-1 py-1 text-xs sm:text-sm flex text-white items-center justify-center whitespace-nowrap gap-1 min-w-max sm:w-24 md:w-24"
 	//	ClassSaveButton        = "bg-green-600 hover:bg-green-700 rounded h-9 sm:h-8 md:h-7 px-2 sm:px-2 md:px-1 py-1 text-xs sm:text-sm flex text-white items-center justify-center whitespace-nowrap gap-1 min-w-max"
-	ClassSaveButton        = "bg-green-600 hover:bg-green-700 rounded h-9 sm:h-8 md:h-7 md:px-1 sm:px py-1 text-xs sm:text-sm flex text-white items-center justify-center whitespace-nowrap min-w-max sm:w-24 md:w-24"
-	ClassDeleteButton      = "bg-red-600 hover:bg-red-700 rounded h-9 sm:h-8 md:h-7 px-2 sm:px-2 md:px-1 py-1 text-xs sm:text-sm flex text-white items-center justify-center whitespace-nowrap w-full sm:w-24 md:w-24"
-	ClassOdustaniButton    = "bg-gray-600 hover:bg-gray-700 rounded h-9 sm:h-8 md:h-7 px-2 sm:px-2 md:px-1 py-1 text-xs sm:text-sm flex text-white items-center justify-center whitespace-nowrap w-full sm:w-24 md:w-24"
-	ClassCloseButton       = "bg-gray-600 hover:bg-gray-700 rounded h-9 sm:h-8 md:h-7 px-2 sm:px-2 md:px-1 py-1 text-xs sm:text-sm flex text-white items-center justify-center whitespace-nowrap gap-2 min-w-max"
-	ClassObradaButton      = "bg-green-600 hover:bg-green-700 rounded h-9 sm:h-7 md:h-7 px-2 sm:px-2 md:px-1 py-1 text-xs sm:text-sm flex text-white items-center justify-center whitespace-nowrap w-full sm:w-24 md:w-24"
-	ClassPrintButton       = "bg-blue-500 hover:bg-blue-900 text-white h-9 sm:h-7 md:h-7 px-2 sm:px-2 md:px-1 py-1 rounded text-xs sm:text-sm flex items-center justify-center whitespace-nowrap w-full sm:w-24 md:w-24"
-	ClassDialogCloseButton = "text-white hover:text-gray-300 p-2 sm:p-1 transition-colors h-9 sm:h-7 md:h-7 px-2 sm:px-2 md:px-1 py-1 rounded text-xs sm:text-sm flex items-center justify-center"
-	ClassConfirmButton     = "bg-red-600 hover:bg-red-700 rounded h-9 sm:h-8 md:h-7 px-2 sm:px-2 md:px-1 py-1 text-xs sm:text-sm flex text-white items-center justify-center whitespace-nowrap gap-1 min-w-max"
-	ClassErrorField        = "text-red-600 text-xs mt-1"
-	ClassIcon              = "h-5 w-5 mr-2 inline-block"
-	ClassPdfButton         = "bg-blue-500 hover:bg-blue-900 text-white h-9 sm:h-7 md:h-7 px-2 sm:px-2 md:px-1 py-1 rounded text-sm flex items-center whitespace-nowrap"
-	ClassExcelButton       = "bg-blue-500 hover:bg-blue-700 text-white h-9 sm:h-7 md:h-7 px-2 sm:px-2 md:px-1 py-1 rounded text-xs sm:text-sm flex items-center justify-center whitespace-nowrap w-full sm:w-12 md:w-12"
+	ClassSaveButton          = "bg-green-600 hover:bg-green-700 rounded h-9 sm:h-8 md:h-7 md:px-1 sm:px py-1 text-xs sm:text-sm flex text-white items-center justify-center whitespace-nowrap min-w-max sm:w-24 md:w-24"
+	ClassDeleteButton        = "bg-red-600 hover:bg-red-700 rounded h-9 sm:h-8 md:h-7 px-2 sm:px-2 md:px-1 py-1 text-xs sm:text-sm flex text-white items-center justify-center whitespace-nowrap w-full sm:w-24 md:w-24"
+	ClassOdustaniButton      = "bg-gray-600 hover:bg-gray-700 rounded h-9 sm:h-8 md:h-7 px-2 sm:px-2 md:px-1 py-1 text-xs sm:text-sm flex text-white items-center justify-center whitespace-nowrap w-full sm:w-24 md:w-24"
+	ClassCloseButton         = "bg-gray-600 hover:bg-gray-700 rounded h-9 sm:h-8 md:h-7 px-2 sm:px-2 md:px-1 py-1 text-xs sm:text-sm flex text-white items-center justify-center whitespace-nowrap gap-2 min-w-max"
+	ClassObradaButton        = "bg-green-600 hover:bg-green-700 rounded h-9 sm:h-7 md:h-7 px-2 sm:px-2 md:px-1 py-1 text-xs sm:text-sm flex text-white items-center justify-center whitespace-nowrap w-full sm:w-24 md:w-24"
+	ClassPrintButton         = "bg-blue-500 hover:bg-blue-900 text-white h-9 sm:h-7 md:h-7 px-2 sm:px-2 md:px-1 py-1 rounded text-xs sm:text-sm flex items-center justify-center whitespace-nowrap w-full sm:w-24 md:w-24"
+	ClassStampaOpomenaButton = "bg-blue-500 hover:bg-blue-900 text-white h-9 sm:h-7 md:h-7 px-2 sm:px-2 md:px-1 py-1 rounded text-xs sm:text-sm flex items-center justify-center whitespace-nowrap w-full sm:w-32 md:w-32"
+	ClassDialogCloseButton   = "text-white hover:text-gray-300 p-2 sm:p-1 transition-colors h-9 sm:h-7 md:h-7 px-2 sm:px-2 md:px-1 py-1 rounded text-xs sm:text-sm flex items-center justify-center"
+	ClassConfirmButton       = "bg-red-600 hover:bg-red-700 rounded h-9 sm:h-8 md:h-7 px-2 sm:px-2 md:px-1 py-1 text-xs sm:text-sm flex text-white items-center justify-center whitespace-nowrap gap-1 min-w-max"
+	ClassErrorField          = "text-red-600 text-xs mt-1"
+	ClassIcon                = "h-5 w-5 mr-2 inline-block"
+	ClassPdfButton           = "bg-blue-500 hover:bg-blue-900 text-white h-9 sm:h-7 md:h-7 px-2 sm:px-2 md:px-1 py-1 rounded text-sm flex items-center whitespace-nowrap"
+	ClassExcelButton         = "bg-blue-500 hover:bg-blue-700 text-white h-9 sm:h-7 md:h-7 px-2 sm:px-2 md:px-1 py-1 rounded text-xs sm:text-sm flex items-center justify-center whitespace-nowrap w-full sm:w-12 md:w-12"
 
 	// Patterns (unchanged)
 	PatternLettersAndNumbers = "[A-Za-z0-9]+"

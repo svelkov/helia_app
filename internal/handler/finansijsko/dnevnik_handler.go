@@ -56,8 +56,8 @@ func (h *DnevnikHandler) DnevnikKnjizenja(c *gin.Context) {
 
 	tbl := common.SetTableBasicData(dnevnikContentTitle, dnevnikTableID, h.service.GetDnevnikTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tbl, "", dnevnikURLMain, false, false, false)
-	searchInput := common.CreateSearchInput(i18n.GetInstance(), dnevnikURLMain, fmt.Sprintf("#%s", dnevnikTableID), hxValsDnevnik)
-
+	searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), dnevnikURLMain, fmt.Sprintf("#%s", dnevnikTableID), hxValsDnevnik)
+	tbl.HasTotals = true
 	if requestSource == "menu" || requestSource == "" {
 		btnObrada := common.SetButton("btnobrada", "Obrada", "fin_obrada", dnevnikURLMain, fmt.Sprintf("#%s", dnevnikTableID), "innerHTML", "GET", "", hxValsDnevnik, true, common.ClassSaveButton, "handleDialogResponse")
 		btnPrint := common.SetButton("stampa", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
@@ -90,7 +90,7 @@ func (h *DnevnikHandler) DnevnikKnjizenja(c *gin.Context) {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
 		}
-
+		
 		utils.RenderContent(c, tbl)
 	}
 }

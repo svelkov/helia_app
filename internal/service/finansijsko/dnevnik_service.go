@@ -2,6 +2,7 @@ package finansijsko
 
 import (
 	"fmt"
+	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
 	"helia/internal/repository"
@@ -54,7 +55,6 @@ func (s *DnevnikResource) GetDnevnikKnjizenja(c *gin.Context, tbl *domain.TableD
 	searchText := c.Query("query")
 
 	common.SetupTablePagination(tbl, currentPage, pageSize)
-
 	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
 
 	// Build query
@@ -122,6 +122,35 @@ func (s *DnevnikResource) GetDnevnikKnjizenja(c *gin.Context, tbl *domain.TableD
 	// Set total records and pagination
 	if getTotalRecords {
 		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
+		// set totals for duguje, potrazuje, saldo, devdug, devpot
+		var totalDuguje, totalPotrazuje, totalSaldo, totalDevDug, totalDevPot float64
+		for _, entity := range *entities {
+			totalDuguje += entity.Duguje
+			totalPotrazuje += entity.Potrazuje
+			totalSaldo += entity.Saldo
+			totalDevDug += entity.Devdug
+			totalDevPot += entity.Devpot
+		}
+		tbl.Totals = make([]string, len(tbl.Headers))
+		tbl.Totals[0] = i18n.GetInstance().Label("Ukupno") // Set label for totals column
+
+		for i, header := range tbl.Headers {
+			if header.IncludeInTotals {
+				switch header.Field {
+				case "duguje":
+					tbl.Totals[i] = common.FormatNumberWithSystemLocale(totalDuguje, 2)
+				case "potrazuje":
+					tbl.Totals[i] = common.FormatNumberWithSystemLocale(totalPotrazuje, 2)
+				case "saldo":
+					tbl.Totals[i] = common.FormatNumberWithSystemLocale(totalSaldo, 2)
+				case "devdug":
+					tbl.Totals[i] = common.FormatNumberWithSystemLocale(totalDevDug, 2)
+				case "devpot":
+					tbl.Totals[i] = common.FormatNumberWithSystemLocale(totalDevPot, 2)
+				}
+			}
+		}
+
 		return nil
 	}
 
@@ -158,22 +187,22 @@ func (s *DnevnikResource) GetDnevnikKnjizenja(c *gin.Context, tbl *domain.TableD
 // setServiceFieldValues initializes all table field definitions
 func (s *DnevnikResource) setServiceFieldValues() {
 	s.dnevnikTableFields = []domain.Fields{
-		{Name: "rbr", Label: "R. broj", Width: "5", Field: "rbr", SkipInSearch: true},
+		{Name: "rbr", Label: "R. broj", Width: "5", Field: "rbr", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
 		{Name: "danal", Label: "Datum naloga", Width: "10", Field: "fpro.danal", SkipInSearch: false},
 		{Name: "tipdok", Label: "Tip dok", Width: "5", Field: "fpro.tipdok", SkipInSearch: false},
 		{Name: "nalog", Label: "Nalog", Width: "8", Field: "fpro.nalog", SkipInSearch: false},
 		{Name: "konto", Label: "Konto", Width: "8", Field: "fpro.konto", SkipInSearch: false},
 		{Name: "sifra", Label: "Šifra", Width: "8", Field: "fpro.sifra", SkipInSearch: false},
 		{Name: "naziv", Label: "Naziv konta", Width: "25", Field: "fkpl.naziv", SkipInSearch: false},
-		{Name: "duguje", Label: "Duguje", Width: "12", Field: "duguje", SkipInSearch: true},
-		{Name: "potrazuje", Label: "Potražuje", Width: "12", Field: "potrazuje", SkipInSearch: true},
-		{Name: "saldo", Label: "Saldo", Width: "12", Field: "saldo", SkipInSearch: true},
+		{Name: "duguje", Label: "Duguje", Width: "12", Field: "duguje", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
+		{Name: "potrazuje", Label: "Potražuje", Width: "12", Field: "potrazuje", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
+		{Name: "saldo", Label: "Saldo", Width: "12", Field: "saldo", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
 		{Name: "opis", Label: "OPIS", Width: "20", Field: "fpro.opis", SkipInSearch: false},
 		{Name: "dokum", Label: "Dokument", Width: "12", Field: "fpro.dokum", SkipInSearch: false},
 		{Name: "dadok", Label: "Datum dokumenta", Width: "10", Field: "fpro.dadok", SkipInSearch: false},
 		{Name: "ojozn", Label: "OJ", Width: "5", Field: "fpro.ojozn", SkipInSearch: false},
 		{Name: "sifval", Label: "Šifra valute", Width: "5", Field: "fpro.sifval", SkipInSearch: false},
-		{Name: "devdug", Label: "Devizno duguje", Width: "12", Field: "devdug", SkipInSearch: true},
-		{Name: "devpot", Label: "Devizno potražuje", Width: "12", Field: "devpot", SkipInSearch: true},
+		{Name: "devdug", Label: "Devizno duguje", Width: "12", Field: "devdug", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
+		{Name: "devpot", Label: "Devizno potražuje", Width: "12", Field: "devpot", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
 	}
 }

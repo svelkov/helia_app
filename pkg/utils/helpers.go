@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"errors"
 	"fmt"
 	"helia/config"
 	"helia/i18n"
@@ -17,15 +16,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// GetIDFromRequest extracts the ID from the request URL path.
-func GetIDFromRequest(c *gin.Context, key string) (int64, error) {
-	idStr := c.Param(key)
-	if idStr == "" {
-		return 0, errors.New(common.ErrMsgGetIDFromURL)
-	}
-	return strconv.ParseInt(idStr, 10, 64)
-}
-
 // DeleteHelper handles HTTP DELETE requests for a resource.
 // It expects the resource ID in the URL path and uses the provided service to delete the resource.
 func DeleteHelper[T any](
@@ -33,7 +23,7 @@ func DeleteHelper[T any](
 	service service.Service[T],
 	idType string,
 ) {
-	id, err := GetIDFromRequest(c, "id")
+	id, err := GetInt64FromParameterRequest(c, "id")
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusBadRequest, false, nil, err.Error())
 		return
@@ -48,10 +38,7 @@ func DeleteHelper[T any](
 }
 
 // ConfirmDeleteHelper renders a confirmation dialog for resource deletion.
-func ConfirmDeleteHelper(
-	c *gin.Context,
-	tableFields []domain.Fields,
-) {
+func ConfirmDeleteHelper(c *gin.Context, tableFields []domain.Fields) {
 	rowID := c.Query("id")
 	url := c.Query("url")
 
@@ -205,7 +192,7 @@ func UpdateHelper[T any](
 	tableFields []domain.Fields,
 	idField string,
 ) {
-	id, err := GetIDFromRequest(c, "id")
+	id, err := GetInt64FromParameterRequest(c, "id")
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusBadRequest, false, nil, err.Error())
 		return
@@ -228,11 +215,11 @@ func UpdateHelper[T any](
 	}
 
 	common.WriteJSONResponse(c, http.StatusOK, true, nil, common.OkMsgSaveData)
-	c.Redirect(http.StatusSeeOther, getRedirectURL(c))
+	c.Redirect(http.StatusSeeOther, GetRedirectURL(c))
 }
 
-// getRedirectURL calculates redirect URL by removing the last path segment
-func getRedirectURL(c *gin.Context) string {
+// GetRedirectURL calculates redirect URL by removing the last path segment
+func GetRedirectURL(c *gin.Context) string {
 	path := c.Request.URL.Path
 	lastSlashIndex := strings.LastIndex(path, "/")
 
@@ -273,8 +260,37 @@ func GetAllEntityHelper[T any](
 		pageSize, currentPage, totalPages, totRecords,
 		cfg,
 	)
+	table.BtnExportPDF.IsVisible = true
+	table.BtnExportExcel.IsVisible = true
 	common.SetTableRows(&table, *allEntities, tableFields, idField, entityURLPrefix, service.GetFieldCache())
 	return &table
+}
+
+// GetAllPrintEntityHelper fetches and returns paginated data for a resource.
+func GetAllPrintEntityHelper[T any](
+	c *gin.Context,
+	service service.Service[T],
+	tableFields []domain.Fields,
+	entityContentTitle, entityTableID, entityURLPrefix, entityURLGetall, idField string,
+	cfg config.Config,
+	hasUpdateDelete ...bool,
+) *domain.TableData {
+
+	allEntities, err := service.GetAll(c, 0, 0, tableFields, idField, "")
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData)
+		return nil
+	}
+
+	tbl := common.SetTableBasicData(
+		entityContentTitle, entityTableID, tableFields,
+		entityURLPrefix, entityURLGetall,
+		0, 0, 0, 0,
+		cfg,
+	)
+	tbl.ShowPagination = false
+	common.SetTableRows(&tbl, *allEntities, tableFields, idField, entityURLPrefix, service.GetFieldCache())
+	return &tbl
 }
 
 func GetAllPdfEntityHelper[T any](
@@ -347,7 +363,7 @@ func GetEntityHelper[T any](
 	tableFields []domain.Fields,
 	idField string,
 ) {
-	id, err := GetIDFromRequest(c, "id")
+	id, err := GetInt64FromParameterRequest(c, "id")
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusBadRequest, false, nil, err.Error())
 		return
@@ -382,9 +398,11 @@ func SearchButtonDialog(c *gin.Context) {
 	}
 
 	// Get the value for the detected field
-	fieldValue := c.Query(fieldName)
-
-	hxVals = fmt.Sprintf(`{"konto": "%s", "vkonta": "%s", "fieldName": "%s"}`, fieldValue, vkonta, fieldName)
+	kontoValue := ""
+	if fieldName == "sifra" {
+		kontoValue = c.Query("konto")
+	}
+	hxVals = fmt.Sprintf(`{"konto": "%s", "vkonta": "%s", "fieldName": "%s"}`, kontoValue, vkonta, fieldName)
 	tmpl.SearchButtonDialog(id, id, placeholder, "/api/fkpl/trazikontosearchtable", "#search-results", "innerHTML", hxVals, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 
 }

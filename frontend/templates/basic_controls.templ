@@ -30,6 +30,9 @@ templ NumericInputField(config domain.InputFieldConfig) {
 		if config.TabIndex != "" {
 			tabindex={ config.TabIndex }
 		}
+		if config.OnFocus != "" {
+			onfocus={ templ.JSFuncCall(fmt.Sprintf("%s", config.OnFocus), config.ID) }
+		}
 		type="number"
 		inputmode="numeric"
 		oninput="this.value = this.value.replace(/[^0-9.]/g, '');"
@@ -106,10 +109,10 @@ templ TextInputField(config domain.InputFieldConfig) {
 			tabindex={ config.TabIndex }
 		}
 		if config.OnInput != "" {
-			oninput={ templ.JSFuncCall("clearFieldError", config.ID) }
+			oninput={ templ.JSFuncCall(fmt.Sprintf("%s", config.OnInput), config.ID) }
 		}
 		if config.OnFocus != "" {
-			onfocus={ templ.JSFuncCall("clearFieldError", config.ID) }
+			onfocus={ templ.JSFuncCall(fmt.Sprintf("%s", config.OnFocus), config.ID) }
 		}
 	/>
 }

@@ -182,19 +182,24 @@ func (s *BaseService[T]) MapEntityToValues(entity *T, tableFields []domain.Field
 	// Iterate over struct fields
 	for i := 0; i < entityType.NumField(); i++ {
 		field := entityType.Field(i)
-		column := field.Tag.Get("db") // Get the `db` tag value
-		if column == "" || column == "-" {
-			continue // Skip fields without `db` tags or explicitly ignored
-		}
+		dbTag, dbOk := field.Tag.Lookup("db")
+		addUpdateTag, addUpdateOk := field.Tag.Lookup("addupdate")
 
-		// Format the field value
-		displayValue := s.formatFieldValue(entityValue.Field(i))
+		// Include if: (db exists AND addupdate="true") OR (db exists AND addupdate is not present)
+		if dbOk && (addUpdateTag == "true" || !addUpdateOk) {
+			if dbTag == "" || dbTag == "-" {
+				continue // Skip fields without `db` tags or explicitly ignored
+			}
 
-		// Check if the column exists in tableFields
-		for j := range tableFields {
-			if strings.EqualFold(tableFields[j].Name, column) {
-				tableFields[j].Value = displayValue
-				break
+			// Format the field value
+			displayValue := s.formatFieldValue(entityValue.Field(i))
+
+			// Check if the column exists in tableFields
+			for j := range tableFields {
+				if strings.EqualFold(tableFields[j].Name, dbTag) {
+					tableFields[j].Value = displayValue
+					break
+				}
 			}
 		}
 	}

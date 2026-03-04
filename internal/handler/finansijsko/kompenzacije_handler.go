@@ -72,7 +72,7 @@ func NewKompenzacijeHandler(service *finservice.KompenzacijeResource, cfg config
 func (h *KompenzacijeHandler) KompenzacijeMain(c *gin.Context) {
 	translator := i18n.GetInstance()
 	csrfToken, _ := c.Cookie("csrf_token")
-	searchInput := common.CreateSearchInput(translator, kompenzacijeURLPregledPartnera, fmt.Sprintf("#%s", kompenzacijePregledTableID), hxValsKompenzacijePregledPartnera)
+	searchInput := common.CreateSearchInput("search-input", translator, kompenzacijeURLPregledPartnera, fmt.Sprintf("#%s", kompenzacijePregledTableID), hxValsKompenzacijePregledPartnera)
 
 	// Create configuration
 	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/kompenzacije/pregledpartnera", fmt.Sprintf("#%s", kompenzacijePregledTableID), "innerHTML", "GET", "", hxValsKompenzacijePregledPartnera, true, common.ClassSaveButton, "handleDialogResponse")
@@ -95,7 +95,7 @@ func (h *KompenzacijeHandler) KompenzacijePregledPartnera(c *gin.Context) {
 	csrfToken, _ := c.Cookie("csrf_token")
 	translator := i18n.GetInstance()
 
-	searchInput := common.CreateSearchInput(translator, kompenzacijeURLPregledPartnera, fmt.Sprintf("#%s", kompenzacijePregledTableID), hxValsKompenzacijePregledPartnera)
+	searchInput := common.CreateSearchInput("search-input", translator, kompenzacijeURLPregledPartnera, fmt.Sprintf("#%s", kompenzacijePregledTableID), hxValsKompenzacijePregledPartnera)
 
 	tbl := common.SetTableBasicData(kompenzacijeContentTitle, kompenzacijePregledTableID, h.service.GetPregledPartneraTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tbl, "PREGLED PARTNERA ZA FORMIRANJE KOMPENZACIJE", kompenzacijeURLPregledPartnera, false, false, false)
@@ -179,7 +179,9 @@ func (h *KompenzacijeHandler) KompenzacijePregled(c *gin.Context) {
 	requestSource := c.Request.Header.Get("X-Request-Source")
 	translator := i18n.GetInstance()
 
-	searchInput := common.CreateSearchInput(translator, kompenzacijeURLPregled, fmt.Sprintf("#%s", kompenzacijePregledKompenzacijaTableID), hxValsKompenzacijePregled)
+	searchInput := common.CreateSearchInput("search-input", translator, kompenzacijeURLPregled, fmt.Sprintf("#%s", kompenzacijePregledKompenzacijaTableID), hxValsKompenzacijePregled)
+	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", kompenzacijeURLPregled, fmt.Sprintf("#%s", kompenzacijePregledKompenzacijaTableID), "innerHTML", "GET", "", hxValsKompenzacijePregled, true, common.ClassSaveButton, "handleDialogResponse")
+	btnPrint := common.SetButton("stampa-btn", "Štampa", "fin_print", kompenzacijeURLPregled+"/print", "", "innerHTML", "GET", "", hxValsKompenzacijePregled, true, common.ClassPrintButton, "")
 
 	tblHdr := common.SetTableBasicData("", kompenzacijePregledKompenzacijaTableID, h.service.GetKompenzacijeTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tblHdr, "KOMPENZACIJE", kompenzacijeURLPregled, false, false, false)
@@ -189,8 +191,6 @@ func (h *KompenzacijeHandler) KompenzacijePregled(c *gin.Context) {
 	tblDet.ShowPagination = false
 
 	if requestSource == "menu" || requestSource == "tab" {
-		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", kompenzacijeURLPregled, fmt.Sprintf("#%s", kompenzacijePregledKompenzacijaTableID), "innerHTML", "GET", "", hxValsKompenzacijePregled, true, common.ClassSaveButton, "handleDialogResponse")
-		btnPrint := common.SetButton("stampa-btn", "Štampa", "fin_print", kompenzacijeURLPregled+"/print", "", "innerHTML", "GET", "", hxValsKompenzacijePregled, true, common.ClassPrintButton, "")
 
 		setActiveKompenzacijeTab(&h.tabData, "pregled")
 		err := tmpl_fin.KompenzacijePregled(h.tabData, tblHdr, tblDet, searchInput, btnObrada, btnPrint, translator).Render(c.Request.Context(), c.Writer)

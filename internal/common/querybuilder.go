@@ -17,6 +17,7 @@ type QueryBuilder struct {
 	paramCount  int
 	joins       []string
 	orderBy     string
+	sortOrder   string
 	groupBy     string
 	having      string
 	limit       string
@@ -130,6 +131,12 @@ func (qb *QueryBuilder) AddOrderBy(orderBy string) *QueryBuilder {
 	return qb
 }
 
+// SetSortOrder sets the sort order (ASC or DESC)
+func (qb *QueryBuilder) AddSortOrder(sortOrder string) *QueryBuilder {
+	qb.sortOrder = sortOrder
+	return qb
+}
+
 // AddGroupBy adds GROUP BY clause
 func (qb *QueryBuilder) AddGroupBy(groupBy string) *QueryBuilder {
 	qb.groupBy = groupBy
@@ -208,6 +215,10 @@ func (qb *QueryBuilder) Build() (string, []interface{}) {
 	if qb.orderBy != "" {
 		query.WriteString(" ORDER BY " + qb.orderBy)
 	}
+	// Add SORT ORDER
+	if qb.sortOrder != "" {
+		query.WriteString(" " + qb.sortOrder)
+	}
 
 	// Add LIMIT and OFFSET
 	if qb.limit != "" {
@@ -228,6 +239,10 @@ func (qb *QueryBuilder) GetArgs() []interface{} {
 // GetArgs returns current arguments (useful for debugging)
 func (qb *QueryBuilder) GetArgsCount() int {
 	return len(qb.args)
+}
+func (qb *QueryBuilder) AddArgs(args ...interface{}) {
+	qb.args = append(qb.args, args...)
+	qb.paramCount += len(args)
 }
 
 // ==================== Repository-Specific Methods ====================
@@ -305,6 +320,9 @@ func (qb *QueryBuilder) BuildUpdate(c *gin.Context, fields []domain.Fields, idFi
 	userSession := domain.GetSessionFromContext(c)
 	// Add provided fields
 	for _, field := range fields {
+		if strings.ToLower(field.Name) == "xdatizmene" || strings.ToLower(field.Name) == "xopizmene" {
+			continue // Skip update timestamp and user if provided in fields
+		}
 		columns = append(columns, fmt.Sprintf(` %s = $%d`, strings.ToLower(field.Name), len(values)+1))
 		values = append(values, field.Value)
 	}
@@ -341,6 +359,10 @@ func (qb *QueryBuilder) BuildSelectByID(idField string) string {
 	for i := 0; i < qb.entityType.NumField(); i++ {
 		field := qb.entityType.Field(i)
 		column := field.Tag.Get("db")
+		shouldGetField := field.Tag.Get("addupdate")
+		if shouldGetField == "false" {
+			continue
+		}
 		if column == "" || column == "-" {
 			continue
 		}
@@ -388,19 +410,12 @@ func (qb *QueryBuilder) BuildSelectAll(fields []domain.Fields, idField string, s
 			}
 		}
 	}
-
+	qb.baseQuery = fmt.Sprintf(`SELECT %s FROM "%s" `, strings.Join(columns, ", "), qb.tableName)
 	// Build WHERE clause
 	// Note: god/kar filtering should be added explicitly in service layer
-	qb.AddSearchConditions(fields, searchParams...)
+	//qb.AddSearchConditions(fields, searchParams...)
 
-	whereClause := qb.whereClause.String()
-	query := fmt.Sprintf(`SELECT %s FROM %s %s ORDER BY %s`,
-		strings.Join(columns, ", "),
-		qb.tableName,
-		whereClause,
-		idField)
-
-	return query
+	return qb.baseQuery
 }
 
 // BuildCount constructs a COUNT query
@@ -440,7 +455,49 @@ func (qb *QueryBuilder) CheckGodKarFields() (bool, bool) {
 	for i := 0; i < qb.entityType.NumField(); i++ {
 		field := qb.entityType.Field(i)
 		column := field.Tag.Get("db")
+
+		// Check if field is a struct and recursively check its fields
+		if field.Type.Kind() == reflect.Struct {
+			hasGod2, hasKar2 := checkNestedStructFields(field.Type)
+			hasGod = hasGod || hasGod2
+			hasKar = hasKar || hasKar2
+			break
+		}
 		if column == "" || column == "-" {
+			continue
+		}
+
+		lowerCol := strings.ToLower(column)
+		switch lowerCol {
+		case "god":
+			hasGod = true
+		case "kar":
+			hasKar = true
+		}
+	}
+	return hasGod, hasKar
+}
+
+// checkNestedStructFields recursively checks nested struct fields for god/kar columns
+func checkNestedStructFields(structType reflect.Type) (bool, bool) {
+	hasGod, hasKar := false, false
+
+	if structType == nil || structType.Kind() != reflect.Struct {
+		return false, false
+	}
+
+	for i := 0; i < structType.NumField(); i++ {
+		field := structType.Field(i)
+		column := field.Tag.Get("db")
+		if column == "" || column == "-" {
+			continue
+		}
+
+		// Recursively check if this field is also a struct
+		if field.Type.Kind() == reflect.Struct {
+			hasGod2, hasKar2 := checkNestedStructFields(field.Type)
+			hasGod = hasGod || hasGod2
+			hasKar = hasKar || hasKar2
 			continue
 		}
 

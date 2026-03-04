@@ -72,7 +72,7 @@ templ PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 							OnInput:      "clearFieldError",
 						})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
-							ID:          "konto",
+							ID:          "btn-search-konto",
 							Name:        "search-konto",
 							HxUrl:       "/api/promet/searchbutton",
 							HxTarget:    "#search-dropdown",
@@ -179,7 +179,8 @@ templ PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 				</div>
 			</div>
 			<!-- Group Data Table -->
-			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
+			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative">
+				@tmpl.LoadingSpinner()
 				@tmpl.Search_Part(tbl, searchInput)
 				<!-- Table -->
 				<div id="promettable" class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
@@ -189,6 +190,8 @@ templ PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 		</div>
 	</div>
 	@tmpl.ShowMessage()
+	@PrometScripts()
+	@tmpl.SpinnerScript()
 }
 
 // Tab 2 - Analiticka kartica po mestima isporuke
@@ -405,7 +408,8 @@ templ AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint,
 				</div>
 			</div>
 			<!-- Group Data Table -->
-			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
+			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative">
+				@tmpl.LoadingSpinner()
 				@tmpl.Search_Part(tbl, searchInput)
 				<!-- Table -->
 				<div id="prometable" class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
@@ -414,6 +418,7 @@ templ AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint,
 			</div>
 		</div>
 	</div>
+	@tmpl.SpinnerScript()
 }
 
 // Tab 3 - Promet deviznih analitickih konta
@@ -715,7 +720,8 @@ templ PrometSubsintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPr
 				</div>
 			</div>
 			<!-- Group Data Table -->
-			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
+			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative">
+				@tmpl.LoadingSpinner()
 				@tmpl.Search_Part(tbl, searchInput)
 				<!-- Table -->
 				<div id="promettable" class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
@@ -724,6 +730,7 @@ templ PrometSubsintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPr
 			</div>
 		</div>
 	</div>
+	@tmpl.SpinnerScript()
 }
 
 templ PrometSintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.TotalValues, searchInput domain.InputControl, gnGod int, translator *i18n.Service) {
@@ -825,7 +832,8 @@ templ PrometSintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 				</div>
 			</div>
 			<!-- Group Data Table -->
-			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
+			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative">
+				@tmpl.LoadingSpinner()
 				@tmpl.Search_Part(tbl, searchInput)
 				<!-- Table -->
 				<div id="promettable" class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
@@ -834,6 +842,7 @@ templ PrometSintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 			</div>
 		</div>
 	</div>
+	@tmpl.SpinnerScript()
 }
 
 templ KarticaSintetickiKonta(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.TotalValues, searchInput domain.InputControl, gnGod int, translator *i18n.Service) {
@@ -843,7 +852,7 @@ templ KarticaSintetickiKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 		<div class="border-b border-blue-600">
 			@tmpl.TabNav(translator.Title("Promet"), tabs, "#tab-content", "promet-panel", translator)
 		</div>
-		<div id="tab6">
+		<div id="tab6" class="flex-1 min-h-0 flex flex-col gap-1">
 			<!-- First Row - Two divs side by side -->
 			<div class="grid grid-cols-2 gap-1">
 				<!-- Parameters Div - Left Aligned -->
@@ -936,7 +945,8 @@ templ KarticaSintetickiKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 				</div>
 			</div>
 			<!-- Group Data Table -->
-			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
+			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative">
+				@tmpl.LoadingSpinner()
 				@tmpl.Search_Part(tbl, searchInput)
 				<!-- Table -->
 				<div id="promettable" class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
@@ -945,6 +955,7 @@ templ KarticaSintetickiKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 			</div>
 		</div>
 	</div>
+	@tmpl.SpinnerScript()
 }
 
 templ PrometKontaPoVRD(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.TotalValues, searchInput domain.InputControl, gnGod int, translator *i18n.Service) {
@@ -1046,7 +1057,8 @@ templ PrometKontaPoVRD(tabs domain.TabData, tbl domain.TableData, btnPrint, btnO
 				</div>
 			</div>
 			<!-- Group Data Table -->
-			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
+			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative">
+				@tmpl.LoadingSpinner()
 				@tmpl.Search_Part(tbl, searchInput)
 				<!-- Table -->
 				<div id="promettable" class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
@@ -1055,6 +1067,7 @@ templ PrometKontaPoVRD(tabs domain.TabData, tbl domain.TableData, btnPrint, btnO
 			</div>
 		</div>
 	</div>
+	@tmpl.SpinnerScript()
 }
 
 templ PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.TotalValues, searchInput domain.InputControl, gnGod int, translator *i18n.Service) {
@@ -1227,7 +1240,8 @@ templ PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint,
 				</div>
 			</div>
 			<!-- Group Data Table -->
-			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
+			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative">
+				@tmpl.LoadingSpinner()
 				@tmpl.Search_Part(tbl, searchInput)
 				<!-- Table -->
 				<div id="promettable" class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
@@ -1236,6 +1250,7 @@ templ PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint,
 			</div>
 		</div>
 	</div>
+	@tmpl.SpinnerScript()
 }
 
 templ PrometTotalValues(total domain.TotalValues, translator *i18n.Service) {
@@ -1341,4 +1356,61 @@ templ PrometTotalValues(total domain.TotalValues, translator *i18n.Service) {
 			})
 		</div>
 	</div>
+}
+
+templ PrometScripts() {
+	<script>
+	  // Backward-compat wrappers used in templates
+    	function showSearchDialog(fieldId) { 
+			openDropdown('search-dropdown', 'search-button-' + fieldId, true); window.currentFieldId = fieldId; 
+		}
+
+		function openDropdown(dropdownId, buttonId, fixed = false) {
+			const dropdown = document.getElementById(dropdownId);
+			if (!dropdown) return;
+			dropdown.classList.remove('hidden');
+			if (fixed) {
+				const button = document.getElementById(buttonId);
+				if (button) {
+				const rect = button.getBoundingClientRect();
+				const scrollX = window.scrollX || window.pageXOffset;
+				const scrollY = window.scrollY || window.pageYOffset;
+				dropdown.style.position = 'fixed';
+				dropdown.style.top = (rect.bottom + scrollY) + 'px';
+				dropdown.style.left = (rect.left + scrollX) + 'px';
+				dropdown.style.zIndex = '1000';
+				}
+			} else {
+				positionDropdown(dropdownId, buttonId);
+			}
+		}
+
+		function clearFieldError(event) {
+			event.target.classList.remove('border-red-500', 'ring-red-500');
+		}
+
+		function hideDropdown(dropdownId) {
+			const el = document.getElementById(dropdownId);
+			if (el) el.classList.add('hidden');
+		}
+
+		function selectDropdownItem(dropdownId, valueFieldId, nameFieldId, value, name) {
+			const vf = document.getElementById(valueFieldId);
+			const nf = document.getElementById(nameFieldId);
+			if (vf) vf.value = value;
+			if (nf) nf.value = name;
+			closeDropdown(dropdownId);
+			if (vf) vf.dispatchEvent(new Event('blur'));
+		}
+		function positionDropdown(dropdownId, buttonId) {
+			const button = document.getElementById(buttonId);
+			const dropdown = document.getElementById(dropdownId);
+			if (!(button && dropdown)) return;
+			const rect = button.getBoundingClientRect();
+			dropdown.style.position = 'absolute';
+			dropdown.style.top = (rect.bottom + window.scrollY) + 'px';
+			dropdown.style.left = (rect.left + window.scrollX) + 'px';
+			dropdown.style.zIndex = '1000';
+		}
+	</script>
 }

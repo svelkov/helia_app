@@ -2,12 +2,15 @@ package handler
 
 import (
 	"helia/config"
+	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
 	"helia/internal/middleware"
 	"helia/internal/service"
 	"helia/pkg/utils"
 	"net/http"
+
+	rep "helia/frontend/templates/reports"
 
 	"github.com/gin-gonic/gin"
 )
@@ -67,6 +70,26 @@ func (h *GenericHandler[T]) GetAll(c *gin.Context) {
 	)
 	utils.RenderContent(c, *tbl)
 }
+func (h *GenericHandler[T]) GetAllPrint(c *gin.Context) {
+	userSession := domain.GetSessionFromContext(c)
+	if userSession == nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, "User session not found")
+		return
+	}
+	tbl := utils.GetAllEntityHelper(
+		c, h.service, h.fields,
+		h.config.ContentTitle, h.config.TableID,
+		h.config.APIPrefix, h.config.APIPrefix+"/all",
+		h.config.IDField,
+		h.cfg,
+	)
+	reportParams := domain.ReportParameters{
+		ReportName:  h.config.ContentTitle,
+		CompanyName: userSession.Firma,
+	}
+	rep.Report(reportParams, *tbl, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+
+}
 func (h *GenericHandler[T]) GetAllPdf(c *gin.Context) {
 	tbl := utils.GetAllPdfEntityHelper(
 		c, h.service, h.fields,
@@ -116,4 +139,6 @@ func (h *GenericHandler[T]) RegisterRoutes(r *gin.Engine) {
 	r.GET(prefix+"/confirm-add", h.confirmAddHandler)
 	r.GET(prefix+"/pdf", h.GetAllPdf)
 	r.GET(prefix+"/excel", h.GetAllExcel)
+	r.GET(prefix+"/print", h.GetAllPrint)
+
 }

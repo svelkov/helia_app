@@ -52,15 +52,15 @@ func ReportPage(tbl domain.TableData, params map[string]interface{}, company str
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = ReportHeader(tbl, params, company).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = ReportHeader1(tbl, params, company).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = ReportDetail(tbl).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = ReportDetail1(tbl).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = ReportFooter(company, time.Now().Year(), time.Now()).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = ReportFooter1(company, time.Now().Year(), time.Now()).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -74,7 +74,7 @@ func ReportPage(tbl domain.TableData, params map[string]interface{}, company str
 
 // ReportHeader, ReportDetail, ReportFooter remain unchanged as per your original code.
 // (Only the template for ReportPage was modified above)
-func ReportHeader(tbl domain.TableData, params map[string]interface{}, companyName string) templ.Component {
+func ReportHeader1(tbl domain.TableData, params map[string]interface{}, companyName string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -139,7 +139,7 @@ func ReportHeader(tbl domain.TableData, params map[string]interface{}, companyNa
 	})
 }
 
-func ReportDetail(tbl domain.TableData) templ.Component {
+func ReportDetail1(tbl domain.TableData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -255,7 +255,7 @@ func ReportDetail(tbl domain.TableData) templ.Component {
 	})
 }
 
-func ReportFooter(company string, year int, generatedTime time.Time) templ.Component {
+func ReportFooter1(company string, year int, generatedTime time.Time) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {

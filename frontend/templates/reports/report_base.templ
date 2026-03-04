@@ -56,9 +56,9 @@ templ ReportPage(tbl domain.TableData, params map[string]interface{}, company st
 				</button>
 			</div>
 			<div id="report-container" class=" max-w-full mx-auto bg-white rounded-lg shadow-md overflow-hidden">
-				@ReportHeader(tbl, params, company)
-				@ReportDetail(tbl)
-				@ReportFooter(company, time.Now().Year(), time.Now())
+				@ReportHeader1(tbl, params, company)
+				@ReportDetail1(tbl)
+				@ReportFooter1(company, time.Now().Year(), time.Now())
 			</div>
 		</body>
 	</html>
@@ -66,7 +66,7 @@ templ ReportPage(tbl domain.TableData, params map[string]interface{}, company st
 
 // ReportHeader, ReportDetail, ReportFooter remain unchanged as per your original code.
 // (Only the template for ReportPage was modified above)
-templ ReportHeader(tbl domain.TableData, params map[string]interface{}, companyName string) {
+templ ReportHeader1(tbl domain.TableData, params map[string]interface{}, companyName string) {
 	<div class="bg-gray-100 border-b border-gray-200 report-header p-4">
 		<div class="flex justify-between items-start mb-4">
 			<!-- Left side: Logo and Company Name -->
@@ -100,7 +100,7 @@ templ ReportHeader(tbl domain.TableData, params map[string]interface{}, companyN
 	</div>
 }
 
-templ ReportDetail(tbl domain.TableData) {
+templ ReportDetail1(tbl domain.TableData) {
 	<div class="overflow-x-auto px-1 py-1">
 		<table class="min-w-full max-w-full divide-y divide-gray-200 border border-gray-200">
 			<thead class="bg-gray-50">
@@ -133,7 +133,7 @@ templ ReportDetail(tbl domain.TableData) {
 	</div>
 }
 
-templ ReportFooter(company string, year int, generatedTime time.Time) {
+templ ReportFooter1(company string, year int, generatedTime time.Time) {
 	<div class="bg-gray-100 p-4 border-t border-gray-200 report-footer mt-auto overflow-x-auto px-6 py-4">
 		<div class="flex justify-between items-center text-xs text-gray-600">
 			<p>© { fmt.Sprintf("%d", year) } { company }. Sva prava zadržana.</p>

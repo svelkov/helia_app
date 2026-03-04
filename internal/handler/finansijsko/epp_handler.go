@@ -56,7 +56,7 @@ func (h *EppHandler) EppMain(c *gin.Context) {
 
 	btnNew := common.SetButton("new-btn", "Novi", "fin_new", eppURLSekcije, "#"+eppTableID, "innerHTML", "GET", "", hxValsEpp, true, common.ClassSaveButton, "handleDialogResponse")
 	btnDelete := common.SetButton("delete-btn", "Obriši", "fin_delete", "", "", "innerHTML", "GET", "", hxValsEpp, true, common.ClassButton, "")
-	searchInput := common.CreateSearchInput(i18n.GetInstance(), eppURLSekcije, fmt.Sprintf("#%s", eppTableID), hxValsEpp)
+	searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), eppURLSekcije, fmt.Sprintf("#%s", eppTableID), hxValsEpp)
 
 	tbl := common.SetTableBasicData(eppContentTitle, eppTableID, h.service.GetSekcijeIzvoriTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tbl, eppContentTitle, "", false, false, false)
@@ -86,7 +86,7 @@ func (h *EppHandler) EppSekcijeIzvori(c *gin.Context) {
 
 		btnNew := common.SetButton("new-btn", "Novi", "fin_new", eppURLSekcije, "#"+eppTableID, "innerHTML", "GET", "", hxValsEpp, true, common.ClassSaveButton, "handleDialogResponse")
 		btnDelete := common.SetButton("delete-btn", "Obriši", "fin_delete", "", "", "innerHTML", "GET", "", hxValsEpp, true, common.ClassButton, "")
-		searchInput := common.CreateSearchInput(i18n.GetInstance(), eppURLSekcije, fmt.Sprintf("#%s", eppTableID), hxValsEpp)
+		searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), eppURLSekcije, fmt.Sprintf("#%s", eppTableID), hxValsEpp)
 
 		tbl := common.SetTableBasicData(eppContentTitle, eppTableID, h.service.GetSekcijeIzvoriTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 		tbl.Pagination.HxVals = hxValsEpp
@@ -155,7 +155,7 @@ func (h *EppHandler) EppEvidencija(c *gin.Context) {
 
 		btnNew := common.SetButton("new-btn", "Novi", "fin_new", eppURLEvidencija, "#"+eppTableID, "innerHTML", "GET", "", hxValsEpp, true, common.ClassSaveButton, "handleDialogResponse")
 		btnDelete := common.SetButton("delete-btn", "Obriši", "fin_delete", "", "", "innerHTML", "GET", "", hxValsEpp, true, common.ClassButton, "")
-		searchInput := common.CreateSearchInput(i18n.GetInstance(), eppURLEvidencija, fmt.Sprintf("#%s", eppTableID), hxValsEpp)
+		searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), eppURLEvidencija, fmt.Sprintf("#%s", eppTableID), hxValsEpp)
 
 		tbl := common.SetTableBasicData(eppContentTitle, eppTableID, h.service.GetEvidencijaTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 		tbl.Pagination.HxVals = hxValsEpp
@@ -208,7 +208,7 @@ func (h *EppHandler) EppSefKpr(c *gin.Context) {
 
 		btnNew := common.SetButton("new-btn", "Novi", "fin_new", eppURLSefKpr, "#"+eppTableID, "innerHTML", "GET", "", hxValsEpp, true, common.ClassSaveButton, "handleDialogResponse")
 		btnDelete := common.SetButton("delete-btn", "Obriši", "fin_delete", "", "", "innerHTML", "GET", "", hxValsEpp, true, common.ClassButton, "")
-		searchInput := common.CreateSearchInput(i18n.GetInstance(), eppURLSefKpr, fmt.Sprintf("#%s", eppTableID), hxValsEpp)
+		searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), eppURLSefKpr, fmt.Sprintf("#%s", eppTableID), hxValsEpp)
 
 		tbl := common.SetTableBasicData(eppContentTitle, eppTableID, h.service.GetSefKprTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 		tbl.Pagination.HxVals = hxValsEpp

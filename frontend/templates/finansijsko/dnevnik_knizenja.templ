@@ -59,7 +59,8 @@ templ DnevnikKnjizenja(tbl domain.TableData, searchControl domain.InputControl, 
 				</div>
 			</div>
 			<!-- Table section -->
-			<div class="border bg-blue-100 border border-blue-400 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
+			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative">
+				@tmpl.LoadingSpinner()
 				@tmpl.Search_Part(tbl, searchControl)
 				<div class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
 					@tmpl.Table(tbl, translator)
@@ -67,6 +68,7 @@ templ DnevnikKnjizenja(tbl domain.TableData, searchControl domain.InputControl, 
 			</div>
 		</div>
 	</div>
+	@tmpl.SpinnerScript()
 	// <script>
 	// 	document.addEventListener('htmx:afterSettle', function(evt) {
 	// 		const firstInput = document.querySelector('input[tabindex="1"]:not(:disabled)');

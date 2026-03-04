@@ -87,16 +87,19 @@ type Button struct {
 	BtnClass         string
 }
 type Fields struct {
-	Name           string
-	Label          string
-	Type           string
-	ValidationText string
-	Value          string
-	Width          string
-	TabIndex       string
-	SkipInSearch   bool
-	Field          string
-	Sortable       bool
+	Name            string
+	Label           string
+	Type            string
+	ValidationText  string
+	Value           string
+	Width           string
+	TabIndex        string
+	SkipInSearch    bool
+	Field           string
+	Sortable        bool
+	Params          map[string]string
+	IncludeInTotals bool
+	TextAlign       string
 }
 type FieldError struct {
 	Field        string `json:"field"`

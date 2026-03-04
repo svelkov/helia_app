@@ -9,6 +9,7 @@ import (
 	"helia/internal/domain"
 	"html/template"
 	"net/http"
+	"reflect"
 	"strings"
 
 	tmpl "helia/frontend/templates"
@@ -250,4 +251,28 @@ func WithDelete() func(*domain.TableData) {
 	return func(t *domain.TableData) {
 		t.BtnDelete.IsVisible = true
 	}
+}
+
+func GetFieldsFromCacheForUpdate(fieldCache map[string]reflect.StructField) ([]domain.Fields, error) {
+	var fields []domain.Fields
+
+	for _, field := range fieldCache {
+		dbTag, dbOk := field.Tag.Lookup("db")
+		addUpdateTag, addUpdateOk := field.Tag.Lookup("addupdate")
+		_, formOk := field.Tag.Lookup("form")
+
+		if dbOk && addUpdateOk && addUpdateTag == "true" && formOk {
+			fieldInfo := domain.Fields{
+				Name: dbTag,
+				Type: field.Type.String(),
+			}
+			fields = append(fields, fieldInfo)
+		}
+	}
+
+	if len(fields) == 0 {
+		return nil, fmt.Errorf("no fields found for update")
+	}
+
+	return fields, nil
 }

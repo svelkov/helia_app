@@ -8,6 +8,7 @@ import (
 	"helia/internal/middleware"
 	"helia/internal/service"
 	"helia/pkg/utils"
+	"net/http"
 
 	tmpl "helia/frontend/templates/opstipodaci"
 
@@ -31,6 +32,12 @@ func NewPartneriHandler(service *service.BaseService[domain.Partneri], cfg confi
 }
 
 func (h *PartneriHandler) GetAllPartneri(c *gin.Context) {
+	userSession := domain.GetSessionFromContext(c)
+	if userSession == nil {
+		common.WriteJSONResponse(c, http.StatusUnauthorized, false, nil, common.ErrMsgUnauthorized)
+		return
+	}
+
 	tbl := utils.GetAllEntityHelper(
 		c, h.Service, SetPartneriFields(),
 		partneriContentTitle, partneriTableID,

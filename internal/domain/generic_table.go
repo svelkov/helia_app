@@ -39,6 +39,9 @@ type TableData struct {
 	FuncClick           string
 	FuncDblClick        string
 	DestField           string //use for popup dialog to return the value in the control
+	Totals              []string
+	HasTotals           bool
+	TotalsCalculated    bool // Track if totals have been calculated for the current dataset
 }
 
 type PaginationData struct {

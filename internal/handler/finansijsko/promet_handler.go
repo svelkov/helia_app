@@ -128,6 +128,11 @@ func (h *PrometHandler) PrometAnalitickihKonta(c *gin.Context) {
 	// Get our custom header
 	requestSource := c.Request.Header.Get("X-Request-Source")
 	translator := i18n.GetInstance()
+	//if the call come from menu click or tab click then render the page with parameters and empty table
+	tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetAnkontaTableFields(), "", "", 0, 0, 0, 0, h.cfg)
+	common.SetTableConfig(&tbl, prometContentTitle, "", false, false, false)
+	common.SetActiveTab(&h.tabData, "analitickakonta")
+	tbl.HasTotals = true
 	if requestSource == "menu" || requestSource == "tab" {
 		session := domain.GetSessionFromContext(c)
 		gnGod := 0
@@ -138,11 +143,6 @@ func (h *PrometHandler) PrometAnalitickihKonta(c *gin.Context) {
 		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", prometURLAnKonta, "#promettable", "innerHTML", "GET", "", hxValsAnalitickihKonta, true, common.ClassSaveButton, "handleDialogResponse")
 		btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
 		searchInput := common.CreateSearchInput("search-input", translator, prometURLAnKonta, fmt.Sprintf("#%s", prometTableID), hxValsAnalitickihKonta)
-
-		//if the call come from menu click or tab click then render the page with parameters and empty table
-		tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetAnkontaTableFields(), "", "", 0, 0, 0, 0, h.cfg)
-		common.SetTableConfig(&tbl, prometContentTitle, "", false, false, false)
-		common.SetActiveTab(&h.tabData, "analitickakonta")
 		err := tmpl_fin.PrometAnalitickihKonta(h.tabData, tbl, btnPrint, btnObrada, domain.TotalValues{}, searchInput, gnGod, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
@@ -175,7 +175,7 @@ func (h *PrometHandler) PrometAnalitickihKonta(c *gin.Context) {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
 		}
-
+		tbl.HasTotals = true
 		utils.RenderContent(c, tbl)
 	}
 }
@@ -184,8 +184,10 @@ func (h *PrometHandler) PrometAnalitickihKontaPoMI(c *gin.Context) {
 	// Get our custom header
 	requestSource := c.Request.Header.Get("X-Request-Source")
 	translator := i18n.GetInstance()
+	//if the call come from menu click or tab click then render the page with parameters and empty table
 	tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetAnKontaMiTableFields(), "", prometURLAnKontaMi, 0, 0, 0, 0, h.cfg)
-
+	common.SetTableConfig(&tbl, prometContentTitle, prometURLAnKontaMi, false, false, false)
+	common.SetActiveTab(&h.tabData, "analitickakontami")
 	if requestSource == "menu" || requestSource == "tab" {
 		session := domain.GetSessionFromContext(c)
 		gnGod := 0
@@ -196,10 +198,6 @@ func (h *PrometHandler) PrometAnalitickihKontaPoMI(c *gin.Context) {
 		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", prometURLAnKontaMi, "#promettable", "innerHTML", "GET", "", hxValsMI, true, common.ClassSaveButton, "handleDialogResponse")
 		btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
 		searchInput := common.CreateSearchInput("search-input", translator, prometURLAnKontaMi, fmt.Sprintf("#%s", prometTableID), hxValsMI)
-
-		//if the call come from menu click or tab click then render the page with parameters and empty table
-		common.SetTableConfig(&tbl, prometContentTitle, prometURLAnKontaMi, false, false, false)
-		common.SetActiveTab(&h.tabData, "analitickakontami")
 		err := tmpl_fin.AnalitickaKarticaPoMI(h.tabData, tbl, btnPrint, btnObrada, domain.TotalValues{}, searchInput, gnGod, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
@@ -232,7 +230,7 @@ func (h *PrometHandler) PrometAnalitickihKontaPoMI(c *gin.Context) {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
 		}
-
+		tbl.HasTotals = true
 		utils.RenderContent(c, tbl)
 	}
 }
@@ -284,7 +282,7 @@ func (h *PrometHandler) PrometDeviznihAnalitickihKonta(c *gin.Context) {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
 		}
-
+		tbl.HasTotals = true
 		utils.RenderContent(c, tbl)
 	}
 }
@@ -339,7 +337,7 @@ func (h *PrometHandler) PrometSubsintetickihKonta(c *gin.Context) {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
 		}
-
+		tbl.HasTotals = true
 		utils.RenderContent(c, tbl)
 	}
 }
@@ -394,7 +392,7 @@ func (h *PrometHandler) PrometSintetickihKonta(c *gin.Context) {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
 		}
-
+		tbl.HasTotals = true
 		utils.RenderContent(c, tbl)
 	}
 }
@@ -449,7 +447,7 @@ func (h *PrometHandler) PrometKarticaSintetickihKonta(c *gin.Context) {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
 		}
-
+		tbl.HasTotals = true
 		utils.RenderContent(c, tbl)
 	}
 }
@@ -504,7 +502,7 @@ func (h *PrometHandler) PrometSubsintetickaKontaPoVRD(c *gin.Context) {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
 		}
-
+		tbl.HasTotals = true
 		utils.RenderContent(c, tbl)
 	}
 
@@ -560,7 +558,7 @@ func (h *PrometHandler) PrometKontaAnaliticki(c *gin.Context) {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
 		}
-
+		tbl.HasTotals = true
 		utils.RenderContent(c, tbl)
 	}
 }

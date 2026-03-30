@@ -43,10 +43,11 @@ type FkplHandler struct {
 	service     service.Service[domain.Fkpl]
 	fkplService finservice.FkplService
 	cfg         config.Config
+	lm          *middleware.LockMiddleware
 }
 
-func NewFkplHandler(service *service.BaseService[domain.Fkpl], fkplService finservice.FkplService, cfg config.Config) *FkplHandler {
-	return &FkplHandler{service: service, fkplService: fkplService, cfg: cfg}
+func NewFkplHandler(service *service.BaseService[domain.Fkpl], fkplService finservice.FkplService, cfg config.Config, lm *middleware.LockMiddleware) *FkplHandler {
+	return &FkplHandler{service: service, fkplService: fkplService, cfg: cfg, lm: lm}
 }
 
 func (h *FkplHandler) CreateFkpl(c *gin.Context) {
@@ -86,7 +87,11 @@ func (h *FkplHandler) GetAllFkpl(c *gin.Context) {
 }
 
 func (h *FkplHandler) TraziKonto(c *gin.Context) {
-	entities, err := h.fkplService.TraziKonto(c)
+	ctx := c.Request.Context()
+	konto := c.Query("konto")
+	sifra := c.Query("sifra")
+	vkonta := c.Query("vkonta")
+	entities, err := h.fkplService.TraziKonto(ctx, konto, sifra, vkonta)
 	if err != nil {
 		c.Writer.Header().Set("Content-Type", "text/plain")
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, err.Error())
@@ -104,7 +109,18 @@ func (h *FkplHandler) TraziKonto(c *gin.Context) {
 func (h *FkplHandler) TraziKontoSearchTable(c *gin.Context) {
 	// Parse query parameters
 	tbl := common.SetTableBasicData("", searchKontoTableID, fkplSearchTableFields, "", "", 0, 0, 0, 0, h.cfg)
-	err := h.fkplService.KontoSearchForTable(c, &tbl)
+	searchValue := c.Query("query")
+	konto := c.Query("konto")
+	vkonta := c.Query("vkonta")
+	fieldName := c.Query("fieldName")
+	fieldColIndex := 0 // Default to first column if not provided
+	if vkonta == "2" {
+		konto = ""
+	}
+	if vkonta == "1" {
+		fieldColIndex = 1 // If searching by sifra, the code value is in the second column
+	}
+	err := h.fkplService.KontoSearchForTable(c.Request.Context(), &tbl, searchValue, konto, vkonta, fieldName, fieldColIndex)
 	if err != nil {
 		c.Writer.Header().Set("Content-Type", "text/plain")
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, err.Error())

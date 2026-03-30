@@ -65,7 +65,7 @@ func ReportTableInternal(tbl domain.TableData, translator *i18n.Service) templ.C
 			templ_7745c5c3_Var2 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<table class=\"w-full border-collapse report-table\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<table class=\"w-full border-collapse report-table mt-8 print:w-full print:text-[9pt] print:table-auto print:border-collapse\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -113,12 +113,12 @@ func ReportTableHeader(tbl domain.TableData, translator *i18n.Service) templ.Com
 			templ_7745c5c3_Var3 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<thead><tr class=\"bg-blue-900 text-white print:bg-blue-900\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<thead><tr class=\"bg-blue-900 text-white print:bg-gray-200 print:text-black print:page-break-inside-auto\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		for _, header := range tbl.Headers {
-			var templ_7745c5c3_Var4 = []any{fmt.Sprintf("border border-gray-300 px-3 py-2 text-left text-sm font-semibold print:text-sm %s",
+			var templ_7745c5c3_Var4 = []any{fmt.Sprintf("border border-gray-300 px-3 py-2 text-center text-sm font-semibold print:bg-gray-200 print:text-black print:px-2 print:py-1 %s",
 				func() string {
 					if header.TextAlign != "" {
 						return fmt.Sprintf("text-%s", header.TextAlign)
@@ -207,7 +207,7 @@ func ReportTableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Se
 			return templ_7745c5c3_Err
 		}
 		for i, row := range tbl.Rows {
-			var templ_7745c5c3_Var9 = []any{fmt.Sprintf("hover:bg-yellow-50 print:hover:bg-white %s",
+			var templ_7745c5c3_Var9 = []any{fmt.Sprintf("hover:bg-yellow-50 print:hover:bg-white print:page-break-inside-avoid %s",
 				func() string {
 					if i%2 == 1 {
 						return "bg-gray-50 print:bg-gray-50"
@@ -236,7 +236,7 @@ func ReportTableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Se
 				return templ_7745c5c3_Err
 			}
 			for j, cell := range row.Fields {
-				var templ_7745c5c3_Var11 = []any{fmt.Sprintf("border border-gray-300 px-3 py-2 text-sm print:text-sm whitespace-nowrap %s",
+				var templ_7745c5c3_Var11 = []any{fmt.Sprintf("border border-gray-300 px-3 py-2 text-sm print:text-[9pt] print:px-2 print:py-1 print:break-words print:whitespace-normal %s",
 					func() string {
 						if tbl.Headers[j].TextAlign != "" {
 							return fmt.Sprintf("text-%s", tbl.Headers[j].TextAlign)
@@ -313,13 +313,13 @@ func ReportTableFooter(tbl domain.TableData) templ.Component {
 			templ_7745c5c3_Var14 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<tfoot><tr class=\"bg-blue-50 font-bold border-t-2 border-blue-900 print:bg-blue-50\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<tfoot><tr class=\"bg-blue-50 font-bold border-t-2 border-blue-900 print:bg-blue-50 print:page-break-inside-avoid\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		for j, header := range tbl.Headers {
 			if header.IncludeInTotals && j < len(tbl.Totals) {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<td class=\"border border-gray-300 px-3 py-2 text-sm font-bold print:text-sm text-right\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<td class=\"border border-gray-300 px-3 py-2 text-sm print:text-[9pt] print:px-2 print:py-1 font-bold text-right\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -337,7 +337,7 @@ func ReportTableFooter(tbl domain.TableData) templ.Component {
 					return templ_7745c5c3_Err
 				}
 			} else {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<td class=\"border border-gray-300 px-3 py-2 text-sm print:text-sm bg-blue-50\"></td>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<td class=\"border border-gray-300 px-3 py-2 text-sm print:text-[9pt] print:px-2 print:py-1 bg-blue-50\"></td>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}

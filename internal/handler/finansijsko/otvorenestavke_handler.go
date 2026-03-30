@@ -3,6 +3,8 @@ package finansijsko
 import (
 	"fmt"
 	"helia/config"
+
+	tmpl "helia/frontend/templates"
 	tmpl_fin "helia/frontend/templates/finansijsko"
 	"helia/i18n"
 	"helia/internal/common"
@@ -181,6 +183,14 @@ func (h *OtvoreneStavkeHandler) OtvoreneStavke(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusUnauthorized, false, nil, "Unauthorized")
 		return
 	}
+	params := domain.OtvStavkeParam{}
+	params.SearchText = c.Query("query")
+	params.Konto = c.Query("konto")
+	params.OdSifre = c.Query("odsifre")
+	params.DoSifre = c.Query("dosifre")
+	params.PodDatumom = c.Query("poddatumom")
+	params.OtvStavkeDana = c.Query("otvstavkedana")
+
 	gnGod := userSession.SelectedGod
 	tblPartneri := common.SetTableBasicData(otvorenestavkeContentTitle, otvorenestavkeTableID, h.service.GetPartneriFields(), "", "", 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tblPartneri, otvorenestavkeContentTitle, "", false, false, false)
@@ -200,7 +210,7 @@ func (h *OtvoreneStavkeHandler) OtvoreneStavke(c *gin.Context) {
 	h.setOtvoreneStavkeActiveTab("otvorenestavke")
 
 	tblPartneri.DetailTarget = fmt.Sprintf("#%s", otvorenestavkeDetaljiTableID)
-	tblPartneri.DetailURL = "/api/otvorenestavke/partneridetails?idfkpl="
+	tblPartneri.DetailURL = "/api/otvorenestavke/partneridetails"
 	tblPartneri.DetailHxRequestType = "GET"
 	tblPartneri.DetailHxSwap = "innerHTML"
 	tblPartneri.DetailHxTrigger = "click, change delay:500ms"
@@ -216,18 +226,19 @@ func (h *OtvoreneStavkeHandler) OtvoreneStavke(c *gin.Context) {
 	}
 
 	if requestSource == "btnobrada" || requestSource == "btnpage" || requestSource == "searchinput" {
+		ctx := c.Request.Context()
 		fieldsError := common.ValidateRequiredParams(c, []string{"konto", "odsifre", "dosifre", "poddatumom", "otvstavkedana"})
 		if len(fieldsError) > 0 {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldsError, common.ErrMsgValidation)
 			return
 		}
 		page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
-		err := h.service.GetOtvoreneStavkePartneri(c, &tblPartneri, true, pageSize, page)
+		err := h.service.GetOtvoreneStavkePartneri(ctx, &tblPartneri, true, pageSize, page, params)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
 		}
-		err = h.service.GetOtvoreneStavkePartneri(c, &tblPartneri, false, pageSize, page)
+		err = h.service.GetOtvoreneStavkePartneri(ctx, &tblPartneri, false, pageSize, page, params)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -237,17 +248,23 @@ func (h *OtvoreneStavkeHandler) OtvoreneStavke(c *gin.Context) {
 	}
 }
 func (h *OtvoreneStavkeHandler) OtvoreneStavkeDetalji(c *gin.Context) {
-
+	id, err := utils.GetInt64FromParameterRequest(c, "id")
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusBadRequest, false, nil, common.ErrMsgGetIDFromURL)
+		return
+	}
+	ctx := c.Request.Context()
+	searchText := c.Query("query")
 	tblDetalji := common.SetTableBasicData("Otvorene stavke - detalji", otvorenestavkeDetaljiTableID, h.service.GetOtvoreneStavkeDetaljiFields(), "", "", 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tblDetalji, "OTVORENE STAVKE - DETALJI", "", false, false, false)
 
 	page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
-	err := h.service.GetOtvoreneStavkeDetalji(c, &tblDetalji, true, pageSize, page)
+	err = h.service.GetOtvoreneStavkeDetalji(ctx, id, &tblDetalji, true, pageSize, page, searchText)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 		return
 	}
-	err = h.service.GetOtvoreneStavkeDetalji(c, &tblDetalji, false, pageSize, page)
+	err = h.service.GetOtvoreneStavkeDetalji(ctx, id, &tblDetalji, false, pageSize, page, searchText)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 		return
@@ -255,7 +272,7 @@ func (h *OtvoreneStavkeHandler) OtvoreneStavkeDetalji(c *gin.Context) {
 	tblDetalji.Pagination.HxVals = hxValsOtvoreneStavkeDetalji
 	tblDetalji.URLGetAll = otvoreneStavkeURLPartneriDetalji
 	tblDetalji.URLPrefix = otvoreneStavkeURLPartneriDetalji
-	utils.RenderContent(c, tblDetalji)
+	tmpl.Table(tblDetalji, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 }
 
 // ZatvoreneStavke - Tab 2: Zatvorene stavke (Closed Items)
@@ -266,6 +283,14 @@ func (h *OtvoreneStavkeHandler) ZatvoreneStavke(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusUnauthorized, false, nil, "Unauthorized")
 		return
 	}
+	params := domain.OtvStavkeParam{}
+	params.SearchText = c.Query("query")
+	params.Konto = c.Query("konto")
+	params.OdSifre = c.Query("odsifre")
+	params.DoSifre = c.Query("dosifre")
+	params.OdDatuma = c.Query("oddatuma")
+	params.DoDatuma = c.Query("dodatuma")
+
 	gnGod := userSession.SelectedGod
 	tblPartneri := common.SetTableBasicData(zatvoreneStavkeContentTitle, zatvoreneStavkeTableID, h.service.GetPartneriFields(), "", "", 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tblPartneri, zatvoreneStavkeContentTitle, "", false, false, false)
@@ -284,7 +309,7 @@ func (h *OtvoreneStavkeHandler) ZatvoreneStavke(c *gin.Context) {
 	h.setOtvoreneStavkeActiveTab("zatvorenestavke")
 
 	tblPartneri.DetailTarget = fmt.Sprintf("#%s", zatvoreneStavkeDetaljiTableID)
-	tblPartneri.DetailURL = "/api/otvorenestavke/zatvorene/partneridetails?idfkpl="
+	tblPartneri.DetailURL = "/api/otvorenestavke/zatvorene/partneridetails"
 	tblPartneri.DetailHxRequestType = "GET"
 	tblPartneri.DetailHxSwap = "innerHTML"
 	tblPartneri.DetailHxTrigger = "click, change delay:500ms"
@@ -300,18 +325,19 @@ func (h *OtvoreneStavkeHandler) ZatvoreneStavke(c *gin.Context) {
 	}
 
 	if requestSource == "btnobrada" || requestSource == "btnpage" || requestSource == "searchinput" {
+		ctx := c.Request.Context()
 		fieldError := common.ValidateRequiredParams(c, []string{"konto", "odsifre", "dosifre", "oddatuma", "dodatuma"})
 		if len(fieldError) > 0 {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldError, common.ErrMsgValidation)
 			return
 		}
 		page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
-		err := h.service.GetZatvoreneStavkePartneri(c, &tblPartneri, true, pageSize, page)
+		err := h.service.GetZatvoreneStavkePartneri(ctx, &tblPartneri, true, pageSize, page, params)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
 		}
-		err = h.service.GetZatvoreneStavkePartneri(c, &tblPartneri, false, pageSize, page)
+		err = h.service.GetZatvoreneStavkePartneri(ctx, &tblPartneri, false, pageSize, page, params)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -321,17 +347,23 @@ func (h *OtvoreneStavkeHandler) ZatvoreneStavke(c *gin.Context) {
 	}
 }
 func (h *OtvoreneStavkeHandler) ZatvoreneStavkeDetalji(c *gin.Context) {
-
+	id, err := utils.GetInt64FromParameterRequest(c, "id")
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusBadRequest, false, nil, common.ErrMsgGetIDFromURL)
+		return
+	}
+	ctx := c.Request.Context()
+	searchText := c.Query("query")
 	tblDetalji := common.SetTableBasicData("Zatvorene stavke - detalji", zatvoreneStavkeDetaljiTableID, h.service.GetZatvoreneStavkeDetaljiFields(), "", "", 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tblDetalji, "ZATVORENE STAVKE - DETALJI", "", false, false, false)
 
 	page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
-	err := h.service.GetZatvoreneStavkeDetalji(c, &tblDetalji, true, pageSize, page)
+	err = h.service.GetZatvoreneStavkeDetalji(ctx, id, &tblDetalji, true, pageSize, page, searchText)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetData)
 		return
 	}
-	err = h.service.GetZatvoreneStavkeDetalji(c, &tblDetalji, false, pageSize, page)
+	err = h.service.GetZatvoreneStavkeDetalji(ctx, id, &tblDetalji, false, pageSize, page, searchText)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetData)
 		return
@@ -339,7 +371,7 @@ func (h *OtvoreneStavkeHandler) ZatvoreneStavkeDetalji(c *gin.Context) {
 	tblDetalji.Pagination.HxVals = hxValsZatvoreneStavkeDetalji
 	tblDetalji.URLGetAll = zatvoreneStavkeURLPartneriDetalji
 	tblDetalji.URLPrefix = zatvoreneStavkeURLPartneriDetalji
-	utils.RenderContent(c, tblDetalji)
+	tmpl.Table(tblDetalji, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 }
 
 // IOS - Tab 3: IOS (Izvod otvorenih stavki)
@@ -350,6 +382,7 @@ func (h *OtvoreneStavkeHandler) IOS(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusUnauthorized, false, nil, "Unauthorized")
 		return
 	}
+
 	h.setOtvoreneStavkeActiveTab("ios")
 	gnGod := userSession.SelectedGod
 	tblPartneri := common.SetTableBasicData(iosContentTitle, iosTableID, h.service.GetPartneriFields(), "", "", 0, 0, 0, 0, h.cfg)
@@ -368,7 +401,7 @@ func (h *OtvoreneStavkeHandler) IOS(c *gin.Context) {
 	btnPrint := common.SetButton("stampa-btn", "Štampa", "fin_print", iosURLPartneri+"/print", "", "innerHTML", "GET", "", hxValsIOS, true, common.ClassPrintButton, "")
 
 	tblPartneri.DetailTarget = fmt.Sprintf("#%s", iosDetaljiTableID)
-	tblPartneri.DetailURL = "/api/otvorenestavke/ios/partneridetails?idfkpl="
+	tblPartneri.DetailURL = "/api/otvorenestavke/ios/partneridetails"
 	tblPartneri.DetailHxRequestType = "GET"
 	tblPartneri.DetailHxSwap = "innerHTML"
 	tblPartneri.DetailHxTrigger = "click, change delay:500ms"
@@ -384,18 +417,26 @@ func (h *OtvoreneStavkeHandler) IOS(c *gin.Context) {
 	}
 
 	if requestSource == "btnobrada" || requestSource == "btnpage" || requestSource == "searchinput" {
+		ctx := c.Request.Context()
+		params := domain.OtvStavkeParam{}
+		params.SearchText = c.Query("query")
+		params.Konto = c.Query("konto")
+		params.OdSifre = c.Query("odsifre")
+		params.DoSifre = c.Query("dosifre")
+		params.PodDatumom = c.Query("poddatumom")
+		params.OtvStavkeDana = c.Query("otvstavkedana")
 		fieldsError := common.ValidateRequiredParams(c, []string{"konto", "odsifre", "dosifre", "poddatumom", "otvstavkedana"})
 		if len(fieldsError) > 0 {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldsError, common.ErrMsgValidation)
 			return
 		}
 		page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
-		err := h.service.GetIOSPartneri(c, &tblPartneri, true, pageSize, page)
+		err := h.service.GetIOSPartneri(ctx, &tblPartneri, true, pageSize, page, params)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
 		}
-		err = h.service.GetIOSPartneri(c, &tblPartneri, false, pageSize, page)
+		err = h.service.GetIOSPartneri(ctx, &tblPartneri, false, pageSize, page, params)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -409,13 +450,20 @@ func (h *OtvoreneStavkeHandler) IOSDetalji(c *gin.Context) {
 	tblDetalji := common.SetTableBasicData("IOS - detalji", iosDetaljiTableID, h.service.GetIOSDetaljiFields(), "", "", 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tblDetalji, "IOS - DETALJI", "", false, false, false)
 
+	ctx := c.Request.Context()
+	id, err := utils.GetInt64FromParameterRequest(c, "id")
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusBadRequest, false, nil, common.ErrMsgGetIDFromURL)
+		return
+	}
+	searchText := c.Query("query")
 	page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
-	err := h.service.GetIOSDetalji(c, &tblDetalji, true, pageSize, page)
+	err = h.service.GetIOSDetalji(ctx, id, &tblDetalji, true, pageSize, page, searchText)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 		return
 	}
-	err = h.service.GetIOSDetalji(c, &tblDetalji, false, pageSize, page)
+	err = h.service.GetIOSDetalji(ctx, id, &tblDetalji, false, pageSize, page, searchText)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 		return
@@ -457,7 +505,7 @@ func (h *OtvoreneStavkeHandler) DospelaPotrazivanja(c *gin.Context) {
 	btnPrint := common.SetButton("stampa-btn", "Štampa", "fin_print", dospelaURLPartneri+"/print", "", "innerHTML", "GET", "", hxValsDospela, true, common.ClassPrintButton, "")
 
 	tblPartneri.DetailTarget = fmt.Sprintf("#%s", dospelaDetaljiTableID)
-	tblPartneri.DetailURL = "/api/otvorenestavke/dospela/partneridetails?idfkpl="
+	tblPartneri.DetailURL = "/api/otvorenestavke/dospela/partneridetails"
 	tblPartneri.DetailHxRequestType = "GET"
 	tblPartneri.DetailHxSwap = "innerHTML"
 	tblPartneri.DetailHxTrigger = "click, change delay:500ms"
@@ -473,18 +521,29 @@ func (h *OtvoreneStavkeHandler) DospelaPotrazivanja(c *gin.Context) {
 	}
 
 	if requestSource == "btnobrada" || requestSource == "btnpage" || requestSource == "searchinput" {
+		ctx := c.Request.Context()
+		params := domain.OtvStavkeParam{}
+		params.SearchText = c.Query("query")
+		params.Konto = c.Query("konto")
+		params.OdSifre = c.Query("odsifre")
+		params.DoSifre = c.Query("dosifre")
+		params.PodDatumom = c.Query("poddatumom")
+		params.BrojDana = c.Query("brojdana")
+		params.TipPregleda = c.Query("tip_pregleda")
+		params.TipPotrazivanja = c.Query("tip_potrazivanja")
+
 		fieldsError := common.ValidateRequiredParams(c, []string{"konto", "odsifre", "dosifre", "poddatumom", "brojdana", "tip_pregleda", "tip_potrazivanja"})
 		if len(fieldsError) > 0 {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldsError, common.ErrMsgValidation)
 			return
 		}
 		page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
-		err := h.service.GetDospelaPotrazivanjaPartneri(c, &tblPartneri, true, pageSize, page)
+		err := h.service.GetDospelaPotrazivanjaPartneri(ctx, &tblPartneri, true, pageSize, page, params)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
 		}
-		err = h.service.GetDospelaPotrazivanjaPartneri(c, &tblPartneri, false, pageSize, page)
+		err = h.service.GetDospelaPotrazivanjaPartneri(ctx, &tblPartneri, false, pageSize, page, params)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -499,12 +558,19 @@ func (h *OtvoreneStavkeHandler) DospelaPotrazivanjaDetalji(c *gin.Context) {
 	common.SetTableConfig(&tblDetalji, "DOSPELA POTRAŽIVANJA - DETALJI", "", false, false, false)
 
 	page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
-	err := h.service.GetDospelaPotrazivanjaDetalji(c, &tblDetalji, true, pageSize, page)
+	ctx := c.Request.Context()
+	id, err := utils.GetInt64FromParameterRequest(c, "id")
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusBadRequest, false, nil, common.ErrMsgGetIDFromURL)
+		return
+	}
+	searchText := c.Query("query")
+	err = h.service.GetDospelaPotrazivanjaDetalji(ctx, id, &tblDetalji, true, pageSize, page, searchText)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 		return
 	}
-	err = h.service.GetDospelaPotrazivanjaDetalji(c, &tblDetalji, false, pageSize, page)
+	err = h.service.GetDospelaPotrazivanjaDetalji(ctx, id, &tblDetalji, false, pageSize, page, searchText)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 		return
@@ -550,6 +616,21 @@ func (h *OtvoreneStavkeHandler) PregledPotrazivanjaObaveze(c *gin.Context) {
 	}
 
 	if requestSource == "btnobrada" || requestSource == "btnpage" || requestSource == "searchinput" {
+		ctx := c.Request.Context()
+		params := domain.OtvStavkeParam{}
+		params.SearchText = c.Query("query")
+		params.OdKonta = c.Query("odkonta")
+		params.DoKonta = c.Query("dokonta")
+		params.OdSifre = c.Query("odsifre")
+		params.DoSifre = c.Query("dosifre")
+		params.StanjeNaDan = c.Query("stanjenadan")
+		params.TipPregleda = c.Query("tip_pregleda")
+		params.Dospece15 = c.Query("dospece15")
+		params.Dospece30 = c.Query("dospece30")
+		params.Dospece60 = c.Query("dospece60")
+		params.Dospece90 = c.Query("dospece90")
+		params.Dospece120 = c.Query("dospece120")
+
 		fieldsError := common.ValidateRequiredParams(c, []string{"odkonta", "dokonta", "odsifre", "dosifre", "stanjenadan", "tip_pregleda", "dospece15", "dospece30", "dospece60", "dospece90", "dospece120"})
 		if len(fieldsError) > 0 {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldsError, common.ErrMsgValidation)
@@ -557,12 +638,12 @@ func (h *OtvoreneStavkeHandler) PregledPotrazivanjaObaveze(c *gin.Context) {
 		}
 		setHeaderTextfromRequest(c, &headerFileds)
 		page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
-		err := h.service.GetPregledPotrazivanjaObaveze(c, &tbl, true, pageSize, page)
+		err := h.service.GetPregledPotrazivanjaObaveze(ctx, &tbl, true, pageSize, page, params)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
 		}
-		err = h.service.GetPregledPotrazivanjaObaveze(c, &tbl, false, pageSize, page)
+		err = h.service.GetPregledPotrazivanjaObaveze(ctx, &tbl, false, pageSize, page, params)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -604,6 +685,21 @@ func (h *OtvoreneStavkeHandler) PregledDospelogDugaPoStarosti(c *gin.Context) {
 	}
 
 	if requestSource == "btnobrada" || requestSource == "btnpage" || requestSource == "searchinput" {
+		ctx := c.Request.Context()
+		params := domain.OtvStavkeParam{}
+		params.SearchText = c.Query("query")
+		params.OdKonta = c.Query("odkonta")
+		params.DoKonta = c.Query("dokonta")
+		params.OdSifre = c.Query("odsifre")
+		params.DoSifre = c.Query("dosifre")
+		params.StanjeNaDan = c.Query("stanjenadan")
+		params.TipPregleda = c.Query("tip_pregleda")
+		params.Dospece15 = c.Query("dospece15")
+		params.Dospece30 = c.Query("dospece30")
+		params.Dospece60 = c.Query("dospece60")
+		params.Dospece90 = c.Query("dospece90")
+		params.Dospece120 = c.Query("dospece120")
+
 		fieldsError := common.ValidateRequiredParams(c, []string{"odkonta", "dokonta", "odsifre", "dosifre", "stanjenadan", "tip_pregleda", "dospece15", "dospece30", "dospece60", "dospece90", "dospece120"})
 		if len(fieldsError) > 0 {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldsError, common.ErrMsgValidation)
@@ -616,12 +712,12 @@ func (h *OtvoreneStavkeHandler) PregledDospelogDugaPoStarosti(c *gin.Context) {
 		tbl.URLGetAll = dospelaStarostiURL
 		tbl.URLPrefix = dospelaStarostiURL
 		page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
-		err := h.service.GetPregledDugovanjaPoStarosti(c, &tbl, true, pageSize, page)
+		err := h.service.GetPregledDugovanjaPoStarosti(ctx, &tbl, true, pageSize, page, params)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
 		}
-		err = h.service.GetPregledDugovanjaPoStarosti(c, &tbl, false, pageSize, page)
+		err = h.service.GetPregledDugovanjaPoStarosti(ctx, &tbl, false, pageSize, page, params)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -696,13 +792,13 @@ func (h *OtvoreneStavkeHandler) RegisterRoutes(r *gin.Engine) {
 
 	r.GET("api/otvorenestavke", h.OtvoreneStavkeMain)
 	r.GET("api/otvorenestavke/partneri", h.OtvoreneStavke)
-	r.GET("api/otvorenestavke/partneridetails", h.OtvoreneStavkeDetalji)
+	r.GET("api/otvorenestavke/partneridetails/:id", h.OtvoreneStavkeDetalji)
 	r.GET("api/otvorenestavke/zatvorene/partneri", h.ZatvoreneStavke)
-	r.GET("api/otvorenestavke/zatvorene/partneridetails", h.ZatvoreneStavkeDetalji)
+	r.GET("api/otvorenestavke/zatvorene/partneridetails/:id", h.ZatvoreneStavkeDetalji)
 	r.GET("api/otvorenestavke/ios/partneri", h.IOS)
-	r.GET("api/otvorenestavke/ios/partneridetails", h.IOSDetalji)
+	r.GET("api/otvorenestavke/ios/partneridetails/:id", h.IOSDetalji)
 	r.GET("api/otvorenestavke/dospela/partneri", h.DospelaPotrazivanja)
-	r.GET("api/otvorenestavke/dospela/partneridetails", h.DospelaPotrazivanjaDetalji)
+	r.GET("api/otvorenestavke/dospela/partneridetails/:id", h.DospelaPotrazivanjaDetalji)
 	r.GET("api/otvorenestavke/pregleddugovanja", h.PregledPotrazivanjaObaveze)
 	r.GET("api/otvorenestavke/dospelidugpostarosti", h.PregledDospelogDugaPoStarosti)
 	r.GET("api/otvorenestavke/povezivanje", h.PovezivanjRacunaIUplata)

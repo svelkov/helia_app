@@ -12,7 +12,7 @@ templ ReportTable(tbl domain.TableData, translator *i18n.Service) {
 }
 
 templ ReportTableInternal(tbl domain.TableData, translator *i18n.Service) {
-	<table class="w-full border-collapse report-table">
+	<table class="w-full border-collapse report-table mt-8 print:w-full print:text-[9pt] print:table-auto print:border-collapse">
 		@ReportTableHeader(tbl, translator)
 		@ReportTableBody(tbl, tbl.URLPrefix, translator)
 		if tbl.HasTotals && len(tbl.Totals) > 0 {
@@ -24,11 +24,11 @@ templ ReportTableInternal(tbl domain.TableData, translator *i18n.Service) {
 // ReportTableHeader renders the table header
 templ ReportTableHeader(tbl domain.TableData, translator *i18n.Service) {
 	<thead>
-		<tr class="bg-blue-900 text-white print:bg-blue-900">
+		<tr class="bg-blue-900 text-white print:bg-gray-200 print:text-black print:page-break-inside-auto">
 			for _, header := range tbl.Headers {
 				<th
 					scope="col"
-					class={ fmt.Sprintf("border border-gray-300 px-3 py-2 text-left text-sm font-semibold print:text-sm %s",
+					class={ fmt.Sprintf("border border-gray-300 px-3 py-2 text-center text-sm font-semibold print:bg-gray-200 print:text-black print:px-2 print:py-1 %s",
 						func() string {
 							if header.TextAlign != "" {
 								return fmt.Sprintf("text-%s", header.TextAlign)
@@ -52,7 +52,7 @@ templ ReportTableBody(tbl domain.TableData, urlPrefix string, translator *i18n.S
 	<tbody>
 		for i, row := range tbl.Rows {
 			<tr
-				class={ fmt.Sprintf("hover:bg-yellow-50 print:hover:bg-white %s",
+				class={ fmt.Sprintf("hover:bg-yellow-50 print:hover:bg-white print:page-break-inside-avoid %s",
 					func() string {
 						if i%2 == 1 {
 							return "bg-gray-50 print:bg-gray-50"
@@ -62,7 +62,7 @@ templ ReportTableBody(tbl domain.TableData, urlPrefix string, translator *i18n.S
 			>
 				for j, cell := range row.Fields {
 					<td
-						class={ fmt.Sprintf("border border-gray-300 px-3 py-2 text-sm print:text-sm whitespace-nowrap %s",
+						class={ fmt.Sprintf("border border-gray-300 px-3 py-2 text-sm print:text-[9pt] print:px-2 print:py-1 print:break-words print:whitespace-normal %s",
 							func() string {
 								if tbl.Headers[j].TextAlign != "" {
 									return fmt.Sprintf("text-%s", tbl.Headers[j].TextAlign)
@@ -81,14 +81,14 @@ templ ReportTableBody(tbl domain.TableData, urlPrefix string, translator *i18n.S
 // ReportTableFooter renders the totals row
 templ ReportTableFooter(tbl domain.TableData) {
 	<tfoot>
-		<tr class="bg-blue-50 font-bold border-t-2 border-blue-900 print:bg-blue-50">
+		<tr class="bg-blue-50 font-bold border-t-2 border-blue-900 print:bg-blue-50 print:page-break-inside-avoid">
 			for j, header := range tbl.Headers {
 				if header.IncludeInTotals && j < len(tbl.Totals) {
-					<td class="border border-gray-300 px-3 py-2 text-sm font-bold print:text-sm text-right">
+					<td class="border border-gray-300 px-3 py-2 text-sm print:text-[9pt] print:px-2 print:py-1 font-bold text-right">
 						{ tbl.Totals[j] }
 					</td>
 				} else {
-					<td class="border border-gray-300 px-3 py-2 text-sm print:text-sm bg-blue-50"></td>
+					<td class="border border-gray-300 px-3 py-2 text-sm print:text-[9pt] print:px-2 print:py-1 bg-blue-50"></td>
 				}
 			}
 		</tr>

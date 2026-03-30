@@ -1,20 +1,6 @@
 package templates
 
-templ DeactivateActionsColumn() {
-	<script>
-    	function deactivateActionsColumn() {
-			console.log("in Deactivating actions column function");
-			// Restore the style of actions column if needed
-			document.querySelectorAll(".actions-column").forEach(el => {
-				el.classList.add('static');
-        		el.classList.remove('sticky', 'right-0', 'z-10');
-			});
-		}
-		
-    </script>
-}
-
-templ HandleDialogResponse(dialogName string) {
+templ HandleDialogResponseScript(dialogName string) {
 	<script>
 		function handleDialogResponse(dialogName) {
 			// Check if the response is an error (400 Bad Request)
@@ -23,7 +9,7 @@ templ HandleDialogResponse(dialogName string) {
 			try {
 				// Get the response text from the backend
 				const responseText = event.detail.xhr.responseText;
-				//console.log("Response text:", responseText)
+				console.log("handleDialogResponse:Response text:", responseText)
 				
 				// Check if response is empty or not JSON
 				if (!responseText || responseText.trim() === '') {
@@ -47,6 +33,9 @@ templ HandleDialogResponse(dialogName string) {
 				// If we get here, response is valid JSON
 				// Clear previous error messages
 				document.querySelectorAll('.input-error').forEach(el => el.remove());
+				document.querySelectorAll('.field-error-inline').forEach(el => {
+					el.textContent = '';
+				});
 				document.querySelectorAll('input').forEach(input => {
 					input.classList.remove('border-red-500');
 				});
@@ -59,11 +48,16 @@ templ HandleDialogResponse(dialogName string) {
 						const field = document.querySelector(`input[name="${error.field}"]`);
 						if (field) {
 							field.classList.add('border-red-500'); // Add red border to invalid field
+							const inlineError = document.getElementById(`${error.field}-error`);
+							if (inlineError) {
+								inlineError.textContent = error.message;
+								return;
+							}
 							// Add error message below the input field
 							const errorMessage = document.createElement('p');
 							errorMessage.className = 'text-red-500 text-xs mt-1 input-error';
 							errorMessage.textContent = error.message;
-							field.insertAdjacentElement('afterend', errorMessage);
+							field.insertAdjacentElement('afterbegin', errorMessage);
 						}
 					});
 					return;
@@ -90,19 +84,20 @@ templ HandleDialogResponse(dialogName string) {
 	</script>
 }
 
-templ ClearFieldError() {
-	<script>
+
+templ ClearFieldErrorScript() {
+	<script>		
 		function clearFieldError(inputElement) {
-			// If inputElement is already a DOM element
 			const elm = document.getElementById(inputElement);
 			if (elm) {
 				elm.classList.remove('border-red-500');
-
-				let nextSibling = elm.nextElementSibling;
-
-				while (nextSibling && nextSibling.classList.contains('input-error')) {
-					nextSibling.remove();
-					nextSibling = elm.nextElementSibling;
+				const inlineError = document.getElementById(`${inputElement}-error`);
+				if (inlineError) {
+					inlineError.textContent = '';
+				}
+				const wrapper = elm.closest('.input-error-wrapper');
+				if (wrapper) {
+					wrapper.querySelectorAll('.input-error').forEach(el => el.remove());
 				}
 			}
 		}
@@ -111,7 +106,6 @@ templ ClearFieldError() {
 
 templ ShowMessage() {
 	<script>
-	//htmx.logAll();
 		function selectRow(row) {
 		   // console.log("Row clicked:", row);
 		   // Deselect any previously selected row by removing the 'bg-blue-300' class
@@ -124,40 +118,7 @@ templ ShowMessage() {
 			row.classList.add('bg-blue-300');
 		}
 
-  		function handleDblClickKontoSelection(element) {
-	        if (!element) return;
-			const destField = element.getAttribute('data-dest-field');
-			console.log("selectedrow:", element)
-			console.log(" destination field:",destField )
-    		// Get all table cells in this row
-			const cells = element.querySelectorAll('td');
-			
-			// Extract values by cell index
-			const firstVal = cells[0]?.querySelector('.text-sm')?.textContent?.trim() || '';
-			const secondVal = cells[1]?.querySelector('.text-sm')?.textContent?.trim() || '';
-			const thirdVal = cells[2]?.querySelector('.text-sm')?.textContent?.trim() || '';
-			
-			// Set values in form
-			if (destField == "konto") {
-				clearFieldError("konto")
-				const kontoInput = document.getElementById('konto');
-				const kontoNaziv = document.getElementById('kontonaziv');
-				if (kontoInput) kontoInput.value = firstVal;
-				if (kontoNaziv) kontoNaziv.value = thirdVal;
-			}
-			
-			if (destField == "sifra") {
-				clearFieldError("sifra")
-				const sifraInput = document.getElementById('sifra');
-				const sifraNaziv = document.getElementById('sifranaziv');
-				if (sifraInput) sifraInput.value = secondVal;
-				if (sifraNaziv) sifraNaziv.value = thirdVal;
-			}
-			
-			// Close the dialog
-            hideDropdown('search-dropdown');
-        }
-
+ 
   		function handleDblClickNalogSelection(element) {
 		    if (!element) return;
 			// Get all table cells in this row
@@ -230,94 +191,7 @@ templ ShowMessage() {
 				infoMessage.classList.add('hidden');
 			}, 3000);
 		}
-
-		function handleDialogResponse(dialogName) {
-			// Check if the response is an error (400 Bad Request)
-			console.log("in handleDialogResponse()", dialogName)
-			//console.log("handleFieldErrors:", event.detail)
-			try {
-				// Get the response text from the backend
-				const responseText = event.detail.xhr.responseText;
-				//console.log("Response text:", responseText)
-				
-				// Check if response is empty or not JSON
-				if (!responseText || responseText.trim() === '') {
-					//console.log("Empty response, closing dialog");
-					closeDialog(dialogName);
-					return;
-				}
-				
-				// Try to parse as JSON
-				let response;
-				try {
-					response = JSON.parse(responseText);
-				} catch (parseError) {
-					console.error("Response is not valid JSON:", parseError);
-					//console.log("Response text was:", responseText);
-					// If not JSON, assume it's HTML success response, close dialog
-					closeDialog(dialogName);
-					return;
-				}
-				
-				// If we get here, response is valid JSON
-				// Clear previous error messages
-				document.querySelectorAll('.input-error').forEach(el => el.remove());
-				document.querySelectorAll('input').forEach(input => {
-					input.classList.remove('border-red-500');
-				});
-				
-				// Handle validation errors
-				if (response.errors && response.errors.length > 0) {
-					//console.log("Errors found:", response.errors)
-					// Loop through errors and show error messages for each field
-					response.errors.forEach(error => {
-						const field = document.querySelector(`input[name="${error.field}"]`);
-						if (field) {
-							field.classList.add('border-red-500'); // Add red border to invalid field
-							// Add error message below the input field
-							const errorMessage = document.createElement('p');
-							errorMessage.className = 'text-red-500 text-xs mt-1 input-error';
-							errorMessage.textContent = error.message;
-							field.insertAdjacentElement('afterend', errorMessage);
-						}
-					});
-					return;
-				}
-				
-				// Handle success response
-				if (response.success) {
-					showMessage(response.message);
-					closeDialog(dialogName);
-					return;
-				}
-				
-				// Handle error response
-				if (!response.success) {
-					showMessage(response.message, true);
-					return;
-				}	
-				
-			} catch (e) {
-				console.error("Unexpected error in handleDialogResponse():", e);
-				closeDialog(dialogName);
-			}
-		}
-			
-		function clearFieldError(inputElement) {
-			// If inputElement is already a DOM element
-			const elm = document.getElementById(inputElement);
-			if (elm) {
-				elm.classList.remove('border-red-500');
-
-				let nextSibling = elm.nextElementSibling;
-
-				while (nextSibling && nextSibling.classList.contains('input-error')) {
-					nextSibling.remove();
-					nextSibling = elm.nextElementSibling;
-				}
-			}
-		}	
-
+	
 		function handleNextNalogResponse(dialogName) {
 			console.log("handleNextNalogResponse:", event.detail);
 			
@@ -381,35 +255,139 @@ templ ShowMessage() {
 			console.log("Tipdok changed, fetching next nalog...", event);
             htmx.trigger('#nalog-trigger', 'tipdokChanged');
         }
-		function closeDialog(id) {
-			console.log("Closing dialog with ID:", id);
-			const dialogElm = document.getElementById(id);
-			if (dialogElm) {
-				dialogElm.classList.add("opacity-0"); // Fade-out effect
-				setTimeout(() => {
-					dialogElm.classList.add("hidden");
-				}, 300); // Delay to allow fade-out animation
-
-				// Restore the style of actions column if needed
-				document.querySelectorAll(".actions-column").forEach(el => {
-					el.classList.remove('static');
-        			el.classList.add('sticky', 'right-0', 'z-10');
-				});
-			}
-		}
-		// Close dialog when pressing "Escape"
-		document.addEventListener("keydown", function(event) {
-			if (event.key === "Escape") {
-				const openDialog = document.querySelector(".fixed:not(.hidden)");
-				if (openDialog) {
-					closeDialog(openDialog.id);
-				}
-			}
-		});
 		// Export functions to global scope
 		window.handleDblClickNalogSelection = handleDblClickNalogSelection;
 		window.handleTipdokAfterRequest = handleTipdokAfterRequest;
 
+	</script>
+}
+
+templ HandleDblClickKontoSelectionScript() {
+	<script>
+ 		function handleDblClickKontoSelection(element) {
+	        if (!element) return;
+			console.log("handleDblClickKontoSelection: element =", element);
+			const destField = element.getAttribute('data-dest-field');
+			console.log("handleDblClickKontoSelection: destField =", destField);
+			// data-value-col: which column index holds the code value (default 0 = first column)
+			const valueCol = parseInt(element.getAttribute('data-value-col') || '0');
+    		console.log("handleDblClickKontoSelection: valueCol =", valueCol);
+			// Get all table cells in this row
+			const cells = element.querySelectorAll('td');
+			
+			// col 0 = code (konto/sifra), col 1 = second code (sifra), col 2 = naziv
+			const vals = Array.from(cells).map(td => td.querySelector('.text-sm')?.textContent?.trim() || '');
+			const selectedVal = vals[valueCol] || '';
+			const nazivVal = vals[2] || '';
+			
+			// Set values in form
+			if (destField) {
+				const destFieldNaziv = destField + 'naziv';
+				clearFieldError(destField);
+				const fieldInput = document.getElementById(destField);
+				const fieldNaziv = document.getElementById(destFieldNaziv);
+				if (fieldInput) fieldInput.value = selectedVal;
+				if (fieldNaziv) fieldNaziv.value = nazivVal;
+			}
+			// Close the dialog
+            hideDropdown('search-dropdown');
+        }
+	</script>
+}
+
+
+templ RestrictNumericInput() {
+	<script>
+		function restrictNumericInput(el, maxDecimals) {
+			maxDecimals = (maxDecimals !== undefined) ? maxDecimals
+				: (parseInt(el.getAttribute('data-decimals')) || 4);
+			const sep = (1.1).toLocaleString().replace(/[0-9]/g, '')[0] || '.';
+			const other = sep === '.' ? ',' : '.';
+			let v = el.value;
+			// predznak minus samo na pocetku i samo jednom
+			const neg = v.startsWith('-');
+			v = v.replace(/-/g, '');
+			// zadrzati samo cifre i separatore
+			v = v.replace(/[^0-9.,]/g, '');
+			// ukloniti suprotni separator
+			v = v.replace(new RegExp('\\' + other, 'g'), '');
+			// samo jedan decimalni separator
+			const idx = v.indexOf(sep);
+			if (idx !== -1) {
+				const decimals = v.substring(idx + 1).replace(new RegExp('\\' + sep, 'g'), '');
+				v = v.substring(0, idx + 1) + decimals.substring(0, maxDecimals);
+			}
+			if (neg) v = '-' + v;
+			el.value = v;
+		}
+	</script>
+}
+
+templ HandleFormResponseScript() {
+	<script>
+		function handleFormResponse(event, requestType, dialogId = null, showMsg = false, closeAfterSuccess = false) {
+			const xhr = event.detail.xhr;
+			const messageDiv = document.getElementById('dialog-form-message') || document.getElementById('dialog-message');
+			// Clear previous error state
+			document.querySelectorAll('.input-error').forEach(el => el.remove());
+			document.querySelectorAll('.field-error-inline').forEach(el => { el.textContent = ''; });
+			document.querySelectorAll('input').forEach(input => { input.classList.remove('border-red-500'); });
+			// Parse response - non-JSON with 2xx: close dialog if dialogId is set
+			let response;
+			try {
+				response = JSON.parse(xhr.responseText);
+			} catch (e) {
+				if ((xhr.status === 200 || xhr.status === 201) && dialogId) closeDialog(dialogId);
+				return;
+			}
+			// Handle validation errors
+			if (response.errors && response.errors.length > 0) {
+				response.errors.forEach(error => {
+					const field = document.querySelector(`input[name="${error.field}"]`);
+					if (field) {
+						field.classList.add('border-red-500');
+						const inlineError = document.getElementById(`${error.field}-error`);
+						if (inlineError) { inlineError.textContent = error.message; return; }
+						let wrapper = field.closest('.input-error-wrapper');
+						if (!wrapper) {
+							const inputWidth = field.offsetWidth;
+							wrapper = document.createElement('div');
+							wrapper.className = 'input-error-wrapper flex flex-col';
+							wrapper.style.maxWidth = inputWidth + 'px';
+							field.parentNode.insertBefore(wrapper, field);
+							wrapper.appendChild(field);
+						}
+						const errorMessage = document.createElement('p');
+						errorMessage.className = 'text-red-500 text-xs mt-1 input-error whitespace-normal break-words';
+						errorMessage.textContent = error.message;
+						wrapper.appendChild(errorMessage);
+					}
+				});
+				return;
+			}
+			if (xhr.status === 200 || xhr.status === 201) {
+				if (showMsg && response.message && messageDiv) {
+					messageDiv.className = 'p-2 text-sm text-green-800 bg-green-100 border border-green-300 rounded-lg w-full whitespace-normal break-words';
+					messageDiv.textContent = response.message;
+					messageDiv.classList.remove('hidden');
+					if (requestType === 'POST') {
+						setTimeout(() => { messageDiv.classList.add('hidden'); }, 3000);
+					}
+					if (dialogId) setTimeout(() => { closeDialog(dialogId); }, 1000);
+				} else if (dialogId) {
+					closeDialog(dialogId);
+				}
+				if (closeAfterSuccess && dialogId) {
+					setTimeout(() => { closeDialog(dialogId); }, 1000);
+				}
+			} else {
+				if (messageDiv) {
+					messageDiv.className = 'p-2 text-sm text-red-800 bg-red-100 border border-red-300 rounded-lg w-full whitespace-normal break-words';
+					messageDiv.textContent = (response && response.message) ? response.message : 'An error occurred';
+					messageDiv.classList.remove('hidden');
+				}
+			}
+		}
 	</script>
 }
 
@@ -456,4 +434,182 @@ templ OpenDialogScript(id string) {
 			});
 		}
 	</script>
+}
+templ HideDropdownScript() {
+	<script> 
+		function hideDropdown(dropdownId) {
+			const el = document.getElementById(dropdownId);
+			if (el) el.classList.add('hidden');
+		}
+	</script>	
+}
+
+// Position dropdown below the button that opened it
+templ PositionDropdownScript() {
+	<script>
+		function positionDropdown(dropdownId, buttonId) {
+			const button = document.getElementById(buttonId);
+			const dropdown = document.getElementById(dropdownId);
+			if (!(button && dropdown)) return;
+			const rect = button.getBoundingClientRect();
+			dropdown.style.position = 'absolute';
+			dropdown.style.top = (rect.bottom + window.scrollY) + 'px';
+			dropdown.style.left = (rect.left + window.scrollX) + 'px';
+			dropdown.style.zIndex = '1000';
+		}
+	</script>
+}
+
+templ SelectItemScript() {
+		// Generic function to select item and close dialog
+	<script>
+		function selectItem(dropdownId, valueFieldId, nameFieldId, value, name) {
+			const vf = document.getElementById(valueFieldId);
+			const nf = document.getElementById(nameFieldId);
+			if (vf) vf.value = value;
+			if (nf) nf.value = name;
+			hideDropdown(dropdownId);
+			
+			// Trigger blur event to update other fields
+			if (vf) vf.dispatchEvent(new Event('blur'));
+		}
+	</script>
+}
+
+templ ShowDropdownScript() {
+	<script>
+		// Show dropdown function
+		function showDropdown(dropdownId, buttonId) {
+			// First hide any other open dropdowns
+			const dropdowns = document.querySelectorAll('[id^="search-dropdown"]');
+			dropdowns.forEach(dropdown => {
+				dropdown.classList.add('hidden');
+			});
+			
+			// Show the requested dropdown
+			const dropdown = document.getElementById(dropdownId);
+			dropdown.classList.remove('hidden');
+			
+			// Position it below the button
+			positionDropdown(dropdownId, buttonId);
+		}
+	</script>
+}
+
+
+// ShowSearchDialogScript renders the JavaScript needed for the search popup
+// This should be included once per page, not per popup instance
+templ ShowSearchDialogScript() {
+	<script>
+		function showSearchDialog(dropdownId, buttonId, fixed = true) {
+			const dropdown = document.getElementById(dropdownId);
+			const button = document.getElementById(buttonId);
+
+			if (!dropdown) return;
+			dropdown.classList.remove('hidden');
+			if (fixed) {
+				const button = document.getElementById(buttonId);
+				if (button) {
+				const rect = button.getBoundingClientRect();
+				const scrollX = window.scrollX || window.pageXOffset;
+				const scrollY = window.scrollY || window.pageYOffset;
+				dropdown.style.position = 'fixed';
+				dropdown.style.top = (rect.bottom + scrollY) + 'px';
+				dropdown.style.left = (rect.left + scrollX) + 'px';
+				dropdown.style.zIndex = '1000';
+				}
+			} else {
+				positionDropdown(dropdownId, buttonId);
+			}
+		}
+
+		// Close dropdown when clicking outside
+		document.addEventListener('click', function(event) {
+			const dropdowns = document.querySelectorAll('[id^="search-dropdown"]');
+			dropdowns.forEach(dropdown => {
+				if (!dropdown.contains(event.target) && !event.target.closest('[onclick*="showDropdown"]')) {
+					dropdown.classList.add('hidden');
+				}
+			});
+		});
+	</script>
+}
+
+templ ShowMessageScript() {
+	<script>
+		function showMessage(message, isError = false) {
+			const infoMessage = document.getElementById('dialog-form-message');
+
+			// Set the message text
+			infoMessage.textContent = message;
+			// Reset previous styles
+			infoMessage.classList.remove('hidden', 'bg-green-500', 'bg-red-500', 'text-white');
+			// Add appropriate styles based on success or error
+			if (isError) {
+				infoMessage.classList.add('bg-red-500', 'text-white', 'w-full', 'whitespace-normal', 'break-words');
+			} else {
+				infoMessage.classList.add('bg-green-500', 'text-white', 'w-full', 'whitespace-normal', 'break-words');
+			}
+			// Show the message
+			infoMessage.classList.remove('hidden');
+			// Hide the message after 3 seconds
+			setTimeout(() => {
+				infoMessage.classList.add('hidden');
+			}, 3000);
+		}
+	</script>
+}
+
+templ SearchPopupScript() {
+	<script>
+        // Toggle popup visibility
+        function togglePopup(fieldId) {
+            const popup = document.getElementById(`${fieldId}-popup`);
+            const isHidden = popup.classList.contains('hidden');
+            
+            // Close all other popups first
+            document.querySelectorAll('.absolute.z-50').forEach(el => {
+                if (el !== popup) el.classList.add('hidden');
+            });
+            
+            // Toggle this popup
+            popup.classList.toggle('hidden');
+            
+            if (!isHidden) {
+                setTimeout(() => document.getElementById(`search-input-${fieldId}`).focus(), 10);
+            }
+        }
+
+        // Reset search input
+        function resetSearch(fieldId) {
+            document.getElementById(`search-input-${fieldId}`).value = '';
+            htmx.trigger(`#search-input-${fieldId}`, 'keyup');
+        }
+
+        // Close popup when clicking outside
+        document.addEventListener('click', function(event) {
+            // Check all popups
+            document.querySelectorAll('[id$="-popup"]').forEach(popup => {
+                const fieldId = popup.id.replace('-popup', '');
+                const field = document.getElementById(fieldId);
+                const searchButton = document.querySelector(`button[onclick="togglePopup('${fieldId}')"]`);
+                
+                if (field && searchButton && 
+                    !popup.contains(event.target) && 
+                    !field.contains(event.target) && 
+                    !searchButton.contains(event.target)) {
+                    popup.classList.add('hidden');
+                }
+            });
+        });
+
+        // Close popup on Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                document.querySelectorAll('[id$="-popup"]').forEach(popup => {
+                    popup.classList.add('hidden');
+                });
+            }
+        });
+    </script>
 }

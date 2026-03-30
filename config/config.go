@@ -26,6 +26,7 @@ type Config struct {
 	JwtSecret       string        `json:"jwt_secret"`
 	SessionSecret   string        `json:"session_secret"`
 	NDuzSint        int           `json:"nDuzSint"`
+	Konta           KontaConfig   `json:"konta"`
 
 	// JWT Token Configuration (Option B - JWT-only authentication)
 	AccessTokenTTL       int  `json:"access_token_ttl"`       // In minutes, default 15
@@ -33,7 +34,10 @@ type Config struct {
 	CSRFTokenTTL         int  `json:"csrf_token_ttl"`         // In minutes, default 1440
 	EnableTokenBlacklist bool `json:"enable_token_blacklist"` // Enable token revocation, default true
 }
-
+type KontaConfig struct {
+	KontoKupca      string `json:"konto_kupca"`
+	KontoDobavljaca string `json:"konto_dobavljaca"`
+}
 type DB_Connection struct {
 	DBHost       string `json:"db_host"`
 	DBPort       int    `json:"db_port"`

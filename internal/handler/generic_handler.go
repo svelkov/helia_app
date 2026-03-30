@@ -21,15 +21,17 @@ type GenericHandler[T any] struct {
 	fields  []domain.Fields
 	config  domain.HandlerConfig
 	cfg     config.Config
+	lm      *middleware.LockMiddleware
 }
 
 // NewGenericHandler creates a new generic handler
-func NewGenericHandler[T any](svc service.Service[T], fields []domain.Fields, config domain.HandlerConfig, cfg config.Config) *GenericHandler[T] {
+func NewGenericHandler[T any](svc service.Service[T], fields []domain.Fields, config domain.HandlerConfig, cfg config.Config, lm *middleware.LockMiddleware) *GenericHandler[T] {
 	return &GenericHandler[T]{
 		service: svc,
 		fields:  fields,
 		config:  config,
 		cfg:     cfg,
+		lm:      lm,
 	}
 }
 
@@ -76,7 +78,7 @@ func (h *GenericHandler[T]) GetAllPrint(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, "User session not found")
 		return
 	}
-	tbl := utils.GetAllEntityHelper(
+	tbl := utils.GetAllPrintEntityHelper(
 		c, h.service, h.fields,
 		h.config.ContentTitle, h.config.TableID,
 		h.config.APIPrefix, h.config.APIPrefix+"/all",

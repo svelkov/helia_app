@@ -85,6 +85,7 @@ type Button struct {
 	Icon             string
 	IsVisible        bool
 	BtnClass         string
+	HxHeaders        string // JSON string for custom headers, e.g. `{"X-Custom-Header": "value"}`
 }
 type Fields struct {
 	Name            string
@@ -120,7 +121,7 @@ type Response struct {
 // For refresh tokens: Contains username only with type="refresh" claim
 type UserClaims struct {
 	Username    string `json:"username"`
-	UserID      int    `json:"user_id"`
+	UserID      int    `json:"userid"`
 	Email       string `json:"email"`
 	Firma       string `json:"firma"`        // Company identifier
 	SelectedGod int    `json:"selected_god"` // Fiscal year
@@ -198,6 +199,7 @@ type InputFieldConfig struct {
 	OnInput          string
 	OnFocus          string
 	DecimalPlaces    int
+	DataDestField    string // Optional: ID of the field where the value should be stored, used for search popups
 }
 
 type ComboFieldConfig struct {
@@ -230,6 +232,8 @@ type ComboFieldConfig struct {
 	MinLength        string
 	MaxLength        string
 	TabIndex         string
+	OnInput          string
+	OnFocus          string
 }
 type CheckboxFieldConfig struct {
 	ID                string
@@ -279,14 +283,19 @@ type SearchButtonConfig struct {
 }
 
 type ReportParameters struct {
-	ReportName  string
-	CompanyName string
-	CompanyLogo string
-	UserName    string
-	Parameters  map[string]interface{}
+	ReportName     string
+	CompanyName    string
+	CompanyLogo    string
+	UserName       string
+	ParameterItems []ParameterItem
 }
 
 type Komintent struct {
 	Kar   int
 	Naziv string
+}
+
+type ParameterItem struct {
+	Name  string
+	Value string
 }

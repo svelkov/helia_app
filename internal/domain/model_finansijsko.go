@@ -7,7 +7,7 @@ import (
 
 // FKPL represents the "baza.fkpl" table.
 type Fkpl struct {
-	IDFkpl      int            `db:"idfkpl"`
+	IDFkpl      int64          `db:"idfkpl"`
 	God         int            `db:"god"`
 	Kar         int            `db:"kar"`
 	Vkonta      int16          `db:"vkonta"`
@@ -28,6 +28,17 @@ type Fkpl struct {
 	Stariidspc  *int           `db:"stariidspc"`
 	NazivEng    string         `db:"naziv_eng"`
 	Kursirati   bool           `db:"kursirati"`
+}
+
+// Tipanalitike represents the "baza.tipanalitike" table.
+type Tipanalitike struct {
+	TipanalitikeID int            `db:"tipanalitikeid"`
+	Sifraanalitike int            `db:"sifraanalitike" form:"sifraanalitike"`
+	Naziv          string         `db:"naziv" form:"naziv"`
+	Xdatunosa      sql.NullTime   `db:"xdatunosa" format:"datetime"`
+	Xopunos        sql.NullString `db:"xopunos"`
+	Xdatizmene     sql.NullTime   `db:"xdatizmene" format:"datetime"`
+	Xopizmene      sql.NullString `db:"xopizmene"`
 }
 
 // FNAL represents the "baza.fnal" table.
@@ -52,6 +63,7 @@ type Fnal struct {
 	Xopunos    sql.NullString `db:"xopunos"`
 	Xopizmene  sql.NullString `db:"xopizmene"`
 	IDTipdok   int64          `db:"idtipdok"`
+	Brna       int            `db:"brna" addupdate:"false"`
 }
 
 // Sf represents the 'sf' table in the 'baza' schema.
@@ -150,7 +162,8 @@ type FproDto struct {
 
 type KopirajNalog struct {
 	IDFnal       int64  `db:"idfnal"`
-	TipdokOld    string `db:"tipdok"`
+	TipdokOld    string `db:"tipdokold"`
+	Tipdok_Old   string
 	NalogOld     string `db:"nalogold"`
 	DanalOld     string `db:"danalold"`
 	DatKnjOld    string `db:"datknjold"`
@@ -313,7 +326,9 @@ type SaldaResponse struct {
 }
 
 type FnalPayload struct {
-	// IDFnal    int64  `schema:"idfnal"`
+	IDFnal    string `form:"idfnal"`
+	OldNalog  string `form:"nalog_old"`
+	OldTipdok string `form:"tipdok_old"`
 	Nalog     string `form:"nalog"`
 	Danal     string `form:"danal"`
 	Datob     string `form:"datob"`
@@ -324,68 +339,97 @@ type FnalPayload struct {
 	Saldo     string `form:"saldo"`
 }
 type FproPayload struct {
-	IDFnal         int64       `schema:"idfnal"`
-	Tipdok         string      `form:"tipdok"`
-	Nalog          string      `form:"nalog"`
-	Danal          string      `form:"danal"`
-	Datob          string      `form:"datob"`
-	Opis           string      `form:"opis"`
-	Brst           string      `form:"brst"`
-	Konto          string      `form:"konto"`
-	Sifra          string      `form:"sifra"`
-	Vrd            string      `form:"vrd"`
-	Opisknj        string      `form:"opisknj"`
-	Mag            string      `form:"mag"`
-	Mi             string      `form:"mi"`
-	Komercijalista string      `form:"komercijalista"`
-	Iznos          string      `form:"iznos"`
-	Kat            string      `form:"kat"`
-	Orgjed         []ComboItem `form:"orgjed"`
-	Mtroska        []ComboItem `form:"mtroska"`
-	Dokum          string      `form:"dokum"`
-	Dadok          string      `form:"dadok"`
-	GodDok         string      `form:"god_dok"`
-	Rok            string      `form:"rok"`
-	Tra            string      `form:"tra"`
-	Dokvezni       string      `form:"dokvezni"`
-	Dadokv         string      `form:"dadokv"`
-	Godvezni       string      `form:"godvezni"`
-	Travez         string      `form:"travez"`
-	Napomena       string      `form:"napomena"`
-	Vkonta         string      `form:"vkonta"`
-	Sifval         string      `form:"sifval"`
-	Kurs           string      `form:"kurs"`
-	Deviznos       string      `form:"deviznos"`
-	Duguje         string
-	Potrazuje      string
-	Saldo          string
+	IDFnal            int64  `schema:"idfnal"`
+	Tipdok            string `form:"tipdok"`
+	Nalog             string `form:"nalog"`
+	Danal             string `form:"danal"`
+	Datob             string `form:"datob"`
+	Opis              string `form:"opis"`
+	Brst              string `form:"brst"`
+	Konto             string `form:"konto"`
+	Sifra             string `form:"sifra"`
+	Vrd               string `form:"vrd"`
+	Opisknj           string `form:"opisknj"`
+	Iznos             string `form:"iznos"`
+	Kat               string `form:"kat"`
+	Dokum             string `form:"dokum"`
+	Dadok             string `form:"dadok"`
+	GodDok            string `form:"goddok"`
+	Rok               string `form:"rok"`
+	Tra               string `form:"tra"`
+	Dokvezni          string `form:"dokvezni"`
+	Dadokv            string `form:"dadokv"`
+	Godvezni          string `form:"godvezni"`
+	Travez            string `form:"travez"`
+	Napomena          string `form:"napomena"`
+	Vkonta            string `form:"vkonta"`
+	Kurs              string `form:"kurs"`
+	Deviznos          string `form:"deviznos"`
+	Duguje            string `form:"duguje"`
+	Potrazuje         string `form:"potrazuje"`
+	IDorgjed          string `form:"idorgjed"`
+	Mestotrid         string `form:"mestotrid"`
+	Magaciniid        string `form:"magaciniid"`
+	Komid             string `form:"komid"`
+	Fispid            string `form:"fispid"`
+	IDValute          string `form:"idvalute"`
+	IDFkpl            int64
+	Rbr               int64
+	Saldo             string
+	StavkeDuguje      string
+	StavkePotrazuje   string
+	CbxOrgjed         []ComboItem
+	CbxMtroska        []ComboItem
+	CbxValute         []ComboItem
+	CbxMagacin        []ComboItem
+	CbxKomercijalista []ComboItem
+	CbxMi             []ComboItem
 }
 
 type KompenzacijeDto struct {
-	God                   int       `db:"god" json:"god"`
-	Kar                   int       `db:"kar" json:"kar"`
-	KompBr                int64     `db:"kompbr" json:"kompbr"`
-	Dokum                 string    `db:"dokum" json:"dokum"`
-	Dadok                 time.Time `db:"dadok" json:"dadok" format:"date"`
-	DatKomp               time.Time `db:"datkomp" json:"datkomp" format:"date"`
-	Iznos                 float64   `db:"iznos" json:"iznos"`
-	Status                string    `db:"status" json:"status"`
-	Partner               string    `db:"partner" json:"partner"`
-	KontoDuznika          string    `db:"konto_duznika" json:"konto_duznika"`
-	SifraDuznika          string    `db:"sifra_duznika" json:"sifra_duznika"`
-	KontoPoverioca        string    `db:"konto_poverioca" json:"konto_poverioca"`
-	SifraPoverioca        string    `db:"sifra_poverioca" json:"sifra_poverioca"`
-	Naziv                 string    `db:"naziv" json:"naziv"`
-	IznosDokumDuznika     float64   `db:"iznos_dokum_duznika" json:"iznos_dokum_duznika"`
-	IznosDokumPoverioca   float64   `db:"iznos_dokum_poverioca" json:"iznos_dokum_poverioca"`
-	KompenzacijeDuznik    float64   `db:"kompenzacije_duznik" json:"kompenzacije_duznik"`
-	KompenzacijePoverilac float64   `db:"kompenzacije_poverilac" json:"kompenzacije_poverilac"`
-	Mesto                 string    `db:"mesto" json:"mesto"`
-	Adresa                string    `db:"adresa" json:"adresa"`
-	Stsdok                int       `db:"stsdok" json:"stsdok"`
-	Odglicep              string    `db:"odglicep" json:"odglicep"`
-	Odgliced              string    `db:"odgliced" json:"odgliced"`
-	Kompenzhid            int64     `db:"kompenzhid" json:"kompenzacijhid"`
+	God                   int          `db:"god" json:"god"`
+	Kar                   int          `db:"kar" json:"kar"`
+	KompBr                int64        `db:"kompbr" json:"kompbr"`
+	Dokum                 string       `db:"dokum" json:"dokum"`
+	Dadok                 sql.NullTime `db:"dadok" json:"dadok" format:"date"`
+	DatKomp               sql.NullTime `db:"datkomp" json:"datkomp" format:"date"`
+	Iznos                 float64      `db:"iznos" json:"iznos"`
+	Status                string       `db:"status" json:"status"`
+	Partner               string       `db:"partner" json:"partner"`
+	KontoDuznika          string       `db:"konto_duznika" json:"konto_duznika"`
+	SifraDuznika          string       `db:"sifra_duznika" json:"sifra_duznika"`
+	KontoPoverioca        string       `db:"konto_poverioca" json:"konto_poverioca"`
+	SifraPoverioca        string       `db:"sifra_poverioca" json:"sifra_poverioca"`
+	Naziv                 string       `db:"naziv" json:"naziv"`
+	IznosDokumDuznika     float64      `db:"iznos_dokum_duznika" json:"iznos_dokum_duznika"`
+	IznosDokumPoverioca   float64      `db:"iznos_dokum_poverioca" json:"iznos_dokum_poverioca"`
+	KompenzacijeDuznik    float64      `db:"kompenzacije_duznik" json:"kompenzacije_duznik"`
+	KompenzacijePoverilac float64      `db:"kompenzacije_poverilac" json:"kompenzacije_poverilac"`
+	Mesto                 string       `db:"mesto" json:"mesto"`
+	Adresa                string       `db:"adresa" json:"adresa"`
+	Stsdok                int          `db:"stsdok" json:"stsdok"`
+	Odglicep              string       `db:"odglicep" json:"odglicep"`
+	Odgliced              string       `db:"odgliced" json:"odgliced"`
+	Kompenzhid            int64        `db:"kompenzhid" json:"kompenzacijhid"`
+	IDPartneri            int64        `db:"idpartneri" json:"idpartneri"`
+	Nalog                 int64        `db:"nalog" json:"nalog"`
+	Faktura               float64      `db:"faktura" json:"faktura"`
+	Uplata                float64      `db:"uplata" json:"uplata"`
+	Saldo                 float64      `db:"saldo" json:"saldo"`
+	Vrd                   string       `db:"vrd" json:"vrd"`
+	Tra                   string       `db:"tra" json:"tra"`
+	Danal                 time.Time    `db:"danal" json:"danal"`
+	Rok                   string       `db:"rok" json:"rok"`
+	Dospece               string       `db:"dospece" json:"dospece"`
+	Opis                  string       `db:"opis" json:"opis"`
+	IdOrgjed              int64        `db:"idorgjed" json:"idorgjed"`
+	Oj                    string       `db:"oj" json:"oj"`
+	// Additional fields from JavaScript
+	StanjeNaDan       string                   `json:"stanje_na_dan"`      // Date from form
+	DatumKompenzacije string                   `json:"datum_kompenzacije"` // Date from form
+	CheckDospele      bool                     `json:"check_dospele"`      // Checkbox flag
+	DuznikRows        []map[string]interface{} `json:"duznik_rows"`        // Table data
+	PoverilacRows     []map[string]interface{} `json:"poverilac_rows"`     // Table data
 }
 
 // DnevnikDto represents dnevnik knjizenja record with calculated fields
@@ -473,16 +517,16 @@ type Fizvdet struct {
 
 // Kir represents the "baza.kir" table (issued invoices register).
 type Kir struct {
-	IDKir      int            `db:"idkir" gorm:"primaryKey"`
+	IDKir      int            `db:"idkir"`
 	God        int            `db:"god"`
 	Kar        int            `db:"kar"`
 	Vktip      string         `db:"vktip"`
 	Vkrbr      int            `db:"vkrbr" form:"vkrbr"`
 	Krbr       int64          `db:"krbr" form:"krbr"`
 	IDPartneri int            `db:"idpartneri"`
-	Dknjiz     time.Time      `db:"dknjiz" format:"date" form:"datknjiz"`
-	Danal      time.Time      `db:"danal" format:"date" form:"danal"`
-	Dizd       time.Time      `db:"dizd" format:"date" form:"datizd"`
+	Dknjiz     sql.NullTime   `db:"dknjiz" format:"date" form:"datknjiz"`
+	Danal      sql.NullTime   `db:"danal" format:"date" form:"danal"`
+	Dizd       sql.NullTime   `db:"dizd" format:"date" form:"datizd"`
 	Kracun     string         `db:"kracun" form:"kracun"`
 	IznsaPDV   float64        `db:"iznsapdv" form:"iznosapdv"`
 	OslobCL24  float64        `db:"oslobcl24" form:"oslobcl24"`
@@ -510,8 +554,8 @@ type Kir struct {
 	Xdatizmene sql.NullTime   `db:"xdatizmene"`
 	Xopunos    sql.NullString `db:"xopunos"`
 	Xopizmene  sql.NullString `db:"xopizmene"`
-	IDFVknjrac *int           `db:"idfvknjrac"`
-	IDFpro     *int64         `db:"idfpro"`
+	IDFVknjrac sql.NullInt64  `db:"idfvknjrac"`
+	IDFpro     sql.NullInt64  `db:"idfpro"`
 	Numdok     int            `db:"numdok"`
 	Datprometa sql.NullTime   `db:"datprometa" format:"date"`
 }
@@ -532,55 +576,69 @@ type KprPayload struct {
 
 // Kpr represents the "baza.kpr" table (tax invoices register - received invoices).
 type Kpr struct {
-	IDKpr        int            `db:"idkpr" gorm:"primaryKey"`
-	God          int            `db:"god"`
-	Kar          int            `db:"kar"`
-	VKTip        string         `db:"vktip"`
-	VKRbr        int            `db:"vkrbr"`
-	DRbr         int            `db:"drbr"`
-	DKnjiz       sql.NullTime   `db:"dknjiz" format:"date"`
-	DUvoz        sql.NullTime   `db:"duvoz" format:"date"`
-	DIzd         sql.NullTime   `db:"dizd" format:"date"`
-	IznsAPDV     float64        `db:"iznsapdv"`
-	IznosLob     float64        `db:"iznoslob"`
-	NisuObvPDV   float64        `db:"nisuobvpdv"`
-	UvozBezPDV   float64        `db:"uvozbezpdv"`
-	PrethodPDV   float64        `db:"prethpdv"`
-	PretPDV1     float64        `db:"pretpdv1"`
-	PretPDV2     float64        `db:"pretpdv2"`
-	UvozPDV      float64        `db:"uvozpdv"`
-	PoljVred     float64        `db:"poljvred"`
-	PoljPDV      float64        `db:"poljpdv"`
-	Vrd          int            `db:"vrd"`
-	Konto        string         `db:"konto"`
-	Sifra        string         `db:"sifra"`
-	Ter          int            `db:"ter"`
-	UvozOsnPDV   float64        `db:"uvozosnpdv"`
-	Vpr          int            `db:"vpr"`
-	OsnBezPDV    float64        `db:"osnbezpdv"`
-	Brst         int            `db:"brst"`
-	RKar         int            `db:"rkar"`
-	Nalog        int64          `db:"nalog"`
-	Dokum        string         `db:"dokum"`
-	PIB          string         `db:"pib"`
-	Naziv        string         `db:"naziv"`
-	IDPartneri   int            `db:"idpartneri"`
-	DAnal        sql.NullTime   `db:"danal" format:"date"`
-	TipDok       string         `db:"tipdok"`
-	XDatUnosa    sql.NullTime   `db:"xdatunosa" format:"datetime"`
-	XDatIzmene   sql.NullTime   `db:"xdatizmene" format:"datetime"`
-	XOpUnos      sql.NullString `db:"xopunos"`
-	XOpIzmene    sql.NullString `db:"xopizmene"`
-	IDFPro       int64          `db:"idfpro"`
-	IDFVknJrac   *int           `db:"idfvknjrac"`
-	OsnBezPod    float64        `db:"osnbezpod"`
-	DatPrometa   sql.NullTime   `db:"datprometa" format:"date"`
-	OsnovicaVT   float64        `db:"osnovicavt"`
-	OsnovicaNT   float64        `db:"osnovicant"`
-	PrethodPDVVT float64        `db:"prethpdvvt"`
-	PrethodPDVNT float64        `db:"prethpdvnt"`
-	TKonto       string         `db:"tkonto"`
-	TSifra       string         `db:"tsifra"`
+	IDKpr              int            `db:"idkpr"`
+	God                int            `db:"god"`
+	Kar                int            `db:"kar"`
+	VKTip              string         `db:"vktip"`
+	VKRbr              int            `db:"vkrbr"`
+	DRbr               int            `db:"drbr"`
+	DKnjiz             sql.NullTime   `db:"dknjiz" format:"date"`
+	DUvoz              sql.NullTime   `db:"duvoz" format:"date"`
+	DIzd               sql.NullTime   `db:"dizd" format:"date"`
+	IznsAPDV           float64        `db:"iznsapdv"`
+	IznosLob           float64        `db:"iznoslob"`
+	NisuObvPDV         float64        `db:"nisuobvpdv"`
+	UvozBezPDV         float64        `db:"uvozbezpdv"`
+	PrethodPDV         float64        `db:"prethpdv"`
+	PretPDV1           float64        `db:"pretpdv1"`
+	PretPDV2           float64        `db:"pretpdv2"`
+	UvozPDV            float64        `db:"uvozpdv"`
+	PoljVred           float64        `db:"poljvred"`
+	PoljPDV            float64        `db:"poljpdv"`
+	Vrd                int            `db:"vrd"`
+	Konto              string         `db:"konto"`
+	Sifra              string         `db:"sifra"`
+	Ter                int            `db:"ter"`
+	UvozOsnPDV         float64        `db:"uvozosnpdv"`
+	Vpr                int            `db:"vpr"`
+	OsnBezPDV          float64        `db:"osnbezpdv"`
+	Brst               int            `db:"brst"`
+	RKar               int            `db:"rkar"`
+	Nalog              int64          `db:"nalog"`
+	Dokum              string         `db:"dokum"`
+	PIB                string         `db:"pib"`
+	Naziv              string         `db:"naziv"`
+	IDPartneri         int            `db:"idpartneri"`
+	DAnal              sql.NullTime   `db:"danal" format:"date"`
+	TipDok             string         `db:"tipdok"`
+	XDatUnosa          sql.NullTime   `db:"xdatunosa" format:"datetime"`
+	XDatIzmene         sql.NullTime   `db:"xdatizmene" format:"datetime"`
+	XOpUnos            sql.NullString `db:"xopunos"`
+	XOpIzmene          sql.NullString `db:"xopizmene"`
+	IDFPro             int64          `db:"idfpro"`
+	IDFVknJrac         *int           `db:"idfvknjrac"`
+	OsnBezPod          float64        `db:"osnbezpod"`
+	DatPrometa         sql.NullTime   `db:"datprometa" format:"date"`
+	OsnovicaVT         float64        `db:"osnovicavt"`
+	OsnovicaNT         float64        `db:"osnovicant"`
+	PrethodPDVVT       float64        `db:"prethpdvvt"`
+	PrethodPDVNT       float64        `db:"prethpdvnt"`
+	TKonto             string         `db:"tkonto"`
+	TSifra             string         `db:"tsifra"`
+	PretPDV1VT         float64        `db:"pretpdv1vt"`
+	PretPDV1NT         float64        `db:"pretpdv1nt"`
+	PretPDV2VT         float64        `db:"pretpdv2vt"`
+	PretPDV2NT         float64        `db:"pretpdv2nt"`
+	IRN                bool           `db:"irn"`
+	BrojIRN            int64          `db:"brojirn"`
+	Demo               bool           `db:"demo"`
+	IndividualVatID    string         `db:"individualvatid"`
+	VatRecordingStatus string         `db:"vatrecordingstatus"`
+	DatumStatIndVat    sql.NullTime   `db:"datum_stat_indvat" format:"datetime"`
+	Obj                bool           `db:"obj"`
+	BezNak             bool           `db:"beznak"`
+	EppPolje           string         `db:"epp_polje"`
+	FseppID            int            `db:"fseppid"`
 }
 
 // PoreskaPrijavaData holds all tax form field values (EDT_001 through EDT_110)
@@ -753,4 +811,26 @@ type BilansiTotals struct {
 	PrethGodH  string
 	PocStanje  string
 	PocStanjeH string
+}
+
+type OtvStavkeParam struct {
+	Konto           string
+	OdKonta         string
+	DoKonta         string
+	OdSifre         string
+	DoSifre         string
+	PodDatumom      string
+	BrojDana        string
+	OtvStavkeDana   string
+	TipPregleda     string
+	TipPotrazivanja string
+	SearchText      string
+	OdDatuma        string
+	DoDatuma        string
+	StanjeNaDan     string
+	Dospece15       string
+	Dospece30       string
+	Dospece60       string
+	Dospece90       string
+	Dospece120      string
 }

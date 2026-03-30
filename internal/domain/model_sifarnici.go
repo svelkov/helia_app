@@ -6,10 +6,11 @@ import (
 )
 
 type Fvr struct {
-	God    int    `json:"god" db:"god"`
-	Kar    int    `json:"kar" db:"kar"`
-	Naziv  string `json:"naziv" db:"naziv"`
-	Adresa string `json:"adresa" db:"adresa"`
+	God     int    `json:"god" db:"god"`
+	Kar     int    `json:"kar" db:"kar"`
+	Naziv   string `json:"naziv" db:"naziv"`
+	Adresa  string `json:"adresa" db:"adresa"`
+	GodZatv bool   `json:"god_zatv" db:"godzatv"`
 }
 
 type Firma struct {
@@ -77,47 +78,63 @@ type Partneri struct {
 	IDPartneri  int            `json:"id_partneri" db:"idpartneri"`
 	God         int            `json:"god" db:"god"`
 	Kar         int            `json:"kar" db:"kar"`
-	Naziv       string         `json:"naziv" db:"naziv"`
-	Mesto       string         `json:"mesto" db:"mesto"`
-	PoBro       int            `json:"pobro" db:"pobro"`
-	Adresa      string         `json:"adresa" db:"adresa"`
+	Naziv       string         `json:"naziv" db:"naziv" form:"naziv"`
+	Mesto       string         `json:"mesto" db:"mesto" form:"mesto"`
+	PoBro       int            `json:"pobro" db:"pobro" form:"pobro"`
+	Adresa      string         `json:"adresa" db:"adresa" form:"adresa"`
 	Ziro        string         `json:"ziro" db:"ziro"`
-	TipPDV      int            `json:"tip_pdv" db:"tippdv"`
+	TipPDV      int            `json:"tip_pdv" db:"tippdv" form:"tippdv"`
 	Mar         float32        `json:"mar" db:"mar"`
-	Ter         int            `json:"ter" db:"ter"`
-	PIB         string         `json:"pib" db:"pib"`
-	Email       string         `json:"email" db:"email"`
-	Website     string         `json:"website" db:"website"`
-	Telefon     string         `json:"telefon" db:"telefon"`
-	StariIDPart int64          `json:"stari_id_part" db:"stariidpart"`
-	KontaktOsb  string         `json:"kontakt_osb" db:"kontaktosb"`
-	Konta       string         `json:"konta" db:"konta"`
-	MatBr       string         `json:"matbr" db:"matbr"`
-	PartnFlg    int            `json:"partn_flg" db:"partnflg"`
-	ProVal      int            `json:"pro_val" db:"proval"`
-	ProKam      float64        `json:"pro_kam" db:"prokam"`
-	NabVal      int            `json:"nab_val" db:"nabval"`
-	XDatUnosa   sql.NullTime   `json:"xdat_unosa" db:"xdatunosa"`
-	XDatIzmene  sql.NullTime   `json:"xdat_izmene" db:"xdatizmene"`
-	XOpuNos     string         `json:"xop_unos" db:"xopunos"`
+	Ter         int            `json:"ter" db:"ter" form:"ter"`
+	PIB         string         `json:"pib" db:"pib" form:"pib"`
+	Email       string         `json:"email" db:"email" form:"email"`
+	Website     string         `json:"website" db:"website" form:"website"`
+	Telefon     string         `json:"telefon" db:"telefon" form:"telefon"`
+	StariIDPart int64          `json:"stari_id_part" db:"stariidpart" form:"stariidpart"`
+	KontaktOsb  string         `json:"kontakt_osb" db:"kontaktosb" form:"kontaktosb"`
+	Konta       string         `json:"konta" db:"konta" form:"konta"`
+	MatBr       string         `json:"matbr" db:"matbr" form:"matbr"`
+	PartnFlg    int            `json:"partn_flg" db:"partnflg" form:"partnflg"`
+	ProVal      int            `json:"pro_val" db:"proval" form:"proval"`
+	ProKam      float64        `json:"pro_kam" db:"prokam" form:"prokam"`
+	NabVal      int            `json:"nab_val" db:"nabval" form:"nabval"`
+	XDatUnosa   sql.NullTime   `json:"xdat_unosa" db:"xdatunosa" `
+	XDatIzmene  sql.NullTime   `json:"xdat_izmene" db:"xdatizmene" `
+	XOpuNos     string         `json:"xop_unos" db:"xopunos" `
 	XOpIzmene   sql.NullString `json:"xop_izmene" db:"xopizmene"`
 	IDSifOp     int            `json:"id_sifop" db:"idsifop"`
-	KrLimit     float64        `json:"kr_limit" db:"krlimit"`
-	KrLimitDosp float64        `json:"kr_limit_dosp" db:"krlimitdosp"`
-	Sifra       string         `json:"sifra" db:"sifra"`
-	JMBG        string         `json:"jmbg" db:"jmbg"`
-	JIB         string         `json:"jib" db:"jib"`
-	UGRabat     float32        `json:"ug_rabat" db:"ugrabat"`
-	Naziv1      string         `json:"naziv1" db:"naziv1"`
-	BPG         string         `json:"bpg" db:"bpg"`
-	Index       string         `json:"index" db:"index"`
-	Kom         int            `json:"kom" db:"kom"`
+	KrLimit     float64        `json:"kr_limit" db:"krlimit" form:"krlimit"`
+	KrLimitDosp float64        `json:"kr_limit_dosp" db:"krlimitdosp" form:"krlimitdosp"`
+	Sifra       string         `json:"sifra" db:"sifra" form:"sifra"`
+	JMBG        string         `json:"jmbg" db:"jmbg" form:"jmbg"`
+	JIB         string         `json:"jib" db:"jib" form:"jib"`
+	UGRabat     float32        `json:"ug_rabat" db:"ugrabat" form:"ugrabat"`
+	Naziv1      string         `json:"naziv1" db:"naziv1" form:"naziv1"`
+	BPG         string         `json:"bpg" db:"bpg" form:"bpg"`
+	Index       string         `json:"index" db:"index" form:"index"`
+	Kom         int            `json:"kom" db:"kom" form:"kom"`
 	KomID       int            `json:"kom_id" db:"komid"`
-	Napomena    string         `json:"napomena" db:"napomena"`
-	Pak         int64          `json:"pak" db:"pak"`
-	Budzetski   bool           `json:"budzetski" db:"budzetski"`
-	JBKJS       string         `json:"jbkjs" db:"jbkjs"`
-	GLN         int64          `json:"gln" db:"gln"`
+	Napomena    string         `json:"napomena" db:"napomena" form:"napomena"`
+	Pak         int64          `json:"pak" db:"pak" form:"pak"`
+	Budzetski   bool           `json:"budzetski" db:"budzetski" form:"budzetski"`
+	JBKJS       string         `json:"jbkjs" db:"jbkjs" form:"jbkjs"`
+	GLN         int64          `json:"gln" db:"gln" form:"gln"`
+}
+
+// TekRacuni Model - Current accounts for partners
+type TekRacuni struct {
+	IDPartneri  int            `json:"id_partneri" db:"idpartneri" addupdate:"true"`
+	TekRacuniID int            `json:"tek_racuni_id" db:"tekracuniid" addupdate:"true"`
+	God         int            `json:"god" db:"god" addupdate:"true"`
+	Kar         int            `json:"kar" db:"kar" addupdate:"true"`
+	BnkCod      string         `json:"bnk_cod" db:"bnkcod" addupdate:"true"`
+	TekRac      string         `json:"tek_rac" db:"tekrac" addupdate:"true"`
+	XOpuNos     string         `json:"xop_unos" db:"xopunos" addupdate:"true"`
+	XDatUnosa   sql.NullTime   `json:"xdat_unosa" db:"xdatunosa" addupdate:"true"`
+	XOpIzmene   sql.NullString `json:"xop_izmene" db:"xopizmene" addupdate:"true"`
+	XDatIzmene  sql.NullTime   `json:"xdat_izmene" db:"xdatizmene" addupdate:"true"`
+	IDBanke     int            `json:"id_banke" db:"idbanke" addupdate:"true"`
+	BankeDes    sql.NullString `json:"banka" db:"banka" addupdate:"false"`
 }
 
 // Tipdok Model
@@ -125,15 +142,15 @@ type Tipdok struct {
 	IDTipDok   int            `json:"id_tip_dok" db:"idtipdok"`
 	God        int            `json:"god" db:"god"`
 	Kar        int            `json:"kar" db:"kar"`
-	TipDok     string         `form:"tipdok" json:"tip_dok" db:"tipdok" form:"tipdok"`
-	Opis       string         `form:"opis" json:"opis" db:"opis" form:"opis"`
+	TipDok     string         `json:"tip_dok" db:"tipdok" form:"tipdok"`
+	Opis       string         `json:"opis" db:"opis" form:"opis"`
 	XDatUnosa  sql.NullTime   `json:"xdat_unosa" db:"xdatunosa"`
 	XDatIzmene sql.NullTime   `json:"xdat_izmene" db:"xdatizmene"`
 	XOpuNos    string         `json:"xop_unos" db:"xopunos"`
 	XOpIzmene  sql.NullString `json:"xop_izmene" db:"xopizmene"`
-	GrpDok     string         `form:"grpdok" json:"grp_dok" db:"grpdok" form:"grpdok"`
-	GrpVrd     string         `form:"grpvrd" json:"grp_vrd" db:"grpvrd" form:"grpvrd"`
-	Magacin    string         `form:"magacin" json:"magacin" db:"magacin"`
+	GrpDok     string         `json:"grp_dok" db:"grpdok" form:"grpdok"`
+	GrpVrd     string         `json:"grp_vrd" db:"grpvrd" form:"grpvrd"`
+	Magacin    string         `json:"magacin" db:"magacin" form:"magacin"`
 }
 
 // Dokvrsta Model
@@ -281,6 +298,44 @@ type Fvknjrac struct {
 	XOpUnos    string         `json:"xop_unos" db:"xopunos"`
 	XOpIzmene  sql.NullString `json:"xop_izmene" db:"xopizmene"`
 }
+
+// VALUTE Model
+type Valute struct {
+	IDValute   int            `json:"idvalute" db:"idvalute"`
+	Sifval     int            `json:"sifval" db:"sifval"`
+	Oznval     sql.NullString `json:"oznval" db:"oznval"`
+	Naziv      sql.NullString `json:"naziv" db:"naziv"`
+	Drzava     sql.NullString `json:"drzava" db:"drzava"`
+	Vaziza     int            `json:"vaziza" db:"vaziza"`
+	XDatUnosa  sql.NullTime   `json:"xdat_unosa" db:"xdatunosa"`
+	XDatIzmene sql.NullTime   `json:"xdat_izmene" db:"xdatizmene"`
+	XOpUnos    sql.NullString `json:"xop_unos" db:"xopunos"`
+	XOpIzmene  sql.NullString `json:"xop_izmene" db:"xopizmene"`
+}
+
+// KOMERCIJALISTI Model
+type Komercijalisti struct {
+	God          int          `json:"god" db:"god"`
+	Kar          int          `json:"kar" db:"kar"`
+	KomID        int          `json:"komid" db:"komid"`
+	Sifkom       int          `json:"sifkom" db:"sifkom"`
+	Sifnadred    int          `json:"sifnadred" db:"sifnadred"`
+	Imeprezime   string       `json:"imeprezime" db:"imeprezime"`
+	Adresa       string       `json:"adresa" db:"adresa"`
+	Mesto        string       `json:"mesto" db:"mesto"`
+	Telposao     string       `json:"telposao" db:"telposao"`
+	Telmob       string       `json:"telmob" db:"telmob"`
+	Totprod      float64      `json:"totprod" db:"totprod"`
+	Totprofit    float64      `json:"totprofit" db:"totprofit"`
+	Zaddatprod   time.Time    `json:"zaddatprod" db:"zaddatprod"`
+	Totnaplaceno float64      `json:"totnaplaceno" db:"totnaplaceno"`
+	Loginname    string       `json:"loginname" db:"loginname"`
+	XDatUnosa    sql.NullTime `json:"xdat_unosa" db:"xdatunosa"`
+	XDatIzmene   sql.NullTime `json:"xdat_izmene" db:"xdatizmene"`
+	XOpUnos      string       `json:"xop_unos" db:"xopunos"`
+	XOpIzmene    string       `json:"xop_izmene" db:"xopizmene"`
+}
+
 type Bnkizv struct {
 	Bnkizvid    int            `json:"bnkizvid" db:"bnkizvid"`
 	God         int            `json:"god" db:"god"`
@@ -313,4 +368,21 @@ type Fvepdv struct {
 	Xdatizmene sql.NullTime   `json:"xdatizmene" db:"xdatizmene"`
 	Xopunos    string         `json:"xopunos" db:"xopunos"`
 	Xopizmene  sql.NullString `json:"xopizmene" db:"xopizmene"`
+}
+
+type CompanyInfo struct {
+	Naziv  string
+	Naziv1 string
+	Mesto  string
+	PBroj  string
+	Adresa string
+	MatBr  string
+}
+
+type CompanyAccount struct {
+	BankCode      string
+	AccountNumber string
+	ControlNumber string
+	BankName      string
+	FullAccount   string
 }

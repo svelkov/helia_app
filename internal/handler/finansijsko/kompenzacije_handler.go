@@ -33,6 +33,7 @@ type KompenzacijeHandler struct {
 	tabData domain.TabData
 	cfg     config.Config
 	service *finservice.KompenzacijeResource
+	lm      *middleware.LockMiddleware
 }
 
 const (
@@ -40,29 +41,33 @@ const (
             "query": document.getElementById("search-input")?.value
         }`
 	hxValsKompenzacijeFormiranje = `js:{
-            "konto_duznika": document.getElementById("konto-duznika")?.value,
-			"sifra_duznika": document.getElementById("sifra-duznika")?.value,
-			"konto_poverioca": document.getElementById("konto-poverioca")?.value,
-			"sifra_poverioca": document.getElementById("sifra-poverioca")?.value
+            "konto_duznika": document.getElementById("konto_duznika")?.value,
+			"sifra_duznika": document.getElementById("sifra_duznika")?.value,
+			"konto_poverioca": document.getElementById("konto_poverioca")?.value,
+			"sifra_poverioca": document.getElementById("sifra_poverioca")?.value,
+			"stanje_na_dan": document.getElementById("stanje_na_dan")?.value,
+			"datum_kompenzacije": document.getElementById("datum_kompenzacije")?.value,
+			"check_dospele": document.getElementById("check_dospele")?.checked
         }`
 	hxValsKompenzacijePregled = `js:{
             "query": document.getElementById("search-input")?.value,
 			"status_filter": document.querySelector('input[name="status-filter"]:checked')?.value
         }`
 	hxValsKompenzacijeKnjizenje = `js:{
-            "od_datuma_kompenz": document.getElementById("od-datuma-kompenz")?.value,
-			"do_datuma_kompenz": document.getElementById("do-datuma-kompenz")?.value,
-			"od_broja_komp": document.getElementById("od-broja-komp")?.value,
-			"do_broja_komp": document.getElementById("do-broja-komp")?.value,
-			"tipdok_knjizenje": document.getElementById("tipdok-knjizenje")?.value,
-			"opis_knjizenja": document.getElementById("opis-knjizenja")?.value
+            "od_datuma_kompenz": document.getElementById("od_datuma_kompenz")?.value,
+			"do_datuma_kompenz": document.getElementById("do_datuma_kompenz")?.value,
+			"od_broja_komp": document.getElementById("od_broja_komp")?.value,
+			"do_broja_komp": document.getElementById("do_broja_komp")?.value,
+			"tipdok_knjizenje": document.getElementById("tipdok_knjizenje")?.value,
+			"opis_knjizenja": document.getElementById("opis_knjizenja")?.value
         }`
 )
 
-func NewKompenzacijeHandler(service *finservice.KompenzacijeResource, cfg config.Config) *KompenzacijeHandler {
+func NewKompenzacijeHandler(service *finservice.KompenzacijeResource, cfg config.Config, lm *middleware.LockMiddleware) *KompenzacijeHandler {
 	handler := &KompenzacijeHandler{
 		cfg:     cfg,
 		service: service,
+		lm:      lm,
 	}
 	handler.tabData = GetKompenzacijeTabData()
 	return handler
@@ -115,19 +120,22 @@ func (h *KompenzacijeHandler) KompenzacijePregledPartnera(c *gin.Context) {
 
 	if requestSource == "btnobrada" || requestSource == "btnpage" || requestSource == "searchinput" {
 		page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
+		searchText := c.Query("query")
 
-		err := h.service.ObradaPredlogKompenzacije(c, &tbl, true, page, pageSize)
+		// Context already has userSession from EnrichContextWithSession middleware
+		// No need to extract and enrich manually!
+		err := h.service.ObradaPredlogKompenzacije(c.Request.Context(), &tbl, true, page, pageSize, searchText)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
 			return
 		}
 		tbl.Pagination.HxVals = hxValsKompenzacijePregledPartnera
-		err = h.service.ObradaPredlogKompenzacije(c, &tbl, false, page, pageSize)
+		err = h.service.ObradaPredlogKompenzacije(c.Request.Context(), &tbl, false, page, pageSize, searchText)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
 		}
-
+		tbl.HasTotals = true
 		utils.RenderContent(c, tbl)
 	}
 }
@@ -136,22 +144,32 @@ func (h *KompenzacijeHandler) KompenzacijePregledPartnera(c *gin.Context) {
 func (h *KompenzacijeHandler) KompenzacijeFormiranje(c *gin.Context) {
 	requestSource := c.Request.Header.Get("X-Request-Source")
 	translator := i18n.GetInstance()
-	csrfToken, _ := c.Cookie("csrf_token")
+	session := domain.GetSessionFromContext(c)
+	if session == nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, "User session not found")
+		return
+	}
+	csrfToken := common.GetCsrfTokenFromSession(c)
 
-	duznikData := common.SetTableBasicData("", "duznik-table", h.service.GetFormiranjeTableFields(), "", "", 0, 0, 0, 0, h.cfg)
-	common.SetTableConfig(&duznikData, "", "", false, false, false)
-	duznikData.ShowPagination = false
-
-	poverilacData := common.SetTableBasicData("", "poverilac-table", h.service.GetFormiranjeTableFields(), "", "", 0, 0, 0, 0, h.cfg)
-	common.SetTableConfig(&poverilacData, "", "", false, false, false)
-	poverilacData.ShowPagination = false
+	duznikData := common.SetTableBasicData("DUŽNIČKE OBAVEZE PREMA POVERIOCU", "duznik-table", h.service.GetFormiranjeTableFields(), kompenzacijeURLFormiranje, kompenzacijeURLFormiranje, 0, 0, 0, 0, h.cfg)
+	common.SetTableConfig(&duznikData, "DUŽNIČKE OBAVEZE PREMA POVERIOCU", "", true, false, false)
+	duznikData.Pagination.HxVals = hxValsKompenzacijeFormiranje
+	duznikData.URLGetAll = kompenzacijeURLFormiranje
+	duznikData.URLPrefix = kompenzacijeURLFormiranje
+	duznikData.ShowActions = true
+	poverilacData := common.SetTableBasicData("POVERILAČKE OBAVEZE PREMA DUŽNIKU", "poverilac-table", h.service.GetFormiranjeTableFields(), kompenzacijeURLFormiranje, kompenzacijeURLFormiranje, 0, 0, 0, 0, h.cfg)
+	common.SetTableConfig(&poverilacData, "POVERILAČKE OBAVEZE PREMA DUŽNIKU", "", true, false, false)
+	poverilacData.Pagination.HxVals = hxValsKompenzacijeFormiranje
+	poverilacData.URLGetAll = kompenzacijeURLFormiranje
+	poverilacData.URLPrefix = kompenzacijeURLFormiranje
+	poverilacData.ShowActions = true
 
 	if requestSource == "menu" || requestSource == "tab" {
-		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", kompenzacijeURLFormiranje, "#tab2", "innerHTML", "GET", "", hxValsKompenzacijeFormiranje, true, common.ClassSaveButton, "handleDialogResponse")
-		btnFormKomp := common.SetButton("form-komp-btn", "Formiraj kompenzaciju", "fin_save", kompenzacijeURLFormiranje+"/formiraj", "#tab2", "innerHTML", "POST", "", hxValsKompenzacijeFormiranje, true, common.ClassAddButton, "")
+		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", kompenzacijeURLFormiranje, "#kompenzacije-detalji", "innerHTML", "GET", "", hxValsKompenzacijeFormiranje, true, common.ClassSaveButton, "handleDialogResponse")
+		btnFormKomp := common.SetButton("form-komp-btn", "Formiraj kompenzaciju", "fin_save", kompenzacijeURLFormiranje+"/formiraj", "#kompenzacije-detalji", "innerHTML", "POST", "", hxValsKompenzacijeFormiranje, true, common.ClassAddButton, "")
 
 		setActiveKompenzacijeTab(&h.tabData, "formiranje")
-		err := tmpl_fin.KompenzacijeFormiranje(h.tabData, duznikData, poverilacData, btnObrada, btnFormKomp, translator, csrfToken).Render(c.Request.Context(), c.Writer)
+		err := tmpl_fin.KompenzacijeFormiranje(h.tabData, duznikData, poverilacData, btnObrada, btnFormKomp, translator, csrfToken, session.SelectedGod, h.cfg.Konta).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -161,16 +179,84 @@ func (h *KompenzacijeHandler) KompenzacijeFormiranje(c *gin.Context) {
 
 	if requestSource == "btnobrada" || requestSource == "btnpage" || requestSource == "searchinput" {
 		// TODO: Implement data fetching when service is ready
-		err := h.service.FormiranjeKompenzacije(c, &duznikData, &poverilacData, 1)
-		if err != nil {
-			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
+		//validacija input parametre:
+		fieldParameters := []string{"konto_duznika", "sifra_duznika", "konto_poverioca", "sifra_poverioca", "stanje_na_dan", "datum_kompenzacije"}
+		fieldsError := common.ValidateRequiredParams(c, fieldParameters)
+		if len(fieldsError) > 0 {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldsError, common.ErrMsgValidation)
 			return
 		}
 
-		err = tmpl_fin.KompenzacijeFormiranje(h.tabData, duznikData, poverilacData, domain.Button{}, domain.Button{}, translator, csrfToken).Render(c.Request.Context(), c.Writer)
-		if err != nil {
-			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
+		page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
+		konto := c.Query("konto_duznika")
+		sifra := c.Query("sifra_duznika")
+		stanjeNaDan := c.Query("stanje_na_dan")
+		checkDospece := c.Query("provera_dospeca") == "true"
+		ctx := c.Request.Context()
+
+		if c.GetHeader("Hx-Target") == "duznik-table" || requestSource == "btnobrada" {
+			err := h.service.FormiranjeKompenzacije(ctx, &duznikData, true, page, pageSize, konto, sifra, stanjeNaDan, checkDospece)
+			if err != nil {
+				common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
+				return
+			}
+			err = h.service.FormiranjeKompenzacije(ctx, &duznikData, false, page, pageSize, konto, sifra, stanjeNaDan, checkDospece)
+			if err != nil {
+				common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
+				return
+			}
 		}
+		if c.GetHeader("Hx-Target") == "poverilac-table" || requestSource == "btnobrada" {
+			// get data for table poverilac
+			kontoPoverilac := c.Query("konto_poverioca")
+			sifraPoverilac := c.Query("sifra_poverioca")
+			err := h.service.FormiranjeKompenzacije(ctx, &poverilacData, true, page, pageSize, kontoPoverilac, sifraPoverilac, stanjeNaDan, checkDospece)
+			if err != nil {
+				common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
+				return
+			}
+			err = h.service.FormiranjeKompenzacije(ctx, &poverilacData, false, page, pageSize, kontoPoverilac, sifraPoverilac, stanjeNaDan, checkDospece)
+			if err != nil {
+				common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
+				return
+			}
+		}
+		poverilacData.ShowActions = true
+		duznikData.ShowActions = true
+		poverilacData.BtnUpdate.IsVisible = false
+		duznikData.BtnUpdate.IsVisible = false
+		poverilacData.HasTotals = true
+		duznikData.HasTotals = true
+		if requestSource == "btnobrada" {
+			err := tmpl_fin.KompenzacijeFormirajDetalji(duznikData, poverilacData, translator).Render(c.Request.Context(), c.Writer)
+			if err != nil {
+				common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
+			}
+			return
+		}
+		if c.GetHeader("Hx-Target") == "duznik-table" {
+			utils.RenderContent(c, duznikData)
+			return
+		}
+		if c.GetHeader("Hx-Target") == "poverilac-table" {
+			utils.RenderContent(c, poverilacData)
+			return
+		}
+	}
+}
+
+// Tab 2: Formiranje kompenzacije
+func (h *KompenzacijeHandler) KompenzacijeFormiraj(c *gin.Context) {
+	session := domain.GetSessionFromContext(c)
+	if session == nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, "User session not found")
+		return
+	}
+	dto := domain.KompenzacijeDto{}
+	err := c.BindJSON(&dto)
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, "Failed to bind JSON")
+		return
 	}
 }
 
@@ -178,6 +264,11 @@ func (h *KompenzacijeHandler) KompenzacijeFormiranje(c *gin.Context) {
 func (h *KompenzacijeHandler) KompenzacijePregled(c *gin.Context) {
 	requestSource := c.Request.Header.Get("X-Request-Source")
 	translator := i18n.GetInstance()
+	session := domain.GetSessionFromContext(c)
+	if session == nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, "User session not found")
+		return
+	}
 
 	searchInput := common.CreateSearchInput("search-input", translator, kompenzacijeURLPregled, fmt.Sprintf("#%s", kompenzacijePregledKompenzacijaTableID), hxValsKompenzacijePregled)
 	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", kompenzacijeURLPregled, fmt.Sprintf("#%s", kompenzacijePregledKompenzacijaTableID), "innerHTML", "GET", "", hxValsKompenzacijePregled, true, common.ClassSaveButton, "handleDialogResponse")
@@ -204,13 +295,16 @@ func (h *KompenzacijeHandler) KompenzacijePregled(c *gin.Context) {
 	if requestSource == "btnobrada" || requestSource == "btnpage" || requestSource == "searchinput" {
 		// TODO: Implement data fetching when service is ready
 		page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
+		statusDok := c.Query("status_dokumenta")
+		searchText := c.Query("search-input")
+		ctx := c.Request.Context()
 
-		err := h.service.PregledKompenzacije(c, &tblHdr, &tblDet, true, page, pageSize)
+		err := h.service.PregledKompenzacije(ctx, &tblHdr, &tblDet, true, page, pageSize, statusDok, searchText)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
 			return
 		}
-		err = h.service.PregledKompenzacije(c, &tblHdr, &tblDet, false, page, pageSize)
+		err = h.service.PregledKompenzacije(ctx, &tblHdr, &tblDet, false, page, pageSize, statusDok, searchText)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -268,13 +362,13 @@ func (h *KompenzacijeHandler) KompenzacijeKnjizenje(c *gin.Context) {
 
 // AddRoutes registers all kompenzacije routes
 func (h *KompenzacijeHandler) AddRoutes(r *gin.Engine) {
-	r.Use(middleware.Auth()) // Apply auth middleware to all routes in group
-
+	r.Use(middleware.Auth())                         // Apply auth middleware to all routes in group
+	r.Use(middleware.ContextWithSessionMiddleware()) // Ensure session is available in context for all handlers
 	// Define routes for kompenzacije
 	r.GET("/api/kompenzacije", h.KompenzacijeMain)
 	r.GET("/api/kompenzacije/pregledpartnera", h.KompenzacijePregledPartnera)
 	r.GET("/api/kompenzacije/formiranje", h.KompenzacijeFormiranje)
-	r.POST("/api/kompenzacije/formiranje/formiraj", h.KompenzacijeFormiranje) // TODO: Create separate handler for POST
+	r.POST("/api/kompenzacije/formiranje/formiraj", h.KompenzacijeFormiraj)
 	r.GET("/api/kompenzacije/pregled", h.KompenzacijePregled)
 	r.GET("/api/kompenzacije/pregled/print", h.KompenzacijePregled) // TODO: Create print handler
 	r.GET("/api/kompenzacije/knjizenje", h.KompenzacijeKnjizenje)

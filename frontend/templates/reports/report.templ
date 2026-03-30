@@ -1,10 +1,10 @@
 package reports
 
 import (
+	"fmt"
+	"helia/i18n"
 	"helia/internal/domain"
 	"time"
-	"helia/i18n"
-	"fmt"
 )
 
 // Main Report Template
@@ -16,129 +16,187 @@ templ Report(parameters domain.ReportParameters, tableData domain.TableData, tra
 			<script src="https://cdn.tailwindcss.com"></script>
 			<title>{ parameters.ReportName } - { parameters.CompanyName }</title>
 			<style>
+				@media print {
 				@page {
 					size: A4;
-					margin: 12mm;
+					margin: 15mm 12mm 15mm 12mm;
 				}
-				@media print {
-					* {
-						box-sizing: border-box;
-					}
-					html, body {
-						margin: 0 !important;
-						padding: 0 !important;
-						width: 100% !important;
-						height: auto !important;
-						background: white !important;
-					}
-					body {
-						font-size: 10pt;
-					}
-					.no-print {
-						display: none !important;
-					}
-					.page-break {
-						page-break-after: always;
-					}
-					.print-container {
-						max-width: 100% !important;
-						width: 100% !important;
-						margin: 0 !important;
-						padding: 0 !important;
-						page-break-after: avoid;
-					}
-					table {
-						page-break-inside: auto;
-						width: 100%;
-						table-layout: auto;
-						border-collapse: collapse;
-						font-size: 9pt;
-					}
-					tr {
-						page-break-inside: avoid;
-					}
-					td, th {
-						word-wrap: break-word;
-						word-break: break-word;
-						white-space: normal;
-						padding: 4px 2px;
-						overflow-wrap: break-word;
-						page-break-inside: avoid;
-					}
-					th {
-						background-color: #f0f0f0;
-						font-weight: bold;
-					}
+				
+				html, body {
+					margin: 0;
+					padding: 0;
+					width: 100%;
 				}
+				
+				body {
+					background: white;
+				}
+				
+				.no-print {
+					display: none !important;
+				}
+				
+				.print-container {
+					width: 100%;
+					margin: 0;
+					padding: 0;
+					background: white;
+				}
+				
+				/* Each page-break div is a complete page */
+				.page-break {
+					width: 100%;
+					margin: 0;
+					padding: 0;
+					background: white;
+					page-break-after: always;
+					display: block;
+					page-break-inside: auto;
+				}
+				
+				.page-break:last-child {
+					page-break-after: avoid;
+				}
+
+				.page-break > div {
+					padding: 0;
+				}
+				
+				.no-break {
+					page-break-inside: avoid;
+				}
+				
+				/* Table should break naturally across pages */
 				table {
 					width: 100%;
-					table-layout: auto;
 					border-collapse: collapse;
+					page-break-inside: auto;
 				}
-				td, th {
-					word-wrap: break-word;
-					word-break: break-word;
-					white-space: normal;
-					overflow-wrap: break-word;
+				
+				/* Repeat header on each page */
+				thead {
+					display: table-header-group;
+					page-break-inside: avoid;
 				}
-				body {
-					font-family: Arial, sans-serif;
+				
+				tbody {
+					display: table-row-group;
+				}
+				
+				/* Table header rows - keep with content */
+				thead tr {
+					page-break-inside: avoid;
+					page-break-after: avoid;
+				}
+				
+				/* Keep group headers with next row */
+				tr.group-header {
+					page-break-inside: avoid;
+					page-break-after: avoid;
+				}
+				
+				tr.subgroup-header {
+					page-break-inside: avoid;
+					page-break-after: auto;
+				}
+				
+				tr.group-total {
+					page-break-inside: avoid;
+					page-break-after: avoid;
+				}
+				
+				tr.group-footer {
+					page-break-inside: avoid;
+				}
+				
+				tr.grand-total {
+					page-break-inside: avoid;
+				}
+				
+				/* Regular data rows can break */
+				tr {
+					page-break-inside: auto;
+				}
+				
+				tfoot {
+					display: table-footer-group;
+				}
+			}
+				/* Screen view */
+				@media screen {
+					.page-break {
+						width: 210mm;
+						margin: 20px auto;
+						padding: 15mm;
+						background: white;
+						box-shadow: 0 0 10px rgba(0,0,0,0.1);
+						min-height: 297mm;
+					}
 				}
 			</style>
 		</head>
-		<body class="bg-gray-100 print:bg-white">
+		<body class="bg-gray-100 print:bg-white print:h-auto print:p-5 font-sans">
 			<!-- Print Controls -->
-			<div class="fixed top-4 right-4 z-50 bg-white p-3 rounded shadow-lg flex gap-2 no-print">
+			<div class="fixed top-1 right-1 z-50 bg-white p-1 rounded shadow-lg flex gap-2 print:hidden">
 				<button
 					onclick="window.print()"
 					class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-sm font-semibold"
 				>
-					🖨️ { translator.Label("Stampaj") }
+					🖨️ { translator.Button("Stampa") }
+				</button>
+				<button onclick="exportToPDF()" class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-sm font-semibold">
+					Download PDF
 				</button>
 				<button
 					onclick="window.close()"
 					class="bg-gray-600 text-white px-3 py-1 rounded hover:bg-gray-700 text-sm font-semibold"
 				>
-					❌ { translator.Label("Zatvori") }
+					❌ { translator.Button("Zatvori") }
 				</button>
 			</div>
-
 			<!-- Main Report Container -->
-			<div class="py-6 px-4 print:py-0 print:px-0 print-container">
-				<div class="bg-white rounded-lg shadow-lg p-8 print:shadow-none print:rounded-none print:p-6 max-w-6xl mx-auto print:mx-0 print:max-w-full">
+			<div class="py-2 px-4 print:py-0 print:px-0 print:w-full print:m-0 print:p-0">
+				<div class="bg-white rounded-lg shadow-lg p-8 print:shadow-none print:rounded-none print:p-0 max-w-6xl mx-auto print:mx-0 print:max-w-full print:bg-white">
 					<!-- Header: Company Info, Date/Time, Page -->
 					@ReportHeader(parameters)
-					
 					<!-- Report Title -->
 					@ReportTitle(parameters)
-					
 					<!-- Report Parameters as Headers (Two Columns) -->
 					@ReportParametersHeader(parameters)
-					
 					<!-- Report Data/Table -->
 					@ReportTableSection(tableData, translator)
-					
 					<!-- Footer -->
 					@ReportFooter(parameters)
 				</div>
 			</div>
+			<script>
+				function exportToPDF() {
+					// Use HTML2Canvas and jsPDF for more reliable PDF export
+					const link = document.createElement('a');
+					link.href = 'data:text/html;charset=utf-8,' + encodeURIComponent(document.documentElement.outerHTML);
+					link.download = '{ metadata.ReportTitle }.html';
+					link.click();
+					
+					// Alternative: Use browser print dialog
+					setTimeout(() => window.print(), 100);
+				}
+			</script>
 		</body>
 	</html>
 }
 
 // Header with Company Info (Left), Date/Time and Page (Right)
 templ ReportHeader(parameters domain.ReportParameters) {
-	<div class="mb-6 border-b-2 border-gray-300 pb-4">
+	<div class="mb-2 border-b-2 border-gray-300 print:m-0 print:mb-1 print:pb-1 print:border-b print:border-gray-300">
 		<div class="flex justify-between items-start">
 			<!-- Left: Company Info -->
-			<div class="text-xs text-gray-700 space-y-0.5">
-				<p class="font-bold text-sm">{ parameters.CompanyName }</p>
-				<p class="text-gray-600">Nov Sad - { fmt.Sprintf("%d", time.Now().Year()) } godine</p>
+			<div class="text-xs text-gray-700 space-y-0.5 print:text-[9pt]">
+				<p class="font-bold text-sm print:text-sm print:leading-tight">{ parameters.CompanyName }</p>
+				<p class="text-gray-600 print:text-gray-700 print:text-[8pt]">Nov Sad - { fmt.Sprintf("%d", time.Now().Year()) } godine</p>
 			</div>
-			
 			<!-- Right: Date/Time and Page Info -->
-			<div class="text-xs text-gray-700 text-right space-y-0.5">
-				<p>{ time.Now().Format("02.01.2006 15:04:05") }</p>
+			<div class="text-xs text-gray-700 text-right space-y-0.5 print:text-[8pt]">
+				<p class="print:leading-tight">{ time.Now().Format("02.01.2006 15:04:05") }</p>
 				<p class="print:hidden page-info" id="page-info">Stranica 1 / </p>
 			</div>
 		</div>
@@ -147,8 +205,8 @@ templ ReportHeader(parameters domain.ReportParameters) {
 
 // Report Title
 templ ReportTitle(parameters domain.ReportParameters) {
-	<div class="mb-6 text-center">
-		<h1 class="text-2xl font-bold text-gray-900 uppercase">
+	<div class="mb-1 text-center print:m-0 print:mb-1">
+		<h1 class="text-2xl font-bold text-gray-900 uppercase print:text-base print:leading-tight">
 			{ parameters.ReportName }
 		</h1>
 	</div>
@@ -156,43 +214,21 @@ templ ReportTitle(parameters domain.ReportParameters) {
 
 // Report Parameters as Two-Column Headers
 templ ReportParametersHeader(parameters domain.ReportParameters) {
-	<div class="mb-6 grid grid-cols-2 gap-6">
+	<div class="mb-1 grid grid-cols-2 gap-6 print:gap-2 print:m-0 print:mb-2 print:pb-1 print:border-b print:border-gray-300">
 		<!-- Left Column -->
-		<div class="space-y-2 text-sm">
-			for key, value := range parameters.Parameters {
-				if key == "DateFrom" || key == "PlaceFrom" || key == "Department" {
-					<div class="flex">
-						<span class="font-semibold text-gray-700 w-24">{ key }:</span>
-						<span class="text-gray-600">{ fmt.Sprintf("%v", value) }</span>
-					</div>
-				}
-			}
-		</div>
-		
-		<!-- Right Column -->
-		<div class="space-y-2 text-sm">
-			for key, value := range parameters.Parameters {
-				if key != "DateFrom" && key != "PlaceFrom" && key != "Department" {
-					<div class="flex">
-						<span class="font-semibold text-gray-700 w-24">{ key }:</span>
-						<span class="text-gray-600">{ fmt.Sprintf("%v", value) }</span>
-					</div>
-				}
-			}
-		</div>
 	</div>
 }
 
 // Report Table Section - uses ReportTable from tablereport.templ
 templ ReportTableSection(tableData domain.TableData, translator *i18n.Service) {
-	<div class="mb-8">
+	<div class="mb-1 print:m-8 print:mb-8 print:mt-8">
 		@ReportTable(tableData, translator)
 	</div>
 }
 
 // Group Template (for grouped report data)
 templ ReportGroup(groupName string, groupData interface{}) {
-	<div class="mt-6 mb-4">
+	<div class="mt-2 mb-4">
 		<h3 class="text-lg font-bold text-gray-800 bg-gray-100 px-3 py-2 border-l-4 border-blue-900">
 			{ groupName }
 		</h3>
@@ -210,12 +246,12 @@ templ ReportSubgroup(subgroupName string, subgroupData interface{}) {
 
 // Footer
 templ ReportFooter(parameters domain.ReportParameters) {
-	<div class="mt-8 pt-6 border-t-2 border-gray-300 text-center text-xs text-gray-600 space-y-1">
-		<p>
+	<div class="mt-1 pt-1 border-t-2 border-gray-300 text-center text-xs text-gray-600 space-y-1 print:m-0 print:mt-2 print:pt-1 print:text-[7pt] print:space-y-0 print:border-t print:border-gray-300">
+		<p class="print:leading-tight">
 			Generated on { time.Now().Format("January 2, 2006") } at { time.Now().Format("15:04:05") }
-			 by { parameters.UserName }
+			by { parameters.UserName }
 		</p>
-		<p class="text-gray-500">
+		<p class="text-gray-500 print:text-gray-600 print:leading-tight">
 			{ parameters.CompanyName } • Confidential
 		</p>
 	</div>

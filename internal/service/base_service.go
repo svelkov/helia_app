@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"helia/internal/common"
@@ -11,8 +12,6 @@ import (
 	"reflect"
 	"strings"
 	"time"
-
-	"github.com/gin-gonic/gin"
 )
 
 // DateTimeFormat specifies how to format time.Time fields
@@ -26,14 +25,14 @@ const (
 
 // Generic service interface
 type Service[T any] interface {
-	Create(c *gin.Context, entity *T, idField string, tableFields []domain.Fields) ([]domain.FieldError, int64, error)
-	GetByID(idField string, idValue int64) (*T, error)
-	GetAll(c *gin.Context, page int, offset int, tableFields []domain.Fields, idField string, searchParams ...string) (*[]T, error)
-	GetAllCustom(c *gin.Context, queryText, whereText string, args []interface{}, limitOffset, orderBy string) (*[]T, error)
-	GetTotalRecordsCustom(c *gin.Context, queryText, whereText string, args []interface{}, limitOffset, orderBy string) (int, error)
-	GetTotalRecords(c *gin.Context, tableFields []domain.Fields, searchParams ...string) (int, error)
-	Update(c *gin.Context, entity *T, idField string, idValue interface{}, tableFields []domain.Fields) ([]domain.FieldError, error)
-	Delete(idField string, id int64) error
+	Create(ctx context.Context, entity *T, idField string, tableFields []domain.Fields) ([]domain.FieldError, int64, error)
+	GetByID(ctx context.Context, idField string, idValue int64) (*T, error)
+	GetAll(ctx context.Context, page int, offset int, tableFields []domain.Fields, idField string, searchParams ...string) (*[]T, error)
+	GetAllCustom(ctx context.Context, queryText, whereText string, args []interface{}, limitOffset, orderBy string) (*[]T, error)
+	GetTotalRecordsCustom(ctx context.Context, queryText, whereText string, args []interface{}, limitOffset, orderBy string) (int, error)
+	GetTotalRecords(ctx context.Context, tableFields []domain.Fields, searchParams ...string) (int, error)
+	Update(ctx context.Context, entity *T, idField string, idValue interface{}, tableFields []domain.Fields) ([]domain.FieldError, error)
+	Delete(ctx context.Context, idField string, id int64) error
 	MapEntityToValues(entity *T, tableFields []domain.Fields) []domain.Fields
 	GetFieldCache() map[string]reflect.StructField
 }
@@ -66,7 +65,33 @@ func NewBaseService[T any](repository repository.BaseRepository[T], validator va
 	return r
 }
 
-func (s *BaseService[T]) Create(c *gin.Context, entity *T, idField string, tableFields []domain.Fields) ([]domain.FieldError, int64, error) {
+func (s *BaseService[T]) GetFieldCache() map[string]reflect.StructField {
+	return s.fieldCache
+}
+func (s *BaseService[T]) SetFieldCache(fieldCache map[string]reflect.StructField) {
+	s.fieldCache = fieldCache
+}
+
+func (s *BaseService[T]) GetByID(ctx context.Context, idField string, idValue int64) (*T, error) {
+	return s.Repo.GetByID(ctx, idField, idValue)
+}
+
+func (s *BaseService[T]) GetAll(ctx context.Context, page int, offset int, tableFields []domain.Fields, idField string, searchParams ...string) (*[]T, error) {
+	return s.Repo.GetAll(ctx, page, offset, tableFields, idField, searchParams...)
+}
+
+func (s *BaseService[T]) GetAllCustom(ctx context.Context, queryText, whereText string, args []interface{}, limitOffset, orderBy string) (*[]T, error) {
+	return s.Repo.GetAllCustom(ctx, queryText, whereText, args, limitOffset, orderBy)
+}
+
+func (s *BaseService[T]) GetTotalRecordsCustom(ctx context.Context, queryText, whereText string, args []interface{}, limitOffset, orderBy string) (int, error) {
+	return s.Repo.GetTotalRecordsCustom(ctx, queryText, whereText, args, limitOffset, orderBy)
+}
+
+func (s *BaseService[T]) GetTotalRecords(ctx context.Context, tableFields []domain.Fields, searchParams ...string) (int, error) {
+	return s.Repo.GetTotalRecords(ctx, tableFields, searchParams...)
+}
+func (s *BaseService[T]) Create(ctx context.Context, entity *T, idField string, tableFields []domain.Fields) ([]domain.FieldError, int64, error) {
 	fieldErrors, err := s.Validator.Validate(entity)
 
 	if err != nil {
@@ -75,49 +100,22 @@ func (s *BaseService[T]) Create(c *gin.Context, entity *T, idField string, table
 	if len(fieldErrors) > 0 {
 		return fieldErrors, 0, nil
 	}
-	lastInsertedID, err := s.Repo.Create(c, entity, idField, tableFields)
+	lastInsertedID, err := s.Repo.Create(ctx, entity, idField, tableFields)
 	log.Println("BaseService Create: lastInsertedID =", lastInsertedID, " error =", err)
 	return []domain.FieldError{}, lastInsertedID, err
 
 }
 
-func (s *BaseService[T]) GetFieldCache() map[string]reflect.StructField {
-	return s.fieldCache
-}
-func (s *BaseService[T]) SetFieldCache(fieldCache map[string]reflect.StructField) {
-	s.fieldCache = fieldCache
-}
-
-func (s *BaseService[T]) GetByID(idField string, idValue int64) (*T, error) {
-	return s.Repo.GetByID(idField, idValue)
-}
-
-func (s *BaseService[T]) GetAll(c *gin.Context, page int, offset int, tableFields []domain.Fields, idField string, searchParams ...string) (*[]T, error) {
-	return s.Repo.GetAll(c, page, offset, tableFields, idField, searchParams...)
-}
-
-func (s *BaseService[T]) GetAllCustom(c *gin.Context, queryText, whereText string, args []interface{}, limitOffset, orderBy string) (*[]T, error) {
-	return s.Repo.GetAllCustom(c, queryText, whereText, args, limitOffset, orderBy)
-}
-
-func (s *BaseService[T]) GetTotalRecordsCustom(c *gin.Context, queryText, whereText string, args []interface{}, limitOffset, orderBy string) (int, error) {
-	return s.Repo.GetTotalRecordsCustom(c, queryText, whereText, args, limitOffset, orderBy)
-}
-
-func (s *BaseService[T]) GetTotalRecords(c *gin.Context, tableFields []domain.Fields, searchParams ...string) (int, error) {
-	return s.Repo.GetTotalRecords(c, tableFields, searchParams...)
-}
-
-func (s *BaseService[T]) Update(c *gin.Context, entity *T, idField string, idValue interface{}, tableFields []domain.Fields) ([]domain.FieldError, error) {
+func (s *BaseService[T]) Update(ctx context.Context, entity *T, idField string, idValue interface{}, tableFields []domain.Fields) ([]domain.FieldError, error) {
 	fieldErrors, err := s.Validator.Validate(entity)
 	if err != nil {
 		return fieldErrors, err
 	}
-	return fieldErrors, s.Repo.Update(c, entity, idField, idValue, tableFields)
+	return fieldErrors, s.Repo.Update(ctx, entity, idField, idValue, tableFields)
 }
 
-func (s *BaseService[T]) Delete(idField string, id int64) error {
-	return s.Repo.Delete(idField, id)
+func (s *BaseService[T]) Delete(ctx context.Context, idField string, id int64) error {
+	return s.Repo.Delete(ctx, idField, id)
 }
 
 // formatTime formats a time.Time with the specified format

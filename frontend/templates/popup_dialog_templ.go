@@ -643,35 +643,4 @@ func SearchResultsTableLoading(headers []string, translator *i18n.Service) templ
 	})
 }
 
-// SearchPopupScript renders the JavaScript needed for the search popup
-// This should be included once per page, not per popup instance
-func SearchPopupScript() templ.Component {
-	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
-		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
-		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
-			return templ_7745c5c3_CtxErr
-		}
-		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
-		if !templ_7745c5c3_IsBuffer {
-			defer func() {
-				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
-				if templ_7745c5c3_Err == nil {
-					templ_7745c5c3_Err = templ_7745c5c3_BufErr
-				}
-			}()
-		}
-		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var37 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var37 == nil {
-			templ_7745c5c3_Var37 = templ.NopComponent
-		}
-		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "<script>\r\n\t\tfunction showSearchDialog(fieldId) {\r\n\t\t\tconst dialog = document.getElementById('search-dropdown');\r\n\t\t\tconst contentDiv = document.getElementById('dialog-content');\r\n\t\t\tconst button = document.getElementById('search-button-' + fieldId);\r\n\t\t\t\r\n\t\t\tconsole.log('Showing dialog for field:', fieldId,  button);\r\n\t\t\tif (!dialog || !button) {\r\n\t\t\t\tconsole.error('Dialog or button not found');\r\n\t\t\t\treturn;\r\n\t\t\t}\r\n\t\t\t\r\n\t\t\tif (dialog.classList.contains('hidden')) {\r\n\t\t\t\tdialog.classList.remove('hidden');\r\n\t\t\t}\t\t \r\n\t\t\t// Store current field ID for later use\r\n\t\t\tcurrentFieldId = fieldId;\r\n\t\t\t\r\n\t\t\t// Position dialog below the button\r\n\t\t\tif (button && dialog) {\r\n\t\t\tconst rect = button.getBoundingClientRect();\r\n\t\t\t// Reset any previous positioning\r\n\t\t\tdialog.style.position = 'fixed';\r\n\t\t\tdialog.style.top = '';\r\n\t\t\tdialog.style.left = '';\r\n\t\t\tdialog.style.right = '';\r\n\t\t\tdialog.style.bottom = '';\r\n\t\t\t\r\n\t\t\t// Calculate position relative to viewport (accounting for scroll)\r\n\t\t\tconst scrollX = window.scrollX || window.pageXOffset;\r\n\t\t\tconst scrollY = window.scrollY || window.pageYOffset;\r\n\t\t\t\r\n\t\t\tdialog.style.position = 'fixed';\r\n\t\t\tdialog.style.top = (rect.bottom + scrollY) + 'px';\r\n\t\t\tdialog.style.left = (rect.left + scrollX) + 'px';\r\n\t\t\tdialog.style.zIndex = '1000';\r\n\t\t\t\r\n\t\t\tconsole.log('Positioning dialog:', {\r\n\t\t\t\tbuttonRect: rect,\r\n\t\t\t\tscrollX: scrollX,\r\n\t\t\t\tscrollY: scrollY,\r\n\t\t\t\tfinalTop: rect.bottom + scrollY,\r\n\t\t\t\tfinalLeft: rect.left + scrollX,\r\n\t\t\t\tviewport: { width: window.innerWidth, height: window.innerHeight }\r\n\t\t\t});\r\n\t\t\t\t\r\n\t\t\t}\r\n\t\t}\r\n\t\t// Position dropdown below the button that opened it\r\n\t\tfunction positionDropdown(dropdownId, buttonId) {\r\n\t\t\tconst button = document.getElementById(buttonId);\r\n\t\t\tconst dropdown = document.getElementById(dropdownId);\r\n\t\t\t\r\n\t\t\tif (button && dropdown) {\r\n\t\t\t\tconst rect = button.getBoundingClientRect();\r\n\t\t\t\tdropdown.style.position = 'absolute';\r\n\t\t\t\tdropdown.style.top = (rect.bottom + window.scrollY) + 'px';\r\n\t\t\t\tdropdown.style.left = (rect.left + window.scrollX) + 'px';\r\n\t\t\t\tdropdown.style.zIndex = '1000';\r\n\t\t\t}\r\n\t\t}\r\n\t\t\r\n\t\t// Close dropdown when clicking outside\r\n\t\tdocument.addEventListener('click', function(event) {\r\n\t\t\tconst dropdowns = document.querySelectorAll('[id^=\"search-dropdown\"]');\r\n\t\t\tdropdowns.forEach(dropdown => {\r\n\t\t\t\tif (!dropdown.contains(event.target) && !event.target.closest('[onclick*=\"showDropdown\"]')) {\r\n\t\t\t\t\tdropdown.classList.add('hidden');\r\n\t\t\t\t}\r\n\t\t\t});\r\n\t\t});\r\n\r\n\t\t// Generic function to select item and close dialog\r\n\t\tfunction selectItem(dropdownId, valueFieldId, nameFieldId, value, name) {\r\n\t\t\tdocument.getElementById(valueFieldId).value = value;\r\n\t\t\tdocument.getElementById(nameFieldId).value = name;\r\n\t\t\thideDropdown(dropdownId);\r\n\t\t\t\r\n\t\t\t// Trigger blur event to update other fields\r\n\t\t\tdocument.getElementById(valueFieldId).dispatchEvent(new Event('blur'));\r\n\t\t}\r\n\t\t\r\n\t\t// Show dropdown function\r\n\t\tfunction showDropdown(dropdownId, buttonId) {\r\n\t\t\t// First hide any other open dropdowns\r\n\t\t\tconst dropdowns = document.querySelectorAll('[id^=\"search-dropdown\"]');\r\n\t\t\tdropdowns.forEach(dropdown => {\r\n\t\t\t\tdropdown.classList.add('hidden');\r\n\t\t\t});\r\n\t\t\t\r\n\t\t\t// Show the requested dropdown\r\n\t\t\tconst dropdown = document.getElementById(dropdownId);\r\n\t\t\tdropdown.classList.remove('hidden');\r\n\t\t\t\r\n\t\t\t// Position it below the button\r\n\t\t\tpositionDropdown(dropdownId, buttonId);\r\n\t\t}\r\n\t\t\r\n\t\t// Hide dropdown function\r\n\t\tfunction hideDropdown(dropdownId) {\r\n\t\t\tdocument.getElementById(dropdownId).classList.add('hidden');\r\n\t\t}\r\n\r\n\t</script>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		return nil
-	})
-}
-
 var _ = templruntime.GeneratedTemplate

@@ -13,27 +13,11 @@ templ SaldaMain(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada d
 	<div id="tab-content" class="flex flex-col h-full">
 		@SaldaPojedinacnihKonta(tabs, tbl, btnObrada, btnPrint, total, saldaURLtotals, translator)
 	</div>
-	<script>
-        // Tab switching functionality
-        document.addEventListener('DOMContentLoaded', function() {
-            // Set first tab as active
-            document.querySelector('[hx-get="/api/salda/saldapojedinacnihkonta"]').classList.remove('bg-gray-200', 'text-gray-700');
-            document.querySelector('[hx-get="/api/salda/saldapojedinacnihkonta"]').classList.add('bg-blue-600', 'text-white');
-            
-            // Tab click handler
-            document.querySelectorAll('[hx-get^="/api/salda"]').forEach(tab => {
-                tab.addEventListener('click', function() {
-                    // Update tab styles    
-                    document.querySelectorAll('[hx-get^="/api/salda"]').forEach(t => {
-                        t.classList.remove('bg-blue-600', 'text-white');
-                        t.classList.add('bg-gray-200', 'text-gray-700');
-                    });
-                    this.classList.remove('bg-gray-200', 'text-gray-700');
-                    this.classList.add('bg-blue-600', 'text-white');
-                });
-            });
-        });
-    </script>
+	@tmpl.ShowSearchDialogScript()
+	@tmpl.HideDropdownScript()
+	@tmpl.ClearFieldErrorScript()
+	@tmpl.HandleDblClickKontoSelectionScript()
+	@tmpl.SpinnerScript()
 }
 
 // Tab 1 - Salda pojedinačnih konta
@@ -81,7 +65,7 @@ templ SaldaPojedinacnihKonta(tabs domain.TabData, tbl domain.TableData, btnObrad
 						ClassInput:   common.ClassInputTextEnabled + " w-24",
 						BlurEndpoint: "api/fkpl/trazikonto",
 						HxTarget:     "kontonaziv",
-						HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": getVkontaValue()}`,
+						HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": getVkontaValue(), "destfield": "konto"}`,
 						HxInclude:    "this",
 						MinLength:    "2",
 						MaxLength:    "6",
@@ -93,7 +77,7 @@ templ SaldaPojedinacnihKonta(tabs domain.TabData, tbl domain.TableData, btnObrad
 						HxUrl:       "/api/promet/searchbutton",
 						HxTarget:    "#search-dropdown",
 						HxSwap:      "innerHTML",
-						HxVals:      `js:{"vkonta": getVkontaValue()}`,
+						HxVals:      `js:{"vkonta": getVkontaValue(), "destfield": "konto"}`,
 						ClassButton: common.ClassButton,
 					})
 					@tmpl.TextInputField(domain.InputFieldConfig{
@@ -119,7 +103,7 @@ templ SaldaPojedinacnihKonta(tabs domain.TabData, tbl domain.TableData, btnObrad
 						ClassInput:   common.ClassInputTextEnabled + " w-24",
 						BlurEndpoint: "api/fkpl/trazikonto",
 						HxTarget:     "sifranaziv",
-						HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('sifra').value, "vkonta": "1"}`,
+						HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('sifra').value, "vkonta": "1", "destfield": "sifra"}`,
 						HxInclude:    "this",
 						MinLength:    "2",
 						MaxLength:    "6",
@@ -131,7 +115,7 @@ templ SaldaPojedinacnihKonta(tabs domain.TabData, tbl domain.TableData, btnObrad
 						HxUrl:       "/api/promet/searchbutton",
 						HxTarget:    "#search-dropdown",
 						HxSwap:      "innerHTML",
-						HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`,
+						HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1", "destfield": "sifra"}`,
 						ClassButton: common.ClassButton,
 					})
 					@tmpl.TextInputField(domain.InputFieldConfig{
@@ -176,9 +160,7 @@ templ SaldaPojedinacnihKonta(tabs domain.TabData, tbl domain.TableData, btnObrad
 			</div>
 		</div>
 	</div>
-	@tmpl.ShowMessage()
 	@ChartScript()
-	@tmpl.SpinnerScript()
 }
 
 // Tab 2 - Salda grupe konta
@@ -201,31 +183,36 @@ templ SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnP
 					<!-- Počev od konta -->
 					<div class="flex items-center gap-1 mb-1">
 						@tmpl.LabelField(domain.LabelFieldConfig{
-							ID:         "od_konta",
-							LabelText:  translator.Label("Počev od konta"),
+							ID:         "odkonta",
+							LabelText:  translator.Label("Od Konta"),
 							ClassLabel: common.ClassLabel + " w-36",
 						})
 						@tmpl.TextInputField(domain.InputFieldConfig{
-							ID:         "od_konta",
-							Name:       "od_konta",
-							FieldType:  "text",
-							Disabled:   false,
-							ClassInput: common.ClassInputTextEnabled + " w-20",
-							Value:      "0000",
-							MaxLength:  "6",
+							ID:           "odkonta",
+							Name:         "odkonta",
+							FieldType:    "text",
+							Disabled:     false,
+							ClassInput:   common.ClassInputTextEnabled + " w-20",
+							BlurEndpoint: "api/fkpl/trazikonto",
+							HxTarget:     "odkontanaziv",
+							HxVals:       `js:{"konto": document.getElementById('odkonta').value, "vkonta": "2", "destfield": "odkonta"}`,
+							HxInclude:    "this",
+							Value:        "0000",
+							MaxLength:    "6",
+							OnInput:      "clearFieldError",
 						})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
-							ID:          "od_konta",
-							Name:        "search-od-konta",
+							ID:          "btn-search-odkonta",
+							Name:        "search-odkonta",
 							HxUrl:       "/api/promet/searchbutton",
 							HxTarget:    "#search-dropdown",
 							HxSwap:      "innerHTML",
-							HxVals:      `{"vkonta": "2"}`,
+							HxVals:      `{"vkonta": "2", "destfield": "odkonta"}`,
 							ClassButton: common.ClassButton,
 						})
 						@tmpl.TextInputField(domain.InputFieldConfig{
-							ID:         "nazivpocev_od_konta",
-							Name:       "nazivpocev_od_konta",
+							ID:         "odkontanaziv",
+							Name:       "odkontanaziv",
 							FieldType:  "text",
 							Disabled:   true,
 							ClassInput: common.ClassInputTextEnabled + " w-full",
@@ -235,31 +222,36 @@ templ SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnP
 					<!-- Zakljucno sa kontom -->
 					<div class="flex items-center gap-1 mb-1">
 						@tmpl.LabelField(domain.LabelFieldConfig{
-							ID:         "do_konta",
-							LabelText:  translator.Label("Zakljucno sa kontom"),
+							ID:         "dokonta",
+							LabelText:  translator.Label("Do Konta"),
 							ClassLabel: common.ClassLabel + " w-36",
 						})
 						@tmpl.TextInputField(domain.InputFieldConfig{
-							ID:         "do_konta",
-							Name:       "do_konta",
-							FieldType:  "text",
-							Disabled:   false,
-							ClassInput: common.ClassInputTextEnabled + " w-20",
-							Value:      "999999",
-							MaxLength:  "6",
+							ID:           "dokonta",
+							Name:         "dokonta",
+							FieldType:    "text",
+							Disabled:     false,
+							ClassInput:   common.ClassInputTextEnabled + " w-20",
+							BlurEndpoint: "api/fkpl/trazikonto",
+							HxTarget:     "dokontanaziv",
+							HxVals:       `js:{"konto": document.getElementById('dokonta').value, "vkonta": "2", "destfield": "dokonta"}`,
+							HxInclude:    "this",
+							Value:        "999999",
+							MaxLength:    "6",
+							OnInput:      "clearFieldError",
 						})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
-							ID:          "do_konta",
-							Name:        "search-do-konta",
+							ID:          "btn-search-dokonta",
+							Name:        "search-dokonta",
 							HxUrl:       "/api/promet/searchbutton",
 							HxTarget:    "#search-dropdown",
 							HxSwap:      "innerHTML",
-							HxVals:      `{"vkonta": "2"}`,
+							HxVals:      `{"vkonta": "2", "destfield": "dokonta"}`,
 							ClassButton: common.ClassButton,
 						})
 						@tmpl.TextInputField(domain.InputFieldConfig{
-							ID:         "nazivzakljucno_sa_kontom",
-							Name:       "nazivzakljucno_sa_kontom",
+							ID:         "dokontanaziv",
+							Name:       "dokontanaziv",
 							FieldType:  "text",
 							Disabled:   true,
 							ClassInput: common.ClassInputTextEnabled + " w-full",
@@ -269,67 +261,81 @@ templ SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnP
 					<!-- Počev od šifre -->
 					<div class="flex items-center gap-1 mb-1">
 						@tmpl.LabelField(domain.LabelFieldConfig{
-							ID:         "od_sifre",
+							ID:         "odsifre",
 							LabelText:  translator.Label("Počev od šifre"),
 							ClassLabel: common.ClassLabel + " w-36",
 						})
 						@tmpl.TextInputField(domain.InputFieldConfig{
-							ID:         "od_sifre",
-							Name:       "od_sifre",
-							FieldType:  "text",
-							Disabled:   false,
-							ClassInput: common.ClassInputTextEnabled + " w-20",
-							Value:      "00",
-							MaxLength:  "6",
+							ID:           "odsifre",
+							Name:         "odsifre",
+							FieldType:    "text",
+							Disabled:     false,
+							ClassInput:   common.ClassInputTextEnabled + " w-20",
+							BlurEndpoint: "api/fkpl/trazikonto",
+							HxTarget:     "odsifrenaziv",
+							HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('odsifre').value, "vkonta": "1", "destfield": "odsifre"}`,
+							HxInclude:    "this",
+							MinLength:    "2",
+							MaxLength:    "6",
+							TabIndex:     "2",
+							Value:        "00",
+							OnInput:      "clearFieldError",
 						})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
-							ID:          "od_sifre",
-							Name:        "search-od-sifre",
-							HxUrl:       "/api/salda/searchsifra",
+							ID:          "btn-search-odsifre",
+							Name:        "search-odsifre",
+							HxUrl:       "/api/promet/searchbutton",
 							HxTarget:    "#search-dropdown",
 							HxSwap:      "innerHTML",
+							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1", "destfield": "odsifre"}`,
 							ClassButton: common.ClassButton,
 						})
 						@tmpl.TextInputField(domain.InputFieldConfig{
-							ID:         "nazivpocev_od_sifre",
-							Name:       "nazivpocev_od_sifre",
+							ID:         "odsifrenaziv",
+							Name:       "odsifrenaziv",
 							FieldType:  "text",
 							Disabled:   true,
-							ClassInput: common.ClassInputTextEnabled + " w-full",
-							TabIndex:   "-1",
+							ClassInput: common.ClassInputTextDisabled + " w-full",
 						})
 					</div>
 					<!-- Zakljucno sa šifrom -->
 					<div class="flex items-center gap-1 mb-1">
 						@tmpl.LabelField(domain.LabelFieldConfig{
-							ID:         "do_sifre",
+							ID:         "dosifre",
 							LabelText:  translator.Label("Zakljucno sa šifrom"),
 							ClassLabel: common.ClassLabel + " w-36",
 						})
 						@tmpl.TextInputField(domain.InputFieldConfig{
-							ID:         "do_sifre",
-							Name:       "do_sifre",
-							FieldType:  "text",
-							Disabled:   false,
-							ClassInput: common.ClassInputTextEnabled + " w-20",
-							Value:      "999999",
-							MaxLength:  "6",
+							ID:           "dosifre",
+							Name:         "dosifre",
+							FieldType:    "text",
+							Disabled:     false,
+							ClassInput:   common.ClassInputTextEnabled + " w-20",
+							BlurEndpoint: "api/fkpl/trazikonto",
+							HxTarget:     "dosifrenaziv",
+							HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('dosifre').value, "vkonta": "1", "destfield": "dosifre"}`,
+							HxInclude:    "this",
+							MinLength:    "2",
+							MaxLength:    "6",
+							TabIndex:     "2",
+							Value:        "999999",
+							OnInput:      "clearFieldError",
 						})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
-							ID:          "do_sifre",
-							Name:        "search-do-sifre",
-							HxUrl:       "/api/salda/searchsifra",
+							ID:          "btn-search-dosifre",
+							Name:        "search-dosifre",
+							HxUrl:       "/api/promet/searchbutton",
 							HxTarget:    "#search-dropdown",
 							HxSwap:      "innerHTML",
+							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1", "destfield": "dosifre"}`,
 							ClassButton: common.ClassButton,
 						})
 						@tmpl.TextInputField(domain.InputFieldConfig{
-							ID:         "nazivzakljucno_sa_sifrom",
-							Name:       "nazivzakljucno_sa_sifrom",
+							ID:         "dosifrenaziv",
+							Name:       "dosifrenaziv",
 							FieldType:  "text",
 							Disabled:   true,
-							ClassInput: common.ClassInputTextEnabled + " w-full",
-							TabIndex:   "-1",
+							ClassInput: common.ClassInputTextDisabled + " w-full",
 						})
 					</div>
 					<!-- Checkbox: Prikaz salda po valutama -->
@@ -510,7 +516,6 @@ templ SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnP
 			</div>
 		</div>
 	</div>
-	@tmpl.SpinnerScript()
 }
 
 // Tab 3 - Salda partneri
@@ -542,7 +547,6 @@ templ SaldaPartneri(tabs domain.TabData, tblPartneri domain.TableData, inputCont
 			</div>
 		</div>
 	</div>
-	@tmpl.SpinnerScript()
 }
 
 templ SaldaPartneriDetalji(tblKonta, tblDetalji domain.TableData, translator *i18n.Service) {
@@ -647,7 +651,6 @@ templ SaldaPartneriPrelomljeno(tabs domain.TabData, tbl domain.TableData, btnObr
 			</div>
 		</div>
 	</div>
-	@tmpl.SpinnerScript()
 }
 
 templ SaldaTotalValues(total domain.SaldaDto, sourceUrl string, translator *i18n.Service) {
@@ -766,7 +769,7 @@ templ SaldaKlase5i6analiticki(tabs domain.TabData, tbl domain.TableData, btnObra
 				<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg">
 					<div class="flex items-center gap-1 mb-1">
 						@tmpl.LabelField(domain.LabelFieldConfig{
-							ID:         "lblodsifre",
+							ID:         "odsifre",
 							LabelText:  translator.Label("Od sifre"),
 							ClassLabel: common.ClassLabel + " w-24",
 						})
@@ -777,8 +780,8 @@ templ SaldaKlase5i6analiticki(tabs domain.TabData, tbl domain.TableData, btnObra
 							Disabled:     false,
 							ClassInput:   common.ClassInputTextEnabled + " w-24",
 							BlurEndpoint: "api/fkpl/trazikonto",
-							HxTarget:     "odsifre",
-							HxVals:       `js:{"odsifre": document.getElementById('odsifre').value, "vkonta": "1"}`,
+							HxTarget:     "odsifrenaziv",
+							HxVals:       `js:{"sifra": document.getElementById('odsifre').value, "vkonta": "1", "destfield": "odsifrenaziv"}`,
 							HxInclude:    "this",
 							Value:        "00",
 							MinLength:    "2",
@@ -792,7 +795,7 @@ templ SaldaKlase5i6analiticki(tabs domain.TabData, tbl domain.TableData, btnObra
 							HxUrl:       "/api/promet/searchbutton",
 							HxTarget:    "#search-dropdown",
 							HxSwap:      "innerHTML",
-							HxVals:      `{"vkonta": "2"}`,
+							HxVals:      `{"vkonta": "1", "destfield": "odsifre"}`,
 							ClassButton: common.ClassButton,
 						})
 						@tmpl.TextInputField(domain.InputFieldConfig{
@@ -805,7 +808,7 @@ templ SaldaKlase5i6analiticki(tabs domain.TabData, tbl domain.TableData, btnObra
 					</div>
 					<div class="flex items-center gap-1 mb-1">
 						@tmpl.LabelField(domain.LabelFieldConfig{
-							ID:         "lbldosifre",
+							ID:         "dosifre",
 							LabelText:  translator.Label("Do sifre"),
 							ClassLabel: common.ClassLabel + " w-24",
 						})
@@ -816,8 +819,8 @@ templ SaldaKlase5i6analiticki(tabs domain.TabData, tbl domain.TableData, btnObra
 							Disabled:     false,
 							ClassInput:   common.ClassInputTextEnabled + " w-24",
 							BlurEndpoint: "api/fkpl/trazikonto",
-							HxTarget:     "dosifre",
-							HxVals:       `js:{"dosifre": document.getElementById('dosifre').value, "vkonta": "1"}`,
+							HxTarget:     "dosifrenaziv",
+							HxVals:       `js:{"sifra": document.getElementById('dosifre').value, "vkonta": "1", "destfield": "dosifre"}`,
 							HxInclude:    "this",
 							Value:        "999999",
 							MinLength:    "2",
@@ -831,7 +834,7 @@ templ SaldaKlase5i6analiticki(tabs domain.TabData, tbl domain.TableData, btnObra
 							HxUrl:       "/api/promet/searchbutton",
 							HxTarget:    "#search-dropdown",
 							HxSwap:      "innerHTML",
-							HxVals:      `js:{"dosifre": document.getElementById('dosifre').value, "vkonta": "1"}`,
+							HxVals:      `js:{"vkonta": "1", "destfield": "dosifre"}`,
 							ClassButton: common.ClassButton,
 						})
 						@tmpl.TextInputField(domain.InputFieldConfig{
@@ -844,7 +847,7 @@ templ SaldaKlase5i6analiticki(tabs domain.TabData, tbl domain.TableData, btnObra
 					</div>
 					<div class="flex items-center gap-1 mb-1">
 						@tmpl.LabelField(domain.LabelFieldConfig{
-							ID:         "lbloddatuma",
+							ID:         "oddatuma",
 							ClassLabel: common.ClassLabel + " w-24",
 							LabelText:  translator.Label("Od datuma"),
 						})
@@ -861,7 +864,7 @@ templ SaldaKlase5i6analiticki(tabs domain.TabData, tbl domain.TableData, btnObra
 					</div>
 					<div class="flex items-center gap-1 mb-1">
 						@tmpl.LabelField(domain.LabelFieldConfig{
-							ID:         "lbldodatuma",
+							ID:         "dodatuma",
 							LabelText:  translator.Label("Do datuma"),
 							ClassLabel: common.ClassLabel + " w-24 ",
 						})
@@ -880,7 +883,7 @@ templ SaldaKlase5i6analiticki(tabs domain.TabData, tbl domain.TableData, btnObra
 						<div class="flex items-center gap-1">
 							<!-- radio set klase 5 i 6  on the left -->
 							@tmpl.LabelField(domain.LabelFieldConfig{
-								ID:         "lblklasa",
+								ID:         "klasa",
 								LabelText:  translator.Label("Klasa"),
 								ClassLabel: common.ClassLabel + " w-24",
 							})
@@ -924,7 +927,6 @@ templ SaldaKlase5i6analiticki(tabs domain.TabData, tbl domain.TableData, btnObra
 			</div>
 		</div>
 	</div>
-	@tmpl.SpinnerScript()
 }
 
 templ SaldaKlase5i6MT(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, total domain.SaldaDto, gnGod int, saldaURLtotals string, translator *i18n.Service) {
@@ -941,8 +943,8 @@ templ SaldaKlase5i6MT(tabs domain.TabData, tbl domain.TableData, btnObrada, btnP
 				<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg">
 					<div class="flex items-center gap-1 mb-1">
 						@tmpl.LabelField(domain.LabelFieldConfig{
-							ID:         "lblodkonta",
-							LabelText:  translator.Label("Od konta"),
+							ID:         "odkonta",
+							LabelText:  translator.Label("Od Konta"),
 							ClassLabel: common.ClassLabel + " w-24",
 						})
 						@tmpl.TextInputField(domain.InputFieldConfig{
@@ -950,24 +952,22 @@ templ SaldaKlase5i6MT(tabs domain.TabData, tbl domain.TableData, btnObrada, btnP
 							Name:         "odkonta",
 							FieldType:    "text",
 							Disabled:     false,
-							ClassInput:   common.ClassInputTextEnabled + " w-24",
+							ClassInput:   common.ClassInputTextEnabled + " w-32",
 							BlurEndpoint: "api/fkpl/trazikonto",
-							HxTarget:     "kontonaziv",
-							HxVals:       `js:{"odkonta": document.getElementById('odkonta').value, "vkonta": "2"}`,
+							HxTarget:     "odkontanaziv",
+							HxVals:       `js:{"konto": document.getElementById('odkonta').value, "vkonta": "2", "destfield": "odkonta"}`,
 							HxInclude:    "this",
 							Value:        "0000",
-							MinLength:    "4",
 							MaxLength:    "6",
-							TabIndex:     "1",
 							OnInput:      "clearFieldError",
 						})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
-							ID:          "btnodkonta",
+							ID:          "btn-search-odkonta",
 							Name:        "search-odkonta",
 							HxUrl:       "/api/promet/searchbutton",
 							HxTarget:    "#search-dropdown",
 							HxSwap:      "innerHTML",
-							HxVals:      `{"vkonta": "2"}`,
+							HxVals:      `{"vkonta": "2", "destfield": "odkonta"}`,
 							ClassButton: common.ClassButton,
 						})
 						@tmpl.TextInputField(domain.InputFieldConfig{
@@ -975,13 +975,14 @@ templ SaldaKlase5i6MT(tabs domain.TabData, tbl domain.TableData, btnObrada, btnP
 							Name:       "odkontanaziv",
 							FieldType:  "text",
 							Disabled:   true,
-							ClassInput: common.ClassInputTextDisabled + " w-full",
+							ClassInput: common.ClassInputTextEnabled + " w-full",
+							TabIndex:   "-1",
 						})
 					</div>
 					<div class="flex items-center gap-1 mb-1">
 						@tmpl.LabelField(domain.LabelFieldConfig{
-							ID:         "lbldokonta",
-							LabelText:  translator.Label("Do konta"),
+							ID:         "dokonta",
+							LabelText:  translator.Label("Do Konta"),
 							ClassLabel: common.ClassLabel + " w-24",
 						})
 						@tmpl.TextInputField(domain.InputFieldConfig{
@@ -989,24 +990,22 @@ templ SaldaKlase5i6MT(tabs domain.TabData, tbl domain.TableData, btnObrada, btnP
 							Name:         "dokonta",
 							FieldType:    "text",
 							Disabled:     false,
-							ClassInput:   common.ClassInputTextEnabled + " w-24",
+							ClassInput:   common.ClassInputTextEnabled + " w-32",
 							BlurEndpoint: "api/fkpl/trazikonto",
-							HxTarget:     "kontonaziv",
-							HxVals:       `js:{"dokonta": document.getElementById('dokonta').value, "vkonta": "2"}`,
+							HxTarget:     "dokontanaziv",
+							HxVals:       `js:{"konto": document.getElementById('dokonta').value, "vkonta": "2", "destfield": "dokonta"}`,
 							HxInclude:    "this",
 							Value:        "999999",
-							MinLength:    "4",
 							MaxLength:    "6",
-							TabIndex:     "2",
 							OnInput:      "clearFieldError",
 						})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
-							ID:          "btndokonta",
+							ID:          "btn-search-dokonta",
 							Name:        "search-dokonta",
 							HxUrl:       "/api/promet/searchbutton",
 							HxTarget:    "#search-dropdown",
 							HxSwap:      "innerHTML",
-							HxVals:      `js:{"dokonta": document.getElementById('dokonta').value, "vkonta": "2"}`,
+							HxVals:      `{"vkonta": "2", "destfield": "dokonta"}`,
 							ClassButton: common.ClassButton,
 						})
 						@tmpl.TextInputField(domain.InputFieldConfig{
@@ -1014,12 +1013,13 @@ templ SaldaKlase5i6MT(tabs domain.TabData, tbl domain.TableData, btnObrada, btnP
 							Name:       "dokontanaziv",
 							FieldType:  "text",
 							Disabled:   true,
-							ClassInput: common.ClassInputTextDisabled + " w-full",
+							ClassInput: common.ClassInputTextEnabled + " w-full",
+							TabIndex:   "-1",
 						})
 					</div>
 					<div class="flex items-center gap-1 mb-1">
 						@tmpl.LabelField(domain.LabelFieldConfig{
-							ID:         "lbloddatuma",
+							ID:         "oddatuma",
 							ClassLabel: common.ClassLabel + " w-24",
 							LabelText:  translator.Label("Od datuma"),
 						})
@@ -1036,7 +1036,7 @@ templ SaldaKlase5i6MT(tabs domain.TabData, tbl domain.TableData, btnObrada, btnP
 					</div>
 					<div class="flex items-center gap-1 mb-1">
 						@tmpl.LabelField(domain.LabelFieldConfig{
-							ID:         "lbldodatuma",
+							ID:         "dodatuma",
 							LabelText:  translator.Label("Do datuma"),
 							ClassLabel: common.ClassLabel + " w-24 ",
 						})
@@ -1055,7 +1055,7 @@ templ SaldaKlase5i6MT(tabs domain.TabData, tbl domain.TableData, btnObrada, btnP
 						<div class="flex items-center gap-1">
 							<!-- radio set klase 5 i 6  on the left -->
 							@tmpl.LabelField(domain.LabelFieldConfig{
-								ID:         "lblklasa",
+								ID:         "klasa",
 								LabelText:  translator.Label("Klasa"),
 								ClassLabel: common.ClassLabel + " w-24",
 							})
@@ -1099,7 +1099,6 @@ templ SaldaKlase5i6MT(tabs domain.TabData, tbl domain.TableData, btnObrada, btnP
 			</div>
 		</div>
 	</div>
-	@tmpl.SpinnerScript()
 }
 
 templ SaldaPoKomercijalistima(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, gnGod int, translator *i18n.Service) {

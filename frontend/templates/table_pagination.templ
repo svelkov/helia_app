@@ -16,7 +16,11 @@ templ TablePagination(tbl domain.TableData, translator *i18n.Service) {
 				id="pageSize"
 				class="block w-auto px-1 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring focus:border-blue-300"
 				hx-get={ fmt.Sprintf("%s", tbl.URLGetAll) }
-				hx-target={ fmt.Sprintf("#%s", tbl.TableID) }
+				if tbl.HxTarget != "" {
+					hx-target={ tbl.HxTarget }
+				} else {
+					hx-target={ fmt.Sprintf("#%s", tbl.TableID) }
+				}
 				hx-trigger="change"
 				if tbl.Pagination.HxInclude !="" {
 					hx-include={ tbl.Pagination.HxInclude }

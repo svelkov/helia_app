@@ -1,42 +1,40 @@
 package repository
 
 import (
-	"fmt"
+	"context"
 	"helia/internal/common"
 	"helia/internal/domain"
 	"reflect"
-
-	"github.com/gin-gonic/gin"
 )
 
 type SqlGenerator[T any] interface {
-	CreateInsertStatement(entity *T, tableFields []domain.Fields) (string, []interface{})
-	CreateUpdateStatement(entity *T, idField string, idValue interface{}, tableFields []domain.Fields) (string, []interface{})
+	CreateInsertStatement(ctx context.Context, entity *T, tableFields []domain.Fields, idField string) (string, []interface{})
+	CreateUpdateStatement(ctx context.Context, entity *T, idField string, idValue interface{}, tableFields []domain.Fields) (string, []interface{})
 	CreateGetByIDStatement(idField string, idValue interface{}) string
-	CreateGetAllStatement(c *gin.Context, tableFields []domain.Fields, idField string, searchParams ...string) (string, []interface{})
-	CreateGetCountRecordsStatement(c *gin.Context, tableFields []domain.Fields, searchParams ...string) (string, []interface{})
+	CreateGetAllStatement(ctx context.Context, tableFields []domain.Fields, idField string, searchParams ...string) (string, []interface{})
+	CreateGetCountRecordsStatement(ctx context.Context, tableFields []domain.Fields, searchParams ...string) (string, []interface{})
 }
 
 // CreateInsertStatement generates an INSERT query using QueryBuilder
-func (r *BaseRepository[T]) CreateInsertStatement(c *gin.Context, entity *T, tableFields []domain.Fields, idField string) (string, []interface{}) {
+func (r *BaseRepository[T]) CreateInsertStatement(ctx context.Context, entity *T, tableFields []domain.Fields, idField string) (string, []interface{}) {
 	config := common.RepositoryConfig{
 		TableName:  r.TableName,
 		EntityType: reflect.TypeOf(*entity),
 	}
 	qb := common.NewRepositoryQueryBuilder(config)
 
-	sqlQuery, args := qb.BuildInsert(c, tableFields, idField)
+	sqlQuery, args := qb.BuildInsert(ctx, tableFields, idField)
 	return sqlQuery, args
 }
 
 // CreateUpdateStatement generates an UPDATE query using QueryBuilder
-func (r *BaseRepository[T]) CreateUpdateStatement(c *gin.Context, entity *T, idField string, idValue interface{}, tableFields []domain.Fields) (string, []interface{}) {
+func (r *BaseRepository[T]) CreateUpdateStatement(ctx context.Context, entity *T, idField string, idValue interface{}, tableFields []domain.Fields) (string, []interface{}) {
 	config := common.RepositoryConfig{
 		TableName:  r.TableName,
 		EntityType: reflect.TypeOf(*entity),
 	}
 	qb := common.NewRepositoryQueryBuilder(config)
-	return qb.BuildUpdate(c, tableFields, idField, idValue)
+	return qb.BuildUpdate(ctx, tableFields, idField, idValue)
 }
 
 // CreateGetByID generates a SELECT query for a single record by ID
@@ -50,42 +48,27 @@ func (r *BaseRepository[T]) CreateGetByIDStatement(idField string, idValue inter
 }
 
 // CreateGetAll generates a SELECT query for multiple records with filtering
-func (r *BaseRepository[T]) CreateGetAllStatement(c *gin.Context, tableFields []domain.Fields, idField string, searchParams ...string) (string, []interface{}) {
+func (r *BaseRepository[T]) CreateGetAllStatement(ctx context.Context, tableFields []domain.Fields, idField string, searchParams ...string) (string, []interface{}) {
 	config := common.RepositoryConfig{
 		TableName:   r.TableName,
 		EntityType:  reflect.TypeOf(new(T)).Elem(),
 		TableFields: tableFields,
 	}
-	orderBy := c.Query("sortBy")
-	sortOrder := c.Query("sortOrder")
-
 	qbRepo := common.NewRepositoryQueryBuilder(config)
-	userSession := domain.GetSessionFromContext(c)
-	hasGod, hasKar := r.GetHasGodHasKar()
-	qb := common.NewQueryBuilder(qbRepo.BuildSelectAll(tableFields, idField, searchParams...))
-	qb.AddGodKarConditions(hasGod, hasKar, userSession.SelectedGod, userSession.SelectedKar)
-	if orderBy != "" {
-		qb.AddOrderBy(fmt.Sprintf("%s.%s", r.TableName, orderBy))
-	}
-	if sortOrder != "" && (sortOrder == "ASC" || sortOrder == "DESC") {
-		qb.AddSortOrder(sortOrder)
-	}
+	qb := common.NewQueryBuilder(qbRepo.BuildSelectAll(tableFields, idField, searchParams...), true)
 
 	return qb.Build()
 
 }
 
 // CreateGetCountRecords generates a COUNT query
-func (r *BaseRepository[T]) CreateGetCountRecordsStatement(c *gin.Context, tableFields []domain.Fields, searchParams ...string) (string, []interface{}) {
+func (r *BaseRepository[T]) CreateGetCountRecordsStatement(ctx context.Context, tableFields []domain.Fields, searchParams ...string) (string, []interface{}) {
 	config := common.RepositoryConfig{
 		TableName:   r.TableName,
 		EntityType:  reflect.TypeOf(new(T)).Elem(),
 		TableFields: tableFields,
 	}
 	qb := common.NewRepositoryQueryBuilder(config)
-	userSession := domain.GetSessionFromContext(c)
-	hasGod, hasKar := r.GetHasGodHasKar()
-	qb.AddGodKarConditions(hasGod, hasKar, userSession.SelectedGod, userSession.SelectedKar)
 	query := qb.BuildCount(tableFields, searchParams...)
 
 	return query, qb.GetArgs()

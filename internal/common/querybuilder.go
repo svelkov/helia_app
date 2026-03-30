@@ -1,13 +1,12 @@
 package common
 
 import (
+	"context"
 	"fmt"
 	"helia/internal/domain"
 	"reflect"
 	"strings"
 	"time"
-
-	"github.com/gin-gonic/gin"
 )
 
 type QueryBuilder struct {
@@ -46,12 +45,14 @@ const (
 	CountQuery  QueryType = "count"
 )
 
-func NewQueryBuilder(baseQuery string) *QueryBuilder {
+func NewQueryBuilder(baseQuery string, addInitialWhere bool) *QueryBuilder {
 	qb := &QueryBuilder{
 		baseQuery:  baseQuery,
 		paramCount: 1,
 	}
-	qb.whereClause.WriteString(" WHERE 1 = 1 ")
+	if addInitialWhere {
+		qb.whereClause.WriteString(" WHERE 1 = 1 ")
+	}
 	return qb
 }
 
@@ -187,6 +188,24 @@ func (qb *QueryBuilder) AddOrCondition(condition string, values ...interface{}) 
 	return qb
 }
 
+// AddCustomSearchCondition for complex conditions (joined with AND)
+func (qb *QueryBuilder) AddCustomSearchCondition(fields []string, searchValue interface{}) *QueryBuilder {
+	qb.whereClause.WriteString(" AND ( ")
+	searchCondition := ""
+	for _, field := range fields {
+		searchCondition += fmt.Sprintf("%s::text ILIKE $%d OR ", field, qb.paramCount)
+	}
+	qb.args = append(qb.args, "%"+searchValue.(string)+"%")
+	qb.paramCount++
+	// Remove the trailing " OR "
+	if len(searchCondition) > 0 {
+		searchCondition = searchCondition[:len(searchCondition)-4]
+	}
+	qb.whereClause.WriteString(searchCondition + " )")
+
+	return qb
+}
+
 // Build constructs the final SQL query and arguments
 func (qb *QueryBuilder) Build() (string, []interface{}) {
 	var query strings.Builder
@@ -248,9 +267,15 @@ func (qb *QueryBuilder) AddArgs(args ...interface{}) {
 // ==================== Repository-Specific Methods ====================
 
 // BuildInsert constructs an INSERT query with RETURNING clause
-func (qb *QueryBuilder) BuildInsert(c *gin.Context, fields []domain.Fields, idField string) (string, []interface{}) {
+// Retrieves UserSession from context.Context
+func (qb *QueryBuilder) BuildInsert(ctx context.Context, fields []domain.Fields, idField string) (string, []interface{}) {
 	if qb.tableName == "" {
 		return "", nil
+	}
+
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		return "", nil // Handle gracefully - caller will get empty query
 	}
 
 	var columns []string
@@ -265,7 +290,7 @@ func (qb *QueryBuilder) BuildInsert(c *gin.Context, fields []domain.Fields, idFi
 	for _, field := range fields {
 		fieldMap[strings.ToLower(field.Name)] = field
 	}
-	userSession := domain.GetSessionFromContext(c)
+
 	// Add god/kar first if entity has them
 	if hasGod {
 		columns = append(columns, "god")
@@ -310,14 +335,20 @@ func (qb *QueryBuilder) BuildInsert(c *gin.Context, fields []domain.Fields, idFi
 }
 
 // BuildUpdate constructs an UPDATE query
-func (qb *QueryBuilder) BuildUpdate(c *gin.Context, fields []domain.Fields, idField string, idValue interface{}) (string, []interface{}) {
+// Retrieves UserSession from context.Context
+func (qb *QueryBuilder) BuildUpdate(ctx context.Context, fields []domain.Fields, idField string, idValue interface{}) (string, []interface{}) {
 	if qb.tableName == "" {
 		return "", nil
 	}
 
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		return "", nil // Handle gracefully - caller will get empty query
+	}
+
 	var columns []string
 	var values []interface{}
-	userSession := domain.GetSessionFromContext(c)
+
 	// Add provided fields
 	for _, field := range fields {
 		if strings.ToLower(field.Name) == "xdatizmene" || strings.ToLower(field.Name) == "xopizmene" {

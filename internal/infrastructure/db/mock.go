@@ -7,14 +7,24 @@ import (
 
 // MockDatabase is a mock implementation of the Database interface for testing
 type MockDatabase struct {
+	GetContextFunc      func(ctx context.Context, dest interface{}, query string, args ...interface{}) error
 	GetFunc             func(dest interface{}, query string, args ...interface{}) error
+	SelectContextFunc   func(ctx context.Context, dest interface{}, query string, args ...interface{}) error
 	SelectFunc          func(dest interface{}, query string, args ...interface{}) error
+	QueryRowContextFunc func(ctx context.Context, query string, args ...interface{}) *sql.Row
 	QueryRowFunc        func(query string, args ...interface{}) *sql.Row
 	QueryContextFunc    func(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error)
-	QueryRowContextFunc func(ctx context.Context, query string, args ...interface{}) *sql.Row
+	ExecContextFunc     func(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
 	BeginxFunc          func() (Transaction, error)
 	PingFunc            func() error
 	CloseFunc           func() error
+}
+
+func (m *MockDatabase) GetContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error {
+	if m.GetContextFunc != nil {
+		return m.GetContextFunc(ctx, dest, query, args...)
+	}
+	return nil
 }
 
 func (m *MockDatabase) Get(dest interface{}, query string, args ...interface{}) error {
@@ -24,9 +34,23 @@ func (m *MockDatabase) Get(dest interface{}, query string, args ...interface{}) 
 	return nil
 }
 
+func (m *MockDatabase) SelectContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error {
+	if m.SelectContextFunc != nil {
+		return m.SelectContextFunc(ctx, dest, query, args...)
+	}
+	return nil
+}
+
 func (m *MockDatabase) Select(dest interface{}, query string, args ...interface{}) error {
 	if m.SelectFunc != nil {
 		return m.SelectFunc(dest, query, args...)
+	}
+	return nil
+}
+
+func (m *MockDatabase) QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row {
+	if m.QueryRowContextFunc != nil {
+		return m.QueryRowContextFunc(ctx, query, args...)
 	}
 	return nil
 }
@@ -45,11 +69,11 @@ func (m *MockDatabase) QueryContext(ctx context.Context, query string, args ...i
 	return nil, nil
 }
 
-func (m *MockDatabase) QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row {
-	if m.QueryRowContextFunc != nil {
-		return m.QueryRowContextFunc(ctx, query, args...)
+func (m *MockDatabase) ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
+	if m.ExecContextFunc != nil {
+		return m.ExecContextFunc(ctx, query, args...)
 	}
-	return nil
+	return nil, nil
 }
 
 func (m *MockDatabase) Beginx() (Transaction, error) {
@@ -75,10 +99,19 @@ func (m *MockDatabase) Close() error {
 
 // MockTransaction is a mock implementation of the Transaction interface for testing
 type MockTransaction struct {
-	ExecFunc     func(query string, args ...interface{}) (sql.Result, error)
-	QueryRowFunc func(query string, args ...interface{}) *sql.Row
-	CommitFunc   func() error
-	RollbackFunc func() error
+	ExecContextFunc     func(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
+	ExecFunc            func(query string, args ...interface{}) (sql.Result, error)
+	QueryRowContextFunc func(ctx context.Context, query string, args ...interface{}) *sql.Row
+	QueryRowFunc        func(query string, args ...interface{}) *sql.Row
+	CommitFunc          func() error
+	RollbackFunc        func() error
+}
+
+func (m *MockTransaction) ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
+	if m.ExecContextFunc != nil {
+		return m.ExecContextFunc(ctx, query, args...)
+	}
+	return nil, nil
 }
 
 func (m *MockTransaction) Exec(query string, args ...interface{}) (sql.Result, error) {
@@ -86,6 +119,13 @@ func (m *MockTransaction) Exec(query string, args ...interface{}) (sql.Result, e
 		return m.ExecFunc(query, args...)
 	}
 	return nil, nil
+}
+
+func (m *MockTransaction) QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row {
+	if m.QueryRowContextFunc != nil {
+		return m.QueryRowContextFunc(ctx, query, args...)
+	}
+	return nil
 }
 
 func (m *MockTransaction) QueryRow(query string, args ...interface{}) *sql.Row {

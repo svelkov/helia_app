@@ -1,7 +1,17 @@
 - proveri zadnja vrednost ve sekvence nakon migracije zato sto su vrednosti setovani na 1
 - proveri id polja i postavi na autoincrement
 -FNAL dodaj index god, kar, tipdok, nalog kao unique index 
+- dodaj novu tabelu tipanalitike koja je u vezi sa partnerima 0..n i sa
+fkpl takodje 0..n. Ova tabela je dodata u .sql definiciju baze, takodje su dodate i constraint-te. 
+- Posle dodavanja ove tabele mora da se uradi reogranizacija podataka tj . da se u FKPL oznace polja koja su za partnere sa tipom analitike za partnere i sva ostala konta koja imaju tip = 1 tj analitika treba da budu obrisani. Veza izmedju fkpl i tipanalitike i partnerii tip analitike mora se proveriti i koretno uspostaviti.
+
+
 
 handleUpdateNalogDataResponse
 handleTipdokAfterRequest
 clearFieldError
+
+- proveri svuda gde se nalazi script u templ i gde je moguce koristi jedinstvenu funkciju
+- ako je specificna samo za prozor gde se potziva onda je definisi u taj templ.
+- ako je listener definisi je u templ gde se poziva u suprotnom moze da pravi probleme
+

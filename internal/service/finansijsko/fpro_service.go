@@ -1,17 +1,17 @@
 package finansijsko
 
 import (
+	"context"
 	"fmt"
 	"helia/config"
+	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
 	"helia/internal/repository"
 	"helia/internal/service"
+	"math"
 	"reflect"
-
 	"strings"
-
-	"github.com/gin-gonic/gin"
 )
 
 // FproViewData encapsulates all data needed for the Nalog display page.
@@ -23,19 +23,35 @@ type FproViewData struct {
 // NalogService defines the interface for operations related to Fpro (Nalogs).
 type FproService interface {
 	service.Service[domain.Fpro]
-	//GetNalogsViewData fetches all data required to render the Nalog list page.
+	GetAllFproByFnalID(ctx context.Context, fproPayload *domain.FproPayload, tbl *domain.TableData, fnalID int64, currentPage, pageSize int, searchText string) error
+	SaveNalogStavke(ctx context.Context, fproStavke *domain.FproPayload) error
+	FproValidate(ctx context.Context, entity *domain.FproPayload) []domain.FieldError
+	GetOrgJedinice(ctx context.Context) ([]domain.ComboItem, error)
+	GetMestoTroska(ctx context.Context, idorgjed int64) ([]domain.ComboItem, error)
+	GetValute(ctx context.Context) ([]domain.ComboItem, error)
+	GetKomercijalisti(ctx context.Context) ([]domain.ComboItem, error)
+	GetMagacini(ctx context.Context) ([]domain.ComboItem, error)
+	GetMI(ctx context.Context) ([]domain.ComboItem, error)
+	GetFieldCache() map[string]reflect.StructField
 	SetNalogIDFieldName(string)
 	GetTableStavkeFields() []domain.Fields
 	GetTableNalogFields() []domain.Fields
-	GetNaloziStavke(c *gin.Context, nalogID int64, searchQuery string, page int, offset int, tableFields []domain.Fields) (domain.TableData, error)
-	GetFieldCache() map[string]reflect.StructField
-	GetAllByFnalID(c *gin.Context, fnalID int64) (*[]domain.Fpro, error)
 }
 
-// FproResource implements the NalogService interface.
+// FproResource implements the FproService interface.
 type FproResource struct {
 	service                 *service.BaseService[domain.Fpro]
 	fproRepo                repository.BaseRepository[domain.Fpro]
+	fnalRepo                repository.BaseRepository[domain.Fnal]
+	fkplRepo                repository.BaseRepository[domain.Fkpl]
+	ojRepo                  repository.BaseRepository[domain.Orgjed]
+	mtroskaRepo             repository.BaseRepository[domain.Mestotr]
+	fvrRepo                 repository.BaseRepository[domain.Fvr]
+	fvknjracRepo            repository.BaseRepository[domain.Fvknjrac]
+	valuteRepo              repository.BaseRepository[domain.Valute]
+	komercijalistiRepo      repository.BaseRepository[domain.Komercijalisti]
+	miRepo                  repository.BaseRepository[domain.Fisp]
+	magaciniRepo            repository.BaseRepository[domain.Magacini]
 	fproIDFieldName         string
 	naloziTableFields       []domain.Fields
 	naloziStavkeTableFields []domain.Fields
@@ -45,6 +61,16 @@ type FproResource struct {
 func NewFproService(
 	Service *service.BaseService[domain.Fpro],
 	fproRepo repository.BaseRepository[domain.Fpro],
+	fnalRepo repository.BaseRepository[domain.Fnal],
+	fkplRepo repository.BaseRepository[domain.Fkpl],
+	ojRepo repository.BaseRepository[domain.Orgjed],
+	mtroskaRepo repository.BaseRepository[domain.Mestotr],
+	fvrRepo repository.BaseRepository[domain.Fvr],
+	fvknjracRepo repository.BaseRepository[domain.Fvknjrac],
+	valuteRepo repository.BaseRepository[domain.Valute],
+	komercijalistiRepo repository.BaseRepository[domain.Komercijalisti],
+	miRepo repository.BaseRepository[domain.Fisp],
+	magaciniRepo repository.BaseRepository[domain.Magacini],
 	fproIDFieldName string,
 	naloziTableFields []domain.Fields,
 	naloziStavkeTableFields []domain.Fields,
@@ -53,6 +79,16 @@ func NewFproService(
 	rs := &FproResource{
 		service:                 Service,
 		fproRepo:                fproRepo,
+		fnalRepo:                fnalRepo,
+		fkplRepo:                fkplRepo,
+		ojRepo:                  ojRepo,
+		mtroskaRepo:             mtroskaRepo,
+		fvrRepo:                 fvrRepo,
+		fvknjracRepo:            fvknjracRepo,
+		valuteRepo:              valuteRepo,
+		komercijalistiRepo:      komercijalistiRepo,
+		miRepo:                  miRepo,
+		magaciniRepo:            magaciniRepo,
 		fproIDFieldName:         fproIDFieldName,
 		naloziTableFields:       naloziTableFields,
 		naloziStavkeTableFields: naloziStavkeTableFields,
@@ -77,38 +113,38 @@ func (s *FproResource) GetFieldCache() map[string]reflect.StructField {
 }
 
 // Create implements NalogService.
-func (s *FproResource) Create(c *gin.Context, Fpro *domain.Fpro, idField string, fields []domain.Fields) ([]domain.FieldError, int64, error) {
-	return s.service.Create(c, Fpro, idField, fields)
+func (s *FproResource) Create(ctx context.Context, Fpro *domain.Fpro, idField string, fields []domain.Fields) ([]domain.FieldError, int64, error) {
+	return s.service.Create(ctx, Fpro, idField, fields)
 }
 
 // Delete implements NalogService.
-func (s *FproResource) Delete(idField string, id int64) error {
-	return s.service.Delete(idField, id)
+func (s *FproResource) Delete(ctx context.Context, idField string, id int64) error {
+	return s.service.Delete(ctx, idField, id)
 }
 
 // GetAll implements NalogService.
-func (s *FproResource) GetAll(c *gin.Context, page int, offset int, tableFields []domain.Fields, idField string, searchParams ...string) (*[]domain.Fpro, error) {
-	return s.service.GetAll(c, page, offset, tableFields, idField, searchParams...)
+func (s *FproResource) GetAll(ctx context.Context, page int, offset int, tableFields []domain.Fields, idField string, searchParams ...string) (*[]domain.Fpro, error) {
+	return s.service.GetAll(ctx, page, offset, tableFields, idField, searchParams...)
 }
 
 // GetAllCustom implements NalogService.
-func (s *FproResource) GetAllCustom(c *gin.Context, queryText string, whereText string, args []interface{}, limitOffset string, orderBy string) (*[]domain.Fpro, error) {
-	return s.service.GetAllCustom(c, queryText, whereText, args, limitOffset, orderBy)
+func (s *FproResource) GetAllCustom(ctx context.Context, queryText string, whereText string, args []interface{}, limitOffset string, orderBy string) (*[]domain.Fpro, error) {
+	return s.service.GetAllCustom(ctx, queryText, whereText, args, limitOffset, orderBy)
 }
 
 // GetByID implements NalogService.
-func (s *FproResource) GetByID(idField string, idValue int64) (*domain.Fpro, error) {
-	return s.service.GetByID(idField, idValue)
+func (s *FproResource) GetByID(ctx context.Context, idField string, idValue int64) (*domain.Fpro, error) {
+	return s.service.GetByID(ctx, idField, idValue)
 }
 
 // GetTotalRecords implements NalogService.
-func (s *FproResource) GetTotalRecords(c *gin.Context, tableFields []domain.Fields, searchParams ...string) (int, error) {
-	return s.service.GetTotalRecords(c, tableFields, searchParams...)
+func (s *FproResource) GetTotalRecords(ctx context.Context, tableFields []domain.Fields, searchParams ...string) (int, error) {
+	return s.service.GetTotalRecords(ctx, tableFields, searchParams...)
 }
 
 // GetTotalRecordsCustom implements NalogService.
-func (s *FproResource) GetTotalRecordsCustom(c *gin.Context, queryText string, whereText string, args []interface{}, limitOffset string, orderBy string) (int, error) {
-	return s.service.GetTotalRecordsCustom(c, queryText, whereText, args, limitOffset, orderBy)
+func (s *FproResource) GetTotalRecordsCustom(ctx context.Context, queryText string, whereText string, args []interface{}, limitOffset string, orderBy string) (int, error) {
+	return s.service.GetTotalRecordsCustom(ctx, queryText, whereText, args, limitOffset, orderBy)
 }
 
 // MapEntityToValues implements NalogService.
@@ -117,135 +153,615 @@ func (s *FproResource) MapEntityToValues(entity *domain.Fpro, tableFields []doma
 }
 
 // Update implements NalogService.
-func (s *FproResource) Update(c *gin.Context, entity *domain.Fpro, idField string, idValue interface{}, tableFields []domain.Fields) ([]domain.FieldError, error) {
-	return s.service.Update(c, entity, idField, idValue, tableFields)
+func (s *FproResource) Update(ctx context.Context, entity *domain.Fpro, idField string, idValue interface{}, tableFields []domain.Fields) ([]domain.FieldError, error) {
+	return s.service.Update(ctx, entity, idField, idValue, tableFields)
 }
 
-func (s *FproResource) GetAllByFnalID(c *gin.Context, fnalID int64) (*[]domain.Fpro, error) {
-	queryText := `select fp.*,  fk.naziv as naziv,
-	case when fp.kat = 1 then fp.iznos
-		 when fp.kat = 2 then fp.iznos
+func (s *FproResource) GetAllFproByFnalID(ctx context.Context, fproPayload *domain.FproPayload, tbl *domain.TableData, fnalID int64, currentPage, pageSize int, searchText string) error {
+	common.SetupTablePagination(tbl, currentPage, pageSize)
+	tbl.ShowActions = true
+	tbl.HasTotals = true
+	qbCount := common.NewQueryBuilder(`SELECT COUNT(*) FROM fpro fp `, true)
+	qbCount.AddJoin(` left join fkpl fk on fk.idfkpl = fp.idfkpl`)
+	qbCount.AddEqual("fp.idfnal", fnalID)
+	if searchText != "" {
+		qbCount.AddLike("CONCAT( fp.nalog, ' ', fp.tipdok, ' ', fp.danal, ' ', fp.opis, ' ', fp.dadok, ' ', fp.rok, ' ', fp.vrd, ' ', fp.vkonta, ' ', fp.konto, ' ', fp.sifra, ' ', fk.naziv)", searchText)
+	}
+	sqlCountQuery, args := qbCount.Build()
+	totalRecords, err := s.fproRepo.GetTotalRecordsCustom(ctx, sqlCountQuery, "", args, "", "")
+	if err != nil {
+		return fmt.Errorf("failed to get total records for Fpro by fnalID: %w", err)
+	}
+	common.SetTableTotalRecords(tbl, totalRecords, pageSize)
+
+	qb := common.NewQueryBuilder(`select fp.idfpro, fp.rbr, fp.nalog, fp.tipdok, fp.danal, fp.iznos, fp.kat, coalesce(fp.opis, '') as opis, fp.dadok,
+	fp.rok, fp.vrd, fp.vkonta, fp.konto, coalesce(fp.sifra, '') as sifra, fp.tra, fp.deviznos, fp.kurs,
+	fp.sifval, fp.mi, coalesce(fp.dokum, '') as dokum, fp.idfnal, 
+	fp.idorgjed, fp.idfkpl, fp.komid, fp.mestotrid, 
+	coalesce(fp.dokumv, '') as dokumv, fp.dadokv,	fp.travez, fk.naziv as naziv,
+	case when fp.kat in (1,2) then fp.iznos
 		 else 0 end as dug,
-	case when fp.kat = 3 then fp.iznos
-		 when fp.kat = 4 then fp.iznos
+	case when fp.kat in (3,4) then fp.iznos
 		 else 0 end as pot
-				  from fpro as fp
-			 	  left join fkpl fk on fk.idfkpl = fp.idfkpl`
-	whereText := " where idfnal = $1"
-	args := []interface{}{}
-	args = append(args, fnalID)
+	from fpro as fp`, true)
+	qb.AddJoin(` left join fkpl fk on fk.idfkpl = fp.idfkpl`)
+	qb.AddEqual("fp.idfnal", fnalID)
+	if searchText != "" {
+		qb.AddLike("CONCAT( fp.nalog, ' ', fp.tipdok, ' ', fp.danal, ' ', fp.opis, ' ', fp.dadok, ' ', fp.rok, ' ', fp.vrd, ' ', fp.vkonta, ' ', fp.konto, ' ', fp.sifra, ' ', fk.naziv)", searchText)
+	}
 
-	entities, err := s.fproRepo.GetAllCustom(c, queryText, whereText, args, "", " order by rbr desc ")
-	return entities, err
+	qb.AddOrderBy("fp.rbr")
+	qb.AddSortOrder(" DESC")
+	qb.SetLimit(pageSize)
+	qb.SetOffset((currentPage - 1) * pageSize)
+	sqlQuery, args := qb.Build()
+	entities, err := s.fproRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	if err != nil {
+		return fmt.Errorf("failed to get Fpro by fnalID: %w", err)
+	}
+	common.SetTableTotalRecords(tbl, totalRecords, pageSize)
+	common.SetupTablePagination(tbl, currentPage, pageSize)
+	tbl.ShowActions = true
+	
+	// Populate table rows
+	if entities != nil && len(*entities) > 0 {
+		tbl.Totals = make([]string, len(tbl.Headers))
+		tbl.Totals[0] = i18n.GetInstance().Label("Ukupno") // Set label for totals column
+		var dugTotal, potTotal float64
+		for _, entity := range *entities {
+			fields := []string{}
+			// Add common fields
+			fields = append(fields,
+				fmt.Sprintf("%d", entity.Rbr),
+				entity.Konto,
+				entity.Sifra,
+				entity.Naziv,
+				fmt.Sprintf("%d", entity.Vrd),
+				entity.Opis,
+				common.FormatNumberWithSystemLocale(entity.Dug, 2),
+				common.FormatNumberWithSystemLocale(entity.Pot, 2),
+				entity.Dokum,
+				entity.Dadok.Time.Format(common.DateLayout),
+			)
+			dugTotal += entity.Dug
+			potTotal += entity.Pot
+			tblRow := domain.TableRow{ID: fmt.Sprintf("%d", entity.IDFpro), Fields: fields, HasUpdate: true, HasDelete: true}
+			tbl.Rows = append(tbl.Rows, tblRow)
+		}
+		tbl.Totals[6] = common.FormatNumberWithSystemLocale(dugTotal, 2)
+		tbl.Totals[7] = common.FormatNumberWithSystemLocale(potTotal, 2)
+	}
+
+	mtroska := []domain.ComboItem{{Key: "-", Value: "-"}} // Default option when no records are found
+	orgjed, err := s.GetOrgJedinice(ctx)
+	if err != nil {
+		return err
+	}
+	magacini, err := s.GetMagacini(ctx)
+	if err != nil {
+		return err
+	}
+	komercijalisti, err := s.GetKomercijalisti(ctx)
+	if err != nil {
+		return err
+	}
+	mi, err := s.GetMI(ctx)
+	if err != nil {
+		return err
+	}
+	valute, err := s.GetValute(ctx)
+	if err != nil {
+		return err
+	}
+	fproPayload.CbxOrgjed = orgjed
+	fproPayload.CbxMtroska = mtroska
+	fproPayload.CbxValute = valute
+	fproPayload.CbxMi = mi
+	fproPayload.CbxMagacin = magacini
+	fproPayload.CbxKomercijalista = komercijalisti
+	return err
 }
 
-// Helper to construct common WHERE clauses and arguments for Fpro queries
-func (s *FproResource) buildFproWhere(idfnal int64, god, kar int, args *[]interface{}, searchQuery string) string {
-	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
-	basicWhere := s.fproRepo.CreateBasicWhere(s.naloziStavkeTableFields, args, hasGod, hasKar, god, kar, searchQuery)
+// SaveNalogStavke implements the logic to save the nalog stavke (items) for a given nalog.
+func (s *FproResource) SaveNalogStavke(ctx context.Context, fproStavke *domain.FproPayload) error {
+	// Build the insert query using QueryBuilder
+	var insertedID int64
+	qb := common.NewRepositoryQueryBuilder(common.RepositoryConfig{
+		TableName:     "fpro",
+		EntityType:    reflect.TypeOf(domain.Fpro{}),
+		TableFields:   s.GetTableStavkeFields(),
+		IncludeGodKar: true,
+	})
+	fnal, err := s.fnalRepo.GetByID(ctx, common.IDfnal, fproStavke.IDFnal)
+	if err != nil {
+		return fmt.Errorf("failed to get fnal by ID: %w", err)
+	}
+	if fnal == nil {
+		return fmt.Errorf("fnal not found for ID: %d", fproStavke.IDFnal)
+	}
+	fproStavke.Nalog = fmt.Sprintf("%d", fnal.Nalog)
+	fproStavke.Tipdok = fnal.Tipdok
+	fproStavke.Danal = fnal.Danal.Format(common.HtmlLayout)
+	fproStavke.Datob = fnal.Datob.Format(common.HtmlLayout)
 
-	var conditions []string
-	if basicWhere != "" {
-		conditions = append(conditions, basicWhere)
+	lastRbr, err := s.getLastRbr(ctx, fproStavke.IDFnal)
+	if err != nil {
+		return fmt.Errorf("failed to get last Rbr: %w", err)
 	}
-	if idfnal > 0 {
-		conditions = append(conditions, fmt.Sprintf("(idfnal = %d)", idfnal))
+	fproStavke.Rbr = lastRbr + 1
+	fields := s.mapFieldsToValues(fproStavke)
+	sqlQuery, args := qb.BuildInsert(ctx, fields, common.IDfpro)
+
+	// Start a transaction
+	tx, err := s.fproRepo.BeginTx()
+	if err != nil {
+		return fmt.Errorf("error beginning transaction: %w", err)
+	}
+	// Defer rollback in case of error
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	err = tx.QueryRowContext(ctx, sqlQuery, args...).Scan(&insertedID)
+	if err != nil {
+		return fmt.Errorf("insert fpro failed: %w", err)
+	}
+	// update fnal with new stavle , duguje, potrazuje
+	qbUpdate := common.NewQueryBuilder(`UPDATE fnal SET dug = dug + $1, 
+	pot = pot + $2, brst = brst + 1 `, true)
+	qbUpdate.AddArgs(common.StringToFloat64(fproStavke.Duguje), common.StringToFloat64(fproStavke.Potrazuje))
+	qbUpdate.AddEqual("idfnal", fproStavke.IDFnal)
+
+	sqlUpdate, argsUpdate := qbUpdate.Build()
+	_, err = tx.ExecContext(ctx, sqlUpdate, argsUpdate...)
+	if err != nil {
+		return fmt.Errorf("update fnal failed: %w", err)
 	}
 
-	if len(conditions) == 0 {
-		return ""
+	err = tx.Commit()
+	if err != nil {
+		return fmt.Errorf("error committing transaction: %w", err)
 	}
-	return strings.Join(conditions, " AND ")
+
+	return nil
 }
 
-// GetNalogsViewData fetches all data required to render the Nalog list page.
-func (s *FproResource) GetNaloziStavke(c *gin.Context, idFnal int64, searchQuery string, page int, offset int, tableFields []domain.Fields) (domain.TableData, error) {
-	table := domain.TableData{}
-	// 2. Fetch Fpro Entities
-	args := []interface{}{}
+func (s *FproResource) getLastRbr(ctx context.Context, fnlID int64) (int64, error) {
+	// Implementation for getting the last Rbr
+	qb := common.NewQueryBuilder(`SELECT COALESCE(MAX(rbr), 0) FROM fpro `, true)
+	qb.AddEqual("idfnal", fnlID)
+	sqlQuery, args := qb.Build()
+	var lastRbr int64
+	err := s.fproRepo.DB.QueryRowContext(ctx, sqlQuery, args...).Scan(&lastRbr)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get last Rbr: %w", err)
+	}
+	return lastRbr, nil
+}
 
-	// Get session for god/kar values
-	session := domain.GetSessionFromContext(c)
+func (s *FproResource) mapFieldsToValues(fproStavke *domain.FproPayload) []domain.Fields {
+	fields := []domain.Fields{}
+	add := func(name, value string) {
+		value = strings.TrimSpace(value)
+		if value == "" || value == "-" {
+			return
+		}
+		fields = append(fields, domain.Fields{Name: name, Value: value})
+	}
+
+	add(common.IDfnal, fmt.Sprintf("%d", fproStavke.IDFnal))
+	add("idfkpl", fmt.Sprintf("%d", fproStavke.IDFkpl))
+	add("rbr", fmt.Sprintf("%d", fproStavke.Rbr))
+	add("tipdok", fproStavke.Tipdok)
+	add("nalog", fproStavke.Nalog)
+	add("danal", fproStavke.Danal)
+	add("opis", fproStavke.Opisknj)
+	add("brst", fproStavke.Brst)
+	add("konto", fproStavke.Konto)
+	add("sifra", fproStavke.Sifra)
+	add("vkonta", fproStavke.Vkonta)
+	add("vrd", fproStavke.Vrd)
+
+	duguje := common.StringToFloat64(fproStavke.Duguje)
+	potrazuje := common.StringToFloat64(fproStavke.Potrazuje)
+	if duguje > 0 {
+		add("kat", "1")
+		add("iznos", fproStavke.Duguje)
+	} else if duguje < 0 {
+		add("kat", "2")
+		add("iznos", fmt.Sprintf("%.2f", -math.Abs(duguje)))
+	}
+	if potrazuje > 0 {
+		add("kat", "3")
+		add("iznos", fmt.Sprintf("%.2f", potrazuje))
+	} else if potrazuje < 0 {
+		add("kat", "4")
+		add("iznos", fmt.Sprintf("%.2f", -math.Abs(potrazuje)))
+	}
+
+	add("dokum", fproStavke.Dokum)
+	add("dadok", fproStavke.Dadok)
+	add("rok", fproStavke.Rok)
+	add("tra", fproStavke.Tra)
+	add("dokumv", fproStavke.Dokvezni)
+	add("dadokv", fproStavke.Dadokv)
+	add("travez", fproStavke.Travez)
+	add("idorgjed", fproStavke.IDorgjed)
+	add("mestotrid", fproStavke.Mestotrid)
+	add("magaciniid", fproStavke.Magaciniid)
+	add("komid", fproStavke.Komid)
+	add("fispid", fproStavke.Fispid)
+	add("idvalute", fproStavke.IDValute)
+	add("kurs", fproStavke.Kurs)
+	add("deviznos", fproStavke.Deviznos)
+
+	return fields
+}
+
+// GetOrgJedinice fetches the list of orgjed options for filtering.
+func (s *FproResource) GetOrgJedinice(ctx context.Context) ([]domain.ComboItem, error) {
+	session := domain.GetSessionFromStdContext(ctx)
 	if session == nil {
-		return table, fmt.Errorf("user session not found")
+		return nil, fmt.Errorf("user session not found")
 	}
 
-	// Use viewData.DefaultTipdok for the actual Fpro query
-	whereText := s.buildFproWhere(idFnal, session.SelectedGod, session.SelectedKar, &args, searchQuery)
-
-	// Get total records
-	totalRecordsQuery := `SELECT count(*) FROM Fpro `
-
-	totRecords, err := s.fproRepo.GetTotalRecordsCustom(c, totalRecordsQuery, whereText, args, "", "")
+	comboItems := []domain.ComboItem{}
+	comboItems = append(comboItems, domain.ComboItem{Key: "-", Value: "-"}) // Default option when no records are found
+	hasGod, hasKar := s.ojRepo.GetHasGodHasKar()
+	qb := common.NewQueryBuilder(`SELECT idorgjed, ojozn, naziv FROM orgjed`, true)
+	qb.AddGodKarConditions(hasGod, hasKar, session.SelectedGod, session.SelectedKar)
+	qb.AddOrderBy("ojozn ASC")
+	sqlQuery, args := qb.Build()
+	ojEntites, err := s.ojRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
 	if err != nil {
-		return table, fmt.Errorf("failed to get total records for Fpro: %w", err)
+		return comboItems, err
+	}
+	for _, oj := range *ojEntites {
+		comboItems = append(comboItems, domain.ComboItem{
+			Key:   fmt.Sprintf("%d", oj.IDOrgjed),
+			Value: fmt.Sprintf("%s - %s", oj.OjOzn, oj.Naziv),
+		})
+	}
+	return comboItems, nil
+}
+
+// GetMestoTroska fetches the list of Mesto Troska options based on the provided idorgjed.
+func (s *FproResource) GetMestoTroska(ctx context.Context, idorgjed int64) ([]domain.ComboItem, error) {
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		return nil, fmt.Errorf("user session not found")
 	}
 
-	// Calculate pagination details
-	currentPage, calculatedPageSize, totalPages := common.GetPaginationData(c, totRecords, s.cfg) // Pass nil for req
-	if page > 0 {                                                                                 // Override current page if provided from handler
-		currentPage = page
-	}
-
-	limitOffset := fmt.Sprintf(" LIMIT %d OFFSET %d", calculatedPageSize, (currentPage-1)*calculatedPageSize)
-	orderBy := " ORDER BY rbr "
-	selectQuery := `SELECT idFpro, rbr, fpro.konto, fpro.sifra, fkpl.naziv as nazivkonta, vrd, opis, dokum, dadok, rok, fpro.vkonta,
-	 CASE 
-        WHEN fpro.kat = 1 THEN fpro.iznos
-        WHEN fpro.kat = 2 THEN  fpro.iznos
-        ELSE 0
-    END AS dug,
-    CASE 
-        WHEN fpro.kat = 3 THEN  fpro.iznos
-        WHEN fpro.kat = 4 THEN  fpro.iznos
-        ELSE 0
-    END AS pot FROM Fpro
-	LEFT join fkpl ON fkpl.idfkpl = fpro.idfkpl`
-
-	entities, err := s.fproRepo.GetAllCustom(c, selectQuery, whereText, args, limitOffset, orderBy)
+	comboItems := []domain.ComboItem{}
+	comboItems = append(comboItems, domain.ComboItem{Key: "-", Value: "-"}) // Default option when no records are found
+	qb := common.NewQueryBuilder(`SELECT mestotrid, mtroska, opis, idorgjed FROM mestotr`, true)
+	hasGod, hasKar := s.mtroskaRepo.GetHasGodHasKar()
+	qb.AddGodKarConditions(hasGod, hasKar, userSession.SelectedGod, userSession.SelectedKar)
+	qb.AddEqual("idorgjed", idorgjed)
+	qb.AddOrderBy("mtroska ASC")
+	sqlQuery, args := qb.Build()
+	mtroskaEntites, err := s.mtroskaRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
 	if err != nil {
-		return table, fmt.Errorf("failed to get Fpro entities: %w", err)
+		return comboItems, err
+	}
+	for _, mtroska := range *mtroskaEntites {
+		comboItems = append(comboItems, domain.ComboItem{
+			Key:   fmt.Sprintf("%d", mtroska.MestoTrID),
+			Value: fmt.Sprintf("%s - %s", mtroska.Mtroska, mtroska.Opis),
+		})
+	}
+	return comboItems, nil
+}
+
+// GetValute fetches the list of valute options for filtering.
+func (s *FproResource) GetValute(ctx context.Context) ([]domain.ComboItem, error) {
+	session := domain.GetSessionFromStdContext(ctx)
+	if session == nil {
+		return nil, fmt.Errorf("user session not found")
 	}
 
-	//viewData = *entities
-	// Prepare TableData for UI
-	table = common.SetTableBasicData("STAVKE NALOGA", "nalozi-tablestavke", s.naloziStavkeTableFields, "", "", calculatedPageSize, currentPage, totalPages, totRecords, s.cfg)
-
-	// Prepare TableData for UI
-	tbl, err := common.SetTableRows(&table, *entities, s.GetTableStavkeFields(), s.fproIDFieldName, "", s.service.GetFieldCache())
+	comboItems := []domain.ComboItem{}
+	comboItems = append(comboItems, domain.ComboItem{Key: "-", Value: "-"}) // Default option when no records are found
+	hasGod, hasKar := s.valuteRepo.GetHasGodHasKar()
+	qb := common.NewQueryBuilder(`SELECT idvalute, sifval, naziv FROM valute`, true)
+	qb.AddGodKarConditions(hasGod, hasKar, session.SelectedGod, session.SelectedKar)
+	qb.AddOrderBy("sifval ASC")
+	sqlQuery, args := qb.Build()
+	valuteEntites, err := s.valuteRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
 	if err != nil {
-		return table, fmt.Errorf("failed to set table rows: %w", err)
+		return comboItems, err
 	}
-	table = *tbl
-	// Additional table data configuration can happen here
-	// if searchQuery != "" { // If it's a search, the URL might change for HTMX
-	// 	table.URLGetAll = "/api/nalozi/all/search"
-	// } else {
-	// 	table.URLGetAll = "/api/nalozi/all/tipdok" // For tipdok specific updates
+	for _, valute := range *valuteEntites {
+		comboItems = append(comboItems, domain.ComboItem{
+			Key:   fmt.Sprintf("%d", valute.IDValute),
+			Value: fmt.Sprintf("%d - %s", valute.Sifval, valute.Naziv.String),
+		})
+	}
+	return comboItems, nil
+}
+
+// GetKomercijalisti fetches the list of komercijalisti options for filtering.
+func (s *FproResource) GetKomercijalisti(ctx context.Context) ([]domain.ComboItem, error) {
+	session := domain.GetSessionFromStdContext(ctx)
+	if session == nil {
+		return nil, fmt.Errorf("user session not found")
+	}
+
+	comboItems := []domain.ComboItem{}
+	comboItems = append(comboItems, domain.ComboItem{Key: "-", Value: "-"}) // Default option when no records are found
+	hasGod, hasKar := s.komercijalistiRepo.GetHasGodHasKar()
+	qb := common.NewQueryBuilder(`SELECT komid, sifkom, imeprezime FROM komercijalisti`, true)
+	qb.AddGodKarConditions(hasGod, hasKar, session.SelectedGod, session.SelectedKar)
+	qb.AddOrderBy("sifkom ASC")
+	sqlQuery, args := qb.Build()
+	komercijalistiEntites, err := s.komercijalistiRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	if err != nil {
+		return comboItems, err
+	}
+	for _, komercijalista := range *komercijalistiEntites {
+		comboItems = append(comboItems, domain.ComboItem{
+			Key:   fmt.Sprintf("%d", komercijalista.KomID),
+			Value: fmt.Sprintf("%d - %s", komercijalista.Sifkom, komercijalista.Imeprezime),
+		})
+	}
+	return comboItems, nil
+}
+
+// GetMagacini fetches the list of magacini
+func (s *FproResource) GetMagacini(ctx context.Context) ([]domain.ComboItem, error) {
+	session := domain.GetSessionFromStdContext(ctx)
+	if session == nil {
+		return nil, fmt.Errorf("user session not found")
+	}
+
+	comboItems := []domain.ComboItem{}
+	comboItems = append(comboItems, domain.ComboItem{Key: "-", Value: "-"}) // Default option when no records are found
+	hasGod, hasKar := s.magaciniRepo.GetHasGodHasKar()
+	qb := common.NewQueryBuilder(`SELECT magaciniid, mag, opis FROM magacini`, true)
+	qb.AddGodKarConditions(hasGod, hasKar, session.SelectedGod, session.SelectedKar)
+	qb.AddOrderBy("mag ASC")
+	sqlQuery, args := qb.Build()
+	magaciniEntites, err := s.magaciniRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	if err != nil {
+		return comboItems, err
+	}
+	for _, magacin := range *magaciniEntites {
+		comboItems = append(comboItems, domain.ComboItem{
+			Key:   fmt.Sprintf("%d", magacin.MagaciniID),
+			Value: fmt.Sprintf("%d - %s", magacin.Mag, magacin.Opis),
+		})
+	}
+	return comboItems, nil
+}
+
+// GetMI fetches the list of MI options for filtering.
+func (s *FproResource) GetMI(ctx context.Context) ([]domain.ComboItem, error) {
+	session := domain.GetSessionFromStdContext(ctx)
+	if session == nil {
+		return nil, fmt.Errorf("user session not found")
+	}
+
+	comboItems := []domain.ComboItem{}
+	comboItems = append(comboItems, domain.ComboItem{Key: "-", Value: "-"}) // Default option when no records are found
+	hasGod, hasKar := s.komercijalistiRepo.GetHasGodHasKar()
+	qb := common.NewQueryBuilder(`SELECT fispid, mi, naziv FROM fisp`, true)
+	qb.AddGodKarConditions(hasGod, hasKar, session.SelectedGod, session.SelectedKar)
+	qb.AddOrderBy("mi ASC")
+	sqlQuery, args := qb.Build()
+	miEntites, err := s.miRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	if err != nil {
+		return comboItems, err
+	}
+	for _, mi := range *miEntites {
+		comboItems = append(comboItems, domain.ComboItem{
+			Key:   fmt.Sprintf("%d", mi.FispID),
+			Value: fmt.Sprintf("%d - %s", mi.MI, mi.Naziv),
+		})
+	}
+	return comboItems, nil
+}
+
+// FproValidate implements validation for Fpro entities.
+func (s *FproResource) FproValidate(ctx context.Context, entity *domain.FproPayload) []domain.FieldError {
+	var fieldErrors []domain.FieldError
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		return append(fieldErrors, domain.FieldError{Field: "session", ErrorMessage: common.ErrMsgUserSessionNotFound})
+	}
+
+	if s.isGodinaZatvorena(ctx, userSession.SelectedGod, userSession.SelectedKar) {
+		fieldErrors = append(fieldErrors, domain.FieldError{Field: "session", ErrorMessage: "godina je zatvorena, nije moguće izvršiti izmene na stavci naloga"})
+		return fieldErrors
+	}
+	if entity.Konto == "" || len(entity.Konto) <= 3 {
+		fieldErrors = append(fieldErrors, domain.FieldError{Field: "konto", ErrorMessage: common.ErrMsgObavezanPodatak})
+	}
+	fkplEntity, exist := s.findFkpl(ctx, userSession.SelectedGod, userSession.SelectedKar, entity.Konto, entity.Sifra)
+	if !exist {
+		fieldErrors = append(fieldErrors, domain.FieldError{Field: "konto", ErrorMessage: "nepostojeći konto"})
+	} else {
+		entity.Vkonta = fmt.Sprintf("%d", fkplEntity.Vkonta)
+		entity.IDFkpl = fkplEntity.IDFkpl
+	}
+	//TODO check how to implemet with tipovi analitike
+	// if entity.Sifra != "" && !sifraExists(entity.Sifra) {
+	// 	fieldErrors = append(fieldErrors, domain.FieldError{Field: "sifra", ErrorMessage: "nepostojeći analitički sifra"})
 	// }
-	table.Pagination.HxInclude = "#tipdokSelect, #search-input"
-	table.HxInclude = "#tipdokSelect, #search-input"
-	table.ShowActions = false // Default, can be overridden by specific handler needs
-	table.BtnAdd.IsVisible = false
-	table.BtnUpdate.IsVisible = false
-	table.BtnDelete.IsVisible = false
-	table.BtnPrint.IsVisible = false
-	//table.Pagination.PageSizes = []int{5, 10, 20, 30, 50} // Example sizes
-	table.Pagination.PageSize = calculatedPageSize
-	table.Pagination.CurrentPage = currentPage
-	table.Pagination.TotalPages = totalPages
-	table.Pagination.TotalRecords = totRecords
-	table.Pagination.StartRecord = (currentPage-1)*calculatedPageSize + 1
-	table.Pagination.EndRecord = currentPage * calculatedPageSize
-	// Ensure EndRecord is not greater than TotalRecords
-	if table.Pagination.EndRecord > totRecords {
-		table.Pagination.EndRecord = totRecords
+	if entity.Vrd != "10" && entity.Vrd != "20" && entity.Vrd != "30" && entity.Vrd != "40" && entity.Vrd != "80" {
+		fieldErrors = append(fieldErrors, domain.FieldError{Field: "vrd", ErrorMessage: "neispravna vrsta dokumenta"})
 	}
-	// viewData.TableData = table
+	if entity.Vrd == "90" {
+		fieldErrors = append(fieldErrors, domain.FieldError{Field: "vrd", ErrorMessage: "ne možete izabrati ovu vrstu dokumenta"})
+	}
+	fkpl, foundFkpl := s.findFkpl(ctx, userSession.SelectedGod, userSession.SelectedKar, entity.Konto, entity.Sifra)
+	if !foundFkpl {
+		if entity.Sifra == "" {
+			fieldErrors = append(fieldErrors, domain.FieldError{Field: "konto", ErrorMessage: "nepostojeći subsintetički konto"})
+		} else {
+			fieldErrors = append(fieldErrors, domain.FieldError{Field: "sifra", ErrorMessage: "nepostojeća analitička sifra"})
+		}
+		return fieldErrors
+	}
 
-	// 3. Fetch UkupnaObrada totals if it's an initial load
+	if fkpl.Vkonta == 3 || common.StringToInt(entity.Vkonta) == 3 {
+		fieldErrors = append(fieldErrors, domain.FieldError{Field: "konto", ErrorMessage: "knjiženje na sintetičkim kontima nije dozvoljeno"})
+	}
+	entity.Vkonta = fmt.Sprintf("%d", fkpl.Vkonta)
+	entity.IDFkpl = fkpl.IDFkpl
+	if entity.Vrd != "80" && entity.Vrd != "90" {
+		if len(entity.Sifra) < 2 {
+			fieldErrors = append(fieldErrors, domain.FieldError{Field: "sifra", ErrorMessage: "šifra mora biti bar dvocifrena"})
+		}
+	}
+	duguje := common.StringToFloat64(entity.Duguje)
+	potrazuje := common.StringToFloat64(entity.Potrazuje)
 
-	return table, nil
+	if duguje != 0 && potrazuje != 0 {
+		fieldErrors = append(fieldErrors, domain.FieldError{Field: "duguje", ErrorMessage: "ne možete uneti iznos u polje duguje i potražuje u isto vreme"})
+		fieldErrors = append(fieldErrors, domain.FieldError{Field: "potrazuje", ErrorMessage: "ne možete uneti iznos u polje duguje i potražuje u isto vreme"})
+	}
+	if duguje == 0 && potrazuje == 0 {
+		fieldErrors = append(fieldErrors, domain.FieldError{Field: "duguje", ErrorMessage: "morate uneti vrednost u polje duguje ili polje potražuje"})
+	}
+
+	if fkpl.Devizni {
+		if common.StringToFloat64(entity.Deviznos) == 0 {
+			fieldErrors = append(fieldErrors, domain.FieldError{Field: "devizniiznos", ErrorMessage: "devizni iznos ne može biti 0 za devizni konto"})
+		}
+		if !s.existsValuta(ctx, entity.IDValute) {
+			fieldErrors = append(fieldErrors, domain.FieldError{Field: "idvalute", ErrorMessage: "ne postoji valuta sa takvom šifrom"})
+		}
+		if common.StringToFloat64(entity.Kurs) <= 0 {
+			fieldErrors = append(fieldErrors, domain.FieldError{Field: "kurs", ErrorMessage: common.ErrMsgObavezanPodatak})
+		}
+	}
+
+	if entity.Vrd == "10" || entity.Vrd == "20" || entity.Vrd == "30" || entity.Vrd == "40" {
+		if entity.IDorgjed != "-" && !s.existsOrgjed(ctx, entity.IDorgjed) {
+			fieldErrors = append(fieldErrors, domain.FieldError{Field: "idorgjed", ErrorMessage: "niste izabrali organizacionu jedinicu"})
+		}
+		if entity.Dokum == "" {
+			fieldErrors = append(fieldErrors, domain.FieldError{Field: "dokum", ErrorMessage: common.ErrMsgObavezanPodatak})
+		}
+		if common.StringToDate(entity.Dadok).IsZero() {
+			fieldErrors = append(fieldErrors, domain.FieldError{Field: "dadok", ErrorMessage: common.ErrMsgObavezanPodatak})
+		}
+
+		if common.StringToInt(entity.Tra) == 0 {
+			fieldErrors = append(fieldErrors, domain.FieldError{Field: "tra", ErrorMessage: common.ErrMsgObavezanPodatak})
+		}
+		if (entity.Vrd == "10" && duguje < 0) || (entity.Vrd == "20" && potrazuje < 0) {
+			if entity.Dokvezni == "" {
+				fieldErrors = append(fieldErrors, domain.FieldError{Field: "dokvezni", ErrorMessage: common.ErrMsgObavezanPodatak})
+			}
+			if common.StringToInt(entity.Travez) == 0 {
+				fieldErrors = append(fieldErrors, domain.FieldError{Field: "travez", ErrorMessage: common.ErrMsgObavezanPodatak})
+			}
+			if common.StringToDate(entity.Dadokv).IsZero() {
+				fieldErrors = append(fieldErrors, domain.FieldError{Field: "dadokv", ErrorMessage: common.ErrMsgObavezanPodatak})
+			}
+		}
+	}
+	if entity.Magaciniid != "-" && !s.existsMagacin(ctx, entity.Magaciniid) {
+		fieldErrors = append(fieldErrors, domain.FieldError{Field: "magaciniid", ErrorMessage: "ne postoji magacin sa takvom šifrom"})
+	}
+	if entity.Komid != "-" && !s.existsKomercijalista(ctx, entity.Komid) {
+		fieldErrors = append(fieldErrors, domain.FieldError{Field: "komid", ErrorMessage: "ne postoji komercijalista sa takvom šifrom"})
+	}
+	if entity.Mestotrid != "-" && !s.existsMtroska(ctx, entity.Mestotrid) {
+		fieldErrors = append(fieldErrors, domain.FieldError{Field: "mestotrid", ErrorMessage: "ne postoji mesto troška sa takvom šifrom"})
+	}
+	if entity.Fispid != "-" && !s.existsMI(ctx, entity.Fispid) {
+		fieldErrors = append(fieldErrors, domain.FieldError{Field: "fispid", ErrorMessage: "ne postoji mi sa takvom šifrom"})
+	}
+	if entity.IDValute != "-" && !s.existsValuta(ctx, entity.IDValute) {
+		fieldErrors = append(fieldErrors, domain.FieldError{Field: "idvalute", ErrorMessage: "ne postoji valuta sa takvom šifrom"})
+	}
+	// if common.dadok, ok := parseHTMLDate(dadokStr); ok {
+	// 	if userSession.SelectedGod-dadok.Year() > 10 {
+	// 		fieldErrors = append(fieldErrors, domain.FieldError{Field: "dadok", ErrorMessage: fmt.Sprintf("datum dokumenta ne može biti manji od 01.01.%d", userSession.SelectedGod-10)})
+	// 	}
+	// 	if dadok.Year() != userSession.SelectedGod {
+	// 		fieldErrors = append(fieldErrors, domain.FieldError{Field: "dadok", ErrorMessage: "datum dokumenta je različit od poslovne godine"})
+	// 	}
+	// }
+
+	// if strings.Contains(dokum, ",") {
+	// 	fieldErrors = append(fieldErrors, domain.FieldError{Field: "dokum", ErrorMessage: "nedozvoljen karakter u broju dokumenta: ,"})
+	// }
+
+	return fieldErrors
+}
+
+func (s *FproResource) isGodinaZatvorena(ctx context.Context, god, kar int) bool {
+	qb := common.NewQueryBuilder("SELECT god, kar, godzatv FROM fvr", true)
+	qb.AddEqual("god", god)
+	qb.AddEqual("kar", kar)
+	sqlQuery, args := qb.Build()
+	entities, err := s.fvrRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	if err != nil || entities == nil || len(*entities) == 0 {
+		return false
+	}
+	return (*entities)[0].GodZatv
+}
+
+func (s *FproResource) findFkpl(ctx context.Context, god, kar int, konto, sifra string) (*domain.Fkpl, bool) {
+	vkonta := 2
+	if sifra != "" {
+		vkonta = 1
+	}
+	qb := common.NewQueryBuilder("SELECT idfkpl, god, kar, vkonta, konto, sifra, naziv, devizni, idpartneri FROM fkpl", true)
+	qb.AddEqual("god", god)
+	qb.AddEqual("kar", kar)
+	qb.AddEqual("konto", konto)
+	qb.AddEqual("vkonta", vkonta)
+	if sifra != "" {
+		qb.AddEqual("sifra", sifra)
+	}
+	sqlQuery, args := qb.Build()
+	entities, err := s.fkplRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	if err != nil || entities == nil || len(*entities) == 0 {
+		return nil, false
+	}
+	return &(*entities)[0], true
+}
+
+// existsmagacin checks if a magacin with the given ID exists in the database.
+func (s *FproResource) existsMagacin(ctx context.Context, idMagacin string) bool {
+	entity, err := s.magaciniRepo.GetByID(ctx, common.IDmagacin, common.StringToInt64(idMagacin))
+	return err == nil && entity != nil && entity.MagaciniID != 0
+}
+
+// existsValuta checks if a valuta with the given ID exists in the database.
+func (s *FproResource) existsValuta(ctx context.Context, idValute string) bool {
+	entity, err := s.valuteRepo.GetByID(ctx, common.IDvalute, common.StringToInt64(idValute))
+	return err == nil && entity != nil && entity.IDValute != 0
+}
+
+// existsOrgjed checks if an orgjed with the given ID exists in the database.
+func (s *FproResource) existsOrgjed(ctx context.Context, idOrgjed string) bool {
+	entity, err := s.ojRepo.GetByID(ctx, common.IDorgjed, common.StringToInt64(idOrgjed))
+	return err == nil && entity != nil && entity.IDOrgjed != 0
+}
+
+// existsMestoTroska checks if a Mesto Troska with the given ID exists in the database.
+func (s *FproResource) existsMtroska(ctx context.Context, idMestotr string) bool {
+	entity, err := s.mtroskaRepo.GetByID(ctx, common.IDmestotr, common.StringToInt64(idMestotr))
+	return err == nil && entity != nil && entity.MestoTrID != 0
+}
+
+// existsKomercijalista checks if a Komercijalista with the given ID exists in the database.
+func (s *FproResource) existsKomercijalista(ctx context.Context, komID string) bool {
+	entity, err := s.komercijalistiRepo.GetByID(ctx, common.IDkomercijalista, common.StringToInt64(komID))
+	return err == nil && entity != nil && entity.KomID != 0
+}
+
+// existsMI checks if a MI with the given ID exists in the database.
+func (s *FproResource) existsMI(ctx context.Context, miID string) bool {
+	entity, err := s.miRepo.GetByID(ctx, common.IDmi, common.StringToInt64(miID))
+	return err == nil && entity != nil && entity.FispID != 0
 }
 
 // GetTableStavkeFields  fetches all data required to render the Nalog Stavke list page.
@@ -261,16 +777,16 @@ func (s *FproResource) GetTableNalogFields() []domain.Fields {
 	if len(s.naloziTableFields) == 0 {
 		s.setServiceFieldValues()
 	}
-	return s.naloziStavkeTableFields
+	return s.naloziTableFields
 }
 
 func (s *FproResource) setServiceFieldValues() {
 	s.naloziTableFields = []domain.Fields{
-		{Name: "rbr", Label: "R. Broj", Width: "4"},
+		{Name: "rbr", Label: "Redni Broj", Width: "4"},
 		{Name: "tipdok", Label: "Vrsta Naloga", Width: "6"},
 		{Name: "nalog", Label: "Br. Naloga", Width: "12"},
 		{Name: "danal", Label: "Datum naloga", Width: "12"},
-		{Name: "opis", Label: "opis ", Width: "60"},
+		{Name: "opis", Label: "Opis", Width: "60"},
 		{Name: "dug", Label: "Duguje", Width: "14"},
 		{Name: "pot", Label: "Potrazuje", Width: "14"},
 		{Name: "datob", Label: "Datum obrade", Width: "12"},
@@ -278,15 +794,15 @@ func (s *FproResource) setServiceFieldValues() {
 		{Name: "nalsts", Label: "Status naloga", Width: "10"},
 	}
 	s.naloziStavkeTableFields = []domain.Fields{
-		{Name: "rbr", Label: "R. Broj", Width: "4"},
+		{Name: "rbr", Label: "Redni Broj", Width: "4", IncludeInTotals: true, TextAlign: "right"},
 		{Name: "konto", Label: "Konto", Width: "6"},
 		{Name: "sifra", Label: "Sifra", Width: "6"},
 		{Name: "nazivkonta", Label: "Naziv Konta", Width: "60"},
-		{Name: "vrd", Label: "Vrsta Dok.", Width: "10"},
+		{Name: "vrd", Label: "Vrsta Dokumenta", Width: "10"},
 		{Name: "opis", Label: "Opis", Width: "60"},
-		{Name: "dug", Label: "Duguje", Width: "14", SkipInSearch: true},
-		{Name: "pot", Label: "Potrazuje", Width: "14", SkipInSearch: true},
-		{Name: "dokum", Label: "Br. Dokum", Width: "12"},
-		{Name: "dadok", Label: "Datum Dok.", Width: "12"},
+		{Name: "dug", Label: "Duguje", Width: "14", SkipInSearch: true, IncludeInTotals: true, TextAlign: "right"},
+		{Name: "pot", Label: "Potrazuje", Width: "14", SkipInSearch: true, IncludeInTotals: true, TextAlign: "right"},
+		{Name: "dokum", Label: "Broj Dokumenta", Width: "12"},
+		{Name: "dadok", Label: "Datum Dokumenta", Width: "12"},
 	}
 }

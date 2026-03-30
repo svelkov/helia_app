@@ -1,6 +1,7 @@
 package finansijsko
 
 import (
+	"context"
 	"fmt"
 	"helia/i18n"
 	"helia/internal/common"
@@ -8,14 +9,12 @@ import (
 	"helia/internal/repository"
 	"helia/internal/service"
 	"reflect"
-
-	"github.com/gin-gonic/gin"
 )
 
 // DnevnikService defines the interface for operations related to Dnevnik knjizenja.
 type DnevnikService interface {
 	GetDnevnikTableFields() []domain.Fields
-	GetDnevnikKnjizenja(c *gin.Context, tbl *domain.TableData, getTotRecords bool, currentPage int, pageSize int) error
+	GetDnevnikKnjizenja(ctx context.Context, tbl *domain.TableData, getTotRecords bool, currentPage int, pageSize int, odDatuma, doDatuma, searchText string) error
 }
 
 // DnevnikResource implements the DnevnikService interface.
@@ -42,17 +41,12 @@ func (s *DnevnikResource) GetDnevnikTableFields() []domain.Fields {
 }
 
 // GetDnevnikKnjizenja fetches the dnevnik knjizenja records
-func (s *DnevnikResource) GetDnevnikKnjizenja(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, currentPage, pageSize int) error {
+func (s *DnevnikResource) GetDnevnikKnjizenja(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage, pageSize int, odDatuma, doDatuma, searchText string) error {
 	// Get user session from context
-	userSession := domain.GetSessionFromContext(c)
+	userSession := domain.GetSessionFromStdContext(ctx)
 	if userSession == nil {
 		return fmt.Errorf("user session not found")
 	}
-
-	// Get query parameters
-	odDatuma := c.Query("oddatuma")
-	doDatuma := c.Query("dodatuma")
-	searchText := c.Query("query")
 
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
@@ -78,7 +72,7 @@ func (s *DnevnikResource) GetDnevnikKnjizenja(c *gin.Context, tbl *domain.TableD
 			fpro.sifval,
 			case when fpro.kat in (1, 2) then fpro.deviznos else 0 end as devdug,
 			case when fpro.kat in (3, 4) then fpro.deviznos else 0 end as devpot
-		from fpro`)
+		from fpro`, true)
 
 	// Add JOIN for fkpl
 	qb.AddJoin("left join fkpl on fkpl.idfkpl = fpro.idfkpl")
@@ -114,7 +108,7 @@ func (s *DnevnikResource) GetDnevnikKnjizenja(c *gin.Context, tbl *domain.TableD
 
 	// Build and execute query
 	sqlQuery, args := qb.Build()
-	entities, err := s.service.GetAllCustom(c, sqlQuery, "", args, "", "")
+	entities, err := s.service.GetAllCustom(ctx, sqlQuery, "", args, "", "")
 	if err != nil {
 		return fmt.Errorf("failed to query fpro: %s", err.Error())
 	}

@@ -7,708 +7,674 @@ import (
 	"helia/internal/domain"
 )
 
-templ NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData, btnSave, btnPrint domain.Button, translator *i18n.Service) {
-	<div id="large-dialog" class="fixed inset-0 flex items-center justify-center p-4 bg-black bg-opacity-50 z-50">
-		<div class="bg-white rounded-lg shadow-xl max-w-fit w-full max-h-[90vh] overflow-y-auto">
-			<div class="m-0 p-0 bg-gray-200 font-sans">
-				<div class="bg-gradient-to-r from-blue-300 to-blue-800 text-white px-4 py-2 font-bold text-sm relative">
-					{ translator.Title("Knjiženje naloga") }
-					<button
-						id="btn-close"
-						class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 border border-white border-opacity-30 text-white px-2 py-1 text-xs cursor-pointer hover:bg-opacity-30"
-						onclick="handleCloseWithUnlock(event, 'api/nalozi/all/tipdok', '#content');"
-					>
-						{ translator.Label("nazad") }
-					</button>
-				</div>
-				<div class="grid grid-cols-3 gap-1 px-1 pt-1 mb-1">
-					<div class="bg-blue-200 border border-blue-400 col-span-2 pt-1 min-h-20">
-						<div class="text-blue-800 font-bold text-sm px-2 pb-2">{ translator.Text("Podaci o nalogu u obradi") }</div>
-						<div class="grid grid-cols-3 gap-2 px-2">
-							<!-- Left Column (1/3) -->
-							<div class="col-span-1 flex flex-col gap-1">
-								<div class="flex items-center gap-1">
-									@tmpl.LabelField(domain.LabelFieldConfig{
-										ID:         "brojnaloga",
-										LabelText:  translator.Label("Broj naloga"),
-										ClassLabel: common.ClassLabel + " text-blue-800 font-bold text-sm w-32 flex-shrink-0",
-									})
-									@tmpl.TextInputField(domain.InputFieldConfig{
-										ID:         "brojnaloga",
-										Name:       "brojnaloga",
-										FieldType:  "text",
-										Value:      fproDto.Tipdok + "-" + fproDto.Nalog,
-										Disabled:   true,
-										ClassInput: common.ClassInputTextDisabled + " h-8 w-full font-bold text-blue-800 text-sm",
-									})
-								</div>
-								<div class="flex items-center gap-1">
-									@tmpl.LabelField(domain.LabelFieldConfig{
-										ID:         "datumnaloga",
-										LabelText:  translator.Label("Datum naloga"),
-										ClassLabel: common.ClassLabel + " text-blue-800 font-bold text-sm w-32 flex-shrink-0",
-									})
-									@tmpl.TextInputField(domain.InputFieldConfig{
-										ID:         "datumnaloga",
-										Name:       "datumnaloga",
-										FieldType:  "date",
-										Value:      fproDto.Danal,
-										Disabled:   true,
-										ClassInput: common.ClassInputTextDisabled + " text-blue-800 font-bold text-sm w-full",
-									})
-								</div>
-							</div>
-							<!-- Right Column (2/3) -->
-							<div class="col-span-2 flex flex-col gap-1">
-								<div class="flex items-center gap-1">
-									@tmpl.LabelField(domain.LabelFieldConfig{
-										ID:         "opis",
-										LabelText:  translator.Label("Opis"),
-										ClassLabel: common.ClassLabel + " text-blue-800 font-bold text-sm w-32 flex-shrink-0",
-									})
-									@tmpl.TextInputField(domain.InputFieldConfig{
-										ID:         "opis",
-										Name:       "opis",
-										FieldType:  "text",
-										Value:      fproDto.Opis,
-										Disabled:   true,
-										ClassInput: common.ClassInputTextDisabled + " text-blue-800 font-bold text-sm w-full",
-									})
-								</div>
-								<div class="flex items-center gap-1">
-									@tmpl.LabelField(domain.LabelFieldConfig{
-										ID:         "datumobrade",
-										LabelText:  translator.Label("Datum obrade"),
-										ClassLabel: common.ClassLabel + " text-blue-800 font-bold text-sm w-32 flex-shrink-0",
-									})
-									@tmpl.TextInputField(domain.InputFieldConfig{
-										ID:         "datumobrade",
-										Name:       "datumobrade",
-										FieldType:  "date",
-										Value:      fproDto.Datob,
-										Disabled:   true,
-										ClassInput: common.ClassInputTextDisabled + " text-blue-800 font-bold text-sm w-full",
-									})
-								</div>
-							</div>
-						</div>
+templ NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData, btnSave, btnPrint, btnClose, btnNazad domain.Button, searchInput domain.InputControl, translator *i18n.Service, csrfToken string) {
+	<div id="nalog-stavke-dialog" class="fixed inset-0 flex items-center justify-center p-4 bg-black bg-opacity-50 z-50">
+		<div class="bg-white rounded-lg shadow-xl w-[95vw] max-w-[1400px] h-[90vh] overflow-hidden">
+			<div class="m-0 p-0 bg-gray-200 font-sans h-full flex flex-col">
+				<form
+					id="nalog-stavke-form"
+					class="p-1 h-full flex flex-col min-h-0"
+					if btnSave.HxRequestType == "PUT" {
+						hx-put={ btnSave.HxActionURL }
+						hx-on::after-request="handleFormResponse(event, 'PUT', null, true)"
+					}
+					if btnSave.HxRequestType == "POST" {
+						hx-post={ btnSave.HxActionURL }
+						hx-on::after-request="handleFormResponse(event, 'POST', null, true)"
+					}
+					hx-target="#dialog-form-message"
+					hx-boost="false"
+					onsubmit="return false;"
+				>
+					<div class="bg-gradient-to-r from-blue-300 to-blue-800 text-white px-1 font-bold text-sm relative flex justify-between items-center">
+						<div>{ translator.Title("Knjiženje naloga") }</div>
+						@tmpl.CloseButton(btnClose)
 					</div>
-					<div class="bg-blue-200 border border-blue-400 col-span-1">
-						<div class="flex flex-col gap-1 p-1">
-							<!-- Row 1: Stanje naloga label and Duguje -->
-							<div class="flex items-start gap-1">
-								<div class="text-blue-800 font-bold text-sm px-1 w-44 flex-shrink-0">{ translator.Text("Stanje naloga") }</div>
-								<div class="flex items-center text-xs gap-1 flex-1">
-									@tmpl.LabelField(domain.LabelFieldConfig{
-										ID:         "nalduguje",
-										LabelText:  translator.Label("Duguje"),
-										ClassLabel: common.ClassLabel + " text-blue-800 font-bold flex-shrink-0 text-xs w-32",
-									})
-									@tmpl.NumericInputField(domain.InputFieldConfig{
-										ID:            "nalduguje",
-										Disabled:      true,
-										ClassInput:    common.ClassInputNumericDisabled + " text-blue-800 font-bold text-sm",
-										Value:         common.FormatNumberWithSystemLocale(fproDto.Duguje, 2),
-										DecimalPlaces: 2,
-										MaxLength:     "18",
-										TabIndex:      "6"})
-								</div>
-							</div>
-							<!-- Row 2: Potrazuje -->
-							<div class="flex items-center text-xs gap-1">
-								<div class="text-blue-800 font-bold text-sm px-1 pt-1 w-44 flex-shrink-0"></div>
-								@tmpl.LabelField(domain.LabelFieldConfig{
-									ID:         "nalpotrazuje",
-									LabelText:  translator.Label("Potrazuje"),
-									ClassLabel: common.ClassLabel + " text-blue-800 font-bold flex-shrink-0 text-xs w-32",
-								})
-								@tmpl.NumericInputField(domain.InputFieldConfig{
-									ID:            "nalpotrazuje",
-									Name:          "nalpotrazuje",
-									Disabled:      true,
-									ClassInput:    common.ClassInputNumericDisabled + " text-blue-800 font-bold text-sm",
-									Value:         common.FormatNumberWithSystemLocale(fproDto.Potrazuje, 2),
-									DecimalPlaces: 2,
-									MaxLength:     "18",
-									TabIndex:      "6"})
-							</div>
-							<!-- Row 3: Saldo -->
-							<div class="flex items-center text-xs gap-1">
-								<div class="text-blue-800 font-bold text-sm px-1 pt-1 w-44 flex-shrink-0"></div>
-								@tmpl.LabelField(domain.LabelFieldConfig{
-									ID:         "nalsaldo",
-									LabelText:  translator.Label("Saldo"),
-									ClassLabel: common.ClassLabel + " text-blue-800 font-bold flex-shrink-0 text-xs w-32",
-								})
-								@tmpl.NumericInputField(domain.InputFieldConfig{
-									ID:            "nalsaldo",
-									Disabled:      true,
-									ClassInput:    common.ClassInputNumericDisabled + " text-blue-800 font-bold text-sm",
-									Value:         common.FormatNumberWithSystemLocale(fproDto.Saldo, 2),
-									DecimalPlaces: 2,
-									MaxLength:     "18",
-									TabIndex:      "6"})
-							</div>
-						</div>
-					</div>
-				</div>
-				<div class="m-0 bg-gray-200 font-sans">
-					<!-- Top Section -->
-					<div class="bg-blue-50 border border-blue-400 flex-1 pl-1 min-h-20">
-						<div class="text-blue-800 font-bold text-xs mb-1 border-b border-gray-400 pb-1">
-							{ translator.Text("Osnovni podaci o stavci naloga") }
-						</div>
-						<!-- Form Fields -->
-						<div class="grid grid-cols-2 mb-1">
-							<!-- Left Column -->
-							<div class="border border-blue-400 space-y-1 pt-1 px-1 flex flex-col">
-								<div class="flex items-center gap-1">
-									@tmpl.LabelField(domain.LabelFieldConfig{
-										ID:         "konto",
-										LabelText:  translator.Label("Konto"),
-										ClassLabel: common.ClassLabel + " w-28",
-									})
-									@tmpl.TextInputField(domain.InputFieldConfig{
-										ID:           "konto",
-										Name:         "konto",
-										FieldType:    "text",
-										Disabled:     false,
-										ClassInput:   common.ClassInputTextEnabled + " w-24",
-										BlurEndpoint: "api/fkpl/trazikonto",
-										HxTarget:     "kontonaziv",
-										HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "2"}`,
-										HxInclude:    "this",
-										MinLength:    "2",
-										MaxLength:    "6",
-										TabIndex:     "1",
-										OnInput:      "clearFieldError"})
-									@tmpl.SearchButton(domain.SearchButtonConfig{
-										ID:          "konto",
-										Name:        "search-konto",
-										HxUrl:       "/api/promet/searchbutton",
-										HxTarget:    "#search-dropdown",
-										HxSwap:      "innerHTML",
-										HxVals:      `{"vkonta": "2"}`,
-										ClassButton: common.ClassButton,
-									})
-									@tmpl.TextInputField(domain.InputFieldConfig{
-										ID:         "kontonaziv",
-										Name:       "kontonaziv",
-										FieldType:  "text",
-										Disabled:   true,
-										ClassInput: common.ClassInputTextEnabled + " w-full",
-										TabIndex:   "-1",
-									})
-								</div>
-								<div class="flex items-center gap-1 mb-1">
-									@tmpl.LabelField(domain.LabelFieldConfig{
-										ID:         "sifra",
-										LabelText:  translator.Label("Sifra"),
-										ClassLabel: common.ClassLabel + " w-28",
-									})
-									@tmpl.TextInputField(domain.InputFieldConfig{
-										ID:           "sifra",
-										Name:         "sifra",
-										FieldType:    "text",
-										Disabled:     false,
-										ClassInput:   common.ClassInputTextEnabled + " w-24",
-										BlurEndpoint: "api/fkpl/trazikonto",
-										HxTarget:     "sifranaziv",
-										HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('sifra').value, "vkonta": "1"}`,
-										HxInclude:    "this",
-										MinLength:    "2",
-										MaxLength:    "6",
-										TabIndex:     "2",
-										OnInput:      "clearFieldError"})
-									@tmpl.SearchButton(domain.SearchButtonConfig{
-										ID:          "sifra",
-										Name:        "search-sifra",
-										HxUrl:       "/api/promet/searchbutton",
-										HxTarget:    "#search-dropdown",
-										HxSwap:      "innerHTML",
-										HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`,
-										ClassButton: common.ClassButton,
-									})
-									@tmpl.TextInputField(domain.InputFieldConfig{
-										ID:         "sifranaziv",
-										Name:       "sifranaziv",
-										FieldType:  "text",
-										Disabled:   true,
-										ClassInput: common.ClassInputTextEnabled + " w-full",
-										TabIndex:   "-1",
-									})
-								</div>
-								<div class="flex items-center gap-1">
-									@tmpl.LabelField(domain.LabelFieldConfig{
-										ID:         "vrstadokum",
-										LabelText:  translator.Label("Vrsta dokumenta"),
-										ClassLabel: common.ClassLabel + " w-28",
-									})
-									@tmpl.ComboBoxField(domain.ComboFieldConfig{
-										ID:          "vrstadokum",
-										Name:        "vrstadokum",
-										Placeholder: "Izaberite vrstu dokumenta",
-										HasLabel:    false,
-										LabelText:   "Vrsta dokumenta",
-										ClassLabel:  common.ClassLabel + " w-28",
-										ClassSelect: common.ClassInputTextEnabled + " min-w-[80px]",
-										Disabled:    false,
-										TabIndex:    "3",
-										OptionValues: []domain.ComboItem{
-											{Key: "10", Value: "10-IZDAT RACUN KUPCU | d"},
-											{Key: "20", Value: "20-PRIMLJEN RACUN OD DOBAVLJACA | p"},
-											{Key: "30", Value: "30-IZVRSENA UPLATA | p"},
-											{Key: "40", Value: "40-PRIMLJENA UPLATA | d"},
-											{Key: "80", Value: "80-OPSTI DOKUMENTI | d/p"},
-											{Key: "90", Value: "90-OPSTO KNJIZENJE | d/p"},
-										},
-									}, translator)
-								</div>
-								<div class="flex items-center gap-1 mb-1">
-									@tmpl.LabelField(domain.LabelFieldConfig{
-										ID:         "opisknjizenja",
-										LabelText:  translator.Label("Opis knjizenja"),
-										ClassLabel: common.ClassLabel + " w-28",
-									})
-									@tmpl.TextInputField(domain.InputFieldConfig{
-										ID:          "opisknjizenja",
-										Name:        "opisknjizenja",
-										Placeholder: translator.Placeholder("unesite opis knjizenja"),
-										FieldType:   "text",
-										Disabled:    false,
-										TabIndex:    "4",
-										MaxLength:   "255",
-										ClassInput:  common.ClassInputTextEnabled + " w-full ",
-									})
-								</div>
-								<div class="flex items-center gap-1 mb-1">
-									@tmpl.LabelField(domain.LabelFieldConfig{
-										ID:         "magacin",
-										LabelText:  translator.Label("Magacin"),
-										ClassLabel: common.ClassLabel + " w-28",
-									})
-									@tmpl.TextInputField(domain.InputFieldConfig{
-										ID:         "magacin",
-										FieldType:  "text",
-										Disabled:   false,
-										ClassInput: common.ClassInputTextEnabled + " w-[50px] min-w-[50px]",
-										MinLength:  "0",
-										MaxLength:  "4",
-										TabIndex:   "5"})
-									@tmpl.SearchButton(domain.SearchButtonConfig{
-										ID:          "magacin",
-										Name:        "search-magacin",
-										HxUrl:       "/api/promet/searchbutton",
-										HxTarget:    "#search-dropdown",
-										HxSwap:      "innerHTML",
-										ClassButton: common.ClassButton,
-									})
-									@tmpl.TextInputField(domain.InputFieldConfig{
-										ID:         "magacinnaziv",
-										Name:       "magacinnaziv",
-										FieldType:  "text",
-										Disabled:   true,
-										ClassInput: common.ClassInputTextEnabled + " w-full",
-										TabIndex:   "-1",
-									})
-								</div>
-								<div class="flex items-center gap-1">
-									@tmpl.LabelField(domain.LabelFieldConfig{
-										ID:         "mestoisporuke",
-										LabelText:  translator.Label("Mesto isporuke"),
-										ClassLabel: common.ClassLabel + " w-28",
-									})
-									@tmpl.TextInputField(domain.InputFieldConfig{
-										ID:         "mestoisporuke",
-										FieldType:  "text",
-										Disabled:   false,
-										ClassInput: common.ClassInputTextEnabled + " w-[50px] min-w-[50px]",
-										MinLength:  "0",
-										MaxLength:  "4",
-										TabIndex:   "7"})
-									@tmpl.SearchButton(domain.SearchButtonConfig{
-										ID:          "mestoisporuke-btn",
-										Name:        "search-mestoisporuke",
-										HxUrl:       "/api/mi/searchbutton",
-										HxTarget:    "#search-dropdown",
-										HxSwap:      "innerHTML",
-										ClassButton: common.ClassButton,
-									})
-									@tmpl.TextInputField(domain.InputFieldConfig{
-										ID:         "minaziv",
-										Name:       "minaziv",
-										FieldType:  "text",
-										Disabled:   true,
-										ClassInput: common.ClassInputTextEnabled + " w-full",
-										TabIndex:   "-1",
-									})
-								</div>
-								<div class="flex items-center gap-1">
-									@tmpl.LabelField(domain.LabelFieldConfig{
-										ID:         "komercijalista",
-										LabelText:  translator.Label("Komercijalista"),
-										ClassLabel: common.ClassLabel + " w-28",
-									})
-									@tmpl.TextInputField(domain.InputFieldConfig{
-										ID:         "komercijalista",
-										FieldType:  "text",
-										Disabled:   false,
-										ClassInput: common.ClassInputTextEnabled + "  w-[50px] min-w-[50px]",
-										MinLength:  "0",
-										MaxLength:  "4",
-										TabIndex:   "8"})
-									@tmpl.SearchButton(domain.SearchButtonConfig{
-										ID:          "komercijalista-btn",
-										Name:        "search-komercijalista",
-										HxUrl:       "/api/komercijalisti/searchbutton",
-										HxTarget:    "#search-dropdown",
-										HxSwap:      "innerHTML",
-										ClassButton: common.ClassButton,
-									})
-									@tmpl.TextInputField(domain.InputFieldConfig{
-										ID:         "komnaziv",
-										Name:       "komnaziv",
-										FieldType:  "text",
-										Disabled:   true,
-										ClassInput: common.ClassInputTextEnabled + " w-full",
-										TabIndex:   "-1",
-									})
-								</div>
-								<!-- Amount Section -->
-								<div class="flex flex-col gap-2 mb-4">
-									<div class="flex items-start justify-center">
-										<div class="flex flex-col gap-1 items-center">
-											<div class="w-44 border-b-2 border-gray-800 pb-1 text-center font-bold text-sm">
-												{ translator.Label("Duguje") }
-											</div>
-											@tmpl.NumericInputField(domain.InputFieldConfig{
-												ID:         "stavkeduguje",
-												Name:       "stavkeduguje",
-												Disabled:   false,
-												ClassInput: common.ClassInputTextEnabled + " w-44 text-right",
-												Value:      "0,00",
-												MinLength:  "0",
-												MaxLength:  "18",
-												TabIndex:   "9",
-											})
-										</div>
-										<div class="flex flex-col items-center">
-											<div class="w-8 border-b-2 border-gray-800 mt-6"></div>
-											<div class="border-l-2 border-gray-800 h-7"></div>
-										</div>
-										<div class="flex flex-col gap-1 items-center">
-											<div class="w-44 border-b-2 border-gray-800 pb-1 text-center font-bold text-sm">
-												{ translator.Label("Potražuje") }
-											</div>
-											@tmpl.NumericInputField(domain.InputFieldConfig{
-												ID:         "stavkepotrazuje",
-												Name:       "stavkepotrazuje",
-												Disabled:   false,
-												ClassInput: common.ClassInputTextEnabled + " w-44 text-right",
-												Value:      "0,00",
-												MinLength:  "0",
-												MaxLength:  "18",
-												TabIndex:   "10",
-											})
-										</div>
-									</div>
-								</div>
-								<!-- Action Buttons -->
-								<div class="flex justify-end gap-1 mt-auto pt-4">
-									@tmpl.SaveButton(btnSave, translator)
-									@tmpl.PrintButton(btnPrint, translator)
-								</div>
-							</div>
-							<!-- Right Column -->
-							<div class="space-y-1 px-1">
-								<div class="bg-blue-50 border border-blue-400 flex-1 px-2 py-1 space-y-1">
+					<input type="hidden" name="_csrf" value={ csrfToken }/>
+					<div class="grid grid-cols-3 gap-1 mb-1">
+						<fieldset class="bg-blue-200 border border-blue-400 col-span-2 p-1">
+							<legend class="px-1 text-blue-800 font-bold text-xs leading-none">{ translator.Text("Podaci o nalogu u obradi") }</legend>
+							<div class="grid grid-cols-3 gap-2 px-1">
+								<!-- Left Column (1/2) -->
+								<div class="col-span-1 flex flex-col gap-1">
 									<div class="flex items-center gap-1">
 										@tmpl.LabelField(domain.LabelFieldConfig{
-											ID:         "oj",
-											LabelText:  translator.Label("Org. Jedinica"),
-											ClassLabel: common.ClassLabel + " w-44",
+											ID:         "brojnaloga",
+											LabelText:  translator.Label("Broj naloga"),
+											ClassLabel: common.ClassLabel + " text-blue-800 font-bold text-sm w-32 flex-shrink-0",
+										})
+										@tmpl.TextInputField(domain.InputFieldConfig{
+											ID:         "brojnaloga",
+											Name:       "brojnaloga",
+											FieldType:  "text",
+											Value:      fproDto.Tipdok + "-" + fproDto.Nalog,
+											Disabled:   true,
+											TabIndex:   "-1",
+											ClassInput: common.ClassInputTextDisabled + " h-8 w-full font-bold text-blue-800 text-sm",
+										})
+									</div>
+									<div class="flex items-center gap-1">
+										@tmpl.LabelField(domain.LabelFieldConfig{
+											ID:         "datumnaloga",
+											LabelText:  translator.Label("Datum naloga"),
+											ClassLabel: common.ClassLabel + " text-blue-800 font-bold text-sm w-32 flex-shrink-0",
+										})
+										@tmpl.TextInputField(domain.InputFieldConfig{
+											ID:         "datumnaloga",
+											Name:       "datumnaloga",
+											FieldType:  "date",
+											Value:      fproDto.Danal,
+											Disabled:   true,
+											TabIndex:   "-1",
+											ClassInput: common.ClassInputTextDisabled + " text-blue-800 font-bold text-sm w-full",
+										})
+									</div>
+								</div>
+								<!-- Right Column (1/2) -->
+								<div class="col-span-2 flex flex-col gap-1">
+									<div class="flex items-center gap-1">
+										@tmpl.LabelField(domain.LabelFieldConfig{
+											ID:         "opis",
+											LabelText:  translator.Label("Opis"),
+											ClassLabel: common.ClassLabel + " text-blue-800 font-bold text-sm w-32 flex-shrink-0",
+										})
+										@tmpl.TextInputField(domain.InputFieldConfig{
+											ID:         "opis",
+											Name:       "opis",
+											FieldType:  "text",
+											Value:      fproDto.Opis,
+											Disabled:   true,
+											TabIndex:   "-1",
+											ClassInput: common.ClassInputTextDisabled + " text-blue-800 font-bold text-sm w-full",
+										})
+									</div>
+									<div class="flex items-center gap-1">
+										@tmpl.LabelField(domain.LabelFieldConfig{
+											ID:         "datumobrade",
+											LabelText:  translator.Label("Datum obrade"),
+											ClassLabel: common.ClassLabel + " text-blue-800 font-bold text-sm w-32 flex-shrink-0",
+										})
+										@tmpl.TextInputField(domain.InputFieldConfig{
+											ID:         "datumobrade",
+											Name:       "datumobrade",
+											FieldType:  "date",
+											Value:      fproDto.Datob,
+											Disabled:   true,
+											TabIndex:   "-1",
+											ClassInput: common.ClassInputTextDisabled + " text-blue-800 font-bold text-sm w-full",
+										})
+									</div>
+								</div>
+							</div>
+						</fieldset>
+						<fieldset class="bg-blue-200 border border-blue-400 col-span-1 p-1">
+							<legend class="px-1 text-blue-800 font-bold text-xs leading-none">{ translator.Text("Stanje naloga") }</legend>
+							<div class="flex flex-col gap-1">
+								<div class="grid grid-cols-2 gap-2 items-center">
+									<div class="flex items-center gap-1">
+										@tmpl.LabelField(domain.LabelFieldConfig{
+											ID:         "nalduguje",
+											LabelText:  translator.Label("Duguje"),
+											ClassLabel: common.ClassLabel + " text-blue-800 font-bold text-xs w-24",
+										})
+										@tmpl.NumericInputField(domain.InputFieldConfig{
+											ID:            "nalduguje",
+											Disabled:      true,
+											ClassInput:    common.ClassInputNumericDisabled + " text-blue-800 font-bold text-sm w-full",
+											Value:         common.FormatNumberWithSystemLocale(fproDto.Duguje, 2),
+											DecimalPlaces: 2,
+											MaxLength:     "18",
+											TabIndex:      "-1"})
+									</div>
+									<div class="flex items-center gap-1">
+										@tmpl.LabelField(domain.LabelFieldConfig{
+											ID:         "nalpotrazuje",
+											LabelText:  translator.Label("Potrazuje"),
+											ClassLabel: common.ClassLabel + " text-blue-800 font-bold text-xs w-24",
+										})
+										@tmpl.NumericInputField(domain.InputFieldConfig{
+											ID:            "nalpotrazuje",
+											Name:          "nalpotrazuje",
+											Disabled:      true,
+											ClassInput:    common.ClassInputNumericDisabled + " text-blue-800 font-bold text-sm w-full",
+											Value:         common.FormatNumberWithSystemLocale(fproDto.Potrazuje, 2),
+											DecimalPlaces: 2,
+											MaxLength:     "18",
+											TabIndex:      "-1"})
+									</div>
+								</div>
+								<div class="grid grid-cols-2 gap-2 items-center">
+									<div></div>
+									<div class="flex items-center gap-1">
+										@tmpl.LabelField(domain.LabelFieldConfig{
+											ID:         "nalsaldo",
+											LabelText:  translator.Label("Saldo"),
+											ClassLabel: common.ClassLabel + " text-blue-800 font-bold text-xs w-24",
+										})
+										@tmpl.NumericInputField(domain.InputFieldConfig{
+											ID:            "nalsaldo",
+											Disabled:      true,
+											ClassInput:    common.ClassInputNumericDisabled + " text-blue-800 font-bold text-sm w-full",
+											Value:         common.FormatNumberWithSystemLocale(fproDto.Saldo, 2),
+											DecimalPlaces: 2,
+											MaxLength:     "18",
+											TabIndex:      "6"})
+									</div>
+								</div>
+							</div>
+						</fieldset>
+					</div>
+					<div class="m-0 bg-gray-200 font-sans flex-1 gap-1 min-h-0 flex flex-col">
+						<!-- Top Section -->
+						<div class="bg-blue-50 border border-blue-400 pl-1 min-h-20 shrink-0">
+							<div class="text-blue-800 font-bold text-xs mb-1 border-b border-gray-400 pb-1">
+								{ translator.Text("Osnovni podaci o stavci naloga") }
+							</div>
+							<!-- Form Fields -->
+							<div class="grid grid-cols-2 mb-1">
+								<!-- Left Column -->
+								<div class="border border-blue-400 space-y-1 pt-1 px-1 flex flex-col">
+									<div class="flex items-center gap-1">
+										@tmpl.LabelField(domain.LabelFieldConfig{
+											ID:         "konto",
+											LabelText:  translator.Label("Konto"),
+											ClassLabel: common.ClassLabel + " w-28",
+										})
+										@tmpl.TextInputField(domain.InputFieldConfig{
+											ID:           "konto",
+											Name:         "konto",
+											FieldType:    "text",
+											Disabled:     false,
+											ClassInput:   common.ClassInputTextEnabled + " w-24",
+											BlurEndpoint: "api/fkpl/trazikonto",
+											HxTarget:     "kontonaziv",
+											HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "2"}`,
+											HxInclude:    "this",
+											MinLength:    "2",
+											MaxLength:    "6",
+											TabIndex:     "1",
+											OnInput:      "clearFieldError",
+											OnFocus:      "clearFieldError"})
+										@tmpl.SearchButton(domain.SearchButtonConfig{
+											ID:          "btnkonto",
+											Name:        "search-konto",
+											HxUrl:       "/api/promet/searchbutton",
+											HxTarget:    "#search-dropdown",
+											HxSwap:      "innerHTML",
+											HxVals:      `{"vkonta": "2"}`,
+											ClassButton: common.ClassButton,
+										})
+										@tmpl.TextInputField(domain.InputFieldConfig{
+											ID:         "kontonaziv",
+											Name:       "kontonaziv",
+											FieldType:  "text",
+											Disabled:   true,
+											ClassInput: common.ClassInputTextEnabled + " w-full",
+											TabIndex:   "-1",
+										})
+									</div>
+									<div class="flex items-center gap-1 mb-1">
+										@tmpl.LabelField(domain.LabelFieldConfig{
+											ID:         "sifra",
+											LabelText:  translator.Label("Sifra"),
+											ClassLabel: common.ClassLabel + " w-28",
+										})
+										@tmpl.TextInputField(domain.InputFieldConfig{
+											ID:           "sifra",
+											Name:         "sifra",
+											FieldType:    "text",
+											Disabled:     false,
+											ClassInput:   common.ClassInputTextEnabled + " w-24",
+											BlurEndpoint: "api/fkpl/trazikonto",
+											HxTarget:     "sifranaziv",
+											HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('sifra').value, "vkonta": "1"}`,
+											HxInclude:    "this",
+											MinLength:    "2",
+											MaxLength:    "6",
+											TabIndex:     "2",
+											OnInput:      "clearFieldError",
+											OnFocus:      "clearFieldError"})
+										@tmpl.SearchButton(domain.SearchButtonConfig{
+											ID:          "btnsifra",
+											Name:        "search-sifra",
+											HxUrl:       "/api/promet/searchbutton",
+											HxTarget:    "#search-dropdown",
+											HxSwap:      "innerHTML",
+											HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`,
+											ClassButton: common.ClassButton,
+										})
+										@tmpl.TextInputField(domain.InputFieldConfig{
+											ID:         "sifranaziv",
+											Name:       "sifranaziv",
+											FieldType:  "text",
+											Disabled:   true,
+											ClassInput: common.ClassInputTextEnabled + " w-full",
+											TabIndex:   "-1",
+										})
+									</div>
+									<div class="flex items-center gap-1">
+										@tmpl.LabelField(domain.LabelFieldConfig{
+											ID:         "vrd",
+											LabelText:  translator.Label("Vrsta dokumenta"),
+											ClassLabel: common.ClassLabel + " w-28",
 										})
 										@tmpl.ComboBoxField(domain.ComboFieldConfig{
-											ID:           "oj",
-											Name:         "oj",
-											Placeholder:  translator.Placeholder("izaberite organizacionu jedinicu"),
+											ID:          "vrd",
+											Name:        "vrd",
+											Placeholder: "Izaberite vrstu dokumenta",
+											HasLabel:    false,
+											LabelText:   "Vrsta dokumenta",
+											ClassLabel:  common.ClassLabel + " w-28",
+											ClassSelect: common.ClassInputTextEnabled + " min-w-[80px]",
+											Disabled:    false,
+											TabIndex:    "3",
+											OptionValues: []domain.ComboItem{
+												{Key: "10", Value: "10-IZDAT RACUN KUPCU | d"},
+												{Key: "20", Value: "20-PRIMLJEN RACUN OD DOBAVLJACA | p"},
+												{Key: "30", Value: "30-IZVRSENA UPLATA | p"},
+												{Key: "40", Value: "40-PRIMLJENA UPLATA | d"},
+												{Key: "80", Value: "80-OPSTI DOKUMENTI | d/p"},
+												{Key: "90", Value: "90-OPSTO KNJIZENJE | d/p"},
+											},
+										}, translator)
+									</div>
+									<div class="flex items-center gap-1 mb-1">
+										@tmpl.LabelField(domain.LabelFieldConfig{
+											ID:         "opisknj",
+											LabelText:  translator.Label("Opis knjizenja"),
+											ClassLabel: common.ClassLabel + " w-28",
+										})
+										@tmpl.TextInputField(domain.InputFieldConfig{
+											ID:          "opisknj",
+											Name:        "opisknj",
+											Placeholder: translator.Placeholder("unesite opis knjizenja"),
+											FieldType:   "text",
+											Disabled:    false,
+											TabIndex:    "4",
+											MaxLength:   "255",
+											OnInput:     "clearFieldError",
+											OnFocus:     "clearFieldError",
+											ClassInput:  common.ClassInputTextEnabled + " w-full ",
+										})
+									</div>
+									<div class="flex items-center gap-1">
+										@tmpl.LabelField(domain.LabelFieldConfig{
+											ID:         "magaciniid",
+											LabelText:  translator.Label("Magacin"),
+											ClassLabel: common.ClassLabel + " w-28",
+										})
+										@tmpl.ComboBoxField(domain.ComboFieldConfig{
+											ID:           "magaciniid",
+											Name:         "magaciniid",
+											Placeholder:  translator.Placeholder("izaberite magacin"),
 											Disabled:     false,
-											ClassSelect:  common.ClassInputTextEnabled + " min-w-[80px] w-full ml-2",
-											TabIndex:     "11",
-											OptionValues: fproDto.Orgjed,
+											ClassSelect:  common.ClassInputTextEnabled + " min-w-[80px] w-full",
+											TabIndex:     "5",
+											OptionValues: fproDto.CbxMagacin,
 										}, translator)
 									</div>
 									<div class="flex items-center gap-1">
 										@tmpl.LabelField(domain.LabelFieldConfig{
-											ID:         "mtroska",
-											LabelText:  translator.Label("Mesto troska"),
-											ClassLabel: common.ClassLabel + " w-44",
+											ID:         "fispid",
+											LabelText:  translator.Label("Mesto isporuke"),
+											ClassLabel: common.ClassLabel + " w-28",
 										})
 										@tmpl.ComboBoxField(domain.ComboFieldConfig{
-											ID:           "mtroska",
-											Name:         "mtroska",
-											Placeholder:  "izaberite mesto troska...",
+											ID:           "fispid",
+											Name:         "fispid",
+											Placeholder:  translator.Placeholder("izaberite mesto isporuke"),
 											Disabled:     false,
-											ClassSelect:  common.ClassInputTextEnabled + " min-w-[80px] w-full ml-2",
-											TabIndex:     "12",
-											OptionValues: fproDto.Mtroska,
+											ClassSelect:  common.ClassInputTextEnabled + " min-w-[80px] w-full",
+											TabIndex:     "6",
+											OptionValues: fproDto.CbxMi,
 										}, translator)
 									</div>
-								</div>
-								<!-- Document Section -->
-								<div class="bg-blue-50 border border-blue-400 flex-1 px-2 py-1 min-h-20">
-									<div class="text-blue-800 font-bold text-xs mb-1">{ translator.Text("Podaci o dokum/uplati/isplati") }</div>
-									<!-- Two Column Grid -->
-									<div class="grid grid-cols-1 md:grid-cols-2">
-										<!-- Document Field -->
-										<div class="grid grid-cols-2 gap-2 mb-1 items-center">
-											@tmpl.LabelField(domain.LabelFieldConfig{
-												ID:         "brojdokum",
-												LabelText:  translator.Label("Broj Dokumenta"),
-												ClassLabel: common.ClassLabel + " w-24",
-											})
-											@tmpl.TextInputField(domain.InputFieldConfig{
-												ID:         "brojdokum",
-												Name:       "brojdokum",
-												FieldType:  "text",
-												Disabled:   false,
-												ClassInput: common.ClassInputTextEnabled + " min-w-[50px]",
-												MinLength:  "0",
-												MaxLength:  "10",
-												TabIndex:   "13"})
-										</div>
-										<!-- Broj godina Field -->
-										<div class="grid grid-cols-2 gap-2 mb-1 pl-1 items-center">
-											@tmpl.LabelField(domain.LabelFieldConfig{
-												ID:         "goddokum",
-												LabelText:  translator.Label("Godina dokumenta"),
-												ClassLabel: common.ClassLabel + " w-24",
-											})
-											@tmpl.NumericInputField(domain.InputFieldConfig{
-												ID:         "goddokum",
-												Name:       "goddokum",
-												Disabled:   false,
-												ClassInput: common.ClassInputTextEnabled + "  min-w-[50px]",
-												MinLength:  "0",
-												MaxLength:  "4",
-												TabIndex:   "14"})
-										</div>
-										<!-- Datum dokumenta Field -->
-										<div class="grid grid-cols-2 gap-2 mb-1 items-center">
-											@tmpl.LabelField(domain.LabelFieldConfig{
-												ID:         "datdokum",
-												LabelText:  translator.Label("Datum dokumenta"),
-												ClassLabel: common.ClassLabel + " w-24",
-											})
-											@tmpl.TextInputField(domain.InputFieldConfig{
-												ID:         "datdokum",
-												Name:       "datdokum",
-												FieldType:  "date",
-												Disabled:   false,
-												ClassInput: common.ClassInputTextEnabled + " min-w-[50px]",
-												TabIndex:   "15"})
-										</div>
-										<!-- Rok Field -->
-										<div class="grid grid-cols-2 gap-1 mb-1 pl-2 items-center">
-											@tmpl.LabelField(domain.LabelFieldConfig{
-												ID:         "rok",
-												LabelText:  translator.Label("Rok"),
-												ClassLabel: common.ClassLabel + " w-24",
-											})
-											@tmpl.NumericInputField(domain.InputFieldConfig{
-												ID:            "rok",
-												FieldType:     "text",
-												Disabled:      false,
-												ClassInput:    common.ClassInputTextEnabled + " min-w-[50px]",
-												Value:         "0",
-												DecimalPlaces: 0,
-												MinLength:     "0",
-												MaxLength:     "4",
-												TabIndex:      "16"})
-										</div>
+									<div class="flex items-center gap-1">
+										@tmpl.LabelField(domain.LabelFieldConfig{
+											ID:         "komid",
+											LabelText:  translator.Label("Komercijalista"),
+											ClassLabel: common.ClassLabel + " w-28",
+										})
+										@tmpl.ComboBoxField(domain.ComboFieldConfig{
+											ID:           "komid",
+											Name:         "komid",
+											Placeholder:  translator.Placeholder("izaberite komercijalistu"),
+											Disabled:     false,
+											ClassSelect:  common.ClassInputTextEnabled + " min-w-[80px] w-full",
+											TabIndex:     "7",
+											OptionValues: fproDto.CbxKomercijalista,
+										}, translator)
 									</div>
-									<!-- Description -->
-									<div class="text-xs text-gray-600 italic py-1 border-t border-gray-300">
-										{ translator.Text("vezni_dokument_opis") }
-									</div>
-									<!-- Second Section - Two Column Grid -->
-									<div class="grid grid-cols-1 md:grid-cols-2">
-										<!-- Br. vezn. dokum. Field -->
-										<div class="grid grid-cols-2 gap-2 mb-1 items-center">
-											@tmpl.LabelField(domain.LabelFieldConfig{
-												ID:         "brvezndokum",
-												LabelText:  translator.Label("Br. Veznog Dokumenta"),
-												ClassLabel: common.ClassLabel + " w-24",
-											})
-											@tmpl.TextInputField(domain.InputFieldConfig{
-												ID:         "brvezndokum",
-												Name:       "brvezndokum",
-												FieldType:  "text",
-												Disabled:   false,
-												ClassInput: common.ClassInputTextEnabled + " min-w-[50px]",
-												MinLength:  "0",
-												MaxLength:  "10",
-												TabIndex:   "17"})
-										</div>
-										<!-- God. godina Field -->
-										<div class="grid grid-cols-2 gap-2 pl-2 mb-1 items-center">
-											@tmpl.LabelField(domain.LabelFieldConfig{
-												ID:         "godinavezndokum",
-												LabelText:  translator.Label("God. Veznog Dokumenta"),
-												ClassLabel: common.ClassLabel + " w-24",
-											})
-											@tmpl.NumericInputField(domain.InputFieldConfig{
-												ID:         "godinavezndokum",
-												Name:       "godinavezndokum",
-												Disabled:   false,
-												ClassInput: common.ClassInputTextEnabled + " min-w-[50px]",
-												MinLength:  "0",
-												MaxLength:  "4",
-												TabIndex:   "18"})
-										</div>
-										<!-- Dat. vezn. dokum. Field -->
-										<div class="grid grid-cols-2 gap-2 mb-1 items-center">
-											@tmpl.LabelField(domain.LabelFieldConfig{
-												ID:         "datveznogdokum",
-												LabelText:  translator.Label("Datum veznog dokumenta"),
-												ClassLabel: common.ClassLabel + " w-24",
-											})
-											@tmpl.TextInputField(domain.InputFieldConfig{
-												ID:         "datveznogdokum",
-												Name:       "datveznogdokum",
-												FieldType:  "date",
-												Disabled:   false,
-												ClassInput: common.ClassInputTextEnabled + " min-w-[50px]",
-												TabIndex:   "19"})
-										</div>
-										<!-- Napomena/Help Field -->
-										<div class="grid grid-cols-2 gap-2 mb-1 pl-2 items-start">
-											@tmpl.LabelField(domain.LabelFieldConfig{
-												ID:         "napomena",
-												LabelText:  translator.Label("Napomena"),
-												ClassLabel: common.ClassLabel + " w-24",
-											})
-											@tmpl.TextInputField(domain.InputFieldConfig{
-												ID:         "napomena",
-												Name:       "napomena",
-												FieldType:  "text",
-												Disabled:   false,
-												ClassInput: common.ClassInputTextEnabled + " min-w-[50px]",
-												MinLength:  "0",
-												MaxLength:  "1000",
-												TabIndex:   "20"})
-										</div>
-									</div>
-								</div>
-								<!-- Currency Section -->
-								<div class="bg-blue-50 border border-blue-400 flex-1 px-2 py-1 min-h-20">
-									<div class="text-blue-800 font-bold text-xs mb-1">{ translator.Text("Devizna vrednost") }</div>
-									<!-- Row 1: Sifra valute, Search button, Naziv -->
-									<div class="grid grid-cols-1 md:grid-cols-2">
-										<div class="grid grid-cols-2 gap-2 mb-1 items-start">
-											<!-- Label -->
-											@tmpl.LabelField(domain.LabelFieldConfig{
-												ID:         "sifravalue",
-												LabelText:  translator.Label("Šifra valute"),
-												ClassLabel: common.ClassLabel + " w-24",
-											})
-											<!-- Input Field + Search Button + Naziv -->
-											<div class="flex items-center gap-1">
+									<!-- Amount Section -->
+									<div class="flex flex-col gap-2 mb-4">
+										<div class="flex items-start justify-center">
+											<div class="flex flex-col gap-1 items-center">
+												<div class="w-44 border-b-2 border-gray-800 pb-1 text-center font-bold text-sm">
+													{ translator.Label("Duguje") }
+												</div>
 												@tmpl.NumericInputField(domain.InputFieldConfig{
-													ID:         "sifravalue",
-													Disabled:   false,
-													ClassInput: common.ClassInputTextEnabled + " w-[50px] min-w-[50px]",
-													MinLength:  "0",
-													MaxLength:  "4",
-													TabIndex:   "21"})
-												@tmpl.SearchButton(domain.SearchButtonConfig{
-													ID:          "sifravalue-btn",
-													Name:        "search-sifravalue",
-													HxUrl:       "/api/valute/searchbutton",
-													HxTarget:    "#search-dropdown",
-													HxSwap:      "innerHTML",
-													ClassButton: common.ClassButton,
+													ID:            "duguje",
+													Name:          "duguje",
+													Disabled:      false,
+													ClassInput:    common.ClassInputTextEnabled + " w-44 text-right",
+													Value:         "0,00",
+													DecimalPlaces: 2,
+													MinLength:     "0",
+													MaxLength:     "18",
+													TabIndex:      "8",
+													OnInput:       "clearFieldError",
+													OnFocus:       "clearFieldError",
+												})
+											</div>
+											<div class="flex flex-col items-center">
+												<div class="w-8 border-b-2 border-gray-800 mt-6"></div>
+												<div class="border-l-2 border-gray-800 h-7"></div>
+											</div>
+											<div class="flex flex-col gap-1 items-center">
+												<div class="w-44 border-b-2 border-gray-800 pb-1 text-center font-bold text-sm">
+													{ translator.Label("Potražuje") }
+												</div>
+												@tmpl.NumericInputField(domain.InputFieldConfig{
+													ID:            "potrazuje",
+													Name:          "potrazuje",
+													Disabled:      false,
+													ClassInput:    common.ClassInputTextEnabled + " w-44 text-right",
+													Value:         "0,00",
+													DecimalPlaces: 2,
+													MinLength:     "0",
+													MaxLength:     "18",
+													TabIndex:      "9",
+													OnInput:       "clearFieldError",
+													OnFocus:       "clearFieldError",
+												})
+											</div>
+										</div>
+									</div>
+									<!-- Action Buttons -->
+									<div class="flex justify-end gap-1 mt-auto pt-4">
+										@tmpl.SaveButton(btnSave, translator)
+										@tmpl.PrintButton(btnPrint, translator)
+										@tmpl.Button(btnNazad, translator)
+									</div>
+									<!-- Message Display Area at Bottom -->
+									<div id="dialog-form-message" class="hidden w-full whitespace-normal break-words"></div>
+								</div>
+								<!-- Right Column -->
+								<div class="space-y-1 px-1">
+									<div class="bg-blue-50 border border-blue-400 flex-1 px-1 py-1 space-y-1">
+										<div class="flex items-center gap-2">
+											@tmpl.LabelField(domain.LabelFieldConfig{
+												ID:         "idorgjed",
+												LabelText:  translator.Label("Org. Jedinica"),
+												ClassLabel: common.ClassLabel + " w-40 whitespace-nowrap",
+											})
+											@tmpl.ComboBoxField(domain.ComboFieldConfig{
+												ID:           "idorgjed",
+												Name:         "idorgjed",
+												Placeholder:  translator.Placeholder("izaberite organizacionu jedinicu"),
+												Disabled:     false,
+												ClassSelect:  common.ClassInputTextEnabled + " w-full",
+												TabIndex:     "10",
+												OptionValues: fproDto.CbxOrgjed,
+											}, translator)
+										</div>
+										<div class="flex items-center gap-2">
+											@tmpl.LabelField(domain.LabelFieldConfig{
+												ID:         "mestotrid",
+												LabelText:  translator.Label("Mesto troska"),
+												ClassLabel: common.ClassLabel + " w-40 whitespace-nowrap",
+											})
+											@tmpl.ComboBoxField(domain.ComboFieldConfig{
+												ID:           "mestotrid",
+												Name:         "mestotrid",
+												Placeholder:  "izaberite mesto troska...",
+												Disabled:     false,
+												ClassSelect:  common.ClassInputTextEnabled + " w-full",
+												TabIndex:     "11",
+												OnInput:      "clearFieldError",
+												OnFocus:      "clearFieldError",
+												OptionValues: fproDto.CbxMtroska,
+											}, translator)
+										</div>
+									</div>
+									<!-- Document Section -->
+									<fieldset class="bg-blue-50 border border-blue-400 flex-1 p-1 min-h-20">
+										<legend class="px-1 text-blue-800 font-bold text-xs leading-none">{ translator.Text("Podaci o dokum/uplati/isplati") }</legend>
+										<div class="flex items-center gap-4 mb-1">
+											<div class="flex items-center gap-2 flex-1 min-w-0">
+												@tmpl.LabelField(domain.LabelFieldConfig{
+													ID:         "dokum",
+													LabelText:  translator.Label("Broj Dokumenta"),
+													ClassLabel: common.ClassLabel + " w-40",
 												})
 												@tmpl.TextInputField(domain.InputFieldConfig{
-													ID:         "sifravalutenaziv",
-													Name:       "sifravalutenaziv",
+													ID:         "dokum",
+													Name:       "dokum",
 													FieldType:  "text",
-													Disabled:   true,
-													ClassInput: common.ClassInputTextEnabled + " w-full",
-													TabIndex:   "-1",
+													Disabled:   false,
+													ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-[100px]",
+													MinLength:  "0",
+													MaxLength:  "10",
+													TabIndex:   "12",
+													OnInput:    "clearFieldError",
+													OnFocus:    "clearFieldError"})
+												<span id="dokum-error" class="field-error-inline text-red-500 text-xs whitespace-normal break-words"></span>
+											</div>
+											<div class="flex items-center gap-2 flex-1 min-w-0 justify-between">
+												@tmpl.LabelField(domain.LabelFieldConfig{
+													ID:         "tra",
+													LabelText:  translator.Label("Godina dokumenta"),
+													ClassLabel: common.ClassLabel + " w-40 whitespace-nowrap",
 												})
+												@tmpl.NumericInputField(domain.InputFieldConfig{
+													ID:         "tra",
+													Name:       "tra",
+													Disabled:   false,
+													ClassInput: common.ClassInputTextEnabled + " w-40 ml-auto",
+													MinLength:  "0",
+													MaxLength:  "4",
+													TabIndex:   "13",
+													OnInput:    "clearFieldError",
+													OnFocus:    "clearFieldError"})
+												<span id="tra-error" class="field-error-inline text-red-500 text-xs whitespace-normal break-words"></span>
 											</div>
 										</div>
-									</div>
-									<!-- Row 2: Kurs and Devizni iznos -->
-									<div class="grid grid-cols-1 md:grid-cols-2">
-										<div class="grid grid-cols-2 gap-2 mb-1 items-start">
-											<!-- Kurs Label -->
-											@tmpl.LabelField(domain.LabelFieldConfig{
-												ID:         "kurs",
-												LabelText:  translator.Label("Kurs"),
-												ClassLabel: common.ClassLabel + " w-24",
-											})
-											<!-- Kurs Input -->
-											@tmpl.NumericInputField(domain.InputFieldConfig{
-												ID:            "kurs",
-												Disabled:      false,
-												ClassInput:    common.ClassInputTextEnabled + " text-right w-full",
-												Value:         "0",
-												DecimalPlaces: 4,
-												MinLength:     "0",
-												MaxLength:     "10",
-												TabIndex:      "22"})
+										<div class="flex items-center gap-4 mb-1">
+											<div class="flex items-center gap-2 flex-1 min-w-0">
+												@tmpl.LabelField(domain.LabelFieldConfig{
+													ID:         "dadok",
+													LabelText:  translator.Label("Datum dokumenta"),
+													ClassLabel: common.ClassLabel + " w-40",
+												})
+												@tmpl.TextInputField(domain.InputFieldConfig{
+													ID:         "dadok",
+													Name:       "dadok",
+													FieldType:  "date",
+													Disabled:   false,
+													ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-[100px]",
+													TabIndex:   "14",
+													OnInput:    "clearFieldError",
+													OnFocus:    "clearFieldError"})
+												<span id="dadok-error" class="field-error-inline text-red-500 text-xs whitespace-normal break-words"></span>
+											</div>
+											<div class="flex items-center gap-2 flex-1 min-w-0">
+												@tmpl.LabelField(domain.LabelFieldConfig{
+													ID:         "rok",
+													LabelText:  translator.Label("Rok"),
+													ClassLabel: common.ClassLabel + " w-40",
+												})
+												@tmpl.NumericInputField(domain.InputFieldConfig{
+													ID:            "rok",
+													FieldType:     "text",
+													Disabled:      false,
+													ClassInput:    common.ClassInputTextEnabled + " flex-1 min-w-[100px]",
+													Value:         "0",
+													DecimalPlaces: 0,
+													MinLength:     "0",
+													MaxLength:     "4",
+													TabIndex:      "15",
+													OnInput:       "clearFieldError",
+													OnFocus:       "clearFieldError"})
+											</div>
 										</div>
-										<!-- Devizni iznos Label -->
-										<div class="grid grid-cols-2 gap-2 mb-1 pl-2 items-start">
-											@tmpl.LabelField(domain.LabelFieldConfig{
-												ID:         "devizniiznos",
-												LabelText:  translator.Label("Devizni iznos"),
-												ClassLabel: common.ClassLabel + " w-24",
-											})
-											<!-- Devizni iznos Input -->
-											@tmpl.NumericInputField(domain.InputFieldConfig{
-												ID:            "devizniiznos",
-												Disabled:      false,
-												Pattern:       "[0-9]*",
-												ClassInput:    common.ClassInputTextEnabled + " text-right w-full",
-												DecimalPlaces: 2,
-												Value:         "0",
-												MinLength:     "0",
-												MaxLength:     "16",
-												TabIndex:      "23"})
+										<div class="text-xs text-gray-600 italic py-1 border-t border-gray-300 mb-1">
+											{ translator.Text("vezni_dokument_opis") }
 										</div>
-									</div>
+										<div class="flex items-center gap-4 mb-1">
+											<div class="flex items-center gap-2 flex-1 min-w-0">
+												@tmpl.LabelField(domain.LabelFieldConfig{
+													ID:         "dokvezni",
+													LabelText:  translator.Label("Br. Veznog Dokumenta"),
+													ClassLabel: common.ClassLabel + " w-40",
+												})
+												@tmpl.TextInputField(domain.InputFieldConfig{
+													ID:         "dokvezni",
+													Name:       "dokvezni",
+													FieldType:  "text",
+													Disabled:   false,
+													ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-[100px]",
+													MinLength:  "0",
+													MaxLength:  "10",
+													TabIndex:   "16",
+													OnInput:    "clearFieldError",
+													OnFocus:    "clearFieldError"})
+												<span id="dokvezni-error" class="field-error-inline text-red-500 text-xs whitespace-normal break-words"></span>
+											</div>
+											<div class="flex items-center gap-2 flex-1 min-w-0 justify-between">
+												@tmpl.LabelField(domain.LabelFieldConfig{
+													ID:         "godvezni",
+													LabelText:  translator.Label("God. Veznog Dokumenta"),
+													ClassLabel: common.ClassLabel + " w-40 whitespace-nowrap",
+												})
+												@tmpl.NumericInputField(domain.InputFieldConfig{
+													ID:         "godvezni",
+													Name:       "godvezni",
+													Disabled:   false,
+													ClassInput: common.ClassInputTextEnabled + " w-40 ml-auto",
+													MinLength:  "0",
+													MaxLength:  "4",
+													TabIndex:   "17",
+													OnInput:    "clearFieldError",
+													OnFocus:    "clearFieldError"})
+												<span id="travez-error" class="field-error-inline text-red-500 text-xs whitespace-normal break-words"></span>
+											</div>
+										</div>
+										<div class="flex items-center gap-4 mb-1">
+											<div class="flex items-center gap-2 flex-1 min-w-0">
+												@tmpl.LabelField(domain.LabelFieldConfig{
+													ID:         "dadokv",
+													LabelText:  translator.Label("Datum veznog dokumenta"),
+													ClassLabel: common.ClassLabel + " w-40",
+												})
+												@tmpl.TextInputField(domain.InputFieldConfig{
+													ID:         "dadokv",
+													Name:       "dadokv",
+													FieldType:  "date",
+													Disabled:   false,
+													ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-[100px]",
+													TabIndex:   "18",
+													OnInput:    "clearFieldError",
+													OnFocus:    "clearFieldError"})
+											</div>
+											<div class="flex items-center gap-2 flex-1 min-w-0">
+												@tmpl.LabelField(domain.LabelFieldConfig{
+													ID:         "napomena",
+													LabelText:  translator.Label("Napomena"),
+													ClassLabel: common.ClassLabel + " w-40",
+												})
+												@tmpl.TextInputField(domain.InputFieldConfig{
+													ID:         "napomena",
+													Name:       "napomena",
+													FieldType:  "text",
+													Disabled:   false,
+													ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-[100px]",
+													MinLength:  "0",
+													MaxLength:  "1000",
+													TabIndex:   "19",
+													OnInput:    "clearFieldError",
+													OnFocus:    "clearFieldError"})
+											</div>
+										</div>
+									</fieldset>
+									<!-- Currency Section -->
+									<fieldset class="bg-blue-50 border border-blue-400 flex-1 p-1 min-h-20">
+										<legend class="px-1 text-blue-800 font-bold text-xs leading-none">{ translator.Text("Devizna vrednost") }</legend>
+										<div class="flex items-center gap-2 mb-1">
+											@tmpl.LabelField(domain.LabelFieldConfig{
+												ID:         "idvalute",
+												LabelText:  translator.Label("Šifra valute"),
+												ClassLabel: common.ClassLabel + " w-40",
+											})
+											@tmpl.ComboBoxField(domain.ComboFieldConfig{
+												ID:           "idvalute",
+												Name:         "idvalute",
+												Placeholder:  translator.Placeholder("izaberite valutu"),
+												Disabled:     false,
+												ClassSelect:  common.ClassInputTextEnabled + " w-full",
+												TabIndex:     "20",
+												OnInput:      "clearFieldError",
+												OnFocus:      "clearFieldError",
+												OptionValues: fproDto.CbxValute,
+											}, translator)
+										</div>
+										<div class="flex items-center gap-4 mb-1">
+											<div class="flex items-center gap-2 flex-1 min-w-0">
+												@tmpl.LabelField(domain.LabelFieldConfig{
+													ID:         "kurs",
+													LabelText:  translator.Label("Kurs"),
+													ClassLabel: common.ClassLabel + " w-40",
+												})
+												@tmpl.NumericInputField(domain.InputFieldConfig{
+													ID:            "kurs",
+													Disabled:      false,
+													ClassInput:    common.ClassInputTextEnabled + " text-right flex-1 min-w-[100px]",
+													Value:         "0",
+													DecimalPlaces: 4,
+													MinLength:     "0",
+													MaxLength:     "10",
+													TabIndex:      "21",
+													OnInput:       "clearFieldError",
+													OnFocus:       "clearFieldError"})
+												<span id="kurs-error" class="field-error-inline text-red-500 text-xs whitespace-normal break-words"></span>
+											</div>
+											<div class="flex items-center gap-2 flex-1 min-w-0">
+												@tmpl.LabelField(domain.LabelFieldConfig{
+													ID:         "deviznos",
+													LabelText:  translator.Label("Devizni iznos"),
+													ClassLabel: common.ClassLabel + " w-40",
+												})
+												@tmpl.NumericInputField(domain.InputFieldConfig{
+													ID:            "deviznos",
+													Name:          "deviznos",
+													Disabled:      false,
+													Pattern:       "[0-9]*",
+													ClassInput:    common.ClassInputTextEnabled + " text-right flex-1 min-w-[100px]",
+													DecimalPlaces: 2,
+													Value:         "0",
+													MinLength:     "0",
+													MaxLength:     "16",
+													TabIndex:      "22",
+													OnInput:       "clearFieldError",
+													OnFocus:       "clearFieldError"})
+											</div>
+										</div>
+									</fieldset>
 								</div>
 							</div>
 						</div>
-					</div>
-					<!-- Table Section -->
-					<div id="table_nalogstavke" class="flex-1 border border-gray-400 m-1 bg-white overflow-y-auto" style="max-height: calc(5 * 2rem + 2rem)">
-						<!-- Total Row -->
-						@tmpl.Table(tblStavke, translator)
-						<div class="bg-gray-100 border-t border-gray-400 sticky top-0">
-							<div class="grid grid-cols-12 gap-0 text-xs font-bold">
-								<div class="p-2 border-r border-gray-300 col-span-9">Total:</div>
-								<div class="p-2 border-r border-gray-300 text-right" id="total-duguje">0,00</div>
-								<div class="p-2 border-r border-gray-300 text-right" id="total-potrazuje">0,00</div>
-								<div class="p-2"></div>
+						<!-- Table Section -->
+						<div id="table-stavke-container" class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col flex-1 min-h-0 overflow-hidden relative">
+							@tmpl.LoadingSpinner()
+							@tmpl.Search_Part(tblStavke, searchInput)
+							<!-- Table -->
+							<div class="flex-1 min-h-0 overflow-auto">
+								@tmpl.Table(tblStavke, translator)
 							</div>
 						</div>
 					</div>
-				</div>
+				</form>
 			</div>
 		</div>
 		<div id="notification" class="fixed top-5 right-5 px-4 py-3 bg-green-500 text-white rounded hidden"></div>
 	</div>
-	<script src="/js/entity_lock.js"></script>
-	<script>
-		// Start lock when form loads
-		// Lock expires after 20 minutes of inactivity (no mouse/keyboard activity)
-		startEntityLock('nalozi', {{ .IDFnal }}, { 
-			entityName: 'naloga',
-			inactivityTimeout: 20 * 60 * 1000  // 20 minutes (can be adjusted: 30 * 60 * 1000 for 30 min)
-		});
-	</script>
 }

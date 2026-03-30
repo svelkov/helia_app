@@ -104,33 +104,4 @@ func SearchPopup1(fieldID, searchURL, placeholder, value string) templ.Component
 	})
 }
 
-func SearchPopupScript(fieldID, resultFieldID string) templ.Component {
-	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
-		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
-		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
-			return templ_7745c5c3_CtxErr
-		}
-		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
-		if !templ_7745c5c3_IsBuffer {
-			defer func() {
-				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
-				if templ_7745c5c3_Err == nil {
-					templ_7745c5c3_Err = templ_7745c5c3_BufErr
-				}
-			}()
-		}
-		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var7 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var7 == nil {
-			templ_7745c5c3_Var7 = templ.NopComponent
-		}
-		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<script>\r\n        // Toggle popup visibility\r\n        function togglePopup(fieldId) {\r\n            const popup = document.getElementById(`${fieldId}-popup`);\r\n            const isHidden = popup.classList.contains('hidden');\r\n            \r\n            // Close all other popups first\r\n            document.querySelectorAll('.absolute.z-50').forEach(el => {\r\n                if (el !== popup) el.classList.add('hidden');\r\n            });\r\n            \r\n            // Toggle this popup\r\n            popup.classList.toggle('hidden');\r\n            \r\n            if (!isHidden) {\r\n                setTimeout(() => document.getElementById(`search-input-${fieldId}`).focus(), 10);\r\n            }\r\n        }\r\n\r\n        // Reset search input\r\n        function resetSearch(fieldId) {\r\n            document.getElementById(`search-input-${fieldId}`).value = '';\r\n            htmx.trigger(`#search-input-${fieldId}`, 'keyup');\r\n        }\r\n\r\n        // Select an item from the results\r\n        function selectItem(fieldId, value, displayValue) {\r\n            // Update the target field\r\n            document.getElementById(fieldId).value = value;\r\n            \r\n            // If a corresponding display field exists, update it too\r\n            const displayField = document.getElementById(`${fieldId}naziv`);\r\n            if (displayField) {\r\n                displayField.value = displayValue;\r\n            }\r\n            \r\n            // Close the popup\r\n            document.getElementById(`${fieldId}-popup`).classList.add('hidden');\r\n            \r\n            console.log(`Selected value for ${fieldId}:`, value, displayValue);\r\n        }\r\n\r\n        // Close popup when clicking outside\r\n        document.addEventListener('click', function(event) {\r\n            // Check all popups\r\n            document.querySelectorAll('[id$=\"-popup\"]').forEach(popup => {\r\n                const fieldId = popup.id.replace('-popup', '');\r\n                const field = document.getElementById(fieldId);\r\n                const searchButton = document.querySelector(`button[onclick=\"togglePopup('${fieldId}')\"]`);\r\n                \r\n                if (field && searchButton && \r\n                    !popup.contains(event.target) && \r\n                    !field.contains(event.target) && \r\n                    !searchButton.contains(event.target)) {\r\n                    popup.classList.add('hidden');\r\n                }\r\n            });\r\n        });\r\n\r\n        // Close popup on Escape key\r\n        document.addEventListener('keydown', function(event) {\r\n            if (event.key === 'Escape') {\r\n                document.querySelectorAll('[id$=\"-popup\"]').forEach(popup => {\r\n                    popup.classList.add('hidden');\r\n                });\r\n            }\r\n        });\r\n    </script>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		return nil
-	})
-}
-
 var _ = templruntime.GeneratedTemplate

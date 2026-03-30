@@ -75,3 +75,10 @@ func StringToInt64(str string) int64 {
 	}
 	return val
 }
+func StringToFloat32(str string) float32 {
+	val, err := strconv.ParseFloat(str, 32)
+	if err != nil {
+		return float32(defaultFloat64)
+	}
+	return float32(val)
+}

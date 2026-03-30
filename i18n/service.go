@@ -189,6 +189,9 @@ func toSnakeCase(s string) string {
 		result = strings.ReplaceAll(result, char, replacement)
 	}
 
+	// Replace "/" with space
+	result = strings.ReplaceAll(result, "/", " ")
+
 	// Replace special characters and spaces with underscores
 	result = regSpecialChars.ReplaceAllString(result, "_")
 
@@ -196,7 +199,6 @@ func toSnakeCase(s string) string {
 	result = strings.ReplaceAll(result, " i ", "_")
 
 	// Remove multiple underscores
-
 	result = reg.ReplaceAllString(result, "_")
 
 	// Trim underscores from start and end

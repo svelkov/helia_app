@@ -31,11 +31,13 @@ type IzvodiHandler struct {
 	tabData domain.TabData
 	service finservice.IzvodiService
 	cfg     config.Config
+	lm      *middleware.LockMiddleware
 }
 
-func NewIzvodiHandler(service finservice.IzvodiService, cfg config.Config) *IzvodiHandler {
+func NewIzvodiHandler(service finservice.IzvodiService, cfg config.Config, lm *middleware.LockMiddleware) *IzvodiHandler {
 	handler := &IzvodiHandler{
 		cfg: cfg,
+		lm:  lm,
 	}
 	handler.tabData = GetIzvodiTabData()
 	handler.service = service

@@ -7,6 +7,7 @@ import (
 	"helia/internal/common"
 	"helia/internal/domain"
 	"time"
+	
 )
 
 // Main entry point for Bilansi module
@@ -274,8 +275,8 @@ templ ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPri
 	</div>
 	<!-- Dialog display container-->
 	<div id="dialog-container"></div>
-	@tmpl.HandleDialogResponse("dialog-container")
-	@tmpl.ClearFieldError()
+	@tmpl.HandleDialogResponseScript("dialog-container")
+	@tmpl.ClearFieldErrorScript()
 	@tmpl.SearchPopupScript()
 	@tmpl.SpinnerScript()
 }
@@ -418,7 +419,7 @@ templ BilansStanja(tabs domain.TabData, tbl domain.TableData, searchInput domain
 
 // BilansStanjaForm is a separate form component for Bilans stanja
 templ BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dialog, btnSave, btnCancel, btnClose domain.Button, translator *i18n.Service) {
-	<div id={ dialog.Id } class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+	<div id={ dialog.Id } class={ common.ClassMainDialogDiv }>
 		<div class="bg-white rounded-lg shadow-2xl relative animate-fade-in max-w-4xl w-full max-h-[90vh] overflow-y-auto">
 			<!-- Title Bar -->
 			<div class="bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg sticky top-0 z-10">
@@ -703,7 +704,7 @@ templ BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dia
 			<div id="dialog-message" class="hidden"></div>
 		</div>
 	</div>
-	@tmpl.HandleFormResponse()
+	@tmpl.HandleFormResponseScript()
 }
 
 // Tab 3 - Stampanje bilansa stanja (Print Balance Sheet)
@@ -866,7 +867,7 @@ templ BilansUspeha(tabs domain.TabData, tbl domain.TableData, searchInput domain
 
 // BilansUspehaForm is a separate form component for Bilans uspeha
 templ BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dialog, btnSave, btnCancel, btnClose domain.Button, translator *i18n.Service) {
-	<div id={ dialog.Id } class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+	<div id={ dialog.Id } class={ common.ClassMainDialogDiv }>
 		<div class="bg-white rounded-lg shadow-2xl relative animate-fade-in max-w-4xl w-full max-h-[90vh] overflow-y-auto">
 			<!-- Title Bar -->
 			<div class="bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg sticky top-0 z-10">
@@ -1151,7 +1152,7 @@ templ BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dia
 			<div id="dialog-message" class="hidden"></div>
 		</div>
 	</div>
-	@tmpl.HandleFormResponse()
+	@tmpl.HandleFormResponseScript()
 }
 
 // Tab 5 - Stampanje bilansa uspeha (Print Income Statement)

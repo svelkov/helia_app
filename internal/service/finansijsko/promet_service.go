@@ -2,6 +2,7 @@ package finansijsko
 
 import (
 	"fmt"
+	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
 	"helia/internal/repository"
@@ -126,7 +127,7 @@ func (s *PrometResource) GetPrometTotals(c *gin.Context) (domain.PrometResponse,
 		select 
 			coalesce(sum(case when kat = 1 or kat = 2 then iznos else 0 end), 0) as duguje,
 			coalesce(sum(case when kat = 3 or kat = 4 then iznos else 0 end), 0) as potrazuje
-		from fpro`)
+		from fpro`, true)
 
 	if hasGod {
 		qbDo.AddEqual("god", session.SelectedGod)
@@ -188,7 +189,7 @@ func (s *PrometResource) GetPrometTotals(c *gin.Context) (domain.PrometResponse,
 		select 
 			coalesce(sum(case when kat = 1 or kat = 2 then iznos else 0 end), 0) as duguje,
 			coalesce(sum(case when kat = 3 or kat = 4 then iznos else 0 end), 0) as potrazuje
-		from fpro`)
+		from fpro`, true)
 
 	if hasGod {
 		qbPeriod.AddEqual("god", session.SelectedGod)
@@ -259,7 +260,7 @@ func (s *PrometResource) CheckPrometParameters(c *gin.Context, requiredFields []
 		return
 	}
 	// Build query dynamically
-	qb := common.NewQueryBuilder(`SELECT f.konto, f.sifra FROM baza.fkpl as f`)
+	qb := common.NewQueryBuilder(`SELECT f.konto, f.sifra FROM baza.fkpl as f`, true)
 
 	session := domain.GetSessionFromContext(c)
 	if session == nil {
@@ -319,30 +320,49 @@ func (s *PrometResource) GetPrometAnalitickihKonta(c *gin.Context, tbl *domain.T
 			   	CASE WHEN kat = 3 OR kat = 4 THEN iznos ELSE 0 END as potrazuje,
 				CASE WHEN kat = 1 OR kat = 2 THEN kolic ELSE 0 END as kolduguje,
 				CASE WHEN kat = 3 OR kat = 4 THEN kolic ELSE 0 END as kolpotrazuje	
-		FROM fpro`)
-
+		FROM fpro`, true)
+	qbTotal := common.NewQueryBuilder(`SELECT 
+			   	coalesce(sum(case when kat = 1 or kat = 2 then iznos else 0 end), 0) as duguje,
+			   	coalesce(sum(case when kat = 3 or kat = 4 then iznos else 0 end), 0) as potrazuje,
+				coalesce(sum(case when kat = 1 or kat = 2 then kolic else 0 end), 0) as kolduguje,
+				coalesce(sum(case when kat = 3 or kat = 4 then kolic else 0 end), 0) as kolpotrazuje,	
+				coalesce(sum(deviznos), 0) as deviznos
+		FROM fpro`, true)
 	if hasGod {
 		qb.AddEqual("god", session.SelectedGod)
+		qbTotal.AddEqual("god", session.SelectedGod)
 	}
 	if hasKar {
 		qb.AddEqual("kar", session.SelectedKar)
+		qbTotal.AddEqual("kar", session.SelectedKar)
 	}
 	qb.AddEqual("konto", konto)
 	qb.AddEqual("sifra", sifra)
 	qb.AddEqual("vkonta", 1)
 	qb.AddCondition("danal", odDatuma, ">=")
 	qb.AddCondition("danal", doDatuma, "<=")
+
+	qbTotal.AddEqual("konto", konto)
+	qbTotal.AddEqual("sifra", sifra)
+	qbTotal.AddEqual("vkonta", 1)
+	qbTotal.AddCondition("danal", odDatuma, ">=")
+	qbTotal.AddCondition("danal", doDatuma, "<=")
 	if isMI {
 		qb.AddCondition("mi", odMI, ">=")
 		qb.AddCondition("mi", doMI, "<=")
+		qbTotal.AddCondition("mi", odMI, ">=")
+		qbTotal.AddCondition("mi", doMI, "<=")
 	}
 	// Add search conditions if search text is provided
 	if searchText != "" {
 		qb.SetEntityType(reflect.TypeOf(domain.PrometDto{}))
+		//qbTotal.SetEntityType(reflect.TypeOf(domain.PrometDto{}))
 		if isMI {
 			qb.AddSearchConditions(s.GetAnKontaMiTableFields(), searchText)
+			//qbTotal.AddSearchConditions(s.GetAnKontaMiTableFields(), searchText)
 		} else {
 			qb.AddSearchConditions(s.GetAnkontaTableFields(), searchText)
+			//qbTotal.AddSearchConditions(s.GetAnkontaTableFields(), searchText)
 		}
 	}
 
@@ -405,6 +425,39 @@ func (s *PrometResource) GetPrometAnalitickihKonta(c *gin.Context, tbl *domain.T
 			tbl.Rows = append(tbl.Rows, tblRow)
 		}
 	}
+	sqlQuery, args = qbTotal.Build()
+	totentites, err := s.prometRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
+	if err != nil {
+		return err
+	}
+	var totDug, totPot, totKolDug, totKolPot, totDevIznos float64
+	for _, tot := range *totentites {
+		totDug += tot.Duguje
+		totPot += tot.Potrazuje
+		totKolDug += tot.Kolduguje
+		totKolPot += tot.Kolpotrazuje
+		totDevIznos += tot.Deviznos
+	}
+
+	tbl.Totals = make([]string, len(tbl.Headers))
+	tbl.Totals[0] = i18n.GetInstance().Label("Ukupno") // Set label for totals column
+
+	for i, header := range tbl.Headers {
+		switch header.Name {
+		case "duguje":
+			tbl.Totals[i] = common.FormatNumberWithSystemLocale(totDug, 2)
+		case "potrazuje":
+			tbl.Totals[i] = common.FormatNumberWithSystemLocale(totPot, 2)
+		case "saldo":
+			tbl.Totals[i] = common.FormatNumberWithSystemLocale(totDug-totPot, 2)
+		case "kolduguje":
+			tbl.Totals[i] = common.FormatNumberWithSystemLocale(totKolDug, 2)
+		case "kolpotrazuje":
+			tbl.Totals[i] = common.FormatNumberWithSystemLocale(totKolPot, 2)
+		case "deviznos":
+			tbl.Totals[i] = common.FormatNumberWithSystemLocale(totDevIznos, 2)
+		}
+	}
 
 	return nil
 }
@@ -430,23 +483,35 @@ func (s *PrometResource) GetPrometSubsintetickihKonta(c *gin.Context, tbl *domai
 			   	CASE WHEN kat = 1 OR kat = 2 THEN iznos ELSE 0 END as duguje,
 			   	CASE WHEN kat = 3 OR kat = 4 THEN iznos ELSE 0 END as potrazuje,
 				idfpro
-		FROM fpro`)
-
+		FROM fpro`, true)
+	qbTotal := common.NewQueryBuilder(`SELECT 
+			   	coalesce(sum(case when kat = 1 or kat = 2 then iznos else 0 end), 0) as duguje,
+			   	coalesce(sum(case when kat = 3 or kat = 4 then iznos else 0 end), 0) as potrazuje
+		FROM fpro`, true)
 	if hasGod {
 		qb.AddEqual("god", session.SelectedGod)
+		qbTotal.AddEqual("god", session.SelectedGod)
 	}
 	if hasKar {
 		qb.AddEqual("kar", session.SelectedKar)
+		qbTotal.AddEqual("kar", session.SelectedKar)
 	}
 	qb.AddCondition("konto::numeric", odkonta, ">=")
 	qb.AddCondition("konto::numeric", dokonta, "<=")
 	qb.AddCondition("danal", odDatuma, ">=")
 	qb.AddCondition("danal", doDatuma, "<=")
+	// add condition for totals
+	qbTotal.AddCondition("konto::numeric", odkonta, ">=")
+	qbTotal.AddCondition("konto::numeric", dokonta, "<=")
+	qbTotal.AddCondition("danal", odDatuma, ">=")
+	qbTotal.AddCondition("danal", doDatuma, "<=")
 
 	// Add search conditions if search text is provided
 	if searchText != "" {
 		qb.SetEntityType(reflect.TypeOf(domain.PrometDto{}))
 		qb.AddSearchConditions(s.GetSubsintetickihKontaTableFields(), searchText)
+		//qbTotal.SetEntityType(reflect.TypeOf(domain.PrometDto{}))
+		//qbTotal.AddSearchConditions(s.GetSubsintetickihKontaTableFields(), searchText)
 	}
 	qb.AddOrderBy("konto, danal, tipdok, nalog")
 	if !getTotalRecords {
@@ -481,6 +546,29 @@ func (s *PrometResource) GetPrometSubsintetickihKonta(c *gin.Context, tbl *domai
 			tbl.Rows = append(tbl.Rows, tblRow)
 		}
 	}
+	// fill totals
+	sqlQuery, args = qbTotal.Build()
+	totentites, err := s.prometRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
+	if err != nil {
+		return err
+	}
+	var totDug, totPot float64
+	for _, tot := range *totentites {
+		totDug += tot.Duguje
+		totPot += tot.Potrazuje
+	}
+	tbl.Totals = make([]string, len(tbl.Headers))
+	tbl.Totals[0] = i18n.GetInstance().Label("Ukupno") // Set label for totals column
+	for i, header := range tbl.Headers {
+		switch header.Name {
+		case "duguje":
+			tbl.Totals[i] = common.FormatNumberWithSystemLocale(totDug, 2)
+		case "potrazuje":
+			tbl.Totals[i] = common.FormatNumberWithSystemLocale(totPot, 2)
+		case "saldo":
+			tbl.Totals[i] = common.FormatNumberWithSystemLocale(totDug-totPot, 2)
+		}
+	}
 
 	return nil
 }
@@ -506,22 +594,34 @@ func (s *PrometResource) GetPrometSintetickihKonta(c *gin.Context, tbl *domain.T
 			   	MAX(opis) as opis,
 			   	SUM(CASE WHEN kat = 1 OR kat = 2 THEN iznos ELSE 0 END) as duguje,
 			   	SUM(CASE WHEN kat = 3 OR kat = 4 THEN iznos ELSE 0 END) as potrazuje
-		FROM fpro`)
+		FROM fpro`, true)
+	qbTotal := common.NewQueryBuilder(`SELECT
+			   	coalesce(sum(case when kat = 1 or kat = 2 then iznos else 0 end), 0) as duguje,
+							   	coalesce(sum(case when kat = 3 or kat = 4 then iznos else 0 end), 0) as potrazuje
+				FROM fpro`, true)
 
 	if hasGod {
 		qb.AddEqual("god", session.SelectedGod)
+		qbTotal.AddEqual("god", session.SelectedGod)
 	}
 	if hasKar {
 		qb.AddEqual("kar", session.SelectedKar)
+		qbTotal.AddEqual("kar", session.SelectedKar)
 	}
 	qb.AddLikeBegin("konto", odkonta)
 	qb.AddCondition("danal", odDatuma, ">=")
 	qb.AddCondition("danal", doDatuma, "<=")
+	// add conditions for totals
+	qbTotal.AddLikeBegin("konto", odkonta)
+	qbTotal.AddCondition("danal", odDatuma, ">=")
+	qbTotal.AddCondition("danal", doDatuma, "<=")
 
 	// Add search conditions if search text is provided
 	if searchText != "" {
 		qb.SetEntityType(reflect.TypeOf(domain.PrometDto{}))
+		//	qbTotal.SetEntityType(reflect.TypeOf(domain.PrometDto{}))
 		qb.AddSearchConditions(s.GetSintetickihKontaTableFields(), searchText)
+		//	qbTotal.AddSearchConditions(s.GetSintetickihKontaTableFields(), searchText)
 	}
 	qb.AddGroupBy("LEFT(konto, 3), tipdok, nalog")
 	qb.AddOrderBy("tipdok, nalog")
@@ -556,7 +656,29 @@ func (s *PrometResource) GetPrometSintetickihKonta(c *gin.Context, tbl *domain.T
 			tbl.Rows = append(tbl.Rows, tblRow)
 		}
 	}
-
+	// fill totals
+	sqlQuery, args = qbTotal.Build()
+	totentites, err := s.prometRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
+	if err != nil {
+		return err
+	}
+	var totDug, totPot float64
+	for _, tot := range *totentites {
+		totDug += tot.Duguje
+		totPot += tot.Potrazuje
+	}
+	tbl.Totals = make([]string, len(tbl.Headers))
+	tbl.Totals[0] = i18n.GetInstance().Label("Ukupno") // Set label for totals column
+	for i, header := range tbl.Headers {
+		switch header.Name {
+		case "duguje":
+			tbl.Totals[i] = common.FormatNumberWithSystemLocale(totDug, 2)
+		case "potrazuje":
+			tbl.Totals[i] = common.FormatNumberWithSystemLocale(totPot, 2)
+		case "saldo":
+			tbl.Totals[i] = common.FormatNumberWithSystemLocale(totDug-totPot, 2)
+		}
+	}
 	return nil
 }
 
@@ -597,21 +719,32 @@ func (s *PrometResource) GetPrometKarticaSintetickihKonta(c *gin.Context, tbl *d
 				LEFT JOIN fkpl ON fkpl.konto = fpro.konto AND fkpl.god = fpro.god AND fkpl.kar = fpro.kar AND fkpl.vkonta = 2`
 		groupByClause = "fpro.konto"
 	}
+	qbTotal := common.NewQueryBuilder(`SELECT 
+						   	coalesce(sum(case when kat = 1 or kat = 2 then iznos else 0 end), 0) as duguje,
+						   	coalesce(sum(case when kat = 3 or kat = 4 then iznos else 0 end), 0) as potrazuje
+							FROM fpro`, true)
 
-	qb := common.NewQueryBuilder(sqlText)
+	qb := common.NewQueryBuilder(sqlText, true)
 	if hasGod {
 		qb.AddEqual("fpro.god", session.SelectedGod)
+		qbTotal.AddEqual("fpro.god", session.SelectedGod)
 	}
 	if hasKar {
 		qb.AddEqual("fpro.kar", session.SelectedKar)
+		qbTotal.AddEqual("fpro.kar", session.SelectedKar)
 	}
 	qb.AddLikeBegin("fpro.konto", odkonta)
 	qb.AddCondition("danal", odDatuma, ">=")
 	qb.AddCondition("danal", doDatuma, "<=")
+	// add condition for totals
+	qbTotal.AddLikeBegin("fpro.konto", odkonta)
+	qbTotal.AddCondition("danal", odDatuma, ">=")
+	qbTotal.AddCondition("danal", doDatuma, "<=")
 
 	// Add search conditions if search text is provided
 	if searchText != "" {
 		qb.SetEntityType(reflect.TypeOf(domain.PrometDto{}))
+
 		qb.AddSearchConditions(s.GetKarticaSintetikaTableFields(), searchText)
 	}
 	qb.AddGroupBy(groupByClause)
@@ -649,7 +782,30 @@ func (s *PrometResource) GetPrometKarticaSintetickihKonta(c *gin.Context, tbl *d
 			tbl.Rows = append(tbl.Rows, tblRow)
 		}
 	}
+	// fill totals
+	sqlQuery, args = qbTotal.Build()
+	totentites, err := s.prometRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
+	if err != nil {
+		return err
+	}
+	var totDug, totPot float64
+	for _, tot := range *totentites {
 
+		totDug += tot.Duguje
+		totPot += tot.Potrazuje
+	}
+	tbl.Totals = make([]string, len(tbl.Headers))
+	tbl.Totals[0] = i18n.GetInstance().Label("Ukupno") // Set label for totals column
+	for i, header := range tbl.Headers {
+		switch header.Name {
+		case "duguje":
+			tbl.Totals[i] = common.FormatNumberWithSystemLocale(totDug, 2)
+		case "potrazuje":
+			tbl.Totals[i] = common.FormatNumberWithSystemLocale(totPot, 2)
+		case "saldo":
+			tbl.Totals[i] = common.FormatNumberWithSystemLocale(totDug-totPot, 2)
+		}
+	}
 	return nil
 }
 
@@ -680,16 +836,27 @@ func (s *PrometResource) GetPrometSubsintetikaVrd(c *gin.Context, tbl *domain.Ta
 				fpro.vrd,
 				SUM(CASE WHEN fpro.kat = 1 OR fpro.kat = 2 THEN fpro.iznos ELSE 0 END) as duguje,
 			   	SUM(CASE WHEN fpro.kat = 3 OR fpro.kat = 4 THEN fpro.iznos ELSE 0 END) as potrazuje
-				FROM fpro`)
+				FROM fpro`, true)
+	qbTotal := common.NewQueryBuilder(`SELECT
+					coalesce(sum(case when kat = 1 or kat = 2 then iznos else 0 end), 0) as duguje,
+					coalesce(sum(case when kat = 3 or kat = 4 then iznos else 0 end), 0) as potrazuje
+					FROM fpro`, true)
+
 	if hasGod {
 		qb.AddEqual("fpro.god", session.SelectedGod)
+		qbTotal.AddEqual("fpro.god", session.SelectedGod)
 	}
 	if hasKar {
 		qb.AddEqual("fpro.kar", session.SelectedKar)
+		qbTotal.AddEqual("fpro.kar", session.SelectedKar)
 	}
 	qb.AddLikeBegin("fpro.konto", odkonta)
 	qb.AddCondition("danal", odDatuma, ">=")
 	qb.AddCondition("danal", doDatuma, "<=")
+	// add condition for totals
+	qbTotal.AddLikeBegin("fpro.konto", odkonta)
+	qbTotal.AddCondition("danal", odDatuma, ">=")
+	qbTotal.AddCondition("danal", doDatuma, "<=")
 
 	// Add search conditions if search text is provided
 	if searchText != "" {
@@ -728,6 +895,29 @@ func (s *PrometResource) GetPrometSubsintetikaVrd(c *gin.Context, tbl *domain.Ta
 			tbl.Rows = append(tbl.Rows, tblRow)
 		}
 	}
+	// fill totals
+	sqlQuery, args = qbTotal.Build()
+	totentites, err := s.prometRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
+	if err != nil {
+		return err
+	}
+	var totDug, totPot float64
+	for _, tot := range *totentites {
+		totDug += tot.Duguje
+		totPot += tot.Potrazuje
+	}
+	tbl.Totals = make([]string, len(tbl.Headers))
+	tbl.Totals[0] = i18n.GetInstance().Label("Ukupno") // Set label for totals column
+	for i, header := range tbl.Headers {
+		switch header.Name {
+		case "duguje":
+			tbl.Totals[i] = common.FormatNumberWithSystemLocale(totDug, 2)
+		case "potrazuje":
+			tbl.Totals[i] = common.FormatNumberWithSystemLocale(totPot, 2)
+		case "saldo":
+			tbl.Totals[i] = common.FormatNumberWithSystemLocale(totDug-totPot, 2)
+		}
+	}
 
 	return nil
 }
@@ -757,13 +947,22 @@ func (s *PrometResource) GetPrometKontaAnaliticki(c *gin.Context, tbl *domain.Ta
 			   	CASE WHEN f.kat = 3 OR f.kat = 4 THEN f.iznos ELSE 0 END as potrazuje,
 				CASE WHEN f.kat = 1 OR f.kat = 2 THEN f.kolic ELSE 0 END as kolduguje,
 				CASE WHEN f.kat = 3 OR f.kat = 4 THEN f.kolic ELSE 0 END as kolpotrazuje	
-		FROM fpro as f`)
+		FROM fpro as f`, true)
 	qb.AddJoin(` LEFT JOIN fkpl fk on fk.idfkpl = f.idfkpl`)
+
+	qbTotal := common.NewQueryBuilder(`SELECT
+			   	coalesce(sum(case when kat = 1 or kat = 2 then iznos else 0 end), 0) as duguje,
+			   	coalesce(sum(case when kat = 3 or kat = 4 then iznos else 0 end), 0) as potrazuje,
+				coalesce(sum(case when kat = 1 or kat = 2 then kolic else 0 end), 0) as kolduguje,
+				coalesce(sum(case when kat = 3 or kat = 4 then kolic else 0 end), 0) as kolpotrazuje
+				FROM fpro as f`, true)
 	if hasGod {
 		qb.AddEqual("f.god", session.SelectedGod)
+		qbTotal.AddEqual("f.god", session.SelectedGod)
 	}
 	if hasKar {
 		qb.AddEqual("f.kar", session.SelectedKar)
+		qbTotal.AddEqual("f.kar", session.SelectedKar)
 	}
 	qb.AddEqual("f.konto", konto)
 	qb.AddCondition("f.sifra::numeric", odSifre, ">=")
@@ -771,6 +970,13 @@ func (s *PrometResource) GetPrometKontaAnaliticki(c *gin.Context, tbl *domain.Ta
 	qb.AddEqual("f.vkonta", 1)
 	qb.AddCondition("f.danal", odDatuma, ">=")
 	qb.AddCondition("f.danal", doDatuma, "<=")
+	// add conditions for totals
+	qbTotal.AddEqual("f.vkonta", 1)
+	qbTotal.AddEqual("f.konto", konto)
+	qbTotal.AddCondition("f.sifra::numeric", odSifre, ">=")
+	qbTotal.AddCondition("f.sifra::numeric", doSifre, "<=")
+	qbTotal.AddCondition("f.danal", odDatuma, ">=")
+	qbTotal.AddCondition("f.danal", doDatuma, "<=")
 	// Add search conditions if search text is provided
 	if searchText != "" {
 		qb.SetEntityType(reflect.TypeOf(domain.PrometDto{}))
@@ -828,6 +1034,35 @@ func (s *PrometResource) GetPrometKontaAnaliticki(c *gin.Context, tbl *domain.Ta
 			tbl.Rows = append(tbl.Rows, tblRow)
 		}
 	}
+	// fill totals
+	sqlQuery, args = qbTotal.Build()
+	totentites, err := s.prometRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
+	if err != nil {
+		return err
+	}
+	var totDug, totPot, totKolDug, totKolPot float64
+	for _, tot := range *totentites {
+		totDug += tot.Duguje
+		totPot += tot.Potrazuje
+		totKolDug += tot.Kolduguje
+		totKolPot += tot.Kolpotrazuje
+	}
+	tbl.Totals = make([]string, len(tbl.Headers))
+	tbl.Totals[0] = i18n.GetInstance().Label("Ukupno") // Set label for totals column
+	for i, header := range tbl.Headers {
+		switch header.Name {
+		case "duguje":
+			tbl.Totals[i] = common.FormatNumberWithSystemLocale(totDug, 2)
+		case "potrazuje":
+			tbl.Totals[i] = common.FormatNumberWithSystemLocale(totPot, 2)
+		case "saldo":
+			tbl.Totals[i] = common.FormatNumberWithSystemLocale(totDug-totPot, 2)
+		case "kolduguje":
+			tbl.Totals[i] = common.FormatNumberWithSystemLocale(totKolDug, 2)
+		case "kolpotrazuje":
+			tbl.Totals[i] = common.FormatNumberWithSystemLocale(totKolPot, 2)
+		}
+	}
 	return nil
 }
 func (s *PrometResource) GetFieldCache() map[string]reflect.StructField {
@@ -862,133 +1097,133 @@ func (s *PrometResource) GetKontaAnalitickiTableFields() []domain.Fields {
 }
 func (s *PrometResource) setServiceFieldValues() {
 	s.prometAnKontaTableFields = []domain.Fields{
-		{Name: "nalog", Label: "Nalog", Width: "10", Field: "fpro.nalog", SkipInSearch: false},
+		{Name: "nalog", Label: "Nalog", Width: "10", Field: "fpro.nalog", SkipInSearch: false, TextAlign: "right", IncludeInTotals: true},
 		{Name: "danal", Label: "Datum Naloga", Width: "10", Field: "fpro.danal", SkipInSearch: false},
 		{Name: "vrd", Label: "Vrd", Width: "4", Field: "fpro.vrd", SkipInSearch: false},
-		{Name: "Dokum", Label: "Broj dokumenta", Width: "6", Field: "fpro.dokum", SkipInSearch: false},
+		{Name: "dokum", Label: "Broj dokumenta", Width: "6", Field: "fpro.dokum", SkipInSearch: false},
 		{Name: "dadok", Label: "Datum Dokumenta", Width: "6", Field: "fpro.dadok", SkipInSearch: false},
 		{Name: "rok", Label: "Rok", Width: "4", Field: "fpro.rok", SkipInSearch: true},
 		{Name: "tra", Label: "Godina Dokumenta", Width: "4", Field: "fpro.tra", SkipInSearch: true},
 		{Name: "oj", Label: "Org. Jedinica", Width: "4", Field: "fpro.ojozn", SkipInSearch: false},
 		{Name: "opis", Label: "Opis", Width: "30", Field: "fpro.opis", SkipInSearch: false},
-		{Name: "duguje", Label: "Duguje", Width: "8", Field: "duguje", SkipInSearch: true},
-		{Name: "potrazuje", Label: "Potrazuje", Width: "8", Field: "potrazuje", SkipInSearch: true},
-		{Name: "saldo", Label: "Saldo", Width: "84", Field: "saldo", SkipInSearch: true},
+		{Name: "duguje", Label: "Duguje", Width: "8", Field: "duguje", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
+		{Name: "potrazuje", Label: "Potrazuje", Width: "8", Field: "potrazuje", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
+		{Name: "saldo", Label: "Saldo", Width: "84", Field: "saldo", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
 		{Name: "sifval", Label: "Sifval", Width: "4", Field: "fpro.sifval", SkipInSearch: true},
 		{Name: "kurs", Label: "Kurs", Width: "6", Field: "kurs", SkipInSearch: true},
-		{Name: "deviznos", Label: "Devizni Iznos", Width: "8", Field: "deviznos", SkipInSearch: true},
-		{Name: "kolduguje", Label: "Kolic. Duguje", Width: "8", Field: "kolduguje", SkipInSearch: true},
-		{Name: "kolpotrazuje", Label: "Kolic. Potrazuje", Width: "8", Field: "kolpotrazuje", SkipInSearch: true},
+		{Name: "deviznos", Label: "Devizni Iznos", Width: "8", Field: "deviznos", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
+		{Name: "kolduguje", Label: "Količina Duguje", Width: "8", Field: "kolduguje", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
+		{Name: "kolpotrazuje", Label: "Količina Potražuje", Width: "8", Field: "kolpotrazuje", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
 		{Name: "cena", Label: "Cena", Width: "8", Field: "cena", SkipInSearch: true},
 		{Name: "stanje", Label: "Stanje", Width: "8", Field: "stanje", SkipInSearch: true},
-		{Name: "dokumv", Label: "Vezn. Dokum.", Width: "6", Field: "fpro.dokumv", SkipInSearch: false},
-		{Name: "dadokv", Label: "Dat. Vezn. Dokum.", Width: "6", Field: "fpro.dadokv", SkipInSearch: false},
-		{Name: "travez", Label: "God. Vezn. Dokum. ", Width: "4", Field: "fpro.travez", SkipInSearch: false},
+		{Name: "dokumv", Label: "Vezni Dokument", Width: "6", Field: "fpro.dokumv", SkipInSearch: false},
+		{Name: "dadokv", Label: "Datum Veznog Dokumenta", Width: "6", Field: "fpro.dadokv", SkipInSearch: false},
+		{Name: "travez", Label: "God Veznog Dokumenta", Width: "4", Field: "fpro.travez", SkipInSearch: false},
 		{Name: "mi", Label: "Mesto Isporuke", Width: "10", Field: "fpro.mi", SkipInSearch: false},
 	}
 
 	s.prometAnKontaMiTableFields = []domain.Fields{
-		{Name: "mi", Label: "Mesto Isporuke", Width: "10", Field: "fpro.mi", SkipInSearch: false},
+		{Name: "mi", Label: "Mesto Isporuke", Width: "10", Field: "fpro.mi", SkipInSearch: false, TextAlign: "right", IncludeInTotals: true},
 		{Name: "nalog", Label: "Nalog", Width: "10", Field: "fpro.nalog", SkipInSearch: false},
 		{Name: "danal", Label: "Datum Naloga", Width: "10", Field: "fpro.danal", SkipInSearch: false},
 		{Name: "vrd", Label: "VD", Width: "4", Field: "fpro.vrd", SkipInSearch: false},
 		{Name: "Dokum", Label: "Dokument", Width: "6", Field: "fpro.dokum", SkipInSearch: false},
-		{Name: "dadok", Label: "Dat. Dokumenta", Width: "6", Field: "fpro.dadok", SkipInSearch: false},
+		{Name: "dadok", Label: "Datum Dokumenta", Width: "6", Field: "fpro.dadok", SkipInSearch: false},
 		{Name: "rok", Label: "Rok", Width: "4", Field: "fpro.rok", SkipInSearch: true},
 		{Name: "tra", Label: "Godina", Width: "4", Field: "fpro.tra", SkipInSearch: false},
 		{Name: "oj", Label: "OJ", Width: "4", Field: "fpro.ojozn", SkipInSearch: false},
 		{Name: "opis", Label: "Opis", Width: "30", Field: "fpro.opis", SkipInSearch: false},
-		{Name: "duguje", Label: "Duguje", Width: "8", Field: "duguje", SkipInSearch: true},
-		{Name: "potrazuje", Label: "Potrazuje", Width: "8", Field: "potrazuje", SkipInSearch: true},
-		{Name: "saldo", Label: "Saldo", Width: "84", Field: "saldo", SkipInSearch: true},
+		{Name: "duguje", Label: "Duguje", Width: "8", Field: "duguje", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
+		{Name: "potrazuje", Label: "Potrazuje", Width: "8", Field: "potrazuje", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
+		{Name: "saldo", Label: "Saldo", Width: "84", Field: "saldo", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
 		{Name: "sifval", Label: "Sifval", Width: "4", Field: "fpro.sifval", SkipInSearch: true},
 		{Name: "kurs", Label: "Kurs", Width: "6", Field: "kurs", SkipInSearch: true},
-		{Name: "deviznos", Label: "Devizni Iznos", Width: "8", Field: "deviznos", SkipInSearch: true},
-		{Name: "kolduguje", Label: "Kolic. Duguje", Width: "8", Field: "kolduguje", SkipInSearch: true},
-		{Name: "kolpotrazuje", Label: "Kolic. Potrazuje", Width: "8", Field: "kolpotrazuje", SkipInSearch: true},
+		{Name: "deviznos", Label: "Devizni Iznos", Width: "8", Field: "deviznos", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
+		{Name: "kolduguje", Label: "Količina Duguje", Width: "8", Field: "kolduguje", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
+		{Name: "kolpotrazuje", Label: "Količina Potražuje", Width: "8", Field: "kolpotrazuje", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
 		{Name: "cena", Label: "Cena", Width: "8", Field: "cena", SkipInSearch: true},
 		{Name: "stanje", Label: "Stanje", Width: "8", Field: "stanje", SkipInSearch: true},
-		{Name: "dokumv", Label: "Vezn. Dokum.", Width: "6", Field: "fpro.dokumv", SkipInSearch: false},
-		{Name: "dadokv", Label: "Dat. Vezn. Dokum.", Width: "6", Field: "fpro.dadokv", SkipInSearch: false},
-		{Name: "travez", Label: "God. Vezn. Dokum. ", Width: "4", Field: "fpro.travez", SkipInSearch: false},
+		{Name: "dokumv", Label: "Vezni Dokument", Width: "6", Field: "fpro.dokumv", SkipInSearch: false},
+		{Name: "dadokv", Label: "Datum Veznog Dokumenta", Width: "6", Field: "fpro.dadokv", SkipInSearch: false},
+		{Name: "travez", Label: "God Veznog Dokumenta", Width: "4", Field: "fpro.travez", SkipInSearch: false},
 	}
 
 	s.prometAnDeviznaKontaTableFields = []domain.Fields{
-		{Name: "nalog", Label: "Nalog", Width: "10"},
-		{Name: "danal", Label: "Datum Naloga", Width: "10"},
-		{Name: "vrd", Label: "VD", Width: "4"},
-		{Name: "opis", Label: "Opis", Width: "30"},
-		{Name: "sifval", Label: "Sifval", Width: "4"},
-		{Name: "kurs", Label: "Kurs", Width: "6"},
-		{Name: "duguje", Label: "Dev. Duguje", Width: "8"},
-		{Name: "potrazuje", Label: "Dev. Potrazuje", Width: "8"},
-		{Name: "saldo", Label: "Saldo", Width: "84"},
-		{Name: "Dokum", Label: "Dokument", Width: "6"},
-		{Name: "dadok", Label: "Dat. Dokumenta", Width: "6"},
-		{Name: "rok", Label: "Rok", Width: "4"},
-		{Name: "tra", Label: "Godina", Width: "4"},
-		{Name: "oj", Label: "OJ", Width: "4"},
-		{Name: "konto", Label: "God. Vezn. Dokum. ", Width: "4"},
+		{Name: "nalog", Label: "Nalog", Width: "10", Field: "fpro.nalog", SkipInSearch: false, TextAlign: "right", IncludeInTotals: true},
+		{Name: "danal", Label: "Datum Naloga", Width: "10", Field: "fpro.danal", SkipInSearch: false},
+		{Name: "vrd", Label: "VD", Width: "4", Field: "fpro.vrd", SkipInSearch: false},
+		{Name: "opis", Label: "Opis", Width: "30", Field: "fpro.opis", SkipInSearch: false},
+		{Name: "sifval", Label: "Sifval", Width: "4", Field: "fpro.sifval", SkipInSearch: true},
+		{Name: "kurs", Label: "Kurs", Width: "6", Field: "fpro.kurs", SkipInSearch: true},
+		{Name: "duguje", Label: "Dev. Duguje", Width: "8", Field: "duguje", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
+		{Name: "potrazuje", Label: "Dev. Potrazuje", Width: "8", Field: "potrazuje", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
+		{Name: "saldo", Label: "Saldo", Width: "84", Field: "saldo", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
+		{Name: "Dokum", Label: "Dokument", Width: "6", Field: "fpro.dokum", SkipInSearch: false},
+		{Name: "dadok", Label: "Dat. Dokumenta", Width: "6", Field: "fpro.dadok", SkipInSearch: false},
+		{Name: "rok", Label: "Rok", Width: "4", Field: "fpro.rok", SkipInSearch: true},
+		{Name: "tra", Label: "Godina", Width: "4", Field: "fpro.tra", SkipInSearch: true},
+		{Name: "oj", Label: "OJ", Width: "4", Field: "fpro.oj", SkipInSearch: true},
+		{Name: "konto", Label: "God Veznog Dokumenta", Width: "4", Field: "fpro.konto", SkipInSearch: true},
 	}
 	s.prometSubsintetickihKontaTablefields = []domain.Fields{
-		{Name: "konto", Label: "Konto", Width: "3", Field: "fpro.konto", SkipInSearch: false},
+		{Name: "konto", Label: "Konto", Width: "3", Field: "fpro.konto", SkipInSearch: false, TextAlign: "right", IncludeInTotals: true},
 		{Name: "tipdok", Label: "Vrsta Naloga", Width: "3", Field: "fpro.tipdok", SkipInSearch: false},
 		{Name: "nalog", Label: "Nalog", Width: "6", Field: "fpro.nalog", SkipInSearch: false},
 		{Name: "danal", Label: "Datum Naloga", Width: "6", Field: "fpro.danal", SkipInSearch: false},
 		{Name: "opis", Label: "Opis", Width: "40", Field: "fpro.opis", SkipInSearch: false},
-		{Name: "duguje", Label: "Duguje", Width: "8", Field: "duguje", SkipInSearch: true},
-		{Name: "potrazuje", Label: "Potrazuje", Width: "8", Field: "potrazuje", SkipInSearch: true},
-		{Name: "saldo", Label: "Saldo", Width: "84", Field: "saldo", SkipInSearch: true},
+		{Name: "duguje", Label: "Duguje", Width: "8", Field: "duguje", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
+		{Name: "potrazuje", Label: "Potrazuje", Width: "8", Field: "potrazuje", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
+		{Name: "saldo", Label: "Saldo", Width: "84", Field: "saldo", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
 	}
 	s.prometSintetickihKontaTableFields = []domain.Fields{
-		{Name: "tipdok", Label: "Vrsta Naloga", Width: "4", Field: "fpro.tipdok", SkipInSearch: false},
+		{Name: "tipdok", Label: "Vrsta Naloga", Width: "4", Field: "fpro.tipdok", SkipInSearch: false, TextAlign: "right", IncludeInTotals: true},
 		{Name: "nalog", Label: "Nalog", Width: "10", Field: "fpro.nalog", SkipInSearch: false},
 		{Name: "danal", Label: "Datum Naloga", Width: "10", Field: "fpro.danal", SkipInSearch: false},
 		{Name: "opis", Label: "Opis", Width: "30", Field: "fpro.opis", SkipInSearch: false},
-		{Name: "duguje", Label: "Duguje", Width: "8", Field: "duguje", SkipInSearch: true},
-		{Name: "potrazuje", Label: "Potrazuje", Width: "8", Field: "potrazuje", SkipInSearch: true},
-		{Name: "saldo", Label: "Saldo", Width: "84", Field: "saldo", SkipInSearch: true},
+		{Name: "duguje", Label: "Duguje", Width: "8", Field: "duguje", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
+		{Name: "potrazuje", Label: "Potrazuje", Width: "8", Field: "potrazuje", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
+		{Name: "saldo", Label: "Saldo", Width: "84", Field: "saldo", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
 	}
 	s.prometKarticaSintetickihKontaTableFields = []domain.Fields{
-		{Name: "konto", Label: "Konto", Width: "10", Field: "fpro.konto", SkipInSearch: false},
-		{Name: "sifra", Label: "Sifra", Width: "10", Field: "fpro.sifra", SkipInSearch: false},
+		{Name: "konto", Label: "Konto", Width: "10", Field: "fpro.konto", SkipInSearch: false, TextAlign: "right", IncludeInTotals: true},
+		{Name: "sifra", Label: "Sifra", Width: "10", Field: "fpro.sifra", SkipInSearch: false, TextAlign: "right", IncludeInTotals: true},
 		{Name: "opis", Label: "Opis", Width: "30", Field: "fkpl.naziv", SkipInSearch: false},
-		{Name: "duguje", Label: "Duguje", Width: "8", Field: "duguje", SkipInSearch: true},
-		{Name: "potrazuje", Label: "Potrazuje", Width: "8", Field: "potrazuje", SkipInSearch: true},
-		{Name: "saldo", Label: "Saldo", Width: "84", Field: "saldo", SkipInSearch: true},
+		{Name: "duguje", Label: "Duguje", Width: "8", Field: "duguje", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
+		{Name: "potrazuje", Label: "Potrazuje", Width: "8", Field: "potrazuje", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
+		{Name: "saldo", Label: "Saldo", Width: "84", Field: "saldo", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
 	}
 	s.prometSubsintetikaVrdTableFields = []domain.Fields{
-		{Name: "vkonta", Label: "Vrsta Konta", Width: "10", Field: "fpro.vkonta", SkipInSearch: false},
-		{Name: "vrd", Label: "Vrsta knjizenja", Width: "10", Field: "fpro.vrd", SkipInSearch: false},
-		{Name: "duguje", Label: "Duguje", Width: "8", Field: "duguje", SkipInSearch: true},
-		{Name: "potrazuje", Label: "Potrazuje", Width: "8", Field: "potrazuje", SkipInSearch: true},
-		{Name: "saldo", Label: "Saldo", Width: "84", Field: "saldo", SkipInSearch: true},
+		{Name: "vkonta", Label: "Vrsta Konta", Width: "10", Field: "fpro.vkonta", SkipInSearch: false, TextAlign: "right", IncludeInTotals: true},
+		{Name: "vrd", Label: "Vrsta knjizenja", Width: "10", Field: "fpro.vrd", SkipInSearch: false, TextAlign: "right", IncludeInTotals: true},
+		{Name: "duguje", Label: "Duguje", Width: "8", Field: "duguje", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
+		{Name: "potrazuje", Label: "Potrazuje", Width: "8", Field: "potrazuje", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
+		{Name: "saldo", Label: "Saldo", Width: "84", Field: "saldo", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
 	}
 	s.prometKontaAnalitickiTableFields = []domain.Fields{
-		{Name: "sifra", Label: "Sifra", Width: "10", Field: "fpro.sifra", SkipInSearch: false},
+		{Name: "sifra", Label: "Sifra", Width: "10", Field: "fpro.sifra", SkipInSearch: false, TextAlign: "right", IncludeInTotals: true},
 		{Name: "naziv", Label: "Naziv", Width: "30", Field: "fpro.naziv", SkipInSearch: false},
 		{Name: "nalog", Label: "Nalog", Width: "10", Field: "fpro.nalog", SkipInSearch: false},
 		{Name: "danal", Label: "Datum Naloga", Width: "10", Field: "fpro.danal", SkipInSearch: false},
-		{Name: "vrd", Label: "VD", Width: "4", Field: "fpro.vrd", SkipInSearch: false},
-		{Name: "dokum", Label: "Dokument", Width: "6", Field: "fpro.dokum", SkipInSearch: false},
-		{Name: "dadok", Label: "Dat. Dokumenta", Width: "6", Field: "fpro.dadok", SkipInSearch: false},
+		{Name: "vrd", Label: "Vrsta Dokumenta", Width: "4", Field: "fpro.vrd", SkipInSearch: false},
+		{Name: "dokum", Label: "Broj Dokumenta", Width: "6", Field: "fpro.dokum", SkipInSearch: false},
+		{Name: "dadok", Label: "Datum Dokumenta", Width: "6", Field: "fpro.dadok", SkipInSearch: false},
 		{Name: "rok", Label: "Rok", Width: "4", Field: "fpro.rok", SkipInSearch: false},
-		{Name: "tra", Label: "Godina", Width: "4", Field: "fpro.tra", SkipInSearch: true},
+		{Name: "tra", Label: "Godina Dokumenta", Width: "4", Field: "fpro.tra", SkipInSearch: true},
 		{Name: "oj", Label: "OJ", Width: "4", Field: "fpro.ojozn", SkipInSearch: false},
 		{Name: "opis", Label: "Opis", Width: "30", Field: "fpro.opis", SkipInSearch: false},
-		{Name: "duguje", Label: "Duguje", Width: "8", Field: "duguje", SkipInSearch: true},
-		{Name: "potrazuje", Label: "Potrazuje", Width: "8", Field: "potrazuje", SkipInSearch: true},
-		{Name: "saldo", Label: "Saldo", Width: "84", Field: "saldo", SkipInSearch: true},
+		{Name: "duguje", Label: "Duguje", Width: "8", Field: "duguje", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
+		{Name: "potrazuje", Label: "Potrazuje", Width: "8", Field: "potrazuje", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
+		{Name: "saldo", Label: "Saldo", Width: "84", Field: "saldo", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
 		{Name: "sifval", Label: "Sifval", Width: "4", Field: "fpro.sifval", SkipInSearch: true},
 		{Name: "kurs", Label: "Kurs", Width: "6", Field: "kurs", SkipInSearch: true},
-		{Name: "deviznos", Label: "Devizni Iznos", Width: "8", Field: "deviznos", SkipInSearch: true},
-		{Name: "kolduguje", Label: "Kolic. Duguje", Width: "8", Field: "kolduguje", SkipInSearch: true},
-		{Name: "kolpotrazuje", Label: "Kolic. Potrazuje", Width: "8", Field: "kolpotrazuje", SkipInSearch: true},
+		{Name: "deviznos", Label: "Devizni Iznos", Width: "8", Field: "deviznos", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
+		{Name: "kolduguje", Label: "Količina Duguje", Width: "8", Field: "kolduguje", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
+		{Name: "kolpotrazuje", Label: "Količina Potražuje", Width: "8", Field: "kolpotrazuje", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
 		{Name: "cena", Label: "Cena", Width: "8", Field: "cena", SkipInSearch: true},
 		{Name: "stanje", Label: "Stanje", Width: "8", Field: "stanje", SkipInSearch: true},
-		{Name: "dokumv", Label: "Vezn. Dokum.", Width: "6", Field: "fpro.dokumv", SkipInSearch: false},
-		{Name: "dadokv", Label: "Dat. Vezn. Dokum.", Width: "6", Field: "fpro.dadokv", SkipInSearch: false},
-		{Name: "travez", Label: "God. Vezn. Dokum. ", Width: "4", Field: "fpro.travez", SkipInSearch: false},
+		{Name: "dokumv", Label: "Vezni Dokument", Width: "6", Field: "fpro.dokumv", SkipInSearch: false},
+		{Name: "dadokv", Label: "Datum Veznog Dokumenta", Width: "6", Field: "fpro.dadokv", SkipInSearch: false},
+		{Name: "travez", Label: "God Veznog Dokumenta", Width: "4", Field: "fpro.travez", SkipInSearch: false},
 		{Name: "rdokid", Label: "Rdokid", Width: "6", Field: "fpro.rdokid", SkipInSearch: true},
 	}
 }

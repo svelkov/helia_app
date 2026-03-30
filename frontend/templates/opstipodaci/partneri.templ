@@ -1,14 +1,15 @@
 package opstipodaci
 
 import (
+	"fmt"
 	tmpl "helia/frontend/templates"
+	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
-	"helia/i18n"
 )
 
-templ PartneriForm(partneriData domain.Partneri, dialog domain.Dialog, btnSave, btnCancel, btnClose domain.Button, translator *i18n.Service) {
-	<div id={ dialog.Id } class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+templ PartneriForm(partneriData domain.Partneri, tekRacuni domain.TableData, dialog domain.Dialog, btnSave, btnCancel, btnClose, btnProveriPIB domain.Button, translator *i18n.Service, csrfToken string) {
+	<div id={ dialog.Id } class={ common.ClassMainDialogDiv }>
 		<div class="bg-white rounded-lg shadow-2xl relative animate-fade-in max-w-7xl w-full max-h-[90vh] overflow-y-auto">
 			<!-- Title Bar -->
 			<div class="bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg sticky top-0 z-10">
@@ -27,17 +28,22 @@ templ PartneriForm(partneriData domain.Partneri, dialog domain.Dialog, btnSave, 
 				onsubmit="return false;"
 				class="p-3 bg-white rounded-b-lg space-y-3"
 			>
+				<input type="hidden" name="_csrf" value={ csrfToken }/>
 				<!-- Main Grid Layout: 60% Left - 40% Right -->
 				<div class="grid gap-4" style="grid-template-columns: 60% 39%;">
 					<!-- Left Column (60% width) - Osnovni podaci o partneru -->
-					<div class="space-y-1">
+					<div class="space-y-1 flex flex-col">
 						<div class="text-blue-900 font-bold text-sm border-b-2 border-blue-900 py-1">
 							{ translator.Text("Osnovni podaci o partneru") }
 						</div>
-						<!-- Šifra partnera -->
+						<!-- Šifra partnera if action is update the create hidden sifra filed -->
+						if dialog.HxRequestType == "PUT" {
+							<input type="hidden" name="sifra" value={ partneriData.Sifra }/>
+						}
+
 						<div class="flex items-center gap-2">
 							@tmpl.LabelField(domain.LabelFieldConfig{
-								ID:         "sifra",
+								ID:         "lblsifra",
 								LabelText:  translator.Label("Sifra partnera"),
 								ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
 							})
@@ -45,10 +51,18 @@ templ PartneriForm(partneriData domain.Partneri, dialog domain.Dialog, btnSave, 
 								ID:         "sifra",
 								Name:       "sifra",
 								FieldType:  "text",
-								Disabled:   false,
-								ClassInput: common.ClassInputTextEnabled + " w-24",
+								Disabled:   dialog.HxRequestType == "PUT",
+								Value:      partneriData.Sifra,
+								ClassInput: func() string {
+									if dialog.HxRequestType == "PUT" {
+										return common.ClassInputTextDisabled + " w-24"
+									}
+									return common.ClassInputTextEnabled + " w-24"
+								}(),
 								MaxLength:  "10",
-								TabIndex:   "1",
+								TabIndex:   "-1",
+								OnInput:    "clearFieldError",
+								OnFocus:    "clearFieldError",
 							})
 							<label class="flex items-center gap-2 cursor-pointer ml-auto">
 								<input type="checkbox" name="budzetski" class="w-4 h-4"/>
@@ -58,7 +72,7 @@ templ PartneriForm(partneriData domain.Partneri, dialog domain.Dialog, btnSave, 
 						<!-- Naziv Partnera -->
 						<div class="flex items-center gap-2">
 							@tmpl.LabelField(domain.LabelFieldConfig{
-								ID:         "naziv",
+								ID:         "lblnaziv",
 								LabelText:  translator.Label("Naziv partnera"),
 								ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
 							})
@@ -67,23 +81,27 @@ templ PartneriForm(partneriData domain.Partneri, dialog domain.Dialog, btnSave, 
 								Name:       "naziv",
 								FieldType:  "text",
 								Disabled:   false,
+								Value:      partneriData.Naziv,
 								ClassInput: common.ClassInputTextEnabled + " flex-1",
 								MaxLength:  "100",
 								TabIndex:   "2",
+								OnInput:    "clearFieldError",
+								OnFocus:    "clearFieldError",
 							})
 						</div>
 						<!-- Pun Naziv Partnera -->
 						<div class="flex items-center gap-2">
 							@tmpl.LabelField(domain.LabelFieldConfig{
-								ID:         "punaziv",
+								ID:         "lblnaziv1",
 								LabelText:  translator.Label("Pun naziv partnera"),
 								ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
 							})
 							@tmpl.TextInputField(domain.InputFieldConfig{
-								ID:         "punaziv",
-								Name:       "punaziv",
+								ID:         "naziv1",
+								Name:       "naziv1",
 								FieldType:  "text",
 								Disabled:   false,
+								Value:      partneriData.Naziv1,
 								ClassInput: common.ClassInputTextEnabled + " flex-1",
 								MaxLength:  "150",
 								TabIndex:   "3",
@@ -101,6 +119,7 @@ templ PartneriForm(partneriData domain.Partneri, dialog domain.Dialog, btnSave, 
 								Name:       "adresa",
 								FieldType:  "text",
 								Disabled:   false,
+								Value:      partneriData.Adresa,
 								ClassInput: common.ClassInputTextEnabled + " flex-1",
 								MaxLength:  "100",
 								TabIndex:   "4",
@@ -110,16 +129,17 @@ templ PartneriForm(partneriData domain.Partneri, dialog domain.Dialog, btnSave, 
 						<div class="grid grid-cols-2 gap-2">
 							<div class="flex items-center gap-2">
 								@tmpl.LabelField(domain.LabelFieldConfig{
-									ID:         "postbroj",
+									ID:         "lblpostbroj",
 									LabelText:  translator.Label("Postanski broj"),
 									ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
 								})
 								@tmpl.TextInputField(domain.InputFieldConfig{
-									ID:         "postbroj",
-									Name:       "postbroj",
+									ID:         "pobro",
+									Name:       "pobro",
 									FieldType:  "text",
 									Disabled:   false,
 									ClassInput: common.ClassInputTextEnabled + " flex-1",
+									Value:      fmt.Sprintf("%d", partneriData.PoBro),
 									MaxLength:  "6",
 									TabIndex:   "5",
 								})
@@ -136,60 +156,66 @@ templ PartneriForm(partneriData domain.Partneri, dialog domain.Dialog, btnSave, 
 									FieldType:  "text",
 									Disabled:   false,
 									ClassInput: common.ClassInputTextEnabled + " w-52 flex-1",
+									Value:      partneriData.Mesto,
 									MaxLength:  "50",
 									TabIndex:   "6",
+									OnInput:    "clearFieldError",
+									OnFocus:    "clearFieldError",
 								})
 								@tmpl.LabelField(domain.LabelFieldConfig{
 									ID:         "pak",
 									LabelText:  translator.Label("PAK"),
 									ClassLabel: common.ClassLabel + " w-8 flex-shrink-0",
 								})
-								@tmpl.TextInputField(domain.InputFieldConfig{
+								@tmpl.NumericInputField(domain.InputFieldConfig{
 									ID:         "pak",
 									Name:       "pak",
-									FieldType:  "text",
 									Disabled:   false,
 									ClassInput: common.ClassInputTextEnabled + " w-24 flex-shrink-0",
 									MaxLength:  "10",
-									TabIndex:   "6",
+									TabIndex:   "7",
+									Value:      fmt.Sprintf("%d", partneriData.Pak),
 								})
 							</div>
 						</div>
 						<!-- Sistema PDV -->
 						<div class="flex items-center gap-2">
 							@tmpl.LabelField(domain.LabelFieldConfig{
-								ID:         "sistempdv",
+								ID:         "lbltippdv",
 								LabelText:  translator.Label("Sistem PDV"),
 								ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
 							})
 							@tmpl.ComboBoxField(domain.ComboFieldConfig{
-								ID:          "sistempdv",
-								Name:        "sistempdv",
+								ID:          "tippdv",
+								Name:        "tippdv",
 								Placeholder: translator.Placeholder("Select"),
 								Disabled:    false,
 								ClassSelect: common.ClassSelect + " flex-1",
-								TabIndex:    "7",
+								TabIndex:    "8",
 								OptionValues: []domain.ComboItem{
-									{Key: "USIST", Value: "U sistemu PDV-a"},
-									{Key: "VSIS", Value: "Van sistema PDV-a"},
-									{Key: "REPOL", Value: "Registrovani poljoprivrednik"},
-									{Key: "FIZL", Value: "Fizičko lice"},
-									{Key: "STUD", Value: "Student"},
+									{Key: "1", Value: "U sistemu PDV-a"},
+									{Key: "2", Value: "Van sistema PDV-a"},
+									{Key: "3", Value: "Registrovani poljoprivrednik"},
+									{Key: "4", Value: "Fizičko lice"},
+									{Key: "5", Value: "Student"},
 								},
+								OnInput: "clearFieldError",
+								OnFocus: "clearFieldError",
+								SelectedValue: fmt.Sprintf("%d", partneriData.TipPDV),
 							}, translator)
 							@tmpl.LabelField(domain.LabelFieldConfig{
 								ID:         "gln",
 								LabelText:  translator.Label("GLN"),
 								ClassLabel: common.ClassLabel + " w-8 flex-shrink-0",
 							})
-							@tmpl.TextInputField(domain.InputFieldConfig{
+							@tmpl.NumericInputField(domain.InputFieldConfig{
 								ID:         "gln",
 								Name:       "gln",
-								FieldType:  "text",
 								Disabled:   false,
 								ClassInput: common.ClassInputTextEnabled + " w-24 flex-shrink-0",
 								MaxLength:  "10",
-								TabIndex:   "6",
+								TabIndex:   "9",
+								Value:      fmt.Sprintf("%d", partneriData.GLN),
 							})
 						</div>
 						<!-- PIB i Button Check PIB -->
@@ -207,21 +233,16 @@ templ PartneriForm(partneriData domain.Partneri, dialog domain.Dialog, btnSave, 
 									Disabled:   false,
 									ClassInput: common.ClassInputTextEnabled + " flex-1",
 									MaxLength:  "20",
-									TabIndex:   "8",
+									TabIndex:   "10",
+									Value:      partneriData.PIB,
 								})
-								<button
-									type="button"
-									class="bg-blue-500 text-white px-3 py-1 text-xs rounded hover:bg-blue-600 flex-shrink-0"
-									title="Check PIB"
-								>
-									✓ { translator.Button("Proveri PIB") }
-								</button>
+								@tmpl.Button(btnProveriPIB, translator)
 							</div>
 						</div>
 						<!-- Matični broj -->
 						<div class="flex items-center gap-2">
 							@tmpl.LabelField(domain.LabelFieldConfig{
-								ID:         "maticnibroj",
+								ID:         "lblmaticnibroj",
 								LabelText:  translator.Label("Maticni broj"),
 								ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
 							})
@@ -232,13 +253,32 @@ templ PartneriForm(partneriData domain.Partneri, dialog domain.Dialog, btnSave, 
 								Disabled:   false,
 								ClassInput: common.ClassInputTextEnabled + " flex-1",
 								MaxLength:  "20",
-								TabIndex:   "9",
+								TabIndex:   "11",
+								Value:      partneriData.MatBr,
+							})
+						</div>
+						<!-- Matični broj -->
+						<div class="flex items-center gap-2">
+							@tmpl.LabelField(domain.LabelFieldConfig{
+								ID:         "lblkonta",
+								LabelText:  translator.Label("Konta partnera"),
+								ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
+							})
+							@tmpl.TextInputField(domain.InputFieldConfig{
+								ID:         "konta",
+								Name:       "konta",
+								FieldType:  "text",
+								Disabled:   false,
+								ClassInput: common.ClassInputTextEnabled + " flex-1",
+								MaxLength:  "120",
+								TabIndex:   "12",
+								Value:      partneriData.Konta,
 							})
 						</div>
 						<!-- Teritorija - Radio Set -->
 						<div class="flex items-center gap-2">
 							@tmpl.LabelField(domain.LabelFieldConfig{
-								ID:         "teritorija",
+								ID:         "lblteritorija",
 								LabelText:  translator.Label("Teritorija"),
 								ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
 							})
@@ -257,24 +297,43 @@ templ PartneriForm(partneriData domain.Partneri, dialog domain.Dialog, btnSave, 
 								</label>
 							</div>
 						</div>
-						<!-- Tekući računi (Table) -->
-						<div class="border border-gray-300 rounded">
-							<table class="w-full text-xs">
-								<thead class="bg-gray-100 border-b border-gray-300">
-									<tr>
-										<th class="px-2 py-1 text-left">{ translator.Label("label.tekuci_racun") }</th>
-										<th class="px-2 py-1 text-left">{ translator.Label("label.banka") }</th>
-										<th class="px-2 py-1 text-center w-12">Actions</th>
-									</tr>
-								</thead>
-								<tbody>
-									<tr class="border-b border-gray-200">
-										<td class="px-2 py-1"><input type="text" class="border border-gray-300 rounded px-1 py-0.5 text-xs w-full" maxlength="30"/></td>
-										<td class="px-2 py-1"><input type="text" class="border border-gray-300 rounded px-1 py-0.5 text-xs w-full" maxlength="100"/></td>
-										<td class="px-2 py-1 text-center"><button type="button" class="text-red-500 hover:text-red-700 text-xs">✕</button></td>
-									</tr>
+						<!-- Tekući računi (Editable Table) -->
+						<div class="max-h-44 overflow-y-auto overflow-x-auto border border-gray-300 rounded">
+						<table id="tekuciracuni-table" class="w-full border-collapse">
+							<thead class="bg-blue-900 text-white sticky top-0">
+								<tr>
+									<th class="border border-gray-300 px-1 w-8 text-xs text-left">{ translator.Label("Redni broj") }</th>
+									<th class="border border-gray-300 px-1 w-32 text-xs text-left">{ translator.Label("Broj računa") }</th>
+									<th class="border border-gray-300 px-1 w-56 text-xs text-left">{ translator.Label("Banka") }</th>
+									<th class="border border-gray-300 px-1 w-16 text-xs text-center ">{ translator.Label("Akcije") }</th>
+								</tr>
+							</thead>
+							<tbody id="tekuciracuni-table-body">
+									if len(tekRacuni.Rows) > 0 {
+										for i, row := range tekRacuni.Rows {
+											<tr class="tekracuni-row hover:bg-blue-50" data-index={ fmt.Sprintf("%d", i) }>
+												<td class="border border-white">
+													<input type="text" class="w-full border rounded px-1 h-7 tekrac-redbroj" placeholder="Redni broj" value={ row.Fields[0] }/>
+												</td>
+												<td class="border border-white">
+													<input type="text" class="w-full border rounded px-1 h-7 tekrac-brojracuna" placeholder="Broj računa" maxlength="20" value={ row.Fields[1] }/>
+												</td>
+												<td class="border border-white">
+													<input type="text" class="w-full border rounded px-1 h-7 tekrac-banka" placeholder="Banka" value={ row.Fields[2] }/>
+												</td>
+												<td class="border border-white px-1 h-7 text-center">
+													<button type="button" class="bg-red-500 text-white text-xs px-1 w-20 rounded hover:bg-red-600 delete-row">
+														{ translator.Button("Obriši") }
+													</button>
+												</td>
+											</tr>
+										}
+									}
 								</tbody>
 							</table>
+							<button type="button" id="add-tekracuni-row" class="mt-2 mb-1 bg-blue-500 text-white text-xs px-2 py-1 h-6 rounded hover:bg-blue-600">
+								+ { translator.Button("Dodaj račun") }
+							</button>
 						</div>
 					</div>
 					<!-- Right Column (40% width) -->
@@ -299,7 +358,8 @@ templ PartneriForm(partneriData domain.Partneri, dialog domain.Dialog, btnSave, 
 										Disabled:   false,
 										ClassInput: common.ClassInputTextEnabled + " flex-1 text-xs",
 										MaxLength:  "150",
-										TabIndex:   "10",
+										TabIndex:   "14",
+										Value:      partneriData.Website,
 									})
 								</div>
 								<!-- E-mail -->
@@ -316,7 +376,8 @@ templ PartneriForm(partneriData domain.Partneri, dialog domain.Dialog, btnSave, 
 										Disabled:   false,
 										ClassInput: common.ClassInputTextEnabled + " flex-1 text-xs",
 										MaxLength:  "100",
-										TabIndex:   "11",
+										TabIndex:   "15",
+										Value:      partneriData.Email,
 									})
 								</div>
 								<!-- Broj telefona -->
@@ -333,7 +394,8 @@ templ PartneriForm(partneriData domain.Partneri, dialog domain.Dialog, btnSave, 
 										Disabled:   false,
 										ClassInput: common.ClassInputTextEnabled + " flex-1 text-xs",
 										MaxLength:  "30",
-										TabIndex:   "12",
+										TabIndex:   "16",
+										Value:      partneriData.Telefon,
 									})
 								</div>
 								<!-- Kontakt osoba -->
@@ -350,7 +412,8 @@ templ PartneriForm(partneriData domain.Partneri, dialog domain.Dialog, btnSave, 
 										Disabled:   false,
 										ClassInput: common.ClassInputTextEnabled + " flex-1 text-xs",
 										MaxLength:  "100",
-										TabIndex:   "13",
+										TabIndex:   "17",
+										Value:      partneriData.KontaktOsb,
 									})
 								</div>
 								<!-- Opština -->
@@ -367,7 +430,8 @@ templ PartneriForm(partneriData domain.Partneri, dialog domain.Dialog, btnSave, 
 										Disabled:   false,
 										ClassInput: common.ClassInputTextEnabled + " flex-1 text-xs",
 										MaxLength:  "100",
-										TabIndex:   "14",
+										TabIndex:   "18",
+										Value:      fmt.Sprintf("%d", partneriData.IDSifOp),
 									})
 								</div>
 								<!-- JMBG -->
@@ -384,7 +448,8 @@ templ PartneriForm(partneriData domain.Partneri, dialog domain.Dialog, btnSave, 
 										Disabled:   false,
 										ClassInput: common.ClassInputTextEnabled + " flex-1 text-xs",
 										MaxLength:  "20",
-										TabIndex:   "15",
+										TabIndex:   "19",
+										Value:      partneriData.JMBG,
 									})
 								</div>
 								<!-- BPG -->
@@ -401,7 +466,8 @@ templ PartneriForm(partneriData domain.Partneri, dialog domain.Dialog, btnSave, 
 										Disabled:   false,
 										ClassInput: common.ClassInputTextEnabled + " flex-1 text-xs",
 										MaxLength:  "20",
-										TabIndex:   "16",
+										TabIndex:   "20",
+										Value:      partneriData.BPG,
 									})
 								</div>
 								<!-- BPG -->
@@ -418,7 +484,8 @@ templ PartneriForm(partneriData domain.Partneri, dialog domain.Dialog, btnSave, 
 										Disabled:   false,
 										ClassInput: common.ClassInputTextEnabled + " w-24",
 										MaxLength:  "20",
-										TabIndex:   "16",
+										TabIndex:   "21",
+										Value:      partneriData.Index,
 									})
 									@tmpl.LabelField(domain.LabelFieldConfig{
 										ID:         "sifrakodpartnera",
@@ -432,7 +499,8 @@ templ PartneriForm(partneriData domain.Partneri, dialog domain.Dialog, btnSave, 
 										Disabled:   false,
 										ClassInput: common.ClassInputTextEnabled + " flex-1 text-xs",
 										MaxLength:  "20",
-										TabIndex:   "16",
+										TabIndex:   "22",
+										Value:      "",
 									})
 								</div>
 							</div>
@@ -456,9 +524,9 @@ templ PartneriForm(partneriData domain.Partneri, dialog domain.Dialog, btnSave, 
 										FieldType:     "number",
 										Disabled:      false,
 										ClassInput:    common.ClassInputTextEnabled,
-										Value:         "0.00",
+										Value:         common.FormatNumberWithSystemLocale(partneriData.KrLimit, 2),
 										DecimalPlaces: 2,
-										TabIndex:      "17",
+										TabIndex:      "23",
 									})
 								</div>
 								<!-- Limit na dospela potraživa -->
@@ -474,9 +542,9 @@ templ PartneriForm(partneriData domain.Partneri, dialog domain.Dialog, btnSave, 
 										FieldType:     "number",
 										Disabled:      false,
 										ClassInput:    common.ClassInputTextEnabled,
-										Value:         "0.00",
+										Value:         common.FormatNumberWithSystemLocale(partneriData.KrLimitDosp, 2),
 										DecimalPlaces: 2,
-										TabIndex:      "18",
+										TabIndex:      "24",
 									})
 								</div>
 								<!-- Valuta plaćanja prodaja + Rabat -->
@@ -492,9 +560,9 @@ templ PartneriForm(partneriData domain.Partneri, dialog domain.Dialog, btnSave, 
 										FieldType:     "number",
 										Disabled:      false,
 										ClassInput:    common.ClassInputTextEnabled,
-										Value:         "0.00",
+										Value:         common.FormatNumberWithSystemLocale(partneriData.ProVal, 0),
 										DecimalPlaces: 2,
-										TabIndex:      "18",
+										TabIndex:      "25",
 									})
 									@tmpl.LabelField(domain.LabelFieldConfig{
 										ID:         "rabatprodaja",
@@ -507,9 +575,9 @@ templ PartneriForm(partneriData domain.Partneri, dialog domain.Dialog, btnSave, 
 										FieldType:     "number",
 										Disabled:      false,
 										ClassInput:    common.ClassInputTextEnabled,
-										Value:         "0.00",
+										Value:         common.FormatNumberWithSystemLocale(partneriData.UGRabat, 2),
 										DecimalPlaces: 2,
-										TabIndex:      "18",
+										TabIndex:      "26",
 									})
 								</div>
 								<!-- Valuta plaćanja nabavka + Rabat -->
@@ -525,9 +593,9 @@ templ PartneriForm(partneriData domain.Partneri, dialog domain.Dialog, btnSave, 
 										FieldType:     "number",
 										Disabled:      false,
 										ClassInput:    common.ClassInputTextEnabled,
-										Value:         "0.00",
+										Value:         common.FormatNumberWithSystemLocale(partneriData.NabVal, 0),
 										DecimalPlaces: 2,
-										TabIndex:      "19",
+										TabIndex:      "27",
 									})
 									@tmpl.LabelField(domain.LabelFieldConfig{
 										ID:         "rabatnaabavka",
@@ -540,9 +608,9 @@ templ PartneriForm(partneriData domain.Partneri, dialog domain.Dialog, btnSave, 
 										FieldType:     "number",
 										Disabled:      false,
 										ClassInput:    common.ClassInputTextEnabled,
-										Value:         "0.00",
 										DecimalPlaces: 2,
-										TabIndex:      "19",
+										TabIndex:      "28",
+										Value:         "0.00",
 									})
 								</div>
 								<!-- Komercijalista -->
@@ -559,7 +627,8 @@ templ PartneriForm(partneriData domain.Partneri, dialog domain.Dialog, btnSave, 
 										Disabled:   false,
 										ClassInput: common.ClassInputTextEnabled,
 										MaxLength:  "100",
-										TabIndex:   "19",
+										TabIndex:   "29",
+										Value:      fmt.Sprintf("%d", partneriData.Kom),
 									})
 								</div>
 								<!-- Napomena -->
@@ -567,18 +636,18 @@ templ PartneriForm(partneriData domain.Partneri, dialog domain.Dialog, btnSave, 
 									@tmpl.LabelField(domain.LabelFieldConfig{
 										ID:         "napomena",
 										LabelText:  translator.Label("Napomena"),
-										ClassLabel: common.ClassLabel + " w-44",
+										ClassLabel: common.ClassLabel + " w-44 text-top",
 									})
-									@tmpl.TextInputField(domain.InputFieldConfig{
+									@tmpl.TextAreaField(domain.InputFieldConfig{
 										ID:         "napomena",
 										Name:       "napomena",
-										FieldType:  "text",
-										Disabled:   false,
-										ClassInput: common.ClassInputTextEnabled + " flex-1 text-xs",
-										MaxLength:  "255",
-										TabIndex:   "19",
+										Value:      partneriData.Napomena,
+										ClassInput: common.ClassTextAreaEnabled,
+										MaxLength:  "1000",
+										TabIndex:   "30",
 									})
 								</div>
+								<div class="flex items-center gap-2"></div>
 							</div>
 						</div>
 					</div>
@@ -593,6 +662,8 @@ templ PartneriForm(partneriData domain.Partneri, dialog domain.Dialog, btnSave, 
 			</form>
 		</div>
 	</div>
+	@PartneriScript()
+	@tmpl.ClearFieldErrorScript()
 }
 
 templ PartneriList(tableData domain.TableData, translator *i18n.Service) {
@@ -600,3 +671,412 @@ templ PartneriList(tableData domain.TableData, translator *i18n.Service) {
 		@tmpl.Table(tableData, translator)
 	</div>
 }
+
+templ PartneriScript() {
+	<script>
+		console.log("PartneriScript loaded - script tag executed");
+		
+		function handleProveriPIBResponse(event) {
+			console.log("handleProveriPIBResponse called");
+			console.log("Event:", event);
+			
+			try {
+				// Get response from HTMX event
+				const responseText = event.detail.xhr.responseText;
+				console.log("Response text:", responseText);
+				
+				const response = JSON.parse(responseText);
+				console.log("Parsed response:", response);
+				
+				// Check if response has the expected structure
+				if (response && response.success) {
+					console.log("PIB data received:", response.naziv);
+					
+					// Update form fields with response data - check if property EXISTS, not if truthy
+					if ('naziv' in response) {
+						const nazivElement = document.getElementById('naziv');
+						if (nazivElement) nazivElement.value = response.naziv || '';
+					}
+					
+					if ('naziv1' in response) {
+						const punazivElement = document.getElementById('punaziv');
+						if (punazivElement) punazivElement.value = response.naziv1 || '';
+					}
+					
+					if ('adresa' in response) {
+						const adresaElement = document.getElementById('adresa');
+						if (adresaElement) adresaElement.value = response.adresa || '';
+					}
+					
+					if ('mesto' in response) {
+						const mestoElement = document.getElementById('mesto');
+						if (mestoElement) mestoElement.value = response.mesto || '';
+					}
+					
+					if ('pobro' in response) {
+						const postbrojElement = document.getElementById('postbroj');
+						if (postbrojElement) postbrojElement.value = response.pobro || '';
+					}
+					
+					if ('matbr' in response) {
+						const maticniBrojElement = document.getElementById('maticnibroj');
+						if (maticniBrojElement) maticniBrojElement.value = response.matbr || '';
+					}
+					
+				// Handle tekRacuni rows if present
+				if ('tekRacuni' in response && response.tekRacuni && Array.isArray(response.tekRacuni)) {
+					console.log("Received tekRacuni data:", response.tekRacuni);
+					// Find the table body and update it
+					const tableBody = document.getElementById('tekuciracuni-table-body');
+					if (tableBody) {
+						// Clear existing rows
+						tableBody.innerHTML = '';
+						// Add rows with tekRacuni data
+						response.tekRacuni.forEach((racun, index) => {
+							const newRow = document.createElement('tr');
+							newRow.className = 'tekracuni-row hover:bg-blue-50';
+							newRow.setAttribute('data-index', index);
+							newRow.innerHTML = `
+								<td class="border border-gray-300 px-1">
+									<input type="text" class="w-full border rounded px-1 h-7 tekrac-redbroj" placeholder="Redni broj" value="${racun.redbroj || index + 1}"/>
+								</td>
+								<td class="border border-gray-300 px-1">
+									<input type="text" class="w-full border rounded px-1 h-7 tekrac-brojracuna" placeholder="Broj računa" maxlength="20" value="${racun.brojracuna || ''}"/>
+								</td>
+								<td class="border border-gray-300 px-1">
+									<input type="text" class="w-full border rounded px-1 h-7 tekrac-banka" placeholder="Banka" value="${racun.banka || ''}"/>
+								</td>
+								<td class="border border-gray-300 px-1 text-center">
+									<button type="button" class="bg-red-500 text-white text-xs px-1 h-6 w-20 rounded hover:bg-red-600 delete-row">
+										Obriši
+									</button>
+								</td>
+							`;
+							tableBody.appendChild(newRow);
+						});
+						console.log("Table updated with tekRacuni data");
+						// Re-attach delete handlers
+						attachDeleteHandlers();
+						}
+					}
+				} else {
+					console.warn("Response missing success flag:", response);
+				}
+				
+			} catch (e) {
+				console.error("Error parsing PIB response", e);
+			}
+		}
+		
+		// Listen for HTMX events on document level
+		document.addEventListener('htmx:afterRequest', function(event) {
+			console.log("HTMX afterRequest event fired on document");
+			if (event.detail.xhr && event.detail.xhr.responseText) {
+				console.log("Response from any HTMX request:", event.detail.xhr.responseText);
+			}
+		});
+		
+		// Also try attach to button when it exists
+		function attachButtonListener() {
+			const btn = document.getElementById('btnProveriPIB');
+			console.log("Looking for btnProveriPIB button, found:", btn);
+			if (btn) {
+				btn.addEventListener('click', function() {
+					console.log("Button clicked!");
+				});
+				btn.addEventListener('htmx:beforeRequest', function() {
+					console.log("HTMX beforeRequest on button");
+				});
+				btn.addEventListener('htmx:afterRequest', handleProveriPIBResponse);
+				console.log("Event listeners attached to btnProveriPIB");
+			} else {
+				console.warn("btnProveriPIB button not found");
+			}
+		}
+		
+		// Try attaching immediately
+		attachButtonListener();
+		
+		// Try attaching on DOMContentLoaded
+		document.addEventListener('DOMContentLoaded', attachButtonListener);
+		
+		// Try attaching with delay
+		setTimeout(attachButtonListener, 100);
+		setTimeout(attachButtonListener, 300);
+
+		function handleDialogResponse(dialogName) {
+			// Check if the response is an error (400 Bad Request)
+			console.log("in handleDialogResponse()", dialogName)
+			//console.log("handleFieldErrors:", event.detail)
+			try {
+				// Get the response text from the backend
+				const responseText = event.detail.xhr.responseText;
+				console.log("handleDialogResponse:Response text:", responseText)
+				
+				// Check if response is empty or not JSON
+				if (!responseText || responseText.trim() === '') {
+					//console.log("Empty response, closing dialog");
+					closeDialog(dialogName);
+					return;
+				}
+				
+				// Try to parse as JSON
+				let response;
+				try {
+					response = JSON.parse(responseText);
+				} catch (parseError) {
+					console.error("Response is not valid JSON:", parseError);
+					//console.log("Response text was:", responseText);
+					// If not JSON, assume it's HTML success response, close dialog
+					closeDialog(dialogName);
+					return;
+				}
+				
+				// If we get here, response is valid JSON
+				// Clear previous error messages
+				document.querySelectorAll('.input-error').forEach(el => el.remove());
+				document.querySelectorAll('input').forEach(input => {
+					input.classList.remove('border-red-500');
+				});
+				
+				// Handle validation errors
+				if (response.errors && response.errors.length > 0) {
+					//console.log("Errors found:", response.errors)
+					// Loop through errors and show error messages for each field
+					response.errors.forEach(error => {
+						const field = document.querySelector(`input[name="${error.field}"]`);
+						if (field) {
+							field.classList.add('border-red-500'); // Add red border to invalid field
+							// Add error message below the input field
+							const errorMessage = document.createElement('p');
+							errorMessage.className = 'text-red-500 text-xs mt-1 input-error';
+							errorMessage.textContent = error.message;
+							field.insertAdjacentElement('afterend', errorMessage);
+						}
+					});
+					return;
+				}
+				
+				// Handle success response
+				if (response.success) {
+					showMessage(response.message);
+					closeDialog(dialogName);
+					return;
+				}
+				
+				// Handle error response
+				if (!response.success) {
+					showMessage(response.message, true);
+					return;
+				}	
+				
+			} catch (e) {
+				console.error("Unexpected error in handleDialogResponse():", e);
+				closeDialog(dialogName);
+			}
+		}
+
+		// ============ TEKRACUNI TABLE EDITING ==============
+		function initTekRacuniTable() {
+			console.log("initTekRacuniTable() called!");
+			const addBtn = document.getElementById('add-tekracuni-row');
+			const tableBody = document.getElementById('tekuciracuni-table-body');
+			const form = document.querySelector('form');
+			
+			console.log("Add button found:", !!addBtn);
+			console.log("Table body found:", !!tableBody);
+			console.log("Form found:", !!form);
+			
+			// Add new row button handler
+			if (addBtn) {
+				addBtn.addEventListener('click', function(e) {
+					e.preventDefault();
+					addTekRacuniRow();
+				});
+				console.log("Added click listener to add-tekracuni-row button");
+			}
+
+			// Delete row handlers
+			attachDeleteHandlers();
+
+			// Use htmx:configRequest instead of beforeRequest - this fires at the right time
+			// to allow us to modify the FormData before it's sent
+			if (form) {
+				console.log("Attempting to attach collectTekRacuniData listener to form via htmx:configRequest");
+				form.addEventListener('htmx:configRequest', function(event) {
+					console.log("htmx:configRequest fired on form element!");
+					addTekRacuniDataToRequest(event);
+				});
+			}
+		}
+
+		function addTekRacuniRow() {
+			const tableBody = document.getElementById('tekuciracuni-table-body');
+			const newIndex = tableBody.querySelectorAll('tr').length;
+			
+			const newRow = document.createElement('tr');
+			newRow.className = 'tekracuni-row hover:bg-blue-50';
+			newRow.setAttribute('data-index', newIndex);
+			newRow.innerHTML = `
+				<td class="border border-gray-300 px-1">
+					<input type="text" class="w-full border rounded px-1 h-7 tekrac-redbroj" placeholder="Redni broj"/>
+				</td>
+				<td class="border border-gray-300 px-1">
+					<input type="text" class="w-full border rounded px-1 h-7 tekrac-brojracuna" placeholder="Broj računa" maxlength="20"/>
+				</td>
+				<td class="border border-gray-300 px-1">
+					<input type="text" class="w-full border rounded px-1 h-7 tekrac-banka" placeholder="Banka"/>
+				</td>
+				<td class="border border-gray-300 px-1 text-center">
+					<button type="button" class="bg-red-500 text-white text-xs px-1 w-20 h-6 rounded hover:bg-red-600 delete-row">
+						Obriši
+					</button>
+				</td>
+			`;
+			
+			tableBody.appendChild(newRow);
+			attachDeleteHandlers();
+		}
+
+		function attachDeleteHandlers() {
+			document.querySelectorAll('.delete-row').forEach(btn => {
+				// Remove existing listeners by cloning
+				const newBtn = btn.cloneNode(true);
+				btn.parentNode.replaceChild(newBtn, btn);
+			});
+
+			document.querySelectorAll('.delete-row').forEach(btn => {
+				btn.addEventListener('click', function(e) {
+					e.preventDefault();
+					this.closest('tr').remove();
+				});
+			});
+		}
+
+		function addTekRacuniDataToRequest(event) {
+			console.log("addTekRacuniDataToRequest() called!");
+			
+			const tableBody = document.getElementById('tekuciracuni-table-body');
+			if (!tableBody) {
+				console.warn("tekuciracuni-table-body not found!");
+				return;
+			}
+			
+			const rows = tableBody.querySelectorAll('tr');
+			console.log("Found", rows.length, "rows in table");
+			
+			// Get the FormData object from HTMX that will be sent
+			// It's in event.detail.formData (for modern HTMX) or we can create our own
+			const formData = event.detail.formData;
+			
+			if (!formData) {
+				console.log("FormData not available in event.detail.formData, HTMX might be using different serialization");
+				return;
+			}
+			
+			console.log("Adding tekracuni data to FormData");
+			
+			// Add tekracuni rows to the FormData
+			rows.forEach((row, index) => {
+				const redbroj = row.querySelector('.tekrac-redbroj')?.value || '';
+				const brojracuna = row.querySelector('.tekrac-brojracuna')?.value || '';
+				const banka = row.querySelector('.tekrac-banka')?.value || '';
+				
+				console.log(`Row ${index}: redbroj='${redbroj}', brojracuna='${brojracuna}', banka='${banka}'`);
+				
+				// Only add non-empty rows
+				if (redbroj || brojracuna || banka) {
+					formData.append(`tekracuni[${index}].redbroj`, redbroj);
+					formData.append(`tekracuni[${index}].brojracuna`, brojracuna);
+					formData.append(`tekracuni[${index}].banka`, banka);
+					console.log(`  Added to FormData for tekracuni[${index}]`);
+				}
+			});
+			
+			console.log("addTekRacuniDataToRequest completed");
+		}
+		
+		function collectTekRacuniData(event) {
+			console.log("collectTekRacuniData() called! Event:", event);
+			
+			const tableBody = document.getElementById('tekuciracuni-table-body');
+			if (!tableBody) {
+				console.warn("tekuciracuni-table-body not found!");
+				return;
+			}
+			
+			const rows = tableBody.querySelectorAll('tr');
+			const form = document.querySelector('form');
+			
+			console.log("collectTekRacuniData: Found tableBody, rows count:", rows.length);
+			console.log("collectTekRacuniData: Form element:", form);
+			
+			// Remove old hidden inputs
+			document.querySelectorAll('input[name^="tekracuni"]').forEach(el => el.remove());
+			
+			let hiddenInputCount = 0;
+			
+			// Add new hidden inputs for each row
+			rows.forEach((row, index) => {
+				const redbroj = row.querySelector('.tekrac-redbroj')?.value || '';
+				const brojracuna = row.querySelector('.tekrac-brojracuna')?.value || '';
+				const banka = row.querySelector('.tekrac-banka')?.value || '';
+				
+				console.log(`Row ${index}: redbroj='${redbroj}', brojracuna='${brojracuna}', banka='${banka}'`);
+				
+				// Only add non-empty rows
+				if (redbroj || brojracuna || banka) {
+					createHiddenInput(form, `tekracuni[${index}].redbroj`, redbroj);
+					createHiddenInput(form, `tekracuni[${index}].brojracuna`, brojracuna);
+					createHiddenInput(form, `tekracuni[${index}].banka`, banka);
+					hiddenInputCount += 3;
+					console.log(`  Added hidden inputs for tekracuni[${index}]`);
+				}
+			});
+			
+			console.log("collectTekRacuniData completed - added", hiddenInputCount, "hidden inputs total");
+			
+			// VERIFY: Check that hidden inputs are actually in the form
+			setTimeout(() => {
+				const tekracuniInputs = form.querySelectorAll('input[name^="tekracuni"]');
+				console.log("VERIFICATION: Hidden inputs in form after collection:", tekracuniInputs.length);
+				tekracuniInputs.forEach((input, idx) => {
+					console.log(`  Input ${idx}: name='${input.name}', value='${input.value}'`);
+				});
+			}, 10);
+		}
+
+		function createHiddenInput(form, name, value) {
+			const input = document.createElement('input');
+			input.type = 'hidden';
+			input.name = name;
+			input.value = value;
+			form.appendChild(input);
+		}
+
+		// Initialize on page load
+		document.addEventListener('DOMContentLoaded', function() {
+			console.log("DOMContentLoaded event fired, calling initTekRacuniTable");
+			initTekRacuniTable();
+		});
+		
+		// Also call immediately for dynamically inserted forms
+		console.log("About to call initTekRacuniTable immediately");
+		initTekRacuniTable();
+		
+		// Fallback: attach listener at document level for htmx:configRequest events
+		// This is the ideal place to add FormData values before request is sent
+		document.addEventListener('htmx:configRequest', function(event) {
+			console.log("Document-level htmx:configRequest fired!", event);
+			const target = event.detail.target;
+			console.log("Event target:", target, "Target tag:", target?.tagName);
+			
+			// Check if this is a form or inside a form
+			if (target && (target.tagName === 'FORM' || target.closest('form'))) {
+				console.log("This is a form submission - calling addTekRacuniDataToRequest from document listener");
+				addTekRacuniDataToRequest(event);
+			}
+		});
+	</script>
+}
+

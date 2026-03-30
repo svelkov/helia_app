@@ -35,7 +35,7 @@ func Side_nav(submenu []domain.SubMenuItem) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div id=\"side-menu\" class=\"bg-gray-700 text-white w-64 text-sm border-b rounded-sm\"><ul class=\"flex flex-col mb-auto gap-1\"><!-- Use 'gap-1' for tighter spacing -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div id=\"side-menu\" class=\"bg-gray-700 text-white w-64 text-sm border-b rounded-sm h-full flex flex-col\"><ul class=\"flex flex-col gap-1 overflow-y-auto flex-1\"><!-- Use 'gap-1' for tighter spacing -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

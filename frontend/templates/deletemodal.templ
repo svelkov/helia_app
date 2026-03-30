@@ -2,9 +2,10 @@ package templates
 
 import "helia/internal/domain"
 import "helia/i18n"
+import "helia/internal/common"
 
 templ DeleteDialog(csrfToken string, dialog domain.Dialog, btnConfirm, btnCancel, btnClose domain.Button, rowID string, translator *i18n.Service) {
-	<div id={ dialog.Id } class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+	<div id={ dialog.Id } class={ common.ClassMainDialogDiv }>
 		<div class="bg-white rounded-lg shadow-2xl relative animate-fade-in max-w-full w-auto">
 			<!-- Title Bar (Flush on Left, Top, Right) -->
 			if btnConfirm.Id == "btn-delete" {
@@ -36,23 +37,8 @@ templ DeleteDialog(csrfToken string, dialog domain.Dialog, btnConfirm, btnCancel
 			</form>
 		</div>
 	</div>
+	@CloseDialogScript()
 	<script>
-		function closeDialog(dialogId) {
-			console.log("Closing dialog with ID:", dialogId);
-			const dialogElm = document.getElementById(dialogId);
-			if (dialogElm) {
-				dialogElm.classList.add("opacity-0"); // Fade-out effect
-				setTimeout(() => {
-					dialogElm.classList.add("hidden");
-				}, 300); // Delay to allow fade-out animation
-
-				// Restore the style of actions column if needed
-				document.querySelectorAll(".actions-column").forEach(el => {
-					el.classList.remove('static');
-        			el.classList.add('sticky', 'right-0', 'z-10');
-				});
-			}
-		}
 		function handleDeleteResponse(dialogId) {
 			// Check if the response is an error (400 Bad Request)
 			console.log("in handleDeleteResponse()", dialogId)
@@ -125,5 +111,4 @@ templ DeleteDialog(csrfToken string, dialog domain.Dialog, btnConfirm, btnCancel
 			}
 		}
 	</script>
-	@DeactivateActionsColumn()
 }

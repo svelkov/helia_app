@@ -172,7 +172,7 @@ func SetTableButtons(table *domain.TableData, entityURLPrefix string) *domain.Ta
 	table.BtnDelete.IsVisible = true                                                // Show Delete button in the table header
 	table.BtnDelete.HxActionURL = fmt.Sprintf("%s/confirm-delete", entityURLPrefix) // Set the URL for Delete button
 	table.BtnPrint.IsVisible = true                                                 // Show Print button in the table header
-	table.BtnPrint.HxActionURL = fmt.Sprintf("%s/print", entityURLPrefix)          // Show Print button in the table header
+	table.BtnPrint.HxActionURL = fmt.Sprintf("%s/print", entityURLPrefix)           // Show Print button in the table header
 	return table
 }
 
@@ -435,6 +435,26 @@ func GetCsrfTokenFromSession(c *gin.Context) string {
 	return csrfToken
 }
 
+func ExtractInnerXML(s, startTag, endTag string) string {
+	start := strings.Index(s, startTag)
+	end := strings.Index(s, endTag)
+	if start != -1 && end != -1 && end > start {
+		return s[start+len(startTag) : end]
+	}
+	return ""
+}
+
+func ExtractTag(xmlStr, tag string) string {
+	openTag := fmt.Sprintf("<%s>", tag)
+	closeTag := fmt.Sprintf("</%s>", tag)
+	start := strings.Index(xmlStr, openTag)
+	end := strings.Index(xmlStr, closeTag)
+	if start == -1 || end == -1 || end <= start {
+		return ""
+	}
+	return strings.TrimSpace(xmlStr[start+len(openTag) : end])
+}
+
 func GetMontshName() []string {
 	translator := i18n.GetInstance()
 	months := []string{
@@ -493,10 +513,10 @@ func SetupTablePagination(tbl *domain.TableData, currentPage, pageSize int) {
 	tbl.Pagination.StartRecord = (currentPage-1)*pageSize + 1
 	tbl.Pagination.EndRecord = tbl.Pagination.StartRecord + pageSize - 1
 	tbl.Pagination.PageSize = pageSize
-	if tbl.Pagination.EndRecord > tbl.Pagination.TotalRecords {
+	if tbl.Pagination.EndRecord > tbl.Pagination.TotalRecords && tbl.Pagination.TotalRecords > 0 {
 		tbl.Pagination.EndRecord = tbl.Pagination.TotalRecords
 	}
-	if tbl.Pagination.StartRecord > tbl.Pagination.TotalRecords {
+	if tbl.Pagination.StartRecord > tbl.Pagination.TotalRecords && tbl.Pagination.TotalRecords > 0 {
 		tbl.Pagination.StartRecord = tbl.Pagination.TotalRecords
 	}
 }

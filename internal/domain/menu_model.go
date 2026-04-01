@@ -48,6 +48,7 @@ var MenuData = MenuDataItems{
 			Name:        "finansijsko",
 			DisplayName: "Finansijsko",
 			SubMenus: []SubMenuItem{
+				{URL: "api/tipanalitike/all", Name: "Tipovi analitike", Icon: "tipanalitike"},
 				{URL: "api/fkpl/all", Name: "Kontni plan", Icon: "kontniplan"},
 				{URL: "api/nalozi/all/tipdok", Name: "Nalozi", Icon: "fin_nalozi"},
 				{URL: "api/dnevnik", Name: "Dnevnik knjiženja", Icon: "fin_dnevnik"},

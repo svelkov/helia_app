@@ -10,6 +10,7 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import "helia/internal/domain"
 import "helia/i18n"
+import "helia/internal/common"
 
 func DeleteDialog(csrfToken string, dialog domain.Dialog, btnConfirm, btnCancel, btnClose domain.Button, rowID string, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
@@ -32,38 +33,56 @@ func DeleteDialog(csrfToken string, dialog domain.Dialog, btnConfirm, btnCancel,
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
+		var templ_7745c5c3_Var2 = []any{common.ClassMainDialogDiv}
+		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var2...)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
 		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div id=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var2 string
-		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.Id)
+		var templ_7745c5c3_Var3 string
+		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.Id)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/deletemodal.templ`, Line: 7, Col: 20}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/deletemodal.templ`, Line: 8, Col: 20}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\" class=\"fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4\"><div class=\"bg-white rounded-lg shadow-2xl relative animate-fade-in max-w-full w-auto\"><!-- Title Bar (Flush on Left, Top, Right) -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\" class=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var4 string
+		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var2).String())
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/deletemodal.templ`, Line: 1, Col: 0}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\"><div class=\"bg-white rounded-lg shadow-2xl relative animate-fade-in max-w-full w-auto\"><!-- Title Bar (Flush on Left, Top, Right) -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if btnConfirm.Id == "btn-delete" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div class=\"bg-red-600 text-white h-9 flex justify-between items-center rounded-t-lg\"><h2 class=\"text-lg font-semibold ml-4\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<div class=\"bg-red-600 text-white h-9 flex justify-between items-center rounded-t-lg\"><h2 class=\"text-lg font-semibold ml-4\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var3 string
-			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Title(dialog.Title))
+			var templ_7745c5c3_Var5 string
+			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Title(dialog.Title))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/deletemodal.templ`, Line: 12, Col: 76}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/deletemodal.templ`, Line: 13, Col: 76}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</h2>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</h2>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -71,25 +90,25 @@ func DeleteDialog(csrfToken string, dialog domain.Dialog, btnConfirm, btnCancel,
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		} else {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<div class=\"bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg\"><h2 class=\"text-lg font-semibold ml-4\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<div class=\"bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg\"><h2 class=\"text-lg font-semibold ml-4\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var4 string
-			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Title(dialog.Title))
+			var templ_7745c5c3_Var6 string
+			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Title(dialog.Title))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/deletemodal.templ`, Line: 17, Col: 76}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/deletemodal.templ`, Line: 18, Col: 76}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</h2>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</h2>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -97,64 +116,64 @@ func DeleteDialog(csrfToken string, dialog domain.Dialog, btnConfirm, btnCancel,
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<!-- Content --><form hx-delete=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var5 string
-		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.HxActionURL)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/deletemodal.templ`, Line: 23, Col: 34}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "\" hx-target=\"#info-message\" hx-boost=\"false\" class=\"grid grid-cols-1 md:grid-cols-[auto,auto] gap-2 gap-x-4 p-3 bg-white shadow-lg rounded-lg w-auto\"><input type=\"hidden\" name=\"_csrf\" value=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var6 string
-		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(csrfToken)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/deletemodal.templ`, Line: 28, Col: 55}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "\"><div class=\"px-1 py-1 col-span-2 max-h-[70vh] overflow-y-auto\"><p class=\"mt-3 mb-3 ml-3 text-xl flex items-center justify-center gap-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<!-- Content --><form hx-delete=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var7 string
-		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Brisanje sloga sa ID: "))
+		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.HxActionURL)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/deletemodal.templ`, Line: 30, Col: 122}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/deletemodal.templ`, Line: 24, Col: 34}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, " ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "\" hx-target=\"#info-message\" hx-boost=\"false\" class=\"grid grid-cols-1 md:grid-cols-[auto,auto] gap-2 gap-x-4 p-3 bg-white shadow-lg rounded-lg w-auto\"><input type=\"hidden\" name=\"_csrf\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var8 string
-		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(rowID)
+		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(csrfToken)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/deletemodal.templ`, Line: 30, Col: 132}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/deletemodal.templ`, Line: 29, Col: 55}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "?</p></div><div class=\"bg-white col-span-2 px-3 py-3 flex justify-end space-x-1 pt-4\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "\"><div class=\"px-1 py-1 col-span-2 max-h-[70vh] overflow-y-auto\"><p class=\"mt-3 mb-3 ml-3 text-xl flex items-center justify-center gap-2\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var9 string
+		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Brisanje sloga sa ID: "))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/deletemodal.templ`, Line: 31, Col: 122}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, " ")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var10 string
+		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(rowID)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/deletemodal.templ`, Line: 31, Col: 132}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "?</p></div><div class=\"bg-white col-span-2 px-3 py-3 flex justify-end space-x-1 pt-4\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -166,11 +185,15 @@ func DeleteDialog(csrfToken string, dialog domain.Dialog, btnConfirm, btnCancel,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</div></form></div></div><script>\r\n\t\tfunction closeDialog(dialogId) {\r\n\t\t\tconsole.log(\"Closing dialog with ID:\", dialogId);\r\n\t\t\tconst dialogElm = document.getElementById(dialogId);\r\n\t\t\tif (dialogElm) {\r\n\t\t\t\tdialogElm.classList.add(\"opacity-0\"); // Fade-out effect\r\n\t\t\t\tsetTimeout(() => {\r\n\t\t\t\t\tdialogElm.classList.add(\"hidden\");\r\n\t\t\t\t}, 300); // Delay to allow fade-out animation\r\n\r\n\t\t\t\t// Restore the style of actions column if needed\r\n\t\t\t\tdocument.querySelectorAll(\".actions-column\").forEach(el => {\r\n\t\t\t\t\tel.classList.remove('static');\r\n        \t\t\tel.classList.add('sticky', 'right-0', 'z-10');\r\n\t\t\t\t});\r\n\t\t\t}\r\n\t\t}\r\n\t\tfunction handleDeleteResponse(dialogId) {\r\n\t\t\t// Check if the response is an error (400 Bad Request)\r\n\t\t\tconsole.log(\"in handleDeleteResponse()\", dialogId)\r\n\t\t\t//console.log(\"handleFieldErrors:\", event.detail)\r\n\t\t\ttry {\r\n\t\t\t\t// Get the response text from the backend\r\n\t\t\t\tconst responseText = event.detail.xhr.responseText;\r\n\t\t\t\t//console.log(\"Response text:\", responseText)\r\n\t\t\t\t\r\n\t\t\t\t// Check if response is empty or not JSON\r\n\t\t\t\tif (!responseText || responseText.trim() === '') {\r\n\t\t\t\t\t//console.log(\"Empty response, closing dialog\");\r\n\t\t\t\t\tcloseDialog(dialogId);\r\n\t\t\t\t\treturn;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t// Try to parse as JSON\r\n\t\t\t\tlet response;\r\n\t\t\t\ttry {\r\n\t\t\t\t\tresponse = JSON.parse(responseText);\r\n\t\t\t\t} catch (parseError) {\r\n\t\t\t\t\tconsole.error(\"Response is not valid JSON:\", parseError);\r\n\t\t\t\t\t//console.log(\"Response text was:\", responseText);\r\n\t\t\t\t\t// If not JSON, assume it's HTML success response, close dialog\r\n\t\t\t\t\tcloseDialog(dialogId);\r\n\t\t\t\t\treturn;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t// If we get here, response is valid JSON\r\n\t\t\t\t// Clear previous error messages\r\n\t\t\t\tdocument.querySelectorAll('.input-error').forEach(el => el.remove());\r\n\t\t\t\tdocument.querySelectorAll('input').forEach(input => {\r\n\t\t\t\t\tinput.classList.remove('border-red-500');\r\n\t\t\t\t});\r\n\t\t\t\t\r\n\t\t\t\t// Handle validation errors\r\n\t\t\t\tif (response.errors && response.errors.length > 0) {\r\n\t\t\t\t\t//console.log(\"Errors found:\", response.errors)\r\n\t\t\t\t\t// Loop through errors and show error messages for each field\r\n\t\t\t\t\tresponse.errors.forEach(error => {\r\n\t\t\t\t\t\tconst field = document.querySelector(`input[name=\"${error.field}\"]`);\r\n\t\t\t\t\t\tif (field) {\r\n\t\t\t\t\t\t\tfield.classList.add('border-red-500'); // Add red border to invalid field\r\n\t\t\t\t\t\t\t// Add error message below the input field\r\n\t\t\t\t\t\t\tconst errorMessage = document.createElement('p');\r\n\t\t\t\t\t\t\terrorMessage.className = 'text-red-500 text-xs mt-1 input-error';\r\n\t\t\t\t\t\t\terrorMessage.textContent = error.message;\r\n\t\t\t\t\t\t\tfield.insertAdjacentElement('afterend', errorMessage);\r\n\t\t\t\t\t\t}\r\n\t\t\t\t\t});\r\n\t\t\t\t\treturn;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t// Handle success response\r\n\t\t\t\tif (response.success) {\r\n\t\t\t\t\tshowMessage(response.message);\r\n\t\t\t\t\tcloseDialog(dialogId);\r\n\t\t\t\t\treturn;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t// Handle error response\r\n\t\t\t\tif (!response.success) {\r\n\t\t\t\t\tshowMessage(response.message, true);\r\n\t\t\t\t\treturn;\r\n\t\t\t\t}\t\r\n\t\t\t\t\r\n\t\t\t} catch (e) {\r\n\t\t\t\tconsole.error(\"Unexpected error in handleDialogResponse():\", e);\r\n\t\t\t\tcloseDialog(dialogId);\r\n\t\t\t}\r\n\t\t}\r\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</div></form></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = DeactivateActionsColumn().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = CloseDialogScript().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<script>\r\n\t\tfunction handleDeleteResponse(dialogId) {\r\n\t\t\t// Check if the response is an error (400 Bad Request)\r\n\t\t\tconsole.log(\"in handleDeleteResponse()\", dialogId)\r\n\t\t\t//console.log(\"handleFieldErrors:\", event.detail)\r\n\t\t\ttry {\r\n\t\t\t\t// Get the response text from the backend\r\n\t\t\t\tconst responseText = event.detail.xhr.responseText;\r\n\t\t\t\t//console.log(\"Response text:\", responseText)\r\n\t\t\t\t\r\n\t\t\t\t// Check if response is empty or not JSON\r\n\t\t\t\tif (!responseText || responseText.trim() === '') {\r\n\t\t\t\t\t//console.log(\"Empty response, closing dialog\");\r\n\t\t\t\t\tcloseDialog(dialogId);\r\n\t\t\t\t\treturn;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t// Try to parse as JSON\r\n\t\t\t\tlet response;\r\n\t\t\t\ttry {\r\n\t\t\t\t\tresponse = JSON.parse(responseText);\r\n\t\t\t\t} catch (parseError) {\r\n\t\t\t\t\tconsole.error(\"Response is not valid JSON:\", parseError);\r\n\t\t\t\t\t//console.log(\"Response text was:\", responseText);\r\n\t\t\t\t\t// If not JSON, assume it's HTML success response, close dialog\r\n\t\t\t\t\tcloseDialog(dialogId);\r\n\t\t\t\t\treturn;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t// If we get here, response is valid JSON\r\n\t\t\t\t// Clear previous error messages\r\n\t\t\t\tdocument.querySelectorAll('.input-error').forEach(el => el.remove());\r\n\t\t\t\tdocument.querySelectorAll('input').forEach(input => {\r\n\t\t\t\t\tinput.classList.remove('border-red-500');\r\n\t\t\t\t});\r\n\t\t\t\t\r\n\t\t\t\t// Handle validation errors\r\n\t\t\t\tif (response.errors && response.errors.length > 0) {\r\n\t\t\t\t\t//console.log(\"Errors found:\", response.errors)\r\n\t\t\t\t\t// Loop through errors and show error messages for each field\r\n\t\t\t\t\tresponse.errors.forEach(error => {\r\n\t\t\t\t\t\tconst field = document.querySelector(`input[name=\"${error.field}\"]`);\r\n\t\t\t\t\t\tif (field) {\r\n\t\t\t\t\t\t\tfield.classList.add('border-red-500'); // Add red border to invalid field\r\n\t\t\t\t\t\t\t// Add error message below the input field\r\n\t\t\t\t\t\t\tconst errorMessage = document.createElement('p');\r\n\t\t\t\t\t\t\terrorMessage.className = 'text-red-500 text-xs mt-1 input-error';\r\n\t\t\t\t\t\t\terrorMessage.textContent = error.message;\r\n\t\t\t\t\t\t\tfield.insertAdjacentElement('afterend', errorMessage);\r\n\t\t\t\t\t\t}\r\n\t\t\t\t\t});\r\n\t\t\t\t\treturn;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t// Handle success response\r\n\t\t\t\tif (response.success) {\r\n\t\t\t\t\tshowMessage(response.message);\r\n\t\t\t\t\tcloseDialog(dialogId);\r\n\t\t\t\t\treturn;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t// Handle error response\r\n\t\t\t\tif (!response.success) {\r\n\t\t\t\t\tshowMessage(response.message, true);\r\n\t\t\t\t\treturn;\r\n\t\t\t\t}\t\r\n\t\t\t\t\r\n\t\t\t} catch (e) {\r\n\t\t\t\tconsole.error(\"Unexpected error in handleDialogResponse():\", e);\r\n\t\t\t\tcloseDialog(dialogId);\r\n\t\t\t}\r\n\t\t}\r\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

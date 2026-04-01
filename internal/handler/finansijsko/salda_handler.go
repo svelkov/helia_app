@@ -53,10 +53,10 @@ const (
 			"tipkonta": document.querySelector('input[name="tipkonta"]:checked')?.value
         }`
 	hxValsSaldaGrupeKonta = `js:{
-            "od_konta": document.getElementById("od_konta")?.value,
-			"do_konta": document.getElementById("do_konta")?.value,
-			"od_sifre": document.getElementById("od_sifre")?.value,
-			"do_sifre": document.getElementById("do_sifre")?.value,
+            "odkonta": document.getElementById("odkonta")?.value,
+			"dokonta": document.getElementById("dokonta")?.value,
+			"odsifre": document.getElementById("odsifre")?.value,
+			"dosifre": document.getElementById("dosifre")?.value,
 			"chk_salda_valute": document.querySelector('input[name="chk_salda_valute"]:checked')?.value,
 			"cbx_tipizvestaja": document.getElementById("cbx_tipizvestaja")?.value,
 			"cbx_klasa": document.getElementById("cbx_klasa")?.value,
@@ -66,8 +66,8 @@ const (
 			"chk_saldo_vece_nula": document.querySelector('input[name="chk_saldo_vece_nula"]:checked')?.value,
 			"chk_saldo_manje_nula": document.querySelector('input[name="chk_saldo_manje_nula"]:checked')?.value,
 			"chk_saldo_nula": document.querySelector('input[name="chk_saldo_nula"]:checked')?.value,
-			"od_salda": document.getElementById("od_salda")?.value,
-			"do_salda": document.getElementById("do_salda")?.value,
+			"odsalda": document.getElementById("odsalda")?.value,
+			"dosalda": document.getElementById("dosalda")?.value,
         }`
 
 	hxValsSaldaPartneriPrelomljeno = `js:{"sifra_od": document.getElementById("sifra_od")?.value,
@@ -157,7 +157,11 @@ func (h *SaldaHandler) SaldaPojedinacnihKonta(c *gin.Context) {
 		case "2", "3":
 			fieldParameters = []string{"konto", "tipkonta"}
 		}
-		fieldsError := h.service.CheckSaldaParameters(c, fieldParameters)
+		// Extract parameters from query
+		konto := c.Query("konto")
+		sifra := c.Query("sifra")
+		ctx := c.Request.Context()
+		fieldsError := common.ValidateRequiredParams(c, fieldParameters)
 		if len(fieldsError) > 0 {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldsError, common.ErrMsgValidation)
 			return
@@ -165,16 +169,12 @@ func (h *SaldaHandler) SaldaPojedinacnihKonta(c *gin.Context) {
 
 		page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
 		tbl.Pagination.HxVals = hxValsSaldaPojedinacnihKonta
-		err := h.service.GetSaldaPojedinacnihKonta(c, &tbl, false, pageSize, page)
+		err := h.service.GetSaldaPojedinacnihKonta(ctx, &tbl, false, pageSize, page, konto, sifra, tipkonta)
+		if err != nil {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
+			return
+		}
 		tbl.ShowPagination = false
-		if err != nil {
-			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
-			return
-		}
-		if err != nil {
-			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
-			return
-		}
 		utils.RenderContent(c, tbl)
 	}
 }
@@ -197,21 +197,41 @@ func (h *SaldaHandler) SaldaGrupeKonta(c *gin.Context) {
 		}
 	}
 	if requestSource == "btnobrada" || requestSource == "btnpage" || requestSource == "searchinput" {
-		fieldParameters := []string{"od_konta", "do_konta", "od_sifre", "do_sifre", "chk_salda_valute",
-			"cbx_tipizvestaja", "cbx_klasa", "cbx_odmeseca", "cbx_domeseca", "chk_saldo_razl_nula",
-			"chk_saldo_vece_nula", "chk_saldo_manje_nula", "chck_saldo_nula", "od_salda", "do_salda"}
-		fieldsError := h.service.CheckSaldaGrupeParameters(c, fieldParameters)
+		fieldParameters := []string{"odkonta", "dokonta", "odsifre", "dosifre", "chk_salda_valute",
+			"cbxtipizvestaja", "cbxklasa", "cbxodmeseca", "cbxdomeseca", "chk_saldo_razl_nula",
+			"chk_saldo_vece_nula", "chk_saldo_manje_nula", "chck_saldo_nula", "odsalda", "dosalda"}
+		// Extract parameters from query
+		ctx := c.Request.Context()
+		params := domain.SaldaParam{
+			OdKonta:           c.Query("odkonta"),
+			DoKonta:           c.Query("dokonta"),
+			OdSifre:           c.Query("odsifre"),
+			DoSifre:           c.Query("dosifre"),
+			ChkSaldaValute:    c.Query("chk_salda_valute"),
+			CbxTipIzvestaja:   c.Query("cbxtipizvestaja"),
+			CbxKlasa:          c.Query("cbxklasa"),
+			CbxOdMeseca:       c.Query("cbxodmeseca"),
+			CbxDoMeseca:       c.Query("cbxdomeseca"),
+			ChkSaldoRazlNula:  c.Query("chk_saldo_razl_nula"),
+			ChkSaldoVeceNula:  c.Query("chk_saldo_vece_nula"),
+			ChkSaldoManjeNula: c.Query("chk_saldo_manje_nula"),
+			ChkSaldoNula:      c.Query("chck_saldo_nula"),
+			OdSalda:           c.Query("odsalda"),
+			DoSalda:           c.Query("dosalda"),
+		}
+
+		fieldsError := h.service.CheckSaldaGrupeParameters(ctx, fieldParameters, params)
 		if len(fieldsError) > 0 {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldsError, common.ErrMsgValidation)
 			return
 		}
 		page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
-		err := h.service.GetSaldaGrupeKonta(c, &tbl, true, page, pageSize)
+		err := h.service.GetSaldaGrupeKonta(ctx, &tbl, true, page, pageSize, params)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
 			return
 		}
-		err = h.service.GetSaldaGrupeKonta(c, &tbl, false, page, pageSize)
+		err = h.service.GetSaldaGrupeKonta(ctx, &tbl, false, page, pageSize, params)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -224,19 +244,20 @@ func (h *SaldaHandler) SaldaGrupeKonta(c *gin.Context) {
 func (h *SaldaHandler) SaldaPartneri(c *gin.Context) {
 	requestSource := c.Request.Header.Get("X-Request-Source")
 	setActiveSaldaTab(&h.tabData, "saldapartneri")
-
 	tblPartneri := common.SetTableBasicData("", saldaPartneriTableID, h.service.GetSaldaPartneriTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 	translator := i18n.GetInstance()
 	searchInput := common.CreateSearchInput("search-input", translator, saldaURLSaldaPartneri, fmt.Sprintf("#%s", saldaPartneriTableID), "")
 	common.SetTableConfig(&tblPartneri, "", saldaURLSaldaPartneri, false, false, false)
 
+	ctx := c.Request.Context()
+	searchText := c.Query("query")
 	currentPage, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
-	err := h.service.GetSaldaPartneriList(c, &tblPartneri, true, currentPage, pageSize)
+	err := h.service.GetSaldaPartneriList(ctx, &tblPartneri, true, currentPage, pageSize, searchText, "", "")
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
 		return
 	}
-	err = h.service.GetSaldaPartneriList(c, &tblPartneri, false, currentPage, pageSize)
+	err = h.service.GetSaldaPartneriList(ctx, &tblPartneri, false, currentPage, pageSize, searchText, "", "")
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
 		return
@@ -244,7 +265,7 @@ func (h *SaldaHandler) SaldaPartneri(c *gin.Context) {
 	tblPartneri.BtnAdd.IsVisible = false
 	tblPartneri.BtnPrint.IsVisible = true
 	tblPartneri.DetailTarget = "#saldapartneri-detalji"
-	tblPartneri.DetailURL = "/api/salda/partneridetails?idpartneri="
+	tblPartneri.DetailURL = "/api/salda/partneridetails"
 	tblPartneri.DetailHxRequestType = "GET"
 	tblPartneri.DetailHxSwap = "innerHTML"
 	tblPartneri.DetailHxTrigger = "click, change delay:500ms"
@@ -262,15 +283,16 @@ func (h *SaldaHandler) SaldaPartneri(c *gin.Context) {
 }
 
 func (h *SaldaHandler) SaldaPartneriDetalji(c *gin.Context) {
-	strPartnerID := c.Query("idpartneri")
+	strPartnerID := c.Param("id")
 	idPartneri := common.StringToInt64(strPartnerID)
 	tblSalda := common.SetTableBasicData("", "saldapartneri-salda-table", h.service.GetSaldaPartneriHeaderTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tblSalda, "", saldaURLSaldaPartneri, false, false, false)
 
 	tblDetalji := common.SetTableBasicData("", "saldapartneri-detalji-table", h.service.GetSaldaPartneriDetailTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tblDetalji, "", saldaURLSaldaPartneri, false, false, false)
-	err := h.service.ProcessSaldaPartneriDetails(c, idPartneri, &tblSalda, &tblDetalji)
-	if err != nil {
+	ctx := c.Request.Context()
+	Err := h.service.ProcessSaldaPartneriDetails(ctx, idPartneri, &tblSalda, &tblDetalji, "", "", "")
+	if Err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData)
 		return
 	}
@@ -295,13 +317,15 @@ func (h *SaldaHandler) SaldaPartneriPrelomljeno(c *gin.Context) {
 		}
 	}
 	if requestSource == "btnobrada" || requestSource == "btnpage" || requestSource == "searchinput" {
+		ctx := c.Request.Context()
+		searchText := c.Query("query")
 		page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
-		err := h.service.GetSaldaPartneriPrelomljeno(c, &tbl, true, page, pageSize)
+		err := h.service.GetSaldaPartneriPrelomljeno(ctx, &tbl, true, page, pageSize, searchText, "", "")
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
 			return
 		}
-		err = h.service.GetSaldaPartneriPrelomljeno(c, &tbl, false, page, pageSize)
+		err = h.service.GetSaldaPartneriPrelomljeno(ctx, &tbl, false, page, pageSize, searchText, "", "")
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -326,7 +350,7 @@ func (h *SaldaHandler) SaldaKlase5i6Analitika(c *gin.Context) {
 
 	tbl := common.SetTableBasicData(saldaContentTitle, saldaTableKlase5i6AnalitikaID, h.service.GetSaldaKlase5i6AnalitikaTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 	tbl.Pagination.HxVals = hxValsSaldaKlase5i6Analitika
-	common.SetTableConfig(&tbl, "SALDA KLASA 5 i 6 ANALITIKA", "", false, false, false)
+	common.SetTableConfig(&tbl, "SALDA KLASA 5 i 6 ANALITIKA", saldaURLKlase5i6Analitika, false, false, false)
 
 	if requestSource == "menu" || requestSource == "tab" {
 		setActiveSaldaTab(&h.tabData, "saldaklase56analitika")
@@ -343,13 +367,15 @@ func (h *SaldaHandler) SaldaKlase5i6Analitika(c *gin.Context) {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldsError, common.ErrMsgValidation)
 			return
 		}
+		ctx := c.Request.Context()
+		searchText := c.Query("query")
 		page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
-		err := h.service.GetSaldaKlase5i6Analitika(c, &tbl, true, page, pageSize)
+		err := h.service.GetSaldaKlase5i6Analitika(ctx, &tbl, true, page, pageSize, searchText)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
 			return
 		}
-		err = h.service.GetSaldaKlase5i6Analitika(c, &tbl, false, page, pageSize)
+		err = h.service.GetSaldaKlase5i6Analitika(ctx, &tbl, false, page, pageSize, searchText)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -373,7 +399,7 @@ func (h *SaldaHandler) SaldaKlase5i6MT(c *gin.Context) {
 
 	tbl := common.SetTableBasicData(saldaContentTitle, saldaTableKlase5i6MTID, h.service.GetSaldaKlase5i6MTTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 	tbl.Pagination.HxVals = hxValsSaldaKlase5i6MT
-	common.SetTableConfig(&tbl, "SALDA KLASA 5 i 6 MT", "", false, false, false)
+	common.SetTableConfig(&tbl, "SALDA KLASA 5 i 6 MT", saldaURLKlase5i6MT, false, false, false)
 
 	if requestSource == "menu" || requestSource == "tab" {
 		setActiveSaldaTab(&h.tabData, "saldaklase56mt")
@@ -390,13 +416,15 @@ func (h *SaldaHandler) SaldaKlase5i6MT(c *gin.Context) {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldsError, common.ErrMsgValidation)
 			return
 		}
+		ctx := c.Request.Context()
+		searchText := c.Query("query")
 		page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
-		err := h.service.SaldaKlase5i6MT(c, &tbl, true, page, pageSize)
+		err := h.service.SaldaKlase5i6MT(ctx, &tbl, true, page, pageSize, searchText)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
 			return
 		}
-		err = h.service.SaldaKlase5i6MT(c, &tbl, false, page, pageSize)
+		err = h.service.SaldaKlase5i6MT(ctx, &tbl, false, page, pageSize, searchText)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -436,13 +464,17 @@ func (h *SaldaHandler) SaldaKomercijalisti(c *gin.Context) {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldsError, common.ErrMsgValidation)
 			return
 		}
+		ctx := c.Request.Context()
+		searchText := c.Query("query")
+		sortBy := c.Query("sortBy")
+		sortOrder := c.Query("sortOrder")
 		page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
-		err := h.service.SaldaPoKomercijalistima(c, &tbl, true, page, pageSize)
+		err := h.service.SaldaPoKomercijalistima(ctx, &tbl, true, page, pageSize, searchText, sortBy, sortOrder)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
 			return
 		}
-		err = h.service.SaldaPoKomercijalistima(c, &tbl, false, page, pageSize)
+		err = h.service.SaldaPoKomercijalistima(ctx, &tbl, false, page, pageSize, searchText, sortBy, sortOrder)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -483,13 +515,17 @@ func (h *SaldaHandler) RealizacijaKomercijalisti(c *gin.Context) {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldsError, common.ErrMsgValidation)
 			return
 		}
+		ctx := c.Request.Context()
+		searchText := c.Query("query")
+		sortBy := c.Query("sortBy")
+		sortOrder := c.Query("sortOrder")
 		page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
-		err := h.service.RealizacijaKomercijalisti(c, &tbl, true, page, pageSize)
+		err := h.service.RealizacijaKomercijalisti(ctx, &tbl, true, page, pageSize, searchText, sortBy, sortOrder)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
 			return
 		}
-		err = h.service.RealizacijaKomercijalisti(c, &tbl, false, page, pageSize)
+		err = h.service.RealizacijaKomercijalisti(ctx, &tbl, false, page, pageSize, searchText, sortBy, sortOrder)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -523,7 +559,7 @@ func (h *SaldaHandler) AddRoutes(r *gin.Engine) {
 	r.GET("/api/salda/pojedinacnihkonta", h.SaldaPojedinacnihKonta)
 	r.GET("/api/salda/grupekonta", h.SaldaGrupeKonta)
 	r.GET("/api/salda/partneri", h.SaldaPartneri)
-	r.GET("/api/salda/partneridetails", h.SaldaPartneriDetalji)
+	r.GET("/api/salda/partneridetails/:id", h.SaldaPartneriDetalji)
 	r.GET("/api/salda/partneriprelomljeno", h.SaldaPartneriPrelomljeno)
 	r.GET("/api/salda/klase56analitika", h.SaldaKlase5i6Analitika)
 	r.GET("/api/salda/klase56mt", h.SaldaKlase5i6MT)

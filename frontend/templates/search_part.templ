@@ -11,43 +11,45 @@ templ Search_Part(tbl domain.TableData, searchControl domain.InputControl) {
 			<div></div>
 		}
 		<div class="flex space-x-1 items-center pr-1">
-			<div class="relative">
-				<input
-					id={searchControl.ID}
-					name="query"
-					if searchControl.Class != "" {
-						class={ searchControl.Class }
-					}
-					id={ searchControl.ID }
-					type={ searchControl.Type }
-					if searchControl.Placeholder != "" {
-						placeholder={ searchControl.Placeholder }
-					}
-					if searchControl.HxActionURL != "" {
-						hx-get={ searchControl.HxActionURL }
-					}
-					if searchControl.HxTarget != "" {
-						hx-target={ searchControl.HxTarget }
-					}
-					if searchControl.HxSwap != "" {
-						hx-swap={ searchControl.HxSwap }
-					}
-					hx-trigger="keyup changed delay:500ms, search"
-					if searchControl.HxInclude != "" {
-						hx-include={ searchControl.HxInclude }
-					}
-					if searchControl.HxVals != "" {
-						hx-vals={ searchControl.HxVals }
-					}
-					if searchControl.Autocomplete != "" {
-						autocomplete={ searchControl.Autocomplete }
-					}
-					hx-headers='{"X-Request-Source": "searchinput"}'
-				/>
-				<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 absolute left-2 top-1/3 transform -translate-y-1 text-gray-400 peer-focus:opacity-0 peer-not-placeholder-shown:opacity-0 transition-opacity duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-				</svg>
-			</div>
+			if searchControl.ID != "" {
+				<div class="relative">
+					<input
+						id={ searchControl.ID }
+						name="query"
+						if searchControl.Class != "" {
+							class={ searchControl.Class }
+						}
+						id={ searchControl.ID }
+						type={ searchControl.Type }
+						if searchControl.Placeholder != "" {
+							placeholder={ searchControl.Placeholder }
+						}
+						if searchControl.HxActionURL != "" {
+							hx-get={ searchControl.HxActionURL }
+						}
+						if searchControl.HxTarget != "" {
+							hx-target={ searchControl.HxTarget }
+						}
+						if searchControl.HxSwap != "" {
+							hx-swap={ searchControl.HxSwap }
+						}
+						hx-trigger="keyup changed delay:500ms, search"
+						if searchControl.HxInclude != "" {
+							hx-include={ searchControl.HxInclude }
+						}
+						if searchControl.HxVals != "" {
+							hx-vals={ searchControl.HxVals }
+						}
+						if searchControl.Autocomplete != "" {
+							autocomplete={ searchControl.Autocomplete }
+						}
+						hx-headers='{"X-Request-Source": "searchinput"}'
+					/>
+					<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 absolute left-2 top-1/3 transform -translate-y-1 text-gray-400 peer-focus:opacity-0 peer-not-placeholder-shown:opacity-0 transition-opacity duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+					</svg>
+				</div>
+			}
 			if tbl.BtnAdd.IsVisible {
 				@Search_PartAddButton(tbl.BtnAdd)
 			}
@@ -66,7 +68,6 @@ templ Search_PartAddButton(btn domain.Button) {
 		}
 		hx-target="#dialog-container"
 		hx-swap="innerHTML"
-		onclick="deactivateActionsColumn()"
 	>
 		@Icon("add", common.ClassIcon)
 		{ btn.LabelText }

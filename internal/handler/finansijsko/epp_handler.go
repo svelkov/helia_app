@@ -36,11 +36,13 @@ type EppHandler struct {
 	tabData domain.TabData
 	service finservice.EppService
 	cfg     config.Config
+	lm *middleware.LockMiddleware
 }
 
-func NewEppHandler(service finservice.EppService, cfg config.Config) *EppHandler {
+func NewEppHandler(service finservice.EppService, cfg config.Config, lm *middleware.LockMiddleware) *EppHandler {
 	handler := &EppHandler{
 		cfg: cfg,
+		lm:  lm,
 	}
 	handler.tabData = GetEppTabData()
 	handler.service = service
@@ -112,15 +114,20 @@ func (h *EppHandler) EppSekcijeIzvori(c *gin.Context) {
 		}
 
 		page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
+		odDatuma := c.Query("oddatuma")
+		doDatuma := c.Query("dodatuma")
+		searchText := c.Query("search-input")
+		ctx := c.Request.Context()
+
 		tbl := common.SetTableBasicData("", eppTableID, h.service.GetSekcijeIzvoriTableFields(), "", eppURLSekcije, 0, 0, 0, 0, h.cfg)
 		tbl.Pagination.HxVals = hxValsEpp
 		common.SetTableConfig(&tbl, "", eppURLSekcije, true, true, false)
-		err := h.service.GetSekcijeIzvori(c, &tbl, true, pageSize, page)
+		err := h.service.GetSekcijeIzvori(ctx, &tbl, true, pageSize, page, odDatuma, doDatuma, searchText)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
 			return
 		}
-		err = h.service.GetSekcijeIzvori(c, &tbl, false, pageSize, page)
+		err = h.service.GetSekcijeIzvori(ctx, &tbl, false, pageSize, page, odDatuma, doDatuma, searchText)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -177,15 +184,20 @@ func (h *EppHandler) EppEvidencija(c *gin.Context) {
 		}
 
 		page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
+		odDatuma := c.Query("oddatuma")
+		doDatuma := c.Query("dodatuma")
+		searchText := c.Query("search-input")
+		ctx := c.Request.Context()
+
 		tbl := common.SetTableBasicData("", eppTableID, h.service.GetEvidencijaTableFields(), "", eppURLEvidencija, 0, 0, 0, 0, h.cfg)
 		tbl.Pagination.HxVals = hxValsEpp
 		common.SetTableConfig(&tbl, "", eppURLEvidencija, true, true, false)
-		err := h.service.GetEvidencija(c, &tbl, true, pageSize, page)
+		err := h.service.GetEvidencija(ctx, &tbl, true, pageSize, page, odDatuma, doDatuma, searchText)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
 			return
 		}
-		err = h.service.GetEvidencija(c, &tbl, false, pageSize, page)
+		err = h.service.GetEvidencija(ctx, &tbl, false, pageSize, page, odDatuma, doDatuma, searchText)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -230,15 +242,20 @@ func (h *EppHandler) EppSefKpr(c *gin.Context) {
 		}
 
 		page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
+		odDatuma := c.Query("oddatuma")
+		doDatuma := c.Query("dodatuma")
+		searchText := c.Query("search-input")
+		ctx := c.Request.Context()
+
 		tbl := common.SetTableBasicData("", eppTableID, h.service.GetSefKprTableFields(), "", eppURLSefKpr, 0, 0, 0, 0, h.cfg)
 		tbl.Pagination.HxVals = hxValsEpp
 		common.SetTableConfig(&tbl, "", eppURLSefKpr, true, true, false)
-		err := h.service.GetSefKpr(c, &tbl, true, pageSize, page)
+		err := h.service.GetSefKpr(ctx, &tbl, true, pageSize, page, odDatuma, doDatuma, searchText)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
 			return
 		}
-		err = h.service.GetSefKpr(c, &tbl, false, pageSize, page)
+		err = h.service.GetSefKpr(ctx, &tbl, false, pageSize, page, odDatuma, doDatuma, searchText)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return

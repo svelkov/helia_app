@@ -1,10 +1,12 @@
 package finansijsko
 
 import (
+	"helia/config"
 	tmpl "helia/frontend/templates"
 	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
+	"time"
 )
 
 // Main Kompenzacije content with tabs
@@ -45,7 +47,7 @@ templ KompenzacijePregledPartnera(tabs domain.TabData, tbl domain.TableData, sea
 }
 
 // Tab 2: Formiranje kompenzacije
-templ KompenzacijeFormiranje(tabs domain.TabData, duznikData, poverilacData domain.TableData, btnObrada, btnFormKomp domain.Button, translator *i18n.Service, csrfToken string) {
+templ KompenzacijeFormiranje(tabs domain.TabData, duznikData, poverilacData domain.TableData, btnObrada, btnFormKomp domain.Button, translator *i18n.Service, csrfToken string, gnGod int, kontaConfig config.KontaConfig) {
 	<!-- Container with full height -->
 	<div id="tab-content" class="flex flex-col h-full">
 		<!-- Tab Navigation -->
@@ -53,85 +55,92 @@ templ KompenzacijeFormiranje(tabs domain.TabData, duznikData, poverilacData doma
 			@tmpl.TabNav(translator.Title("Kompenzacije"), tabs, "#tab-content", "kompenzacije-panel", translator)
 		</div>
 		<!-- Tab Content -->
-		<div id="tab2" class="flex flex-col h-full">
+		<div id="tab2" class="flex flex-col h-full overflow-hidden">
 			<!-- Main Grid - Three columns -->
-			<div class="grid grid-cols-3 gap-1">
+			<!-- <form id="kompenzacije-form" method="post" hx-post="/api/kompenzacije/formiranje" hx-headers={ fmt.Sprintf(`{"X-CSRF-Token": "%s"}`, csrfToken) }> -->
+			<div class="grid grid-cols-3 gap-1 flex-shrink-0">
 				<!-- Column 1: Dužnik -->
-				<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg flex flex-col">
+				<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg">
 					<div class="text-blue-800 font-bold text-xs mb-1 border-b border-gray-400 pb-1">
 						{ translator.Text("Dužnik") }
 					</div>
 					<!-- Konto Field -->
 					<div class="flex items-center gap-1 mb-1">
 						@tmpl.LabelField(domain.LabelFieldConfig{
-							ID:         "konto-duznika",
+							ID:         "lblkonto_duznika",
 							LabelText:  translator.Label("Konto"),
-							ClassLabel: common.ClassLabel + " w-16",
+							ClassLabel: common.ClassLabel + " w-24",
 						})
-						@tmpl.TextInputField(domain.InputFieldConfig{
-							ID:           "konto-duznika",
-							Name:         "konto-duznika",
-							FieldType:    "text",
-							ClassInput:   common.ClassInputTextEnabled + " w-20",
-							Value:        "2040",
+						@tmpl.NumericInputField(domain.InputFieldConfig{
+							ID:           "konto_duznika",
+							Name:         "konto_duznika",
+							Disabled:     false,
+							ClassInput:   common.ClassInputTextEnabled + " w-24",
 							BlurEndpoint: "api/fkpl/trazikonto",
-							HxTarget:     "opis-duznika",
-							HxVals:       `js:{"konto": document.getElementById('konto-duznika').value, "sifra": document.getElementById('sifra-duznika').value, "vkonta": "1"}`,
+							HxTarget:     "kontoduznikanaziv",
+							HxVals:       `js:{"konto": document.getElementById('konto_duznika').value, "vkonta": "2"}`,
 							HxInclude:    "this",
+							MinLength:    "4",
+							MaxLength:    "6",
 							TabIndex:     "1",
-						})
+							Value:        kontaConfig.KontoKupca,
+							OnInput:      "clearFieldError",
+							OnFocus:      "clearFieldError"})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
-							ID:          "konto-duznika",
+							ID:          "btnkonto_duznika",
 							Name:        "search-konto-duznika",
 							HxUrl:       "/api/promet/searchbutton",
-							HxTarget:    "#search-dropdown-duznik",
+							HxTarget:    "#search-dropdown",
 							HxSwap:      "innerHTML",
-							HxVals:      `js:{"vkonta": "1"}`,
+							HxVals:      `{"vkonta": "2"}`,
 							ClassButton: common.ClassButton,
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "kontoduznikanaziv",
+							Name:       "kontoduznikanaziv",
+							FieldType:  "text",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextDisabled + " w-full",
 						})
 					</div>
 					<!-- Sifra Field -->
 					<div class="flex items-center gap-1 mb-1">
 						@tmpl.LabelField(domain.LabelFieldConfig{
-							ID:         "sifra-duznika",
+							ID:         "lblsifra_duznika",
 							LabelText:  translator.Label("Šifra"),
-							ClassLabel: common.ClassLabel + " w-16",
+							ClassLabel: common.ClassLabel + " w-24",
 						})
-						@tmpl.TextInputField(domain.InputFieldConfig{
-							ID:           "sifra-duznika",
-							Name:         "sifra-duznika",
-							FieldType:    "text",
-							ClassInput:   common.ClassInputTextEnabled + " w-20",
-							Value:        "00",
+						@tmpl.NumericInputField(domain.InputFieldConfig{
+							ID:           "sifra_duznika",
+							Name:         "sifra_duznika",
+							Disabled:     false,
+							ClassInput:   common.ClassInputTextEnabled + " w-24",
 							BlurEndpoint: "api/fkpl/trazikonto",
-							HxTarget:     "opis-duznika",
-							HxVals:       `js:{"konto": document.getElementById('konto-duznika').value, "sifra": document.getElementById('sifra-duznika').value, "vkonta": "1"}`,
-							HxInclude:    "this",
-							TabIndex:     "2",
+							HxTarget:     "sifra_duznika_naziv",
+							HxVals:       `js:{"konto": document.getElementById('konto_duznika').value, "sifra":document.getElementById('sifra_duznika').value,  "vkonta": "1"}`,
+							MinLength:    "2",
+							MaxLength:    "6",
+							TabIndex:     "3",
+							OnInput:      "clearFieldError",
+							OnFocus:      "clearFieldError",
 						})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
-							ID:          "sifra-duznika",
+							ID:          "btnsifra_duznika",
 							Name:        "search-sifra-duznika",
 							HxUrl:       "/api/promet/searchbutton",
-							HxTarget:    "#search-dropdown-duznik",
+							HxTarget:    "#search-dropdown",
 							HxSwap:      "innerHTML",
-							HxVals:      `js:{"konto": document.getElementById('konto-duznika').value, "vkonta": "1"}`,
+							HxVals:      `js:{"konto": document.getElementById('konto_duznika').value, "sifra":document.getElementById('sifra_duznika').value,  "vkonta": "1"}`,
 							ClassButton: common.ClassButton,
 						})
-					</div>
-					<!-- Opis Field -->
-					<div class="flex items-center gap-1 mb-1">
-						<div class="w-16"></div>
 						@tmpl.TextInputField(domain.InputFieldConfig{
-							ID:         "opis-duznika",
-							Name:       "opis-duznika",
+							ID:         "sifra_duznika_naziv",
+							Name:       "sifra_duznika_naziv",
 							FieldType:  "text",
-							ClassInput: common.ClassInputTextDisabled + " flex-1",
 							Disabled:   true,
-							TabIndex:   "3",
+							ClassInput: common.ClassInputTextDisabled + " w-full",
 						})
 					</div>
-					<div id="search-dropdown-duznik"></div>
 				</div>
 				<!-- Column 2: Poverilac -->
 				<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg flex flex-col">
@@ -141,155 +150,281 @@ templ KompenzacijeFormiranje(tabs domain.TabData, duznikData, poverilacData doma
 					<!-- Konto Field -->
 					<div class="flex items-center gap-1 mb-1">
 						@tmpl.LabelField(domain.LabelFieldConfig{
-							ID:         "konto-poverioca",
+							ID:         "lblkonto_poverioca",
 							LabelText:  translator.Label("Konto"),
-							ClassLabel: common.ClassLabel + " w-16",
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@tmpl.NumericInputField(domain.InputFieldConfig{
+							ID:           "konto_poverioca",
+							Name:         "konto_poverioca",
+							Disabled:     false,
+							ClassInput:   common.ClassInputTextEnabled + " w-24",
+							BlurEndpoint: "api/fkpl/trazikonto",
+							HxTarget:     "konto_poverioca_naziv",
+							HxVals:       `js:{"konto": document.getElementById('konto_poverioca').value, "vkonta": "2"}`,
+							HxInclude:    "this",
+							MinLength:    "4",
+							MaxLength:    "6",
+							TabIndex:     "1",
+							Value:        kontaConfig.KontoDobavljaca,
+							OnInput:      "clearFieldError",
+							OnFocus:      "clearFieldError"})
+						@tmpl.SearchButton(domain.SearchButtonConfig{
+							ID:          "btnkonto_poverioca",
+							Name:        "search-konto_poverioca",
+							HxUrl:       "/api/promet/searchbutton",
+							HxTarget:    "#search-dropdown",
+							HxSwap:      "innerHTML",
+							HxVals:      `js:{"konto": document.getElementById('konto_poverioca').value, "sifra":document.getElementById('sifra_poverioca').value,  "vkonta": "2"}`,
+							ClassButton: common.ClassButton,
 						})
 						@tmpl.TextInputField(domain.InputFieldConfig{
-							ID:           "konto-poverioca",
-							Name:         "konto-poverioca",
-							FieldType:    "text",
-							ClassInput:   common.ClassInputTextEnabled + " w-20",
-							Value:        "4350",
-							BlurEndpoint: "api/fkpl/trazikonto",
-							HxTarget:     "opis-poverioca",
-							HxVals:       `js:{"konto": document.getElementById('konto-poverioca').value, "sifra": document.getElementById('sifra-poverioca').value, "vkonta": "1"}`,
-							HxInclude:    "this",
-							TabIndex:     "4",
-						})
-						@tmpl.SearchButton(domain.SearchButtonConfig{
-							ID:          "konto-poverioca",
-							Name:        "search-konto-poverioca",
-							HxUrl:       "/api/promet/searchbutton",
-							HxTarget:    "#search-dropdown-poverilac",
-							HxSwap:      "innerHTML",
-							HxVals:      `js:{"vkonta": "1"}`,
-							ClassButton: common.ClassButton,
+							ID:         "konto_poverioca_naziv",
+							Name:       "konto_poverioca_naziv",
+							FieldType:  "text",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextDisabled + " w-full",
 						})
 					</div>
 					<!-- Sifra Field -->
 					<div class="flex items-center gap-1 mb-1">
 						@tmpl.LabelField(domain.LabelFieldConfig{
-							ID:         "sifra-poverioca",
+							ID:         "lblsifra_poverioca",
 							LabelText:  translator.Label("Šifra"),
-							ClassLabel: common.ClassLabel + " w-16",
+							ClassLabel: common.ClassLabel + " w-24",
 						})
-						@tmpl.TextInputField(domain.InputFieldConfig{
-							ID:           "sifra-poverioca",
-							Name:         "sifra-poverioca",
-							FieldType:    "text",
-							ClassInput:   common.ClassInputTextEnabled + " w-20",
-							Value:        "00",
+						@tmpl.NumericInputField(domain.InputFieldConfig{
+							ID:           "sifra_poverioca",
+							Name:         "sifra_poverioca",
+							Disabled:     false,
+							ClassInput:   common.ClassInputTextEnabled + " w-24",
 							BlurEndpoint: "api/fkpl/trazikonto",
-							HxTarget:     "opis-poverioca",
-							HxVals:       `js:{"konto": document.getElementById('konto-poverioca').value, "sifra": document.getElementById('sifra-poverioca').value, "vkonta": "1"}`,
-							HxInclude:    "this",
-							TabIndex:     "5",
+							HxTarget:     "sifra_poverioca_naziv",
+							HxVals:       `js:{"konto": document.getElementById('konto_poverioca').value, "sifra":document.getElementById('sifra_poverioca').value,  "vkonta": "1"}`,
+							Value:        "",
+							MinLength:    "2",
+							MaxLength:    "6",
+							TabIndex:     "3",
+							OnInput:      "clearFieldError",
+							OnFocus:      "clearFieldError",
 						})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
-							ID:          "sifra-poverioca",
-							Name:        "search-sifra-poverioca",
+							ID:          "btnsifra_poverioca",
+							Name:        "search-sifra_poverioca",
 							HxUrl:       "/api/promet/searchbutton",
-							HxTarget:    "#search-dropdown-poverilac",
+							HxTarget:    "#search-dropdown",
 							HxSwap:      "innerHTML",
-							HxVals:      `js:{"konto": document.getElementById('konto-poverioca').value, "vkonta": "1"}`,
+							HxVals:      `js:{"konto": document.getElementById('konto_poverioca').value, "sifra":document.getElementById('sifra_poverioca').value,  "vkonta": "1"}`,
 							ClassButton: common.ClassButton,
 						})
-					</div>
-					<!-- Opis Field -->
-					<div class="flex items-center gap-1 mb-1">
-						<div class="w-16"></div>
 						@tmpl.TextInputField(domain.InputFieldConfig{
-							ID:         "opis-poverioca",
-							Name:       "opis-poverioca",
+							ID:         "sifra_poverioca_naziv",
+							Name:       "sifra_poverioca_naziv",
 							FieldType:  "text",
-							ClassInput: common.ClassInputTextDisabled + " flex-1",
 							Disabled:   true,
-							TabIndex:   "6",
+							ClassInput: common.ClassInputTextDisabled + " w-full",
 						})
 					</div>
-					<div id="search-dropdown-poverilac"></div>
 				</div>
 				<!-- Column 3: Parameters -->
 				<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg flex flex-col">
 					<div class="text-blue-800 font-bold text-xs mb-1 border-b border-gray-400 pb-1">
 						{ translator.Text("Parametri") }
 					</div>
+					<!-- Hidden CSRF token -->
+					<input type="hidden" id="_csrf" name="_csrf" value={ csrfToken }/>
 					<!-- Stanje na dan + Checkbox -->
 					<div class="flex items-center gap-2 mb-1">
 						<div class="flex items-center gap-1">
 							@tmpl.LabelField(domain.LabelFieldConfig{
-								ID:         "stanje-na-dan",
+								ID:         "lblstanje_na_dan",
 								LabelText:  translator.Label("Stanje na dan"),
 								ClassLabel: common.ClassLabel + " w-32",
 							})
 							@tmpl.TextInputField(domain.InputFieldConfig{
-								ID:         "stanje-na-dan",
-								Name:       "stanje-na-dan",
+								ID:         "stanje_na_dan",
+								Name:       "stanje_na_dan",
 								FieldType:  "date",
-								Value:      "2026-01-09",
+								Value:      time.Date(gnGod, time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
 								ClassInput: common.ClassInputTextEnabled + " w-32",
 								TabIndex:   "7",
+								OnInput:    "clearFieldError",
+								OnFocus:    "clearFieldError",
 							})
 						</div>
 						<div class="flex items-center gap-1">
-							<input id="check-dospele" type="checkbox" class="h-4 w-4 rounded border-blue-400 text-blue-600 focus:ring-blue-500"/>
-							<label for="check-dospele" class="text-xs text-gray-700">{ translator.Label("Dospeli računi") }</label>
+							<input id="check_dospele" type="checkbox" class="h-4 w-4 rounded border-blue-400 text-blue-600 focus:ring-blue-500"/>
+							<label for="check_dospele" class="text-xs text-gray-700">{ translator.Label("Dospeli računi") }</label>
 						</div>
 					</div>
 					<!-- Datum kompenzacije -->
 					<div class="flex items-center gap-1 mb-2">
 						@tmpl.LabelField(domain.LabelFieldConfig{
-							ID:         "datum-kompenzacije",
+							ID:         "lbldatum_kompenzacije",
 							LabelText:  translator.Label("Datum kompenzacije"),
 							ClassLabel: common.ClassLabel + " w-32",
 						})
 						@tmpl.TextInputField(domain.InputFieldConfig{
-							ID:         "datum-kompenzacije",
-							Name:       "datum-kompenzacije",
+							ID:         "datum_kompenzacije",
+							Name:       "datum_kompenzacije",
 							FieldType:  "date",
-							Value:      "2026-01-09",
+							Value:      time.Date(gnGod, time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
 							ClassInput: common.ClassInputTextEnabled + " w-32",
 							TabIndex:   "8",
+							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError",
 						})
 					</div>
 					<!-- Action buttons -->
-					<div class="flex justify-end gap-1">
+					<div class="flex justify-end gap-1 ml-auto">
 						@tmpl.FormObradaButton(btnObrada, translator)
-						@tmpl.SaveButton(btnFormKomp, translator)
+						<button
+							id="btnFormKomp"
+							type="button"
+							data-csrf-token={ csrfToken }
+							onclick="handleFormKompClick(event)"
+							class="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded transition"
+						>
+							{ translator.Label(btnFormKomp.LabelText) }
+						</button>
 					</div>
 				</div>
 			</div>
 			<!-- Warning message -->
 			<textarea readonly rows="2" class="w-full bg-red-50 border border-red-300 p-1 mb-1 rounded text-xs text-red-700 resize-none">{ translator.Message("napomena_kompenzacije") }</textarea>
-			<!-- Two tables side by side -->
-			<div class="grid grid-cols-2 gap-1 flex-1 min-h-0 overflow-hidden">
-				<!-- Left table: Dužničke obaveze -->
-				<div class="border bg-blue-100 border-blue-400 rounded-lg p-1 flex flex-col min-h-0">
-					<div class="flex justify-between items-center mb-1">
-						<h4 class="text-xs font-semibold text-blue-700">{ translator.Title("DUŽNIČKE OBAVEZE PREMA POVERIOCU") }</h4>
-					</div>
-					<div id="duznik-table" class="flex-1 overflow-auto">
-						@tmpl.Table(duznikData, translator)
-					</div>
-					<div class="mt-1 text-sm font-medium border-t border-blue-300 pt-1">TOTAL:</div>
-				</div>
-				<!-- Right table: Poverilačke obaveze -->
-				<div class="border bg-blue-100 border-blue-400 rounded-lg p-1 flex flex-col min-h-0">
-					<div class="flex justify-between items-center mb-1">
-						<h4 class="text-xs font-semibold text-blue-700">{ translator.Title("POVERILAČKE OBAVEZE PREMA DUŽNIKU") }</h4>
-					</div>
-					<div id="poverilac-table" class="flex-1 overflow-auto">
-						@tmpl.Table(poverilacData, translator)
-					</div>
-					<div class="mt-1 text-sm font-medium border-t border-blue-300 pt-1">TOTAL:</div>
-				</div>
+			<!-- Details section -->
+			<div id="kompenzacije-detalji" class="flex-1 min-h-0">
+				@KompenzacijeFormirajDetalji(duznikData, poverilacData, translator)
 			</div>
+			<!-- </form> -->
 		</div>
 	</div>
 	<!-- Global search dropdown for all search buttons -->
 	<div id="search-dropdown" class="hidden fixed bg-white border border-gray-300 rounded-lg shadow-xl z-[9999] max-w-2xl min-w-[400px] max-h-[500px] overflow-auto"></div>
 	@tmpl.SearchPopupScript()
+	@tmpl.ShowMessageScript()
+	@tmpl.SpinnerScript()
+	@tmpl.ClearFieldErrorScript()
+	<script>
+	console.log("KompenzacijeFormiranje script loaded");
+	
+	function handleFormKompClick(event) {
+		console.log("Button clicked!");
+		event.preventDefault();
+		
+		const duznikTable = document.getElementById('duznik-table');
+		const poverilacTable = document.getElementById('poverilac-table');
+		
+		const duznikRows = [];
+		const poverilacRows = [];
+		
+		// Collect duznik table data
+		if (duznikTable) {
+			const rows = duznikTable.querySelectorAll('tbody tr');
+			rows.forEach(row => {
+				const cells = row.querySelectorAll('td');
+				const rowData = {};
+				cells.forEach((cell, index) => {
+					rowData[`col_${index}`] = cell.textContent.trim();
+				});
+				duznikRows.push(rowData);
+			});
+		}
+		
+		// Collect poverilac table data
+		if (poverilacTable) {
+			const rows = poverilacTable.querySelectorAll('tbody tr');
+			rows.forEach(row => {
+				const cells = row.querySelectorAll('td');
+				const rowData = {};
+				cells.forEach((cell, index) => {
+					rowData[`col_${index}`] = cell.textContent.trim();
+				});
+				poverilacRows.push(rowData);
+			});
+		}
+		
+		// Build payload
+		const payload = {
+			konto_duznika: document.getElementById('konto_duznika').value,
+			sifra_duznika: document.getElementById('sifra_duznika').value,
+			konto_poverioca: document.getElementById('konto_poverioca').value,
+			sifra_poverioca: document.getElementById('sifra_poverioca').value,
+			stanje_na_dan: document.getElementById('stanje_na_dan').value,
+			datum_kompenzacije: document.getElementById('datum_kompenzacije').value,
+			check_dospele: document.getElementById('check_dospele').checked,
+			duznik_rows: duznikRows,
+			poverilac_rows: poverilacRows
+		};
+		
+		console.log("Payload prepared:", payload);
+		
+		// Get CSRF token from button data attribute
+		const button = document.getElementById('btnFormKomp');
+		const csrfToken = button.getAttribute('data-csrf-token');
+		
+		console.log("CSRF Token:", csrfToken);
+		
+		const headers = {
+			'Content-Type': 'application/json',
+			'X-CSRF-Token': csrfToken || ''
+		};
+		console.log("Request headers:", headers);
+		
+		// Make fetch request with JSON body
+		fetch('/api/kompenzacije/formiranje/formiraj', {
+			method: 'POST',
+			headers: headers,
+			body: JSON.stringify(payload)
+		})
+		.then(response => {
+			console.log("Response status:", response.status);
+			if (!response.ok) {
+				throw new Error(`HTTP error! status: ${response.status}`);
+			}
+			return response.text();
+		})
+		.then(html => {
+			console.log("Response received, updating DOM");
+			const targetEl = document.getElementById('kompenzacije-detalji');
+			if (targetEl) {
+				targetEl.innerHTML = html;
+			}
+		})
+		.catch(error => {
+			console.error('Error:', error);
+			alert('Error: ' + error.message);
+		});
+	}
+	</script>
+}
+
+templ KompenzacijeFormirajDetalji(duznikData, poverilacData domain.TableData, translator *i18n.Service) {
+	<!-- Two tables side by side - fills parent container -->
+	<div class="grid grid-cols-2 gap-1 h-full min-h-0">
+		<!-- Left table: Dužničke obaveze -->
+		<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden">
+			@tmpl.LoadingSpinner()
+			@tmpl.Search_Part(duznikData, domain.InputControl{})
+			<!-- Table -->
+			<div class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+				<div id="duznik-table">
+					@tmpl.Table(duznikData, translator)
+				</div>
+			</div>
+		</div>
+		<!-- Right table: Poverilačke obaveze -->
+		<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden">
+			@tmpl.LoadingSpinner()
+			@tmpl.Search_Part(poverilacData, domain.InputControl{})
+			<!-- Table -->
+			<div class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+				<div id="poverilac-table">
+					@tmpl.Table(poverilacData, translator)
+				</div>
+			</div>
+		</div>
+	</div>
 }
 
 // Tab 3: Pregled kompenzacija
@@ -558,4 +693,3 @@ templ KompenzacijeKnjizenje(tabs domain.TabData, tbl domain.TableData, dokumenta
 		</div>
 	</div>
 }
-

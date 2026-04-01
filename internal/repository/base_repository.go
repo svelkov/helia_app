@@ -1,13 +1,12 @@
 package repository
 
 import (
+	"context"
 	"fmt"
 	"helia/internal/domain"
 	"helia/internal/infrastructure/db"
 	"reflect"
 	"strings"
-
-	"github.com/gin-gonic/gin"
 )
 
 // // Generic repository interface
@@ -61,56 +60,59 @@ func (r *BaseRepository[T]) GetFieldCache() map[string]reflect.StructField {
 	return r.fieldCache
 }
 
-func (r *BaseRepository[T]) GetByID(idField string, idValue interface{}) (*T, error) {
+func (r *BaseRepository[T]) GetByID(ctx context.Context, idField string, idValue interface{}) (*T, error) {
 	var entity T
 	query := r.CreateGetByIDStatement(idField, idValue)
 	// Execute the query
-	err := r.DB.Get(&entity, query, idValue)
+	err := r.DB.GetContext(ctx, &entity, query, idValue)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching entity by ID: %w", err)
 	}
 	return &entity, nil
 }
 
-func (r *BaseRepository[T]) GetAll(c *gin.Context, pageSize int, offset int, tableFields []domain.Fields, idField string, searchParams ...string) (*[]T, error) {
+func (r *BaseRepository[T]) GetAll(ctx context.Context, pageSize int, offset int, tableFields []domain.Fields, idField string, searchText string) (*[]T, error) {
 	var entity []T
 
-	query, args := r.CreateGetAllStatement(c, tableFields, idField, searchParams...)
-	param := len(args) + 1
-
-	endPaging := ""
-	if pageSize > 0 {
-		args = append(args, pageSize, offset)
-		endPaging = fmt.Sprintf(` LIMIT $%d OFFSET $%d`, param, param+1)
+	qb := r.CreateGetAllStatement(ctx, tableFields, idField, searchText)
+	if qb == nil {
+		return nil, fmt.Errorf("error creating query builder")
 	}
-	query = fmt.Sprintf("%s %s", query, endPaging)
+	if searchText != "" {	
+		// Add search conditions to the query builder
+		qb.AddSearchConditions(tableFields, searchText)
+	}
+	qb.SetLimit(pageSize)
+	qb.SetOffset(offset) 
+	
+	query, args := qb.Build()
 	// Execute the query
-	err := r.DB.Select(&entity, query, args...)
+	err := r.DB.SelectContext(ctx, &entity, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching entity records, error: %w", err)
 	}
 	return &entity, nil
 }
 
-func (r *BaseRepository[T]) GetAllCustom(c *gin.Context, queryText, whereText string, args []interface{}, limitOffset, sortBy string) (*[]T, error) {
+func (r *BaseRepository[T]) GetAllCustom(ctx context.Context, queryText, whereText string, args []interface{}, limitOffset, sortBy string) (*[]T, error) {
 	var entity []T
 
 	queryText = fmt.Sprintf("%s %s %s %s", queryText, whereText, sortBy, limitOffset)
 	// Execute the query
 	//fmt.Println(queryText)
-	err := r.DB.Select(&entity, queryText, args...)
+	err := r.DB.SelectContext(ctx, &entity, queryText, args...)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching entity records, error: %w", err)
 	}
 	return &entity, nil
 }
 
-func (r *BaseRepository[T]) GetTotalRecords(c *gin.Context, tableFields []domain.Fields, searchParams ...string) (int, error) {
+func (r *BaseRepository[T]) GetTotalRecords(ctx context.Context, tableFields []domain.Fields, searchText string) (int, error) {
 	countRec := 0
-	query, args := r.CreateGetCountRecordsStatement(c, tableFields, searchParams...)
+	query, args := r.CreateGetCountRecordsStatement(ctx, tableFields, searchText)
 
 	// Execute the query
-	err := r.DB.Get(&countRec, query, args...)
+	err := r.DB.GetContext(ctx, &countRec, query, args...)
 	if err != nil {
 		return 0, fmt.Errorf("error fetching count of recordsD: %w", err)
 	}
@@ -118,39 +120,78 @@ func (r *BaseRepository[T]) GetTotalRecords(c *gin.Context, tableFields []domain
 	return countRec, nil
 }
 
-func (r *BaseRepository[T]) GetTotalRecordsCustom(c *gin.Context, queryText, whereText string, args []interface{}, limitOffset, sortBy string) (int, error) {
+func (r *BaseRepository[T]) GetTotalRecordsCustom(ctx context.Context, queryText, whereText string, args []interface{}, limitOffset, sortBy string) (int, error) {
 
 	countRec := 0
 
 	queryText = fmt.Sprintf("%s %s %s %s", queryText, whereText, limitOffset, sortBy)
 	// Execute the query
-	err := r.DB.Get(&countRec, queryText, args...)
+	err := r.DB.GetContext(ctx, &countRec, queryText, args...)
 	if err != nil {
 		return 0, fmt.Errorf("error fetching entity records, error: %w", err)
 	}
 	return countRec, nil
 }
 
-func (r *BaseRepository[T]) Create(c *gin.Context, entity *T, idField string, tableFields []domain.Fields) (int64, error) {
-	query, values := r.CreateInsertStatement(c, entity, tableFields, idField)
-	lastInsertedID, err := doTransaction(r.DB, ActionTypeInsert, query, values...)
+func (r *BaseRepository[T]) Create(ctx context.Context, entity *T, idField string, tableFields []domain.Fields) (int64, error) {
+	query, values := r.CreateInsertStatement(ctx, entity, tableFields, idField)
+
+	lastInsertedID, err := doTransaction(ctx, r.DB, ActionTypeInsert, query, values...)
 	return lastInsertedID, err
 }
 
-func (r *BaseRepository[T]) Update(c *gin.Context, entity *T, idField string, idValue interface{}, tableFields []domain.Fields) error {
-	query, values := r.CreateUpdateStatement(c, entity, idField, idValue, tableFields)
-	_, err := doTransaction(r.DB, ActionTypeUpdate, query, values...)
+func (r *BaseRepository[T]) Update(ctx context.Context, entity *T, idField string, idValue interface{}, tableFields []domain.Fields) error {
+	query, values := r.CreateUpdateStatement(ctx, entity, idField, idValue, tableFields)
+	_, err := doTransaction(ctx, r.DB, ActionTypeUpdate, query, values...)
 	return err
 }
 
-func (r *BaseRepository[T]) Delete(idField string, id int64) error {
+func (r *BaseRepository[T]) Delete(ctx context.Context, idField string, id int64) error {
 	query := fmt.Sprintf(`DELETE FROM  %s WHERE %s = $1`, r.TableName, idField)
-	_, err := doTransaction(r.DB, ActionTypeDelete, query, id)
+	_, err := doTransaction(ctx, r.DB, ActionTypeDelete, query, id)
 	return err
+}
+
+// ============ TRANSACTION-AWARE METHODS ============
+
+// BeginTx starts a new database transaction
+func (r *BaseRepository[T]) BeginTx() (db.Transaction, error) {
+	return r.DB.Beginx()
+}
+
+// CreateWithTx executes an INSERT within an existing transaction
+func (r *BaseRepository[T]) CreateWithTx(ctx context.Context, tx db.Transaction, entity *T, idField string, tableFields []domain.Fields) (int64, error) {
+	query, values := r.CreateInsertStatement(ctx, entity, tableFields, idField)
+	lastInsertedID := int64(0)
+	err := tx.QueryRowContext(ctx, query, values...).Scan(&lastInsertedID)
+	if err != nil {
+		return 0, fmt.Errorf("query execution failed: %v", err)
+	}
+	return lastInsertedID, nil
+}
+
+// UpdateWithTx executes an UPDATE within an existing transaction
+func (r *BaseRepository[T]) UpdateWithTx(ctx context.Context, tx db.Transaction, entity *T, idField string, idValue interface{}, tableFields []domain.Fields) error {
+	query, values := r.CreateUpdateStatement(ctx, entity, idField, idValue, tableFields)
+	_, err := tx.ExecContext(ctx, query, values...)
+	if err != nil {
+		return fmt.Errorf("query execution failed: %v", err)
+	}
+	return nil
+}
+
+// DeleteWithTx executes a DELETE within an existing transaction
+func (r *BaseRepository[T]) DeleteWithTx(ctx context.Context, tx db.Transaction, idField string, id int64) error {
+	query := fmt.Sprintf(`DELETE FROM  %s WHERE %s = $1`, r.TableName, idField)
+	_, err := tx.ExecContext(ctx, query, id)
+	if err != nil {
+		return fmt.Errorf("query execution failed: %v", err)
+	}
+	return nil
 }
 
 // doTransaction executes a query within a transaction
-func doTransaction(database db.Database, actionType, query string, values ...interface{}) (int64, error) {
+func doTransaction(ctx context.Context, database db.Database, actionType, query string, values ...interface{}) (int64, error) {
 	// Start a transaction
 	lastInsertedID := int64(0)
 	tx, err := database.Beginx()
@@ -160,14 +201,14 @@ func doTransaction(database db.Database, actionType, query string, values ...int
 	defer tx.Rollback() // Ensures rollback if commit isn't reached
 	// Execute the query with provided values
 	if actionType == ActionTypeDelete || actionType == ActionTypeUpdate {
-		_, err := tx.Exec(query, values...)
+		_, err := tx.ExecContext(ctx, query, values...)
 		if err != nil {
 			return 0, fmt.Errorf("query execution failed: %v", err)
 		}
 		err = tx.Commit() // Commit if successful
 		return lastInsertedID, err
 	}
-	err = tx.QueryRow(query, values...).Scan(&lastInsertedID)
+	err = tx.QueryRowContext(ctx, query, values...).Scan(&lastInsertedID)
 	if err != nil {
 		return 0, fmt.Errorf("query execution failed: %v", err)
 	}

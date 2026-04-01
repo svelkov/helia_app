@@ -37,7 +37,7 @@ func TopMenu(isLoggedIn bool, username string, menuItems domain.MenuDataItems, c
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"bg-gradient-to-r from-blue-900 to-blue-900 text-white shadow-xl shadow-blue-600/50\"><nav class=\"flex flex-wrap\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"bg-gradient-to-r from-blue-900 to-blue-900 text-white shadow-xl shadow-blue-600/50\"><nav class=\"flex flex-wrap\" id=\"top-nav\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -47,9 +47,9 @@ func TopMenu(isLoggedIn bool, username string, menuItems domain.MenuDataItems, c
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var2 string
-			templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("menu-%s", strings.ReplaceAll(strings.ToLower(item.Name), " ", "-")))
+			templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("topmenu-%s", strings.ReplaceAll(strings.ToLower(item.Name), " ", "-")))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/headermenu.templ`, Line: 16, Col: 90}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/headermenu.templ`, Line: 16, Col: 93}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 			if templ_7745c5c3_Err != nil {
@@ -81,12 +81,12 @@ func TopMenu(isLoggedIn bool, username string, menuItems domain.MenuDataItems, c
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\" hx-trigger=\"click\" hx-target=\"#side-menu\" hx-swap=\"outerHTML\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\" hx-trigger=\"click\" hx-target=\"#side-menu\" hx-swap=\"outerHTML\" hx-on=\"htmx:afterRequest: updateMenuButtonStyles(this)\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			if item.Name == currentMenu {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, " class=\"menu-btn px-2 py-2 font-medium border-r border-b rounded--t-md text-sm bg-white text-blue-800 focus:outline-none transition-colors duration-200\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, " class=\"menu-btn px-2 py-2 font-medium border-r border-b rounded-t-md text-sm bg-white text-blue-800 focus:outline-none transition-colors duration-200\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -96,14 +96,14 @@ func TopMenu(isLoggedIn bool, username string, menuItems domain.MenuDataItems, c
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, " type=\"button\" onclick=\"document.querySelectorAll(&#39;nav button&#39;).forEach(b =&gt; b.className = &#39;px-2 py-2 border-r border-b rounded-t-md font-medium text-sm bg-blue-900 text-white&#39;);\r\n                this.className = &#39;px-2 py-2 border-r border-b rounded-t-md font-medium text-sm text-white bg-white text-blue-800&#39;;\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, " type=\"button\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Menu(item.Name))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/headermenu.templ`, Line: 31, Col: 33}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/headermenu.templ`, Line: 30, Col: 33}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
@@ -121,7 +121,7 @@ func TopMenu(isLoggedIn bool, username string, menuItems domain.MenuDataItems, c
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Pocetna"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/headermenu.templ`, Line: 36, Col: 72}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/headermenu.templ`, Line: 35, Col: 72}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
@@ -139,7 +139,7 @@ func TopMenu(isLoggedIn bool, username string, menuItems domain.MenuDataItems, c
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Prijava"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/headermenu.templ`, Line: 38, Col: 78}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/headermenu.templ`, Line: 37, Col: 78}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
@@ -152,7 +152,7 @@ func TopMenu(isLoggedIn bool, username string, menuItems domain.MenuDataItems, c
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Registracija"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/headermenu.templ`, Line: 39, Col: 86}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/headermenu.templ`, Line: 38, Col: 86}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -170,7 +170,7 @@ func TopMenu(isLoggedIn bool, username string, menuItems domain.MenuDataItems, c
 			var templ_7745c5c3_Var9 string
 			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Odjava"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/headermenu.templ`, Line: 41, Col: 78}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/headermenu.templ`, Line: 40, Col: 78}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {
@@ -183,7 +183,7 @@ func TopMenu(isLoggedIn bool, username string, menuItems domain.MenuDataItems, c
 			var templ_7745c5c3_Var10 string
 			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Dobrodosli"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/headermenu.templ`, Line: 42, Col: 55}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/headermenu.templ`, Line: 41, Col: 55}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
@@ -196,7 +196,7 @@ func TopMenu(isLoggedIn bool, username string, menuItems domain.MenuDataItems, c
 			var templ_7745c5c3_Var11 string
 			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(username)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/headermenu.templ`, Line: 42, Col: 69}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/headermenu.templ`, Line: 41, Col: 69}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {
@@ -207,7 +207,7 @@ func TopMenu(isLoggedIn bool, username string, menuItems domain.MenuDataItems, c
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<!-- Theme Toggle Button --><button id=\"theme-toggle\" class=\"p-2 rounded-full hover:bg-blue-700 focus:outline-none\"><span id=\"theme-icon\">🌙</span><!-- Moon icon for dark mode --></button></div></nav></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<!-- Theme Toggle Button --><button id=\"theme-toggle\" class=\"p-2 rounded-full hover:bg-blue-700 focus:outline-none\"><span id=\"theme-icon\">🌙</span><!-- Moon icon for dark mode --></button></div></nav></div><script>\r\n\t\tfunction updateMenuButtonStyles(clickedButton) {\r\n\t\t\tconst nav = document.getElementById('top-nav');\r\n\t\t\tif (!nav) return;\r\n\t\t\t\r\n\t\t\t// Get all buttons in the nav\r\n\t\t\tconst buttons = nav.querySelectorAll('button[name]');\r\n\t\t\t\r\n\t\t\t// Reset all buttons to inactive style\r\n\t\t\tbuttons.forEach(btn => {\r\n\t\t\t\tbtn.className = 'menu-btn px-2 py-2 font-medium border-r border-b rounded-t-md text-sm focus:outline-none bg-blue-900 text-white transition-colors duration-200';\r\n\t\t\t});\r\n\t\t\t\r\n\t\t\t// Set clicked button to active style\r\n\t\t\tif (clickedButton) {\r\n\t\t\t\tclickedButton.className = 'menu-btn px-2 py-2 font-medium border-r border-b rounded-t-md text-sm bg-white text-blue-800 focus:outline-none transition-colors duration-200';\r\n\t\t\t}\r\n\t\t}\r\n\t\t\r\n\t\t// Also handle clicks directly before HTMX event\r\n\t\tdocument.addEventListener('DOMContentLoaded', function() {\r\n\t\t\tconst nav = document.getElementById('top-nav');\r\n\t\t\tif (nav) {\r\n\t\t\t\tnav.querySelectorAll('button[name]').forEach(btn => {\r\n\t\t\t\t\tbtn.addEventListener('click', function(e) {\r\n\t\t\t\t\t\tupdateMenuButtonStyles(this);\r\n\t\t\t\t\t});\r\n\t\t\t\t});\r\n\t\t\t}\r\n\t\t});\r\n\t\t\r\n\t\t// Re-attach listeners after HTMX updates (in case nav is replaced)\r\n\t\tdocument.addEventListener('htmx:load', function() {\r\n\t\t\tconst nav = document.getElementById('top-nav');\r\n\t\t\tif (nav) {\r\n\t\t\t\tnav.querySelectorAll('button[name]').forEach(btn => {\r\n\t\t\t\t\tbtn.addEventListener('click', function(e) {\r\n\t\t\t\t\t\tupdateMenuButtonStyles(this);\r\n\t\t\t\t\t});\r\n\t\t\t\t});\r\n\t\t\t}\r\n\t\t});\r\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

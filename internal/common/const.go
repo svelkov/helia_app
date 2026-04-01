@@ -1,26 +1,33 @@
 package common
 
 const (
-	IDdrzave   = "iddrzave"
-	IDbanke    = "idbanke"
-	IDsifop    = "idsifop"
-	IDpartneri = "idpartneri"
-	IDtipdok   = "idtipdok"
-	IDdokvrsta = "dokvrstaid"
-	IDpopdv    = "popdvid"
-	IDorgjed   = "idorgjed"
-	IDmestotr  = "mestotrid"
-	IDsifplizv = "sifplizvid"
-	IDfvknjrac = "idfvknjrac"
-	IDsifmesto = "sifm"
-	IDbnkizv   = "bnkizvid"
-	IDfvepdv   = "fvepdvid"
-	IDfkpl     = "idfkpl"
-	IDfnal     = "idfnal"
-	IDfpro     = "idfpro"
-	IDoamgrp   = "oamgrpid"
-	IDBils     = "bilsid"
-	IDBilu     = "biluid"
+	IDdrzave         = "iddrzave"
+	IDbanke          = "idbanke"
+	IDsifop          = "idsifop"
+	IDpartneri       = "idpartneri"
+	IDtipdok         = "idtipdok"
+	IDdokvrsta       = "dokvrstaid"
+	IDpopdv          = "popdvid"
+	IDorgjed         = "idorgjed"
+	IDmestotr        = "mestotrid"
+	IDsifplizv       = "sifplizvid"
+	IDfvknjrac       = "idfvknjrac"
+	IDsifmesto       = "sifm"
+	IDbnkizv         = "bnkizvid"
+	IDfvepdv         = "fvepdvid"
+	IDfkpl           = "idfkpl"
+	IDfnal           = "idfnal"
+	IDfpro           = "idfpro"
+	IDoamgrp         = "oamgrpid"
+	IDbils           = "bilsid"
+	IDbilu           = "biluid"
+	IDtekracuni      = "tekracuniid"
+	IDtipanalitike   = "tipanalitikeid"
+	IDentityLocks    = "entitylocksid"
+	IDvalute         = "idvalute"
+	IDkomercijalista = "komid"
+	IDmagacin        = "magaciniid"
+	IDmi             = "fispid"
 )
 
 const (
@@ -63,6 +70,9 @@ const (
 	ErrMsgUserSessionNotFound = "User session not found"
 	ErrMsgNotFound            = "Nije pronađena šifra"
 	ErrMsgSearchKonto         = "Greška prilikom pretrage konta"
+	ErrMsgLockFailed          = "Neuspešno zaključavanje zapisa, pokušajte ponovo"
+	ErrMsgUpdate              = "Greska prilikom ažuriranja. "
+
 )
 
 // constants for styling of inputs
@@ -97,7 +107,9 @@ const (
 	// Input - Text (Enabled)
 	ClassInputTextEnabled = "h-8 sm:h-7 md:h-6 px-2 sm:px-1.5 md:px-1 text-xs sm:text-sm rounded border border-blue-400 focus:bg-green-50 focus:border-green-500 focus:ring-green-500 text-left w-full"
 	// Input - Text (Disabled)
-	ClassInputTextDisabled = "h-8 sm:h-7 md:h-6 px-2 sm:px-1.5 md:px-1 text-xs sm:text-sm min-w-0 text-left rounded border border-blue-400 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed w-full"
+	ClassInputTextDisabled = "h-8 sm:h-7 md:h-6 px-2 sm:px-1.5 md:px-1 text-xs sm:text-sm min-w-0 text-left rounded border border-blue-400 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-300 disabled:text-gray-600 disabled:cursor-not-allowed w-full"
+	// TextArea (Enabled)
+	ClassTextAreaEnabled = "px-2 sm:px-1.5 md:px-1 py-2 text-xs sm:text-sm rounded border border-blue-400 focus:bg-green-50 focus:border-green-500 focus:ring-green-500 text-left w-full resize-none"
 	// Label
 	ClassLabel = "h-8 sm:h-7 md:h-6 text-xs sm:text-sm text-black whitespace-nowrap flex-shrink-0 flex items-center"
 
@@ -133,6 +145,8 @@ const (
 	ClassPdfButton           = "bg-blue-500 hover:bg-blue-900 text-white h-9 sm:h-7 md:h-7 px-2 sm:px-2 md:px-1 py-1 rounded text-sm flex items-center whitespace-nowrap"
 	ClassExcelButton         = "bg-blue-500 hover:bg-blue-700 text-white h-9 sm:h-7 md:h-7 px-2 sm:px-2 md:px-1 py-1 rounded text-xs sm:text-sm flex items-center justify-center whitespace-nowrap w-full sm:w-12 md:w-12"
 
+	// Classes for dialog forms
+	ClassMainDialogDiv = "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
 	// Patterns (unchanged)
 	PatternLettersAndNumbers = "[A-Za-z0-9]+"
 	PatternNumbers           = "[0-9]+"
@@ -202,5 +216,8 @@ var IconSVG = map[string]string{
 	"sort_up":     `<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16.881 16H7.119a1 1 0 0 1-.772-1.636l4.881-5.927a1 1 0 0 1 1.544 0l4.88 5.927a1 1 0 0 1-.77 1.636Z"/>`,
 	"sort":        `<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m8 10 4-6 4 6H8Zm8 4-4 6-4-6h8Z"/>`,
 	"add":         `<path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25ZM12.75 9a.75.75 0 0 0-1.5 0v2.25H9a.75.75 0 0 0 0 1.5h2.25V15a.75.75 0 0 0 1.5 0v-2.25H15a.75.75 0 0 0 0-1.5h-2.25V9Z" clip-rule="evenodd"></path>`,
-	//"kontniplan":         `<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 19V4a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v13H7a2 2 0 0 0-2 2Zm0 0a2 2 0 0 0 2 2h12M9 3v14m7 0v4" /><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 9h6m-6 3h6m-6 3h6M6.996 9h.01m-.01 3h.01m-.01 3h.01M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" />`,
+	"refresh":     `<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.651 7.65a7.131 7.131 0 0 0-12.68 3.15M18.001 4v4h-4m-7.652 8.35a7.13 7.13 0 0 0 12.68-3.15M6 20v-4h4"/>`,
+	"back":        `<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.5 8.046H11V6.119c0-.921-.9-1.446-1.524-.894l-5.108 4.49a1.2 1.2 0 0 0 0 1.739l5.108 4.49c.624.556 1.524.027 1.524-.893v-1.928h2a3.023 3.023 0 0 1 3 3.046V19a5.593 5.593 0 0 0-1.5-10.954Z"/>`,
+	"cancel":      `<path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25Zm-1.72 6.97a.75.75 0 1 0-1.06 1.06L10.94 12l-1.72 1.72a.75.75 0 1 0 1.06 1.06L12 13.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L13.06 12l1.72-1.72a.75.75 0 1 0-1.06-1.06L12 10.94l-1.72-1.72Z" clip-rule="evenodd"></path>`,
+	"close":       `<path fill-rule="evenodd" d="M2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10S2 17.523 2 12Zm7.707-3.707a1 1 0 0 0-1.414 1.414L10.586 12l-2.293 2.293a1 1 0 1 0 1.414 1.414L12 13.414l2.293 2.293a1 1 0 0 0 1.414-1.414L13.414 12l2.293-2.293a1 1 0 0 0-1.414-1.414L12 10.586 9.707 8.293Z" clip-rule="evenodd"/>^`,
 }

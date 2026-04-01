@@ -128,6 +128,11 @@ func (h *PrometHandler) PrometAnalitickihKonta(c *gin.Context) {
 	// Get our custom header
 	requestSource := c.Request.Header.Get("X-Request-Source")
 	translator := i18n.GetInstance()
+	//if the call come from menu click or tab click then render the page with parameters and empty table
+	tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetAnkontaTableFields(), "", "", 0, 0, 0, 0, h.cfg)
+	common.SetTableConfig(&tbl, prometContentTitle, "", false, false, false)
+	common.SetActiveTab(&h.tabData, "analitickakonta")
+	tbl.HasTotals = true
 	if requestSource == "menu" || requestSource == "tab" {
 		session := domain.GetSessionFromContext(c)
 		gnGod := 0
@@ -138,11 +143,6 @@ func (h *PrometHandler) PrometAnalitickihKonta(c *gin.Context) {
 		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", prometURLAnKonta, "#promettable", "innerHTML", "GET", "", hxValsAnalitickihKonta, true, common.ClassSaveButton, "handleDialogResponse")
 		btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
 		searchInput := common.CreateSearchInput("search-input", translator, prometURLAnKonta, fmt.Sprintf("#%s", prometTableID), hxValsAnalitickihKonta)
-
-		//if the call come from menu click or tab click then render the page with parameters and empty table
-		tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetAnkontaTableFields(), "", "", 0, 0, 0, 0, h.cfg)
-		common.SetTableConfig(&tbl, prometContentTitle, "", false, false, false)
-		common.SetActiveTab(&h.tabData, "analitickakonta")
 		err := tmpl_fin.PrometAnalitickihKonta(h.tabData, tbl, btnPrint, btnObrada, domain.TotalValues{}, searchInput, gnGod, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
@@ -151,6 +151,15 @@ func (h *PrometHandler) PrometAnalitickihKonta(c *gin.Context) {
 	}
 	// If it's a POST request, the make obrada
 	if requestSource == "btnobrada" || requestSource == "btnpage" || requestSource == "searchinput" {
+		ctx := c.Request.Context()
+		params := domain.PrometParam{
+			Konto:      c.Query("konto"),
+			Sifra:      c.Query("sifra"),
+			OdDatuma:   c.Query("oddatuma"),
+			DoDatuma:   c.Query("dodatuma"),
+			SearchText: c.Query("query"),
+			ReportTip:  "prometankonta",
+		}
 		//validacija input parametre:
 		fieldParameters := []string{"konto", "sifra", "oddatuma", "dodatuma"}
 		fieldsError := common.ValidateRequiredParams(c, fieldParameters)
@@ -164,18 +173,18 @@ func (h *PrometHandler) PrometAnalitickihKonta(c *gin.Context) {
 		common.SetTableConfig(&tbl, "", prometURLAnKonta, false, false, false)
 		tbl.Pagination.HxVals = hxValsAnalitickihKonta
 
-		err := h.service.GetPrometAnalitickihKonta(c, &tbl, true, pageSize, page, false)
+		err := h.service.GetPrometAnalitickihKonta(ctx, &tbl, true, pageSize, page, false, params)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
 			return
 		}
 
-		err = h.service.GetPrometAnalitickihKonta(c, &tbl, false, pageSize, page, false)
+		err = h.service.GetPrometAnalitickihKonta(ctx, &tbl, false, pageSize, page, false, params)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
 		}
-
+		tbl.HasTotals = true
 		utils.RenderContent(c, tbl)
 	}
 }
@@ -184,8 +193,10 @@ func (h *PrometHandler) PrometAnalitickihKontaPoMI(c *gin.Context) {
 	// Get our custom header
 	requestSource := c.Request.Header.Get("X-Request-Source")
 	translator := i18n.GetInstance()
+	//if the call come from menu click or tab click then render the page with parameters and empty table
 	tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetAnKontaMiTableFields(), "", prometURLAnKontaMi, 0, 0, 0, 0, h.cfg)
-
+	common.SetTableConfig(&tbl, prometContentTitle, prometURLAnKontaMi, false, false, false)
+	common.SetActiveTab(&h.tabData, "analitickakontami")
 	if requestSource == "menu" || requestSource == "tab" {
 		session := domain.GetSessionFromContext(c)
 		gnGod := 0
@@ -196,10 +207,6 @@ func (h *PrometHandler) PrometAnalitickihKontaPoMI(c *gin.Context) {
 		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", prometURLAnKontaMi, "#promettable", "innerHTML", "GET", "", hxValsMI, true, common.ClassSaveButton, "handleDialogResponse")
 		btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
 		searchInput := common.CreateSearchInput("search-input", translator, prometURLAnKontaMi, fmt.Sprintf("#%s", prometTableID), hxValsMI)
-
-		//if the call come from menu click or tab click then render the page with parameters and empty table
-		common.SetTableConfig(&tbl, prometContentTitle, prometURLAnKontaMi, false, false, false)
-		common.SetActiveTab(&h.tabData, "analitickakontami")
 		err := tmpl_fin.AnalitickaKarticaPoMI(h.tabData, tbl, btnPrint, btnObrada, domain.TotalValues{}, searchInput, gnGod, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
@@ -208,6 +215,17 @@ func (h *PrometHandler) PrometAnalitickihKontaPoMI(c *gin.Context) {
 	}
 	// If it's a POST request, the make obrada
 	if requestSource == "btnobrada" || requestSource == "btnpage" || requestSource == "searchinput" {
+		ctx := c.Request.Context()
+		params := domain.PrometParam{
+			Konto:      c.Query("konto"),
+			Sifra:      c.Query("sifra"),
+			OdDatuma:   c.Query("oddatuma"),
+			DoDatuma:   c.Query("dodatuma"),
+			OdMI:       c.Query("odmi"),
+			DoMI:       c.Query("domi"),
+			SearchText: c.Query("query"),
+			ReportTip:  "prometankontami",
+		}
 		//validacija input parametre:
 		fieldParameters := []string{"konto", "sifra", "oddatuma", "dodatuma"}
 		fieldsError := common.ValidateRequiredParams(c, fieldParameters)
@@ -221,18 +239,18 @@ func (h *PrometHandler) PrometAnalitickihKontaPoMI(c *gin.Context) {
 		common.SetTableConfig(&tbl, "", prometURLAnKontaMi, false, false, false)
 		tbl.Pagination.HxVals = hxValsMI
 
-		err := h.service.GetPrometAnalitickihKonta(c, &tbl, true, pageSize, page, true)
+		err := h.service.GetPrometAnalitickihKonta(ctx, &tbl, true, pageSize, page, true, params)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
 			return
 		}
 
-		err = h.service.GetPrometAnalitickihKonta(c, &tbl, false, pageSize, page, true)
+		err = h.service.GetPrometAnalitickihKonta(ctx, &tbl, false, pageSize, page, true, params)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
 		}
-
+		tbl.HasTotals = true
 		utils.RenderContent(c, tbl)
 	}
 }
@@ -261,6 +279,15 @@ func (h *PrometHandler) PrometDeviznihAnalitickihKonta(c *gin.Context) {
 	}
 
 	if requestSource == "btnobrada" || requestSource == "btnpage" {
+		ctx := c.Request.Context()
+		params := domain.PrometParam{
+			Konto:      c.Query("konto"),
+			Sifra:      c.Query("sifra"),
+			OdDatuma:   c.Query("oddatuma"),
+			DoDatuma:   c.Query("dodatuma"),
+			SearchText: c.Query("query"),
+			ReportTip:  "deviznihanalitickihkonta",
+		}
 		//validacija input parametre:
 		fieldParameters := []string{"konto", "sifra", "oddatuma", "dodatuma"}
 		fieldsError := common.ValidateRequiredParams(c, fieldParameters)
@@ -273,18 +300,18 @@ func (h *PrometHandler) PrometDeviznihAnalitickihKonta(c *gin.Context) {
 		common.SetTableConfig(&tbl, "", prometURLDeviznaKonta, false, false, false)
 		tbl.Pagination.HxVals = hxValsDeviznaKonta
 
-		err := h.service.GetPrometAnalitickihKonta(c, &tbl, true, pageSize, page, false)
+		err := h.service.GetPrometAnalitickihKonta(ctx, &tbl, true, pageSize, page, false, params)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
 			return
 		}
 
-		err = h.service.GetPrometAnalitickihKonta(c, &tbl, false, pageSize, page, false)
+		err = h.service.GetPrometAnalitickihKonta(ctx, &tbl, false, pageSize, page, false, params)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
 		}
-
+		tbl.HasTotals = true
 		utils.RenderContent(c, tbl)
 	}
 }
@@ -315,6 +342,15 @@ func (h *PrometHandler) PrometSubsintetickihKonta(c *gin.Context) {
 	}
 	// If it's a POST request, the make obrada
 	if requestSource == "btnobrada" || requestSource == "btnpage" || requestSource == "searchinput" {
+		ctx := c.Request.Context()
+		params := domain.PrometParam{
+			OdKonta:    c.Query("odkonta"),
+			DoKonta:    c.Query("dokonta"),
+			OdDatuma:   c.Query("oddatuma"),
+			DoDatuma:   c.Query("dodatuma"),
+			SearchText: c.Query("query"),
+			ReportTip:  "subsintetickihkonta",
+		}
 		//validacija input parametre:
 		fieldParameters := []string{"odkonta", "dokonta", "oddatuma", "dodatuma"}
 		fieldsError := common.ValidateRequiredParams(c, fieldParameters)
@@ -328,18 +364,18 @@ func (h *PrometHandler) PrometSubsintetickihKonta(c *gin.Context) {
 		common.SetTableConfig(&tbl, "", prometURLSubsintetika, false, false, false)
 		tbl.Pagination.HxVals = hxValsSubsintetika
 
-		err := h.service.GetPrometSubsintetickihKonta(c, &tbl, true, pageSize, page)
+		err := h.service.GetPrometSubsintetickihKonta(ctx, &tbl, true, pageSize, page, params)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
 			return
 		}
 
-		err = h.service.GetPrometSubsintetickihKonta(c, &tbl, false, pageSize, page)
+		err = h.service.GetPrometSubsintetickihKonta(ctx, &tbl, false, pageSize, page, params)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
 		}
-
+		tbl.HasTotals = true
 		utils.RenderContent(c, tbl)
 	}
 }
@@ -370,6 +406,14 @@ func (h *PrometHandler) PrometSintetickihKonta(c *gin.Context) {
 	}
 	// If it's a POST request, the make obrada
 	if requestSource == "btnobrada" || requestSource == "btnpage" || requestSource == "searchinput" {
+		ctx := c.Request.Context()
+		params := domain.PrometParam{
+			Konto:      c.Query("konto"),
+			OdDatuma:   c.Query("oddatuma"),
+			DoDatuma:   c.Query("dodatuma"),
+			SearchText: c.Query("query"),
+			ReportTip:  "sintetickakonta",
+		}
 		//validacija input parametre:
 		fieldParameters := []string{"konto", "oddatuma", "dodatuma"}
 		fieldsError := common.ValidateRequiredParams(c, fieldParameters)
@@ -377,24 +421,23 @@ func (h *PrometHandler) PrometSintetickihKonta(c *gin.Context) {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldsError, common.ErrMsgValidation)
 			return
 		}
-
 		page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
 		tbl := common.SetTableBasicData("", prometTableID, h.service.GetSintetickihKontaTableFields(), "", prometURLSintetika, 0, 0, 0, 0, h.cfg)
 		common.SetTableConfig(&tbl, "", prometURLSintetika, false, false, false)
 		tbl.Pagination.HxVals = hxValsSintetika
 
-		err := h.service.GetPrometSintetickihKonta(c, &tbl, true, pageSize, page)
+		err := h.service.GetPrometSintetickihKonta(ctx, &tbl, true, pageSize, page, params)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
 			return
 		}
 
-		err = h.service.GetPrometSintetickihKonta(c, &tbl, false, pageSize, page)
+		err = h.service.GetPrometSintetickihKonta(ctx, &tbl, false, pageSize, page, params)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
 		}
-
+		tbl.HasTotals = true
 		utils.RenderContent(c, tbl)
 	}
 }
@@ -425,6 +468,15 @@ func (h *PrometHandler) PrometKarticaSintetickihKonta(c *gin.Context) {
 	}
 	// If it's a POST request, the make obrada
 	if requestSource == "btnobrada" || requestSource == "btnpage" || requestSource == "searchinput" {
+		ctx := c.Request.Context()
+		params := domain.PrometParam{
+			Konto:      c.Query("konto"),
+			OdDatuma:   c.Query("oddatuma"),
+			DoDatuma:   c.Query("dodatuma"),
+			Analitika:  c.Query("analitika"),
+			SearchText: c.Query("query"),
+			ReportTip:  "karticasintetickihkonta",
+		}
 		//validacija input parametre:
 		fieldParameters := []string{"konto", "oddatuma", "dodatuma"}
 		fieldsError := common.ValidateRequiredParams(c, fieldParameters)
@@ -438,18 +490,18 @@ func (h *PrometHandler) PrometKarticaSintetickihKonta(c *gin.Context) {
 		common.SetTableConfig(&tbl, "", prometURLKarticaSintetika, false, false, false)
 		tbl.Pagination.HxVals = hxValsKarticaSintetika
 
-		err := h.service.GetPrometKarticaSintetickihKonta(c, &tbl, true, pageSize, page)
+		err := h.service.GetPrometKarticaSintetickihKonta(ctx, &tbl, true, pageSize, page, params)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
 			return
 		}
 
-		err = h.service.GetPrometKarticaSintetickihKonta(c, &tbl, false, pageSize, page)
+		err = h.service.GetPrometKarticaSintetickihKonta(ctx, &tbl, false, pageSize, page, params)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
 		}
-
+		tbl.HasTotals = true
 		utils.RenderContent(c, tbl)
 	}
 }
@@ -480,6 +532,15 @@ func (h *PrometHandler) PrometSubsintetickaKontaPoVRD(c *gin.Context) {
 	}
 	// If it's a POST request, the make obrada
 	if requestSource == "btnobrada" || requestSource == "btnpage" || requestSource == "searchinput" {
+		ctx := c.Request.Context()
+		params := domain.PrometParam{
+			Konto:      c.Query("konto"),
+			OdDatuma:   c.Query("oddatuma"),
+			DoDatuma:   c.Query("dodatuma"),
+			SearchText: c.Query("query"),
+			ReportTip:  "subsintetickihkontapovrd",
+		}
+
 		//validacija input parametre:
 		fieldParameters := []string{"konto", "oddatuma", "dodatuma"}
 		fieldsError := common.ValidateRequiredParams(c, fieldParameters)
@@ -493,18 +554,18 @@ func (h *PrometHandler) PrometSubsintetickaKontaPoVRD(c *gin.Context) {
 		common.SetTableConfig(&tbl, "", prometURLSubsintetikaVrd, false, false, false)
 		tbl.Pagination.HxVals = hxValsSubsintetikaVrd
 
-		err := h.service.GetPrometSubsintetikaVrd(c, &tbl, true, pageSize, page)
+		err := h.service.GetPrometSubsintetikaVrd(ctx, &tbl, true, pageSize, page, params)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
 			return
 		}
 
-		err = h.service.GetPrometSubsintetikaVrd(c, &tbl, false, pageSize, page)
+		err = h.service.GetPrometSubsintetikaVrd(ctx, &tbl, false, pageSize, page, params)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
 		}
-
+		tbl.HasTotals = true
 		utils.RenderContent(c, tbl)
 	}
 
@@ -536,6 +597,16 @@ func (h *PrometHandler) PrometKontaAnaliticki(c *gin.Context) {
 	}
 	// If it's a POST request, the make obrada
 	if requestSource == "btnobrada" || requestSource == "btnpage" || requestSource == "searchinput" {
+		ctx := c.Request.Context()
+		params := domain.PrometParam{
+			Konto:      c.Query("konto"),
+			OdDatuma:   c.Query("oddatuma"),
+			DoDatuma:   c.Query("dodatuma"),
+			OdSifre:    c.Query("odsifre"),
+			DoSifre:    c.Query("dosifre"),
+			SearchText: c.Query("query"),
+			ReportTip:  "kontaanaliticki",
+		}
 		//validacija input parametre:
 		fieldParameters := []string{"konto", "oddatuma", "dodatuma", "odsifre", "dosifre"}
 		fieldsError := common.ValidateRequiredParams(c, fieldParameters)
@@ -549,18 +620,18 @@ func (h *PrometHandler) PrometKontaAnaliticki(c *gin.Context) {
 		common.SetTableConfig(&tbl, "", prometURLKontaAnaliticki, false, false, false)
 		tbl.Pagination.HxVals = hxValsKontaAnaliticki
 
-		err := h.service.GetPrometKontaAnaliticki(c, &tbl, true, pageSize, page)
+		err := h.service.GetPrometKontaAnaliticki(ctx, &tbl, true, pageSize, page, params)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
 			return
 		}
 
-		err = h.service.GetPrometKontaAnaliticki(c, &tbl, false, pageSize, page)
+		err = h.service.GetPrometKontaAnaliticki(ctx, &tbl, false, pageSize, page, params)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
 		}
-
+		tbl.HasTotals = true
 		utils.RenderContent(c, tbl)
 	}
 }
@@ -568,7 +639,20 @@ func (h *PrometHandler) PrometKontaAnaliticki(c *gin.Context) {
 func (h *PrometHandler) TotalValues(c *gin.Context) {
 
 	// Get totals data
-	response, err := h.service.GetPrometTotals(c)
+	params := domain.PrometParam{
+		Konto:      c.Query("konto"),
+		Sifra:      c.Query("sifra"),
+		OdDatuma:   c.Query("oddatuma"),
+		DoDatuma:   c.Query("dodatuma"),
+		OdSifre:    c.Query("odsifre"),
+		DoSifre:    c.Query("dosifre"),
+		OdMI:       c.Query("odmi"),
+		DoMI:       c.Query("domi"),
+		SearchText: c.Query("query"),
+		ReportTip:  c.Query("tabname"),
+		Analitika:  c.Query("analitika"),
+	}
+	response, err := h.service.GetPrometTotals(c.Request.Context(), params)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData)
 		return

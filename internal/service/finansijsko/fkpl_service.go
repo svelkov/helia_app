@@ -1,6 +1,7 @@
 package finansijsko
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"helia/config"
@@ -9,15 +10,13 @@ import (
 	"helia/internal/repository"
 	"helia/internal/service"
 	"reflect"
-
-	"github.com/gin-gonic/gin"
 )
 
 // FkplService defines the interface for operations related to Fkpl.
 type FkplService interface {
 	service.Service[domain.Fkpl]
-	TraziKonto(c *gin.Context) (entities *[]domain.Fkpl, err error)
-	KontoSearchForTable(c *gin.Context, tbl *domain.TableData) error
+	TraziKonto(ctx context.Context, konto, sifra, vkonta string) (entities *[]domain.Fkpl, err error)
+	KontoSearchForTable(ctx context.Context, tbl *domain.TableData, searchValue, konto, vkonta, fieldName string, fieldColIndex int) error
 }
 
 // FkplResource implements the FkplService interface.
@@ -44,38 +43,38 @@ func (r *FkplResource) GetFieldCache() map[string]reflect.StructField {
 	return r.service.GetFieldCache()
 }
 
-func (r *FkplResource) Create(c *gin.Context, entity *domain.Fkpl, idFkpl string, fields []domain.Fields) ([]domain.FieldError, int64, error) {
-	return r.service.Create(c, entity, idFkpl, fields)
+func (r *FkplResource) Create(ctx context.Context, entity *domain.Fkpl, idFkpl string, fields []domain.Fields) ([]domain.FieldError, int64, error) {
+	return r.service.Create(ctx, entity, idFkpl, fields)
 }
-func (r *FkplResource) Update(c *gin.Context, entity *domain.Fkpl, idField string, idFiledValue interface{}, fields []domain.Fields) ([]domain.FieldError, error) {
-	return r.service.Update(c, entity, idField, idFiledValue, fields)
+func (r *FkplResource) Update(ctx context.Context, entity *domain.Fkpl, idField string, idFiledValue interface{}, fields []domain.Fields) ([]domain.FieldError, error) {
+	return r.service.Update(ctx, entity, idField, idFiledValue, fields)
 
 }
-func (r *FkplResource) Delete(idField string, idFieldValue int64) error {
-	return r.service.Delete(idField, idFieldValue)
+func (r *FkplResource) Delete(ctx context.Context, idField string, idFieldValue int64) error {
+	return r.service.Delete(ctx, idField, idFieldValue)
 }
-func (r *FkplResource) GetAll(c *gin.Context, page int, pageSize int, tableFields []domain.Fields, idField string, searchParams ...string) (*[]domain.Fkpl, error) {
-	return r.service.GetAll(c, page, pageSize, tableFields, idField, searchParams...)
+func (r *FkplResource) GetAll(ctx context.Context, page int, pageSize int, tableFields []domain.Fields, idField string, searchText string) (*[]domain.Fkpl, error) {
+	return r.service.GetAll(ctx, page, pageSize, tableFields, idField, searchText)
 }
 
 // GetAllCustom implements FkplService.
-func (r *FkplResource) GetAllCustom(c *gin.Context, queryText string, whereText string, args []interface{}, limitOffset string, orderBy string) (*[]domain.Fkpl, error) {
-	return r.service.GetAllCustom(c, queryText, whereText, args, limitOffset, orderBy)
+func (r *FkplResource) GetAllCustom(ctx context.Context, queryText string, whereText string, args []interface{}, limitOffset string, orderBy string) (*[]domain.Fkpl, error) {
+	return r.service.GetAllCustom(ctx, queryText, whereText, args, limitOffset, orderBy)
 }
 
 // GetByID implements FkplService.
-func (r *FkplResource) GetByID(idField string, idValue int64) (*domain.Fkpl, error) {
-	return r.service.GetByID(idField, idValue)
+func (r *FkplResource) GetByID(ctx context.Context, idField string, idValue int64) (*domain.Fkpl, error) {
+	return r.service.GetByID(ctx, idField, idValue)
 }
 
 // GetTotalRecords implements FkplService.
-func (r *FkplResource) GetTotalRecords(c *gin.Context, tableFields []domain.Fields, searchParams ...string) (int, error) {
-	return r.service.GetTotalRecords(c, tableFields, searchParams...)
+func (r *FkplResource) GetTotalRecords(ctx context.Context, tableFields []domain.Fields, searchText string) (int, error) {
+	return r.service.GetTotalRecords(ctx, tableFields, searchText)
 }
 
 // GetTotalRecordsCustom implements FkplService.
-func (r *FkplResource) GetTotalRecordsCustom(c *gin.Context, queryText string, whereText string, args []interface{}, limitOffset string, orderBy string) (int, error) {
-	return r.service.GetTotalRecordsCustom(c, queryText, whereText, args, limitOffset, orderBy)
+func (r *FkplResource) GetTotalRecordsCustom(ctx context.Context, queryText string, whereText string, args []interface{}, limitOffset string, orderBy string) (int, error) {
+	return r.service.GetTotalRecordsCustom(ctx, queryText, whereText, args, limitOffset, orderBy)
 }
 
 // MapEntityToValues implements FkplService.
@@ -83,19 +82,11 @@ func (r *FkplResource) MapEntityToValues(entity *domain.Fkpl, tableFields []doma
 	return r.service.MapEntityToValues(entity, tableFields)
 }
 
-func (r *FkplResource) TraziKonto(c *gin.Context) (entities *[]domain.Fkpl, err error) {
-
-	konto := c.Query("konto")
-	sifra := c.Query("sifra")
-	vkonta := c.Query("vkonta")
-	if vkonta == "" && konto == "" && sifra == "" {
-		return nil, errors.New(common.ErrMsgMissingParameter)
-	}
-
+func (r *FkplResource) TraziKonto(ctx context.Context, konto, sifra, vkonta string) (entities *[]domain.Fkpl, err error) {
 	// Custom SQL query for searching konto, sifra, or naziv
-	qb := common.NewQueryBuilder(`SELECT f.naziv FROM baza.fkpl as f`)
+	qb := common.NewQueryBuilder(`SELECT f.naziv FROM baza.fkpl as f`, true)
 
-	session := domain.GetSessionFromContext(c)
+	session := domain.GetSessionFromStdContext(ctx)
 	if session == nil {
 		return nil, errors.New(common.ErrMsgUserSessionNotFound)
 	}
@@ -122,7 +113,7 @@ func (r *FkplResource) TraziKonto(c *gin.Context) (entities *[]domain.Fkpl, err 
 	}
 
 	sqlQuery, args := qb.Build()
-	entities, err = r.fkplRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
+	entities, err = r.fkplRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
 	if err != nil {
 		return nil, errors.New(common.ErrMsgSearchKonto)
 	}
@@ -131,23 +122,15 @@ func (r *FkplResource) TraziKonto(c *gin.Context) (entities *[]domain.Fkpl, err 
 	}
 	return entities, nil
 }
-func (r *FkplResource) KontoSearchForTable(c *gin.Context, tbl *domain.TableData) error {
-	searchValue := c.Query("query")
-	konto := c.Query("konto")
-	vkonta := c.Query("vkonta")
-	fieldName := c.DefaultQuery("fieldName", "konto")
+func (r *FkplResource) KontoSearchForTable(ctx context.Context, tbl *domain.TableData, searchValue, konto, vkonta, fieldName string, fieldColIndex int) error {
 
-	if searchValue == "" {
-		return errors.New(common.ErrMsgMissingParameter)
-	}
-
-	session := domain.GetSessionFromContext(c)
+	session := domain.GetSessionFromStdContext(ctx)
 	if session == nil {
 		return errors.New(common.ErrMsgUserSessionNotFound)
 	}
 
 	// Build query
-	qb := common.NewQueryBuilder(`SELECT f.idfkpl, f.konto, f.sifra, f.naziv FROM baza.fkpl as f`)
+	qb := common.NewQueryBuilder(`SELECT f.idfkpl, f.konto, f.sifra, f.naziv FROM baza.fkpl as f`, true)
 
 	hasGod, hasKar := r.fkplRepo.GetHasGodHasKar()
 	if hasGod {
@@ -172,7 +155,7 @@ func (r *FkplResource) KontoSearchForTable(c *gin.Context, tbl *domain.TableData
 	qb.SetLimit(20)
 
 	sqlQuery, args := qb.Build()
-	entities, err := r.fkplRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
+	entities, err := r.fkplRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
 	if err != nil {
 		return errors.New(common.ErrMsgReadData)
 	}
@@ -183,16 +166,8 @@ func (r *FkplResource) KontoSearchForTable(c *gin.Context, tbl *domain.TableData
 	tbl.FuncClick = "selectRow"
 	tbl.FuncDblClick = "handleDblClickKontoSelection(this)"
 
-	// Determine destination field based on vkonta or fieldName
-	destFieldMap := map[string]string{
-		"2": "konto",
-		"1": "sifra",
-	}
-	if destField, exists := destFieldMap[vkonta]; exists {
-		tbl.DestField = destField
-	} else {
-		tbl.DestField = fieldName
-	}
+	tbl.DestField = fieldName
+	tbl.DestFieldColIndex = fieldColIndex
 	for _, entity := range *entities {
 		fields := []string{}
 		// Add common fields

@@ -88,7 +88,7 @@ func (s *IzvodiResource) GetIzvodiHeader(c *gin.Context, tbl *domain.TableData, 
 			b.konto as konto_ba,
 			b.sifra as sifra_ba
 		FROM fizvzag i
-		LEFT JOIN banke b ON b.idbanke = i.idbanke`)
+		LEFT JOIN banke b ON b.idbanke = i.idbanke`, true)
 
 	if hasGod {
 		qb.AddEqual("i.god", session.SelectedGod)
@@ -215,7 +215,7 @@ func (s *IzvodiResource) GetIzvodiDetail(c *gin.Context, tbl *domain.TableData, 
 			d.mododob,
 			d.pnabrodob,
 			d.prekl
-		FROM fizvdet d`)
+		FROM fizvdet d`, true)
 
 	qb.AddEqual("d.idfizvzag", izvodID)
 

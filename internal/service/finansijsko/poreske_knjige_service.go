@@ -68,7 +68,7 @@ func (s *PoreskeKnjigeResource) GetTipoveKnjigaValues(c *gin.Context, comboValue
 	}
 
 	qb := common.NewQueryBuilder(`
-		SELECT vkrbr, opis FROM fvknjrac `)
+		SELECT vkrbr, opis FROM fvknjrac `, true)
 
 	hasGod, hasKar := s.fvknjracRepo.GetHasGodHasKar()
 	if hasGod {
@@ -136,7 +136,7 @@ func (s *PoreskeKnjigeResource) GetKnjigaIzdatihRacuna(c *gin.Context, tbl *doma
 			partneri.mesto AS mesto_pa,
 			partneri.pib AS pib_pa,
 			partneri.adresa AS adresa_pa
-		FROM kir `)
+		FROM kir `, true)
 
 	qb.AddJoin(`LEFT JOIN partneri ON partneri.idpartneri = kir.idpartneri`)
 	if hasGod {
@@ -187,8 +187,8 @@ func (s *PoreskeKnjigeResource) GetKnjigaIzdatihRacuna(c *gin.Context, tbl *doma
 		for _, entity := range *entities {
 			fields := []string{
 				fmt.Sprintf("%v", entity.Krbr),
-				entity.Dknjiz.Format(common.DateLayout),
-				entity.Dizd.Format(common.DateLayout),
+				common.FormatNullTime(entity.Dknjiz, common.DateLayout),
+				common.FormatNullTime(entity.Dizd, common.DateLayout),
 				entity.Dokum,
 				entity.Naziv,
 				entity.PIB,
@@ -250,7 +250,7 @@ func (s *PoreskeKnjigeResource) GetKnjigaPrimljenihRacuna(c *gin.Context, tbl *d
 			kpr.dokum, partneri.naziv as naziv_pa, partneri.pib as pib_pa, kpr.iznsapdv,
 			kpr.iznoslob, kpr.nisuobvpdv, kpr.uvozbezpdv, kpr.prethpdv,
 			kpr.pretpdv1, kpr.pretpdv2, kpr.uvozpdv, kpr.poljvred, kpr.idkpr
-		FROM kpr`)
+		FROM kpr`, true)
 	qb.AddJoin(`LEFT JOIN partneri ON partneri.idpartneri = kpr.idpartneri`)
 	if hasGod {
 		qb.AddEqual("kpr.god", session.SelectedGod)
@@ -337,7 +337,7 @@ func (s *PoreskeKnjigeResource) GetPoreskaPrijava(c *gin.Context, poreskaPrijava
 		SELECT 	kir.dknjiz, kir.vkrbr, kir.izvozsapr, kir.oslobcl24,
 			kir.izvozbezpr, kir.oslobcl25, kir.osn1, kir.osn2,
 			kir.pdv1, kir.pdv2, kir.idkir
-		FROM kir`)
+		FROM kir`, true)
 
 	if hasGod {
 		kirQB.AddEqual("kir.god", session.SelectedGod)
@@ -374,7 +374,7 @@ func (s *PoreskeKnjigeResource) GetPoreskaPrijava(c *gin.Context, poreskaPrijava
 		SELECT 
 			uvozosnpdv, uvozpdv, poljvred, poljpdv, osnbezpdv, iznoslob,
 			nisuobvpdv, uvozbezpdv, osnbezpod, pretpdv1
-		FROM kpr`)
+		FROM kpr`, true)
 	hasGod, hasKar = s.kprRepo.GetHasGodHasKar()
 	if hasGod {
 		kprQB.AddEqual("kpr.god", session.SelectedGod)

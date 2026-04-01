@@ -1,14 +1,13 @@
 package finansijsko
 
 import (
+	"context"
 	"fmt"
 	"helia/internal/common"
 	"helia/internal/domain"
 	"helia/internal/repository"
 	"helia/internal/service"
 	"reflect"
-
-	"github.com/gin-gonic/gin"
 )
 
 // KamateService defines the interface for operations related to Kamate (Interest Rates and Calculations).
@@ -16,9 +15,9 @@ type KamateService interface {
 	GetTableFields() []domain.Fields
 	GetFormiranjeLisovaTableFields() []domain.Fields
 	GetObracunTableFields() []domain.Fields
-	GetKamatneStope(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error
-	GetFormiranjeLista(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error
-	GetObracunKamate(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error
+	GetKamatneStope(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, searchText string) error
+	GetFormiranjeLista(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, konto, odSifre, doSifre, odDatuma, doDatuma, searchText string) error
+	GetObracunKamate(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, odBrojaListe, doBrojaListe, podDatumom, searchText string) error
 	GetFieldCache() map[string]reflect.StructField
 }
 
@@ -59,8 +58,8 @@ func (s *KamateResource) GetObracunTableFields() []domain.Fields {
 }
 
 // GetKamatneStope retrieves data for Kamatne stope (Interest Rates)
-func (s *KamateResource) GetKamatneStope(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error {
-	session := domain.GetSessionFromContext(c)
+func (s *KamateResource) GetKamatneStope(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, searchText string) error {
+	session := domain.GetSessionFromStdContext(ctx)
 	if session == nil {
 		return fmt.Errorf("user session not found")
 	}
@@ -69,12 +68,6 @@ func (s *KamateResource) GetKamatneStope(c *gin.Context, tbl *domain.TableData, 
 	tbl.SearchEnabled = true
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 	hasGod, hasKar := s.fkplRepo.GetHasGodHasKar()
-
-	// Get parameters from query
-	// tipKamate := c.Query("tip_kamate")
-	// stopaOd := c.Query("stopa_od")
-	// stopaDo := c.Query("stopa_do")
-	searchText := c.Query("query")
 
 	// Build query for Kamatne stope
 	qb := common.NewQueryBuilder(`
@@ -85,7 +78,7 @@ func (s *KamateResource) GetKamatneStope(c *gin.Context, tbl *domain.TableData, 
 			'2099-12-31'::date as vrsta_do_datuma,
 			0 as kamatna_stopa,
 			0 as redni_broj
-		FROM fkpl `)
+		FROM fkpl `, true)
 
 	if hasGod {
 		qb.AddEqual("fkpl.god", session.SelectedGod)
@@ -107,7 +100,7 @@ func (s *KamateResource) GetKamatneStope(c *gin.Context, tbl *domain.TableData, 
 
 	// Execute query and populate table
 	sqlQuery, args := qb.Build()
-	entities, err := s.fkplRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
+	entities, err := s.fkplRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
 	if err != nil {
 		return err
 	}
@@ -140,8 +133,8 @@ func (s *KamateResource) GetKamatneStope(c *gin.Context, tbl *domain.TableData, 
 }
 
 // GetFormiranjeLista retrieves data for Formiranje kamatnih listova (Forming Interest Lists)
-func (s *KamateResource) GetFormiranjeLista(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error {
-	session := domain.GetSessionFromContext(c)
+func (s *KamateResource) GetFormiranjeLista(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, konto, odSifre, doSifre, odDatuma, doDatuma, searchText string) error {
+	session := domain.GetSessionFromStdContext(ctx)
 	if session == nil {
 		return fmt.Errorf("user session not found")
 	}
@@ -150,14 +143,6 @@ func (s *KamateResource) GetFormiranjeLista(c *gin.Context, tbl *domain.TableDat
 	tbl.SearchEnabled = true
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 	hasGod, hasKar := s.fkplRepo.GetHasGodHasKar()
-
-	// Get parameters from query
-	konto := c.Query("konto")
-	odSifre := c.Query("od_sifre")
-	doSifre := c.Query("do_sifre")
-	odDatuma := c.Query("od_datuma")
-	doDatuma := c.Query("do_datuma")
-	searchText := c.Query("query")
 
 	// Build query for Formiranje listova - fetches document data
 	qb := common.NewQueryBuilder(`
@@ -171,7 +156,7 @@ func (s *KamateResource) GetFormiranjeLista(c *gin.Context, tbl *domain.TableDat
 			0 as zaduzenje,
 			0 as uplata,
 			0 as saldo
-		FROM fkpl `)
+		FROM fkpl `, true)
 
 	if hasGod {
 		qb.AddEqual("fkpl.god", session.SelectedGod)
@@ -208,7 +193,7 @@ func (s *KamateResource) GetFormiranjeLista(c *gin.Context, tbl *domain.TableDat
 
 	// Execute query and populate table
 	sqlQuery, args := qb.Build()
-	entities, err := s.fkplRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
+	entities, err := s.fkplRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
 	if err != nil {
 		return err
 	}
@@ -249,8 +234,8 @@ func (s *KamateResource) GetFormiranjeLista(c *gin.Context, tbl *domain.TableDat
 }
 
 // GetObracunKamate retrieves data for Obracun kamate (Interest Calculation)
-func (s *KamateResource) GetObracunKamate(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error {
-	session := domain.GetSessionFromContext(c)
+func (s *KamateResource) GetObracunKamate(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, odBrojaListe, doBrojaListe, podDatumom, searchText string) error {
+	session := domain.GetSessionFromStdContext(ctx)
 	if session == nil {
 		return fmt.Errorf("user session not found")
 	}
@@ -259,12 +244,6 @@ func (s *KamateResource) GetObracunKamate(c *gin.Context, tbl *domain.TableData,
 	tbl.SearchEnabled = true
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 	hasGod, hasKar := s.fkplRepo.GetHasGodHasKar()
-
-	// Get parameters from query
-	odBrojaListe := c.Query("od_broja_liste")
-	doBrojaListe := c.Query("do_broja_liste")
-	podDatumom := c.Query("pod_datumom")
-	searchText := c.Query("query")
 
 	// Build query for Obracun kamate
 	qb := common.NewQueryBuilder(`
@@ -287,7 +266,7 @@ func (s *KamateResource) GetObracunKamate(c *gin.Context, tbl *domain.TableData,
 			0 as iznos_dana,
 			0 as broj,
 			0 as iznos
-		FROM fkpl `)
+		FROM fkpl `, true)
 
 	if hasGod {
 		qb.AddEqual("fkpl.god", session.SelectedGod)
@@ -312,7 +291,7 @@ func (s *KamateResource) GetObracunKamate(c *gin.Context, tbl *domain.TableData,
 
 	// Execute query and populate table
 	sqlQuery, args := qb.Build()
-	entities, err := s.fkplRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
+	entities, err := s.fkplRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
 	if err != nil {
 		return err
 	}

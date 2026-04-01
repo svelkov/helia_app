@@ -79,18 +79,24 @@ func (h *DnevnikHandler) DnevnikKnjizenja(c *gin.Context) {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldsError, common.ErrMsgValidation)
 			return
 		}
-		err := h.service.GetDnevnikKnjizenja(c, &tbl, true, page, pageSize)
+
+		odDatuma := c.Query("oddatuma")
+		doDatuma := c.Query("dodatuma")
+		searchText := c.Query("search-input")
+		ctx := c.Request.Context()
+
+		err := h.service.GetDnevnikKnjizenja(ctx, &tbl, true, page, pageSize, odDatuma, doDatuma, searchText)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
 			return
 		}
 		tbl.Pagination.HxVals = hxValsDnevnik
-		err = h.service.GetDnevnikKnjizenja(c, &tbl, false, page, pageSize)
+		err = h.service.GetDnevnikKnjizenja(ctx, &tbl, false, page, pageSize, odDatuma, doDatuma, searchText)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
 		}
-		
+
 		utils.RenderContent(c, tbl)
 	}
 }

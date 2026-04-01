@@ -1,6 +1,7 @@
 package finansijsko
 
 import (
+	"context"
 	"fmt"
 	"helia/i18n"
 	"helia/internal/common"
@@ -10,24 +11,21 @@ import (
 	"regexp"
 	"strconv"
 	"time"
-
-	"github.com/gin-gonic/gin"
 )
 
 // OtvoreneStavkeService defines the service interface for Otvorene Stavke operations
 type OtvoreneStavkeService interface {
-	GetOtvoreneStavkePartneri(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error
-	GetOtvoreneStavkeDetalji(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error
-	GetZatvoreneStavkePartneri(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error
-	GetZatvoreneStavkeDetalji(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error
-	GetIOSPartneri(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error
-	GetIOSDetalji(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error
-	GetDospelaPotrazivanjaPartneri(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error
-	GetDospelaPotrazivanjaDetalji(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error
-	GetPregledPotrazivanjaObaveze(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error
-	GetPregledDugovanjaPoStarosti(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error
-	GetPregledDospelogDuga(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error
-	GetPovezivanjRacunaIUplata(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error
+	GetOtvoreneStavkePartneri(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.OtvStavkeParam) error
+	GetOtvoreneStavkeDetalji(ctx context.Context, id int64, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, searchText string) error
+	GetZatvoreneStavkePartneri(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.OtvStavkeParam) error
+	GetZatvoreneStavkeDetalji(ctx context.Context, id int64, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, searchText string) error
+	GetIOSPartneri(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.OtvStavkeParam) error
+	GetIOSDetalji(ctx context.Context, id int64, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, searchText string) error
+	GetDospelaPotrazivanjaPartneri(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.OtvStavkeParam) error
+	GetDospelaPotrazivanjaDetalji(ctx context.Context, id int64, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, searchText string) error
+	GetPregledPotrazivanjaObaveze(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.OtvStavkeParam) error
+	GetPregledDugovanjaPoStarosti(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.OtvStavkeParam) error
+	GetPovezivanjRacunaIUplata(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error
 	GetPartneriFields() []domain.Fields
 	GetPartneriFieldsSintetika() []domain.Fields
 	GetOtvoreneStavkeDetaljiFields() []domain.Fields
@@ -62,18 +60,11 @@ func NewOtvoreneStavkeService(repo repository.BaseRepository[domain.Fpro]) *Otvo
 }
 
 // GetOtvoreneStavkePartneri retrieves open items data for partners
-func (s *OtvoreneStavkeResource) GetOtvoreneStavkePartneri(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error {
-	session := domain.GetSessionFromContext(c)
+func (s *OtvoreneStavkeResource) GetOtvoreneStavkePartneri(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.OtvStavkeParam) error {
+	session := domain.GetSessionFromStdContext(ctx)
 	if session == nil {
 		return fmt.Errorf("user session not found")
 	}
-
-	konto := c.Query("konto")
-	odsifre := c.Query("odsifre")
-	dosifre := c.Query("dosifre")
-	poddatumom := c.Query("poddatumom")
-	//otvstavkedana := c.Query("otvstavkedana")
-	searchText := c.Query("query")
 
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
@@ -83,7 +74,7 @@ func (s *OtvoreneStavkeResource) GetOtvoreneStavkePartneri(c *gin.Context, tbl *
 	qb := common.NewQueryBuilder(`SELECT fkpl.idfkpl,fpro.konto, fpro.sifra, fkpl.naziv as nazivpartnera, 
 			   	SUM(CASE WHEN fpro.kat = 1 OR fpro.kat = 2 THEN fpro.iznos ELSE 0 END) as dug,
 				SUM(CASE WHEN fpro.kat = 3 OR fpro.kat = 4 THEN fpro.iznos ELSE 0 END) as pot
-		FROM fpro`)
+		FROM fpro`, true)
 	qb.AddJoin("left join fkpl on fkpl.idfkpl = fpro.idfkpl")
 
 	if hasGod {
@@ -92,15 +83,15 @@ func (s *OtvoreneStavkeResource) GetOtvoreneStavkePartneri(c *gin.Context, tbl *
 	if hasKar {
 		qb.AddEqual("fpro.kar", session.SelectedKar)
 	}
-	qb.AddEqual("fpro.konto", konto)
-	qb.AddCondition("fpro.sifra", odsifre, ">=")
-	qb.AddCondition("fpro.sifra", dosifre, "<=")
-	qb.AddCondition("fpro.dadok + fpro.rok", poddatumom, "<=")
+	qb.AddEqual("fpro.konto", params.Konto)
+	qb.AddCondition("fpro.sifra", params.OdSifre, ">=")
+	qb.AddCondition("fpro.sifra", params.DoSifre, "<=")
+	qb.AddCondition("fpro.dadok + fpro.rok", params.PodDatumom, "<=")
 	//qb.AddCondition("fpro.otvstavkedana", otvstavkedana, "<=")
 	// Add search conditions if search text is provided
-	if searchText != "" && searchText != "undefined" && len(searchText) >= 1 {
+	if params.SearchText != "" && params.SearchText != "undefined" && len(params.SearchText) >= 1 {
 		qb.SetEntityType(reflect.TypeOf(domain.Fpro{}))
-		qb.AddSearchConditions(s.GetPartneriFields(), searchText)
+		qb.AddSearchConditions(s.GetPartneriFields(), params.SearchText)
 	}
 	// Add GROUP BY
 	qb.AddGroupBy("fkpl.idfkpl, fpro.konto, fpro.sifra, fkpl.naziv")
@@ -114,7 +105,7 @@ func (s *OtvoreneStavkeResource) GetOtvoreneStavkePartneri(c *gin.Context, tbl *
 	}
 	qb.AddOrderBy("fpro.sifra")
 	sqlQuery, args := qb.Build()
-	entities, err := s.fproRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
+	entities, err := s.fproRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
 	if err != nil {
 		return err
 	}
@@ -157,14 +148,11 @@ func (s *OtvoreneStavkeResource) GetOtvoreneStavkePartneri(c *gin.Context, tbl *
 }
 
 // GetOtvoreneStavkeDetalji retrieves open items details for partners
-func (s *OtvoreneStavkeResource) GetOtvoreneStavkeDetalji(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error {
-	session := domain.GetSessionFromContext(c)
+func (s *OtvoreneStavkeResource) GetOtvoreneStavkeDetalji(ctx context.Context, id int64, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, searchText string) error {
+	session := domain.GetSessionFromStdContext(ctx)
 	if session == nil {
 		return fmt.Errorf("user session not found")
 	}
-
-	idfkpl := c.Query("idfkpl")
-	searchText := c.Query("query")
 
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
@@ -177,14 +165,14 @@ func (s *OtvoreneStavkeResource) GetOtvoreneStavkeDetalji(c *gin.Context, tbl *d
 								case when fpro.kat = 1 or fpro.kat = 2 then fpro.iznos else 0 end as dug,
 								case when fpro.kat = 3 or fpro.kat = 4 then fpro.iznos else 0 end as pot,
 								fpro.opis, fpro.vrd
-								FROM fpro`)
+								FROM fpro`, true)
 	if hasGod {
 		qb.AddEqual("fpro.god", session.SelectedGod)
 	}
 	if hasKar {
 		qb.AddEqual("fpro.kar", session.SelectedKar)
 	}
-	qb.AddEqual("fpro.idfkpl", idfkpl)
+	qb.AddEqual("fpro.idfkpl", id)
 	// Add search conditions if search text is provided
 	if searchText != "" && searchText != "undefined" && len(searchText) >= 1 {
 		qb.SetEntityType(reflect.TypeOf(domain.Fpro{}))
@@ -196,7 +184,7 @@ func (s *OtvoreneStavkeResource) GetOtvoreneStavkeDetalji(c *gin.Context, tbl *d
 	}
 	qb.AddOrderBy("fpro.dokum, fpro.dadok")
 	sqlQuery, args := qb.Build()
-	entities, err := s.fproRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
+	entities, err := s.fproRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
 	if err != nil {
 		return err
 	}
@@ -234,19 +222,11 @@ func (s *OtvoreneStavkeResource) GetOtvoreneStavkeDetalji(c *gin.Context, tbl *d
 }
 
 // GetZatvoreneStavkePartneri retrieves closed items data for partners
-func (s *OtvoreneStavkeResource) GetZatvoreneStavkePartneri(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error {
-	session := domain.GetSessionFromContext(c)
+func (s *OtvoreneStavkeResource) GetZatvoreneStavkePartneri(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.OtvStavkeParam) error {
+	session := domain.GetSessionFromStdContext(ctx)
 	if session == nil {
 		return fmt.Errorf("user session not found")
 	}
-
-	konto := c.Query("konto")
-	odsifre := c.Query("odsifre")
-	dosifre := c.Query("dosifre")
-	oddatuma := c.Query("oddatuma")
-	dodatuma := c.Query("dodatuma")
-	searchText := c.Query("query")
-
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
 
@@ -255,7 +235,7 @@ func (s *OtvoreneStavkeResource) GetZatvoreneStavkePartneri(c *gin.Context, tbl 
 	qb := common.NewQueryBuilder(`SELECT fkpl.idfkpl,fpro.konto, fpro.sifra, fkpl.naziv as nazivpartnera, 
 			   	SUM(CASE WHEN fpro.kat = 1 OR fpro.kat = 2 THEN fpro.iznos ELSE 0 END) as dug,
 				SUM(CASE WHEN fpro.kat = 3 OR fpro.kat = 4 THEN fpro.iznos ELSE 0 END) as pot
-		FROM fpro`)
+		FROM fpro`, true)
 	qb.AddJoin("left join fkpl on fkpl.idfkpl = fpro.idfkpl")
 
 	if hasGod {
@@ -266,15 +246,15 @@ func (s *OtvoreneStavkeResource) GetZatvoreneStavkePartneri(c *gin.Context, tbl 
 	}
 	qb.AddIn("fpro.vrd", []interface{}{10, 20, 30, 40})
 	qb.AddEqual("fpro.vkonta", "1")
-	qb.AddEqual("fpro.konto", konto)
-	qb.AddCondition("fpro.sifra", odsifre, ">=")
-	qb.AddCondition("fpro.sifra", dosifre, "<=")
-	qb.AddCondition("fpro.dadok", oddatuma, ">=")
-	qb.AddCondition("fpro.dadok", dodatuma, "<=")
+	qb.AddEqual("fpro.konto", params.Konto)
+	qb.AddCondition("fpro.sifra", params.OdSifre, ">=")
+	qb.AddCondition("fpro.sifra", params.DoSifre, "<=")
+	qb.AddCondition("fpro.dadok", params.OdDatuma, ">=")
+	qb.AddCondition("fpro.dadok", params.DoDatuma, "<=")
 	// Add search conditions if search text is provided
-	if searchText != "" && searchText != "undefined" && len(searchText) >= 1 {
+	if params.SearchText != "" && params.SearchText != "undefined" && len(params.SearchText) >= 1 {
 		qb.SetEntityType(reflect.TypeOf(domain.Fpro{}))
-		qb.AddSearchConditions(s.GetPartneriFields(), searchText)
+		qb.AddSearchConditions(s.GetPartneriFields(), params.SearchText)
 	}
 	// Add GROUP BY
 	qb.AddGroupBy("fkpl.idfkpl, fpro.konto, fpro.sifra, fkpl.naziv")
@@ -288,7 +268,7 @@ func (s *OtvoreneStavkeResource) GetZatvoreneStavkePartneri(c *gin.Context, tbl 
 	}
 	qb.AddOrderBy("fpro.sifra")
 	sqlQuery, args := qb.Build()
-	entities, err := s.fproRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
+	entities, err := s.fproRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
 	if err != nil {
 		return err
 	}
@@ -319,14 +299,11 @@ func (s *OtvoreneStavkeResource) GetZatvoreneStavkePartneri(c *gin.Context, tbl 
 }
 
 // GetZatvoreneStavkeDetalji retrieves closed items details for partners
-func (s *OtvoreneStavkeResource) GetZatvoreneStavkeDetalji(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error {
-	session := domain.GetSessionFromContext(c)
+func (s *OtvoreneStavkeResource) GetZatvoreneStavkeDetalji(ctx context.Context, id int64, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, searchText string) error {
+	session := domain.GetSessionFromStdContext(ctx)
 	if session == nil {
 		return fmt.Errorf("user session not found")
 	}
-
-	idfkpl := c.Query("idfkpl")
-	searchText := c.Query("query")
 
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
@@ -339,7 +316,7 @@ func (s *OtvoreneStavkeResource) GetZatvoreneStavkeDetalji(c *gin.Context, tbl *
 								case when fpro.kat = 1 or fpro.kat = 2 then fpro.iznos else 0 end as dug,
 								case when fpro.kat = 3 or fpro.kat = 4 then fpro.iznos else 0 end as pot,
 								fpro.opis, fpro.vrd, fpro.vkonta, fpro.kat
-								FROM fpro`)
+								FROM fpro`, true)
 
 	if hasGod {
 		qb.AddEqual("fpro.god", session.SelectedGod)
@@ -347,7 +324,7 @@ func (s *OtvoreneStavkeResource) GetZatvoreneStavkeDetalji(c *gin.Context, tbl *
 	if hasKar {
 		qb.AddEqual("fpro.kar", session.SelectedKar)
 	}
-	qb.AddEqual("fpro.idfkpl", idfkpl)
+	qb.AddEqual("fpro.idfkpl", id)
 	// Add search conditions if search text is provided
 	if searchText != "" && searchText != "undefined" && len(searchText) >= 1 {
 		qb.SetEntityType(reflect.TypeOf(domain.Fpro{}))
@@ -359,7 +336,7 @@ func (s *OtvoreneStavkeResource) GetZatvoreneStavkeDetalji(c *gin.Context, tbl *
 	}
 	qb.AddOrderBy("fpro.dokum, fpro.dadok")
 	sqlQuery, args := qb.Build()
-	entities, err := s.fproRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
+	entities, err := s.fproRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
 	if err != nil {
 		return err
 	}
@@ -399,37 +376,12 @@ func (s *OtvoreneStavkeResource) GetZatvoreneStavkeDetalji(c *gin.Context, tbl *
 	return nil
 }
 
-// GetZatvoreneStavke retrieves closed items data
-func (s *OtvoreneStavkeResource) GetZatvoreneStavke(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error {
-	session := domain.GetSessionFromContext(c)
-	if session == nil {
-		return fmt.Errorf("user session not found")
-	}
-	//TODO should be implemented with actual database query
-	// common.SetTableConfig(tbl, "Zatvorene stavke", "", false, false, false)
-	// common.SetupTablePagination(tbl, currentPage, pageSize)
-	// tbl.Fields = s.fieldZatvoreneStavke
-
-	// // Mock data - replace with actual database query
-	// tbl.Rows = []map[string]interface{}{}
-	// tbl.TotalRecords = 0
-
-	return nil
-}
-
 // GetIOS retrieves IOS (Izvod otvorenih stavki) data
-func (s *OtvoreneStavkeResource) GetIOSPartneri(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error {
-	session := domain.GetSessionFromContext(c)
+func (s *OtvoreneStavkeResource) GetIOSPartneri(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.OtvStavkeParam) error {
+	session := domain.GetSessionFromStdContext(ctx)
 	if session == nil {
 		return fmt.Errorf("user session not found")
 	}
-
-	konto := c.Query("konto")
-	odsifre := c.Query("odsifre")
-	dosifre := c.Query("dosifre")
-	poddatumom := c.Query("poddatumom")
-	//otvstavkedana := c.Query("otvstavkedana")
-	searchText := c.Query("query")
 
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
@@ -439,7 +391,7 @@ func (s *OtvoreneStavkeResource) GetIOSPartneri(c *gin.Context, tbl *domain.Tabl
 	qb := common.NewQueryBuilder(`SELECT fkpl.idfkpl, fpro.konto, fpro.sifra, fkpl.naziv as nazivpartnera, 
 			   	SUM(CASE WHEN fpro.kat = 1 OR fpro.kat = 2 THEN fpro.iznos ELSE 0 END) as dug,
 				SUM(CASE WHEN fpro.kat = 3 OR fpro.kat = 4 THEN fpro.iznos ELSE 0 END) as pot
-		FROM fpro`)
+		FROM fpro`, true)
 	qb.AddJoin("left join fkpl on fkpl.idfkpl = fpro.idfkpl")
 
 	if hasGod {
@@ -448,15 +400,15 @@ func (s *OtvoreneStavkeResource) GetIOSPartneri(c *gin.Context, tbl *domain.Tabl
 	if hasKar {
 		qb.AddEqual("fpro.kar", session.SelectedKar)
 	}
-	qb.AddEqual("fpro.konto", konto)
-	qb.AddCondition("COALESCE(NULLIF(fpro.sifra, '')::numeric, 0)", odsifre, ">=")
-	qb.AddCondition("COALESCE(NULLIF(fpro.sifra, '')::numeric, 0)", dosifre, "<=")
-	qb.AddCondition("fpro.dadok", poddatumom, "<=")
-	//qb.AddCondition("fpro.otvstavkedana", otvstavkedana, "<=")
+	qb.AddEqual("fpro.konto", params.Konto)
+	qb.AddCondition("COALESCE(NULLIF(fpro.sifra, '')::numeric, 0)", params.OdSifre, ">=")
+	qb.AddCondition("COALESCE(NULLIF(fpro.sifra, '')::numeric, 0)", params.DoSifre, "<=")
+	qb.AddCondition("fpro.dadok", params.PodDatumom, "<=")
+	//qb.AddCondition("fpro.otvstavkedana", params.otvstavkedana, "<=")
 	// Add search conditions if search text is provided
-	if searchText != "" && searchText != "undefined" && len(searchText) >= 1 {
+	if params.SearchText != "" && params.SearchText != "undefined" && len(params.SearchText) >= 1 {
 		qb.SetEntityType(reflect.TypeOf(domain.Fpro{}))
-		qb.AddSearchConditions(s.GetPartneriFields(), searchText)
+		qb.AddSearchConditions(s.GetPartneriFields(), params.SearchText)
 	}
 	// Add GROUP BY
 	qb.AddGroupBy("fkpl.idfkpl, fpro.konto, fpro.sifra, fkpl.naziv")
@@ -470,7 +422,7 @@ func (s *OtvoreneStavkeResource) GetIOSPartneri(c *gin.Context, tbl *domain.Tabl
 	}
 	qb.AddOrderBy("COALESCE(NULLIF(fpro.sifra, '')::numeric, 0)")
 	sqlQuery, args := qb.Build()
-	entities, err := s.fproRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
+	entities, err := s.fproRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
 	if err != nil {
 		return err
 	}
@@ -501,14 +453,11 @@ func (s *OtvoreneStavkeResource) GetIOSPartneri(c *gin.Context, tbl *domain.Tabl
 }
 
 // GetIOSDetalji retrieves IOS details for partners
-func (s *OtvoreneStavkeResource) GetIOSDetalji(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error {
-	session := domain.GetSessionFromContext(c)
+func (s *OtvoreneStavkeResource) GetIOSDetalji(ctx context.Context, id int64, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, searchText string) error {
+	session := domain.GetSessionFromStdContext(ctx)
 	if session == nil {
 		return fmt.Errorf("user session not found")
 	}
-
-	idfkpl := c.Query("idfkpl")
-	searchText := c.Query("query")
 
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
@@ -521,14 +470,14 @@ func (s *OtvoreneStavkeResource) GetIOSDetalji(c *gin.Context, tbl *domain.Table
 								case when fpro.kat = 1 or fpro.kat = 2 then fpro.iznos else 0 end as dug,
 								case when fpro.kat = 3 or fpro.kat = 4 then fpro.iznos else 0 end as pot,
 								fpro.opis, fpro.vrd
-								FROM fpro`)
+								FROM fpro`, true)
 	if hasGod {
 		qb.AddEqual("fpro.god", session.SelectedGod)
 	}
 	if hasKar {
 		qb.AddEqual("fpro.kar", session.SelectedKar)
 	}
-	qb.AddEqual("fpro.idfkpl", idfkpl)
+	qb.AddEqual("fpro.idfkpl", id)
 	// Add search conditions if search text is provided
 	if searchText != "" && searchText != "undefined" && len(searchText) >= 1 {
 		qb.SetEntityType(reflect.TypeOf(domain.Fpro{}))
@@ -540,7 +489,7 @@ func (s *OtvoreneStavkeResource) GetIOSDetalji(c *gin.Context, tbl *domain.Table
 	}
 	qb.AddOrderBy("fpro.dokum, fpro.dadok")
 	sqlQuery, args := qb.Build()
-	entities, err := s.fproRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
+	entities, err := s.fproRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
 	if err != nil {
 		return err
 	}
@@ -578,24 +527,15 @@ func (s *OtvoreneStavkeResource) GetIOSDetalji(c *gin.Context, tbl *domain.Table
 }
 
 // GetDospelaPotrazivanjaPartneri retrieves due receivables data for partners
-func (s *OtvoreneStavkeResource) GetDospelaPotrazivanjaPartneri(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error {
-	session := domain.GetSessionFromContext(c)
+func (s *OtvoreneStavkeResource) GetDospelaPotrazivanjaPartneri(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.OtvStavkeParam) error {
+	session := domain.GetSessionFromStdContext(ctx)
 	if session == nil {
 		return fmt.Errorf("user session not found")
 	}
 
-	konto := c.Query("konto")
-	odsifre := c.Query("odsifre")
-	dosifre := c.Query("dosifre")
-	poddatumom := c.Query("poddatumom")
-	brojDana := c.Query("brojdana")
-	tipPregleda := c.Query("tip_pregleda")
-	tipPotrazivanja := c.Query("tip_potrazivanja")
-	searchText := c.Query("query")
-
-	brojDanaInt, err := strconv.Atoi(brojDana)
+	brojDanaInt, err := strconv.Atoi(params.BrojDana)
 	if err != nil {
-		return fmt.Errorf("invalid brojDana value: %v", err)
+		return fmt.Errorf("invalid BrojDana value: %v", err)
 	}
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
@@ -605,7 +545,7 @@ func (s *OtvoreneStavkeResource) GetDospelaPotrazivanjaPartneri(c *gin.Context, 
 	qb := common.NewQueryBuilder(`SELECT fkpl.idfkpl,fpro.konto, fpro.sifra, fkpl.naziv as nazivpartnera, 
 			   	SUM(CASE WHEN fpro.kat = 1 OR fpro.kat = 2 THEN fpro.iznos ELSE 0 END) as dug,
 				SUM(CASE WHEN fpro.kat = 3 OR fpro.kat = 4 THEN fpro.iznos ELSE 0 END) as pot
-		FROM fpro`)
+		FROM fpro`, true)
 	qb.AddJoin("left join fkpl on fkpl.idfkpl = fpro.idfkpl")
 
 	if hasGod {
@@ -614,21 +554,21 @@ func (s *OtvoreneStavkeResource) GetDospelaPotrazivanjaPartneri(c *gin.Context, 
 	if hasKar {
 		qb.AddEqual("fpro.kar", session.SelectedKar)
 	}
-	qb.AddEqual("fpro.konto", konto)
-	qb.AddCondition("fpro.sifra", odsifre, ">=")
-	qb.AddCondition("fpro.sifra", dosifre, "<=")
-	qb.AddCondition("fpro.dadok + fpro.rok", poddatumom, "<=")
-	if tipPotrazivanja == "D" {
+	qb.AddEqual("fpro.konto", params.Konto)
+	qb.AddCondition("fpro.sifra", params.OdSifre, ">=")
+	qb.AddCondition("fpro.sifra", params.DoSifre, "<=")
+	qb.AddCondition("fpro.dadok + fpro.rok", params.PodDatumom, "<=")
+	if params.TipPotrazivanja == "D" {
 		qb.AddCondition("fpro.dadok + fpro.rok", time.Now().AddDate(0, 0, brojDanaInt).Format(common.HtmlLayout), "<=")
 	}
-	if tipPregleda == "P" {
+	if params.TipPregleda == "P" {
 		qb.AddCondition("fpro.dadok + fpro.rok", time.Now().AddDate(0, 0, -brojDanaInt).Format(common.HtmlLayout), ">=")
 	}
 
 	// Add search conditions if search text is provided
-	if searchText != "" && searchText != "undefined" && len(searchText) >= 1 {
+	if params.SearchText != "" && params.SearchText != "undefined" && len(params.SearchText) >= 1 {
 		qb.SetEntityType(reflect.TypeOf(domain.Fpro{}))
-		qb.AddSearchConditions(s.GetPartneriFields(), searchText)
+		qb.AddSearchConditions(s.GetPartneriFields(), params.SearchText)
 	}
 	// Add GROUP BY
 	qb.AddGroupBy("fkpl.idfkpl, fpro.konto, fpro.sifra, fkpl.naziv")
@@ -642,7 +582,7 @@ func (s *OtvoreneStavkeResource) GetDospelaPotrazivanjaPartneri(c *gin.Context, 
 	}
 	qb.AddOrderBy("fpro.sifra::numeric")
 	sqlQuery, args := qb.Build()
-	entities, err := s.fproRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
+	entities, err := s.fproRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
 	if err != nil {
 		return err
 	}
@@ -656,7 +596,7 @@ func (s *OtvoreneStavkeResource) GetDospelaPotrazivanjaPartneri(c *gin.Context, 
 		for _, entity := range *entities {
 			fields := []string{}
 			// Add common fields
-			if tipPregleda == "A" {
+			if params.TipPregleda == "A" {
 				fields = append(fields,
 					entity.Konto,
 					entity.Sifra,
@@ -666,7 +606,7 @@ func (s *OtvoreneStavkeResource) GetDospelaPotrazivanjaPartneri(c *gin.Context, 
 					common.FormatNumberWithSystemLocale(entity.Dug-entity.Pot, 2),
 				)
 			}
-			if tipPregleda == "S" {
+			if params.TipPregleda == "S" {
 				fields = append(fields,
 					entity.Konto,
 					entity.Sifra,
@@ -683,14 +623,11 @@ func (s *OtvoreneStavkeResource) GetDospelaPotrazivanjaPartneri(c *gin.Context, 
 }
 
 // GetDospelaPotrazivanjaDetalji retrieves overdue receivables details for partners
-func (s *OtvoreneStavkeResource) GetDospelaPotrazivanjaDetalji(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error {
-	session := domain.GetSessionFromContext(c)
+func (s *OtvoreneStavkeResource) GetDospelaPotrazivanjaDetalji(ctx context.Context, id int64, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, searchText string) error {
+	session := domain.GetSessionFromStdContext(ctx)
 	if session == nil {
 		return fmt.Errorf("user session not found")
 	}
-
-	idfkpl := c.Query("idfkpl")
-	searchText := c.Query("query")
 
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
@@ -703,14 +640,14 @@ func (s *OtvoreneStavkeResource) GetDospelaPotrazivanjaDetalji(c *gin.Context, t
 								case when fpro.kat = 1 or fpro.kat = 2 then fpro.iznos else 0 end as dug,
 								case when fpro.kat = 3 or fpro.kat = 4 then fpro.iznos else 0 end as pot,
 								fpro.opis, fpro.vrd
-								FROM fpro`)
+								FROM fpro`, true)
 	if hasGod {
 		qb.AddEqual("fpro.god", session.SelectedGod)
 	}
 	if hasKar {
 		qb.AddEqual("fpro.kar", session.SelectedKar)
 	}
-	qb.AddEqual("fpro.idfkpl", idfkpl)
+	qb.AddEqual("fpro.idfkpl", id)
 	// Add search conditions if search text is provided
 	if searchText != "" && searchText != "undefined" && len(searchText) >= 1 {
 		qb.SetEntityType(reflect.TypeOf(domain.Fpro{}))
@@ -722,7 +659,7 @@ func (s *OtvoreneStavkeResource) GetDospelaPotrazivanjaDetalji(c *gin.Context, t
 	}
 	qb.AddOrderBy("fpro.dokum, fpro.dadok")
 	sqlQuery, args := qb.Build()
-	entities, err := s.fproRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
+	entities, err := s.fproRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
 	if err != nil {
 		return err
 	}
@@ -756,30 +693,19 @@ func (s *OtvoreneStavkeResource) GetDospelaPotrazivanjaDetalji(c *gin.Context, t
 }
 
 // GetPregledPotrazivanjaObaveze retrieves due receivables and obligations data for partners
-func (s *OtvoreneStavkeResource) GetPregledPotrazivanjaObaveze(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error {
-	session := domain.GetSessionFromContext(c)
+func (s *OtvoreneStavkeResource) GetPregledPotrazivanjaObaveze(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.OtvStavkeParam) error {
+	session := domain.GetSessionFromStdContext(ctx)
 	if session == nil {
 		return fmt.Errorf("user session not found")
 	}
 
-	odkonta := c.Query("odkonta")
-	dokonta := c.Query("dokonta")
-	odsifre := c.Query("odsifre")
-	dosifre := c.Query("dosifre")
-	stanjenadan := c.Query("stanjenadan")
-	dospece15 := c.Query("dospece15")
-	dospece30 := c.Query("dospece30")
-	dospece60 := c.Query("dospece60")
-	dospece90 := c.Query("dospece90")
-	dospece120 := c.Query("dospece120")
-
 	// Validate interval parameters - must be numeric only to prevent SQL injection
 	intervals := map[string]string{
-		"dospece15":  dospece15,
-		"dospece30":  dospece30,
-		"dospece60":  dospece60,
-		"dospece90":  dospece90,
-		"dospece120": dospece120,
+		"dospece15":  params.Dospece15,
+		"dospece30":  params.Dospece30,
+		"dospece60":  params.Dospece60,
+		"dospece90":  params.Dospece90,
+		"dospece120": params.Dospece120,
 	}
 
 	for name, value := range intervals {
@@ -788,27 +714,24 @@ func (s *OtvoreneStavkeResource) GetPregledPotrazivanjaObaveze(c *gin.Context, t
 		}
 	}
 
-	tipPregleda := c.Query("tip_pregleda")
-	searchText := c.Query("query")
-
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
 
 	// Build age bucket intervals
-	interval15 := dospece15 + " days"
-	interval30 := dospece30 + " days"
-	interval60 := dospece60 + " days"
-	interval90 := dospece90 + " days"
-	interval120 := dospece120 + " days"
+	interval15 := params.Dospece15 + " days"
+	interval30 := params.Dospece30 + " days"
+	interval60 := params.Dospece60 + " days"
+	interval90 := params.Dospece90 + " days"
+	interval120 := params.Dospece120 + " days"
 
 	// Determine vkonta based on tipPregleda (K=kupci, D=dobavljaci)
 	vrd1 := ""
 	vrd2 := ""
-	if tipPregleda == "K" { //kupci
+	if params.TipPregleda == "K" { //kupci
 		vrd1 = "10"
 		vrd2 = "30"
 	}
-	if tipPregleda == "D" { //dobavljaci
+	if params.TipPregleda == "D" { //dobavljaci
 		vrd1 = "20"
 		vrd2 = "40"
 	}
@@ -856,9 +779,9 @@ func (s *OtvoreneStavkeResource) GetPregledPotrazivanjaObaveze(c *gin.Context, t
 			 		AND (fpro.dadok + fpro.rok)::date > ('%s'::date + INTERVAL '`+interval120+`')::date
 			 		THEN fpro.iznos ELSE 0 END) as dospece120plus
 		FROM fpro
-	`, stanjenadan, stanjenadan, stanjenadan, stanjenadan,
-		stanjenadan, stanjenadan, stanjenadan, stanjenadan,
-		stanjenadan, stanjenadan, stanjenadan, stanjenadan))
+	`, params.StanjeNaDan, params.StanjeNaDan, params.StanjeNaDan, params.StanjeNaDan,
+		params.StanjeNaDan, params.StanjeNaDan, params.StanjeNaDan, params.StanjeNaDan,
+		params.StanjeNaDan, params.StanjeNaDan, params.StanjeNaDan, params.StanjeNaDan), true)
 	qb.AddJoin("left join fkpl on fkpl.idfkpl = fpro.idfkpl")
 
 	qb.AddArgs(vrd1, vrd2)
@@ -869,17 +792,17 @@ func (s *OtvoreneStavkeResource) GetPregledPotrazivanjaObaveze(c *gin.Context, t
 		qb.AddEqual("fpro.kar", session.SelectedKar)
 	}
 
-	qb.AddCondition("fpro.konto", odkonta, ">=")
-	qb.AddCondition("fpro.konto", dokonta, "<=")
-	qb.AddCondition("fpro.sifra", odsifre, ">=")
-	qb.AddCondition("fpro.sifra", dosifre, "<=")
-	qb.AddCondition("fpro.dadok", stanjenadan, "<=")
+	qb.AddCondition("fpro.konto", params.OdKonta, ">=")
+	qb.AddCondition("fpro.konto", params.DoKonta, "<=")
+	qb.AddCondition("fpro.sifra", params.OdSifre, ">=")
+	qb.AddCondition("fpro.sifra", params.DoSifre, "<=")
+	qb.AddCondition("fpro.dadok", params.StanjeNaDan, "<=")
 	qb.AddIn("fpro.vrd", []interface{}{vrd1, vrd2})
 
 	// Add search conditions if search text is provided
-	if searchText != "" && searchText != "undefined" && len(searchText) >= 1 {
+	if params.SearchText != "" && params.SearchText != "undefined" && len(params.SearchText) >= 1 {
 		qb.SetEntityType(reflect.TypeOf(domain.Fpro{}))
-		qb.AddSearchConditions(s.GetPartneriFields(), searchText)
+		qb.AddSearchConditions(s.GetPartneriFields(), params.SearchText)
 	}
 
 	// Add GROUP BY
@@ -893,7 +816,7 @@ func (s *OtvoreneStavkeResource) GetPregledPotrazivanjaObaveze(c *gin.Context, t
 
 	sqlQuery, args := qb.Build()
 
-	entities, err := s.fproRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
+	entities, err := s.fproRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
 	if err != nil {
 		return err
 	}
@@ -933,30 +856,19 @@ func (s *OtvoreneStavkeResource) GetPregledPotrazivanjaObaveze(c *gin.Context, t
 }
 
 // GetPregledDugovanjaPoStarosti retrieves payables overview by age
-func (s *OtvoreneStavkeResource) GetPregledDugovanjaPoStarosti(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error {
-	session := domain.GetSessionFromContext(c)
+func (s *OtvoreneStavkeResource) GetPregledDugovanjaPoStarosti(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.OtvStavkeParam) error {
+	session := domain.GetSessionFromStdContext(ctx)
 	if session == nil {
 		return fmt.Errorf("user session not found")
 	}
 
-	odkonta := c.Query("odkonta")
-	dokonta := c.Query("dokonta")
-	odsifre := c.Query("odsifre")
-	dosifre := c.Query("dosifre")
-	stanjenadan := c.Query("stanjenadan")
-	dospece15 := c.Query("dospece15")
-	dospece30 := c.Query("dospece30")
-	dospece60 := c.Query("dospece60")
-	dospece90 := c.Query("dospece90")
-	dospece120 := c.Query("dospece120")
-
 	// Validate interval parameters - must be numeric only to prevent SQL injection
 	intervals := map[string]string{
-		"dospece15":  dospece15,
-		"dospece30":  dospece30,
-		"dospece60":  dospece60,
-		"dospece90":  dospece90,
-		"dospece120": dospece120,
+		"dospece15":  params.Dospece15,
+		"dospece30":  params.Dospece30,
+		"dospece60":  params.Dospece60,
+		"dospece90":  params.Dospece90,
+		"dospece120": params.Dospece120,
 	}
 
 	for name, value := range intervals {
@@ -965,18 +877,15 @@ func (s *OtvoreneStavkeResource) GetPregledDugovanjaPoStarosti(c *gin.Context, t
 		}
 	}
 
-	tipPregleda := c.Query("tip_pregleda")
-	searchText := c.Query("query")
-
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
 
 	// Build age bucket intervals
-	interval15 := dospece15 + " days"
-	interval30 := dospece30 + " days"
-	interval60 := dospece60 + " days"
-	interval90 := dospece90 + " days"
-	interval120 := dospece120 + " days"
+	interval15 := params.Dospece15 + " days"
+	interval30 := params.Dospece30 + " days"
+	interval60 := params.Dospece60 + " days"
+	interval90 := params.Dospece90 + " days"
+	interval120 := params.Dospece120 + " days"
 
 	// Get data for the table with age bucket categorization
 	qb := common.NewQueryBuilder(fmt.Sprintf(`
@@ -1021,9 +930,9 @@ func (s *OtvoreneStavkeResource) GetPregledDugovanjaPoStarosti(c *gin.Context, t
 			 		AND (fpro.dadok + fpro.rok)::date > ('%s'::date + INTERVAL '`+interval120+`')::date
 			 		THEN fpro.iznos ELSE 0 END) as dospece120plus
 		FROM fpro
-	`, stanjenadan, stanjenadan, stanjenadan, stanjenadan,
-		stanjenadan, stanjenadan, stanjenadan, stanjenadan,
-		stanjenadan, stanjenadan, stanjenadan, stanjenadan))
+	`, params.StanjeNaDan, params.StanjeNaDan, params.StanjeNaDan, params.StanjeNaDan,
+		params.StanjeNaDan, params.StanjeNaDan, params.StanjeNaDan, params.StanjeNaDan,
+		params.StanjeNaDan, params.StanjeNaDan, params.StanjeNaDan, params.StanjeNaDan), true)
 	qb.AddJoin("left join fkpl on fkpl.idfkpl = fpro.idfkpl")
 
 	if hasGod {
@@ -1034,21 +943,21 @@ func (s *OtvoreneStavkeResource) GetPregledDugovanjaPoStarosti(c *gin.Context, t
 	}
 
 	// Determine vkonta based on tipPregleda (K=kupci, D=dobavljaci)
-	if tipPregleda == "K" {
+	if params.TipPregleda == "K" {
 		//qb.AddEqual("fpro.vkonta", "2")
-	} else if tipPregleda == "D" {
+	} else if params.TipPregleda == "D" {
 		//qb.AddEqual("fpro.vkonta", "1")
 	}
 
-	qb.AddCondition("fpro.konto", odkonta, ">=")
-	qb.AddCondition("fpro.konto", dokonta, "<=")
-	qb.AddCondition("fpro.sifra", odsifre, ">=")
-	qb.AddCondition("fpro.sifra", dosifre, "<=")
+	qb.AddCondition("fpro.konto", params.OdKonta, ">=")
+	qb.AddCondition("fpro.konto", params.DoKonta, "<=")
+	qb.AddCondition("fpro.sifra", params.OdSifre, ">=")
+	qb.AddCondition("fpro.sifra", params.DoSifre, "<=")
 
 	// Add search conditions if search text is provided
-	if searchText != "" && searchText != "undefined" && len(searchText) >= 1 {
+	if params.SearchText != "" && params.SearchText != "undefined" && len(params.SearchText) >= 1 {
 		qb.SetEntityType(reflect.TypeOf(domain.Fpro{}))
-		qb.AddSearchConditions(s.GetPartneriFields(), searchText)
+		qb.AddSearchConditions(s.GetPartneriFields(), params.SearchText)
 	}
 
 	// Add GROUP BY
@@ -1065,8 +974,7 @@ func (s *OtvoreneStavkeResource) GetPregledDugovanjaPoStarosti(c *gin.Context, t
 
 	sqlQuery, args := qb.Build()
 
-	fmt.Println(sqlQuery, args)
-	entities, err := s.fproRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
+	entities, err := s.fproRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
 	if err != nil {
 		return err
 	}
@@ -1105,30 +1013,9 @@ func (s *OtvoreneStavkeResource) GetPregledDugovanjaPoStarosti(c *gin.Context, t
 	return nil
 }
 
-// GetPregledDospelogDuga retrieves due debt overview
-func (s *OtvoreneStavkeResource) GetPregledDospelogDuga(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error {
-	session := domain.GetSessionFromContext(c)
-	if session == nil {
-		return fmt.Errorf("user session not found")
-	}
-	//TODO should be implemented with actual database query
-	// if err := common.ValidateRequiredParams(c, "konto"); err != nil {
-	// 	return err
-	// }
-	// common.SetTableConfig(tbl, "Pregled dospelog duga", "", false, false, false)
-	// common.SetupTablePagination(tbl, currentPage, pageSize)
-	// tbl.Fields = s.fieldDospelaPotraživanja
-
-	// // Mock data - replace with actual database query
-	// tbl.Rows = []map[string]interface{}{}
-	// tbl.TotalRecords = 0
-
-	return nil
-}
-
 // GetPovezivanjRacunaIUplata retrieves account and payment linking data
-func (s *OtvoreneStavkeResource) GetPovezivanjRacunaIUplata(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error {
-	session := domain.GetSessionFromContext(c)
+func (s *OtvoreneStavkeResource) GetPovezivanjRacunaIUplata(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error {
+	session := domain.GetSessionFromStdContext(ctx)
 	if session == nil {
 		return fmt.Errorf("user session not found")
 	}

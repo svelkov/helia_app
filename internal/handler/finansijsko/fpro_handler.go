@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
-	"strconv"
 	"strings"
 
 	"helia/config"
-	tmpl "helia/frontend/templates/finansijsko"
+	tmpl "helia/frontend/templates"
+	tmpl_fin "helia/frontend/templates/finansijsko"
 	"helia/global"
 	"helia/i18n"
 	"helia/internal/common"
@@ -25,7 +25,7 @@ const (
 	fproTableID         string = "fpro-table"
 	fproURLPrefix       string = "/api/fpro/"
 	fproURLGetAll       string = "/api/fpro/all/tipdok"
-	fproURLGetAllSearch string = "/api/nalozi/stavke/{idfnalog}"
+	fproURLGetAllSearch string = "/api/nalozi/stavke/:id"
 	fproURLNextFpro     string = "/api/fpro/nextfpro"
 )
 
@@ -35,10 +35,11 @@ type FproHandler struct {
 	btnSave     domain.Button
 	btnNazad    domain.Button
 	cfg         config.Config
+	lm          *middleware.LockMiddleware
 }
 
-func NewFproHandler(service finservice.FproService, cfg config.Config) *FproHandler {
-	handler := &FproHandler{fproService: service, cfg: cfg}
+func NewFproHandler(service finservice.FproService, cfg config.Config, lm *middleware.LockMiddleware) *FproHandler {
+	handler := &FproHandler{fproService: service, cfg: cfg, lm: lm}
 	handler.setHandlerFieldValues()
 	return handler
 }
@@ -83,51 +84,88 @@ func (h *FproHandler) getFproStavkeHandler(c *gin.Context) {
 	utils.ConfirmUpdateHelper[domain.Fpro](c, nil, h.fproService.GetTableStavkeFields(), common.IDfpro)
 }
 
-// --- CONSOLIDATED VIEW DATA HANDLER ---
+// GetNalogStavke handles the request to get the stavke (items) of a nalog (order) for a given ID.
 func (h *FproHandler) GetNalogStavke(c *gin.Context) {
-	idFnalParam := c.PostForm("id")
-	searchQuery := c.Query("query")
-	searchControl := domain.InputControl{
-		ID:           "search-controldetail",
-		Label:        "Pretraži stavke naloga",
-		Type:         "search",
-		Placeholder:  "Unesite broj naloga ili druge podatke",
-		HxActionURL:  fmt.Sprintf("/api/fpro/nalog/%s", idFnalParam),
-		HxTarget:     "#nalozi_kopiranje_stavke",
-		HxSwap:       "innerHTML",
-		HxInclude:    "#search-controldetail",
-		Class:        common.ClassSearchInput,
-		Autocomplete: "off",
+	requestSource := c.Request.Header.Get("X-Request-Source")
+	idFnal, err := utils.GetInt64FromParameterRequest(c, "id")
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusBadRequest, false, nil, common.ErrMsgInvalidID)
+		return
 	}
-	if idFnalParam == "" && searchQuery == "" {
-		err := tmpl.NaloziDetail(domain.TableData{}, searchControl, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+	urlGetAll := fmt.Sprintf("/api/fpro/nalog/%d", idFnal)
+	searchQuery := c.Query("query")
+	searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), urlGetAll, fmt.Sprintf("#%s", naloziStavkeTableID), "")
+	page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
+	tbl := common.SetTableBasicData("STAVKE NALOGA", naloziStavkeTableID, h.fproService.GetTableStavkeFields(), urlGetAll, urlGetAll, 0, 0, 0, 0, h.cfg)
+	common.SetTableConfig(&tbl, "", urlGetAll, false, false, false)
+
+	if idFnal == 0 && searchQuery == "" {
+		err := tmpl_fin.NaloziDetail(domain.TableData{}, searchInput, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
 		}
 	}
-
-	idFnal, err := strconv.ParseInt(idFnalParam, 10, 64)
-	if err != nil {
-		common.WriteJSONResponse(c, http.StatusBadRequest, false, nil, common.ErrMsgInvalidID)
-		return
-	}
-
-	page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
 	// Call the service to get ALL necessary data for the view
-	tbl, err := h.fproService.GetNaloziStavke(c, idFnal, searchQuery, page, pageSize, h.fproService.GetTableStavkeFields())
+	fproPayload := domain.FproPayload{}
+	ctx := c.Request.Context()
+	err = h.fproService.GetAllFproByFnalID(ctx, &fproPayload, &tbl, idFnal, page, pageSize, searchQuery)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData)
 		return
 	}
-	tbl.TableID = "nalozi_kopiranje_stavke"
-	tbl.URLGetAll = "/api/fpro/nalog/" + idFnalParam
+	tbl.URLGetAll = urlGetAll
+	if requestSource == "btnpage" || requestSource == "searchinput" {
+		utils.RenderContent(c, tbl)
+		return
+	}
+	err = tmpl_fin.NaloziDetail(tbl, searchInput, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData)
+		return
+	}
+}
 
-	err = tmpl.NaloziDetail(tbl, searchControl, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+// SaveNalogStavke handles the request to save the stavke (items) of a nalog (order) for a given ID.
+func (h *FproHandler) SaveNalogStavke(c *gin.Context) {
+	var fproStavke domain.FproPayload
+	fnalID, err := utils.GetInt64FromParameterRequest(c, "id")
 	if err != nil {
-		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData)
+		common.WriteJSONResponse(c, http.StatusBadRequest, false, []domain.FieldError{}, common.ErrMsgInvalidID)
 		return
 	}
+
+	if err := c.ShouldBind(&fproStavke); err != nil {
+		common.WriteJSONResponse(c, http.StatusBadRequest, false, []domain.FieldError{}, common.ErrMsgFormDecode)
+		return
+	}
+	
+	fproStavke.IDFnal = fnalID
+	filedErrors := h.fproService.FproValidate(c.Request.Context(), &fproStavke)
+	if len(filedErrors) != 0 {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, filedErrors, common.ErrMsgValidation)
+		return
+	}
+	err = h.fproService.SaveNalogStavke(c.Request.Context(), &fproStavke)
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, common.ErrMsgSaveData)
+		return
+	}
+	currentPage, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
+	urlGetAll := fmt.Sprintf("/api/fpro/nalog/%d", fnalID)
+	tblStavke := common.SetTableBasicData("STAVKE NALOGA", naloziStavkeTableID, h.fproService.GetTableStavkeFields(), "", "", 0, 0, 0, 0, h.cfg)
+	err = h.fproService.GetAllFproByFnalID(c.Request.Context(), &fproStavke, &tblStavke, fnalID, currentPage, pageSize, "")
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, common.ErrMsgReadData)
+		return
+	}
+	tblStavke.URLGetAll = urlGetAll
+	tblStavke.URLPrefix = urlGetAll
+	tblStavke.SearchEnabled = false
+	tblStavke.BtnAdd.IsVisible = false
+	tblStavke.BtnPrint.IsVisible = false
+	tblStavke.ShowActions = false
+	tmpl.Table(tblStavke, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 }
 
 func (h *FproHandler) populateTableRows(tableData domain.TableData, entities []domain.Fpro, fieldsDef []domain.Fields) []domain.TableRow {
@@ -170,21 +208,22 @@ func (h *FproHandler) populateTableRows(tableData domain.TableData, entities []d
 */
 func (h *FproHandler) AddRoutes(r *gin.Engine) {
 
-	// Create API group with prefix
-	api := r.Group(fproURLPrefix)
-	api.Use(middleware.Auth()) // Apply auth middleware to all routes in group
+	r.Use(middleware.Auth()) // Apply auth middleware to all routes in group
 
-	api.POST("/api/fpro", h.CreateFpro)
-	api.GET("/api/fpro/nalog/:idfnalog", h.GetNalogStavke)
-	api.GET("/api/fpro/confirm-delete", h.confirmDeleteHandler)
-	api.GET("/api/fpro/confirm-update", h.getFproStavkeHandler)
-	api.GET("/api/fpro/confirm-add", h.confirmAddHandler)
-	api.GET("/api/fpro/:id", h.GetFpro)
-	api.PUT("/api/fpro/:id", h.UpdateFpro)
-	api.DELETE(" /api/fpro/:id", h.DeleteFpro)
-	// api.GET /api/fpro/prepis", h.FproPrepis))
-	// api.GET /api/fpro/storniranje", h.FproStorniranje))
-	// api.GET /api/fpro/prikaz", h.FproPrikaz))
+	r.POST("/api/fpro", h.CreateFpro)
+	r.GET("/api/fpro/nalog/:id", h.GetNalogStavke)
+	r.GET("/api/fpro/confirm-delete", h.confirmDeleteHandler)
+	r.GET("/api/fpro/confirm-update", h.getFproStavkeHandler)
+	r.GET("/api/fpro/confirm-add", h.confirmAddHandler)
+	r.GET("/api/fpro/:id", h.GetFpro)
+	r.PUT("/api/fpro/:id", h.UpdateFpro)
+	r.DELETE("/api/fpro/:id", h.DeleteFpro)
+	r.POST("/api/fpro/nalog/:id/stavke/save", h.SaveNalogStavke)
+	r.PUT("/api/fpro/nalog/:id/stavke/save", h.SaveNalogStavke)
+
+	// r.GET /api/fpro/prepis", h.FproPrepis))
+	// r.GET /api/fpro/storniranje", h.FproStorniranje))
+	// r.GET /api/fpro/prikaz", h.FproPrikaz))
 }
 
 func (h *FproHandler) setHandlerFieldValues() {

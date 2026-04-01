@@ -1,13 +1,12 @@
 package common
 
 import (
+	"context"
 	"fmt"
 	"helia/internal/domain"
 	"reflect"
 	"strings"
 	"time"
-
-	"github.com/gin-gonic/gin"
 )
 
 type QueryBuilder struct {
@@ -46,12 +45,14 @@ const (
 	CountQuery  QueryType = "count"
 )
 
-func NewQueryBuilder(baseQuery string) *QueryBuilder {
+func NewQueryBuilder(baseQuery string, addInitialWhere bool) *QueryBuilder {
 	qb := &QueryBuilder{
 		baseQuery:  baseQuery,
 		paramCount: 1,
 	}
-	qb.whereClause.WriteString(" WHERE 1 = 1 ")
+	if addInitialWhere {
+		qb.whereClause.WriteString(" WHERE 1 = 1 ")
+	}
 	return qb
 }
 
@@ -187,6 +188,24 @@ func (qb *QueryBuilder) AddOrCondition(condition string, values ...interface{}) 
 	return qb
 }
 
+// AddCustomSearchCondition for complex conditions (joined with AND)
+func (qb *QueryBuilder) AddCustomSearchCondition(fields []string, searchValue interface{}) *QueryBuilder {
+	qb.whereClause.WriteString(" AND ( ")
+	searchCondition := ""
+	for _, field := range fields {
+		searchCondition += fmt.Sprintf("%s::text ILIKE $%d OR ", field, qb.paramCount)
+	}
+	qb.args = append(qb.args, "%"+searchValue.(string)+"%")
+	qb.paramCount++
+	// Remove the trailing " OR "
+	if len(searchCondition) > 0 {
+		searchCondition = searchCondition[:len(searchCondition)-4]
+	}
+	qb.whereClause.WriteString(searchCondition + " )")
+
+	return qb
+}
+
 // Build constructs the final SQL query and arguments
 func (qb *QueryBuilder) Build() (string, []interface{}) {
 	var query strings.Builder
@@ -248,9 +267,15 @@ func (qb *QueryBuilder) AddArgs(args ...interface{}) {
 // ==================== Repository-Specific Methods ====================
 
 // BuildInsert constructs an INSERT query with RETURNING clause
-func (qb *QueryBuilder) BuildInsert(c *gin.Context, fields []domain.Fields, idField string) (string, []interface{}) {
+// Retrieves UserSession from context.Context
+func (qb *QueryBuilder) BuildInsert(ctx context.Context, fields []domain.Fields, idField string) (string, []interface{}) {
 	if qb.tableName == "" {
 		return "", nil
+	}
+
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		return "", nil // Handle gracefully - caller will get empty query
 	}
 
 	var columns []string
@@ -265,7 +290,7 @@ func (qb *QueryBuilder) BuildInsert(c *gin.Context, fields []domain.Fields, idFi
 	for _, field := range fields {
 		fieldMap[strings.ToLower(field.Name)] = field
 	}
-	userSession := domain.GetSessionFromContext(c)
+
 	// Add god/kar first if entity has them
 	if hasGod {
 		columns = append(columns, "god")
@@ -310,14 +335,20 @@ func (qb *QueryBuilder) BuildInsert(c *gin.Context, fields []domain.Fields, idFi
 }
 
 // BuildUpdate constructs an UPDATE query
-func (qb *QueryBuilder) BuildUpdate(c *gin.Context, fields []domain.Fields, idField string, idValue interface{}) (string, []interface{}) {
+// Retrieves UserSession from context.Context
+func (qb *QueryBuilder) BuildUpdate(ctx context.Context, fields []domain.Fields, idField string, idValue interface{}) (string, []interface{}) {
 	if qb.tableName == "" {
 		return "", nil
 	}
 
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		return "", nil // Handle gracefully - caller will get empty query
+	}
+
 	var columns []string
 	var values []interface{}
-	userSession := domain.GetSessionFromContext(c)
+
 	// Add provided fields
 	for _, field := range fields {
 		if strings.ToLower(field.Name) == "xdatizmene" || strings.ToLower(field.Name) == "xopizmene" {
@@ -380,7 +411,7 @@ func (qb *QueryBuilder) BuildSelectByID(idField string) string {
 }
 
 // BuildSelectAll constructs a SELECT query for multiple records with filtering
-func (qb *QueryBuilder) BuildSelectAll(fields []domain.Fields, idField string, searchParams ...string) string {
+func (qb *QueryBuilder) BuildSelectAll(fields []domain.Fields, idField string, searchText string) string {
 	if qb.tableName == "" || qb.entityType == nil {
 		return ""
 	}
@@ -410,7 +441,7 @@ func (qb *QueryBuilder) BuildSelectAll(fields []domain.Fields, idField string, s
 			}
 		}
 	}
-	qb.baseQuery = fmt.Sprintf(`SELECT %s FROM "%s" `, strings.Join(columns, ", "), qb.tableName)
+	qb.baseQuery = fmt.Sprintf(`SELECT %s FROM %s `, strings.Join(columns, ", "), qb.tableName)
 	// Build WHERE clause
 	// Note: god/kar filtering should be added explicitly in service layer
 	//qb.AddSearchConditions(fields, searchParams...)
@@ -419,13 +450,13 @@ func (qb *QueryBuilder) BuildSelectAll(fields []domain.Fields, idField string, s
 }
 
 // BuildCount constructs a COUNT query
-func (qb *QueryBuilder) BuildCount(fields []domain.Fields, searchParams ...string) string {
+func (qb *QueryBuilder) BuildCount(fields []domain.Fields, searchText string) string {
 	if qb.tableName == "" || qb.entityType == nil {
 		return ""
 	}
 
 	// Note: god/kar filtering should be added explicitly in service layer
-	qb.AddSearchConditions(fields, searchParams...)
+	qb.AddSearchConditions(fields, searchText)
 
 	whereClause := qb.whereClause.String()
 	query := fmt.Sprintf(`SELECT count(*) FROM %s %s`, qb.tableName, whereClause)
@@ -533,8 +564,8 @@ func (qb *QueryBuilder) AddGodKarConditions(hasGod, hasKar bool, god, kar int) {
 
 // AddSearchConditions adds search/filter conditions to WHERE clause
 // Supports table-qualified column names when Field contains "table.column" format
-func (qb *QueryBuilder) AddSearchConditions(fields []domain.Fields, searchParams ...string) {
-	if len(searchParams) == 0 || len(searchParams[0]) == 0 {
+func (qb *QueryBuilder) AddSearchConditions(fields []domain.Fields, searchText string) {
+	if len(searchText) == 0 {
 		return
 	}
 
@@ -544,6 +575,11 @@ func (qb *QueryBuilder) AddSearchConditions(fields []domain.Fields, searchParams
 
 	likeString := " AND ( "
 	hasCondition := false
+
+	// Add the search value once and reuse the same parameter index for all columns
+	qb.args = append(qb.args, fmt.Sprintf("%%%s%%", searchText))
+	searchParamIdx := qb.paramCount
+	qb.paramCount++
 
 	for i := 0; i < qb.entityType.NumField(); i++ {
 		field := qb.entityType.Field(i)
@@ -575,9 +611,7 @@ func (qb *QueryBuilder) AddSearchConditions(fields []domain.Fields, searchParams
 
 		switch field.Type.Name() {
 		case "int", "int64", "int32", "float32", "float64", "string", "bool":
-			likeString += fmt.Sprintf(" OR (%s::TEXT ILIKE $%d)", qualifiedCol, qb.paramCount)
-			qb.args = append(qb.args, fmt.Sprintf("%%%s%%", searchParams[0]))
-			qb.paramCount++
+			likeString += fmt.Sprintf(" OR (%s::TEXT ILIKE $%d)", qualifiedCol, searchParamIdx)
 			hasCondition = true
 		}
 	}
@@ -586,6 +620,10 @@ func (qb *QueryBuilder) AddSearchConditions(fields []domain.Fields, searchParams
 		likeString += " )"
 		likeString = strings.ReplaceAll(likeString, "AND (  OR", "AND ( ")
 		qb.whereClause.WriteString(likeString)
+	} else {
+		// No searchable columns matched — remove the unused arg
+		qb.args = qb.args[:len(qb.args)-1]
+		qb.paramCount--
 	}
 }
 

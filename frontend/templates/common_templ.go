@@ -66,33 +66,4 @@ func SpinnerScript() templ.Component {
 	})
 }
 
-func HandleFormResponse() templ.Component {
-	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
-		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
-		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
-			return templ_7745c5c3_CtxErr
-		}
-		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
-		if !templ_7745c5c3_IsBuffer {
-			defer func() {
-				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
-				if templ_7745c5c3_Err == nil {
-					templ_7745c5c3_Err = templ_7745c5c3_BufErr
-				}
-			}()
-		}
-		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var3 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var3 == nil {
-			templ_7745c5c3_Var3 = templ.NopComponent
-		}
-		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<script>\r\n\thtmx.logAll();\r\n\t\tfunction handleFormResponse(event, requestType) {\r\n\t\t\tconsole.log(\"Handling form response for request type:\", requestType);\r\n\t\t\tconst xhr = event.detail.xhr;\r\n\t\t\tconst messageDiv = document.getElementById('dialog-message');\r\n\t\t\tconst dialogId = '{ dialog.Id }';\r\n\t\t\t// if there are validation errors, they will be handled by validation logic\r\n\t\t\t// If we get here, response is valid JSON\r\n\t\t\t\t// Clear previous error messages\r\n\t\t\tdocument.querySelectorAll('.input-error').forEach(el => el.remove());\r\n\t\t\tdocument.querySelectorAll('input').forEach(input => {\r\n\t\t\t\tinput.classList.remove('border-red-500');\r\n\t\t\t});\r\n\t\t\tconsole.log(\"XHR Response:\", xhr.responseText);\r\n\t\t\tconst response = JSON.parse(xhr.responseText);\r\n\t\t\t// Handle validation errors\r\n\t\t\tif (response.errors && response.errors.length > 0) {\r\n\t\t\t\tconsole.log(\"Errors found:\", response.errors)\r\n\t\t\t\t// Loop through errors and show error messages for each field\r\n\t\t\t\tresponse.errors.forEach(error => {\r\n\t\t\t\tconst field = document.querySelector(`input[name=\"${error.field}\"]`);\r\n\t\t\t\t\tif (field) {\r\n\t\t\t\t\t\tfield.classList.add('border-red-500'); // Add red border to invalid field\r\n\t\t\t\t\t\t// Add error message below the input field\r\n\t\t\t\t\t\tconst errorMessage = document.createElement('p');\r\n\t\t\t\t\t\terrorMessage.className = 'text-red-500 text-xs mt-1 input-error';\r\n\t\t\t\t\t\terrorMessage.textContent = error.message;\r\n\t\t\t\t\t\tfield.insertAdjacentElement('afterend', errorMessage);\r\n\t\t\t\t\t}\r\n\t\t\t\t});\r\n\t\t\t\treturn;\r\n\t\t\t}\r\n\t\t\tif (xhr.status === 200 || xhr.status === 201) {\r\n\t\t\t\t// Success\r\n\t\t\t\tmessageDiv.className = 'p-2 text-sm text-green-800 bg-green-100 border border-green-300 rounded-lg';\r\n\t\t\t\tmessageDiv.textContent = 'Uspesno upisani podaci...';\r\n\t\t\t\tmessageDiv.classList.remove('hidden');\r\n\t\t\t\t\r\n\t\t\t\tif (requestType === 'POST') {\r\n\t\t\t\t\t// For ADD operation: Clear all input fields\r\n\t\t\t\t\tconst form = document.getElementById('dialog-form');\r\n\t\t\t\t\tconst inputs = form.querySelectorAll('input:not([type=\"hidden\"])');\r\n\t\t\t\t\tinputs.forEach(input => {\r\n\t\t\t\t\t\tinput.value = '';\r\n\t\t\t\t\t});\r\n\t\t\t\t\t\r\n\t\t\t\t\t// Auto-hide message after 3 seconds\r\n\t\t\t\t\tsetTimeout(() => {\r\n\t\t\t\t\t\tmessageDiv.classList.add('hidden');\r\n\t\t\t\t\t}, 3000);\r\n\t\t\t\t} else if (requestType === 'PUT') {\r\n\t\t\t\t\t// For UPDATE operation: Close dialog after brief delay\r\n\t\t\t\t\tsetTimeout(() => {\r\n\t\t\t\t\t\tcloseDialog(dialogId);\r\n\t\t\t\t\t}, 1000);\r\n\t\t\t\t}\r\n\t\t\t} else {\r\n\t\t\t\t// Error\r\n\t\t\t\tmessageDiv.className = 'p-2 text-sm text-red-800 bg-red-100 border border-red-300 rounded-lg';\r\n\t\t\t\ttry {\r\n\t\t\t\t\tconst response = JSON.parse(xhr.responseText);\r\n\t\t\t\t\tconsole.log('Error response:', response);\r\n\t\t\t\t\tif (response.success === false && response.message) {\r\n\t\t\t\t\t\tmessageDiv.textContent = response.message;\r\n\t\t\t\t\t\treturn;\r\n\t\t\t\t\t}\r\n\t\t\t\t\tmessageDiv.textContent = response.message || 'An error occurred';\r\n\t\t\t\t} catch (e) {\r\n\t\t\t\t\tmessageDiv.textContent = 'An error occurred, error:' + response.message;\r\n\t\t\t\t}\r\n\t\t\t\tmessageDiv.classList.remove('hidden');\r\n\t\t\t}\r\n\t\t}\r\n\t</script>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		return nil
-	})
-}
-
 var _ = templruntime.GeneratedTemplate

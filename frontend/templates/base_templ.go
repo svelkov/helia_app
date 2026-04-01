@@ -62,7 +62,7 @@ func Base(isLoggedIn bool, content templ.Component, menuItems domain.MenuDataIte
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<!-- Main Content --><div class=\"flex flex-1 min-h-0\"><!-- Sidebar (Conditional) -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<!-- Main Content --><div class=\"flex flex-1 min-h-0 overflow-hidden\"><!-- Sidebar (Conditional) -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -72,7 +72,7 @@ func Base(isLoggedIn bool, content templ.Component, menuItems domain.MenuDataIte
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<!-- Content Area --><main id=\"content\" class=\"flex-1 p-2 overflow-auto text-sm w-full min-h-0\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<!-- Content Area --><main id=\"content\" class=\"flex-1 p-2 overflow-y-auto text-sm w-full min-h-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

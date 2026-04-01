@@ -13,27 +13,11 @@ templ PrometMain(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada 
 	<div id="tab-content" class="flex flex-col h-full">
 		@PrometAnalitickihKonta(tabs, tbl, btnPrint, btnObrada, total, searchInput, gnGod, translator)
 	</div>
-	<script>
-        // Tab switching functionality
-        document.addEventListener('DOMContentLoaded', function() {
-            // Set first tab as active
-            document.querySelector('[hx-get="/promet/analitickakonta"]').classList.remove('bg-gray-200', 'text-gray-700');
-            document.querySelector('[hx-get="/promet/analitickakonta"]').classList.add('bg-blue-600', 'text-white');
-            
-            // Tab click handler
-            document.querySelectorAll('[hx-get^="/promet"]').forEach(tab => {
-                tab.addEventListener('click', function() {
-                    // Update tab styles
-                    document.querySelectorAll('[hx-get^="/promet"]').forEach(t => {
-                        t.classList.remove('bg-blue-600', 'text-white');
-                        t.classList.add('bg-gray-200', 'text-gray-700');
-                    });
-                    this.classList.remove('bg-gray-200', 'text-gray-700');
-                    this.classList.add('bg-blue-600', 'text-white');
-                });
-            });
-        });
-    </script>
+	@tmpl.ShowSearchDialogScript()
+	@tmpl.HideDropdownScript()
+	@tmpl.ClearFieldErrorScript()
+	@tmpl.HandleDblClickKontoSelectionScript()
+	@tmpl.HandleDialogResponseScript("")
 }
 
 // Tab 1 - Promet analitickih konta
@@ -64,12 +48,13 @@ templ PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 							ClassInput:   common.ClassInputTextEnabled + " w-24",
 							BlurEndpoint: "api/fkpl/trazikonto",
 							HxTarget:     "kontonaziv",
-							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "2"}`,
+							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "2", "destfield": "konto"}`,
 							HxInclude:    "this",
 							MinLength:    "2",
 							MaxLength:    "6",
 							TabIndex:     "1",
 							OnInput:      "clearFieldError",
+							OnFocus:      "clearFieldError",
 						})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
 							ID:          "btn-search-konto",
@@ -77,7 +62,7 @@ templ PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 							HxUrl:       "/api/promet/searchbutton",
 							HxTarget:    "#search-dropdown",
 							HxSwap:      "innerHTML",
-							HxVals:      `{"vkonta": "2"}`,
+							HxVals:      `{"vkonta": "2", "destfield": "konto"}`,
 							ClassButton: common.ClassButton,
 						})
 						@tmpl.TextInputField(domain.InputFieldConfig{
@@ -102,12 +87,13 @@ templ PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 							ClassInput:   common.ClassInputTextEnabled + " w-24",
 							BlurEndpoint: "api/fkpl/trazikonto",
 							HxTarget:     "sifranaziv",
-							HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('sifra').value, "vkonta": "1"}`,
+							HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('sifra').value, "vkonta": "1", "destfield": "sifra"}`,
 							HxInclude:    "this",
 							MinLength:    "2",
 							MaxLength:    "6",
 							TabIndex:     "2",
 							OnInput:      "clearFieldError",
+							OnFocus:      "clearFieldError",
 						})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
 							ID:          "sifra",
@@ -115,7 +101,7 @@ templ PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 							HxUrl:       "/api/promet/searchbutton",
 							HxTarget:    "#search-dropdown",
 							HxSwap:      "innerHTML",
-							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`,
+							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1", "destfield": "sifra"}`,
 							ClassButton: common.ClassButton,
 						})
 						@tmpl.TextInputField(domain.InputFieldConfig{
@@ -141,6 +127,7 @@ templ PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 							ClassInput: common.ClassInputTextEnabled + " w-32",
 							TabIndex:   "3",
 							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError",
 						})
 					</div>
 					<div class="flex items-center gap-1 mb-1">
@@ -158,6 +145,7 @@ templ PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 							ClassInput: common.ClassInputTextEnabled + " w-32",
 							TabIndex:   "4",
 							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError",
 						})
 					</div>
 					<div class="mb-1 flex items-center justify-between h-6">
@@ -189,9 +177,6 @@ templ PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 			</div>
 		</div>
 	</div>
-	@tmpl.ShowMessage()
-	@PrometScripts()
-	@tmpl.SpinnerScript()
 }
 
 // Tab 2 - Analiticka kartica po mestima isporuke
@@ -222,12 +207,13 @@ templ AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint,
 							ClassInput:   common.ClassInputTextEnabled + " w-24",
 							BlurEndpoint: "api/fkpl/trazikonto",
 							HxTarget:     "kontonaziv",
-							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "2"}`,
+							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "2", "destfield": "konto"}`,
 							HxInclude:    "this",
 							MinLength:    "2",
 							MaxLength:    "6",
 							TabIndex:     "1",
 							OnInput:      "clearFieldError",
+							OnFocus:      "clearFieldError",
 						})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
 							ID:          "konto",
@@ -235,7 +221,7 @@ templ AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint,
 							HxUrl:       "/api/promet/searchbutton",
 							HxTarget:    "#search-dropdown",
 							HxSwap:      "innerHTML",
-							HxVals:      `{"vkonta": "2"}`,
+							HxVals:      `{"vkonta": "2", "destfield": "konto"}`,
 							ClassButton: common.ClassButton,
 						})
 						@tmpl.TextInputField(domain.InputFieldConfig{
@@ -260,12 +246,13 @@ templ AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint,
 							ClassInput:   common.ClassInputTextEnabled + " w-24",
 							BlurEndpoint: "api/fkpl/trazikonto",
 							HxTarget:     "sifranaziv",
-							HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('sifra').value, "vkonta": "1"}`,
+							HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('sifra').value, "vkonta": "1", "destfield": "sifra"}`,
 							HxInclude:    "this",
 							MinLength:    "2",
 							MaxLength:    "6",
 							TabIndex:     "2",
 							OnInput:      "clearFieldError",
+							OnFocus:      "clearFieldError",
 						})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
 							ID:          "sifra",
@@ -273,7 +260,7 @@ templ AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint,
 							HxUrl:       "/api/promet/searchbutton",
 							HxTarget:    "#search-dropdown",
 							HxSwap:      "innerHTML",
-							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`,
+							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1", "destfield": "sifra"}`,
 							ClassButton: common.ClassButton,
 						})
 						@tmpl.TextInputField(domain.InputFieldConfig{
@@ -299,6 +286,7 @@ templ AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint,
 							ClassInput: common.ClassInputTextEnabled + " w-32",
 							TabIndex:   "3",
 							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError",
 						})
 					</div>
 					<div class="flex items-center gap-1 mb-1">
@@ -316,6 +304,7 @@ templ AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint,
 							ClassInput: common.ClassInputTextEnabled + " w-32",
 							TabIndex:   "4",
 							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError",
 						})
 					</div>
 					<div class="flex items-center gap-1 mb-1">
@@ -332,10 +321,12 @@ templ AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint,
 							ClassInput:   common.ClassInputTextEnabled + " w-24",
 							BlurEndpoint: "api/mi/trazimi",
 							HxTarget:     "odminaziv",
+							Value:        "0",
 							MinLength:    "1",
 							MaxLength:    "6",
 							TabIndex:     "5",
 							OnInput:      "clearFieldError",
+							OnFocus:      "clearFieldError",
 						})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
 							ID:          "odmi",
@@ -372,6 +363,7 @@ templ AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint,
 							MaxLength:    "6",
 							TabIndex:     "6",
 							OnInput:      "clearFieldError",
+							OnFocus:      "clearFieldError",
 						})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
 							ID:          "search-domi",
@@ -418,7 +410,6 @@ templ AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint,
 			</div>
 		</div>
 	</div>
-	@tmpl.SpinnerScript()
 }
 
 // Tab 3 - Promet deviznih analitickih konta
@@ -448,12 +439,13 @@ templ PrometDeviznihAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, 
 							ClassInput:   common.ClassInputTextEnabled + " w-24",
 							BlurEndpoint: "api/fkpl/trazikonto",
 							HxTarget:     "kontonaziv",
-							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "2"}`,
+							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "2", "destfield": "konto"}`,
 							HxInclude:    "this",
 							MinLength:    "2",
 							MaxLength:    "6",
 							TabIndex:     "1",
 							OnInput:      "clearFieldError",
+							OnFocus:      "clearFieldError",
 						})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
 							ID:          "konto",
@@ -461,7 +453,7 @@ templ PrometDeviznihAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, 
 							HxUrl:       "/api/promet/searchbutton",
 							HxTarget:    "#search-dropdown",
 							HxSwap:      "innerHTML",
-							HxVals:      `{"vkonta": "2"}`,
+							HxVals:      `{"vkonta": "2", "destfield": "konto"}`,
 							ClassButton: common.ClassButton,
 						})
 						@tmpl.TextInputField(domain.InputFieldConfig{
@@ -486,12 +478,13 @@ templ PrometDeviznihAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, 
 							ClassInput:   common.ClassInputTextEnabled + " w-24",
 							BlurEndpoint: "api/fkpl/trazikonto",
 							HxTarget:     "sifranaziv",
-							HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('sifra').value, "vkonta": "1"}`,
+							HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('sifra').value, "vkonta": "1", "destfield": "sifra"}`,
 							HxInclude:    "this",
 							MinLength:    "2",
 							MaxLength:    "6",
 							TabIndex:     "2",
 							OnInput:      "clearFieldError",
+							OnFocus:      "clearFieldError",
 						})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
 							ID:          "sifra",
@@ -499,7 +492,7 @@ templ PrometDeviznihAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, 
 							HxUrl:       "/api/promet/searchbutton",
 							HxTarget:    "#search-dropdown",
 							HxSwap:      "innerHTML",
-							HxVals:      `{"vkonta": "1"}`,
+							HxVals:      `{"vkonta": "1", "destfield": "sifra"}`,
 							ClassButton: common.ClassButton,
 						})
 						@tmpl.TextInputField(domain.InputFieldConfig{
@@ -525,6 +518,7 @@ templ PrometDeviznihAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, 
 							ClassInput: common.ClassInputTextEnabled + " w-28",
 							TabIndex:   "3",
 							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError",
 						})
 					</div>
 					<div class="flex items-center gap-1 mb-1">
@@ -542,6 +536,7 @@ templ PrometDeviznihAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, 
 							ClassInput: common.ClassInputTextEnabled + " w-28",
 							TabIndex:   "4",
 							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError",
 						})
 					</div>
 					<div class="mb-1 flex items-center justify-between h-6">
@@ -600,20 +595,22 @@ templ PrometSubsintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPr
 							ClassLabel: common.ClassLabel + " w-24",
 						})
 						@tmpl.TextInputField(domain.InputFieldConfig{
-							ID:           "odkonta",
-							Name:         "odkonta",
-							FieldType:    "text",
-							Disabled:     false,
-							ClassInput:   common.ClassInputTextEnabled + " w-24",
-							BlurEndpoint: "api/fkpl/trazikonto",
-							HxTarget:     "odkontanaziv",
-							HxVals:       `js:{"konto": document.getElementById('odkonta').value, "vkonta": "2"}`,
-							HxInclude:    "this",
-							Value:        "0000",
-							MinLength:    "4",
-							MaxLength:    "4",
-							TabIndex:     "1",
-							OnInput:      "clearFieldError",
+							ID:            "odkonta",
+							Name:          "odkonta",
+							FieldType:     "text",
+							DataDestField: "odkonta",
+							Disabled:      false,
+							ClassInput:    common.ClassInputTextEnabled + " w-24",
+							BlurEndpoint:  "api/fkpl/trazikonto",
+							HxTarget:      "odkontanaziv",
+							HxVals:        `js:{"konto": document.getElementById('odkonta').value, "vkonta": "2", "destfield": "odkonta"}`,
+							HxInclude:     "this",
+							Value:         "0000",
+							MinLength:     "4",
+							MaxLength:     "4",
+							TabIndex:      "1",
+							OnInput:       "clearFieldError",
+							OnFocus:       "clearFieldError",
 						})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
 							ID:          "odkonta",
@@ -621,7 +618,7 @@ templ PrometSubsintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPr
 							HxUrl:       "/api/promet/searchbutton",
 							HxTarget:    "#search-dropdown",
 							HxSwap:      "innerHTML",
-							HxVals:      `js:{"konto": document.getElementById('odkonta').value, "vkonta": "2"}`,
+							HxVals:      `js:{"konto": document.getElementById('odkonta').value, "vkonta": "2", "destfield": "odkonta"}`,
 							ClassButton: common.ClassButton,
 						})
 						@tmpl.TextInputField(domain.InputFieldConfig{
@@ -647,13 +644,14 @@ templ PrometSubsintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPr
 							ClassInput:   common.ClassInputTextEnabled + " w-24",
 							BlurEndpoint: "api/fkpl/trazikonto",
 							HxTarget:     "dokontanaziv",
-							HxVals:       `js:{"konto": document.getElementById('dokonta').value, "vkonta": "2"}`,
+							HxVals:       `js:{"konto": document.getElementById('dokonta').value, "vkonta": "2", "destfield": "dokonta"}`,
 							HxInclude:    "this",
 							Value:        "9999",
 							MinLength:    "4",
 							MaxLength:    "4",
 							TabIndex:     "2",
 							OnInput:      "clearFieldError",
+							OnFocus:      "clearFieldError",
 						})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
 							ID:          "dokonta",
@@ -661,7 +659,7 @@ templ PrometSubsintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPr
 							HxUrl:       "/api/promet/searchbutton",
 							HxTarget:    "#search-dropdown",
 							HxSwap:      "innerHTML",
-							HxVals:      `js:{"konto": document.getElementById('dokonta').value, "vkonta": "2"}`,
+							HxVals:      `js:{"konto": document.getElementById('dokonta').value, "vkonta": "2", "destfield": "dokonta"}`,
 							ClassButton: common.ClassButton,
 						})
 						@tmpl.TextInputField(domain.InputFieldConfig{
@@ -687,26 +685,29 @@ templ PrometSubsintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPr
 							Disabled:   false,
 							ClassInput: common.ClassInputTextEnabled + " w-28",
 							TabIndex:   "3",
+							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError",
 						})
 					</div>
-					<div class="flex items-center gap-1 mb-1">
-						@tmpl.LabelField(domain.LabelFieldConfig{
-							ID:         "dodatuma",
-							LabelText:  translator.Label("Do datuma"),
-							ClassLabel: common.ClassLabel + " w-24",
-						})
-						@tmpl.TextInputField(domain.InputFieldConfig{
-							ID:         "dodatuma",
-							Name:       "dodatuma",
-							FieldType:  "date",
-							Value:      time.Date(gnGod, 12, 31, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
-							Disabled:   false,
-							ClassInput: common.ClassInputTextEnabled + " w-28",
-							TabIndex:   "4",
-						})
-					</div>
-					<div class="mb-1 flex items-center justify-between h-6">
-						<div class="flex items-center"></div>
+					<div class="flex items-center justify-between gap-1 mb-1">
+						<div class="flex items-center gap-1">
+							@tmpl.LabelField(domain.LabelFieldConfig{
+								ID:         "dodatuma",
+								LabelText:  translator.Label("Do datuma"),
+								ClassLabel: common.ClassLabel + " w-24",
+							})
+							@tmpl.TextInputField(domain.InputFieldConfig{
+								ID:         "dodatuma",
+								Name:       "dodatuma",
+								FieldType:  "date",
+								Value:      time.Date(gnGod, 12, 31, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
+								Disabled:   false,
+								ClassInput: common.ClassInputTextEnabled + " w-28",
+								TabIndex:   "4",
+								OnInput:    "clearFieldError",
+								OnFocus:    "clearFieldError",
+							})
+						</div>
 						<!-- Buttons on the right -->
 						<div class="flex items-center space-x-1">
 							@tmpl.FormObradaButton(btnObrada, translator)
@@ -760,12 +761,13 @@ templ PrometSintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 							ClassInput:   common.ClassInputTextEnabled + " w-24",
 							BlurEndpoint: "api/fkpl/trazikonto",
 							HxTarget:     "kontonaziv",
-							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "3"}`,
+							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "3", "destfield": "konto"}`,
 							HxInclude:    "this",
 							MinLength:    "3",
 							MaxLength:    "3",
 							TabIndex:     "1",
 							OnInput:      "clearFieldError",
+							OnFocus:      "clearFieldError",
 						})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
 							ID:          "konto",
@@ -773,7 +775,7 @@ templ PrometSintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 							HxUrl:       "/api/promet/searchbutton",
 							HxTarget:    "#search-dropdown",
 							HxSwap:      "innerHTML",
-							HxVals:      `{"vkonta": "3"}`,
+							HxVals:      `{"vkonta": "3", "destfield": "konto"}`,
 							ClassButton: common.ClassButton,
 						})
 						@tmpl.TextInputField(domain.InputFieldConfig{
@@ -798,6 +800,8 @@ templ PrometSintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 							Disabled:   false,
 							ClassInput: common.ClassInputTextEnabled + " w-28",
 							TabIndex:   "3",
+							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError",
 						})
 					</div>
 					<div class="flex items-center gap-1 mb-1">
@@ -814,6 +818,8 @@ templ PrometSintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 							Disabled:   false,
 							ClassInput: common.ClassInputTextEnabled + " w-28",
 							TabIndex:   "4",
+							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError",
 						})
 					</div>
 					<div class="mb-2 flex items-center justify-between h-6">
@@ -871,19 +877,20 @@ templ KarticaSintetickiKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 							ClassInput:   common.ClassInputTextEnabled + " w-28",
 							BlurEndpoint: "api/fkpl/trazikonto",
 							HxTarget:     "kontonaziv",
-							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "3"}`,
+							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "3", "destfield": "konto"}`,
 							HxInclude:    "this",
 							MinLength:    "2",
 							MaxLength:    "3",
 							TabIndex:     "1",
-							OnInput:      "clearFieldError"})
+							OnInput:      "clearFieldError",
+							OnFocus:      "clearFieldError"})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
 							ID:          "konto",
 							Name:        "search-konto",
 							HxUrl:       "/api/promet/searchbutton",
 							HxTarget:    "#search-dropdown",
 							HxSwap:      "innerHTML",
-							HxVals:      `{"vkonta": "3"}`,
+							HxVals:      `{"vkonta": "3", "destfield": "konto"}`,
 							ClassButton: common.ClassButton,
 						})
 						@tmpl.TextInputField(domain.InputFieldConfig{
@@ -908,6 +915,8 @@ templ KarticaSintetickiKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 							Disabled:   false,
 							ClassInput: common.ClassInputTextEnabled + " w-28",
 							TabIndex:   "3",
+							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError",
 						})
 					</div>
 					<div class="flex items-center gap-1 mb-1">
@@ -924,6 +933,8 @@ templ KarticaSintetickiKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 							Disabled:   false,
 							ClassInput: common.ClassInputTextEnabled + " w-28",
 							TabIndex:   "4",
+							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError",
 						})
 					</div>
 					<div class="mb-2 flex items-center justify-between h-6">
@@ -985,12 +996,13 @@ templ PrometKontaPoVRD(tabs domain.TabData, tbl domain.TableData, btnPrint, btnO
 							ClassInput:   common.ClassInputTextEnabled + " w-24",
 							BlurEndpoint: "api/fkpl/trazikonto",
 							HxTarget:     "kontonaziv",
-							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "3"}`,
+							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "3", "destfield": "konto"}`,
 							HxInclude:    "this",
 							MinLength:    "4",
 							MaxLength:    "6",
 							TabIndex:     "1",
 							OnInput:      "clearFieldError",
+							OnFocus:      "clearFieldError",
 						})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
 							ID:          "konto",
@@ -998,7 +1010,7 @@ templ PrometKontaPoVRD(tabs domain.TabData, tbl domain.TableData, btnPrint, btnO
 							HxUrl:       "/api/promet/searchbutton",
 							HxTarget:    "#search-dropdown",
 							HxSwap:      "innerHTML",
-							HxVals:      `{"vkonta": "3"}`,
+							HxVals:      `{"vkonta": "3", "destfield": "konto"}`,
 							ClassButton: common.ClassButton,
 						})
 						@tmpl.TextInputField(domain.InputFieldConfig{
@@ -1023,6 +1035,8 @@ templ PrometKontaPoVRD(tabs domain.TabData, tbl domain.TableData, btnPrint, btnO
 							Disabled:   false,
 							ClassInput: common.ClassInputTextEnabled + " w-28",
 							TabIndex:   "3",
+							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError",
 						})
 					</div>
 					<div class="flex items-center gap-1 mb-1">
@@ -1039,6 +1053,8 @@ templ PrometKontaPoVRD(tabs domain.TabData, tbl domain.TableData, btnPrint, btnO
 							Disabled:   false,
 							ClassInput: common.ClassInputTextEnabled + " w-28",
 							TabIndex:   "4",
+							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError",
 						})
 					</div>
 					<div class="mb-2 flex items-center justify-between h-6">
@@ -1097,19 +1113,20 @@ templ PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint,
 							ClassInput:   common.ClassInputTextEnabled + " w-24",
 							BlurEndpoint: "api/fkpl/trazikonto",
 							HxTarget:     "kontonaziv",
-							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "2"}`,
+							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "2", "destfield": "konto"}`,
 							HxInclude:    "this",
 							MinLength:    "4",
 							MaxLength:    "6",
 							TabIndex:     "1",
-							OnInput:      "clearFieldError"})
+							OnInput:      "clearFieldError",
+							OnFocus:      "clearFieldError"})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
 							ID:          "konto",
 							Name:        "search-konto",
 							HxUrl:       "/api/promet/searchbutton",
 							HxTarget:    "#search-dropdown",
 							HxSwap:      "innerHTML",
-							HxVals:      `{"vkonta": "2"}`,
+							HxVals:      `{"vkonta": "2", "destfield": "konto"}`,
 							ClassButton: common.ClassButton,
 						})
 						@tmpl.TextInputField(domain.InputFieldConfig{
@@ -1133,11 +1150,13 @@ templ PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint,
 							ClassInput:   common.ClassInputTextEnabled + " w-24",
 							BlurEndpoint: "api/fkpl/trazikonto",
 							HxTarget:     "sifranaziv",
-							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`,
+							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "1", "destfield": "odsifre"}`,
 							Value:        "00",
 							MinLength:    "2",
 							MaxLength:    "6",
 							TabIndex:     "2",
+							OnInput:      "clearFieldError",
+							OnFocus:      "clearFieldError",
 						})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
 							ID:          "odsifre",
@@ -1145,7 +1164,7 @@ templ PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint,
 							HxUrl:       "/api/promet/searchbutton",
 							HxTarget:    "#search-dropdown",
 							HxSwap:      "innerHTML",
-							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`,
+							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1", "destfield": "odsifre"}`,
 							ClassButton: common.ClassButton,
 						})
 						@tmpl.TextInputField(domain.InputFieldConfig{
@@ -1169,11 +1188,13 @@ templ PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint,
 							ClassInput:   common.ClassInputTextEnabled + " w-24",
 							BlurEndpoint: "api/fkpl/trazikonto",
 							HxTarget:     "sifranaziv",
-							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`,
+							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "1", "destfield": "dosifre"}`,
 							Value:        "999999",
 							MinLength:    "2",
 							MaxLength:    "6",
 							TabIndex:     "3",
+							OnInput:      "clearFieldError",
+							OnFocus:      "clearFieldError",
 						})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
 							ID:          "dosifre",
@@ -1181,7 +1202,7 @@ templ PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint,
 							HxUrl:       "/api/promet/searchbutton",
 							HxTarget:    "#search-dropdown",
 							HxSwap:      "innerHTML",
-							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`,
+							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1", "destfield": "dosifre"}`,
 							ClassButton: common.ClassButton,
 						})
 						@tmpl.TextInputField(domain.InputFieldConfig{
@@ -1192,41 +1213,41 @@ templ PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint,
 							ClassInput: common.ClassInputTextDisabled + " w-full",
 						})
 					</div>
-					<div class="flex items-center gap-1 mb-1">
-						@tmpl.LabelField(domain.LabelFieldConfig{
-							ID:         "oddatuma",
-							LabelText:  translator.Label("Od Datuma"),
-							ClassLabel: common.ClassLabel + " w-24",
-						})
-						@tmpl.TextInputField(domain.InputFieldConfig{
-							ID:         "oddatuma",
-							Name:       "oddatuma",
-							FieldType:  "date",
-							Disabled:   false,
-							ClassInput: common.ClassInputTextEnabled + " w-32",
-							Value:      time.Date(gnGod, 1, 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
-							TabIndex:   "4",
-						})
-					</div>
-					<div class="flex items-center gap-1 mb-1">
-						@tmpl.LabelField(domain.LabelFieldConfig{
-							ID:         "dodatuma",
-							LabelText:  translator.Label("Do Datuma"),
-							ClassLabel: common.ClassLabel + " w-24",
-						})
-						@tmpl.TextInputField(domain.InputFieldConfig{
-							ID:         "dodatuma",
-							Name:       "dodatuma",
-							FieldType:  "date",
-							Disabled:   false,
-							ClassInput: common.ClassInputTextEnabled + " w-32",
-							Value:      time.Date(gnGod, 12, 31, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
-							TabIndex:   "5",
-						})
-					</div>
-					<div class="mb-2 flex items-center justify-between h-6">
-						<!-- Checkbox group on the left -->
-						<div class="flex items-center"></div>
+					<div class="flex items-center justify-between gap-1 mb-1">
+						<div class="flex items-center gap-1">
+							@tmpl.LabelField(domain.LabelFieldConfig{
+								ID:         "oddatuma",
+								LabelText:  translator.Label("Od Datuma"),
+								ClassLabel: common.ClassLabel + " w-24",
+							})
+							@tmpl.TextInputField(domain.InputFieldConfig{
+								ID:         "oddatuma",
+								Name:       "oddatuma",
+								FieldType:  "date",
+								Disabled:   false,
+								ClassInput: common.ClassInputTextEnabled + " w-32",
+								Value:      time.Date(gnGod, 1, 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
+								TabIndex:   "4",
+								OnInput:    "clearFieldError",
+								OnFocus:    "clearFieldError",
+							})
+							@tmpl.LabelField(domain.LabelFieldConfig{
+								ID:         "dodatuma",
+								LabelText:  translator.Label("Do Datuma"),
+								ClassLabel: common.ClassLabel + " w-20",
+							})
+							@tmpl.TextInputField(domain.InputFieldConfig{
+								ID:         "dodatuma",
+								Name:       "dodatuma",
+								FieldType:  "date",
+								Disabled:   false,
+								ClassInput: common.ClassInputTextEnabled + " w-32",
+								Value:      time.Date(gnGod, 12, 31, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
+								TabIndex:   "5",
+								OnInput:    "clearFieldError",
+								OnFocus:    "clearFieldError",
+							})
+						</div>
 						<!-- Buttons on the right -->
 						<div class="flex items-center space-x-1">
 							@tmpl.FormObradaButton(btnObrada, translator)
@@ -1356,61 +1377,4 @@ templ PrometTotalValues(total domain.TotalValues, translator *i18n.Service) {
 			})
 		</div>
 	</div>
-}
-
-templ PrometScripts() {
-	<script>
-	  // Backward-compat wrappers used in templates
-    	function showSearchDialog(fieldId) { 
-			openDropdown('search-dropdown', 'search-button-' + fieldId, true); window.currentFieldId = fieldId; 
-		}
-
-		function openDropdown(dropdownId, buttonId, fixed = false) {
-			const dropdown = document.getElementById(dropdownId);
-			if (!dropdown) return;
-			dropdown.classList.remove('hidden');
-			if (fixed) {
-				const button = document.getElementById(buttonId);
-				if (button) {
-				const rect = button.getBoundingClientRect();
-				const scrollX = window.scrollX || window.pageXOffset;
-				const scrollY = window.scrollY || window.pageYOffset;
-				dropdown.style.position = 'fixed';
-				dropdown.style.top = (rect.bottom + scrollY) + 'px';
-				dropdown.style.left = (rect.left + scrollX) + 'px';
-				dropdown.style.zIndex = '1000';
-				}
-			} else {
-				positionDropdown(dropdownId, buttonId);
-			}
-		}
-
-		function clearFieldError(event) {
-			event.target.classList.remove('border-red-500', 'ring-red-500');
-		}
-
-		function hideDropdown(dropdownId) {
-			const el = document.getElementById(dropdownId);
-			if (el) el.classList.add('hidden');
-		}
-
-		function selectDropdownItem(dropdownId, valueFieldId, nameFieldId, value, name) {
-			const vf = document.getElementById(valueFieldId);
-			const nf = document.getElementById(nameFieldId);
-			if (vf) vf.value = value;
-			if (nf) nf.value = name;
-			closeDropdown(dropdownId);
-			if (vf) vf.dispatchEvent(new Event('blur'));
-		}
-		function positionDropdown(dropdownId, buttonId) {
-			const button = document.getElementById(buttonId);
-			const dropdown = document.getElementById(dropdownId);
-			if (!(button && dropdown)) return;
-			const rect = button.getBoundingClientRect();
-			dropdown.style.position = 'absolute';
-			dropdown.style.top = (rect.bottom + window.scrollY) + 'px';
-			dropdown.style.left = (rect.left + window.scrollX) + 'px';
-			dropdown.style.zIndex = '1000';
-		}
-	</script>
 }

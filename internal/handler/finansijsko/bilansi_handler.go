@@ -55,11 +55,13 @@ type BilansiHandler struct {
 	tabData domain.TabData
 	service *finservice.BilansiResource
 	cfg     config.Config
+	lm      *middleware.LockMiddleware
 }
 
-func NewBilansiHandler(service *finservice.BilansiResource, cfg config.Config) *BilansiHandler {
+func NewBilansiHandler(service *finservice.BilansiResource, cfg config.Config, lm *middleware.LockMiddleware) *BilansiHandler {
 	handler := &BilansiHandler{
 		cfg: cfg,
+		lm:  lm,
 	}
 	handler.tabData = GetBilansiTabData()
 	handler.service = service
@@ -244,7 +246,7 @@ func (h *BilansiHandler) CreateBilansStanja(c *gin.Context) {
 		return
 	}
 	mappedTableFields := h.service.MapEntityToValues(entity, tableFields)
-	_, err = h.service.Add(c, entity, common.IDBils, mappedTableFields)
+	_, err = h.service.Add(c, entity, common.IDbils, mappedTableFields)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgSaveData)
 		return
@@ -289,7 +291,7 @@ func (h *BilansiHandler) ConfirmUpdateBilansStanja(c *gin.Context) {
 	}
 	csrfToken := common.GetCsrfToken(c)
 
-	entity, err := h.service.GetByID(common.IDBils, id)
+	entity, err := h.service.GetByID(c.Request.Context(), common.IDbils, id)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, err.Error())
 		return
@@ -324,7 +326,7 @@ func (h *BilansiHandler) UpdateBilansStanja(c *gin.Context) {
 		return
 	}
 	mappedTableFields := h.service.MapEntityToValues(entity, tableFields)
-	err = h.service.Update(c, entity, common.IDBils, id, mappedTableFields)
+	err = h.service.Update(c, entity, common.IDbils, id, mappedTableFields)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgSaveData)
 		return
@@ -337,7 +339,8 @@ func (h *BilansiHandler) ConfirmDeleteBilansStanja(c *gin.Context) {
 	utils.ConfirmDeleteHelper(c, h.service.GetBilansStanjaTableFields())
 }
 func (h *BilansiHandler) DeleteBilansStanja(c *gin.Context) {
-	h.service.DeleteBilansStanja(c)
+	id := c.Param("id")
+	h.service.DeleteBilansStanja(c.Request.Context(), id)
 }
 func (h *BilansiHandler) StampanjeBilansStanja(c *gin.Context) {
 	requestSource := c.Request.Header.Get("X-Request-Source")
@@ -482,7 +485,7 @@ func (h *BilansiHandler) CreateBilansUspeha(c *gin.Context) {
 		return
 	}
 	mappedTableFields := h.service.MapEntityToValuesBilu(entity, tableFields)
-	_, err = h.service.AddBilu(c, entity, common.IDBilu, mappedTableFields)
+	_, err = h.service.AddBilu(c, entity, common.IDbilu, mappedTableFields)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgSaveData)
 		return
@@ -526,7 +529,7 @@ func (h *BilansiHandler) ConfirmUpdateBilansUspeha(c *gin.Context) {
 	}
 	csrfToken := common.GetCsrfToken(c)
 
-	entity, err := h.service.GetByIDBilu(common.IDBilu, id)
+	entity, err := h.service.GetByIDBilu(c.Request.Context(), common.IDbilu, id)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, err.Error())
 		return
@@ -561,7 +564,7 @@ func (h *BilansiHandler) UpdateBilansUspeha(c *gin.Context) {
 		return
 	}
 	mappedTableFields := h.service.MapEntityToValuesBilu(entity, tableFields)
-	err = h.service.UpdateBilu(c, entity, common.IDBilu, id, mappedTableFields)
+	err = h.service.UpdateBilu(c, entity, common.IDbilu, id, mappedTableFields)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgSaveData)
 		return
@@ -574,7 +577,8 @@ func (h *BilansiHandler) ConfirmDeleteBilansUspeha(c *gin.Context) {
 	utils.ConfirmDeleteHelper(c, h.service.GetBilansUspehaTableFields())
 }
 func (h *BilansiHandler) DeleteBilansUspeha(c *gin.Context) {
-	h.service.DeleteBilansUspeha(c)
+	id := c.Param("id")
+	h.service.DeleteBilansUspeha(c.Request.Context(), id)
 }
 func (h *BilansiHandler) StampanjeBilansUspeha(c *gin.Context) {
 	requestSource := c.Request.Header.Get("X-Request-Source")

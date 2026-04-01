@@ -19,17 +19,32 @@ func NewPostgresDB(conn *sqlx.DB) *PostgresDB {
 	return &PostgresDB{conn: conn}
 }
 
-// Get retrieves a single row
+// GetContext retrieves a single row with context
+func (p *PostgresDB) GetContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error {
+	return p.conn.GetContext(ctx, dest, query, args...)
+}
+
+// Get retrieves a single row (legacy, prefer GetContext)
 func (p *PostgresDB) Get(dest interface{}, query string, args ...interface{}) error {
 	return p.conn.Get(dest, query, args...)
 }
 
-// Select retrieves multiple rows
+// SelectContext retrieves multiple rows with context
+func (p *PostgresDB) SelectContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error {
+	return p.conn.SelectContext(ctx, dest, query, args...)
+}
+
+// Select retrieves multiple rows (legacy, prefer SelectContext)
 func (p *PostgresDB) Select(dest interface{}, query string, args ...interface{}) error {
 	return p.conn.Select(dest, query, args...)
 }
 
-// QueryRow executes a query that returns a single row
+// QueryRowContext executes a query that returns a single row with context
+func (p *PostgresDB) QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row {
+	return p.conn.QueryRowContext(ctx, query, args...)
+}
+
+// QueryRow executes a query that returns a single row (legacy, prefer QueryRowContext)
 func (p *PostgresDB) QueryRow(query string, args ...interface{}) *sql.Row {
 	return p.conn.QueryRow(query, args...)
 }
@@ -39,9 +54,9 @@ func (p *PostgresDB) QueryContext(ctx context.Context, query string, args ...int
 	return p.conn.QueryContext(ctx, query, args...)
 }
 
-// QueryRowContext executes a query that returns a single row with context
-func (p *PostgresDB) QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row {
-	return p.conn.QueryRowContext(ctx, query, args...)
+// ExecContext executes a query (INSERT, UPDATE, DELETE) with context
+func (p *PostgresDB) ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
+	return p.conn.ExecContext(ctx, query, args...)
 }
 
 // Beginx starts a new transaction
@@ -68,12 +83,22 @@ type PostgresTx struct {
 	tx *sqlx.Tx
 }
 
-// Exec executes a query within a transaction
+// ExecContext executes a query within a transaction with context
+func (t *PostgresTx) ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
+	return t.tx.ExecContext(ctx, query, args...)
+}
+
+// Exec executes a query within a transaction (legacy, prefer ExecContext)
 func (t *PostgresTx) Exec(query string, args ...interface{}) (sql.Result, error) {
 	return t.tx.Exec(query, args...)
 }
 
-// QueryRow executes a query that returns a single row within a transaction
+// QueryRowContext executes a query that returns a single row within a transaction with context
+func (t *PostgresTx) QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row {
+	return t.tx.QueryRowContext(ctx, query, args...)
+}
+
+// QueryRow executes a query that returns a single row within a transaction (legacy, prefer QueryRowContext)
 func (t *PostgresTx) QueryRow(query string, args ...interface{}) *sql.Row {
 	return t.tx.QueryRow(query, args...)
 }

@@ -29,7 +29,7 @@ func DeleteHelper[T any](
 		return
 	}
 
-	if err := service.Delete(idType, id); err != nil {
+	if err := service.Delete(c.Request.Context(), idType, id); err != nil {
 		common.WriteJSONResponse(c, http.StatusBadRequest, false, nil, fmt.Sprintf("%s: %s", common.ErrMsgDeleteData, err.Error()))
 		return
 	}
@@ -123,7 +123,7 @@ func ConfirmUpdateHelper[T any](c *gin.Context, service service.Service[T], tabl
 		return
 	}
 
-	entity, err := service.GetByID(idField, int64(id))
+	entity, err := service.GetByID(c.Request.Context(), idField, int64(id))
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusBadRequest, false, nil, common.ErrMsgReadData)
 		return
@@ -204,7 +204,7 @@ func UpdateHelper[T any](
 	}
 
 	tableFields = service.MapEntityToValues(entity, tableFields)
-	fieldErrors, err := service.Update(c, entity, idField, id, tableFields)
+	fieldErrors, err := service.Update(c.Request.Context(), entity, idField, id, tableFields)
 	if len(fieldErrors) > 0 {
 		common.WriteJSONResponse(c, http.StatusUnprocessableEntity, false, fieldErrors, common.ErrMsgValidation)
 		return
@@ -239,16 +239,16 @@ func GetAllEntityHelper[T any](
 	cfg config.Config,
 	hasUpdateDelete ...bool,
 ) *domain.TableData {
-	searchValue := c.DefaultQuery("query", "")
-
-	totRecords, err := service.GetTotalRecords(c, tableFields, searchValue)
+	searchText := c.DefaultQuery("query", "")
+	ctx := c.Request.Context()
+	totRecords, err := service.GetTotalRecords(ctx, tableFields, searchText)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData)
 		return nil
 	}
 
 	currentPage, pageSize, totalPages := common.GetPaginationData(c, totRecords, cfg)
-	allEntities, err := service.GetAll(c, pageSize, (currentPage-1)*pageSize, tableFields, idField, searchValue)
+	allEntities, err := service.GetAll(ctx, pageSize, (currentPage-1)*pageSize, tableFields, idField, searchText)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData)
 		return nil
@@ -273,10 +273,10 @@ func GetAllPrintEntityHelper[T any](
 	tableFields []domain.Fields,
 	entityContentTitle, entityTableID, entityURLPrefix, entityURLGetall, idField string,
 	cfg config.Config,
-	hasUpdateDelete ...bool,
-) *domain.TableData {
-
-	allEntities, err := service.GetAll(c, 0, 0, tableFields, idField, "")
+	) *domain.TableData {
+	
+	ctx := c.Request.Context()
+	allEntities, err := service.GetAll(ctx, 0, 0, tableFields, idField, "")
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData)
 		return nil
@@ -302,15 +302,15 @@ func GetAllPdfEntityHelper[T any](
 	hasUpdateDelete ...bool,
 ) *domain.TableData {
 	searchValue := c.DefaultQuery("query", "")
-
-	totRecords, err := service.GetTotalRecords(c, tableFields, searchValue)
+	ctx := c.Request.Context()
+	totRecords, err := service.GetTotalRecords(ctx, tableFields, searchValue)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData)
 		return nil
 	}
 
 	currentPage, pageSize, totalPages := common.GetPaginationData(c, totRecords, cfg)
-	allEntities, err := service.GetAll(c, pageSize, (currentPage-1)*pageSize, tableFields, idField, searchValue)
+	allEntities, err := service.GetAll(ctx, pageSize, (currentPage-1)*pageSize, tableFields, idField, searchValue)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData)
 		return nil
@@ -333,15 +333,15 @@ func GetAllExcelEntityHelper[T any](
 	hasUpdateDelete ...bool,
 ) *domain.TableData {
 	searchValue := c.DefaultQuery("query", "")
-
-	totRecords, err := service.GetTotalRecords(c, tableFields, searchValue)
+	ctx := c.Request.Context()
+	totRecords, err := service.GetTotalRecords(ctx, tableFields, searchValue)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData)
 		return nil
 	}
 
 	currentPage, pageSize, totalPages := common.GetPaginationData(c, totRecords, cfg)
-	allEntities, err := service.GetAll(c, pageSize, (currentPage-1)*pageSize, tableFields, idField, searchValue)
+	allEntities, err := service.GetAll(ctx, pageSize, (currentPage-1)*pageSize, tableFields, idField, searchValue)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData)
 		return nil
@@ -369,7 +369,8 @@ func GetEntityHelper[T any](
 		return
 	}
 
-	entity, err := service.GetByID(idField, id)
+	ctx := c.Request.Context()
+	entity, err := service.GetByID(ctx, idField, id)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData)
 		return
@@ -379,30 +380,85 @@ func GetEntityHelper[T any](
 
 func SearchButtonDialog(c *gin.Context) {
 	hxVals := ""
+	konto := c.Query("konto")
 	vkonta := c.Query("vkonta")
 	queryParams := c.Request.URL.Query()
 	id := ""
-	fieldName := "konto" // default
-	placeholder := "trazi konto..."
+	placeholder := "trazi podatak..."
 
-	// Detect which field is being searched by checking query parameters
-	searchFields := []string{"search-konto", "search-odkonta", "search-dokonta", "search-odmi", "search-domi", "search-sifra", "search-odsifre", "search-dosifre"}
-	for _, searchField := range searchFields {
-		if _, exists := queryParams[searchField]; exists {
-			// Extract field name from search-* parameter
-			fieldName = strings.TrimPrefix(searchField, "search-")
-			id = fieldName
-			placeholder = fmt.Sprintf("trazi %s...", fieldName)
-			break
-		}
-	}
+	fieldName := queryParams.Get("destfield")
 
-	// Get the value for the detected field
-	kontoValue := ""
-	if fieldName == "sifra" {
-		kontoValue = c.Query("konto")
-	}
-	hxVals = fmt.Sprintf(`{"konto": "%s", "vkonta": "%s", "fieldName": "%s"}`, kontoValue, vkonta, fieldName)
+	hxVals = fmt.Sprintf(`{"konto": "%s", "vkonta": "%s", "fieldName": "%s"}`, konto, vkonta, fieldName)
 	tmpl.SearchButtonDialog(id, id, placeholder, "/api/fkpl/trazikontosearchtable", "#search-results", "innerHTML", hxVals, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 
+}
+
+// PaginateTableData splits table rows into pages for print-friendly reports
+// rowsPerPage: number of rows per page (typically 20-30)
+// Returns a slice of TableData objects, one for each page
+func PaginateTableData(tableData *domain.TableData, rowsPerPage int) []*domain.TableData {
+	if rowsPerPage <= 0 {
+		rowsPerPage = 25
+	}
+
+	totalRows := len(tableData.Rows)
+	if totalRows == 0 {
+		return []*domain.TableData{tableData}
+	}
+
+	// Calculate number of pages needed
+	totalPages := (totalRows + rowsPerPage - 1) / rowsPerPage
+
+	// Create a slice to hold paginated tables
+	paginatedTables := make([]*domain.TableData, 0, totalPages)
+
+	// Split rows into pages
+	for page := 0; page < totalPages; page++ {
+		startIdx := page * rowsPerPage
+		endIdx := startIdx + rowsPerPage
+		if endIdx > totalRows {
+			endIdx = totalRows
+		}
+
+		// Create a copy of the table data for this page
+		pageTable := &domain.TableData{
+			ContentTitle:        tableData.ContentTitle,
+			TableID:             tableData.TableID,
+			Headers:             tableData.Headers,
+			Rows:                tableData.Rows[startIdx:endIdx],
+			Pagination:          tableData.Pagination,
+			URLPrefix:           tableData.URLPrefix,
+			URLGetAll:           tableData.URLGetAll,
+			HxInclude:           tableData.HxInclude,
+			HxTarget:            tableData.HxTarget,
+			BtnAdd:              tableData.BtnAdd,
+			BtnUpdate:           tableData.BtnUpdate,
+			BtnDelete:           tableData.BtnDelete,
+			BtnPrint:            tableData.BtnPrint,
+			BtnExportExcel:      tableData.BtnExportExcel,
+			BtnExportPDF:        tableData.BtnExportPDF,
+			SearchEnabled:       tableData.SearchEnabled,
+			ShowActions:         tableData.ShowActions,
+			ShowPagination:      false,
+			HxVals:              tableData.HxVals,
+			DetailTarget:        tableData.DetailTarget,
+			DetailURL:           tableData.DetailURL,
+			DetailHxRequestType: tableData.DetailHxRequestType,
+			DetailHxTrigger:     tableData.DetailHxTrigger,
+			DetailHxSwap:        tableData.DetailHxSwap,
+			ExportFilename:      tableData.ExportFilename,
+			HasExportExcel:      tableData.HasExportExcel,
+			HasExportPdf:        tableData.HasExportPdf,
+			FuncClick:           tableData.FuncClick,
+			FuncDblClick:        tableData.FuncDblClick,
+			DestField:           tableData.DestField,
+			Totals:              tableData.Totals,
+			HasTotals:           tableData.HasTotals && page == totalPages-1, // Show totals only on last page
+			TotalsCalculated:    tableData.TotalsCalculated,
+		}
+
+		paginatedTables = append(paginatedTables, pageTable)
+	}
+
+	return paginatedTables
 }

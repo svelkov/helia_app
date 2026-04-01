@@ -14,6 +14,11 @@ templ OtvoreneStavkeMain(tabs domain.TabData, tblPartneri, tblDetalji domain.Tab
 	<div id="tab-content" class="flex flex-col h-full">
 		@OtvoreneStavke(tabs, tblPartneri, tblDetalji, btnObrada, btnStampaOpomena, searchInput, searchInputDetalji, translator, gnGod)
 	</div>
+	@tmpl.ShowSearchDialogScript()
+	@tmpl.HideDropdownScript()
+	@tmpl.ClearFieldErrorScript()
+	@tmpl.HandleDblClickKontoSelectionScript()
+	@tmpl.SpinnerScript()
 }
 
 // Tab 1 - Otvorene stavke (Open Items)
@@ -43,21 +48,22 @@ templ OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDa
 							FieldType:    "text",
 							Disabled:     false,
 							ClassInput:   common.ClassInputTextEnabled + " w-24",
-							TabIndex:     "1",
-							OnInput:      "clearFieldError",
-							OnFocus:      "clearFieldError",
 							BlurEndpoint: "api/fkpl/trazikonto",
 							HxTarget:     "kontonaziv",
-							HxVals:       `js:{"konto": document.getElementById('konto').value,  "vkonta": "2"}`,
+							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "2", "destfield": "konto"}`,
 							HxInclude:    "this",
+							MinLength:    "2",
+							MaxLength:    "6",
+							TabIndex:     "1",
+							OnInput:      "clearFieldError",
 						})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
-							ID:          "btnkonto",
+							ID:          "btn-search-konto",
 							Name:        "search-konto",
 							HxUrl:       "/api/promet/searchbutton",
 							HxTarget:    "#search-dropdown",
 							HxSwap:      "innerHTML",
-							HxVals:      `js:{"vkonta": "1"}`,
+							HxVals:      `{"vkonta": "2", "destfield": "konto"}`,
 							ClassButton: common.ClassButton,
 						})
 						@tmpl.TextInputField(domain.InputFieldConfig{
@@ -65,14 +71,13 @@ templ OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDa
 							Name:       "kontonaziv",
 							FieldType:  "text",
 							Disabled:   true,
-							ClassInput: common.ClassInputTextEnabled + " w-full",
-							TabIndex:   "-1",
+							ClassInput: common.ClassInputTextDisabled + " w-full",
 						})
 					</div>
 					<!-- Od Šifre -->
 					<div class="flex items-center gap-1 mb-1">
 						@tmpl.LabelField(domain.LabelFieldConfig{
-							ID:         "lblodsifre",
+							ID:         "odsifre",
 							LabelText:  translator.Label("Od šifre"),
 							ClassLabel: common.ClassLabel + " w-24",
 						})
@@ -82,22 +87,23 @@ templ OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDa
 							FieldType:    "text",
 							Disabled:     false,
 							ClassInput:   common.ClassInputTextEnabled + " w-24",
-							Value:        "00",
-							TabIndex:     "2",
-							OnInput:      "clearFieldError",
-							OnFocus:      "clearFieldError",
 							BlurEndpoint: "api/fkpl/trazikonto",
 							HxTarget:     "odsifrenaziv",
-							HxVals:       `js:{"konto": document.getElementById('konto-duznika').value, "sifra": document.getElementById('odsifre').value, "vkonta": "1"}`,
+							HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('odsifre').value, "vkonta": "1", "destfield": "odsifre"}`,
 							HxInclude:    "this",
+							Value:        "00",
+							MinLength:    "2",
+							MaxLength:    "6",
+							TabIndex:     "2",
+							OnInput:      "clearFieldError",
 						})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
-							ID:          "btnodsifre",
+							ID:          "odsifre",
 							Name:        "search-odsifre",
 							HxUrl:       "/api/promet/searchbutton",
 							HxTarget:    "#search-dropdown",
 							HxSwap:      "innerHTML",
-							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`,
+							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1", "destfield": "odsifre"}`,
 							ClassButton: common.ClassButton,
 						})
 						@tmpl.TextInputField(domain.InputFieldConfig{
@@ -105,14 +111,13 @@ templ OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDa
 							Name:       "odsifrenaziv",
 							FieldType:  "text",
 							Disabled:   true,
-							ClassInput: common.ClassInputTextEnabled + " w-full",
-							TabIndex:   "-1",
+							ClassInput: common.ClassInputTextDisabled + " w-full",
 						})
 					</div>
 					<!-- Do Šifre -->
 					<div class="flex items-center gap-1 mb-1">
 						@tmpl.LabelField(domain.LabelFieldConfig{
-							ID:         "lbldosifre",
+							ID:         "dosifre",
 							LabelText:  translator.Label("Do šifre"),
 							ClassLabel: common.ClassLabel + " w-24",
 						})
@@ -122,22 +127,23 @@ templ OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDa
 							FieldType:    "text",
 							Disabled:     false,
 							ClassInput:   common.ClassInputTextEnabled + " w-24",
-							Value:        "999999",
-							TabIndex:     "3",
-							OnInput:      "clearFieldError",
-							OnFocus:      "clearFieldError",
 							BlurEndpoint: "api/fkpl/trazikonto",
 							HxTarget:     "dosifrenaziv",
-							HxVals:       `js:{"konto": document.getElementById('konto-duznika').value, "sifra": document.getElementById('dosifre').value, "vkonta": "1"}`,
+							HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('dosifre').value, "vkonta": "1", "destfield": "dosifre"}`,
 							HxInclude:    "this",
+							Value:        "999999",
+							MinLength:    "2",
+							MaxLength:    "6",
+							TabIndex:     "2",
+							OnInput:      "clearFieldError",
 						})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
-							ID:          "btndosifre",
+							ID:          "dosifre",
 							Name:        "search-dosifre",
 							HxUrl:       "/api/promet/searchbutton",
 							HxTarget:    "#search-dropdown",
 							HxSwap:      "innerHTML",
-							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`,
+							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1", "destfield": "dosifre"}`,
 							ClassButton: common.ClassButton,
 						})
 						@tmpl.TextInputField(domain.InputFieldConfig{
@@ -145,8 +151,7 @@ templ OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDa
 							Name:       "dosifrenaziv",
 							FieldType:  "text",
 							Disabled:   true,
-							ClassInput: common.ClassInputTextEnabled + " w-full",
-							TabIndex:   "-1",
+							ClassInput: common.ClassInputTextDisabled + " w-full",
 						})
 					</div>
 				</div>
@@ -218,9 +223,6 @@ templ OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDa
 	</div>
 	<!-- Dialog display container-->
 	<div id="dialog-content"></div>
-	@tmpl.HandleDialogResponse("dialog-content")
-	@tmpl.ClearFieldError()
-	@tmpl.SpinnerScript()
 	<script>
 		// Listen for table data to be loaded via HTMX, then auto-click first row once
 		if (!window.otvoreneStavkeFirstRowListener) {
@@ -273,21 +275,22 @@ templ ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableD
 							FieldType:    "text",
 							Disabled:     false,
 							ClassInput:   common.ClassInputTextEnabled + " w-24",
-							TabIndex:     "1",
-							OnInput:      "clearFieldError",
-							OnFocus:      "clearFieldError",
 							BlurEndpoint: "api/fkpl/trazikonto",
 							HxTarget:     "kontonaziv",
-							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "2"}`,
+							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "2", "destfield": "konto"}`,
 							HxInclude:    "this",
+							MinLength:    "2",
+							MaxLength:    "6",
+							TabIndex:     "1",
+							OnInput:      "clearFieldError",
 						})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
-							ID:          "btnkonto",
+							ID:          "btn-search-konto",
 							Name:        "search-konto",
 							HxUrl:       "/api/promet/searchbutton",
 							HxTarget:    "#search-dropdown",
 							HxSwap:      "innerHTML",
-							HxVals:      `js:{"vkonta": "1"}`,
+							HxVals:      `{"vkonta": "2", "destfield": "konto"}`,
 							ClassButton: common.ClassButton,
 						})
 						@tmpl.TextInputField(domain.InputFieldConfig{
@@ -295,14 +298,13 @@ templ ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableD
 							Name:       "kontonaziv",
 							FieldType:  "text",
 							Disabled:   true,
-							ClassInput: common.ClassInputTextEnabled + " w-full",
-							TabIndex:   "-1",
+							ClassInput: common.ClassInputTextDisabled + " w-full",
 						})
 					</div>
 					<!-- Od Šifre -->
 					<div class="flex items-center gap-1 mb-1">
 						@tmpl.LabelField(domain.LabelFieldConfig{
-							ID:         "lblodsifre",
+							ID:         "odsifre",
 							LabelText:  translator.Label("Od šifre"),
 							ClassLabel: common.ClassLabel + " w-24",
 						})
@@ -312,22 +314,23 @@ templ ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableD
 							FieldType:    "text",
 							Disabled:     false,
 							ClassInput:   common.ClassInputTextEnabled + " w-24",
-							Value:        "00",
-							TabIndex:     "2",
-							OnInput:      "clearFieldError",
-							OnFocus:      "clearFieldError",
 							BlurEndpoint: "api/fkpl/trazikonto",
 							HxTarget:     "odsifrenaziv",
-							HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('odsifre').value, "vkonta": "1"}`,
+							HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('odsifre').value, "vkonta": "1", "destfield": "odsifre"}`,
 							HxInclude:    "this",
+							Value:        "00",
+							MinLength:    "2",
+							MaxLength:    "6",
+							TabIndex:     "2",
+							OnInput:      "clearFieldError",
 						})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
-							ID:          "btnodsifre",
+							ID:          "odsifre",
 							Name:        "search-odsifre",
 							HxUrl:       "/api/promet/searchbutton",
 							HxTarget:    "#search-dropdown",
 							HxSwap:      "innerHTML",
-							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`,
+							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1", "destfield": "odsifre"}`,
 							ClassButton: common.ClassButton,
 						})
 						@tmpl.TextInputField(domain.InputFieldConfig{
@@ -335,14 +338,13 @@ templ ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableD
 							Name:       "odsifrenaziv",
 							FieldType:  "text",
 							Disabled:   true,
-							ClassInput: common.ClassInputTextEnabled + " w-full",
-							TabIndex:   "-1",
+							ClassInput: common.ClassInputTextDisabled + " w-full",
 						})
 					</div>
 					<!-- Do Šifre -->
 					<div class="flex items-center gap-1 mb-1">
 						@tmpl.LabelField(domain.LabelFieldConfig{
-							ID:         "lbldosifre",
+							ID:         "dosifre",
 							LabelText:  translator.Label("Do šifre"),
 							ClassLabel: common.ClassLabel + " w-24",
 						})
@@ -352,22 +354,23 @@ templ ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableD
 							FieldType:    "text",
 							Disabled:     false,
 							ClassInput:   common.ClassInputTextEnabled + " w-24",
-							Value:        "999999",
-							TabIndex:     "3",
-							OnInput:      "clearFieldError",
-							OnFocus:      "clearFieldError",
 							BlurEndpoint: "api/fkpl/trazikonto",
 							HxTarget:     "dosifrenaziv",
-							HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('dosifre').value, "vkonta": "1"}`,
+							HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('dosifre').value, "vkonta": "1", "destfield": "dosifre"}`,
 							HxInclude:    "this",
+							Value:        "999999",
+							MinLength:    "2",
+							MaxLength:    "6",
+							TabIndex:     "2",
+							OnInput:      "clearFieldError",
 						})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
-							ID:          "btndosifre",
+							ID:          "dosifre",
 							Name:        "search-dosifre",
 							HxUrl:       "/api/promet/searchbutton",
 							HxTarget:    "#search-dropdown",
 							HxSwap:      "innerHTML",
-							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`,
+							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1", "destfield": "dosifre"}`,
 							ClassButton: common.ClassButton,
 						})
 						@tmpl.TextInputField(domain.InputFieldConfig{
@@ -375,8 +378,7 @@ templ ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableD
 							Name:       "dosifrenaziv",
 							FieldType:  "text",
 							Disabled:   true,
-							ClassInput: common.ClassInputTextEnabled + " w-full",
-							TabIndex:   "-1",
+							ClassInput: common.ClassInputTextDisabled + " w-full",
 						})
 					</div>
 				</div>
@@ -447,9 +449,6 @@ templ ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableD
 	</div>
 	<!-- Dialog display container-->
 	<div id="dialog-content"></div>
-	@tmpl.HandleDialogResponse("dialog-content")
-	@tmpl.ClearFieldError()
-	@tmpl.SpinnerScript()
 	<script>
 		// Listen for table data to be loaded via HTMX, then auto-click first row once
 		if (!window.zatvoreneStavkeFirstRowListener) {
@@ -496,7 +495,7 @@ templ IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObra
 					<!-- Konto Field -->
 					<div class="flex items-center gap-1 mb-1">
 						@tmpl.LabelField(domain.LabelFieldConfig{
-							ID:         "konto-ios",
+							ID:         "konto",
 							LabelText:  translator.Label("Konto"),
 							ClassLabel: common.ClassLabel + " w-24",
 						})
@@ -506,23 +505,22 @@ templ IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObra
 							FieldType:    "text",
 							Disabled:     false,
 							ClassInput:   common.ClassInputTextEnabled + " w-24",
-							TabIndex:     "1",
-							OnInput:      "clearFieldError",
-							OnFocus:      "clearFieldError",
 							BlurEndpoint: "api/fkpl/trazikonto",
-							HxTarget:     "kontonaziv-ios",
-							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "2"}`,
+							HxTarget:     "kontonaziv",
+							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "2", "destfield": "konto"}`,
 							HxInclude:    "this",
 							MinLength:    "2",
 							MaxLength:    "6",
+							TabIndex:     "1",
+							OnInput:      "clearFieldError",
 						})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
-							ID:          "btnkonto",
+							ID:          "btn-search-konto",
 							Name:        "search-konto",
 							HxUrl:       "/api/promet/searchbutton",
 							HxTarget:    "#search-dropdown",
 							HxSwap:      "innerHTML",
-							HxVals:      `js:{"vkonta": "1"}`,
+							HxVals:      `{"vkonta": "2", "destfield": "konto"}`,
 							ClassButton: common.ClassButton,
 						})
 						@tmpl.TextInputField(domain.InputFieldConfig{
@@ -530,14 +528,13 @@ templ IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObra
 							Name:       "kontonaziv",
 							FieldType:  "text",
 							Disabled:   true,
-							ClassInput: common.ClassInputTextEnabled + " w-full",
-							TabIndex:   "-1",
+							ClassInput: common.ClassInputTextDisabled + " w-full",
 						})
 					</div>
 					<!-- Od Šifre -->
 					<div class="flex items-center gap-1 mb-1">
 						@tmpl.LabelField(domain.LabelFieldConfig{
-							ID:         "lblodsifre",
+							ID:         "odsifre",
 							LabelText:  translator.Label("Od šifre"),
 							ClassLabel: common.ClassLabel + " w-24",
 						})
@@ -547,24 +544,23 @@ templ IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObra
 							FieldType:    "text",
 							Disabled:     false,
 							ClassInput:   common.ClassInputTextEnabled + " w-24",
-							Value:        "00",
-							TabIndex:     "2",
-							OnInput:      "clearFieldError",
-							OnFocus:      "clearFieldError",
 							BlurEndpoint: "api/fkpl/trazikonto",
 							HxTarget:     "odsifrenaziv",
-							HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('odsifre').value, "vkonta": "1"}`,
+							HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('odsifre').value, "vkonta": "1", "destfield": "odsifre"}`,
 							HxInclude:    "this",
+							Value:        "00",
 							MinLength:    "2",
 							MaxLength:    "6",
+							TabIndex:     "2",
+							OnInput:      "clearFieldError",
 						})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
-							ID:          "btnodsifre",
+							ID:          "odsifre",
 							Name:        "search-odsifre",
 							HxUrl:       "/api/promet/searchbutton",
 							HxTarget:    "#search-dropdown",
 							HxSwap:      "innerHTML",
-							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`,
+							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1", "destfield": "odsifre"}`,
 							ClassButton: common.ClassButton,
 						})
 						@tmpl.TextInputField(domain.InputFieldConfig{
@@ -572,14 +568,13 @@ templ IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObra
 							Name:       "odsifrenaziv",
 							FieldType:  "text",
 							Disabled:   true,
-							ClassInput: common.ClassInputTextEnabled + " w-full",
-							TabIndex:   "-1",
+							ClassInput: common.ClassInputTextDisabled + " w-full",
 						})
 					</div>
 					<!-- Do Šifre -->
 					<div class="flex items-center gap-1 mb-1">
 						@tmpl.LabelField(domain.LabelFieldConfig{
-							ID:         "lbldosifre",
+							ID:         "dosifre",
 							LabelText:  translator.Label("Do šifre"),
 							ClassLabel: common.ClassLabel + " w-24",
 						})
@@ -589,24 +584,23 @@ templ IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObra
 							FieldType:    "text",
 							Disabled:     false,
 							ClassInput:   common.ClassInputTextEnabled + " w-24",
-							Value:        "999999",
-							TabIndex:     "3",
-							OnInput:      "clearFieldError",
-							OnFocus:      "clearFieldError",
 							BlurEndpoint: "api/fkpl/trazikonto",
 							HxTarget:     "dosifrenaziv",
-							HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('dosifre').value, "vkonta": "1"}`,
+							HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('dosifre').value, "vkonta": "1", "destfield": "dosifre"}`,
 							HxInclude:    "this",
+							Value:        "999999",
 							MinLength:    "2",
 							MaxLength:    "6",
+							TabIndex:     "2",
+							OnInput:      "clearFieldError",
 						})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
-							ID:          "btndosifre",
+							ID:          "dosifre",
 							Name:        "search-dosifre",
 							HxUrl:       "/api/promet/searchbutton",
 							HxTarget:    "#search-dropdown",
 							HxSwap:      "innerHTML",
-							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`,
+							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1", "destfield": "dosifre"}`,
 							ClassButton: common.ClassButton,
 						})
 						@tmpl.TextInputField(domain.InputFieldConfig{
@@ -614,8 +608,7 @@ templ IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObra
 							Name:       "dosifrenaziv",
 							FieldType:  "text",
 							Disabled:   true,
-							ClassInput: common.ClassInputTextEnabled + " w-full",
-							TabIndex:   "-1",
+							ClassInput: common.ClassInputTextDisabled + " w-full",
 						})
 					</div>
 				</div>
@@ -687,9 +680,6 @@ templ IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObra
 	</div>
 	<!-- Dialog display container-->
 	<div id="dialog-content"></div>
-	@tmpl.HandleDialogResponse("dialog-content")
-	@tmpl.ClearFieldError()
-	@tmpl.SpinnerScript()
 	<script>
 		// Listen for table data to be loaded via HTMX, then auto-click first row once
 		if (!window.iosFirstRowListener) {
@@ -745,23 +735,22 @@ templ DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Ta
 							FieldType:    "text",
 							Disabled:     false,
 							ClassInput:   common.ClassInputTextEnabled + " w-24",
-							TabIndex:     "1",
-							OnInput:      "clearFieldError",
-							OnFocus:      "clearFieldError",
 							BlurEndpoint: "api/fkpl/trazikonto",
 							HxTarget:     "kontonaziv",
-							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "2"}`,
+							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "2", "destfield": "konto"}`,
 							HxInclude:    "this",
 							MinLength:    "2",
 							MaxLength:    "6",
+							TabIndex:     "1",
+							OnInput:      "clearFieldError",
 						})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
-							ID:          "btnkonto",
+							ID:          "btn-search-konto",
 							Name:        "search-konto",
 							HxUrl:       "/api/promet/searchbutton",
 							HxTarget:    "#search-dropdown",
 							HxSwap:      "innerHTML",
-							HxVals:      `js:{"vkonta": "2"}`,
+							HxVals:      `{"vkonta": "2", "destfield": "konto"}`,
 							ClassButton: common.ClassButton,
 						})
 						@tmpl.TextInputField(domain.InputFieldConfig{
@@ -769,14 +758,13 @@ templ DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Ta
 							Name:       "kontonaziv",
 							FieldType:  "text",
 							Disabled:   true,
-							ClassInput: common.ClassInputTextEnabled + " w-full",
-							TabIndex:   "-1",
+							ClassInput: common.ClassInputTextDisabled + " w-full",
 						})
 					</div>
 					<!-- Od Šifre -->
 					<div class="flex items-center gap-1 mb-1">
 						@tmpl.LabelField(domain.LabelFieldConfig{
-							ID:         "lblodsifre",
+							ID:         "odsifre",
 							LabelText:  translator.Label("Od šifre"),
 							ClassLabel: common.ClassLabel + " w-24",
 						})
@@ -786,24 +774,23 @@ templ DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Ta
 							FieldType:    "text",
 							Disabled:     false,
 							ClassInput:   common.ClassInputTextEnabled + " w-24",
+							BlurEndpoint: "api/fkpl/trazikonto",
+							HxTarget:     "odsifrenaziv",
+							HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('odsifre').value, "vkonta": "1", "destfield": "odsifre"}`,
+							HxInclude:    "this",
 							Value:        "00",
 							MinLength:    "2",
 							MaxLength:    "6",
 							TabIndex:     "2",
 							OnInput:      "clearFieldError",
-							OnFocus:      "clearFieldError",
-							BlurEndpoint: "api/fkpl/trazikonto",
-							HxTarget:     "odsifrenaziv",
-							HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('odsifre').value, "vkonta": "1"}`,
-							HxInclude:    "this",
 						})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
-							ID:          "btnodsifre",
+							ID:          "odsifre",
 							Name:        "search-odsifre",
 							HxUrl:       "/api/promet/searchbutton",
 							HxTarget:    "#search-dropdown",
 							HxSwap:      "innerHTML",
-							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`,
+							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1", "destfield": "odsifre"}`,
 							ClassButton: common.ClassButton,
 						})
 						@tmpl.TextInputField(domain.InputFieldConfig{
@@ -811,14 +798,13 @@ templ DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Ta
 							Name:       "odsifrenaziv",
 							FieldType:  "text",
 							Disabled:   true,
-							ClassInput: common.ClassInputTextEnabled + " w-full",
-							TabIndex:   "-1",
+							ClassInput: common.ClassInputTextDisabled + " w-full",
 						})
 					</div>
 					<!-- Do Šifre -->
 					<div class="flex items-center gap-1 mb-1">
 						@tmpl.LabelField(domain.LabelFieldConfig{
-							ID:         "lbldosifre",
+							ID:         "dosifre",
 							LabelText:  translator.Label("Do šifre"),
 							ClassLabel: common.ClassLabel + " w-24",
 						})
@@ -828,24 +814,23 @@ templ DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Ta
 							FieldType:    "text",
 							Disabled:     false,
 							ClassInput:   common.ClassInputTextEnabled + " w-24",
-							Value:        "999999",
-							TabIndex:     "3",
-							MinLength:    "2",
-							MaxLength:    "6",
-							OnInput:      "clearFieldError",
-							OnFocus:      "clearFieldError",
 							BlurEndpoint: "api/fkpl/trazikonto",
 							HxTarget:     "dosifrenaziv",
-							HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('dosifre').value, "vkonta": "1"}`,
+							HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('dosifre').value, "vkonta": "1", "destfield": "dosifre"}`,
 							HxInclude:    "this",
+							Value:        "999999",
+							MinLength:    "2",
+							MaxLength:    "6",
+							TabIndex:     "2",
+							OnInput:      "clearFieldError",
 						})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
-							ID:          "btndosifre",
+							ID:          "dosifre",
 							Name:        "search-dosifre",
 							HxUrl:       "/api/promet/searchbutton",
 							HxTarget:    "#search-dropdown",
 							HxSwap:      "innerHTML",
-							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`,
+							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1", "destfield": "dosifre"}`,
 							ClassButton: common.ClassButton,
 						})
 						@tmpl.TextInputField(domain.InputFieldConfig{
@@ -853,8 +838,7 @@ templ DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Ta
 							Name:       "dosifrenaziv",
 							FieldType:  "text",
 							Disabled:   true,
-							ClassInput: common.ClassInputTextEnabled + " w-full",
-							TabIndex:   "-1",
+							ClassInput: common.ClassInputTextDisabled + " w-full",
 						})
 					</div>
 				</div>
@@ -947,8 +931,8 @@ templ DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Ta
 	</div>
 	<!-- Dialog display container-->
 	<div id="dialog-content"></div>
-	@tmpl.HandleDialogResponse("dialog-content")
-	@tmpl.ClearFieldError()
+	@tmpl.HandleDialogResponseScript("dialog-content")
+	@tmpl.ClearFieldErrorScript()
 	@tmpl.SpinnerScript()
 	<script>
 		// Listen for table data to be loaded via HTMX, then auto-click first row once
@@ -1216,8 +1200,8 @@ templ PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnO
 	<div id="dialog-content"></div>
 	<!-- Dialog display container-->
 	<div id="dialog-content"></div>
-	@tmpl.HandleDialogResponse("dialog-content")
-	@tmpl.ClearFieldError()
+	@tmpl.HandleDialogResponseScript("dialog-content")
+	@tmpl.ClearFieldErrorScript()
 	@tmpl.SpinnerScript()
 	<script>
 		// Listen for table data to be loaded via HTMX, then auto-click first row once
@@ -1481,8 +1465,8 @@ templ PregledDospelogDugaPoStarosti(tabs domain.TabData, tbl domain.TableData, b
 	</div>
 	<!-- Dialog display container-->
 	<div id="dialog-content"></div>
-	@tmpl.HandleDialogResponse("dialog-content")
-	@tmpl.ClearFieldError()
+	@tmpl.HandleDialogResponseScript("dialog-content")
+	@tmpl.ClearFieldErrorScript()
 	@tmpl.SpinnerScript()
 }
 

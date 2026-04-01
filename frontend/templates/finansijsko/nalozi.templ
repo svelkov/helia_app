@@ -3,9 +3,9 @@ package finansijsko
 import (
 	"fmt"
 	tmpl "helia/frontend/templates"
+	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
-	"helia/i18n"
 )
 
 var tabClasses string
@@ -29,8 +29,8 @@ templ NaloziKnjizenjeContent(tipdokValues []domain.ComboItem, ukObrada domain.Uk
 				@tmpl.Table(tbl, translator)
 			</div>
 		</div>
-		<div id="dialog-confirm"></div>
-		<div id="dialog-stavkenaloga"></div>
+		<div id="dialog-confirm" class="top-0 z-50"></div>
+		<div id="dialog-stavkenaloga" class="top-0 z-50"></div>
 	</div>
 }
 
@@ -210,7 +210,12 @@ templ NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Uku
 			</div>
 		</div>
 	</div>
-	@tmpl.ShowMessage()
+	
+	@tmpl.HandleFormResponseScript()
+	@tmpl.ShowMessageScript()
+	@tmpl.ClearFieldErrorScript()
+	@tmpl.CloseDialogScript()
+	@tmpl.RestrictNumericInput()
 }
 
 templ NaloziHeader(tblHeader domain.TableData, translator *i18n.Service) {
@@ -234,6 +239,15 @@ templ NaloziKopiranje(tabs domain.TabData, tblHeader, tblStavke domain.TableData
 		<div id="tab2" class="flex-1 min-h-0 flex flex-col gap-1">
 			@tmpl.TabNav(translator.Title("Nalozi za knjizenje"), tabs, "#main-content", "knjizenje-panel", translator)
 			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
+				@tmpl.CheckboxField(domain.CheckboxFieldConfig{
+					ID:            "kopirajceonalog",
+					Name:          "kopirajceonalog",
+					LabelText:     "Kopiraj ceo nalog",
+					Disabled:      false,
+					Checked:       true,
+					ClassCheckbox: common.ClassCheckbox + " mr-2",
+					ClassLabel:    common.ClassLabel + " flex items-center",
+				}, translator)
 				@tmpl.Search_Part(tblHeader, searchControl)
 				<!-- Table -->
 				<div class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
@@ -250,7 +264,7 @@ templ NaloziStorniranje(tabs domain.TabData, tblHeader, tblStavke domain.TableDa
 	<div class="flex flex-col h-full">
 		<!-- Tab Content -->
 		<div id="tab3" class="flex-1 min-h-0 flex flex-col gap-1">
-			@tmpl.TabNav(translator.Title("Nalozi za storniranje"), tabs, "#main-content", "storniranje-panel", translator)
+			@tmpl.TabNav(translator.Title("Nalozi za knjizenje"), tabs, "#main-content", "storniranje-panel", translator)
 			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
 				@tmpl.Search_Part(tblHeader, searchControl)
 				<!-- Table -->
@@ -263,342 +277,872 @@ templ NaloziStorniranje(tabs domain.TabData, tblHeader, tblStavke domain.TableDa
 	</div>
 }
 
-templ NaloziStampanje(tabs domain.TabData, tblHeader, tblStavke domain.TableData, btnStampaj domain.Button, searchControl domain.InputControl, translator *i18n.Service) {
+templ NaloziStampanje(tabs domain.TabData, tblHeader, tblStavke domain.TableData, btnStampaj domain.Button, searchControl, searchControlDetalji domain.InputControl, translator *i18n.Service) {
 	<!-- Container with full height -->
 	<div class="flex flex-col h-full">
 		<!-- Tab Content -->
 		<div id="tab4" class="flex-1 min-h-0 flex flex-col gap-1">
-			@tmpl.TabNav(translator.Title("Nalozi za stampanje"), tabs, "#main-content", "stampanje-panel", translator)
+			@tmpl.TabNav(translator.Title("Nalozi za knjizenje"), tabs, "#main-content", "stampanje-panel", translator)
 			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
+				<div class="flex items-center justify-between mb-1 px-1">
+					<div class="flex items-center gap-4">
+						@tmpl.RadioButtonField(domain.RadioFieldConfig{
+							ID:         "stampanje-pojedinacnog-naloga",
+							Name:       "tip-stampanja",
+							Value:      "pojedinacni",
+							LabelText:  translator.Label("Štampanje pojedinačnog naloga"),
+							IsSelected: true,
+						}, translator)
+						@tmpl.RadioButtonField(domain.RadioFieldConfig{
+							ID:         "stampanje-grupa-naloga",
+							Name:       "tip-stampanja",
+							Value:      "grupa",
+							LabelText:  translator.Label("Štampanje grupa naloga"),
+							IsSelected: false,
+						}, translator)
+					</div>
+					<div class="flex items-center">
+						@tmpl.PrintButton(btnStampaj, translator)
+					</div>
+				</div>
 				@tmpl.Search_Part(tblHeader, searchControl)
 				<!-- Table -->
 				<div class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
 					@tmpl.Table(tblHeader, translator)
 				</div>
-				<div class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
-					@tmpl.Table(tblStavke, translator)
+				<div id="stavke-naloga" class="flex-1 min-h-0 flex flex-col">
+					@NaloziStampanjeStavke(tblStavke, searchControlDetalji, translator)
 				</div>
 			</div>
 		</div>
-		<div id="nalozi_stampanje" class="border-b border-gray-200"></div>
+	</div>
+	@tmpl.ShowMessageScript()
+	@tmpl.ClearFieldErrorScript()
+	@HandleTableRowClickScript()
+}
+
+templ NaloziStampanjeStavke(tblStavke domain.TableData, searchControlDetalji domain.InputControl, translator *i18n.Service) {
+	@tmpl.Search_Part(tblStavke, searchControlDetalji)
+	<div class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+		@tmpl.Table(tblStavke, translator)
 	</div>
 }
 
-templ NaloziKopiranjeDialog(model domain.KopirajNalog, btnSave domain.Button, translator *i18n.Service, csrfToken string) {
-	<input type="hidden" name="_csrf" value={ csrfToken }/>
-	<div class="text-blue-800 font-bold text-sm mb-1">
-		{ translator.Text("Podaci o nalogu iz kojeg se kopira") }
+templ NaloziKopiranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, btnSave, btnCancel, btnClose domain.Button, translator *i18n.Service, csrfToken string) {
+	<div id={ dialog.Id } class={ common.ClassMainDialogDiv }>
+		<div class="bg-white rounded-lg shadow-2xl relative animate-fade-in max-w-full w-auto">
+			<!-- Title Bar (Flush on Left, Top, Right) -->
+			if btnSave.Id == "btn-delete" {
+				<div class="bg-red-600 text-white h-9 flex justify-between items-center rounded-t-lg">
+					<h2 class="text-lg font-semibold ml-4">{ translator.Title(dialog.Title) }</h2>
+					@tmpl.CloseButton(btnClose)
+				</div>
+			} else {
+				<div class="bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg">
+					<h2 class="text-lg font-semibold ml-4">{ translator.Title(dialog.Title) }</h2>
+					@tmpl.CloseButton(btnClose)
+				</div>
+			}
+			<div class="flex flex-col h-full">
+				<!-- Content -->
+				<form
+					if dialog.HxRequestType == "PUT" {
+						hx-put={ dialog.HxActionURL }
+						hx-on::after-request="handleFormResponse(event, 'PUT', null, true)"
+					}
+					if dialog.HxRequestType == "POST" {
+						hx-post={ dialog.HxActionURL }
+						hx-on::after-request="handleFormResponse(event, 'POST', null, true)"
+					}
+					hx-target="#dialog-form-message"
+					hx-boost="false"
+					hx-on::after-request="handleFormResponse(event, 'dialog-form')"
+					onsubmit="return false;"
+					class="grid grid-cols-1 md:grid-cols-[auto,auto] gap-2 gap-x-4 p-3 bg-white shadow-lg rounded-lg w-auto"
+				>
+					<input type="hidden" name="_csrf" value={ csrfToken }/>
+					<div class="px-1 py-1 col-span-2 max-h-[70vh] overflow-y-auto">
+						<input type="hidden" name="idfnal" value={ fmt.Sprintf("%d", model.IDFnal) }/>
+						<input type="hidden" name="tipdok_old" value={ model.Tipdok_Old }/>
+						<input type="hidden" name="nalog_old" value={ model.NalogOld }/>
+						<div class="text-blue-800 font-bold text-sm mb-1">
+							{ translator.Text("Podaci o nalogu iz kojeg se kopira") }
+						</div>
+						<div class="box-content flex flex-col p-2 border-2 border-gray-300 rounded-md">
+							<div class="flex items-center space-x-2 mb-1">
+								@tmpl.LabelField(domain.LabelFieldConfig{
+									ID:         "lbltipdokold",
+									LabelText:  translator.Label("Vrsta naloga"),
+									ClassLabel: common.ClassLabel + " w-24",
+								})
+								@tmpl.TextInputField(domain.InputFieldConfig{
+									ID:         "tipdokold",
+									Name:       "tipdokold",
+									Value:      model.TipdokOld,
+									FieldType:  "text",
+									Disabled:   true,
+									ClassInput: common.ClassInputTextDisabled + " w-full",
+								})
+							</div>
+							<div class="flex items-center space-x-2 mb-1">
+								@tmpl.LabelField(domain.LabelFieldConfig{
+									ID:         "lblmaogold",
+									LabelText:  translator.Label("Broj naloga"),
+									ClassLabel: common.ClassLabel + " w-24",
+								})
+								@tmpl.TextInputField(domain.InputFieldConfig{
+									ID:         "nalogold",
+									Name:       "nalogold",
+									Value:      model.NalogOld,
+									FieldType:  "text",
+									Disabled:   true,
+									ClassInput: common.ClassInputTextDisabled + " w-42",
+								})
+							</div>
+							<div class="flex items-center space-x-2 mb-1">
+								@tmpl.LabelField(domain.LabelFieldConfig{
+									ID:         "lbldatknjold",
+									LabelText:  translator.Label("Datum naloga"),
+									ClassLabel: common.ClassLabel + " w-24",
+								})
+								@tmpl.TextInputField(domain.InputFieldConfig{
+									ID:         "danalold",
+									Name:       "danalold",
+									Value:      model.DatKnjOld,
+									FieldType:  "text",
+									Disabled:   true,
+									ClassInput: common.ClassInputTextDisabled,
+								})
+								@tmpl.LabelField(domain.LabelFieldConfig{
+									ID:         "lbldatob",
+									LabelText:  translator.Label("Datum Obrade"),
+									ClassLabel: common.ClassLabel + " w-24",
+								})
+								@tmpl.TextInputField(domain.InputFieldConfig{
+									ID:         "datobold",
+									Name:       "datobold",
+									Value:      model.DanalOld,
+									FieldType:  "text",
+									Disabled:   true,
+									ClassInput: common.ClassInputTextDisabled,
+								})
+							</div>
+							<div class="flex items-center space-x-2 mb-1">
+								@tmpl.LabelField(domain.LabelFieldConfig{
+									ID:         "lblopisold",
+									LabelText:  translator.Label("Opis knjizenja"),
+									ClassLabel: common.ClassLabel + " w-24",
+								})
+								@tmpl.TextInputField(domain.InputFieldConfig{
+									ID:         "opisold",
+									Name:       "opisold",
+									Value:      model.OpisOld,
+									Disabled:   true,
+									FieldType:  "text",
+									ClassInput: common.ClassInputTextDisabled + " w-full",
+								})
+							</div>
+						</div>
+						<!-- Full-width Description Section -->
+						<div class="text-blue-800 font-bold text-sm mb-1">
+							{ translator.Text("Podaci o novom nalogu") }
+						</div>
+						<div class="box-content flex flex-col p-2 border-2 border-gray-300 rounded-md">
+							<div class="flex items-center space-x-2 mb-1">
+								@tmpl.LabelField(domain.LabelFieldConfig{
+									ID:         "tipdok",
+									LabelText:  translator.Label("Vrsta Naloga"),
+									ClassLabel: common.ClassLabel + " w-24 ",
+								})
+								@tmpl.ComboBoxField(domain.ComboFieldConfig{
+									ID:             "tipdok",
+									Name:           "tipdok",
+									Placeholder:    translator.Placeholder("Select"),
+									Disabled:       false,
+									ClassSelect:    common.ClassSelect + " w-full ",
+									HxSwap:         "innerHTML",
+									HxChangeTarget: "vrstanaloganew",
+									HxVals:         `js:{"tipdok": document.getElementById("tipdok").value}`,
+									OptionValues:   model.TipdokValues,
+								}, translator)
+							</div>
+							<div class="flex items-center space-x-2 mb-1">
+								@tmpl.LabelField(domain.LabelFieldConfig{
+									ID:         "nalog",
+									LabelText:  translator.Label("Broj naloga"),
+									ClassLabel: common.ClassLabel + " w-24",
+								})
+								@tmpl.TextInputField(domain.InputFieldConfig{
+									ID:               "nalog",
+									Name:             "nalog",
+									Value:            model.NalogNew,
+									FieldType:        "text",
+									Disabled:         false,
+									ClassInput:       common.ClassInputTextEnabled,
+									HxGet:            "/api/nalozi/nextnalog",
+									HxTrigger:        "change from:select[name='tipdok']",
+									HxInclude:        "select[name='tipdok']",
+									HxOnAfterRequest: "handleNextNalogResponse",
+									OnInput:          "clearFieldError",
+								})
+							</div>
+							<div class="flex items-center space-x-2 mb-1">
+								@tmpl.LabelField(domain.LabelFieldConfig{
+									ID:         "danal",
+									LabelText:  translator.Label("Datum naloga"),
+									ClassLabel: common.ClassLabel + " w-24",
+								})
+								@tmpl.TextInputField(domain.InputFieldConfig{
+									ID:         "danal",
+									Name:       "danal",
+									Value:      model.DanalNew,
+									FieldType:  "date",
+									Disabled:   false,
+									ClassInput: common.ClassInputTextEnabled + " w-full",
+									OnInput:    "clearFieldError",
+								})
+								@tmpl.LabelField(domain.LabelFieldConfig{
+									ID:         "datob",
+									LabelText:  translator.Label("Datum Obrade"),
+									ClassLabel: common.ClassLabel + " w-24",
+								})
+								@tmpl.TextInputField(domain.InputFieldConfig{
+									ID:         "datob",
+									Name:       "datob",
+									Value:      model.DatknjNew,
+									FieldType:  "date",
+									Disabled:   false,
+									ClassInput: common.ClassInputTextDisabled + " w-full",
+									OnInput:    "clearFieldError",
+								})
+							</div>
+							<div class="flex items-center space-x-2 mb-1">
+								@tmpl.LabelField(domain.LabelFieldConfig{
+									ID:         "opis",
+									LabelText:  translator.Label("Opis knjizenja"),
+									ClassLabel: common.ClassLabel + " w-24",
+								})
+								@tmpl.TextInputField(domain.InputFieldConfig{
+									ID:         "opis",
+									Name:       "opis",
+									Value:      model.OpisNew,
+									FieldType:  "text",
+									Disabled:   false,
+									ClassInput: common.ClassInputTextEnabled + " w-full",
+								})
+							</div>
+						</div>
+					</div>
+					<div class="bg-white col-span-2 px-3 py-3 flex justify-end space-x-1 pt-4">
+						@tmpl.ConfirmButton(btnSave, translator)
+						@tmpl.CancelButton(btnCancel, translator)
+					</div>
+				</form>
+				<!-- Message Display Area at Bottom -->
+				<div id="dialog-form-message" class="hidden w-full whitespace-normal break-words"></div>
+			</div>
+		</div>
+		<div id="dialog-confirm" class="top-0 z-60"></div>
 	</div>
-	<div class="box-content flex flex-col p-2 border-2 border-gray-300 rounded-md">
-		<div class="flex items-center space-x-2 mb-1">
-			@tmpl.LabelField(domain.LabelFieldConfig{
-				ID:         "vrstanalogaold",
-				LabelText:  translator.Label("Vrsta naloga"),
-				ClassLabel: common.ClassLabel + " w-24",
-			})
-			@tmpl.TextInputField(domain.InputFieldConfig{
-				ID:         "vrstanalogaold",
-				Name:       "vrstanalogaold",
-				Value:      model.TipdokOld,
-				FieldType:  "text",
-				Disabled:   true,
-				ClassInput: common.ClassInputTextDisabled + " w-full",
-			})
-		</div>
-		<div class="flex items-center space-x-2 mb-1">
-			@tmpl.LabelField(domain.LabelFieldConfig{
-				ID:         "brojnalogaold",
-				LabelText:  translator.Label("Broj naloga"),
-				ClassLabel: common.ClassLabel + " w-24",
-			})
-			@tmpl.TextInputField(domain.InputFieldConfig{
-				ID:         "brojnalogaold",
-				Name:       "brojnalogaold",
-				Value:      model.NalogOld,
-				FieldType:  "text",
-				Disabled:   true,
-				ClassInput: common.ClassInputTextDisabled + " w-42",
-			})
-		</div>
-		<div class="flex items-center space-x-2 mb-1">
-			@tmpl.LabelField(domain.LabelFieldConfig{
-				ID:         "datumknjold",
-				LabelText:  translator.Label("Datum naloga"),
-				ClassLabel: common.ClassLabel + " w-24",
-			})
-			@tmpl.TextInputField(domain.InputFieldConfig{
-				ID:         "datumknjold",
-				Name:       "datumnknjold",
-				Value:      model.DatKnjOld,
-				FieldType:  "text",
-				Disabled:   true,
-				ClassInput: common.ClassInputTextDisabled,
-			})
-			@tmpl.LabelField(domain.LabelFieldConfig{
-				ID:         "datumobradeold",
-				LabelText:  translator.Label("Datum Obrade"),
-				ClassLabel: common.ClassLabel + " w-24",
-			})
-			@tmpl.TextInputField(domain.InputFieldConfig{
-				ID:         "datumobradeold",
-				Name:       "datumobradeold",
-				Value:      model.DanalOld,
-				FieldType:  "text",
-				Disabled:   true,
-				ClassInput: common.ClassInputTextDisabled,
-			})
-		</div>
-		<div class="flex items-center space-x-2 mb-1">
-			@tmpl.LabelField(domain.LabelFieldConfig{
-				ID:         "opisknjizenjaold",
-				LabelText:  translator.Label("Opis knjizenja"),
-				ClassLabel: common.ClassLabel + " w-24",
-			})
-			@tmpl.TextInputField(domain.InputFieldConfig{
-				ID:         "opisknjizenjaold",
-				Name:       "opisknjizenjaold",
-				Value:      model.OpisOld,
-				Disabled:   true,
-				FieldType:  "text",
-				ClassInput: common.ClassInputTextDisabled + " w-full",
-			})
-		</div>
-	</div>
-	<!-- Full-width Description Section -->
-	<div class="text-blue-800 font-bold text-sm mb-1">
-		{ translator.Text("Podaci o novom nalogu") }
-	</div>
-	<div class="box-content flex flex-col p-2 border-2 border-gray-300 rounded-md">
-		<div class="flex items-center space-x-2 mb-1">
-			@tmpl.LabelField(domain.LabelFieldConfig{
-				ID:         "tipdok",
-				LabelText:  translator.Label("Vrsta Naloga"),
-				ClassLabel: common.ClassLabel + " w-24 ",
-			})
-			@tmpl.ComboBoxField(domain.ComboFieldConfig{
-				ID:             "tipdok",
-				Name:           "tipdok",
-				Placeholder:    translator.Placeholder("Select"),
-				Disabled:       false,
-				ClassSelect:    common.ClassSelect + " w-full ",
-				HxSwap:         "innerHTML",
-				HxChangeTarget: "vrstanaloganew",
-				HxVals:         `js:{"tipdok": document.getElementById("tipdok").value}`,
-				OptionValues:   model.TipdokValues,
-			}, translator)
-		</div>
-		<div class="flex items-center space-x-2 mb-1">
-			@tmpl.LabelField(domain.LabelFieldConfig{
-				ID:         "nalog",
-				LabelText:  translator.Label("Broj naloga"),
-				ClassLabel: common.ClassLabel + " w-24",
-			})
-			@tmpl.TextInputField(domain.InputFieldConfig{
-				ID:               "nalog",
-				Name:             "nalog",
-				Value:            model.NalogNew,
-				FieldType:        "text",
-				Disabled:         false,
-				ClassInput:       common.ClassInputTextEnabled,
-				HxGet:            "/api/nalozi/nextnalog",
-				HxTrigger:        "change from:select[name='tipdok']",
-				HxInclude:        "select[name='tipdok']",
-				HxOnAfterRequest: "handleNextNalogResponse",
-				OnInput:          "clearFieldError",
-			})
-		</div>
-		<div class="flex items-center space-x-2 mb-1">
-			@tmpl.LabelField(domain.LabelFieldConfig{
-				ID:         "danal",
-				LabelText:  translator.Label("Datum naloga"),
-				ClassLabel: common.ClassLabel + " w-24",
-			})
-			@tmpl.TextInputField(domain.InputFieldConfig{
-				ID:         "danal",
-				Name:       "danal",
-				Value:      model.DanalNew,
-				FieldType:  "date",
-				Disabled:   false,
-				ClassInput: common.ClassInputTextEnabled + " w-full",
-				OnInput:    "clearFieldError",
-			})
-			@tmpl.LabelField(domain.LabelFieldConfig{
-				ID:         "datob",
-				LabelText:  translator.Label("Datum Obrade"),
-				ClassLabel: common.ClassLabel + " w-24",
-			})
-			@tmpl.TextInputField(domain.InputFieldConfig{
-				ID:         "datob",
-				Name:       "datob",
-				Value:      model.DatknjNew,
-				FieldType:  "date",
-				Disabled:   false,
-				ClassInput: common.ClassInputTextDisabled + " w-full",
-				OnInput:    "clearFieldError",
-			})
-		</div>
-		<div class="flex items-center space-x-2 mb-1">
-			@tmpl.LabelField(domain.LabelFieldConfig{
-				ID:         "opis",
-				LabelText:  translator.Label("Opis knjizenja"),
-				ClassLabel: common.ClassLabel + " w-24",
-			})
-			@tmpl.TextInputField(domain.InputFieldConfig{
-				ID:         "opis",
-				Name:       "opis",
-				Value:      model.OpisNew,
-				FieldType:  "text",
-				Disabled:   false,
-				ClassInput: common.ClassInputTextEnabled + " w-full",
-			})
-		</div>
-	</div>
+	@tmpl.HandleFormResponseScript()
+	@tmpl.ShowMessageScript()
+	@tmpl.ClearFieldErrorScript()
+	@tmpl.CloseDialogScript()
 }
 
-templ NaloziStorniranjeDialog(model domain.KopirajNalog, btnSave domain.Button, translator *i18n.Service, csrfToken string) {
-	<input type="hidden" name="_csrf" value={ csrfToken }/>
-	<div class="text-blue-800 font-bold text-sm mb-1">
-		{ translator.Text("Podaci o nalogu koji se stornira") }
+templ NaloziKopiranjeDialogDeo(dialog domain.Dialog, model domain.KopirajNalog, btnSave, btnClose, btnPrikazi, btnOdustani domain.Button, tblOriginal, tblCopy domain.TableData, translator *i18n.Service, csrfToken string) {
+	<div id={ dialog.Id } class={ common.ClassMainDialogDiv }>
+		<div class="bg-white rounded-lg shadow-2xl relative animate-fade-in max-w-full w-auto">
+			<!-- Title Bar (Flush on Left, Top, Right) -->
+			if btnSave.Id == "btn-delete" {
+				<div class="bg-red-600 text-white h-9 flex justify-between items-center rounded-t-lg">
+					<h2 class="text-lg font-semibold ml-4">{ translator.Title(dialog.Title) }</h2>
+					@tmpl.CloseButton(btnClose)
+				</div>
+			} else {
+				<div class="bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg">
+					<h2 class="text-lg font-semibold ml-4">{ translator.Title(dialog.Title) }</h2>
+					@tmpl.CloseButton(btnClose)
+				</div>
+			}
+			<div class="flex flex-col h-full">
+				<!-- Content -->
+				<form
+					if dialog.HxRequestType == "PUT" {
+						hx-put={ dialog.HxActionURL }
+						hx-on::after-request="handleFormResponse(event, 'PUT')"
+					}
+					if dialog.HxRequestType == "POST" {
+						hx-post={ dialog.HxActionURL }
+						hx-on::after-request="handleFormResponse(event, 'POST')"
+					}
+					hx-target="#dialog-form-message"
+					hx-boost="false"
+					hx-on::after-request="handleFormResponse(event, 'dialog-form')"
+					onsubmit="return false;"
+					class="grid grid-cols-1 md:grid-cols-[auto,auto] gap-2 gap-x-4 p-1 bg-white shadow-lg rounded-lg w-auto"
+				>
+					<input type="hidden" name="_csrf" value={ csrfToken }/>
+					<div class="col-span-2 px-1 py-1 max-h-[70vh] overflow-y-auto">
+						<div class="grid grid-cols-1 xl:grid-cols-2 gap-3">
+							<div>
+								<div class="text-blue-800 font-bold text-sm mb-1">
+									{ translator.Text("Podaci o nalogu iz kojeg se kopira") }
+								</div>
+								<div class="box-content flex flex-col p-1 border-2 border-blue-400 rounded-md">
+									<div class="flex items-center space-x-2 mb-1">
+										@tmpl.LabelField(domain.LabelFieldConfig{
+											ID:         "tipdokold",
+											LabelText:  translator.Label("Vrsta Naloga"),
+											ClassLabel: common.ClassLabel + " w-24 ",
+										})
+										@tmpl.ComboBoxField(domain.ComboFieldConfig{
+											ID:             "tipdokold",
+											Name:           "tipdokold",
+											Placeholder:    translator.Placeholder("Select"),
+											Disabled:       false,
+											ClassSelect:    common.ClassSelect + " w-full ",
+											HxSwap:         "innerHTML",
+											HxChangeTarget: "vrstanaloganew",
+											HxVals:         `js:{"tipdokold": document.getElementById("tipdokold").value}`,
+											OptionValues:   model.TipdokValues,
+										}, translator)
+									</div>
+									<div class="flex items-center space-x-2 mb-1">
+										@tmpl.LabelField(domain.LabelFieldConfig{
+											ID:         "brojnalogaold",
+											LabelText:  translator.Label("Broj naloga"),
+											ClassLabel: common.ClassLabel + " w-24",
+										})
+										@tmpl.TextInputField(domain.InputFieldConfig{
+											ID:         "brojnalogaold",
+											Name:       "brojnalogaold",
+											Value:      model.NalogOld,
+											FieldType:  "text",
+											Disabled:   false,
+											ClassInput: common.ClassInputTextEnabled + " w-42",
+										})
+									</div>
+									<div class="flex items-center space-x-2 mb-1">
+										@tmpl.LabelField(domain.LabelFieldConfig{
+											ID:         "datumknjold",
+											LabelText:  translator.Label("Datum naloga"),
+											ClassLabel: common.ClassLabel + " w-24",
+										})
+										@tmpl.TextInputField(domain.InputFieldConfig{
+											ID:         "datumknjold",
+											Name:       "datumnknjold",
+											Value:      model.DatKnjOld,
+											FieldType:  "text",
+											Disabled:   false,
+											ClassInput: common.ClassInputTextEnabled,
+										})
+										@tmpl.LabelField(domain.LabelFieldConfig{
+											ID:         "datumobradeold",
+											LabelText:  translator.Label("Datum Obrade"),
+											ClassLabel: common.ClassLabel + " w-24",
+										})
+										@tmpl.TextInputField(domain.InputFieldConfig{
+											ID:         "datumobradeold",
+											Name:       "datumobradeold",
+											Value:      model.DanalOld,
+											FieldType:  "text",
+											Disabled:   false,
+											ClassInput: common.ClassInputTextEnabled,
+										})
+									</div>
+									<div class="flex items-center space-x-2 mb-1">
+										@tmpl.LabelField(domain.LabelFieldConfig{
+											ID:         "opisknjizenjaold",
+											LabelText:  translator.Label("Opis knjizenja"),
+											ClassLabel: common.ClassLabel + " w-24",
+										})
+										@tmpl.TextInputField(domain.InputFieldConfig{
+											ID:         "opisknjizenjaold",
+											Name:       "opisknjizenjaold",
+											Value:      model.OpisOld,
+											Disabled:   false,
+											FieldType:  "text",
+											ClassInput: common.ClassInputTextEnabled + " w-full",
+										})
+									</div>
+								</div>
+							</div>
+							<div>
+								<div class="text-blue-800 font-bold text-sm mb-1">
+									{ translator.Text("Podaci o novom nalogu") }
+								</div>
+								<div class="box-content flex flex-col p-1 border-2 border-blue-400 rounded-md">
+									<div class="flex items-center space-x-2 mb-1">
+										@tmpl.LabelField(domain.LabelFieldConfig{
+											ID:         "tipdok",
+											LabelText:  translator.Label("Vrsta Naloga"),
+											ClassLabel: common.ClassLabel + " w-24 ",
+										})
+										@tmpl.ComboBoxField(domain.ComboFieldConfig{
+											ID:             "tipdok",
+											Name:           "tipdok",
+											Placeholder:    translator.Placeholder("Select"),
+											Disabled:       false,
+											ClassSelect:    common.ClassSelect + " w-full ",
+											HxSwap:         "innerHTML",
+											HxChangeTarget: "vrstanaloganew",
+											HxVals:         `js:{"tipdok": document.getElementById("tipdok").value}`,
+											OptionValues:   model.TipdokValues,
+										}, translator)
+									</div>
+									<div class="flex items-center space-x-2 mb-1">
+										@tmpl.LabelField(domain.LabelFieldConfig{
+											ID:         "nalog",
+											LabelText:  translator.Label("Broj naloga"),
+											ClassLabel: common.ClassLabel + " w-24",
+										})
+										@tmpl.TextInputField(domain.InputFieldConfig{
+											ID:               "nalog",
+											Name:             "nalog",
+											Value:            model.NalogNew,
+											FieldType:        "text",
+											Disabled:         false,
+											ClassInput:       common.ClassInputTextEnabled,
+											HxGet:            "/api/nalozi/nextnalog",
+											HxTrigger:        "change from:select[name='tipdok']",
+											HxInclude:        "select[name='tipdok']",
+											HxOnAfterRequest: "handleNextNalogResponse",
+											OnInput:          "clearFieldError",
+										})
+									</div>
+									<div class="flex items-center space-x-2 mb-1">
+										@tmpl.LabelField(domain.LabelFieldConfig{
+											ID:         "danal",
+											LabelText:  translator.Label("Datum naloga"),
+											ClassLabel: common.ClassLabel + " w-24",
+										})
+										@tmpl.TextInputField(domain.InputFieldConfig{
+											ID:         "danal",
+											Name:       "danal",
+											Value:      model.DanalNew,
+											FieldType:  "date",
+											Disabled:   false,
+											ClassInput: common.ClassInputTextEnabled + " w-full",
+											OnInput:    "clearFieldError",
+										})
+										@tmpl.LabelField(domain.LabelFieldConfig{
+											ID:         "datob",
+											LabelText:  translator.Label("Datum Obrade"),
+											ClassLabel: common.ClassLabel + " w-24",
+										})
+										@tmpl.TextInputField(domain.InputFieldConfig{
+											ID:         "datob",
+											Name:       "datob",
+											Value:      model.DatknjNew,
+											FieldType:  "date",
+											Disabled:   false,
+											ClassInput: common.ClassInputTextDisabled + " w-full",
+											OnInput:    "clearFieldError",
+										})
+									</div>
+									<div class="flex items-center space-x-2 mb-1">
+										@tmpl.LabelField(domain.LabelFieldConfig{
+											ID:         "opis",
+											LabelText:  translator.Label("Opis knjizenja"),
+											ClassLabel: common.ClassLabel + " w-24",
+										})
+										@tmpl.TextInputField(domain.InputFieldConfig{
+											ID:         "opis",
+											Name:       "opis",
+											Value:      model.OpisNew,
+											FieldType:  "text",
+											Disabled:   false,
+											ClassInput: common.ClassInputTextEnabled + " w-full",
+										})
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr),auto,minmax(0,1fr)] gap-3 mt-3 items-stretch">
+							<div class="h-full flex flex-col min-h-0">
+								<div class="text-blue-800 font-bold text-sm mb-1">
+									{ translator.Text("Stavke izvornog naloga") }
+								</div>
+								<div class="box-content border-2 border-blue-400 rounded-md overflow-hidden bg-white h-full flex flex-col min-h-0 p-1">
+									<div class="flex flex-col sm:flex-row sm:items-end gap-2 p-1 border-b border-gray-300 bg-gray-50">
+										<div class="flex items-center space-x-2 w-full">
+											@tmpl.LabelField(domain.LabelFieldConfig{
+												ID:         "konta_za_prikaz",
+												LabelText:  "Konta za prikaz",
+												ClassLabel: common.ClassLabel + " w-28",
+											})
+											@tmpl.TextInputField(domain.InputFieldConfig{
+												ID:         "konta_za_prikaz",
+												Name:       "konta_za_prikaz",
+												FieldType:  "text",
+												Disabled:   false,
+												ClassInput: common.ClassInputTextEnabled + " w-full",
+											})
+										</div>
+										@tmpl.Button(btnPrikazi, translator)
+									</div>
+									<div class="flex-1 min-h-[16rem] overflow-x-auto overflow-y-auto">
+										@tmpl.Table(tblOriginal, translator)
+									</div>
+								</div>
+							</div>
+							<div class="flex flex-col items-center justify-end mb-8 gap-2 self-stretch">
+								<button type="button" id="btn-prebaci-jedan-desno" class="h-8 w-10 bg-gray-200 hover:bg-gray-300 rounded border border-blue-400 text-base font-semibold">&gt;</button>
+								<button type="button" id="btn-prebaci-sve-desno" class="h-8 w-10 bg-gray-200 hover:bg-gray-300 rounded border border-blue-400 text-base font-semibold">&gt;&gt;</button>
+								<button type="button" id="btn-prebaci-jedan-levo" class="h-8 w-10 bg-gray-200 hover:bg-gray-300 rounded border border-blue-400 text-base font-semibold">&lt;</button>
+								<button type="button" id="btn-prebaci-sve-levo" class="h-8 w-10 bg-gray-200 hover:bg-gray-300 rounded border border-blue-400 text-base font-semibold">&lt;&lt;</button>
+							</div>
+							<div class="h-full flex flex-col min-h-0">
+								<div class="text-blue-800 font-bold text-sm mb-1">
+									{ translator.Text("Stavke novog naloga") }
+								</div>
+								<div class="box-content border-2 border-blue-400 rounded-md overflow-hidden bg-white h-full flex flex-col min-h-0 p-1">
+									<div class="flex flex-col lg:flex-row lg:items-center lg:flex-wrap gap-2 p-1 border-b border-gray-300 bg-gray-50">
+										<div class="flex items-center space-x-2 flex-1 min-w-0">
+											@tmpl.LabelField(domain.LabelFieldConfig{
+												ID:         "konto_prihoda",
+												LabelText:  "Konto prihoda",
+												ClassLabel: common.ClassLabel + " w-28",
+											})
+											@tmpl.TextInputField(domain.InputFieldConfig{
+												ID:         "konto_prihoda",
+												Name:       "konto_prihoda",
+												FieldType:  "text",
+												Disabled:   false,
+												ClassInput: common.ClassInputTextEnabled + " w-full",
+											})
+										</div>
+										<label for="kopiraj_kontra_stav" class={ common.ClassCheckboxLabel + " whitespace-nowrap" }>
+											<input type="checkbox" id="kopiraj_kontra_stav" name="kopiraj_kontra_stav" class={ common.ClassCheckbox }/>
+											<span class={ common.ClassCheckboxSpan }>Kopiraj stavke u kontra stav</span>
+										</label>
+										<div class="flex items-center gap-2 lg:ml-auto">
+											@tmpl.ConfirmButton(btnSave, translator)
+											@tmpl.CancelButton(btnOdustani, translator)
+										</div>
+									</div>
+									<div class="flex-1 min-h-[16rem] overflow-x-auto overflow-y-auto">
+										@tmpl.Table(tblCopy, translator)
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</form>
+				<!-- Message Display Area at Bottom -->
+				<div id="dialog-form-message" class="hidden"></div>
+			</div>
+		</div>
 	</div>
-	<div class="box-content flex flex-col p-2 border-2 border-gray-300 rounded-md">
-		<div class="flex items-center space-x-2 mb-1">
-			@tmpl.LabelField(domain.LabelFieldConfig{
-				ID:         "vrstanalogaold",
-				LabelText:  translator.Label("Vrsta naloga"),
-				ClassLabel: common.ClassLabel + " w-24",
-			})
-			@tmpl.TextInputField(domain.InputFieldConfig{
-				ID:         "vrstanalogaold",
-				Name:       "vrstanalogaold",
-				Value:      model.TipdokOld,
-				FieldType:  "text",
-				Disabled:   true,
-				ClassInput: common.ClassInputTextDisabled + " w-full",
-			})
-		</div>
-		<div class="flex items-center space-x-2 mb-1">
-			@tmpl.LabelField(domain.LabelFieldConfig{
-				ID:         "brojnalogaold",
-				LabelText:  translator.Label("Broj naloga"),
-				ClassLabel: common.ClassLabel + " w-24",
-			})
-			@tmpl.TextInputField(domain.InputFieldConfig{
-				ID:         "brojnalogaold",
-				Name:       "brojnalogaold",
-				Value:      model.NalogOld,
-				FieldType:  "text",
-				Disabled:   true,
-				ClassInput: common.ClassInputTextDisabled + " w-42",
-			})
-		</div>
-		<div class="flex items-center space-x-2 mb-1">
-			@tmpl.LabelField(domain.LabelFieldConfig{
-				ID:         "datumknjold",
-				LabelText:  translator.Label("Datum naloga"),
-				ClassLabel: common.ClassLabel + " w-24",
-			})
-			@tmpl.TextInputField(domain.InputFieldConfig{
-				ID:         "datumknjold",
-				Name:       "datumnknjold",
-				Value:      model.DatKnjOld,
-				FieldType:  "text",
-				Disabled:   true,
-				ClassInput: common.ClassInputTextDisabled,
-			})
-			@tmpl.LabelField(domain.LabelFieldConfig{
-				ID:         "datumobradeold",
-				LabelText:  translator.Label("Datum Obrade"),
-				ClassLabel: common.ClassLabel + " w-24",
-			})
-			@tmpl.TextInputField(domain.InputFieldConfig{
-				ID:         "datumobradeold",
-				Name:       "datumobradeold",
-				Value:      model.DanalOld,
-				FieldType:  "text",
-				Disabled:   true,
-				ClassInput: common.ClassInputTextDisabled,
-			})
-		</div>
-		<div class="flex items-center space-x-2 mb-1">
-			@tmpl.LabelField(domain.LabelFieldConfig{
-				ID:         "opisknjizenjaold",
-				LabelText:  translator.Label("Opis knjizenja"),
-				ClassLabel: common.ClassLabel + " w-24",
-			})
-			@tmpl.TextInputField(domain.InputFieldConfig{
-				ID:         "opisknjizenjaold",
-				Name:       "opisknjizenjaold",
-				Value:      model.OpisOld,
-				Disabled:   true,
-				FieldType:  "text",
-				ClassInput: common.ClassInputTextDisabled + " w-full",
-			})
+	@tmpl.HandleFormResponseScript()
+	@tmpl.ShowMessageScript()
+	@tmpl.ClearFieldErrorScript()
+	@tmpl.CloseDialogScript()
+}
+
+templ NaloziStorniranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, btnSave, btnClose, btnCancel domain.Button, translator *i18n.Service, csrfToken string) {
+	<div id={ dialog.Id } class={ common.ClassMainDialogDiv }>
+		<div class="bg-white rounded-lg shadow-2xl relative animate-fade-in max-w-full w-auto">
+			<!-- Title Bar (Flush on Left, Top, Right) -->
+			if btnSave.Id == "btn-delete" {
+				<div class="bg-red-600 text-white h-9 flex justify-between items-center rounded-t-lg">
+					<h2 class="text-lg font-semibold ml-4">{ translator.Title(dialog.Title) }</h2>
+					@tmpl.CloseButton(btnClose)
+				</div>
+			} else {
+				<div class="bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg">
+					<h2 class="text-lg font-semibold ml-4">{ translator.Title(dialog.Title) }</h2>
+					@tmpl.CloseButton(btnClose)
+				</div>
+			}
+			<div class="flex flex-col h-full">
+				<!-- Content -->
+				<form
+					if dialog.HxRequestType == "PUT" {
+						hx-put={ dialog.HxActionURL }
+						hx-on::after-request="handleFormResponse(event, 'PUT', null, true)"
+					}
+					if dialog.HxRequestType == "POST" {
+						hx-post={ dialog.HxActionURL }
+						hx-on::after-request="handleFormResponse(event, 'POST', null, true)"
+					}
+					hx-target="#dialog-form-message"
+					hx-boost="false"
+					onsubmit="return false;"
+					class="grid grid-cols-1 md:grid-cols-[auto,auto] gap-2 gap-x-4 p-3 bg-white shadow-lg rounded-lg w-auto"
+				>
+					<div class="px-1 py-1 col-span-2 max-h-[70vh] overflow-y-auto">
+						<input type="hidden" name="_csrf" value={ csrfToken }/>
+						<input type="hidden" name="idfnal" value={ fmt.Sprintf("%d", model.IDFnal) }/>
+						<div class="text-blue-800 font-bold text-sm mb-1">
+							{ translator.Text("Podaci o nalogu koji se stornira") }
+						</div>
+						<div class="box-content flex flex-col p-2 border-2 border-gray-300 rounded-md">
+							<div class="flex items-center space-x-2 mb-1">
+								@tmpl.LabelField(domain.LabelFieldConfig{
+									ID:         "vrstanalogaold",
+									LabelText:  translator.Label("Vrsta naloga"),
+									ClassLabel: common.ClassLabel + " w-24",
+								})
+								@tmpl.TextInputField(domain.InputFieldConfig{
+									ID:         "vrstanalogaold",
+									Name:       "vrstanalogaold",
+									Value:      model.TipdokOld,
+									FieldType:  "text",
+									Disabled:   true,
+									ClassInput: common.ClassInputTextDisabled + " w-full",
+								})
+							</div>
+							<div class="flex items-center space-x-2 mb-1">
+								@tmpl.LabelField(domain.LabelFieldConfig{
+									ID:         "brojnalogaold",
+									LabelText:  translator.Label("Broj naloga"),
+									ClassLabel: common.ClassLabel + " w-24",
+								})
+								@tmpl.TextInputField(domain.InputFieldConfig{
+									ID:         "brojnalogaold",
+									Name:       "brojnalogaold",
+									Value:      model.NalogOld,
+									FieldType:  "text",
+									Disabled:   true,
+									ClassInput: common.ClassInputTextDisabled + " w-42",
+								})
+							</div>
+							<div class="flex items-center space-x-2 mb-1">
+								@tmpl.LabelField(domain.LabelFieldConfig{
+									ID:         "datumknjold",
+									LabelText:  translator.Label("Datum naloga"),
+									ClassLabel: common.ClassLabel + " w-24",
+								})
+								@tmpl.TextInputField(domain.InputFieldConfig{
+									ID:         "datumknjold",
+									Name:       "datumnknjold",
+									Value:      model.DatKnjOld,
+									FieldType:  "date",
+									Disabled:   true,
+									ClassInput: common.ClassInputTextDisabled,
+								})
+								@tmpl.LabelField(domain.LabelFieldConfig{
+									ID:         "datumobradeold",
+									LabelText:  translator.Label("Datum Obrade"),
+									ClassLabel: common.ClassLabel + " w-24",
+								})
+								@tmpl.TextInputField(domain.InputFieldConfig{
+									ID:         "datumobradeold",
+									Name:       "datumobradeold",
+									Value:      model.DanalOld,
+									FieldType:  "date",
+									Disabled:   true,
+									ClassInput: common.ClassInputTextDisabled,
+								})
+							</div>
+							<div class="flex items-center space-x-2 mb-1">
+								@tmpl.LabelField(domain.LabelFieldConfig{
+									ID:         "opisknjizenjaold",
+									LabelText:  translator.Label("Opis knjizenja"),
+									ClassLabel: common.ClassLabel + " w-24",
+								})
+								@tmpl.TextInputField(domain.InputFieldConfig{
+									ID:         "opisknjizenjaold",
+									Name:       "opisknjizenjaold",
+									Value:      model.OpisOld,
+									Disabled:   true,
+									FieldType:  "text",
+									ClassInput: common.ClassInputTextDisabled + " w-full",
+								})
+							</div>
+						</div>
+						<!-- Storniranje Details Section -->
+						<div class="text-blue-800 font-bold text-sm mb-1">
+							{ translator.Text("Podaci o novom nalogu") }
+						</div>
+						<div class="box-content flex flex-col p-2 border-2 border-gray-300 rounded-md">
+							<div class="flex items-center space-x-2 mb-1">
+								@tmpl.LabelField(domain.LabelFieldConfig{
+									ID:         "nalog",
+									LabelText:  translator.Label("Broj naloga"),
+									ClassLabel: common.ClassLabel + " w-24",
+								})
+								@tmpl.TextInputField(domain.InputFieldConfig{
+									ID:         "nalog",
+									Name:       "nalog",
+									Value:      model.NalogNew,
+									FieldType:  "text",
+									Disabled:   false,
+									ClassInput: common.ClassInputTextDisabled + " w-42",
+									OnInput:    "clearFieldError",
+									OnFocus:    "clearFieldError",
+								})
+							</div>
+							<div class="flex items-center space-x-2 mb-1">
+								@tmpl.LabelField(domain.LabelFieldConfig{
+									ID:         "danal",
+									LabelText:  translator.Label("Datum naloga"),
+									ClassLabel: common.ClassLabel + " w-24",
+								})
+								@tmpl.TextInputField(domain.InputFieldConfig{
+									ID:         "danal",
+									Name:       "danal",
+									Value:      model.DanalNew,
+									FieldType:  "date",
+									Disabled:   false,
+									ClassInput: common.ClassInputTextDisabled,
+									OnInput:    "clearFieldError",
+									OnFocus:    "clearFieldError",
+								})
+								@tmpl.LabelField(domain.LabelFieldConfig{
+									ID:         "datob",
+									LabelText:  translator.Label("Datum Obrade"),
+									ClassLabel: common.ClassLabel + " w-24",
+								})
+								@tmpl.TextInputField(domain.InputFieldConfig{
+									ID:         "datob",
+									Name:       "datob",
+									Value:      model.DanalNew,
+									FieldType:  "date",
+									Disabled:   false,
+									ClassInput: common.ClassInputTextDisabled,
+									OnInput:    "clearFieldError",
+									OnFocus:    "clearFieldError",
+								})
+							</div>
+							<div class="flex items-center space-x-2 mb-1">
+								@tmpl.LabelField(domain.LabelFieldConfig{
+									ID:         "opis",
+									LabelText:  translator.Label("Opis knjizenja"),
+									ClassLabel: common.ClassLabel + " w-24",
+								})
+								@tmpl.TextInputField(domain.InputFieldConfig{
+									ID:         "opis",
+									Name:       "opis",
+									Value:      model.OpisNew,
+									Disabled:   false,
+									FieldType:  "text",
+									ClassInput: common.ClassInputTextDisabled + " w-full",
+								})
+							</div>
+						</div>
+					</div>
+					<div class="bg-white col-span-2 px-3 py-3 flex justify-end space-x-1 pt-4">
+						@tmpl.ConfirmButton(btnSave, translator)
+						@tmpl.CancelButton(btnCancel, translator)
+					</div>
+				</form>
+			</div>
+			<!-- Message Display Area at Bottom -->
+			<div id="dialog-form-message" class="hidden w-full whitespace-normal break-words"></div>
 		</div>
 	</div>
-	<!-- Storniranje Details Section -->
-	<div class="text-blue-800 font-bold text-sm mb-1">
-		{ translator.Text("Podaci o novom nalogu") }
-	</div>
-	<div class="box-content flex flex-col p-2 border-2 border-gray-300 rounded-md">
-		<div class="flex items-center space-x-2 mb-1">
-			@tmpl.LabelField(domain.LabelFieldConfig{
-				ID:         "nalog",
-				LabelText:  translator.Label("Broj naloga"),
-				ClassLabel: common.ClassLabel + " w-24",
-			})
-			@tmpl.TextInputField(domain.InputFieldConfig{
-				ID:         "nalog",
-				Name:       "nalog",
-				Value:      model.NalogNew,
-				FieldType:  "text",
-				Disabled:   false,
-				ClassInput: common.ClassInputTextDisabled + " w-42",
-			})
-		</div>
-		<div class="flex items-center space-x-2 mb-1">
-			@tmpl.LabelField(domain.LabelFieldConfig{
-				ID:         "danal",
-				LabelText:  translator.Label("Datum naloga"),
-				ClassLabel: common.ClassLabel + " w-24",
-			})
-			@tmpl.TextInputField(domain.InputFieldConfig{
-				ID:         "danal",
-				Name:       "danal",
-				Value:      model.DanalNew,
-				FieldType:  "text",
-				Disabled:   false,
-				ClassInput: common.ClassInputTextDisabled,
-			})
-			@tmpl.LabelField(domain.LabelFieldConfig{
-				ID:         "datob",
-				LabelText:  translator.Label("Datum Obrade"),
-				ClassLabel: common.ClassLabel + " w-24",
-			})
-			@tmpl.TextInputField(domain.InputFieldConfig{
-				ID:         "datob",
-				Name:       "datob",
-				Value:      model.DanalNew,
-				FieldType:  "text",
-				Disabled:   false,
-				ClassInput: common.ClassInputTextDisabled,
-			})
-		</div>
-		<div class="flex items-center space-x-2 mb-1">
-			@tmpl.LabelField(domain.LabelFieldConfig{
-				ID:         "opis",
-				LabelText:  translator.Label("Opis knjizenja"),
-				ClassLabel: common.ClassLabel + " w-24",
-			})
-			@tmpl.TextInputField(domain.InputFieldConfig{
-				ID:         "opis",
-				Name:       "opis",
-				Value:      model.OpisNew,
-				Disabled:   false,
-				FieldType:  "text",
-				ClassInput: common.ClassInputTextDisabled + " w-full",
-			})
-		</div>
-	</div>
+	@tmpl.HandleFormResponseScript()
+	@tmpl.ShowMessageScript()
+	@tmpl.ClearFieldErrorScript()
+	@tmpl.CloseDialogScript()
+}
+
+templ HandleFormResponseScript() {
+	<script>
+		document.addEventListener("keydown", function (event) {
+			// if escape key is pressed then close the open dialog
+			if (event.key === "Escape") {
+				const openDialog = document.querySelector(".fixed:not(.hidden)");
+				if (openDialog) {
+					closeDialog(openDialog.id);
+				}
+			};
+			if (event.key === "Enter") {
+				event.preventDefault();
+
+				// Find all input fields inside the dialog
+				const inputs = Array.from(document.querySelectorAll("#addupdate-dialog input"));
+				// Filter out any non-focusable elements (just in case)
+				const focusableInputs = inputs.filter(input => 
+					!input.disabled && 
+					input.getAttribute('tabindex') !== '-1' && 
+					input.offsetParent !== null // checks if element is visible
+				);
+
+				// Sort inputs by `tabindex` (if defined), else use DOM order
+				focusableInputs.sort((a, b) => {
+					const aIndex = parseInt(a.getAttribute("tabindex") || "9999", 10);
+					const bIndex = parseInt(b.getAttribute("tabindex") || "9999", 10);
+					return aIndex - bIndex;
+				});
+
+				// Get the currently focused element
+				const currentInput = document.activeElement;
+
+				// Find the current input's index in the sorted list
+				const currentIndex = focusableInputs.indexOf(currentInput);
+
+				if (currentIndex !== -1) {
+					// Move to next input or wrap around
+					const nextIndex = (currentIndex + 1) % focusableInputs.length;
+					focusableInputs[nextIndex].focus();
+				} else if (focusableInputs.length > 0) {
+					// If no input currently focused, focus the first one
+					focusableInputs[0].focus();
+				}
+			}
+		});
+	</script>
+}
+
+
+templ HandleTableRowClickScript() {
+	// Auto-click first row in stampanje table after initial render and table refreshes.
+	<script>
+		function clickFirstStampanjeRow() {
+			const firstRow = document.querySelector('#nalozi-stampanje-table table tbody tr');
+			if (!firstRow) {
+				return false;
+			}
+
+			firstRow.click();
+			return true;
+		}
+
+		function isStampanjeHeaderSwapTarget(target) {
+			if (!target) {
+				return false;
+			}
+
+			if (target.id === 'nalozi-stampanje-table') {
+				return true;
+			}
+
+			if (typeof target.closest === 'function' && target.closest('#nalozi-stampanje-table')) {
+				return true;
+			}
+
+			if (typeof target.querySelector === 'function' && target.querySelector('#nalozi-stampanje-table')) {
+				return true;
+			}
+
+			return false;
+		}
+
+		// Initial tab render can swap a parent container, so try once after paint.
+		setTimeout(() => {
+			clickFirstStampanjeRow();
+		}, 0);
+
+		if (!window.naloziStampanjeFirstRowListenerAttached) {
+			window.naloziStampanjeFirstRowListenerAttached = true;
+			window.handleNaloziStampanjeFirstRowAfterSwap = function(evt) {
+				const target = evt.detail && evt.detail.target;
+				if (!isStampanjeHeaderSwapTarget(target)) {
+					return;
+				}
+
+				setTimeout(() => {
+					clickFirstStampanjeRow();
+				}, 50);
+			};
+
+			document.addEventListener('htmx:afterSwap', window.handleNaloziStampanjeFirstRowAfterSwap);
+		}
+	</script>
 }
 
 templ NaloziScript() {

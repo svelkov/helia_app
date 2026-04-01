@@ -1,21 +1,20 @@
 package finansijsko
 
 import (
+	"context"
 	"fmt"
 	"helia/internal/common"
 	"helia/internal/domain"
 	"helia/internal/repository"
 	"helia/internal/service"
 	"reflect"
-
-	"github.com/gin-gonic/gin"
 )
 
 // EppService defines the interface for operations related to EPP (Evidencija Prethodnog Poreza).
 type EppService interface {
-	GetSekcijeIzvori(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error
-	GetEvidencija(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error
-	GetSefKpr(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error
+	GetSekcijeIzvori(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, odDatuma, doDatuma, searchText string) error
+	GetEvidencija(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, odDatuma, doDatuma, searchText string) error
+	GetSefKpr(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, odDatuma, doDatuma, searchText string) error
 	GetSekcijeIzvoriTableFields() []domain.Fields
 	GetEvidencijaTableFields() []domain.Fields
 	GetSefKprTableFields() []domain.Fields
@@ -71,8 +70,8 @@ func (s *EppResource) GetSefKprTableFields() []domain.Fields {
 }
 
 // GetSekcije retrieves data for EPP Sekcije i izvori
-func (s *EppResource) GetSekcijeIzvori(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error {
-	session := domain.GetSessionFromContext(c)
+func (s *EppResource) GetSekcijeIzvori(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, odDatuma, doDatuma, searchText string) error {
+	session := domain.GetSessionFromStdContext(ctx)
 	if session == nil {
 		return fmt.Errorf("user session not found")
 	}
@@ -83,10 +82,6 @@ func (s *EppResource) GetSekcijeIzvori(c *gin.Context, tbl *domain.TableData, ge
 
 	hasGod, hasKar := s.eppSekcijeIzvoriRepo.GetHasGodHasKar()
 
-	odDatuma := c.Query("oddatuma")
-	doDatuma := c.Query("dodatuma")
-	searchText := c.Query("query")
-
 	// Build query for Sekcije i izvori
 	qb := common.NewQueryBuilder(`
 		SELECT 
@@ -94,7 +89,7 @@ func (s *EppResource) GetSekcijeIzvori(c *gin.Context, tbl *domain.TableData, ge
 			fepp.akt1, fepp.akt2, fepp.akt3, fepp.akt4,
 			fepp.kprpoc, fepp.krpdodatnap, fepp.kprpdv,
 			fepp.idfepp
-		FROM fepp`)
+		FROM fepp`, true)
 
 	if hasGod {
 		qb.AddEqual("fepp.god", session.SelectedGod)
@@ -122,7 +117,7 @@ func (s *EppResource) GetSekcijeIzvori(c *gin.Context, tbl *domain.TableData, ge
 
 	// Execute query and populate table
 	sqlQuery, args := qb.Build()
-	entities, err := s.eppSekcijeIzvoriRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
+	entities, err := s.eppSekcijeIzvoriRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
 	if err != nil {
 		return err
 	}
@@ -180,8 +175,8 @@ func (s *EppResource) GetSekcijeIzvori(c *gin.Context, tbl *domain.TableData, ge
 }
 
 // GetEvidencija retrieves data for EPP Evidencija PP
-func (s *EppResource) GetEvidencija(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error {
-	session := domain.GetSessionFromContext(c)
+func (s *EppResource) GetEvidencija(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, odDatuma, doDatuma, searchText string) error {
+	session := domain.GetSessionFromStdContext(ctx)
 	if session == nil {
 		return fmt.Errorf("user session not found")
 	}
@@ -192,10 +187,6 @@ func (s *EppResource) GetEvidencija(c *gin.Context, tbl *domain.TableData, getTo
 
 	hasGod, hasKar := s.eppEvidencijaRepo.GetHasGodHasKar()
 
-	odDatuma := c.Query("oddatuma")
-	doDatuma := c.Query("dodatuma")
-	searchText := c.Query("query")
-
 	// Build query for Evidencija PP
 	qb := common.NewQueryBuilder(`
 		SELECT 
@@ -203,7 +194,7 @@ func (s *EppResource) GetEvidencija(c *gin.Context, tbl *domain.TableData, getTo
 			feppevidencija.pdv1, feppevidencija.osn2, feppevidencija.pdv2,
 			feppevidencija.oddat, feppevidencija.dodat, feppevidencija.nipo,
 			feppevidencija.fsepid
-		FROM feppevidencija`)
+		FROM feppevidencija`, true)
 
 	if hasGod {
 		qb.AddEqual("feppevidencija.god", session.SelectedGod)
@@ -231,7 +222,7 @@ func (s *EppResource) GetEvidencija(c *gin.Context, tbl *domain.TableData, getTo
 
 	// Execute query and populate table
 	sqlQuery, args := qb.Build()
-	entities, err := s.eppEvidencijaRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
+	entities, err := s.eppEvidencijaRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
 	if err != nil {
 		return err
 	}
@@ -269,8 +260,8 @@ func (s *EppResource) GetEvidencija(c *gin.Context, tbl *domain.TableData, getTo
 }
 
 // GetSefKpr retrieves data for EPP SEF-KPR
-func (s *EppResource) GetSefKpr(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error {
-	session := domain.GetSessionFromContext(c)
+func (s *EppResource) GetSefKpr(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, odDatuma, doDatuma, searchText string) error {
+	session := domain.GetSessionFromStdContext(ctx)
 	if session == nil {
 		return fmt.Errorf("user session not found")
 	}
@@ -281,10 +272,6 @@ func (s *EppResource) GetSefKpr(c *gin.Context, tbl *domain.TableData, getTotalR
 
 	hasGod, hasKar := s.eppSefKprRepo.GetHasGodHasKar()
 
-	odDatuma := c.Query("oddatuma")
-	doDatuma := c.Query("dodatuma")
-	searchText := c.Query("query")
-
 	// Build query for SEF-KPR
 	qb := common.NewQueryBuilder(`
 		SELECT 
@@ -292,7 +279,7 @@ func (s *EppResource) GetSefKpr(c *gin.Context, tbl *domain.TableData, getTotalR
 			feppsef.datumdokumenta, feppsef.datumlicnog, feppsef.iznos,
 			feppsef.pdv, feppsef.konto, feppsef.status,
 			feppsef.idfeppsef
-		FROM feppsef`)
+		FROM feppsef`, true)
 
 	if hasGod {
 		qb.AddEqual("feppsef.god", session.SelectedGod)
@@ -320,7 +307,7 @@ func (s *EppResource) GetSefKpr(c *gin.Context, tbl *domain.TableData, getTotalR
 
 	// Execute query and populate table
 	sqlQuery, args := qb.Build()
-	entities, err := s.eppSefKprRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
+	entities, err := s.eppSefKprRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
 	if err != nil {
 		return err
 	}

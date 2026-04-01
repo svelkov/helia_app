@@ -48,11 +48,13 @@ type KamateHandler struct {
 	tabData domain.TabData
 	service finservice.KamateService
 	cfg     config.Config
+	lm *middleware.LockMiddleware
 }
 
-func NewKamateHandler(service finservice.KamateService, cfg config.Config) *KamateHandler {
+func NewKamateHandler(service finservice.KamateService, cfg config.Config, lm *middleware.LockMiddleware) *KamateHandler {
 	handler := &KamateHandler{
 		cfg: cfg,
+		lm:  lm,
 	}
 	handler.tabData = GetKamateTabData()
 	handler.service = service
@@ -99,14 +101,17 @@ func (h *KamateHandler) KamatneStope(c *gin.Context) {
 	}
 	if requestSource == "btnobrada" || requestSource == "btnpage" || requestSource == "searchinput" {
 		page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
+		searchText := c.Query("search")
+		ctx := c.Request.Context()
+
 		tbl := common.SetTableBasicData("", kamateTableID, h.service.GetTableFields(), "", kamateURLStope, 0, 0, 0, 0, h.cfg)
 		common.SetTableConfig(&tbl, "", kamateURLStope, false, false, false)
-		err := h.service.GetKamatneStope(c, &tbl, true, pageSize, page)
+		err := h.service.GetKamatneStope(ctx, &tbl, true, pageSize, page, searchText)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
 			return
 		}
-		err = h.service.GetKamatneStope(c, &tbl, false, pageSize, page)
+		err = h.service.GetKamatneStope(ctx, &tbl, false, pageSize, page, searchText)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -146,14 +151,22 @@ func (h *KamateHandler) FormiranjeLista(c *gin.Context) {
 		}
 
 		page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
+		konto := c.Query("konto")
+		odSifre := c.Query("od_sifre")
+		doSifre := c.Query("do_sifre")
+		odDatuma := c.Query("od_datuma")
+		doDatuma := c.Query("do_datuma")
+		searchText := c.Query("search")
+		ctx := c.Request.Context()
+
 		tbl := common.SetTableBasicData("", kamateTableID, h.service.GetFormiranjeLisovaTableFields(), "", kamateURLFormiranje, 0, 0, 0, 0, h.cfg)
 		common.SetTableConfig(&tbl, "", kamateURLFormiranje, false, false, false)
-		err := h.service.GetFormiranjeLista(c, &tbl, true, pageSize, page)
+		err := h.service.GetFormiranjeLista(ctx, &tbl, true, pageSize, page, konto, odSifre, doSifre, odDatuma, doDatuma, searchText)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
 			return
 		}
-		err = h.service.GetFormiranjeLista(c, &tbl, false, pageSize, page)
+		err = h.service.GetFormiranjeLista(ctx, &tbl, false, pageSize, page, konto, odSifre, doSifre, odDatuma, doDatuma, searchText)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -193,14 +206,20 @@ func (h *KamateHandler) ObracunKamate(c *gin.Context) {
 		}
 
 		page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
+		odBrojaListe := c.Query("od_broja_liste")
+		doBrojaListe := c.Query("do_broja_liste")
+		podDatumom := c.Query("pod_datumom")
+		searchText := c.Query("search")
+		ctx := c.Request.Context()
+
 		tbl := common.SetTableBasicData("", kamateTableID, h.service.GetObracunTableFields(), "", kamateURLObracun, 0, 0, 0, 0, h.cfg)
 		common.SetTableConfig(&tbl, "", kamateURLObracun, false, false, false)
-		err := h.service.GetObracunKamate(c, &tbl, true, pageSize, page)
+		err := h.service.GetObracunKamate(ctx, &tbl, true, pageSize, page, odBrojaListe, doBrojaListe, podDatumom, searchText)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
 			return
 		}
-		err = h.service.GetObracunKamate(c, &tbl, false, pageSize, page)
+		err = h.service.GetObracunKamate(ctx, &tbl, false, pageSize, page, odBrojaListe, doBrojaListe, podDatumom, searchText)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return

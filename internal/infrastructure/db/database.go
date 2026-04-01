@@ -8,12 +8,14 @@ import (
 // Database defines the interface for database operations
 // This abstraction allows for easier testing and potential database switching
 type Database interface {
-	// Query methods
-	Get(dest interface{}, query string, args ...interface{}) error
-	Select(dest interface{}, query string, args ...interface{}) error
-	QueryRow(query string, args ...interface{}) *sql.Row
+	// Query methods (context-aware - preferred)
+	GetContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error
+	SelectContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error
 	QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error)
 	QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row
+
+	// Execution methods (for INSERT, UPDATE, DELETE)
+	ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
 
 	// Transaction methods
 	Beginx() (Transaction, error)
@@ -25,8 +27,11 @@ type Database interface {
 
 // Transaction defines the interface for database transactions
 type Transaction interface {
-	Exec(query string, args ...interface{}) (sql.Result, error)
-	QueryRow(query string, args ...interface{}) *sql.Row
+	// Context-aware methods (preferred)
+	ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
+	QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row
+
+	// Commit and Rollback
 	Commit() error
 	Rollback() error
 }

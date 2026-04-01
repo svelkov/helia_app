@@ -8,8 +8,8 @@ import (
 
 templ Side_nav(submenu []domain.SubMenuItem) {
 	// Side menu navigation area
-	<div id="side-menu" class="bg-gray-700 text-white w-64 text-sm border-b rounded-sm">
-		<ul class="flex flex-col mb-auto gap-1">
+	<div id="side-menu" class="bg-gray-700 text-white w-64 text-sm border-b rounded-sm h-full flex flex-col">
+		<ul class="flex flex-col gap-1 overflow-y-auto flex-1">
 			<!-- Use 'gap-1' for tighter spacing -->
 			for _, item := range submenu {
 				<li class="nav-item">

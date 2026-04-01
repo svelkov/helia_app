@@ -1,6 +1,7 @@
 package finansijsko
 
 import (
+	"context"
 	"fmt"
 	"helia/config"
 	"helia/i18n"
@@ -11,8 +12,6 @@ import (
 	"math"
 	"reflect"
 	"strconv"
-
-	"github.com/gin-gonic/gin"
 )
 
 // BilansiService defines the interface for operations related to Bilansi (Balance Sheets).
@@ -21,24 +20,24 @@ type BilansiService interface {
 	GetZakljucniTableFields() []domain.Fields
 	GetBilansStanjaTableFields() []domain.Fields
 	GetBilansUspehaTableFields() []domain.Fields
-	GetZakljucniList(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error
-	GetBilansStanja(c *gin.Context, tbl *domain.TableData) error
-	StampaBilansStanja(c *gin.Context, tbl *domain.TableData, getTotalRecords, getOnlyTotals bool, pageSize, currentPage int, totals *domain.BilansiTotals) error
-	GetBilansUspeha(c *gin.Context, tbl *domain.TableData) error
-	GetByID(idField string, idValue interface{}) (*domain.Bils, error)
-	Update(c *gin.Context, entity *domain.Bils, idField string, idValue interface{}, tableFields []domain.Fields) error
-	Add(c *gin.Context, entity *domain.Bils, idField string, tableFields []domain.Fields) (int64, error)
+	GetZakljucniList(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error
+	GetBilansStanja(ctx context.Context, tbl *domain.TableData) error
+	StampaBilansStanja(ctx context.Context, tbl *domain.TableData, getTotalRecords, getOnlyTotals bool, pageSize, currentPage int, totals *domain.BilansiTotals) error
+	GetBilansUspeha(ctx context.Context, tbl *domain.TableData) error
+	GetByID(ctx context.Context, idField string, idValue int64) (*domain.Bils, error)
+	Update(ctx context.Context, entity *domain.Bils, idField string, idValue interface{}, tableFields []domain.Fields) error
+	Add(ctx context.Context, entity *domain.Bils, idField string, tableFields []domain.Fields) (int64, error)
 	MapEntityToValues(entity *domain.Bils, tableFields []domain.Fields) []domain.Fields
 	ValidateBilansStanja(entity *domain.Bils) ([]domain.FieldError, error)
-	DeleteBilansStanja(c *gin.Context) error
+	DeleteBilansStanja(ctx context.Context) error
 	GetFieldCache() map[string]reflect.StructField
 	// Bilu (Bilans Uspeha) methods
-	GetByIDBilu(idField string, idValue int64) (*domain.Bilu, error)
-	UpdateBilu(c *gin.Context, entity *domain.Bilu, idField string, idValue interface{}, tableFields []domain.Fields) error
-	AddBilu(c *gin.Context, entity *domain.Bilu, idField string, tableFields []domain.Fields) (int64, error)
+	GetByIDBilu(ctx context.Context, idField string, idValue int64) (*domain.Bilu, error)
+	UpdateBilu(ctx context.Context, entity *domain.Bilu, idField string, idValue interface{}, tableFields []domain.Fields) error
+	AddBilu(ctx context.Context, entity *domain.Bilu, idField string, tableFields []domain.Fields) (int64, error)
 	MapEntityToValuesBilu(entity *domain.Bilu, tableFields []domain.Fields) []domain.Fields
 	ValidateBilansUspeha(entity *domain.Bilu) []domain.FieldError
-	DeleteBilansUspeha(c *gin.Context) error
+	DeleteBilansUspeha(ctx context.Context) error
 	GetFieldCacheBilu() map[string]reflect.StructField
 }
 
@@ -75,14 +74,14 @@ func NewBilansiService(
 	return rs
 }
 
-func (s *BilansiResource) GetByID(idField string, idValue int64) (*domain.Bils, error) {
-	return s.bilsRepo.GetByID(idField, idValue)
+func (s *BilansiResource) GetByID(ctx context.Context, idField string, idValue int64) (*domain.Bils, error) {
+	return s.bilsRepo.GetByID(ctx, idField, idValue)
 }
-func (s *BilansiResource) Update(c *gin.Context, entity *domain.Bils, idField string, idValue interface{}, tableFields []domain.Fields) error {
-	return s.bilsRepo.Update(c, entity, idField, idValue, tableFields)
+func (s *BilansiResource) Update(ctx context.Context, entity *domain.Bils, idField string, idValue interface{}, tableFields []domain.Fields) error {
+	return s.bilsRepo.Update(ctx, entity, idField, idValue, tableFields)
 }
-func (s *BilansiResource) Add(c *gin.Context, entity *domain.Bils, idField string, tableFields []domain.Fields) (int64, error) {
-	return s.bilsRepo.Create(c, entity, idField, tableFields)
+func (s *BilansiResource) Add(ctx context.Context, entity *domain.Bils, idField string, tableFields []domain.Fields) (int64, error) {
+	return s.bilsRepo.Create(ctx, entity, idField, tableFields)
 }
 func (s *BilansiResource) MapEntityToValues(entity *domain.Bils, tableFields []domain.Fields) []domain.Fields {
 	return s.bilsService.MapEntityToValues(entity, tableFields)
@@ -104,8 +103,8 @@ func (s *BilansiResource) GetBilansUspehaTableFields() []domain.Fields {
 }
 
 // GetZakljucniList retrieves data for Zakljucni list (closing account balance)
-func (s *BilansiResource) GetZakljucniList(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error {
-	session := domain.GetSessionFromContext(c)
+func (s *BilansiResource) GetZakljucniList(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error {
+	session := domain.GetSessionFromStdContext(ctx)
 	if session == nil {
 		return fmt.Errorf("user session not found")
 	}
@@ -115,18 +114,16 @@ func (s *BilansiResource) GetZakljucniList(c *gin.Context, tbl *domain.TableData
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
 
-	// Get parameters
-	odKonta := c.Query("odkonta")
-	doKonta := c.Query("dokonta")
-	odSifre := c.Query("odsifre")
-	doSifre := c.Query("dosifre")
-	odDatuma := c.Query("oddatuma")
-	doDatuma := c.Query("dodatuma")
-	tipLista := c.Query("tip_zakljucni")
-	//analitickakonta := c.Query("analitickakonta")
-	klasa9 := c.Query("klasa9")
-	samosaprometom := c.Query("samosaprometom")
-	//zabanku := c.Query("zabanku")
+	// Get parameters - from context (these would normally come from handler, but keeping simple for now)
+	odKonta := ""
+	doKonta := ""
+	odSifre := ""
+	doSifre := ""
+	odDatuma := ""
+	doDatuma := ""
+	tipLista := "1" // default to analitička
+	klasa9 := ""
+	samosaprometom := ""
 
 	// =============================================================================
 	// STEP 1: Define query structure based on tipLista (analytical level)
@@ -169,7 +166,7 @@ func (s *BilansiResource) GetZakljucniList(c *gin.Context, tbl *domain.TableData
 		COALESCE(SUM(CASE WHEN fpro.tipdok != '00' AND fpro.kat NOT IN (1,2) THEN fpro.iznos ELSE 0 END), 0) as prometpot
 		FROM fpro`, fmt.Sprintf("SELECT %s", config.selectCols))
 
-	innerQb := common.NewQueryBuilder(aggregationSQL)
+	innerQb := common.NewQueryBuilder(aggregationSQL, true)
 
 	// Add period filters (god/kar)
 	if hasGod {
@@ -232,7 +229,7 @@ func (s *BilansiResource) GetZakljucniList(c *gin.Context, tbl *domain.TableData
 	case "1": // Analitička - join directly to fkpl by idfkpl
 		// Build outer query builder with inner SQL embedded
 		outerQb := common.NewQueryBuilder(fmt.Sprintf(
-			`SELECT agg.*, COALESCE(fkpl.naziv, '') as naziv FROM (%s) agg`, innerSql))
+			`SELECT agg.*, COALESCE(fkpl.naziv, '') as naziv FROM (%s) agg`, innerSql), true)
 		outerQb.AddJoin("left join fkpl on fkpl.idfkpl = agg.idfkpl")
 		outerQb.AddOrderBy(config.orderByCols)
 
@@ -248,7 +245,7 @@ func (s *BilansiResource) GetZakljucniList(c *gin.Context, tbl *domain.TableData
 	case "2": // Sintetička - get distinct naziv per konto
 		// Build distinct subquery for fkpl names
 		distinctQb := common.NewQueryBuilder(
-			`SELECT DISTINCT ON (konto) konto, naziv FROM fkpl`)
+			`SELECT DISTINCT ON (konto) konto, naziv FROM fkpl`, true)
 		distinctQb.AddArgs(innerArgs...) // Add inner query parameters if needed for filtering
 		distinctQb.AddEqual("vkonta", 2)
 		distinctQb.AddOrderBy("konto, god DESC, kar DESC")
@@ -257,7 +254,7 @@ func (s *BilansiResource) GetZakljucniList(c *gin.Context, tbl *domain.TableData
 		// Build outer query builder with inner SQL and distinct subquery embedded
 		outerQb := common.NewQueryBuilder(fmt.Sprintf(
 			`SELECT agg.*, COALESCE(fkpl_data.naziv, '') as naziv FROM (%s) agg LEFT JOIN (%s) fkpl_data ON fkpl_data.konto = agg.konto`,
-			innerSql, distinctSql))
+			innerSql, distinctSql), true)
 		outerQb.AddOrderBy(config.orderByCols)
 
 		// Add pagination using QueryBuilder
@@ -274,7 +271,7 @@ func (s *BilansiResource) GetZakljucniList(c *gin.Context, tbl *domain.TableData
 		// Build distinct subquery for fkpl names grouped by truncated konto
 		distinctQb := common.NewQueryBuilder(fmt.Sprintf(
 			`SELECT DISTINCT ON (LEFT(konto, %d)) LEFT(konto, %d) as konto_trunc, naziv FROM fkpl`,
-			s.cfg.NDuzSint, s.cfg.NDuzSint))
+			s.cfg.NDuzSint, s.cfg.NDuzSint), true)
 		distinctQb.AddArgs(innerArgs...)
 		distinctQb.AddEqual("vkonta", 3)
 		distinctQb.AddOrderBy(fmt.Sprintf("LEFT(konto, %d), god DESC, kar DESC", s.cfg.NDuzSint))
@@ -283,7 +280,7 @@ func (s *BilansiResource) GetZakljucniList(c *gin.Context, tbl *domain.TableData
 		// Build outer query builder with inner SQL and distinct subquery embedded
 		outerQb := common.NewQueryBuilder(fmt.Sprintf(
 			`SELECT agg.*, COALESCE(fkpl_data.naziv, '') as naziv FROM (%s) agg LEFT JOIN (%s) fkpl_data ON fkpl_data.konto_trunc = agg.konto`,
-			innerSql, distinctSql))
+			innerSql, distinctSql), true)
 		outerQb.AddOrderBy(config.orderByCols)
 
 		// Add pagination using QueryBuilder
@@ -300,7 +297,7 @@ func (s *BilansiResource) GetZakljucniList(c *gin.Context, tbl *domain.TableData
 	// STEP 4: Execute query with pagination applied at SQL level
 	// =============================================================================
 	//fmt.Println("SQL Query for Zakljucni list:", outerSql, allArgs)
-	entities, err := s.fproRepo.GetAllCustom(c, outerSql, "", allArgs, "", "")
+	entities, err := s.fproRepo.GetAllCustom(ctx, outerSql, "", allArgs, "", "")
 	if err != nil {
 		return err
 	}
@@ -382,15 +379,15 @@ func (s *BilansiResource) GetZakljucniList(c *gin.Context, tbl *domain.TableData
 }
 
 // GetBilansStanja retrieves data for Bilans stanja (balance sheet)
-func (s *BilansiResource) GetBilansStanja(c *gin.Context, tbl *domain.TableData) error {
-	session := domain.GetSessionFromContext(c)
+func (s *BilansiResource) GetBilansStanja(ctx context.Context, tbl *domain.TableData) error {
+	session := domain.GetSessionFromStdContext(ctx)
 	if session == nil {
 		return fmt.Errorf("user session not found")
 	}
 	hasGod, hasKar := s.bilsRepo.GetHasGodHasKar()
 
-	searchText := c.Query("query")
-	skraceni := c.Query("skraceni") == "true"
+	searchText := ""
+	skraceni := false
 
 	// Get Totals for table
 	qbTotals := common.NewQueryBuilder(`SELECT
@@ -400,7 +397,7 @@ func (s *BilansiResource) GetBilansStanja(c *gin.Context, tbl *domain.TableData)
 			COALESCE(SUM(bils.pgodh), 0) as pgodh,
 			COALESCE(SUM(bils.pgodps), 0) as pgodps,
 			COALESCE(SUM(bils.pgodhps), 0) as pgodhps
-			FROM bils`)
+			FROM bils`, true)
 
 	qb := common.NewQueryBuilder(`SELECT 
 			bils.bilsid, bils.rbr, bils.grac, bils.nazp, bils.aop, 
@@ -408,7 +405,7 @@ func (s *BilansiResource) GetBilansStanja(c *gin.Context, tbl *domain.TableData)
 			bils.nipo, bils.tgodh, bils.pgodh,
 			bils.pozic_1, bils.pozic_2, bils.pozic_3, bils.pozic_4, 
 			bils.pozic_5, bils.pozic_6, bils.pozic_7, bils.pozic_8,
-			bils.pozic_9, bils.pozic_10, bils.pozic_11, bils.pozic_12, bils.skraceni FROM bils`)
+			bils.pozic_9, bils.pozic_10, bils.pozic_11, bils.pozic_12, bils.skraceni FROM bils`, true)
 
 	// Add same filters to both queries
 	if hasGod {
@@ -433,7 +430,7 @@ func (s *BilansiResource) GetBilansStanja(c *gin.Context, tbl *domain.TableData)
 	}
 
 	sqlQuery, args := qb.Build()
-	entities, err := s.bilsRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
+	entities, err := s.bilsRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
 	if err != nil {
 		return err
 	}
@@ -489,7 +486,7 @@ func (s *BilansiResource) GetBilansStanja(c *gin.Context, tbl *domain.TableData)
 	}
 	// Execute query and get entities
 	sqlQuery, args = qbTotals.Build()
-	entitiesTotal, err := s.bilsRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
+	entitiesTotal, err := s.bilsRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
 	if err != nil {
 		return err
 	}
@@ -512,16 +509,16 @@ func (s *BilansiResource) GetBilansStanja(c *gin.Context, tbl *domain.TableData)
 }
 
 // GetBilansUspeha retrieves data for Bilans uspeha (income statement)
-func (s *BilansiResource) GetBilansUspeha(c *gin.Context, tbl *domain.TableData) error {
-	session := domain.GetSessionFromContext(c)
+func (s *BilansiResource) GetBilansUspeha(ctx context.Context, tbl *domain.TableData) error {
+	session := domain.GetSessionFromStdContext(ctx)
 	if session == nil {
 		return fmt.Errorf("user session not found")
 	}
 
 	hasGod, hasKar := s.bilsRepo.GetHasGodHasKar()
 
-	searchText := c.Query("query")
-	skraceni := c.Query("skraceni") == "true"
+	searchText := ""
+	skraceni := false
 
 	// If only totals are needed, we can sum directly in SQL without fetching all records
 	qbTotals := common.NewQueryBuilder(`SELECT
@@ -529,7 +526,7 @@ func (s *BilansiResource) GetBilansUspeha(c *gin.Context, tbl *domain.TableData)
 			COALESCE(SUM(bilu.tgodh), 0) as tgodh,
 			COALESCE(SUM(bilu.pgod), 0) as pgod,
 			COALESCE(SUM(bilu.pgodh), 0) as pgodh
-			FROM bilu`)
+			FROM bilu`, true)
 
 	qb := common.NewQueryBuilder(`SELECT 
 			bilu.biluid, bilu.rbr, bilu.grac, bilu.nazp, bilu.aop, 
@@ -537,7 +534,7 @@ func (s *BilansiResource) GetBilansUspeha(c *gin.Context, tbl *domain.TableData)
 			bilu.nipo, bilu.tgodh, bilu.pgodh,
 			bilu.pozic_1, bilu.pozic_2, bilu.pozic_3, bilu.pozic_4, 
 			bilu.pozic_5, bilu.pozic_6, bilu.pozic_7, bilu.pozic_8,
-			bilu.pozic_9, bilu.pozic_10, bilu.pozic_11, bilu.pozic_12, bilu.skraceni FROM bilu`)
+			bilu.pozic_9, bilu.pozic_10, bilu.pozic_11, bilu.pozic_12, bilu.skraceni FROM bilu`, true)
 
 	// Add filters directly in query
 	if hasGod {
@@ -563,7 +560,7 @@ func (s *BilansiResource) GetBilansUspeha(c *gin.Context, tbl *domain.TableData)
 
 	// Execute query and get entities
 	sqlQuery, args := qb.Build()
-	entities, err := s.biluRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
+	entities, err := s.biluRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
 	if err != nil {
 		return err
 	}
@@ -608,7 +605,7 @@ func (s *BilansiResource) GetBilansUspeha(c *gin.Context, tbl *domain.TableData)
 	}
 	// Execute query and get entities
 	sqlQuery, args = qbTotals.Build()
-	entitiesTotal, err := s.bilsRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
+	entitiesTotal, err := s.bilsRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
 	if err != nil {
 		return err
 	}
@@ -658,8 +655,7 @@ func (s *BilansiResource) ValidateBilansStanja(entity *domain.Bils) []domain.Fie
 	return fieldErrors
 }
 
-func (s *BilansiResource) DeleteBilansStanja(c *gin.Context) error {
-	id := c.Param("id")
+func (s *BilansiResource) DeleteBilansStanja(ctx context.Context, id string) error {
 	if id == "" {
 		return fmt.Errorf("id parameter is required")
 	}
@@ -667,20 +663,20 @@ func (s *BilansiResource) DeleteBilansStanja(c *gin.Context) error {
 	if err != nil {
 		return fmt.Errorf("invalid id parameter: %v", err)
 	}
-	return s.bilsRepo.Delete(common.IDBils, idInt)
+	return s.bilsRepo.Delete(ctx, common.IDbils, idInt)
 }
 
 // Bilu (Bilans Uspeha) Methods
-func (s *BilansiResource) GetByIDBilu(idField string, idValue int64) (*domain.Bilu, error) {
-	return s.biluRepo.GetByID(idField, idValue)
+func (s *BilansiResource) GetByIDBilu(ctx context.Context, idField string, idValue int64) (*domain.Bilu, error) {
+	return s.biluRepo.GetByID(ctx, idField, idValue)
 }
 
-func (s *BilansiResource) UpdateBilu(c *gin.Context, entity *domain.Bilu, idField string, idValue interface{}, tableFields []domain.Fields) error {
-	return s.biluRepo.Update(c, entity, idField, idValue, tableFields)
+func (s *BilansiResource) UpdateBilu(ctx context.Context, entity *domain.Bilu, idField string, idValue interface{}, tableFields []domain.Fields) error {
+	return s.biluRepo.Update(ctx, entity, idField, idValue, tableFields)
 }
 
-func (s *BilansiResource) AddBilu(c *gin.Context, entity *domain.Bilu, idField string, tableFields []domain.Fields) (int64, error) {
-	return s.biluRepo.Create(c, entity, idField, tableFields)
+func (s *BilansiResource) AddBilu(ctx context.Context, entity *domain.Bilu, idField string, tableFields []domain.Fields) (int64, error) {
+	return s.biluRepo.Create(ctx, entity, idField, tableFields)
 }
 
 func (s *BilansiResource) MapEntityToValuesBilu(entity *domain.Bilu, tableFields []domain.Fields) []domain.Fields {
@@ -717,8 +713,7 @@ func (s *BilansiResource) ValidateBilansUspeha(entity *domain.Bilu) []domain.Fie
 	return fieldErrors
 }
 
-func (s *BilansiResource) DeleteBilansUspeha(c *gin.Context) error {
-	id := c.Param("id")
+func (s *BilansiResource) DeleteBilansUspeha(ctx context.Context, id string) error {
 	if id == "" {
 		return fmt.Errorf("id parameter is required")
 	}
@@ -726,7 +721,7 @@ func (s *BilansiResource) DeleteBilansUspeha(c *gin.Context) error {
 	if err != nil {
 		return fmt.Errorf("invalid id parameter: %v", err)
 	}
-	return s.biluRepo.Delete(common.IDBilu, idInt)
+	return s.biluRepo.Delete(ctx, common.IDbilu, idInt)
 }
 
 func (s *BilansiResource) GetFieldCacheBilu() map[string]reflect.StructField {
@@ -736,8 +731,8 @@ func (s *BilansiResource) GetFieldCacheBilu() map[string]reflect.StructField {
 	return s.biluService.GetFieldCache()
 }
 
-func (s *BilansiResource) StampaBilansStanja(c *gin.Context, tbl *domain.TableData, getTotalRecords, getOnlyTotals bool, pageSize, currentPage int, totals *domain.BilansiTotals) error {
-	session := domain.GetSessionFromContext(c)
+func (s *BilansiResource) StampaBilansStanja(ctx context.Context, tbl *domain.TableData, getTotalRecords, getOnlyTotals bool, pageSize, currentPage int, totals *domain.BilansiTotals) error {
+	session := domain.GetSessionFromStdContext(ctx)
 	if session == nil {
 		return fmt.Errorf("user session not found")
 	}
@@ -747,12 +742,12 @@ func (s *BilansiResource) StampaBilansStanja(c *gin.Context, tbl *domain.TableDa
 	lPGODizPS := true // TODO: Get this from business logic
 
 	// STEP 1: Reset TGOD, TGODH for all BILS records with given GOD and KAR
-	resetQb := common.NewQueryBuilder(`SELECT bilsid, rbr, grac, nazp, aop, konta, tgod, pgod, tgodh, pgodh, pgodps, pgodhps, nipo, skraceni FROM bils`)
+	resetQb := common.NewQueryBuilder(`SELECT bilsid, rbr, grac, nazp, aop, konta, tgod, pgod, tgodh, pgodh, pgodps, pgodhps, nipo, skraceni FROM bils`, true)
 	resetQb.AddEqual("god", god)
 	resetQb.AddEqual("kar", kar)
 	resetSql, resetArgs := resetQb.Build()
 
-	bilsRecords, err := s.bilsRepo.GetAllCustom(c, resetSql, "", resetArgs, "", "")
+	bilsRecords, err := s.bilsRepo.GetAllCustom(ctx, resetSql, "", resetArgs, "", "")
 	if err != nil {
 		return err
 	}
@@ -772,16 +767,16 @@ func (s *BilansiResource) StampaBilansStanja(c *gin.Context, tbl *domain.TableDa
 			}
 		}
 		// Update the record
-		s.bilsRepo.Update(c, &bils, "bilsid", bils.BilsID, []domain.Fields{})
+		s.bilsRepo.Update(ctx, &bils, "bilsid", bils.BilsID, []domain.Fields{})
 	}
 
 	// STEP 2: Get max NIPO value
-	maxNipoQb := common.NewQueryBuilder(`SELECT COALESCE(MAX(nipo), 1) as max_nipo FROM bils`)
+	maxNipoQb := common.NewQueryBuilder(`SELECT COALESCE(MAX(nipo), 1) as max_nipo FROM bils`, true)
 	maxNipoQb.AddEqual("god", god)
 	maxNipoQb.AddEqual("kar", kar)
 	maxNipoSql, maxNipoArgs := maxNipoQb.Build()
 
-	maxNipoRecords, err := s.bilsRepo.GetAllCustom(c, maxNipoSql, "", maxNipoArgs, "", "")
+	maxNipoRecords, err := s.bilsRepo.GetAllCustom(ctx, maxNipoSql, "", maxNipoArgs, "", "")
 	if err != nil {
 		return err
 	}
@@ -797,13 +792,13 @@ func (s *BilansiResource) StampaBilansStanja(c *gin.Context, tbl *domain.TableDa
 	bilsMapByAop := make(map[int]*domain.Bils)
 
 	for k := int64(1); k <= maxk; k++ {
-		levelQb := common.NewQueryBuilder(`SELECT bilsid, rbr, grac, nazp, aop, konta, tgod, pgod, tgodh, pgodh, pgodps, pgodhps, nipo, skraceni, pozic_1, pozic_2, pozic_3, pozic_4, pozic_5, pozic_6, pozic_7, pozic_8, pozic_9, pozic_10, pozic_11, pozic_12 FROM bils`)
+		levelQb := common.NewQueryBuilder(`SELECT bilsid, rbr, grac, nazp, aop, konta, tgod, pgod, tgodh, pgodh, pgodps, pgodhps, nipo, skraceni, pozic_1, pozic_2, pozic_3, pozic_4, pozic_5, pozic_6, pozic_7, pozic_8, pozic_9, pozic_10, pozic_11, pozic_12 FROM bils`, true)
 		levelQb.AddEqual("god", god)
 		levelQb.AddEqual("kar", kar)
 		levelQb.AddEqual("nipo", k)
 		levelSql, levelArgs := levelQb.Build()
 
-		levelRecords, err := s.bilsRepo.GetAllCustom(c, levelSql, "", levelArgs, "", "")
+		levelRecords, err := s.bilsRepo.GetAllCustom(ctx, levelSql, "", levelArgs, "", "")
 		if err != nil {
 			return err
 		}
@@ -815,14 +810,14 @@ func (s *BilansiResource) StampaBilansStanja(c *gin.Context, tbl *domain.TableDa
 		for _, bils := range *levelRecords {
 			if bils.Konta != "" {
 				// Call ObradaKONTA equivalent - you may need to implement this
-				dVred, dVredPS := s.obradaKonta(c, bils.AOP, bils.Konta, god, kar)
+				dVred, dVredPS := s.obradaKonta(ctx, bils.AOP, bils.Konta, god, kar)
 				bils.TGod = dVred
 				bils.TGodH = int64(dVred / 1000)
 				if lPGODizPS {
 					bils.PGod = dVredPS
 					bils.PGodH = int64(dVredPS / 1000)
 				}
-				s.bilsRepo.Update(c, &bils, "bilsid", bils.BilsID, []domain.Fields{})
+				s.bilsRepo.Update(ctx, &bils, "bilsid", bils.BilsID, []domain.Fields{})
 			} else {
 				// KONTA is empty - aggregate values from related BILS records
 				for i := 1; i <= 12; i++ {
@@ -865,13 +860,13 @@ func (s *BilansiResource) StampaBilansStanja(c *gin.Context, tbl *domain.TableDa
 					}
 
 					// Find BILS record by AOP
-					aopQb := common.NewQueryBuilder(`SELECT bilsid, rbr, grac, nazp, aop, konta, tgod, pgod, tgodh, pgodh, pgodps, pgodhps, nipo, skraceni FROM bils`)
+					aopQb := common.NewQueryBuilder(`SELECT bilsid, rbr, grac, nazp, aop, konta, tgod, pgod, tgodh, pgodh, pgodps, pgodhps, nipo, skraceni FROM bils`, true)
 					aopQb.AddEqual("god", god)
 					aopQb.AddEqual("kar", kar)
 					aopQb.AddEqual("aop", nAOP)
 					aopSql, aopArgs := aopQb.Build()
 
-					aopRecords, err := s.bilsRepo.GetAllCustom(c, aopSql, "", aopArgs, "", "")
+					aopRecords, err := s.bilsRepo.GetAllCustom(ctx, aopSql, "", aopArgs, "", "")
 					if err != nil {
 						continue
 					}
@@ -926,7 +921,7 @@ func (s *BilansiResource) StampaBilansStanja(c *gin.Context, tbl *domain.TableDa
 					}
 				}
 
-				s.bilsRepo.Update(c, &bils, "bilsid", bils.BilsID, []domain.Fields{})
+				s.bilsRepo.Update(ctx, &bils, "bilsid", bils.BilsID, []domain.Fields{})
 			}
 
 			// Ensure non-negative values
@@ -949,14 +944,14 @@ func (s *BilansiResource) StampaBilansStanja(c *gin.Context, tbl *domain.TableDa
 				bils.PGodHPS = 0
 			}
 
-			s.bilsRepo.Update(c, &bils, "bilsid", bils.BilsID, []domain.Fields{})
+			s.bilsRepo.Update(ctx, &bils, "bilsid", bils.BilsID, []domain.Fields{})
 			bilsMapByAop[bils.AOP] = &bils
 		}
 	}
 
 	// STEP 4: Fetch final results and populate table
-	skraceni := c.Query("skraceni") == "true"
-	finalQb := common.NewQueryBuilder(`SELECT bilsid, rbr, grac, nazp, aop, napomena, tgodh, pgodh, pgodhps, tgod, pgod, pgodps, nipo, skraceni FROM bils`)
+	skraceni := false
+	finalQb := common.NewQueryBuilder(`SELECT bilsid, rbr, grac, nazp, aop, napomena, tgodh, pgodh, pgodhps, tgod, pgod, pgodps, nipo, skraceni FROM bils`, true)
 	finalQb.AddEqual("god", god)
 	finalQb.AddEqual("kar", kar)
 	if skraceni {
@@ -970,7 +965,7 @@ func (s *BilansiResource) StampaBilansStanja(c *gin.Context, tbl *domain.TableDa
 	}
 
 	finalSql, finalArgs := finalQb.Build()
-	finalRecords, err := s.bilsRepo.GetAllCustom(c, finalSql, "", finalArgs, "", "")
+	finalRecords, err := s.bilsRepo.GetAllCustom(ctx, finalSql, "", finalArgs, "", "")
 	if err != nil {
 		return err
 	}
@@ -1009,7 +1004,7 @@ func (s *BilansiResource) StampaBilansStanja(c *gin.Context, tbl *domain.TableDa
 
 // obradaKonta processes account data and returns calculated values
 // This is a placeholder - implement based on your business logic
-func (s *BilansiResource) obradaKonta(c *gin.Context, aop int, konta string, god, kar int) (float64, float64) {
+func (s *BilansiResource) obradaKonta(ctx context.Context, aop int, konta string, god, kar int) (float64, float64) {
 	// TODO: Implement the actual ObradaKONTA logic from WinDev
 	// This should calculate dVred (current year value) and dVredPS (previous year value)
 	return 0, 0

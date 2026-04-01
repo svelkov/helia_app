@@ -1,15 +1,14 @@
 package finansijsko
 
 import (
+	"context"
 	"fmt"
+	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
 	"helia/internal/repository"
 	"helia/internal/service"
 	"reflect"
-	"strings"
-
-	"github.com/gin-gonic/gin"
 )
 
 // KompenzacijeService defines the interface for operations related to Kompenzacije.
@@ -18,9 +17,10 @@ type KompenzacijeService interface {
 	GetFormiranjeTableFields() []domain.Fields
 	GetKompenzacijeTableFields() []domain.Fields
 	GetDokumentaTableFields() []domain.Fields
-	ObradaPredlogKompenzacije(c *gin.Context, tbl *domain.TableData, getTotRecords bool, currentPage int, pageSize int) error
-	FormiranjeKompenzacije(c *gin.Context, tblDuznik, tblPoverilac *domain.TableData, tipObrade int) error
-	GetPregledKompenzacijaList(c *gin.Context, tbl *domain.TableData, odDat, doDat, odDok, doDok, statusFilter string) error
+	// Observer pattern: userSession comes from context.Context
+	ObradaPredlogKompenzacije(ctx context.Context, tbl *domain.TableData, getTotRecords bool, currentPage int, pageSize int, searchText string) error
+	FormiranjeKompenzacije(ctx context.Context, tbl *domain.TableData, tipObrade int, getTotalRecords bool, currentPage, pageSize int, konto, sifra, stanjeNaDan string, checkDospece bool) error
+	GetPregledKompenzacijaList(ctx context.Context, tbl *domain.TableData, odDat, doDat, odDok, doDok, statusFilter string) error
 }
 
 // KompenzacijeResource implements the KompenzacijeService interface.
@@ -31,6 +31,7 @@ type KompenzacijeResource struct {
 	formiranjeTableFields      []domain.Fields
 	kompenzacijeHdrTableFields []domain.Fields
 	kompenzacijeDetTableFields []domain.Fields
+	searchFiledsTab1           []string
 }
 
 // NewKompenzacijeService creates a new instance of KompenzacijeResource
@@ -64,107 +65,90 @@ func (s *KompenzacijeResource) GetDokumentaTableFields() []domain.Fields {
 	return s.kompenzacijeDetTableFields
 }
 
-func (s *KompenzacijeResource) ObradaPredlogKompenzacije(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, currentPage, pageSize int) error {
-	// Get user session from context
-	userSession := domain.GetSessionFromContext(c)
+func (s *KompenzacijeResource) ObradaPredlogKompenzacije(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage, pageSize int, searchText string) error {
+	// UserSession is now retrieved from context.Context
+	userSession := domain.GetSessionFromStdContext(ctx)
 	if userSession == nil {
 		return fmt.Errorf("user session not found")
 	}
-	searchText := c.Query("query")
 
 	common.SetupTablePagination(tbl, currentPage, pageSize)
-
 	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
-
-	// Build single optimized query with all JOINs and aggregations
+	// Build single optimized query - group by partner only, one row per partner with both debtor/creditor data
 	qb := common.NewQueryBuilder(`
-        select 
-            max(case when fpro.konto like '204%' then fpro.konto else '' end) as konto_duznika,
-            max(case when fpro.konto like '204%' then fpro.sifra else '' end) as sifra_duznika,
-            max(case when fpro.konto like '435%' then fpro.konto else '' end) as konto_poverioca,
-            max(case when fpro.konto like '435%' then fpro.sifra else '' end) as sifra_poverioca,
-            p.naziv as naziv,
-            p.mesto as mesto,
-			p.adresa as adresa,
-            sum(case when fpro.konto like '204%' then 
-                (case fpro.vrd when 10 then fpro.iznos when 20 then fpro.iznos else 0 end) - 
-                (case fpro.vrd when 30 then fpro.iznos when 40 then fpro.iznos else 0 end)
-            else 0 end) as iznos_dokum_duznika,
-            sum(case when fpro.konto like '435%' then 
-                (case fpro.vrd when 10 then fpro.iznos when 20 then fpro.iznos else 0 end) - 
-                (case fpro.vrd when 30 then fpro.iznos when 40 then fpro.iznos else 0 end)
-            else 0 end) as iznos_dokum_poverioca,
-            coalesce(kd.komp_iznos, 0) as kompenzacije_duznik,
-            coalesce(kp.komp_iznos, 0) as kompenzacije_poverilac
-        from fpro`)
+			select 
+				coalesce(max(case when fpro.konto like '204%' then fpro.konto else null end), '') as konto_duznika,
+				coalesce(max(case when fpro.konto like '204%' then fpro.sifra else null end), '') as sifra_duznika,
+				coalesce(max(case when fpro.konto like '435%' then fpro.konto else null end), '') as konto_poverioca,
+				coalesce(max(case when fpro.konto like '435%' then fpro.sifra else null end), '') as sifra_poverioca,
+				sum(case when fpro.konto like '204%' and fpro.vrd in (10, 20) then fpro.iznos else 0 end) -
+				sum(case when fpro.konto like '204%' and fpro.vrd in (30, 40) then fpro.iznos else 0 end) as iznos_dokum_duznika,
+				sum(case when fpro.konto like '435%' and fpro.vrd in (10, 20) then fpro.iznos else 0 end) -
+				sum(case when fpro.konto like '435%' and fpro.vrd in (30, 40) then fpro.iznos else 0 end) as iznos_dokum_poverioca,
+				p.idpartneri,
+				p.naziv,
+				p.mesto,
+				p.adresa,
+				coalesce(komp.total_kompd, 0) as kompenzacije_duznik, 
+				coalesce(komp.total_kompp, 0) as kompenzacije_poverilac
+			from fpro`, true)
+	// query totals
+	qbTotals := common.NewQueryBuilder(`
+	select	
+	sum(case when fpro.konto like '204%' and fpro.vrd in (10, 20) then fpro.iznos else 0 end) -
+	sum(case when fpro.konto like '204%' and fpro.vrd in (30, 40) then fpro.iznos else 0 end) as iznos_dokum_duznika,
+	sum(case when fpro.konto like '435%' and fpro.vrd in (10, 20) then fpro.iznos else 0 end) -
+	sum(case when fpro.konto like '435%' and fpro.vrd in (30, 40) then fpro.iznos else 0 end) as iznos_dokum_poverioca,
+	sum(coalesce(komp.total_kompd, 0)) as kompenzacije_duznik, 
+	sum(coalesce(komp.total_kompp, 0)) as kompenzacije_poverilac
+	from fpro`, true)
 
-	// Build JOIN conditions for fkpl and partneri
-	qb.AddJoin("left join fkpl on fkpl.idfkpl = fpro.idfkpl")
-	qb.AddJoin("left join partneri p on p.idpartneri = fkpl.idpartneri")
+	qb.AddJoin(` left join fkpl on fpro.idfkpl = fkpl.idfkpl `)
+	qb.AddJoin(` left join partneri p on p.idpartneri = fkpl.idpartneri`)
+	qb.AddJoin(fmt.Sprintf(` left join (
+				select 
+					sum(case when kompenzh.konto like '204%%' then iznosdok else 0 end) as total_kompd,
+					sum(case when kompenzh.konto like '435%%' then iznosdok else 0 end) as total_kompp
+				from kompenzh
+				where god = %d and kar = %d and stsdok <= 10
+			) komp on 1=1`, userSession.SelectedGod, userSession.SelectedKar))
+	qbTotals.AddJoin(` left join fkpl on fpro.idfkpl = fkpl.idfkpl `)
+	qbTotals.AddJoin(` left join partneri p on p.idpartneri = fkpl.idpartneri`)
+	qbTotals.AddJoin(fmt.Sprintf(` left join (
+				select
+					sum(case when kompenzh.konto like '204%%' then iznosdok else 0 end) as total_kompd,
+					sum(case when kompenzh.konto like '435%%' then iznosdok else 0 end) as total_kompp
+				from kompenzh
+				where god = %d and kar = %d and stsdok <= 10
+			) komp on 1=1`, userSession.SelectedGod, userSession.SelectedKar))
 
-	// Build kompenzh subquery conditions based on god/kar
-	var kompWhereConditions []string
-	if hasGod {
-		kompWhereConditions = append(kompWhereConditions, fmt.Sprintf("god = %d", userSession.SelectedGod))
-	}
-	if hasKar {
-		kompWhereConditions = append(kompWhereConditions, fmt.Sprintf("kar = %d", userSession.SelectedKar))
-	}
-	kompWhereConditions = append(kompWhereConditions, "stsdok <= 10")
-	kompWhereClause := strings.Join(kompWhereConditions, " and ")
-
-	// LEFT JOIN for debtor compensations (konto like '204%')
-	qb.AddJoin(fmt.Sprintf(`left join (
-        select konto, sifra, sum(iznosdok) as komp_iznos 
-        from kompenzh 
-        where %s
-        group by konto, sifra
-    ) kd on kd.konto = fpro.konto and kd.sifra = fpro.sifra and fpro.konto like '204%%'`, kompWhereClause))
-
-	// LEFT JOIN for creditor compensations (kontod like '435%')
-	qb.AddJoin(fmt.Sprintf(`left join (
-        select kontod, sifrad, sum(iznosdok) as komp_iznos 
-        from kompenzh 
-        where %s
-        group by kontod, sifrad
-    ) kp on kp.kontod = fpro.konto and kp.sifrad = fpro.sifra and fpro.konto like '435%%'`, kompWhereClause))
-
-	// Add WHERE conditions for fpro
 	if hasGod {
 		qb.AddEqual("fpro.god", userSession.SelectedGod)
+		qbTotals.AddEqual("fpro.god", userSession.SelectedGod)
 	}
 	if hasKar {
 		qb.AddEqual("fpro.kar", userSession.SelectedKar)
+		qbTotals.AddEqual("fpro.kar", userSession.SelectedKar)
 	}
-	// Add custom condition to filter only accounts starting with 204 or 435
-	qb.AddCustomCondition("(fpro.konto like '204%' or fpro.konto like '435%')")
-	// if search text is not epmty, add search conditions
-	if searchText != "" {
-		qb.SetEntityType(reflect.TypeOf(domain.KompenzacijeDto{}))
-		qb.AddSearchConditions(s.GetPregledPartneraTableFields(), searchText)
-	}
-	// Add GROUP BY
-	qb.AddGroupBy("p.naziv, p.mesto, p.adresa, kd.komp_iznos, kp.komp_iznos")
+	qb.AddCustomCondition("(fpro.konto like '204%' OR fpro.konto like '435%')")
+	qb.AddGroupBy("p.idpartneri, p.naziv, p.mesto, p.adresa, total_kompd, total_kompp")
+	qb.AddHaving("max(case when fpro.konto like '204%' then fpro.konto end) IS NOT NULL AND max(case when fpro.konto like '435%' then fpro.konto end) IS NOT NULL")
+	qb.AddOrderBy("p.naziv")
 
-	// Add HAVING clause to filter only partners with both debtor and creditor accounts
-	qb.AddHaving(` 
-        max(case when fpro.konto like '204%' then fpro.konto else '' end) <> '' and
-        max(case when fpro.konto like '435%' then fpro.konto else '' end) <> '' and
-        sum(case when fpro.konto like '204%' then 
-            (case fpro.vrd when 10 then fpro.iznos when 20 then fpro.iznos else 0 end) - 
-            (case fpro.vrd when 30 then fpro.iznos when 40 then fpro.iznos else 0 end)
-        else 0 end) > 0 and
-        sum(case when fpro.konto like '435%' then 
-            (case fpro.vrd when 10 then fpro.iznos when 20 then fpro.iznos else 0 end) - 
-            (case fpro.vrd when 30 then fpro.iznos when 40 then fpro.iznos else 0 end)
-        else 0 end) > 0`)
+	qbTotals.AddCustomCondition("(fpro.konto like '204%' OR fpro.konto like '435%')")
+	qbTotals.AddHaving("max(case when fpro.konto like '204%' then fpro.konto end) IS NOT NULL AND max(case when fpro.konto like '435%' then fpro.konto end) IS NOT NULL")
+
 	if !getTotalRecords {
 		qb.SetLimit(pageSize)
 		qb.SetOffset((currentPage - 1) * pageSize)
 	}
+	if searchText != "" {
+		qb.AddCustomSearchCondition(s.searchFiledsTab1, searchText)
+		qbTotals.AddCustomSearchCondition(s.searchFiledsTab1, searchText)
+	}
 	// Build and execute query
 	sqlQuery, args := qb.Build()
-	entities, err := s.service.GetAllCustom(c, sqlQuery, "", args, "", "")
+	entities, err := s.service.GetAllCustom(ctx, sqlQuery, "", args, "", "")
 	if err != nil {
 		return fmt.Errorf("failed to query fpro: %s", err.Error())
 	}
@@ -173,7 +157,7 @@ func (s *KompenzacijeResource) ObradaPredlogKompenzacije(c *gin.Context, tbl *do
 		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
 		return nil
 	}
-	// Set table rows
+	// Set table rows - one row per partner with both debtor and creditor data
 	if entities != nil && len(*entities) > 0 {
 		for _, entity := range *entities {
 			fields := []string{
@@ -193,170 +177,211 @@ func (s *KompenzacijeResource) ObradaPredlogKompenzacije(c *gin.Context, tbl *do
 			tbl.Rows = append(tbl.Rows, tblRow)
 		}
 	}
+	// Get totals and set in table footer
+	sqlTotalsQuery, totalsArgs := qbTotals.Build()
+	totalsEntities, err := s.service.GetAllCustom(ctx, sqlTotalsQuery, "", totalsArgs, "", "")
+	if err != nil {
+		return fmt.Errorf("failed to query totals: %s", err.Error())
+	}
+	var totDuznik, totPoverilac, totKompDuznik, totKompPoverilac float64
+	for _, tot := range *totalsEntities {
+		totDuznik += tot.IznosDokumDuznika
+		totPoverilac += tot.IznosDokumPoverioca
+		totKompDuznik += tot.KompenzacijeDuznik
+		totKompPoverilac += tot.KompenzacijePoverilac
+	}
+	tbl.Totals = make([]string, len(tbl.Headers))
+	tbl.Totals[0] = i18n.GetInstance().Label("Ukupno") // Set label for totals column
+	for i, header := range tbl.Headers {
+		switch header.Name {
+		case "iznos_dokum_duznika":
+			tbl.Totals[i] = common.FormatNumberWithSystemLocale(totDuznik, 2)
+		case "iznos_dokum_poverioca":
+			tbl.Totals[i] = common.FormatNumberWithSystemLocale(totPoverilac, 2)
+		case "saldo":
+			tbl.Totals[i] = common.FormatNumberWithSystemLocale(totDuznik-totPoverilac, 2)
+		case "kompenzacije_duznik":
+			tbl.Totals[i] = common.FormatNumberWithSystemLocale(totKompDuznik, 2)
+		case "kompenzacije_poverilac":
+			tbl.Totals[i] = common.FormatNumberWithSystemLocale(totKompPoverilac, 2)
+		}
+	}
 
 	return nil
 }
 
 // FormiranjeKompenzacije fetches debtor or creditor obligations for kompenzacije formiranje
 // ipTip: 1 = debtor obligations, 2 = creditor obligations
-func (s *KompenzacijeResource) FormiranjeKompenzacije(c *gin.Context, tblDuznik, tblPoverilac *domain.TableData, tipObrade int) error {
+func (s *KompenzacijeResource) FormiranjeKompenzacije(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage, pageSize int, konto, sifra, stanjeNaDan string, checkDospece bool) error {
 	// Get user session from context
-	userSession := domain.GetSessionFromContext(c)
+	userSession := domain.GetSessionFromStdContext(ctx)
 	if userSession == nil {
 		return fmt.Errorf("user session not found")
 	}
-	// Get query parameters
-	konto := c.Query("konto")
-	sifra := c.Query("sifra")
-	datumFilter := c.Query("datum_filter")
-	checkDueDate := c.Query("check_due_date") == "true"
 
+	common.SetupTablePagination(tbl, currentPage, pageSize)
 	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
 
-	// Build single optimized query with conditional aggregations and subquery JOIN
-	qb := common.NewQueryBuilder(`
+	// Build inner query builder for WITH clause
+	innerQb := common.NewQueryBuilder(`
 		select 
-			f.idfpro,
-			f.konto,
-			f.sifra,
-			case 
-				when f.iznos > 0 then f.dokum
-				else f.dokumv
-			end as dokum,
-			f.idorgjed as idorgjed,
-			f.ojozn,
-			case 
-				when f.iznos > 0 then f.tra
-				else f.travez
-			end as tra,
-			f.nalog as nalog,
-			f.danal as danal,
-			f.dadok as dadok,
-			f.dadok + f.rok as dospece,
-			f.rok as rok,
-			case when f.vrd in (10, 20) then f.vrd else 0 end as vrd,
-			sum(case when f.vrd in (10, 20) then f.iznos else 0 end) as xfaktura,
-			sum(case when f.vrd in (30, 40) then f.iznos else 0 end) as xuplata,
-			sum(case when f.vrd in (10, 20) then f.iznos else 0 end) - 
-			sum(case when f.vrd in (30, 40) then f.iznos else 0 end) as xsaldo,
-			f.brst as brst,
-			f.opis as opis,
-			coalesce(komp.iznos_kompenz, 0) as xiznkompenz
-		from fpro f`)
-
-	// LEFT JOIN subquery for existing compensations
-	var kompWhereConditions []string
-	if hasGod {
-		kompWhereConditions = append(kompWhereConditions, fmt.Sprintf("kh.god = %d", userSession.SelectedGod))
-	}
-	if hasKar {
-		kompWhereConditions = append(kompWhereConditions, fmt.Sprintf("kh.kar = %d", userSession.SelectedKar))
-	}
-	kompWhereConditions = append(kompWhereConditions, "kh.stsdok <= 10")
-	kompWhereClause := strings.Join(kompWhereConditions, " and ")
-
-	qb.AddJoin(fmt.Sprintf(`
+			fpro.konto,
+			fpro.sifra,
+			fpro.ojozn,
+			fpro.idorgjed,
+			fpro.nalog,
+			fpro.danal,
+			fpro.dadok,
+			fpro.rok,
+			fpro.vrd,
+			fpro.iznos,
+			fpro.opis,
+			case when fpro.iznos > 0 then fpro.tra else fpro.travez end as norm_tra,
+			case when fpro.iznos > 0 then fpro.dokum else fpro.dokumv end as norm_dokum,
+			kompd.total_komp
+		from fpro
 		left join (
-			select kd.idfpro, sum(kd.iznosdok) as iznos_kompenz
-			from kompenzd kd
-			join kompenzh kh on kh.kompenzhid = kd.kompenzhid
-			where %s
-			group by kd.idfpro
-		) komp on komp.idfpro = f.idfpro`, kompWhereClause))
+			select idfpro, sum(iznosdok) as total_komp 
+			from kompenzd
+			where exists (
+				select 1 from kompenzh 
+				where kompenzh.kompenzhid = kompenzd.kompenzhid 
+				and kompenzh.stsdok <= 10
+			)
+			group by idfpro
+		) kompd on fpro.idfpro = kompd.idfpro
+	`, true)
 
-	// Add WHERE conditions
+	// Add WHERE conditions to inner query builder
+	innerQb.AddEqual("fpro.vkonta", 1)
+	innerQb.AddEqual("fpro.konto", konto)
+	innerQb.AddEqual("fpro.sifra", sifra)
+
 	if hasGod {
-		qb.AddEqual("f.god", userSession.SelectedGod)
+		innerQb.AddEqual("fpro.god", userSession.SelectedGod)
 	}
 	if hasKar {
-		qb.AddEqual("f.kar", userSession.SelectedKar)
-	}
-	qb.AddEqual("f.vkonta", 1)
-	qb.AddEqual("f.konto", konto)
-	qb.AddEqual("f.sifra", sifra)
-
-	// Group by document key components
-	qb.AddGroupBy("f.konto, f.sifra, f.ojozn, f.tra, f.dokum, f.travez, f.dokumv, f.idfpro, f.idorgjed, f.nalog, f.danal, f.dadok, f.rok, f.brst, f.opis, f.iznos")
-
-	// Add HAVING to filter out zero balance entries
-	havingClause := `
-		(sum(case when f.vrd in (10, 20) then f.iznos else 0 end) - 
-		 sum(case when f.vrd in (30, 40) then f.iznos else 0 end)) > 0`
-
-	// Add due date filter if enabled
-	if checkDueDate && datumFilter != "" {
-		havingClause += fmt.Sprintf(" and f.dadok + f.rok <= '%s'", datumFilter)
+		innerQb.AddEqual("fpro.kar", userSession.SelectedKar)
 	}
 
-	qb.AddHaving(havingClause)
-	qb.AddOrderBy("f.dadok")
+	if checkDospece && stanjeNaDan != "" {
+		innerQb.AddCustomCondition(fmt.Sprintf("fpro.dadok + (fpro.rok || ' days')::interval <= '%s'::date", stanjeNaDan))
+	}
+	if stanjeNaDan != "" {
+		innerQb.AddCustomCondition(fmt.Sprintf("fpro.dadok <= '%s'::date", stanjeNaDan))
+	}
+	// Build inner query and get SQL + args
+	innerSQL, innerArgs := innerQb.Build()
+
+	// Build outer query using WITH clause
+	qb := common.NewQueryBuilder(fmt.Sprintf(`
+		with inner_data as (%s)
+		select 
+			t.konto as konto_duznika,
+			t.sifra as sifra_duznika,
+			t.norm_dokum as dokum,
+			max(t.idorgjed) as idorgjed,
+			t.ojozn as oj,
+			t.norm_tra as tra,
+			max(t.nalog) as nalog,
+			max(t.danal) as danal,
+			max(t.dadok) as dadok,
+			max(t.dadok) + max(t.rok) as dospece,
+			max(t.rok) as rok,
+			min(t.vrd) as vrd,
+			sum(case when t.vrd in (10,20) then t.iznos else 0 end) as faktura,
+			sum(case when t.vrd in (30,40) then t.iznos else 0 end) as uplata,
+			sum(case when t.vrd in (10,20) then t.iznos else 0 end) - 
+			sum(case when t.vrd in (30,40) then t.iznos else 0 end) as saldo,
+			max(t.opis) as opis,
+			coalesce(max(t.total_komp), 0) as kompenzacije_duznik
+		from inner_data t
+	`, innerSQL), true)
+
+	// Add inner query parameters and configure outer aggregation
+	qb.AddArgs(innerArgs...)
+	qb.AddGroupBy("t.konto, t.sifra, t.ojozn, t.norm_tra, t.norm_dokum")
+	qb.AddHaving("sum(case when t.vrd in (10,20) then t.iznos else 0 end) - sum(case when t.vrd in (30,40) then t.iznos else 0 end) > 0")
+	qb.AddOrderBy("t.norm_dokum")
+
+	if !getTotalRecords {
+		qb.SetLimit(pageSize)
+		qb.SetOffset((currentPage - 1) * pageSize)
+	}
 
 	// Build and execute query
 	sqlQuery, args := qb.Build()
-
-	rows, err := s.fproRepo.DB.QueryContext(c, sqlQuery, args...)
+	fmt.Println(sqlQuery, args)
+	entities, err := s.service.GetAllCustom(ctx, sqlQuery, "", args, "", "")
 	if err != nil {
 		return fmt.Errorf("failed to query fpro: %s", err.Error())
 	}
-	defer rows.Close()
-
-	// Process results and populate table
-	xUkupno := 0.0
-
-	for rows.Next() {
-		var idfpro, idorgjed, tra, rok, vrd, brst int
-		var konto, sifra, dokum, ojozn, nalog, danal, dadok, dospece, opis string
-		var xfaktura, xuplata, xsaldo, xiznkompenz float64
-
-		err := rows.Scan(&idfpro, &konto, &sifra, &dokum, &idorgjed, &ojozn, &tra,
-			&nalog, &danal, &dadok, &dospece, &rok, &vrd, &xfaktura, &xuplata,
-			&xsaldo, &brst, &opis, &xiznkompenz)
-		if err != nil {
-			return fmt.Errorf("failed to scan row: %s", err.Error())
-		}
-
-		// Calculate final amount for compensation
-		iznZaKomp := xfaktura - xuplata - xiznkompenz
-		xUkupno += iznZaKomp
-
-		// Add row to table
-		fields := []string{
-			nalog,
-			dadok,
-			common.FormatNumberWithSystemLocale(xfaktura, 2),
-			common.FormatNumberWithSystemLocale(xuplata, 2),
-			common.FormatNumberWithSystemLocale(xsaldo, 2),
-			common.FormatNumberWithSystemLocale(xiznkompenz, 2),
-			common.FormatNumberWithSystemLocale(iznZaKomp, 2),
-			dokum,
-			fmt.Sprintf("%d", vrd),
-			fmt.Sprintf("%d", tra),
-			danal,
-			fmt.Sprintf("%d", rok),
-			dospece,
-			opis,
-		}
-		tblRow := domain.TableRow{Fields: fields, HasUpdate: false, HasDelete: true}
-		switch tipObrade {
-		case 1:
-			tblDuznik.Rows = append(tblDuznik.Rows, tblRow)
-		case 2:
-			tblPoverilac.Rows = append(tblPoverilac.Rows, tblRow)
+	if getTotalRecords {
+		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
+		return nil
+	}
+	// Set table rows - one row per partner with both debtor and creditor data
+	if entities != nil && len(*entities) > 0 {
+		for _, entity := range *entities {
+			fields := []string{
+				fmt.Sprintf("%d", entity.Nalog),
+				common.FormatNullTime(entity.Dadok, common.HtmlLayout),
+				common.FormatNumberWithSystemLocale(entity.Faktura, 2),
+				common.FormatNumberWithSystemLocale(entity.Uplata, 2),
+				common.FormatNumberWithSystemLocale(entity.Saldo, 2),
+				common.FormatNumberWithSystemLocale(entity.KompenzacijeDuznik, 2),
+				common.FormatNumberWithSystemLocale(entity.Saldo-entity.KompenzacijeDuznik, 2),
+				entity.Dokum,
+				entity.Vrd,
+				entity.Tra,
+				entity.Danal.Format(common.HtmlLayout),
+				entity.Rok,
+				entity.Dospece,
+				entity.Opis,
+			}
+			tblRow := domain.TableRow{Fields: fields, HasUpdate: false, HasDelete: true, ID: fmt.Sprintf("%d", entity.IDPartneri)}
+			tbl.Rows = append(tbl.Rows, tblRow)
 		}
 	}
-
+	// // Get totals and set in table footer
+	// sqlTotalsQuery, totalsArgs := qbTotals.Build()
+	// totalsEntities, err := s.service.GetAllCustom(c, sqlTotalsQuery, "", totalsArgs, "", "")
+	// if err != nil {
+	// 	return fmt.Errorf("failed to query totals: %s", err.Error())
+	// }
+	// var totFaktura, totUplata, totKomp, totKompUToku float64
+	// for _, tot := range *totalsEntities {
+	// 	totFaktura += tot.Faktura
+	// 	totUplata += tot.Uplata
+	// 	totKomp += tot.KompenzacijeDuznik
+	// 	totKompUToku += tot.KompenzacijePoverilac
+	// }
+	// tbl.Totals = make([]string, len(tbl.Headers))
+	// tbl.Totals[0] = i18n.GetInstance().Label("Ukupno") // Set label for totals column
+	// for i, header := range tbl.Headers {
+	// 	switch header.Name {
+	// 	case "faktura":
+	// 		tbl.Totals[i] = common.FormatNumberWithSystemLocale(totFaktura, 2)
+	// 	case "uplata":
+	// 		tbl.Totals[i] = common.FormatNumberWithSystemLocale(totUplata, 2)
+	// 	case "saldo":
+	// 		tbl.Totals[i] = common.FormatNumberWithSystemLocale(totFaktura-totUplata, 2)
+	// 	case "kompenzacije_duznik":
+	// 		tbl.Totals[i] = common.FormatNumberWithSystemLocale(totKomp, 2)
+	// 	case "kompenzacije_poverilac":
+	// 		tbl.Totals[i] = common.FormatNumberWithSystemLocale(totKompUToku, 2)
+	// 	}
+	// }
 	return nil
 }
 
 // GetPregledKompenzacijaList fetches the list of kompenzacije for Tab 3 (Pregled)
-func (s *KompenzacijeResource) PregledKompenzacije(c *gin.Context, tblHdr, tblDet *domain.TableData, getTotalRecords bool, currentPage, pageSize int) error {
+func (s *KompenzacijeResource) PregledKompenzacije(ctx context.Context, tblHdr, tblDet *domain.TableData, getTotalRecords bool, currentPage, pageSize int, statusDok string, searchText string) error {
 	// Get user session from context
-	userSession := domain.GetSessionFromContext(c)
+	userSession := domain.GetSessionFromStdContext(ctx)
 	if userSession == nil {
 		return fmt.Errorf("user session not found")
 	}
-	statusDok := c.Query("status_filter")
-	searchText := c.Query("query")
 
 	common.SetupTablePagination(tblHdr, currentPage, pageSize)
 	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
@@ -378,7 +403,7 @@ func (s *KompenzacijeResource) PregledKompenzacije(c *gin.Context, tblHdr, tblDe
 			fkpl.naziv,
 			kompenzh.kompenzhid,
 			kompenzh.iznosdok as iznos
-		from kompenzh`)
+		from kompenzh`, true)
 
 	// Add JOIN
 	qb.AddJoin("inner join fkpl on fkpl.idfkpl = kompenzh.idfkpl")
@@ -419,7 +444,7 @@ func (s *KompenzacijeResource) PregledKompenzacije(c *gin.Context, tblHdr, tblDe
 	}
 	// Build and execute query
 	sqlQuery, args := qb.Build()
-	entities, err := s.service.GetAllCustom(c, sqlQuery, "", args, "", "")
+	entities, err := s.service.GetAllCustom(ctx, sqlQuery, "", args, "", "")
 	if err != nil {
 		return fmt.Errorf("failed to query kompenzh: %s", err.Error())
 	}
@@ -452,7 +477,7 @@ func (s *KompenzacijeResource) PregledKompenzacije(c *gin.Context, tblHdr, tblDe
 			entity.KontoDuznika,
 			entity.SifraDuznika,
 			entity.Dokum,
-			entity.Dadok.Format(common.DateLayout),
+			common.FormatNullTime(entity.Dadok, common.DateLayout),
 			common.FormatNumberWithSystemLocale(entity.Iznos, 2), // iznos
 			entity.Odglicep,
 			entity.Odgliced,
@@ -467,33 +492,34 @@ func (s *KompenzacijeResource) PregledKompenzacije(c *gin.Context, tblHdr, tblDe
 
 // setServiceFieldValues initializes all table field definitions
 func (s *KompenzacijeResource) setServiceFieldValues() {
+	s.searchFiledsTab1 = []string{"p.naziv", "p.mesto", "p.adresa", "fpro.konto", "fpro.sifra"}
 	// Tab 1: Pregled partnera za kompenzacije (based on screenshot)
 	s.pregledPartneraTableFields = []domain.Fields{
-		{Name: "konto_duznika", Label: "Konto dužnika", Width: "10", Field: "konto_duznika"},
+		{Name: "konto_duznika", Label: "Konto dužnika", Width: "10", Field: "konto_duznika", IncludeInTotals: true, TextAlign: "right"},
 		{Name: "sifra_duznika", Label: "Šifra Dužnika", Width: "10", Field: "sifra_duznika"},
 		{Name: "konto_poverioca", Label: "Konto poverioca", Width: "10", Field: "konto_poverioca"},
 		{Name: "sifra_poverioca", Label: "Šifra poverioca", Width: "10", Field: "sifra_poverioca"},
 		{Name: "naziv", Label: "Naziv", Width: "40", Field: "p.naziv"},
-		{Name: "iznos_dokum_duznika", Label: "Iznos dokum. dužnika", Width: "15", Field: "kd.komp_iznos"},
-		{Name: "iznos_dokum_poverioca", Label: "Iznos dokum. poverioca", Width: "15", Field: "kp.komp_iznos"},
-		{Name: "kompenzacije_duznik", Label: "Kompenzacije dužnik", Width: "15", Field: "kompenzacije_duznik"},
-		{Name: "kompenzacije_poverilac", Label: "Kompenzacije poverilac", Width: "15", Field: "kompenzacije_poverilac"},
+		{Name: "iznos_dokum_duznika", Label: "Iznos dokum dužnika", Width: "15", Field: "kd.komp_iznos", IncludeInTotals: true, TextAlign: "right"},
+		{Name: "iznos_dokum_poverioca", Label: "Iznos dokum poverioca", Width: "15", Field: "kp.komp_iznos", IncludeInTotals: true, TextAlign: "right"},
+		{Name: "kompenzacije_duznik", Label: "Kompenzacije dužnik", Width: "15", Field: "kompenzacije_duznik", IncludeInTotals: true, TextAlign: "right"},
+		{Name: "kompenzacije_poverilac", Label: "Kompenzacije poverilac", Width: "15", Field: "kompenzacije_poverilac", IncludeInTotals: true, TextAlign: "right"},
 		{Name: "mesto", Label: "Mesto", Width: "20", Field: "p.mesto"},
 		{Name: "adresa", Label: "Adresa", Width: "30", Field: "p.adresa"},
 	}
 
 	// Tab 2: Formiranje kompenzacije (used for both dužnik and poverilac tables)
 	s.formiranjeTableFields = []domain.Fields{
-		{Name: "nalog", Label: "Broj naloga", Width: "8"},
-		{Name: "dadok", Label: "Datum dokum.", Width: "10"},
-		{Name: "faktura", Label: "Iznos Faktura", Width: "12"},
-		{Name: "uplata", Label: "Iznos Uplata", Width: "12"},
-		{Name: "saldo", Label: "Saldo", Width: "12"},
-		{Name: "kompenz", Label: "Kompenzacije u toku", Width: "12"},
-		{Name: "iznkomp", Label: "Iznos za kompenz.", Width: "12"},
-		{Name: "dokum", Label: "Broj dokum.", Width: "10"},
-		{Name: "vrd", Label: "Vrsta dokum.", Width: "8"},
-		{Name: "tra", Label: "Godina Dokum.", Width: "10"},
+		{Name: "nalog", Label: "Broj naloga", Width: "8", IncludeInTotals: true, TextAlign: "right"},
+		{Name: "dadok", Label: "Datum dokum", Width: "10"},
+		{Name: "faktura", Label: "Iznos Faktura", Width: "12", IncludeInTotals: true, TextAlign: "right"},
+		{Name: "uplata", Label: "Iznos Uplata", Width: "12", IncludeInTotals: true, TextAlign: "right"},
+		{Name: "saldo", Label: "Saldo", Width: "12", IncludeInTotals: true, TextAlign: "right"},
+		{Name: "kompenz", Label: "Kompenzacije u toku", Width: "12", IncludeInTotals: true, TextAlign: "right"},
+		{Name: "iznkomp", Label: "Iznos za kompenziranje", Width: "12", IncludeInTotals: true, TextAlign: "right"},
+		{Name: "dokum", Label: "Broj dokum", Width: "10"},
+		{Name: "vrd", Label: "Vrsta dokum", Width: "8"},
+		{Name: "tra", Label: "Godina Dokum", Width: "10"},
 		{Name: "danal", Label: "Datum naloga", Width: "5"},
 		{Name: "rok", Label: "Rok", Width: "5"},
 		{Name: "dospece", Label: "Datum dospeca", Width: "10"},

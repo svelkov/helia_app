@@ -41,11 +41,13 @@ type PoreskeKnjigeHandler struct {
 	tabData domain.TabData
 	service *finservice.PoreskeKnjigeResource
 	cfg     config.Config
+	lm *middleware.LockMiddleware
 }
 
-func NewPoreskeKnjigeHandler(service *finservice.PoreskeKnjigeResource, cfg config.Config) *PoreskeKnjigeHandler {
+func NewPoreskeKnjigeHandler(service *finservice.PoreskeKnjigeResource, cfg config.Config, lm *middleware.LockMiddleware) *PoreskeKnjigeHandler {
 	handler := &PoreskeKnjigeHandler{
 		cfg: cfg,
+		lm:  lm,
 	}
 	handler.tabData = GetPoreskeKnjigeTabData()
 	handler.service = service

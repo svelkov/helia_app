@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"helia/i18n"
 	"helia/internal/domain"
+	"strings"
 )
 
 templ Table(tbl domain.TableData, translator *i18n.Service) {
@@ -20,9 +21,8 @@ templ Table(tbl domain.TableData, translator *i18n.Service) {
 			</div>
 		}
 		<!-- Container for HTMX-loaded dialog -->
-		<div id="dialog-container" hx-on="htmx:afterSwap:deactivateActionsColumn()"></div>
+		<div id="dialog-container"></div>
 	</div>
-	@DeactivateActionsColumn()
 	@ShowMessage()
 	@OpenDialogScript(tbl.TableID)
 	@TableSortScript()
@@ -42,11 +42,29 @@ templ TableHeader(tbl domain.TableData, translator *i18n.Service) {
 							return ""
 						}()) }
 					if header.Sortable {
-						hx-get={ fmt.Sprintf("%s?sortBy=%s", tbl.URLGetAll, header.Name) }
+						hx-get={ fmt.Sprintf("%s%ssortBy=%s", tbl.URLGetAll, func() string {
+									if strings.Contains(tbl.URLGetAll, "?") {
+										return "&"
+									} else {
+										return "?"
+									}
+								}(), header.Name) }
 						hx-target={ fmt.Sprintf("#%s", tbl.TableID) }
 						hx-swap="innerHTML"
 						hx-trigger="click"
-						hx-vals={ fmt.Sprintf(`js:{sortOrder: getSortOrder('%s', '%s')}`, tbl.TableID, header.Name) }
+						hx-headers='{"X-Request-Source": "tblheader"}'
+						hx-vals={ func() string {
+							if strings.TrimSpace(tbl.HxVals) == "" {
+								return fmt.Sprintf(`js:{sortOrder: getSortOrder('%s', '%s')}`, tbl.TableID, header.Name)
+							}
+
+							hxVals := strings.TrimSpace(tbl.HxVals)
+							if strings.HasPrefix(hxVals, "js:") {
+								hxVals = strings.TrimSpace(strings.TrimPrefix(hxVals, "js:"))
+							}
+
+							return fmt.Sprintf(`js:{...(%s), sortOrder: getSortOrder('%s', '%s')}`, hxVals, tbl.TableID, header.Name)
+						}() }
 						onclick={ templ.JSFuncCall("toggleSort", tbl.TableID, header.Name, "this") }
 					}
 				>
@@ -95,6 +113,9 @@ templ TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service
 					if tbl.DestField != "" {
 						data-dest-field={ tbl.DestField }
 					}
+					if tbl.DestFieldColIndex >= 0 {
+						data-value-col={ fmt.Sprintf("%d", tbl.DestFieldColIndex) }
+					}
 					ondblclick={ templ.JSUnsafeFuncCall(tbl.FuncDblClick) }
 				}
 				if tbl.DetailTarget != "" && tbl.DetailURL != "" {
@@ -102,13 +123,13 @@ templ TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service
 						hx-target={ tbl.DetailTarget }
 					}
 					if tbl.DetailHxRequestType == "GET" {
-						hx-get={ fmt.Sprintf("%s%s", tbl.DetailURL, row.ID) }
+						hx-get={ fmt.Sprintf("%s/%s", tbl.DetailURL, row.ID) }
 					}
 					if tbl.DetailHxRequestType == "PUT" {
-						hx-put={ fmt.Sprintf("%s%s", tbl.DetailURL, row.ID) }
+						hx-put={ fmt.Sprintf("%s/%s", tbl.DetailURL, row.ID) }
 					}
 					if tbl.DetailHxRequestType == "POST" {
-						hx-post={ fmt.Sprintf("%s%s", tbl.DetailURL, row.ID) }
+						hx-post={ fmt.Sprintf("%s/%s", tbl.DetailURL, row.ID) }
 					}
 					if tbl.DetailHxSwap != "" {
 						hx-swap={ tbl.DetailHxSwap }
@@ -138,13 +159,24 @@ templ TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service
 				if tbl.ShowActions && ( tbl.BtnUpdate.IsVisible || tbl.BtnDelete.IsVisible ) {
 					<td class="actions-column px-3 py-0.5 whitespace-nowrap text-right text-sm font-medium bg-white w-0 sticky right-0 z-10">
 						<div class="flex space-x-1 justify-end">
-							if tbl.BtnUpdate.IsVisible {
+							if row.HasUpdate || tbl.BtnUpdate.IsVisible {
 								<button
 									hx-get={ tbl.BtnUpdate.HxActionURL }
 									hx-target="#dialog-container"
 									hx-swap="innerHTML"
 									onclick="event.stopPropagation(); openDialog()"
-									hx-vals={ fmt.Sprintf(`{"url": "%s", "id": "%s"}`, tbl.URLPrefix, row.ID) }
+									hx-vals={ func() string {
+										if strings.TrimSpace(tbl.HxVals) == "" {
+											return fmt.Sprintf(`{"url": "%s", "id": "%s"}`, tbl.URLPrefix, row.ID)
+										}
+
+										hxVals := strings.TrimSpace(tbl.HxVals)
+										if strings.HasPrefix(hxVals, "js:") {
+											hxVals = strings.TrimSpace(strings.TrimPrefix(hxVals, "js:"))
+										}
+
+										return fmt.Sprintf(`js:{...(%s), url: "%s", id: "%s"}`, hxVals, tbl.URLPrefix, row.ID)
+									}() }
 									class="bg-indigo-500 hover:bg-indigo-700 text-white py-1 px-1 rounded text-xs flex items-center"
 								>
 									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-4 mr-1">
@@ -154,13 +186,24 @@ templ TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service
 									{ translator.Button(tbl.BtnUpdate.LabelText) }
 								</button>
 							}
-							if row.HasDelete {
+							if row.HasDelete || tbl.BtnDelete.IsVisible {
 								<button
 									hx-get={ tbl.BtnDelete.HxActionURL }
 									hx-target="#dialog-container"
 									hx-swap="innerHTML"
 									onclick="event.stopPropagation(); openDialog()"
-									hx-vals={ fmt.Sprintf(`{"url": "%s", "id": "%s"}`, tbl.URLPrefix, row.ID) }
+									hx-vals={ func() string {
+										if strings.TrimSpace(tbl.HxVals) == "" {
+											return fmt.Sprintf(`{"url": "%s", "id": "%s"}`, tbl.URLPrefix, row.ID)
+										}
+
+										hxVals := strings.TrimSpace(tbl.HxVals)
+										if strings.HasPrefix(hxVals, "js:") {
+											hxVals = strings.TrimSpace(strings.TrimPrefix(hxVals, "js:"))
+										}
+
+										return fmt.Sprintf(`js:{...(%s), url: "%s", id: "%s"}`, hxVals, tbl.URLPrefix, row.ID)
+									}() }
 									class="bg-red-500 hover:bg-red-700 text-white py-1 px-2 rounded text-xs flex items-center"
 								>
 									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-4 mr-1">
@@ -180,15 +223,15 @@ templ TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service
 			<tr>
 				for j, header := range tbl.Headers {
 					if header.IncludeInTotals && j < len(tbl.Totals) {
-						<td class="px-1 py-1 whitespace-nowrap border-r text-right text-sm font-bold bg-green-200 sticky bottom-0 z-20">
+						<td class="px-1 whitespace-nowrap border-r text-right text-sm font-bold bg-green-200 sticky bottom-0 z-20">
 							{ tbl.Totals[j] }
 						</td>
 					} else {
-						<td class="px-1 py-1 whitespace-nowrap border-r bg-green-200 sticky bottom-0 z-20"></td>
+						<td class="px-1 whitespace-nowrap border-r bg-green-200 sticky bottom-0 z-20"></td>
 					}
 				}
 				if tbl.ShowActions {
-					<td class="actions-column px-1 py-1 whitespace-nowrap bg-green-200 sticky right-0  bottom-0 z-20"></td>
+					<td class="actions-column px-1 whitespace-nowrap bg-green-200 sticky right-0  bottom-0 z-20"></td>
 				}
 			</tr>
 		</tfoot>
@@ -242,18 +285,6 @@ templ TableScript() {
 		closeDialog();
 	}
 
-	function selectRow(row) {
-		console.log("Row clicked:", row);
-		// Deselect any previously selected row by removing the 'bg-blue-300' class
-		const selectedRow = document.querySelector('.bg-blue-300');
-		if (selectedRow) {
-			selectedRow.classList.remove('bg-blue-300');
-		}
-
-		// Select the clicked row
-		row.classList.add('bg-blue-300');
-	}
-
 	// Function to use the selected record data
 	function useSelectedRecord(data) {
 		// Example: Populate some input fields
@@ -270,27 +301,6 @@ templ TableScript() {
 		console.log("Using selected record:", data);
 	}
 
-	// Function to close the dialog (you might need to adjust this based on your dialog implementation)
-	function closeDialog() {
-		// If using a modal/dialog element
-		const dialog = document.getElementById('your-dialog-id');
-		if (dialog) {
-			dialog.close();
-			dialog.style.display = 'none';
-		}
-		
-		// If using a div with display styles
-		const dialogDiv = document.querySelector('.dialog-container');
-		if (dialogDiv) {
-			dialogDiv.style.display = 'none';
-		}
-		
-		// Remove backdrop if exists
-		const backdrop = document.querySelector('.dialog-backdrop');
-		if (backdrop) {
-			backdrop.remove();
-		}
-	}
 </script>
 }
 

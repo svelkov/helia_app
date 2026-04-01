@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"context"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -68,4 +70,28 @@ func GetCurrentUserClaims(c *gin.Context) *UserClaims {
 	}
 
 	return userClaims
+}
+
+// ==================== context.Context Helpers (for framework-agnostic layers) ====================
+
+type contextKey string
+
+const UserSessionContextKey contextKey = "userSession"
+
+// GetSessionFromStdContext retrieves UserSession from standard context.Context
+// Use this in service/repository layers (framework-independent code)
+// Returns nil if not found
+func GetSessionFromStdContext(ctx context.Context) *UserSession {
+	session, ok := ctx.Value(UserSessionContextKey).(*UserSession)
+	if !ok {
+		return nil
+	}
+	return session
+}
+
+// SetSessionInStdContext stores UserSession in standard context.Context
+// Use this in handlers before passing context to service layer
+// Example: ctx := domain.SetSessionInStdContext(c.Request.Context(), userSession)
+func SetSessionInStdContext(ctx context.Context, session *UserSession) context.Context {
+	return context.WithValue(ctx, UserSessionContextKey, session)
 }

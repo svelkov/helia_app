@@ -30,12 +30,33 @@ templ NumericInputField(config domain.InputFieldConfig) {
 		if config.TabIndex != "" {
 			tabindex={ config.TabIndex }
 		}
+		if config.HxVals != "" {
+			hx-vals={ config.HxVals }
+		}
 		if config.OnFocus != "" {
 			onfocus={ templ.JSFuncCall(fmt.Sprintf("%s", config.OnFocus), config.ID) }
 		}
+		if config.BlurEndpoint != "" {
+			hx-trigger="blur"
+			hx-get={ config.BlurEndpoint }
+			if config.HxTarget != "" {
+				hx-target={ fmt.Sprintf("#%s", config.HxTarget) }
+				hx-swap="innerHTML"
+				hx-on--after-request={ fmt.Sprintf(`
+					const xhr = event.detail.xhr;
+					try {
+						// Try to use xhr.response if it's already parsed
+						document.getElementById('%s').value = xhr.response.message || JSON.parse(xhr.responseText).message;
+					} catch (e) {
+						document.getElementById('%s').value = xhr.responseText;
+					}
+					`, config.HxTarget, config.HxTarget) }
+			}
+		}
 		type="number"
 		inputmode="numeric"
-		oninput="this.value = this.value.replace(/[^0-9.]/g, '');"
+		data-decimals={ fmt.Sprintf("%d", config.DecimalPlaces) }
+		oninput="restrictNumericInput(this)"
 		class={ config.ClassInput + " [&::-webkit-outer-spin-button]:hidden [&::-webkit-inner-spin-button]:hidden" }
 		value={ common.FormatNumberWithSystemLocale(config.Value, config.DecimalPlaces) }
 	/>
@@ -52,6 +73,7 @@ templ TextInputField(config domain.InputFieldConfig) {
 		name={ config.Name }
 		value={ config.Value }
 		class={ config.ClassInput }
+		data-dest-field={ config.DataDestField }
 		if config.Disabled {
 			disabled
 		}
@@ -117,6 +139,41 @@ templ TextInputField(config domain.InputFieldConfig) {
 	/>
 }
 
+templ TextAreaField(config domain.InputFieldConfig) {
+	<textarea
+		id={ config.ID }
+		name={ config.Name }
+		class={ config.ClassInput }
+		if config.Disabled {
+			disabled
+		}
+		if config.MinLength != "" {
+			minlength={ config.MinLength }
+		}
+		if config.MaxLength != "" {
+			maxlength={ config.MaxLength }
+		}
+		if config.TabIndex != "" {
+			tabindex={ config.TabIndex }
+		}
+		if config.HxVals != "" {
+			hx-vals={ config.HxVals }
+		}
+		if config.BlurEndpoint != "" {
+			hx-trigger="blur"
+			hx-get={ config.BlurEndpoint }
+			if config.HxTarget != "" {
+				hx-target={ fmt.Sprintf("#%s", config.HxTarget) }
+				hx-swap="innerHTML"
+			}
+		}
+		if config.OnInput != "" {
+			oninput={ templ.JSFuncCall(fmt.Sprintf("%s", config.OnInput), config.ID) }
+		}
+		placeholder={ config.Placeholder }
+	>{ config.Value }</textarea>
+}
+
 templ ValidationField(id, className string) {
 	<!-- Error Container -->
 	<div id={ fmt.Sprintf("%s-error", id) } class={ className }></div>
@@ -147,7 +204,7 @@ templ SearchButton(config domain.SearchButtonConfig) {
 				hx-vals={ config.HxVals }
 			}
 			hx-include="this"
-			hx-on::after-request={ templ.JSFuncCall("showSearchDialog", config.ID) }
+			hx-on::after-request={ templ.JSFuncCall("showSearchDialog", "search-dropdown", "search-button-"+config.ID) }
 		>
 			🔍
 		</button>
@@ -193,7 +250,16 @@ templ ComboBoxField(comboConfig domain.ComboFieldConfig, translator *i18n.Servic
 		if comboConfig.HxOnAfterRequest != "" {
 			hx-on::after-request={ templ.JSFuncCall(fmt.Sprintf("%s", comboConfig.HxOnAfterRequest), comboConfig.ID) }
 		}
+		if comboConfig.OnInput != "" {
+			oninput={ templ.JSFuncCall(fmt.Sprintf("%s", comboConfig.OnInput), comboConfig.ID) }
+		}
+		if comboConfig.OnFocus != "" {
+			onfocus={ templ.JSFuncCall(fmt.Sprintf("%s", comboConfig.OnFocus), comboConfig.ID) }
+		}
 		class={ comboConfig.ClassSelect }
+		if comboConfig.TabIndex != "" {
+			tabindex={ comboConfig.TabIndex }
+		}
 	>
 		for _, item := range comboConfig.OptionValues {
 			if fmt.Sprintf("%v",item.Key) == comboConfig.SelectedValue {
@@ -332,13 +398,13 @@ templ CheckboxField(cfg domain.CheckboxFieldConfig, translator *i18n.Service) {
 			name={ cfg.Name }
 			id={ cfg.ID }
 			class={ cfg.ClassCheckbox }
+			if cfg.IsChecked || cfg.Checked {
+				checked="checked"
+			}
 		/>
 		<span class={ cfg.ClassCheckboxSpan }>
 			{ translator.Label(cfg.LabelText) }
 		</span>
-		if cfg.IsChecked {
-			checked = true
-		}
 		if cfg.OnChange != "" {
 			<script>
 				document.getElementById("{ cfg.ID }").addEventListener('change', function() {{
@@ -364,6 +430,6 @@ templ RadioButtonField(cfg domain.RadioFieldConfig, translator *i18n.Service) {
 				checked="checked"
 			}
 		/>
-		<span class={cfg.ClassSelect}>{ translator.Label(cfg.LabelText) }</span>
+		<span class={ cfg.ClassSelect }>{ translator.Label(cfg.LabelText) }</span>
 	</label>
 }

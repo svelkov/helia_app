@@ -22,7 +22,6 @@ import (
 
 	"helia/config"
 	"helia/frontend/templates"
-	"helia/global"
 	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
@@ -82,8 +81,10 @@ func factory() {
 
 	// create empty context
 	c := gin.CreateTestContextOnly(nil, router)
+	lockService := middleware.NewLockService(db)
+	lm := middleware.NewLockMiddleware(lockService)
 	// Entity settings
-	setEntities(c, db, router, jwtSecret, cfg)
+	setEntities(c, db, router, jwtSecret, cfg, lm, lockService)
 
 	// Create server
 	srv := &http.Server{
@@ -102,19 +103,14 @@ func factory() {
 		}
 	}()
 
-	// Start background lock cleanup (every 5 minutes, remove locks idle > 15 minutes)
+	// Setup periodic cleanup (every 5 minutes)
 	go func() {
-		ticker := time.NewTicker(5 * time.Minute)
+		ticker := time.NewTicker(30 * time.Minute)
 		defer ticker.Stop()
-		for {
-			<-ticker.C
-			count := global.CleanupStaleLocks(15 * time.Minute)
-			if count > 0 {
-				log.Printf("Cleaned up %d stale nalog locks", count)
-			}
+		for range ticker.C {
+			lockService.CleanupExpired(context.Background())
 		}
 	}()
-
 	// Graceful shutdown
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
@@ -146,11 +142,22 @@ func setupRouter(translator *i18n.Service, jwtSecret []byte, sessionSecret strin
 
 	// UserSession middleware - creates UserSession in context from JWT token on every request
 	router.Use(middleware.UserSession(jwtSecret))
-
+	// Global middleware to inject UserSession into standard context
+	router.Use(func(c *gin.Context) {
+		userSession := domain.GetSessionFromContext(c)
+		if userSession != nil {
+			// Wrap the request context with userSession
+			ctx := domain.SetSessionInStdContext(c.Request.Context(), userSession)
+			// Replace the request's context
+			c.Request = c.Request.WithContext(ctx)
+		}
+		c.Next()
+	})
 	// Global middleware
 	router.Use(middleware.CORS())
 	router.Use(middleware.I18n(translator))
 	router.Use(gzip.Gzip(gzip.DefaultCompression)) // Compression¨
+	router.Use(middleware.ContextWithSessionMiddleware())
 
 	// Static files BEFORE CSRF middleware (so they bypass it)
 	router.Static("/css", "./frontend/static/css")
@@ -329,16 +336,17 @@ func registerGenericEntity[T any](
 	fields []domain.Fields,
 	config domain.HandlerConfig,
 	cfg config.Config,
+	lm *middleware.LockMiddleware, // Optional lock middleware for entities that require it
 ) {
 	repo := repository.NewBaseRepository[T](db, tableName)
 	validator := validation.NewRuleBasedValidator[T](validationRules)
 	svc := service.NewBaseService(*repo, validator)
-	h := handler.NewGenericHandler(svc, fields, config, cfg)
+	h := handler.NewGenericHandler(svc, fields, config, cfg, lm)
 	h.RegisterRoutes(r)
 }
 
 // setEntities registers all entity routes
-func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte, cfg config.Config) {
+func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte, cfg config.Config, lm *middleware.LockMiddleware, ls *middleware.LockService) {
 	// Drzave
 	registerGenericEntity[domain.Drzave](
 		r, db, "drzave",
@@ -351,6 +359,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 			IDField:      common.IDdrzave,
 		},
 		cfg,
+		lm,
 	)
 
 	// Tipdok
@@ -365,6 +374,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 			IDField:      common.IDtipdok,
 		},
 		cfg,
+		lm,
 	)
 
 	// Dokvrsta
@@ -379,6 +389,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 			IDField:      common.IDdokvrsta,
 		},
 		cfg,
+		lm,
 	)
 
 	// Opstine
@@ -393,6 +404,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 			IDField:      common.IDsifop,
 		},
 		cfg,
+		lm,
 	)
 
 	// Sifmesto
@@ -407,6 +419,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 			IDField:      common.IDsifmesto,
 		},
 		cfg,
+		lm,
 	)
 
 	// Mestotr
@@ -421,6 +434,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 			IDField:      common.IDmestotr,
 		},
 		cfg,
+		lm,
 	)
 
 	// Orgjed
@@ -435,6 +449,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 			IDField:      common.IDorgjed,
 		},
 		cfg,
+		lm,
 	)
 
 	// Banke
@@ -449,6 +464,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 			IDField:      common.IDbanke,
 		},
 		cfg,
+		lm,
 	)
 
 	// Sifplizv
@@ -463,6 +479,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 			IDField:      common.IDsifplizv,
 		},
 		cfg,
+		lm,
 	)
 
 	// Fvknjrac
@@ -477,6 +494,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 			IDField:      common.IDfvknjrac,
 		},
 		cfg,
+		lm,
 	)
 
 	// Bnkizv
@@ -491,6 +509,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 			IDField:      common.IDbnkizv,
 		},
 		cfg,
+		lm,
 	)
 
 	// Fvepdv
@@ -505,6 +524,21 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 			IDField:      common.IDfvepdv,
 		},
 		cfg,
+		lm,
+	)
+	// Tipanalitike
+	registerGenericEntity[domain.Tipanalitike](
+		r, db, "tipanalitike",
+		validation.TipanalitikeValidationRules(),
+		handler.SetTipanalitikeFields(),
+		domain.HandlerConfig{
+			ContentTitle: "TIPOVI ANALITIKE",
+			TableID:      "tipanalitike-table",
+			APIPrefix:    "/api/tipanalitike",
+			IDField:      common.IDtipanalitike,
+		},
+		cfg,
+		lm,
 	)
 
 	// Oamgrp
@@ -519,36 +553,60 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 			IDField:      common.IDoamgrp,
 		},
 		cfg,
+		lm,
 	)
 
 	// Complex entities with custom services (non-generic)
 	//partneri
+	tekracuniRepo := repository.NewBaseRepository[domain.TekRacuni](db, "tekracuni")
 	partneriRepo := repository.NewBaseRepository[domain.Partneri](db, "partneri")
+	tipAnalitikeRepo := repository.NewBaseRepository[domain.Tipanalitike](db, "tipanalitike")
 	partneriValidator := validation.NewRuleBasedValidator[domain.Partneri](validation.PartneriValidationRules())
-	partneriService := service.NewBaseService(*partneriRepo, partneriValidator)
-	partneriHandler := handler.NewPartneriHandler(partneriService, cfg)
+	partnerBaseService := service.NewBaseService(*partneriRepo, partneriValidator)
+	partneriService := service.NewPartneriService(partnerBaseService, partneriValidator, partneriRepo, tekracuniRepo, tipAnalitikeRepo)
+	partneriHandler := handler.NewPartneriHandler(partneriService, cfg, lm)
 	partneriHandler.AddRoutes(r)
 	// Fkpl
 	fkplRepo := repository.NewBaseRepository[domain.Fkpl](db, "fkpl")
 	fkplValidator := validation.NewRuleBasedValidator[domain.Fkpl](finval.FkplValidationRules())
 	baseService := service.NewBaseService(*fkplRepo, fkplValidator)
 	fkplService := finservice.NewFkplResource(baseService, *fkplRepo, cfg)
-	fkplHandler := fin.NewFkplHandler(baseService, fkplService, cfg)
+	fkplHandler := fin.NewFkplHandler(baseService, fkplService, cfg, lm)
 	fkplHandler.AddRoutes(r)
 
 	// Fpro
 	fproRepo := repository.NewBaseRepository[domain.Fpro](db, "fpro")
+	fproFnalRepo := repository.NewBaseRepository[domain.Fnal](db, "fnal")
+	fproFkplRepo := repository.NewBaseRepository[domain.Fkpl](db, "fkpl")
+	fproOrgjedRepo := repository.NewBaseRepository[domain.Orgjed](db, "orgjed")
+	fproMestotrRepo := repository.NewBaseRepository[domain.Mestotr](db, "mestotr")
+	fproFvrRepo := repository.NewBaseRepository[domain.Fvr](db, "fvr")
+	fproFvknjracRepo := repository.NewBaseRepository[domain.Fvknjrac](db, "fvknjrac")
+	fproValuteRepo := repository.NewBaseRepository[domain.Valute](db, "valute")
+	fproKomercijalistiRepo := repository.NewBaseRepository[domain.Komercijalisti](db, "komercijalisti")
+	fproMiRepo := repository.NewBaseRepository[domain.Fisp](db, "fisp")
+	fproMagaciniRepo := repository.NewBaseRepository[domain.Magacini](db, "magacini")
 	fproValidator := validation.NewRuleBasedValidator[domain.Fpro](finval.FnalValidationRules())
 	fproBaseService := service.NewBaseService(*fproRepo, fproValidator)
 	fproService := finservice.NewFproService(
 		fproBaseService,
 		*fproRepo,
+		*fproFnalRepo,
+		*fproFkplRepo,
+		*fproOrgjedRepo,
+		*fproMestotrRepo,
+		*fproFvrRepo,
+		*fproFvknjracRepo,
+		*fproValuteRepo,
+		*fproKomercijalistiRepo,
+		*fproMiRepo,
+		*fproMagaciniRepo,
 		common.IDfpro,
 		[]domain.Fields{},
 		[]domain.Fields{},
 		cfg,
 	)
-	fproHandler := fin.NewFproHandler(fproService, cfg)
+	fproHandler := fin.NewFproHandler(fproService, cfg, lm)
 	fproHandler.AddRoutes(r)
 	// Fnal
 	fnalRepo := repository.NewBaseRepository[domain.Fnal](db, "fnal")
@@ -563,12 +621,12 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 		*repository.NewBaseRepository[domain.Sf](db, "sf"),
 		*repository.NewBaseRepository[domain.Orgjed](db, "orgjed"),
 		*repository.NewBaseRepository[domain.Mestotr](db, "mestotr"),
+		*repository.NewBaseRepository[domain.Fvr](db, "fvr"),
+		*fproRepo,
 		"",
-		[]domain.Fields{},
-		[]domain.Fields{},
 		cfg,
 	)
-	fnalHandler := fin.NewFnalHandler(fnalService, fnalBaseService, cfg)
+	fnalHandler := fin.NewFnalHandler(fnalService, fnalBaseService, cfg, lm, ls)
 	fnalHandler.AddRoutes(r)
 
 	// Promet
@@ -610,7 +668,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 		// repository.NewBaseRepository[domain.SaldaKomercijalistiDto](db, "saldakomercijalistidto"),
 	)
 
-	kompHandler := fin.NewKompenzacijeHandler(kompService, cfg)
+	kompHandler := fin.NewKompenzacijeHandler(kompService, cfg, lm)
 	kompHandler.AddRoutes(r)
 
 	// DnevnikHandler
@@ -627,7 +685,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 	izvhdrRepo := repository.NewBaseRepository[domain.Fizvzag](db, "fizvzag")
 	izvdetRepo := repository.NewBaseRepository[domain.Fizvdet](db, "fizvdet")
 	izvodiService := finservice.NewIzvodiResource(izvhdrRepo, izvdetRepo, cfg)
-	izvodiHandler := fin.NewIzvodiHandler(izvodiService, cfg)
+	izvodiHandler := fin.NewIzvodiHandler(izvodiService, cfg, lm)
 	izvodiHandler.AddRoutes(r)
 
 	// BasicHandler
@@ -652,7 +710,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 	kirService := service.NewBaseService(*kirRepo, kirValidator)
 	kprService := service.NewBaseService(*kprRepo, kprValidator)
 	poreskeKnjigeService := finservice.NewPoreskeKnjigeService(kirService, kprService, kirRepo, kprRepo, fvknjracRepo)
-	poreskeKnjigeHandler := fin.NewPoreskeKnjigeHandler(poreskeKnjigeService, cfg)
+	poreskeKnjigeHandler := fin.NewPoreskeKnjigeHandler(poreskeKnjigeService, cfg, lm)
 	poreskeKnjigeHandler.RegisterRoutes(r)
 
 	//otvorene stavke
@@ -665,7 +723,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 	kamataValidator := validation.NewRuleBasedValidator[domain.Fkpl]([]validation.ValidationRule{})
 	kamataBaseService := service.NewBaseService(*kamataRepo, kamataValidator)
 	kamateService := finservice.NewKamateService(kamataBaseService, kamataRepo)
-	kamateHandler := fin.NewKamateHandler(kamateService, cfg)
+	kamateHandler := fin.NewKamateHandler(kamateService, cfg, lm)
 	kamateHandler.RegisterRoutes(r)
 
 	// Bilansi
@@ -684,7 +742,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 		repository.NewBaseRepository[domain.FproDto](db, "fprodto"),
 		cfg,
 	)
-	bilansiHandler := fin.NewBilansiHandler(bilansiService, cfg)
+	bilansiHandler := fin.NewBilansiHandler(bilansiService, cfg, lm)
 	bilansiHandler.RegisterRoutes(r)
 
 	// EPP
@@ -708,6 +766,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 		eppEvidencijaRepo,
 		eppSefKprRepo,
 	)
-	eppHandler := fin.NewEppHandler(eppService, cfg)
+	eppHandler := fin.NewEppHandler(eppService, cfg, lm)
 	eppHandler.RegisterRoutes(r)
+
 }

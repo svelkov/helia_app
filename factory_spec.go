@@ -560,9 +560,10 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 	//partneri
 	tekracuniRepo := repository.NewBaseRepository[domain.TekRacuni](db, "tekracuni")
 	partneriRepo := repository.NewBaseRepository[domain.Partneri](db, "partneri")
+	tipAnalitikeRepo := repository.NewBaseRepository[domain.Tipanalitike](db, "tipanalitike")
 	partneriValidator := validation.NewRuleBasedValidator[domain.Partneri](validation.PartneriValidationRules())
 	partnerBaseService := service.NewBaseService(*partneriRepo, partneriValidator)
-	partneriService := service.NewPartneriService(partnerBaseService, partneriValidator, partneriRepo, tekracuniRepo)
+	partneriService := service.NewPartneriService(partnerBaseService, partneriValidator, partneriRepo, tekracuniRepo, tipAnalitikeRepo)
 	partneriHandler := handler.NewPartneriHandler(partneriService, cfg, lm)
 	partneriHandler.AddRoutes(r)
 	// Fkpl
@@ -767,4 +768,5 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 	)
 	eppHandler := fin.NewEppHandler(eppService, cfg, lm)
 	eppHandler.RegisterRoutes(r)
+
 }

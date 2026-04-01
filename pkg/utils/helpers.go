@@ -239,16 +239,16 @@ func GetAllEntityHelper[T any](
 	cfg config.Config,
 	hasUpdateDelete ...bool,
 ) *domain.TableData {
-	searchValue := c.DefaultQuery("query", "")
-
-	totRecords, err := service.GetTotalRecords(c, tableFields, searchValue)
+	searchText := c.DefaultQuery("query", "")
+	ctx := c.Request.Context()
+	totRecords, err := service.GetTotalRecords(ctx, tableFields, searchText)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData)
 		return nil
 	}
 
 	currentPage, pageSize, totalPages := common.GetPaginationData(c, totRecords, cfg)
-	allEntities, err := service.GetAll(c.Request.Context(), pageSize, (currentPage-1)*pageSize, tableFields, idField, searchValue)
+	allEntities, err := service.GetAll(ctx, pageSize, (currentPage-1)*pageSize, tableFields, idField, searchText)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData)
 		return nil
@@ -273,9 +273,10 @@ func GetAllPrintEntityHelper[T any](
 	tableFields []domain.Fields,
 	entityContentTitle, entityTableID, entityURLPrefix, entityURLGetall, idField string,
 	cfg config.Config,
-) *domain.TableData {
-
-	allEntities, err := service.GetAll(c.Request.Context(), 0, 0, tableFields, idField, "")
+	) *domain.TableData {
+	
+	ctx := c.Request.Context()
+	allEntities, err := service.GetAll(ctx, 0, 0, tableFields, idField, "")
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData)
 		return nil
@@ -301,15 +302,15 @@ func GetAllPdfEntityHelper[T any](
 	hasUpdateDelete ...bool,
 ) *domain.TableData {
 	searchValue := c.DefaultQuery("query", "")
-
-	totRecords, err := service.GetTotalRecords(c, tableFields, searchValue)
+	ctx := c.Request.Context()
+	totRecords, err := service.GetTotalRecords(ctx, tableFields, searchValue)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData)
 		return nil
 	}
 
 	currentPage, pageSize, totalPages := common.GetPaginationData(c, totRecords, cfg)
-	allEntities, err := service.GetAll(c.Request.Context(), pageSize, (currentPage-1)*pageSize, tableFields, idField, searchValue)
+	allEntities, err := service.GetAll(ctx, pageSize, (currentPage-1)*pageSize, tableFields, idField, searchValue)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData)
 		return nil
@@ -332,15 +333,15 @@ func GetAllExcelEntityHelper[T any](
 	hasUpdateDelete ...bool,
 ) *domain.TableData {
 	searchValue := c.DefaultQuery("query", "")
-
-	totRecords, err := service.GetTotalRecords(c, tableFields, searchValue)
+	ctx := c.Request.Context()
+	totRecords, err := service.GetTotalRecords(ctx, tableFields, searchValue)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData)
 		return nil
 	}
 
 	currentPage, pageSize, totalPages := common.GetPaginationData(c, totRecords, cfg)
-	allEntities, err := service.GetAll(c.Request.Context(), pageSize, (currentPage-1)*pageSize, tableFields, idField, searchValue)
+	allEntities, err := service.GetAll(ctx, pageSize, (currentPage-1)*pageSize, tableFields, idField, searchValue)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData)
 		return nil
@@ -368,7 +369,8 @@ func GetEntityHelper[T any](
 		return
 	}
 
-	entity, err := service.GetByID(c.Request.Context(), idField, id)
+	ctx := c.Request.Context()
+	entity, err := service.GetByID(ctx, idField, id)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData)
 		return

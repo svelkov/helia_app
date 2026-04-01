@@ -48,16 +48,11 @@ templ HandleDialogResponseScript(dialogName string) {
 						const field = document.querySelector(`input[name="${error.field}"]`);
 						if (field) {
 							field.classList.add('border-red-500'); // Add red border to invalid field
-							const inlineError = document.getElementById(`${error.field}-error`);
-							if (inlineError) {
-								inlineError.textContent = error.message;
-								return;
-							}
 							// Add error message below the input field
 							const errorMessage = document.createElement('p');
 							errorMessage.className = 'text-red-500 text-xs mt-1 input-error';
 							errorMessage.textContent = error.message;
-							field.insertAdjacentElement('afterbegin', errorMessage);
+							field.insertAdjacentElement('afterend', errorMessage);
 						}
 					});
 					return;
@@ -98,6 +93,13 @@ templ ClearFieldErrorScript() {
 				const wrapper = elm.closest('.input-error-wrapper');
 				if (wrapper) {
 					wrapper.querySelectorAll('.input-error').forEach(el => el.remove());
+				}
+				// Also remove sibling errors inserted via insertAdjacentElement('afterend', ...)
+				let sibling = elm.nextElementSibling;
+				while (sibling && sibling.classList.contains('input-error')) {
+					const next = sibling.nextElementSibling;
+					sibling.remove();
+					sibling = next;
 				}
 			}
 		}

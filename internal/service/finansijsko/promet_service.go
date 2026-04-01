@@ -1,6 +1,7 @@
 package finansijsko
 
 import (
+	"context"
 	"fmt"
 	"helia/i18n"
 	"helia/internal/common"
@@ -8,8 +9,6 @@ import (
 	"helia/internal/repository"
 	"helia/internal/service"
 	"reflect"
-
-	"github.com/gin-gonic/gin"
 )
 
 // FproViewData encapsulates all data needed for the Nalog display page.
@@ -22,13 +21,13 @@ type PrometViewData struct {
 // NalogService defines the interface for operations related to Fpro (Nalogs).
 type PrometService interface {
 	GetFieldCache() map[string]reflect.StructField
-	GetPrometAnalitickihKonta(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, isMI bool) error
-	GetPrometSubsintetickihKonta(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error
-	GetPrometSintetickihKonta(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error
-	GetPrometKarticaSintetickihKonta(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error
-	GetPrometKontaAnaliticki(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error
-	GetPrometSubsintetikaVrd(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error
-	GetPrometTotals(c *gin.Context) (domain.PrometResponse, error)
+	GetPrometAnalitickihKonta(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, isMI bool, params domain.PrometParam) error
+	GetPrometSubsintetickihKonta(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.PrometParam) error
+	GetPrometSintetickihKonta(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.PrometParam) error
+	GetPrometKarticaSintetickihKonta(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.PrometParam) error
+	GetPrometKontaAnaliticki(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.PrometParam) error
+	GetPrometSubsintetikaVrd(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.PrometParam) error
+	GetPrometTotals(ctx context.Context, params domain.PrometParam) (domain.PrometResponse, error)
 	GetAnkontaTableFields() []domain.Fields
 	GetAnKontaMiTableFields() []domain.Fields
 	GetAnDeviznaKontaTableFields() []domain.Fields
@@ -63,51 +62,51 @@ func NewPrometService(service *service.BaseService[domain.PrometDto], prometRepo
 	rs.setServiceFieldValues()
 	return rs
 }
-func (s *PrometResource) GetPrometTotals(c *gin.Context) (domain.PrometResponse, error) {
+func (s *PrometResource) GetPrometTotals(ctx context.Context, params domain.PrometParam) (domain.PrometResponse, error) {
 	var response domain.PrometResponse
 	var konto, sifra, odDatuma, doDatuma, odMI, doMI, odkonta, dokonta, odsifre, dosifre string
-	reportTip := c.Query("tabname")
+	reportTip := params.ReportTip
 	switch reportTip {
 	case "prometankonta": // Analiticka Konta
-		konto = c.Query("konto")
-		sifra = c.Query("sifra")
-		odDatuma = c.Query("oddatuma")
-		doDatuma = c.Query("dodatuma")
+		konto = params.Konto
+		sifra = params.Sifra
+		odDatuma = params.OdDatuma
+		doDatuma = params.DoDatuma
 		if konto == "" || sifra == "" || odDatuma == "" || doDatuma == "" {
 			return response, fmt.Errorf("missing required parameters")
 		}
 	case "prometankontami": // Analiticka Konta po MI
-		konto = c.Query("konto")
-		sifra = c.Query("sifra")
-		odDatuma = c.Query("oddatuma")
-		doDatuma = c.Query("dodatuma")
-		odMI = c.Query("odmi")
-		doMI = c.Query("domi")
-		if konto == "" || sifra == "" || odDatuma == "" || doDatuma == "" || doMI == "" {
+		konto = params.Konto
+		sifra = params.Sifra
+		odDatuma = params.OdDatuma
+		doDatuma = params.DoDatuma
+		odMI = params.OdMI
+		doMI = params.DoMI
+		if konto == "" || sifra == "" || odDatuma == "" || doDatuma == "" || odMI == "" || doMI == "" {
 			return response, fmt.Errorf("missing required parameters")
 		}
 	case "deviznahanalitickihkonta": // Devizna Analiticka Konta
 	case "subsintetickakonta": // Subsinteticka Konta
-		odkonta = c.Query("odkonta")
-		dokonta = c.Query("dokonta")
-		odDatuma = c.Query("oddatuma")
-		doDatuma = c.Query("dodatuma")
+		odkonta = params.OdKonta
+		dokonta = params.DoKonta
+		odDatuma = params.OdDatuma
+		doDatuma = params.DoDatuma
 		if odkonta == "" || dokonta == "" || odDatuma == "" || doDatuma == "" {
 			return response, fmt.Errorf("missing required parameters")
 		}
 	case "sintetickakonta", "karticasintetickihkonta", "subsintetickakontapovrd": // Sinteticka Konta
-		konto = c.Query("konto")
-		odDatuma = c.Query("oddatuma")
-		doDatuma = c.Query("dodatuma")
+		konto = params.Konto
+		odDatuma = params.OdDatuma
+		doDatuma = params.DoDatuma
 		if konto == "" || odDatuma == "" || doDatuma == "" {
 			return response, fmt.Errorf("missing required parameters")
 		}
 	case "kontaanaliticki": // Konta Analiticki
-		konto = c.Query("konto")
-		odsifre = c.Query("odsifre")
-		dosifre = c.Query("dosifre")
-		odDatuma = c.Query("oddatuma")
-		doDatuma = c.Query("dodatuma")
+		konto = params.Konto
+		odsifre = params.OdSifre
+		dosifre = params.DoSifre
+		odDatuma = params.OdDatuma
+		doDatuma = params.DoDatuma
 		if konto == "" || odsifre == "" || dosifre == "" || odDatuma == "" || doDatuma == "" {
 			return response, fmt.Errorf("missing required parameters")
 		}
@@ -115,8 +114,8 @@ func (s *PrometResource) GetPrometTotals(c *gin.Context) (domain.PrometResponse,
 		return response, fmt.Errorf("invalid report tip")
 	}
 
-	session := domain.GetSessionFromContext(c)
-	if session == nil {
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
 		return response, fmt.Errorf("user session not found")
 	}
 
@@ -130,10 +129,10 @@ func (s *PrometResource) GetPrometTotals(c *gin.Context) (domain.PrometResponse,
 		from fpro`, true)
 
 	if hasGod {
-		qbDo.AddEqual("god", session.SelectedGod)
+		qbDo.AddEqual("god", userSession.SelectedGod)
 	}
 	if hasKar {
-		qbDo.AddEqual("kar", session.SelectedKar)
+		qbDo.AddEqual("kar", userSession.SelectedKar)
 	}
 	switch reportTip {
 	case "prometankonta": // Analiticka Konta
@@ -167,7 +166,7 @@ func (s *PrometResource) GetPrometTotals(c *gin.Context) (domain.PrometResponse,
 	}
 
 	prometDoQuery, prometDoArgs := qbDo.Build()
-	prometDoResults, err := s.prometRepo.GetAllCustom(c, prometDoQuery, "", prometDoArgs, "", "")
+	prometDoResults, err := s.prometRepo.GetAllCustom(ctx, prometDoQuery, "", prometDoArgs, "", "")
 	if err != nil {
 		return response, fmt.Errorf("error getting promet do totals: %v", err)
 	}
@@ -179,9 +178,9 @@ func (s *PrometResource) GetPrometTotals(c *gin.Context) (domain.PrometResponse,
 	}
 
 	response.Totals = domain.TotalValues{
-		DugDo:   prometDoDuguje,
-		PotDo:   prometDoPotrazuje,
-		SaldoDo: prometDoDuguje - prometDoPotrazuje,
+		DugDo:   common.FormatFloatNumber64WithSystemLocale(prometDoDuguje, 2),
+		PotDo:   common.FormatFloatNumber64WithSystemLocale(prometDoPotrazuje, 2),
+		SaldoDo: common.FormatFloatNumber64WithSystemLocale(prometDoDuguje-prometDoPotrazuje, 2),
 	}
 
 	// Get "promet za period" totals (for the specified period)
@@ -192,10 +191,10 @@ func (s *PrometResource) GetPrometTotals(c *gin.Context) (domain.PrometResponse,
 		from fpro`, true)
 
 	if hasGod {
-		qbPeriod.AddEqual("god", session.SelectedGod)
+		qbPeriod.AddEqual("god", userSession.SelectedGod)
 	}
 	if hasKar {
-		qbPeriod.AddEqual("kar", session.SelectedKar)
+		qbPeriod.AddEqual("kar", userSession.SelectedKar)
 	}
 	switch reportTip {
 	case "prometankonta": // Analiticka Konta
@@ -233,7 +232,7 @@ func (s *PrometResource) GetPrometTotals(c *gin.Context) (domain.PrometResponse,
 	}
 
 	prometPeriodQuery, prometPeriodArgs := qbPeriod.Build()
-	prometPeriodResults, err := s.prometRepo.GetAllCustom(c, prometPeriodQuery, "", prometPeriodArgs, "", "")
+	prometPeriodResults, err := s.prometRepo.GetAllCustom(ctx, prometPeriodQuery, "", prometPeriodArgs, "", "")
 	if err != nil {
 		return response, fmt.Errorf("error getting promet period totals: %v", err)
 	}
@@ -253,16 +252,11 @@ func (s *PrometResource) GetPrometTotals(c *gin.Context) (domain.PrometResponse,
 	return response, err
 }
 
-func (s *PrometResource) CheckPrometParameters(c *gin.Context, requiredFields []string) (fieldsError []domain.FieldError) {
-
-	fieldsError = common.ValidateRequiredParams(c, requiredFields)
-	if len(fieldsError) > 0 {
-		return
-	}
+func (s *PrometResource) CheckPrometParameters(ctx context.Context, requiredFields []string, params domain.PrometParam) (fieldsError []domain.FieldError) {
 	// Build query dynamically
 	qb := common.NewQueryBuilder(`SELECT f.konto, f.sifra FROM baza.fkpl as f`, true)
 
-	session := domain.GetSessionFromContext(c)
+	session := domain.GetSessionFromStdContext(ctx)
 	if session == nil {
 		return []domain.FieldError{{Field: "session", ErrorMessage: "User session not found"}}
 	}
@@ -277,13 +271,13 @@ func (s *PrometResource) CheckPrometParameters(c *gin.Context, requiredFields []
 	}
 
 	// Add user conditions
-	qb.AddEqual("f.konto", c.Query("konto"))
-	qb.AddEqual("f.sifra", c.Query("sifra"))
-	qb.AddEqual("f.vkonta", c.Query("vkonta"))
+	qb.AddEqual("f.konto", params.Konto)
+	qb.AddEqual("f.sifra", params.Sifra)
+	qb.AddEqual("f.vkonta", params.Vkonta)
 
 	sqlQuery, args := qb.Build()
 
-	entities, err := s.service.GetAllCustom(c, sqlQuery, "", args, "", "")
+	entities, err := s.service.GetAllCustom(ctx, sqlQuery, "", args, "", "")
 	if err != nil {
 		return []domain.FieldError{{Field: "konto", ErrorMessage: common.ErrMsgGetData}}
 	}
@@ -294,19 +288,11 @@ func (s *PrometResource) CheckPrometParameters(c *gin.Context, requiredFields []
 	return nil
 }
 
-func (s *PrometResource) GetPrometAnalitickihKonta(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, isMI bool) error {
-	session := domain.GetSessionFromContext(c)
-	if session == nil {
+func (s *PrometResource) GetPrometAnalitickihKonta(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, isMI bool, params domain.PrometParam) error {
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
 		return fmt.Errorf("user session not found")
 	}
-
-	konto := c.Query("konto")
-	sifra := c.Query("sifra")
-	odDatuma := c.Query("oddatuma")
-	doDatuma := c.Query("dodatuma")
-	odMI := c.Query("odmi")
-	doMI := c.Query("domi")
-	searchText := c.Query("query")
 
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 	hasGod, hasKar := s.prometRepo.GetHasGodHasKar()
@@ -329,40 +315,40 @@ func (s *PrometResource) GetPrometAnalitickihKonta(c *gin.Context, tbl *domain.T
 				coalesce(sum(deviznos), 0) as deviznos
 		FROM fpro`, true)
 	if hasGod {
-		qb.AddEqual("god", session.SelectedGod)
-		qbTotal.AddEqual("god", session.SelectedGod)
+		qb.AddEqual("god", userSession.SelectedGod)
+		qbTotal.AddEqual("god", userSession.SelectedGod)
 	}
 	if hasKar {
-		qb.AddEqual("kar", session.SelectedKar)
-		qbTotal.AddEqual("kar", session.SelectedKar)
+		qb.AddEqual("kar", userSession.SelectedKar)
+		qbTotal.AddEqual("kar", userSession.SelectedKar)
 	}
-	qb.AddEqual("konto", konto)
-	qb.AddEqual("sifra", sifra)
+	qb.AddEqual("konto", params.Konto)
+	qb.AddEqual("sifra", params.Sifra)
 	qb.AddEqual("vkonta", 1)
-	qb.AddCondition("danal", odDatuma, ">=")
-	qb.AddCondition("danal", doDatuma, "<=")
+	qb.AddCondition("danal", params.OdDatuma, ">=")
+	qb.AddCondition("danal", params.DoDatuma, "<=")
 
-	qbTotal.AddEqual("konto", konto)
-	qbTotal.AddEqual("sifra", sifra)
+	qbTotal.AddEqual("konto", params.Konto)
+	qbTotal.AddEqual("sifra", params.Sifra)
 	qbTotal.AddEqual("vkonta", 1)
-	qbTotal.AddCondition("danal", odDatuma, ">=")
-	qbTotal.AddCondition("danal", doDatuma, "<=")
+	qbTotal.AddCondition("danal", params.OdDatuma, ">=")
+	qbTotal.AddCondition("danal", params.DoDatuma, "<=")
 	if isMI {
-		qb.AddCondition("mi", odMI, ">=")
-		qb.AddCondition("mi", doMI, "<=")
-		qbTotal.AddCondition("mi", odMI, ">=")
-		qbTotal.AddCondition("mi", doMI, "<=")
+		qb.AddCondition("mi", params.OdMI, ">=")
+		qb.AddCondition("mi", params.DoMI, "<=")
+		qbTotal.AddCondition("mi", params.OdMI, ">=")
+		qbTotal.AddCondition("mi", params.DoMI, "<=")
 	}
 	// Add search conditions if search text is provided
-	if searchText != "" {
+	if params.SearchText != "" {
 		qb.SetEntityType(reflect.TypeOf(domain.PrometDto{}))
 		//qbTotal.SetEntityType(reflect.TypeOf(domain.PrometDto{}))
 		if isMI {
-			qb.AddSearchConditions(s.GetAnKontaMiTableFields(), searchText)
-			//qbTotal.AddSearchConditions(s.GetAnKontaMiTableFields(), searchText)
+			qb.AddSearchConditions(s.GetAnKontaMiTableFields(), params.SearchText)
+			//qbTotal.AddSearchConditions(s.GetAnKontaMiTableFields(), params.SearchText)
 		} else {
-			qb.AddSearchConditions(s.GetAnkontaTableFields(), searchText)
-			//qbTotal.AddSearchConditions(s.GetAnkontaTableFields(), searchText)
+			qb.AddSearchConditions(s.GetAnkontaTableFields(), params.SearchText)
+			//qbTotal.AddSearchConditions(s.GetAnkontaTableFields(), params.SearchText)
 		}
 	}
 
@@ -374,7 +360,7 @@ func (s *PrometResource) GetPrometAnalitickihKonta(c *gin.Context, tbl *domain.T
 	}
 
 	sqlQuery, args := qb.Build()
-	entities, err := s.prometRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
+	entities, err := s.prometRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
 	if err != nil {
 		return err
 	}
@@ -383,6 +369,7 @@ func (s *PrometResource) GetPrometAnalitickihKonta(c *gin.Context, tbl *domain.T
 		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
 		return nil
 	}
+	var totDug, totPot, totKolDug, totKolPot, totDevIznos float64
 	// Populate table rows
 	if entities != nil && len(*entities) > 0 {
 		for _, entity := range *entities {
@@ -423,20 +410,12 @@ func (s *PrometResource) GetPrometAnalitickihKonta(c *gin.Context, tbl *domain.T
 			}
 			tblRow := domain.TableRow{Fields: fields, HasUpdate: false, HasDelete: false}
 			tbl.Rows = append(tbl.Rows, tblRow)
+			totDug += entity.Duguje
+			totPot += entity.Potrazuje
+			totKolDug += entity.Kolduguje
+			totKolPot += entity.Kolpotrazuje
+			totDevIznos += entity.Deviznos
 		}
-	}
-	sqlQuery, args = qbTotal.Build()
-	totentites, err := s.prometRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
-	if err != nil {
-		return err
-	}
-	var totDug, totPot, totKolDug, totKolPot, totDevIznos float64
-	for _, tot := range *totentites {
-		totDug += tot.Duguje
-		totPot += tot.Potrazuje
-		totKolDug += tot.Kolduguje
-		totKolPot += tot.Kolpotrazuje
-		totDevIznos += tot.Deviznos
 	}
 
 	tbl.Totals = make([]string, len(tbl.Headers))
@@ -462,56 +441,37 @@ func (s *PrometResource) GetPrometAnalitickihKonta(c *gin.Context, tbl *domain.T
 	return nil
 }
 
-func (s *PrometResource) GetPrometSubsintetickihKonta(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error {
-	session := domain.GetSessionFromContext(c)
-	if session == nil {
+func (s *PrometResource) GetPrometSubsintetickihKonta(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.PrometParam) error {
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
 		return fmt.Errorf("user session not found")
 	}
-
-	odkonta := c.Query("odkonta")
-	dokonta := c.Query("dokonta")
-	odDatuma := c.Query("oddatuma")
-	doDatuma := c.Query("dodatuma")
-	searchText := c.Query("query")
-
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 	hasGod, hasKar := s.prometRepo.GetHasGodHasKar()
 
 	//if we need to get only total records we check the bool gettotalrecords
 	//Get data for the table
-	qb := common.NewQueryBuilder(`SELECT  konto, tipdok, nalog, danal, opis, 
+	qb := common.NewQueryBuilder(`SELECT  konto, tipdok, nalog, danal, coalesce(opis, '') as opis, 
 			   	CASE WHEN kat = 1 OR kat = 2 THEN iznos ELSE 0 END as duguje,
 			   	CASE WHEN kat = 3 OR kat = 4 THEN iznos ELSE 0 END as potrazuje,
 				idfpro
 		FROM fpro`, true)
-	qbTotal := common.NewQueryBuilder(`SELECT 
-			   	coalesce(sum(case when kat = 1 or kat = 2 then iznos else 0 end), 0) as duguje,
-			   	coalesce(sum(case when kat = 3 or kat = 4 then iznos else 0 end), 0) as potrazuje
-		FROM fpro`, true)
 	if hasGod {
-		qb.AddEqual("god", session.SelectedGod)
-		qbTotal.AddEqual("god", session.SelectedGod)
+		qb.AddEqual("god", userSession.SelectedGod)
 	}
 	if hasKar {
-		qb.AddEqual("kar", session.SelectedKar)
-		qbTotal.AddEqual("kar", session.SelectedKar)
+		qb.AddEqual("kar", userSession.SelectedKar)
+
 	}
-	qb.AddCondition("konto::numeric", odkonta, ">=")
-	qb.AddCondition("konto::numeric", dokonta, "<=")
-	qb.AddCondition("danal", odDatuma, ">=")
-	qb.AddCondition("danal", doDatuma, "<=")
-	// add condition for totals
-	qbTotal.AddCondition("konto::numeric", odkonta, ">=")
-	qbTotal.AddCondition("konto::numeric", dokonta, "<=")
-	qbTotal.AddCondition("danal", odDatuma, ">=")
-	qbTotal.AddCondition("danal", doDatuma, "<=")
+	qb.AddCondition("konto::numeric", params.OdKonta, ">=")
+	qb.AddCondition("konto::numeric", params.DoKonta, "<=")
+	qb.AddCondition("danal", params.OdDatuma, ">=")
+	qb.AddCondition("danal", params.DoDatuma, "<=")
 
 	// Add search conditions if search text is provided
-	if searchText != "" {
+	if params.SearchText != "" {
 		qb.SetEntityType(reflect.TypeOf(domain.PrometDto{}))
-		qb.AddSearchConditions(s.GetSubsintetickihKontaTableFields(), searchText)
-		//qbTotal.SetEntityType(reflect.TypeOf(domain.PrometDto{}))
-		//qbTotal.AddSearchConditions(s.GetSubsintetickihKontaTableFields(), searchText)
+		qb.AddSearchConditions(s.GetSubsintetickihKontaTableFields(), params.SearchText)
 	}
 	qb.AddOrderBy("konto, danal, tipdok, nalog")
 	if !getTotalRecords {
@@ -520,7 +480,7 @@ func (s *PrometResource) GetPrometSubsintetickihKonta(c *gin.Context, tbl *domai
 	}
 
 	sqlQuery, args := qb.Build()
-	entities, err := s.prometRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
+	entities, err := s.prometRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
 	if err != nil {
 		return err
 	}
@@ -529,6 +489,7 @@ func (s *PrometResource) GetPrometSubsintetickihKonta(c *gin.Context, tbl *domai
 		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
 		return nil
 	}
+	var totDug, totPot float64
 	// Populate table rows
 	if entities != nil && len(*entities) > 0 {
 		for _, entity := range *entities {
@@ -544,19 +505,11 @@ func (s *PrometResource) GetPrometSubsintetickihKonta(c *gin.Context, tbl *domai
 			}
 			tblRow := domain.TableRow{Fields: fields, HasUpdate: false, HasDelete: false}
 			tbl.Rows = append(tbl.Rows, tblRow)
+			totDug += entity.Duguje
+			totPot += entity.Potrazuje
 		}
 	}
 	// fill totals
-	sqlQuery, args = qbTotal.Build()
-	totentites, err := s.prometRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
-	if err != nil {
-		return err
-	}
-	var totDug, totPot float64
-	for _, tot := range *totentites {
-		totDug += tot.Duguje
-		totPot += tot.Potrazuje
-	}
 	tbl.Totals = make([]string, len(tbl.Headers))
 	tbl.Totals[0] = i18n.GetInstance().Label("Ukupno") // Set label for totals column
 	for i, header := range tbl.Headers {
@@ -573,17 +526,11 @@ func (s *PrometResource) GetPrometSubsintetickihKonta(c *gin.Context, tbl *domai
 	return nil
 }
 
-func (s *PrometResource) GetPrometSintetickihKonta(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error {
-	session := domain.GetSessionFromContext(c)
-	if session == nil {
+func (s *PrometResource) GetPrometSintetickihKonta(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.PrometParam) error {
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
 		return fmt.Errorf("user session not found")
 	}
-
-	odkonta := c.Query("konto")
-	odDatuma := c.Query("oddatuma")
-	doDatuma := c.Query("dodatuma")
-	searchText := c.Query("query")
-
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 	hasGod, hasKar := s.prometRepo.GetHasGodHasKar()
 
@@ -591,37 +538,25 @@ func (s *PrometResource) GetPrometSintetickihKonta(c *gin.Context, tbl *domain.T
 	//Get data for the table
 	qb := common.NewQueryBuilder(`SELECT LEFT(konto, 3) as konto, tipdok, nalog, 
 			   	MAX(danal) as danal, 
-			   	MAX(opis) as opis,
+			   	MAX(coalesce(opis, '')) as opis,
 			   	SUM(CASE WHEN kat = 1 OR kat = 2 THEN iznos ELSE 0 END) as duguje,
 			   	SUM(CASE WHEN kat = 3 OR kat = 4 THEN iznos ELSE 0 END) as potrazuje
 		FROM fpro`, true)
-	qbTotal := common.NewQueryBuilder(`SELECT
-			   	coalesce(sum(case when kat = 1 or kat = 2 then iznos else 0 end), 0) as duguje,
-							   	coalesce(sum(case when kat = 3 or kat = 4 then iznos else 0 end), 0) as potrazuje
-				FROM fpro`, true)
 
 	if hasGod {
-		qb.AddEqual("god", session.SelectedGod)
-		qbTotal.AddEqual("god", session.SelectedGod)
+		qb.AddEqual("god", userSession.SelectedGod)
 	}
 	if hasKar {
-		qb.AddEqual("kar", session.SelectedKar)
-		qbTotal.AddEqual("kar", session.SelectedKar)
+		qb.AddEqual("kar", userSession.SelectedKar)
 	}
-	qb.AddLikeBegin("konto", odkonta)
-	qb.AddCondition("danal", odDatuma, ">=")
-	qb.AddCondition("danal", doDatuma, "<=")
-	// add conditions for totals
-	qbTotal.AddLikeBegin("konto", odkonta)
-	qbTotal.AddCondition("danal", odDatuma, ">=")
-	qbTotal.AddCondition("danal", doDatuma, "<=")
+	qb.AddLikeBegin("konto", params.OdKonta)
+	qb.AddCondition("danal", params.OdDatuma, ">=")
+	qb.AddCondition("danal", params.DoDatuma, "<=")
 
 	// Add search conditions if search text is provided
-	if searchText != "" {
+	if params.SearchText != "" {
 		qb.SetEntityType(reflect.TypeOf(domain.PrometDto{}))
-		//	qbTotal.SetEntityType(reflect.TypeOf(domain.PrometDto{}))
-		qb.AddSearchConditions(s.GetSintetickihKontaTableFields(), searchText)
-		//	qbTotal.AddSearchConditions(s.GetSintetickihKontaTableFields(), searchText)
+		qb.AddSearchConditions(s.GetSintetickihKontaTableFields(), params.SearchText)
 	}
 	qb.AddGroupBy("LEFT(konto, 3), tipdok, nalog")
 	qb.AddOrderBy("tipdok, nalog")
@@ -631,7 +566,7 @@ func (s *PrometResource) GetPrometSintetickihKonta(c *gin.Context, tbl *domain.T
 	}
 
 	sqlQuery, args := qb.Build()
-	entities, err := s.prometRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
+	entities, err := s.prometRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
 	if err != nil {
 		return err
 	}
@@ -640,6 +575,7 @@ func (s *PrometResource) GetPrometSintetickihKonta(c *gin.Context, tbl *domain.T
 		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
 		return nil
 	}
+	var totDug, totPot float64
 	// Populate table rows
 	if entities != nil && len(*entities) > 0 {
 		for _, entity := range *entities {
@@ -654,19 +590,11 @@ func (s *PrometResource) GetPrometSintetickihKonta(c *gin.Context, tbl *domain.T
 			}
 			tblRow := domain.TableRow{Fields: fields, HasUpdate: false, HasDelete: false}
 			tbl.Rows = append(tbl.Rows, tblRow)
+			totDug += entity.Duguje
+			totPot += entity.Potrazuje
 		}
 	}
 	// fill totals
-	sqlQuery, args = qbTotal.Build()
-	totentites, err := s.prometRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
-	if err != nil {
-		return err
-	}
-	var totDug, totPot float64
-	for _, tot := range *totentites {
-		totDug += tot.Duguje
-		totPot += tot.Potrazuje
-	}
 	tbl.Totals = make([]string, len(tbl.Headers))
 	tbl.Totals[0] = i18n.GetInstance().Label("Ukupno") // Set label for totals column
 	for i, header := range tbl.Headers {
@@ -682,19 +610,11 @@ func (s *PrometResource) GetPrometSintetickihKonta(c *gin.Context, tbl *domain.T
 	return nil
 }
 
-func (s *PrometResource) GetPrometKarticaSintetickihKonta(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error {
-	session := domain.GetSessionFromContext(c)
-	if session == nil {
+func (s *PrometResource) GetPrometKarticaSintetickihKonta(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.PrometParam) error {
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
 		return fmt.Errorf("user session not found")
 	}
-
-	odkonta := c.Query("konto")
-	odDatuma := c.Query("oddatuma")
-	doDatuma := c.Query("dodatuma")
-	analitika := c.Query("analitika")
-
-	searchText := c.Query("query")
-
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 	hasGod, hasKar := s.prometRepo.GetHasGodHasKar()
 
@@ -702,7 +622,7 @@ func (s *PrometResource) GetPrometKarticaSintetickihKonta(c *gin.Context, tbl *d
 	//Get data for the table
 	sqlText := ""
 	groupByClause := ""
-	if analitika == "true" {
+	if params.Analitika == "true" {
 		sqlText = `SELECT fpro.konto, fpro.sifra,
 			   	MAX(COALESCE(fkpl.naziv, '')) as opis,
 			   	SUM(CASE WHEN fpro.kat = 1 OR fpro.kat = 2 THEN fpro.iznos ELSE 0 END) as duguje,
@@ -719,33 +639,23 @@ func (s *PrometResource) GetPrometKarticaSintetickihKonta(c *gin.Context, tbl *d
 				LEFT JOIN fkpl ON fkpl.konto = fpro.konto AND fkpl.god = fpro.god AND fkpl.kar = fpro.kar AND fkpl.vkonta = 2`
 		groupByClause = "fpro.konto"
 	}
-	qbTotal := common.NewQueryBuilder(`SELECT 
-						   	coalesce(sum(case when kat = 1 or kat = 2 then iznos else 0 end), 0) as duguje,
-						   	coalesce(sum(case when kat = 3 or kat = 4 then iznos else 0 end), 0) as potrazuje
-							FROM fpro`, true)
 
 	qb := common.NewQueryBuilder(sqlText, true)
 	if hasGod {
-		qb.AddEqual("fpro.god", session.SelectedGod)
-		qbTotal.AddEqual("fpro.god", session.SelectedGod)
+		qb.AddEqual("fpro.god", userSession.SelectedGod)
 	}
 	if hasKar {
-		qb.AddEqual("fpro.kar", session.SelectedKar)
-		qbTotal.AddEqual("fpro.kar", session.SelectedKar)
+		qb.AddEqual("fpro.kar", userSession.SelectedKar)
 	}
-	qb.AddLikeBegin("fpro.konto", odkonta)
-	qb.AddCondition("danal", odDatuma, ">=")
-	qb.AddCondition("danal", doDatuma, "<=")
-	// add condition for totals
-	qbTotal.AddLikeBegin("fpro.konto", odkonta)
-	qbTotal.AddCondition("danal", odDatuma, ">=")
-	qbTotal.AddCondition("danal", doDatuma, "<=")
+	qb.AddLikeBegin("fpro.konto", params.OdKonta)
+	qb.AddCondition("danal", params.OdDatuma, ">=")
+	qb.AddCondition("danal", params.DoDatuma, "<=")
 
 	// Add search conditions if search text is provided
-	if searchText != "" {
+	if params.SearchText != "" {
 		qb.SetEntityType(reflect.TypeOf(domain.PrometDto{}))
 
-		qb.AddSearchConditions(s.GetKarticaSintetikaTableFields(), searchText)
+		qb.AddSearchConditions(s.GetKarticaSintetikaTableFields(), params.SearchText)
 	}
 	qb.AddGroupBy(groupByClause)
 	qb.AddOrderBy("fpro.konto::numeric")
@@ -755,7 +665,7 @@ func (s *PrometResource) GetPrometKarticaSintetickihKonta(c *gin.Context, tbl *d
 	}
 
 	sqlQuery, args := qb.Build()
-	entities, err := s.prometRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
+	entities, err := s.prometRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
 	if err != nil {
 		return err
 	}
@@ -764,6 +674,7 @@ func (s *PrometResource) GetPrometKarticaSintetickihKonta(c *gin.Context, tbl *d
 		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
 		return nil
 	}
+	var totDug, totPot float64
 	// Populate table rows
 	if entities != nil && len(*entities) > 0 {
 		for _, entity := range *entities {
@@ -775,25 +686,16 @@ func (s *PrometResource) GetPrometKarticaSintetickihKonta(c *gin.Context, tbl *d
 				common.FormatNumberWithSystemLocale(entity.Potrazuje, 2),
 				common.FormatNumberWithSystemLocale(entity.Duguje-entity.Potrazuje, 2),
 			}
-			if analitika == "true" {
+			if params.Analitika == "true" {
 				fields[1] = entity.Sifra
 			}
 			tblRow := domain.TableRow{Fields: fields, HasUpdate: false, HasDelete: false}
 			tbl.Rows = append(tbl.Rows, tblRow)
+			totDug += entity.Duguje
+			totPot += entity.Potrazuje
 		}
 	}
 	// fill totals
-	sqlQuery, args = qbTotal.Build()
-	totentites, err := s.prometRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
-	if err != nil {
-		return err
-	}
-	var totDug, totPot float64
-	for _, tot := range *totentites {
-
-		totDug += tot.Duguje
-		totPot += tot.Potrazuje
-	}
 	tbl.Totals = make([]string, len(tbl.Headers))
 	tbl.Totals[0] = i18n.GetInstance().Label("Ukupno") // Set label for totals column
 	for i, header := range tbl.Headers {
@@ -809,17 +711,11 @@ func (s *PrometResource) GetPrometKarticaSintetickihKonta(c *gin.Context, tbl *d
 	return nil
 }
 
-func (s *PrometResource) GetPrometSubsintetikaVrd(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error {
-	session := domain.GetSessionFromContext(c)
-	if session == nil {
+func (s *PrometResource) GetPrometSubsintetikaVrd(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.PrometParam) error {
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
 		return fmt.Errorf("user session not found")
 	}
-
-	odkonta := c.Query("konto")
-	odDatuma := c.Query("oddatuma")
-	doDatuma := c.Query("dodatuma")
-
-	searchText := c.Query("query")
 
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 	hasGod, hasKar := s.prometRepo.GetHasGodHasKar()
@@ -837,31 +733,21 @@ func (s *PrometResource) GetPrometSubsintetikaVrd(c *gin.Context, tbl *domain.Ta
 				SUM(CASE WHEN fpro.kat = 1 OR fpro.kat = 2 THEN fpro.iznos ELSE 0 END) as duguje,
 			   	SUM(CASE WHEN fpro.kat = 3 OR fpro.kat = 4 THEN fpro.iznos ELSE 0 END) as potrazuje
 				FROM fpro`, true)
-	qbTotal := common.NewQueryBuilder(`SELECT
-					coalesce(sum(case when kat = 1 or kat = 2 then iznos else 0 end), 0) as duguje,
-					coalesce(sum(case when kat = 3 or kat = 4 then iznos else 0 end), 0) as potrazuje
-					FROM fpro`, true)
 
 	if hasGod {
-		qb.AddEqual("fpro.god", session.SelectedGod)
-		qbTotal.AddEqual("fpro.god", session.SelectedGod)
+		qb.AddEqual("fpro.god", userSession.SelectedGod)
 	}
 	if hasKar {
-		qb.AddEqual("fpro.kar", session.SelectedKar)
-		qbTotal.AddEqual("fpro.kar", session.SelectedKar)
+		qb.AddEqual("fpro.kar", userSession.SelectedKar)
 	}
-	qb.AddLikeBegin("fpro.konto", odkonta)
-	qb.AddCondition("danal", odDatuma, ">=")
-	qb.AddCondition("danal", doDatuma, "<=")
-	// add condition for totals
-	qbTotal.AddLikeBegin("fpro.konto", odkonta)
-	qbTotal.AddCondition("danal", odDatuma, ">=")
-	qbTotal.AddCondition("danal", doDatuma, "<=")
+	qb.AddLikeBegin("fpro.konto", params.OdKonta)
+	qb.AddCondition("danal", params.OdDatuma, ">=")
+	qb.AddCondition("danal", params.DoDatuma, "<=")
 
 	// Add search conditions if search text is provided
-	if searchText != "" {
+	if params.SearchText != "" {
 		qb.SetEntityType(reflect.TypeOf(domain.PrometDto{}))
-		qb.AddSearchConditions(s.GetSubsintetikaVrdTableFields(), searchText)
+		qb.AddSearchConditions(s.GetSubsintetikaVrdTableFields(), params.SearchText)
 	}
 	qb.AddGroupBy(`fpro.vrd, fpro.konto, fpro.vkonta`)
 	qb.AddOrderBy("fpro.konto::numeric")
@@ -871,7 +757,7 @@ func (s *PrometResource) GetPrometSubsintetikaVrd(c *gin.Context, tbl *domain.Ta
 	}
 
 	sqlQuery, args := qb.Build()
-	entities, err := s.prometRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
+	entities, err := s.prometRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
 	if err != nil {
 		return err
 	}
@@ -880,6 +766,7 @@ func (s *PrometResource) GetPrometSubsintetikaVrd(c *gin.Context, tbl *domain.Ta
 		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
 		return nil
 	}
+	var totDug, totPot float64
 	// Populate table rows
 	if entities != nil && len(*entities) > 0 {
 		for _, entity := range *entities {
@@ -893,19 +780,11 @@ func (s *PrometResource) GetPrometSubsintetikaVrd(c *gin.Context, tbl *domain.Ta
 
 			tblRow := domain.TableRow{Fields: fields, HasUpdate: false, HasDelete: false}
 			tbl.Rows = append(tbl.Rows, tblRow)
+			totDug += entity.Duguje
+			totPot += entity.Potrazuje
 		}
 	}
 	// fill totals
-	sqlQuery, args = qbTotal.Build()
-	totentites, err := s.prometRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
-	if err != nil {
-		return err
-	}
-	var totDug, totPot float64
-	for _, tot := range *totentites {
-		totDug += tot.Duguje
-		totPot += tot.Potrazuje
-	}
 	tbl.Totals = make([]string, len(tbl.Headers))
 	tbl.Totals[0] = i18n.GetInstance().Label("Ukupno") // Set label for totals column
 	for i, header := range tbl.Headers {
@@ -922,18 +801,11 @@ func (s *PrometResource) GetPrometSubsintetikaVrd(c *gin.Context, tbl *domain.Ta
 	return nil
 }
 
-func (s *PrometResource) GetPrometKontaAnaliticki(c *gin.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int) error {
-	session := domain.GetSessionFromContext(c)
-	if session == nil {
+func (s *PrometResource) GetPrometKontaAnaliticki(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.PrometParam) error {
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
 		return fmt.Errorf("user session not found")
 	}
-
-	konto := c.Query("konto")
-	odSifre := c.Query("odsifre")
-	doSifre := c.Query("dosifre")
-	odDatuma := c.Query("oddatuma")
-	doDatuma := c.Query("dodatuma")
-	searchText := c.Query("query")
 
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 	hasGod, hasKar := s.prometRepo.GetHasGodHasKar()
@@ -950,37 +822,23 @@ func (s *PrometResource) GetPrometKontaAnaliticki(c *gin.Context, tbl *domain.Ta
 		FROM fpro as f`, true)
 	qb.AddJoin(` LEFT JOIN fkpl fk on fk.idfkpl = f.idfkpl`)
 
-	qbTotal := common.NewQueryBuilder(`SELECT
-			   	coalesce(sum(case when kat = 1 or kat = 2 then iznos else 0 end), 0) as duguje,
-			   	coalesce(sum(case when kat = 3 or kat = 4 then iznos else 0 end), 0) as potrazuje,
-				coalesce(sum(case when kat = 1 or kat = 2 then kolic else 0 end), 0) as kolduguje,
-				coalesce(sum(case when kat = 3 or kat = 4 then kolic else 0 end), 0) as kolpotrazuje
-				FROM fpro as f`, true)
 	if hasGod {
-		qb.AddEqual("f.god", session.SelectedGod)
-		qbTotal.AddEqual("f.god", session.SelectedGod)
+		qb.AddEqual("f.god", userSession.SelectedGod)
 	}
 	if hasKar {
-		qb.AddEqual("f.kar", session.SelectedKar)
-		qbTotal.AddEqual("f.kar", session.SelectedKar)
+		qb.AddEqual("f.kar", userSession.SelectedKar)
 	}
-	qb.AddEqual("f.konto", konto)
-	qb.AddCondition("f.sifra::numeric", odSifre, ">=")
-	qb.AddCondition("f.sifra::numeric", doSifre, "<=")
+	qb.AddEqual("f.konto", params.Konto)
+	qb.AddCondition("f.sifra::numeric", params.OdSifre, ">=")
+	qb.AddCondition("f.sifra::numeric", params.DoSifre, "<=")
 	qb.AddEqual("f.vkonta", 1)
-	qb.AddCondition("f.danal", odDatuma, ">=")
-	qb.AddCondition("f.danal", doDatuma, "<=")
-	// add conditions for totals
-	qbTotal.AddEqual("f.vkonta", 1)
-	qbTotal.AddEqual("f.konto", konto)
-	qbTotal.AddCondition("f.sifra::numeric", odSifre, ">=")
-	qbTotal.AddCondition("f.sifra::numeric", doSifre, "<=")
-	qbTotal.AddCondition("f.danal", odDatuma, ">=")
-	qbTotal.AddCondition("f.danal", doDatuma, "<=")
+	qb.AddCondition("f.danal", params.OdDatuma, ">=")
+	qb.AddCondition("f.danal", params.DoDatuma, "<=")
+
 	// Add search conditions if search text is provided
-	if searchText != "" {
+	if params.SearchText != "" {
 		qb.SetEntityType(reflect.TypeOf(domain.PrometDto{}))
-		qb.AddSearchConditions(s.GetKontaAnalitickiTableFields(), searchText)
+		qb.AddSearchConditions(s.GetKontaAnalitickiTableFields(), params.SearchText)
 
 	}
 
@@ -992,7 +850,7 @@ func (s *PrometResource) GetPrometKontaAnaliticki(c *gin.Context, tbl *domain.Ta
 	}
 
 	sqlQuery, args := qb.Build()
-	entities, err := s.prometRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
+	entities, err := s.prometRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
 	if err != nil {
 		return err
 	}
@@ -1001,6 +859,7 @@ func (s *PrometResource) GetPrometKontaAnaliticki(c *gin.Context, tbl *domain.Ta
 		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
 		return nil
 	}
+	var totDug, totPot, totKolDug, totKolPot float64
 	// Populate table rows
 	if entities != nil && len(*entities) > 0 {
 		for _, entity := range *entities {
@@ -1032,21 +891,14 @@ func (s *PrometResource) GetPrometKontaAnaliticki(c *gin.Context, tbl *domain.Ta
 			}
 			tblRow := domain.TableRow{Fields: fields, HasUpdate: false, HasDelete: false}
 			tbl.Rows = append(tbl.Rows, tblRow)
+			totDug += entity.Duguje
+			totPot += entity.Potrazuje
+			totKolDug += entity.Kolduguje
+			totKolPot += entity.Kolpotrazuje
+
 		}
 	}
 	// fill totals
-	sqlQuery, args = qbTotal.Build()
-	totentites, err := s.prometRepo.GetAllCustom(c, sqlQuery, "", args, "", "")
-	if err != nil {
-		return err
-	}
-	var totDug, totPot, totKolDug, totKolPot float64
-	for _, tot := range *totentites {
-		totDug += tot.Duguje
-		totPot += tot.Potrazuje
-		totKolDug += tot.Kolduguje
-		totKolPot += tot.Kolpotrazuje
-	}
 	tbl.Totals = make([]string, len(tbl.Headers))
 	tbl.Totals[0] = i18n.GetInstance().Label("Ukupno") // Set label for totals column
 	for i, header := range tbl.Headers {

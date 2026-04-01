@@ -16,7 +16,7 @@ import (
 	"helia/internal/domain"
 )
 
-func PartneriForm(partneriData domain.Partneri, tekRacuni domain.TableData, dialog domain.Dialog, btnSave, btnCancel, btnClose, btnProveriPIB domain.Button, translator *i18n.Service, csrfToken string) templ.Component {
+func PartneriFormMain(partneriData domain.Partneri, tekRacuni domain.TableData, dialog domain.Dialog, tipoviAnalitike []domain.ComboItem, btnSave, btnCancel, btnClose, btnProveriPIB domain.Button, translator *i18n.Service, csrfToken string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -68,7 +68,7 @@ func PartneriForm(partneriData domain.Partneri, tekRacuni domain.TableData, dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\"><div class=\"bg-white rounded-lg shadow-2xl relative animate-fade-in max-w-7xl w-full max-h-[90vh] overflow-y-auto\"><!-- Title Bar --><div class=\"bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg sticky top-0 z-10\"><h2 class=\"text-lg font-semibold ml-4\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\"><div class=\"bg-white rounded-lg shadow-2xl relative animate-fade-in max-w-7xl w-full max-h-[95vh] overflow-y-auto\"><!-- Title Bar --><div class=\"bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg sticky top-0 z-10\"><h2 class=\"text-lg font-semibold ml-4\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -144,43 +144,125 @@ func PartneriForm(partneriData domain.Partneri, tekRacuni domain.TableData, dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "\"><!-- Main Grid Layout: 60% Left - 40% Right --><div class=\"grid gap-4\" style=\"grid-template-columns: 60% 39%;\"><!-- Left Column (60% width) - Osnovni podaci o partneru --><div class=\"space-y-1 flex flex-col\"><div class=\"text-blue-900 font-bold text-sm border-b-2 border-blue-900 py-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "\"><!-- Tipovi Analitike --><div class=\"flex items-center gap-2 border-b-2 border-blue-900\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var9 string
-		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Osnovni podaci o partneru"))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/partneri.templ`, Line: 37, Col: 53}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "tipanalitike",
+			LabelText:  translator.Label("Tip analitike"),
+			ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</div><!-- Šifra partnera if action is update the create hidden sifra filed -->")
+		templ_7745c5c3_Err = tmpl.ComboBoxField(domain.ComboFieldConfig{
+			ID:             "tipanalitike",
+			Name:           "tipanalitike",
+			Placeholder:    translator.Placeholder("Select"),
+			Disabled:       dialog.HxRequestType == "PUT",
+			ClassSelect:    common.ClassSelect + " w-64",
+			TabIndex:       "1",
+			OptionValues:   tipoviAnalitike,
+			SelectedValue:  "",
+			ChangeEndpoint: "/api/partneri/form",
+			HxChangeTarget: "partneri-form-content",
+			HxSwap:         "innerHTML",
+			HxVals:         `js:{"tipanalitike": document.getElementById('tipanalitike').value}`,
+		}, translator).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</div><!-- Content swapped by HTMX when tipanalitike changes --><div id=\"partneri-form-content\"></div><!-- Action Buttons - Full Width at Bottom --><div class=\"flex items-center justify-end gap-3 border-t border-gray-300 pt-3 mt-4\"><div class=\"flex items-center justify-end pt-2 pb-2 space-x-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.SaveButton(btnSave, translator).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.CancelButton(btnCancel, translator).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</div></div></form></div></div>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = PartneriScript().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.ClearFieldErrorScript().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.CloseDialogScript().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+func PartneriForm(partneriData domain.Partneri, tekRacuni domain.TableData, dialog domain.Dialog, tipoviAnalitike []domain.ComboItem, btnSave, btnCancel, btnClose, btnProveriPIB domain.Button, translator *i18n.Service, csrfToken string) templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var9 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var9 == nil {
+			templ_7745c5c3_Var9 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<!-- Main Grid Layout: 60% Left - 40% Right --><div class=\"grid gap-4\" style=\"grid-template-columns: 60% 39%;\"><!-- Left Column (60% width) - Osnovni podaci o partneru --><div class=\"space-y-1 flex flex-col\"><div class=\"text-blue-900 font-bold text-sm border-b-2 border-blue-900 py-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var10 string
+		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Osnovni podaci o partneru"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/partneri.templ`, Line: 77, Col: 50}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</div><!-- Šifra partnera if action is update the create hidden sifra filed -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if dialog.HxRequestType == "PUT" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "<input type=\"hidden\" name=\"sifra\" value=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<input type=\"hidden\" name=\"sifra\" value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var10 string
-			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(partneriData.Sifra)
+			var templ_7745c5c3_Var11 string
+			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(partneriData.Sifra)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/partneri.templ`, Line: 41, Col: 67}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/partneri.templ`, Line: 81, Col: 64}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<div class=\"flex items-center gap-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "<div class=\"flex items-center gap-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -212,42 +294,42 @@ func PartneriForm(partneriData domain.Partneri, tekRacuni domain.TableData, dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<label class=\"flex items-center gap-2 cursor-pointer ml-auto\"><input type=\"checkbox\" name=\"budzetski\" class=\"w-4 h-4\"> ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<label class=\"flex items-center gap-2 cursor-pointer ml-auto\"><input type=\"checkbox\" name=\"budzetski\" class=\"w-4 h-4\"> ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var11 = []any{common.ClassLabel}
-		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var11...)
+		var templ_7745c5c3_Var12 = []any{common.ClassLabel}
+		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var12...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<span class=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var12 string
-		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var11).String())
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/partneri.templ`, Line: 1, Col: 0}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "<span class=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var13 string
-		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Budzetski korisnik"))
+		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var12).String())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/partneri.templ`, Line: 69, Col: 82}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/partneri.templ`, Line: 1, Col: 0}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</span></label></div><!-- Naziv Partnera --><div class=\"flex items-center gap-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var14 string
+		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Budzetski korisnik"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/partneri.templ`, Line: 108, Col: 79}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</span></label></div><!-- Naziv Partnera --><div class=\"flex items-center gap-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -274,7 +356,7 @@ func PartneriForm(partneriData domain.Partneri, tekRacuni domain.TableData, dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</div><!-- Pun Naziv Partnera --><div class=\"flex items-center gap-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "</div><!-- Pun Naziv Partnera --><div class=\"flex items-center gap-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -299,7 +381,7 @@ func PartneriForm(partneriData domain.Partneri, tekRacuni domain.TableData, dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</div><!-- Adresa --><div class=\"flex items-center gap-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "</div><!-- Adresa --><div class=\"flex items-center gap-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -324,7 +406,7 @@ func PartneriForm(partneriData domain.Partneri, tekRacuni domain.TableData, dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</div><!-- Poštanski broj i Mjesto --><div class=\"grid grid-cols-2 gap-2\"><div class=\"flex items-center gap-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "</div><!-- Poštanski broj i Mjesto --><div class=\"grid grid-cols-2 gap-2\"><div class=\"flex items-center gap-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -349,7 +431,7 @@ func PartneriForm(partneriData domain.Partneri, tekRacuni domain.TableData, dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "</div><div class=\"flex items-center gap-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "</div><div class=\"flex items-center gap-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -396,7 +478,7 @@ func PartneriForm(partneriData domain.Partneri, tekRacuni domain.TableData, dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "</div></div><!-- Sistema PDV --><div class=\"flex items-center gap-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "</div></div><!-- Sistema PDV --><div class=\"flex items-center gap-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -449,7 +531,7 @@ func PartneriForm(partneriData domain.Partneri, tekRacuni domain.TableData, dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "</div><!-- PIB i Button Check PIB --><div class=\"flex items-center gap-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "</div><!-- PIB i Button Check PIB --><div class=\"flex items-center gap-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -461,7 +543,7 @@ func PartneriForm(partneriData domain.Partneri, tekRacuni domain.TableData, dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "<div class=\"flex items-center gap-2 flex-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "<div class=\"flex items-center gap-2 flex-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -482,7 +564,7 @@ func PartneriForm(partneriData domain.Partneri, tekRacuni domain.TableData, dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "</div></div><!-- Matični broj --><div class=\"flex items-center gap-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "</div></div><!-- Matični broj --><div class=\"flex items-center gap-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -507,7 +589,7 @@ func PartneriForm(partneriData domain.Partneri, tekRacuni domain.TableData, dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "</div><!-- Matični broj --><div class=\"flex items-center gap-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "</div><!-- Matični broj --><div class=\"flex items-center gap-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -532,7 +614,7 @@ func PartneriForm(partneriData domain.Partneri, tekRacuni domain.TableData, dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "</div><!-- Teritorija - Radio Set --><div class=\"flex items-center gap-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "</div><!-- Teritorija - Radio Set --><div class=\"flex items-center gap-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -544,47 +626,12 @@ func PartneriForm(partneriData domain.Partneri, tekRacuni domain.TableData, dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "<div class=\"flex items-center gap-3 flex-1\"><label class=\"flex items-center gap-2 cursor-pointer\"><input type=\"radio\" name=\"teritorija\" value=\"srbija\" class=\"w-4 h-4\" checked> ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "<div class=\"flex items-center gap-3 flex-1\"><label class=\"flex items-center gap-2 cursor-pointer\"><input type=\"radio\" name=\"teritorija\" value=\"srbija\" class=\"w-4 h-4\" checked> ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var14 = []any{common.ClassLabel}
-		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var14...)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "<span class=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var15 string
-		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var14).String())
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/partneri.templ`, Line: 1, Col: 0}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var16 string
-		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Srbija"))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/partneri.templ`, Line: 288, Col: 70}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "</span></label> <label class=\"flex items-center gap-2 cursor-pointer\"><input type=\"radio\" name=\"teritorija\" value=\"kosovo\" class=\"w-4 h-4\"> ")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var17 = []any{common.ClassLabel}
-		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var17...)
+		var templ_7745c5c3_Var15 = []any{common.ClassLabel}
+		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var15...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -592,12 +639,12 @@ func PartneriForm(partneriData domain.Partneri, tekRacuni domain.TableData, dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var18 string
-		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var17).String())
+		var templ_7745c5c3_Var16 string
+		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var15).String())
 		if templ_7745c5c3_Err != nil {
 			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/partneri.templ`, Line: 1, Col: 0}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -605,21 +652,21 @@ func PartneriForm(partneriData domain.Partneri, tekRacuni domain.TableData, dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var19 string
-		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Kosovo i Metohija"))
+		var templ_7745c5c3_Var17 string
+		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Srbija"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/partneri.templ`, Line: 292, Col: 81}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/partneri.templ`, Line: 327, Col: 67}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "</span></label> <label class=\"flex items-center gap-2 cursor-pointer\"><input type=\"radio\" name=\"teritorija\" value=\"ino\" class=\"w-4 h-4\"> ")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var20 = []any{common.ClassLabel}
-		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var20...)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "</span></label> <label class=\"flex items-center gap-2 cursor-pointer\"><input type=\"radio\" name=\"teritorija\" value=\"kosovo\" class=\"w-4 h-4\"> ")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var18 = []any{common.ClassLabel}
+		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var18...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -627,12 +674,12 @@ func PartneriForm(partneriData domain.Partneri, tekRacuni domain.TableData, dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var21 string
-		templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var20).String())
+		var templ_7745c5c3_Var19 string
+		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var18).String())
 		if templ_7745c5c3_Err != nil {
 			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/partneri.templ`, Line: 1, Col: 0}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -640,171 +687,206 @@ func PartneriForm(partneriData domain.Partneri, tekRacuni domain.TableData, dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var22 string
-		templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Ino partner"))
+		var templ_7745c5c3_Var20 string
+		templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Kosovo i Metohija"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/partneri.templ`, Line: 296, Col: 75}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/partneri.templ`, Line: 331, Col: 78}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "</span></label> <label class=\"flex items-center gap-2 cursor-pointer\"><input type=\"radio\" name=\"teritorija\" value=\"ino\" class=\"w-4 h-4\"> ")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var21 = []any{common.ClassLabel}
+		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var21...)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "<span class=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var22 string
+		templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var21).String())
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/partneri.templ`, Line: 1, Col: 0}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "</span></label></div></div><!-- Tekući računi (Editable Table) --><div class=\"max-h-44 overflow-y-auto overflow-x-auto border border-gray-300 rounded\"><table id=\"tekuciracuni-table\" class=\"w-full border-collapse\"><thead class=\"bg-blue-900 text-white sticky top-0\"><tr><th class=\"border border-gray-300 px-1 w-8 text-xs text-left\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var23 string
-		templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Redni broj"))
+		templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Ino partner"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/partneri.templ`, Line: 305, Col: 103}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/partneri.templ`, Line: 335, Col: 72}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "</th><th class=\"border border-gray-300 px-1 w-32 text-xs text-left\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "</span></label></div></div><!-- Tekući računi (Editable Table) --><div class=\"max-h-44 overflow-y-auto overflow-x-auto border border-gray-300 rounded\"><table id=\"tekuciracuni-table\" class=\"w-full border-collapse\"><thead class=\"bg-blue-900 text-white sticky top-0\"><tr><th class=\"border border-gray-300 px-1 w-8 text-xs text-left\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var24 string
-		templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Broj računa"))
+		templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Redni broj"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/partneri.templ`, Line: 306, Col: 106}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/partneri.templ`, Line: 344, Col: 101}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "</th><th class=\"border border-gray-300 px-1 w-56 text-xs text-left\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "</th><th class=\"border border-gray-300 px-1 w-32 text-xs text-left\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var25 string
-		templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Banka"))
+		templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Broj računa"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/partneri.templ`, Line: 307, Col: 99}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/partneri.templ`, Line: 345, Col: 104}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "</th><th class=\"border border-gray-300 px-1 w-16 text-xs text-center \">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "</th><th class=\"border border-gray-300 px-1 w-56 text-xs text-left\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var26 string
-		templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Akcije"))
+		templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Banka"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/partneri.templ`, Line: 308, Col: 103}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/partneri.templ`, Line: 346, Col: 97}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "</th></tr></thead> <tbody id=\"tekuciracuni-table-body\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "</th><th class=\"border border-gray-300 px-1 w-16 text-xs text-center \">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var27 string
+		templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Akcije"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/partneri.templ`, Line: 347, Col: 101}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "</th></tr></thead> <tbody id=\"tekuciracuni-table-body\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if len(tekRacuni.Rows) > 0 {
 			for i, row := range tekRacuni.Rows {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "<tr class=\"tekracuni-row hover:bg-blue-50\" data-index=\"")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var27 string
-				templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", i))
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/partneri.templ`, Line: 314, Col: 87}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "\"><td class=\"border border-white\"><input type=\"text\" class=\"w-full border rounded px-1 h-7 tekrac-redbroj\" placeholder=\"Redni broj\" value=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "<tr class=\"tekracuni-row hover:bg-blue-50\" data-index=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var28 string
-				templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(row.Fields[0])
+				templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", i))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/partneri.templ`, Line: 316, Col: 132}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/partneri.templ`, Line: 353, Col: 84}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "\"></td><td class=\"border border-white\"><input type=\"text\" class=\"w-full border rounded px-1 h-7 tekrac-brojracuna\" placeholder=\"Broj računa\" maxlength=\"20\" value=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "\"><td class=\"border border-white\"><input type=\"text\" class=\"w-full border rounded px-1 h-7 tekrac-redbroj\" placeholder=\"Redni broj\" value=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var29 string
-				templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(row.Fields[1])
+				templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(row.Fields[0])
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/partneri.templ`, Line: 319, Col: 152}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/partneri.templ`, Line: 355, Col: 129}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "\"></td><td class=\"border border-white\"><input type=\"text\" class=\"w-full border rounded px-1 h-7 tekrac-banka\" placeholder=\"Banka\" value=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "\"></td><td class=\"border border-white\"><input type=\"text\" class=\"w-full border rounded px-1 h-7 tekrac-brojracuna\" placeholder=\"Broj računa\" maxlength=\"20\" value=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var30 string
-				templ_7745c5c3_Var30, templ_7745c5c3_Err = templ.JoinStringErrs(row.Fields[2])
+				templ_7745c5c3_Var30, templ_7745c5c3_Err = templ.JoinStringErrs(row.Fields[1])
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/partneri.templ`, Line: 322, Col: 125}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/partneri.templ`, Line: 358, Col: 149}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var30))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "\"></td><td class=\"border border-white px-1 h-7 text-center\"><button type=\"button\" class=\"bg-red-500 text-white text-xs px-1 w-20 rounded hover:bg-red-600 delete-row\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, "\"></td><td class=\"border border-white\"><input type=\"text\" class=\"w-full border rounded px-1 h-7 tekrac-banka\" placeholder=\"Banka\" value=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var31 string
-				templ_7745c5c3_Var31, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Button("Obriši"))
+				templ_7745c5c3_Var31, templ_7745c5c3_Err = templ.JoinStringErrs(row.Fields[2])
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/partneri.templ`, Line: 326, Col: 44}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/partneri.templ`, Line: 361, Col: 122}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var31))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "</button></td></tr>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, "\"></td><td class=\"border border-white px-1 h-7 text-center\"><button type=\"button\" class=\"bg-red-500 text-white text-xs px-1 w-20 rounded hover:bg-red-600 delete-row\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var32 string
+				templ_7745c5c3_Var32, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Button("Obriši"))
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/partneri.templ`, Line: 365, Col: 41}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var32))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "</button></td></tr>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, "</tbody></table><button type=\"button\" id=\"add-tekracuni-row\" class=\"mt-2 mb-1 bg-blue-500 text-white text-xs px-2 py-1 h-6 rounded hover:bg-blue-600\">+ ")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var32 string
-		templ_7745c5c3_Var32, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Button("Dodaj račun"))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/partneri.templ`, Line: 335, Col: 45}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var32))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, "</button></div></div><!-- Right Column (40% width) --><div class=\"space-y-1\"><!-- Ostali podaci o partneru --><div><div class=\"text-blue-900 font-bold text-sm border-b-2 border-blue-900 py-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 53, "</tbody></table><button type=\"button\" id=\"add-tekracuni-row\" class=\"mt-2 mb-1 bg-blue-500 text-white text-xs px-2 py-1 h-6 rounded hover:bg-blue-600\">+ ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var33 string
-		templ_7745c5c3_Var33, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Ostali podaci o partneru"))
+		templ_7745c5c3_Var33, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Button("Dodaj račun"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/partneri.templ`, Line: 344, Col: 53}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/partneri.templ`, Line: 374, Col: 42}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var33))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "</div><div class=\"space-y-1\"><!-- Web stranica --><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 54, "</button></div></div><!-- Right Column (40% width) --><div class=\"space-y-1\"><!-- Ostali podaci o partneru --><div><div class=\"text-blue-900 font-bold text-sm border-b-2 border-blue-900 py-1 mb-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var34 string
+		templ_7745c5c3_Var34, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Ostali podaci o partneru"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/partneri.templ`, Line: 383, Col: 50}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var34))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 55, "</div><div class=\"space-y-1\"><!-- Web stranica --><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -829,7 +911,7 @@ func PartneriForm(partneriData domain.Partneri, tekRacuni domain.TableData, dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 53, "</div><!-- E-mail --><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 56, "</div><!-- E-mail --><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -854,7 +936,7 @@ func PartneriForm(partneriData domain.Partneri, tekRacuni domain.TableData, dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 54, "</div><!-- Broj telefona --><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 57, "</div><!-- Broj telefona --><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -879,7 +961,7 @@ func PartneriForm(partneriData domain.Partneri, tekRacuni domain.TableData, dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 55, "</div><!-- Kontakt osoba --><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 58, "</div><!-- Kontakt osoba --><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -904,7 +986,7 @@ func PartneriForm(partneriData domain.Partneri, tekRacuni domain.TableData, dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 56, "</div><!-- Opština --><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 59, "</div><!-- Opština --><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -929,7 +1011,7 @@ func PartneriForm(partneriData domain.Partneri, tekRacuni domain.TableData, dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 57, "</div><!-- JMBG --><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 60, "</div><!-- JMBG --><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -954,7 +1036,7 @@ func PartneriForm(partneriData domain.Partneri, tekRacuni domain.TableData, dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 58, "</div><!-- BPG --><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 61, "</div><!-- BPG --><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -979,7 +1061,7 @@ func PartneriForm(partneriData domain.Partneri, tekRacuni domain.TableData, dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 59, "</div><!-- BPG --><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 62, "</div><!-- BPG --><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1025,20 +1107,20 @@ func PartneriForm(partneriData domain.Partneri, tekRacuni domain.TableData, dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 60, "</div></div></div><!-- Uslovi prodaje/nabavke --><div><div class=\"text-blue-900 font-bold text-sm border-b-2 border-blue-900 py-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 63, "</div></div></div><!-- Uslovi prodaje/nabavke --><div><div class=\"text-blue-900 font-bold text-sm border-b-2 border-blue-900 py-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var34 string
-		templ_7745c5c3_Var34, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Uslovi prodaje/nabavke"))
+		var templ_7745c5c3_Var35 string
+		templ_7745c5c3_Var35, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Uslovi prodaje/nabavke"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/partneri.templ`, Line: 511, Col: 51}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/partneri.templ`, Line: 550, Col: 48}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var34))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var35))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 61, "</div><div class=\"space-y-1 text-xs\"><!-- Kredit limit --><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 64, "</div><div class=\"space-y-1 text-xs\"><!-- Kredit limit --><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1063,7 +1145,7 @@ func PartneriForm(partneriData domain.Partneri, tekRacuni domain.TableData, dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 62, "</div><!-- Limit na dospela potraživa --><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 65, "</div><!-- Limit na dospela potraživa --><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1088,7 +1170,7 @@ func PartneriForm(partneriData domain.Partneri, tekRacuni domain.TableData, dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 63, "</div><!-- Valuta plaćanja prodaja + Rabat --><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 66, "</div><!-- Valuta plaćanja prodaja + Rabat --><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1134,7 +1216,7 @@ func PartneriForm(partneriData domain.Partneri, tekRacuni domain.TableData, dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 64, "</div><!-- Valuta plaćanja nabavka + Rabat --><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 67, "</div><!-- Valuta plaćanja nabavka + Rabat --><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1180,7 +1262,7 @@ func PartneriForm(partneriData domain.Partneri, tekRacuni domain.TableData, dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 65, "</div><!-- Komercijalista --><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 68, "</div><!-- Komercijalista --><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1205,7 +1287,7 @@ func PartneriForm(partneriData domain.Partneri, tekRacuni domain.TableData, dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 66, "</div><!-- Napomena --><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 69, "</div><!-- Napomena --><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1228,27 +1310,7 @@ func PartneriForm(partneriData domain.Partneri, tekRacuni domain.TableData, dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 67, "</div><div class=\"flex items-center gap-2\"></div></div></div></div></div><!-- Action Buttons - Full Width at Bottom --><div class=\"flex items-center justify-end gap-3 border-t border-gray-300 pt-3 mt-4\"><div class=\"flex items-center justify-end pt-2 pb-2 space-x-1\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.SaveButton(btnSave, translator).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.CancelButton(btnCancel, translator).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 68, "</div></div></form></div></div>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = PartneriScript().Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.ClearFieldErrorScript().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 70, "</div><div class=\"flex items-center gap-2\"></div></div></div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1272,12 +1334,12 @@ func PartneriList(tableData domain.TableData, translator *i18n.Service) templ.Co
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var35 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var35 == nil {
-			templ_7745c5c3_Var35 = templ.NopComponent
+		templ_7745c5c3_Var36 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var36 == nil {
+			templ_7745c5c3_Var36 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 69, "<div class=\"mt-4\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 71, "<div class=\"mt-4\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1285,7 +1347,7 @@ func PartneriList(tableData domain.TableData, translator *i18n.Service) templ.Co
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 70, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 72, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1309,12 +1371,12 @@ func PartneriScript() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var36 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var36 == nil {
-			templ_7745c5c3_Var36 = templ.NopComponent
+		templ_7745c5c3_Var37 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var37 == nil {
+			templ_7745c5c3_Var37 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 71, "<script>\r\n\t\tconsole.log(\"PartneriScript loaded - script tag executed\");\r\n\t\t\r\n\t\tfunction handleProveriPIBResponse(event) {\r\n\t\t\tconsole.log(\"handleProveriPIBResponse called\");\r\n\t\t\tconsole.log(\"Event:\", event);\r\n\t\t\t\r\n\t\t\ttry {\r\n\t\t\t\t// Get response from HTMX event\r\n\t\t\t\tconst responseText = event.detail.xhr.responseText;\r\n\t\t\t\tconsole.log(\"Response text:\", responseText);\r\n\t\t\t\t\r\n\t\t\t\tconst response = JSON.parse(responseText);\r\n\t\t\t\tconsole.log(\"Parsed response:\", response);\r\n\t\t\t\t\r\n\t\t\t\t// Check if response has the expected structure\r\n\t\t\t\tif (response && response.success) {\r\n\t\t\t\t\tconsole.log(\"PIB data received:\", response.naziv);\r\n\t\t\t\t\t\r\n\t\t\t\t\t// Update form fields with response data - check if property EXISTS, not if truthy\r\n\t\t\t\t\tif ('naziv' in response) {\r\n\t\t\t\t\t\tconst nazivElement = document.getElementById('naziv');\r\n\t\t\t\t\t\tif (nazivElement) nazivElement.value = response.naziv || '';\r\n\t\t\t\t\t}\r\n\t\t\t\t\t\r\n\t\t\t\t\tif ('naziv1' in response) {\r\n\t\t\t\t\t\tconst punazivElement = document.getElementById('punaziv');\r\n\t\t\t\t\t\tif (punazivElement) punazivElement.value = response.naziv1 || '';\r\n\t\t\t\t\t}\r\n\t\t\t\t\t\r\n\t\t\t\t\tif ('adresa' in response) {\r\n\t\t\t\t\t\tconst adresaElement = document.getElementById('adresa');\r\n\t\t\t\t\t\tif (adresaElement) adresaElement.value = response.adresa || '';\r\n\t\t\t\t\t}\r\n\t\t\t\t\t\r\n\t\t\t\t\tif ('mesto' in response) {\r\n\t\t\t\t\t\tconst mestoElement = document.getElementById('mesto');\r\n\t\t\t\t\t\tif (mestoElement) mestoElement.value = response.mesto || '';\r\n\t\t\t\t\t}\r\n\t\t\t\t\t\r\n\t\t\t\t\tif ('pobro' in response) {\r\n\t\t\t\t\t\tconst postbrojElement = document.getElementById('postbroj');\r\n\t\t\t\t\t\tif (postbrojElement) postbrojElement.value = response.pobro || '';\r\n\t\t\t\t\t}\r\n\t\t\t\t\t\r\n\t\t\t\t\tif ('matbr' in response) {\r\n\t\t\t\t\t\tconst maticniBrojElement = document.getElementById('maticnibroj');\r\n\t\t\t\t\t\tif (maticniBrojElement) maticniBrojElement.value = response.matbr || '';\r\n\t\t\t\t\t}\r\n\t\t\t\t\t\r\n\t\t\t\t// Handle tekRacuni rows if present\r\n\t\t\t\tif ('tekRacuni' in response && response.tekRacuni && Array.isArray(response.tekRacuni)) {\r\n\t\t\t\t\tconsole.log(\"Received tekRacuni data:\", response.tekRacuni);\r\n\t\t\t\t\t// Find the table body and update it\r\n\t\t\t\t\tconst tableBody = document.getElementById('tekuciracuni-table-body');\r\n\t\t\t\t\tif (tableBody) {\r\n\t\t\t\t\t\t// Clear existing rows\r\n\t\t\t\t\t\ttableBody.innerHTML = '';\r\n\t\t\t\t\t\t// Add rows with tekRacuni data\r\n\t\t\t\t\t\tresponse.tekRacuni.forEach((racun, index) => {\r\n\t\t\t\t\t\t\tconst newRow = document.createElement('tr');\r\n\t\t\t\t\t\t\tnewRow.className = 'tekracuni-row hover:bg-blue-50';\r\n\t\t\t\t\t\t\tnewRow.setAttribute('data-index', index);\r\n\t\t\t\t\t\t\tnewRow.innerHTML = `\r\n\t\t\t\t\t\t\t\t<td class=\"border border-gray-300 px-1\">\r\n\t\t\t\t\t\t\t\t\t<input type=\"text\" class=\"w-full border rounded px-1 h-7 tekrac-redbroj\" placeholder=\"Redni broj\" value=\"${racun.redbroj || index + 1}\"/>\r\n\t\t\t\t\t\t\t\t</td>\r\n\t\t\t\t\t\t\t\t<td class=\"border border-gray-300 px-1\">\r\n\t\t\t\t\t\t\t\t\t<input type=\"text\" class=\"w-full border rounded px-1 h-7 tekrac-brojracuna\" placeholder=\"Broj računa\" maxlength=\"20\" value=\"${racun.brojracuna || ''}\"/>\r\n\t\t\t\t\t\t\t\t</td>\r\n\t\t\t\t\t\t\t\t<td class=\"border border-gray-300 px-1\">\r\n\t\t\t\t\t\t\t\t\t<input type=\"text\" class=\"w-full border rounded px-1 h-7 tekrac-banka\" placeholder=\"Banka\" value=\"${racun.banka || ''}\"/>\r\n\t\t\t\t\t\t\t\t</td>\r\n\t\t\t\t\t\t\t\t<td class=\"border border-gray-300 px-1 text-center\">\r\n\t\t\t\t\t\t\t\t\t<button type=\"button\" class=\"bg-red-500 text-white text-xs px-1 h-6 w-20 rounded hover:bg-red-600 delete-row\">\r\n\t\t\t\t\t\t\t\t\t\tObriši\r\n\t\t\t\t\t\t\t\t\t</button>\r\n\t\t\t\t\t\t\t\t</td>\r\n\t\t\t\t\t\t\t`;\r\n\t\t\t\t\t\t\ttableBody.appendChild(newRow);\r\n\t\t\t\t\t\t});\r\n\t\t\t\t\t\tconsole.log(\"Table updated with tekRacuni data\");\r\n\t\t\t\t\t\t// Re-attach delete handlers\r\n\t\t\t\t\t\tattachDeleteHandlers();\r\n\t\t\t\t\t\t}\r\n\t\t\t\t\t}\r\n\t\t\t\t} else {\r\n\t\t\t\t\tconsole.warn(\"Response missing success flag:\", response);\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t} catch (e) {\r\n\t\t\t\tconsole.error(\"Error parsing PIB response\", e);\r\n\t\t\t}\r\n\t\t}\r\n\t\t\r\n\t\t// Listen for HTMX events on document level\r\n\t\tdocument.addEventListener('htmx:afterRequest', function(event) {\r\n\t\t\tconsole.log(\"HTMX afterRequest event fired on document\");\r\n\t\t\tif (event.detail.xhr && event.detail.xhr.responseText) {\r\n\t\t\t\tconsole.log(\"Response from any HTMX request:\", event.detail.xhr.responseText);\r\n\t\t\t}\r\n\t\t});\r\n\t\t\r\n\t\t// Also try attach to button when it exists\r\n\t\tfunction attachButtonListener() {\r\n\t\t\tconst btn = document.getElementById('btnProveriPIB');\r\n\t\t\tconsole.log(\"Looking for btnProveriPIB button, found:\", btn);\r\n\t\t\tif (btn) {\r\n\t\t\t\tbtn.addEventListener('click', function() {\r\n\t\t\t\t\tconsole.log(\"Button clicked!\");\r\n\t\t\t\t});\r\n\t\t\t\tbtn.addEventListener('htmx:beforeRequest', function() {\r\n\t\t\t\t\tconsole.log(\"HTMX beforeRequest on button\");\r\n\t\t\t\t});\r\n\t\t\t\tbtn.addEventListener('htmx:afterRequest', handleProveriPIBResponse);\r\n\t\t\t\tconsole.log(\"Event listeners attached to btnProveriPIB\");\r\n\t\t\t} else {\r\n\t\t\t\tconsole.warn(\"btnProveriPIB button not found\");\r\n\t\t\t}\r\n\t\t}\r\n\t\t\r\n\t\t// Try attaching immediately\r\n\t\tattachButtonListener();\r\n\t\t\r\n\t\t// Try attaching on DOMContentLoaded\r\n\t\tdocument.addEventListener('DOMContentLoaded', attachButtonListener);\r\n\t\t\r\n\t\t// Try attaching with delay\r\n\t\tsetTimeout(attachButtonListener, 100);\r\n\t\tsetTimeout(attachButtonListener, 300);\r\n\r\n\t\tfunction handleDialogResponse(dialogName) {\r\n\t\t\t// Check if the response is an error (400 Bad Request)\r\n\t\t\tconsole.log(\"in handleDialogResponse()\", dialogName)\r\n\t\t\t//console.log(\"handleFieldErrors:\", event.detail)\r\n\t\t\ttry {\r\n\t\t\t\t// Get the response text from the backend\r\n\t\t\t\tconst responseText = event.detail.xhr.responseText;\r\n\t\t\t\tconsole.log(\"handleDialogResponse:Response text:\", responseText)\r\n\t\t\t\t\r\n\t\t\t\t// Check if response is empty or not JSON\r\n\t\t\t\tif (!responseText || responseText.trim() === '') {\r\n\t\t\t\t\t//console.log(\"Empty response, closing dialog\");\r\n\t\t\t\t\tcloseDialog(dialogName);\r\n\t\t\t\t\treturn;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t// Try to parse as JSON\r\n\t\t\t\tlet response;\r\n\t\t\t\ttry {\r\n\t\t\t\t\tresponse = JSON.parse(responseText);\r\n\t\t\t\t} catch (parseError) {\r\n\t\t\t\t\tconsole.error(\"Response is not valid JSON:\", parseError);\r\n\t\t\t\t\t//console.log(\"Response text was:\", responseText);\r\n\t\t\t\t\t// If not JSON, assume it's HTML success response, close dialog\r\n\t\t\t\t\tcloseDialog(dialogName);\r\n\t\t\t\t\treturn;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t// If we get here, response is valid JSON\r\n\t\t\t\t// Clear previous error messages\r\n\t\t\t\tdocument.querySelectorAll('.input-error').forEach(el => el.remove());\r\n\t\t\t\tdocument.querySelectorAll('input').forEach(input => {\r\n\t\t\t\t\tinput.classList.remove('border-red-500');\r\n\t\t\t\t});\r\n\t\t\t\t\r\n\t\t\t\t// Handle validation errors\r\n\t\t\t\tif (response.errors && response.errors.length > 0) {\r\n\t\t\t\t\t//console.log(\"Errors found:\", response.errors)\r\n\t\t\t\t\t// Loop through errors and show error messages for each field\r\n\t\t\t\t\tresponse.errors.forEach(error => {\r\n\t\t\t\t\t\tconst field = document.querySelector(`input[name=\"${error.field}\"]`);\r\n\t\t\t\t\t\tif (field) {\r\n\t\t\t\t\t\t\tfield.classList.add('border-red-500'); // Add red border to invalid field\r\n\t\t\t\t\t\t\t// Add error message below the input field\r\n\t\t\t\t\t\t\tconst errorMessage = document.createElement('p');\r\n\t\t\t\t\t\t\terrorMessage.className = 'text-red-500 text-xs mt-1 input-error';\r\n\t\t\t\t\t\t\terrorMessage.textContent = error.message;\r\n\t\t\t\t\t\t\tfield.insertAdjacentElement('afterend', errorMessage);\r\n\t\t\t\t\t\t}\r\n\t\t\t\t\t});\r\n\t\t\t\t\treturn;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t// Handle success response\r\n\t\t\t\tif (response.success) {\r\n\t\t\t\t\tshowMessage(response.message);\r\n\t\t\t\t\tcloseDialog(dialogName);\r\n\t\t\t\t\treturn;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t// Handle error response\r\n\t\t\t\tif (!response.success) {\r\n\t\t\t\t\tshowMessage(response.message, true);\r\n\t\t\t\t\treturn;\r\n\t\t\t\t}\t\r\n\t\t\t\t\r\n\t\t\t} catch (e) {\r\n\t\t\t\tconsole.error(\"Unexpected error in handleDialogResponse():\", e);\r\n\t\t\t\tcloseDialog(dialogName);\r\n\t\t\t}\r\n\t\t}\r\n\r\n\t\t// ============ TEKRACUNI TABLE EDITING ==============\r\n\t\tfunction initTekRacuniTable() {\r\n\t\t\tconsole.log(\"initTekRacuniTable() called!\");\r\n\t\t\tconst addBtn = document.getElementById('add-tekracuni-row');\r\n\t\t\tconst tableBody = document.getElementById('tekuciracuni-table-body');\r\n\t\t\tconst form = document.querySelector('form');\r\n\t\t\t\r\n\t\t\tconsole.log(\"Add button found:\", !!addBtn);\r\n\t\t\tconsole.log(\"Table body found:\", !!tableBody);\r\n\t\t\tconsole.log(\"Form found:\", !!form);\r\n\t\t\t\r\n\t\t\t// Add new row button handler\r\n\t\t\tif (addBtn) {\r\n\t\t\t\taddBtn.addEventListener('click', function(e) {\r\n\t\t\t\t\te.preventDefault();\r\n\t\t\t\t\taddTekRacuniRow();\r\n\t\t\t\t});\r\n\t\t\t\tconsole.log(\"Added click listener to add-tekracuni-row button\");\r\n\t\t\t}\r\n\r\n\t\t\t// Delete row handlers\r\n\t\t\tattachDeleteHandlers();\r\n\r\n\t\t\t// Use htmx:configRequest instead of beforeRequest - this fires at the right time\r\n\t\t\t// to allow us to modify the FormData before it's sent\r\n\t\t\tif (form) {\r\n\t\t\t\tconsole.log(\"Attempting to attach collectTekRacuniData listener to form via htmx:configRequest\");\r\n\t\t\t\tform.addEventListener('htmx:configRequest', function(event) {\r\n\t\t\t\t\tconsole.log(\"htmx:configRequest fired on form element!\");\r\n\t\t\t\t\taddTekRacuniDataToRequest(event);\r\n\t\t\t\t});\r\n\t\t\t}\r\n\t\t}\r\n\r\n\t\tfunction addTekRacuniRow() {\r\n\t\t\tconst tableBody = document.getElementById('tekuciracuni-table-body');\r\n\t\t\tconst newIndex = tableBody.querySelectorAll('tr').length;\r\n\t\t\t\r\n\t\t\tconst newRow = document.createElement('tr');\r\n\t\t\tnewRow.className = 'tekracuni-row hover:bg-blue-50';\r\n\t\t\tnewRow.setAttribute('data-index', newIndex);\r\n\t\t\tnewRow.innerHTML = `\r\n\t\t\t\t<td class=\"border border-gray-300 px-1\">\r\n\t\t\t\t\t<input type=\"text\" class=\"w-full border rounded px-1 h-7 tekrac-redbroj\" placeholder=\"Redni broj\"/>\r\n\t\t\t\t</td>\r\n\t\t\t\t<td class=\"border border-gray-300 px-1\">\r\n\t\t\t\t\t<input type=\"text\" class=\"w-full border rounded px-1 h-7 tekrac-brojracuna\" placeholder=\"Broj računa\" maxlength=\"20\"/>\r\n\t\t\t\t</td>\r\n\t\t\t\t<td class=\"border border-gray-300 px-1\">\r\n\t\t\t\t\t<input type=\"text\" class=\"w-full border rounded px-1 h-7 tekrac-banka\" placeholder=\"Banka\"/>\r\n\t\t\t\t</td>\r\n\t\t\t\t<td class=\"border border-gray-300 px-1 text-center\">\r\n\t\t\t\t\t<button type=\"button\" class=\"bg-red-500 text-white text-xs px-1 w-20 h-6 rounded hover:bg-red-600 delete-row\">\r\n\t\t\t\t\t\tObriši\r\n\t\t\t\t\t</button>\r\n\t\t\t\t</td>\r\n\t\t\t`;\r\n\t\t\t\r\n\t\t\ttableBody.appendChild(newRow);\r\n\t\t\tattachDeleteHandlers();\r\n\t\t}\r\n\r\n\t\tfunction attachDeleteHandlers() {\r\n\t\t\tdocument.querySelectorAll('.delete-row').forEach(btn => {\r\n\t\t\t\t// Remove existing listeners by cloning\r\n\t\t\t\tconst newBtn = btn.cloneNode(true);\r\n\t\t\t\tbtn.parentNode.replaceChild(newBtn, btn);\r\n\t\t\t});\r\n\r\n\t\t\tdocument.querySelectorAll('.delete-row').forEach(btn => {\r\n\t\t\t\tbtn.addEventListener('click', function(e) {\r\n\t\t\t\t\te.preventDefault();\r\n\t\t\t\t\tthis.closest('tr').remove();\r\n\t\t\t\t});\r\n\t\t\t});\r\n\t\t}\r\n\r\n\t\tfunction addTekRacuniDataToRequest(event) {\r\n\t\t\tconsole.log(\"addTekRacuniDataToRequest() called!\");\r\n\t\t\t\r\n\t\t\tconst tableBody = document.getElementById('tekuciracuni-table-body');\r\n\t\t\tif (!tableBody) {\r\n\t\t\t\tconsole.warn(\"tekuciracuni-table-body not found!\");\r\n\t\t\t\treturn;\r\n\t\t\t}\r\n\t\t\t\r\n\t\t\tconst rows = tableBody.querySelectorAll('tr');\r\n\t\t\tconsole.log(\"Found\", rows.length, \"rows in table\");\r\n\t\t\t\r\n\t\t\t// Get the FormData object from HTMX that will be sent\r\n\t\t\t// It's in event.detail.formData (for modern HTMX) or we can create our own\r\n\t\t\tconst formData = event.detail.formData;\r\n\t\t\t\r\n\t\t\tif (!formData) {\r\n\t\t\t\tconsole.log(\"FormData not available in event.detail.formData, HTMX might be using different serialization\");\r\n\t\t\t\treturn;\r\n\t\t\t}\r\n\t\t\t\r\n\t\t\tconsole.log(\"Adding tekracuni data to FormData\");\r\n\t\t\t\r\n\t\t\t// Add tekracuni rows to the FormData\r\n\t\t\trows.forEach((row, index) => {\r\n\t\t\t\tconst redbroj = row.querySelector('.tekrac-redbroj')?.value || '';\r\n\t\t\t\tconst brojracuna = row.querySelector('.tekrac-brojracuna')?.value || '';\r\n\t\t\t\tconst banka = row.querySelector('.tekrac-banka')?.value || '';\r\n\t\t\t\t\r\n\t\t\t\tconsole.log(`Row ${index}: redbroj='${redbroj}', brojracuna='${brojracuna}', banka='${banka}'`);\r\n\t\t\t\t\r\n\t\t\t\t// Only add non-empty rows\r\n\t\t\t\tif (redbroj || brojracuna || banka) {\r\n\t\t\t\t\tformData.append(`tekracuni[${index}].redbroj`, redbroj);\r\n\t\t\t\t\tformData.append(`tekracuni[${index}].brojracuna`, brojracuna);\r\n\t\t\t\t\tformData.append(`tekracuni[${index}].banka`, banka);\r\n\t\t\t\t\tconsole.log(`  Added to FormData for tekracuni[${index}]`);\r\n\t\t\t\t}\r\n\t\t\t});\r\n\t\t\t\r\n\t\t\tconsole.log(\"addTekRacuniDataToRequest completed\");\r\n\t\t}\r\n\t\t\r\n\t\tfunction collectTekRacuniData(event) {\r\n\t\t\tconsole.log(\"collectTekRacuniData() called! Event:\", event);\r\n\t\t\t\r\n\t\t\tconst tableBody = document.getElementById('tekuciracuni-table-body');\r\n\t\t\tif (!tableBody) {\r\n\t\t\t\tconsole.warn(\"tekuciracuni-table-body not found!\");\r\n\t\t\t\treturn;\r\n\t\t\t}\r\n\t\t\t\r\n\t\t\tconst rows = tableBody.querySelectorAll('tr');\r\n\t\t\tconst form = document.querySelector('form');\r\n\t\t\t\r\n\t\t\tconsole.log(\"collectTekRacuniData: Found tableBody, rows count:\", rows.length);\r\n\t\t\tconsole.log(\"collectTekRacuniData: Form element:\", form);\r\n\t\t\t\r\n\t\t\t// Remove old hidden inputs\r\n\t\t\tdocument.querySelectorAll('input[name^=\"tekracuni\"]').forEach(el => el.remove());\r\n\t\t\t\r\n\t\t\tlet hiddenInputCount = 0;\r\n\t\t\t\r\n\t\t\t// Add new hidden inputs for each row\r\n\t\t\trows.forEach((row, index) => {\r\n\t\t\t\tconst redbroj = row.querySelector('.tekrac-redbroj')?.value || '';\r\n\t\t\t\tconst brojracuna = row.querySelector('.tekrac-brojracuna')?.value || '';\r\n\t\t\t\tconst banka = row.querySelector('.tekrac-banka')?.value || '';\r\n\t\t\t\t\r\n\t\t\t\tconsole.log(`Row ${index}: redbroj='${redbroj}', brojracuna='${brojracuna}', banka='${banka}'`);\r\n\t\t\t\t\r\n\t\t\t\t// Only add non-empty rows\r\n\t\t\t\tif (redbroj || brojracuna || banka) {\r\n\t\t\t\t\tcreateHiddenInput(form, `tekracuni[${index}].redbroj`, redbroj);\r\n\t\t\t\t\tcreateHiddenInput(form, `tekracuni[${index}].brojracuna`, brojracuna);\r\n\t\t\t\t\tcreateHiddenInput(form, `tekracuni[${index}].banka`, banka);\r\n\t\t\t\t\thiddenInputCount += 3;\r\n\t\t\t\t\tconsole.log(`  Added hidden inputs for tekracuni[${index}]`);\r\n\t\t\t\t}\r\n\t\t\t});\r\n\t\t\t\r\n\t\t\tconsole.log(\"collectTekRacuniData completed - added\", hiddenInputCount, \"hidden inputs total\");\r\n\t\t\t\r\n\t\t\t// VERIFY: Check that hidden inputs are actually in the form\r\n\t\t\tsetTimeout(() => {\r\n\t\t\t\tconst tekracuniInputs = form.querySelectorAll('input[name^=\"tekracuni\"]');\r\n\t\t\t\tconsole.log(\"VERIFICATION: Hidden inputs in form after collection:\", tekracuniInputs.length);\r\n\t\t\t\ttekracuniInputs.forEach((input, idx) => {\r\n\t\t\t\t\tconsole.log(`  Input ${idx}: name='${input.name}', value='${input.value}'`);\r\n\t\t\t\t});\r\n\t\t\t}, 10);\r\n\t\t}\r\n\r\n\t\tfunction createHiddenInput(form, name, value) {\r\n\t\t\tconst input = document.createElement('input');\r\n\t\t\tinput.type = 'hidden';\r\n\t\t\tinput.name = name;\r\n\t\t\tinput.value = value;\r\n\t\t\tform.appendChild(input);\r\n\t\t}\r\n\r\n\t\t// Initialize on page load\r\n\t\tdocument.addEventListener('DOMContentLoaded', function() {\r\n\t\t\tconsole.log(\"DOMContentLoaded event fired, calling initTekRacuniTable\");\r\n\t\t\tinitTekRacuniTable();\r\n\t\t});\r\n\t\t\r\n\t\t// Also call immediately for dynamically inserted forms\r\n\t\tconsole.log(\"About to call initTekRacuniTable immediately\");\r\n\t\tinitTekRacuniTable();\r\n\t\t\r\n\t\t// Fallback: attach listener at document level for htmx:configRequest events\r\n\t\t// This is the ideal place to add FormData values before request is sent\r\n\t\tdocument.addEventListener('htmx:configRequest', function(event) {\r\n\t\t\tconsole.log(\"Document-level htmx:configRequest fired!\", event);\r\n\t\t\tconst target = event.detail.target;\r\n\t\t\tconsole.log(\"Event target:\", target, \"Target tag:\", target?.tagName);\r\n\t\t\t\r\n\t\t\t// Check if this is a form or inside a form\r\n\t\t\tif (target && (target.tagName === 'FORM' || target.closest('form'))) {\r\n\t\t\t\tconsole.log(\"This is a form submission - calling addTekRacuniDataToRequest from document listener\");\r\n\t\t\t\taddTekRacuniDataToRequest(event);\r\n\t\t\t}\r\n\t\t});\r\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 73, "<script>\r\n\t\tconsole.log(\"PartneriScript loaded - script tag executed\");\r\n\t\t\r\n\t\tfunction handleProveriPIBResponse(event) {\r\n\t\t\tconsole.log(\"handleProveriPIBResponse called\");\r\n\t\t\tconsole.log(\"Event:\", event);\r\n\t\t\t\r\n\t\t\ttry {\r\n\t\t\t\t// Get response from HTMX event\r\n\t\t\t\tconst responseText = event.detail.xhr.responseText;\r\n\t\t\t\tconsole.log(\"Response text:\", responseText);\r\n\t\t\t\t\r\n\t\t\t\tconst response = JSON.parse(responseText);\r\n\t\t\t\tconsole.log(\"Parsed response:\", response);\r\n\t\t\t\t\r\n\t\t\t\t// Check if response has the expected structure\r\n\t\t\t\tif (response && response.success) {\r\n\t\t\t\t\tconsole.log(\"PIB data received:\", response.naziv);\r\n\t\t\t\t\t\r\n\t\t\t\t\t// Update form fields with response data - check if property EXISTS, not if truthy\r\n\t\t\t\t\tif ('naziv' in response) {\r\n\t\t\t\t\t\tconst nazivElement = document.getElementById('naziv');\r\n\t\t\t\t\t\tif (nazivElement) nazivElement.value = response.naziv || '';\r\n\t\t\t\t\t}\r\n\t\t\t\t\t\r\n\t\t\t\t\tif ('naziv1' in response) {\r\n\t\t\t\t\t\tconst punazivElement = document.getElementById('punaziv');\r\n\t\t\t\t\t\tif (punazivElement) punazivElement.value = response.naziv1 || '';\r\n\t\t\t\t\t}\r\n\t\t\t\t\t\r\n\t\t\t\t\tif ('adresa' in response) {\r\n\t\t\t\t\t\tconst adresaElement = document.getElementById('adresa');\r\n\t\t\t\t\t\tif (adresaElement) adresaElement.value = response.adresa || '';\r\n\t\t\t\t\t}\r\n\t\t\t\t\t\r\n\t\t\t\t\tif ('mesto' in response) {\r\n\t\t\t\t\t\tconst mestoElement = document.getElementById('mesto');\r\n\t\t\t\t\t\tif (mestoElement) mestoElement.value = response.mesto || '';\r\n\t\t\t\t\t}\r\n\t\t\t\t\t\r\n\t\t\t\t\tif ('pobro' in response) {\r\n\t\t\t\t\t\tconst postbrojElement = document.getElementById('postbroj');\r\n\t\t\t\t\t\tif (postbrojElement) postbrojElement.value = response.pobro || '';\r\n\t\t\t\t\t}\r\n\t\t\t\t\t\r\n\t\t\t\t\tif ('matbr' in response) {\r\n\t\t\t\t\t\tconst maticniBrojElement = document.getElementById('maticnibroj');\r\n\t\t\t\t\t\tif (maticniBrojElement) maticniBrojElement.value = response.matbr || '';\r\n\t\t\t\t\t}\r\n\t\t\t\t\t\r\n\t\t\t\t// Handle tekRacuni rows if present\r\n\t\t\t\tif ('tekRacuni' in response && response.tekRacuni && Array.isArray(response.tekRacuni)) {\r\n\t\t\t\t\tconsole.log(\"Received tekRacuni data:\", response.tekRacuni);\r\n\t\t\t\t\t// Find the table body and update it\r\n\t\t\t\t\tconst tableBody = document.getElementById('tekuciracuni-table-body');\r\n\t\t\t\t\tif (tableBody) {\r\n\t\t\t\t\t\t// Clear existing rows\r\n\t\t\t\t\t\ttableBody.innerHTML = '';\r\n\t\t\t\t\t\t// Add rows with tekRacuni data\r\n\t\t\t\t\t\tresponse.tekRacuni.forEach((racun, index) => {\r\n\t\t\t\t\t\t\tconst newRow = document.createElement('tr');\r\n\t\t\t\t\t\t\tnewRow.className = 'tekracuni-row hover:bg-blue-50';\r\n\t\t\t\t\t\t\tnewRow.setAttribute('data-index', index);\r\n\t\t\t\t\t\t\tnewRow.innerHTML = `\r\n\t\t\t\t\t\t\t\t<td class=\"border border-gray-300 px-1\">\r\n\t\t\t\t\t\t\t\t\t<input type=\"text\" class=\"w-full border rounded px-1 h-7 tekrac-redbroj\" placeholder=\"Redni broj\" value=\"${racun.redbroj || index + 1}\"/>\r\n\t\t\t\t\t\t\t\t</td>\r\n\t\t\t\t\t\t\t\t<td class=\"border border-gray-300 px-1\">\r\n\t\t\t\t\t\t\t\t\t<input type=\"text\" class=\"w-full border rounded px-1 h-7 tekrac-brojracuna\" placeholder=\"Broj računa\" maxlength=\"20\" value=\"${racun.brojracuna || ''}\"/>\r\n\t\t\t\t\t\t\t\t</td>\r\n\t\t\t\t\t\t\t\t<td class=\"border border-gray-300 px-1\">\r\n\t\t\t\t\t\t\t\t\t<input type=\"text\" class=\"w-full border rounded px-1 h-7 tekrac-banka\" placeholder=\"Banka\" value=\"${racun.banka || ''}\"/>\r\n\t\t\t\t\t\t\t\t</td>\r\n\t\t\t\t\t\t\t\t<td class=\"border border-gray-300 px-1 text-center\">\r\n\t\t\t\t\t\t\t\t\t<button type=\"button\" class=\"bg-red-500 text-white text-xs px-1 h-6 w-20 rounded hover:bg-red-600 delete-row\">\r\n\t\t\t\t\t\t\t\t\t\tObriši\r\n\t\t\t\t\t\t\t\t\t</button>\r\n\t\t\t\t\t\t\t\t</td>\r\n\t\t\t\t\t\t\t`;\r\n\t\t\t\t\t\t\ttableBody.appendChild(newRow);\r\n\t\t\t\t\t\t});\r\n\t\t\t\t\t\tconsole.log(\"Table updated with tekRacuni data\");\r\n\t\t\t\t\t\t// Re-attach delete handlers\r\n\t\t\t\t\t\tattachDeleteHandlers();\r\n\t\t\t\t\t\t}\r\n\t\t\t\t\t}\r\n\t\t\t\t} else {\r\n\t\t\t\t\tconsole.warn(\"Response missing success flag:\", response);\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t} catch (e) {\r\n\t\t\t\tconsole.error(\"Error parsing PIB response\", e);\r\n\t\t\t}\r\n\t\t}\r\n\t\t\r\n\t\t// Listen for HTMX events on document level\r\n\t\tdocument.addEventListener('htmx:afterRequest', function(event) {\r\n\t\t\tconsole.log(\"HTMX afterRequest event fired on document\");\r\n\t\t\tif (event.detail.xhr && event.detail.xhr.responseText) {\r\n\t\t\t\tconsole.log(\"Response from any HTMX request:\", event.detail.xhr.responseText);\r\n\t\t\t}\r\n\t\t});\r\n\t\t\r\n\t\t// Also try attach to button when it exists\r\n\t\tfunction attachButtonListener() {\r\n\t\t\tconst btn = document.getElementById('btnProveriPIB');\r\n\t\t\tconsole.log(\"Looking for btnProveriPIB button, found:\", btn);\r\n\t\t\tif (btn) {\r\n\t\t\t\tbtn.addEventListener('click', function() {\r\n\t\t\t\t\tconsole.log(\"Button clicked!\");\r\n\t\t\t\t});\r\n\t\t\t\tbtn.addEventListener('htmx:beforeRequest', function() {\r\n\t\t\t\t\tconsole.log(\"HTMX beforeRequest on button\");\r\n\t\t\t\t});\r\n\t\t\t\tbtn.addEventListener('htmx:afterRequest', handleProveriPIBResponse);\r\n\t\t\t\tconsole.log(\"Event listeners attached to btnProveriPIB\");\r\n\t\t\t} else {\r\n\t\t\t\tconsole.warn(\"btnProveriPIB button not found\");\r\n\t\t\t}\r\n\t\t}\r\n\t\t\r\n\t\t// Try attaching immediately\r\n\t\tattachButtonListener();\r\n\t\t\r\n\t\t// Try attaching on DOMContentLoaded\r\n\t\tdocument.addEventListener('DOMContentLoaded', attachButtonListener);\r\n\t\t\r\n\t\t// Try attaching with delay\r\n\t\tsetTimeout(attachButtonListener, 100);\r\n\t\tsetTimeout(attachButtonListener, 300);\r\n\r\n\t\tfunction handleDialogResponse(dialogName) {\r\n\t\t\t// Check if the response is an error (400 Bad Request)\r\n\t\t\tconsole.log(\"in handleDialogResponse()\", dialogName)\r\n\t\t\t//console.log(\"handleFieldErrors:\", event.detail)\r\n\t\t\ttry {\r\n\t\t\t\t// Get the response text from the backend\r\n\t\t\t\tconst responseText = event.detail.xhr.responseText;\r\n\t\t\t\tconsole.log(\"handleDialogResponse:Response text:\", responseText)\r\n\t\t\t\t\r\n\t\t\t\t// Check if response is empty or not JSON\r\n\t\t\t\tif (!responseText || responseText.trim() === '') {\r\n\t\t\t\t\t//console.log(\"Empty response, closing dialog\");\r\n\t\t\t\t\tcloseDialog(dialogName);\r\n\t\t\t\t\treturn;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t// Try to parse as JSON\r\n\t\t\t\tlet response;\r\n\t\t\t\ttry {\r\n\t\t\t\t\tresponse = JSON.parse(responseText);\r\n\t\t\t\t} catch (parseError) {\r\n\t\t\t\t\tconsole.error(\"Response is not valid JSON:\", parseError);\r\n\t\t\t\t\t//console.log(\"Response text was:\", responseText);\r\n\t\t\t\t\t// If not JSON, assume it's HTML success response, close dialog\r\n\t\t\t\t\tcloseDialog(dialogName);\r\n\t\t\t\t\treturn;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t// If we get here, response is valid JSON\r\n\t\t\t\t// Clear previous error messages\r\n\t\t\t\tdocument.querySelectorAll('.input-error').forEach(el => el.remove());\r\n\t\t\t\tdocument.querySelectorAll('input').forEach(input => {\r\n\t\t\t\t\tinput.classList.remove('border-red-500');\r\n\t\t\t\t});\r\n\t\t\t\t\r\n\t\t\t\t// Handle validation errors\r\n\t\t\t\tif (response.errors && response.errors.length > 0) {\r\n\t\t\t\t\t//console.log(\"Errors found:\", response.errors)\r\n\t\t\t\t\t// Loop through errors and show error messages for each field\r\n\t\t\t\t\tresponse.errors.forEach(error => {\r\n\t\t\t\t\t\tconst field = document.querySelector(`input[name=\"${error.field}\"]`);\r\n\t\t\t\t\t\tif (field) {\r\n\t\t\t\t\t\t\tfield.classList.add('border-red-500'); // Add red border to invalid field\r\n\t\t\t\t\t\t\t// Add error message below the input field\r\n\t\t\t\t\t\t\tconst errorMessage = document.createElement('p');\r\n\t\t\t\t\t\t\terrorMessage.className = 'text-red-500 text-xs mt-1 input-error';\r\n\t\t\t\t\t\t\terrorMessage.textContent = error.message;\r\n\t\t\t\t\t\t\tfield.insertAdjacentElement('afterend', errorMessage);\r\n\t\t\t\t\t\t}\r\n\t\t\t\t\t});\r\n\t\t\t\t\treturn;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t// Handle success response\r\n\t\t\t\tif (response.success) {\r\n\t\t\t\t\tshowMessage(response.message);\r\n\t\t\t\t\tcloseDialog(dialogName);\r\n\t\t\t\t\treturn;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t// Handle error response\r\n\t\t\t\tif (!response.success) {\r\n\t\t\t\t\tshowMessage(response.message, true);\r\n\t\t\t\t\treturn;\r\n\t\t\t\t}\t\r\n\t\t\t\t\r\n\t\t\t} catch (e) {\r\n\t\t\t\tconsole.error(\"Unexpected error in handleDialogResponse():\", e);\r\n\t\t\t\tcloseDialog(dialogName);\r\n\t\t\t}\r\n\t\t}\r\n\r\n\t\t// ============ TEKRACUNI TABLE EDITING ==============\r\n\t\tfunction initTekRacuniTable() {\r\n\t\t\tconsole.log(\"initTekRacuniTable() called!\");\r\n\t\t\tconst addBtn = document.getElementById('add-tekracuni-row');\r\n\t\t\tconst tableBody = document.getElementById('tekuciracuni-table-body');\r\n\t\t\tconst form = document.querySelector('form');\r\n\t\t\t\r\n\t\t\tconsole.log(\"Add button found:\", !!addBtn);\r\n\t\t\tconsole.log(\"Table body found:\", !!tableBody);\r\n\t\t\tconsole.log(\"Form found:\", !!form);\r\n\t\t\t\r\n\t\t\t// Add new row button handler\r\n\t\t\tif (addBtn) {\r\n\t\t\t\taddBtn.addEventListener('click', function(e) {\r\n\t\t\t\t\te.preventDefault();\r\n\t\t\t\t\taddTekRacuniRow();\r\n\t\t\t\t});\r\n\t\t\t\tconsole.log(\"Added click listener to add-tekracuni-row button\");\r\n\t\t\t}\r\n\r\n\t\t\t// Delete row handlers\r\n\t\t\tattachDeleteHandlers();\r\n\r\n\t\t\t// Use htmx:configRequest instead of beforeRequest - this fires at the right time\r\n\t\t\t// to allow us to modify the FormData before it's sent\r\n\t\t\tif (form) {\r\n\t\t\t\tconsole.log(\"Attempting to attach collectTekRacuniData listener to form via htmx:configRequest\");\r\n\t\t\t\tform.addEventListener('htmx:configRequest', function(event) {\r\n\t\t\t\t\tconsole.log(\"htmx:configRequest fired on form element!\");\r\n\t\t\t\t\taddTekRacuniDataToRequest(event);\r\n\t\t\t\t});\r\n\t\t\t}\r\n\t\t}\r\n\r\n\t\tfunction addTekRacuniRow() {\r\n\t\t\tconst tableBody = document.getElementById('tekuciracuni-table-body');\r\n\t\t\tconst newIndex = tableBody.querySelectorAll('tr').length;\r\n\t\t\t\r\n\t\t\tconst newRow = document.createElement('tr');\r\n\t\t\tnewRow.className = 'tekracuni-row hover:bg-blue-50';\r\n\t\t\tnewRow.setAttribute('data-index', newIndex);\r\n\t\t\tnewRow.innerHTML = `\r\n\t\t\t\t<td class=\"border border-gray-300 px-1\">\r\n\t\t\t\t\t<input type=\"text\" class=\"w-full border rounded px-1 h-7 tekrac-redbroj\" placeholder=\"Redni broj\"/>\r\n\t\t\t\t</td>\r\n\t\t\t\t<td class=\"border border-gray-300 px-1\">\r\n\t\t\t\t\t<input type=\"text\" class=\"w-full border rounded px-1 h-7 tekrac-brojracuna\" placeholder=\"Broj računa\" maxlength=\"20\"/>\r\n\t\t\t\t</td>\r\n\t\t\t\t<td class=\"border border-gray-300 px-1\">\r\n\t\t\t\t\t<input type=\"text\" class=\"w-full border rounded px-1 h-7 tekrac-banka\" placeholder=\"Banka\"/>\r\n\t\t\t\t</td>\r\n\t\t\t\t<td class=\"border border-gray-300 px-1 text-center\">\r\n\t\t\t\t\t<button type=\"button\" class=\"bg-red-500 text-white text-xs px-1 w-20 h-6 rounded hover:bg-red-600 delete-row\">\r\n\t\t\t\t\t\tObriši\r\n\t\t\t\t\t</button>\r\n\t\t\t\t</td>\r\n\t\t\t`;\r\n\t\t\t\r\n\t\t\ttableBody.appendChild(newRow);\r\n\t\t\tattachDeleteHandlers();\r\n\t\t}\r\n\r\n\t\tfunction attachDeleteHandlers() {\r\n\t\t\tdocument.querySelectorAll('.delete-row').forEach(btn => {\r\n\t\t\t\t// Remove existing listeners by cloning\r\n\t\t\t\tconst newBtn = btn.cloneNode(true);\r\n\t\t\t\tbtn.parentNode.replaceChild(newBtn, btn);\r\n\t\t\t});\r\n\r\n\t\t\tdocument.querySelectorAll('.delete-row').forEach(btn => {\r\n\t\t\t\tbtn.addEventListener('click', function(e) {\r\n\t\t\t\t\te.preventDefault();\r\n\t\t\t\t\tthis.closest('tr').remove();\r\n\t\t\t\t});\r\n\t\t\t});\r\n\t\t}\r\n\r\n\t\tfunction addTekRacuniDataToRequest(event) {\r\n\t\t\tconsole.log(\"addTekRacuniDataToRequest() called!\");\r\n\t\t\t\r\n\t\t\tconst tableBody = document.getElementById('tekuciracuni-table-body');\r\n\t\t\tif (!tableBody) {\r\n\t\t\t\tconsole.warn(\"tekuciracuni-table-body not found!\");\r\n\t\t\t\treturn;\r\n\t\t\t}\r\n\t\t\t\r\n\t\t\tconst rows = tableBody.querySelectorAll('tr');\r\n\t\t\tconsole.log(\"Found\", rows.length, \"rows in table\");\r\n\t\t\t\r\n\t\t\t// Get the FormData object from HTMX that will be sent\r\n\t\t\t// It's in event.detail.formData (for modern HTMX) or we can create our own\r\n\t\t\tconst formData = event.detail.formData;\r\n\t\t\t\r\n\t\t\tif (!formData) {\r\n\t\t\t\tconsole.log(\"FormData not available in event.detail.formData, HTMX might be using different serialization\");\r\n\t\t\t\treturn;\r\n\t\t\t}\r\n\t\t\t\r\n\t\t\tconsole.log(\"Adding tekracuni data to FormData\");\r\n\t\t\t\r\n\t\t\t// Add tekracuni rows to the FormData\r\n\t\t\trows.forEach((row, index) => {\r\n\t\t\t\tconst redbroj = row.querySelector('.tekrac-redbroj')?.value || '';\r\n\t\t\t\tconst brojracuna = row.querySelector('.tekrac-brojracuna')?.value || '';\r\n\t\t\t\tconst banka = row.querySelector('.tekrac-banka')?.value || '';\r\n\t\t\t\t\r\n\t\t\t\tconsole.log(`Row ${index}: redbroj='${redbroj}', brojracuna='${brojracuna}', banka='${banka}'`);\r\n\t\t\t\t\r\n\t\t\t\t// Only add non-empty rows\r\n\t\t\t\tif (redbroj || brojracuna || banka) {\r\n\t\t\t\t\tformData.append(`tekracuni[${index}].redbroj`, redbroj);\r\n\t\t\t\t\tformData.append(`tekracuni[${index}].brojracuna`, brojracuna);\r\n\t\t\t\t\tformData.append(`tekracuni[${index}].banka`, banka);\r\n\t\t\t\t\tconsole.log(`  Added to FormData for tekracuni[${index}]`);\r\n\t\t\t\t}\r\n\t\t\t});\r\n\t\t\t\r\n\t\t\tconsole.log(\"addTekRacuniDataToRequest completed\");\r\n\t\t}\r\n\t\t\r\n\t\tfunction collectTekRacuniData(event) {\r\n\t\t\tconsole.log(\"collectTekRacuniData() called! Event:\", event);\r\n\t\t\t\r\n\t\t\tconst tableBody = document.getElementById('tekuciracuni-table-body');\r\n\t\t\tif (!tableBody) {\r\n\t\t\t\tconsole.warn(\"tekuciracuni-table-body not found!\");\r\n\t\t\t\treturn;\r\n\t\t\t}\r\n\t\t\t\r\n\t\t\tconst rows = tableBody.querySelectorAll('tr');\r\n\t\t\tconst form = document.querySelector('form');\r\n\t\t\t\r\n\t\t\tconsole.log(\"collectTekRacuniData: Found tableBody, rows count:\", rows.length);\r\n\t\t\tconsole.log(\"collectTekRacuniData: Form element:\", form);\r\n\t\t\t\r\n\t\t\t// Remove old hidden inputs\r\n\t\t\tdocument.querySelectorAll('input[name^=\"tekracuni\"]').forEach(el => el.remove());\r\n\t\t\t\r\n\t\t\tlet hiddenInputCount = 0;\r\n\t\t\t\r\n\t\t\t// Add new hidden inputs for each row\r\n\t\t\trows.forEach((row, index) => {\r\n\t\t\t\tconst redbroj = row.querySelector('.tekrac-redbroj')?.value || '';\r\n\t\t\t\tconst brojracuna = row.querySelector('.tekrac-brojracuna')?.value || '';\r\n\t\t\t\tconst banka = row.querySelector('.tekrac-banka')?.value || '';\r\n\t\t\t\t\r\n\t\t\t\tconsole.log(`Row ${index}: redbroj='${redbroj}', brojracuna='${brojracuna}', banka='${banka}'`);\r\n\t\t\t\t\r\n\t\t\t\t// Only add non-empty rows\r\n\t\t\t\tif (redbroj || brojracuna || banka) {\r\n\t\t\t\t\tcreateHiddenInput(form, `tekracuni[${index}].redbroj`, redbroj);\r\n\t\t\t\t\tcreateHiddenInput(form, `tekracuni[${index}].brojracuna`, brojracuna);\r\n\t\t\t\t\tcreateHiddenInput(form, `tekracuni[${index}].banka`, banka);\r\n\t\t\t\t\thiddenInputCount += 3;\r\n\t\t\t\t\tconsole.log(`  Added hidden inputs for tekracuni[${index}]`);\r\n\t\t\t\t}\r\n\t\t\t});\r\n\t\t\t\r\n\t\t\tconsole.log(\"collectTekRacuniData completed - added\", hiddenInputCount, \"hidden inputs total\");\r\n\t\t\t\r\n\t\t\t// VERIFY: Check that hidden inputs are actually in the form\r\n\t\t\tsetTimeout(() => {\r\n\t\t\t\tconst tekracuniInputs = form.querySelectorAll('input[name^=\"tekracuni\"]');\r\n\t\t\t\tconsole.log(\"VERIFICATION: Hidden inputs in form after collection:\", tekracuniInputs.length);\r\n\t\t\t\ttekracuniInputs.forEach((input, idx) => {\r\n\t\t\t\t\tconsole.log(`  Input ${idx}: name='${input.name}', value='${input.value}'`);\r\n\t\t\t\t});\r\n\t\t\t}, 10);\r\n\t\t}\r\n\r\n\t\tfunction createHiddenInput(form, name, value) {\r\n\t\t\tconst input = document.createElement('input');\r\n\t\t\tinput.type = 'hidden';\r\n\t\t\tinput.name = name;\r\n\t\t\tinput.value = value;\r\n\t\t\tform.appendChild(input);\r\n\t\t}\r\n\r\n\t\t// Initialize on page load\r\n\t\tdocument.addEventListener('DOMContentLoaded', function() {\r\n\t\t\tconsole.log(\"DOMContentLoaded event fired, calling initTekRacuniTable\");\r\n\t\t\tinitTekRacuniTable();\r\n\t\t});\r\n\t\t\r\n\t\t// Also call immediately for dynamically inserted forms\r\n\t\tconsole.log(\"About to call initTekRacuniTable immediately\");\r\n\t\tinitTekRacuniTable();\r\n\t\t\r\n\t\t// Fallback: attach listener at document level for htmx:configRequest events\r\n\t\t// This is the ideal place to add FormData values before request is sent\r\n\t\tdocument.addEventListener('htmx:configRequest', function(event) {\r\n\t\t\tconsole.log(\"Document-level htmx:configRequest fired!\", event);\r\n\t\t\tconst target = event.detail.target;\r\n\t\t\tconsole.log(\"Event target:\", target, \"Target tag:\", target?.tagName);\r\n\t\t\t\r\n\t\t\t// Check if this is a form or inside a form\r\n\t\t\tif (target && (target.tagName === 'FORM' || target.closest('form'))) {\r\n\t\t\t\tconsole.log(\"This is a form submission - calling addTekRacuniDataToRequest from document listener\");\r\n\t\t\t\taddTekRacuniDataToRequest(event);\r\n\t\t\t}\r\n\t\t});\r\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

@@ -90,7 +90,12 @@ func (h *PartneriHandler) PartneriConfirmAdd(c *gin.Context) {
 	tblTekRacuni.ShowActions = true
 	tblTekRacuni.BtnDelete.IsVisible = true
 	tblTekRacuni.BtnUpdate.IsVisible = false
-	tmpl1.PartneriForm(entity, tblTekRacuni, dialog, btnSacuvaj, btnCancel, btnClose, btnProveriPIB, i18n.GetInstance(), csrfToken).Render(c.Request.Context(), c.Writer)
+	tipoviAnalitike, err := h.Service.GetTipoveAnalitike(ctx)
+	if err != nil {
+		log.Printf("Error fetching tipove analitike: %v", err)
+		tipoviAnalitike = []domain.ComboItem{} // fallback to empty list
+	}
+	tmpl1.PartneriFormMain(entity, tblTekRacuni, dialog, tipoviAnalitike, btnSacuvaj, btnCancel, btnClose, btnProveriPIB, i18n.GetInstance(), csrfToken).Render(c.Request.Context(), c.Writer)
 }
 
 func (h *PartneriHandler) PartneriCreate(c *gin.Context) {
@@ -103,7 +108,7 @@ func (h *PartneriHandler) PartneriCreate(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusBadRequest, false, []domain.FieldError{}, common.ErrMsgFormDecode)
 		return
 	}
-	filedsErrors, err := h.Service.ValidacijaPartneri(ctx, &entity)
+	filedsErrors, err := h.Service.ValidacijaPartneri(ctx, &entity, common.ActionAdd)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, "Error validating partner")
 		return
@@ -184,7 +189,12 @@ func (h *PartneriHandler) PartneriConfirmUpdate(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, "Error fetching tekući računi")
 		return
 	}
-	tmpl1.PartneriForm(*entity, tblTekRacuni, dialog, btnSacuvaj, btnCancel, btnClose, btnProveriPIB, i18n.GetInstance(), csrfToken).Render(c.Request.Context(), c.Writer)
+	tipoviAnalitike, err := h.Service.GetTipoveAnalitike(ctx)
+	if err != nil {
+		log.Printf("Error fetching tipove analitike: %v", err)
+		tipoviAnalitike = []domain.ComboItem{}
+	}
+	tmpl1.PartneriForm(*entity, tblTekRacuni, dialog, tipoviAnalitike, btnSacuvaj, btnCancel, btnClose, btnProveriPIB, i18n.GetInstance(), csrfToken).Render(c.Request.Context(), c.Writer)
 }
 
 func (h *PartneriHandler) PartneriUpdate(c *gin.Context) {
@@ -205,7 +215,7 @@ func (h *PartneriHandler) PartneriUpdate(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusBadRequest, false, []domain.FieldError{}, common.ErrMsgFormDecode)
 		return
 	}
-	filedsErrors, err := h.Service.ValidacijaPartneri(ctx, &entity)
+	filedsErrors, err := h.Service.ValidacijaPartneri(ctx, &entity, common.ActionUpdate)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, "Error validating partner")
 		return
@@ -379,6 +389,58 @@ func extractTekRacuniFromForm(c *gin.Context) []domain.TekRacuni {
 	return result
 }
 
+// GetPartneriForm returns the appropriate form fragment based on tipanalitike.
+// Called by HTMX when the "Tip analitike" combo changes.
+func (h *PartneriHandler) GetPartneriForm(c *gin.Context) {
+	ctx := c.Request.Context()
+	csrfToken := common.GetCsrfToken(c)
+	tipAnalitike := c.Query("tipanalitike")
+
+	dialog := domain.Dialog{
+		Id:            "partneri-add-dialog",
+		Title:         "Dodaj partnera",
+		HxActionURL:   "/api/partneri/create",
+		HxRequestType: "POST",
+	}
+	btnSacuvaj := domain.Button{
+		Id:               "btn-sacuvaj",
+		IsVisible:        true,
+		LabelText:        "Sačuvaj",
+		HxActionURL:      "/api/partneri/create",
+		HxRequestType:    "POST",
+		IdDialog:         dialog.Id,
+		BtnClass:         common.ClassSaveButton,
+		HxOnAfterRequest: fmt.Sprintf("handleDialogResponse('%s')", dialog.Id),
+	}
+	btnCancel := domain.Button{
+		Id:        "btn-cancel",
+		IsVisible: true,
+		LabelText: "Odustani",
+		IdDialog:  dialog.Id,
+		BtnClass:  common.ClassOdustaniButton,
+	}
+	btnClose := domain.Button{
+		Id:        "btn-close",
+		IsVisible: true,
+		IdDialog:  dialog.Id,
+		BtnClass:  common.ClassDialogCloseButton,
+	}
+	btnProveriPIB := setButtonProveriPIB(dialog.Id)
+	entity := domain.Partneri{}
+	tblTekRacuni := common.SetTableBasicData("Tekuci racuni", tekruciRacuniTableID, h.Service.GetTekuciRacuniTableFields(), "", "", 0, 0, 0, 0, h.cfg)
+	tblTekRacuni.ShowActions = true
+	tblTekRacuni.BtnDelete.IsVisible = true
+	tblTekRacuni.BtnUpdate.IsVisible = false
+
+	switch tipAnalitike {
+	// Add cases here as you create new form templates, e.g.:
+	// case "2":
+	//     tmpl1.FizickaLicaForm(entity, tblTekRacuni, dialog, []domain.ComboItem{}, ...).Render(ctx, c.Writer)
+	default:
+		tmpl1.PartneriForm(entity, tblTekRacuni, dialog, []domain.ComboItem{}, btnSacuvaj, btnCancel, btnClose, btnProveriPIB, i18n.GetInstance(), csrfToken).Render(ctx, c.Writer)
+	}
+}
+
 func (h *PartneriHandler) AddRoutes(r *gin.Engine) {
 	r.Use(middleware.Auth()) // Apply auth middleware to all routes in group
 
@@ -388,4 +450,5 @@ func (h *PartneriHandler) AddRoutes(r *gin.Engine) {
 	r.POST("api/partneri/create", h.PartneriCreate)
 	r.PUT("api/partneri/update/:id", h.PartneriUpdate)
 	r.GET("api/partneri/proveripib", h.CheckPIBForPartner)
+	r.GET("api/partneri/form", h.GetPartneriForm)
 }

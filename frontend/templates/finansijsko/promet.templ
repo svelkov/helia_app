@@ -17,6 +17,7 @@ templ PrometMain(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada 
 	@tmpl.HideDropdownScript()
 	@tmpl.ClearFieldErrorScript()
 	@tmpl.HandleDblClickKontoSelectionScript()
+	@tmpl.HandleDialogResponseScript("")
 }
 
 // Tab 1 - Promet analitickih konta
@@ -53,6 +54,7 @@ templ PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 							MaxLength:    "6",
 							TabIndex:     "1",
 							OnInput:      "clearFieldError",
+							OnFocus:      "clearFieldError",
 						})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
 							ID:          "btn-search-konto",
@@ -91,6 +93,7 @@ templ PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 							MaxLength:    "6",
 							TabIndex:     "2",
 							OnInput:      "clearFieldError",
+							OnFocus:      "clearFieldError",
 						})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
 							ID:          "sifra",
@@ -124,6 +127,7 @@ templ PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 							ClassInput: common.ClassInputTextEnabled + " w-32",
 							TabIndex:   "3",
 							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError",
 						})
 					</div>
 					<div class="flex items-center gap-1 mb-1">
@@ -141,6 +145,7 @@ templ PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 							ClassInput: common.ClassInputTextEnabled + " w-32",
 							TabIndex:   "4",
 							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError",
 						})
 					</div>
 					<div class="mb-1 flex items-center justify-between h-6">
@@ -208,6 +213,7 @@ templ AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint,
 							MaxLength:    "6",
 							TabIndex:     "1",
 							OnInput:      "clearFieldError",
+							OnFocus:      "clearFieldError",
 						})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
 							ID:          "konto",
@@ -246,6 +252,7 @@ templ AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint,
 							MaxLength:    "6",
 							TabIndex:     "2",
 							OnInput:      "clearFieldError",
+							OnFocus:      "clearFieldError",
 						})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
 							ID:          "sifra",
@@ -279,6 +286,7 @@ templ AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint,
 							ClassInput: common.ClassInputTextEnabled + " w-32",
 							TabIndex:   "3",
 							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError",
 						})
 					</div>
 					<div class="flex items-center gap-1 mb-1">
@@ -296,6 +304,7 @@ templ AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint,
 							ClassInput: common.ClassInputTextEnabled + " w-32",
 							TabIndex:   "4",
 							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError",
 						})
 					</div>
 					<div class="flex items-center gap-1 mb-1">
@@ -312,10 +321,12 @@ templ AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint,
 							ClassInput:   common.ClassInputTextEnabled + " w-24",
 							BlurEndpoint: "api/mi/trazimi",
 							HxTarget:     "odminaziv",
+							Value:        "0",
 							MinLength:    "1",
 							MaxLength:    "6",
 							TabIndex:     "5",
 							OnInput:      "clearFieldError",
+							OnFocus:      "clearFieldError",
 						})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
 							ID:          "odmi",
@@ -352,6 +363,7 @@ templ AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint,
 							MaxLength:    "6",
 							TabIndex:     "6",
 							OnInput:      "clearFieldError",
+							OnFocus:      "clearFieldError",
 						})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
 							ID:          "search-domi",
@@ -433,6 +445,7 @@ templ PrometDeviznihAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, 
 							MaxLength:    "6",
 							TabIndex:     "1",
 							OnInput:      "clearFieldError",
+							OnFocus:      "clearFieldError",
 						})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
 							ID:          "konto",
@@ -471,6 +484,7 @@ templ PrometDeviznihAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, 
 							MaxLength:    "6",
 							TabIndex:     "2",
 							OnInput:      "clearFieldError",
+							OnFocus:      "clearFieldError",
 						})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
 							ID:          "sifra",
@@ -504,6 +518,7 @@ templ PrometDeviznihAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, 
 							ClassInput: common.ClassInputTextEnabled + " w-28",
 							TabIndex:   "3",
 							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError",
 						})
 					</div>
 					<div class="flex items-center gap-1 mb-1">
@@ -521,6 +536,7 @@ templ PrometDeviznihAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, 
 							ClassInput: common.ClassInputTextEnabled + " w-28",
 							TabIndex:   "4",
 							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError",
 						})
 					</div>
 					<div class="mb-1 flex items-center justify-between h-6">
@@ -594,6 +610,7 @@ templ PrometSubsintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPr
 							MaxLength:     "4",
 							TabIndex:      "1",
 							OnInput:       "clearFieldError",
+							OnFocus:       "clearFieldError",
 						})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
 							ID:          "odkonta",
@@ -634,6 +651,7 @@ templ PrometSubsintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPr
 							MaxLength:    "4",
 							TabIndex:     "2",
 							OnInput:      "clearFieldError",
+							OnFocus:      "clearFieldError",
 						})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
 							ID:          "dokonta",
@@ -667,6 +685,8 @@ templ PrometSubsintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPr
 							Disabled:   false,
 							ClassInput: common.ClassInputTextEnabled + " w-28",
 							TabIndex:   "3",
+							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError",
 						})
 					</div>
 					<div class="flex items-center justify-between gap-1 mb-1">
@@ -684,6 +704,8 @@ templ PrometSubsintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPr
 								Disabled:   false,
 								ClassInput: common.ClassInputTextEnabled + " w-28",
 								TabIndex:   "4",
+								OnInput:    "clearFieldError",
+								OnFocus:    "clearFieldError",
 							})
 						</div>
 						<!-- Buttons on the right -->
@@ -745,6 +767,7 @@ templ PrometSintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 							MaxLength:    "3",
 							TabIndex:     "1",
 							OnInput:      "clearFieldError",
+							OnFocus:      "clearFieldError",
 						})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
 							ID:          "konto",
@@ -777,6 +800,8 @@ templ PrometSintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 							Disabled:   false,
 							ClassInput: common.ClassInputTextEnabled + " w-28",
 							TabIndex:   "3",
+							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError",
 						})
 					</div>
 					<div class="flex items-center gap-1 mb-1">
@@ -793,6 +818,8 @@ templ PrometSintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 							Disabled:   false,
 							ClassInput: common.ClassInputTextEnabled + " w-28",
 							TabIndex:   "4",
+							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError",
 						})
 					</div>
 					<div class="mb-2 flex items-center justify-between h-6">
@@ -855,7 +882,8 @@ templ KarticaSintetickiKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 							MinLength:    "2",
 							MaxLength:    "3",
 							TabIndex:     "1",
-							OnInput:      "clearFieldError"})
+							OnInput:      "clearFieldError",
+							OnFocus:      "clearFieldError"})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
 							ID:          "konto",
 							Name:        "search-konto",
@@ -887,6 +915,8 @@ templ KarticaSintetickiKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 							Disabled:   false,
 							ClassInput: common.ClassInputTextEnabled + " w-28",
 							TabIndex:   "3",
+							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError",
 						})
 					</div>
 					<div class="flex items-center gap-1 mb-1">
@@ -903,6 +933,8 @@ templ KarticaSintetickiKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 							Disabled:   false,
 							ClassInput: common.ClassInputTextEnabled + " w-28",
 							TabIndex:   "4",
+							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError",
 						})
 					</div>
 					<div class="mb-2 flex items-center justify-between h-6">
@@ -970,6 +1002,7 @@ templ PrometKontaPoVRD(tabs domain.TabData, tbl domain.TableData, btnPrint, btnO
 							MaxLength:    "6",
 							TabIndex:     "1",
 							OnInput:      "clearFieldError",
+							OnFocus:      "clearFieldError",
 						})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
 							ID:          "konto",
@@ -1002,6 +1035,8 @@ templ PrometKontaPoVRD(tabs domain.TabData, tbl domain.TableData, btnPrint, btnO
 							Disabled:   false,
 							ClassInput: common.ClassInputTextEnabled + " w-28",
 							TabIndex:   "3",
+							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError",
 						})
 					</div>
 					<div class="flex items-center gap-1 mb-1">
@@ -1018,6 +1053,8 @@ templ PrometKontaPoVRD(tabs domain.TabData, tbl domain.TableData, btnPrint, btnO
 							Disabled:   false,
 							ClassInput: common.ClassInputTextEnabled + " w-28",
 							TabIndex:   "4",
+							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError",
 						})
 					</div>
 					<div class="mb-2 flex items-center justify-between h-6">
@@ -1081,7 +1118,8 @@ templ PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint,
 							MinLength:    "4",
 							MaxLength:    "6",
 							TabIndex:     "1",
-							OnInput:      "clearFieldError"})
+							OnInput:      "clearFieldError",
+							OnFocus:      "clearFieldError"})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
 							ID:          "konto",
 							Name:        "search-konto",
@@ -1117,6 +1155,8 @@ templ PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint,
 							MinLength:    "2",
 							MaxLength:    "6",
 							TabIndex:     "2",
+							OnInput:      "clearFieldError",
+							OnFocus:      "clearFieldError",
 						})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
 							ID:          "odsifre",
@@ -1153,6 +1193,8 @@ templ PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint,
 							MinLength:    "2",
 							MaxLength:    "6",
 							TabIndex:     "3",
+							OnInput:      "clearFieldError",
+							OnFocus:      "clearFieldError",
 						})
 						@tmpl.SearchButton(domain.SearchButtonConfig{
 							ID:          "dosifre",
@@ -1186,6 +1228,8 @@ templ PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint,
 								ClassInput: common.ClassInputTextEnabled + " w-32",
 								Value:      time.Date(gnGod, 1, 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
 								TabIndex:   "4",
+								OnInput:    "clearFieldError",
+								OnFocus:    "clearFieldError",
 							})
 							@tmpl.LabelField(domain.LabelFieldConfig{
 								ID:         "dodatuma",
@@ -1200,6 +1244,8 @@ templ PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint,
 								ClassInput: common.ClassInputTextEnabled + " w-32",
 								Value:      time.Date(gnGod, 12, 31, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
 								TabIndex:   "5",
+								OnInput:    "clearFieldError",
+								OnFocus:    "clearFieldError",
 							})
 						</div>
 						<!-- Buttons on the right -->

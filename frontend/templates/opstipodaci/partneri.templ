@@ -8,9 +8,9 @@ import (
 	"helia/internal/domain"
 )
 
-templ PartneriForm(partneriData domain.Partneri, tekRacuni domain.TableData, dialog domain.Dialog, btnSave, btnCancel, btnClose, btnProveriPIB domain.Button, translator *i18n.Service, csrfToken string) {
+templ PartneriFormMain(partneriData domain.Partneri, tekRacuni domain.TableData, dialog domain.Dialog, tipoviAnalitike []domain.ComboItem, btnSave, btnCancel, btnClose, btnProveriPIB domain.Button, translator *i18n.Service, csrfToken string) {
 	<div id={ dialog.Id } class={ common.ClassMainDialogDiv }>
-		<div class="bg-white rounded-lg shadow-2xl relative animate-fade-in max-w-7xl w-full max-h-[90vh] overflow-y-auto">
+		<div class="bg-white rounded-lg shadow-2xl relative animate-fade-in max-w-7xl w-full max-h-[95vh] overflow-y-auto">
 			<!-- Title Bar -->
 			<div class="bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg sticky top-0 z-10">
 				<h2 class="text-lg font-semibold ml-4">{ translator.Title(dialog.Title) }</h2>
@@ -29,629 +29,30 @@ templ PartneriForm(partneriData domain.Partneri, tekRacuni domain.TableData, dia
 				class="p-3 bg-white rounded-b-lg space-y-3"
 			>
 				<input type="hidden" name="_csrf" value={ csrfToken }/>
-				<!-- Main Grid Layout: 60% Left - 40% Right -->
-				<div class="grid gap-4" style="grid-template-columns: 60% 39%;">
-					<!-- Left Column (60% width) - Osnovni podaci o partneru -->
-					<div class="space-y-1 flex flex-col">
-						<div class="text-blue-900 font-bold text-sm border-b-2 border-blue-900 py-1">
-							{ translator.Text("Osnovni podaci o partneru") }
-						</div>
-						<!-- Šifra partnera if action is update the create hidden sifra filed -->
-						if dialog.HxRequestType == "PUT" {
-							<input type="hidden" name="sifra" value={ partneriData.Sifra }/>
-						}
-
-						<div class="flex items-center gap-2">
-							@tmpl.LabelField(domain.LabelFieldConfig{
-								ID:         "lblsifra",
-								LabelText:  translator.Label("Sifra partnera"),
-								ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
-							})
-							@tmpl.TextInputField(domain.InputFieldConfig{
-								ID:         "sifra",
-								Name:       "sifra",
-								FieldType:  "text",
-								Disabled:   dialog.HxRequestType == "PUT",
-								Value:      partneriData.Sifra,
-								ClassInput: func() string {
-									if dialog.HxRequestType == "PUT" {
-										return common.ClassInputTextDisabled + " w-24"
-									}
-									return common.ClassInputTextEnabled + " w-24"
-								}(),
-								MaxLength:  "10",
-								TabIndex:   "-1",
-								OnInput:    "clearFieldError",
-								OnFocus:    "clearFieldError",
-							})
-							<label class="flex items-center gap-2 cursor-pointer ml-auto">
-								<input type="checkbox" name="budzetski" class="w-4 h-4"/>
-								<span class={ common.ClassLabel }>{ translator.Label("Budzetski korisnik") } </span>
-							</label>
-						</div>
-						<!-- Naziv Partnera -->
-						<div class="flex items-center gap-2">
-							@tmpl.LabelField(domain.LabelFieldConfig{
-								ID:         "lblnaziv",
-								LabelText:  translator.Label("Naziv partnera"),
-								ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
-							})
-							@tmpl.TextInputField(domain.InputFieldConfig{
-								ID:         "naziv",
-								Name:       "naziv",
-								FieldType:  "text",
-								Disabled:   false,
-								Value:      partneriData.Naziv,
-								ClassInput: common.ClassInputTextEnabled + " flex-1",
-								MaxLength:  "100",
-								TabIndex:   "2",
-								OnInput:    "clearFieldError",
-								OnFocus:    "clearFieldError",
-							})
-						</div>
-						<!-- Pun Naziv Partnera -->
-						<div class="flex items-center gap-2">
-							@tmpl.LabelField(domain.LabelFieldConfig{
-								ID:         "lblnaziv1",
-								LabelText:  translator.Label("Pun naziv partnera"),
-								ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
-							})
-							@tmpl.TextInputField(domain.InputFieldConfig{
-								ID:         "naziv1",
-								Name:       "naziv1",
-								FieldType:  "text",
-								Disabled:   false,
-								Value:      partneriData.Naziv1,
-								ClassInput: common.ClassInputTextEnabled + " flex-1",
-								MaxLength:  "150",
-								TabIndex:   "3",
-							})
-						</div>
-						<!-- Adresa -->
-						<div class="flex items-center gap-2">
-							@tmpl.LabelField(domain.LabelFieldConfig{
-								ID:         "adresa",
-								LabelText:  translator.Label("Adresa"),
-								ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
-							})
-							@tmpl.TextInputField(domain.InputFieldConfig{
-								ID:         "adresa",
-								Name:       "adresa",
-								FieldType:  "text",
-								Disabled:   false,
-								Value:      partneriData.Adresa,
-								ClassInput: common.ClassInputTextEnabled + " flex-1",
-								MaxLength:  "100",
-								TabIndex:   "4",
-							})
-						</div>
-						<!-- Poštanski broj i Mjesto -->
-						<div class="grid grid-cols-2 gap-2">
-							<div class="flex items-center gap-2">
-								@tmpl.LabelField(domain.LabelFieldConfig{
-									ID:         "lblpostbroj",
-									LabelText:  translator.Label("Postanski broj"),
-									ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
-								})
-								@tmpl.TextInputField(domain.InputFieldConfig{
-									ID:         "pobro",
-									Name:       "pobro",
-									FieldType:  "text",
-									Disabled:   false,
-									ClassInput: common.ClassInputTextEnabled + " flex-1",
-									Value:      fmt.Sprintf("%d", partneriData.PoBro),
-									MaxLength:  "6",
-									TabIndex:   "5",
-								})
-							</div>
-							<div class="flex items-center gap-2">
-								@tmpl.LabelField(domain.LabelFieldConfig{
-									ID:         "mesto",
-									LabelText:  translator.Label("Mesto"),
-									ClassLabel: common.ClassLabel + " w-10 flex-shrink-0",
-								})
-								@tmpl.TextInputField(domain.InputFieldConfig{
-									ID:         "mesto",
-									Name:       "mesto",
-									FieldType:  "text",
-									Disabled:   false,
-									ClassInput: common.ClassInputTextEnabled + " w-52 flex-1",
-									Value:      partneriData.Mesto,
-									MaxLength:  "50",
-									TabIndex:   "6",
-									OnInput:    "clearFieldError",
-									OnFocus:    "clearFieldError",
-								})
-								@tmpl.LabelField(domain.LabelFieldConfig{
-									ID:         "pak",
-									LabelText:  translator.Label("PAK"),
-									ClassLabel: common.ClassLabel + " w-8 flex-shrink-0",
-								})
-								@tmpl.NumericInputField(domain.InputFieldConfig{
-									ID:         "pak",
-									Name:       "pak",
-									Disabled:   false,
-									ClassInput: common.ClassInputTextEnabled + " w-24 flex-shrink-0",
-									MaxLength:  "10",
-									TabIndex:   "7",
-									Value:      fmt.Sprintf("%d", partneriData.Pak),
-								})
-							</div>
-						</div>
-						<!-- Sistema PDV -->
-						<div class="flex items-center gap-2">
-							@tmpl.LabelField(domain.LabelFieldConfig{
-								ID:         "lbltippdv",
-								LabelText:  translator.Label("Sistem PDV"),
-								ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
-							})
-							@tmpl.ComboBoxField(domain.ComboFieldConfig{
-								ID:          "tippdv",
-								Name:        "tippdv",
-								Placeholder: translator.Placeholder("Select"),
-								Disabled:    false,
-								ClassSelect: common.ClassSelect + " flex-1",
-								TabIndex:    "8",
-								OptionValues: []domain.ComboItem{
-									{Key: "1", Value: "U sistemu PDV-a"},
-									{Key: "2", Value: "Van sistema PDV-a"},
-									{Key: "3", Value: "Registrovani poljoprivrednik"},
-									{Key: "4", Value: "Fizičko lice"},
-									{Key: "5", Value: "Student"},
-								},
-								OnInput: "clearFieldError",
-								OnFocus: "clearFieldError",
-								SelectedValue: fmt.Sprintf("%d", partneriData.TipPDV),
-							}, translator)
-							@tmpl.LabelField(domain.LabelFieldConfig{
-								ID:         "gln",
-								LabelText:  translator.Label("GLN"),
-								ClassLabel: common.ClassLabel + " w-8 flex-shrink-0",
-							})
-							@tmpl.NumericInputField(domain.InputFieldConfig{
-								ID:         "gln",
-								Name:       "gln",
-								Disabled:   false,
-								ClassInput: common.ClassInputTextEnabled + " w-24 flex-shrink-0",
-								MaxLength:  "10",
-								TabIndex:   "9",
-								Value:      fmt.Sprintf("%d", partneriData.GLN),
-							})
-						</div>
-						<!-- PIB i Button Check PIB -->
-						<div class="flex items-center gap-2">
-							@tmpl.LabelField(domain.LabelFieldConfig{
-								ID:         "pib",
-								LabelText:  translator.Label("PIB"),
-								ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
-							})
-							<div class="flex items-center gap-2 flex-1">
-								@tmpl.TextInputField(domain.InputFieldConfig{
-									ID:         "pib",
-									Name:       "pib",
-									FieldType:  "text",
-									Disabled:   false,
-									ClassInput: common.ClassInputTextEnabled + " flex-1",
-									MaxLength:  "20",
-									TabIndex:   "10",
-									Value:      partneriData.PIB,
-								})
-								@tmpl.Button(btnProveriPIB, translator)
-							</div>
-						</div>
-						<!-- Matični broj -->
-						<div class="flex items-center gap-2">
-							@tmpl.LabelField(domain.LabelFieldConfig{
-								ID:         "lblmaticnibroj",
-								LabelText:  translator.Label("Maticni broj"),
-								ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
-							})
-							@tmpl.TextInputField(domain.InputFieldConfig{
-								ID:         "maticnibroj",
-								Name:       "maticnibroj",
-								FieldType:  "text",
-								Disabled:   false,
-								ClassInput: common.ClassInputTextEnabled + " flex-1",
-								MaxLength:  "20",
-								TabIndex:   "11",
-								Value:      partneriData.MatBr,
-							})
-						</div>
-						<!-- Matični broj -->
-						<div class="flex items-center gap-2">
-							@tmpl.LabelField(domain.LabelFieldConfig{
-								ID:         "lblkonta",
-								LabelText:  translator.Label("Konta partnera"),
-								ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
-							})
-							@tmpl.TextInputField(domain.InputFieldConfig{
-								ID:         "konta",
-								Name:       "konta",
-								FieldType:  "text",
-								Disabled:   false,
-								ClassInput: common.ClassInputTextEnabled + " flex-1",
-								MaxLength:  "120",
-								TabIndex:   "12",
-								Value:      partneriData.Konta,
-							})
-						</div>
-						<!-- Teritorija - Radio Set -->
-						<div class="flex items-center gap-2">
-							@tmpl.LabelField(domain.LabelFieldConfig{
-								ID:         "lblteritorija",
-								LabelText:  translator.Label("Teritorija"),
-								ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
-							})
-							<div class="flex items-center gap-3 flex-1">
-								<label class="flex items-center gap-2 cursor-pointer">
-									<input type="radio" name="teritorija" value="srbija" class="w-4 h-4" checked/>
-									<span class={ common.ClassLabel }>{ translator.Text("Srbija") }</span>
-								</label>
-								<label class="flex items-center gap-2 cursor-pointer">
-									<input type="radio" name="teritorija" value="kosovo" class="w-4 h-4"/>
-									<span class={ common.ClassLabel }>{ translator.Text("Kosovo i Metohija") }</span>
-								</label>
-								<label class="flex items-center gap-2 cursor-pointer">
-									<input type="radio" name="teritorija" value="ino" class="w-4 h-4"/>
-									<span class={ common.ClassLabel }>{ translator.Text("Ino partner") }</span>
-								</label>
-							</div>
-						</div>
-						<!-- Tekući računi (Editable Table) -->
-						<div class="max-h-44 overflow-y-auto overflow-x-auto border border-gray-300 rounded">
-						<table id="tekuciracuni-table" class="w-full border-collapse">
-							<thead class="bg-blue-900 text-white sticky top-0">
-								<tr>
-									<th class="border border-gray-300 px-1 w-8 text-xs text-left">{ translator.Label("Redni broj") }</th>
-									<th class="border border-gray-300 px-1 w-32 text-xs text-left">{ translator.Label("Broj računa") }</th>
-									<th class="border border-gray-300 px-1 w-56 text-xs text-left">{ translator.Label("Banka") }</th>
-									<th class="border border-gray-300 px-1 w-16 text-xs text-center ">{ translator.Label("Akcije") }</th>
-								</tr>
-							</thead>
-							<tbody id="tekuciracuni-table-body">
-									if len(tekRacuni.Rows) > 0 {
-										for i, row := range tekRacuni.Rows {
-											<tr class="tekracuni-row hover:bg-blue-50" data-index={ fmt.Sprintf("%d", i) }>
-												<td class="border border-white">
-													<input type="text" class="w-full border rounded px-1 h-7 tekrac-redbroj" placeholder="Redni broj" value={ row.Fields[0] }/>
-												</td>
-												<td class="border border-white">
-													<input type="text" class="w-full border rounded px-1 h-7 tekrac-brojracuna" placeholder="Broj računa" maxlength="20" value={ row.Fields[1] }/>
-												</td>
-												<td class="border border-white">
-													<input type="text" class="w-full border rounded px-1 h-7 tekrac-banka" placeholder="Banka" value={ row.Fields[2] }/>
-												</td>
-												<td class="border border-white px-1 h-7 text-center">
-													<button type="button" class="bg-red-500 text-white text-xs px-1 w-20 rounded hover:bg-red-600 delete-row">
-														{ translator.Button("Obriši") }
-													</button>
-												</td>
-											</tr>
-										}
-									}
-								</tbody>
-							</table>
-							<button type="button" id="add-tekracuni-row" class="mt-2 mb-1 bg-blue-500 text-white text-xs px-2 py-1 h-6 rounded hover:bg-blue-600">
-								+ { translator.Button("Dodaj račun") }
-							</button>
-						</div>
-					</div>
-					<!-- Right Column (40% width) -->
-					<div class="space-y-1">
-						<!-- Ostali podaci o partneru -->
-						<div>
-							<div class="text-blue-900 font-bold text-sm border-b-2 border-blue-900 py-1 mb-1">
-								{ translator.Text("Ostali podaci o partneru") }
-							</div>
-							<div class="space-y-1">
-								<!-- Web stranica -->
-								<div class="flex items-center gap-1">
-									@tmpl.LabelField(domain.LabelFieldConfig{
-										ID:         "webstranica",
-										LabelText:  translator.Label("Web stranica"),
-										ClassLabel: common.ClassLabel + " w-28 flex-shrink-0",
-									})
-									@tmpl.TextInputField(domain.InputFieldConfig{
-										ID:         "webstranica",
-										Name:       "webstranica",
-										FieldType:  "url",
-										Disabled:   false,
-										ClassInput: common.ClassInputTextEnabled + " flex-1 text-xs",
-										MaxLength:  "150",
-										TabIndex:   "14",
-										Value:      partneriData.Website,
-									})
-								</div>
-								<!-- E-mail -->
-								<div class="flex items-center gap-1">
-									@tmpl.LabelField(domain.LabelFieldConfig{
-										ID:         "email",
-										LabelText:  translator.Label("E-mail"),
-										ClassLabel: common.ClassLabel + " w-28 flex-shrink-0",
-									})
-									@tmpl.TextInputField(domain.InputFieldConfig{
-										ID:         "email",
-										Name:       "email",
-										FieldType:  "email",
-										Disabled:   false,
-										ClassInput: common.ClassInputTextEnabled + " flex-1 text-xs",
-										MaxLength:  "100",
-										TabIndex:   "15",
-										Value:      partneriData.Email,
-									})
-								</div>
-								<!-- Broj telefona -->
-								<div class="flex items-center gap-1">
-									@tmpl.LabelField(domain.LabelFieldConfig{
-										ID:         "telefon",
-										LabelText:  translator.Label("Broj telefona"),
-										ClassLabel: common.ClassLabel + " w-28 flex-shrink-0",
-									})
-									@tmpl.TextInputField(domain.InputFieldConfig{
-										ID:         "telefon",
-										Name:       "telefon",
-										FieldType:  "tel",
-										Disabled:   false,
-										ClassInput: common.ClassInputTextEnabled + " flex-1 text-xs",
-										MaxLength:  "30",
-										TabIndex:   "16",
-										Value:      partneriData.Telefon,
-									})
-								</div>
-								<!-- Kontakt osoba -->
-								<div class="flex items-center gap-1">
-									@tmpl.LabelField(domain.LabelFieldConfig{
-										ID:         "kontakosoba",
-										LabelText:  translator.Label("Kontakt osoba"),
-										ClassLabel: common.ClassLabel + " w-28 flex-shrink-0",
-									})
-									@tmpl.TextInputField(domain.InputFieldConfig{
-										ID:         "kontakosoba",
-										Name:       "kontakosoba",
-										FieldType:  "text",
-										Disabled:   false,
-										ClassInput: common.ClassInputTextEnabled + " flex-1 text-xs",
-										MaxLength:  "100",
-										TabIndex:   "17",
-										Value:      partneriData.KontaktOsb,
-									})
-								</div>
-								<!-- Opština -->
-								<div class="flex items-center gap-1">
-									@tmpl.LabelField(domain.LabelFieldConfig{
-										ID:         "opstina",
-										LabelText:  translator.Label("Opstina"),
-										ClassLabel: common.ClassLabel + " w-28 flex-shrink-0",
-									})
-									@tmpl.TextInputField(domain.InputFieldConfig{
-										ID:         "opstina",
-										Name:       "opstina",
-										FieldType:  "text",
-										Disabled:   false,
-										ClassInput: common.ClassInputTextEnabled + " flex-1 text-xs",
-										MaxLength:  "100",
-										TabIndex:   "18",
-										Value:      fmt.Sprintf("%d", partneriData.IDSifOp),
-									})
-								</div>
-								<!-- JMBG -->
-								<div class="flex items-center gap-1">
-									@tmpl.LabelField(domain.LabelFieldConfig{
-										ID:         "jmbg",
-										LabelText:  translator.Label("JMBG"),
-										ClassLabel: common.ClassLabel + " w-28 flex-shrink-0",
-									})
-									@tmpl.TextInputField(domain.InputFieldConfig{
-										ID:         "jmbg",
-										Name:       "jmbg",
-										FieldType:  "text",
-										Disabled:   false,
-										ClassInput: common.ClassInputTextEnabled + " flex-1 text-xs",
-										MaxLength:  "20",
-										TabIndex:   "19",
-										Value:      partneriData.JMBG,
-									})
-								</div>
-								<!-- BPG -->
-								<div class="flex items-center gap-1">
-									@tmpl.LabelField(domain.LabelFieldConfig{
-										ID:         "bpg",
-										LabelText:  translator.Label("BPG"),
-										ClassLabel: common.ClassLabel + " w-28 flex-shrink-0",
-									})
-									@tmpl.TextInputField(domain.InputFieldConfig{
-										ID:         "bpg",
-										Name:       "bpg",
-										FieldType:  "text",
-										Disabled:   false,
-										ClassInput: common.ClassInputTextEnabled + " flex-1 text-xs",
-										MaxLength:  "20",
-										TabIndex:   "20",
-										Value:      partneriData.BPG,
-									})
-								</div>
-								<!-- BPG -->
-								<div class="flex items-center gap-1">
-									@tmpl.LabelField(domain.LabelFieldConfig{
-										ID:         "indeks",
-										LabelText:  translator.Label("Indeks"),
-										ClassLabel: common.ClassLabel + " w-28 flex-shrink-0",
-									})
-									@tmpl.TextInputField(domain.InputFieldConfig{
-										ID:         "indeks",
-										Name:       "indeks",
-										FieldType:  "text",
-										Disabled:   false,
-										ClassInput: common.ClassInputTextEnabled + " w-24",
-										MaxLength:  "20",
-										TabIndex:   "21",
-										Value:      partneriData.Index,
-									})
-									@tmpl.LabelField(domain.LabelFieldConfig{
-										ID:         "sifrakodpartnera",
-										LabelText:  translator.Label("Šifra kod partnera"),
-										ClassLabel: common.ClassLabel + " w-34 flex-shrink-0",
-									})
-									@tmpl.TextInputField(domain.InputFieldConfig{
-										ID:         "sifrakodpartnera",
-										Name:       "sifrakodpartnera",
-										FieldType:  "text",
-										Disabled:   false,
-										ClassInput: common.ClassInputTextEnabled + " flex-1 text-xs",
-										MaxLength:  "20",
-										TabIndex:   "22",
-										Value:      "",
-									})
-								</div>
-							</div>
-						</div>
-						<!-- Uslovi prodaje/nabavke -->
-						<div>
-							<div class="text-blue-900 font-bold text-sm border-b-2 border-blue-900 py-1 mb-1">
-								{ translator.Text("Uslovi prodaje/nabavke") }
-							</div>
-							<div class="space-y-1 text-xs">
-								<!-- Kredit limit -->
-								<div class="flex items-center gap-1">
-									@tmpl.LabelField(domain.LabelFieldConfig{
-										ID:         "limitkredita",
-										LabelText:  translator.Label("Kredit limit"),
-										ClassLabel: common.ClassLabel + " w-52 flex-shrink-0",
-									})
-									@tmpl.NumericInputField(domain.InputFieldConfig{
-										ID:            "limitkredita",
-										Name:          "limitkredita",
-										FieldType:     "number",
-										Disabled:      false,
-										ClassInput:    common.ClassInputTextEnabled,
-										Value:         common.FormatNumberWithSystemLocale(partneriData.KrLimit, 2),
-										DecimalPlaces: 2,
-										TabIndex:      "23",
-									})
-								</div>
-								<!-- Limit na dospela potraživa -->
-								<div class="flex items-center gap-1">
-									@tmpl.LabelField(domain.LabelFieldConfig{
-										ID:         "limitdospela",
-										LabelText:  translator.Label("Limit na dospela potraživanja"),
-										ClassLabel: common.ClassLabel + " w-52 flex-shrink-0",
-									})
-									@tmpl.NumericInputField(domain.InputFieldConfig{
-										ID:            "limitdospela",
-										Name:          "limitdospela",
-										FieldType:     "number",
-										Disabled:      false,
-										ClassInput:    common.ClassInputTextEnabled,
-										Value:         common.FormatNumberWithSystemLocale(partneriData.KrLimitDosp, 2),
-										DecimalPlaces: 2,
-										TabIndex:      "24",
-									})
-								</div>
-								<!-- Valuta plaćanja prodaja + Rabat -->
-								<div class="flex items-center gap-1">
-									@tmpl.LabelField(domain.LabelFieldConfig{
-										ID:         "valutaprodaja",
-										LabelText:  translator.Label("Valuta placanja (prodaja)"),
-										ClassLabel: common.ClassLabel + " w-44 flex-shrink-0",
-									})
-									@tmpl.NumericInputField(domain.InputFieldConfig{
-										ID:            "valutaprodaja",
-										Name:          "valutaprodaja",
-										FieldType:     "number",
-										Disabled:      false,
-										ClassInput:    common.ClassInputTextEnabled,
-										Value:         common.FormatNumberWithSystemLocale(partneriData.ProVal, 0),
-										DecimalPlaces: 2,
-										TabIndex:      "25",
-									})
-									@tmpl.LabelField(domain.LabelFieldConfig{
-										ID:         "rabatprodaja",
-										LabelText:  translator.Label("Ugovoreni Rabat %"),
-										ClassLabel: common.ClassLabel + " w-28 flex-shrink-0",
-									})
-									@tmpl.NumericInputField(domain.InputFieldConfig{
-										ID:            "rabatprodaja",
-										Name:          "rabatprodaja",
-										FieldType:     "number",
-										Disabled:      false,
-										ClassInput:    common.ClassInputTextEnabled,
-										Value:         common.FormatNumberWithSystemLocale(partneriData.UGRabat, 2),
-										DecimalPlaces: 2,
-										TabIndex:      "26",
-									})
-								</div>
-								<!-- Valuta plaćanja nabavka + Rabat -->
-								<div class="flex items-center gap-1">
-									@tmpl.LabelField(domain.LabelFieldConfig{
-										ID:         "valutanabavka",
-										LabelText:  translator.Label("Valuta placanja (nabavka)"),
-										ClassLabel: common.ClassLabel + " w-44 flex-shrink-0",
-									})
-									@tmpl.NumericInputField(domain.InputFieldConfig{
-										ID:            "valutanabavka",
-										Name:          "valutanabavka",
-										FieldType:     "number",
-										Disabled:      false,
-										ClassInput:    common.ClassInputTextEnabled,
-										Value:         common.FormatNumberWithSystemLocale(partneriData.NabVal, 0),
-										DecimalPlaces: 2,
-										TabIndex:      "27",
-									})
-									@tmpl.LabelField(domain.LabelFieldConfig{
-										ID:         "rabatnaabavka",
-										LabelText:  translator.Label("Procenat marze %"),
-										ClassLabel: common.ClassLabel + " w-28",
-									})
-									@tmpl.NumericInputField(domain.InputFieldConfig{
-										ID:            "rabatnaabavka",
-										Name:          "rabatnaabavka",
-										FieldType:     "number",
-										Disabled:      false,
-										ClassInput:    common.ClassInputTextEnabled,
-										DecimalPlaces: 2,
-										TabIndex:      "28",
-										Value:         "0.00",
-									})
-								</div>
-								<!-- Komercijalista -->
-								<div class="flex items-center gap-1">
-									@tmpl.LabelField(domain.LabelFieldConfig{
-										ID:         "komercijalista",
-										LabelText:  translator.Label("Komercijalista"),
-										ClassLabel: common.ClassLabel + " w-44",
-									})
-									@tmpl.TextInputField(domain.InputFieldConfig{
-										ID:         "komercijalista",
-										Name:       "komercijalista",
-										FieldType:  "text",
-										Disabled:   false,
-										ClassInput: common.ClassInputTextEnabled,
-										MaxLength:  "100",
-										TabIndex:   "29",
-										Value:      fmt.Sprintf("%d", partneriData.Kom),
-									})
-								</div>
-								<!-- Napomena -->
-								<div class="flex items-center gap-1">
-									@tmpl.LabelField(domain.LabelFieldConfig{
-										ID:         "napomena",
-										LabelText:  translator.Label("Napomena"),
-										ClassLabel: common.ClassLabel + " w-44 text-top",
-									})
-									@tmpl.TextAreaField(domain.InputFieldConfig{
-										ID:         "napomena",
-										Name:       "napomena",
-										Value:      partneriData.Napomena,
-										ClassInput: common.ClassTextAreaEnabled,
-										MaxLength:  "1000",
-										TabIndex:   "30",
-									})
-								</div>
-								<div class="flex items-center gap-2"></div>
-							</div>
-						</div>
-					</div>
+				<!-- Tipovi Analitike -->
+				<div class="flex items-center gap-2 border-b-2 border-blue-900">
+					@tmpl.LabelField(domain.LabelFieldConfig{
+						ID:         "tipanalitike",
+						LabelText:  translator.Label("Tip analitike"),
+						ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
+					})
+					@tmpl.ComboBoxField(domain.ComboFieldConfig{
+						ID:             "tipanalitike",
+						Name:           "tipanalitike",
+						Placeholder:    translator.Placeholder("Select"),
+						Disabled:       dialog.HxRequestType == "PUT",
+						ClassSelect:    common.ClassSelect + " w-64",
+						TabIndex:       "1",
+						OptionValues:   tipoviAnalitike,
+						SelectedValue:  "",
+						ChangeEndpoint: "/api/partneri/form",
+						HxChangeTarget: "partneri-form-content",
+						HxSwap:         "innerHTML",
+						HxVals:         `js:{"tipanalitike": document.getElementById('tipanalitike').value}`,
+					}, translator)
 				</div>
+				<!-- Content swapped by HTMX when tipanalitike changes -->
+				<div id="partneri-form-content"></div>
 				<!-- Action Buttons - Full Width at Bottom -->
 				<div class="flex items-center justify-end gap-3 border-t border-gray-300 pt-3 mt-4">
 					<div class="flex items-center justify-end pt-2 pb-2 space-x-1">
@@ -664,6 +65,632 @@ templ PartneriForm(partneriData domain.Partneri, tekRacuni domain.TableData, dia
 	</div>
 	@PartneriScript()
 	@tmpl.ClearFieldErrorScript()
+	@tmpl.CloseDialogScript()
+}
+
+templ PartneriForm(partneriData domain.Partneri, tekRacuni domain.TableData, dialog domain.Dialog, tipoviAnalitike []domain.ComboItem, btnSave, btnCancel, btnClose, btnProveriPIB domain.Button, translator *i18n.Service, csrfToken string) {
+	<!-- Main Grid Layout: 60% Left - 40% Right -->
+	<div class="grid gap-4" style="grid-template-columns: 60% 39%;">
+		<!-- Left Column (60% width) - Osnovni podaci o partneru -->
+		<div class="space-y-1 flex flex-col">
+			<div class="text-blue-900 font-bold text-sm border-b-2 border-blue-900 py-1">
+				{ translator.Text("Osnovni podaci o partneru") }
+			</div>
+			<!-- Šifra partnera if action is update the create hidden sifra filed -->
+			if dialog.HxRequestType == "PUT" {
+				<input type="hidden" name="sifra" value={ partneriData.Sifra }/>
+			}
+			<div class="flex items-center gap-2">
+				@tmpl.LabelField(domain.LabelFieldConfig{
+					ID:         "lblsifra",
+					LabelText:  translator.Label("Sifra partnera"),
+					ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
+				})
+				@tmpl.TextInputField(domain.InputFieldConfig{
+					ID:        "sifra",
+					Name:      "sifra",
+					FieldType: "text",
+					Disabled:  dialog.HxRequestType == "PUT",
+					Value:     partneriData.Sifra,
+					ClassInput: func() string {
+						if dialog.HxRequestType == "PUT" {
+							return common.ClassInputTextDisabled + " w-24"
+						}
+						return common.ClassInputTextEnabled + " w-24"
+					}(),
+					MaxLength: "10",
+					TabIndex:  "-1",
+					OnInput:   "clearFieldError",
+					OnFocus:   "clearFieldError",
+				})
+				<label class="flex items-center gap-2 cursor-pointer ml-auto">
+					<input type="checkbox" name="budzetski" class="w-4 h-4"/>
+					<span class={ common.ClassLabel }>{ translator.Label("Budzetski korisnik") } </span>
+				</label>
+			</div>
+			<!-- Naziv Partnera -->
+			<div class="flex items-center gap-2">
+				@tmpl.LabelField(domain.LabelFieldConfig{
+					ID:         "lblnaziv",
+					LabelText:  translator.Label("Naziv partnera"),
+					ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
+				})
+				@tmpl.TextInputField(domain.InputFieldConfig{
+					ID:         "naziv",
+					Name:       "naziv",
+					FieldType:  "text",
+					Disabled:   false,
+					Value:      partneriData.Naziv,
+					ClassInput: common.ClassInputTextEnabled + " flex-1",
+					MaxLength:  "100",
+					TabIndex:   "2",
+					OnInput:    "clearFieldError",
+					OnFocus:    "clearFieldError",
+				})
+			</div>
+			<!-- Pun Naziv Partnera -->
+			<div class="flex items-center gap-2">
+				@tmpl.LabelField(domain.LabelFieldConfig{
+					ID:         "lblnaziv1",
+					LabelText:  translator.Label("Pun naziv partnera"),
+					ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
+				})
+				@tmpl.TextInputField(domain.InputFieldConfig{
+					ID:         "naziv1",
+					Name:       "naziv1",
+					FieldType:  "text",
+					Disabled:   false,
+					Value:      partneriData.Naziv1,
+					ClassInput: common.ClassInputTextEnabled + " flex-1",
+					MaxLength:  "150",
+					TabIndex:   "3",
+				})
+			</div>
+			<!-- Adresa -->
+			<div class="flex items-center gap-2">
+				@tmpl.LabelField(domain.LabelFieldConfig{
+					ID:         "adresa",
+					LabelText:  translator.Label("Adresa"),
+					ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
+				})
+				@tmpl.TextInputField(domain.InputFieldConfig{
+					ID:         "adresa",
+					Name:       "adresa",
+					FieldType:  "text",
+					Disabled:   false,
+					Value:      partneriData.Adresa,
+					ClassInput: common.ClassInputTextEnabled + " flex-1",
+					MaxLength:  "100",
+					TabIndex:   "4",
+				})
+			</div>
+			<!-- Poštanski broj i Mjesto -->
+			<div class="grid grid-cols-2 gap-2">
+				<div class="flex items-center gap-2">
+					@tmpl.LabelField(domain.LabelFieldConfig{
+						ID:         "lblpostbroj",
+						LabelText:  translator.Label("Postanski broj"),
+						ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
+					})
+					@tmpl.TextInputField(domain.InputFieldConfig{
+						ID:         "pobro",
+						Name:       "pobro",
+						FieldType:  "text",
+						Disabled:   false,
+						ClassInput: common.ClassInputTextEnabled + " flex-1",
+						Value:      fmt.Sprintf("%d", partneriData.PoBro),
+						MaxLength:  "6",
+						TabIndex:   "5",
+					})
+				</div>
+				<div class="flex items-center gap-2">
+					@tmpl.LabelField(domain.LabelFieldConfig{
+						ID:         "mesto",
+						LabelText:  translator.Label("Mesto"),
+						ClassLabel: common.ClassLabel + " w-10 flex-shrink-0",
+					})
+					@tmpl.TextInputField(domain.InputFieldConfig{
+						ID:         "mesto",
+						Name:       "mesto",
+						FieldType:  "text",
+						Disabled:   false,
+						ClassInput: common.ClassInputTextEnabled + " w-52 flex-1",
+						Value:      partneriData.Mesto,
+						MaxLength:  "50",
+						TabIndex:   "6",
+						OnInput:    "clearFieldError",
+						OnFocus:    "clearFieldError",
+					})
+					@tmpl.LabelField(domain.LabelFieldConfig{
+						ID:         "pak",
+						LabelText:  translator.Label("PAK"),
+						ClassLabel: common.ClassLabel + " w-8 flex-shrink-0",
+					})
+					@tmpl.NumericInputField(domain.InputFieldConfig{
+						ID:         "pak",
+						Name:       "pak",
+						Disabled:   false,
+						ClassInput: common.ClassInputTextEnabled + " w-24 flex-shrink-0",
+						MaxLength:  "10",
+						TabIndex:   "7",
+						Value:      fmt.Sprintf("%d", partneriData.Pak),
+					})
+				</div>
+			</div>
+			<!-- Sistema PDV -->
+			<div class="flex items-center gap-2">
+				@tmpl.LabelField(domain.LabelFieldConfig{
+					ID:         "lbltippdv",
+					LabelText:  translator.Label("Sistem PDV"),
+					ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
+				})
+				@tmpl.ComboBoxField(domain.ComboFieldConfig{
+					ID:          "tippdv",
+					Name:        "tippdv",
+					Placeholder: translator.Placeholder("Select"),
+					Disabled:    false,
+					ClassSelect: common.ClassSelect + " flex-1",
+					TabIndex:    "8",
+					OptionValues: []domain.ComboItem{
+						{Key: "1", Value: "U sistemu PDV-a"},
+						{Key: "2", Value: "Van sistema PDV-a"},
+						{Key: "3", Value: "Registrovani poljoprivrednik"},
+						{Key: "4", Value: "Fizičko lice"},
+						{Key: "5", Value: "Student"},
+					},
+					OnInput:       "clearFieldError",
+					OnFocus:       "clearFieldError",
+					SelectedValue: fmt.Sprintf("%d", partneriData.TipPDV),
+				}, translator)
+				@tmpl.LabelField(domain.LabelFieldConfig{
+					ID:         "gln",
+					LabelText:  translator.Label("GLN"),
+					ClassLabel: common.ClassLabel + " w-8 flex-shrink-0",
+				})
+				@tmpl.NumericInputField(domain.InputFieldConfig{
+					ID:         "gln",
+					Name:       "gln",
+					Disabled:   false,
+					ClassInput: common.ClassInputTextEnabled + " w-24 flex-shrink-0",
+					MaxLength:  "10",
+					TabIndex:   "9",
+					Value:      fmt.Sprintf("%d", partneriData.GLN),
+				})
+			</div>
+			<!-- PIB i Button Check PIB -->
+			<div class="flex items-center gap-2">
+				@tmpl.LabelField(domain.LabelFieldConfig{
+					ID:         "pib",
+					LabelText:  translator.Label("PIB"),
+					ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
+				})
+				<div class="flex items-center gap-2 flex-1">
+					@tmpl.TextInputField(domain.InputFieldConfig{
+						ID:         "pib",
+						Name:       "pib",
+						FieldType:  "text",
+						Disabled:   false,
+						ClassInput: common.ClassInputTextEnabled + " flex-1",
+						MaxLength:  "20",
+						TabIndex:   "10",
+						Value:      partneriData.PIB,
+					})
+					@tmpl.Button(btnProveriPIB, translator)
+				</div>
+			</div>
+			<!-- Matični broj -->
+			<div class="flex items-center gap-2">
+				@tmpl.LabelField(domain.LabelFieldConfig{
+					ID:         "lblmaticnibroj",
+					LabelText:  translator.Label("Maticni broj"),
+					ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
+				})
+				@tmpl.TextInputField(domain.InputFieldConfig{
+					ID:         "maticnibroj",
+					Name:       "maticnibroj",
+					FieldType:  "text",
+					Disabled:   false,
+					ClassInput: common.ClassInputTextEnabled + " flex-1",
+					MaxLength:  "20",
+					TabIndex:   "11",
+					Value:      partneriData.MatBr,
+				})
+			</div>
+			<!-- Matični broj -->
+			<div class="flex items-center gap-2">
+				@tmpl.LabelField(domain.LabelFieldConfig{
+					ID:         "lblkonta",
+					LabelText:  translator.Label("Konta partnera"),
+					ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
+				})
+				@tmpl.TextInputField(domain.InputFieldConfig{
+					ID:         "konta",
+					Name:       "konta",
+					FieldType:  "text",
+					Disabled:   false,
+					ClassInput: common.ClassInputTextEnabled + " flex-1",
+					MaxLength:  "120",
+					TabIndex:   "12",
+					Value:      partneriData.Konta,
+				})
+			</div>
+			<!-- Teritorija - Radio Set -->
+			<div class="flex items-center gap-2">
+				@tmpl.LabelField(domain.LabelFieldConfig{
+					ID:         "lblteritorija",
+					LabelText:  translator.Label("Teritorija"),
+					ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
+				})
+				<div class="flex items-center gap-3 flex-1">
+					<label class="flex items-center gap-2 cursor-pointer">
+						<input type="radio" name="teritorija" value="srbija" class="w-4 h-4" checked/>
+						<span class={ common.ClassLabel }>{ translator.Text("Srbija") }</span>
+					</label>
+					<label class="flex items-center gap-2 cursor-pointer">
+						<input type="radio" name="teritorija" value="kosovo" class="w-4 h-4"/>
+						<span class={ common.ClassLabel }>{ translator.Text("Kosovo i Metohija") }</span>
+					</label>
+					<label class="flex items-center gap-2 cursor-pointer">
+						<input type="radio" name="teritorija" value="ino" class="w-4 h-4"/>
+						<span class={ common.ClassLabel }>{ translator.Text("Ino partner") }</span>
+					</label>
+				</div>
+			</div>
+			<!-- Tekući računi (Editable Table) -->
+			<div class="max-h-44 overflow-y-auto overflow-x-auto border border-gray-300 rounded">
+				<table id="tekuciracuni-table" class="w-full border-collapse">
+					<thead class="bg-blue-900 text-white sticky top-0">
+						<tr>
+							<th class="border border-gray-300 px-1 w-8 text-xs text-left">{ translator.Label("Redni broj") }</th>
+							<th class="border border-gray-300 px-1 w-32 text-xs text-left">{ translator.Label("Broj računa") }</th>
+							<th class="border border-gray-300 px-1 w-56 text-xs text-left">{ translator.Label("Banka") }</th>
+							<th class="border border-gray-300 px-1 w-16 text-xs text-center ">{ translator.Label("Akcije") }</th>
+						</tr>
+					</thead>
+					<tbody id="tekuciracuni-table-body">
+						if len(tekRacuni.Rows) > 0 {
+							for i, row := range tekRacuni.Rows {
+								<tr class="tekracuni-row hover:bg-blue-50" data-index={ fmt.Sprintf("%d", i) }>
+									<td class="border border-white">
+										<input type="text" class="w-full border rounded px-1 h-7 tekrac-redbroj" placeholder="Redni broj" value={ row.Fields[0] }/>
+									</td>
+									<td class="border border-white">
+										<input type="text" class="w-full border rounded px-1 h-7 tekrac-brojracuna" placeholder="Broj računa" maxlength="20" value={ row.Fields[1] }/>
+									</td>
+									<td class="border border-white">
+										<input type="text" class="w-full border rounded px-1 h-7 tekrac-banka" placeholder="Banka" value={ row.Fields[2] }/>
+									</td>
+									<td class="border border-white px-1 h-7 text-center">
+										<button type="button" class="bg-red-500 text-white text-xs px-1 w-20 rounded hover:bg-red-600 delete-row">
+											{ translator.Button("Obriši") }
+										</button>
+									</td>
+								</tr>
+							}
+						}
+					</tbody>
+				</table>
+				<button type="button" id="add-tekracuni-row" class="mt-2 mb-1 bg-blue-500 text-white text-xs px-2 py-1 h-6 rounded hover:bg-blue-600">
+					+ { translator.Button("Dodaj račun") }
+				</button>
+			</div>
+		</div>
+		<!-- Right Column (40% width) -->
+		<div class="space-y-1">
+			<!-- Ostali podaci o partneru -->
+			<div>
+				<div class="text-blue-900 font-bold text-sm border-b-2 border-blue-900 py-1 mb-1">
+					{ translator.Text("Ostali podaci o partneru") }
+				</div>
+				<div class="space-y-1">
+					<!-- Web stranica -->
+					<div class="flex items-center gap-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "webstranica",
+							LabelText:  translator.Label("Web stranica"),
+							ClassLabel: common.ClassLabel + " w-28 flex-shrink-0",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "webstranica",
+							Name:       "webstranica",
+							FieldType:  "url",
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " flex-1 text-xs",
+							MaxLength:  "150",
+							TabIndex:   "14",
+							Value:      partneriData.Website,
+						})
+					</div>
+					<!-- E-mail -->
+					<div class="flex items-center gap-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "email",
+							LabelText:  translator.Label("E-mail"),
+							ClassLabel: common.ClassLabel + " w-28 flex-shrink-0",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "email",
+							Name:       "email",
+							FieldType:  "email",
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " flex-1 text-xs",
+							MaxLength:  "100",
+							TabIndex:   "15",
+							Value:      partneriData.Email,
+						})
+					</div>
+					<!-- Broj telefona -->
+					<div class="flex items-center gap-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "telefon",
+							LabelText:  translator.Label("Broj telefona"),
+							ClassLabel: common.ClassLabel + " w-28 flex-shrink-0",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "telefon",
+							Name:       "telefon",
+							FieldType:  "tel",
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " flex-1 text-xs",
+							MaxLength:  "30",
+							TabIndex:   "16",
+							Value:      partneriData.Telefon,
+						})
+					</div>
+					<!-- Kontakt osoba -->
+					<div class="flex items-center gap-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "kontakosoba",
+							LabelText:  translator.Label("Kontakt osoba"),
+							ClassLabel: common.ClassLabel + " w-28 flex-shrink-0",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "kontakosoba",
+							Name:       "kontakosoba",
+							FieldType:  "text",
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " flex-1 text-xs",
+							MaxLength:  "100",
+							TabIndex:   "17",
+							Value:      partneriData.KontaktOsb,
+						})
+					</div>
+					<!-- Opština -->
+					<div class="flex items-center gap-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "opstina",
+							LabelText:  translator.Label("Opstina"),
+							ClassLabel: common.ClassLabel + " w-28 flex-shrink-0",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "opstina",
+							Name:       "opstina",
+							FieldType:  "text",
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " flex-1 text-xs",
+							MaxLength:  "100",
+							TabIndex:   "18",
+							Value:      fmt.Sprintf("%d", partneriData.IDSifOp),
+						})
+					</div>
+					<!-- JMBG -->
+					<div class="flex items-center gap-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "jmbg",
+							LabelText:  translator.Label("JMBG"),
+							ClassLabel: common.ClassLabel + " w-28 flex-shrink-0",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "jmbg",
+							Name:       "jmbg",
+							FieldType:  "text",
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " flex-1 text-xs",
+							MaxLength:  "20",
+							TabIndex:   "19",
+							Value:      partneriData.JMBG,
+						})
+					</div>
+					<!-- BPG -->
+					<div class="flex items-center gap-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "bpg",
+							LabelText:  translator.Label("BPG"),
+							ClassLabel: common.ClassLabel + " w-28 flex-shrink-0",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "bpg",
+							Name:       "bpg",
+							FieldType:  "text",
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " flex-1 text-xs",
+							MaxLength:  "20",
+							TabIndex:   "20",
+							Value:      partneriData.BPG,
+						})
+					</div>
+					<!-- BPG -->
+					<div class="flex items-center gap-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "indeks",
+							LabelText:  translator.Label("Indeks"),
+							ClassLabel: common.ClassLabel + " w-28 flex-shrink-0",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "indeks",
+							Name:       "indeks",
+							FieldType:  "text",
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " w-24",
+							MaxLength:  "20",
+							TabIndex:   "21",
+							Value:      partneriData.Index,
+						})
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "sifrakodpartnera",
+							LabelText:  translator.Label("Šifra kod partnera"),
+							ClassLabel: common.ClassLabel + " w-34 flex-shrink-0",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "sifrakodpartnera",
+							Name:       "sifrakodpartnera",
+							FieldType:  "text",
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " flex-1 text-xs",
+							MaxLength:  "20",
+							TabIndex:   "22",
+							Value:      "",
+						})
+					</div>
+				</div>
+			</div>
+			<!-- Uslovi prodaje/nabavke -->
+			<div>
+				<div class="text-blue-900 font-bold text-sm border-b-2 border-blue-900 py-1 mb-1">
+					{ translator.Text("Uslovi prodaje/nabavke") }
+				</div>
+				<div class="space-y-1 text-xs">
+					<!-- Kredit limit -->
+					<div class="flex items-center gap-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "limitkredita",
+							LabelText:  translator.Label("Kredit limit"),
+							ClassLabel: common.ClassLabel + " w-52 flex-shrink-0",
+						})
+						@tmpl.NumericInputField(domain.InputFieldConfig{
+							ID:            "limitkredita",
+							Name:          "limitkredita",
+							FieldType:     "number",
+							Disabled:      false,
+							ClassInput:    common.ClassInputTextEnabled,
+							Value:         common.FormatNumberWithSystemLocale(partneriData.KrLimit, 2),
+							DecimalPlaces: 2,
+							TabIndex:      "23",
+						})
+					</div>
+					<!-- Limit na dospela potraživa -->
+					<div class="flex items-center gap-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "limitdospela",
+							LabelText:  translator.Label("Limit na dospela potraživanja"),
+							ClassLabel: common.ClassLabel + " w-52 flex-shrink-0",
+						})
+						@tmpl.NumericInputField(domain.InputFieldConfig{
+							ID:            "limitdospela",
+							Name:          "limitdospela",
+							FieldType:     "number",
+							Disabled:      false,
+							ClassInput:    common.ClassInputTextEnabled,
+							Value:         common.FormatNumberWithSystemLocale(partneriData.KrLimitDosp, 2),
+							DecimalPlaces: 2,
+							TabIndex:      "24",
+						})
+					</div>
+					<!-- Valuta plaćanja prodaja + Rabat -->
+					<div class="flex items-center gap-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "valutaprodaja",
+							LabelText:  translator.Label("Valuta placanja (prodaja)"),
+							ClassLabel: common.ClassLabel + " w-44 flex-shrink-0",
+						})
+						@tmpl.NumericInputField(domain.InputFieldConfig{
+							ID:            "valutaprodaja",
+							Name:          "valutaprodaja",
+							FieldType:     "number",
+							Disabled:      false,
+							ClassInput:    common.ClassInputTextEnabled,
+							Value:         common.FormatNumberWithSystemLocale(partneriData.ProVal, 0),
+							DecimalPlaces: 2,
+							TabIndex:      "25",
+						})
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "rabatprodaja",
+							LabelText:  translator.Label("Ugovoreni Rabat %"),
+							ClassLabel: common.ClassLabel + " w-28 flex-shrink-0",
+						})
+						@tmpl.NumericInputField(domain.InputFieldConfig{
+							ID:            "rabatprodaja",
+							Name:          "rabatprodaja",
+							FieldType:     "number",
+							Disabled:      false,
+							ClassInput:    common.ClassInputTextEnabled,
+							Value:         common.FormatNumberWithSystemLocale(partneriData.UGRabat, 2),
+							DecimalPlaces: 2,
+							TabIndex:      "26",
+						})
+					</div>
+					<!-- Valuta plaćanja nabavka + Rabat -->
+					<div class="flex items-center gap-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "valutanabavka",
+							LabelText:  translator.Label("Valuta placanja (nabavka)"),
+							ClassLabel: common.ClassLabel + " w-44 flex-shrink-0",
+						})
+						@tmpl.NumericInputField(domain.InputFieldConfig{
+							ID:            "valutanabavka",
+							Name:          "valutanabavka",
+							FieldType:     "number",
+							Disabled:      false,
+							ClassInput:    common.ClassInputTextEnabled,
+							Value:         common.FormatNumberWithSystemLocale(partneriData.NabVal, 0),
+							DecimalPlaces: 2,
+							TabIndex:      "27",
+						})
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "rabatnaabavka",
+							LabelText:  translator.Label("Procenat marze %"),
+							ClassLabel: common.ClassLabel + " w-28",
+						})
+						@tmpl.NumericInputField(domain.InputFieldConfig{
+							ID:            "rabatnaabavka",
+							Name:          "rabatnaabavka",
+							FieldType:     "number",
+							Disabled:      false,
+							ClassInput:    common.ClassInputTextEnabled,
+							DecimalPlaces: 2,
+							TabIndex:      "28",
+							Value:         "0.00",
+						})
+					</div>
+					<!-- Komercijalista -->
+					<div class="flex items-center gap-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "komercijalista",
+							LabelText:  translator.Label("Komercijalista"),
+							ClassLabel: common.ClassLabel + " w-44",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "komercijalista",
+							Name:       "komercijalista",
+							FieldType:  "text",
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled,
+							MaxLength:  "100",
+							TabIndex:   "29",
+							Value:      fmt.Sprintf("%d", partneriData.Kom),
+						})
+					</div>
+					<!-- Napomena -->
+					<div class="flex items-center gap-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "napomena",
+							LabelText:  translator.Label("Napomena"),
+							ClassLabel: common.ClassLabel + " w-44 text-top",
+						})
+						@tmpl.TextAreaField(domain.InputFieldConfig{
+							ID:         "napomena",
+							Name:       "napomena",
+							Value:      partneriData.Napomena,
+							ClassInput: common.ClassTextAreaEnabled,
+							MaxLength:  "1000",
+							TabIndex:   "30",
+						})
+					</div>
+					<div class="flex items-center gap-2"></div>
+				</div>
+			</div>
+		</div>
+	</div>
 }
 
 templ PartneriList(tableData domain.TableData, translator *i18n.Service) {
@@ -1079,4 +1106,3 @@ templ PartneriScript() {
 		});
 	</script>
 }
-

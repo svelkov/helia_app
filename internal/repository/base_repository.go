@@ -71,18 +71,21 @@ func (r *BaseRepository[T]) GetByID(ctx context.Context, idField string, idValue
 	return &entity, nil
 }
 
-func (r *BaseRepository[T]) GetAll(ctx context.Context, pageSize int, offset int, tableFields []domain.Fields, idField string, searchParams ...string) (*[]T, error) {
+func (r *BaseRepository[T]) GetAll(ctx context.Context, pageSize int, offset int, tableFields []domain.Fields, idField string, searchText string) (*[]T, error) {
 	var entity []T
 
-	query, args := r.CreateGetAllStatement(ctx, tableFields, idField, searchParams...)
-	param := len(args) + 1
-
-	endPaging := ""
-	if pageSize > 0 {
-		args = append(args, pageSize, offset)
-		endPaging = fmt.Sprintf(` LIMIT $%d OFFSET $%d`, param, param+1)
+	qb := r.CreateGetAllStatement(ctx, tableFields, idField, searchText)
+	if qb == nil {
+		return nil, fmt.Errorf("error creating query builder")
 	}
-	query = fmt.Sprintf("%s %s", query, endPaging)
+	if searchText != "" {	
+		// Add search conditions to the query builder
+		qb.AddSearchConditions(tableFields, searchText)
+	}
+	qb.SetLimit(pageSize)
+	qb.SetOffset(offset) 
+	
+	query, args := qb.Build()
 	// Execute the query
 	err := r.DB.SelectContext(ctx, &entity, query, args...)
 	if err != nil {
@@ -104,9 +107,9 @@ func (r *BaseRepository[T]) GetAllCustom(ctx context.Context, queryText, whereTe
 	return &entity, nil
 }
 
-func (r *BaseRepository[T]) GetTotalRecords(ctx context.Context, tableFields []domain.Fields, searchParams ...string) (int, error) {
+func (r *BaseRepository[T]) GetTotalRecords(ctx context.Context, tableFields []domain.Fields, searchText string) (int, error) {
 	countRec := 0
-	query, args := r.CreateGetCountRecordsStatement(ctx, tableFields, searchParams...)
+	query, args := r.CreateGetCountRecordsStatement(ctx, tableFields, searchText)
 
 	// Execute the query
 	err := r.DB.GetContext(ctx, &countRec, query, args...)

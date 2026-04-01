@@ -53,10 +53,10 @@ const (
 			"tipkonta": document.querySelector('input[name="tipkonta"]:checked')?.value
         }`
 	hxValsSaldaGrupeKonta = `js:{
-            "od_konta": document.getElementById("od_konta")?.value,
-			"do_konta": document.getElementById("do_konta")?.value,
-			"od_sifre": document.getElementById("od_sifre")?.value,
-			"do_sifre": document.getElementById("do_sifre")?.value,
+            "odkonta": document.getElementById("odkonta")?.value,
+			"dokonta": document.getElementById("dokonta")?.value,
+			"odsifre": document.getElementById("odsifre")?.value,
+			"dosifre": document.getElementById("dosifre")?.value,
 			"chk_salda_valute": document.querySelector('input[name="chk_salda_valute"]:checked')?.value,
 			"cbx_tipizvestaja": document.getElementById("cbx_tipizvestaja")?.value,
 			"cbx_klasa": document.getElementById("cbx_klasa")?.value,
@@ -66,8 +66,8 @@ const (
 			"chk_saldo_vece_nula": document.querySelector('input[name="chk_saldo_vece_nula"]:checked')?.value,
 			"chk_saldo_manje_nula": document.querySelector('input[name="chk_saldo_manje_nula"]:checked')?.value,
 			"chk_saldo_nula": document.querySelector('input[name="chk_saldo_nula"]:checked')?.value,
-			"od_salda": document.getElementById("od_salda")?.value,
-			"do_salda": document.getElementById("do_salda")?.value,
+			"odsalda": document.getElementById("odsalda")?.value,
+			"dosalda": document.getElementById("dosalda")?.value,
         }`
 
 	hxValsSaldaPartneriPrelomljeno = `js:{"sifra_od": document.getElementById("sifra_od")?.value,
@@ -161,8 +161,7 @@ func (h *SaldaHandler) SaldaPojedinacnihKonta(c *gin.Context) {
 		konto := c.Query("konto")
 		sifra := c.Query("sifra")
 		ctx := c.Request.Context()
-
-		fieldsError := h.service.CheckSaldaParameters(ctx, fieldParameters, konto, sifra, tipkonta)
+		fieldsError := common.ValidateRequiredParams(c, fieldParameters)
 		if len(fieldsError) > 0 {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldsError, common.ErrMsgValidation)
 			return
@@ -171,15 +170,11 @@ func (h *SaldaHandler) SaldaPojedinacnihKonta(c *gin.Context) {
 		page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
 		tbl.Pagination.HxVals = hxValsSaldaPojedinacnihKonta
 		err := h.service.GetSaldaPojedinacnihKonta(ctx, &tbl, false, pageSize, page, konto, sifra, tipkonta)
+		if err != nil {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
+			return
+		}
 		tbl.ShowPagination = false
-		if err != nil {
-			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
-			return
-		}
-		if err != nil {
-			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
-			return
-		}
 		utils.RenderContent(c, tbl)
 	}
 }
@@ -202,31 +197,41 @@ func (h *SaldaHandler) SaldaGrupeKonta(c *gin.Context) {
 		}
 	}
 	if requestSource == "btnobrada" || requestSource == "btnpage" || requestSource == "searchinput" {
-		fieldParameters := []string{"od_konta", "do_konta", "od_sifre", "do_sifre", "chk_salda_valute",
-			"cbx_tipizvestaja", "cbx_klasa", "cbx_odmeseca", "cbx_domeseca", "chk_saldo_razl_nula",
-			"chk_saldo_vece_nula", "chk_saldo_manje_nula", "chck_saldo_nula", "od_salda", "do_salda"}
+		fieldParameters := []string{"odkonta", "dokonta", "odsifre", "dosifre", "chk_salda_valute",
+			"cbxtipizvestaja", "cbxklasa", "cbxodmeseca", "cbxdomeseca", "chk_saldo_razl_nula",
+			"chk_saldo_vece_nula", "chk_saldo_manje_nula", "chck_saldo_nula", "odsalda", "dosalda"}
 		// Extract parameters from query
 		ctx := c.Request.Context()
-		odkonta := c.Query("od_konta")
-		dokonta := c.Query("do_konta")
-		odsifre := c.Query("od_sifre")
-		dosifre := c.Query("do_sifre")
-		tiplazivestaja := c.Query("cbx_tipizvestaja")
-		klasa9 := c.Query("cbx_klasa")
-		samosaprometom := c.Query("chk_saldo_razl_nula")
+		params := domain.SaldaParam{
+			OdKonta:           c.Query("odkonta"),
+			DoKonta:           c.Query("dokonta"),
+			OdSifre:           c.Query("odsifre"),
+			DoSifre:           c.Query("dosifre"),
+			ChkSaldaValute:    c.Query("chk_salda_valute"),
+			CbxTipIzvestaja:   c.Query("cbxtipizvestaja"),
+			CbxKlasa:          c.Query("cbxklasa"),
+			CbxOdMeseca:       c.Query("cbxodmeseca"),
+			CbxDoMeseca:       c.Query("cbxdomeseca"),
+			ChkSaldoRazlNula:  c.Query("chk_saldo_razl_nula"),
+			ChkSaldoVeceNula:  c.Query("chk_saldo_vece_nula"),
+			ChkSaldoManjeNula: c.Query("chk_saldo_manje_nula"),
+			ChkSaldoNula:      c.Query("chck_saldo_nula"),
+			OdSalda:           c.Query("odsalda"),
+			DoSalda:           c.Query("dosalda"),
+		}
 
-		fieldsError := h.service.CheckSaldaGrupeParameters(ctx, fieldParameters, tiplazivestaja, odkonta, dokonta, odsifre, dosifre, klasa9)
+		fieldsError := h.service.CheckSaldaGrupeParameters(ctx, fieldParameters, params)
 		if len(fieldsError) > 0 {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldsError, common.ErrMsgValidation)
 			return
 		}
 		page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
-		err := h.service.GetSaldaGrupeKonta(ctx, &tbl, true, page, pageSize, odkonta, dokonta, odsifre, dosifre, tiplazivestaja, klasa9, samosaprometom)
+		err := h.service.GetSaldaGrupeKonta(ctx, &tbl, true, page, pageSize, params)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
 			return
 		}
-		err = h.service.GetSaldaGrupeKonta(ctx, &tbl, false, page, pageSize, odkonta, dokonta, odsifre, dosifre, tiplazivestaja, klasa9, samosaprometom)
+		err = h.service.GetSaldaGrupeKonta(ctx, &tbl, false, page, pageSize, params)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return

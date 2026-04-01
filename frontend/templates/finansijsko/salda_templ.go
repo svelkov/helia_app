@@ -69,6 +69,10 @@ func SaldaMain(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada do
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
+		templ_7745c5c3_Err = tmpl.HandleDialogResponseScript("").Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
 		return nil
 	})
 }
@@ -110,7 +114,7 @@ func SaldaPojedinacnihKonta(tabs domain.TabData, tbl domain.TableData, btnObrada
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Parametri"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 36, Col: 35}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 37, Col: 35}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
@@ -123,7 +127,7 @@ func SaldaPojedinacnihKonta(tabs domain.TabData, tbl domain.TableData, btnObrada
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Sintetika"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 42, Col: 73}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 43, Col: 73}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
@@ -136,7 +140,7 @@ func SaldaPojedinacnihKonta(tabs domain.TabData, tbl domain.TableData, btnObrada
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Subsintetika"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 46, Col: 76}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 47, Col: 76}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
@@ -149,7 +153,7 @@ func SaldaPojedinacnihKonta(tabs domain.TabData, tbl domain.TableData, btnObrada
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Analitika"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 50, Col: 73}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 51, Col: 73}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
@@ -180,7 +184,8 @@ func SaldaPojedinacnihKonta(tabs domain.TabData, tbl domain.TableData, btnObrada
 			MinLength:    "2",
 			MaxLength:    "6",
 			TabIndex:     "1",
-			OnInput:      "clearFieldError"}).Render(ctx, templ_7745c5c3_Buffer)
+			OnInput:      "clearFieldError",
+			OnFocus:      "clearFieldError"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -232,7 +237,8 @@ func SaldaPojedinacnihKonta(tabs domain.TabData, tbl domain.TableData, btnObrada
 			MinLength:    "2",
 			MaxLength:    "6",
 			TabIndex:     "2",
-			OnInput:      "clearFieldError"}).Render(ctx, templ_7745c5c3_Buffer)
+			OnInput:      "clearFieldError",
+			OnFocus:      "clearFieldError"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -286,7 +292,7 @@ func SaldaPojedinacnihKonta(tabs domain.TabData, tbl domain.TableData, btnObrada
 		var templ_7745c5c3_Var7 string
 		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Mesečna salda"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 142, Col: 40}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 145, Col: 40}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {
@@ -315,7 +321,7 @@ func SaldaPojedinacnihKonta(tabs domain.TabData, tbl domain.TableData, btnObrada
 		var templ_7745c5c3_Var8 string
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Prikaz salda"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 156, Col: 37}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 159, Col: 37}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {
@@ -370,7 +376,7 @@ func SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Parametri"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 181, Col: 36}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 184, Col: 36}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
@@ -401,6 +407,7 @@ func SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 			Value:        "0000",
 			MaxLength:    "6",
 			OnInput:      "clearFieldError",
+			OnFocus:      "clearFieldError",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -453,6 +460,7 @@ func SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 			Value:        "999999",
 			MaxLength:    "6",
 			OnInput:      "clearFieldError",
+			OnFocus:      "clearFieldError",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -507,6 +515,7 @@ func SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 			TabIndex:     "2",
 			Value:        "00",
 			OnInput:      "clearFieldError",
+			OnFocus:      "clearFieldError",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -560,6 +569,7 @@ func SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 			TabIndex:     "2",
 			Value:        "999999",
 			OnInput:      "clearFieldError",
+			OnFocus:      "clearFieldError",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -609,7 +619,7 @@ func SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		var templ_7745c5c3_Var11 string
 		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Ime izveštaja"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 355, Col: 42}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 362, Col: 42}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {
@@ -748,7 +758,7 @@ func SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "od_salda",
+			ID:         "odsalda",
 			LabelText:  translator.Label("Od salda"),
 			ClassLabel: common.ClassLabel + " w-36",
 		}).Render(ctx, templ_7745c5c3_Buffer)
@@ -756,8 +766,8 @@ func SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "od_salda",
-			Name:       "od_salda",
+			ID:         "odsalda",
+			Name:       "odsalda",
 			FieldType:  "number",
 			Disabled:   true,
 			ClassInput: common.ClassInputTextEnabled + " w-40",
@@ -783,7 +793,7 @@ func SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "do_salda",
+			ID:         "dosalda",
 			LabelText:  translator.Label("Do salda"),
 			ClassLabel: common.ClassLabel + " w-36",
 		}).Render(ctx, templ_7745c5c3_Buffer)
@@ -791,8 +801,8 @@ func SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "do_salda",
-			Name:       "do_salda",
+			ID:         "dosalda",
+			Name:       "dosalda",
 			FieldType:  "number",
 			Disabled:   true,
 			ClassInput: common.ClassInputTextEnabled + " w-40",
@@ -890,7 +900,7 @@ func SaldaPartneri(tabs domain.TabData, tblPartneri domain.TableData, inputContr
 		var templ_7745c5c3_Var13 string
 		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Title("Partneri"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 536, Col: 36}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 543, Col: 36}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 		if templ_7745c5c3_Err != nil {
@@ -952,7 +962,7 @@ func SaldaPartneriDetalji(tblKonta, tblDetalji domain.TableData, translator *i18
 		var templ_7745c5c3_Var15 string
 		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Title("Salda po kontima"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 556, Col: 41}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 563, Col: 41}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 		if templ_7745c5c3_Err != nil {
@@ -973,7 +983,7 @@ func SaldaPartneriDetalji(tblKonta, tblDetalji domain.TableData, translator *i18
 		var templ_7745c5c3_Var16 string
 		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Title("Detalji"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 566, Col: 32}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 573, Col: 32}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 		if templ_7745c5c3_Err != nil {
@@ -1031,7 +1041,7 @@ func SaldaPartneriPrelomljeno(tabs domain.TabData, tbl domain.TableData, btnObra
 		var templ_7745c5c3_Var18 string
 		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Parametri"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 589, Col: 36}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 596, Col: 36}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
@@ -1057,6 +1067,8 @@ func SaldaPartneriPrelomljeno(tabs domain.TabData, tbl domain.TableData, btnObra
 			ClassInput: common.ClassInputTextEnabled + " w-24",
 			Value:      "000000",
 			MaxLength:  "6",
+			OnFocus:    "clearFieldError",
+			OnInput:    "clearFieldError",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -1081,6 +1093,8 @@ func SaldaPartneriPrelomljeno(tabs domain.TabData, tbl domain.TableData, btnObra
 			ClassInput: common.ClassInputTextEnabled + " w-24",
 			Value:      "999999",
 			MaxLength:  "6",
+			OnFocus:    "clearFieldError",
+			OnInput:    "clearFieldError",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -1104,7 +1118,7 @@ func SaldaPartneriPrelomljeno(tabs domain.TabData, tbl domain.TableData, btnObra
 		var templ_7745c5c3_Var19 string
 		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Rezime"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 633, Col: 33}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 644, Col: 33}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 		if templ_7745c5c3_Err != nil {
@@ -1117,7 +1131,7 @@ func SaldaPartneriPrelomljeno(tabs domain.TabData, tbl domain.TableData, btnObra
 		var templ_7745c5c3_Var20 string
 		templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Kupac"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 636, Col: 80}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 647, Col: 80}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 		if templ_7745c5c3_Err != nil {
@@ -1130,7 +1144,7 @@ func SaldaPartneriPrelomljeno(tabs domain.TabData, tbl domain.TableData, btnObra
 		var templ_7745c5c3_Var21 string
 		templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Dobavljač"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 637, Col: 85}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 648, Col: 85}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 		if templ_7745c5c3_Err != nil {
@@ -1143,7 +1157,7 @@ func SaldaPartneriPrelomljeno(tabs domain.TabData, tbl domain.TableData, btnObra
 		var templ_7745c5c3_Var22 string
 		templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Primijen avans"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 638, Col: 89}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 649, Col: 89}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
 		if templ_7745c5c3_Err != nil {
@@ -1156,7 +1170,7 @@ func SaldaPartneriPrelomljeno(tabs domain.TabData, tbl domain.TableData, btnObra
 		var templ_7745c5c3_Var23 string
 		templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Dat avans"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 639, Col: 84}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 650, Col: 84}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 		if templ_7745c5c3_Err != nil {
@@ -1218,7 +1232,7 @@ func SaldaTotalValues(total domain.SaldaDto, sourceUrl string, translator *i18n.
 		var templ_7745c5c3_Var25 string
 		templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(sourceUrl)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 660, Col: 20}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 671, Col: 20}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
 		if templ_7745c5c3_Err != nil {
@@ -1231,7 +1245,7 @@ func SaldaTotalValues(total domain.SaldaDto, sourceUrl string, translator *i18n.
 		var templ_7745c5c3_Var26 string
 		templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Duguje"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 679, Col: 56}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 690, Col: 56}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
 		if templ_7745c5c3_Err != nil {
@@ -1244,7 +1258,7 @@ func SaldaTotalValues(total domain.SaldaDto, sourceUrl string, translator *i18n.
 		var templ_7745c5c3_Var27 string
 		templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Potražuje"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 680, Col: 60}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 691, Col: 60}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
 		if templ_7745c5c3_Err != nil {
@@ -1257,7 +1271,7 @@ func SaldaTotalValues(total domain.SaldaDto, sourceUrl string, translator *i18n.
 		var templ_7745c5c3_Var28 string
 		templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Saldo"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 681, Col: 55}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 692, Col: 55}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
 		if templ_7745c5c3_Err != nil {
@@ -1270,7 +1284,7 @@ func SaldaTotalValues(total domain.SaldaDto, sourceUrl string, translator *i18n.
 		var templ_7745c5c3_Var29 string
 		templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Početno stanje"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 684, Col: 75}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 695, Col: 75}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
 		if templ_7745c5c3_Err != nil {
@@ -1317,7 +1331,7 @@ func SaldaTotalValues(total domain.SaldaDto, sourceUrl string, translator *i18n.
 		var templ_7745c5c3_Var30 string
 		templ_7745c5c3_Var30, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Tekući promet"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 708, Col: 74}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 719, Col: 74}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var30))
 		if templ_7745c5c3_Err != nil {
@@ -1364,7 +1378,7 @@ func SaldaTotalValues(total domain.SaldaDto, sourceUrl string, translator *i18n.
 		var templ_7745c5c3_Var31 string
 		templ_7745c5c3_Var31, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Ukupan promet"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 732, Col: 73}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 743, Col: 73}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var31))
 		if templ_7745c5c3_Err != nil {
@@ -1468,6 +1482,7 @@ func SaldaKlase5i6analiticki(tabs domain.TabData, tbl domain.TableData, btnObrad
 			MaxLength:    "6",
 			TabIndex:     "1",
 			OnInput:      "clearFieldError",
+			OnFocus:      "clearFieldError",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -1521,6 +1536,7 @@ func SaldaKlase5i6analiticki(tabs domain.TabData, tbl domain.TableData, btnObrad
 			MaxLength:    "6",
 			TabIndex:     "2",
 			OnInput:      "clearFieldError",
+			OnFocus:      "clearFieldError",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -1568,6 +1584,7 @@ func SaldaKlase5i6analiticki(tabs domain.TabData, tbl domain.TableData, btnObrad
 			ClassInput: common.ClassInputTextEnabled + " w-32",
 			TabIndex:   "3",
 			OnInput:    "clearFieldError",
+			OnFocus:    "clearFieldError",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -1593,6 +1610,7 @@ func SaldaKlase5i6analiticki(tabs domain.TabData, tbl domain.TableData, btnObrad
 			ClassInput: common.ClassInputTextEnabled + " w-32",
 			TabIndex:   "4",
 			OnInput:    "clearFieldError",
+			OnFocus:    "clearFieldError",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -1735,6 +1753,7 @@ func SaldaKlase5i6MT(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 			Value:        "0000",
 			MaxLength:    "6",
 			OnInput:      "clearFieldError",
+			OnFocus:      "clearFieldError",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -1787,6 +1806,7 @@ func SaldaKlase5i6MT(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 			Value:        "999999",
 			MaxLength:    "6",
 			OnInput:      "clearFieldError",
+			OnFocus:      "clearFieldError",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -1860,6 +1880,7 @@ func SaldaKlase5i6MT(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 			ClassInput: common.ClassInputTextEnabled + " w-32",
 			TabIndex:   "4",
 			OnInput:    "clearFieldError",
+			OnFocus:    "clearFieldError",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -1984,7 +2005,7 @@ func SaldaPoKomercijalistima(tabs domain.TabData, tbl domain.TableData, btnObrad
 		var templ_7745c5c3_Var35 string
 		templ_7745c5c3_Var35, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Parametri"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 1118, Col: 36}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 1136, Col: 36}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var35))
 		if templ_7745c5c3_Err != nil {
@@ -2010,6 +2031,8 @@ func SaldaPoKomercijalistima(tabs domain.TabData, tbl domain.TableData, btnObrad
 			Disabled:   false,
 			ClassInput: common.ClassInputTextEnabled + " w-28",
 			MaxLength:  "3",
+			OnFocus:    "clearFieldError",
+			OnInput:    "clearFieldError",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -2034,6 +2057,8 @@ func SaldaPoKomercijalistima(tabs domain.TabData, tbl domain.TableData, btnObrad
 			ClassInput: common.ClassInputTextEnabled + " w-20",
 			Value:      "0",
 			MaxLength:  "3",
+			OnFocus:    "clearFieldError",
+			OnInput:    "clearFieldError",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -2076,6 +2101,8 @@ func SaldaPoKomercijalistima(tabs domain.TabData, tbl domain.TableData, btnObrad
 			ClassInput: common.ClassInputTextEnabled + " w-16",
 			Value:      "999",
 			MaxLength:  "3",
+			OnFocus:    "clearFieldError",
+			OnInput:    "clearFieldError",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -2182,7 +2209,7 @@ func RealizacijaKomercijalisti(tabs domain.TabData, tbl domain.TableData, btnObr
 		var templ_7745c5c3_Var37 string
 		templ_7745c5c3_Var37, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Parametri"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 1235, Col: 36}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 1259, Col: 36}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var37))
 		if templ_7745c5c3_Err != nil {
@@ -2325,7 +2352,7 @@ func RealizacijaKomercijalisti(tabs domain.TabData, tbl domain.TableData, btnObr
 		var templ_7745c5c3_Var38 string
 		templ_7745c5c3_Var38, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Stampaj zbirno po komercijalistima"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 1337, Col: 99}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 1361, Col: 99}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var38))
 		if templ_7745c5c3_Err != nil {
@@ -2338,7 +2365,7 @@ func RealizacijaKomercijalisti(tabs domain.TabData, tbl domain.TableData, btnObr
 		var templ_7745c5c3_Var39 string
 		templ_7745c5c3_Var39, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Stampaj komercijalistu na novu stranu"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 1345, Col: 102}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 1369, Col: 102}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var39))
 		if templ_7745c5c3_Err != nil {

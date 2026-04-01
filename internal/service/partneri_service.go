@@ -23,7 +23,8 @@ type PartneriService interface {
 	GetCompanyByPIB(pib string) (*domain.CompanyInfo, error)
 	GetCompanyAccountsByPIB(tbl *domain.TableData, pib string) error
 	GetLastPartneriID(ctx context.Context) (int64, error)
-	ValidacijaPartneri(ctx context.Context, entity *domain.Partneri) ([]domain.FieldError, error)
+	ValidacijaPartneri(ctx context.Context, entity *domain.Partneri, action string) ([]domain.FieldError, error)
+	GetTipoveAnalitike(ctx context.Context) ([]domain.ComboItem, error)
 	GetTekuciRacuni(ctx context.Context, id int64, tbl *domain.TableData) error
 	GetTekuciRacuniTableFields() []domain.Fields
 	GetPartneriTableFields() []domain.Fields
@@ -38,16 +39,18 @@ type PartneriResource struct {
 	validator               *validation.RuleBasedValidator[domain.Partneri]
 	partneriRepo            *repository.BaseRepository[domain.Partneri]
 	tekracuniRepo           *repository.BaseRepository[domain.TekRacuni]
+	tipanalitikeRepo        *repository.BaseRepository[domain.Tipanalitike]
 	partneriTableFields     []domain.Fields
 	tekuciRacuniTableFields []domain.Fields
 }
 
-func NewPartneriService(service *BaseService[domain.Partneri], validator *validation.RuleBasedValidator[domain.Partneri], partneriRepo *repository.BaseRepository[domain.Partneri], tekracuniRepo *repository.BaseRepository[domain.TekRacuni]) *PartneriResource {
+func NewPartneriService(service *BaseService[domain.Partneri], validator *validation.RuleBasedValidator[domain.Partneri], partneriRepo *repository.BaseRepository[domain.Partneri], tekracuniRepo *repository.BaseRepository[domain.TekRacuni], tipanalitikeRepo *repository.BaseRepository[domain.Tipanalitike]) *PartneriResource {
 	rs := &PartneriResource{
-		service:       service,
-		validator:     validator,
-		partneriRepo:  partneriRepo,
-		tekracuniRepo: tekracuniRepo,
+		service:          service,
+		validator:        validator,
+		partneriRepo:     partneriRepo,
+		tekracuniRepo:    tekracuniRepo,
+		tipanalitikeRepo: tipanalitikeRepo,
 	}
 	rs.setServiceFieldValues()
 	return rs
@@ -100,8 +103,8 @@ func (s *PartneriResource) Delete(ctx context.Context, idField string, id int64)
 }
 
 // GetAll implements NalogService.
-func (s *PartneriResource) GetAll(ctx context.Context, page int, offset int, tableFields []domain.Fields, idField string, searchParams ...string) (*[]domain.Partneri, error) {
-	return s.service.GetAll(ctx, page, offset, tableFields, idField, searchParams...)
+func (s *PartneriResource) GetAll(ctx context.Context, page int, offset int, tableFields []domain.Fields, idField string, searchText string) (*[]domain.Partneri, error) {
+	return s.service.GetAll(ctx, page, offset, tableFields, idField, searchText)
 }
 
 // GetAllCustom implements NalogService.
@@ -148,8 +151,8 @@ func (s *PartneriResource) GetFieldCache() map[string]reflect.StructField {
 }
 
 // GetTotalRecords implements NalogService.
-func (s *PartneriResource) GetTotalRecords(ctx context.Context, tableFields []domain.Fields, searchParams ...string) (int, error) {
-	return s.service.GetTotalRecords(ctx, tableFields, searchParams...)
+func (s *PartneriResource) GetTotalRecords(ctx context.Context, tableFields []domain.Fields, searchText string) (int, error) {
+	return s.service.GetTotalRecords(ctx, tableFields, searchText)
 }
 
 // GetTotalRecordsCustom implements NalogService.
@@ -299,7 +302,7 @@ func (s *PartneriResource) UpdateWithTekRacuni(ctx context.Context, partner *dom
 	return nil
 }
 
-func (s *PartneriResource) ValidacijaPartneri(ctx context.Context, entity *domain.Partneri) ([]domain.FieldError, error) {
+func (s *PartneriResource) ValidacijaPartneri(ctx context.Context, entity *domain.Partneri, action string) ([]domain.FieldError, error) {
 	var fieldErrors []domain.FieldError
 
 	// Trim spaces from fields
@@ -313,19 +316,21 @@ func (s *PartneriResource) ValidacijaPartneri(ctx context.Context, entity *domai
 	if strings.TrimSpace(entity.Sifra) == "" {
 		fieldErrors = append(fieldErrors, domain.FieldError{
 			Field:        "sifra",
-			ErrorMessage: "Morate uneti analitiku sifru partnera!!!",
+			ErrorMessage: "Morate uneti sifru partnera!!!",
 		})
 	}
 	// Always check for duplicate sifra (validation applies to both create and update)
-	exists, err := s.ExistsByField(ctx, "sifra", strings.TrimSpace(entity.Sifra))
-	if err != nil {
-		return fieldErrors, err
-	}
-	if exists {
-		fieldErrors = append(fieldErrors, domain.FieldError{
-			Field:        "sifra",
-			ErrorMessage: "Partner sa ovom šifrom već postoji!!!",
-		})
+	if action == common.ActionAdd {
+		exists, err := s.ExistsByField(ctx, "sifra", strings.TrimSpace(entity.Sifra))
+		if err != nil {
+			return fieldErrors, err
+		}
+		if exists {
+			fieldErrors = append(fieldErrors, domain.FieldError{
+				Field:        "sifra",
+				ErrorMessage: "Partner sa ovom šifrom već postoji!!!",
+			})
+		}
 	}
 
 	// Check Naziv - obavezna
@@ -374,44 +379,50 @@ func (s *PartneriResource) ValidacijaPartneri(ctx context.Context, entity *domai
 	// Check for duplicate PIB (types 1 and 2)
 	if (entity.TipPDV == 1 || entity.TipPDV == 2) && pib != "" {
 		// For now, this is a placeholder for database check logic
-		exists, err := s.ExistsByField(ctx, "pib", pib)
-		if err != nil {
-			return fieldErrors, err
-		}
-		if exists {
-			fieldErrors = append(fieldErrors, domain.FieldError{
-				Field:        "pib",
-				ErrorMessage: "Partner sa izabranim PIB-om već postoji!",
-			})
+		if action == common.ActionAdd {
+			exists, err := s.ExistsByField(ctx, "pib", pib)
+			if err != nil {
+				return fieldErrors, err
+			}
+			if exists {
+				fieldErrors = append(fieldErrors, domain.FieldError{
+					Field:        "pib",
+					ErrorMessage: "Partner sa izabranim PIB-om već postoji!",
+				})
+			}
 		}
 	}
 
 	// Check for duplicate BPG (type 3 - Registrovani poljoprivrednik)
 	if entity.TipPDV == 3 && bpg != "" {
-		exists, err := s.ExistsByField(ctx, "bpg", bpg)
-		if err != nil {
-			return fieldErrors, err
-		}
-		if exists {
-			fieldErrors = append(fieldErrors, domain.FieldError{
-				Field:        "bpg",
-				ErrorMessage: "Partner sa ovakvim BPG-om već postoji!",
-			})
+		if action == common.ActionAdd {
+			exists, err := s.ExistsByField(ctx, "bpg", bpg)
+			if err != nil {
+				return fieldErrors, err
+			}
+			if exists {
+				fieldErrors = append(fieldErrors, domain.FieldError{
+					Field:        "bpg",
+					ErrorMessage: "Partner sa ovakvim BPG-om već postoji!",
+				})
+			}
 		}
 	}
 
 	// Check for duplicate JMBG (type 4 - Fizičko lice)
 	if entity.TipPDV == 4 && jmbg != "" {
 		// Placeholder for database check
-		exists, err := s.ExistsByField(ctx, "jmbg", jmbg)
-		if err != nil {
-			return fieldErrors, err
-		}
-		if exists {
-			fieldErrors = append(fieldErrors, domain.FieldError{
-				Field:        "jmbg",
-				ErrorMessage: "Partner sa ovakvim JMBG-om već postoji!",
-			})
+		if action == common.ActionAdd {
+			exists, err := s.ExistsByField(ctx, "jmbg", jmbg)
+			if err != nil {
+				return fieldErrors, err
+			}
+			if exists {
+				fieldErrors = append(fieldErrors, domain.FieldError{
+					Field:        "jmbg",
+					ErrorMessage: "Partner sa ovakvim JMBG-om već postoji!",
+				})
+			}
 		}
 	}
 
@@ -423,21 +434,25 @@ func (s *PartneriResource) ValidacijaPartneri(ctx context.Context, entity *domai
 		// Check JMBG for students
 		if jmbg != "" {
 			// Placeholder for database check
-			exists, err := s.ExistsByField(ctx, "jmbg", jmbg)
-			if err != nil {
-				return fieldErrors, err
+			if action == common.ActionAdd {
+				exists, err := s.ExistsByField(ctx, "jmbg", jmbg)
+				if err != nil {
+					return fieldErrors, err
+				}
+				ok1 = exists
 			}
-			ok1 = exists
 		}
 
 		// Check Index for students
 		if index != "" {
 			// Placeholder for database check
-			exists, err := s.ExistsByField(ctx, "index", index)
-			if err != nil {
-				return fieldErrors, err
+			if action == common.ActionAdd {
+				exists, err := s.ExistsByField(ctx, "index", index)
+				if err != nil {
+					return fieldErrors, err
+				}
+				ok2 = exists
 			}
-			ok2 = exists
 		}
 
 		if !ok1 || !ok2 {
@@ -462,6 +477,23 @@ func (s *PartneriResource) ValidacijaPartneri(ctx context.Context, entity *domai
 	return fieldErrors, nil
 }
 
+func (s *PartneriResource) GetTipoveAnalitike(ctx context.Context) ([]domain.ComboItem, error) {
+	qb := common.NewQueryBuilder("SELECT tipanalitikeid, naziv FROM tipanalitike", true)
+	qb.AddOrderBy("tipanalitikeid")
+	sqlQuery, args := qb.Build()
+	entities, err := s.tipanalitikeRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	if err != nil {
+		return nil, err
+	}
+	var comboItems []domain.ComboItem
+	for _, entity := range *entities {
+		comboItems = append(comboItems, domain.ComboItem{
+			Key:   fmt.Sprintf("%d", entity.TipanalitikeID),
+			Value: entity.Naziv,
+		})
+	}
+	return comboItems, nil
+}
 func (s *PartneriResource) ExistsByField(ctx context.Context, filedName string, filedValue interface{}) (bool, error) {
 	session := domain.GetSessionFromStdContext(ctx)
 	if session == nil {

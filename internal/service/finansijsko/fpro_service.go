@@ -123,8 +123,8 @@ func (s *FproResource) Delete(ctx context.Context, idField string, id int64) err
 }
 
 // GetAll implements NalogService.
-func (s *FproResource) GetAll(ctx context.Context, page int, offset int, tableFields []domain.Fields, idField string, searchParams ...string) (*[]domain.Fpro, error) {
-	return s.service.GetAll(ctx, page, offset, tableFields, idField, searchParams...)
+func (s *FproResource) GetAll(ctx context.Context, page int, offset int, tableFields []domain.Fields, idField string, searchText string) (*[]domain.Fpro, error) {
+	return s.service.GetAll(ctx, page, offset, tableFields, idField, searchText)
 }
 
 // GetAllCustom implements NalogService.
@@ -138,8 +138,8 @@ func (s *FproResource) GetByID(ctx context.Context, idField string, idValue int6
 }
 
 // GetTotalRecords implements NalogService.
-func (s *FproResource) GetTotalRecords(ctx context.Context, tableFields []domain.Fields, searchParams ...string) (int, error) {
-	return s.service.GetTotalRecords(ctx, tableFields, searchParams...)
+func (s *FproResource) GetTotalRecords(ctx context.Context, tableFields []domain.Fields, searchText string) (int, error) {
+	return s.service.GetTotalRecords(ctx, tableFields, searchText)
 }
 
 // GetTotalRecordsCustom implements NalogService.

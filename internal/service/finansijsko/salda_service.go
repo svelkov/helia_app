@@ -20,7 +20,7 @@ type SaldaViewData struct {
 // SaldaService defines the interface for operations related to Salda.
 type SaldaService interface {
 	GetSaldaPojedinacnihKonta(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, page int, konto, sifra, tipkonta string) error
-	GetSaldaGrupeKonta(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, page int, odkonta, dokonta, odsifre, dosifre, tiplazivestaja, klasa9, samosaprometom string) error
+	GetSaldaGrupeKonta(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, page int, params domain.SaldaParam) error
 	GetSaldaPartneriList(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage int, pageSize int, searchText, sortBy, sortOrder string) error
 	GetSaldaTotalValues(ctx context.Context) (domain.SaldaDto, error)
 	GetSaldaKlase5i6TotalValues(ctx context.Context) (domain.SaldaDto, error)
@@ -31,7 +31,7 @@ type SaldaService interface {
 	SaldaPoKomercijalistima(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage int, pageSize int, searchText, sortBy, sortOrder string) error
 	RealizacijaKomercijalisti(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage int, pageSize int, searchText, sortBy, sortOrder string) error
 
-	CheckSaldaGrupeParameters(ctx context.Context, requiredFields []string, cbxTipizvestaja, odkonta, dokonta, odsifre, dosifre, cbxKlasa string) (fieldsError []domain.FieldError)
+	CheckSaldaGrupeParameters(ctx context.Context, requiredFields []string, params domain.SaldaParam) (fieldsError []domain.FieldError)
 	CheckSaldaParameters(ctx context.Context, requiredFields []string, konto, sifra, tipkonta string) []domain.FieldError
 
 	SetDefaultTableData(tbl *domain.TableData)
@@ -101,11 +101,11 @@ func (s *SaldaResource) CheckSaldaParameters(ctx context.Context, requiredFields
 		switch field {
 		case "konto":
 			if konto == "" {
-				fieldsError = append(fieldsError, domain.FieldError{Field: "konto", ErrorMessage: "Konto is required"})
+				fieldsError = append(fieldsError, domain.FieldError{Field: "konto", ErrorMessage: "obavezan podatak..."})
 			}
 		case "tipkonta":
 			if tipkonta == "" {
-				fieldsError = append(fieldsError, domain.FieldError{Field: "tipkonta", ErrorMessage: "Tip konta is required"})
+				fieldsError = append(fieldsError, domain.FieldError{Field: "tipkonta", ErrorMessage: "obavezan podatak..."})
 			}
 		}
 	}
@@ -145,7 +145,7 @@ func (s *SaldaResource) CheckSaldaParameters(ctx context.Context, requiredFields
 	return nil
 }
 
-func (s *SaldaResource) CheckSaldaGrupeParameters(ctx context.Context, requiredFields []string, cbxTipizvestaja, odkonta, dokonta, odsifre, dosifre, cbxKlasa string) (fieldsError []domain.FieldError) {
+func (s *SaldaResource) CheckSaldaGrupeParameters(ctx context.Context, requiredFields []string, params domain.SaldaParam) (fieldsError []domain.FieldError) {
 	fieldsError = []domain.FieldError{}
 
 	// Get user session from context
@@ -155,20 +155,32 @@ func (s *SaldaResource) CheckSaldaGrupeParameters(ctx context.Context, requiredF
 	}
 
 	nduzsin := 3 // Default length of synthetic account TODO should be get from config
+	if params.OdKonta == "" {
+		fieldsError = append(fieldsError, domain.FieldError{Field: "odkonta", ErrorMessage: "obavezan podatak..."})
+	}
+	if params.DoKonta == "" {
+		fieldsError = append(fieldsError, domain.FieldError{Field: "dokonta", ErrorMessage: "obavezan podatak..."})
+	}
+	if params.OdSifre == "" {
+		fieldsError = append(fieldsError, domain.FieldError{Field: "odsifre", ErrorMessage: "obavezan podatak..."})
+	}
+	if params.DoSifre == "" {
+		fieldsError = append(fieldsError, domain.FieldError{Field: "dosifre", ErrorMessage: "obavezan podatak..."})
+	}
 
-	switch cbxTipizvestaja {
+	switch params.CbxTipIzvestaja {
 	case "analitika":
-		fieldsError = append(fieldsError, validateKontoFields(odkonta, dokonta, nduzsin, "<")...)
-		fieldsError = append(fieldsError, validateSifraFields(odsifre, dosifre)...)
+		fieldsError = append(fieldsError, validateKontoFields(params.OdKonta, params.DoKonta, nduzsin, "<")...)
+		fieldsError = append(fieldsError, validateSifraFields(params.OdSifre, params.DoSifre)...)
 
 	case "subsintetika", "klasa_subsintetika":
-		fieldsError = append(fieldsError, validateKontoFields(odkonta, dokonta, nduzsin, "<")...)
+		fieldsError = append(fieldsError, validateKontoFields(params.OdKonta, params.DoKonta, nduzsin, "<")...)
 	case "sintetika":
-		fieldsError = append(fieldsError, validateKontoFields(odkonta, dokonta, nduzsin, "=")...)
+		fieldsError = append(fieldsError, validateKontoFields(params.OdKonta, params.DoKonta, nduzsin, "=")...)
 
 	case "klasa_sifra":
-		fieldsError = append(fieldsError, validateSifraFields(odsifre, dosifre)...)
-		if len(cbxKlasa) <= 0 {
+		fieldsError = append(fieldsError, validateSifraFields(params.OdSifre, params.DoSifre)...)
+		if len(params.CbxKlasa) <= 0 {
 			fieldsError = append(fieldsError, domain.FieldError{Field: "cbx_klasa", ErrorMessage: "Morate izabrati klasu konta!!!"})
 		}
 	}
@@ -283,7 +295,7 @@ func (s *SaldaResource) GetSaldaPojedinacnihKonta(ctx context.Context, tbl *doma
 	tbl.Rows = saldaDtoToTableRows(templateData)
 	return nil
 }
-func (s *SaldaResource) GetSaldaGrupeKonta(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage int, pageSize int, odkonta, dokonta, odsifre, dosifre, tiplazivestaja, klasa9, samosaprometom string) error {
+func (s *SaldaResource) GetSaldaGrupeKonta(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage int, pageSize int, params domain.SaldaParam) error {
 	// Get user session from context
 	userSession := domain.GetSessionFromStdContext(ctx)
 	if userSession == nil {
@@ -295,7 +307,7 @@ func (s *SaldaResource) GetSaldaGrupeKonta(ctx context.Context, tbl *domain.Tabl
 	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
 
 	// Parse filter parameters
-	chkSaldoRazl0 := common.StringToBool(samosaprometom)
+	chkSaldoRazl0 := common.StringToBool(params.SamoSaPrometom)
 
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 	// Build combined query with partner join (eliminates N+1)
@@ -328,22 +340,22 @@ func (s *SaldaResource) GetSaldaGrupeKonta(ctx context.Context, tbl *domain.Tabl
 	if hasKar {
 		qb.AddEqual("fpro.kar", gnKar)
 	}
-	qb.AddCondition("fkpl.konto", odkonta, ">=")
-	qb.AddCondition("fkpl.konto", dokonta, "<=")
-	qb.AddCondition("fkpl.sifra", odsifre, ">=")
-	qb.AddCondition("fkpl.sifra", dosifre, "<=")
-	if tiplazivestaja == "analitika" {
+	qb.AddCondition("fkpl.konto", params.OdKonta, ">=")
+	qb.AddCondition("fkpl.konto", params.DoKonta, "<=")
+	qb.AddCondition("fkpl.sifra", params.OdSifre, ">=")
+	qb.AddCondition("fkpl.sifra", params.DoSifre, "<=")
+	if params.CbxTipIzvestaja == "analitika" {
 		qb.AddEqual("fkpl.vkonta", "1")
 	}
-	if tiplazivestaja == "subsintetika" {
+	if params.CbxTipIzvestaja == "subsintetika" {
 		qb.AddEqual("fkpl.vkonta", "2")
 	}
-	if tiplazivestaja == "sintetika" {
+	if params.CbxTipIzvestaja == "sintetika" {
 		qb.AddEqual("fkpl.vkonta", "3")
 	}
 
-	if klasa9 != "" && tiplazivestaja == "klasa_sifra" {
-		klasaKonta := s.extractGrupa(odkonta, 2)
+	if params.Klasa9 != "" && params.CbxTipIzvestaja == "klasa_sifra" {
+		klasaKonta := s.extractGrupa(params.OdKonta, 2)
 		qb.AddLike("fkpl.konto", klasaKonta+"%")
 	}
 	if chkSaldoRazl0 {

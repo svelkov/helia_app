@@ -834,3 +834,40 @@ type OtvStavkeParam struct {
 	Dospece90       string
 	Dospece120      string
 }
+
+type PrometParam struct {
+	Konto      string
+	Sifra      string
+	OdKonta    string
+	DoKonta    string
+	OdSifre    string
+	DoSifre    string
+	OdDatuma   string
+	DoDatuma   string
+	OdMI       string
+	DoMI       string
+	Vkonta     string
+	Analitika  string
+	ReportTip  string
+	SearchText string
+}
+
+type SaldaParam struct {
+	OdKonta           string
+	DoKonta           string
+	OdSifre           string
+	DoSifre           string
+	ChkSaldaValute    string
+	CbxTipIzvestaja   string
+	CbxKlasa          string
+	CbxOdMeseca       string
+	CbxDoMeseca       string
+	ChkSaldoRazlNula  string
+	ChkSaldoVeceNula  string
+	ChkSaldoManjeNula string
+	ChkSaldoNula      string
+	OdSalda           string
+	DoSalda           string
+	Klasa9            string
+	SamoSaPrometom   string
+}

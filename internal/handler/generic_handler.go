@@ -47,7 +47,6 @@ func (h *GenericHandler[T]) Create(c *gin.Context) {
 		return
 	}
 	common.WriteJSONResponse(c, http.StatusCreated, true, nil, common.OkMsgSaveData)
-
 }
 
 func (h *GenericHandler[T]) Update(c *gin.Context) {
@@ -55,7 +54,7 @@ func (h *GenericHandler[T]) Update(c *gin.Context) {
 	utils.UpdateHelper(c, &entity, h.service, h.fields, h.config.IDField)
 }
 
-func (h *GenericHandler[T]) Delete(c *gin.Context) {
+func (h *GenericHandler[T]) Delete(c *gin.Context) { 
 	utils.DeleteHelper(c, h.service, h.config.IDField)
 }
 

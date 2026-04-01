@@ -183,13 +183,6 @@ func (h *OtvoreneStavkeHandler) OtvoreneStavke(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusUnauthorized, false, nil, "Unauthorized")
 		return
 	}
-	params := domain.OtvStavkeParam{}
-	params.SearchText = c.Query("query")
-	params.Konto = c.Query("konto")
-	params.OdSifre = c.Query("odsifre")
-	params.DoSifre = c.Query("dosifre")
-	params.PodDatumom = c.Query("poddatumom")
-	params.OtvStavkeDana = c.Query("otvstavkedana")
 
 	gnGod := userSession.SelectedGod
 	tblPartneri := common.SetTableBasicData(otvorenestavkeContentTitle, otvorenestavkeTableID, h.service.GetPartneriFields(), "", "", 0, 0, 0, 0, h.cfg)
@@ -227,6 +220,13 @@ func (h *OtvoreneStavkeHandler) OtvoreneStavke(c *gin.Context) {
 
 	if requestSource == "btnobrada" || requestSource == "btnpage" || requestSource == "searchinput" {
 		ctx := c.Request.Context()
+		params := domain.OtvStavkeParam{}
+		params.SearchText = c.Query("query")
+		params.Konto = c.Query("konto")
+		params.OdSifre = c.Query("odsifre")
+		params.DoSifre = c.Query("dosifre")
+		params.PodDatumom = c.Query("poddatumom")
+		params.OtvStavkeDana = c.Query("otvstavkedana")
 		fieldsError := common.ValidateRequiredParams(c, []string{"konto", "odsifre", "dosifre", "poddatumom", "otvstavkedana"})
 		if len(fieldsError) > 0 {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldsError, common.ErrMsgValidation)
@@ -283,14 +283,6 @@ func (h *OtvoreneStavkeHandler) ZatvoreneStavke(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusUnauthorized, false, nil, "Unauthorized")
 		return
 	}
-	params := domain.OtvStavkeParam{}
-	params.SearchText = c.Query("query")
-	params.Konto = c.Query("konto")
-	params.OdSifre = c.Query("odsifre")
-	params.DoSifre = c.Query("dosifre")
-	params.OdDatuma = c.Query("oddatuma")
-	params.DoDatuma = c.Query("dodatuma")
-
 	gnGod := userSession.SelectedGod
 	tblPartneri := common.SetTableBasicData(zatvoreneStavkeContentTitle, zatvoreneStavkeTableID, h.service.GetPartneriFields(), "", "", 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tblPartneri, zatvoreneStavkeContentTitle, "", false, false, false)
@@ -326,6 +318,13 @@ func (h *OtvoreneStavkeHandler) ZatvoreneStavke(c *gin.Context) {
 
 	if requestSource == "btnobrada" || requestSource == "btnpage" || requestSource == "searchinput" {
 		ctx := c.Request.Context()
+		params := domain.OtvStavkeParam{}
+		params.SearchText = c.Query("query")
+		params.Konto = c.Query("konto")
+		params.OdSifre = c.Query("odsifre")
+		params.DoSifre = c.Query("dosifre")
+		params.OdDatuma = c.Query("oddatuma")
+		params.DoDatuma = c.Query("dodatuma")
 		fieldError := common.ValidateRequiredParams(c, []string{"konto", "odsifre", "dosifre", "oddatuma", "dodatuma"})
 		if len(fieldError) > 0 {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldError, common.ErrMsgValidation)

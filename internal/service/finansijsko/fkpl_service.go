@@ -53,8 +53,8 @@ func (r *FkplResource) Update(ctx context.Context, entity *domain.Fkpl, idField 
 func (r *FkplResource) Delete(ctx context.Context, idField string, idFieldValue int64) error {
 	return r.service.Delete(ctx, idField, idFieldValue)
 }
-func (r *FkplResource) GetAll(ctx context.Context, page int, pageSize int, tableFields []domain.Fields, idField string, searchParams ...string) (*[]domain.Fkpl, error) {
-	return r.service.GetAll(ctx, page, pageSize, tableFields, idField, searchParams...)
+func (r *FkplResource) GetAll(ctx context.Context, page int, pageSize int, tableFields []domain.Fields, idField string, searchText string) (*[]domain.Fkpl, error) {
+	return r.service.GetAll(ctx, page, pageSize, tableFields, idField, searchText)
 }
 
 // GetAllCustom implements FkplService.
@@ -68,8 +68,8 @@ func (r *FkplResource) GetByID(ctx context.Context, idField string, idValue int6
 }
 
 // GetTotalRecords implements FkplService.
-func (r *FkplResource) GetTotalRecords(ctx context.Context, tableFields []domain.Fields, searchParams ...string) (int, error) {
-	return r.service.GetTotalRecords(ctx, tableFields, searchParams...)
+func (r *FkplResource) GetTotalRecords(ctx context.Context, tableFields []domain.Fields, searchText string) (int, error) {
+	return r.service.GetTotalRecords(ctx, tableFields, searchText)
 }
 
 // GetTotalRecordsCustom implements FkplService.

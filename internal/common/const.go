@@ -28,6 +28,22 @@ const (
 	IDkomercijalista = "komid"
 	IDmagacin        = "magaciniid"
 	IDmi             = "fispid"
+	IDjedmere        = "jedmereid"
+	IDkepu           = "kepuid"
+	IDmaguser        = "maguserid"
+	IDporkat         = "porkatid"
+	IDrcene          = "rceneid"
+	IDrcenovnik      = "rcenovnikid"
+	IDrcenovnikhdr   = "rcenovnikhdrid"
+	IDrsif           = "rsifid"
+	IDrgru           = "rgruid"
+	IDrpgru          = "rpgruid"
+	IDrpor           = "rporid"
+	IDrdok           = "rdokid"
+	IDrnal           = "rnalid"
+	IDrpro           = "rproid"
+	IDrppo           = "rppoid"
+	IDrztr           = "rztrid"
 )
 
 const (

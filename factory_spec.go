@@ -36,6 +36,7 @@ import (
 	"helia/internal/validation"
 	finval "helia/internal/validation/finansijsko"
 	osval "helia/internal/validation/os"
+	robval "helia/internal/validation/robno"
 
 	"github.com/gin-gonic/gin"
 )
@@ -556,6 +557,53 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 		lm,
 	)
 
+	/// ROBNO
+	// Jedinice mere
+	registerGenericEntity[domain.Jedmere](
+		r, db, "jedmere",
+		robval.JedmereValidationRules(),
+		handler.SetJedmereFields(),
+		domain.HandlerConfig{
+			ContentTitle: "JEDINICE MERE",
+			TableID:      "jedmere-table",
+			APIPrefix:    "/api/jedmere",
+			IDField:      common.IDjedmere,
+		},
+		cfg,
+		lm,
+	)
+
+	// Robne grupe
+	registerGenericEntity[domain.Rgru](
+		r, db, "rgru",
+		robval.RgruValidationRules(),
+		handler.SetRgruFields(),
+		domain.HandlerConfig{
+			ContentTitle: "ROBNE GRUPE",
+			TableID:      "rgru-table",
+			APIPrefix:    "/api/rgru",
+			IDField:      common.IDrgru,
+		},
+		cfg,
+		lm,
+	)
+
+	// Robne podgrupe
+	registerGenericEntity[domain.Rpgru](
+		r, db, "rpgru",
+		robval.RpgruValidationRules(),
+		handler.SetRpgruFields(),
+		domain.HandlerConfig{
+			ContentTitle: "ROBNE PODGRUPE",
+			TableID:      "rpgru-table",
+			APIPrefix:    "/api/rpgru",
+			IDField:      common.IDrpgru,
+		},
+		cfg,
+		lm,
+	)
+
+	//***************************************************************
 	// Complex entities with custom services (non-generic)
 	//partneri
 	tekracuniRepo := repository.NewBaseRepository[domain.TekRacuni](db, "tekracuni")

@@ -162,3 +162,27 @@ func SetTipanalitikeFields() []domain.Fields {
 		{Name: "naziv", Label: "Naziv Analitike", Width: "50", Sortable: true},
 	}
 }
+func SetJedmereFields() []domain.Fields {
+	return []domain.Fields{
+		{Name: "jm", Label: "Jed mere", Width: "4", Sortable: true},
+		{Name: "opis", Label: "Opis", Width: "20", Sortable: true},
+		{Name: "brdecimala", Label: "Broj decimala"},
+		{Name: "ima_duzinu", Label: "Ima duzinu"},
+		{Name: "ima_sirinu", Label: "Ima sirinu"},
+		{Name: "ima_komade", Label: "Ima komade"},
+		{Name: "koristi_spectez", Label: "Koristi spectez"},
+	}
+}
+func SetRgruFields() []domain.Fields {
+	return []domain.Fields{
+		{Name: "gru", Label: "Grupa", Sortable: true},
+		{Name: "naziv", Label: "Naziv", Sortable: true},
+	}
+}
+func SetRpgruFields() []domain.Fields {
+	return []domain.Fields{
+		{Name: "gru", Label: "Grupa", Sortable: true},
+		{Name: "pgru", Label: "Podgrupa", Width: "40", Sortable: true},
+		{Name: "naziv", Label: "Naziv", Sortable: true},
+	}
+}

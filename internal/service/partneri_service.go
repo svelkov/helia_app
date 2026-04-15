@@ -103,8 +103,8 @@ func (s *PartneriResource) Delete(ctx context.Context, idField string, id int64)
 }
 
 // GetAll implements NalogService.
-func (s *PartneriResource) GetAll(ctx context.Context, page int, offset int, tableFields []domain.Fields, idField string, searchText string) (*[]domain.Partneri, error) {
-	return s.service.GetAll(ctx, page, offset, tableFields, idField, searchText)
+func (s *PartneriResource) GetAll(ctx context.Context, page int, offset int, tableFields []domain.Fields, idField string, searchText, sortBy, sortOrder string) (*[]domain.Partneri, error) {
+	return s.service.GetAll(ctx, page, offset, tableFields, idField, searchText, sortBy, sortOrder)
 }
 
 // GetAllCustom implements NalogService.

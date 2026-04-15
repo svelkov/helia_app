@@ -53,8 +53,8 @@ func (r *FkplResource) Update(ctx context.Context, entity *domain.Fkpl, idField 
 func (r *FkplResource) Delete(ctx context.Context, idField string, idFieldValue int64) error {
 	return r.service.Delete(ctx, idField, idFieldValue)
 }
-func (r *FkplResource) GetAll(ctx context.Context, page int, pageSize int, tableFields []domain.Fields, idField string, searchText string) (*[]domain.Fkpl, error) {
-	return r.service.GetAll(ctx, page, pageSize, tableFields, idField, searchText)
+func (r *FkplResource) GetAll(ctx context.Context, page int, pageSize int, tableFields []domain.Fields, idField string, searchText, sortBy, sortOrder string) (*[]domain.Fkpl, error) {
+	return r.service.GetAll(ctx, page, pageSize, tableFields, idField, searchText, sortBy, sortOrder)
 }
 
 // GetAllCustom implements FkplService.
@@ -83,33 +83,37 @@ func (r *FkplResource) MapEntityToValues(entity *domain.Fkpl, tableFields []doma
 }
 
 func (r *FkplResource) TraziKonto(ctx context.Context, konto, sifra, vkonta string) (entities *[]domain.Fkpl, err error) {
-	// Custom SQL query for searching konto, sifra, or naziv
-	qb := common.NewQueryBuilder(`SELECT f.naziv FROM baza.fkpl as f`, true)
-
 	session := domain.GetSessionFromStdContext(ctx)
 	if session == nil {
 		return nil, errors.New(common.ErrMsgUserSessionNotFound)
 	}
-
+	var qb *common.QueryBuilder
 	hasGod, hasKar := r.fkplRepo.GetHasGodHasKar()
+	// if vkonta == "1"  then search ibn table partneri for the tipanalitke for that konto and use that tipanalitikeid to search in fkpl, if vkonta == "2" then search directly in fkpl with vkonta = 2 and konto
+	if vkonta == "1" {
+		qb = common.NewQueryBuilder(`SELECT ta.tipanalitikeid, p.naziv as naziv, p.sifra as sifra FROM partneri as p `, true)
+		qb.AddJoin("inner join tipanalitike ta on ta.tipanalitikeid = p.tipanalitikeid ")
+		qb.AddJoin(" inner join fkpl f on f.tipanalitikeid = ta.tipanalitikeid ")
+	}
+	if vkonta == "2" {
+		qb = common.NewQueryBuilder(`SELECT f.idfkpl, f.konto, f.sifra, f.naziv FROM fkpl as f`, true)
+	}
 	if hasGod {
-		qb.AddEqual("god", session.SelectedGod)
+		qb.AddEqual("f.god", session.SelectedGod)
 	}
 	if hasKar {
-		qb.AddEqual("kar", session.SelectedKar)
-	}
-	if konto != "" {
-		qb.AddEqual("konto", konto)
-	}
-	if sifra != "" {
-		qb.AddEqual("sifra", sifra)
-	}
-	if vkonta != "" {
-		qb.AddEqual("vkonta", vkonta)
+		qb.AddEqual("f.kar", session.SelectedKar)
 	}
 
-	if vkonta == "1" && sifra == "" {
-		return nil, errors.New(common.ErrMsgMissingParameter)
+	if konto != "" {
+		qb.AddEqual("f.konto", konto)
+	}
+	// only search in fkpl if vkonta is 2, if vkonta is 1 then search in partneri and join with fkpl through tipanalitikeid
+	if vkonta == "2" {
+		qb.AddEqual("f.vkonta", vkonta)
+	}
+	if vkonta == "1" && sifra != "" {
+		qb.AddEqual("p.sifra", sifra)
 	}
 
 	sqlQuery, args := qb.Build()
@@ -123,35 +127,41 @@ func (r *FkplResource) TraziKonto(ctx context.Context, konto, sifra, vkonta stri
 	return entities, nil
 }
 func (r *FkplResource) KontoSearchForTable(ctx context.Context, tbl *domain.TableData, searchValue, konto, vkonta, fieldName string, fieldColIndex int) error {
-
 	session := domain.GetSessionFromStdContext(ctx)
 	if session == nil {
 		return errors.New(common.ErrMsgUserSessionNotFound)
 	}
-
-	// Build query
-	qb := common.NewQueryBuilder(`SELECT f.idfkpl, f.konto, f.sifra, f.naziv FROM baza.fkpl as f`, true)
-
+	var qb *common.QueryBuilder
 	hasGod, hasKar := r.fkplRepo.GetHasGodHasKar()
+	// if vkonta == "1"  then search ibn table partneri for the tipanalitke for that konto and use that tipanalitikeid to search in fkpl, if vkonta == "2" then search directly in fkpl with vkonta = 2 and konto
+	if vkonta == "1" {
+		qb = common.NewQueryBuilder(`SELECT ta.tipanalitikeid, p.naziv as naziv, p.sifra as sifra, f.konto FROM partneri as p `, true)
+		qb.AddJoin("left join tipanalitike ta on ta.tipanalitikeid = p.tipanalitikeid ")
+		qb.AddJoin(" left join fkpl f on f.tipanalitikeid = ta.tipanalitikeid ")
+	}
+	if vkonta == "2" {
+		qb = common.NewQueryBuilder(`SELECT f.idfkpl, f.konto, f.sifra, f.naziv FROM fkpl as f`, true)
+	}
 	if hasGod {
 		qb.AddEqual("f.god", session.SelectedGod)
 	}
 	if hasKar {
 		qb.AddEqual("f.kar", session.SelectedKar)
 	}
-
-	if konto != "" {
+	if vkonta == "2" && konto != "" {
+		qb.AddEqual("f.vkonta", vkonta)
 		qb.AddEqual("f.konto", konto)
 	}
 
-	if vkonta != "" {
-		qb.AddEqual("f.vkonta", vkonta)
-	}
-
 	nbrArgs := qb.GetArgsCount()
-	qb.AddCustomCondition(fmt.Sprintf(`(f.konto ILIKE '%%' || $%d || '%%' OR f.sifra ILIKE '%%' || $%d || '%%' OR f.naziv ILIKE '%%' || $%d || '%%')`, nbrArgs+1, nbrArgs+2, nbrArgs+3))
-	qb.AddArgs(searchValue, searchValue, searchValue)
-	qb.AddOrderBy("f.konto")
+	qb.AddCustomCondition(fmt.Sprintf(`(f.konto ILIKE '%%' || $%d || '%%' OR f.sifra ILIKE '%%' || $%d || '%%' OR f.naziv ILIKE '%%' || $%d || '%%' OR p.naziv ILIKE '%%' || $%d || '%%')`, nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1))
+	qb.AddArgs(searchValue)
+	if vkonta == "2" {
+		qb.AddOrderBy("f.konto")
+	}
+	if vkonta == "1" {
+		qb.AddOrderBy("p.sifra")
+	}
 	qb.SetLimit(20)
 
 	sqlQuery, args := qb.Build()

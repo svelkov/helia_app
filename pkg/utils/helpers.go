@@ -38,7 +38,7 @@ func DeleteHelper[T any](
 }
 
 // ConfirmDeleteHelper renders a confirmation dialog for resource deletion.
-func ConfirmDeleteHelper(c *gin.Context, tableFields []domain.Fields) {
+func ConfirmDeleteHelper(c *gin.Context, tableFields []domain.Fields, hxTarget string) {
 	rowID := c.Query("id")
 	url := c.Query("url")
 
@@ -58,7 +58,7 @@ func ConfirmDeleteHelper(c *gin.Context, tableFields []domain.Fields) {
 		HxActionURL:   url,
 		HxRequestType: "DELETE",
 		IdDialog:      "dialog-delete",
-		HxTarget:      "#info-message",
+		HxTarget:      hxTarget,
 		HxSwap:        "innerHTML",
 	}
 	btnCancel := domain.Button{
@@ -79,7 +79,7 @@ func ConfirmDeleteHelper(c *gin.Context, tableFields []domain.Fields) {
 }
 
 // ConfirmAddHelper renders a dialog for adding a new resource.
-func ConfirmAddHelper(c *gin.Context, url string, tableFields []domain.Fields) {
+func ConfirmAddHelper(c *gin.Context, url string, tableFields []domain.Fields, hxTarget string) {
 	for i := range tableFields {
 		tableFields[i].Value = ""
 	}
@@ -93,7 +93,7 @@ func ConfirmAddHelper(c *gin.Context, url string, tableFields []domain.Fields) {
 		HxActionURL:   url,
 		HxRequestType: "POST",
 		IdDialog:      "dialog-save",
-		HxTarget:      "#info-message",
+		HxTarget:      hxTarget,
 		HxSwap:        "innerHTML",
 	}
 	btnCancel := domain.Button{
@@ -240,6 +240,8 @@ func GetAllEntityHelper[T any](
 	hasUpdateDelete ...bool,
 ) *domain.TableData {
 	searchText := c.DefaultQuery("query", "")
+	sortBy := c.DefaultQuery("sortBy", "")
+	sortOrder := c.DefaultQuery("sortOrder", "")
 	ctx := c.Request.Context()
 	totRecords, err := service.GetTotalRecords(ctx, tableFields, searchText)
 	if err != nil {
@@ -248,7 +250,7 @@ func GetAllEntityHelper[T any](
 	}
 
 	currentPage, pageSize, totalPages := common.GetPaginationData(c, totRecords, cfg)
-	allEntities, err := service.GetAll(ctx, pageSize, (currentPage-1)*pageSize, tableFields, idField, searchText)
+	allEntities, err := service.GetAll(ctx, pageSize, (currentPage-1)*pageSize, tableFields, idField, searchText, sortBy, sortOrder)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData)
 		return nil
@@ -273,10 +275,11 @@ func GetAllPrintEntityHelper[T any](
 	tableFields []domain.Fields,
 	entityContentTitle, entityTableID, entityURLPrefix, entityURLGetall, idField string,
 	cfg config.Config,
-	) *domain.TableData {
-	
+) *domain.TableData {
+	sortBy := c.DefaultQuery("sortBy", "")
+	sortOrder := c.DefaultQuery("sortOrder", "")
 	ctx := c.Request.Context()
-	allEntities, err := service.GetAll(ctx, 0, 0, tableFields, idField, "")
+	allEntities, err := service.GetAll(ctx, 0, 0, tableFields, idField, "", sortBy, sortOrder)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData)
 		return nil
@@ -302,6 +305,9 @@ func GetAllPdfEntityHelper[T any](
 	hasUpdateDelete ...bool,
 ) *domain.TableData {
 	searchValue := c.DefaultQuery("query", "")
+	sortBy := c.DefaultQuery("sortBy", "")
+	sortOrder := c.DefaultQuery("sortOrder", "")
+
 	ctx := c.Request.Context()
 	totRecords, err := service.GetTotalRecords(ctx, tableFields, searchValue)
 	if err != nil {
@@ -310,7 +316,7 @@ func GetAllPdfEntityHelper[T any](
 	}
 
 	currentPage, pageSize, totalPages := common.GetPaginationData(c, totRecords, cfg)
-	allEntities, err := service.GetAll(ctx, pageSize, (currentPage-1)*pageSize, tableFields, idField, searchValue)
+	allEntities, err := service.GetAll(ctx, pageSize, (currentPage-1)*pageSize, tableFields, idField, searchValue, sortBy, sortOrder)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData)
 		return nil
@@ -333,6 +339,8 @@ func GetAllExcelEntityHelper[T any](
 	hasUpdateDelete ...bool,
 ) *domain.TableData {
 	searchValue := c.DefaultQuery("query", "")
+	sortBy := c.DefaultQuery("sortBy", "")
+	sortOrder := c.DefaultQuery("sortOrder", "")
 	ctx := c.Request.Context()
 	totRecords, err := service.GetTotalRecords(ctx, tableFields, searchValue)
 	if err != nil {
@@ -341,7 +349,7 @@ func GetAllExcelEntityHelper[T any](
 	}
 
 	currentPage, pageSize, totalPages := common.GetPaginationData(c, totRecords, cfg)
-	allEntities, err := service.GetAll(ctx, pageSize, (currentPage-1)*pageSize, tableFields, idField, searchValue)
+	allEntities, err := service.GetAll(ctx, pageSize, (currentPage-1)*pageSize, tableFields, idField, searchValue, sortBy, sortOrder)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData)
 		return nil
@@ -446,6 +454,7 @@ func PaginateTableData(tableData *domain.TableData, rowsPerPage int) []*domain.T
 			DetailHxRequestType: tableData.DetailHxRequestType,
 			DetailHxTrigger:     tableData.DetailHxTrigger,
 			DetailHxSwap:        tableData.DetailHxSwap,
+			DetailHxHeaders:     tableData.DetailHxHeaders,
 			ExportFilename:      tableData.ExportFilename,
 			HasExportExcel:      tableData.HasExportExcel,
 			HasExportPdf:        tableData.HasExportPdf,

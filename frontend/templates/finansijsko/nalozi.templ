@@ -16,6 +16,15 @@ templ NaloziContent(tabs domain.TabData, tipdokValues []domain.ComboItem, ukObra
 		@tmpl.TabNav(translator.Title("Nalozi za knjizenje"), tabs, "#main-content", "knjizenje-panel", translator)
 		@NaloziKnjizenjeContent(tipdokValues, ukObrada, btnSave, btnNoviNalog, tbl, searchControl, nalogPayload, translator, csrfToken)
 	</div>
+	@tmpl.HandleFormResponseScript()
+	@tmpl.ShowMessageScript()
+	@tmpl.ClearFieldErrorScript()
+	@tmpl.CloseDialogScript()
+	@tmpl.RestrictNumericInput()
+	@tmpl.HandleDblClickNalogSelectionScript()
+	@tmpl.HandleDialogResponseScript("")
+	@tmpl.HandleNextNalogResponseScript()
+	@tmpl.SelectRowScript()
 }
 
 templ NaloziKnjizenjeContent(tipdokValues []domain.ComboItem, ukObrada domain.UkupnaObrada, btnSave, btnNoviNalog domain.Button, tbl domain.TableData, searchControl domain.InputControl, nalogPayload domain.FnalPayload, translator *i18n.Service, csrfToken string) {
@@ -210,12 +219,6 @@ templ NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Uku
 			</div>
 		</div>
 	</div>
-	
-	@tmpl.HandleFormResponseScript()
-	@tmpl.ShowMessageScript()
-	@tmpl.ClearFieldErrorScript()
-	@tmpl.CloseDialogScript()
-	@tmpl.RestrictNumericInput()
 }
 
 templ NaloziHeader(tblHeader domain.TableData, translator *i18n.Service) {
@@ -348,30 +351,29 @@ templ NaloziKopiranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, btn
 				<form
 					if dialog.HxRequestType == "PUT" {
 						hx-put={ dialog.HxActionURL }
-						hx-on::after-request="handleFormResponse(event, 'PUT', null, true)"
+						hx-on::after-request={ templ.JSFuncCall("handleFormResponse", templ.JSExpression("event"), "PUT", dialog.Id, true) }
 					}
 					if dialog.HxRequestType == "POST" {
 						hx-post={ dialog.HxActionURL }
-						hx-on::after-request="handleFormResponse(event, 'POST', null, true)"
+						hx-on::after-request={ templ.JSFuncCall("handleFormResponse", templ.JSExpression("event"), "POST", dialog.Id, true) }
 					}
-					hx-target="#dialog-form-message"
+					hx-target="#dialog-nalog-message"
 					hx-boost="false"
-					hx-on::after-request="handleFormResponse(event, 'dialog-form')"
 					onsubmit="return false;"
 					class="grid grid-cols-1 md:grid-cols-[auto,auto] gap-2 gap-x-4 p-3 bg-white shadow-lg rounded-lg w-auto"
 				>
 					<input type="hidden" name="_csrf" value={ csrfToken }/>
 					<div class="px-1 py-1 col-span-2 max-h-[70vh] overflow-y-auto">
 						<input type="hidden" name="idfnal" value={ fmt.Sprintf("%d", model.IDFnal) }/>
-						<input type="hidden" name="tipdok_old" value={ model.Tipdok_Old }/>
-						<input type="hidden" name="nalog_old" value={ model.NalogOld }/>
+						<input type="hidden" name="tipdokold" value={ model.TipdokOld }/>
+						<input type="hidden" name="nalogold" value={ model.NalogOld }/>
 						<div class="text-blue-800 font-bold text-sm mb-1">
 							{ translator.Text("Podaci o nalogu iz kojeg se kopira") }
 						</div>
 						<div class="box-content flex flex-col p-2 border-2 border-gray-300 rounded-md">
 							<div class="flex items-center space-x-2 mb-1">
 								@tmpl.LabelField(domain.LabelFieldConfig{
-									ID:         "lbltipdokold",
+									ID:         "tipdokold",
 									LabelText:  translator.Label("Vrsta naloga"),
 									ClassLabel: common.ClassLabel + " w-24",
 								})
@@ -386,7 +388,7 @@ templ NaloziKopiranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, btn
 							</div>
 							<div class="flex items-center space-x-2 mb-1">
 								@tmpl.LabelField(domain.LabelFieldConfig{
-									ID:         "lblmaogold",
+									ID:         "nalogold",
 									LabelText:  translator.Label("Broj naloga"),
 									ClassLabel: common.ClassLabel + " w-24",
 								})
@@ -401,7 +403,7 @@ templ NaloziKopiranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, btn
 							</div>
 							<div class="flex items-center space-x-2 mb-1">
 								@tmpl.LabelField(domain.LabelFieldConfig{
-									ID:         "lbldatknjold",
+									ID:         "danalold",
 									LabelText:  translator.Label("Datum naloga"),
 									ClassLabel: common.ClassLabel + " w-24",
 								})
@@ -414,7 +416,7 @@ templ NaloziKopiranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, btn
 									ClassInput: common.ClassInputTextDisabled,
 								})
 								@tmpl.LabelField(domain.LabelFieldConfig{
-									ID:         "lbldatob",
+									ID:         "datobold",
 									LabelText:  translator.Label("Datum Obrade"),
 									ClassLabel: common.ClassLabel + " w-24",
 								})
@@ -429,7 +431,7 @@ templ NaloziKopiranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, btn
 							</div>
 							<div class="flex items-center space-x-2 mb-1">
 								@tmpl.LabelField(domain.LabelFieldConfig{
-									ID:         "lblopisold",
+									ID:         "opisold",
 									LabelText:  translator.Label("Opis knjizenja"),
 									ClassLabel: common.ClassLabel + " w-24",
 								})
@@ -539,7 +541,7 @@ templ NaloziKopiranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, btn
 					</div>
 				</form>
 				<!-- Message Display Area at Bottom -->
-				<div id="dialog-form-message" class="hidden w-full whitespace-normal break-words"></div>
+				<div id="dialog-nalog-message" class="hidden w-full whitespace-normal break-words"></div>
 			</div>
 		</div>
 		<div id="dialog-confirm" class="top-0 z-60"></div>
@@ -576,7 +578,7 @@ templ NaloziKopiranjeDialogDeo(dialog domain.Dialog, model domain.KopirajNalog, 
 						hx-post={ dialog.HxActionURL }
 						hx-on::after-request="handleFormResponse(event, 'POST')"
 					}
-					hx-target="#dialog-form-message"
+					hx-target="#dialog-nalog-message"
 					hx-boost="false"
 					hx-on::after-request="handleFormResponse(event, 'dialog-form')"
 					onsubmit="return false;"
@@ -831,7 +833,7 @@ templ NaloziKopiranjeDialogDeo(dialog domain.Dialog, model domain.KopirajNalog, 
 					</div>
 				</form>
 				<!-- Message Display Area at Bottom -->
-				<div id="dialog-form-message" class="hidden"></div>
+				<div id="dialog-nalog-message" class="hidden"></div>
 			</div>
 		</div>
 	</div>
@@ -861,13 +863,13 @@ templ NaloziStorniranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, b
 				<form
 					if dialog.HxRequestType == "PUT" {
 						hx-put={ dialog.HxActionURL }
-						hx-on::after-request="handleFormResponse(event, 'PUT', null, true)"
+						hx-on::after-request={ templ.JSFuncCall("handleFormResponse", templ.JSExpression("event"), "PUT", dialog.Id, true) }
 					}
 					if dialog.HxRequestType == "POST" {
 						hx-post={ dialog.HxActionURL }
-						hx-on::after-request="handleFormResponse(event, 'POST', null, true)"
+						hx-on::after-request={ templ.JSFuncCall("handleFormResponse", templ.JSExpression("event"), "POST", dialog.Id, true) }
 					}
-					hx-target="#dialog-form-message"
+					hx-target="#dialog-nalog-message"
 					hx-boost="false"
 					onsubmit="return false;"
 					class="grid grid-cols-1 md:grid-cols-[auto,auto] gap-2 gap-x-4 p-3 bg-white shadow-lg rounded-lg w-auto"
@@ -875,20 +877,22 @@ templ NaloziStorniranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, b
 					<div class="px-1 py-1 col-span-2 max-h-[70vh] overflow-y-auto">
 						<input type="hidden" name="_csrf" value={ csrfToken }/>
 						<input type="hidden" name="idfnal" value={ fmt.Sprintf("%d", model.IDFnal) }/>
+						<input type="hidden" name="tipdokold" value={ model.TipdokOld }/>
+						<input type="hidden" name="nalogold" value={ model.NalogOld }/>
 						<div class="text-blue-800 font-bold text-sm mb-1">
 							{ translator.Text("Podaci o nalogu koji se stornira") }
 						</div>
 						<div class="box-content flex flex-col p-2 border-2 border-gray-300 rounded-md">
 							<div class="flex items-center space-x-2 mb-1">
 								@tmpl.LabelField(domain.LabelFieldConfig{
-									ID:         "vrstanalogaold",
+									ID:         "tipdok_old",
 									LabelText:  translator.Label("Vrsta naloga"),
 									ClassLabel: common.ClassLabel + " w-24",
 								})
 								@tmpl.TextInputField(domain.InputFieldConfig{
-									ID:         "vrstanalogaold",
-									Name:       "vrstanalogaold",
-									Value:      model.TipdokOld,
+									ID:         "tipdok_old",
+									Name:       "tipdok_old",
+									Value:      model.Tipdok_Old,
 									FieldType:  "text",
 									Disabled:   true,
 									ClassInput: common.ClassInputTextDisabled + " w-full",
@@ -896,13 +900,13 @@ templ NaloziStorniranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, b
 							</div>
 							<div class="flex items-center space-x-2 mb-1">
 								@tmpl.LabelField(domain.LabelFieldConfig{
-									ID:         "brojnalogaold",
+									ID:         "nalog_old",
 									LabelText:  translator.Label("Broj naloga"),
 									ClassLabel: common.ClassLabel + " w-24",
 								})
 								@tmpl.TextInputField(domain.InputFieldConfig{
-									ID:         "brojnalogaold",
-									Name:       "brojnalogaold",
+									ID:         "nalog_old",
+									Name:       "nalog_old",
 									Value:      model.NalogOld,
 									FieldType:  "text",
 									Disabled:   true,
@@ -1031,7 +1035,7 @@ templ NaloziStorniranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, b
 				</form>
 			</div>
 			<!-- Message Display Area at Bottom -->
-			<div id="dialog-form-message" class="hidden w-full whitespace-normal break-words"></div>
+			<div id="dialog-nalog-message" class="hidden w-full whitespace-normal break-words"></div>
 		</div>
 	</div>
 	@tmpl.HandleFormResponseScript()
@@ -1087,7 +1091,6 @@ templ HandleFormResponseScript() {
 		});
 	</script>
 }
-
 
 templ HandleTableRowClickScript() {
 	// Auto-click first row in stampanje table after initial render and table refreshes.

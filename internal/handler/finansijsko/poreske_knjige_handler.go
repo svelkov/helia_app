@@ -41,7 +41,7 @@ type PoreskeKnjigeHandler struct {
 	tabData domain.TabData
 	service *finservice.PoreskeKnjigeResource
 	cfg     config.Config
-	lm *middleware.LockMiddleware
+	lm      *middleware.LockMiddleware
 }
 
 func NewPoreskeKnjigeHandler(service *finservice.PoreskeKnjigeResource, cfg config.Config, lm *middleware.LockMiddleware) *PoreskeKnjigeHandler {
@@ -242,7 +242,7 @@ func (h *PoreskeKnjigeHandler) PoreskaPrijava(c *gin.Context) {
 
 		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", poreskeKnjigeURLPrijava, "#poreska-prijava-form", "innerHTML", "GET", "", hxValsPoreskaPrijava, true, common.ClassSaveButton, "")
 		btnPrint := common.SetButton("stampa", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
-		btnObrada.HxOn = "handlePoreskaPrijavaResponse(evt)"
+		btnObrada.HxOnClick = "handlePoreskaPrijavaResponse(evt)"
 		tbl := common.SetTableBasicData(poreskeKnjigeContentTitle, poreskeKnjigeTableID, h.service.GetTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 		common.SetTableConfig(&tbl, poreskeKnjigeContentTitle, "", false, false, false)
 

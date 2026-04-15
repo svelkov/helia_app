@@ -282,11 +282,11 @@ func (s *SaldaResource) GetSaldaPojedinacnihKonta(ctx context.Context, tbl *doma
 				// Monthly data
 				saldoDto := domain.SaldaDto{
 					Mesec:     entity.Mesec,
-					Duguje:    entity.Dug,
-					Potrazuje: entity.Pot,
-					Saldo:     entity.Dug - entity.Pot,
+					Duguje:    entity.Dug.Float64,
+					Potrazuje: entity.Pot.Float64,
+					Saldo:     entity.Dug.Float64 - entity.Pot.Float64,
 				}
-				kumulSaldo = kumulSaldo + (entity.Dug - entity.Pot)
+				kumulSaldo = kumulSaldo + (entity.Dug.Float64 - entity.Pot.Float64)
 				templateData[entity.Mesec] = saldoDto
 				templateData[entity.Mesec].SaldoKumul = kumulSaldo
 			}
@@ -587,9 +587,9 @@ func (s *SaldaResource) GetSaldaKlase5i6Analitika(ctx context.Context, tbl *doma
 				entity.Konto,
 				entity.Sifra,
 				entity.Naziv,
-				common.FormatNumberWithSystemLocale(entity.Dug, 2),
-				common.FormatNumberWithSystemLocale(entity.Pot, 2),
-				common.FormatNumberWithSystemLocale(entity.Dug-entity.Pot, 2),
+				common.FormatNumberWithSystemLocale(entity.Dug.Float64, 2),
+				common.FormatNumberWithSystemLocale(entity.Pot.Float64, 2),
+				common.FormatNumberWithSystemLocale(entity.Dug.Float64-entity.Pot.Float64, 2),
 			}
 			tblRow := domain.TableRow{Fields: fields, HasUpdate: false, HasDelete: false}
 			tbl.Rows = append(tbl.Rows, tblRow)
@@ -645,10 +645,10 @@ func (s *SaldaResource) SaldaKlase5i6MT(ctx context.Context, tbl *domain.TableDa
 			fields := []string{
 				entity.Konto,
 				entity.Naziv,
-				entity.Mtroska,
-				common.FormatNumberWithSystemLocale(entity.Dug, 2),
-				common.FormatNumberWithSystemLocale(entity.Pot, 2),
-				common.FormatNumberWithSystemLocale(entity.Dug-entity.Pot, 2),
+				entity.Mtroska.String,
+				common.FormatNumberWithSystemLocale(entity.Dug.Float64, 2),
+				common.FormatNumberWithSystemLocale(entity.Pot.Float64, 2),
+				common.FormatNumberWithSystemLocale(entity.Dug.Float64-entity.Pot.Float64, 2),
 			}
 			tblRow := domain.TableRow{Fields: fields, HasUpdate: false, HasDelete: false}
 			tbl.Rows = append(tbl.Rows, tblRow)
@@ -989,9 +989,9 @@ func (s *SaldaResource) ProcessSaldaPartneriDetails(ctx context.Context, idPartn
 		for _, konta := range *kontaEntities {
 			fields := []string{
 				fmt.Sprintf("%s %s-%s", konta.Konto, konta.Sifra, konta.Naziv),
-				common.FormatNumberWithSystemLocale(konta.Dug, 2),
-				common.FormatNumberWithSystemLocale(konta.Pot, 2),
-				common.FormatNumberWithSystemLocale(konta.Dug-konta.Pot, 2),
+				common.FormatNumberWithSystemLocale(konta.Dug.Float64, 2),
+				common.FormatNumberWithSystemLocale(konta.Pot.Float64, 2),
+				common.FormatNumberWithSystemLocale(konta.Dug.Float64-konta.Pot.Float64, 2),
 			}
 			tblRow := domain.TableRow{Fields: fields, HasUpdate: false, HasDelete: false}
 			tblKonta.Rows = append(tblKonta.Rows, tblRow)

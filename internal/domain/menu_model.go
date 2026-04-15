@@ -87,7 +87,7 @@ var MenuData = MenuDataItems{
 				{URL: "", Name: "Stanje po artiklima i kontima", Icon: ""},
 				{URL: "", Name: "Izveštaji pregled ulaza/izlaza", Icon: ""},
 				{URL: "", Name: "Artikli", Icon: ""},
-				{URL: "", Name: "Jedinice mere", Icon: ""},
+				{URL: "api/jedmere/all", Name: "Jedinice mere", Icon: ""},
 				{URL: "", Name: "Robne grupe", Icon: ""},
 				{URL: "", Name: "Robne podgrupe", Icon: ""},
 				{URL: "", Name: "Mesta isporuke", Icon: ""},

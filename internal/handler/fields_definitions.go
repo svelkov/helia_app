@@ -86,7 +86,7 @@ func SetPopdvFields() []domain.Fields {
 	}
 }
 
-func SetSifmestoFileds() []domain.Fields {
+func SetSifmestoFields() []domain.Fields {
 	return []domain.Fields{
 		{Name: "sifm", Label: "Sifra Mesta", Width: "4", Sortable: true},
 		{Name: "naziv", Label: "Naziv", Width: "80", Sortable: true},
@@ -158,7 +158,7 @@ func SetPartneriFields() []domain.Fields {
 }
 func SetTipanalitikeFields() []domain.Fields {
 	return []domain.Fields{
-		{Name: "sifraanalitike", Label: "Sifra Analitike", Width: "4", Sortable: true},
+		{Name: "tipanalitikeid", Label: "Sifra Analitike", Width: "4", Sortable: true},
 		{Name: "naziv", Label: "Naziv Analitike", Width: "50", Sortable: true},
 	}
 }

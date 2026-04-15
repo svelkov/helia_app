@@ -28,6 +28,7 @@ const (
 	IDkomercijalista = "komid"
 	IDmagacin        = "magaciniid"
 	IDmi             = "fispid"
+	IDjedmere        = "jm"
 )
 
 const (
@@ -72,7 +73,6 @@ const (
 	ErrMsgSearchKonto         = "Greška prilikom pretrage konta"
 	ErrMsgLockFailed          = "Neuspešno zaključavanje zapisa, pokušajte ponovo"
 	ErrMsgUpdate              = "Greska prilikom ažuriranja. "
-
 )
 
 // constants for styling of inputs
@@ -114,7 +114,9 @@ const (
 	ClassLabel = "h-8 sm:h-7 md:h-6 text-xs sm:text-sm text-black whitespace-nowrap flex-shrink-0 flex items-center"
 
 	// Select/Dropdown
-	ClassSelect = "h-8 sm:h-7 md:h-6 px-2 sm:px-1.5 md:px-1 text-xs sm:text-sm text-black rounded border border-blue-400 focus:border-blue-500 focus:ring-blue-500 w-full"
+	ClassSelect         = "h-8 sm:h-7 md:h-6 px-2 sm:px-1.5 md:px-1 text-xs sm:text-sm text-black rounded border border-blue-400 focus:border-blue-500 focus:ring-blue-500 w-full"
+	ClassSelectDisabled = "h-8 sm:h-7 md:h-6 px-2 sm:px-1.5 md:px-1 text-xs sm:text-sm text-black rounded border border-blue-400 focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-300 disabled:text-gray-600 disabled:cursor-not-allowed w-full"
+	ClassSelectEnabled  = "h-8 sm:h-7 md:h-6 px-2 sm:px-1.5 md:px-1 text-xs sm:text-sm text-black rounded border border-blue-400 focus:border-blue-500 focus:ring-blue-500 w-full"
 
 	ClassRadioSet = "w-4 h-4 rounded border-blue-400 text-blue-600 focus:ring-blue-500"
 	//checkbox
@@ -134,6 +136,7 @@ const (
 	ClassSaveButton          = "bg-green-600 hover:bg-green-700 rounded h-9 sm:h-8 md:h-7 md:px-1 sm:px py-1 text-xs sm:text-sm flex text-white items-center justify-center whitespace-nowrap min-w-max sm:w-24 md:w-24"
 	ClassDeleteButton        = "bg-red-600 hover:bg-red-700 rounded h-9 sm:h-8 md:h-7 px-2 sm:px-2 md:px-1 py-1 text-xs sm:text-sm flex text-white items-center justify-center whitespace-nowrap w-full sm:w-24 md:w-24"
 	ClassOdustaniButton      = "bg-gray-600 hover:bg-gray-700 rounded h-9 sm:h-8 md:h-7 px-2 sm:px-2 md:px-1 py-1 text-xs sm:text-sm flex text-white items-center justify-center whitespace-nowrap w-full sm:w-24 md:w-24"
+	ClassButtonDisabled      = "bg-gray-600 hover:bg-gray-700 rounded h-9 sm:h-8 md:h-7 px-2 sm:px-2 md:px-1 py-1 text-xs sm:text-sm flex text-white items-center justify-center whitespace-nowrap w-full sm:w-24 md:w-24 opacity-50 cursor-not-allowed"
 	ClassCloseButton         = "bg-gray-600 hover:bg-gray-700 rounded h-9 sm:h-8 md:h-7 px-2 sm:px-2 md:px-1 py-1 text-xs sm:text-sm flex text-white items-center justify-center whitespace-nowrap gap-2 min-w-max"
 	ClassObradaButton        = "bg-green-600 hover:bg-green-700 rounded h-9 sm:h-7 md:h-7 px-2 sm:px-2 md:px-1 py-1 text-xs sm:text-sm flex text-white items-center justify-center whitespace-nowrap w-full sm:w-24 md:w-24"
 	ClassPrintButton         = "bg-blue-500 hover:bg-blue-900 text-white h-9 sm:h-7 md:h-7 px-2 sm:px-2 md:px-1 py-1 rounded text-xs sm:text-sm flex items-center justify-center whitespace-nowrap w-full sm:w-24 md:w-24"
@@ -146,7 +149,7 @@ const (
 	ClassExcelButton         = "bg-blue-500 hover:bg-blue-700 text-white h-9 sm:h-7 md:h-7 px-2 sm:px-2 md:px-1 py-1 rounded text-xs sm:text-sm flex items-center justify-center whitespace-nowrap w-full sm:w-12 md:w-12"
 
 	// Classes for dialog forms
-	ClassMainDialogDiv = "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+	ClassMainDialogDiv = "fixed inset-0 bg-black flex items-center justify-center p-4 bg-opacity-40 z-[60] "
 	// Patterns (unchanged)
 	PatternLettersAndNumbers = "[A-Za-z0-9]+"
 	PatternNumbers           = "[0-9]+"

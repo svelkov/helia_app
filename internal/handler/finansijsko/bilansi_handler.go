@@ -336,7 +336,7 @@ func (h *BilansiHandler) UpdateBilansStanja(c *gin.Context) {
 	c.Redirect(http.StatusSeeOther, utils.GetRedirectURL(c))
 }
 func (h *BilansiHandler) ConfirmDeleteBilansStanja(c *gin.Context) {
-	utils.ConfirmDeleteHelper(c, h.service.GetBilansStanjaTableFields())
+	utils.ConfirmDeleteHelper(c, h.service.GetBilansStanjaTableFields(), "#info-message")
 }
 func (h *BilansiHandler) DeleteBilansStanja(c *gin.Context) {
 	id := c.Param("id")
@@ -574,7 +574,7 @@ func (h *BilansiHandler) UpdateBilansUspeha(c *gin.Context) {
 	c.Redirect(http.StatusSeeOther, utils.GetRedirectURL(c))
 }
 func (h *BilansiHandler) ConfirmDeleteBilansUspeha(c *gin.Context) {
-	utils.ConfirmDeleteHelper(c, h.service.GetBilansUspehaTableFields())
+	utils.ConfirmDeleteHelper(c, h.service.GetBilansUspehaTableFields(), "#info-message")
 }
 func (h *BilansiHandler) DeleteBilansUspeha(c *gin.Context) {
 	id := c.Param("id")

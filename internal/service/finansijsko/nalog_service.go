@@ -60,6 +60,7 @@ type NalogService interface {
 	StornirajNalog(ctx context.Context, idFnal int64, entity domain.Fnal) error
 	GetNalogStampanjeData(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, page, pageSize int, searchText, sortBy, sortOrder string) error
 	GetNalogStampanjeDataDetalji(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, page, pageSize int, idFnal int64, searchText, sortBy, sortOrder string) error
+	GetNalogTotalValues(ctx context.Context, nalogTotals *domain.NalogTotalValues, idFnal int64) error
 	SetNalogIDFieldName(string)
 	GetNaloziTableFields() []domain.Fields
 	GetNaloziStavkeTableFields() []domain.Fields
@@ -220,8 +221,8 @@ func (s *NalogResource) Delete(ctx context.Context, idField string, id int64) er
 }
 
 // GetAll implements NalogService.
-func (s *NalogResource) GetAll(ctx context.Context, page int, offset int, tableFields []domain.Fields, idField string, searchText string) (*[]domain.Fnal, error) {
-	return s.service.GetAll(ctx, page, offset, tableFields, idField, searchText)
+func (s *NalogResource) GetAll(ctx context.Context, page int, offset int, tableFields []domain.Fields, idField string, searchText, sortBy, sortOrder string) (*[]domain.Fnal, error) {
+	return s.service.GetAll(ctx, page, offset, tableFields, idField, searchText, sortBy, sortOrder)
 }
 
 // GetAllCustom implements NalogService.
@@ -443,7 +444,8 @@ func (s *NalogResource) GetNalogViewData(ctx context.Context, tbl *domain.TableD
 	qbCount.AddGodKarConditions(hasGod, hasKar, userSession.SelectedGod, userSession.SelectedKar)
 	qbCount.AddEqual("tipdok", viewData.DefaultTipdok)
 	if searchQuery != "" {
-		qbCount.AddLike("CONCAT(tipdok, ' ', nalog, ' ', opis, ' ', dug, ' ', pot, ' ', datob, ' ', brst, ' ', nalsts)", searchQuery)
+		nbrArgs := len(qbCount.GetArgs())
+		qbCount.AddCustomCondition(fmt.Sprintf("(tipdok ILIKE $%d OR nalog::TEXT ILIKE $%d OR opis ILIKE $%d OR dug::TEXT ILIKE $%d OR pot::TEXT ILIKE $%d OR datob::TEXT ILIKE $%d OR brst::TEXT ILIKE $%d OR nalsts ILIKE $%d)", nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1), searchQuery)
 	}
 
 	sqlQuery, args := qbCount.Build()
@@ -459,7 +461,8 @@ func (s *NalogResource) GetNalogViewData(ctx context.Context, tbl *domain.TableD
 	qb.AddGodKarConditions(hasGod, hasKar, userSession.SelectedGod, userSession.SelectedKar)
 	qb.AddEqual("tipdok", tipdok)
 	if searchQuery != "" {
-		qb.AddLike("CONCAT(tipdok, ' ', nalog, ' ', opis, ' ', dug, ' ', pot, ' ', datob, ' ', brst, ' ', nalsts)", searchQuery)
+		nbrArgs := len(qb.GetArgs())
+		qb.AddCustomCondition(fmt.Sprintf("(tipdok ILIKE $%d OR nalog::TEXT ILIKE $%d OR opis ILIKE $%d OR dug::TEXT ILIKE $%d OR pot::TEXT ILIKE $%d OR datob::TEXT ILIKE $%d OR brst::TEXT ILIKE $%d OR nalsts ILIKE $%d)", nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1), searchQuery)
 	}
 	if sortBy != "" {
 		qb.AddOrderBy(fmt.Sprintf("fnal.%s", sortBy))
@@ -490,9 +493,9 @@ func (s *NalogResource) GetNalogViewData(ctx context.Context, tbl *domain.TableD
 
 	// 3. Fetch UkupnaObrada totals if it's an initial load
 	if isInitialRequest {
-		ukObrada, err := s.GetNalogTotals(ctx, tipdok)
+		ukObrada, err := s.GetNaloziTotals(ctx, tipdok)
 		if err != nil {
-			return viewData, fmt.Errorf("failed to get Nalog totals: %w", err)
+			return viewData, fmt.Errorf("failed to get Nalozi totals: %w", err)
 		}
 		viewData.UkupnaObrada = &ukObrada
 	}
@@ -502,7 +505,6 @@ func (s *NalogResource) GetNalogViewData(ctx context.Context, tbl *domain.TableD
 
 // GetNalogPrepisData fetches all data required to render the Nalog list page.
 func (s *NalogResource) GetNalogPrepisData(ctx context.Context, tbl *domain.TableData, currentPage, pageSize int, searchText, sortBy, sortOrder string) error {
-
 	// Get user session from context
 	userSession := domain.GetSessionFromStdContext(ctx)
 	if userSession == nil {
@@ -520,7 +522,9 @@ func (s *NalogResource) GetNalogPrepisData(ctx context.Context, tbl *domain.Tabl
 		qbCount.AddEqual("kar", userSession.SelectedKar)
 	}
 	if searchText != "" {
-		qbCount.AddLike("CONCAT(tipdok, ' ', nalog, ' ', opis, ' ', dug, ' ', pot, ' ', datob, ' ', brst, ' ', nalsts)", searchText)
+		likePattern := fmt.Sprintf("%%%s%%", searchText)
+		argsNbr := len(qbCount.GetArgs())
+		qbCount.AddCustomCondition(fmt.Sprintf("(tipdok ILIKE $%d OR nalog::TEXT ILIKE $%d OR opis ILIKE $%d OR dug::TEXT ILIKE $%d OR pot::TEXT ILIKE $%d OR datob::TEXT ILIKE $%d OR brst::TEXT ILIKE $%d OR nalsts ILIKE $%d)", argsNbr+1, argsNbr+1, argsNbr+1, argsNbr+1, argsNbr+1, argsNbr+1, argsNbr+1, argsNbr+1), likePattern)
 	}
 	sqlQuery, args := qbCount.Build()
 	totRecords, err := s.fnalRepo.GetTotalRecordsCustom(ctx, sqlQuery, "", args, "", "")
@@ -537,7 +541,9 @@ func (s *NalogResource) GetNalogPrepisData(ctx context.Context, tbl *domain.Tabl
 		qb.AddEqual("kar", userSession.SelectedKar)
 	}
 	if searchText != "" {
-		qb.AddLike("CONCAT(tipdok, ' ', nalog, ' ', opis, ' ', dug, ' ', pot, ' ', datob, ' ', brst, ' ', nalsts)", searchText)
+		likePattern := fmt.Sprintf("%%%s%%", searchText)
+		argsNbr := len(qb.GetArgs())
+		qb.AddCustomCondition(fmt.Sprintf("(tipdok ILIKE $%d OR nalog::TEXT ILIKE $%d OR opis ILIKE $%d OR dug::TEXT ILIKE $%d OR pot::TEXT ILIKE $%d OR datob::TEXT ILIKE $%d OR brst::TEXT ILIKE $%d OR nalsts ILIKE $%d)", argsNbr+1, argsNbr+1, argsNbr+1, argsNbr+1, argsNbr+1, argsNbr+1, argsNbr+1, argsNbr+1), likePattern)
 	}
 	if sortBy != "" {
 		qb.AddOrderBy(fmt.Sprintf("fnal.%s", sortBy))
@@ -600,6 +606,7 @@ func (s *NalogResource) GetNalogPrepisData(ctx context.Context, tbl *domain.Tabl
 	tbl.BtnPrint.IsVisible = false
 	tbl.BtnUpdate.LabelText = "Kopiraj"
 	tbl.BtnUpdate.HxActionURL = "/api/nalozi/confirm-prepis" // Set the HxActionURL for the update button
+	tbl.BtnUpdate.HxRequestType = "GET"
 
 	return nil
 }
@@ -726,7 +733,8 @@ func (s *NalogResource) GetNalogStornirajData(ctx context.Context, tbl *domain.T
 		qbCount.AddEqual("kar", userSession.SelectedKar)
 	}
 	if searchText != "" {
-		qbCount.AddLike("CONCAT(tipdok, ' ', nalog, ' ', opis, ' ', dug, ' ', pot, ' ', datob, ' ', brst, ' ', nalsts)", searchText)
+		nbrArgs := len(qbCount.GetArgs())
+		qbCount.AddCustomCondition(fmt.Sprintf("(tipdok::TEXT ILIKE '%%' || $%d || '%%' OR nalog::TEXT ILIKE '%%' || $%d || '%%' OR opis ILIKE '%%' || $%d || '%%' OR dug::TEXT ILIKE '%%' || $%d || '%%' OR pot::TEXT ILIKE '%%' || $%d || '%%' OR datob::TEXT ILIKE '%%' || $%d || '%%' OR brst::TEXT ILIKE '%%' || $%d || '%%' OR nalsts ILIKE '%%' || $%d || '%%')", nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1), searchText)
 	}
 
 	sqlQuery, args := qbCount.Build()
@@ -743,7 +751,8 @@ func (s *NalogResource) GetNalogStornirajData(ctx context.Context, tbl *domain.T
 		qb.AddEqual("kar", userSession.SelectedKar)
 	}
 	if searchText != "" {
-		qb.AddLike("CONCAT(tipdok, ' ', nalog, ' ', opis, ' ', dug, ' ', pot, ' ', datob, ' ', brst, ' ', nalsts)", searchText)
+		nbrArgs := len(qb.GetArgs())
+		qb.AddCustomCondition(fmt.Sprintf("(tipdok::text ilike '%%' || $%d || '%%' OR nalog::text ilike '%%' || $%d || '%%' OR opis ilike '%%' || $%d || '%%' OR datob::text ilike '%%' || $%d || '%%' OR dug::text ilike '%%' || $%d || '%%' OR pot::text ilike '%%' || $%d || '%%' OR nalsts::text ilike '%%' || $%d || '%%')", nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1), searchText)
 	}
 	if sortBy != "" {
 		qb.AddOrderBy(fmt.Sprintf("fnal.%s", sortBy))
@@ -792,7 +801,9 @@ func (s *NalogResource) GetNalogStornirajData(ctx context.Context, tbl *domain.T
 		HxActionURL:   "/api/nalozi/confirm-storniraj",
 		IsVisible:     true,
 		Id:            "btn-storniraj",
-		HxRequestType: "POST",
+		HxRequestType: "GET",
+		HxTarget:      "#nalozi_storniranje",
+		HxSwap:        "innerHTML",
 	}
 	// Additional table data configuration can happen here
 	tbl.URLGetAll = "/api/nalozi/storniraj"
@@ -804,8 +815,6 @@ func (s *NalogResource) GetNalogStornirajData(ctx context.Context, tbl *domain.T
 	tbl.ShowActions = true // Default, can be overridden by specific handler needs
 	tbl.BtnUpdate.IsVisible = true
 	tbl.BtnDelete.IsVisible = true
-	tbl.BtnUpdate.HxActionURL = "/api/nalozi/confirm-storniraj" // Set the HxActionURL for the update button
-
 	viewData.TableData = *tbl
 
 	return viewData, nil
@@ -869,7 +878,8 @@ func (s *NalogResource) GetNalogStampanjeData(ctx context.Context, tbl *domain.T
 		qb.AddEqual("kar", userSession.SelectedKar)
 	}
 	if searchText != "" {
-		qb.AddLike("CONCAT(tipdok, ' ', nalog, ' ', opis, ' ', iznos, ' ', datob, ' ', brst, ' ', nalsts, ' ', idtipdok)", searchText)
+		args := qb.GetArgs()
+		qb.AddCustomCondition(fmt.Sprintf("(tipdok::text ilike '%%' || $%d || '%%' OR nalog::text ilike '%%' || $%d || '%%' OR opis ilike '%%' || $%d || '%%' OR datob::text ilike '%%' || $%d || '%%' OR dug::text ilike '%%' || $%d || '%%' OR pot::text ilike '%%' || $%d || '%%' OR nalsts::text ilike '%%' || $%d || '%%')", len(args)+1, len(args)+1, len(args)+1, len(args)+1, len(args)+1, len(args)+1, len(args)+1), searchText)
 	}
 	if !getTotalRecords {
 		if sortBy != "" {
@@ -932,7 +942,8 @@ func (s *NalogResource) GetNalogStampanjeDataDetalji(ctx context.Context, tbl *d
 
 	qb.AddEqual("idfnal", idFnal)
 	if searchText != "" {
-		qb.AddLike("CONCAT(fpro.rbr, ' ', fpro.konto, ' ', fpro.sifra, ' ', fkpl.naziv, ' ', fpro.vrd, ' ', fpro.opis, ' ', fpro.iznos, ' ', fpro.dokum, ' ', fpro.dadok, ' ', fpro.vkonta)", searchText)
+		nbrArgs := len(qb.GetArgs())
+		qb.AddCustomCondition(fmt.Sprintf("(fpro.rbr::text ilike '%%' || $%d || '%%' OR fpro.konto::text ilike '%%' || $%d || '%%' OR fpro.sifra::text ilike '%%' || $%d || '%%' OR fkpl.naziv::text ilike '%%' || $%d || '%%' OR fpro.vrd::text ilike '%%' || $%d || '%%' OR fpro.opis::text ilike '%%' || $%d || '%%' OR fpro.iznos::text ilike '%%' || $%d || '%%' OR fpro.dokum::text ilike '%%' || $%d || '%%' OR fpro.dadok::text ilike '%%' || $%d || '%%' OR fpro.vkonta::text ilike '%%' || $%d || '%%')", nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1), searchText)
 	}
 	if !getTotalRecords {
 		if sortBy != "" {
@@ -967,8 +978,8 @@ func (s *NalogResource) GetNalogStampanjeDataDetalji(ctx context.Context, tbl *d
 				entity.Naziv,
 				fmt.Sprintf("%d", entity.Vrd),
 				entity.Opis,
-				common.FormatNumberWithSystemLocale(entity.Dug, 2),
-				common.FormatNumberWithSystemLocale(entity.Pot, 2),
+				common.FormatNumberWithSystemLocale(entity.Dug.Float64, 2),
+				common.FormatNumberWithSystemLocale(entity.Pot.Float64, 2),
 				entity.Dokum,
 				common.FormatNullTime(entity.Dadok, common.DateLayout),
 				fmt.Sprintf("%d", entity.Vkonta),
@@ -983,7 +994,7 @@ func (s *NalogResource) GetNalogStampanjeDataDetalji(ctx context.Context, tbl *d
 }
 
 // GetNalogTotals calculates the total dug, pot, brst, and brna for the current user's selected god and kar.
-func (s *NalogResource) GetNalogTotals(ctx context.Context, tipdok string) (domain.UkupnaObrada, error) {
+func (s *NalogResource) GetNaloziTotals(ctx context.Context, tipdok string) (domain.UkupnaObrada, error) {
 	userSession := domain.GetSessionFromStdContext(ctx)
 	if userSession == nil {
 		return domain.UkupnaObrada{}, fmt.Errorf("user session not found")
@@ -1019,6 +1030,10 @@ func (s *NalogResource) GetNalogTotals(ctx context.Context, tipdok string) (doma
 		return ukObrada, nil
 	}
 	return domain.UkupnaObrada{}, nil
+}
+
+func (s *NalogResource) GetNalogTotalValues(ctx context.Context, nalogTotals *domain.NalogTotalValues, idFnal int64) error {
+	return s.fproService.GetNalogTotalValues(ctx, nalogTotals, idFnal)
 }
 
 // GetTipdokOptions fetches the list of tipdok options for filtering. This method stays the same.
@@ -1176,7 +1191,7 @@ func (s *NalogResource) setServiceFieldValues() {
 		{Name: "konto", Label: "Konto", Width: "6", Sortable: true},
 		{Name: "sifra", Label: "Sifra", Width: "6", Sortable: true},
 		{Name: "naziv", Label: "Naziv Konta", Width: "60", Sortable: true},
-		{Name: "vrd", Label: "Vrsta Dok.", Width: "10", Sortable: true},
+		{Name: "vrd", Label: "Vrsta Dokumenta", Width: "10", Sortable: true},
 		{Name: "opis", Label: "Opis", Width: "60", Sortable: true},
 		{Name: "dug", Label: "Duguje", Width: "14", Sortable: true, TextAlign: "right"},
 		{Name: "pot", Label: "Potrazuje", Width: "14", Sortable: true, TextAlign: "right"},
@@ -1189,12 +1204,12 @@ func (s *NalogResource) setServiceFieldValues() {
 		{Name: "konto", Label: "Konto", Width: "6"},
 		{Name: "sifra", Label: "Sifra", Width: "6"},
 		{Name: "naziv", Label: "Naziv Konta", Width: "60"},
-		{Name: "vrd", Label: "Vrsta Dok.", Width: "10"},
+		{Name: "vrd", Label: "Vrsta Dokumenta", Width: "10"},
 		{Name: "opis", Label: "Opis", Width: "60"},
 		{Name: "dug", Label: "Duguje", Width: "14"},
 		{Name: "pot", Label: "Potrazuje", Width: "14"},
-		{Name: "dokum", Label: "Br. Dokum", Width: "12"},
-		{Name: "dadok", Label: "Datum Dok.", Width: "12"},
+		{Name: "dokum", Label: "Broj Dokumenta", Width: "12"},
+		{Name: "dadok", Label: "Datum Dokumenta", Width: "12"},
 		{Name: "idorgjed", Label: "Id orgjed", Width: "10", Field: "idorgjed"},
 	}
 }

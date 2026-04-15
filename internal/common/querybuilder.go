@@ -380,7 +380,8 @@ func (qb *QueryBuilder) BuildUpdate(ctx context.Context, fields []domain.Fields,
 	return query, values
 }
 
-// BuildSelectByID constructs a SELECT query for single record by ID
+// BuildSelectByID constructs a SELECT query for single record by ID.
+// Non-pointer value fields are wrapped with COALESCE to handle nullable DB columns.
 func (qb *QueryBuilder) BuildSelectByID(idField string) string {
 	if qb.tableName == "" || qb.entityType == nil {
 		return ""
@@ -397,7 +398,7 @@ func (qb *QueryBuilder) BuildSelectByID(idField string) string {
 		if column == "" || column == "-" {
 			continue
 		}
-		columns = append(columns, fmt.Sprintf(`"%s"`, column))
+		columns = append(columns, coalesceExpr(column, field.Type))
 	}
 
 	query := fmt.Sprintf(
@@ -408,6 +409,30 @@ func (qb *QueryBuilder) BuildSelectByID(idField string) string {
 	)
 
 	return query
+}
+
+// coalesceExpr wraps a column with COALESCE for non-pointer value types so that
+// a NULL in the database doesn't fail scanning into a Go value type.
+// Pointer fields (*string, *int64, etc.) can hold NULL directly and are left bare.
+func coalesceExpr(column string, t reflect.Type) string {
+	if t.Kind() == reflect.Ptr {
+		return fmt.Sprintf(`"%s"`, column)
+	}
+	switch t.Kind() {
+	case reflect.String:
+		return fmt.Sprintf(`COALESCE("%s", '') AS "%s"`, column, column)
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return fmt.Sprintf(`COALESCE("%s", 0) AS "%s"`, column, column)
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		return fmt.Sprintf(`COALESCE("%s", 0) AS "%s"`, column, column)
+	case reflect.Float32, reflect.Float64:
+		return fmt.Sprintf(`COALESCE("%s", 0) AS "%s"`, column, column)
+	case reflect.Bool:
+		return fmt.Sprintf(`COALESCE("%s", false) AS "%s"`, column, column)
+	default:
+		// Struct types (time.Time, etc.) and anything else — leave as-is
+		return fmt.Sprintf(`"%s"`, column)
+	}
 }
 
 // BuildSelectAll constructs a SELECT query for multiple records with filtering
@@ -550,15 +575,10 @@ func (qb *QueryBuilder) AddGodKarConditions(hasGod, hasKar bool, god, kar int) {
 	}
 
 	if hasGod {
-		qb.whereClause.WriteString(fmt.Sprintf(" AND %sgod = $%d ", entityName, qb.paramCount))
-		qb.args = append(qb.args, god)
-		qb.paramCount++
+		qb.AddEqual(fmt.Sprintf("%sgod", entityName), god)
 	}
-
 	if hasKar {
-		qb.whereClause.WriteString(fmt.Sprintf(" AND %skar = $%d ", entityName, qb.paramCount))
-		qb.args = append(qb.args, kar)
-		qb.paramCount++
+		qb.AddEqual(fmt.Sprintf("%skar", entityName), kar)
 	}
 }
 

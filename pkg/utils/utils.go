@@ -166,7 +166,7 @@ func SetButton(id, labelText, actionUrl, hxTarget, hxSwap, hxOn, hxInclude, hxVa
 		HxActionURL:      actionUrl,
 		HxTarget:         hxTarget,
 		HxSwap:           hxSwap,
-		HxOn:             hxOn,
+		HxOnClick:        hxOn,
 		HxInclude:        hxInclude,
 		HxVals:           hxVals,
 		HxRequestType:    hxRequestType,

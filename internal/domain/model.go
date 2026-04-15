@@ -5,6 +5,13 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+// TrustedJS holds a JavaScript expression that is emitted verbatim into an
+// HTML event-handler attribute (e.g. hx-on::after-request).
+// SECURITY: assign only from compile-time string constants in server-side Go code.
+// NEVER assign from user-supplied input (query params, form fields, headers, etc.)
+// as it would result in a reflected XSS vulnerability.
+type TrustedJS = string
+
 // Config holds handler configuration
 type HandlerConfig struct {
 	ContentTitle string
@@ -75,15 +82,17 @@ type Button struct {
 	HxActionURL      string
 	HxTarget         string
 	HxSwap           string
-	HxOn             string
+	HxOnClick        string
+	HxOnClickArg     string // Optional argument for HxOnClick function
 	HxInclude        string
 	HxVals           string
 	HxRequestType    string
-	HxOnAfterRequest string
+	HxOnAfterRequest TrustedJS
 	IdDialog         string
 	ActionMethod     string
 	Icon             string
 	IsVisible        bool
+	IsDisabled       bool
 	BtnClass         string
 	HxHeaders        string // JSON string for custom headers, e.g. `{"X-Custom-Header": "value"}`
 }
@@ -195,7 +204,7 @@ type InputFieldConfig struct {
 	MaxLength        string
 	Pattern          string
 	TabIndex         string
-	HxOnAfterRequest string
+	HxOnAfterRequest TrustedJS
 	OnInput          string
 	OnFocus          string
 	DecimalPlaces    int
@@ -224,7 +233,7 @@ type ComboFieldConfig struct {
 	HxChangeTarget   string
 	HxVals           string
 	HxInclude        string
-	HxOnAfterRequest string
+	HxOnAfterRequest TrustedJS
 	HxSwap           string
 	HxParams         string
 	HxGet            string

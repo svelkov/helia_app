@@ -23,8 +23,7 @@ templ Table(tbl domain.TableData, translator *i18n.Service) {
 		<!-- Container for HTMX-loaded dialog -->
 		<div id="dialog-container"></div>
 	</div>
-	@ShowMessage()
-	@OpenDialogScript(tbl.TableID)
+	@ShowMessageScript()
 	@TableSortScript()
 }
 
@@ -161,10 +160,25 @@ templ TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service
 						<div class="flex space-x-1 justify-end">
 							if row.HasUpdate || tbl.BtnUpdate.IsVisible {
 								<button
-									hx-get={ tbl.BtnUpdate.HxActionURL }
-									hx-target="#dialog-container"
-									hx-swap="innerHTML"
-									onclick="event.stopPropagation(); openDialog()"
+									if tbl.BtnUpdate.HxRequestType == "GET" {
+										hx-get={ fmt.Sprintf("%s/%s", tbl.BtnUpdate.HxActionURL, row.ID) }
+									}
+									if tbl.BtnUpdate.HxRequestType == "PUT" {
+										hx-put={ fmt.Sprintf("%s/%s", tbl.BtnUpdate.HxActionURL, row.ID) }
+									}
+									if tbl.BtnUpdate.HxRequestType == "POST" {
+										hx-post={ fmt.Sprintf("%s/%s", tbl.BtnUpdate.HxActionURL, row.ID) }
+									}
+									if tbl.BtnUpdate.HxSwap != "" {
+										hx-swap={ tbl.BtnUpdate.HxSwap }
+									}
+									if tbl.BtnUpdate.HxTarget != "" {
+										hx-target={ tbl.BtnUpdate.HxTarget }
+									}
+									if tbl.BtnUpdate.HxOnAfterRequest != "" {
+										{ templ.Attributes{"hx-on::after-request": tbl.BtnUpdate.HxOnAfterRequest}... }
+									}
+									onclick="event.stopPropagation()"
 									hx-vals={ func() string {
 										if strings.TrimSpace(tbl.HxVals) == "" {
 											return fmt.Sprintf(`{"url": "%s", "id": "%s"}`, tbl.URLPrefix, row.ID)
@@ -189,9 +203,18 @@ templ TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service
 							if row.HasDelete || tbl.BtnDelete.IsVisible {
 								<button
 									hx-get={ tbl.BtnDelete.HxActionURL }
-									hx-target="#dialog-container"
-									hx-swap="innerHTML"
-									onclick="event.stopPropagation(); openDialog()"
+									if tbl.BtnDelete.HxSwap != "" {
+										hx-swap={ tbl.BtnDelete.HxSwap }
+									}
+									if tbl.BtnDelete.HxTarget != "" {
+										hx-target={ tbl.BtnDelete.HxTarget }
+									} else {
+										hx-target="#dialog-container"
+									}
+									if tbl.BtnDelete.HxOnAfterRequest != "" {
+										{ templ.Attributes{"hx-on::after-request": tbl.BtnDelete.HxOnAfterRequest}... }
+									}
+									onclick="event.stopPropagation()"
 									hx-vals={ func() string {
 										if strings.TrimSpace(tbl.HxVals) == "" {
 											return fmt.Sprintf(`{"url": "%s", "id": "%s"}`, tbl.URLPrefix, row.ID)
@@ -381,7 +404,7 @@ templ TableSortScript() {
 		if (!table) return;
 
 		const indicators = table.querySelectorAll('[class*="sort-indicator-"]');
-		console.log(`Found ${indicators.length} indicators in table ${tableId}`);
+		//console.log(`Found ${indicators.length} indicators in table ${tableId}`);
 		
 		indicators.forEach(indicator => {
 			// Extract field name from class name (e.g., "sort-indicator-fieldname")
@@ -427,7 +450,7 @@ templ TableSortScript() {
 		// Get the currently sorted field for this table
 		const sortedField = window.currentSortField[tableId];
 		if (sortedField) {
-			console.log(`Reapplying sort indicators for table ${tableId}, field: ${sortedField}`);
+			//console.log(`Reapplying sort indicators for table ${tableId}, field: ${sortedField}`);
 			updateSortIndicators(tableId, sortedField);
 		}
 	}
@@ -455,7 +478,6 @@ templ TableSortScript() {
 				}
 				
 				if (tableId) {
-					console.log(`HTMX settle event for table: ${tableId}`);
 					reapplySortIndicators(tableId);
 				}
 			}

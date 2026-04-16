@@ -71,7 +71,7 @@ func (s *OtvoreneStavkeResource) GetOtvoreneStavkePartneri(ctx context.Context, 
 
 	//if we need to get only total records we check the bool gettotalrecords
 	//Get data for the table
-	qb := common.NewQueryBuilder(`SELECT fkpl.idfkpl,fpro.konto, fpro.sifra, fkpl.naziv as nazivpartnera, 
+	qb := common.NewQueryBuilder(`SELECT fkpl.idfkpl,fpro.konto, fpro.sifra, fkpl.naziv as nazivanalitike, 
 			   	SUM(CASE WHEN fpro.kat = 1 OR fpro.kat = 2 THEN fpro.iznos ELSE 0 END) as dug,
 				SUM(CASE WHEN fpro.kat = 3 OR fpro.kat = 4 THEN fpro.iznos ELSE 0 END) as pot
 		FROM fpro`, true)
@@ -115,8 +115,8 @@ func (s *OtvoreneStavkeResource) GetOtvoreneStavkePartneri(ctx context.Context, 
 		tbl.Totals = make([]string, len(tbl.Headers))
 		var totalDug, totalPot float64
 		for _, entity := range *entities {
-			totalDug += entity.Dug
-			totalPot += entity.Pot
+			totalDug += entity.Dug.Float64
+			totalPot += entity.Pot.Float64
 		}
 		if len(tbl.Headers) >= 6 {
 			tbl.Totals[0] = i18n.GetInstance().Label("Ukupno")
@@ -134,10 +134,10 @@ func (s *OtvoreneStavkeResource) GetOtvoreneStavkePartneri(ctx context.Context, 
 			fields = append(fields,
 				entity.Konto,
 				entity.Sifra,
-				entity.NazivPartnera,
+				entity.NazivAnalitike,
 				common.FormatNumberWithSystemLocale(entity.Dug, 2),
 				common.FormatNumberWithSystemLocale(entity.Pot, 2),
-				common.FormatNumberWithSystemLocale(entity.Dug-entity.Pot, 2),
+				common.FormatNumberWithSystemLocale(entity.Dug.Float64-entity.Pot.Float64, 2),
 			)
 			tblRow := domain.TableRow{ID: fmt.Sprintf("%d", entity.IDFkpl), Fields: fields, HasUpdate: false, HasDelete: false}
 			tbl.Rows = append(tbl.Rows, tblRow)
@@ -203,7 +203,7 @@ func (s *OtvoreneStavkeResource) GetOtvoreneStavkeDetalji(ctx context.Context, i
 				entity.DocType,
 				entity.Dokum,
 				fmt.Sprintf("%d", entity.Tra),
-				entity.Ojozn,
+				entity.Ojozn.String,
 				fmt.Sprintf("%d", entity.Nalog),
 				entity.Danal.Format(common.DateLayout),
 				common.FormatNullTime(entity.Dadok, common.DateLayout),
@@ -211,7 +211,7 @@ func (s *OtvoreneStavkeResource) GetOtvoreneStavkeDetalji(ctx context.Context, i
 				common.AddDaysToNullTime(entity.Dadok, entity.Rok, common.DateLayout),
 				common.FormatNumberWithSystemLocale(entity.Dug, 2),
 				common.FormatNumberWithSystemLocale(entity.Pot, 2),
-				common.FormatNumberWithSystemLocale(entity.Dug-entity.Pot, 2),
+				common.FormatNumberWithSystemLocale(entity.Dug.Float64-entity.Pot.Float64, 2),
 				entity.Opis)
 			tblRow := domain.TableRow{ID: fmt.Sprintf("%d", entity.IDFkpl), Fields: fields, HasUpdate: false, HasDelete: false}
 			tbl.Rows = append(tbl.Rows, tblRow)
@@ -232,7 +232,7 @@ func (s *OtvoreneStavkeResource) GetZatvoreneStavkePartneri(ctx context.Context,
 
 	//if we need to get only total records we check the bool gettotalrecords
 	//Get data for the table
-	qb := common.NewQueryBuilder(`SELECT fkpl.idfkpl,fpro.konto, fpro.sifra, fkpl.naziv as nazivpartnera, 
+	qb := common.NewQueryBuilder(`SELECT fkpl.idfkpl,fpro.konto, fpro.sifra, fkpl.naziv as nazivanalitike, 
 			   	SUM(CASE WHEN fpro.kat = 1 OR fpro.kat = 2 THEN fpro.iznos ELSE 0 END) as dug,
 				SUM(CASE WHEN fpro.kat = 3 OR fpro.kat = 4 THEN fpro.iznos ELSE 0 END) as pot
 		FROM fpro`, true)
@@ -285,10 +285,10 @@ func (s *OtvoreneStavkeResource) GetZatvoreneStavkePartneri(ctx context.Context,
 			fields = append(fields,
 				entity.Konto,
 				entity.Sifra,
-				entity.NazivPartnera,
-				common.FormatNumberWithSystemLocale(entity.Dug, 2),
-				common.FormatNumberWithSystemLocale(entity.Pot, 2),
-				common.FormatNumberWithSystemLocale(entity.Dug-entity.Pot, 2),
+				entity.NazivAnalitike,
+				common.FormatNumberWithSystemLocale(entity.Dug.Float64, 2),
+				common.FormatNumberWithSystemLocale(entity.Pot.Float64, 2),
+				common.FormatNumberWithSystemLocale(entity.Dug.Float64-entity.Pot.Float64, 2),
 			)
 			tblRow := domain.TableRow{ID: fmt.Sprintf("%d", entity.IDFkpl), Fields: fields, HasUpdate: false, HasDelete: false}
 			tbl.Rows = append(tbl.Rows, tblRow)
@@ -353,16 +353,16 @@ func (s *OtvoreneStavkeResource) GetZatvoreneStavkeDetalji(ctx context.Context, 
 			fields = append(fields,
 				entity.Dokum,
 				fmt.Sprintf("%d", entity.Tra),
-				entity.Ojozn,
+				entity.Ojozn.String,
 				entity.Tipdok,
 				fmt.Sprintf("%d", entity.Nalog),
 				entity.Danal.Format(common.DateLayout),
 				common.FormatNullTime(entity.Dadok, common.DateLayout),
 				fmt.Sprintf("%d", entity.Rok),
 				common.AddDaysToNullTime(entity.Dadok, entity.Rok, common.DateLayout),
-				common.FormatNumberWithSystemLocale(entity.Dug, 2),
-				common.FormatNumberWithSystemLocale(entity.Pot, 2),
-				common.FormatNumberWithSystemLocale(entity.Dug-entity.Pot, 2),
+				common.FormatNumberWithSystemLocale(entity.Dug.Float64, 2),
+				common.FormatNumberWithSystemLocale(entity.Pot.Float64, 2),
+				common.FormatNumberWithSystemLocale(entity.Dug.Float64-entity.Pot.Float64, 2),
 				entity.Opis,
 				fmt.Sprintf("%d", entity.Vrd),
 				fmt.Sprintf("%d", entity.Vkonta),
@@ -388,7 +388,7 @@ func (s *OtvoreneStavkeResource) GetIOSPartneri(ctx context.Context, tbl *domain
 
 	//if we need to get only total records we check the bool gettotalrecords
 	//Get data for the table
-	qb := common.NewQueryBuilder(`SELECT fkpl.idfkpl, fpro.konto, fpro.sifra, fkpl.naziv as nazivpartnera, 
+	qb := common.NewQueryBuilder(`SELECT fkpl.idfkpl, fpro.konto, fpro.sifra, fkpl.naziv as nazivanalitike, 
 			   	SUM(CASE WHEN fpro.kat = 1 OR fpro.kat = 2 THEN fpro.iznos ELSE 0 END) as dug,
 				SUM(CASE WHEN fpro.kat = 3 OR fpro.kat = 4 THEN fpro.iznos ELSE 0 END) as pot
 		FROM fpro`, true)
@@ -439,10 +439,10 @@ func (s *OtvoreneStavkeResource) GetIOSPartneri(ctx context.Context, tbl *domain
 			fields = append(fields,
 				entity.Konto,
 				entity.Sifra,
-				entity.NazivPartnera,
-				common.FormatNumberWithSystemLocale(entity.Dug, 2),
-				common.FormatNumberWithSystemLocale(entity.Pot, 2),
-				common.FormatNumberWithSystemLocale(entity.Dug-entity.Pot, 2),
+				entity.NazivAnalitike,
+				common.FormatNumberWithSystemLocale(entity.Dug.Float64, 2),
+				common.FormatNumberWithSystemLocale(entity.Pot.Float64, 2),
+				common.FormatNumberWithSystemLocale(entity.Dug.Float64-entity.Pot.Float64, 2),
 			)
 			tblRow := domain.TableRow{ID: fmt.Sprintf("%d", entity.IDFkpl), Fields: fields, HasUpdate: false, HasDelete: false}
 			tbl.Rows = append(tbl.Rows, tblRow)
@@ -507,15 +507,15 @@ func (s *OtvoreneStavkeResource) GetIOSDetalji(ctx context.Context, id int64, tb
 				entity.DocType,
 				entity.Dokum,
 				fmt.Sprintf("%d", entity.Tra),
-				entity.Ojozn,
+				entity.Ojozn.String,
 				fmt.Sprintf("%d", entity.Nalog),
 				entity.Danal.Format(common.DateLayout),
 				common.FormatNullTime(entity.Dadok, common.DateLayout),
 				fmt.Sprintf("%d", entity.Rok),
 				common.AddDaysToNullTime(entity.Dadok, entity.Rok, common.DateLayout),
-				common.FormatNumberWithSystemLocale(entity.Dug, 2),
-				common.FormatNumberWithSystemLocale(entity.Pot, 2),
-				common.FormatNumberWithSystemLocale(entity.Dug-entity.Pot, 2),
+				common.FormatNumberWithSystemLocale(entity.Dug.Float64, 2),
+				common.FormatNumberWithSystemLocale(entity.Pot.Float64, 2),
+				common.FormatNumberWithSystemLocale(entity.Dug.Float64-entity.Pot.Float64, 2),
 				entity.Opis,
 				fmt.Sprintf("%d", entity.Vrd))
 			tblRow := domain.TableRow{ID: fmt.Sprintf("%d", entity.IDFkpl), Fields: fields, HasUpdate: false, HasDelete: false}
@@ -542,7 +542,7 @@ func (s *OtvoreneStavkeResource) GetDospelaPotrazivanjaPartneri(ctx context.Cont
 
 	//if we need to get only total records we check the bool gettotalrecords
 	//Get data for the table
-	qb := common.NewQueryBuilder(`SELECT fkpl.idfkpl,fpro.konto, fpro.sifra, fkpl.naziv as nazivpartnera, 
+	qb := common.NewQueryBuilder(`SELECT fkpl.idfkpl,fpro.konto, fpro.sifra, fkpl.naziv as nazivanalitike, 
 			   	SUM(CASE WHEN fpro.kat = 1 OR fpro.kat = 2 THEN fpro.iznos ELSE 0 END) as dug,
 				SUM(CASE WHEN fpro.kat = 3 OR fpro.kat = 4 THEN fpro.iznos ELSE 0 END) as pot
 		FROM fpro`, true)
@@ -600,17 +600,17 @@ func (s *OtvoreneStavkeResource) GetDospelaPotrazivanjaPartneri(ctx context.Cont
 				fields = append(fields,
 					entity.Konto,
 					entity.Sifra,
-					entity.NazivPartnera,
-					common.FormatNumberWithSystemLocale(entity.Dug, 2),
-					common.FormatNumberWithSystemLocale(entity.Pot, 2),
-					common.FormatNumberWithSystemLocale(entity.Dug-entity.Pot, 2),
+					entity.NazivAnalitike,
+					common.FormatNumberWithSystemLocale(entity.Dug.Float64, 2),
+					common.FormatNumberWithSystemLocale(entity.Pot.Float64, 2),
+					common.FormatNumberWithSystemLocale(entity.Dug.Float64-entity.Pot.Float64, 2),
 				)
 			}
 			if params.TipPregleda == "S" {
 				fields = append(fields,
 					entity.Konto,
 					entity.Sifra,
-					entity.NazivPartnera,
+					entity.NazivAnalitike,
 				)
 			}
 
@@ -678,9 +678,9 @@ func (s *OtvoreneStavkeResource) GetDospelaPotrazivanjaDetalji(ctx context.Conte
 				entity.Dokum,
 				fmt.Sprintf("%d", entity.Rok),
 				common.AddDaysToNullTime(entity.Dadok, entity.Rok, common.DateLayout),
-				common.FormatNumberWithSystemLocale(entity.Dug, 2),
-				common.FormatNumberWithSystemLocale(entity.Pot, 2),
-				common.FormatNumberWithSystemLocale(entity.Dug-entity.Pot, 2),
+				common.FormatNumberWithSystemLocale(entity.Dug.Float64, 2),
+				common.FormatNumberWithSystemLocale(entity.Pot.Float64, 2),
+				common.FormatNumberWithSystemLocale(entity.Dug.Float64-entity.Pot.Float64, 2),
 				fmt.Sprintf("%d", entity.Nalog),
 				entity.Danal.Format(common.DateLayout),
 				entity.Opis)
@@ -741,7 +741,7 @@ func (s *OtvoreneStavkeResource) GetPregledPotrazivanjaObaveze(ctx context.Conte
 		SELECT
 			fpro.konto, 
 			fpro.sifra, 
-			fkpl.naziv as nazivpartnera,
+			fkpl.naziv as nazivanalitike,
 			-- Total realized amount (invoices only)
 			SUM(CASE WHEN fpro.vrd IN ($1) THEN fpro.iznos ELSE 0 END) as realizacija,
 			-- Total payments
@@ -835,7 +835,7 @@ func (s *OtvoreneStavkeResource) GetPregledPotrazivanjaObaveze(ctx context.Conte
 			fields = append(fields,
 				entity.Konto,
 				entity.Sifra,
-				entity.NazivPartnera,
+				entity.NazivAnalitike,
 				common.FormatNumberWithSystemLocale(entity.Realizacija, 2),
 				common.FormatNumberWithSystemLocale(entity.Placeno, 2),
 				common.FormatNumberWithSystemLocale(entity.Realizacija-entity.Placeno, 2),
@@ -892,7 +892,7 @@ func (s *OtvoreneStavkeResource) GetPregledDugovanjaPoStarosti(ctx context.Conte
 		SELECT
 			fpro.konto, 
 			fpro.sifra, 
-			fkpl.naziv as nazivpartnera,
+			fkpl.naziv as nazivanalitike,
 			-- Total realized amount (invoices only)
 			SUM(CASE WHEN fpro.vrd IN (10, 20) THEN fpro.iznos ELSE 0 END) as realizacija,
 			-- Total payments
@@ -993,7 +993,7 @@ func (s *OtvoreneStavkeResource) GetPregledDugovanjaPoStarosti(ctx context.Conte
 			fields = append(fields,
 				entity.Konto,
 				entity.Sifra,
-				entity.NazivPartnera,
+				entity.NazivAnalitike,
 				common.FormatNumberWithSystemLocale(entity.Realizacija, 2),
 				common.FormatNumberWithSystemLocale(entity.Placeno, 2),
 				common.FormatNumberWithSystemLocale(entity.Realizacija-entity.Placeno, 2),
@@ -1061,7 +1061,7 @@ func (s *OtvoreneStavkeResource) setServiceFieldValues() {
 	s.fieldsPartneri = []domain.Fields{
 		{Name: "konto", Label: "Konto", Width: "8", Field: "fpro.konto", SkipInSearch: false, IncludeInTotals: true},
 		{Name: "sifra", Label: "Šifra", Width: "8", Field: "fpro.sifra", SkipInSearch: false},
-		{Name: "nazivpartnera", Label: "Naziv partnera", Width: "15", Field: "fkpl.naziv", SkipInSearch: false},
+		{Name: "nazivanalitike", Label: "Naziv analitike", Width: "15", Field: "fkpl.naziv", SkipInSearch: false},
 		{Name: "duguje", Label: "Duguje", Width: "12", Field: "fpro.dug", SkipInSearch: true, IncludeInTotals: true, TextAlign: "right"},
 		{Name: "potrazuje", Label: "Potražuje", Width: "12", Field: "fpro.pot", SkipInSearch: true, IncludeInTotals: true, TextAlign: "right"},
 		{Name: "saldo", Label: "Saldo", Width: "12", Field: "", SkipInSearch: true, IncludeInTotals: true, TextAlign: "right"},
@@ -1069,7 +1069,7 @@ func (s *OtvoreneStavkeResource) setServiceFieldValues() {
 	s.fieldsPartneriSintetika = []domain.Fields{
 		{Name: "konto", Label: "Konto", Width: "8", Field: "fpro.konto", SkipInSearch: false},
 		{Name: "sifra", Label: "Šifra", Width: "8", Field: "fpro.sifra", SkipInSearch: false},
-		{Name: "nazivpartnera", Label: "Naziv partnera", Width: "15", Field: "fkpl.naziv", SkipInSearch: false},
+		{Name: "nazivanalitike", Label: "Naziv analitike", Width: "15", Field: "fkpl.naziv", SkipInSearch: false},
 	}
 	s.fieldsOtvoreneStavkeDetalji = []domain.Fields{
 		{Name: "det", Label: "Detalji", Width: "5", Field: "fpro.detalj", SkipInSearch: true},
@@ -1139,13 +1139,13 @@ func (s *OtvoreneStavkeResource) setServiceFieldValues() {
 	s.fieldsPotrazivanjaObavezePartneri = []domain.Fields{
 		{Name: "konto", Label: "Konto", Width: "8", Field: "fpro.konto", SkipInSearch: false},
 		{Name: "sifra", Label: "Šifra", Width: "8", Field: "fpro.sifra", SkipInSearch: false},
-		{Name: "nazivpartnera", Label: "Naziv partnera", Width: "15", Field: "fkpl.naziv", SkipInSearch: false},
+		{Name: "nazivanalitike", Label: "Naziv analitike", Width: "15", Field: "fkpl.naziv", SkipInSearch: false},
 	}
 	// Dospela Potraživanja fields (Tab 5, 6, 7)
 	s.fieldsPotrazivanjaObaveze = []domain.Fields{
 		{Name: "konto", Label: "Konto", Width: "8", Field: "fpro.konto", SkipInSearch: false},
 		{Name: "sifra", Label: "Šifra", Width: "8", Field: "fpro.sifra", SkipInSearch: false},
-		{Name: "nazivpartnera", Label: "Naziv partnera", Width: "15", Field: "fkpl.naziv", SkipInSearch: false},
+		{Name: "nazivanalitike", Label: "Naziv analitike", Width: "15", Field: "fkpl.naziv", SkipInSearch: false},
 		{Name: "realizacija", Label: "Ukupna realizacija", Width: "12", Field: "fpro.realizacija", SkipInSearch: true},
 		{Name: "placeno", Label: "Plaćeno", Width: "12", Field: "fpro.placeno", SkipInSearch: true},
 		{Name: "ukdug", Label: "Ukupno dugovanje/obaveza", Width: "12", Field: "fpro.ukdug", SkipInSearch: true},

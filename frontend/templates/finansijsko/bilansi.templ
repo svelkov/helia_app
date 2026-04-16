@@ -7,7 +7,6 @@ import (
 	"helia/internal/common"
 	"helia/internal/domain"
 	"time"
-	
 )
 
 // Main entry point for Bilansi module
@@ -413,7 +412,7 @@ templ BilansStanja(tabs domain.TabData, tbl domain.TableData, searchInput domain
 	</div>
 	<!-- Dialog display container-->
 	<div id="dialog-container"></div>
-	@tmpl.ShowMessage()
+	@tmpl.ShowMessageScript()
 	@tmpl.SpinnerScript()
 }
 
@@ -758,7 +757,7 @@ templ StampanjeBilansaStanja(tabs domain.TabData, tbl domain.TableData, btnObrad
 	</div>
 	<!-- Dialog display container-->
 	<div id="dialog-content"></div>
-	@tmpl.ShowMessage()
+	@tmpl.ShowMessageScript()
 }
 
 // Tab 4 - Bilans uspeha (Income Statement)
@@ -861,7 +860,7 @@ templ BilansUspeha(tabs domain.TabData, tbl domain.TableData, searchInput domain
 	</div>
 	<!-- Dialog display container-->
 	<div id="dialog-container"></div>
-	@tmpl.ShowMessage()
+	@tmpl.ShowMessageScript()
 	@tmpl.SpinnerScript()
 }
 
@@ -1220,5 +1219,5 @@ templ StampanjeBilansaUspeha(tabs domain.TabData, tbl domain.TableData, btnObrad
 	</div>
 	<!-- Dialog display container-->
 	<div id="dialog-content"></div>
-	@tmpl.ShowMessage()
+	@tmpl.ShowMessageScript()
 }

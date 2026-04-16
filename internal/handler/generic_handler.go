@@ -54,7 +54,7 @@ func (h *GenericHandler[T]) Update(c *gin.Context) {
 	utils.UpdateHelper(c, &entity, h.service, h.fields, h.config.IDField)
 }
 
-func (h *GenericHandler[T]) Delete(c *gin.Context) { 
+func (h *GenericHandler[T]) Delete(c *gin.Context) {
 	utils.DeleteHelper(c, h.service, h.config.IDField)
 }
 
@@ -112,11 +112,11 @@ func (h *GenericHandler[T]) GetAllExcel(c *gin.Context) {
 	utils.RenderContent(c, *tbl)
 }
 func (h *GenericHandler[T]) confirmDeleteHandler(c *gin.Context) {
-	utils.ConfirmDeleteHelper(c, h.fields)
+	utils.ConfirmDeleteHelper(c, h.fields, "#info-message")
 }
 
 func (h *GenericHandler[T]) confirmAddHandler(c *gin.Context) {
-	utils.ConfirmAddHelper(c, h.config.APIPrefix, h.fields)
+	utils.ConfirmAddHelper(c, h.config.APIPrefix, h.fields, "#info-message")
 }
 
 func (h *GenericHandler[T]) confirmUpdateHandler(c *gin.Context) {

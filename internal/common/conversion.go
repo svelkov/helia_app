@@ -2,6 +2,7 @@ package common
 
 import (
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -55,6 +56,27 @@ func StringToTimeWithLayout(timeStr, layout string) (time.Time, error) {
 }
 
 func StringToFloat64(str string) float64 {
+	str = strings.TrimSpace(str)
+	commas := strings.Count(str, ",")
+	dots := strings.Count(str, ".")
+
+	switch {
+	case commas > 0 && dots > 0:
+		// Both present — last one is the decimal separator
+		if strings.LastIndex(str, ",") > strings.LastIndex(str, ".") {
+			// European: 1.234,56 → remove dots, comma becomes dot
+			str = strings.ReplaceAll(str, ".", "")
+			str = strings.ReplaceAll(str, ",", ".")
+		} else {
+			// US: 1,234.56 → remove commas
+			str = strings.ReplaceAll(str, ",", "")
+		}
+	case commas == 1:
+		// Only comma → decimal separator (e.g. "150,00")
+		str = strings.ReplaceAll(str, ",", ".")
+	}
+	// Only dot or plain integer → already valid for ParseFloat
+
 	val, err := strconv.ParseFloat(str, 64)
 	if err != nil {
 		return defaultFloat64

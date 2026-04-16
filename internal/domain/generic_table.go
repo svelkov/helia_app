@@ -33,6 +33,7 @@ type TableData struct {
 	DetailHxRequestType string
 	DetailHxTrigger     string
 	DetailHxSwap        string
+	DetailHxHeaders     string
 	ExportFilename      string
 	HasExportExcel      bool
 	HasExportPdf        bool

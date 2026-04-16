@@ -411,7 +411,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 	registerGenericEntity[domain.Sifmesto](
 		r, db, "sifmesto",
 		validation.SifmestoValidationRules(),
-		handler.SetSifmestoFileds(),
+		handler.SetSifmestoFields(),
 		domain.HandlerConfig{
 			ContentTitle: "MESTA",
 			TableID:      "sifmesto-table",

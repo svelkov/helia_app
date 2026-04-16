@@ -117,7 +117,7 @@ templ KamatneStope(tabs domain.TabData, tbl domain.TableData, translator *i18n.S
 	</div>
 	<!-- Dialog display container-->
 	<div id="dialog-content"></div>
-	@tmpl.ShowMessage()
+	@tmpl.ShowMessageScript()
 }
 
 // Tab 2 - Formiranje kamatnih listova (Forming Interest Lists)
@@ -265,7 +265,7 @@ templ FormiranjeLista(tabs domain.TabData, tbl domain.TableData, translator *i18
 	</div>
 	<!-- Dialog display container-->
 	<div id="dialog-content"></div>
-	@tmpl.ShowMessage()
+	@tmpl.ShowMessageScript()
 }
 
 // Tab 3 - Obracun kamate (Interest Calculation)
@@ -385,5 +385,5 @@ templ ObracunKamate(tabs domain.TabData, tbl domain.TableData, translator *i18n.
 	</div>
 	<!-- Dialog display container-->
 	<div id="dialog-content"></div>
-	@tmpl.ShowMessage()
+	@tmpl.ShowMessageScript()
 }

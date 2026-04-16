@@ -71,7 +71,7 @@ func (r *BaseRepository[T]) GetByID(ctx context.Context, idField string, idValue
 	return &entity, nil
 }
 
-func (r *BaseRepository[T]) GetAll(ctx context.Context, pageSize int, offset int, tableFields []domain.Fields, idField string, searchText string) (*[]T, error) {
+func (r *BaseRepository[T]) GetAll(ctx context.Context, pageSize int, offset int, tableFields []domain.Fields, idField string, searchText, sortBy, sortOrder string) (*[]T, error) {
 	var entity []T
 
 	qb := r.CreateGetAllStatement(ctx, tableFields, idField, searchText)
@@ -84,6 +84,12 @@ func (r *BaseRepository[T]) GetAll(ctx context.Context, pageSize int, offset int
 	}
 	qb.SetLimit(pageSize)
 	qb.SetOffset(offset) 
+	if sortBy != "" {
+		qb.AddOrderBy(sortBy)
+	}	
+	if sortOrder != "" {
+		qb.AddSortOrder(sortOrder)
+	}		
 	
 	query, args := qb.Build()
 	// Execute the query

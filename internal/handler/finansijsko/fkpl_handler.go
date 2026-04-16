@@ -65,11 +65,11 @@ func (h *FkplHandler) DeleteFkpl(c *gin.Context) {
 }
 
 func (h *FkplHandler) confirmDeleteHandler(c *gin.Context) {
-	utils.ConfirmDeleteHelper(c, SetFkplFields())
+	utils.ConfirmDeleteHelper(c, SetFkplFields(), "#info-message")
 }
 
 func (h *FkplHandler) confirmAddHandler(c *gin.Context) {
-	utils.ConfirmAddHelper(c, strings.TrimSuffix(fkplURLPrefix, "/"), SetFkplFields())
+	utils.ConfirmAddHelper(c, strings.TrimSuffix(fkplURLPrefix, "/"), SetFkplFields(), "#info-message")
 }
 
 func (h *FkplHandler) confirmUpdateHandler(c *gin.Context) {

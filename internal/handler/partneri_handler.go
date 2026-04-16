@@ -194,7 +194,7 @@ func (h *PartneriHandler) PartneriConfirmUpdate(c *gin.Context) {
 		log.Printf("Error fetching tipove analitike: %v", err)
 		tipoviAnalitike = []domain.ComboItem{}
 	}
-	tmpl1.PartneriForm(*entity, tblTekRacuni, dialog, tipoviAnalitike, btnSacuvaj, btnCancel, btnClose, btnProveriPIB, i18n.GetInstance(), csrfToken).Render(c.Request.Context(), c.Writer)
+	tmpl1.PartneriFormMain(*entity, tblTekRacuni, dialog, tipoviAnalitike, btnSacuvaj, btnCancel, btnClose, btnProveriPIB, i18n.GetInstance(), csrfToken).Render(c.Request.Context(), c.Writer)
 }
 
 func (h *PartneriHandler) PartneriUpdate(c *gin.Context) {
@@ -434,10 +434,10 @@ func (h *PartneriHandler) GetPartneriForm(c *gin.Context) {
 
 	switch tipAnalitike {
 	// Add cases here as you create new form templates, e.g.:
-	// case "2":
-	//     tmpl1.FizickaLicaForm(entity, tblTekRacuni, dialog, []domain.ComboItem{}, ...).Render(ctx, c.Writer)
+	 case "5": // Fizicka lica
+	    tmpl1.PartneriFormFizickaLica(entity, tblTekRacuni, dialog, []domain.ComboItem{}, btnSacuvaj, btnCancel, btnClose, btnProveriPIB, i18n.GetInstance(), csrfToken).Render(ctx, c.Writer)
 	default:
-		tmpl1.PartneriForm(entity, tblTekRacuni, dialog, []domain.ComboItem{}, btnSacuvaj, btnCancel, btnClose, btnProveriPIB, i18n.GetInstance(), csrfToken).Render(ctx, c.Writer)
+		tmpl1.PartneriFormKomintenti(entity, tblTekRacuni, dialog, []domain.ComboItem{}, btnSacuvaj, btnCancel, btnClose, btnProveriPIB, i18n.GetInstance(), csrfToken).Render(ctx, c.Writer)
 	}
 }
 

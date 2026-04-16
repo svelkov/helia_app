@@ -15,7 +15,7 @@ import (
 	"helia/internal/domain"
 )
 
-func NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData, btnSave, btnPrint, btnClose, btnNazad domain.Button, searchInput domain.InputControl, translator *i18n.Service, csrfToken string) templ.Component {
+func NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData, nalogTotal domain.NalogTotalValues, btnSave, btnCancel, btnPrint, btnClose, btnNazad domain.Button, searchInput domain.InputControl, translator *i18n.Service, csrfToken string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -36,62 +36,20 @@ func NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div id=\"nalog-stavke-dialog\" class=\"fixed inset-0 flex items-center justify-center p-4 bg-black bg-opacity-50 z-50\"><div class=\"bg-white rounded-lg shadow-xl w-[95vw] max-w-[1400px] h-[90vh] overflow-hidden\"><div class=\"m-0 p-0 bg-gray-200 font-sans h-full flex flex-col\"><form id=\"nalog-stavke-form\" class=\"p-1 h-full flex flex-col min-h-0\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div id=\"nalog-stavke-dialog\" class=\"fixed inset-0 flex items-center justify-center p-4 bg-black bg-opacity-50 z-50\"><div class=\"bg-white rounded-lg shadow-xl w-[95vw] max-w-[1400px] h-[90vh] overflow-hidden\"><div class=\"m-0 p-0 bg-gray-200 font-sans h-full flex flex-col\"><div class=\"bg-gradient-to-r from-blue-300 to-blue-800 text-white px-1 font-bold text-sm relative flex justify-between items-center\"><div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		if btnSave.HxRequestType == "PUT" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, " hx-put=\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var2 string
-			templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(btnSave.HxActionURL)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi_stavke.templ`, Line: 18, Col: 34}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\" hx-on::after-request=\"handleFormResponse(event, &#39;PUT&#39;, null, true)\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
+		var templ_7745c5c3_Var2 string
+		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Title("Knjiženje naloga"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi_stavke.templ`, Line: 15, Col: 49}
 		}
-		if btnSave.HxRequestType == "POST" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, " hx-post=\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var3 string
-			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(btnSave.HxActionURL)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi_stavke.templ`, Line: 22, Col: 35}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\" hx-on::after-request=\"handleFormResponse(event, &#39;POST&#39;, null, true)\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, " hx-target=\"#dialog-form-message\" hx-boost=\"false\" onsubmit=\"return false;\"><div class=\"bg-gradient-to-r from-blue-300 to-blue-800 text-white px-1 font-bold text-sm relative flex justify-between items-center\"><div>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var4 string
-		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Title("Knjiženje naloga"))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi_stavke.templ`, Line: 30, Col: 50}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -99,33 +57,20 @@ func NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</div><input type=\"hidden\" name=\"_csrf\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</div><div class=\"grid grid-cols-3 gap-1 ml-1 mr-1\"><fieldset class=\"bg-blue-200 border border-blue-400 col-span-2 p-1\"><legend class=\"px-1 text-blue-800 font-bold text-xs leading-none\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var5 string
-		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(csrfToken)
+		var templ_7745c5c3_Var3 string
+		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Podaci o nalogu u obradi"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi_stavke.templ`, Line: 33, Col: 56}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi_stavke.templ`, Line: 20, Col: 117}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "\"><div class=\"grid grid-cols-3 gap-1 mb-1\"><fieldset class=\"bg-blue-200 border border-blue-400 col-span-2 p-1\"><legend class=\"px-1 text-blue-800 font-bold text-xs leading-none\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var6 string
-		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Podaci o nalogu u obradi"))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi_stavke.templ`, Line: 36, Col: 118}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</legend><div class=\"grid grid-cols-3 gap-2 px-1\"><!-- Left Column (1/2) --><div class=\"col-span-1 flex flex-col gap-1\"><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</legend><div class=\"grid grid-cols-3 gap-2 px-1\"><!-- Left Column (1/2) --><div class=\"col-span-1 flex flex-col gap-1\"><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -149,7 +94,7 @@ func NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -173,7 +118,7 @@ func NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</div></div><!-- Right Column (1/2) --><div class=\"col-span-2 flex flex-col gap-1\"><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</div></div><!-- Right Column (1/2) --><div class=\"col-span-2 flex flex-col gap-1\"><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -197,7 +142,7 @@ func NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -221,103 +166,83 @@ func NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</div></div></div></fieldset><fieldset class=\"bg-blue-200 border border-blue-400 col-span-1 p-1\"><legend class=\"px-1 text-blue-800 font-bold text-xs leading-none\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</div></div></div></fieldset>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = NalogTotalValues(nalogTotal, translator).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</div><form id=\"nalog-stavke-form\" class=\"p-1 h-full flex flex-col min-h-0\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		if btnSave.HxRequestType == "PUT" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, " hx-put=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var4 string
+			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(btnSave.HxActionURL)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi_stavke.templ`, Line: 100, Col: 34}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "\" hx-on::after-request=\"handleFormResponse(event, &#39;PUT&#39;, null, true, &#39;btn-save-stavke&#39;)\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		if btnSave.HxRequestType == "POST" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, " hx-post=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var5 string
+			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(btnSave.HxActionURL)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi_stavke.templ`, Line: 104, Col: 35}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "\" hx-on::after-request=\"handleFormResponse(event, &#39;POST&#39;, null, true, &#39;btn-save-stavke&#39;)\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, " hx-swap=\"none\" hx-boost=\"false\" onsubmit=\"return false;\"><input type=\"hidden\" name=\"_csrf\" value=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var6 string
+		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(csrfToken)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi_stavke.templ`, Line: 111, Col: 56}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "\"><div class=\"m-0 bg-gray-200 font-sans flex-1 gap-1 min-h-0 flex flex-col\"><!-- Top Section --><div class=\"bg-blue-50 border border-blue-400 pl-1 min-h-20 shrink-0\"><div class=\"text-blue-800 font-bold text-xs mb-1 border-b border-gray-400 pb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var7 string
-		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Stanje naloga"))
+		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Osnovni podaci o stavci naloga"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi_stavke.templ`, Line: 111, Col: 107}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi_stavke.templ`, Line: 116, Col: 59}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</legend><div class=\"flex flex-col gap-1\"><div class=\"grid grid-cols-2 gap-2 items-center\"><div class=\"flex items-center gap-1\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "nalduguje",
-			LabelText:  translator.Label("Duguje"),
-			ClassLabel: common.ClassLabel + " text-blue-800 font-bold text-xs w-24",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
-			ID:            "nalduguje",
-			Disabled:      true,
-			ClassInput:    common.ClassInputNumericDisabled + " text-blue-800 font-bold text-sm w-full",
-			Value:         common.FormatNumberWithSystemLocale(fproDto.Duguje, 2),
-			DecimalPlaces: 2,
-			MaxLength:     "18",
-			TabIndex:      "-1"}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "</div><div class=\"flex items-center gap-1\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "nalpotrazuje",
-			LabelText:  translator.Label("Potrazuje"),
-			ClassLabel: common.ClassLabel + " text-blue-800 font-bold text-xs w-24",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
-			ID:            "nalpotrazuje",
-			Name:          "nalpotrazuje",
-			Disabled:      true,
-			ClassInput:    common.ClassInputNumericDisabled + " text-blue-800 font-bold text-sm w-full",
-			Value:         common.FormatNumberWithSystemLocale(fproDto.Potrazuje, 2),
-			DecimalPlaces: 2,
-			MaxLength:     "18",
-			TabIndex:      "-1"}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</div></div><div class=\"grid grid-cols-2 gap-2 items-center\"><div></div><div class=\"flex items-center gap-1\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "nalsaldo",
-			LabelText:  translator.Label("Saldo"),
-			ClassLabel: common.ClassLabel + " text-blue-800 font-bold text-xs w-24",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
-			ID:            "nalsaldo",
-			Disabled:      true,
-			ClassInput:    common.ClassInputNumericDisabled + " text-blue-800 font-bold text-sm w-full",
-			Value:         common.FormatNumberWithSystemLocale(fproDto.Saldo, 2),
-			DecimalPlaces: 2,
-			MaxLength:     "18",
-			TabIndex:      "6"}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</div></div></div></fieldset></div><div class=\"m-0 bg-gray-200 font-sans flex-1 gap-1 min-h-0 flex flex-col\"><!-- Top Section --><div class=\"bg-blue-50 border border-blue-400 pl-1 min-h-20 shrink-0\"><div class=\"text-blue-800 font-bold text-xs mb-1 border-b border-gray-400 pb-1\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var8 string
-		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Osnovni podaci o stavci naloga"))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi_stavke.templ`, Line: 171, Col: 59}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</div><!-- Form Fields --><div class=\"grid grid-cols-2 mb-1\"><!-- Left Column --><div class=\"border border-blue-400 space-y-1 pt-1 px-1 flex flex-col\"><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "</div><!-- Form Fields --><div class=\"grid grid-cols-2 mb-1\"><!-- Left Column --><div class=\"border border-blue-400 space-y-1 pt-1 px-1 flex flex-col\"><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -337,23 +262,24 @@ func NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData
 			ClassInput:   common.ClassInputTextEnabled + " w-24",
 			BlurEndpoint: "api/fkpl/trazikonto",
 			HxTarget:     "kontonaziv",
-			HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "2"}`,
+			HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "2", "destfield": "konto"}`,
 			HxInclude:    "this",
 			MinLength:    "2",
 			MaxLength:    "6",
 			TabIndex:     "1",
 			OnInput:      "clearFieldError",
-			OnFocus:      "clearFieldError"}).Render(ctx, templ_7745c5c3_Buffer)
+			OnFocus:      "clearFieldError",
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.SearchButton(domain.SearchButtonConfig{
-			ID:          "btnkonto",
+			ID:          "btn-search-konto",
 			Name:        "search-konto",
 			HxUrl:       "/api/promet/searchbutton",
 			HxTarget:    "#search-dropdown",
 			HxSwap:      "innerHTML",
-			HxVals:      `{"vkonta": "2"}`,
+			HxVals:      `{"vkonta": "2", "destfield": "konto"}`,
 			ClassButton: common.ClassButton,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
@@ -364,13 +290,12 @@ func NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData
 			Name:       "kontonaziv",
 			FieldType:  "text",
 			Disabled:   true,
-			ClassInput: common.ClassInputTextEnabled + " w-full",
-			TabIndex:   "-1",
+			ClassInput: common.ClassInputTextDisabled + " w-full",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</div><div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -390,23 +315,24 @@ func NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData
 			ClassInput:   common.ClassInputTextEnabled + " w-24",
 			BlurEndpoint: "api/fkpl/trazikonto",
 			HxTarget:     "sifranaziv",
-			HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('sifra').value, "vkonta": "1"}`,
+			HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('sifra').value, "vkonta": "1", "destfield": "sifra"}`,
 			HxInclude:    "this",
 			MinLength:    "2",
 			MaxLength:    "6",
 			TabIndex:     "2",
 			OnInput:      "clearFieldError",
-			OnFocus:      "clearFieldError"}).Render(ctx, templ_7745c5c3_Buffer)
+			OnFocus:      "clearFieldError",
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.SearchButton(domain.SearchButtonConfig{
-			ID:          "btnsifra",
+			ID:          "sifra",
 			Name:        "search-sifra",
 			HxUrl:       "/api/promet/searchbutton",
 			HxTarget:    "#search-dropdown",
 			HxSwap:      "innerHTML",
-			HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1"}`,
+			HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1", "destfield": "sifra"}`,
 			ClassButton: common.ClassButton,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
@@ -417,13 +343,12 @@ func NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData
 			Name:       "sifranaziv",
 			FieldType:  "text",
 			Disabled:   true,
-			ClassInput: common.ClassInputTextEnabled + " w-full",
-			TabIndex:   "-1",
+			ClassInput: common.ClassInputTextDisabled + " w-full",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -457,7 +382,7 @@ func NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</div><div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</div><div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -484,7 +409,7 @@ func NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -508,7 +433,7 @@ func NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -532,7 +457,7 @@ func NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -556,20 +481,20 @@ func NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "</div><!-- Amount Section --><div class=\"flex flex-col gap-2 mb-4\"><div class=\"flex items-start justify-center\"><div class=\"flex flex-col gap-1 items-center\"><div class=\"w-44 border-b-2 border-gray-800 pb-1 text-center font-bold text-sm\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "</div><!-- Amount Section --><div class=\"flex flex-col gap-2 mb-4\"><div class=\"flex items-start justify-center\"><div class=\"flex flex-col gap-1 items-center\"><div class=\"w-44 border-b-2 border-gray-800 pb-1 text-center font-bold text-sm\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var9 string
-		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Duguje"))
+		var templ_7745c5c3_Var8 string
+		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Duguje"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi_stavke.templ`, Line: 353, Col: 41}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi_stavke.templ`, Line: 298, Col: 41}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -589,20 +514,20 @@ func NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "</div><div class=\"flex flex-col items-center\"><div class=\"w-8 border-b-2 border-gray-800 mt-6\"></div><div class=\"border-l-2 border-gray-800 h-7\"></div></div><div class=\"flex flex-col gap-1 items-center\"><div class=\"w-44 border-b-2 border-gray-800 pb-1 text-center font-bold text-sm\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "</div><div class=\"flex flex-col items-center\"><div class=\"w-8 border-b-2 border-gray-800 mt-6\"></div><div class=\"border-l-2 border-gray-800 h-7\"></div></div><div class=\"flex flex-col gap-1 items-center\"><div class=\"w-44 border-b-2 border-gray-800 pb-1 text-center font-bold text-sm\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var10 string
-		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Potražuje"))
+		var templ_7745c5c3_Var9 string
+		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Potražuje"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi_stavke.templ`, Line: 375, Col: 45}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi_stavke.templ`, Line: 320, Col: 45}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -622,11 +547,15 @@ func NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "</div></div></div><!-- Action Buttons --><div class=\"flex justify-end gap-1 mt-auto pt-4\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "</div></div></div><!-- Action Buttons --><div class=\"flex justify-end gap-1 mt-auto pt-4\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.SaveButton(btnSave, translator).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.Button(btnCancel, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -638,7 +567,7 @@ func NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "</div><!-- Message Display Area at Bottom --><div id=\"dialog-form-message\" class=\"hidden w-full whitespace-normal break-words\"></div></div><!-- Right Column --><div class=\"space-y-1 px-1\"><div class=\"bg-blue-50 border border-blue-400 flex-1 px-1 py-1 space-y-1\"><div class=\"flex items-center gap-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "</div><!-- Message Display Area at Bottom --><div id=\"dialog-form-message\" class=\"hidden w-full whitespace-normal break-words\" hx-on:fpro:changed=\"this.classList.add(&#39;hidden&#39;); this.textContent=&#39;&#39;\"></div></div><!-- Right Column --><div class=\"space-y-1 px-1\"><div class=\"bg-blue-50 border border-blue-400 flex-1 px-1 py-1 space-y-1\"><div class=\"flex items-center gap-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -662,7 +591,7 @@ func NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "</div><div class=\"flex items-center gap-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "</div><div class=\"flex items-center gap-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -688,20 +617,20 @@ func NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "</div></div><!-- Document Section --><fieldset class=\"bg-blue-50 border border-blue-400 flex-1 p-1 min-h-20\"><legend class=\"px-1 text-blue-800 font-bold text-xs leading-none\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "</div></div><!-- Document Section --><fieldset class=\"bg-blue-50 border border-blue-400 flex-1 p-1 min-h-20\"><legend class=\"px-1 text-blue-800 font-bold text-xs leading-none\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var11 string
-		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Podaci o dokum/uplati/isplati"))
+		var templ_7745c5c3_Var10 string
+		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Podaci o dokum/uplati/isplati"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi_stavke.templ`, Line: 442, Col: 126}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi_stavke.templ`, Line: 388, Col: 126}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "</legend><div class=\"flex items-center gap-4 mb-1\"><div class=\"flex items-center gap-2 flex-1 min-w-0\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "</legend><div class=\"flex items-center gap-4 mb-1\"><div class=\"flex items-center gap-2 flex-1 min-w-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -727,7 +656,7 @@ func NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "<span id=\"dokum-error\" class=\"field-error-inline text-red-500 text-xs whitespace-normal break-words\"></span></div><div class=\"flex items-center gap-2 flex-1 min-w-0 justify-between\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "<span id=\"dokum-error\" class=\"field-error-inline text-red-500 text-xs whitespace-normal break-words\"></span></div><div class=\"flex items-center gap-2 flex-1 min-w-0 justify-between\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -752,7 +681,7 @@ func NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "<span id=\"tra-error\" class=\"field-error-inline text-red-500 text-xs whitespace-normal break-words\"></span></div></div><div class=\"flex items-center gap-4 mb-1\"><div class=\"flex items-center gap-2 flex-1 min-w-0\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "<span id=\"tra-error\" class=\"field-error-inline text-red-500 text-xs whitespace-normal break-words\"></span></div></div><div class=\"flex items-center gap-4 mb-1\"><div class=\"flex items-center gap-2 flex-1 min-w-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -776,12 +705,12 @@ func NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "<span id=\"dadok-error\" class=\"field-error-inline text-red-500 text-xs whitespace-normal break-words\"></span></div><div class=\"flex items-center gap-2 flex-1 min-w-0\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "<span id=\"dadok-error\" class=\"field-error-inline text-red-500 text-xs whitespace-normal break-words\"></span></div><div class=\"flex items-center gap-2 flex-1 min-w-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "rok",
+			ID:         "tra",
 			LabelText:  translator.Label("Rok"),
 			ClassLabel: common.ClassLabel + " w-40",
 		}).Render(ctx, templ_7745c5c3_Buffer)
@@ -789,7 +718,7 @@ func NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
-			ID:            "rok",
+			ID:            "tra",
 			FieldType:     "text",
 			Disabled:      false,
 			ClassInput:    common.ClassInputTextEnabled + " flex-1 min-w-[100px]",
@@ -803,25 +732,25 @@ func NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "</div></div><div class=\"text-xs text-gray-600 italic py-1 border-t border-gray-300 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "</div></div><div class=\"text-xs text-gray-600 italic py-1 border-t border-gray-300 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var12 string
-		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("vezni_dokument_opis"))
+		var templ_7745c5c3_Var11 string
+		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("vezni_dokument_opis"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi_stavke.templ`, Line: 521, Col: 51}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi_stavke.templ`, Line: 467, Col: 51}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "</div><div class=\"flex items-center gap-4 mb-1\"><div class=\"flex items-center gap-2 flex-1 min-w-0\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "</div><div class=\"flex items-center gap-4 mb-1\"><div class=\"flex items-center gap-2 flex-1 min-w-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "dokvezni",
+			ID:         "dokumv",
 			LabelText:  translator.Label("Br. Veznog Dokumenta"),
 			ClassLabel: common.ClassLabel + " w-40",
 		}).Render(ctx, templ_7745c5c3_Buffer)
@@ -829,8 +758,8 @@ func NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "dokvezni",
-			Name:       "dokvezni",
+			ID:         "dokumv",
+			Name:       "dokumv",
 			FieldType:  "text",
 			Disabled:   false,
 			ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-[100px]",
@@ -842,12 +771,12 @@ func NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "<span id=\"dokvezni-error\" class=\"field-error-inline text-red-500 text-xs whitespace-normal break-words\"></span></div><div class=\"flex items-center gap-2 flex-1 min-w-0 justify-between\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "<span id=\"dokvezni-error\" class=\"field-error-inline text-red-500 text-xs whitespace-normal break-words\"></span></div><div class=\"flex items-center gap-2 flex-1 min-w-0 justify-between\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "godvezni",
+			ID:         "travez",
 			LabelText:  translator.Label("God. Veznog Dokumenta"),
 			ClassLabel: common.ClassLabel + " w-40 whitespace-nowrap",
 		}).Render(ctx, templ_7745c5c3_Buffer)
@@ -855,8 +784,8 @@ func NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
-			ID:         "godvezni",
-			Name:       "godvezni",
+			ID:         "travez",
+			Name:       "travez",
 			Disabled:   false,
 			ClassInput: common.ClassInputTextEnabled + " w-40 ml-auto",
 			MinLength:  "0",
@@ -867,7 +796,7 @@ func NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "<span id=\"travez-error\" class=\"field-error-inline text-red-500 text-xs whitespace-normal break-words\"></span></div></div><div class=\"flex items-center gap-4 mb-1\"><div class=\"flex items-center gap-2 flex-1 min-w-0\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "<span id=\"travez-error\" class=\"field-error-inline text-red-500 text-xs whitespace-normal break-words\"></span></div></div><div class=\"flex items-center gap-4 mb-1\"><div class=\"flex items-center gap-2 flex-1 min-w-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -891,46 +820,20 @@ func NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "</div><div class=\"flex items-center gap-2 flex-1 min-w-0\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "</div></div></fieldset><!-- Currency Section --><fieldset class=\"bg-blue-50 border border-blue-400 flex-1 p-1 min-h-20\"><legend class=\"px-1 text-blue-800 font-bold text-xs leading-none\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "napomena",
-			LabelText:  translator.Label("Napomena"),
-			ClassLabel: common.ClassLabel + " w-40",
-		}).Render(ctx, templ_7745c5c3_Buffer)
+		var templ_7745c5c3_Var12 string
+		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Devizna vrednost"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi_stavke.templ`, Line: 529, Col: 113}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "napomena",
-			Name:       "napomena",
-			FieldType:  "text",
-			Disabled:   false,
-			ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-[100px]",
-			MinLength:  "0",
-			MaxLength:  "1000",
-			TabIndex:   "19",
-			OnInput:    "clearFieldError",
-			OnFocus:    "clearFieldError"}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "</div></div></fieldset><!-- Currency Section --><fieldset class=\"bg-blue-50 border border-blue-400 flex-1 p-1 min-h-20\"><legend class=\"px-1 text-blue-800 font-bold text-xs leading-none\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var13 string
-		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Devizna vrednost"))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi_stavke.templ`, Line: 601, Col: 113}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "</legend><div class=\"flex items-center gap-2 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "</legend><div class=\"flex items-center gap-2 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -956,7 +859,7 @@ func NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "</div><div class=\"flex items-center gap-4 mb-1\"><div class=\"flex items-center gap-2 flex-1 min-w-0\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "</div><div class=\"flex items-center gap-4 mb-1\"><div class=\"flex items-center gap-2 flex-1 min-w-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -982,7 +885,7 @@ func NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "<span id=\"kurs-error\" class=\"field-error-inline text-red-500 text-xs whitespace-normal break-words\"></span></div><div class=\"flex items-center gap-2 flex-1 min-w-0\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "<span id=\"kurs-error\" class=\"field-error-inline text-red-500 text-xs whitespace-normal break-words\"></span></div><div class=\"flex items-center gap-2 flex-1 min-w-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -998,7 +901,6 @@ func NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData
 			ID:            "deviznos",
 			Name:          "deviznos",
 			Disabled:      false,
-			Pattern:       "[0-9]*",
 			ClassInput:    common.ClassInputTextEnabled + " text-right flex-1 min-w-[100px]",
 			DecimalPlaces: 2,
 			Value:         "0",
@@ -1010,7 +912,7 @@ func NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "</div></div></fieldset></div></div></div><!-- Table Section --><div id=\"table-stavke-container\" class=\"border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col flex-1 min-h-0 overflow-hidden relative\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "</div></div></fieldset></div></div></div><!-- Table Section --><div id=\"table-stavke-container\" class=\"border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col flex-1 min-h-0 overflow-hidden relative\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1022,7 +924,20 @@ func NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "<!-- Table --><div class=\"flex-1 min-h-0 overflow-auto\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "<!-- Table --><div class=\"flex-1 min-h-0 overflow-auto\" hx-get=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var13 string
+		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(tblStavke.DetailURL)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi_stavke.templ`, Line: 599, Col: 36}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "\" hx-trigger=\"fpro:changed from:body\" hx-swap=\"innerHTML\" hx-headers=\"{&#34;X-Request-Source&#34;: &#34;btnpage&#34;}\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1030,7 +945,160 @@ func NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "</div></div></div></form></div></div><div id=\"notification\" class=\"fixed top-5 right-5 px-4 py-3 bg-green-500 text-white rounded hidden\"></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "</div></div></div></form></div></div><div id=\"notification\" class=\"fixed top-5 right-5 px-4 py-3 bg-green-500 text-white rounded hidden\"></div><div id=\"dialog-container\"></div></div>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.ShowSearchDialogScript().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.HideDropdownScript().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.ClearFieldErrorScript().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.HandleDblClickKontoSelectionScript().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.HandleFormResponseScript().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.PopulateFproUpdateFormScript().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.ClearFormScript().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+func NalogTotalValues(nalogTotal domain.NalogTotalValues, translator *i18n.Service) templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var14 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var14 == nil {
+			templ_7745c5c3_Var14 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "<fieldset class=\"bg-blue-200 border border-blue-400 col-span-1 p-1\"><legend class=\"px-1 text-blue-800 font-bold text-xs leading-none\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var15 string
+		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Stanje naloga"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi_stavke.templ`, Line: 625, Col: 102}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "</legend><div id=\"nalogtotalvalues\" hx-get=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var16 string
+		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(nalogTotal.HxGetURL)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi_stavke.templ`, Line: 628, Col: 31}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "\" hx-trigger=\"fpro:changed from:body\" hx-target=\"#nalogtotalvalues\" hx-swap=\"outerHTML\" class=\"flex flex-col gap-1\"><div class=\"grid grid-cols-2 gap-2 items-center\"><div class=\"flex items-center gap-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "nalduguje",
+			LabelText:  translator.Label("Duguje"),
+			ClassLabel: common.ClassLabel + " text-blue-800 font-bold text-xs w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+			ID:            "nalduguje",
+			Disabled:      true,
+			ClassInput:    common.ClassInputNumericDisabled + " text-blue-800 font-bold text-sm w-full",
+			Value:         common.FormatNumberWithSystemLocale(nalogTotal.Duguje, 2),
+			DecimalPlaces: 2,
+			MaxLength:     "18",
+			TabIndex:      "-1"}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, "</div><div class=\"flex items-center gap-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "nalpotrazuje",
+			LabelText:  translator.Label("Potrazuje"),
+			ClassLabel: common.ClassLabel + " text-blue-800 font-bold text-xs w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+			ID:            "nalpotrazuje",
+			Name:          "nalpotrazuje",
+			Disabled:      true,
+			ClassInput:    common.ClassInputNumericDisabled + " text-blue-800 font-bold text-sm w-full",
+			Value:         common.FormatNumberWithSystemLocale(nalogTotal.Potrazuje, 2),
+			DecimalPlaces: 2,
+			MaxLength:     "18",
+			TabIndex:      "-1"}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, "</div></div><div class=\"grid grid-cols-2 gap-2 items-center\"><div></div><div class=\"flex items-center gap-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+			ID:         "nalsaldo",
+			LabelText:  translator.Label("Saldo"),
+			ClassLabel: common.ClassLabel + " text-blue-800 font-bold text-xs w-24",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+			ID:            "nalsaldo",
+			Disabled:      true,
+			ClassInput:    common.ClassInputNumericDisabled + " text-blue-800 font-bold text-sm w-full",
+			Value:         common.FormatNumberWithSystemLocale(nalogTotal.Duguje-nalogTotal.Potrazuje, 2),
+			DecimalPlaces: 2,
+			MaxLength:     "18",
+			TabIndex:      "6"}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "</div></div></div></fieldset>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

@@ -55,6 +55,42 @@ func NaloziContent(tabs domain.TabData, tipdokValues []domain.ComboItem, ukObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
+		templ_7745c5c3_Err = tmpl.HandleFormResponseScript().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.ShowMessageScript().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.ClearFieldErrorScript().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.CloseDialogScript().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.RestrictNumericInput().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.HandleDblClickNalogSelectionScript().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.HandleDialogResponseScript("").Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.HandleNextNalogResponseScript().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.SelectRowScript().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
 		return nil
 	})
 }
@@ -140,7 +176,7 @@ func NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Ukup
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf(`{"X-CSRF-Token": "%s"}`, csrfToken))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 44, Col: 65}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 53, Col: 65}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
@@ -153,7 +189,7 @@ func NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Ukup
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(csrfToken)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 47, Col: 55}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 56, Col: 55}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
@@ -306,7 +342,7 @@ func NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Ukup
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Prikaz ukupne obrade"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 152, Col: 100}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 161, Col: 100}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
@@ -401,26 +437,6 @@ func NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Ukup
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</div></div></div></div>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.HandleFormResponseScript().Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.ShowMessageScript().Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.ClearFieldErrorScript().Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.CloseDialogScript().Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.RestrictNumericInput().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -803,7 +819,7 @@ func NaloziKopiranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, btnS
 		var templ_7745c5c3_Var15 string
 		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.Id)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 332, Col: 20}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 335, Col: 20}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 		if templ_7745c5c3_Err != nil {
@@ -834,7 +850,7 @@ func NaloziKopiranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, btnS
 			var templ_7745c5c3_Var17 string
 			templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Title(dialog.Title))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 337, Col: 76}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 340, Col: 76}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 			if templ_7745c5c3_Err != nil {
@@ -860,7 +876,7 @@ func NaloziKopiranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, btnS
 			var templ_7745c5c3_Var18 string
 			templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Title(dialog.Title))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 342, Col: 76}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 345, Col: 76}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 			if templ_7745c5c3_Err != nil {
@@ -879,119 +895,145 @@ func NaloziKopiranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, btnS
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "<div class=\"flex flex-col h-full\"><!-- Content --><form")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "<div class=\"flex flex-col h-full\"><!-- Content -->")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templ.RenderScriptItems(ctx, templ_7745c5c3_Buffer, templ.JSFuncCall("handleFormResponse", templ.JSExpression("event"), "PUT", dialog.Id, true), templ.JSFuncCall("handleFormResponse", templ.JSExpression("event"), "POST", dialog.Id, true))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, "<form")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if dialog.HxRequestType == "PUT" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, " hx-put=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, " hx-put=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var19 string
 			templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.HxActionURL)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 350, Col: 33}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 353, Col: 33}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, "\" hx-on::after-request=\"handleFormResponse(event, &#39;PUT&#39;, null, true)\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "\" hx-on::after-request=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var20 templ.ComponentScript = templ.JSFuncCall("handleFormResponse", templ.JSExpression("event"), "PUT", dialog.Id, true)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var20.Call)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 53, "\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
 		if dialog.HxRequestType == "POST" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, " hx-post=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 54, " hx-post=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var20 string
-			templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.HxActionURL)
+			var templ_7745c5c3_Var21 string
+			templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.HxActionURL)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 354, Col: 34}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 357, Col: 34}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 53, "\" hx-on::after-request=\"handleFormResponse(event, &#39;POST&#39;, null, true)\"")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 55, "\" hx-on::after-request=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var22 templ.ComponentScript = templ.JSFuncCall("handleFormResponse", templ.JSExpression("event"), "POST", dialog.Id, true)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var22.Call)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 56, "\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 54, " hx-target=\"#dialog-form-message\" hx-boost=\"false\" hx-on::after-request=\"handleFormResponse(event, &#39;dialog-form&#39;)\" onsubmit=\"return false;\" class=\"grid grid-cols-1 md:grid-cols-[auto,auto] gap-2 gap-x-4 p-3 bg-white shadow-lg rounded-lg w-auto\"><input type=\"hidden\" name=\"_csrf\" value=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var21 string
-		templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(csrfToken)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 363, Col: 56}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 55, "\"><div class=\"px-1 py-1 col-span-2 max-h-[70vh] overflow-y-auto\"><input type=\"hidden\" name=\"idfnal\" value=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var22 string
-		templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", model.IDFnal))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 365, Col: 80}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 56, "\"> <input type=\"hidden\" name=\"tipdok_old\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 57, " hx-target=\"#dialog-nalog-message\" hx-boost=\"false\" onsubmit=\"return false;\" class=\"grid grid-cols-1 md:grid-cols-[auto,auto] gap-2 gap-x-4 p-3 bg-white shadow-lg rounded-lg w-auto\"><input type=\"hidden\" name=\"_csrf\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var23 string
-		templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(model.Tipdok_Old)
+		templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(csrfToken)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 366, Col: 69}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 365, Col: 56}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 57, "\"> <input type=\"hidden\" name=\"nalog_old\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 58, "\"><div class=\"px-1 py-1 col-span-2 max-h-[70vh] overflow-y-auto\"><input type=\"hidden\" name=\"idfnal\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var24 string
-		templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(model.NalogOld)
+		templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", model.IDFnal))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 367, Col: 66}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 367, Col: 80}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 58, "\"><div class=\"text-blue-800 font-bold text-sm mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 59, "\"> <input type=\"hidden\" name=\"tipdokold\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var25 string
-		templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Podaci o nalogu iz kojeg se kopira"))
+		templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(model.TipdokOld)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 369, Col: 62}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 368, Col: 67}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 59, "</div><div class=\"box-content flex flex-col p-2 border-2 border-gray-300 rounded-md\"><div class=\"flex items-center space-x-2 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 60, "\"> <input type=\"hidden\" name=\"nalogold\" value=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var26 string
+		templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(model.NalogOld)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 369, Col: 65}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 61, "\"><div class=\"text-blue-800 font-bold text-sm mb-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var27 string
+		templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Podaci o nalogu iz kojeg se kopira"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 371, Col: 62}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 62, "</div><div class=\"box-content flex flex-col p-2 border-2 border-gray-300 rounded-md\"><div class=\"flex items-center space-x-2 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "lbltipdokold",
+			ID:         "tipdokold",
 			LabelText:  translator.Label("Vrsta naloga"),
 			ClassLabel: common.ClassLabel + " w-24",
 		}).Render(ctx, templ_7745c5c3_Buffer)
@@ -1009,12 +1051,12 @@ func NaloziKopiranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, btnS
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 60, "</div><div class=\"flex items-center space-x-2 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 63, "</div><div class=\"flex items-center space-x-2 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "lblmaogold",
+			ID:         "nalogold",
 			LabelText:  translator.Label("Broj naloga"),
 			ClassLabel: common.ClassLabel + " w-24",
 		}).Render(ctx, templ_7745c5c3_Buffer)
@@ -1032,12 +1074,12 @@ func NaloziKopiranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, btnS
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 61, "</div><div class=\"flex items-center space-x-2 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 64, "</div><div class=\"flex items-center space-x-2 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "lbldatknjold",
+			ID:         "danalold",
 			LabelText:  translator.Label("Datum naloga"),
 			ClassLabel: common.ClassLabel + " w-24",
 		}).Render(ctx, templ_7745c5c3_Buffer)
@@ -1056,7 +1098,7 @@ func NaloziKopiranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, btnS
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "lbldatob",
+			ID:         "datobold",
 			LabelText:  translator.Label("Datum Obrade"),
 			ClassLabel: common.ClassLabel + " w-24",
 		}).Render(ctx, templ_7745c5c3_Buffer)
@@ -1074,12 +1116,12 @@ func NaloziKopiranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, btnS
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 62, "</div><div class=\"flex items-center space-x-2 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 65, "</div><div class=\"flex items-center space-x-2 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "lblopisold",
+			ID:         "opisold",
 			LabelText:  translator.Label("Opis knjizenja"),
 			ClassLabel: common.ClassLabel + " w-24",
 		}).Render(ctx, templ_7745c5c3_Buffer)
@@ -1097,20 +1139,20 @@ func NaloziKopiranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, btnS
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 63, "</div></div><!-- Full-width Description Section --><div class=\"text-blue-800 font-bold text-sm mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 66, "</div></div><!-- Full-width Description Section --><div class=\"text-blue-800 font-bold text-sm mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var26 string
-		templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Podaci o novom nalogu"))
+		var templ_7745c5c3_Var28 string
+		templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Podaci o novom nalogu"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 448, Col: 49}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 450, Col: 49}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 64, "</div><div class=\"box-content flex flex-col p-2 border-2 border-gray-300 rounded-md\"><div class=\"flex items-center space-x-2 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 67, "</div><div class=\"box-content flex flex-col p-2 border-2 border-gray-300 rounded-md\"><div class=\"flex items-center space-x-2 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1136,7 +1178,7 @@ func NaloziKopiranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, btnS
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 65, "</div><div class=\"flex items-center space-x-2 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 68, "</div><div class=\"flex items-center space-x-2 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1164,7 +1206,7 @@ func NaloziKopiranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, btnS
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 66, "</div><div class=\"flex items-center space-x-2 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 69, "</div><div class=\"flex items-center space-x-2 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1208,7 +1250,7 @@ func NaloziKopiranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, btnS
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 67, "</div><div class=\"flex items-center space-x-2 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 70, "</div><div class=\"flex items-center space-x-2 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1231,7 +1273,7 @@ func NaloziKopiranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, btnS
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 68, "</div></div></div><div class=\"bg-white col-span-2 px-3 py-3 flex justify-end space-x-1 pt-4\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 71, "</div></div></div><div class=\"bg-white col-span-2 px-3 py-3 flex justify-end space-x-1 pt-4\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1243,7 +1285,7 @@ func NaloziKopiranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, btnS
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 69, "</div></form><!-- Message Display Area at Bottom --><div id=\"dialog-form-message\" class=\"hidden w-full whitespace-normal break-words\"></div></div></div><div id=\"dialog-confirm\" class=\"top-0 z-60\"></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 72, "</div></form><!-- Message Display Area at Bottom --><div id=\"dialog-nalog-message\" class=\"hidden w-full whitespace-normal break-words\"></div></div></div><div id=\"dialog-confirm\" class=\"top-0 z-60\"></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1283,83 +1325,57 @@ func NaloziKopiranjeDialogDeo(dialog domain.Dialog, model domain.KopirajNalog, b
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var27 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var27 == nil {
-			templ_7745c5c3_Var27 = templ.NopComponent
+		templ_7745c5c3_Var29 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var29 == nil {
+			templ_7745c5c3_Var29 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		var templ_7745c5c3_Var28 = []any{common.ClassMainDialogDiv}
-		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var28...)
+		var templ_7745c5c3_Var30 = []any{common.ClassMainDialogDiv}
+		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var30...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 70, "<div id=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 73, "<div id=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var29 string
-		templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.Id)
+		var templ_7745c5c3_Var31 string
+		templ_7745c5c3_Var31, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.Id)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 554, Col: 20}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 556, Col: 20}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 71, "\" class=\"")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var31))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var30 string
-		templ_7745c5c3_Var30, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var28).String())
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 74, "\" class=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var32 string
+		templ_7745c5c3_Var32, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var30).String())
 		if templ_7745c5c3_Err != nil {
 			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 1, Col: 0}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var30))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var32))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 72, "\"><div class=\"bg-white rounded-lg shadow-2xl relative animate-fade-in max-w-full w-auto\"><!-- Title Bar (Flush on Left, Top, Right) -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 75, "\"><div class=\"bg-white rounded-lg shadow-2xl relative animate-fade-in max-w-full w-auto\"><!-- Title Bar (Flush on Left, Top, Right) -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if btnSave.Id == "btn-delete" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 73, "<div class=\"bg-red-600 text-white h-9 flex justify-between items-center rounded-t-lg\"><h2 class=\"text-lg font-semibold ml-4\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 76, "<div class=\"bg-red-600 text-white h-9 flex justify-between items-center rounded-t-lg\"><h2 class=\"text-lg font-semibold ml-4\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var31 string
-			templ_7745c5c3_Var31, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Title(dialog.Title))
+			var templ_7745c5c3_Var33 string
+			templ_7745c5c3_Var33, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Title(dialog.Title))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 559, Col: 76}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 561, Col: 76}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var31))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 74, "</h2>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = tmpl.CloseButton(btnClose).Render(ctx, templ_7745c5c3_Buffer)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 75, "</div>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		} else {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 76, "<div class=\"bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg\"><h2 class=\"text-lg font-semibold ml-4\">")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var32 string
-			templ_7745c5c3_Var32, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Title(dialog.Title))
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 564, Col: 76}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var32))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var33))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1375,76 +1391,102 @@ func NaloziKopiranjeDialogDeo(dialog domain.Dialog, model domain.KopirajNalog, b
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 79, "<div class=\"flex flex-col h-full\"><!-- Content --><form")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		if dialog.HxRequestType == "PUT" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 80, " hx-put=\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var33 string
-			templ_7745c5c3_Var33, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.HxActionURL)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 572, Col: 33}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var33))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 81, "\" hx-on::after-request=\"handleFormResponse(event, &#39;PUT&#39;)\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		}
-		if dialog.HxRequestType == "POST" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 82, " hx-post=\"")
+		} else {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 79, "<div class=\"bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg\"><h2 class=\"text-lg font-semibold ml-4\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var34 string
-			templ_7745c5c3_Var34, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.HxActionURL)
+			templ_7745c5c3_Var34, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Title(dialog.Title))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 576, Col: 34}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 566, Col: 76}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var34))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 83, "\" hx-on::after-request=\"handleFormResponse(event, &#39;POST&#39;)\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 80, "</h2>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = tmpl.CloseButton(btnClose).Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 81, "</div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 84, " hx-target=\"#dialog-form-message\" hx-boost=\"false\" hx-on::after-request=\"handleFormResponse(event, &#39;dialog-form&#39;)\" onsubmit=\"return false;\" class=\"grid grid-cols-1 md:grid-cols-[auto,auto] gap-2 gap-x-4 p-1 bg-white shadow-lg rounded-lg w-auto\"><input type=\"hidden\" name=\"_csrf\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 82, "<div class=\"flex flex-col h-full\"><!-- Content --><form")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var35 string
-		templ_7745c5c3_Var35, templ_7745c5c3_Err = templ.JoinStringErrs(csrfToken)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 585, Col: 56}
+		if dialog.HxRequestType == "PUT" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 83, " hx-put=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var35 string
+			templ_7745c5c3_Var35, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.HxActionURL)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 574, Col: 33}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var35))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 84, "\" hx-on::after-request=\"handleFormResponse(event, &#39;PUT&#39;)\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var35))
+		if dialog.HxRequestType == "POST" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 85, " hx-post=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var36 string
+			templ_7745c5c3_Var36, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.HxActionURL)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 578, Col: 34}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var36))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 86, "\" hx-on::after-request=\"handleFormResponse(event, &#39;POST&#39;)\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 87, " hx-target=\"#dialog-nalog-message\" hx-boost=\"false\" hx-on::after-request=\"handleFormResponse(event, &#39;dialog-form&#39;)\" onsubmit=\"return false;\" class=\"grid grid-cols-1 md:grid-cols-[auto,auto] gap-2 gap-x-4 p-1 bg-white shadow-lg rounded-lg w-auto\"><input type=\"hidden\" name=\"_csrf\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 85, "\"><div class=\"col-span-2 px-1 py-1 max-h-[70vh] overflow-y-auto\"><div class=\"grid grid-cols-1 xl:grid-cols-2 gap-3\"><div><div class=\"text-blue-800 font-bold text-sm mb-1\">")
+		var templ_7745c5c3_Var37 string
+		templ_7745c5c3_Var37, templ_7745c5c3_Err = templ.JoinStringErrs(csrfToken)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 587, Col: 56}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var37))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var36 string
-		templ_7745c5c3_Var36, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Podaci o nalogu iz kojeg se kopira"))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 590, Col: 64}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var36))
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 88, "\"><div class=\"col-span-2 px-1 py-1 max-h-[70vh] overflow-y-auto\"><div class=\"grid grid-cols-1 xl:grid-cols-2 gap-3\"><div><div class=\"text-blue-800 font-bold text-sm mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 86, "</div><div class=\"box-content flex flex-col p-1 border-2 border-blue-400 rounded-md\"><div class=\"flex items-center space-x-2 mb-1\">")
+		var templ_7745c5c3_Var38 string
+		templ_7745c5c3_Var38, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Podaci o nalogu iz kojeg se kopira"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 592, Col: 64}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var38))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 89, "</div><div class=\"box-content flex flex-col p-1 border-2 border-blue-400 rounded-md\"><div class=\"flex items-center space-x-2 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1470,7 +1512,7 @@ func NaloziKopiranjeDialogDeo(dialog domain.Dialog, model domain.KopirajNalog, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 87, "</div><div class=\"flex items-center space-x-2 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 90, "</div><div class=\"flex items-center space-x-2 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1493,7 +1535,7 @@ func NaloziKopiranjeDialogDeo(dialog domain.Dialog, model domain.KopirajNalog, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 88, "</div><div class=\"flex items-center space-x-2 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 91, "</div><div class=\"flex items-center space-x-2 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1535,7 +1577,7 @@ func NaloziKopiranjeDialogDeo(dialog domain.Dialog, model domain.KopirajNalog, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 89, "</div><div class=\"flex items-center space-x-2 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 92, "</div><div class=\"flex items-center space-x-2 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1558,20 +1600,20 @@ func NaloziKopiranjeDialogDeo(dialog domain.Dialog, model domain.KopirajNalog, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 90, "</div></div></div><div><div class=\"text-blue-800 font-bold text-sm mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 93, "</div></div></div><div><div class=\"text-blue-800 font-bold text-sm mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var37 string
-		templ_7745c5c3_Var37, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Podaci o novom nalogu"))
+		var templ_7745c5c3_Var39 string
+		templ_7745c5c3_Var39, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Podaci o novom nalogu"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 673, Col: 51}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 675, Col: 51}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var37))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var39))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 91, "</div><div class=\"box-content flex flex-col p-1 border-2 border-blue-400 rounded-md\"><div class=\"flex items-center space-x-2 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 94, "</div><div class=\"box-content flex flex-col p-1 border-2 border-blue-400 rounded-md\"><div class=\"flex items-center space-x-2 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1597,7 +1639,7 @@ func NaloziKopiranjeDialogDeo(dialog domain.Dialog, model domain.KopirajNalog, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 92, "</div><div class=\"flex items-center space-x-2 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 95, "</div><div class=\"flex items-center space-x-2 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1625,7 +1667,7 @@ func NaloziKopiranjeDialogDeo(dialog domain.Dialog, model domain.KopirajNalog, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 93, "</div><div class=\"flex items-center space-x-2 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 96, "</div><div class=\"flex items-center space-x-2 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1669,7 +1711,7 @@ func NaloziKopiranjeDialogDeo(dialog domain.Dialog, model domain.KopirajNalog, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 94, "</div><div class=\"flex items-center space-x-2 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 97, "</div><div class=\"flex items-center space-x-2 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1692,20 +1734,20 @@ func NaloziKopiranjeDialogDeo(dialog domain.Dialog, model domain.KopirajNalog, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 95, "</div></div></div></div><div class=\"grid grid-cols-1 xl:grid-cols-[minmax(0,1fr),auto,minmax(0,1fr)] gap-3 mt-3 items-stretch\"><div class=\"h-full flex flex-col min-h-0\"><div class=\"text-blue-800 font-bold text-sm mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 98, "</div></div></div></div><div class=\"grid grid-cols-1 xl:grid-cols-[minmax(0,1fr),auto,minmax(0,1fr)] gap-3 mt-3 items-stretch\"><div class=\"h-full flex flex-col min-h-0\"><div class=\"text-blue-800 font-bold text-sm mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var38 string
-		templ_7745c5c3_Var38, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Stavke izvornog naloga"))
+		var templ_7745c5c3_Var40 string
+		templ_7745c5c3_Var40, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Stavke izvornog naloga"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 765, Col: 52}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 767, Col: 52}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var38))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var40))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 96, "</div><div class=\"box-content border-2 border-blue-400 rounded-md overflow-hidden bg-white h-full flex flex-col min-h-0 p-1\"><div class=\"flex flex-col sm:flex-row sm:items-end gap-2 p-1 border-b border-gray-300 bg-gray-50\"><div class=\"flex items-center space-x-2 w-full\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 99, "</div><div class=\"box-content border-2 border-blue-400 rounded-md overflow-hidden bg-white h-full flex flex-col min-h-0 p-1\"><div class=\"flex flex-col sm:flex-row sm:items-end gap-2 p-1 border-b border-gray-300 bg-gray-50\"><div class=\"flex items-center space-x-2 w-full\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1727,7 +1769,7 @@ func NaloziKopiranjeDialogDeo(dialog domain.Dialog, model domain.KopirajNalog, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 97, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 100, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1735,7 +1777,7 @@ func NaloziKopiranjeDialogDeo(dialog domain.Dialog, model domain.KopirajNalog, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 98, "</div><div class=\"flex-1 min-h-[16rem] overflow-x-auto overflow-y-auto\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 101, "</div><div class=\"flex-1 min-h-[16rem] overflow-x-auto overflow-y-auto\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1743,20 +1785,20 @@ func NaloziKopiranjeDialogDeo(dialog domain.Dialog, model domain.KopirajNalog, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 99, "</div></div></div><div class=\"flex flex-col items-center justify-end mb-8 gap-2 self-stretch\"><button type=\"button\" id=\"btn-prebaci-jedan-desno\" class=\"h-8 w-10 bg-gray-200 hover:bg-gray-300 rounded border border-blue-400 text-base font-semibold\">&gt;</button> <button type=\"button\" id=\"btn-prebaci-sve-desno\" class=\"h-8 w-10 bg-gray-200 hover:bg-gray-300 rounded border border-blue-400 text-base font-semibold\">&gt;&gt;</button> <button type=\"button\" id=\"btn-prebaci-jedan-levo\" class=\"h-8 w-10 bg-gray-200 hover:bg-gray-300 rounded border border-blue-400 text-base font-semibold\">&lt;</button> <button type=\"button\" id=\"btn-prebaci-sve-levo\" class=\"h-8 w-10 bg-gray-200 hover:bg-gray-300 rounded border border-blue-400 text-base font-semibold\">&lt;&lt;</button></div><div class=\"h-full flex flex-col min-h-0\"><div class=\"text-blue-800 font-bold text-sm mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 102, "</div></div></div><div class=\"flex flex-col items-center justify-end mb-8 gap-2 self-stretch\"><button type=\"button\" id=\"btn-prebaci-jedan-desno\" class=\"h-8 w-10 bg-gray-200 hover:bg-gray-300 rounded border border-blue-400 text-base font-semibold\">&gt;</button> <button type=\"button\" id=\"btn-prebaci-sve-desno\" class=\"h-8 w-10 bg-gray-200 hover:bg-gray-300 rounded border border-blue-400 text-base font-semibold\">&gt;&gt;</button> <button type=\"button\" id=\"btn-prebaci-jedan-levo\" class=\"h-8 w-10 bg-gray-200 hover:bg-gray-300 rounded border border-blue-400 text-base font-semibold\">&lt;</button> <button type=\"button\" id=\"btn-prebaci-sve-levo\" class=\"h-8 w-10 bg-gray-200 hover:bg-gray-300 rounded border border-blue-400 text-base font-semibold\">&lt;&lt;</button></div><div class=\"h-full flex flex-col min-h-0\"><div class=\"text-blue-800 font-bold text-sm mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var39 string
-		templ_7745c5c3_Var39, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Stavke novog naloga"))
+		var templ_7745c5c3_Var41 string
+		templ_7745c5c3_Var41, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Stavke novog naloga"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 798, Col: 49}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 800, Col: 49}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var39))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var41))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 100, "</div><div class=\"box-content border-2 border-blue-400 rounded-md overflow-hidden bg-white h-full flex flex-col min-h-0 p-1\"><div class=\"flex flex-col lg:flex-row lg:items-center lg:flex-wrap gap-2 p-1 border-b border-gray-300 bg-gray-50\"><div class=\"flex items-center space-x-2 flex-1 min-w-0\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 103, "</div><div class=\"box-content border-2 border-blue-400 rounded-md overflow-hidden bg-white h-full flex flex-col min-h-0 p-1\"><div class=\"flex flex-col lg:flex-row lg:items-center lg:flex-wrap gap-2 p-1 border-b border-gray-300 bg-gray-50\"><div class=\"flex items-center space-x-2 flex-1 min-w-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1778,38 +1820,16 @@ func NaloziKopiranjeDialogDeo(dialog domain.Dialog, model domain.KopirajNalog, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 101, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 104, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var40 = []any{common.ClassCheckboxLabel + " whitespace-nowrap"}
-		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var40...)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 102, "<label for=\"kopiraj_kontra_stav\" class=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var41 string
-		templ_7745c5c3_Var41, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var40).String())
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 1, Col: 0}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var41))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 103, "\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var42 = []any{common.ClassCheckbox}
+		var templ_7745c5c3_Var42 = []any{common.ClassCheckboxLabel + " whitespace-nowrap"}
 		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var42...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 104, "<input type=\"checkbox\" id=\"kopiraj_kontra_stav\" name=\"kopiraj_kontra_stav\" class=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 105, "<label for=\"kopiraj_kontra_stav\" class=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1822,16 +1842,16 @@ func NaloziKopiranjeDialogDeo(dialog domain.Dialog, model domain.KopirajNalog, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 105, "\"> ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 106, "\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var44 = []any{common.ClassCheckboxSpan}
+		var templ_7745c5c3_Var44 = []any{common.ClassCheckbox}
 		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var44...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 106, "<span class=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 107, "<input type=\"checkbox\" id=\"kopiraj_kontra_stav\" name=\"kopiraj_kontra_stav\" class=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1844,7 +1864,29 @@ func NaloziKopiranjeDialogDeo(dialog domain.Dialog, model domain.KopirajNalog, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 107, "\">Kopiraj stavke u kontra stav</span></label><div class=\"flex items-center gap-2 lg:ml-auto\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 108, "\"> ")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var46 = []any{common.ClassCheckboxSpan}
+		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var46...)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 109, "<span class=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var47 string
+		templ_7745c5c3_Var47, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var46).String())
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 1, Col: 0}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var47))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 110, "\">Kopiraj stavke u kontra stav</span></label><div class=\"flex items-center gap-2 lg:ml-auto\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1856,7 +1898,7 @@ func NaloziKopiranjeDialogDeo(dialog domain.Dialog, model domain.KopirajNalog, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 108, "</div></div><div class=\"flex-1 min-h-[16rem] overflow-x-auto overflow-y-auto\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 111, "</div></div><div class=\"flex-1 min-h-[16rem] overflow-x-auto overflow-y-auto\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1864,7 +1906,7 @@ func NaloziKopiranjeDialogDeo(dialog domain.Dialog, model domain.KopirajNalog, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 109, "</div></div></div></div></div></form><!-- Message Display Area at Bottom --><div id=\"dialog-form-message\" class=\"hidden\"></div></div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 112, "</div></div></div></div></div></form><!-- Message Display Area at Bottom --><div id=\"dialog-nalog-message\" class=\"hidden\"></div></div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1904,83 +1946,57 @@ func NaloziStorniranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, bt
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var46 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var46 == nil {
-			templ_7745c5c3_Var46 = templ.NopComponent
+		templ_7745c5c3_Var48 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var48 == nil {
+			templ_7745c5c3_Var48 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		var templ_7745c5c3_Var47 = []any{common.ClassMainDialogDiv}
-		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var47...)
+		var templ_7745c5c3_Var49 = []any{common.ClassMainDialogDiv}
+		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var49...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 110, "<div id=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 113, "<div id=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var48 string
-		templ_7745c5c3_Var48, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.Id)
+		var templ_7745c5c3_Var50 string
+		templ_7745c5c3_Var50, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.Id)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 845, Col: 20}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 847, Col: 20}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var48))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 111, "\" class=\"")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var50))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var49 string
-		templ_7745c5c3_Var49, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var47).String())
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 114, "\" class=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var51 string
+		templ_7745c5c3_Var51, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var49).String())
 		if templ_7745c5c3_Err != nil {
 			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 1, Col: 0}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var49))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var51))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 112, "\"><div class=\"bg-white rounded-lg shadow-2xl relative animate-fade-in max-w-full w-auto\"><!-- Title Bar (Flush on Left, Top, Right) -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 115, "\"><div class=\"bg-white rounded-lg shadow-2xl relative animate-fade-in max-w-full w-auto\"><!-- Title Bar (Flush on Left, Top, Right) -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if btnSave.Id == "btn-delete" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 113, "<div class=\"bg-red-600 text-white h-9 flex justify-between items-center rounded-t-lg\"><h2 class=\"text-lg font-semibold ml-4\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 116, "<div class=\"bg-red-600 text-white h-9 flex justify-between items-center rounded-t-lg\"><h2 class=\"text-lg font-semibold ml-4\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var50 string
-			templ_7745c5c3_Var50, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Title(dialog.Title))
+			var templ_7745c5c3_Var52 string
+			templ_7745c5c3_Var52, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Title(dialog.Title))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 850, Col: 76}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 852, Col: 76}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var50))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 114, "</h2>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = tmpl.CloseButton(btnClose).Render(ctx, templ_7745c5c3_Buffer)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 115, "</div>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		} else {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 116, "<div class=\"bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg\"><h2 class=\"text-lg font-semibold ml-4\">")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var51 string
-			templ_7745c5c3_Var51, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Title(dialog.Title))
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 855, Col: 76}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var51))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var52))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1996,94 +2012,172 @@ func NaloziStorniranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, bt
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 119, "<div class=\"flex flex-col h-full\"><!-- Content --><form")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		if dialog.HxRequestType == "PUT" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 120, " hx-put=\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var52 string
-			templ_7745c5c3_Var52, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.HxActionURL)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 863, Col: 33}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var52))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 121, "\" hx-on::after-request=\"handleFormResponse(event, &#39;PUT&#39;, null, true)\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		}
-		if dialog.HxRequestType == "POST" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 122, " hx-post=\"")
+		} else {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 119, "<div class=\"bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg\"><h2 class=\"text-lg font-semibold ml-4\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var53 string
-			templ_7745c5c3_Var53, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.HxActionURL)
+			templ_7745c5c3_Var53, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Title(dialog.Title))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 867, Col: 34}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 857, Col: 76}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var53))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 123, "\" hx-on::after-request=\"handleFormResponse(event, &#39;POST&#39;, null, true)\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 120, "</h2>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = tmpl.CloseButton(btnClose).Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 121, "</div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 124, " hx-target=\"#dialog-form-message\" hx-boost=\"false\" onsubmit=\"return false;\" class=\"grid grid-cols-1 md:grid-cols-[auto,auto] gap-2 gap-x-4 p-3 bg-white shadow-lg rounded-lg w-auto\"><div class=\"px-1 py-1 col-span-2 max-h-[70vh] overflow-y-auto\"><input type=\"hidden\" name=\"_csrf\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 122, "<div class=\"flex flex-col h-full\"><!-- Content -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var54 string
-		templ_7745c5c3_Var54, templ_7745c5c3_Err = templ.JoinStringErrs(csrfToken)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 876, Col: 57}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var54))
+		templ_7745c5c3_Err = templ.RenderScriptItems(ctx, templ_7745c5c3_Buffer, templ.JSFuncCall("handleFormResponse", templ.JSExpression("event"), "PUT", dialog.Id, true), templ.JSFuncCall("handleFormResponse", templ.JSExpression("event"), "POST", dialog.Id, true))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 125, "\"> <input type=\"hidden\" name=\"idfnal\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 123, "<form")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var55 string
-		templ_7745c5c3_Var55, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", model.IDFnal))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 877, Col: 80}
+		if dialog.HxRequestType == "PUT" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 124, " hx-put=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var54 string
+			templ_7745c5c3_Var54, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.HxActionURL)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 865, Col: 33}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var54))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 125, "\" hx-on::after-request=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var55 templ.ComponentScript = templ.JSFuncCall("handleFormResponse", templ.JSExpression("event"), "PUT", dialog.Id, true)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var55.Call)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 126, "\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var55))
+		if dialog.HxRequestType == "POST" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 127, " hx-post=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var56 string
+			templ_7745c5c3_Var56, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.HxActionURL)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 869, Col: 34}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var56))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 128, "\" hx-on::after-request=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var57 templ.ComponentScript = templ.JSFuncCall("handleFormResponse", templ.JSExpression("event"), "POST", dialog.Id, true)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var57.Call)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 129, "\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 130, " hx-target=\"#dialog-nalog-message\" hx-boost=\"false\" onsubmit=\"return false;\" class=\"grid grid-cols-1 md:grid-cols-[auto,auto] gap-2 gap-x-4 p-3 bg-white shadow-lg rounded-lg w-auto\"><div class=\"px-1 py-1 col-span-2 max-h-[70vh] overflow-y-auto\"><input type=\"hidden\" name=\"_csrf\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 126, "\"><div class=\"text-blue-800 font-bold text-sm mb-1\">")
+		var templ_7745c5c3_Var58 string
+		templ_7745c5c3_Var58, templ_7745c5c3_Err = templ.JoinStringErrs(csrfToken)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 878, Col: 57}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var58))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var56 string
-		templ_7745c5c3_Var56, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Podaci o nalogu koji se stornira"))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 879, Col: 60}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var56))
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 131, "\"> <input type=\"hidden\" name=\"idfnal\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 127, "</div><div class=\"box-content flex flex-col p-2 border-2 border-gray-300 rounded-md\"><div class=\"flex items-center space-x-2 mb-1\">")
+		var templ_7745c5c3_Var59 string
+		templ_7745c5c3_Var59, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", model.IDFnal))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 879, Col: 80}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var59))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 132, "\"> <input type=\"hidden\" name=\"tipdokold\" value=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var60 string
+		templ_7745c5c3_Var60, templ_7745c5c3_Err = templ.JoinStringErrs(model.TipdokOld)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 880, Col: 67}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var60))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 133, "\"> <input type=\"hidden\" name=\"nalogold\" value=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var61 string
+		templ_7745c5c3_Var61, templ_7745c5c3_Err = templ.JoinStringErrs(model.NalogOld)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 881, Col: 65}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var61))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 134, "\"><div class=\"text-blue-800 font-bold text-sm mb-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var62 string
+		templ_7745c5c3_Var62, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Podaci o nalogu koji se stornira"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 883, Col: 60}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var62))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 135, "</div><div class=\"box-content flex flex-col p-2 border-2 border-gray-300 rounded-md\"><div class=\"flex items-center space-x-2 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "vrstanalogaold",
+			ID:         "tipdok_old",
 			LabelText:  translator.Label("Vrsta naloga"),
 			ClassLabel: common.ClassLabel + " w-24",
 		}).Render(ctx, templ_7745c5c3_Buffer)
@@ -2091,9 +2185,9 @@ func NaloziStorniranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, bt
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "vrstanalogaold",
-			Name:       "vrstanalogaold",
-			Value:      model.TipdokOld,
+			ID:         "tipdok_old",
+			Name:       "tipdok_old",
+			Value:      model.Tipdok_Old,
 			FieldType:  "text",
 			Disabled:   true,
 			ClassInput: common.ClassInputTextDisabled + " w-full",
@@ -2101,12 +2195,12 @@ func NaloziStorniranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, bt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 128, "</div><div class=\"flex items-center space-x-2 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 136, "</div><div class=\"flex items-center space-x-2 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "brojnalogaold",
+			ID:         "nalog_old",
 			LabelText:  translator.Label("Broj naloga"),
 			ClassLabel: common.ClassLabel + " w-24",
 		}).Render(ctx, templ_7745c5c3_Buffer)
@@ -2114,8 +2208,8 @@ func NaloziStorniranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, bt
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "brojnalogaold",
-			Name:       "brojnalogaold",
+			ID:         "nalog_old",
+			Name:       "nalog_old",
 			Value:      model.NalogOld,
 			FieldType:  "text",
 			Disabled:   true,
@@ -2124,7 +2218,7 @@ func NaloziStorniranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, bt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 129, "</div><div class=\"flex items-center space-x-2 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 137, "</div><div class=\"flex items-center space-x-2 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2166,7 +2260,7 @@ func NaloziStorniranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, bt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 130, "</div><div class=\"flex items-center space-x-2 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 138, "</div><div class=\"flex items-center space-x-2 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2189,20 +2283,20 @@ func NaloziStorniranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, bt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 131, "</div></div><!-- Storniranje Details Section --><div class=\"text-blue-800 font-bold text-sm mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 139, "</div></div><!-- Storniranje Details Section --><div class=\"text-blue-800 font-bold text-sm mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var57 string
-		templ_7745c5c3_Var57, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Podaci o novom nalogu"))
+		var templ_7745c5c3_Var63 string
+		templ_7745c5c3_Var63, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Podaci o novom nalogu"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 958, Col: 49}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/nalozi.templ`, Line: 962, Col: 49}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var57))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var63))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 132, "</div><div class=\"box-content flex flex-col p-2 border-2 border-gray-300 rounded-md\"><div class=\"flex items-center space-x-2 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 140, "</div><div class=\"box-content flex flex-col p-2 border-2 border-gray-300 rounded-md\"><div class=\"flex items-center space-x-2 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2227,7 +2321,7 @@ func NaloziStorniranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, bt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 133, "</div><div class=\"flex items-center space-x-2 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 141, "</div><div class=\"flex items-center space-x-2 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2273,7 +2367,7 @@ func NaloziStorniranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, bt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 134, "</div><div class=\"flex items-center space-x-2 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 142, "</div><div class=\"flex items-center space-x-2 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2296,7 +2390,7 @@ func NaloziStorniranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, bt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 135, "</div></div></div><div class=\"bg-white col-span-2 px-3 py-3 flex justify-end space-x-1 pt-4\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 143, "</div></div></div><div class=\"bg-white col-span-2 px-3 py-3 flex justify-end space-x-1 pt-4\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2308,7 +2402,7 @@ func NaloziStorniranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, bt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 136, "</div></form></div><!-- Message Display Area at Bottom --><div id=\"dialog-form-message\" class=\"hidden w-full whitespace-normal break-words\"></div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 144, "</div></form></div><!-- Message Display Area at Bottom --><div id=\"dialog-nalog-message\" class=\"hidden w-full whitespace-normal break-words\"></div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2348,12 +2442,12 @@ func HandleFormResponseScript() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var58 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var58 == nil {
-			templ_7745c5c3_Var58 = templ.NopComponent
+		templ_7745c5c3_Var64 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var64 == nil {
+			templ_7745c5c3_Var64 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 137, "<script>\r\n\t\tdocument.addEventListener(\"keydown\", function (event) {\r\n\t\t\t// if escape key is pressed then close the open dialog\r\n\t\t\tif (event.key === \"Escape\") {\r\n\t\t\t\tconst openDialog = document.querySelector(\".fixed:not(.hidden)\");\r\n\t\t\t\tif (openDialog) {\r\n\t\t\t\t\tcloseDialog(openDialog.id);\r\n\t\t\t\t}\r\n\t\t\t};\r\n\t\t\tif (event.key === \"Enter\") {\r\n\t\t\t\tevent.preventDefault();\r\n\r\n\t\t\t\t// Find all input fields inside the dialog\r\n\t\t\t\tconst inputs = Array.from(document.querySelectorAll(\"#addupdate-dialog input\"));\r\n\t\t\t\t// Filter out any non-focusable elements (just in case)\r\n\t\t\t\tconst focusableInputs = inputs.filter(input => \r\n\t\t\t\t\t!input.disabled && \r\n\t\t\t\t\tinput.getAttribute('tabindex') !== '-1' && \r\n\t\t\t\t\tinput.offsetParent !== null // checks if element is visible\r\n\t\t\t\t);\r\n\r\n\t\t\t\t// Sort inputs by `tabindex` (if defined), else use DOM order\r\n\t\t\t\tfocusableInputs.sort((a, b) => {\r\n\t\t\t\t\tconst aIndex = parseInt(a.getAttribute(\"tabindex\") || \"9999\", 10);\r\n\t\t\t\t\tconst bIndex = parseInt(b.getAttribute(\"tabindex\") || \"9999\", 10);\r\n\t\t\t\t\treturn aIndex - bIndex;\r\n\t\t\t\t});\r\n\r\n\t\t\t\t// Get the currently focused element\r\n\t\t\t\tconst currentInput = document.activeElement;\r\n\r\n\t\t\t\t// Find the current input's index in the sorted list\r\n\t\t\t\tconst currentIndex = focusableInputs.indexOf(currentInput);\r\n\r\n\t\t\t\tif (currentIndex !== -1) {\r\n\t\t\t\t\t// Move to next input or wrap around\r\n\t\t\t\t\tconst nextIndex = (currentIndex + 1) % focusableInputs.length;\r\n\t\t\t\t\tfocusableInputs[nextIndex].focus();\r\n\t\t\t\t} else if (focusableInputs.length > 0) {\r\n\t\t\t\t\t// If no input currently focused, focus the first one\r\n\t\t\t\t\tfocusableInputs[0].focus();\r\n\t\t\t\t}\r\n\t\t\t}\r\n\t\t});\r\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 145, "<script>\r\n\t\tdocument.addEventListener(\"keydown\", function (event) {\r\n\t\t\t// if escape key is pressed then close the open dialog\r\n\t\t\tif (event.key === \"Escape\") {\r\n\t\t\t\tconst openDialog = document.querySelector(\".fixed:not(.hidden)\");\r\n\t\t\t\tif (openDialog) {\r\n\t\t\t\t\tcloseDialog(openDialog.id);\r\n\t\t\t\t}\r\n\t\t\t};\r\n\t\t\tif (event.key === \"Enter\") {\r\n\t\t\t\tevent.preventDefault();\r\n\r\n\t\t\t\t// Find all input fields inside the dialog\r\n\t\t\t\tconst inputs = Array.from(document.querySelectorAll(\"#addupdate-dialog input\"));\r\n\t\t\t\t// Filter out any non-focusable elements (just in case)\r\n\t\t\t\tconst focusableInputs = inputs.filter(input => \r\n\t\t\t\t\t!input.disabled && \r\n\t\t\t\t\tinput.getAttribute('tabindex') !== '-1' && \r\n\t\t\t\t\tinput.offsetParent !== null // checks if element is visible\r\n\t\t\t\t);\r\n\r\n\t\t\t\t// Sort inputs by `tabindex` (if defined), else use DOM order\r\n\t\t\t\tfocusableInputs.sort((a, b) => {\r\n\t\t\t\t\tconst aIndex = parseInt(a.getAttribute(\"tabindex\") || \"9999\", 10);\r\n\t\t\t\t\tconst bIndex = parseInt(b.getAttribute(\"tabindex\") || \"9999\", 10);\r\n\t\t\t\t\treturn aIndex - bIndex;\r\n\t\t\t\t});\r\n\r\n\t\t\t\t// Get the currently focused element\r\n\t\t\t\tconst currentInput = document.activeElement;\r\n\r\n\t\t\t\t// Find the current input's index in the sorted list\r\n\t\t\t\tconst currentIndex = focusableInputs.indexOf(currentInput);\r\n\r\n\t\t\t\tif (currentIndex !== -1) {\r\n\t\t\t\t\t// Move to next input or wrap around\r\n\t\t\t\t\tconst nextIndex = (currentIndex + 1) % focusableInputs.length;\r\n\t\t\t\t\tfocusableInputs[nextIndex].focus();\r\n\t\t\t\t} else if (focusableInputs.length > 0) {\r\n\t\t\t\t\t// If no input currently focused, focus the first one\r\n\t\t\t\t\tfocusableInputs[0].focus();\r\n\t\t\t\t}\r\n\t\t\t}\r\n\t\t});\r\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2377,12 +2471,12 @@ func HandleTableRowClickScript() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var59 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var59 == nil {
-			templ_7745c5c3_Var59 = templ.NopComponent
+		templ_7745c5c3_Var65 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var65 == nil {
+			templ_7745c5c3_Var65 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 138, "<script>\r\n\t\tfunction clickFirstStampanjeRow() {\r\n\t\t\tconst firstRow = document.querySelector('#nalozi-stampanje-table table tbody tr');\r\n\t\t\tif (!firstRow) {\r\n\t\t\t\treturn false;\r\n\t\t\t}\r\n\r\n\t\t\tfirstRow.click();\r\n\t\t\treturn true;\r\n\t\t}\r\n\r\n\t\tfunction isStampanjeHeaderSwapTarget(target) {\r\n\t\t\tif (!target) {\r\n\t\t\t\treturn false;\r\n\t\t\t}\r\n\r\n\t\t\tif (target.id === 'nalozi-stampanje-table') {\r\n\t\t\t\treturn true;\r\n\t\t\t}\r\n\r\n\t\t\tif (typeof target.closest === 'function' && target.closest('#nalozi-stampanje-table')) {\r\n\t\t\t\treturn true;\r\n\t\t\t}\r\n\r\n\t\t\tif (typeof target.querySelector === 'function' && target.querySelector('#nalozi-stampanje-table')) {\r\n\t\t\t\treturn true;\r\n\t\t\t}\r\n\r\n\t\t\treturn false;\r\n\t\t}\r\n\r\n\t\t// Initial tab render can swap a parent container, so try once after paint.\r\n\t\tsetTimeout(() => {\r\n\t\t\tclickFirstStampanjeRow();\r\n\t\t}, 0);\r\n\r\n\t\tif (!window.naloziStampanjeFirstRowListenerAttached) {\r\n\t\t\twindow.naloziStampanjeFirstRowListenerAttached = true;\r\n\t\t\twindow.handleNaloziStampanjeFirstRowAfterSwap = function(evt) {\r\n\t\t\t\tconst target = evt.detail && evt.detail.target;\r\n\t\t\t\tif (!isStampanjeHeaderSwapTarget(target)) {\r\n\t\t\t\t\treturn;\r\n\t\t\t\t}\r\n\r\n\t\t\t\tsetTimeout(() => {\r\n\t\t\t\t\tclickFirstStampanjeRow();\r\n\t\t\t\t}, 50);\r\n\t\t\t};\r\n\r\n\t\t\tdocument.addEventListener('htmx:afterSwap', window.handleNaloziStampanjeFirstRowAfterSwap);\r\n\t\t}\r\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 146, "<script>\r\n\t\tfunction clickFirstStampanjeRow() {\r\n\t\t\tconst firstRow = document.querySelector('#nalozi-stampanje-table table tbody tr');\r\n\t\t\tif (!firstRow) {\r\n\t\t\t\treturn false;\r\n\t\t\t}\r\n\r\n\t\t\tfirstRow.click();\r\n\t\t\treturn true;\r\n\t\t}\r\n\r\n\t\tfunction isStampanjeHeaderSwapTarget(target) {\r\n\t\t\tif (!target) {\r\n\t\t\t\treturn false;\r\n\t\t\t}\r\n\r\n\t\t\tif (target.id === 'nalozi-stampanje-table') {\r\n\t\t\t\treturn true;\r\n\t\t\t}\r\n\r\n\t\t\tif (typeof target.closest === 'function' && target.closest('#nalozi-stampanje-table')) {\r\n\t\t\t\treturn true;\r\n\t\t\t}\r\n\r\n\t\t\tif (typeof target.querySelector === 'function' && target.querySelector('#nalozi-stampanje-table')) {\r\n\t\t\t\treturn true;\r\n\t\t\t}\r\n\r\n\t\t\treturn false;\r\n\t\t}\r\n\r\n\t\t// Initial tab render can swap a parent container, so try once after paint.\r\n\t\tsetTimeout(() => {\r\n\t\t\tclickFirstStampanjeRow();\r\n\t\t}, 0);\r\n\r\n\t\tif (!window.naloziStampanjeFirstRowListenerAttached) {\r\n\t\t\twindow.naloziStampanjeFirstRowListenerAttached = true;\r\n\t\t\twindow.handleNaloziStampanjeFirstRowAfterSwap = function(evt) {\r\n\t\t\t\tconst target = evt.detail && evt.detail.target;\r\n\t\t\t\tif (!isStampanjeHeaderSwapTarget(target)) {\r\n\t\t\t\t\treturn;\r\n\t\t\t\t}\r\n\r\n\t\t\t\tsetTimeout(() => {\r\n\t\t\t\t\tclickFirstStampanjeRow();\r\n\t\t\t\t}, 50);\r\n\t\t\t};\r\n\r\n\t\t\tdocument.addEventListener('htmx:afterSwap', window.handleNaloziStampanjeFirstRowAfterSwap);\r\n\t\t}\r\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2406,12 +2500,12 @@ func NaloziScript() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var60 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var60 == nil {
-			templ_7745c5c3_Var60 = templ.NopComponent
+		templ_7745c5c3_Var66 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var66 == nil {
+			templ_7745c5c3_Var66 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 139, "<script>\r\n        document.addEventListener('htmx:afterSwap', function(event) {\r\n    \t\tconsole.log('HTMX After Swap:', event.detail.target);\r\n\t\t\tconst tabs = document.querySelectorAll('nav button');\r\n            const tabContent = document.getElementById('tab-content');\r\n\r\n            tabs.forEach(tab => {\r\n                tab.addEventListener('click', () => {\r\n                    // Remove active classes from all tabs\r\n                    tabs.forEach(t => {\r\n                        t.classList.remove('text-blue-600', 'border-blue-600');\r\n                        t.classList.add('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');\r\n                        t.setAttribute('aria-selected', 'false');\r\n                    });\r\n\r\n                    // Add active classes to the clicked tab\r\n                    tab.classList.add('text-blue-600', 'border-blue-600');\r\n                    tab.classList.remove('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');\r\n                    tab.setAttribute('aria-selected', 'true');\r\n                });\r\n            });\r\n\r\n            // Trigger click on the first tab to load its content on page load\r\n            document.getElementById('knjizenje-tab').click();\r\n        });\r\n    </script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 147, "<script>\r\n        document.addEventListener('htmx:afterSwap', function(event) {\r\n    \t\tconsole.log('HTMX After Swap:', event.detail.target);\r\n\t\t\tconst tabs = document.querySelectorAll('nav button');\r\n            const tabContent = document.getElementById('tab-content');\r\n\r\n            tabs.forEach(tab => {\r\n                tab.addEventListener('click', () => {\r\n                    // Remove active classes from all tabs\r\n                    tabs.forEach(t => {\r\n                        t.classList.remove('text-blue-600', 'border-blue-600');\r\n                        t.classList.add('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');\r\n                        t.setAttribute('aria-selected', 'false');\r\n                    });\r\n\r\n                    // Add active classes to the clicked tab\r\n                    tab.classList.add('text-blue-600', 'border-blue-600');\r\n                    tab.classList.remove('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');\r\n                    tab.setAttribute('aria-selected', 'true');\r\n                });\r\n            });\r\n\r\n            // Trigger click on the first tab to load its content on page load\r\n            document.getElementById('knjizenje-tab').click();\r\n        });\r\n    </script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

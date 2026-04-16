@@ -205,7 +205,7 @@ func UcitavanjeIzvoda(tabs domain.TabData, tblMaster domain.TableData, tblDetail
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.ShowMessage().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.ShowMessageScript().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -528,7 +528,7 @@ func KnjizenjeIzvoda(tabs domain.TabData, tblMaster domain.TableData, tblDetail 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.ShowMessage().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.ShowMessageScript().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -773,7 +773,7 @@ func PregledIzvoda(tabs domain.TabData, tblMaster domain.TableData, tblDetail do
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.ShowMessage().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.ShowMessageScript().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

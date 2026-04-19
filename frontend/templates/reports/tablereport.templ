@@ -12,10 +12,10 @@ templ ReportTable(tbl domain.TableData, translator *i18n.Service) {
 }
 
 templ ReportTableInternal(tbl domain.TableData, translator *i18n.Service) {
-	<table class="w-full border-collapse report-table mt-8 print:w-full print:text-[9pt] print:table-auto print:border-collapse">
+	<table class="w-full border-collapse report-table mt-4 print:w-full print:text-[9pt] print:table-auto print:border-collapse">
 		@ReportTableHeader(tbl, translator)
 		@ReportTableBody(tbl, tbl.URLPrefix, translator)
-		if tbl.HasTotals && len(tbl.Totals) > 0 {
+		if tbl.HasTotals {
 			@ReportTableFooter(tbl)
 		}
 	</table>
@@ -83,7 +83,7 @@ templ ReportTableFooter(tbl domain.TableData) {
 	<tfoot>
 		<tr class="bg-blue-50 font-bold border-t-2 border-blue-900 print:bg-blue-50 print:page-break-inside-avoid">
 			for j, header := range tbl.Headers {
-				if header.IncludeInTotals && j < len(tbl.Totals) {
+				if header.IncludeInTotals {
 					<td class="border border-gray-300 px-3 py-2 text-sm print:text-[9pt] print:px-2 print:py-1 font-bold text-right">
 						{ tbl.Totals[j] }
 					</td>

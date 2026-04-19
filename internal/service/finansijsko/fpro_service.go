@@ -142,7 +142,35 @@ func (s *FproResource) GetAllCustom(ctx context.Context, queryText string, where
 
 // GetByID implements NalogService.
 func (s *FproResource) GetByID(ctx context.Context, idField string, idValue int64) (*domain.Fpro, error) {
-	return s.service.GetByID(ctx, idField, idValue)
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		return nil, fmt.Errorf("no user session found in context")
+	}
+	qb := common.NewQueryBuilder(`select fp.idfpro, fp.rbr, fp.nalog, fp.tipdok, fp.danal, fp.iznos, fp.kat, coalesce(fp.opis, '') as opis, fp.dadok,
+	fp.rok, fp.vrd, fp.vkonta, fp.konto, coalesce(fp.sifra, '') as sifra, fp.tra, fp.deviznos, fp.kurs,
+	fp.sifval, fp.mi, coalesce(fp.dokum, '') as dokum, fp.idfnal, 
+	coalesce(fp.idorgjed, 0) as idorgjed, coalesce(fp.komid, 0) as komid, coalesce(fp.mestotrid, 0) as mestotrid,  fp.idfkpl, 
+	coalesce(fp.dokumv, '') as dokumv, fp.dadokv, fp.travez,
+	coalesce(fk.naziv, '') as nazivkonta,
+	coalesce(p.naziv, '') as NazivAnalitike,
+	case when fp.kat in (1,2) then fp.iznos
+		 else 0 end as dug,
+	case when fp.kat in (3,4) then fp.iznos
+		 else 0 end as pot
+	from fpro as fp`, true)
+	qb.AddJoin(` left join fkpl fk on fk.idfkpl = fp.idfkpl`)
+	qb.AddJoin(` left join partneri p on p.sifra = fp.sifra and p.tipanalitikeid = fk.tipanalitikeid `)
+	qb.AddEqual(fmt.Sprintf("fp.%s", idField), idValue)
+	sqlQuery, args := qb.Build()
+	entities, err := s.service.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	if err != nil {
+		return nil, err
+	}
+	if entities == nil || len(*entities) == 0 {
+		return nil, fmt.Errorf("Fpro not found for %s = %d", idField, idValue)
+	}
+	return &(*entities)[0], nil
+
 }
 
 // GetTotalRecords implements NalogService.
@@ -302,8 +330,13 @@ func (s *FproResource) SaveNalogStavke(ctx context.Context, fproStavke *domain.F
 	}
 	fproStavke.Rbr = lastRbr + 1
 	fields := s.mapFieldsToValues(fproStavke)
-	sqlQuery, args := qb.BuildInsert(ctx, fields, common.IDfpro)
-
+	sqlQuery := ""
+	args := []interface{}{}
+	if fproStavke.IDFkpl != 0 {
+		sqlQuery, args = qb.BuildUpdate(ctx, fields, common.IDfpro, fproStavke.IDFpro)
+	} else {
+		sqlQuery, args = qb.BuildInsert(ctx, fields, common.IDfpro)
+	}
 	// Start a transaction
 	tx, err := s.fproRepo.BeginTx()
 	if err != nil {
@@ -315,10 +348,12 @@ func (s *FproResource) SaveNalogStavke(ctx context.Context, fproStavke *domain.F
 			tx.Rollback()
 		}
 	}()
-
-	err = tx.QueryRowContext(ctx, sqlQuery, args...).Scan(&insertedID)
-	if err != nil {
-		return fmt.Errorf("insert fpro failed: %w", err)
+	// check only we have insert record
+	if fproStavke.IDFpro == 0 {
+		err = tx.QueryRowContext(ctx, sqlQuery, args...).Scan(&insertedID)
+		if err != nil {
+			return fmt.Errorf("insert fpro failed: %w", err)
+		}
 	}
 	err = s.recalculateFnal(ctx, tx, fproStavke.IDFnal)
 	if err != nil {

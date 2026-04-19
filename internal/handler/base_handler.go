@@ -692,7 +692,31 @@ func (h *BasicHandler) setComboFirma(c *gin.Context) {
 }
 
 func (h *BasicHandler) SelectComboFirma(c *gin.Context) {
-	// UserSession already has firma from context, just render
+	newFirma := c.Query("firma")
+	if newFirma == "" {
+		newFirma = c.PostForm("firma")
+	}
+	if newFirma != "" {
+		userSession := domain.GetSessionFromContext(c)
+		if userSession != nil && userSession.Firma != newFirma {
+			userSession.Firma = newFirma
+			// Reset god and kar to first available values for the new firma
+			userSession.SelectedGod = 0
+			userSession.SelectedKar = 0
+			fvrData := h.getFirma()
+			for _, f := range fvrData.Firme {
+				if f.Naziv == newFirma && len(f.Godine) > 0 {
+					userSession.SelectedGod = f.Godine[0].God
+					if len(f.Godine[0].Kar) > 0 {
+						userSession.SelectedKar = f.Godine[0].Kar[0]
+					}
+					break
+				}
+			}
+			c.Set("userSession", userSession)
+			h.regenerateToken(c, userSession)
+		}
+	}
 	h.renderFullPage(c)
 }
 
@@ -704,16 +728,24 @@ func (h *BasicHandler) SetComboGod(c *gin.Context) {
 
 	if god != "" {
 		if gnGod, err := strconv.Atoi(god); err == nil {
-			// Update user session in context (per-user, request-scoped)
 			userSession := domain.GetSessionFromContext(c)
 			if userSession != nil {
 				userSession.SelectedGod = gnGod
-
-				// Regenerate JWT token with new preferences
-				h.regenerateToken(c, userSession)
-				// Reset dependent field
-				userSession.SelectedKar = 0
+				// Reset kar and pick the default for the new god before regenerating the token
+				fvrData := h.getFirma()
+				defaultKar := 0
+				for _, firma := range fvrData.Firme {
+					if firma.Naziv == userSession.Firma {
+						for _, g := range firma.Godine {
+							if g.God == gnGod && len(g.Kar) > 0 {
+								defaultKar = g.Kar[0]
+							}
+						}
+					}
+				}
+				userSession.SelectedKar = defaultKar
 				c.Set("userSession", userSession)
+				h.regenerateToken(c, userSession)
 			}
 		}
 	}
@@ -722,7 +754,33 @@ func (h *BasicHandler) SetComboGod(c *gin.Context) {
 }
 
 func (h *BasicHandler) SelectComboGod(c *gin.Context) {
-	// UserSession already has god from context, just render
+	god := c.Query("god")
+	if god == "" {
+		god = c.PostForm("god")
+	}
+	if god != "" {
+		if gnGod, err := strconv.Atoi(god); err == nil {
+			userSession := domain.GetSessionFromContext(c)
+			if userSession != nil && gnGod != userSession.SelectedGod {
+				userSession.SelectedGod = gnGod
+				// Reset kar to first available value for the new god
+				userSession.SelectedKar = 0
+				fvrData := h.getFirma()
+				for _, f := range fvrData.Firme {
+					if f.Naziv == userSession.Firma {
+						for _, g := range f.Godine {
+							if g.God == gnGod && len(g.Kar) > 0 {
+								userSession.SelectedKar = g.Kar[0]
+							}
+						}
+						break
+					}
+				}
+				c.Set("userSession", userSession)
+				h.regenerateToken(c, userSession)
+			}
+		}
+	}
 	h.renderFullPage(c)
 }
 
@@ -736,12 +794,12 @@ func (h *BasicHandler) SetComboKar(c *gin.Context) {
 		if gnKar, err := strconv.Atoi(kar); err == nil {
 			// Update user session in context (per-user, request-scoped)
 			userSession := domain.GetSessionFromContext(c)
-
-			// Regenerate JWT token with new preferences
-			h.regenerateToken(c, userSession)
 			if userSession != nil {
 				userSession.SelectedKar = gnKar
 				c.Set("userSession", userSession)
+
+				// Regenerate JWT token with new preferences
+				h.regenerateToken(c, userSession)
 			}
 		}
 	}
@@ -750,7 +808,20 @@ func (h *BasicHandler) SetComboKar(c *gin.Context) {
 }
 
 func (h *BasicHandler) SelectComboKar(c *gin.Context) {
-	// UserSession already has kar from context, just render
+	kar := c.Query("kar")
+	if kar == "" {
+		kar = c.PostForm("kar")
+	}
+	if kar != "" {
+		if gnKar, err := strconv.Atoi(kar); err == nil {
+			userSession := domain.GetSessionFromContext(c)
+			if userSession != nil && gnKar != userSession.SelectedKar {
+				userSession.SelectedKar = gnKar
+				c.Set("userSession", userSession)
+				h.regenerateToken(c, userSession)
+			}
+		}
+	}
 	h.renderFullPage(c)
 }
 func (h *BasicHandler) SelectComboLanguage(c *gin.Context) {
@@ -894,9 +965,13 @@ func (h *BasicHandler) renderFullPage(c *gin.Context) {
 		KarConf:      setComboKarConfig(fvrData, selections.firma, selections.god, selections.kar),
 		LanguageConf: setComboLanguageConfig(selections.language, h.cfg),
 	}
-
+	userSession.Firma = selections.firma
+	userSession.SelectedGod = selections.god
+	userSession.SelectedKar = selections.kar
+	userSession.Language = selections.language
+	c.Set("userSession", userSession)
 	// Render the page
-	err := tmpl.Base(
+	tmpl.Base(
 		pageData.IsLoggedIn,
 		pageData.Content,
 		pageData.MenuItems,
@@ -911,12 +986,6 @@ func (h *BasicHandler) renderFullPage(c *gin.Context) {
 		pageData.LanguageConf,
 		i18n.GetInstance(),
 	).Render(c.Request.Context(), c.Writer)
-
-	if err != nil {
-		h.logger.Printf("Error rendering template: %v", err)
-		h.respondWithError(c, http.StatusInternalServerError, "Error rendering template")
-		return
-	}
 }
 
 func (rw *responseWriter) WriteHeader(code int) {

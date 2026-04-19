@@ -340,6 +340,7 @@ type FnalPayload struct {
 	Saldo     string `form:"saldo"`
 }
 type FproPayload struct {
+	IDFpro            int64  `form:"idfpro"`
 	IDFnal            int64  `schema:"idfnal"`
 	Tipdok            string `form:"tipdok"`
 	Nalog             string `form:"nalog"`
@@ -878,4 +879,29 @@ type NalogTotalValues struct {
 	Duguje    float64
 	Potrazuje float64
 	Saldo     float64
+}
+
+// // FproStavkaPrint holds formatted fields for a single fpro row in the nalog print report.
+// type FproStavkaPrint struct {
+// 	Rbr      int
+// 	Konto    string
+// 	Sifra    string
+// 	Naziv    string
+// 	Opis     string
+// 	Ojozn    string
+// 	Dokum    string
+// 	DadokStr string
+// 	Dug      float64
+// 	Pot      float64
+// 	DugStr   string
+// 	PotStr   string
+// 	SaldoStr string
+// }
+
+// NalogKontoSummary holds per-konto aggregated totals for the nalog print report.
+type NalogKontoSummary struct {
+	Konto     string
+	BrStavki  int
+	Duguje    float64
+	Potrazuje float64
 }

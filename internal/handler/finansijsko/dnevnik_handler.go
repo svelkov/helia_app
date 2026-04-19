@@ -62,11 +62,7 @@ func (h *DnevnikHandler) DnevnikKnjizenja(c *gin.Context) {
 		btnObrada := common.SetButton("btnobrada", "Obrada", "fin_obrada", dnevnikURLMain, fmt.Sprintf("#%s", dnevnikTableID), "innerHTML", "GET", "", hxValsDnevnik, true, common.ClassSaveButton, "handleDialogResponse")
 		btnPrint := common.SetButton("stampa", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
 
-		err := tmpl_fin.DnevnikKnjizenja(tbl, searchInput, btnObrada, btnPrint, i18n.GetInstance(), gnGod).Render(c.Request.Context(), c.Writer)
-		if err != nil {
-			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
-			return
-		}
+		tmpl_fin.DnevnikKnjizenja(tbl, searchInput, btnObrada, btnPrint, i18n.GetInstance(), gnGod).Render(c.Request.Context(), c.Writer)
 		return
 	}
 
@@ -82,7 +78,7 @@ func (h *DnevnikHandler) DnevnikKnjizenja(c *gin.Context) {
 
 		odDatuma := c.Query("oddatuma")
 		doDatuma := c.Query("dodatuma")
-		searchText := c.Query("search-input")
+		searchText := c.Query("query")
 		ctx := c.Request.Context()
 
 		err := h.service.GetDnevnikKnjizenja(ctx, &tbl, true, page, pageSize, odDatuma, doDatuma, searchText)

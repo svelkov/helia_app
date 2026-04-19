@@ -8,7 +8,7 @@ import (
 )
 
 // Main Report Template
-templ Report(parameters domain.ReportParameters, tableData domain.TableData, translator *i18n.Service) {
+templ Report(parameters domain.ReportParameters, tableData domain.TableData, translator *i18n.Service, summaryComponent templ.Component) {
 	<html lang="en">
 		<head>
 			<meta charset="UTF-8"/>
@@ -16,12 +16,32 @@ templ Report(parameters domain.ReportParameters, tableData domain.TableData, tra
 			<script src="https://cdn.tailwindcss.com"></script>
 			<title>{ parameters.ReportName } - { parameters.CompanyName }</title>
 			<style>
-				@media print {
-				@page {
-					size: A4;
-					margin: 15mm 12mm 15mm 12mm;
+			/* @page must be at top level, not inside @media print */
+			/* @top-right requires Chrome 128+ — thead::before below is the Chrome fallback */
+			@page {
+				size: A4;
+				margin: 8mm 10mm 12mm 10mm;
+				@top-right {
+					content: "Stranica " counter(page);
+					font-size: 9pt;
+					font-family: sans-serif;
+					color: #374151;
+					text-align: left;
+				}
+			}
+
+			@media print {
+				.page-info {
+					font-size: 8pt;
+					color: #374151;
 				}
 				
+				/* Ensure page numbers appear on each printed page */
+				.page-break {
+					position: relative;
+					page-break-after: always;
+				}
+		
 				html, body {
 					margin: 0;
 					padding: 0;
@@ -43,25 +63,6 @@ templ Report(parameters domain.ReportParameters, tableData domain.TableData, tra
 					background: white;
 				}
 				
-				/* Each page-break div is a complete page */
-				.page-break {
-					width: 100%;
-					margin: 0;
-					padding: 0;
-					background: white;
-					page-break-after: always;
-					display: block;
-					page-break-inside: auto;
-				}
-				
-				.page-break:last-child {
-					page-break-after: avoid;
-				}
-
-				.page-break > div {
-					padding: 0;
-				}
-				
 				.no-break {
 					page-break-inside: avoid;
 				}
@@ -71,6 +72,7 @@ templ Report(parameters domain.ReportParameters, tableData domain.TableData, tra
 					width: 100%;
 					border-collapse: collapse;
 					page-break-inside: auto;
+					table-layout: fixed;
 				}
 				
 				/* Repeat header on each page */
@@ -78,7 +80,7 @@ templ Report(parameters domain.ReportParameters, tableData domain.TableData, tra
 					display: table-header-group;
 					page-break-inside: avoid;
 				}
-				
+
 				tbody {
 					display: table-row-group;
 				}
@@ -119,21 +121,23 @@ templ Report(parameters domain.ReportParameters, tableData domain.TableData, tra
 				}
 				
 				tfoot {
-					display: table-footer-group;
+					display: table-row-group;
+					page-break-inside: avoid;
 				}
 			}
-				/* Screen view */
-				@media screen {
-					.page-break {
-						width: 210mm;
-						margin: 20px auto;
-						padding: 15mm;
-						background: white;
-						box-shadow: 0 0 10px rgba(0,0,0,0.1);
-						min-height: 297mm;
-					}
+			/* Screen view */
+			@media screen {
+				
+				.page-break {
+					width: 210mm;
+					margin: 20px auto;
+					padding: 15mm;
+					background: white;
+					box-shadow: 0 0 10px rgba(0,0,0,0.1);
+					min-height: 297mm;
 				}
-			</style>
+			}
+		</style>
 		</head>
 		<body class="bg-gray-100 print:bg-white print:h-auto print:p-5 font-sans">
 			<!-- Print Controls -->
@@ -156,7 +160,7 @@ templ Report(parameters domain.ReportParameters, tableData domain.TableData, tra
 			</div>
 			<!-- Main Report Container -->
 			<div class="py-2 px-4 print:py-0 print:px-0 print:w-full print:m-0 print:p-0">
-				<div class="bg-white rounded-lg shadow-lg p-8 print:shadow-none print:rounded-none print:p-0 max-w-6xl mx-auto print:mx-0 print:max-w-full print:bg-white">
+				<div class="bg-white rounded-lg shadow-lg px-8 py-10 print:shadow-none print:rounded-none print:p-0 max-w-6xl mx-auto print:mx-0 print:max-w-full print:bg-white">
 					<!-- Header: Company Info, Date/Time, Page -->
 					@ReportHeader(parameters)
 					<!-- Report Title -->
@@ -165,22 +169,21 @@ templ Report(parameters domain.ReportParameters, tableData domain.TableData, tra
 					@ReportParametersHeader(parameters)
 					<!-- Report Data/Table -->
 					@ReportTableSection(tableData, translator)
+					if summaryComponent != nil {
+						<!-- Page break: gray gap on screen, real break on print -->
+						<div class="print:hidden -mx-8 h-16 bg-gray-200 border-y border-gray-300"></div>
+						<div class="hidden print:block" style="page-break-before: always;"></div>
+						<!-- Summary Section (e.g., Totals, Averages) -->
+						<div class="pt-10 print:pt-8">
+							@summaryComponent
+						</div>
+					}
 					<!-- Footer -->
 					@ReportFooter(parameters)
 				</div>
 			</div>
-			<script>
-				function exportToPDF() {
-					// Use HTML2Canvas and jsPDF for more reliable PDF export
-					const link = document.createElement('a');
-					link.href = 'data:text/html;charset=utf-8,' + encodeURIComponent(document.documentElement.outerHTML);
-					link.download = '{ metadata.ReportTitle }.html';
-					link.click();
-					
-					// Alternative: Use browser print dialog
-					setTimeout(() => window.print(), 100);
-				}
-			</script>
+			@ReportPaginationScript()
+			@ReportKeyboardShortcutsScript()
 		</body>
 	</html>
 }
@@ -197,7 +200,6 @@ templ ReportHeader(parameters domain.ReportParameters) {
 			<!-- Right: Date/Time and Page Info -->
 			<div class="text-xs text-gray-700 text-right space-y-0.5 print:text-[8pt]">
 				<p class="print:leading-tight">{ time.Now().Format("02.01.2006 15:04:05") }</p>
-				<p class="print:hidden page-info" id="page-info">Stranica 1 / </p>
 			</div>
 		</div>
 	</div>
@@ -215,13 +217,18 @@ templ ReportTitle(parameters domain.ReportParameters) {
 // Report Parameters as Two-Column Headers
 templ ReportParametersHeader(parameters domain.ReportParameters) {
 	<div class="mb-1 grid grid-cols-2 gap-6 print:gap-2 print:m-0 print:mb-2 print:pb-1 print:border-b print:border-gray-300">
-		<!-- Left Column -->
+		for _, param := range parameters.ParameterItems {
+			<div class="flex gap-1 items-center text-sm text-gray-700 print:text-[8pt] print:leading-tight">
+				<span class="font-semibold">{ param.Name }:</span>
+				<span>{ param.Value }</span>
+			</div>
+		}
 	</div>
 }
 
 // Report Table Section - uses ReportTable from tablereport.templ
 templ ReportTableSection(tableData domain.TableData, translator *i18n.Service) {
-	<div class="mb-1 print:m-8 print:mb-8 print:mt-8">
+	<div class="mb-1 overflow-x-auto print:overflow-visible print:mt-4 print:mb-4 print:mx-0">
 		@ReportTable(tableData, translator)
 	</div>
 }
@@ -244,6 +251,15 @@ templ ReportSubgroup(subgroupName string, subgroupData interface{}) {
 	</div>
 }
 
+templ ReportEnd(endOfReport templ.Component) {
+	<div>
+		@endOfReport
+	</div>
+	<div class="mt-6 text-center font-bold text-gray-700 print:mt-4 print:text-[9pt]">
+		*** KRAJ IZVEŠTAJA ***
+	</div>
+}
+
 // Footer
 templ ReportFooter(parameters domain.ReportParameters) {
 	<div class="mt-1 pt-1 border-t-2 border-gray-300 text-center text-xs text-gray-600 space-y-1 print:m-0 print:mt-2 print:pt-1 print:text-[7pt] print:space-y-0 print:border-t print:border-gray-300">
@@ -257,18 +273,110 @@ templ ReportFooter(parameters domain.ReportParameters) {
 	</div>
 }
 
-// Pagination script (add this to generate page info)
 templ ReportPaginationScript() {
 	<script>
-		function updatePageNumbers() {
-			const pageInfo = document.getElementById('page-info');
-			if (pageInfo && window.print) {
-				// This is a simplified version - in production, calculate actual page count
-				pageInfo.textContent = 'Stranica 1 / ' + Math.ceil(document.body.scrollHeight / window.innerHeight);
+		async function exportToPDF() {
+			// Show loading state
+			const btn = event.target;
+			const originalText = btn.innerText;
+			btn.innerText = 'Generating PDF...';
+			btn.disabled = true;
+			
+			try {
+				// Dynamic import for better performance
+				const html2pdf = (await import('https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js')).default;
+				
+				const element = document.querySelector('.print-container') || document.querySelector('.bg-white');
+				const opt = {
+					margin: [0.6, 0.5, 0.6, 0.5], // top, right, bottom, left (in inches)
+					filename: '{ parameters.ReportName }.pdf',
+					image: { type: 'jpeg', quality: 0.98 },
+					html2canvas: { scale: 2, letterRendering: true, useCORS: true },
+					jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+				};
+				await html2pdf().set(opt).from(element).save();
+			} catch (error) {
+				console.error('PDF generation failed:', error);
+				// Fallback to print
+				window.print();
+			} finally {
+				btn.innerText = originalText;
+				btn.disabled = false;
 			}
 		}
 		
-		window.addEventListener('beforeprint', updatePageNumbers);
+		function updatePageNumbers() {
+			const currentPageSpan = document.getElementById('current-page');
+			const totalPagesSpan = document.getElementById('total-pages');
+			
+			if (!currentPageSpan || !totalPagesSpan) return;
+			
+			// Calculate total pages
+			const pageHeight = 1123;
+			const totalHeight = document.body.scrollHeight;
+			const totalPages = Math.max(1, Math.ceil(totalHeight / pageHeight));
+			totalPagesSpan.textContent = totalPages;
+			
+			// Calculate current page based on scroll
+			const scrollPosition = window.scrollY;
+			const currentPage = Math.min(totalPages, Math.max(1, Math.floor(scrollPosition / pageHeight) + 1));
+			currentPageSpan.textContent = currentPage;
+			
+			// Update all page info elements
+			document.querySelectorAll('.page-info').forEach(el => {
+				if (el.id !== 'page-info-header') {
+					el.textContent = `Stranica ${currentPage} / ${totalPages}`;
+				}
+			});
+			
+			// Store for print
+			window._totalPages = totalPages;
+		}
+		
+		// Debounced update
+		let timeout;
+		function debouncedUpdate() {
+			clearTimeout(timeout);
+			timeout = setTimeout(updatePageNumbers, 100);
+		}
+		
+		// Watch for content changes
+		const observer = new MutationObserver(debouncedUpdate);
+		observer.observe(document.body, {
+			childList: true,
+			subtree: true,
+			attributes: true,
+			attributeFilter: ['style', 'class']
+		});
+		
+		// Event listeners
+		window.addEventListener('scroll', debouncedUpdate);
+		window.addEventListener('resize', debouncedUpdate);
 		window.addEventListener('load', updatePageNumbers);
+		
+		// Initial update
+		updatePageNumbers();
+		
+	</script>
+}
+
+templ ReportKeyboardShortcutsScript() {
+	<script>
+		document.addEventListener('keydown', (e) => {
+			// Ctrl/Cmd + P for print
+			if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+				e.preventDefault();
+				window.print();
+			}
+			// Ctrl/Cmd + Shift + E for export
+			if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'E') {
+				e.preventDefault();
+				exportToPDF();
+			}
+			// Escape to close
+			if (e.key === 'Escape') {
+				window.close();
+			}
+		});
 	</script>
 }

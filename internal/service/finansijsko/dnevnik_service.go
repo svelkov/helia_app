@@ -59,23 +59,26 @@ func (s *DnevnikResource) GetDnevnikKnjizenja(ctx context.Context, tbl *domain.T
 			fpro.tipdok,
 			fpro.nalog,
 			fpro.konto,
-			fpro.sifra,
-			coalesce(fkpl.naziv, '') as naziv,
+			coalesce(fpro.sifra, '') as sifra,
+			case when fpro.sifra <> '' then coalesce(p.naziv, '') else coalesce(fkpl.naziv, '') end as naziv,
 			case when fpro.kat in (1, 2) then fpro.iznos else 0 end as duguje,
 			case when fpro.kat in (3, 4) then fpro.iznos else 0 end as potrazuje,
 			case when fpro.kat in (1, 2) then fpro.iznos else 0 end - 
 			case when fpro.kat in (3, 4) then fpro.iznos else 0 end as saldo,
-			fpro.opis,
-			fpro.dokum,
+			coalesce(fpro.opis, '') as opis,
+			coalesce(fpro.dokum, '') as dokum,
 			fpro.dadok,
-			coalesce(fpro.ojozn, '') as ojozn,
-			fpro.sifval,
+			concat(coalesce(o.ojozn,''), '-', coalesce(o.naziv,'')) as ojozn,
+			concat(coalesce(v.sifval::text,''), '-', coalesce(v.oznval,'')) as sifval,
 			case when fpro.kat in (1, 2) then fpro.deviznos else 0 end as devdug,
 			case when fpro.kat in (3, 4) then fpro.deviznos else 0 end as devpot
 		from fpro`, true)
 
 	// Add JOIN for fkpl
 	qb.AddJoin("left join fkpl on fkpl.idfkpl = fpro.idfkpl")
+	qb.AddJoin("left join partneri p on p.sifra = fpro.sifra and p.tipanalitikeid = fkpl.tipanalitikeid")
+	qb.AddJoin("left join orgjed o on o.idorgjed = fpro.idorgjed")
+	qb.AddJoin("left join valute v on v.idvalute = fpro.idvalute")
 
 	// Add WHERE conditions
 	if hasGod {

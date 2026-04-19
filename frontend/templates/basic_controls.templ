@@ -11,7 +11,11 @@ import (
 // Then in template:
 templ NumericInputField(config domain.InputFieldConfig) {
 	<input
-		type={ config.FieldType }
+		if config.FieldType != "" {
+			type={ config.FieldType }
+		} else {
+			type="text"
+		}
 		id={ config.ID }
 		name={ config.Name }
 		value={ config.Value }

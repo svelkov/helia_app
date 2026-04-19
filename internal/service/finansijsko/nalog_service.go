@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"helia/config"
+	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
 	"helia/internal/repository"
@@ -61,6 +62,7 @@ type NalogService interface {
 	GetNalogStampanjeData(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, page, pageSize int, searchText, sortBy, sortOrder string) error
 	GetNalogStampanjeDataDetalji(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, page, pageSize int, idFnal int64, searchText, sortBy, sortOrder string) error
 	GetNalogTotalValues(ctx context.Context, nalogTotals *domain.NalogTotalValues, idFnal int64) error
+	GetNalogStampaData(ctx context.Context, idFnal int64) (domain.Fnal, domain.TableData, domain.TableData, error)
 	SetNalogIDFieldName(string)
 	GetNaloziTableFields() []domain.Fields
 	GetNaloziStavkeTableFields() []domain.Fields
@@ -85,6 +87,7 @@ type NalogResource struct {
 	naloziStampaTableFields       []domain.Fields
 	naloziStavkeTableFields       []domain.Fields
 	naloziStavkeStampaTableFields []domain.Fields
+	nalogStampaTableFields        []domain.Fields
 	cfg                           config.Config
 }
 
@@ -1036,6 +1039,136 @@ func (s *NalogResource) GetNalogTotalValues(ctx context.Context, nalogTotals *do
 	return s.fproService.GetNalogTotalValues(ctx, nalogTotals, idFnal)
 }
 
+// GetNalogStampaData fetches all data required to render the nalog print report.
+// Returns the fnal header and two pre-built TableData: one for stavke, one for per-konto summary.
+func (s *NalogResource) GetNalogStampaData(ctx context.Context, idFnal int64) (domain.Fnal, domain.TableData, domain.TableData, error) {
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		return domain.Fnal{}, domain.TableData{}, domain.TableData{}, fmt.Errorf("user session not found")
+	}
+
+	// Fetch fnal header
+	fnals, err := s.fnalRepo.GetAllCustom(ctx, `SELECT idfnal, god, kar, nalog, tipdok, danal, opis, dug, pot, brst FROM fnal WHERE idfnal = $1`, "", []interface{}{idFnal}, "", "")
+	if err != nil || fnals == nil || len(*fnals) == 0 {
+		return domain.Fnal{}, domain.TableData{}, domain.TableData{}, fmt.Errorf("nalog not found: %w", err)
+	}
+	fnal := (*fnals)[0]
+
+	// Fetch stavke with ojozn
+	qb := common.NewQueryBuilder(`SELECT fpro.rbr, fpro.konto, coalesce(fpro.sifra, '') as sifra,
+		case fpro.sifra 
+			when '' then concat(coalesce(fkpl.naziv, ''), chr(10), '|', coalesce(fpro.opis, ''), '|', coalesce(o.ojozn, ''), '|', coalesce(fpro.dokum::text, ''))
+			else  concat(coalesce(p.naziv, ''), chr(10), '|', coalesce(fpro.opis, ''), coalesce(o.ojozn, ''), '|', coalesce(fpro.dokum::text, '')) 
+		end as naziv,
+		case when fpro.kat in (1,2) then fpro.iznos else 0 end as dug,
+		case when fpro.kat in (3,4) then fpro.iznos else 0 end as pot,
+		coalesce(o.ojozn, '') as ojozn
+		FROM fpro `, true)
+	qb.AddJoin(` left join fkpl ON fpro.idfkpl = fkpl.idfkpl`)
+	qb.AddJoin(` left join partneri p ON fpro.sifra = p.sifra AND p.tipanalitikeid = fkpl.tipanalitikeid`)
+	qb.AddJoin(` left join orgjed o ON o.idorgjed = fpro.idorgjed`)
+	qb.AddEqual("fpro.idfnal", idFnal)
+	qb.AddOrderBy("fpro.rbr")
+	qb.AddSortOrder(" ASC ")
+	sqlStavke, argsStavke := qb.Build()
+
+	fproEntities, err := s.fproRepo.GetAllCustom(ctx, sqlStavke, "", argsStavke, "", "")
+	if err != nil {
+		return fnal, domain.TableData{}, domain.TableData{}, fmt.Errorf("failed to get stavke: %w", err)
+	}
+
+	tblStavke := common.SetTableBasicData("", "table-stavke-print", s.nalogStampaTableFields, "", "", 999999, 1, 1, len(*fproEntities), s.cfg)
+	tblStavke.HasTotals = true
+
+	type kontoAgg struct {
+		BrStavki int
+		Duguje   float64
+		Pot      float64
+	}
+	kontoOrder := []string{}
+	kontoMap := map[string]*kontoAgg{}
+	var totalDug, totalPot float64
+
+	if fproEntities != nil {
+		for _, entity := range *fproEntities {
+			dug := entity.Dug.Float64
+			pot := entity.Pot.Float64
+
+			tblStavke.Rows = append(tblStavke.Rows, domain.TableRow{
+				Fields: []string{
+					fmt.Sprintf("%d", entity.Rbr),
+					entity.Konto, entity.Sifra, entity.Naziv,
+					common.FormatNumberWithSystemLocale(dug, 2),
+					common.FormatNumberWithSystemLocale(pot, 2),
+					common.FormatNumberWithSystemLocale(dug-pot, 2),
+				},
+			})
+
+			totalDug += dug
+			totalPot += pot
+
+			if _, exists := kontoMap[entity.Konto]; !exists {
+				kontoOrder = append(kontoOrder, entity.Konto)
+				kontoMap[entity.Konto] = &kontoAgg{}
+			}
+			kontoMap[entity.Konto].BrStavki++
+			kontoMap[entity.Konto].Duguje += dug
+			kontoMap[entity.Konto].Pot += pot
+		}
+	}
+	tblStavke.Totals = make([]string, len(tblStavke.Headers))
+	tblStavke.Totals[0] = i18n.GetInstance().Label("Ukupno") // Set label for totals column
+
+	for i, header := range tblStavke.Headers {
+		switch header.Name {
+		case "dug":
+			tblStavke.Totals[i] = common.FormatNumberWithSystemLocale(totalDug, 2)
+		case "pot":
+			tblStavke.Totals[i] = common.FormatNumberWithSystemLocale(totalPot, 2)
+		case "saldo":
+			tblStavke.Totals[i] = common.FormatNumberWithSystemLocale(totalDug-totalPot, 2)
+		}
+	}
+
+	// Build konto summary TableData
+	tblKonta := domain.TableData{
+		HasTotals: true,
+		Headers: []domain.Fields{
+			{Label: "Konto"},
+			{Label: "Br stavki", TextAlign: "right", IncludeInTotals: true},
+			{Label: "Duguje", TextAlign: "right", IncludeInTotals: true},
+			{Label: "Potražuje", TextAlign: "right", IncludeInTotals: true},
+			{Label: "Saldo", TextAlign: "right", IncludeInTotals: true},
+		},
+	}
+	var kTotalBr int
+	var kTotalDug, kTotalPot float64
+	for _, k := range kontoOrder {
+		agg := kontoMap[k]
+		tblKonta.Rows = append(tblKonta.Rows, domain.TableRow{
+			Fields: []string{
+				k,
+				fmt.Sprintf("%d", agg.BrStavki),
+				common.FormatNumberWithSystemLocale(agg.Duguje, 2),
+				common.FormatNumberWithSystemLocale(agg.Pot, 2),
+				common.FormatNumberWithSystemLocale(agg.Duguje-agg.Pot, 2),
+			},
+		})
+		kTotalBr += agg.BrStavki
+		kTotalDug += agg.Duguje
+		kTotalPot += agg.Pot
+	}
+	tblKonta.Totals = []string{
+		i18n.GetInstance().Label("Ukupno"),
+		fmt.Sprintf("%d", kTotalBr),
+		common.FormatNumberWithSystemLocale(kTotalDug, 2),
+		common.FormatNumberWithSystemLocale(kTotalPot, 2),
+		common.FormatNumberWithSystemLocale(kTotalDug-kTotalPot, 2),
+	}
+
+	return fnal, tblStavke, tblKonta, nil
+}
+
 // GetTipdokOptions fetches the list of tipdok options for filtering. This method stays the same.
 func (s *NalogResource) GetTipdokOptions(ctx context.Context) ([]domain.Tipdok, error) {
 	userSession := domain.GetSessionFromStdContext(ctx)
@@ -1211,6 +1344,15 @@ func (s *NalogResource) setServiceFieldValues() {
 		{Name: "dokum", Label: "Broj Dokumenta", Width: "12"},
 		{Name: "dadok", Label: "Datum Dokumenta", Width: "12"},
 		{Name: "idorgjed", Label: "Id orgjed", Width: "10", Field: "idorgjed"},
+	}
+	s.nalogStampaTableFields = []domain.Fields{
+		{Name: "rbr", Label: "Redni Broj", Width: "4", TextAlign: "right"},
+		{Name: "konto", Label: "Konto", Width: "6"},
+		{Name: "sifra", Label: "Šifra", Width: "6"},
+		{Name: "naziv", Label: "Naziv konta / Opis knjiženja", Width: "60"},
+		{Name: "dug", Label: "Duguje", Width: "14", TextAlign: "right", IncludeInTotals: true},
+		{Name: "pot", Label: "Potražuje", Width: "14", TextAlign: "right", IncludeInTotals: true},
+		{Name: "saldo", Label: "Saldo", Width: "14", TextAlign: "right", IncludeInTotals: true},
 	}
 }
 

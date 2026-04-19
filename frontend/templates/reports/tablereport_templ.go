@@ -65,7 +65,7 @@ func ReportTableInternal(tbl domain.TableData, translator *i18n.Service) templ.C
 			templ_7745c5c3_Var2 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<table class=\"w-full border-collapse report-table mt-8 print:w-full print:text-[9pt] print:table-auto print:border-collapse\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<table class=\"w-full border-collapse report-table mt-4 print:w-full print:text-[9pt] print:table-auto print:border-collapse\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -77,7 +77,7 @@ func ReportTableInternal(tbl domain.TableData, translator *i18n.Service) templ.C
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		if tbl.HasTotals && len(tbl.Totals) > 0 {
+		if tbl.HasTotals {
 			templ_7745c5c3_Err = ReportTableFooter(tbl).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -318,7 +318,7 @@ func ReportTableFooter(tbl domain.TableData) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		for j, header := range tbl.Headers {
-			if header.IncludeInTotals && j < len(tbl.Totals) {
+			if header.IncludeInTotals {
 				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<td class=\"border border-gray-300 px-3 py-2 text-sm print:text-[9pt] print:px-2 print:py-1 font-bold text-right\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err

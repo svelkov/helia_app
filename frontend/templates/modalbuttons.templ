@@ -282,9 +282,18 @@ templ PrintButton(btn domain.Button, translator *i18n.Service) {
 		if btn.HxVals !="" {
 			hx-vals={ btn.HxVals }
 		}
-		hx-headers='{"X-Request-Source": "btnprint"}'
+		if btn.HxRequestType != "" {
+			hx-headers='{"X-Request-Source": "btnprint"}'
+		}
 		if btn.HxOnAfterRequest != "" {
 			hx-on::after-request={ templ.JSFuncCall(fmt.Sprintf("%s", btn.HxOnAfterRequest), btn.IdDialog) }
+		}
+		if btn.HxOnClick != "" {
+			if btn.HxOnClickArg != "" {
+				onclick={ templ.JSFuncCall(btn.HxOnClick, btn.HxOnClickArg) }
+			} else {
+				onclick={ templ.JSFuncCall(btn.HxOnClick) }
+			}
 		}
 	>
 		@Icon("stampa", common.ClassIcon)

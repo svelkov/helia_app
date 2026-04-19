@@ -1,0 +1,22 @@
+package finansijsko
+
+import (
+	rep "helia/frontend/templates/reports"
+	"helia/i18n"
+	"helia/internal/domain"
+)
+
+// NalogStampa renders a printable full-page report for a single nalog,
+// reusing the shared report layout components.
+templ NalogStampa(tblStavke domain.TableData, tblKonta domain.TableData, params domain.ReportParameters, translator *i18n.Service) {
+	@rep.Report(params, tblStavke, translator, ReportSummary(params, tblKonta, translator))
+}
+
+templ ReportSummary(params domain.ReportParameters, tblKonta domain.TableData, translator *i18n.Service) {
+	@rep.ReportHeader(params)
+	@rep.ReportTitle(params)
+	<div class="mt-2">
+		<h2 class="text-sm font-semibold text-gray-700 mb-1">{ translator.Title("Promet po kontima za nalog") }</h2>
+		@rep.ReportTableSection(tblKonta, translator)
+	</div>
+}

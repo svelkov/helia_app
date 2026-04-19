@@ -88,7 +88,7 @@ func (h *GenericHandler[T]) GetAllPrint(c *gin.Context) {
 		ReportName:  h.config.ContentTitle,
 		CompanyName: userSession.Firma,
 	}
-	rep.Report(reportParams, *tbl, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+	rep.Report(reportParams, *tbl, i18n.GetInstance(), nil).Render(c.Request.Context(), c.Writer)
 
 }
 func (h *GenericHandler[T]) GetAllPdf(c *gin.Context) {

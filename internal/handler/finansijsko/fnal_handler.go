@@ -11,6 +11,7 @@ import (
 	"helia/config"
 	tmpl "helia/frontend/templates"
 	tmpl_fin "helia/frontend/templates/finansijsko"
+	tmpl_rep_fin "helia/frontend/templates/reports/finansijsko"
 	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
@@ -36,6 +37,7 @@ const (
 	naloziURLPrintStavke   string = "/api/print/nalog/stavke"
 	naloziURLStorniraj     string = "/api/nalozi/storniraj"
 	naloziURLStampa        string = "/api/nalozi/prikaz"
+	naloziURLStampaNalog   string = "/api/nalozi/stampanalog/%d"
 	naloziURLStampaDetalji string = "/api/nalozi/prikaz/detalji"
 	naloziURLStavkeNaloga  string = "/api/fpro/nalog/"
 
@@ -170,6 +172,11 @@ func (h *FnalHandler) CreateNalog(c *gin.Context) {
 	searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), urlGetAll, fmt.Sprintf("#%s", naloziStavkeTableID), "")
 	tblStavke := common.SetTableBasicData("Stavke Naloga", naloziStavkeTableID, h.service.MapEntityToValues(&entity, h.naloziService.GetNaloziTableFields()), "", "", 10, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tblStavke, "NALOZI STAVKE", urlGetAll, true, false, false)
+	tblStavke.BtnDelete.HxActionURL = "/api/fpro/confirm-delete"
+	tblStavke.BtnUpdate.HxActionURL = "/api/fpro/stavka/update"
+	tblStavke.BtnUpdate.HxOnAfterRequest = "populateFproUpdateFormFromEvent(event)"
+	tblStavke.BtnUpdate.HxSwap = "none"
+	tblStavke.BtnUpdate.HxRequestType = "GET"
 	btnSave, btnPrint := setStavkeButtons("POST", lastInsertedID)
 	btnClose := domain.Button{
 		Id:            "btn-close",
@@ -181,7 +188,7 @@ func (h *FnalHandler) CreateNalog(c *gin.Context) {
 		HxInclude:     "input[name='_csrf']",
 	}
 	btnCancel := domain.Button{
-		Id:           "btn-cancel",
+		Id:           "btn-stavke-cancel",
 		LabelText:    "Odustani",
 		IsVisible:    true,
 		IsDisabled:   true,
@@ -267,7 +274,7 @@ func (h *FnalHandler) UpdateNalog(c *gin.Context) {
 		HxInclude:     "input[name='_csrf']",
 	}
 	btnCancel := domain.Button{
-		Id:           "btn-cancel",
+		Id:           "btn-stavke-cancel",
 		LabelText:    "Odustani",
 		IsVisible:    true,
 		IsDisabled:   true,
@@ -1015,6 +1022,43 @@ func (h *FnalHandler) ValidacijaNalogStorniranje(c *gin.Context, danalStr, datob
 	return errors
 }
 
+// StampatNalog renders a full-page printable report for a single nalog.
+func (h *FnalHandler) StampaNalog(c *gin.Context) {
+	ctx := c.Request.Context()
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		common.WriteJSONResponse(c, http.StatusUnauthorized, false, []domain.FieldError{}, common.ErrMsgUnauthorized)
+		return
+	}
+	idFnal, err := utils.GetInt64FromParameterRequest(c, "id")
+	if err != nil || idFnal == 0 {
+		common.WriteJSONResponse(c, http.StatusBadRequest, false, []domain.FieldError{}, common.ErrMsgInvalidID)
+		return
+	}
+
+	fnal, tblStavke, tblKonta, err := h.naloziService.GetNalogStampaData(ctx, idFnal)
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, common.ErrMsgReadData+" error:"+err.Error())
+		return
+	}
+
+	danalStr := fnal.Danal.Format("02.01.2006.")
+	params := domain.ReportParameters{
+		ReportName:  fmt.Sprintf("NALOG ZA KNJIŽENJE BR.: %s - %d ", fnal.Tipdok, fnal.Nalog),
+		CompanyName: userSession.Firma,
+		UserName:    userSession.UserName,
+	}
+	params.ParameterItems = append(params.ParameterItems, domain.ParameterItem{Name: "Datum naloga", Value: danalStr})
+
+	if fnal.Opis != "" {
+		params.ParameterItems = append(params.ParameterItems, domain.ParameterItem{Name: "Opis", Value: fnal.Opis})
+	}
+
+	c.Header("Content-Type", "text/html; charset=utf-8")
+	tmpl_rep_fin.NalogStampa(tblStavke, tblKonta, params, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+
+}
+
 // FnalPrikazStampa renders the print view for nalozi. This is a full page render, not just a table update, so it stays in the handler.
 func (h *FnalHandler) FnalPrikazStampa(c *gin.Context) {
 	requestSource := c.GetHeader("Hx-Trigger")
@@ -1215,7 +1259,7 @@ func setStavkeButtons(requestType string, idFnal int64) (domain.Button, domain.B
 		LabelText:     "Štampa ",
 		BtnClass:      common.ClassPrintButton,
 		HxTarget:      "#nalog-stavke-table",
-		HxActionURL:   naloziURLPrintStavke,
+		HxActionURL:   fmt.Sprintf(naloziURLStampaNalog, idFnal),
 		HxRequestType: "GET",
 	}
 	return btnSave, btnPrint
@@ -1252,6 +1296,7 @@ func (h *FnalHandler) AddRoutes(r *gin.Engine) {
 	r.POST("/api/nalozi/storniraj/:id", h.FnalStornirajSave)
 	r.GET("/api/nalozi/prikaz", h.FnalPrikazStampa)
 	r.GET("/api/nalozi/prikaz/detalji/:id", h.FnalPrikazStampaDetalji)
+	r.GET("/api/nalozi/stampanalog/:id", h.StampaNalog)
 }
 
 func (h *FnalHandler) setHandlerFieldValues() {

@@ -78,6 +78,12 @@ templ ClearFormScript() {
 	<script>
 		function clearForm(formId = 'nalog-stavke-form') {
 			console.log("Clearing form fields and errors...");
+			btnCancel = document.getElementById('btn-stavke-cancel');
+			console.log("btnCancel element:", btnCancel);
+			if (btnCancel) {
+				btnCancel.disabled = true;
+				btnCancel.classList.add('opacity-50', 'cursor-not-allowed');
+			}
 			const form = document.getElementById(formId);
 			if (!form) return;
 			form.querySelectorAll('input').forEach(input => {
@@ -626,12 +632,12 @@ templ PopulateFproUpdateFormScript() {
 		// Usage (htmx after-request): hx-on::after-request="populateFproUpdateFormFromEvent(event)"
 		function populateFproUpdateFormFromEvent(event) {
 			const xhr = event?.detail?.xhr;
-			console.log("populateFproUpdateFormFromEvent: event =", event);
+
+			console.log("call function populateFproUpdateFormFromEvent: event =", event);
 			if (!xhr) {
 				console.error("populateFproUpdateFormFromEvent: No xhr found in event detail", event);
 				return;
 			}
-			console.log("populateFproUpdateFormFromEvent: xhr =", xhr);
 			if (xhr.status !== 200) return;
 			let data;
 			try { data = JSON.parse(xhr.responseText); } catch { return; }
@@ -651,7 +657,9 @@ templ PopulateFproUpdateFormScript() {
 
 			// Text / date fields
 			setVal('konto',    data.konto);
-			setVal('sifra',    data.sifra);
+			setVal('kontonaziv', data.kontonaziv);
+			setVal('sifra',     data.sifra);
+			setVal('sifranaziv', data.sifranaziv);
 			setVal('opisknj',  data.opisknj);
 			setVal('dokum',    data.dokum);
 			setVal('dadok',    data.dadok);
@@ -669,15 +677,33 @@ templ PopulateFproUpdateFormScript() {
 			setVal('fispid',     data.fispid);
 			setVal('komid',      data.komid);
 			setVal('idorgjed',   data.idorgjed);
-			setVal('mestotrid',  data.mestrotrid); // JSON key: mestrotrid → field id: mestotrid
 			setVal('idvalute',   data.idvalute);
 
-			// Numeric fields — server sends dot decimal; form uses comma decimal
-			setVal('duguje',    toComma(data.duguje));
-			setVal('potrazuje', toComma(data.potrazuje));
-			setVal('deviznos',  toComma(data.deviznos));
-			setVal('kurs',      toComma(data.kurs));
+			// Fetch mestotrid options for the saved idorgjed, then select the saved value
+			const idorgjed  = data.idorgjed;
+			const mestotrid = String(data.mestrotrid ?? '');
+			if (idorgjed && idorgjed !== '-' && idorgjed !== '0') {
+				fetch(`/api/mestotroska?idorgjed=${encodeURIComponent(idorgjed)}`)
+					.then(r => r.text())
+					.then(html => {
+						const sel = document.getElementById('mestotrid');
+						if (sel) {
+							sel.outerHTML = html;
+							const newSel = document.getElementById('mestotrid');
+							if (newSel && mestotrid) newSel.value = mestotrid;
+						}
+					})
+					.catch(() => setVal('mestotrid', mestotrid));
+			} else {
+				setVal('mestotrid', mestotrid);
+			}
 
+			// Numeric fields — server sends dot decimal; form uses comma decimal
+			setVal('duguje',    data.duguje);
+			setVal('potrazuje', data.potrazuje);
+			setVal('deviznos',  data.deviznos);
+			setVal('kurs',      data.kurs);
+		
 			// Ensure a hidden idfpro field exists so the PUT payload carries the record id
 			const form = document.getElementById('nalog-stavke-form');
 			if (!form) return;
@@ -693,17 +719,24 @@ templ PopulateFproUpdateFormScript() {
 
 		// Lock the table while a row is being edited
 		function _fpro_lockTable() {
+			console.log("in function _fpro_lockTable: Locking table for editing...");
 			const container = document.getElementById('table-stavke-container');
 			if (!container || container.querySelector('#fpro-table-lock')) return;
 			const overlay = document.createElement('div');
 			overlay.id = 'fpro-table-lock';
 			overlay.style.cssText = 'position:absolute;inset:0;background:rgba(255,255,255,0.55);cursor:not-allowed;z-index:10;border-radius:inherit;';
 			container.appendChild(overlay);
-			_dlg_msg(document.getElementById('dialog-form-message'), 'Uređivanje u toku — sačuvajte stavku', false);
-			['btn-cancel', 'btn-print-stavke', 'btn-nazad'].forEach(id => {
+			const btnCancel = document.getElementById('btn-stavke-cancel');
+			if (btnCancel) {
+				btnCancel.disabled = false;
+				btnCancel.classList.remove('opacity-50', 'cursor-not-allowed');
+			}
+			//_dlg_msg(document.getElementById('dialog-form-message'), 'Uređivanje u toku — sačuvajte stavku', false);
+
+			['btn-stavke-cancel', 'btn-print-stavke', 'btn-nazad'].forEach(id => {
 				const btn = document.getElementById(id);
 				if (!btn) return;
-				if (id === 'btn-cancel') { btn.disabled = false; btn.classList.remove('opacity-50', 'cursor-not-allowed'); }
+				if (id === 'btn-stavke-cancel') { btn.disabled = false; btn.classList.remove('opacity-50', 'cursor-not-allowed'); }
 				else { btn.disabled = true; btn.classList.add('opacity-50', 'cursor-not-allowed'); }
 			});
 		}
@@ -711,10 +744,15 @@ templ PopulateFproUpdateFormScript() {
 		// Unlock the table (called automatically on fpro:changed)
 		function _fpro_unlockTable() {
 			document.getElementById('fpro-table-lock')?.remove();
-			['btn-cancel', 'btn-print-stavke', 'btn-nazad'].forEach(id => {
+			btnCancel = document.getElementById('btn-stavke-cancel');
+			if (btnCancel) {
+				btnCancel.disabled = true;
+				btnCancel.classList.add('opacity-50', 'cursor-not-allowed');
+			}
+			['btn-print-stavke', 'btn-nazad'].forEach(id => {
 				const btn = document.getElementById(id);
 				if (!btn) return;
-				if (id === 'btn-cancel') { btn.disabled = true; btn.classList.add('opacity-50', 'cursor-not-allowed'); }
+				if (id === 'btn-stavke-cancel') { btn.disabled = true; btn.classList.add('opacity-50', 'cursor-not-allowed'); }
 				else { btn.disabled = false; btn.classList.remove('opacity-50', 'cursor-not-allowed'); }
 			});
 		}

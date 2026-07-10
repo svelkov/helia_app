@@ -28,7 +28,6 @@ const (
 	IDkomercijalista = "komid"
 	IDmagacin        = "magaciniid"
 	IDmi             = "fispid"
-	IDjedmere        = "jedmereid"
 	IDkepu           = "kepuid"
 	IDmaguser        = "maguserid"
 	IDporkat         = "porkatid"

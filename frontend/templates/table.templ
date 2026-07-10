@@ -23,9 +23,9 @@ templ Table(tbl domain.TableData, translator *i18n.Service) {
 		<!-- Container for HTMX-loaded dialog -->
 		<div id="dialog-container"></div>
 	</div>
-	@ShowMessage()
-	@OpenDialogScript(tbl.TableID)
+	@ShowMessageScript()
 	@TableSortScript()
+	@TableScript(tbl.TableID)
 }
 
 templ TableHeader(tbl domain.TableData, translator *i18n.Service) {
@@ -99,7 +99,8 @@ templ TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service
 	<tbody id={ fmt.Sprintf("%s-body", tbl.TableID) } class="bg-white divide-y divide-gray-200">
 		for i, row := range tbl.Rows {
 			<tr
-				class={ fmt.Sprintf("hover:bg-green-200 cursor-pointer %s", func() string {
+				hx-on:click="handleRowClick(this)"
+				class={ fmt.Sprintf("cursor-pointer transition-colors hover:bg-green-100 %s", func() string {
 				            if i%2 == 1 {
                                 return "bg-green-50"
                             } else {
@@ -153,7 +154,17 @@ templ TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service
 							return "px-1 text-sm text-black"
 						}() }
 							title={ translator.Message("Double-click za selektovanje") }
-						>{ cell }</div>
+						>
+							if tbl.Headers[j].Type == "checkbox" {
+								if cell == "true" {
+									<input type="checkbox" disabled checked class="w-4 h-4"/>
+								} else {
+									<input type="checkbox" disabled class="w-4 h-4"/>
+								}
+							} else {
+								{ cell }
+							}
+						</div>
 					</td>
 				}
 				if tbl.ShowActions && ( tbl.BtnUpdate.IsVisible || tbl.BtnDelete.IsVisible ) {
@@ -161,10 +172,27 @@ templ TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service
 						<div class="flex space-x-1 justify-end">
 							if row.HasUpdate || tbl.BtnUpdate.IsVisible {
 								<button
-									hx-get={ tbl.BtnUpdate.HxActionURL }
-									hx-target="#dialog-container"
-									hx-swap="innerHTML"
-									onclick="event.stopPropagation(); openDialog()"
+									if tbl.BtnUpdate.HxRequestType == "GET" {
+										hx-get={ tbl.BtnUpdate.HxActionURL }
+									}
+									if tbl.BtnUpdate.HxRequestType == "PUT" {
+										hx-put={ fmt.Sprintf("%s/%s", tbl.BtnUpdate.HxActionURL, row.ID) }
+									}
+									if tbl.BtnUpdate.HxRequestType == "POST" {
+										hx-post={ fmt.Sprintf("%s/%s", tbl.BtnUpdate.HxActionURL, row.ID) }
+									}
+									if tbl.BtnUpdate.HxSwap != "" {
+										hx-swap={ tbl.BtnUpdate.HxSwap }
+									}
+									if tbl.BtnUpdate.HxTarget != "" {
+										hx-target={ tbl.BtnUpdate.HxTarget }
+									} else {
+										hx-target="#dialog-container"
+									}
+									if tbl.BtnUpdate.HxOnAfterRequest != "" {
+										{ templ.Attributes{"hx-on::after-request": tbl.BtnUpdate.HxOnAfterRequest}... }
+									}
+									onclick="event.stopPropagation();"
 									hx-vals={ func() string {
 										if strings.TrimSpace(tbl.HxVals) == "" {
 											return fmt.Sprintf(`{"url": "%s", "id": "%s"}`, tbl.URLPrefix, row.ID)
@@ -189,9 +217,17 @@ templ TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service
 							if row.HasDelete || tbl.BtnDelete.IsVisible {
 								<button
 									hx-get={ tbl.BtnDelete.HxActionURL }
-									hx-target="#dialog-container"
-									hx-swap="innerHTML"
-									onclick="event.stopPropagation(); openDialog()"
+									if tbl.BtnDelete.HxSwap != "" {
+										hx-swap={ tbl.BtnDelete.HxSwap }
+									}
+									if tbl.BtnDelete.HxTarget != "" {
+										hx-target={ tbl.BtnDelete.HxTarget }
+									} else {
+										hx-target="#dialog-container"
+									}
+									if tbl.BtnDelete.HxOnAfterRequest != "" {
+										{ templ.Attributes{"hx-on::after-request": tbl.BtnDelete.HxOnAfterRequest}... }
+									}
 									hx-vals={ func() string {
 										if strings.TrimSpace(tbl.HxVals) == "" {
 											return fmt.Sprintf(`{"url": "%s", "id": "%s"}`, tbl.URLPrefix, row.ID)
@@ -238,70 +274,63 @@ templ TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service
 	}
 }
 
-templ TableScript() {
-	// Add this to your script
+templ TableScript(tableID string) {
+	<span data-tbody-id={ fmt.Sprintf("%s-body", tableID) } style="display:none"></span>
 	<script>
-	document.addEventListener('DOMContentLoaded', function() {
-		const tableBody = document.getElementById('promettable-body');
-		
-		if (tableBody) {
-			// Single click for selection
-			tableBody.addEventListener('click', function(e) {
-				const row = e.target.closest('tr');
-				if (row) {
-					selectRow(row);
-				}
-			});
-			
-			// Double click for selection and closing dialog
-			tableBody.addEventListener('dblclick', function(e) {
-				const row = e.target.closest('tr');
-				if (row) {
-					handleRowDoubleClick(row);
-				}
-			});
+	(function() {
+		const _tbodyId = document.currentScript.previousElementSibling.dataset.tbodyId;
+		const _tbody   = document.getElementById(_tbodyId);
+		let _selected  = null;
+
+		function getRows() {
+			return _tbody ? Array.from(_tbody.querySelectorAll('tr')) : [];
 		}
-	});
 
-	// New function to handle double-click
-	function handleRowDoubleClick(row) {
-		// Get the selected row data
-		const cells = row.querySelectorAll('td');
-		const rowData = {
-			konto: cells[0].textContent.trim(),
-			sifra: cells[1].textContent.trim(),
-			naziv: cells[2].textContent.trim()
+		function selectRow(row) {
+			if (_selected) {
+				_selected.classList.remove('!bg-green-200');
+				_selected.removeAttribute('data-selected');
+			}
+			_selected = (row !== _selected) ? row : null;
+			if (_selected) {
+				_selected.classList.add('!bg-green-200');
+				_selected.setAttribute('data-selected', 'true');
+			}
+		}
+
+		// Exposed globally for hx-on:click="handleRowClick(this)"
+		window.handleRowClick = function(row) { selectRow(row); };
+
+		window.handleRowDoubleClick = function(row) {
+			selectRow(row);
+			const rowData = Array.from(row.querySelectorAll('td')).map(c => c.textContent.trim());
+			document.dispatchEvent(new CustomEvent('rowDblSelected', { detail: rowData }));
+			window.selectedRecord = rowData;
 		};
-		
-		console.log("Selected record:", rowData);
-		
-		// You can use this data as needed - for example:
-		// - Populate form fields
-		// - Update another table
-		// - Send to backend
-		useSelectedRecord(rowData);
-		
-		// Close the dialog
-		closeDialog();
-	}
 
-	// Function to use the selected record data
-	function useSelectedRecord(data) {
-		// Example: Populate some input fields
-		// document.getElementById('some-input').value = data.konto;
-		// document.getElementById('another-input').value = data.naziv;
-		
-		// Or dispatch a custom event that other parts of your app can listen to
-		const event = new CustomEvent('recordSelected', { detail: data });
-		document.dispatchEvent(event);
-		
-		// Or store in a global variable
-		window.selectedRecord = data;
-		
-		console.log("Using selected record:", data);
-	}
+		document.addEventListener('keydown', function(e) {
+			const tag = document.activeElement?.tagName;
+			if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+			if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown' && e.key !== 'Enter') return;
 
-</script>
+			const rows = getRows();
+			if (!rows.length) return;
+			e.preventDefault();
+
+			if (e.key === 'Enter' && _selected) { _selected.click(); return; }
+
+			const idx = _selected ? rows.indexOf(_selected) : -1;
+			let newIdx;
+			if (e.key === 'ArrowUp') {
+				newIdx = idx > 0 ? idx - 1 : idx === -1 ? rows.length - 1 : 0;
+			} else {
+				newIdx = idx < rows.length - 1 ? idx + 1 : idx === -1 ? 0 : rows.length - 1;
+			}
+			selectRow(rows[newIdx]);
+			rows[newIdx].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+		});
+	})();
+	</script>
 }
 
 templ TableSortScript() {
@@ -381,7 +410,7 @@ templ TableSortScript() {
 		if (!table) return;
 
 		const indicators = table.querySelectorAll('[class*="sort-indicator-"]');
-		console.log(`Found ${indicators.length} indicators in table ${tableId}`);
+		//console.log(`Found ${indicators.length} indicators in table ${tableId}`);
 		
 		indicators.forEach(indicator => {
 			// Extract field name from class name (e.g., "sort-indicator-fieldname")
@@ -427,7 +456,7 @@ templ TableSortScript() {
 		// Get the currently sorted field for this table
 		const sortedField = window.currentSortField[tableId];
 		if (sortedField) {
-			console.log(`Reapplying sort indicators for table ${tableId}, field: ${sortedField}`);
+			//console.log(`Reapplying sort indicators for table ${tableId}, field: ${sortedField}`);
 			updateSortIndicators(tableId, sortedField);
 		}
 	}
@@ -455,7 +484,6 @@ templ TableSortScript() {
 				}
 				
 				if (tableId) {
-					console.log(`HTMX settle event for table: ${tableId}`);
 					reapplySortIndicators(tableId);
 				}
 			}

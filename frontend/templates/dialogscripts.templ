@@ -3,14 +3,9 @@ package templates
 templ HandleDialogResponseScript(dialogName string) {
 	<script>
 		function handleDialogResponse(dialogName) {
-			// Check if the response is an error (400 Bad Request)
-			console.log("in handleDialogResponse()", dialogName)
-			//console.log("handleFieldErrors:", event.detail)
 			try {
 				// Get the response text from the backend
 				const responseText = event.detail.xhr.responseText;
-				console.log("handleDialogResponse:Response text:", responseText)
-				
 				// Check if response is empty or not JSON
 				if (!responseText || responseText.trim() === '') {
 					//console.log("Empty response, closing dialog");
@@ -23,7 +18,7 @@ templ HandleDialogResponseScript(dialogName string) {
 				try {
 					response = JSON.parse(responseText);
 				} catch (parseError) {
-					console.error("Response is not valid JSON:", parseError);
+					console.error("Response is not valid JSON...");
 					//console.log("Response text was:", responseText);
 					// If not JSON, assume it's HTML success response, close dialog
 					closeDialog(dialogName);
@@ -48,7 +43,7 @@ templ HandleDialogResponseScript(dialogName string) {
 						const field = document.querySelector(`input[name="${error.field}"]`);
 						if (field) {
 							field.classList.add('border-red-500'); // Add red border to invalid field
-							// Add error message below the input field
+							// Add error message immediately after the input field
 							const errorMessage = document.createElement('p');
 							errorMessage.className = 'text-red-500 text-xs mt-1 input-error';
 							errorMessage.textContent = error.message;
@@ -79,6 +74,101 @@ templ HandleDialogResponseScript(dialogName string) {
 	</script>
 }
 
+templ HandleBackendResponseScript() {
+	<script>
+		function handleBackendResponse() {
+			try {
+				// Get the response text from the backend
+				const responseText = event.detail.xhr.responseText;
+				// Check if response is empty or not JSON
+				if (!responseText || responseText.trim() === '') {
+					return;
+				}
+				
+				// Try to parse as JSON
+				let response;
+				try {
+					response = JSON.parse(responseText);
+				} catch (parseError) {
+					console.error("Response is not valid JSON...");
+					return;
+				}
+				
+				// If we get here, response is valid JSON
+				// Clear previous error messages
+				document.querySelectorAll('.input-error').forEach(el => el.remove());
+				document.querySelectorAll('.field-error-inline').forEach(el => {
+					el.textContent = '';
+				});
+				document.querySelectorAll('input').forEach(input => {
+					input.classList.remove('border-red-500');
+				});
+				
+				// Handle validation errors
+				if (response.errors && response.errors.length > 0) {
+					//console.log("Errors found:", response.errors)
+					// Loop through errors and show error messages for each field
+					response.errors.forEach(error => {
+						const field = document.querySelector(`input[name="${error.field}"]`);
+						if (field) {
+							field.classList.add('border-red-500'); // Add red border to invalid field
+							// Add error message immediately after the input field
+							const errorMessage = document.createElement('p');
+							errorMessage.className = 'text-red-500 text-xs mt-1 input-error';
+							errorMessage.textContent = error.message;
+							field.insertAdjacentElement('afterend', errorMessage);
+						}
+					});
+					return;
+				}
+				
+				// Handle success response
+				if (response.success) {
+					showMessage(response.message);
+					return;
+				}
+				
+				// Handle error response
+				if (!response.success) {
+					showMessage(response.message, true);
+					return;
+				}	
+				
+			} catch (e) {
+				console.error("Unexpected error in handleBackendResponse():", e);
+			}
+		}
+	</script>
+}
+
+
+templ ClearFormScript() {
+	<script>
+		function clearForm(formId = 'nalog-stavke-form') {
+			console.log("Clearing form fields and errors...");
+			btnCancel = document.getElementById('btn-stavke-cancel');
+			console.log("btnCancel element:", btnCancel);
+			if (btnCancel) {
+				btnCancel.disabled = true;
+				btnCancel.classList.add('opacity-50', 'cursor-not-allowed');
+			}
+			const form = document.getElementById(formId);
+			if (!form) return;
+			form.querySelectorAll('input').forEach(input => {
+				input.value = '';
+				input.classList.remove('border-red-500');
+			});
+			form.querySelectorAll('select').forEach(select => {
+				select.selectedIndex = 0;
+			});
+			form.querySelectorAll('.input-error').forEach(el => el.remove());
+			form.querySelectorAll('.field-error-inline').forEach(el => {
+				el.textContent = '';
+			});
+			if (typeof _fpro_unlockTable === 'function') _fpro_unlockTable();
+		}
+	</script>
+}
 
 templ ClearFieldErrorScript() {
 	<script>		
@@ -106,22 +196,9 @@ templ ClearFieldErrorScript() {
 	</script>
 }
 
-templ ShowMessage() {
+templ HandleDblClickNalogSelectionScript() {
 	<script>
-		function selectRow(row) {
-		   // console.log("Row clicked:", row);
-		   // Deselect any previously selected row by removing the 'bg-blue-300' class
-			const selectedRow = document.querySelector('.bg-blue-300');
-			if (selectedRow) {
-			selectedRow.classList.remove('bg-blue-300');
-			}
-
-			// Select the clicked row
-			row.classList.add('bg-blue-300');
-		}
-
- 
-  		function handleDblClickNalogSelection(element) {
+		function handleDblClickNalogSelection(element) {
 		    if (!element) return;
 			// Get all table cells in this row
 			const cells = element.querySelectorAll('td');
@@ -171,29 +248,16 @@ templ ShowMessage() {
 			if (datobInput) datobInput.value = datobVal;
 			if (danalInput) danalInput.value = danalVal;
 			if (opisInput) opisInput.value = opisVal;
-		}
 
-		function showMessage(message, isError = false) {
-			const infoMessage = document.getElementById('info-message');
-
-			// Set the message text
-			infoMessage.textContent = message;
-			// Reset previous styles
-			infoMessage.classList.remove('hidden', 'bg-green-500', 'bg-red-500', 'text-white');
-			// Add appropriate styles based on success or error
-			if (isError) {
-				infoMessage.classList.add('bg-red-500', 'text-white');
-			} else {
-				infoMessage.classList.add('bg-green-500', 'text-white');
-			}
-			// Show the message
-			infoMessage.classList.remove('hidden');
-			// Hide the message after 3 seconds
-			setTimeout(() => {
-				infoMessage.classList.add('hidden');
-			}, 3000);
+			// Trigger click on the "sacuvaj" button
+			const sacuvajBtn = document.querySelector('button[name="btn-save"], button#sacuvaj, button[id*="btn-save"]');
+			if (sacuvajBtn) sacuvajBtn.click();
 		}
-	
+	</script>
+}
+
+templ HandleNextNalogResponseScript() {
+	<script>
 		function handleNextNalogResponse(dialogName) {
 			console.log("handleNextNalogResponse:", event.detail);
 			
@@ -221,6 +285,11 @@ templ ShowMessage() {
 				console.error("Invalid JSON response", e);
 			}
 		}
+	</script>
+}
+
+templ HandleUpdateNalogDataResponseScript() {
+	<script>
 		function handleUpdateNalogDataResponse() {
 			console.log("handleUpdateNalogDataResponse:", event.detail);
 			
@@ -252,15 +321,27 @@ templ ShowMessage() {
 				console.error("Invalid JSON response", e);
 			}
 		}
-		// Trigger next nalog fetch after tipdok combo changes
-        function handleTipdokAfterRequest(event) {
+	</script>
+}
+
+templ HandleTipdokAfterRequestScript() {
+	<script>
+	    function handleTipdokAfterRequest(event) {
 			console.log("Tipdok changed, fetching next nalog...", event);
             htmx.trigger('#nalog-trigger', 'tipdokChanged');
         }
-		// Export functions to global scope
-		window.handleDblClickNalogSelection = handleDblClickNalogSelection;
-		window.handleTipdokAfterRequest = handleTipdokAfterRequest;
+	</script>
+}
 
+templ SelectRowScript() {
+	<script>
+		function selectRow(row) {
+			const prev = document.querySelector('tr.table-row-selected');
+			if (prev) {
+				prev.classList.remove('table-row-selected');
+			}
+			row.classList.add('table-row-selected');
+		}
 	</script>
 }
 
@@ -297,7 +378,6 @@ templ HandleDblClickKontoSelectionScript() {
 	</script>
 }
 
-
 templ RestrictNumericInput() {
 	<script>
 		function restrictNumericInput(el, maxDecimals) {
@@ -327,68 +407,125 @@ templ RestrictNumericInput() {
 
 templ HandleFormResponseScript() {
 	<script>
-		function handleFormResponse(event, requestType, dialogId = null, showMsg = false, closeAfterSuccess = false) {
-			const xhr = event.detail.xhr;
-			const messageDiv = document.getElementById('dialog-form-message') || document.getElementById('dialog-message');
-			// Clear previous error state
+		// handleFormResponse — universal htmx after-request handler for all dialogs.
+		// Usage: hx-on::after-request="handleFormResponse(event, 'POST', 'dialog-nalog')"
+		// Conventions:
+		//   • dialogId  — id of the dialog root element, e.g. "dialog-nalog"
+		//   • message div id = dialogId + "-message",  e.g. "dialog-nalog-message"
+		//   • staging slots (#dialog-confirm, #dialog-stavkenaloga) receive sub-dialog HTML
+		function handleFormResponse(event, requestType, dialogId, showMsg = true) {
+			// Guard: ignore requests from child non-button elements (e.g. combos, inputs with hx-trigger)
+			// but allow requests from submit buttons (which have their own hx-post/put and bubble up).
+			const _elt = event.detail?.elt;
+			console.log("handleFormResponse: event =", event, "requestType =", requestType, "dialogId =", dialogId);
+			if (event.currentTarget && _elt !== event.currentTarget && _elt?.tagName !== 'BUTTON') return;
+			const xhr  = event.detail.xhr;
+			const ok   = xhr.status === 200 || xhr.status === 201;
+			const resp = _dlg_tryJSON(xhr.responseText);
+			console.log("Parsed response:", resp);
+			// HTML response → new sub-dialog was injected by HTMX into a staging slot
+			// if (ok && !resp) {
+			// 	console.log("HTML response detected, opening sub-dialog if present...");
+			// 	_dlg_openSubDialog(dialogId, event.detail.target);
+			// 	return;
+			// }
+			console.log("JSON response detected, processing..."); 
+			const msgDiv = _dlg_msgDiv(dialogId);
+			console.log("Message div:", msgDiv);
+			if (msgDiv) { msgDiv.classList.add('hidden'); msgDiv.textContent = ''; }
+
+			// Validation field errors
+			if (resp?.errors?.length) {
+				_dlg_fieldErrors(resp.errors);
+				if (resp?.message) _dlg_msg(msgDiv, resp.message, true);
+				return;
+			}
+
+			// Failure (HTTP error or explicit success:false)
+			if (!ok || resp?.success === false) {
+				_dlg_msg(msgDiv, resp?.message, true);
+				return;
+			}
+
+			// Success
+			if (showMsg && resp?.message) {
+				_dlg_msg(msgDiv, resp.message, false);
+				if (dialogId) setTimeout(() => closeDialog(dialogId), 1500);
+			} else if (dialogId) {
+				closeDialog(dialogId);
+			}
+		}
+
+		// Open a sub-dialog that HTMX just injected into a staging slot.
+		// Wipes the confirm slot and removes the closing dialog without moving the new one.
+		function _dlg_openSubDialog(closingId, swapTarget) {
+			// Find new dialog: check swap target first (skip dialog-confirm — it holds current dialog)
+			let next = null;
+			if (swapTarget?.id !== 'dialog-confirm') {
+				const c = swapTarget?.querySelector(':scope > [id]');
+				if (c && c.id !== closingId) next = c;
+			}
+			if (!next) {
+				for (const slotId of ['dialog-stavkenaloga', 'dialog-message']) {
+					const c = document.getElementById(slotId)?.querySelector(':scope > [id]');
+					if (c && c.id !== closingId) { next = c; break; }
+				}
+			}
+			// Clean up old dialogs
+			const confirmSlot = document.getElementById('dialog-confirm');
+			if (confirmSlot) confirmSlot.innerHTML = '';
+			document.getElementById(closingId)?.remove();
+			// Show new dialog in place (no DOM move — keeps htmx handlers intact)
+			if (next) next.classList.remove('hidden', 'opacity-0');
+		}
+
+		function _dlg_msgDiv(dialogId) {
+			if (!dialogId) return document.getElementById('dialog-form-message');
+			const dlg = document.getElementById(dialogId);
+			return dlg?.querySelector('[id$="-message"]')
+				|| document.getElementById(dialogId + '-message')
+				|| document.getElementById('dialog-form-message');
+		}
+
+		function _dlg_tryJSON(text) {
+			try { return text?.trim() ? JSON.parse(text) : null; } catch { return null; }
+		}
+
+		function _dlg_msg(div, text, isError) {
+			// if (!div) { if (isError) alert(text); return; }
+			// Measure the sibling form width BEFORE unhiding, so a long message
+			// cannot expand the w-auto dialog box beyond its natural content width.
+			const siblingForm = div.closest('form') || div.parentElement?.querySelector('form');
+			const maxW = siblingForm ? siblingForm.offsetWidth : 0;
+			div.className = (isError
+				? 'p-1 text-sm text-red-800 bg-red-100 border border-red-300'
+				: 'p-1 text-sm text-green-800 bg-green-100 border border-green-300')
+				+ ' rounded-lg w-full';
+			if (maxW > 0) div.style.maxWidth = maxW + 'px';
+			div.style.wordBreak = 'break-all';
+			div.style.overflowWrap = 'anywhere';
+			div.style.whiteSpace = 'normal';
+			div.textContent = text;
+			div.classList.remove('hidden');
+			div.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+			setTimeout(() => div.classList.add('hidden'), isError ? 5000 : 3000);
+		}
+
+		function _dlg_fieldErrors(errors) {
 			document.querySelectorAll('.input-error').forEach(el => el.remove());
 			document.querySelectorAll('.field-error-inline').forEach(el => { el.textContent = ''; });
-			document.querySelectorAll('input').forEach(input => { input.classList.remove('border-red-500'); });
-			// Parse response - non-JSON with 2xx: close dialog if dialogId is set
-			let response;
-			try {
-				response = JSON.parse(xhr.responseText);
-			} catch (e) {
-				if ((xhr.status === 200 || xhr.status === 201) && dialogId) closeDialog(dialogId);
-				return;
-			}
-			// Handle validation errors
-			if (response.errors && response.errors.length > 0) {
-				response.errors.forEach(error => {
-					const field = document.querySelector(`input[name="${error.field}"]`);
-					if (field) {
-						field.classList.add('border-red-500');
-						const inlineError = document.getElementById(`${error.field}-error`);
-						if (inlineError) { inlineError.textContent = error.message; return; }
-						let wrapper = field.closest('.input-error-wrapper');
-						if (!wrapper) {
-							const inputWidth = field.offsetWidth;
-							wrapper = document.createElement('div');
-							wrapper.className = 'input-error-wrapper flex flex-col';
-							wrapper.style.maxWidth = inputWidth + 'px';
-							field.parentNode.insertBefore(wrapper, field);
-							wrapper.appendChild(field);
-						}
-						const errorMessage = document.createElement('p');
-						errorMessage.className = 'text-red-500 text-xs mt-1 input-error whitespace-normal break-words';
-						errorMessage.textContent = error.message;
-						wrapper.appendChild(errorMessage);
-					}
-				});
-				return;
-			}
-			if (xhr.status === 200 || xhr.status === 201) {
-				if (showMsg && response.message && messageDiv) {
-					messageDiv.className = 'p-2 text-sm text-green-800 bg-green-100 border border-green-300 rounded-lg w-full whitespace-normal break-words';
-					messageDiv.textContent = response.message;
-					messageDiv.classList.remove('hidden');
-					if (requestType === 'POST') {
-						setTimeout(() => { messageDiv.classList.add('hidden'); }, 3000);
-					}
-					if (dialogId) setTimeout(() => { closeDialog(dialogId); }, 1000);
-				} else if (dialogId) {
-					closeDialog(dialogId);
-				}
-				if (closeAfterSuccess && dialogId) {
-					setTimeout(() => { closeDialog(dialogId); }, 1000);
-				}
-			} else {
-				if (messageDiv) {
-					messageDiv.className = 'p-2 text-sm text-red-800 bg-red-100 border border-red-300 rounded-lg w-full whitespace-normal break-words';
-					messageDiv.textContent = (response && response.message) ? response.message : 'An error occurred';
-					messageDiv.classList.remove('hidden');
-				}
-			}
+			document.querySelectorAll('input').forEach(el => el.classList.remove('border-red-500'));
+			errors.forEach(({ field, message }) => {
+				const input = document.querySelector(`input[name="${field}"]`);
+				if (!input) return;
+				input.classList.add('border-red-500');
+				const inline = document.getElementById(`${field}-error`);
+				if (inline) { inline.textContent = message; return; }
+				const p = document.createElement('p');
+				p.className = 'text-red-500 text-xs input-error whitespace-nowrap';
+				p.textContent = message;
+				input.parentElement.appendChild(p);
+			});
 		}
 	</script>
 }
@@ -420,30 +557,16 @@ templ CloseDialogScript() {
 				}
 			}
 		});
-		// Export functions to global scope
-		window.handleDblClickNalogSelection = handleDblClickNalogSelection;
-		window.handleTipdokAfterRequest = handleTipdokAfterRequest;
     </script>
 }
 
-templ OpenDialogScript(id string) {
-	<!-- JavaScript Functions -->
-	<script>
-		function openDialog() {
-			document.querySelectorAll('.actions-column').forEach(el => {
-				el.classList.remove('sticky', 'right-0', 'z-10');
-				el.classList.add('static');
-			});
-		}
-	</script>
-}
 templ HideDropdownScript() {
 	<script> 
 		function hideDropdown(dropdownId) {
 			const el = document.getElementById(dropdownId);
 			if (el) el.classList.add('hidden');
 		}
-	</script>	
+	</script>
 }
 
 // Position dropdown below the button that opened it
@@ -463,7 +586,7 @@ templ PositionDropdownScript() {
 }
 
 templ SelectItemScript() {
-		// Generic function to select item and close dialog
+	// Generic function to select item and close dialog
 	<script>
 		function selectItem(dropdownId, valueFieldId, nameFieldId, value, name) {
 			const vf = document.getElementById(valueFieldId);
@@ -497,7 +620,6 @@ templ ShowDropdownScript() {
 		}
 	</script>
 }
-
 
 // ShowSearchDialogScript renders the JavaScript needed for the search popup
 // This should be included once per page, not per popup instance
@@ -540,8 +662,10 @@ templ ShowSearchDialogScript() {
 templ ShowMessageScript() {
 	<script>
 		function showMessage(message, isError = false) {
-			const infoMessage = document.getElementById('dialog-form-message');
-
+			const infoMessage = document.getElementById('dialog-form-message') || document.querySelector('.info-message');
+			if (!infoMessage) {
+				return;
+			}
 			// Set the message text
 			infoMessage.textContent = message;
 			// Reset previous styles
@@ -559,6 +683,148 @@ templ ShowMessageScript() {
 				infoMessage.classList.add('hidden');
 			}, 3000);
 		}
+	</script>
+}
+
+templ PopulateFproUpdateFormScript() {
+	<script>
+		// populateFproUpdateForm — reads the JSON response from /api/fpro/stavka/update
+		// and assigns values to the matching form fields in nalog-stavke-form.
+		// Usage (htmx after-request): hx-on::after-request="populateFproUpdateFormFromEvent(event)"
+		function populateFproUpdateFormFromEvent(event) {
+			const xhr = event?.detail?.xhr;
+
+			console.log("call function populateFproUpdateFormFromEvent: event =", event);
+			if (!xhr) {
+				console.error("populateFproUpdateFormFromEvent: No xhr found in event detail", event);
+				return;
+			}
+			if (xhr.status !== 200) return;
+			let data;
+			try { data = JSON.parse(xhr.responseText); } catch { return; }
+			populateFproUpdateForm(data);
+			_fpro_lockTable();
+		}
+
+		function populateFproUpdateForm(data) {
+			function setVal(id, value) {
+				const el = document.getElementById(id);
+				if (el) el.value = (value !== null && value !== undefined) ? value : '';
+			}
+			// Convert dot-decimal string to comma-decimal (e.g. "1234.56" → "1234,56")
+			function toComma(str) {
+				return (str || '0').replace('.', ',');
+			}
+
+			// Text / date fields
+			setVal('konto',    data.konto);
+			setVal('kontonaziv', data.kontonaziv);
+			setVal('sifra',     data.sifra);
+			setVal('sifranaziv', data.sifranaziv);
+			setVal('opisknj',  data.opisknj);
+			setVal('dokum',    data.dokum);
+			setVal('dadok',    data.dadok);
+			setVal('dokumv',   data.dokumv);
+			setVal('dadokv',   data.datdokv);   // JSON key: datdokv → field id: dadokv
+			setVal('napomena', data.napomena);
+
+			// Integer fields
+			setVal('tra',     data.tra);
+			setVal('travez',  data.travez);
+
+			// Select / combo fields
+			setVal('vrd',        data.vrd);
+			setVal('magaciniid', data.magaciniid);
+			setVal('fispid',     data.fispid);
+			setVal('komid',      data.komid);
+			setVal('idorgjed',   data.idorgjed);
+			setVal('idvalute',   data.idvalute);
+
+			// Fetch mestotrid options for the saved idorgjed, then select the saved value
+			const idorgjed  = data.idorgjed;
+			const mestotrid = String(data.mestrotrid ?? '');
+			if (idorgjed && idorgjed !== '-' && idorgjed !== '0') {
+				fetch(`/api/mestotroska?idorgjed=${encodeURIComponent(idorgjed)}`)
+					.then(r => r.text())
+					.then(html => {
+						const sel = document.getElementById('mestotrid');
+						if (sel) {
+							sel.outerHTML = html;
+							const newSel = document.getElementById('mestotrid');
+							if (newSel && mestotrid) newSel.value = mestotrid;
+						}
+					})
+					.catch(() => setVal('mestotrid', mestotrid));
+			} else {
+				setVal('mestotrid', mestotrid);
+			}
+
+			// Numeric fields — server sends dot decimal; form uses comma decimal
+			setVal('duguje',    data.duguje);
+			setVal('potrazuje', data.potrazuje);
+			setVal('deviznos',  data.deviznos);
+			setVal('kurs',      data.kurs);
+		
+			// Ensure a hidden idfpro field exists so the PUT payload carries the record id
+			const form = document.getElementById('nalog-stavke-form');
+			if (!form) return;
+			let hdnFpro = form.querySelector('input[name="idfpro"]');
+			if (!hdnFpro) {
+				hdnFpro = document.createElement('input');
+				hdnFpro.type  = 'hidden';
+				hdnFpro.name  = 'idfpro';
+				form.appendChild(hdnFpro);
+			}
+			hdnFpro.value = data.idfpro || '';
+		}
+
+		// Lock the table while a row is being edited
+		function _fpro_lockTable() {
+			console.log("in function _fpro_lockTable: Locking table for editing...");
+			const container = document.getElementById('table-stavke-container');
+			if (!container || container.querySelector('#fpro-table-lock')) return;
+			const overlay = document.createElement('div');
+			overlay.id = 'fpro-table-lock';
+			overlay.style.cssText = 'position:absolute;inset:0;background:rgba(255,255,255,0.55);cursor:not-allowed;z-index:10;border-radius:inherit;';
+			container.appendChild(overlay);
+			const btnCancel = document.getElementById('btn-stavke-cancel');
+			const btnPrint = document.getElementById('btn-print-stavke');
+			if (btnCancel) {
+				btnCancel.disabled = false;
+				btnCancel.classList.remove('opacity-50', 'cursor-not-allowed');
+			}
+			if (btnPrint) {
+				btnPrint.disabled = false;
+				btnPrint.classList.remove('opacity-50', 'cursor-not-allowed');
+			}
+			//_dlg_msg(document.getElementById('dialog-form-message'), 'Uređivanje u toku — sačuvajte stavku', false);
+
+			['btn-stavke-cancel', 'btn-print-stavke', 'btn-nazad'].forEach(id => {
+				const btn = document.getElementById(id);
+				if (!btn) return;
+				if (id === 'btn-stavke-cancel') { btn.disabled = false; btn.classList.remove('opacity-50', 'cursor-not-allowed'); }
+				else { btn.disabled = true; btn.classList.add('opacity-50', 'cursor-not-allowed'); }
+			});
+		}
+
+		// Unlock the table (called automatically on fpro:changed)
+		function _fpro_unlockTable() {
+			document.getElementById('fpro-table-lock')?.remove();
+			btnCancel = document.getElementById('btn-stavke-cancel');
+			if (btnCancel) {
+				btnCancel.disabled = true;
+				btnCancel.classList.add('opacity-50', 'cursor-not-allowed');
+			}
+			['btn-print-stavke', 'btn-nazad'].forEach(id => {
+				const btn = document.getElementById(id);
+				if (!btn) return;
+				if (id === 'btn-stavke-cancel') { btn.disabled = true; btn.classList.add('opacity-50', 'cursor-not-allowed'); }
+				else { btn.disabled = false; btn.classList.remove('opacity-50', 'cursor-not-allowed'); }
+			});
+		}
+
+		// Unlock whenever a save or delete completes (fpro:changed fires from body)
+		document.body.addEventListener('fpro:changed', _fpro_unlockTable);
 	</script>
 }
 
@@ -613,5 +879,140 @@ templ SearchPopupScript() {
                 });
             }
         });
+    </script>
+}
+
+templ OpenPrintWithParamsScript() {
+	<script>
+		function openPrintWithParams(event, el) {
+			event.preventDefault();
+
+			const baseUrl = el.dataset.url;
+			const fields = (el.dataset.fields || "")
+				.split(",")
+				.map(x => x.trim())
+				.filter(Boolean);
+
+			const params = new URLSearchParams();
+
+			for (const fieldId of fields) {
+				const field = document.getElementById(fieldId) || document.querySelector(`[name="${fieldId}"]`);
+				if (!field) continue;
+
+				const name = field.name || field.id;
+
+				if (field.type === "checkbox") {
+					params.append(name, field.checked ? "true" : "false");
+					continue;
+				}
+
+				if (field.type === "radio") {
+					const checked = document.querySelector(`input[name="${field.name}"]:checked`);
+					if (checked) {
+						params.append(field.name, checked.value);
+					}
+					continue;
+				}
+
+				params.append(name, field.value);
+			}
+			console.log("Constructed URL parameters:", params.toString());
+			const separator = baseUrl.includes("?") ? "&" : "?";
+			const finalUrl = params.toString()
+				? baseUrl + separator + params.toString()
+				: baseUrl;
+			console.log("Opening print URL:", finalUrl);
+			window.open(finalUrl, "_blank", "noopener,noreferrer");
+		}
+	</script>
+}
+
+templ FileSelectScript() {
+	<script>
+        let selectedFile = null;
+        let fileContent = null;
+
+        async function openFileDialog() {
+            try {
+                const [fileHandle] = await window.showOpenFilePicker({
+                    types: [{
+                        description: 'CSV Files',
+                        accept: { 'text/csv': ['.csv'] }
+                    }]
+                });
+
+                const file = await fileHandle.getFile();
+                processFile(file);
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    console.error('Error:', err);
+                    showFileMessage('<span class="text-red-600">❌ Error opening file</span>');
+                }
+            }
+        }
+
+        function processFile(file) {
+        	const filepathInput = document.getElementById('filepath');
+			const fileInputData = document.getElementById('file-input-data');
+			
+			console.log('processFile called with:', file?.name);
+			
+			if (!file) {
+				filepathInput.value = '';
+				selectedFile = null;
+				fileContent = null;
+				if (fileInputData) fileInputData.value = '';
+				showFileMessage('<span class="text-red-600">❌ No file selected</span>');
+				return;
+			}
+
+			selectedFile = file;
+			filepathInput.value = file.name;
+
+			// Extract file extension
+			const fileExtension = file.name.split('.').pop().toLowerCase();
+			console.log('Extracted extension:', fileExtension);
+			const fileTypeInput = document.getElementById('file-type-data');
+			console.log('fileTypeInput element found:', !!fileTypeInput);
+			if (fileTypeInput) {
+				fileTypeInput.value = fileExtension;
+				console.log('✅ File type set to:', fileTypeInput.value);
+			} else {
+				console.error('❌ file-type-data input not found');
+			}
+
+			const reader = new FileReader();
+			reader.onload = function(e) {
+				fileContent = e.target.result;
+				// Store the file data in the hidden input
+				if (fileInputData) {
+					fileInputData.value = fileContent;
+					console.log('✅ File content stored - size:', fileContent.length, 'bytes');
+					console.log('Hidden input value length:', document.getElementById('file-input-data')?.value?.length);
+				} else {
+					console.error('❌ Hidden input #file-input-data not found');
+				}
+				showFileMessage(`<span class="text-green-600">✅ File loaded: ${file.name} (${(file.size / 1024).toFixed(2)} KB)</span>`);
+			};
+			
+			reader.onerror = function(e) {
+				console.error('❌ FileReader error:', e);
+				fileContent = null;
+				if (fileInputData) fileInputData.value = '';
+				showFileMessage('<span class="text-red-600">❌ Error reading file</span>');
+			};
+			
+			console.log('Starting FileReader...');
+			reader.readAsText(file);
+        }
+
+        function showFileMessage(message) {
+            const statusElement = document.getElementById('file-status-message');
+            if (statusElement) {
+                statusElement.innerHTML = message;
+            } else {
+                console.log(message);
+            }
+        }
     </script>
 }

@@ -2,7 +2,6 @@ package finansijsko
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"reflect"
 	"strconv"
@@ -12,6 +11,7 @@ import (
 	"helia/config"
 	tmpl "helia/frontend/templates"
 	tmpl_fin "helia/frontend/templates/finansijsko"
+	tmpl_rep_fin "helia/frontend/templates/reports/finansijsko"
 	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
@@ -24,21 +24,24 @@ import (
 )
 
 const (
-	naloziContentTitle     string = "NALOZI"
-	naloziTableID          string = "nalozi-table"
-	naloziStavkeTableID    string = "nalog-stavke-table"
-	naloziURLPrefix        string = "/api/nalozi/"
-	naloziURLGetAllSearch  string = "/api/nalozi/all/search"
-	naloziURLNextNalog     string = "/api/nalozi/nextnalog"
-	naloziURLCreate        string = "/api/nalozi/new"
-	naloziURLUpdate        string = "/api/nalozi/update"
-	naloziURLUpdateCopy    string = "/api/nalozi/update/copy"
-	naloziURLSaveStavke    string = "/api/fpro/nalog/%d/stavke/save"
-	naloziURLPrintStavke   string = "/api/print/nalog/stavke"
-	naloziURLStorniraj     string = "/api/nalozi/storniraj"
-	naloziURLStampa        string = "/api/nalozi/prikaz"
-	naloziURLStampaDetalji string = "/api/nalozi/prikaz/detalji"
-	naloziURLStavkeNaloga  string = "/api/fpro/nalog/"
+	naloziContentTitle         string = "NALOZI"
+	naloziTableID              string = "nalozi-table"
+	naloziStavkeTableID        string = "nalog-stavke-table"
+	naloziURLPrefix            string = "/api/nalozi/"
+	naloziURLGetAllSearch      string = "/api/nalozi/all/search"
+	naloziURLNextNalog         string = "/api/nalozi/nextnalog"
+	naloziURLCreate            string = "/api/nalozi/new"
+	naloziURLUpdate            string = "/api/nalozi/update"
+	naloziURLUpdateCopy        string = "/api/nalozi/update/copy"
+	naloziURLSaveStavke        string = "/api/fpro/nalog/%d/stavke/save"
+	naloziURLPrintStavke       string = "/api/print/nalog/stavke"
+	naloziURLStorniraj         string = "/api/nalozi/storniraj"
+	naloziURLStampa            string = "/api/nalozi/prikaz"
+	naloziURLStampaNalog       string = "/api/nalozi/stampanalog/%d"
+	naloziURLStampaDetalji     string = "/api/nalozi/prikaz/detalji"
+	naloziURLStavkeNaloga      string = "/api/fpro/nalog/"
+	naloziURLStampaGrupaDialog string = "/api/nalozi/stampa/grupadialog"
+	naloziURLStampaGrupaReport string = "/api/nalozi/stampa/grupanalog"
 
 	hxValsKopirajNalog = `js:{
 			"query": document.getElementById("search-prepishdr")?.value, 
@@ -150,7 +153,6 @@ func (h *FnalHandler) CreateNalog(c *gin.Context) {
 	// Check if nalog already exists - if so, redirect to update
 	existingNalog, err := h.naloziService.GetByTipdokNalog(ctx, req.Tipdok, common.StringToInt64(req.Nalog))
 	if err == nil && existingNalog.IDFnal != 0 {
-		log.Printf("Nalog already exists (IDFnal=%d), redirecting to update instead of create", existingNalog.IDFnal)
 		c.Request.Method = "PUT"
 		c.Params = append(c.Params, gin.Param{Key: "id", Value: fmt.Sprintf("%d", existingNalog.IDFnal)})
 		h.UpdateNalog(c)
@@ -168,9 +170,15 @@ func (h *FnalHandler) CreateNalog(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusUnprocessableEntity, false, fieldsErrors, common.ErrMsgValidation)
 		return
 	}
-
-	searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), fmt.Sprintf("%s%d", naloziURLStavkeNaloga, lastInsertedID), fmt.Sprintf("#%s", naloziStavkeTableID), "")
+	urlGetAll := fmt.Sprintf("/api/fpro/nalog/%d", lastInsertedID)
+	searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), urlGetAll, fmt.Sprintf("#%s", naloziStavkeTableID), "")
 	tblStavke := common.SetTableBasicData("Stavke Naloga", naloziStavkeTableID, h.service.MapEntityToValues(&entity, h.naloziService.GetNaloziTableFields()), "", "", 10, 0, 0, 0, h.cfg)
+	common.SetTableConfig(&tblStavke, "NALOZI STAVKE", urlGetAll, true, false, false)
+	tblStavke.BtnDelete.HxActionURL = "/api/fpro/confirm-delete"
+	tblStavke.BtnUpdate.HxActionURL = "/api/fpro/stavka/update"
+	tblStavke.BtnUpdate.HxOnAfterRequest = "populateFproUpdateFormFromEvent(event)"
+	tblStavke.BtnUpdate.HxSwap = "none"
+	tblStavke.BtnUpdate.HxRequestType = "GET"
 	btnSave, btnPrint := setStavkeButtons("POST", lastInsertedID)
 	btnClose := domain.Button{
 		Id:            "btn-close",
@@ -179,6 +187,17 @@ func (h *FnalHandler) CreateNalog(c *gin.Context) {
 		BtnClass:      common.ClassDialogCloseButton,
 		HxActionURL:   fmt.Sprintf("/api/nalozi/unlock/%d", lastInsertedID),
 		HxRequestType: "POST",
+		HxInclude:     "input[name='_csrf']",
+	}
+	btnCancel := domain.Button{
+		Id:           "btn-stavke-cancel",
+		LabelText:    "Odustani",
+		IsVisible:    true,
+		IsDisabled:   true,
+		IdDialog:     "nalog-stavke-dialog",
+		BtnClass:     common.ClassButtonDisabled,
+		HxOnClick:    "clearForm",
+		HxOnClickArg: "nalog-stavke-form",
 	}
 	btnNazad := domain.Button{
 		Id:               "btn-nazad",
@@ -188,6 +207,7 @@ func (h *FnalHandler) CreateNalog(c *gin.Context) {
 		Icon:             "back",
 		BtnClass:         common.ClassCloseButton,
 		HxActionURL:      fmt.Sprintf("/api/nalozi/unlock/%d", lastInsertedID),
+		HxInclude:        "input[name='_csrf']",
 		HxRequestType:    "POST",
 		HxOnAfterRequest: "closeDialog",
 	}
@@ -197,7 +217,14 @@ func (h *FnalHandler) CreateNalog(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, common.ErrMsgLockFailed)
 		return
 	}
-	err = tmpl_fin.NalogKnjizenjeStavke(*fproPayload, tblStavke, btnSave, btnPrint, btnClose, btnNazad, searchInput, i18n.GetInstance(), common.GetCsrfTokenFromSession(c)).Render(c.Request.Context(), c.Writer)
+	nalogTotal := domain.NalogTotalValues{}
+	err = h.naloziService.GetNalogTotalValues(ctx, &nalogTotal, lastInsertedID)
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, common.ErrMsgReadData+" error:"+err.Error())
+		return
+	}
+	nalogTotal.HxGetURL = fmt.Sprintf("/api/fpro/nalog/total/%d", lastInsertedID)
+	err = tmpl_fin.NalogKnjizenjeStavke(*fproPayload, tblStavke, nalogTotal, btnSave, btnCancel, btnPrint, btnClose, btnNazad, searchInput, i18n.GetInstance(), common.GetCsrfTokenFromSession(c)).Render(c.Request.Context(), c.Writer)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, common.ErrMsgReadData)
 		return
@@ -245,7 +272,18 @@ func (h *FnalHandler) UpdateNalog(c *gin.Context) {
 		BtnClass:      common.ClassDialogCloseButton,
 		HxActionURL:   fmt.Sprintf("/api/nalozi/unlock/%d", fnalID),
 		HxRequestType: "POST",
-		HxOn:          "closeDialog('nalog-stavke-dialog')",
+		HxOnClick:     "closeDialog('nalog-stavke-dialog')",
+		HxInclude:     "input[name='_csrf']",
+	}
+	btnCancel := domain.Button{
+		Id:           "btn-stavke-cancel",
+		LabelText:    "Odustani",
+		IsVisible:    true,
+		IsDisabled:   true,
+		IdDialog:     "nalog-stavke-dialog",
+		BtnClass:     common.ClassButtonDisabled,
+		HxOnClick:    "clearForm",
+		HxOnClickArg: "nalog-stavke-form",
 	}
 	btnNazad := domain.Button{
 		Id:               "btn-nazad",
@@ -256,11 +294,27 @@ func (h *FnalHandler) UpdateNalog(c *gin.Context) {
 		BtnClass:         common.ClassCloseButton,
 		HxActionURL:      fmt.Sprintf("/api/nalozi/unlock/%d", fnalID),
 		HxRequestType:    "POST",
+		HxInclude:        "input[name='_csrf']",
 		HxOnAfterRequest: "closeDialog",
 	}
 	tblStavke.URLGetAll = urlGetAll
 	tblStavke.URLPrefix = urlGetAll
-	err = tmpl_fin.NalogKnjizenjeStavke(fproPayload, tblStavke, btnSave, btnPrint, btnClose, btnNazad, searchInput, i18n.GetInstance(), common.GetCsrfTokenFromSession(c)).Render(c.Request.Context(), c.Writer)
+	tblStavke.BtnDelete.HxActionURL = "/api/fpro/confirm-delete"
+	tblStavke.BtnUpdate.HxActionURL = "/api/fpro/stavka/update"
+	tblStavke.BtnUpdate.HxOnAfterRequest = "populateFproUpdateFormFromEvent(event)"
+	tblStavke.BtnUpdate.HxSwap = "none"
+	tblStavke.BtnUpdate.HxRequestType = "GET"
+	tblStavke.DetailURL = urlGetAll
+	tblStavke.SearchEnabled = true
+	tblStavke.ShowActions = true
+	nalogTotal := domain.NalogTotalValues{}
+	err = h.naloziService.GetNalogTotalValues(ctx, &nalogTotal, fnalID)
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, common.ErrMsgReadData+" error:"+err.Error())
+		return
+	}
+	nalogTotal.HxGetURL = fmt.Sprintf("/api/fpro/nalog/total/%d", fnalID)
+	err = tmpl_fin.NalogKnjizenjeStavke(fproPayload, tblStavke, nalogTotal, btnSave, btnCancel, btnPrint, btnClose, btnNazad, searchInput, i18n.GetInstance(), common.GetCsrfTokenFromSession(c)).Render(c.Request.Context(), c.Writer)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, common.ErrMsgReadData)
 		return
@@ -276,7 +330,7 @@ func (h *FnalHandler) UnlockNalog(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Nalog unlocked..."})
 }
 func (h *FnalHandler) confirmDeleteHandler(c *gin.Context) {
-	utils.ConfirmDeleteHelper(c, h.naloziService.GetNaloziTableFields())
+	utils.ConfirmDeleteHelper(c, h.naloziService.GetNaloziTableFields(), "#info-message")
 }
 
 func (h *FnalHandler) confirmAddHandler(c *gin.Context) {
@@ -332,6 +386,7 @@ func (h *FnalHandler) confirmAddHandler(c *gin.Context) {
 	}
 
 	dialog := domain.Dialog{
+		Id:            "dialog-nalog",
 		Title:         dlgTitle,
 		OkText:        "Da",
 		CancelText:    "Ne",
@@ -364,12 +419,10 @@ func (h *FnalHandler) confirmAddHandler(c *gin.Context) {
 		BtnClass:  common.ClassOdustaniButton,
 	}
 	if action == common.ActionAdd {
-		dialog.Id = "dlg_nalog_create"
 		btnSacuvaj.HxRequestType = "POST"
 		btnSacuvaj.HxActionURL = naloziURLCreate
 	}
 	if action == common.ActionUpdate {
-		dialog.Id = "dlg_nalog_update"
 		btnSacuvaj.HxRequestType = "PUT"
 		btnSacuvaj.HxActionURL = fmt.Sprintf("%s/%d", naloziURLUpdate, nalogEntity.IDFnal)
 	}
@@ -457,12 +510,7 @@ func (h *FnalHandler) GetNalogMainView(c *gin.Context) {
 	} else {
 		// HTMX request, just render the table component
 		c.Header("Content-Type", "text/html; charset=utf-8")
-		err = tmpl.Table(tbl, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
-	}
-
-	if err != nil {
-		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, common.ErrMsgRenderTemplate)
-		return
+		tmpl.Table(tbl, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 	}
 }
 
@@ -518,11 +566,7 @@ func (h *FnalHandler) FnalPrepis(c *gin.Context) {
 		}
 	} else {
 		// If this is an HTMX request, we just render the table component
-		err = tmpl.Table(tbl, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
-		if err != nil {
-			common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, common.ErrMsgRenderTemplate)
-			return
-		}
+		tmpl.Table(tbl, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 	}
 }
 
@@ -535,6 +579,12 @@ func (h *FnalHandler) FnalPrepisSave(c *gin.Context) {
 		return
 	}
 	ctx := c.Request.Context()
+	idFnalRequest, err := utils.GetInt64FromParameterRequest(c, "id")
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusBadRequest, false, []domain.FieldError{}, common.ErrMsgFormDecode)
+		return
+	}
+
 	h.naloziService.MapReqToEntity(ctx, req, &entity, common.ActionAdd)
 	if c.Request.Method == http.MethodPost {
 		fieldErrors, err := h.naloziService.ValidateCopyNalog(ctx, req, entity)
@@ -558,7 +608,7 @@ func (h *FnalHandler) FnalPrepisSave(c *gin.Context) {
 		}
 
 		ctx := c.Request.Context()
-		err = h.naloziService.KopirajNalog(ctx, idfnal, entity)
+		err = h.naloziService.KopirajNalog(ctx, idFnalRequest, entity)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, err.Error())
 			return
@@ -644,8 +694,7 @@ func (h *FnalHandler) FnalPrepisDialog(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusUnauthorized, false, []domain.FieldError{}, "Unauthorized")
 		return
 	}
-	idFnalParam := c.Query("id") //
-	idFnal, err := strconv.ParseInt(idFnalParam, 10, 64)
+	idFnal, err := utils.GetInt64FromParameterRequest(c, "id")
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusBadRequest, false, []domain.FieldError{}, common.ErrMsgInvalidID)
 		return
@@ -673,14 +722,14 @@ func (h *FnalHandler) FnalPrepisDialog(c *gin.Context) {
 	now := time.Now()
 	currentBusinessDate := time.Date(userSession.SelectedGod, now.Month(), now.Day(), 0, 0, 0, 0, time.Local).Format(common.HtmlLayout)
 	modelView := domain.KopirajNalog{
-		IDFnal:     idFnal,
-		NalogOld:   fmt.Sprintf("%d", result.Nalog),
-		DanalOld:   result.Danal.Format(common.DateLayout),
-		DatKnjOld:  result.Datob.Format(common.DateLayout),
-		Tipdok_Old: result.Tipdok,
-		OpisOld:    result.Opis,
-		DanalNew:   currentBusinessDate,
-		DatknjNew:  currentBusinessDate,
+		IDFnal:    idFnal,
+		NalogOld:  fmt.Sprintf("%d", result.Nalog),
+		DanalOld:  result.Danal.Format(common.DateLayout),
+		DatKnjOld: result.Datob.Format(common.DateLayout),
+		TipdokOld: result.Tipdok,
+		OpisOld:   result.Opis,
+		DanalNew:  currentBusinessDate,
+		DatknjNew: currentBusinessDate,
 	}
 
 	ctx := c.Request.Context()
@@ -709,7 +758,7 @@ func (h *FnalHandler) FnalPrepisDialog(c *gin.Context) {
 		HxActionURL:   fmt.Sprintf("/api/nalozi/prepis/%d", idFnal),
 		HxVals:        fmt.Sprintf(`{"idfnal": "%d"}`, idFnal),
 		HxRequestType: "POST",
-		HxTarget:      "#dialog-confirm",
+		HxSwap:        "none",
 		//HxOnAfterRequest: "handleFormResponse",
 	}
 	btnCancel := domain.Button{
@@ -759,12 +808,16 @@ func (h *FnalHandler) FnalPrepisDialog(c *gin.Context) {
 // FnalStorniranje
 func (h *FnalHandler) FnalStorniraj(c *gin.Context) {
 	requestSource := c.GetHeader("Hx-Trigger")
+	searchText := c.Query("query")
+	orderBy := c.Query("orderBy")
+	sortOrder := c.Query("sortOrder")
+
 	page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
 	tbl := common.SetTableBasicData("NALOZI STORNIRANJE", "nalozi-storniranje-table", h.naloziService.GetNaloziTableFields(), naloziURLStorniraj, naloziURLStorniraj, pageSize, page, 0, 0, h.cfg)
 	common.SetTableConfig(&tbl, "PREGLED NALOGA", naloziURLStorniraj, true, false, false)
 	// Get data for the header table
 	ctx := c.Request.Context()
-	viewData, err := h.naloziService.GetNalogStornirajData(ctx, &tbl, page, pageSize, "", "", "") // Not initial load for prepis tab
+	viewData, err := h.naloziService.GetNalogStornirajData(ctx, &tbl, page, pageSize, searchText, orderBy, sortOrder) // Not initial load for prepis tab
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, "Failed to get Nalog header data for storniranje")
 		return
@@ -779,14 +832,14 @@ func (h *FnalHandler) FnalStorniraj(c *gin.Context) {
 	currentTabData.Tabs[3].IsActive = false
 
 	searchControl := domain.InputControl{
-		ID:           "search-control",
+		ID:           "search-input",
 		Label:        "Pretraži Naloge",
 		Type:         "search",
 		Placeholder:  "Unesite broj naloga ili druge podatke",
-		HxActionURL:  naloziURLGetAllSearch,
-		HxTarget:     "#table-body",
+		HxActionURL:  "/api/nalozi/storniraj",
+		HxTarget:     "#nalozi-storniranje-table",
 		HxSwap:       "innerHTML",
-		HxInclude:    "#tipdok",
+		HxInclude:    "#search-input",
 		Autocomplete: "off",
 		Class:        common.ClassSearchInput,
 	}
@@ -814,7 +867,7 @@ func (h *FnalHandler) FnalStornirajDialog(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusUnauthorized, false, []domain.FieldError{}, "Unauthorized")
 		return
 	}
-	idFnal, err := utils.GetInt64FromQueryRequest(c, "id")
+	idFnal, err := utils.GetInt64FromParameterRequest(c, "id")
 	if err != nil || idFnal == 0 {
 		common.WriteJSONResponse(c, http.StatusBadRequest, false, []domain.FieldError{}, common.ErrMsgInvalidID)
 		return
@@ -834,7 +887,7 @@ func (h *FnalHandler) FnalStornirajDialog(c *gin.Context) {
 		CancelText:    "Otkaži",
 		SaveText:      "Snimi",
 		HxTarget:      "#nalozi_storniranje",
-		HxSwap:        "innerHTML",
+		HxSwap:        "none",
 		HxRequestType: "POST",
 		HxActionURL:   fmt.Sprintf("%s/%d", naloziURLStorniraj, idFnal),
 	}
@@ -863,7 +916,7 @@ func (h *FnalHandler) FnalStornirajDialog(c *gin.Context) {
 
 	for _, item := range tipdokValues {
 		if strings.Trim(strings.ToLower(item.TipDok), " ") == strings.Trim(strings.ToLower(result.Tipdok), " ") {
-			modelView.TipdokOld = fmt.Sprintf("%s-%s", result.Tipdok, item.Opis)
+			modelView.Tipdok_Old = fmt.Sprintf("%s-%s", result.Tipdok, item.Opis)
 		}
 		modelView.TipdokValues = append(modelView.TipdokValues, domain.ComboItem{Key: item.TipDok, Value: item.TipDok + "-" + item.Opis})
 	}
@@ -874,8 +927,8 @@ func (h *FnalHandler) FnalStornirajDialog(c *gin.Context) {
 		IdDialog:      dialog.Id,
 		BtnClass:      common.ClassSaveButton,
 		HxActionURL:   fmt.Sprintf("%s/%d", naloziURLStorniraj, idFnal),
-		HxVals:        fmt.Sprintf(`{"idfnal": "%d", "tipdok": "%s"}`, idFnal, result.Tipdok),
 		HxRequestType: "POST",
+		HxSwap:        "none",
 	}
 	btnCancel := domain.Button{
 		Id:        "btn-cancel",
@@ -890,8 +943,7 @@ func (h *FnalHandler) FnalStornirajDialog(c *gin.Context) {
 		IdDialog:  dialog.Id,
 		BtnClass:  common.ClassDialogCloseButton,
 	}
-	content := tmpl_fin.NaloziStorniranjeDialog(dialog, modelView, btnSave, btnClose, btnCancel, i18n.GetInstance(), csrfToken)
-	err = tmpl.Dialog(dialog.Id, csrfToken, content, dialog, btnSave, btnCancel, btnClose, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+	err = tmpl_fin.NaloziStorniranjeDialog(dialog, modelView, btnSave, btnClose, btnCancel, i18n.GetInstance(), csrfToken).Render(c.Request.Context(), c.Writer)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, common.ErrMsgRenderTemplate)
 		return
@@ -899,8 +951,7 @@ func (h *FnalHandler) FnalStornirajDialog(c *gin.Context) {
 }
 
 func (h *FnalHandler) FnalStornirajSave(c *gin.Context) {
-	idFnalParam := c.Param("id")
-	idFnal, err := strconv.ParseInt(idFnalParam, 10, 64)
+	idFnal, err := utils.GetInt64FromParameterRequest(c, "id")
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusBadRequest, false, []domain.FieldError{}, common.ErrMsgInvalidID)
 		return
@@ -914,6 +965,7 @@ func (h *FnalHandler) FnalStornirajSave(c *gin.Context) {
 	ctx := c.Request.Context()
 	// map request to entity
 	h.naloziService.MapReqToEntity(ctx, req, &entity, common.ActionAdd)
+	entity.Tipdok = req.OldTipdok // Ensure we use the original tipdok for validation and storniranje logic
 	fieldErrors, err := h.naloziService.NalogValidation(ctx, entity, common.ActionAdd)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, common.ErrMsgReadData)
@@ -967,9 +1019,61 @@ func (h *FnalHandler) ValidacijaNalogStorniranje(c *gin.Context, danalStr, datob
 	return errors
 }
 
+// StampatNalog renders a full-page printable report for a single nalog.
+func (h *FnalHandler) StampaNalog(c *gin.Context) {
+	ctx := c.Request.Context()
+	translator := i18n.GetInstance()
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		common.WriteJSONResponse(c, http.StatusUnauthorized, false, []domain.FieldError{}, common.ErrMsgUnauthorized)
+		return
+	}
+	idFnal, err := utils.GetInt64FromParameterRequest(c, "id")
+	if err != nil || idFnal == 0 {
+		common.WriteJSONResponse(c, http.StatusBadRequest, false, []domain.FieldError{}, common.ErrMsgInvalidID)
+		return
+	}
+
+	fnal, tblStavke, tblKonta, err := h.naloziService.GetNalogStampaData(ctx, idFnal, h.cfg)
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, common.ErrMsgReadData+" error:"+err.Error())
+		return
+	}
+	fvrData, err := h.naloziService.GetFvrData(ctx)
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, common.ErrMsgReadData+" error:"+err.Error())
+		return
+	}
+	repParams := domain.ReportParameters{
+		ReportName:     fmt.Sprintf(translator.Title("NALOG ZA KNJIŽENJE BR")+".: %s - %d ", fnal.Tipdok, fnal.Nalog),
+		Orientation:    "portrait",
+		CompanyName:    fvrData.Naziv,
+		Adress:         fvrData.Adresa,
+		Postcode:       fvrData.Pobro,
+		City:           fvrData.Mesto,
+		PIB:            fvrData.PIB,
+		MatBroj:        fvrData.Matbr,
+		SifDel:         fvrData.SifDel,
+		ParameterItems: map[string]domain.ParameterItem{},
+	}
+	danalStr := fnal.Danal.Format("02.01.2006.")
+	repParams.ParameterItems["DatumNaloga"] = domain.ParameterItem{
+		Name: "Datum naloga", Value: danalStr,
+	}
+
+	if fnal.Opis != "" {
+		repParams.ParameterItems["Opis"] = domain.ParameterItem{Name: "Opis", Value: fnal.Opis}
+	}
+
+	c.Header("Content-Type", "text/html; charset=utf-8")
+	tmpl_rep_fin.NalogStampa(tblStavke, tblKonta, repParams, translator).Render(c.Request.Context(), c.Writer)
+
+}
+
 // FnalPrikazStampa renders the print view for nalozi. This is a full page render, not just a table update, so it stays in the handler.
 func (h *FnalHandler) FnalPrikazStampa(c *gin.Context) {
 	requestSource := c.GetHeader("Hx-Trigger")
+
 	page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
 	tblHdr := common.SetTableBasicData("NALOZI STAMPANJE", "nalozi-stampanje-table", h.naloziService.GetNaloziStampaTableFields(), naloziURLStampa, naloziURLStampa, pageSize, page, 0, 0, h.cfg)
 	common.SetTableConfig(&tblHdr, "PREGLED NALOGA", naloziURLStampa, true, false, false)
@@ -1062,6 +1166,7 @@ func (h *FnalHandler) FnalPrikazStampa(c *gin.Context) {
 // FnalPrikazStampaDetalji renders the details table for the print view. This is a full page render, not just a table update, so it stays in the handler.
 func (h *FnalHandler) FnalPrikazStampaDetalji(c *gin.Context) {
 	requestSource := c.GetHeader("X-Request-Source")
+	hxTarget := c.GetHeader("HX-Target")
 	idFnal, err := utils.GetInt64FromParameterRequest(c, "id")
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusBadRequest, false, []domain.FieldError{}, "Invalid ID parameter")
@@ -1092,8 +1197,8 @@ func (h *FnalHandler) FnalPrikazStampaDetalji(c *gin.Context) {
 		return
 	}
 	// If this is an HTMX request, we just render the table component
-	if requestSource == "searchinput" || requestSource == "btnpage" || requestSource == "tblheader" {
-		err = tmpl.Table(tblDet, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+	if requestSource == "searchinput" || requestSource == "btnpage" || requestSource == "tblheader" || hxTarget == "stavke-naloga-stampa" {
+		tmpl.Table(tblDet, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 	} else {
 		searchControlDetalji := domain.InputControl{
 			ID:           "search-control-detalji",
@@ -1155,6 +1260,7 @@ func setStavkeButtons(requestType string, idFnal int64) (domain.Button, domain.B
 		HxTarget:         "#nalog-stavke-table",
 		HxActionURL:      fmt.Sprintf(naloziURLSaveStavke, idFnal),
 		HxRequestType:    requestType,
+		HxSwap:           "innerHTML",
 		HxOnAfterRequest: "",
 	}
 
@@ -1164,10 +1270,105 @@ func setStavkeButtons(requestType string, idFnal int64) (domain.Button, domain.B
 		LabelText:     "Štampa ",
 		BtnClass:      common.ClassPrintButton,
 		HxTarget:      "#nalog-stavke-table",
-		HxActionURL:   naloziURLPrintStavke,
+		HxActionURL:   fmt.Sprintf(naloziURLStampaNalog, idFnal),
 		HxRequestType: "GET",
 	}
 	return btnSave, btnPrint
+}
+
+// NaloziStampaGrupaDialog renders the dialog for group nalog printing.
+func (h *FnalHandler) NaloziStampaGrupaDialog(c *gin.Context) {
+	ctx := c.Request.Context()
+	tipdokOptions, err := h.naloziService.GetTipdokOptions(ctx)
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, "Failed to get Tipdok options")
+		return
+	}
+	var tipdokValues []domain.ComboItem
+	selectedTipdok := ""
+	for _, item := range tipdokOptions {
+		tipdokValues = append(tipdokValues, domain.ComboItem{Key: item.TipDok, Value: item.TipDok + "-" + item.Opis})
+	}
+	if len(tipdokValues) > 0 {
+		selectedTipdok = tipdokValues[0].Key
+	}
+	dialog := domain.Dialog{
+		Id:    "dialog-nalog-stampa-grupe-dlg",
+		Title: "Štampanje grupe naloga",
+	}
+	btnClose := domain.Button{
+		Id:        "btn-close-grupe",
+		IsVisible: true,
+		IdDialog:  dialog.Id,
+		BtnClass:  common.ClassDialogCloseButton,
+	}
+	btnCancel := domain.Button{
+		Id:        "btn-cancel-grupe",
+		LabelText: "Odustani",
+		IsVisible: true,
+		IdDialog:  dialog.Id,
+		BtnClass:  common.ClassCloseButton,
+	}
+	err = tmpl_fin.NaloziStampaGrupeDialog(dialog, tipdokValues, selectedTipdok, btnClose, btnCancel, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, common.ErrMsgRenderTemplate)
+	}
+}
+
+// NaloziStampaGrupaReport renders the group nalozi print report.
+func (h *FnalHandler) NaloziStampaGrupaReport(c *gin.Context) {
+	ctx := c.Request.Context()
+	translator := i18n.GetInstance()
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		common.WriteJSONResponse(c, http.StatusUnauthorized, false, []domain.FieldError{}, common.ErrMsgUnauthorized)
+		return
+	}
+
+	tipdok := c.Query("tipdok")
+	odBroja := common.StringToInt64(c.Query("odbroja"))
+	doBroja := common.StringToInt64(c.Query("dobroja"))
+	if doBroja == 0 {
+		doBroja = 999999
+	}
+	prikazPoNalogu := c.Query("zbirniponalog") == "true"
+	prikazPoListi := c.Query("zbirnipolisti") == "true"
+	noviNalogNovaSrana := c.Query("novinalognovasrana") == "true"
+
+	items, grandKontaSummary, err := h.naloziService.GetGrupeNaloziStampaData(ctx, tipdok, odBroja, doBroja, h.cfg)
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, common.ErrMsgReadData+" error:"+err.Error())
+		return
+	}
+	if len(items) == 0 {
+		common.WriteJSONResponse(c, http.StatusOK, false, []domain.FieldError{}, "Nema naloga za odabrane parametre.")
+		return
+	}
+
+	fvrData, err := h.naloziService.GetFvrData(ctx)
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, common.ErrMsgReadData+" error:"+err.Error())
+		return
+	}
+
+	repParams := domain.ReportParameters{
+		ReportName:     translator.Title("NALOZI ZA KNJIZENJE"),
+		Orientation:    "landscape",
+		CompanyName:    fvrData.Naziv,
+		Adress:         fvrData.Adresa,
+		Postcode:       fvrData.Pobro,
+		City:           fvrData.Mesto,
+		PIB:            fvrData.PIB,
+		MatBroj:        fvrData.Matbr,
+		SifDel:         fvrData.SifDel,
+		ParameterItems: map[string]domain.ParameterItem{},
+	}
+	repParams.ParameterItems["Tipdok"] = domain.ParameterItem{Name: translator.Label("Vrsta naloga"), Value: tipdok}
+	repParams.ParameterItems["OdBroja"] = domain.ParameterItem{Name: translator.Label("Od broja naloga"), Value: fmt.Sprintf("%d", odBroja)}
+	repParams.ParameterItems["DoBroja"] = domain.ParameterItem{Name: translator.Label("Do broja naloga"), Value: fmt.Sprintf("%d", doBroja)}
+
+	c.Header("Content-Type", "text/html; charset=utf-8")
+	tmpl_rep_fin.StampanjeGrupeNaloga(items, grandKontaSummary, repParams, prikazPoNalogu, prikazPoListi, noviNalogNovaSrana, translator).Render(c.Request.Context(), c.Writer)
 }
 
 func (h *FnalHandler) AddRoutes(r *gin.Engine) {
@@ -1194,13 +1395,16 @@ func (h *FnalHandler) AddRoutes(r *gin.Engine) {
 	r.POST("/api/nalozi/unlock/:id", h.lm.WithEntityLockVerifyAndRelease("fnal", "id"), h.UnlockNalog)
 	r.GET("/api/nalozi/prepis", h.FnalPrepis)
 	r.POST("/api/nalozi/prepis/:id", h.FnalPrepisSave)
-	r.GET("/api/nalozi/confirm-prepis", h.FnalPrepisDialog)
+	r.GET("/api/nalozi/confirm-prepis/:id", h.FnalPrepisDialog)
 	r.PUT("/api/nalozi/update/copy/:id", h.FnalPrepisSave)
-	r.GET("/api/nalozi/confirm-storniraj", h.FnalStornirajDialog)
+	r.GET("/api/nalozi/confirm-storniraj/:id", h.FnalStornirajDialog)
 	r.GET("/api/nalozi/storniraj", h.FnalStorniraj)
 	r.POST("/api/nalozi/storniraj/:id", h.FnalStornirajSave)
 	r.GET("/api/nalozi/prikaz", h.FnalPrikazStampa)
 	r.GET("/api/nalozi/prikaz/detalji/:id", h.FnalPrikazStampaDetalji)
+	r.GET("/api/nalozi/stampanalog/:id", h.StampaNalog)
+	r.GET("/api/nalozi/stampa/grupadialog", h.NaloziStampaGrupaDialog)
+	r.GET("/api/nalozi/stampa/grupanalog", h.NaloziStampaGrupaReport)
 }
 
 func (h *FnalHandler) setHandlerFieldValues() {

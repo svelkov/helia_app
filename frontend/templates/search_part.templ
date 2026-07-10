@@ -53,8 +53,10 @@ templ Search_Part(tbl domain.TableData, searchControl domain.InputControl) {
 			if tbl.BtnAdd.IsVisible {
 				@Search_PartAddButton(tbl.BtnAdd)
 			}
-			if tbl.BtnPrint.IsVisible {
+			if tbl.BtnPrint.IsVisible && !tbl.BtnPrint.OpenDialog {
 				@Search_PartPrintButton(tbl.BtnPrint)
+			}else if tbl.BtnPrint.IsVisible && tbl.BtnPrint.OpenDialog {
+				@Button(tbl.BtnPrint)
 			}
 		</div>
 	</div>
@@ -76,10 +78,18 @@ templ Search_PartAddButton(btn domain.Button) {
 
 templ Search_PartPrintButton(btn domain.Button) {
 	<a
-		href={ templ.URL(btn.HxActionURL) }
+		id={ btn.Id }
+		href="#"
 		target="_blank"
 		rel="noopener noreferrer"
-		class={ common.ClassPrintButton }
+		class={ btn.BtnClass }
+		onclick="openPrintWithParams(event, this)"
+		if btn.HxActionURL != "" {
+			data-url={ btn.HxActionURL }
+		}
+		if btn.DataFields != "" {
+			data-fields={ btn.DataFields }
+		}
 	>
 		@Icon("stampa", common.ClassIcon)
 		{ btn.LabelText }

@@ -1,11 +1,15 @@
 package templates
 
-import "helia/internal/domain"
-import "helia/i18n"
+import (
+	"helia/i18n"
+	"helia/internal/domain"
+)
 
 templ ContentContainer(tbl domain.TableData, inputControl domain.InputControl, translator *i18n.Service) {
 	<!-- Container with full height -->
 	<div class="flex flex-col h-full">
+		<!-- Dialog container placed first so it is outside overflow wrappers -->
+		<div id="dialog-container"></div>
 		<!-- Tab Content -->
 		<div id="content" class="flex-1 min-h-0 flex flex-col gap-1">
 			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
@@ -33,4 +37,5 @@ templ ContentContainer(tbl domain.TableData, inputControl domain.InputControl, t
 	        }
 	    });
 	</script>
+	@OpenPrintWithParamsScript()
 }

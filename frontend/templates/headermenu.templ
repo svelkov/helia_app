@@ -13,21 +13,21 @@ templ TopMenu(isLoggedIn bool, username string, menuItems domain.MenuDataItems, 
 		<nav class="flex flex-wrap" id="top-nav">
 			for _, item := range menuItems.MenuItems {
 				<button
-					id={ fmt.Sprintf("topmenu-%s", strings.ReplaceAll(strings.ToLower(item.Name), " ", "-")) }
-					name={ item.Name }
-					hx-get={ fmt.Sprintf("/get-menu?menuName=%s", url.QueryEscape(item.Name)) }
+					id={ fmt.Sprintf("topmenu-%s", strings.ReplaceAll(strings.ToLower(item.MenuName), " ", "-")) }
+					name={ item.MenuName }
+					hx-get={ fmt.Sprintf("/api/get-menu?menuName=%s", url.QueryEscape(item.MenuName)) }
 					hx-trigger="click"
 					hx-target="#side-menu"
 					hx-swap="outerHTML"
 					hx-on="htmx:afterRequest: updateMenuButtonStyles(this)"
-					if item.Name == currentMenu {
+					if item.MenuName == currentMenu {
 						class="menu-btn px-2 py-2 font-medium border-r border-b rounded-t-md text-sm bg-white text-blue-800 focus:outline-none transition-colors duration-200"
 					} else {
 						class="menu-btn px-2 py-2 font-medium border-r border-b rounded-t-md text-sm focus:outline-none bg-blue-900 text-white transition-colors duration-200"
 					}
 					type="button"
 				>
-					{ translator.Menu(item.Name) }
+					{ translator.Menu(item.MenuName) }
 				</button>
 			}
 			<!-- Right-aligned items  -->

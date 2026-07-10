@@ -7,11 +7,17 @@ import (
 	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
+	"helia/internal/infrastructure/db"
 	"helia/internal/repository"
 	"helia/internal/service"
 	"math"
 	"reflect"
 	"strings"
+)
+
+const (
+	urlFproStavka      = "/api/fpro/stavka"
+	urlFproNalogStavke = "/api/fpro/nalog/:%d"
 )
 
 // FproViewData encapsulates all data needed for the Nalog display page.
@@ -25,7 +31,9 @@ type FproService interface {
 	service.Service[domain.Fpro]
 	GetAllFproByFnalID(ctx context.Context, fproPayload *domain.FproPayload, tbl *domain.TableData, fnalID int64, currentPage, pageSize int, searchText string) error
 	SaveNalogStavke(ctx context.Context, fproStavke *domain.FproPayload) error
+	DeleteFpro(ctx context.Context, id int64, tblStavke *domain.TableData, currentPage, pageSize int) error
 	FproValidate(ctx context.Context, entity *domain.FproPayload) []domain.FieldError
+	GetNalogTotalValues(ctx context.Context, nalogTotal *domain.NalogTotalValues, idFnal int64) error
 	GetOrgJedinice(ctx context.Context) ([]domain.ComboItem, error)
 	GetMestoTroska(ctx context.Context, idorgjed int64) ([]domain.ComboItem, error)
 	GetValute(ctx context.Context) ([]domain.ComboItem, error)
@@ -123,8 +131,8 @@ func (s *FproResource) Delete(ctx context.Context, idField string, id int64) err
 }
 
 // GetAll implements NalogService.
-func (s *FproResource) GetAll(ctx context.Context, page int, offset int, tableFields []domain.Fields, idField string, searchText string) (*[]domain.Fpro, error) {
-	return s.service.GetAll(ctx, page, offset, tableFields, idField, searchText)
+func (s *FproResource) GetAll(ctx context.Context, page int, offset int, tableFields []domain.Fields, idField string, searchText, sortBy, sortOrder string) (*[]domain.Fpro, error) {
+	return s.service.GetAll(ctx, page, offset, tableFields, idField, searchText, sortBy, sortOrder)
 }
 
 // GetAllCustom implements NalogService.
@@ -134,7 +142,35 @@ func (s *FproResource) GetAllCustom(ctx context.Context, queryText string, where
 
 // GetByID implements NalogService.
 func (s *FproResource) GetByID(ctx context.Context, idField string, idValue int64) (*domain.Fpro, error) {
-	return s.service.GetByID(ctx, idField, idValue)
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		return nil, fmt.Errorf("no user session found in context")
+	}
+	qb := common.NewQueryBuilder(`select fp.idfpro, fp.rbr, fp.nalog, fp.tipdok, fp.danal, fp.iznos, fp.kat, coalesce(fp.opis, '') as opis, fp.dadok,
+	fp.rok, fp.vrd, fp.vkonta, fp.konto, coalesce(fp.sifra, '') as sifra, fp.tra, fp.deviznos, fp.kurs,
+	fp.sifval, fp.mi, coalesce(fp.dokum, '') as dokum, fp.idfnal, 
+	coalesce(fp.idorgjed, 0) as idorgjed, coalesce(fp.komid, 0) as komid, coalesce(fp.mestotrid, 0) as mestotrid,  fp.idfkpl, 
+	coalesce(fp.dokumv, '') as dokumv, fp.dadokv, fp.travez,
+	coalesce(fk.naziv, '') as nazivkonta,
+	coalesce(p.naziv, '') as NazivAnalitike,
+	case when fp.kat in (1,2) then fp.iznos
+		 else 0 end as dug,
+	case when fp.kat in (3,4) then fp.iznos
+		 else 0 end as pot
+	from fpro as fp`, true)
+	qb.AddJoin(` left join fkpl fk on fk.idfkpl = fp.idfkpl`)
+	qb.AddJoin(` left join partneri p on p.sifra = fp.sifra and p.tipanalitikeid = fk.tipanalitikeid `)
+	qb.AddEqual(fmt.Sprintf("fp.%s", idField), idValue)
+	sqlQuery, args := qb.Build()
+	entities, err := s.service.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	if err != nil {
+		return nil, err
+	}
+	if entities == nil || len(*entities) == 0 {
+		return nil, fmt.Errorf("Fpro not found for %s = %d", idField, idValue)
+	}
+	return &(*entities)[0], nil
+
 }
 
 // GetTotalRecords implements NalogService.
@@ -161,7 +197,7 @@ func (s *FproResource) GetAllFproByFnalID(ctx context.Context, fproPayload *doma
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 	tbl.ShowActions = true
 	tbl.HasTotals = true
-	qbCount := common.NewQueryBuilder(`SELECT COUNT(*) FROM fpro fp `, true)
+	qbCount := common.NewQueryBuilder(`select count(*) from fpro fp `, true)
 	qbCount.AddJoin(` left join fkpl fk on fk.idfkpl = fp.idfkpl`)
 	qbCount.AddEqual("fp.idfnal", fnalID)
 	if searchText != "" {
@@ -202,7 +238,8 @@ func (s *FproResource) GetAllFproByFnalID(ctx context.Context, fproPayload *doma
 	common.SetTableTotalRecords(tbl, totalRecords, pageSize)
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 	tbl.ShowActions = true
-	
+	tbl.URLGetAll = urlFproStavka
+	tbl.URLPrefix = urlFproStavka
 	// Populate table rows
 	if entities != nil && len(*entities) > 0 {
 		tbl.Totals = make([]string, len(tbl.Headers))
@@ -218,13 +255,13 @@ func (s *FproResource) GetAllFproByFnalID(ctx context.Context, fproPayload *doma
 				entity.Naziv,
 				fmt.Sprintf("%d", entity.Vrd),
 				entity.Opis,
-				common.FormatNumberWithSystemLocale(entity.Dug, 2),
-				common.FormatNumberWithSystemLocale(entity.Pot, 2),
+				common.FormatNumberWithSystemLocale(entity.Dug.Float64, 2),
+				common.FormatNumberWithSystemLocale(entity.Pot.Float64, 2),
 				entity.Dokum,
 				entity.Dadok.Time.Format(common.DateLayout),
 			)
-			dugTotal += entity.Dug
-			potTotal += entity.Pot
+			dugTotal += entity.Dug.Float64
+			potTotal += entity.Pot.Float64
 			tblRow := domain.TableRow{ID: fmt.Sprintf("%d", entity.IDFpro), Fields: fields, HasUpdate: true, HasDelete: true}
 			tbl.Rows = append(tbl.Rows, tblRow)
 		}
@@ -283,6 +320,9 @@ func (s *FproResource) SaveNalogStavke(ctx context.Context, fproStavke *domain.F
 	fproStavke.Tipdok = fnal.Tipdok
 	fproStavke.Danal = fnal.Danal.Format(common.HtmlLayout)
 	fproStavke.Datob = fnal.Datob.Format(common.HtmlLayout)
+	if fproStavke.Opisknj == "" {
+		fproStavke.Opisknj = "-"
+	}
 
 	lastRbr, err := s.getLastRbr(ctx, fproStavke.IDFnal)
 	if err != nil {
@@ -290,7 +330,57 @@ func (s *FproResource) SaveNalogStavke(ctx context.Context, fproStavke *domain.F
 	}
 	fproStavke.Rbr = lastRbr + 1
 	fields := s.mapFieldsToValues(fproStavke)
-	sqlQuery, args := qb.BuildInsert(ctx, fields, common.IDfpro)
+	sqlQuery := ""
+	args := []interface{}{}
+	if fproStavke.IDFpro != 0 {
+		sqlQuery, args = qb.BuildUpdate(ctx, fields, common.IDfpro, fproStavke.IDFpro)
+	} else {
+		sqlQuery, args = qb.BuildInsert(ctx, fields, common.IDfpro)
+	}
+	// Start a transaction
+	tx, err := s.fproRepo.BeginTx()
+	if err != nil {
+		return fmt.Errorf("error beginning transaction: %w", err)
+	}
+	// Defer rollback in case of error
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+	// check only we have insert record
+	if fproStavke.IDFpro == 0 {
+		err = tx.QueryRowContext(ctx, sqlQuery, args...).Scan(&insertedID)
+		if err != nil {
+			return fmt.Errorf("insert fpro failed: %w", err)
+		}
+	}
+	err = s.recalculateFnal(ctx, tx, fproStavke.IDFnal)
+	if err != nil {
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return fmt.Errorf("error committing transaction: %w", err)
+	}
+
+	return nil
+}
+
+func (s *FproResource) DeleteFpro(ctx context.Context, idFpro int64, tblStavke *domain.TableData, currentPage, pageSize int) error {
+	// Get the Fpro record to be deleted
+	fpro, err := s.fproRepo.GetByID(ctx, common.IDfpro, idFpro)
+	if err != nil {
+		return fmt.Errorf("failed to get Fpro by ID: %w", err)
+	}
+	if fpro == nil {
+		return fmt.Errorf("Fpro not found for ID: %d", idFpro)
+	}
+	// Delete the Fpro record
+	qb := common.NewQueryBuilder(`delete from fpro `, true)
+	qb.AddEqual("idfpro", idFpro)
+	sqlQuery, args := qb.Build()
 
 	// Start a transaction
 	tx, err := s.fproRepo.BeginTx()
@@ -303,34 +393,80 @@ func (s *FproResource) SaveNalogStavke(ctx context.Context, fproStavke *domain.F
 			tx.Rollback()
 		}
 	}()
-
-	err = tx.QueryRowContext(ctx, sqlQuery, args...).Scan(&insertedID)
+	_, err = tx.ExecContext(ctx, sqlQuery, args...)
 	if err != nil {
-		return fmt.Errorf("insert fpro failed: %w", err)
+		return fmt.Errorf("failed to delete Fpro: %w", err)
 	}
-	// update fnal with new stavle , duguje, potrazuje
-	qbUpdate := common.NewQueryBuilder(`UPDATE fnal SET dug = dug + $1, 
-	pot = pot + $2, brst = brst + 1 `, true)
-	qbUpdate.AddArgs(common.StringToFloat64(fproStavke.Duguje), common.StringToFloat64(fproStavke.Potrazuje))
-	qbUpdate.AddEqual("idfnal", fproStavke.IDFnal)
+	// delete kir
+	if fpro.Vrd == 10 {
+		qbDeleteKir := common.NewQueryBuilder(`delete from kir `, true)
+		qbDeleteKir.AddEqual("idfpro", fpro.IDFpro)
+		sqlUpdate, argsUpdate := qbDeleteKir.Build()
+		_, err = tx.ExecContext(ctx, sqlUpdate, argsUpdate...)
+		if err != nil {
+			return fmt.Errorf("failed to delete kir: %w", err)
+		}
+	}
+	// delete kpr
+	if fpro.Vrd == 20 {
+		qbDeleteKpr := common.NewQueryBuilder(`delete from kpr `, true)
+		qbDeleteKpr.AddEqual("idfpro", fpro.IDFpro)
 
-	sqlUpdate, argsUpdate := qbUpdate.Build()
-	_, err = tx.ExecContext(ctx, sqlUpdate, argsUpdate...)
+		sqlUpdate, argsUpdate := qbDeleteKpr.Build()
+		_, err = tx.ExecContext(ctx, sqlUpdate, argsUpdate...)
+		if err != nil {
+			return fmt.Errorf("failed to delete kpr: %w", err)
+		}
+	}
+	err = s.recalculateFnal(ctx, tx, fpro.IDFnal)
 	if err != nil {
-		return fmt.Errorf("update fnal failed: %w", err)
+		return err
 	}
-
 	err = tx.Commit()
 	if err != nil {
 		return fmt.Errorf("error committing transaction: %w", err)
 	}
 
+	// Refresh the table data after deletion
+	err = s.GetAllFproByFnalID(ctx, &domain.FproPayload{}, tblStavke, fpro.IDFnal, currentPage, pageSize, "")
+	if err != nil {
+		return fmt.Errorf("failed to refresh table data: %w", err)
+	}
+
+	tblStavke.URLGetAll = urlFproStavka
+	tblStavke.URLPrefix = urlFproStavka
+	tblStavke.DetailURL = fmt.Sprintf(urlFproNalogStavke, fpro.IDFnal)
+	tblStavke.SearchEnabled = true
+	tblStavke.BtnAdd.IsVisible = false
+	tblStavke.BtnPrint.IsVisible = false
+	tblStavke.ShowActions = true
+	return nil
+}
+
+// recalculateFnal recalculates dug, pot, brst and nalsts on fnal from the
+// remaining fpro rows. It must be called within an open transaction.
+func (s *FproResource) recalculateFnal(ctx context.Context, tx db.Transaction, idFnal int64) error {
+	qb := common.NewQueryBuilder(`update fnal set
+		dug    = (select coalesce(sum(case when kat in (1,2) then iznos else 0 end), 0) from fpro where idfnal = $1),
+		pot    = (select coalesce(sum(case when kat in (3,4) then iznos else 0 end), 0) from fpro where idfnal = $1),
+		brst   = (select count(*) from fpro where idfnal = $1),
+		nalsts = case when
+			(select coalesce(sum(case when kat in (1,2) then iznos else 0 end), 0) from fpro where idfnal = $1) =
+			(select coalesce(sum(case when kat in (3,4) then iznos else 0 end), 0) from fpro where idfnal = $1)
+			then 'Slozen' else 'Neslozen' end`, true)
+	qb.AddArgs(idFnal)
+	qb.AddEqual("idfnal", idFnal)
+	sql, args := qb.Build()
+	_, err := tx.ExecContext(ctx, sql, args...)
+	if err != nil {
+		return fmt.Errorf("failed to recalculate fnal (id=%d): %w", idFnal, err)
+	}
 	return nil
 }
 
 func (s *FproResource) getLastRbr(ctx context.Context, fnlID int64) (int64, error) {
 	// Implementation for getting the last Rbr
-	qb := common.NewQueryBuilder(`SELECT COALESCE(MAX(rbr), 0) FROM fpro `, true)
+	qb := common.NewQueryBuilder(`select coalesce(max(rbr), 0) from fpro `, true)
 	qb.AddEqual("idfnal", fnlID)
 	sqlQuery, args := qb.Build()
 	var lastRbr int64
@@ -368,7 +504,7 @@ func (s *FproResource) mapFieldsToValues(fproStavke *domain.FproPayload) []domai
 	potrazuje := common.StringToFloat64(fproStavke.Potrazuje)
 	if duguje > 0 {
 		add("kat", "1")
-		add("iznos", fproStavke.Duguje)
+		add("iznos", fmt.Sprintf("%.2f", duguje))
 	} else if duguje < 0 {
 		add("kat", "2")
 		add("iznos", fmt.Sprintf("%.2f", -math.Abs(duguje)))
@@ -410,7 +546,7 @@ func (s *FproResource) GetOrgJedinice(ctx context.Context) ([]domain.ComboItem, 
 	comboItems := []domain.ComboItem{}
 	comboItems = append(comboItems, domain.ComboItem{Key: "-", Value: "-"}) // Default option when no records are found
 	hasGod, hasKar := s.ojRepo.GetHasGodHasKar()
-	qb := common.NewQueryBuilder(`SELECT idorgjed, ojozn, naziv FROM orgjed`, true)
+	qb := common.NewQueryBuilder(`select idorgjed, ojozn, naziv from orgjed`, true)
 	qb.AddGodKarConditions(hasGod, hasKar, session.SelectedGod, session.SelectedKar)
 	qb.AddOrderBy("ojozn ASC")
 	sqlQuery, args := qb.Build()
@@ -436,7 +572,7 @@ func (s *FproResource) GetMestoTroska(ctx context.Context, idorgjed int64) ([]do
 
 	comboItems := []domain.ComboItem{}
 	comboItems = append(comboItems, domain.ComboItem{Key: "-", Value: "-"}) // Default option when no records are found
-	qb := common.NewQueryBuilder(`SELECT mestotrid, mtroska, opis, idorgjed FROM mestotr`, true)
+	qb := common.NewQueryBuilder(`select mestotrid, mtroska, opis, idorgjed from mestotr`, true)
 	hasGod, hasKar := s.mtroskaRepo.GetHasGodHasKar()
 	qb.AddGodKarConditions(hasGod, hasKar, userSession.SelectedGod, userSession.SelectedKar)
 	qb.AddEqual("idorgjed", idorgjed)
@@ -465,7 +601,7 @@ func (s *FproResource) GetValute(ctx context.Context) ([]domain.ComboItem, error
 	comboItems := []domain.ComboItem{}
 	comboItems = append(comboItems, domain.ComboItem{Key: "-", Value: "-"}) // Default option when no records are found
 	hasGod, hasKar := s.valuteRepo.GetHasGodHasKar()
-	qb := common.NewQueryBuilder(`SELECT idvalute, sifval, naziv FROM valute`, true)
+	qb := common.NewQueryBuilder(`select idvalute, sifval, naziv from valute`, true)
 	qb.AddGodKarConditions(hasGod, hasKar, session.SelectedGod, session.SelectedKar)
 	qb.AddOrderBy("sifval ASC")
 	sqlQuery, args := qb.Build()
@@ -492,7 +628,7 @@ func (s *FproResource) GetKomercijalisti(ctx context.Context) ([]domain.ComboIte
 	comboItems := []domain.ComboItem{}
 	comboItems = append(comboItems, domain.ComboItem{Key: "-", Value: "-"}) // Default option when no records are found
 	hasGod, hasKar := s.komercijalistiRepo.GetHasGodHasKar()
-	qb := common.NewQueryBuilder(`SELECT komid, sifkom, imeprezime FROM komercijalisti`, true)
+	qb := common.NewQueryBuilder(`select komid, sifkom, imeprezime from komercijalisti`, true)
 	qb.AddGodKarConditions(hasGod, hasKar, session.SelectedGod, session.SelectedKar)
 	qb.AddOrderBy("sifkom ASC")
 	sqlQuery, args := qb.Build()
@@ -519,7 +655,7 @@ func (s *FproResource) GetMagacini(ctx context.Context) ([]domain.ComboItem, err
 	comboItems := []domain.ComboItem{}
 	comboItems = append(comboItems, domain.ComboItem{Key: "-", Value: "-"}) // Default option when no records are found
 	hasGod, hasKar := s.magaciniRepo.GetHasGodHasKar()
-	qb := common.NewQueryBuilder(`SELECT magaciniid, mag, opis FROM magacini`, true)
+	qb := common.NewQueryBuilder(`select magaciniid, mag, opis from magacini`, true)
 	qb.AddGodKarConditions(hasGod, hasKar, session.SelectedGod, session.SelectedKar)
 	qb.AddOrderBy("mag ASC")
 	sqlQuery, args := qb.Build()
@@ -546,7 +682,7 @@ func (s *FproResource) GetMI(ctx context.Context) ([]domain.ComboItem, error) {
 	comboItems := []domain.ComboItem{}
 	comboItems = append(comboItems, domain.ComboItem{Key: "-", Value: "-"}) // Default option when no records are found
 	hasGod, hasKar := s.komercijalistiRepo.GetHasGodHasKar()
-	qb := common.NewQueryBuilder(`SELECT fispid, mi, naziv FROM fisp`, true)
+	qb := common.NewQueryBuilder(`select fispid, mi, naziv from fisp`, true)
 	qb.AddGodKarConditions(hasGod, hasKar, session.SelectedGod, session.SelectedKar)
 	qb.AddOrderBy("mi ASC")
 	sqlQuery, args := qb.Build()
@@ -561,6 +697,27 @@ func (s *FproResource) GetMI(ctx context.Context) ([]domain.ComboItem, error) {
 		})
 	}
 	return comboItems, nil
+}
+
+func (s *FproResource) GetNalogTotalValues(ctx context.Context, nalogTotal *domain.NalogTotalValues, idFnal int64) error {
+	// Implementation for fetching nalog total values
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		return fmt.Errorf("user session not found")
+	}
+
+	qb := common.NewQueryBuilder(`select 
+		coalesce(sum(case when kat in (1,2) then iznos else 0 end), 0) as duguje,
+		coalesce(sum(case when kat in (3,4) then iznos else 0 end), 0) as potrazuje
+		from fpro`, true)
+	qb.AddEqual("idfnal", idFnal)
+	sqlQuery, args := qb.Build()
+	err := s.fproRepo.DB.QueryRowContext(ctx, sqlQuery, args...).Scan(&nalogTotal.Duguje, &nalogTotal.Potrazuje)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // FproValidate implements validation for Fpro entities.
@@ -696,7 +853,7 @@ func (s *FproResource) FproValidate(ctx context.Context, entity *domain.FproPayl
 }
 
 func (s *FproResource) isGodinaZatvorena(ctx context.Context, god, kar int) bool {
-	qb := common.NewQueryBuilder("SELECT god, kar, godzatv FROM fvr", true)
+	qb := common.NewQueryBuilder("select god, kar, godzatv from fvr", true)
 	qb.AddEqual("god", god)
 	qb.AddEqual("kar", kar)
 	sqlQuery, args := qb.Build()
@@ -712,7 +869,7 @@ func (s *FproResource) findFkpl(ctx context.Context, god, kar int, konto, sifra 
 	if sifra != "" {
 		vkonta = 1
 	}
-	qb := common.NewQueryBuilder("SELECT idfkpl, god, kar, vkonta, konto, sifra, naziv, devizni, idpartneri FROM fkpl", true)
+	qb := common.NewQueryBuilder("select idfkpl, god, kar, vkonta, konto, sifra, naziv, devizni, idpartneri from fkpl", true)
 	qb.AddEqual("god", god)
 	qb.AddEqual("kar", kar)
 	qb.AddEqual("konto", konto)

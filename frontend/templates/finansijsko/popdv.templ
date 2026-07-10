@@ -1,0 +1,384 @@
+package finansijsko
+
+import (
+	"fmt"
+	tmpl "helia/frontend/templates"
+	"helia/i18n"
+	"helia/internal/common"
+	"helia/internal/domain"
+	"time"
+)
+
+// POPDV Main - Prijava PDV od nabavke dobara i usluga
+templ PopdvMain(tabs domain.TabData, tblPolja domain.TableData, searchInput domain.InputControl, gnGod int, translator *i18n.Service) {
+	<!-- Tab Content -->
+	<div id="tab-content" class="flex flex-col h-full">
+		@PopdvPolja(tabs, tblPolja, searchInput, gnGod, translator)
+	</div>
+}
+
+// Tab 1 - Polja POPDV prijave
+templ PopdvPolja(tabs domain.TabData, tbl domain.TableData, searchInput domain.InputControl, gnGod int, translator *i18n.Service) {
+	<!-- Container with full height -->
+	<div class="flex flex-col h-full">
+		<!-- Tab Navigation -->
+		<div class="border-b border-blue-600">
+			@tmpl.TabNav(translator.Title("Prijava PDV od nabavke dobara i usluga"), tabs, "#tab-content", "popdv-panel", translator)
+		</div>
+		<!-- Tab 1 Content -->
+		<div id="tab1" class="flex-1 min-h-0 flex flex-col gap-1 pt-1">
+			<!-- Master Table -->
+			<div class="border bg-blue-100 border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
+				@tmpl.Search_Part(tbl, searchInput)
+				<!-- Table -->
+				<div id="popdv-polja-table" class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+					@tmpl.Table(tbl, translator)
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- Dialog display container-->
+	<div id="dialog-content"></div>
+	@tmpl.ShowMessageScript()
+}
+
+// Tab 2 - POPDV prijava
+templ PopdvPrijava(tabs domain.TabData, tbl domain.TableData, btnObrada, btnDelete domain.Button, searchInput domain.InputControl, gnGod int, translator *i18n.Service) {
+	<!-- Container with full height -->
+	<div class="flex flex-col h-full">
+		<!-- Tab Navigation -->
+		<div class="border-b border-blue-600">
+			@tmpl.TabNav(translator.Title("Prijava PDV od nabavke dobara i usluga"), tabs, "#tab-content", "popdv-panel", translator)
+		</div>
+		<!-- Tab 2 Content -->
+		<div id="tab2" class="flex-1 min-h-0 flex flex-col gap-1">
+			<!-- Parameters Section -->
+			<div class="border bg-blue-100 border-blue-400 mt-1 p-2 rounded-lg">
+				<div class="flex items-center gap-1">
+					@tmpl.LabelField(domain.LabelFieldConfig{
+						ID:         "oddatuma",
+						LabelText:  translator.Label("Od datuma"),
+						ClassLabel: common.ClassLabel + " w-32",
+					})
+					@tmpl.TextInputField(domain.InputFieldConfig{
+						ID:         "oddatuma",
+						Name:       "oddatuma",
+						FieldType:  "date",
+						Value:      time.Date(gnGod, 1, 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
+						ClassInput: common.ClassInputTextEnabled + " w-32 mr-2",
+						TabIndex:   "1",
+					})
+					@tmpl.LabelField(domain.LabelFieldConfig{
+						ID:         "dodatuma",
+						LabelText:  translator.Label("Do datuma"),
+						ClassLabel: common.ClassLabel + " w-28",
+					})
+					@tmpl.TextInputField(domain.InputFieldConfig{
+						ID:         "dodatuma",
+						Name:       "dodatuma",
+						FieldType:  "date",
+						Value:      time.Date(gnGod, 12, 31, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
+						ClassInput: common.ClassInputTextEnabled + " w-32",
+						TabIndex:   "2",
+					})
+					@tmpl.Button(btnObrada)
+				</div>
+			</div>
+			<!-- Master Table -->
+			<div class="border bg-blue-100 border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
+				@tmpl.Search_Part(tbl, searchInput)
+				<!-- Table -->
+				<div id="popdv-prijava-table" class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+					@tmpl.Table(tbl, translator)
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- Dialog display container-->
+	<div id="dialog-content"></div>
+	@tmpl.ShowMessageScript()
+}
+
+// Tab 3 - Stampa evidencija
+templ PopdvStampa(tabs domain.TabData, tbl domain.TableData, btnPrint domain.Button, searchInput domain.InputControl, gnGod int, translator *i18n.Service) {
+	<!-- Container with full height -->
+	<div class="flex flex-col h-full">
+		<!-- Tab Navigation -->
+		<div class="border-b border-blue-600">
+			@tmpl.TabNav(translator.Title("Prijava PDV od nabavke dobara i usluga"), tabs, "#tab-content", "popdv-panel", translator)
+		</div>
+		<!-- Tab 3 Content -->
+		<div id="tab3" class="flex-1 min-h-0 flex flex-col gap-1 pt-1">
+			<!-- Master Table -->
+			<div class="border bg-blue-100 border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
+				@tmpl.Search_Part(tbl, searchInput)
+				<!-- Table -->
+				<div id="popdv-stampa-table" class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+					@tmpl.Table(tbl, translator)
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- Dialog display container-->
+	<div id="dialog-content"></div>
+	@tmpl.ShowMessageScript()
+}
+
+// Dialog for POPDV entry - Polja POPDV
+templ DialogPopdvPolja(model domain.Popdv, dlg domain.Dialog, btnSave, btnCancel, btnClose domain.Button, translator *i18n.Service, csrfToken string) {
+	<!-- Dialog Container -->
+	<div id={ dlg.Id } class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+		<div class="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+			<!-- Header -->
+			<div class="bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg">
+				<h2 class="text-lg font-semibold ml-4">{ translator.Title("Unos/izmene podataka - Polja POPDV") }</h2>
+				@tmpl.CloseButton(btnClose)
+			</div>
+			<!-- Form Content -->
+			<form class="p-2 space-y-3">
+				<!-- Section 1: OSNOVNI PODACI -->
+				<input type="hidden" name="_csrf" value={ csrfToken }/>
+				<div class="pb-1">
+					<div class="font-bold text-xs text-gray-900 border-b-2 border-gray-400 pb-2">{ translator.Text("Osnovni podaci") }</div>
+					<div class="space-y-1 pt-1">
+						<div class="flex items-center gap-2">
+							@tmpl.LabelField(domain.LabelFieldConfig{
+								ID:         "tip",
+								LabelText:  translator.Label("Tip podatka"),
+								ClassLabel: "w-32",
+							})
+							@tmpl.TextInputField(domain.InputFieldConfig{
+								ID:         "tip",
+								Name:       "tip",
+								FieldType:  "text",
+								Value:      fmt.Sprintf("%d", model.Tip),
+								ClassInput: common.ClassInputTextEnabled + " min-w-[200px]",
+								TabIndex:   "1",
+							})
+						</div>
+						<div class="flex items-center gap-2">
+							@tmpl.LabelField(domain.LabelFieldConfig{
+								ID:         "deo",
+								LabelText:  translator.Label("Deo"),
+								ClassLabel: "w-32",
+							})
+							@tmpl.TextInputField(domain.InputFieldConfig{
+								ID:         "deo",
+								Name:       "deo",
+								FieldType:  "number",
+								Value:      fmt.Sprintf("%d", model.Deo),
+								ClassInput: common.ClassInputTextEnabled + " min-w-[100px]",
+								TabIndex:   "2",
+							})
+						</div>
+						<div class="flex items-center gap-2">
+							@tmpl.LabelField(domain.LabelFieldConfig{
+								ID:         "polje",
+								LabelText:  translator.Label("Polje"),
+								ClassLabel: "w-32",
+							})
+							@tmpl.TextInputField(domain.InputFieldConfig{
+								ID:         "polje",
+								Name:       "polje",
+								FieldType:  "text",
+								Value:      model.Polje,
+								ClassInput: common.ClassInputTextEnabled + " min-w-[200px]",
+								TabIndex:   "3",
+							})
+						</div>
+						<div class="flex items-center gap-2">
+							@tmpl.LabelField(domain.LabelFieldConfig{
+								ID:         "opis",
+								LabelText:  translator.Label("Opis"),
+								ClassLabel: "w-32",
+							})
+							@tmpl.TextInputField(domain.InputFieldConfig{
+								ID:         "opis",
+								Name:       "opis",
+								FieldType:  "text",
+								Value:      model.Opis,
+								ClassInput: common.ClassInputTextEnabled + " min-w-[400px]",
+								TabIndex:   "4",
+							})
+						</div>
+					</div>
+				</div>
+				<!-- Section 2: IZNOSI -->
+				<div class="pb-1">
+					<div class="font-bold text-xs text-gray-900 border-b-2 border-gray-400 pb-2">{ translator.Text("Iznosi") }</div>
+					<div class="space-y-1 pt-1">
+						<div class="grid grid-cols-2 gap-4">
+							<div class="flex items-center gap-2">
+								@tmpl.LabelField(domain.LabelFieldConfig{
+									ID:         "osn1",
+									LabelText:  translator.Label("Osn. 1"),
+									ClassLabel: "w-32",
+								})
+								@tmpl.TextInputField(domain.InputFieldConfig{
+									ID:         "osn1",
+									Name:       "osn1",
+									FieldType:  "number",
+									Value:      fmt.Sprintf("%.2f", model.Osn1),
+									ClassInput: common.ClassInputTextEnabled + " min-w-[150px]",
+									TabIndex:   "5",
+								})
+							</div>
+							<div class="flex items-center gap-2">
+								@tmpl.LabelField(domain.LabelFieldConfig{
+									ID:         "pdv1",
+									LabelText:  translator.Label("PDV 1"),
+									ClassLabel: "w-32",
+								})
+								@tmpl.TextInputField(domain.InputFieldConfig{
+									ID:         "pdv1",
+									Name:       "pdv1",
+									FieldType:  "number",
+									Value:      fmt.Sprintf("%.2f", model.Pdv1),
+									ClassInput: common.ClassInputTextEnabled + " min-w-[150px]",
+									TabIndex:   "6",
+								})
+							</div>
+							<div class="flex items-center gap-2">
+								@tmpl.LabelField(domain.LabelFieldConfig{
+									ID:         "osn2",
+									LabelText:  translator.Label("Osn. 2"),
+									ClassLabel: "w-32",
+								})
+								@tmpl.TextInputField(domain.InputFieldConfig{
+									ID:         "osn2",
+									Name:       "osn2",
+									FieldType:  "number",
+									Value:      fmt.Sprintf("%.2f", model.Osn2),
+									ClassInput: common.ClassInputTextEnabled + " min-w-[150px]",
+									TabIndex:   "7",
+								})
+							</div>
+							<div class="flex items-center gap-2">
+								@tmpl.LabelField(domain.LabelFieldConfig{
+									ID:         "pdv2",
+									LabelText:  translator.Label("PDV 2"),
+									ClassLabel: "w-32",
+								})
+								@tmpl.TextInputField(domain.InputFieldConfig{
+									ID:         "pdv2",
+									Name:       "pdv2",
+									FieldType:  "number",
+									Value:      fmt.Sprintf("%.2f", model.Pdv2),
+									ClassInput: common.ClassInputTextEnabled + " min-w-[150px]",
+									TabIndex:   "8",
+								})
+							</div>
+						</div>
+						<div class="grid grid-cols-2 gap-4">
+							<div class="flex items-center gap-2">
+								@tmpl.LabelField(domain.LabelFieldConfig{
+									ID:         "poljvred",
+									LabelText:  translator.Label("Poljvred"),
+									ClassLabel: "w-32",
+								})
+								@tmpl.TextInputField(domain.InputFieldConfig{
+									ID:         "poljvred",
+									Name:       "poljvred",
+									FieldType:  "number",
+									Value:      fmt.Sprintf("%.2f", model.Poljvred),
+									ClassInput: common.ClassInputTextEnabled + " min-w-[150px]",
+									TabIndex:   "9",
+								})
+							</div>
+							<div class="flex items-center gap-2">
+								@tmpl.LabelField(domain.LabelFieldConfig{
+									ID:         "poljpdv",
+									LabelText:  translator.Label("Poljpdv"),
+									ClassLabel: "w-32",
+								})
+								@tmpl.TextInputField(domain.InputFieldConfig{
+									ID:         "poljpdv",
+									Name:       "poljpdv",
+									FieldType:  "number",
+									Value:      fmt.Sprintf("%.2f", model.Poljpdv),
+									ClassInput: common.ClassInputTextEnabled + " min-w-[150px]",
+									TabIndex:   "10",
+								})
+							</div>
+						</div>
+					</div>
+				</div>
+				<!-- Section 3: AKTIVNOST -->
+				<div class="pb-1">
+					<div class="font-bold text-xs text-gray-900 border-b-2 border-gray-400 pb-2">{ translator.Text("Aktivnost") }</div>
+					<div class="space-y-1 pt-1">
+						<div class="flex items-center gap-8">
+							@tmpl.CheckboxField(domain.CheckboxFieldConfig{
+								ID:            "aktosn1",
+								Name:          "aktosn1",
+								IsChecked:     model.Aktosn1,
+								ClassCheckbox: common.ClassCheckbox,
+								TabIndex:      "11",
+							}, translator)
+							@tmpl.CheckboxField(domain.CheckboxFieldConfig{
+								ID:            "aktpdv1",
+								Name:          "aktpdv1",
+								IsChecked:     model.Aktpdv1,
+								ClassCheckbox: common.ClassCheckbox,
+								TabIndex:      "12",
+							}, translator)
+							@tmpl.CheckboxField(domain.CheckboxFieldConfig{
+								ID:            "aktosn2",
+								Name:          "aktosn2",
+								IsChecked:     model.Aktosn2,
+								ClassCheckbox: common.ClassCheckbox,
+								TabIndex:      "13",
+							}, translator)
+							@tmpl.CheckboxField(domain.CheckboxFieldConfig{
+								ID:            "aktpdv2",
+								Name:          "aktpdv2",
+								IsChecked:     model.Aktpdv2,
+								ClassCheckbox: common.ClassCheckbox,
+								TabIndex:      "14",
+							}, translator)
+						</div>
+					</div>
+				</div>
+				<!-- Section 4: DATUMI -->
+				<div class="pb-1">
+					<div class="font-bold text-xs text-gray-900 border-b-2 border-gray-400 pb-2">{ translator.Text("Datumi") }</div>
+					<div class="space-y-1 pt-1">
+						<div class="flex items-center gap-2">
+							@tmpl.LabelField(domain.LabelFieldConfig{
+								ID:         "oddat",
+								LabelText:  translator.Label("Od datuma"),
+								ClassLabel: "w-32",
+							})
+							@tmpl.TextInputField(domain.InputFieldConfig{
+								ID:         "oddat",
+								Name:       "oddat",
+								FieldType:  "date",
+								Value:      model.Oddat.Format(common.HtmlLayout),
+								ClassInput: common.ClassInputTextEnabled + " w-32",
+								TabIndex:   "15",
+							})
+							@tmpl.LabelField(domain.LabelFieldConfig{
+								ID:         "dodat",
+								LabelText:  translator.Label("Do datuma"),
+								ClassLabel: "w-32",
+							})
+							@tmpl.TextInputField(domain.InputFieldConfig{
+								ID:         "dodat",
+								Name:       "dodat",
+								FieldType:  "date",
+								Value:      model.Dodat.Format(common.HtmlLayout),
+								ClassInput: common.ClassInputTextEnabled + " w-32",
+								TabIndex:   "16",
+							})
+						</div>
+					</div>
+				</div>
+				<!-- Footer Buttons -->
+				<div class="flex justify-end gap-2 pt-4 border-t">
+					@tmpl.Button(btnSave)
+					@tmpl.Button(btnCancel)
+				</div>
+			</form>
+		</div>
+	</div>
+}

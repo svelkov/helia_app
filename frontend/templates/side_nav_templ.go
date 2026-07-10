@@ -45,7 +45,7 @@ func Side_nav(submenu []domain.SubMenuItem) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var2 string
-			templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%s", item.URL))
+			templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%s", item.Url))
 			if templ_7745c5c3_Err != nil {
 				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/side_nav.templ`, Line: 17, Col: 42}
 			}
@@ -66,9 +66,9 @@ func Side_nav(submenu []domain.SubMenuItem) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var3 string
-			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(item.Name)
+			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(item.SubMenuName)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/side_nav.templ`, Line: 32, Col: 38}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/side_nav.templ`, Line: 32, Col: 45}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {

@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"context"
 	"fmt"
 	"helia/config"
 	"helia/i18n"
@@ -38,7 +39,7 @@ func DeleteHelper[T any](
 }
 
 // ConfirmDeleteHelper renders a confirmation dialog for resource deletion.
-func ConfirmDeleteHelper(c *gin.Context, tableFields []domain.Fields) {
+func ConfirmDeleteHelper(c *gin.Context, tableFields []domain.Fields, hxTarget string) {
 	rowID := c.Query("id")
 	url := c.Query("url")
 
@@ -58,7 +59,7 @@ func ConfirmDeleteHelper(c *gin.Context, tableFields []domain.Fields) {
 		HxActionURL:   url,
 		HxRequestType: "DELETE",
 		IdDialog:      "dialog-delete",
-		HxTarget:      "#info-message",
+		HxTarget:      hxTarget,
 		HxSwap:        "innerHTML",
 	}
 	btnCancel := domain.Button{
@@ -79,7 +80,7 @@ func ConfirmDeleteHelper(c *gin.Context, tableFields []domain.Fields) {
 }
 
 // ConfirmAddHelper renders a dialog for adding a new resource.
-func ConfirmAddHelper(c *gin.Context, url string, tableFields []domain.Fields) {
+func ConfirmAddHelper(c *gin.Context, url string, tableFields []domain.Fields, hxTarget string) {
 	for i := range tableFields {
 		tableFields[i].Value = ""
 	}
@@ -93,7 +94,7 @@ func ConfirmAddHelper(c *gin.Context, url string, tableFields []domain.Fields) {
 		HxActionURL:   url,
 		HxRequestType: "POST",
 		IdDialog:      "dialog-save",
-		HxTarget:      "#info-message",
+		HxTarget:      hxTarget,
 		HxSwap:        "innerHTML",
 	}
 	btnCancel := domain.Button{
@@ -240,6 +241,8 @@ func GetAllEntityHelper[T any](
 	hasUpdateDelete ...bool,
 ) *domain.TableData {
 	searchText := c.DefaultQuery("query", "")
+	sortBy := c.DefaultQuery("sortBy", "")
+	sortOrder := c.DefaultQuery("sortOrder", "")
 	ctx := c.Request.Context()
 	totRecords, err := service.GetTotalRecords(ctx, tableFields, searchText)
 	if err != nil {
@@ -248,7 +251,7 @@ func GetAllEntityHelper[T any](
 	}
 
 	currentPage, pageSize, totalPages := common.GetPaginationData(c, totRecords, cfg)
-	allEntities, err := service.GetAll(ctx, pageSize, (currentPage-1)*pageSize, tableFields, idField, searchText)
+	allEntities, err := service.GetAll(ctx, pageSize, (currentPage-1)*pageSize, tableFields, idField, searchText, sortBy, sortOrder)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData)
 		return nil
@@ -260,6 +263,7 @@ func GetAllEntityHelper[T any](
 		pageSize, currentPage, totalPages, totRecords,
 		cfg,
 	)
+	table.BtnPrint.DataFields = "sortBy,sortOrder"
 	table.BtnExportPDF.IsVisible = true
 	table.BtnExportExcel.IsVisible = true
 	common.SetTableRows(&table, *allEntities, tableFields, idField, entityURLPrefix, service.GetFieldCache())
@@ -273,10 +277,11 @@ func GetAllPrintEntityHelper[T any](
 	tableFields []domain.Fields,
 	entityContentTitle, entityTableID, entityURLPrefix, entityURLGetall, idField string,
 	cfg config.Config,
-	) *domain.TableData {
-	
+) *domain.TableData {
+	sortBy := c.DefaultQuery("sortBy", "")
+	sortOrder := c.DefaultQuery("sortOrder", "")
 	ctx := c.Request.Context()
-	allEntities, err := service.GetAll(ctx, 0, 0, tableFields, idField, "")
+	allEntities, err := service.GetAll(ctx, 0, 0, tableFields, idField, "", sortBy, sortOrder)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData)
 		return nil
@@ -302,6 +307,9 @@ func GetAllPdfEntityHelper[T any](
 	hasUpdateDelete ...bool,
 ) *domain.TableData {
 	searchValue := c.DefaultQuery("query", "")
+	sortBy := c.DefaultQuery("sortBy", "")
+	sortOrder := c.DefaultQuery("sortOrder", "")
+
 	ctx := c.Request.Context()
 	totRecords, err := service.GetTotalRecords(ctx, tableFields, searchValue)
 	if err != nil {
@@ -310,7 +318,7 @@ func GetAllPdfEntityHelper[T any](
 	}
 
 	currentPage, pageSize, totalPages := common.GetPaginationData(c, totRecords, cfg)
-	allEntities, err := service.GetAll(ctx, pageSize, (currentPage-1)*pageSize, tableFields, idField, searchValue)
+	allEntities, err := service.GetAll(ctx, pageSize, (currentPage-1)*pageSize, tableFields, idField, searchValue, sortBy, sortOrder)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData)
 		return nil
@@ -333,6 +341,8 @@ func GetAllExcelEntityHelper[T any](
 	hasUpdateDelete ...bool,
 ) *domain.TableData {
 	searchValue := c.DefaultQuery("query", "")
+	sortBy := c.DefaultQuery("sortBy", "")
+	sortOrder := c.DefaultQuery("sortOrder", "")
 	ctx := c.Request.Context()
 	totRecords, err := service.GetTotalRecords(ctx, tableFields, searchValue)
 	if err != nil {
@@ -341,7 +351,7 @@ func GetAllExcelEntityHelper[T any](
 	}
 
 	currentPage, pageSize, totalPages := common.GetPaginationData(c, totRecords, cfg)
-	allEntities, err := service.GetAll(ctx, pageSize, (currentPage-1)*pageSize, tableFields, idField, searchValue)
+	allEntities, err := service.GetAll(ctx, pageSize, (currentPage-1)*pageSize, tableFields, idField, searchValue, sortBy, sortOrder)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData)
 		return nil
@@ -376,6 +386,38 @@ func GetEntityHelper[T any](
 		return
 	}
 	c.JSON(http.StatusOK, entity)
+}
+
+// FvrRepository is the minimal interface needed to fetch FVR (company) data.
+type FvrRepository interface {
+	GetHasGodHasKar() (bool, bool)
+	GetAllCustom(ctx context.Context, queryText, whereText string, args []interface{}, limitOffset, sortBy string) (*[]domain.Fvr, error)
+}
+
+// GetFvrData retrieves company (FVR) data filtered by the current user session (god, kar, firma).
+func GetFvrData(ctx context.Context, repo FvrRepository) (domain.Fvr, error) {
+	session := domain.GetSessionFromStdContext(ctx)
+	if session == nil {
+		return domain.Fvr{}, fmt.Errorf("user session not found")
+	}
+	qb := common.NewQueryBuilder(`SELECT naziv, adresa, pobro, mesto, pib, matbr, sifdel FROM fvr`, true)
+	hasGod, hasKar := repo.GetHasGodHasKar()
+	if hasGod {
+		qb.AddEqual("god", session.SelectedGod)
+	}
+	if hasKar {
+		qb.AddEqual("kar", session.SelectedKar)
+	}
+	qb.AddEqual("fvr.naziv", session.Firma)
+	sqlQuery, args := qb.Build()
+	entities, err := repo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	if err != nil {
+		return domain.Fvr{}, err
+	}
+	if len(*entities) > 0 {
+		return (*entities)[0], nil
+	}
+	return domain.Fvr{}, nil
 }
 
 func SearchButtonDialog(c *gin.Context) {
@@ -446,6 +488,7 @@ func PaginateTableData(tableData *domain.TableData, rowsPerPage int) []*domain.T
 			DetailHxRequestType: tableData.DetailHxRequestType,
 			DetailHxTrigger:     tableData.DetailHxTrigger,
 			DetailHxSwap:        tableData.DetailHxSwap,
+			DetailHxHeaders:     tableData.DetailHxHeaders,
 			ExportFilename:      tableData.ExportFilename,
 			HasExportExcel:      tableData.HasExportExcel,
 			HasExportPdf:        tableData.HasExportPdf,

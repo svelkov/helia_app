@@ -5,6 +5,13 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+// TrustedJS holds a JavaScript expression that is emitted verbatim into an
+// HTML event-handler attribute (e.g. hx-on::after-request).
+// SECURITY: assign only from compile-time string constants in server-side Go code.
+// NEVER assign from user-supplied input (query params, form fields, headers, etc.)
+// as it would result in a reflected XSS vulnerability.
+type TrustedJS = string
+
 // Config holds handler configuration
 type HandlerConfig struct {
 	ContentTitle string
@@ -75,17 +82,21 @@ type Button struct {
 	HxActionURL      string
 	HxTarget         string
 	HxSwap           string
-	HxOn             string
+	HxOnClick        string
+	HxOnClickArg     string // Optional argument for HxOnClick function
 	HxInclude        string
 	HxVals           string
 	HxRequestType    string
-	HxOnAfterRequest string
+	HxOnAfterRequest TrustedJS
 	IdDialog         string
 	ActionMethod     string
 	Icon             string
 	IsVisible        bool
+	IsDisabled       bool
 	BtnClass         string
+	DataFields       string // Parameters for print comma separated, e.g. `param1,param2...
 	HxHeaders        string // JSON string for custom headers, e.g. `{"X-Custom-Header": "value"}`
+	OpenDialog       bool   // Whether this button opens a dialog
 }
 type Fields struct {
 	Name            string
@@ -130,6 +141,7 @@ type UserClaims struct {
 	Language    string `json:"language"`     // UI language
 	TokenType   string `json:"token_type"`   // "access" or "refresh"
 	CSRFHash    string `json:"csrf_hash"`    // SHA256 hash of CSRF token (access tokens only)
+	Mesto       string `json:"mesto"`        // User's city (for report headers)
 	jwt.RegisteredClaims
 }
 
@@ -195,7 +207,7 @@ type InputFieldConfig struct {
 	MaxLength        string
 	Pattern          string
 	TabIndex         string
-	HxOnAfterRequest string
+	HxOnAfterRequest TrustedJS
 	OnInput          string
 	OnFocus          string
 	DecimalPlaces    int
@@ -224,7 +236,7 @@ type ComboFieldConfig struct {
 	HxChangeTarget   string
 	HxVals           string
 	HxInclude        string
-	HxOnAfterRequest string
+	HxOnAfterRequest TrustedJS
 	HxSwap           string
 	HxParams         string
 	HxGet            string
@@ -285,9 +297,18 @@ type SearchButtonConfig struct {
 type ReportParameters struct {
 	ReportName     string
 	CompanyName    string
+	PIB            string
+	MatBroj        string
+	SifDel         string
+	Adress         string
+	Postcode       string
+	City           string
+	TekRac         string
+	Telefon        string
 	CompanyLogo    string
 	UserName       string
-	ParameterItems []ParameterItem
+	ParameterItems map[string]ParameterItem
+	Orientation    string
 }
 
 type Komintent struct {

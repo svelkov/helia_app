@@ -5,8 +5,10 @@ import (
 	"helia/config"
 	"log"
 	"net/http"
+	"time"
 
 	tmpl_fin "helia/frontend/templates/finansijsko"
+	tmpl_rep_fin "helia/frontend/templates/reports/finansijsko"
 	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
@@ -31,13 +33,19 @@ const (
 	saldaURLPrefix                    string = "/api/salda/"
 	saldaURLSaldaGrupeKonta           string = "/api/salda/grupekonta"
 	saldaURLSaldaPartneri             string = "/api/salda/partneri"
+	saldaURLpartneriIzborStampe       string = "/api/salda/partneri/izborparametara"
 	saldaURLPartneriPrelomljeno       string = "/api/salda/partneriprelomljeno"
+	saldaURLPartneriPrelomljenoStampa string = "/api/salda/partneriprelomljeno/stampa"
+	saldaURLPartneraPoKontimaStampa   string = "/api/salda/partneri/pokontima/stampa"
 	saldaURLKomercijalisti            string = "/api/salda/komercijalisti"
 	saldaURLrealizacijakomercijalisti string = "/api/salda/realizacijakomercijalisti"
 	saldaURLKlase5i6Analitika         string = "/api/salda/klase56analitika"
+	saldaURLKlase5i6AnalitikaStampa   string = "/api/salda/klase56analitika/stampa"
 	saldaURLKlase5i6MT                string = "/api/salda/klase56mt"
+	saldaURLKlase5i6MTStampa          string = "/api/salda/klase56mt/stampa"
 	saldaURLtotals                    string = "/api/salda/totalvalues"
 	saldaURLKlase5i6Totals            string = "/api/salda/klase56totalvalues"
+	saldaURLPojedinacnihKontaStampa   string = "/api/salda/pojedinacnihkonta/stampa"
 )
 
 type SaldaHandler struct {
@@ -62,10 +70,7 @@ const (
 			"cbx_klasa": document.getElementById("cbx_klasa")?.value,
 			"cbx_odmeseca": document.getElementById("cbx_odmeseca")?.value,
 			"cbx_domeseca": document.getElementById("cbx_domeseca")?.value,
-			"chk_saldo_razl_nula": document.querySelector('input[name="chk_saldo_razl_nula"]:checked')?.value,
-			"chk_saldo_vece_nula": document.querySelector('input[name="chk_saldo_vece_nula"]:checked')?.value,
-			"chk_saldo_manje_nula": document.querySelector('input[name="chk_saldo_manje_nula"]:checked')?.value,
-			"chk_saldo_nula": document.querySelector('input[name="chk_saldo_nula"]:checked')?.value,
+			"saldo_filter": document.querySelector('input[name="saldo_filter"]:checked')?.value,
 			"odsalda": document.getElementById("odsalda")?.value,
 			"dosalda": document.getElementById("dosalda")?.value,
         }`
@@ -108,7 +113,15 @@ func NewSaldaHandler(service finservice.SaldaService, cfg config.Config) *SaldaH
 func (h *SaldaHandler) SaldaMain(c *gin.Context) {
 	// Create configuration
 	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/salda/pojedinacnihkonta", "#saldapojedinacnihkonta-table", "innerHTML", "GET", "#konto", hxValsSaldaPojedinacnihKonta, true, common.ClassSaveButton, "handleDialogResponse")
-	btnPrint := common.SetButton("stampa", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
+	btnPrint := domain.Button{
+		Id:            "btn-print-salda",
+		IsVisible:     true,
+		LabelText:     "Štampa",
+		BtnClass:      common.ClassPrintButton,
+		HxActionURL:   saldaURLPojedinacnihKontaStampa,
+		DataFields:    "konto,sifra,tipkonta",
+		HxRequestType: "GET",
+	}
 
 	tbl := common.SetTableBasicData(saldaContentTitle, saldaTableID, h.service.GetPojedKontaTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 	h.service.SetDefaultTableData(&tbl)
@@ -128,7 +141,15 @@ func (h *SaldaHandler) SaldaPojedinacnihKonta(c *gin.Context) {
 	total := domain.SaldaDto{}
 	requestSource := c.Request.Header.Get("X-Request-Source")
 	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", saldaURLPojedinacnihKonta, "#saldapojedinacnihkonta-table", "innerHTML", "GET", "", hxValsSaldaPojedinacnihKonta, true, common.ClassSaveButton, "handleDialogResponse")
-	btnPrint := common.SetButton("stampa", "Štampa", "fin_print", saldaURLPojedinacnihKonta+"/print", "#saldapojedinacnihkonta-table", "innerHTML", "GET", "", hxValsSaldaPojedinacnihKonta, true, common.ClassPrintButton, "")
+	btnPrint := domain.Button{
+		Id:            "btn-print-salda",
+		IsVisible:     true,
+		LabelText:     "Štampa",
+		BtnClass:      common.ClassPrintButton,
+		HxActionURL:   saldaURLPojedinacnihKontaStampa,
+		DataFields:    "konto,sifra,tipkonta",
+		HxRequestType: "GET",
+	}
 	tbl := common.SetTableBasicData(saldaContentTitle, saldaTableID, h.service.GetPojedKontaTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tbl, saldaContentTitle, saldaURLPojedinacnihKonta, false, false, false)
 	h.service.SetDefaultTableData(&tbl)
@@ -187,7 +208,7 @@ func (h *SaldaHandler) SaldaGrupeKonta(c *gin.Context) {
 	btnPrint := common.SetButton("stampa", "Stampaj", "fin_print", saldaURLSaldaGrupeKonta+"/print", "#saldagrupekonta-table", "innerHTML", "GET", "", hxValsSaldaGrupeKonta, true, common.ClassPrintButton, "")
 	searchInput := common.CreateSearchInput("search-input", translator, saldaURLSaldaGrupeKonta, fmt.Sprintf("#%s", saldaGrupeKontaTableID), hxValsSaldaGrupeKonta)
 	common.SetTableConfig(&tbl, "", saldaURLSaldaGrupeKonta, false, false, false)
-
+	tbl.Pagination.HxVals = hxValsSaldaGrupeKonta
 	if requestSource == "menu" || requestSource == "tab" {
 		setActiveSaldaTab(&h.tabData, "saldagrupe")
 		err := tmpl_fin.SaldaGrupeKonta(h.tabData, tbl, btnObrada, btnPrint, common.MonthComboItems, searchInput, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
@@ -197,27 +218,30 @@ func (h *SaldaHandler) SaldaGrupeKonta(c *gin.Context) {
 		}
 	}
 	if requestSource == "btnobrada" || requestSource == "btnpage" || requestSource == "searchinput" {
-		fieldParameters := []string{"odkonta", "dokonta", "odsifre", "dosifre", "chk_salda_valute",
-			"cbxtipizvestaja", "cbxklasa", "cbxodmeseca", "cbxdomeseca", "chk_saldo_razl_nula",
-			"chk_saldo_vece_nula", "chk_saldo_manje_nula", "chck_saldo_nula", "odsalda", "dosalda"}
+		var fieldParameters []string
+		if c.Query("cbx_tipizvestaja") == "analitika" {
+			fieldParameters = []string{"odkonta", "dokonta", "odsifre", "dosifre", "chk_salda_valute",
+				"cbx_tipizvestaja", "cbx_klasa", "cbx_odmeseca", "cbx_domeseca", "saldo_filter", "odsalda", "dosalda"}
+		}
+		if c.Query("cbx_tipizvestaja") == "subsintetika" || c.Query("cbx_tipizvestaja") == "sintetika" {
+			fieldParameters = []string{"odkonta", "dokonta", "chk_salda_valute",
+				"cbx_tipizvestaja", "cbx_klasa", "cbx_odmeseca", "cbx_domeseca", "saldo_filter", "odsalda", "dosalda"}
+		}
 		// Extract parameters from query
 		ctx := c.Request.Context()
 		params := domain.SaldaParam{
-			OdKonta:           c.Query("odkonta"),
-			DoKonta:           c.Query("dokonta"),
-			OdSifre:           c.Query("odsifre"),
-			DoSifre:           c.Query("dosifre"),
-			ChkSaldaValute:    c.Query("chk_salda_valute"),
-			CbxTipIzvestaja:   c.Query("cbxtipizvestaja"),
-			CbxKlasa:          c.Query("cbxklasa"),
-			CbxOdMeseca:       c.Query("cbxodmeseca"),
-			CbxDoMeseca:       c.Query("cbxdomeseca"),
-			ChkSaldoRazlNula:  c.Query("chk_saldo_razl_nula"),
-			ChkSaldoVeceNula:  c.Query("chk_saldo_vece_nula"),
-			ChkSaldoManjeNula: c.Query("chk_saldo_manje_nula"),
-			ChkSaldoNula:      c.Query("chck_saldo_nula"),
-			OdSalda:           c.Query("odsalda"),
-			DoSalda:           c.Query("dosalda"),
+			OdKonta:         c.Query("odkonta"),
+			DoKonta:         c.Query("dokonta"),
+			OdSifre:         c.Query("odsifre"),
+			DoSifre:         c.Query("dosifre"),
+			ChkSaldaValute:  c.Query("chk_salda_valute"),
+			CbxTipIzvestaja: c.Query("cbx_tipizvestaja"),
+			CbxKlasa:        c.Query("cbx_klasa"),
+			CbxOdMeseca:     c.Query("cbx_odmeseca"),
+			CbxDoMeseca:     c.Query("cbx_domeseca"),
+			SaldoFilter:     c.Query("saldo_filter"),
+			OdSalda:         c.Query("odsalda"),
+			DoSalda:         c.Query("dosalda"),
 		}
 
 		fieldsError := h.service.CheckSaldaGrupeParameters(ctx, fieldParameters, params)
@@ -226,12 +250,12 @@ func (h *SaldaHandler) SaldaGrupeKonta(c *gin.Context) {
 			return
 		}
 		page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
-		err := h.service.GetSaldaGrupeKonta(ctx, &tbl, true, page, pageSize, params)
+		err := h.service.GetSaldaGrupeKonta(ctx, &tbl, true, page, pageSize, params, h.cfg.NDuzSint)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
 			return
 		}
-		err = h.service.GetSaldaGrupeKonta(ctx, &tbl, false, page, pageSize, params)
+		err = h.service.GetSaldaGrupeKonta(ctx, &tbl, false, page, pageSize, params, h.cfg.NDuzSint)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -262,7 +286,10 @@ func (h *SaldaHandler) SaldaPartneri(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
 		return
 	}
+	btnPrint := common.SetButton("stampa-btn", "Štampa", "stampa", saldaURLpartneriIzborStampe, "#dialog-salda-partneri-stampa", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
+	btnPrint.OpenDialog = true
 	tblPartneri.BtnAdd.IsVisible = false
+	tblPartneri.BtnPrint = btnPrint
 	tblPartneri.BtnPrint.IsVisible = true
 	tblPartneri.DetailTarget = "#saldapartneri-detalji"
 	tblPartneri.DetailURL = "/api/salda/partneridetails"
@@ -298,7 +325,30 @@ func (h *SaldaHandler) SaldaPartneriDetalji(c *gin.Context) {
 	}
 	tmpl_fin.SaldaPartneriDetalji(tblSalda, tblDetalji, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 }
+func (h *SaldaHandler) SaldaPartneriIzborParametara(c *gin.Context) {
+	ctx := c.Request.Context()
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		common.WriteJSONResponse(c, http.StatusUnauthorized, false, nil, common.ErrMsgUnauthorized)
+		return
+	}
 
+	dialog := domain.Dialog{
+		Id:          "dialog-salda-partneri-stampa-dlg",
+		Title:       "Štampa - izbor parametara",
+		OkText:      "Štampaj",
+		CancelText:  "Odustani",
+		HxActionURL: saldaURLPartneriPrelomljenoStampa,
+		HxTarget:    "#dialog-salda-partneri-stampa",
+		HxSwap:      "innerHTML",
+	}
+	btnPrint := common.SetPrintButton("stampa-btn", "Štampa", "print", saldaURLPartneraPoKontimaStampa, "GET", true, common.ClassPrintButton, "stampaj-detalje,novi-partner-nova-strana,odsifre,dosifre")
+	btnCancel := common.SetButton("btn-cancel", "Odustani", "cancel", "", "#dialog-salda-partneri-stampa", "innerHTML", "GET", "", "", true, common.ClassOdustaniButton, "")
+	btnClose := common.SetButton("btn-close", "", "close", "", "#dialog-salda-partneri-stampa", "innerHTML", "GET", "", "", true, common.ClassDialogCloseButton, "")
+	btnClose.IdDialog = "dialog-salda-partneri-stampa-dlg"
+	btnCancel.IdDialog = "dialog-salda-partneri-stampa-dlg"
+	tmpl_fin.SaldaPartneriStampaDialog(dialog, btnPrint, btnCancel, btnClose, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+}
 func (h *SaldaHandler) SaldaPartneriPrelomljeno(c *gin.Context) {
 	requestSource := c.Request.Header.Get("X-Request-Source")
 	translator := i18n.GetInstance()
@@ -306,7 +356,7 @@ func (h *SaldaHandler) SaldaPartneriPrelomljeno(c *gin.Context) {
 	searchInput := common.CreateSearchInput("search-input", translator, saldaURLPartneriPrelomljeno, fmt.Sprintf("#%s", saldaTablePrelomljenoID), "")
 	common.SetTableConfig(&tbl, "PREGLED SALDA PARTNERA", saldaURLPartneriPrelomljeno, false, false, false)
 	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/salda/partneriprelomljeno", "#saldatable-prelomljeno", "innerHTML", "GET", "", hxValsSaldaPartneriPrelomljeno, true, common.ClassSaveButton, "handleDialogResponse")
-	btnPrint := common.SetButton("stampa", "Stampaj", "fin_print", "/api/salda/partneriprelomljeno/print", "#saldatable-prelomljeno", "innerHTML", "GET", "", hxValsSaldaPartneriPrelomljeno, true, common.ClassPrintButton, "")
+	btnPrint := common.SetPrintButton("stampa-btn", "Štampa", "fin_print", saldaURLPartneriPrelomljenoStampa, "GET", true, common.ClassPrintButton, "sifra_od,sifra_do")
 	setActiveSaldaTab(&h.tabData, "saldapartneriprelomljeno")
 
 	if requestSource == "menu" || requestSource == "tab" {
@@ -335,17 +385,105 @@ func (h *SaldaHandler) SaldaPartneriPrelomljeno(c *gin.Context) {
 	}
 }
 
+// SaldaPartneriPrelomljenoStampa renders a full-page printable Salda Partnera Prelomljeno report.
+func (h *SaldaHandler) SaldaPartneriPrelomljenoStampa(c *gin.Context) {
+	ctx := c.Request.Context()
+	translator := i18n.GetInstance()
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		common.WriteJSONResponse(c, http.StatusUnauthorized, false, nil, common.ErrMsgUnauthorized)
+		return
+	}
+
+	sifrOd := c.Query("sifra_od")
+	sifraDo := c.Query("sifra_do")
+
+	fvrData, err := h.service.GetFvrData(ctx)
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData+" "+err.Error())
+		return
+	}
+
+	repParams := domain.ReportParameters{
+		ReportName:  translator.Title("PREGLED STANJA PARTNERA - PRELOMLJENO"),
+		Orientation: "landscape",
+		CompanyName: fvrData.Naziv,
+		Adress:      fvrData.Adresa,
+		Postcode:    fvrData.Pobro,
+		City:        fvrData.Mesto,
+		ParameterItems: map[string]domain.ParameterItem{
+			"OdPartnera":  {Name: translator.Label("Od partnera"), Value: sifrOd},
+			"DoPartnera":  {Name: translator.Label("Do partnera"), Value: sifraDo},
+			"StanjeNaDan": {Name: translator.Label("Stanje na dan"), Value: time.Now().Format(common.DateLayout)},
+		},
+	}
+
+	tbl := common.SetTableBasicData("", "salda-partneri-prelomljeno-stampa", h.service.GetSaldaPartneriPrelomljenoStampaFields(), "", "", 0, 0, 0, 0, h.cfg)
+	if err := h.service.GetSaldaPartneriPrelomljenoStampa(ctx, &tbl, sifrOd, sifraDo); err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData+" "+err.Error())
+		return
+	}
+
+	c.Header("Content-Type", "text/html; charset=utf-8")
+	tmpl_rep_fin.SaldaPartneriPrelomljenoStampa(repParams, tbl, translator).Render(ctx, c.Writer)
+}
+
+// SaldaPartneraPoKontimaStampa renders a full-page printable Salda Partnera po kontima report.
+func (h *SaldaHandler) SaldaPartneraPoKontimaStampa(c *gin.Context) {
+	ctx := c.Request.Context()
+	translator := i18n.GetInstance()
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		common.WriteJSONResponse(c, http.StatusUnauthorized, false, nil, common.ErrMsgUnauthorized)
+		return
+	}
+
+	sifrOd := c.Query("odsifre")
+	sifraDo := c.Query("dosifre")
+	stampajDetalje := c.Query("stampajdetalje") == "true"
+	noviPartnerNovaSt := c.Query("novipartnernova") == "true"
+
+	fvrData, err := h.service.GetFvrData(ctx)
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData+" "+err.Error())
+		return
+	}
+
+	repParams := domain.ReportParameters{
+		ReportName:  translator.Title("PREGLED STANJA PARTNERA PO KONTIMA"),
+		Orientation: "landscape",
+		CompanyName: fvrData.Naziv,
+		Adress:      fvrData.Adresa,
+		Postcode:    fvrData.Pobro,
+		City:        fvrData.Mesto,
+		ParameterItems: map[string]domain.ParameterItem{
+			"OdPartnera":  {Name: translator.Label("Od Partnera"), Value: sifrOd},
+			"DoPartnera":  {Name: translator.Label("Do Partnera"), Value: sifraDo},
+			"StanjeNaDan": {Name: translator.Label("Stanje na dan"), Value: time.Now().Format(common.DateLayout)},
+		},
+	}
+
+	tbl := common.SetTableBasicData("", "salda-partnera-pokontima-stampa", h.service.GetSaldaPartneraPoKontimaStampaFields(), "", "", 0, 0, 0, 0, h.cfg)
+	if err := h.service.GetSaldaPartneraPoKontimaStampa(ctx, &tbl, sifrOd, sifraDo, stampajDetalje); err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData+" "+err.Error())
+		return
+	}
+
+	c.Header("Content-Type", "text/html; charset=utf-8")
+	tmpl_rep_fin.SaldaPartneraPoKontimaStampa(repParams, tbl, stampajDetalje, noviPartnerNovaSt, translator).Render(ctx, c.Writer)
+}
+
 func (h *SaldaHandler) SaldaKlase5i6Analitika(c *gin.Context) {
 	requestSource := c.Request.Header.Get("X-Request-Source")
 	total := domain.SaldaDto{}
-	userSession := domain.GetSessionFromContext(c)
+	userSession := domain.GetSessionFromStdContext(c.Request.Context())
 	if userSession == nil {
 		common.WriteJSONResponse(c, http.StatusUnauthorized, false, nil, "user session not found")
 		return
 	}
 	gnGod := userSession.SelectedGod
 	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", saldaURLKlase5i6Analitika, fmt.Sprintf("#%s", saldaTableKlase5i6AnalitikaID), "innerHTML", "GET", "", hxValsSaldaKlase5i6Analitika, true, common.ClassSaveButton, "handleDialogResponse")
-	btnPrint := common.SetButton("stampa", "Stampaj", "fin_print", saldaURLKlase5i6Analitika+"/print", fmt.Sprintf("#%s", saldaTableKlase5i6AnalitikaID), "innerHTML", "GET", "", hxValsSaldaKlase5i6Analitika, true, common.ClassPrintButton, "")
+	btnPrint := common.SetPrintButton("stampa-btn", "Štampa", "fin_print", saldaURLKlase5i6AnalitikaStampa, "GET", true, common.ClassPrintButton, "odsifre,dosifre,oddatuma,dodatuma,klasa")
 	searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), saldaURLKlase5i6Analitika, fmt.Sprintf("#%s", saldaTableKlase5i6AnalitikaID), "")
 
 	tbl := common.SetTableBasicData(saldaContentTitle, saldaTableKlase5i6AnalitikaID, h.service.GetSaldaKlase5i6AnalitikaTableFields(), "", "", 0, 0, 0, 0, h.cfg)
@@ -368,14 +506,21 @@ func (h *SaldaHandler) SaldaKlase5i6Analitika(c *gin.Context) {
 			return
 		}
 		ctx := c.Request.Context()
+		saldaParam := domain.SaldaParam{
+			OdSifre:  c.Query("odsifre"),
+			DoSifre:  c.Query("dosifre"),
+			OdDatuma: c.Query("oddatuma"),
+			DoDatuma: c.Query("dodatuma"),
+			Klasa:    c.Query("klasa"),
+		}
 		searchText := c.Query("query")
 		page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
-		err := h.service.GetSaldaKlase5i6Analitika(ctx, &tbl, true, page, pageSize, searchText)
+		err := h.service.GetSaldaKlase5i6Analitika(ctx, &tbl, true, page, pageSize, saldaParam, searchText)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
 			return
 		}
-		err = h.service.GetSaldaKlase5i6Analitika(ctx, &tbl, false, page, pageSize, searchText)
+		err = h.service.GetSaldaKlase5i6Analitika(ctx, &tbl, false, page, pageSize, saldaParam, searchText)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -387,14 +532,14 @@ func (h *SaldaHandler) SaldaKlase5i6Analitika(c *gin.Context) {
 func (h *SaldaHandler) SaldaKlase5i6MT(c *gin.Context) {
 	requestSource := c.Request.Header.Get("X-Request-Source")
 	total := domain.SaldaDto{}
-	userSession := domain.GetSessionFromContext(c)
+	userSession := domain.GetSessionFromStdContext(c.Request.Context())
 	if userSession == nil {
 		common.WriteJSONResponse(c, http.StatusUnauthorized, false, nil, "user session not found")
 		return
 	}
 	gnGod := userSession.SelectedGod
 	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", saldaURLKlase5i6MT, fmt.Sprintf("#%s", saldaTableKlase5i6MTID), "innerHTML", "GET", "", hxValsSaldaKlase5i6MT, true, common.ClassSaveButton, "handleDialogResponse")
-	btnPrint := common.SetButton("stampa", "Stampaj", "fin_print", saldaURLKlase5i6MT+"/print", fmt.Sprintf("#%s", saldaTableKlase5i6MTID), "innerHTML", "GET", "", hxValsSaldaKlase5i6MT, true, common.ClassPrintButton, "")
+	btnPrint := common.SetPrintButton("stampa-btn", "Štampa", "fin_print", saldaURLKlase5i6MTStampa, "GET", true, common.ClassPrintButton, "odkonta,dokonta,oddatuma,dodatuma,klasa")
 	searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), saldaURLKlase5i6MT, fmt.Sprintf("#%s", saldaTableKlase5i6MTID), "")
 
 	tbl := common.SetTableBasicData(saldaContentTitle, saldaTableKlase5i6MTID, h.service.GetSaldaKlase5i6MTTableFields(), "", "", 0, 0, 0, 0, h.cfg)
@@ -419,12 +564,19 @@ func (h *SaldaHandler) SaldaKlase5i6MT(c *gin.Context) {
 		ctx := c.Request.Context()
 		searchText := c.Query("query")
 		page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
-		err := h.service.SaldaKlase5i6MT(ctx, &tbl, true, page, pageSize, searchText)
+		saldaParam := domain.SaldaParam{
+			OdSifre:  c.Query("odsifre"),
+			DoSifre:  c.Query("dosifre"),
+			OdDatuma: c.Query("oddatuma"),
+			DoDatuma: c.Query("dodatuma"),
+			Klasa:    c.Query("klasa"),
+		}
+		err := h.service.SaldaKlase5i6MT(ctx, &tbl, true, page, pageSize, saldaParam, searchText)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
 			return
 		}
-		err = h.service.SaldaKlase5i6MT(ctx, &tbl, false, page, pageSize, searchText)
+		err = h.service.SaldaKlase5i6MT(ctx, &tbl, false, page, pageSize, saldaParam, searchText)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -436,7 +588,7 @@ func (h *SaldaHandler) SaldaKlase5i6MT(c *gin.Context) {
 func (h *SaldaHandler) SaldaKomercijalisti(c *gin.Context) {
 	requestSource := c.Request.Header.Get("X-Request-Source")
 	translator := i18n.GetInstance()
-	userSession := domain.GetSessionFromContext(c)
+	userSession := domain.GetSessionFromStdContext(c.Request.Context())
 	if userSession == nil {
 		common.WriteJSONResponse(c, http.StatusUnauthorized, false, nil, "user session not found")
 		return
@@ -486,7 +638,7 @@ func (h *SaldaHandler) SaldaKomercijalisti(c *gin.Context) {
 func (h *SaldaHandler) RealizacijaKomercijalisti(c *gin.Context) {
 	requestSource := c.Request.Header.Get("X-Request-Source")
 	translator := i18n.GetInstance()
-	userSession := domain.GetSessionFromContext(c)
+	userSession := domain.GetSessionFromStdContext(c.Request.Context())
 	if userSession == nil {
 		common.WriteJSONResponse(c, http.StatusUnauthorized, false, nil, "user session not found")
 		return
@@ -535,14 +687,21 @@ func (h *SaldaHandler) RealizacijaKomercijalisti(c *gin.Context) {
 }
 
 func (h *SaldaHandler) Klase5i6TotalValues(c *gin.Context) {
-	totalValues, err := h.service.GetSaldaKlase5i6TotalValues(c)
+	totalValues, err := h.service.GetSaldaKlase5i6TotalValues(c.Request.Context())
 	if err != nil {
 		log.Printf("Error getting total values for klase 5 i 6: %v", err)
 	}
 	tmpl_fin.SaldaTotalValues(totalValues, saldaURLKlase5i6Totals, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 }
 func (h *SaldaHandler) TotalValues(c *gin.Context) {
-	totalValues, err := h.service.GetSaldaTotalValues(c)
+	konto := c.Query("konto")
+	sifra := c.Query("sifra")
+	tipKonta := c.Query("tipkonta")
+	if konto == "" || tipKonta == "" {
+		tmpl_fin.SaldaTotalValues(domain.SaldaDto{}, saldaURLtotals, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+		return
+	}
+	totalValues, err := h.service.GetSaldaTotalValues(c.Request.Context(), konto, sifra, tipKonta)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
 		return
@@ -551,18 +710,219 @@ func (h *SaldaHandler) TotalValues(c *gin.Context) {
 	tmpl_fin.SaldaTotalValues(totalValues, saldaURLtotals, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 }
 
+// SaldaPojedinacnihKontaStampa renders a full-page printable Salda pojedinačnih konta report.
+func (h *SaldaHandler) SaldaPojedinacnihKontaStampa(c *gin.Context) {
+	ctx := c.Request.Context()
+	translator := i18n.GetInstance()
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		common.WriteJSONResponse(c, http.StatusUnauthorized, false, nil, common.ErrMsgUnauthorized)
+		return
+	}
+
+	konto := c.Query("konto")
+	sifra := c.Query("sifra")
+	tipkonta := c.Query("tipkonta")
+
+	tipkontaLabel := ""
+	switch tipkonta {
+	case "1":
+		tipkontaLabel = translator.Label("Analitika")
+	case "2":
+		tipkontaLabel = translator.Label("Subsintetika")
+	case "3":
+		tipkontaLabel = translator.Label("Sintetika")
+	}
+
+	// Fetch totals
+	total, err := h.service.GetSaldaTotalValues(ctx, konto, sifra, tipkonta)
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData+" "+err.Error())
+		return
+	}
+
+	// Fetch monthly table data (all records, no pagination)
+	tbl := common.SetTableBasicData(saldaContentTitle, saldaTableID, h.service.GetPojedKontaTableFields(), "", "", 999999, 1, 1, 0, h.cfg)
+	if err := h.service.GetSaldaPojedinacnihKonta(ctx, &tbl, false, 999999, 1, konto, sifra, tipkonta); err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData+" "+err.Error())
+		return
+	}
+
+	fvrData, err := h.service.GetFvrData(ctx)
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
+		return
+	}
+	repParams := domain.ReportParameters{
+		ReportName:     translator.Title("SALDA POJEDINAČNIH KONTA"),
+		Orientation:    "portrait",
+		CompanyName:    fvrData.Naziv,
+		Adress:         fvrData.Adresa,
+		Postcode:       fvrData.Pobro,
+		City:           fvrData.Mesto,
+		ParameterItems: make(map[string]domain.ParameterItem),
+	}
+	if konto != "" {
+		repParams.ParameterItems["Konto"] = domain.ParameterItem{Name: translator.Label("Konto"), Value: konto}
+	}
+	if sifra != "" {
+		repParams.ParameterItems["Sifra"] = domain.ParameterItem{Name: translator.Label("Šifra"), Value: sifra}
+	}
+	if tipkontaLabel != "" {
+		repParams.ParameterItems["TipKonta"] = domain.ParameterItem{Name: translator.Label("Tip konta"), Value: tipkontaLabel}
+	}
+
+	c.Header("Content-Type", "text/html; charset=utf-8")
+	tmpl_rep_fin.SaldaPojedinacnihKontaStampa(tbl, total, repParams, translator).Render(ctx, c.Writer)
+}
+
+func (h *SaldaHandler) SaldaKlase5i6AnalitikaStampa(c *gin.Context) {
+	ctx := c.Request.Context()
+	translator := i18n.GetInstance()
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		common.WriteJSONResponse(c, http.StatusUnauthorized, false, nil, common.ErrMsgUnauthorized)
+		return
+	}
+
+	saldaParam := domain.SaldaParam{
+		OdSifre:  c.Query("odsifre"),
+		DoSifre:  c.Query("dosifre"),
+		OdDatuma: c.Query("oddatuma"),
+		DoDatuma: c.Query("dodatuma"),
+		Klasa:    c.Query("klasa"),
+	}
+	odDatFmt := saldaParam.OdDatuma
+	if t, err := time.Parse("2006-01-02", saldaParam.OdDatuma); err == nil {
+		odDatFmt = t.Format(common.DateLayout)
+	}
+	doDatFmt := saldaParam.DoDatuma
+	if t, err := time.Parse("2006-01-02", saldaParam.DoDatuma); err == nil {
+		doDatFmt = t.Format(common.DateLayout)
+	}
+
+	reportName := translator.Title("PREGLED SALDA KONTA KLASE 5 I 6")
+	switch saldaParam.Klasa {
+	case "5":
+		reportName = translator.Title("PREGLED SALDA KONTA KLASE 5")
+	case "6":
+		reportName = translator.Title("PREGLED SALDA KONTA KLASE 6")
+	}
+
+	fvrData, err := h.service.GetFvrData(ctx)
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData+" "+err.Error())
+		return
+	}
+
+	repParams := domain.ReportParameters{
+		ReportName:  reportName,
+		Orientation: "landscape",
+		CompanyName: fvrData.Naziv,
+		Adress:      fvrData.Adresa,
+		Postcode:    fvrData.Pobro,
+		City:        fvrData.Mesto,
+		ParameterItems: map[string]domain.ParameterItem{
+			"OdSifre":  {Name: translator.Label("Počev od šifre"), Value: saldaParam.OdSifre},
+			"DoSifre":  {Name: translator.Label("Zaključno sa šifrom"), Value: saldaParam.DoSifre},
+			"OdDatuma": {Name: translator.Label("Počev od datuma"), Value: odDatFmt},
+			"DoDatuma": {Name: translator.Label("Zaključno sa datumom"), Value: doDatFmt},
+		},
+	}
+
+	tbl := common.SetTableBasicData("", "salda-klase56-analitika-stampa", h.service.GetSaldaKlase5i6AnalitikaStampaFields(), "", "", 0, 0, 0, 0, h.cfg)
+	if err := h.service.GetSaldaKlase5i6AnalitikaStampa(ctx, &tbl, saldaParam); err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData+" "+err.Error())
+		return
+	}
+
+	c.Header("Content-Type", "text/html; charset=utf-8")
+	tmpl_rep_fin.SaldaKlase56AnalitikaStampa(repParams, tbl, translator).Render(ctx, c.Writer)
+}
+
+func (h *SaldaHandler) SaldaKlase5i6MTStampa(c *gin.Context) {
+	ctx := c.Request.Context()
+	translator := i18n.GetInstance()
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		common.WriteJSONResponse(c, http.StatusUnauthorized, false, nil, common.ErrMsgUnauthorized)
+		return
+	}
+
+	saldaParam := domain.SaldaParam{
+		OdKonta:  c.Query("odkonta"),
+		DoKonta:  c.Query("dokonta"),
+		OdDatuma: c.Query("oddatuma"),
+		DoDatuma: c.Query("dodatuma"),
+		Klasa:    c.Query("klasa"),
+	}
+
+	odDatFmt := saldaParam.OdDatuma
+	if t, err := time.Parse("2006-01-02", saldaParam.OdDatuma); err == nil {
+		odDatFmt = t.Format(common.DateLayout)
+	}
+	doDatFmt := saldaParam.DoDatuma
+	if t, err := time.Parse("2006-01-02", saldaParam.DoDatuma); err == nil {
+		doDatFmt = t.Format(common.DateLayout)
+	}
+
+	reportName := translator.Title("PREGLED SALDA KONTA KLASE 5 I 6")
+	switch saldaParam.Klasa {
+	case "5":
+		reportName = translator.Title("PREGLED SALDA KONTA KLASE 5")
+	case "6":
+		reportName = translator.Title("PREGLED SALDA KONTA KLASE 6")
+	}
+
+	fvrData, err := h.service.GetFvrData(ctx)
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData+" "+err.Error())
+		return
+	}
+
+	repParams := domain.ReportParameters{
+		ReportName:  reportName,
+		Orientation: "landscape",
+		CompanyName: fvrData.Naziv,
+		Adress:      fvrData.Adresa,
+		Postcode:    fvrData.Pobro,
+		City:        fvrData.Mesto,
+		ParameterItems: map[string]domain.ParameterItem{
+			"OdKonta":  {Name: translator.Label("Počev od konta"), Value: saldaParam.OdKonta},
+			"DoKonta":  {Name: translator.Label("Zaključno sa kontom"), Value: saldaParam.DoKonta},
+			"OdDatuma": {Name: translator.Label("Počev od datuma"), Value: odDatFmt},
+			"DoDatuma": {Name: translator.Label("Zaključno sa datumom"), Value: doDatFmt},
+		},
+	}
+
+	tbl := common.SetTableBasicData("", "salda-klase56-mt-stampa", h.service.GetSaldaKlase5i6MTStampaFields(), "", "", 0, 0, 0, 0, h.cfg)
+	if err := h.service.GetSaldaKlase5i6MTStampa(ctx, &tbl, saldaParam); err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData+" "+err.Error())
+		return
+	}
+
+	c.Header("Content-Type", "text/html; charset=utf-8")
+	tmpl_rep_fin.SaldaKlase56MTStampa(repParams, tbl, translator).Render(ctx, c.Writer)
+}
+
 func (h *SaldaHandler) AddRoutes(r *gin.Engine) {
 	r.Use(middleware.Auth()) // Apply auth middleware to all routes in group
 
 	// Define routes for salda
 	r.GET("/api/salda", h.SaldaMain)
 	r.GET("/api/salda/pojedinacnihkonta", h.SaldaPojedinacnihKonta)
+	r.GET("/api/salda/pojedinacnihkonta/stampa", h.SaldaPojedinacnihKontaStampa)
 	r.GET("/api/salda/grupekonta", h.SaldaGrupeKonta)
 	r.GET("/api/salda/partneri", h.SaldaPartneri)
 	r.GET("/api/salda/partneridetails/:id", h.SaldaPartneriDetalji)
+	r.GET("/api/salda/partneri/izborparametara", h.SaldaPartneriIzborParametara)
+	r.GET("/api/salda/partneri/pokontima/stampa", h.SaldaPartneraPoKontimaStampa)
 	r.GET("/api/salda/partneriprelomljeno", h.SaldaPartneriPrelomljeno)
+	r.GET("/api/salda/partneriprelomljeno/stampa", h.SaldaPartneriPrelomljenoStampa)
 	r.GET("/api/salda/klase56analitika", h.SaldaKlase5i6Analitika)
+	r.GET("/api/salda/klase56analitika/stampa", h.SaldaKlase5i6AnalitikaStampa)
 	r.GET("/api/salda/klase56mt", h.SaldaKlase5i6MT)
+	r.GET("/api/salda/klase56mt/stampa", h.SaldaKlase5i6MTStampa)
 	r.GET("/api/salda/komercijalisti", h.SaldaKomercijalisti)
 	r.GET("/api/salda/realizacijakomercijalisti", h.RealizacijaKomercijalisti)
 	r.GET("/api/salda/searchbutton", utils.SearchButtonDialog)

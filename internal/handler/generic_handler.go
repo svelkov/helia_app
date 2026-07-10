@@ -1,11 +1,13 @@
 package handler
 
 import (
+	"context"
 	"helia/config"
 	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
 	"helia/internal/middleware"
+	"helia/internal/repository"
 	"helia/internal/service"
 	"helia/pkg/utils"
 	"net/http"
@@ -19,25 +21,27 @@ import (
 type GenericHandler[T any] struct {
 	service service.Service[T]
 	fields  []domain.Fields
-	config  domain.HandlerConfig
+	hconfig domain.HandlerConfig
 	cfg     config.Config
 	lm      *middleware.LockMiddleware
+	fvrRepo *repository.BaseRepository[domain.Fvr]
 }
 
 // NewGenericHandler creates a new generic handler
-func NewGenericHandler[T any](svc service.Service[T], fields []domain.Fields, config domain.HandlerConfig, cfg config.Config, lm *middleware.LockMiddleware) *GenericHandler[T] {
+func NewGenericHandler[T any](svc service.Service[T], fields []domain.Fields, hconfig domain.HandlerConfig, cfg config.Config, lm *middleware.LockMiddleware, fvrRepo *repository.BaseRepository[domain.Fvr]) *GenericHandler[T] {
 	return &GenericHandler[T]{
 		service: svc,
 		fields:  fields,
-		config:  config,
+		hconfig: hconfig,
 		cfg:     cfg,
 		lm:      lm,
+		fvrRepo: fvrRepo,
 	}
 }
 
 func (h *GenericHandler[T]) Create(c *gin.Context) {
 	var entity T
-	fieldsError, err := utils.CreateHelper(c, &entity, h.service, h.config.IDField, h.fields)
+	fieldsError, err := utils.CreateHelper(c, &entity, h.service, h.hconfig.IDField, h.fields)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldsError, common.ErrMsgSaveData+", greska: "+err.Error())
 		return
@@ -51,22 +55,22 @@ func (h *GenericHandler[T]) Create(c *gin.Context) {
 
 func (h *GenericHandler[T]) Update(c *gin.Context) {
 	var entity T
-	utils.UpdateHelper(c, &entity, h.service, h.fields, h.config.IDField)
+	utils.UpdateHelper(c, &entity, h.service, h.fields, h.hconfig.IDField)
 }
 
-func (h *GenericHandler[T]) Delete(c *gin.Context) { 
-	utils.DeleteHelper(c, h.service, h.config.IDField)
+func (h *GenericHandler[T]) Delete(c *gin.Context) {
+	utils.DeleteHelper(c, h.service, h.hconfig.IDField)
 }
 
 func (h *GenericHandler[T]) Get(c *gin.Context) {
-	utils.GetEntityHelper(c, h.service, h.fields, h.config.IDField)
+	utils.GetEntityHelper(c, h.service, h.fields, h.hconfig.IDField)
 }
 func (h *GenericHandler[T]) GetAll(c *gin.Context) {
 	tbl := utils.GetAllEntityHelper(
 		c, h.service, h.fields,
-		h.config.ContentTitle, h.config.TableID,
-		h.config.APIPrefix, h.config.APIPrefix+"/all",
-		h.config.IDField,
+		h.hconfig.ContentTitle, h.hconfig.TableID,
+		h.hconfig.APIPrefix, h.hconfig.APIPrefix+"/all",
+		h.hconfig.IDField,
 		h.cfg,
 	)
 	utils.RenderContent(c, *tbl)
@@ -79,24 +83,32 @@ func (h *GenericHandler[T]) GetAllPrint(c *gin.Context) {
 	}
 	tbl := utils.GetAllPrintEntityHelper(
 		c, h.service, h.fields,
-		h.config.ContentTitle, h.config.TableID,
-		h.config.APIPrefix, h.config.APIPrefix+"/all",
-		h.config.IDField,
-		h.cfg,
-	)
+		h.hconfig.ContentTitle, h.hconfig.TableID,
+		h.hconfig.APIPrefix, h.hconfig.APIPrefix+"/all",
+		h.hconfig.IDField,
+		h.cfg)
+
+	fvrData := h.getFvrData(c.Request.Context())
 	reportParams := domain.ReportParameters{
-		ReportName:  h.config.ContentTitle,
+		ReportName:  h.hconfig.ContentTitle,
 		CompanyName: userSession.Firma,
+		Adress:      fvrData.Adresa,
+		Postcode:    fvrData.Pobro,
+		City:        fvrData.Mesto,
+		PIB:         fvrData.PIB,
+		MatBroj:     fvrData.Matbr,
+		SifDel:      fvrData.SifDel,
+		Orientation: "portrait",
 	}
-	rep.Report(reportParams, *tbl, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+	rep.Report(reportParams, *tbl, i18n.GetInstance(), nil, nil).Render(c.Request.Context(), c.Writer)
 
 }
 func (h *GenericHandler[T]) GetAllPdf(c *gin.Context) {
 	tbl := utils.GetAllPdfEntityHelper(
 		c, h.service, h.fields,
-		h.config.ContentTitle, h.config.TableID,
-		h.config.APIPrefix, h.config.APIPrefix+"/all",
-		h.config.IDField,
+		h.hconfig.ContentTitle, h.hconfig.TableID,
+		h.hconfig.APIPrefix, h.hconfig.APIPrefix+"/all",
+		h.hconfig.IDField,
 		h.cfg,
 	)
 	utils.RenderContent(c, *tbl)
@@ -104,27 +116,32 @@ func (h *GenericHandler[T]) GetAllPdf(c *gin.Context) {
 func (h *GenericHandler[T]) GetAllExcel(c *gin.Context) {
 	tbl := utils.GetAllExcelEntityHelper(
 		c, h.service, h.fields,
-		h.config.ContentTitle, h.config.TableID,
-		h.config.APIPrefix, h.config.APIPrefix+"/all",
-		h.config.IDField,
+		h.hconfig.ContentTitle, h.hconfig.TableID,
+		h.hconfig.APIPrefix, h.hconfig.APIPrefix+"/all",
+		h.hconfig.IDField,
 		h.cfg,
 	)
 	utils.RenderContent(c, *tbl)
 }
 func (h *GenericHandler[T]) confirmDeleteHandler(c *gin.Context) {
-	utils.ConfirmDeleteHelper(c, h.fields)
+	utils.ConfirmDeleteHelper(c, h.fields, "#info-message")
 }
 
 func (h *GenericHandler[T]) confirmAddHandler(c *gin.Context) {
-	utils.ConfirmAddHelper(c, h.config.APIPrefix, h.fields)
+	utils.ConfirmAddHelper(c, h.hconfig.APIPrefix, h.fields, "#info-message")
 }
 
 func (h *GenericHandler[T]) confirmUpdateHandler(c *gin.Context) {
-	utils.ConfirmUpdateHelper(c, h.service, h.fields, h.config.IDField)
+	utils.ConfirmUpdateHelper(c, h.service, h.fields, h.hconfig.IDField)
+}
+
+func (h *GenericHandler[T]) getFvrData(ctx context.Context) domain.Fvr {
+	fvr, _ := utils.GetFvrData(ctx, h.fvrRepo)
+	return fvr
 }
 
 func (h *GenericHandler[T]) RegisterRoutes(r *gin.Engine) {
-	prefix := h.config.APIPrefix
+	prefix := h.hconfig.APIPrefix
 
 	// Create API group with prefix
 	//api := r.Group(prefix)

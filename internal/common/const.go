@@ -44,12 +44,18 @@ const (
 	IDrpro           = "rproid"
 	IDrppo           = "rppoid"
 	IDrztr           = "rztrid"
+	IDjedmere        = "jm"
+	IDKir            = "idkir"
+	IDkpr            = "idkpr"
+	IDfsepp          = "fseppid"
 )
 
 const (
-	ActionDelete = "DELETE"
-	ActionAdd    = "ADD"
-	ActionUpdate = "UPDATE"
+	ActionDelete            = "DELETE"
+	ActionAdd               = "ADD"
+	ActionUpdate            = "UPDATE"
+	TipStampePreview string = "PREVIEW"
+	TipStampePrint   string = "PRINT"
 )
 
 // Date format constants
@@ -88,7 +94,8 @@ const (
 	ErrMsgSearchKonto         = "Greška prilikom pretrage konta"
 	ErrMsgLockFailed          = "Neuspešno zaključavanje zapisa, pokušajte ponovo"
 	ErrMsgUpdate              = "Greska prilikom ažuriranja. "
-
+	ErrMsgFileSelection       = "Niste odabrali fajl za upload ili software"
+	ErrMsgSoftwareSelection   = "Niste odabrali kom softwaru pripada fajl za import"
 )
 
 // constants for styling of inputs
@@ -118,6 +125,8 @@ const (
 // Mobile-first approach: base styles for mobile, then tablet (md:), then desktop (lg:)
 
 const (
+	// Input - Numeric (Enabled)
+	ClassInputNumericEnabled = "h-8 sm:h-7 md:h-6 px-2 sm:px-1.5 md:px-1 py-1 text-xs sm:text-sm border border-blue-400 rounded focus:bg-green-50 focus:border-green-500 focus:ring-green-500 text-right w-full"
 	// Input - Numeric (Disabled)
 	ClassInputNumericDisabled = "h-8 sm:h-7 md:h-6 px-2 sm:px-1.5 md:px-1 py-1 text-xs sm:text-sm border border-blue-400 rounded focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed text-right w-full"
 	// Input - Text (Enabled)
@@ -130,7 +139,9 @@ const (
 	ClassLabel = "h-8 sm:h-7 md:h-6 text-xs sm:text-sm text-black whitespace-nowrap flex-shrink-0 flex items-center"
 
 	// Select/Dropdown
-	ClassSelect = "h-8 sm:h-7 md:h-6 px-2 sm:px-1.5 md:px-1 text-xs sm:text-sm text-black rounded border border-blue-400 focus:border-blue-500 focus:ring-blue-500 w-full"
+	ClassSelect         = "h-8 sm:h-7 md:h-6 px-2 sm:px-1.5 md:px-1 text-xs sm:text-sm text-black rounded border border-blue-400 focus:border-blue-500 focus:ring-blue-500 w-full"
+	ClassSelectDisabled = "h-8 sm:h-7 md:h-6 px-2 sm:px-1.5 md:px-1 text-xs sm:text-sm text-black rounded border border-blue-400 focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-300 disabled:text-gray-600 disabled:cursor-not-allowed w-full"
+	ClassSelectEnabled  = "h-8 sm:h-7 md:h-6 px-2 sm:px-1.5 md:px-1 text-xs sm:text-sm text-black rounded border border-blue-400 focus:border-blue-500 focus:ring-blue-500 w-full"
 
 	ClassRadioSet = "w-4 h-4 rounded border-blue-400 text-blue-600 focus:ring-blue-500"
 	//checkbox
@@ -150,10 +161,11 @@ const (
 	ClassSaveButton          = "bg-green-600 hover:bg-green-700 rounded h-9 sm:h-8 md:h-7 md:px-1 sm:px py-1 text-xs sm:text-sm flex text-white items-center justify-center whitespace-nowrap min-w-max sm:w-24 md:w-24"
 	ClassDeleteButton        = "bg-red-600 hover:bg-red-700 rounded h-9 sm:h-8 md:h-7 px-2 sm:px-2 md:px-1 py-1 text-xs sm:text-sm flex text-white items-center justify-center whitespace-nowrap w-full sm:w-24 md:w-24"
 	ClassOdustaniButton      = "bg-gray-600 hover:bg-gray-700 rounded h-9 sm:h-8 md:h-7 px-2 sm:px-2 md:px-1 py-1 text-xs sm:text-sm flex text-white items-center justify-center whitespace-nowrap w-full sm:w-24 md:w-24"
+	ClassButtonDisabled      = "bg-gray-600 hover:bg-gray-700 rounded h-9 sm:h-8 md:h-7 px-2 sm:px-2 md:px-1 py-1 text-xs sm:text-sm flex text-white items-center justify-center whitespace-nowrap w-full sm:w-24 md:w-24 opacity-50 cursor-not-allowed"
 	ClassCloseButton         = "bg-gray-600 hover:bg-gray-700 rounded h-9 sm:h-8 md:h-7 px-2 sm:px-2 md:px-1 py-1 text-xs sm:text-sm flex text-white items-center justify-center whitespace-nowrap gap-2 min-w-max"
 	ClassObradaButton        = "bg-green-600 hover:bg-green-700 rounded h-9 sm:h-7 md:h-7 px-2 sm:px-2 md:px-1 py-1 text-xs sm:text-sm flex text-white items-center justify-center whitespace-nowrap w-full sm:w-24 md:w-24"
 	ClassPrintButton         = "bg-blue-500 hover:bg-blue-900 text-white h-9 sm:h-7 md:h-7 px-2 sm:px-2 md:px-1 py-1 rounded text-xs sm:text-sm flex items-center justify-center whitespace-nowrap w-full sm:w-24 md:w-24"
-	ClassStampaOpomenaButton = "bg-blue-500 hover:bg-blue-900 text-white h-9 sm:h-7 md:h-7 px-2 sm:px-2 md:px-1 py-1 rounded text-xs sm:text-sm flex items-center justify-center whitespace-nowrap w-full sm:w-32 md:w-32"
+	ClassStampaOpomenaButton = "bg-blue-500 hover:bg-blue-900 text-white h-9 sm:h-7 md:h-7 px-2 sm:px-2 md:px-1 py-1 rounded text-xs sm:text-sm flex items-center justify-center whitespace-nowrap w-full sm:w-36 md:w-36"
 	ClassDialogCloseButton   = "text-white hover:text-gray-300 p-2 sm:p-1 transition-colors h-9 sm:h-7 md:h-7 px-2 sm:px-2 md:px-1 py-1 rounded text-xs sm:text-sm flex items-center justify-center"
 	ClassConfirmButton       = "bg-red-600 hover:bg-red-700 rounded h-9 sm:h-8 md:h-7 px-2 sm:px-2 md:px-1 py-1 text-xs sm:text-sm flex text-white items-center justify-center whitespace-nowrap gap-1 min-w-max"
 	ClassErrorField          = "text-red-600 text-xs mt-1"
@@ -162,7 +174,7 @@ const (
 	ClassExcelButton         = "bg-blue-500 hover:bg-blue-700 text-white h-9 sm:h-7 md:h-7 px-2 sm:px-2 md:px-1 py-1 rounded text-xs sm:text-sm flex items-center justify-center whitespace-nowrap w-full sm:w-12 md:w-12"
 
 	// Classes for dialog forms
-	ClassMainDialogDiv = "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+	ClassMainDialogDiv = "fixed inset-0 bg-black flex items-center justify-center p-4 bg-opacity-40 z-[60] "
 	// Patterns (unchanged)
 	PatternLettersAndNumbers = "[A-Za-z0-9]+"
 	PatternNumbers           = "[0-9]+"
@@ -221,7 +233,10 @@ var IconSVG = map[string]string{
 	"fin_kompenzacije3":  `<path fill-rule="evenodd" d="m-0.25,23.94l22.28,0c1.06,0 1.93,-0.75 1.93,-1.68l0,-16.74l-24.21,0l0,18.42zm9.81,-4.19c0.33,0.29 0.33,0.75 0,1.04c-0.17,0.14 -0.38,0.21 -0.6,0.21s-0.43,-0.07 -0.6,-0.21l-1.71,-1.49l-1.71,1.49c-0.17,0.14 -0.38,0.21 -0.6,0.21c-0.22,0 -0.43,-0.07 -0.6,-0.21c-0.33,-0.29 -0.33,-0.75 0,-1.04l1.71,-1.49l-1.71,-1.49c-0.33,-0.29 -0.33,-0.75 0,-1.04c0.33,-0.29 0.87,-0.29 1.19,0l1.71,1.49l1.71,-1.49c0.33,-0.29 0.87,-0.29 1.2,0c0.33,0.29 0.33,0.75 0,1.04l-1.71,1.49l1.71,1.49zm8,1.35l-0.59,0c-0.47,0 -0.84,-0.33 -0.84,-0.73s0.38,-0.73 0.84,-0.73l0.59,0c0.47,0 0.85,0.33 0.85,0.73s-0.38,0.73 -0.85,0.73zm-2.99,-11.27l5.4,0c0.47,0 0.85,0.33 0.85,0.73s-0.38,0.73 -0.85,0.73l-5.4,0c-0.47,0 -0.84,-0.33 -0.84,-0.73s0.38,-0.73 0.84,-0.73zm3.84,6.33c0,0.41 -0.38,0.73 -0.85,0.73l-0.59,0c-0.47,0 -0.84,-0.33 -0.84,-0.73c0,-0.41 0.38,-0.73 0.84,-0.73l0.59,0c0.47,0 0.85,0.33 0.85,0.73zm-3.84,1.37l5.4,0c0.47,0 0.85,0.33 0.85,0.73s-0.38,0.73 -0.85,0.73l-5.4,0c-0.47,0 -0.84,-0.33 -0.84,-0.73s0.38,-0.73 0.84,-0.73zm-10.61,-7.7l1.85,0l0,-1.61c0,-0.41 0.38,-0.73 0.84,-0.73c0.47,0 0.84,0.33 0.84,0.73l0,1.61l1.86,0c0.47,0 0.84,0.33 0.84,0.73s-0.38,0.73 -0.84,0.73l-1.86,0l0,1.61c0,0.41 -0.38,0.74 -0.84,0.74c-0.46,0 -0.84,-0.33 -0.84,-0.74l0,-1.61l-1.85,0c-0.47,0 -0.85,-0.33 -0.85,-0.73s0.38,-0.73 0.85,-0.73z" />`,
 	"fin_obracunkamate":  `<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m11.0001 18-.8536-.8536c-.0937-.0937-.1464-.2209-.1464-.3535v-4.4172c0-.2422-.08794-.4762-.24744-.6585L4.45127 5.6585C3.88551 5.01192 4.34469 4 5.20385 4H18.7547c.8658 0 1.3225 1.02544.7433 1.66896L16.5001 9m-2.5 9.3754c.3347.3615.7824.6134 1.2788.7195.4771.1584 1.0002.1405 1.464-.05.4638-.1906.8338-.5396 1.0356-.977.2462-.8286-.6363-1.7337-1.7735-1.9948-1.1372-.2611-2.016-1.1604-1.7735-1.9948.2016-.4375.5716-.7868 1.0354-.9774.4639-.1905.9871-.2082 1.4643-.0496.491.1045.9348.3517 1.2689.7067m-1.9397 5.41V20m0-8v.9771"/>`,
 	"fin_bilansi":        `<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 0 0-2 2v4m5-6h8M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m0 0h3a2 2 0 0 1 2 2v4m0 0v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-6m18 0s-4 2-9 2-9-2-9-2m9-2h.01"/>`,
-	"fin_ravnoteza":      `<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M104.26,0c10.28,0,18.62,8.33,18.62,18.62c0,8.96-6.33,16.44-14.76,18.21c0.02,0.14,0.02,0.28,0.02,0.42v5.3 l7.28-0.96c2.45-0.32,4.7,1.41,5.02,3.86c0.32,2.45-1.41,4.7-3.86,5.02l-51.07,6.71l11.31,40.56h6.25c2.25,0,4.08,1.84,4.08,4.08 l0,0c0,2.25-1.84,4.08-4.08,4.08l-42.66,0c-2.25,0-4.08-1.84-4.08-4.08l0,0c0-2.25,1.84-4.08,4.08-4.08h6.22l9.4-39.31L8.66,64.66 c-2.45,0.32-4.7-1.41-5.02-3.86c-0.32-2.45,1.41-4.7,3.86-5.02l7.38-0.97v-5.78c0-0.12,0.01-0.24,0.02-0.36 C6.4,46.94,0,39.42,0,30.41C0,20.13,8.33,11.8,18.62,11.8c10.28,0,18.62,8.33,18.62,18.62c0,9.06-6.48,16.61-15.05,18.27 c0.01,0.11,0.02,0.22,0.02,0.33v4.82l78.65-10.33v-6.26c0-0.11,0.01-0.22,0.02-0.33c-8.65-1.6-15.21-9.19-15.21-18.3 C85.65,8.33,93.98,0,104.26,0L104.26,0L104.26,0z M104.26,11.6c3.83,0,6.94,3.1,6.94,6.94s-3.11,6.94-6.94,6.94 s-6.93-3.1-6.93-6.94S100.43,11.6,104.26,11.6L104.26,11.6z M18.71,23.51c3.83,0,6.93,3.1,6.93,6.94c0,3.83-3.1,6.93-6.93,6.93 c-3.83,0-6.94-3.1-6.94-6.93C11.78,26.61,14.88,23.51,18.71,23.51L18.71,23.51z" />`,
+	"fin_ravnoteza":      `<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m16 10 3-3m0 0-3-3m3 3H5v3m3 4-3 3m0 0 3 3m-3-3h14v-3"/>`,
+	"fin_knjizenje":      `<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 5V4a1 1 0 0 0-1-1H8.914a1 1 0 0 0-.707.293L4.293 7.207A1 1 0 0 0 4 7.914V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-5M9 3v4a1 1 0 0 1-1 1H4m11.383.772 2.745 2.746m1.215-3.906a2.089 2.089 0 0 1 0 2.953l-6.65 6.646L9 17.95l.739-3.692 6.646-6.646a2.087 2.087 0 0 1 2.958 0Z"/>`,
+	"fin_import":         `<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12V7.914a1 1 0 0 1 .293-.707l3.914-3.914A1 1 0 0 1 9.914 3H18a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-4m5-13v4a1 1 0 0 1-1 1H5m0 6h9m0 0-2-2m2 2-2 2"/>`,
+	"fin_azurirajkonta":  `<path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M6 4v10m0 0a2 2 0 1 0 0 4m0-4a2 2 0 1 1 0 4m0 0v2m6-16v2m0 0a2 2 0 1 0 0 4m0-4a2 2 0 1 1 0 4m0 0v10m6-16v10m0 0a2 2 0 1 0 0 4m0-4a2 2 0 1 1 0 4m0 0v2"/>`,
 	"fin_obrada": `<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13v-2a1 1 0 0 0-1-1h-.757l-.707-1.707.535-.536a1 1 0 0 0 0-1.414l-1.414-1.414a1 1 0 0 0-1.414 0l-.536.535L14 4.757V4a1 1 0 0 0-1-1h-2a1 1 0 0 0-1 1v.757l-1.707.707-.536-.535a1 1 0 0 0-1.414 0L4.929 6.343a1 1 0 0 0 0 1.414l.536.536L4.757 10H4a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h.757l.707 1.707-.535.536a1 1 0 0 0 0 1.414l1.414 1.414a1 1 0 0 0 1.414 0l.536-.535 1.707.707V20a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-.757l1.707-.708.536.536a1 1 0 0 0 1.414 0l1.414-1.414a1 1 0 0 0 0-1.414l-.535-.536.707-1.707H20a1 1 0 0 0 1-1Z"/>
   					<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/>`,
 	"stampa":      `<path stroke="currentColor" stroke-linejoin="round" stroke-width="2" d="M16.444 18H19a1 1 0 0 0 1-1v-5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v5a1 1 0 0 0 1 1h2.556M17 11V5a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v6h10ZM7 15h10v4a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1v-4Z"/>`,
@@ -235,5 +250,8 @@ var IconSVG = map[string]string{
 	"refresh":     `<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.651 7.65a7.131 7.131 0 0 0-12.68 3.15M18.001 4v4h-4m-7.652 8.35a7.13 7.13 0 0 0 12.68-3.15M6 20v-4h4"/>`,
 	"back":        `<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.5 8.046H11V6.119c0-.921-.9-1.446-1.524-.894l-5.108 4.49a1.2 1.2 0 0 0 0 1.739l5.108 4.49c.624.556 1.524.027 1.524-.893v-1.928h2a3.023 3.023 0 0 1 3 3.046V19a5.593 5.593 0 0 0-1.5-10.954Z"/>`,
 	"cancel":      `<path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25Zm-1.72 6.97a.75.75 0 1 0-1.06 1.06L10.94 12l-1.72 1.72a.75.75 0 1 0 1.06 1.06L12 13.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L13.06 12l1.72-1.72a.75.75 0 1 0-1.06-1.06L12 10.94l-1.72-1.72Z" clip-rule="evenodd"></path>`,
-	"close":       `<path fill-rule="evenodd" d="M2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10S2 17.523 2 12Zm7.707-3.707a1 1 0 0 0-1.414 1.414L10.586 12l-2.293 2.293a1 1 0 1 0 1.414 1.414L12 13.414l2.293 2.293a1 1 0 0 0 1.414-1.414L13.414 12l2.293-2.293a1 1 0 0 0-1.414-1.414L12 10.586 9.707 8.293Z" clip-rule="evenodd"/>^`,
+	"close":       `<path fill-rule="evenodd" d="M2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10S2 17.523 2 12Zm7.707-3.707a1 1 0 0 0-1.414 1.414L10.586 12l-2.293 2.293a1 1 0 1 0 1.414 1.414L12 13.414l2.293 2.293a1 1 0 0 0 1.414-1.414L13.414 12l2.293-2.293a1 1 0 0 0-1.414-1.414L12 10.586 9.707 8.293Z" clip-rule="evenodd"/>`,
+	"save":        `<path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clip-rule="evenodd"></path>`,
+	"delete":      `<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 7h14m-9 3v8m4-8v8M10 3h4a1 1 0 0 1 1 1v3H9V4a1 1 0 0 1 1-1ZM6 7h12v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7Z"/>`,
+	"file-select": `<path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />`,
 }

@@ -15,19 +15,17 @@ templ Register(translator *i18n.Service) {
 					name="username"
 					class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
 					required
-					placeholder={ translator.Label("Unesite korisnicko ime") }
 				/>
 			</div>
 			<!-- Email Field -->
 			<div>
-				<label for="email" class="block text-gray-700">Email:</label>
+				<label for="email" class="block text-gray-700">{ translator.Label("Email") }:</label>
 				<input
 					type="email"
 					id="email"
 					name="email"
 					class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
 					required
-					placeholder={ translator.Label("Unesite email") }
 				/>
 			</div>
 			<!-- Password Field -->
@@ -39,7 +37,6 @@ templ Register(translator *i18n.Service) {
 					name="password"
 					class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
 					required
-					placeholder={ translator.Label("Unesite lozinku") }
 				/>
 			</div>
 			<!-- Confirm Password Field -->
@@ -51,7 +48,6 @@ templ Register(translator *i18n.Service) {
 					name="confirm_password"
 					class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
 					required
-					placeholder={ translator.Label("Potvrdi lozinku") }
 				/>
 			</div>
 			<!-- Submit Button -->

@@ -30,18 +30,23 @@ templ PartneriFormMain(partneriData domain.Partneri, tekRacuni domain.TableData,
 			>
 				<input type="hidden" name="_csrf" value={ csrfToken }/>
 				<!-- Tipovi Analitike -->
-				<div class="flex items-center gap-2 border-b-2 border-blue-900">
+				<div class="flex items-center gap-2 border-b-2 border-blue-900 pb-1">
 					@tmpl.LabelField(domain.LabelFieldConfig{
 						ID:         "tipanalitike",
 						LabelText:  translator.Label("Tip analitike"),
 						ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
 					})
 					@tmpl.ComboBoxField(domain.ComboFieldConfig{
-						ID:             "tipanalitike",
-						Name:           "tipanalitike",
-						Placeholder:    translator.Placeholder("Select"),
-						Disabled:       dialog.HxRequestType == "PUT",
-						ClassSelect:    common.ClassSelect + " w-64",
+						ID:          "tipanalitike",
+						Name:        "tipanalitike",
+						Placeholder: translator.Placeholder("Select"),
+						Disabled:    dialog.HxRequestType == "PUT",
+						ClassSelect: func() string {
+							if dialog.HxRequestType == "PUT" {
+								return common.ClassSelectEnabled + " w-96"
+							}
+							return common.ClassSelectEnabled + " w-96"
+						}(),
 						TabIndex:       "1",
 						OptionValues:   tipoviAnalitike,
 						SelectedValue:  "",
@@ -52,7 +57,9 @@ templ PartneriFormMain(partneriData domain.Partneri, tekRacuni domain.TableData,
 					}, translator)
 				</div>
 				<!-- Content swapped by HTMX when tipanalitike changes -->
-				<div id="partneri-form-content"></div>
+				<div id="partneri-form-content">
+					@PartneriFormKomintenti(partneriData, tekRacuni, dialog, tipoviAnalitike, btnSave, btnCancel, btnClose, btnProveriPIB, translator, csrfToken)
+				</div>
 				<!-- Action Buttons - Full Width at Bottom -->
 				<div class="flex items-center justify-end gap-3 border-t border-gray-300 pt-3 mt-4">
 					<div class="flex items-center justify-end pt-2 pb-2 space-x-1">
@@ -64,11 +71,12 @@ templ PartneriFormMain(partneriData domain.Partneri, tekRacuni domain.TableData,
 		</div>
 	</div>
 	@PartneriScript()
+	@tmpl.HandleDialogResponseScript("")
 	@tmpl.ClearFieldErrorScript()
 	@tmpl.CloseDialogScript()
 }
 
-templ PartneriForm(partneriData domain.Partneri, tekRacuni domain.TableData, dialog domain.Dialog, tipoviAnalitike []domain.ComboItem, btnSave, btnCancel, btnClose, btnProveriPIB domain.Button, translator *i18n.Service, csrfToken string) {
+templ PartneriFormKomintenti(partneriData domain.Partneri, tekRacuni domain.TableData, dialog domain.Dialog, tipoviAnalitike []domain.ComboItem, btnSave, btnCancel, btnClose, btnProveriPIB domain.Button, translator *i18n.Service, csrfToken string) {
 	<!-- Main Grid Layout: 60% Left - 40% Right -->
 	<div class="grid gap-4" style="grid-template-columns: 60% 39%;">
 		<!-- Left Column (60% width) - Osnovni podaci o partneru -->
@@ -82,7 +90,7 @@ templ PartneriForm(partneriData domain.Partneri, tekRacuni domain.TableData, dia
 			}
 			<div class="flex items-center gap-2">
 				@tmpl.LabelField(domain.LabelFieldConfig{
-					ID:         "lblsifra",
+					ID:         "sifra",
 					LabelText:  translator.Label("Sifra partnera"),
 					ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
 				})
@@ -111,7 +119,7 @@ templ PartneriForm(partneriData domain.Partneri, tekRacuni domain.TableData, dia
 			<!-- Naziv Partnera -->
 			<div class="flex items-center gap-2">
 				@tmpl.LabelField(domain.LabelFieldConfig{
-					ID:         "lblnaziv",
+					ID:         "naziv",
 					LabelText:  translator.Label("Naziv partnera"),
 					ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
 				})
@@ -131,7 +139,7 @@ templ PartneriForm(partneriData domain.Partneri, tekRacuni domain.TableData, dia
 			<!-- Pun Naziv Partnera -->
 			<div class="flex items-center gap-2">
 				@tmpl.LabelField(domain.LabelFieldConfig{
-					ID:         "lblnaziv1",
+					ID:         "naziv1",
 					LabelText:  translator.Label("Pun naziv partnera"),
 					ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
 				})
@@ -168,7 +176,7 @@ templ PartneriForm(partneriData domain.Partneri, tekRacuni domain.TableData, dia
 			<div class="grid grid-cols-2 gap-2">
 				<div class="flex items-center gap-2">
 					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "lblpostbroj",
+						ID:         "postbroj",
 						LabelText:  translator.Label("Postanski broj"),
 						ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
 					})
@@ -220,7 +228,7 @@ templ PartneriForm(partneriData domain.Partneri, tekRacuni domain.TableData, dia
 			<!-- Sistema PDV -->
 			<div class="flex items-center gap-2">
 				@tmpl.LabelField(domain.LabelFieldConfig{
-					ID:         "lbltippdv",
+					ID:         "tippdv",
 					LabelText:  translator.Label("Sistem PDV"),
 					ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
 				})
@@ -275,13 +283,13 @@ templ PartneriForm(partneriData domain.Partneri, tekRacuni domain.TableData, dia
 						TabIndex:   "10",
 						Value:      partneriData.PIB,
 					})
-					@tmpl.Button(btnProveriPIB, translator)
+					@tmpl.Button(btnProveriPIB)
 				</div>
 			</div>
 			<!-- Matični broj -->
 			<div class="flex items-center gap-2">
 				@tmpl.LabelField(domain.LabelFieldConfig{
-					ID:         "lblmaticnibroj",
+					ID:         "maticnibroj",
 					LabelText:  translator.Label("Maticni broj"),
 					ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
 				})
@@ -299,7 +307,7 @@ templ PartneriForm(partneriData domain.Partneri, tekRacuni domain.TableData, dia
 			<!-- Matični broj -->
 			<div class="flex items-center gap-2">
 				@tmpl.LabelField(domain.LabelFieldConfig{
-					ID:         "lblkonta",
+					ID:         "konta",
 					LabelText:  translator.Label("Konta partnera"),
 					ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
 				})
@@ -317,7 +325,7 @@ templ PartneriForm(partneriData domain.Partneri, tekRacuni domain.TableData, dia
 			<!-- Teritorija - Radio Set -->
 			<div class="flex items-center gap-2">
 				@tmpl.LabelField(domain.LabelFieldConfig{
-					ID:         "lblteritorija",
+					ID:         "teritorija",
 					LabelText:  translator.Label("Teritorija"),
 					ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
 				})
@@ -693,6 +701,224 @@ templ PartneriForm(partneriData domain.Partneri, tekRacuni domain.TableData, dia
 	</div>
 }
 
+templ PartneriFormFizickaLica(partneriData domain.Partneri, tekRacuni domain.TableData, dialog domain.Dialog, tipoviAnalitike []domain.ComboItem, btnSave, btnCancel, btnClose, btnProveriPIB domain.Button, translator *i18n.Service, csrfToken string) {
+	<!-- Main Grid Layout: 60% Left - 40% Right -->
+	<div class="grid gap-4" style="grid-template-columns: 60% 39%;">
+		<!-- Left Column (60% width) - Osnovni podaci o fizičkom licu -->
+		<div class="space-y-1 flex flex-col">
+			<div class="text-blue-900 font-bold text-sm border-b-2 border-blue-900 py-1">
+				{ translator.Text("Osnovni podaci o fizičkom licu") }
+			</div>
+			<!-- Šifra partnera if action is update the create hidden sifra filed -->
+			if dialog.HxRequestType == "PUT" {
+				<input type="hidden" name="sifra" value={ partneriData.Sifra }/>
+			}
+			<div class="flex items-center gap-2">
+				@tmpl.LabelField(domain.LabelFieldConfig{
+					ID:         "sifra",
+					LabelText:  translator.Label("Sifra partnera"),
+					ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
+				})
+				@tmpl.TextInputField(domain.InputFieldConfig{
+					ID:        "sifra",
+					Name:      "sifra",
+					FieldType: "text",
+					Disabled:  dialog.HxRequestType == "PUT",
+					Value:     partneriData.Sifra,
+					ClassInput: func() string {
+						if dialog.HxRequestType == "PUT" {
+							return common.ClassInputTextDisabled + " w-24"
+						}
+						return common.ClassInputTextEnabled + " w-24"
+					}(),
+					MaxLength: "10",
+					TabIndex:  "-1",
+					OnInput:   "clearFieldError",
+					OnFocus:   "clearFieldError",
+				})
+			</div>
+			<!-- Naziv Partnera -->
+			<div class="flex items-center gap-2">
+				@tmpl.LabelField(domain.LabelFieldConfig{
+					ID:         "naziv",
+					LabelText:  translator.Label("Ime i prezime"),
+					ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
+				})
+				@tmpl.TextInputField(domain.InputFieldConfig{
+					ID:         "naziv",
+					Name:       "naziv",
+					FieldType:  "text",
+					Disabled:   false,
+					Value:      partneriData.Naziv,
+					ClassInput: common.ClassInputTextEnabled + " flex-1",
+					MaxLength:  "100",
+					TabIndex:   "2",
+					OnInput:    "clearFieldError",
+					OnFocus:    "clearFieldError",
+				})
+			</div>
+			<!-- Adresa -->
+			<div class="flex items-center gap-2">
+				@tmpl.LabelField(domain.LabelFieldConfig{
+					ID:         "adresa",
+					LabelText:  translator.Label("Adresa"),
+					ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
+				})
+				@tmpl.TextInputField(domain.InputFieldConfig{
+					ID:         "adresa",
+					Name:       "adresa",
+					FieldType:  "text",
+					Disabled:   false,
+					Value:      partneriData.Adresa,
+					ClassInput: common.ClassInputTextEnabled + " flex-1",
+					MaxLength:  "100",
+					TabIndex:   "4",
+				})
+			</div>
+			<!-- Poštanski broj i Mjesto -->
+			<div class="grid grid-cols-2 gap-2">
+				<div class="flex items-center gap-2">
+					@tmpl.LabelField(domain.LabelFieldConfig{
+						ID:         "postbroj",
+						LabelText:  translator.Label("Postanski broj"),
+						ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
+					})
+					@tmpl.TextInputField(domain.InputFieldConfig{
+						ID:         "pobro",
+						Name:       "pobro",
+						FieldType:  "text",
+						Disabled:   false,
+						ClassInput: common.ClassInputTextEnabled + " flex-1",
+						Value:      fmt.Sprintf("%d", partneriData.PoBro),
+						MaxLength:  "6",
+						TabIndex:   "5",
+					})
+				</div>
+				<div class="flex items-center gap-2">
+					@tmpl.LabelField(domain.LabelFieldConfig{
+						ID:         "mesto",
+						LabelText:  translator.Label("Mesto"),
+						ClassLabel: common.ClassLabel + " w-10 flex-shrink-0",
+					})
+					@tmpl.TextInputField(domain.InputFieldConfig{
+						ID:         "mesto",
+						Name:       "mesto",
+						FieldType:  "text",
+						Disabled:   false,
+						ClassInput: common.ClassInputTextEnabled + " w-52 flex-1",
+						Value:      partneriData.Mesto,
+						MaxLength:  "50",
+						TabIndex:   "6",
+						OnInput:    "clearFieldError",
+						OnFocus:    "clearFieldError",
+					})
+				</div>
+			</div>
+			<!-- Opština -->
+			<div class="flex items-center gap-2">
+				@tmpl.LabelField(domain.LabelFieldConfig{
+					ID:         "opstina",
+					LabelText:  translator.Label("Opstina"),
+					ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
+				})
+				@tmpl.TextInputField(domain.InputFieldConfig{
+					ID:         "opstina",
+					Name:       "opstina",
+					FieldType:  "text",
+					Disabled:   false,
+					ClassInput: common.ClassInputTextEnabled + " flex-1 text-xs",
+					MaxLength:  "100",
+					TabIndex:   "5",
+					Value:      fmt.Sprintf("%d", partneriData.IDSifOp),
+				})
+			</div>
+		</div>
+		<!-- Right Column (40% width) -->
+		<div class="space-y-1">
+			<!-- Ostali podaci o fizičkom licu -->
+			<div>
+				<div class="text-blue-900 font-bold text-sm border-b-2 border-blue-900 py-1 mb-1">
+					{ translator.Text("Ostali podaci o fizičkom licu") }
+				</div>
+				<div class="space-y-1">
+					<!-- Web stranica -->
+					<div class="flex items-center gap-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "webstranica",
+							LabelText:  translator.Label("Web stranica"),
+							ClassLabel: common.ClassLabel + " w-28 flex-shrink-0",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "webstranica",
+							Name:       "webstranica",
+							FieldType:  "url",
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " flex-1 text-xs",
+							MaxLength:  "150",
+							TabIndex:   "14",
+							Value:      partneriData.Website,
+						})
+					</div>
+					<!-- E-mail -->
+					<div class="flex items-center gap-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "email",
+							LabelText:  translator.Label("E-mail"),
+							ClassLabel: common.ClassLabel + " w-28 flex-shrink-0",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "email",
+							Name:       "email",
+							FieldType:  "email",
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " flex-1 text-xs",
+							MaxLength:  "100",
+							TabIndex:   "15",
+							Value:      partneriData.Email,
+						})
+					</div>
+					<!-- Broj telefona -->
+					<div class="flex items-center gap-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "telefon",
+							LabelText:  translator.Label("Broj telefona"),
+							ClassLabel: common.ClassLabel + " w-28 flex-shrink-0",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "telefon",
+							Name:       "telefon",
+							FieldType:  "tel",
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " flex-1 text-xs",
+							MaxLength:  "30",
+							TabIndex:   "16",
+							Value:      partneriData.Telefon,
+						})
+					</div>
+					<!-- JMBG -->
+					<div class="flex items-center gap-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "jmbg",
+							LabelText:  translator.Label("JMBG"),
+							ClassLabel: common.ClassLabel + " w-28 flex-shrink-0",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "jmbg",
+							Name:       "jmbg",
+							FieldType:  "text",
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " flex-1 text-xs",
+							MaxLength:  "20",
+							TabIndex:   "19",
+							Value:      partneriData.JMBG,
+						})
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
 templ PartneriList(tableData domain.TableData, translator *i18n.Service) {
 	<div class="mt-4">
 		@tmpl.Table(tableData, translator)
@@ -798,9 +1024,6 @@ templ PartneriScript() {
 		// Listen for HTMX events on document level
 		document.addEventListener('htmx:afterRequest', function(event) {
 			console.log("HTMX afterRequest event fired on document");
-			if (event.detail.xhr && event.detail.xhr.responseText) {
-				console.log("Response from any HTMX request:", event.detail.xhr.responseText);
-			}
 		});
 		
 		// Also try attach to button when it exists
@@ -852,7 +1075,7 @@ templ PartneriScript() {
 				try {
 					response = JSON.parse(responseText);
 				} catch (parseError) {
-					console.error("Response is not valid JSON:", parseError);
+					console.error("Response is not valid JSON...");
 					//console.log("Response text was:", responseText);
 					// If not JSON, assume it's HTML success response, close dialog
 					closeDialog(dialogName);

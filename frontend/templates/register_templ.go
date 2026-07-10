@@ -57,124 +57,85 @@ func Register(translator *i18n.Service) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, ":</label> <input type=\"text\" id=\"username\" name=\"username\" class=\"w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600\" required placeholder=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, ":</label> <input type=\"text\" id=\"username\" name=\"username\" class=\"w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600\" required></div><!-- Email Field --><div><label for=\"email\" class=\"block text-gray-700\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var4 string
-		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Unesite korisnicko ime"))
+		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Email"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/register.templ`, Line: 18, Col: 61}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/register.templ`, Line: 22, Col: 78}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "\"></div><!-- Email Field --><div><label for=\"email\" class=\"block text-gray-700\">Email:</label> <input type=\"email\" id=\"email\" name=\"email\" class=\"w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600\" required placeholder=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, ":</label> <input type=\"email\" id=\"email\" name=\"email\" class=\"w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600\" required></div><!-- Password Field --><div><label for=\"password\" class=\"block text-gray-700\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var5 string
-		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Unesite email"))
+		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Lozinka"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/register.templ`, Line: 30, Col: 52}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/register.templ`, Line: 33, Col: 83}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\"></div><!-- Password Field --><div><label for=\"password\" class=\"block text-gray-700\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, ":</label> <input type=\"password\" id=\"password\" name=\"password\" class=\"w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600\" required></div><!-- Confirm Password Field --><div><label for=\"confirm_password\" class=\"block text-gray-700\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var6 string
-		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Lozinka"))
+		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Potvrdi lozinku"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/register.templ`, Line: 35, Col: 83}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/register.templ`, Line: 44, Col: 99}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, ":</label> <input type=\"password\" id=\"password\" name=\"password\" class=\"w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600\" required placeholder=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, ":</label> <input type=\"password\" id=\"confirm_password\" name=\"confirm_password\" class=\"w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600\" required></div><!-- Submit Button --><div><button type=\"submit\" class=\"w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var7 string
-		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Unesite lozinku"))
+		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Registracija"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/register.templ`, Line: 42, Col: 54}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/register.templ`, Line: 59, Col: 39}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "\"></div><!-- Confirm Password Field --><div><label for=\"confirm_password\" class=\"block text-gray-700\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</button></div><!-- Login Link --><div class=\"text-center\"><p class=\"text-gray-600\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var8 string
-		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Potvrdi lozinku"))
+		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Vec imate nalog"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/register.templ`, Line: 47, Col: 99}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/register.templ`, Line: 64, Col: 66}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, ":</label> <input type=\"password\" id=\"confirm_password\" name=\"confirm_password\" class=\"w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600\" required placeholder=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "? <a href=\"/login\" class=\"text-blue-600 hover:underline\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var9 string
-		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Potvrdi lozinku"))
+		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Prijavite se ovde"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/register.templ`, Line: 54, Col: 54}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/register.templ`, Line: 64, Col: 164}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "\"></div><!-- Submit Button --><div><button type=\"submit\" class=\"w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var10 string
-		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Registracija"))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/register.templ`, Line: 63, Col: 39}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</button></div><!-- Login Link --><div class=\"text-center\"><p class=\"text-gray-600\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var11 string
-		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Vec imate nalog"))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/register.templ`, Line: 68, Col: 66}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "? <a href=\"/login\" class=\"text-blue-600 hover:underline\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var12 string
-		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Prijavite se ovde"))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/register.templ`, Line: 68, Col: 164}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</a></p></div></form></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</a></p></div></form></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

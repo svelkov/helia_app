@@ -22,9 +22,6 @@ templ ConfirmButton(btn domain.Button, translator *i18n.Service) {
 				hx-swap={ btn.HxSwap }
 			}
 			hx-include="closest form"
-			if btn.HxOnAfterRequest != "" {
-				hx-on::after-request={ templ.JSFuncCall(fmt.Sprintf("%s", btn.HxOnAfterRequest), btn.IdDialog) }
-			}
 		>
 			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6 mr-1">
 				<path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clip-rule="evenodd"></path>
@@ -87,11 +84,28 @@ templ CancelButton(btn domain.Button, translator *i18n.Service) {
 		type="button"
 		onclick={ templ.JSFuncCall("closeDialog", btn.IdDialog) }
 		class={ btn.BtnClass }
+		if btn.HxActionURL != "" {
+			if btn.HxRequestType == "POST" {
+				hx-post={ btn.HxActionURL }
+			}
+			if btn.HxRequestType == "GET" {
+				hx-get={ btn.HxActionURL }
+			}
+			if btn.HxRequestType == "DELETE" {
+				hx-delete={ btn.HxActionURL }
+			}
+			if btn.HxRequestType == "PUT" {
+				hx-put={ btn.HxActionURL }
+			}
+		}
+		if btn.HxInclude != "" {
+			hx-include={ btn.HxInclude }
+		}
 	>
 		if btn.Icon != "" {
-			@Icon(btn.Icon, common.ClassIcon + " h-6 w-6 mr-2")
+			@Icon(btn.Icon, common.ClassIcon+" h-6 w-6 mr-2")
 		} else {
-			@Icon("cancel", common.ClassIcon + " h-6 w-6 mr-2")
+			@Icon("cancel", common.ClassIcon+" h-6 w-6 mr-2")
 		}
 		{ translator.Button(btn.LabelText) }
 	</button>
@@ -117,9 +131,12 @@ templ CloseButton(btn domain.Button) {
 				hx-put={ btn.HxActionURL }
 			}
 		}
+		if btn.HxInclude != "" {
+			hx-include={ btn.HxInclude }
+		}
 	>
 		if btn.Icon != "" {
-			@Icon(btn.Icon, common.ClassIcon + " h-6 w-6")
+			@Icon(btn.Icon, common.ClassIcon+" h-6 w-6")
 		} else {
 			@Icon("close", "h-6 w-6 mr-1 inline-block")
 		}
@@ -194,9 +211,7 @@ templ SaveButton(btn domain.Button, translator *i18n.Service) {
 			hx-on::after-request={ templ.JSFuncCall("handleDialogResponse", btn.IdDialog) }
 		}
 	>
-		<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6 mr-2">
-			<path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clip-rule="evenodd"></path>
-		</svg>
+		@Icon("save", common.ClassIcon)
 		{ translator.Button(btn.LabelText) }
 	</button>
 }
@@ -282,9 +297,18 @@ templ PrintButton(btn domain.Button, translator *i18n.Service) {
 		if btn.HxVals !="" {
 			hx-vals={ btn.HxVals }
 		}
-		hx-headers='{"X-Request-Source": "btnprint"}'
+		if btn.HxRequestType != "" {
+			hx-headers='{"X-Request-Source": "btnprint"}'
+		}
 		if btn.HxOnAfterRequest != "" {
 			hx-on::after-request={ templ.JSFuncCall(fmt.Sprintf("%s", btn.HxOnAfterRequest), btn.IdDialog) }
+		}
+		if btn.HxOnClick != "" {
+			if btn.HxOnClickArg != "" {
+				onclick={ templ.JSFuncCall(btn.HxOnClick, btn.HxOnClickArg) }
+			} else {
+				onclick={ templ.JSFuncCall(btn.HxOnClick) }
+			}
 		}
 	>
 		@Icon("stampa", common.ClassIcon)
@@ -292,10 +316,14 @@ templ PrintButton(btn domain.Button, translator *i18n.Service) {
 	</button>
 }
 
-templ Button(btn domain.Button, translator *i18n.Service) {
+templ Button(btn domain.Button) {
 	<button
 		id={ btn.Id }
+		type="button"
 		class={ btn.BtnClass }
+		if btn.IsDisabled {
+			disabled
+		}
 		if btn.HxRequestType == "POST" {
 			hx-post={ btn.HxActionURL }
 		}
@@ -324,10 +352,42 @@ templ Button(btn domain.Button, translator *i18n.Service) {
 		if btn.HxOnAfterRequest != "" {
 			hx-on::after-request={ templ.JSFuncCall(fmt.Sprintf("%s", btn.HxOnAfterRequest), btn.IdDialog) }
 		}
+		if btn.HxOnClick != "" {
+			if btn.HxOnClickArg != "" {
+				onclick={ templ.JSFuncCall(btn.HxOnClick, btn.HxOnClickArg) }
+			} else {
+				onclick={ templ.JSFuncCall(btn.HxOnClick) }
+			}
+		}
 	>
 		if btn.Icon != "" {
 			@Icon(btn.Icon, common.ClassIcon)
 		}
-		{ translator.Button(btn.LabelText) }
+		{ btn.LabelText }
+	</button>
+}
+
+templ ButtonOpenFileDialog(btn domain.Button) {
+	<button
+		id={ btn.Id }
+		type="button"
+		class={ btn.BtnClass }
+		if btn.IsDisabled {
+			disabled
+		}
+		if btn.HxOnClick != "" {
+			if btn.HxOnClickArg != "" {
+				hx-on:click={ templ.JSFuncCall(btn.HxOnClick, btn.HxOnClickArg) }
+			} else {
+				hx-on:click={ templ.JSFuncCall(btn.HxOnClick) }
+			}
+		}
+	>
+		if btn.Icon != "" {
+			@Icon(btn.Icon, common.ClassIcon)
+		}
+		if btn.LabelText != "" {
+			{ btn.LabelText }
+		}
 	</button>
 }

@@ -282,7 +282,7 @@ func KamatneStope(tabs domain.TabData, tbl domain.TableData, translator *i18n.Se
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.ShowMessage().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.ShowMessageScript().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -520,7 +520,7 @@ func FormiranjeLista(tabs domain.TabData, tbl domain.TableData, translator *i18n
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.ShowMessage().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.ShowMessageScript().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -710,7 +710,7 @@ func ObracunKamate(tabs domain.TabData, tbl domain.TableData, translator *i18n.S
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.ShowMessage().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.ShowMessageScript().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

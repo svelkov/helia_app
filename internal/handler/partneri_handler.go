@@ -39,15 +39,25 @@ func NewPartneriHandler(service service.PartneriService, cfg config.Config, lm *
 }
 
 func (h *PartneriHandler) GetAllPartneri(c *gin.Context) {
-
-	tbl := utils.GetAllEntityHelper(
-		c, h.Service, SetPartneriFields(),
-		partneriContentTitle, partneriTableID,
-		partneriURLPrefix, partneriURLGetAll,
-		"IDPartneri", h.cfg)
+	tbl := common.SetTableBasicData(partneriContentTitle, partneriTableID, SetPartneriFields(), partneriURLPrefix, partneriURLGetAll, 0, 0, 0, 0, h.cfg)
+	common.SetTableConfig(&tbl, partneriContentTitle, partneriTableID, false, false, false)
 	tbl.URLGetAll = partneriURLGetAll
 	tbl.URLPrefix = partneriURLPrefix
-	utils.RenderContent(c, *tbl)
+	page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
+	searchText := c.Query("search")
+	sortBy := c.Query("sortBy")
+	sortOrder := c.Query("sortOrder")
+	err := h.Service.GetAllPartneri(c.Request.Context(), &tbl, true, page, pageSize, searchText, sortBy, sortOrder)
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, fmt.Sprintf("Error fetching partneri: %v", err))
+		return
+	}
+	err = h.Service.GetAllPartneri(c.Request.Context(), &tbl, false, page, pageSize, searchText, sortBy, sortOrder)
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, fmt.Sprintf("Error fetching partneri: %v", err))
+		return
+	}
+	utils.RenderContent(c, tbl)
 }
 
 func (h *PartneriHandler) PartneriConfirmAdd(c *gin.Context) {
@@ -194,7 +204,7 @@ func (h *PartneriHandler) PartneriConfirmUpdate(c *gin.Context) {
 		log.Printf("Error fetching tipove analitike: %v", err)
 		tipoviAnalitike = []domain.ComboItem{}
 	}
-	tmpl1.PartneriForm(*entity, tblTekRacuni, dialog, tipoviAnalitike, btnSacuvaj, btnCancel, btnClose, btnProveriPIB, i18n.GetInstance(), csrfToken).Render(c.Request.Context(), c.Writer)
+	tmpl1.PartneriFormMain(*entity, tblTekRacuni, dialog, tipoviAnalitike, btnSacuvaj, btnCancel, btnClose, btnProveriPIB, i18n.GetInstance(), csrfToken).Render(c.Request.Context(), c.Writer)
 }
 
 func (h *PartneriHandler) PartneriUpdate(c *gin.Context) {
@@ -434,10 +444,10 @@ func (h *PartneriHandler) GetPartneriForm(c *gin.Context) {
 
 	switch tipAnalitike {
 	// Add cases here as you create new form templates, e.g.:
-	// case "2":
-	//     tmpl1.FizickaLicaForm(entity, tblTekRacuni, dialog, []domain.ComboItem{}, ...).Render(ctx, c.Writer)
+	case "5": // Fizicka lica
+		tmpl1.PartneriFormFizickaLica(entity, tblTekRacuni, dialog, []domain.ComboItem{}, btnSacuvaj, btnCancel, btnClose, btnProveriPIB, i18n.GetInstance(), csrfToken).Render(ctx, c.Writer)
 	default:
-		tmpl1.PartneriForm(entity, tblTekRacuni, dialog, []domain.ComboItem{}, btnSacuvaj, btnCancel, btnClose, btnProveriPIB, i18n.GetInstance(), csrfToken).Render(ctx, c.Writer)
+		tmpl1.PartneriFormKomintenti(entity, tblTekRacuni, dialog, []domain.ComboItem{}, btnSacuvaj, btnCancel, btnClose, btnProveriPIB, i18n.GetInstance(), csrfToken).Render(ctx, c.Writer)
 	}
 }
 

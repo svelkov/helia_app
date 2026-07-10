@@ -1,0 +1,294 @@
+package finansijsko
+
+import (
+	"fmt"
+	rep "helia/frontend/templates/reports"
+	"helia/i18n"
+	"helia/internal/domain"
+)
+
+// KnjigaIzlaznihRacunaStampa renders the printable Knjiga izdatih računa report.
+templ KnjigaIzlaznihRacunaStampa(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
+	@rep.Report(repParams, domain.TableData{}, translator, nil, KnjigaIzlaznihRacunaContent(repParams, tbl, translator))
+}
+
+templ KnjigaIzlaznihRacunaContent(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
+	@rep.ReportHeader(repParams)
+	@rep.ReportTitle(repParams)
+	@KnjigaIzlaznihRacunaParam(repParams, translator)
+	@KnjigaIzlaznihRacunaTable(tbl, translator)
+	@rep.ReportEnd(nil)
+}
+
+templ KnjigaIzlaznihRacunaParam(repParams domain.ReportParameters, translator *i18n.Service) {
+	<div class="text-center text-sm font-semibold mb-2">
+		if repParams.ParameterItems["OdDatuma"].Value != "" {
+			{ repParams.ParameterItems["OdDatuma"].Name }:
+			<span class="font-bold">{ repParams.ParameterItems["OdDatuma"].Value }</span>
+			&nbsp;&nbsp;&nbsp;{ repParams.ParameterItems["DoDatuma"].Name }:
+			<span class="font-bold">{ repParams.ParameterItems["DoDatuma"].Value }</span>
+		}
+		if repParams.ParameterItems["Knjiga"].Value != "" {
+			&nbsp;&nbsp;&nbsp;{ repParams.ParameterItems["Knjiga"].Name }:
+			<span class="font-bold">{ repParams.ParameterItems["Knjiga"].Value }</span>
+		}
+	</div>
+}
+
+templ KnjigaIzlaznihRacunaTable(tbl domain.TableData, translator *i18n.Service) {
+	<table class="w-full border-collapse report-table mt-2 print:w-full print:text-[7pt] print:table-auto print:border-collapse text-[8pt]">
+		<thead>
+			<!-- Row 1: top-level groups -->
+			<tr class="text-black text-center text-[8pt] print:bg-white print:text-black">
+				<th rowspan="3" class="border border-gray-300 px-1 align-middle">{ translator.Label("redni_broj") }</th>
+				<th colspan="3" class="border border-gray-300 px-1">{ translator.Label("racun_ili_drugi_dokument") }</th>
+				<th colspan="2" class="border border-gray-300 px-1">{ translator.Label("kupac") }</th>
+				<th rowspan="3" class="border border-gray-300 px-1 align-middle">{ translator.Label("ukupna_naknada_sa_pdv") }</th>
+				<th colspan="4" class="border border-gray-300 px-1">{ translator.Label("osloboden_promet") }</th>
+				<th colspan="4" class="border border-gray-300 px-1">{ translator.Label("oporezovani_promet") }</th>
+				<th rowspan="3" class="border border-gray-300 px-1 align-middle">{ translator.Label("ukupan_promet_bez_pdv_formula") }<br/>(8 do 12+14)</th>
+				<th rowspan="3" class="border border-gray-300 px-1 align-middle">{ translator.Label("promet_sa_pravom_na_odbitak_bez_pdv_formula") }<br/>(8+10+12+14)</th>
+			</tr>
+			<!-- Row 2: sub-groups -->
+			<tr class="text-black text-center text-[8pt] print:text-black">
+				<th rowspan="2" class="border border-gray-300 px-1">{ translator.Label("datum knjizenja") }</th>
+				<th rowspan="2" class="border border-gray-300 px-1">{ translator.Label("broj dokumenta") }</th>
+				<th rowspan="2" class="border border-gray-300 px-1">{ translator.Label("datum izdavanja racuna") }</th>
+				<th rowspan="2" class="border border-gray-300 px-1">{ translator.Label("naziv kupca") }</th>
+				<th rowspan="2" class="border border-gray-300 px-1">{ translator.Label("pib ili jmbg") }</th>
+				<th rowspan="2" class="border border-gray-300 px-1">{ translator.Label("osloboden promet sa pravom na odbitak prethodnog poreza cl 24") }</th>
+				<th rowspan="2" class="border border-gray-300 px-1">{ translator.Label("osloboden promet bez prava na odbitak prethodnog poreza cl 25") }</th>
+				<th colspan="2" class="border border-gray-300 px-1">{ translator.Label("promet u inostranstvu") }</th>
+				<th colspan="2" class="border border-gray-300 px-1">{ translator.Label("po opstoj stopi") }</th>
+				<th colspan="2" class="border border-gray-300 px-1">{ translator.Label("po posebnoj stopi") }</th>
+			</tr>
+			<!-- Row 3: leaf columns -->
+			<tr class="text-black text-center text-[8pt] print:text-black">
+				<th class="border border-gray-300 px-1">{ translator.Label("sa pravom na prethodni porez u zemlji") }</th>
+				<th class="border border-gray-300 px-1">{ translator.Label("bez prava na prethodni porez u zemlji") }</th>
+				<th class="border border-gray-300 px-1">{ translator.Label("osnovica") }</th>
+				<th class="border border-gray-300 px-1">{ translator.Label("pdv") }</th>
+				<th class="border border-gray-300 px-1">{ translator.Label("osnovica") }</th>
+				<th class="border border-gray-300 px-1">{ translator.Label("pdv") }</th>
+			</tr>
+			<!-- Row 4: column numbers -->
+			<tr class="bg-gray-100 text-black text-center text-xs font-bold print:bg-gray-200">
+				for _, n := range []string{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17"} {
+					<th class="border border-gray-300 px-1 py-1">{ n }</th>
+				}
+			</tr>
+		</thead>
+		<tbody>
+			for _, row := range tbl.Rows {
+				if row.ClassRow == "nalog-header" {
+					<tr class="bg-gray-200 font-semibold text-black print:bg-gray-100 print:text-black">
+						<td colspan={ fmt.Sprintf("%d", len(tbl.Headers)) } class="border border-gray-300 px-1 py-1 text-left">
+							{ row.Fields[0] }
+						</td>
+					</tr>
+				} else {
+					<tr
+						class={ fmt.Sprintf("hover:bg-yellow-50 print:hover:bg-white %s", func() string {
+						if row.ClassRow == "nalog-total" {
+							return "bg-gray-50 font-semibold"
+						}
+						return ""
+					}()) }
+					>
+						if row.ClassRow == "nalog-total" {
+							<td class="border border-gray-300 px-1 py-0.5 text-xs print:text-[7pt] print:px-0.5 text-left" colspan="7">
+								{ row.Fields[0] }
+							</td>
+							for j, cell := range row.Fields {
+								if j >= 7 {
+									<td
+										class={ fmt.Sprintf("border border-gray-300 px-1 py-0.5 text-xs print:text-[7pt] print:px-0.5 text-%s", func() string {
+											if j < len(tbl.Headers) && tbl.Headers[j].TextAlign != "" {
+												return tbl.Headers[j].TextAlign
+											}
+											return "left"
+										}()) }
+									>
+										{ cell }
+									</td>
+								}
+							}
+						} else {
+							for j, cell := range row.Fields {
+								<td
+									class={ fmt.Sprintf("border border-gray-300 px-1 py-0.5 text-xs print:text-[7pt] print:px-0.5 text-%s", func() string {
+										if j < len(tbl.Headers) && tbl.Headers[j].TextAlign != "" {
+											return tbl.Headers[j].TextAlign
+										}
+										return "left"
+									}()) }
+								>
+									{ cell }
+								</td>
+							}
+						}
+					</tr>
+				}
+			}
+		</tbody>
+		if tbl.HasTotals && len(tbl.Totals) > 0 {
+			<tfoot>
+				<tr class="bg-blue-900 text-white font-bold print:bg-gray-700 print:text-white">
+					for j, total := range tbl.Totals {
+						<td
+							class={ fmt.Sprintf("border border-gray-300 px-1 py-0.5 text-xs font-bold print:text-[7pt] print:px-0.5 text-%s", func() string {
+								if j < len(tbl.Headers) && tbl.Headers[j].TextAlign != "" {
+									return tbl.Headers[j].TextAlign
+								}
+								return "left"
+							}()) }
+						>
+							{ total }
+						</td>
+					}
+				</tr>
+			</tfoot>
+		}
+	</table>
+}
+
+// KnjigaPrimljenihRacunaStampa renders the printable Knjiga primljenih računa report.
+templ KnjigaPrimljenihRacunaStampa(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
+	@rep.Report(repParams, domain.TableData{}, translator, nil, KnjigaPrimljenihRacunaContent(repParams, tbl, translator))
+}
+
+templ KnjigaPrimljenihRacunaContent(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
+	@rep.ReportHeader(repParams)
+	@rep.ReportTitle(repParams)
+	@KnjigaPrimljenihRacunaParam(repParams)
+	@KnjigaPrimljenihRacunaTable(tbl, translator)
+	@rep.ReportEnd(nil)
+}
+
+templ KnjigaPrimljenihRacunaParam(repParams domain.ReportParameters) {
+	<div class="text-center text-sm font-semibold mb-2">
+		if repParams.ParameterItems["OdDatuma"].Value != "" {
+			{ repParams.ParameterItems["OdDatuma"].Name }:
+			<span class="font-bold">{ repParams.ParameterItems["OdDatuma"].Value }</span>
+			&nbsp;&nbsp;&nbsp;{ repParams.ParameterItems["DoDatuma"].Name }:
+			<span class="font-bold">{ repParams.ParameterItems["DoDatuma"].Value }</span>
+		}
+		if repParams.ParameterItems["Knjiga"].Value != "" {
+			&nbsp;&nbsp;&nbsp;{ repParams.ParameterItems["Knjiga"].Name }:
+			<span class="font-bold">{ repParams.ParameterItems["Knjiga"].Value }</span>
+		}
+	</div>
+}
+
+templ KnjigaPrimljenihRacunaTable(tbl domain.TableData, translator *i18n.Service) {
+	<table class="w-full border-collapse report-table mt-2 print:w-full print:text-[7pt] print:table-auto print:border-collapse text-[8pt]">
+		<thead>
+			<tr class="text-black text-center text-[8pt] print:bg-white print:text-black">
+				<th rowspan="3" class="border border-gray-300 px-1 align-middle">{ translator.Label("Redni broj") }</th>
+				<th colspan="2" class="border border-gray-300 px-1">{ translator.Label("Datum") }</th>
+				<th colspan="9" class="border border-gray-300 px-1">{ translator.Label("Račun ili drugi dokument") }</th>
+				<th rowspan="3" class="border border-gray-300 px-1 align-middle">{ translator.Label("Ukupan iznos izracunatog prethodnog PDV tacka 17") }</th>
+				<th rowspan="3" class="border border-gray-300 px-1 align-middle">{ translator.Label("Iznos prethodnog pdv koji se moze odbiti") }</th>
+				<th rowspan="3" class="border border-gray-300 px-1 align-middle">{ translator.Label("Iznos prethodnog pdv koji se ne moze odbiti") }</th>
+				<th colspan="2" class="border border-gray-300 px-1">{ translator.Label("UVOZ") }</th>
+				<th colspan="2" class="border border-gray-300 px-1">{ translator.Label("Naknada poljopr.") }</th>
+			</tr>
+			<tr class="text-black text-center text-[8pt] print:text-black">
+				<th rowspan="2" class="border border-gray-300 px-1">{ translator.Label("Knjizenja isprave") }</th>
+				<th rowspan="2" class="border border-gray-300 px-1">{ translator.Label("Prij. carin. isprave i pl. nakn. polj.") }</th>
+				<th rowspan="2" class="border border-gray-300 px-1">{ translator.Label("Broj Racuna") }</th>
+				<th rowspan="2" class="border border-gray-300 px-1">{ translator.Label("Datum izd. racuna ili drugog dokum.") }</th>
+				<th colspan="2" class="border border-gray-300 px-1">{ translator.Label("DOBAVLJAČ") }</th>
+				<th rowspan="2" class="border border-gray-300 px-1">{ translator.Label("Ukupna naknada sa pdv tacka 16") }</th>
+				<th rowspan="2" class="border border-gray-300 px-1">{ translator.Label("Naknada bez PDV (na koju je obracunat PDV koji se moze odbiti)") }</th>
+				<th rowspan="2" class="border border-gray-300 px-1">{ translator.Label("Oslobodene nabavke tacka 18") }</th>
+				<th rowspan="2" class="border border-gray-300 px-1">{ translator.Label("Nabavke od lica koja nisu obveznici PDV tacka 15") }</th>
+				<th rowspan="2" class="border border-gray-300 px-1">{ translator.Label("Naknada za uvezena dobra za koja se ne placa PDV tacka 22") }</th>
+				<th rowspan="2" class="border border-gray-300 px-1">{ translator.Label("Vrednost dobara bez PDV tacka 21") }</th>
+				<th rowspan="2" class="border border-gray-300 px-1">{ translator.Label("Iznos PDV-a tacka 23") }</th>
+				<th rowspan="2" class="border border-gray-300 px-1">{ translator.Label("Vrednost primlj. dobara i usluga tacka 25") }</th>
+				<th rowspan="2" class="border border-gray-300 px-1">{ translator.Label("Iznos naknade tacka 24") }</th>
+			</tr>
+			<tr class="text-black text-center text-[8pt] print:text-black">
+				<th class="border border-gray-300 px-1">{ translator.Label("Naziv dobavljaca") }</th>
+				<th class="border border-gray-300 px-1">{ translator.Label("PIB ili JMBG") }</th>
+			</tr>
+			<tr class="bg-gray-100 text-black text-center text-xs font-bold print:bg-gray-200">
+				for _, n := range []string{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19"} {
+					<th class="border border-gray-300 px-1 py-1">{ n }</th>
+				}
+			</tr>
+		</thead>
+		<tbody>
+			for _, row := range tbl.Rows {
+				if row.ClassRow == "nalog-header" {
+					<tr class="bg-gray-200 font-semibold text-black print:bg-gray-100 print:text-black">
+						<td colspan={ fmt.Sprintf("%d", len(tbl.Headers)) } class="border border-gray-300 px-1 py-1 text-left">
+							{ row.Fields[0] }
+						</td>
+					</tr>
+				} else {
+					<tr
+						class={ fmt.Sprintf("hover:bg-yellow-50 print:hover:bg-white %s", func() string {
+						if row.ClassRow == "nalog-total" {
+							return "bg-gray-50 font-semibold"
+						}
+						return ""
+					}()) }
+					>
+						if row.ClassRow == "nalog-total" {
+							<td class="border border-gray-300 px-1 py-0.5 text-xs print:text-[7pt] print:px-0.5 text-left" colspan="7">
+								{ row.Fields[0] }
+							</td>
+							for j, cell := range row.Fields {
+								if j >= 7 {
+									<td
+										class={ fmt.Sprintf("border border-gray-300 px-1 py-0.5 text-xs print:text-[7pt] print:px-0.5 text-%s", func() string {
+											if j < len(tbl.Headers) && tbl.Headers[j].TextAlign != "" {
+												return tbl.Headers[j].TextAlign
+											}
+											return "left"
+										}()) }
+									>
+										{ cell }
+									</td>
+								}
+							}
+						} else {
+							for j, cell := range row.Fields {
+								<td
+									class={ fmt.Sprintf("border border-gray-300 px-1 py-0.5 text-xs print:text-[7pt] print:px-0.5 text-%s", func() string {
+										if j < len(tbl.Headers) && tbl.Headers[j].TextAlign != "" {
+											return tbl.Headers[j].TextAlign
+										}
+										return "left"
+									}()) }
+								>
+									{ cell }
+								</td>
+							}
+						}
+					</tr>
+				}
+			}
+		</tbody>
+		if tbl.HasTotals && len(tbl.Totals) > 0 {
+			<tfoot>
+				<tr class="bg-blue-900 text-white font-bold print:bg-gray-700 print:text-white">
+					for j, total := range tbl.Totals {
+						<td
+							class={ fmt.Sprintf("border border-gray-300 px-1 py-0.5 text-xs font-bold print:text-[7pt] print:px-0.5 text-%s", func() string {
+								if j < len(tbl.Headers) && tbl.Headers[j].TextAlign != "" {
+									return tbl.Headers[j].TextAlign
+								}
+								return "left"
+							}()) }
+						>
+							{ total }
+						</td>
+					}
+				</tr>
+			</tfoot>
+		}
+	</table>
+}

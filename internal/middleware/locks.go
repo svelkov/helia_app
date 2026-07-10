@@ -7,6 +7,7 @@ import (
 	"helia/internal/common"
 	"helia/internal/infrastructure/db"
 	"log"
+	"net/http"
 	"strconv"
 	"time"
 
@@ -256,7 +257,7 @@ func (lm *LockMiddleware) WithEntityLock(entityType, paramName string) gin.Handl
 		entityIdStr := c.Param(paramName)
 		entityId, err := strconv.ParseInt(entityIdStr, 10, 64)
 		if err != nil {
-			c.JSON(400, gin.H{"error": "Invalid entity ID format"})
+			common.WriteJSONResponse(c, http.StatusBadRequest, false, nil, common.ErrMsgInvalidID)
 			c.Abort()
 			return
 		}
@@ -264,7 +265,7 @@ func (lm *LockMiddleware) WithEntityLock(entityType, paramName string) gin.Handl
 		// Get user ID from context (set by auth middleware)
 		userId, exists := c.Get("userid")
 		if !exists {
-			c.JSON(401, gin.H{"error": "Unauthorized"})
+			common.WriteJSONResponse(c, http.StatusUnauthorized, false, nil, common.ErrMsgUnauthorized)
 			c.Abort()
 			return
 		}
@@ -274,7 +275,7 @@ func (lm *LockMiddleware) WithEntityLock(entityType, paramName string) gin.Handl
 		// Attempt to acquire lock
 		lockErr := lm.lockService.Lock(c.Request.Context(), entityType, entityId, userIdStr)
 		if lockErr != nil {
-			c.JSON(409, gin.H{"error": fmt.Sprintf("Cannot acquire lock: %v", lockErr)})
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgLockFailed)
 			c.Abort()
 			return
 		}
@@ -306,9 +307,12 @@ func (lm *LockMiddleware) WithEntityLockHold(entityType, paramName string) gin.H
 	return func(c *gin.Context) {
 		// Extract entity ID from URL parameter
 		entityIdStr := c.Param(paramName)
+		if entityIdStr == "" {
+			entityIdStr = c.Query(paramName) // Try query parameter if not in path
+		}
 		entityId, err := strconv.ParseInt(entityIdStr, 10, 64)
 		if err != nil {
-			c.JSON(400, gin.H{"error": "Invalid entity ID format"})
+			common.WriteJSONResponse(c, http.StatusBadRequest, false, nil, common.ErrMsgInvalidID)
 			c.Abort()
 			return
 		}
@@ -316,7 +320,7 @@ func (lm *LockMiddleware) WithEntityLockHold(entityType, paramName string) gin.H
 		// Get user ID from context (set by auth middleware)
 		userId, exists := c.Get("username")
 		if !exists {
-			c.JSON(401, gin.H{"error": "Unauthorized"})
+			common.WriteJSONResponse(c, http.StatusUnauthorized, false, nil, common.ErrMsgUnauthorized)
 			c.Abort()
 			return
 		}
@@ -326,7 +330,7 @@ func (lm *LockMiddleware) WithEntityLockHold(entityType, paramName string) gin.H
 		// Attempt to acquire lock
 		lockErr := lm.lockService.Lock(c.Request.Context(), entityType, entityId, userIdStr)
 		if lockErr != nil {
-			c.JSON(409, gin.H{"error": fmt.Sprintf("Cannot acquire lock: %v", lockErr)})
+			common.WriteJSONResponse(c, http.StatusConflict, false, nil, common.ErrMsgLockFailed)
 			c.Abort()
 			return
 		}
@@ -353,7 +357,7 @@ func (lm *LockMiddleware) WithEntityLockVerifyAndRefresh(entityType, paramName s
 		entityIdStr := c.Param(paramName)
 		entityId, err := strconv.ParseInt(entityIdStr, 10, 64)
 		if err != nil {
-			c.JSON(400, gin.H{"error": "Invalid entity ID format"})
+			common.WriteJSONResponse(c, http.StatusBadRequest, false, nil, common.ErrMsgInvalidID)
 			c.Abort()
 			return
 		}
@@ -361,7 +365,7 @@ func (lm *LockMiddleware) WithEntityLockVerifyAndRefresh(entityType, paramName s
 		// Get user ID from context (set by auth middleware)
 		userId, exists := c.Get("username")
 		if !exists {
-			c.JSON(401, gin.H{"error": "Unauthorized"})
+			common.WriteJSONResponse(c, http.StatusUnauthorized, false, nil, common.ErrMsgUnauthorized)
 			c.Abort()
 			return
 		}
@@ -371,7 +375,7 @@ func (lm *LockMiddleware) WithEntityLockVerifyAndRefresh(entityType, paramName s
 		// Verify the lock is still held by this user
 		verifyErr := lm.lockService.VerifyLock(c.Request.Context(), entityType, entityId, userIdStr)
 		if verifyErr != nil {
-			c.JSON(409, gin.H{"error": fmt.Sprintf("Lock verification failed: %v", verifyErr)})
+			common.WriteJSONResponse(c, http.StatusConflict, false, nil, common.ErrMsgLockFailed)
 			c.Abort()
 			return
 		}
@@ -379,7 +383,7 @@ func (lm *LockMiddleware) WithEntityLockVerifyAndRefresh(entityType, paramName s
 		// Refresh the lock (extend expiry by 10 minutes)
 		refreshErr := lm.lockService.Lock(c.Request.Context(), entityType, entityId, userIdStr)
 		if refreshErr != nil {
-			c.JSON(409, gin.H{"error": fmt.Sprintf("Cannot refresh lock: %v", refreshErr)})
+			common.WriteJSONResponse(c, http.StatusConflict, false, nil, common.ErrMsgLockFailed)
 			c.Abort()
 			return
 		}
@@ -405,7 +409,7 @@ func (lm *LockMiddleware) WithEntityLockVerifyAndRelease(entityType, paramName s
 		entityIdStr := c.Param(paramName)
 		entityId, err := strconv.ParseInt(entityIdStr, 10, 64)
 		if err != nil {
-			c.JSON(400, gin.H{"error": "Invalid entity ID format"})
+			common.WriteJSONResponse(c, http.StatusBadRequest, false, nil, common.ErrMsgInvalidID)
 			c.Abort()
 			return
 		}
@@ -413,7 +417,7 @@ func (lm *LockMiddleware) WithEntityLockVerifyAndRelease(entityType, paramName s
 		// Get user ID from context (set by auth middleware)
 		userId, exists := c.Get("username")
 		if !exists {
-			c.JSON(401, gin.H{"error": "Unauthorized"})
+			common.WriteJSONResponse(c, http.StatusUnauthorized, false, nil, common.ErrMsgUnauthorized)
 			c.Abort()
 			return
 		}
@@ -423,7 +427,7 @@ func (lm *LockMiddleware) WithEntityLockVerifyAndRelease(entityType, paramName s
 		// Verify the lock is still held by this user
 		verifyErr := lm.lockService.VerifyLock(c.Request.Context(), entityType, entityId, userIdStr)
 		if verifyErr != nil {
-			c.JSON(409, gin.H{"error": fmt.Sprintf("Lock verification failed: %v", verifyErr)})
+			common.WriteJSONResponse(c, http.StatusConflict, false, nil, common.ErrMsgLockFailed)
 			c.Abort()
 			return
 		}

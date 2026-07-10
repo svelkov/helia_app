@@ -1,0 +1,326 @@
+package finansijsko
+
+import (
+	"fmt"
+	rep "helia/frontend/templates/reports"
+	"helia/i18n"
+	"helia/internal/domain"
+	"time"
+)
+
+// ZakljucniListObrazacStampa renders a printable full-page Zakljucni list report.
+templ ZakljucniListObrazacStampa(repParams domain.ReportParameters, params domain.ZakljucniStampaParams, tbl domain.TableData, tblSummary domain.TableData, translator *i18n.Service) {
+	@rep.Report(repParams, tbl, translator, nil, ZakljucniListReport(params, tbl, tblSummary, translator))
+}
+
+templ ZakljucniListReport(params domain.ZakljucniStampaParams, tbl domain.TableData, tblSummary domain.TableData, translator *i18n.Service) {
+	@ZakljucniListReportHeader(params, translator)
+	@ZakljucniListReportBody(params, tbl, translator)
+	@ZakljucniListReportSummary(params, tblSummary, translator)
+	@rep.ReportEnd(nil)
+}
+
+templ ZakljucniListReportHeader(params domain.ZakljucniStampaParams, translator *i18n.Service) {
+	<!-- Company info + date/page -->
+	<div class="flex justify-between items-start text-[10px] mb-2">
+		<!-- Left: company block -->
+		<div>
+			<div class="font-bold text-sm">{ params.Naziv }</div>
+			<div>{ params.Adresa }, { params.PostBroj } { params.Mesto } - { fmt.Sprintf("%d", params.God) }. { translator.Label("godina") }</div>
+			<div>{ translator.Label("Matični broj") } : { params.MaticniBroj }</div>
+			<div>{ translator.Label("Šifra delatnosti") } : { params.SifraDelatnosti }</div>
+		</div>
+		<!-- Right: date/time and page (browser/CSS handles page number) -->
+		<div class="text-right">
+			<div class="page-info">{ time.Now().Format("02.01.2006 15:04:05") }</div>
+		</div>
+	</div>
+	<!-- Title -->
+	<div class="text-center mb-1">
+		<h1 class="text-[13px] font-bold tracking-wide">{ translator.Title(params.ReportTitle) }</h1>
+	</div>
+	<!-- Period line -->
+	<div class="text-center text-[11px] font-semibold mb-3">
+		{ translator.Label("Za period od") }: <span class="font-bold">{ params.OdDatuma }</span>
+		&nbsp;&nbsp;{ translator.Label("do") }: <span class="font-bold">{ params.DoDatuma }</span>
+		&nbsp;&nbsp;&nbsp;&nbsp;{ translator.Label("Datum obrade") }: <span class="font-bold">{ params.DatumObrade }</span>
+	</div>
+}
+
+templ ZakljucniListReportBody(params domain.ZakljucniStampaParams, tbl domain.TableData, translator *i18n.Service) {
+	<table class="w-full table-fixed border-collapse text-[10px] border border-black [border-collapse:collapse]">
+		<thead class="text-[10px] bg-gray-200">
+			if params.ZaBanku == "false" {
+				<!-- Row 1: full columns (početno stanje + tekući promet + ukupan promet + saldo) -->
+				<tr>
+					<th rowspan="2" class="border border-black px-1 w-[4%] text-center">{ translator.Label("Redni broj") }</th>
+					<th rowspan="2" class="border border-black px-1 w-[6%] text-center">{ translator.Label("Konto") }</th>
+					<th rowspan="2" class="border border-black px-1 w-[5%] text-center">{ translator.Label("Šifra") }</th>
+					<th rowspan="2" class="border border-black px-1 w-[21%] text-center">{ translator.Label("NAZIV") }</th>
+					<th colspan="2" class="border border-black px-1 text-center">{ translator.Label("POČETNO STANJE") }</th>
+					<th colspan="2" class="border border-black px-1 text-center">{ translator.Label("TEKUĆI PROMET") }</th>
+					<th colspan="2" class="border border-black px-1 text-center">{ translator.Label("UKUPAN PROMET") }</th>
+					<th colspan="2" class="border border-black px-1 text-center">{ translator.Label("SALDO") }</th>
+				</tr>
+				<tr>
+					<th class="border border-black px-1 text-right w-[8%]">{ translator.Label("Duguje") }</th>
+					<th class="border border-black px-1 text-right w-[8%]">{ translator.Label("Potražuje") }</th>
+					<th class="border border-black px-1 text-right w-[8%]">{ translator.Label("Duguje") }</th>
+					<th class="border border-black px-1 text-right w-[8%]">{ translator.Label("Potražuje") }</th>
+					<th class="border border-black px-1 text-right w-[8%]">{ translator.Label("Duguje") }</th>
+					<th class="border border-black px-1 text-right w-[8%]">{ translator.Label("Potražuje") }</th>
+					<th class="border border-black px-1 text-right w-[8%]">{ translator.Label("Duguje") }</th>
+					<th class="border border-black px-1 text-right w-[8%]">{ translator.Label("Potražuje") }</th>
+				</tr>
+			} else {
+				<!-- Row 1: za banku columns (ukupan promet + saldo only) -->
+				<tr>
+					<th rowspan="2" class="border border-black px-1 w-[5%] text-center">{ translator.Label("Redni broj") }</th>
+					<th rowspan="2" class="border border-black px-1 w-[8%] text-center">{ translator.Label("Konto") }</th>
+					<th rowspan="2" class="border border-black px-1 w-[6%] text-center">{ translator.Label("Šifra") }</th>
+					<th rowspan="2" class="border border-black px-1 w-[37%] text-center">{ translator.Label("NAZIV") }</th>
+					<th colspan="2" class="border border-black px-1 text-center">{ translator.Label("UKUPAN PROMET") }</th>
+					<th colspan="2" class="border border-black px-1 text-center">{ translator.Label("SALDO") }</th>
+				</tr>
+				<tr>
+					<th class="border border-black px-1 text-right w-[10%]">{ translator.Label("Duguje") }</th>
+					<th class="border border-black px-1 text-right w-[10%]">{ translator.Label("Potražuje") }</th>
+					<th class="border border-black px-1 text-right w-[10%]">{ translator.Label("Duguje") }</th>
+					<th class="border border-black px-1 text-right w-[10%]">{ translator.Label("Potražuje") }</th>
+				</tr>
+			}
+		</thead>
+		<tbody>
+			for i, row := range tbl.Rows {
+				if len(row.Fields) < 12 {
+					continue
+				}
+				// Fields[0] encodes row type:
+				//   "G1" = innermost group total (subsintetika / sintetika / grupa depending on tipLista)
+				//   "G2" = next group total
+				//   "G3" = next group total
+				//   "G4" = outermost group total (klasa, only tipLista=1)
+				//   "T"  = grand total
+				//   otherwise = data row (rbr number)
+				switch row.Fields[0] {
+					case "G1":
+						<!-- G1 — innermost group subtotal (subgroup-header style) -->
+						<tr class="subgroup-header font-semibold bg-gray-50 border-t border-black">
+							<td class="border border-black px-1 py-[2px]"></td>
+							<td class="border border-black px-1 py-[2px] font-semibold">{ row.Fields[1] }</td>
+							<td class="border border-black px-1 py-[2px]"></td>
+							<td class="border border-black px-1 py-[2px] font-semibold">{ row.Fields[3] }</td>
+							if params.ZaBanku == "false" {
+								<td class="border border-black px-1 py-[2px] text-right font-semibold">{ row.Fields[4] }</td>
+								<td class="border border-black px-1 py-[2px] text-right font-semibold">{ row.Fields[5] }</td>
+								<td class="border border-black px-1 py-[2px] text-right font-semibold">{ row.Fields[6] }</td>
+								<td class="border border-black px-1 py-[2px] text-right font-semibold">{ row.Fields[7] }</td>
+							}
+							<td class="border border-black px-1 py-[2px] text-right font-semibold">{ row.Fields[8] }</td>
+							<td class="border border-black px-1 py-[2px] text-right font-semibold">{ row.Fields[9] }</td>
+							<td class="border border-black px-1 py-[2px] text-right font-semibold">{ row.Fields[10] }</td>
+							<td class="border border-black px-1 py-[2px] text-right font-semibold">{ row.Fields[11] }</td>
+						</tr>
+					case "G2":
+						<!-- G2 — second group subtotal (group-header style) -->
+						<tr class="group-header font-bold bg-gray-100 border-t border-black">
+							<td class="border border-black px-1 py-[2px]"></td>
+							<td class="border border-black px-1 py-[2px] font-bold">{ row.Fields[1] }</td>
+							<td class="border border-black px-1 py-[2px]"></td>
+							<td class="border border-black px-1 py-[2px] font-bold">{ row.Fields[3] }</td>
+							if params.ZaBanku == "false" {
+								<td class="border border-black px-1 py-[2px] text-right font-bold">{ row.Fields[4] }</td>
+								<td class="border border-black px-1 py-[2px] text-right font-bold">{ row.Fields[5] }</td>
+								<td class="border border-black px-1 py-[2px] text-right font-bold">{ row.Fields[6] }</td>
+								<td class="border border-black px-1 py-[2px] text-right font-bold">{ row.Fields[7] }</td>
+							}
+							<td class="border border-black px-1 py-[2px] text-right font-bold">{ row.Fields[8] }</td>
+							<td class="border border-black px-1 py-[2px] text-right font-bold">{ row.Fields[9] }</td>
+							<td class="border border-black px-1 py-[2px] text-right font-bold">{ row.Fields[10] }</td>
+							<td class="border border-black px-1 py-[2px] text-right font-bold">{ row.Fields[11] }</td>
+						</tr>
+					case "G3":
+						<!-- G3 — third group subtotal (group-total style) -->
+						<tr class="group-total font-bold bg-gray-200 border-t-2 border-black">
+							<td class="border border-black px-1 py-[2px]"></td>
+							<td class="border border-black px-1 py-[2px] font-bold">{ row.Fields[1] }</td>
+							<td class="border border-black px-1 py-[2px]"></td>
+							<td class="border border-black px-1 py-[2px] font-bold">{ row.Fields[3] }</td>
+							if params.ZaBanku == "false" {
+								<td class="border border-black px-1 py-[2px] text-right font-bold">{ row.Fields[4] }</td>
+								<td class="border border-black px-1 py-[2px] text-right font-bold">{ row.Fields[5] }</td>
+								<td class="border border-black px-1 py-[2px] text-right font-bold">{ row.Fields[6] }</td>
+								<td class="border border-black px-1 py-[2px] text-right font-bold">{ row.Fields[7] }</td>
+							}
+							<td class="border border-black px-1 py-[2px] text-right font-bold">{ row.Fields[8] }</td>
+							<td class="border border-black px-1 py-[2px] text-right font-bold">{ row.Fields[9] }</td>
+							<td class="border border-black px-1 py-[2px] text-right font-bold">{ row.Fields[10] }</td>
+							<td class="border border-black px-1 py-[2px] text-right font-bold">{ row.Fields[11] }</td>
+						</tr>
+					case "G4":
+						<!-- G4 — outermost group subtotal (klasa, tipLista=1 only) -->
+						<tr class="group-total font-bold bg-gray-300 border-t-2 border-black">
+							<td class="border border-black px-1 py-[2px]"></td>
+							<td class="border border-black px-1 py-[2px] font-bold">{ row.Fields[1] }</td>
+							<td class="border border-black px-1 py-[2px]"></td>
+							<td class="border border-black px-1 py-[2px] font-bold">{ row.Fields[3] }</td>
+							if params.ZaBanku == "false" {
+								<td class="border border-black px-1 py-[2px] text-right font-bold">{ row.Fields[4] }</td>
+								<td class="border border-black px-1 py-[2px] text-right font-bold">{ row.Fields[5] }</td>
+								<td class="border border-black px-1 py-[2px] text-right font-bold">{ row.Fields[6] }</td>
+								<td class="border border-black px-1 py-[2px] text-right font-bold">{ row.Fields[7] }</td>
+							}
+							<td class="border border-black px-1 py-[2px] text-right font-bold">{ row.Fields[8] }</td>
+							<td class="border border-black px-1 py-[2px] text-right font-bold">{ row.Fields[9] }</td>
+							<td class="border border-black px-1 py-[2px] text-right font-bold">{ row.Fields[10] }</td>
+							<td class="border border-black px-1 py-[2px] text-right font-bold">{ row.Fields[11] }</td>
+						</tr>
+					case "T":
+						<!-- T — grand total row -->
+						<tr class="grand-total font-bold border-t-2 border-black bg-gray-400">
+							<td colspan="4" class="border border-black px-1 py-[2px] font-bold">{ row.Fields[3] }</td>
+							if params.ZaBanku == "false" {
+								<td class="border border-black px-1 py-[2px] text-right font-bold">{ row.Fields[4] }</td>
+								<td class="border border-black px-1 py-[2px] text-right font-bold">{ row.Fields[5] }</td>
+								<td class="border border-black px-1 py-[2px] text-right font-bold">{ row.Fields[6] }</td>
+								<td class="border border-black px-1 py-[2px] text-right font-bold">{ row.Fields[7] }</td>
+							}
+							<td class="border border-black px-1 py-[2px] text-right font-bold">{ row.Fields[8] }</td>
+							<td class="border border-black px-1 py-[2px] text-right font-bold">{ row.Fields[9] }</td>
+							<td class="border border-black px-1 py-[2px] text-right font-bold">{ row.Fields[10] }</td>
+							<td class="border border-black px-1 py-[2px] text-right font-bold">{ row.Fields[11] }</td>
+						</tr>
+					default:
+						<!-- DATA row — alternating background -->
+						<tr
+							class={ func() string {
+							if i%2 == 1 {
+								return "bg-gray-50 hover:bg-yellow-50 print:hover:bg-gray-50"
+							}
+							return "bg-white hover:bg-yellow-50 print:hover:bg-white"
+						}() }
+						>
+							<td class="border border-black px-1 py-[2px] text-center">{ row.Fields[0] }</td>
+							<td class="border border-black px-1 py-[2px]">{ row.Fields[1] }</td>
+							<td class="border border-black px-1 py-[2px] text-center">{ row.Fields[2] }</td>
+							<td class="border border-black px-1 py-[2px]">{ row.Fields[3] }</td>
+							if params.ZaBanku == "false" {
+								<td class="border border-black px-1 py-[2px] text-right">{ row.Fields[4] }</td>
+								<td class="border border-black px-1 py-[2px] text-right">{ row.Fields[5] }</td>
+								<td class="border border-black px-1 py-[2px] text-right">{ row.Fields[6] }</td>
+								<td class="border border-black px-1 py-[2px] text-right">{ row.Fields[7] }</td>
+							}
+							<td class="border border-black px-1 py-[2px] text-right">{ row.Fields[8] }</td>
+							<td class="border border-black px-1 py-[2px] text-right">{ row.Fields[9] }</td>
+							<td class="border border-black px-1 py-[2px] text-right">{ row.Fields[10] }</td>
+							<td class="border border-black px-1 py-[2px] text-right">{ row.Fields[11] }</td>
+						</tr>
+				}
+			}
+		</tbody>
+	</table>
+}
+
+templ ZakljucniListReportSummary(params domain.ZakljucniStampaParams, tblSummary domain.TableData, translator *i18n.Service) {
+	if len(tblSummary.Rows) == 0 {
+		return
+	}
+	<!-- Rekapitulacija po klasama -->
+	<div class="mt-6">
+		<div class="text-[11px] font-bold mb-1">{ translator.Label("rekapitulacija_po_klasama") }:</div>
+		<table class="w-full table-fixed border-collapse text-[10px] border border-black [border-collapse:collapse]">
+			if params.ZaBanku == "false" {
+				<colgroup>
+					<col style="width:4%"/>
+					<col style="width:6%"/>
+					<col style="width:5%"/>
+					<col style="width:21%"/>
+					<col style="width:8%"/>
+					<col style="width:8%"/>
+					<col style="width:8%"/>
+					<col style="width:8%"/>
+					<col style="width:8%"/>
+					<col style="width:8%"/>
+					<col style="width:8%"/>
+					<col style="width:8%"/>
+				</colgroup>
+			} else {
+				<colgroup>
+					<col style="width:5%"/>
+					<col style="width:8%"/>
+					<col style="width:6%"/>
+					<col style="width:32%"/>
+					<col style="width:10%"/>
+					<col style="width:10%"/>
+					<col style="width:10%"/>
+					<col style="width:10%"/>
+				</colgroup>
+			}
+			<tbody>
+				for _, row := range tblSummary.Rows {
+					if len(row.Fields) < 12 {
+						continue
+					}
+					if row.Fields[0] == "T" {
+						<tr class="font-bold bg-gray-400 border-t-2 border-black">
+							<td colspan="4" class="border border-black px-1 py-[2px] text-right font-bold">{ row.Fields[3] }</td>
+							if params.ZaBanku == "false" {
+								<td class="border border-black px-1 py-[2px] text-right font-bold">{ row.Fields[4] }</td>
+								<td class="border border-black px-1 py-[2px] text-right font-bold">{ row.Fields[5] }</td>
+								<td class="border border-black px-1 py-[2px] text-right font-bold">{ row.Fields[6] }</td>
+								<td class="border border-black px-1 py-[2px] text-right font-bold">{ row.Fields[7] }</td>
+							}
+							<td class="border border-black px-1 py-[2px] text-right font-bold">{ row.Fields[8] }</td>
+							<td class="border border-black px-1 py-[2px] text-right font-bold">{ row.Fields[9] }</td>
+							<td class="border border-black px-1 py-[2px] text-right font-bold">{ row.Fields[10] }</td>
+							<td class="border border-black px-1 py-[2px] text-right font-bold">{ row.Fields[11] }</td>
+						</tr>
+					} else {
+						<tr class="border-t border-black">
+							<td colspan="4" class="border border-black px-1 py-[2px] text-right">{ row.Fields[3] }</td>
+							if params.ZaBanku == "false" {
+								<td class="border border-black px-1 py-[2px] text-right">{ row.Fields[4] }</td>
+								<td class="border border-black px-1 py-[2px] text-right">{ row.Fields[5] }</td>
+								<td class="border border-black px-1 py-[2px] text-right">{ row.Fields[6] }</td>
+								<td class="border border-black px-1 py-[2px] text-right">{ row.Fields[7] }</td>
+							}
+							<td class="border border-black px-1 py-[2px] text-right">{ row.Fields[8] }</td>
+							<td class="border border-black px-1 py-[2px] text-right">{ row.Fields[9] }</td>
+							<td class="border border-black px-1 py-[2px] text-right">{ row.Fields[10] }</td>
+							<td class="border border-black px-1 py-[2px] text-right">{ row.Fields[11] }</td>
+						</tr>
+					}
+				}
+			</tbody>
+		</table>
+	</div>
+	<!-- Signature block -->
+	<div class="mt-8 flex justify-between items-end text-[10px]">
+		<!-- Left: U / Dana -->
+		<div class="flex flex-col gap-4 w-[22%]">
+			<div class="flex items-end gap-1">
+				<span>U</span>
+				<div class="border-b border-black flex-1 mb-[2px]"></div>
+			</div>
+			<div class="flex items-end gap-1">
+				<span>{ translator.Label("Dana") }</span>
+				<div class="border-b border-black flex-1 mb-[2px]"></div>
+				<span>{ translator.Label("godine") }</span>
+			</div>
+		</div>
+		<!-- Center: Lice odgovorno -->
+		<div class="flex flex-col items-center gap-4 w-[32%]">
+			<div class="border-b border-black w-full"></div>
+			<div>{ translator.Label("lice odgovorno za sastavljanje bilansa") }</div>
+		</div>
+		<!-- Right: Rukovodilac -->
+		<div class="flex flex-col items-center gap-4 w-[32%]">
+			<div class="border-b border-black w-full"></div>
+			<div>{ translator.Label("rukovodilac pravnog lica") }</div>
+		</div>
+	</div>
+	<!-- Software footer -->
+	<div class="mt-6 text-right text-[9px] text-gray-500">
+		Lav kompjuteri - lavsoft@yahoo.com
+	</div>
+}

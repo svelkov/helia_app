@@ -1,0 +1,45 @@
+package finansijsko
+
+import (
+	rep "helia/frontend/templates/reports"
+	"helia/i18n"
+	"helia/internal/domain"
+)
+
+// DnevnikKnjizenjaStampa renders a printable full-page Dnevnik knjizenja report.
+templ DnevnikKnjizenjaStampa(tblStavke domain.TableData, tblKonta domain.TableData, params domain.ReportParameters, translator *i18n.Service) {
+	@rep.Report(params, tblStavke, translator, nil, DnevnikKnjizenjaReport(params, tblStavke, tblKonta, translator))
+}
+
+templ DnevnikKnjizenjaReport(params domain.ReportParameters, tblStavke domain.TableData, tblKonta domain.TableData, translator *i18n.Service) {
+	@DnevnikKnjizenjaReportHeader(params, translator)
+	@DnevnikKnjizenjaReportBody(tblStavke, translator)
+	if len(tblKonta.Rows) > 0 {
+		@DnevnikKnjizenjaReportSummary(tblKonta, translator)
+	}
+	@rep.ReportEnd(nil)
+}
+
+templ DnevnikKnjizenjaReportHeader(params domain.ReportParameters, translator *i18n.Service) {
+	<!-- Company info + date/page -->
+	@rep.ReportHeader(params)
+	@rep.ReportTitle(params)
+	<!-- Period from ParameterItems -->
+	<div class="text-center text-[11px] font-semibold mb-3">
+		{ params.ParameterItems["OdDatuma"].Name }:
+		<span class="font-bold">{ params.ParameterItems["OdDatuma"].Value }</span>
+		&nbsp;&nbsp;{ params.ParameterItems["DoDatuma"].Name }:
+		<span class="font-bold">{ params.ParameterItems["DoDatuma"].Value }</span>
+	</div>
+}
+
+templ DnevnikKnjizenjaReportBody(tbl domain.TableData, translator *i18n.Service) {
+	@rep.ReportTable(tbl, translator)
+}
+
+templ DnevnikKnjizenjaReportSummary(tblKonta domain.TableData, translator *i18n.Service) {
+	<div class="mt-6">
+		<div class="text-[11px] font-bold mb-1">{ translator.Title("Promet po kontima za nalog") }:</div>
+		@rep.ReportTableSection(tblKonta, translator)
+	</div>
+}

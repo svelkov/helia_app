@@ -8,8 +8,10 @@ package templates
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-import "helia/internal/domain"
-import "helia/i18n"
+import (
+	"helia/i18n"
+	"helia/internal/domain"
+)
 
 func ContentContainer(tbl domain.TableData, inputControl domain.InputControl, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
@@ -32,7 +34,7 @@ func ContentContainer(tbl domain.TableData, inputControl domain.InputControl, tr
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!-- Container with full height --><div class=\"flex flex-col h-full\"><!-- Tab Content --><div id=\"content\" class=\"flex-1 min-h-0 flex flex-col gap-1\"><div class=\"border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!-- Container with full height --><div class=\"flex flex-col h-full\"><!-- Dialog container placed first so it is outside overflow wrappers --><div id=\"dialog-container\"></div><!-- Tab Content --><div id=\"content\" class=\"flex-1 min-h-0 flex flex-col gap-1\"><div class=\"border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -49,6 +51,10 @@ func ContentContainer(tbl domain.TableData, inputControl domain.InputControl, tr
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</div></div></div></div><script>\r\n\t    document.addEventListener('htmx:afterSwap', (event) => {\r\n\t        if (event.detail.target.id === 'table') {\r\n\t            const currentPage = event.detail.xhr.responseURL.match(/page=(\\d+)/);\r\n\t            if (currentPage) {\r\n\t                const page = parseInt(currentPage[1], 10);\r\n\t                document.querySelectorAll('.pagination .page-item').forEach((item) => {\r\n\t                    item.classList.remove('active');\r\n\t                });\r\n\t                const activeLink = document.querySelector(`.pagination .page-link[hx-get*=\"?page=${page}\"]`);\r\n\t                if (activeLink) {\r\n\t                    activeLink.closest('.page-item').classList.add('active');\r\n\t                }\r\n\t            }\r\n\t        }\r\n\t    });\r\n\t</script>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = OpenPrintWithParamsScript().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

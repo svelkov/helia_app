@@ -3,10 +3,12 @@ package finansijsko
 import (
 	"context"
 	"fmt"
+	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
 	"helia/internal/repository"
 	"helia/internal/service"
+	"helia/pkg/utils"
 	"reflect"
 	"strings"
 )
@@ -20,14 +22,17 @@ type SaldaViewData struct {
 // SaldaService defines the interface for operations related to Salda.
 type SaldaService interface {
 	GetSaldaPojedinacnihKonta(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, page int, konto, sifra, tipkonta string) error
-	GetSaldaGrupeKonta(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, page int, params domain.SaldaParam) error
+	GetSaldaGrupeKonta(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, page int, params domain.SaldaParam, duzSintetika int) error
 	GetSaldaPartneriList(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage int, pageSize int, searchText, sortBy, sortOrder string) error
-	GetSaldaTotalValues(ctx context.Context) (domain.SaldaDto, error)
+	GetSaldaTotalValues(ctx context.Context, konto, sifra, tipKonta string) (domain.SaldaDto, error)
 	GetSaldaKlase5i6TotalValues(ctx context.Context) (domain.SaldaDto, error)
 	ProcessSaldaPartneriDetails(ctx context.Context, idPartneri int64, tblKonta, tblDetalji *domain.TableData, searchText, sortBy, sortOrder string) error
 	GetSaldaPartneriPrelomljeno(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage int, pageSize int, searchText, sortBy, sortOrder string) error
-	GetSaldaKlase5i6Analitika(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage int, pageSize int, searchText string) error
-	SaldaKlase5i6MT(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage int, pageSize int, searchText string) error
+	GetSaldaPartneriPrelomljenoStampa(ctx context.Context, tbl *domain.TableData, sifrOd, sifraDo string) error
+	GetSaldaKlase5i6Analitika(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage int, pageSize int, saldaParam domain.SaldaParam, searchText string) error
+	GetSaldaKlase5i6AnalitikaStampa(ctx context.Context, tbl *domain.TableData, saldaParam domain.SaldaParam) error
+	SaldaKlase5i6MT(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage int, pageSize int, saldaParam domain.SaldaParam, searchText string) error
+	GetSaldaKlase5i6MTStampa(ctx context.Context, tbl *domain.TableData, saldaParam domain.SaldaParam) error
 	SaldaPoKomercijalistima(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage int, pageSize int, searchText, sortBy, sortOrder string) error
 	RealizacijaKomercijalisti(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage int, pageSize int, searchText, sortBy, sortOrder string) error
 
@@ -42,10 +47,16 @@ type SaldaService interface {
 	GetSaldaPartneriHeaderTableFields() []domain.Fields
 	GetSaldaPartneriDetailTableFields() []domain.Fields
 	GetSaldaPartneriPrelomljenoTableFields() []domain.Fields
+	GetSaldaPartneriPrelomljenoStampaFields() []domain.Fields
 	GetSaldaKlase5i6AnalitikaTableFields() []domain.Fields
+	GetSaldaKlase5i6AnalitikaStampaFields() []domain.Fields
 	GetSaldaKlase5i6MTTableFields() []domain.Fields
+	GetSaldaKlase5i6MTStampaFields() []domain.Fields
 	GetKomercijalistiTableFields() []domain.Fields
 	GetRealizacijaKomercijalistiTableFields() []domain.Fields
+	GetSaldaPartneraPoKontimaStampaFields() []domain.Fields
+	GetSaldaPartneraPoKontimaStampa(ctx context.Context, tbl *domain.TableData, sifrOd, sifraDo string, stampajDetalje bool) error
+	GetFvrData(ctx context.Context) (domain.Fvr, error)
 }
 
 // SaldaResource implements the SaldaService interface.
@@ -57,16 +68,21 @@ type SaldaResource struct {
 	partneriRepo                              *repository.BaseRepository[domain.Partneri]
 	saldaPartneriRepo                         *repository.BaseRepository[domain.SaldaPartnerDto]
 	saldaKomRepo                              *repository.BaseRepository[domain.SaldaKomercijalistiDto]
+	fvrRepo                                   *repository.BaseRepository[domain.Fvr]
 	saldaPojedinacniTableFields               []domain.Fields
 	saldaGrupeKontaTableFields                []domain.Fields
 	saldaPartneriTableFields                  []domain.Fields
 	saldaPartneriHeaderTableFields            []domain.Fields
 	saldaPartneriDetailTableFields            []domain.Fields
 	saldaPartneriPrelomljenoTableFields       []domain.Fields
+	saldaPartneriPrelomljenoStampaTableFields []domain.Fields
 	saldaKlase5i6AnalitikaTableFields         []domain.Fields
+	saldaKlase5i6AnalitikaStampaTableFields   []domain.Fields
 	saldaKlase5i6MTTableFields                []domain.Fields
+	saldaKlase5i6MTStampaTableFields          []domain.Fields
 	saldaKomercijalistiTableFields            []domain.Fields
 	saldaRealizacijakomercijalistiTableFields []domain.Fields
+	saldaPartneraPoKontimaStampaTableFields   []domain.Fields
 }
 
 func NewSaldaService(service *service.BaseService[domain.SaldaDto],
@@ -75,7 +91,8 @@ func NewSaldaService(service *service.BaseService[domain.SaldaDto],
 	fproRepo *repository.BaseRepository[domain.Fpro],
 	partneriRepo *repository.BaseRepository[domain.Partneri],
 	saldaPartneriRepo *repository.BaseRepository[domain.SaldaPartnerDto],
-	saldaKomRepo *repository.BaseRepository[domain.SaldaKomercijalistiDto]) *SaldaResource {
+	saldaKomRepo *repository.BaseRepository[domain.SaldaKomercijalistiDto],
+	fvrRepo *repository.BaseRepository[domain.Fvr]) *SaldaResource {
 	rs := &SaldaResource{
 		service:           service,
 		saldaRepo:         saldaRepo,
@@ -84,6 +101,7 @@ func NewSaldaService(service *service.BaseService[domain.SaldaDto],
 		partneriRepo:      partneriRepo,
 		saldaPartneriRepo: saldaPartneriRepo,
 		saldaKomRepo:      saldaKomRepo,
+		fvrRepo:           fvrRepo,
 	}
 	rs.setServiceFieldValues()
 	return rs
@@ -282,11 +300,11 @@ func (s *SaldaResource) GetSaldaPojedinacnihKonta(ctx context.Context, tbl *doma
 				// Monthly data
 				saldoDto := domain.SaldaDto{
 					Mesec:     entity.Mesec,
-					Duguje:    entity.Dug,
-					Potrazuje: entity.Pot,
-					Saldo:     entity.Dug - entity.Pot,
+					Duguje:    entity.Dug.Float64,
+					Potrazuje: entity.Pot.Float64,
+					Saldo:     entity.Dug.Float64 - entity.Pot.Float64,
 				}
-				kumulSaldo = kumulSaldo + (entity.Dug - entity.Pot)
+				kumulSaldo = kumulSaldo + (entity.Dug.Float64 - entity.Pot.Float64)
 				templateData[entity.Mesec] = saldoDto
 				templateData[entity.Mesec].SaldoKumul = kumulSaldo
 			}
@@ -295,7 +313,7 @@ func (s *SaldaResource) GetSaldaPojedinacnihKonta(ctx context.Context, tbl *doma
 	tbl.Rows = saldaDtoToTableRows(templateData)
 	return nil
 }
-func (s *SaldaResource) GetSaldaGrupeKonta(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage int, pageSize int, params domain.SaldaParam) error {
+func (s *SaldaResource) GetSaldaGrupeKonta(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage int, pageSize int, params domain.SaldaParam, duzSintetika int) error {
 	// Get user session from context
 	userSession := domain.GetSessionFromStdContext(ctx)
 	if userSession == nil {
@@ -307,63 +325,120 @@ func (s *SaldaResource) GetSaldaGrupeKonta(ctx context.Context, tbl *domain.Tabl
 	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
 
 	// Parse filter parameters
-	chkSaldoRazl0 := common.StringToBool(params.SamoSaPrometom)
+	const saldoExpr = "(SUM(CASE WHEN fpro.kat IN ('1','2') THEN fpro.iznos ELSE 0 END) - SUM(CASE WHEN fpro.kat IN ('3','4') THEN fpro.iznos ELSE 0 END))"
 
 	common.SetupTablePagination(tbl, currentPage, pageSize)
+
 	// Build combined query with partner join (eliminates N+1)
-	// Separate sums for početno stanje (tipdok='00') and other promet (tipdok!='00')
-	qb := common.NewQueryBuilder(`
-		SELECT 
-			fkpl.konto, fkpl.sifra, fkpl.naziv as kontonaziv,
+	selectFields := ``
+	if params.CbxTipIzvestaja == "analitika" {
+		selectFields = `fpro.konto,
+			COALESCE(fpro.sifra, '') as sifra, 
+			COALESCE(MIN(p.naziv), '') as kontonaziv,
+			COALESCE(MIN(p.adresa), '') as adresa,
+			COALESCE(MIN(p.mesto), '') as mesto,
+			COALESCE(MIN(p.pib), '') as pib,`
+	}
+	if params.CbxTipIzvestaja == "subsintetika" {
+		selectFields = `fpro.konto,
+		'' as sifra,
+		COALESCE(MIN(grp_fkpl.naziv), '') as kontonaziv,
+		'' as adresa,
+		'' as mesto,
+		'' as pib,`
+	}
+	if params.CbxTipIzvestaja == "sintetika" {
+		selectFields = fmt.Sprintf(` left(fpro.konto, %d) as konto,
+		'' as sifra,
+		COALESCE(MIN(grp_fkpl.naziv), '') as kontonaziv,
+		'' as adresa,
+		'' as mesto,
+		'' as pib,`, duzSintetika)
+	}
+
+	qb := common.NewQueryBuilder(fmt.Sprintf(`
+		SELECT
+			%s
 			COALESCE(SUM(CASE WHEN fpro.tipdok = '00' AND fpro.kat IN ('1', '2') THEN fpro.iznos ELSE 0 END), 0) as pstdug,
 			COALESCE(SUM(CASE WHEN fpro.tipdok = '00' AND fpro.kat IN ('3', '4') THEN fpro.iznos ELSE 0 END), 0) as pstpot,
-			COALESCE(SUM(CASE WHEN fpro.tipdok != '00' AND fpro.kat IN ('1', '2') THEN fpro.iznos ELSE 0 END), 0) - COALESCE(SUM(CASE WHEN fpro.tipdok = '00' AND fpro.kat IN ('3', '4') THEN fpro.iznos ELSE 0 END), 0) as pstsaldo,
 			COALESCE(SUM(CASE WHEN fpro.tipdok != '00' AND fpro.kat IN ('1', '2') THEN fpro.iznos ELSE 0 END), 0) as dug,
-			COALESCE(SUM(CASE WHEN fpro.tipdok != '00' AND fpro.kat IN ('3', '4') THEN fpro.iznos ELSE 0 END), 0) as pot,
-			COALESCE(SUM(CASE WHEN fpro.tipdok != '00' AND fpro.kat IN ('1', '2') THEN fpro.iznos ELSE 0 END), 0) - COALESCE(SUM(CASE WHEN fpro.tipdok != '00' AND fpro.kat IN ('3', '4') THEN fpro.iznos ELSE 0 END), 0) as saldo,
-			fkpl.idpartneri,
-			COALESCE(p.naziv, '') as naziv,
-			COALESCE(p.adresa, '') as adresa,
-			COALESCE(p.mesto, '') as mesto,
-			COALESCE(p.pib, '') as pib,
-			COALESCE(p.jmbg, '') as jmbg,
-			COALESCE(p.bpg, '') as bpg,
-			COALESCE(p.index, '') as brindex		
-		FROM fpro`, true)
+			COALESCE(SUM(CASE WHEN fpro.tipdok != '00' AND fpro.kat IN ('3', '4') THEN fpro.iznos ELSE 0 END), 0) as pot
+		FROM fpro`, selectFields), true)
 
-	qb.AddJoin("LEFT JOIN fkpl ON fkpl.idfkpl = fpro.idfkpl")
-	qb.AddJoin("LEFT JOIN partneri p ON p.idpartneri = fkpl.idpartneri")
-
+	if params.CbxTipIzvestaja == "analitika" {
+		qb.AddJoin("LEFT JOIN fkpl ON fkpl.idfkpl = fpro.idfkpl")
+		qb.AddJoin("LEFT JOIN tipanalitike ta ON ta.tipanalitikeid = fkpl.tipanalitikeid")
+		qb.AddJoin("LEFT JOIN partneri p ON p.tipanalitikeid = ta.tipanalitikeid AND p.sifra = fpro.sifra")
+	}
+	if params.CbxTipIzvestaja == "subsintetika" {
+		joinStr := "LEFT JOIN fkpl grp_fkpl ON grp_fkpl.konto = fpro.konto AND grp_fkpl.vkonta = 2"
+		if hasGod {
+			joinStr += fmt.Sprintf(" AND grp_fkpl.god = %d", gnGod)
+		}
+		if hasKar {
+			joinStr += fmt.Sprintf(" AND grp_fkpl.kar = %d", gnKar)
+		}
+		qb.AddJoin(joinStr)
+	}
+	if params.CbxTipIzvestaja == "sintetika" {
+		joinStr := fmt.Sprintf("LEFT JOIN fkpl grp_fkpl ON grp_fkpl.konto = left(fpro.konto, %d) AND grp_fkpl.vkonta = 3", duzSintetika)
+		if hasGod {
+			joinStr += fmt.Sprintf(" AND grp_fkpl.god = %d", gnGod)
+		}
+		if hasKar {
+			joinStr += fmt.Sprintf(" AND grp_fkpl.kar = %d", gnKar)
+		}
+		qb.AddJoin(joinStr)
+	}
 	if hasGod {
 		qb.AddEqual("fpro.god", gnGod)
 	}
 	if hasKar {
 		qb.AddEqual("fpro.kar", gnKar)
 	}
-	qb.AddCondition("fkpl.konto", params.OdKonta, ">=")
-	qb.AddCondition("fkpl.konto", params.DoKonta, "<=")
-	qb.AddCondition("fkpl.sifra", params.OdSifre, ">=")
-	qb.AddCondition("fkpl.sifra", params.DoSifre, "<=")
 	if params.CbxTipIzvestaja == "analitika" {
-		qb.AddEqual("fkpl.vkonta", "1")
+		qb.AddCondition("fpro.konto::numeric", params.OdKonta, ">=")
+		qb.AddCondition("fpro.konto::numeric", params.DoKonta, "<=")
+		qb.AddCondition("COALESCE(NULLIF(fpro.sifra, '')::numeric, 0)", params.OdSifre, ">=")
+		qb.AddCondition("COALESCE(NULLIF(fpro.sifra, '')::numeric, 0)", params.DoSifre, "<=")
 	}
 	if params.CbxTipIzvestaja == "subsintetika" {
-		qb.AddEqual("fkpl.vkonta", "2")
+		qb.AddCondition("fpro.konto::numeric", params.OdKonta, ">=")
+		qb.AddCondition("fpro.konto::numeric", params.DoKonta, "<=")
 	}
 	if params.CbxTipIzvestaja == "sintetika" {
-		qb.AddEqual("fkpl.vkonta", "3")
+		qb.AddCondition(fmt.Sprintf("left(fpro.konto, %d)::numeric", duzSintetika), params.OdKonta, ">=")
+		qb.AddCondition(fmt.Sprintf("left(fpro.konto, %d)::numeric", duzSintetika), params.DoKonta, "<=")
 	}
+	qb.AddCondition("EXTRACT(MONTH FROM fpro.danal)", params.CbxOdMeseca, ">=")
+	qb.AddCondition("EXTRACT(MONTH FROM fpro.danal)", params.CbxDoMeseca, "<=")
 
-	if params.Klasa9 != "" && params.CbxTipIzvestaja == "klasa_sifra" {
+	if params.CbxTipIzvestaja == "klasa_sifra" {
 		klasaKonta := s.extractGrupa(params.OdKonta, 2)
-		qb.AddLike("fkpl.konto", klasaKonta+"%")
-	}
-	if chkSaldoRazl0 {
-		qb.AddCustomCondition(" (pstsaldo + saldo) <> 0 ", "AND")
+		qb.AddLike("fpro.konto", klasaKonta+"%")
 	}
 
-	qb.AddGroupBy("fkpl.konto, fkpl.sifra, fkpl.naziv, fkpl.idpartneri, p.naziv, p.adresa, p.mesto, p.pib, p.jmbg, p.bpg, p.index")
-	qb.AddOrderBy("fkpl.konto, fkpl.sifra")
+	switch params.CbxTipIzvestaja {
+	case "analitika":
+		qb.AddGroupBy("fpro.konto, fpro.sifra")
+		qb.AddOrderBy("fpro.konto::numeric, COALESCE(NULLIF(fpro.sifra, '')::numeric, 0)")
+	case "subsintetika":
+		qb.AddGroupBy("fpro.konto")
+		qb.AddOrderBy("fpro.konto::numeric")
+	case "sintetika":
+		qb.AddGroupBy(fmt.Sprintf("left(fpro.konto, %d)", duzSintetika))
+		qb.AddOrderBy(fmt.Sprintf("left(fpro.konto, %d)::numeric", duzSintetika))
+	}
+	switch params.SaldoFilter {
+	case "razl_nula":
+		qb.AddHaving(saldoExpr + " <> 0")
+	case "vece_nula":
+		qb.AddHaving(saldoExpr + " > 0")
+	case "manje_nula":
+		qb.AddHaving(saldoExpr + " < 0")
+	case "nula":
+		qb.AddHaving(saldoExpr + " = 0")
+	}
 	if !getTotalRecords {
 		qb.SetLimit(pageSize)
 		qb.SetOffset((currentPage - 1) * pageSize)
@@ -383,10 +458,10 @@ func (s *SaldaResource) GetSaldaGrupeKonta(ctx context.Context, tbl *domain.Tabl
 	if entities != nil {
 		for i, entity := range *entities {
 			// Build naziv with partner info
-			if entity.IDPartneri == 0 {
-				entity.Naziv = entity.NazivKonta
+			if params.CbxTipIzvestaja == "analitika" {
+				entity.Naziv = buildNaziv(entity.NazivKonta, entity.PIB, entity.JMBG, entity.BPG, entity.BrIndex)
 			} else {
-				entity.Naziv = buildNaziv(entity.Naziv, entity.PIB, entity.JMBG, entity.BPG, entity.BrIndex)
+				entity.Naziv = entity.NazivKonta
 			}
 			fields := []string{
 				"+",
@@ -394,10 +469,10 @@ func (s *SaldaResource) GetSaldaGrupeKonta(ctx context.Context, tbl *domain.Tabl
 				entity.Konto,
 				entity.Sifra,
 				entity.Naziv,
-				common.FormatNumberWithSystemLocale(entity.PstSaldo, 2),
+				common.FormatNumberWithSystemLocale(entity.PstDug-entity.PstPot, 2),
 				common.FormatNumberWithSystemLocale(entity.Dug, 2),
 				common.FormatNumberWithSystemLocale(entity.Pot, 2),
-				common.FormatNumberWithSystemLocale(entity.Saldo, 2),
+				common.FormatNumberWithSystemLocale(entity.PstDug-entity.PstPot + entity.Dug-entity.Pot, 2),
 				entity.Adresa,
 				entity.Mesto,
 			}
@@ -540,7 +615,343 @@ func (s *SaldaResource) GetSaldaPartneriPrelomljeno(ctx context.Context, tbl *do
 
 	return nil
 }
-func (s *SaldaResource) GetSaldaKlase5i6Analitika(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage int, pageSize int, searchText string) error {
+
+func (s *SaldaResource) GetSaldaPartneriPrelomljenoStampa(ctx context.Context, tbl *domain.TableData, sifrOd, sifraDo string) error {
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		return fmt.Errorf("user session not found")
+	}
+
+	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
+
+	qb := common.NewQueryBuilder(`
+        select
+            partneri.sifra,
+            partneri.naziv,
+            partneri.adresa,
+            partneri.pobro,
+            partneri.mesto,
+            partneri.pib,
+            coalesce(sum(case when fpro.konto like '200%' or fpro.konto like '201%' or fpro.konto like '202%' or
+                fpro.konto like '203%' or fpro.konto like '204%' or fpro.konto like '205%' or fpro.konto like '206%'
+                then fpro.iznos else 0 end), 0) as kupac,
+            coalesce(sum(case when fpro.konto like '431%' or fpro.konto like '432%' or fpro.konto like '433%' or
+                fpro.konto like '434%' or fpro.konto like '435%' or fpro.konto like '436%'
+                then fpro.iznos else 0 end), 0) as dobavljac,
+            coalesce(sum(case when fpro.konto like '430%' then fpro.iznos else 0 end), 0) as primljenavans,
+            coalesce(sum(case when fpro.konto like '150%' or fpro.konto like '151%' or fpro.konto like '152%' or
+                fpro.konto like '153%' or fpro.konto like '154%' or fpro.konto like '155%'
+                then fpro.iznos else 0 end), 0) as datavans
+        from fpro`, true)
+	qb.AddJoin("inner join fkpl on fkpl.idfkpl = fpro.idfkpl")
+	qb.AddJoin("inner join partneri on partneri.idpartneri = fkpl.idpartneri")
+	if hasGod {
+		qb.AddEqual("fpro.god", userSession.SelectedGod)
+	}
+	if hasKar {
+		qb.AddEqual("fpro.kar", userSession.SelectedKar)
+	}
+	qb.AddEqual("fpro.vkonta", 1)
+	qb.AddCustomCondition("(fpro.konto ilike '15%' OR fpro.konto ilike '20%' OR fpro.konto ilike '43%')")
+	qb.AddCondition("partneri.sifra", sifrOd, ">=")
+	qb.AddCondition("partneri.sifra", sifraDo, "<=")
+	qb.AddGroupBy("fkpl.idpartneri, partneri.sifra, partneri.naziv, partneri.adresa, partneri.pobro, partneri.mesto, partneri.pib")
+	qb.AddOrderBy("partneri.sifra::numeric asc")
+
+	sqlQuery, args := qb.Build()
+	entities, err := s.saldaPartneriRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	if err != nil {
+		return err
+	}
+
+	tbl.Totals = make([]string, len(tbl.Headers))
+	tbl.Totals[0] = i18n.GetInstance().Label("Ukupno")
+	tbl.HasTotals = true
+
+	var totKupac, totDobavljac, totPrimljenAvans, totDatAvans, totStanje float64
+	if entities != nil {
+		for _, entity := range *entities {
+			stanje := entity.Kupac + entity.DatAvans - entity.Dobavljac - entity.PrimljenAvanas
+			dugPot := "-"
+			if stanje > 0 {
+				dugPot = "Duguje"
+			} else if stanje < 0 {
+				dugPot = "Potražuje"
+			}
+			totKupac += entity.Kupac
+			totDobavljac += entity.Dobavljac
+			totPrimljenAvans += entity.PrimljenAvanas
+			totDatAvans += entity.DatAvans
+			totStanje += stanje
+			fields := []string{
+				entity.Sifra,
+				entity.Naziv,
+				entity.Adresa,
+				fmt.Sprintf("%d", entity.PostanskiBroj),
+				entity.Mesto,
+				entity.PIB,
+				common.FormatNumberWithSystemLocale(entity.Kupac, 2),
+				common.FormatNumberWithSystemLocale(entity.Dobavljac, 2),
+				common.FormatNumberWithSystemLocale(entity.PrimljenAvanas, 2),
+				common.FormatNumberWithSystemLocale(entity.DatAvans, 2),
+				common.FormatNumberWithSystemLocale(stanje, 2),
+				dugPot,
+			}
+			tbl.Rows = append(tbl.Rows, domain.TableRow{Fields: fields})
+		}
+	}
+
+	tbl.Totals[6] = common.FormatNumberWithSystemLocale(totKupac, 2)
+	tbl.Totals[7] = common.FormatNumberWithSystemLocale(totDobavljac, 2)
+	tbl.Totals[8] = common.FormatNumberWithSystemLocale(totPrimljenAvans, 2)
+	tbl.Totals[9] = common.FormatNumberWithSystemLocale(totDatAvans, 2)
+	tbl.Totals[10] = common.FormatNumberWithSystemLocale(totStanje, 2)
+
+	return nil
+}
+func (s *SaldaResource) GetSaldaPartneraPoKontimaStampa(ctx context.Context, tbl *domain.TableData, sifrOd, sifraDo string, stampajDetalje bool) error {
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		return fmt.Errorf("user session not found")
+	}
+	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
+	translator := i18n.GetInstance()
+
+	// Query 1: konta aggregates per partner per konto
+	qb := common.NewQueryBuilder(`
+		SELECT
+			p.idpartneri,
+			p.sifra as sifra,
+			p.naziv as naziv,
+			COALESCE(p.adresa, '') as adresa,
+			p.pobro,
+			COALESCE(p.pib, '') as pib,
+			COALESCE(p.mesto, '') as mesto,
+			fkpl.konto,
+			fkpl.naziv as kontonaziv,
+			COALESCE(SUM(CASE WHEN fpro.kat IN (1,2) THEN fpro.iznos ELSE 0 END), 0) as dug,
+			COALESCE(SUM(CASE WHEN fpro.kat IN (3,4) THEN fpro.iznos ELSE 0 END), 0) as pot
+		FROM fpro`, true)
+	qb.AddJoin("JOIN fkpl ON fkpl.idfkpl = fpro.idfkpl")
+	qb.AddJoin("JOIN partneri p ON p.idpartneri = fkpl.idpartneri")
+	if hasGod {
+		qb.AddEqual("fpro.god", userSession.SelectedGod)
+	}
+	if hasKar {
+		qb.AddEqual("fpro.kar", userSession.SelectedKar)
+	}
+	qb.AddEqual("fpro.vkonta", 1)
+	qb.AddCondition("p.sifra", sifrOd, ">=")
+	qb.AddCondition("p.sifra", sifraDo, "<=")
+	qb.AddGroupBy("p.idpartneri, p.sifra, p.naziv, p.adresa, p.pobro, p.pib, p.mesto, fkpl.konto, fkpl.naziv")
+	qb.AddOrderBy("p.sifra::numeric, fkpl.konto")
+
+	sqlQuery, args := qb.Build()
+	kontaEntities, err := s.saldaPartneriRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	if err != nil {
+		return err
+	}
+
+	// Query 2: details (if stampajDetalje)
+	type detailKey struct {
+		idPartneri int64
+		konto      string
+	}
+	detaljiMap := map[detailKey][]domain.Fpro{}
+	if stampajDetalje && kontaEntities != nil && len(*kontaEntities) > 0 {
+		qbDet := common.NewQueryBuilder(`
+			SELECT
+				fkpl.idpartneri as idfkpl,
+				fp.konto, fp.vrd, fp.kat, fp.tipdok, fp.nalog, fp.danal, fp.dokum, fp.dadok, fp.tra, fp.iznos, fp.god
+			FROM fpro fp`, true)
+		qbDet.AddJoin("JOIN fkpl ON fkpl.idfkpl = fp.idfkpl")
+		qbDet.AddJoin("JOIN partneri p ON p.idpartneri = fkpl.idpartneri")
+		if hasGod {
+			qbDet.AddEqual("fp.god", userSession.SelectedGod)
+		}
+		if hasKar {
+			qbDet.AddEqual("fp.kar", userSession.SelectedKar)
+		}
+		qbDet.AddEqual("fp.vkonta", 1)
+		qbDet.AddCondition("p.sifra", sifrOd, ">=")
+		qbDet.AddCondition("p.sifra", sifraDo, "<=")
+		qbDet.AddOrderBy("p.sifra::numeric, fp.konto, fp.danal")
+
+		sqlDet, argsDet := qbDet.Build()
+		detEntities, derr := s.fproRepo.GetAllCustom(ctx, sqlDet, "", argsDet, "", "")
+		if derr != nil {
+			return derr
+		}
+		if detEntities != nil {
+			for _, d := range *detEntities {
+				k := detailKey{idPartneri: d.IDFkpl, konto: d.Konto}
+				detaljiMap[k] = append(detaljiMap[k], d)
+			}
+		}
+	}
+
+	tbl.Totals = make([]string, len(tbl.Headers))
+	tbl.HasTotals = true
+	var grandDug, grandPot float64
+	lastPartnerID := int64(-1)
+	var partnerDug, partnerPot float64
+	var lastPartnerNaziv string
+
+	if kontaEntities == nil {
+		return nil
+	}
+
+	for _, entity := range *kontaEntities {
+		if entity.IDPartneri != lastPartnerID {
+			// Close previous partner
+			if lastPartnerID != -1 {
+				pSaldo := partnerDug - partnerPot
+				tbl.Rows = append(tbl.Rows, domain.TableRow{
+					ClassRow: "partner-total",
+					Fields: []string{
+						translator.Label("Ukupno za partnera") + ": " + lastPartnerNaziv,
+						common.FormatNumberWithSystemLocale(partnerDug, 2),
+						common.FormatNumberWithSystemLocale(partnerPot, 2),
+						common.FormatNumberWithSystemLocale(pSaldo, 2),
+					},
+				})
+			}
+			// Open new partner
+			partnerDug, partnerPot = 0, 0
+			lastPartnerID = entity.IDPartneri
+			lastPartnerNaziv = entity.Naziv
+			tbl.Rows = append(tbl.Rows, domain.TableRow{
+				ClassRow: "partner-header",
+				Fields: []string{
+					entity.Sifra + " - " + entity.Naziv,
+					entity.Adresa,
+					fmt.Sprintf("%d", entity.PostanskiBroj),
+					entity.Mesto,
+					entity.PIB,
+				},
+			})
+		}
+
+		dug := entity.Dug
+		pot := entity.Pot
+		saldo := dug - pot
+
+		// Konto header
+		tbl.Rows = append(tbl.Rows, domain.TableRow{
+			ClassRow: "konto-header",
+			Fields: []string{
+				entity.Konto,
+				entity.NazivKonta,
+			},
+		})
+
+		// Detail rows (only if stampajDetalje)
+		if stampajDetalje {
+			k := detailKey{idPartneri: entity.IDPartneri, konto: entity.Konto}
+			for _, detail := range detaljiMap[k] {
+				var sVrd string
+				switch detail.Vrd {
+				case 10:
+					sVrd = "10-Izdat racun"
+				case 20:
+					sVrd = "20-Primljen racun"
+				case 30:
+					sVrd = "30-Primljena uplata"
+				case 40:
+					sVrd = "40-Izvrsena uplata"
+				case 80:
+					sVrd = "80-Opsti dok."
+				case 90:
+					sVrd = "90-Aut. knj. dokum."
+				default:
+					sVrd = ""
+				}
+				var sTip string
+				switch detail.Vrd {
+				case 10, 20:
+					sTip = "F"
+				case 30, 40:
+					sTip = "U"
+				case 80, 90:
+					if len(detail.Konto) > 0 {
+						kontoPrefix := string(detail.Konto[0])
+						if kontoPrefix == "2" && (detail.Kat == 1 || detail.Kat == 2) {
+							sTip = "F"
+						} else if kontoPrefix == "2" && (detail.Kat == 3 || detail.Kat == 4) {
+							sTip = "U"
+						} else if kontoPrefix == "4" && (detail.Kat == 1 || detail.Kat == 2) {
+							sTip = "U"
+						} else if kontoPrefix == "4" && (detail.Kat == 3 || detail.Kat == 4) {
+							sTip = "F"
+						}
+					}
+				default:
+					sTip = "-"
+				}
+				danalStr := ""
+				if detail.Danal != nil {
+					danalStr = detail.Danal.Format(common.DateLayout)
+				}
+				dadokStr := ""
+				if detail.Dadok.Valid {
+					dadokStr = detail.Dadok.Time.Format(common.DateLayout)
+				}
+				godStr := fmt.Sprintf("%d", detail.God)
+				tbl.Rows = append(tbl.Rows, domain.TableRow{
+					Fields: []string{
+						sTip,
+						fmt.Sprintf("%s-%d", detail.Tipdok, detail.Nalog),
+						danalStr,
+						sVrd,
+						detail.Dokum,
+						dadokStr,
+						godStr,
+						common.FormatNumberWithSystemLocale(detail.Iznos, 2),
+					},
+				})
+			}
+		}
+
+		// Konto total
+		tbl.Rows = append(tbl.Rows, domain.TableRow{
+			ClassRow: "konto-total",
+			Fields: []string{
+				translator.Label("Ukupno za konto") + ": " + entity.Konto + " - " + entity.NazivKonta,
+				common.FormatNumberWithSystemLocale(dug, 2),
+				common.FormatNumberWithSystemLocale(pot, 2),
+				common.FormatNumberWithSystemLocale(saldo, 2),
+			},
+		})
+		partnerDug += dug
+		partnerPot += pot
+		grandDug += dug
+		grandPot += pot
+	}
+
+	// Close last partner
+	if lastPartnerID != -1 {
+		pSaldo := partnerDug - partnerPot
+		tbl.Rows = append(tbl.Rows, domain.TableRow{
+			ClassRow: "partner-total",
+			Fields: []string{
+				translator.Label("Ukupno za partnera") + ": " + lastPartnerNaziv,
+				common.FormatNumberWithSystemLocale(partnerDug, 2),
+				common.FormatNumberWithSystemLocale(partnerPot, 2),
+				common.FormatNumberWithSystemLocale(pSaldo, 2),
+			},
+		})
+	}
+
+	grandSaldo := grandDug - grandPot
+	tbl.Totals[0] = translator.Label("Ukupno za izveštaj")
+	tbl.Totals[5] = common.FormatNumberWithSystemLocale(grandDug, 2)
+	tbl.Totals[6] = common.FormatNumberWithSystemLocale(grandPot, 2)
+	tbl.Totals[7] = common.FormatNumberWithSystemLocale(grandSaldo, 2)
+
+	return nil
+}
+
+func (s *SaldaResource) GetSaldaKlase5i6Analitika(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage int, pageSize int, saldaParam domain.SaldaParam, searchText string) error {
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 	// Get user session from context
 	userSession := domain.GetSessionFromStdContext(ctx)
@@ -550,7 +961,7 @@ func (s *SaldaResource) GetSaldaKlase5i6Analitika(ctx context.Context, tbl *doma
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 
 	// Create first query (opening balance - tipdok = '00')
-	qb := common.NewQueryBuilder(`SELECT f.konto, f.sifra, fkpl.naziv,
+	qb := common.NewQueryBuilder(`SELECT f.konto, coalesce(f.sifra, '') as sifra, fkpl.naziv,
     COALESCE(SUM(CASE WHEN f.kat = '1' OR f.kat = '2' THEN f.iznos ELSE 0 END), 0) as dug,
     COALESCE(SUM(CASE WHEN f.kat = '3' OR f.kat = '4' THEN f.iznos ELSE 0 END), 0) as pot
     FROM fpro f`, true)
@@ -563,10 +974,21 @@ func (s *SaldaResource) GetSaldaKlase5i6Analitika(ctx context.Context, tbl *doma
 	if hasKar {
 		qb.AddEqual("f.kar", userSession.SelectedKar)
 	}
+	qb.AddCondition("COALESCE(NULLIF(COALESCE(f.sifra, ''), '')::numeric, 0)", saldaParam.OdSifre, ">=")
+	qb.AddCondition("COALESCE(NULLIF(COALESCE(f.sifra, ''), '')::numeric, 0)", saldaParam.DoSifre, "<=")
+	qb.AddCondition("f.danal::date", saldaParam.OdDatuma, ">=")
+	qb.AddCondition("f.danal::date", saldaParam.DoDatuma, "<=")
 	// Check account range between 5 and 6 (class 5 and 6)
-	qb.AddCustomCondition("(f.konto like '5%' OR f.konto like '6%')")
+	switch saldaParam.Klasa {
+	case "5":
+		qb.AddCustomCondition("f.konto like '5%'")
+	case "6":
+		qb.AddCustomCondition("f.konto like '6%'")
+	default:
+		qb.AddCustomCondition("(f.konto like '5%' OR f.konto like '6%')")
+	}
 
-	qb.AddGroupBy("f.konto, f.sifra, fkpl.naziv")
+	qb.AddGroupBy("f.konto, coalesce(f.sifra, ''), fkpl.naziv")
 	if !getTotalRecords {
 		qb.SetLimit(pageSize)
 		qb.SetOffset((currentPage - 1) * pageSize)
@@ -587,9 +1009,9 @@ func (s *SaldaResource) GetSaldaKlase5i6Analitika(ctx context.Context, tbl *doma
 				entity.Konto,
 				entity.Sifra,
 				entity.Naziv,
-				common.FormatNumberWithSystemLocale(entity.Dug, 2),
-				common.FormatNumberWithSystemLocale(entity.Pot, 2),
-				common.FormatNumberWithSystemLocale(entity.Dug-entity.Pot, 2),
+				common.FormatNumberWithSystemLocale(entity.Dug.Float64, 2),
+				common.FormatNumberWithSystemLocale(entity.Pot.Float64, 2),
+				common.FormatNumberWithSystemLocale(entity.Dug.Float64-entity.Pot.Float64, 2),
 			}
 			tblRow := domain.TableRow{Fields: fields, HasUpdate: false, HasDelete: false}
 			tbl.Rows = append(tbl.Rows, tblRow)
@@ -598,7 +1020,158 @@ func (s *SaldaResource) GetSaldaKlase5i6Analitika(ctx context.Context, tbl *doma
 	return nil
 
 }
-func (s *SaldaResource) SaldaKlase5i6MT(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage int, pageSize int, searchText string) error {
+
+func (s *SaldaResource) GetSaldaKlase5i6AnalitikaStampa(ctx context.Context, tbl *domain.TableData, saldaParam domain.SaldaParam) error {
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		return fmt.Errorf("user session not found")
+	}
+	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
+
+	qb := common.NewQueryBuilder(`
+		SELECT f.konto, COALESCE(f.sifra, '') as sifra, fkpl.naziv,
+			COALESCE(oj.naziv, '') as ojozn,
+			COALESCE(m.opis, '') as mtroska,
+			COALESCE(SUM(CASE WHEN f.kat IN (1,2) THEN f.iznos ELSE 0 END), 0) as dug,
+			COALESCE(SUM(CASE WHEN f.kat IN (3,4) THEN f.iznos ELSE 0 END), 0) as pot
+		FROM fpro f`, true)
+	qb.AddJoin("LEFT JOIN fkpl ON fkpl.idfkpl = f.idfkpl")
+	qb.AddJoin("LEFT JOIN orgjed oj ON oj.idorgjed = f.idorgjed")
+	qb.AddJoin("LEFT JOIN mestotr m ON m.mestotrid = f.mestotrid")
+
+	if hasGod {
+		qb.AddEqual("f.god", userSession.SelectedGod)
+	}
+	if hasKar {
+		qb.AddEqual("f.kar", userSession.SelectedKar)
+	}
+	switch saldaParam.Klasa {
+	case "5":
+		qb.AddCustomCondition("f.konto like '5%'")
+	case "6":
+		qb.AddCustomCondition("f.konto like '6%'")
+	default:
+		qb.AddCustomCondition("(f.konto like '5%' OR f.konto like '6%')")
+	}
+
+	qb.AddCondition("COALESCE(NULLIF(COALESCE(f.sifra, ''), '')::numeric, 0)", saldaParam.OdSifre, ">=")
+	qb.AddCondition("COALESCE(NULLIF(COALESCE(f.sifra, ''), '')::numeric, 0)", saldaParam.DoSifre, "<=")
+	qb.AddCondition("f.danal::date", saldaParam.OdDatuma, ">=")
+	qb.AddCondition("f.danal::date", saldaParam.DoDatuma, "<=")
+
+	qb.AddGroupBy("f.konto, COALESCE(f.sifra, ''), fkpl.naziv, COALESCE(oj.naziv, ''), COALESCE(m.opis, '')")
+	qb.AddOrderBy("COALESCE(f.sifra, ''), COALESCE(oj.naziv, ''), f.konto")
+
+	sqlQuery, args := qb.Build()
+	entities, err := s.fproRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	if err != nil {
+		return err
+	}
+
+	translator := i18n.GetInstance()
+	tbl.Totals = make([]string, len(tbl.Headers))
+	tbl.Totals[0] = translator.Label("Ukupno")
+	tbl.HasTotals = true
+
+	var grandDug, grandPot float64
+	lastSifra := "\x01"
+	lastOj := "\x01"
+	var ojDug, ojPot float64
+	var sifraDug, sifraPot float64
+
+	emitOjSubtotal := func() {
+		ojSaldo := ojDug - ojPot
+		tbl.Rows = append(tbl.Rows, domain.TableRow{
+			ClassRow: "group-total",
+			Fields: []string{
+				translator.Label("Ukupno za OJ") + ": " + lastOj, "", "",
+				common.FormatNumberWithSystemLocale(ojDug, 2),
+				common.FormatNumberWithSystemLocale(ojPot, 2),
+				common.FormatNumberWithSystemLocale(ojSaldo, 2),
+			},
+		})
+		ojDug, ojPot = 0, 0
+	}
+
+	emitSifraSubtotal := func() {
+		sifraSaldo := sifraDug - sifraPot
+		tbl.Rows = append(tbl.Rows, domain.TableRow{
+			ClassRow: "sifra-total",
+			Fields: []string{
+				translator.Label("Ukupno za šifru") + " " + lastSifra + ":", "", "",
+				common.FormatNumberWithSystemLocale(sifraDug, 2),
+				common.FormatNumberWithSystemLocale(sifraPot, 2),
+				common.FormatNumberWithSystemLocale(sifraSaldo, 2),
+			},
+		})
+		sifraDug, sifraPot = 0, 0
+	}
+
+	if entities != nil {
+		for _, entity := range *entities {
+			sifra := entity.Sifra
+			ojozn := entity.Ojozn.String
+
+			if sifra != lastSifra {
+				// New sifra group — close previous OJ and sifra subtotals
+				if lastSifra != "\x01" {
+					emitOjSubtotal()
+					emitSifraSubtotal()
+				}
+				tbl.Rows = append(tbl.Rows, domain.TableRow{
+					ClassRow: "group-header",
+					Fields:   []string{sifra, "", "", "", "", ""},
+				})
+				lastSifra = sifra
+				tbl.Rows = append(tbl.Rows, domain.TableRow{
+					ClassRow: "subgroup-header",
+					Fields:   []string{ojozn, "", "", "", "", ""},
+				})
+				lastOj = ojozn
+			} else if ojozn != lastOj {
+				// Same sifra, new OJ
+				emitOjSubtotal()
+				tbl.Rows = append(tbl.Rows, domain.TableRow{
+					ClassRow: "subgroup-header",
+					Fields:   []string{ojozn, "", "", "", "", ""},
+				})
+				lastOj = ojozn
+			}
+
+			dug := entity.Dug.Float64
+			pot := entity.Pot.Float64
+			saldo := dug - pot
+			tbl.Rows = append(tbl.Rows, domain.TableRow{
+				Fields: []string{
+					entity.Konto,
+					entity.Naziv,
+					entity.Mtroska.String,
+					common.FormatNumberWithSystemLocale(dug, 2),
+					common.FormatNumberWithSystemLocale(pot, 2),
+					common.FormatNumberWithSystemLocale(saldo, 2),
+				},
+			})
+			ojDug += dug
+			ojPot += pot
+			sifraDug += dug
+			sifraPot += pot
+			grandDug += dug
+			grandPot += pot
+		}
+		if lastSifra != "\x01" {
+			emitOjSubtotal()
+			emitSifraSubtotal()
+		}
+	}
+
+	grandSaldo := grandDug - grandPot
+	tbl.Totals[3] = common.FormatNumberWithSystemLocale(grandDug, 2)
+	tbl.Totals[4] = common.FormatNumberWithSystemLocale(grandPot, 2)
+	tbl.Totals[5] = common.FormatNumberWithSystemLocale(grandSaldo, 2)
+	return nil
+}
+
+func (s *SaldaResource) SaldaKlase5i6MT(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage int, pageSize int, saldaParam domain.SaldaParam, searchText string) error {
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 	// Get user session from context
 	userSession := domain.GetSessionFromStdContext(ctx)
@@ -608,7 +1181,7 @@ func (s *SaldaResource) SaldaKlase5i6MT(ctx context.Context, tbl *domain.TableDa
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 
 	// Create first query (opening balance - tipdok = '00')
-	qb := common.NewQueryBuilder(`SELECT f.konto, fkpl.naziv, coalesce(m.mtroska, '') as mtroska,
+	qb := common.NewQueryBuilder(`SELECT f.konto, fkpl.naziv, max(coalesce(m.opis, '')) as mtroska,
     COALESCE(SUM(CASE WHEN f.kat = '1' OR f.kat = '2' THEN f.iznos ELSE 0 END), 0) as dug,
     COALESCE(SUM(CASE WHEN f.kat = '3' OR f.kat = '4' THEN f.iznos ELSE 0 END), 0) as pot
     FROM fpro f`, true)
@@ -622,9 +1195,19 @@ func (s *SaldaResource) SaldaKlase5i6MT(ctx context.Context, tbl *domain.TableDa
 	if hasKar {
 		qb.AddEqual("f.kar", userSession.SelectedKar)
 	}
+	qb.AddCondition("COALESCE(NULLIF(COALESCE(f.sifra, ''), '')::numeric, 0)", saldaParam.OdSifre, ">=")
+	qb.AddCondition("COALESCE(NULLIF(COALESCE(f.sifra, ''), '')::numeric, 0)", saldaParam.DoSifre, "<=")
+	qb.AddCondition("f.danal::date", saldaParam.OdDatuma, ">=")
+	qb.AddCondition("f.danal::date", saldaParam.DoDatuma, "<=")
 	// Check account range between 5 and 6 (class 5 and 6)
-	qb.AddCustomCondition("(f.konto like '5%' OR f.konto like '6%')")
-
+	switch saldaParam.Klasa {
+	case "5":
+		qb.AddCustomCondition("f.konto like '5%'")
+	case "6":
+		qb.AddCustomCondition("f.konto like '6%'")
+	default:
+		qb.AddCustomCondition("(f.konto like '5%' OR f.konto like '6%')")
+	}
 	qb.AddGroupBy("f.konto, f.sifra, fkpl.naziv, m.mtroska")
 	if !getTotalRecords {
 		qb.SetLimit(pageSize)
@@ -645,10 +1228,10 @@ func (s *SaldaResource) SaldaKlase5i6MT(ctx context.Context, tbl *domain.TableDa
 			fields := []string{
 				entity.Konto,
 				entity.Naziv,
-				entity.Mtroska,
-				common.FormatNumberWithSystemLocale(entity.Dug, 2),
-				common.FormatNumberWithSystemLocale(entity.Pot, 2),
-				common.FormatNumberWithSystemLocale(entity.Dug-entity.Pot, 2),
+				entity.Mtroska.String,
+				common.FormatNumberWithSystemLocale(entity.Dug.Float64, 2),
+				common.FormatNumberWithSystemLocale(entity.Pot.Float64, 2),
+				common.FormatNumberWithSystemLocale(entity.Dug.Float64-entity.Pot.Float64, 2),
 			}
 			tblRow := domain.TableRow{Fields: fields, HasUpdate: false, HasDelete: false}
 			tbl.Rows = append(tbl.Rows, tblRow)
@@ -656,6 +1239,119 @@ func (s *SaldaResource) SaldaKlase5i6MT(ctx context.Context, tbl *domain.TableDa
 	}
 	return nil
 
+}
+
+func (s *SaldaResource) GetSaldaKlase5i6MTStampa(ctx context.Context, tbl *domain.TableData, saldaParam domain.SaldaParam) error {
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		return fmt.Errorf("user session not found")
+	}
+	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
+
+	qb := common.NewQueryBuilder(`
+		SELECT f.konto, fkpl.naziv,
+			COALESCE(m.mtroska, '') as mtroska,
+			COALESCE(SUM(CASE WHEN f.kat IN ('1','2') THEN f.iznos ELSE 0 END), 0) as dug,
+			COALESCE(SUM(CASE WHEN f.kat IN ('3','4') THEN f.iznos ELSE 0 END), 0) as pot
+		FROM fpro f`, true)
+	qb.AddJoin("LEFT JOIN fkpl ON fkpl.idfkpl = f.idfkpl")
+	qb.AddJoin("LEFT JOIN mestotr m ON m.mestotrid = f.mestotrid")
+
+	if hasGod {
+		qb.AddEqual("f.god", userSession.SelectedGod)
+	}
+	if hasKar {
+		qb.AddEqual("f.kar", userSession.SelectedKar)
+	}
+
+	switch saldaParam.Klasa {
+	case "5":
+		qb.AddCustomCondition("f.konto like '5%'")
+	case "6":
+		qb.AddCustomCondition("f.konto like '6%'")
+	default:
+		qb.AddCustomCondition("(f.konto like '5%' OR f.konto like '6%')")
+	}
+
+	qb.AddCondition("f.konto", saldaParam.OdKonta, ">=")
+	qb.AddCondition("f.konto", saldaParam.DoKonta, "<=")
+	qb.AddCondition("f.danal::date", saldaParam.OdDatuma, ">=")
+	qb.AddCondition("f.danal::date", saldaParam.DoDatuma, "<=")
+
+	qb.AddGroupBy("COALESCE(m.mtroska, ''), f.konto, fkpl.naziv")
+	qb.AddOrderBy("COALESCE(m.mtroska, ''), f.konto")
+
+	sqlQuery, args := qb.Build()
+	entities, err := s.fproRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	if err != nil {
+		return err
+	}
+
+	translator := i18n.GetInstance()
+	tbl.Totals = make([]string, len(tbl.Headers))
+	tbl.Totals[0] = translator.Label("Ukupno za izveštaj")
+	tbl.HasTotals = true
+
+	var grandDug, grandPot float64
+	lastMT := "\x01"
+	var mtDug, mtPot float64
+
+	emitMTSubtotal := func() {
+		mtSaldo := mtDug - mtPot
+		tbl.Rows = append(tbl.Rows, domain.TableRow{
+			ClassRow: "group-total",
+			Fields: []string{
+				translator.Label("Ukupno za MT") + ": " + lastMT,
+				"",
+				common.FormatNumberWithSystemLocale(mtDug, 2),
+				common.FormatNumberWithSystemLocale(mtPot, 2),
+				common.FormatNumberWithSystemLocale(mtSaldo, 2),
+			},
+		})
+		mtDug, mtPot = 0, 0
+	}
+
+	if entities != nil {
+		for _, entity := range *entities {
+			mt := entity.Mtroska.String
+
+			if mt != lastMT {
+				if lastMT != "\x01" {
+					emitMTSubtotal()
+				}
+				tbl.Rows = append(tbl.Rows, domain.TableRow{
+					ClassRow: "group-header",
+					Fields:   []string{"MT", mt, "", "", ""},
+				})
+				lastMT = mt
+			}
+
+			dug := entity.Dug.Float64
+			pot := entity.Pot.Float64
+			saldo := dug - pot
+			tbl.Rows = append(tbl.Rows, domain.TableRow{
+				Fields: []string{
+					entity.Konto,
+					entity.Naziv,
+					common.FormatNumberWithSystemLocale(dug, 2),
+					common.FormatNumberWithSystemLocale(pot, 2),
+					common.FormatNumberWithSystemLocale(saldo, 2),
+				},
+			})
+			mtDug += dug
+			mtPot += pot
+			grandDug += dug
+			grandPot += pot
+		}
+		if lastMT != "\x01" {
+			emitMTSubtotal()
+		}
+	}
+
+	tbl.Totals[2] = common.FormatNumberWithSystemLocale(grandDug, 2)
+	tbl.Totals[3] = common.FormatNumberWithSystemLocale(grandPot, 2)
+	tbl.Totals[4] = common.FormatNumberWithSystemLocale(grandDug-grandPot, 2)
+	return nil
 }
 
 func (s *SaldaResource) SaldaPoKomercijalistima(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage int, pageSize int, searchText, sortBy, sortOrder string) error {
@@ -880,7 +1576,7 @@ func (s *SaldaResource) extractGrupa(konto string, nDuzSin int) string {
 	}
 	return konto
 }
-func (s *SaldaResource) GetSaldaTotalValues(ctx context.Context) (domain.SaldaDto, error) {
+func (s *SaldaResource) GetSaldaTotalValues(ctx context.Context, konto, sifra, tipKonta string) (domain.SaldaDto, error) {
 	var totals domain.SaldaDto
 
 	// Get user session from context
@@ -888,8 +1584,48 @@ func (s *SaldaResource) GetSaldaTotalValues(ctx context.Context) (domain.SaldaDt
 	if userSession == nil {
 		return totals, fmt.Errorf("user session not found")
 	}
-	// Note: konto, sifra, vkonta parameters would need to be passed as separate parameters instead of extracted from context
-	// For now, returning empty totals
+	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
+	qb := common.NewQueryBuilder(`
+		SELECT 
+			COALESCE(SUM(CASE WHEN fpro.tipdok = '00' AND fpro.kat IN ('1', '2') THEN fpro.iznos ELSE 0 END), 0) as pstdug,
+			COALESCE(SUM(CASE WHEN fpro.tipdok = '00' AND fpro.kat IN ('3', '4') THEN fpro.iznos ELSE 0 END), 0) as pstpot,
+			COALESCE(SUM(CASE WHEN fpro.tipdok != '00' AND fpro.kat IN ('1', '2') THEN fpro.iznos ELSE 0 END), 0) as dug,
+			COALESCE(SUM(CASE WHEN fpro.tipdok != '00' AND fpro.kat IN ('3', '4') THEN fpro.iznos ELSE 0 END), 0) as pot
+			FROM fpro`, true)
+	if hasGod {
+		qb.AddEqual("fpro.god", userSession.SelectedGod)
+	}
+	if hasKar {
+		qb.AddEqual("fpro.kar", userSession.SelectedKar)
+	}
+	if tipKonta == "3" {
+		qb.AddLikeBegin("fpro.konto", konto)
+	}
+	if tipKonta == "2" {
+		qb.AddEqual("fpro.konto", konto)
+	}
+	if tipKonta == "1" {
+		qb.AddEqual("fpro.konto", konto)
+		qb.AddEqual("fpro.sifra", sifra)
+	}
+
+	sqlQuery, args := qb.Build()
+	entities, err := s.fproRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	if err != nil {
+		return totals, err
+	}
+	if entities != nil && len(*entities) > 0 {
+		totals.PocStanjeDug = (*entities)[0].PSTDug
+		totals.PocStanjePot = (*entities)[0].PSTPot
+		totals.PocStanjeSaldo = (*entities)[0].PSTDug - (*entities)[0].PSTPot
+		totals.TekuciPromDug = (*entities)[0].Dug.Float64
+		totals.TekuciPromPot = (*entities)[0].Pot.Float64
+		totals.TekuciPromSaldo = (*entities)[0].Dug.Float64 - (*entities)[0].Pot.Float64
+		totals.UkPromDug = totals.PocStanjeDug + totals.TekuciPromDug
+		totals.UkPromPot = totals.PocStanjePot + totals.TekuciPromPot
+		totals.UkPromSaldo = totals.PocStanjeSaldo + totals.TekuciPromSaldo
+	}
+
 	return totals, nil
 }
 
@@ -989,9 +1725,9 @@ func (s *SaldaResource) ProcessSaldaPartneriDetails(ctx context.Context, idPartn
 		for _, konta := range *kontaEntities {
 			fields := []string{
 				fmt.Sprintf("%s %s-%s", konta.Konto, konta.Sifra, konta.Naziv),
-				common.FormatNumberWithSystemLocale(konta.Dug, 2),
-				common.FormatNumberWithSystemLocale(konta.Pot, 2),
-				common.FormatNumberWithSystemLocale(konta.Dug-konta.Pot, 2),
+				common.FormatNumberWithSystemLocale(konta.Dug.Float64, 2),
+				common.FormatNumberWithSystemLocale(konta.Pot.Float64, 2),
+				common.FormatNumberWithSystemLocale(konta.Dug.Float64-konta.Pot.Float64, 2),
 			}
 			tblRow := domain.TableRow{Fields: fields, HasUpdate: false, HasDelete: false}
 			tblKonta.Rows = append(tblKonta.Rows, tblRow)
@@ -1117,11 +1853,21 @@ func (s *SaldaResource) GetSaldaPartneriDetailTableFields() []domain.Fields {
 func (s *SaldaResource) GetSaldaPartneriPrelomljenoTableFields() []domain.Fields {
 	return s.saldaPartneriPrelomljenoTableFields
 }
+func (s *SaldaResource) GetSaldaPartneriPrelomljenoStampaFields() []domain.Fields {
+	return s.saldaPartneriPrelomljenoStampaTableFields
+}
 func (s *SaldaResource) GetSaldaKlase5i6AnalitikaTableFields() []domain.Fields {
 	return s.saldaKlase5i6AnalitikaTableFields
 }
+func (s *SaldaResource) GetSaldaKlase5i6AnalitikaStampaFields() []domain.Fields {
+	return s.saldaKlase5i6AnalitikaStampaTableFields
+}
 func (s *SaldaResource) GetSaldaKlase5i6MTTableFields() []domain.Fields {
 	return s.saldaKlase5i6MTTableFields
+}
+
+func (s *SaldaResource) GetSaldaKlase5i6MTStampaFields() []domain.Fields {
+	return s.saldaKlase5i6MTStampaTableFields
 }
 
 func (s *SaldaResource) GetKomercijalistiTableFields() []domain.Fields {
@@ -1130,14 +1876,21 @@ func (s *SaldaResource) GetKomercijalistiTableFields() []domain.Fields {
 func (s *SaldaResource) GetRealizacijaKomercijalistiTableFields() []domain.Fields {
 	return s.saldaRealizacijakomercijalistiTableFields
 }
+func (s *SaldaResource) GetSaldaPartneraPoKontimaStampaFields() []domain.Fields {
+	return s.saldaPartneraPoKontimaStampaTableFields
+}
+
+func (s *SaldaResource) GetFvrData(ctx context.Context) (domain.Fvr, error) {
+	return utils.GetFvrData(ctx, s.fvrRepo)
+}
 
 func (s *SaldaResource) setServiceFieldValues() {
 	s.saldaPojedinacniTableFields = []domain.Fields{
 		{Name: "mesec", Label: "Mesec", Width: "10"},
-		{Name: "duguje", Label: "Duguje", Width: "12"},
-		{Name: "potrazuje", Label: "Potrazuje", Width: "12"},
-		{Name: "saldo", Label: "Saldo u mesecu", Width: "12"},
-		{Name: "saldokumul", Label: "Saldo na kraju meseca", Width: "15"},
+		{Name: "duguje", Label: "Duguje", Width: "12", TextAlign: "right"},
+		{Name: "potrazuje", Label: "Potrazuje", Width: "12", TextAlign: "right"},
+		{Name: "saldo", Label: "Saldo u mesecu", Width: "12", TextAlign: "right"},
+		{Name: "saldokumul", Label: "Saldo na kraju meseca", Width: "15", TextAlign: "right"},
 	}
 	s.saldaPartneriTableFields = []domain.Fields{
 		{Name: "sifra", Label: "Šifra partnera", Width: "10"},
@@ -1149,12 +1902,12 @@ func (s *SaldaResource) setServiceFieldValues() {
 		{Name: "idpartneri", Label: "ID Partnera", Width: "30"},
 	}
 	s.saldaGrupeKontaTableFields = []domain.Fields{
-		{Name: "detail", Label: "Detail", Width: "10"},
+		{Name: "detalji", Label: "Detalji", Width: "10"},
 		{Name: "rbr", Label: "Redni Broj", Width: "10"},
 		{Name: "konto", Label: "Konto", Width: "10"},
 		{Name: "sifra", Label: "Šifra", Width: "10"},
 		{Name: "naziv", Label: "Naziv konta", Width: "60"},
-		{Name: "pst", Label: "PST", Width: "12", Field: "pst", SkipInSearch: true},
+		{Name: "pst", Label: "Početno stanje", Width: "12", Field: "pst", SkipInSearch: true},
 		{Name: "dudguje", Label: "Duguje", Width: "30", Field: "doduguje", SkipInSearch: true},
 		{Name: "potrazuje", Label: "Potrazuje", Width: "30", Field: "potrazuje", SkipInSearch: true},
 		{Name: "saldo", Label: "Saldo", Width: "30", Field: "saldo", SkipInSearch: true},
@@ -1188,6 +1941,20 @@ func (s *SaldaResource) setServiceFieldValues() {
 		{Name: "stanje", Label: "Stanje", Width: "30", Field: "stanje", SkipInSearch: true},
 		{Name: "dugpot", Label: "Duguje/Potrazuje", Width: "30", Field: "dugpot", SkipInSearch: true},
 	}
+	s.saldaPartneriPrelomljenoStampaTableFields = []domain.Fields{
+		{Name: "sifra", Label: "Šifra", Width: "8", Field: "partneri.sifra"},
+		{Name: "naziv", Label: "Naziv partnera", Width: "30", Field: "partneri.naziv"},
+		{Name: "adresa", Label: "Adresa", Width: "20", Field: "partneri.adresa"},
+		{Name: "pobro", Label: "Poštanski broj", Width: "8", Field: "partneri.pobro", TextAlign: "center"},
+		{Name: "mesto", Label: "Mesto", Width: "12", Field: "partneri.mesto"},
+		{Name: "pib", Label: "PIB", Width: "10", Field: "partneri.pib", TextAlign: "center"},
+		{Name: "kupac", Label: "Saldo Kupac", Width: "10", Field: "kupac", SkipInSearch: true, IncludeInTotals: true, TextAlign: "right"},
+		{Name: "dobavljac", Label: "Saldo Dobavljač", Width: "10", Field: "dobavljac", SkipInSearch: true, IncludeInTotals: true, TextAlign: "right"},
+		{Name: "primljenavans", Label: "Primljeni Avansi", Width: "10", Field: "primljenavans", SkipInSearch: true, IncludeInTotals: true, TextAlign: "right"},
+		{Name: "datavans", Label: "Dati Avansi", Width: "10", Field: "datavans", SkipInSearch: true, IncludeInTotals: true, TextAlign: "right"},
+		{Name: "stanje", Label: "Stanje", Width: "10", Field: "stanje", SkipInSearch: true, IncludeInTotals: true, TextAlign: "right"},
+		{Name: "dugpot", Label: "Duguje/Potražuje", Width: "10", Field: "dugpot", SkipInSearch: true, TextAlign: "center"},
+	}
 
 	s.saldaKlase5i6AnalitikaTableFields = []domain.Fields{
 		{Name: "konto", Label: "Konto", Width: "10"},
@@ -1197,6 +1964,14 @@ func (s *SaldaResource) setServiceFieldValues() {
 		{Name: "potrazuje", Label: "Potrazuje", Width: "12", Field: "potrazuje", SkipInSearch: true},
 		{Name: "saldo", Label: "Saldo", Width: "30", Field: "saldo", SkipInSearch: true},
 	}
+	s.saldaKlase5i6AnalitikaStampaTableFields = []domain.Fields{
+		{Name: "konto", Label: "Konto", Width: "10"},
+		{Name: "naziv", Label: "Naziv", Width: "40"},
+		{Name: "mtroska", Label: "Mesto troška", Width: "12", TextAlign: "center"},
+		{Name: "dug", Label: "Duguje", Width: "13", TextAlign: "right", IncludeInTotals: true},
+		{Name: "pot", Label: "Potražuje", Width: "13", TextAlign: "right", IncludeInTotals: true},
+		{Name: "saldo", Label: "Saldo", Width: "12", TextAlign: "right", IncludeInTotals: true},
+	}
 	s.saldaKlase5i6MTTableFields = []domain.Fields{
 		{Name: "konto", Label: "Konto", Width: "10"},
 		{Name: "opis", Label: "Opis", Width: "60"},
@@ -1204,6 +1979,13 @@ func (s *SaldaResource) setServiceFieldValues() {
 		{Name: "duguje", Label: "Duguje", Width: "30", Field: "duguje", SkipInSearch: true},
 		{Name: "potrazuje", Label: "Potrazuje", Width: "12", Field: "potrazuje", SkipInSearch: true},
 		{Name: "saldo", Label: "Saldo", Width: "30", Field: "saldo", SkipInSearch: true},
+	}
+	s.saldaKlase5i6MTStampaTableFields = []domain.Fields{
+		{Name: "konto", Label: "Konto", Width: "10"},
+		{Name: "naziv", Label: "Naziv", Width: "55"},
+		{Name: "dug", Label: "Duguje", Width: "15", TextAlign: "right", IncludeInTotals: true},
+		{Name: "pot", Label: "Potražuje", Width: "15", TextAlign: "right", IncludeInTotals: true},
+		{Name: "saldo", Label: "Saldo", Width: "15", TextAlign: "right", IncludeInTotals: true},
 	}
 	s.saldaKomercijalistiTableFields = []domain.Fields{
 		{Name: "detalji", Label: "Detalji", Width: "10"},
@@ -1223,6 +2005,16 @@ func (s *SaldaResource) setServiceFieldValues() {
 		{Name: "naplaceno", Label: "Naplaceno", Width: "30", Field: "naplaceno", SkipInSearch: true},
 		{Name: "saldo", Label: "Saldo", Width: "30", Field: "saldo", SkipInSearch: true},
 		{Name: "naplacenovanperioda", Label: "Naplaceno van perioda", Width: "30", Field: "naplacenovanperioda", SkipInSearch: true},
+	}
+	s.saldaPartneraPoKontimaStampaTableFields = []domain.Fields{
+		{Name: "fu", Label: "F/U", Width: "5", TextAlign: "center"},
+		{Name: "brnal", Label: "Broj naloga", Width: "12"},
+		{Name: "danal", Label: "Datum naloga", Width: "12", TextAlign: "center"},
+		{Name: "vrstadok", Label: "Vrsta dokum.", Width: "20"},
+		{Name: "brmdok", Label: "Broj dokum.", Width: "12"},
+		{Name: "dadok", Label: "Datum dokum.", Width: "12", TextAlign: "center"},
+		{Name: "god", Label: "Godina dokum.", Width: "8", TextAlign: "center"},
+		{Name: "iznos", Label: "Iznos", Width: "15", TextAlign: "right"},
 	}
 }
 

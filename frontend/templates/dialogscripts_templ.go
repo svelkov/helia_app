@@ -29,7 +29,65 @@ func HandleDialogResponseScript(dialogName string) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<script>\r\n\t\tfunction handleDialogResponse(dialogName) {\r\n\t\t\t// Check if the response is an error (400 Bad Request)\r\n\t\t\tconsole.log(\"in handleDialogResponse()\", dialogName)\r\n\t\t\t//console.log(\"handleFieldErrors:\", event.detail)\r\n\t\t\ttry {\r\n\t\t\t\t// Get the response text from the backend\r\n\t\t\t\tconst responseText = event.detail.xhr.responseText;\r\n\t\t\t\tconsole.log(\"handleDialogResponse:Response text:\", responseText)\r\n\t\t\t\t\r\n\t\t\t\t// Check if response is empty or not JSON\r\n\t\t\t\tif (!responseText || responseText.trim() === '') {\r\n\t\t\t\t\t//console.log(\"Empty response, closing dialog\");\r\n\t\t\t\t\tcloseDialog(dialogName);\r\n\t\t\t\t\treturn;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t// Try to parse as JSON\r\n\t\t\t\tlet response;\r\n\t\t\t\ttry {\r\n\t\t\t\t\tresponse = JSON.parse(responseText);\r\n\t\t\t\t} catch (parseError) {\r\n\t\t\t\t\tconsole.error(\"Response is not valid JSON:\", parseError);\r\n\t\t\t\t\t//console.log(\"Response text was:\", responseText);\r\n\t\t\t\t\t// If not JSON, assume it's HTML success response, close dialog\r\n\t\t\t\t\tcloseDialog(dialogName);\r\n\t\t\t\t\treturn;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t// If we get here, response is valid JSON\r\n\t\t\t\t// Clear previous error messages\r\n\t\t\t\tdocument.querySelectorAll('.input-error').forEach(el => el.remove());\r\n\t\t\t\tdocument.querySelectorAll('.field-error-inline').forEach(el => {\r\n\t\t\t\t\tel.textContent = '';\r\n\t\t\t\t});\r\n\t\t\t\tdocument.querySelectorAll('input').forEach(input => {\r\n\t\t\t\t\tinput.classList.remove('border-red-500');\r\n\t\t\t\t});\r\n\t\t\t\t\r\n\t\t\t\t// Handle validation errors\r\n\t\t\t\tif (response.errors && response.errors.length > 0) {\r\n\t\t\t\t\t//console.log(\"Errors found:\", response.errors)\r\n\t\t\t\t\t// Loop through errors and show error messages for each field\r\n\t\t\t\t\tresponse.errors.forEach(error => {\r\n\t\t\t\t\t\tconst field = document.querySelector(`input[name=\"${error.field}\"]`);\r\n\t\t\t\t\t\tif (field) {\r\n\t\t\t\t\t\t\tfield.classList.add('border-red-500'); // Add red border to invalid field\r\n\t\t\t\t\t\t\t// Add error message below the input field\r\n\t\t\t\t\t\t\tconst errorMessage = document.createElement('p');\r\n\t\t\t\t\t\t\terrorMessage.className = 'text-red-500 text-xs mt-1 input-error';\r\n\t\t\t\t\t\t\terrorMessage.textContent = error.message;\r\n\t\t\t\t\t\t\tfield.insertAdjacentElement('afterend', errorMessage);\r\n\t\t\t\t\t\t}\r\n\t\t\t\t\t});\r\n\t\t\t\t\treturn;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t// Handle success response\r\n\t\t\t\tif (response.success) {\r\n\t\t\t\t\tshowMessage(response.message);\r\n\t\t\t\t\tcloseDialog(dialogName);\r\n\t\t\t\t\treturn;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t// Handle error response\r\n\t\t\t\tif (!response.success) {\r\n\t\t\t\t\tshowMessage(response.message, true);\r\n\t\t\t\t\treturn;\r\n\t\t\t\t}\t\r\n\t\t\t\t\r\n\t\t\t} catch (e) {\r\n\t\t\t\tconsole.error(\"Unexpected error in handleDialogResponse():\", e);\r\n\t\t\t\tcloseDialog(dialogName);\r\n\t\t\t}\r\n\t\t}\r\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<script>\r\n\t\tfunction handleDialogResponse(dialogName) {\r\n\t\t\ttry {\r\n\t\t\t\t// Get the response text from the backend\r\n\t\t\t\tconst responseText = event.detail.xhr.responseText;\r\n\t\t\t\t// Check if response is empty or not JSON\r\n\t\t\t\tif (!responseText || responseText.trim() === '') {\r\n\t\t\t\t\t//console.log(\"Empty response, closing dialog\");\r\n\t\t\t\t\tcloseDialog(dialogName);\r\n\t\t\t\t\treturn;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t// Try to parse as JSON\r\n\t\t\t\tlet response;\r\n\t\t\t\ttry {\r\n\t\t\t\t\tresponse = JSON.parse(responseText);\r\n\t\t\t\t} catch (parseError) {\r\n\t\t\t\t\tconsole.error(\"Response is not valid JSON...\");\r\n\t\t\t\t\t//console.log(\"Response text was:\", responseText);\r\n\t\t\t\t\t// If not JSON, assume it's HTML success response, close dialog\r\n\t\t\t\t\tcloseDialog(dialogName);\r\n\t\t\t\t\treturn;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t// If we get here, response is valid JSON\r\n\t\t\t\t// Clear previous error messages\r\n\t\t\t\tdocument.querySelectorAll('.input-error').forEach(el => el.remove());\r\n\t\t\t\tdocument.querySelectorAll('.field-error-inline').forEach(el => {\r\n\t\t\t\t\tel.textContent = '';\r\n\t\t\t\t});\r\n\t\t\t\tdocument.querySelectorAll('input').forEach(input => {\r\n\t\t\t\t\tinput.classList.remove('border-red-500');\r\n\t\t\t\t});\r\n\t\t\t\t\r\n\t\t\t\t// Handle validation errors\r\n\t\t\t\tif (response.errors && response.errors.length > 0) {\r\n\t\t\t\t\t//console.log(\"Errors found:\", response.errors)\r\n\t\t\t\t\t// Loop through errors and show error messages for each field\r\n\t\t\t\t\tresponse.errors.forEach(error => {\r\n\t\t\t\t\t\tconst field = document.querySelector(`input[name=\"${error.field}\"]`);\r\n\t\t\t\t\t\tif (field) {\r\n\t\t\t\t\t\t\tfield.classList.add('border-red-500'); // Add red border to invalid field\r\n\t\t\t\t\t\t\t// Add error message immediately after the input field\r\n\t\t\t\t\t\t\tconst errorMessage = document.createElement('p');\r\n\t\t\t\t\t\t\terrorMessage.className = 'text-red-500 text-xs mt-1 input-error';\r\n\t\t\t\t\t\t\terrorMessage.textContent = error.message;\r\n\t\t\t\t\t\t\tfield.insertAdjacentElement('afterend', errorMessage);\r\n\t\t\t\t\t\t}\r\n\t\t\t\t\t});\r\n\t\t\t\t\treturn;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t// Handle success response\r\n\t\t\t\tif (response.success) {\r\n\t\t\t\t\tshowMessage(response.message);\r\n\t\t\t\t\tcloseDialog(dialogName);\r\n\t\t\t\t\treturn;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t// Handle error response\r\n\t\t\t\tif (!response.success) {\r\n\t\t\t\t\tshowMessage(response.message, true);\r\n\t\t\t\t\treturn;\r\n\t\t\t\t}\t\r\n\t\t\t\t\r\n\t\t\t} catch (e) {\r\n\t\t\t\tconsole.error(\"Unexpected error in handleDialogResponse():\", e);\r\n\t\t\t\tcloseDialog(dialogName);\r\n\t\t\t}\r\n\t\t}\r\n\t</script>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+func HandleBackendResponseScript() templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var2 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var2 == nil {
+			templ_7745c5c3_Var2 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<script>\r\n\t\tfunction handleBackendResponse() {\r\n\t\t\ttry {\r\n\t\t\t\t// Get the response text from the backend\r\n\t\t\t\tconst responseText = event.detail.xhr.responseText;\r\n\t\t\t\t// Check if response is empty or not JSON\r\n\t\t\t\tif (!responseText || responseText.trim() === '') {\r\n\t\t\t\t\treturn;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t// Try to parse as JSON\r\n\t\t\t\tlet response;\r\n\t\t\t\ttry {\r\n\t\t\t\t\tresponse = JSON.parse(responseText);\r\n\t\t\t\t} catch (parseError) {\r\n\t\t\t\t\tconsole.error(\"Response is not valid JSON...\");\r\n\t\t\t\t\treturn;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t// If we get here, response is valid JSON\r\n\t\t\t\t// Clear previous error messages\r\n\t\t\t\tdocument.querySelectorAll('.input-error').forEach(el => el.remove());\r\n\t\t\t\tdocument.querySelectorAll('.field-error-inline').forEach(el => {\r\n\t\t\t\t\tel.textContent = '';\r\n\t\t\t\t});\r\n\t\t\t\tdocument.querySelectorAll('input').forEach(input => {\r\n\t\t\t\t\tinput.classList.remove('border-red-500');\r\n\t\t\t\t});\r\n\t\t\t\t\r\n\t\t\t\t// Handle validation errors\r\n\t\t\t\tif (response.errors && response.errors.length > 0) {\r\n\t\t\t\t\t//console.log(\"Errors found:\", response.errors)\r\n\t\t\t\t\t// Loop through errors and show error messages for each field\r\n\t\t\t\t\tresponse.errors.forEach(error => {\r\n\t\t\t\t\t\tconst field = document.querySelector(`input[name=\"${error.field}\"]`);\r\n\t\t\t\t\t\tif (field) {\r\n\t\t\t\t\t\t\tfield.classList.add('border-red-500'); // Add red border to invalid field\r\n\t\t\t\t\t\t\t// Add error message immediately after the input field\r\n\t\t\t\t\t\t\tconst errorMessage = document.createElement('p');\r\n\t\t\t\t\t\t\terrorMessage.className = 'text-red-500 text-xs mt-1 input-error';\r\n\t\t\t\t\t\t\terrorMessage.textContent = error.message;\r\n\t\t\t\t\t\t\tfield.insertAdjacentElement('afterend', errorMessage);\r\n\t\t\t\t\t\t}\r\n\t\t\t\t\t});\r\n\t\t\t\t\treturn;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t// Handle success response\r\n\t\t\t\tif (response.success) {\r\n\t\t\t\t\tshowMessage(response.message);\r\n\t\t\t\t\treturn;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t// Handle error response\r\n\t\t\t\tif (!response.success) {\r\n\t\t\t\t\tshowMessage(response.message, true);\r\n\t\t\t\t\treturn;\r\n\t\t\t\t}\t\r\n\t\t\t\t\r\n\t\t\t} catch (e) {\r\n\t\t\t\tconsole.error(\"Unexpected error in handleBackendResponse():\", e);\r\n\t\t\t}\r\n\t\t}\r\n\t</script>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+func ClearFormScript() templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var3 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var3 == nil {
+			templ_7745c5c3_Var3 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<script>\r\n\t\tfunction clearForm(formId = 'nalog-stavke-form') {\r\n\t\t\tconsole.log(\"Clearing form fields and errors...\");\r\n\t\t\tbtnCancel = document.getElementById('btn-stavke-cancel');\r\n\t\t\tconsole.log(\"btnCancel element:\", btnCancel);\r\n\t\t\tif (btnCancel) {\r\n\t\t\t\tbtnCancel.disabled = true;\r\n\t\t\t\tbtnCancel.classList.add('opacity-50', 'cursor-not-allowed');\r\n\t\t\t}\r\n\t\t\tconst form = document.getElementById(formId);\r\n\t\t\tif (!form) return;\r\n\t\t\tform.querySelectorAll('input').forEach(input => {\r\n\t\t\t\tinput.value = '';\r\n\t\t\t\tinput.classList.remove('border-red-500');\r\n\t\t\t});\r\n\t\t\tform.querySelectorAll('select').forEach(select => {\r\n\t\t\t\tselect.selectedIndex = 0;\r\n\t\t\t});\r\n\t\t\tform.querySelectorAll('.input-error').forEach(el => el.remove());\r\n\t\t\tform.querySelectorAll('.field-error-inline').forEach(el => {\r\n\t\t\t\tel.textContent = '';\r\n\t\t\t});\r\n\t\t\tif (typeof _fpro_unlockTable === 'function') _fpro_unlockTable();\r\n\t\t}\r\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -53,12 +111,12 @@ func ClearFieldErrorScript() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var2 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var2 == nil {
-			templ_7745c5c3_Var2 = templ.NopComponent
+		templ_7745c5c3_Var4 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var4 == nil {
+			templ_7745c5c3_Var4 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<script>\t\t\r\n\t\tfunction clearFieldError(inputElement) {\r\n\t\t\tconst elm = document.getElementById(inputElement);\r\n\t\t\tif (elm) {\r\n\t\t\t\telm.classList.remove('border-red-500');\r\n\t\t\t\tconst inlineError = document.getElementById(`${inputElement}-error`);\r\n\t\t\t\tif (inlineError) {\r\n\t\t\t\t\tinlineError.textContent = '';\r\n\t\t\t\t}\r\n\t\t\t\tconst wrapper = elm.closest('.input-error-wrapper');\r\n\t\t\t\tif (wrapper) {\r\n\t\t\t\t\twrapper.querySelectorAll('.input-error').forEach(el => el.remove());\r\n\t\t\t\t}\r\n\t\t\t\t// Also remove sibling errors inserted via insertAdjacentElement('afterend', ...)\r\n\t\t\t\tlet sibling = elm.nextElementSibling;\r\n\t\t\t\twhile (sibling && sibling.classList.contains('input-error')) {\r\n\t\t\t\t\tconst next = sibling.nextElementSibling;\r\n\t\t\t\t\tsibling.remove();\r\n\t\t\t\t\tsibling = next;\r\n\t\t\t\t}\r\n\t\t\t}\r\n\t\t}\r\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<script>\t\t\r\n\t\tfunction clearFieldError(inputElement) {\r\n\t\t\tconst elm = document.getElementById(inputElement);\r\n\t\t\tif (elm) {\r\n\t\t\t\telm.classList.remove('border-red-500');\r\n\t\t\t\tconst inlineError = document.getElementById(`${inputElement}-error`);\r\n\t\t\t\tif (inlineError) {\r\n\t\t\t\t\tinlineError.textContent = '';\r\n\t\t\t\t}\r\n\t\t\t\tconst wrapper = elm.closest('.input-error-wrapper');\r\n\t\t\t\tif (wrapper) {\r\n\t\t\t\t\twrapper.querySelectorAll('.input-error').forEach(el => el.remove());\r\n\t\t\t\t}\r\n\t\t\t\t// Also remove sibling errors inserted via insertAdjacentElement('afterend', ...)\r\n\t\t\t\tlet sibling = elm.nextElementSibling;\r\n\t\t\t\twhile (sibling && sibling.classList.contains('input-error')) {\r\n\t\t\t\t\tconst next = sibling.nextElementSibling;\r\n\t\t\t\t\tsibling.remove();\r\n\t\t\t\t\tsibling = next;\r\n\t\t\t\t}\r\n\t\t\t}\r\n\t\t}\r\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -66,7 +124,7 @@ func ClearFieldErrorScript() templ.Component {
 	})
 }
 
-func ShowMessage() templ.Component {
+func HandleDblClickNalogSelectionScript() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -82,12 +140,128 @@ func ShowMessage() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var3 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var3 == nil {
-			templ_7745c5c3_Var3 = templ.NopComponent
+		templ_7745c5c3_Var5 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var5 == nil {
+			templ_7745c5c3_Var5 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<script>\r\n\t\tfunction selectRow(row) {\r\n\t\t   // console.log(\"Row clicked:\", row);\r\n\t\t   // Deselect any previously selected row by removing the 'bg-blue-300' class\r\n\t\t\tconst selectedRow = document.querySelector('.bg-blue-300');\r\n\t\t\tif (selectedRow) {\r\n\t\t\tselectedRow.classList.remove('bg-blue-300');\r\n\t\t\t}\r\n\r\n\t\t\t// Select the clicked row\r\n\t\t\trow.classList.add('bg-blue-300');\r\n\t\t}\r\n\r\n \r\n  \t\tfunction handleDblClickNalogSelection(element) {\r\n\t\t    if (!element) return;\r\n\t\t\t// Get all table cells in this row\r\n\t\t\tconst cells = element.querySelectorAll('td');\r\n\t\t\t// Extract values by div name attribute: tdval-index-fieldname\r\n\t\t\tconst nalogDiv = element.querySelector('div[name*=\"nalog\"]');\r\n\t\t\tconst datobDiv = element.querySelector('div[name*=\"datob\"]');\r\n\t\t\tconst danalDiv = element.querySelector('div[name*=\"danal\"]');\r\n\t\t\tconst opisDiv = element.querySelector('div[name*=\"opis\"]');\r\n\t\t\t\r\n\t\t\t// Get text content from divs\r\n\t\t\tconst nalogVal = nalogDiv?.textContent?.trim() || '';\r\n\t\t\tlet datobVal = datobDiv?.textContent?.trim() || '';\r\n\t\t\tlet danalVal = danalDiv?.textContent?.trim() || '';\r\n\t\t\tconst opisVal = opisDiv?.textContent?.trim() || '';\r\n\t\t\t\r\n\t\t\t// Convert date format from dd.mm.yyyy to yyyy-mm-dd for HTML date input\r\n\t\t\tconst convertDateFormat = (dateStr) => {\r\n\t\t\t\tif (!dateStr) return '';\r\n\t\t\t\tconst parts = dateStr.split('.');\r\n\t\t\t\tif (parts.length === 3) {\r\n\t\t\t\t\tconst day = parseInt(parts[0]);\r\n\t\t\t\t\tconst month = parseInt(parts[1]);\r\n\t\t\t\t\tconst year = parseInt(parts[2]);\r\n\t\t\t\t\t// Create date object (month is 0-indexed in Date constructor)\r\n\t\t\t\t\tconst date = new Date(year, month - 1, day);\r\n\t\t\t\t\t// Format as yyyy-mm-dd\r\n\t\t\t\t\tconst yyyy = date.getFullYear();\r\n\t\t\t\t\tconst mm = String(date.getMonth() + 1).padStart(2, '0');\r\n\t\t\t\t\tconst dd = String(date.getDate()).padStart(2, '0');\r\n\t\t\t\t\treturn `${yyyy}-${mm}-${dd}`;\r\n\t\t\t\t}\r\n\t\t\t\treturn dateStr;\r\n\t\t\t};\r\n\t\t\t\r\n\t\t\tdatobVal = convertDateFormat(datobVal);\r\n\t\t\tdanalVal = convertDateFormat(danalVal);\r\n\t\t\t\r\n\t\t\tconsole.log(\"Extracted values - nalog:\", nalogVal, \"datob:\", datobVal, \"danal:\", danalVal, \"opis:\", opisVal);\r\n\t\t\t\r\n\t\t\t// Set values in form\r\n\t\t\tconst nalogInput = document.getElementById('nalog');\r\n\t\t\tconst datobInput = document.getElementById('datob');\r\n\t\t\tconst danalInput = document.getElementById('danal');\r\n\t\t\tconst opisInput = document.getElementById('opis');\r\n\t\t\t\r\n\t\t\tif (nalogInput) nalogInput.value = nalogVal;\r\n\t\t\tif (datobInput) datobInput.value = datobVal;\r\n\t\t\tif (danalInput) danalInput.value = danalVal;\r\n\t\t\tif (opisInput) opisInput.value = opisVal;\r\n\t\t}\r\n\r\n\t\tfunction showMessage(message, isError = false) {\r\n\t\t\tconst infoMessage = document.getElementById('info-message');\r\n\r\n\t\t\t// Set the message text\r\n\t\t\tinfoMessage.textContent = message;\r\n\t\t\t// Reset previous styles\r\n\t\t\tinfoMessage.classList.remove('hidden', 'bg-green-500', 'bg-red-500', 'text-white');\r\n\t\t\t// Add appropriate styles based on success or error\r\n\t\t\tif (isError) {\r\n\t\t\t\tinfoMessage.classList.add('bg-red-500', 'text-white');\r\n\t\t\t} else {\r\n\t\t\t\tinfoMessage.classList.add('bg-green-500', 'text-white');\r\n\t\t\t}\r\n\t\t\t// Show the message\r\n\t\t\tinfoMessage.classList.remove('hidden');\r\n\t\t\t// Hide the message after 3 seconds\r\n\t\t\tsetTimeout(() => {\r\n\t\t\t\tinfoMessage.classList.add('hidden');\r\n\t\t\t}, 3000);\r\n\t\t}\r\n\t\r\n\t\tfunction handleNextNalogResponse(dialogName) {\r\n\t\t\tconsole.log(\"handleNextNalogResponse:\", event.detail);\r\n\t\t\t\r\n\t\t\ttry {\r\n\t\t\t\tconsole.log(\"u handleNextNalogResponse() \")\r\n\t\t\t\tconst response = JSON.parse(event.detail.xhr.responseText);\r\n\t\t\t\t\r\n\t\t\t\t// Check if response has the expected structure\r\n\t\t\t\tif (response && response.success && response.nalog) {\r\n\t\t\t\t\tconsole.log(\"response\", response.nalog);\r\n\t\t\t\t\t\r\n\t\t\t\t\tconst nalogElement = document.getElementById('nalog');\r\n\t\t\t\t\tif (nalogElement) {\r\n\t\t\t\t\t\tnalogElement.value = response.nalog;\r\n\t\t\t\t\t}\r\n\t\t\t\t\tconst opisElement = document.getElementById('opis');\r\n\t\t\t\t\tif (opisElement) {\r\n\t\t\t\t\t\topisElement.value =  '';\r\n\t\t\t\t\t}\r\n\t\t\t\t} else {\r\n\t\t\t\t\tconsole.warn(\"Response missing expected data:\", response);\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t} catch (e) {\r\n\t\t\t\tconsole.error(\"Invalid JSON response\", e);\r\n\t\t\t}\r\n\t\t}\r\n\t\tfunction handleUpdateNalogDataResponse() {\r\n\t\t\tconsole.log(\"handleUpdateNalogDataResponse:\", event.detail);\r\n\t\t\t\r\n\t\t\ttry {\r\n\t\t\t\tconsole.log(\"u handleUpdateNalogDataResponse() \")\r\n\t\t\t\tconst response = JSON.parse(event.detail.xhr.responseText);\r\n\t\t\t\t\r\n\t\t\t\t// Check if response has the expected structure\r\n\t\t\t\tif (response && response.success ) {\r\n\t\t\t\t\tconsole.log(\"response\", response.nalog);\r\n\t\t\t\t\t\r\n\t\t\t\t\tconst datobElement = document.getElementById('datob');\r\n\t\t\t\t\tconst danalElement = document.getElementById('danal');\r\n\t\t\t\t\tconst opisElement = document.getElementById('opis');\r\n\t\t\t\t\tif (datobElement) {\r\n\t\t\t\t\t\tdatobElement.value = response.datob || '';\r\n\t\t\t\t\t} \r\n\t\t\t\t\tif (danalElement) {\r\n\t\t\t\t\t\tdanalElement.value = response.danal || '';\r\n\t\t\t\t\t}\r\n\t\t\t\t\tif (opisElement) {\r\n\t\t\t\t\t\topisElement.value = response.opis || '';\r\n\t\t\t\t\t}\r\n\t\t\t\t} else {\r\n\t\t\t\t\tconsole.warn(\"Response missing expected data:\", response);\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t} catch (e) {\r\n\t\t\t\tconsole.error(\"Invalid JSON response\", e);\r\n\t\t\t}\r\n\t\t}\r\n\t\t// Trigger next nalog fetch after tipdok combo changes\r\n        function handleTipdokAfterRequest(event) {\r\n\t\t\tconsole.log(\"Tipdok changed, fetching next nalog...\", event);\r\n            htmx.trigger('#nalog-trigger', 'tipdokChanged');\r\n        }\r\n\t\t// Export functions to global scope\r\n\t\twindow.handleDblClickNalogSelection = handleDblClickNalogSelection;\r\n\t\twindow.handleTipdokAfterRequest = handleTipdokAfterRequest;\r\n\r\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<script>\r\n\t\tfunction handleDblClickNalogSelection(element) {\r\n\t\t    if (!element) return;\r\n\t\t\t// Get all table cells in this row\r\n\t\t\tconst cells = element.querySelectorAll('td');\r\n\t\t\t// Extract values by div name attribute: tdval-index-fieldname\r\n\t\t\tconst nalogDiv = element.querySelector('div[name*=\"nalog\"]');\r\n\t\t\tconst datobDiv = element.querySelector('div[name*=\"datob\"]');\r\n\t\t\tconst danalDiv = element.querySelector('div[name*=\"danal\"]');\r\n\t\t\tconst opisDiv = element.querySelector('div[name*=\"opis\"]');\r\n\t\t\t\r\n\t\t\t// Get text content from divs\r\n\t\t\tconst nalogVal = nalogDiv?.textContent?.trim() || '';\r\n\t\t\tlet datobVal = datobDiv?.textContent?.trim() || '';\r\n\t\t\tlet danalVal = danalDiv?.textContent?.trim() || '';\r\n\t\t\tconst opisVal = opisDiv?.textContent?.trim() || '';\r\n\t\t\t\r\n\t\t\t// Convert date format from dd.mm.yyyy to yyyy-mm-dd for HTML date input\r\n\t\t\tconst convertDateFormat = (dateStr) => {\r\n\t\t\t\tif (!dateStr) return '';\r\n\t\t\t\tconst parts = dateStr.split('.');\r\n\t\t\t\tif (parts.length === 3) {\r\n\t\t\t\t\tconst day = parseInt(parts[0]);\r\n\t\t\t\t\tconst month = parseInt(parts[1]);\r\n\t\t\t\t\tconst year = parseInt(parts[2]);\r\n\t\t\t\t\t// Create date object (month is 0-indexed in Date constructor)\r\n\t\t\t\t\tconst date = new Date(year, month - 1, day);\r\n\t\t\t\t\t// Format as yyyy-mm-dd\r\n\t\t\t\t\tconst yyyy = date.getFullYear();\r\n\t\t\t\t\tconst mm = String(date.getMonth() + 1).padStart(2, '0');\r\n\t\t\t\t\tconst dd = String(date.getDate()).padStart(2, '0');\r\n\t\t\t\t\treturn `${yyyy}-${mm}-${dd}`;\r\n\t\t\t\t}\r\n\t\t\t\treturn dateStr;\r\n\t\t\t};\r\n\t\t\t\r\n\t\t\tdatobVal = convertDateFormat(datobVal);\r\n\t\t\tdanalVal = convertDateFormat(danalVal);\r\n\t\t\t\r\n\t\t\tconsole.log(\"Extracted values - nalog:\", nalogVal, \"datob:\", datobVal, \"danal:\", danalVal, \"opis:\", opisVal);\r\n\t\t\t\r\n\t\t\t// Set values in form\r\n\t\t\tconst nalogInput = document.getElementById('nalog');\r\n\t\t\tconst datobInput = document.getElementById('datob');\r\n\t\t\tconst danalInput = document.getElementById('danal');\r\n\t\t\tconst opisInput = document.getElementById('opis');\r\n\t\t\t\r\n\t\t\tif (nalogInput) nalogInput.value = nalogVal;\r\n\t\t\tif (datobInput) datobInput.value = datobVal;\r\n\t\t\tif (danalInput) danalInput.value = danalVal;\r\n\t\t\tif (opisInput) opisInput.value = opisVal;\r\n\r\n\t\t\t// Trigger click on the \"sacuvaj\" button\r\n\t\t\tconst sacuvajBtn = document.querySelector('button[name=\"btn-save\"], button#sacuvaj, button[id*=\"btn-save\"]');\r\n\t\t\tif (sacuvajBtn) sacuvajBtn.click();\r\n\t\t}\r\n\t</script>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+func HandleNextNalogResponseScript() templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var6 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var6 == nil {
+			templ_7745c5c3_Var6 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<script>\r\n\t\tfunction handleNextNalogResponse(dialogName) {\r\n\t\t\tconsole.log(\"handleNextNalogResponse:\", event.detail);\r\n\t\t\t\r\n\t\t\ttry {\r\n\t\t\t\tconsole.log(\"u handleNextNalogResponse() \")\r\n\t\t\t\tconst response = JSON.parse(event.detail.xhr.responseText);\r\n\t\t\t\t\r\n\t\t\t\t// Check if response has the expected structure\r\n\t\t\t\tif (response && response.success && response.nalog) {\r\n\t\t\t\t\tconsole.log(\"response\", response.nalog);\r\n\t\t\t\t\t\r\n\t\t\t\t\tconst nalogElement = document.getElementById('nalog');\r\n\t\t\t\t\tif (nalogElement) {\r\n\t\t\t\t\t\tnalogElement.value = response.nalog;\r\n\t\t\t\t\t}\r\n\t\t\t\t\tconst opisElement = document.getElementById('opis');\r\n\t\t\t\t\tif (opisElement) {\r\n\t\t\t\t\t\topisElement.value =  '';\r\n\t\t\t\t\t}\r\n\t\t\t\t} else {\r\n\t\t\t\t\tconsole.warn(\"Response missing expected data:\", response);\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t} catch (e) {\r\n\t\t\t\tconsole.error(\"Invalid JSON response\", e);\r\n\t\t\t}\r\n\t\t}\r\n\t</script>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+func HandleUpdateNalogDataResponseScript() templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var7 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var7 == nil {
+			templ_7745c5c3_Var7 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<script>\r\n\t\tfunction handleUpdateNalogDataResponse() {\r\n\t\t\tconsole.log(\"handleUpdateNalogDataResponse:\", event.detail);\r\n\t\t\t\r\n\t\t\ttry {\r\n\t\t\t\tconsole.log(\"u handleUpdateNalogDataResponse() \")\r\n\t\t\t\tconst response = JSON.parse(event.detail.xhr.responseText);\r\n\t\t\t\t\r\n\t\t\t\t// Check if response has the expected structure\r\n\t\t\t\tif (response && response.success ) {\r\n\t\t\t\t\tconsole.log(\"response\", response.nalog);\r\n\t\t\t\t\t\r\n\t\t\t\t\tconst datobElement = document.getElementById('datob');\r\n\t\t\t\t\tconst danalElement = document.getElementById('danal');\r\n\t\t\t\t\tconst opisElement = document.getElementById('opis');\r\n\t\t\t\t\tif (datobElement) {\r\n\t\t\t\t\t\tdatobElement.value = response.datob || '';\r\n\t\t\t\t\t} \r\n\t\t\t\t\tif (danalElement) {\r\n\t\t\t\t\t\tdanalElement.value = response.danal || '';\r\n\t\t\t\t\t}\r\n\t\t\t\t\tif (opisElement) {\r\n\t\t\t\t\t\topisElement.value = response.opis || '';\r\n\t\t\t\t\t}\r\n\t\t\t\t} else {\r\n\t\t\t\t\tconsole.warn(\"Response missing expected data:\", response);\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t} catch (e) {\r\n\t\t\t\tconsole.error(\"Invalid JSON response\", e);\r\n\t\t\t}\r\n\t\t}\r\n\t</script>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+func HandleTipdokAfterRequestScript() templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var8 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var8 == nil {
+			templ_7745c5c3_Var8 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<script>\r\n\t    function handleTipdokAfterRequest(event) {\r\n\t\t\tconsole.log(\"Tipdok changed, fetching next nalog...\", event);\r\n            htmx.trigger('#nalog-trigger', 'tipdokChanged');\r\n        }\r\n\t</script>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+func SelectRowScript() templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var9 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var9 == nil {
+			templ_7745c5c3_Var9 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<script>\r\n\t\tfunction selectRow(row) {\r\n\t\t\tconst prev = document.querySelector('tr.table-row-selected');\r\n\t\t\tif (prev) {\r\n\t\t\t\tprev.classList.remove('table-row-selected');\r\n\t\t\t}\r\n\t\t\trow.classList.add('table-row-selected');\r\n\t\t}\r\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -111,12 +285,12 @@ func HandleDblClickKontoSelectionScript() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var4 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var4 == nil {
-			templ_7745c5c3_Var4 = templ.NopComponent
+		templ_7745c5c3_Var10 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var10 == nil {
+			templ_7745c5c3_Var10 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<script>\r\n \t\tfunction handleDblClickKontoSelection(element) {\r\n\t        if (!element) return;\r\n\t\t\tconsole.log(\"handleDblClickKontoSelection: element =\", element);\r\n\t\t\tconst destField = element.getAttribute('data-dest-field');\r\n\t\t\tconsole.log(\"handleDblClickKontoSelection: destField =\", destField);\r\n\t\t\t// data-value-col: which column index holds the code value (default 0 = first column)\r\n\t\t\tconst valueCol = parseInt(element.getAttribute('data-value-col') || '0');\r\n    \t\tconsole.log(\"handleDblClickKontoSelection: valueCol =\", valueCol);\r\n\t\t\t// Get all table cells in this row\r\n\t\t\tconst cells = element.querySelectorAll('td');\r\n\t\t\t\r\n\t\t\t// col 0 = code (konto/sifra), col 1 = second code (sifra), col 2 = naziv\r\n\t\t\tconst vals = Array.from(cells).map(td => td.querySelector('.text-sm')?.textContent?.trim() || '');\r\n\t\t\tconst selectedVal = vals[valueCol] || '';\r\n\t\t\tconst nazivVal = vals[2] || '';\r\n\t\t\t\r\n\t\t\t// Set values in form\r\n\t\t\tif (destField) {\r\n\t\t\t\tconst destFieldNaziv = destField + 'naziv';\r\n\t\t\t\tclearFieldError(destField);\r\n\t\t\t\tconst fieldInput = document.getElementById(destField);\r\n\t\t\t\tconst fieldNaziv = document.getElementById(destFieldNaziv);\r\n\t\t\t\tif (fieldInput) fieldInput.value = selectedVal;\r\n\t\t\t\tif (fieldNaziv) fieldNaziv.value = nazivVal;\r\n\t\t\t}\r\n\t\t\t// Close the dialog\r\n            hideDropdown('search-dropdown');\r\n        }\r\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<script>\r\n \t\tfunction handleDblClickKontoSelection(element) {\r\n\t        if (!element) return;\r\n\t\t\tconsole.log(\"handleDblClickKontoSelection: element =\", element);\r\n\t\t\tconst destField = element.getAttribute('data-dest-field');\r\n\t\t\tconsole.log(\"handleDblClickKontoSelection: destField =\", destField);\r\n\t\t\t// data-value-col: which column index holds the code value (default 0 = first column)\r\n\t\t\tconst valueCol = parseInt(element.getAttribute('data-value-col') || '0');\r\n    \t\tconsole.log(\"handleDblClickKontoSelection: valueCol =\", valueCol);\r\n\t\t\t// Get all table cells in this row\r\n\t\t\tconst cells = element.querySelectorAll('td');\r\n\t\t\t\r\n\t\t\t// col 0 = code (konto/sifra), col 1 = second code (sifra), col 2 = naziv\r\n\t\t\tconst vals = Array.from(cells).map(td => td.querySelector('.text-sm')?.textContent?.trim() || '');\r\n\t\t\tconst selectedVal = vals[valueCol] || '';\r\n\t\t\tconst nazivVal = vals[2] || '';\r\n\t\t\t\r\n\t\t\t// Set values in form\r\n\t\t\tif (destField) {\r\n\t\t\t\tconst destFieldNaziv = destField + 'naziv';\r\n\t\t\t\tclearFieldError(destField);\r\n\t\t\t\tconst fieldInput = document.getElementById(destField);\r\n\t\t\t\tconst fieldNaziv = document.getElementById(destFieldNaziv);\r\n\t\t\t\tif (fieldInput) fieldInput.value = selectedVal;\r\n\t\t\t\tif (fieldNaziv) fieldNaziv.value = nazivVal;\r\n\t\t\t}\r\n\t\t\t// Close the dialog\r\n            hideDropdown('search-dropdown');\r\n        }\r\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -140,12 +314,12 @@ func RestrictNumericInput() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var5 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var5 == nil {
-			templ_7745c5c3_Var5 = templ.NopComponent
+		templ_7745c5c3_Var11 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var11 == nil {
+			templ_7745c5c3_Var11 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<script>\r\n\t\tfunction restrictNumericInput(el, maxDecimals) {\r\n\t\t\tmaxDecimals = (maxDecimals !== undefined) ? maxDecimals\r\n\t\t\t\t: (parseInt(el.getAttribute('data-decimals')) || 4);\r\n\t\t\tconst sep = (1.1).toLocaleString().replace(/[0-9]/g, '')[0] || '.';\r\n\t\t\tconst other = sep === '.' ? ',' : '.';\r\n\t\t\tlet v = el.value;\r\n\t\t\t// predznak minus samo na pocetku i samo jednom\r\n\t\t\tconst neg = v.startsWith('-');\r\n\t\t\tv = v.replace(/-/g, '');\r\n\t\t\t// zadrzati samo cifre i separatore\r\n\t\t\tv = v.replace(/[^0-9.,]/g, '');\r\n\t\t\t// ukloniti suprotni separator\r\n\t\t\tv = v.replace(new RegExp('\\\\' + other, 'g'), '');\r\n\t\t\t// samo jedan decimalni separator\r\n\t\t\tconst idx = v.indexOf(sep);\r\n\t\t\tif (idx !== -1) {\r\n\t\t\t\tconst decimals = v.substring(idx + 1).replace(new RegExp('\\\\' + sep, 'g'), '');\r\n\t\t\t\tv = v.substring(0, idx + 1) + decimals.substring(0, maxDecimals);\r\n\t\t\t}\r\n\t\t\tif (neg) v = '-' + v;\r\n\t\t\tel.value = v;\r\n\t\t}\r\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<script>\r\n\t\tfunction restrictNumericInput(el, maxDecimals) {\r\n\t\t\tmaxDecimals = (maxDecimals !== undefined) ? maxDecimals\r\n\t\t\t\t: (parseInt(el.getAttribute('data-decimals')) || 4);\r\n\t\t\tconst sep = (1.1).toLocaleString().replace(/[0-9]/g, '')[0] || '.';\r\n\t\t\tconst other = sep === '.' ? ',' : '.';\r\n\t\t\tlet v = el.value;\r\n\t\t\t// predznak minus samo na pocetku i samo jednom\r\n\t\t\tconst neg = v.startsWith('-');\r\n\t\t\tv = v.replace(/-/g, '');\r\n\t\t\t// zadrzati samo cifre i separatore\r\n\t\t\tv = v.replace(/[^0-9.,]/g, '');\r\n\t\t\t// ukloniti suprotni separator\r\n\t\t\tv = v.replace(new RegExp('\\\\' + other, 'g'), '');\r\n\t\t\t// samo jedan decimalni separator\r\n\t\t\tconst idx = v.indexOf(sep);\r\n\t\t\tif (idx !== -1) {\r\n\t\t\t\tconst decimals = v.substring(idx + 1).replace(new RegExp('\\\\' + sep, 'g'), '');\r\n\t\t\t\tv = v.substring(0, idx + 1) + decimals.substring(0, maxDecimals);\r\n\t\t\t}\r\n\t\t\tif (neg) v = '-' + v;\r\n\t\t\tel.value = v;\r\n\t\t}\r\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -169,12 +343,12 @@ func HandleFormResponseScript() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var6 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var6 == nil {
-			templ_7745c5c3_Var6 = templ.NopComponent
+		templ_7745c5c3_Var12 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var12 == nil {
+			templ_7745c5c3_Var12 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<script>\r\n\t\tfunction handleFormResponse(event, requestType, dialogId = null, showMsg = false, closeAfterSuccess = false) {\r\n\t\t\tconst xhr = event.detail.xhr;\r\n\t\t\tconst messageDiv = document.getElementById('dialog-form-message') || document.getElementById('dialog-message');\r\n\t\t\t// Clear previous error state\r\n\t\t\tdocument.querySelectorAll('.input-error').forEach(el => el.remove());\r\n\t\t\tdocument.querySelectorAll('.field-error-inline').forEach(el => { el.textContent = ''; });\r\n\t\t\tdocument.querySelectorAll('input').forEach(input => { input.classList.remove('border-red-500'); });\r\n\t\t\t// Parse response - non-JSON with 2xx: close dialog if dialogId is set\r\n\t\t\tlet response;\r\n\t\t\ttry {\r\n\t\t\t\tresponse = JSON.parse(xhr.responseText);\r\n\t\t\t} catch (e) {\r\n\t\t\t\tif ((xhr.status === 200 || xhr.status === 201) && dialogId) closeDialog(dialogId);\r\n\t\t\t\treturn;\r\n\t\t\t}\r\n\t\t\t// Handle validation errors\r\n\t\t\tif (response.errors && response.errors.length > 0) {\r\n\t\t\t\tresponse.errors.forEach(error => {\r\n\t\t\t\t\tconst field = document.querySelector(`input[name=\"${error.field}\"]`);\r\n\t\t\t\t\tif (field) {\r\n\t\t\t\t\t\tfield.classList.add('border-red-500');\r\n\t\t\t\t\t\tconst inlineError = document.getElementById(`${error.field}-error`);\r\n\t\t\t\t\t\tif (inlineError) { inlineError.textContent = error.message; return; }\r\n\t\t\t\t\t\tlet wrapper = field.closest('.input-error-wrapper');\r\n\t\t\t\t\t\tif (!wrapper) {\r\n\t\t\t\t\t\t\tconst inputWidth = field.offsetWidth;\r\n\t\t\t\t\t\t\twrapper = document.createElement('div');\r\n\t\t\t\t\t\t\twrapper.className = 'input-error-wrapper flex flex-col';\r\n\t\t\t\t\t\t\twrapper.style.maxWidth = inputWidth + 'px';\r\n\t\t\t\t\t\t\tfield.parentNode.insertBefore(wrapper, field);\r\n\t\t\t\t\t\t\twrapper.appendChild(field);\r\n\t\t\t\t\t\t}\r\n\t\t\t\t\t\tconst errorMessage = document.createElement('p');\r\n\t\t\t\t\t\terrorMessage.className = 'text-red-500 text-xs mt-1 input-error whitespace-normal break-words';\r\n\t\t\t\t\t\terrorMessage.textContent = error.message;\r\n\t\t\t\t\t\twrapper.appendChild(errorMessage);\r\n\t\t\t\t\t}\r\n\t\t\t\t});\r\n\t\t\t\treturn;\r\n\t\t\t}\r\n\t\t\tif (xhr.status === 200 || xhr.status === 201) {\r\n\t\t\t\tif (showMsg && response.message && messageDiv) {\r\n\t\t\t\t\tmessageDiv.className = 'p-2 text-sm text-green-800 bg-green-100 border border-green-300 rounded-lg w-full whitespace-normal break-words';\r\n\t\t\t\t\tmessageDiv.textContent = response.message;\r\n\t\t\t\t\tmessageDiv.classList.remove('hidden');\r\n\t\t\t\t\tif (requestType === 'POST') {\r\n\t\t\t\t\t\tsetTimeout(() => { messageDiv.classList.add('hidden'); }, 3000);\r\n\t\t\t\t\t}\r\n\t\t\t\t\tif (dialogId) setTimeout(() => { closeDialog(dialogId); }, 1000);\r\n\t\t\t\t} else if (dialogId) {\r\n\t\t\t\t\tcloseDialog(dialogId);\r\n\t\t\t\t}\r\n\t\t\t\tif (closeAfterSuccess && dialogId) {\r\n\t\t\t\t\tsetTimeout(() => { closeDialog(dialogId); }, 1000);\r\n\t\t\t\t}\r\n\t\t\t} else {\r\n\t\t\t\tif (messageDiv) {\r\n\t\t\t\t\tmessageDiv.className = 'p-2 text-sm text-red-800 bg-red-100 border border-red-300 rounded-lg w-full whitespace-normal break-words';\r\n\t\t\t\t\tmessageDiv.textContent = (response && response.message) ? response.message : 'An error occurred';\r\n\t\t\t\t\tmessageDiv.classList.remove('hidden');\r\n\t\t\t\t}\r\n\t\t\t}\r\n\t\t}\r\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<script>\r\n\t\t// handleFormResponse — universal htmx after-request handler for all dialogs.\r\n\t\t// Usage: hx-on::after-request=\"handleFormResponse(event, 'POST', 'dialog-nalog')\"\r\n\t\t// Conventions:\r\n\t\t//   • dialogId  — id of the dialog root element, e.g. \"dialog-nalog\"\r\n\t\t//   • message div id = dialogId + \"-message\",  e.g. \"dialog-nalog-message\"\r\n\t\t//   • staging slots (#dialog-confirm, #dialog-stavkenaloga) receive sub-dialog HTML\r\n\t\tfunction handleFormResponse(event, requestType, dialogId, showMsg = true) {\r\n\t\t\t// Guard: ignore requests from child non-button elements (e.g. combos, inputs with hx-trigger)\r\n\t\t\t// but allow requests from submit buttons (which have their own hx-post/put and bubble up).\r\n\t\t\tconst _elt = event.detail?.elt;\r\n\t\t\tconsole.log(\"handleFormResponse: event =\", event, \"requestType =\", requestType, \"dialogId =\", dialogId);\r\n\t\t\tif (event.currentTarget && _elt !== event.currentTarget && _elt?.tagName !== 'BUTTON') return;\r\n\t\t\tconst xhr  = event.detail.xhr;\r\n\t\t\tconst ok   = xhr.status === 200 || xhr.status === 201;\r\n\t\t\tconst resp = _dlg_tryJSON(xhr.responseText);\r\n\t\t\tconsole.log(\"Parsed response:\", resp);\r\n\t\t\t// HTML response → new sub-dialog was injected by HTMX into a staging slot\r\n\t\t\t// if (ok && !resp) {\r\n\t\t\t// \tconsole.log(\"HTML response detected, opening sub-dialog if present...\");\r\n\t\t\t// \t_dlg_openSubDialog(dialogId, event.detail.target);\r\n\t\t\t// \treturn;\r\n\t\t\t// }\r\n\t\t\tconsole.log(\"JSON response detected, processing...\"); \r\n\t\t\tconst msgDiv = _dlg_msgDiv(dialogId);\r\n\t\t\tconsole.log(\"Message div:\", msgDiv);\r\n\t\t\tif (msgDiv) { msgDiv.classList.add('hidden'); msgDiv.textContent = ''; }\r\n\r\n\t\t\t// Validation field errors\r\n\t\t\tif (resp?.errors?.length) {\r\n\t\t\t\t_dlg_fieldErrors(resp.errors);\r\n\t\t\t\tif (resp?.message) _dlg_msg(msgDiv, resp.message, true);\r\n\t\t\t\treturn;\r\n\t\t\t}\r\n\r\n\t\t\t// Failure (HTTP error or explicit success:false)\r\n\t\t\tif (!ok || resp?.success === false) {\r\n\t\t\t\t_dlg_msg(msgDiv, resp?.message, true);\r\n\t\t\t\treturn;\r\n\t\t\t}\r\n\r\n\t\t\t// Success\r\n\t\t\tif (showMsg && resp?.message) {\r\n\t\t\t\t_dlg_msg(msgDiv, resp.message, false);\r\n\t\t\t\tif (dialogId) setTimeout(() => closeDialog(dialogId), 1500);\r\n\t\t\t} else if (dialogId) {\r\n\t\t\t\tcloseDialog(dialogId);\r\n\t\t\t}\r\n\t\t}\r\n\r\n\t\t// Open a sub-dialog that HTMX just injected into a staging slot.\r\n\t\t// Wipes the confirm slot and removes the closing dialog without moving the new one.\r\n\t\tfunction _dlg_openSubDialog(closingId, swapTarget) {\r\n\t\t\t// Find new dialog: check swap target first (skip dialog-confirm — it holds current dialog)\r\n\t\t\tlet next = null;\r\n\t\t\tif (swapTarget?.id !== 'dialog-confirm') {\r\n\t\t\t\tconst c = swapTarget?.querySelector(':scope > [id]');\r\n\t\t\t\tif (c && c.id !== closingId) next = c;\r\n\t\t\t}\r\n\t\t\tif (!next) {\r\n\t\t\t\tfor (const slotId of ['dialog-stavkenaloga', 'dialog-message']) {\r\n\t\t\t\t\tconst c = document.getElementById(slotId)?.querySelector(':scope > [id]');\r\n\t\t\t\t\tif (c && c.id !== closingId) { next = c; break; }\r\n\t\t\t\t}\r\n\t\t\t}\r\n\t\t\t// Clean up old dialogs\r\n\t\t\tconst confirmSlot = document.getElementById('dialog-confirm');\r\n\t\t\tif (confirmSlot) confirmSlot.innerHTML = '';\r\n\t\t\tdocument.getElementById(closingId)?.remove();\r\n\t\t\t// Show new dialog in place (no DOM move — keeps htmx handlers intact)\r\n\t\t\tif (next) next.classList.remove('hidden', 'opacity-0');\r\n\t\t}\r\n\r\n\t\tfunction _dlg_msgDiv(dialogId) {\r\n\t\t\tif (!dialogId) return document.getElementById('dialog-form-message');\r\n\t\t\tconst dlg = document.getElementById(dialogId);\r\n\t\t\treturn dlg?.querySelector('[id$=\"-message\"]')\r\n\t\t\t\t|| document.getElementById(dialogId + '-message')\r\n\t\t\t\t|| document.getElementById('dialog-form-message');\r\n\t\t}\r\n\r\n\t\tfunction _dlg_tryJSON(text) {\r\n\t\t\ttry { return text?.trim() ? JSON.parse(text) : null; } catch { return null; }\r\n\t\t}\r\n\r\n\t\tfunction _dlg_msg(div, text, isError) {\r\n\t\t\t// if (!div) { if (isError) alert(text); return; }\r\n\t\t\t// Measure the sibling form width BEFORE unhiding, so a long message\r\n\t\t\t// cannot expand the w-auto dialog box beyond its natural content width.\r\n\t\t\tconst siblingForm = div.closest('form') || div.parentElement?.querySelector('form');\r\n\t\t\tconst maxW = siblingForm ? siblingForm.offsetWidth : 0;\r\n\t\t\tdiv.className = (isError\r\n\t\t\t\t? 'p-1 text-sm text-red-800 bg-red-100 border border-red-300'\r\n\t\t\t\t: 'p-1 text-sm text-green-800 bg-green-100 border border-green-300')\r\n\t\t\t\t+ ' rounded-lg w-full';\r\n\t\t\tif (maxW > 0) div.style.maxWidth = maxW + 'px';\r\n\t\t\tdiv.style.wordBreak = 'break-all';\r\n\t\t\tdiv.style.overflowWrap = 'anywhere';\r\n\t\t\tdiv.style.whiteSpace = 'normal';\r\n\t\t\tdiv.textContent = text;\r\n\t\t\tdiv.classList.remove('hidden');\r\n\t\t\tdiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });\r\n\t\t\tsetTimeout(() => div.classList.add('hidden'), isError ? 5000 : 3000);\r\n\t\t}\r\n\r\n\t\tfunction _dlg_fieldErrors(errors) {\r\n\t\t\tdocument.querySelectorAll('.input-error').forEach(el => el.remove());\r\n\t\t\tdocument.querySelectorAll('.field-error-inline').forEach(el => { el.textContent = ''; });\r\n\t\t\tdocument.querySelectorAll('input').forEach(el => el.classList.remove('border-red-500'));\r\n\t\t\terrors.forEach(({ field, message }) => {\r\n\t\t\t\tconst input = document.querySelector(`input[name=\"${field}\"]`);\r\n\t\t\t\tif (!input) return;\r\n\t\t\t\tinput.classList.add('border-red-500');\r\n\t\t\t\tconst inline = document.getElementById(`${field}-error`);\r\n\t\t\t\tif (inline) { inline.textContent = message; return; }\r\n\t\t\t\tconst p = document.createElement('p');\r\n\t\t\t\tp.className = 'text-red-500 text-xs input-error whitespace-nowrap';\r\n\t\t\t\tp.textContent = message;\r\n\t\t\t\tinput.parentElement.appendChild(p);\r\n\t\t\t});\r\n\t\t}\r\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -198,41 +372,12 @@ func CloseDialogScript() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var7 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var7 == nil {
-			templ_7745c5c3_Var7 = templ.NopComponent
+		templ_7745c5c3_Var13 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var13 == nil {
+			templ_7745c5c3_Var13 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<script>\r\n\t\tfunction closeDialog(id) {\r\n\t\t\tconsole.log(\"Closing dialog with ID:\", id);\r\n\t\t\tconst dialogElm = document.getElementById(id);\r\n\t\t\tif (dialogElm) {\r\n\t\t\t\tdialogElm.classList.add(\"opacity-0\"); // Fade-out effect\r\n\t\t\t\tsetTimeout(() => {\r\n\t\t\t\t\tdialogElm.classList.add(\"hidden\");\r\n\t\t\t\t}, 300); // Delay to allow fade-out animation\r\n\r\n\t\t\t\t// Restore the style of actions column if needed\r\n\t\t\t\tdocument.querySelectorAll(\".actions-column\").forEach(el => {\r\n\t\t\t\t\tel.classList.remove('static');\r\n        \t\t\tel.classList.add('sticky', 'right-0', 'z-10');\r\n\t\t\t\t});\r\n\t\t\t}\r\n\t\t}\r\n\t\t// Close dialog when pressing \"Escape\"\r\n\t\tdocument.addEventListener(\"keydown\", function(event) {\r\n\t\t\tif (event.key === \"Escape\") {\r\n\t\t\t\tconst openDialog = document.querySelector(\".fixed:not(.hidden)\");\r\n\t\t\t\tif (openDialog) {\r\n\t\t\t\t\tcloseDialog(openDialog.id);\r\n\t\t\t\t}\r\n\t\t\t}\r\n\t\t});\r\n\t\t// Export functions to global scope\r\n\t\twindow.handleDblClickNalogSelection = handleDblClickNalogSelection;\r\n\t\twindow.handleTipdokAfterRequest = handleTipdokAfterRequest;\r\n    </script>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		return nil
-	})
-}
-
-func OpenDialogScript(id string) templ.Component {
-	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
-		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
-		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
-			return templ_7745c5c3_CtxErr
-		}
-		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
-		if !templ_7745c5c3_IsBuffer {
-			defer func() {
-				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
-				if templ_7745c5c3_Err == nil {
-					templ_7745c5c3_Err = templ_7745c5c3_BufErr
-				}
-			}()
-		}
-		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var8 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var8 == nil {
-			templ_7745c5c3_Var8 = templ.NopComponent
-		}
-		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<!-- JavaScript Functions --><script>\r\n\t\tfunction openDialog() {\r\n\t\t\tdocument.querySelectorAll('.actions-column').forEach(el => {\r\n\t\t\t\tel.classList.remove('sticky', 'right-0', 'z-10');\r\n\t\t\t\tel.classList.add('static');\r\n\t\t\t});\r\n\t\t}\r\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "<script>\r\n\t\tfunction closeDialog(id) {\r\n\t\t\tconsole.log(\"Closing dialog with ID:\", id);\r\n\t\t\tconst dialogElm = document.getElementById(id);\r\n\t\t\tif (dialogElm) {\r\n\t\t\t\tdialogElm.classList.add(\"opacity-0\"); // Fade-out effect\r\n\t\t\t\tsetTimeout(() => {\r\n\t\t\t\t\tdialogElm.classList.add(\"hidden\");\r\n\t\t\t\t}, 300); // Delay to allow fade-out animation\r\n\r\n\t\t\t\t// Restore the style of actions column if needed\r\n\t\t\t\tdocument.querySelectorAll(\".actions-column\").forEach(el => {\r\n\t\t\t\t\tel.classList.remove('static');\r\n        \t\t\tel.classList.add('sticky', 'right-0', 'z-10');\r\n\t\t\t\t});\r\n\t\t\t}\r\n\t\t}\r\n\t\t// Close dialog when pressing \"Escape\"\r\n\t\tdocument.addEventListener(\"keydown\", function(event) {\r\n\t\t\tif (event.key === \"Escape\") {\r\n\t\t\t\tconst openDialog = document.querySelector(\".fixed:not(.hidden)\");\r\n\t\t\t\tif (openDialog) {\r\n\t\t\t\t\tcloseDialog(openDialog.id);\r\n\t\t\t\t}\r\n\t\t\t}\r\n\t\t});\r\n    </script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -256,12 +401,12 @@ func HideDropdownScript() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var9 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var9 == nil {
-			templ_7745c5c3_Var9 = templ.NopComponent
+		templ_7745c5c3_Var14 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var14 == nil {
+			templ_7745c5c3_Var14 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<script> \r\n\t\tfunction hideDropdown(dropdownId) {\r\n\t\t\tconst el = document.getElementById(dropdownId);\r\n\t\t\tif (el) el.classList.add('hidden');\r\n\t\t}\r\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<script> \r\n\t\tfunction hideDropdown(dropdownId) {\r\n\t\t\tconst el = document.getElementById(dropdownId);\r\n\t\t\tif (el) el.classList.add('hidden');\r\n\t\t}\r\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -286,12 +431,12 @@ func PositionDropdownScript() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var10 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var10 == nil {
-			templ_7745c5c3_Var10 = templ.NopComponent
+		templ_7745c5c3_Var15 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var15 == nil {
+			templ_7745c5c3_Var15 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<script>\r\n\t\tfunction positionDropdown(dropdownId, buttonId) {\r\n\t\t\tconst button = document.getElementById(buttonId);\r\n\t\t\tconst dropdown = document.getElementById(dropdownId);\r\n\t\t\tif (!(button && dropdown)) return;\r\n\t\t\tconst rect = button.getBoundingClientRect();\r\n\t\t\tdropdown.style.position = 'absolute';\r\n\t\t\tdropdown.style.top = (rect.bottom + window.scrollY) + 'px';\r\n\t\t\tdropdown.style.left = (rect.left + window.scrollX) + 'px';\r\n\t\t\tdropdown.style.zIndex = '1000';\r\n\t\t}\r\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<script>\r\n\t\tfunction positionDropdown(dropdownId, buttonId) {\r\n\t\t\tconst button = document.getElementById(buttonId);\r\n\t\t\tconst dropdown = document.getElementById(dropdownId);\r\n\t\t\tif (!(button && dropdown)) return;\r\n\t\t\tconst rect = button.getBoundingClientRect();\r\n\t\t\tdropdown.style.position = 'absolute';\r\n\t\t\tdropdown.style.top = (rect.bottom + window.scrollY) + 'px';\r\n\t\t\tdropdown.style.left = (rect.left + window.scrollX) + 'px';\r\n\t\t\tdropdown.style.zIndex = '1000';\r\n\t\t}\r\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -315,12 +460,12 @@ func SelectItemScript() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var11 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var11 == nil {
-			templ_7745c5c3_Var11 = templ.NopComponent
+		templ_7745c5c3_Var16 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var16 == nil {
+			templ_7745c5c3_Var16 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<script>\r\n\t\tfunction selectItem(dropdownId, valueFieldId, nameFieldId, value, name) {\r\n\t\t\tconst vf = document.getElementById(valueFieldId);\r\n\t\t\tconst nf = document.getElementById(nameFieldId);\r\n\t\t\tif (vf) vf.value = value;\r\n\t\t\tif (nf) nf.value = name;\r\n\t\t\thideDropdown(dropdownId);\r\n\t\t\t\r\n\t\t\t// Trigger blur event to update other fields\r\n\t\t\tif (vf) vf.dispatchEvent(new Event('blur'));\r\n\t\t}\r\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<script>\r\n\t\tfunction selectItem(dropdownId, valueFieldId, nameFieldId, value, name) {\r\n\t\t\tconst vf = document.getElementById(valueFieldId);\r\n\t\t\tconst nf = document.getElementById(nameFieldId);\r\n\t\t\tif (vf) vf.value = value;\r\n\t\t\tif (nf) nf.value = name;\r\n\t\t\thideDropdown(dropdownId);\r\n\t\t\t\r\n\t\t\t// Trigger blur event to update other fields\r\n\t\t\tif (vf) vf.dispatchEvent(new Event('blur'));\r\n\t\t}\r\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -344,12 +489,12 @@ func ShowDropdownScript() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var12 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var12 == nil {
-			templ_7745c5c3_Var12 = templ.NopComponent
+		templ_7745c5c3_Var17 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var17 == nil {
+			templ_7745c5c3_Var17 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<script>\r\n\t\t// Show dropdown function\r\n\t\tfunction showDropdown(dropdownId, buttonId) {\r\n\t\t\t// First hide any other open dropdowns\r\n\t\t\tconst dropdowns = document.querySelectorAll('[id^=\"search-dropdown\"]');\r\n\t\t\tdropdowns.forEach(dropdown => {\r\n\t\t\t\tdropdown.classList.add('hidden');\r\n\t\t\t});\r\n\t\t\t\r\n\t\t\t// Show the requested dropdown\r\n\t\t\tconst dropdown = document.getElementById(dropdownId);\r\n\t\t\tdropdown.classList.remove('hidden');\r\n\t\t\t\r\n\t\t\t// Position it below the button\r\n\t\t\tpositionDropdown(dropdownId, buttonId);\r\n\t\t}\r\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<script>\r\n\t\t// Show dropdown function\r\n\t\tfunction showDropdown(dropdownId, buttonId) {\r\n\t\t\t// First hide any other open dropdowns\r\n\t\t\tconst dropdowns = document.querySelectorAll('[id^=\"search-dropdown\"]');\r\n\t\t\tdropdowns.forEach(dropdown => {\r\n\t\t\t\tdropdown.classList.add('hidden');\r\n\t\t\t});\r\n\t\t\t\r\n\t\t\t// Show the requested dropdown\r\n\t\t\tconst dropdown = document.getElementById(dropdownId);\r\n\t\t\tdropdown.classList.remove('hidden');\r\n\t\t\t\r\n\t\t\t// Position it below the button\r\n\t\t\tpositionDropdown(dropdownId, buttonId);\r\n\t\t}\r\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -375,12 +520,12 @@ func ShowSearchDialogScript() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var13 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var13 == nil {
-			templ_7745c5c3_Var13 = templ.NopComponent
+		templ_7745c5c3_Var18 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var18 == nil {
+			templ_7745c5c3_Var18 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "<script>\r\n\t\tfunction showSearchDialog(dropdownId, buttonId, fixed = true) {\r\n\t\t\tconst dropdown = document.getElementById(dropdownId);\r\n\t\t\tconst button = document.getElementById(buttonId);\r\n\r\n\t\t\tif (!dropdown) return;\r\n\t\t\tdropdown.classList.remove('hidden');\r\n\t\t\tif (fixed) {\r\n\t\t\t\tconst button = document.getElementById(buttonId);\r\n\t\t\t\tif (button) {\r\n\t\t\t\tconst rect = button.getBoundingClientRect();\r\n\t\t\t\tconst scrollX = window.scrollX || window.pageXOffset;\r\n\t\t\t\tconst scrollY = window.scrollY || window.pageYOffset;\r\n\t\t\t\tdropdown.style.position = 'fixed';\r\n\t\t\t\tdropdown.style.top = (rect.bottom + scrollY) + 'px';\r\n\t\t\t\tdropdown.style.left = (rect.left + scrollX) + 'px';\r\n\t\t\t\tdropdown.style.zIndex = '1000';\r\n\t\t\t\t}\r\n\t\t\t} else {\r\n\t\t\t\tpositionDropdown(dropdownId, buttonId);\r\n\t\t\t}\r\n\t\t}\r\n\r\n\t\t// Close dropdown when clicking outside\r\n\t\tdocument.addEventListener('click', function(event) {\r\n\t\t\tconst dropdowns = document.querySelectorAll('[id^=\"search-dropdown\"]');\r\n\t\t\tdropdowns.forEach(dropdown => {\r\n\t\t\t\tif (!dropdown.contains(event.target) && !event.target.closest('[onclick*=\"showDropdown\"]')) {\r\n\t\t\t\t\tdropdown.classList.add('hidden');\r\n\t\t\t\t}\r\n\t\t\t});\r\n\t\t});\r\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "<script>\r\n\t\tfunction showSearchDialog(dropdownId, buttonId, fixed = true) {\r\n\t\t\tconst dropdown = document.getElementById(dropdownId);\r\n\t\t\tconst button = document.getElementById(buttonId);\r\n\r\n\t\t\tif (!dropdown) return;\r\n\t\t\tdropdown.classList.remove('hidden');\r\n\t\t\tif (fixed) {\r\n\t\t\t\tconst button = document.getElementById(buttonId);\r\n\t\t\t\tif (button) {\r\n\t\t\t\tconst rect = button.getBoundingClientRect();\r\n\t\t\t\tconst scrollX = window.scrollX || window.pageXOffset;\r\n\t\t\t\tconst scrollY = window.scrollY || window.pageYOffset;\r\n\t\t\t\tdropdown.style.position = 'fixed';\r\n\t\t\t\tdropdown.style.top = (rect.bottom + scrollY) + 'px';\r\n\t\t\t\tdropdown.style.left = (rect.left + scrollX) + 'px';\r\n\t\t\t\tdropdown.style.zIndex = '1000';\r\n\t\t\t\t}\r\n\t\t\t} else {\r\n\t\t\t\tpositionDropdown(dropdownId, buttonId);\r\n\t\t\t}\r\n\t\t}\r\n\r\n\t\t// Close dropdown when clicking outside\r\n\t\tdocument.addEventListener('click', function(event) {\r\n\t\t\tconst dropdowns = document.querySelectorAll('[id^=\"search-dropdown\"]');\r\n\t\t\tdropdowns.forEach(dropdown => {\r\n\t\t\t\tif (!dropdown.contains(event.target) && !event.target.closest('[onclick*=\"showDropdown\"]')) {\r\n\t\t\t\t\tdropdown.classList.add('hidden');\r\n\t\t\t\t}\r\n\t\t\t});\r\n\t\t});\r\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -404,12 +549,41 @@ func ShowMessageScript() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var14 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var14 == nil {
-			templ_7745c5c3_Var14 = templ.NopComponent
+		templ_7745c5c3_Var19 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var19 == nil {
+			templ_7745c5c3_Var19 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<script>\r\n\t\tfunction showMessage(message, isError = false) {\r\n\t\t\tconst infoMessage = document.getElementById('dialog-form-message');\r\n\r\n\t\t\t// Set the message text\r\n\t\t\tinfoMessage.textContent = message;\r\n\t\t\t// Reset previous styles\r\n\t\t\tinfoMessage.classList.remove('hidden', 'bg-green-500', 'bg-red-500', 'text-white');\r\n\t\t\t// Add appropriate styles based on success or error\r\n\t\t\tif (isError) {\r\n\t\t\t\tinfoMessage.classList.add('bg-red-500', 'text-white', 'w-full', 'whitespace-normal', 'break-words');\r\n\t\t\t} else {\r\n\t\t\t\tinfoMessage.classList.add('bg-green-500', 'text-white', 'w-full', 'whitespace-normal', 'break-words');\r\n\t\t\t}\r\n\t\t\t// Show the message\r\n\t\t\tinfoMessage.classList.remove('hidden');\r\n\t\t\t// Hide the message after 3 seconds\r\n\t\t\tsetTimeout(() => {\r\n\t\t\t\tinfoMessage.classList.add('hidden');\r\n\t\t\t}, 3000);\r\n\t\t}\r\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<script>\r\n\t\tfunction showMessage(message, isError = false) {\r\n\t\t\tconst infoMessage = document.getElementById('dialog-form-message') || document.querySelector('.info-message');\r\n\t\t\tif (!infoMessage) {\r\n\t\t\t\treturn;\r\n\t\t\t}\r\n\t\t\t// Set the message text\r\n\t\t\tinfoMessage.textContent = message;\r\n\t\t\t// Reset previous styles\r\n\t\t\tinfoMessage.classList.remove('hidden', 'bg-green-500', 'bg-red-500', 'text-white');\r\n\t\t\t// Add appropriate styles based on success or error\r\n\t\t\tif (isError) {\r\n\t\t\t\tinfoMessage.classList.add('bg-red-500', 'text-white', 'w-full', 'whitespace-normal', 'break-words');\r\n\t\t\t} else {\r\n\t\t\t\tinfoMessage.classList.add('bg-green-500', 'text-white', 'w-full', 'whitespace-normal', 'break-words');\r\n\t\t\t}\r\n\t\t\t// Show the message\r\n\t\t\tinfoMessage.classList.remove('hidden');\r\n\t\t\t// Hide the message after 3 seconds\r\n\t\t\tsetTimeout(() => {\r\n\t\t\t\tinfoMessage.classList.add('hidden');\r\n\t\t\t}, 3000);\r\n\t\t}\r\n\t</script>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+func PopulateFproUpdateFormScript() templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var20 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var20 == nil {
+			templ_7745c5c3_Var20 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "<script>\r\n\t\t// populateFproUpdateForm — reads the JSON response from /api/fpro/stavka/update\r\n\t\t// and assigns values to the matching form fields in nalog-stavke-form.\r\n\t\t// Usage (htmx after-request): hx-on::after-request=\"populateFproUpdateFormFromEvent(event)\"\r\n\t\tfunction populateFproUpdateFormFromEvent(event) {\r\n\t\t\tconst xhr = event?.detail?.xhr;\r\n\r\n\t\t\tconsole.log(\"call function populateFproUpdateFormFromEvent: event =\", event);\r\n\t\t\tif (!xhr) {\r\n\t\t\t\tconsole.error(\"populateFproUpdateFormFromEvent: No xhr found in event detail\", event);\r\n\t\t\t\treturn;\r\n\t\t\t}\r\n\t\t\tif (xhr.status !== 200) return;\r\n\t\t\tlet data;\r\n\t\t\ttry { data = JSON.parse(xhr.responseText); } catch { return; }\r\n\t\t\tpopulateFproUpdateForm(data);\r\n\t\t\t_fpro_lockTable();\r\n\t\t}\r\n\r\n\t\tfunction populateFproUpdateForm(data) {\r\n\t\t\tfunction setVal(id, value) {\r\n\t\t\t\tconst el = document.getElementById(id);\r\n\t\t\t\tif (el) el.value = (value !== null && value !== undefined) ? value : '';\r\n\t\t\t}\r\n\t\t\t// Convert dot-decimal string to comma-decimal (e.g. \"1234.56\" → \"1234,56\")\r\n\t\t\tfunction toComma(str) {\r\n\t\t\t\treturn (str || '0').replace('.', ',');\r\n\t\t\t}\r\n\r\n\t\t\t// Text / date fields\r\n\t\t\tsetVal('konto',    data.konto);\r\n\t\t\tsetVal('kontonaziv', data.kontonaziv);\r\n\t\t\tsetVal('sifra',     data.sifra);\r\n\t\t\tsetVal('sifranaziv', data.sifranaziv);\r\n\t\t\tsetVal('opisknj',  data.opisknj);\r\n\t\t\tsetVal('dokum',    data.dokum);\r\n\t\t\tsetVal('dadok',    data.dadok);\r\n\t\t\tsetVal('dokumv',   data.dokumv);\r\n\t\t\tsetVal('dadokv',   data.datdokv);   // JSON key: datdokv → field id: dadokv\r\n\t\t\tsetVal('napomena', data.napomena);\r\n\r\n\t\t\t// Integer fields\r\n\t\t\tsetVal('tra',     data.tra);\r\n\t\t\tsetVal('travez',  data.travez);\r\n\r\n\t\t\t// Select / combo fields\r\n\t\t\tsetVal('vrd',        data.vrd);\r\n\t\t\tsetVal('magaciniid', data.magaciniid);\r\n\t\t\tsetVal('fispid',     data.fispid);\r\n\t\t\tsetVal('komid',      data.komid);\r\n\t\t\tsetVal('idorgjed',   data.idorgjed);\r\n\t\t\tsetVal('idvalute',   data.idvalute);\r\n\r\n\t\t\t// Fetch mestotrid options for the saved idorgjed, then select the saved value\r\n\t\t\tconst idorgjed  = data.idorgjed;\r\n\t\t\tconst mestotrid = String(data.mestrotrid ?? '');\r\n\t\t\tif (idorgjed && idorgjed !== '-' && idorgjed !== '0') {\r\n\t\t\t\tfetch(`/api/mestotroska?idorgjed=${encodeURIComponent(idorgjed)}`)\r\n\t\t\t\t\t.then(r => r.text())\r\n\t\t\t\t\t.then(html => {\r\n\t\t\t\t\t\tconst sel = document.getElementById('mestotrid');\r\n\t\t\t\t\t\tif (sel) {\r\n\t\t\t\t\t\t\tsel.outerHTML = html;\r\n\t\t\t\t\t\t\tconst newSel = document.getElementById('mestotrid');\r\n\t\t\t\t\t\t\tif (newSel && mestotrid) newSel.value = mestotrid;\r\n\t\t\t\t\t\t}\r\n\t\t\t\t\t})\r\n\t\t\t\t\t.catch(() => setVal('mestotrid', mestotrid));\r\n\t\t\t} else {\r\n\t\t\t\tsetVal('mestotrid', mestotrid);\r\n\t\t\t}\r\n\r\n\t\t\t// Numeric fields — server sends dot decimal; form uses comma decimal\r\n\t\t\tsetVal('duguje',    data.duguje);\r\n\t\t\tsetVal('potrazuje', data.potrazuje);\r\n\t\t\tsetVal('deviznos',  data.deviznos);\r\n\t\t\tsetVal('kurs',      data.kurs);\r\n\t\t\r\n\t\t\t// Ensure a hidden idfpro field exists so the PUT payload carries the record id\r\n\t\t\tconst form = document.getElementById('nalog-stavke-form');\r\n\t\t\tif (!form) return;\r\n\t\t\tlet hdnFpro = form.querySelector('input[name=\"idfpro\"]');\r\n\t\t\tif (!hdnFpro) {\r\n\t\t\t\thdnFpro = document.createElement('input');\r\n\t\t\t\thdnFpro.type  = 'hidden';\r\n\t\t\t\thdnFpro.name  = 'idfpro';\r\n\t\t\t\tform.appendChild(hdnFpro);\r\n\t\t\t}\r\n\t\t\thdnFpro.value = data.idfpro || '';\r\n\t\t}\r\n\r\n\t\t// Lock the table while a row is being edited\r\n\t\tfunction _fpro_lockTable() {\r\n\t\t\tconsole.log(\"in function _fpro_lockTable: Locking table for editing...\");\r\n\t\t\tconst container = document.getElementById('table-stavke-container');\r\n\t\t\tif (!container || container.querySelector('#fpro-table-lock')) return;\r\n\t\t\tconst overlay = document.createElement('div');\r\n\t\t\toverlay.id = 'fpro-table-lock';\r\n\t\t\toverlay.style.cssText = 'position:absolute;inset:0;background:rgba(255,255,255,0.55);cursor:not-allowed;z-index:10;border-radius:inherit;';\r\n\t\t\tcontainer.appendChild(overlay);\r\n\t\t\tconst btnCancel = document.getElementById('btn-stavke-cancel');\r\n\t\t\tconst btnPrint = document.getElementById('btn-print-stavke');\r\n\t\t\tif (btnCancel) {\r\n\t\t\t\tbtnCancel.disabled = false;\r\n\t\t\t\tbtnCancel.classList.remove('opacity-50', 'cursor-not-allowed');\r\n\t\t\t}\r\n\t\t\tif (btnPrint) {\r\n\t\t\t\tbtnPrint.disabled = false;\r\n\t\t\t\tbtnPrint.classList.remove('opacity-50', 'cursor-not-allowed');\r\n\t\t\t}\r\n\t\t\t//_dlg_msg(document.getElementById('dialog-form-message'), 'Uređivanje u toku — sačuvajte stavku', false);\r\n\r\n\t\t\t['btn-stavke-cancel', 'btn-print-stavke', 'btn-nazad'].forEach(id => {\r\n\t\t\t\tconst btn = document.getElementById(id);\r\n\t\t\t\tif (!btn) return;\r\n\t\t\t\tif (id === 'btn-stavke-cancel') { btn.disabled = false; btn.classList.remove('opacity-50', 'cursor-not-allowed'); }\r\n\t\t\t\telse { btn.disabled = true; btn.classList.add('opacity-50', 'cursor-not-allowed'); }\r\n\t\t\t});\r\n\t\t}\r\n\r\n\t\t// Unlock the table (called automatically on fpro:changed)\r\n\t\tfunction _fpro_unlockTable() {\r\n\t\t\tdocument.getElementById('fpro-table-lock')?.remove();\r\n\t\t\tbtnCancel = document.getElementById('btn-stavke-cancel');\r\n\t\t\tif (btnCancel) {\r\n\t\t\t\tbtnCancel.disabled = true;\r\n\t\t\t\tbtnCancel.classList.add('opacity-50', 'cursor-not-allowed');\r\n\t\t\t}\r\n\t\t\t['btn-print-stavke', 'btn-nazad'].forEach(id => {\r\n\t\t\t\tconst btn = document.getElementById(id);\r\n\t\t\t\tif (!btn) return;\r\n\t\t\t\tif (id === 'btn-stavke-cancel') { btn.disabled = true; btn.classList.add('opacity-50', 'cursor-not-allowed'); }\r\n\t\t\t\telse { btn.disabled = false; btn.classList.remove('opacity-50', 'cursor-not-allowed'); }\r\n\t\t\t});\r\n\t\t}\r\n\r\n\t\t// Unlock whenever a save or delete completes (fpro:changed fires from body)\r\n\t\tdocument.body.addEventListener('fpro:changed', _fpro_unlockTable);\r\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -433,12 +607,70 @@ func SearchPopupScript() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var15 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var15 == nil {
-			templ_7745c5c3_Var15 = templ.NopComponent
+		templ_7745c5c3_Var21 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var21 == nil {
+			templ_7745c5c3_Var21 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<script>\r\n        // Toggle popup visibility\r\n        function togglePopup(fieldId) {\r\n            const popup = document.getElementById(`${fieldId}-popup`);\r\n            const isHidden = popup.classList.contains('hidden');\r\n            \r\n            // Close all other popups first\r\n            document.querySelectorAll('.absolute.z-50').forEach(el => {\r\n                if (el !== popup) el.classList.add('hidden');\r\n            });\r\n            \r\n            // Toggle this popup\r\n            popup.classList.toggle('hidden');\r\n            \r\n            if (!isHidden) {\r\n                setTimeout(() => document.getElementById(`search-input-${fieldId}`).focus(), 10);\r\n            }\r\n        }\r\n\r\n        // Reset search input\r\n        function resetSearch(fieldId) {\r\n            document.getElementById(`search-input-${fieldId}`).value = '';\r\n            htmx.trigger(`#search-input-${fieldId}`, 'keyup');\r\n        }\r\n\r\n        // Close popup when clicking outside\r\n        document.addEventListener('click', function(event) {\r\n            // Check all popups\r\n            document.querySelectorAll('[id$=\"-popup\"]').forEach(popup => {\r\n                const fieldId = popup.id.replace('-popup', '');\r\n                const field = document.getElementById(fieldId);\r\n                const searchButton = document.querySelector(`button[onclick=\"togglePopup('${fieldId}')\"]`);\r\n                \r\n                if (field && searchButton && \r\n                    !popup.contains(event.target) && \r\n                    !field.contains(event.target) && \r\n                    !searchButton.contains(event.target)) {\r\n                    popup.classList.add('hidden');\r\n                }\r\n            });\r\n        });\r\n\r\n        // Close popup on Escape key\r\n        document.addEventListener('keydown', function(event) {\r\n            if (event.key === 'Escape') {\r\n                document.querySelectorAll('[id$=\"-popup\"]').forEach(popup => {\r\n                    popup.classList.add('hidden');\r\n                });\r\n            }\r\n        });\r\n    </script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "<script>\r\n        // Toggle popup visibility\r\n        function togglePopup(fieldId) {\r\n            const popup = document.getElementById(`${fieldId}-popup`);\r\n            const isHidden = popup.classList.contains('hidden');\r\n            \r\n            // Close all other popups first\r\n            document.querySelectorAll('.absolute.z-50').forEach(el => {\r\n                if (el !== popup) el.classList.add('hidden');\r\n            });\r\n            \r\n            // Toggle this popup\r\n            popup.classList.toggle('hidden');\r\n            \r\n            if (!isHidden) {\r\n                setTimeout(() => document.getElementById(`search-input-${fieldId}`).focus(), 10);\r\n            }\r\n        }\r\n\r\n        // Reset search input\r\n        function resetSearch(fieldId) {\r\n            document.getElementById(`search-input-${fieldId}`).value = '';\r\n            htmx.trigger(`#search-input-${fieldId}`, 'keyup');\r\n        }\r\n\r\n        // Close popup when clicking outside\r\n        document.addEventListener('click', function(event) {\r\n            // Check all popups\r\n            document.querySelectorAll('[id$=\"-popup\"]').forEach(popup => {\r\n                const fieldId = popup.id.replace('-popup', '');\r\n                const field = document.getElementById(fieldId);\r\n                const searchButton = document.querySelector(`button[onclick=\"togglePopup('${fieldId}')\"]`);\r\n                \r\n                if (field && searchButton && \r\n                    !popup.contains(event.target) && \r\n                    !field.contains(event.target) && \r\n                    !searchButton.contains(event.target)) {\r\n                    popup.classList.add('hidden');\r\n                }\r\n            });\r\n        });\r\n\r\n        // Close popup on Escape key\r\n        document.addEventListener('keydown', function(event) {\r\n            if (event.key === 'Escape') {\r\n                document.querySelectorAll('[id$=\"-popup\"]').forEach(popup => {\r\n                    popup.classList.add('hidden');\r\n                });\r\n            }\r\n        });\r\n    </script>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+func OpenPrintWithParamsScript() templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var22 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var22 == nil {
+			templ_7745c5c3_Var22 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "<script>\r\n\t\tfunction openPrintWithParams(event, el) {\r\n\t\t\tevent.preventDefault();\r\n\r\n\t\t\tconst baseUrl = el.dataset.url;\r\n\t\t\tconst fields = (el.dataset.fields || \"\")\r\n\t\t\t\t.split(\",\")\r\n\t\t\t\t.map(x => x.trim())\r\n\t\t\t\t.filter(Boolean);\r\n\r\n\t\t\tconst params = new URLSearchParams();\r\n\r\n\t\t\tfor (const fieldId of fields) {\r\n\t\t\t\tconst field = document.getElementById(fieldId) || document.querySelector(`[name=\"${fieldId}\"]`);\r\n\t\t\t\tif (!field) continue;\r\n\r\n\t\t\t\tconst name = field.name || field.id;\r\n\r\n\t\t\t\tif (field.type === \"checkbox\") {\r\n\t\t\t\t\tparams.append(name, field.checked ? \"true\" : \"false\");\r\n\t\t\t\t\tcontinue;\r\n\t\t\t\t}\r\n\r\n\t\t\t\tif (field.type === \"radio\") {\r\n\t\t\t\t\tconst checked = document.querySelector(`input[name=\"${field.name}\"]:checked`);\r\n\t\t\t\t\tif (checked) {\r\n\t\t\t\t\t\tparams.append(field.name, checked.value);\r\n\t\t\t\t\t}\r\n\t\t\t\t\tcontinue;\r\n\t\t\t\t}\r\n\r\n\t\t\t\tparams.append(name, field.value);\r\n\t\t\t}\r\n\t\t\tconsole.log(\"Constructed URL parameters:\", params.toString());\r\n\t\t\tconst separator = baseUrl.includes(\"?\") ? \"&\" : \"?\";\r\n\t\t\tconst finalUrl = params.toString()\r\n\t\t\t\t? baseUrl + separator + params.toString()\r\n\t\t\t\t: baseUrl;\r\n\t\t\tconsole.log(\"Opening print URL:\", finalUrl);\r\n\t\t\twindow.open(finalUrl, \"_blank\", \"noopener,noreferrer\");\r\n\t\t}\r\n\t</script>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+func FileSelectScript() templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var23 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var23 == nil {
+			templ_7745c5c3_Var23 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "<script>\r\n        let selectedFile = null;\r\n        let fileContent = null;\r\n\r\n        async function openFileDialog() {\r\n            try {\r\n                const [fileHandle] = await window.showOpenFilePicker({\r\n                    types: [{\r\n                        description: 'CSV Files',\r\n                        accept: { 'text/csv': ['.csv'] }\r\n                    }]\r\n                });\r\n\r\n                const file = await fileHandle.getFile();\r\n                processFile(file);\r\n            } catch (err) {\r\n                if (err.name !== 'AbortError') {\r\n                    console.error('Error:', err);\r\n                    showFileMessage('<span class=\"text-red-600\">❌ Error opening file</span>');\r\n                }\r\n            }\r\n        }\r\n\r\n        function processFile(file) {\r\n        \tconst filepathInput = document.getElementById('filepath');\r\n\t\t\tconst fileInputData = document.getElementById('file-input-data');\r\n\t\t\t\r\n\t\t\tconsole.log('processFile called with:', file?.name);\r\n\t\t\t\r\n\t\t\tif (!file) {\r\n\t\t\t\tfilepathInput.value = '';\r\n\t\t\t\tselectedFile = null;\r\n\t\t\t\tfileContent = null;\r\n\t\t\t\tif (fileInputData) fileInputData.value = '';\r\n\t\t\t\tshowFileMessage('<span class=\"text-red-600\">❌ No file selected</span>');\r\n\t\t\t\treturn;\r\n\t\t\t}\r\n\r\n\t\t\tselectedFile = file;\r\n\t\t\tfilepathInput.value = file.name;\r\n\r\n\t\t\t// Extract file extension\r\n\t\t\tconst fileExtension = file.name.split('.').pop().toLowerCase();\r\n\t\t\tconsole.log('Extracted extension:', fileExtension);\r\n\t\t\tconst fileTypeInput = document.getElementById('file-type-data');\r\n\t\t\tconsole.log('fileTypeInput element found:', !!fileTypeInput);\r\n\t\t\tif (fileTypeInput) {\r\n\t\t\t\tfileTypeInput.value = fileExtension;\r\n\t\t\t\tconsole.log('✅ File type set to:', fileTypeInput.value);\r\n\t\t\t} else {\r\n\t\t\t\tconsole.error('❌ file-type-data input not found');\r\n\t\t\t}\r\n\r\n\t\t\tconst reader = new FileReader();\r\n\t\t\treader.onload = function(e) {\r\n\t\t\t\tfileContent = e.target.result;\r\n\t\t\t\t// Store the file data in the hidden input\r\n\t\t\t\tif (fileInputData) {\r\n\t\t\t\t\tfileInputData.value = fileContent;\r\n\t\t\t\t\tconsole.log('✅ File content stored - size:', fileContent.length, 'bytes');\r\n\t\t\t\t\tconsole.log('Hidden input value length:', document.getElementById('file-input-data')?.value?.length);\r\n\t\t\t\t} else {\r\n\t\t\t\t\tconsole.error('❌ Hidden input #file-input-data not found');\r\n\t\t\t\t}\r\n\t\t\t\tshowFileMessage(`<span class=\"text-green-600\">✅ File loaded: ${file.name} (${(file.size / 1024).toFixed(2)} KB)</span>`);\r\n\t\t\t};\r\n\t\t\t\r\n\t\t\treader.onerror = function(e) {\r\n\t\t\t\tconsole.error('❌ FileReader error:', e);\r\n\t\t\t\tfileContent = null;\r\n\t\t\t\tif (fileInputData) fileInputData.value = '';\r\n\t\t\t\tshowFileMessage('<span class=\"text-red-600\">❌ Error reading file</span>');\r\n\t\t\t};\r\n\t\t\t\r\n\t\t\tconsole.log('Starting FileReader...');\r\n\t\t\treader.readAsText(file);\r\n        }\r\n\r\n        function showFileMessage(message) {\r\n            const statusElement = document.getElementById('file-status-message');\r\n            if (statusElement) {\r\n                statusElement.innerHTML = message;\r\n            } else {\r\n                console.log(message);\r\n            }\r\n        }\r\n    </script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

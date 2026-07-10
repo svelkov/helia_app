@@ -146,6 +146,30 @@ func RenderDialogContent(c *gin.Context, dialog domain.Dialog, fields []domain.F
 
 	return component.Render(c.Request.Context(), c.Writer)
 }
+func RenderDialogOK(c *gin.Context, id, message string) {
+	translator := i18n.GetInstance()
+	dialog := domain.Dialog{
+		Id:    id,
+		Title: "Info",
+	}
+	btnClose := domain.Button{
+		Id:        "btn-close",
+		IsVisible: true,
+		IdDialog:  dialog.Id,
+		BtnClass:  common.ClassDialogCloseButton,
+	}
+	btnOk := domain.Button{
+		Id:           "btn-ok",
+		LabelText:    "OK",
+		IsVisible:    true,
+		IdDialog:     dialog.Id,
+		BtnClass:     common.ClassSaveButton,
+		HxOnClick:    "closeDialog",
+		HxOnClickArg: dialog.Id,
+	}
+
+	tmpl.DialogOk(message, dialog, btnClose, btnOk, translator).Render(c.Request.Context(), c.Writer)
+}
 func SetDialogValues(id string, actionURL, title, requestType string) domain.Dialog {
 	return domain.Dialog{
 		Id:            id,
@@ -166,7 +190,7 @@ func SetButton(id, labelText, actionUrl, hxTarget, hxSwap, hxOn, hxInclude, hxVa
 		HxActionURL:      actionUrl,
 		HxTarget:         hxTarget,
 		HxSwap:           hxSwap,
-		HxOn:             hxOn,
+		HxOnClick:        hxOn,
 		HxInclude:        hxInclude,
 		HxVals:           hxVals,
 		HxRequestType:    hxRequestType,

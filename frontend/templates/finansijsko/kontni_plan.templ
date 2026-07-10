@@ -1,0 +1,276 @@
+package finansijsko
+
+import (
+	"fmt"
+	tmpl "helia/frontend/templates"
+	"helia/i18n"
+	"helia/internal/common"
+	"helia/internal/domain"
+)
+
+templ KontniPlan(tbl domain.TableData, searchInput domain.InputControl, btnPrint domain.Button, selectedVkonta string, translator *i18n.Service) {
+	<!-- Container with full height -->
+	<div class="flex flex-col h-full">
+		<!-- Tab Content -->
+		<div id="tab1" class="flex-1 min-h-0 flex flex-col gap-1 pt-1">
+			<!-- Title -->
+			<div class="text-xl font-semibold mb-1">
+				{ translator.Title("Kontni plan") }
+			</div>
+			<!-- Filter bar + print button -->
+			<div class="border bg-blue-100 border border-blue-400 p-2 rounded-lg">
+				<div class="flex items-center justify-between">
+					<div class="flex items-center gap-4 flex-wrap">
+						@kontniPlanRadio("1", "Analitički konto", selectedVkonta, tbl, translator)
+						@kontniPlanRadio("2", "Subsintetički konto", selectedVkonta, tbl, translator)
+						@kontniPlanRadio("3", "Sintetički konto", selectedVkonta, tbl, translator)
+						@kontniPlanRadio("4", "Grupa konta", selectedVkonta, tbl, translator)
+						@kontniPlanRadio("5", "Klasa", selectedVkonta, tbl, translator)
+						@kontniPlanRadio("", "Sva konta", selectedVkonta, tbl, translator)
+					</div>
+					@tmpl.Search_PartPrintButton(btnPrint)
+				</div>
+			</div>
+			<!-- Table section -->
+			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative">
+				@tmpl.LoadingSpinner()
+				@tmpl.Search_Part(tbl, searchInput)
+				<div class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+					@tmpl.Table(tbl, translator)
+				</div>
+			</div>
+		</div>
+	</div>
+	@tmpl.SpinnerScript()
+	@tmpl.OpenPrintWithParamsScript()
+}
+
+templ kontniPlanRadio(value string, labelKey string, selectedVkonta string, tbl domain.TableData, translator *i18n.Service) {
+	<label class={ common.ClassLabel + " flex items-center gap-1 cursor-pointer" }>
+		<input
+			type="radio"
+			name="vkonta"
+			value={ value }
+			class={ common.ClassRadioSet }
+			hx-get={ tbl.URLGetAll }
+			hx-target={ fmt.Sprintf("#%s", tbl.TableID) }
+			hx-swap="innerHTML"
+			hx-trigger="change"
+			hx-headers='{"X-Request-Source": "vkonta-filter"}'
+			hx-vals='js:{"query": document.getElementById("search-input")?.value || ""}'
+			if selectedVkonta == value {
+				checked="checked"
+			}
+		/>
+		<span class="text-sm text-gray-700">{ translator.Label(labelKey) }</span>
+	</label>
+}
+
+templ KontniPlanDialog(dialog domain.Dialog, action string, tipAnalitike []domain.ComboItem, model domain.Fkpl, btnSave, btnCancel, btnClose domain.Button, translator *i18n.Service, csrfToken string) {
+	<div id={ dialog.Id } class={ common.ClassMainDialogDiv }>
+		<div class="bg-white rounded-lg shadow-2xl relative animate-fade-in min-w-[840px]">
+			<!-- Title Bar -->
+			<div class="bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg">
+				<h2 class="text-lg font-semibold ml-4">{ translator.Title(dialog.Title) }</h2>
+				@tmpl.CloseButton(btnClose)
+			</div>
+			<div class="flex flex-col">
+				<form
+					if dialog.HxRequestType == "PUT" {
+						hx-put={ dialog.HxActionURL }
+						hx-on::after-request={ templ.JSFuncCall("handleFormResponse", templ.JSExpression("event"), "PUT", dialog.Id, true) }
+					}
+					if dialog.HxRequestType == "POST" {
+						hx-post={ dialog.HxActionURL }
+						hx-on::after-request={ templ.JSFuncCall("handleFormResponse", templ.JSExpression("event"), "POST", dialog.Id, true) }
+					}
+					hx-target="#dialog-fkpl-message"
+					hx-boost="false"
+					onsubmit="return false;"
+					class="p-4 bg-white rounded-b-lg"
+				>
+					<input type="hidden" name="_csrf" value={ csrfToken }/>
+					<input type="hidden" name="idfkpl" value={ fmt.Sprintf("%d", model.IDFkpl) }/>
+					<div class="flex gap-6 items-start">
+						<!-- Left: Vrsta konta radio group -->
+						<div class="flex flex-col gap-1 min-w-[185px]">
+							<p class="text-sm font-semibold text-gray-700 mb-1">{ translator.Label("Vrsta konta") }</p>
+					@fkplVkontaRadio("1", "Analitički konto", model.Vkonta, action == common.ActionUpdate, translator)
+					@fkplVkontaRadio("2", "Subsintetički konto", model.Vkonta, action == common.ActionUpdate, translator)
+					@fkplVkontaRadio("3", "Sintetički konto", model.Vkonta, action == common.ActionUpdate, translator)
+					@fkplVkontaRadio("4", "Grupa konta", model.Vkonta, action == common.ActionUpdate, translator)
+					@fkplVkontaRadio("5", "Klasa", model.Vkonta, action == common.ActionUpdate, translator)
+						</div>
+						<!-- Right: Form fields -->
+						<div class="flex flex-col gap-2 flex-1">
+							<!-- Konto (required) -->
+							<div class="flex items-center">
+								@tmpl.LabelField(domain.LabelFieldConfig{
+									ID:         "konto",
+									LabelText:  translator.Label("Konto"),
+									ClassLabel: common.ClassLabel + " w-28",
+								})
+								if action == common.ActionUpdate {
+									@tmpl.TextInputField(domain.InputFieldConfig{
+										ID:         "konto",
+										Name:       "konto",
+										Value:      model.Konto,
+										FieldType:  "text",
+										Required:   true,
+										Disabled:   true,
+										ClassInput: common.ClassInputTextDisabled + " w-32",
+										MaxLength:  "15",
+										TabIndex:   "1",
+									})
+								} else {
+									@tmpl.TextInputField(domain.InputFieldConfig{
+										ID:         "konto",
+										Name:       "konto",
+										Value:      model.Konto,
+										FieldType:  "text",
+										Required:   true,
+										Disabled:   false,
+										ClassInput: common.ClassInputTextEnabled + " w-32",
+										MaxLength:  "15",
+										TabIndex:   "1",
+										OnInput:    "clearFieldError",
+										OnFocus:    "clearFieldError",
+									})
+								}
+							</div>
+							<!-- Analitika (enabled only for Analitički konto on add; always disabled on update) -->
+							<div class="flex items-center">
+								@tmpl.LabelField(domain.LabelFieldConfig{
+									ID:         "tipanalitikeid",
+									LabelText:  translator.Label("Analitika"),
+									ClassLabel: common.ClassLabel + " w-28",
+								})
+								if model.Vkonta == 1 && action != common.ActionUpdate {
+									@tmpl.ComboBoxField(domain.ComboFieldConfig{
+										ID:            "tipanalitikeid",
+										Name:          "tipanalitikeid",
+										LabelText:     "Tip analitike",
+										ClassLabel:    common.ClassLabel + " w-28",
+										ClassSelect:   common.ClassInputTextEnabled,
+										OptionValues:  tipAnalitike,
+										SelectedValue: fmt.Sprintf("%d", model.TipanalitikeID),
+										TabIndex:      "2",
+									}, translator)
+								} else {
+									@tmpl.ComboBoxField(domain.ComboFieldConfig{
+										ID:            "tipanalitikeid",
+										Name:          "tipanalitikeid",
+										LabelText:     "Tip analitike",
+										ClassLabel:    common.ClassLabel + " w-28",
+										Disabled:      true,
+										ClassSelect:   common.ClassInputTextDisabled,
+										OptionValues:  tipAnalitike,
+										SelectedValue: fmt.Sprintf("%d", model.TipanalitikeID),
+										TabIndex:      "2",
+									}, translator)
+								}
+							</div>
+							<!-- Naziv konta (required) -->
+							<div class="flex items-center">
+								@tmpl.LabelField(domain.LabelFieldConfig{
+									ID:         "naziv",
+									LabelText:  translator.Label("Naziv konta"),
+									ClassLabel: common.ClassLabel + " w-28",
+								})
+								@tmpl.TextInputField(domain.InputFieldConfig{
+									ID:         "naziv",
+									Name:       "naziv",
+									Value:      model.Naziv,
+									FieldType:  "text",
+									Required:   true,
+									Disabled:   false,
+									ClassInput: common.ClassInputTextEnabled + " flex-1",
+									MaxLength:  "600",
+									TabIndex:   "3",
+									OnInput:    "clearFieldError",
+									OnFocus:    "clearFieldError",
+								})
+							</div>
+							<!-- Devizni + Količinski checkboxes -->
+							<div class="flex items-center gap-6 mt-1">
+								@tmpl.CheckboxField(domain.CheckboxFieldConfig{
+									ID:            "devizni",
+									Name:          "devizni",
+									LabelText:     "Devizni konto",
+									Checked:       model.Devizni,
+									Disabled:      false,
+									ClassCheckbox: common.ClassCheckbox + " mr-2",
+									ClassLabel:    common.ClassLabel + " flex items-center",
+								}, translator)
+								@tmpl.CheckboxField(domain.CheckboxFieldConfig{
+									ID:            "kolicinski",
+									Name:          "kolicinski",
+									LabelText:     "Količinski konto",
+									Checked:       model.Kolicinski,
+									Disabled:      false,
+									ClassCheckbox: common.ClassCheckbox + " mr-2",
+									ClassLabel:    common.ClassLabel + " flex items-center",
+								}, translator)
+							</div>
+						</div>
+					</div>
+					<!-- Buttons -->
+					<div class="flex justify-end gap-2 pt-4">
+						@tmpl.ConfirmButton(btnSave, translator)
+						@tmpl.CancelButton(btnCancel, translator)
+					</div>
+				</form>
+				<div id="dialog-fkpl-message" class="hidden w-full whitespace-normal break-words px-4 pb-2"></div>
+			</div>
+		</div>
+	</div>
+	@tmpl.HandleFormResponseScript()
+	@tmpl.ShowMessageScript()
+	@tmpl.ClearFieldErrorScript()
+	@tmpl.CloseDialogScript()
+	@fkplAnalitikaToggleScript()
+}
+
+// fkplVkontaRadio renders a plain-form radio button for the dialog (no HTMX).
+// selectedVkonta is int16 from domain.Fkpl.Vkonta; value is the string form value.
+templ fkplVkontaRadio(value, labelKey string, selectedVkonta int16, disabled bool, translator *i18n.Service) {
+	<label class={ common.ClassLabel + " flex items-center gap-1 cursor-pointer" }>
+		<input
+			type="radio"
+			name="vkonta"
+			id={ "vkonta-" + value }
+			value={ value }
+			class={ common.ClassRadioSet }
+			if fmt.Sprintf("%d", selectedVkonta) == value {
+				checked="checked"
+			}
+			if disabled {
+				disabled="disabled"
+			}
+		/>
+		<span class="text-sm text-gray-700">{ translator.Label(labelKey) }</span>
+	</label>
+}
+
+// fkplAnalitikaToggleScript attaches a change listener to the vkonta radio group
+// so the Analitika field is enabled only when Analitički konto (value "1") is selected.
+templ fkplAnalitikaToggleScript() {
+	<script>
+		(function () {
+			document.querySelectorAll('input[name="vkonta"]').forEach(function (radio) {
+				radio.addEventListener('change', function () {
+					var field = document.getElementById('tipanalitikeid');
+					if (!field) return;
+					if (this.value === '1') {
+						field.disabled = false;
+						field.classList.remove('bg-gray-100', 'text-gray-500', 'cursor-not-allowed');
+					} else {
+						field.disabled = true;
+						field.classList.add('bg-gray-100', 'text-gray-500', 'cursor-not-allowed');
+						field.value = '';
+					}
+				});
+			});
+		})();
+	</script>
+}

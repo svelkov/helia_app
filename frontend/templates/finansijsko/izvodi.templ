@@ -8,15 +8,15 @@ import (
 	"time"
 )
 
-templ IzvodiMain(tabs domain.TabData, tblMaster domain.TableData, tblDetail domain.TableData, btnImport, btnAzurKonta, btnBrisi domain.Button, gnGod int, translator *i18n.Service) {
+templ IzvodiMain(tabs domain.TabData, tblMaster domain.TableData, tblDetail domain.TableData, btnImport, btnAzurKonta, btnBrisi domain.Button, bankValues []domain.ComboItem, gnGod int, translator *i18n.Service, csrfToken string) {
 	<!-- Tab Content -->
 	<div id="tab-content" class="flex flex-col h-full">
-		@UcitavanjeIzvoda(tabs, tblMaster, tblDetail, btnImport, btnAzurKonta, btnBrisi, gnGod, translator)
+		@UcitavanjeIzvoda(tabs, tblMaster, tblDetail, btnImport, btnAzurKonta, btnBrisi, bankValues, gnGod, translator, csrfToken)
 	</div>
 }
 
 // Tab 1 - Učitavanje izvoda
-templ UcitavanjeIzvoda(tabs domain.TabData, tblMaster domain.TableData, tblDetail domain.TableData, btnImport, btnAzurKonta, btnBrisi domain.Button, gnGod int, translator *i18n.Service) {
+templ UcitavanjeIzvoda(tabs domain.TabData, tblMaster domain.TableData, tblDetail domain.TableData, btnImport, btnAzurKonta, btnBrisi domain.Button, bankValues []domain.ComboItem, gnGod int, translator *i18n.Service, csrfToken string) {
 	<!-- Container with full height -->
 	<div class="flex flex-col h-full">
 		<!-- Tab Navigation -->
@@ -26,85 +26,100 @@ templ UcitavanjeIzvoda(tabs domain.TabData, tblMaster domain.TableData, tblDetai
 		<!-- Tab 1 Content -->
 		<div id="tab1" class="flex-1 min-h-0 flex flex-col gap-1">
 			<!-- Parameters Section -->
-			<div class="border bg-blue-100 border-blue-400 mt-1 p-1 rounded-lg">
-				<div class="grid grid-cols-3 gap-1">
-					<!-- Left part - 2/3 -->
-					<div class="col-span-2">
-						<div class="mb-1">
-							<label class="text-sm font-medium text-gray-700 mb-1 block">Software</label>
-							<div class="flex flex-wrap gap-1">
-								<label class="flex items-center">
-									<input type="radio" name="software" value="halcom" checked class="mr-1"/>
-									<span class="text-sm">Halcom</span>
-								</label>
-								<label class="flex items-center">
-									<input type="radio" name="software" value="office_banking" class="mr-1"/>
-									<span class="text-sm">Office Banking (XML)</span>
-								</label>
-								<label class="flex items-center">
-									<input type="radio" name="software" value="raiffeisen" class="mr-1"/>
-									<span class="text-sm">Raiffeisen (XML)</span>
-								</label>
-								<label class="flex items-center">
-									<input type="radio" name="software" value="societe" class="mr-1"/>
-									<span class="text-sm">Societe Generale (XML)</span>
-								</label>
-								<label class="flex items-center">
-									<input type="radio" name="software" value="otp" class="mr-1"/>
-									<span class="text-sm">OTP banka (XML)</span>
-								</label>
-								<label class="flex items-center">
-									<input type="radio" name="software" value="trezor" class="mr-1"/>
-									<span class="text-sm">Trezor (XML)</span>
-								</label>
+			<!-- Parameters Section -->
+			<form
+				id="import-form"
+				hx-post={ btnImport.HxActionURL }
+				hx-target={ btnImport.HxTarget }
+				hx-swap="innerHTML"
+				hx-request-headers='{"X-Request-Source": "btnimport"}'
+				hx-encoding="multipart/form-data"
+				hx-vals={ btnImport.HxVals }
+			>
+				<input type="hidden" name="_csrf" value={ csrfToken }/>
+				<!-- Hidden file input to store the actual file -->
+				<input type="hidden" id="file-input-data" name="file"/>
+				<input type="hidden" id="file-type-data" name="file_type"/>
+				<div class="border bg-blue-100 border-blue-400 mt-1 p-1 rounded-lg">
+					<div class="grid grid-cols-3 gap-1">
+						<!-- Left part - 2/3 -->
+						<div class="col-span-2">
+							<div class="mb-1">
+								<label class="text-sm font-medium text-gray-700 mb-1 block">Software</label>
+								<div class="flex flex-wrap gap-1">
+									<label class="flex items-center">
+										<input type="radio" name="software" value="halcom" checked class="mr-1"/>
+										<span class="text-sm">Halcom</span>
+									</label>
+									<label class="flex items-center">
+										<input type="radio" name="software" value="office_banking" class="mr-1"/>
+										<span class="text-sm">Office Banking (XML)</span>
+									</label>
+									<label class="flex items-center">
+										<input type="radio" name="software" value="raiffeisen" class="mr-1"/>
+										<span class="text-sm">Raiffeisen (XML)</span>
+									</label>
+									<label class="flex items-center">
+										<input type="radio" name="software" value="societe" class="mr-1"/>
+										<span class="text-sm">Societe Generale (XML)</span>
+									</label>
+									<label class="flex items-center">
+										<input type="radio" name="software" value="otp" class="mr-1"/>
+										<span class="text-sm">OTP banka (XML)</span>
+									</label>
+									<label class="flex items-center">
+										<input type="radio" name="software" value="trezor" class="mr-1"/>
+										<span class="text-sm">Trezor (XML)</span>
+									</label>
+								</div>
+							</div>
+							<div class="flex items-center gap-1">
+								@tmpl.LabelField(domain.LabelFieldConfig{
+									ID:         "filepath",
+									LabelText:  translator.Label("Putanja do .csv, .xlsx, .xml dokumenta"),
+									ClassLabel: common.ClassLabel + " w-64",
+								})
+								@tmpl.TextInputField(domain.InputFieldConfig{
+									ID:         "filepath",
+									Name:       "filepath",
+									FieldType:  "text",
+									Disabled:   false,
+									ClassInput: common.ClassInputTextEnabled + " flex-1",
+									TabIndex:   "1",
+								})
+								<button
+									type="button"
+									onclick="openFileDialog()"
+									class={ common.ClassPrintButton }
+								>
+									@tmpl.Icon("file-select", common.ClassIcon)
+									{ translator.Label("Izaberi fajl") }
+								</button>
 							</div>
 						</div>
-						<div class="flex items-center gap-1">
-							@tmpl.LabelField(domain.LabelFieldConfig{
-								ID:         "filepath",
-								LabelText:  translator.Label("Putanja do .csv, .xlsx, .xml dokumenta"),
-								ClassLabel: common.ClassLabel + " w-64",
-							})
-							@tmpl.TextInputField(domain.InputFieldConfig{
-								ID:         "filepath",
-								Name:       "filepath",
-								FieldType:  "text",
-								Disabled:   false,
-								ClassInput: common.ClassInputTextEnabled + " flex-1",
-								TabIndex:   "1",
-							})
-							@tmpl.SearchButton(domain.SearchButtonConfig{
-								ID:          "filepath",
-								Name:        "search-filepath",
-								HxUrl:       "/api/izvodi/selectfile",
-								HxTarget:    "#filepath",
-								HxSwap:      "value",
-								ClassButton: common.ClassButton,
-							})
-						</div>
-					</div>
-					<!-- Right part - 1/3 -->
-					<div class="col-span-1 flex flex-col gap-1">
-						<label class="flex items-center">
-							<input type="checkbox" id="povezivanje_jmbg" class="h-4 w-4 rounded border border-blue-400 text-blue-600 focus:ring-blue-500 mr-2"/>
-							<span class="text-sm text-gray-700">{ translator.Label("Povezivanje konta preko JMBG") }</span>
-						</label>
-						<label class="flex items-center">
-							<input type="checkbox" id="azuriraj_konta" class="h-4 w-4 rounded border border-blue-400 text-blue-600 focus:ring-blue-500 mr-2"/>
-							<span class="text-sm text-gray-700">{ translator.Label("Ažuriraj konta koja su već uneta u detalje izvoda") }</span>
-						</label>
-						<label class="flex items-center">
-							<input type="checkbox" id="brisanje_prikaza" class="h-4 w-4 rounded border border-blue-400 text-blue-600 focus:ring-blue-500 mr-2"/>
-							<span class="text-sm text-gray-700">{ translator.Label("Brisanje prikazanih dokumenata") }</span>
-						</label>
-						<div class="flex gap-1 mt-1 justify-end">
-							@tmpl.FormObradaButton(btnImport, translator)
-							@tmpl.FormObradaButton(btnAzurKonta, translator)
-							@tmpl.FormObradaButton(btnBrisi, translator)
+						<!-- Right part - 1/3 -->
+						<div class="col-span-1 flex flex-col gap-1">
+							<label class="flex items-center">
+								<input type="checkbox" id="povezivanje_jmbg" class="h-4 w-4 rounded border border-blue-400 text-blue-600 focus:ring-blue-500 mr-2"/>
+								<span class="text-sm text-gray-700">{ translator.Label("Povezivanje konta preko JMBG") }</span>
+							</label>
+							<label class="flex items-center">
+								<input type="checkbox" id="azuriraj_konta" class="h-4 w-4 rounded border border-blue-400 text-blue-600 focus:ring-blue-500 mr-2"/>
+								<span class="text-sm text-gray-700">{ translator.Label("Ažuriraj konta koja su već uneta u detalje izvoda") }</span>
+							</label>
+							<label class="flex items-center">
+								<input type="checkbox" id="brisanje_prikaza" class="h-4 w-4 rounded border border-blue-400 text-blue-600 focus:ring-blue-500 mr-2"/>
+								<span class="text-sm text-gray-700">{ translator.Label("Brisanje prikazanih dokumenata") }</span>
+							</label>
+							<div class="flex gap-1 mt-1 justify-end">
+								@tmpl.Button(btnImport)
+								@tmpl.Button(btnAzurKonta)
+								@tmpl.Button(btnBrisi)
+							</div>
 						</div>
 					</div>
 				</div>
-			</div>
+			</form>
 			<!-- Master Table -->
 			<div class="border bg-blue-100 border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden" style="flex: 0 0 40%;">
 				<div id="izvodi-master-table" class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
@@ -121,10 +136,11 @@ templ UcitavanjeIzvoda(tabs domain.TabData, tblMaster domain.TableData, tblDetai
 		</div>
 	</div>
 	@tmpl.ShowMessageScript()
+	@tmpl.FileSelectScript()
 }
 
 // Tab 2 - Knjiženje izvoda
-templ KnjizenjeIzvoda(tabs domain.TabData, tblMaster domain.TableData, tblDetail domain.TableData, btnPrihvati, btnRaznoteza, btnKnjizenje domain.Button, bankaValues, tipdokValues []domain.ComboItem, gnGod int, translator *i18n.Service) {
+templ KnjizenjeIzvoda(tabs domain.TabData, tblMaster domain.TableData, tblDetail domain.TableData, btnObrada, btnRavnoteza, btnKnjizenje domain.Button, bankaValues, tipdokValues []domain.ComboItem, gnGod int, nextNalog string, translator *i18n.Service, csrfToken string) {
 	<!-- Container with full height -->
 	<div class="flex flex-col h-full">
 		<!-- Tab Navigation -->
@@ -134,33 +150,34 @@ templ KnjizenjeIzvoda(tabs domain.TabData, tblMaster domain.TableData, tblDetail
 		<!-- Tab 2 Content -->
 		<div id="tab2" class="flex-1 min-h-0 flex flex-col gap-1">
 			<!-- Parameters Section -->
+			<div id="nalog-trigger" hx-get="/api/nalozi/nextnalog" hx-trigger="tipdokChanged" hx-vals='js:{"tipdok": document.getElementById("tipdok").value}' hx-on::after-request="handleNextNalogResponse('')" style="display:none;"></div>
 			<div class="border bg-blue-100 border-blue-400 mt-1 p-1 rounded-lg">
 				<div class="grid grid-cols-2 gap-3">
 					<!-- Left part - 1/2 - Parametri za selekciju -->
 					<div>
 						<div class="flex items-center gap-1 mb-1">
 							@tmpl.LabelField(domain.LabelFieldConfig{
-								ID:         "banka",
+								ID:         "idbanke",
 								LabelText:  translator.Label("Banka"),
 								ClassLabel: common.ClassLabel + " w-32",
 							})
 							@tmpl.ComboBoxField(domain.ComboFieldConfig{
-								ID:           "banka",
-								Name:         "banka",
-								ClassSelect:  common.ClassSelect + " flex-1",
+								ID:           "idbanke",
+								Name:         "idbanke",
+								ClassSelect:  common.ClassSelect,
 								OptionValues: bankaValues,
 								TabIndex:     "1",
 							}, translator)
 						</div>
 						<div class="flex items-center gap-1 mb-1">
 							@tmpl.LabelField(domain.LabelFieldConfig{
-								ID:         "odbroja",
+								ID:         "odbrojaizvoda",
 								LabelText:  translator.Label("Od broja izvoda"),
 								ClassLabel: common.ClassLabel + " w-32",
 							})
 							@tmpl.TextInputField(domain.InputFieldConfig{
-								ID:         "odbroja",
-								Name:       "odbroja",
+								ID:         "odbrojaizvoda",
+								Name:       "odbrojaizvoda",
 								FieldType:  "text",
 								Value:      "0",
 								ClassInput: common.ClassInputTextEnabled + " w-28",
@@ -183,13 +200,13 @@ templ KnjizenjeIzvoda(tabs domain.TabData, tblMaster domain.TableData, tblDetail
 						</div>
 						<div class="flex items-center gap-1 mb-1">
 							@tmpl.LabelField(domain.LabelFieldConfig{
-								ID:         "dobroja",
+								ID:         "dobrojaizvoda",
 								LabelText:  translator.Label("Do broja izvoda"),
 								ClassLabel: common.ClassLabel + " w-32",
 							})
 							@tmpl.TextInputField(domain.InputFieldConfig{
-								ID:         "dobroja",
-								Name:       "dobroja",
+								ID:         "dobrojaizvoda",
+								Name:       "dobrojaizvoda",
 								FieldType:  "text",
 								Value:      "999999",
 								ClassInput: common.ClassInputTextEnabled + " w-28",
@@ -211,36 +228,41 @@ templ KnjizenjeIzvoda(tabs domain.TabData, tblMaster domain.TableData, tblDetail
 							})
 						</div>
 						<div class="flex justify-end">
-							@tmpl.FormObradaButton(btnPrihvati, translator)
+							@tmpl.Button(btnObrada)
 						</div>
 					</div>
 					<!-- Right part - 1/2 - Parametri za knjiženje -->
 					<div>
 						<div class="flex items-center gap-1 mb-1">
 							@tmpl.LabelField(domain.LabelFieldConfig{
-								ID:         "vrstanaloga",
+								ID:         "tipdok",
 								LabelText:  translator.Label("Vrsta naloga"),
 								ClassLabel: common.ClassLabel + " w-24",
 							})
 							@tmpl.ComboBoxField(domain.ComboFieldConfig{
-								ID:           "vrstanaloga",
-								Name:         "vrstanaloga",
-								ClassSelect:  common.ClassSelect + " flex-1",
-								OptionValues: tipdokValues,
-								TabIndex:     "6",
+								ID:               "tipdok",
+								Name:             "tipdok",
+								ClassSelect:      common.ClassSelect + " flex-1",
+								OptionValues:     tipdokValues,
+								TabIndex:         "6",
+								HxVals:           `js:{"tipdok": document.getElementById("tipdok").value}`,
+								ChangeEndpoint:   "/api/nalozi/nextnalog",
+								HxSwap:           "none",
+								HxOnAfterRequest: "handleTipdokAfterRequest",
 							}, translator)
 						</div>
 						<div class="flex items-center gap-1 mb-1">
 							@tmpl.LabelField(domain.LabelFieldConfig{
-								ID:         "brojnaloga",
+								ID:         "nalog",
 								LabelText:  translator.Label("Broj naloga"),
 								ClassLabel: common.ClassLabel + " w-24",
 							})
 							@tmpl.TextInputField(domain.InputFieldConfig{
-								ID:         "brojnaloga",
-								Name:       "brojnaloga",
+								ID:         "nalog",
+								Name:       "nalog",
 								FieldType:  "text",
 								ClassInput: common.ClassInputTextEnabled + " flex-1",
+								Value:      nextNalog,
 								TabIndex:   "7",
 							})
 							@tmpl.LabelField(domain.LabelFieldConfig{
@@ -291,8 +313,8 @@ templ KnjizenjeIzvoda(tabs domain.TabData, tblMaster domain.TableData, tblDetail
 								<span class="text-sm text-gray-700">{ translator.Label("Jedan izvod jedan nalog") }</span>
 							</label>
 							<div class="flex gap-1">
-								@tmpl.FormObradaButton(btnRaznoteza, translator)
-								@tmpl.FormObradaButton(btnKnjizenje, translator)
+								@tmpl.Button(btnRavnoteza)
+								@tmpl.Button(btnKnjizenje)
 							</div>
 						</div>
 					</div>
@@ -314,6 +336,8 @@ templ KnjizenjeIzvoda(tabs domain.TabData, tblMaster domain.TableData, tblDetail
 		</div>
 	</div>
 	@tmpl.ShowMessageScript()
+	@tmpl.HandleNextNalogResponseScript()
+	@tmpl.HandleTipdokAfterRequestScript()
 }
 
 // Tab 3 - Pregled proknjiženih i neproknjiženih izvoda
@@ -333,46 +357,59 @@ templ PregledIzvoda(tabs domain.TabData, tblMaster domain.TableData, tblDetail d
 					<div class="flex flex-col gap-2">
 						<div class="flex items-center">
 							@tmpl.LabelField(domain.LabelFieldConfig{
-								ID:         "banka",
+								ID:         "idbanke",
 								LabelText:  translator.Label("Banka"),
 								ClassLabel: common.ClassLabel + " w-28",
 							})
 							@tmpl.ComboBoxField(domain.ComboFieldConfig{
-								ID:           "banka",
-								Name:         "banka",
-								ClassSelect:  common.ClassSelect + " w-64",
+								ID:           "idbanke",
+								Name:         "idbanke",
+								ClassSelect:  common.ClassSelect,
 								OptionValues: bankaValues,
 								TabIndex:     "1",
 							}, translator)
 						</div>
 						<div class="flex items-center gap-2 pl-28">
-							<label class="flex items-center">
-								<input type="radio" name="status" value="proknjizeni" checked class="mr-1"/>
-								<span class="text-sm">{ translator.Label("Proknjiženi izvodi") }</span>
-							</label>
-							<label class="flex items-center">
-								<input type="radio" name="status" value="neproknjizeni" class="mr-1"/>
-								<span class="text-sm">{ translator.Label("Neproknjiženi izvodi") }</span>
-							</label>
+							@tmpl.RadioButtonField(domain.RadioFieldConfig{
+								ID:          "status_proknjizeni",
+								Name:        "status",
+								LabelText:   "Proknjiženi",
+								Value:       "40",
+								ClassSelect: common.ClassRadioSet,
+								ClassLabel:  "text-sm text-black whitespace-nowrap",
+								IsSelected:  true,
+							}, translator)
+							@tmpl.RadioButtonField(domain.RadioFieldConfig{
+								ID:          "status_neproknjizeni",
+								Name:        "status",
+								LabelText:   "Neproknjiženi",
+								Value:       "1",
+								ClassSelect: common.ClassRadioSet,
+								ClassLabel:  "text-sm text-black whitespace-nowrap",
+							}, translator)
 						</div>
 						<div class="flex items-center pl-28">
-							<label class="flex items-center">
-								<input type="checkbox" id="oznaci_neproknjizene" class="h-4 w-4 rounded border border-blue-400 text-blue-600 focus:ring-blue-500 mr-2"/>
-								<span class="text-sm text-gray-700">{ translator.Label("Označi prikazane izvode kao neproknjižene...") }</span>
-							</label>
+							@tmpl.CheckboxField(domain.CheckboxFieldConfig{
+								ID:                "oznaci_neporknjizene",
+								Name:              "oznaci_neproknjizene",
+								LabelText:         "Označi prikazane izvode kao neproknjižene",
+								ClassLabel:        common.ClassCheckboxLabel,
+								ClassCheckbox:     common.ClassCheckbox,
+								ClassCheckboxSpan: common.ClassCheckboxSpan,
+							}, translator)
 						</div>
 					</div>
 					<!-- Right half: ranges and obrada -->
 					<div class="flex flex-col gap-1">
 						<div class="flex items-center gap-1 flex-wrap justify-between">
 							@tmpl.LabelField(domain.LabelFieldConfig{
-								ID:         "odbroja",
+								ID:         "odbrojaizvoda",
 								LabelText:  translator.Label("Od broja izvoda"),
 								ClassLabel: common.ClassLabel + " w-32",
 							})
 							@tmpl.TextInputField(domain.InputFieldConfig{
-								ID:         "odbroja",
-								Name:       "odbroja",
+								ID:         "odbrojaizvoda",
+								Name:       "odbrojaizvoda",
 								FieldType:  "text",
 								Value:      "0",
 								ClassInput: common.ClassInputTextEnabled + " w-28",
@@ -395,19 +432,19 @@ templ PregledIzvoda(tabs domain.TabData, tblMaster domain.TableData, tblDetail d
 							</div>
 						</div>
 						<div class="flex items-center gap-1 flex-wrap justify-between">
-								@tmpl.LabelField(domain.LabelFieldConfig{
-									ID:         "dobroja",
-									LabelText:  translator.Label("Do broja izvoda"),
-									ClassLabel: common.ClassLabel + " w-32",
-								})
-								@tmpl.TextInputField(domain.InputFieldConfig{
-									ID:         "dobroja",
-									Name:       "dobroja",
-									FieldType:  "text",
-									Value:      "999999",
-									ClassInput: common.ClassInputTextEnabled + " w-28",
-									TabIndex:   "4",
-								})
+							@tmpl.LabelField(domain.LabelFieldConfig{
+								ID:         "dobrojaizvoda",
+								LabelText:  translator.Label("Do broja izvoda"),
+								ClassLabel: common.ClassLabel + " w-32",
+							})
+							@tmpl.TextInputField(domain.InputFieldConfig{
+								ID:         "dobrojaizvoda",
+								Name:       "dobrojaizvoda",
+								FieldType:  "text",
+								Value:      "999999",
+								ClassInput: common.ClassInputTextEnabled + " w-28",
+								TabIndex:   "4",
+							})
 							<div class="flex items-center gap-1">
 								@tmpl.LabelField(domain.LabelFieldConfig{
 									ID:         "dodatuma",
@@ -423,17 +460,19 @@ templ PregledIzvoda(tabs domain.TabData, tblMaster domain.TableData, tblDetail d
 									TabIndex:   "5",
 								})
 							</div>
+						</div>
+						<!-- Note row -->
+						<div class="mt-1 flex items-start">
+							<div class="flex items-start">
+								<p class="text-sm text-red-600 font-medium">
+									{ translator.Label("Napomena izvodi") }
+								</p>
 							</div>
-						<div class="flex items-end justify-end">
-							@tmpl.FormObradaButton(btnObrada, translator)
+							<div class="ml-auto flex items-end justify-end">
+								@tmpl.FormObradaButton(btnObrada, translator)
+							</div>
 						</div>
 					</div>
-				</div>
-				<!-- Note row -->
-				<div class="mt-1 flex items-start">
-					<p class="text-sm text-red-600 font-medium">
-						{ translator.Label("Napomena izvodi") }
-					</p>
 				</div>
 			</div>
 			<!-- Master Table -->

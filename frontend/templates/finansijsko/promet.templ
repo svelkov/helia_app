@@ -8,20 +8,22 @@ import (
 	"time"
 )
 
-templ PrometMain(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.TotalValues, searchInput domain.InputControl, gnGod int, translator *i18n.Service) {
+templ PrometMain(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.TotalValues, searchInput domain.InputControl, gnGod int, checkBoxURL string, translator *i18n.Service) {
 	<!-- Tab Content -->
 	<div id="tab-content" class="flex flex-col h-full">
-		@PrometAnalitickihKonta(tabs, tbl, btnPrint, btnObrada, total, searchInput, gnGod, translator)
+		@PrometAnalitickihKonta(tabs, tbl, btnPrint, btnObrada, total, searchInput, gnGod, checkBoxURL, translator)
 	</div>
 	@tmpl.ShowSearchDialogScript()
 	@tmpl.HideDropdownScript()
 	@tmpl.ClearFieldErrorScript()
 	@tmpl.HandleDblClickKontoSelectionScript()
 	@tmpl.HandleDialogResponseScript("")
+	@tmpl.CloseDialogScript()
+	@tmpl.OpenPrintWithParamsScript()
 }
 
 // Tab 1 - Promet analitickih konta
-templ PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.TotalValues, searchInput domain.InputControl, gnGod int, translator *i18n.Service) {
+templ PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.TotalValues, searchInput domain.InputControl, gnGod int, checkBoxURL string, translator *i18n.Service) {
 	<!-- Container with full height -->
 	<div class="flex flex-col h-full">
 		<!-- Tab Navigation -->
@@ -33,7 +35,7 @@ templ PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 			<!-- First Row - Two divs side by side -->
 			<div class="grid grid-cols-2 gap-1">
 				<!-- Parameters Div - Left Aligned -->
-				<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg">
+				<div class="border bg-blue-100 border border-blue-400 mt-1 p-1 rounded-lg">
 					<div class="flex items-center gap-1 mb-1">
 						@tmpl.LabelField(domain.LabelFieldConfig{
 							ID:         "konto",
@@ -150,9 +152,19 @@ templ PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 					</div>
 					<div class="mb-1 flex items-center justify-between h-6">
 						<!-- Checkbox group on the left -->
-						<div class="flex items-center">
-							<input type="checkbox" class="h-4 w-4 rounded border border-blue-400 text-blue-600 focus:ring-blue-500"/>
-							<span class="ml-1 text-sm text-gray-700">Dodatni parametri</span>
+						<div class="flex items-center justify-center gap-2 pl-24">
+							@tmpl.CheckboxField(domain.CheckboxFieldConfig{
+								ID:               "dodatniparametri",
+								Name:             "dodatniparametri",
+								LabelText:        translator.Label("Dodatni parametri"),
+								ClassCheckbox:    common.ClassCheckbox,
+								OnChangeEndpoint: checkBoxURL,
+								HxTarget:         "#dialog-proment-analitika-stampa",
+							}, translator)
+							@tmpl.LabelField(domain.LabelFieldConfig{
+								ID:         "dodatniparametri",
+								ClassLabel: common.ClassCheckboxLabel,
+							})
 						</div>
 						<!-- Buttons on the right -->
 						<div class="flex items-center space-x-1">
@@ -162,7 +174,7 @@ templ PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 					</div>
 				</div>
 				<!-- Values Div - Numeric Right Aligned -->
-				<div class="border mt-1 mb-1 bg-blue-100 border border-blue-400 p-1 rounded-lg">
+				<div class="border mt-1 bg-blue-100 border border-blue-400 p-1 rounded-lg">
 					@PrometTotalValues(total, translator)
 				</div>
 			</div>
@@ -174,6 +186,421 @@ templ PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 				<div id="promettable" class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
 					@tmpl.Table(tbl, translator)
 				</div>
+			</div>
+			<div id="dialog-proment-analitika-stampa"></div>
+		</div>
+	</div>
+}
+
+templ PrometAnalitickihKontaDialog(dialog domain.Dialog, btnPrint, btnCancel, btnClose domain.Button, prometParams domain.PrometParam, gnGod int, translator *i18n.Service) {
+	<div id={ dialog.Id } class={ common.ClassMainDialogDiv }>
+		<div class="bg-white rounded-lg shadow-2xl relative animate-fade-in w-auto min-w-[380px]">
+			<!-- Title Bar -->
+			<div class="bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg">
+				<h2 class="text-lg font-semibold ml-4">{ translator.Title(dialog.Title) }</h2>
+				@tmpl.CloseButton(btnClose)
+			</div>
+			<!-- Content -->
+			<div class="space-y-1">
+				<div class="bg-white rounded-lg shadow-2xl relative animate-fade-in w-auto min-w-[700px] max-w-5xl">
+					<fieldset class="border-2 border-blue-500 rounded-lg m-3 mb-2 p-1">
+						<legend class="text-sm font-bold text-blue-700">{ translator.Title("Selekcija parametara za štampu") }</legend>
+						<!-- Top checkboxes + Datum štampe -->
+						<div class="flex flex-wrap items-center gap-4 mb-2">
+							@tmpl.CheckboxField(domain.CheckboxFieldConfig{
+								ID:                "saldapomesecima",
+								Name:              "saldapomesecima",
+								LabelText:         translator.Label("Štampaj salda po mesecima"),
+								IsChecked:         false,
+								ClassLabel:        common.ClassCheckboxLabel,
+								ClassCheckbox:     common.ClassCheckbox,
+								ClassCheckboxSpan: common.ClassCheckboxSpan,
+							}, translator)
+							@tmpl.CheckboxField(domain.CheckboxFieldConfig{
+								ID:                "ukupansaldo",
+								Name:              "ukupansaldo",
+								LabelText:         translator.Label("Štampaj ukupan saldo posle svake stavke"),
+								IsChecked:         false,
+								ClassLabel:        common.ClassCheckboxLabel,
+								ClassCheckbox:     common.ClassCheckbox,
+								ClassCheckboxSpan: common.ClassCheckboxSpan,
+							}, translator)
+						</div>
+						<!-- Konta + Šifre + Buttons row -->
+						<div class="grid grid-cols-[1fr_1fr_auto] gap-2 mb-1 items-start">
+							<!-- Konta column -->
+							<div class="space-y-1">
+								<div class="flex items-center gap-1">
+									@tmpl.LabelField(domain.LabelFieldConfig{
+										ID:         "odkonta",
+										LabelText:  translator.Label("Počev od konta"),
+										ClassLabel: common.ClassLabel + " w-40",
+									})
+									@tmpl.TextInputField(domain.InputFieldConfig{
+										ID:         "odkonta",
+										Name:       "odkonta",
+										FieldType:  "text",
+										ClassInput: common.ClassInputTextEnabled + " w-20",
+										MaxLength:  "6",
+										Value:      prometParams.Konto,
+										OnInput:    "clearFieldError",
+										OnFocus:    "clearFieldError",
+									})
+									@tmpl.SearchButton(domain.SearchButtonConfig{
+										ID:          "btn-odkonta",
+										Name:        "btn-odkonta",
+										HxUrl:       "/api/promet/searchbutton",
+										HxTarget:    "#search-dropdown",
+										HxSwap:      "innerHTML",
+										HxVals:      `{"vkonta": "1", "destfield": "odkonta"}`,
+										ClassButton: common.ClassButton,
+									})
+								</div>
+								<div class="flex items-center gap-1">
+									@tmpl.LabelField(domain.LabelFieldConfig{
+										ID:         "dokonta",
+										LabelText:  translator.Label("Zaključno sa kontom"),
+										ClassLabel: common.ClassLabel + " w-40",
+									})
+									@tmpl.TextInputField(domain.InputFieldConfig{
+										ID:         "dokonta",
+										Name:       "dokonta",
+										FieldType:  "text",
+										ClassInput: common.ClassInputTextEnabled + " w-20",
+										MaxLength:  "6",
+										Value:      prometParams.Konto,
+										OnInput:    "clearFieldError",
+										OnFocus:    "clearFieldError",
+									})
+									@tmpl.SearchButton(domain.SearchButtonConfig{
+										ID:          "btn-dokonta",
+										Name:        "btn-dokonta",
+										HxUrl:       "/api/promet/searchbutton",
+										HxTarget:    "#search-dropdown",
+										HxSwap:      "innerHTML",
+										HxVals:      `{"vkonta": "1", "destfield": "dokonta"}`,
+										ClassButton: common.ClassButton,
+									})
+								</div>
+							</div>
+							<!-- Šifre column -->
+							<div class="space-y-1">
+								<div class="flex items-center gap-1">
+									@tmpl.LabelField(domain.LabelFieldConfig{
+										ID:         "odsifre",
+										LabelText:  translator.Label("Počev od šifre"),
+										ClassLabel: common.ClassLabel + " w-36",
+									})
+									@tmpl.TextInputField(domain.InputFieldConfig{
+										ID:         "odsifre",
+										Name:       "odsifre",
+										FieldType:  "text",
+										ClassInput: common.ClassInputTextEnabled + " w-20",
+										MaxLength:  "6",
+										Value:      prometParams.Sifra,
+										OnInput:    "clearFieldError",
+										OnFocus:    "clearFieldError",
+									})
+									@tmpl.SearchButton(domain.SearchButtonConfig{
+										ID:          "btn-odsifre",
+										Name:        "btn-odsifre",
+										HxUrl:       "/api/promet/searchbutton",
+										HxTarget:    "#search-dropdown",
+										HxSwap:      "innerHTML",
+										HxVals:      `{"vkonta": "1", "destfield": "odsifre"}`,
+										ClassButton: common.ClassButton,
+									})
+								</div>
+								<div class="flex items-center gap-1">
+									@tmpl.LabelField(domain.LabelFieldConfig{
+										ID:         "dosifre",
+										LabelText:  translator.Label("Zaključno sa šifrom"),
+										ClassLabel: common.ClassLabel + " w-36",
+									})
+									@tmpl.TextInputField(domain.InputFieldConfig{
+										ID:         "dosifre",
+										Name:       "dosifre",
+										FieldType:  "text",
+										ClassInput: common.ClassInputTextEnabled + " w-20",
+										MaxLength:  "6",
+										Value:      prometParams.Sifra,
+										OnInput:    "clearFieldError",
+										OnFocus:    "clearFieldError",
+									})
+									@tmpl.SearchButton(domain.SearchButtonConfig{
+										ID:          "btn-dosifre",
+										Name:        "btn-dosifre",
+										HxUrl:       "/api/promet/searchbutton",
+										HxTarget:    "#search-dropdown",
+										HxSwap:      "innerHTML",
+										HxVals:      `{"vkonta": "1", "destfield": "dosifre"}`,
+										ClassButton: common.ClassButton,
+									})
+								</div>
+							</div>
+						</div>
+						<div class="flex items-center gap-1 mb-4 ml-auto">
+							@tmpl.LabelField(domain.LabelFieldConfig{
+								ID:         "datumstampe",
+								LabelText:  translator.Label("Datum štampe"),
+								ClassLabel: common.ClassLabel + " whitespace-nowrap w-40",
+							})
+							@tmpl.TextInputField(domain.InputFieldConfig{
+								ID:         "datumstampe",
+								Name:       "datumstampe",
+								FieldType:  "date",
+								ClassInput: common.ClassInputTextEnabled + " w-36",
+								Value:      time.Date(gnGod, 12, 31, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
+							})
+						</div>
+						<!-- Option checkboxes row -->
+						<div class="flex items-center gap-8 mb-2">
+							@tmpl.CheckboxField(domain.CheckboxFieldConfig{
+								ID:                "karticadeviznihkonta",
+								Name:              "karticadeviznihkonta",
+								LabelText:         "KARTICA DEVIZNIH KONTA",
+								IsChecked:         false,
+								ClassLabel:        common.ClassCheckboxLabel,
+								ClassCheckbox:     common.ClassCheckbox,
+								ClassCheckboxSpan: common.ClassCheckboxSpan + " font-semibold text-blue-800",
+							}, translator)
+							@tmpl.CheckboxField(domain.CheckboxFieldConfig{
+								ID:                "karticasakolicinom",
+								Name:              "karticasakolicinom",
+								LabelText:         "KARTICA SA KOLIČINOM",
+								IsChecked:         false,
+								ClassLabel:        common.ClassCheckboxLabel,
+								ClassCheckbox:     common.ClassCheckbox,
+								ClassCheckboxSpan: common.ClassCheckboxSpan + " font-semibold text-blue-800",
+							}, translator)
+						</div>
+					</fieldset>
+					<div class="mt-2 ml-4 mb-4 mr-4">
+						<div class="mb-2 border-b-2 border-blue-500 pt-2">
+							<label class={ common.ClassCheckboxLabel + " font-bold" }>
+								<input
+									type="checkbox"
+									id="dodatnikriterijumi"
+									name="dodatnikriterijumi"
+									checked="checked"
+									class={ common.ClassCheckbox }
+									onchange="document.getElementById('sak-dodatni-content').style.display = this.checked ? 'block' : 'none'"
+								/>
+								<span class={ common.ClassCheckboxSpan + " font-bold" }>{ translator.Label("Dodatni kriterijumi") }</span>
+							</label>
+						</div>
+					</div>
+					@DodatniKriterijumi(prometParams, translator)
+					<!-- Buttons -->
+					<div class="flex justify-end gap-1 px-4 pb-4">
+						@tmpl.Search_PartPrintButton(btnPrint)
+						@tmpl.CancelButton(btnCancel, translator)
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script>
+		function sakToggle(chk, ids) {
+			ids.forEach(function(id) {
+				var el = document.getElementById(id);
+				if (el) el.disabled = !chk.checked;
+			});
+		}
+	</script>
+}
+
+templ PrometAnalitickihKontaDodatniParametri(dialog domain.Dialog, btnClose, btnSelect, btnCancel domain.Button, prometParams domain.PrometParam, translator *i18n.Service) {
+	<div id={ dialog.Id } class={ common.ClassMainDialogDiv }>
+		<div class="bg-white rounded-lg shadow-2xl relative animate-fade-in w-auto min-w-[380px]">
+			<!-- Title Bar -->
+			<div class="bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg">
+				<h2 class="text-lg font-semibold ml-4">{ translator.Title(dialog.Title) }</h2>
+				@tmpl.CloseButton(btnClose)
+			</div>
+			@DodatniKriterijumi(prometParams, translator)
+			<!-- Buttons -->
+			<div class="flex justify-end gap-1 px-4 pb-4">
+				@tmpl.SaveButton(btnSelect, translator)
+				@tmpl.CancelButton(btnCancel, translator)
+			</div>
+		</div>
+	</div>
+}
+
+templ DodatniKriterijumi(prometParams domain.PrometParam, translator *i18n.Service) {
+	<!-- Dodatni kriterijumi section -->
+	<div class="mt-2 ml-4 mb-4 mr-4">
+		<div id="sak-dodatni-content" style="display: block;">
+			<!-- Row: Po grupi naloga -->
+			<div class="flex items-center gap-2 mb-1">
+				<label class={ common.ClassCheckboxLabel + " w-44 flex-shrink-0" }>
+					<input
+						type="checkbox"
+						id="chkpogrupinaloga"
+						name="chkpogrupinaloga"
+						class={ common.ClassCheckbox }
+						onchange="sakToggle(this,['odvrstenaloga','dovrstenaloga'])"
+					/>
+					<span class={ common.ClassCheckboxSpan }>{ translator.Label("Po grupi naloga ?") }</span>
+				</label>
+				@tmpl.LabelField(domain.LabelFieldConfig{
+					ID:         "odvrstenaloga",
+					LabelText:  translator.Label("Od vrste naloga"),
+					ClassLabel: common.ClassLabel + " w-32",
+				})
+				@tmpl.TextInputField(domain.InputFieldConfig{
+					ID:         "odvrstenaloga",
+					Name:       "odvrstenaloga",
+					FieldType:  "text",
+					Disabled:   true,
+					ClassInput: common.ClassInputTextEnabled + " w-32",
+					Value:      "0",
+				})
+				@tmpl.LabelField(domain.LabelFieldConfig{
+					LabelText:  translator.Label("Do vrste naloga"),
+					ClassLabel: common.ClassLabel + " w-32",
+				})
+				@tmpl.TextInputField(domain.InputFieldConfig{
+					ID:         "dovrstenaloga",
+					Name:       "dovrstenaloga",
+					FieldType:  "text",
+					Disabled:   true,
+					ClassInput: common.ClassInputTextEnabled + " w-32",
+					Value:      "0",
+				})
+			</div>
+			<!-- Row: Po broju naloga -->
+			<div class="flex items-center gap-2 mb-1">
+				<label class={ common.ClassCheckboxLabel + " w-44 flex-shrink-0" }>
+					<input
+						type="checkbox"
+						id="chkpobrojunaloga"
+						name="chkpobrojunaloga"
+						class={ common.ClassCheckbox }
+						onchange="sakToggle(this,['odbrojanaloga','dobrojanaloga'])"
+					/>
+					<span class={ common.ClassCheckboxSpan }>{ translator.Label("Po broju naloga ?") }</span>
+				</label>
+				@tmpl.LabelField(domain.LabelFieldConfig{ID: "odbrojanaloga", LabelText: translator.Label("Od broja naloga"), ClassLabel: common.ClassLabel + " w-32"})
+				@tmpl.TextInputField(domain.InputFieldConfig{ID: "odbrojanaloga", Name: "odbrojanaloga", FieldType: "text", Disabled: true, ClassInput: common.ClassInputTextEnabled + " w-32", Value: "0"})
+				@tmpl.LabelField(domain.LabelFieldConfig{ID: "dobrojanaloga", LabelText: translator.Label("Do broja naloga"), ClassLabel: common.ClassLabel + " w-32"})
+				@tmpl.TextInputField(domain.InputFieldConfig{ID: "dobrojanaloga", Name: "dobrojanaloga", FieldType: "text", Disabled: true, ClassInput: common.ClassInputTextEnabled + " w-32", Value: "0"})
+			</div>
+			<!-- Row: Po datumu naloga -->
+			<div class="flex items-center gap-2 mb-1">
+				<label class={ common.ClassCheckboxLabel + " w-44 flex-shrink-0" }>
+					<input
+						type="checkbox"
+						id="chkpodatumnaloga"
+						name="chkpodatumnaloga"
+						class={ common.ClassCheckbox }
+						onchange="sakToggle(this,['oddatumnaloga','dodatumnaloga'])"
+					/>
+					<span class={ common.ClassCheckboxSpan }>{ translator.Label("Po datumu naloga ?") }</span>
+				</label>
+				@tmpl.LabelField(domain.LabelFieldConfig{ID: "oddatumnaloga", LabelText: translator.Label("Od datuma naloga"), ClassLabel: common.ClassLabel + " w-32"})
+				@tmpl.TextInputField(domain.InputFieldConfig{ID: "oddatumnaloga", Name: "oddatumnaloga", FieldType: "date", Disabled: true, ClassInput: common.ClassInputTextEnabled + " w-32"})
+				@tmpl.LabelField(domain.LabelFieldConfig{ID: "dodatumnaloga", LabelText: translator.Label("Do datuma naloga"), ClassLabel: common.ClassLabel + " w-32"})
+				@tmpl.TextInputField(domain.InputFieldConfig{ID: "dodatumnaloga", Name: "dodatumnaloga", FieldType: "date", Disabled: true, ClassInput: common.ClassInputTextEnabled + " w-32"})
+			</div>
+			<!-- Row: Po datumu obrade -->
+			<div class="flex items-center gap-2 mb-1">
+				<label class={ common.ClassCheckboxLabel + " w-44 flex-shrink-0" }>
+					<input
+						type="checkbox"
+						id="chkpodatumuobrade"
+						name="chkpodatumuobrade"
+						class={ common.ClassCheckbox }
+						onchange="sakToggle(this,['oddatumobrade','dodatumobrade'])"
+					/>
+					<span class={ common.ClassCheckboxSpan }>{ translator.Label("Po datumu obrade ?") }</span>
+				</label>
+				@tmpl.LabelField(domain.LabelFieldConfig{ID: "oddatumobrade", LabelText: translator.Label("Od datuma obrade"), ClassLabel: common.ClassLabel + " w-32"})
+				@tmpl.TextInputField(domain.InputFieldConfig{ID: "oddatumobrade", Name: "oddatumobrade", FieldType: "date", Disabled: true, ClassInput: common.ClassInputTextEnabled + " w-32"})
+				@tmpl.LabelField(domain.LabelFieldConfig{ID: "dodatumobrade", LabelText: translator.Label("Do datuma obrade"), ClassLabel: common.ClassLabel + " w-32"})
+				@tmpl.TextInputField(domain.InputFieldConfig{ID: "dodatumobrade", Name: "dodatumobrade", FieldType: "date", Disabled: true, ClassInput: common.ClassInputTextEnabled + " w-32"})
+			</div>
+			<!-- Row: Po vrsti dokumenta -->
+			<div class="flex items-center gap-2 mb-1">
+				<label class={ common.ClassCheckboxLabel + " w-44 flex-shrink-0" }>
+					<input
+						type="checkbox"
+						id="chkpovrstidokumenta"
+						name="chkpovrstidokumenta"
+						class={ common.ClassCheckbox }
+						onchange="sakToggle(this,['vrstedokumenta'])"
+					/>
+					<span class={ common.ClassCheckboxSpan }>{ translator.Label("Po vrsti dokumenta ?") }</span>
+				</label>
+				@tmpl.LabelField(domain.LabelFieldConfig{ID: "vrstedokumenta", LabelText: translator.Label("Vrste dokumentata"), ClassLabel: common.ClassLabel + " w-32"})
+				@tmpl.TextInputField(domain.InputFieldConfig{ID: "vrstedokumenta", Name: "vrstedokumenta", FieldType: "text", Disabled: true, ClassInput: common.ClassInputTextEnabled + " flex-1", Placeholder: "Unesite šifre vrsta dokumenta razdvojene zarezom"})
+			</div>
+			<!-- Row: Po broju dokumenta -->
+			<div class="flex items-center gap-2 mb-1">
+				<label class={ common.ClassCheckboxLabel + " w-44 flex-shrink-0" }>
+					<input
+						type="checkbox"
+						id="chkpobrojudokumenta"
+						name="chkpobrojudokumenta"
+						class={ common.ClassCheckbox }
+						onchange="sakToggle(this,['odbrojadokumenta','dobrojadokumenta'])"
+					/>
+					<span class={ common.ClassCheckboxSpan }>{ translator.Label("Po broju dokumenta ?") }</span>
+				</label>
+				@tmpl.LabelField(domain.LabelFieldConfig{ID: "odbrojadokumenta", LabelText: translator.Label("Od broja dokumenta"), ClassLabel: common.ClassLabel + " w-32"})
+				@tmpl.TextInputField(domain.InputFieldConfig{ID: "odbrojadokumenta", Name: "odbrojadokumenta", FieldType: "text", Disabled: true, ClassInput: common.ClassInputTextEnabled + " w-32", Value: "0"})
+				@tmpl.LabelField(domain.LabelFieldConfig{ID: "dobrojadokumenta", LabelText: translator.Label("Do broja dokumenta"), ClassLabel: common.ClassLabel + " w-32"})
+				@tmpl.TextInputField(domain.InputFieldConfig{ID: "dobrojadokumenta", Name: "dobrojadokumenta", FieldType: "text", Disabled: true, ClassInput: common.ClassInputTextEnabled + " w-32", Value: "0"})
+			</div>
+			<!-- Row: Po datumu dokumenta -->
+			<div class="flex items-center gap-2 mb-1">
+				<label class={ common.ClassCheckboxLabel + " w-44 flex-shrink-0" }>
+					<input
+						type="checkbox"
+						id="chkpodatumudokumenta"
+						name="chkpodatumudokumenta"
+						class={ common.ClassCheckbox }
+						onchange="sakToggle(this,['oddatumadokumenta','dodatumadokumenta'])"
+					/>
+					<span class={ common.ClassCheckboxSpan }>{ translator.Label("Po datumu dokumenta ?") }</span>
+				</label>
+				@tmpl.LabelField(domain.LabelFieldConfig{ID: "oddatumadokumenta", LabelText: translator.Label("Od datuma dokumenta"), ClassLabel: common.ClassLabel + " w-32"})
+				@tmpl.TextInputField(domain.InputFieldConfig{ID: "oddatumadokumenta", Name: "oddatumadokumenta", FieldType: "date", Disabled: true, ClassInput: common.ClassInputTextEnabled + " w-32"})
+				@tmpl.LabelField(domain.LabelFieldConfig{ID: "dodatumadokumenta", LabelText: translator.Label("Do datuma dokumenta"), ClassLabel: common.ClassLabel + " w-32"})
+				@tmpl.TextInputField(domain.InputFieldConfig{ID: "dodatumadokumenta", Name: "dodatumadokumenta", FieldType: "date", Disabled: true, ClassInput: common.ClassInputTextEnabled + " w-32"})
+			</div>
+			<!-- Row: Po iznosu -->
+			<div class="flex items-center gap-2 mb-1">
+				<label class={ common.ClassCheckboxLabel + " w-44 flex-shrink-0" }>
+					<input
+						type="checkbox"
+						id="chkpoiznosu"
+						name="chkpoiznosu"
+						class={ common.ClassCheckbox }
+						onchange="sakToggle(this,['odiznosa','doiznosa'])"
+					/>
+					<span class={ common.ClassCheckboxSpan }>{ translator.Label("Po iznosu ?") }</span>
+				</label>
+				@tmpl.LabelField(domain.LabelFieldConfig{ID: "odiznosa", LabelText: translator.Label("Od iznosa"), ClassLabel: common.ClassLabel + " w-32"})
+				@tmpl.NumericInputField(domain.InputFieldConfig{ID: "odiznosa", Name: "odiznosa", Disabled: true, ClassInput: common.ClassInputNumericDisabled + " w-32", DecimalPlaces: 2})
+				@tmpl.LabelField(domain.LabelFieldConfig{ID: "doiznosa", LabelText: translator.Label("Do iznosa"), ClassLabel: common.ClassLabel + " w-32"})
+				@tmpl.NumericInputField(domain.InputFieldConfig{ID: "doiznosa", Name: "doiznosa", Disabled: true, ClassInput: common.ClassInputNumericDisabled + " w-32", DecimalPlaces: 2})
+			</div>
+			<!-- Row: Po načinu knjiženja -->
+			<div class="flex items-center gap-2">
+				<label class={ common.ClassCheckboxLabel + " w-44 flex-shrink-0" }>
+					<input
+						type="checkbox"
+						id="chkponacinuknjizenja"
+						name="chkponacinuknjizenja"
+						class={ common.ClassCheckbox }
+						onchange="sakToggle(this,['nacinknjizenja'])"
+					/>
+					<span class={ common.ClassCheckboxSpan }>{ translator.Label("Po načinu knjiženja ?") }</span>
+				</label>
+				@tmpl.LabelField(domain.LabelFieldConfig{ID: "nacinknjizenja", LabelText: translator.Label("Način knjiženja"), ClassLabel: common.ClassLabel + " w-32"})
+				@tmpl.TextInputField(domain.InputFieldConfig{ID: "nacinknjizenja", Name: "nacinknjizenja", FieldType: "text", Disabled: true, ClassInput: common.ClassInputTextEnabled + " flex-1", Placeholder: "1-Duguje, 2-St.duguje, 3-Potražuje, 4-St.potražuje"})
 			</div>
 		</div>
 	</div>
@@ -192,7 +619,7 @@ templ AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint,
 			<!-- First Row - Two divs side by side -->
 			<div class="grid grid-cols-2 gap-1">
 				<!-- Parameters Div - Left Aligned -->
-				<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg">
+				<div class="border bg-blue-100 border border-blue-400 mt-1 p-1 rounded-lg">
 					<div class="flex items-center gap-1 mb-1">
 						@tmpl.LabelField(domain.LabelFieldConfig{
 							ID:         "konto",
@@ -382,20 +809,27 @@ templ AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint,
 						})
 					</div>
 					<div class="mb-1 flex items-center justify-between h-6">
-						<!-- Checkbox group on the left -->
+						<!-- saldo po mesecima checkbox on the left -->
 						<div class="flex items-center">
-							<input type="checkbox" class="h-4 w-4 rounded border border-blue-400 text-blue-600 focus:ring-blue-500"/>
-							<span class="ml-1 text-sm text-gray-700">Dodatni parametri</span>
+							@tmpl.CheckboxField(domain.CheckboxFieldConfig{
+								ID:                "saldapomesecima",
+								Name:              "saldapomesecima",
+								LabelText:         translator.Label("Štampaj salda po mesecima"),
+								IsChecked:         false,
+								ClassLabel:        common.ClassCheckboxLabel,
+								ClassCheckbox:     common.ClassCheckbox,
+								ClassCheckboxSpan: common.ClassCheckboxSpan,
+							}, translator)
 						</div>
 						<!-- Buttons on the right -->
-						<div class="flex items-center space-x-1">
+						<div class="flex items-center pt-1 space-x-1">
 							@tmpl.FormObradaButton(btnObrada, translator)
-							@tmpl.PrintButton(btnPrint, translator)
+							@tmpl.Search_PartPrintButton(btnPrint)
 						</div>
 					</div>
 				</div>
 				<!-- Values Div - Numeric Right Aligned -->
-				<div class="border mt-1 mb-1 bg-blue-100 border border-blue-400 p-1 rounded-lg">
+				<div class="border mt-1 bg-blue-100 border border-blue-400 p-1 rounded-lg">
 					@PrometTotalValues(total, translator)
 				</div>
 			</div>
@@ -424,7 +858,7 @@ templ PrometDeviznihAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, 
 			<!-- First Row - Two divs side by side -->
 			<div class="grid grid-cols-2 gap-1">
 				<!-- Parameters Div - Left Aligned -->
-				<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg">
+				<div class="border bg-blue-100 border border-blue-400 mt-1 p-1 rounded-lg">
 					<div class="flex items-center gap-1 mb-1">
 						@tmpl.LabelField(domain.LabelFieldConfig{
 							ID:         "konto",
@@ -553,7 +987,7 @@ templ PrometDeviznihAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, 
 					</div>
 				</div>
 				<!-- Values Div - Numeric Right Aligned -->
-				<div class="border mt-1 mb-1 bg-blue-100 border border-blue-400 p-1 rounded-lg">
+				<div class="border mt-1 bg-blue-100 border border-blue-400 p-1 rounded-lg">
 					@PrometTotalValues(total, translator)
 				</div>
 			</div>
@@ -587,7 +1021,7 @@ templ PrometSubsintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPr
 			<!-- First Row - Two divs side by side -->
 			<div class="grid grid-cols-2 gap-1">
 				<!-- Parameters Div - Left Aligned -->
-				<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg">
+				<div class="border bg-blue-100 border border-blue-400 mt-1 p-1 rounded-lg">
 					<div class="flex items-center gap-1 mb-1">
 						@tmpl.LabelField(domain.LabelFieldConfig{
 							ID:         "odkonta",
@@ -716,7 +1150,7 @@ templ PrometSubsintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPr
 					</div>
 				</div>
 				<!-- Values Div - Numeric Right Aligned -->
-				<div class="border mt-1 mb-1 bg-blue-100 border border-blue-400 p-1 rounded-lg">
+				<div class="border mt-1 bg-blue-100 border border-blue-400 p-1 rounded-lg">
 					@PrometTotalValues(total, translator)
 				</div>
 			</div>
@@ -729,9 +1163,135 @@ templ PrometSubsintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPr
 					@tmpl.Table(tbl, translator)
 				</div>
 			</div>
+			<div id="dialog-promet-subsint-stampa"></div>
 		</div>
 	</div>
 	@tmpl.SpinnerScript()
+}
+
+templ PrometSubsintetickihKontaDialog(dialog domain.Dialog, btnPrint, btnCancel, btnClose domain.Button, prometParams domain.PrometParam, gnGod int, translator *i18n.Service) {
+	<div id={ dialog.Id } class={ common.ClassMainDialogDiv }>
+		<div class="bg-white rounded-lg shadow-2xl relative animate-fade-in w-auto min-w-[380px]">
+			<!-- Title Bar -->
+			<div class="bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg">
+				<h2 class="text-lg font-semibold ml-4">{ translator.Title(dialog.Title) }</h2>
+				@tmpl.CloseButton(btnClose)
+			</div>
+			<!-- Content -->
+			<div class="space-y-1">
+				<div class="bg-white rounded-lg shadow-2xl relative animate-fade-in w-auto min-w-[480px] max-w-2xl">
+					<fieldset class="border-2 border-blue-500 rounded-lg m-3 mb-2 p-2">
+						<legend class="text-sm font-bold text-blue-700">{ translator.Title("Selekcija parametara za štampu") }</legend>
+						<!-- Top checkboxes -->
+						<div class="flex flex-wrap items-center gap-4 mb-2">
+							@tmpl.CheckboxField(domain.CheckboxFieldConfig{
+								ID:                "saldapomesecima",
+								Name:              "saldapomesecima",
+								LabelText:         translator.Label("Štampanje salda po mesecima"),
+								IsChecked:         false,
+								ClassLabel:        common.ClassCheckboxLabel,
+								ClassCheckbox:     common.ClassCheckbox,
+								ClassCheckboxSpan: common.ClassCheckboxSpan,
+							}, translator)
+							@tmpl.CheckboxField(domain.CheckboxFieldConfig{
+								ID:                "ukupansaldo",
+								Name:              "ukupansaldo",
+								LabelText:         translator.Label("Štampaj ukupan saldo posle svake stavke"),
+								IsChecked:         true,
+								ClassLabel:        common.ClassCheckboxLabel,
+								ClassCheckbox:     common.ClassCheckbox,
+								ClassCheckboxSpan: common.ClassCheckboxSpan,
+							}, translator)
+							@tmpl.CheckboxField(domain.CheckboxFieldConfig{
+								ID:                "stampadokumenta",
+								Name:              "stampadokumenta",
+								LabelText:         translator.Label("Štampaj spisak dokumenata po nalogu"),
+								IsChecked:         false,
+								ClassLabel:        common.ClassCheckboxLabel,
+								ClassCheckbox:     common.ClassCheckbox,
+								ClassCheckboxSpan: common.ClassCheckboxSpan,
+							}, translator)
+						</div>
+						<!-- Datum štampanja kartica -->
+						<div class="flex items-center gap-1 mb-2">
+							@tmpl.LabelField(domain.LabelFieldConfig{
+								ID:         "datumstampe",
+								LabelText:  translator.Label("Datum štampanja kartica"),
+								ClassLabel: common.ClassLabel + " whitespace-nowrap w-48",
+							})
+							@tmpl.TextInputField(domain.InputFieldConfig{
+								ID:         "datumstampe",
+								Name:       "datumstampe",
+								FieldType:  "date",
+								ClassInput: common.ClassInputTextEnabled + " w-36",
+								Value:      time.Date(gnGod, 12, 31, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
+							})
+						</div>
+						<!-- Konta range -->
+						<div class="space-y-1">
+							<div class="flex items-center gap-1">
+								@tmpl.LabelField(domain.LabelFieldConfig{
+									ID:         "odkonta",
+									LabelText:  translator.Label("Počev od konta"),
+									ClassLabel: common.ClassLabel + " w-48",
+								})
+								@tmpl.TextInputField(domain.InputFieldConfig{
+									ID:         "odkonta",
+									Name:       "odkonta",
+									FieldType:  "text",
+									ClassInput: common.ClassInputTextEnabled + " w-20",
+									MaxLength:  "4",
+									Value:      prometParams.OdKonta,
+									OnInput:    "clearFieldError",
+									OnFocus:    "clearFieldError",
+								})
+								@tmpl.SearchButton(domain.SearchButtonConfig{
+									ID:          "btn-sub-odkonta",
+									Name:        "btn-sub-odkonta",
+									HxUrl:       "/api/promet/searchbutton",
+									HxTarget:    "#search-dropdown",
+									HxSwap:      "innerHTML",
+									HxVals:      `{"vkonta": "2", "destfield": "odkonta"}`,
+									ClassButton: common.ClassButton,
+								})
+							</div>
+							<div class="flex items-center gap-1">
+								@tmpl.LabelField(domain.LabelFieldConfig{
+									ID:         "dokonta",
+									LabelText:  translator.Label("Zaključno sa kontom"),
+									ClassLabel: common.ClassLabel + " w-48",
+								})
+								@tmpl.TextInputField(domain.InputFieldConfig{
+									ID:         "dokonta",
+									Name:       "dokonta",
+									FieldType:  "text",
+									ClassInput: common.ClassInputTextEnabled + " w-20",
+									MaxLength:  "4",
+									Value:      prometParams.DoKonta,
+									OnInput:    "clearFieldError",
+									OnFocus:    "clearFieldError",
+								})
+								@tmpl.SearchButton(domain.SearchButtonConfig{
+									ID:          "btn-sub-dokonta",
+									Name:        "btn-sub-dokonta",
+									HxUrl:       "/api/promet/searchbutton",
+									HxTarget:    "#search-dropdown",
+									HxSwap:      "innerHTML",
+									HxVals:      `{"vkonta": "2", "destfield": "dokonta"}`,
+									ClassButton: common.ClassButton,
+								})
+							</div>
+						</div>
+					</fieldset>
+					<!-- Buttons -->
+					<div class="flex justify-end gap-1 px-4 pb-4">
+						@tmpl.Search_PartPrintButton(btnPrint)
+						@tmpl.CancelButton(btnCancel, translator)
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
 }
 
 templ PrometSintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.TotalValues, searchInput domain.InputControl, gnGod int, translator *i18n.Service) {
@@ -746,7 +1306,7 @@ templ PrometSintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 			<!-- First Row - Two divs side by side -->
 			<div class="grid grid-cols-2 gap-1">
 				<!-- Parameters Div - Left Aligned -->
-				<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg">
+				<div class="border bg-blue-100 border border-blue-400 mt-1 p-1 rounded-lg">
 					<div class="flex items-center gap-1 mb-1">
 						@tmpl.LabelField(domain.LabelFieldConfig{
 							ID:         "konto",
@@ -833,7 +1393,7 @@ templ PrometSintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 					</div>
 				</div>
 				<!-- Values Div - Numeric Right Aligned -->
-				<div class="border mt-1 mb-1 bg-blue-100 border border-blue-400 p-1 rounded-lg">
+				<div class="border mt-1 bg-blue-100 border border-blue-400 p-1 rounded-lg">
 					@PrometTotalValues(total, translator)
 				</div>
 			</div>
@@ -846,9 +1406,98 @@ templ PrometSintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 					@tmpl.Table(tbl, translator)
 				</div>
 			</div>
+			<div id="dialog-promet-sint-stampa"></div>
 		</div>
 	</div>
 	@tmpl.SpinnerScript()
+}
+
+templ PrometSintetickihKontaDialog(dialog domain.Dialog, btnPrint, btnCancel, btnClose domain.Button, prometParams domain.PrometParam, gnGod int, translator *i18n.Service) {
+	<div id={ dialog.Id } class={ common.ClassMainDialogDiv }>
+		<div class="bg-white rounded-lg shadow-2xl relative animate-fade-in w-auto min-w-[380px]">
+			<!-- Title Bar -->
+			<div class="bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg">
+				<h2 class="text-lg font-semibold ml-4">{ translator.Title(dialog.Title) }</h2>
+				@tmpl.CloseButton(btnClose)
+			</div>
+			<!-- Content -->
+			<div class="space-y-1">
+				<div class="bg-white rounded-lg shadow-2xl relative animate-fade-in w-auto min-w-[480px] max-w-2xl">
+					<fieldset class="border-2 border-blue-500 rounded-lg m-3 mb-2 p-2">
+						<legend class="text-sm font-bold text-blue-700">{ translator.Title("Selekcija parametara za štampu") }</legend>
+						<!-- Top checkboxes -->
+						<div class="flex flex-wrap items-center gap-4 mb-2">
+							@tmpl.CheckboxField(domain.CheckboxFieldConfig{
+								ID:                "saldapomesecima",
+								Name:              "saldapomesecima",
+								LabelText:         translator.Label("Štampanje salda po mesecima"),
+								IsChecked:         false,
+								ClassLabel:        common.ClassCheckboxLabel,
+								ClassCheckbox:     common.ClassCheckbox,
+								ClassCheckboxSpan: common.ClassCheckboxSpan,
+							}, translator)
+							@tmpl.CheckboxField(domain.CheckboxFieldConfig{
+								ID:                "ukupansaldo",
+								Name:              "ukupansaldo",
+								LabelText:         translator.Label("Štampaj ukupan saldo posle svake stavke"),
+								IsChecked:         true,
+								ClassLabel:        common.ClassCheckboxLabel,
+								ClassCheckbox:     common.ClassCheckbox,
+								ClassCheckboxSpan: common.ClassCheckboxSpan,
+							}, translator)
+						</div>
+						<!-- Datum štampanja kartica -->
+						<div class="flex items-center gap-1 mb-2">
+							@tmpl.LabelField(domain.LabelFieldConfig{
+								ID:         "datumstampe",
+								LabelText:  translator.Label("Datum štampanja kartica"),
+								ClassLabel: common.ClassLabel + " whitespace-nowrap w-48",
+							})
+							@tmpl.TextInputField(domain.InputFieldConfig{
+								ID:         "datumstampe",
+								Name:       "datumstampe",
+								FieldType:  "date",
+								ClassInput: common.ClassInputTextEnabled + " w-36",
+								Value:      time.Date(gnGod, 12, 31, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
+							})
+						</div>
+						<!-- Konto -->
+						<div class="flex items-center gap-1 mb-2">
+							@tmpl.LabelField(domain.LabelFieldConfig{
+								ID:         "konto",
+								LabelText:  translator.Label("Konto"),
+								ClassLabel: common.ClassLabel + " w-48",
+							})
+							@tmpl.TextInputField(domain.InputFieldConfig{
+								ID:         "konto",
+								Name:       "konto",
+								FieldType:  "text",
+								ClassInput: common.ClassInputTextEnabled + " w-20",
+								MaxLength:  "3",
+								Value:      prometParams.Konto,
+								OnInput:    "clearFieldError",
+								OnFocus:    "clearFieldError",
+							})
+							@tmpl.SearchButton(domain.SearchButtonConfig{
+								ID:          "btn-sint-konto",
+								Name:        "btn-sint-konto",
+								HxUrl:       "/api/promet/searchbutton",
+								HxTarget:    "#search-dropdown",
+								HxSwap:      "innerHTML",
+								HxVals:      `{"vkonta": "3", "destfield": "konto"}`,
+								ClassButton: common.ClassButton,
+							})
+						</div>
+					</fieldset>
+					<!-- Buttons -->
+					<div class="flex justify-end gap-1 px-4 pb-4">
+						@tmpl.Search_PartPrintButton(btnPrint)
+						@tmpl.CancelButton(btnCancel, translator)
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
 }
 
 templ KarticaSintetickiKonta(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.TotalValues, searchInput domain.InputControl, gnGod int, translator *i18n.Service) {
@@ -862,7 +1511,7 @@ templ KarticaSintetickiKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 			<!-- First Row - Two divs side by side -->
 			<div class="grid grid-cols-2 gap-1">
 				<!-- Parameters Div - Left Aligned -->
-				<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg">
+				<div class="border bg-blue-100 border border-blue-400 mt-1 p-1 rounded-lg">
 					<div class="flex items-center gap-1 mb-1">
 						@tmpl.LabelField(domain.LabelFieldConfig{
 							ID:         "konto",
@@ -946,12 +1595,12 @@ templ KarticaSintetickiKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 						<!-- Buttons on the right -->
 						<div class="flex items-center space-x-1">
 							@tmpl.FormObradaButton(btnObrada, translator)
-							@tmpl.PrintButton(btnPrint, translator)
+							@tmpl.Search_PartPrintButton(btnPrint)
 						</div>
 					</div>
 				</div>
 				<!-- Values Div - Numeric Right Aligned -->
-				<div class="border mt-1 mb-1 bg-blue-100 border border-blue-400 p-1 rounded-lg">
+				<div class="border mt-1 bg-blue-100 border border-blue-400 p-1 rounded-lg">
 					@PrometTotalValues(total, translator)
 				</div>
 			</div>
@@ -965,6 +1614,7 @@ templ KarticaSintetickiKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 				</div>
 			</div>
 		</div>
+		<div id="dialog-sint-stampa"></div>
 	</div>
 	@tmpl.SpinnerScript()
 }
@@ -981,7 +1631,7 @@ templ PrometKontaPoVRD(tabs domain.TabData, tbl domain.TableData, btnPrint, btnO
 			<!-- First Row - Two divs side by side -->
 			<div class="grid grid-cols-2 gap-1">
 				<!-- Parameters Div - Left Aligned -->
-				<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg">
+				<div class="border bg-blue-100 border border-blue-400 mt-1 p-1 rounded-lg">
 					<div class="flex items-center gap-1 mb-1">
 						@tmpl.LabelField(domain.LabelFieldConfig{
 							ID:         "konto",
@@ -1063,12 +1713,12 @@ templ PrometKontaPoVRD(tabs domain.TabData, tbl domain.TableData, btnPrint, btnO
 						<!-- Buttons on the right -->
 						<div class="flex items-center space-x-1">
 							@tmpl.FormObradaButton(btnObrada, translator)
-							@tmpl.PrintButton(btnPrint, translator)
+							@tmpl.Search_PartPrintButton(btnPrint)
 						</div>
 					</div>
 				</div>
 				<!-- Values Div - Numeric Right Aligned -->
-				<div class="border mt-1 mb-1 bg-blue-100 border border-blue-400 p-1 rounded-lg">
+				<div class="border mt-1 bg-blue-100 border border-blue-400 p-1 rounded-lg">
 					@PrometTotalValues(total, translator)
 				</div>
 			</div>
@@ -1098,7 +1748,7 @@ templ PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint,
 			<!-- First Row - Two divs side by side -->
 			<div class="grid grid-cols-2 gap-1">
 				<!-- Parameters Div - Left Aligned -->
-				<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg">
+				<div class="border bg-blue-100 border border-blue-400 mt-1 p-1 rounded-lg">
 					<div class="flex items-center gap-1 mb-1">
 						@tmpl.LabelField(domain.LabelFieldConfig{
 							ID:         "konto",
@@ -1256,7 +1906,7 @@ templ PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint,
 					</div>
 				</div>
 				<!-- Values Div - Numeric Right Aligned -->
-				<div class="border mt-1 mb-1 bg-blue-100 border border-blue-400 p-1 rounded-lg">
+				<div class="border mt-1 bg-blue-100 border border-blue-400 p-1 rounded-lg">
 					@PrometTotalValues(total, translator)
 				</div>
 			</div>

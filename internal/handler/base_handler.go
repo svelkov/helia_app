@@ -9,6 +9,7 @@ import (
 	"helia/internal/common"
 	"helia/internal/domain"
 	"helia/internal/infrastructure"
+	"helia/internal/service"
 	"log"
 	"net/http"
 	"os"
@@ -85,6 +86,7 @@ type responseWriter struct {
 
 // BasicHandler handles base application functionality
 type BasicHandler struct {
+	menuService  service.MenuService
 	isLoggedIn   bool
 	menuItems    domain.MenuDataItems
 	subMenuItems []domain.SubMenuItem
@@ -95,15 +97,14 @@ type BasicHandler struct {
 }
 
 // NewBasicHandler creates and initializes a new BasicHandler
-func NewBasicHandler(c *gin.Context, isLoggedIn bool, menuItems domain.MenuDataItems, subMenuItems []domain.SubMenuItem, fvrService finservice.FvrService, cfg config.Config) *BasicHandler {
+func NewBasicHandler(c *gin.Context, menuService service.MenuService, isLoggedIn bool, fvrService finservice.FvrService, cfg config.Config) *BasicHandler {
 	handler := &BasicHandler{
-		isLoggedIn:   isLoggedIn,
-		menuItems:    menuItems,
-		subMenuItems: subMenuItems,
-		fvrService:   fvrService,
-		firma:        domain.Firma{},
-		logger:       log.New(os.Stdout, "[BasicHandler] ", log.LstdFlags|log.Lshortfile),
-		cfg:          cfg,
+		menuService: menuService,
+		isLoggedIn:  isLoggedIn,
+		fvrService:  fvrService,
+		firma:       domain.Firma{},
+		logger:      log.New(os.Stdout, "[BasicHandler] ", log.LstdFlags|log.Lshortfile),
+		cfg:         cfg,
 	}
 
 	// Initialize firma data
@@ -507,8 +508,27 @@ func (h *BasicHandler) indexHandler(c *gin.Context) {
 	if menuName == "" {
 		menuName = defaultMenu
 	}
+	ctx := c.Request.Context()
+	menuData, err := h.menuService.GetMenuData(ctx)
+	if err != nil {
+		h.logger.Printf("Error fetching menu data: %v", err)
+		h.respondWithError(c, http.StatusInternalServerError, "Error fetching menu data")
+		return
+	}
+	subMenuData, err := h.menuService.GetSubmenuData(ctx, menuName)
+	if err != nil {
+		h.logger.Printf("Error fetching submenu data for menu %s: %v", menuName, err)
+		h.respondWithError(c, http.StatusInternalServerError, "Error fetching submenu data")
+		return
+	}
+	menuDataItems := domain.MenuDataItems{
+		CurrentMenu:    menuName,
+		CurrentSubMenu: "",
+		MenuItems:      menuData,
+	}
+
 	// Get submenu items
-	subMenus := common.GetTranslatedSubMenus(domain.MenuData, menuName, selections.language)
+	subMenus := common.GetTranslatedSubMenus(menuDataItems, menuName, subMenuData, selections.language)
 	if subMenus == nil {
 		h.logger.Printf("Menu not found: %s", menuName)
 		h.respondWithError(c, http.StatusNotFound, "Menu not found")
@@ -516,11 +536,12 @@ func (h *BasicHandler) indexHandler(c *gin.Context) {
 	}
 
 	// Update handler state
+	h.menuItems = menuDataItems
 	h.subMenuItems = subMenus
 	h.menuItems.CurrentMenu = menuName
 
 	// Render the page
-	err := tmpl.Base(
+	err = tmpl.Base(
 		isLoggedIn,
 		tmpl.Content(isLoggedIn, i18n.GetInstance()),
 		h.menuItems,
@@ -868,6 +889,51 @@ func (h *BasicHandler) renderComboResponse(c *gin.Context) {
 	}
 }
 
+// getMenuHandler handles menu requests
+func (h *BasicHandler) getMenuHandler(c *gin.Context) {
+	// Get user session from context
+	userSession := domain.GetSessionFromContext(c)
+	if userSession == nil {
+		c.JSON(401, gin.H{"error": "User session not found"})
+		return
+	}
+
+	menuName := c.Query("menuName")
+	if menuName == "" {
+		menuName = defaultMenu
+	}
+	menuData, err := h.menuService.GetMenuData(c.Request.Context())
+	if err != nil {
+		h.logger.Printf("Error fetching menu data: %v", err)
+		c.JSON(500, gin.H{"error": "Error fetching menu data"})
+		return
+	}
+	subMenuData, err := h.menuService.GetSubmenuData(c.Request.Context(), menuName)
+	if err != nil {
+		h.logger.Printf("Error fetching submenu data for menu %s: %v", menuName, err)
+		c.JSON(500, gin.H{"error": "Error fetching submenu data"})
+		return
+	}
+	menuDataItems := domain.MenuDataItems{
+		CurrentMenu:    menuName,
+		CurrentSubMenu: "",
+		MenuItems:      menuData,
+	}
+
+	subMenus := common.GetTranslatedSubMenus(menuDataItems, menuName, subMenuData, userSession.Language)
+	if subMenus == nil {
+		c.JSON(404, gin.H{"error": "Menu not found"})
+		return
+	}
+
+	// Render templ component directly
+	component := templates.Side_nav(subMenus)
+	if err := component.Render(c.Request.Context(), c.Writer); err != nil {
+		c.JSON(500, gin.H{"error": "Error rendering template"})
+		return
+	}
+}
+
 // renderFullPage handles the full page rendering with all components
 func (h *BasicHandler) renderFullPage(c *gin.Context) {
 	// Get user session from context (per-user, request-scoped)
@@ -921,9 +987,27 @@ func (h *BasicHandler) renderFullPage(c *gin.Context) {
 	if menuName == "" {
 		menuName = defaultMenu
 	}
+	ctx := c.Request.Context()
+	menuData, err := h.menuService.GetMenuData(ctx)
+	if err != nil {
+		h.logger.Printf("Error fetching menu data: %v", err)
+		h.respondWithError(c, http.StatusInternalServerError, "Error fetching menu data")
+		return
+	}
+	subMenuData, err := h.menuService.GetSubmenuData(ctx, menuName)
+	if err != nil {
+		h.logger.Printf("Error fetching submenu data: %v", err)
+		h.respondWithError(c, http.StatusInternalServerError, "Error fetching submenu data")
+		return
+	}
 
+	menuDataItems := domain.MenuDataItems{
+		CurrentMenu:    menuName,
+		CurrentSubMenu: "",
+		MenuItems:      menuData,
+	}
 	// Get submenu items
-	subMenus := common.GetTranslatedSubMenus(domain.MenuData, menuName, userSession.Language)
+	subMenus := common.GetTranslatedSubMenus(menuDataItems, menuName, subMenuData, userSession.Language)
 	if subMenus == nil {
 		h.logger.Printf("Menu not found: %s", menuName)
 		h.respondWithError(c, http.StatusNotFound, "Menu not found")
@@ -1027,6 +1111,7 @@ func (h *BasicHandler) AddRoutes(r *gin.Engine) {
 	r.GET("/api/selectkar", h.SelectComboKar)
 	r.GET("/api/setkar", h.SetComboKar)
 	r.GET("/api/selectlanguage", h.SelectComboLanguage)
+	r.GET("/api/get-menu", h.getMenuHandler)
 	//r.GET("/api/setlanguage", h.SetComboLanguage)
 }
 

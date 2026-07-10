@@ -2,31 +2,35 @@ package reports
 
 import (
 	"fmt"
+	tmpl "helia/frontend/templates"
 	"helia/i18n"
 	"helia/internal/domain"
 	"time"
 )
 
 // Main Report Template
-templ Report(parameters domain.ReportParameters, tableData domain.TableData, translator *i18n.Service, summaryComponent templ.Component) {
+templ Report(parameters domain.ReportParameters, tableData domain.TableData, translator *i18n.Service, summaryComponent templ.Component, customReport templ.Component) {
 	<html lang="en">
 		<head>
 			<meta charset="UTF-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<meta name="report-name" content={ parameters.ReportName }/>
 			<script src="https://cdn.tailwindcss.com"></script>
+			<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
 			<title>{ parameters.ReportName } - { parameters.CompanyName }</title>
 			<style>
 			/* @page must be at top level, not inside @media print */
 			/* @top-right requires Chrome 128+ — thead::before below is the Chrome fallback */
 			@page {
-				size: A4;
-				margin: 8mm 10mm 12mm 10mm;
-				@top-right {
-					content: "Stranica " counter(page);
+				size: A4 { parameters.Orientation };
+				margin: 12mm 8mm 12mm 8mm;
+				@bottom-right {
+					content: "Strana: " counter(page) " / " counter(pages);
 					font-size: 9pt;
 					font-family: sans-serif;
 					color: #374151;
-					text-align: left;
+					vertical-align: bottom;
+					padding-bottom: 6mm;
 				}
 			}
 
@@ -130,7 +134,7 @@ templ Report(parameters domain.ReportParameters, tableData domain.TableData, tra
 				
 				.page-break {
 					width: 210mm;
-					margin: 20px auto;
+					margin: 10px auto;
 					padding: 15mm;
 					background: white;
 					box-shadow: 0 0 10px rgba(0,0,0,0.1);
@@ -139,17 +143,20 @@ templ Report(parameters domain.ReportParameters, tableData domain.TableData, tra
 			}
 		</style>
 		</head>
-		<body class="bg-gray-100 print:bg-white print:h-auto print:p-5 font-sans">
+		<body class="bg-gray-100 print:bg-white print:h-auto font-sans">
 			<!-- Print Controls -->
-			<div class="fixed top-1 right-1 z-50 bg-white p-1 rounded shadow-lg flex gap-2 print:hidden">
+			<div class="fixed top-2 right-2 z-50 bg-white p-2 rounded shadow-lg flex gap-2 items-center print:hidden">
 				<button
 					onclick="window.print()"
 					class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-sm font-semibold"
 				>
 					🖨️ { translator.Button("Stampa") }
 				</button>
-				<button onclick="exportToPDF()" class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-sm font-semibold">
-					Download PDF
+				<button onclick="exportToPDF()"  class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-sm font-semibold">
+					📄 Download PDF
+				</button>
+				<button onclick="exportToExcel()" class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-sm font-semibold">
+					📊 Export Excel
 				</button>
 				<button
 					onclick="window.close()"
@@ -160,30 +167,35 @@ templ Report(parameters domain.ReportParameters, tableData domain.TableData, tra
 			</div>
 			<!-- Main Report Container -->
 			<div class="py-2 px-4 print:py-0 print:px-0 print:w-full print:m-0 print:p-0">
-				<div class="bg-white rounded-lg shadow-lg px-8 py-10 print:shadow-none print:rounded-none print:p-0 max-w-6xl mx-auto print:mx-0 print:max-w-full print:bg-white">
-					<!-- Header: Company Info, Date/Time, Page -->
-					@ReportHeader(parameters)
-					<!-- Report Title -->
-					@ReportTitle(parameters)
-					<!-- Report Parameters as Headers (Two Columns) -->
-					@ReportParametersHeader(parameters)
-					<!-- Report Data/Table -->
-					@ReportTableSection(tableData, translator)
-					if summaryComponent != nil {
-						<!-- Page break: gray gap on screen, real break on print -->
-						<div class="print:hidden -mx-8 h-16 bg-gray-200 border-y border-gray-300"></div>
-						<div class="hidden print:block" style="page-break-before: always;"></div>
-						<!-- Summary Section (e.g., Totals, Averages) -->
-						<div class="pt-10 print:pt-8">
-							@summaryComponent
-						</div>
+				<div class="bg-white rounded-lg shadow-lg px-8 py-10 print:shadow-none print:rounded-none print:p-0 max-w-full mx-auto print:mx-0 print:bg-white overflow-x-auto print:overflow-visible">
+					if customReport != nil {
+						@customReport
+					} else {
+						<!-- Header: Company Info, Date/Time, Page -->
+						@ReportHeader(parameters)
+						<!-- Report Title -->
+						@ReportTitle(parameters)
+						<!-- Report Parameters as Headers (Two Columns) -->
+						@ReportParametersHeader(parameters)
+						<!-- Report Data/Table -->
+						@ReportTableSection(tableData, translator)
+						if summaryComponent != nil {
+							<!-- Page break: gray gap on screen, real break on print -->
+							<div class="print:hidden -mx-8 h-16 bg-gray-200 border-y border-gray-300"></div>
+							<div class="hidden print:block" style="page-break-before: always;"></div>
+							<!-- Summary Section (e.g., Totals, Averages) -->
+							<div class="pt-10 print:pt-8">
+								@summaryComponent
+							</div>
+						}
+						<!-- Footer -->
+						@ReportFooter(parameters)
 					}
-					<!-- Footer -->
-					@ReportFooter(parameters)
 				</div>
 			</div>
 			@ReportPaginationScript()
 			@ReportKeyboardShortcutsScript()
+			@tmpl.OpenPrintWithParamsScript()
 		</body>
 	</html>
 }
@@ -195,7 +207,7 @@ templ ReportHeader(parameters domain.ReportParameters) {
 			<!-- Left: Company Info -->
 			<div class="text-xs text-gray-700 space-y-0.5 print:text-[9pt]">
 				<p class="font-bold text-sm print:text-sm print:leading-tight">{ parameters.CompanyName }</p>
-				<p class="text-gray-600 print:text-gray-700 print:text-[8pt]">Nov Sad - { fmt.Sprintf("%d", time.Now().Year()) } godine</p>
+				<p class="text-xs text-black print:text-black print:text-xs">{ parameters.Adress }, { parameters.Postcode } { parameters.City } - { fmt.Sprintf("%d", time.Now().Year()) } godine</p>
 			</div>
 			<!-- Right: Date/Time and Page Info -->
 			<div class="text-xs text-gray-700 text-right space-y-0.5 print:text-[8pt]">
@@ -208,19 +220,23 @@ templ ReportHeader(parameters domain.ReportParameters) {
 // Report Title
 templ ReportTitle(parameters domain.ReportParameters) {
 	<div class="mb-1 text-center print:m-0 print:mb-1">
-		<h1 class="text-2xl font-bold text-gray-900 uppercase print:text-base print:leading-tight">
+		<h2 class="text-xl font-bold text-gray-900 uppercase print:text-base print:leading-tight">
 			{ parameters.ReportName }
-		</h1>
+		</h2>
 	</div>
 }
 
 // Report Parameters as Two-Column Headers
 templ ReportParametersHeader(parameters domain.ReportParameters) {
-	<div class="mb-1 grid grid-cols-2 gap-6 print:gap-2 print:m-0 print:mb-2 print:pb-1 print:border-b print:border-gray-300">
+	<div class="mb-1 grid grid-cols-2 gap-1 print:gap-2 print:m-0 print:mb-2 print:pb-1 print:border-b print:border-gray-300">
 		for _, param := range parameters.ParameterItems {
 			<div class="flex gap-1 items-center text-sm text-gray-700 print:text-[8pt] print:leading-tight">
-				<span class="font-semibold">{ param.Name }:</span>
-				<span>{ param.Value }</span>
+			if param.Name != "" {
+					<span class="font-semibold">{ param.Name }:</span>
+				}else{
+					<span></span>
+				}
+				<span class="font-bold">{ param.Value }</span>
 			</div>
 		}
 	</div>
@@ -252,12 +268,18 @@ templ ReportSubgroup(subgroupName string, subgroupData interface{}) {
 }
 
 templ ReportEnd(endOfReport templ.Component) {
-	<div>
-		@endOfReport
-	</div>
-	<div class="mt-6 text-center font-bold text-gray-700 print:mt-4 print:text-[9pt]">
-		*** KRAJ IZVEŠTAJA ***
-	</div>
+	if endOfReport != nil {
+		<div class="mt-2">
+			@endOfReport
+		</div>
+		<div class="mt-6 text-left text-gray-700 print:mt-4 print:text-[7pt]">
+			*** KRAJ IZVEŠTAJA ***
+		</div>
+	} else {
+		<div class="mt-6 text-left text-xs text-gray-700 print:mt-4 print:text-[7pt]">
+			*** KRAJ IZVEŠTAJA ***
+		</div>
+	}
 }
 
 // Footer
@@ -275,6 +297,36 @@ templ ReportFooter(parameters domain.ReportParameters) {
 
 templ ReportPaginationScript() {
 	<script>
+		async function exportToExcel() {
+			const btn = event.target;
+			const originalText = btn.innerText;
+			btn.innerText = 'Exporting...';
+			btn.disabled = true;
+			try {
+				// Load SheetJS from CDN
+				await new Promise((resolve, reject) => {
+					if (window.XLSX) { resolve(); return; }
+					const s = document.createElement('script');
+					s.src = 'https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js';
+					s.onload = resolve;
+					s.onerror = reject;
+					document.head.appendChild(s);
+				});
+				// Find the first table in the report container
+				const table = document.querySelector('table');
+				if (!table) { alert('No table found to export.'); return; }
+				const wb = XLSX.utils.table_to_book(table, { sheet: 'Izvestaj', raw: false });
+				const excelName = document.querySelector('meta[name="report-name"]')?.content || 'Izvestaj';
+				XLSX.writeFile(wb, excelName + '.xlsx');
+			} catch (error) {
+				console.error('Excel export failed:', error);
+				alert('Export failed: ' + error.message);
+			} finally {
+				btn.innerText = originalText;
+				btn.disabled = false;
+			}
+		}
+
 		async function exportToPDF() {
 			// Show loading state
 			const btn = event.target;
@@ -287,9 +339,10 @@ templ ReportPaginationScript() {
 				const html2pdf = (await import('https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js')).default;
 				
 				const element = document.querySelector('.print-container') || document.querySelector('.bg-white');
+				const pdfName = document.querySelector('meta[name="report-name"]')?.content || 'Report';
 				const opt = {
 					margin: [0.6, 0.5, 0.6, 0.5], // top, right, bottom, left (in inches)
-					filename: '{ parameters.ReportName }.pdf',
+					filename: pdfName + '.pdf',
 					image: { type: 'jpeg', quality: 0.98 },
 					html2canvas: { scale: 2, letterRendering: true, useCORS: true },
 					jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
@@ -309,25 +362,16 @@ templ ReportPaginationScript() {
 			const currentPageSpan = document.getElementById('current-page');
 			const totalPagesSpan = document.getElementById('total-pages');
 			
-			if (!currentPageSpan || !totalPagesSpan) return;
-			
-			// Calculate total pages
-			const pageHeight = 1123;
+			// A4 page height at 96dpi minus margins (~24mm total vertical margin)
+			const pageHeightPx = (297 - 24) * 96 / 25.4;
 			const totalHeight = document.body.scrollHeight;
-			const totalPages = Math.max(1, Math.ceil(totalHeight / pageHeight));
-			totalPagesSpan.textContent = totalPages;
+			const totalPages = Math.max(1, Math.ceil(totalHeight / pageHeightPx));
 			
-			// Calculate current page based on scroll
 			const scrollPosition = window.scrollY;
-			const currentPage = Math.min(totalPages, Math.max(1, Math.floor(scrollPosition / pageHeight) + 1));
-			currentPageSpan.textContent = currentPage;
+			const currentPage = Math.min(totalPages, Math.max(1, Math.floor(scrollPosition / pageHeightPx) + 1));
 			
-			// Update all page info elements
-			document.querySelectorAll('.page-info').forEach(el => {
-				if (el.id !== 'page-info-header') {
-					el.textContent = `Stranica ${currentPage} / ${totalPages}`;
-				}
-			});
+			if (currentPageSpan) currentPageSpan.textContent = currentPage;
+			if (totalPagesSpan) totalPagesSpan.textContent = totalPages;
 			
 			// Store for print
 			window._totalPages = totalPages;

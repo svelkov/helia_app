@@ -55,6 +55,22 @@ func StringToTime(timeStr string) time.Time {
 func StringToTimeWithLayout(timeStr, layout string) (time.Time, error) {
 	return time.Parse(layout, timeStr)
 }
+func AnyToFloat64(value any) float64 {
+	switch v := value.(type) {
+	case float64:
+		return v
+	case float32:
+		return float64(v)
+	case int:
+		return float64(v)
+	case int64:
+		return float64(v)
+	case string:
+		return StringToFloat64(v)
+	default:
+		return defaultFloat64
+	}
+}
 
 func StringToFloat64(str string) float64 {
 	str = strings.TrimSpace(str)

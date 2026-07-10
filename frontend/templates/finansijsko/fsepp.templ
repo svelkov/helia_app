@@ -1,0 +1,481 @@
+package finansijsko
+
+import (
+	"fmt"
+	tmpl "helia/frontend/templates"
+	"helia/i18n"
+	"helia/internal/common"
+	"helia/internal/domain"
+	"time"
+)
+
+// FSEPP Main - Evidencija prethodnog poreza (Evidence of Previous Tax Credit)
+templ FseppMain(tabs domain.TabData, tblSekcije domain.TableData, searchInput domain.InputControl, gnGod int, translator *i18n.Service) {
+	<!-- Tab Content -->
+	<div id="tab-content" class="flex flex-col h-full">
+		@FseppSekcijeIzvori(tabs, tblSekcije, searchInput, gnGod, translator)
+	</div>
+}
+
+// Tab 1 - Sekcije i izvori
+templ FseppSekcijeIzvori(tabs domain.TabData, tbl domain.TableData, searchInput domain.InputControl, gnGod int, translator *i18n.Service) {
+	<!-- Container with full height -->
+	<div class="flex flex-col h-full">
+		<!-- Tab Navigation -->
+		<div class="border-b border-blue-600">
+			@tmpl.TabNav(translator.Title("Evidencija prethodnog poreza"), tabs, "#tab-content", "fsepp-panel", translator)
+		</div>
+		<!-- Tab 1 Content -->
+		<div id="tab1" class="flex-1 min-h-0 flex flex-col gap-1 pt-1">
+			<!-- Master Table -->
+			<div class="border bg-blue-100 border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
+				@tmpl.Search_Part(tbl, searchInput)
+				<!-- Table -->
+				<div id="epp-sekcije-table" class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+					@tmpl.Table(tbl, translator)
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- Dialog display container-->
+	<div id="dialog-content"></div>
+	@tmpl.ShowMessageScript()
+}
+
+// Tab 2 - Evidencija PP
+templ FseppEvidencija(tabs domain.TabData, tbl domain.TableData, btnObrada, btnDelete domain.Button, searchInput domain.InputControl, gnGod int, translator *i18n.Service) {
+	<!-- Container with full height -->
+	<div class="flex flex-col h-full">
+		<!-- Tab Navigation -->
+		<div class="border-b border-blue-600">
+			@tmpl.TabNav(translator.Title("Evidencija prethodnog poreza"), tabs, "#tab-content", "fsepp-panel", translator)
+		</div>
+		<!-- Tab 2 Content -->
+		<div id="tab2" class="flex-1 min-h-0 flex flex-col gap-1">
+			<!-- Parameters Section -->
+			<div class="border bg-blue-100 border-blue-400 mt-1 p-2 rounded-lg">
+				<div class="flex items-center gap-1">
+					@tmpl.LabelField(domain.LabelFieldConfig{
+						ID:         "oddatuma",
+						LabelText:  translator.Label("Od datuma"),
+						ClassLabel: common.ClassLabel + " w-32",
+					})
+					@tmpl.TextInputField(domain.InputFieldConfig{
+						ID:         "oddatuma",
+						Name:       "oddatuma",
+						FieldType:  "date",
+						Value:      time.Date(gnGod, 1, 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
+						ClassInput: common.ClassInputTextEnabled + " w-32 mr-2",
+						TabIndex:   "1",
+					})
+					@tmpl.LabelField(domain.LabelFieldConfig{
+						ID:         "dodatuma",
+						LabelText:  translator.Label("Do datuma"),
+						ClassLabel: common.ClassLabel + " w-28",
+					})
+					@tmpl.TextInputField(domain.InputFieldConfig{
+						ID:         "dodatuma",
+						Name:       "dodatuma",
+						FieldType:  "date",
+						Value:      time.Date(gnGod, 12, 31, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
+						ClassInput: common.ClassInputTextEnabled + " w-32",
+						TabIndex:   "2",
+					})
+					@tmpl.Button(btnObrada)
+				</div>
+			</div>
+			<!-- Master Table -->
+			<div class="border bg-blue-100 border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
+				@tmpl.Search_Part(tbl, searchInput)
+				<!-- Table -->
+				<div id="epp-evidencija-table" class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+					@tmpl.Table(tbl, translator)
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- Dialog display container-->
+	<div id="dialog-content"></div>
+	@tmpl.ShowMessageScript()
+}
+
+// Tab 3 - SEF-KPR
+templ FseppSefKpr(tabs domain.TabData, tbl domain.TableData, btnImport domain.Button, searchInput domain.InputControl, gnGod int, csrfToken string, translator *i18n.Service) {
+	<!-- Container with full height -->
+	<div class="flex flex-col h-full">
+		<!-- Tab Navigation -->
+		<div class="border-b border-blue-600">
+			@tmpl.TabNav(translator.Title("Evidencija prethodnog poreza"), tabs, "#tab-content", "fsepp-panel", translator)
+		</div>
+		<!-- Tab 3 Content -->
+		<div id="tab3" class="flex-1 min-h-0 flex flex-col gap-1">
+			<!-- Parameters Section -->
+			<form
+				id="import-form"
+				hx-post={ btnImport.HxActionURL }
+				hx-target={ btnImport.HxTarget }
+				hx-swap="innerHTML"
+				hx-encoding="multipart/form-data"
+				hx-vals={ btnImport.HxVals }
+			>
+				<input type="hidden" name="_csrf" value={ csrfToken }/>
+				<!-- Hidden file input to store the actual file -->
+				<input type="hidden" id="file-input-data" name="file"/>
+				<input type="hidden" id="file-type-data" name="file_type"/>
+				<div class="border bg-blue-100 border-blue-400 mt-1 p-2 rounded-lg">
+					<div class="flex items-center gap-2">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "oddatuma",
+							LabelText:  "Od Datuma",
+							ClassLabel: common.ClassLabel + " w-20",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "oddatuma",
+							Name:       "oddatuma",
+							FieldType:  "date",
+							Value:      time.Date(gnGod, 1, 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
+							ClassInput: common.ClassInputTextEnabled + " w-28",
+							TabIndex:   "1",
+						})
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "dodatuma",
+							LabelText:  "Do Datuma",
+							ClassLabel: common.ClassLabel + " w-20",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "dodatuma",
+							Name:       "dodatuma",
+							FieldType:  "date",
+							Value:      time.Date(gnGod, 12, 31, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
+							ClassInput: common.ClassInputTextEnabled + " w-28",
+							TabIndex:   "2",
+						})
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "filepath",
+							LabelText:  "CSV fajl",
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "filepath",
+							Name:       "filepath",
+							FieldType:  "text",
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " w-72",
+							TabIndex:   "3",
+						})
+						<button
+							type="button"
+							name="select_file"
+							onclick="openFileDialog()"
+							class={ common.ClassPrintButton }
+						>
+							@tmpl.Icon("file-select", common.ClassIcon)
+							{ translator.Label("Izaberi fajl") }
+						</button>
+						@tmpl.RadioButtonField(domain.RadioFieldConfig{
+							ID:          "sve",
+							Name:        "filter_type",
+							LabelText:   "Sve",
+							Value:       "1",
+							ClassSelect: common.ClassRadioSet,
+							ClassLabel:  "text-sm text-black whitespace-nowrap",
+							IsSelected:  true,
+						}, translator)
+						@tmpl.RadioButtonField(domain.RadioFieldConfig{
+							ID:          "razlike",
+							Name:        "filter_type",
+							LabelText:   "Razlike",
+							Value:       "2",
+							ClassSelect: common.ClassRadioSet,
+							ClassLabel:  "text-sm text-black whitespace-nowrap",
+						}, translator)
+						<div class="flex-1"></div>
+						@tmpl.Button(btnImport)
+					</div>
+				</div>
+			</form>
+			<!-- Master Table -->
+			<div class="border bg-blue-100 border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
+				@tmpl.Search_Part(tbl, searchInput)
+				<!-- Table -->
+				<div id="epp-sef-kpr-table" class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+					@tmpl.Table(tbl, translator)
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- Dialog display container-->
+	<div id="dialog-content"></div>
+	@tmpl.ShowMessageScript()
+	@tmpl.FileSelectScript()
+	@tmpl.HandleFormResponseScript()
+}
+
+// Dialog for FSEPP entry - Sekcije i izvori
+templ DialogFseppSekcije(model domain.Fsepp, dlg domain.Dialog, btnSave, btnCancel, btnClose domain.Button, translator *i18n.Service, csrfToken string) {
+	<!-- Dialog Container -->
+	<div id={ dlg.Id } class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+		<div class="bg-white rounded-lg shadow-xl max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+			<!-- Header -->
+			<div class="bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg">
+				<h2 class="text-lg font-semibold ml-4">{ translator.Title("Unos/izmene podataka - Sekcije i izvori") }</h2>
+				@tmpl.CloseButton(btnClose)
+			</div>
+			<!-- Form Content -->
+			<form class="p-2 space-y-3">
+				<!-- Section 1: OSNOVNI PODACI -->
+				<input type="hidden" name="_csrf" value={ csrfToken }/>
+				<div class="pb-1">
+					<div class="font-bold text-xs text-gray-900 border-b-2 border-gray-400 pb-2">{ translator.Text("Osnovni podaci") }</div>
+					<div class="space-y-1 pt-1">
+						<div class="flex items-center gap-2">
+							@tmpl.LabelField(domain.LabelFieldConfig{
+								ID:         "tip",
+								LabelText:  translator.Label("Tip podatka"),
+								ClassLabel: "w-24",
+							})
+							@tmpl.ComboBoxField(domain.ComboFieldConfig{
+								ID:          "tip",
+								Name:        "tip",
+								Placeholder: "Tip podatka",
+								HasLabel:    false,
+								ClassSelect: common.ClassInputTextEnabled + " min-w-[80px]",
+								Disabled:    false,
+								TabIndex:    "1",
+								OptionValues: []domain.ComboItem{
+									{Key: "0", Value: "0 - Deo"},
+									{Key: "1", Value: "1 - Sekcija"},
+									{Key: "2", Value: "2 - Izvor"},
+									{Key: "3", Value: "3 - Pomoćni"},
+								},
+							}, translator)
+						</div>
+						<div class="flex items-center gap-2 flex-1">
+							@tmpl.LabelField(domain.LabelFieldConfig{
+								ID:         "deo",
+								LabelText:  translator.Label("Deo"),
+								ClassLabel: "w-24",
+							})
+							@tmpl.TextInputField(domain.InputFieldConfig{
+								ID:         "deo",
+								Name:       "deo",
+								FieldType:  "text",
+								ClassInput: common.ClassInputTextEnabled + " w-32",
+								Value:      fmt.Sprintf("%d", model.Deo),
+								TabIndex:   "2",
+							})
+						</div>
+						<div class="flex items-center gap-2 flex-1">
+							@tmpl.LabelField(domain.LabelFieldConfig{
+								ID:         "sekcija",
+								LabelText:  translator.Label("Sekcija"),
+								ClassLabel: "w-24",
+							})
+							@tmpl.TextInputField(domain.InputFieldConfig{
+								ID:         "sekcija",
+								Name:       "sekcija",
+								FieldType:  "text",
+								ClassInput: common.ClassInputTextEnabled + " w-32",
+								Value:      fmt.Sprintf("%d", model.Sekcija),
+								TabIndex:   "3",
+							})
+						</div>
+						<div class="flex items-center gap-2 flex-1">
+							@tmpl.LabelField(domain.LabelFieldConfig{
+								ID:         "izvor",
+								LabelText:  translator.Label("Izvor"),
+								ClassLabel: "w-24",
+							})
+							@tmpl.TextInputField(domain.InputFieldConfig{
+								ID:         "izvor",
+								Name:       "izvor",
+								FieldType:  "text",
+								ClassInput: common.ClassInputTextEnabled + " w-32",
+								Value:      fmt.Sprintf("%d", model.Izvor),
+								TabIndex:   "4",
+							})
+						</div>
+						<div class="flex items-center gap-2 flex-1">
+							@tmpl.LabelField(domain.LabelFieldConfig{
+								ID:         "polje",
+								LabelText:  translator.Label("Polje"),
+								ClassLabel: "w-24",
+							})
+							@tmpl.TextInputField(domain.InputFieldConfig{
+								ID:         "polje",
+								Name:       "polje",
+								FieldType:  "text",
+								ClassInput: common.ClassInputTextEnabled + " w-32",
+								Value:      model.Polje,
+								TabIndex:   "5",
+							})
+						</div>
+						<div class="flex items-center gap-2 flex-1">
+							@tmpl.LabelField(domain.LabelFieldConfig{
+								ID:         "nivo",
+								LabelText:  translator.Label("Nivo"),
+								ClassLabel: "w-24",
+							})
+							@tmpl.TextInputField(domain.InputFieldConfig{
+								ID:         "nivo",
+								Name:       "nivo",
+								FieldType:  "text",
+								ClassInput: common.ClassInputTextEnabled + " w-32",
+								Value:      fmt.Sprintf("%d", model.Nipo),
+								TabIndex:   "6",
+							})
+						</div>
+					</div>
+				</div>
+				<!-- Section 2: VRSTE NALOGA -->
+				<div class="pb-2">
+					<div class="font-bold text-xs text-gray-900 border-b-2 border-gray-400 pb-2">{ translator.Text("Vrste naloga, PDV računi") }</div>
+					<div class="space-y-1 pt-1">
+						<div class="flex items-start gap-2">
+							@tmpl.LabelField(domain.LabelFieldConfig{
+								ID:         "grpdok",
+								LabelText:  translator.Label("Vrste naloga"),
+								ClassLabel: "w-24 pt-1",
+							})
+							@tmpl.TextInputField(domain.InputFieldConfig{
+								ID:          "grpdok",
+								Name:        "grpdok",
+								FieldType:   "text",
+								Placeholder: translator.Placeholder("Unesite vrste naloga odvojene zarezom"),
+								ClassInput:  common.ClassInputTextEnabled + " flex-1",
+								Value:       model.GrpDok,
+								TabIndex:    "7",
+							})
+						</div>
+					</div>
+					<div class="space-y-1 pt-1">
+						<div class="flex items-center gap-2">
+							<div class="flex items-center gap-2">
+								@tmpl.LabelField(domain.LabelFieldConfig{
+									ID:         "polje_pdv_da",
+									LabelText:  translator.Label("PDV Da"),
+									ClassLabel: "w-24",
+								})
+								@tmpl.TextInputField(domain.InputFieldConfig{
+									ID:         "polje_pdv_da",
+									Name:       "polje_pdv_da",
+									FieldType:  "text",
+									ClassInput: common.ClassInputTextEnabled + " w-32",
+									Value:      model.PoljePdvDa,
+									TabIndex:   "8",
+								})
+							</div>
+							<div class="flex items-center gap-2">
+								@tmpl.LabelField(domain.LabelFieldConfig{
+									ID:         "polje_pdv_ne",
+									LabelText:  translator.Label("PDV Ne"),
+									ClassLabel: "w-24",
+								})
+								@tmpl.TextInputField(domain.InputFieldConfig{
+									ID:         "polje_pdv_ne",
+									Name:       "polje_pdv_ne",
+									FieldType:  "text",
+									ClassInput: common.ClassInputTextEnabled + " w-32",
+									Value:      model.PoljePdvNe,
+									TabIndex:   "9",
+								})
+							</div>
+						</div>
+					</div>
+					<div class="pt-1">
+						<div class="flex items-center gap-2">
+							<!-- Input fields row 1 - Pozicije controls -->
+							<div class="flex gap-2 mb-1">
+								<div class="flex gap-2">
+									@tmpl.LabelField(domain.LabelFieldConfig{
+										ID:         "pozic_1",
+										LabelText:  translator.Label("Pozicije"),
+										ClassLabel: common.ClassLabel + " w-24",
+									})
+									@tmpl.NumericInputField(domain.InputFieldConfig{
+										ID:         "pozic_1",
+										Name:       "pozic_1",
+										FieldType:  "text",
+										Value:      model.Pozic1,
+										ClassInput: common.ClassInputTextEnabled + " w-16 text-right",
+										MaxLength:  "4",
+										TabIndex:   "11",
+									})
+									@tmpl.NumericInputField(domain.InputFieldConfig{
+										ID:         "pozic_2",
+										Name:       "pozic_2",
+										FieldType:  "text",
+										Value:      model.Pozic2,
+										ClassInput: common.ClassInputTextEnabled + " w-16 text-right",
+										MaxLength:  "4",
+										TabIndex:   "12",
+									})
+									@tmpl.NumericInputField(domain.InputFieldConfig{
+										ID:         "pozic_3",
+										Name:       "pozic_3",
+										FieldType:  "text",
+										Value:      model.Pozic3,
+										ClassInput: common.ClassInputTextEnabled + " w-16 text-right",
+										MaxLength:  "4",
+										TabIndex:   "13",
+									})
+									@tmpl.NumericInputField(domain.InputFieldConfig{
+										ID:         "pozic_4",
+										Name:       "pozic_4",
+										FieldType:  "text",
+										Value:      model.Pozic4,
+										ClassInput: common.ClassInputTextEnabled + " w-16 text-right",
+										MaxLength:  "4",
+										TabIndex:   "14",
+									})
+									@tmpl.NumericInputField(domain.InputFieldConfig{
+										ID:         "pozic_5",
+										Name:       "pozic_5",
+										FieldType:  "text",
+										Value:      model.Pozic5,
+										ClassInput: common.ClassInputTextEnabled + " w-16 text-right",
+										MaxLength:  "4",
+										TabIndex:   "15",
+									})
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<!-- Section 4: AKTIVNA POLJA -->
+				<div class="pb-2">
+					<div class="font-bold text-xs text-gray-900 border-b-2 border-gray-400 pb-2">{ translator.Text("Aktivna polja") }</div>
+					<div class="space-y-1 pt-2">
+						<div class="grid grid-cols-4 gap-4">
+							<label class="flex items-center gap-2 cursor-pointer">
+								<input type="checkbox" id="aktpol_osn1" name="aktpol_osn1" class="h-4 w-4 text-blue-600 rounded border-gray-300"/>
+								<span class="text-sm text-gray-700">OSN1</span>
+							</label>
+							<label class="flex items-center gap-2 cursor-pointer">
+								<input type="checkbox" id="aktpol_pdv1" name="aktpol_pdv1" class="h-4 w-4 text-blue-600 rounded border-gray-300"/>
+								<span class="text-sm text-gray-700">PDV1</span>
+							</label>
+							<label class="flex items-center gap-2 cursor-pointer">
+								<input type="checkbox" id="aktpol_osn2" name="aktpol_osn2" class="h-4 w-4 text-blue-600 rounded border-gray-300"/>
+								<span class="text-sm text-gray-700">OSN2</span>
+							</label>
+							<label class="flex items-center gap-2 cursor-pointer">
+								<input type="checkbox" id="aktpol_pdv2" name="aktpol_pdv2" class="h-4 w-4 text-blue-600 rounded border-gray-300"/>
+								<span class="text-sm text-gray-700">PDV2</span>
+							</label>
+						</div>
+					</div>
+				</div>
+				<!-- Action Buttons -->
+				<div class="flex justify-end gap-1 pt-4 border-t border-gray-300">
+					@tmpl.ConfirmButton(btnSave, translator)
+					@tmpl.CancelButton(btnCancel, translator)
+				</div>
+			</form>
+		</div>
+	</div>
+	@tmpl.CloseDialogScript()
+	@tmpl.ShowSearchDialogScript()
+	@tmpl.HideDropdownScript()
+	@tmpl.ClearFieldErrorScript()
+}

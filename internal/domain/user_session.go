@@ -13,6 +13,7 @@ type UserSession struct {
 	UserID      int64  `json:"user_id"`      // From JWT claims
 	UserName    string `json:"username"`     // From JWT claims
 	Firma       string `json:"firma"`        // From JWT claims (company identifier)
+	Mesto       string `json:"mesto"`        // User's city (for report headers)
 	SelectedGod int    `json:"selected_god"` // Fiscal year (user-mutable - can change per session)
 	SelectedKar int    `json:"selected_kar"` // Accounting period (user-mutable - can change per session)
 	Language    string `json:"language"`     // UI language preference (user-mutable)

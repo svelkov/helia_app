@@ -12,7 +12,7 @@ import (
 type QueryBuilder struct {
 	baseQuery   string
 	whereClause strings.Builder
-	args        []interface{}
+	args        []any
 	paramCount  int
 	joins       []string
 	orderBy     string
@@ -25,6 +25,11 @@ type QueryBuilder struct {
 	tableName    string
 	entityType   reflect.Type
 	selectFields []string
+	// New fields for complex queries
+	cteQueries      []string // For WITH clause
+	setClauses      []string // For UPDATE SET
+	returningFields []string // For RETURNING clause
+	fromClause      string   // For UPDATE ... FROM
 }
 
 // RepositoryConfig holds configuration for repository operations
@@ -72,7 +77,7 @@ func (qb *QueryBuilder) SetEntityType(entityType reflect.Type) {
 }
 
 // AddCondition adds a simple condition with operator
-func (qb *QueryBuilder) AddCondition(field string, value interface{}, operator string) *QueryBuilder {
+func (qb *QueryBuilder) AddCondition(field string, value any, operator string) *QueryBuilder {
 	if value != nil && value != "" {
 		qb.whereClause.WriteString(fmt.Sprintf(" AND %s %s $%d", field, operator, qb.paramCount))
 		qb.args = append(qb.args, value)
@@ -82,12 +87,12 @@ func (qb *QueryBuilder) AddCondition(field string, value interface{}, operator s
 }
 
 // AddEqual condition (most common)
-func (qb *QueryBuilder) AddEqual(field string, value interface{}) *QueryBuilder {
+func (qb *QueryBuilder) AddEqual(field string, value any) *QueryBuilder {
 	return qb.AddCondition(field, value, "=")
 }
 
 // AddLike condition for partial matches
-func (qb *QueryBuilder) AddLike(field string, value interface{}) *QueryBuilder {
+func (qb *QueryBuilder) AddLike(field string, value any) *QueryBuilder {
 	if value != nil && value != "" {
 		qb.whereClause.WriteString(fmt.Sprintf(" AND %s ILIKE $%d", field, qb.paramCount))
 		qb.args = append(qb.args, "%"+value.(string)+"%")
@@ -97,7 +102,7 @@ func (qb *QueryBuilder) AddLike(field string, value interface{}) *QueryBuilder {
 }
 
 // AddLike condition for partial matches
-func (qb *QueryBuilder) AddLikeBegin(field string, value interface{}) *QueryBuilder {
+func (qb *QueryBuilder) AddLikeBegin(field string, value any) *QueryBuilder {
 	if value != nil && value != "" {
 		qb.whereClause.WriteString(fmt.Sprintf(" AND %s ILIKE $%d", field, qb.paramCount))
 		qb.args = append(qb.args, value.(string)+"%")
@@ -107,7 +112,7 @@ func (qb *QueryBuilder) AddLikeBegin(field string, value interface{}) *QueryBuil
 }
 
 // AddIn condition for multiple values
-func (qb *QueryBuilder) AddIn(field string, values []interface{}) *QueryBuilder {
+func (qb *QueryBuilder) AddIn(field string, values []any) *QueryBuilder {
 	if len(values) > 0 {
 		placeholders := make([]string, len(values))
 		for i, val := range values {
@@ -153,7 +158,7 @@ func (qb *QueryBuilder) AddHaving(having string) *QueryBuilder {
 // SetLimit sets LIMIT
 func (qb *QueryBuilder) SetLimit(limit int) *QueryBuilder {
 	if limit > 0 {
-		qb.limit = fmt.Sprintf("LIMIT %d", limit)
+		qb.limit = fmt.Sprintf(" LIMIT %d ", limit)
 	}
 	return qb
 }
@@ -161,14 +166,15 @@ func (qb *QueryBuilder) SetLimit(limit int) *QueryBuilder {
 // SetOffset sets OFFSET
 func (qb *QueryBuilder) SetOffset(offset int) *QueryBuilder {
 	if offset > 0 {
-		qb.offset = fmt.Sprintf("OFFSET %d", offset)
+		qb.offset = fmt.Sprintf(" OFFSET %d ", offset)
 	}
 	return qb
 }
 
 // AddCustomCondition for complex conditions (joined with AND)
-func (qb *QueryBuilder) AddCustomCondition(condition string, values ...interface{}) *QueryBuilder {
-	qb.whereClause.WriteString(" AND " + condition)
+func (qb *QueryBuilder) AddCustomCondition(condition string, values ...any) *QueryBuilder {
+	qb.whereClause.WriteString(" AND ")
+	qb.whereClause.WriteString(condition)
 	for _, val := range values {
 		if val != nil && val != "" {
 			qb.args = append(qb.args, val)
@@ -178,8 +184,9 @@ func (qb *QueryBuilder) AddCustomCondition(condition string, values ...interface
 }
 
 // AddOrCondition for OR conditions
-func (qb *QueryBuilder) AddOrCondition(condition string, values ...interface{}) *QueryBuilder {
-	qb.whereClause.WriteString(" OR " + condition)
+func (qb *QueryBuilder) AddOrCondition(condition string, values ...any) *QueryBuilder {
+	qb.whereClause.WriteString(" OR ")
+	qb.whereClause.WriteString(condition)
 	for _, val := range values {
 		if val != nil && val != "" {
 			qb.args = append(qb.args, val)
@@ -189,7 +196,7 @@ func (qb *QueryBuilder) AddOrCondition(condition string, values ...interface{}) 
 }
 
 // AddCustomSearchCondition for complex conditions (joined with AND)
-func (qb *QueryBuilder) AddCustomSearchCondition(fields []string, searchValue interface{}) *QueryBuilder {
+func (qb *QueryBuilder) AddCustomSearchCondition(fields []string, searchValue any) *QueryBuilder {
 	qb.whereClause.WriteString(" AND ( ")
 	searchCondition := ""
 	for _, field := range fields {
@@ -201,57 +208,150 @@ func (qb *QueryBuilder) AddCustomSearchCondition(fields []string, searchValue in
 	if len(searchCondition) > 0 {
 		searchCondition = searchCondition[:len(searchCondition)-4]
 	}
-	qb.whereClause.WriteString(searchCondition + " )")
+	qb.whereClause.WriteString(searchCondition)
+	qb.whereClause.WriteString(" )")
 
 	return qb
 }
 
+// New method to add CTE
+func (qb *QueryBuilder) WithCTE(name string, query string) *QueryBuilder {
+	qb.cteQueries = append(qb.cteQueries, fmt.Sprintf("%s as (%s)", name, query))
+	return qb
+}
+
+// WHERE method - this was missing!
+func (qb *QueryBuilder) Where(condition string, args ...interface{}) *QueryBuilder {
+	if qb.whereClause.Len() > 0 {
+		qb.whereClause.WriteString(" and ")
+	}
+	qb.whereClause.WriteString(condition)
+	qb.args = append(qb.args, args...)
+	return qb
+}
+
+// New method for UPDATE queries
+func (qb *QueryBuilder) Update(tableName string) *QueryBuilder {
+	qb.baseQuery = "update " + tableName
+	qb.tableName = tableName
+	return qb
+}
+
+// New method for SET clause
+func (qb *QueryBuilder) Set(clause string, args ...any) *QueryBuilder {
+	qb.setClauses = append(qb.setClauses, clause)
+	qb.args = append(qb.args, args...)
+	return qb
+}
+
+// New method for FROM clause in UPDATE
+func (qb *QueryBuilder) From(tableName string) *QueryBuilder {
+	qb.fromClause = tableName
+	return qb
+}
+
+// New method for RETURNING clause
+func (qb *QueryBuilder) Returning(fields ...string) *QueryBuilder {
+	qb.returningFields = fields
+	return qb
+}
+
 // Build constructs the final SQL query and arguments
-func (qb *QueryBuilder) Build() (string, []interface{}) {
+func (qb *QueryBuilder) Build() (string, []any) {
 	var query strings.Builder
 
+	// Build CTE if present
+	if len(qb.cteQueries) > 0 {
+		query.WriteString(" WITH ")
+		query.WriteString(strings.Join(qb.cteQueries, ", "))
+		query.WriteString(" ")
+	}
+
+	// Base query
 	query.WriteString(qb.baseQuery)
 
-	// Add JOINs
-	for _, join := range qb.joins {
-		query.WriteString(" " + join)
+	// SET clauses for UPDATE
+	if len(qb.setClauses) > 0 {
+		query.WriteString(" SET ")
+		query.WriteString(strings.Join(qb.setClauses, ", "))
 	}
 
-	// Add WHERE clause
-	query.WriteString(" " + qb.whereClause.String())
+	// FROM clause for UPDATE
+	if qb.fromClause != "" {
+		query.WriteString(" FROM ")
+		query.WriteString(qb.fromClause)
+	}
 
-	// Add GROUP BY
+	// Joins
+	if len(qb.joins) > 0 {
+		query.WriteString(" ")
+		query.WriteString(strings.Join(qb.joins, " "))
+	}
+
+	// WHERE clause
+	if qb.whereClause.Len() > 0 {
+		if qb.baseQuery != "" && !strings.Contains(strings.ToUpper(qb.GetWhereClause()), "WHERE") {
+			query.WriteString(" WHERE ")
+		}
+		query.WriteString(qb.whereClause.String())
+	}
+
+	// GROUP BY
 	if qb.groupBy != "" {
-		query.WriteString(" GROUP BY " + qb.groupBy)
+		if !strings.Contains(strings.ToUpper(qb.groupBy), "GROUP BY") {
+			query.WriteString(" GROUP BY ")
+		}
+
+		query.WriteString(qb.groupBy)
 	}
 
-	// Add HAVING
+	// HAVING
 	if qb.having != "" {
-		query.WriteString(" HAVING " + qb.having)
+		if !strings.Contains(strings.ToUpper(qb.having), "HAVING") {
+			query.WriteString(" HAVING ")
+		}
+		query.WriteString(qb.having)
 	}
 
-	// Add ORDER BY
+	// ORDER BY
 	if qb.orderBy != "" {
-		query.WriteString(" ORDER BY " + qb.orderBy)
-	}
-	// Add SORT ORDER
-	if qb.sortOrder != "" {
-		query.WriteString(" " + qb.sortOrder)
+		if !strings.Contains(strings.ToUpper(qb.orderBy), "ORDER BY") {
+			query.WriteString(" ORDER BY ")
+		}
+		query.WriteString(qb.orderBy)
+		if qb.sortOrder != "" {
+			query.WriteString(" ")
+			query.WriteString(qb.sortOrder)
+		}
 	}
 
-	// Add LIMIT and OFFSET
-	if qb.limit != "" {
-		query.WriteString(" " + qb.limit)
+	// RETURNING
+	if len(qb.returningFields) > 0 {
+		query.WriteString(" RETURNING ")
+		query.WriteString(strings.Join(qb.returningFields, ", "))
 	}
+
+	// LIMIT
+	if qb.limit != "" {
+		if !strings.Contains(strings.ToUpper(qb.limit), "LIMIT") {
+			query.WriteString(" LIMIT ")
+		}
+		query.WriteString(qb.limit)
+	}
+
+	// OFFSET
 	if qb.offset != "" {
-		query.WriteString(" " + qb.offset)
+		if !strings.Contains(strings.ToUpper(qb.offset), "OFFSET") {
+			query.WriteString(" OFFSET ")
+		}
+		query.WriteString(qb.offset)
 	}
 
 	return query.String(), qb.args
 }
 
 // GetArgs returns current arguments (useful for debugging)
-func (qb *QueryBuilder) GetArgs() []interface{} {
+func (qb *QueryBuilder) GetArgs() []any {
 	return qb.args
 }
 
@@ -259,7 +359,7 @@ func (qb *QueryBuilder) GetArgs() []interface{} {
 func (qb *QueryBuilder) GetArgsCount() int {
 	return len(qb.args)
 }
-func (qb *QueryBuilder) AddArgs(args ...interface{}) {
+func (qb *QueryBuilder) AddArgs(args ...any) {
 	qb.args = append(qb.args, args...)
 	qb.paramCount += len(args)
 }
@@ -268,7 +368,7 @@ func (qb *QueryBuilder) AddArgs(args ...interface{}) {
 
 // BuildInsert constructs an INSERT query with RETURNING clause
 // Retrieves UserSession from context.Context
-func (qb *QueryBuilder) BuildInsert(ctx context.Context, fields []domain.Fields, idField string) (string, []interface{}) {
+func (qb *QueryBuilder) BuildInsert(ctx context.Context, fields []domain.Fields, idField string) (string, []any) {
 	if qb.tableName == "" {
 		return "", nil
 	}
@@ -280,7 +380,7 @@ func (qb *QueryBuilder) BuildInsert(ctx context.Context, fields []domain.Fields,
 
 	var columns []string
 	var placeholders []string
-	var values []interface{}
+	var values []any
 
 	// Check if entity has god/kar fields
 	hasGod, hasKar := qb.CheckGodKarFields()
@@ -336,7 +436,7 @@ func (qb *QueryBuilder) BuildInsert(ctx context.Context, fields []domain.Fields,
 
 // BuildUpdate constructs an UPDATE query
 // Retrieves UserSession from context.Context
-func (qb *QueryBuilder) BuildUpdate(ctx context.Context, fields []domain.Fields, idField string, idValue interface{}) (string, []interface{}) {
+func (qb *QueryBuilder) BuildUpdate(ctx context.Context, fields []domain.Fields, idField string, idValue any) (string, []any) {
 	if qb.tableName == "" {
 		return "", nil
 	}
@@ -347,7 +447,7 @@ func (qb *QueryBuilder) BuildUpdate(ctx context.Context, fields []domain.Fields,
 	}
 
 	var columns []string
-	var values []interface{}
+	var values []any
 
 	// Add provided fields
 	for _, field := range fields {
@@ -490,13 +590,13 @@ func (qb *QueryBuilder) BuildCount(fields []domain.Fields, searchText string) st
 }
 
 // BuildDelete constructs a DELETE query
-func (qb *QueryBuilder) BuildDelete(idField string, idValue interface{}) (string, []interface{}) {
+func (qb *QueryBuilder) BuildDelete(idField string, idValue any) (string, []any) {
 	if qb.tableName == "" {
 		return "", nil
 	}
 
 	query := fmt.Sprintf(`DELETE FROM %s WHERE %s = $1`, qb.tableName, idField)
-	return query, []interface{}{idValue}
+	return query, []any{idValue}
 }
 
 // Helper methods
@@ -558,9 +658,10 @@ func checkNestedStructFields(structType reflect.Type) (bool, bool) {
 		}
 
 		lowerCol := strings.ToLower(column)
-		if lowerCol == "god" {
+		switch lowerCol {
+		case "god":
 			hasGod = true
-		} else if lowerCol == "kar" {
+		case "kar":
 			hasKar = true
 		}
 	}
@@ -734,9 +835,9 @@ func adjustParameterPlaceholders(query string, offset int) string {
 }
 
 // Build constructs the final UNION query with proper parameter placeholders
-func (uqb *UnionQueryBuilder) Build() (string, []interface{}) {
+func (uqb *UnionQueryBuilder) Build() (string, []any) {
 	var query strings.Builder
-	var allArgs []interface{}
+	var allArgs []any
 	var paramOffset int
 
 	for i, qb := range uqb.queries {
@@ -771,6 +872,6 @@ func (uqb *UnionQueryBuilder) Build() (string, []interface{}) {
 }
 
 // GetArgs returns all arguments from the union
-func (uqb *UnionQueryBuilder) GetArgs() []interface{} {
+func (uqb *UnionQueryBuilder) GetArgs() []any {
 	return nil // Args are included in Build() result
 }

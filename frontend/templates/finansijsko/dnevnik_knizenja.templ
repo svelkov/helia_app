@@ -23,7 +23,7 @@ templ DnevnikKnjizenja(tbl domain.TableData, searchControl domain.InputControl, 
 					<div class="flex items-center gap-4">
 						<div class="flex items-center gap-2">
 							@tmpl.LabelField(domain.LabelFieldConfig{
-								ID:         "lbloddatuma",
+								ID:         "oddatuma",
 								LabelText:  translator.Label("Počev od datuma"),
 								ClassLabel: common.ClassLabel,
 							})
@@ -38,7 +38,7 @@ templ DnevnikKnjizenja(tbl domain.TableData, searchControl domain.InputControl, 
 						</div>
 						<div class="flex items-center gap-2">
 							@tmpl.LabelField(domain.LabelFieldConfig{
-								ID:         "lbldodatuma",
+								ID:         "dodatuma",
 								LabelText:  translator.Label("Zaključno sa datumom"),
 								ClassLabel: common.ClassLabel,
 							})
@@ -54,7 +54,7 @@ templ DnevnikKnjizenja(tbl domain.TableData, searchControl domain.InputControl, 
 					</div>
 					<div class="flex gap-1">
 						@tmpl.FormObradaButton(btnObrada, translator)
-						@tmpl.PrintButton(btnPrint, translator)
+						@tmpl.Search_PartPrintButton(btnPrint)
 					</div>
 				</div>
 			</div>
@@ -69,12 +69,6 @@ templ DnevnikKnjizenja(tbl domain.TableData, searchControl domain.InputControl, 
 		</div>
 	</div>
 	@tmpl.SpinnerScript()
-	// <script>
-	// 	document.addEventListener('htmx:afterSettle', function(evt) {
-	// 		const firstInput = document.querySelector('input[tabindex="1"]:not(:disabled)');
-	// 		if (firstInput) {
-	// 			firstInput.focus();
-	// 		}
-	// 	});
-	// </script>
+	@tmpl.OpenPrintWithParamsScript()
+	@tmpl.HandleBackendResponseScript()
 }

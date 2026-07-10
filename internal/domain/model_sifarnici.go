@@ -11,6 +11,11 @@ type Fvr struct {
 	Naziv   string `json:"naziv" db:"naziv"`
 	Adresa  string `json:"adresa" db:"adresa"`
 	GodZatv bool   `json:"god_zatv" db:"godzatv"`
+	PIB     string `json:"pib" db:"pib"`
+	SifDel  string `json:"sifdel" db:"sifdel"`
+	Matbr   string `json:"matbr" db:"matbr"`
+	Pobro   string `json:"pobro" db:"pobro"`
+	Mesto   string `json:"mesto" db:"mesto"`
 }
 
 type Firma struct {
@@ -180,50 +185,62 @@ type Dokvrsta struct {
 
 // Popdv Model
 type Popdv struct {
-	PopdvID        int            `json:"popdv_id" db:"popdvid"`
-	God            int            `json:"god" db:"god"`
-	Kar            int            `json:"kar" db:"kar"`
-	Tip            string         `json:"tip" db:"tip"`
-	Deo            int            `json:"deo" db:"deo"`
-	Polje          string         `json:"polje" db:"polje"`
-	Opis           string         `json:"opis" db:"opis"`
-	Naknada        float64        `json:"naknada" db:"naknada"`
-	Osn1           float64        `json:"osn1" db:"osn1"`
-	Pdv1           float64        `json:"pdv1" db:"pdv1"`
-	Osn2           float64        `json:"osn2" db:"osn2"`
-	Pdv2           float64        `json:"pdv2" db:"pdv2"`
-	Iznos          float64        `json:"iznos" db:"iznos"`
-	Poljvred       float64        `json:"poljvred" db:"poljvred"`
-	Poljpdv        float64        `json:"poljpdv" db:"poljpdv"`
-	Nipo           int            `json:"nipo" db:"nipo"`
-	PppdvPolje     int            `json:"pppdv_polje" db:"pppdvpolje"`
-	Pozic          string         `json:"pozic" db:"pozic"`
-	XDatUnosa      sql.NullTime   `json:"xdat_unosa" db:"xdatunosa"`
-	XDatIzmene     sql.NullTime   `json:"xdat_izmene" db:"xdatizmene"`
-	XOpuNos        sql.NullString `json:"xop_unos" db:"xopunos"`
-	XOpIzmene      sql.NullString `json:"xop_izmene" db:"xopizmene"`
-	Npredznak      int            `json:"npredznak" db:"npredznak"`
-	Aktosn1        bool           `json:"aktosn1" db:"aktosn1"`
-	Aktpdv1        bool           `json:"aktpdv1" db:"aktpdv1"`
-	Aktosn2        bool           `json:"aktosn2" db:"aktosn2"`
-	Aktpdv2        bool           `json:"aktpdv2" db:"aktpdv2"`
-	Oddat          time.Time      `json:"oddat" db:"oddat"`
-	Dodat          time.Time      `json:"dodat" db:"dodat"`
-	FvepdvID       int            `json:"fvepdv_id" db:"fvepdvid"`
-	VkrbrFvknjrac  string         `json:"vkrbr_fvknjrac" db:"vkrbr_fvknjrac"`
-	TerPartneri    string         `json:"ter_partneri" db:"terpartneri"`
-	TippdvPartneri string         `json:"tip_pdv_partneri" db:"tippdvpartneri"`
-	Prioritet      int            `json:"prioritet" db:"prioritet"`
-	Povpolje1      string         `json:"povpolje1" db:"povpolje1"`
-	LabelaAktosn1  string         `json:"labela_aktosn1" db:"labelaaktosn1"`
-	LabelaAktpdv1  string         `json:"labela_aktpdv1" db:"labelaaktpdv1"`
-	LabelaAktosn2  string         `json:"labela_aktosn2" db:"labelaaktosn2"`
-	LabelaAktpdv2  string         `json:"labela_aktpdv2" db:"labelaaktpdv2"`
-	Povpolje2      string         `json:"povpolje2" db:"povpolje2"`
-	KirkprPolje1O  string         `json:"kirkpr_polje1o" db:"kirkprpolje1o"`
-	KirkprPolje1P  string         `json:"kirkpr_polje1p" db:"kirkprpolje1p"`
-	KirkprPolje2O  string         `json:"kirkpr_polje2o" db:"kirkprpolje2o"`
-	KirkprPolje2P  string         `json:"kirkpr_polje2p" db:"kirkprpolje2p"`
+	Popdvid        int        `json:"popdvid" db:"popdvid"`
+	God            int        `json:"god" db:"god"`
+	Kar            int        `json:"kar" db:"kar"`
+	Tip            int16      `json:"tip" db:"tip"`
+	Deo            int16      `json:"deo" db:"deo"`
+	Polje          string     `json:"polje" db:"polje"`
+	Opis           string     `json:"opis" db:"opis"`
+	Naknada        float64    `json:"naknada" db:"naknada"`
+	Osn1           float64    `json:"osn1" db:"osn1"`
+	Pdv1           float64    `json:"pdv1" db:"pdv1"`
+	Osn2           float64    `json:"osn2" db:"osn2"`
+	Pdv2           float64    `json:"pdv2" db:"pdv2"`
+	Iznos          float64    `json:"iznos" db:"iznos"`
+	Poljvred       float64    `json:"poljvred" db:"poljvred"`
+	Poljpdv        float64    `json:"poljpdv" db:"poljpdv"`
+	Nipo           int16      `json:"nipo" db:"nipo"`
+	PppdvPolje     int        `json:"pppdv_polje" db:"pppdv_polje"`
+	Pozic1         string     `json:"pozic_1" db:"pozic_1"`
+	Pozic2         string     `json:"pozic_2" db:"pozic_2"`
+	Pozic3         string     `json:"pozic_3" db:"pozic_3"`
+	Pozic4         string     `json:"pozic_4" db:"pozic_4"`
+	Pozic5         string     `json:"pozic_5" db:"pozic_5"`
+	Pozic6         string     `json:"pozic_6" db:"pozic_6"`
+	Pozic7         string     `json:"pozic_7" db:"pozic_7"`
+	Pozic8         string     `json:"pozic_8" db:"pozic_8"`
+	Pozic9         string     `json:"pozic_9" db:"pozic_9"`
+	Pozic10        string     `json:"pozic_10" db:"pozic_10"`
+	Pozic11        string     `json:"pozic_11" db:"pozic_11"`
+	Pozic12        string     `json:"pozic_12" db:"pozic_12"`
+	Xdatunosa      *time.Time `json:"xdatunosa,omitempty" db:"xdatunosa"`
+	Xdatizmene     *time.Time `json:"xdatizmene,omitempty" db:"xdatizmene"`
+	Xopunos        string     `json:"xopunos" db:"xopunos"`
+	Xopizmene      string     `json:"xopizmene" db:"xopizmene"`
+	Npredznak      int16      `json:"npredznak" db:"npredznak"`
+	Aktosn1        bool       `json:"aktosn1" db:"aktosn1"`
+	Aktpdv1        bool       `json:"aktpdv1" db:"aktpdv1"`
+	Aktosn2        bool       `json:"aktosn2" db:"aktosn2"`
+	Aktpdv2        bool       `json:"aktpdv2" db:"aktpdv2"`
+	Oddat          *time.Time `json:"oddat,omitempty" db:"oddat"`
+	Dodat          *time.Time `json:"dodat,omitempty" db:"dodat"`
+	Fvepdvid       int        `json:"fvepdvid" db:"fvepdvid"`
+	VkrbrFvknjrac  string     `json:"vkrbr_fvknjrac" db:"vkrbr_fvknjrac"`
+	TerPartneri    string     `json:"ter_partneri" db:"ter_partneri"`
+	TippdvPartneri string     `json:"tippdv_partneri" db:"tippdv_partneri"`
+	Prioritet      int16      `json:"prioritet" db:"prioritet"`
+	Povpolje1      string     `json:"povpolje1" db:"povpolje1"`
+	LabelaAktosn1  string     `json:"labela_aktosn1" db:"labela_aktosn1"`
+	LabelaAktpdv1  string     `json:"labela_aktpdv1" db:"labela_aktpdv1"`
+	LabelaAktosn2  string     `json:"labela_aktosn2" db:"labela_aktosn2"`
+	LabelaAktpdv2  string     `json:"labela_aktpdv2" db:"labela_aktpdv2"`
+	Povpolje2      string     `json:"povpolje2" db:"povpolje2"`
+	KirkprPolje1o  string     `json:"kirkpr_polje1o" db:"kirkpr_polje1o"`
+	KirkprPolje1p  string     `json:"kirkpr_polje1p" db:"kirkpr_polje1p"`
+	KirkprPolje2o  string     `json:"kirkpr_polje2o" db:"kirkpr_polje2o"`
+	KirkprPolje2p  string     `json:"kirkpr_polje2p" db:"kirkpr_polje2p"`
+	Predznaktxt    string     `json:"predznaktxt" db:"predznaktxt"`
 }
 
 // ORGJED Model

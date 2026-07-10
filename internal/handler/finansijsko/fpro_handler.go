@@ -298,7 +298,7 @@ func (h *FproHandler) AddRoutes(r *gin.Engine) {
 	r.DELETE("/api/fpro/stavka/:id", h.DeleteFpro)
 	r.POST("/api/fpro/nalog/:id/stavke/save", h.SaveNalogStavke)
 	r.PUT("/api/fpro/nalog/:id/stavke/save", h.SaveNalogStavke)
-	r.GET("/api/fpro/stavka/update/:id", h.UpdateFproStavke)
+	r.GET("/api/fpro/stavka/update", h.UpdateFproStavke)
 
 	// r.GET /api/fpro/prepis", h.FproPrepis))
 	// r.GET /api/fpro/storniranje", h.FproStorniranje))

@@ -12,6 +12,7 @@ import (
 	"helia/internal/repository"
 	"helia/internal/service"
 	finval "helia/internal/validation/finansijsko"
+	"helia/pkg/utils"
 	"log"
 	"strings"
 
@@ -62,7 +63,9 @@ type NalogService interface {
 	GetNalogStampanjeData(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, page, pageSize int, searchText, sortBy, sortOrder string) error
 	GetNalogStampanjeDataDetalji(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, page, pageSize int, idFnal int64, searchText, sortBy, sortOrder string) error
 	GetNalogTotalValues(ctx context.Context, nalogTotals *domain.NalogTotalValues, idFnal int64) error
-	GetNalogStampaData(ctx context.Context, idFnal int64) (domain.Fnal, domain.TableData, domain.TableData, error)
+	GetNalogStampaData(ctx context.Context, idFnal int64, cfg config.Config) (domain.Fnal, domain.TableData, domain.TableData, error)
+	GetGrupeNaloziStampaData(ctx context.Context, tipdok string, odBroja, doBroja int64, cfg config.Config) ([]domain.NalogStampaItem, domain.TableData, error)
+	GetFvrData(ctx context.Context) (domain.Fvr, error)
 	SetNalogIDFieldName(string)
 	GetNaloziTableFields() []domain.Fields
 	GetNaloziStavkeTableFields() []domain.Fields
@@ -81,13 +84,14 @@ type NalogResource struct {
 	sfRepo                        repository.BaseRepository[domain.Sf]
 	ojRepo                        repository.BaseRepository[domain.Orgjed]
 	mtroskaRepo                   repository.BaseRepository[domain.Mestotr]
-	fvrRepo                       repository.BaseRepository[domain.Fvr]
+	fvrRepo                       *repository.BaseRepository[domain.Fvr]
 	nalogIDFieldName              string
 	naloziTableFields             []domain.Fields
 	naloziStampaTableFields       []domain.Fields
 	naloziStavkeTableFields       []domain.Fields
 	naloziStavkeStampaTableFields []domain.Fields
 	nalogStampaTableFields        []domain.Fields
+	nalogGrupaStampaTableFields   []domain.Fields
 	cfg                           config.Config
 }
 
@@ -100,7 +104,7 @@ func NewNalogService(
 	sfRepo repository.BaseRepository[domain.Sf],
 	ojRepo repository.BaseRepository[domain.Orgjed],
 	mtroskaRepo repository.BaseRepository[domain.Mestotr],
-	fvrRepo repository.BaseRepository[domain.Fvr],
+	fvrRepo *repository.BaseRepository[domain.Fvr],
 	fproRepo repository.BaseRepository[domain.Fpro],
 	nalogIDFieldName string,
 
@@ -157,6 +161,14 @@ func (s *NalogResource) checkGodinaZatvorena(ctx context.Context) (bool, error) 
 		return (*entities)[0].GodZatv, nil
 	}
 	return false, nil
+}
+
+// GetFvrData retrieves company (fvr) data for the current session.
+func (s *NalogResource) GetFvrData(ctx context.Context) (domain.Fvr, error) {
+	if s.fvrRepo == nil {
+		return domain.Fvr{}, fmt.Errorf("fvrRepo not initialized")
+	}
+	return utils.GetFvrData(ctx, s.fvrRepo)
 }
 
 // NalogValidation checks if the given Fnal entity is valid for creation or update.
@@ -1041,7 +1053,7 @@ func (s *NalogResource) GetNalogTotalValues(ctx context.Context, nalogTotals *do
 
 // GetNalogStampaData fetches all data required to render the nalog print report.
 // Returns the fnal header and two pre-built TableData: one for stavke, one for per-konto summary.
-func (s *NalogResource) GetNalogStampaData(ctx context.Context, idFnal int64) (domain.Fnal, domain.TableData, domain.TableData, error) {
+func (s *NalogResource) GetNalogStampaData(ctx context.Context, idFnal int64, cfg config.Config) (domain.Fnal, domain.TableData, domain.TableData, error) {
 	userSession := domain.GetSessionFromStdContext(ctx)
 	if userSession == nil {
 		return domain.Fnal{}, domain.TableData{}, domain.TableData{}, fmt.Errorf("user session not found")
@@ -1065,7 +1077,7 @@ func (s *NalogResource) GetNalogStampaData(ctx context.Context, idFnal int64) (d
 		coalesce(o.ojozn, '') as ojozn
 		FROM fpro `, true)
 	qb.AddJoin(` left join fkpl ON fpro.idfkpl = fkpl.idfkpl`)
-	qb.AddJoin(` left join partneri p ON fpro.sifra = p.sifra AND p.tipanalitikeid = fkpl.tipanalitikeid`)
+	qb.AddJoin(` left join lateral (SELECT naziv FROM partneri WHERE sifra = fpro.sifra AND tipanalitikeid = fkpl.tipanalitikeid LIMIT 1) p ON true`)
 	qb.AddJoin(` left join orgjed o ON o.idorgjed = fpro.idorgjed`)
 	qb.AddEqual("fpro.idfnal", idFnal)
 	qb.AddOrderBy("fpro.rbr")
@@ -1107,13 +1119,20 @@ func (s *NalogResource) GetNalogStampaData(ctx context.Context, idFnal int64) (d
 			totalDug += dug
 			totalPot += pot
 
-			if _, exists := kontoMap[entity.Konto]; !exists {
-				kontoOrder = append(kontoOrder, entity.Konto)
-				kontoMap[entity.Konto] = &kontoAgg{}
+			key := ""
+			if entity.Sifra != "" {
+				key = entity.Konto
+			} else {
+				key = entity.Konto[:cfg.NDuzSint]
 			}
-			kontoMap[entity.Konto].BrStavki++
-			kontoMap[entity.Konto].Duguje += dug
-			kontoMap[entity.Konto].Pot += pot
+			if _, exists := kontoMap[key]; !exists {
+				kontoOrder = append(kontoOrder, key)
+				kontoMap[key] = &kontoAgg{}
+			}
+
+			kontoMap[key].BrStavki++
+			kontoMap[key].Duguje += dug
+			kontoMap[key].Pot += pot
 		}
 	}
 	tblStavke.Totals = make([]string, len(tblStavke.Headers))
@@ -1167,6 +1186,215 @@ func (s *NalogResource) GetNalogStampaData(ctx context.Context, idFnal int64) (d
 	}
 
 	return fnal, tblStavke, tblKonta, nil
+}
+
+// GetGrupeNaloziStampaData fetches data for all nalozi matching the given criteria for group printing.
+// Returns a slice of NalogStampaItem (one per nalog) and a grand konta summary across all nalozi.
+func (s *NalogResource) GetGrupeNaloziStampaData(ctx context.Context, tipdok string, odBroja, doBroja int64, cfg config.Config) ([]domain.NalogStampaItem, domain.TableData, error) {
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		return nil, domain.TableData{}, fmt.Errorf("user session not found")
+	}
+
+	hasGod, hasKar := s.fnalRepo.GetHasGodHasKar()
+
+	type kontoAgg struct {
+		BrStavki int
+		Duguje   float64
+		Pot      float64
+	}
+
+	grandKontoOrder := []string{}
+	grandKontoMap := map[string]*kontoAgg{}
+	var items []domain.NalogStampaItem
+
+	qb := common.NewQueryBuilder(`SELECT
+			fnal.nalog, fnal.tipdok, fnal.danal, fnal.opis,
+			fpro.rbr, fpro.konto, coalesce(fpro.sifra, '') as sifra,
+			case when fpro.sifra = '' then coalesce(fkpl.naziv, '') else coalesce(p.naziv, '') end as naziv,
+			fpro.vrd,
+			coalesce(o.ojozn, '') as ojozn,
+			coalesce(fpro.dokum, '') as dokum,
+			fpro.dadok,
+			fpro.rok,
+			fpro.vkonta,
+			case when fpro.kat in (1,2) then fpro.iznos else 0 end as dug,
+			case when fpro.kat in (3,4) then fpro.iznos else 0 end as pot
+			FROM fnal`, true)
+	qb.AddJoin(`left join fpro ON fnal.idfnal = fpro.idfnal`)
+	qb.AddJoin(`left join fkpl ON fpro.idfkpl = fkpl.idfkpl`)
+	qb.AddJoin(`left join lateral (SELECT naziv FROM partneri WHERE sifra = fpro.sifra AND tipanalitikeid = fkpl.tipanalitikeid LIMIT 1) p ON true`)
+	qb.AddJoin(`left join orgjed o ON o.idorgjed = fpro.idorgjed`)
+	if hasGod {
+		qb.AddEqual("fnal.god", userSession.SelectedGod)
+	}
+	if hasKar {
+		qb.AddEqual("fnal.kar", userSession.SelectedKar)
+	}
+	qb.AddEqual("fnal.tipdok", tipdok)
+	qb.AddCondition("fnal.nalog", odBroja, ">=")
+	qb.AddCondition("fnal.nalog", doBroja, "<=")
+	qb.AddOrderBy("fnal.nalog, fpro.rbr")
+	qb.AddSortOrder("ASC")
+
+	sqlQuery, args := qb.Build()
+	entities, err := s.fproRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	if err != nil {
+		return nil, domain.TableData{}, fmt.Errorf("failed to get stavke: %w", err)
+	}
+	if entities == nil || len(*entities) == 0 {
+		return items, domain.TableData{}, nil
+	}
+
+	// Helper to build konta summary TableData from an ordered konto map.
+	buildKontaSummary := func(order []string, kmap map[string]*kontoAgg) domain.TableData {
+		tbl := domain.TableData{
+			HasTotals: true,
+			Headers: []domain.Fields{
+				{Label: "konto"},
+				{Label: "broj stavki", TextAlign: "right", IncludeInTotals: true},
+				{Label: "duguje", TextAlign: "right", IncludeInTotals: true},
+				{Label: "potrazuje", TextAlign: "right", IncludeInTotals: true},
+				{Label: "saldo", TextAlign: "right", IncludeInTotals: true},
+			},
+		}
+		var totBr int
+		var totDug, totPot float64
+		for _, k := range order {
+			agg := kmap[k]
+			tbl.Rows = append(tbl.Rows, domain.TableRow{
+				Fields: []string{
+					k,
+					fmt.Sprintf("%d", agg.BrStavki),
+					common.FormatNumberWithSystemLocale(agg.Duguje, 2),
+					common.FormatNumberWithSystemLocale(agg.Pot, 2),
+					common.FormatNumberWithSystemLocale(agg.Duguje-agg.Pot, 2),
+				},
+			})
+			totBr += agg.BrStavki
+			totDug += agg.Duguje
+			totPot += agg.Pot
+		}
+		tbl.Totals = []string{
+			i18n.GetInstance().Label("Ukupno"),
+			fmt.Sprintf("%d", totBr),
+			common.FormatNumberWithSystemLocale(totDug, 2),
+			common.FormatNumberWithSystemLocale(totPot, 2),
+			common.FormatNumberWithSystemLocale(totDug-totPot, 2),
+		}
+		return tbl
+	}
+
+	// Per-nalog grouping state
+	var currentNalog int64 = -1
+	var currentFnal domain.Fnal
+	var tblStavke domain.TableData
+	var kontoOrder []string
+	var kontoMap map[string]*kontoAgg
+	var totalDug, totalPot float64
+
+	finalizeNalog := func() {
+		if currentNalog < 0 {
+			return
+		}
+		tblStavke.Totals = make([]string, len(tblStavke.Headers))
+		for i, h := range tblStavke.Headers {
+			switch h.Name {
+			case "dug":
+				tblStavke.Totals[i] = common.FormatNumberWithSystemLocale(totalDug, 2)
+			case "pot":
+				tblStavke.Totals[i] = common.FormatNumberWithSystemLocale(totalPot, 2)
+			case "saldo":
+				tblStavke.Totals[i] = common.FormatNumberWithSystemLocale(totalDug-totalPot, 2)
+			}
+		}
+		items = append(items, domain.NalogStampaItem{
+			Fnal:         currentFnal,
+			Stavke:       tblStavke,
+			KontaSummary: buildKontaSummary(kontoOrder, kontoMap),
+		})
+	}
+
+	for _, entity := range *entities {
+		// Detect nalog boundary
+		if entity.Nalog != currentNalog {
+			finalizeNalog()
+			currentNalog = entity.Nalog
+			currentFnal = domain.Fnal{Nalog: entity.Nalog, Tipdok: entity.Tipdok, Opis: entity.Opis}
+			if entity.Danal != nil {
+				currentFnal.Danal = *entity.Danal
+			}
+			tblStavke = common.SetTableBasicData("", fmt.Sprintf("tbl-grp-%d", entity.Nalog),
+				s.nalogGrupaStampaTableFields, "", "", 999999, 1, 1, 0, cfg)
+			tblStavke.HasTotals = true
+			kontoOrder = []string{}
+			kontoMap = map[string]*kontoAgg{}
+			totalDug = 0
+			totalPot = 0
+		}
+
+		// Skip left-join null rows (nalog without stavke)
+		if entity.Rbr == 0 {
+			continue
+		}
+
+		dug := entity.Dug.Float64
+		pot := entity.Pot.Float64
+
+		dadokStr := ""
+		if entity.Dadok.Valid {
+			dadokStr = entity.Dadok.Time.Format("02.01.2006")
+		}
+
+		tblStavke.Rows = append(tblStavke.Rows, domain.TableRow{
+			Fields: []string{
+				fmt.Sprintf("%d", entity.Rbr),
+				entity.Konto,
+				entity.Sifra,
+				entity.Naziv,
+				fmt.Sprintf("%d", entity.Vrd),
+				entity.Ojozn.String,
+				entity.Dokum,
+				dadokStr,
+				fmt.Sprintf("%d", entity.Rok),
+				fmt.Sprintf("%d", entity.Vkonta),
+				common.FormatNumberWithSystemLocale(dug, 2),
+				common.FormatNumberWithSystemLocale(pot, 2),
+				common.FormatNumberWithSystemLocale(dug-pot, 2),
+			},
+		})
+
+		totalDug += dug
+		totalPot += pot
+
+		sintLen := cfg.NDuzSint
+		if len(entity.Konto) < sintLen {
+			sintLen = len(entity.Konto)
+		}
+		key := entity.Konto
+		if entity.Sifra == "" {
+			key = entity.Konto[:sintLen]
+		}
+
+		if _, exists := kontoMap[key]; !exists {
+			kontoOrder = append(kontoOrder, key)
+			kontoMap[key] = &kontoAgg{}
+		}
+		kontoMap[key].BrStavki++
+		kontoMap[key].Duguje += dug
+		kontoMap[key].Pot += pot
+
+		if _, exists := grandKontoMap[key]; !exists {
+			grandKontoOrder = append(grandKontoOrder, key)
+			grandKontoMap[key] = &kontoAgg{}
+		}
+		grandKontoMap[key].BrStavki++
+		grandKontoMap[key].Duguje += dug
+		grandKontoMap[key].Pot += pot
+	}
+	finalizeNalog() // flush the last nalog
+
+	return items, buildKontaSummary(grandKontoOrder, grandKontoMap), nil
 }
 
 // GetTipdokOptions fetches the list of tipdok options for filtering. This method stays the same.
@@ -1353,6 +1581,21 @@ func (s *NalogResource) setServiceFieldValues() {
 		{Name: "dug", Label: "Duguje", Width: "14", TextAlign: "right", IncludeInTotals: true},
 		{Name: "pot", Label: "Potražuje", Width: "14", TextAlign: "right", IncludeInTotals: true},
 		{Name: "saldo", Label: "Saldo", Width: "14", TextAlign: "right", IncludeInTotals: true},
+	}
+	s.nalogGrupaStampaTableFields = []domain.Fields{
+		{Name: "rbr", Label: "Redni Broj", Width: "4", TextAlign: "right"},
+		{Name: "konto", Label: "Konto", Width: "6"},
+		{Name: "sifra", Label: "Šifra", Width: "6"},
+		{Name: "naziv", Label: "Naziv konta", Width: "30"},
+		{Name: "vrd", Label: "Vrsta Dokumenta", Width: "5", TextAlign: "right"},
+		{Name: "ojozn", Label: "ID OJ", Width: "7"},
+		{Name: "dokum", Label: "Br. dokumenta", Width: "12"},
+		{Name: "dadok", Label: "Datum dokumenta", Width: "10"},
+		{Name: "rok", Label: "Rok", Width: "4", TextAlign: "right"},
+		{Name: "vkonta", Label: "Nacin knjizenja", Width: "5", TextAlign: "right"},
+		{Name: "dug", Label: "Duguje", Width: "12", TextAlign: "right", IncludeInTotals: true},
+		{Name: "pot", Label: "Potražuje", Width: "12", TextAlign: "right", IncludeInTotals: true},
+		{Name: "saldo", Label: "Saldo", Width: "12", TextAlign: "right", IncludeInTotals: true},
 	}
 }
 

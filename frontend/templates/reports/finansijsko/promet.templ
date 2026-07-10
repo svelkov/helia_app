@@ -1,0 +1,552 @@
+package finansijsko
+
+import (
+	"fmt"
+	rep "helia/frontend/templates/reports"
+	"helia/i18n"
+	"helia/internal/domain"
+)
+
+// PrometAnalitickaKarticaStampa renders a printable Analitička kartica report.
+templ PrometAnalitickaKarticaStampa(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
+	@rep.Report(repParams, domain.TableData{}, translator, nil, PrometAnalitickaKarticaContent(repParams, tbl, translator))
+}
+
+templ PrometAnalitickaKarticaContent(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
+	@rep.ReportHeader(repParams)
+	@rep.ReportTitle(repParams)
+	@PrometAnalitickaKarticaParam(repParams, translator)
+	@PrometAnalitickaKarticaTable(tbl, translator)
+	@rep.ReportEnd(nil)
+}
+
+templ PrometAnalitickaKarticaParam(repParams domain.ReportParameters, translator *i18n.Service) {
+	<div class="text-center text-sm font-semibold mb-3">
+		{ repParams.ParameterItems["OdKonta"].Name }: <span class="font-bold">{ repParams.ParameterItems["OdKonta"].Value }</span>
+		&nbsp;&nbsp;&nbsp;{ repParams.ParameterItems["DoKonta"].Name }: <span class="font-bold">{ repParams.ParameterItems["DoKonta"].Value }</span>
+		&nbsp;&nbsp;&nbsp;{ repParams.ParameterItems["OdSifre"].Name }: <span class="font-bold">{ repParams.ParameterItems["OdSifre"].Value }</span>
+		&nbsp;&nbsp;&nbsp;{ repParams.ParameterItems["DoSifre"].Name }: <span class="font-bold">{ repParams.ParameterItems["DoSifre"].Value }</span>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ repParams.ParameterItems["StanjeNaDan"].Name }: <span class="font-bold">{ repParams.ParameterItems["StanjeNaDan"].Value }</span>
+	</div>
+}
+
+templ PrometAnalitickaKarticaTable(tbl domain.TableData, translator *i18n.Service) {
+	<table class="w-full border-collapse report-table mt-2 print:w-full print:text-[11pt] print:table-auto print:border-collapse">
+		<thead></thead>
+		<tbody>
+			for _, row := range tbl.Rows {
+				if row.ClassRow == "konto-header" {
+					<tr class="bg-blue-900 text-white print:bg-gray-500 print:text-white">
+						<td colspan={ fmt.Sprintf("%d", len(tbl.Headers)) } class="border border-gray-400 px-2 py-1 text-sm font-bold">
+							if len(row.Fields) > 0 {
+								{ row.Fields[0] }
+							}
+							if len(row.Fields) > 1 && row.Fields[1] != "" {
+								&nbsp;&nbsp;|&nbsp;&nbsp;{ row.Fields[1] }
+							}
+							if len(row.Fields) > 2 && row.Fields[2] != "" {
+								&nbsp;&nbsp;|&nbsp;&nbsp;{ row.Fields[2] }
+							}
+						</td>
+					</tr>
+					<tr class="bg-blue-800 text-white text-center print:bg-gray-300 print:text-black">
+						for _, header := range tbl.Headers {
+							<th class="border border-gray-300 px-1 text-center text-xs font-semibold print:bg-gray-300 print:text-black print:px-1 text-center">
+								{ translator.Label(header.Label) }
+							</th>
+						}
+					</tr>
+				} else if row.ClassRow == "konto-total" {
+					<tr class="bg-gray-50 font-bold border-t border-gray-400 print:bg-gray-50">
+						<td colspan={ fmt.Sprintf("%d", len(tbl.Headers)-3) } class="border border-gray-300 px-2 py-1 text-sm font-bold">
+							if len(row.Fields) > 0 {
+								{ row.Fields[0] }
+							}
+						</td>
+						<td class="border border-gray-300 px-1 text-sm font-bold text-right">
+							if len(row.Fields) > 1 {
+								{ row.Fields[1] }
+							}
+						</td>
+						<td class="border border-gray-300 px-1 text-sm font-bold text-right">
+							if len(row.Fields) > 2 {
+								{ row.Fields[2] }
+							}
+						</td>
+						<td class="border border-gray-300 px-1 text-sm font-bold text-right">
+							if len(row.Fields) > 3 {
+								{ row.Fields[3] }
+							}
+						</td>
+					</tr>
+				} else {
+					<tr class="hover:bg-yellow-50 print:hover:bg-white">
+						for j, cell := range row.Fields {
+							<td
+								class={ fmt.Sprintf("border border-gray-300 px-1 text-sm print:text-[9pt] print:px-1 text-%s", func() string {
+									if j < len(tbl.Headers) && tbl.Headers[j].TextAlign != "" {
+										return tbl.Headers[j].TextAlign
+									}
+									return "left"
+								}()) }
+							>
+								{ cell }
+							</td>
+						}
+					</tr>
+				}
+			}
+		</tbody>
+		if tbl.HasTotals {
+			<tfoot>
+				<tr class="bg-blue-900 text-white font-bold print:bg-gray-700 print:text-white">
+					for j, total := range tbl.Totals {
+						<td
+							class={ fmt.Sprintf("border border-gray-300 px-1 text-sm font-bold print:text-[9pt] print:px-1 text-%s", func() string {
+								if j < len(tbl.Headers) && tbl.Headers[j].TextAlign != "" {
+									return tbl.Headers[j].TextAlign
+								}
+								return "left"
+							}()) }
+						>
+							{ total }
+						</td>
+					}
+				</tr>
+			</tfoot>
+		}
+	</table>
+}
+
+// PrometSubsintetickihKontaKarticaStampa renders a printable Promet subsintetičkih konta report.
+templ PrometSubsintetickihKontaKarticaStampa(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
+	@rep.Report(repParams, domain.TableData{}, translator, nil, PrometSubsintetickihKontaKarticaContent(repParams, tbl, translator))
+}
+
+templ PrometSubsintetickihKontaKarticaContent(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
+	@rep.ReportHeader(repParams)
+	@rep.ReportTitle(repParams)
+	@PrometSubsintetickihKontaKarticaParam(repParams, translator)
+	@PrometSubsintetickihKontaKarticaTable(tbl, translator)
+	@rep.ReportEnd(nil)
+}
+
+templ PrometSubsintetickihKontaKarticaParam(repParams domain.ReportParameters, translator *i18n.Service) {
+	<div class="text-center text-sm font-semibold mb-3">
+		{ repParams.ParameterItems["OdKonta"].Name }: <span class="font-bold">{ repParams.ParameterItems["OdKonta"].Value }</span>
+		&nbsp;&nbsp;&nbsp;{ repParams.ParameterItems["DoKonta"].Name }: <span class="font-bold">{ repParams.ParameterItems["DoKonta"].Value }</span>
+		if repParams.ParameterItems["OdDatuma"].Value != "" {
+			&nbsp;&nbsp;&nbsp;{ repParams.ParameterItems["OdDatuma"].Name }: <span class="font-bold">{ repParams.ParameterItems["OdDatuma"].Value }</span>
+		}
+		if repParams.ParameterItems["DoDatuma"].Value != "" {
+			&nbsp;&nbsp;&nbsp;{ repParams.ParameterItems["DoDatuma"].Name }: <span class="font-bold">{ repParams.ParameterItems["DoDatuma"].Value }</span>
+		}
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ repParams.ParameterItems["StanjeNaDan"].Name }: <span class="font-bold">{ repParams.ParameterItems["StanjeNaDan"].Value }</span>
+	</div>
+}
+
+templ PrometSubsintetickihKontaKarticaTable(tbl domain.TableData, translator *i18n.Service) {
+	<table class="w-full border-collapse report-table mt-2 print:w-full print:text-[11pt] print:table-auto print:border-collapse">
+		<thead></thead>
+		<tbody>
+			for _, row := range tbl.Rows {
+				if row.ClassRow == "konto-header" {
+					<tr class="bg-blue-900 text-white print:bg-gray-500 print:text-white">
+						<td class="border border-gray-400 px-2 py-1 text-sm font-bold w-28">
+							if len(row.Fields) > 0 {
+								Konto : { row.Fields[0] }
+							}
+						</td>
+						<td colspan={ fmt.Sprintf("%d", len(tbl.Headers)-1) } class="border border-gray-400 px-2 py-1 text-sm font-bold">
+							if len(row.Fields) > 1 {
+								{ row.Fields[1] }
+							}
+						</td>
+					</tr>
+					<tr class="bg-blue-800 text-white text-center print:bg-gray-300 print:text-black">
+						for _, header := range tbl.Headers {
+							<th class="border border-gray-300 px-1 text-center text-xs font-semibold print:bg-gray-300 print:text-black print:px-1 text-center">
+								{ translator.Label(header.Label) }
+							</th>
+						}
+					</tr>
+				} else if row.ClassRow == "month-total" {
+					<tr class="bg-blue-100 italic border-t border-blue-300 print:bg-gray-100">
+						<td colspan={ fmt.Sprintf("%d", len(tbl.Headers)-3) } class="border border-gray-300 px-2 py-1 text-sm italic">
+							if len(row.Fields) > 0 {
+								{ row.Fields[0] }
+							}
+						</td>
+						<td class="border border-gray-300 px-1 text-sm italic text-right">
+							if len(row.Fields) > 1 {
+								{ row.Fields[1] }
+							}
+						</td>
+						<td class="border border-gray-300 px-1 text-sm italic text-right">
+							if len(row.Fields) > 2 {
+								{ row.Fields[2] }
+							}
+						</td>
+						<td class="border border-gray-300 px-1 text-sm italic text-right">
+							if len(row.Fields) > 3 {
+								{ row.Fields[3] }
+							}
+						</td>
+					</tr>
+				} else if row.ClassRow == "konto-total" {
+					<tr class="bg-gray-50 font-bold border-t border-gray-400 print:bg-gray-50">
+						<td colspan={ fmt.Sprintf("%d", len(tbl.Headers)-3) } class="border border-gray-300 px-2 py-1 text-sm font-bold">
+							if len(row.Fields) > 0 {
+								{ row.Fields[0] }
+							}
+						</td>
+						<td class="border border-gray-300 px-1 text-sm font-bold text-right">
+							if len(row.Fields) > 1 {
+								{ row.Fields[1] }
+							}
+						</td>
+						<td class="border border-gray-300 px-1 text-sm font-bold text-right">
+							if len(row.Fields) > 2 {
+								{ row.Fields[2] }
+							}
+						</td>
+						<td class="border border-gray-300 px-1 text-sm font-bold text-right">
+							if len(row.Fields) > 3 {
+								{ row.Fields[3] }
+							}
+						</td>
+					</tr>
+				} else {
+					<tr class="hover:bg-yellow-50 print:hover:bg-white">
+						for j, cell := range row.Fields {
+							<td
+								class={ fmt.Sprintf("border border-gray-300 px-1 text-sm print:text-[9pt] print:px-1 text-%s", func() string {
+									if j < len(tbl.Headers) && tbl.Headers[j].TextAlign != "" {
+										return tbl.Headers[j].TextAlign
+									}
+									return "left"
+								}()) }
+							>
+								{ cell }
+							</td>
+						}
+					</tr>
+				}
+			}
+		</tbody>
+		if tbl.HasTotals {
+			<tfoot>
+				<tr class="bg-blue-900 text-white font-bold print:bg-gray-700 print:text-white">
+					for j, total := range tbl.Totals {
+						<td
+							class={ fmt.Sprintf("border border-gray-300 px-1 text-sm font-bold print:text-[9pt] print:px-1 text-%s", func() string {
+								if j < len(tbl.Headers) && tbl.Headers[j].TextAlign != "" {
+									return tbl.Headers[j].TextAlign
+								}
+								return "left"
+							}()) }
+						>
+							{ total }
+						</td>
+					}
+				</tr>
+			</tfoot>
+		}
+	</table>
+}
+
+// KarticaSintetickihKontaStampa renders a printable Sintetička kartica report.
+templ KarticaSintetickihKontaStampa(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
+	@rep.Report(repParams, domain.TableData{}, translator, nil, KarticaSintetickihKontaStampaContent(repParams, tbl, translator))
+}
+
+templ KarticaSintetickihKontaStampaContent(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
+	@rep.ReportHeader(repParams)
+	@rep.ReportTitle(repParams)
+	@KarticaSintetickihKontaStampaParam(repParams, translator)
+	@PrometSubsintetickihKontaKarticaTable(tbl, translator)
+	@rep.ReportEnd(nil)
+}
+
+templ KarticaSintetickihKontaStampaParam(repParams domain.ReportParameters, translator *i18n.Service) {
+	<div class="text-center text-sm font-semibold mb-3">
+		{ repParams.ParameterItems["OdKonta"].Name }: <span class="font-bold">{ repParams.ParameterItems["OdKonta"].Value }</span>
+		&nbsp;&nbsp;&nbsp;{ repParams.ParameterItems["DoKonta"].Name }: <span class="font-bold">{ repParams.ParameterItems["DoKonta"].Value }</span>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ repParams.ParameterItems["StanjeNaDan"].Name }: <span class="font-bold">{ repParams.ParameterItems["StanjeNaDan"].Value }</span>
+	</div>
+}
+
+// KarticaSintKontaStampa renders a printable Kartica sintetičkog konta report (direct, no dialog).
+templ KarticaSintKontaStampa(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
+	@rep.Report(repParams, domain.TableData{}, translator, nil, KarticaSintKontaStampaContent(repParams, tbl, translator))
+}
+
+templ KarticaSintKontaStampaContent(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
+	@rep.ReportHeader(repParams)
+	@rep.ReportTitle(repParams)
+	@KarticaSintKontaStampaParam(repParams, translator)
+	@KarticaSintKontaStampaTable(tbl, translator)
+	@rep.ReportEnd(nil)
+}
+
+templ KarticaSintKontaStampaParam(repParams domain.ReportParameters, translator *i18n.Service) {
+	<div class="text-center text-sm font-semibold mb-3">
+		{ repParams.ParameterItems["Konto"].Name }: <span class="font-bold">{ repParams.ParameterItems["Konto"].Value }</span>
+		&nbsp;&nbsp;&nbsp;{ repParams.ParameterItems["OdDatuma"].Name }: <span class="font-bold">{ repParams.ParameterItems["OdDatuma"].Value }</span>
+		&nbsp;&nbsp;&nbsp;{ repParams.ParameterItems["DoDatuma"].Name }: <span class="font-bold">{ repParams.ParameterItems["DoDatuma"].Value }</span>
+	</div>
+}
+
+templ KarticaSintKontaStampaTable(tbl domain.TableData, translator *i18n.Service) {
+	<table class="w-full border-collapse report-table mt-2 print:w-full print:text-[11pt] print:table-auto print:border-collapse">
+		<thead>
+			<tr class="bg-blue-800 text-white text-center print:bg-gray-300 print:text-black">
+				for _, header := range tbl.Headers {
+					<th class="border border-gray-300 px-1 text-center text-xs font-semibold print:bg-gray-300 print:text-black print:px-1">
+						{ translator.Label(header.Label) }
+					</th>
+				}
+			</tr>
+		</thead>
+		<tbody>
+			for _, row := range tbl.Rows {
+				<tr class="hover:bg-yellow-50 print:hover:bg-white">
+					for j, cell := range row.Fields {
+						<td
+							class={ fmt.Sprintf("border border-gray-300 px-1 text-sm print:text-[9pt] print:px-1 text-%s", func() string {
+								if j < len(tbl.Headers) && tbl.Headers[j].TextAlign != "" {
+									return tbl.Headers[j].TextAlign
+								}
+								return "left"
+							}()) }
+						>
+							{ cell }
+						</td>
+					}
+				</tr>
+			}
+		</tbody>
+		if tbl.HasTotals {
+			<tfoot>
+				<tr class="bg-blue-900 text-white font-bold print:bg-gray-700 print:text-white">
+					for j, total := range tbl.Totals {
+						<td
+							class={ fmt.Sprintf("border border-gray-300 px-1 text-sm font-bold print:text-[9pt] print:px-1 text-%s", func() string {
+								if j < len(tbl.Headers) && tbl.Headers[j].TextAlign != "" {
+									return tbl.Headers[j].TextAlign
+								}
+								return "left"
+							}()) }
+						>
+							{ total }
+						</td>
+					}
+				</tr>
+			</tfoot>
+		}
+	</table>
+}
+
+// PrometSubsintetikaVrdStampa renders a printable Promet subsintetike po VRD report.
+templ PrometSubsintetikaVrdStampa(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
+	@rep.Report(repParams, domain.TableData{}, translator, nil, PrometSubsintetikaVrdStampaContent(repParams, tbl, translator))
+}
+
+templ PrometSubsintetikaVrdStampaContent(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
+	@rep.ReportHeader(repParams)
+	@rep.ReportTitle(repParams)
+	@PrometSubsintetikaVrdStampaParam(repParams, translator)
+	@PrometSubsintetikaVrdStampaTable(tbl, translator)
+	@rep.ReportEnd(nil)
+}
+
+templ PrometSubsintetikaVrdStampaParam(repParams domain.ReportParameters, translator *i18n.Service) {
+	<div class="text-center text-sm font-semibold mb-3">
+		{ repParams.ParameterItems["Konto"].Name }: <span class="font-bold">{ repParams.ParameterItems["Konto"].Value }</span>
+		&nbsp;&nbsp;&nbsp;{ repParams.ParameterItems["OdDatuma"].Name }: <span class="font-bold">{ repParams.ParameterItems["OdDatuma"].Value }</span>
+		&nbsp;&nbsp;&nbsp;{ repParams.ParameterItems["DoDatuma"].Name }: <span class="font-bold">{ repParams.ParameterItems["DoDatuma"].Value }</span>
+	</div>
+}
+
+templ PrometSubsintetikaVrdStampaTable(tbl domain.TableData, translator *i18n.Service) {
+	@rep.ReportTable(tbl, translator)
+}
+
+// PrometAnalitickaKarticaPoMIStampa renders a printable Analitička kartica po mestima isporuke report.
+templ PrometAnalitickaKarticaPoMIStampa(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
+	@rep.Report(repParams, domain.TableData{}, translator, nil, PrometAnalitickaKarticaPoMIContent(repParams, tbl, translator))
+}
+
+templ PrometAnalitickaKarticaPoMIContent(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
+	@rep.ReportHeader(repParams)
+	@rep.ReportTitle(repParams)
+	@PrometAnalitickaKarticaPoMIParam(repParams, translator)
+	@PrometAnalitickaKarticaPoMITable(tbl, translator)
+	@rep.ReportEnd(nil)
+}
+
+templ PrometAnalitickaKarticaPoMIParam(repParams domain.ReportParameters, translator *i18n.Service) {
+	<div class="text-center text-sm font-semibold mb-3">
+		if repParams.ParameterItems["Konto"].Value != "" {
+			{ repParams.ParameterItems["Konto"].Name }: <span class="font-bold">{ repParams.ParameterItems["Konto"].Value }</span>
+		}
+		if repParams.ParameterItems["Sifra"].Value != "" {
+			&nbsp;&nbsp;&nbsp;{ repParams.ParameterItems["Sifra"].Name }: <span class="font-bold">{ repParams.ParameterItems["Sifra"].Value }</span>
+		}
+		if repParams.ParameterItems["OdDatuma"].Value != "" {
+			&nbsp;&nbsp;&nbsp;{ repParams.ParameterItems["OdDatuma"].Name }: <span class="font-bold">{ repParams.ParameterItems["OdDatuma"].Value }</span>
+		}
+		if repParams.ParameterItems["DoDatuma"].Value != "" {
+			&nbsp;&nbsp;&nbsp;{ repParams.ParameterItems["DoDatuma"].Name }: <span class="font-bold">{ repParams.ParameterItems["DoDatuma"].Value }</span>
+		}
+		if repParams.ParameterItems["OdMI"].Value != "" {
+			&nbsp;&nbsp;&nbsp;{ repParams.ParameterItems["OdMI"].Name }: <span class="font-bold">{ repParams.ParameterItems["OdMI"].Value }</span>
+		}
+		if repParams.ParameterItems["DoMI"].Value != "" {
+			&nbsp;&nbsp;&nbsp;{ repParams.ParameterItems["DoMI"].Name }: <span class="font-bold">{ repParams.ParameterItems["DoMI"].Value }</span>
+		}
+	</div>
+}
+
+templ PrometAnalitickaKarticaPoMITable(tbl domain.TableData, translator *i18n.Service) {
+	<table class="w-full border-collapse report-table mt-2 print:w-full print:text-[11pt] print:table-auto print:border-collapse">
+		<thead></thead>
+		<tbody>
+			for _, row := range tbl.Rows {
+				if row.ClassRow == "konto-header" {
+					<tr class="bg-blue-900 text-white print:bg-gray-500 print:text-white">
+						<td colspan={ fmt.Sprintf("%d", len(tbl.Headers)) } class="border border-gray-400 px-2 py-1 text-sm font-bold">
+							if len(row.Fields) > 0 {
+								{ translator.Label("Konto") }: { row.Fields[0] }
+							}
+							if len(row.Fields) > 1 && row.Fields[1] != "" {
+								&nbsp;&nbsp;|&nbsp;&nbsp;{ row.Fields[1] }
+							}
+							if len(row.Fields) > 2 && row.Fields[2] != "" {
+								&nbsp;&nbsp;|&nbsp;&nbsp;{ row.Fields[2] }
+							}
+						</td>
+					</tr>
+					<tr class="bg-blue-800 text-white text-center print:bg-gray-300 print:text-black">
+						for _, header := range tbl.Headers {
+							<th class="border border-gray-300 px-1 text-center text-xs font-semibold print:bg-gray-300 print:text-black print:px-1">
+								{ translator.Label(header.Label) }
+							</th>
+						}
+					</tr>
+				} else if row.ClassRow == "mi-header" {
+					<tr class="bg-blue-700 text-white print:bg-gray-400 print:text-white">
+						<td colspan={ fmt.Sprintf("%d", len(tbl.Headers)) } class="border border-gray-400 px-2 py-1 text-sm font-semibold">
+							{ translator.Label("Mesto Isporuke") }:&nbsp;
+							if len(row.Fields) > 0 {
+								{ row.Fields[0] }
+							}
+						</td>
+					</tr>
+				} else if row.ClassRow == "month-total" {
+					<tr class="bg-blue-100 italic border-t border-blue-300 print:bg-gray-100">
+						<td colspan={ fmt.Sprintf("%d", len(tbl.Headers)-3) } class="border border-gray-300 px-2 py-1 text-sm italic">
+							if len(row.Fields) > 0 {
+								{ row.Fields[0] }
+							}
+						</td>
+						<td class="border border-gray-300 px-1 text-sm italic text-right">
+							if len(row.Fields) > 1 {
+								{ row.Fields[1] }
+							}
+						</td>
+						<td class="border border-gray-300 px-1 text-sm italic text-right">
+							if len(row.Fields) > 2 {
+								{ row.Fields[2] }
+							}
+						</td>
+						<td class="border border-gray-300 px-1 text-sm italic text-right">
+							if len(row.Fields) > 3 {
+								{ row.Fields[3] }
+							}
+						</td>
+					</tr>
+				} else if row.ClassRow == "mi-total" {
+					<tr class="bg-blue-50 font-semibold border-t border-blue-200 print:bg-gray-50">
+						<td colspan={ fmt.Sprintf("%d", len(tbl.Headers)-3) } class="border border-gray-300 px-2 py-1 text-sm font-semibold">
+							if len(row.Fields) > 0 {
+								{ row.Fields[0] }
+							}
+						</td>
+						<td class="border border-gray-300 px-1 text-sm font-semibold text-right">
+							if len(row.Fields) > 1 {
+								{ row.Fields[1] }
+							}
+						</td>
+						<td class="border border-gray-300 px-1 text-sm font-semibold text-right">
+							if len(row.Fields) > 2 {
+								{ row.Fields[2] }
+							}
+						</td>
+						<td class="border border-gray-300 px-1 text-sm font-semibold text-right">
+							if len(row.Fields) > 3 {
+								{ row.Fields[3] }
+							}
+						</td>
+					</tr>
+				} else if row.ClassRow == "konto-total" {
+					<tr class="bg-gray-50 font-bold border-t border-gray-400 print:bg-gray-50">
+						<td colspan={ fmt.Sprintf("%d", len(tbl.Headers)-3) } class="border border-gray-300 px-2 py-1 text-sm font-bold">
+							if len(row.Fields) > 0 {
+								{ row.Fields[0] }
+							}
+						</td>
+						<td class="border border-gray-300 px-1 text-sm font-bold text-right">
+							if len(row.Fields) > 1 {
+								{ row.Fields[1] }
+							}
+						</td>
+						<td class="border border-gray-300 px-1 text-sm font-bold text-right">
+							if len(row.Fields) > 2 {
+								{ row.Fields[2] }
+							}
+						</td>
+						<td class="border border-gray-300 px-1 text-sm font-bold text-right">
+							if len(row.Fields) > 3 {
+								{ row.Fields[3] }
+							}
+						</td>
+					</tr>
+				} else {
+					<tr class="hover:bg-yellow-50 print:hover:bg-white">
+						for j, cell := range row.Fields {
+							<td
+								class={ fmt.Sprintf("border border-gray-300 px-1 text-sm print:text-[9pt] print:px-1 text-%s", func() string {
+									if j < len(tbl.Headers) && tbl.Headers[j].TextAlign != "" {
+										return tbl.Headers[j].TextAlign
+									}
+									return "left"
+								}()) }
+							>
+								{ cell }
+							</td>
+						}
+					</tr>
+				}
+			}
+		</tbody>
+		if tbl.HasTotals {
+			<tfoot>
+				<tr class="bg-blue-900 text-white font-bold print:bg-gray-700 print:text-white">
+					for j, total := range tbl.Totals {
+						<td
+							class={ fmt.Sprintf("border border-gray-300 px-1 text-sm font-bold print:text-[9pt] print:px-1 text-%s", func() string {
+								if j < len(tbl.Headers) && tbl.Headers[j].TextAlign != "" {
+									return tbl.Headers[j].TextAlign
+								}
+								return "left"
+							}()) }
+						>
+							{ total }
+						</td>
+					}
+				</tr>
+			</tfoot>
+		}
+	</table>
+}

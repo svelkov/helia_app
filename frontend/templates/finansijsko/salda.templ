@@ -19,6 +19,8 @@ templ SaldaMain(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada d
 	@tmpl.HandleDblClickKontoSelectionScript()
 	@tmpl.SpinnerScript()
 	@tmpl.HandleDialogResponseScript("")
+	@tmpl.OpenPrintWithParamsScript()
+	@tmpl.CloseDialogScript()
 }
 
 // Tab 1 - Salda pojedinačnih konta
@@ -118,8 +120,9 @@ templ SaldaPojedinacnihKonta(tabs domain.TabData, tbl domain.TableData, btnObrad
 						HxUrl:       "/api/promet/searchbutton",
 						HxTarget:    "#search-dropdown",
 						HxSwap:      "innerHTML",
+						Disabled:    true,
 						HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1", "destfield": "sifra"}`,
-						ClassButton: common.ClassButton,
+						ClassButton: common.ClassButton + " cursor-not-allowed",
 					})
 					@tmpl.TextInputField(domain.InputFieldConfig{
 						ID:         "sifranaziv",
@@ -133,7 +136,7 @@ templ SaldaPojedinacnihKonta(tabs domain.TabData, tbl domain.TableData, btnObrad
 				<!-- Obradi Button -->
 				<div class="flex justify-end gap-1">
 					@tmpl.FormObradaButton(btnObrada, translator)
-					@tmpl.PrintButton(btnPrint, translator)
+					@tmpl.Search_PartPrintButton(btnPrint)
 				</div>
 				<div class="border mt-auto mb-1 bg-blue-100 border border-blue-400 mt-2 p-1 rounded-lg">
 					@SaldaTotalValues(total, saldaURLtotals, translator)
@@ -358,9 +361,6 @@ templ SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnP
 				</div>
 				<!-- Right Column - Report Type Selection -->
 				<div class="border bg-blue-100 border border-blue-400 mt-1 p-1 rounded-lg flex flex-col">
-					<div class="text-blue-800 font-bold text-xs mb-1 border-b border-gray-400 pb-1">
-						{ translator.Label("Ime izveštaja") }
-					</div>
 					<!-- Tip izveštaja -->
 					<div class="flex items-center gap-1 mb-1">
 						@tmpl.LabelField(domain.LabelFieldConfig{
@@ -418,15 +418,6 @@ templ SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnP
 							OptionValues:  monthsComboItems,
 							SelectedValue: "1",
 						}, translator)
-						@tmpl.CheckboxField(domain.CheckboxFieldConfig{
-							ID:                "chk_saldo_razl_nula",
-							Name:              "chk_saldo_razl_nula",
-							LabelText:         "Prikazi konta sa saldom <> 0",
-							IsChecked:         false,
-							ClassLabel:        common.ClassCheckboxLabel + " pl-2",
-							ClassCheckbox:     common.ClassCheckbox,
-							ClassCheckboxSpan: common.ClassCheckboxSpan,
-						}, translator)
 					</div>
 					<!-- Do meseca -->
 					<div class="flex items-center gap-1 mb-1">
@@ -445,15 +436,6 @@ templ SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnP
 							OptionValues:  monthsComboItems,
 							SelectedValue: "12",
 						}, translator)
-						@tmpl.CheckboxField(domain.CheckboxFieldConfig{
-							ID:                "chk_saldo_vece_nula",
-							Name:              "chk_saldo_vece_nula",
-							LabelText:         "Prikazi konta sa saldom > 0",
-							IsChecked:         false,
-							ClassLabel:        common.ClassCheckboxLabel + " pl-2",
-							ClassCheckbox:     common.ClassCheckbox,
-							ClassCheckboxSpan: common.ClassCheckboxSpan,
-						}, translator)
 					</div>
 					<!-- Od salda -->
 					<div class="flex items-center gap-1 mb-1">
@@ -470,15 +452,6 @@ templ SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnP
 							ClassInput: common.ClassInputTextEnabled + " w-40",
 							Value:      "0",
 						})
-						@tmpl.CheckboxField(domain.CheckboxFieldConfig{
-							ID:                "chk_saldo_manje_nula",
-							Name:              "chk_saldo_manje_nula",
-							LabelText:         "Prikazi konta sa saldom < 0",
-							IsChecked:         false,
-							ClassLabel:        common.ClassCheckboxLabel + " pl-2",
-							ClassCheckbox:     common.ClassCheckbox,
-							ClassCheckboxSpan: common.ClassCheckboxSpan,
-						}, translator)
 					</div>
 					<!-- Do salda -->
 					<div class="flex items-center gap-1 mb-2">
@@ -495,15 +468,51 @@ templ SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnP
 							ClassInput: common.ClassInputTextEnabled + " w-40",
 							Value:      "0",
 						})
-						@tmpl.CheckboxField(domain.CheckboxFieldConfig{
-							ID:                "chk_saldo_nula",
-							Name:              "chk_saldo_nula",
-							LabelText:         "Prikazi konta sa saldom = 0",
-							IsChecked:         false,
-							ClassLabel:        common.ClassCheckboxLabel + " pl-2",
-							ClassCheckbox:     common.ClassCheckbox,
-							ClassCheckboxSpan: common.ClassCheckboxSpan,
-						}, translator)
+					</div>
+					<!-- Saldo filter radio set -->
+					<div class="flex items-center gap-2 mb-2">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "saldo_filter_label",
+							LabelText:  translator.Label("Prikaz salda"),
+							ClassLabel: common.ClassLabel + " w-36",
+						})
+						<div class="flex items-center gap-3">
+							@tmpl.RadioButtonField(domain.RadioFieldConfig{
+								ID:         "saldo_filter_sva_salda",
+								Name:       "saldo_filter",
+								Value:      "sva_salda",
+								LabelText:  "sva_salda",
+								IsSelected: true,
+							}, translator)
+							@tmpl.RadioButtonField(domain.RadioFieldConfig{
+								ID:         "saldo_filter_razl_nula",
+								Name:       "saldo_filter",
+								Value:      "razl_nula",
+								LabelText:  "saldo_<>_0",
+								IsSelected: false,
+							}, translator)
+							@tmpl.RadioButtonField(domain.RadioFieldConfig{
+								ID:         "saldo_filter_vece_nula",
+								Name:       "saldo_filter",
+								Value:      "vece_nula",
+								LabelText:  "saldo_>_0",
+								IsSelected: false,
+							}, translator)
+							@tmpl.RadioButtonField(domain.RadioFieldConfig{
+								ID:         "saldo_filter_manje_nula",
+								Name:       "saldo_filter",
+								Value:      "manje_nula",
+								LabelText:  "saldo_<_0",
+								IsSelected: false,
+							}, translator)
+							@tmpl.RadioButtonField(domain.RadioFieldConfig{
+								ID:         "saldo_filter_nula",
+								Name:       "saldo_filter",
+								Value:      "nula",
+								LabelText:  "saldo_=_0",
+								IsSelected: false,
+							}, translator)
+						</div>
 					</div>
 					<!-- Obradi and Print Buttons -->
 					<div class="flex justify-end gap-1">
@@ -523,6 +532,66 @@ templ SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnP
 			</div>
 		</div>
 	</div>
+	<script>
+		(function() {
+			function setField(id, enabled) {
+				const el = document.getElementById(id);
+				if (!el) return;
+				el.disabled = !enabled;
+				['!bg-gray-300', 'text-gray-500', 'cursor-not-allowed', 'opacity-75'].forEach(c => el.classList.toggle(c, !enabled));
+			}
+			function setBtn(name, enabled) {
+				const el = document.querySelector('[name="' + name + '"]');
+				if (!el) return;
+				el.disabled = !enabled;
+				['!bg-gray-300', 'text-gray-500', 'cursor-not-allowed', 'opacity-75'].forEach(c => el.classList.toggle(c, !enabled));
+			}
+			function applyTipIzvestaja(val) {
+				const kontoOn  = val === 'analitika' || val === 'subsintetika' || val === 'sintetika';
+				const sifreOn  = val === 'analitika' || val === 'klasa_sifra';
+				const klasaOn  = val === 'klasa_sifra' || val === 'klasa_subsintetika';
+				setField('odkonta',  kontoOn);  setBtn('search-odkonta',  kontoOn);
+				setField('dokonta',  kontoOn);  setBtn('search-dokonta',  kontoOn);
+				setField('odsifre',  sifreOn);  setBtn('search-odsifre',  sifreOn);
+				setField('dosifre',  sifreOn);  setBtn('search-dosifre',  sifreOn);
+				setField('cbx_klasa', klasaOn);
+			}
+			function applySaldoFilter(val) {
+				const saldoOn = val === 'vece_nula' || val === 'manje_nula';
+				setField('odsalda', saldoOn);
+				setField('dosalda', saldoOn);
+				const od = document.getElementById('odsalda');
+				const dod = document.getElementById('dosalda');
+				if (!od || !dod) return;
+				if (val === 'vece_nula') {
+					od.value  = '0.01';
+					dod.value = '9999999999999.99';
+				} else if (val === 'manje_nula') {
+					od.value  = '-9999999999999.99';
+					dod.value = '-0.01';
+				} else {
+					od.value  = '0';
+					dod.value = '0';
+				}
+			}
+			function init() {
+				const sel = document.getElementById('cbx_tipizvestaja');
+				if (!sel) return;
+				sel.addEventListener('change', function() { applyTipIzvestaja(this.value); });
+				applyTipIzvestaja(sel.value);
+				document.querySelectorAll('input[name="saldo_filter"]').forEach(function(r) {
+					r.addEventListener('change', function() { applySaldoFilter(this.value); });
+				});
+				const checked = document.querySelector('input[name="saldo_filter"]:checked');
+				applySaldoFilter(checked ? checked.value : '');
+			}
+			if (document.readyState === 'loading') {
+				document.addEventListener('DOMContentLoaded', init);
+			} else {
+				init();
+			}
+		})();
+	</script>
 }
 
 // Tab 3 - Salda partneri
@@ -539,8 +608,8 @@ templ SaldaPartneri(tabs domain.TabData, tblPartneri domain.TableData, inputCont
 			<div class="grid grid-cols-2 gap-1 min-h-0 h-full">
 				<!-- Left Column - Partner List (Full Height) -->
 				<div class="border bg-blue-100 border border-blue-400 p-1 mt-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative">
-					<div class="text-blue-800 font-bold text-xs mb-1 border-b border-gray-400 pb-1 flex-shrink-0">
-						{ translator.Title("Partneri") }
+					<div class="text-blue-800 font-bold text-xs mb-1 border-b border-gray-400 pb-1 flex-shrink-0 flex justify-between items-center">
+						<span>{ translator.Title("Partneri") }</span>
 					</div>
 					@tmpl.LoadingSpinner()
 					@tmpl.Search_Part(tblPartneri, inputControl)
@@ -551,6 +620,86 @@ templ SaldaPartneri(tabs domain.TabData, tblPartneri domain.TableData, inputCont
 				</div>
 				<!-- Right Column - Two Stacked Sections -->
 				<div id="saldapartneri-detalji" class="flex flex-col h-full gap-1 overflow-hidden"></div>
+				<div id="dialog-salda-partneri-stampa" class="flex flex-col h-full gap-1"></div>
+			</div>
+		</div>
+	</div>
+	<script>
+		(function() {
+			function clickFirstPartnerRow() {
+				const firstRow = document.querySelector('#saldapartneri-table tbody tr');
+				if (firstRow) firstRow.click();
+			}
+			if (document.readyState === 'loading') {
+				document.addEventListener('DOMContentLoaded', function() { setTimeout(clickFirstPartnerRow, 300); });
+			} else {
+				setTimeout(clickFirstPartnerRow, 300);
+			}
+		})();
+	</script>
+}
+
+templ SaldaPartneriStampaDialog(dialog domain.Dialog, btnPrint, btnCancel, btnClose domain.Button, translator *i18n.Service) {
+	<div id={ dialog.Id } class={ common.ClassMainDialogDiv }>
+		<div class="bg-white rounded-lg shadow-2xl relative animate-fade-in w-auto min-w-[380px]">
+			<!-- Title Bar -->
+			<div class="bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg">
+				<h2 class="text-lg font-semibold ml-4">{ translator.Title(dialog.Title) }</h2>
+				@tmpl.CloseButton(btnClose)
+			</div>
+			<!-- Content -->
+			<div class="p-2 space-y-1">
+				<!-- Checkboxes -->
+				<div class="flex items-center gap-2">
+					<input type="checkbox" id="stampaj-detalje" name="stampajdetalje" class="h-4 w-4"/>
+					<label for="stampaj-detalje" class="text-sm">{ translator.Label("Stampaj detalje") }</label>
+				</div>
+				<div class="flex items-center gap-2 pb-4">
+					<input type="checkbox" id="novi-partner-nova-strana" name="novipartnernova" class="h-4 w-4"/>
+					<label for="novi-partner-nova-strana" class="text-sm">{ translator.Label("Novi partner nova strana") }</label>
+				</div>
+				<!-- Sifra Range -->
+				<div class="flex items-center gap-1">
+					@tmpl.LabelField(domain.LabelFieldConfig{
+						ID:         "odsifre",
+						LabelText:  translator.Label("Počev od sifre"),
+						ClassLabel: common.ClassLabel + " w-36",
+					})
+					@tmpl.TextInputField(domain.InputFieldConfig{
+						ID:         "odsifre",
+						Name:       "odsifre",
+						FieldType:  "text",
+						Disabled:   false,
+						ClassInput: common.ClassInputTextEnabled + " w-24",
+						Value:      "00",
+						MaxLength:  "6",
+						OnFocus:    "clearFieldError",
+						OnInput:    "clearFieldError",
+					})
+				</div>
+				<div class="flex items-center gap-1 pb-4">
+					@tmpl.LabelField(domain.LabelFieldConfig{
+						ID:         "dosifre",
+						LabelText:  translator.Label("Zaključno sa sifrom"),
+						ClassLabel: common.ClassLabel + " w-36",
+					})
+					@tmpl.TextInputField(domain.InputFieldConfig{
+						ID:         "dosifre",
+						Name:       "dosifre",
+						FieldType:  "text",
+						Disabled:   false,
+						ClassInput: common.ClassInputTextEnabled + " w-24",
+						Value:      "999999",
+						MaxLength:  "6",
+						OnFocus:    "clearFieldError",
+						OnInput:    "clearFieldError",
+					})
+				</div>
+			</div>
+			<!-- Buttons -->
+			<div class="flex justify-end gap-1 px-4 pb-4">
+				@tmpl.Search_PartPrintButton(btnPrint)
+				@tmpl.CancelButton(btnCancel, translator)
 			</div>
 		</div>
 	</div>
@@ -635,7 +784,7 @@ templ SaldaPartneriPrelomljeno(tabs domain.TabData, tbl domain.TableData, btnObr
 					<!-- Obradi Button -->
 					<div class="flex justify-end gap-1">
 						@tmpl.FormObradaButton(btnObrada, translator)
-						@tmpl.PrintButton(btnPrint, translator)
+						@tmpl.Search_PartPrintButton(btnPrint)
 					</div>
 				</div>
 				<!-- Right Column - Summary Totals -->
@@ -922,7 +1071,7 @@ templ SaldaKlase5i6analiticki(tabs domain.TabData, tbl domain.TableData, btnObra
 						<!-- Buttons on the right -->
 						<div class="flex items-center space-x-1">
 							@tmpl.FormObradaButton(btnObrada, translator)
-							@tmpl.PrintButton(btnPrint, translator)
+							@tmpl.Search_PartPrintButton(btnPrint)
 						</div>
 					</div>
 				</div>
@@ -1097,7 +1246,7 @@ templ SaldaKlase5i6MT(tabs domain.TabData, tbl domain.TableData, btnObrada, btnP
 						<!-- Buttons on the right -->
 						<div class="flex items-center space-x-1">
 							@tmpl.FormObradaButton(btnObrada, translator)
-							@tmpl.PrintButton(btnPrint, translator)
+							@tmpl.Search_PartPrintButton(btnPrint)
 						</div>
 					</div>
 				</div>
@@ -1515,7 +1664,7 @@ templ ChartScript() {
 		});
 
 		// Enable/disable sifra field based on tipkonta selection
-		function toggleSifraField() {
+		function enableDisableField() {
 			const checkedRadio = document.querySelector('input[name="tipkonta"]:checked');
 			if (!checkedRadio) return;
 			
@@ -1535,6 +1684,8 @@ templ ChartScript() {
 			}
 			if (sifraSearchBtn) {
 				sifraSearchBtn.disabled = !isAnalitika;
+				sifraSearchBtn.classList.toggle('cursor-pointer', isAnalitika);
+				sifraSearchBtn.classList.toggle('cursor-not-allowed', !isAnalitika);
 			}
 		}
 		
@@ -1546,7 +1697,7 @@ templ ChartScript() {
 		// Use event delegation for radio button changes
 		document.addEventListener('change', function(evt) {
 			if (evt.target.name === 'tipkonta') {
-				toggleSifraField();
+				enableDisableField();
 			}
 		});
 
@@ -1554,7 +1705,7 @@ templ ChartScript() {
 		document.addEventListener('htmx:afterSwap', function(evt) {
 			const targetId = evt.detail.target.id;
 			if (targetId === 'tab1') {
-				setTimeout(toggleSifraField, 50);
+				setTimeout(enableDisableField, 50);
 			}
 		});
 	</script>

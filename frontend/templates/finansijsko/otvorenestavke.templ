@@ -9,20 +9,22 @@ import (
 )
 
 // Main entry point for Otvorene stavke module
-templ OtvoreneStavkeMain(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObrada, btnStampaOpomena domain.Button, searchInput, searchInputDetalji domain.InputControl, translator *i18n.Service, gnGod int) {
+templ OtvoreneStavkeMain(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObrada, btnPrint, btnOpomene domain.Button, searchInput, searchInputDetalji domain.InputControl, translator *i18n.Service, gnGod int) {
 	<!-- Tab Content -->
 	<div id="tab-content" class="flex flex-col h-full">
-		@OtvoreneStavke(tabs, tblPartneri, tblDetalji, btnObrada, btnStampaOpomena, searchInput, searchInputDetalji, translator, gnGod)
+		@OtvoreneStavke(tabs, tblPartneri, tblDetalji, btnObrada, btnPrint, btnOpomene, searchInput, searchInputDetalji, translator, gnGod)
 	</div>
 	@tmpl.ShowSearchDialogScript()
 	@tmpl.HideDropdownScript()
 	@tmpl.ClearFieldErrorScript()
 	@tmpl.HandleDblClickKontoSelectionScript()
 	@tmpl.SpinnerScript()
+	@tmpl.OpenPrintWithParamsScript()¨
+	@tmpl.HandleBackendResponseScript()
 }
 
 // Tab 1 - Otvorene stavke (Open Items)
-templ OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObrada, btnStampaOpomena domain.Button, searchInput, searchInputDetalji domain.InputControl, translator *i18n.Service, gnGod int) {
+templ OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObrada, btnPrint, btnOpomene domain.Button, searchInput, searchInputDetalji domain.InputControl, translator *i18n.Service, gnGod int) {
 	<!-- Container with full height -->
 	<div class="flex flex-col h-full">
 		<!-- Tab Navigation -->
@@ -199,7 +201,8 @@ templ OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDa
 					<!-- Buttons -->
 					<div class="flex justify-end gap-1 mt-auto">
 						@tmpl.FormObradaButton(btnObrada, translator)
-						@tmpl.PrintButton(btnStampaOpomena, translator)
+						@tmpl.Search_PartPrintButton(btnPrint)
+						@tmpl.Search_PartPrintButton(btnOpomene)
 					</div>
 				</div>
 			</div>
@@ -223,7 +226,23 @@ templ OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDa
 	</div>
 	<!-- Dialog display container-->
 	<div id="dialog-content"></div>
+	<input type="hidden" id="otvorene-selected-id" name="otvorene-selected-id" value=""/>
+	<input type="hidden" id="stampaotvstavke" name="stampaotvstavke" value="otvstavke"/>
+	<input type="hidden" id="stampaopomena" name="stampaopomena" value="opomena"/>
 	<script>
+			// Capture selected row ID from hx-get attribute when a partneri row is clicked
+		if (!window.otvoreneStavkeRowIdListener) {
+			window.otvoreneStavkeRowIdListener = true;
+			document.addEventListener('htmx:beforeRequest', function(evt) {
+				const el = evt.detail.elt;
+				if (el.tagName === 'TR' && el.closest('#otvorenestavketable')) {
+					const hxGet = el.getAttribute('hx-get') || '';
+					const id = hxGet.split('/').pop();
+					const input = document.getElementById('otvorene-selected-id');
+					if (input && id) input.value = id;
+				}
+			});
+		}
 		// Listen for table data to be loaded via HTMX, then auto-click first row once
 		if (!window.otvoreneStavkeFirstRowListener) {
 			window.otvoreneStavkeFirstRowListener = true;
@@ -249,7 +268,7 @@ templ OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDa
 }
 
 // Tab 2 - Zatvorene stavke (Closed Items)
-templ ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObrada, btnStampaOpomena domain.Button, searchInput, searchInputDetalji domain.InputControl, translator *i18n.Service, gnGod int) {
+templ ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObrada, btnStampa domain.Button, searchInput, searchInputDetalji domain.InputControl, translator *i18n.Service, gnGod int) {
 	<!-- Container with full height -->
 	<div class="flex flex-col h-full">
 		<!-- Tab Navigation -->
@@ -387,7 +406,7 @@ templ ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableD
 					<!-- Od datuma -->
 					<div class="flex items-center gap-1 mb-1">
 						@tmpl.LabelField(domain.LabelFieldConfig{
-							ID:         "lbloddatuma",
+							ID:         "oddatuma",
 							LabelText:  translator.Label("Od datuma"),
 							ClassLabel: common.ClassLabel + " w-44",
 						})
@@ -406,7 +425,7 @@ templ ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableD
 					<!-- Do datuma -->
 					<div class="flex items-center gap-1 mb-1">
 						@tmpl.LabelField(domain.LabelFieldConfig{
-							ID:         "lbldodatuma",
+							ID:         "dodatuma",
 							LabelText:  translator.Label("Do datuma"),
 							ClassLabel: common.ClassLabel + " w-44",
 						})
@@ -425,7 +444,7 @@ templ ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableD
 					<!-- Buttons -->
 					<div class="flex justify-end gap-1 mt-auto">
 						@tmpl.FormObradaButton(btnObrada, translator)
-						@tmpl.PrintButton(btnStampaOpomena, translator)
+						@tmpl.Search_PartPrintButton(btnStampa)
 					</div>
 				</div>
 			</div>
@@ -449,7 +468,22 @@ templ ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableD
 	</div>
 	<!-- Dialog display container-->
 	<div id="dialog-content"></div>
+	<!-- Hidden input: holds the ID of the currently selected partneri row for use by the print button -->
+	<input type="hidden" id="zatvorene-selected-id" name="zatvorene-selected-id" value=""/>
 	<script>
+		// Capture selected row ID from hx-get attribute when a partneri row is clicked
+		if (!window.zatvoreneStavkeRowIdListener) {
+			window.zatvoreneStavkeRowIdListener = true;
+			document.addEventListener('htmx:beforeRequest', function(evt) {
+				const el = evt.detail.elt;
+				if (el.tagName === 'TR' && el.closest('#zatvorenestavketable')) {
+					const hxGet = el.getAttribute('hx-get') || '';
+					const id = hxGet.split('/').pop();
+					const input = document.getElementById('zatvorene-selected-id');
+					if (input && id) input.value = id;
+				}
+			});
+		}
 		// Listen for table data to be loaded via HTMX, then auto-click first row once
 		if (!window.zatvoreneStavkeFirstRowListener) {
 			window.zatvoreneStavkeFirstRowListener = true;
@@ -479,7 +513,7 @@ templ ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableD
 }
 
 // Tab 3 - IOS (Izvod otvorenih stavki - Statement of Open Items)
-templ IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObrada, btnStampaOpomena domain.Button, searchInput, searchInputDetalji domain.InputControl, translator *i18n.Service, gnGod int) {
+templ IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObrada, btnIOS domain.Button, searchInput, searchInputDetalji domain.InputControl, translator *i18n.Service, gnGod int) {
 	<!-- Container with full height -->
 	<div class="flex flex-col h-full">
 		<!-- Tab Navigation -->
@@ -617,7 +651,7 @@ templ IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObra
 					<!-- Od datuma -->
 					<div class="flex items-center gap-1 mb-1">
 						@tmpl.LabelField(domain.LabelFieldConfig{
-							ID:         "lbloddatuma",
+							ID:         "oddatuma",
 							LabelText:  translator.Label("Od datuma"),
 							ClassLabel: common.ClassLabel + " w-44",
 						})
@@ -656,7 +690,7 @@ templ IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObra
 					<!-- Buttons -->
 					<div class="flex justify-end gap-1 mt-auto">
 						@tmpl.FormObradaButton(btnObrada, translator)
-						@tmpl.PrintButton(btnStampaOpomena, translator)
+						@tmpl.Search_PartPrintButton(btnIOS)
 					</div>
 				</div>
 			</div>
@@ -680,7 +714,22 @@ templ IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObra
 	</div>
 	<!-- Dialog display container-->
 	<div id="dialog-content"></div>
+	<!-- Hidden input: holds the ID of the currently selected IOS partneri row for use by the print button -->
+	<input type="hidden" id="ios-selected-id" name="ios-selected-id" value=""/>
 	<script>
+		// Capture selected row ID from hx-get attribute when a partneri row is clicked
+		if (!window.iosRowIdListener) {
+			window.iosRowIdListener = true;
+			document.addEventListener('htmx:beforeRequest', function(evt) {
+				const el = evt.detail.elt;
+				if (el.tagName === 'TR' && el.closest('#iostable')) {
+					const hxGet = el.getAttribute('hx-get') || '';
+					const id = hxGet.split('/').pop();
+					const input = document.getElementById('ios-selected-id');
+					if (input && id) input.value = id;
+				}
+			});
+		}
 		// Listen for table data to be loaded via HTMX, then auto-click first row once
 		if (!window.iosFirstRowListener) {
 			window.iosFirstRowListener = true;
@@ -905,7 +954,7 @@ templ DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Ta
 							<!-- Buttons -->
 							<div class="flex gap-1">
 								@tmpl.FormObradaButton(btnObrada, translator)
-								@tmpl.PrintButton(btnPrint, translator)
+								@tmpl.Search_PartPrintButton(btnPrint)
 							</div>
 						</div>
 					</div>
@@ -991,7 +1040,7 @@ templ PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnO
 					<div class="flex gap-1">
 						<div class="flex items-center gap-1 flex-1">
 							@tmpl.LabelField(domain.LabelFieldConfig{
-								ID:         "lblodkonta",
+								ID:         "odkonta",
 								LabelText:  translator.Label("Od konta"),
 								ClassLabel: common.ClassLabel + " w-24",
 							})
@@ -1011,7 +1060,7 @@ templ PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnO
 						</div>
 						<div class="flex items-center gap-1 flex-1">
 							@tmpl.LabelField(domain.LabelFieldConfig{
-								ID:         "lblodsifre",
+								ID:         "odsifre",
 								LabelText:  translator.Label("Od šifre"),
 								ClassLabel: common.ClassLabel + " w-24",
 							})
@@ -1034,7 +1083,7 @@ templ PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnO
 					<div class="flex gap-1">
 						<div class="flex items-center gap-1 flex-1">
 							@tmpl.LabelField(domain.LabelFieldConfig{
-								ID:         "lbldokonta",
+								ID:         "dokonta",
 								LabelText:  translator.Label("Do konta"),
 								ClassLabel: common.ClassLabel + " w-24",
 							})
@@ -1054,7 +1103,7 @@ templ PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnO
 						</div>
 						<div class="flex items-center gap-1 flex-1">
 							@tmpl.LabelField(domain.LabelFieldConfig{
-								ID:         "lbldosifre",
+								ID:         "dosifre",
 								LabelText:  translator.Label("Do šifre"),
 								ClassLabel: common.ClassLabel + " w-24",
 							})
@@ -1080,7 +1129,7 @@ templ PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnO
 					<div class="flex items-center gap-1">
 						<div class="flex items-center gap-1">
 							@tmpl.LabelField(domain.LabelFieldConfig{
-								ID:         "lblstanjenadan",
+								ID:         "stanjenadan",
 								LabelText:  translator.Label("Stanje na dan"),
 								ClassLabel: common.ClassLabel + " w-44",
 							})
@@ -1109,7 +1158,7 @@ templ PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnO
 					<!-- Row 2: Buttons - Bottom Right Aligned -->
 					<div class="flex items-center gap-1">
 						@tmpl.LabelField(domain.LabelFieldConfig{
-							ID:         "lblbperiodi",
+							ID:         "bperiodi",
 							LabelText:  translator.Label("Periodi"),
 							ClassLabel: common.ClassLabel + " w-44",
 						})
@@ -1181,7 +1230,7 @@ templ PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnO
 					</div>
 					<div class="flex gap-1 justify-end mt-auto">
 						@tmpl.FormObradaButton(btnObrada, translator)
-						@tmpl.PrintButton(btnPrint, translator)
+						@tmpl.Search_PartPrintButton(btnPrint)
 					</div>
 				</div>
 			</div>
@@ -1260,7 +1309,7 @@ templ PregledDospelogDugaPoStarosti(tabs domain.TabData, tbl domain.TableData, b
 					<div class="flex gap-1">
 						<div class="flex items-center gap-1 flex-1">
 							@tmpl.LabelField(domain.LabelFieldConfig{
-								ID:         "lblodkonta",
+								ID:         "odkonta",
 								LabelText:  translator.Label("Od konta"),
 								ClassLabel: common.ClassLabel + " w-24",
 							})
@@ -1280,7 +1329,7 @@ templ PregledDospelogDugaPoStarosti(tabs domain.TabData, tbl domain.TableData, b
 						</div>
 						<div class="flex items-center gap-1 flex-1">
 							@tmpl.LabelField(domain.LabelFieldConfig{
-								ID:         "lblodsifre",
+								ID:         "odsifre",
 								LabelText:  translator.Label("Od šifre"),
 								ClassLabel: common.ClassLabel + " w-24",
 							})
@@ -1303,7 +1352,7 @@ templ PregledDospelogDugaPoStarosti(tabs domain.TabData, tbl domain.TableData, b
 					<div class="flex gap-1">
 						<div class="flex items-center gap-1 flex-1">
 							@tmpl.LabelField(domain.LabelFieldConfig{
-								ID:         "lbldokonta",
+								ID:         "dokonta",
 								LabelText:  translator.Label("Do konta"),
 								ClassLabel: common.ClassLabel + " w-24",
 							})
@@ -1323,7 +1372,7 @@ templ PregledDospelogDugaPoStarosti(tabs domain.TabData, tbl domain.TableData, b
 						</div>
 						<div class="flex items-center gap-1 flex-1">
 							@tmpl.LabelField(domain.LabelFieldConfig{
-								ID:         "lbldosifre",
+								ID:         "dosifre",
 								LabelText:  translator.Label("Do šifre"),
 								ClassLabel: common.ClassLabel + " w-24",
 							})
@@ -1349,7 +1398,7 @@ templ PregledDospelogDugaPoStarosti(tabs domain.TabData, tbl domain.TableData, b
 					<div class="flex items-center gap-1">
 						<div class="flex items-center gap-1">
 							@tmpl.LabelField(domain.LabelFieldConfig{
-								ID:         "lblstanjenadan",
+								ID:         "stanjenadan",
 								LabelText:  translator.Label("Stanje na dan"),
 								ClassLabel: common.ClassLabel + " w-44",
 							})
@@ -1363,20 +1412,11 @@ templ PregledDospelogDugaPoStarosti(tabs domain.TabData, tbl domain.TableData, b
 								TabIndex:   "7",
 							})
 						</div>
-						@tmpl.CheckboxField(domain.CheckboxFieldConfig{
-							ID:            "stampaj_samo_zbir",
-							Name:          "stampaj_samo_zbir",
-							LabelText:     "Štampaj samo zbir za partnera",
-							Disabled:      false,
-							ClassLabel:    common.ClassCheckboxLabel,
-							ClassCheckbox: common.ClassCheckbox + " ml-10",
-							TabIndex:      "8",
-						}, translator)
 					</div>
 					<!-- Row 2: Buttons - Bottom Right Aligned -->
 					<div class="flex items-center gap-1">
 						@tmpl.LabelField(domain.LabelFieldConfig{
-							ID:         "lblbperiodi",
+							ID:         "periodi",
 							LabelText:  translator.Label("Periodi"),
 							ClassLabel: common.ClassLabel + " w-44",
 						})
@@ -1448,7 +1488,7 @@ templ PregledDospelogDugaPoStarosti(tabs domain.TabData, tbl domain.TableData, b
 					</div>
 					<div class="flex gap-1 justify-end mt-auto">
 						@tmpl.FormObradaButton(btnObrada, translator)
-						@tmpl.PrintButton(btnPrint, translator)
+						@tmpl.Search_PartPrintButton(btnPrint)
 					</div>
 				</div>
 			</div>
@@ -1471,7 +1511,7 @@ templ PregledDospelogDugaPoStarosti(tabs domain.TabData, tbl domain.TableData, b
 }
 
 // Tab 7 - Povezivanje računa i uplata (Account and Payment Linking)
-templ PovezivanjRacunaIUplata(tabs domain.TabData, tbl domain.TableData, translator *i18n.Service, gnGod int) {
+templ PovezivanjeRacunaUplata(tabs domain.TabData, tblPartneri, tblUplate, tblFakture domain.TableData, btnObrada, btnZatvaranje, btnNazad domain.Button, searchPartneri domain.InputControl, translator *i18n.Service, gnGod int) {
 	<!-- Container with full height -->
 	<div class="flex flex-col h-full">
 		<!-- Tab Navigation -->
@@ -1481,151 +1521,220 @@ templ PovezivanjRacunaIUplata(tabs domain.TabData, tbl domain.TableData, transla
 		<!-- Tab 7 Content -->
 		<div id="tab7" class="flex-1 min-h-0 flex flex-col gap-1">
 			<!-- Parameters Section -->
-			<div class="border bg-yellow-100 border-yellow-400 p-2 rounded-lg">
-				<div class="flex items-center gap-2">
-					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "konto7",
-						LabelText:  translator.Label("Konto"),
-						ClassLabel: "text-sm font-medium w-16",
-					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:         "konto7",
-						Name:       "konto7",
-						FieldType:  "text",
-						ClassInput: common.ClassInputTextEnabled + " w-32",
-						TabIndex:   "1",
-					})
-					<button class="px-2 py-1 bg-blue-500 text-white text-xs rounded">F3</button>
-					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "pocetakkonta7",
-						LabelText:  translator.Label("Početak od šifre"),
-						ClassLabel: "text-sm font-medium w-28",
-					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:         "pocetakkonta7",
-						Name:       "pocetakkonta7",
-						FieldType:  "text",
-						Value:      "00",
-						ClassInput: common.ClassInputTextEnabled + " w-20",
-						TabIndex:   "2",
-					})
-					<button class="px-2 py-1 bg-blue-500 text-white text-xs rounded">F3</button>
-					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "zavrsenisifra7",
-						LabelText:  translator.Label("Završeno sa šifrom"),
-						ClassLabel: "text-sm font-medium w-28",
-					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:         "zavrsenisifra7",
-						Name:       "zavrsenisifra7",
-						FieldType:  "text",
-						Value:      "999999",
-						ClassInput: common.ClassInputTextEnabled + " w-20",
-						TabIndex:   "3",
-					})
-					<button class="px-2 py-1 bg-blue-500 text-white text-xs rounded">F3</button>
-					<div class="flex-1"></div>
-					<button class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded">{ translator.Label("Obradi") }</button>
-					<button class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded">{ translator.Label("Zatv. račun") }</button>
-					<button class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded">{ translator.Label("Nazad") }</button>
-				</div>
-				<div class="flex items-center gap-2 mt-2">
-					<div class="border bg-white border-gray-300 p-2 rounded w-32">
-						<div class="text-xs font-bold mb-2">{ translator.Label("Iznosi") }</div>
-						<div class="flex justify-between text-xs mb-1">
-							<span>{ translator.Label("Iznos za razdoblje") }</span>
-							<span class="font-bold">0,00</span>
-						</div>
-						<div class="flex justify-between text-xs mb-1">
-							<span>{ translator.Label("Selektovani iznos") }</span>
-							<span class="font-bold">0,00</span>
-						</div>
-						<div class="flex justify-between text-xs">
-							<span>{ translator.Label("Ostatak") }</span>
-							<span class="font-bold">0,00</span>
-						</div>
+			<div class="border bg-blue-100 border-blue-400 mt-1 p-1 rounded-lg flex flex-row gap-2">
+				<!-- Left: Input fields -->
+				<div class="flex flex-col gap-1 flex-1">
+					<!-- Konto Field -->
+					<div class="flex items-center gap-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "konto",
+							LabelText:  translator.Label("Konto"),
+							ClassLabel: common.ClassLabel + " w-32",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:           "konto",
+							Name:         "konto",
+							FieldType:    "text",
+							Disabled:     false,
+							ClassInput:   common.ClassInputTextEnabled + " w-24",
+							BlurEndpoint: "api/fkpl/trazikonto",
+							HxTarget:     "kontonaziv",
+							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "2", "destfield": "konto"}`,
+							HxInclude:    "this",
+							MinLength:    "2",
+							MaxLength:    "6",
+							TabIndex:     "1",
+							OnInput:      "clearFieldError",
+						})
+						@tmpl.SearchButton(domain.SearchButtonConfig{
+							ID:          "btn-search-konto",
+							Name:        "search-konto",
+							HxUrl:       "/api/promet/searchbutton",
+							HxTarget:    "#search-dropdown",
+							HxSwap:      "innerHTML",
+							HxVals:      `{"vkonta": "2", "destfield": "konto"}`,
+							ClassButton: common.ClassButton,
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "kontonaziv",
+							Name:       "kontonaziv",
+							FieldType:  "text",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextDisabled + " w-full",
+						})
 					</div>
+					<!-- Počev od šifre -->
+					<div class="flex items-center gap-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "odsifre",
+							LabelText:  translator.Label("Počev od šifre"),
+							ClassLabel: common.ClassLabel + " w-32",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:           "odsifre",
+							Name:         "odsifre",
+							FieldType:    "text",
+							Disabled:     false,
+							ClassInput:   common.ClassInputTextEnabled + " w-24",
+							BlurEndpoint: "api/fkpl/trazikonto",
+							HxTarget:     "odsifrenaziv",
+							HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('odsifre').value, "vkonta": "1", "destfield": "odsifre"}`,
+							HxInclude:    "this",
+							Value:        "00",
+							MinLength:    "2",
+							MaxLength:    "6",
+							TabIndex:     "2",
+							OnInput:      "clearFieldError",
+						})
+						@tmpl.SearchButton(domain.SearchButtonConfig{
+							ID:          "btn-search-odsifre",
+							Name:        "search-odsifre",
+							HxUrl:       "/api/promet/searchbutton",
+							HxTarget:    "#search-dropdown",
+							HxSwap:      "innerHTML",
+							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1", "destfield": "odsifre"}`,
+							ClassButton: common.ClassButton,
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "odsifrenaziv",
+							Name:       "odsifrenaziv",
+							FieldType:  "text",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextDisabled + " w-full",
+						})
+					</div>
+					<!-- Zaključno sa šifrom -->
+					<div class="flex items-center gap-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "dosifre",
+							LabelText:  translator.Label("Zaključno sa šifrom"),
+							ClassLabel: common.ClassLabel + " w-32",
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:           "dosifre",
+							Name:         "dosifre",
+							FieldType:    "text",
+							Disabled:     false,
+							ClassInput:   common.ClassInputTextEnabled + " w-24",
+							BlurEndpoint: "api/fkpl/trazikonto",
+							HxTarget:     "dosifrenaziv",
+							HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('dosifre').value, "vkonta": "1", "destfield": "dosifre"}`,
+							HxInclude:    "this",
+							Value:        "999999",
+							MinLength:    "2",
+							MaxLength:    "6",
+							TabIndex:     "3",
+							OnInput:      "clearFieldError",
+						})
+						@tmpl.SearchButton(domain.SearchButtonConfig{
+							ID:          "btn-search-dosifre",
+							Name:        "search-dosifre",
+							HxUrl:       "/api/promet/searchbutton",
+							HxTarget:    "#search-dropdown",
+							HxSwap:      "innerHTML",
+							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1", "destfield": "dosifre"}`,
+							ClassButton: common.ClassButton,
+						})
+						@tmpl.TextInputField(domain.InputFieldConfig{
+							ID:         "dosifrenaziv",
+							Name:       "dosifrenaziv",
+							FieldType:  "text",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextDisabled + " w-full",
+						})
+					</div>
+				</div>
+				<!-- Right: Buttons + Iznosi fieldset -->
+				<div class="flex flex-col gap-1 flex-1">
+					<!-- Buttons row -->
+					<div class="flex items-center gap-1 justify-end">
+						@tmpl.FormObradaButton(btnObrada, translator)
+						@tmpl.FormObradaButton(btnZatvaranje, translator)
+						@tmpl.Button(btnNazad)
+					</div>
+					<!-- Iznosi fieldset - single row, fills parent -->
+					<fieldset class="px-2 pt-0 w-full">
+						<div class="grid grid-cols-3 gap-2">
+							<div class="flex flex-col gap-0.5">
+								@tmpl.LabelField(domain.LabelFieldConfig{
+									ID:         "iznoszarazvodjenje",
+									LabelText:  translator.Label("Iznos za razvođenje"),
+									ClassLabel: common.ClassLabel + " text-blue-800 font-bold text-xs",
+								})
+								@tmpl.NumericInputField(domain.InputFieldConfig{
+									ID:            "iznoszarazvodjenje",
+									Name:          "iznoszarazvodjenje",
+									Disabled:      true,
+									ClassInput:    common.ClassInputNumericDisabled + " text-blue-800 font-bold text-sm w-full",
+									DecimalPlaces: 2,
+									MaxLength:     "18",
+									TabIndex:      "-1",
+								})
+							</div>
+							<div class="flex flex-col gap-0.5">
+								@tmpl.LabelField(domain.LabelFieldConfig{
+									ID:         "selelektovaniiznos",
+									LabelText:  translator.Label("Selektovani iznos"),
+									ClassLabel: common.ClassLabel + " text-blue-800 font-bold text-xs",
+								})
+								@tmpl.NumericInputField(domain.InputFieldConfig{
+									ID:            "selelektovaniiznos",
+									Name:          "selelektovaniiznos",
+									Disabled:      true,
+									ClassInput:    common.ClassInputNumericDisabled + " text-blue-800 font-bold text-sm w-full",
+									DecimalPlaces: 2,
+									MaxLength:     "18",
+									TabIndex:      "-1",
+								})
+							</div>
+							<div class="flex flex-col gap-0.5">
+								@tmpl.LabelField(domain.LabelFieldConfig{
+									ID:         "ostatak",
+									LabelText:  translator.Label("Ostatak"),
+									ClassLabel: common.ClassLabel + " text-blue-800 font-bold text-xs",
+								})
+								@tmpl.NumericInputField(domain.InputFieldConfig{
+									ID:            "ostatak",
+									Name:          "ostatak",
+									Disabled:      true,
+									ClassInput:    common.ClassInputNumericDisabled + " text-blue-800 font-bold text-sm w-full",
+									DecimalPlaces: 2,
+									MaxLength:     "18",
+									TabIndex:      "-1",
+								})
+							</div>
+						</div>
+					</fieldset>
 				</div>
 			</div>
-			<!-- Three-column layout -->
+			<!-- Data Section: Two Columns -->
 			<div class="flex flex-row gap-1 flex-1 min-h-0">
-				<!-- Partners Column -->
-				<div class="border bg-blue-100 border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden w-1/3">
-					<div class="text-sm font-bold mb-1 px-1">{ translator.Label("PARTNERI") }</div>
-					<div class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
-						<table class="w-full text-xs border-collapse">
-							<thead>
-								<tr class="bg-gray-700 text-white sticky top-0">
-									<th class="border border-gray-400 px-1 py-1 text-left">Konto</th>
-									<th class="border border-gray-400 px-1 py-1 text-left">Sifra</th>
-									<th class="border border-gray-400 px-1 py-1 text-left">Naziv</th>
-								</tr>
-							</thead>
-							<tbody>
-								<!-- Partner rows -->
-							</tbody>
-						</table>
-					</div>
+				<!-- Left Column: PARTNERI -->
+				<div class="flex flex-col border bg-blue-100 border-blue-400 p-1 rounded-lg min-h-0 overflow-hidden w-1/2">
+					@tmpl.LoadingSpinner()
+					@tmpl.Search_Part(tblPartneri, searchPartneri)
+					@tmpl.Table(tblPartneri, translator)
 				</div>
-				<!-- Payments/Documents Columns -->
-				<div class="flex flex-col gap-1 flex-1 min-h-0">
-					<!-- Payments Column -->
-					<div class="border bg-blue-100 border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
-						<div class="text-sm font-bold mb-1 px-1">{ translator.Label("UPLATE") }</div>
-						<div class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
-							<table class="w-full text-xs border-collapse">
-								<thead>
-									<tr class="bg-gray-700 text-white sticky top-0">
-										<th class="border border-gray-400 px-1 py-1 text-left">Broj naloga</th>
-										<th class="border border-gray-400 px-1 py-1 text-left">Datum naloga</th>
-										<th class="border border-gray-400 px-1 py-1 text-left">Dokument</th>
-										<th class="border border-gray-400 px-1 py-1 text-left">Datum dokumenta</th>
-										<th class="border border-gray-400 px-1 py-1 text-left">Dospece</th>
-									</tr>
-								</thead>
-								<tbody>
-									<!-- Payment rows -->
-								</tbody>
-							</table>
-						</div>
-						<div class="border-t border-gray-400 p-1 bg-gray-100 font-bold text-xs">
-							<span>TOTAL:</span>
-						</div>
+				<!-- Right Column: UPLATE + RAČUNI stacked -->
+				<div class="flex flex-col gap-1 w-1/2 min-h-0">
+					<!-- UPLATE -->
+					<div class="flex flex-col border bg-blue-100 border-blue-400 p-1 rounded-lg min-h-0 overflow-hidden flex-1">
+						@tmpl.Table(tblUplate, translator)
 					</div>
-					<!-- Invoices/Accounts Column -->
-					<div class="border bg-blue-100 border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
-						<div class="text-sm font-bold mb-1 px-1">{ translator.Label("RAČUNI") }</div>
-						<div class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
-							<table class="w-full text-xs border-collapse">
-								<thead>
-									<tr class="bg-green-600 text-white sticky top-0">
-										<th class="border border-gray-400 px-1 py-1 text-left">Broj naloga</th>
-										<th class="border border-gray-400 px-1 py-1 text-left">Broj dokumenta</th>
-										<th class="border border-gray-400 px-1 py-1 text-left">Rodov. godina</th>
-										<th class="border border-gray-400 px-1 py-1 text-left">OJ</th>
-										<th class="border border-gray-400 px-1 py-1 text-left">Datum dokumenta</th>
-										<th class="border border-gray-400 px-1 py-1 text-left">Rok</th>
-										<th class="border border-gray-400 px-1 py-1 text-left">Dospeće</th>
-										<th class="border border-gray-400 px-1 py-1 text-left">Iznos računa</th>
-										<th class="border border-gray-400 px-1 py-1 text-left">Nezatvoren</th>
-										<th class="border border-gray-400 px-1 py-1 text-left">Kompenzacije</th>
-										<th class="border border-gray-400 px-1 py-1 text-left">Iznos za zatvaranje</th>
-									</tr>
-								</thead>
-								<tbody>
-									<!-- Account rows -->
-								</tbody>
-							</table>
-						</div>
-						<div class="border-t border-gray-400 p-1 bg-gray-100 font-bold text-xs">
-							<span>TOTAL:</span>
-						</div>
+					<!-- RAČUNI -->
+					<div class="flex flex-col border bg-blue-100 border-blue-400 p-1 rounded-lg min-h-0 overflow-hidden flex-1">
+						@tmpl.Table(tblFakture, translator)
 					</div>
 				</div>
 			</div>
 		</div>
 	</div>
-	<!-- Dialog display container-->
-	<div id="dialog-content"></div>
-	@tmpl.ShowMessageScript()
+	<!-- Dialog display container -->
+	<div id="pov-dialog-content"></div>
+	@tmpl.ClearFieldErrorScript()
+	@tmpl.SpinnerScript()
+	<div id="search-dropdown"></div>
+	@tmpl.ShowSearchDialogScript()
+	@tmpl.HideDropdownScript()
+	@tmpl.HandleDblClickKontoSelectionScript()
 }

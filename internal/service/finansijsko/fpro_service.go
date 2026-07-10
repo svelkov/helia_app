@@ -332,7 +332,7 @@ func (s *FproResource) SaveNalogStavke(ctx context.Context, fproStavke *domain.F
 	fields := s.mapFieldsToValues(fproStavke)
 	sqlQuery := ""
 	args := []interface{}{}
-	if fproStavke.IDFkpl != 0 {
+	if fproStavke.IDFpro != 0 {
 		sqlQuery, args = qb.BuildUpdate(ctx, fields, common.IDfpro, fproStavke.IDFpro)
 	} else {
 		sqlQuery, args = qb.BuildInsert(ctx, fields, common.IDfpro)

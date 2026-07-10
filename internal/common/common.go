@@ -167,8 +167,10 @@ func SetTableRows[T any](table *domain.TableData, entities []T, tableFields []do
 func SetTableButtons(table *domain.TableData, entityURLPrefix string) *domain.TableData {
 	table.BtnAdd.IsVisible = true                                                   // Show Add button in the table header
 	table.BtnAdd.HxActionURL = fmt.Sprintf("%s/confirm-add", entityURLPrefix)       // Set the URL for Add button
+	table.BtnUpdate.HxRequestType = "GET"                                           // Set Update button to use GET request
 	table.BtnUpdate.IsVisible = true                                                // Show Update button in the table header
 	table.BtnUpdate.HxActionURL = fmt.Sprintf("%s/confirm-update", entityURLPrefix) // Set the URL for Update button
+	table.BtnDelete.HxRequestType = "GET"                                           // Set Delete button to use DELETE request
 	table.BtnDelete.IsVisible = true                                                // Show Delete button in the table header
 	table.BtnDelete.HxActionURL = fmt.Sprintf("%s/confirm-delete", entityURLPrefix) // Set the URL for Delete button
 	table.BtnPrint.IsVisible = true                                                 // Show Print button in the table header
@@ -190,6 +192,18 @@ func SetButton(Id, LabelText, Icon, HxActionURL, HxTarget, HxSwap, HxRequestType
 		IsVisible:        IsVisible,
 		BtnClass:         class,
 		HxOnAfterRequest: afterRequest,
+	}
+}
+func SetPrintButton(Id, LabelText, Icon, HxActionURL, HxRequestType string, IsVisible bool, class string, dataFields string) domain.Button {
+	return domain.Button{
+		Id:            Id,
+		LabelText:     LabelText,
+		Icon:          Icon,
+		HxActionURL:   HxActionURL,
+		HxRequestType: HxRequestType,
+		IsVisible:     IsVisible,
+		BtnClass:      class,
+		DataFields:    dataFields,
 	}
 }
 
@@ -327,23 +341,9 @@ func detectSystemLanguage() language.Tag {
 //***************************************
 
 // GetTranslatedSubMenus returns submenus with translated names
-func GetTranslatedSubMenus(menuData domain.MenuDataItems, menuName, lang string) []domain.SubMenuItem {
-	subMenus := GetSubMenus(menuData, menuName)
-	if subMenus == nil {
-		return nil
-	}
+func GetTranslatedSubMenus(menuData domain.MenuDataItems, menuName string, subMenus []domain.SubMenuItem, lang string) []domain.SubMenuItem {
 
 	return translateSubMenus(subMenus, menuName, lang)
-}
-
-// GetSubMenus returns original submenus (your existing function)
-func GetSubMenus(menuData domain.MenuDataItems, targetMenu string) []domain.SubMenuItem {
-	for _, menuItem := range menuData.MenuItems {
-		if menuItem.Name == targetMenu {
-			return menuItem.SubMenus
-		}
-	}
-	return nil
 }
 
 // translateSubMenus translates submenu names
@@ -351,9 +351,9 @@ func translateSubMenus(subMenus []domain.SubMenuItem, menuName, lang string) []d
 	translated := make([]domain.SubMenuItem, len(subMenus))
 	for i, subMenu := range subMenus {
 		translated[i] = domain.SubMenuItem{
-			Name: getSubmenuKey(menuName, subMenu.Name),
-			URL:  subMenu.URL,
-			Icon: subMenu.Icon,
+			SubMenuName: getSubmenuKey(menuName, subMenu.SubMenuName),
+			Url:         subMenu.Url,
+			Icon:        subMenu.Icon,
 		}
 	}
 	return translated
@@ -525,6 +525,8 @@ func SetupTablePagination(tbl *domain.TableData, currentPage, pageSize int) {
 // Returns true if the operation was to get total records only (no data processing needed)
 func SetTableTotalRecords(tbl *domain.TableData, totalRecords, pageSize int) {
 	tbl.Pagination.TotalRecords = totalRecords
+	tbl.Pagination.StartRecord = (tbl.Pagination.CurrentPage-1)*pageSize + 1
+	tbl.Pagination.EndRecord = tbl.Pagination.StartRecord + pageSize - 1
 	tbl.Pagination.TotalPages = (totalRecords + pageSize - 1) / pageSize
 	if tbl.Pagination.EndRecord > totalRecords {
 		tbl.Pagination.EndRecord = totalRecords
@@ -542,4 +544,20 @@ func SetActiveTab(tabs *domain.TabData, tabName string) {
 			tabs.Tabs[i].IsActive = false
 		}
 	}
+}
+
+// BilansCharAt returns the rune at position i in s as a string, or " " if out of range.
+func BilansCharAt(s string, i int) string {
+	r := []rune(s)
+	if i < len(r) {
+		return string(r[i])
+	}
+	return " "
+}
+
+func SetUnlockButtonProperties(btn *domain.Button, url string) {
+	btn.HxActionURL = url
+	btn.HxInclude = "input[name='_csrf']"
+	btn.HxRequestType = "POST"
+	btn.HxOnAfterRequest = "closeDialog"
 }

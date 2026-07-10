@@ -43,7 +43,7 @@ templ HandleDialogResponseScript(dialogName string) {
 						const field = document.querySelector(`input[name="${error.field}"]`);
 						if (field) {
 							field.classList.add('border-red-500'); // Add red border to invalid field
-							// Add error message below the input field
+							// Add error message immediately after the input field
 							const errorMessage = document.createElement('p');
 							errorMessage.className = 'text-red-500 text-xs mt-1 input-error';
 							errorMessage.textContent = error.message;
@@ -73,6 +73,74 @@ templ HandleDialogResponseScript(dialogName string) {
 		}
 	</script>
 }
+
+templ HandleBackendResponseScript() {
+	<script>
+		function handleBackendResponse() {
+			try {
+				// Get the response text from the backend
+				const responseText = event.detail.xhr.responseText;
+				// Check if response is empty or not JSON
+				if (!responseText || responseText.trim() === '') {
+					return;
+				}
+				
+				// Try to parse as JSON
+				let response;
+				try {
+					response = JSON.parse(responseText);
+				} catch (parseError) {
+					console.error("Response is not valid JSON...");
+					return;
+				}
+				
+				// If we get here, response is valid JSON
+				// Clear previous error messages
+				document.querySelectorAll('.input-error').forEach(el => el.remove());
+				document.querySelectorAll('.field-error-inline').forEach(el => {
+					el.textContent = '';
+				});
+				document.querySelectorAll('input').forEach(input => {
+					input.classList.remove('border-red-500');
+				});
+				
+				// Handle validation errors
+				if (response.errors && response.errors.length > 0) {
+					//console.log("Errors found:", response.errors)
+					// Loop through errors and show error messages for each field
+					response.errors.forEach(error => {
+						const field = document.querySelector(`input[name="${error.field}"]`);
+						if (field) {
+							field.classList.add('border-red-500'); // Add red border to invalid field
+							// Add error message immediately after the input field
+							const errorMessage = document.createElement('p');
+							errorMessage.className = 'text-red-500 text-xs mt-1 input-error';
+							errorMessage.textContent = error.message;
+							field.insertAdjacentElement('afterend', errorMessage);
+						}
+					});
+					return;
+				}
+				
+				// Handle success response
+				if (response.success) {
+					showMessage(response.message);
+					return;
+				}
+				
+				// Handle error response
+				if (!response.success) {
+					showMessage(response.message, true);
+					return;
+				}	
+				
+			} catch (e) {
+				console.error("Unexpected error in handleBackendResponse():", e);
+			}
+		}
+	</script>
+}
+
 
 templ ClearFormScript() {
 	<script>
@@ -268,15 +336,11 @@ templ HandleTipdokAfterRequestScript() {
 templ SelectRowScript() {
 	<script>
 		function selectRow(row) {
-		   // console.log("Row clicked:", row);
-		   // Deselect any previously selected row by removing the 'bg-blue-300' class
-			const selectedRow = document.querySelector('.bg-blue-300');
-			if (selectedRow) {
-			selectedRow.classList.remove('bg-blue-300');
+			const prev = document.querySelector('tr.table-row-selected');
+			if (prev) {
+				prev.classList.remove('table-row-selected');
 			}
-
-			// Select the clicked row
-			row.classList.add('bg-blue-300');
+			row.classList.add('table-row-selected');
 		}
 	</script>
 }
@@ -353,29 +417,32 @@ templ HandleFormResponseScript() {
 			// Guard: ignore requests from child non-button elements (e.g. combos, inputs with hx-trigger)
 			// but allow requests from submit buttons (which have their own hx-post/put and bubble up).
 			const _elt = event.detail?.elt;
+			console.log("handleFormResponse: event =", event, "requestType =", requestType, "dialogId =", dialogId);
 			if (event.currentTarget && _elt !== event.currentTarget && _elt?.tagName !== 'BUTTON') return;
 			const xhr  = event.detail.xhr;
 			const ok   = xhr.status === 200 || xhr.status === 201;
 			const resp = _dlg_tryJSON(xhr.responseText);
 			console.log("Parsed response:", resp);
 			// HTML response → new sub-dialog was injected by HTMX into a staging slot
-			if (ok && !resp) {
-				_dlg_openSubDialog(dialogId, event.detail.target);
-				return;
-			}
-
+			// if (ok && !resp) {
+			// 	console.log("HTML response detected, opening sub-dialog if present...");
+			// 	_dlg_openSubDialog(dialogId, event.detail.target);
+			// 	return;
+			// }
+			console.log("JSON response detected, processing..."); 
 			const msgDiv = _dlg_msgDiv(dialogId);
+			console.log("Message div:", msgDiv);
 			if (msgDiv) { msgDiv.classList.add('hidden'); msgDiv.textContent = ''; }
 
 			// Validation field errors
 			if (resp?.errors?.length) {
 				_dlg_fieldErrors(resp.errors);
+				if (resp?.message) _dlg_msg(msgDiv, resp.message, true);
 				return;
 			}
 
 			// Failure (HTTP error or explicit success:false)
 			if (!ok || resp?.success === false) {
-				console.log("Request failed:", resp?.message || xhr.statusText);
 				_dlg_msg(msgDiv, resp?.message, true);
 				return;
 			}
@@ -425,14 +492,14 @@ templ HandleFormResponseScript() {
 		}
 
 		function _dlg_msg(div, text, isError) {
-			if (!div) { if (isError) alert(text); return; }
+			// if (!div) { if (isError) alert(text); return; }
 			// Measure the sibling form width BEFORE unhiding, so a long message
 			// cannot expand the w-auto dialog box beyond its natural content width.
 			const siblingForm = div.closest('form') || div.parentElement?.querySelector('form');
 			const maxW = siblingForm ? siblingForm.offsetWidth : 0;
 			div.className = (isError
-				? 'p-2 text-sm text-red-800 bg-red-100 border border-red-300'
-				: 'p-2 text-sm text-green-800 bg-green-100 border border-green-300')
+				? 'p-1 text-sm text-red-800 bg-red-100 border border-red-300'
+				: 'p-1 text-sm text-green-800 bg-green-100 border border-green-300')
 				+ ' rounded-lg w-full';
 			if (maxW > 0) div.style.maxWidth = maxW + 'px';
 			div.style.wordBreak = 'break-all';
@@ -454,18 +521,10 @@ templ HandleFormResponseScript() {
 				input.classList.add('border-red-500');
 				const inline = document.getElementById(`${field}-error`);
 				if (inline) { inline.textContent = message; return; }
-				let wrap = input.closest('.input-error-wrapper');
-				if (!wrap) {
-					wrap = document.createElement('div');
-					wrap.className = 'input-error-wrapper flex flex-col';
-					wrap.style.maxWidth = input.offsetWidth + 'px';
-					input.parentNode.insertBefore(wrap, input);
-					wrap.appendChild(input);
-				}
 				const p = document.createElement('p');
-				p.className = 'text-red-500 text-xs mt-1 input-error whitespace-normal break-words';
+				p.className = 'text-red-500 text-xs input-error whitespace-nowrap';
 				p.textContent = message;
-				wrap.appendChild(p);
+				input.parentElement.appendChild(p);
 			});
 		}
 	</script>
@@ -603,8 +662,10 @@ templ ShowSearchDialogScript() {
 templ ShowMessageScript() {
 	<script>
 		function showMessage(message, isError = false) {
-			const infoMessage = document.getElementById('dialog-form-message');
-
+			const infoMessage = document.getElementById('dialog-form-message') || document.querySelector('.info-message');
+			if (!infoMessage) {
+				return;
+			}
 			// Set the message text
 			infoMessage.textContent = message;
 			// Reset previous styles
@@ -727,9 +788,14 @@ templ PopulateFproUpdateFormScript() {
 			overlay.style.cssText = 'position:absolute;inset:0;background:rgba(255,255,255,0.55);cursor:not-allowed;z-index:10;border-radius:inherit;';
 			container.appendChild(overlay);
 			const btnCancel = document.getElementById('btn-stavke-cancel');
+			const btnPrint = document.getElementById('btn-print-stavke');
 			if (btnCancel) {
 				btnCancel.disabled = false;
 				btnCancel.classList.remove('opacity-50', 'cursor-not-allowed');
+			}
+			if (btnPrint) {
+				btnPrint.disabled = false;
+				btnPrint.classList.remove('opacity-50', 'cursor-not-allowed');
 			}
 			//_dlg_msg(document.getElementById('dialog-form-message'), 'Uređivanje u toku — sačuvajte stavku', false);
 
@@ -813,5 +879,140 @@ templ SearchPopupScript() {
                 });
             }
         });
+    </script>
+}
+
+templ OpenPrintWithParamsScript() {
+	<script>
+		function openPrintWithParams(event, el) {
+			event.preventDefault();
+
+			const baseUrl = el.dataset.url;
+			const fields = (el.dataset.fields || "")
+				.split(",")
+				.map(x => x.trim())
+				.filter(Boolean);
+
+			const params = new URLSearchParams();
+
+			for (const fieldId of fields) {
+				const field = document.getElementById(fieldId) || document.querySelector(`[name="${fieldId}"]`);
+				if (!field) continue;
+
+				const name = field.name || field.id;
+
+				if (field.type === "checkbox") {
+					params.append(name, field.checked ? "true" : "false");
+					continue;
+				}
+
+				if (field.type === "radio") {
+					const checked = document.querySelector(`input[name="${field.name}"]:checked`);
+					if (checked) {
+						params.append(field.name, checked.value);
+					}
+					continue;
+				}
+
+				params.append(name, field.value);
+			}
+			console.log("Constructed URL parameters:", params.toString());
+			const separator = baseUrl.includes("?") ? "&" : "?";
+			const finalUrl = params.toString()
+				? baseUrl + separator + params.toString()
+				: baseUrl;
+			console.log("Opening print URL:", finalUrl);
+			window.open(finalUrl, "_blank", "noopener,noreferrer");
+		}
+	</script>
+}
+
+templ FileSelectScript() {
+	<script>
+        let selectedFile = null;
+        let fileContent = null;
+
+        async function openFileDialog() {
+            try {
+                const [fileHandle] = await window.showOpenFilePicker({
+                    types: [{
+                        description: 'CSV Files',
+                        accept: { 'text/csv': ['.csv'] }
+                    }]
+                });
+
+                const file = await fileHandle.getFile();
+                processFile(file);
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    console.error('Error:', err);
+                    showFileMessage('<span class="text-red-600">❌ Error opening file</span>');
+                }
+            }
+        }
+
+        function processFile(file) {
+        	const filepathInput = document.getElementById('filepath');
+			const fileInputData = document.getElementById('file-input-data');
+			
+			console.log('processFile called with:', file?.name);
+			
+			if (!file) {
+				filepathInput.value = '';
+				selectedFile = null;
+				fileContent = null;
+				if (fileInputData) fileInputData.value = '';
+				showFileMessage('<span class="text-red-600">❌ No file selected</span>');
+				return;
+			}
+
+			selectedFile = file;
+			filepathInput.value = file.name;
+
+			// Extract file extension
+			const fileExtension = file.name.split('.').pop().toLowerCase();
+			console.log('Extracted extension:', fileExtension);
+			const fileTypeInput = document.getElementById('file-type-data');
+			console.log('fileTypeInput element found:', !!fileTypeInput);
+			if (fileTypeInput) {
+				fileTypeInput.value = fileExtension;
+				console.log('✅ File type set to:', fileTypeInput.value);
+			} else {
+				console.error('❌ file-type-data input not found');
+			}
+
+			const reader = new FileReader();
+			reader.onload = function(e) {
+				fileContent = e.target.result;
+				// Store the file data in the hidden input
+				if (fileInputData) {
+					fileInputData.value = fileContent;
+					console.log('✅ File content stored - size:', fileContent.length, 'bytes');
+					console.log('Hidden input value length:', document.getElementById('file-input-data')?.value?.length);
+				} else {
+					console.error('❌ Hidden input #file-input-data not found');
+				}
+				showFileMessage(`<span class="text-green-600">✅ File loaded: ${file.name} (${(file.size / 1024).toFixed(2)} KB)</span>`);
+			};
+			
+			reader.onerror = function(e) {
+				console.error('❌ FileReader error:', e);
+				fileContent = null;
+				if (fileInputData) fileInputData.value = '';
+				showFileMessage('<span class="text-red-600">❌ Error reading file</span>');
+			};
+			
+			console.log('Starting FileReader...');
+			reader.readAsText(file);
+        }
+
+        function showFileMessage(message) {
+            const statusElement = document.getElementById('file-status-message');
+            if (statusElement) {
+                statusElement.innerHTML = message;
+            } else {
+                console.log(message);
+            }
+        }
     </script>
 }

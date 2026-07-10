@@ -12,7 +12,7 @@ templ ReportTable(tbl domain.TableData, translator *i18n.Service) {
 }
 
 templ ReportTableInternal(tbl domain.TableData, translator *i18n.Service) {
-	<table class="w-full border-collapse report-table mt-4 print:w-full print:text-[9pt] print:table-auto print:border-collapse">
+	<table class="w-full border-collapse report-table mt-2 print:w-full print:text-[10pt] print:table-auto print:border-collapse">
 		@ReportTableHeader(tbl, translator)
 		@ReportTableBody(tbl, tbl.URLPrefix, translator)
 		if tbl.HasTotals {
@@ -24,17 +24,11 @@ templ ReportTableInternal(tbl domain.TableData, translator *i18n.Service) {
 // ReportTableHeader renders the table header
 templ ReportTableHeader(tbl domain.TableData, translator *i18n.Service) {
 	<thead>
-		<tr class="bg-blue-900 text-white print:bg-gray-200 print:text-black print:page-break-inside-auto">
+		<tr class="bg-blue-900 text-white text-center print:bg-gray-200 print:text-black print:page-break-inside-auto">
 			for _, header := range tbl.Headers {
 				<th
 					scope="col"
-					class={ fmt.Sprintf("border border-gray-300 px-3 py-2 text-center text-sm font-semibold print:bg-gray-200 print:text-black print:px-2 print:py-1 %s",
-						func() string {
-							if header.TextAlign != "" {
-								return fmt.Sprintf("text-%s", header.TextAlign)
-							}
-							return ""
-						}()) }
+					class="border border-gray-300 px-1 text-center text-sm font-semibold print:bg-gray-200 print:text-black print:px-1 print:text-align-center"
 				>
 					if header.Params != nil {
 						{ translator.LabelWithParams(header.Label, header.Params) }
@@ -62,7 +56,7 @@ templ ReportTableBody(tbl domain.TableData, urlPrefix string, translator *i18n.S
 			>
 				for j, cell := range row.Fields {
 					<td
-						class={ fmt.Sprintf("border border-gray-300 px-3 py-2 text-sm print:text-[9pt] print:px-2 print:py-1 print:break-words print:whitespace-normal %s",
+						class={ fmt.Sprintf("border border-gray-300 px-1 text-sm print:text-[10pt] print:px-1 print:break-words print:whitespace-normal %s",
 							func() string {
 								if tbl.Headers[j].TextAlign != "" {
 									return fmt.Sprintf("text-%s", tbl.Headers[j].TextAlign)
@@ -84,11 +78,11 @@ templ ReportTableFooter(tbl domain.TableData) {
 		<tr class="bg-blue-50 font-bold border-t-2 border-blue-900 print:bg-blue-50 print:page-break-inside-avoid">
 			for j, header := range tbl.Headers {
 				if header.IncludeInTotals {
-					<td class="border border-gray-300 px-3 py-2 text-sm print:text-[9pt] print:px-2 print:py-1 font-bold text-right">
+					<td class="border border-gray-300 px-1 text-sm print:text-[10pt] print:px-1 font-bold text-right">
 						{ tbl.Totals[j] }
 					</td>
 				} else {
-					<td class="border border-gray-300 px-3 py-2 text-sm print:text-[9pt] print:px-2 print:py-1 bg-blue-50"></td>
+					<td class="border border-gray-300 px-1 text-sm print:text-[10pt] print:px-1 bg-blue-50"></td>
 				}
 			}
 		</tr>
@@ -105,7 +99,7 @@ templ ReportTableWithGroups(tbl domain.TableData, groupColumn string, translator
 					<!-- Check if this is a group header (indicated by a special marker in the first cell) -->
 					if row.Fields[0] != "" && i == 0 {
 						<tr class="bg-gray-200 print:bg-gray-200">
-							<td colspan={ fmt.Sprintf("%d", len(tbl.Headers)) } class="border border-gray-300 px-3 py-2 font-bold text-sm print:text-sm">
+							<td colspan={ fmt.Sprintf("%d", len(tbl.Headers)) } class="border border-gray-300 px-1 font-bold text-sm print:text-sm">
 								Group: { row.Fields[0] }
 							</td>
 						</tr>
@@ -121,7 +115,7 @@ templ ReportTableWithGroups(tbl domain.TableData, groupColumn string, translator
 					>
 						for j, cell := range row.Fields {
 							<td
-								class={ fmt.Sprintf("border border-gray-300 px-3 py-2 text-sm print:text-sm %s",
+								class={ fmt.Sprintf("border border-gray-300 px-1 text-sm print:text-sm %s",
 									func() string {
 										if tbl.Headers[j].TextAlign != "" {
 											return fmt.Sprintf("text-%s", tbl.Headers[j].TextAlign)
@@ -148,7 +142,7 @@ templ SimpleReportTable(headers []string, rows [][]string) {
 		<thead>
 			<tr class="bg-blue-900 text-white print:bg-blue-900">
 				for _, header := range headers {
-					<th class="border border-gray-300 px-3 py-2 text-left text-sm font-semibold print:text-sm">
+					<th class="border border-gray-300 px-1 text-left text-sm font-semibold print:text-sm">
 						{ header }
 					</th>
 				}
@@ -165,7 +159,7 @@ templ SimpleReportTable(headers []string, rows [][]string) {
 					}() }
 				>
 					for _, cell := range row {
-						<td class="border border-gray-300 px-3 py-2 text-sm print:text-sm">
+						<td class="border border-gray-300 px-1 text-sm print:text-sm">
 							{ cell }
 						</td>
 					}

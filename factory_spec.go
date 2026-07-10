@@ -21,7 +21,6 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	"helia/config"
-	"helia/frontend/templates"
 	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
@@ -90,8 +89,8 @@ func factory() {
 	srv := &http.Server{
 		Addr:           ":" + cfg.Port,
 		Handler:        router,
-		ReadTimeout:    10 * time.Second,
-		WriteTimeout:   10 * time.Second,
+		ReadTimeout:    60 * time.Second,
+		WriteTimeout:   60 * time.Second,
 		MaxHeaderBytes: 1 << 20,
 	}
 
@@ -103,7 +102,7 @@ func factory() {
 		}
 	}()
 
-	// Setup periodic cleanup (every 5 minutes)
+	// Setup periodic cleanup (every 30 minutes)
 	go func() {
 		ticker := time.NewTicker(30 * time.Minute)
 		defer ticker.Stop()
@@ -186,7 +185,7 @@ func setupRouter(translator *i18n.Service, jwtSecret []byte, sessionSecret strin
 	// Load HTML templates
 	//router.LoadHTMLGlob("./frontend/templates/*")
 	// API routes
-	router.Handle("GET", "/get-menu", getMenuHandler)
+	//router.Handle("GET", "/get-menu", getMenuHandler)
 
 	return router
 
@@ -303,30 +302,6 @@ func connectDB(cfg config.Config) (db.Database, error) {
 	return db, nil
 }
 
-// getMenuHandler handles menu requests
-func getMenuHandler(c *gin.Context) {
-	// Get user session from context
-	userSession := domain.GetSessionFromContext(c)
-	if userSession == nil {
-		c.JSON(401, gin.H{"error": "User session not found"})
-		return
-	}
-
-	menuName := c.Query("menuName")
-	subMenus := common.GetTranslatedSubMenus(domain.MenuData, menuName, userSession.Language)
-	if subMenus == nil {
-		c.JSON(404, gin.H{"error": "Menu not found"})
-		return
-	}
-
-	// Render templ component directly
-	component := templates.Side_nav(subMenus)
-	if err := component.Render(c.Request.Context(), c.Writer); err != nil {
-		c.JSON(500, gin.H{"error": "Error rendering template"})
-		return
-	}
-}
-
 // registerGenericEntity registers a generic entity's routes
 func registerGenericEntity[T any](
 	r *gin.Engine,
@@ -338,10 +313,11 @@ func registerGenericEntity[T any](
 	cfg config.Config,
 	lm *middleware.LockMiddleware, // Optional lock middleware for entities that require it
 ) {
+	fvrRepo := repository.NewBaseRepository[domain.Fvr](db, "fvr")
 	repo := repository.NewBaseRepository[T](db, tableName)
 	validator := validation.NewRuleBasedValidator[T](validationRules)
 	svc := service.NewBaseService(*repo, validator)
-	h := handler.NewGenericHandler(svc, fields, config, cfg, lm)
+	h := handler.NewGenericHandler(svc, fields, config, cfg, lm, fvrRepo)
 	h.RegisterRoutes(r)
 }
 
@@ -556,6 +532,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 		lm,
 	)
 
+	fvrRepo := repository.NewBaseRepository[domain.Fvr](db, "fvr")
 	// Complex entities with custom services (non-generic)
 	//partneri
 	tekracuniRepo := repository.NewBaseRepository[domain.TekRacuni](db, "tekracuni")
@@ -570,7 +547,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 	fkplRepo := repository.NewBaseRepository[domain.Fkpl](db, "fkpl")
 	fkplValidator := validation.NewRuleBasedValidator[domain.Fkpl](finval.FkplValidationRules())
 	baseService := service.NewBaseService(*fkplRepo, fkplValidator)
-	fkplService := finservice.NewFkplResource(baseService, *fkplRepo, cfg)
+	fkplService := finservice.NewFkplResource(baseService, fkplRepo, fvrRepo, tipAnalitikeRepo, cfg)
 	fkplHandler := fin.NewFkplHandler(baseService, fkplService, cfg, lm)
 	fkplHandler.AddRoutes(r)
 
@@ -621,7 +598,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 		*repository.NewBaseRepository[domain.Sf](db, "sf"),
 		*repository.NewBaseRepository[domain.Orgjed](db, "orgjed"),
 		*repository.NewBaseRepository[domain.Mestotr](db, "mestotr"),
-		*repository.NewBaseRepository[domain.Fvr](db, "fvr"),
+		repository.NewBaseRepository[domain.Fvr](db, "fvr"),
 		*fproRepo,
 		"",
 		cfg,
@@ -636,6 +613,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 		service.NewBaseService(*prometRepo, prometValidator),
 		prometRepo,
 		fkplRepo,
+		fvrRepo,
 	)
 	prometHandler := fin.NewPrometHandler(prometService, cfg)
 	prometHandler.AddRoutes(r)
@@ -651,6 +629,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 		repository.NewBaseRepository[domain.Partneri](db, "partneri"),
 		repository.NewBaseRepository[domain.SaldaPartnerDto](db, "saldapartneridto"),
 		repository.NewBaseRepository[domain.SaldaKomercijalistiDto](db, "saldakomercijalistidto"),
+		repository.NewBaseRepository[domain.Fvr](db, "fvr"),
 	)
 
 	saldaHandler := fin.NewSaldaHandler(saldaService, cfg)
@@ -672,11 +651,13 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 	kompHandler.AddRoutes(r)
 
 	// DnevnikHandler
+
 	dnevnikRepo := repository.NewBaseRepository[domain.DnevnikDto](db, "fpro")
 	dnevnikValidator := validation.NewValidator[domain.DnevnikDto]()
 	dnevnikService := finservice.NewDnevnikService(
 		service.NewBaseService(*dnevnikRepo, dnevnikValidator),
 		fproRepo,
+		fvrRepo,
 	)
 	dnevnikHandler := fin.NewDnevnikHandler(dnevnikService, cfg)
 	dnevnikHandler.AddRoutes(r)
@@ -684,37 +665,44 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 	// Izvodi
 	izvhdrRepo := repository.NewBaseRepository[domain.Fizvzag](db, "fizvzag")
 	izvdetRepo := repository.NewBaseRepository[domain.Fizvdet](db, "fizvdet")
-	izvodiService := finservice.NewIzvodiResource(izvhdrRepo, izvdetRepo, cfg)
+	bankeRepo := repository.NewBaseRepository[domain.Banke](db, "banke")
+	tipdokRepo := repository.NewBaseRepository[domain.Tipdok](db, "tipdok")
+	izvodiService := finservice.NewIzvodiResource(izvhdrRepo, izvdetRepo, bankeRepo, tipdokRepo, fnalRepo, cfg)
 	izvodiHandler := fin.NewIzvodiHandler(izvodiService, cfg, lm)
 	izvodiHandler.AddRoutes(r)
 
 	// BasicHandler
-	fvrRepo := repository.NewBaseRepository[domain.Fvr](db, "fvr")
 	fvrService := finservice.NewFvrService(fvrRepo)
+	menuService := service.NewMenuService(
+		repository.NewBaseRepository[domain.MenuItem](db, "menuitems"),
+		repository.NewBaseRepository[domain.SubMenuItem](db, "submenuitems"),
+	)
+
 	basicHandler := handler.NewBasicHandler(
 		c,
+		menuService,
 		IsLoggedIn,
-		domain.MenuData,
-		[]domain.SubMenuItem{},
 		fvrService,
 		cfg,
 	)
 	basicHandler.AddRoutes(r)
 
 	// PoreskeKnjige
-	kirRepo := repository.NewBaseRepository[domain.KirPayload](db, "kirpayload")
-	kprRepo := repository.NewBaseRepository[domain.KprPayload](db, "kprpayload")
+	kirRepo := repository.NewBaseRepository[domain.Kir](db, "kir")
+	kprRepo := repository.NewBaseRepository[domain.Kpr](db, "kpr")
 	fvknjracRepo := repository.NewBaseRepository[domain.Fvknjrac](db, "fvknjrac")
-	kirValidator := validation.NewRuleBasedValidator[domain.KirPayload]([]validation.ValidationRule{})
-	kprValidator := validation.NewRuleBasedValidator[domain.KprPayload]([]validation.ValidationRule{})
+	kirValidator := validation.NewRuleBasedValidator[domain.Kir]([]validation.ValidationRule{})
+	kprValidator := validation.NewRuleBasedValidator[domain.Kpr]([]validation.ValidationRule{})
 	kirService := service.NewBaseService(*kirRepo, kirValidator)
 	kprService := service.NewBaseService(*kprRepo, kprValidator)
-	poreskeKnjigeService := finservice.NewPoreskeKnjigeService(kirService, kprService, kirRepo, kprRepo, fvknjracRepo)
+	poreskeKnjigeService := finservice.NewPoreskeKnjigeService(kirService, kprService, kirRepo, kprRepo, fvknjracRepo, tipdokRepo, fvrRepo)
 	poreskeKnjigeHandler := fin.NewPoreskeKnjigeHandler(poreskeKnjigeService, cfg, lm)
 	poreskeKnjigeHandler.RegisterRoutes(r)
 
 	//otvorene stavke
-	otvoreneStavkeService := finservice.NewOtvoreneStavkeService(*fproRepo)
+	otvFvrRepo := repository.NewBaseRepository[domain.Fvr](db, "fvr")
+	otvPartneriRepo := repository.NewBaseRepository[domain.Partneri](db, "partneri")
+	otvoreneStavkeService := finservice.NewOtvoreneStavkeService(*fproRepo, otvFvrRepo, otvPartneriRepo)
 	otvoreneStavkeHandler := fin.NewOtvoreneStavkeHandler(otvoreneStavkeService, cfg)
 	otvoreneStavkeHandler.RegisterRoutes(r)
 
@@ -740,33 +728,40 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 		bilsService,
 		bilsRepo,
 		repository.NewBaseRepository[domain.FproDto](db, "fprodto"),
+		repository.NewBaseRepository[domain.Fvr](db, "fvr"),
+		repository.NewBaseRepository[domain.Fkpl](db, "fkpl"),
 		cfg,
 	)
 	bilansiHandler := fin.NewBilansiHandler(bilansiService, cfg, lm)
 	bilansiHandler.RegisterRoutes(r)
 
-	// EPP
-	eppSekcijeRepo := repository.NewBaseRepository[domain.EppSekcija](db, "epp_sekcije")
-	eppSekcijeValidator := validation.NewRuleBasedValidator[domain.EppSekcija]([]validation.ValidationRule{})
-	eppSekcijeService := service.NewBaseService(*eppSekcijeRepo, eppSekcijeValidator)
+	// FSEPP
+	fseppRepo := repository.NewBaseRepository[domain.Fsepp](db, "fsepp")
+	fseppValidator := validation.NewRuleBasedValidator[domain.Fsepp]([]validation.ValidationRule{})
+	fseppBaseService := service.NewBaseService(*fseppRepo, fseppValidator)
 
-	eppEvidencijaRepo := repository.NewBaseRepository[domain.EppEvidencija](db, "epp_evidencija")
-	eppEvidencijaValidator := validation.NewRuleBasedValidator[domain.EppEvidencija]([]validation.ValidationRule{})
-	eppEvidencijaService := service.NewBaseService(*eppEvidencijaRepo, eppEvidencijaValidator)
+	fseppSefKprRepo := repository.NewBaseRepository[domain.FseppSefKpr](db, "epp_sef_kpr")
+	fseppSefKprValidator := validation.NewRuleBasedValidator[domain.FseppSefKpr]([]validation.ValidationRule{})
+	fseppBaseSefKprService := service.NewBaseService(*fseppSefKprRepo, fseppSefKprValidator)
 
-	eppSefKprRepo := repository.NewBaseRepository[domain.EppSefKpr](db, "epp_sef_kpr")
-	eppSefKprValidator := validation.NewRuleBasedValidator[domain.EppSefKpr]([]validation.ValidationRule{})
-	eppSefKprService := service.NewBaseService(*eppSefKprRepo, eppSefKprValidator)
-
-	eppService := finservice.NewEppService(
-		eppSekcijeService,
-		eppEvidencijaService,
-		eppSefKprService,
-		eppSekcijeRepo,
-		eppEvidencijaRepo,
-		eppSefKprRepo,
+	fseppService := finservice.NewFseppService(
+		fseppBaseService,
+		fseppBaseSefKprService,
+		fseppRepo,
+		fseppSefKprRepo,
+		kprRepo,
 	)
-	eppHandler := fin.NewEppHandler(eppService, cfg, lm)
-	eppHandler.RegisterRoutes(r)
+	fseppHandler := fin.NewFseppHandler(fseppService, cfg, lm)
+	fseppHandler.RegisterRoutes(r)
+	// POPDV
+	popdvRepo := repository.NewBaseRepository[domain.Popdv](db, "popdv")
+	popdvValidator := validation.NewRuleBasedValidator[domain.Popdv]([]validation.ValidationRule{})
+	popdvBaseService := service.NewBaseService(*popdvRepo, popdvValidator)
 
+	popdvService := finservice.NewPopdvService(
+		popdvBaseService,
+		popdvRepo,
+	)
+	popdvHandler := fin.NewPopdvHandler(popdvService, cfg, lm)
+	popdvHandler.RegisterRoutes(r)
 }

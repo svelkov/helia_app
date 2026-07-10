@@ -28,6 +28,7 @@ type PartneriService interface {
 	GetTekuciRacuni(ctx context.Context, id int64, tbl *domain.TableData) error
 	GetTekuciRacuniTableFields() []domain.Fields
 	GetPartneriTableFields() []domain.Fields
+	GetAllPartneri(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage, pageSize int, searchText, sortBy, sortOrder string) error
 	PrepareInsertUpdateFields(partner *domain.Partneri) []domain.Fields
 	DeleteTekRacuniForPartner(ctx context.Context, partneriID int64) error
 	CreateWithTekRacuni(ctx context.Context, partner *domain.Partneri, tekRacuniList []domain.TekRacuni) (int64, error)
@@ -110,6 +111,77 @@ func (s *PartneriResource) GetAll(ctx context.Context, page int, offset int, tab
 // GetAllCustom implements NalogService.
 func (s *PartneriResource) GetAllCustom(ctx context.Context, queryText string, whereText string, args []interface{}, limitOffset string, orderBy string) (*[]domain.Partneri, error) {
 	return s.service.GetAllCustom(ctx, queryText, whereText, args, limitOffset, orderBy)
+}
+
+// GetAllCustom implements NalogService.
+func (s *PartneriResource) GetAllPartneri(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage int, pageSize int, searchText string, sortBy string, sortOrder string) error {
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		return fmt.Errorf("user session not found")
+	}
+	common.SetupTablePagination(tbl, currentPage, pageSize)
+	hasGod, hasKar := s.partneriRepo.GetHasGodHasKar()
+	qb := common.NewQueryBuilder(`SELECT  sifra,
+		naziv, adresa, pobro, mesto, pib, 
+		jmbg, bpg, index, gln, jib, coalesce(ziro, '') as ziro, matbr,
+		konta, tippdv, email, telefon, kontaktosb, budzetski, jbkjs,
+		napomena, idpartneri FROM partneri`, true)
+
+	if hasGod {
+		qb.AddEqual("partneri.god", userSession.SelectedGod)
+	}
+	if hasKar {
+		qb.AddEqual("partneri.kar", userSession.SelectedKar)
+	}
+	if searchText != "" {
+		qb.AddCustomCondition(`(LOWER(partneri.sifra) LIKE LOWER($3) OR LOWER(partneri.naziv) LIKE LOWER($3) OR LOWER(partneri.adresa)
+			 LIKE LOWER($3) OR LOWER(partneri.pobro) LIKE LOWER($3) OR LOWER(partneri.mesto) LIKE LOWER($3) OR LOWER(partneri.pib)
+			 LIKE LOWER($3) OR LOWER(partneri.jmbg) LIKE LOWER($3) OR LOWER(partneri.bpg) LIKE LOWER($3) OR LOWER(partneri.index)) `, searchText)
+	}
+	if !getTotalRecords {
+		qb.SetLimit(pageSize)
+		qb.SetOffset((currentPage - 1) * pageSize)
+	}
+
+	sqlQuery, args := qb.Build()
+	entities, err := s.partneriRepo.GetAllCustom(ctx, sqlQuery, "", args, sortBy, sortOrder)
+	if err != nil {
+		return err
+	}
+	// Set total records and pagination
+	if getTotalRecords {
+		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
+		return nil
+	}
+	for _, entity := range *entities {
+		fields := []string{
+			entity.Sifra,
+			entity.Naziv,
+			entity.Adresa,
+			fmt.Sprintf("%d", entity.PoBro),
+			entity.Mesto,
+			entity.PIB,
+			entity.JMBG,
+			entity.BPG,
+			entity.Index,
+			fmt.Sprintf("%d", entity.GLN),
+			entity.JIB,
+			entity.Ziro,
+			entity.MatBr,
+			entity.Konta,
+			fmt.Sprintf("%d", entity.TipPDV),
+			entity.Email,
+			entity.Telefon,
+			entity.KontaktOsb,
+			fmt.Sprintf("%t", entity.Budzetski),
+			entity.JBKJS,
+			entity.Napomena,
+			fmt.Sprintf("%d", entity.IDPartneri),
+		}
+		tableRow := domain.TableRow{ID: fmt.Sprintf("%d", entity.IDPartneri), Fields: fields, HasUpdate: true, HasDelete: true}
+		tbl.Rows = append(tbl.Rows, tableRow)
+	}
+	return nil
 }
 
 // GetByID implements NalogService.

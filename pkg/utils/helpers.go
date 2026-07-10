@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"context"
 	"fmt"
 	"helia/config"
 	"helia/i18n"
@@ -262,6 +263,7 @@ func GetAllEntityHelper[T any](
 		pageSize, currentPage, totalPages, totRecords,
 		cfg,
 	)
+	table.BtnPrint.DataFields = "sortBy,sortOrder"
 	table.BtnExportPDF.IsVisible = true
 	table.BtnExportExcel.IsVisible = true
 	common.SetTableRows(&table, *allEntities, tableFields, idField, entityURLPrefix, service.GetFieldCache())
@@ -384,6 +386,38 @@ func GetEntityHelper[T any](
 		return
 	}
 	c.JSON(http.StatusOK, entity)
+}
+
+// FvrRepository is the minimal interface needed to fetch FVR (company) data.
+type FvrRepository interface {
+	GetHasGodHasKar() (bool, bool)
+	GetAllCustom(ctx context.Context, queryText, whereText string, args []interface{}, limitOffset, sortBy string) (*[]domain.Fvr, error)
+}
+
+// GetFvrData retrieves company (FVR) data filtered by the current user session (god, kar, firma).
+func GetFvrData(ctx context.Context, repo FvrRepository) (domain.Fvr, error) {
+	session := domain.GetSessionFromStdContext(ctx)
+	if session == nil {
+		return domain.Fvr{}, fmt.Errorf("user session not found")
+	}
+	qb := common.NewQueryBuilder(`SELECT naziv, adresa, pobro, mesto, pib, matbr, sifdel FROM fvr`, true)
+	hasGod, hasKar := repo.GetHasGodHasKar()
+	if hasGod {
+		qb.AddEqual("god", session.SelectedGod)
+	}
+	if hasKar {
+		qb.AddEqual("kar", session.SelectedKar)
+	}
+	qb.AddEqual("fvr.naziv", session.Firma)
+	sqlQuery, args := qb.Build()
+	entities, err := repo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	if err != nil {
+		return domain.Fvr{}, err
+	}
+	if len(*entities) > 0 {
+		return (*entities)[0], nil
+	}
+	return domain.Fvr{}, nil
 }
 
 func SearchButtonDialog(c *gin.Context) {

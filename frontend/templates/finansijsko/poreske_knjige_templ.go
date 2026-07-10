@@ -49,6 +49,18 @@ func PoreskeKnjigeMain(tabs domain.TabData, tblIzdatih domain.TableData, btnObra
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
+		templ_7745c5c3_Err = tmpl.ShowMessageScript().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.HandleBackendResponseScript().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.SpinnerScript().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
 		return nil
 	})
 }
@@ -83,7 +95,7 @@ func KnjigaIzdatihRacuna(tabs domain.TabData, tbl domain.TableData, btnObrada, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</div><!-- Tab 1 Content --><div id=\"tab1\" class=\"flex-1 min-h-0 flex flex-col gap-1\"><!-- Parameters Section --><div class=\"border bg-blue-100 border-blue-400 mt-1 p-2 rounded-lg\"><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</div><!-- Tab 1 Content --><div id=\"tab1\" class=\"flex-1 min-h-0 flex flex-col gap-1\"><!-- Parameters Section --><div class=\"border bg-blue-100 border-blue-400 mt-1 p-2 rounded-lg\"><div class=\"grid grid-cols-[40%_25%_33%] gap-x-3 items-center\"><div class=\"col-start-1 row-start-1 flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -105,7 +117,7 @@ func KnjigaIzdatihRacuna(tabs domain.TabData, tbl domain.TableData, btnObrada, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</div><div class=\"col-start-1 row-start-2 flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -121,7 +133,7 @@ func KnjigaIzdatihRacuna(tabs domain.TabData, tbl domain.TableData, btnObrada, b
 			ID:         "oddatuma",
 			Name:       "oddatuma",
 			FieldType:  "date",
-			Value:      time.Date(gnGod, 1, 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
+			Value:      time.Date(gnGod, time.Now().Month(), 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
 			ClassInput: common.ClassInputTextEnabled + " w-32 mr-2",
 			TabIndex:   "2",
 		}).Render(ctx, templ_7745c5c3_Buffer)
@@ -140,14 +152,40 @@ func KnjigaIzdatihRacuna(tabs domain.TabData, tbl domain.TableData, btnObrada, b
 			ID:         "dodatuma",
 			Name:       "dodatuma",
 			FieldType:  "date",
-			Value:      time.Date(gnGod, 12, 31, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
+			Value:      time.Date(gnGod, time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
 			ClassInput: common.ClassInputTextEnabled + " w-32",
 			TabIndex:   "3",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<div class=\"flex-1\"></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</div><div class=\"col-start-2 row-start-1 flex items-center gap-1 whitespace-nowrap\"><input type=\"checkbox\" id=\"stampaponalozima\" name=\"stampaponalozima\" tabindex=\"4\" class=\"w-4 h-4\"> <label for=\"stampaponalozima\" class=\"text-gray-900\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var3 string
+		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Štampaj knjigu po nalozima"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 78, Col: 107}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</label></div><div class=\"col-start-2 row-start-2 flex items-center gap-1 whitespace-nowrap\"><input type=\"checkbox\" id=\"stampaponalozimazbirno\" name=\"stampaponalozimazbirno\" tabindex=\"5\" class=\"w-4 h-4\"> <label for=\"stampaponalozimazbirno\" class=\"text-gray-900\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var4 string
+		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Štampaj knjigu po nalozima zbirno"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 82, Col: 120}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</label></div><div class=\"col-start-3 row-start-2 flex items-center justify-end gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -155,11 +193,15 @@ func KnjigaIzdatihRacuna(tabs domain.TabData, tbl domain.TableData, btnObrada, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.PrintButton(btnPrint, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.Search_PartPrintButton(btnPrint).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</div></div><!-- Master Table --><div class=\"border bg-blue-100 border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</div></div></div><!-- Master Table --><div class=\"border bg-blue-100 border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -167,7 +209,7 @@ func KnjigaIzdatihRacuna(tabs domain.TabData, tbl domain.TableData, btnObrada, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<!-- Table --><div id=\"poreske-knjige-table\" class=\"flex-1 overflow-x-auto overflow-y-auto min-h-0\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<!-- Table --><div id=\"poreske-knjige-table\" class=\"flex-1 overflow-x-auto overflow-y-auto min-h-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -175,11 +217,11 @@ func KnjigaIzdatihRacuna(tabs domain.TabData, tbl domain.TableData, btnObrada, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</div></div></div></div><!-- Dialog display container--><div id=\"dialog-content\"></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</div></div></div></div><!-- Dialog display container--><div id=\"dialog-content\"></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.ShowMessageScript().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.OpenPrintWithParamsScript().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -204,12 +246,12 @@ func KnjigaPrimljenihRacuna(tabs domain.TabData, tbl domain.TableData, btnObrada
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var3 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var3 == nil {
-			templ_7745c5c3_Var3 = templ.NopComponent
+		templ_7745c5c3_Var5 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var5 == nil {
+			templ_7745c5c3_Var5 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<!-- Container with full height --><div class=\"flex flex-col h-full\"><!-- Tab Navigation --><div class=\"border-b border-blue-600\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<!-- Container with full height --><div class=\"flex flex-col h-full\"><!-- Tab Navigation --><div class=\"border-b border-blue-600\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -217,7 +259,7 @@ func KnjigaPrimljenihRacuna(tabs domain.TabData, tbl domain.TableData, btnObrada
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</div><!-- Tab 2 Content --><div id=\"tab2\" class=\"flex-1 min-h-0 flex flex-col gap-1\"><!-- Parameters Section --><div class=\"border bg-blue-100 border-blue-400 mt-1 p-2 rounded-lg\"><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</div><!-- Tab 2 Content --><div id=\"tab2\" class=\"flex-1 min-h-0 flex flex-col gap-1\"><!-- Parameters Section --><div class=\"border bg-blue-100 border-blue-400 mt-1 p-2 rounded-lg\"><div class=\"grid grid-cols-[40%_25%_33%] gap-x-3 items-center\"><div class=\"col-start-1 row-start-1 flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -239,7 +281,7 @@ func KnjigaPrimljenihRacuna(tabs domain.TabData, tbl domain.TableData, btnObrada
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</div><div class=\"col-start-1 row-start-2 flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -255,7 +297,7 @@ func KnjigaPrimljenihRacuna(tabs domain.TabData, tbl domain.TableData, btnObrada
 			ID:         "oddatuma",
 			Name:       "oddatuma",
 			FieldType:  "date",
-			Value:      time.Date(gnGod, 1, 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
+			Value:      time.Date(gnGod, time.Now().Month(), 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
 			ClassInput: common.ClassInputTextEnabled + " w-32 mr-2",
 			TabIndex:   "2",
 		}).Render(ctx, templ_7745c5c3_Buffer)
@@ -274,14 +316,14 @@ func KnjigaPrimljenihRacuna(tabs domain.TabData, tbl domain.TableData, btnObrada
 			ID:         "dodatuma",
 			Name:       "dodatuma",
 			FieldType:  "date",
-			Value:      time.Date(gnGod, 12, 31, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
+			Value:      time.Date(gnGod, time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
 			ClassInput: common.ClassInputTextEnabled + " w-32",
 			TabIndex:   "3",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "<div class=\"flex-1\"></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</div><div class=\"col-start-2 row-start-1 flex items-center gap-1 whitespace-nowrap\"><input type=\"checkbox\" id=\"stampaponalozima\" name=\"stampaponalozima\" tabindex=\"4\" class=\"w-4 h-4\"> <label for=\"stampaponalozima\" class=\"text-gray-900\">Stampaj knjigu po nalozima</label></div><div class=\"col-start-2 row-start-2 flex items-center gap-1 whitespace-nowrap\"><input type=\"checkbox\" id=\"stampaponalozimazbirno\" name=\"stampaponalozimazbirno\" tabindex=\"5\" class=\"w-4 h-4\"> <label for=\"stampaponalozimazbirno\" class=\"text-gray-900\">Stampaj knjigu po nalozima zbirno</label></div><div class=\"col-start-3 row-start-2 flex items-center justify-end gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -289,11 +331,15 @@ func KnjigaPrimljenihRacuna(tabs domain.TabData, tbl domain.TableData, btnObrada
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.PrintButton(btnPrint, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.Search_PartPrintButton(btnPrint).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</div></div><!-- Master Table --><div class=\"border bg-blue-100 border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "</div></div></div><!-- Master Table --><div class=\"border bg-blue-100 border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -301,7 +347,7 @@ func KnjigaPrimljenihRacuna(tabs domain.TabData, tbl domain.TableData, btnObrada
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<!-- Table --><div id=\"poreske-knjige-table\" class=\"flex-1 overflow-x-auto overflow-y-auto min-h-0\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<!-- Table --><div id=\"poreske-knjige-table\" class=\"flex-1 overflow-x-auto overflow-y-auto min-h-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -309,7 +355,11 @@ func KnjigaPrimljenihRacuna(tabs domain.TabData, tbl domain.TableData, btnObrada
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "</div></div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</div></div></div></div>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.OpenPrintWithParamsScript().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -334,12 +384,12 @@ func PoreskaPrijava(tabs domain.TabData, data domain.PoreskaPrijavaData, btnObra
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var4 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var4 == nil {
-			templ_7745c5c3_Var4 = templ.NopComponent
+		templ_7745c5c3_Var6 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var6 == nil {
+			templ_7745c5c3_Var6 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<!-- Container with full height --><div class=\"flex flex-col h-full\"><!-- Tab Navigation --><div class=\"border-b border-blue-600\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<!-- Container with full height --><div class=\"flex flex-col h-full\"><!-- Tab Navigation --><div class=\"border-b border-blue-600\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -347,7 +397,7 @@ func PoreskaPrijava(tabs domain.TabData, data domain.PoreskaPrijavaData, btnObra
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</div><!-- Tab 3 Content --><div id=\"tab3\" class=\"flex-1 min-h-0 flex flex-col gap-1\"><!-- Parameters Section --><div class=\"border bg-blue-100 border-blue-400 mt-1 p-1 rounded-lg\"><div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</div><!-- Tab 3 Content --><div id=\"tab3\" class=\"flex-1 min-h-0 flex flex-col gap-1\"><!-- Parameters Section --><div class=\"border bg-blue-100 border-blue-400 mt-1 p-1 rounded-lg\"><div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -391,7 +441,7 @@ func PoreskaPrijava(tabs domain.TabData, data domain.PoreskaPrijavaData, btnObra
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<div class=\"flex-1\"></div><div class=\"flex items-center space-x-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "<div class=\"flex-1\"></div><div class=\"flex items-center space-x-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -399,11 +449,11 @@ func PoreskaPrijava(tabs domain.TabData, data domain.PoreskaPrijavaData, btnObra
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.PrintButton(btnPrint, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.Search_PartPrintButton(btnPrint).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</div></div></div><!-- Data Form --><div id=\"poreska-prijava-form\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</div></div></div><!-- Data Form --><div id=\"poreska-prijava-form\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -411,7 +461,7 @@ func PoreskaPrijava(tabs domain.TabData, data domain.PoreskaPrijavaData, btnObra
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "</div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -435,12 +485,12 @@ func PoreskaPrijavaForm(data domain.PoreskaPrijavaData, translator *i18n.Service
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var5 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var5 == nil {
-			templ_7745c5c3_Var5 = templ.NopComponent
+		templ_7745c5c3_Var7 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var7 == nil {
+			templ_7745c5c3_Var7 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "<div class=\"border bg-blue-100 border-blue-400 p-2 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1\"><div class=\"flex-1 overflow-x-auto overflow-y-auto min-h-0\"><div class=\"w-full\"><!-- I. PROMET DOBARA I USLUGA --><div class=\"mb-4\"><div class=\"flex mb-2\"><div class=\"flex-1\"><h4 class=\"text-sm font-bold font-medium text-gray-900 border-b border-gray-400 pb-1\">I. PROMET DOBARA I USLUGA</h4></div><div class=\"w-52 text-center\"><h4 class=\"text-sm font-bold font-medium text-gray-900 border-b border-gray-400 pb-1\">Iznos naknade bez PDV</h4></div><div class=\"w-52 text-center\"><h4 class=\"text-sm font-bold font-medium text-gray-900 border-b border-gray-400 pb-1 mr-2\">PDV</h4></div></div><div class=\"space-y-1\"><!-- Row 1 --><div class=\"flex items-center\"><div class=\"flex-1 text-sm\">1. Promet dobara i usluga koji je oslobođen PDV sa pravom na odbitak prethodnog poreza</div><div class=\"w-52 flex items-center justify-center gap-1\"><span class=\"text-xs font-medium text-gray-600 w-12 text-center\">001</span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "<div class=\"border bg-blue-100 border-blue-400 p-2 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1\"><div class=\"flex-1 overflow-x-auto overflow-y-auto min-h-0\"><div class=\"w-full\"><!-- I. PROMET DOBARA I USLUGA --><div class=\"mb-4\"><div class=\"flex mb-2\"><div class=\"flex-1\"><h4 class=\"text-sm font-bold font-medium text-gray-900 border-b border-gray-400 pb-1\">I. PROMET DOBARA I USLUGA</h4></div><div class=\"w-52 text-center\"><h4 class=\"text-sm font-bold font-medium text-gray-900 border-b border-gray-400 pb-1\">Iznos naknade bez PDV</h4></div><div class=\"w-52 text-center\"><h4 class=\"text-sm font-bold font-medium text-gray-900 border-b border-gray-400 pb-1 mr-2\">PDV</h4></div></div><div class=\"space-y-1\"><!-- Row 1 --><div class=\"flex items-center\"><div class=\"flex-1 text-sm\">1. Promet dobara i usluga koji je oslobođen PDV sa pravom na odbitak prethodnog poreza</div><div class=\"w-52 flex items-center justify-center gap-1\"><span class=\"text-xs font-medium text-gray-600 w-12 text-center\">001</span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -456,7 +506,7 @@ func PoreskaPrijavaForm(data domain.PoreskaPrijavaData, translator *i18n.Service
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "</div><div class=\"w-52 flex items-center justify-center gap-1\"><span class=\"text-xs font-medium text-gray-600 w-12 text-center\">103</span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "</div><div class=\"w-52 flex items-center justify-center gap-1\"><span class=\"text-xs font-medium text-gray-600 w-12 text-center\">103</span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -472,7 +522,7 @@ func PoreskaPrijavaForm(data domain.PoreskaPrijavaData, translator *i18n.Service
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "</div></div><!-- Row 2 --><div class=\"flex items-center\"><div class=\"flex-1 text-sm\">2. Promet dobara i usluga koji je oslobođen PDV bez prava na odbitak prethodnog poreza</div><div class=\"w-52 flex items-center justify-center gap-1\"><span class=\"text-xs font-medium text-gray-600 w-12 text-center\">002</span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "</div></div><!-- Row 2 --><div class=\"flex items-center\"><div class=\"flex-1 text-sm\">2. Promet dobara i usluga koji je oslobođen PDV bez prava na odbitak prethodnog poreza</div><div class=\"w-52 flex items-center justify-center gap-1\"><span class=\"text-xs font-medium text-gray-600 w-12 text-center\">002</span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -488,7 +538,7 @@ func PoreskaPrijavaForm(data domain.PoreskaPrijavaData, translator *i18n.Service
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "</div><div class=\"w-52\"></div></div><!-- Row 3 --><div class=\"flex items-center\"><div class=\"flex-1 text-sm\">3. Promet dobara i usluga po opštoj stopi</div><div class=\"w-52 flex items-center justify-center gap-1\"><span class=\"text-xs font-medium text-gray-600 w-12 text-center\">003</span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "</div><div class=\"w-52\"></div></div><!-- Row 3 --><div class=\"flex items-center\"><div class=\"flex-1 text-sm\">3. Promet dobara i usluga po opštoj stopi</div><div class=\"w-52 flex items-center justify-center gap-1\"><span class=\"text-xs font-medium text-gray-600 w-12 text-center\">003</span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -504,7 +554,7 @@ func PoreskaPrijavaForm(data domain.PoreskaPrijavaData, translator *i18n.Service
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "</div><div class=\"w-52 flex items-center justify-center gap-1\"><span class=\"text-xs font-medium text-gray-600 w-12 text-center\">104</span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "</div><div class=\"w-52 flex items-center justify-center gap-1\"><span class=\"text-xs font-medium text-gray-600 w-12 text-center\">104</span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -520,7 +570,7 @@ func PoreskaPrijavaForm(data domain.PoreskaPrijavaData, translator *i18n.Service
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "</div></div><!-- Row 4 --><div class=\"flex items-center\"><div class=\"flex-1 text-sm\">4. Promet dobara i usluga po posebnoj stopi</div><div class=\"w-52 flex items-center justify-center gap-1\"><span class=\"text-xs font-medium text-gray-600 w-12 text-center\">004</span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "</div></div><!-- Row 4 --><div class=\"flex items-center\"><div class=\"flex-1 text-sm\">4. Promet dobara i usluga po posebnoj stopi</div><div class=\"w-52 flex items-center justify-center gap-1\"><span class=\"text-xs font-medium text-gray-600 w-12 text-center\">004</span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -536,7 +586,7 @@ func PoreskaPrijavaForm(data domain.PoreskaPrijavaData, translator *i18n.Service
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "</div><div class=\"w-52\"></div></div><!-- Row 5 --><div class=\"flex items-center\"><div class=\"flex-1 text-sm\">5. ZBIR (1+2+3+4)</div><div class=\"w-52 flex items-center justify-center gap-1\"><span class=\"text-xs font-medium text-gray-600 w-12 text-center\">005</span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "</div><div class=\"w-52\"></div></div><!-- Row 5 --><div class=\"flex items-center\"><div class=\"flex-1 text-sm\">5. ZBIR (1+2+3+4)</div><div class=\"w-52 flex items-center justify-center gap-1\"><span class=\"text-xs font-medium text-gray-600 w-12 text-center\">005</span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -552,7 +602,7 @@ func PoreskaPrijavaForm(data domain.PoreskaPrijavaData, translator *i18n.Service
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "</div><div class=\"w-52 flex items-center justify-center gap-1\"><span class=\"text-xs font-medium text-gray-600 w-12 text-center\">105</span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "</div><div class=\"w-52 flex items-center justify-center gap-1\"><span class=\"text-xs font-medium text-gray-600 w-12 text-center\">105</span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -568,7 +618,7 @@ func PoreskaPrijavaForm(data domain.PoreskaPrijavaData, translator *i18n.Service
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "</div></div></div></div><!-- II. PRETHODNI POREZ --><div class=\"mb-4\"><div class=\"flex mb-2\"><div class=\"flex-1\"><h4 class=\"text-sm font-bold font-medium text-gray-900 border-b border-gray-400 pb-1\">II. PRETHODNI POREZ</h4></div><div class=\"w-52 text-center\"><h4 class=\"text-sm font-bold font-medium text-gray-900 border-b border-gray-400 pb-1\">Iznos naknade bez PDV</h4></div><div class=\"w-52 text-center\"><h4 class=\"text-sm font-bold font-medium text-gray-900 border-b border-gray-400 pb-1\">PDV</h4></div></div><div class=\"space-y-1\"><!-- Row 6 --><div class=\"flex items-center\"><div class=\"flex-1 text-sm\">6. Prethodni porez plaćen prilikom uvoza</div><div class=\"w-52 flex items-center justify-center gap-1\"><span class=\"text-xs font-medium text-gray-600 w-12 text-center\">006</span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "</div></div></div></div><!-- II. PRETHODNI POREZ --><div class=\"mb-4\"><div class=\"flex mb-2\"><div class=\"flex-1\"><h4 class=\"text-sm font-bold font-medium text-gray-900 border-b border-gray-400 pb-1\">II. PRETHODNI POREZ</h4></div><div class=\"w-52 text-center\"><h4 class=\"text-sm font-bold font-medium text-gray-900 border-b border-gray-400 pb-1\">Iznos naknade bez PDV</h4></div><div class=\"w-52 text-center\"><h4 class=\"text-sm font-bold font-medium text-gray-900 border-b border-gray-400 pb-1\">PDV</h4></div></div><div class=\"space-y-1\"><!-- Row 6 --><div class=\"flex items-center\"><div class=\"flex-1 text-sm\">6. Prethodni porez plaćen prilikom uvoza</div><div class=\"w-52 flex items-center justify-center gap-1\"><span class=\"text-xs font-medium text-gray-600 w-12 text-center\">006</span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -584,7 +634,7 @@ func PoreskaPrijavaForm(data domain.PoreskaPrijavaData, translator *i18n.Service
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "</div><div class=\"w-52 flex items-center justify-center gap-1\"><span class=\"text-xs font-medium text-gray-600 w-12 text-center\">106</span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "</div><div class=\"w-52 flex items-center justify-center gap-1\"><span class=\"text-xs font-medium text-gray-600 w-12 text-center\">106</span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -600,7 +650,7 @@ func PoreskaPrijavaForm(data domain.PoreskaPrijavaData, translator *i18n.Service
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "</div></div><!-- Row 7 --><div class=\"flex items-center\"><div class=\"flex-1 text-sm\">7. PDV nadoknada plaćena poljoprivredniku</div><div class=\"w-52 flex items-center justify-center gap-1\"><span class=\"text-xs font-medium text-gray-600 w-12 text-center\">007</span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "</div></div><!-- Row 7 --><div class=\"flex items-center\"><div class=\"flex-1 text-sm\">7. PDV nadoknada plaćena poljoprivredniku</div><div class=\"w-52 flex items-center justify-center gap-1\"><span class=\"text-xs font-medium text-gray-600 w-12 text-center\">007</span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -616,7 +666,7 @@ func PoreskaPrijavaForm(data domain.PoreskaPrijavaData, translator *i18n.Service
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "</div><div class=\"w-52 flex items-center justify-center gap-1\"><span class=\"text-xs font-medium text-gray-600 w-12 text-center\">107</span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "</div><div class=\"w-52 flex items-center justify-center gap-1\"><span class=\"text-xs font-medium text-gray-600 w-12 text-center\">107</span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -632,7 +682,7 @@ func PoreskaPrijavaForm(data domain.PoreskaPrijavaData, translator *i18n.Service
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "</div></div><!-- Row 8 --><div class=\"flex items-center\"><div class=\"flex-1 text-sm\">8. Prethodni porez, osim prethodnog poreza za red. br. 6. i 7.</div><div class=\"w-52 flex items-center justify-center gap-1\"><span class=\"text-xs font-medium text-gray-600 w-12 text-center\">008</span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "</div></div><!-- Row 8 --><div class=\"flex items-center\"><div class=\"flex-1 text-sm\">8. Prethodni porez, osim prethodnog poreza za red. br. 6. i 7.</div><div class=\"w-52 flex items-center justify-center gap-1\"><span class=\"text-xs font-medium text-gray-600 w-12 text-center\">008</span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -648,7 +698,7 @@ func PoreskaPrijavaForm(data domain.PoreskaPrijavaData, translator *i18n.Service
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "</div><div class=\"w-52 flex items-center justify-center gap-1\"><span class=\"text-xs font-medium text-gray-600 w-12 text-center\">108</span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "</div><div class=\"w-52 flex items-center justify-center gap-1\"><span class=\"text-xs font-medium text-gray-600 w-12 text-center\">108</span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -664,7 +714,7 @@ func PoreskaPrijavaForm(data domain.PoreskaPrijavaData, translator *i18n.Service
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "</div></div><!-- Row 9 --><div class=\"flex items-center\"><div class=\"flex-1 text-sm\">9. ZBIR (6+7+8)</div><div class=\"w-52 flex items-center justify-center gap-1\"><span class=\"text-xs font-medium text-gray-600 w-12 text-center\">009</span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "</div></div><!-- Row 9 --><div class=\"flex items-center\"><div class=\"flex-1 text-sm\">9. ZBIR (6+7+8)</div><div class=\"w-52 flex items-center justify-center gap-1\"><span class=\"text-xs font-medium text-gray-600 w-12 text-center\">009</span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -680,7 +730,7 @@ func PoreskaPrijavaForm(data domain.PoreskaPrijavaData, translator *i18n.Service
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "</div><div class=\"w-52 flex items-center justify-center gap-1\"><span class=\"text-xs font-medium text-gray-600 w-12 text-center\">109</span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "</div><div class=\"w-52 flex items-center justify-center gap-1\"><span class=\"text-xs font-medium text-gray-600 w-12 text-center\">109</span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -696,7 +746,7 @@ func PoreskaPrijavaForm(data domain.PoreskaPrijavaData, translator *i18n.Service
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "</div></div></div></div><!-- III. PORESKA OBAVEZA --><div class=\"mb-4\"><div class=\"flex mb-2\"><div class=\"flex-1\"><h4 class=\"text-sm font-bold font-medium text-gray-900 border-b border-gray-400 pb-1\">III. PORESKA OBAVEZA</h4></div><div class=\"w-52 text-center\"><h4 class=\"text-sm font-bold font-medium text-gray-900 border-b border-gray-400 pb-1 mr-2\">PDV</h4></div></div><div class=\"space-y-1\"><!-- Row 10 --><div class=\"flex items-center\"><div class=\"flex-1 text-sm\">10. Iznos PDV u poreskom periodu (5-9)</div><div class=\"w-52 flex items-center justify-center gap-1\"><span class=\"text-xs font-medium text-gray-600 w-12 text-center\">110</span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "</div></div></div></div><!-- III. PORESKA OBAVEZA --><div class=\"mb-4\"><div class=\"flex mb-2\"><div class=\"flex-1\"><h4 class=\"text-sm font-bold font-medium text-gray-900 border-b border-gray-400 pb-1\">III. PORESKA OBAVEZA</h4></div><div class=\"w-52 text-center\"><h4 class=\"text-sm font-bold font-medium text-gray-900 border-b border-gray-400 pb-1 mr-2\">PDV</h4></div></div><div class=\"space-y-1\"><!-- Row 10 --><div class=\"flex items-center\"><div class=\"flex-1 text-sm\">10. Iznos PDV u poreskom periodu (5-9)</div><div class=\"w-52 flex items-center justify-center gap-1\"><span class=\"text-xs font-medium text-gray-600 w-12 text-center\">110</span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -712,7 +762,7 @@ func PoreskaPrijavaForm(data domain.PoreskaPrijavaData, translator *i18n.Service
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "</div></div><!-- Row 11 --><div class=\"flex items-center\"><div class=\"flex-1 text-sm\">11. Povraćaj:</div></div></div></div><!-- Closing section with yes/no option --><div class=\"mt-6 pt-1 border-t border-gray-400\"><div class=\"flex items-center justify-end\"><div class=\"flex gap-2\"><label class=\"flex items-center gap-2\"><input type=\"radio\" name=\"final_option\" value=\"yes\" class=\"w-4 h-4 text-blue-600\"> <span class=\"text-sm text-gray-700\">DA</span></label> <label class=\"flex items-center gap-2\"><input type=\"radio\" name=\"final_option\" value=\"no\" class=\"w-4 h-4 text-blue-600\" checked> <span class=\"text-sm text-gray-700\">NE</span></label><div class=\"text-sm text-gray-600\">(Obavezno izabrati opciju)</div></div></div></div></div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "</div></div><!-- Row 11 --><div class=\"flex items-center\"><div class=\"flex-1 text-sm\">11. Povraćaj:</div></div></div></div><!-- Closing section with yes/no option --><div class=\"mt-6 pt-1 border-t border-gray-400\"><div class=\"flex items-center justify-end\"><div class=\"flex gap-2\"><label class=\"flex items-center gap-2\"><input type=\"radio\" name=\"final_option\" value=\"yes\" class=\"w-4 h-4 text-blue-600\"> <span class=\"text-sm text-gray-700\">DA</span></label> <label class=\"flex items-center gap-2\"><input type=\"radio\" name=\"final_option\" value=\"no\" class=\"w-4 h-4 text-blue-600\" checked> <span class=\"text-sm text-gray-700\">NE</span></label><div class=\"text-sm text-gray-600\">(Obavezno izabrati opciju)</div></div></div></div></div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -721,7 +771,7 @@ func PoreskaPrijavaForm(data domain.PoreskaPrijavaData, translator *i18n.Service
 }
 
 // Dialog - KIR Entry Form
-func DialogKirUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCancel domain.Button, translator *i18n.Service) templ.Component {
+func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCancel, btnClose domain.Button, csrfToken string, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -737,38 +787,114 @@ func DialogKirUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var6 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var6 == nil {
-			templ_7745c5c3_Var6 = templ.NopComponent
+		templ_7745c5c3_Var8 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var8 == nil {
+			templ_7745c5c3_Var8 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "<!-- Dialog Container --><div class=\"fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50\"><div class=\"bg-white rounded-lg shadow-xl max-w-5xl w-full mx-4 max-h-[90vh] overflow-y-auto\"><!-- Header --><div class=\"bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg\"><h2 class=\"text-lg font-semibold ml-4\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "<!-- Dialog Container --><div id=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var7 string
-		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Title("Unos podataka - Knjiga izdatih računa"))
+		var templ_7745c5c3_Var9 string
+		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(dlg.Id)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 544, Col: 103}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 568, Col: 17}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "</h2><button onclick=\"closeDialog()\" class=\"text-white hover:text-gray-200 mr-4\"><svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-6 w-6\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M6 18L18 6M6 6l12 12\"></path></svg></button></div><!-- Form Content --><div class=\"p-2 space-y-1\"><!-- Top Controls --><div class=\"pl-2 pb-1\"><div class=\"font-bold text-xs text-gray-900 border-b-2 border-gray-400\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var8 string
-		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Vrste knjige izlaznih računa"))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 555, Col: 127}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "\" class=\"fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50\"><div class=\"bg-white rounded-lg shadow-xl max-w-5xl w-full mx-4 max-h-[90vh] overflow-y-auto\"><!-- Header --><div class=\"bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg\"><h2 class=\"text-lg font-semibold ml-4\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "</div><div class=\"space-y-1 pt-2\"><!-- Row 1: Book Type --><div class=\"flex items-center gap-1\">")
+		var templ_7745c5c3_Var10 string
+		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Title("Unos podataka - Knjiga izdatih računa"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 572, Col: 103}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "</h2>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.CloseButton(btnClose).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "</div><form id=\"kir-form\" class=\"p-1 h-full flex flex-col min-h-0\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		if btnSave.HxRequestType == "PUT" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, " hx-put=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var11 string
+			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(btnSave.HxActionURL)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 579, Col: 33}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "\" hx-on::after-request=\"handleFormResponse(event, &#39;PUT&#39;, &#39;dialog-kir-unos&#39;, true, &#39;btn-save&#39;)\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		if btnSave.HxRequestType == "POST" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, " hx-post=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var12 string
+			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(btnSave.HxActionURL)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 583, Col: 34}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "\" hx-on::after-request=\"handleFormResponse(event, &#39;POST&#39;, &#39;dialog-kir-unos&#39;, true, &#39;btn-save&#39;)\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, " hx-swap=\"none\" hx-boost=\"false\" onsubmit=\"return false;\"><input type=\"hidden\" name=\"_csrf\" value=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var13 string
+		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(csrfToken)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 590, Col: 55}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, "\"><!-- Form Content --><div class=\"p-2 space-y-1\"><!-- Top Controls --><div class=\"pl-2 pb-1\"><div class=\"font-bold text-xs text-gray-900 border-b-2 border-gray-400\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var14 string
+		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Vrste knjige izlaznih računa"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 595, Col: 128}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "</div><div class=\"space-y-1 pt-2\"><!-- Row 1: Book Type --><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -783,40 +909,41 @@ func DialogKirUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		templ_7745c5c3_Err = tmpl.ComboBoxField(domain.ComboFieldConfig{
 			ID:           "knjiga",
 			Name:         "knjiga",
-			ClassSelect:  common.ClassSelect + " w-96",
+			ClassSelect:  common.ClassSelectDisabled + " w-96 no-focus ring-0 cursor-not-allowed",
 			OptionValues: knjigaValues,
-			TabIndex:     "1",
+			Disabled:     true,
+			TabIndex:     "-1",
 		}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "</div><!-- Row 2: Checkbox --><div class=\"flex items-center gap-1\"><input type=\"checkbox\" id=\"maloprodaja\" name=\"maloprodaja\" class=\"w-4 h-4 text-blue-600 rounded\"> <label for=\"maloprodaja\" class=\"font-medium text-gray-700\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 53, "</div><!-- Row 2: Checkbox --><div class=\"flex items-center gap-1\"><input type=\"checkbox\" id=\"maloprodaja\" name=\"maloprodaja\" class=\"w-4 h-4 text-blue-600 rounded\"> <label for=\"maloprodaja\" class=\"font-medium text-gray-700\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var9 string
-		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Maloprodaja"))
+		var templ_7745c5c3_Var15 string
+		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Maloprodaja"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 575, Col: 99}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 616, Col: 100}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "</label></div></div></div><!-- Section 1: PODACI O IZDATOM RAČUNU --><div class=\"pl-2 pb-1\"><div class=\"font-bold text-xs text-gray-900 border-b-2 border-gray-400\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var10 string
-		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Podaci o izdatom računu"))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 581, Col: 122}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 54, "</label></div></div></div><!-- Section 1: PODACI O IZDATOM RAČUNU --><div class=\"pl-2 pb-1\"><div class=\"font-bold text-xs text-gray-900 border-b-2 border-gray-400\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "</div><div class=\"space-y-1 pt-2\"><!-- Row 1 --><div class=\"flex items-center gap-1\"><div class=\"flex items-center gap-2 w-1/3\">")
+		var templ_7745c5c3_Var16 string
+		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Podaci o izdatom računu"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 622, Col: 123}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 55, "</div><div class=\"space-y-1 pt-2\"><!-- Row 1 --><div class=\"flex items-center gap-1\"><div class=\"flex items-center gap-2 w-1/3\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -833,12 +960,14 @@ func DialogKirUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 			Name:       "vkrbr",
 			FieldType:  "text",
 			ClassInput: common.ClassInputTextEnabled + " w-36",
+			OnInput:    "clearFieldError",
+			OnFocus:    "clearFieldError",
 			TabIndex:   "1",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "</div><div class=\"flex items-center gap-2 flex-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 56, "</div><div class=\"flex items-center gap-2 flex-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -850,17 +979,17 @@ func DialogKirUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "tipdok",
-			Name:       "tipdok",
-			FieldType:  "text",
-			ClassInput: common.ClassInputTextEnabled + " flex-1",
-			TabIndex:   "2",
-		}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.ComboBoxField(domain.ComboFieldConfig{
+			ID:           "tipdok",
+			Name:         "tipdok",
+			ClassSelect:  common.ClassSelectEnabled + " flex-1",
+			OptionValues: tipdokValues,
+			TabIndex:     "5",
+		}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "</div></div><!-- Row 2 --><div class=\"flex items-center gap-1\"><div class=\"flex items-center gap-2 w-1/3\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 57, "</div></div><!-- Row 2 --><div class=\"flex items-center gap-1\"><div class=\"flex items-center gap-2 w-1/3\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -877,12 +1006,14 @@ func DialogKirUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 			Name:       "dknjiz",
 			FieldType:  "date",
 			ClassInput: common.ClassInputTextEnabled + " w-36",
-			TabIndex:   "3",
+			TabIndex:   "2",
+			OnInput:    "clearFieldError",
+			OnFocus:    "clearFieldError",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "<span class=\"font-medium text-gray-600 text-center\">2</span></div><div class=\"flex items-center gap-2 flex-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 58, "<span class=\"font-medium text-gray-600 text-center\">2</span></div><div class=\"flex items-center gap-2 flex-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -895,16 +1026,22 @@ func DialogKirUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "nalog",
-			Name:       "nalog",
-			FieldType:  "text",
-			ClassInput: common.ClassInputTextEnabled + " flex-1 w-32",
-			TabIndex:   "4",
+			ID:               "nalog",
+			Name:             "nalog",
+			FieldType:        "text",
+			ClassInput:       common.ClassInputTextEnabled + " flex-1 w-32",
+			HxGet:            "/api/nalozi/nextnalog",
+			HxTrigger:        "change from:select[name='tipdok']",
+			HxInclude:        "select[name='tipdok']",
+			HxOnAfterRequest: "handleNextNalogResponse",
+			OnInput:          "clearFieldError",
+			OnFocus:          "clearFieldError",
+			TabIndex:         "6",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "</div></div><!-- Row 3 --><div class=\"flex items-center gap-1\"><div class=\"flex items-center gap-2 w-1/3\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 59, "</div></div><!-- Row 3 --><div class=\"flex items-center gap-1\"><div class=\"flex items-center gap-2 w-1/3\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -921,12 +1058,14 @@ func DialogKirUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 			Name:       "kracun",
 			FieldType:  "text",
 			ClassInput: common.ClassInputTextEnabled + " w-36",
-			TabIndex:   "5",
+			TabIndex:   "3",
+			OnInput:    "clearFieldError",
+			OnFocus:    "clearFieldError",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, "<span class=\"font-medium text-gray-600 text-center\">3</span></div><div class=\"flex items-center gap-2 w-1/3\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 60, "<span class=\"font-medium text-gray-600 text-center\">3</span></div><div class=\"flex items-center gap-2 w-1/3\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -943,12 +1082,14 @@ func DialogKirUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 			Name:       "dizd",
 			FieldType:  "date",
 			ClassInput: common.ClassInputTextEnabled + " w-36",
-			TabIndex:   "6",
+			TabIndex:   "7",
+			OnInput:    "clearFieldError",
+			OnFocus:    "clearFieldError",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, "<span class=\"font-medium text-gray-600 text-center\">4</span></div><div class=\"flex items-center gap-2 flex-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 61, "<span class=\"font-medium text-gray-600 text-center\">4</span></div><div class=\"flex items-center gap-2 flex-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -965,12 +1106,14 @@ func DialogKirUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 			Name:       "datprometa",
 			FieldType:  "date",
 			ClassInput: common.ClassInputTextEnabled + " flex-1 w-32",
-			TabIndex:   "7",
+			TabIndex:   "8",
+			OnInput:    "clearFieldError",
+			OnFocus:    "clearFieldError",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "</div></div><!-- Row 4: Konto and Search --><div class=\"flex items-center gap-1\"><div class=\"flex items-center gap-2 w-1/3\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 62, "</div></div><!-- Row 4: Konto and Search --><div class=\"flex items-center gap-1\"><div class=\"flex items-center gap-2 w-1/3\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -990,47 +1133,66 @@ func DialogKirUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 			MinLength:  "4",
 			MaxLength:  "6",
 			TabIndex:   "8",
+			OnInput:    "clearFieldError",
+			OnFocus:    "clearFieldError",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 53, "</div><div class=\"flex items-center gap-1 w-1/3\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 63, "</div><div class=\"flex flex-1 items-center gap-1 w-1/3\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
 			ID:         "sifra",
 			LabelText:  translator.Label("Analitička šifra"),
-			ClassLabel: "w-44 mr-1",
+			ClassLabel: common.ClassLabel + " w-44 mr-1",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
-			ID:         "sifra",
-			Name:       "sifra",
-			FieldType:  "text",
-			ClassInput: common.ClassInputTextEnabled + " w-24",
-			MinLength:  "2",
-			MaxLength:  "6",
-			TabIndex:   "9",
+			ID:           "sifra",
+			Name:         "sifra",
+			FieldType:    "text",
+			Disabled:     false,
+			ClassInput:   common.ClassInputTextEnabled + " w-24",
+			BlurEndpoint: "api/fkpl/trazikonto",
+			HxTarget:     "sifranaziv",
+			HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('sifra').value, "vkonta": "1", "destfield": "sifra"}`,
+			HxInclude:    "this",
+			MinLength:    "2",
+			MaxLength:    "6",
+			TabIndex:     "9",
+			OnInput:      "clearFieldError",
+			OnFocus:      "clearFieldError",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.SearchButton(domain.SearchButtonConfig{
-			ID:          "konto",
-			Name:        "search-konto",
+			ID:          "sifra",
+			Name:        "search-sifra",
 			HxUrl:       "/api/promet/searchbutton",
 			HxTarget:    "#search-dropdown",
 			HxSwap:      "innerHTML",
-			HxVals:      `{"vkonta": "1"}`,
+			HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1", "destfield": "sifra"}`,
 			ClassButton: common.ClassButton,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 54, "</div></div><!-- Row 5: Customer Name and PIB --><div class=\"flex items-center gap-1\"><div class=\"flex items-center gap-2 flex-1\">")
+		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+			ID:         "sifranaziv",
+			Name:       "sifranaziv",
+			FieldType:  "text",
+			Disabled:   true,
+			ClassInput: common.ClassInputTextDisabled + " flex-1 w-full",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 64, "</div></div><!-- Row 5: Customer Name and PIB --><div class=\"flex items-center gap-1\"><div class=\"flex items-center gap-2 flex-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1053,7 +1215,7 @@ func DialogKirUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 55, "<span class=\"font-medium text-gray-600 text-center\">5</span></div><div class=\"flex items-center gap-2 w-1/3\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 65, "<span class=\"font-medium text-gray-600 text-center\">5</span></div><div class=\"flex items-center gap-2 w-1/3\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1076,7 +1238,7 @@ func DialogKirUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 56, "<span class=\"font-medium text-gray-600 text-center\">6</span></div></div><!-- Row 6: Address fields --><div class=\"flex items-center gap-1\"><div class=\"flex items-center gap-2 flex-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 66, "<span class=\"font-medium text-gray-600 text-center\">6</span></div></div><!-- Row 6: Address fields --><div class=\"flex items-center gap-1\"><div class=\"flex items-center gap-2 flex-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1099,7 +1261,7 @@ func DialogKirUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 57, "</div><div class=\"flex items-center gap-2 w-1/4\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 67, "</div><div class=\"flex items-center gap-2 w-1/4\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1122,7 +1284,7 @@ func DialogKirUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 58, "</div><div class=\"flex items-center gap-2 w-1/4\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 68, "</div><div class=\"flex items-center gap-2 w-1/4\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1145,331 +1307,208 @@ func DialogKirUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 59, "</div></div></div></div><!-- Section 2: UKUPAN IZNOS SA PDV-OM --><div class=\"pl-2 pb-1\"><div class=\"font-bold text-xs text-gray-900 border-b-2 border-gray-400\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 69, "</div></div></div></div><!-- Section 2: UKUPAN IZNOS SA PDV-OM --><div class=\"pl-2 pb-1\"><div class=\"font-bold text-xs text-gray-900 border-b-2 border-gray-400\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var11 string
-		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Ukupan iznos sa PDV-om"))
+		var templ_7745c5c3_Var17 string
+		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Ukupan iznos sa PDV-om"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 824, Col: 120}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 897, Col: 121}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 60, "</div><div class=\"flex items-center gap-2 pt-2\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "iznsapdv",
-			LabelText:  translator.Label("Iznos sa PDV"),
-			ClassLabel: "w-96",
-		}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 70, "</div><div class=\"grid grid-cols-2 justify-items-start gap-x-4 gap-y-2 pt-2\"><div class=\"flex items-center gap-2 w-full min-w-0 col-span-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
-			ID:            "iznsapdv",
-			Name:          "iznsapdv",
-			Value:         "0.00",
-			ClassInput:    common.ClassInputTextEnabled + " w-32 text-right",
-			DecimalPlaces: 2,
-			TabIndex:      "15",
-		}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{ID: "iznsapdv", LabelText: translator.Label("Iznos sa PDV"), ClassLabel: "flex-1 min-w-0"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 61, "<span class=\"font-medium text-gray-600 text-center\">7</span></div></div><!-- Section 3: OSLOBOĐENI PROMET --><div class=\"pl-2 pb-1\"><div class=\"font-bold text-xs text-gray-900 border-b-2 border-gray-400\">")
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{ID: "iznsapdv", Name: "iznsapdv", Value: "0.00", ClassInput: common.ClassInputTextEnabled + " w-40 shrink-0 text-right", DecimalPlaces: 2, TabIndex: "15"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var12 string
-		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Oslobođeni promet"))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 844, Col: 116}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 71, "<span class=\"font-medium text-gray-600 text-center shrink-0\">7</span></div></div></div><!-- Section 3: OSLOBOĐENI PROMET --><div class=\"pl-2 pb-1\"><div class=\"font-bold text-xs text-gray-900 border-b-2 border-gray-400\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 62, "</div><div class=\"space-y-1 pt-2\"><!-- Row 1 --><div class=\"flex items-center gap-2\">")
+		var templ_7745c5c3_Var18 string
+		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Oslobođeni promet"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 908, Col: 117}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "oslobcl24",
-			LabelText:  translator.Label("odbitak_cl24"),
-			ClassLabel: "w-96",
-		}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 72, "</div><div class=\"grid grid-cols-2 justify-items-start gap-x-4 gap-y-2 pt-2\"><div class=\"flex items-center gap-2 w-full min-w-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
-			ID:            "oslobcl24",
-			Name:          "oslobcl24",
-			Value:         "0.00",
-			ClassInput:    common.ClassInputTextEnabled + " w-32 text-right",
-			DecimalPlaces: 2,
-			TabIndex:      "16",
-		}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{ID: "oslobcl24", LabelText: translator.Label("odbitak_cl24"), ClassLabel: "flex-1 min-w-0"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 63, "<span class=\"font-medium text-gray-600 text-center\">8</span></div><!-- Row 2 --><div class=\"flex items-center gap-2\">")
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{ID: "oslobcl24", Name: "oslobcl24", Value: "0.00", ClassInput: common.ClassInputTextEnabled + " w-40 shrink-0 text-right", DecimalPlaces: 2, TabIndex: "16"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "oslobcl25",
-			LabelText:  translator.Label("odbitak_cl25"),
-			ClassLabel: "w-96",
-		}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 73, "<span class=\"font-medium text-gray-600 text-center shrink-0\">8</span></div><div class=\"flex items-center gap-2 w-full min-w-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
-			ID:            "oslobcl25",
-			Name:          "oslobcl25",
-			Value:         "0.00",
-			ClassInput:    common.ClassInputTextEnabled + " w-32 text-right",
-			DecimalPlaces: 2,
-			TabIndex:      "17",
-		}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{ID: "oslobcl25", LabelText: translator.Label("odbitak_cl25"), ClassLabel: "flex-1 min-w-0"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 64, "<span class=\"font-medium text-gray-600 text-center\">9</span></div></div></div><!-- Section 4: PROMET U INOSTRANSTVU --><div class=\"pl-2 pb-1\"><div class=\"font-bold text-xs text-gray-900 border-b-2 border-gray-400\">")
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{ID: "oslobcl25", Name: "oslobcl25", Value: "0.00", ClassInput: common.ClassInputTextEnabled + " w-40 shrink-0 text-right", DecimalPlaces: 2, TabIndex: "17"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var13 string
-		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Promet u inostranstvu"))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 884, Col: 119}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 74, "<span class=\"font-medium text-gray-600 text-center shrink-0\">9</span></div></div></div><!-- Section 4: PROMET U INOSTRANSTVU --><div class=\"pl-2 pb-1\"><div class=\"font-bold text-xs text-gray-900 border-b-2 border-gray-400\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 65, "</div><div class=\"space-y-1 pt-2\"><!-- Row 1 --><div class=\"flex items-center gap-2\">")
+		var templ_7745c5c3_Var19 string
+		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Promet u inostranstvu"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 924, Col: 120}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "izvozsapr",
-			LabelText:  translator.Label("Promet u inostranstvu sa pravom odbitka"),
-			ClassLabel: "w-96",
-		}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 75, "</div><div class=\"grid grid-cols-2 justify-items-start gap-x-4 gap-y-2 pt-2\"><div class=\"flex items-center gap-2 w-full min-w-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
-			ID:            "izvozsapr",
-			Name:          "izvozsapr",
-			Value:         "0.00",
-			ClassInput:    common.ClassInputTextEnabled + " w-32 text-right",
-			DecimalPlaces: 2,
-			TabIndex:      "18",
-		}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{ID: "izvozsapr", LabelText: translator.Label("Promet u inostranstvu sa pravom odbitka"), ClassLabel: "flex-1 min-w-0"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 66, "<span class=\"font-medium text-gray-600 text-center\">10</span></div><!-- Row 2 --><div class=\"flex items-center gap-2\">")
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{ID: "izvozsapr", Name: "izvozsapr", Value: "0.00", ClassInput: common.ClassInputTextEnabled + " w-40 shrink-0 text-right", DecimalPlaces: 2, TabIndex: "18"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "izvozbezpr",
-			LabelText:  translator.Label("Promet u inostranstvu bez prava odbitka"),
-			ClassLabel: "w-96",
-		}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 76, "<span class=\"font-medium text-gray-600 text-center shrink-0\">10</span></div><div class=\"flex items-center gap-2 w-full min-w-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
-			ID:            "izvozbezpr",
-			Name:          "izvozbezpr",
-			Value:         "0.00",
-			ClassInput:    common.ClassInputTextEnabled + " w-32 text-right",
-			DecimalPlaces: 2,
-			TabIndex:      "19",
-		}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{ID: "izvozbezpr", LabelText: translator.Label("Promet u inostranstvu bez prava odbitka"), ClassLabel: "flex-1 min-w-0"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 67, "<span class=\"font-medium text-gray-600 text-center\">11</span></div></div></div><!-- Section 5: OPOREZIVI PROMET --><div class=\"pl-2 pb-1\"><div class=\"font-bold text-xs text-gray-900 border-b-2 border-gray-400\">")
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{ID: "izvozbezpr", Name: "izvozbezpr", Value: "0.00", ClassInput: common.ClassInputTextEnabled + " w-40 shrink-0 text-right", DecimalPlaces: 2, TabIndex: "19"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var14 string
-		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Oporezivi promet"))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 924, Col: 114}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 77, "<span class=\"font-medium text-gray-600 text-center shrink-0\">11</span></div></div></div><!-- Section 5: OPOREZIVI PROMET --><div class=\"pl-2 pb-1\"><div class=\"font-bold text-xs text-gray-900 border-b-2 border-gray-400\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 68, "</div><div class=\"space-y-1 pt-2\"><!-- Row 1 --><div class=\"flex items-center gap-2\"><div class=\"flex items-center gap-2 flex-1\">")
+		var templ_7745c5c3_Var20 string
+		templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Oporezivi promet"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 940, Col: 115}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "osn1",
-			LabelText:  translator.Label("Osnovica po opštoj stopi"),
-			ClassLabel: "w-96",
-		}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 78, "</div><div class=\"grid grid-cols-2 justify-items-start gap-x-4 gap-y-2 pt-2\"><div class=\"flex items-center gap-2 w-full min-w-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
-			ID:            "osn1",
-			Name:          "osn1",
-			Value:         "0.00",
-			ClassInput:    common.ClassInputTextEnabled + " w-32 text-right",
-			DecimalPlaces: 2,
-			TabIndex:      "20",
-		}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{ID: "osn1", LabelText: translator.Label("Osnovica po opštoj stopi"), ClassLabel: "flex-1 min-w-0"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 69, "<span class=\"font-medium text-gray-600 text-center\">12</span></div><div class=\"flex items-center gap-2 flex-1\">")
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{ID: "osn1", Name: "osn1", Value: "0.00", ClassInput: common.ClassInputTextEnabled + " w-40 shrink-0 text-right", DecimalPlaces: 2, TabIndex: "20"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "pdv1",
-			LabelText:  translator.Label("PDV opšta stopa"),
-			ClassLabel: "w-32",
-		}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 79, "<span class=\"font-medium text-gray-600 text-center shrink-0\">12</span></div><div class=\"flex items-center gap-2 w-full min-w-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
-			ID:            "pdv1",
-			Name:          "pdv1",
-			Value:         "0.00",
-			ClassInput:    common.ClassInputTextEnabled + " w-32 text-right",
-			DecimalPlaces: 2,
-			TabIndex:      "21",
-		}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{ID: "pdv1", LabelText: translator.Label("PDV opšta stopa"), ClassLabel: "flex-1 min-w-0"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 70, "<span class=\"font-medium text-gray-600 text-center\">13</span></div></div><!-- Row 2 --><div class=\"flex items-center gap-2\"><div class=\"flex items-center gap-2 flex-1\">")
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{ID: "pdv1", Name: "pdv1", Value: "0.00", ClassInput: common.ClassInputTextEnabled + " w-40 shrink-0 text-right", DecimalPlaces: 2, TabIndex: "21"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "osn1",
-			LabelText:  translator.Label("Osnovica po posebnoj stopi"),
-			ClassLabel: "w-96",
-		}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 80, "<span class=\"font-medium text-gray-600 text-center shrink-0\">13</span></div><div class=\"flex items-center gap-2 w-full min-w-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
-			ID:            "osn1",
-			Name:          "osn1",
-			Value:         "0.00",
-			ClassInput:    common.ClassInputTextEnabled + " w-32 text-right",
-			DecimalPlaces: 2,
-			TabIndex:      "22",
-		}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{ID: "osn1", LabelText: translator.Label("Osnovica po posebnoj stopi"), ClassLabel: "flex-1 min-w-0"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 71, "<span class=\"font-medium text-gray-600 text-center\">14</span></div><div class=\"flex items-center gap-2 flex-1\">")
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{ID: "osn1", Name: "osn1", Value: "0.00", ClassInput: common.ClassInputTextEnabled + " w-40 shrink-0 text-right", DecimalPlaces: 2, TabIndex: "22"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "pdv2",
-			LabelText:  translator.Label("PDV posebna stopa"),
-			ClassLabel: "w-32",
-		}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 81, "<span class=\"font-medium text-gray-600 text-center shrink-0\">14</span></div><div class=\"flex items-center gap-2 w-full min-w-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
-			ID:            "pdv2",
-			Name:          "pdv2",
-			Value:         "0.00",
-			ClassInput:    common.ClassInputTextEnabled + " w-32 text-right",
-			DecimalPlaces: 2,
-			TabIndex:      "23",
-		}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{ID: "pdv2", LabelText: translator.Label("PDV posebna stopa"), ClassLabel: "flex-1 min-w-0"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 72, "<span class=\"font-medium text-gray-600 text-center\">15</span></div></div></div></div><!-- Section 6: UKUPAN PROMET --><div class=\"pl-2 pb-1\"><div class=\"font-bold text-xs text-gray-900 border-b-2 border-gray-400\">")
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{ID: "pdv2", Name: "pdv2", Value: "0.00", ClassInput: common.ClassInputTextEnabled + " w-40 shrink-0 text-right", DecimalPlaces: 2, TabIndex: "23"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var15 string
-		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Ukupan promet"))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 1000, Col: 111}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 82, "<span class=\"font-medium text-gray-600 text-center shrink-0\">15</span></div></div></div><!-- Section 6: UKUPAN PROMET --><div class=\"pl-2 pb-1\"><div class=\"font-bold text-xs text-gray-900 border-b-2 border-gray-400\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 73, "</div><div class=\"space-y-1 pt-2\"><!-- Row 1 --><div class=\"flex items-center gap-2\">")
+		var templ_7745c5c3_Var21 string
+		templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Ukupan promet"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 966, Col: 112}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "prom1",
-			LabelText:  translator.Label("ukupan_promet_1"),
-			ClassLabel: "w-96",
-		}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 83, "</div><div class=\"grid grid-cols-2 justify-items-start gap-x-4 gap-y-2 pt-2\"><div class=\"flex items-center gap-2 w-full min-w-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
-			ID:            "prom1",
-			Name:          "prom1",
-			Value:         "0.00",
-			ClassInput:    common.ClassInputTextEnabled + " w-32 text-right font-bold",
-			DecimalPlaces: 2,
-			TabIndex:      "24",
-			Disabled:      true,
-		}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{ID: "prom1", LabelText: translator.Label("ukupan_promet_1"), ClassLabel: "flex-1 min-w-0"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 74, "<span class=\"font-medium text-gray-600 text-center\">16</span></div><!-- Row 2 --><div class=\"flex items-center gap-2\">")
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{ID: "prom1", Name: "prom1", Value: "0.00", ClassInput: common.ClassInputTextEnabled + " w-40 shrink-0 text-right font-bold", DecimalPlaces: 2, TabIndex: "24", Disabled: true}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "prom2",
-			LabelText:  translator.Label("ukupan_promet_2"),
-			ClassLabel: "w-96",
-		}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 84, "<span class=\"font-medium text-gray-600 text-center shrink-0\">16</span></div><div class=\"flex items-center gap-2 w-full min-w-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
-			ID:            "prom2",
-			Name:          "prom2",
-			Value:         "0.00",
-			ClassInput:    common.ClassInputTextEnabled + " w-32 text-right font-bold",
-			DecimalPlaces: 2,
-			TabIndex:      "25",
-			Disabled:      true,
-		}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{ID: "prom2", LabelText: translator.Label("ukupan_promet_2"), ClassLabel: "flex-1 min-w-0"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 75, "<span class=\"font-medium text-gray-600 text-center\">17</span></div></div><!-- Action Buttons --><div class=\"flex justify-end gap-2 pt-2 border-t border-gray-300\">")
+		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{ID: "prom2", Name: "prom2", Value: "0.00", ClassInput: common.ClassInputTextEnabled + " w-40 shrink-0 text-right font-bold", DecimalPlaces: 2, TabIndex: "25", Disabled: true}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SaveButton(btnSave, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 85, "<span class=\"font-medium text-gray-600 text-center shrink-0\">17</span></div><div class=\"col-span-2 flex justify-end gap-2 pt-2 border-t border-gray-300\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.ConfirmButton(btnSave, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1477,7 +1516,39 @@ func DialogKirUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 76, "</div></div></div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 86, "</div></div></div></div><!-- Message Display Area at Bottom --><div id=\"dialog-form-message\" class=\"hidden w-full whitespace-normal break-words\" hx-on:kir:changed=\"this.classList.add(&#39;hidden&#39;); this.textContent=&#39;&#39;\"></div></form></div></div>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.CloseDialogScript().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.ShowSearchDialogScript().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.HideDropdownScript().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.ClearFieldErrorScript().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.HandleDblClickKontoSelectionScript().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.HandleFormResponseScript().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.ClearFormScript().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.HandleNextNalogResponseScript().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1502,38 +1573,38 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var16 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var16 == nil {
-			templ_7745c5c3_Var16 = templ.NopComponent
+		templ_7745c5c3_Var22 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var22 == nil {
+			templ_7745c5c3_Var22 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 77, "<!-- Dialog Container --><div class=\"fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50\"><div class=\"bg-white rounded-lg shadow-xl max-w-5xl w-full mx-4 max-h-[90vh] overflow-y-auto\"><!-- Header --><div class=\"bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg\"><h2 class=\"text-lg font-semibold ml-4\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 87, "<!-- Dialog Container --><div class=\"fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50\"><div class=\"bg-white rounded-lg shadow-xl max-w-5xl w-full mx-4 max-h-[90vh] overflow-y-auto\"><!-- Header --><div class=\"bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg\"><h2 class=\"text-lg font-semibold ml-4\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var17 string
-		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Title("Unos podataka - Knjiga primljenih računa"))
+		var templ_7745c5c3_Var23 string
+		templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Title("Unos podataka - Knjiga primljenih računa"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 1057, Col: 106}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 1007, Col: 106}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 78, "</h2><button onclick=\"closeDialog()\" class=\"text-white hover:text-gray-200 mr-4\"><svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-6 w-6\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M6 18L18 6M6 6l12 12\"></path></svg></button></div><!-- Form Content --><div class=\"p-2 space-y-1\"><!-- Top Controls --><div class=\"pl-2 pb-1\"><div class=\"font-bold text-xs text-gray-900 border-b-2 border-gray-400\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var18 string
-		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Vrste knjige ulaznih računa"))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 1068, Col: 126}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 88, "</h2><button onclick=\"closeDialog()\" class=\"text-white hover:text-gray-200 mr-4\"><svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-6 w-6\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M6 18L18 6M6 6l12 12\"></path></svg></button></div><!-- Form Content --><div class=\"p-2 space-y-1\"><!-- Top Controls --><div class=\"pl-2 pb-1\"><div class=\"font-bold text-xs text-gray-900 border-b-2 border-gray-400\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 79, "</div><div class=\"space-y-1 pt-2\"><!-- Row 1: Book Type --><div class=\"flex items-center gap-1\">")
+		var templ_7745c5c3_Var24 string
+		templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Vrste knjige ulaznih računa"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 1018, Col: 126}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 89, "</div><div class=\"space-y-1 pt-2\"><!-- Row 1: Book Type --><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1555,33 +1626,33 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 80, "</div><!-- Row 2: Checkbox --><div class=\"flex items-center gap-1\"><input type=\"checkbox\" id=\"interniracun\" name=\"interniracun\" class=\"w-4 h-4 text-blue-600 rounded\"> <label for=\"interniracun\" class=\"font-medium text-gray-700\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 90, "</div><!-- Row 2: Checkbox --><div class=\"flex items-center gap-1\"><input type=\"checkbox\" id=\"interniracun\" name=\"interniracun\" class=\"w-4 h-4 text-blue-600 rounded\"> <label for=\"interniracun\" class=\"font-medium text-gray-700\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var19 string
-		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Interni račun"))
+		var templ_7745c5c3_Var25 string
+		templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Interni račun"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 1088, Col: 103}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 1038, Col: 103}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 81, "</label></div></div></div><!-- Section 1: OSNOVNI PODACI --><div class=\"pl-2 pb-1\"><div class=\"font-bold text-xs text-gray-900 border-b-2 border-gray-400\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var20 string
-		templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Osnovni podaci"))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 1094, Col: 112}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 91, "</label></div></div></div><!-- Section 1: OSNOVNI PODACI --><div class=\"pl-2 pb-1\"><div class=\"font-bold text-xs text-gray-900 border-b-2 border-gray-400\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 82, "</div><div class=\"space-y-1 pt-2\"><!-- Row 1 --><div class=\"flex items-center gap-1\"><div class=\"flex items-center gap-2 w-1/3\">")
+		var templ_7745c5c3_Var26 string
+		templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Osnovni podaci"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 1044, Col: 112}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 92, "</div><div class=\"space-y-1 pt-2\"><!-- Row 1 --><div class=\"flex items-center gap-1\"><div class=\"flex items-center gap-2 w-1/3\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1603,7 +1674,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 83, "<span class=\"font-medium text-gray-600 text-center\">1</span></div><div class=\"flex items-center gap-2 flex-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 93, "<span class=\"font-medium text-gray-600 text-center\">1</span></div><div class=\"flex items-center gap-2 flex-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1625,7 +1696,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 84, "</div></div><!-- Row 2 --><div class=\"flex items-center gap-1\"><div class=\"flex items-center gap-2 w-1/3\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 94, "</div></div><!-- Row 2 --><div class=\"flex items-center gap-1\"><div class=\"flex items-center gap-2 w-1/3\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1647,7 +1718,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 85, "</div><div class=\"flex items-center gap-2 flex-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 95, "</div><div class=\"flex items-center gap-2 flex-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1669,7 +1740,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 86, "<span class=\"font-medium text-gray-600 text-center\">2</span></div></div><!-- Row 3 --><div class=\"flex items-center gap-1\"><div class=\"flex items-center gap-2 w-1/3\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 96, "<span class=\"font-medium text-gray-600 text-center\">2</span></div></div><!-- Row 3 --><div class=\"flex items-center gap-1\"><div class=\"flex items-center gap-2 w-1/3\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1691,7 +1762,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 87, "<span class=\"font-medium text-gray-600 text-center\">3</span></div><div class=\"flex items-center gap-2 w-1/3\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 97, "<span class=\"font-medium text-gray-600 text-center\">3</span></div><div class=\"flex items-center gap-2 w-1/3\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1713,7 +1784,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 88, "<span class=\"font-medium text-gray-600 text-center\">4</span></div><div class=\"flex items-center gap-2 flex-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 98, "<span class=\"font-medium text-gray-600 text-center\">4</span></div><div class=\"flex items-center gap-2 flex-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1735,7 +1806,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 89, "</div></div><!-- Row 4: Konto and Search --><div class=\"flex items-center gap-1\"><div class=\"flex items-center gap-2 w-1/3\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 99, "</div></div><!-- Row 4: Konto and Search --><div class=\"flex items-center gap-1\"><div class=\"flex items-center gap-2 w-1/3\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1759,7 +1830,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 90, "</div><div class=\"flex items-center gap-1 w-1/3\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 100, "</div><div class=\"flex items-center gap-1 w-1/3\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1795,7 +1866,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 91, "</div></div><!-- Row 5: Supplier Name and PIB --><div class=\"flex items-center gap-1\"><div class=\"flex items-center gap-2 flex-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 101, "</div></div><!-- Row 5: Supplier Name and PIB --><div class=\"flex items-center gap-1\"><div class=\"flex items-center gap-2 flex-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1818,7 +1889,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 92, "<span class=\"font-medium text-gray-600 text-center\">5</span></div><div class=\"flex items-center gap-2 w-1/3\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 102, "<span class=\"font-medium text-gray-600 text-center\">5</span></div><div class=\"flex items-center gap-2 w-1/3\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1841,7 +1912,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 93, "<span class=\"font-medium text-gray-600 text-center\">6</span></div></div><!-- Row 6: Address fields --><div class=\"flex items-center gap-1\"><div class=\"flex items-center gap-2 flex-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 103, "<span class=\"font-medium text-gray-600 text-center\">6</span></div></div><!-- Row 6: Address fields --><div class=\"flex items-center gap-1\"><div class=\"flex items-center gap-2 flex-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1864,7 +1935,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 94, "</div><div class=\"flex items-center gap-2 w-1/4\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 104, "</div><div class=\"flex items-center gap-2 w-1/4\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1887,7 +1958,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 95, "</div><div class=\"flex items-center gap-2 w-1/4\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 105, "</div><div class=\"flex items-center gap-2 w-1/4\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1910,20 +1981,20 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 96, "</div></div></div></div><!-- Section 2: PODACI O PDV, UKUPNIM IZNOSIMA --><div class=\"pl-2 pb-1\"><div class=\"font-bold text-xs text-gray-900 border-b-2 border-gray-400\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 106, "</div></div></div></div><!-- Section 2: PODACI O PDV, UKUPNIM IZNOSIMA --><div class=\"pl-2 pb-1\"><div class=\"font-bold text-xs text-gray-900 border-b-2 border-gray-400\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var21 string
-		templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Podaci o PDV, ukupnim iznosima"))
+		var templ_7745c5c3_Var27 string
+		templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Podaci o PDV, ukupnim iznosima"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 1338, Col: 128}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 1288, Col: 128}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 97, "</div><div class=\"space-y-1 pt-2\"><!-- Row 1 --><div class=\"flex items-center gap-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 107, "</div><div class=\"space-y-1 pt-2\"><!-- Row 1 --><div class=\"flex items-center gap-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1946,7 +2017,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 98, "<span class=\"font-medium text-gray-600 text-center\">8</span></div><!-- Row 2 --><div class=\"flex items-center gap-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 108, "<span class=\"font-medium text-gray-600 text-center\">8</span></div><!-- Row 2 --><div class=\"flex items-center gap-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1969,7 +2040,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 99, "<span class=\"font-medium text-gray-600 text-center\">9</span></div><!-- Row 3 --><div class=\"flex items-center gap-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 109, "<span class=\"font-medium text-gray-600 text-center\">9</span></div><!-- Row 3 --><div class=\"flex items-center gap-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1992,7 +2063,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 100, "<span class=\"font-medium text-gray-600 text-center\">10</span></div><!-- Row 4 --><div class=\"flex items-center gap-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 110, "<span class=\"font-medium text-gray-600 text-center\">10</span></div><!-- Row 4 --><div class=\"flex items-center gap-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2015,20 +2086,20 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 101, "<span class=\"font-medium text-gray-600 text-center\">11</span></div></div></div><!-- Section 3: PRETHODNI POREZ --><div class=\"pl-2 pb-1\"><div class=\"font-bold text-xs text-gray-900 border-b-2 border-gray-400\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 111, "<span class=\"font-medium text-gray-600 text-center\">11</span></div></div></div><!-- Section 3: PRETHODNI POREZ --><div class=\"pl-2 pb-1\"><div class=\"font-bold text-xs text-gray-900 border-b-2 border-gray-400\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var22 string
-		templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Prethodni porez"))
+		var templ_7745c5c3_Var28 string
+		templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Prethodni porez"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 1412, Col: 113}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 1362, Col: 113}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 102, "</div><div class=\"space-y-1 pt-2\"><!-- Row 1 --><div class=\"flex items-center gap-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 112, "</div><div class=\"space-y-1 pt-2\"><!-- Row 1 --><div class=\"flex items-center gap-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2051,7 +2122,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 103, "<span class=\"font-medium text-gray-600 text-center\">12</span></div><!-- Row 2 --><div class=\"flex items-center gap-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 113, "<span class=\"font-medium text-gray-600 text-center\">12</span></div><!-- Row 2 --><div class=\"flex items-center gap-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2074,7 +2145,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 104, "<span class=\"font-medium text-gray-600 text-center\">13</span></div><!-- Row 3 --><div class=\"flex items-center gap-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 114, "<span class=\"font-medium text-gray-600 text-center\">13</span></div><!-- Row 3 --><div class=\"flex items-center gap-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2097,7 +2168,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 105, "<span class=\"font-medium text-gray-600 text-center\">14</span></div><!-- Row 4 --><div class=\"flex items-center gap-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 115, "<span class=\"font-medium text-gray-600 text-center\">14</span></div><!-- Row 4 --><div class=\"flex items-center gap-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2120,7 +2191,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 106, "<span class=\"font-medium text-gray-600 text-center\">15</span></div><!-- Row 5 --><div class=\"flex items-center gap-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 116, "<span class=\"font-medium text-gray-600 text-center\">15</span></div><!-- Row 5 --><div class=\"flex items-center gap-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2143,7 +2214,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 107, "<span class=\"font-medium text-gray-600 text-center\">16</span></div></div><!-- Action Buttons --><div class=\"flex justify-end gap-2 pt-2 border-t border-gray-300\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 117, "<span class=\"font-medium text-gray-600 text-center\">16</span></div></div><!-- Action Buttons --><div class=\"flex justify-end gap-2 pt-2 border-t border-gray-300\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2155,7 +2226,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 108, "</div></div></div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 118, "</div></div></div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

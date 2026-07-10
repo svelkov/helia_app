@@ -9,6 +9,7 @@ import (
 	"helia/internal/common"
 	"helia/internal/domain"
 	"helia/internal/infrastructure"
+	"helia/internal/service"
 	"log"
 	"net/http"
 	"os"
@@ -85,6 +86,7 @@ type responseWriter struct {
 
 // BasicHandler handles base application functionality
 type BasicHandler struct {
+	menuService  service.MenuService
 	isLoggedIn   bool
 	menuItems    domain.MenuDataItems
 	subMenuItems []domain.SubMenuItem
@@ -95,15 +97,14 @@ type BasicHandler struct {
 }
 
 // NewBasicHandler creates and initializes a new BasicHandler
-func NewBasicHandler(c *gin.Context, isLoggedIn bool, menuItems domain.MenuDataItems, subMenuItems []domain.SubMenuItem, fvrService finservice.FvrService, cfg config.Config) *BasicHandler {
+func NewBasicHandler(c *gin.Context, menuService service.MenuService, isLoggedIn bool, fvrService finservice.FvrService, cfg config.Config) *BasicHandler {
 	handler := &BasicHandler{
-		isLoggedIn:   isLoggedIn,
-		menuItems:    menuItems,
-		subMenuItems: subMenuItems,
-		fvrService:   fvrService,
-		firma:        domain.Firma{},
-		logger:       log.New(os.Stdout, "[BasicHandler] ", log.LstdFlags|log.Lshortfile),
-		cfg:          cfg,
+		menuService: menuService,
+		isLoggedIn:  isLoggedIn,
+		fvrService:  fvrService,
+		firma:       domain.Firma{},
+		logger:      log.New(os.Stdout, "[BasicHandler] ", log.LstdFlags|log.Lshortfile),
+		cfg:         cfg,
 	}
 
 	// Initialize firma data
@@ -507,8 +508,27 @@ func (h *BasicHandler) indexHandler(c *gin.Context) {
 	if menuName == "" {
 		menuName = defaultMenu
 	}
+	ctx := c.Request.Context()
+	menuData, err := h.menuService.GetMenuData(ctx)
+	if err != nil {
+		h.logger.Printf("Error fetching menu data: %v", err)
+		h.respondWithError(c, http.StatusInternalServerError, "Error fetching menu data")
+		return
+	}
+	subMenuData, err := h.menuService.GetSubmenuData(ctx, menuName)
+	if err != nil {
+		h.logger.Printf("Error fetching submenu data for menu %s: %v", menuName, err)
+		h.respondWithError(c, http.StatusInternalServerError, "Error fetching submenu data")
+		return
+	}
+	menuDataItems := domain.MenuDataItems{
+		CurrentMenu:    menuName,
+		CurrentSubMenu: "",
+		MenuItems:      menuData,
+	}
+
 	// Get submenu items
-	subMenus := common.GetTranslatedSubMenus(domain.MenuData, menuName, selections.language)
+	subMenus := common.GetTranslatedSubMenus(menuDataItems, menuName, subMenuData, selections.language)
 	if subMenus == nil {
 		h.logger.Printf("Menu not found: %s", menuName)
 		h.respondWithError(c, http.StatusNotFound, "Menu not found")
@@ -516,11 +536,12 @@ func (h *BasicHandler) indexHandler(c *gin.Context) {
 	}
 
 	// Update handler state
+	h.menuItems = menuDataItems
 	h.subMenuItems = subMenus
 	h.menuItems.CurrentMenu = menuName
 
 	// Render the page
-	err := tmpl.Base(
+	err = tmpl.Base(
 		isLoggedIn,
 		tmpl.Content(isLoggedIn, i18n.GetInstance()),
 		h.menuItems,
@@ -692,7 +713,31 @@ func (h *BasicHandler) setComboFirma(c *gin.Context) {
 }
 
 func (h *BasicHandler) SelectComboFirma(c *gin.Context) {
-	// UserSession already has firma from context, just render
+	newFirma := c.Query("firma")
+	if newFirma == "" {
+		newFirma = c.PostForm("firma")
+	}
+	if newFirma != "" {
+		userSession := domain.GetSessionFromContext(c)
+		if userSession != nil && userSession.Firma != newFirma {
+			userSession.Firma = newFirma
+			// Reset god and kar to first available values for the new firma
+			userSession.SelectedGod = 0
+			userSession.SelectedKar = 0
+			fvrData := h.getFirma()
+			for _, f := range fvrData.Firme {
+				if f.Naziv == newFirma && len(f.Godine) > 0 {
+					userSession.SelectedGod = f.Godine[0].God
+					if len(f.Godine[0].Kar) > 0 {
+						userSession.SelectedKar = f.Godine[0].Kar[0]
+					}
+					break
+				}
+			}
+			c.Set("userSession", userSession)
+			h.regenerateToken(c, userSession)
+		}
+	}
 	h.renderFullPage(c)
 }
 
@@ -704,16 +749,24 @@ func (h *BasicHandler) SetComboGod(c *gin.Context) {
 
 	if god != "" {
 		if gnGod, err := strconv.Atoi(god); err == nil {
-			// Update user session in context (per-user, request-scoped)
 			userSession := domain.GetSessionFromContext(c)
 			if userSession != nil {
 				userSession.SelectedGod = gnGod
-
-				// Regenerate JWT token with new preferences
-				h.regenerateToken(c, userSession)
-				// Reset dependent field
-				userSession.SelectedKar = 0
+				// Reset kar and pick the default for the new god before regenerating the token
+				fvrData := h.getFirma()
+				defaultKar := 0
+				for _, firma := range fvrData.Firme {
+					if firma.Naziv == userSession.Firma {
+						for _, g := range firma.Godine {
+							if g.God == gnGod && len(g.Kar) > 0 {
+								defaultKar = g.Kar[0]
+							}
+						}
+					}
+				}
+				userSession.SelectedKar = defaultKar
 				c.Set("userSession", userSession)
+				h.regenerateToken(c, userSession)
 			}
 		}
 	}
@@ -722,7 +775,33 @@ func (h *BasicHandler) SetComboGod(c *gin.Context) {
 }
 
 func (h *BasicHandler) SelectComboGod(c *gin.Context) {
-	// UserSession already has god from context, just render
+	god := c.Query("god")
+	if god == "" {
+		god = c.PostForm("god")
+	}
+	if god != "" {
+		if gnGod, err := strconv.Atoi(god); err == nil {
+			userSession := domain.GetSessionFromContext(c)
+			if userSession != nil && gnGod != userSession.SelectedGod {
+				userSession.SelectedGod = gnGod
+				// Reset kar to first available value for the new god
+				userSession.SelectedKar = 0
+				fvrData := h.getFirma()
+				for _, f := range fvrData.Firme {
+					if f.Naziv == userSession.Firma {
+						for _, g := range f.Godine {
+							if g.God == gnGod && len(g.Kar) > 0 {
+								userSession.SelectedKar = g.Kar[0]
+							}
+						}
+						break
+					}
+				}
+				c.Set("userSession", userSession)
+				h.regenerateToken(c, userSession)
+			}
+		}
+	}
 	h.renderFullPage(c)
 }
 
@@ -736,12 +815,12 @@ func (h *BasicHandler) SetComboKar(c *gin.Context) {
 		if gnKar, err := strconv.Atoi(kar); err == nil {
 			// Update user session in context (per-user, request-scoped)
 			userSession := domain.GetSessionFromContext(c)
-
-			// Regenerate JWT token with new preferences
-			h.regenerateToken(c, userSession)
 			if userSession != nil {
 				userSession.SelectedKar = gnKar
 				c.Set("userSession", userSession)
+
+				// Regenerate JWT token with new preferences
+				h.regenerateToken(c, userSession)
 			}
 		}
 	}
@@ -750,7 +829,20 @@ func (h *BasicHandler) SetComboKar(c *gin.Context) {
 }
 
 func (h *BasicHandler) SelectComboKar(c *gin.Context) {
-	// UserSession already has kar from context, just render
+	kar := c.Query("kar")
+	if kar == "" {
+		kar = c.PostForm("kar")
+	}
+	if kar != "" {
+		if gnKar, err := strconv.Atoi(kar); err == nil {
+			userSession := domain.GetSessionFromContext(c)
+			if userSession != nil && gnKar != userSession.SelectedKar {
+				userSession.SelectedKar = gnKar
+				c.Set("userSession", userSession)
+				h.regenerateToken(c, userSession)
+			}
+		}
+	}
 	h.renderFullPage(c)
 }
 func (h *BasicHandler) SelectComboLanguage(c *gin.Context) {
@@ -793,6 +885,51 @@ func (h *BasicHandler) renderComboResponse(c *gin.Context) {
 	if err := json.NewEncoder(c.Writer).Encode(response); err != nil {
 		h.logger.Printf("Error encoding response: %v", err)
 		h.respondWithError(c, http.StatusInternalServerError, "Error generating response")
+		return
+	}
+}
+
+// getMenuHandler handles menu requests
+func (h *BasicHandler) getMenuHandler(c *gin.Context) {
+	// Get user session from context
+	userSession := domain.GetSessionFromContext(c)
+	if userSession == nil {
+		c.JSON(401, gin.H{"error": "User session not found"})
+		return
+	}
+
+	menuName := c.Query("menuName")
+	if menuName == "" {
+		menuName = defaultMenu
+	}
+	menuData, err := h.menuService.GetMenuData(c.Request.Context())
+	if err != nil {
+		h.logger.Printf("Error fetching menu data: %v", err)
+		c.JSON(500, gin.H{"error": "Error fetching menu data"})
+		return
+	}
+	subMenuData, err := h.menuService.GetSubmenuData(c.Request.Context(), menuName)
+	if err != nil {
+		h.logger.Printf("Error fetching submenu data for menu %s: %v", menuName, err)
+		c.JSON(500, gin.H{"error": "Error fetching submenu data"})
+		return
+	}
+	menuDataItems := domain.MenuDataItems{
+		CurrentMenu:    menuName,
+		CurrentSubMenu: "",
+		MenuItems:      menuData,
+	}
+
+	subMenus := common.GetTranslatedSubMenus(menuDataItems, menuName, subMenuData, userSession.Language)
+	if subMenus == nil {
+		c.JSON(404, gin.H{"error": "Menu not found"})
+		return
+	}
+
+	// Render templ component directly
+	component := templates.Side_nav(subMenus)
+	if err := component.Render(c.Request.Context(), c.Writer); err != nil {
+		c.JSON(500, gin.H{"error": "Error rendering template"})
 		return
 	}
 }
@@ -850,9 +987,27 @@ func (h *BasicHandler) renderFullPage(c *gin.Context) {
 	if menuName == "" {
 		menuName = defaultMenu
 	}
+	ctx := c.Request.Context()
+	menuData, err := h.menuService.GetMenuData(ctx)
+	if err != nil {
+		h.logger.Printf("Error fetching menu data: %v", err)
+		h.respondWithError(c, http.StatusInternalServerError, "Error fetching menu data")
+		return
+	}
+	subMenuData, err := h.menuService.GetSubmenuData(ctx, menuName)
+	if err != nil {
+		h.logger.Printf("Error fetching submenu data: %v", err)
+		h.respondWithError(c, http.StatusInternalServerError, "Error fetching submenu data")
+		return
+	}
 
+	menuDataItems := domain.MenuDataItems{
+		CurrentMenu:    menuName,
+		CurrentSubMenu: "",
+		MenuItems:      menuData,
+	}
 	// Get submenu items
-	subMenus := common.GetTranslatedSubMenus(domain.MenuData, menuName, userSession.Language)
+	subMenus := common.GetTranslatedSubMenus(menuDataItems, menuName, subMenuData, userSession.Language)
 	if subMenus == nil {
 		h.logger.Printf("Menu not found: %s", menuName)
 		h.respondWithError(c, http.StatusNotFound, "Menu not found")
@@ -894,9 +1049,13 @@ func (h *BasicHandler) renderFullPage(c *gin.Context) {
 		KarConf:      setComboKarConfig(fvrData, selections.firma, selections.god, selections.kar),
 		LanguageConf: setComboLanguageConfig(selections.language, h.cfg),
 	}
-
+	userSession.Firma = selections.firma
+	userSession.SelectedGod = selections.god
+	userSession.SelectedKar = selections.kar
+	userSession.Language = selections.language
+	c.Set("userSession", userSession)
 	// Render the page
-	err := tmpl.Base(
+	tmpl.Base(
 		pageData.IsLoggedIn,
 		pageData.Content,
 		pageData.MenuItems,
@@ -911,12 +1070,6 @@ func (h *BasicHandler) renderFullPage(c *gin.Context) {
 		pageData.LanguageConf,
 		i18n.GetInstance(),
 	).Render(c.Request.Context(), c.Writer)
-
-	if err != nil {
-		h.logger.Printf("Error rendering template: %v", err)
-		h.respondWithError(c, http.StatusInternalServerError, "Error rendering template")
-		return
-	}
 }
 
 func (rw *responseWriter) WriteHeader(code int) {
@@ -958,6 +1111,7 @@ func (h *BasicHandler) AddRoutes(r *gin.Engine) {
 	r.GET("/api/selectkar", h.SelectComboKar)
 	r.GET("/api/setkar", h.SetComboKar)
 	r.GET("/api/selectlanguage", h.SelectComboLanguage)
+	r.GET("/api/get-menu", h.getMenuHandler)
 	//r.GET("/api/setlanguage", h.SetComboLanguage)
 }
 

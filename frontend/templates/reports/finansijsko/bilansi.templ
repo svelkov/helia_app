@@ -1,0 +1,445 @@
+package finansijsko
+
+import (
+	rep "helia/frontend/templates/reports"
+	"helia/i18n"
+	"helia/internal/common"
+	"helia/internal/domain"
+)
+
+// BilansStanjaObrazacStampa renders a printable full-page report for a single bilans stanja,
+// reusing the shared report layout components.
+templ BilansStanjaObrazacStampa(repParams domain.ReportParameters, params domain.BilansiStampaParams, tblStavke domain.TableData, translator *i18n.Service) {
+	@rep.Report(repParams, tblStavke, translator, nil, BilansStanjaReport(params, tblStavke, translator))
+}
+
+templ BilansStanjaReport(params domain.BilansiStampaParams, tblStavke domain.TableData, translator *i18n.Service) {
+	@BilansStanjaReportHeader(params, tblStavke, translator)
+	@BilansStanjaReportBody(params, tblStavke, translator)
+	@BilansStanjaReportSummary(params, tblStavke, translator)
+}
+
+templ BilansStanjaReportHeader(params domain.BilansiStampaParams, tbl domain.TableData, translator *i18n.Service) {
+	<div class="mb-2 text-right font-semibold">
+		{ translator.Label("Prilog 2") }
+	</div>
+	<!-- Official header -->
+	<table class="mb-3 w-full table-fixed border border-black text-center text-[10px] [border-collapse:collapse]">
+		<colgroup>
+			<col span="24" class="w-[4.166%]"/>
+		</colgroup>
+		<tbody>
+			<tr>
+				<td colspan="24" class="h-5 border border-black font-semibold">
+					{ translator.Label("Popunjava pravno lice - preduzetnik") }
+				</td>
+			</tr>
+			<!-- 24 small boxes -->
+			<tr>
+				for i := 0; i < 8; i++ {
+					<td class="border border-black text-sm font-bold">{ common.BilansCharAt(params.MaticniBroj, i) }</td>
+				}
+				<td class="border border-black"></td>
+				<td class="border border-black"></td>
+				<td class="border border-black"></td>
+				<td class="border border-black"></td>
+				<td class="border border-black"></td>
+				<td class="border border-black"></td>
+				<td class="border border-black"></td>
+				for i := 0; i < 9; i++ {
+					<td class="border border-black text-sm font-bold">{ common.BilansCharAt(params.PIB, i) }</td>
+				}
+			</tr>
+			<!-- Labels -->
+			<tr>
+				<td colspan="8" class="h-5 border border-black font-semibold">
+					{ translator.Label("Matični broj") }
+				</td>
+				<td class="border border-black"></td>
+				<td colspan="5" class="border border-black font-semibold">
+					{ translator.Label("Šifra delatnosti") }
+				</td>
+				<td class="border border-black"></td>
+				<td colspan="9" class="border border-black font-semibold">
+					{ translator.Label("PIB") }
+				</td>
+			</tr>
+			<tr>
+				<td colspan="24" class="h-5 border border-black font-semibold">
+					{ translator.Label("Popunjava Agencija za privredne registre") }
+				</td>
+			</tr>
+			<!-- Empty APR row above numbers -->
+			<tr>
+				<td class="h-7 border border-black"></td>
+				<td class="border border-black"></td>
+				<td class="border border-black"></td>
+				<td colspan="9" class="border border-black"></td>
+				<td class="border border-black"></td>
+				<td colspan="4" class="border border-black"></td>
+				<td class="border border-black"></td>
+				<td class="border border-black"></td>
+				<td class="border border-black"></td>
+				<td class="border border-black"></td>
+				<td class="border border-black"></td>
+				<td class="border border-black"></td>
+				<td class="border border-black"></td>
+			</tr>
+			<!-- Number row: 1 2 3, 19, 20-26 -->
+			<tr>
+				<td class="border border-black">1</td>
+				<td class="border border-black">2</td>
+				<td class="border border-black">3</td>
+				<td colspan="9" class="border border-black"></td>
+				<td class="border border-black">19</td>
+				<td colspan="4" class="border border-black"></td>
+				<td class="border border-black">20</td>
+				<td class="border border-black">21</td>
+				<td class="border border-black">22</td>
+				<td class="border border-black">23</td>
+				<td class="border border-black">24</td>
+				<td class="border border-black">25</td>
+				<td class="border border-black">26</td>
+			</tr>
+			<tr>
+				<td colspan="3" class="h-5 border border-black font-semibold">
+					{ translator.Label("Vrsta posla") }
+				</td>
+				<td colspan="21" class="border border-black"></td>
+			</tr>
+		</tbody>
+	</table>
+	<div class="mt-4 space-y-3">
+		<div class="flex gap-2">
+			<span class="text-xs">{ translator.Label("Naziv") }:</span>
+			<div class="flex-1 text-sm font-bold border-b border-black">{ params.Naziv }</div>
+		</div>
+		<div class="flex gap-2">
+			<span class="text-xs">{ translator.Label("Sedište") }:</span>
+			<div class="flex-1 text-sm font-bold border-b border-black">{ params.Adresa }, { params.PostBroj } { params.Mesto } </div>
+		</div>
+	</div>
+	<div class="mt-8 mb-4 text-center">
+		<h1 class="text-lg font-bold tracking-wide">{ translator.Title("Bilans stanja") }</h1>
+		<div class="text-sm font-semibold">
+			{ translator.Label("Na dan") }: { params.OdDatuma } { translator.Label("godine") }
+		</div>
+	</div>
+}
+
+templ BilansStanjaReportBody(params domain.BilansiStampaParams, tblStavke domain.TableData, translator *i18n.Service) {
+	<div class="mb-1 text-right text-[10px]">
+		- { translator.Label("u hiljadama dinara") } -
+	</div>
+	<table class="w-full table-fixed border bg-gray-200 border-black text-center [border-collapse:collapse]">
+		<!-- HEADER -->
+		<thead class="text-[11px]">
+			<!-- Row 1 -->
+			<tr>
+				<th rowspan="3" class="border border-black px-1 w-[14%]">
+					{ translator.Label("Grupa računa,") }
+					<br/>
+					{ translator.Label("račun") }
+				</th>
+				<th rowspan="3" class="border border-black px-1 w-[36%] tracking-[0.3em]">
+					{ translator.Label("POZICIJA") }
+				</th>
+				<th rowspan="3" class="border border-black px-1 w-[6%]">
+					{ translator.Label("AOP") }
+				</th>
+				<th rowspan="3" class="border border-black px-1 w-[10%]">
+					{ translator.Label("Napomena") }
+					<br/>
+					{ translator.Label("broj") }
+				</th>
+				<th colspan="3" class="border border-black px-1 w-[34%]">
+					{ translator.Label("Iznos") }
+				</th>
+			</tr>
+			<!-- Row 2 -->
+			<tr>
+				<th rowspan="2" class="border border-black px-1">
+					{ translator.Label("Tekuća godina") }
+				</th>
+				<th colspan="2" class="border border-black px-1">
+					{ translator.Label("Prethodna godina") }
+				</th>
+			</tr>
+			<!-- Row 3 -->
+			<tr>
+				<th class="border border-black px-1">
+					{ translator.Label("Krajnje stanje") }
+					<br/>
+					__ 20__
+				</th>
+				<th class="border border-black px-1">
+					{ translator.Label("Početno stanje") }
+					<br/>
+					01.01.20__
+				</th>
+			</tr>
+			<!-- Column numbers -->
+			<tr>
+				<th class="border border-black">1</th>
+				<th class="border border-black">2</th>
+				<th class="border border-black">3</th>
+				<th class="border border-black">4</th>
+				<th class="border border-black">5</th>
+				<th class="border border-black">6</th>
+				<th class="border border-black">7</th>
+			</tr>
+		</thead>
+		@rep.ReportTableBody(tblStavke, "", translator)
+	</table>
+}
+
+templ BilansStanjaReportSummary(params domain.BilansiStampaParams, tblKonta domain.TableData, translator *i18n.Service) {
+	<!-- FOOTER -->
+	<div class="mt-16 text-[11px]">
+		<!-- Top row -->
+		<div class="flex justify-between items-start">
+			<!-- Left -->
+			<div class="w-1/3">
+				<div class="mb-6">
+					<span>{ translator.Label("U") }</span>
+					<div class="border-b border-black w-40 mt-1"></div>
+				</div>
+				<div class="flex items-end gap-2">
+					<span>{ translator.Label("Dana") }</span>
+					<div class="border-b border-black w-24"></div>
+					<span>20</span>
+					<div class="border-b border-black w-12"></div>
+					<span>{ translator.Label("godine") }.</span>
+				</div>
+			</div>
+			<!-- Center -->
+			<div class="w-1/3 text-center">
+				<div class="font-semibold leading-tight">
+					{ translator.Label("Lice odgovorno za sastavljanje") }
+					<br/>
+					{ translator.Label("finansijskog izveštaja") }
+				</div>
+				<div class="border-b border-black w-56 mx-auto mt-8"></div>
+			</div>
+			<!-- Right -->
+			<div class="w-1/3 text-center">
+				<div class="font-semibold">
+					{ translator.Label("Zakonski zastupnik") }
+				</div>
+				<div class="border-b border-black w-56 mx-auto mt-8"></div>
+			</div>
+		</div>
+		<!-- Bottom center -->
+		<div class="text-center mt-12 font-semibold text-lg">
+			{ translator.Label("M.P.") }
+		</div>
+	</div>
+}
+
+// BilansUspehaObrazacStampa renders a printable full-page report for a single bilans uspeha,
+// reusing the shared report layout components.
+templ BilansUspehaObrazacStampa(repParams domain.ReportParameters, params domain.BilansiStampaParams, tblStavke domain.TableData, translator *i18n.Service) {
+	@rep.Report(repParams, tblStavke, translator, nil, BilansUspehaReport(params, tblStavke, translator))
+}
+
+templ BilansUspehaReport(params domain.BilansiStampaParams, tblStavke domain.TableData, translator *i18n.Service) {
+	@BilansUspehaReportHeader(params, tblStavke, translator)
+	@BilansUspehaReportBody(params, tblStavke, translator)
+	@BilansUspehaReportSummary(params, tblStavke, translator)
+}
+
+templ BilansUspehaReportHeader(params domain.BilansiStampaParams, tbl domain.TableData, translator *i18n.Service) {
+	<div class="mb-2 text-right font-semibold">
+		{ translator.Label("Prilog 2") }
+	</div>
+	<!-- Official header -->
+	<table class="mb-3 w-full table-fixed border border-black text-center text-[10px] [border-collapse:collapse]">
+		<colgroup>
+			<col span="24" class="w-[4.166%]"/>
+		</colgroup>
+		<tbody>
+			<tr>
+				<td colspan="24" class="h-5 border border-black font-semibold">
+					{ translator.Label("Popunjava pravno lice - preduzetnik") }
+				</td>
+			</tr>
+			<!-- 24 small boxes -->
+			<tr>
+			    for i := 0; i < 8; i++ {
+					<td class="border border-black text-sm font-bold">{ common.BilansCharAt(params.MaticniBroj, i) }</td>
+				}
+				<td class="border border-black"></td>
+				<td class="border border-black"></td>
+				<td class="border border-black"></td>
+				<td class="border border-black"></td>
+				<td class="border border-black"></td>
+				<td class="border border-black"></td>
+				<td class="border border-black"></td>
+				for i := 0; i < 9; i++ {
+					<td class="border border-black text-sm font-bold">{ common.BilansCharAt(params.PIB, i) }</td>
+				}
+			</tr>
+			<!-- Labels -->
+			<tr>
+				<td colspan="8" class="h-5 border border-black font-semibold">
+					{ translator.Label("Matični broj") }
+				</td>
+				<td class="border border-black"></td>
+				<td colspan="5" class="border border-black font-semibold">
+					{ translator.Label("Šifra delatnosti") }
+				</td>
+				<td class="border border-black"></td>
+				<td colspan="9" class="border border-black font-semibold">
+					{ translator.Label("PIB") }
+				</td>
+			</tr>
+			<tr>
+				<td colspan="24" class="h-5 border border-black font-semibold">
+					{ translator.Label("Popunjava Agencija za privredne registre") }
+				</td>
+			</tr>
+			<!-- Empty APR row above numbers -->
+			<tr>
+				<td class="h-7 border border-black"></td>
+				<td class="border border-black"></td>
+				<td class="border border-black"></td>
+				<td colspan="9" class="border border-black"></td>
+				<td class="border border-black"></td>
+				<td colspan="4" class="border border-black"></td>
+				<td class="border border-black"></td>
+				<td class="border border-black"></td>
+				<td class="border border-black"></td>
+				<td class="border border-black"></td>
+				<td class="border border-black"></td>
+				<td class="border border-black"></td>
+				<td class="border border-black"></td>
+			</tr>
+			<!-- Number row: 1 2 3, 19, 20-26 -->
+			<tr>
+				<td class="border border-black">1</td>
+				<td class="border border-black">2</td>
+				<td class="border border-black">3</td>
+				<td colspan="9" class="border border-black"></td>
+				<td class="border border-black">19</td>
+				<td colspan="4" class="border border-black"></td>
+				<td class="border border-black">20</td>
+				<td class="border border-black">21</td>
+				<td class="border border-black">22</td>
+				<td class="border border-black">23</td>
+				<td class="border border-black">24</td>
+				<td class="border border-black">25</td>
+				<td class="border border-black">26</td>
+			</tr>
+			<tr>
+				<td colspan="3" class="h-5 border border-black font-semibold">
+					{ translator.Label("Vrsta posla") }
+				</td>
+				<td colspan="21" class="border border-black"></td>
+			</tr>
+		</tbody>
+	</table>
+	<div class="mt-4 space-y-3">
+		<div class="flex gap-2">
+			<span class="text-xs">{ translator.Label("Naziv") }:</span>
+			<div class="flex-1 text-sm font-bold border-b border-black">{ params.Naziv }</div>
+		</div>
+		<div class="flex gap-2">
+			<span class="text-xs">{ translator.Label("Sedište") }:</span>
+			<div class="flex-1 text-sm font-bold border-b border-black">{ params.Adresa }, { params.PostBroj } { params.Mesto } </div>
+		</div>
+	</div>
+	<div class="mt-8 mb-4 text-center">
+		<h1 class="text-lg font-bold tracking-wide">{ translator.Title("Bilans uspeha") }</h1>
+		<div class="text-sm font-semibold">
+			{ translator.Label("u periodu od") } { params.OdDatuma } { translator.Label("do") } { params.DoDatuma } { translator.Label("godine") }
+		</div>
+	</div>
+}
+
+templ BilansUspehaReportBody(params domain.BilansiStampaParams, tblStavke domain.TableData, translator *i18n.Service) {
+	<div class="mb-1 text-right text-[10px]">
+		- { translator.Label("u hiljadama dinara") } -
+	</div>
+	<table class="w-full table-fixed border bg-gray-200 border-black text-center [border-collapse:collapse]">
+		<!-- HEADER -->
+		<thead class="text-[11px]">
+			<tr>
+				<th rowspan="2" class="w-[13%] border border-black px-1">
+					{ translator.Label("Grupa računa,") }
+					<br/>
+					{ translator.Label("račun") }
+				</th>
+				<th rowspan="2" class="w-[42%] border border-black px-1">
+					{ translator.Label("POZICIJA") }
+				</th>
+				<th rowspan="2" class="w-[6%] border border-black px-1">
+					{ translator.Label("AOP") }
+				</th>
+				<th rowspan="2" class="w-[10%] border border-black px-1">
+					{ translator.Label("Napomena") }
+					<br/>
+					{ translator.Label("broj") }
+				</th>
+				<th colspan="2" class="w-[29%] border border-black px-1">
+					{ translator.Label("Iznos") }
+				</th>
+			</tr>
+			<tr>
+				<th class="border border-black px-1">{ translator.Label("Tekuća") }<br/>{ translator.Label("godina") }</th>
+				<th class="border border-black px-1">{ translator.Label("Prethodna") }<br/>{ translator.Label("godina") }</th>
+			</tr>
+			<tr>
+				<th class="border border-black">1</th>
+				<th class="border border-black">2</th>
+				<th class="border border-black">3</th>
+				<th class="border border-black">4</th>
+				<th class="border border-black">5</th>
+				<th class="border border-black">6</th>
+			</tr>
+		</thead>
+		@rep.ReportTableBody(tblStavke, "", translator)
+	</table>
+}
+
+templ BilansUspehaReportSummary(params domain.BilansiStampaParams, tblKonta domain.TableData, translator *i18n.Service) {
+	<!-- FOOTER -->
+	<div class="mt-16 text-[11px]">
+		<!-- Top row -->
+		<div class="flex justify-between items-start">
+			<!-- Left -->
+			<div class="w-1/3">
+				<div class="mb-6">
+					<span>{ translator.Label("U") }</span>
+					<div class="border-b border-black w-40 mt-1"></div>
+				</div>
+				<div class="flex items-end gap-2">
+					<span>{ translator.Label("Dana") }</span>
+					<div class="border-b border-black w-24"></div>
+					<span>20</span>
+					<div class="border-b border-black w-12"></div>
+					<span>{ translator.Label("godine") }.</span>
+				</div>
+			</div>
+			<!-- Center -->
+			<div class="w-1/3 text-center">
+				<div class="font-semibold leading-tight">
+					{ translator.Label("Lice odgovorno za sastavljanje") }
+					<br/>
+					{ translator.Label("finansijskog izveštaja") }
+				</div>
+				<div class="border-b border-black w-56 mx-auto mt-8"></div>
+			</div>
+			<!-- Right -->
+			<div class="w-1/3 text-center">
+				<div class="font-semibold">
+					{ translator.Label("Zakonski zastupnik") }
+				</div>
+				<div class="border-b border-black w-56 mx-auto mt-8"></div>
+			</div>
+		</div>
+		<!-- Bottom center -->
+		<div class="text-center mt-12 font-semibold text-lg">
+			{ translator.Label("M.P.") }
+		</div>
+	</div>
+}

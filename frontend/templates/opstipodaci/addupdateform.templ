@@ -20,13 +20,14 @@ templ AddUpdateForm(csrfToken string, dialog domain.Dialog, fields []domain.Fiel
 				id="dialog-form"
 				if dialog.HxRequestType == "PUT" {
 					hx-put={ dialog.HxActionURL }
-					hx-on::after-request="handleFormResponse(event, 'PUT')"
+					hx-on::after-request="handleFormResponse(event, 'PUT', this.dataset.dialogId)"
 				}
 				if dialog.HxRequestType == "POST" {
 					hx-post={ dialog.HxActionURL }
-					hx-on::after-request="handleFormResponse(event, 'POST')"
+					hx-on::after-request="handleFormResponse(event, 'POST', this.dataset.dialogId)"
 				}
-				hx-target="#dialog-message"
+				data-dialog-id={ dialog.Id }
+				hx-target={ "#" + dialog.Id + "-message" }
 				hx-boost="false"
 				onsubmit="return false;"
 				class="grid grid-cols-1 md:grid-cols-[auto,auto] gap-2 gap-x-4 p-3 bg-white shadow-lg rounded-lg w-auto"
@@ -52,7 +53,7 @@ templ AddUpdateForm(csrfToken string, dialog domain.Dialog, fields []domain.Fiel
 				</div>
 			</form>
 			<!-- Message Display Area at Bottom -->
-			<div id="dialog-message" class="hidden"></div>
+			<div id={ dialog.Id + "-message" } class="hidden"></div>
 		</div>
 	</div>
 	<script>

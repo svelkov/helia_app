@@ -3,7 +3,6 @@ package finansijsko
 import (
 	"fmt"
 	"net/http"
-	"reflect"
 	"strings"
 
 	"helia/config"
@@ -97,6 +96,7 @@ func (h *FproHandler) GetNalogStavke(c *gin.Context) {
 	tblStavke.BtnUpdate.HxActionURL = fproURLUpdate
 	tblStavke.BtnUpdate.HxOnAfterRequest = "populateFproUpdateFormFromEvent(event)"
 	tblStavke.BtnUpdate.HxSwap = "none"
+	tblStavke.BtnUpdate.HxRequestType = "GET"
 	tblStavke.DetailURL = fproURLGetAll
 
 	if idFnal == 0 && searchQuery == "" {
@@ -131,12 +131,12 @@ func (h *FproHandler) SaveNalogStavke(c *gin.Context) {
 	var fproStavke domain.FproPayload
 	fnalID, err := utils.GetInt64FromParameterRequest(c, "id")
 	if err != nil {
-		common.WriteJSONResponse(c, http.StatusBadRequest, false, []domain.FieldError{}, common.ErrMsgInvalidID)
+		common.WriteJSONResponse(c, http.StatusBadRequest, false, []domain.FieldError{}, common.ErrMsgInvalidID+": "+err.Error())
 		return
 	}
 
 	if err := c.ShouldBind(&fproStavke); err != nil {
-		common.WriteJSONResponse(c, http.StatusBadRequest, false, []domain.FieldError{}, common.ErrMsgFormDecode)
+		common.WriteJSONResponse(c, http.StatusBadRequest, false, []domain.FieldError{}, common.ErrMsgFormDecode+": "+err.Error())
 		return
 	}
 
@@ -159,6 +159,7 @@ func (h *FproHandler) SaveNalogStavke(c *gin.Context) {
 	tblStavke.BtnUpdate.HxActionURL = fproURLUpdate
 	tblStavke.BtnUpdate.HxOnAfterRequest = "populateFproUpdateFormFromEvent(event)"
 	tblStavke.BtnUpdate.HxSwap = "none"
+	tblStavke.BtnUpdate.HxRequestType = "GET"
 	err = h.fproService.GetAllFproByFnalID(c.Request.Context(), &fproStavke, &tblStavke, fnalID, currentPage, pageSize, "")
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, common.ErrMsgReadData)
@@ -188,34 +189,6 @@ func (h *FproHandler) UpdateFproStavke(c *gin.Context) {
 	}
 	// return JSON response with fpro data for populating the update form
 	c.JSON(http.StatusOK, setUpdateValues(fpro))
-}
-
-func (h *FproHandler) populateTableRows(tableData domain.TableData, entities []domain.Fpro, fieldsDef []domain.Fields) []domain.TableRow {
-	var tableRows []domain.TableRow
-	fieldCache := h.fproService.GetFieldCache()
-
-	for _, entity := range entities {
-		val := reflect.ValueOf(entity)
-		idValue, _, found := common.GetFieldByNameCaseInsensitive(val, common.IDfpro)
-		id := ""
-		if found {
-			id = fmt.Sprintf("%v", idValue)
-		}
-		var fields []string
-		for _, fieldName := range fieldsDef {
-			fieldInfo, found := fieldCache[strings.ToLower(fieldName.Name)]
-			if !found {
-				continue // or return error if field is required
-			}
-
-			value := common.GetFormattedValue(fieldInfo, val.FieldByName(fieldInfo.Name))
-			fields = append(fields, value)
-			fields = append(fields, "")
-		}
-		row := domain.TableRow{ID: id, Fields: fields, HasUpdate: tableData.BtnUpdate.IsVisible, HasDelete: tableData.BtnDelete.IsVisible}
-		tableRows = append(tableRows, row)
-	}
-	return tableRows
 }
 
 func (h *FproHandler) GetNalogTotalValues(c *gin.Context) {
@@ -255,34 +228,67 @@ func setUpdateValues(fpro *domain.Fpro) map[string]interface{} {
 		"travez":     fpro.Travez.Int16,
 		"datdokv":    fpro.Dadokv.Time.Format(common.HtmlLayout),
 		"sifval":     fpro.Sifval.Int16,
-		"deviznos":   fmt.Sprintf("%.2f", fpro.Deviznos),
-		"kurs":       fmt.Sprintf("%.4f", fpro.Kurs),
-		"Iznos":      fmt.Sprintf("%.2f", fpro.Iznos),
+		"deviznos":   common.FormatFloatNumber64WithSystemLocale(fpro.Deviznos, 2),
+		"kurs":       common.FormatFloatNumber64WithSystemLocale(fpro.Kurs, 4),
+		"Iznos":      common.FormatFloatNumber64WithSystemLocale(fpro.Iznos, 2),
 		"IDFnal":     fmt.Sprintf("%d", fpro.IDFnal),
+		"duguje":     0,
+		"potrazuje":  0,
+	}
+	if fpro.Sifval.Int16 == 0 {
+		result["idvalute"] = "-"
+	}
+	if fpro.IDMestotr.Int16 == 0 {
+		result["mestrotrid"] = "-"
+	}
+	if fpro.IDKom.Int16 == 0 {
+		result["komid"] = "-"
+	}
+	if fpro.IDMagacini.Int16 == 0 {
+		result["magaciniid"] = "-"
+	}
+	if fpro.IDFisp.Int16 == 0 {
+		result["fispid"] = "-"
+	}
+	if fpro.IDOrgjed.Int64 == 0 {
+		result["idorgjed"] = "-"
 	}
 
 	if fpro.Kat == 1 || fpro.Kat == 2 {
-		result["duguje"] = fmt.Sprintf("%.2f", fpro.Iznos)
+		result["duguje"] = fmt.Sprintf("%.2f", common.FormatFloatNumber64WithSystemLocale(fpro.Iznos, 2))
 	}
 	if fpro.Kat == 3 || fpro.Kat == 4 {
-		result["potrazuje"] = fmt.Sprintf("%.2f", fpro.Iznos)
+		result["potrazuje"] = fmt.Sprintf("%.2f", common.FormatFloatNumber64WithSystemLocale(fpro.Iznos, 2))
 	}
 	return result
 }
 
-/*
-	 func (h *FproHandler) FproPrikaz(c *gin.Context) {
-		err := tmpl_fin.FproContent(h.tabData, nil, domain.UkupnaObrada{}, h.btnSave, h.btnNoviFpro, domain.TableData{}).Render(r.Context(), w)
-		if err != nil {
-			response := utils.CreateResponse(w, false, []domain.FieldError{}, utils.RenderTemplateErr, http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(response)
-			return
-		}
+// GetMestoTroskaOptions returns <option> elements for the mestotrid combo,
+// filtered by the idorgjed query parameter sent by HTMX on change.
+func (h *FproHandler) GetMestoTroskaOptions(c *gin.Context) {
+	idorgjed, _ := utils.GetInt64FromQueryRequest(c, "idorgjed")
+	items, err := h.fproService.GetMestoTroska(c.Request.Context(), idorgjed)
+	if err != nil {
+		c.String(http.StatusInternalServerError, "")
+		return
 	}
-*/
+	tmpl.ComboBoxField(domain.ComboFieldConfig{
+		ID:           "mestotrid",
+		Name:         "mestotrid",
+		Placeholder:  "izaberite mesto troska...",
+		Disabled:     false,
+		ClassSelect:  common.ClassInputTextEnabled + " w-full",
+		TabIndex:     "11",
+		OnInput:      "clearFieldError",
+		OnFocus:      "clearFieldError",
+		OptionValues: items,
+	}, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+}
+
 func (h *FproHandler) AddRoutes(r *gin.Engine) {
 
 	r.Use(middleware.Auth()) // Apply auth middleware to all routes in group
+	r.GET("/api/mestotroska", h.GetMestoTroskaOptions)
 	r.GET("/api/fpro/nalog/:id", h.GetNalogStavke)
 	r.GET("/api/fpro/nalog/total/:id", h.GetNalogTotalValues)
 	r.GET("/api/fpro/confirm-delete", h.confirmDeleteHandler)
@@ -292,7 +298,7 @@ func (h *FproHandler) AddRoutes(r *gin.Engine) {
 	r.DELETE("/api/fpro/stavka/:id", h.DeleteFpro)
 	r.POST("/api/fpro/nalog/:id/stavke/save", h.SaveNalogStavke)
 	r.PUT("/api/fpro/nalog/:id/stavke/save", h.SaveNalogStavke)
-	r.GET("/api/fpro/stavka/update/:id", h.UpdateFproStavke)
+	r.GET("/api/fpro/stavka/update", h.UpdateFproStavke)
 
 	// r.GET /api/fpro/prepis", h.FproPrepis))
 	// r.GET /api/fpro/storniranje", h.FproStorniranje))

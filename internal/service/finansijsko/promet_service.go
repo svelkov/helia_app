@@ -8,6 +8,7 @@ import (
 	"helia/internal/domain"
 	"helia/internal/repository"
 	"helia/internal/service"
+	"helia/pkg/utils"
 	"reflect"
 )
 
@@ -26,7 +27,7 @@ type PrometService interface {
 	GetPrometSintetickihKonta(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.PrometParam) error
 	GetPrometKarticaSintetickihKonta(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.PrometParam) error
 	GetPrometKontaAnaliticki(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.PrometParam) error
-	GetPrometSubsintetikaVrd(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.PrometParam) error
+	GetPrometSubsintetikaVrd(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.PrometParam, tipStampe string) error
 	GetPrometTotals(ctx context.Context, params domain.PrometParam) (domain.PrometResponse, error)
 	GetAnkontaTableFields() []domain.Fields
 	GetAnKontaMiTableFields() []domain.Fields
@@ -36,78 +37,75 @@ type PrometService interface {
 	GetKarticaSintetikaTableFields() []domain.Fields
 	GetSubsintetikaVrdTableFields() []domain.Fields
 	GetKontaAnalitickiTableFields() []domain.Fields
+	GetFvrData(ctx context.Context) (domain.Fvr, error)
+	GetPrometAnalitickaKarticaStampa(ctx context.Context, tbl *domain.TableData, params domain.PrometStampaParam) error
+	GetPrometAnalitickaKarticaStampaTableFields() []domain.Fields
+	GetPrometSubsintetickihKontaStampa(ctx context.Context, tbl *domain.TableData, params domain.PrometStampaParam) error
+	GetPrometSubsintetickihKontaStampaTableFields() []domain.Fields
+	GetPrometSintetickihKontaStampa(ctx context.Context, tbl *domain.TableData, params domain.PrometStampaParam) error
+	GetPrometSintetickihKontaStampaTableFields() []domain.Fields
+	GetPrometKarticaSintKontaStampa(ctx context.Context, tbl *domain.TableData, params domain.PrometStampaParam) error
+	GetPrometKarticaSintKontaStampaTableFields() []domain.Fields
+	GetPrometSubsintetikaVrdStampaTableFields() []domain.Fields
+	GetPrometAnalitickaKarticaPoMIStampa(ctx context.Context, tbl *domain.TableData, params domain.PrometStampaParam) error
+	GetPrometAnalitickaKarticaPoMIStampaTableFields() []domain.Fields
 }
 
 // PrometResource implements the PrometService interface.
 type PrometResource struct {
-	service                                  *service.BaseService[domain.PrometDto]
-	prometRepo                               *repository.BaseRepository[domain.PrometDto]
-	fkplRepo                                 *repository.BaseRepository[domain.Fkpl]
-	prometAnKontaTableFields                 []domain.Fields
-	prometAnKontaMiTableFields               []domain.Fields
-	prometAnDeviznaKontaTableFields          []domain.Fields
-	prometSubsintetickihKontaTablefields     []domain.Fields
-	prometSintetickihKontaTableFields        []domain.Fields
-	prometKarticaSintetickihKontaTableFields []domain.Fields
-	prometSubsintetikaVrdTableFields         []domain.Fields
-	prometKontaAnalitickiTableFields         []domain.Fields
+	service                                      *service.BaseService[domain.PrometDto]
+	prometRepo                                   *repository.BaseRepository[domain.PrometDto]
+	fkplRepo                                     *repository.BaseRepository[domain.Fkpl]
+	fvrRepo                                      *repository.BaseRepository[domain.Fvr]
+	prometAnKontaTableFields                     []domain.Fields
+	prometAnKontaMiTableFields                   []domain.Fields
+	prometAnDeviznaKontaTableFields              []domain.Fields
+	prometSubsintetickihKontaTablefields         []domain.Fields
+	prometSintetickihKontaTableFields            []domain.Fields
+	prometKarticaSintetickihKontaTableFields     []domain.Fields
+	prometSubsintetikaVrdTableFields             []domain.Fields
+	prometKontaAnalitickiTableFields             []domain.Fields
+	prometAnalitickaKarticaStampaTableFields     []domain.Fields
+	prometSubsintetickihKontaStampaTableFields   []domain.Fields
+	prometSintetickihKontaStampaTableFields      []domain.Fields
+	prometKarticaSintKontaStampaTableFields      []domain.Fields
+	prometSubsintetikaVrdStampaTableFields       []domain.Fields
+	prometAnalitickaKarticaPoMIStampaTableFields []domain.Fields
 }
 
-func NewPrometService(service *service.BaseService[domain.PrometDto], prometRepo *repository.BaseRepository[domain.PrometDto], fkplRepo *repository.BaseRepository[domain.Fkpl]) *PrometResource {
+func NewPrometService(service *service.BaseService[domain.PrometDto], prometRepo *repository.BaseRepository[domain.PrometDto], fkplRepo *repository.BaseRepository[domain.Fkpl], fvrRepo *repository.BaseRepository[domain.Fvr]) *PrometResource {
 	rs := &PrometResource{
 		service:    service,
 		prometRepo: prometRepo,
 		fkplRepo:   fkplRepo,
+		fvrRepo:    fvrRepo,
 	}
 	rs.setServiceFieldValues()
 	return rs
 }
 func (s *PrometResource) GetPrometTotals(ctx context.Context, params domain.PrometParam) (domain.PrometResponse, error) {
 	var response domain.PrometResponse
-	var konto, sifra, odDatuma, doDatuma, odMI, doMI, odkonta, dokonta, odsifre, dosifre string
 	reportTip := params.ReportTip
 	switch reportTip {
 	case "prometankonta": // Analiticka Konta
-		konto = params.Konto
-		sifra = params.Sifra
-		odDatuma = params.OdDatuma
-		doDatuma = params.DoDatuma
-		if konto == "" || sifra == "" || odDatuma == "" || doDatuma == "" {
+		if params.Konto == "" || params.Sifra == "" || params.OdDatuma == "" || params.DoDatuma == "" {
 			return response, fmt.Errorf("missing required parameters")
 		}
 	case "prometankontami": // Analiticka Konta po MI
-		konto = params.Konto
-		sifra = params.Sifra
-		odDatuma = params.OdDatuma
-		doDatuma = params.DoDatuma
-		odMI = params.OdMI
-		doMI = params.DoMI
-		if konto == "" || sifra == "" || odDatuma == "" || doDatuma == "" || odMI == "" || doMI == "" {
+		if params.Konto == "" || params.Sifra == "" || params.OdDatuma == "" || params.DoDatuma == "" || params.OdMI == "" || params.DoMI == "" {
 			return response, fmt.Errorf("missing required parameters")
 		}
 	case "deviznahanalitickihkonta": // Devizna Analiticka Konta
 	case "subsintetickakonta": // Subsinteticka Konta
-		odkonta = params.OdKonta
-		dokonta = params.DoKonta
-		odDatuma = params.OdDatuma
-		doDatuma = params.DoDatuma
-		if odkonta == "" || dokonta == "" || odDatuma == "" || doDatuma == "" {
+		if params.OdKonta == "" || params.DoKonta == "" || params.OdDatuma == "" || params.DoDatuma == "" {
 			return response, fmt.Errorf("missing required parameters")
 		}
 	case "sintetickakonta", "karticasintetickihkonta", "subsintetickakontapovrd": // Sinteticka Konta
-		konto = params.Konto
-		odDatuma = params.OdDatuma
-		doDatuma = params.DoDatuma
-		if konto == "" || odDatuma == "" || doDatuma == "" {
+		if params.Konto == "" || params.OdDatuma == "" || params.DoDatuma == "" {
 			return response, fmt.Errorf("missing required parameters")
 		}
 	case "kontaanaliticki": // Konta Analiticki
-		konto = params.Konto
-		odsifre = params.OdSifre
-		dosifre = params.DoSifre
-		odDatuma = params.OdDatuma
-		doDatuma = params.DoDatuma
-		if konto == "" || odsifre == "" || dosifre == "" || odDatuma == "" || doDatuma == "" {
+		if params.Konto == "" || params.OdSifre == "" || params.DoSifre == "" || params.OdDatuma == "" || params.DoDatuma == "" {
 			return response, fmt.Errorf("missing required parameters")
 		}
 	default:
@@ -136,31 +134,31 @@ func (s *PrometResource) GetPrometTotals(ctx context.Context, params domain.Prom
 	}
 	switch reportTip {
 	case "prometankonta": // Analiticka Konta
-		qbDo.AddEqual("konto", konto)
-		qbDo.AddEqual("sifra", sifra)
+		qbDo.AddEqual("konto", params.Konto)
+		qbDo.AddEqual("sifra", params.Sifra)
 		qbDo.AddEqual("vkonta", 1)
-		qbDo.AddCondition("danal", odDatuma, "<")
+		qbDo.AddCondition("danal", params.OdDatuma, "<")
 	case "prometankontami": // Analiticka Konta po MI
-		qbDo.AddEqual("konto", konto)
-		qbDo.AddEqual("sifra", sifra)
+		qbDo.AddEqual("konto", params.Konto)
+		qbDo.AddEqual("sifra", params.Sifra)
 		qbDo.AddEqual("vkonta", 1)
-		qbDo.AddCondition("danal", odDatuma, "<")
-		qbDo.AddCondition("mi", odMI, ">=")
-		qbDo.AddCondition("mi", doMI, "<=")
+		qbDo.AddCondition("danal", params.OdDatuma, "<")
+		qbDo.AddCondition("mi", params.OdMI, ">=")
+		qbDo.AddCondition("mi", params.DoMI, "<=")
 	case "deviznahanalitickihkonta": // Devizna Analiticka Konta
 	case "subsintetickakonta": // Subsinteticka Konta
-		qbDo.AddCondition("konto", odkonta, ">=")
-		qbDo.AddCondition("konto", dokonta, "<=")
-		qbDo.AddCondition("danal", odDatuma, "<")
+		qbDo.AddCondition("konto", params.OdKonta, ">=")
+		qbDo.AddCondition("konto", params.DoKonta, "<=")
+		qbDo.AddCondition("danal", params.OdDatuma, "<")
 
 	case "sintetickakonta", "karticasintetickihkonta", "subsintetickakontapovrd": // Sinteticka Konta
-		qbDo.AddLikeBegin("konto", konto)
-		qbDo.AddCondition("danal", odDatuma, "<")
+		qbDo.AddLikeBegin("konto", params.Konto)
+		qbDo.AddCondition("danal", params.OdDatuma, "<")
 	case "kontaanaliticki": // Konta Analiticki
-		qbDo.AddEqual("konto", konto)
-		qbDo.AddCondition("sifra::numeric", odsifre, ">=")
-		qbDo.AddCondition("sifra::numeric", dosifre, "<=")
-		qbDo.AddCondition("danal", odDatuma, "<")
+		qbDo.AddEqual("konto", params.Konto)
+		qbDo.AddCondition("sifra::numeric", params.OdSifre, ">=")
+		qbDo.AddCondition("sifra::numeric", params.DoSifre, "<=")
+		qbDo.AddCondition("danal", params.OdDatuma, "<")
 		qbDo.AddEqual("vkonta", 1)
 	default:
 	}
@@ -198,35 +196,35 @@ func (s *PrometResource) GetPrometTotals(ctx context.Context, params domain.Prom
 	}
 	switch reportTip {
 	case "prometankonta": // Analiticka Konta
-		qbPeriod.AddEqual("konto", konto)
-		qbPeriod.AddEqual("sifra", sifra)
+		qbPeriod.AddEqual("konto", params.Konto)
+		qbPeriod.AddEqual("sifra", params.Sifra)
 		qbPeriod.AddEqual("vkonta", 1)
-		qbPeriod.AddCondition("danal", odDatuma, ">=")
-		qbPeriod.AddCondition("danal", doDatuma, "<=")
+		qbPeriod.AddCondition("danal", params.OdDatuma, ">=")
+		qbPeriod.AddCondition("danal", params.DoDatuma, "<=")
 	case "prometankontami": // Analiticka Konta po MI
-		qbPeriod.AddEqual("konto", konto)
-		qbPeriod.AddEqual("sifra", sifra)
+		qbPeriod.AddEqual("konto", params.Konto)
+		qbPeriod.AddEqual("sifra", params.Sifra)
 		qbPeriod.AddEqual("vkonta", 1)
-		qbPeriod.AddCondition("danal", odDatuma, ">=")
-		qbPeriod.AddCondition("danal", doDatuma, "<=")
-		qbPeriod.AddCondition("mi", odMI, ">=")
-		qbPeriod.AddCondition("mi", doMI, "<=")
+		qbPeriod.AddCondition("danal", params.OdDatuma, ">=")
+		qbPeriod.AddCondition("danal", params.DoDatuma, "<=")
+		qbPeriod.AddCondition("mi", params.OdMI, ">=")
+		qbPeriod.AddCondition("mi", params.DoMI, "<=")
 	case "deviznahanalitickihkonta": // Devizna Analiticka Konta
 	case "subsintetickakonta": // Subsinteticka Konta
-		qbPeriod.AddCondition("konto", odkonta, ">=")
-		qbPeriod.AddCondition("konto", dokonta, "<=")
-		qbPeriod.AddCondition("danal", odDatuma, ">=")
-		qbPeriod.AddCondition("danal", doDatuma, "<=")
+		qbPeriod.AddCondition("konto", params.OdKonta, ">=")
+		qbPeriod.AddCondition("konto", params.DoKonta, "<=")
+		qbPeriod.AddCondition("danal", params.OdDatuma, ">=")
+		qbPeriod.AddCondition("danal", params.DoDatuma, "<=")
 	case "sintetickakonta", "karticasintetickihkonta", "subsintetickakontapovrd": // Sinteticka Konta
-		qbPeriod.AddLikeBegin("konto", konto)
-		qbPeriod.AddCondition("danal", odDatuma, ">=")
-		qbPeriod.AddCondition("danal", doDatuma, "<=")
+		qbPeriod.AddLikeBegin("konto", params.Konto)
+		qbPeriod.AddCondition("danal", params.OdDatuma, ">=")
+		qbPeriod.AddCondition("danal", params.DoDatuma, "<=")
 	case "kontaanaliticki": // Konta Analiticki
-		qbPeriod.AddEqual("konto", konto)
-		qbPeriod.AddCondition("sifra::numeric", odsifre, ">=")
-		qbPeriod.AddCondition("sifra::numeric", dosifre, "<=")
-		qbPeriod.AddCondition("danal", odDatuma, ">=")
-		qbPeriod.AddCondition("danal", doDatuma, "<=")
+		qbPeriod.AddEqual("konto", params.Konto)
+		qbPeriod.AddCondition("sifra::numeric", params.OdSifre, ">=")
+		qbPeriod.AddCondition("sifra::numeric", params.DoSifre, "<=")
+		qbPeriod.AddCondition("danal", params.OdDatuma, ">=")
+		qbPeriod.AddCondition("danal", params.DoDatuma, "<=")
 		qbPeriod.AddEqual("vkonta", 1)
 	default:
 	}
@@ -300,8 +298,9 @@ func (s *PrometResource) GetPrometAnalitickihKonta(ctx context.Context, tbl *dom
 	//if we need to get only total records we check the bool gettotalrecords
 	//Get data for the table
 	qb := common.NewQueryBuilder(`SELECT danal, tipdok, concat(tipdok,'-',nalog) as nalog, idfpro, kat, iznos, kolic, 
-		       	vrd, dokum, dadok, rok, tra, ojozn as oj, opis, sifval, kurs, 
-		       	deviznos, cena, konto, idfnal, idfkpl, dokumv, dadokv, travez, rdokid,
+		       	vrd, dokum, dadok, rok, tra, coalesce(ojozn, '') as oj, coalesce(opis, '') as opis, coalesce(sifval, 0) as sifval, kurs, 
+		       	deviznos, cena, konto, idfnal, idfkpl, 
+				coalesce(dokumv, '') as dokumv, dadokv, coalesce(travez, 0) as travez,
 			   	CASE WHEN kat = 1 OR kat = 2 THEN iznos ELSE 0 END as duguje,
 			   	CASE WHEN kat = 3 OR kat = 4 THEN iznos ELSE 0 END as potrazuje,
 				CASE WHEN kat = 1 OR kat = 2 THEN kolic ELSE 0 END as kolduguje,
@@ -440,7 +439,145 @@ func (s *PrometResource) GetPrometAnalitickihKonta(ctx context.Context, tbl *dom
 
 	return nil
 }
+func (s *PrometResource) GetPrometAnalitickaKarticaStampa(ctx context.Context, tbl *domain.TableData, params domain.PrometStampaParam) error {
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		return fmt.Errorf("user session not found")
+	}
+	translator := i18n.GetInstance()
+	hasGod, hasKar := s.prometRepo.GetHasGodHasKar()
 
+	qb := common.NewQueryBuilder(`SELECT
+		f.tipdok, f.nalog, f.danal, f.vrd,
+		COALESCE(f.opis, '') as opis,
+		COALESCE(f.ojozn, '') as oj,
+		f.dokum,
+		f.tra,
+		f.dadok,
+		f.rok,
+		f.brst,
+		CASE WHEN f.kat = 1 OR f.kat = 2 THEN f.iznos ELSE 0 END as duguje,
+		CASE WHEN f.kat = 3 OR f.kat = 4 THEN f.iznos ELSE 0 END as potrazuje,
+		f.konto,
+		COALESCE(f.sifra, '') as sifra,
+		COALESCE(fk.naziv, '') as naziv
+	FROM fpro f`, true)
+	qb.AddJoin("LEFT JOIN fkpl fk ON fk.idfkpl = f.idfkpl")
+
+	if hasGod {
+		qb.AddEqual("f.god", userSession.SelectedGod)
+	}
+	if hasKar {
+		qb.AddEqual("f.kar", userSession.SelectedKar)
+	}
+	qb.AddEqual("f.vkonta", 1)
+	qb.AddCondition("f.konto", params.OdKonta, ">=")
+	qb.AddCondition("f.konto", params.DoKonta, "<=")
+	qb.AddCondition("f.sifra::numeric", params.OdSifre, ">=")
+	qb.AddCondition("f.sifra::numeric", params.DoSifre, "<=")
+	qb.AddCondition("f.danal", params.OdDatuma, ">=")
+	qb.AddCondition("f.danal", params.DoDatuma, "<=")
+	qb.AddOrderBy("f.konto, f.sifra::numeric, f.danal, f.nalog::numeric, f.brst")
+
+	sqlQuery, args := qb.Build()
+	entities, err := s.prometRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	if err != nil {
+		return err
+	}
+
+	tbl.HasTotals = true
+	tbl.Totals = make([]string, len(tbl.Headers))
+
+	if entities == nil || len(*entities) == 0 {
+		return nil
+	}
+
+	var grandDug, grandPot float64
+	lastGroupKey := ""
+	var groupDug, groupPot, runningSaldo float64
+	var lastKonto, lastSifra, lastNaziv string
+
+	for _, entity := range *entities {
+		groupKey := entity.Konto + "|" + entity.Sifra
+
+		if groupKey != lastGroupKey {
+			if lastGroupKey != "" {
+				pSaldo := groupDug - groupPot
+				tbl.Rows = append(tbl.Rows, domain.TableRow{
+					ClassRow: "konto-total",
+					Fields: []string{
+						translator.Label("Ukupno za") + ": " + lastKonto + " | " + lastSifra + " | " + lastNaziv,
+						common.FormatNumberWithSystemLocale(groupDug, 2),
+						common.FormatNumberWithSystemLocale(groupPot, 2),
+						common.FormatNumberWithSystemLocale(pSaldo, 2),
+					},
+				})
+			}
+			groupDug, groupPot = 0, 0
+			runningSaldo = 0
+			lastGroupKey = groupKey
+			lastKonto = entity.Konto
+			lastSifra = entity.Sifra
+			lastNaziv = entity.Naziv
+			tbl.Rows = append(tbl.Rows, domain.TableRow{
+				ClassRow: "konto-header",
+				Fields:   []string{entity.Konto, entity.Sifra, entity.Naziv},
+			})
+		}
+
+		dug := entity.Duguje
+		pot := entity.Potrazuje
+		runningSaldo += dug - pot
+		groupDug += dug
+		groupPot += pot
+		grandDug += dug
+		grandPot += pot
+
+		tbl.Rows = append(tbl.Rows, domain.TableRow{
+			Fields: []string{
+				entity.Tipdok,
+				entity.Nalog,
+				entity.Danal.Time.Format(common.DateLayout),
+				entity.Vrd,
+				entity.Opis,
+				entity.OJ,
+				entity.Dokum,
+				entity.Tra,
+				entity.Dadok.Time.Format(common.DateLayout),
+				entity.Rok,
+				fmt.Sprintf("%d", entity.Brst),
+				common.FormatNumberWithSystemLocale(dug, 2),
+				common.FormatNumberWithSystemLocale(pot, 2),
+				common.FormatNumberWithSystemLocale(runningSaldo, 2),
+			},
+		})
+	}
+
+	if lastGroupKey != "" {
+		pSaldo := groupDug - groupPot
+		tbl.Rows = append(tbl.Rows, domain.TableRow{
+			ClassRow: "konto-total",
+			Fields: []string{
+				translator.Label("Ukupno za") + ": " + lastKonto + " | " + lastSifra + " | " + lastNaziv,
+				common.FormatNumberWithSystemLocale(groupDug, 2),
+				common.FormatNumberWithSystemLocale(groupPot, 2),
+				common.FormatNumberWithSystemLocale(pSaldo, 2),
+			},
+		})
+	}
+
+	nHeaders := len(tbl.Headers)
+	if nHeaders >= 3 {
+		grandSaldo := grandDug - grandPot
+		tbl.Totals[nHeaders-3] = common.FormatNumberWithSystemLocale(grandDug, 2)
+		tbl.Totals[nHeaders-2] = common.FormatNumberWithSystemLocale(grandPot, 2)
+		tbl.Totals[nHeaders-1] = common.FormatNumberWithSystemLocale(grandSaldo, 2)
+	}
+
+	return nil
+}
+
+// GetPrometSubsintetickihKonta retrieves data for subsinteticka konta based on the provided parameters and populates the table data structure.
 func (s *PrometResource) GetPrometSubsintetickihKonta(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.PrometParam) error {
 	userSession := domain.GetSessionFromStdContext(ctx)
 	if userSession == nil {
@@ -711,7 +848,7 @@ func (s *PrometResource) GetPrometKarticaSintetickihKonta(ctx context.Context, t
 	return nil
 }
 
-func (s *PrometResource) GetPrometSubsintetikaVrd(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.PrometParam) error {
+func (s *PrometResource) GetPrometSubsintetikaVrd(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.PrometParam, tipStampe string) error {
 	userSession := domain.GetSessionFromStdContext(ctx)
 	if userSession == nil {
 		return fmt.Errorf("user session not found")
@@ -720,9 +857,26 @@ func (s *PrometResource) GetPrometSubsintetikaVrd(ctx context.Context, tbl *doma
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 	hasGod, hasKar := s.prometRepo.GetHasGodHasKar()
 
-	//if we need to get only total records we check the bool gettotalrecords
-	//Get data for the table
+	// Look up konto name from fkpl
+	if tipStampe == common.TipStampePrint {
+		qbFkpl := common.NewQueryBuilder("SELECT konto, naziv FROM fkpl", true)
+		if hasGod {
+			if hasGod {
+				qbFkpl.AddEqual("god", userSession.SelectedGod)
+			}
+			if hasKar {
+				qbFkpl.AddEqual("kar", userSession.SelectedKar)
+			}
+		}
+		qbFkpl.AddEqual("konto", params.OdKonta)
+		qbFkpl.AddEqual("vkonta", "2")
+		sqlFkpl, argsFkpl := qbFkpl.Build()
 
+		fkplEntities, _ := s.fkplRepo.GetAllCustom(ctx, sqlFkpl, "", argsFkpl, "", "")
+		if fkplEntities != nil && len(*fkplEntities) > 0 {
+			tbl.ContentTitle = (*fkplEntities)[0].Naziv
+		}
+	}
 	qb := common.NewQueryBuilder(`SELECT 
 				CASE fpro.vkonta
 				WHEN '1' THEN 'Analitika'
@@ -740,29 +894,30 @@ func (s *PrometResource) GetPrometSubsintetikaVrd(ctx context.Context, tbl *doma
 	if hasKar {
 		qb.AddEqual("fpro.kar", userSession.SelectedKar)
 	}
-	qb.AddLikeBegin("fpro.konto", params.OdKonta)
+	qb.AddLikeBegin("fpro.konto", params.Konto)
 	qb.AddCondition("danal", params.OdDatuma, ">=")
 	qb.AddCondition("danal", params.DoDatuma, "<=")
 
 	// Add search conditions if search text is provided
-	if params.SearchText != "" {
+
+	if tipStampe == common.TipStampePreview && params.SearchText != "" {
 		qb.SetEntityType(reflect.TypeOf(domain.PrometDto{}))
 		qb.AddSearchConditions(s.GetSubsintetikaVrdTableFields(), params.SearchText)
 	}
-	qb.AddGroupBy(`fpro.vrd, fpro.konto, fpro.vkonta`)
-	qb.AddOrderBy("fpro.konto::numeric")
-	if !getTotalRecords {
+	qb.AddGroupBy(`fpro.vrd, fpro.vkonta`)
+	if tipStampe == common.TipStampePreview && !getTotalRecords {
 		qb.SetLimit(pageSize)
 		qb.SetOffset((currentPage - 1) * pageSize)
 	}
 
 	sqlQuery, args := qb.Build()
+	// fmt.Println(sqlQuery, args)
 	entities, err := s.prometRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
 	if err != nil {
 		return err
 	}
 	// Set total records and pagination
-	if getTotalRecords {
+	if tipStampe == common.TipStampePreview && getTotalRecords {
 		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
 		return nil
 	}
@@ -1051,6 +1206,29 @@ func (s *PrometResource) setServiceFieldValues() {
 		{Name: "potrazuje", Label: "Potrazuje", Width: "8", Field: "potrazuje", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
 		{Name: "saldo", Label: "Saldo", Width: "84", Field: "saldo", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
 	}
+	s.prometSubsintetikaVrdStampaTableFields = []domain.Fields{
+		{Name: "vkonta", Label: "Vrsta konta", Width: "15", Field: "vkonta", SkipInSearch: true},
+		{Name: "vrd", Label: "Vrsta dokumenta", Width: "15", Field: "fpro.vrd", SkipInSearch: true, TextAlign: "center"},
+		{Name: "duguje", Label: "Duguje", Width: "20", Field: "duguje", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
+		{Name: "potrazuje", Label: "Potražuje", Width: "20", Field: "potrazuje", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
+		{Name: "saldo", Label: "Saldo", Width: "20", Field: "saldo", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
+	}
+	s.prometAnalitickaKarticaPoMIStampaTableFields = []domain.Fields{
+		{Name: "tipdok", Label: "Vrsta naloga", Width: "4", Field: "f.tipdok", SkipInSearch: true},
+		{Name: "nalog", Label: "Broj naloga", Width: "8", Field: "f.nalog", SkipInSearch: true},
+		{Name: "danal", Label: "Datum naloga", Width: "8", Field: "f.danal", SkipInSearch: true},
+		{Name: "vrd", Label: "Vrsta dokumenta", Width: "4", Field: "f.vrd", SkipInSearch: true},
+		{Name: "opis", Label: "Opis", Width: "30", Field: "f.opis", SkipInSearch: true},
+		{Name: "oj", Label: "OJ", Width: "4", Field: "f.ojozn", SkipInSearch: true},
+		{Name: "dokum", Label: "Broj dokumenta", Width: "10", Field: "f.dokum", SkipInSearch: true},
+		{Name: "tra", Label: "Poslovna godina", Width: "5", Field: "f.tra", SkipInSearch: true},
+		{Name: "dadok", Label: "Datum dokumenta", Width: "8", Field: "f.dadok", SkipInSearch: true},
+		{Name: "rok", Label: "Rok", Width: "4", Field: "f.rok", SkipInSearch: true},
+		{Name: "brst", Label: "Redni broj", Width: "5", Field: "f.brst", SkipInSearch: true, TextAlign: "right"},
+		{Name: "duguje", Label: "Duguje", Width: "10", Field: "duguje", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
+		{Name: "potrazuje", Label: "Potražuje", Width: "10", Field: "potrazuje", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
+		{Name: "saldo", Label: "Saldo", Width: "10", Field: "saldo", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
+	}
 	s.prometKontaAnalitickiTableFields = []domain.Fields{
 		{Name: "sifra", Label: "Sifra", Width: "10", Field: "fpro.sifra", SkipInSearch: false, TextAlign: "right", IncludeInTotals: true},
 		{Name: "naziv", Label: "Naziv", Width: "30", Field: "fpro.naziv", SkipInSearch: false},
@@ -1078,4 +1256,764 @@ func (s *PrometResource) setServiceFieldValues() {
 		{Name: "travez", Label: "God Veznog Dokumenta", Width: "4", Field: "fpro.travez", SkipInSearch: false},
 		{Name: "rdokid", Label: "Rdokid", Width: "6", Field: "fpro.rdokid", SkipInSearch: true},
 	}
+	s.prometAnalitickaKarticaStampaTableFields = []domain.Fields{
+		{Name: "tipdok", Label: "Vrsta naloga", Width: "4", Field: "f.tipdok", SkipInSearch: true},
+		{Name: "nalog", Label: "Broj naloga", Width: "8", Field: "f.nalog", SkipInSearch: true},
+		{Name: "danal", Label: "Datum naloga", Width: "8", Field: "f.danal", SkipInSearch: true},
+		{Name: "vrd", Label: "Vrsta dokumenta", Width: "4", Field: "f.vrd", SkipInSearch: true},
+		{Name: "opis", Label: "Opis", Width: "30", Field: "f.opis", SkipInSearch: true},
+		{Name: "oj", Label: "OJ", Width: "4", Field: "f.ojozn", SkipInSearch: true},
+		{Name: "dokum", Label: "Broj dokumenta", Width: "10", Field: "f.dokum", SkipInSearch: true},
+		{Name: "tra", Label: "Poslovna godina", Width: "5", Field: "f.tra", SkipInSearch: true},
+		{Name: "dadok", Label: "Datum dokumenta", Width: "8", Field: "f.dadok", SkipInSearch: true},
+		{Name: "rok", Label: "Rok", Width: "4", Field: "f.rok", SkipInSearch: true},
+		{Name: "brst", Label: "Redni broj", Width: "5", Field: "f.brst", SkipInSearch: true, TextAlign: "right"},
+		{Name: "duguje", Label: "Duguje", Width: "10", Field: "duguje", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
+		{Name: "potrazuje", Label: "Potražuje", Width: "10", Field: "potrazuje", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
+		{Name: "saldo", Label: "Saldo", Width: "10", Field: "saldo", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
+	}
+	s.prometSubsintetickihKontaStampaTableFields = []domain.Fields{
+		{Name: "tipdok", Label: "Vrsta naloga", Width: "4", Field: "f.tipdok", SkipInSearch: true},
+		{Name: "nalog", Label: "Broj naloga", Width: "8", Field: "f.nalog", SkipInSearch: true},
+		{Name: "danal", Label: "Datum naloga", Width: "8", Field: "f.danal", SkipInSearch: true},
+		{Name: "opis", Label: "Opis", Width: "40", Field: "f.opis", SkipInSearch: true},
+		{Name: "duguje", Label: "Duguje", Width: "10", Field: "duguje", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
+		{Name: "potrazuje", Label: "Potražuje", Width: "10", Field: "potrazuje", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
+		{Name: "saldo", Label: "Saldo", Width: "10", Field: "saldo", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
+	}
+	s.prometSintetickihKontaStampaTableFields = []domain.Fields{
+		{Name: "tipdok", Label: "Vrsta naloga", Width: "4", Field: "f.tipdok", SkipInSearch: true},
+		{Name: "nalog", Label: "Broj naloga", Width: "8", Field: "f.nalog", SkipInSearch: true},
+		{Name: "danal", Label: "Datum naloga", Width: "8", Field: "f.danal", SkipInSearch: true},
+		{Name: "opis", Label: "Opis", Width: "40", Field: "f.opis", SkipInSearch: true},
+		{Name: "duguje", Label: "Duguje", Width: "10", Field: "duguje", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
+		{Name: "potrazuje", Label: "Potražuje", Width: "10", Field: "potrazuje", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
+		{Name: "saldo", Label: "Saldo", Width: "10", Field: "saldo", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
+	}
+	s.prometKarticaSintKontaStampaTableFields = []domain.Fields{
+		{Name: "rednibr", Label: "Red. Br.", Width: "5", Field: "rednibr", SkipInSearch: true, TextAlign: "center"},
+		{Name: "konto", Label: "Konto", Width: "8", Field: "f.konto", SkipInSearch: true},
+		{Name: "sifra", Label: "Sifra", Width: "8", Field: "f.sifra", SkipInSearch: true},
+		{Name: "opis", Label: "Opis", Width: "40", Field: "opis", SkipInSearch: true},
+		{Name: "duguje", Label: "Duguje", Width: "12", Field: "duguje", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
+		{Name: "potrazuje", Label: "Potražuje", Width: "12", Field: "potrazuje", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
+		{Name: "saldo", Label: "Saldo", Width: "12", Field: "saldo", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
+	}
+}
+
+func (s *PrometResource) GetFvrData(ctx context.Context) (domain.Fvr, error) {
+	return utils.GetFvrData(ctx, s.fvrRepo)
+}
+
+func (s *PrometResource) GetPrometAnalitickaKarticaStampaTableFields() []domain.Fields {
+	return s.prometAnalitickaKarticaStampaTableFields
+}
+
+func (s *PrometResource) GetPrometSubsintetickihKontaStampaTableFields() []domain.Fields {
+	return s.prometSubsintetickihKontaStampaTableFields
+}
+
+func (s *PrometResource) GetPrometSintetickihKontaStampaTableFields() []domain.Fields {
+	return s.prometSintetickihKontaStampaTableFields
+}
+
+func (s *PrometResource) GetPrometKarticaSintKontaStampaTableFields() []domain.Fields {
+	return s.prometKarticaSintKontaStampaTableFields
+}
+
+func (s *PrometResource) GetPrometSubsintetikaVrdStampaTableFields() []domain.Fields {
+	return s.prometSubsintetikaVrdStampaTableFields
+}
+
+func (s *PrometResource) GetPrometAnalitickaKarticaPoMIStampaTableFields() []domain.Fields {
+	return s.prometAnalitickaKarticaPoMIStampaTableFields
+}
+
+func (s *PrometResource) GetPrometAnalitickaKarticaPoMIStampa(ctx context.Context, tbl *domain.TableData, params domain.PrometStampaParam) error {
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		return fmt.Errorf("user session not found")
+	}
+	translator := i18n.GetInstance()
+	hasGod, hasKar := s.prometRepo.GetHasGodHasKar()
+
+	qb := common.NewQueryBuilder(`SELECT
+		f.tipdok, f.nalog, f.danal, f.vrd,
+		COALESCE(f.opis, '') as opis,
+		COALESCE(f.ojozn, '') as oj,
+		f.dokum,
+		f.tra,
+		f.dadok,
+		f.rok,
+		f.brst,
+		CASE WHEN f.kat = 1 OR f.kat = 2 THEN f.iznos ELSE 0 END as duguje,
+		CASE WHEN f.kat = 3 OR f.kat = 4 THEN f.iznos ELSE 0 END as potrazuje,
+		f.konto,
+		COALESCE(f.sifra, '') as sifra,
+		COALESCE(fk.naziv, '') as naziv,
+		COALESCE(f.mi::text, '0') as mi
+	FROM fpro f`, true)
+	qb.AddJoin("LEFT JOIN fkpl fk ON fk.idfkpl = f.idfkpl")
+	if hasGod {
+		qb.AddEqual("f.god", userSession.SelectedGod)
+	}
+	if hasKar {
+		qb.AddEqual("f.kar", userSession.SelectedKar)
+	}
+	qb.AddEqual("f.vkonta", 1)
+	qb.AddCondition("f.konto", params.OdKonta, ">=")
+	qb.AddCondition("f.konto", params.DoKonta, "<=")
+	qb.AddCondition("f.sifra::numeric", params.OdSifre, ">=")
+	qb.AddCondition("f.sifra::numeric", params.DoSifre, "<=")
+	qb.AddCondition("f.danal", params.OdDatuma, ">=")
+	qb.AddCondition("f.danal", params.DoDatuma, "<=")
+	if params.OdMI != "" {
+		qb.AddCondition("f.mi::numeric", params.OdMI, ">=")
+	}
+	if params.DoMI != "" {
+		qb.AddCondition("f.mi::numeric", params.DoMI, "<=")
+	}
+	qb.AddOrderBy("f.konto, f.sifra::numeric, f.mi::numeric, f.danal, f.nalog::numeric, f.brst")
+
+	sqlQuery, args := qb.Build()
+	entities, err := s.prometRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	if err != nil {
+		return err
+	}
+
+	tbl.HasTotals = true
+	tbl.Totals = make([]string, len(tbl.Headers))
+	if entities == nil || len(*entities) == 0 {
+		return nil
+	}
+
+	monthNames := []string{"", "Januar", "Februar", "Mart", "April", "Maj", "Jun", "Jul", "Avgust", "Septembar", "Oktobar", "Novembar", "Decembar"}
+
+	var grandDug, grandPot float64
+	var groupDug, groupPot, runningSaldo float64
+	var miDug, miPot float64
+	var monthDug, monthPot float64
+	lastGroupKey := ""
+	lastMIKey := ""
+	lastMonthKey := ""
+	lastMonthLabel := ""
+	var lastKonto, lastSifra, lastNaziv, lastMI string
+
+	appendMonthTotal := func() {
+		mSaldo := monthDug - monthPot
+		tbl.Rows = append(tbl.Rows, domain.TableRow{
+			ClassRow: "month-total",
+			Fields: []string{
+				lastMonthLabel,
+				common.FormatNumberWithSystemLocale(monthDug, 2),
+				common.FormatNumberWithSystemLocale(monthPot, 2),
+				common.FormatNumberWithSystemLocale(mSaldo, 2),
+			},
+		})
+		monthDug, monthPot = 0, 0
+		lastMonthKey = ""
+		lastMonthLabel = ""
+	}
+
+	appendMiTotal := func() {
+		if params.SaldaPoMesecima && lastMonthKey != "" {
+			appendMonthTotal()
+		}
+		miSaldo := miDug - miPot
+		tbl.Rows = append(tbl.Rows, domain.TableRow{
+			ClassRow: "mi-total",
+			Fields: []string{
+				translator.Label("Ukupno za mesto isporuke") + ": " + lastMI,
+				common.FormatNumberWithSystemLocale(miDug, 2),
+				common.FormatNumberWithSystemLocale(miPot, 2),
+				common.FormatNumberWithSystemLocale(miSaldo, 2),
+			},
+		})
+		miDug, miPot = 0, 0
+		lastMIKey = ""
+	}
+
+	appendKontoTotal := func() {
+		if lastMIKey != "" {
+			appendMiTotal()
+		}
+		pSaldo := groupDug - groupPot
+		tbl.Rows = append(tbl.Rows, domain.TableRow{
+			ClassRow: "konto-total",
+			Fields: []string{
+				translator.Label("Ukupno za") + ": " + lastKonto + " | " + lastSifra + " | " + lastNaziv,
+				common.FormatNumberWithSystemLocale(groupDug, 2),
+				common.FormatNumberWithSystemLocale(groupPot, 2),
+				common.FormatNumberWithSystemLocale(pSaldo, 2),
+			},
+		})
+		groupDug, groupPot = 0, 0
+		runningSaldo = 0
+		lastGroupKey = ""
+	}
+
+	for _, entity := range *entities {
+		groupKey := entity.Konto + "|" + entity.Sifra
+		miKey := entity.MI
+		monthKey := ""
+		monthLabel := ""
+		if params.SaldaPoMesecima && entity.Danal.Valid {
+			month := int(entity.Danal.Time.Month())
+			year := entity.Danal.Time.Year()
+			monthKey = fmt.Sprintf("%04d-%02d", year, month)
+			monthLabel = fmt.Sprintf("%s %d", monthNames[month], year)
+		}
+
+		// Close month subtotal if month changed (same MI)
+		if params.SaldaPoMesecima && monthKey != lastMonthKey && lastMonthKey != "" {
+			appendMonthTotal()
+		}
+
+		// Close MI group if MI changed
+		if miKey != lastMIKey && lastMIKey != "" {
+			appendMiTotal()
+		}
+
+		// Close konto group if konto+sifra changed
+		if groupKey != lastGroupKey && lastGroupKey != "" {
+			appendKontoTotal()
+		}
+
+		// Open new konto group
+		if groupKey != lastGroupKey {
+			lastGroupKey = groupKey
+			lastKonto = entity.Konto
+			lastSifra = entity.Sifra
+			lastNaziv = entity.Naziv
+			runningSaldo = 0
+			tbl.Rows = append(tbl.Rows, domain.TableRow{
+				ClassRow: "konto-header",
+				Fields:   []string{entity.Konto, entity.Sifra, entity.Naziv},
+			})
+		}
+
+		// Open new MI group
+		if miKey != lastMIKey {
+			lastMIKey = miKey
+			lastMI = miKey
+			miDug, miPot = 0, 0
+			tbl.Rows = append(tbl.Rows, domain.TableRow{
+				ClassRow: "mi-header",
+				Fields:   []string{miKey},
+			})
+		}
+
+		// Open new month (track only)
+		if params.SaldaPoMesecima && monthKey != lastMonthKey {
+			lastMonthKey = monthKey
+			lastMonthLabel = monthLabel
+			monthDug, monthPot = 0, 0
+		}
+
+		// Data row
+		dug := entity.Duguje
+		pot := entity.Potrazuje
+		runningSaldo += dug - pot
+		groupDug += dug
+		groupPot += pot
+		miDug += dug
+		miPot += pot
+		monthDug += dug
+		monthPot += pot
+		grandDug += dug
+		grandPot += pot
+
+		tbl.Rows = append(tbl.Rows, domain.TableRow{
+			Fields: []string{
+				entity.Tipdok,
+				entity.Nalog,
+				entity.Danal.Time.Format(common.DateLayout),
+				entity.Vrd,
+				entity.Opis,
+				entity.OJ,
+				entity.Dokum,
+				entity.Tra,
+				entity.Dadok.Time.Format(common.DateLayout),
+				entity.Rok,
+				fmt.Sprintf("%d", entity.Brst),
+				common.FormatNumberWithSystemLocale(dug, 2),
+				common.FormatNumberWithSystemLocale(pot, 2),
+				common.FormatNumberWithSystemLocale(runningSaldo, 2),
+			},
+		})
+	}
+
+	// Close remaining groups
+	if lastGroupKey != "" {
+		appendKontoTotal()
+	}
+
+	// Grand totals
+	nHeaders := len(tbl.Headers)
+	if nHeaders >= 3 {
+		grandSaldo := grandDug - grandPot
+		tbl.Totals[nHeaders-3] = common.FormatNumberWithSystemLocale(grandDug, 2)
+		tbl.Totals[nHeaders-2] = common.FormatNumberWithSystemLocale(grandPot, 2)
+		tbl.Totals[nHeaders-1] = common.FormatNumberWithSystemLocale(grandSaldo, 2)
+	}
+	return nil
+}
+
+// GetPrometKarticaSintKontaStampa generates data for the "Promet Kartica Sintetickog Konta" report based on the provided parameters.
+func (s *PrometResource) GetPrometKarticaSintKontaStampa(ctx context.Context, tbl *domain.TableData, params domain.PrometStampaParam) error {
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		return fmt.Errorf("user session not found")
+	}
+	translator := i18n.GetInstance()
+	hasGod, hasKar := s.prometRepo.GetHasGodHasKar()
+
+	// Look up konto name from fkpl (sintetički konto vkonta=3)
+	fkplQb := common.NewQueryBuilder(`SELECT konto, naziv FROM fkpl`, true)
+	if hasGod {
+		fkplQb.AddEqual("god", userSession.SelectedGod)
+	}
+	if hasKar {
+		fkplQb.AddEqual("kar", userSession.SelectedKar)
+	}
+	fkplQb.AddEqual("konto", params.OdKonta)
+	fkplQb.AddEqual("vkonta", 3)
+	fkplSql, fkplArgs := fkplQb.Build()
+	fkplEntities, _ := s.fkplRepo.GetAllCustom(ctx, fkplSql, "", fkplArgs, "", "")
+	if fkplEntities != nil && len(*fkplEntities) > 0 {
+		tbl.ContentTitle = (*fkplEntities)[0].Naziv
+	}
+
+	var sqlQuery string
+	var args []interface{}
+
+	if !params.Analitika {
+		// AGGREGATED MODE: one row per konto+sifra combination
+		qb := common.NewQueryBuilder(`SELECT
+			f.konto,
+			COALESCE(f.sifra, '') as sifra,
+			COALESCE(MAX(fk.naziv), '') as opis,
+			SUM(CASE WHEN f.kat = 1 OR f.kat = 2 THEN f.iznos ELSE 0 END) as duguje,
+			SUM(CASE WHEN f.kat = 3 OR f.kat = 4 THEN f.iznos ELSE 0 END) as potrazuje
+		FROM fpro f`, true)
+		qb.AddJoin("LEFT JOIN fkpl fk ON fk.idfkpl = f.idfkpl")
+		if hasGod {
+			qb.AddEqual("f.god", userSession.SelectedGod)
+		}
+		if hasKar {
+			qb.AddEqual("f.kar", userSession.SelectedKar)
+		}
+		qb.AddLikeBegin("f.konto", params.OdKonta)
+		qb.AddCondition("f.danal", params.OdDatuma, ">=")
+		qb.AddCondition("f.danal", params.DoDatuma, "<=")
+		qb.AddGroupBy("f.konto, f.sifra")
+		qb.AddOrderBy("f.konto, coalesce(NULLIF(f.sifra, ''), '0')::numeric")
+		sqlQuery, args = qb.Build()
+	} else {
+		// DETAILED MODE: individual journal entries
+		qb := common.NewQueryBuilder(`SELECT
+			f.konto,
+			COALESCE(f.sifra, '') as sifra,
+			COALESCE(fk.naziv, '') as opis,
+			CASE WHEN f.kat = 1 OR f.kat = 2 THEN f.iznos ELSE 0 END as duguje,
+			CASE WHEN f.kat = 3 OR f.kat = 4 THEN f.iznos ELSE 0 END as potrazuje
+		FROM fpro f`, true)
+		qb.AddJoin("LEFT JOIN fkpl fk ON fk.idfkpl = f.idfkpl")
+		if hasGod {
+			qb.AddEqual("f.god", userSession.SelectedGod)
+		}
+		if hasKar {
+			qb.AddEqual("f.kar", userSession.SelectedKar)
+		}
+		qb.AddLikeBegin("f.konto", params.OdKonta)
+		qb.AddCondition("f.danal", params.OdDatuma, ">=")
+		qb.AddCondition("f.danal", params.DoDatuma, "<=")
+		qb.AddOrderBy("f.konto, COALESCE(NULLIF(f.sifra, ''), '0')::numeric, f.danal, f.nalog::numeric")
+		sqlQuery, args = qb.Build()
+	}
+
+	entities, err := s.prometRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	if err != nil {
+		return err
+	}
+
+	tbl.HasTotals = true
+	tbl.Totals = make([]string, len(tbl.Headers))
+
+	if entities == nil || len(*entities) == 0 {
+		return nil
+	}
+
+	var grandDug, grandPot float64
+	for i, entity := range *entities {
+		dug := entity.Duguje
+		pot := entity.Potrazuje
+		saldo := dug - pot
+		grandDug += dug
+		grandPot += pot
+		tbl.Rows = append(tbl.Rows, domain.TableRow{
+			Fields: []string{
+				fmt.Sprintf("%d", i+1),
+				entity.Konto,
+				entity.Sifra,
+				entity.Opis,
+				common.FormatNumberWithSystemLocale(dug, 2),
+				common.FormatNumberWithSystemLocale(pot, 2),
+				common.FormatNumberWithSystemLocale(saldo, 2),
+			},
+		})
+	}
+
+	grandSaldo := grandDug - grandPot
+	for i, header := range tbl.Headers {
+		switch header.Name {
+		case "opis":
+			tbl.Totals[i] = translator.Label("Ukupno za listu")
+		case "duguje":
+			tbl.Totals[i] = common.FormatNumberWithSystemLocale(grandDug, 2)
+		case "potrazuje":
+			tbl.Totals[i] = common.FormatNumberWithSystemLocale(grandPot, 2)
+		case "saldo":
+			tbl.Totals[i] = common.FormatNumberWithSystemLocale(grandSaldo, 2)
+		}
+	}
+	return nil
+}
+
+func (s *PrometResource) GetPrometSintetickihKontaStampa(ctx context.Context, tbl *domain.TableData, params domain.PrometStampaParam) error {
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		return fmt.Errorf("user session not found")
+	}
+	translator := i18n.GetInstance()
+	hasGod, hasKar := s.prometRepo.GetHasGodHasKar()
+
+	qb := common.NewQueryBuilder(`SELECT
+		f.tipdok, f.nalog, f.danal,
+		COALESCE(f.opis, '') as opis,
+		CASE WHEN f.kat = 1 OR f.kat = 2 THEN f.iznos ELSE 0 END as duguje,
+		CASE WHEN f.kat = 3 OR f.kat = 4 THEN f.iznos ELSE 0 END as potrazuje,
+		f.konto,
+		COALESCE(fkpl.naziv, '') as naziv
+	FROM fpro f`, true)
+	qb.AddJoin("LEFT JOIN fkpl ON fkpl.idfkpl = f.idfkpl")
+
+	if hasGod {
+		qb.AddEqual("f.god", userSession.SelectedGod)
+	}
+	if hasKar {
+		qb.AddEqual("f.kar", userSession.SelectedKar)
+	}
+	qb.AddLikeBegin("f.konto", params.OdKonta)
+	qb.AddCondition("f.danal", params.OdDatuma, ">=")
+	qb.AddCondition("f.danal", params.DoDatuma, "<=")
+	qb.AddOrderBy("f.konto, f.danal, f.tipdok, f.nalog::numeric")
+
+	sqlQuery, args := qb.Build()
+	entities, err := s.prometRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	if err != nil {
+		return err
+	}
+
+	tbl.HasTotals = true
+	tbl.Totals = make([]string, len(tbl.Headers))
+
+	if entities == nil || len(*entities) == 0 {
+		return nil
+	}
+
+	var grandDug, grandPot float64
+	var groupDug, groupPot, runningSaldo float64
+	var monthDug, monthPot float64
+	lastKonto := ""
+	var lastNaziv, lastMonth string
+
+	monthKey := func(entity domain.PrometDto) string {
+		if !entity.Danal.Valid {
+			return ""
+		}
+		return fmt.Sprintf("%02d/%d", int(entity.Danal.Time.Month()), entity.Danal.Time.Year())
+	}
+
+	for _, entity := range *entities {
+		currentMonth := monthKey(entity)
+
+		if entity.Konto != lastKonto {
+			if lastKonto != "" {
+				if params.SaldaPoMesecima && lastMonth != "" {
+					tbl.Rows = append(tbl.Rows, domain.TableRow{
+						ClassRow: "month-total",
+						Fields: []string{
+							translator.Label("Ukupno za mesec") + " " + lastMonth,
+							common.FormatNumberWithSystemLocale(monthDug, 2),
+							common.FormatNumberWithSystemLocale(monthPot, 2),
+							common.FormatNumberWithSystemLocale(monthDug-monthPot, 2),
+						},
+					})
+				}
+				pSaldo := groupDug - groupPot
+				tbl.Rows = append(tbl.Rows, domain.TableRow{
+					ClassRow: "konto-total",
+					Fields: []string{
+						translator.Label("Ukupno za") + ": " + lastKonto,
+						common.FormatNumberWithSystemLocale(groupDug, 2),
+						common.FormatNumberWithSystemLocale(groupPot, 2),
+						common.FormatNumberWithSystemLocale(pSaldo, 2),
+					},
+				})
+			}
+			groupDug, groupPot, runningSaldo = 0, 0, 0
+			monthDug, monthPot = 0, 0
+			lastKonto = entity.Konto
+			lastNaziv = entity.Naziv
+			lastMonth = currentMonth
+			tbl.Rows = append(tbl.Rows, domain.TableRow{
+				ClassRow: "konto-header",
+				Fields:   []string{entity.Konto, lastNaziv},
+			})
+		} else if params.SaldaPoMesecima && currentMonth != lastMonth {
+			tbl.Rows = append(tbl.Rows, domain.TableRow{
+				ClassRow: "month-total",
+				Fields: []string{
+					translator.Label("Ukupno za mesec") + " " + lastMonth,
+					common.FormatNumberWithSystemLocale(monthDug, 2),
+					common.FormatNumberWithSystemLocale(monthPot, 2),
+					common.FormatNumberWithSystemLocale(monthDug-monthPot, 2),
+				},
+			})
+			monthDug, monthPot = 0, 0
+			lastMonth = currentMonth
+		}
+
+		dug := entity.Duguje
+		pot := entity.Potrazuje
+		runningSaldo += dug - pot
+		groupDug += dug
+		groupPot += pot
+		monthDug += dug
+		monthPot += pot
+		grandDug += dug
+		grandPot += pot
+
+		tbl.Rows = append(tbl.Rows, domain.TableRow{
+			Fields: []string{
+				entity.Tipdok,
+				entity.Nalog,
+				entity.Danal.Time.Format(common.DateLayout),
+				entity.Opis,
+				common.FormatNumberWithSystemLocale(dug, 2),
+				common.FormatNumberWithSystemLocale(pot, 2),
+				common.FormatNumberWithSystemLocale(runningSaldo, 2),
+			},
+		})
+	}
+
+	if lastKonto != "" {
+		if params.SaldaPoMesecima && lastMonth != "" {
+			tbl.Rows = append(tbl.Rows, domain.TableRow{
+				ClassRow: "month-total",
+				Fields: []string{
+					translator.Label("Ukupno za mesec") + " " + lastMonth,
+					common.FormatNumberWithSystemLocale(monthDug, 2),
+					common.FormatNumberWithSystemLocale(monthPot, 2),
+					common.FormatNumberWithSystemLocale(monthDug-monthPot, 2),
+				},
+			})
+		}
+		pSaldo := groupDug - groupPot
+		tbl.Rows = append(tbl.Rows, domain.TableRow{
+			ClassRow: "konto-total",
+			Fields: []string{
+				translator.Label("Ukupno za") + ": " + lastKonto,
+				common.FormatNumberWithSystemLocale(groupDug, 2),
+				common.FormatNumberWithSystemLocale(groupPot, 2),
+				common.FormatNumberWithSystemLocale(pSaldo, 2),
+			},
+		})
+	}
+
+	grandSaldo := grandDug - grandPot
+	for i, header := range tbl.Headers {
+		switch header.Name {
+		case "duguje":
+			tbl.Totals[i] = common.FormatNumberWithSystemLocale(grandDug, 2)
+		case "potrazuje":
+			tbl.Totals[i] = common.FormatNumberWithSystemLocale(grandPot, 2)
+		case "saldo":
+			tbl.Totals[i] = common.FormatNumberWithSystemLocale(grandSaldo, 2)
+		}
+	}
+
+	return nil
+}
+
+func (s *PrometResource) GetPrometSubsintetickihKontaStampa(ctx context.Context, tbl *domain.TableData, params domain.PrometStampaParam) error {
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		return fmt.Errorf("user session not found")
+	}
+	translator := i18n.GetInstance()
+	hasGod, hasKar := s.prometRepo.GetHasGodHasKar()
+
+	qb := common.NewQueryBuilder(`SELECT
+		f.tipdok, f.nalog, f.danal,
+		COALESCE(f.opis, '') as opis,
+		CASE WHEN f.kat = 1 OR f.kat = 2 THEN f.iznos ELSE 0 END as duguje,
+		CASE WHEN f.kat = 3 OR f.kat = 4 THEN f.iznos ELSE 0 END as potrazuje,
+		f.konto,
+		COALESCE(fkpl.naziv, '') as naziv
+	FROM fpro f`, true)
+	qb.AddJoin("LEFT JOIN fkpl ON fkpl.idfkpl = f.idfkpl")
+
+	if hasGod {
+		qb.AddEqual("f.god", userSession.SelectedGod)
+	}
+	if hasKar {
+		qb.AddEqual("f.kar", userSession.SelectedKar)
+	}
+	qb.AddCondition("f.konto::numeric", params.OdKonta, ">=")
+	qb.AddCondition("f.konto::numeric", params.DoKonta, "<=")
+	qb.AddCondition("f.danal", params.OdDatuma, ">=")
+	qb.AddCondition("f.danal", params.DoDatuma, "<=")
+	qb.AddOrderBy("f.konto, f.danal, f.tipdok, f.nalog::numeric")
+
+	sqlQuery, args := qb.Build()
+	entities, err := s.prometRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	if err != nil {
+		return err
+	}
+
+	tbl.HasTotals = true
+	tbl.Totals = make([]string, len(tbl.Headers))
+
+	if entities == nil || len(*entities) == 0 {
+		return nil
+	}
+
+	var grandDug, grandPot float64
+	var groupDug, groupPot, runningSaldo float64
+	var monthDug, monthPot float64
+	lastKonto := ""
+	var lastNaziv, lastMonth string
+
+	monthKey := func(entity domain.PrometDto) string {
+		if !entity.Danal.Valid {
+			return ""
+		}
+		return fmt.Sprintf("%02d/%d", int(entity.Danal.Time.Month()), entity.Danal.Time.Year())
+	}
+
+	for _, entity := range *entities {
+		currentMonth := monthKey(entity)
+
+		if entity.Konto != lastKonto {
+			if lastKonto != "" {
+				// Close out last month of previous konto
+				if params.SaldaPoMesecima && lastMonth != "" {
+					tbl.Rows = append(tbl.Rows, domain.TableRow{
+						ClassRow: "month-total",
+						Fields: []string{
+							translator.Label("Ukupno za mesec") + " " + lastMonth,
+							common.FormatNumberWithSystemLocale(monthDug, 2),
+							common.FormatNumberWithSystemLocale(monthPot, 2),
+							common.FormatNumberWithSystemLocale(monthDug-monthPot, 2),
+						},
+					})
+				}
+				// Emit konto-total
+				pSaldo := groupDug - groupPot
+				tbl.Rows = append(tbl.Rows, domain.TableRow{
+					ClassRow: "konto-total",
+					Fields: []string{
+						translator.Label("Ukupno za") + ": " + lastKonto,
+						common.FormatNumberWithSystemLocale(groupDug, 2),
+						common.FormatNumberWithSystemLocale(groupPot, 2),
+						common.FormatNumberWithSystemLocale(pSaldo, 2),
+					},
+				})
+			}
+			groupDug, groupPot, runningSaldo = 0, 0, 0
+			monthDug, monthPot = 0, 0
+			lastKonto = entity.Konto
+			lastNaziv = entity.Naziv
+			lastMonth = currentMonth
+			tbl.Rows = append(tbl.Rows, domain.TableRow{
+				ClassRow: "konto-header",
+				Fields:   []string{entity.Konto, lastNaziv},
+			})
+		} else if params.SaldaPoMesecima && currentMonth != lastMonth {
+			// Month changed within same konto
+			tbl.Rows = append(tbl.Rows, domain.TableRow{
+				ClassRow: "month-total",
+				Fields: []string{
+					translator.Label("Ukupno za mesec") + " " + lastMonth,
+					common.FormatNumberWithSystemLocale(monthDug, 2),
+					common.FormatNumberWithSystemLocale(monthPot, 2),
+					common.FormatNumberWithSystemLocale(monthDug-monthPot, 2),
+				},
+			})
+			monthDug, monthPot = 0, 0
+			lastMonth = currentMonth
+		}
+
+		dug := entity.Duguje
+		pot := entity.Potrazuje
+		runningSaldo += dug - pot
+		groupDug += dug
+		groupPot += pot
+		monthDug += dug
+		monthPot += pot
+		grandDug += dug
+		grandPot += pot
+
+		tbl.Rows = append(tbl.Rows, domain.TableRow{
+			Fields: []string{
+				entity.Tipdok,
+				entity.Nalog,
+				entity.Danal.Time.Format(common.DateLayout),
+				entity.Opis,
+				common.FormatNumberWithSystemLocale(dug, 2),
+				common.FormatNumberWithSystemLocale(pot, 2),
+				common.FormatNumberWithSystemLocale(runningSaldo, 2),
+			},
+		})
+	}
+
+	if lastKonto != "" {
+		if params.SaldaPoMesecima && lastMonth != "" {
+			tbl.Rows = append(tbl.Rows, domain.TableRow{
+				ClassRow: "month-total",
+				Fields: []string{
+					translator.Label("Ukupno za mesec") + " " + lastMonth,
+					common.FormatNumberWithSystemLocale(monthDug, 2),
+					common.FormatNumberWithSystemLocale(monthPot, 2),
+					common.FormatNumberWithSystemLocale(monthDug-monthPot, 2),
+				},
+			})
+		}
+		pSaldo := groupDug - groupPot
+		tbl.Rows = append(tbl.Rows, domain.TableRow{
+			ClassRow: "konto-total",
+			Fields: []string{
+				translator.Label("Ukupno za") + ": " + lastKonto,
+				common.FormatNumberWithSystemLocale(groupDug, 2),
+				common.FormatNumberWithSystemLocale(groupPot, 2),
+				common.FormatNumberWithSystemLocale(pSaldo, 2),
+			},
+		})
+	}
+
+	grandSaldo := grandDug - grandPot
+	for i, header := range tbl.Headers {
+		switch header.Name {
+		case "duguje":
+			tbl.Totals[i] = common.FormatNumberWithSystemLocale(grandDug, 2)
+		case "potrazuje":
+			tbl.Totals[i] = common.FormatNumberWithSystemLocale(grandPot, 2)
+		case "saldo":
+			tbl.Totals[i] = common.FormatNumberWithSystemLocale(grandSaldo, 2)
+		}
+	}
+
+	return nil
 }

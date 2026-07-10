@@ -11,7 +11,11 @@ import (
 // Then in template:
 templ NumericInputField(config domain.InputFieldConfig) {
 	<input
-		type={ config.FieldType }
+		if config.FieldType != "" {
+			type={ config.FieldType }
+		} else {
+			type="text"
+		}
 		id={ config.ID }
 		name={ config.Name }
 		value={ config.Value }
@@ -136,6 +140,9 @@ templ TextInputField(config domain.InputFieldConfig) {
 		if config.OnFocus != "" {
 			onfocus={ templ.JSFuncCall(fmt.Sprintf("%s", config.OnFocus), config.ID) }
 		}
+		if config.Placeholder != "" {
+			placeholder={ config.Placeholder }
+		}
 	/>
 }
 
@@ -238,6 +245,8 @@ templ ComboBoxField(comboConfig domain.ComboFieldConfig, translator *i18n.Servic
 				} else {
 					hx-target={ fmt.Sprintf("#%s", comboConfig.HxChangeTarget) }
 				}
+				hx-swap={ comboConfig.HxSwap }
+			} else if comboConfig.HxSwap != "" {
 				hx-swap={ comboConfig.HxSwap }
 			}
 		}
@@ -397,9 +406,30 @@ templ CheckboxField(cfg domain.CheckboxFieldConfig, translator *i18n.Service) {
 			type="checkbox"
 			name={ cfg.Name }
 			id={ cfg.ID }
+			value={ func() string {
+				if cfg.Value != "" {
+					return cfg.Value
+				}
+				return "1"
+			}() }
 			class={ cfg.ClassCheckbox }
 			if cfg.IsChecked || cfg.Checked {
 				checked="checked"
+			}
+			if cfg.OnChangeEndpoint != "" {
+				hx-get={ cfg.OnChangeEndpoint }
+				hx-trigger="change"
+				if cfg.HxTarget != "" {
+					hx-target={ cfg.HxTarget }
+				}
+				if cfg.HxSwap != "" {
+					hx-swap={ cfg.HxSwap }
+				} else {
+					hx-swap="innerHTML"
+				}
+				if cfg.HxVals != "" {
+					hx-vals={ cfg.HxVals }
+				}
 			}
 		/>
 		<span class={ cfg.ClassCheckboxSpan }>
@@ -430,6 +460,10 @@ templ RadioButtonField(cfg domain.RadioFieldConfig, translator *i18n.Service) {
 				checked="checked"
 			}
 		/>
-		<span class={ cfg.ClassSelect }>{ translator.Label(cfg.LabelText) }</span>
+		if cfg.ClassLabel != "" {
+			<span class={ cfg.ClassLabel }>{ translator.Label(cfg.LabelText) }</span>
+		} else {
+			<span class={ cfg.ClassSelect }>{ translator.Label(cfg.LabelText) }</span>
+		}
 	</label>
 }

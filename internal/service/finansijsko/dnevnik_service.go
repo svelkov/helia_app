@@ -8,31 +8,40 @@ import (
 	"helia/internal/domain"
 	"helia/internal/repository"
 	"helia/internal/service"
+	"helia/pkg/utils"
 	"reflect"
 )
 
 // DnevnikService defines the interface for operations related to Dnevnik knjizenja.
 type DnevnikService interface {
+	GetDnevnikKnjizenja(ctx context.Context, tbl *domain.TableData, getTotRecords bool, currentPage int, pageSize int, odDatuma, doDatuma, searchText string, printType string) error
 	GetDnevnikTableFields() []domain.Fields
-	GetDnevnikKnjizenja(ctx context.Context, tbl *domain.TableData, getTotRecords bool, currentPage int, pageSize int, odDatuma, doDatuma, searchText string) error
+	GetDnevnikStampaTableFields() []domain.Fields
+	GetFvrData(ctx context.Context) (domain.Fvr, error)
 }
 
 // DnevnikResource implements the DnevnikService interface.
 type DnevnikResource struct {
-	service            *service.BaseService[domain.DnevnikDto]
-	fproRepo           *repository.BaseRepository[domain.Fpro]
-	dnevnikTableFields []domain.Fields
+	service                  *service.BaseService[domain.DnevnikDto]
+	fproRepo                 *repository.BaseRepository[domain.Fpro]
+	fvrRepo                  *repository.BaseRepository[domain.Fvr]
+	dnevnikTableFields       []domain.Fields
+	dnevnikStampaTableFields []domain.Fields
 }
 
 // NewDnevnikService creates a new instance of DnevnikResource
 func NewDnevnikService(service *service.BaseService[domain.DnevnikDto],
-	fproRepo *repository.BaseRepository[domain.Fpro]) *DnevnikResource {
+	fproRepo *repository.BaseRepository[domain.Fpro], fvrRepo *repository.BaseRepository[domain.Fvr]) *DnevnikResource {
 	rs := &DnevnikResource{
 		service:  service,
 		fproRepo: fproRepo,
+		fvrRepo:  fvrRepo,
 	}
 	rs.setServiceFieldValues()
 	return rs
+}
+func (s *DnevnikResource) GetFvrData(ctx context.Context) (domain.Fvr, error) {
+	return utils.GetFvrData(ctx, s.fvrRepo)
 }
 
 // GetDnevnikTableFields returns the table fields for dnevnik knjizenja
@@ -40,8 +49,12 @@ func (s *DnevnikResource) GetDnevnikTableFields() []domain.Fields {
 	return s.dnevnikTableFields
 }
 
+func (s *DnevnikResource) GetDnevnikStampaTableFields() []domain.Fields {
+	return s.dnevnikStampaTableFields
+}
+
 // GetDnevnikKnjizenja fetches the dnevnik knjizenja records
-func (s *DnevnikResource) GetDnevnikKnjizenja(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage, pageSize int, odDatuma, doDatuma, searchText string) error {
+func (s *DnevnikResource) GetDnevnikKnjizenja(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage, pageSize int, odDatuma, doDatuma, searchText string, printType string) error {
 	// Get user session from context
 	userSession := domain.GetSessionFromStdContext(ctx)
 	if userSession == nil {
@@ -54,28 +67,32 @@ func (s *DnevnikResource) GetDnevnikKnjizenja(ctx context.Context, tbl *domain.T
 	// Build query
 	qb := common.NewQueryBuilder(`
 		select 
-			row_number() over (order by fpro.danal, fpro.nalog) as rbr,
+			row_number() over (order by fpro.danal, fpro.nalog) as redbr,
+			fpro.rbr,
 			fpro.danal,
 			fpro.tipdok,
 			fpro.nalog,
 			fpro.konto,
-			fpro.sifra,
-			coalesce(fkpl.naziv, '') as naziv,
+			coalesce(fpro.sifra, '') as sifra,
+			case when fpro.sifra <> '' then coalesce(p.naziv, '') else coalesce(fkpl.naziv, '') end as naziv,
 			case when fpro.kat in (1, 2) then fpro.iznos else 0 end as duguje,
 			case when fpro.kat in (3, 4) then fpro.iznos else 0 end as potrazuje,
 			case when fpro.kat in (1, 2) then fpro.iznos else 0 end - 
 			case when fpro.kat in (3, 4) then fpro.iznos else 0 end as saldo,
-			fpro.opis,
-			fpro.dokum,
+			coalesce(fpro.opis, '') as opis,
+			coalesce(fpro.dokum, '') as dokum,
 			fpro.dadok,
-			coalesce(fpro.ojozn, '') as ojozn,
-			fpro.sifval,
+			concat(coalesce(o.ojozn,''), '-', coalesce(o.naziv,'')) as ojozn,
+			concat(coalesce(v.sifval::text,''), '-', coalesce(v.oznval,'')) as sifval,
 			case when fpro.kat in (1, 2) then fpro.deviznos else 0 end as devdug,
 			case when fpro.kat in (3, 4) then fpro.deviznos else 0 end as devpot
 		from fpro`, true)
 
 	// Add JOIN for fkpl
 	qb.AddJoin("left join fkpl on fkpl.idfkpl = fpro.idfkpl")
+	qb.AddJoin("left join partneri p on p.sifra = fpro.sifra and p.tipanalitikeid = fkpl.tipanalitikeid")
+	qb.AddJoin("left join orgjed o on o.idorgjed = fpro.idorgjed")
+	qb.AddJoin("left join valute v on v.idvalute = fpro.idvalute")
 
 	// Add WHERE conditions
 	if hasGod {
@@ -99,7 +116,7 @@ func (s *DnevnikResource) GetDnevnikKnjizenja(ctx context.Context, tbl *domain.T
 	}
 
 	// Order by
-	qb.AddOrderBy("fpro.danal, fpro.nalog")
+	qb.AddOrderBy("fpro.danal, fpro.nalog, fpro.rbr")
 
 	if !getTotalRecords {
 		qb.SetLimit(pageSize)
@@ -147,28 +164,46 @@ func (s *DnevnikResource) GetDnevnikKnjizenja(ctx context.Context, tbl *domain.T
 
 		return nil
 	}
-
+	rbr := 0
 	// Process results and populate table
 	if entities != nil && len(*entities) > 0 {
 		for _, entity := range *entities {
-			fields := []string{
-				fmt.Sprintf("%d", entity.Rbr),
-				entity.Danal.Time.Format(common.DateLayout),
-				entity.Tipdok,
-				fmt.Sprintf("%d", entity.Nalog),
-				entity.Konto,
-				entity.Sifra,
-				entity.Naziv,
-				common.FormatNumberWithSystemLocale(entity.Duguje, 2),
-				common.FormatNumberWithSystemLocale(entity.Potrazuje, 2),
-				common.FormatNumberWithSystemLocale(entity.Saldo, 2),
-				entity.Opis,
-				entity.Dokum,
-				entity.Dadok.Time.Format(common.DateLayout),
-				entity.Ojozn,
-				entity.Sifval,
-				common.FormatNumberWithSystemLocale(entity.Devdug, 2),
-				common.FormatNumberWithSystemLocale(entity.Devpot, 2),
+			rbr++
+			fields := []string{}
+			if printType == "O" { //obrada - samo polja potrebna za prikaz u obradi
+				fields = []string{
+					fmt.Sprintf("%d", rbr),
+					entity.Danal.Time.Format(common.DateLayout),
+					entity.Tipdok,
+					fmt.Sprintf("%d", entity.Nalog),
+					entity.Konto,
+					entity.Sifra,
+					entity.Naziv,
+					common.FormatNumberWithSystemLocale(entity.Duguje, 2),
+					common.FormatNumberWithSystemLocale(entity.Potrazuje, 2),
+					common.FormatNumberWithSystemLocale(entity.Saldo, 2),
+					entity.Opis,
+					entity.Dokum,
+					entity.Dadok.Time.Format(common.DateLayout),
+					entity.Ojozn,
+					entity.Sifval,
+					common.FormatNumberWithSystemLocale(entity.Devdug, 2),
+					common.FormatNumberWithSystemLocale(entity.Devpot, 2),
+				}
+			}
+			if printType == "S" { //stampa - polja potrebna za štampu
+				fields = []string{
+					fmt.Sprintf("%d", rbr),
+					fmt.Sprintf("%d", entity.Rbr),
+					entity.Danal.Time.Format(common.DateLayout),
+					entity.Tipdok,
+					fmt.Sprintf("%d", entity.Nalog),
+					entity.Konto,
+					entity.Sifra,
+					entity.Naziv,
+					common.FormatNumberWithSystemLocale(entity.Duguje, 2),
+					common.FormatNumberWithSystemLocale(entity.Potrazuje, 2),
+				}
 			}
 			tblRow := domain.TableRow{Fields: fields, HasUpdate: false, HasDelete: false}
 			tbl.Rows = append(tbl.Rows, tblRow)
@@ -198,5 +233,17 @@ func (s *DnevnikResource) setServiceFieldValues() {
 		{Name: "sifval", Label: "Šifra valute", Width: "5", Field: "fpro.sifval", SkipInSearch: false},
 		{Name: "devdug", Label: "Devizno duguje", Width: "12", Field: "devdug", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
 		{Name: "devpot", Label: "Devizno potražuje", Width: "12", Field: "devpot", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
+	}
+	s.dnevnikStampaTableFields = []domain.Fields{
+		{Name: "redbr", Label: "Redni broj", Width: "5", Field: "rbr", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
+		{Name: "rbr", Label: "Red broj stavke u nalogu", Width: "5", Field: "fpro.rbr", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
+		{Name: "danal", Label: "Datum naloga", Width: "10", Field: "fpro.danal", SkipInSearch: false},
+		{Name: "tipdok", Label: "Vrsta naloga", Width: "5", Field: "fpro.tipdok", SkipInSearch: false},
+		{Name: "nalog", Label: "Nalog", Width: "8", Field: "fpro.nalog", SkipInSearch: false},
+		{Name: "konto", Label: "Konto", Width: "8", Field: "fpro.konto", SkipInSearch: false},
+		{Name: "sifra", Label: "Šifra", Width: "8", Field: "fpro.sifra", SkipInSearch: false},
+		{Name: "naziv", Label: "Naziv konta", Width: "25", SkipInSearch: false},
+		{Name: "duguje", Label: "Duguje", Width: "12", Field: "duguje", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
+		{Name: "potrazuje", Label: "Potražuje", Width: "12", Field: "potrazuje", SkipInSearch: true, TextAlign: "right", IncludeInTotals: true},
 	}
 }

@@ -1,0 +1,582 @@
+package finansijsko
+
+import (
+	"fmt"
+	rep "helia/frontend/templates/reports"
+	"helia/i18n"
+	"helia/internal/common"
+	"helia/internal/domain"
+)
+
+// SaldaPojedinacnihKontaStampa renders a printable full-page Salda pojedinačnih konta report.
+templ SaldaPojedinacnihKontaStampa(tbl domain.TableData, total domain.SaldaDto, params domain.ReportParameters, translator *i18n.Service) {
+	@rep.Report(params, tbl, translator, nil, SaldaPojedinacnihKontaReport(tbl, total, params, translator))
+}
+
+templ SaldaPojedinacnihKontaReport(tbl domain.TableData, total domain.SaldaDto, params domain.ReportParameters, translator *i18n.Service) {
+	@SaldaPojedinacnihKontaReportHeader(params, translator)
+	@SaldaPojedinacnihKontaReportSummary(total, translator)
+	@SaldaPojedinacnihKontaReportBody(tbl, translator)
+	@SaldaPojedinacnihKontaReportChart(translator)
+	@rep.ReportEnd(nil)
+}
+
+templ SaldaPojedinacnihKontaReportHeader(params domain.ReportParameters, translator *i18n.Service) {
+	<!-- Company info + date/page -->
+	@rep.ReportHeader(params)
+	<!-- Title -->
+	@rep.ReportTitle(params)
+	<!-- Parameters (konto, sifra, tip konta) -->
+}
+
+templ SaldaPojedinacnihKontaReportSummary(total domain.SaldaDto, translator *i18n.Service) {
+	<div class="mb-4">
+		<table class="w-full border-collapse report-table mt-4 print:w-full print:text-[11pt] print:table-auto print:border-collapse">
+			<colgroup>
+				<col style="width:72px"/>
+				<col style="width:100px"/>
+				<col style="width:100px"/>
+				<col style="width:100px"/>
+			</colgroup>
+			<thead>
+				<tr class="bg-blue-900 text-white print:bg-gray-200 print:text-black print:page-break-inside-auto">
+					<th class="border border-gray-300 px-1"></th>
+					<th class="border border-gray-300 px-1 text-sm text-center">{ translator.Label("Duguje") }</th>
+					<th class="border border-gray-300 px-1 text-sm text-center">{ translator.Label("Potražuje") }</th>
+					<th class="border border-gray-300 px-1 text-sm text-center">{ translator.Label("Saldo") }</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr
+					class={ fmt.Sprintf("hover:bg-yellow-50 print:hover:bg-white print:page-break-inside-avoid %s",
+					func() string {
+						if 1%2 == 1 {
+							return "bg-gray-50 print:bg-gray-50"
+						}
+						return "bg-white print:bg-white"
+					}()) }
+				>
+					<td class="border border-gray-300 px-1 text-sm">{ translator.Label("Početno stanje") }</td>
+					<td class="border border-gray-300 px-1 text-sm text-right">{ common.FormatNumberWithSystemLocale(total.PocStanjeDug, 2) }</td>
+					<td class="border border-gray-300 px-1 text-sm text-right">{ common.FormatNumberWithSystemLocale(total.PocStanjePot, 2) }</td>
+					<td class="border border-gray-300 px-1 text-sm text-right">{ common.FormatNumberWithSystemLocale(total.PocStanjeSaldo, 2) }</td>
+				</tr>
+				<tr
+					class={ fmt.Sprintf("hover:bg-yellow-50 print:hover:bg-white print:page-break-inside-avoid %s",
+					func() string {
+						if 2%2 == 1 {
+							return "bg-gray-50 print:bg-gray-50"
+						}
+						return "bg-white print:bg-white"
+					}()) }
+				>
+					<td class="border border-gray-300 px-1 text-sm">{ translator.Label("Tekući promet") }</td>
+					<td class="border border-gray-300 px-1 text-sm text-right">{ common.FormatNumberWithSystemLocale(total.TekuciPromDug, 2) }</td>
+					<td class="border border-gray-300 px-1 text-sm text-right">{ common.FormatNumberWithSystemLocale(total.TekuciPromPot, 2) }</td>
+					<td class="border border-gray-300 px-1 text-sm text-right">{ common.FormatNumberWithSystemLocale(total.TekuciPromSaldo, 2) }</td>
+				</tr>
+				<tr
+					class={ fmt.Sprintf("hover:bg-yellow-50 print:hover:bg-white print:page-break-inside-avoid %s",
+					func() string {
+						if 3%2 == 1 {
+							return "bg-gray-50 print:bg-gray-50"
+						}
+						return "bg-white print:bg-white"
+					}()) }
+				>
+					<td class="border border-gray-300 px-1 text-sm">{ translator.Label("Ukupan promet") }</td>
+					<td class="border border-gray-300 px-1 text-sm text-right">{ common.FormatNumberWithSystemLocale(total.UkPromDug, 2) }</td>
+					<td class="border border-gray-300 px-1 text-sm text-right">{ common.FormatNumberWithSystemLocale(total.UkPromPot, 2) }</td>
+					<td class="border border-gray-300 px-1 text-sm text-right">{ common.FormatNumberWithSystemLocale(total.UkPromSaldo, 2) }</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+}
+
+templ SaldaPojedinacnihKontaReportBody(tbl domain.TableData, translator *i18n.Service) {
+	@rep.ReportTable(tbl, translator)
+}
+
+templ SaldaPojedinacnihKontaReportChart(translator *i18n.Service) {
+	<div class="mt-6 no-break" id="salda-report-chart-wrap">
+		<div class="text-[11px] font-bold mb-2">{ translator.Title("Grafički prikaz salda") }</div>
+		<canvas id="salda-report-chart" style="width:100%;height:260px;max-height:260px;"></canvas>
+	</div>
+	<script>
+		(function() {
+			function buildSaldaReportChart() {
+				var canvas = document.getElementById('salda-report-chart');
+				if (!canvas || typeof Chart === 'undefined') return;
+
+				// Read data from the monthly table (first table on page that has 5 columns)
+				var months = [], duguje = [], potrazuje = [], saldo = [];
+				var tables = document.querySelectorAll('table');
+				var dataTable = null;
+				for (var i = 0; i < tables.length; i++) {
+					var th = tables[i].querySelectorAll('thead th');
+					if (th.length === 5) { dataTable = tables[i]; break; }
+				}
+				if (!dataTable) return;
+
+				var rows = dataTable.querySelectorAll('tbody tr');
+				rows.forEach(function(row) {
+					var cells = row.querySelectorAll('td');
+					if (cells.length < 4) return;
+					// Parse numbers: strip thousand separators (period or comma)
+					function parseNum(s) {
+						var clean = s.trim().replace(/[.\s]/g, '').replace(',', '.');
+						return parseFloat(clean) || 0;
+					}
+					months.push(cells[0].textContent.trim());
+					duguje.push(parseNum(cells[1].textContent));
+					potrazuje.push(parseNum(cells[2].textContent));
+					saldo.push(parseNum(cells[3].textContent));
+				});
+
+				if (months.length === 0) return;
+
+				new Chart(canvas, {
+					type: 'bar',
+					data: {
+						labels: months,
+						datasets: [
+							{
+								label: 'Duguje',
+								data: duguje,
+								backgroundColor: 'rgba(59,130,246,0.55)',
+								borderColor: 'rgba(59,130,246,1)',
+								borderWidth: 1
+							},
+							{
+								label: 'Potražuje',
+								data: potrazuje,
+								backgroundColor: 'rgba(34,197,94,0.55)',
+								borderColor: 'rgba(34,197,94,1)',
+								borderWidth: 1
+							},
+							{
+								label: 'Saldo',
+								data: saldo,
+								backgroundColor: 'rgba(239,68,68,0.55)',
+								borderColor: 'rgba(239,68,68,1)',
+								borderWidth: 1
+							}
+						]
+					},
+					options: {
+						responsive: true,
+						maintainAspectRatio: false,
+						animation: { duration: 0 },
+						plugins: {
+							legend: { position: 'top' },
+							title: { display: false }
+						},
+						scales: { y: { beginAtZero: true } }
+					}
+				});
+			}
+
+			// Run after DOM + Chart.js are ready
+			if (document.readyState === 'loading') {
+				document.addEventListener('DOMContentLoaded', buildSaldaReportChart);
+			} else {
+				buildSaldaReportChart();
+			}
+		})();
+	</script>
+}
+
+// SaldaPartneriPrelomljenoStampa renders a printable Pregled stanja partnera - prelomljeno report.
+templ SaldaPartneriPrelomljenoStampa(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
+	@rep.Report(repParams, domain.TableData{}, translator, nil, SaldaPartneriPrelomljenoStampaContent(repParams, tbl, translator))
+}
+
+templ SaldaPartneriPrelomljenoStampaContent(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
+	@rep.ReportHeader(repParams)
+	@rep.ReportTitle(repParams)
+	<div class="text-center text-[11px] font-semibold mb-3">
+		{ translator.Label("Od partnera") }: <span class="font-bold">{ repParams.ParameterItems["OdPartnera"].Value }</span>
+		&nbsp;&nbsp;&nbsp;{ translator.Label("Do partnera") }: <span class="font-bold">{ repParams.ParameterItems["DoPartnera"].Value }</span>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ repParams.ParameterItems["StanjeNaDan"].Name }: <span class="font-bold">{ repParams.ParameterItems["StanjeNaDan"].Value }</span>
+	</div>
+	@rep.ReportTable(tbl, translator)
+	@rep.ReportEnd(nil)
+}
+
+templ SaldaKlase56AnalitikaStampa(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
+	@rep.Report(repParams, domain.TableData{}, translator, nil, SaldaKlase56AnalitikaStampaContent(repParams, tbl, translator))
+}
+
+templ SaldaKlase56AnalitikaStampaContent(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
+	@rep.ReportHeader(repParams)
+	@rep.ReportTitle(repParams)
+	<div class="flex flex-wrap justify-center gap-x-8 text-sm font-semibold mb-3">
+		<div>{ repParams.ParameterItems["OdSifre"].Name }: <span class="font-bold">{ repParams.ParameterItems["OdSifre"].Value }</span></div>
+		<div>{ repParams.ParameterItems["DoSifre"].Name }: <span class="font-bold">{ repParams.ParameterItems["DoSifre"].Value }</span></div>
+		<div>{ repParams.ParameterItems["OdDatuma"].Name }: <span class="font-bold">{ repParams.ParameterItems["OdDatuma"].Value }</span></div>
+		<div>{ repParams.ParameterItems["DoDatuma"].Name }: <span class="font-bold">{ repParams.ParameterItems["DoDatuma"].Value }</span></div>
+	</div>
+	@SaldaKlase56AnalitikaGroupTable(tbl, translator)
+	@rep.ReportEnd(nil)
+}
+
+templ SaldaKlase56AnalitikaGroupTable(tbl domain.TableData, translator *i18n.Service) {
+	<table class="w-full border-collapse report-table mt-2 print:w-full print:text-[10pt] print:table-auto print:border-collapse">
+		<thead>
+			<tr class="bg-blue-900 text-white text-center print:bg-gray-200 print:text-black print:page-break-inside-auto">
+				for _, header := range tbl.Headers {
+					<th class="border border-gray-300 px-1 text-center text-sm font-semibold print:bg-gray-200 print:text-black print:px-1">
+						{ translator.Label(header.Label) }
+					</th>
+				}
+			</tr>
+		</thead>
+		<tbody>
+			for i, row := range tbl.Rows {
+				if row.ClassRow == "group-header" {
+					<tr class="bg-gray-300 print:bg-gray-300 print:page-break-inside-avoid">
+						<td colspan={ fmt.Sprintf("%d", len(tbl.Headers)) } class="border border-gray-300 px-2 text-sm font-bold">
+							{ translator.Label("Šifra") } { row.Fields[0] }
+						</td>
+					</tr>
+				} else if row.ClassRow == "subgroup-header" {
+					<tr class="bg-gray-100 print:bg-gray-100 print:page-break-inside-avoid">
+						<td colspan={ fmt.Sprintf("%d", len(tbl.Headers)) } class="border border-gray-300 px-2 text-sm font-semibold">
+							{ translator.Label("OJ") }: { row.Fields[0] }
+						</td>
+					</tr>
+				} else if row.ClassRow == "group-total" {
+					<tr class="bg-blue-50 font-bold border-t border-gray-400 print:bg-blue-50 print:page-break-inside-avoid">
+						for j, cell := range row.Fields {
+							<td
+								class={ fmt.Sprintf("border border-gray-300 px-1 text-sm font-bold print:text-[10pt] print:px-1 %s",
+									func() string {
+										if tbl.Headers[j].TextAlign != "" {
+											return fmt.Sprintf("text-%s", tbl.Headers[j].TextAlign)
+										}
+										return ""
+									}()) }
+							>
+								{ cell }
+							</td>
+						}
+					</tr>
+				} else if row.ClassRow == "sifra-total" {
+					<tr class="bg-blue-100 font-bold border-t-2 border-blue-400 print:bg-blue-100 print:page-break-inside-avoid">
+						for j, cell := range row.Fields {
+							<td
+								class={ fmt.Sprintf("border border-gray-300 px-1 text-sm font-bold print:text-[10pt] print:px-1 %s",
+									func() string {
+										if tbl.Headers[j].TextAlign != "" {
+											return fmt.Sprintf("text-%s", tbl.Headers[j].TextAlign)
+										}
+										return ""
+									}()) }
+							>
+								{ cell }
+							</td>
+						}
+					</tr>
+				} else {
+					<tr
+						class={ fmt.Sprintf("hover:bg-yellow-50 print:hover:bg-white print:page-break-inside-avoid %s",
+							func() string {
+								if i%2 == 1 {
+									return "bg-gray-50 print:bg-gray-50"
+								}
+								return "bg-white print:bg-white"
+							}()) }
+					>
+						for j, cell := range row.Fields {
+							<td
+								class={ fmt.Sprintf("border border-gray-300 px-1 text-sm print:text-[10pt] print:px-1 print:break-words print:whitespace-normal %s",
+									func() string {
+										if tbl.Headers[j].TextAlign != "" {
+											return fmt.Sprintf("text-%s", tbl.Headers[j].TextAlign)
+										}
+										return ""
+									}()) }
+							>
+								{ cell }
+							</td>
+						}
+					</tr>
+				}
+			}
+		</tbody>
+		if tbl.HasTotals {
+			<tfoot>
+				<tr class="bg-blue-50 font-bold border-t-2 border-blue-900 print:bg-blue-50 print:page-break-inside-avoid">
+					for j, header := range tbl.Headers {
+						if header.IncludeInTotals {
+							<td class="border border-gray-300 px-1 text-sm print:text-[10pt] print:px-1 font-bold text-right">
+								{ tbl.Totals[j] }
+							</td>
+						} else {
+							<td class="border border-gray-300 px-1 text-sm print:text-[10pt] print:px-1 bg-blue-50">
+								{ tbl.Totals[j] }
+							</td>
+						}
+					}
+				</tr>
+			</tfoot>
+		}
+	</table>
+}
+
+templ SaldaKlase56MTStampa(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
+	@rep.Report(repParams, domain.TableData{}, translator, nil, SaldaKlase56MTStampaContent(repParams, tbl, translator))
+}
+
+templ SaldaKlase56MTStampaContent(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
+	@rep.ReportHeader(repParams)
+	@rep.ReportTitle(repParams)
+	<div class="flex flex-wrap justify-center gap-x-8 text-sm font-semibold mb-3">
+		<div>{ repParams.ParameterItems["OdKonta"].Name }: <span class="font-bold">{ repParams.ParameterItems["OdKonta"].Value }</span></div>
+		<div>{ repParams.ParameterItems["DoKonta"].Name }: <span class="font-bold">{ repParams.ParameterItems["DoKonta"].Value }</span></div>
+		<div>{ repParams.ParameterItems["OdDatuma"].Name }: <span class="font-bold">{ repParams.ParameterItems["OdDatuma"].Value }</span></div>
+		<div>{ repParams.ParameterItems["DoDatuma"].Name }: <span class="font-bold">{ repParams.ParameterItems["DoDatuma"].Value }</span></div>
+	</div>
+	@SaldaKlase56MTGroupTable(tbl, translator)
+	@rep.ReportEnd(nil)
+}
+
+templ SaldaKlase56MTGroupTable(tbl domain.TableData, translator *i18n.Service) {
+	<table class="w-full border-collapse report-table mt-2 print:w-full print:text-[10pt] print:table-auto print:border-collapse">
+		<thead>
+			<tr class="bg-blue-900 text-white text-center print:bg-gray-200 print:text-black print:page-break-inside-auto">
+				for _, header := range tbl.Headers {
+					<th class="border border-gray-300 px-1 text-center text-sm font-semibold print:bg-gray-200 print:text-black print:px-1">
+						{ translator.Label(header.Label) }
+					</th>
+				}
+			</tr>
+		</thead>
+		<tbody>
+			for i, row := range tbl.Rows {
+				if row.ClassRow == "group-header" {
+					<tr class="bg-gray-300 print:bg-gray-300 print:page-break-inside-avoid">
+						<td class="border border-gray-300 px-2 text-sm font-bold">{ row.Fields[0] }</td>
+						<td colspan={ fmt.Sprintf("%d", len(tbl.Headers)-1) } class="border border-gray-300 px-2 text-sm font-bold">{ row.Fields[1] }</td>
+					</tr>
+				} else if row.ClassRow == "group-total" {
+					<tr class="bg-blue-50 font-bold border-t border-gray-400 print:bg-blue-50 print:page-break-inside-avoid">
+						for j, cell := range row.Fields {
+							<td
+								class={ fmt.Sprintf("border border-gray-300 px-1 text-sm font-bold print:text-[10pt] print:px-1 %s",
+									func() string {
+										if tbl.Headers[j].TextAlign != "" {
+											return fmt.Sprintf("text-%s", tbl.Headers[j].TextAlign)
+										}
+										return ""
+									}()) }
+							>
+								{ cell }
+							</td>
+						}
+					</tr>
+				} else {
+					<tr
+						class={ fmt.Sprintf("hover:bg-yellow-50 print:hover:bg-white print:page-break-inside-avoid %s",
+							func() string {
+								if i%2 == 1 {
+									return "bg-gray-50 print:bg-gray-50"
+								}
+								return "bg-white print:bg-white"
+							}()) }
+					>
+						for j, cell := range row.Fields {
+							<td
+								class={ fmt.Sprintf("border border-gray-300 px-1 text-sm print:text-[10pt] print:px-1 print:break-words print:whitespace-normal %s",
+									func() string {
+										if tbl.Headers[j].TextAlign != "" {
+											return fmt.Sprintf("text-%s", tbl.Headers[j].TextAlign)
+										}
+										return ""
+									}()) }
+							>
+								{ cell }
+							</td>
+						}
+					</tr>
+				}
+			}
+		</tbody>
+		if tbl.HasTotals {
+			<tfoot>
+				<tr class="bg-blue-50 font-bold border-t-2 border-blue-900 print:bg-blue-50 print:page-break-inside-avoid">
+					for j, header := range tbl.Headers {
+						if header.IncludeInTotals {
+							<td class="border border-gray-300 px-1 text-sm print:text-[10pt] print:px-1 font-bold text-right">
+								{ tbl.Totals[j] }
+							</td>
+						} else {
+							<td class="border border-gray-300 px-1 text-sm print:text-[10pt] print:px-1 bg-blue-50">
+								{ tbl.Totals[j] }
+							</td>
+						}
+					}
+				</tr>
+			</tfoot>
+		}
+	</table>
+}
+
+// SaldaPartneraPoKontimaStampa renders printable Pregled stanja partnera po kontima.
+templ SaldaPartneraPoKontimaStampa(repParams domain.ReportParameters, tbl domain.TableData, stampajDetalje bool, noviPartnerNovaSt bool, translator *i18n.Service) {
+	@rep.Report(repParams, domain.TableData{}, translator, nil, SaldaPartneraPoKontimaContent(repParams, tbl, stampajDetalje, noviPartnerNovaSt, translator))
+}
+
+templ SaldaPartneraPoKontimaContent(repParams domain.ReportParameters, tbl domain.TableData, stampajDetalje bool, noviPartnerNovaSt bool, translator *i18n.Service) {
+	@rep.ReportHeader(repParams)
+	@rep.ReportTitle(repParams)
+	<div class="text-center text-[11px] font-semibold mb-3">
+		{ translator.Label("Od Partnera") }: <span class="font-bold">{ repParams.ParameterItems["OdPartnera"].Value }</span>
+		&nbsp;&nbsp;&nbsp;{ translator.Label("Do Partnera") }: <span class="font-bold">{ repParams.ParameterItems["DoPartnera"].Value }</span>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ repParams.ParameterItems["StanjeNaDan"].Name }: <span class="font-bold">{ repParams.ParameterItems["StanjeNaDan"].Value }</span>
+	</div>
+	@SaldaPartneraPoKontimaTable(tbl, stampajDetalje, noviPartnerNovaSt, translator)
+	@rep.ReportEnd(nil)
+}
+
+templ SaldaPartneraPoKontimaTable(tbl domain.TableData, stampajDetalje bool, noviPartnerNovaSt bool, translator *i18n.Service) {
+	<table class="w-full border-collapse report-table mt-2 print:w-full print:text-[10pt] print:table-auto print:border-collapse">
+		<thead></thead>
+		<tbody>
+			for _, row := range tbl.Rows {
+				if row.ClassRow == "partner-header" {
+					<tr
+						class="bg-gray-700 text-white print:bg-gray-700 print:text-white"
+						if noviPartnerNovaSt {
+							style="break-before: page;"
+						}
+					>
+						<td colspan={ fmt.Sprintf("%d", len(tbl.Headers)) } class="border border-gray-400 px-2 py-1 text-sm font-bold">
+							if len(row.Fields) > 0 {
+								{ row.Fields[0] }
+							}
+							if len(row.Fields) > 1 && row.Fields[1] != "" {
+								&nbsp;&nbsp;|&nbsp;&nbsp;{ row.Fields[1] }
+							}
+							if len(row.Fields) > 2 && row.Fields[2] != "" {
+								&nbsp;&nbsp;{ row.Fields[2] }
+							}
+							if len(row.Fields) > 3 && row.Fields[3] != "" {
+								&nbsp;{ row.Fields[3] }
+							}
+							if len(row.Fields) > 4 && row.Fields[4] != "" {
+								&nbsp;&nbsp;PIB:&nbsp;{ row.Fields[4] }
+							}
+						</td>
+					</tr>
+				} else if row.ClassRow == "konto-header" {
+					<tr class="bg-blue-200 print:bg-blue-200">
+						<td colspan={ fmt.Sprintf("%d", len(tbl.Headers)) } class="border border-gray-300 px-2 py-1 text-sm font-bold">
+							if len(row.Fields) > 0 {
+								{ row.Fields[0] }
+							}
+							if len(row.Fields) > 1 && row.Fields[1] != "" {
+								&nbsp;{ row.Fields[1] }
+							}
+						</td>
+					</tr>
+					<tr class="bg-blue-800 text-white text-center print:bg-gray-300 print:text-black">
+						for _, header := range tbl.Headers {
+							<th
+								class={ fmt.Sprintf("border border-gray-300 px-1 text-center text-xs font-semibold print:bg-gray-300 print:text-black print:px-1 text-%s", func() string {
+									if header.TextAlign != "" {
+										return header.TextAlign
+									} else {
+										return "left"
+									}
+								}()) }
+							>
+								{ translator.Label(header.Label) }
+							</th>
+						}
+					</tr>
+				} else if row.ClassRow == "konto-total" {
+					<tr class="bg-blue-50 font-bold border-t border-gray-400 print:bg-blue-50">
+						<td colspan={ fmt.Sprintf("%d", len(tbl.Headers)-3) } class="border border-gray-300 px-2 py-1 text-sm font-bold">
+							if len(row.Fields) > 0 {
+								{ row.Fields[0] }
+							}
+						</td>
+						<td class="border border-gray-300 px-1 text-sm font-bold text-right">
+							if len(row.Fields) > 1 {
+								{ row.Fields[1] }
+							}
+						</td>
+						<td class="border border-gray-300 px-1 text-sm font-bold text-right">
+							if len(row.Fields) > 2 {
+								{ row.Fields[2] }
+							}
+						</td>
+						<td class="border border-gray-300 px-1 text-sm font-bold text-right">
+							if len(row.Fields) > 3 {
+								{ row.Fields[3] }
+							}
+						</td>
+					</tr>
+				} else if row.ClassRow == "partner-total" {
+					<tr class="bg-gray-200 font-bold border-t-2 border-gray-500 print:bg-gray-200">
+						<td colspan={ fmt.Sprintf("%d", len(tbl.Headers)-3) } class="border border-gray-300 px-2 py-1 text-sm font-bold">
+							if len(row.Fields) > 0 {
+								{ row.Fields[0] }
+							}
+						</td>
+						<td class="border border-gray-300 px-1 text-sm font-bold text-right">
+							if len(row.Fields) > 1 {
+								{ row.Fields[1] }
+							}
+						</td>
+						<td class="border border-gray-300 px-1 text-sm font-bold text-right">
+							if len(row.Fields) > 2 {
+								{ row.Fields[2] }
+							}
+						</td>
+						<td class="border border-gray-300 px-1 text-sm font-bold text-right">
+							if len(row.Fields) > 3 {
+								{ row.Fields[3] }
+							}
+						</td>
+					</tr>
+				} else {
+					<tr class="hover:bg-yellow-50 print:hover:bg-white">
+						for j, cell := range row.Fields {
+							<td
+								class={ fmt.Sprintf("border border-gray-300 px-1 text-sm print:text-[9pt] print:px-1 text-%s", func() string {
+if j < len(tbl.Headers) && tbl.Headers[j].TextAlign != "" {
+return tbl.Headers[j].TextAlign
+}
+return "left"
+}()) }
+							>
+								{ cell }
+							</td>
+						}
+					</tr>
+				}
+			}
+		</tbody>
+		if tbl.HasTotals {
+			<tfoot>
+				<tr class="bg-blue-900 text-white font-bold print:bg-gray-700 print:text-white">
+					for j, total := range tbl.Totals {
+						<td
+							class={ fmt.Sprintf("border border-gray-300 px-1 text-sm font-bold print:text-[9pt] print:px-1 text-%s", func() string {
+if j < len(tbl.Headers) && tbl.Headers[j].TextAlign != "" {
+return tbl.Headers[j].TextAlign
+}
+return "left"
+}()) }
+						>
+							{ total }
+						</td>
+					}
+				</tr>
+			</tfoot>
+		}
+	</table>
+}

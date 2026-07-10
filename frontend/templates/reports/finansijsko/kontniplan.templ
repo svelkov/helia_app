@@ -1,0 +1,20 @@
+package finansijsko
+
+import (
+	rep "helia/frontend/templates/reports"
+	"helia/i18n"
+	"helia/internal/domain"
+)
+
+// KontniPlanStampa renders a printable Kontni plan report.
+templ KontniPlanStampa(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
+	@rep.Report(repParams, domain.TableData{}, translator, nil, KontniPlanContent(repParams, tbl, translator))
+}
+
+templ KontniPlanContent(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
+	@rep.ReportHeader(repParams)
+	@rep.ReportTitle(repParams)
+	@rep.ReportTableSection(tbl, translator)
+	@rep.ReportEnd(nil)
+}
+

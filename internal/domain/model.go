@@ -94,7 +94,9 @@ type Button struct {
 	IsVisible        bool
 	IsDisabled       bool
 	BtnClass         string
+	DataFields       string // Parameters for print comma separated, e.g. `param1,param2...
 	HxHeaders        string // JSON string for custom headers, e.g. `{"X-Custom-Header": "value"}`
+	OpenDialog       bool   // Whether this button opens a dialog
 }
 type Fields struct {
 	Name            string
@@ -139,6 +141,7 @@ type UserClaims struct {
 	Language    string `json:"language"`     // UI language
 	TokenType   string `json:"token_type"`   // "access" or "refresh"
 	CSRFHash    string `json:"csrf_hash"`    // SHA256 hash of CSRF token (access tokens only)
+	Mesto       string `json:"mesto"`        // User's city (for report headers)
 	jwt.RegisteredClaims
 }
 
@@ -294,9 +297,18 @@ type SearchButtonConfig struct {
 type ReportParameters struct {
 	ReportName     string
 	CompanyName    string
+	PIB            string
+	MatBroj        string
+	SifDel         string
+	Adress         string
+	Postcode       string
+	City           string
+	TekRac         string
+	Telefon        string
 	CompanyLogo    string
 	UserName       string
-	ParameterItems []ParameterItem
+	ParameterItems map[string]ParameterItem
+	Orientation    string
 }
 
 type Komintent struct {

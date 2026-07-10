@@ -293,19 +293,27 @@ templ NaloziStampanje(tabs domain.TabData, tblHeader, tblStavke domain.TableData
 							ID:         "stampanje-pojedinacnog-naloga",
 							Name:       "tip-stampanja",
 							Value:      "pojedinacni",
-							LabelText:  translator.Label("Štampanje pojedinačnog naloga"),
+							LabelText:  "Štampanje pojedinačnog naloga",
 							IsSelected: true,
 						}, translator)
 						@tmpl.RadioButtonField(domain.RadioFieldConfig{
 							ID:         "stampanje-grupa-naloga",
 							Name:       "tip-stampanja",
 							Value:      "grupa",
-							LabelText:  translator.Label("Štampanje grupa naloga"),
+							LabelText:  "Štampanje grupe naloga",
 							IsSelected: false,
 						}, translator)
 					</div>
 					<div class="flex items-center">
-						@tmpl.PrintButton(btnStampaj, translator)
+						<a
+							id={ btnStampaj.Id }
+							href="#"
+							class={ btnStampaj.BtnClass }
+							onclick="handleNaloziStampaClick(event)"
+						>
+							@tmpl.Icon("stampa", common.ClassIcon)
+							{ translator.Button(btnStampaj.LabelText) }
+						</a>
 					</div>
 				</div>
 				@tmpl.Search_Part(tblHeader, searchControl)
@@ -319,9 +327,14 @@ templ NaloziStampanje(tabs domain.TabData, tblHeader, tblStavke domain.TableData
 			</div>
 		</div>
 	</div>
+	<!-- Hidden input: holds the ID of the currently selected header row for use by Štampa button -->
+	<input type="hidden" id="stampanje-selected-id" value=""/>
+	<!-- Dialog container for group print -->
+	<div id="dialog-nalog-stampa-grupe"></div>
 	@tmpl.ShowMessageScript()
 	@tmpl.ClearFieldErrorScript()
 	@HandleTableRowClickScript()
+	@HandleNaloziStampaClickScript()
 }
 
 templ NaloziStampanjeStavke(tblStavke domain.TableData, searchControlDetalji domain.InputControl, translator *i18n.Service) {
@@ -782,7 +795,7 @@ templ NaloziKopiranjeDialogDeo(dialog domain.Dialog, model domain.KopirajNalog, 
 												ClassInput: common.ClassInputTextEnabled + " w-full",
 											})
 										</div>
-										@tmpl.Button(btnPrikazi, translator)
+										@tmpl.Button(btnPrikazi)
 									</div>
 									<div class="flex-1 min-h-[16rem] overflow-x-auto overflow-y-auto">
 										@tmpl.Table(tblOriginal, translator)
@@ -1145,7 +1158,145 @@ templ HandleTableRowClickScript() {
 
 			document.addEventListener('htmx:afterSwap', window.handleNaloziStampanjeFirstRowAfterSwap);
 		}
+
+		// Capture selected header row ID into hidden input for single-nalog print
+		if (!window.naloziStampaRowIdListener) {
+			window.naloziStampaRowIdListener = true;
+			document.addEventListener('htmx:beforeRequest', function(evt) {
+				const el = evt.detail.elt;
+				if (el.tagName === 'TR' && el.closest('#nalozi-stampanje-table')) {
+					const hxGet = el.getAttribute('hx-get') || '';
+					const id = hxGet.split('/').pop();
+					const input = document.getElementById('stampanje-selected-id');
+					if (input && id) input.value = id;
+				}
+			});
+		}
 	</script>
+}
+
+templ HandleNaloziStampaClickScript() {
+	<script>
+		function handleNaloziStampaClick(event) {
+			event.preventDefault();
+			const sel = document.querySelector('input[name="tip-stampanja"]:checked');
+			const tipStampanja = sel ? sel.value : 'pojedinacni';
+			if (tipStampanja === 'pojedinacni') {
+				const idfnal = document.getElementById('stampanje-selected-id')?.value;
+				if (!idfnal) {
+					alert('Molimo izaberite nalog za štampu');
+					return;
+				}
+				window.open('/api/nalozi/stampanalog/' + idfnal, '_blank', 'noopener,noreferrer');
+			} else {
+				htmx.ajax('GET', '/api/nalozi/stampa/grupadialog', {target: '#dialog-nalog-stampa-grupe', swap: 'innerHTML'});
+			}
+		}
+	</script>
+}
+
+templ NaloziStampaGrupeDialog(dialog domain.Dialog, tipdokValues []domain.ComboItem, selectedTipdok string, btnClose, btnCancel domain.Button, translator *i18n.Service) {
+	<div id={ dialog.Id } class={ common.ClassMainDialogDiv }>
+		<div class="bg-white rounded-lg shadow-2xl relative animate-fade-in w-auto min-w-[480px]">
+			<!-- Title Bar -->
+			<div class="bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg">
+				<h2 class="text-lg font-semibold ml-4">{ translator.Title(dialog.Title) }</h2>
+				@tmpl.CloseButton(btnClose)
+			</div>
+			<!-- Content -->
+			<div class="p-3">
+				<fieldset class="border-2 border-blue-500 rounded-lg p-3">
+					<legend class="text-sm font-bold text-blue-700 px-1">{ translator.Text("Selekcija parametara za štampanje grupe naloga") }</legend>
+					<!-- Vrsta naloga -->
+					<div class="flex items-center gap-2 mb-3">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "tipdok",
+							LabelText:  translator.Label("Vrsta naloga"),
+							ClassLabel: common.ClassLabel + " w-28",
+						})
+						@tmpl.ComboBoxField(domain.ComboFieldConfig{
+							ID:            "tipdok",
+							Name:          "tipdok",
+							OptionValues:  tipdokValues,
+							SelectedValue: selectedTipdok,
+							ClassSelect:   common.ClassSelect + " w-full",
+						}, translator)
+					</div>
+					<!-- Od/Do broja naloga -->
+					<div class="flex items-center gap-2 mb-3">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "odbroja",
+							LabelText:  "Od broja naloga",
+							ClassLabel: common.ClassLabel + " w-28",
+						})
+						@tmpl.NumericInputField(domain.InputFieldConfig{
+							ID:            "odbroja",
+							Name:          "odbroja",
+							Value:         "0",
+							Disabled:      false,
+							ClassInput:    common.ClassInputNumericEnabled + " w-24",
+							DecimalPlaces: 0,
+						})
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "dobroja",
+							LabelText:  "Do broja naloga",
+							ClassLabel: common.ClassLabel + " w-28",
+						})
+						@tmpl.NumericInputField(domain.InputFieldConfig{
+							ID:            "dobroja",
+							Name:          "dobroja",
+							Value:         "999999",
+							Disabled:      false,
+							ClassInput:    common.ClassInputNumericEnabled + " w-24",
+							DecimalPlaces: 0,
+						})
+					</div>
+					<!-- Checkboxes -->
+					<div class="flex flex-col gap-2">
+						@tmpl.CheckboxField(domain.CheckboxFieldConfig{
+							ID:                "zbirniponalog",
+							Name:              "zbirniponalog",
+							LabelText:         "Prikaz zbirnog prometa po kontima za nalog",
+							IsChecked:         false,
+							ClassLabel:        common.ClassCheckboxLabel,
+							ClassCheckbox:     common.ClassCheckbox,
+							ClassCheckboxSpan: common.ClassCheckboxSpan,
+						}, translator)
+						@tmpl.CheckboxField(domain.CheckboxFieldConfig{
+							ID:                "zbirnipolisti",
+							Name:              "zbirnipolisti",
+							LabelText:         "Prikaz zbirnog prometa po kontima za listu",
+							IsChecked:         false,
+							ClassLabel:        common.ClassCheckboxLabel,
+							ClassCheckbox:     common.ClassCheckbox,
+							ClassCheckboxSpan: common.ClassCheckboxSpan,
+						}, translator)
+						@tmpl.CheckboxField(domain.CheckboxFieldConfig{
+							ID:                "novinalognovasrana",
+							Name:              "novinalognovasrana",
+							LabelText:         "Novi nalog nova strana",
+							IsChecked:         false,
+							ClassLabel:        common.ClassCheckboxLabel,
+							ClassCheckbox:     common.ClassCheckbox,
+							ClassCheckboxSpan: common.ClassCheckboxSpan,
+						}, translator)
+					</div>
+				</fieldset>
+			</div>
+			<!-- Buttons -->
+			<div class="px-3 py-3 flex justify-end space-x-1">
+				@tmpl.Search_PartPrintButton(domain.Button{
+					Id:            "btn-print-grupe",
+					LabelText:     translator.Button("Štampa"),
+					BtnClass:      common.ClassPrintButton,
+					HxActionURL:   "/api/nalozi/stampa/grupanalog",
+					DataFields:    "tipdok,odbroja,dobroja,zbirniponalog,zbirnipolisti,novinalognovasrana",
+				})
+				@tmpl.CancelButton(btnCancel, translator)
+			</div>
+		</div>
+	</div>
+	@tmpl.CloseDialogScript()
 }
 
 templ NaloziScript() {

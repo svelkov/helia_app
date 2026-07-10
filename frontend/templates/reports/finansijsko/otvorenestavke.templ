@@ -1,0 +1,463 @@
+package finansijsko
+
+import (
+	"fmt"
+	rep "helia/frontend/templates/reports"
+	"helia/i18n"
+	"helia/internal/domain"
+)
+
+// OtvoreneStavkePregledStampa renders a printable open items overview report, one page per partner.
+templ OtvoreneStavkePregledStampa(repParams domain.ReportParameters, tbl domain.TableData, tipStampe string, translator *i18n.Service) {
+	@rep.Report(repParams, tbl, translator, OtvoreneStavkePregledSummary(translator), OtvoreneStavkePregledReport(repParams, tbl, tipStampe, translator))
+}
+
+templ OtvoreneStavkePregledReport(repParams domain.ReportParameters, tbl domain.TableData, tipStampe string, translator *i18n.Service) {
+	@OtvoreneStavkeHeader(repParams, translator)
+	<!-- Report table -->
+	@rep.ReportTable(tbl, translator)
+	if tipStampe == "opomena" {
+		@OpomenePregledSummary(repParams, translator)
+	} else {
+		@OtvoreneStavkePregledSummary(translator)
+	}
+}
+
+templ OtvoreneStavkeHeader(repParams domain.ReportParameters, translator *i18n.Service) {
+	<!-- Header: two company boxes side by side -->
+	<div class="flex justify-between gap-4 mb-4 text-sm">
+		<!-- Left: creditor (our company) -->
+		<div class="border border-gray-400 p-2 flex-1">
+			<div class="font-bold text-sm">{ repParams.CompanyName }</div>
+			<div>{ repParams.Adress }</div>
+			<div>{ repParams.Postcode } { repParams.City }</div>
+			<div>Tekući račun: { repParams.TekRac }</div>
+			<div>{ translator.Label("Obveznik PDV br") }:</div>
+			<div>{ translator.Label("PIB") }: { repParams.PIB }</div>
+			<div>{ translator.Label("Telefon") }: { repParams.Telefon }</div>
+		</div>
+		<!-- Right: debtor (partner) -->
+		<div class="border border-gray-400 p-2 flex-1">
+			<div class="font-bold text-sm">{ repParams.ParameterItems["Naziv"].Value }</div>
+			<div>{ repParams.ParameterItems["Adresa"].Value }</div>
+			<div>{ repParams.ParameterItems["Postcode"].Value } { repParams.ParameterItems["Mesto"].Value }</div>
+			<div>{  repParams.ParameterItems["ObvPDV"].Name }: { repParams.ParameterItems["ObvPDV"].Value }</div>
+			<div>{ repParams.ParameterItems["PIB"].Name }: { repParams.ParameterItems["PIB"].Value }</div>
+			<div>{ repParams.ParameterItems["Telefon"].Name }: { repParams.ParameterItems["Telefon"].Value }</div>
+		</div>
+	</div>
+	<!-- Title -->
+	@rep.ReportTitle(repParams)
+	<!-- Subtitle -->
+	<div class="text-sm">
+		{ translator.Label("Vaš račun br") }: <span class="font-semibold">{ repParams.ParameterItems["Konto"].Value }</span>
+		&nbsp;&nbsp;<span class="font-semibold">{ repParams.ParameterItems["Sifra"].Value }</span>
+		&nbsp;&nbsp;{ translator.Label("Prema našim poslovnim knjigama na dan") }:
+		<span class="font-semibold">{ repParams.ParameterItems["Stanjenadan"].Value }</span>
+		{ translator.Label("pokazuje sledeće otvorene stavke") }:
+	</div>
+}
+
+// OtvoreneStavkePregledSummary renders the signature footer for the open items overview report.
+templ OtvoreneStavkePregledSummary(translator *i18n.Service) {
+	<div class="flex justify-between mt-16 text-[11px] print:text-[10pt]">
+		<!-- Left: Finance Manager -->
+		<div class="w-56 text-center">
+			<div class="font-bold mb-8">{ translator.Label("Sef finansija") }:</div>
+			<div class="border-t border-black pt-1"></div>
+		</div>
+		<!-- Right: Director -->
+		<div class="w-56 text-center">
+			<div class="font-bold mb-8">{ translator.Label("Direktor") }:</div>
+			<div class="border-t border-black pt-1"></div>
+		</div>
+	</div>
+}
+
+templ OpomenePregledSummary(repParams domain.ReportParameters, translator *i18n.Service) {
+	<div class="flex justify-between mt-16 text-[11px] print:text-[10pt]">
+		<div class="text-sm">
+			<div>
+				{ translator.Text("otvstavke_summary1") } Molimo Vas da gornji iznos uplatite u roku od sedam dana od prijema opomene na ovaj racun:
+				<span class="font-semibold">{ repParams.TekRac }</span>
+			</div>
+			<div>{ translator.Text("otvstavke_summary2") } jer cemo u protivnom biti prinuđeni da naplatu zahtevamo sudskim putem.</div>
+		</div>
+	</div>
+	<div class="flex justify-between mt-16 text-[11px] print:text-[10pt]">
+		<!-- Left: Finance Manager -->
+		<div class="w-56 text-center">
+			<div class="font-bold mb-8">{ translator.Label("Sef finansija") }:</div>
+			<div class="border-t border-black pt-1"></div>
+		</div>
+		<!-- Right: Director -->
+		<div class="w-56 text-center">
+			<div class="font-bold mb-8">{ translator.Label("Direktor") }:</div>
+			<div class="border-t border-black pt-1"></div>
+		</div>
+	</div>
+}
+
+// ZatvoreneStavkeStampa renders a printable closed items overview report grouped by partner.
+templ ZatvoreneStavkeStampa(reportParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
+	@rep.Report(reportParams, tbl, translator, nil, ZatvoreneStavkeReport(tbl, reportParams, translator))
+}
+
+templ ZatvoreneStavkeReport(tbl domain.TableData, reportParams domain.ReportParameters, translator *i18n.Service) {
+	@rep.ReportHeader(reportParams)
+	@rep.ReportTitle(reportParams)
+	@ZatvoreneStavkeReportHeader(reportParams, translator)
+	<!-- Report table -->
+	@rep.ReportTable(tbl, translator)
+	@rep.ReportEnd(nil)
+}
+
+templ ZatvoreneStavkeReportHeader(params domain.ReportParameters, translator *i18n.Service) {
+	<!-- Period from ParameterItems -->
+	<div class="text-center text-[11px] font-semibold mb-1">
+		{ translator.Label("U periodu od") }:
+		<span class="font-bold">{ params.ParameterItems["OdDatuma"].Value }</span>
+		&nbsp;{ translator.Label("do") }&nbsp;
+		<span class="font-bold">{ params.ParameterItems["DoDatuma"].Value }</span>
+	</div>
+	<div class="text-left text-[11px] font-semibold mb-3">
+		{ translator.Label("Partner") }:
+		<span class="font-bold">{ params.ParameterItems["Partner"].Value }</span>
+	</div>
+}
+
+// IOSStampa renders a printable IOS (Izvod otvorenih stavki) report for a selected partner.
+templ IOSStampa(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
+	@rep.Report(repParams, tbl, translator, IOSSummary(repParams, translator), IOSReport(repParams, tbl, translator))
+}
+
+templ IOSReport(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
+	@OtvoreneStavkeHeader(repParams, translator)
+	<!-- Report table -->
+	@rep.ReportTable(tbl, translator)
+	@IOSSummary(repParams, translator)
+	@rep.ReportEnd(nil)
+}
+
+templ IOSSummary(repParams domain.ReportParameters, translator *i18n.Service) {
+	<div class="mt-4 text-[11px] print:text-[11pt]">
+		<p>{ translator.Text("ios_opis") }</p>
+	</div>
+	<div class="flex justify-between mt-10 text-[11px] print:text-[11pt]">
+		<!-- Left: Pošiljalac izvoda -->
+		<div class="w-56 text-center">
+			<div class="font-bold mb-8">{ translator.Label("Pošiljalac izvoda") }</div>
+			<div class="border-t border-black pt-1"></div>
+			<div class="mt-8"></div>
+			<div class="border-t border-black pt-1"></div>
+			<div class="text-center font-semibold mt-1">M. P.</div>
+		</div>
+		<!-- Right: Potvrđujemo saglasnost -->
+		<div class="w-64 text-center">
+			<div class="font-bold mb-4">{ translator.Label("Potvrđujemo saglasnost") }:<br/>{ translator.Label("otvorenih stavki") }</div>
+			<div class="border-t border-black pt-1"></div>
+			<div class="mt-8"></div>
+			<div class="border-t border-black pt-1"></div>
+			<div class="text-center font-semibold mt-1">M. P.</div>
+		</div>
+	</div>
+	<div class="mt-6 text-[11px] print:text-[11pt]">
+		<div>({ translator.Label("Mesto i datum") })</div>
+		<div class="mt-4">
+			<div>{ translator.Label("Napomene") }:</div>
+			<div>A) { translator.Label("Nemamo knjiženo") }: ___________________________________________</div>
+			<div class="mt-2">B) { translator.Label("Nemate knjiženo") }: ___________________________________________</div>
+		</div>
+		<div class="mt-4">
+			<div>{ translator.Label("Tako da nas saldo kod VAS na dan") }: <span class="font-semibold">{ repParams.ParameterItems["Stanjenadan"].Value }</span></div>
+			<div>{ translator.Label("Iznosi") } ________________ { translator.Label("din u") } ________________ { translator.Label("korist") }.</div>
+		</div>
+	</div>
+}
+
+// DugovanjaObavezeStampa renders the print report for dospela potrazivanja grouped by partner.
+templ DugovanjaObavezeStampa(repParams domain.ReportParameters, partners []domain.DospelaPartnerReport, translator *i18n.Service) {
+	@rep.Report(repParams, domain.TableData{}, translator, nil, DugovanjaObavezeStampaContent(repParams, partners, translator))
+}
+
+templ DugovanjaObavezeStampaContent(repParams domain.ReportParameters, partners []domain.DospelaPartnerReport, translator *i18n.Service) {
+	@rep.ReportHeader(repParams)
+	@rep.ReportTitle(repParams)
+	<!-- Parameters -->
+	<div class="text-center text-[11px] font-semibold mb-1">
+		{ translator.Label("Stanje na dan") }: <span class="font-bold">{ repParams.ParameterItems["Stanjenadan"].Value }</span>
+		&nbsp;&nbsp;
+		{ repParams.ParameterItems["Brojdana"].Name }: <span class="font-bold">{ repParams.ParameterItems["Brojdana"].Value }</span>
+		&nbsp;{ translator.Label("Dana") }
+	</div>
+	if repParams.ParameterItems["TipPregleda"].Value == "S" {
+		<div class="text-center text-[11px] font-semibold mb-3">Sintetički prikaz</div>
+		<!-- Sinteticki flat table: one row per partner -->
+		<table class="w-full border-collapse report-table mt-2 print:w-full print:text-[11pt] print:table-auto print:border-collapse">
+			<thead>
+				<tr class="bg-blue-900 text-white print:bg-gray-200 print:text-black print:page-break-inside-auto">
+					<th class="border border-gray-300 px-1 text-center text-sm font-semibold print:bg-gray-200 print:text-black print:px-1 text-right">Red. br.</th>
+					<th class="border border-gray-300 px-1 text-center text-sm font-semibold print:bg-gray-200 print:text-black print:px-1">Konto</th>
+					<th class="border border-gray-300 px-1 text-center text-sm font-semibold print:bg-gray-200 print:text-black print:px-1">Sifra</th>
+					<th class="border border-gray-300 px-1 text-center text-sm font-semibold print:bg-gray-200 print:text-black print:px-1 text-left">Naziv</th>
+					<th class="border border-gray-300 px-1 text-center text-sm font-semibold print:bg-gray-200 print:text-black print:px-1 text-right">Dospelo dugovanje</th>
+					<th class="border border-gray-300 px-1 text-center text-sm font-semibold print:bg-gray-200 print:text-black print:px-1 text-right">Placeno</th>
+					<th class="border border-gray-300 px-1 text-center text-sm font-semibold print:bg-gray-200 print:text-black print:px-1 text-right">Saldo</th>
+				</tr>
+			</thead>
+			<tbody>
+				for i, partner := range partners {
+					<tr
+						class={ fmt.Sprintf("hover:bg-yellow-50 print:hover:bg-white print:page-break-inside-avoid %s", func() string {
+						if i%2 == 1 {
+							return "bg-gray-50 print:bg-gray-50"
+						}
+						return "bg-white print:bg-white"
+					}()) }
+					>
+						<td class="border border-gray-300 px-1 text-sm print:text-[11pt] print:px-1 print:break-words print:whitespace-normal text-right">{ fmt.Sprintf("%d", i+1) }</td>
+						<td class="border border-gray-300 px-1 text-sm print:text-[11pt] print:px-1 print:break-words print:whitespace-normal text-center">{ partner.Konto }</td>
+						<td class="border border-gray-300 px-1 text-sm print:text-[11pt] print:px-1 print:break-words print:whitespace-normal text-center">{ partner.Sifra }</td>
+						<td class="border border-gray-300 px-1 text-sm print:text-[11pt] print:px-1 print:break-words print:whitespace-normal text-left">{ partner.Naziv }</td>
+						<td class="border border-gray-300 px-1 text-sm print:text-[11pt] print:px-1 print:break-words print:whitespace-normal text-right">{ partner.TotalDug }</td>
+						<td class="border border-gray-300 px-1 text-sm print:text-[11pt] print:px-1 print:break-words print:whitespace-normal text-right">{ partner.TotalPot }</td>
+						<td class="border border-gray-300 px-1 text-sm print:text-[11pt] print:px-1 print:break-words print:whitespace-normal text-right">{ partner.TotalSaldo }</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	} else {
+		<div class="text-center text-[11px] font-semibold mb-3">Analitički prikaz</div>
+		<!-- Partner groups -->
+		for _, partner := range partners {
+			<div class="mb-4">
+				<!-- Partner header -->
+				<div class="text-sm font-bold mb-1">
+					{ translator.Label("Partner") }: { partner.Konto } &nbsp; { partner.Sifra } &nbsp; { partner.Naziv }
+				</div>
+				<!-- Detail table -->
+				<table class="w-full border-collapse report-table mt-2 print:w-full print:text-[11pt] print:table-auto print:border-collapse">
+					<thead>
+						<tr class="bg-blue-900 text-white print:bg-gray-200 print:text-black print:page-break-inside-auto">
+							<th class="border border-gray-300 px-1 text-center text-sm font-semibold print:bg-gray-200 print:text-black print:px-1 text-right">Red. br.</th>
+							<th class="border border-gray-300 px-1 text-center text-sm font-semibold print:bg-gray-200 print:text-black print:px-1">Broj naloga</th>
+							<th class="border border-gray-300 px-1 text-center text-sm font-semibold print:bg-gray-200 print:text-black print:px-1">Datum naloga</th>
+							<th class="border border-gray-300 px-1 text-center text-sm font-semibold print:bg-gray-200 print:text-black print:px-1">Tip Dok.</th>
+							<th class="border border-gray-300 px-1 text-center text-sm font-semibold print:bg-gray-200 print:text-black print:px-1">Broj dokum.</th>
+							<th class="border border-gray-300 px-1 text-center text-sm font-semibold print:bg-gray-200 print:text-black print:px-1">Datum dokum.</th>
+							<th class="border border-gray-300 px-1 text-center text-sm font-semibold print:bg-gray-200 print:text-black print:px-1">Rok</th>
+							<th class="border border-gray-300 px-1 text-center text-sm font-semibold print:bg-gray-200 print:text-black print:px-1">Datum dospeca</th>
+							<th class="border border-gray-300 px-1 text-center text-sm font-semibold print:bg-gray-200 print:text-black print:px-1 text-right">Dospelo dugovanje</th>
+							<th class="border border-gray-300 px-1 text-center text-sm font-semibold print:bg-gray-200 print:text-black print:px-1 text-right">Placeno</th>
+							<th class="border border-gray-300 px-1 text-center text-sm font-semibold print:bg-gray-200 print:text-black print:px-1 text-right">Saldo</th>
+						</tr>
+					</thead>
+					<tbody>
+						for i, item := range partner.Items {
+							<tr
+								class={ fmt.Sprintf("hover:bg-yellow-50 print:hover:bg-white print:page-break-inside-avoid %s", func() string {
+								if i%2 == 1 {
+									return "bg-gray-50 print:bg-gray-50"
+								}
+								return "bg-white print:bg-white"
+							}()) }
+							>
+								<td class="border border-gray-300 px-1 text-sm print:text-[11pt] print:px-1 print:break-words print:whitespace-normal text-right">{ item.RBr }</td>
+								<td class="border border-gray-300 px-1 text-sm print:text-[11pt] print:px-1 print:break-words print:whitespace-normal text-center">{ item.Nalog }</td>
+								<td class="border border-gray-300 px-1 text-sm print:text-[11pt] print:px-1 print:break-words print:whitespace-normal text-center">{ item.DatNalog }</td>
+								<td class="border border-gray-300 px-1 text-sm print:text-[11pt] print:px-1 print:break-words print:whitespace-normal text-center">{ item.TipDok }</td>
+								<td class="border border-gray-300 px-1 text-sm print:text-[11pt] print:px-1 print:break-words print:whitespace-normal text-center">{ item.BrDok }</td>
+								<td class="border border-gray-300 px-1 text-sm print:text-[11pt] print:px-1 print:break-words print:whitespace-normal text-center">{ item.DatDok }</td>
+								<td class="border border-gray-300 px-1 text-sm print:text-[11pt] print:px-1 print:break-words print:whitespace-normal text-center">{ item.Rok }</td>
+								<td class="border border-gray-300 px-1 text-sm print:text-[11pt] print:px-1 print:break-words print:whitespace-normal text-center">{ item.Dospece }</td>
+								<td class="border border-gray-300 px-1 text-sm print:text-[11pt] print:px-1 print:break-words print:whitespace-normal text-right">{ item.DospeliDug }</td>
+								<td class="border border-gray-300 px-1 text-sm print:text-[11pt] print:px-1 print:break-words print:whitespace-normal text-right">{ item.Placeno }</td>
+								<td class="border border-gray-300 px-1 text-sm print:text-[11pt] print:px-1 print:break-words print:whitespace-normal text-right">{ item.Saldo }</td>
+							</tr>
+						}
+					</tbody>
+					<tfoot>
+						<tr class="bg-blue-50 font-bold border-t-2 border-blue-900 print:bg-blue-50 print:page-break-inside-avoid">
+							<td colspan="8" class="border border-gray-300 px-1 text-sm print:text-[11pt] print:px-1 font-bold text-right">{ translator.Label("Ukupno") }:</td>
+							<td class="border border-gray-300 px-1 text-sm print:text-[11pt] print:px-1 font-bold text-right">{ partner.TotalDug }</td>
+							<td class="border border-gray-300 px-1 text-sm print:text-[11pt] print:px-1 font-bold text-right">{ partner.TotalPot }</td>
+							<td class="border border-gray-300 px-1 text-sm print:text-[11pt] print:px-1 font-bold text-right">{ partner.TotalSaldo }</td>
+						</tr>
+					</tfoot>
+				</table>
+			</div>
+		}
+	}
+	@rep.ReportEnd(nil)
+}
+
+// PotrazivanjaDugovanjaStampa renders the printable pregled potrazivanja/obaveze report grouped by partner.
+templ PotrazivanjaDugovanjaStampa(repParams domain.ReportParameters, partners []domain.PregledPotrazivanjaPartnerReport, translator *i18n.Service) {
+	@rep.Report(repParams, domain.TableData{}, translator, nil, PotrazivanjaDugovanjaContent(repParams, partners, translator))
+}
+
+templ PotrazivanjaDugovanjaContent(repParams domain.ReportParameters, partners []domain.PregledPotrazivanjaPartnerReport, translator *i18n.Service) {
+	@rep.ReportHeader(repParams)
+	@rep.ReportTitle(repParams)
+	<div class="text-center text-[11px] font-semibold mb-3">
+		{ repParams.ParameterItems["StanjeNaDan"].Name }: <span class="font-bold">{ repParams.ParameterItems["StanjeNaDan"].Value }</span>
+	</div>
+	if repParams.ParameterItems["StampajSamoZbir"].Value == "true" {
+		<!-- Zbir mode: single table, header shown once -->
+		<table class="w-full border-collapse report-table print:w-full print:text-[11pt] print:table-auto print:border-collapse">
+			<thead>
+				<tr class="bg-blue-900 text-white print:bg-gray-200 print:text-[11pt] print:text-black">
+					<th class="border border-gray-300 px-1 text-center text-xs font-semibold print:bg-gray-200 print:text-black">{ translator.Label("Konto") }</th>
+					<th class="border border-gray-300 px-1 text-center text-xs font-semibold print:bg-gray-200 print:text-black">{ translator.Label("Sifra") }</th>
+					<th class="border border-gray-300 px-1 text-left text-xs font-semibold print:bg-gray-200 print:text-black">{ translator.Label("Naziv Partnera") }</th>
+					<th class="border border-gray-300 px-1 text-center text-xs font-semibold print:bg-gray-200 print:text-black">{ translator.Label("Mesto") }</th>
+					<th class="border border-gray-300 px-1 text-right text-xs font-semibold print:bg-gray-200 print:text-black">{ translator.Label("Ukupna realizacija") }</th>
+					<th class="border border-gray-300 px-1 text-right text-xs font-semibold print:bg-gray-200 print:text-black">{ translator.Label("Placeno") }</th>
+					<th class="border border-gray-300 px-1 text-right text-xs font-semibold print:bg-gray-200 print:text-black">{ translator.Label("Ukupan DUG") }</th>
+					<th class="border border-gray-300 px-1 text-right text-xs font-semibold print:bg-gray-200 print:text-black">{ translator.Label("Dospeli DUG") }</th>
+					<th class="border border-gray-300 px-1 text-right text-xs font-semibold print:bg-gray-200 print:text-black">{ translator.Label("Dospeva za") } { repParams.ParameterItems["DLabel15"].Value }</th>
+					<th class="border border-gray-300 px-1 text-right text-xs font-semibold print:bg-gray-200 print:text-black">{ translator.Label("Dospeva za") } { repParams.ParameterItems["DLabel30"].Value }</th>
+					<th class="border border-gray-300 px-1 text-right text-xs font-semibold print:bg-gray-200 print:text-black">{ translator.Label("Dospeva za") } { repParams.ParameterItems["DLabel60"].Value }</th>
+					<th class="border border-gray-300 px-1 text-right text-xs font-semibold print:bg-gray-200 print:text-black">{ translator.Label("Dospeva za") } { repParams.ParameterItems["DLabel90"].Value }</th>
+					<th class="border border-gray-300 px-1 text-right text-xs font-semibold print:bg-gray-200 print:text-black">{ translator.Label("Dospeva za") } { repParams.ParameterItems["DLabel120"].Value }</th>
+					<th class="border border-gray-300 px-1 text-right text-xs font-semibold print:bg-gray-200 print:text-black">{ translator.Label("Dospeva za") } { repParams.ParameterItems["DLabel120Plus"].Value }</th>
+				</tr>
+			</thead>
+			<tbody>
+				for _, partner := range partners {
+					<tr class="font-bold text-xs print:text-[11pt] print:page-break-inside-avoid bg-white print:bg-white">
+						<td class="border border-gray-300 px-1 text-center">{ partner.Konto }</td>
+						<td class="border border-gray-300 px-1 text-center">{ partner.Sifra }</td>
+						<td class="border border-gray-300 px-1 text-left">{ partner.Naziv }</td>
+						<td class="border border-gray-300 px-1 text-center">{ partner.Mesto }</td>
+						<td class="border border-gray-300 px-1 text-right">{ partner.UkupnaRealizacija }</td>
+						<td class="border border-gray-300 px-1 text-right">{ partner.Placeno }</td>
+						<td class="border border-gray-300 px-1 text-right">{ partner.UkupanDug }</td>
+						<td class="border border-gray-300 px-1 text-right">{ partner.DospeliDug }</td>
+						<td class="border border-gray-300 px-1 text-right">{ partner.Dospece15 }</td>
+						<td class="border border-gray-300 px-1 text-right">{ partner.Dospece30 }</td>
+						<td class="border border-gray-300 px-1 text-right">{ partner.Dospece60 }</td>
+						<td class="border border-gray-300 px-1 text-right">{ partner.Dospece90 }</td>
+						<td class="border border-gray-300 px-1 text-right">{ partner.Dospece120 }</td>
+						<td class="border border-gray-300 px-1 text-right">{ partner.Dospece120Plus }</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	} else {
+		<!-- Detail mode: per-partner blocks, each on its own page from the 2nd onward -->
+		for i, partner := range partners {
+			<div
+				class={ fmt.Sprintf("mb-4 %s", func() string {
+				if i > 0 {
+					return "print:break-before-page"
+				}
+				return ""
+			}()) }
+			>
+				<!-- Partner summary row -->
+				<table class="w-full border-collapse report-table print:w-full print:text-[11pt] print:table-auto print:border-collapse">
+					<thead>
+						<tr class="bg-blue-900 text-white print:bg-gray-200 print:text-[11pt] print:text-black">
+							<th class="border border-gray-300 px-1 text-center text-xs font-semibold print:bg-gray-200 print:text-black">{ translator.Label("Konto") }</th>
+							<th class="border border-gray-300 px-1 text-center text-xs font-semibold print:bg-gray-200 print:text-black">{ translator.Label("Sifra") }</th>
+							<th class="border border-gray-300 px-1 text-left text-xs font-semibold print:bg-gray-200 print:text-black">{ translator.Label("Naziv Partnera") }</th>
+							<th class="border border-gray-300 px-1 text-center text-xs font-semibold print:bg-gray-200 print:text-black">{ translator.Label("Mesto") }</th>
+							<th class="border border-gray-300 px-1 text-right text-xs font-semibold print:bg-gray-200 print:text-black">{ translator.Label("Ukupna realizacija") }</th>
+							<th class="border border-gray-300 px-1 text-right text-xs font-semibold print:bg-gray-200 print:text-black">{ translator.Label("Placeno") }</th>
+							<th class="border border-gray-300 px-1 text-right text-xs font-semibold print:bg-gray-200 print:text-black">{ translator.Label("Ukupan DUG") }</th>
+							<th class="border border-gray-300 px-1 text-right text-xs font-semibold print:bg-gray-200 print:text-black">{ translator.Label("Dospeli DUG") }</th>
+							<th class="border border-gray-300 px-1 text-right text-xs font-semibold print:bg-gray-200 print:text-black">{ translator.Label("Dospeva za") } { repParams.ParameterItems["DLabel15"].Value }</th>
+							<th class="border border-gray-300 px-1 text-right text-xs font-semibold print:bg-gray-200 print:text-black">{ translator.Label("Dospeva za") } { repParams.ParameterItems["DLabel30"].Value }</th>
+							<th class="border border-gray-300 px-1 text-right text-xs font-semibold print:bg-gray-200 print:text-black">{ translator.Label("Dospeva za") } { repParams.ParameterItems["DLabel60"].Value }</th>
+							<th class="border border-gray-300 px-1 text-right text-xs font-semibold print:bg-gray-200 print:text-black">{ translator.Label("Dospeva za") } { repParams.ParameterItems["DLabel90"].Value }</th>
+							<th class="border border-gray-300 px-1 text-right text-xs font-semibold print:bg-gray-200 print:text-black">{ translator.Label("Dospeva za") } { repParams.ParameterItems["DLabel120"].Value }</th>
+							<th class="border border-gray-300 px-1 text-right text-xs font-semibold print:bg-gray-200 print:text-black">{ translator.Label("Dospeva za") } { repParams.ParameterItems["DLabel120Plus"].Value }</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr class="bg-blue-50 font-bold text-xs print:bg-blue-50 print:text-[11pt] print:page-break-inside-avoid">
+							<td class="border border-gray-300 px-1 text-center">{ partner.Konto }</td>
+							<td class="border border-gray-300 px-1 text-center">{ partner.Sifra }</td>
+							<td class="border border-gray-300 px-1 text-left">{ partner.Naziv }</td>
+							<td class="border border-gray-300 px-1 text-center">{ partner.Mesto }</td>
+							<td class="border border-gray-300 px-1 text-right">{ partner.UkupnaRealizacija }</td>
+							<td class="border border-gray-300 px-1 text-right">{ partner.Placeno }</td>
+							<td class="border border-gray-300 px-1 text-right">{ partner.UkupanDug }</td>
+							<td class="border border-gray-300 px-1 text-right">{ partner.DospeliDug }</td>
+							<td class="border border-gray-300 px-1 text-right">{ partner.Dospece15 }</td>
+							<td class="border border-gray-300 px-1 text-right">{ partner.Dospece30 }</td>
+							<td class="border border-gray-300 px-1 text-right">{ partner.Dospece60 }</td>
+							<td class="border border-gray-300 px-1 text-right">{ partner.Dospece90 }</td>
+							<td class="border border-gray-300 px-1 text-right">{ partner.Dospece120 }</td>
+							<td class="border border-gray-300 px-1 text-right">{ partner.Dospece120Plus }</td>
+						</tr>
+					</tbody>
+				</table>
+				<!-- Detail rows per document -->
+				if len(partner.Items) > 0 {
+					<table class="w-full border-collapse report-table mt-0 print:w-full print:text-[10pt] print:table-auto print:border-collapse">
+						<thead>
+							<tr class="bg-blue-900 text-white print:bg-gray-200 print:text-black">
+								<th class="border border-gray-300 px-1 text-center text-xs font-semibold print:bg-gray-200 print:text-black">{ translator.Label("Broj dokumenta") }</th>
+								<th class="border border-gray-300 px-1 text-center text-xs font-semibold print:bg-gray-200 print:text-black">{ translator.Label("Datum dokumenta") }</th>
+								<th class="border border-gray-300 px-1 text-center text-xs font-semibold print:bg-gray-200 print:text-black">{ translator.Label("Rok") }</th>
+								<th class="border border-gray-300 px-1 text-center text-xs font-semibold print:bg-gray-200 print:text-black">{ translator.Label("Datum dospeca") }</th>
+								<th class="border border-gray-300 px-1 text-center text-xs font-semibold print:bg-gray-200 print:text-black">{ translator.Label("Iznos Dokumenta") }</th>
+								<th class="border border-gray-300 px-1 text-center text-xs font-semibold print:bg-gray-200 print:text-black">{ translator.Label("Placeno") }</th>
+								<th class="border border-gray-300 px-1 text-center text-xs font-semibold print:bg-gray-200 print:text-black">{ translator.Label("Dospelo") }</th>
+								<th class="border border-gray-300 px-1 text-center text-xs font-semibold print:bg-gray-200 print:text-black">{ repParams.ParameterItems["DLabel15"].Value }</th>
+								<th class="border border-gray-300 px-1 text-center text-xs font-semibold print:bg-gray-200 print:text-black">{ repParams.ParameterItems["DLabel30"].Value }</th>
+								<th class="border border-gray-300 px-1 text-center text-xs font-semibold print:bg-gray-200 print:text-black">{ repParams.ParameterItems["DLabel60"].Value }</th>
+								<th class="border border-gray-300 px-1 text-center text-xs font-semibold print:bg-gray-200 print:text-black">{ repParams.ParameterItems["DLabel90"].Value }</th>
+								<th class="border border-gray-300 px-1 text-center text-xs font-semibold print:bg-gray-200 print:text-black">{ repParams.ParameterItems["DLabel120"].Value }</th>
+								<th class="border border-gray-300 px-1 text-center text-xs font-semibold print:bg-gray-200 print:text-black">{ repParams.ParameterItems["DLabel120Plus"].Value }</th>
+							</tr>
+						</thead>
+						<tbody>
+							for j, item := range partner.Items {
+								<tr
+									class={ fmt.Sprintf("print:page-break-inside-avoid %s", func() string {
+									if j%2 == 1 {
+										return "bg-gray-50 print:bg-gray-50"
+									}
+									return "bg-white print:bg-white"
+								}()) }
+								>
+									<td class="border border-gray-300 px-1 text-xs print:text-[10pt] text-left">{ item.BrDok }</td>
+									<td class="border border-gray-300 px-1 text-xs print:text-[10pt] text-center">{ item.DatDok }</td>
+									<td class="border border-gray-300 px-1 text-xs print:text-[10pt] text-center">{ item.Rok }</td>
+									<td class="border border-gray-300 px-1 text-xs print:text-[10pt] text-center">{ item.DatDospeca }</td>
+									<td class="border border-gray-300 px-1 text-xs print:text-[10pt] text-right">{ item.Iznos }</td>
+									<td class="border border-gray-300 px-1 text-xs print:text-[10pt] text-right">{ item.Placeno }</td>
+									<td class="border border-gray-300 px-1 text-xs print:text-[10pt] text-right">{ item.DospeliIznos }</td>
+									<td class="border border-gray-300 px-1 text-xs print:text-[10pt] text-right">{ item.Dospece15 }</td>
+									<td class="border border-gray-300 px-1 text-xs print:text-[10pt] text-right">{ item.Dospece30 }</td>
+									<td class="border border-gray-300 px-1 text-xs print:text-[10pt] text-right">{ item.Dospece60 }</td>
+									<td class="border border-gray-300 px-1 text-xs print:text-[10pt] text-right">{ item.Dospece90 }</td>
+									<td class="border border-gray-300 px-1 text-xs print:text-[10pt] text-right">{ item.Dospece120 }</td>
+									<td class="border border-gray-300 px-1 text-xs print:text-[10pt] text-right">{ item.Dospece120Plus }</td>
+								</tr>
+							}
+						</tbody>
+					</table>
+				}
+			</div>
+		}
+	}
+	@rep.ReportEnd(nil)
+}
+// DospelogDugaPoStarostiStampa renders the printable dospeli dug po starosti report grouped by partner.
+templ DospelogDugaPoStarostiStampa(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
+	@rep.Report(repParams, domain.TableData{}, translator, nil, DospelogDugaPoStarostiContent(repParams, tbl, translator))
+}
+
+templ DospelogDugaPoStarostiContent(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
+	@rep.ReportHeader(repParams)
+	@rep.ReportTitle(repParams)
+	<div class="text-center text-[11px] font-semibold mb-3">
+		{ repParams.ParameterItems["StanjeNaDan"].Name }: <span class="font-bold">{ repParams.ParameterItems["StanjeNaDan"].Value }</span>
+	</div>
+	@rep.ReportTable(tbl, translator)
+	@rep.ReportEnd(nil)
+}

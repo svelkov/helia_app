@@ -1,0 +1,89 @@
+package finansijsko
+
+import (
+	"fmt"
+	rep "helia/frontend/templates/reports"
+	"helia/i18n"
+	"helia/internal/domain"
+)
+
+// NalogStampa renders a printable full-page report for a single nalog,
+// reusing the shared report layout components.
+templ NalogStampa(tblStavke domain.TableData, tblKonta domain.TableData, params domain.ReportParameters, translator *i18n.Service) {
+	@rep.Report(params, tblStavke, translator, ReportSummary(params, tblKonta, translator), nil)
+}
+
+templ ReportSummary(params domain.ReportParameters, tblKonta domain.TableData, translator *i18n.Service) {
+	@rep.ReportHeader(params)
+	@rep.ReportTitle(params)
+	<div class="mt-2">
+		<h2 class="text-sm font-bold text-gray-700 mb-1">{ translator.Title("Promet po kontima za nalog") }</h2>
+		@rep.ReportTableSection(tblKonta, translator)
+	</div>
+	@rep.ReportEnd(nil)
+}
+
+// StampanjeGrupeNaloga renders the group nalozi print report.
+templ StampanjeGrupeNaloga(items []domain.NalogStampaItem, grandKontaSummary domain.TableData, params domain.ReportParameters, prikazPoNalogu, prikazPoListi, noviNalogNovaSrana bool, translator *i18n.Service) {
+	@rep.Report(params, domain.TableData{}, translator, nil, GrupeNaloziReport(items, grandKontaSummary, params, prikazPoNalogu, prikazPoListi, noviNalogNovaSrana, translator))
+}
+
+// GrupeNaloziReport is the custom report body for group nalozi printing.
+templ GrupeNaloziReport(items []domain.NalogStampaItem, grandKontaSummary domain.TableData, params domain.ReportParameters, prikazPoNalogu, prikazPoListi, noviNalogNovaSrana bool, translator *i18n.Service) {
+	if !noviNalogNovaSrana {
+		@rep.ReportHeader(params)
+		
+	}
+	for i, item := range items {
+		if noviNalogNovaSrana {
+			if i > 0 {
+				<div class="print:hidden -mx-8 h-8 bg-gray-200 border-y border-gray-300 my-4"></div>
+				<div class="hidden print:block" style="page-break-before: always;"></div>
+			}
+			@rep.ReportHeader(params)
+		
+		}
+		@NalogGrupaBlock(item, prikazPoNalogu, translator)
+	}
+	if prikazPoListi && len(grandKontaSummary.Rows) > 0 {
+		<div class="print:hidden -mx-8 h-8 bg-gray-200 border-y border-gray-300 my-4"></div>
+		<div class="hidden print:block" style="page-break-before: always;"></div>
+		@rep.ReportHeader(params)
+		<div class="mt-2">
+			<h2 class="text-sm font-bold text-gray-700 mb-1">{ translator.Title("Promet po kontima za listu") }</h2>
+			@rep.ReportTableSection(grandKontaSummary, translator)
+		</div>
+	}
+	@rep.ReportEnd(nil)
+}
+
+// NalogGrupaBlock renders a single nalog block: header bar, stavke table, and optional konta summary.
+templ NalogGrupaBlock(item domain.NalogStampaItem, showKontaSummary bool, translator *i18n.Service) {
+	<div class="mt-4 print:mt-3">
+		<div class="mb-1 text-center print:m-0 print:mb-1">
+			<h2 class="text-base font-bold text-gray-900 uppercase print:text-[11pt] print:leading-tight">
+				{ fmt.Sprintf("%s.: %s - %d", translator.Title("NALOG ZA KNJIZENJE BR"), item.Fnal.Tipdok, item.Fnal.Nalog) }
+			</h2>
+		</div>
+		<div class="mb-1 grid grid-cols-2 gap-1 print:gap-2 print:m-0 print:mb-2 print:pb-1 print:border-b print:border-gray-300">
+			<div class="flex gap-1 items-center text-sm text-gray-700 print:text-[9pt] print:leading-tight">
+				<span class="font-semibold">{ translator.Label("Datum naloga") }:</span>
+				<span class="font-bold">{ item.Fnal.Danal.Format("02.01.2006.") }</span>
+			</div>
+			if item.Fnal.Opis != "" {
+				<div class="flex gap-1 items-center text-sm text-gray-700 print:text-[9pt] print:leading-tight">
+					<span class="font-semibold">{ translator.Label("Opis") }:</span>
+					<span class="font-bold">{ item.Fnal.Opis }</span>
+				</div>
+			}
+		</div>
+		@rep.ReportTable(item.Stavke, translator)
+		if showKontaSummary && len(item.KontaSummary.Rows) > 0 {
+			<div class="mt-2">
+				<h3 class="text-sm font-bold text-gray-700 mb-1">{ translator.Title("Promet po kontima za nalog") }</h3>
+				@rep.ReportTableSection(item.KontaSummary, translator)
+			</div>
+		}
+	</div>
+}
+

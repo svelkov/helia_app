@@ -55,7 +55,7 @@ func DnevnikKnjizenja(tbl domain.TableData, searchControl domain.InputControl, b
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "lbloddatuma",
+			ID:         "oddatuma",
 			LabelText:  translator.Label("Počev od datuma"),
 			ClassLabel: common.ClassLabel,
 		}).Render(ctx, templ_7745c5c3_Buffer)
@@ -78,7 +78,7 @@ func DnevnikKnjizenja(tbl domain.TableData, searchControl domain.InputControl, b
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
-			ID:         "lbldodatuma",
+			ID:         "dodatuma",
 			LabelText:  translator.Label("Zaključno sa datumom"),
 			ClassLabel: common.ClassLabel,
 		}).Render(ctx, templ_7745c5c3_Buffer)
@@ -104,7 +104,7 @@ func DnevnikKnjizenja(tbl domain.TableData, searchControl domain.InputControl, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.PrintButton(btnPrint, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.Search_PartPrintButton(btnPrint).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -133,6 +133,14 @@ func DnevnikKnjizenja(tbl domain.TableData, searchControl domain.InputControl, b
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.SpinnerScript().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.OpenPrintWithParamsScript().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.HandleBackendResponseScript().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

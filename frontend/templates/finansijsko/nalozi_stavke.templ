@@ -290,6 +290,76 @@ templ NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableDat
 											OptionValues: fproDto.CbxKomercijalista,
 										}, translator)
 									</div>
+									<div class="flex items-center gap-1">
+										@tmpl.LabelField(domain.LabelFieldConfig{
+											ID:         "oris_sifprog",
+											LabelText:  translator.Label("Program"),
+											ClassLabel: common.ClassLabel + " w-28",
+										})
+										@tmpl.TextInputField(domain.InputFieldConfig{
+											ID:           "oris_sifprog",
+											Name:         "oris_sifprog",
+											FieldType:    "text",
+											Disabled:     false,
+											ClassInput:   common.ClassInputTextEnabled + " w-16",
+											MinLength:    "0",
+											MaxLength:    "4",
+											TabIndex:     "8",
+											OnInput:      "clearFieldError",
+											OnFocus:      "clearFieldError",
+										})
+										@tmpl.LabelField(domain.LabelFieldConfig{
+											ID:         "oris_sifproj",
+											LabelText:  translator.Label("Projekat"),
+											ClassLabel: common.ClassLabel + " w-20",
+										})
+										@tmpl.TextInputField(domain.InputFieldConfig{
+											ID:           "oris_sifproj",
+											Name:         "oris_sifproj",
+											FieldType:    "text",
+											Disabled:     false,
+											ClassInput:   common.ClassInputTextEnabled + " w-16",
+											MinLength:    "0",
+											MaxLength:    "4",
+											TabIndex:     "8",
+											OnInput:      "clearFieldError",
+											OnFocus:      "clearFieldError",
+										})
+										@tmpl.LabelField(domain.LabelFieldConfig{
+											ID:         "oris_sifizvfin",
+											LabelText:  translator.Label("Oris Izv. Fin"),
+											ClassLabel: common.ClassLabel + " w-20",
+										})
+										@tmpl.TextInputField(domain.InputFieldConfig{
+											ID:           "oris_sifizvfin",
+											Name:         "oris_sifizvfin",
+											FieldType:    "text",
+											Disabled:     false,
+											ClassInput:   common.ClassInputTextEnabled + " w-16",
+											MinLength:    "0",
+											MaxLength:    "2",
+											TabIndex:     "8",
+											OnInput:      "clearFieldError",
+											OnFocus:      "clearFieldError",
+										})
+										@tmpl.LabelField(domain.LabelFieldConfig{
+											ID:         "oris_sifunkla",
+											LabelText:  translator.Label("Funkcionalna klasifikacija"),
+											ClassLabel: common.ClassLabel + " w-32",
+										})
+										@tmpl.TextInputField(domain.InputFieldConfig{
+											ID:           "oris_sifunkla",
+											Name:         "oris_sifunkla",
+											FieldType:    "text",
+											Disabled:     false,
+											ClassInput:   common.ClassInputTextEnabled + " w-full",
+											MinLength:    "0",
+											MaxLength:    "2",
+											TabIndex:     "8",
+											OnInput:      "clearFieldError",
+											OnFocus:      "clearFieldError",
+										})
+									</div>
 									<!-- Amount Section -->
 									<div class="flex flex-col gap-2 mb-4">
 										<div class="flex items-start justify-center">
@@ -302,7 +372,6 @@ templ NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableDat
 													Name:          "duguje",
 													Disabled:      false,
 													ClassInput:    common.ClassInputTextEnabled + " w-44 text-right",
-													Value:         "0,00",
 													DecimalPlaces: 2,
 													MinLength:     "0",
 													MaxLength:     "18",
@@ -324,10 +393,10 @@ templ NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableDat
 													Name:          "potrazuje",
 													Disabled:      false,
 													ClassInput:    common.ClassInputTextEnabled + " w-44 text-right",
-													Value:         "0,00",
 													DecimalPlaces: 2,
 													MinLength:     "0",
 													MaxLength:     "18",
+													FieldType:     "text",
 													TabIndex:      "9",
 													OnInput:       "clearFieldError",
 													OnFocus:       "clearFieldError",
@@ -336,11 +405,11 @@ templ NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableDat
 										</div>
 									</div>
 									<!-- Action Buttons -->
-									<div class="flex justify-end gap-1 mt-auto pt-4">
+									<div class="flex justify-end gap-1 mt-auto pt-1">
 										@tmpl.SaveButton(btnSave, translator)
-										@tmpl.Button(btnCancel, translator)
-										@tmpl.PrintButton(btnPrint, translator)
-										@tmpl.Button(btnNazad, translator)
+										@tmpl.Button(btnCancel)
+										@tmpl.Search_PartPrintButton(btnPrint)
+										@tmpl.Button(btnNazad)
 									</div>
 									<!-- Message Display Area at Bottom -->
 									<div id="dialog-form-message" class="hidden w-full whitespace-normal break-words" hx-on:fpro:changed="this.classList.add('hidden'); this.textContent=''"></div>
@@ -355,13 +424,16 @@ templ NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableDat
 												ClassLabel: common.ClassLabel + " w-40 whitespace-nowrap",
 											})
 											@tmpl.ComboBoxField(domain.ComboFieldConfig{
-												ID:           "idorgjed",
-												Name:         "idorgjed",
-												Placeholder:  translator.Placeholder("izaberite organizacionu jedinicu"),
-												Disabled:     false,
-												ClassSelect:  common.ClassInputTextEnabled + " w-full",
-												TabIndex:     "10",
-												OptionValues: fproDto.CbxOrgjed,
+												ID:             "idorgjed",
+												Name:           "idorgjed",
+												Placeholder:    translator.Placeholder("izaberite organizacionu jedinicu"),
+												Disabled:       false,
+												ClassSelect:    common.ClassInputTextEnabled + " w-full",
+												TabIndex:       "10",
+												OptionValues:   fproDto.CbxOrgjed,
+												ChangeEndpoint:  "/api/mestotroska",
+												HxChangeTarget:  "mestotrid",
+												HxSwap:          "outerHTML",
 											}, translator)
 										</div>
 										<div class="flex items-center gap-2">
@@ -545,7 +617,7 @@ templ NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableDat
 												OptionValues: fproDto.CbxValute,
 											}, translator)
 										</div>
-										<div class="flex items-center gap-4 mb-1">
+										<div class="flex items-center gap-4 mb-5">
 											<div class="flex items-center gap-2 flex-1 min-w-0">
 												@tmpl.LabelField(domain.LabelFieldConfig{
 													ID:         "kurs",
@@ -618,70 +690,73 @@ templ NalogKnjizenjeStavke(fproDto domain.FproPayload, tblStavke domain.TableDat
 	@tmpl.HandleFormResponseScript()
 	@tmpl.PopulateFproUpdateFormScript()
 	@tmpl.ClearFormScript()
+	@tmpl.OpenPrintWithParamsScript()
 }
 
 templ NalogTotalValues(nalogTotal domain.NalogTotalValues, translator *i18n.Service) {
-	<fieldset class="bg-blue-200 border border-blue-400 col-span-1 p-1">
-		<legend class="px-1 text-blue-800 font-bold text-xs leading-none">{ translator.Text("Stanje naloga") }</legend>
-		<div
-			id="nalogtotalvalues"
-			hx-get={ nalogTotal.HxGetURL }
-			hx-trigger="fpro:changed from:body"
-			hx-target="#nalogtotalvalues"
-			hx-swap="outerHTML"
-			class="flex flex-col gap-1"
-		>
-			<div class="grid grid-cols-2 gap-2 items-center">
-				<div class="flex items-center gap-1">
-					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "nalduguje",
-						LabelText:  translator.Label("Duguje"),
-						ClassLabel: common.ClassLabel + " text-blue-800 font-bold text-xs w-24",
-					})
-					@tmpl.NumericInputField(domain.InputFieldConfig{
-						ID:            "nalduguje",
-						Disabled:      true,
-						ClassInput:    common.ClassInputNumericDisabled + " text-blue-800 font-bold text-sm w-full",
-						Value:         common.FormatNumberWithSystemLocale(nalogTotal.Duguje, 2),
-						DecimalPlaces: 2,
-						MaxLength:     "18",
-						TabIndex:      "-1"})
+	<div id="nalogtotalvalues">
+		<fieldset class="bg-blue-200 border border-blue-400 col-span-1 p-1">
+			<legend class="px-1 text-blue-800 font-bold text-xs leading-none">{ translator.Text("Stanje naloga") }</legend>
+			<div
+				id="nalog-total-values"
+				hx-get={ nalogTotal.HxGetURL }
+				hx-trigger="fpro:changed from:body"
+				hx-target="#nalogtotalvalues"
+				hx-swap="innerHTML"
+				class="flex flex-col gap-1"
+			>
+				<div class="grid grid-cols-2 gap-2 items-center">
+					<div class="flex items-center gap-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "nalduguje",
+							LabelText:  translator.Label("Duguje"),
+							ClassLabel: common.ClassLabel + " text-blue-800 font-bold text-xs w-24",
+						})
+						@tmpl.NumericInputField(domain.InputFieldConfig{
+							ID:            "nalduguje",
+							Disabled:      true,
+							ClassInput:    common.ClassInputNumericDisabled + " text-blue-800 font-bold text-sm w-full",
+							Value:         common.FormatNumberWithSystemLocale(nalogTotal.Duguje, 2),
+							DecimalPlaces: 2,
+							MaxLength:     "18",
+							TabIndex:      "-1"})
+					</div>
+					<div class="flex items-center gap-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "nalpotrazuje",
+							LabelText:  translator.Label("Potrazuje"),
+							ClassLabel: common.ClassLabel + " text-blue-800 font-bold text-xs w-24",
+						})
+						@tmpl.NumericInputField(domain.InputFieldConfig{
+							ID:            "nalpotrazuje",
+							Name:          "nalpotrazuje",
+							Disabled:      true,
+							ClassInput:    common.ClassInputNumericDisabled + " text-blue-800 font-bold text-sm w-full",
+							Value:         common.FormatNumberWithSystemLocale(nalogTotal.Potrazuje, 2),
+							DecimalPlaces: 2,
+							MaxLength:     "18",
+							TabIndex:      "-1"})
+					</div>
 				</div>
-				<div class="flex items-center gap-1">
-					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "nalpotrazuje",
-						LabelText:  translator.Label("Potrazuje"),
-						ClassLabel: common.ClassLabel + " text-blue-800 font-bold text-xs w-24",
-					})
-					@tmpl.NumericInputField(domain.InputFieldConfig{
-						ID:            "nalpotrazuje",
-						Name:          "nalpotrazuje",
-						Disabled:      true,
-						ClassInput:    common.ClassInputNumericDisabled + " text-blue-800 font-bold text-sm w-full",
-						Value:         common.FormatNumberWithSystemLocale(nalogTotal.Potrazuje, 2),
-						DecimalPlaces: 2,
-						MaxLength:     "18",
-						TabIndex:      "-1"})
+				<div class="grid grid-cols-2 gap-2 items-center">
+					<div></div>
+					<div class="flex items-center gap-1">
+						@tmpl.LabelField(domain.LabelFieldConfig{
+							ID:         "nalsaldo",
+							LabelText:  translator.Label("Saldo"),
+							ClassLabel: common.ClassLabel + " text-blue-800 font-bold text-xs w-24",
+						})
+						@tmpl.NumericInputField(domain.InputFieldConfig{
+							ID:            "nalsaldo",
+							Disabled:      true,
+							ClassInput:    common.ClassInputNumericDisabled + " text-blue-800 font-bold text-sm w-full",
+							Value:         common.FormatNumberWithSystemLocale(nalogTotal.Duguje-nalogTotal.Potrazuje, 2),
+							DecimalPlaces: 2,
+							MaxLength:     "18",
+							TabIndex:      "6"})
+					</div>
 				</div>
 			</div>
-			<div class="grid grid-cols-2 gap-2 items-center">
-				<div></div>
-				<div class="flex items-center gap-1">
-					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "nalsaldo",
-						LabelText:  translator.Label("Saldo"),
-						ClassLabel: common.ClassLabel + " text-blue-800 font-bold text-xs w-24",
-					})
-					@tmpl.NumericInputField(domain.InputFieldConfig{
-						ID:            "nalsaldo",
-						Disabled:      true,
-						ClassInput:    common.ClassInputNumericDisabled + " text-blue-800 font-bold text-sm w-full",
-						Value:         common.FormatNumberWithSystemLocale(nalogTotal.Duguje-nalogTotal.Potrazuje, 2),
-						DecimalPlaces: 2,
-						MaxLength:     "18",
-						TabIndex:      "6"})
-				</div>
-			</div>
-		</div>
-	</fieldset>
+		</fieldset>
+	</div>
 }

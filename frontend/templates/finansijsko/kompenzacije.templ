@@ -30,11 +30,10 @@ templ KompenzacijePregledPartnera(tabs domain.TabData, tbl domain.TableData, sea
 		<!-- Tab Content -->
 		<div id="tab1" class="flex-1 min-h-0 flex flex-col gap-1 pt-1">
 			<!-- Action buttons -->
-			<div class="flex gap-1 justify-end">
+			<div class="flex gap-1 p-1 justify-end">
 				@tmpl.FormObradaButton(btnObrada, translator)
-				@tmpl.PrintButton(btnPrint, translator)
 			</div>
-			<div class="border bg-blue-100 border border-blue-400 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative">
+			<div class="border bg-blue-100 p-1 border border-blue-400 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative">
 				@tmpl.LoadingSpinner()
 				@tmpl.Search_Part(tbl, searchControl)
 				<div class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
@@ -67,7 +66,7 @@ templ KompenzacijeFormiranje(tabs domain.TabData, duznikData, poverilacData doma
 					<!-- Konto Field -->
 					<div class="flex items-center gap-1 mb-1">
 						@tmpl.LabelField(domain.LabelFieldConfig{
-							ID:         "lblkonto_duznika",
+							ID:         "konto_duznika",
 							LabelText:  translator.Label("Konto"),
 							ClassLabel: common.ClassLabel + " w-24",
 						})
@@ -106,7 +105,7 @@ templ KompenzacijeFormiranje(tabs domain.TabData, duznikData, poverilacData doma
 					<!-- Sifra Field -->
 					<div class="flex items-center gap-1 mb-1">
 						@tmpl.LabelField(domain.LabelFieldConfig{
-							ID:         "lblsifra_duznika",
+							ID:         "sifra_duznika",
 							LabelText:  translator.Label("Šifra"),
 							ClassLabel: common.ClassLabel + " w-24",
 						})
@@ -150,7 +149,7 @@ templ KompenzacijeFormiranje(tabs domain.TabData, duznikData, poverilacData doma
 					<!-- Konto Field -->
 					<div class="flex items-center gap-1 mb-1">
 						@tmpl.LabelField(domain.LabelFieldConfig{
-							ID:         "lblkonto_poverioca",
+							ID:         "konto_poverioca",
 							LabelText:  translator.Label("Konto"),
 							ClassLabel: common.ClassLabel + " w-24",
 						})
@@ -189,7 +188,7 @@ templ KompenzacijeFormiranje(tabs domain.TabData, duznikData, poverilacData doma
 					<!-- Sifra Field -->
 					<div class="flex items-center gap-1 mb-1">
 						@tmpl.LabelField(domain.LabelFieldConfig{
-							ID:         "lblsifra_poverioca",
+							ID:         "sifra_poverioca",
 							LabelText:  translator.Label("Šifra"),
 							ClassLabel: common.ClassLabel + " w-24",
 						})
@@ -237,7 +236,7 @@ templ KompenzacijeFormiranje(tabs domain.TabData, duznikData, poverilacData doma
 					<div class="flex items-center gap-2 mb-1">
 						<div class="flex items-center gap-1">
 							@tmpl.LabelField(domain.LabelFieldConfig{
-								ID:         "lblstanje_na_dan",
+								ID:         "stanje_na_dan",
 								LabelText:  translator.Label("Stanje na dan"),
 								ClassLabel: common.ClassLabel + " w-32",
 							})
@@ -260,7 +259,7 @@ templ KompenzacijeFormiranje(tabs domain.TabData, duznikData, poverilacData doma
 					<!-- Datum kompenzacije -->
 					<div class="flex items-center gap-1 mb-2">
 						@tmpl.LabelField(domain.LabelFieldConfig{
-							ID:         "lbldatum_kompenzacije",
+							ID:         "datum_kompenzacije",
 							LabelText:  translator.Label("Datum kompenzacije"),
 							ClassLabel: common.ClassLabel + " w-32",
 						})
@@ -522,8 +521,8 @@ templ KompenzacijeKnjizenje(tabs domain.TabData, tbl domain.TableData, dokumenta
 					<div class="flex items-center gap-1 mb-1">
 						@tmpl.LabelField(domain.LabelFieldConfig{
 							ID:         "od-datuma-kompenz",
-							LabelText:  translator.Label("Od datuma kompenz."),
-							ClassLabel: common.ClassLabel + " w-32",
+							LabelText:  translator.Label("Od datuma kompenzacije"),
+							ClassLabel: common.ClassLabel + " w-48",
 						})
 						@tmpl.TextInputField(domain.InputFieldConfig{
 							ID:         "od-datuma-kompenz",
@@ -538,8 +537,8 @@ templ KompenzacijeKnjizenje(tabs domain.TabData, tbl domain.TableData, dokumenta
 					<div class="flex items-center gap-1 mb-1">
 						@tmpl.LabelField(domain.LabelFieldConfig{
 							ID:         "do-datuma-kompenz",
-							LabelText:  translator.Label("Do datuma kompenz."),
-							ClassLabel: common.ClassLabel + " w-32",
+							LabelText:  translator.Label("Do datuma kompenzacije"),
+							ClassLabel: common.ClassLabel + " w-48",
 						})
 						@tmpl.TextInputField(domain.InputFieldConfig{
 							ID:         "do-datuma-kompenz",
@@ -554,8 +553,8 @@ templ KompenzacijeKnjizenje(tabs domain.TabData, tbl domain.TableData, dokumenta
 					<div class="flex items-center gap-1 mb-1">
 						@tmpl.LabelField(domain.LabelFieldConfig{
 							ID:         "od-broja-komp",
-							LabelText:  translator.Label("Od broja komp."),
-							ClassLabel: common.ClassLabel + " w-32",
+							LabelText:  translator.Label("Od broja kompenzacije"),
+							ClassLabel: common.ClassLabel + " w-48",
 						})
 						@tmpl.TextInputField(domain.InputFieldConfig{
 							ID:         "od-broja-komp",
@@ -570,8 +569,8 @@ templ KompenzacijeKnjizenje(tabs domain.TabData, tbl domain.TableData, dokumenta
 					<div class="flex items-center gap-1 mb-1">
 						@tmpl.LabelField(domain.LabelFieldConfig{
 							ID:         "do-broja-komp",
-							LabelText:  translator.Label("Do broja komp."),
-							ClassLabel: common.ClassLabel + " w-32",
+							LabelText:  translator.Label("Do broja kompenzacije"),
+							ClassLabel: common.ClassLabel + " w-48",
 						})
 						@tmpl.TextInputField(domain.InputFieldConfig{
 							ID:         "do-broja-komp",

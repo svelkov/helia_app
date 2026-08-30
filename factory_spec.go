@@ -1,6 +1,8 @@
 package main
 
 import (
+	"helia/internal/validation/robno"
+
 	"context"
 	"encoding/json"
 	"fmt"
@@ -26,12 +28,15 @@ import (
 	"helia/internal/domain"
 	"helia/internal/handler"
 	fin "helia/internal/handler/finansijsko"
+	"helia/internal/handler/kamate"
 	oshandler "helia/internal/handler/os"
+	robnohand "helia/internal/handler/robno"
 	"helia/internal/infrastructure/db"
 	"helia/internal/middleware"
 	"helia/internal/repository"
 	"helia/internal/service"
 	finservice "helia/internal/service/finansijsko"
+	robnosvc "helia/internal/service/robno"
 	"helia/internal/validation"
 	finval "helia/internal/validation/finansijsko"
 	osval "helia/internal/validation/os"
@@ -516,7 +521,68 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 		cfg,
 		lm,
 	)
+	// ROBNO
+	// Rgru
+	registerGenericEntity[domain.Rgru](
+		r, db, "rgru",
+		robno.RgruValidationRules(),
+		handler.SetRgruFields(),
+		domain.HandlerConfig{
+			ContentTitle: "ROBNE GRUPE",
+			TableID:      "rgru-table",
+			APIPrefix:    "/api/rgru",
+			IDField:      common.IDrgru,
+		},
+		cfg,
+		lm,
+	)
 
+	// Rpgru
+	registerGenericEntity[domain.Rpgru](
+		r, db, "rpgru",
+		robno.RpgruValidationRules(),
+		handler.SetRpgruFields(),
+		domain.HandlerConfig{
+			ContentTitle: "ROBNE PODGRUPE",
+			TableID:      "rpgru-table",
+			APIPrefix:    "/api/rpgru",
+			IDField:      common.IDrpgru,
+		},
+		cfg,
+		lm,
+	)
+
+	// Jedmere
+	registerGenericEntity[domain.Jedmere](
+		r, db, "jedmere",
+		robno.JedmereValidationRules(),
+		handler.SetJedmereFields(),
+		domain.HandlerConfig{
+			ContentTitle: "JEDINICE MERE",
+			TableID:      "jedmere-table",
+			APIPrefix:    "/api/jedmere",
+			IDField:      common.IDjedmere,
+		},
+		cfg,
+		lm,
+	)
+
+	// Rpor
+	registerGenericEntity[domain.Rpor](
+		r, db, "rpor",
+		robno.RporValidationRules(),
+		handler.SetRporFields(),
+		domain.HandlerConfig{
+			ContentTitle: "SIFARNIK PORESKIH STOPA",
+			TableID:      "rpor-table",
+			APIPrefix:    "/api/rpor",
+			IDField:      common.IDrpor,
+		},
+		cfg,
+		lm,
+	)
+
+	// OSNOVNA SREDSTVA
 	// Oamgrp
 	registerGenericEntity[domain.Oamgrp](
 		r, db, "oamgrp",
@@ -533,6 +599,39 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 	)
 
 	fvrRepo := repository.NewBaseRepository[domain.Fvr](db, "fvr")
+
+	// MAGACINI
+	magaciniRepo := repository.NewBaseRepository[domain.Magacini](db, "magacini")
+	magaciniValidator := validation.NewRuleBasedValidator[domain.Magacini]([]validation.ValidationRule{})
+	magaciniBaseService := service.NewBaseService(*magaciniRepo, magaciniValidator)
+	magaciniService := robnosvc.NewMagaciniResource(magaciniBaseService, magaciniRepo, fvrRepo, cfg)
+	magaciniHandler := robnohand.NewMagaciniHandler(magaciniBaseService, magaciniService, cfg, lm)
+	magaciniHandler.AddRoutes(r)
+
+	// MAGACIN KONTO
+	magacinKontoRepo := repository.NewBaseRepository[domain.Magkonto](db, "magkonto")
+	magacinKontoValidator := validation.NewRuleBasedValidator[domain.Magkonto]([]validation.ValidationRule{})
+	magacinKontoBaseService := service.NewBaseService(*magacinKontoRepo, magacinKontoValidator)
+	magacinKontoService := robnosvc.NewMagacinKontoResource(magacinKontoBaseService, magacinKontoRepo, fvrRepo, cfg)
+	magacinKontoHandler := robnohand.NewMagacinKontoHandler(magacinKontoBaseService, magacinKontoService, cfg, lm)
+	magacinKontoHandler.AddRoutes(r)
+
+	// KOMERCIJALISTI
+	komercijalistiRepo := repository.NewBaseRepository[domain.Komercijalisti](db, "komercijalisti")
+	komercijalistiValidator := validation.NewRuleBasedValidator[domain.Komercijalisti]([]validation.ValidationRule{})
+	komercijalistiBaseService := service.NewBaseService(*komercijalistiRepo, komercijalistiValidator)
+	komercijalistiService := robnosvc.NewKomercijalistiResource(komercijalistiBaseService, komercijalistiRepo, fvrRepo, cfg)
+	komercijalistiHandler := robnohand.NewKomercijalistiHandler(komercijalistiBaseService, komercijalistiService, cfg, lm)
+	komercijalistiHandler.AddRoutes(r)
+
+	// ARTIKLI
+	artikliRepo := repository.NewBaseRepository[domain.Rsif](db, "rsif")
+	artikliValidator := validation.NewRuleBasedValidator[domain.Rsif]([]validation.ValidationRule{})
+	artikliBaseService := service.NewBaseService(*artikliRepo, artikliValidator)
+	artikliService := robnosvc.NewArtikliResource(artikliBaseService, artikliRepo, fvrRepo, cfg)
+	artikliHandler := robnohand.NewArtikliHandler(artikliBaseService, artikliService, cfg, lm)
+	artikliHandler.AddRoutes(r)
+
 	// Complex entities with custom services (non-generic)
 	//partneri
 	tekracuniRepo := repository.NewBaseRepository[domain.TekRacuni](db, "tekracuni")
@@ -540,14 +639,14 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 	tipAnalitikeRepo := repository.NewBaseRepository[domain.Tipanalitike](db, "tipanalitike")
 	partneriValidator := validation.NewRuleBasedValidator[domain.Partneri](validation.PartneriValidationRules())
 	partnerBaseService := service.NewBaseService(*partneriRepo, partneriValidator)
-	partneriService := service.NewPartneriService(partnerBaseService, partneriValidator, partneriRepo, tekracuniRepo, tipAnalitikeRepo)
+	partneriService := service.NewPartneriService(partnerBaseService, partneriValidator, partneriRepo, tekracuniRepo, tipAnalitikeRepo, fvrRepo)
 	partneriHandler := handler.NewPartneriHandler(partneriService, cfg, lm)
 	partneriHandler.AddRoutes(r)
 	// Fkpl
 	fkplRepo := repository.NewBaseRepository[domain.Fkpl](db, "fkpl")
 	fkplValidator := validation.NewRuleBasedValidator[domain.Fkpl](finval.FkplValidationRules())
 	baseService := service.NewBaseService(*fkplRepo, fkplValidator)
-	fkplService := finservice.NewFkplResource(baseService, fkplRepo, fvrRepo, tipAnalitikeRepo, cfg)
+	fkplService := finservice.NewFkplResource(baseService, fkplRepo, fvrRepo, tipAnalitikeRepo, partneriRepo, cfg)
 	fkplHandler := fin.NewFkplHandler(baseService, fkplService, cfg, lm)
 	fkplHandler.AddRoutes(r)
 
@@ -618,6 +717,23 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 	prometHandler := fin.NewPrometHandler(prometService, cfg)
 	prometHandler.AddRoutes(r)
 
+	// Robno kartica artikla
+	robnoKarticaRepo := repository.NewBaseRepository[domain.RobnoStanjeDto](db, "robnostanjedto")
+	robnoKarticaService := robnosvc.NewRobnoKarticaService(robnoKarticaRepo)
+	robnoKarticaHandler := robnohand.NewRobnoKarticaHandler(robnoKarticaService, cfg)
+	robnoKarticaHandler.AddRoutes(r)
+
+	// Robno stanja
+	robnoStanjaRepo := repository.NewBaseRepository[domain.RobnoStanjeDto](db, "robnostanjedto")
+	robnoStanjaService := robnosvc.NewRobnoStanjaService(*robnoStanjaRepo)
+	robnoStanjaHandler := robnohand.NewRobnoStanjaHandler(robnoStanjaService, cfg)
+	robnoStanjaHandler.AddRoutes(r)
+
+	// Robno promet reports
+	robnoprometService := robnosvc.NewRobnoPrometService(prometService)
+	robnoprometHandler := robnohand.NewRobnoPrometHandler(robnoprometService, cfg)
+	robnoprometHandler.AddRoutes(r)
+
 	// Salda
 	saldaRepo := repository.NewBaseRepository[domain.SaldaDto](db, "saldadto")
 	saldaValidator := validation.NewRuleBasedValidator[domain.SaldaDto](finval.SaldaValidationRules())
@@ -667,7 +783,8 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 	izvdetRepo := repository.NewBaseRepository[domain.Fizvdet](db, "fizvdet")
 	bankeRepo := repository.NewBaseRepository[domain.Banke](db, "banke")
 	tipdokRepo := repository.NewBaseRepository[domain.Tipdok](db, "tipdok")
-	izvodiService := finservice.NewIzvodiResource(izvhdrRepo, izvdetRepo, bankeRepo, tipdokRepo, fnalRepo, cfg)
+	sifplizvRepo := repository.NewBaseRepository[domain.Sifplizv](db, "sifplizv")
+	izvodiService := finservice.NewIzvodiResource(izvhdrRepo, izvdetRepo, bankeRepo, tipdokRepo, fnalRepo, partneriRepo, tekracuniRepo, sifplizvRepo, fkplRepo, fvrRepo, cfg)
 	izvodiHandler := fin.NewIzvodiHandler(izvodiService, cfg, lm)
 	izvodiHandler.AddRoutes(r)
 
@@ -678,12 +795,18 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 		repository.NewBaseRepository[domain.SubMenuItem](db, "submenuitems"),
 	)
 
+	// UserService for authentication and user management
+	userRepo := repository.NewBaseRepository[domain.User](db, "appusers")
+	userValidator := validation.NewRuleBasedValidator[domain.User]([]validation.ValidationRule{})
+	userService := service.NewUserService(userRepo, userValidator)
+
 	basicHandler := handler.NewBasicHandler(
 		c,
 		menuService,
 		IsLoggedIn,
 		fvrService,
 		cfg,
+		userService,
 	)
 	basicHandler.AddRoutes(r)
 
@@ -706,12 +829,13 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 	otvoreneStavkeHandler := fin.NewOtvoreneStavkeHandler(otvoreneStavkeService, cfg)
 	otvoreneStavkeHandler.RegisterRoutes(r)
 
-	//obracun kamate
-	kamataRepo := repository.NewBaseRepository[domain.Fkpl](db, "kamata")
-	kamataValidator := validation.NewRuleBasedValidator[domain.Fkpl]([]validation.ValidationRule{})
-	kamataBaseService := service.NewBaseService(*kamataRepo, kamataValidator)
-	kamateService := finservice.NewKamateService(kamataBaseService, kamataRepo)
-	kamateHandler := fin.NewKamateHandler(kamateService, cfg, lm)
+	// Kamatne stope (Kam)
+	kamRepo := repository.NewBaseRepository[domain.Kam](db, "kam")
+	// Tipovi kamate (Tkam)
+	tkamRepo := repository.NewBaseRepository[domain.Tkam](db, "tkam")
+
+	kamateService := finservice.NewKamateService(fkplRepo, kamRepo, tkamRepo, fproRepo)
+	kamateHandler := kamate.NewKamateHandler(kamateService, cfg, lm)
 	kamateHandler.RegisterRoutes(r)
 
 	// Bilansi

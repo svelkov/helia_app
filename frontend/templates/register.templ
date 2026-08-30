@@ -50,6 +50,17 @@ templ Register(translator *i18n.Service) {
 					required
 				/>
 			</div>
+			<!-- 2FA Enable Field -->
+			<div class="flex items-center">
+				<input
+					type="checkbox"
+					id="enable_2fa"
+					name="enable_2fa"
+					value="on"
+					class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-600"
+				/>
+				<label for="enable_2fa" class="block ml-2 text-gray-700">{ translator.Label("enable 2fa") }</label>
+			</div>
 			<!-- Submit Button -->
 			<div>
 				<button

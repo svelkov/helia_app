@@ -12,7 +12,6 @@ import (
 	"helia/internal/repository"
 	"helia/internal/service"
 	finval "helia/internal/validation/finansijsko"
-	"helia/pkg/utils"
 	"log"
 	"strings"
 
@@ -168,7 +167,7 @@ func (s *NalogResource) GetFvrData(ctx context.Context) (domain.Fvr, error) {
 	if s.fvrRepo == nil {
 		return domain.Fvr{}, fmt.Errorf("fvrRepo not initialized")
 	}
-	return utils.GetFvrData(ctx, s.fvrRepo)
+	return common.GetFvrData(ctx, s.fvrRepo)
 }
 
 // NalogValidation checks if the given Fnal entity is valid for creation or update.
@@ -315,6 +314,7 @@ func (s *NalogResource) UpdateNalog(ctx context.Context, fnalID int64, payload *
 	var entity *domain.Fnal
 	*tblStavke = common.SetTableBasicData("Stavke Naloga", naloziStavkeTableID, s.fproService.GetTableStavkeFields(), "", "", pageSize, 0, 0, 0, s.cfg)
 	tblStavke.ShowActions = true
+	common.SetTableConfig(tblStavke, "STAVKE NALOGA", "", false, false, false)
 	// Get username from claims or session
 	userSession := domain.GetSessionFromStdContext(ctx)
 	if userSession == nil {
@@ -1619,8 +1619,8 @@ func (s *NalogResource) MapReqToEntity(ctx context.Context, req domain.FnalPaylo
 		entity.Xopizmene = sql.NullString{String: userSession.UserName, Valid: true}
 	}
 	entity.Nalog = common.StringToInt64(req.Nalog)
-	entity.Danal = common.StringToDate(req.Danal)
-	entity.Datob = common.StringToDate(req.Datob)
+	entity.Danal = common.StringToDate(req.Danal, common.HtmlLayout)
+	entity.Datob = common.StringToDate(req.Datob, common.HtmlLayout)
 	entity.Tipdok = req.Tipdok
 
 }

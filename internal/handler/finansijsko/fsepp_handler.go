@@ -6,6 +6,7 @@ import (
 	"helia/pkg/utils"
 	"net/http"
 
+	"helia/frontend/components"
 	tmpl "helia/frontend/templates"
 	tmpl_fin "helia/frontend/templates/finansijsko"
 	"helia/i18n"
@@ -141,7 +142,7 @@ func (h *FseppHandler) FseppSekcijeIzvori(c *gin.Context) {
 	tbl.BtnAdd.HxActionURL = fseppURLSekcijeUnos
 	tbl.BtnAdd.HxTarget = "#dialog-content"
 	if requestSource == "btnobrada" || requestSource == "btnpage" || requestSource == "searchinput" {
-		tmpl.Table(tbl, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+		components.Table(tbl, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 	} else {
 		tmpl_fin.FseppSekcijeIzvori(h.tabData, tbl, searchInput, gnGod, translator).Render(c.Request.Context(), c.Writer)
 	}
@@ -327,7 +328,7 @@ func (h *FseppHandler) FseppSefKprImport(c *gin.Context) {
 		IdDialog:     dialog.Id,
 		BtnClass:     common.ClassSaveButton,
 		HxOnClick:    "closeDialog",
-		HxOnClickArg: dialog.Id,
+		HxOnClickArg: []any{dialog.Id},
 	}
 
 	// Get CSV content from form data

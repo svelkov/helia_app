@@ -68,7 +68,7 @@ func Auth(jwtSecret ...[]byte) gin.HandlerFunc {
 		}
 
 		// Skip auth for these public routes
-		publicPaths := []string{"/login", "/register", "/frontend/static"}
+		publicPaths := []string{"/login", "/register", "/setup-2fa", "/verify-2fa", "/frontend/static"}
 		for _, path := range publicPaths {
 			if strings.HasPrefix(c.Request.URL.Path, path) {
 				c.Next()

@@ -1,0 +1,135 @@
+package robno
+
+import (
+	"helia/frontend/components"
+	tmpl "helia/frontend/templates"
+	"helia/i18n"
+	"helia/internal/common"
+	"helia/internal/domain"
+)
+
+templ RobnoPrometMain(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
+	<div id="robno-promet-reports-content" class="flex flex-col h-full">
+		@RobnoPrometGrupe1(tabs, tbl, btnObrada, btnPrint, translator)
+	</div>
+	@tmpl.ShowSearchDialogScript()
+	@tmpl.HideDropdownScript()
+}
+
+templ RobnoPrometGrupe1(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
+	@robnoPrometFrame(tabs, "Promet artikala po grupama za period", tbl, btnObrada, btnPrint, translator, robnoPrometGrupeParameters(translator))
+}
+
+templ RobnoPrometGrupe2(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
+	@robnoPrometFrame(tabs, "Promet artikala po grupama za period", tbl, btnObrada, btnPrint, translator, robnoPrometGrupeParameters(translator))
+}
+
+templ RobnoPrometDobavljaci(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
+	@robnoPrometFrame(tabs, "Promet artikala po dobavljačima za period", tbl, btnObrada, btnPrint, translator, robnoPrometDobavljaciParameters(translator))
+}
+
+templ RobnoPrometRuc(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
+	@robnoPrometFrame(tabs, "Pregled ulaza / izlaza, lager liste", tbl, btnObrada, btnPrint, translator, robnoPrometRucParameters(translator))
+}
+
+templ RobnoPrometGradiliste(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
+	@robnoPrometFrame(tabs, "Zaduženje gradilišta", tbl, btnObrada, btnPrint, translator, robnoPrometGradilisteParameters(translator))
+}
+
+templ RobnoPrometGradilisteVpcNc(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
+	@robnoPrometFrame(tabs, "Zaduženje gradilišta (VP cena - Nabavna)", tbl, btnObrada, btnPrint, translator, robnoPrometGradilisteParameters(translator))
+}
+
+templ robnoPrometFrame(tabs domain.TabData, title string, tbl domain.TableData, btnObrada, btnPrint domain.Button, translator *i18n.Service, parameters templ.Component) {
+	<div class="bg-blue-100 p-1 flex flex-col h-full">
+		<div class="border-b border-blue-600">
+			@tmpl.TabNav(translator.Title("Robno promet"), tabs, "#robno-promet-reports-content", "robno-promet-reports-panel", translator)
+		</div>
+		<div class="flex-1 min-h-0 flex flex-col gap-1 pt-1">
+			<div class="border bg-blue-100 border-blue-400 p-1 rounded-lg">
+				<h2 class="font-semibold text-sm text-blue-900 mb-1">{ translator.Title(title) }</h2>
+				@parameters
+				<div class="flex justify-end gap-1 pt-2">
+					@components.Button(btnObrada)
+					@components.Search_PartPrintButton(btnPrint)
+				</div>
+			</div>
+			<div class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex-1 min-h-0 overflow-hidden">
+				@components.Table(tbl, translator)
+			</div>
+		</div>
+	</div>
+}
+
+templ robnoPrometGrupeParameters(translator *i18n.Service) {
+	<div class="grid grid-cols-4 gap-1 items-center">
+		@robnoPrometInput("Od magacina", "odmagacina", "text", translator)
+		@robnoPrometInput("Do magacina", "domagacina", "text", translator)
+		@robnoPrometInput("Od datuma", "oddatuma", "date", translator)
+		@robnoPrometInput("Do datuma", "dodatuma", "date", translator)
+		@robnoPrometInput("Od šifre artikla", "odsifre", "number", translator)
+		@robnoPrometInput("Do šifre artikla", "dosifre", "number", translator)
+		@robnoPrometInput("Od grupe", "odgrupe", "number", translator)
+		@robnoPrometInput("Do grupe", "dogrupe", "number", translator)
+	</div>
+}
+
+templ robnoPrometDobavljaciParameters(translator *i18n.Service) {
+	<div class="grid grid-cols-4 gap-1 items-center">
+		@robnoPrometInput("Od magacina", "odmagacina", "text", translator)
+		@robnoPrometInput("Do magacina", "domagacina", "text", translator)
+		@robnoPrometInput("Od grupe", "odgrupe", "number", translator)
+		@robnoPrometInput("Do grupe", "dogrupe", "number", translator)
+		@robnoPrometInput("Od šifre artikla", "odsifre", "number", translator)
+		@robnoPrometInput("Do šifre artikla", "dosifre", "number", translator)
+		@robnoPrometInput("Od datuma", "oddatuma", "date", translator)
+		@robnoPrometInput("Do datuma", "dodatuma", "date", translator)
+	</div>
+}
+
+templ robnoPrometRucParameters(translator *i18n.Service) {
+	<div class="grid grid-cols-4 gap-1 items-center">
+		@robnoPrometInput("Od magacina", "odmagacina", "text", translator)
+		@robnoPrometInput("Do magacina", "domagacina", "text", translator)
+		@robnoPrometInput("Od grupe", "odgrupe", "number", translator)
+		@robnoPrometInput("Do grupe", "dogrupe", "number", translator)
+		@robnoPrometInput("Stanje na dan", "stanjenadan", "date", translator)
+		@robnoPrometCheck("Zalihe < 0", "zalihemanje0", translator)
+		@robnoPrometCheck("Štampaj zalihe po grupama", "stampajgrupe", translator)
+	</div>
+}
+
+templ robnoPrometGradilisteParameters(translator *i18n.Service) {
+	<div class="grid grid-cols-4 gap-1 items-center">
+		@robnoPrometInput("Od magacina", "odmagacina", "text", translator)
+		@robnoPrometInput("Do magacina", "domagacina", "text", translator)
+		@robnoPrometInput("Od datuma", "oddatuma", "date", translator)
+		@robnoPrometInput("Do datuma", "dodatuma", "date", translator)
+		@robnoPrometInput("Od šifre artikla", "odsifre", "number", translator)
+		@robnoPrometInput("Do šifre artikla", "dosifre", "number", translator)
+		@robnoPrometInput("Od grupe", "odgrupe", "number", translator)
+		@robnoPrometInput("Do grupe", "dogrupe", "number", translator)
+	</div>
+}
+
+templ robnoPrometInput(label, name, fieldType string, translator *i18n.Service) {
+	<div class="flex items-center gap-1">
+		@components.LabelField(domain.LabelFieldConfig{ID: name, LabelText: translator.Label(label), ClassLabel: common.ClassLabel + " w-28"})
+		@components.TextInputField(domain.InputFieldConfig{ID: name, Name: name, FieldType: fieldType, ClassInput: common.ClassInputTextEnabled + " flex-1"})
+	</div>
+}
+
+templ robnoPrometCheck(label, name string, translator *i18n.Service) {
+	<label class={ common.ClassLabel + " flex items-center gap-1" }>
+		<input type="checkbox" name={ name } id={ name } class={ common.ClassCheckbox }/>
+		<span>{ translator.Label(label) }</span>
+	</label>
+}
+
+templ RobnoPrometGrupe1Table(tbl domain.TableData, translator *i18n.Service) {
+	@components.Table(tbl, translator)
+}
+
+templ RobnoPrometTable(tbl domain.TableData, translator *i18n.Service) {
+	@components.Table(tbl, translator)
+}

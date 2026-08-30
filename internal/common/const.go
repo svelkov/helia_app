@@ -28,10 +28,17 @@ const (
 	IDkomercijalista = "komid"
 	IDmagacin        = "magaciniid"
 	IDmi             = "fispid"
-	IDjedmere        = "jm"
+	IDjedmere        = "jedmereid"
 	IDKir            = "idkir"
 	IDkpr            = "idkpr"
 	IDfsepp          = "fseppid"
+	IDfizvzag        = "idfizvzag"
+	IDkam            = "idkam"
+	IDtkam           = "idtkam"
+	IDrgru           = "rgruid"
+	IDrpgru          = "rpgruid"
+	IDrpor           = "rporid"
+	IDrsif           = "rsifid"
 )
 
 const (
@@ -44,15 +51,17 @@ const (
 
 // Date format constants
 const (
-	DateLayout = "02.01.2006" // Serbian date format (DD.MM.YYYY)
-	HtmlLayout = "2006-01-02" // HTML5 date input format (YYYY-MM-DD)
+	DateLayout  = "02.01.2006" // Serbian date format (DD.MM.YYYY)
+	HtmlLayout  = "2006-01-02" // HTML5 date input format (YYYY-MM-DD)
+	HtmlLayout1 = "2006-02-01" // HTML5 datetime input format (YYYY-DD-MM HH:MM:SS)
+	DateLayouts = "02.01.2006, 2006-01-02, 02/01/2006, 02.01.2006, 02-01-2006"
 )
 
 const (
 	ErrMsgParseForm           = "Parsiranje forme nije uspelo."
 	ErrMsgGetIdFromUrl        = "Neuspešno preuzimanje ID-a iz URL-a."
 	ErrMsgFormDecode          = "Neuspešno dekodiranje forme."
-	ErrMsgValidation          = "Greška prilkom validacije"
+	ErrMsgValidation          = "Greška prilikom validacije"
 	ErrMsgSaveData            = "Greška prilikom upisa podataka"
 	ErrMsgDeleteData          = "Greška prilikom brisanja podataka. Greska: %s"
 	ErrMsgInvalidId           = "Nevažeći ID"
@@ -75,6 +84,7 @@ const (
 	ErrMsgMissingParameter    = "Nedostaje parametar konto ili vkonta"
 	ErrMsgUserSessionNotFound = "User session not found"
 	ErrMsgNotFound            = "Nije pronađena šifra"
+	ErrMsgSessionNotFound     = "Korisnička sesija nije dostupna"
 	ErrMsgSearchKonto         = "Greška prilikom pretrage konta"
 	ErrMsgLockFailed          = "Neuspešno zaključavanje zapisa, pokušajte ponovo"
 	ErrMsgUpdate              = "Greska prilikom ažuriranja. "

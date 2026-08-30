@@ -8,7 +8,6 @@ import (
 	"helia/internal/domain"
 	"helia/internal/repository"
 	"helia/internal/service"
-	"helia/pkg/utils"
 	"reflect"
 )
 
@@ -41,7 +40,7 @@ func NewDnevnikService(service *service.BaseService[domain.DnevnikDto],
 	return rs
 }
 func (s *DnevnikResource) GetFvrData(ctx context.Context) (domain.Fvr, error) {
-	return utils.GetFvrData(ctx, s.fvrRepo)
+	return common.GetFvrData(ctx, s.fvrRepo)
 }
 
 // GetDnevnikTableFields returns the table fields for dnevnik knjizenja

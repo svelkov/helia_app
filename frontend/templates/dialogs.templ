@@ -1,6 +1,7 @@
 package templates
 
 import (
+	"helia/frontend/components"
 	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
@@ -13,12 +14,12 @@ templ Dialog(id, csrfToken string, content templ.Component, dialog domain.Dialog
 			if btnConfirm.Id == "btn-delete" {
 				<div class="bg-red-600 text-white h-9 flex justify-between items-center rounded-t-lg">
 					<h2 class="text-lg font-semibold ml-4">{ translator.Title(dialog.Title) }</h2>
-					@CloseButton(btnClose)
+					@components.CloseButton(btnClose)
 				</div>
 			} else {
 				<div class="bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg">
 					<h2 class="text-lg font-semibold ml-4">{ translator.Title(dialog.Title) }</h2>
-					@CloseButton(btnClose)
+					@components.CloseButton(btnClose)
 				</div>
 			}
 			<!-- Content -->
@@ -34,8 +35,8 @@ templ Dialog(id, csrfToken string, content templ.Component, dialog domain.Dialog
 					@content
 				</div>
 				<div class="bg-white col-span-2 px-3 py-3 flex justify-end space-x-1 pt-4">
-					@ConfirmButton(btnConfirm, translator)
-					@CancelButton(btnCancel, translator)
+					@components.ConfirmButton(btnConfirm, translator)
+					@components.CancelButton(btnCancel, translator)
 				</div>
 			</form>
 		</div>
@@ -88,7 +89,7 @@ templ DialogConfirm(message []string, dialog domain.Dialog, btnClose, btnConfirm
 			<!-- Title Bar (Flush on Left, Top, Right) -->
 			<div class="bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg">
 				<h2 class="text-lg font-semibold ml-4">{ translator.Title(dialog.Title) }</h2>
-				@CloseButton(btnClose)
+				@components.CloseButton(btnClose)
 			</div>
 			<form
 				id="dialog-confirm-form"
@@ -118,8 +119,8 @@ templ DialogConfirm(message []string, dialog domain.Dialog, btnClose, btnConfirm
 					</p>
 				</div>
 				<div class="bg-white col-span-2 px-3 py-3 flex justify-end space-x-1 pt-4">
-					@ConfirmButton(btnConfirm, translator)
-					@CancelButton(btnCancel, translator)
+					@components.ConfirmButton(btnConfirm, translator)
+					@components.CancelButton(btnCancel, translator)
 				</div>
 			</form>
 			<!-- Message Display Area at Bottom -->
@@ -135,7 +136,7 @@ templ DialogOk(message string, dialog domain.Dialog, btnClose, btnOk domain.Butt
 			<!-- Title Bar (Flush on Left, Top, Right) -->
 			<div class="bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg">
 				<h2 class="text-lg font-semibold ml-4">{ translator.Title(dialog.Title) }</h2>
-				@CloseButton(btnClose)
+				@components.CloseButton(btnClose)
 			</div>
 			<!-- Content -->
 			<div class="px-1 py-1 col-span-2 max-h-[60vh] overflow-y-auto">
@@ -147,7 +148,22 @@ templ DialogOk(message string, dialog domain.Dialog, btnClose, btnOk domain.Butt
 				</p>
 			</div>
 			<div class="bg-white col-span-2 px-3 py-3 flex justify-end space-x-1 pt-4">
-				@Button(btnOk)
+				if btnOk.HxActionURL != "" {
+					<button
+						id={ btnOk.Id }
+						type="button"
+						class={ btnOk.BtnClass }
+						hx-get={ btnOk.HxActionURL }
+						hx-target={ btnOk.HxTarget }
+						hx-swap="innerHTML"
+						hx-on::after-request={ templ.JSFuncCall("closeDialog", dialog.Id) }
+						hx-headers='{"X-Request-Source": "btn"}'
+					>
+						{ btnOk.LabelText }
+					</button>
+				} else {
+					@components.Button(btnOk)
+				}
 			</div>
 		</div>
 	</div>

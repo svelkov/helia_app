@@ -2,6 +2,7 @@ package finansijsko
 
 import (
 	"fmt"
+	"helia/frontend/components"
 	tmpl "helia/frontend/templates"
 	"helia/i18n"
 	"helia/internal/common"
@@ -12,7 +13,7 @@ import (
 // FSEPP Main - Evidencija prethodnog poreza (Evidence of Previous Tax Credit)
 templ FseppMain(tabs domain.TabData, tblSekcije domain.TableData, searchInput domain.InputControl, gnGod int, translator *i18n.Service) {
 	<!-- Tab Content -->
-	<div id="tab-content" class="flex flex-col h-full">
+	<div id="tab-content" class="bg-blue-100 p-1 flex flex-col h-full">
 		@FseppSekcijeIzvori(tabs, tblSekcije, searchInput, gnGod, translator)
 	</div>
 }
@@ -20,7 +21,7 @@ templ FseppMain(tabs domain.TabData, tblSekcije domain.TableData, searchInput do
 // Tab 1 - Sekcije i izvori
 templ FseppSekcijeIzvori(tabs domain.TabData, tbl domain.TableData, searchInput domain.InputControl, gnGod int, translator *i18n.Service) {
 	<!-- Container with full height -->
-	<div class="flex flex-col h-full">
+	<div class="bg-blue-100 p-1 flex flex-col h-full">
 		<!-- Tab Navigation -->
 		<div class="border-b border-blue-600">
 			@tmpl.TabNav(translator.Title("Evidencija prethodnog poreza"), tabs, "#tab-content", "fsepp-panel", translator)
@@ -29,10 +30,10 @@ templ FseppSekcijeIzvori(tabs domain.TabData, tbl domain.TableData, searchInput 
 		<div id="tab1" class="flex-1 min-h-0 flex flex-col gap-1 pt-1">
 			<!-- Master Table -->
 			<div class="border bg-blue-100 border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
-				@tmpl.Search_Part(tbl, searchInput)
+				@components.Search_Part(tbl, searchInput)
 				<!-- Table -->
 				<div id="epp-sekcije-table" class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
-					@tmpl.Table(tbl, translator)
+					@components.Table(tbl, translator)
 				</div>
 			</div>
 		</div>
@@ -55,12 +56,12 @@ templ FseppEvidencija(tabs domain.TabData, tbl domain.TableData, btnObrada, btnD
 			<!-- Parameters Section -->
 			<div class="border bg-blue-100 border-blue-400 mt-1 p-2 rounded-lg">
 				<div class="flex items-center gap-1">
-					@tmpl.LabelField(domain.LabelFieldConfig{
+					@components.LabelField(domain.LabelFieldConfig{
 						ID:         "oddatuma",
 						LabelText:  translator.Label("Od datuma"),
 						ClassLabel: common.ClassLabel + " w-32",
 					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
+					@components.TextInputField(domain.InputFieldConfig{
 						ID:         "oddatuma",
 						Name:       "oddatuma",
 						FieldType:  "date",
@@ -68,12 +69,12 @@ templ FseppEvidencija(tabs domain.TabData, tbl domain.TableData, btnObrada, btnD
 						ClassInput: common.ClassInputTextEnabled + " w-32 mr-2",
 						TabIndex:   "1",
 					})
-					@tmpl.LabelField(domain.LabelFieldConfig{
+					@components.LabelField(domain.LabelFieldConfig{
 						ID:         "dodatuma",
 						LabelText:  translator.Label("Do datuma"),
 						ClassLabel: common.ClassLabel + " w-28",
 					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
+					@components.TextInputField(domain.InputFieldConfig{
 						ID:         "dodatuma",
 						Name:       "dodatuma",
 						FieldType:  "date",
@@ -81,15 +82,15 @@ templ FseppEvidencija(tabs domain.TabData, tbl domain.TableData, btnObrada, btnD
 						ClassInput: common.ClassInputTextEnabled + " w-32",
 						TabIndex:   "2",
 					})
-					@tmpl.Button(btnObrada)
+					@components.Button(btnObrada)
 				</div>
 			</div>
 			<!-- Master Table -->
 			<div class="border bg-blue-100 border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
-				@tmpl.Search_Part(tbl, searchInput)
+				@components.Search_Part(tbl, searchInput)
 				<!-- Table -->
 				<div id="epp-evidencija-table" class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
-					@tmpl.Table(tbl, translator)
+					@components.Table(tbl, translator)
 				</div>
 			</div>
 		</div>
@@ -124,12 +125,12 @@ templ FseppSefKpr(tabs domain.TabData, tbl domain.TableData, btnImport domain.Bu
 				<input type="hidden" id="file-type-data" name="file_type"/>
 				<div class="border bg-blue-100 border-blue-400 mt-1 p-2 rounded-lg">
 					<div class="flex items-center gap-2">
-						@tmpl.LabelField(domain.LabelFieldConfig{
+						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "oddatuma",
 							LabelText:  "Od Datuma",
 							ClassLabel: common.ClassLabel + " w-20",
 						})
-						@tmpl.TextInputField(domain.InputFieldConfig{
+						@components.TextInputField(domain.InputFieldConfig{
 							ID:         "oddatuma",
 							Name:       "oddatuma",
 							FieldType:  "date",
@@ -137,12 +138,12 @@ templ FseppSefKpr(tabs domain.TabData, tbl domain.TableData, btnImport domain.Bu
 							ClassInput: common.ClassInputTextEnabled + " w-28",
 							TabIndex:   "1",
 						})
-						@tmpl.LabelField(domain.LabelFieldConfig{
+						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "dodatuma",
 							LabelText:  "Do Datuma",
 							ClassLabel: common.ClassLabel + " w-20",
 						})
-						@tmpl.TextInputField(domain.InputFieldConfig{
+						@components.TextInputField(domain.InputFieldConfig{
 							ID:         "dodatuma",
 							Name:       "dodatuma",
 							FieldType:  "date",
@@ -150,12 +151,12 @@ templ FseppSefKpr(tabs domain.TabData, tbl domain.TableData, btnImport domain.Bu
 							ClassInput: common.ClassInputTextEnabled + " w-28",
 							TabIndex:   "2",
 						})
-						@tmpl.LabelField(domain.LabelFieldConfig{
+						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "filepath",
 							LabelText:  "CSV fajl",
 							ClassLabel: common.ClassLabel + " w-24",
 						})
-						@tmpl.TextInputField(domain.InputFieldConfig{
+						@components.TextInputField(domain.InputFieldConfig{
 							ID:         "filepath",
 							Name:       "filepath",
 							FieldType:  "text",
@@ -169,10 +170,10 @@ templ FseppSefKpr(tabs domain.TabData, tbl domain.TableData, btnImport domain.Bu
 							onclick="openFileDialog()"
 							class={ common.ClassPrintButton }
 						>
-							@tmpl.Icon("file-select", common.ClassIcon)
+							@components.Icon("file-select", common.ClassIcon)
 							{ translator.Label("Izaberi fajl") }
 						</button>
-						@tmpl.RadioButtonField(domain.RadioFieldConfig{
+						@components.RadioButtonField(domain.RadioFieldConfig{
 							ID:          "sve",
 							Name:        "filter_type",
 							LabelText:   "Sve",
@@ -181,7 +182,7 @@ templ FseppSefKpr(tabs domain.TabData, tbl domain.TableData, btnImport domain.Bu
 							ClassLabel:  "text-sm text-black whitespace-nowrap",
 							IsSelected:  true,
 						}, translator)
-						@tmpl.RadioButtonField(domain.RadioFieldConfig{
+						@components.RadioButtonField(domain.RadioFieldConfig{
 							ID:          "razlike",
 							Name:        "filter_type",
 							LabelText:   "Razlike",
@@ -190,16 +191,16 @@ templ FseppSefKpr(tabs domain.TabData, tbl domain.TableData, btnImport domain.Bu
 							ClassLabel:  "text-sm text-black whitespace-nowrap",
 						}, translator)
 						<div class="flex-1"></div>
-						@tmpl.Button(btnImport)
+						@components.Button(btnImport)
 					</div>
 				</div>
 			</form>
 			<!-- Master Table -->
 			<div class="border bg-blue-100 border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
-				@tmpl.Search_Part(tbl, searchInput)
+				@components.Search_Part(tbl, searchInput)
 				<!-- Table -->
 				<div id="epp-sef-kpr-table" class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
-					@tmpl.Table(tbl, translator)
+					@components.Table(tbl, translator)
 				</div>
 			</div>
 		</div>
@@ -219,7 +220,7 @@ templ DialogFseppSekcije(model domain.Fsepp, dlg domain.Dialog, btnSave, btnCanc
 			<!-- Header -->
 			<div class="bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg">
 				<h2 class="text-lg font-semibold ml-4">{ translator.Title("Unos/izmene podataka - Sekcije i izvori") }</h2>
-				@tmpl.CloseButton(btnClose)
+				@components.CloseButton(btnClose)
 			</div>
 			<!-- Form Content -->
 			<form class="p-2 space-y-3">
@@ -229,12 +230,12 @@ templ DialogFseppSekcije(model domain.Fsepp, dlg domain.Dialog, btnSave, btnCanc
 					<div class="font-bold text-xs text-gray-900 border-b-2 border-gray-400 pb-2">{ translator.Text("Osnovni podaci") }</div>
 					<div class="space-y-1 pt-1">
 						<div class="flex items-center gap-2">
-							@tmpl.LabelField(domain.LabelFieldConfig{
+							@components.LabelField(domain.LabelFieldConfig{
 								ID:         "tip",
 								LabelText:  translator.Label("Tip podatka"),
 								ClassLabel: "w-24",
 							})
-							@tmpl.ComboBoxField(domain.ComboFieldConfig{
+							@components.ComboBoxField(domain.ComboFieldConfig{
 								ID:          "tip",
 								Name:        "tip",
 								Placeholder: "Tip podatka",
@@ -251,12 +252,12 @@ templ DialogFseppSekcije(model domain.Fsepp, dlg domain.Dialog, btnSave, btnCanc
 							}, translator)
 						</div>
 						<div class="flex items-center gap-2 flex-1">
-							@tmpl.LabelField(domain.LabelFieldConfig{
+							@components.LabelField(domain.LabelFieldConfig{
 								ID:         "deo",
 								LabelText:  translator.Label("Deo"),
 								ClassLabel: "w-24",
 							})
-							@tmpl.TextInputField(domain.InputFieldConfig{
+							@components.TextInputField(domain.InputFieldConfig{
 								ID:         "deo",
 								Name:       "deo",
 								FieldType:  "text",
@@ -266,12 +267,12 @@ templ DialogFseppSekcije(model domain.Fsepp, dlg domain.Dialog, btnSave, btnCanc
 							})
 						</div>
 						<div class="flex items-center gap-2 flex-1">
-							@tmpl.LabelField(domain.LabelFieldConfig{
+							@components.LabelField(domain.LabelFieldConfig{
 								ID:         "sekcija",
 								LabelText:  translator.Label("Sekcija"),
 								ClassLabel: "w-24",
 							})
-							@tmpl.TextInputField(domain.InputFieldConfig{
+							@components.TextInputField(domain.InputFieldConfig{
 								ID:         "sekcija",
 								Name:       "sekcija",
 								FieldType:  "text",
@@ -281,12 +282,12 @@ templ DialogFseppSekcije(model domain.Fsepp, dlg domain.Dialog, btnSave, btnCanc
 							})
 						</div>
 						<div class="flex items-center gap-2 flex-1">
-							@tmpl.LabelField(domain.LabelFieldConfig{
+							@components.LabelField(domain.LabelFieldConfig{
 								ID:         "izvor",
 								LabelText:  translator.Label("Izvor"),
 								ClassLabel: "w-24",
 							})
-							@tmpl.TextInputField(domain.InputFieldConfig{
+							@components.TextInputField(domain.InputFieldConfig{
 								ID:         "izvor",
 								Name:       "izvor",
 								FieldType:  "text",
@@ -296,12 +297,12 @@ templ DialogFseppSekcije(model domain.Fsepp, dlg domain.Dialog, btnSave, btnCanc
 							})
 						</div>
 						<div class="flex items-center gap-2 flex-1">
-							@tmpl.LabelField(domain.LabelFieldConfig{
+							@components.LabelField(domain.LabelFieldConfig{
 								ID:         "polje",
 								LabelText:  translator.Label("Polje"),
 								ClassLabel: "w-24",
 							})
-							@tmpl.TextInputField(domain.InputFieldConfig{
+							@components.TextInputField(domain.InputFieldConfig{
 								ID:         "polje",
 								Name:       "polje",
 								FieldType:  "text",
@@ -311,12 +312,12 @@ templ DialogFseppSekcije(model domain.Fsepp, dlg domain.Dialog, btnSave, btnCanc
 							})
 						</div>
 						<div class="flex items-center gap-2 flex-1">
-							@tmpl.LabelField(domain.LabelFieldConfig{
+							@components.LabelField(domain.LabelFieldConfig{
 								ID:         "nivo",
 								LabelText:  translator.Label("Nivo"),
 								ClassLabel: "w-24",
 							})
-							@tmpl.TextInputField(domain.InputFieldConfig{
+							@components.TextInputField(domain.InputFieldConfig{
 								ID:         "nivo",
 								Name:       "nivo",
 								FieldType:  "text",
@@ -332,12 +333,12 @@ templ DialogFseppSekcije(model domain.Fsepp, dlg domain.Dialog, btnSave, btnCanc
 					<div class="font-bold text-xs text-gray-900 border-b-2 border-gray-400 pb-2">{ translator.Text("Vrste naloga, PDV računi") }</div>
 					<div class="space-y-1 pt-1">
 						<div class="flex items-start gap-2">
-							@tmpl.LabelField(domain.LabelFieldConfig{
+							@components.LabelField(domain.LabelFieldConfig{
 								ID:         "grpdok",
 								LabelText:  translator.Label("Vrste naloga"),
 								ClassLabel: "w-24 pt-1",
 							})
-							@tmpl.TextInputField(domain.InputFieldConfig{
+							@components.TextInputField(domain.InputFieldConfig{
 								ID:          "grpdok",
 								Name:        "grpdok",
 								FieldType:   "text",
@@ -351,12 +352,12 @@ templ DialogFseppSekcije(model domain.Fsepp, dlg domain.Dialog, btnSave, btnCanc
 					<div class="space-y-1 pt-1">
 						<div class="flex items-center gap-2">
 							<div class="flex items-center gap-2">
-								@tmpl.LabelField(domain.LabelFieldConfig{
+								@components.LabelField(domain.LabelFieldConfig{
 									ID:         "polje_pdv_da",
 									LabelText:  translator.Label("PDV Da"),
 									ClassLabel: "w-24",
 								})
-								@tmpl.TextInputField(domain.InputFieldConfig{
+								@components.TextInputField(domain.InputFieldConfig{
 									ID:         "polje_pdv_da",
 									Name:       "polje_pdv_da",
 									FieldType:  "text",
@@ -366,12 +367,12 @@ templ DialogFseppSekcije(model domain.Fsepp, dlg domain.Dialog, btnSave, btnCanc
 								})
 							</div>
 							<div class="flex items-center gap-2">
-								@tmpl.LabelField(domain.LabelFieldConfig{
+								@components.LabelField(domain.LabelFieldConfig{
 									ID:         "polje_pdv_ne",
 									LabelText:  translator.Label("PDV Ne"),
 									ClassLabel: "w-24",
 								})
-								@tmpl.TextInputField(domain.InputFieldConfig{
+								@components.TextInputField(domain.InputFieldConfig{
 									ID:         "polje_pdv_ne",
 									Name:       "polje_pdv_ne",
 									FieldType:  "text",
@@ -387,51 +388,51 @@ templ DialogFseppSekcije(model domain.Fsepp, dlg domain.Dialog, btnSave, btnCanc
 							<!-- Input fields row 1 - Pozicije controls -->
 							<div class="flex gap-2 mb-1">
 								<div class="flex gap-2">
-									@tmpl.LabelField(domain.LabelFieldConfig{
+									@components.LabelField(domain.LabelFieldConfig{
 										ID:         "pozic_1",
 										LabelText:  translator.Label("Pozicije"),
 										ClassLabel: common.ClassLabel + " w-24",
 									})
-									@tmpl.NumericInputField(domain.InputFieldConfig{
+									@components.TextInputField(domain.InputFieldConfig{
 										ID:         "pozic_1",
 										Name:       "pozic_1",
-										FieldType:  "text",
+										FieldType:  "number",
 										Value:      model.Pozic1,
 										ClassInput: common.ClassInputTextEnabled + " w-16 text-right",
 										MaxLength:  "4",
 										TabIndex:   "11",
 									})
-									@tmpl.NumericInputField(domain.InputFieldConfig{
+									@components.TextInputField(domain.InputFieldConfig{
 										ID:         "pozic_2",
 										Name:       "pozic_2",
-										FieldType:  "text",
+										FieldType:  "number",
 										Value:      model.Pozic2,
 										ClassInput: common.ClassInputTextEnabled + " w-16 text-right",
 										MaxLength:  "4",
 										TabIndex:   "12",
 									})
-									@tmpl.NumericInputField(domain.InputFieldConfig{
+									@components.TextInputField(domain.InputFieldConfig{
 										ID:         "pozic_3",
 										Name:       "pozic_3",
-										FieldType:  "text",
+										FieldType:  "number",
 										Value:      model.Pozic3,
 										ClassInput: common.ClassInputTextEnabled + " w-16 text-right",
 										MaxLength:  "4",
 										TabIndex:   "13",
 									})
-									@tmpl.NumericInputField(domain.InputFieldConfig{
+									@components.TextInputField(domain.InputFieldConfig{
 										ID:         "pozic_4",
 										Name:       "pozic_4",
-										FieldType:  "text",
+										FieldType:  "number",
 										Value:      model.Pozic4,
 										ClassInput: common.ClassInputTextEnabled + " w-16 text-right",
 										MaxLength:  "4",
 										TabIndex:   "14",
 									})
-									@tmpl.NumericInputField(domain.InputFieldConfig{
+									@components.TextInputField(domain.InputFieldConfig{
 										ID:         "pozic_5",
 										Name:       "pozic_5",
-										FieldType:  "text",
+										FieldType:  "number",
 										Value:      model.Pozic5,
 										ClassInput: common.ClassInputTextEnabled + " w-16 text-right",
 										MaxLength:  "4",
@@ -468,8 +469,8 @@ templ DialogFseppSekcije(model domain.Fsepp, dlg domain.Dialog, btnSave, btnCanc
 				</div>
 				<!-- Action Buttons -->
 				<div class="flex justify-end gap-1 pt-4 border-t border-gray-300">
-					@tmpl.ConfirmButton(btnSave, translator)
-					@tmpl.CancelButton(btnCancel, translator)
+					@components.ConfirmButton(btnSave, translator)
+					@components.CancelButton(btnCancel, translator)
 				</div>
 			</form>
 		</div>

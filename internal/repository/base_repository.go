@@ -72,7 +72,7 @@ func (r *BaseRepository[T]) GetByID(ctx context.Context, idField string, idValue
 }
 
 func (r *BaseRepository[T]) GetAll(ctx context.Context, pageSize int, offset int, tableFields []domain.Fields, idField string, searchText, sortBy, sortOrder string) (*[]T, error) {
-	var entity []T
+	var entities []T
 
 	qb := r.CreateGetAllStatement(ctx, tableFields, idField, searchText)
 	if qb == nil {
@@ -96,24 +96,24 @@ func (r *BaseRepository[T]) GetAll(ctx context.Context, pageSize int, offset int
 	}
 	query, args := qb.Build()
 	// Execute the query
-	err := r.DB.SelectContext(ctx, &entity, query, args...)
+	err := r.DB.SelectContext(ctx, &entities, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching entity records, error: %w", err)
 	}
-	return &entity, nil
+	return &entities, nil
 }
 
 func (r *BaseRepository[T]) GetAllCustom(ctx context.Context, queryText, whereText string, args []any, limitOffset, sortBy string) (*[]T, error) {
-	var entity []T
+	var entities []T
 
 	queryText = fmt.Sprintf("%s %s %s %s", queryText, whereText, sortBy, limitOffset)
 	// Execute the query
 	//fmt.Println(queryText)
-	err := r.DB.SelectContext(ctx, &entity, queryText, args...)
+	err := r.DB.SelectContext(ctx, &entities, queryText, args...)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching entity records, error: %w", err)
 	}
-	return &entity, nil
+	return &entities, nil
 }
 
 func (r *BaseRepository[T]) GetTotalRecords(ctx context.Context, tableFields []domain.Fields, searchText string) (int, error) {
@@ -188,8 +188,14 @@ func (r *BaseRepository[T]) UpdateWithTx(ctx context.Context, tx db.Transaction,
 	}
 	return nil
 }
-
-func (r *BaseRepository[T]) UpdateCustomWithTx(ctx context.Context, tx db.Transaction, query string, values ...any) error {
+func (r *BaseRepository[T]) CreateUpdateCustom(ctx context.Context, query string, values ...any) error {
+	_, err := r.DB.ExecContext(ctx, query, values...)
+	if err != nil {
+		return fmt.Errorf("query execution failed: %v", err)
+	}
+	return nil
+}
+func (r *BaseRepository[T]) CreateUpdateCustomWithTx(ctx context.Context, tx db.Transaction, query string, values ...any) error {
 	_, err := tx.ExecContext(ctx, query, values...)
 	if err != nil {
 		return fmt.Errorf("query execution failed: %v", err)

@@ -9,6 +9,7 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
+	"helia/frontend/components"
 	tmpl "helia/frontend/templates"
 	"helia/i18n"
 	"helia/internal/common"
@@ -38,7 +39,7 @@ func OtvoreneStavkeMain(tabs domain.TabData, tblPartneri, tblDetalji domain.Tabl
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!-- Tab Content --><div id=\"tab-content\" class=\"flex flex-col h-full\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!-- Tab Content --><div id=\"tab-content\" class=\"bg-blue-100 p-1 flex flex-col h-full\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -66,7 +67,7 @@ func OtvoreneStavkeMain(tabs domain.TabData, tblPartneri, tblDetalji domain.Tabl
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SpinnerScript().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.SpinnerScript().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -108,7 +109,7 @@ func OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDat
 			templ_7745c5c3_Var2 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<!-- Container with full height --><div class=\"flex flex-col h-full\"><!-- Tab Navigation --><div class=\"border-b border-blue-600\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<!-- Container with full height --><div class=\"bg-blue-100 p-1 flex flex-col h-full\"><!-- Tab Navigation --><div class=\"border-b border-blue-600\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -116,11 +117,11 @@ func OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDat
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</div><!-- Tab 1 Content --><div id=\"tab1\" class=\"flex-1 min-h-0 flex flex-col gap-1\"><!-- Parameters Section - Two Columns --><div class=\"grid grid-cols-2 gap-1\"><!-- Left Column - Konto and Sifre --><div class=\"border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg flex flex-col\"><!-- Konto Field --><div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</div><!-- Tab 1 Content --><div id=\"tab1\" class=\"flex-1 min-h-0 flex flex-col gap-1\"><!-- Parameters Section - Two Columns --><div class=\"grid grid-cols-2 gap-1\"><!-- Left Column - Konto and Sifre --><div class=\"border bg-blue-100 border border-blue-400 mt-1 p-1 rounded-lg flex flex-col\"><!-- Konto Field --><div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "konto",
 			LabelText:  translator.Label("Konto"),
 			ClassLabel: common.ClassLabel + " w-24",
@@ -128,7 +129,7 @@ func OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDat
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:           "konto",
 			Name:         "konto",
 			FieldType:    "text",
@@ -146,7 +147,7 @@ func OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDat
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SearchButton(domain.SearchButtonConfig{
+		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
 			ID:          "btn-search-konto",
 			Name:        "search-konto",
 			HxUrl:       "/api/promet/searchbutton",
@@ -158,7 +159,7 @@ func OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDat
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "kontonaziv",
 			Name:       "kontonaziv",
 			FieldType:  "text",
@@ -172,7 +173,7 @@ func OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDat
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "odsifre",
 			LabelText:  translator.Label("Od šifre"),
 			ClassLabel: common.ClassLabel + " w-24",
@@ -180,7 +181,7 @@ func OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDat
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:           "odsifre",
 			Name:         "odsifre",
 			FieldType:    "text",
@@ -199,7 +200,7 @@ func OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDat
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SearchButton(domain.SearchButtonConfig{
+		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
 			ID:          "odsifre",
 			Name:        "search-odsifre",
 			HxUrl:       "/api/promet/searchbutton",
@@ -211,7 +212,7 @@ func OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDat
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "odsifrenaziv",
 			Name:       "odsifrenaziv",
 			FieldType:  "text",
@@ -225,7 +226,7 @@ func OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDat
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "dosifre",
 			LabelText:  translator.Label("Do šifre"),
 			ClassLabel: common.ClassLabel + " w-24",
@@ -233,7 +234,7 @@ func OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDat
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:           "dosifre",
 			Name:         "dosifre",
 			FieldType:    "text",
@@ -252,7 +253,7 @@ func OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDat
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SearchButton(domain.SearchButtonConfig{
+		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
 			ID:          "dosifre",
 			Name:        "search-dosifre",
 			HxUrl:       "/api/promet/searchbutton",
@@ -264,7 +265,7 @@ func OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDat
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "dosifrenaziv",
 			Name:       "dosifrenaziv",
 			FieldType:  "text",
@@ -274,11 +275,11 @@ func OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDat
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</div></div><!-- Right Column - Date and Days --><div class=\"border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg flex flex-col\"><!-- Pod datumom --><div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</div></div><!-- Right Column - Date and Days --><div class=\"border bg-blue-100 border border-blue-400 mt-1 p-1 rounded-lg flex flex-col\"><!-- Pod datumom --><div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "poddatumom",
 			LabelText:  translator.Label("Pod datumom"),
 			ClassLabel: common.ClassLabel + " w-44",
@@ -286,7 +287,7 @@ func OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDat
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "poddatumom",
 			Name:       "poddatumom",
 			FieldType:  "date",
@@ -304,7 +305,7 @@ func OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDat
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "otvstavkedana",
 			LabelText:  translator.Label("Otv. stavke preko broja dana"),
 			ClassLabel: common.ClassLabel + " w-44",
@@ -312,10 +313,10 @@ func OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDat
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "otvstavkedana",
 			Name:       "otvstavkedana",
-			FieldType:  "text",
+			FieldType:  "number",
 			Value:      "0",
 			Disabled:   false,
 			ClassInput: common.ClassInputTextEnabled + " w-20",
@@ -331,15 +332,15 @@ func OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDat
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.FormObradaButton(btnObrada, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.FormObradaButton(btnObrada, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Search_PartPrintButton(btnPrint).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Search_PartPrintButton(btnPrint).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Search_PartPrintButton(btnOpomene).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Search_PartPrintButton(btnOpomene).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -347,11 +348,11 @@ func OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDat
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Search_Part(tblPartneri, searchInput).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Search_Part(tblPartneri, searchInput).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -359,7 +360,7 @@ func OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDat
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Table(tblPartneri, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Table(tblPartneri, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -367,7 +368,7 @@ func OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDat
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Search_Part(tblDetalji, searchInputDetalji).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Search_Part(tblDetalji, searchInputDetalji).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -375,7 +376,7 @@ func OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDat
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Table(tblDetalji, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Table(tblDetalji, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -421,7 +422,7 @@ func ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "konto",
 			LabelText:  translator.Label("Konto"),
 			ClassLabel: common.ClassLabel + " w-24",
@@ -429,7 +430,7 @@ func ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:           "konto",
 			Name:         "konto",
 			FieldType:    "text",
@@ -447,7 +448,7 @@ func ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SearchButton(domain.SearchButtonConfig{
+		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
 			ID:          "btn-search-konto",
 			Name:        "search-konto",
 			HxUrl:       "/api/promet/searchbutton",
@@ -459,7 +460,7 @@ func ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "kontonaziv",
 			Name:       "kontonaziv",
 			FieldType:  "text",
@@ -473,7 +474,7 @@ func ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "odsifre",
 			LabelText:  translator.Label("Od šifre"),
 			ClassLabel: common.ClassLabel + " w-24",
@@ -481,7 +482,7 @@ func ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:           "odsifre",
 			Name:         "odsifre",
 			FieldType:    "text",
@@ -500,7 +501,7 @@ func ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SearchButton(domain.SearchButtonConfig{
+		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
 			ID:          "odsifre",
 			Name:        "search-odsifre",
 			HxUrl:       "/api/promet/searchbutton",
@@ -512,7 +513,7 @@ func ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "odsifrenaziv",
 			Name:       "odsifrenaziv",
 			FieldType:  "text",
@@ -526,7 +527,7 @@ func ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "dosifre",
 			LabelText:  translator.Label("Do šifre"),
 			ClassLabel: common.ClassLabel + " w-24",
@@ -534,7 +535,7 @@ func ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:           "dosifre",
 			Name:         "dosifre",
 			FieldType:    "text",
@@ -553,7 +554,7 @@ func ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SearchButton(domain.SearchButtonConfig{
+		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
 			ID:          "dosifre",
 			Name:        "search-dosifre",
 			HxUrl:       "/api/promet/searchbutton",
@@ -565,7 +566,7 @@ func ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "dosifrenaziv",
 			Name:       "dosifrenaziv",
 			FieldType:  "text",
@@ -579,7 +580,7 @@ func ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "oddatuma",
 			LabelText:  translator.Label("Od datuma"),
 			ClassLabel: common.ClassLabel + " w-44",
@@ -587,7 +588,7 @@ func ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "oddatuma",
 			Name:       "oddatuma",
 			FieldType:  "date",
@@ -605,7 +606,7 @@ func ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "dodatuma",
 			LabelText:  translator.Label("Do datuma"),
 			ClassLabel: common.ClassLabel + " w-44",
@@ -613,7 +614,7 @@ func ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "dodatuma",
 			Name:       "dodatuma",
 			FieldType:  "date",
@@ -631,11 +632,11 @@ func ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.FormObradaButton(btnObrada, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.FormObradaButton(btnObrada, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Search_PartPrintButton(btnStampa).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Search_PartPrintButton(btnStampa).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -643,11 +644,11 @@ func ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Search_Part(tblPartneri, searchInput).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Search_Part(tblPartneri, searchInput).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -655,7 +656,7 @@ func ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Table(tblPartneri, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Table(tblPartneri, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -663,7 +664,7 @@ func ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Search_Part(tblDetalji, searchInputDetalji).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Search_Part(tblDetalji, searchInputDetalji).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -671,7 +672,7 @@ func ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Table(tblDetalji, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Table(tblDetalji, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -717,7 +718,7 @@ func IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "konto",
 			LabelText:  translator.Label("Konto"),
 			ClassLabel: common.ClassLabel + " w-24",
@@ -725,7 +726,7 @@ func IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:           "konto",
 			Name:         "konto",
 			FieldType:    "text",
@@ -743,7 +744,7 @@ func IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SearchButton(domain.SearchButtonConfig{
+		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
 			ID:          "btn-search-konto",
 			Name:        "search-konto",
 			HxUrl:       "/api/promet/searchbutton",
@@ -755,7 +756,7 @@ func IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "kontonaziv",
 			Name:       "kontonaziv",
 			FieldType:  "text",
@@ -769,7 +770,7 @@ func IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "odsifre",
 			LabelText:  translator.Label("Od šifre"),
 			ClassLabel: common.ClassLabel + " w-24",
@@ -777,7 +778,7 @@ func IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:           "odsifre",
 			Name:         "odsifre",
 			FieldType:    "text",
@@ -796,7 +797,7 @@ func IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SearchButton(domain.SearchButtonConfig{
+		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
 			ID:          "odsifre",
 			Name:        "search-odsifre",
 			HxUrl:       "/api/promet/searchbutton",
@@ -808,7 +809,7 @@ func IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "odsifrenaziv",
 			Name:       "odsifrenaziv",
 			FieldType:  "text",
@@ -822,7 +823,7 @@ func IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "dosifre",
 			LabelText:  translator.Label("Do šifre"),
 			ClassLabel: common.ClassLabel + " w-24",
@@ -830,7 +831,7 @@ func IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:           "dosifre",
 			Name:         "dosifre",
 			FieldType:    "text",
@@ -849,7 +850,7 @@ func IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SearchButton(domain.SearchButtonConfig{
+		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
 			ID:          "dosifre",
 			Name:        "search-dosifre",
 			HxUrl:       "/api/promet/searchbutton",
@@ -861,7 +862,7 @@ func IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "dosifrenaziv",
 			Name:       "dosifrenaziv",
 			FieldType:  "text",
@@ -875,7 +876,7 @@ func IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "oddatuma",
 			LabelText:  translator.Label("Od datuma"),
 			ClassLabel: common.ClassLabel + " w-44",
@@ -883,7 +884,7 @@ func IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "poddatumom",
 			Name:       "poddatumom",
 			FieldType:  "date",
@@ -901,7 +902,7 @@ func IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "otvstavkedana",
 			LabelText:  translator.Label("Otv. stavke preko broja dana"),
 			ClassLabel: common.ClassLabel + " w-44",
@@ -909,7 +910,7 @@ func IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "otvstavkedana",
 			Name:       "otvstavkedana",
 			FieldType:  "number",
@@ -928,11 +929,11 @@ func IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.FormObradaButton(btnObrada, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.FormObradaButton(btnObrada, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Search_PartPrintButton(btnIOS).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Search_PartPrintButton(btnIOS).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -940,7 +941,7 @@ func IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Search_Part(tblPartneri, searchInput).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Search_Part(tblPartneri, searchInput).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -948,7 +949,7 @@ func IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Table(tblPartneri, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Table(tblPartneri, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -956,11 +957,11 @@ func IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Search_Part(tblDetalji, searchInputDetalji).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Search_Part(tblDetalji, searchInputDetalji).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -968,7 +969,7 @@ func IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Table(tblDetalji, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Table(tblDetalji, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1014,7 +1015,7 @@ func DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Tab
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "konto",
 			LabelText:  translator.Label("Konto"),
 			ClassLabel: common.ClassLabel + " w-24",
@@ -1022,7 +1023,7 @@ func DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Tab
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:           "konto",
 			Name:         "konto",
 			FieldType:    "text",
@@ -1040,7 +1041,7 @@ func DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Tab
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SearchButton(domain.SearchButtonConfig{
+		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
 			ID:          "btn-search-konto",
 			Name:        "search-konto",
 			HxUrl:       "/api/promet/searchbutton",
@@ -1052,7 +1053,7 @@ func DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Tab
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "kontonaziv",
 			Name:       "kontonaziv",
 			FieldType:  "text",
@@ -1066,7 +1067,7 @@ func DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Tab
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "odsifre",
 			LabelText:  translator.Label("Od šifre"),
 			ClassLabel: common.ClassLabel + " w-24",
@@ -1074,7 +1075,7 @@ func DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Tab
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:           "odsifre",
 			Name:         "odsifre",
 			FieldType:    "text",
@@ -1093,7 +1094,7 @@ func DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Tab
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SearchButton(domain.SearchButtonConfig{
+		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
 			ID:          "odsifre",
 			Name:        "search-odsifre",
 			HxUrl:       "/api/promet/searchbutton",
@@ -1105,7 +1106,7 @@ func DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Tab
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "odsifrenaziv",
 			Name:       "odsifrenaziv",
 			FieldType:  "text",
@@ -1119,7 +1120,7 @@ func DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Tab
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "dosifre",
 			LabelText:  translator.Label("Do šifre"),
 			ClassLabel: common.ClassLabel + " w-24",
@@ -1127,7 +1128,7 @@ func DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Tab
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:           "dosifre",
 			Name:         "dosifre",
 			FieldType:    "text",
@@ -1146,7 +1147,7 @@ func DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Tab
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SearchButton(domain.SearchButtonConfig{
+		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
 			ID:          "dosifre",
 			Name:        "search-dosifre",
 			HxUrl:       "/api/promet/searchbutton",
@@ -1158,7 +1159,7 @@ func DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Tab
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "dosifrenaziv",
 			Name:       "dosifrenaziv",
 			FieldType:  "text",
@@ -1175,7 +1176,7 @@ func DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Tab
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Prikaz analitički"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 901, Col: 70}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 903, Col: 70}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
@@ -1188,7 +1189,7 @@ func DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Tab
 		var templ_7745c5c3_Var7 string
 		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Prikaz sintetički"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 905, Col: 70}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 907, Col: 70}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {
@@ -1198,7 +1199,7 @@ func DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Tab
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "poddatumom",
 			LabelText:  translator.Label("Pod datumom"),
 			ClassLabel: common.ClassLabel + " w-24",
@@ -1206,7 +1207,7 @@ func DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Tab
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "poddatumom",
 			Name:       "poddatumom",
 			FieldType:  "date",
@@ -1227,7 +1228,7 @@ func DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Tab
 		var templ_7745c5c3_Var8 string
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Potraživanja koja dospevaju u narednih"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 931, Col: 91}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 933, Col: 91}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {
@@ -1240,7 +1241,7 @@ func DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Tab
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Potraživanja koja su starija od"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 938, Col: 85}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 940, Col: 85}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
@@ -1250,10 +1251,10 @@ func DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Tab
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "brojdana",
 			Name:       "brojdana",
-			FieldType:  "text",
+			FieldType:  "number",
 			Disabled:   false,
 			ClassInput: common.ClassInputTextEnabled + " ml-16 w-16",
 			MaxLength:  "3",
@@ -1272,7 +1273,7 @@ func DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Tab
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("dana"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 952, Col: 56}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 954, Col: 56}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
@@ -1282,11 +1283,11 @@ func DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Tab
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.FormObradaButton(btnObrada, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.FormObradaButton(btnObrada, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Search_PartPrintButton(btnPrint).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Search_PartPrintButton(btnPrint).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1294,11 +1295,11 @@ func DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Tab
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Search_Part(tblPartneri, searchInput).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Search_Part(tblPartneri, searchInput).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1306,7 +1307,7 @@ func DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Tab
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Table(tblPartneri, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Table(tblPartneri, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1314,7 +1315,7 @@ func DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Tab
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Search_Part(tblDetalji, searchInputDetalji).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Search_Part(tblDetalji, searchInputDetalji).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1322,7 +1323,7 @@ func DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Tab
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Table(tblDetalji, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Table(tblDetalji, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1330,7 +1331,7 @@ func DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Tab
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.HandleDialogResponseScript("dialog-content").Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.HandleDialogResponseScript().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1338,7 +1339,7 @@ func DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Tab
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SpinnerScript().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.SpinnerScript().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1387,7 +1388,7 @@ func PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnOb
 		var templ_7745c5c3_Var12 string
 		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Pregled dugovanja kupaca"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 1032, Col: 75}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 1034, Col: 75}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 		if templ_7745c5c3_Err != nil {
@@ -1400,7 +1401,7 @@ func PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnOb
 		var templ_7745c5c3_Var13 string
 		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Pregled obaveza prema dobavljačima"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 1036, Col: 86}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 1038, Col: 86}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 		if templ_7745c5c3_Err != nil {
@@ -1410,7 +1411,7 @@ func PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnOb
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "odkonta",
 			LabelText:  translator.Label("Od konta"),
 			ClassLabel: common.ClassLabel + " w-24",
@@ -1418,7 +1419,7 @@ func PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnOb
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "odkonta",
 			Name:       "odkonta",
 			FieldType:  "text",
@@ -1438,7 +1439,7 @@ func PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnOb
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "odsifre",
 			LabelText:  translator.Label("Od šifre"),
 			ClassLabel: common.ClassLabel + " w-24",
@@ -1446,7 +1447,7 @@ func PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnOb
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "odsifre",
 			Name:       "odsifre",
 			FieldType:  "text",
@@ -1466,7 +1467,7 @@ func PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnOb
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "dokonta",
 			LabelText:  translator.Label("Do konta"),
 			ClassLabel: common.ClassLabel + " w-24",
@@ -1474,7 +1475,7 @@ func PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnOb
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "dokonta",
 			Name:       "dokonta",
 			FieldType:  "text",
@@ -1494,7 +1495,7 @@ func PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnOb
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "dosifre",
 			LabelText:  translator.Label("Do šifre"),
 			ClassLabel: common.ClassLabel + " w-24",
@@ -1502,7 +1503,7 @@ func PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnOb
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "dosifre",
 			Name:       "dosifre",
 			FieldType:  "text",
@@ -1522,7 +1523,7 @@ func PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnOb
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "stanjenadan",
 			LabelText:  translator.Label("Stanje na dan"),
 			ClassLabel: common.ClassLabel + " w-44",
@@ -1530,7 +1531,7 @@ func PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnOb
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "stanjenadan",
 			Name:       "stanjenadan",
 			FieldType:  "date",
@@ -1548,7 +1549,7 @@ func PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnOb
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.CheckboxField(domain.CheckboxFieldConfig{
+		templ_7745c5c3_Err = components.CheckboxField(domain.CheckboxFieldConfig{
 			ID:            "stampaj_samo_zbir",
 			Name:          "stampaj_samo_zbir",
 			LabelText:     "Štampaj samo zbir za partnera",
@@ -1564,7 +1565,7 @@ func PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnOb
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "bperiodi",
 			LabelText:  translator.Label("Periodi"),
 			ClassLabel: common.ClassLabel + " w-44",
@@ -1572,7 +1573,7 @@ func PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnOb
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "dospece15",
 			Name:       "dospece15",
 			FieldType:  "text",
@@ -1588,7 +1589,7 @@ func PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnOb
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "dospece30",
 			Name:       "dospece30",
 			FieldType:  "text",
@@ -1604,7 +1605,7 @@ func PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnOb
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "dospece60",
 			Name:       "dospece60",
 			FieldType:  "text",
@@ -1620,7 +1621,7 @@ func PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnOb
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "dospece90",
 			Name:       "dospece90",
 			FieldType:  "text",
@@ -1636,7 +1637,7 @@ func PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnOb
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "dospece120",
 			Name:       "dospece120",
 			FieldType:  "text",
@@ -1656,11 +1657,11 @@ func PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnOb
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.FormObradaButton(btnObrada, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.FormObradaButton(btnObrada, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Search_PartPrintButton(btnPrint).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Search_PartPrintButton(btnPrint).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1668,11 +1669,11 @@ func PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnOb
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Search_Part(tbl, searchInput).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Search_Part(tbl, searchInput).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1680,7 +1681,7 @@ func PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnOb
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1688,7 +1689,7 @@ func PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnOb
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.HandleDialogResponseScript("dialog-content").Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.HandleDialogResponseScript().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1696,7 +1697,7 @@ func PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnOb
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SpinnerScript().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.SpinnerScript().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1745,7 +1746,7 @@ func PregledDospelogDugaPoStarosti(tabs domain.TabData, tbl domain.TableData, bt
 		var templ_7745c5c3_Var15 string
 		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Pregled dugovanja kupaca"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 1301, Col: 75}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 1303, Col: 75}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 		if templ_7745c5c3_Err != nil {
@@ -1758,7 +1759,7 @@ func PregledDospelogDugaPoStarosti(tabs domain.TabData, tbl domain.TableData, bt
 		var templ_7745c5c3_Var16 string
 		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Pregled obaveza prema dobavljačima"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 1305, Col: 86}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 1307, Col: 86}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 		if templ_7745c5c3_Err != nil {
@@ -1768,7 +1769,7 @@ func PregledDospelogDugaPoStarosti(tabs domain.TabData, tbl domain.TableData, bt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "odkonta",
 			LabelText:  translator.Label("Od konta"),
 			ClassLabel: common.ClassLabel + " w-24",
@@ -1776,7 +1777,7 @@ func PregledDospelogDugaPoStarosti(tabs domain.TabData, tbl domain.TableData, bt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "odkonta",
 			Name:       "odkonta",
 			FieldType:  "text",
@@ -1796,7 +1797,7 @@ func PregledDospelogDugaPoStarosti(tabs domain.TabData, tbl domain.TableData, bt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "odsifre",
 			LabelText:  translator.Label("Od šifre"),
 			ClassLabel: common.ClassLabel + " w-24",
@@ -1804,7 +1805,7 @@ func PregledDospelogDugaPoStarosti(tabs domain.TabData, tbl domain.TableData, bt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "odsifre",
 			Name:       "odsifre",
 			FieldType:  "text",
@@ -1824,7 +1825,7 @@ func PregledDospelogDugaPoStarosti(tabs domain.TabData, tbl domain.TableData, bt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "dokonta",
 			LabelText:  translator.Label("Do konta"),
 			ClassLabel: common.ClassLabel + " w-24",
@@ -1832,7 +1833,7 @@ func PregledDospelogDugaPoStarosti(tabs domain.TabData, tbl domain.TableData, bt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "dokonta",
 			Name:       "dokonta",
 			FieldType:  "text",
@@ -1852,7 +1853,7 @@ func PregledDospelogDugaPoStarosti(tabs domain.TabData, tbl domain.TableData, bt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "dosifre",
 			LabelText:  translator.Label("Do šifre"),
 			ClassLabel: common.ClassLabel + " w-24",
@@ -1860,7 +1861,7 @@ func PregledDospelogDugaPoStarosti(tabs domain.TabData, tbl domain.TableData, bt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "dosifre",
 			Name:       "dosifre",
 			FieldType:  "text",
@@ -1880,7 +1881,7 @@ func PregledDospelogDugaPoStarosti(tabs domain.TabData, tbl domain.TableData, bt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "stanjenadan",
 			LabelText:  translator.Label("Stanje na dan"),
 			ClassLabel: common.ClassLabel + " w-44",
@@ -1888,7 +1889,7 @@ func PregledDospelogDugaPoStarosti(tabs domain.TabData, tbl domain.TableData, bt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "stanjenadan",
 			Name:       "stanjenadan",
 			FieldType:  "date",
@@ -1904,7 +1905,7 @@ func PregledDospelogDugaPoStarosti(tabs domain.TabData, tbl domain.TableData, bt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "periodi",
 			LabelText:  translator.Label("Periodi"),
 			ClassLabel: common.ClassLabel + " w-44",
@@ -1912,7 +1913,7 @@ func PregledDospelogDugaPoStarosti(tabs domain.TabData, tbl domain.TableData, bt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "dospece15",
 			Name:       "dospece15",
 			FieldType:  "text",
@@ -1928,7 +1929,7 @@ func PregledDospelogDugaPoStarosti(tabs domain.TabData, tbl domain.TableData, bt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "dospece30",
 			Name:       "dospece30",
 			FieldType:  "text",
@@ -1944,7 +1945,7 @@ func PregledDospelogDugaPoStarosti(tabs domain.TabData, tbl domain.TableData, bt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "dospece60",
 			Name:       "dospece60",
 			FieldType:  "text",
@@ -1960,7 +1961,7 @@ func PregledDospelogDugaPoStarosti(tabs domain.TabData, tbl domain.TableData, bt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "dospece90",
 			Name:       "dospece90",
 			FieldType:  "text",
@@ -1976,7 +1977,7 @@ func PregledDospelogDugaPoStarosti(tabs domain.TabData, tbl domain.TableData, bt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "dospece120",
 			Name:       "dospece120",
 			FieldType:  "text",
@@ -1996,11 +1997,11 @@ func PregledDospelogDugaPoStarosti(tabs domain.TabData, tbl domain.TableData, bt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.FormObradaButton(btnObrada, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.FormObradaButton(btnObrada, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Search_PartPrintButton(btnPrint).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Search_PartPrintButton(btnPrint).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2008,11 +2009,11 @@ func PregledDospelogDugaPoStarosti(tabs domain.TabData, tbl domain.TableData, bt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Search_Part(tbl, searchInput).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Search_Part(tbl, searchInput).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2020,7 +2021,7 @@ func PregledDospelogDugaPoStarosti(tabs domain.TabData, tbl domain.TableData, bt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2028,7 +2029,7 @@ func PregledDospelogDugaPoStarosti(tabs domain.TabData, tbl domain.TableData, bt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.HandleDialogResponseScript("dialog-content").Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.HandleDialogResponseScript().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2036,7 +2037,7 @@ func PregledDospelogDugaPoStarosti(tabs domain.TabData, tbl domain.TableData, bt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SpinnerScript().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.SpinnerScript().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2078,7 +2079,7 @@ func PovezivanjeRacunaUplata(tabs domain.TabData, tblPartneri, tblUplate, tblFak
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "konto",
 			LabelText:  translator.Label("Konto"),
 			ClassLabel: common.ClassLabel + " w-32",
@@ -2086,7 +2087,7 @@ func PovezivanjeRacunaUplata(tabs domain.TabData, tblPartneri, tblUplate, tblFak
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:           "konto",
 			Name:         "konto",
 			FieldType:    "text",
@@ -2104,7 +2105,7 @@ func PovezivanjeRacunaUplata(tabs domain.TabData, tblPartneri, tblUplate, tblFak
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SearchButton(domain.SearchButtonConfig{
+		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
 			ID:          "btn-search-konto",
 			Name:        "search-konto",
 			HxUrl:       "/api/promet/searchbutton",
@@ -2116,7 +2117,7 @@ func PovezivanjeRacunaUplata(tabs domain.TabData, tblPartneri, tblUplate, tblFak
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "kontonaziv",
 			Name:       "kontonaziv",
 			FieldType:  "text",
@@ -2130,7 +2131,7 @@ func PovezivanjeRacunaUplata(tabs domain.TabData, tblPartneri, tblUplate, tblFak
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "odsifre",
 			LabelText:  translator.Label("Počev od šifre"),
 			ClassLabel: common.ClassLabel + " w-32",
@@ -2138,7 +2139,7 @@ func PovezivanjeRacunaUplata(tabs domain.TabData, tblPartneri, tblUplate, tblFak
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:           "odsifre",
 			Name:         "odsifre",
 			FieldType:    "text",
@@ -2157,7 +2158,7 @@ func PovezivanjeRacunaUplata(tabs domain.TabData, tblPartneri, tblUplate, tblFak
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SearchButton(domain.SearchButtonConfig{
+		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
 			ID:          "btn-search-odsifre",
 			Name:        "search-odsifre",
 			HxUrl:       "/api/promet/searchbutton",
@@ -2169,7 +2170,7 @@ func PovezivanjeRacunaUplata(tabs domain.TabData, tblPartneri, tblUplate, tblFak
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "odsifrenaziv",
 			Name:       "odsifrenaziv",
 			FieldType:  "text",
@@ -2183,7 +2184,7 @@ func PovezivanjeRacunaUplata(tabs domain.TabData, tblPartneri, tblUplate, tblFak
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "dosifre",
 			LabelText:  translator.Label("Zaključno sa šifrom"),
 			ClassLabel: common.ClassLabel + " w-32",
@@ -2191,7 +2192,7 @@ func PovezivanjeRacunaUplata(tabs domain.TabData, tblPartneri, tblUplate, tblFak
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:           "dosifre",
 			Name:         "dosifre",
 			FieldType:    "text",
@@ -2210,7 +2211,7 @@ func PovezivanjeRacunaUplata(tabs domain.TabData, tblPartneri, tblUplate, tblFak
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SearchButton(domain.SearchButtonConfig{
+		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
 			ID:          "btn-search-dosifre",
 			Name:        "search-dosifre",
 			HxUrl:       "/api/promet/searchbutton",
@@ -2222,7 +2223,7 @@ func PovezivanjeRacunaUplata(tabs domain.TabData, tblPartneri, tblUplate, tblFak
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "dosifrenaziv",
 			Name:       "dosifrenaziv",
 			FieldType:  "text",
@@ -2236,15 +2237,15 @@ func PovezivanjeRacunaUplata(tabs domain.TabData, tblPartneri, tblUplate, tblFak
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.FormObradaButton(btnObrada, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.FormObradaButton(btnObrada, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.FormObradaButton(btnZatvaranje, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.FormObradaButton(btnZatvaranje, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Button(btnNazad).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Button(btnNazad).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2252,7 +2253,7 @@ func PovezivanjeRacunaUplata(tabs domain.TabData, tblPartneri, tblUplate, tblFak
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "iznoszarazvodjenje",
 			LabelText:  translator.Label("Iznos za razvođenje"),
 			ClassLabel: common.ClassLabel + " text-blue-800 font-bold text-xs",
@@ -2260,10 +2261,11 @@ func PovezivanjeRacunaUplata(tabs domain.TabData, tblPartneri, tblUplate, tblFak
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:            "iznoszarazvodjenje",
 			Name:          "iznoszarazvodjenje",
 			Disabled:      true,
+			FieldType:     "number",
 			ClassInput:    common.ClassInputNumericDisabled + " text-blue-800 font-bold text-sm w-full",
 			DecimalPlaces: 2,
 			MaxLength:     "18",
@@ -2276,7 +2278,7 @@ func PovezivanjeRacunaUplata(tabs domain.TabData, tblPartneri, tblUplate, tblFak
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "selelektovaniiznos",
 			LabelText:  translator.Label("Selektovani iznos"),
 			ClassLabel: common.ClassLabel + " text-blue-800 font-bold text-xs",
@@ -2284,10 +2286,11 @@ func PovezivanjeRacunaUplata(tabs domain.TabData, tblPartneri, tblUplate, tblFak
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:            "selelektovaniiznos",
 			Name:          "selelektovaniiznos",
 			Disabled:      true,
+			FieldType:     "number",
 			ClassInput:    common.ClassInputNumericDisabled + " text-blue-800 font-bold text-sm w-full",
 			DecimalPlaces: 2,
 			MaxLength:     "18",
@@ -2300,7 +2303,7 @@ func PovezivanjeRacunaUplata(tabs domain.TabData, tblPartneri, tblUplate, tblFak
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "ostatak",
 			LabelText:  translator.Label("Ostatak"),
 			ClassLabel: common.ClassLabel + " text-blue-800 font-bold text-xs",
@@ -2308,11 +2311,12 @@ func PovezivanjeRacunaUplata(tabs domain.TabData, tblPartneri, tblUplate, tblFak
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:            "ostatak",
 			Name:          "ostatak",
 			Disabled:      true,
 			ClassInput:    common.ClassInputNumericDisabled + " text-blue-800 font-bold text-sm w-full",
+			FieldType:     "number",
 			DecimalPlaces: 2,
 			MaxLength:     "18",
 			TabIndex:      "-1",
@@ -2324,15 +2328,15 @@ func PovezivanjeRacunaUplata(tabs domain.TabData, tblPartneri, tblUplate, tblFak
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Search_Part(tblPartneri, searchPartneri).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Search_Part(tblPartneri, searchPartneri).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Table(tblPartneri, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Table(tblPartneri, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2340,7 +2344,7 @@ func PovezivanjeRacunaUplata(tabs domain.TabData, tblPartneri, tblUplate, tblFak
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Table(tblUplate, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Table(tblUplate, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2348,7 +2352,7 @@ func PovezivanjeRacunaUplata(tabs domain.TabData, tblPartneri, tblUplate, tblFak
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Table(tblFakture, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Table(tblFakture, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2360,7 +2364,7 @@ func PovezivanjeRacunaUplata(tabs domain.TabData, tblPartneri, tblUplate, tblFak
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SpinnerScript().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.SpinnerScript().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

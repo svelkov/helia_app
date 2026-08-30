@@ -77,26 +77,27 @@ type SearchResultRow struct {
 }
 
 type Button struct {
-	Id               string
-	LabelText        string
-	HxActionURL      string
-	HxTarget         string
-	HxSwap           string
-	HxOnClick        string
-	HxOnClickArg     string // Optional argument for HxOnClick function
-	HxInclude        string
-	HxVals           string
-	HxRequestType    string
-	HxOnAfterRequest TrustedJS
-	IdDialog         string
-	ActionMethod     string
-	Icon             string
-	IsVisible        bool
-	IsDisabled       bool
-	BtnClass         string
-	DataFields       string // Parameters for print comma separated, e.g. `param1,param2...
-	HxHeaders        string // JSON string for custom headers, e.g. `{"X-Custom-Header": "value"}`
-	OpenDialog       bool   // Whether this button opens a dialog
+	Id                   string
+	LabelText            string
+	HxActionURL          string
+	HxTarget             string
+	HxSwap               string
+	HxOnClick            string
+	HxOnClickArg         []any // Optional argument for HxOnClick function
+	HxInclude            string
+	HxVals               string
+	HxRequestType        string
+	HxOnAfterRequest     TrustedJS
+	HxOnAfterRequestArgs []any // Optional arguments for HxOnAfterRequest function]
+	IdDialog             string
+	ActionMethod         string
+	Icon                 string
+	IsVisible            bool
+	IsDisabled           bool
+	BtnClass             string
+	DataFields           string // Parameters for print comma separated, e.g. `param1,param2...
+	HxHeaders            string // JSON string for custom headers, e.g. `{"X-Custom-Header": "value"}`
+	OpenDialog           bool   // Whether this button opens a dialog
 }
 type Fields struct {
 	Name            string
@@ -119,12 +120,13 @@ type FieldError struct {
 }
 
 type Response struct {
-	StatusCode int          `json:"statusCode"`
-	Success    bool         `json:"success"`
-	Message    string       `json:"message"`
-	Errors     []FieldError `json:"errors,omitempty"`
-	HxTrigger  string       `json:"hxTrigger,omitempty"`
-	HxLocation string       `json:"hxLocation,omitempty"`
+	StatusCode  int          `json:"statusCode"`
+	Success     bool         `json:"success"`
+	Message     string       `json:"message"`
+	Errors      []FieldError `json:"errors,omitempty"`
+	HxTrigger   string       `json:"hxTrigger,omitempty"`
+	HxLocation  string       `json:"hxLocation,omitempty"`
+	CloseDialog bool         `json:"closeDialog,omitempty"`
 }
 
 // UserClaims defines the claims (data) stored in the JWT.
@@ -147,9 +149,15 @@ type UserClaims struct {
 
 // UserClaims defines the claims (data) stored in the JWT.
 type User struct {
-	Username string `json:"username"`
-	Password string
-	Email    string `json:"email"`
+	Id           int64  `json:"id" db:"id"`
+	Username     string `json:"username" db:"username"`
+	Password     string `json:"-" db:"-"`
+	Email        string `json:"email" db:"email"`
+	Name         string `json:"name" db:"name"`
+	PasswordHash string `json:"-" db:"password_hash"`
+	TwoFAEnabled bool   `json:"2fa_enabled" db:"two_fa_enabled"`
+	TwoFASecret  string `json:"-" db:"two_fa_secret"`
+	BackupCodes  string `json:"-" db:"backup_codes"`
 }
 
 // Assuming 'tmpl' is of type '*MyTemplates'
@@ -309,6 +317,16 @@ type ReportParameters struct {
 	UserName       string
 	ParameterItems map[string]ParameterItem
 	Orientation    string
+}
+
+type PartneriParameters struct {
+	OdSifre        string
+	DoSifre        string
+	OdMesta        string
+	DoMesta        string
+	PartnerNaziv   string
+	Konto          string
+	SortirajStampu string
 }
 
 type Komintent struct {

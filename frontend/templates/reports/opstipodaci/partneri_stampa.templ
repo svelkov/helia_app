@@ -1,0 +1,34 @@
+package opstipodaci
+
+import (
+	rep "helia/frontend/templates/reports"
+	"helia/i18n"
+	"helia/internal/domain"
+)
+
+// PartneriStampa renders a printable full-page Partneri report.
+templ PartneriStampa(tblPartneri domain.TableData, reportParamers domain.ReportParameters, translator *i18n.Service) {
+	@rep.Report(reportParamers, tblPartneri, translator, nil, PartneriReport(reportParamers, tblPartneri, translator))
+}
+
+// PartneriReport renders the complete Partneri report content with header, title, and table.
+templ PartneriReport(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
+	@rep.ReportHeader(repParams)
+	@rep.ReportTitle(repParams)
+	@PartneriParam(repParams, translator)
+	@rep.ReportTableSection(tbl, translator)
+	@rep.ReportEnd(nil)
+}
+
+templ PartneriParam(repParams domain.ReportParameters, translator *i18n.Service) {
+	<div class="text-sm font-bold ml-10 grid grid-cols-8 gap-1 print:gap-2 print:m-0 print:mb-2 print:pb-1 print:border-b print:border-gray-300">{ translator.Text("Parametri izveštaja") }</div>
+	<div class="mb-1 ml-10 grid grid-cols-8 gap-1 print:gap-2 print:m-0 print:mb-2 print:pb-1 print:border-b print:border-gray-300">
+		{ translator.Label(repParams.ParameterItems["OdSifre"].Name) }: <span class="font-bold">{ repParams.ParameterItems["OdSifre"].Value }</span>
+		{ translator.Label(repParams.ParameterItems["DoSifre"].Name) }: <span class="font-bold">{ repParams.ParameterItems["DoSifre"].Value }</span>
+		{ translator.Label(repParams.ParameterItems["OdMesta"].Name) }: <span class="font-bold">{ repParams.ParameterItems["OdMesta"].Value }</span>
+		{ translator.Label(repParams.ParameterItems["DoMesta"].Name) }: <span class="font-bold">{ repParams.ParameterItems["DoMesta"].Value }</span>
+		{ translator.Label(repParams.ParameterItems["PartnerNazivSadrzi"].Name) }: <span class="font-bold">{ repParams.ParameterItems["PartnerNazivSadrzi"].Value }</span>
+		{ translator.Label(repParams.ParameterItems["Konto"].Name) }: <span class="font-bold">{ repParams.ParameterItems["Konto"].Value }</span>
+		{ translator.Text(repParams.ParameterItems["SortirajStampu"].Name) }: <span class="font-bold">{ repParams.ParameterItems["SortirajStampu"].Value }</span>
+	</div>
+}

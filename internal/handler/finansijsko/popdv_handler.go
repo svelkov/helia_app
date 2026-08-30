@@ -6,7 +6,7 @@ import (
 	"helia/pkg/utils"
 	"net/http"
 
-	tmpl "helia/frontend/templates"
+	"helia/frontend/components"
 	tmpl_fin "helia/frontend/templates/finansijsko"
 	"helia/i18n"
 	"helia/internal/common"
@@ -25,7 +25,7 @@ const (
 	popdvURLPoljaUnos string = "/api/popdv/polja/unos"
 	popdvURLPoljaSave string = "/api/popdv/polja/save"
 	popdvURLPrijava   string = "/api/popdv/prijava"
-	pppdvURLPrijava   string = "/api/pppdv/prijava"
+	pppdvURLPrijava   string = "/api/popdv/pppdv/prijava"
 	popdvURLStampa    string = "/api/popdv/stampa"
 )
 
@@ -124,7 +124,7 @@ func (h *PopdvHandler) PopdvPolja(c *gin.Context) {
 	tbl.BtnAdd.HxActionURL = popdvURLPoljaUnos
 	tbl.BtnAdd.HxTarget = "#dialog-content"
 	if requestSource == "btnobrada" || requestSource == "btnpage" || requestSource == "searchinput" {
-		tmpl.Table(tbl, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+		components.Table(tbl, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 	} else {
 		tmpl_fin.PopdvPolja(h.tabData, tbl, searchInput, gnGod, translator).Render(c.Request.Context(), c.Writer)
 	}
@@ -170,7 +170,7 @@ func (h *PopdvHandler) PopdvPoljaSave(c *gin.Context) {
 func (h *PopdvHandler) PopdvPrijava(c *gin.Context) {
 	requestSource := c.Request.Header.Get("X-Request-Source")
 	translator := i18n.GetInstance()
-
+	h.tabData = setPopdvActiveTab(h.tabData, "popprijava")
 	if requestSource == "menu" || requestSource == "tab" {
 		session := domain.GetSessionFromContext(c)
 		gnGod := 0
@@ -186,8 +186,64 @@ func (h *PopdvHandler) PopdvPrijava(c *gin.Context) {
 		tbl.URLGetAll = popdvURLPrijava
 		tbl.URLPrefix = popdvURLPrijava
 		common.SetTableConfig(&tbl, "POPDV PRIJAVA", popdvURLPrijava, false, false, false)
+		err := tmpl_fin.PopdvPrijava(h.tabData, tbl, btnObrada, btnDelete, searchInput, gnGod, translator).Render(c.Request.Context(), c.Writer)
+		if err != nil {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
+			return
+		}
+	}
+	if requestSource == "btnobrada" || requestSource == "btnpage" || requestSource == "searchinput" || requestSource == "btn" {
+		fieldParameters := []string{"oddatuma", "dodatuma"}
+		fieldsError := common.ValidateRequiredParams(c, fieldParameters)
+		if len(fieldsError) > 0 {
+			utils.RenderDialogOK(c, "dialog-popdv-validation-error", common.ErrMsgValidation)
+			return
+		}
 
-		h.tabData = setPopdvActiveTab(h.tabData, "prijava")
+		page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
+		odDatuma := c.Query("oddatuma")
+		doDatuma := c.Query("dodatuma")
+		searchText := c.Query("query")
+		ctx := c.Request.Context()
+
+		tbl := common.SetTableBasicData("", popdvTableID, h.service.GetPrijavaTableFields(), "", popdvURLPrijava, 0, 0, 0, 0, h.cfg)
+		common.SetTableConfig(&tbl, "", popdvURLPrijava, false, false, false)
+		tbl.Pagination.HxVals = hxValsPopdvPrijava
+		err := h.service.GetPrijava(ctx, &tbl, true, pageSize, page, odDatuma, doDatuma, searchText)
+		if err != nil {
+			utils.RenderDialogOK(c, "dialog-popdv-get-total-records", common.ErrMsgGetTotalRecords)
+			return
+		}
+		err = h.service.GetPrijava(ctx, &tbl, false, pageSize, page, odDatuma, doDatuma, searchText)
+		if err != nil {
+			utils.RenderDialogOK(c, "dialog-popdv-render-template", common.ErrMsgGetData)
+			return
+		}
+		tbl.URLGetAll = popdvURLPrijava
+		tbl.URLPrefix = popdvURLPrijava
+		utils.RenderContent(c, tbl)
+	}
+}
+
+func (h *PopdvHandler) PppdvPrijava(c *gin.Context) {
+	requestSource := c.Request.Header.Get("X-Request-Source")
+	translator := i18n.GetInstance()
+	h.tabData = setPopdvActiveTab(h.tabData, "ppprijava")
+	if requestSource == "menu" || requestSource == "tab" {
+		session := domain.GetSessionFromContext(c)
+		gnGod := 0
+		if session != nil {
+			gnGod = session.SelectedGod
+		}
+		btnObrada := common.SetButton("obrada-btn", translator.Button("Obrada"), "fin_obrada", popdvURLPrijava, "#"+popdvTableID, "innerHTML", "GET", "", hxValsPopdvPrijava, true, common.ClassSaveButton, "")
+		btnDelete := common.SetButton("delete-btn", "Obriši", "fin_delete", "", "", "innerHTML", "GET", "", hxValsPopdvPrijava, true, common.ClassButton, "")
+		searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), popdvURLPrijava, fmt.Sprintf("#%s", popdvTableID), hxValsPopdvPrijava)
+
+		tbl := common.SetTableBasicData(popdvContentTitle, popdvTableID, h.service.GetPrijavaTableFields(), "", "", 0, 0, 0, 0, h.cfg)
+		tbl.Pagination.HxVals = hxValsPopdvPrijava
+		tbl.URLGetAll = popdvURLPrijava
+		tbl.URLPrefix = popdvURLPrijava
+		common.SetTableConfig(&tbl, "POPDV PRIJAVA", popdvURLPrijava, false, false, false)
 		err := tmpl_fin.PopdvPrijava(h.tabData, tbl, btnObrada, btnDelete, searchInput, gnGod, translator).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
@@ -230,7 +286,7 @@ func (h *PopdvHandler) PopdvPrijava(c *gin.Context) {
 func (h *PopdvHandler) PopdvStampa(c *gin.Context) {
 	requestSource := c.Request.Header.Get("X-Request-Source")
 	translator := i18n.GetInstance()
-
+	h.tabData = setPopdvActiveTab(h.tabData, "stampa")
 	if requestSource == "menu" || requestSource == "tab" {
 		session := domain.GetSessionFromContext(c)
 		gnGod := 0
@@ -285,6 +341,7 @@ func (h *PopdvHandler) RegisterRoutes(r *gin.Engine) {
 	r.POST("api/popdv/polja/save", h.PopdvPoljaSave)
 	r.GET("api/popdv/polja/unos", h.PopdvPoljaUnos)
 	r.GET("api/popdv/prijava", h.PopdvPrijava)
+	r.GET("api/popdv/pppdv/prijava", h.PppdvPrijava)
 	r.GET("api/popdv/stampa", h.PopdvStampa)
 }
 

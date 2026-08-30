@@ -5,6 +5,14 @@
 fkpl takodje 0..n. Ova tabela je dodata u .sql definiciju baze, takodje su dodate i constraint-te. 
 - Posle dodavanja ove tabele mora da se uradi reogranizacija podataka tj . da se u FKPL oznace polja koja su za partnere sa tipom analitike za partnere i sva ostala konta koja imaju tip = 1 tj analitika treba da budu obrisani. Veza izmedju fkpl i tipanalitike i partnerii tip analitike mora se proveriti i koretno uspostaviti.
 
+- posle migracije podataka izvrsi ovu komandu: 
+UPDATE fpro
+SET idpartneri = p.idpartneri
+FROM fkpl f
+INNER JOIN partneri p ON p.idpartneri = f.idpartneri
+WHERE fpro.idfkpl = f.idfkpl
+  AND f.idpartneri IS NOT NULL;
+
 - Baza:
 dodati polje idvalute kopija iz tabele valute i dodaj constraint fpro->valute
 

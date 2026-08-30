@@ -1,0 +1,231 @@
+package robno
+
+import (
+	"helia/frontend/components"
+	tmpl "helia/frontend/templates"
+	"helia/i18n"
+	"helia/internal/common"
+	"helia/internal/domain"
+)
+
+templ RobnoKarticaMain(tabs domain.TabData, articleTable, subsyntheticTable domain.TableData, articleButton, articlePrintButton, subsyntheticButton, subsyntheticPrintButton domain.Button, magacini []domain.ComboItem, translator *i18n.Service) {
+	<div id="robno-kartica-content" class="flex flex-col h-full">
+		@RobnoKarticaArticle(tabs, articleTable, articleButton, articlePrintButton, magacini, translator)
+	</div>
+	@tmpl.ShowSearchDialogScript()
+	@tmpl.HideDropdownScript()
+	@tmpl.CloseDialogScript()
+	@RobnoKarticaScripts()
+}
+
+templ RobnoKarticaArticle(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint domain.Button, magacini []domain.ComboItem, translator *i18n.Service) {
+	<!-- Container with full height -->
+	<div class="bg-blue-100 p-1 flex flex-col h-full">
+		<div class="border-b border-blue-600">
+			@tmpl.TabNav(translator.Title("ROBNO KARTICA"), tabs, "#robno-kartica-content", "robno-kartica-panel", translator)
+		</div>
+		<div class="flex-1 min-h-0 flex flex-col gap-1 pt-1">
+			<div class="grid grid-cols-[1fr_4fr_1fr] gap-2 items-start">
+				<fieldset class="border border-blue-400 p-1 rounded-lg h-full">
+					<legend class="px-1 mb-7 font-semibold text-sm text-blue-900">{ translator.Label("Selekcija") }</legend>
+					@RobnoKarticaCheck("chkpobrojunaloga", "Po broju naloga ?", `["brojnaloga"]`, translator)
+					@RobnoKarticaCheck("chkpodatumunaloga", "Po datumu naloga ?", `["oddatumanaloga","dodatumanaloga"]`, translator)
+					@RobnoKarticaCheck("chkpodatumuobrade", "Po datumu obrade ?", `["oddatumaobrade","dodatumaobrade"]`, translator)
+					@RobnoKarticaCheck("chkpovrstidokumenta", "Po vrsti dokumenta ?", `["sifvrstedokumenta"]`, translator)
+					@RobnoKarticaCheck("chkpobrojudokumenta", "Po broju dokumenta ?", `["brojdokumenta"]`, translator)
+					@RobnoKarticaCheck("chkpodatumdokumenta", "Po datumu dokumenta ?", `["oddatumadok","dodatumaadok"]`, translator)
+					@RobnoKarticaCheck("chkpoiznosu", "Po iznosu ?", `["odiznosa","doiznosa"]`, translator)
+				</fieldset>
+				<fieldset class="border border-blue-400 p-1 rounded-lg">
+					<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Parametri za obradu") }</legend>
+					<div class="flex items-center gap-1 mb-1">
+						@components.LabelField(domain.LabelFieldConfig{ID: "magacin", LabelText: translator.Label("Magacin"), ClassLabel: common.ClassLabel + " w-32"})
+						@components.ComboBoxField(domain.ComboFieldConfig{ID: "magacin", Name: "magacin", LabelText: translator.Label("Magacin"), ClassLabel: common.ClassLabel, ClassSelect: common.ClassInputTextEnabled + " flex-1", OptionValues: magacini, TabIndex: "1"}, translator)
+					</div>
+					<div class="flex items-center gap-1 mb-1">
+						@components.LabelField(domain.LabelFieldConfig{ID: "brojnaloga", LabelText: translator.Label("Broj naloga"), ClassLabel: common.ClassLabel + " w-32"})
+						@components.TextInputField(domain.InputFieldConfig{ID: "brojnaloga", Name: "brojnaloga", Disabled: true, ClassInput: common.ClassInputTextEnabled + " w-40", TabIndex: "2"})
+					</div>
+					<div class="grid grid-cols-2 gap-1 mb-1">
+						<div class="flex items-center gap-1 min-w-0">
+							@components.LabelField(domain.LabelFieldConfig{ID: "oddatumanaloga", LabelText: translator.Label("Od datuma naloga"), ClassLabel: common.ClassLabel + " w-32"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "oddatumanaloga", Name: "oddatumanaloga", Disabled: true, FieldType: "date", ClassInput: common.ClassInputTextEnabled + "  w-40", TabIndex: "3"})
+						</div>
+						<div class="flex items-center gap-1 min-w-0">
+							@components.LabelField(domain.LabelFieldConfig{ID: "dodatumanaloga", LabelText: translator.Label("Do datuma naloga"), ClassLabel: common.ClassLabel + " w-32"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "dodatumanaloga", Name: "dodatumanaloga", Disabled: true, FieldType: "date", ClassInput: common.ClassInputTextEnabled + "  w-40", TabIndex: "4"})
+						</div>
+					</div>
+					<div class="grid grid-cols-2 gap-1 mb-1">
+						<div class="flex items-center gap-1 min-w-0">
+							@components.LabelField(domain.LabelFieldConfig{ID: "oddatumaobrade", LabelText: translator.Label("Od datuma obrade"), ClassLabel: common.ClassLabel + " w-32"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "oddatumaobrade", Name: "oddatumaobrade", Disabled: true, FieldType: "date", ClassInput: common.ClassInputTextEnabled + "  w-40", TabIndex: "3"})
+						</div>
+						<div class="flex items-center gap-1 min-w-0">
+							@components.LabelField(domain.LabelFieldConfig{ID: "dodatumaobrade", LabelText: translator.Label("Do datuma obrade"), ClassLabel: common.ClassLabel + " w-32"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "dodatumaobrade", Name: "dodatumaobrade", Disabled: true, FieldType: "date", ClassInput: common.ClassInputTextEnabled + "  w-40", TabIndex: "4"})
+						</div>
+					</div>
+					<div class="flex items-center gap-1 mb-1">
+						@components.LabelField(domain.LabelFieldConfig{ID: "sifvrstedokumenta", LabelText: translator.Label("Šifra vrste dokumenta"), ClassLabel: common.ClassLabel + " w-32"})
+						@components.TextInputField(domain.InputFieldConfig{ID: "sifvrstedokumenta", Name: "sifvrstedokumenta", Disabled: true, FieldType: "text", ClassInput: common.ClassInputTextEnabled + "  flex-1 w-full", TabIndex: "7"})
+					</div>
+					<div class="flex items-center gap-1 mb-1">
+						@components.LabelField(domain.LabelFieldConfig{ID: "brojdokumenta", LabelText: translator.Label("Broj dokumenta"), ClassLabel: common.ClassLabel + " w-32"})
+						@components.TextInputField(domain.InputFieldConfig{ID: "brojdokumenta", Name: "brojdokumenta", Disabled: true, FieldType: "text", ClassInput: common.ClassInputTextEnabled + "  flex-1 w-full", TabIndex: "7"})
+					</div>
+					<div class="grid grid-cols-2 gap-1 mb-1">
+						<div class="flex items-center gap-1 min-w-0">
+							@components.LabelField(domain.LabelFieldConfig{ID: "oddatumadok", LabelText: translator.Label("Od datuma dokumenta"), ClassLabel: common.ClassLabel + " w-32"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "oddatumadok", Name: "oddatumadok", Disabled: true, FieldType: "date", ClassInput: common.ClassInputTextEnabled + "  w-40", TabIndex: "3"})
+						</div>
+						<div class="flex items-center gap-1 min-w-0">
+							@components.LabelField(domain.LabelFieldConfig{ID: "dodatumaadok", LabelText: translator.Label("Do datuma dokumenta"), ClassLabel: common.ClassLabel + " w-32"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "dodatumaadok", Name: "dodatumaadok", Disabled: true, FieldType: "date", ClassInput: common.ClassInputTextEnabled + "  w-40", TabIndex: "4"})
+						</div>
+					</div>
+					<div class="grid grid-cols-2 gap-1 mb-1">
+						<div class="flex items-center gap-1 min-w-0">
+							@components.LabelField(domain.LabelFieldConfig{ID: "odiznosa", LabelText: translator.Label("Od iznosa"), ClassLabel: common.ClassLabel + " w-32"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "odiznosa", Name: "odiznosa", Disabled: true, FieldType: "number", ClassInput: common.ClassInputTextEnabled + "  w-40", TabIndex: "3"})
+						</div>
+						<div class="flex items-center gap-1 min-w-0">
+							@components.LabelField(domain.LabelFieldConfig{ID: "doiznosa", LabelText: translator.Label("Do iznosa"), ClassLabel: common.ClassLabel + " w-32"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "doiznosa", Name: "doiznosa", Disabled: true, FieldType: "number", ClassInput: common.ClassInputTextEnabled + "  w-40", TabIndex: "4"})
+						</div>
+					</div>
+					<div class="grid grid-cols-2 gap-1">
+						@RobnoKarticaArticleRange(translator.Label("Od šifre artikla"), "odsifre", "")
+						@RobnoKarticaArticleRange(translator.Label("Do šifre artikla"), "dosifre", "")
+					</div>
+				</fieldset>
+				<fieldset class="border border-blue-400 p-1 rounded-lg h-full">
+					<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Dodatni parametri") }</legend>
+					@RobnoKarticaCheck("chkpRPROID", "po RPROID", `[]`, translator)
+					@RobnoKarticaCheck("stampajpomesecima", "Štampaj po mesecima", `[]`, translator)
+					<div class="border-t border-blue-400 mt-2 pt-2">
+						@components.RadioButtonField(domain.RadioFieldConfig{ID: "sortiranje-nalog", Name: "sortiranje", LabelText: "Sortiranje po datumu naloga", ClassLabel: common.ClassLabel, ClassSelect: common.ClassRadioSet, Value: "nalog", IsSelected: true}, translator)
+						@components.RadioButtonField(domain.RadioFieldConfig{ID: "sortiranje-dokument", Name: "sortiranje", LabelText: "Sortiranje po datumu dokumenta", ClassLabel: common.ClassLabel, ClassSelect: common.ClassRadioSet, Value: "dokument"}, translator)
+					</div>
+				</fieldset>
+			</div>
+			<div class="flex justify-end gap-1">
+				@components.Button(btnObrada)
+				@components.Search_PartPrintButton(btnPrint)
+			</div>
+			<div class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex-1 min-h-0 overflow-hidden">
+				@components.Table(tbl, translator)
+			</div>
+		</div>
+	</div>
+}
+
+templ RobnoKarticaSubsynthetic(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint domain.Button, magacini []domain.ComboItem, translator *i18n.Service) {
+	<div class="bg-blue-100 p-1 flex flex-col h-full">
+		<div class="border-b border-blue-600">
+			@tmpl.TabNav(translator.Title("Robno kartica"), tabs, "#robno-kartica-content", "robno-kartica-panel", translator)
+		</div>
+		<div class="flex-1 min-h-0 flex flex-col gap-1 pt-1">
+			<div class="grid grid-cols-[2fr_4fr] gap-2 items-start">
+				<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg h-full">
+					<legend class="px-1 mb-14 font-semibold text-sm text-blue-900">{ translator.Label("Selekcija") }</legend>
+					@RobnoKarticaCheck("chkpobrojunaloga", "Po broju naloga ?", `["brojunaloga"]`, translator)
+					@RobnoKarticaCheck("chkpodatumunaloga", "Po datumu naloga ?", `["oddatumanaloga","dodatumanaloga"]`, translator)
+					@RobnoKarticaCheck("chkpoiznosu", "Po iznosu ?", `["odiznosa","doiznosa"]`, translator)
+				</fieldset>
+				<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg">
+					<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Parametri za obradu") }</legend>
+					<div class="flex items-center gap-1 pb-1">
+						@components.LabelField(domain.LabelFieldConfig{ID: "magacin", LabelText: translator.Label("Magacin"), ClassLabel: common.ClassLabel + " w-32"})
+						@components.ComboBoxField(domain.ComboFieldConfig{ID: "magacin", Name: "magacin", LabelText: translator.Label("Magacin"), ClassLabel: common.ClassLabel, ClassSelect: common.ClassInputTextEnabled + " flex-1", OptionValues: magacini, TabIndex: "1"}, translator)
+					</div>
+					<div class="flex items-center gap-1 pb-1">
+						@components.LabelField(domain.LabelFieldConfig{ID: "konto", LabelText: translator.Label("Subsintetički konto"), ClassLabel: common.ClassLabel + " w-32"})
+						@components.TextInputField(domain.InputFieldConfig{ID: "konto", Name: "konto", FieldType: "text", Value: "", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "2", MinLength: "4", MaxLength: "4"})
+						@components.SearchButton(domain.SearchButtonConfig{ID: "konto", Name: "search-konto", HxUrl: "/api/kartica/searchbutton", HxTarget: "#search-dropdown", HxSwap: "innerHTML", HxVals: `js:{"vkonta": "2", "destfield": "konto"}`, ClassButton: common.ClassButton})
+						@components.TextInputField(domain.InputFieldConfig{ID: "kontonaziv", Name: "kontonaziv", FieldType: "text", Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1", TabIndex: "-1"})
+					</div>
+					<div class="flex items-center gap-1 mb-1">
+						@components.LabelField(domain.LabelFieldConfig{ID: "brojnaloga", LabelText: translator.Label("Broj naloga"), ClassLabel: common.ClassLabel + " w-32"})
+						@components.TextInputField(domain.InputFieldConfig{ID: "brojnaloga", Name: "brojnaloga", Disabled: true, ClassInput: common.ClassInputTextEnabled + " w-40", TabIndex: "2"})
+					</div>
+					<div class="grid grid-cols-2 gap-1 mb-1">
+						<div class="flex items-center gap-1 min-w-0">
+							@components.LabelField(domain.LabelFieldConfig{ID: "oddatumanaloga", LabelText: translator.Label("Od datuma naloga"), ClassLabel: common.ClassLabel + " w-32"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "oddatumanaloga", Name: "oddatumanaloga", Disabled: true, FieldType: "date", ClassInput: common.ClassInputTextEnabled + "  w-40", TabIndex: "3"})
+						</div>
+						<div class="flex items-center gap-1 min-w-0">
+							@components.LabelField(domain.LabelFieldConfig{ID: "dodatumanaloga", LabelText: translator.Label("Do datuma naloga"), ClassLabel: common.ClassLabel + " w-32"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "dodatumanaloga", Name: "dodatumanaloga", Disabled: true, FieldType: "date", ClassInput: common.ClassInputTextEnabled + "  w-40", TabIndex: "4"})
+						</div>
+					</div>
+					<div class="grid grid-cols-2 gap-1 mb-1">
+						<div class="flex items-center gap-1 min-w-0">
+							@components.LabelField(domain.LabelFieldConfig{ID: "odiznosa", LabelText: translator.Label("Od iznosa"), ClassLabel: common.ClassLabel + " w-32"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "odiznosa", Name: "odiznosa", Disabled: true, FieldType: "number", ClassInput: common.ClassInputTextEnabled + "  w-40", TabIndex: "3"})
+						</div>
+						<div class="flex items-center gap-1 min-w-0">
+							@components.LabelField(domain.LabelFieldConfig{ID: "doiznosa", LabelText: translator.Label("Do iznosa"), ClassLabel: common.ClassLabel + " w-32"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "doiznosa", Name: "doiznosa", Disabled: true, FieldType: "number", ClassInput: common.ClassInputTextEnabled + "  w-40", TabIndex: "4"})
+						</div>
+					</div>
+				</fieldset>
+			</div>
+			<div class="flex justify-end gap-1">
+				@components.Button(btnObrada)
+				@components.Search_PartPrintButton(btnPrint)
+			</div>
+			<div class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex-1 min-h-0 overflow-hidden">
+				@components.Table(tbl, translator)
+			</div>
+		</div>
+	</div>
+}
+
+templ RobnoKarticaCheck(id, labelText, fields string, translator *i18n.Service) {
+	<label class={ common.ClassCheckboxLabel + " w-44 flex-shrink-0 h-8 sm:h-7 md:h-6 mb-1" }>
+		<input
+			type="checkbox"
+			id={ id }
+			name={ id }
+			class={ common.ClassCheckbox }
+			onchange={ templ.JSFuncCall("sakToggle", templ.JSExpression("this"), templ.JSExpression(fields)) }
+		/>
+		<span class={ common.ClassCheckboxSpan }>{ translator.Label(labelText) }</span>
+	</label>
+}
+
+templ RobnoKarticaInput(label, name, fieldType, tabIndex string) {
+	<div class="flex items-center gap-1">
+		@components.LabelField(domain.LabelFieldConfig{ID: name, LabelText: label, ClassLabel: common.ClassLabel + " w-32"})
+		@components.TextInputField(domain.InputFieldConfig{ID: name, Name: name, FieldType: fieldType, ClassInput: common.ClassInputTextEnabled + " flex-1", TabIndex: tabIndex})
+	</div>
+}
+
+templ RobnoKarticaArticleRange(label, name, shortcut string) {
+	<div class="flex items-center gap-1">
+		@components.LabelField(domain.LabelFieldConfig{ID: name, LabelText: label, ClassLabel: common.ClassLabel + " w-32"})
+		@components.TextInputField(domain.InputFieldConfig{ID: name, Name: name, FieldType: "number", ClassInput: common.ClassInputTextEnabled + " w-24"})
+		@components.SearchButton(domain.SearchButtonConfig{ID: name, Name: "search-" + name, HxUrl: "/api/kartica/searchbutton", HxTarget: "#search-dropdown", HxSwap: "innerHTML", HxVals: `{"destfield": "` + name + `"}`, ClassButton: common.ClassButton})
+		@components.TextInputField(domain.InputFieldConfig{ID: name + "naziv", Name: name + "naziv", FieldType: "text", Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1", Placeholder: shortcut})
+	</div>
+}
+
+templ RobnoKarticaArticleTable(tbl domain.TableData, translator *i18n.Service) {
+	@components.Table(tbl, translator)
+}
+
+templ RobnoKarticaSubsyntheticTable(tbl domain.TableData, translator *i18n.Service) {
+	@components.Table(tbl, translator)
+}
+
+templ RobnoKarticaScripts() {
+	<script>
+		function sakToggle(chk, ids) {
+			ids.forEach(function(id) {
+				var el = document.getElementById(id);
+				if (el) el.disabled = !chk.checked;
+			});
+		}
+	</script>
+}

@@ -1,0 +1,128 @@
+package robno
+
+import (
+	"helia/frontend/components"
+	tmpl "helia/frontend/templates"
+	"helia/i18n"
+	"helia/internal/common"
+	"helia/internal/domain"
+)
+
+templ RobnoStanjaMain(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
+	<div id="robno-stanja-content" class="flex flex-col h-full">
+		@RobnoStanjePojedinacnogArtikla(tabs, tbl, btnObrada, btnPrint, translator)
+	</div>
+	@tmpl.ShowSearchDialogScript()
+	@tmpl.HideDropdownScript()
+}
+
+templ RobnoStanjePojedinacnogArtikla(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
+	@robnoStanjeTabFrame(tabs, "artikl", "Prikaz stanja artikla", tbl, btnObrada, btnPrint, translator, robnoStanjePojedinacnogArtiklaParameters(tbl, translator))
+}
+
+templ RobnoStanjeViseArtikala(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
+	@robnoStanjeTabFrame(tabs, "vise-artikala", "Prikaz stanja više artikala", tbl, btnObrada, btnPrint, translator, robnoStanjeViseArtikalaParameters(translator))
+}
+
+templ RobnoStanjeSubsintetickogKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
+	@robnoStanjeTabFrame(tabs, "saldo-subsintetickog-konta", "Saldo subsintetičkog konta", tbl, btnObrada, btnPrint, translator, robnoStanjeSubsintetickogKontaParameters(translator))
+}
+
+templ RobnoSvodjenjeZaliha(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
+	@robnoStanjeTabFrame(tabs, "svodjenje-zalihe", "Svodjenje stanja zalihe", tbl, btnObrada, btnPrint, translator, robnoStanjeSvodjenjeZalihaParameters(translator))
+}
+
+templ robnoStanjeTabFrame(tabs domain.TabData, tabName, title string, tbl domain.TableData, btnObrada, btnPrint domain.Button, translator *i18n.Service, parameters templ.Component) {
+	<div class="bg-blue-100 p-1 flex flex-col h-full">
+		<div class="border-b border-blue-600">
+			@tmpl.TabNav(translator.Title("Robno stanje"), tabs, "#robno-stanja-content", "robno-stanja-panel", translator)
+		</div>
+		<div class="flex-1 min-h-0 flex flex-col gap-1 pt-1">
+			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg">
+				<div class="font-semibold text-sm text-blue-900 mb-1">{ translator.Title(title) }</div>
+				@parameters
+				<div class="flex justify-end gap-1 pt-2">
+					@components.Button(btnObrada)
+					@components.Search_PartPrintButton(btnPrint)
+				</div>
+			</div>
+			<div class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex-1 min-h-0 overflow-hidden">
+				@components.Table(tbl, translator)
+			</div>
+		</div>
+	</div>
+}
+
+templ robnoStanjePojedinacnogArtiklaParameters(tbl domain.TableData, translator *i18n.Service) {
+	<div class="grid grid-cols-2 gap-2 items-center">
+		@robnoStanjeInput("Magacin", "magacin", "text", "1", translator)
+		@robnoStanjeInput("Konto", "konto", "text", "2", translator)
+		@robnoStanjeInput("Šifra artikla", "sifra", "text", "3", translator)
+		@robnoStanjeInput("Naziv artikla", "naziv", "text", "4", translator)
+		@robnoStanjeInput("JM", "jm", "text", "5", translator)
+		@robnoStanjeInput("Cena", "cena", "number", "6", translator)
+	</div>
+}
+
+templ robnoStanjeViseArtikalaParameters(translator *i18n.Service) {
+	<div class="flex gap-1 mb-1">
+		<button type="button" class="whitespace-nowrap rounded-t-lg py-1 px-2 font-medium text-sm text-white bg-blue-600 hover:bg-blue-700" hx-get="/api/robno-stanja/vise-artikala/po-sifri" hx-target="#robnostanja-vise-artikala-parameters" hx-swap="innerHTML">Po šifri</button>
+		<button type="button" class="whitespace-nowrap rounded-t-lg py-1 px-2 font-medium text-sm text-gray-600 bg-white border border-gray-300 hover:text-blue-700 hover:bg-blue-50" hx-get="/api/robno-stanja/vise-artikala/po-grupi" hx-target="#robnostanja-vise-artikala-parameters" hx-swap="innerHTML">Po grupi</button>
+	</div>
+	<div id="robnostanja-vise-artikala-parameters">
+		@robnoStanjeMultipleFields(translator)
+	</div>
+}
+
+templ robnoStanjeMultipleFields(translator *i18n.Service) {
+	<div class="grid grid-cols-2 gap-2 items-center">
+		@robnoStanjeInput("Magacin", "magacin", "text", "1", translator)
+		@robnoStanjeInput("Početak od konta", "odkonta", "text", "2", translator)
+		@robnoStanjeInput("Zaključno sa kontom", "dokonta", "text", "3", translator)
+		@robnoStanjeInput("Početak od šifre", "odsifre", "text", "4", translator)
+		@robnoStanjeInput("Zaključno sa šifrom", "dosifre", "text", "5", translator)
+		@robnoStanjeCheck("Za dobavljača", "zadobavljaca", translator)
+		@robnoStanjeCheck("Finansijski iznos", "finansijskiiznos", translator)
+	</div>
+}
+
+templ RobnoStanjeMultipleSubtab(translator *i18n.Service) {
+	@robnoStanjeMultipleFields(translator)
+}
+
+templ robnoStanjeSubsintetickogKontaParameters(translator *i18n.Service) {
+	<div class="grid grid-cols-2 gap-2 items-center">
+		@robnoStanjeInput("Magacin", "magacin", "text", "1", translator)
+		@robnoStanjeInput("Konto", "konto", "text", "2", translator)
+		@robnoStanjeInput("Naziv konta", "naziv", "text", "3", translator)
+	</div>
+}
+
+templ robnoStanjeSvodjenjeZalihaParameters(translator *i18n.Service) {
+	<div class="grid grid-cols-2 gap-2 items-center">
+		@robnoStanjeInput("Magacin", "magacin", "text", "1", translator)
+		@robnoStanjeInput("Od šifre artikla", "odsifre", "text", "2", translator)
+		@robnoStanjeInput("Do šifre artikla", "dosifre", "text", "3", translator)
+		@robnoStanjeInput("Datum obrade", "datumobrade", "date", "4", translator)
+		@robnoStanjeInput("Opis knjiženja", "opisknjizenja", "text", "5", translator)
+	</div>
+}
+
+templ robnoStanjeInput(label, name, fieldType, tabIndex string, translator *i18n.Service) {
+	<div class="flex items-center gap-1">
+		@components.LabelField(domain.LabelFieldConfig{ID: name, LabelText: translator.Label(label), ClassLabel: common.ClassLabel + " w-36"})
+		@components.TextInputField(domain.InputFieldConfig{ID: name, Name: name, FieldType: fieldType, ClassInput: common.ClassInputTextEnabled + " flex-1", TabIndex: tabIndex})
+	</div>
+}
+
+templ robnoStanjeCheck(label, name string, translator *i18n.Service) {
+	@components.CheckboxField(domain.CheckboxFieldConfig{ID: name, Name: name, LabelText: translator.Label(label), ClassCheckbox: common.ClassCheckbox + " mr-2", ClassLabel: common.ClassLabel + " flex items-center"}, translator)
+}
+
+templ RobnoStanjaPojedinacnogArtiklaTable(tbl domain.TableData, translator *i18n.Service) {
+	@components.Table(tbl, translator)
+}
+
+templ RobnoStanjaTable(tbl domain.TableData, translator *i18n.Service) {
+	@components.Table(tbl, translator)
+}

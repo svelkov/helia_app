@@ -1,13 +1,15 @@
 package templates
 
-import "helia/internal/domain"
-import "helia/i18n"
+import (
+	"helia/internal/domain"
+	"helia/i18n"
+	"helia/frontend/components"
+)
 
 templ Header(isLoggedIn bool, comboCompany, comboPoslGod, comboKar, comboLanguage domain.ComboFieldConfig, translator *i18n.Service) {
 	<header class="bg-blue-600 text-white p-1 flex justify-between items-center shadow-xl shadow-blue-600/50">
-		<div class="flex items-center ml-4">
-			<img src="/frontend/static/lav_logo.png" alt="HELIA Logo" class="h-10 w-auto"/>
-			<img src="/frontend/static/helia.png" alt="HELIA text" class="h-9 w-auto"/>
+		<div class="flex items-justify">
+			<img src="/frontend/static/helia_logo.png" alt="HELIA text" class="h-9 w-52"/>
 		</div>
 		<nav class="flex items-center space-x-4">
 			<!-- Right-aligned Combo Boxes -->
@@ -15,18 +17,18 @@ templ Header(isLoggedIn bool, comboCompany, comboPoslGod, comboKar, comboLanguag
 				if isLoggedIn {
 					<!-- Company Select -->
 					<div class="flex items-center space-x-2">
-						@ComboBoxField(comboCompany, translator)
+						@components.ComboBoxField(comboCompany, translator)
 					</div>
 					<!-- Poslovna Godina Select -->
 					<div class="flex items-center space-x-2">
-						@ComboBoxField(comboPoslGod, translator)
+						@components.ComboBoxField(comboPoslGod, translator)
 					</div>
 					<div class="flex items-center space-x-2">
-						@ComboBoxField(comboKar, translator)
+						@components.ComboBoxField(comboKar, translator)
 					</div>
 				}
 				<div class="flex items-center space-x-2">
-					@ComboBoxField(comboLanguage, translator)
+					@components.ComboBoxField(comboLanguage, translator)
 				</div>
 			</div>
 		</nav>

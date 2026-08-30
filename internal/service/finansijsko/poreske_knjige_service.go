@@ -9,7 +9,6 @@ import (
 	"helia/internal/domain"
 	"helia/internal/repository"
 	"helia/internal/service"
-	"helia/pkg/utils"
 	"math"
 	"reflect"
 )
@@ -66,7 +65,7 @@ func NewPoreskeKnjigeService(kirService *service.BaseService[domain.Kir], kprSer
 }
 
 func (s *PoreskeKnjigeResource) GetFvrData(ctx context.Context) (domain.Fvr, error) {
-	return utils.GetFvrData(ctx, s.fvrRepo)
+	return common.GetFvrData(ctx, s.fvrRepo)
 }
 
 // GetTableFields returns the table field definitions for Poreske Knjige (KIR - Issued Invoices by default)

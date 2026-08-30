@@ -1,0 +1,113 @@
+package components
+
+import (
+	"fmt"
+
+	"helia/internal/domain"
+)
+
+// Templated function to render a text input field with various configurations.
+templ TextInputField(config domain.InputFieldConfig) {
+	<input
+		if config.FieldType != "" && config.FieldType != "number" {
+			type={ config.FieldType }
+		} else {
+			type="text"
+		}
+		id={ config.ID }
+		name={ config.Name }
+		class={ config.ClassInput}
+		value={ config.Value }
+		data-dest-field={ config.DataDestField }
+		if config.Disabled {
+			disabled
+		}
+		if config.MinLength != "" {
+			minlength={ config.MinLength }
+		}
+		if config.MaxLength != "" {
+			maxlength={ config.MaxLength }
+		}
+		if config.Pattern != "" {
+			pattern={ config.Pattern }
+		}
+		if config.TabIndex != "" {
+			tabindex={ config.TabIndex }
+		}
+		if config.HxVals != "" {
+			hx-vals={ config.HxVals }
+		}
+		if config.OnFocus != "" {
+			onfocus={ templ.JSFuncCall(fmt.Sprintf("%s", config.OnFocus), config.ID) }
+		}
+		if config.BlurEndpoint != "" {
+			hx-trigger="blur"
+			hx-get={ config.BlurEndpoint }
+			if config.HxTarget != "" {
+				hx-target={ fmt.Sprintf("#%s", config.HxTarget) }
+				hx-swap="innerHTML"
+				hx-on--after-request={ fmt.Sprintf(`
+					const xhr = event.detail.xhr;
+					try {
+						// Try to use xhr.response if it's already parsed
+						document.getElementById('%s').value = xhr.response.message || JSON.parse(xhr.responseText).message;
+					} catch (e) {
+						document.getElementById('%s').value = xhr.responseText;
+					}
+					`, config.HxTarget, config.HxTarget) }
+			}
+		}
+		if config.FieldType == "number" {
+			type="text"
+			data-decimals={ fmt.Sprintf("%d", config.DecimalPlaces) }
+			oninput="restrictNumericInput(this)"
+			onblur="cleanNumberInput(this)"
+			class={ config.ClassInput + " [&::-webkit-outer-spin-button]:hidden [&::-webkit-inner-spin-button]:hidden" }
+			value={ config.Value }
+		}
+		if config.HxGet != "" {
+			hx-get={ config.HxGet }
+		}
+		if config.HxTarget != "" {
+			hx-target={ fmt.Sprintf("#%s", config.HxTarget) }
+		}
+		if config.HxTrigger != "" {
+			hx-trigger={ config.HxTrigger }
+		}
+		if config.HxInclude != "" {
+			hx-include={ config.HxInclude }
+		}
+		if config.HxSwap != "" {
+			hx-swap={ config.HxSwap }
+		}
+		if config.HxVals != "" {
+			hx-vals={ config.HxVals }
+		}
+		if config.MinLength != "" {
+			minlength={ config.MinLength }
+		}
+		if config.MaxLength != "" {
+			maxlength={ config.MaxLength }
+		}
+		if config.Pattern != "" {
+			pattern={ config.Pattern }
+		}
+		if config.HxOnAfterRequest != "" {
+			hx-on::after-request={ templ.JSFuncCall(fmt.Sprintf("%s", config.HxOnAfterRequest), config.ID) }
+		}
+		if config.TabIndex != "" {
+			tabindex={ config.TabIndex }
+		}
+		if config.OnInput != "" {
+			oninput={ templ.JSFuncCall(fmt.Sprintf("%s", config.OnInput), config.ID) }
+		}
+		if config.OnFocus != "" {
+			onfocus={ templ.JSFuncCall(fmt.Sprintf("%s", config.OnFocus), config.ID) }
+		}
+		if config.Placeholder != "" {
+			placeholder={ config.Placeholder }
+		}
+	/>
+}
+
+

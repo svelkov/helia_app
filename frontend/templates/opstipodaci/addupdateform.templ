@@ -6,6 +6,7 @@ import (
 	"helia/internal/domain"
 	"helia/i18n"
 	"helia/internal/common"
+	"helia/frontend/components"
 )
 
 templ AddUpdateForm(csrfToken string, dialog domain.Dialog, fields []domain.Fields, btnSave, btnCancel, btnClose domain.Button, translator *i18n.Service) {
@@ -14,7 +15,7 @@ templ AddUpdateForm(csrfToken string, dialog domain.Dialog, fields []domain.Fiel
 			<!-- Title Bar (Flush on Left, Top, Right) -->
 			<div class="bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg">
 				<h2 class="text-lg font-semibold ml-4">{ dialog.Title }</h2>
-				@tmpl.CloseButton(btnClose)
+				@components.CloseButton(btnClose)
 			</div>
 			<form
 				id="dialog-form"
@@ -48,8 +49,8 @@ templ AddUpdateForm(csrfToken string, dialog domain.Dialog, fields []domain.Fiel
 					</div>
 				}
 				<div class="bg-white col-span-2 px-3 py-3 flex items-center justify-end pt-4 gap-1">
-					@tmpl.SaveButton(btnSave, translator)
-					@tmpl.CancelButton(btnCancel, translator)
+					@components.SaveButton(btnSave, translator)
+					@components.CancelButton(btnCancel, translator)
 				</div>
 			</form>
 			<!-- Message Display Area at Bottom -->

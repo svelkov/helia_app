@@ -8,7 +8,6 @@ import (
 	"helia/internal/domain"
 	"helia/internal/repository"
 	"helia/internal/service"
-	"helia/pkg/utils"
 	"reflect"
 	"strings"
 )
@@ -25,7 +24,7 @@ type SaldaService interface {
 	GetSaldaGrupeKonta(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, page int, params domain.SaldaParam, duzSintetika int) error
 	GetSaldaPartneriList(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage int, pageSize int, searchText, sortBy, sortOrder string) error
 	GetSaldaTotalValues(ctx context.Context, konto, sifra, tipKonta string) (domain.SaldaDto, error)
-	GetSaldaKlase5i6TotalValues(ctx context.Context) (domain.SaldaDto, error)
+	GetSaldaKlase5i6TotalValues(ctx context.Context, saldaParam domain.SaldaParam) (domain.SaldaDto, error)
 	ProcessSaldaPartneriDetails(ctx context.Context, idPartneri int64, tblKonta, tblDetalji *domain.TableData, searchText, sortBy, sortOrder string) error
 	GetSaldaPartneriPrelomljeno(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage int, pageSize int, searchText, sortBy, sortOrder string) error
 	GetSaldaPartneriPrelomljenoStampa(ctx context.Context, tbl *domain.TableData, sifrOd, sifraDo string) error
@@ -472,7 +471,7 @@ func (s *SaldaResource) GetSaldaGrupeKonta(ctx context.Context, tbl *domain.Tabl
 				common.FormatNumberWithSystemLocale(entity.PstDug-entity.PstPot, 2),
 				common.FormatNumberWithSystemLocale(entity.Dug, 2),
 				common.FormatNumberWithSystemLocale(entity.Pot, 2),
-				common.FormatNumberWithSystemLocale(entity.PstDug-entity.PstPot + entity.Dug-entity.Pot, 2),
+				common.FormatNumberWithSystemLocale(entity.PstDug-entity.PstPot+entity.Dug-entity.Pot, 2),
 				entity.Adresa,
 				entity.Mesto,
 			}
@@ -1366,13 +1365,13 @@ func (s *SaldaResource) SaldaPoKomercijalistima(ctx context.Context, tbl *domain
 
 	// Build commercialist balance query
 	qb := common.NewQueryBuilder(`select 
-            fpro.komid,
-            kom.sifkom,
-            kom.imeprezime,
+            coalesce(fpro.komid, 0) as komid,
+            coalesce(kom.sifkom, 0) as sifkom,
+            coalesce(kom.imeprezime, '') as imeprezime,
             coalesce(sum(case when fpro.kat in (1,2) then fpro.iznos else 0 end), 0) as dug,
     		coalesce(sum(case when fpro.kat in (3,4) then fpro.iznos else 0 end), 0) as pot,
     		coalesce(sum(case when fpro.kat in (1,2) then fpro.iznos 
-                    when fpro.kat in (3,4) then -fpro.iznos 
+                    when fpro.kat in (3,4) then 0-fpro.iznos 
                                  else 0 end), 0) as dospelo
         from fpro`, true)
 
@@ -1416,7 +1415,6 @@ func (s *SaldaResource) SaldaPoKomercijalistima(ctx context.Context, tbl *domain
 				common.FormatNumberWithSystemLocale(entity.Duguje-entity.Potrazuje, 2),
 				common.FormatNumberWithSystemLocale(entity.Dospelo, 2),
 				common.FormatNumberWithSystemLocale((entity.Duguje-entity.Potrazuje)-entity.Dospelo, 2),
-				common.FormatNumberWithSystemLocale(entity.KomID, 0),
 			}
 			tblRow := domain.TableRow{Fields: fields, HasUpdate: false, HasDelete: false}
 			tbl.Rows = append(tbl.Rows, tblRow)
@@ -1436,9 +1434,9 @@ func (s *SaldaResource) RealizacijaKomercijalisti(ctx context.Context, tbl *doma
 
 	// Build commercialist balance query
 	qb := common.NewQueryBuilder(`select 
-            fpro.komid,
-            kom.sifkom,
-            kom.imeprezime,
+            coalesce(fpro.komid, 0) as komid,
+            coalesce(kom.sifkom, 0) as sifkom,
+            coalesce(kom.imeprezime, '') as imeprezime,
             coalesce(sum(case when fpro.kat in (1,2) then fpro.iznos else 0 end), 0) as dug,
     		coalesce(sum(case when fpro.kat in (3,4) then fpro.iznos else 0 end), 0) as pot,
     		coalesce(sum(case when (fpro.dadok::date + (fpro.rok || ' days')::interval)::date <= fpro.danal::date
@@ -1490,7 +1488,6 @@ func (s *SaldaResource) RealizacijaKomercijalisti(ctx context.Context, tbl *doma
 				common.FormatNumberWithSystemLocale(entity.Potrazuje, 2),
 				common.FormatNumberWithSystemLocale((entity.Duguje - entity.Potrazuje), 2),
 				common.FormatNumberWithSystemLocale((entity.Vanperioda), 2),
-				common.FormatNumberWithSystemLocale(entity.KomID, 0),
 			}
 			tblRow := domain.TableRow{Fields: fields, HasUpdate: false, HasDelete: false}
 			tbl.Rows = append(tbl.Rows, tblRow)
@@ -1556,16 +1553,23 @@ func buildNaziv(naziv, pib, jmbg, bpg, index string) string {
 	sb.WriteString("\n   ")
 
 	if pib != "" {
-		sb.WriteString(" PIB:" + pib + "   ")
+		sb.WriteString(" PIB:")
+		sb.WriteString(pib)
+		sb.WriteString("   ")
 	}
 	if jmbg != "" {
-		sb.WriteString(" JMBG:" + jmbg + "   ")
+		sb.WriteString(" JMBG:")
+		sb.WriteString(jmbg)
+		sb.WriteString("   ")
 	}
 	if bpg != "" {
-		sb.WriteString(" BPG:" + bpg + "   ")
+		sb.WriteString(" BPG:")
+		sb.WriteString(bpg)
+		sb.WriteString("   ")
 	}
 	if index != "" {
-		sb.WriteString(" INDEX:" + index)
+		sb.WriteString(" INDEX:")
+		sb.WriteString(index)
 	}
 
 	return sb.String()
@@ -1629,7 +1633,7 @@ func (s *SaldaResource) GetSaldaTotalValues(ctx context.Context, konto, sifra, t
 	return totals, nil
 }
 
-func (s *SaldaResource) GetSaldaKlase5i6TotalValues(ctx context.Context) (domain.SaldaDto, error) {
+func (s *SaldaResource) GetSaldaKlase5i6TotalValues(ctx context.Context, saldaParam domain.SaldaParam) (domain.SaldaDto, error) {
 	var totals domain.SaldaDto
 
 	// Get user session from context
@@ -1637,8 +1641,78 @@ func (s *SaldaResource) GetSaldaKlase5i6TotalValues(ctx context.Context) (domain
 	if userSession == nil {
 		return totals, fmt.Errorf("user session not found")
 	}
-	// Note: odkonta, dokonta, odsifre, dosifre, oddatuma, dodatuma, klasa parameters would need to be passed as separate parameters instead of extracted from context
-	// For now, returning empty totals
+
+	// Create first query (opening balance - tipdok = '00')
+	qbPst := common.NewQueryBuilder(`SELECT 
+    COALESCE(SUM(CASE WHEN f.kat = '1' OR f.kat = '2' THEN f.iznos ELSE 0 END), 0) as dug,
+    COALESCE(SUM(CASE WHEN f.kat = '3' OR f.kat = '4' THEN f.iznos ELSE 0 END), 0) as pot
+    FROM fpro f`, true)
+	qb := common.NewQueryBuilder(`SELECT 
+    COALESCE(SUM(CASE WHEN f.kat = '1' OR f.kat = '2' THEN f.iznos ELSE 0 END), 0) as dug,
+    COALESCE(SUM(CASE WHEN f.kat = '3' OR f.kat = '4' THEN f.iznos ELSE 0 END), 0) as pot
+    FROM fpro f`, true)
+	// Add conditions to first query
+	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
+	if hasGod {
+		qb.AddEqual("f.god", userSession.SelectedGod)
+		qbPst.AddEqual("f.god", userSession.SelectedGod)
+	}
+	if hasKar {
+		qb.AddEqual("f.kar", userSession.SelectedKar)
+		qbPst.AddEqual("f.kar", userSession.SelectedKar)
+	}
+	if saldaParam.OdSifre != "undefined" && saldaParam.DoSifre == "undefined" {
+		qb.AddCondition("COALESCE(NULLIF(COALESCE(f.sifra, ''), '')::numeric, 0)", saldaParam.OdSifre, ">=")
+		qb.AddCondition("COALESCE(NULLIF(COALESCE(f.sifra, ''), '')::numeric, 0)", saldaParam.DoSifre, "<=")
+		qbPst.AddCondition("COALESCE(NULLIF(COALESCE(f.sifra, ''), '')::numeric, 0)", saldaParam.OdSifre, ">=")
+		qbPst.AddCondition("COALESCE(NULLIF(COALESCE(f.sifra, ''), '')::numeric, 0)", saldaParam.DoSifre, "<=")
+	}
+	if saldaParam.OdKonta != "undefined" && saldaParam.DoKonta == "undefined" {
+		qb.AddCondition("COALESCE(NULLIF(COALESCE(f.konto, ''), '')::numeric, 0)", saldaParam.OdKonta, ">=")
+		qb.AddCondition("COALESCE(NULLIF(COALESCE(f.konto, ''), '')::numeric, 0)", saldaParam.DoKonta, "<=")
+		qbPst.AddCondition("COALESCE(NULLIF(COALESCE(f.konto, ''), '')::numeric, 0)", saldaParam.OdKonta, ">=")
+		qbPst.AddCondition("COALESCE(NULLIF(COALESCE(f.konto, ''), '')::numeric, 0)", saldaParam.DoKonta, "<=")
+	}
+
+	qb.AddCondition("f.danal::date", saldaParam.OdDatuma, ">=")
+	qb.AddCondition("f.danal::date", saldaParam.DoDatuma, "<=")
+	qb.AddCondition("f.tipdok", "00", "<>")
+
+	qbPst.AddEqual("f.tipdok", "00")
+	// Check account range between 5 and 6 (class 5 and 6)
+	switch saldaParam.Klasa {
+	case "5":
+		qb.AddCustomCondition("f.konto like '5%'")
+		qbPst.AddCustomCondition("f.konto like '5%'")
+	case "6":
+		qb.AddCustomCondition("f.konto like '6%'")
+		qbPst.AddCustomCondition("f.konto like '6%'")
+	default:
+
+	}
+	sqlQuery, args := qb.Build()
+	sqlQueryPst, argsPst := qbPst.Build()
+	entities, err := s.fproRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	if err != nil {
+		return totals, err
+	}
+	if entities != nil && len(*entities) > 0 {
+		totals.TekuciPromDug = (*entities)[0].Dug.Float64
+		totals.TekuciPromPot = (*entities)[0].Pot.Float64
+		totals.TekuciPromSaldo = (*entities)[0].Dug.Float64 - (*entities)[0].Pot.Float64
+	}
+	entitiesPst, err := s.fproRepo.GetAllCustom(ctx, sqlQueryPst, "", argsPst, "", "")
+	if err != nil {
+		return totals, err
+	}
+	if entitiesPst != nil && len(*entitiesPst) > 0 {
+		totals.PocStanjeDug = (*entitiesPst)[0].Dug.Float64
+		totals.PocStanjePot = (*entitiesPst)[0].Pot.Float64
+		totals.PocStanjeSaldo = (*entitiesPst)[0].Dug.Float64 - (*entitiesPst)[0].Pot.Float64
+	}
+	totals.UkPromDug = totals.PocStanjeDug + totals.TekuciPromDug
+	totals.UkPromPot = totals.PocStanjePot + totals.TekuciPromPot
+	totals.UkPromSaldo = totals.PocStanjeSaldo + totals.TekuciPromSaldo
 	return totals, nil
 }
 
@@ -1881,7 +1955,7 @@ func (s *SaldaResource) GetSaldaPartneraPoKontimaStampaFields() []domain.Fields 
 }
 
 func (s *SaldaResource) GetFvrData(ctx context.Context) (domain.Fvr, error) {
-	return utils.GetFvrData(ctx, s.fvrRepo)
+	return common.GetFvrData(ctx, s.fvrRepo)
 }
 
 func (s *SaldaResource) setServiceFieldValues() {

@@ -92,7 +92,7 @@ func (h *BilansiHandler) BilansiMain(c *gin.Context) {
 		HxRequestType: "GET",
 	}
 
-	common.SetActiveTab(&h.tabData, "zakljucnilist")
+	common.SetActiveTab(&h.tabData, 0)
 	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", bilansiURLZakljucni, "#bilansitable", "innerHTML", "GET", "", hxValsZakljucni, true, common.ClassSaveButton, "handleBackendResponse")
 	searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), bilansiURLZakljucni, fmt.Sprintf("#%s", bilansiTableID), hxValsZakljucni)
 
@@ -132,7 +132,7 @@ func (h *BilansiHandler) ZakljucniList(c *gin.Context) {
 		}
 		common.SetTableConfig(&tbl, "ZAKLJUCNI LIST", bilansiURLZakljucni, false, false, false)
 
-		common.SetActiveTab(&h.tabData, "zakljucnilist")
+		common.SetActiveTab(&h.tabData, 0)
 		err := tmpl_fin.ZakljucniList(h.tabData, tbl, btnObrada, btnPrint, searchInput, translator, gnGod).Render(ctx, c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
@@ -276,7 +276,7 @@ func (h *BilansiHandler) BilansStanja(c *gin.Context) {
 	ctx := c.Request.Context()
 	searchText := c.Query("query")
 	skraceni := c.Query("skraceni") == "true" || c.Query("skraceni") == "1"
-	common.SetActiveTab(&h.tabData, "bilansstanja")
+	common.SetActiveTab(&h.tabData, 0)
 	tbl := common.SetTableBasicData(bilansiContentTitle, bilansiTableID, h.service.GetBilansStanjaTableFields(), bilansiURLStanja, bilansiURLStanja, 0, 0, 0, 0, h.cfg)
 	tbl.BtnExportPDF.IsVisible = true
 	tbl.BtnExportExcel.IsVisible = true
@@ -514,7 +514,7 @@ func (h *BilansiHandler) ObradaStampanjeBilansaStanja(c *gin.Context) {
 		//if the call come from menu click or tab click then render the page with parameters and empty table
 		tbl := common.SetTableBasicData(bilansiContentTitle, bilansiTableID, h.service.GetBilansStanjaStampaTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 		common.SetTableConfig(&tbl, bilansiContentTitle, "", false, false, false)
-		common.SetActiveTab(&h.tabData, "stampanjebilansstanja")
+		common.SetActiveTab(&h.tabData, 1)
 		common.SetTableConfig(&tbl, "ŠTANPANJE BILANSA STANJA", bilansiURLStanja, false, false, false)
 		err := h.service.GetBilansStanjaZaStampu(ctx, &tbl, common.TipStampePreview, skraceni)
 		if err != nil {
@@ -602,7 +602,7 @@ func (h *BilansiHandler) BilansUspeha(c *gin.Context) {
 	searchText := c.Query("query")
 	skraceni := c.Query("skraceni") == "true" || c.Query("skraceni") == "1"
 	translator := i18n.GetInstance()
-	common.SetActiveTab(&h.tabData, "bilansuspeha")
+	common.SetActiveTab(&h.tabData, 2)
 	tbl := common.SetTableBasicData(bilansiContentTitle, bilansiTableID, h.service.GetBilansUspehaTableFields(), bilansiURLUspeha, bilansiURLUspeha, 0, 0, 0, 0, h.cfg)
 	tbl.HxVals = hxValsUspeha
 	tbl.Pagination.HxVals = hxValsUspeha
@@ -816,7 +816,7 @@ func (h *BilansiHandler) ObradaStampanjeBilansUspeha(c *gin.Context) {
 		common.SetTableConfig(&tbl, "STAMPANJE BILANSA USPEHA", bilansiURLUspehaStampanje, false, false, false)
 		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", bilansiURLUspehaStampanje, "#bilu-print-area", "innerHTML", "GET", "", hxValsUspeha, true, common.ClassSaveButton, "handleDialogResponse")
 		btnExportXML := common.SetButton("exportxml-btn", "Export XML", "exportxml", "", "", "", "GET", "", hxValsUspeha, true, common.ClassButton, "handleExportXMLResponse")
-		common.SetActiveTab(&h.tabData, "stampanjebilansuspeha")
+		common.SetActiveTab(&h.tabData, 3)
 		err := h.service.GetBilansUspehaZaStampu(ctx, &tbl, common.TipStampePreview)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)

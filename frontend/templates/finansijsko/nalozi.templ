@@ -6,36 +6,42 @@ import (
 	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
+	"helia/frontend/components"
 )
 
 var tabClasses string
 
 templ NaloziContent(tabs domain.TabData, tipdokValues []domain.ComboItem, ukObrada domain.UkupnaObrada, btnSave, btnNoviNalog domain.Button, tbl domain.TableData, searchControl domain.InputControl, nalogPayload domain.FnalPayload, translator *i18n.Service, csrfToken string) {
 	<!-- Container with full height -->
-	<div id="main-content" class="flex flex-col h-full">
-		@tmpl.TabNav(translator.Title("Nalozi za knjizenje"), tabs, "#main-content", "knjizenje-panel", translator)
+	<div id="main-content" class="bg-blue-100 p-1 flex flex-col h-full">
+		<div class="border-b border-blue-600">
+			@tmpl.TabNav(translator.Title("Nalozi za knjizenje"), tabs, "#main-content", "knjizenje-panel", translator)
+		</div>
 		@NaloziKnjizenjeContent(tipdokValues, ukObrada, btnSave, btnNoviNalog, tbl, searchControl, nalogPayload, translator, csrfToken)
 	</div>
-	@tmpl.HandleFormResponseScript()
+	@tmpl.HandleFproFormResponseScript()
 	@tmpl.ShowMessageScript()
 	@tmpl.ClearFieldErrorScript()
 	@tmpl.CloseDialogScript()
-	@tmpl.RestrictNumericInput()
+	@tmpl.RestrictNumericInputScript()
 	@tmpl.HandleDblClickNalogSelectionScript()
-	@tmpl.HandleDialogResponseScript("")
+	@tmpl.HandleDialogResponseScript()
 	@tmpl.HandleNextNalogResponseScript()
 	@tmpl.SelectRowScript()
+	@tmpl.HandleUpdateNalogDataResponseScript()
 }
 
 templ NaloziKnjizenjeContent(tipdokValues []domain.ComboItem, ukObrada domain.UkupnaObrada, btnSave, btnNoviNalog domain.Button, tbl domain.TableData, searchControl domain.InputControl, nalogPayload domain.FnalPayload, translator *i18n.Service, csrfToken string) {
 	<!-- Tab Content -->
 	<div id="tab1" class="flex-1 min-h-0 flex flex-col gap-1">
-		@NaloziKnjizenjeHeader(tipdokValues, ukObrada, btnSave, btnNoviNalog, nalogPayload, translator, csrfToken)
+		<div class="border bg-blue-100 border border-blue-400 p-1 mt-1 rounded-lg flex flex-col">
+			@NaloziKnjizenjeHeader(tipdokValues, ukObrada, btnSave, btnNoviNalog, nalogPayload, translator, csrfToken)
+		</div>
 		<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
-			@tmpl.Search_Part(tbl, searchControl)
+			@components.Search_Part(tbl, searchControl)
 			<!-- Table -->
 			<div class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
-				@tmpl.Table(tbl, translator)
+				@components.Table(tbl, translator)
 			</div>
 		</div>
 		<div id="dialog-confirm" class="top-0 z-50"></div>
@@ -57,12 +63,12 @@ templ NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Uku
 				<div id="nalog-trigger" hx-get="/api/nalozi/nextnalog" hx-trigger="tipdokChanged" hx-vals='js:{"tipdok": document.getElementById("tipdok").value}' hx-on::after-request="handleNextNalogResponse('form-nalozi')" style="display:none;"></div>
 				<!-- First row: Combo for Vrsta naloga za knjiženje -->
 				<div class="flex items-center">
-					@tmpl.LabelField(domain.LabelFieldConfig{
+					@components.LabelField(domain.LabelFieldConfig{
 						ID:         "tipdok",
 						LabelText:  translator.Label("Vrsta Naloga za knjiženje"),
 						ClassLabel: common.ClassLabel + " w-44 ",
 					})
-					@tmpl.ComboBoxField(domain.ComboFieldConfig{
+					@components.ComboBoxField(domain.ComboFieldConfig{
 						ID:               "tipdok",
 						Name:             "tipdok",
 						Placeholder:      translator.Placeholder("Select"),
@@ -79,12 +85,12 @@ templ NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Uku
 				</div>
 				<!-- Second row: Broj naloga, Datum naloga, Datum obrade -->
 				<div class="flex flex-1 items-center py-1">
-					@tmpl.LabelField(domain.LabelFieldConfig{
+					@components.LabelField(domain.LabelFieldConfig{
 						ID:         "nalog",
 						LabelText:  translator.Label("Broj Naloga"),
 						ClassLabel: common.ClassLabel + " w-44",
 					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
+					@components.TextInputField(domain.InputFieldConfig{
 						ID:               "nalog",
 						Name:             "nalog",
 						FieldType:        "text",
@@ -101,12 +107,12 @@ templ NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Uku
 						OnInput:          "clearFieldError",
 						OnFocus:          "clearFieldError",
 						HxOnAfterRequest: "handleUpdateNalogDataResponse"})
-					@tmpl.LabelField(domain.LabelFieldConfig{
+					@components.LabelField(domain.LabelFieldConfig{
 						ID:         "danal",
 						LabelText:  translator.Label("Datum Naloga"),
 						ClassLabel: common.ClassLabel + " pl-4 pr-2 ",
 					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
+					@components.TextInputField(domain.InputFieldConfig{
 						ID:         "danal",
 						Name:       "danal",
 						Value:      nalogPayload.Danal,
@@ -116,12 +122,12 @@ templ NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Uku
 						TabIndex:   "2",
 						OnInput:    "clearFieldError",
 						OnFocus:    "clearFieldError"})
-					@tmpl.LabelField(domain.LabelFieldConfig{
+					@components.LabelField(domain.LabelFieldConfig{
 						ID:         "datob",
 						LabelText:  translator.Label("Datum Obrade"),
 						ClassLabel: common.ClassLabel + " pl-5 pr-2 ",
 					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
+					@components.TextInputField(domain.InputFieldConfig{
 						ID:         "datob",
 						Name:       "datob",
 						Value:      nalogPayload.Datob,
@@ -134,12 +140,12 @@ templ NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Uku
 				</div>
 				<!-- Third row: Opis knjiženja -->
 				<div class="flex items-center">
-					@tmpl.LabelField(domain.LabelFieldConfig{
+					@components.LabelField(domain.LabelFieldConfig{
 						ID:         "opis",
 						LabelText:  translator.Label("Opis Knjiženja"),
 						ClassLabel: common.ClassLabel + " w-44 ",
 					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
+					@components.TextInputField(domain.InputFieldConfig{
 						ID:         "opis",
 						Name:       "opis",
 						FieldType:  "text",
@@ -152,8 +158,8 @@ templ NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Uku
 				</div>
 				<!-- Fourth row: Buttons -->
 				<div class="flex items-center justify-end pt-8 space-x-1">
-					@tmpl.SaveButton(btnSave, translator)
-					@tmpl.AddButton(btnNoviNalog, translator)
+					@components.SaveButton(btnSave, translator)
+					@components.AddButton(btnNoviNalog, translator)
 				</div>
 			</form>
 		</div>
@@ -161,12 +167,12 @@ templ NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Uku
 			<p class="block text-sm font-medium text-blue-700 mb-1">{ translator.Text("Prikaz ukupne obrade") }</p>
 			<div class="box-content flex flex-col p-1 border-2 border-gray-300 rounded-md">
 				<div class="flex items-center space-x-2 mb-1">
-					@tmpl.LabelField(domain.LabelFieldConfig{
+					@components.LabelField(domain.LabelFieldConfig{
 						ID:         "ukupnoNaloga",
 						LabelText:  translator.Label("Ukupno Naloga"),
 						ClassLabel: common.ClassLabel + " w-[60%]",
 					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
+					@components.TextInputField(domain.InputFieldConfig{
 						ID:         "ukupnoNaloga",
 						Value:      ukObrada.UkNaloga,
 						FieldType:  "text",
@@ -175,12 +181,12 @@ templ NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Uku
 					})
 				</div>
 				<div class="flex items-center space-x-2 mb-1">
-					@tmpl.LabelField(domain.LabelFieldConfig{
+					@components.LabelField(domain.LabelFieldConfig{
 						ID:         "ukupnoStavki",
 						LabelText:  translator.Label("Ukupno Stavki"),
 						ClassLabel: common.ClassLabel + " w-[60%]",
 					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
+					@components.TextInputField(domain.InputFieldConfig{
 						ID:         "ukupnoStavki",
 						Value:      ukObrada.UkStavki,
 						FieldType:  "text",
@@ -189,13 +195,13 @@ templ NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Uku
 					})
 				</div>
 				<div class="flex items-center space-x-2 mb-1">
-					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "duguje",
+					@components.LabelField(domain.LabelFieldConfig{
+						ID:         "ukduguje",
 						LabelText:  translator.Label("Duguje"),
 						ClassLabel: common.ClassLabel + " w-[60%]",
 					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:         "duguje",
+					@components.TextInputField(domain.InputFieldConfig{
+						ID:         "ukduguje",
 						Value:      ukObrada.Duguje,
 						FieldType:  "text",
 						Disabled:   true,
@@ -203,13 +209,13 @@ templ NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Uku
 					})
 				</div>
 				<div class="flex items-center space-x-2 mb-1">
-					@tmpl.LabelField(domain.LabelFieldConfig{
-						ID:         "potrazuje",
+					@components.LabelField(domain.LabelFieldConfig{
+						ID:         "ukpotrazuje",
 						LabelText:  translator.Label("Potrazuje"),
 						ClassLabel: common.ClassLabel + " w-[60%]",
 					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
-						ID:         "potrazuje",
+					@components.TextInputField(domain.InputFieldConfig{
+						ID:         "ukpotrazuje",
 						Value:      ukObrada.Potrazuje,
 						FieldType:  "text",
 						Disabled:   true,
@@ -223,14 +229,14 @@ templ NaloziKnjizenjeHeader(tipdokValues []domain.ComboItem, ukObrada domain.Uku
 
 templ NaloziHeader(tblHeader domain.TableData, translator *i18n.Service) {
 	<div class="border-b border-gray-200 mb-4">
-		@tmpl.Table(tblHeader, translator)
+		@components.Table(tblHeader, translator)
 	</div>
 }
 
 templ NaloziDetail(tblStavke domain.TableData, searchControl domain.InputControl, translator *i18n.Service) {
-	@tmpl.Search_Part(tblStavke, searchControl)
+	@components.Search_Part(tblStavke, searchControl)
 	<div id="table-container" class="mt-1">
-		@tmpl.Table(tblStavke, translator)
+		@components.Table(tblStavke, translator)
 		<div id="nalozi_stavke" class="border-b border-gray-200"></div>
 	</div>
 }
@@ -242,7 +248,7 @@ templ NaloziKopiranje(tabs domain.TabData, tblHeader, tblStavke domain.TableData
 		<div id="tab2" class="flex-1 min-h-0 flex flex-col gap-1">
 			@tmpl.TabNav(translator.Title("Nalozi za knjizenje"), tabs, "#main-content", "knjizenje-panel", translator)
 			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
-				@tmpl.CheckboxField(domain.CheckboxFieldConfig{
+				@components.CheckboxField(domain.CheckboxFieldConfig{
 					ID:            "kopirajceonalog",
 					Name:          "kopirajceonalog",
 					LabelText:     "Kopiraj ceo nalog",
@@ -251,10 +257,10 @@ templ NaloziKopiranje(tabs domain.TabData, tblHeader, tblStavke domain.TableData
 					ClassCheckbox: common.ClassCheckbox + " mr-2",
 					ClassLabel:    common.ClassLabel + " flex items-center",
 				}, translator)
-				@tmpl.Search_Part(tblHeader, searchControl)
+				@components.Search_Part(tblHeader, searchControl)
 				<!-- Table -->
 				<div class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
-					@tmpl.Table(tblHeader, translator)
+					@components.Table(tblHeader, translator)
 				</div>
 			</div>
 			<div id="nalozi_kopiranje"></div>
@@ -269,10 +275,10 @@ templ NaloziStorniranje(tabs domain.TabData, tblHeader, tblStavke domain.TableDa
 		<div id="tab3" class="flex-1 min-h-0 flex flex-col gap-1">
 			@tmpl.TabNav(translator.Title("Nalozi za knjizenje"), tabs, "#main-content", "storniranje-panel", translator)
 			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
-				@tmpl.Search_Part(tblHeader, searchControl)
+				@components.Search_Part(tblHeader, searchControl)
 				<!-- Table -->
 				<div class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
-					@tmpl.Table(tblHeader, translator)
+					@components.Table(tblHeader, translator)
 				</div>
 			</div>
 		</div>
@@ -289,14 +295,14 @@ templ NaloziStampanje(tabs domain.TabData, tblHeader, tblStavke domain.TableData
 			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
 				<div class="flex items-center justify-between mb-1 px-1">
 					<div class="flex items-center gap-4">
-						@tmpl.RadioButtonField(domain.RadioFieldConfig{
+						@components.RadioButtonField(domain.RadioFieldConfig{
 							ID:         "stampanje-pojedinacnog-naloga",
 							Name:       "tip-stampanja",
 							Value:      "pojedinacni",
 							LabelText:  "Štampanje pojedinačnog naloga",
 							IsSelected: true,
 						}, translator)
-						@tmpl.RadioButtonField(domain.RadioFieldConfig{
+						@components.RadioButtonField(domain.RadioFieldConfig{
 							ID:         "stampanje-grupa-naloga",
 							Name:       "tip-stampanja",
 							Value:      "grupa",
@@ -311,15 +317,15 @@ templ NaloziStampanje(tabs domain.TabData, tblHeader, tblStavke domain.TableData
 							class={ btnStampaj.BtnClass }
 							onclick="handleNaloziStampaClick(event)"
 						>
-							@tmpl.Icon("stampa", common.ClassIcon)
+							@components.Icon("stampa", common.ClassIcon)
 							{ translator.Button(btnStampaj.LabelText) }
 						</a>
 					</div>
 				</div>
-				@tmpl.Search_Part(tblHeader, searchControl)
+				@components.Search_Part(tblHeader, searchControl)
 				<!-- Table -->
 				<div class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
-					@tmpl.Table(tblHeader, translator)
+					@components.Table(tblHeader, translator)
 				</div>
 				<div id="stavke-naloga" class="flex-1 min-h-0 flex flex-col">
 					@NaloziStampanjeStavke(tblStavke, searchControlDetalji, translator)
@@ -338,9 +344,9 @@ templ NaloziStampanje(tabs domain.TabData, tblHeader, tblStavke domain.TableData
 }
 
 templ NaloziStampanjeStavke(tblStavke domain.TableData, searchControlDetalji domain.InputControl, translator *i18n.Service) {
-	@tmpl.Search_Part(tblStavke, searchControlDetalji)
+	@components.Search_Part(tblStavke, searchControlDetalji)
 	<div class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
-		@tmpl.Table(tblStavke, translator)
+		@components.Table(tblStavke, translator)
 	</div>
 }
 
@@ -351,12 +357,12 @@ templ NaloziKopiranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, btn
 			if btnSave.Id == "btn-delete" {
 				<div class="bg-red-600 text-white h-9 flex justify-between items-center rounded-t-lg">
 					<h2 class="text-lg font-semibold ml-4">{ translator.Title(dialog.Title) }</h2>
-					@tmpl.CloseButton(btnClose)
+					@components.CloseButton(btnClose)
 				</div>
 			} else {
 				<div class="bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg">
 					<h2 class="text-lg font-semibold ml-4">{ translator.Title(dialog.Title) }</h2>
-					@tmpl.CloseButton(btnClose)
+					@components.CloseButton(btnClose)
 				</div>
 			}
 			<div class="flex flex-col h-full">
@@ -385,12 +391,12 @@ templ NaloziKopiranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, btn
 						</div>
 						<div class="box-content flex flex-col p-2 border-2 border-gray-300 rounded-md">
 							<div class="flex items-center space-x-2 mb-1">
-								@tmpl.LabelField(domain.LabelFieldConfig{
+								@components.LabelField(domain.LabelFieldConfig{
 									ID:         "tipdokold",
 									LabelText:  translator.Label("Vrsta naloga"),
 									ClassLabel: common.ClassLabel + " w-24",
 								})
-								@tmpl.TextInputField(domain.InputFieldConfig{
+								@components.TextInputField(domain.InputFieldConfig{
 									ID:         "tipdokold",
 									Name:       "tipdokold",
 									Value:      model.TipdokOld,
@@ -400,12 +406,12 @@ templ NaloziKopiranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, btn
 								})
 							</div>
 							<div class="flex items-center space-x-2 mb-1">
-								@tmpl.LabelField(domain.LabelFieldConfig{
+								@components.LabelField(domain.LabelFieldConfig{
 									ID:         "nalogold",
 									LabelText:  translator.Label("Broj naloga"),
 									ClassLabel: common.ClassLabel + " w-24",
 								})
-								@tmpl.TextInputField(domain.InputFieldConfig{
+								@components.TextInputField(domain.InputFieldConfig{
 									ID:         "nalogold",
 									Name:       "nalogold",
 									Value:      model.NalogOld,
@@ -415,12 +421,12 @@ templ NaloziKopiranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, btn
 								})
 							</div>
 							<div class="flex items-center space-x-2 mb-1">
-								@tmpl.LabelField(domain.LabelFieldConfig{
+								@components.LabelField(domain.LabelFieldConfig{
 									ID:         "danalold",
 									LabelText:  translator.Label("Datum naloga"),
 									ClassLabel: common.ClassLabel + " w-24",
 								})
-								@tmpl.TextInputField(domain.InputFieldConfig{
+								@components.TextInputField(domain.InputFieldConfig{
 									ID:         "danalold",
 									Name:       "danalold",
 									Value:      model.DatKnjOld,
@@ -428,12 +434,12 @@ templ NaloziKopiranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, btn
 									Disabled:   true,
 									ClassInput: common.ClassInputTextDisabled,
 								})
-								@tmpl.LabelField(domain.LabelFieldConfig{
+								@components.LabelField(domain.LabelFieldConfig{
 									ID:         "datobold",
 									LabelText:  translator.Label("Datum Obrade"),
 									ClassLabel: common.ClassLabel + " w-24",
 								})
-								@tmpl.TextInputField(domain.InputFieldConfig{
+								@components.TextInputField(domain.InputFieldConfig{
 									ID:         "datobold",
 									Name:       "datobold",
 									Value:      model.DanalOld,
@@ -443,12 +449,12 @@ templ NaloziKopiranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, btn
 								})
 							</div>
 							<div class="flex items-center space-x-2 mb-1">
-								@tmpl.LabelField(domain.LabelFieldConfig{
+								@components.LabelField(domain.LabelFieldConfig{
 									ID:         "opisold",
 									LabelText:  translator.Label("Opis knjizenja"),
 									ClassLabel: common.ClassLabel + " w-24",
 								})
-								@tmpl.TextInputField(domain.InputFieldConfig{
+								@components.TextInputField(domain.InputFieldConfig{
 									ID:         "opisold",
 									Name:       "opisold",
 									Value:      model.OpisOld,
@@ -464,12 +470,12 @@ templ NaloziKopiranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, btn
 						</div>
 						<div class="box-content flex flex-col p-2 border-2 border-gray-300 rounded-md">
 							<div class="flex items-center space-x-2 mb-1">
-								@tmpl.LabelField(domain.LabelFieldConfig{
+								@components.LabelField(domain.LabelFieldConfig{
 									ID:         "tipdok",
 									LabelText:  translator.Label("Vrsta Naloga"),
 									ClassLabel: common.ClassLabel + " w-24 ",
 								})
-								@tmpl.ComboBoxField(domain.ComboFieldConfig{
+								@components.ComboBoxField(domain.ComboFieldConfig{
 									ID:             "tipdok",
 									Name:           "tipdok",
 									Placeholder:    translator.Placeholder("Select"),
@@ -482,12 +488,12 @@ templ NaloziKopiranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, btn
 								}, translator)
 							</div>
 							<div class="flex items-center space-x-2 mb-1">
-								@tmpl.LabelField(domain.LabelFieldConfig{
+								@components.LabelField(domain.LabelFieldConfig{
 									ID:         "nalog",
 									LabelText:  translator.Label("Broj naloga"),
 									ClassLabel: common.ClassLabel + " w-24",
 								})
-								@tmpl.TextInputField(domain.InputFieldConfig{
+								@components.TextInputField(domain.InputFieldConfig{
 									ID:               "nalog",
 									Name:             "nalog",
 									Value:            model.NalogNew,
@@ -502,12 +508,12 @@ templ NaloziKopiranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, btn
 								})
 							</div>
 							<div class="flex items-center space-x-2 mb-1">
-								@tmpl.LabelField(domain.LabelFieldConfig{
+								@components.LabelField(domain.LabelFieldConfig{
 									ID:         "danal",
 									LabelText:  translator.Label("Datum naloga"),
 									ClassLabel: common.ClassLabel + " w-24",
 								})
-								@tmpl.TextInputField(domain.InputFieldConfig{
+								@components.TextInputField(domain.InputFieldConfig{
 									ID:         "danal",
 									Name:       "danal",
 									Value:      model.DanalNew,
@@ -516,12 +522,12 @@ templ NaloziKopiranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, btn
 									ClassInput: common.ClassInputTextEnabled + " w-full",
 									OnInput:    "clearFieldError",
 								})
-								@tmpl.LabelField(domain.LabelFieldConfig{
+								@components.LabelField(domain.LabelFieldConfig{
 									ID:         "datob",
 									LabelText:  translator.Label("Datum Obrade"),
 									ClassLabel: common.ClassLabel + " w-24",
 								})
-								@tmpl.TextInputField(domain.InputFieldConfig{
+								@components.TextInputField(domain.InputFieldConfig{
 									ID:         "datob",
 									Name:       "datob",
 									Value:      model.DatknjNew,
@@ -532,12 +538,12 @@ templ NaloziKopiranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, btn
 								})
 							</div>
 							<div class="flex items-center space-x-2 mb-1">
-								@tmpl.LabelField(domain.LabelFieldConfig{
+								@components.LabelField(domain.LabelFieldConfig{
 									ID:         "opis",
 									LabelText:  translator.Label("Opis knjizenja"),
 									ClassLabel: common.ClassLabel + " w-24",
 								})
-								@tmpl.TextInputField(domain.InputFieldConfig{
+								@components.TextInputField(domain.InputFieldConfig{
 									ID:         "opis",
 									Name:       "opis",
 									Value:      model.OpisNew,
@@ -549,8 +555,8 @@ templ NaloziKopiranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, btn
 						</div>
 					</div>
 					<div class="bg-white col-span-2 px-3 py-3 flex justify-end space-x-1 pt-4">
-						@tmpl.ConfirmButton(btnSave, translator)
-						@tmpl.CancelButton(btnCancel, translator)
+						@components.ConfirmButton(btnSave, translator)
+						@components.CancelButton(btnCancel, translator)
 					</div>
 				</form>
 				<!-- Message Display Area at Bottom -->
@@ -572,12 +578,12 @@ templ NaloziKopiranjeDialogDeo(dialog domain.Dialog, model domain.KopirajNalog, 
 			if btnSave.Id == "btn-delete" {
 				<div class="bg-red-600 text-white h-9 flex justify-between items-center rounded-t-lg">
 					<h2 class="text-lg font-semibold ml-4">{ translator.Title(dialog.Title) }</h2>
-					@tmpl.CloseButton(btnClose)
+					@components.CloseButton(btnClose)
 				</div>
 			} else {
 				<div class="bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg">
 					<h2 class="text-lg font-semibold ml-4">{ translator.Title(dialog.Title) }</h2>
-					@tmpl.CloseButton(btnClose)
+					@components.CloseButton(btnClose)
 				</div>
 			}
 			<div class="flex flex-col h-full">
@@ -606,12 +612,12 @@ templ NaloziKopiranjeDialogDeo(dialog domain.Dialog, model domain.KopirajNalog, 
 								</div>
 								<div class="box-content flex flex-col p-1 border-2 border-blue-400 rounded-md">
 									<div class="flex items-center space-x-2 mb-1">
-										@tmpl.LabelField(domain.LabelFieldConfig{
+										@components.LabelField(domain.LabelFieldConfig{
 											ID:         "tipdokold",
 											LabelText:  translator.Label("Vrsta Naloga"),
 											ClassLabel: common.ClassLabel + " w-24 ",
 										})
-										@tmpl.ComboBoxField(domain.ComboFieldConfig{
+										@components.ComboBoxField(domain.ComboFieldConfig{
 											ID:             "tipdokold",
 											Name:           "tipdokold",
 											Placeholder:    translator.Placeholder("Select"),
@@ -624,12 +630,12 @@ templ NaloziKopiranjeDialogDeo(dialog domain.Dialog, model domain.KopirajNalog, 
 										}, translator)
 									</div>
 									<div class="flex items-center space-x-2 mb-1">
-										@tmpl.LabelField(domain.LabelFieldConfig{
+										@components.LabelField(domain.LabelFieldConfig{
 											ID:         "brojnalogaold",
 											LabelText:  translator.Label("Broj naloga"),
 											ClassLabel: common.ClassLabel + " w-24",
 										})
-										@tmpl.TextInputField(domain.InputFieldConfig{
+										@components.TextInputField(domain.InputFieldConfig{
 											ID:         "brojnalogaold",
 											Name:       "brojnalogaold",
 											Value:      model.NalogOld,
@@ -639,12 +645,12 @@ templ NaloziKopiranjeDialogDeo(dialog domain.Dialog, model domain.KopirajNalog, 
 										})
 									</div>
 									<div class="flex items-center space-x-2 mb-1">
-										@tmpl.LabelField(domain.LabelFieldConfig{
+										@components.LabelField(domain.LabelFieldConfig{
 											ID:         "datumknjold",
 											LabelText:  translator.Label("Datum naloga"),
 											ClassLabel: common.ClassLabel + " w-24",
 										})
-										@tmpl.TextInputField(domain.InputFieldConfig{
+										@components.TextInputField(domain.InputFieldConfig{
 											ID:         "datumknjold",
 											Name:       "datumnknjold",
 											Value:      model.DatKnjOld,
@@ -652,12 +658,12 @@ templ NaloziKopiranjeDialogDeo(dialog domain.Dialog, model domain.KopirajNalog, 
 											Disabled:   false,
 											ClassInput: common.ClassInputTextEnabled,
 										})
-										@tmpl.LabelField(domain.LabelFieldConfig{
+										@components.LabelField(domain.LabelFieldConfig{
 											ID:         "datumobradeold",
 											LabelText:  translator.Label("Datum Obrade"),
 											ClassLabel: common.ClassLabel + " w-24",
 										})
-										@tmpl.TextInputField(domain.InputFieldConfig{
+										@components.TextInputField(domain.InputFieldConfig{
 											ID:         "datumobradeold",
 											Name:       "datumobradeold",
 											Value:      model.DanalOld,
@@ -667,12 +673,12 @@ templ NaloziKopiranjeDialogDeo(dialog domain.Dialog, model domain.KopirajNalog, 
 										})
 									</div>
 									<div class="flex items-center space-x-2 mb-1">
-										@tmpl.LabelField(domain.LabelFieldConfig{
+										@components.LabelField(domain.LabelFieldConfig{
 											ID:         "opisknjizenjaold",
 											LabelText:  translator.Label("Opis knjizenja"),
 											ClassLabel: common.ClassLabel + " w-24",
 										})
-										@tmpl.TextInputField(domain.InputFieldConfig{
+										@components.TextInputField(domain.InputFieldConfig{
 											ID:         "opisknjizenjaold",
 											Name:       "opisknjizenjaold",
 											Value:      model.OpisOld,
@@ -689,12 +695,12 @@ templ NaloziKopiranjeDialogDeo(dialog domain.Dialog, model domain.KopirajNalog, 
 								</div>
 								<div class="box-content flex flex-col p-1 border-2 border-blue-400 rounded-md">
 									<div class="flex items-center space-x-2 mb-1">
-										@tmpl.LabelField(domain.LabelFieldConfig{
+										@components.LabelField(domain.LabelFieldConfig{
 											ID:         "tipdok",
 											LabelText:  translator.Label("Vrsta Naloga"),
 											ClassLabel: common.ClassLabel + " w-24 ",
 										})
-										@tmpl.ComboBoxField(domain.ComboFieldConfig{
+										@components.ComboBoxField(domain.ComboFieldConfig{
 											ID:             "tipdok",
 											Name:           "tipdok",
 											Placeholder:    translator.Placeholder("Select"),
@@ -707,12 +713,12 @@ templ NaloziKopiranjeDialogDeo(dialog domain.Dialog, model domain.KopirajNalog, 
 										}, translator)
 									</div>
 									<div class="flex items-center space-x-2 mb-1">
-										@tmpl.LabelField(domain.LabelFieldConfig{
+										@components.LabelField(domain.LabelFieldConfig{
 											ID:         "nalog",
 											LabelText:  translator.Label("Broj naloga"),
 											ClassLabel: common.ClassLabel + " w-24",
 										})
-										@tmpl.TextInputField(domain.InputFieldConfig{
+										@components.TextInputField(domain.InputFieldConfig{
 											ID:               "nalog",
 											Name:             "nalog",
 											Value:            model.NalogNew,
@@ -727,12 +733,12 @@ templ NaloziKopiranjeDialogDeo(dialog domain.Dialog, model domain.KopirajNalog, 
 										})
 									</div>
 									<div class="flex items-center space-x-2 mb-1">
-										@tmpl.LabelField(domain.LabelFieldConfig{
+										@components.LabelField(domain.LabelFieldConfig{
 											ID:         "danal",
 											LabelText:  translator.Label("Datum naloga"),
 											ClassLabel: common.ClassLabel + " w-24",
 										})
-										@tmpl.TextInputField(domain.InputFieldConfig{
+										@components.TextInputField(domain.InputFieldConfig{
 											ID:         "danal",
 											Name:       "danal",
 											Value:      model.DanalNew,
@@ -741,12 +747,12 @@ templ NaloziKopiranjeDialogDeo(dialog domain.Dialog, model domain.KopirajNalog, 
 											ClassInput: common.ClassInputTextEnabled + " w-full",
 											OnInput:    "clearFieldError",
 										})
-										@tmpl.LabelField(domain.LabelFieldConfig{
+										@components.LabelField(domain.LabelFieldConfig{
 											ID:         "datob",
 											LabelText:  translator.Label("Datum Obrade"),
 											ClassLabel: common.ClassLabel + " w-24",
 										})
-										@tmpl.TextInputField(domain.InputFieldConfig{
+										@components.TextInputField(domain.InputFieldConfig{
 											ID:         "datob",
 											Name:       "datob",
 											Value:      model.DatknjNew,
@@ -757,12 +763,12 @@ templ NaloziKopiranjeDialogDeo(dialog domain.Dialog, model domain.KopirajNalog, 
 										})
 									</div>
 									<div class="flex items-center space-x-2 mb-1">
-										@tmpl.LabelField(domain.LabelFieldConfig{
+										@components.LabelField(domain.LabelFieldConfig{
 											ID:         "opis",
 											LabelText:  translator.Label("Opis knjizenja"),
 											ClassLabel: common.ClassLabel + " w-24",
 										})
-										@tmpl.TextInputField(domain.InputFieldConfig{
+										@components.TextInputField(domain.InputFieldConfig{
 											ID:         "opis",
 											Name:       "opis",
 											Value:      model.OpisNew,
@@ -782,12 +788,12 @@ templ NaloziKopiranjeDialogDeo(dialog domain.Dialog, model domain.KopirajNalog, 
 								<div class="box-content border-2 border-blue-400 rounded-md overflow-hidden bg-white h-full flex flex-col min-h-0 p-1">
 									<div class="flex flex-col sm:flex-row sm:items-end gap-2 p-1 border-b border-gray-300 bg-gray-50">
 										<div class="flex items-center space-x-2 w-full">
-											@tmpl.LabelField(domain.LabelFieldConfig{
+											@components.LabelField(domain.LabelFieldConfig{
 												ID:         "konta_za_prikaz",
 												LabelText:  "Konta za prikaz",
 												ClassLabel: common.ClassLabel + " w-28",
 											})
-											@tmpl.TextInputField(domain.InputFieldConfig{
+											@components.TextInputField(domain.InputFieldConfig{
 												ID:         "konta_za_prikaz",
 												Name:       "konta_za_prikaz",
 												FieldType:  "text",
@@ -795,10 +801,10 @@ templ NaloziKopiranjeDialogDeo(dialog domain.Dialog, model domain.KopirajNalog, 
 												ClassInput: common.ClassInputTextEnabled + " w-full",
 											})
 										</div>
-										@tmpl.Button(btnPrikazi)
+										@components.Button(btnPrikazi)
 									</div>
 									<div class="flex-1 min-h-[16rem] overflow-x-auto overflow-y-auto">
-										@tmpl.Table(tblOriginal, translator)
+										@components.Table(tblOriginal, translator)
 									</div>
 								</div>
 							</div>
@@ -815,12 +821,12 @@ templ NaloziKopiranjeDialogDeo(dialog domain.Dialog, model domain.KopirajNalog, 
 								<div class="box-content border-2 border-blue-400 rounded-md overflow-hidden bg-white h-full flex flex-col min-h-0 p-1">
 									<div class="flex flex-col lg:flex-row lg:items-center lg:flex-wrap gap-2 p-1 border-b border-gray-300 bg-gray-50">
 										<div class="flex items-center space-x-2 flex-1 min-w-0">
-											@tmpl.LabelField(domain.LabelFieldConfig{
+											@components.LabelField(domain.LabelFieldConfig{
 												ID:         "konto_prihoda",
 												LabelText:  "Konto prihoda",
 												ClassLabel: common.ClassLabel + " w-28",
 											})
-											@tmpl.TextInputField(domain.InputFieldConfig{
+											@components.TextInputField(domain.InputFieldConfig{
 												ID:         "konto_prihoda",
 												Name:       "konto_prihoda",
 												FieldType:  "text",
@@ -833,12 +839,12 @@ templ NaloziKopiranjeDialogDeo(dialog domain.Dialog, model domain.KopirajNalog, 
 											<span class={ common.ClassCheckboxSpan }>Kopiraj stavke u kontra stav</span>
 										</label>
 										<div class="flex items-center gap-2 lg:ml-auto">
-											@tmpl.ConfirmButton(btnSave, translator)
-											@tmpl.CancelButton(btnOdustani, translator)
+											@components.ConfirmButton(btnSave, translator)
+											@components.CancelButton(btnOdustani, translator)
 										</div>
 									</div>
 									<div class="flex-1 min-h-[16rem] overflow-x-auto overflow-y-auto">
-										@tmpl.Table(tblCopy, translator)
+										@components.Table(tblCopy, translator)
 									</div>
 								</div>
 							</div>
@@ -863,12 +869,12 @@ templ NaloziStorniranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, b
 			if btnSave.Id == "btn-delete" {
 				<div class="bg-red-600 text-white h-9 flex justify-between items-center rounded-t-lg">
 					<h2 class="text-lg font-semibold ml-4">{ translator.Title(dialog.Title) }</h2>
-					@tmpl.CloseButton(btnClose)
+					@components.CloseButton(btnClose)
 				</div>
 			} else {
 				<div class="bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg">
 					<h2 class="text-lg font-semibold ml-4">{ translator.Title(dialog.Title) }</h2>
-					@tmpl.CloseButton(btnClose)
+					@components.CloseButton(btnClose)
 				</div>
 			}
 			<div class="flex flex-col h-full">
@@ -897,12 +903,12 @@ templ NaloziStorniranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, b
 						</div>
 						<div class="box-content flex flex-col p-2 border-2 border-gray-300 rounded-md">
 							<div class="flex items-center space-x-2 mb-1">
-								@tmpl.LabelField(domain.LabelFieldConfig{
+								@components.LabelField(domain.LabelFieldConfig{
 									ID:         "tipdok_old",
 									LabelText:  translator.Label("Vrsta naloga"),
 									ClassLabel: common.ClassLabel + " w-24",
 								})
-								@tmpl.TextInputField(domain.InputFieldConfig{
+								@components.TextInputField(domain.InputFieldConfig{
 									ID:         "tipdok_old",
 									Name:       "tipdok_old",
 									Value:      model.Tipdok_Old,
@@ -912,12 +918,12 @@ templ NaloziStorniranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, b
 								})
 							</div>
 							<div class="flex items-center space-x-2 mb-1">
-								@tmpl.LabelField(domain.LabelFieldConfig{
+								@components.LabelField(domain.LabelFieldConfig{
 									ID:         "nalog_old",
 									LabelText:  translator.Label("Broj naloga"),
 									ClassLabel: common.ClassLabel + " w-24",
 								})
-								@tmpl.TextInputField(domain.InputFieldConfig{
+								@components.TextInputField(domain.InputFieldConfig{
 									ID:         "nalog_old",
 									Name:       "nalog_old",
 									Value:      model.NalogOld,
@@ -927,12 +933,12 @@ templ NaloziStorniranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, b
 								})
 							</div>
 							<div class="flex items-center space-x-2 mb-1">
-								@tmpl.LabelField(domain.LabelFieldConfig{
+								@components.LabelField(domain.LabelFieldConfig{
 									ID:         "datumknjold",
 									LabelText:  translator.Label("Datum naloga"),
 									ClassLabel: common.ClassLabel + " w-24",
 								})
-								@tmpl.TextInputField(domain.InputFieldConfig{
+								@components.TextInputField(domain.InputFieldConfig{
 									ID:         "datumknjold",
 									Name:       "datumnknjold",
 									Value:      model.DatKnjOld,
@@ -940,12 +946,12 @@ templ NaloziStorniranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, b
 									Disabled:   true,
 									ClassInput: common.ClassInputTextDisabled,
 								})
-								@tmpl.LabelField(domain.LabelFieldConfig{
+								@components.LabelField(domain.LabelFieldConfig{
 									ID:         "datumobradeold",
 									LabelText:  translator.Label("Datum Obrade"),
 									ClassLabel: common.ClassLabel + " w-24",
 								})
-								@tmpl.TextInputField(domain.InputFieldConfig{
+								@components.TextInputField(domain.InputFieldConfig{
 									ID:         "datumobradeold",
 									Name:       "datumobradeold",
 									Value:      model.DanalOld,
@@ -955,12 +961,12 @@ templ NaloziStorniranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, b
 								})
 							</div>
 							<div class="flex items-center space-x-2 mb-1">
-								@tmpl.LabelField(domain.LabelFieldConfig{
+								@components.LabelField(domain.LabelFieldConfig{
 									ID:         "opisknjizenjaold",
 									LabelText:  translator.Label("Opis knjizenja"),
 									ClassLabel: common.ClassLabel + " w-24",
 								})
-								@tmpl.TextInputField(domain.InputFieldConfig{
+								@components.TextInputField(domain.InputFieldConfig{
 									ID:         "opisknjizenjaold",
 									Name:       "opisknjizenjaold",
 									Value:      model.OpisOld,
@@ -976,12 +982,12 @@ templ NaloziStorniranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, b
 						</div>
 						<div class="box-content flex flex-col p-2 border-2 border-gray-300 rounded-md">
 							<div class="flex items-center space-x-2 mb-1">
-								@tmpl.LabelField(domain.LabelFieldConfig{
+								@components.LabelField(domain.LabelFieldConfig{
 									ID:         "nalog",
 									LabelText:  translator.Label("Broj naloga"),
 									ClassLabel: common.ClassLabel + " w-24",
 								})
-								@tmpl.TextInputField(domain.InputFieldConfig{
+								@components.TextInputField(domain.InputFieldConfig{
 									ID:         "nalog",
 									Name:       "nalog",
 									Value:      model.NalogNew,
@@ -993,12 +999,12 @@ templ NaloziStorniranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, b
 								})
 							</div>
 							<div class="flex items-center space-x-2 mb-1">
-								@tmpl.LabelField(domain.LabelFieldConfig{
+								@components.LabelField(domain.LabelFieldConfig{
 									ID:         "danal",
 									LabelText:  translator.Label("Datum naloga"),
 									ClassLabel: common.ClassLabel + " w-24",
 								})
-								@tmpl.TextInputField(domain.InputFieldConfig{
+								@components.TextInputField(domain.InputFieldConfig{
 									ID:         "danal",
 									Name:       "danal",
 									Value:      model.DanalNew,
@@ -1008,12 +1014,12 @@ templ NaloziStorniranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, b
 									OnInput:    "clearFieldError",
 									OnFocus:    "clearFieldError",
 								})
-								@tmpl.LabelField(domain.LabelFieldConfig{
+								@components.LabelField(domain.LabelFieldConfig{
 									ID:         "datob",
 									LabelText:  translator.Label("Datum Obrade"),
 									ClassLabel: common.ClassLabel + " w-24",
 								})
-								@tmpl.TextInputField(domain.InputFieldConfig{
+								@components.TextInputField(domain.InputFieldConfig{
 									ID:         "datob",
 									Name:       "datob",
 									Value:      model.DanalNew,
@@ -1025,12 +1031,12 @@ templ NaloziStorniranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, b
 								})
 							</div>
 							<div class="flex items-center space-x-2 mb-1">
-								@tmpl.LabelField(domain.LabelFieldConfig{
+								@components.LabelField(domain.LabelFieldConfig{
 									ID:         "opis",
 									LabelText:  translator.Label("Opis knjizenja"),
 									ClassLabel: common.ClassLabel + " w-24",
 								})
-								@tmpl.TextInputField(domain.InputFieldConfig{
+								@components.TextInputField(domain.InputFieldConfig{
 									ID:         "opis",
 									Name:       "opis",
 									Value:      model.OpisNew,
@@ -1042,8 +1048,8 @@ templ NaloziStorniranjeDialog(dialog domain.Dialog, model domain.KopirajNalog, b
 						</div>
 					</div>
 					<div class="bg-white col-span-2 px-3 py-3 flex justify-end space-x-1 pt-4">
-						@tmpl.ConfirmButton(btnSave, translator)
-						@tmpl.CancelButton(btnCancel, translator)
+						@components.ConfirmButton(btnSave, translator)
+						@components.CancelButton(btnCancel, translator)
 					</div>
 				</form>
 			</div>
@@ -1201,7 +1207,7 @@ templ NaloziStampaGrupeDialog(dialog domain.Dialog, tipdokValues []domain.ComboI
 			<!-- Title Bar -->
 			<div class="bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg">
 				<h2 class="text-lg font-semibold ml-4">{ translator.Title(dialog.Title) }</h2>
-				@tmpl.CloseButton(btnClose)
+				@components.CloseButton(btnClose)
 			</div>
 			<!-- Content -->
 			<div class="p-3">
@@ -1209,12 +1215,12 @@ templ NaloziStampaGrupeDialog(dialog domain.Dialog, tipdokValues []domain.ComboI
 					<legend class="text-sm font-bold text-blue-700 px-1">{ translator.Text("Selekcija parametara za štampanje grupe naloga") }</legend>
 					<!-- Vrsta naloga -->
 					<div class="flex items-center gap-2 mb-3">
-						@tmpl.LabelField(domain.LabelFieldConfig{
+						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "tipdok",
 							LabelText:  translator.Label("Vrsta naloga"),
 							ClassLabel: common.ClassLabel + " w-28",
 						})
-						@tmpl.ComboBoxField(domain.ComboFieldConfig{
+						@components.ComboBoxField(domain.ComboFieldConfig{
 							ID:            "tipdok",
 							Name:          "tipdok",
 							OptionValues:  tipdokValues,
@@ -1224,28 +1230,30 @@ templ NaloziStampaGrupeDialog(dialog domain.Dialog, tipdokValues []domain.ComboI
 					</div>
 					<!-- Od/Do broja naloga -->
 					<div class="flex items-center gap-2 mb-3">
-						@tmpl.LabelField(domain.LabelFieldConfig{
+						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "odbroja",
 							LabelText:  "Od broja naloga",
 							ClassLabel: common.ClassLabel + " w-28",
 						})
-						@tmpl.NumericInputField(domain.InputFieldConfig{
+						@components.TextInputField(domain.InputFieldConfig{
 							ID:            "odbroja",
 							Name:          "odbroja",
+							FieldType:     "number",
 							Value:         "0",
 							Disabled:      false,
 							ClassInput:    common.ClassInputNumericEnabled + " w-24",
 							DecimalPlaces: 0,
 						})
-						@tmpl.LabelField(domain.LabelFieldConfig{
+						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "dobroja",
 							LabelText:  "Do broja naloga",
 							ClassLabel: common.ClassLabel + " w-28",
 						})
-						@tmpl.NumericInputField(domain.InputFieldConfig{
+						@components.TextInputField(domain.InputFieldConfig{
 							ID:            "dobroja",
 							Name:          "dobroja",
 							Value:         "999999",
+							FieldType:     "number",
 							Disabled:      false,
 							ClassInput:    common.ClassInputNumericEnabled + " w-24",
 							DecimalPlaces: 0,
@@ -1253,7 +1261,7 @@ templ NaloziStampaGrupeDialog(dialog domain.Dialog, tipdokValues []domain.ComboI
 					</div>
 					<!-- Checkboxes -->
 					<div class="flex flex-col gap-2">
-						@tmpl.CheckboxField(domain.CheckboxFieldConfig{
+						@components.CheckboxField(domain.CheckboxFieldConfig{
 							ID:                "zbirniponalog",
 							Name:              "zbirniponalog",
 							LabelText:         "Prikaz zbirnog prometa po kontima za nalog",
@@ -1262,7 +1270,7 @@ templ NaloziStampaGrupeDialog(dialog domain.Dialog, tipdokValues []domain.ComboI
 							ClassCheckbox:     common.ClassCheckbox,
 							ClassCheckboxSpan: common.ClassCheckboxSpan,
 						}, translator)
-						@tmpl.CheckboxField(domain.CheckboxFieldConfig{
+						@components.CheckboxField(domain.CheckboxFieldConfig{
 							ID:                "zbirnipolisti",
 							Name:              "zbirnipolisti",
 							LabelText:         "Prikaz zbirnog prometa po kontima za listu",
@@ -1271,7 +1279,7 @@ templ NaloziStampaGrupeDialog(dialog domain.Dialog, tipdokValues []domain.ComboI
 							ClassCheckbox:     common.ClassCheckbox,
 							ClassCheckboxSpan: common.ClassCheckboxSpan,
 						}, translator)
-						@tmpl.CheckboxField(domain.CheckboxFieldConfig{
+						@components.CheckboxField(domain.CheckboxFieldConfig{
 							ID:                "novinalognovasrana",
 							Name:              "novinalognovasrana",
 							LabelText:         "Novi nalog nova strana",
@@ -1285,14 +1293,14 @@ templ NaloziStampaGrupeDialog(dialog domain.Dialog, tipdokValues []domain.ComboI
 			</div>
 			<!-- Buttons -->
 			<div class="px-3 py-3 flex justify-end space-x-1">
-				@tmpl.Search_PartPrintButton(domain.Button{
-					Id:            "btn-print-grupe",
-					LabelText:     translator.Button("Štampa"),
-					BtnClass:      common.ClassPrintButton,
-					HxActionURL:   "/api/nalozi/stampa/grupanalog",
-					DataFields:    "tipdok,odbroja,dobroja,zbirniponalog,zbirnipolisti,novinalognovasrana",
+				@components.Search_PartPrintButton(domain.Button{
+					Id:          "btn-print-grupe",
+					LabelText:   translator.Button("Štampa"),
+					BtnClass:    common.ClassPrintButton,
+					HxActionURL: "/api/nalozi/stampa/grupanalog",
+					DataFields:  "tipdok,odbroja,dobroja,zbirniponalog,zbirnipolisti,novinalognovasrana",
 				})
-				@tmpl.CancelButton(btnCancel, translator)
+				@components.CancelButton(btnCancel, translator)
 			</div>
 		</div>
 	</div>

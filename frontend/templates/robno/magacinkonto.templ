@@ -1,0 +1,202 @@
+package robno
+
+import (
+	"fmt"
+	"helia/frontend/components"
+	tmpl "helia/frontend/templates"
+	"helia/i18n"
+	"helia/internal/common"
+	"helia/internal/domain"
+)
+
+templ MagacinKonto(tbl domain.TableData, searchInput domain.InputControl, btnPrint domain.Button, translator *i18n.Service) {
+	<!-- Container with full height -->
+	<div class="bg-blue-100 p-1 flex flex-col h-full">
+		<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
+			<!-- Search bar with button in flex row -->
+			<div class="flex items-center justify-between">
+				<div class="flex-1">
+					@components.Search_Part(tbl, searchInput)
+				</div>
+				<div class="flex-shrink-0 mb-1">
+					@components.Search_PartPrintButton(btnPrint)
+				</div>
+			</div>
+			<!-- Table -->
+			<div class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+				@components.Table(tbl, translator)
+			</div>
+		</div>
+		<div id="dialog-partneri-stampa"></div>
+	</div>
+	@tmpl.OpenPrintWithParamsScript()
+}
+
+templ MagacinKontoDialog(dialog domain.Dialog, action string, model domain.Magkonto, btnSave domain.Button, btnCancel domain.Button, btnClose domain.Button, translator *i18n.Service, csrfToken string) {
+	@tmpl.Dialog("magacin-konto-form", csrfToken, magacinKontoFormContent(model, translator), dialog, btnSave, btnCancel, btnClose, translator)
+}
+
+templ magacinKontoFormContent(model domain.Magkonto, translator *i18n.Service) {
+	<div class="grid grid-cols-2 gap-2">
+		<!-- Magacin (required) -->
+		<div class="flex items-center">
+			@components.LabelField(domain.LabelFieldConfig{
+				ID:         "mag",
+				LabelText:  translator.Label("Magacin"),
+				ClassLabel: common.ClassLabel + " w-24",
+			})
+			@components.TextInputField(domain.InputFieldConfig{
+				ID:         "mag",
+				Name:       "mag",
+				Value:      fmt.Sprintf("%d", model.Mag),
+				FieldType:  "number",
+				Required:   true,
+				Disabled:   false,
+				ClassInput: common.ClassInputTextEnabled + " w-24",
+				TabIndex:   "1",
+				OnInput:    "clearFieldError",
+				OnFocus:    "clearFieldError",
+			})
+		</div>
+		<!-- Konto zaliha (required) -->
+		<div class="flex items-center">
+			@components.LabelField(domain.LabelFieldConfig{
+				ID:         "konto",
+				LabelText:  translator.Label("Konto zaliha"),
+				ClassLabel: common.ClassLabel + " w-24",
+			})
+			@components.TextInputField(domain.InputFieldConfig{
+				ID:         "konto",
+				Name:       "konto",
+				Value:      model.Konto,
+				FieldType:  "text",
+				Required:   true,
+				Disabled:   false,
+				ClassInput: common.ClassInputTextEnabled + " flex-1",
+				TabIndex:   "2",
+				OnInput:    "clearFieldError",
+				OnFocus:    "clearFieldError",
+			})
+		</div>
+		<!-- ID FKPL -->
+		<div class="flex items-center">
+			@components.LabelField(domain.LabelFieldConfig{
+				ID:         "idfkpl",
+				LabelText:  translator.Label("ID FKPL"),
+				ClassLabel: common.ClassLabel + " w-24",
+			})
+			@components.TextInputField(domain.InputFieldConfig{
+				ID:         "idfkpl",
+				Name:       "idfkpl",
+				Value:      fmt.Sprintf("%d", model.IDFkpl),
+				FieldType:  "number",
+				Required:   false,
+				Disabled:   false,
+				ClassInput: common.ClassInputTextEnabled + " w-24",
+				TabIndex:   "3",
+				OnInput:    "clearFieldError",
+				OnFocus:    "clearFieldError",
+			})
+		</div>
+		<!-- V Konta -->
+		<div class="flex items-center">
+			@components.LabelField(domain.LabelFieldConfig{
+				ID:         "vkonta",
+				LabelText:  translator.Label("V Konta"),
+				ClassLabel: common.ClassLabel + " w-24",
+			})
+			@components.TextInputField(domain.InputFieldConfig{
+				ID:         "vkonta",
+				Name:       "vkonta",
+				Value:      fmt.Sprintf("%d", model.VKonta),
+				FieldType:  "number",
+				Required:   false,
+				Disabled:   false,
+				ClassInput: common.ClassInputTextEnabled + " w-24",
+				TabIndex:   "4",
+				OnInput:    "clearFieldError",
+				OnFocus:    "clearFieldError",
+			})
+		</div>
+		<!-- Konto prihoda -->
+		<div class="flex items-center">
+			@components.LabelField(domain.LabelFieldConfig{
+				ID:         "kontoprih",
+				LabelText:  translator.Label("Konto prihoda"),
+				ClassLabel: common.ClassLabel + " w-24",
+			})
+			@components.TextInputField(domain.InputFieldConfig{
+				ID:         "kontoprih",
+				Name:       "kontoprih",
+				Value:      model.KontoPrih,
+				FieldType:  "text",
+				Required:   false,
+				Disabled:   false,
+				ClassInput: common.ClassInputTextEnabled + " flex-1",
+				TabIndex:   "5",
+				OnInput:    "clearFieldError",
+				OnFocus:    "clearFieldError",
+			})
+		</div>
+		<!-- Konto troška -->
+		<div class="flex items-center">
+			@components.LabelField(domain.LabelFieldConfig{
+				ID:         "kontotroska",
+				LabelText:  translator.Label("Konto troška"),
+				ClassLabel: common.ClassLabel + " w-24",
+			})
+			@components.TextInputField(domain.InputFieldConfig{
+				ID:         "kontotroska",
+				Name:       "kontotroska",
+				Value:      model.KontoTroska,
+				FieldType:  "text",
+				Required:   false,
+				Disabled:   false,
+				ClassInput: common.ClassInputTextEnabled + " flex-1",
+				TabIndex:   "6",
+				OnInput:    "clearFieldError",
+				OnFocus:    "clearFieldError",
+			})
+		</div>
+		<!-- Konto RUC -->
+		<div class="flex items-center">
+			@components.LabelField(domain.LabelFieldConfig{
+				ID:         "kontoruc",
+				LabelText:  translator.Label("Konto RUC"),
+				ClassLabel: common.ClassLabel + " w-24",
+			})
+			@components.TextInputField(domain.InputFieldConfig{
+				ID:         "kontoruc",
+				Name:       "kontoruc",
+				Value:      model.KontoRuc,
+				FieldType:  "text",
+				Required:   false,
+				Disabled:   false,
+				ClassInput: common.ClassInputTextEnabled + " flex-1",
+				TabIndex:   "7",
+				OnInput:    "clearFieldError",
+				OnFocus:    "clearFieldError",
+			})
+		</div>
+		<!-- Konto rabat -->
+		<div class="flex items-center">
+			@components.LabelField(domain.LabelFieldConfig{
+				ID:         "kontorab",
+				LabelText:  translator.Label("Konto rabat"),
+				ClassLabel: common.ClassLabel + " w-24",
+			})
+			@components.TextInputField(domain.InputFieldConfig{
+				ID:         "kontorab",
+				Name:       "kontorab",
+				Value:      model.KontoRab,
+				FieldType:  "text",
+				Required:   false,
+				Disabled:   false,
+				ClassInput: common.ClassInputTextEnabled + " flex-1",
+				TabIndex:   "8",
+				OnInput:    "clearFieldError",
+				OnFocus:    "clearFieldError",
+			})
+		</div>
+	</div>
+}

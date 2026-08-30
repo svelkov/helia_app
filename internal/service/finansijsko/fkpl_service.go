@@ -9,7 +9,6 @@ import (
 	"helia/internal/domain"
 	"helia/internal/repository"
 	"helia/internal/service"
-	"helia/pkg/utils"
 	"reflect"
 )
 
@@ -31,18 +30,20 @@ type FkplResource struct {
 	fkplRepo         *repository.BaseRepository[domain.Fkpl]
 	fvrRepo          *repository.BaseRepository[domain.Fvr]
 	tipAnalitikeRepo *repository.BaseRepository[domain.Tipanalitike]
+	partneriRepo     *repository.BaseRepository[domain.Partneri]
 	fkplTableFields  []domain.Fields
 	cfg              config.Config
 }
 
-func NewFkplResource(service *service.BaseService[domain.Fkpl], fkplRepo *repository.BaseRepository[domain.Fkpl], fvrRepo *repository.BaseRepository[domain.Fvr], tipAnalitikeRepo *repository.BaseRepository[domain.Tipanalitike], cfg config.Config) *FkplResource {
+func NewFkplResource(service *service.BaseService[domain.Fkpl], fkplRepo *repository.BaseRepository[domain.Fkpl], fvrRepo *repository.BaseRepository[domain.Fvr], tipAnalitikeRepo *repository.BaseRepository[domain.Tipanalitike], partneriRepo *repository.BaseRepository[domain.Partneri], cfg config.Config) *FkplResource {
 	rs := &FkplResource{
 		service:          service,
 		fkplRepo:         fkplRepo,
 		fvrRepo:          fvrRepo,
 		tipAnalitikeRepo: tipAnalitikeRepo,
+		partneriRepo:     partneriRepo,
 		cfg:              cfg,
-	}
+	}	
 	rs.setKontniPlanTableFields()
 	return rs
 }
@@ -51,7 +52,7 @@ func (s *FkplResource) GetFvrData(ctx context.Context) (domain.Fvr, error) {
 	if s.fvrRepo == nil {
 		return domain.Fvr{}, fmt.Errorf("fvrRepo not initialized")
 	}
-	return utils.GetFvrData(ctx, s.fvrRepo)
+	return common.GetFvrData(ctx, s.fvrRepo)
 }
 func (s *FkplResource) GetAnalitikaForSelect(ctx context.Context) ([]domain.ComboItem, error) {
 	if s.tipAnalitikeRepo == nil {
@@ -351,6 +352,9 @@ func (s *FkplResource) TraziKonto(ctx context.Context, konto, sifra, vkonta stri
 	if vkonta == "2" {
 		qb = common.NewQueryBuilder(`SELECT f.idfkpl, f.konto, f.sifra, f.naziv FROM fkpl as f`, true)
 	}
+	if qb == nil {
+		return nil, errors.New("Invalid vkonta value")
+	}
 	if hasGod {
 		qb.AddEqual("f.god", session.SelectedGod)
 	}
@@ -385,36 +389,57 @@ func (s *FkplResource) KontoSearchForTable(ctx context.Context, tbl *domain.Tabl
 		return errors.New(common.ErrMsgUserSessionNotFound)
 	}
 	var qb *common.QueryBuilder
-	hasGod, hasKar := s.fkplRepo.GetHasGodHasKar()
+
 	// if vkonta == "1"  then search ibn table partneri for the tipanalitke for that konto and use that tipanalitikeid to search in fkpl, if vkonta == "2" then search directly in fkpl with vkonta = 2 and konto
 	if vkonta == "1" {
-		qb = common.NewQueryBuilder(`SELECT ta.tipanalitikeid, p.naziv as naziv, p.sifra as sifra, f.konto FROM partneri as p `, true)
+		qb = common.NewQueryBuilder(`SELECT distinct ta.tipanalitikeid, p.naziv as naziv, p.sifra as sifra, f.konto FROM partneri as p `, true)
 		qb.AddJoin("left join tipanalitike ta on ta.tipanalitikeid = p.tipanalitikeid ")
-		qb.AddJoin(" left join fkpl f on f.tipanalitikeid = ta.tipanalitikeid ")
-	}
-	if vkonta == "2" {
-		qb = common.NewQueryBuilder(`SELECT f.idfkpl, f.konto, f.sifra, f.naziv FROM fkpl as f`, true)
-	}
-	if hasGod {
-		qb.AddEqual("f.god", session.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("f.kar", session.SelectedKar)
-	}
-	if vkonta == "2" && konto != "" {
-		qb.AddEqual("f.vkonta", vkonta)
-		qb.AddEqual("f.konto", konto)
-	}
 
-	nbrArgs := qb.GetArgsCount()
-	qb.AddCustomCondition(fmt.Sprintf(`(f.konto ILIKE '%%' || $%d || '%%' OR f.sifra ILIKE '%%' || $%d || '%%' OR f.naziv ILIKE '%%' || $%d || '%%' OR p.naziv ILIKE '%%' || $%d || '%%')`, nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1))
-	qb.AddArgs(searchValue)
-	if vkonta == "2" {
-		qb.AddOrderBy("f.konto")
-	}
-	if vkonta == "1" {
+		hasGod, hasKar := s.fkplRepo.GetHasGodHasKar()
+		fkplJoin := " left join fkpl f on f.tipanalitikeid = ta.tipanalitikeid "
+		if hasGod {
+			fkplJoin += fmt.Sprintf(" and f.god = %d ", session.SelectedGod)
+		}
+		if hasKar {
+			fkplJoin += fmt.Sprintf(" and f.kar = %d ", session.SelectedKar)
+		}
+		if searchValue != "" {
+			fkplJoin += fmt.Sprintf(" and (f.sifra ILIKE '%%' || $%d || '%%' OR f.naziv ILIKE '%%' || $%d || '%%')", 1, 1)
+			qb.AddArgs(searchValue)
+		}
+		qb.AddJoin(fkplJoin)
+		hasGod, hasKar = s.partneriRepo.GetHasGodHasKar()
+		if hasGod {
+			qb.AddEqual("p.god", session.SelectedGod)
+		}
+		if hasKar {
+			qb.AddEqual("p.kar", session.SelectedKar)
+		}
+		if searchValue != "" {
+			nbrArgs := qb.GetArgsCount()
+			qb.AddCustomCondition(fmt.Sprintf(`(p.sifra ILIKE '%%' || $%d || '%%' OR p.naziv ILIKE '%%' || $%d || '%%')`, nbrArgs+1, nbrArgs+1))
+			qb.AddArgs(searchValue)
+		}
 		qb.AddOrderBy("p.sifra")
 	}
+	if vkonta == "2" {
+		hasGod, hasKar := s.fkplRepo.GetHasGodHasKar()
+		qb = common.NewQueryBuilder(`SELECT f.idfkpl, f.konto, f.sifra, f.naziv FROM fkpl as f`, true)
+		if hasGod {
+			qb.AddEqual("f.god", session.SelectedGod)
+		}
+		if hasKar {
+			qb.AddEqual("f.kar", session.SelectedKar)
+		}
+		qb.AddEqual("f.vkonta", "2")
+		if searchValue != "" {
+			nbrArgs := qb.GetArgsCount()
+			qb.AddCustomCondition(fmt.Sprintf(`(f.konto ILIKE '%%' || $%d || '%%' OR f.sifra ILIKE '%%' || $%d || '%%' OR f.naziv ILIKE '%%' || $%d || '%%')`, nbrArgs+1, nbrArgs+1, nbrArgs+1))
+			qb.AddArgs(searchValue)
+		}
+		qb.AddOrderBy("f.konto")
+	}
+
 	qb.SetLimit(20)
 
 	sqlQuery, args := qb.Build()

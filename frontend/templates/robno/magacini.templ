@@ -1,0 +1,348 @@
+package robno
+
+import (
+	"fmt"
+	"helia/frontend/components"
+	tmpl "helia/frontend/templates"
+	"helia/i18n"
+	"helia/internal/common"
+	"helia/internal/domain"
+)
+
+templ Magacini(tbl domain.TableData, searchInput domain.InputControl, btnPrint domain.Button, translator *i18n.Service) {
+	<!-- Container with full height -->
+	<div class="bg-blue-100 p-1 flex flex-col h-full">
+		<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
+			<!-- Search bar with button in flex row -->
+			<div class="flex items-center justify-between">
+				<div class="flex-1">
+					@components.Search_Part(tbl, searchInput)
+				</div>
+				<div class="flex-shrink-0 mb-1">
+					@components.Search_PartPrintButton(btnPrint)
+				</div>
+			</div>
+			<!-- Table -->
+			<div class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+				@components.Table(tbl, translator)
+			</div>
+		</div>
+		<div id="dialog-partneri-stampa"></div>
+	</div>
+	@tmpl.OpenPrintWithParamsScript()
+}
+
+templ MagaciniDialog(dialog domain.Dialog, action string, model domain.Magacini, btnSave domain.Button, btnCancel domain.Button, btnClose domain.Button, translator *i18n.Service, csrfToken string) {
+	@tmpl.Dialog("magacini-form", csrfToken, magaciniFormContent(model, translator), dialog, btnSave, btnCancel, btnClose, translator)
+}
+
+templ magaciniFormContent(model domain.Magacini, translator *i18n.Service) {
+	<div class="grid grid-cols-2 gap-2">
+		<!-- Magacin (required) -->
+		<div class="flex items-center">
+			@components.LabelField(domain.LabelFieldConfig{
+				ID:         "mag",
+				LabelText:  translator.Label("Magacin"),
+				ClassLabel: common.ClassLabel + " w-24",
+			})
+			@components.TextInputField(domain.InputFieldConfig{
+				ID:         "mag",
+				Name:       "mag",
+				Value:      fmt.Sprintf("%d", model.Mag),
+				FieldType:  "number",
+				Required:   true,
+				Disabled:   false,
+				ClassInput: common.ClassInputTextEnabled + " w-24",
+				TabIndex:   "1",
+				OnInput:    "clearFieldError",
+				OnFocus:    "clearFieldError",
+			})
+		</div>
+		<!-- Nadređeni -->
+		<div class="flex items-center">
+			@components.LabelField(domain.LabelFieldConfig{
+				ID:         "nadmag",
+				LabelText:  translator.Label("Nadređeni"),
+				ClassLabel: common.ClassLabel + " w-24",
+			})
+			@components.TextInputField(domain.InputFieldConfig{
+				ID:         "nadmag",
+				Name:       "nadmag",
+				Value:      fmt.Sprintf("%d", model.Nadmag),
+				FieldType:  "number",
+				Required:   false,
+				Disabled:   false,
+				ClassInput: common.ClassInputTextEnabled + " w-24",
+				TabIndex:   "2",
+			})
+		</div>
+		<!-- Tip -->
+		<div class="flex items-center">
+			@components.LabelField(domain.LabelFieldConfig{
+				ID:         "tipmag",
+				LabelText:  translator.Label("Tip"),
+				ClassLabel: common.ClassLabel + " w-24",
+			})
+			@components.TextInputField(domain.InputFieldConfig{
+				ID:         "tipmag",
+				Name:       "tipmag",
+				Value:      model.Tipmag,
+				FieldType:  "text",
+				Required:   false,
+				Disabled:   false,
+				ClassInput: common.ClassInputTextEnabled + " flex-1",
+				MaxLength:  "10",
+				TabIndex:   "3",
+				OnInput:    "clearFieldError",
+				OnFocus:    "clearFieldError",
+			})
+		</div>
+		<!-- Opis magacina (required) -->
+		<div class="flex items-center">
+			@components.LabelField(domain.LabelFieldConfig{
+				ID:         "opis",
+				LabelText:  translator.Label("Opis magacina"),
+				ClassLabel: common.ClassLabel + " w-24",
+			})
+			@components.TextInputField(domain.InputFieldConfig{
+				ID:         "opis",
+				Name:       "opis",
+				Value:      model.Opis,
+				FieldType:  "text",
+				Required:   true,
+				Disabled:   false,
+				ClassInput: common.ClassInputTextEnabled + " flex-1",
+				MaxLength:  "600",
+				TabIndex:   "4",
+				OnInput:    "clearFieldError",
+				OnFocus:    "clearFieldError",
+			})
+		</div>
+		<!-- Adresa -->
+		<div class="flex items-center">
+			@components.LabelField(domain.LabelFieldConfig{
+				ID:         "adresa",
+				LabelText:  translator.Label("Adresa"),
+				ClassLabel: common.ClassLabel + " w-24",
+			})
+			@components.TextInputField(domain.InputFieldConfig{
+				ID:         "adresa",
+				Name:       "adresa",
+				Value:      model.Adresa,
+				FieldType:  "text",
+				Required:   false,
+				Disabled:   false,
+				ClassInput: common.ClassInputTextEnabled + " flex-1",
+				MaxLength:  "100",
+				TabIndex:   "5",
+			})
+		</div>
+		<!-- Poštanski broj -->
+		<div class="flex items-center">
+			@components.LabelField(domain.LabelFieldConfig{
+				ID:         "pobro",
+				LabelText:  translator.Label("Poštanski broj"),
+				ClassLabel: common.ClassLabel + " w-24",
+			})
+			@components.TextInputField(domain.InputFieldConfig{
+				ID:         "pobro",
+				Name:       "pobro",
+				Value:      fmt.Sprintf("%d", model.Pobro),
+				FieldType:  "number",
+				Required:   false,
+				Disabled:   false,
+				ClassInput: common.ClassInputTextEnabled + " w-32",
+				TabIndex:   "6",
+			})
+		</div>
+		<!-- Mesto -->
+		<div class="flex items-center">
+			@components.LabelField(domain.LabelFieldConfig{
+				ID:         "mesto",
+				LabelText:  translator.Label("Mesto"),
+				ClassLabel: common.ClassLabel + " w-24",
+			})
+			@components.TextInputField(domain.InputFieldConfig{
+				ID:         "mesto",
+				Name:       "mesto",
+				Value:      model.Mesto,
+				FieldType:  "text",
+				Required:   false,
+				Disabled:   false,
+				ClassInput: common.ClassInputTextEnabled + " flex-1",
+				MaxLength:  "100",
+				TabIndex:   "7",
+			})
+		</div>
+		<!-- Osoba magacina -->
+		<div class="flex items-center">
+			@components.LabelField(domain.LabelFieldConfig{
+				ID:         "magosoba",
+				LabelText:  translator.Label("Osoba magacina"),
+				ClassLabel: common.ClassLabel + " w-24",
+			})
+			@components.TextInputField(domain.InputFieldConfig{
+				ID:         "magosoba",
+				Name:       "magosoba",
+				Value:      model.Magosoba,
+				FieldType:  "text",
+				Required:   false,
+				Disabled:   false,
+				ClassInput: common.ClassInputTextEnabled + " flex-1",
+				MaxLength:  "100",
+				TabIndex:   "8",
+			})
+		</div>
+		<!-- Telefon -->
+		<div class="flex items-center">
+			@components.LabelField(domain.LabelFieldConfig{
+				ID:         "tel",
+				LabelText:  translator.Label("Telefon"),
+				ClassLabel: common.ClassLabel + " w-24",
+			})
+			@components.TextInputField(domain.InputFieldConfig{
+				ID:         "tel",
+				Name:       "tel",
+				Value:      model.Tel,
+				FieldType:  "tel",
+				Required:   false,
+				Disabled:   false,
+				ClassInput: common.ClassInputTextEnabled + " w-40",
+				MaxLength:  "20",
+				TabIndex:   "9",
+			})
+		</div>
+		<!-- Faks -->
+		<div class="flex items-center">
+			@components.LabelField(domain.LabelFieldConfig{
+				ID:         "fax",
+				LabelText:  translator.Label("Faks"),
+				ClassLabel: common.ClassLabel + " w-24",
+			})
+			@components.TextInputField(domain.InputFieldConfig{
+				ID:         "fax",
+				Name:       "fax",
+				Value:      model.Fax,
+				FieldType:  "tel",
+				Required:   false,
+				Disabled:   false,
+				ClassInput: common.ClassInputTextEnabled + " w-40",
+				MaxLength:  "20",
+				TabIndex:   "10",
+			})
+		</div>
+		<!-- Email -->
+		<div class="flex items-center">
+			@components.LabelField(domain.LabelFieldConfig{
+				ID:         "email",
+				LabelText:  translator.Label("Email"),
+				ClassLabel: common.ClassLabel + " w-24",
+			})
+			@components.TextInputField(domain.InputFieldConfig{
+				ID:         "email",
+				Name:       "email",
+				Value:      model.Email,
+				FieldType:  "email",
+				Required:   false,
+				Disabled:   false,
+				ClassInput: common.ClassInputTextEnabled + " flex-1",
+				MaxLength:  "100",
+				TabIndex:   "11",
+			})
+		</div>
+		<!-- Tip cena -->
+		<div class="col-span-2 flex items-center gap-6 mt-2">
+			<label class="text-sm font-semibold text-gray-700 w-24">{ translator.Label("Tip cena") }</label>
+			<div class="flex gap-4">
+				@components.RadioButtonField(domain.RadioFieldConfig{
+					ID:         "tipcene_0",
+					Name:       "tipcene",
+					Value:      "0",
+					LabelText:  translator.Label("Dohodak"),
+					IsSelected: model.Tipcene == 0,
+				}, translator)
+				@components.RadioButtonField(domain.RadioFieldConfig{
+					ID:         "tipcene_1",
+					Name:       "tipcene",
+					Value:      "1",
+					LabelText:  translator.Label("Rashoda"),
+					IsSelected: model.Tipcene == 1,
+				}, translator)
+			</div>
+		</div>
+		<!-- Način vođenja -->
+		<div class="col-span-2 flex items-center gap-6">
+			<label class="text-sm font-semibold text-gray-700 w-24">{ translator.Label("Način vođenja") }</label>
+			<div class="flex gap-4">
+				@components.RadioButtonField(domain.RadioFieldConfig{
+					ID:         "nacvodzal_0",
+					Name:       "nacvodzal",
+					Value:      "0",
+					LabelText:  translator.Label("FIFO"),
+					IsSelected: model.Nacvodzal == 0,
+				}, translator)
+				@components.RadioButtonField(domain.RadioFieldConfig{
+					ID:         "nacvodzal_1",
+					Name:       "nacvodzal",
+					Value:      "1",
+					LabelText:  translator.Label("LIFO"),
+					IsSelected: model.Nacvodzal == 1,
+				}, translator)
+			</div>
+		</div>
+		<!-- Tip zalihe -->
+		<div class="col-span-2 flex items-start gap-6">
+			<label class="text-sm font-semibold text-gray-700 w-24 pt-1">{ translator.Label("Tip zalihe") }</label>
+			<div class="flex flex-col gap-1">
+				@components.RadioButtonField(domain.RadioFieldConfig{
+					ID:         "tipzal_1",
+					Name:       "tipzal",
+					Value:      "1",
+					LabelText:  translator.Label("Sirovina"),
+					IsSelected: model.Tipzal == 1,
+				}, translator)
+				@components.RadioButtonField(domain.RadioFieldConfig{
+					ID:         "tipzal_2",
+					Name:       "tipzal",
+					Value:      "2",
+					LabelText:  translator.Label("Materijal"),
+					IsSelected: model.Tipzal == 2,
+				}, translator)
+				@components.RadioButtonField(domain.RadioFieldConfig{
+					ID:         "tipzal_3",
+					Name:       "tipzal",
+					Value:      "3",
+					LabelText:  translator.Label("Gotov proizvod"),
+					IsSelected: model.Tipzal == 3,
+				}, translator)
+				@components.RadioButtonField(domain.RadioFieldConfig{
+					ID:         "tipzal_4",
+					Name:       "tipzal",
+					Value:      "4",
+					LabelText:  translator.Label("Roba"),
+					IsSelected: model.Tipzal == 4,
+				}, translator)
+			</div>
+		</div>
+		<!-- Analiza -->
+		<div class="col-span-2 flex items-center gap-6">
+			<label class="text-sm font-semibold text-gray-700 w-24">{ translator.Label("Analiza") }</label>
+			<div class="flex gap-4">
+				@components.RadioButtonField(domain.RadioFieldConfig{
+					ID:         "analiza_0",
+					Name:       "analiza",
+					Value:      "0",
+					LabelText:  translator.Label("Ne"),
+					IsSelected: model.Analiza == 0,
+				}, translator)
+				@components.RadioButtonField(domain.RadioFieldConfig{
+					ID:         "analiza_1",
+					Name:       "analiza",
+					Value:      "1",
+					LabelText:  translator.Label("Da"),
+					IsSelected: model.Analiza == 1,
+				}, translator)
+			</div>
+		</div>
+	</div>
+}

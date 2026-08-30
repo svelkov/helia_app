@@ -7,6 +7,15 @@ templ Base(isLoggedIn bool, content templ.Component, menuItems domain.MenuDataIt
 	<!DOCTYPE html>
 	<html lang="en" class="h-screen">
 		@Head()
+		<style>
+			.content-with-bg {
+				background-image: url('/frontend/static/helia_background.png');
+				background-size: cover;
+				background-position: center;
+				background-repeat: no-repeat;
+				background-attachment: fixed;
+			}
+		</style>
 		<body class="flex flex-col h-screen m-0 p-0 bg-gray-100 text-sm dark:bg-gray-900 dark:text-gray-100">
 			<!-- Header -->
 			@Header(isLoggedIn, comboCompany, comboPoslGod, comboKar, comboLanguage, translator)
@@ -22,7 +31,7 @@ templ Base(isLoggedIn bool, content templ.Component, menuItems domain.MenuDataIt
 					@Side_nav(subMenuItems)
 				}
 				<!-- Content Area -->
-				<main id="content" class="flex-1 p-2 overflow-y-auto text-sm w-full min-h-0">
+			<main id="content" class="flex-1 p-1 overflow-y-auto text-sm w-full min-h-0 content-with-bg">
 					@content
 				</main>
 			</div>

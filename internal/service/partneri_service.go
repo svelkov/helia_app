@@ -8,6 +8,7 @@ import (
 	"helia/internal/domain"
 	"helia/internal/repository"
 	"helia/internal/validation"
+
 	"html"
 	"io"
 	"net/http"
@@ -28,11 +29,14 @@ type PartneriService interface {
 	GetTekuciRacuni(ctx context.Context, id int64, tbl *domain.TableData) error
 	GetTekuciRacuniTableFields() []domain.Fields
 	GetPartneriTableFields() []domain.Fields
+	GetPartneriStampaFields() []domain.Fields
 	GetAllPartneri(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage, pageSize int, searchText, sortBy, sortOrder string) error
 	PrepareInsertUpdateFields(partner *domain.Partneri) []domain.Fields
 	DeleteTekRacuniForPartner(ctx context.Context, partneriID int64) error
 	CreateWithTekRacuni(ctx context.Context, partner *domain.Partneri, tekRacuniList []domain.TekRacuni) (int64, error)
 	UpdateWithTekRacuni(ctx context.Context, partner *domain.Partneri, id int64, tekRacuniList []domain.TekRacuni) error
+	GetFvrData(ctx context.Context) (domain.Fvr, error)
+	GetAllStampa(ctx context.Context, tbl *domain.TableData, partneriParam domain.PartneriParameters) error
 }
 
 type PartneriResource struct {
@@ -41,29 +45,39 @@ type PartneriResource struct {
 	partneriRepo            *repository.BaseRepository[domain.Partneri]
 	tekracuniRepo           *repository.BaseRepository[domain.TekRacuni]
 	tipanalitikeRepo        *repository.BaseRepository[domain.Tipanalitike]
+	fvrRepo                 *repository.BaseRepository[domain.Fvr]
 	partneriTableFields     []domain.Fields
 	tekuciRacuniTableFields []domain.Fields
+	partneriStampaFields    []domain.Fields
 }
 
-func NewPartneriService(service *BaseService[domain.Partneri], validator *validation.RuleBasedValidator[domain.Partneri], partneriRepo *repository.BaseRepository[domain.Partneri], tekracuniRepo *repository.BaseRepository[domain.TekRacuni], tipanalitikeRepo *repository.BaseRepository[domain.Tipanalitike]) *PartneriResource {
+func NewPartneriService(service *BaseService[domain.Partneri], validator *validation.RuleBasedValidator[domain.Partneri], partneriRepo *repository.BaseRepository[domain.Partneri], tekracuniRepo *repository.BaseRepository[domain.TekRacuni], tipanalitikeRepo *repository.BaseRepository[domain.Tipanalitike], fvrRepo *repository.BaseRepository[domain.Fvr]) *PartneriResource {
 	rs := &PartneriResource{
 		service:          service,
 		validator:        validator,
 		partneriRepo:     partneriRepo,
 		tekracuniRepo:    tekracuniRepo,
 		tipanalitikeRepo: tipanalitikeRepo,
+		fvrRepo:          fvrRepo,
 	}
 	rs.setServiceFieldValues()
 	return rs
 }
-
+func (s *PartneriResource) GetFvrData(ctx context.Context) (domain.Fvr, error) {
+	if s.fvrRepo == nil {
+		return domain.Fvr{}, fmt.Errorf("fvrRepo not initialized")
+	}
+	return common.GetFvrData(ctx, s.fvrRepo)
+}
 func (s *PartneriResource) GetTekuciRacuniTableFields() []domain.Fields {
 	return s.tekuciRacuniTableFields
 }
 func (s *PartneriResource) GetPartneriTableFields() []domain.Fields {
 	return s.partneriTableFields
 }
-
+func (s *PartneriResource) GetPartneriStampaFields() []domain.Fields {
+	return s.partneriStampaFields
+}
 func (s *PartneriResource) GetLastPartneriID(ctx context.Context) (int64, error) {
 	session := domain.GetSessionFromStdContext(ctx)
 	if session == nil {
@@ -180,6 +194,72 @@ func (s *PartneriResource) GetAllPartneri(ctx context.Context, tbl *domain.Table
 		}
 		tableRow := domain.TableRow{ID: fmt.Sprintf("%d", entity.IDPartneri), Fields: fields, HasUpdate: true, HasDelete: true}
 		tbl.Rows = append(tbl.Rows, tableRow)
+	}
+	return nil
+}
+func (s *PartneriResource) GetAllStampa(ctx context.Context, tbl *domain.TableData, partneriParam domain.PartneriParameters) error {
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		return fmt.Errorf("user session not found")
+	}
+	hasgod, hasKar := s.partneriRepo.GetHasGodHasKar()
+	qb := common.NewQueryBuilder(`SELECT idpartneri, sifra, naziv, mesto, pib, jib, 
+	pobro, coalesce(adresa, '') as adresa, coalesce(ziro, '') as ziro, coalesce(telefon, '') as telefon, 
+	coalesce(kontaktosb, '') as kontaktosb FROM partneri`, true)
+	if hasgod {
+		qb.AddEqual("partneri.god", userSession.SelectedGod)
+	}
+	if hasKar {
+		qb.AddEqual("partneri.kar", userSession.SelectedKar)
+	}
+	if partneriParam.OdSifre != "" {
+		qb.AddCondition("partneri.sifra", partneriParam.OdSifre, ">=")
+	}
+	if partneriParam.DoSifre != "" {
+		qb.AddCondition("partneri.sifra", partneriParam.DoSifre, "<=")
+	}
+	if partneriParam.PartnerNaziv != "" {
+		qb.AddLike("naziv", partneriParam.PartnerNaziv)
+	}
+	if partneriParam.OdMesta != "" {
+		qb.AddCondition("mesto", partneriParam.OdMesta, ">=")
+	}
+	if partneriParam.DoMesta != "" {
+		qb.AddCondition("mesto", partneriParam.DoMesta, "<=")
+	}
+	if partneriParam.SortirajStampu != "" {
+		switch partneriParam.SortirajStampu {
+		case "analitickasifra":
+			qb.AddOrderBy("sifra").AddSortOrder(" ASC ")
+		case "nazivpartnera":
+			qb.AddOrderBy("naziv").AddSortOrder(" ASC ")
+		case "sediste":
+			qb.AddOrderBy("mesto").AddSortOrder(" ASC ")
+		default:
+		}
+	}
+
+	sqlQuery, args := qb.Build()
+	entities, err := s.partneriRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	if err != nil {
+		return fmt.Errorf("failed to get all custom: %w", err)
+	}
+	if len(*entities) > 0 {
+		for _, entity := range *entities {
+			fields := []string{
+				entity.Naziv,
+				entity.Mesto,
+				entity.PIB,
+				entity.JIB,
+				fmt.Sprintf("%d", entity.PoBro),
+				entity.Adresa,
+				entity.Ziro,
+				entity.Telefon,
+				entity.KontaktOsb,
+			}
+			tableRow := domain.TableRow{ID: fmt.Sprintf("%d", entity.IDPartneri), Fields: fields, HasUpdate: true, HasDelete: true}
+			tbl.Rows = append(tbl.Rows, tableRow)
+		}
 	}
 	return nil
 }
@@ -832,6 +912,17 @@ func (s *PartneriResource) setServiceFieldValues() {
 		{Name: "jbkjs", Label: "JBKJS"},
 		{Name: "napomena", Label: "Naponema"},
 		{Name: "idpartneri", Label: "ID Partneri"},
+	}
+	s.partneriStampaFields = []domain.Fields{
+		{Name: "naziv", Label: "Naziv"},
+		{Name: "mesto", Label: "Mesto"},
+		{Name: "pib", Label: "PIB"},
+		{Name: "jib", Label: "JIB"},
+		{Name: "pobro", Label: "Postanski broj"},
+		{Name: "adresa", Label: "Adresa"},
+		{Name: "ziro", Label: "Tekući racun"},
+		{Name: "telefon", Label: "Telefon"},
+		{Name: "kontaktosb", Label: "Kontakt osoba"},
 	}
 
 	s.tekuciRacuniTableFields = []domain.Fields{

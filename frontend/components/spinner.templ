@@ -1,0 +1,40 @@
+package components
+
+templ LoadingSpinner() {
+	<div id="loading-spinner" class="hidden absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 rounded-lg z-50">
+		<div class="flex flex-col items-center justify-center gap-3">
+			<div class="relative h-16 w-16">
+				<!-- Outer ring -->
+				<div class="absolute inset-0 rounded-full border-4 border-transparent border-t-blue-600 border-r-blue-400 animate-spin" style="animation-duration: 1.5s"></div>
+				<!-- Inner ring -->
+				<div class="absolute inset-2 rounded-full border-4 border-transparent border-b-blue-600 border-l-blue-400 animate-spin" style="animation-duration: 1s; animation-direction: reverse"></div>
+			</div>
+			<div class="text-white text-sm font-medium">Loading...</div>
+		</div>
+	</div>
+}
+
+templ SpinnerScript() {
+	<script>
+		(function() {
+			const showSpinner = function() {
+				const spinner = document.getElementById('loading-spinner');
+				if (spinner) {
+					spinner.classList.remove('hidden');
+				}
+			};
+
+			const hideSpinner = function() {
+				const spinner = document.getElementById('loading-spinner');
+				if (spinner) {
+					spinner.classList.add('hidden');
+				}
+			};
+
+			document.addEventListener('htmx:beforeRequest', showSpinner);
+			document.addEventListener('htmx:afterRequest', hideSpinner);
+			document.addEventListener('htmx:responseError', hideSpinner);
+			document.addEventListener('htmx:timeout', hideSpinner);
+		})();
+	</script>
+}

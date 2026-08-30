@@ -3,10 +3,17 @@ package templates
 import "helia/i18n"
 
 templ Nav(isLoggedIn bool, translator *i18n.Service) {
-	<header class="bg-blue-600 text-white p-4 flex justify-between items-center text-sm">
+	<style>
+		.nav-with-bg {
+			background-image: linear-gradient(rgba(37, 99, 235, 0.85), rgba(37, 99, 235, 0.85)), url('/frontend/static/helia_background.png');
+			background-size: cover;
+			background-position: center;
+			background-repeat: no-repeat;
+		}
+	</style>
+	<header class="text-white p-4 flex justify-between items-center text-sm">
 		<div class="text-2xl font-bold">{ translator.Label("Helia") }</div>
-		<nav class="space-x-4">
-			<a href="/" class="hover:text-blue-200">{ translator.Label("Pocetna") }</a>
+		<nav class="space-x-4 px-4 py-3 rounded flex items-center nav-with-bg">	
 			if !isLoggedIn {
 				<a href="/login" class="hover:text-blue-200">{ translator.Label("Prijava") }</a>
 				<a href="/register" class="hover:text-blue-200">{ translator.Label("Registracija") }</a>

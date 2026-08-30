@@ -1,6 +1,7 @@
 package finansijsko
 
 import (
+	"helia/frontend/components"
 	tmpl "helia/frontend/templates"
 	"helia/i18n"
 	"helia/internal/common"
@@ -10,7 +11,7 @@ import (
 
 templ DnevnikKnjizenja(tbl domain.TableData, searchControl domain.InputControl, btnObrada, btnPrint domain.Button, translator *i18n.Service, gnGod int) {
 	<!-- Container with full height -->
-	<div class="flex flex-col h-full">
+	<div class="bg-blue-100 p-1 flex flex-col h-full">
 		<!-- Tab Content -->
 		<div id="tab1" class="flex-1 min-h-0 flex flex-col gap-1 pt-1">
 			<!-- Title -->
@@ -22,12 +23,12 @@ templ DnevnikKnjizenja(tbl domain.TableData, searchControl domain.InputControl, 
 				<div class="flex items-center justify-between">
 					<div class="flex items-center gap-4">
 						<div class="flex items-center gap-2">
-							@tmpl.LabelField(domain.LabelFieldConfig{
+							@components.LabelField(domain.LabelFieldConfig{
 								ID:         "oddatuma",
 								LabelText:  translator.Label("Počev od datuma"),
 								ClassLabel: common.ClassLabel,
 							})
-							@tmpl.TextInputField(domain.InputFieldConfig{
+							@components.TextInputField(domain.InputFieldConfig{
 								ID:         "oddatuma",
 								Name:       "oddatuma",
 								FieldType:  "date",
@@ -37,12 +38,12 @@ templ DnevnikKnjizenja(tbl domain.TableData, searchControl domain.InputControl, 
 							})
 						</div>
 						<div class="flex items-center gap-2">
-							@tmpl.LabelField(domain.LabelFieldConfig{
+							@components.LabelField(domain.LabelFieldConfig{
 								ID:         "dodatuma",
 								LabelText:  translator.Label("Zaključno sa datumom"),
 								ClassLabel: common.ClassLabel,
 							})
-							@tmpl.TextInputField(domain.InputFieldConfig{
+							@components.TextInputField(domain.InputFieldConfig{
 								ID:         "dodatuma",
 								Name:       "dodatuma",
 								FieldType:  "date",
@@ -53,22 +54,22 @@ templ DnevnikKnjizenja(tbl domain.TableData, searchControl domain.InputControl, 
 						</div>
 					</div>
 					<div class="flex gap-1">
-						@tmpl.FormObradaButton(btnObrada, translator)
-						@tmpl.Search_PartPrintButton(btnPrint)
+						@components.FormObradaButton(btnObrada, translator)
+						@components.Search_PartPrintButton(btnPrint)
 					</div>
 				</div>
 			</div>
 			<!-- Table section -->
 			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative">
-				@tmpl.LoadingSpinner()
-				@tmpl.Search_Part(tbl, searchControl)
+				@components.LoadingSpinner()
+				@components.Search_Part(tbl, searchControl)
 				<div class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
-					@tmpl.Table(tbl, translator)
+					@components.Table(tbl, translator)
 				</div>
 			</div>
 		</div>
 	</div>
-	@tmpl.SpinnerScript()
+	@components.SpinnerScript()
 	@tmpl.OpenPrintWithParamsScript()
 	@tmpl.HandleBackendResponseScript()
 }

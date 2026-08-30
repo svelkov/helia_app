@@ -1,0 +1,60 @@
+package components
+import (
+	"fmt"
+
+	"helia/i18n"
+	"helia/internal/domain"
+)
+templ ComboBoxField(comboConfig domain.ComboFieldConfig, translator *i18n.Service) {
+	if comboConfig.HasLabel {
+		<!-- Label - fixed width -->
+		<label for={ comboConfig.ID } class={ comboConfig.ClassLabel }>{ translator.Label(comboConfig.LabelText) }</label>
+	}
+	<select
+		id={ comboConfig.ID }
+		name={ comboConfig.Name }
+		if comboConfig.Disabled {
+			disabled
+		}
+		if comboConfig.ChangeEndpoint != "" {
+			hx-get={ comboConfig.ChangeEndpoint }
+			if comboConfig.HxChangeTarget != "" {
+				if comboConfig.HxChangeTarget == "body" {
+					hx-target={ fmt.Sprintf("%s", comboConfig.HxChangeTarget) }
+				} else {
+					hx-target={ fmt.Sprintf("#%s", comboConfig.HxChangeTarget) }
+				}
+				hx-swap={ comboConfig.HxSwap }
+			} else if comboConfig.HxSwap != "" {
+				hx-swap={ comboConfig.HxSwap }
+			}
+		}
+		if comboConfig.HxParams != "" {
+			hx-params={ comboConfig.HxParams }
+		}
+		if comboConfig.HxVals != "" {
+			hx-vals={ comboConfig.HxVals }
+		}
+		if comboConfig.HxOnAfterRequest != "" {
+			hx-on::after-request={ templ.JSFuncCall(fmt.Sprintf("%s", comboConfig.HxOnAfterRequest), comboConfig.ID) }
+		}
+		if comboConfig.OnInput != "" {
+			oninput={ templ.JSFuncCall(fmt.Sprintf("%s", comboConfig.OnInput), comboConfig.ID) }
+		}
+		if comboConfig.OnFocus != "" {
+			onfocus={ templ.JSFuncCall(fmt.Sprintf("%s", comboConfig.OnFocus), comboConfig.ID) }
+		}
+		class={ comboConfig.ClassSelect }
+		if comboConfig.TabIndex != "" {
+			tabindex={ comboConfig.TabIndex }
+		}
+	>
+		for _, item := range comboConfig.OptionValues {
+			if fmt.Sprintf("%v",item.Key) == comboConfig.SelectedValue {
+				<option value={ item.Key } selected>{ item.Value }</option>
+			} else {
+				<option value={ item.Key }>{ item.Value }</option>
+			}
+		}
+	</select>
+}

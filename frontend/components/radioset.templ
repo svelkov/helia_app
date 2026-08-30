@@ -1,0 +1,28 @@
+package components
+
+import (
+    "helia/internal/domain"
+	"helia/i18n"
+)
+templ RadioButtonField(cfg domain.RadioFieldConfig, translator *i18n.Service) {
+	<label class="flex items-center gap-2">
+		<input
+			type="radio"
+			name={ cfg.Name }
+			id={ cfg.ID }
+			value={ cfg.Value }
+			class={ cfg.ClassSelect }
+			if cfg.TabIndex != "" {
+				tabindex={ cfg.TabIndex }
+			}
+			if cfg.IsSelected {
+				checked="checked"
+			}
+		/>
+		if cfg.ClassLabel != "" {
+			<span class={ cfg.ClassLabel }>{ translator.Label(cfg.LabelText) }</span>
+		} else {
+			<span class={ cfg.ClassSelect }>{ translator.Label(cfg.LabelText) }</span>
+		}
+	</label>
+}

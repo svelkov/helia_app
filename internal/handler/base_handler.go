@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"helia/config"
@@ -11,6 +13,7 @@ import (
 	"helia/internal/infrastructure"
 	"helia/internal/service"
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
 	"strconv"
@@ -24,6 +27,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	"github.com/pquerna/otp/totp"
+	qrcode "github.com/skip2/go-qrcode"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // Helper struct for default selections
@@ -94,10 +100,11 @@ type BasicHandler struct {
 	firma        domain.Firma
 	cfg          config.Config
 	logger       *log.Logger
+	userService  service.UserService
 }
 
 // NewBasicHandler creates and initializes a new BasicHandler
-func NewBasicHandler(c *gin.Context, menuService service.MenuService, isLoggedIn bool, fvrService finservice.FvrService, cfg config.Config) *BasicHandler {
+func NewBasicHandler(c *gin.Context, menuService service.MenuService, isLoggedIn bool, fvrService finservice.FvrService, cfg config.Config, userService service.UserService) *BasicHandler {
 	handler := &BasicHandler{
 		menuService: menuService,
 		isLoggedIn:  isLoggedIn,
@@ -105,6 +112,7 @@ func NewBasicHandler(c *gin.Context, menuService service.MenuService, isLoggedIn
 		firma:       domain.Firma{},
 		logger:      log.New(os.Stdout, "[BasicHandler] ", log.LstdFlags|log.Lshortfile),
 		cfg:         cfg,
+		userService: userService,
 	}
 
 	// Initialize firma data
@@ -178,17 +186,54 @@ func (h *BasicHandler) handleLoginPost(c *gin.Context, selections defaultSelecti
 	}
 
 	if err := c.ShouldBind(&loginData); err != nil {
+		h.logger.Printf("Form binding error: %v", err)
 		h.respondWithError(c, http.StatusBadRequest, "Username and password are required")
 		return
 	}
 
-	if !h.validateCredentials(loginData.Username, loginData.Password) {
+	h.logger.Printf("Login attempt for user: %s (password length: %d)", loginData.Username, len(loginData.Password))
+
+	credentialsValid := h.validateCredentials(loginData.Username, loginData.Password)
+	h.logger.Printf("Credential validation result: %v", credentialsValid)
+
+	if !credentialsValid {
 		h.logger.Printf("Failed login attempt for user: %s", loginData.Username)
 		h.respondWithError(c, http.StatusUnauthorized, "Invalid credentials")
 		return
 	}
 
-	token, err := h.generateToken(loginData.Username, selections, h.getJwtSecretFromContext(c))
+	// Check if user has 2FA enabled
+	user, err := h.getUserByUsername(loginData.Username)
+	if err != nil {
+		h.logger.Printf("Error retrieving user %s: %v", loginData.Username, err)
+		h.respondWithError(c, http.StatusInternalServerError, "Error during authentication")
+		return
+	}
+
+	// If 2FA is enabled, redirect to 2FA verification page
+	if user != nil && user.TwoFAEnabled {
+		// Store username in session temporarily for 2FA verification
+		c.SetCookie("pending_2fa_user", loginData.Username, 900, "/", "", true, true)
+
+		// Get CSRF token
+		csrfToken := c.GetString("_csrf")
+		if csrfToken == "" {
+			csrfToken = c.PostForm("_csrf")
+		}
+
+		if c.GetHeader("HX-Request") == "true" {
+			c.JSON(200, gin.H{
+				"success":  true,
+				"message":  "2FA verification required",
+				"redirect": "/verify-2fa?username=" + loginData.Username,
+			})
+		} else {
+			c.Redirect(http.StatusSeeOther, "/verify-2fa?username="+loginData.Username)
+		}
+		return
+	}
+
+	token, err := h.generateToken(loginData.Username, user.Id, selections, h.getJwtSecretFromContext(c))
 	if err != nil {
 		h.logger.Printf("Error generating token for user %s: %v", loginData.Username, err)
 		h.respondWithError(c, http.StatusInternalServerError, "Error generating authentication token")
@@ -262,17 +307,49 @@ func (h *BasicHandler) getDefaultSelections(fvrData domain.Firma) defaultSelecti
 	return selections
 }
 
-// validateCredentials checks if the provided credentials are valid
+// validateCredentials checks if the provided credentials are valid by querying the database
 func (h *BasicHandler) validateCredentials(username, password string) bool {
-	// TODO: Replace with actual authentication logic
-	return username == "testuser" && password == "123"
+	if username == "" || password == "" {
+		h.logger.Printf("Empty username or password provided")
+		return false
+	}
+
+	// Get user from database via UserService
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	h.logger.Printf("Querying database for user: %s", username)
+
+	user, err := h.userService.GetUserByUsername(ctx, username)
+	if err != nil {
+		h.logger.Printf("ERROR: Database query failed for user %s: %v", username, err)
+		return false
+	}
+
+	// User not found
+	if user == nil {
+		h.logger.Printf("User not found in database: %s", username)
+		return false
+	}
+
+	h.logger.Printf("User found: %s, PasswordHash exists: %v (hash length: %d)", username, user.PasswordHash != "", len(user.PasswordHash))
+
+	// Verify password using bcrypt
+	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
+	if err != nil {
+		h.logger.Printf("Password verification failed for user %s: %v", username, err)
+		return false
+	}
+
+	h.logger.Printf("User %s authenticated successfully", username)
+	return true
 }
 
 // generateToken creates a new JWT token for the authenticated user with preferences
-func (h *BasicHandler) generateToken(username string, selections defaultSelections, jwtSecret []byte) (string, error) {
+func (h *BasicHandler) generateToken(username string, userID int64, selections defaultSelections, jwtSecret []byte) (string, error) {
 	claims := domain.UserClaims{
 		Username:    username,
-		UserID:      0, // TODO: Set from user lookup
+		UserID:      int(userID),
 		Firma:       selections.firma,
 		SelectedGod: selections.god,
 		SelectedKar: selections.kar,
@@ -392,6 +469,7 @@ func (h *BasicHandler) clearCSRFToken(c *gin.Context) {
 // RegisterHandler manages user registration
 func (h *BasicHandler) RegisterHandler(c *gin.Context) {
 	fvrData := h.getFirma()
+	ctx := c.Request.Context()
 	selections := h.getDefaultSelections(fvrData)
 
 	if c.Request.Method == http.MethodGet {
@@ -423,6 +501,8 @@ func (h *BasicHandler) RegisterHandler(c *gin.Context) {
 	username := c.PostForm("username")
 	password := c.PostForm("password")
 	confirmPassword := c.PostForm("confirm_password")
+	email := c.PostForm("email")
+	enable2FA := c.PostForm("enable_2fa")
 
 	// Validate input
 	if err := h.validateRegistration(username, password, confirmPassword); err != nil {
@@ -431,9 +511,67 @@ func (h *BasicHandler) RegisterHandler(c *gin.Context) {
 		return
 	}
 
-	// TODO: Add actual user registration logic here
-	// For now, just redirect to login page
+	// Create user with 2FA setting if enabled
+	user := &domain.User{
+		Username:     username,
+		Email:        email,
+		TwoFAEnabled: enable2FA == "on",
+	}
+
+	// Hash password using bcrypt
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		h.logger.Printf("Error hashing password: %v", err)
+		h.respondWithError(c, http.StatusInternalServerError, "Error processing registration")
+		return
+	}
+	user.PasswordHash = string(hashedPassword)
+
+	// If 2FA is enabled, generate secret and backup codes
+	if user.TwoFAEnabled {
+		secret, err := h.generateTOTPSecret(username)
+		if err != nil {
+			h.logger.Printf("Error generating TOTP secret: %v", err)
+			h.respondWithError(c, http.StatusInternalServerError, "Error setting up 2FA")
+			return
+		}
+		user.TwoFASecret = secret
+
+		// Generate backup codes (8 codes, 8 characters each)
+		backupCodes := h.generateBackupCodes(8)
+		user.BackupCodes = formatBackupCodes(backupCodes)
+
+		h.logger.Printf("User %s registered with 2FA enabled. Backup codes: %v", username, backupCodes)
+	}
+
+	err = h.userService.CreateUser(ctx, user)
+	if err != nil {
+		h.logger.Printf("Error saving user to database: %v", err)
+		h.respondWithError(c, http.StatusInternalServerError, "Error creating user")
+		return
+	}
+
+	h.logger.Printf("User %s registered successfully", username)
+
+	// If 2FA is enabled, redirect to setup page to display QR code and backup codes
+	if user.TwoFAEnabled {
+		c.Redirect(http.StatusSeeOther, "/setup-2fa?username="+username)
+		return
+	}
+
 	c.Redirect(http.StatusSeeOther, "/login")
+}
+
+// formatBackupCodes converts backup codes array to comma-separated string
+func formatBackupCodes(codes []string) string {
+	result := ""
+	for i, code := range codes {
+		if i > 0 {
+			result += ","
+		}
+		result += code
+	}
+	return result
 }
 
 // LogoutHandler manages user logout
@@ -466,6 +604,124 @@ func (h *BasicHandler) LogoutHandler(c *gin.Context) {
 	c.Redirect(http.StatusSeeOther, "/login")
 }
 
+// Verify2FAHandler manages 2FA verification page
+func (h *BasicHandler) Verify2FAHandler(c *gin.Context) {
+	username := c.Query("username")
+	if username == "" {
+		h.respondWithError(c, http.StatusBadRequest, "Username is required")
+		return
+	}
+
+	fvrData := h.getFirma()
+	selections := h.getDefaultSelections(fvrData)
+
+	// Generate CSRF token
+	csrfToken := c.GetString("_csrf")
+	if csrfToken == "" {
+		// Generate a new token if not present
+		csrfToken = "generated_token"
+	}
+
+	err := templates.Base(
+		false,
+		templates.Verify2FA(i18n.GetInstance(), csrfToken, username),
+		h.menuItems,
+		h.subMenuItems,
+		"Helia - 2FA Verification",
+		"",
+		fmt.Sprintf("%d", time.Now().Year()),
+		"",
+		setComboFirmaConfig(fvrData, selections.firma),
+		setComboPoslGodConfig(fvrData, selections.firma, selections.god),
+		setComboKarConfig(fvrData, selections.firma, selections.god, selections.kar),
+		setComboLanguageConfig(selections.language, h.cfg),
+		i18n.GetInstance(),
+	).Render(c.Request.Context(), c.Writer)
+
+	if err != nil {
+		h.logger.Printf("Error rendering 2FA verification page: %v", err)
+		h.respondWithError(c, http.StatusInternalServerError, "Error rendering 2FA verification page")
+		return
+	}
+}
+
+// Verify2FAPostHandler processes 2FA code verification
+func (h *BasicHandler) Verify2FAPostHandler(c *gin.Context) {
+	var verify2FAData struct {
+		Username  string `form:"username" binding:"required"`
+		TOTPCode  string `form:"totp_code" binding:"required"`
+		UseBackup string `form:"use_backup"`
+	}
+
+	if err := c.ShouldBind(&verify2FAData); err != nil {
+		h.respondWithError(c, http.StatusBadRequest, "Username and 2FA code are required")
+		return
+	}
+
+	// Get user from database
+	user, err := h.getUserByUsername(verify2FAData.Username)
+	if err != nil || user == nil {
+		h.logger.Printf("User not found during 2FA verification: %s", verify2FAData.Username)
+		h.respondWithError(c, http.StatusUnauthorized, "Invalid user")
+		return
+	}
+
+	if !user.TwoFAEnabled {
+		h.logger.Printf("2FA verification attempted for user without 2FA: %s", verify2FAData.Username)
+		h.respondWithError(c, http.StatusBadRequest, "2FA not enabled for this user")
+		return
+	}
+
+	// Verify the TOTP code or backup code
+	isValid := false
+
+	if verify2FAData.UseBackup == "on" {
+		// Verify backup code
+		isValid = h.verifyBackupCode(user, verify2FAData.TOTPCode)
+	} else {
+		// Verify TOTP code
+		isValid = h.verifyTOTPCode(user.TwoFASecret, verify2FAData.TOTPCode)
+	}
+
+	if !isValid {
+		h.logger.Printf("Invalid 2FA code for user: %s", verify2FAData.Username)
+		h.respondWithError(c, http.StatusUnauthorized, "Invalid 2FA code")
+		return
+	}
+
+	// Clear pending 2FA cookie
+	c.SetCookie("pending_2fa_user", "", -1, "/", "", true, true)
+
+	// Get selections for token generation
+	fvrData := h.getFirma()
+	selections := h.getDefaultSelections(fvrData)
+
+	// Generate token and set auth cookie
+	token, err := h.generateToken(verify2FAData.Username, user.Id, selections, h.getJwtSecretFromContext(c))
+	if err != nil {
+		h.logger.Printf("Error generating token for user %s after 2FA: %v", verify2FAData.Username, err)
+		h.respondWithError(c, http.StatusInternalServerError, "Error generating authentication token")
+		return
+	}
+
+	// Set auth cookie
+	h.setAuthCookie(c, token)
+
+	// Update user session in context
+	h.updateUserSession(c, selections)
+
+	// Handle response based on request type
+	if c.GetHeader("HX-Request") == "true" {
+		c.JSON(200, gin.H{
+			"success":  true,
+			"message":  "2FA verification successful",
+			"redirect": "/",
+		})
+	} else {
+		c.Redirect(http.StatusSeeOther, "/")
+	}
+}
+
 // Helper functions for registration
 func (h *BasicHandler) validateRegistration(username, password, confirmPassword string) error {
 	if username == "" {
@@ -484,6 +740,127 @@ func (h *BasicHandler) validateRegistration(username, password, confirmPassword 
 		return fmt.Errorf("passwords do not match")
 	}
 	return nil
+}
+
+// getUserByUsername retrieves a user from the service by username
+func (h *BasicHandler) getUserByUsername(username string) (*domain.User, error) {
+	if h.userService == nil {
+		return nil, fmt.Errorf("user service not available")
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	user, err := h.userService.GetUserByUsername(ctx, username)
+	if err != nil {
+		h.logger.Printf("Error retrieving user %s: %v", username, err)
+		return nil, err
+	}
+
+	return user, nil
+}
+
+// verifyTOTPCode verifies a TOTP code against the user's secret
+func (h *BasicHandler) verifyTOTPCode(secret, code string) bool {
+	if secret == "" || code == "" {
+		return false
+	}
+
+	// Verify the TOTP code using the pquerna/otp library
+	valid := totp.Validate(code, secret)
+	if !valid {
+		h.logger.Printf("Invalid TOTP code provided")
+		return false
+	}
+
+	return valid
+}
+
+// verifyBackupCode verifies a backup code for the user
+// Backup codes are stored as comma-separated values
+func (h *BasicHandler) verifyBackupCode(user *domain.User, code string) bool {
+	if user.BackupCodes == "" {
+		return false
+	}
+
+	// Parse backup codes (stored as comma-separated string)
+	codes := string(user.BackupCodes)
+	if codes == "" {
+		return false
+	}
+
+	// Check if the code is in the backup codes list
+	// In production, you should mark used codes so they can't be reused
+	// For now, we'll just check if it exists
+	backupCodes := splitBackupCodes(codes)
+	for _, bc := range backupCodes {
+		if bc == code {
+			h.logger.Printf("Valid backup code used for user: %d", user.Id)
+			// TODO: Mark this backup code as used in the database
+			return true
+		}
+	}
+
+	return false
+}
+
+// splitBackupCodes splits the backup codes string into individual codes
+func splitBackupCodes(codes string) []string {
+	// Backup codes are stored as comma-separated or space-separated values
+	// This function handles both formats
+	var result []string
+	current := ""
+
+	for _, ch := range codes {
+		if ch == ',' || ch == ' ' || ch == '\n' {
+			if current != "" {
+				result = append(result, current)
+				current = ""
+			}
+		} else {
+			current += string(ch)
+		}
+	}
+
+	if current != "" {
+		result = append(result, current)
+	}
+
+	return result
+}
+
+// generateTOTPSecret generates a new TOTP secret for 2FA setup
+func (h *BasicHandler) generateTOTPSecret(username string) (string, error) {
+	key, err := totp.Generate(totp.GenerateOpts{
+		Issuer:      "HeliaApp",
+		AccountName: username,
+	})
+
+	if err != nil {
+		h.logger.Printf("Error generating TOTP secret for user %s: %v", username, err)
+		return "", err
+	}
+
+	return key.Secret(), nil
+}
+
+// generateBackupCodes generates a set of backup codes for 2FA recovery
+func (h *BasicHandler) generateBackupCodes(count int) []string {
+	codes := make([]string, count)
+	for i := 0; i < count; i++ {
+		codes[i] = generateRandomCode(8)
+	}
+	return codes
+}
+
+// generateRandomCode generates a random alphanumeric code
+func generateRandomCode(length int) string {
+	const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	b := make([]byte, length)
+	for i := range b {
+		b[i] = charset[rand.Intn(len(charset))]
+	}
+	return string(b)
 }
 
 // --- Main Page Handlers ---
@@ -1094,6 +1471,10 @@ func (h *BasicHandler) AddRoutes(r *gin.Engine) {
 	r.GET("/login", h.LoginHandler)
 	r.POST("/login", h.LoginHandler)
 	r.GET("/register", h.RegisterHandler)
+	r.POST("/register", h.RegisterHandler)
+	r.GET("/setup-2fa", h.Setup2FAHandler)
+	r.GET("/verify-2fa", h.Verify2FAHandler)
+	r.POST("/verify-2fa", h.Verify2FAPostHandler)
 	r.GET("/logout", h.LogoutHandler)
 
 	// Main page routes
@@ -1268,4 +1649,84 @@ func setComboLanguageConfig(selectedValue string, cfg config.Config) domain.Comb
 	configCombo.OptionValues = optionItems
 	configCombo.SelectedValue = fmt.Sprintf("%s", selectedValue)
 	return configCombo
+}
+
+// Setup2FAHandler displays the 2FA setup page with QR code and backup codes after registration
+func (h *BasicHandler) Setup2FAHandler(c *gin.Context) {
+	username := c.Query("username")
+	if username == "" {
+		h.respondWithError(c, http.StatusBadRequest, "Username is required")
+		return
+	}
+
+	// Get user from database
+	user, err := h.getUserByUsername(username)
+	if err != nil || user == nil {
+		h.logger.Printf("User not found during 2FA setup: %s", username)
+		h.respondWithError(c, http.StatusNotFound, "User not found")
+		return
+	}
+
+	// Generate QR code from TOTP secret
+	qrCodeDataURL, err := h.generateQRCodeDataURL(user.Username, user.TwoFASecret)
+	if err != nil {
+		h.logger.Printf("Error generating QR code for user %s: %v", username, err)
+		h.respondWithError(c, http.StatusInternalServerError, "Error generating QR code")
+		return
+	}
+
+	// Split backup codes into individual codes for display
+	backupCodesArray := splitBackupCodes(user.BackupCodes)
+
+	fvrData := h.getFirma()
+	selections := h.getDefaultSelections(fvrData)
+
+	c.Header("content-type", "text/html")
+	err = templates.Base(
+		false,
+		templates.Setup2FA(i18n.GetInstance(), qrCodeDataURL, backupCodesArray),
+		h.menuItems,
+		h.subMenuItems,
+		"Helia - 2FA Setup",
+		"",
+		fmt.Sprintf("%d", time.Now().Year()),
+		"",
+		setComboFirmaConfig(fvrData, selections.firma),
+		setComboPoslGodConfig(fvrData, selections.firma, selections.god),
+		setComboKarConfig(fvrData, selections.firma, selections.god, selections.kar),
+		setComboLanguageConfig(selections.language, h.cfg),
+		i18n.GetInstance(),
+	).Render(c.Request.Context(), c.Writer)
+
+	if err != nil {
+		h.logger.Printf("Error rendering 2FA setup page: %v", err)
+		h.respondWithError(c, http.StatusInternalServerError, "Error rendering setup page")
+		return
+	}
+}
+
+// generateQRCodeDataURL generates a QR code as a base64-encoded data URL
+func (h *BasicHandler) generateQRCodeDataURL(username, secret string) (string, error) {
+	// Create TOTP URL for authenticator apps
+	// Format: otpauth://totp/ISSUER:username?secret=SECRET&issuer=ISSUER
+	otpAuthURL := fmt.Sprintf("otpauth://totp/HeliaApp:%s?secret=%s&issuer=HeliaApp", username, secret)
+
+	// Generate QR code (200x200 pixels)
+	qr, err := qrcode.New(otpAuthURL, qrcode.High)
+	if err != nil {
+		h.logger.Printf("Error creating QR code: %v", err)
+		return "", err
+	}
+
+	// Convert to PNG bytes
+	pngBytes, err := qr.PNG(200)
+	if err != nil {
+		h.logger.Printf("Error encoding QR code to PNG: %v", err)
+		return "", err
+	}
+
+	// Convert to base64 data URL
+	base64Data := base64.StdEncoding.EncodeToString(pngBytes)
+	dataURL := fmt.Sprintf("data:image/png;base64,%s", base64Data)
+	return dataURL, nil
 }

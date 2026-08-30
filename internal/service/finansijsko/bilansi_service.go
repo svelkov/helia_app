@@ -9,7 +9,6 @@ import (
 	"helia/internal/domain"
 	"helia/internal/repository"
 	"helia/internal/service"
-	"helia/pkg/utils"
 	"math"
 	"reflect"
 	"strings"
@@ -91,7 +90,7 @@ func NewBilansiService(
 }
 
 func (s *BilansiResource) GetFvrData(ctx context.Context) (domain.Fvr, error) {
-	return utils.GetFvrData(ctx, s.fvrRepo)
+	return common.GetFvrData(ctx, s.fvrRepo)
 }
 
 func (s *BilansiResource) GetByID(ctx context.Context, idField string, idValue int64) (*domain.Bils, error) {

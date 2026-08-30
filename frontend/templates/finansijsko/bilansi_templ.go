@@ -10,6 +10,7 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import (
 	"fmt"
+	"helia/frontend/components"
 	tmpl "helia/frontend/templates"
 	"helia/i18n"
 	"helia/internal/common"
@@ -57,7 +58,7 @@ func BilansiMain(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint 
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!-- Tab Content --><div id=\"tab-content\" class=\"flex flex-col h-full\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!-- Tab Content --><div id=\"tab-content\" class=\"bg-blue-100 p-1 flex flex-col h-full\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -115,7 +116,7 @@ func ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrin
 			templ_7745c5c3_Var2 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<!-- Container with full height --><div class=\"flex flex-col h-full\"><!-- Tab Navigation --><div class=\"border-b border-blue-600\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<!-- Container with full height --><div class=\"bg-blue-100 p-1 flex flex-col h-full\"><!-- Tab Navigation --><div class=\"border-b border-blue-600\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -127,7 +128,7 @@ func ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrin
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "tipzakljucnoglista",
 			LabelText:  translator.Label("Tip zakljucnog lista"),
 			ClassLabel: common.ClassLabel + " w-32",
@@ -139,33 +140,33 @@ func ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrin
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.RadioButtonField(domain.RadioFieldConfig{
+		templ_7745c5c3_Err = components.RadioButtonField(domain.RadioFieldConfig{
 			ID:         "zakljucni-analitika",
 			Name:       "tip_zakljucni",
 			Value:      "1",
-			LabelText:  translator.Label("Analitika"),
+			LabelText:  "Analitika",
 			IsSelected: true,
 			TabIndex:   "1",
 		}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.RadioButtonField(domain.RadioFieldConfig{
+		templ_7745c5c3_Err = components.RadioButtonField(domain.RadioFieldConfig{
 			ID:         "zakljucni-subsintetika",
 			Name:       "tip_zakljucni",
 			Value:      "2",
-			LabelText:  translator.Label("Subsintetika"),
+			LabelText:  "Subsintetika",
 			IsSelected: false,
 			TabIndex:   "2",
 		}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.RadioButtonField(domain.RadioFieldConfig{
+		templ_7745c5c3_Err = components.RadioButtonField(domain.RadioFieldConfig{
 			ID:         "zakljucni-sintetika",
 			Name:       "tip_zakljucni",
 			Value:      "3",
-			LabelText:  translator.Label("Sintetika"),
+			LabelText:  "Sintetika",
 			IsSelected: false,
 			TabIndex:   "3",
 		}, translator).Render(ctx, templ_7745c5c3_Buffer)
@@ -176,7 +177,7 @@ func ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrin
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "odkonta",
 			LabelText:  translator.Label("Od konta"),
 			ClassLabel: common.ClassLabel + " w-32",
@@ -184,7 +185,7 @@ func ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrin
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "odkonta",
 			Name:       "odkonta",
 			FieldType:  "text",
@@ -199,7 +200,7 @@ func ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrin
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SearchButton(domain.SearchButtonConfig{
+		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
 			ID:          "odkonta",
 			Name:        "search-odkonta",
 			HxUrl:       "/api/promet/searchbutton",
@@ -211,7 +212,7 @@ func ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrin
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "odsifre",
 			LabelText:  translator.Label("Od šifre"),
 			ClassLabel: common.ClassLabel + " w-20",
@@ -219,7 +220,7 @@ func ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrin
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "odsifre",
 			Name:       "odsifre",
 			FieldType:  "text",
@@ -234,7 +235,7 @@ func ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrin
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SearchButton(domain.SearchButtonConfig{
+		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
 			ID:          "odsifre",
 			Name:        "search-odsifre",
 			HxUrl:       "/api/promet/searchbutton",
@@ -250,7 +251,7 @@ func ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrin
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "dokonta",
 			LabelText:  translator.Label("Do konta"),
 			ClassLabel: common.ClassLabel + " w-32",
@@ -258,7 +259,7 @@ func ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrin
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "dokonta",
 			Name:       "dokonta",
 			FieldType:  "text",
@@ -273,7 +274,7 @@ func ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrin
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SearchButton(domain.SearchButtonConfig{
+		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
 			ID:          "dokonta",
 			Name:        "search-dokonta",
 			HxUrl:       "/api/promet/searchbutton",
@@ -285,7 +286,7 @@ func ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrin
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "dosifre",
 			LabelText:  translator.Label("Do šifre"),
 			ClassLabel: common.ClassLabel + " w-20",
@@ -293,7 +294,7 @@ func ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrin
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "dosifre",
 			Name:       "dosifre",
 			FieldType:  "text",
@@ -308,7 +309,7 @@ func ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrin
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SearchButton(domain.SearchButtonConfig{
+		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
 			ID:          "dosifre",
 			Name:        "search-dosifre",
 			HxUrl:       "/api/promet/searchbutton",
@@ -324,40 +325,40 @@ func ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrin
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.CheckboxField(domain.CheckboxFieldConfig{
+		templ_7745c5c3_Err = components.CheckboxField(domain.CheckboxFieldConfig{
 			ID:        "analitickakonta",
 			Name:      "analitickakonta",
-			LabelText: translator.Label("Štampanje analitičkih konta"),
+			LabelText: "Štampanje analitičkih konta",
 			Checked:   true,
 			TabIndex:  "11",
 		}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.CheckboxField(domain.CheckboxFieldConfig{
+		templ_7745c5c3_Err = components.CheckboxField(domain.CheckboxFieldConfig{
 			ID:        "klasa9",
 			Name:      "klasa9",
-			LabelText: translator.Label("Štampanje klase 9"),
+			LabelText: "Štampanje klase 9",
 			Checked:   false,
 			TabIndex:  "12",
 		}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.CheckboxField(domain.CheckboxFieldConfig{
+		templ_7745c5c3_Err = components.CheckboxField(domain.CheckboxFieldConfig{
 			ID:        "samosaprometom",
 			Name:      "samosaprometom",
-			LabelText: translator.Label("Štampanje konta samo sa prometom"),
+			LabelText: "Štampanje konta samo sa prometom",
 			Checked:   false,
 			TabIndex:  "13",
 		}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.CheckboxField(domain.CheckboxFieldConfig{
+		templ_7745c5c3_Err = components.CheckboxField(domain.CheckboxFieldConfig{
 			ID:        "zabanku",
 			Name:      "zabanku",
-			LabelText: translator.Label("Štampanje za banku"),
+			LabelText: "Štampanje za banku",
 			Checked:   false,
 			TabIndex:  "14",
 		}, translator).Render(ctx, templ_7745c5c3_Buffer)
@@ -368,7 +369,7 @@ func ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrin
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "oddatuma",
 			LabelText:  translator.Label("Od datuma"),
 			ClassLabel: common.ClassLabel + " w-28",
@@ -376,7 +377,7 @@ func ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrin
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "oddatuma",
 			Name:       "oddatuma",
 			FieldType:  "date",
@@ -387,7 +388,7 @@ func ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrin
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "datumobrade",
 			LabelText:  translator.Label("Datum obrade"),
 			ClassLabel: common.ClassLabel + " w-28",
@@ -395,7 +396,7 @@ func ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrin
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "datumobrade",
 			Name:       "datumobrade",
 			FieldType:  "date",
@@ -410,7 +411,7 @@ func ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrin
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "dodatuma",
 			LabelText:  translator.Label("Do datuma"),
 			ClassLabel: common.ClassLabel + " w-28",
@@ -418,7 +419,7 @@ func ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrin
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "dodatuma",
 			Name:       "dodatuma",
 			FieldType:  "date",
@@ -433,11 +434,11 @@ func ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrin
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.FormObradaButton(btnObrada, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.FormObradaButton(btnObrada, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Search_PartPrintButton(btnPrint).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Search_PartPrintButton(btnPrint).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -445,11 +446,11 @@ func ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrin
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Search_Part(tbl, searchInput).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Search_Part(tbl, searchInput).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -457,7 +458,7 @@ func ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrin
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -473,7 +474,7 @@ func ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrin
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SpinnerScript().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.SpinnerScript().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -515,7 +516,7 @@ func BilansStanja(tabs domain.TabData, tbl domain.TableData, totals domain.Bilan
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "tekuca_godina",
 			LabelText:  translator.Label("Tekuća godina"),
 			ClassLabel: common.ClassLabel + " w-42",
@@ -523,7 +524,7 @@ func BilansStanja(tabs domain.TabData, tbl domain.TableData, totals domain.Bilan
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "tekuca_godina",
 			Name:       "tekuca_godina",
 			FieldType:  "text",
@@ -538,7 +539,7 @@ func BilansStanja(tabs domain.TabData, tbl domain.TableData, totals domain.Bilan
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "prethodna_godina",
 			LabelText:  translator.Label("Prethodna godina"),
 			ClassLabel: common.ClassLabel + " w-42",
@@ -546,7 +547,7 @@ func BilansStanja(tabs domain.TabData, tbl domain.TableData, totals domain.Bilan
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "prethodna_godina",
 			Name:       "prethodna_godina",
 			FieldType:  "text",
@@ -561,7 +562,7 @@ func BilansStanja(tabs domain.TabData, tbl domain.TableData, totals domain.Bilan
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "pocetno_stanje",
 			LabelText:  translator.Label("Početno Stanje"),
 			ClassLabel: common.ClassLabel + " w-42",
@@ -569,7 +570,7 @@ func BilansStanja(tabs domain.TabData, tbl domain.TableData, totals domain.Bilan
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "pocetno_stanje",
 			Name:       "pocetno_stanje",
 			FieldType:  "text",
@@ -584,7 +585,7 @@ func BilansStanja(tabs domain.TabData, tbl domain.TableData, totals domain.Bilan
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "tekuca_hiljada",
 			LabelText:  translator.Label("Tekuća u hiljadama"),
 			ClassLabel: common.ClassLabel + " w-42",
@@ -592,7 +593,7 @@ func BilansStanja(tabs domain.TabData, tbl domain.TableData, totals domain.Bilan
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "tekuca_hiljada",
 			Name:       "tekuca_hiljada",
 			FieldType:  "text",
@@ -607,7 +608,7 @@ func BilansStanja(tabs domain.TabData, tbl domain.TableData, totals domain.Bilan
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "prethodna_hiljada",
 			LabelText:  translator.Label("Prethodna u hiljadama"),
 			ClassLabel: common.ClassLabel + " w-42",
@@ -615,7 +616,7 @@ func BilansStanja(tabs domain.TabData, tbl domain.TableData, totals domain.Bilan
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "prethodna_hiljada",
 			Name:       "prethodna_hiljada",
 			FieldType:  "text",
@@ -630,7 +631,7 @@ func BilansStanja(tabs domain.TabData, tbl domain.TableData, totals domain.Bilan
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "pocetno_hiljada",
 			LabelText:  translator.Label("Početno u hiljadama"),
 			ClassLabel: common.ClassLabel + " w-42",
@@ -638,7 +639,7 @@ func BilansStanja(tabs domain.TabData, tbl domain.TableData, totals domain.Bilan
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "pocetno_hiljada",
 			Name:       "pocetno_hiljada",
 			FieldType:  "text",
@@ -653,11 +654,11 @@ func BilansStanja(tabs domain.TabData, tbl domain.TableData, totals domain.Bilan
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Search_Part(tbl, searchInput).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Search_Part(tbl, searchInput).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -665,7 +666,7 @@ func BilansStanja(tabs domain.TabData, tbl domain.TableData, totals domain.Bilan
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -677,7 +678,7 @@ func BilansStanja(tabs domain.TabData, tbl domain.TableData, totals domain.Bilan
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SpinnerScript().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.SpinnerScript().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -719,7 +720,7 @@ func BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dial
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.Id)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 498, Col: 20}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 499, Col: 20}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
@@ -745,7 +746,7 @@ func BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dial
 		var templ_7745c5c3_Var8 string
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Title(dialog.Title))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 502, Col: 75}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 503, Col: 75}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {
@@ -755,7 +756,7 @@ func BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.CloseButton(btnClose).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.CloseButton(btnClose).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -771,7 +772,7 @@ func BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dial
 			var templ_7745c5c3_Var9 string
 			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.HxActionURL)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 507, Col: 32}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 508, Col: 32}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {
@@ -790,7 +791,7 @@ func BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dial
 			var templ_7745c5c3_Var10 string
 			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.HxActionURL)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 511, Col: 33}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 512, Col: 33}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
@@ -808,7 +809,7 @@ func BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dial
 		var templ_7745c5c3_Var11 string
 		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.Id)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 514, Col: 30}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 515, Col: 30}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {
@@ -821,7 +822,7 @@ func BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dial
 		var templ_7745c5c3_Var12 string
 		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs("#" + dialog.Id + "-message")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 515, Col: 44}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 516, Col: 44}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 		if templ_7745c5c3_Err != nil {
@@ -834,7 +835,7 @@ func BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dial
 		var templ_7745c5c3_Var13 string
 		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(csrfToken)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 522, Col: 56}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 523, Col: 56}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 		if templ_7745c5c3_Err != nil {
@@ -844,7 +845,7 @@ func BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "bs_redni_broj",
 			LabelText:  translator.Label("Redni broj"),
 			ClassLabel: common.ClassLabel + " w-40",
@@ -852,10 +853,10 @@ func BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "bs_redni_broj",
 			Name:       "rbr",
-			FieldType:  "text",
+			FieldType:  "number",
 			Value:      fmt.Sprintf("%d", bilsData.Rbr),
 			ClassInput: common.ClassInputTextEnabled + " w-24",
 			MaxLength:  "4",
@@ -870,7 +871,7 @@ func BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "bs_oznaka_aop",
 			LabelText:  translator.Label("Oznaka za AOP"),
 			ClassLabel: common.ClassLabel + " w-28",
@@ -878,10 +879,10 @@ func BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "bs_oznaka_aop",
 			Name:       "aop",
-			FieldType:  "text",
+			FieldType:  "number",
 			Value:      fmt.Sprintf("%d", bilsData.AOP),
 			ClassInput: common.ClassInputTextEnabled + " w-24",
 			MaxLength:  "4",
@@ -896,7 +897,7 @@ func BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.CheckboxField(domain.CheckboxFieldConfig{
+		templ_7745c5c3_Err = components.CheckboxField(domain.CheckboxFieldConfig{
 			ID:        "bs_skraceni",
 			Name:      "skraceni",
 			LabelText: "AOP skracenog bilansa",
@@ -910,7 +911,7 @@ func BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "bs_grupa_racuna",
 			LabelText:  translator.Label("Grupa računa, račun"),
 			ClassLabel: common.ClassLabel + " w-40",
@@ -918,7 +919,7 @@ func BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "bs_grupa_racuna",
 			Name:       "grac",
 			FieldType:  "text",
@@ -934,7 +935,7 @@ func BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "bs_naziv_pozicije",
 			LabelText:  translator.Label("Naziv pozicije"),
 			ClassLabel: common.ClassLabel + " w-40",
@@ -942,7 +943,7 @@ func BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "bs_naziv_pozicije",
 			Name:       "nazp",
 			FieldType:  "text",
@@ -960,7 +961,7 @@ func BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "bs_spisak_konta",
 			LabelText:  translator.Label("Spisak konta"),
 			ClassLabel: common.ClassLabel + " w-40",
@@ -968,7 +969,7 @@ func BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "bs_spisak_konta",
 			Name:       "konta",
 			FieldType:  "text",
@@ -986,7 +987,7 @@ func BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "bs_spisak_konta",
 			LabelText:  translator.Label("Pozicije"),
 			ClassLabel: common.ClassLabel + " w-40",
@@ -994,10 +995,10 @@ func BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "bs_input_01",
 			Name:       "pozic_1",
-			FieldType:  "text",
+			FieldType:  "number",
 			Value:      fmt.Sprintf("%04d", bilsData.Pozic1),
 			ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
 			MaxLength:  "4",
@@ -1006,10 +1007,10 @@ func BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "bs_input_02",
 			Name:       "pozic_2",
-			FieldType:  "text",
+			FieldType:  "number",
 			Value:      fmt.Sprintf("%04d", bilsData.Pozic2),
 			ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
 			MaxLength:  "4",
@@ -1018,10 +1019,10 @@ func BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "bs_input_03",
 			Name:       "pozic_3",
-			FieldType:  "text",
+			FieldType:  "number",
 			Value:      fmt.Sprintf("%04d", bilsData.Pozic3),
 			ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
 			MaxLength:  "4",
@@ -1029,10 +1030,10 @@ func BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "bs_input_04",
 			Name:       "pozic_4",
-			FieldType:  "text",
+			FieldType:  "number",
 			Value:      fmt.Sprintf("%04d", bilsData.Pozic4),
 			ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
 			MaxLength:  "4",
@@ -1041,10 +1042,10 @@ func BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "bs_input_05",
 			Name:       "pozic_5",
-			FieldType:  "text",
+			FieldType:  "number",
 			Value:      fmt.Sprintf("%04d", bilsData.Pozic5),
 			ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
 			MaxLength:  "4",
@@ -1053,10 +1054,10 @@ func BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "bs_input_06",
 			Name:       "pozic_6",
-			FieldType:  "text",
+			FieldType:  "number",
 			Value:      fmt.Sprintf("%04d", bilsData.Pozic6),
 			ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
 			MaxLength:  "4",
@@ -1069,7 +1070,7 @@ func BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "bs_pozicije",
 			LabelText:  "",
 			ClassLabel: common.ClassLabel + " w-40",
@@ -1077,10 +1078,10 @@ func BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "bs_input_07",
 			Name:       "pozic_7",
-			FieldType:  "text",
+			FieldType:  "number",
 			Value:      fmt.Sprintf("%04d", bilsData.Pozic7),
 			ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
 			MaxLength:  "4",
@@ -1089,10 +1090,10 @@ func BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "bs_input_08",
 			Name:       "pozic_8",
-			FieldType:  "text",
+			FieldType:  "number",
 			Value:      fmt.Sprintf("%04d", bilsData.Pozic8),
 			ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
 			MaxLength:  "4",
@@ -1101,10 +1102,10 @@ func BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "bs_input_09",
 			Name:       "pozic_9",
-			FieldType:  "text",
+			FieldType:  "number",
 			Value:      fmt.Sprintf("%04d", bilsData.Pozic9),
 			ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
 			MaxLength:  "4",
@@ -1113,10 +1114,10 @@ func BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "bs_input_10",
 			Name:       "pozic_10",
-			FieldType:  "text",
+			FieldType:  "number",
 			Value:      fmt.Sprintf("%04d", bilsData.Pozic10),
 			ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
 			MaxLength:  "4",
@@ -1125,10 +1126,10 @@ func BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "bs_input_11",
 			Name:       "pozic_11",
-			FieldType:  "text",
+			FieldType:  "number",
 			Value:      fmt.Sprintf("%04d", bilsData.Pozic11),
 			ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
 			MaxLength:  "4",
@@ -1137,10 +1138,10 @@ func BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "bs_input_12",
 			Name:       "pozic_12",
-			FieldType:  "text",
+			FieldType:  "number",
 			Value:      fmt.Sprintf("%04d", bilsData.Pozic12),
 			ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
 			MaxLength:  "4",
@@ -1153,7 +1154,7 @@ func BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "bs_nivo_podataka",
 			LabelText:  translator.Label("Nivo podataka"),
 			ClassLabel: common.ClassLabel + " w-40",
@@ -1161,10 +1162,10 @@ func BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "bs_nivo_podataka",
 			Name:       "nipo",
-			FieldType:  "text",
+			FieldType:  "number",
 			Value:      fmt.Sprintf("%d", bilsData.NiPo),
 			ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
 			MaxLength:  "2",
@@ -1179,11 +1180,11 @@ func BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SaveButton(btnSave, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.SaveButton(btnSave, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.CancelButton(btnCancel, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.CancelButton(btnCancel, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1194,7 +1195,7 @@ func BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dial
 		var templ_7745c5c3_Var14 string
 		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.Id + "-message")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 781, Col: 35}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 782, Col: 35}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 		if templ_7745c5c3_Err != nil {
@@ -1246,7 +1247,7 @@ func StampanjeBilansaStanja(tabs domain.TabData, tbl domain.TableData, btnObrada
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.CheckboxField(domain.CheckboxFieldConfig{
+		templ_7745c5c3_Err = components.CheckboxField(domain.CheckboxFieldConfig{
 			ID:        "skraceni",
 			Name:      "skraceni",
 			LabelText: translator.Label("Skraćeni bilans"),
@@ -1256,7 +1257,7 @@ func StampanjeBilansaStanja(tabs domain.TabData, tbl domain.TableData, btnObrada
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.CheckboxField(domain.CheckboxFieldConfig{
+		templ_7745c5c3_Err = components.CheckboxField(domain.CheckboxFieldConfig{
 			ID:        "pocstanjepg",
 			Name:      "pocstanjepg",
 			Value:     "false",
@@ -1274,7 +1275,7 @@ func StampanjeBilansaStanja(tabs domain.TabData, tbl domain.TableData, btnObrada
 		var templ_7745c5c3_Var16 string
 		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Stanje na dan"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 815, Col: 79}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 816, Col: 79}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 		if templ_7745c5c3_Err != nil {
@@ -1284,7 +1285,7 @@ func StampanjeBilansaStanja(tabs domain.TabData, tbl domain.TableData, btnObrada
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "stanjenadan",
 			Name:       "stanjenadan",
 			FieldType:  "date",
@@ -1299,15 +1300,15 @@ func StampanjeBilansaStanja(tabs domain.TabData, tbl domain.TableData, btnObrada
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.FormObradaButton(btnObrada, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.FormObradaButton(btnObrada, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Search_PartPrintButton(btnPrint).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Search_PartPrintButton(btnPrint).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Button(btnExportXML).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Button(btnExportXML).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1315,11 +1316,11 @@ func StampanjeBilansaStanja(tabs domain.TabData, tbl domain.TableData, btnObrada
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Search_Part(tbl, searchInput).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Search_Part(tbl, searchInput).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1327,7 +1328,7 @@ func StampanjeBilansaStanja(tabs domain.TabData, tbl domain.TableData, btnObrada
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1380,7 +1381,7 @@ func BilansUspeha(tabs domain.TabData, tbl domain.TableData, searchInput domain.
 		var templ_7745c5c3_Var18 string
 		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(tbl.DetailURL)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 865, Col: 28}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 866, Col: 28}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
@@ -1390,7 +1391,7 @@ func BilansUspeha(tabs domain.TabData, tbl domain.TableData, searchInput domain.
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "tekuca_godina",
 			LabelText:  translator.Label("Tekuća godina"),
 			ClassLabel: common.ClassLabel + " w-44",
@@ -1398,7 +1399,7 @@ func BilansUspeha(tabs domain.TabData, tbl domain.TableData, searchInput domain.
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "tekuca_godina",
 			Name:       "tekuca_godina",
 			FieldType:  "text",
@@ -1413,7 +1414,7 @@ func BilansUspeha(tabs domain.TabData, tbl domain.TableData, searchInput domain.
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "prethodna_godina",
 			LabelText:  translator.Label("Prethodna godina"),
 			ClassLabel: common.ClassLabel + " w-44",
@@ -1421,7 +1422,7 @@ func BilansUspeha(tabs domain.TabData, tbl domain.TableData, searchInput domain.
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "prethodna_godina",
 			Name:       "prethodna_godina",
 			FieldType:  "text",
@@ -1436,7 +1437,7 @@ func BilansUspeha(tabs domain.TabData, tbl domain.TableData, searchInput domain.
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "tekuca_hiljada",
 			LabelText:  translator.Label("Tekuća u hiljadama"),
 			ClassLabel: common.ClassLabel + " w-44",
@@ -1444,7 +1445,7 @@ func BilansUspeha(tabs domain.TabData, tbl domain.TableData, searchInput domain.
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "tekuca_hiljada",
 			Name:       "tekuca_hiljada",
 			FieldType:  "text",
@@ -1459,7 +1460,7 @@ func BilansUspeha(tabs domain.TabData, tbl domain.TableData, searchInput domain.
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "prethodna_hiljada",
 			LabelText:  translator.Label("Prethodna u hiljadama"),
 			ClassLabel: common.ClassLabel + " w-44",
@@ -1467,7 +1468,7 @@ func BilansUspeha(tabs domain.TabData, tbl domain.TableData, searchInput domain.
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "prethodna_hiljada",
 			Name:       "prethodna_hiljada",
 			FieldType:  "text",
@@ -1482,11 +1483,11 @@ func BilansUspeha(tabs domain.TabData, tbl domain.TableData, searchInput domain.
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Search_Part(tbl, searchInput).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Search_Part(tbl, searchInput).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1494,7 +1495,7 @@ func BilansUspeha(tabs domain.TabData, tbl domain.TableData, searchInput domain.
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1506,7 +1507,7 @@ func BilansUspeha(tabs domain.TabData, tbl domain.TableData, searchInput domain.
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SpinnerScript().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.SpinnerScript().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1548,7 +1549,7 @@ func BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dial
 		var templ_7745c5c3_Var21 string
 		templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.Id)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 962, Col: 20}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 963, Col: 20}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 		if templ_7745c5c3_Err != nil {
@@ -1574,7 +1575,7 @@ func BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dial
 		var templ_7745c5c3_Var23 string
 		templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Title(dialog.Title))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 966, Col: 75}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 967, Col: 75}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 		if templ_7745c5c3_Err != nil {
@@ -1584,7 +1585,7 @@ func BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.CloseButton(btnClose).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.CloseButton(btnClose).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1600,7 +1601,7 @@ func BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dial
 			var templ_7745c5c3_Var24 string
 			templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.HxActionURL)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 971, Col: 32}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 972, Col: 32}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 			if templ_7745c5c3_Err != nil {
@@ -1619,7 +1620,7 @@ func BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dial
 			var templ_7745c5c3_Var25 string
 			templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.HxActionURL)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 975, Col: 33}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 976, Col: 33}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
 			if templ_7745c5c3_Err != nil {
@@ -1637,7 +1638,7 @@ func BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dial
 		var templ_7745c5c3_Var26 string
 		templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.Id)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 978, Col: 30}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 979, Col: 30}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
 		if templ_7745c5c3_Err != nil {
@@ -1650,7 +1651,7 @@ func BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dial
 		var templ_7745c5c3_Var27 string
 		templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinStringErrs("#" + dialog.Id + "-message")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 979, Col: 44}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 980, Col: 44}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
 		if templ_7745c5c3_Err != nil {
@@ -1663,7 +1664,7 @@ func BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dial
 		var templ_7745c5c3_Var28 string
 		templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(csrfToken)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 986, Col: 56}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 987, Col: 56}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
 		if templ_7745c5c3_Err != nil {
@@ -1673,7 +1674,7 @@ func BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "bs_redni_broj",
 			LabelText:  translator.Label("Redni broj"),
 			ClassLabel: common.ClassLabel + " w-40",
@@ -1681,10 +1682,10 @@ func BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "bs_redni_broj",
 			Name:       "rbr",
-			FieldType:  "text",
+			FieldType:  "number",
 			Value:      fmt.Sprintf("%d", bilsData.Rbr),
 			ClassInput: common.ClassInputTextEnabled + " w-24",
 			MaxLength:  "4",
@@ -1699,7 +1700,7 @@ func BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "bs_oznaka_aop",
 			LabelText:  translator.Label("Oznaka za AOP"),
 			ClassLabel: common.ClassLabel + " w-28",
@@ -1707,10 +1708,10 @@ func BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "bs_oznaka_aop",
 			Name:       "aop",
-			FieldType:  "text",
+			FieldType:  "number",
 			Value:      fmt.Sprintf("%d", bilsData.AOP),
 			ClassInput: common.ClassInputTextEnabled + " w-24",
 			MaxLength:  "4",
@@ -1725,7 +1726,7 @@ func BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.CheckboxField(domain.CheckboxFieldConfig{
+		templ_7745c5c3_Err = components.CheckboxField(domain.CheckboxFieldConfig{
 			ID:        "bs_skraceni",
 			Name:      "skraceni",
 			LabelText: "AOP skracenog bilansa",
@@ -1739,7 +1740,7 @@ func BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "bs_grupa_racuna",
 			LabelText:  translator.Label("Grupa računa, račun"),
 			ClassLabel: common.ClassLabel + " w-40",
@@ -1747,7 +1748,7 @@ func BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "bs_grupa_racuna",
 			Name:       "grac",
 			FieldType:  "text",
@@ -1763,7 +1764,7 @@ func BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "bs_naziv_pozicije",
 			LabelText:  translator.Label("Naziv pozicije"),
 			ClassLabel: common.ClassLabel + " w-40",
@@ -1771,7 +1772,7 @@ func BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "bs_naziv_pozicije",
 			Name:       "nazp",
 			FieldType:  "text",
@@ -1789,7 +1790,7 @@ func BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "bs_spisak_konta",
 			LabelText:  translator.Label("Spisak konta"),
 			ClassLabel: common.ClassLabel + " w-40",
@@ -1797,7 +1798,7 @@ func BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "bs_spisak_konta",
 			Name:       "konta",
 			FieldType:  "text",
@@ -1815,7 +1816,7 @@ func BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "bs_spisak_konta",
 			LabelText:  translator.Label("Pozicije"),
 			ClassLabel: common.ClassLabel + " w-40",
@@ -1823,10 +1824,10 @@ func BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "bs_input_01",
 			Name:       "pozic_1",
-			FieldType:  "text",
+			FieldType:  "number",
 			Value:      fmt.Sprintf("%04d", bilsData.Pozic1),
 			ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
 			MaxLength:  "4",
@@ -1835,10 +1836,10 @@ func BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "bs_input_02",
 			Name:       "pozic_2",
-			FieldType:  "text",
+			FieldType:  "number",
 			Value:      fmt.Sprintf("%04d", bilsData.Pozic2),
 			ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
 			MaxLength:  "4",
@@ -1847,10 +1848,10 @@ func BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "bs_input_03",
 			Name:       "pozic_3",
-			FieldType:  "text",
+			FieldType:  "number",
 			Value:      fmt.Sprintf("%04d", bilsData.Pozic3),
 			ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
 			MaxLength:  "4",
@@ -1858,10 +1859,10 @@ func BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "bs_input_04",
 			Name:       "pozic_4",
-			FieldType:  "text",
+			FieldType:  "number",
 			Value:      fmt.Sprintf("%04d", bilsData.Pozic4),
 			ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
 			MaxLength:  "4",
@@ -1870,10 +1871,10 @@ func BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "bs_input_05",
 			Name:       "pozic_5",
-			FieldType:  "text",
+			FieldType:  "number",
 			Value:      fmt.Sprintf("%04d", bilsData.Pozic5),
 			ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
 			MaxLength:  "4",
@@ -1882,10 +1883,10 @@ func BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "bs_input_06",
 			Name:       "pozic_6",
-			FieldType:  "text",
+			FieldType:  "number",
 			Value:      fmt.Sprintf("%04d", bilsData.Pozic6),
 			ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
 			MaxLength:  "4",
@@ -1898,7 +1899,7 @@ func BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "bs_pozicije",
 			LabelText:  "",
 			ClassLabel: common.ClassLabel + " w-40",
@@ -1906,10 +1907,10 @@ func BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "bs_input_07",
 			Name:       "pozic_7",
-			FieldType:  "text",
+			FieldType:  "number",
 			Value:      fmt.Sprintf("%04d", bilsData.Pozic7),
 			ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
 			MaxLength:  "4",
@@ -1918,10 +1919,10 @@ func BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "bs_input_08",
 			Name:       "pozic_8",
-			FieldType:  "text",
+			FieldType:  "number",
 			Value:      fmt.Sprintf("%04d", bilsData.Pozic8),
 			ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
 			MaxLength:  "4",
@@ -1930,10 +1931,10 @@ func BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "bs_input_09",
 			Name:       "pozic_9",
-			FieldType:  "text",
+			FieldType:  "number",
 			Value:      fmt.Sprintf("%04d", bilsData.Pozic9),
 			ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
 			MaxLength:  "4",
@@ -1942,10 +1943,10 @@ func BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "bs_input_10",
 			Name:       "pozic_10",
-			FieldType:  "text",
+			FieldType:  "number",
 			Value:      fmt.Sprintf("%04d", bilsData.Pozic10),
 			ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
 			MaxLength:  "4",
@@ -1954,10 +1955,10 @@ func BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "bs_input_11",
 			Name:       "pozic_11",
-			FieldType:  "text",
+			FieldType:  "number",
 			Value:      fmt.Sprintf("%04d", bilsData.Pozic11),
 			ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
 			MaxLength:  "4",
@@ -1966,10 +1967,10 @@ func BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "bs_input_12",
 			Name:       "pozic_12",
-			FieldType:  "text",
+			FieldType:  "number",
 			Value:      fmt.Sprintf("%04d", bilsData.Pozic12),
 			ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
 			MaxLength:  "4",
@@ -1982,7 +1983,7 @@ func BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "bs_nivo_podataka",
 			LabelText:  translator.Label("Nivo podataka"),
 			ClassLabel: common.ClassLabel + " w-40",
@@ -1990,10 +1991,10 @@ func BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "bs_nivo_podataka",
 			Name:       "nipo",
-			FieldType:  "text",
+			FieldType:  "number",
 			Value:      fmt.Sprintf("%d", bilsData.NiPo),
 			ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
 			MaxLength:  "2",
@@ -2008,11 +2009,11 @@ func BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dial
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SaveButton(btnSave, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.SaveButton(btnSave, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.CancelButton(btnCancel, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.CancelButton(btnCancel, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2023,7 +2024,7 @@ func BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dial
 		var templ_7745c5c3_Var29 string
 		templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.Id + "-message")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 1245, Col: 35}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 1246, Col: 35}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
 		if templ_7745c5c3_Err != nil {
@@ -2071,11 +2072,11 @@ func StampanjeBilansaUspeha(tabs domain.TabData, tbl domain.TableData, btnObrada
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 91, "</div><!-- Tab 5 Content --><div id=\"tab5\" class=\"flex-1 min-h-0 flex flex-col gap-1\"><!-- Control Section --><div class=\"border bg-blue-100 border-blue-400 mt-1 p-2 rounded-lg\"><div class=\"flex items-center gap-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 91, "</div><!-- Tab 5 Content --><div id=\"tab5\" class=\"flex-1 min-h-0 flex flex-col gap-1\"><!-- Control Section --><div class=\"border bg-blue-100 border-blue-400 mt-1 p-2 rounded-lg\"><div class=\"flex items-center gap-4\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.CheckboxField(domain.CheckboxFieldConfig{
+		templ_7745c5c3_Err = components.CheckboxField(domain.CheckboxFieldConfig{
 			ID:        "skraceni",
 			Name:      "skraceni",
 			Value:     "false",
@@ -2086,7 +2087,7 @@ func StampanjeBilansaUspeha(tabs domain.TabData, tbl domain.TableData, btnObrada
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.CheckboxField(domain.CheckboxFieldConfig{
+		templ_7745c5c3_Err = components.CheckboxField(domain.CheckboxFieldConfig{
 			ID:        "pocstanjepg",
 			Name:      "pocstanjepg",
 			Value:     "false",
@@ -2097,7 +2098,7 @@ func StampanjeBilansaUspeha(tabs domain.TabData, tbl domain.TableData, btnObrada
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "oddatuma",
 			LabelText:  translator.Label("Od datuma"),
 			ClassLabel: common.ClassLabel,
@@ -2105,7 +2106,7 @@ func StampanjeBilansaUspeha(tabs domain.TabData, tbl domain.TableData, btnObrada
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "oddatuma",
 			Name:       "oddatuma",
 			FieldType:  "date",
@@ -2116,7 +2117,7 @@ func StampanjeBilansaUspeha(tabs domain.TabData, tbl domain.TableData, btnObrada
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "dodatuma",
 			LabelText:  translator.Label("Do datuma"),
 			ClassLabel: common.ClassLabel,
@@ -2124,7 +2125,7 @@ func StampanjeBilansaUspeha(tabs domain.TabData, tbl domain.TableData, btnObrada
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "dodatuma",
 			Name:       "dodatuma",
 			FieldType:  "date",
@@ -2139,15 +2140,15 @@ func StampanjeBilansaUspeha(tabs domain.TabData, tbl domain.TableData, btnObrada
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.FormObradaButton(btnObrada, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.FormObradaButton(btnObrada, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Search_PartPrintButton(btnPrint).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Search_PartPrintButton(btnPrint).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Button(btnExportXML).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Button(btnExportXML).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2155,11 +2156,11 @@ func StampanjeBilansaUspeha(tabs domain.TabData, tbl domain.TableData, btnObrada
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2171,7 +2172,7 @@ func StampanjeBilansaUspeha(tabs domain.TabData, tbl domain.TableData, btnObrada
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SpinnerScript().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.SpinnerScript().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

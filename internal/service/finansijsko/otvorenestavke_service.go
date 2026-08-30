@@ -7,7 +7,6 @@ import (
 	"helia/internal/common"
 	"helia/internal/domain"
 	"helia/internal/repository"
-	"helia/pkg/utils"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -1734,7 +1733,7 @@ func (s *OtvoreneStavkeResource) GetFvrData(ctx context.Context) (domain.Fvr, er
 	if s.fvrRepo == nil {
 		return domain.Fvr{}, fmt.Errorf("fvrRepo not initialized")
 	}
-	return utils.GetFvrData(ctx, s.fvrRepo)
+	return common.GetFvrData(ctx, s.fvrRepo)
 }
 func (s *OtvoreneStavkeResource) GetPotrazivanjaDugovanjaStampaFields() []domain.Fields {
 	return s.fieldsPotrazivanjaDugovanjaStampa

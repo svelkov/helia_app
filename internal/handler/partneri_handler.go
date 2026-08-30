@@ -13,17 +13,23 @@ import (
 	"net/http"
 
 	tmpl1 "helia/frontend/templates/opstipodaci"
+	tmpl2 "helia/frontend/templates/reports/opstipodaci"
 
 	"github.com/gin-gonic/gin"
 )
 
 const (
-	partneriContentTitle string = "PARTNERI"
-	partneriTableID      string = "partneri-table"
-	tekruciRacuniTableID string = "tekuciracuni-table"
-	partneriURLPrefix    string = "/api/partneri"
-	partneriURLGetAll    string = "/api/partneri/all"
-	hxValsPIB            string = `js:{
+	partneriContentTitle     string = "PARTNERI"
+	partneriTableID          string = "partneri-table"
+	tekruciRacuniTableID     string = "tekuciracuni-table"
+	partneriURLPrefix        string = "/api/partneri"
+	partneriURLGetAll        string = "/api/partneri/all"
+	partneriURLCreate        string = "/api/partneri/create"
+	partneriURLPrint         string = "/api/partneri/stampa/dialog"
+	partneriURLConfirmAdd    string = "/api/partneri/confirm-add"
+	partneriURLConfirmUpdate string = "/api/partneri/confirm-update"
+	partneriURLConfirmDelete string = "/api/partneri/confirm-delete"
+	hxValsPIB                string = `js:{
             			"pib": document.getElementById("pib")?.value
        					}`
 )
@@ -40,9 +46,20 @@ func NewPartneriHandler(service service.PartneriService, cfg config.Config, lm *
 
 func (h *PartneriHandler) GetAllPartneri(c *gin.Context) {
 	tbl := common.SetTableBasicData(partneriContentTitle, partneriTableID, SetPartneriFields(), partneriURLPrefix, partneriURLGetAll, 0, 0, 0, 0, h.cfg)
-	common.SetTableConfig(&tbl, partneriContentTitle, partneriTableID, false, false, false)
+
+	btnPrint := common.SetButton("stampa-btn", "Štampa", "fin_print", partneriURLPrint, "#dialog-partneri-stampa", "outerHTML", "GET", "", "", true, common.ClassPrintButton, "")
+	searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), partneriURLGetAll, fmt.Sprintf("#%s", partneriTableID), "")
+
+	common.SetTableConfig(&tbl, partneriContentTitle, partneriTableID, true, true, false)
 	tbl.URLGetAll = partneriURLGetAll
 	tbl.URLPrefix = partneriURLPrefix
+	tbl.BtnAdd.HxRequestType = "GET"
+	tbl.BtnAdd.HxActionURL = partneriURLConfirmAdd
+	tbl.BtnAdd.HxTarget = "#dialog-content"
+	tbl.BtnUpdate.HxRequestType = "GET"
+	tbl.BtnDelete.HxRequestType = "GET"
+	tbl.BtnUpdate.HxActionURL = partneriURLConfirmUpdate
+	tbl.BtnDelete.HxActionURL = partneriURLConfirmDelete
 	page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
 	searchText := c.Query("search")
 	sortBy := c.Query("sortBy")
@@ -57,7 +74,7 @@ func (h *PartneriHandler) GetAllPartneri(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, fmt.Sprintf("Error fetching partneri: %v", err))
 		return
 	}
-	utils.RenderContent(c, tbl)
+	tmpl1.PartneriMain(tbl, searchInput, btnPrint, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 }
 
 func (h *PartneriHandler) PartneriConfirmAdd(c *gin.Context) {
@@ -139,6 +156,9 @@ func (h *PartneriHandler) PartneriCreate(c *gin.Context) {
 	}
 
 	log.Printf("Partner created successfully with ID: %d", newID)
+}
+func (h *PartneriHandler) PartneriConfirmDelete(c *gin.Context) {
+	utils.ConfirmDeleteHelper(c, SetPartneriFields(), "#info-message")
 }
 
 func (h *PartneriHandler) PartneriConfirmUpdate(c *gin.Context) {
@@ -450,15 +470,139 @@ func (h *PartneriHandler) GetPartneriForm(c *gin.Context) {
 		tmpl1.PartneriFormKomintenti(entity, tblTekRacuni, dialog, []domain.ComboItem{}, btnSacuvaj, btnCancel, btnClose, btnProveriPIB, i18n.GetInstance(), csrfToken).Render(ctx, c.Writer)
 	}
 }
+func (h *PartneriHandler) PartneriStampa(c *gin.Context) {
+	ctx := c.Request.Context()
+	session := domain.GetSessionFromContext(c)
+	if session == nil {
+		common.WriteJSONResponse(c, http.StatusUnauthorized, false, nil, common.ErrMsgUserSessionNotFound)
+		return
+	}
+	sortBy := c.Query("sortBy")
+	sortOrder := c.Query("sortOrder")
+	searchText := c.Query("query")
+	page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
+	fvrData, err := h.Service.GetFvrData(ctx)
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, err.Error())
+		return
+	}
+	repParams := domain.ReportParameters{
+		Orientation:    "landscape",
+		CompanyName:    fvrData.Naziv,
+		Adress:         fvrData.Adresa,
+		Postcode:       fvrData.Pobro,
+		City:           fvrData.Mesto,
+		PIB:            fvrData.PIB,
+		MatBroj:        fvrData.Matbr,
+		ReportName:     "Kontni Plan",
+		ParameterItems: map[string]domain.ParameterItem{},
+	}
+	fmt.Println(repParams)
+	tbl := common.SetTableBasicData(partneriContentTitle, partneriTableID, h.Service.GetPartneriTableFields(), "", partneriURLGetAll, 0, 0, 0, 0, h.cfg)
+	err = h.Service.GetAllPartneri(c.Request.Context(), &tbl, true, page, pageSize, searchText, sortBy, sortOrder)
+	//err = h.Service.GetAllPartneri(ctx, &tbl, page, pageSize, true, sortBy, sortOrder, searchText, common.TipStampePrint)
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, err.Error())
+		return
+	}
+	//translator := i18n.GetInstance()
+	//tmpl_fin_rep.PartneriStampa(repParams, tbl, translator).Render(ctx, c.Writer)
+}
+
+func (h *PartneriHandler) PartnerStampaDialog(c *gin.Context) {
+	dialog := domain.Dialog{
+		Id:    "dialog-partneri-stampa",
+		Title: "Štampanje partnera",
+	}
+	btnClose := domain.Button{
+		Id:        "btn-close-partneri-stampa",
+		IsVisible: true,
+		IdDialog:  dialog.Id,
+		BtnClass:  common.ClassDialogCloseButton,
+	}
+	btnCancel := domain.Button{
+		Id:        "btn-cancel-partneri-stampa",
+		LabelText: "Odustani",
+		IsVisible: true,
+		IdDialog:  dialog.Id,
+		BtnClass:  common.ClassCloseButton,
+	}
+	err := tmpl1.PartnerStampaDialog(dialog, btnClose, btnCancel, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, common.ErrMsgRenderTemplate)
+	}
+}
+func (h *PartneriHandler) PartnerStampa(c *gin.Context) {
+	ctx := c.Request.Context()
+	session := domain.GetSessionFromContext(c)
+	if session == nil {
+		common.WriteJSONResponse(c, http.StatusUnauthorized, false, nil, common.ErrMsgUserSessionNotFound)
+		return
+	}
+	odSifre := c.Query("odsifre")
+	doSifre := c.Query("dosifre")
+	odMesta := c.Query("odmesta")
+	doMesta := c.Query("domesta")
+	partnerNaziv := c.Query("partnernaziv")
+	konto := c.Query("konto")
+	sortirajStampu := c.Query("sortirajstampu")
+
+	fvrData, err := h.Service.GetFvrData(ctx)
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, err.Error())
+		return
+	}
+	repParams := domain.ReportParameters{
+		Orientation: "landscape",
+		CompanyName: fvrData.Naziv,
+		Adress:      fvrData.Adresa,
+		Postcode:    fvrData.Pobro,
+		City:        fvrData.Mesto,
+		PIB:         fvrData.PIB,
+		MatBroj:     fvrData.Matbr,
+		ReportName:  "POSLOVNI PARTNERI",
+		ParameterItems: map[string]domain.ParameterItem{
+			"OdSifre":            {Name: "Od šifre", Value: odSifre},
+			"DoSifre":            {Name: "Do šifre", Value: doSifre},
+			"OdMesta":            {Name: "Od Mesta", Value: odMesta},
+			"DoMesta":            {Name: "Do Mesta", Value: doMesta},
+			"PartnerNazivSadrzi": {Name: "Partner Naziv sadrži", Value: partnerNaziv},
+			"Konto":              {Name: "Konto", Value: konto},
+			"SortirajStampu":     {Name: "Sortiraj stampu", Value: sortirajStampu},
+		},
+	}
+	partneriParams := domain.PartneriParameters{
+		OdSifre:        odSifre,
+		DoSifre:        doSifre,
+		OdMesta:        odMesta,
+		DoMesta:        doMesta,
+		PartnerNaziv:   partnerNaziv,
+		Konto:          konto,
+		SortirajStampu: sortirajStampu,
+	}
+	tbl := common.SetTableBasicData(partneriContentTitle, partneriTableID, h.Service.GetPartneriStampaFields(), "", partneriURLGetAll, 0, 0, 0, 0, h.cfg)
+	err = h.Service.GetAllStampa(ctx, &tbl, partneriParams)
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, err.Error())
+		return
+	}
+	translator := i18n.GetInstance()
+	tmpl2.PartneriStampa(tbl, repParams, translator).Render(ctx, c.Writer)
+
+}
 
 func (h *PartneriHandler) AddRoutes(r *gin.Engine) {
 	r.Use(middleware.Auth()) // Apply auth middleware to all routes in group
 
 	r.GET("/api/partneri/all", h.GetAllPartneri)
-	r.GET("/api/partneri/confirm-update", h.PartneriConfirmUpdate)
-	r.GET("api/partneri/confirm-add", h.PartneriConfirmAdd)
-	r.POST("api/partneri/create", h.PartneriCreate)
-	r.PUT("api/partneri/update/:id", h.PartneriUpdate)
-	r.GET("api/partneri/proveripib", h.CheckPIBForPartner)
-	r.GET("api/partneri/form", h.GetPartneriForm)
+	r.POST("/api/partneri/create", h.PartneriCreate)
+	r.PUT("/api/partneri/update/:id", h.PartneriUpdate)
+	r.GET("/api/partneri/proveripib", h.CheckPIBForPartner)
+	r.GET("/api/partneri/form", h.GetPartneriForm)
+	r.GET("/api/partneri/confirm-add", h.PartneriConfirmAdd)
+	r.GET("/api/partneri/confirm-delete", h.lm.WithEntityLockHold("fkpl", "id"), h.PartneriConfirmDelete)
+	r.GET("/api/partneri/confirm-update", h.lm.WithEntityLockHold("fkpl", "id"), h.PartneriConfirmUpdate)
+	r.GET("/api/partneri/stampa/dialog", h.PartnerStampaDialog)
+	r.GET("/api/partneri/stampa", h.PartnerStampa)
+
 }

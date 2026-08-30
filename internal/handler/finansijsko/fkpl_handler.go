@@ -256,7 +256,7 @@ func (h *FkplHandler) GetAllFkpl(c *gin.Context) {
 	currentPage, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
 
 	tbl := common.SetTableBasicData(fkplContentTitle, fkplTableID, h.fkplService.GetFkplTableFields(), "", fkplURLGetAll, pageSize, currentPage, 0, 0, h.cfg)
-	common.SetTableConfig(&tbl, "", fkplURLGetAll, true, true, false)
+	common.SetTableConfig(&tbl, "", fkplURLGetAll, false, false, false)
 	tbl.ShowPagination = true
 	tbl.ShowActions = true
 	tbl.Pagination.HxVals = hxValsFkpl
@@ -280,7 +280,8 @@ func (h *FkplHandler) GetAllFkpl(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, err.Error())
 		return
 	}
-
+	tbl.BtnDelete.IsVisible = false // Hide Delete button in the table header
+	
 	if requestSource == "menu" || requestSource == "" {
 		searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), fkplURLGetAll, fmt.Sprintf("#%s", fkplTableID), hxValsFkpl)
 		btnPrint := common.SetPrintButton("btn-print-fkpl", "Štampa", "fin_print", fkplURLPrint, "GET", true, common.ClassPrintButton, "vkonta")
@@ -290,7 +291,6 @@ func (h *FkplHandler) GetAllFkpl(c *gin.Context) {
 	}
 
 }
-
 
 // KontniPlanStampa renders a printable view of the kontni plan.
 func (h *FkplHandler) KontniPlanStampa(c *gin.Context) {

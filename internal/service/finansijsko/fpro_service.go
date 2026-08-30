@@ -13,6 +13,7 @@ import (
 	"math"
 	"reflect"
 	"strings"
+	"time"
 )
 
 const (
@@ -237,9 +238,7 @@ func (s *FproResource) GetAllFproByFnalID(ctx context.Context, fproPayload *doma
 	}
 	common.SetTableTotalRecords(tbl, totalRecords, pageSize)
 	common.SetupTablePagination(tbl, currentPage, pageSize)
-	tbl.ShowActions = true
-	tbl.URLGetAll = urlFproStavka
-	tbl.URLPrefix = urlFproStavka
+
 	// Populate table rows
 	if entities != nil && len(*entities) > 0 {
 		tbl.Totals = make([]string, len(tbl.Headers))
@@ -323,12 +322,13 @@ func (s *FproResource) SaveNalogStavke(ctx context.Context, fproStavke *domain.F
 	if fproStavke.Opisknj == "" {
 		fproStavke.Opisknj = "-"
 	}
-
-	lastRbr, err := s.getLastRbr(ctx, fproStavke.IDFnal)
-	if err != nil {
-		return fmt.Errorf("failed to get last Rbr: %w", err)
+	if fproStavke.IDFpro == 0 {
+		lastRbr, err := s.getLastRbr(ctx, fproStavke.IDFnal)
+		if err != nil {
+			return fmt.Errorf("failed to get last Rbr: %w", err)
+		}
+		fproStavke.Rbr = lastRbr + 1
 	}
-	fproStavke.Rbr = lastRbr + 1
 	fields := s.mapFieldsToValues(fproStavke)
 	sqlQuery := ""
 	args := []interface{}{}
@@ -353,6 +353,11 @@ func (s *FproResource) SaveNalogStavke(ctx context.Context, fproStavke *domain.F
 		err = tx.QueryRowContext(ctx, sqlQuery, args...).Scan(&insertedID)
 		if err != nil {
 			return fmt.Errorf("insert fpro failed: %w", err)
+		}
+	} else {
+		_, err = tx.ExecContext(ctx, sqlQuery, args...)
+		if err != nil {
+			return fmt.Errorf("update fpro failed: %w", err)
 		}
 	}
 	err = s.recalculateFnal(ctx, tx, fproStavke.IDFnal)
@@ -432,10 +437,14 @@ func (s *FproResource) DeleteFpro(ctx context.Context, idFpro int64, tblStavke *
 	if err != nil {
 		return fmt.Errorf("failed to refresh table data: %w", err)
 	}
-
-	tblStavke.URLGetAll = urlFproStavka
-	tblStavke.URLPrefix = urlFproStavka
-	tblStavke.DetailURL = fmt.Sprintf(urlFproNalogStavke, fpro.IDFnal)
+	tblStavke.URLGetAll = fmt.Sprintf("/api/fpro/nalog/%d", fpro.IDFnal)
+	tblStavke.URLPrefix = fmt.Sprintf("/api/fpro/nalog/%d", fpro.IDFnal)
+	tblStavke.BtnDelete.HxActionURL = "/api/fpro/confirm-delete"
+	tblStavke.BtnUpdate.HxActionURL = "/api/fpro/stavka/update"
+	tblStavke.BtnUpdate.HxOnAfterRequest = "populateFproUpdateFormFromEvent(event)"
+	tblStavke.BtnUpdate.HxSwap = "none"
+	tblStavke.BtnUpdate.HxRequestType = "GET"
+	tblStavke.DetailURL = fmt.Sprintf("/api/fpro/nalog/%d", fpro.IDFnal)
 	tblStavke.SearchEnabled = true
 	tblStavke.BtnAdd.IsVisible = false
 	tblStavke.BtnPrint.IsVisible = false
@@ -639,7 +648,7 @@ func (s *FproResource) GetKomercijalisti(ctx context.Context) ([]domain.ComboIte
 	for _, komercijalista := range *komercijalistiEntites {
 		comboItems = append(comboItems, domain.ComboItem{
 			Key:   fmt.Sprintf("%d", komercijalista.KomID),
-			Value: fmt.Sprintf("%d - %s", komercijalista.Sifkom, komercijalista.Imeprezime),
+			Value: fmt.Sprintf("%d - %s", komercijalista.Sifkom, komercijalista.ImePrezime),
 		})
 	}
 	return comboItems, nil
@@ -705,17 +714,23 @@ func (s *FproResource) GetNalogTotalValues(ctx context.Context, nalogTotal *doma
 	if userSession == nil {
 		return fmt.Errorf("user session not found")
 	}
-
+	var totDuguje, totPotrazuje, totSaldo float64
 	qb := common.NewQueryBuilder(`select 
 		coalesce(sum(case when kat in (1,2) then iznos else 0 end), 0) as duguje,
-		coalesce(sum(case when kat in (3,4) then iznos else 0 end), 0) as potrazuje
+		coalesce(sum(case when kat in (3,4) then iznos else 0 end), 0) as potrazuje,
+		coalesce(sum(case when kat in (1,2) then iznos else 0 end), 0) - coalesce(sum(case when kat in (3,4) then iznos else 0 end), 0) as saldo
+		
 		from fpro`, true)
 	qb.AddEqual("idfnal", idFnal)
 	sqlQuery, args := qb.Build()
-	err := s.fproRepo.DB.QueryRowContext(ctx, sqlQuery, args...).Scan(&nalogTotal.Duguje, &nalogTotal.Potrazuje)
+	err := s.fproRepo.DB.QueryRowContext(ctx, sqlQuery, args...).Scan(&totDuguje, &totPotrazuje, &totSaldo)
 	if err != nil {
 		return err
 	}
+	// Convert float64 to string
+	nalogTotal.Duguje = common.FormatNumberWithSystemLocale(totDuguje, 2)
+	nalogTotal.Potrazuje = common.FormatNumberWithSystemLocale(totPotrazuje, 2)
+	nalogTotal.Saldo = common.FormatNumberWithSystemLocale(totSaldo, 2)
 
 	return nil
 }
@@ -802,10 +817,10 @@ func (s *FproResource) FproValidate(ctx context.Context, entity *domain.FproPayl
 		if entity.Dokum == "" {
 			fieldErrors = append(fieldErrors, domain.FieldError{Field: "dokum", ErrorMessage: common.ErrMsgObavezanPodatak})
 		}
-		if common.StringToDate(entity.Dadok).IsZero() {
+		dadok, err := time.Parse(common.HtmlLayout, entity.Dadok)
+		if err != nil || dadok.IsZero() {
 			fieldErrors = append(fieldErrors, domain.FieldError{Field: "dadok", ErrorMessage: common.ErrMsgObavezanPodatak})
 		}
-
 		if common.StringToInt(entity.Tra) == 0 {
 			fieldErrors = append(fieldErrors, domain.FieldError{Field: "tra", ErrorMessage: common.ErrMsgObavezanPodatak})
 		}
@@ -816,7 +831,7 @@ func (s *FproResource) FproValidate(ctx context.Context, entity *domain.FproPayl
 			if common.StringToInt(entity.Travez) == 0 {
 				fieldErrors = append(fieldErrors, domain.FieldError{Field: "travez", ErrorMessage: common.ErrMsgObavezanPodatak})
 			}
-			if common.StringToDate(entity.Dadokv).IsZero() {
+			if common.StringToDate(entity.Dadokv, "02.01.2006").IsZero() {
 				fieldErrors = append(fieldErrors, domain.FieldError{Field: "dadokv", ErrorMessage: common.ErrMsgObavezanPodatak})
 			}
 		}
@@ -866,16 +881,20 @@ func (s *FproResource) isGodinaZatvorena(ctx context.Context, god, kar int) bool
 
 func (s *FproResource) findFkpl(ctx context.Context, god, kar int, konto, sifra string) (*domain.Fkpl, bool) {
 	vkonta := 2
+	var qb *common.QueryBuilder
 	if sifra != "" {
-		vkonta = 1
-	}
-	qb := common.NewQueryBuilder("select idfkpl, god, kar, vkonta, konto, sifra, naziv, devizni, idpartneri from fkpl", true)
-	qb.AddEqual("god", god)
-	qb.AddEqual("kar", kar)
-	qb.AddEqual("konto", konto)
-	qb.AddEqual("vkonta", vkonta)
-	if sifra != "" {
-		qb.AddEqual("sifra", sifra)
+		qb = common.NewQueryBuilder("select idfkpl, vkonta, konto, p.sifra, f.naziv, devizni, p.idpartneri, p.naziv as partnernaziv from partneri p ", true)
+		qb.AddJoin(" inner join fkpl f on p.tipanalitikeid = f.tipanalitikeid and f.god = p.god and f.kar = p.kar and f.konto = $1 and f.vkonta = 2")
+		qb.AddArgs(konto)
+		qb.AddEqual("p.god", god)
+		qb.AddEqual("p.kar", kar)
+		qb.AddEqual("p.sifra", sifra)
+	} else {
+		qb = common.NewQueryBuilder("select idfkpl, god, kar, vkonta, konto, sifra, naziv, devizni from fkpl f", true)
+		qb.AddEqual("f.god", god)
+		qb.AddEqual("f.kar", kar)
+		qb.AddEqual("f.konto", konto)
+		qb.AddEqual("f.vkonta", vkonta)
 	}
 	sqlQuery, args := qb.Build()
 	entities, err := s.fkplRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")

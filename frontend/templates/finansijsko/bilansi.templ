@@ -7,6 +7,7 @@ import (
 	"helia/internal/common"
 	"helia/internal/domain"
 	"time"
+	"helia/frontend/components"
 )
 
 // biluPrintRowClass returns CSS classes for a Bilans Uspeha print row.
@@ -30,7 +31,7 @@ func biluCharAt(s string, i int) string {
 // Main entry point for Bilansi module
 templ BilansiMain(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service, gnGod int) {
 	<!-- Tab Content -->
-	<div id="tab-content" class="flex flex-col h-full">
+	<div id="tab-content" class="bg-blue-100 p-1 flex flex-col h-full">
 		@ZakljucniList(tabs, tbl, btnObrada, btnPrint, searchInput, translator, gnGod)
 	</div>
 	@tmpl.CloseDialogScript()
@@ -43,7 +44,7 @@ templ BilansiMain(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint
 // Tab 1 - Zakljucni list (Closing List)
 templ ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service, gnGod int) {
 	<!-- Container with full height -->
-	<div class="flex flex-col h-full">
+	<div class="bg-blue-100 p-1 flex flex-col h-full">
 		<!-- Tab Navigation -->
 		<div class="border-b border-blue-600">
 			@tmpl.TabNav(translator.Title("Bilansi"), tabs, "#tab-content", "bilansi-panel", translator)
@@ -56,33 +57,33 @@ templ ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPri
 				<div class="w-2/5 border bg-blue-100 border-blue-400 mt-1 p-2 rounded-lg">
 					<!-- Row 1: Tip zakljucnog lista -->
 					<div class="flex items-center gap-1 mb-1">
-						@tmpl.LabelField(domain.LabelFieldConfig{
+						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "tipzakljucnoglista",
 							LabelText:  translator.Label("Tip zakljucnog lista"),
 							ClassLabel: common.ClassLabel + " w-32",
 						})
 						<div class="flex gap-3">
-							@tmpl.RadioButtonField(domain.RadioFieldConfig{
+							@components.RadioButtonField(domain.RadioFieldConfig{
 								ID:         "zakljucni-analitika",
 								Name:       "tip_zakljucni",
 								Value:      "1",
-								LabelText:  translator.Label("Analitika"),
+								LabelText:  "Analitika",
 								IsSelected: true,
 								TabIndex:   "1",
 							}, translator)
-							@tmpl.RadioButtonField(domain.RadioFieldConfig{
+							@components.RadioButtonField(domain.RadioFieldConfig{
 								ID:         "zakljucni-subsintetika",
 								Name:       "tip_zakljucni",
 								Value:      "2",
-								LabelText:  translator.Label("Subsintetika"),
+								LabelText:  "Subsintetika",
 								IsSelected: false,
 								TabIndex:   "2",
 							}, translator)
-							@tmpl.RadioButtonField(domain.RadioFieldConfig{
+							@components.RadioButtonField(domain.RadioFieldConfig{
 								ID:         "zakljucni-sintetika",
 								Name:       "tip_zakljucni",
 								Value:      "3",
-								LabelText:  translator.Label("Sintetika"),
+								LabelText:  "Sintetika",
 								IsSelected: false,
 								TabIndex:   "3",
 							}, translator)
@@ -90,12 +91,12 @@ templ ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPri
 					</div>
 					<!-- Row 2: Od konta and Od sifre -->
 					<div class="flex items-center gap-1 mb-1">
-						@tmpl.LabelField(domain.LabelFieldConfig{
+						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "odkonta",
 							LabelText:  translator.Label("Od konta"),
 							ClassLabel: common.ClassLabel + " w-32",
 						})
-						@tmpl.TextInputField(domain.InputFieldConfig{
+						@components.TextInputField(domain.InputFieldConfig{
 							ID:         "odkonta",
 							Name:       "odkonta",
 							FieldType:  "text",
@@ -107,7 +108,7 @@ templ ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPri
 							OnInput:    "clearFieldError",
 							OnFocus:    "clearFieldError",
 						})
-						@tmpl.SearchButton(domain.SearchButtonConfig{
+						@components.SearchButton(domain.SearchButtonConfig{
 							ID:          "odkonta",
 							Name:        "search-odkonta",
 							HxUrl:       "/api/promet/searchbutton",
@@ -116,12 +117,12 @@ templ ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPri
 							HxVals:      `js:{"odkonta": document.getElementById('odkonta').value, "vkonta": "2"}`,
 							ClassButton: common.ClassButton,
 						})
-						@tmpl.LabelField(domain.LabelFieldConfig{
+						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "odsifre",
 							LabelText:  translator.Label("Od šifre"),
 							ClassLabel: common.ClassLabel + " w-20",
 						})
-						@tmpl.TextInputField(domain.InputFieldConfig{
+						@components.TextInputField(domain.InputFieldConfig{
 							ID:         "odsifre",
 							Name:       "odsifre",
 							FieldType:  "text",
@@ -133,7 +134,7 @@ templ ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPri
 							OnInput:    "clearFieldError",
 							OnFocus:    "clearFieldError",
 						})
-						@tmpl.SearchButton(domain.SearchButtonConfig{
+						@components.SearchButton(domain.SearchButtonConfig{
 							ID:          "odsifre",
 							Name:        "search-odsifre",
 							HxUrl:       "/api/promet/searchbutton",
@@ -145,12 +146,12 @@ templ ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPri
 					</div>
 					<!-- Row 3: Do konta and Do sifre -->
 					<div class="flex items-center gap-1">
-						@tmpl.LabelField(domain.LabelFieldConfig{
+						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "dokonta",
 							LabelText:  translator.Label("Do konta"),
 							ClassLabel: common.ClassLabel + " w-32",
 						})
-						@tmpl.TextInputField(domain.InputFieldConfig{
+						@components.TextInputField(domain.InputFieldConfig{
 							ID:         "dokonta",
 							Name:       "dokonta",
 							FieldType:  "text",
@@ -162,7 +163,7 @@ templ ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPri
 							OnInput:    "clearFieldError",
 							OnFocus:    "clearFieldError",
 						})
-						@tmpl.SearchButton(domain.SearchButtonConfig{
+						@components.SearchButton(domain.SearchButtonConfig{
 							ID:          "dokonta",
 							Name:        "search-dokonta",
 							HxUrl:       "/api/promet/searchbutton",
@@ -171,12 +172,12 @@ templ ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPri
 							HxVals:      `js:{"konto": document.getElementById('dokonta').value, "vkonta": "2"}`,
 							ClassButton: common.ClassButton,
 						})
-						@tmpl.LabelField(domain.LabelFieldConfig{
+						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "dosifre",
 							LabelText:  translator.Label("Do šifre"),
 							ClassLabel: common.ClassLabel + " w-20",
 						})
-						@tmpl.TextInputField(domain.InputFieldConfig{
+						@components.TextInputField(domain.InputFieldConfig{
 							ID:         "dosifre",
 							Name:       "dosifre",
 							FieldType:  "text",
@@ -188,7 +189,7 @@ templ ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPri
 							OnInput:    "clearFieldError",
 							OnFocus:    "clearFieldError",
 						})
-						@tmpl.SearchButton(domain.SearchButtonConfig{
+						@components.SearchButton(domain.SearchButtonConfig{
 							ID:          "dosifre",
 							Name:        "search-dosifre",
 							HxUrl:       "/api/promet/searchbutton",
@@ -203,43 +204,43 @@ templ ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPri
 				<div class="w-3/5 border bg-blue-100 border-blue-400 mt-1 p-2 rounded-lg">
 					<!-- Row 1: Checkboxes for display variants -->
 					<div class="flex items-center gap-2 mb-1">
-						@tmpl.CheckboxField(domain.CheckboxFieldConfig{
+						@components.CheckboxField(domain.CheckboxFieldConfig{
 							ID:        "analitickakonta",
 							Name:      "analitickakonta",
-							LabelText: translator.Label("Štampanje analitičkih konta"),
+							LabelText: "Štampanje analitičkih konta",
 							Checked:   true,
 							TabIndex:  "11",
 						}, translator)
-						@tmpl.CheckboxField(domain.CheckboxFieldConfig{
+						@components.CheckboxField(domain.CheckboxFieldConfig{
 							ID:        "klasa9",
 							Name:      "klasa9",
-							LabelText: translator.Label("Štampanje klase 9"),
+							LabelText: "Štampanje klase 9",
 							Checked:   false,
 							TabIndex:  "12",
 						}, translator)
-						@tmpl.CheckboxField(domain.CheckboxFieldConfig{
+						@components.CheckboxField(domain.CheckboxFieldConfig{
 							ID:        "samosaprometom",
 							Name:      "samosaprometom",
-							LabelText: translator.Label("Štampanje konta samo sa prometom"),
+							LabelText: "Štampanje konta samo sa prometom",
 							Checked:   false,
 							TabIndex:  "13",
 						}, translator)
-						@tmpl.CheckboxField(domain.CheckboxFieldConfig{
+						@components.CheckboxField(domain.CheckboxFieldConfig{
 							ID:        "zabanku",
 							Name:      "zabanku",
-							LabelText: translator.Label("Štampanje za banku"),
+							LabelText: "Štampanje za banku",
 							Checked:   false,
 							TabIndex:  "14",
 						}, translator)
 					</div>
 					<!-- Row 2: Od datuma and Do datuma -->
 					<div class="flex items-center gap-4 mb-1">
-						@tmpl.LabelField(domain.LabelFieldConfig{
+						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "oddatuma",
 							LabelText:  translator.Label("Od datuma"),
 							ClassLabel: common.ClassLabel + " w-28",
 						})
-						@tmpl.TextInputField(domain.InputFieldConfig{
+						@components.TextInputField(domain.InputFieldConfig{
 							ID:         "oddatuma",
 							Name:       "oddatuma",
 							FieldType:  "date",
@@ -247,12 +248,12 @@ templ ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPri
 							ClassInput: common.ClassInputTextEnabled + " w-28",
 							TabIndex:   "8",
 						})
-						@tmpl.LabelField(domain.LabelFieldConfig{
+						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "datumobrade",
 							LabelText:  translator.Label("Datum obrade"),
 							ClassLabel: common.ClassLabel + " w-28",
 						})
-						@tmpl.TextInputField(domain.InputFieldConfig{
+						@components.TextInputField(domain.InputFieldConfig{
 							ID:         "datumobrade",
 							Name:       "datumobrade",
 							FieldType:  "date",
@@ -263,12 +264,12 @@ templ ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPri
 					</div>
 					<!-- Row 3: Datum obrade and Buttons -->
 					<div class="flex items-center gap-4">
-						@tmpl.LabelField(domain.LabelFieldConfig{
+						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "dodatuma",
 							LabelText:  translator.Label("Do datuma"),
 							ClassLabel: common.ClassLabel + " w-28",
 						})
-						@tmpl.TextInputField(domain.InputFieldConfig{
+						@components.TextInputField(domain.InputFieldConfig{
 							ID:         "dodatuma",
 							Name:       "dodatuma",
 							FieldType:  "date",
@@ -278,19 +279,19 @@ templ ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPri
 						})
 						<div class="flex-1"></div>
 						<div class="flex items-center gap-1">
-							@tmpl.FormObradaButton(btnObrada, translator)
-							@tmpl.Search_PartPrintButton(btnPrint)
+							@components.FormObradaButton(btnObrada, translator)
+							@components.Search_PartPrintButton(btnPrint)
 						</div>
 					</div>
 				</div>
 			</div>
 			<!-- Master Table -->
 			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative">
-				@tmpl.LoadingSpinner()
-				@tmpl.Search_Part(tbl, searchInput)
+				@components.LoadingSpinner()
+				@components.Search_Part(tbl, searchInput)
 				<!-- Table -->
 				<div id="bilansi-table" class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
-					@tmpl.Table(tbl, translator)
+					@components.Table(tbl, translator)
 				</div>
 			</div>
 		</div>
@@ -354,7 +355,7 @@ templ ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPri
 	</script>
 	@tmpl.ClearFieldErrorScript()
 	@tmpl.SearchPopupScript()
-	@tmpl.SpinnerScript()
+	@components.SpinnerScript()
 }
 
 // Tab 2 - Bilans stanja (Balance Sheet)
@@ -379,12 +380,12 @@ templ BilansStanja(tabs domain.TabData, tbl domain.TableData, totals domain.Bila
 					<div class="space-y-1">
 						<!-- Tekuća godina -->
 						<div class="flex justify-between items-center">
-							@tmpl.LabelField(domain.LabelFieldConfig{
+							@components.LabelField(domain.LabelFieldConfig{
 								ID:         "tekuca_godina",
 								LabelText:  translator.Label("Tekuća godina"),
 								ClassLabel: common.ClassLabel + " w-42",
 							})
-							@tmpl.TextInputField(domain.InputFieldConfig{
+							@components.TextInputField(domain.InputFieldConfig{
 								ID:         "tekuca_godina",
 								Name:       "tekuca_godina",
 								FieldType:  "text",
@@ -395,12 +396,12 @@ templ BilansStanja(tabs domain.TabData, tbl domain.TableData, totals domain.Bila
 						</div>
 						<!-- Prethodna godina -->
 						<div class="flex justify-between items-center">
-							@tmpl.LabelField(domain.LabelFieldConfig{
+							@components.LabelField(domain.LabelFieldConfig{
 								ID:         "prethodna_godina",
 								LabelText:  translator.Label("Prethodna godina"),
 								ClassLabel: common.ClassLabel + " w-42",
 							})
-							@tmpl.TextInputField(domain.InputFieldConfig{
+							@components.TextInputField(domain.InputFieldConfig{
 								ID:         "prethodna_godina",
 								Name:       "prethodna_godina",
 								FieldType:  "text",
@@ -411,12 +412,12 @@ templ BilansStanja(tabs domain.TabData, tbl domain.TableData, totals domain.Bila
 						</div>
 						<!-- Početno Stanje -->
 						<div class="flex justify-between items-center">
-							@tmpl.LabelField(domain.LabelFieldConfig{
+							@components.LabelField(domain.LabelFieldConfig{
 								ID:         "pocetno_stanje",
 								LabelText:  translator.Label("Početno Stanje"),
 								ClassLabel: common.ClassLabel + " w-42",
 							})
-							@tmpl.TextInputField(domain.InputFieldConfig{
+							@components.TextInputField(domain.InputFieldConfig{
 								ID:         "pocetno_stanje",
 								Name:       "pocetno_stanje",
 								FieldType:  "text",
@@ -430,12 +431,12 @@ templ BilansStanja(tabs domain.TabData, tbl domain.TableData, totals domain.Bila
 					<div class="space-y-1">
 						<!-- Tekuća u hiljadama -->
 						<div class="flex justify-between items-center">
-							@tmpl.LabelField(domain.LabelFieldConfig{
+							@components.LabelField(domain.LabelFieldConfig{
 								ID:         "tekuca_hiljada",
 								LabelText:  translator.Label("Tekuća u hiljadama"),
 								ClassLabel: common.ClassLabel + " w-42",
 							})
-							@tmpl.TextInputField(domain.InputFieldConfig{
+							@components.TextInputField(domain.InputFieldConfig{
 								ID:         "tekuca_hiljada",
 								Name:       "tekuca_hiljada",
 								FieldType:  "text",
@@ -446,12 +447,12 @@ templ BilansStanja(tabs domain.TabData, tbl domain.TableData, totals domain.Bila
 						</div>
 						<!-- Prethodna u hiljadama -->
 						<div class="flex justify-between items-center">
-							@tmpl.LabelField(domain.LabelFieldConfig{
+							@components.LabelField(domain.LabelFieldConfig{
 								ID:         "prethodna_hiljada",
 								LabelText:  translator.Label("Prethodna u hiljadama"),
 								ClassLabel: common.ClassLabel + " w-42",
 							})
-							@tmpl.TextInputField(domain.InputFieldConfig{
+							@components.TextInputField(domain.InputFieldConfig{
 								ID:         "prethodna_hiljada",
 								Name:       "prethodna_hiljada",
 								FieldType:  "text",
@@ -462,12 +463,12 @@ templ BilansStanja(tabs domain.TabData, tbl domain.TableData, totals domain.Bila
 						</div>
 						<!-- Početno u hiljadama -->
 						<div class="flex justify-between items-center">
-							@tmpl.LabelField(domain.LabelFieldConfig{
+							@components.LabelField(domain.LabelFieldConfig{
 								ID:         "pocetno_hiljada",
 								LabelText:  translator.Label("Početno u hiljadama"),
 								ClassLabel: common.ClassLabel + " w-42",
 							})
-							@tmpl.TextInputField(domain.InputFieldConfig{
+							@components.TextInputField(domain.InputFieldConfig{
 								ID:         "pocetno_hiljada",
 								Name:       "pocetno_hiljada",
 								FieldType:  "text",
@@ -481,16 +482,16 @@ templ BilansStanja(tabs domain.TabData, tbl domain.TableData, totals domain.Bila
 			</div>
 			<!-- Table section -->
 			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative">
-				@tmpl.LoadingSpinner()
-				@tmpl.Search_Part(tbl, searchInput)
+				@components.LoadingSpinner()
+				@components.Search_Part(tbl, searchInput)
 				<div class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
-					@tmpl.Table(tbl, translator)
+					@components.Table(tbl, translator)
 				</div>
 			</div>
 		</div>
 	</div>
 	@tmpl.ShowMessageScript()
-	@tmpl.SpinnerScript()
+	@components.SpinnerScript()
 }
 
 // BilansStanjaForm is a separate form component for Bilans stanja
@@ -500,7 +501,7 @@ templ BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dia
 			<!-- Title Bar -->
 			<div class="bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg sticky top-0 z-50">
 				<h2 class="text-lg font-semibold ml-4">{ translator.Title(dialog.Title) }</h2>
-				@tmpl.CloseButton(btnClose)
+				@components.CloseButton(btnClose)
 			</div>
 			<form
 				if dialog.HxRequestType == "PUT" {
@@ -523,15 +524,15 @@ templ BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dia
 					<!-- Top Row: Redni broj, Oznaka za AOP -->
 					<div class="flex items-center gap-2 mb-1">
 						<div class="flex items-center gap-1">
-							@tmpl.LabelField(domain.LabelFieldConfig{
+							@components.LabelField(domain.LabelFieldConfig{
 								ID:         "bs_redni_broj",
 								LabelText:  translator.Label("Redni broj"),
 								ClassLabel: common.ClassLabel + " w-40",
 							})
-							@tmpl.NumericInputField(domain.InputFieldConfig{
+							@components.TextInputField(domain.InputFieldConfig{
 								ID:         "bs_redni_broj",
 								Name:       "rbr",
-								FieldType:  "text",
+								FieldType:  "number",
 								Value:      fmt.Sprintf("%d", bilsData.Rbr),
 								ClassInput: common.ClassInputTextEnabled + " w-24",
 								MaxLength:  "4",
@@ -541,15 +542,15 @@ templ BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dia
 							})
 						</div>
 						<div class="flex items-center gap-1">
-							@tmpl.LabelField(domain.LabelFieldConfig{
+							@components.LabelField(domain.LabelFieldConfig{
 								ID:         "bs_oznaka_aop",
 								LabelText:  translator.Label("Oznaka za AOP"),
 								ClassLabel: common.ClassLabel + " w-28",
 							})
-							@tmpl.NumericInputField(domain.InputFieldConfig{
+							@components.TextInputField(domain.InputFieldConfig{
 								ID:         "bs_oznaka_aop",
 								Name:       "aop",
-								FieldType:  "text",
+								FieldType:  "number",
 								Value:      fmt.Sprintf("%d", bilsData.AOP),
 								ClassInput: common.ClassInputTextEnabled + " w-24",
 								MaxLength:  "4",
@@ -560,7 +561,7 @@ templ BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dia
 						</div>
 						<!-- Nivo podataka checkbox -->
 						<div class="flex items-center gap-1">
-							@tmpl.CheckboxField(domain.CheckboxFieldConfig{
+							@components.CheckboxField(domain.CheckboxFieldConfig{
 								ID:        "bs_skraceni",
 								Name:      "skraceni",
 								LabelText: "AOP skracenog bilansa",
@@ -571,12 +572,12 @@ templ BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dia
 					</div>
 					<!-- Second Row: Grupa računa -->
 					<div class="flex items-center gap-1 mb-1">
-						@tmpl.LabelField(domain.LabelFieldConfig{
+						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "bs_grupa_racuna",
 							LabelText:  translator.Label("Grupa računa, račun"),
 							ClassLabel: common.ClassLabel + " w-40",
 						})
-						@tmpl.TextInputField(domain.InputFieldConfig{
+						@components.TextInputField(domain.InputFieldConfig{
 							ID:         "bs_grupa_racuna",
 							Name:       "grac",
 							FieldType:  "text",
@@ -588,12 +589,12 @@ templ BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dia
 					</div>
 					<!-- Third Row: Naziv pozicije -->
 					<div class="flex items-center gap-1 mb-1">
-						@tmpl.LabelField(domain.LabelFieldConfig{
+						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "bs_naziv_pozicije",
 							LabelText:  translator.Label("Naziv pozicije"),
 							ClassLabel: common.ClassLabel + " w-40",
 						})
-						@tmpl.TextInputField(domain.InputFieldConfig{
+						@components.TextInputField(domain.InputFieldConfig{
 							ID:         "bs_naziv_pozicije",
 							Name:       "nazp",
 							FieldType:  "text",
@@ -607,12 +608,12 @@ templ BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dia
 					</div>
 					<!-- Fourth Row: Spisak konta -->
 					<div class="flex items-center gap-1 mb-1">
-						@tmpl.LabelField(domain.LabelFieldConfig{
+						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "bs_spisak_konta",
 							LabelText:  translator.Label("Spisak konta"),
 							ClassLabel: common.ClassLabel + " w-40",
 						})
-						@tmpl.TextInputField(domain.InputFieldConfig{
+						@components.TextInputField(domain.InputFieldConfig{
 							ID:         "bs_spisak_konta",
 							Name:       "konta",
 							FieldType:  "text",
@@ -627,59 +628,59 @@ templ BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dia
 					<!-- Input fields row 1 - Pozicije controls -->
 					<div class="flex gap-1 mb-1">
 						<div class="flex gap-1">
-							@tmpl.LabelField(domain.LabelFieldConfig{
+							@components.LabelField(domain.LabelFieldConfig{
 								ID:         "bs_spisak_konta",
 								LabelText:  translator.Label("Pozicije"),
 								ClassLabel: common.ClassLabel + " w-40",
 							})
-							@tmpl.NumericInputField(domain.InputFieldConfig{
+							@components.TextInputField(domain.InputFieldConfig{
 								ID:         "bs_input_01",
 								Name:       "pozic_1",
-								FieldType:  "text",
+								FieldType:  "number",
 								Value:      fmt.Sprintf("%04d", bilsData.Pozic1),
 								ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
 								MaxLength:  "4",
 								TabIndex:   "7",
 							})
-							@tmpl.NumericInputField(domain.InputFieldConfig{
+							@components.TextInputField(domain.InputFieldConfig{
 								ID:         "bs_input_02",
 								Name:       "pozic_2",
-								FieldType:  "text",
+								FieldType:  "number",
 								Value:      fmt.Sprintf("%04d", bilsData.Pozic2),
 								ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
 								MaxLength:  "4",
 								TabIndex:   "8",
 							})
-							@tmpl.NumericInputField(domain.InputFieldConfig{
+							@components.TextInputField(domain.InputFieldConfig{
 								ID:         "bs_input_03",
 								Name:       "pozic_3",
-								FieldType:  "text",
+								FieldType:  "number",
 								Value:      fmt.Sprintf("%04d", bilsData.Pozic3),
 								ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
 								MaxLength:  "4",
 							})
-							@tmpl.NumericInputField(domain.InputFieldConfig{
+							@components.TextInputField(domain.InputFieldConfig{
 								ID:         "bs_input_04",
 								Name:       "pozic_4",
-								FieldType:  "text",
+								FieldType:  "number",
 								Value:      fmt.Sprintf("%04d", bilsData.Pozic4),
 								ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
 								MaxLength:  "4",
 								TabIndex:   "10",
 							})
-							@tmpl.NumericInputField(domain.InputFieldConfig{
+							@components.TextInputField(domain.InputFieldConfig{
 								ID:         "bs_input_05",
 								Name:       "pozic_5",
-								FieldType:  "text",
+								FieldType:  "number",
 								Value:      fmt.Sprintf("%04d", bilsData.Pozic5),
 								ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
 								MaxLength:  "4",
 								TabIndex:   "11",
 							})
-							@tmpl.NumericInputField(domain.InputFieldConfig{
+							@components.TextInputField(domain.InputFieldConfig{
 								ID:         "bs_input_06",
 								Name:       "pozic_6",
-								FieldType:  "text",
+								FieldType:  "number",
 								Value:      fmt.Sprintf("%04d", bilsData.Pozic6),
 								ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
 								MaxLength:  "4",
@@ -690,60 +691,60 @@ templ BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dia
 					<!-- Input fields row 2 - Additional Pozicije controls -->
 					<div class="flex gap-1 mb-1">
 						<div class="flex gap-1">
-							@tmpl.LabelField(domain.LabelFieldConfig{
+							@components.LabelField(domain.LabelFieldConfig{
 								ID:         "bs_pozicije",
 								LabelText:  "",
 								ClassLabel: common.ClassLabel + " w-40",
 							})
-							@tmpl.NumericInputField(domain.InputFieldConfig{
+							@components.TextInputField(domain.InputFieldConfig{
 								ID:         "bs_input_07",
 								Name:       "pozic_7",
-								FieldType:  "text",
+								FieldType:  "number",
 								Value:      fmt.Sprintf("%04d", bilsData.Pozic7),
 								ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
 								MaxLength:  "4",
 								TabIndex:   "13",
 							})
-							@tmpl.NumericInputField(domain.InputFieldConfig{
+							@components.TextInputField(domain.InputFieldConfig{
 								ID:         "bs_input_08",
 								Name:       "pozic_8",
-								FieldType:  "text",
+								FieldType:  "number",
 								Value:      fmt.Sprintf("%04d", bilsData.Pozic8),
 								ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
 								MaxLength:  "4",
 								TabIndex:   "14",
 							})
-							@tmpl.NumericInputField(domain.InputFieldConfig{
+							@components.TextInputField(domain.InputFieldConfig{
 								ID:         "bs_input_09",
 								Name:       "pozic_9",
-								FieldType:  "text",
+								FieldType:  "number",
 								Value:      fmt.Sprintf("%04d", bilsData.Pozic9),
 								ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
 								MaxLength:  "4",
 								TabIndex:   "15",
 							})
-							@tmpl.NumericInputField(domain.InputFieldConfig{
+							@components.TextInputField(domain.InputFieldConfig{
 								ID:         "bs_input_10",
 								Name:       "pozic_10",
-								FieldType:  "text",
+								FieldType:  "number",
 								Value:      fmt.Sprintf("%04d", bilsData.Pozic10),
 								ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
 								MaxLength:  "4",
 								TabIndex:   "16",
 							})
-							@tmpl.NumericInputField(domain.InputFieldConfig{
+							@components.TextInputField(domain.InputFieldConfig{
 								ID:         "bs_input_11",
 								Name:       "pozic_11",
-								FieldType:  "text",
+								FieldType:  "number",
 								Value:      fmt.Sprintf("%04d", bilsData.Pozic11),
 								ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
 								MaxLength:  "4",
 								TabIndex:   "17",
 							})
-							@tmpl.NumericInputField(domain.InputFieldConfig{
+							@components.TextInputField(domain.InputFieldConfig{
 								ID:         "bs_input_12",
 								Name:       "pozic_12",
-								FieldType:  "text",
+								FieldType:  "number",
 								Value:      fmt.Sprintf("%04d", bilsData.Pozic12),
 								ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
 								MaxLength:  "4",
@@ -753,15 +754,15 @@ templ BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dia
 					</div>
 					<!-- Nivo podataka checkbox -->
 					<div class="flex items-center gap-1 mb-1">
-						@tmpl.LabelField(domain.LabelFieldConfig{
+						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "bs_nivo_podataka",
 							LabelText:  translator.Label("Nivo podataka"),
 							ClassLabel: common.ClassLabel + " w-40",
 						})
-						@tmpl.NumericInputField(domain.InputFieldConfig{
+						@components.TextInputField(domain.InputFieldConfig{
 							ID:         "bs_nivo_podataka",
 							Name:       "nipo",
-							FieldType:  "text",
+							FieldType:  "number",
 							Value:      fmt.Sprintf("%d", bilsData.NiPo),
 							ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
 							MaxLength:  "2",
@@ -773,8 +774,8 @@ templ BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dia
 				</div>
 				<!-- Buttons - Bottom Right Aligned -->
 				<div class="flex gap-1 justify-end">
-					@tmpl.SaveButton(btnSave, translator)
-					@tmpl.CancelButton(btnCancel, translator)
+					@components.SaveButton(btnSave, translator)
+					@components.CancelButton(btnCancel, translator)
 				</div>
 			</form>
 			<!-- Message Display Area at Bottom -->
@@ -797,14 +798,14 @@ templ StampanjeBilansaStanja(tabs domain.TabData, tbl domain.TableData, btnObrad
 			<!-- Control Section -->
 			<div class="border bg-blue-100 border-blue-400 mt-1 p-2 rounded-lg">
 				<div class="flex items-center gap-2">
-					@tmpl.CheckboxField(domain.CheckboxFieldConfig{
+					@components.CheckboxField(domain.CheckboxFieldConfig{
 						ID:        "skraceni",
 						Name:      "skraceni",
 						LabelText: translator.Label("Skraćeni bilans"),
 						Checked:   false,
 						TabIndex:  "1",
 					}, translator)
-					@tmpl.CheckboxField(domain.CheckboxFieldConfig{
+					@components.CheckboxField(domain.CheckboxFieldConfig{
 						ID:        "pocstanjepg",
 						Name:      "pocstanjepg",
 						Value:     "false",
@@ -813,7 +814,7 @@ templ StampanjeBilansaStanja(tabs domain.TabData, tbl domain.TableData, btnObrad
 						TabIndex:  "2",
 					}, translator)
 					<span class="text-sm font-medium ml-4">{ translator.Label("Stanje na dan") }:</span>
-					@tmpl.TextInputField(domain.InputFieldConfig{
+					@components.TextInputField(domain.InputFieldConfig{
 						ID:         "stanjenadan",
 						Name:       "stanjenadan",
 						FieldType:  "date",
@@ -823,19 +824,19 @@ templ StampanjeBilansaStanja(tabs domain.TabData, tbl domain.TableData, btnObrad
 					})
 					<div class="flex-1"></div>
 					<div class="flex items-center gap-1">
-						@tmpl.FormObradaButton(btnObrada, translator)
-						@tmpl.Search_PartPrintButton(btnPrint)
-						@tmpl.Button(btnExportXML)
+						@components.FormObradaButton(btnObrada, translator)
+						@components.Search_PartPrintButton(btnPrint)
+						@components.Button(btnExportXML)
 					</div>
 				</div>
 			</div>
 			<!-- Master Table -->
 			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative">
-				@tmpl.LoadingSpinner()
-				@tmpl.Search_Part(tbl, searchInput)
+				@components.LoadingSpinner()
+				@components.Search_Part(tbl, searchInput)
 				<!-- Table -->
 				<div id="bilansi-table" class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
-					@tmpl.Table(tbl, translator)
+					@components.Table(tbl, translator)
 				</div>
 			</div>
 		</div>
@@ -872,12 +873,12 @@ templ BilansUspeha(tabs domain.TabData, tbl domain.TableData, searchInput domain
 						<div class="space-y-1">
 							<!-- Tekuća godina -->
 							<div class="flex justify-between items-center">
-								@tmpl.LabelField(domain.LabelFieldConfig{
+								@components.LabelField(domain.LabelFieldConfig{
 									ID:         "tekuca_godina",
 									LabelText:  translator.Label("Tekuća godina"),
 									ClassLabel: common.ClassLabel + " w-44",
 								})
-								@tmpl.TextInputField(domain.InputFieldConfig{
+								@components.TextInputField(domain.InputFieldConfig{
 									ID:         "tekuca_godina",
 									Name:       "tekuca_godina",
 									FieldType:  "text",
@@ -888,12 +889,12 @@ templ BilansUspeha(tabs domain.TabData, tbl domain.TableData, searchInput domain
 							</div>
 							<!-- Prethodna godina -->
 							<div class="flex justify-between items-center">
-								@tmpl.LabelField(domain.LabelFieldConfig{
+								@components.LabelField(domain.LabelFieldConfig{
 									ID:         "prethodna_godina",
 									LabelText:  translator.Label("Prethodna godina"),
 									ClassLabel: common.ClassLabel + " w-44",
 								})
-								@tmpl.TextInputField(domain.InputFieldConfig{
+								@components.TextInputField(domain.InputFieldConfig{
 									ID:         "prethodna_godina",
 									Name:       "prethodna_godina",
 									FieldType:  "text",
@@ -907,12 +908,12 @@ templ BilansUspeha(tabs domain.TabData, tbl domain.TableData, searchInput domain
 						<div class="space-y-1">
 							<!-- Tekuća u hiljadama -->
 							<div class="flex justify-between items-center">
-								@tmpl.LabelField(domain.LabelFieldConfig{
+								@components.LabelField(domain.LabelFieldConfig{
 									ID:         "tekuca_hiljada",
 									LabelText:  translator.Label("Tekuća u hiljadama"),
 									ClassLabel: common.ClassLabel + " w-44",
 								})
-								@tmpl.TextInputField(domain.InputFieldConfig{
+								@components.TextInputField(domain.InputFieldConfig{
 									ID:         "tekuca_hiljada",
 									Name:       "tekuca_hiljada",
 									FieldType:  "text",
@@ -923,12 +924,12 @@ templ BilansUspeha(tabs domain.TabData, tbl domain.TableData, searchInput domain
 							</div>
 							<!-- Prethodna u hiljadama -->
 							<div class="flex justify-between items-center">
-								@tmpl.LabelField(domain.LabelFieldConfig{
+								@components.LabelField(domain.LabelFieldConfig{
 									ID:         "prethodna_hiljada",
 									LabelText:  translator.Label("Prethodna u hiljadama"),
 									ClassLabel: common.ClassLabel + " w-44",
 								})
-								@tmpl.TextInputField(domain.InputFieldConfig{
+								@components.TextInputField(domain.InputFieldConfig{
 									ID:         "prethodna_hiljada",
 									Name:       "prethodna_hiljada",
 									FieldType:  "text",
@@ -943,10 +944,10 @@ templ BilansUspeha(tabs domain.TabData, tbl domain.TableData, searchInput domain
 			</div>
 			<!-- Table section -->
 			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative">
-				@tmpl.LoadingSpinner()
-				@tmpl.Search_Part(tbl, searchInput)
+				@components.LoadingSpinner()
+				@components.Search_Part(tbl, searchInput)
 				<div class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
-					@tmpl.Table(tbl, translator)
+					@components.Table(tbl, translator)
 				</div>
 			</div>
 		</div>
@@ -954,7 +955,7 @@ templ BilansUspeha(tabs domain.TabData, tbl domain.TableData, searchInput domain
 	<!-- Dialog display container-->
 	<div id="dialog-container"></div>
 	@tmpl.ShowMessageScript()
-	@tmpl.SpinnerScript()
+	@components.SpinnerScript()
 }
 
 // BilansUspehaForm is a separate form component for Bilans uspeha
@@ -964,7 +965,7 @@ templ BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dia
 			<!-- Title Bar -->
 			<div class="bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg sticky top-0 z-10">
 				<h2 class="text-lg font-semibold ml-4">{ translator.Title(dialog.Title) }</h2>
-				@tmpl.CloseButton(btnClose)
+				@components.CloseButton(btnClose)
 			</div>
 			<form
 				if dialog.HxRequestType == "PUT" {
@@ -987,15 +988,15 @@ templ BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dia
 					<!-- Top Row: Redni broj, Oznaka za AOP -->
 					<div class="flex items-center gap-2 mb-1">
 						<div class="flex items-center gap-1">
-							@tmpl.LabelField(domain.LabelFieldConfig{
+							@components.LabelField(domain.LabelFieldConfig{
 								ID:         "bs_redni_broj",
 								LabelText:  translator.Label("Redni broj"),
 								ClassLabel: common.ClassLabel + " w-40",
 							})
-							@tmpl.NumericInputField(domain.InputFieldConfig{
+							@components.TextInputField(domain.InputFieldConfig{
 								ID:         "bs_redni_broj",
 								Name:       "rbr",
-								FieldType:  "text",
+								FieldType:  "number",
 								Value:      fmt.Sprintf("%d", bilsData.Rbr),
 								ClassInput: common.ClassInputTextEnabled + " w-24",
 								MaxLength:  "4",
@@ -1005,15 +1006,15 @@ templ BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dia
 							})
 						</div>
 						<div class="flex items-center gap-1">
-							@tmpl.LabelField(domain.LabelFieldConfig{
+							@components.LabelField(domain.LabelFieldConfig{
 								ID:         "bs_oznaka_aop",
 								LabelText:  translator.Label("Oznaka za AOP"),
 								ClassLabel: common.ClassLabel + " w-28",
 							})
-							@tmpl.NumericInputField(domain.InputFieldConfig{
+							@components.TextInputField(domain.InputFieldConfig{
 								ID:         "bs_oznaka_aop",
 								Name:       "aop",
-								FieldType:  "text",
+								FieldType:  "number",
 								Value:      fmt.Sprintf("%d", bilsData.AOP),
 								ClassInput: common.ClassInputTextEnabled + " w-24",
 								MaxLength:  "4",
@@ -1024,7 +1025,7 @@ templ BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dia
 						</div>
 						<!-- Nivo podataka checkbox -->
 						<div class="flex items-center gap-1">
-							@tmpl.CheckboxField(domain.CheckboxFieldConfig{
+							@components.CheckboxField(domain.CheckboxFieldConfig{
 								ID:        "bs_skraceni",
 								Name:      "skraceni",
 								LabelText: "AOP skracenog bilansa",
@@ -1035,12 +1036,12 @@ templ BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dia
 					</div>
 					<!-- Second Row: Grupa računa -->
 					<div class="flex items-center gap-1 mb-1">
-						@tmpl.LabelField(domain.LabelFieldConfig{
+						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "bs_grupa_racuna",
 							LabelText:  translator.Label("Grupa računa, račun"),
 							ClassLabel: common.ClassLabel + " w-40",
 						})
-						@tmpl.TextInputField(domain.InputFieldConfig{
+						@components.TextInputField(domain.InputFieldConfig{
 							ID:         "bs_grupa_racuna",
 							Name:       "grac",
 							FieldType:  "text",
@@ -1052,12 +1053,12 @@ templ BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dia
 					</div>
 					<!-- Third Row: Naziv pozicije -->
 					<div class="flex items-center gap-1 mb-1">
-						@tmpl.LabelField(domain.LabelFieldConfig{
+						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "bs_naziv_pozicije",
 							LabelText:  translator.Label("Naziv pozicije"),
 							ClassLabel: common.ClassLabel + " w-40",
 						})
-						@tmpl.TextInputField(domain.InputFieldConfig{
+						@components.TextInputField(domain.InputFieldConfig{
 							ID:         "bs_naziv_pozicije",
 							Name:       "nazp",
 							FieldType:  "text",
@@ -1071,12 +1072,12 @@ templ BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dia
 					</div>
 					<!-- Fourth Row: Spisak konta -->
 					<div class="flex items-center gap-1 mb-1">
-						@tmpl.LabelField(domain.LabelFieldConfig{
+						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "bs_spisak_konta",
 							LabelText:  translator.Label("Spisak konta"),
 							ClassLabel: common.ClassLabel + " w-40",
 						})
-						@tmpl.TextInputField(domain.InputFieldConfig{
+						@components.TextInputField(domain.InputFieldConfig{
 							ID:         "bs_spisak_konta",
 							Name:       "konta",
 							FieldType:  "text",
@@ -1091,59 +1092,59 @@ templ BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dia
 					<!-- Input fields row 1 - Pozicije controls -->
 					<div class="flex gap-1 mb-1">
 						<div class="flex gap-1">
-							@tmpl.LabelField(domain.LabelFieldConfig{
+							@components.LabelField(domain.LabelFieldConfig{
 								ID:         "bs_spisak_konta",
 								LabelText:  translator.Label("Pozicije"),
 								ClassLabel: common.ClassLabel + " w-40",
 							})
-							@tmpl.NumericInputField(domain.InputFieldConfig{
+							@components.TextInputField(domain.InputFieldConfig{
 								ID:         "bs_input_01",
 								Name:       "pozic_1",
-								FieldType:  "text",
+								FieldType:  "number",
 								Value:      fmt.Sprintf("%04d", bilsData.Pozic1),
 								ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
 								MaxLength:  "4",
 								TabIndex:   "7",
 							})
-							@tmpl.NumericInputField(domain.InputFieldConfig{
+							@components.TextInputField(domain.InputFieldConfig{
 								ID:         "bs_input_02",
 								Name:       "pozic_2",
-								FieldType:  "text",
+								FieldType:  "number",
 								Value:      fmt.Sprintf("%04d", bilsData.Pozic2),
 								ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
 								MaxLength:  "4",
 								TabIndex:   "8",
 							})
-							@tmpl.NumericInputField(domain.InputFieldConfig{
+							@components.TextInputField(domain.InputFieldConfig{
 								ID:         "bs_input_03",
 								Name:       "pozic_3",
-								FieldType:  "text",
+								FieldType:  "number",
 								Value:      fmt.Sprintf("%04d", bilsData.Pozic3),
 								ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
 								MaxLength:  "4",
 							})
-							@tmpl.NumericInputField(domain.InputFieldConfig{
+							@components.TextInputField(domain.InputFieldConfig{
 								ID:         "bs_input_04",
 								Name:       "pozic_4",
-								FieldType:  "text",
+								FieldType:  "number",
 								Value:      fmt.Sprintf("%04d", bilsData.Pozic4),
 								ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
 								MaxLength:  "4",
 								TabIndex:   "10",
 							})
-							@tmpl.NumericInputField(domain.InputFieldConfig{
+							@components.TextInputField(domain.InputFieldConfig{
 								ID:         "bs_input_05",
 								Name:       "pozic_5",
-								FieldType:  "text",
+								FieldType:  "number",
 								Value:      fmt.Sprintf("%04d", bilsData.Pozic5),
 								ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
 								MaxLength:  "4",
 								TabIndex:   "11",
 							})
-							@tmpl.NumericInputField(domain.InputFieldConfig{
+							@components.TextInputField(domain.InputFieldConfig{
 								ID:         "bs_input_06",
 								Name:       "pozic_6",
-								FieldType:  "text",
+								FieldType:  "number",
 								Value:      fmt.Sprintf("%04d", bilsData.Pozic6),
 								ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
 								MaxLength:  "4",
@@ -1154,60 +1155,60 @@ templ BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dia
 					<!-- Input fields row 2 - Additional Pozicije controls -->
 					<div class="flex gap-1 mb-1">
 						<div class="flex gap-1">
-							@tmpl.LabelField(domain.LabelFieldConfig{
+							@components.LabelField(domain.LabelFieldConfig{
 								ID:         "bs_pozicije",
 								LabelText:  "",
 								ClassLabel: common.ClassLabel + " w-40",
 							})
-							@tmpl.NumericInputField(domain.InputFieldConfig{
+							@components.TextInputField(domain.InputFieldConfig{
 								ID:         "bs_input_07",
 								Name:       "pozic_7",
-								FieldType:  "text",
+								FieldType:  "number",
 								Value:      fmt.Sprintf("%04d", bilsData.Pozic7),
 								ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
 								MaxLength:  "4",
 								TabIndex:   "13",
 							})
-							@tmpl.NumericInputField(domain.InputFieldConfig{
+							@components.TextInputField(domain.InputFieldConfig{
 								ID:         "bs_input_08",
 								Name:       "pozic_8",
-								FieldType:  "text",
+								FieldType:  "number",
 								Value:      fmt.Sprintf("%04d", bilsData.Pozic8),
 								ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
 								MaxLength:  "4",
 								TabIndex:   "14",
 							})
-							@tmpl.NumericInputField(domain.InputFieldConfig{
+							@components.TextInputField(domain.InputFieldConfig{
 								ID:         "bs_input_09",
 								Name:       "pozic_9",
-								FieldType:  "text",
+								FieldType:  "number",
 								Value:      fmt.Sprintf("%04d", bilsData.Pozic9),
 								ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
 								MaxLength:  "4",
 								TabIndex:   "15",
 							})
-							@tmpl.NumericInputField(domain.InputFieldConfig{
+							@components.TextInputField(domain.InputFieldConfig{
 								ID:         "bs_input_10",
 								Name:       "pozic_10",
-								FieldType:  "text",
+								FieldType:  "number",
 								Value:      fmt.Sprintf("%04d", bilsData.Pozic10),
 								ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
 								MaxLength:  "4",
 								TabIndex:   "16",
 							})
-							@tmpl.NumericInputField(domain.InputFieldConfig{
+							@components.TextInputField(domain.InputFieldConfig{
 								ID:         "bs_input_11",
 								Name:       "pozic_11",
-								FieldType:  "text",
+								FieldType:  "number",
 								Value:      fmt.Sprintf("%04d", bilsData.Pozic11),
 								ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
 								MaxLength:  "4",
 								TabIndex:   "17",
 							})
-							@tmpl.NumericInputField(domain.InputFieldConfig{
+							@components.TextInputField(domain.InputFieldConfig{
 								ID:         "bs_input_12",
 								Name:       "pozic_12",
-								FieldType:  "text",
+								FieldType:  "number",
 								Value:      fmt.Sprintf("%04d", bilsData.Pozic12),
 								ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
 								MaxLength:  "4",
@@ -1217,15 +1218,15 @@ templ BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dia
 					</div>
 					<!-- Nivo podataka checkbox -->
 					<div class="flex items-center gap-1 mb-1">
-						@tmpl.LabelField(domain.LabelFieldConfig{
+						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "bs_nivo_podataka",
 							LabelText:  translator.Label("Nivo podataka"),
 							ClassLabel: common.ClassLabel + " w-40",
 						})
-						@tmpl.NumericInputField(domain.InputFieldConfig{
+						@components.TextInputField(domain.InputFieldConfig{
 							ID:         "bs_nivo_podataka",
 							Name:       "nipo",
-							FieldType:  "text",
+							FieldType:  "number",
 							Value:      fmt.Sprintf("%d", bilsData.NiPo),
 							ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
 							MaxLength:  "2",
@@ -1237,8 +1238,8 @@ templ BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dia
 				</div>
 				<!-- Buttons - Bottom Right Aligned -->
 				<div class="flex gap-1 justify-end">
-					@tmpl.SaveButton(btnSave, translator)
-					@tmpl.CancelButton(btnCancel, translator)
+					@components.SaveButton(btnSave, translator)
+					@components.CancelButton(btnCancel, translator)
 				</div>
 			</form>
 			<!-- Message Display Area at Bottom -->
@@ -1260,8 +1261,8 @@ templ StampanjeBilansaUspeha(tabs domain.TabData, tbl domain.TableData, btnObrad
 		<div id="tab5" class="flex-1 min-h-0 flex flex-col gap-1">
 			<!-- Control Section -->
 			<div class="border bg-blue-100 border-blue-400 mt-1 p-2 rounded-lg">
-				<div class="flex items-center gap-2">
-					@tmpl.CheckboxField(domain.CheckboxFieldConfig{
+				<div class="flex items-center gap-4">
+					@components.CheckboxField(domain.CheckboxFieldConfig{
 						ID:        "skraceni",
 						Name:      "skraceni",
 						Value:     "false",
@@ -1269,7 +1270,7 @@ templ StampanjeBilansaUspeha(tabs domain.TabData, tbl domain.TableData, btnObrad
 						Checked:   false,
 						TabIndex:  "1",
 					}, translator)
-					@tmpl.CheckboxField(domain.CheckboxFieldConfig{
+					@components.CheckboxField(domain.CheckboxFieldConfig{
 						ID:        "pocstanjepg",
 						Name:      "pocstanjepg",
 						Value:     "false",
@@ -1277,12 +1278,12 @@ templ StampanjeBilansaUspeha(tabs domain.TabData, tbl domain.TableData, btnObrad
 						Checked:   false,
 						TabIndex:  "2",
 					}, translator)
-					@tmpl.LabelField(domain.LabelFieldConfig{
+					@components.LabelField(domain.LabelFieldConfig{
 						ID:         "oddatuma",
 						LabelText:  translator.Label("Od datuma"),
 						ClassLabel: common.ClassLabel,
 					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
+					@components.TextInputField(domain.InputFieldConfig{
 						ID:         "oddatuma",
 						Name:       "oddatuma",
 						FieldType:  "date",
@@ -1290,12 +1291,12 @@ templ StampanjeBilansaUspeha(tabs domain.TabData, tbl domain.TableData, btnObrad
 						ClassInput: common.ClassInputTextEnabled + " w-32",
 						TabIndex:   "3",
 					})
-					@tmpl.LabelField(domain.LabelFieldConfig{
+					@components.LabelField(domain.LabelFieldConfig{
 						ID:         "dodatuma",
 						LabelText:  translator.Label("Do datuma"),
 						ClassLabel: common.ClassLabel,
 					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
+					@components.TextInputField(domain.InputFieldConfig{
 						ID:         "dodatuma",
 						Name:       "dodatuma",
 						FieldType:  "date",
@@ -1305,17 +1306,17 @@ templ StampanjeBilansaUspeha(tabs domain.TabData, tbl domain.TableData, btnObrad
 					})
 					<div class="flex-1"></div>
 					<div class="flex items-center gap-1">
-						@tmpl.FormObradaButton(btnObrada, translator)
-						@tmpl.Search_PartPrintButton(btnPrint)
-						@tmpl.Button(btnExportXML)
+						@components.FormObradaButton(btnObrada, translator)
+						@components.Search_PartPrintButton(btnPrint)
+						@components.Button(btnExportXML)
 					</div>
 				</div>
 			</div>
 			<!-- Data Table -->
 			<div class="border bg-blue-100 border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
 				<div id="bilu-print-area" class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
-					@tmpl.LoadingSpinner()
-					@tmpl.Table(tbl, translator)
+					@components.LoadingSpinner()
+					@components.Table(tbl, translator)
 				</div>
 			</div>
 		</div>
@@ -1323,6 +1324,5 @@ templ StampanjeBilansaUspeha(tabs domain.TabData, tbl domain.TableData, btnObrad
 	<!-- Dialog display container-->
 	<div id="dialog-content"></div>
 	@tmpl.ShowMessageScript()
-	@tmpl.SpinnerScript()
+	@components.SpinnerScript()
 }
-

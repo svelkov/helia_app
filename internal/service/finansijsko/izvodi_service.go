@@ -2,6 +2,8 @@ package finansijsko
 
 import (
 	"context"
+	"database/sql"
+	"encoding/xml"
 	"fmt"
 	"helia/config"
 	"helia/internal/common"
@@ -19,8 +21,8 @@ type IzvodiService interface {
 	GetDetailTableFields() []domain.Fields
 	GetIzvodiHeader(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.IzvodiParams) error
 	GetIzvodiDetail(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.IzvodiParams) error
-	ImportIzvod(ctx context.Context, fileData []string, software string) error
-	AzurirajKonta(ctx context.Context, izvodID string) error
+	ImportIzvod(ctx context.Context, fileData string, software string, prekoJMBG bool) error
+	AzuriranjeKonta(ctx context.Context, fizvhdrID int64, povezivanjeJMBG bool, azurirajKonta bool) error
 	BrisiIzvod(ctx context.Context, izvodID string) error
 	ProveriRaznotezu(ctx context.Context, izvodID string) error
 	KnjiziIzvod(ctx context.Context, izvodID string, nalogParams map[string]interface{}) error
@@ -38,20 +40,30 @@ type IzvodiResource struct {
 	bankeRepo               *repository.BaseRepository[domain.Banke]
 	tipdokRepo              *repository.BaseRepository[domain.Tipdok]
 	fnalRepo                *repository.BaseRepository[domain.Fnal]
+	partneriRepo            *repository.BaseRepository[domain.Partneri]
+	tekracuniRepo           *repository.BaseRepository[domain.TekRacuni]
+	sifplizvRepo            *repository.BaseRepository[domain.Sifplizv]
+	fkplRepo                *repository.BaseRepository[domain.Fkpl]
+	fvrRepo                 *repository.BaseRepository[domain.Fvr]
 	cfg                     config.Config
 	izvodiHeaderTableFields []domain.Fields
 	izvodiDetailTableFields []domain.Fields
 }
 
 func NewIzvodiResource(izvhdrRepo *repository.BaseRepository[domain.Fizvzag], izvdetRepo *repository.BaseRepository[domain.Fizvdet],
-	bankeRepo *repository.BaseRepository[domain.Banke], tipdokRepo *repository.BaseRepository[domain.Tipdok], fnalRepo *repository.BaseRepository[domain.Fnal], cfg config.Config) *IzvodiResource {
+	bankeRepo *repository.BaseRepository[domain.Banke], tipdokRepo *repository.BaseRepository[domain.Tipdok], fnalRepo *repository.BaseRepository[domain.Fnal], partneriRepo *repository.BaseRepository[domain.Partneri], tekracuniRepo *repository.BaseRepository[domain.TekRacuni], sifplizvRepo *repository.BaseRepository[domain.Sifplizv], fkplRepo *repository.BaseRepository[domain.Fkpl], fvrRepo *repository.BaseRepository[domain.Fvr], cfg config.Config) *IzvodiResource {
 	rs := &IzvodiResource{
-		izvhdrRepo: izvhdrRepo,
-		izvdetRepo: izvdetRepo,
-		bankeRepo:  bankeRepo,
-		tipdokRepo: tipdokRepo,
-		fnalRepo:   fnalRepo,
-		cfg:        cfg,
+		izvhdrRepo:    izvhdrRepo,
+		izvdetRepo:    izvdetRepo,
+		bankeRepo:     bankeRepo,
+		tipdokRepo:    tipdokRepo,
+		fnalRepo:      fnalRepo,
+		partneriRepo:  partneriRepo,
+		tekracuniRepo: tekracuniRepo,
+		sifplizvRepo:  sifplizvRepo,
+		fkplRepo:      fkplRepo,
+		fvrRepo:       fvrRepo,
+		cfg:           cfg,
 	}
 	rs.SetIzvodiFields()
 	return rs
@@ -74,7 +86,8 @@ func (s *IzvodiResource) GetIzvodiHeader(ctx context.Context, tbl *domain.TableD
 			i.idfizvzag, i.god, i.kar, i.brrac,
 			i.izvbr, i.datizv, i.konto, i.sifra, i.prstanje,
 			i.ukdug, i.ukpot, i.nstanje, i.ukbrst,
-			i.nalog, i.tipdok, i.izvsts, i.idbanke, coalesce(b.banka,'') as banka, coalesce(b.brrac,'') as brrac,
+			i.nalog, coalesce(i.tipdok,'') as tipdok, i.izvsts, 
+			i.idbanke, coalesce(b.banka,'') as banka, coalesce(b.brrac,'') as brrac,
 			i.konto, i.sifra
 		FROM fizvzag i`, true)
 
@@ -157,7 +170,7 @@ func (s *IzvodiResource) GetIzvodiHeader(ctx context.Context, tbl *domain.TableD
 				entity.Izvsts,
 				fmt.Sprintf("%d", entity.IDFizvzag),
 			}
-			tblRow := domain.TableRow{ID: fmt.Sprintf("%d", entity.IDFizvzag), Fields: fields, HasUpdate: false, HasDelete: false}
+			tblRow := domain.TableRow{ID: fmt.Sprintf("%d", entity.IDFizvzag), Fields: fields, HasUpdate: false, HasDelete: true}
 			tbl.Rows = append(tbl.Rows, tblRow)
 		}
 	}
@@ -175,10 +188,10 @@ func (s *IzvodiResource) GetIzvodiDetail(ctx context.Context, tbl *domain.TableD
 	qb := common.NewQueryBuilder(`
 		SELECT 
 			d.idfizvdet, d.rbr, d.konto, d.sifra, d.kat,
-			d.vrd, d.konto1, d.sifra1, d.iznos, d.duguje,
+			d.vrd, coalesce(d.konto1, '') as konto1, coalesce(d.sifra1, '') as sifra1, d.iznos, d.duguje,
 			d.potrazuje, d.nsedprim, d.brracup, d.osnplac,
-			d.sdozn, d.sdozn1, d.modelzad, d.pnabrzad,
-			d.mododob, d.pnabrodob, d.prekl
+			coalesce(d.sdozn, '') as sdozn, coalesce(d.sdozn1, '') as sdozn1, coalesce(d.modelzad, '') as modelzad, coalesce(d.pnabrzad, '') as pnabrzad,
+			coalesce(d.mododob, '') as mododob, coalesce(d.pnabrodob, '') as pnabrodob, coalesce(d.prekl, '') as prekl
 		FROM fizvdet d`, true)
 
 	qb.AddEqual("d.idfizvzag", params.IDfizvzag)
@@ -262,7 +275,7 @@ func (s *IzvodiResource) GetBanke(ctx context.Context) ([]domain.ComboItem, erro
 	var comboItems []domain.ComboItem
 	for _, banka := range *banke {
 		comboItems = append(comboItems, domain.ComboItem{
-			Key:   fmt.Sprintf("%d", banka.IDBanKe),
+			Key:   fmt.Sprintf("%d", banka.IDBanke),
 			Value: fmt.Sprintf("%s - %s", banka.BnkCod, banka.Banka),
 		})
 	}
@@ -320,35 +333,305 @@ func (s *IzvodiResource) GetNextNalog(ctx context.Context, tipdok string) (int64
 
 }
 
-func (s *IzvodiResource) ImportIzvod(ctx context.Context, fileData []string, software string) error {
+func (s *IzvodiResource) ImportIzvod(ctx context.Context, fileData string, software string, prekoJMBG bool) error {
 	//var izvodiData any
 	switch software {
 	case "halcom":
 		// Call the import function for Halcom software
-		err := s.ImportDATAHALCOM(ctx, fileData)
+		err := s.ImportDATAHALCOM(ctx, fileData, prekoJMBG)
 		if err != nil {
 			return fmt.Errorf("failed to import Halcom data: %w", err)
 		}
+	case "trezor":
+		// Call the import function for Trezor software
+		err := s.ImportDATATREZOR(ctx, fileData, prekoJMBG)
+		if err != nil {
+			return fmt.Errorf("failed to import Trezor data: %w", err)
+		}
+	case "otp", "societe":
+		// Call the import function for OTP or Societe software
+		err := s.ImportDATAOTP(ctx, fileData, prekoJMBG)
+		if err != nil {
+			return fmt.Errorf("failed to import OTP or Societe data: %w", err)
+		}
+	default:
+		return fmt.Errorf("unsupported software: %s", software)
 	}
 
-	return fmt.Errorf("unsupported software: %s", software)
+	return nil
 }
 
-func (s *IzvodiResource) ImportDATAHALCOM(ctx context.Context, fileData []string) error {
+func (s *IzvodiResource) AzuriranjeKonta(ctx context.Context, fizvhdrID int64, povezivanjeJMBG bool, azurirajKonta bool) error {
+
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		return fmt.Errorf("user session not found")
+	}
+	qb := common.NewQueryBuilder(`SELECT idfizvdet, rbr, konto, sifra, kat, vrd, iznos, duguje, potrazuje FROM fizvdet `, true)
+	qb.AddEqual("idfizvzag", fizvhdrID)
+	sqlQuery, args := qb.Build()
+	entities, err := s.izvdetRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	if err != nil {
+		return fmt.Errorf("failed to get Fizvdet entities: %w", err)
+	}
+
+	qbOsnPlacanja := common.NewQueryBuilder(`SELECT sifplac, konto, sifra FROM sifplizv `, true)
+	tekRacuni := common.NewQueryBuilder(`SELECT idpartneri, brrac FROM tekracuni `, true)
+	hasGod, hasKar := s.tekracuniRepo.GetHasGodHasKar()
+	if hasGod {
+		tekRacuni.AddEqual("god", userSession.SelectedGod)
+	}
+	if hasKar {
+		tekRacuni.AddEqual("kar", userSession.SelectedKar)
+	}
+	qbPartneri := common.NewQueryBuilder(`SELECT idpartneri, god, kar, jmbg FROM partneri `, true)
+	hasGod, hasKar = s.partneriRepo.GetHasGodHasKar()
+	if hasGod {
+		qbPartneri.AddEqual("god", userSession.SelectedGod)
+	}
+	if hasKar {
+		qbPartneri.AddEqual("kar", userSession.SelectedKar)
+	}
+	qbFkpl := common.NewQueryBuilder(`SELECT idfkpl, god, kar, vrd, konto, sifra, idpartneri FROM fkpl `, true)
+	hasGod, hasKar = s.fkplRepo.GetHasGodHasKar()
+	if hasGod {
+		qbFkpl.AddEqual("god", userSession.SelectedGod)
+	}
+	if hasKar {
+		qbFkpl.AddEqual("kar", userSession.SelectedKar)
+	}
+	for _, fizvdet := range *entities {
+		// Step 1: Look up SIFPLIZV by OSNPLAC
+		qbOsnPlacanja.AddEqual("sifplac", fizvdet.Osnplac)
+		qryOsnPlacanja, argsOsnPlacanja := qbOsnPlacanja.Build()
+		sifplEntites, err := s.sifplizvRepo.GetAllCustom(ctx, qryOsnPlacanja, "", argsOsnPlacanja, "", "")
+		if err == nil && sifplEntites != nil && len(*sifplEntites) > 0 {
+			sifplizv := (*sifplEntites)[0]
+			// Update KONTO and SIFRA based on checkbox condition
+			if azurirajKonta {
+				fizvdet.Konto = sifplizv.Konto
+				fizvdet.Sifra = sifplizv.Sifra
+			} else {
+				if fizvdet.Konto == "" {
+					fizvdet.Konto = sifplizv.Konto
+				}
+				if fizvdet.Sifra == "" {
+					fizvdet.Sifra = sifplizv.Sifra
+				}
+			}
+		}
+
+		// Step 2: Determine partner ID based on JMBG or account number
+		var nIDPARTNERI int64 = 0
+
+		if povezivanjeJMBG {
+			// Extract JMBG from PNABRODOB field
+			pnabrodob := strings.TrimSpace(fizvdet.Pnabrodob)
+			var sJMBG string
+
+			if len(pnabrodob) <= 13 {
+				sJMBG = pnabrodob
+			} else {
+				// Split by "-" and take first part as JMBG
+				parts := strings.Split(pnabrodob, "-")
+				if len(parts) >= 1 {
+					sJMBG = strings.TrimSpace(parts[0])
+				}
+				// Note: parts[1] would be sCode (payment code 01 or 02)
+			}
+
+			// Look up partner by JMBG
+			if sJMBG != "" {
+				qbPartneri.AddEqual("jmbg", sJMBG)
+				qryPartneri, argsPartneri := qbPartneri.Build()
+				partneri, err := s.partneriRepo.GetAllCustom(ctx, qryPartneri, "", argsPartneri, "", "")
+				if err == nil && partneri != nil && len(*partneri) > 0 {
+					nIDPARTNERI = int64((*partneri)[0].IDPartneri)
+				}
+			}
+		} else {
+			// Look up by account number from TEKRACUNI
+			if fizvdet.Brracup != "" {
+				tekRacuni.AddEqual("brrac", fizvdet.Brracup)
+				qryTekRacuni, argsTekRacuni := tekRacuni.Build()
+				tekracuni, err := s.tekracuniRepo.GetAllCustom(ctx, qryTekRacuni, "", argsTekRacuni, "", "")
+				if err == nil && tekracuni != nil && len(*tekracuni) > 0 {
+					nIDPARTNERI = int64((*tekracuni)[0].IDPartneri)
+				}
+			}
+		}
+
+		// Step 3: Update FKPL based on DUGUJE (debit) amount
+		if nIDPARTNERI > 0 && fizvdet.Duguje != 0 {
+			qbFkpl.AddEqual("konto", s.cfg.Konta.KontoDobavljaca)
+			fkplQuery, fkplArgs := qbFkpl.Build()
+			fkplEntities, err := s.fkplRepo.GetAllCustom(ctx, fkplQuery, "", fkplArgs, "", "")
+			if err == nil && fkplEntities != nil && len(*fkplEntities) > 0 {
+				fkpl := (*fkplEntities)[0]
+				if azurirajKonta {
+					fizvdet.Konto = fkpl.Konto
+					fizvdet.Sifra = fkpl.Sifra
+				} else {
+					if fizvdet.Konto == "" {
+						fizvdet.Konto = fkpl.Konto
+					}
+					if fizvdet.Sifra == "" {
+						fizvdet.Sifra = fkpl.Sifra
+					}
+				}
+				fizvdet.Vrd = 40
+				fizvdet.Kat = 1
+			}
+		}
+
+		// Step 4: Update FKPL based on POTRAZUJE (credit) amount
+		if nIDPARTNERI > 0 && fizvdet.Potrazuje != 0 {
+			qbFkpl.AddEqual("konto", s.cfg.Konta.KontoKupca)
+			fkplQuery, fkplArgs := qbFkpl.Build()
+			fkplEntities, err := s.fkplRepo.GetAllCustom(ctx, fkplQuery, "", fkplArgs, "", "")
+			if err == nil && fkplEntities != nil && len(*fkplEntities) > 0 {
+				fkpl := (*fkplEntities)[0]
+				if azurirajKonta {
+					fizvdet.Konto = fkpl.Konto
+					fizvdet.Sifra = fkpl.Sifra
+				} else {
+					if fizvdet.Konto == "" {
+						fizvdet.Konto = fkpl.Konto
+					}
+					if fizvdet.Sifra == "" {
+						fizvdet.Sifra = fkpl.Sifra
+					}
+				}
+				fizvdet.Vrd = 30
+				fizvdet.Kat = 3
+			}
+		}
+		// At the end of loop update fizvdet record in the database
+		qbUpdate := common.NewQueryBuilder(`UPDATE fizvdet SET konto = $1, sifra = $2, kat = $3, vrd = $4 `, true)
+		qbUpdate.AddArgs(fizvdet.Konto, fizvdet.Sifra, fizvdet.Kat, fizvdet.Vrd)
+		qbUpdate.AddEqual("idfizvdet", fizvdet.IDFizvdet)
+		sqlUpdate, argsUpdate := qbUpdate.Build()
+		tx, err := s.izvdetRepo.BeginTx()
+		if err != nil {
+			return fmt.Errorf("failed to begin transaction: %w", err)
+		}
+		_, err = tx.ExecContext(ctx, sqlUpdate, argsUpdate...)
+		if err != nil {
+			tx.Rollback()
+			return fmt.Errorf("failed to update Fizvdet: %w", err)
+		}
+		err = tx.Commit()
+		if err != nil {
+			return fmt.Errorf("failed to commit transaction: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// UpisIzvoda inserts the header and detail records into the database.
+func (s *IzvodiResource) UpisIzvoda(ctx context.Context, izvHdr *domain.Fizvzag, izvDet []domain.Fizvdet) error {
+	//check ig the izvod exist and is already booked, if so return error
+	hasGod, hasKar := s.izvhdrRepo.GetHasGodHasKar()
+	qb := common.NewQueryBuilder(`SELECT idfizvzag, izvsts FROM fizvzag `, true)
+	if hasGod {
+		qb.AddEqual("god", izvHdr.God)
+	}
+	if hasKar {
+		qb.AddEqual("kar", izvHdr.Kar)
+	}
+	qb.AddEqual("brrac", izvHdr.Brrac)
+	qb.AddEqual("izvbr", izvHdr.Izvbr)
+	sqlQuery, args := qb.Build()
+	entities, err := s.izvhdrRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	IdFizvzag := int64(0)
+	if err != nil {
+		return fmt.Errorf("failed to get Fizvzag entities: %w", err)
+	}
+	if len(*entities) > 0 {
+		IdFizvzag = (*entities)[0].IDFizvzag
+		if (*entities)[0].Izvsts == "40" {
+			return fmt.Errorf("izvod sa brojem %d vec postoji i proknjizen je", izvHdr.Izvbr)
+		}
+	}
+
+	tx, err := s.izvhdrRepo.BeginTx()
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	// Izvod postoji uradi update, inace insert
+	if IdFizvzag > 0 {
+		qbUpdate := common.NewQueryBuilder(`UPDATE fizvzag SET 
+		datizv = $1, konto = $2, sifra = $3, prstanje = $4, ukdug = $5, 
+		ukpot = $6, nstanje = $7, ukbrst = $8, nalog = $9, tipdok = $10, izvsts = $11,
+		 idbanke = $12, xdatizmene = NOW(), xopizmene = $13 WHERE idfizvzag = $14`, false)
+		sqlUpdate, argsUpdate := qbUpdate.Build()
+		argsUpdate = append(argsUpdate, izvHdr.Datizv, izvHdr.Konto, izvHdr.Sifra,
+			izvHdr.Prstanje, izvHdr.Ukdug, izvHdr.Ukpot, izvHdr.Nstanje,
+			izvHdr.Ukbrst, izvHdr.Nalog, izvHdr.Tipdok, izvHdr.Izvsts, izvHdr.IDbanke, izvHdr.Xopunos, IdFizvzag)
+		_, err = tx.ExecContext(ctx, sqlUpdate, argsUpdate...)
+		if err != nil {
+			tx.Rollback()
+			return fmt.Errorf("failed to update Fizvzag: %w", err)
+		}
+	} else {
+		qbInsert := common.NewQueryBuilder(`INSERT INTO fizvzag (god, kar, brrac, izvbr, datizv, konto, sifra, 
+		prstanje, ukdug, ukpot, nstanje, ukbrst, nalog, tipdok, izvsts, idbanke, xdatunosa, xopunos) 
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18) RETURNING idfizvzag`, false)
+		sqlInsert, argsInsert := qbInsert.Build()
+		argsInsert = append(argsInsert, izvHdr.God, izvHdr.Kar, izvHdr.Brrac, izvHdr.Izvbr,
+			izvHdr.Datizv, izvHdr.Konto, izvHdr.Sifra, izvHdr.Prstanje, izvHdr.Ukdug,
+			izvHdr.Ukpot, izvHdr.Nstanje, izvHdr.Ukbrst, izvHdr.Nalog,
+			izvHdr.Tipdok, izvHdr.Izvsts, izvHdr.IDbanke, izvHdr.Xdatunosa, izvHdr.Xopunos)
+		err := tx.QueryRowContext(ctx, sqlInsert, argsInsert...).Scan(&IdFizvzag)
+		if err != nil {
+			tx.Rollback()
+			return fmt.Errorf("failed to insert Fizvzag: %w", err)
+		}
+	}
+	// Delete existing detail records for the header before inserting new ones
+	sqlDelete := `DELETE FROM fizvdet WHERE idfizvzag = $1`
+	_, err = tx.ExecContext(ctx, sqlDelete, IdFizvzag)
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("failed to delete existing detail records: %w", err)
+	}
+	sqlQuery, args = s.createBulkInsertDetailQuery(ctx, izvDet, IdFizvzag)
+	_, err = tx.ExecContext(ctx, sqlQuery, args...)
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("failed to insert detail records: %w", err)
+	}
+	err = tx.Commit()
+	if err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+	return nil
+}
+
+// ImportDATATREZOR imports bank statement data from Trezor software.
+func (s *IzvodiResource) ImportDATATREZOR(ctx context.Context, fileData string, prekoJMBG bool) error {
+	izvodTrezor := domain.TrezorDokument{}
+	err := xml.Unmarshal([]byte(fileData), &izvodTrezor)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal Trezor data: %w", err)
+	}
+	izvodHdr, izvodDet, err := s.MapTrezorToDomain(ctx, izvodTrezor, prekoJMBG)
+	if err != nil {
+		return fmt.Errorf("failed to map Trezor data to domain: %w", err)
+	}
+	return s.UpisIzvoda(ctx, izvodHdr, izvodDet)
+}
+
+// ImportDATAHALCOM imports bank statement data from Halcom software.
+func (s *IzvodiResource) ImportDATAHALCOM(ctx context.Context, fileData string, prekoJMBG bool) error {
 	izvodHalcom := []domain.IzvodHalcom{}
 	usrSession := domain.GetSessionFromStdContext(ctx)
 	if usrSession == nil {
 		return fmt.Errorf("user session not found")
 	}
-	god, kar := 0, 0
-	hasGod, hasKar := s.izvhdrRepo.GetHasGodHasKar()
-	if hasGod {
-		god = usrSession.SelectedGod
-	}
-	if hasKar {
-		kar = usrSession.SelectedKar
-	}
-	for i, line := range fileData {
+	fileLines := strings.Split(fileData, "\n")
+	for i, line := range fileLines {
 		// Skip the header line if present
 		if i == 0 {
 			continue
@@ -361,54 +644,359 @@ func (s *IzvodiResource) ImportDATAHALCOM(ctx context.Context, fileData []string
 		}
 		izvodHalcom = append(izvodHalcom, *izvod)
 	}
-	// create header and detail of izvodi
-	tx, err := s.izvhdrRepo.BeginTx()
-	if err != nil {
-		return fmt.Errorf("failed to begin transaction: %w", err)
+	if len(izvodHalcom) == 0 {
+		return fmt.Errorf("no valid records found in the file")
 	}
-	// Defer handles both panic and normal errors
-	defer func() {
-		if r := recover(); r != nil {
-			_ = tx.Rollback()
-			// Convert panic to error or re-panic
-			err = fmt.Errorf("panic recovered: %v", r)
-			// Or re-panic if you want to crash:
-			// panic(r)
-		} else if err != nil {
-			_ = tx.Rollback()
-		} else {
-			err = tx.Commit()
-		}
-	}()
+	izvHdr, izvDet, err := s.MapHalcomToDomain(ctx, izvodHalcom, prekoJMBG)
+	if err != nil {
+		return fmt.Errorf("failed to map Halcom data to domain: %w", err)
+	}
+	return s.UpisIzvoda(ctx, izvHdr, izvDet)
+}
 
-	for _, izvod := range izvodHalcom {
-		var newIdfizvzag int64
-		izvodHdrID, err := s.getIzvodHeader(ctx, god, kar, izvod.BrRacuna, izvod.BrIzvoda, izvod.DatumObrada)
-		if err != nil {
-			return fmt.Errorf("failed to get izvod header: %w", err)
+// ImportDATAOTP imports bank statement data from OTP or Societe software.
+func (s *IzvodiResource) ImportDATAOTP(ctx context.Context, fileData string, prekoJMBG bool) error {
+	izvod := domain.StmtRsList{}
+	err := xml.Unmarshal([]byte(fileData), &izvod)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal OTP data: %w", err)
+	}
+	izvHdr, izvDet, err := s.MapIntesaToDomain(ctx, izvod, prekoJMBG)
+	if err != nil {
+		return fmt.Errorf("failed to map OTP ili Societe data to domain: %w", err)
+	}
+	return s.UpisIzvoda(ctx, izvHdr, izvDet)
+}
+
+// MapTrezorToDomain maps the Trezor data to domain.Fizvzag and domain.Fizvdet.
+func (s *IzvodiResource) MapTrezorToDomain(ctx context.Context, izvodTrezor domain.TrezorDokument, prekoJMBG bool) (*domain.Fizvzag, []domain.Fizvdet, error) {
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		return nil, nil, fmt.Errorf("user session not found")
+	}
+	// Map the TrezorDokument to domain.Fizvzag and domain.Fizvdet
+	izvodHdr := &domain.Fizvzag{
+		God:       userSession.SelectedGod,
+		Kar:       userSession.SelectedKar,
+		Brrac:     izvodTrezor.Zbirni.RacunIzvoda,
+		Izvbr:     common.StringToInt(izvodTrezor.Zbirni.BrojIzvoda),
+		Datizv:    sql.NullTime{Time: common.StringToDate(izvodTrezor.Zaglavlje.DatumIzvoda, common.DateLayout), Valid: true},
+		Prstanje:  izvodTrezor.Zbirni.PrethodniSaldo,
+		Ukdug:     izvodTrezor.Zbirni.KumulativnoDuguje,
+		Ukpot:     izvodTrezor.Zbirni.KumulativnoPotrazuje,
+		Ukbrst:    len(izvodTrezor.Stavke),
+		Konto:     "",
+		Sifra:     "",
+		Izvsts:    "1", // status 1 -importovan, status 40 - proknjizen
+		Xopunos:   sql.NullString{String: userSession.UserName, Valid: true},
+		Xdatunosa: sql.NullTime{Time: time.Now(), Valid: true},
+	}
+	// Update bank info
+	bank, err := s.getBankInfo(ctx, userSession.SelectedGod, userSession.SelectedKar, izvodTrezor.Zbirni.RacunIzvoda)
+	if err == nil && bank != nil {
+		izvodHdr.IDbanke = sql.NullInt64{Int64: int64(bank.IDBanke), Valid: true}
+		izvodHdr.Konto = bank.Konto
+		izvodHdr.Sifra = bank.Sifra
+	}
+
+	i := int64(0)
+	izvDet := []domain.Fizvdet{}
+	ukDug, ukPot := float64(0), float64(0)
+	for _, stavka := range izvodTrezor.Stavke {
+		i++
+		konto, sifra := "", ""
+		kat := int16(0)
+		dug, pot := float64(0), float64(0)
+		brRacDet := ""
+		firstChar := string([]rune(stavka.IzvorInformacije)[0])
+
+		izvodDet := domain.Fizvdet{
+			God:       userSession.SelectedGod,
+			Kar:       userSession.SelectedKar,
+			Brrac:     izvodHdr.Brrac,
+			Izvbr:     common.StringToInt(izvodTrezor.Zbirni.BrojIzvoda),
+			Datizv:    sql.NullTime{Time: common.StringToDate(izvodTrezor.Zaglavlje.DatumIzvoda, common.DateLayout), Valid: true},
+			Rbr:       i,
+			Konto:     konto,
+			Sifra:     sifra,
+			Iznos:     stavka.Iznos,
+			Kat:       kat,
+			Vrd:       90,
+			Duguje:    dug,
+			Potrazuje: pot,
+			Nsedprim:  stavka.MestoZaduzenja,
+			Brracup:   brRacDet,
+			Osnplac:   stavka.SifraPlacanja,
+			Sdozn:     "",
+			Sdozn1:    stavka.SvrhaDoznake,
+			Modelzad:  stavka.ModelPozivaZaduzenja,
+			Pnabrzad:  stavka.PozivZaduzenja,
+			Mododob:   stavka.ModelPozivaOdobrenja,
+			Pnabrodob: stavka.PozivOdobrenja,
+			Prekl:     stavka.PodatakZaReklamaciju,
 		}
-		// If the header does not exist, insert it
-		if izvodHdrID == 0 {
-			qb := common.NewQueryBuilder(`INSERT INTO fizvzag (god, kar, brrac, datizv, izvbr, valuta, prstanje, ukdug, ukpot,
-			 nstanje, ukbrst, nalog, tipdok, izvsts)
-										VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING idfizvzag`, false)
-			qb.AddArgs(god, kar, izvod.BrRacuna, izvod.DatumObrada, izvod.BrIzvoda, 0, 0, 0, 0, 0, 0, 0, "", 1)
-			sqlQuery, args := qb.Build()
-			err = tx.QueryRowContext(ctx, sqlQuery, args...).Scan(&newIdfizvzag)
-			if err != nil {
-				return fmt.Errorf("failed to insert izvod: %w", err)
+		if firstChar == "1" {
+			izvodDet.Nsedprim = stavka.NazivOdobrenja + " " + stavka.MestoOdobrenja
+			izvodDet.Duguje = stavka.Iznos
+			izvodDet.Brracup = stavka.RacunOdobrenja
+			izvodDet.Potrazuje = 0
+			izvodDet.Kat = 1
+			ukDug += stavka.Iznos
+		} else {
+			izvodDet.Nsedprim = stavka.NazivZaduzenja + " " + stavka.MestoZaduzenja
+			izvodDet.Duguje = 0
+			izvodDet.Potrazuje = stavka.Iznos
+			izvodDet.Kat = 3
+			izvodDet.Brracup = stavka.RacunZaduzenja
+			ukPot += stavka.Iznos
+		}
+		//get konto and sifra from tekracuni table based on brRacDet
+		konto, sifra, err := s.getSifplIzvodiInfo(ctx, common.StringToInt(stavka.SifraPlacanja))
+		if err != nil {
+			log.Printf("failed to get konto and sifra: %v", err)
+		}
+		if konto != "" {
+			izvodDet.Konto = konto
+		}
+		if sifra != "" {
+			izvodDet.Sifra = sifra
+		}
+		partnerID := s.getPartneriID(ctx, prekoJMBG, "", brRacDet)
+		konto, sifra = s.getPartnerKontoSifra(ctx, partnerID, izvodDet.Duguje, izvodDet.Potrazuje)
+		if konto != "" {
+			izvodDet.Konto = konto
+		}
+		if sifra != "" {
+			izvodDet.Sifra = sifra
+		}
+		izvodDet.Xopunos = sql.NullString{String: userSession.UserName, Valid: true}
+		izvodDet.Xdatunosa = sql.NullTime{Time: time.Now(), Valid: true}
+		// add the izvodDet to the list
+		izvDet = append(izvDet, izvodDet)
+	}
+	izvodHdr.Ukdug = ukDug
+	izvodHdr.Ukpot = ukPot
+	izvodHdr.Nstanje = izvodHdr.Prstanje + ukDug - ukPot
+	izvodHdr.Ukbrst = len(izvDet)
+	return izvodHdr, izvDet, nil
+}
+
+// MapHalcomToDomain maps the Halcom data to domain.Fizvzag and domain.Fizvdet.
+func (s *IzvodiResource) MapHalcomToDomain(ctx context.Context, izvodHalcom []domain.IzvodHalcom, prekoJMBG bool) (*domain.Fizvzag, []domain.Fizvdet, error) {
+	if len(izvodHalcom) == 0 {
+		return nil, nil, fmt.Errorf("no records to map")
+	}
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		return nil, nil, fmt.Errorf("user session not found")
+	}
+	izvodFirst := izvodHalcom[0]
+	// Map the HalcomData to domain.Fizvzag and domain.Fizvdet
+	izvodHdr := &domain.Fizvzag{
+		God:       userSession.SelectedGod,
+		Kar:       userSession.SelectedKar,
+		Brrac:     izvodFirst.BrRacuna,
+		Izvbr:     common.StringToInt(strings.TrimSpace(izvodFirst.BrIzvoda)),
+		Datizv:    sql.NullTime{Time: common.StringToDate(izvodFirst.DatumKnjizenja, common.HtmlLayout), Valid: true},
+		Konto:     "",
+		Sifra:     "",
+		Prstanje:  0,
+		Izvsts:    "1",
+		Xdatunosa: sql.NullTime{Time: time.Now(), Valid: true},
+		Xopunos:   sql.NullString{String: userSession.UserName, Valid: true},
+	}
+	// Update bank info
+	bank, err := s.getBankInfo(ctx, userSession.SelectedGod, userSession.SelectedKar, izvodFirst.BrRacuna)
+	if err == nil && bank != nil {
+		izvodHdr.IDbanke = sql.NullInt64{Int64: int64(bank.IDBanke), Valid: true}
+		izvodHdr.Konto = bank.Konto
+		izvodHdr.Sifra = bank.Sifra
+	}
+	// Map the HalcomData to domain.Fizvdet
+	izvDet := []domain.Fizvdet{}
+	totDug, totPot := 0.0, 0.0
+	i := 0
+	for _, row := range izvodHalcom {
+		i++
+		dug, pot, iznos := 0.0, 0.0, 0.0
+		konto, sifra := "", ""
+		vrd := 90
+		kat := 0
+		if row.IznosZaduzenja > 0 {
+			dug = row.IznosZaduzenja
+			iznos = row.IznosZaduzenja
+			kat = 1
+			totDug += dug
+		}
+		if row.IznosOdobrenja > 0 {
+			pot = row.IznosOdobrenja
+			iznos = row.IznosOdobrenja
+			kat = 3
+			totPot += pot
+		}
+		konto, sifra, err := s.getSifplIzvodiInfo(ctx, common.StringToInt(row.OznakaVrstePosla))
+		if err != nil {
+			log.Printf("Error fetching sifplizv info for OznakaVrstePosla %s: %v", row.OznakaVrstePosla, err)
+		}
+		partnerID := s.getPartneriID(ctx, prekoJMBG, row.PozivNaBrojOdobrenja, row.RacunPartnera)
+		if partnerID != 0 {
+			konto, sifra = s.getPartnerKontoSifra(ctx, partnerID, dug, pot)
+		}
+		if konto != "" && sifra != "" {
+			if dug > 0 {
+				vrd = 40
+				kat = 1
+			}
+			if pot > 0 {
+				vrd = 30
+				kat = 3
 			}
 		}
+		fizvdet := domain.Fizvdet{
+			God:       userSession.SelectedGod,
+			Kar:       userSession.SelectedKar,
+			Brrac:     row.BrRacuna,
+			Izvbr:     common.StringToInt(row.BrIzvoda),
+			Rbr:       int64(i),
+			Datizv:    sql.NullTime{Time: common.StringToDate(row.DatumObrada, common.HtmlLayout), Valid: true},
+			Konto:     konto,
+			Sifra:     sifra,
+			Iznos:     iznos,
+			Kat:       int16(kat),
+			Vrd:       vrd,
+			Nsedprim:  row.NazivPartnera,
+			Brracup:   row.RacunPartnera,
+			Osnplac:   row.OznakaVrstePosla,
+			Sdozn:     row.OznakaVrstePosla,
+			Duguje:    dug,
+			Potrazuje: pot,
+			Modelzad:  row.ModelZaduzenja,
+			Pnabrzad:  row.PozivNaBrojZaduzenja,
+			Mododob:   row.ModelOdobrenja,
+			Pnabrodob: row.PozivNaBrojOdobrenja,
+			Prekl:     row.ReferencaBanke,
+			Xdatunosa: sql.NullTime{Time: time.Now(), Valid: true},
+			Xopunos:   sql.NullString{String: userSession.UserName, Valid: true},
+		}
+		izvDet = append(izvDet, fizvdet)
 	}
-	return nil
-}
-func (s *IzvodiResource) ImportDATAOTP(ctx context.Context, fileData []string) error {
+	izvodHdr.Ukdug += totDug
+	izvodHdr.Ukpot += totPot
+	izvodHdr.Nstanje = izvodHdr.Prstanje + totDug - totPot
+	izvodHdr.Ukbrst = len(izvDet)
 
-	return nil
+	return izvodHdr, izvDet, nil
 }
 
+// MapIntesaToDomain maps the Intesa data to domain.Fizvzag and domain.Fizvdet.
+func (s *IzvodiResource) MapIntesaToDomain(ctx context.Context, izvodIntesa domain.StmtRsList, prekoJMBG bool) (*domain.Fizvzag, []domain.Fizvdet, error) {
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		return nil, nil, fmt.Errorf("user session not found")
+	}
+	// Map the Intesa data to domain.Fizvzag and domain.Fizvdet
+	izvodHdr := &domain.Fizvzag{
+		God:       userSession.SelectedGod,
+		Kar:       userSession.SelectedKar,
+		Brrac:     izvodIntesa.StmtRs.AcctID,
+		Izvbr:     common.StringToInt(izvodIntesa.StmtRs.StmtNumber),
+		Datizv:    sql.NullTime{Time: time.Time(izvodIntesa.StmtRs.LedgerBal.DtAsOf), Valid: true},
+		Prstanje:  izvodIntesa.StmtRs.LedgerBal.BalAmt,
+		Ukdug:     izvodIntesa.StmtRs.LedgerBal.BalAmt,
+		Ukpot:     izvodIntesa.StmtRs.AvailBal.BalAmt,
+		Ukbrst:    izvodIntesa.StmtRs.TrnList.Count,
+		Nstanje:   izvodIntesa.StmtRs.AvailBal.BalAmt,
+		Izvsts:    "1", // status 1 -importovan, status 40 - proknjizen
+		Xopunos:   sql.NullString{String: userSession.UserName, Valid: true},
+		Xdatunosa: sql.NullTime{Time: time.Now(), Valid: true},
+	}
+	// Update bank info
+	bank, err := s.getBankInfo(ctx, userSession.SelectedGod, userSession.SelectedKar, izvodIntesa.StmtRs.AcctID)
+	if err == nil && bank != nil {
+		izvodHdr.IDbanke = sql.NullInt64{Int64: int64(bank.IDBanke), Valid: true}
+		izvodHdr.Konto = bank.Konto
+		izvodHdr.Sifra = bank.Sifra
+	}
+	ukDug, ukPot := float64(0), float64(0)
+	i := int64(0)
+	izvDet := []domain.Fizvdet{}
+	for _, stavka := range izvodIntesa.StmtRs.TrnList.StmtTrns {
+		i++
+		konto, sifra := "", ""
+		kat := int16(0)
+		modZaduzenja, modOdobrenja := "", ""
+		dug, pot := float64(0), float64(0)
+		if stavka.Benefit == "debit" {
+			kat = 1
+			dug = stavka.TrnAmt
+			modZaduzenja = stavka.Purpose
+			ukDug += stavka.TrnAmt
+		}
+		if stavka.Benefit == "credit" {
+			kat = 3
+			pot = stavka.TrnAmt
+			modOdobrenja = stavka.Purpose
+			ukPot += stavka.TrnAmt
+		}
+		izvodDet := domain.Fizvdet{
+			God:       userSession.SelectedGod,
+			Kar:       userSession.SelectedKar,
+			Brrac:     izvodIntesa.StmtRs.AcctID,
+			Izvbr:     common.StringToInt(izvodIntesa.StmtRs.StmtNumber),
+			Datizv:    sql.NullTime{Time: time.Time(izvodIntesa.StmtRs.LedgerBal.DtAsOf), Valid: true},
+			Rbr:       i,
+			Konto:     konto,
+			Sifra:     sifra,
+			Iznos:     stavka.TrnAmt,
+			Kat:       kat,
+			Vrd:       90,
+			Duguje:    dug,
+			Potrazuje: pot,
+			Nsedprim:  stavka.PayeeInfo.City,
+			Brracup:   stavka.PayeeAccountInfo.AcctID,
+			Osnplac:   stavka.PurposeCode,
+			Sdozn:     "",
+			Sdozn1:    "",
+			Modelzad:  modZaduzenja,
+			Pnabrzad:  "",
+			Mododob:   modOdobrenja,
+			Pnabrodob: "",
+			Prekl:     "",
+		}
+		//get konto and sifra from tekracuni table based on brRacDet
+		konto, sifra, err := s.getSifplIzvodiInfo(ctx, common.StringToInt(stavka.PurposeCode))
+		if err != nil {
+			log.Printf("failed to get konto and sifra: %v", err)
+		}
+		if konto != "" {
+			izvodDet.Konto = konto
+		}
+		if sifra != "" {
+			izvodDet.Sifra = sifra
+		}
+		partnerID := s.getPartneriID(ctx, prekoJMBG, "", stavka.PayeeAccountInfo.AcctID)
+		konto, sifra = s.getPartnerKontoSifra(ctx, partnerID, izvodDet.Duguje, izvodDet.Potrazuje)
+		if konto != "" {
+			izvodDet.Konto = konto
+		}
+		if sifra != "" {
+			izvodDet.Sifra = sifra
+		}
+		izvodDet.Xopunos = sql.NullString{String: userSession.UserName, Valid: true}
+		izvodDet.Xdatunosa = sql.NullTime{Time: time.Now(), Valid: true}
+		// add the izvodDet to the list
+		izvDet = append(izvDet, izvodDet)
+	}
+	izvodHdr.Ukdug = ukDug
+	izvodHdr.Ukpot = ukPot
+	izvodHdr.Nstanje = izvodHdr.Prstanje + ukDug - ukPot
+	izvodHdr.Ukbrst = len(izvDet)
+	return izvodHdr, izvDet, nil
+}
+
+// getIzvodHeader retrieves the ID of the Izvod header based on the provided parameters.
 func (s *IzvodiResource) getIzvodHeader(ctx context.Context, god, kar int, brRacuna string, brIzvoda string, datumObrade time.Time) (int64, error) {
-	qb := common.NewQueryBuilder(`SELECT fiizvzagid FROM fizvzag `, true)
+	qb := common.NewQueryBuilder(`SELECT fizvzagid FROM fizvzag `, true)
 	if god > 0 {
 		qb.AddEqual("god", god)
 	}
@@ -422,7 +1010,7 @@ func (s *IzvodiResource) getIzvodHeader(ctx context.Context, god, kar int, brRac
 	sqlQuery, args := qb.Build()
 	entities, err := s.izvhdrRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
 	if err != nil {
-		return 0, fmt.Errorf("failed to insert izvod: %w", err)
+		return 0, fmt.Errorf("failed to query izvod header: %w", err)
 	}
 	if entities != nil && len(*entities) > 0 {
 		return int64((*entities)[0].IDFizvzag), nil
@@ -442,19 +1030,19 @@ func ParseIzvodHalcomLine(line string) (*domain.IzvodHalcom, error) {
 
 	izvod := &domain.IzvodHalcom{}
 	// Map fields by index - this is fast and clear
-	izvod.BrRacuna = strings.TrimSpace(fields[0])
-	izvod.DatumObrada = common.StringToDate(strings.TrimSpace(fields[1]))
+	izvod.BrRacuna = formatAccountNumber(strings.TrimSpace(fields[0]))
+	izvod.DatumObrada = strings.TrimSpace(fields[1])
 	izvod.BrIzvoda = strings.TrimSpace(fields[2])
 	izvod.Valuta = strings.TrimSpace(fields[3])
-	izvod.DatumValute = common.StringToDate(strings.TrimSpace(fields[4]))
+	izvod.DatumValute = strings.TrimSpace(fields[4])
 	izvod.IznosZaduzenja = common.FormatFloatNumber64WithSystemLocale(common.StringToFloat64(strings.TrimSpace(fields[5])), 2)
 	izvod.IznosOdobrenja = common.FormatFloatNumber64WithSystemLocale(common.StringToFloat64(strings.TrimSpace(fields[6])), 2)
 	izvod.OznakaKnjizenja = strings.TrimSpace(fields[7])
 	izvod.Opis = strings.TrimSpace(fields[8])
-	izvod.DatumKnjizenja = common.StringToDate(strings.TrimSpace(fields[9]))
-	izvod.RacunPartnera = strings.TrimSpace(fields[10])
-	izvod.NazivPartnera = strings.TrimSpace(fields[11])
-	izvod.Svrha = strings.TrimSpace(fields[12])
+	izvod.DatumKnjizenja = strings.TrimSpace(fields[9])
+	izvod.RacunPartnera = formatAccountNumber(strings.TrimSpace(fields[10]))
+	izvod.NazivPartnera = common.TruncateString(strings.TrimSpace(fields[11]), 72)
+	izvod.Svrha = common.TruncateString(strings.TrimSpace(fields[12]), 72)
 	izvod.OznakaVrstePosla = strings.TrimSpace(fields[13])
 	izvod.PozivNaBrojOdobrenja = strings.TrimSpace(fields[14])
 	izvod.PozivNaBrojZaduzenja = strings.TrimSpace(fields[15])
@@ -474,17 +1062,316 @@ func ParseIzvodHalcomLine(line string) (*domain.IzvodHalcom, error) {
 	return izvod, nil
 }
 
+// // processHeader processes the header record
+// func (s *IzvodiResource) processHeader(ctx context.Context, tx db.Transaction, izvRecord domain.IzvodHalcom, brRac string) (int64, bool, error) {
+// 	// Check if header exists
+// 	userSession := domain.GetSessionFromStdContext(ctx)
+// 	if userSession == nil {
+// 		return 0, false, fmt.Errorf("user session not found")
+// 	}
+
+// 	hasGod, hasKar := s.izvhdrRepo.GetHasGodHasKar()
+// 	qb := common.NewQueryBuilder(`SELECT idfizvzag, brrac, izvbr, datizv, prstanje, ukdug, ukpot, nstanje, ukbrst,
+// 	coalesce(nalog, 0) as nalog, coalesce(tipdok, '') as tipdok, izvsts, idbanke FROM fizvzag`, true)
+// 	if hasGod {
+// 		qb.AddEqual("god", userSession.SelectedGod)
+// 	}
+// 	if hasKar {
+// 		qb.AddEqual("kar", userSession.SelectedKar)
+// 	}
+// 	qb.AddEqual("brrac", izvRecord.BrRacuna)
+// 	qb.AddEqual("izvbr", izvRecord.BrIzvoda)
+// 	qb.AddEqual("datizv", izvRecord.DatumObrada)
+// 	sqlQuery, args := qb.Build()
+// 	existingHeaders, err := s.izvhdrRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+// 	if err != nil {
+// 		return 0, false, fmt.Errorf("failed to query existing header: %w", err)
+// 	}
+// 	var existingHeader *domain.Fizvzag
+// 	headerFields := []domain.Fields{}
+// 	newID := int64(0)
+// 	if len(*existingHeaders) > 0 {
+// 		existingHeader = &(*existingHeaders)[0]
+// 	}
+// 	if existingHeader == nil {
+// 		// Create new header
+// 		headerFields = append(headerFields, []domain.Fields{
+// 			{Name: "brrac", Value: brRac},
+// 			{Name: "izvbr", Value: strings.TrimSpace(izvRecord.BrIzvoda)},
+// 			{Name: "datizv", Value: izvRecord.DatumObrada},
+// 			{Name: "konto", Value: ""},
+// 			{Name: "sifra", Value: ""},
+// 			{Name: "prstanje", Value: "0"},
+// 			{Name: "izvsts", Value: "1"},
+// 		}...)
+// 		datumObrade, err := time.Parse(common.DateLayout, izvRecord.DatumObrada)
+// 		if err != nil {
+// 			return 0, false, fmt.Errorf("failed to parse date: %w", err)
+// 		}
+// 		header := &domain.Fizvzag{
+// 			God:      userSession.SelectedGod,
+// 			Kar:      userSession.SelectedKar,
+// 			Brrac:    brRac,
+// 			Izvbr:    common.StringToInt(strings.TrimSpace(izvRecord.BrIzvoda)),
+// 			Datizv:   sql.NullTime{Time: datumObrade, Valid: true},
+// 			Konto:    "",
+// 			Sifra:    "",
+// 			Prstanje: 0,
+// 			Izvsts:   "1",
+// 		}
+// 		// Update bank info
+// 		bank, err := s.getBankInfo(ctx, userSession.SelectedGod, userSession.SelectedKar, brRac)
+// 		if err == nil && bank != nil {
+// 			header.IDbanke = sql.NullInt64{Int64: int64(bank.IDBanke), Valid: true}
+// 			header.Konto = bank.Konto
+// 			header.Sifra = bank.Sifra
+// 			headerFields = append(headerFields, domain.Fields{Name: "idbanke", Value: fmt.Sprintf("%d", bank.IDBanke)})
+// 			headerFields = append(headerFields, domain.Fields{Name: "konto", Value: bank.Konto})
+// 			headerFields = append(headerFields, domain.Fields{Name: "sifra", Value: bank.Sifra})
+// 		}
+
+// 		// Insert new header
+// 		newID, err = s.izvhdrRepo.CreateWithTx(ctx, tx, header, common.IDfizvzag, headerFields)
+// 		if err != nil {
+// 			return 0, false, fmt.Errorf("failed to insert new header: %w", err)
+// 		}
+// 		return int64(newID), true, nil
+// 	}
+
+// 	// Check if header is in valid state for modification
+// 	if common.StringToInt(existingHeader.Izvsts) > 1 {
+// 		return 0, false, fmt.Errorf("selected statement is already processed")
+// 	}
+
+// 	if err := s.izvhdrRepo.UpdateWithTx(ctx, tx, existingHeader, common.IDfizvzag, newID, headerFields); err != nil {
+// 		return 0, false, fmt.Errorf("failed to update header: %w", err)
+// 	}
+
+// 	return int64(existingHeader.IDFizvzag), false, nil
+// }
+
+func (s *IzvodiResource) createBulkInsertDetailQuery(ctx context.Context, izvDet []domain.Fizvdet, idFizvzag int64) (string, []interface{}) {
+	if len(izvDet) == 0 {
+		return "", nil
+	}
+
+	// Column list - excluding auto-generated idfizvdet
+	columns := []string{
+		"god", "kar", "brrac", "izvbr", "datizv", "rbr",
+		"konto", "sifra", "iznos", "kat", "vrd", "nsedprim",
+		"brracup", "osnplac", "sdozn", "duguje", "potrazuje",
+		"modelzad", "pnabrzad", "mododob", "pnabrodob", "prekl",
+		"xdatunosa", "xopunos", "idfizvzag",
+	}
+
+	// Build query with your exact column list
+	sqlQuery := "INSERT INTO fizvdet (" + strings.Join(columns, ", ") + ") VALUES "
+
+	var args []interface{}
+	paramCount := 1
+	i := 0
+	for _, row := range izvDet {
+		if i > 0 {
+			sqlQuery += ", "
+		}
+
+		placeholders := make([]string, len(columns))
+		for j := range columns {
+			placeholders[j] = fmt.Sprintf("$%d", paramCount)
+			paramCount++
+		}
+		sqlQuery += "(" + strings.Join(placeholders, ", ") + ")"
+		i++
+
+		args = append(args, row.God, row.Kar, row.Brrac, row.Izvbr, row.Datizv, row.Rbr, row.Konto, row.Sifra,
+			row.Iznos, row.Kat, row.Vrd, row.Nsedprim, row.Brracup,
+			row.Osnplac, row.Sdozn, row.Duguje, row.Potrazuje, row.Modelzad, row.Pnabrzad,
+			row.Mododob, row.Pnabrodob, row.Prekl, row.Xdatunosa, row.Xopunos, idFizvzag)
+	}
+
+	sqlQuery = strings.TrimSuffix(sqlQuery, ", \n") // Remove the trailing comma and newline
+	return sqlQuery, args
+}
+
+// formatAccountNumber formats account number: xxx-xxxxxxxxxxxxx-xx
+func formatAccountNumber(account string) string {
+	// Remove existing dashes
+	clean := strings.ReplaceAll(account, "-", "")
+
+	// Check if we have enough characters
+	if len(clean) < 18 {
+		return account
+	}
+
+	// Format: xxx-xxxxxxxxxxxxx-xx
+	// Positions: 0-2 = first 3 digits, 3-15 = next 13 digits, 16-17 = last 2 digits
+	return clean[:3] + "-" + clean[3:16] + "-" + clean[16:18]
+}
+func (s *IzvodiResource) getPartneriID(ctx context.Context, searchJbmg bool, jmbg, brrac string) int {
+	// Get partner ID based on JMBG and account number
+	if searchJbmg {
+		// Search by JMBG
+		partner, err := s.partneriRepo.GetAllCustom(ctx, "SELECT IDpartneri FROM partneri WHERE jmbg = $1", "", []interface{}{jmbg}, "", "")
+		if err != nil {
+			log.Printf("Error fetching partner by JMBG %s: %v", jmbg, err)
+			return 0
+		}
+		if partner != nil && len(*partner) > 0 {
+			return (*partner)[0].IDPartneri
+		}
+	} else {
+		// Search by account number
+		qb := common.NewQueryBuilder(`SELECT IDpartneri FROM tekracuni`, true)
+		hasGod, hasKar := s.tekracuniRepo.GetHasGodHasKar()
+		if hasGod {
+			qb.AddEqual("god", domain.GetSessionFromStdContext(ctx).SelectedGod)
+		}
+		if hasKar {
+			qb.AddEqual("kar", domain.GetSessionFromStdContext(ctx).SelectedKar)
+		}
+		qb.AddEqual("tekrac", brrac)
+		sqlQuery, args := qb.Build()
+		tekracuni, err := s.tekracuniRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+		if err != nil {
+			log.Printf("Error fetching partner by account number %s: %v", brrac, err)
+			return 0
+		}
+		if tekracuni != nil && len(*tekracuni) > 0 {
+			return (*tekracuni)[0].IDPartneri
+		}
+
+	}
+	return 0
+}
+func (s *IzvodiResource) getPartnerKontoSifra(ctx context.Context, partnerID int, duguje, potrazuje float64) (string, string) {
+	// Get partner konto and sifra
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		log.Printf("User session not found")
+		return "", ""
+	}
+	konto, sifra := "", ""
+	qb := common.NewQueryBuilder(`SELECT sifra FROM partneri `, true)
+	qb.AddEqual("idpartneri", partnerID)
+	sqlQuery, args := qb.Build()
+	partnerEntities, err := s.partneriRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	if err != nil {
+		log.Printf("Error fetching partner konto and sifra for partnerID %d: %v", partnerID, err)
+		return "", ""
+	}
+	if partnerEntities != nil && len(*partnerEntities) > 0 {
+		sifra = (*partnerEntities)[0].Sifra
+	}
+	qb = common.NewQueryBuilder(`SELECT konto FROM fkpl `, true)
+	hasGod, hasKar := s.fkplRepo.GetHasGodHasKar()
+	if hasGod {
+		qb.AddEqual("god", userSession.SelectedGod) // Replace with actual god value if needed
+	}
+	if hasKar {
+		qb.AddEqual("kar", userSession.SelectedKar) // Replace with actual kar value if needed
+	}
+	qb.AddEqual("vkonta", 2)
+	fvrData, err := common.GetFvrData(ctx, s.fvrRepo)
+	if err != nil {
+		log.Printf("Error fetching FVR data: %v", err)
+		return "", ""
+	}
+	if duguje > 0 {
+		qb.AddLikeBegin("konto", fvrData.KontaDob1)
+	}
+	if potrazuje > 0 {
+		qb.AddLikeBegin("konto", fvrData.KontaKup1)
+
+	}
+	sqlQuery, args = qb.Build()
+	fkplEntities, err := s.fkplRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	if err != nil {
+		log.Printf("Error fetching fkpl konto for duguje: %v", err)
+		return "", ""
+	}
+	if fkplEntities != nil && len(*fkplEntities) > 0 {
+		konto = (*fkplEntities)[0].Konto
+	}
+
+	return konto, sifra
+}
+
+func (s *IzvodiResource) getBankInfo(ctx context.Context, god, kar int, brRac string) (*domain.Banke, error) {
+	// Get bank info
+	qbBank := common.NewQueryBuilder(`SELECT idbanke, banka, brrac, konto, sifra FROM banke`, true)
+	hasGod, hasKar := s.bankeRepo.GetHasGodHasKar()
+	if hasGod {
+		qbBank.AddEqual("god", god)
+	}
+	if hasKar {
+		qbBank.AddEqual("kar", kar)
+	}
+	qbBank.AddEqual("brrac", brRac)
+	sqlQueryBank, argsBank := qbBank.Build()
+	bankEntities, err := s.bankeRepo.GetAllCustom(ctx, sqlQueryBank, "", argsBank, "", "")
+	if err != nil {
+		return nil, fmt.Errorf("failed to query bank info: %w", err)
+	}
+	if len(*bankEntities) > 0 {
+		return &(*bankEntities)[0], nil
+	}
+	return nil, nil
+}
+func (s *IzvodiResource) getSifplIzvodiInfo(ctx context.Context, sifPlacanja int) (string, string, error) {
+	// Get bank info
+	qb := common.NewQueryBuilder(`SELECT sifplac, opis, konto, sifra FROM sifplizv`, true)
+
+	qb.AddEqual("sifplac", sifPlacanja)
+	sqlQuery, args := qb.Build()
+	entities, err := s.sifplizvRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	if err != nil {
+		return "", "", fmt.Errorf("failed to query bank info: %w", err)
+	}
+	if len(*entities) > 0 {
+		return (*entities)[0].Konto, (*entities)[0].Sifra, nil
+	}
+	return "", "", nil
+}
+
 func (s *IzvodiResource) AzurirajKonta(ctx context.Context, izvodID string) error {
 	// TODO: Implement account update logic
 	// - Update accounts in izvodi_detalji based on parameters
 	return fmt.Errorf("not implemented")
 }
 
-func (s *IzvodiResource) BrisiIzvod(ctx context.Context, izvodID string) error {
-	// TODO: Implement delete logic
+func (s *IzvodiResource) BrisiIzvod(ctx context.Context, fizvzagID string) error {
 	// - Delete from izvodi_detalji first
-	// - Delete from izvodi
-	return fmt.Errorf("not implemented")
+	qb := common.NewQueryBuilder(`DELETE FROM fizvdet `, true)
+	qb.AddEqual("idfizvzag", fizvzagID)
+	tx, err := s.izvhdrRepo.BeginTx()
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			_ = tx.Rollback()
+			err = fmt.Errorf("panic recovered: %v", r)
+		} else if err != nil {
+			_ = tx.Rollback()
+		} else {
+			err = tx.Commit()
+		}
+	}()
+	sqlQuery, args := qb.Build()
+	_, err = tx.ExecContext(ctx, sqlQuery, args...)
+	if err != nil {
+		return fmt.Errorf("failed to delete detail records: %w", err)
+	}
+
+	// - Delete from izvodi header
+	qb = common.NewQueryBuilder(`DELETE FROM fizvzag `, true)
+	qb.AddEqual("idfizvzag", fizvzagID)
+	sqlQuery, args = qb.Build()
+	_, err = tx.ExecContext(ctx, sqlQuery, args...)
+	if err != nil {
+		return fmt.Errorf("failed to delete header record: %w", err)
+	}
+	return nil
 }
 
 func (s *IzvodiResource) ProveriRaznotezu(ctx context.Context, izvodID string) error {
@@ -549,7 +1436,7 @@ func (s *IzvodiResource) SetIzvodiFields() {
 		{Name: "mododob", Label: "Model odobrenja", Width: "8", Field: "d.mododob", SkipInSearch: false},
 		{Name: "pnabrodob", Label: "Poziv na broj odobrenja", Width: "18", Field: "d.pnabrodob", SkipInSearch: false},
 		{Name: "prekl", Label: "Podaci sa reklame", Width: "18", Field: "d.prekl", SkipInSearch: false},
-		{Name: "idfizvdet", Label: "ID", Width: "8", Field: "d.idfizvdet", SkipInSearch: true},
+		//{Name: "idfizvdet", Label: "ID", Width: "8", Field: "d.idfizvdet", SkipInSearch: true},
 	}
 }
 func (s *IzvodiResource) GetMasterTableFields() []domain.Fields {

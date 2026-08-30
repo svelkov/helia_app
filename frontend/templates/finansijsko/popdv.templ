@@ -7,12 +7,13 @@ import (
 	"helia/internal/common"
 	"helia/internal/domain"
 	"time"
+	"helia/frontend/components"
 )
 
 // POPDV Main - Prijava PDV od nabavke dobara i usluga
 templ PopdvMain(tabs domain.TabData, tblPolja domain.TableData, searchInput domain.InputControl, gnGod int, translator *i18n.Service) {
 	<!-- Tab Content -->
-	<div id="tab-content" class="flex flex-col h-full">
+	<div id="tab-content" class="bg-blue-100 p-1 flex flex-col h-full">
 		@PopdvPolja(tabs, tblPolja, searchInput, gnGod, translator)
 	</div>
 }
@@ -20,7 +21,7 @@ templ PopdvMain(tabs domain.TabData, tblPolja domain.TableData, searchInput doma
 // Tab 1 - Polja POPDV prijave
 templ PopdvPolja(tabs domain.TabData, tbl domain.TableData, searchInput domain.InputControl, gnGod int, translator *i18n.Service) {
 	<!-- Container with full height -->
-	<div class="flex flex-col h-full">
+	<div class="bg-blue-100 p-1 flex flex-col h-full">
 		<!-- Tab Navigation -->
 		<div class="border-b border-blue-600">
 			@tmpl.TabNav(translator.Title("Prijava PDV od nabavke dobara i usluga"), tabs, "#tab-content", "popdv-panel", translator)
@@ -29,10 +30,10 @@ templ PopdvPolja(tabs domain.TabData, tbl domain.TableData, searchInput domain.I
 		<div id="tab1" class="flex-1 min-h-0 flex flex-col gap-1 pt-1">
 			<!-- Master Table -->
 			<div class="border bg-blue-100 border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
-				@tmpl.Search_Part(tbl, searchInput)
+				@components.Search_Part(tbl, searchInput)
 				<!-- Table -->
 				<div id="popdv-polja-table" class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
-					@tmpl.Table(tbl, translator)
+					@components.Table(tbl, translator)
 				</div>
 			</div>
 		</div>
@@ -45,7 +46,7 @@ templ PopdvPolja(tabs domain.TabData, tbl domain.TableData, searchInput domain.I
 // Tab 2 - POPDV prijava
 templ PopdvPrijava(tabs domain.TabData, tbl domain.TableData, btnObrada, btnDelete domain.Button, searchInput domain.InputControl, gnGod int, translator *i18n.Service) {
 	<!-- Container with full height -->
-	<div class="flex flex-col h-full">
+	<div class="bg-blue-100 p-1 flex flex-col h-full">
 		<!-- Tab Navigation -->
 		<div class="border-b border-blue-600">
 			@tmpl.TabNav(translator.Title("Prijava PDV od nabavke dobara i usluga"), tabs, "#tab-content", "popdv-panel", translator)
@@ -55,12 +56,12 @@ templ PopdvPrijava(tabs domain.TabData, tbl domain.TableData, btnObrada, btnDele
 			<!-- Parameters Section -->
 			<div class="border bg-blue-100 border-blue-400 mt-1 p-2 rounded-lg">
 				<div class="flex items-center gap-1">
-					@tmpl.LabelField(domain.LabelFieldConfig{
+					@components.LabelField(domain.LabelFieldConfig{
 						ID:         "oddatuma",
 						LabelText:  translator.Label("Od datuma"),
 						ClassLabel: common.ClassLabel + " w-32",
 					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
+					@components.TextInputField(domain.InputFieldConfig{
 						ID:         "oddatuma",
 						Name:       "oddatuma",
 						FieldType:  "date",
@@ -68,12 +69,12 @@ templ PopdvPrijava(tabs domain.TabData, tbl domain.TableData, btnObrada, btnDele
 						ClassInput: common.ClassInputTextEnabled + " w-32 mr-2",
 						TabIndex:   "1",
 					})
-					@tmpl.LabelField(domain.LabelFieldConfig{
+					@components.LabelField(domain.LabelFieldConfig{
 						ID:         "dodatuma",
 						LabelText:  translator.Label("Do datuma"),
 						ClassLabel: common.ClassLabel + " w-28",
 					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
+					@components.TextInputField(domain.InputFieldConfig{
 						ID:         "dodatuma",
 						Name:       "dodatuma",
 						FieldType:  "date",
@@ -81,15 +82,15 @@ templ PopdvPrijava(tabs domain.TabData, tbl domain.TableData, btnObrada, btnDele
 						ClassInput: common.ClassInputTextEnabled + " w-32",
 						TabIndex:   "2",
 					})
-					@tmpl.Button(btnObrada)
+					@components.Button(btnObrada)
 				</div>
 			</div>
 			<!-- Master Table -->
 			<div class="border bg-blue-100 border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
-				@tmpl.Search_Part(tbl, searchInput)
+				@components.Search_Part(tbl, searchInput)
 				<!-- Table -->
 				<div id="popdv-prijava-table" class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
-					@tmpl.Table(tbl, translator)
+					@components.Table(tbl, translator)
 				</div>
 			</div>
 		</div>
@@ -111,10 +112,10 @@ templ PopdvStampa(tabs domain.TabData, tbl domain.TableData, btnPrint domain.But
 		<div id="tab3" class="flex-1 min-h-0 flex flex-col gap-1 pt-1">
 			<!-- Master Table -->
 			<div class="border bg-blue-100 border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
-				@tmpl.Search_Part(tbl, searchInput)
+				@components.Search_Part(tbl, searchInput)
 				<!-- Table -->
 				<div id="popdv-stampa-table" class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
-					@tmpl.Table(tbl, translator)
+					@components.Table(tbl, translator)
 				</div>
 			</div>
 		</div>
@@ -132,7 +133,7 @@ templ DialogPopdvPolja(model domain.Popdv, dlg domain.Dialog, btnSave, btnCancel
 			<!-- Header -->
 			<div class="bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg">
 				<h2 class="text-lg font-semibold ml-4">{ translator.Title("Unos/izmene podataka - Polja POPDV") }</h2>
-				@tmpl.CloseButton(btnClose)
+				@components.CloseButton(btnClose)
 			</div>
 			<!-- Form Content -->
 			<form class="p-2 space-y-3">
@@ -142,12 +143,12 @@ templ DialogPopdvPolja(model domain.Popdv, dlg domain.Dialog, btnSave, btnCancel
 					<div class="font-bold text-xs text-gray-900 border-b-2 border-gray-400 pb-2">{ translator.Text("Osnovni podaci") }</div>
 					<div class="space-y-1 pt-1">
 						<div class="flex items-center gap-2">
-							@tmpl.LabelField(domain.LabelFieldConfig{
+							@components.LabelField(domain.LabelFieldConfig{
 								ID:         "tip",
 								LabelText:  translator.Label("Tip podatka"),
 								ClassLabel: "w-32",
 							})
-							@tmpl.TextInputField(domain.InputFieldConfig{
+							@components.TextInputField(domain.InputFieldConfig{
 								ID:         "tip",
 								Name:       "tip",
 								FieldType:  "text",
@@ -157,12 +158,12 @@ templ DialogPopdvPolja(model domain.Popdv, dlg domain.Dialog, btnSave, btnCancel
 							})
 						</div>
 						<div class="flex items-center gap-2">
-							@tmpl.LabelField(domain.LabelFieldConfig{
+							@components.LabelField(domain.LabelFieldConfig{
 								ID:         "deo",
 								LabelText:  translator.Label("Deo"),
 								ClassLabel: "w-32",
 							})
-							@tmpl.TextInputField(domain.InputFieldConfig{
+							@components.TextInputField(domain.InputFieldConfig{
 								ID:         "deo",
 								Name:       "deo",
 								FieldType:  "number",
@@ -172,12 +173,12 @@ templ DialogPopdvPolja(model domain.Popdv, dlg domain.Dialog, btnSave, btnCancel
 							})
 						</div>
 						<div class="flex items-center gap-2">
-							@tmpl.LabelField(domain.LabelFieldConfig{
+							@components.LabelField(domain.LabelFieldConfig{
 								ID:         "polje",
 								LabelText:  translator.Label("Polje"),
 								ClassLabel: "w-32",
 							})
-							@tmpl.TextInputField(domain.InputFieldConfig{
+							@components.TextInputField(domain.InputFieldConfig{
 								ID:         "polje",
 								Name:       "polje",
 								FieldType:  "text",
@@ -187,12 +188,12 @@ templ DialogPopdvPolja(model domain.Popdv, dlg domain.Dialog, btnSave, btnCancel
 							})
 						</div>
 						<div class="flex items-center gap-2">
-							@tmpl.LabelField(domain.LabelFieldConfig{
+							@components.LabelField(domain.LabelFieldConfig{
 								ID:         "opis",
 								LabelText:  translator.Label("Opis"),
 								ClassLabel: "w-32",
 							})
-							@tmpl.TextInputField(domain.InputFieldConfig{
+							@components.TextInputField(domain.InputFieldConfig{
 								ID:         "opis",
 								Name:       "opis",
 								FieldType:  "text",
@@ -209,12 +210,12 @@ templ DialogPopdvPolja(model domain.Popdv, dlg domain.Dialog, btnSave, btnCancel
 					<div class="space-y-1 pt-1">
 						<div class="grid grid-cols-2 gap-4">
 							<div class="flex items-center gap-2">
-								@tmpl.LabelField(domain.LabelFieldConfig{
+								@components.LabelField(domain.LabelFieldConfig{
 									ID:         "osn1",
 									LabelText:  translator.Label("Osn. 1"),
 									ClassLabel: "w-32",
 								})
-								@tmpl.TextInputField(domain.InputFieldConfig{
+								@components.TextInputField(domain.InputFieldConfig{
 									ID:         "osn1",
 									Name:       "osn1",
 									FieldType:  "number",
@@ -224,12 +225,12 @@ templ DialogPopdvPolja(model domain.Popdv, dlg domain.Dialog, btnSave, btnCancel
 								})
 							</div>
 							<div class="flex items-center gap-2">
-								@tmpl.LabelField(domain.LabelFieldConfig{
+								@components.LabelField(domain.LabelFieldConfig{
 									ID:         "pdv1",
 									LabelText:  translator.Label("PDV 1"),
 									ClassLabel: "w-32",
 								})
-								@tmpl.TextInputField(domain.InputFieldConfig{
+								@components.TextInputField(domain.InputFieldConfig{
 									ID:         "pdv1",
 									Name:       "pdv1",
 									FieldType:  "number",
@@ -239,12 +240,12 @@ templ DialogPopdvPolja(model domain.Popdv, dlg domain.Dialog, btnSave, btnCancel
 								})
 							</div>
 							<div class="flex items-center gap-2">
-								@tmpl.LabelField(domain.LabelFieldConfig{
+								@components.LabelField(domain.LabelFieldConfig{
 									ID:         "osn2",
 									LabelText:  translator.Label("Osn. 2"),
 									ClassLabel: "w-32",
 								})
-								@tmpl.TextInputField(domain.InputFieldConfig{
+								@components.TextInputField(domain.InputFieldConfig{
 									ID:         "osn2",
 									Name:       "osn2",
 									FieldType:  "number",
@@ -254,12 +255,12 @@ templ DialogPopdvPolja(model domain.Popdv, dlg domain.Dialog, btnSave, btnCancel
 								})
 							</div>
 							<div class="flex items-center gap-2">
-								@tmpl.LabelField(domain.LabelFieldConfig{
+								@components.LabelField(domain.LabelFieldConfig{
 									ID:         "pdv2",
 									LabelText:  translator.Label("PDV 2"),
 									ClassLabel: "w-32",
 								})
-								@tmpl.TextInputField(domain.InputFieldConfig{
+								@components.TextInputField(domain.InputFieldConfig{
 									ID:         "pdv2",
 									Name:       "pdv2",
 									FieldType:  "number",
@@ -271,12 +272,12 @@ templ DialogPopdvPolja(model domain.Popdv, dlg domain.Dialog, btnSave, btnCancel
 						</div>
 						<div class="grid grid-cols-2 gap-4">
 							<div class="flex items-center gap-2">
-								@tmpl.LabelField(domain.LabelFieldConfig{
+								@components.LabelField(domain.LabelFieldConfig{
 									ID:         "poljvred",
 									LabelText:  translator.Label("Poljvred"),
 									ClassLabel: "w-32",
 								})
-								@tmpl.TextInputField(domain.InputFieldConfig{
+								@components.TextInputField(domain.InputFieldConfig{
 									ID:         "poljvred",
 									Name:       "poljvred",
 									FieldType:  "number",
@@ -286,12 +287,12 @@ templ DialogPopdvPolja(model domain.Popdv, dlg domain.Dialog, btnSave, btnCancel
 								})
 							</div>
 							<div class="flex items-center gap-2">
-								@tmpl.LabelField(domain.LabelFieldConfig{
+								@components.LabelField(domain.LabelFieldConfig{
 									ID:         "poljpdv",
 									LabelText:  translator.Label("Poljpdv"),
 									ClassLabel: "w-32",
 								})
-								@tmpl.TextInputField(domain.InputFieldConfig{
+								@components.TextInputField(domain.InputFieldConfig{
 									ID:         "poljpdv",
 									Name:       "poljpdv",
 									FieldType:  "number",
@@ -308,28 +309,28 @@ templ DialogPopdvPolja(model domain.Popdv, dlg domain.Dialog, btnSave, btnCancel
 					<div class="font-bold text-xs text-gray-900 border-b-2 border-gray-400 pb-2">{ translator.Text("Aktivnost") }</div>
 					<div class="space-y-1 pt-1">
 						<div class="flex items-center gap-8">
-							@tmpl.CheckboxField(domain.CheckboxFieldConfig{
+							@components.CheckboxField(domain.CheckboxFieldConfig{
 								ID:            "aktosn1",
 								Name:          "aktosn1",
 								IsChecked:     model.Aktosn1,
 								ClassCheckbox: common.ClassCheckbox,
 								TabIndex:      "11",
 							}, translator)
-							@tmpl.CheckboxField(domain.CheckboxFieldConfig{
+							@components.CheckboxField(domain.CheckboxFieldConfig{
 								ID:            "aktpdv1",
 								Name:          "aktpdv1",
 								IsChecked:     model.Aktpdv1,
 								ClassCheckbox: common.ClassCheckbox,
 								TabIndex:      "12",
 							}, translator)
-							@tmpl.CheckboxField(domain.CheckboxFieldConfig{
+							@components.CheckboxField(domain.CheckboxFieldConfig{
 								ID:            "aktosn2",
 								Name:          "aktosn2",
 								IsChecked:     model.Aktosn2,
 								ClassCheckbox: common.ClassCheckbox,
 								TabIndex:      "13",
 							}, translator)
-							@tmpl.CheckboxField(domain.CheckboxFieldConfig{
+							@components.CheckboxField(domain.CheckboxFieldConfig{
 								ID:            "aktpdv2",
 								Name:          "aktpdv2",
 								IsChecked:     model.Aktpdv2,
@@ -344,12 +345,12 @@ templ DialogPopdvPolja(model domain.Popdv, dlg domain.Dialog, btnSave, btnCancel
 					<div class="font-bold text-xs text-gray-900 border-b-2 border-gray-400 pb-2">{ translator.Text("Datumi") }</div>
 					<div class="space-y-1 pt-1">
 						<div class="flex items-center gap-2">
-							@tmpl.LabelField(domain.LabelFieldConfig{
+							@components.LabelField(domain.LabelFieldConfig{
 								ID:         "oddat",
 								LabelText:  translator.Label("Od datuma"),
 								ClassLabel: "w-32",
 							})
-							@tmpl.TextInputField(domain.InputFieldConfig{
+							@components.TextInputField(domain.InputFieldConfig{
 								ID:         "oddat",
 								Name:       "oddat",
 								FieldType:  "date",
@@ -357,12 +358,12 @@ templ DialogPopdvPolja(model domain.Popdv, dlg domain.Dialog, btnSave, btnCancel
 								ClassInput: common.ClassInputTextEnabled + " w-32",
 								TabIndex:   "15",
 							})
-							@tmpl.LabelField(domain.LabelFieldConfig{
+							@components.LabelField(domain.LabelFieldConfig{
 								ID:         "dodat",
 								LabelText:  translator.Label("Do datuma"),
 								ClassLabel: "w-32",
 							})
-							@tmpl.TextInputField(domain.InputFieldConfig{
+							@components.TextInputField(domain.InputFieldConfig{
 								ID:         "dodat",
 								Name:       "dodat",
 								FieldType:  "date",
@@ -375,8 +376,8 @@ templ DialogPopdvPolja(model domain.Popdv, dlg domain.Dialog, btnSave, btnCancel
 				</div>
 				<!-- Footer Buttons -->
 				<div class="flex justify-end gap-2 pt-4 border-t">
-					@tmpl.Button(btnSave)
-					@tmpl.Button(btnCancel)
+					@components.Button(btnSave)
+					@components.Button(btnCancel)
 				</div>
 			</form>
 		</div>

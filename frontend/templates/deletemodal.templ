@@ -1,8 +1,11 @@
 package templates
 
-import "helia/internal/domain"
-import "helia/i18n"
-import "helia/internal/common"
+import (
+	"helia/i18n"
+	"helia/internal/common"
+	"helia/frontend/components"
+	"helia/internal/domain"
+)
 
 templ DeleteDialog(csrfToken string, dialog domain.Dialog, btnConfirm, btnCancel, btnClose domain.Button, rowID string, translator *i18n.Service) {
 	<div id={ dialog.Id } class={ common.ClassMainDialogDiv }>
@@ -11,12 +14,12 @@ templ DeleteDialog(csrfToken string, dialog domain.Dialog, btnConfirm, btnCancel
 			if btnConfirm.Id == "btn-delete" {
 				<div class="bg-red-600 text-white h-9 flex justify-between items-center rounded-t-lg">
 					<h2 class="text-lg font-semibold ml-4">{ translator.Title(dialog.Title) }</h2>
-					@CloseButton(btnClose)
+					@components.CloseButton(btnClose)
 				</div>
 			} else {
 				<div class="bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg">
 					<h2 class="text-lg font-semibold ml-4">{ translator.Title(dialog.Title) }</h2>
-					@CloseButton(btnClose)
+					@components.CloseButton(btnClose)
 				</div>
 			}
 			<!-- Content -->
@@ -34,8 +37,8 @@ templ DeleteDialog(csrfToken string, dialog domain.Dialog, btnConfirm, btnCancel
 					<p class="mt-3 mb-3 ml-3 text-xl flex items-center justify-center gap-2">{ translator.Label("Brisanje sloga sa ID: ") } { rowID }?</p>
 				</div>
 				<div class="bg-white col-span-2 px-3 py-3 flex justify-end space-x-1 pt-4">
-					@ConfirmButton(btnConfirm, translator)
-					@CancelButton(btnCancel, translator)
+					@components.ConfirmButton(btnConfirm, translator)
+					@components.CancelButton(btnCancel, translator)
 				</div>
 			</form>
 			<!-- Message Display Area at Bottom -->

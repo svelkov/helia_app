@@ -25,8 +25,8 @@ func StringToBool(boolStr string) bool {
 }
 
 // StringToDate converts string to time.Time (date only)
-func StringToDate(dateStr string) time.Time {
-	val, err := time.Parse(HtmlLayout, dateStr)
+func StringToDate(dateStr string, layout string) time.Time {
+	val, err := time.Parse(layout, dateStr)
 	if err != nil {
 		return defaultTime
 	}

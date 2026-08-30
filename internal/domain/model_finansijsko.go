@@ -2,6 +2,7 @@ package domain
 
 import (
 	"database/sql"
+	"encoding/xml"
 	"time"
 )
 
@@ -30,12 +31,12 @@ type Fkpl struct {
 	Kursirati      bool           `db:"kursirati"`
 	TipanalitikeID *int64         `db:"tipanalitikeid" form:"tipanalitikeid"`
 	AnalitikaNaziv string         `db:"annaziv"`
+	PartnerNaziv   string         `db:"partnernaziv"`
 }
 
 // Tipanalitike represents the "baza.tipanalitike" table.
 type Tipanalitike struct {
 	TipanalitikeID int64          `db:"tipanalitikeid"`
-	Sifraanalitike int            `db:"sifraanalitike" form:"sifraanalitike"`
 	Naziv          string         `db:"naziv" form:"naziv"`
 	Xdatunosa      sql.NullTime   `db:"xdatunosa" format:"datetime"`
 	Xopunos        sql.NullString `db:"xopunos"`
@@ -142,18 +143,20 @@ type Fpro struct {
 	Mesec          int             `db:"mesec" addupdate:"false"`
 	DocType        string          `db:"doctype" addupdate:"false"`
 	// Age bucket fields for PregledPotrazivanjaObaveze
-	Realizacija        float64 `db:"realizacija" addupdate:"false"`
-	Placeno            float64 `db:"placeno" addupdate:"false"`
-	DospelaRealizacija float64 `db:"dospelarealizacija" addupdate:"false"`
-	Dospece15          float64 `db:"dospece15" addupdate:"false"`
-	Dospece30          float64 `db:"dospece30" addupdate:"false"`
-	Dospece60          float64 `db:"dospece60" addupdate:"false"`
-	Dospece90          float64 `db:"dospece90" addupdate:"false"`
-	Dospece120         float64 `db:"dospece120" addupdate:"false"`
-	Dospece120Plus     float64 `db:"dospece120plus" addupdate:"false"`
-	PSTDug             float64 `db:"pstdug" addupdate:"false"`
-	PSTPot             float64 `db:"pstpot" addupdate:"false"`
-	Mesto              string  `db:"mesto" addupdate:"false"`
+	Realizacija        float64      `db:"realizacija" addupdate:"false"`
+	Placeno            float64      `db:"placeno" addupdate:"false"`
+	DospelaRealizacija float64      `db:"dospelarealizacija" addupdate:"false"`
+	Dospece15          float64      `db:"dospece15" addupdate:"false"`
+	Dospece30          float64      `db:"dospece30" addupdate:"false"`
+	Dospece60          float64      `db:"dospece60" addupdate:"false"`
+	Dospece90          float64      `db:"dospece90" addupdate:"false"`
+	Dospece120         float64      `db:"dospece120" addupdate:"false"`
+	Dospece120Plus     float64      `db:"dospece120plus" addupdate:"false"`
+	PSTDug             float64      `db:"pstdug" addupdate:"false"`
+	PSTPot             float64      `db:"pstpot" addupdate:"false"`
+	Adresa             string       `db:"adresa" addupdate:"false"`
+	Mesto              string       `db:"mesto" addupdate:"false"`
+	Dospece            sql.NullTime `db:"dospece" addupdate:"false"`
 }
 type FproDto struct {
 	Fpro
@@ -382,8 +385,8 @@ type FproPayload struct {
 	Komid             string `form:"komid"`
 	Fispid            string `form:"fispid"`
 	IDValute          string `form:"idvalute"`
+	Rbr               int64  `form:"rbr"`
 	IDFkpl            int64
-	Rbr               int64
 	Saldo             string
 	StavkeDuguje      string
 	StavkePotrazuje   string
@@ -465,7 +468,7 @@ type DnevnikDto struct {
 
 // Fizvzag represents the "baza.fizvzag" table (bank statement header).
 type Fizvzag struct {
-	IDFizvzag  int            `db:"idfizvzag"`
+	IDFizvzag  int64          `db:"idfizvzag"`
 	God        int            `db:"god"`
 	Kar        int            `db:"kar"`
 	Konto      string         `db:"konto"`
@@ -491,7 +494,7 @@ type Fizvzag struct {
 
 // Fizvdet represents the "baza.fizvdet" table (bank statement details).
 type Fizvdet struct {
-	IDFizvdet  int            `db:"idfizvdet"`
+	IDFizvdet  int64          `db:"idfizvdet"`
 	God        int            `db:"god"`
 	Kar        int            `db:"kar"`
 	Brrac      string         `db:"brrac"`
@@ -539,34 +542,34 @@ type IzvodiParams struct {
 
 // IzvodHalcom represents a single record from the data
 type IzvodHalcom struct {
-	BrRacuna             string    // Br. računa
-	DatumObrada          time.Time // Datum obrade
-	BrIzvoda             string    // Br. izvoda
-	Valuta               string    // Valuta
-	DatumValute          time.Time // Datum valute
-	IznosZaduzenja       float64   // Iznos zaduživanja
-	IznosOdobrenja       float64   // Iznos odobrenja
-	OznakaKnjizenja      string    // Oznaka knjiženja
-	Opis                 string    // Opis
-	DatumKnjizenja       time.Time // Datum knjiženja
-	RacunPartnera        string    // Račun partnera
-	NazivPartnera        string    // Naziv partnera
-	Svrha                string    // Svrha
-	OznakaVrstePosla     string    // Oznaka vrste posla
-	PozivNaBrojOdobrenja string    // Poziv na broj odobrenja
-	PozivNaBrojZaduzenja string    // Poziv na broj zaduženja
-	ModelOdobrenja       string    // Model odobrenja
-	ModelZaduzenja       string    // Model zaduženja
-	IDNaloga             string    // ID naloga
-	VremeNastanka        string    // Vreme nastanka
-	VremePrijema         string    // Vreme prijema
-	LeviPotpisnik        string    // Levi potpisnik
-	DesniPotpisnik       string    // Desni potpisnik
-	DatumValuteNaloga    string    // Datum valute naloga
-	DatumPripreme        string    // Datum pripreme
-	TipNaloga            string    // Tip naloga
-	Hitni                string    // Hitni
-	ReferencaBanke       string    // Referenca banke
+	BrRacuna             string  // Br. računa
+	DatumObrada          string  // Datum obrade
+	BrIzvoda             string  // Br. izvoda
+	Valuta               string  // Valuta
+	DatumValute          string  // Datum valute
+	IznosZaduzenja       float64 // Iznos zaduživanja
+	IznosOdobrenja       float64 // Iznos odobrenja
+	OznakaKnjizenja      string  // Oznaka knjiženja
+	Opis                 string  // Opis
+	DatumKnjizenja       string  // Datum knjiženja
+	RacunPartnera        string  // Račun partnera
+	NazivPartnera        string  // Naziv partnera
+	Svrha                string  // Svrha
+	OznakaVrstePosla     string  // Oznaka vrste posla
+	PozivNaBrojOdobrenja string  // Poziv na broj odobrenja
+	PozivNaBrojZaduzenja string  // Poziv na broj zaduženja
+	ModelOdobrenja       string  // Model odobrenja
+	ModelZaduzenja       string  // Model zaduženja
+	IDNaloga             string  // ID naloga
+	VremeNastanka        string  // Vreme nastanka
+	VremePrijema         string  // Vreme prijema
+	LeviPotpisnik        string  // Levi potpisnik
+	DesniPotpisnik       string  // Desni potpisnik
+	DatumValuteNaloga    string  // Datum valute naloga
+	DatumPripreme        string  // Datum pripreme
+	TipNaloga            string  // Tip naloga
+	Hitni                string  // Hitni
+	ReferencaBanke       string  // Referenca banke
 }
 
 // Kir represents the "baza.kir" table (issued invoices register).
@@ -1189,9 +1192,9 @@ type SaldaParam struct {
 
 type NalogTotalValues struct {
 	HxGetURL  string
-	Duguje    float64
-	Potrazuje float64
-	Saldo     float64
+	Duguje    string
+	Potrazuje string
+	Saldo     string
 }
 
 // // FproStavkaPrint holds formatted fields for a single fpro row in the nalog print report.
@@ -1224,4 +1227,195 @@ type NalogStampaItem struct {
 	Fnal         Fnal
 	Stavke       TableData
 	KontaSummary TableData
+}
+
+// ============================================================================
+// INTESA BANK XML STRUCTURES
+// ============================================================================
+
+// StmtRsList represents the root element of bank statement XML
+type StmtRsList struct {
+	StmtRs StmtRs `xml:"stmtrs"`
+}
+
+// StmtRs represents a single statement response
+type StmtRs struct {
+	RsType        string  `xml:"rstype"`
+	Status        Status  `xml:"status"`
+	CurDef        string  `xml:"curdef"`
+	AcctID        string  `xml:"acctid"`
+	StmtNumber    string  `xml:"stmtnumber"`
+	LedgerBal     Balance `xml:"ledgerbal"`
+	AvailBal      Balance `xml:"availbal"`
+	ReservedFunds float64 `xml:"reservedfunds"`
+	TrnList       TrnList `xml:"trnlist"`
+}
+
+// Status represents the status response information
+type Status struct {
+	Code     int    `xml:"code"`
+	Severity string `xml:"severity"`
+	Details  string `xml:"details"`
+}
+
+// Balance represents account balance information
+type Balance struct {
+	BalAmt float64    `xml:"balamt"`
+	DtAsOf IntesaTime `xml:"dtasof"`
+}
+
+// TrnList represents a list of transactions
+type TrnList struct {
+	Count    int       `xml:"count,attr"`
+	StmtTrns []StmtTrn `xml:"stmttrn"`
+}
+
+// StmtTrn represents a single bank statement transaction
+type StmtTrn struct {
+	TrnType          string           `xml:"trntype"`
+	FitID            string           `xml:"fitid"`
+	TrnUID           string           `xml:"trnuid"`
+	Benefit          string           `xml:"benefit"`
+	PayeeInfo        PayeeInfo        `xml:"payeeinfo"`
+	PayeeAccountInfo PayeeAccountInfo `xml:"payeeaccountinfo"`
+	DtPosted         IntesaTime       `xml:"dtposted"`
+	TrnAmt           float64          `xml:"trnamt"`
+	Purpose          string           `xml:"purpose"`
+	PurposeCode      string           `xml:"purposecode"`
+	CurDef           string           `xml:"curdef"`
+	PayeeRefNumber   string           `xml:"payeerefnumber"`
+	TrnPlace         string           `xml:"trnplace"`
+	DtUser           IntesaTime       `xml:"dtuser"`
+	DtAvail          IntesaTime       `xml:"dtavail"`
+	RefNumber        string           `xml:"refnumber"`
+	RefModel         string           `xml:"refmodel"`
+	PayeeRefModel    string           `xml:"payeerefmodel"`
+	Urgency          string           `xml:"urgency"`
+	Fee              string           `xml:"fee"`
+	StatusInfo       StatusInfo       `xml:"statusinfo"`
+}
+
+// PayeeInfo represents information about the transaction payee
+type PayeeInfo struct {
+	Name string `xml:"name"`
+	City string `xml:"city"`
+}
+
+// PayeeAccountInfo represents payee account details
+type PayeeAccountInfo struct {
+	AcctID   string `xml:"acctid"`
+	BankID   string `xml:"bankid"`
+	BankName string `xml:"bankname"`
+}
+
+// StatusInfo represents transaction status information
+type StatusInfo struct {
+	Code       int        `xml:"code"`
+	TimePosted IntesaTime `xml:"timeposted"`
+}
+
+// ============================================================================
+// TREZOR BANK XML STRUCTURES
+// ============================================================================
+
+// TrezorDokument represents the root element of Trezor bank statement XML
+type TrezorDokument struct {
+	Zaglavlje TrezorZaglavlje `xml:"Zaglavlje"`
+	Zbirni    TrezorZbirni    `xml:"Zbirni"`
+	Stavke    []TrezorStavka  `xml:"Stavka"`
+}
+
+// TrezorZaglavlje represents the header section of Trezor statement
+type TrezorZaglavlje struct {
+	Sediste      string `xml:"Sediste"`
+	NazivSedista string `xml:"NazivSedista"`
+	DatumIzvoda  string `xml:"DatumIzvoda"`
+	TipSloga     string `xml:"TipSloga"`
+}
+
+// TrezorZbirni represents the summary section of Trezor statement
+type TrezorZbirni struct {
+	RacunIzvoda          string  `xml:"RacunIzvoda"`
+	Naziv                string  `xml:"Naziv"`
+	Mesto                string  `xml:"Mesto"`
+	BrNalogaDuguje       int     `xml:"BrNalogaDuguje"`
+	BrNalogaPotrazuje    int     `xml:"BrNalogaPotrazuje"`
+	KumulativnoDuguje    float64 `xml:"KumulativnoDuguje"`
+	KumulativnoPotrazuje float64 `xml:"KumulativnoPotrazuje"`
+	PrethodniSaldo       float64 `xml:"PrethodniSaldo"`
+	IznosDuguje          float64 `xml:"IznosDuguje"`
+	IznosPotrazuje       float64 `xml:"IznosPotrazuje"`
+	Saldo                float64 `xml:"Saldo"`
+	DatumIzvoda2         string  `xml:"DatumIzvoda"`
+	BrojIzvoda           string  `xml:"BrojIzvoda"`
+	RbrObrada            int     `xml:"RbrObrada"`
+	TipSloga2            string  `xml:"TipSloga"`
+}
+
+// TrezorStavka represents a single transaction item in Trezor statement
+type TrezorStavka struct {
+	RacunZaduzenja       string  `xml:"RacunZaduzenja"`
+	NazivZaduzenja       string  `xml:"NazivZaduzenja"`
+	MestoZaduzenja       string  `xml:"MestoZaduzenja"`
+	IzvorInformacije     string  `xml:"IzvorInformacije"`
+	ModelPozivaZaduzenja string  `xml:"ModelPozivaZaduzenja"`
+	PozivZaduzenja       string  `xml:"PozivZaduzenja"`
+	SifraPlacanja        string  `xml:"SifraPlacanja"`
+	Iznos                float64 `xml:"Iznos"`
+	RacunOdobrenja       string  `xml:"RacunOdobrenja"`
+	NazivOdobrenja       string  `xml:"NazivOdobrenja"`
+	MestoOdobrenja       string  `xml:"MestoOdobrenja"`
+	ModelPozivaOdobrenja string  `xml:"ModelPozivaOdobrenja"`
+	PozivOdobrenja       string  `xml:"PozivOdobrenja"`
+	SvrhaDoznake         string  `xml:"SvrhaDoznake"`
+	PodatakZaReklamaciju string  `xml:"PodatakZaReklamaciju"`
+	DatumValute          string  `xml:"DatumValute"`
+	NacinObracuna        string  `xml:"NacinObracuna"`
+	PrioritetNaloga      string  `xml:"PrioritetNaloga"`
+	VremeUnosa           string  `xml:"VremeUnosa"`
+	VremeIzvrsenja       string  `xml:"VremeIzvrsenja"`
+	StatusNaloga         string  `xml:"StatusNaloga"`
+	TipSloga3            string  `xml:"TipSloga"`
+}
+
+// ============================================================================
+// CUSTOM TIME TYPES FOR XML UNMARSHALING
+// ============================================================================
+
+// IntesaTime is a custom time type for Intesa bank XML format: 2026-06-30T00:00:00
+type IntesaTime time.Time
+
+// UnmarshalXML unmarshals Intesa time format (2006-01-02T15:04:05)
+func (it *IntesaTime) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	var v string
+	d.DecodeElement(&v, &start)
+
+	// Try parsing with ISO 8601 format without timezone
+	t, err := time.Parse("2006-01-02T15:04:05", v)
+	if err != nil {
+		// Try parsing with just date
+		t, err = time.Parse("2006-01-02", v)
+		if err != nil {
+			return err
+		}
+	}
+	*it = IntesaTime(t)
+	return nil
+}
+
+// TrezorDate is a custom date type for Trezor bank XML format: 08.06.2024
+type TrezorDate time.Time
+
+// UnmarshalXML unmarshals Trezor date format (02.01.2006)
+func (td *TrezorDate) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	var v string
+	d.DecodeElement(&v, &start)
+
+	// Parse DD.MM.YYYY format
+	t, err := time.Parse("02.01.2006", v)
+	if err != nil {
+		return err
+	}
+	*td = TrezorDate(t)
+	return nil
 }

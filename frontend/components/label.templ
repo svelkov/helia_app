@@ -1,0 +1,7 @@
+package components
+
+import "helia/internal/domain"
+
+templ LabelField(config domain.LabelFieldConfig) {
+	<label for={ config.ID } class={ config.ClassLabel }>{ config.LabelText }</label>
+}

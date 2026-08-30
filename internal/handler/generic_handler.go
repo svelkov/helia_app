@@ -136,7 +136,7 @@ func (h *GenericHandler[T]) confirmUpdateHandler(c *gin.Context) {
 }
 
 func (h *GenericHandler[T]) getFvrData(ctx context.Context) domain.Fvr {
-	fvr, _ := utils.GetFvrData(ctx, h.fvrRepo)
+	fvr, _ := common.GetFvrData(ctx, h.fvrRepo)
 	return fvr
 }
 

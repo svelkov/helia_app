@@ -248,7 +248,7 @@ func (s *FseppResource) GetEvidencija(ctx context.Context, tbl *domain.TableData
 			tx.Rollback()
 		}
 	}()
-	err = s.fseppRepo.UpdateCustomWithTx(ctx, tx, updateQuery, updateArgs...)
+	err = s.fseppRepo.CreateUpdateCustomWithTx(ctx, tx, updateQuery, updateArgs...)
 	if err != nil {
 		return fmt.Errorf("error updating fsepp records: %w", err)
 	}
@@ -278,7 +278,7 @@ func (s *FseppResource) GetEvidencija(ctx context.Context, tbl *domain.TableData
 			qbUpdate.AddArgs(fsepp.Osn1, fsepp.Pdv1, fsepp.Osn2, fsepp.Pdv2)
 			qbUpdate.AddEqual("fseppid", fsepp.FseppID)
 			sqlQuery, args := qbUpdate.Build()
-			err = s.fseppRepo.UpdateCustomWithTx(ctx, tx, sqlQuery, args...)
+			err = s.fseppRepo.CreateUpdateCustomWithTx(ctx, tx, sqlQuery, args...)
 			if err != nil {
 				log.Printf("error updating fsepp record: %v", err)
 			}
@@ -320,7 +320,7 @@ func (s *FseppResource) GetEvidencija(ctx context.Context, tbl *domain.TableData
 					qbUpdate.AddArgs(fsepp.Osn1, fsepp.Pdv1, fsepp.Osn2, fsepp.Pdv2)
 					qbUpdate.AddEqual("fseppid", fsepp.FseppID)
 					sqlQuery, args := qbUpdate.Build()
-					err = s.fseppRepo.UpdateCustomWithTx(ctx, tx, sqlQuery, args...)
+					err = s.fseppRepo.CreateUpdateCustomWithTx(ctx, tx, sqlQuery, args...)
 					if err != nil {
 						log.Printf("error updating fsepp record: %v", err)
 					}
@@ -362,7 +362,7 @@ func (s *FseppResource) GetEvidencija(ctx context.Context, tbl *domain.TableData
 					qbUpdate.AddArgs(fsepp.Osn1, fsepp.Pdv1, fsepp.Osn2, fsepp.Pdv2)
 					qbUpdate.AddEqual("fseppid", fsepp.FseppID)
 					sqlQuery, args := qbUpdate.Build()
-					err = s.fseppRepo.UpdateCustomWithTx(ctx, tx, sqlQuery, args...)
+					err = s.fseppRepo.CreateUpdateCustomWithTx(ctx, tx, sqlQuery, args...)
 					if err != nil {
 						log.Printf("error updating fsepp record: %v", err)
 					}
@@ -480,7 +480,7 @@ func (s *FseppResource) UpdateFsepp(ctx context.Context, tx db.Transaction, fsep
 	qbUpdate.AddArgs(fsepp.Osn1, fsepp.Pdv1, fsepp.Osn2, fsepp.Pdv2, fsepp.FseppID)
 	qbUpdate.AddEqual("fseppid", fsepp.FseppID)
 	sqlQuery, args := qbUpdate.Build()
-	err := s.fseppRepo.UpdateCustomWithTx(ctx, tx, sqlQuery, args...)
+	err := s.fseppRepo.CreateUpdateCustomWithTx(ctx, tx, sqlQuery, args...)
 	if err != nil {
 		log.Printf("error updating fsepp record: %v", err)
 	}
@@ -727,8 +727,8 @@ func (s *FseppResource) FseppSefKprImport(ctx context.Context, tbl *domain.Table
 					PDV22_KPR: 0,
 					SistemID:  getField(record, 2),
 					Status:    getField(record, 4),
-					DateV:     common.StringToDate(getField(record, 6)),
-					DateOb:    common.StringToDate(getField(record, 7)),
+					DateV:     common.StringToDate(getField(record, 6), "02.01.2006"),
+					DateOb:    common.StringToDate(getField(record, 7), "02.01.2006"),
 					OdDat:     "",
 					DoDat:     "",
 				}

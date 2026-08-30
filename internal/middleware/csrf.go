@@ -31,8 +31,8 @@ func getCsrfTokenFromSessionOrContext(c *gin.Context) (string, bool) {
 // CSRFMiddleware protects against CSRF attacks
 func CSRFMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Skip CSRF validation for public routes (login, register, static)
-		publicPaths := []string{"/login", "/register", "/frontend/static"}
+		// Skip CSRF validation for public routes (login, register, 2FA, static)
+		publicPaths := []string{"/login", "/register", "/verify-2fa", "/setup-2fa", "/frontend/static"}
 		for _, path := range publicPaths {
 			if strings.HasPrefix(c.Request.URL.Path, path) {
 				c.Next()

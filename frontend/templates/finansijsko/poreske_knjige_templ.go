@@ -9,6 +9,7 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
+	"helia/frontend/components"
 	tmpl "helia/frontend/templates"
 	"helia/i18n"
 	"helia/internal/common"
@@ -37,7 +38,7 @@ func PoreskeKnjigeMain(tabs domain.TabData, tblIzdatih domain.TableData, btnObra
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!-- Tab Content --><div id=\"tab-content\" class=\"flex flex-col h-full\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!-- Tab Content --><div id=\"tab-content\" class=\"bg-blue-100 p-1 flex flex-col h-full\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -57,7 +58,7 @@ func PoreskeKnjigeMain(tabs domain.TabData, tblIzdatih domain.TableData, btnObra
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SpinnerScript().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.SpinnerScript().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -87,7 +88,7 @@ func KnjigaIzdatihRacuna(tabs domain.TabData, tbl domain.TableData, btnObrada, b
 			templ_7745c5c3_Var2 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<!-- Container with full height --><div class=\"flex flex-col h-full\"><!-- Tab Navigation --><div class=\"border-b border-blue-600\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<!-- Container with full height --><div class=\"bg-blue-100 p-1 flex flex-col h-full\"><!-- Tab Navigation --><div class=\"border-b border-blue-600\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -99,7 +100,7 @@ func KnjigaIzdatihRacuna(tabs domain.TabData, tbl domain.TableData, btnObrada, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "knjiga",
 			LabelText:  translator.Label("Vrsta knjige računa"),
 			ClassLabel: common.ClassLabel + " w-32",
@@ -107,7 +108,7 @@ func KnjigaIzdatihRacuna(tabs domain.TabData, tbl domain.TableData, btnObrada, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.ComboBoxField(domain.ComboFieldConfig{
+		templ_7745c5c3_Err = components.ComboBoxField(domain.ComboFieldConfig{
 			ID:           "knjiga",
 			Name:         "knjiga",
 			ClassSelect:  common.ClassSelect + " w-96",
@@ -121,7 +122,7 @@ func KnjigaIzdatihRacuna(tabs domain.TabData, tbl domain.TableData, btnObrada, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "oddatuma",
 			LabelText:  translator.Label("Od datuma"),
 			ClassLabel: common.ClassLabel + " w-32",
@@ -129,7 +130,7 @@ func KnjigaIzdatihRacuna(tabs domain.TabData, tbl domain.TableData, btnObrada, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "oddatuma",
 			Name:       "oddatuma",
 			FieldType:  "date",
@@ -140,7 +141,7 @@ func KnjigaIzdatihRacuna(tabs domain.TabData, tbl domain.TableData, btnObrada, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "dodatuma",
 			LabelText:  translator.Label("Do datuma"),
 			ClassLabel: common.ClassLabel + " w-28",
@@ -148,7 +149,7 @@ func KnjigaIzdatihRacuna(tabs domain.TabData, tbl domain.TableData, btnObrada, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "dodatuma",
 			Name:       "dodatuma",
 			FieldType:  "date",
@@ -166,7 +167,7 @@ func KnjigaIzdatihRacuna(tabs domain.TabData, tbl domain.TableData, btnObrada, b
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Štampaj knjigu po nalozima"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 78, Col: 107}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 79, Col: 107}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
@@ -179,7 +180,7 @@ func KnjigaIzdatihRacuna(tabs domain.TabData, tbl domain.TableData, btnObrada, b
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Štampaj knjigu po nalozima zbirno"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 82, Col: 120}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 83, Col: 120}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
@@ -189,11 +190,11 @@ func KnjigaIzdatihRacuna(tabs domain.TabData, tbl domain.TableData, btnObrada, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.FormObradaButton(btnObrada, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.FormObradaButton(btnObrada, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Search_PartPrintButton(btnPrint).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Search_PartPrintButton(btnPrint).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -201,11 +202,11 @@ func KnjigaIzdatihRacuna(tabs domain.TabData, tbl domain.TableData, btnObrada, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Search_Part(tbl, searchInput).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Search_Part(tbl, searchInput).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -213,7 +214,7 @@ func KnjigaIzdatihRacuna(tabs domain.TabData, tbl domain.TableData, btnObrada, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -263,7 +264,7 @@ func KnjigaPrimljenihRacuna(tabs domain.TabData, tbl domain.TableData, btnObrada
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "knjiga",
 			LabelText:  translator.Label("Vrsta knjige računa"),
 			ClassLabel: common.ClassLabel + " w-32",
@@ -271,7 +272,7 @@ func KnjigaPrimljenihRacuna(tabs domain.TabData, tbl domain.TableData, btnObrada
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.ComboBoxField(domain.ComboFieldConfig{
+		templ_7745c5c3_Err = components.ComboBoxField(domain.ComboFieldConfig{
 			ID:           "knjiga",
 			Name:         "knjiga",
 			ClassSelect:  common.ClassSelect + " w-96",
@@ -285,7 +286,7 @@ func KnjigaPrimljenihRacuna(tabs domain.TabData, tbl domain.TableData, btnObrada
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "oddatuma",
 			LabelText:  translator.Label("Od datuma"),
 			ClassLabel: common.ClassLabel + " w-32",
@@ -293,7 +294,7 @@ func KnjigaPrimljenihRacuna(tabs domain.TabData, tbl domain.TableData, btnObrada
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "oddatuma",
 			Name:       "oddatuma",
 			FieldType:  "date",
@@ -304,7 +305,7 @@ func KnjigaPrimljenihRacuna(tabs domain.TabData, tbl domain.TableData, btnObrada
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "dodatuma",
 			LabelText:  translator.Label("Do datuma"),
 			ClassLabel: common.ClassLabel + " w-28",
@@ -312,7 +313,7 @@ func KnjigaPrimljenihRacuna(tabs domain.TabData, tbl domain.TableData, btnObrada
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "dodatuma",
 			Name:       "dodatuma",
 			FieldType:  "date",
@@ -327,11 +328,11 @@ func KnjigaPrimljenihRacuna(tabs domain.TabData, tbl domain.TableData, btnObrada
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.FormObradaButton(btnObrada, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.FormObradaButton(btnObrada, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Search_PartPrintButton(btnPrint).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Search_PartPrintButton(btnPrint).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -339,11 +340,11 @@ func KnjigaPrimljenihRacuna(tabs domain.TabData, tbl domain.TableData, btnObrada
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Search_Part(tbl, searchInput).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Search_Part(tbl, searchInput).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -351,7 +352,7 @@ func KnjigaPrimljenihRacuna(tabs domain.TabData, tbl domain.TableData, btnObrada
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -401,7 +402,7 @@ func PoreskaPrijava(tabs domain.TabData, data domain.PoreskaPrijavaData, btnObra
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "oddatuma",
 			LabelText:  translator.Label("Od datuma"),
 			ClassLabel: common.ClassLabel + " w-28",
@@ -409,7 +410,7 @@ func PoreskaPrijava(tabs domain.TabData, data domain.PoreskaPrijavaData, btnObra
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "oddatuma",
 			Name:       "oddatuma",
 			FieldType:  "date",
@@ -421,7 +422,7 @@ func PoreskaPrijava(tabs domain.TabData, data domain.PoreskaPrijavaData, btnObra
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "dodatuma",
 			LabelText:  translator.Label("Do datuma"),
 			ClassLabel: common.ClassLabel + " w-28",
@@ -429,7 +430,7 @@ func PoreskaPrijava(tabs domain.TabData, data domain.PoreskaPrijavaData, btnObra
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "dodatuma",
 			Name:       "dodatuma",
 			FieldType:  "date",
@@ -445,11 +446,11 @@ func PoreskaPrijava(tabs domain.TabData, data domain.PoreskaPrijavaData, btnObra
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.FormObradaButton(btnObrada, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.FormObradaButton(btnObrada, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Search_PartPrintButton(btnPrint).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Search_PartPrintButton(btnPrint).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -494,7 +495,7 @@ func PoreskaPrijavaForm(data domain.PoreskaPrijavaData, translator *i18n.Service
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "pdv001",
 			Name:       "pdv001",
 			FieldType:  "text",
@@ -510,7 +511,7 @@ func PoreskaPrijavaForm(data domain.PoreskaPrijavaData, translator *i18n.Service
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "pdv103",
 			Name:       "pdv103",
 			FieldType:  "text",
@@ -526,7 +527,7 @@ func PoreskaPrijavaForm(data domain.PoreskaPrijavaData, translator *i18n.Service
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "pdv002",
 			Name:       "pdv002",
 			FieldType:  "text",
@@ -542,7 +543,7 @@ func PoreskaPrijavaForm(data domain.PoreskaPrijavaData, translator *i18n.Service
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "pdv003",
 			Name:       "pdv003",
 			FieldType:  "text",
@@ -558,7 +559,7 @@ func PoreskaPrijavaForm(data domain.PoreskaPrijavaData, translator *i18n.Service
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "pdv104",
 			Name:       "pdv104",
 			FieldType:  "text",
@@ -574,7 +575,7 @@ func PoreskaPrijavaForm(data domain.PoreskaPrijavaData, translator *i18n.Service
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "pdv004",
 			Name:       "pdv004",
 			FieldType:  "text",
@@ -590,7 +591,7 @@ func PoreskaPrijavaForm(data domain.PoreskaPrijavaData, translator *i18n.Service
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "pdv005",
 			Name:       "pdv005",
 			FieldType:  "text",
@@ -606,7 +607,7 @@ func PoreskaPrijavaForm(data domain.PoreskaPrijavaData, translator *i18n.Service
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "pdv105",
 			Name:       "pdv105",
 			FieldType:  "text",
@@ -622,7 +623,7 @@ func PoreskaPrijavaForm(data domain.PoreskaPrijavaData, translator *i18n.Service
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "pdv006",
 			Name:       "pdv006",
 			FieldType:  "text",
@@ -638,7 +639,7 @@ func PoreskaPrijavaForm(data domain.PoreskaPrijavaData, translator *i18n.Service
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "pdv106",
 			Name:       "pdv106",
 			FieldType:  "text",
@@ -654,7 +655,7 @@ func PoreskaPrijavaForm(data domain.PoreskaPrijavaData, translator *i18n.Service
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "pdv007",
 			Name:       "pdv007",
 			FieldType:  "text",
@@ -670,7 +671,7 @@ func PoreskaPrijavaForm(data domain.PoreskaPrijavaData, translator *i18n.Service
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "pdv107",
 			Name:       "pdv107",
 			FieldType:  "text",
@@ -686,7 +687,7 @@ func PoreskaPrijavaForm(data domain.PoreskaPrijavaData, translator *i18n.Service
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "pdv008",
 			Name:       "pdv008",
 			FieldType:  "text",
@@ -702,7 +703,7 @@ func PoreskaPrijavaForm(data domain.PoreskaPrijavaData, translator *i18n.Service
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "pdv108",
 			Name:       "pdv108",
 			FieldType:  "text",
@@ -718,7 +719,7 @@ func PoreskaPrijavaForm(data domain.PoreskaPrijavaData, translator *i18n.Service
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "pdv009",
 			Name:       "pdv009",
 			FieldType:  "text",
@@ -734,7 +735,7 @@ func PoreskaPrijavaForm(data domain.PoreskaPrijavaData, translator *i18n.Service
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "pdv109",
 			Name:       "pdv109",
 			FieldType:  "text",
@@ -750,7 +751,7 @@ func PoreskaPrijavaForm(data domain.PoreskaPrijavaData, translator *i18n.Service
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "pdv110",
 			Name:       "pdv110",
 			FieldType:  "text",
@@ -799,7 +800,7 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(dlg.Id)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 568, Col: 17}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 569, Col: 17}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
@@ -812,7 +813,7 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Title("Unos podataka - Knjiga izdatih računa"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 572, Col: 103}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 573, Col: 103}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
@@ -822,7 +823,7 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.CloseButton(btnClose).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.CloseButton(btnClose).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -838,7 +839,7 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 			var templ_7745c5c3_Var11 string
 			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(btnSave.HxActionURL)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 579, Col: 33}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 580, Col: 33}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {
@@ -857,7 +858,7 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 			var templ_7745c5c3_Var12 string
 			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(btnSave.HxActionURL)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 583, Col: 34}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 584, Col: 34}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 			if templ_7745c5c3_Err != nil {
@@ -875,7 +876,7 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		var templ_7745c5c3_Var13 string
 		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(csrfToken)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 590, Col: 55}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 591, Col: 55}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 		if templ_7745c5c3_Err != nil {
@@ -888,7 +889,7 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		var templ_7745c5c3_Var14 string
 		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Vrste knjige izlaznih računa"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 595, Col: 128}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 596, Col: 128}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 		if templ_7745c5c3_Err != nil {
@@ -898,7 +899,7 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "knjiga",
 			LabelText:  translator.Label("Vrsta knjige računa"),
 			ClassLabel: common.ClassLabel + " w-32",
@@ -906,7 +907,7 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.ComboBoxField(domain.ComboFieldConfig{
+		templ_7745c5c3_Err = components.ComboBoxField(domain.ComboFieldConfig{
 			ID:           "knjiga",
 			Name:         "knjiga",
 			ClassSelect:  common.ClassSelectDisabled + " w-96 no-focus ring-0 cursor-not-allowed",
@@ -924,7 +925,7 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		var templ_7745c5c3_Var15 string
 		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Maloprodaja"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 616, Col: 100}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 617, Col: 100}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 		if templ_7745c5c3_Err != nil {
@@ -937,7 +938,7 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		var templ_7745c5c3_Var16 string
 		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Podaci o izdatom računu"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 622, Col: 123}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 623, Col: 123}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 		if templ_7745c5c3_Err != nil {
@@ -947,7 +948,7 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "vkrbr",
 			LabelText:  translator.Label("Redni broj"),
 			ClassLabel: "w-36",
@@ -955,7 +956,7 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "vkrbr",
 			Name:       "vkrbr",
 			FieldType:  "text",
@@ -971,7 +972,7 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "tipdok",
 			LabelText:  translator.Label("Vrsta naloga za knjiženje"),
 			ClassLabel: "w-44",
@@ -979,7 +980,7 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.ComboBoxField(domain.ComboFieldConfig{
+		templ_7745c5c3_Err = components.ComboBoxField(domain.ComboFieldConfig{
 			ID:           "tipdok",
 			Name:         "tipdok",
 			ClassSelect:  common.ClassSelectEnabled + " flex-1",
@@ -993,7 +994,7 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "dknjiz",
 			LabelText:  translator.Label("Datum knjiženja"),
 			ClassLabel: "w-36",
@@ -1001,7 +1002,7 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "dknjiz",
 			Name:       "dknjiz",
 			FieldType:  "date",
@@ -1017,7 +1018,7 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "nalog",
 			LabelText:  translator.Label("Broj naloga"),
 			ClassLabel: "w-44",
@@ -1025,7 +1026,7 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:               "nalog",
 			Name:             "nalog",
 			FieldType:        "text",
@@ -1045,7 +1046,7 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "kracun",
 			LabelText:  translator.Label("Broj fakture"),
 			ClassLabel: "w-36",
@@ -1053,7 +1054,7 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "kracun",
 			Name:       "kracun",
 			FieldType:  "text",
@@ -1069,7 +1070,7 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "dizd",
 			LabelText:  translator.Label("Datum izdavanja fakture"),
 			ClassLabel: "w-44 mr-5",
@@ -1077,7 +1078,7 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "dizd",
 			Name:       "dizd",
 			FieldType:  "date",
@@ -1093,7 +1094,7 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "datprometa",
 			LabelText:  translator.Label("Datum prometa"),
 			ClassLabel: "w-36",
@@ -1101,7 +1102,7 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "datprometa",
 			Name:       "datprometa",
 			FieldType:  "date",
@@ -1117,7 +1118,7 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "konto",
 			LabelText:  translator.Label("Konto kupca"),
 			ClassLabel: "w-36",
@@ -1125,7 +1126,7 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "konto",
 			Name:       "konto",
 			FieldType:  "text",
@@ -1143,7 +1144,7 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "sifra",
 			LabelText:  translator.Label("Analitička šifra"),
 			ClassLabel: common.ClassLabel + " w-44 mr-1",
@@ -1151,7 +1152,7 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:           "sifra",
 			Name:         "sifra",
 			FieldType:    "text",
@@ -1170,7 +1171,7 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SearchButton(domain.SearchButtonConfig{
+		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
 			ID:          "sifra",
 			Name:        "search-sifra",
 			HxUrl:       "/api/promet/searchbutton",
@@ -1182,7 +1183,7 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "sifranaziv",
 			Name:       "sifranaziv",
 			FieldType:  "text",
@@ -1196,7 +1197,7 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "naziv",
 			LabelText:  translator.Label("Naziv kupca"),
 			ClassLabel: " w-36",
@@ -1204,7 +1205,7 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "naziv",
 			Name:       "naziv",
 			FieldType:  "text",
@@ -1219,7 +1220,7 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "pib",
 			LabelText:  translator.Label("PIB"),
 			ClassLabel: " w-12",
@@ -1227,7 +1228,7 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "pib",
 			Name:       "pib",
 			FieldType:  "text",
@@ -1242,7 +1243,7 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "adresa",
 			LabelText:  translator.Label("Adresa"),
 			ClassLabel: "w-36",
@@ -1250,7 +1251,7 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "adresa",
 			Name:       "adresa",
 			FieldType:  "text",
@@ -1265,7 +1266,7 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "pobroj",
 			LabelText:  translator.Label("Poštanski broj"),
 			ClassLabel: "w-24",
@@ -1273,7 +1274,7 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "pobroj",
 			Name:       "pobroj",
 			FieldType:  "text",
@@ -1288,7 +1289,7 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "mesto",
 			LabelText:  translator.Label("Mesto"),
 			ClassLabel: "w-16",
@@ -1296,7 +1297,7 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "mesto",
 			Name:       "mesto",
 			FieldType:  "text",
@@ -1314,7 +1315,7 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		var templ_7745c5c3_Var17 string
 		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Ukupan iznos sa PDV-om"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 897, Col: 121}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 898, Col: 121}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 		if templ_7745c5c3_Err != nil {
@@ -1324,11 +1325,17 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{ID: "iznsapdv", LabelText: translator.Label("Iznos sa PDV"), ClassLabel: "flex-1 min-w-0"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "iznsapdv", LabelText: translator.Label("Iznos sa PDV"), ClassLabel: "flex-1 min-w-0"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{ID: "iznsapdv", Name: "iznsapdv", Value: "0.00", ClassInput: common.ClassInputTextEnabled + " w-40 shrink-0 text-right", DecimalPlaces: 2, TabIndex: "15"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
+			ID:            "iznsapdv",
+			Name:          "iznsapdv",
+			FieldType:     "number",
+			Value:         "0.00",
+			ClassInput:    common.ClassInputTextEnabled + " w-40 shrink-0 text-right",
+			DecimalPlaces: 2, TabIndex: "15"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1339,7 +1346,7 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		var templ_7745c5c3_Var18 string
 		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Oslobođeni promet"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 908, Col: 117}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 915, Col: 117}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
@@ -1349,11 +1356,11 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{ID: "oslobcl24", LabelText: translator.Label("odbitak_cl24"), ClassLabel: "flex-1 min-w-0"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "oslobcl24", LabelText: translator.Label("odbitak_cl24"), ClassLabel: "flex-1 min-w-0"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{ID: "oslobcl24", Name: "oslobcl24", Value: "0.00", ClassInput: common.ClassInputTextEnabled + " w-40 shrink-0 text-right", DecimalPlaces: 2, TabIndex: "16"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "oslobcl24", FieldType: "number", Name: "oslobcl24", Value: "0.00", ClassInput: common.ClassInputTextEnabled + " w-40 shrink-0 text-right", DecimalPlaces: 2, TabIndex: "16"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1361,11 +1368,11 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{ID: "oslobcl25", LabelText: translator.Label("odbitak_cl25"), ClassLabel: "flex-1 min-w-0"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "oslobcl25", LabelText: translator.Label("odbitak_cl25"), ClassLabel: "flex-1 min-w-0"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{ID: "oslobcl25", Name: "oslobcl25", Value: "0.00", ClassInput: common.ClassInputTextEnabled + " w-40 shrink-0 text-right", DecimalPlaces: 2, TabIndex: "17"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "oslobcl25", FieldType: "number", Name: "oslobcl25", Value: "0.00", ClassInput: common.ClassInputTextEnabled + " w-40 shrink-0 text-right", DecimalPlaces: 2, TabIndex: "17"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1376,7 +1383,7 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		var templ_7745c5c3_Var19 string
 		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Promet u inostranstvu"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 924, Col: 120}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 931, Col: 120}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 		if templ_7745c5c3_Err != nil {
@@ -1386,11 +1393,11 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{ID: "izvozsapr", LabelText: translator.Label("Promet u inostranstvu sa pravom odbitka"), ClassLabel: "flex-1 min-w-0"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "izvozsapr", LabelText: translator.Label("Promet u inostranstvu sa pravom odbitka"), ClassLabel: "flex-1 min-w-0"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{ID: "izvozsapr", Name: "izvozsapr", Value: "0.00", ClassInput: common.ClassInputTextEnabled + " w-40 shrink-0 text-right", DecimalPlaces: 2, TabIndex: "18"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "izvozsapr", FieldType: "number", Name: "izvozsapr", Value: "0.00", ClassInput: common.ClassInputTextEnabled + " w-40 shrink-0 text-right", DecimalPlaces: 2, TabIndex: "18"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1398,11 +1405,11 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{ID: "izvozbezpr", LabelText: translator.Label("Promet u inostranstvu bez prava odbitka"), ClassLabel: "flex-1 min-w-0"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "izvozbezpr", LabelText: translator.Label("Promet u inostranstvu bez prava odbitka"), ClassLabel: "flex-1 min-w-0"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{ID: "izvozbezpr", Name: "izvozbezpr", Value: "0.00", ClassInput: common.ClassInputTextEnabled + " w-40 shrink-0 text-right", DecimalPlaces: 2, TabIndex: "19"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "izvozbezpr", FieldType: "number", Name: "izvozbezpr", Value: "0.00", ClassInput: common.ClassInputTextEnabled + " w-40 shrink-0 text-right", DecimalPlaces: 2, TabIndex: "19"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1413,7 +1420,7 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		var templ_7745c5c3_Var20 string
 		templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Oporezivi promet"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 940, Col: 115}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 947, Col: 115}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 		if templ_7745c5c3_Err != nil {
@@ -1423,11 +1430,11 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{ID: "osn1", LabelText: translator.Label("Osnovica po opštoj stopi"), ClassLabel: "flex-1 min-w-0"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "osn1", LabelText: translator.Label("Osnovica po opštoj stopi"), ClassLabel: "flex-1 min-w-0"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{ID: "osn1", Name: "osn1", Value: "0.00", ClassInput: common.ClassInputTextEnabled + " w-40 shrink-0 text-right", DecimalPlaces: 2, TabIndex: "20"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "osn1", FieldType: "number", Name: "osn1", Value: "0.00", ClassInput: common.ClassInputTextEnabled + " w-40 shrink-0 text-right", DecimalPlaces: 2, TabIndex: "20"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1435,11 +1442,11 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{ID: "pdv1", LabelText: translator.Label("PDV opšta stopa"), ClassLabel: "flex-1 min-w-0"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "pdv1", LabelText: translator.Label("PDV opšta stopa"), ClassLabel: "flex-1 min-w-0"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{ID: "pdv1", Name: "pdv1", Value: "0.00", ClassInput: common.ClassInputTextEnabled + " w-40 shrink-0 text-right", DecimalPlaces: 2, TabIndex: "21"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "pdv1", FieldType: "number", Name: "pdv1", Value: "0.00", ClassInput: common.ClassInputTextEnabled + " w-40 shrink-0 text-right", DecimalPlaces: 2, TabIndex: "21"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1447,11 +1454,11 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{ID: "osn1", LabelText: translator.Label("Osnovica po posebnoj stopi"), ClassLabel: "flex-1 min-w-0"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "osn1", LabelText: translator.Label("Osnovica po posebnoj stopi"), ClassLabel: "flex-1 min-w-0"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{ID: "osn1", Name: "osn1", Value: "0.00", ClassInput: common.ClassInputTextEnabled + " w-40 shrink-0 text-right", DecimalPlaces: 2, TabIndex: "22"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "osn1", FieldType: "number", Name: "osn1", Value: "0.00", ClassInput: common.ClassInputTextEnabled + " w-40 shrink-0 text-right", DecimalPlaces: 2, TabIndex: "22"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1459,11 +1466,11 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{ID: "pdv2", LabelText: translator.Label("PDV posebna stopa"), ClassLabel: "flex-1 min-w-0"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "pdv2", LabelText: translator.Label("PDV posebna stopa"), ClassLabel: "flex-1 min-w-0"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{ID: "pdv2", Name: "pdv2", Value: "0.00", ClassInput: common.ClassInputTextEnabled + " w-40 shrink-0 text-right", DecimalPlaces: 2, TabIndex: "23"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "pdv2", FieldType: "number", Name: "pdv2", Value: "0.00", ClassInput: common.ClassInputTextEnabled + " w-40 shrink-0 text-right", DecimalPlaces: 2, TabIndex: "23"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1474,7 +1481,7 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		var templ_7745c5c3_Var21 string
 		templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Ukupan promet"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 966, Col: 112}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 973, Col: 112}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 		if templ_7745c5c3_Err != nil {
@@ -1484,11 +1491,11 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{ID: "prom1", LabelText: translator.Label("ukupan_promet_1"), ClassLabel: "flex-1 min-w-0"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "prom1", LabelText: translator.Label("ukupan_promet_1"), ClassLabel: "flex-1 min-w-0"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{ID: "prom1", Name: "prom1", Value: "0.00", ClassInput: common.ClassInputTextEnabled + " w-40 shrink-0 text-right font-bold", DecimalPlaces: 2, TabIndex: "24", Disabled: true}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "prom1", FieldType: "number", Name: "prom1", Value: "0.00", ClassInput: common.ClassInputTextEnabled + " w-40 shrink-0 text-right font-bold", DecimalPlaces: 2, TabIndex: "24", Disabled: true}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1496,11 +1503,11 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{ID: "prom2", LabelText: translator.Label("ukupan_promet_2"), ClassLabel: "flex-1 min-w-0"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "prom2", LabelText: translator.Label("ukupan_promet_2"), ClassLabel: "flex-1 min-w-0"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{ID: "prom2", Name: "prom2", Value: "0.00", ClassInput: common.ClassInputTextEnabled + " w-40 shrink-0 text-right font-bold", DecimalPlaces: 2, TabIndex: "25", Disabled: true}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "prom2", FieldType: "number", Name: "prom2", Value: "0.00", ClassInput: common.ClassInputTextEnabled + " w-40 shrink-0 text-right font-bold", DecimalPlaces: 2, TabIndex: "25", Disabled: true}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1508,11 +1515,11 @@ func DialogKirUnos(dlg domain.Dialog, knjigaValues, tipdokValues []domain.ComboI
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.ConfirmButton(btnSave, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.ConfirmButton(btnSave, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.CancelButton(btnCancel, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.CancelButton(btnCancel, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1585,7 +1592,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		var templ_7745c5c3_Var23 string
 		templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Title("Unos podataka - Knjiga primljenih računa"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 1007, Col: 106}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 1014, Col: 106}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 		if templ_7745c5c3_Err != nil {
@@ -1598,7 +1605,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		var templ_7745c5c3_Var24 string
 		templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Vrste knjige ulaznih računa"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 1018, Col: 126}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 1025, Col: 126}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 		if templ_7745c5c3_Err != nil {
@@ -1608,7 +1615,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "knjiga",
 			LabelText:  translator.Label("Vrsta knjige računa"),
 			ClassLabel: common.ClassLabel + " w-32",
@@ -1616,7 +1623,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.ComboBoxField(domain.ComboFieldConfig{
+		templ_7745c5c3_Err = components.ComboBoxField(domain.ComboFieldConfig{
 			ID:           "knjiga",
 			Name:         "knjiga",
 			ClassSelect:  common.ClassSelect + " w-96",
@@ -1633,7 +1640,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		var templ_7745c5c3_Var25 string
 		templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Interni račun"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 1038, Col: 103}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 1045, Col: 103}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
 		if templ_7745c5c3_Err != nil {
@@ -1646,7 +1653,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		var templ_7745c5c3_Var26 string
 		templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Osnovni podaci"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 1044, Col: 112}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 1051, Col: 112}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
 		if templ_7745c5c3_Err != nil {
@@ -1656,7 +1663,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "redbroj",
 			LabelText:  translator.Label("Redni broj"),
 			ClassLabel: "w-36",
@@ -1664,7 +1671,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "redbroj",
 			Name:       "redbroj",
 			FieldType:  "text",
@@ -1678,7 +1685,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "vrstanaloga",
 			LabelText:  translator.Label("Vrsta naloga"),
 			ClassLabel: "w-44",
@@ -1686,7 +1693,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "vrstanaloga",
 			Name:       "vrstanaloga",
 			FieldType:  "text",
@@ -1700,7 +1707,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "dknjiz",
 			LabelText:  translator.Label("Datum knjiženja"),
 			ClassLabel: "w-36",
@@ -1708,7 +1715,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "dknjiz",
 			Name:       "dknjiz",
 			FieldType:  "date",
@@ -1722,7 +1729,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "brojnaloga",
 			LabelText:  translator.Label("Broj naloga"),
 			ClassLabel: "w-44",
@@ -1730,7 +1737,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "brojnaloga",
 			Name:       "brojnaloga",
 			FieldType:  "text",
@@ -1744,7 +1751,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "brdokumenta",
 			LabelText:  translator.Label("Broj dokumenta"),
 			ClassLabel: "w-36",
@@ -1752,7 +1759,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "brdokumenta",
 			Name:       "brdokumenta",
 			FieldType:  "text",
@@ -1766,7 +1773,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "dizd",
 			LabelText:  translator.Label("Datum izdavanja"),
 			ClassLabel: "w-44 mr-5",
@@ -1774,7 +1781,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "dizd",
 			Name:       "dizd",
 			FieldType:  "date",
@@ -1788,7 +1795,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "datprometa",
 			LabelText:  translator.Label("Datum prometa"),
 			ClassLabel: "w-36",
@@ -1796,7 +1803,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "datprometa",
 			Name:       "datprometa",
 			FieldType:  "date",
@@ -1810,7 +1817,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "kontodobavljaca",
 			LabelText:  translator.Label("Konto dobavljača"),
 			ClassLabel: "w-36",
@@ -1818,7 +1825,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "kontodobavljaca",
 			Name:       "kontodobavljaca",
 			FieldType:  "text",
@@ -1834,7 +1841,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "analiticka",
 			LabelText:  translator.Label("Analitička šifra"),
 			ClassLabel: "w-44 mr-1",
@@ -1842,7 +1849,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "analiticka",
 			Name:       "analiticka",
 			FieldType:  "text",
@@ -1854,7 +1861,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SearchButton(domain.SearchButtonConfig{
+		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
 			ID:          "konto",
 			Name:        "search-konto",
 			HxUrl:       "/api/promet/searchbutton",
@@ -1870,7 +1877,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "naziv",
 			LabelText:  translator.Label("Naziv dobavljača"),
 			ClassLabel: " w-36",
@@ -1878,7 +1885,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "naziv",
 			Name:       "naziv",
 			FieldType:  "text",
@@ -1893,7 +1900,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "pib",
 			LabelText:  translator.Label("PIB"),
 			ClassLabel: " w-12",
@@ -1901,7 +1908,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "pib",
 			Name:       "pib",
 			FieldType:  "text",
@@ -1916,7 +1923,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "adresa",
 			LabelText:  translator.Label("Adresa"),
 			ClassLabel: "w-36",
@@ -1924,7 +1931,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "adresa",
 			Name:       "adresa",
 			FieldType:  "text",
@@ -1939,7 +1946,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "pobroj",
 			LabelText:  translator.Label("Poštanski broj"),
 			ClassLabel: "w-24",
@@ -1947,7 +1954,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "pobroj",
 			Name:       "pobroj",
 			FieldType:  "text",
@@ -1962,7 +1969,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "mesto",
 			LabelText:  translator.Label("Mesto"),
 			ClassLabel: "w-16",
@@ -1970,7 +1977,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "mesto",
 			Name:       "mesto",
 			FieldType:  "text",
@@ -1988,7 +1995,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		var templ_7745c5c3_Var27 string
 		templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Podaci o PDV, ukupnim iznosima"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 1288, Col: 128}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 1295, Col: 128}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
 		if templ_7745c5c3_Err != nil {
@@ -1998,7 +2005,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "iznsapdv",
 			LabelText:  translator.Label("Iznos sa PDV"),
 			ClassLabel: "w-96",
@@ -2006,10 +2013,11 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:            "iznsapdv",
 			Name:          "iznsapdv",
 			Value:         "0.00",
+			FieldType:     "number",
 			ClassInput:    common.ClassInputTextEnabled + " w-32 text-right",
 			DecimalPlaces: 2,
 			TabIndex:      "15",
@@ -2021,7 +2029,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "iznoslob",
 			LabelText:  translator.Label("Iznos oslobođen"),
 			ClassLabel: "w-96",
@@ -2029,12 +2037,13 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:            "iznoslob",
 			Name:          "iznoslob",
 			Value:         "0.00",
 			ClassInput:    common.ClassInputTextEnabled + " w-32 text-right",
 			DecimalPlaces: 2,
+			FieldType:     "number",
 			TabIndex:      "16",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
@@ -2044,7 +2053,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "nisuobvpdv",
 			LabelText:  translator.Label("Nisu obavezni PDV"),
 			ClassLabel: "w-96",
@@ -2052,12 +2061,13 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:            "nisuobvpdv",
 			Name:          "nisuobvpdv",
 			Value:         "0.00",
 			ClassInput:    common.ClassInputTextEnabled + " w-32 text-right",
 			DecimalPlaces: 2,
+			FieldType:     "number",
 			TabIndex:      "17",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
@@ -2067,7 +2077,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "uvozbezpdv",
 			LabelText:  translator.Label("Uvoz bez PDV"),
 			ClassLabel: "w-96",
@@ -2075,12 +2085,13 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:            "uvozbezpdv",
 			Name:          "uvozbezpdv",
 			Value:         "0.00",
 			ClassInput:    common.ClassInputTextEnabled + " w-32 text-right",
 			DecimalPlaces: 2,
+			FieldType:     "number",
 			TabIndex:      "18",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
@@ -2093,7 +2104,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		var templ_7745c5c3_Var28 string
 		templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Prethodni porez"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 1362, Col: 113}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/poreske_knjige.templ`, Line: 1373, Col: 113}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
 		if templ_7745c5c3_Err != nil {
@@ -2103,7 +2114,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "pretpdv",
 			LabelText:  translator.Label("Prethodni PDV"),
 			ClassLabel: "w-96",
@@ -2111,11 +2122,12 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:            "pretpdv",
 			Name:          "pretpdv",
 			Value:         "0.00",
 			ClassInput:    common.ClassInputTextEnabled + " w-32 text-right",
+			FieldType:     "number",
 			DecimalPlaces: 2,
 			TabIndex:      "19",
 		}).Render(ctx, templ_7745c5c3_Buffer)
@@ -2126,7 +2138,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "pretpdv1",
 			LabelText:  translator.Label("Prethodni PDV 1"),
 			ClassLabel: "w-96",
@@ -2134,11 +2146,12 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:            "pretpdv1",
 			Name:          "pretpdv1",
 			Value:         "0.00",
 			ClassInput:    common.ClassInputTextEnabled + " w-32 text-right",
+			FieldType:     "number",
 			DecimalPlaces: 2,
 			TabIndex:      "20",
 		}).Render(ctx, templ_7745c5c3_Buffer)
@@ -2149,7 +2162,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "pretpdv2",
 			LabelText:  translator.Label("Prethodni PDV 2"),
 			ClassLabel: "w-96",
@@ -2157,11 +2170,12 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:            "pretpdv2",
 			Name:          "pretpdv2",
 			Value:         "0.00",
 			ClassInput:    common.ClassInputTextEnabled + " w-32 text-right",
+			FieldType:     "number",
 			DecimalPlaces: 2,
 			TabIndex:      "21",
 		}).Render(ctx, templ_7745c5c3_Buffer)
@@ -2172,7 +2186,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "uvozpdv",
 			LabelText:  translator.Label("Uvoz PDV"),
 			ClassLabel: "w-96",
@@ -2180,11 +2194,12 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:            "uvozpdv",
 			Name:          "uvozpdv",
 			Value:         "0.00",
 			ClassInput:    common.ClassInputTextEnabled + " w-32 text-right",
+			FieldType:     "number",
 			DecimalPlaces: 2,
 			TabIndex:      "22",
 		}).Render(ctx, templ_7745c5c3_Buffer)
@@ -2195,7 +2210,7 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "poljvred",
 			LabelText:  translator.Label("Polje vrednost"),
 			ClassLabel: "w-96",
@@ -2203,11 +2218,12 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:            "poljvred",
 			Name:          "poljvred",
 			Value:         "0.00",
 			ClassInput:    common.ClassInputTextEnabled + " w-32 text-right",
+			FieldType:     "number",
 			DecimalPlaces: 2,
 			TabIndex:      "23",
 		}).Render(ctx, templ_7745c5c3_Buffer)
@@ -2218,11 +2234,11 @@ func DialogKprUnos(knjigaValues, tipdokValues []domain.ComboItem, btnSave, btnCa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SaveButton(btnSave, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.SaveButton(btnSave, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.CancelButton(btnCancel, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.CancelButton(btnCancel, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

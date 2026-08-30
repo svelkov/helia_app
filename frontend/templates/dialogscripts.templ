@@ -1,6 +1,6 @@
 package templates
 
-templ HandleDialogResponseScript(dialogName string) {
+templ HandleDialogResponseScript() {
 	<script>
 		function handleDialogResponse(dialogName) {
 			try {
@@ -56,7 +56,9 @@ templ HandleDialogResponseScript(dialogName string) {
 				// Handle success response
 				if (response.success) {
 					showMessage(response.message);
-					closeDialog(dialogName);
+					setTimeout(() => {
+						closeDialog(dialogName);
+					}, 3000);
 					return;
 				}
 				
@@ -77,6 +79,7 @@ templ HandleDialogResponseScript(dialogName string) {
 templ HandleBackendResponseScript() {
 	<script>
 		function handleBackendResponse() {
+			console.log("handleBackendResponse:", event.detail);
 			try {
 				// Get the response text from the backend
 				const responseText = event.detail.xhr.responseText;
@@ -141,20 +144,18 @@ templ HandleBackendResponseScript() {
 	</script>
 }
 
-
 templ ClearFormScript() {
 	<script>
-		function clearForm(formId = 'nalog-stavke-form') {
+		function clearForm(formId = 'nalog-stavke-dialog-form') {
 			console.log("Clearing form fields and errors...");
 			btnCancel = document.getElementById('btn-stavke-cancel');
-			console.log("btnCancel element:", btnCancel);
 			if (btnCancel) {
 				btnCancel.disabled = true;
 				btnCancel.classList.add('opacity-50', 'cursor-not-allowed');
 			}
 			const form = document.getElementById(formId);
 			if (!form) return;
-			form.querySelectorAll('input').forEach(input => {
+			form.querySelectorAll('input:not([name="_csrf"])').forEach(input => {
 				input.value = '';
 				input.classList.remove('border-red-500');
 			});
@@ -378,33 +379,32 @@ templ HandleDblClickKontoSelectionScript() {
 	</script>
 }
 
-templ RestrictNumericInput() {
-	<script>
-		function restrictNumericInput(el, maxDecimals) {
-			maxDecimals = (maxDecimals !== undefined) ? maxDecimals
-				: (parseInt(el.getAttribute('data-decimals')) || 4);
-			const sep = (1.1).toLocaleString().replace(/[0-9]/g, '')[0] || '.';
-			const other = sep === '.' ? ',' : '.';
-			let v = el.value;
-			// predznak minus samo na pocetku i samo jednom
-			const neg = v.startsWith('-');
-			v = v.replace(/-/g, '');
-			// zadrzati samo cifre i separatore
-			v = v.replace(/[^0-9.,]/g, '');
-			// ukloniti suprotni separator
-			v = v.replace(new RegExp('\\' + other, 'g'), '');
-			// samo jedan decimalni separator
-			const idx = v.indexOf(sep);
-			if (idx !== -1) {
-				const decimals = v.substring(idx + 1).replace(new RegExp('\\' + sep, 'g'), '');
-				v = v.substring(0, idx + 1) + decimals.substring(0, maxDecimals);
-			}
-			if (neg) v = '-' + v;
-			el.value = v;
-		}
-	</script>
-}
-
+// templ RestrictNumericInput() {
+// 	<script>
+// 		function restrictNumericInput(el, maxDecimals) {
+// 			maxDecimals = (maxDecimals !== undefined) ? maxDecimals
+// 				: (parseInt(el.getAttribute('data-decimals')) || 4);
+// 			const sep = (1.1).toLocaleString().replace(/[0-9]/g, '')[0] || '.';
+// 			const other = sep === '.' ? ',' : '.';
+// 			let v = el.value;
+// 			// predznak minus samo na pocetku i samo jednom
+// 			const neg = v.startsWith('-');
+// 			v = v.replace(/-/g, '');
+// 			// zadrzati samo cifre i separatore
+// 			v = v.replace(/[^0-9.,]/g, '');
+// 			// ukloniti suprotni separator
+// 			v = v.replace(new RegExp('\\' + other, 'g'), '');
+// 			// samo jedan decimalni separator
+// 			const idx = v.indexOf(sep);
+// 			if (idx !== -1) {
+// 				const decimals = v.substring(idx + 1).replace(new RegExp('\\' + sep, 'g'), '');
+// 				v = v.substring(0, idx + 1) + decimals.substring(0, maxDecimals);
+// 			}
+// 			if (neg) v = '-' + v;
+// 			el.value = v;
+// 		}
+// 	</script>
+// }
 templ HandleFormResponseScript() {
 	<script>
 		// handleFormResponse — universal htmx after-request handler for all dialogs.
@@ -414,26 +414,16 @@ templ HandleFormResponseScript() {
 		//   • message div id = dialogId + "-message",  e.g. "dialog-nalog-message"
 		//   • staging slots (#dialog-confirm, #dialog-stavkenaloga) receive sub-dialog HTML
 		function handleFormResponse(event, requestType, dialogId, showMsg = true) {
+			console.log("  u funkciji handleFormResponse: dialogId =", dialogId, "requestType =", requestType, "showMsg =", showMsg, "event =", event);
 			// Guard: ignore requests from child non-button elements (e.g. combos, inputs with hx-trigger)
 			// but allow requests from submit buttons (which have their own hx-post/put and bubble up).
 			const _elt = event.detail?.elt;
-			console.log("handleFormResponse: event =", event, "requestType =", requestType, "dialogId =", dialogId);
 			if (event.currentTarget && _elt !== event.currentTarget && _elt?.tagName !== 'BUTTON') return;
 			const xhr  = event.detail.xhr;
 			const ok   = xhr.status === 200 || xhr.status === 201;
 			const resp = _dlg_tryJSON(xhr.responseText);
-			console.log("Parsed response:", resp);
-			// HTML response → new sub-dialog was injected by HTMX into a staging slot
-			// if (ok && !resp) {
-			// 	console.log("HTML response detected, opening sub-dialog if present...");
-			// 	_dlg_openSubDialog(dialogId, event.detail.target);
-			// 	return;
-			// }
-			console.log("JSON response detected, processing..."); 
 			const msgDiv = _dlg_msgDiv(dialogId);
-			console.log("Message div:", msgDiv);
 			if (msgDiv) { msgDiv.classList.add('hidden'); msgDiv.textContent = ''; }
-
 			// Validation field errors
 			if (resp?.errors?.length) {
 				_dlg_fieldErrors(resp.errors);
@@ -450,7 +440,10 @@ templ HandleFormResponseScript() {
 			// Success
 			if (showMsg && resp?.message) {
 				_dlg_msg(msgDiv, resp.message, false);
-				if (dialogId) setTimeout(() => closeDialog(dialogId), 1500);
+				clearForm(dialogId + '-form');
+				if (resp?.closeDialog && dialogId) {
+					setTimeout(() => closeDialog(dialogId), 3000);
+				}
 			} else if (dialogId) {
 				closeDialog(dialogId);
 			}
@@ -530,15 +523,133 @@ templ HandleFormResponseScript() {
 	</script>
 }
 
+templ HandleFproFormResponseScript() {
+	<script>
+		// handleFproFormResponse — universal htmx after-request handler for all dialogs.
+		// Usage: hx-on::after-request="handleFproFormResponse(event, 'POST', 'dialog-nalog')"
+		// Conventions:
+		//   • dialogId  — id of the dialog root element, e.g. "dialog-nalog"
+		//   • message div id = dialogId + "-message",  e.g. "dialog-nalog-message"
+		//   • staging slots (#dialog-confirm, #dialog-stavkenaloga) receive sub-dialog HTML
+		function handleFproFormResponse(event, requestType, dialogId, showMsg = true) {
+			console.log("handleFproFormResponse: dialogId =", dialogId, "requestType =", requestType, "showMsg =", showMsg, "event =", event);
+			// Guard: ignore requests from child non-button elements (e.g. combos, inputs with hx-trigger)
+			// but allow requests from submit buttons (which have their own hx-post/put and bubble up).
+			const _elt = event.detail?.elt;
+			if (event.currentTarget && _elt !== event.currentTarget && _elt?.tagName !== 'BUTTON') return;
+			const xhr  = event.detail.xhr;
+			const ok   = xhr.status === 200 || xhr.status === 201;
+			const resp = _dlg_tryJSON(xhr.responseText);
+			const msgDiv = _dlg_msgDiv(dialogId);
+			if (msgDiv) { msgDiv.classList.add('hidden'); msgDiv.textContent = ''; }
+			// Validation field errors
+			if (resp?.errors?.length) {
+				_dlg_fieldErrors(resp.errors);
+				if (resp?.message) _dlg_msg(msgDiv, resp.message, true);
+				return;
+			}
+
+			// Failure (HTTP error or explicit success:false)
+			if (!ok || resp?.success === false) {
+				_dlg_msg(msgDiv, resp?.message, true);
+				return;
+			}
+
+			// Success
+			if (showMsg && resp?.message) {
+				_dlg_msg(msgDiv, resp.message, false);
+				clearForm(dialogId + '-form');	
+			}
+		}
+
+		// Open a sub-dialog that HTMX just injected into a staging slot.
+		// Wipes the confirm slot and removes the closing dialog without moving the new one.
+		function _dlg_openSubDialog(closingId, swapTarget) {
+			// Find new dialog: check swap target first (skip dialog-confirm — it holds current dialog)
+			let next = null;
+			if (swapTarget?.id !== 'dialog-confirm') {
+				const c = swapTarget?.querySelector(':scope > [id]');
+				if (c && c.id !== closingId) next = c;
+			}
+			if (!next) {
+				for (const slotId of ['dialog-stavkenaloga', 'dialog-message']) {
+					const c = document.getElementById(slotId)?.querySelector(':scope > [id]');
+					if (c && c.id !== closingId) { next = c; break; }
+				}
+			}
+			// Clean up old dialogs
+			const confirmSlot = document.getElementById('dialog-confirm');
+			if (confirmSlot) confirmSlot.innerHTML = '';
+			document.getElementById(closingId)?.remove();
+			// Show new dialog in place (no DOM move — keeps htmx handlers intact)
+			if (next) next.classList.remove('hidden', 'opacity-0');
+		}
+
+		function _dlg_msgDiv(dialogId) {
+			if (!dialogId) return document.getElementById('dialog-form-message');
+			const dlg = document.getElementById(dialogId);
+			return dlg?.querySelector('[id$="-message"]')
+				|| document.getElementById(dialogId + '-message')
+				|| document.getElementById('dialog-form-message');
+		}
+
+		function _dlg_tryJSON(text) {
+			try { return text?.trim() ? JSON.parse(text) : null; } catch { return null; }
+		}
+
+		function _dlg_msg(div, text, isError) {
+			// if (!div) { if (isError) alert(text); return; }
+			// Measure the sibling form width BEFORE unhiding, so a long message
+			// cannot expand the w-auto dialog box beyond its natural content width.
+			const siblingForm = div.closest('form') || div.parentElement?.querySelector('form');
+			const maxW = siblingForm ? siblingForm.offsetWidth : 0;
+			div.className = (isError
+				? 'p-1 text-sm text-red-800 bg-red-100 border border-red-300'
+				: 'p-1 text-sm text-green-800 bg-green-100 border border-green-300')
+				+ ' rounded-lg w-full';
+			if (maxW > 0) div.style.maxWidth = maxW + 'px';
+			div.style.wordBreak = 'break-all';
+			div.style.overflowWrap = 'anywhere';
+			div.style.whiteSpace = 'normal';
+			div.textContent = text;
+			div.classList.remove('hidden');
+			div.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+			setTimeout(() => div.classList.add('hidden'), isError ? 5000 : 3000);
+		}
+
+		function _dlg_fieldErrors(errors) {
+			document.querySelectorAll('.input-error').forEach(el => el.remove());
+			document.querySelectorAll('.field-error-inline').forEach(el => { el.textContent = ''; });
+			document.querySelectorAll('input').forEach(el => el.classList.remove('border-red-500'));
+			errors.forEach(({ field, message }) => {
+				const input = document.querySelector(`input[name="${field}"]`);
+				if (!input) return;
+				input.classList.add('border-red-500');
+				const inline = document.getElementById(`${field}-error`);
+				if (inline) { inline.textContent = message; return; }
+				const p = document.createElement('p');
+				p.className = 'text-red-500 text-xs input-error whitespace-nowrap';
+				p.textContent = message;
+				input.parentElement.appendChild(p);
+			});
+		}
+	</script>
+}
+
 templ CloseDialogScript() {
 	<script>
-		function closeDialog(id) {
+		function closeDialog(id, onCloseCallback) {
 			console.log("Closing dialog with ID:", id);
 			const dialogElm = document.getElementById(id);
 			if (dialogElm) {
 				dialogElm.classList.add("opacity-0"); // Fade-out effect
 				setTimeout(() => {
 					dialogElm.classList.add("hidden");
+					
+					// Execute callback after dialog is hidden
+					if (onCloseCallback && typeof onCloseCallback === 'function') {
+						onCloseCallback();
+					}
 				}, 300); // Delay to allow fade-out animation
 
 				// Restore the style of actions column if needed
@@ -686,148 +797,6 @@ templ ShowMessageScript() {
 	</script>
 }
 
-templ PopulateFproUpdateFormScript() {
-	<script>
-		// populateFproUpdateForm — reads the JSON response from /api/fpro/stavka/update
-		// and assigns values to the matching form fields in nalog-stavke-form.
-		// Usage (htmx after-request): hx-on::after-request="populateFproUpdateFormFromEvent(event)"
-		function populateFproUpdateFormFromEvent(event) {
-			const xhr = event?.detail?.xhr;
-
-			console.log("call function populateFproUpdateFormFromEvent: event =", event);
-			if (!xhr) {
-				console.error("populateFproUpdateFormFromEvent: No xhr found in event detail", event);
-				return;
-			}
-			if (xhr.status !== 200) return;
-			let data;
-			try { data = JSON.parse(xhr.responseText); } catch { return; }
-			populateFproUpdateForm(data);
-			_fpro_lockTable();
-		}
-
-		function populateFproUpdateForm(data) {
-			function setVal(id, value) {
-				const el = document.getElementById(id);
-				if (el) el.value = (value !== null && value !== undefined) ? value : '';
-			}
-			// Convert dot-decimal string to comma-decimal (e.g. "1234.56" → "1234,56")
-			function toComma(str) {
-				return (str || '0').replace('.', ',');
-			}
-
-			// Text / date fields
-			setVal('konto',    data.konto);
-			setVal('kontonaziv', data.kontonaziv);
-			setVal('sifra',     data.sifra);
-			setVal('sifranaziv', data.sifranaziv);
-			setVal('opisknj',  data.opisknj);
-			setVal('dokum',    data.dokum);
-			setVal('dadok',    data.dadok);
-			setVal('dokumv',   data.dokumv);
-			setVal('dadokv',   data.datdokv);   // JSON key: datdokv → field id: dadokv
-			setVal('napomena', data.napomena);
-
-			// Integer fields
-			setVal('tra',     data.tra);
-			setVal('travez',  data.travez);
-
-			// Select / combo fields
-			setVal('vrd',        data.vrd);
-			setVal('magaciniid', data.magaciniid);
-			setVal('fispid',     data.fispid);
-			setVal('komid',      data.komid);
-			setVal('idorgjed',   data.idorgjed);
-			setVal('idvalute',   data.idvalute);
-
-			// Fetch mestotrid options for the saved idorgjed, then select the saved value
-			const idorgjed  = data.idorgjed;
-			const mestotrid = String(data.mestrotrid ?? '');
-			if (idorgjed && idorgjed !== '-' && idorgjed !== '0') {
-				fetch(`/api/mestotroska?idorgjed=${encodeURIComponent(idorgjed)}`)
-					.then(r => r.text())
-					.then(html => {
-						const sel = document.getElementById('mestotrid');
-						if (sel) {
-							sel.outerHTML = html;
-							const newSel = document.getElementById('mestotrid');
-							if (newSel && mestotrid) newSel.value = mestotrid;
-						}
-					})
-					.catch(() => setVal('mestotrid', mestotrid));
-			} else {
-				setVal('mestotrid', mestotrid);
-			}
-
-			// Numeric fields — server sends dot decimal; form uses comma decimal
-			setVal('duguje',    data.duguje);
-			setVal('potrazuje', data.potrazuje);
-			setVal('deviznos',  data.deviznos);
-			setVal('kurs',      data.kurs);
-		
-			// Ensure a hidden idfpro field exists so the PUT payload carries the record id
-			const form = document.getElementById('nalog-stavke-form');
-			if (!form) return;
-			let hdnFpro = form.querySelector('input[name="idfpro"]');
-			if (!hdnFpro) {
-				hdnFpro = document.createElement('input');
-				hdnFpro.type  = 'hidden';
-				hdnFpro.name  = 'idfpro';
-				form.appendChild(hdnFpro);
-			}
-			hdnFpro.value = data.idfpro || '';
-		}
-
-		// Lock the table while a row is being edited
-		function _fpro_lockTable() {
-			console.log("in function _fpro_lockTable: Locking table for editing...");
-			const container = document.getElementById('table-stavke-container');
-			if (!container || container.querySelector('#fpro-table-lock')) return;
-			const overlay = document.createElement('div');
-			overlay.id = 'fpro-table-lock';
-			overlay.style.cssText = 'position:absolute;inset:0;background:rgba(255,255,255,0.55);cursor:not-allowed;z-index:10;border-radius:inherit;';
-			container.appendChild(overlay);
-			const btnCancel = document.getElementById('btn-stavke-cancel');
-			const btnPrint = document.getElementById('btn-print-stavke');
-			if (btnCancel) {
-				btnCancel.disabled = false;
-				btnCancel.classList.remove('opacity-50', 'cursor-not-allowed');
-			}
-			if (btnPrint) {
-				btnPrint.disabled = false;
-				btnPrint.classList.remove('opacity-50', 'cursor-not-allowed');
-			}
-			//_dlg_msg(document.getElementById('dialog-form-message'), 'Uređivanje u toku — sačuvajte stavku', false);
-
-			['btn-stavke-cancel', 'btn-print-stavke', 'btn-nazad'].forEach(id => {
-				const btn = document.getElementById(id);
-				if (!btn) return;
-				if (id === 'btn-stavke-cancel') { btn.disabled = false; btn.classList.remove('opacity-50', 'cursor-not-allowed'); }
-				else { btn.disabled = true; btn.classList.add('opacity-50', 'cursor-not-allowed'); }
-			});
-		}
-
-		// Unlock the table (called automatically on fpro:changed)
-		function _fpro_unlockTable() {
-			document.getElementById('fpro-table-lock')?.remove();
-			btnCancel = document.getElementById('btn-stavke-cancel');
-			if (btnCancel) {
-				btnCancel.disabled = true;
-				btnCancel.classList.add('opacity-50', 'cursor-not-allowed');
-			}
-			['btn-print-stavke', 'btn-nazad'].forEach(id => {
-				const btn = document.getElementById(id);
-				if (!btn) return;
-				if (id === 'btn-stavke-cancel') { btn.disabled = true; btn.classList.add('opacity-50', 'cursor-not-allowed'); }
-				else { btn.disabled = false; btn.classList.remove('opacity-50', 'cursor-not-allowed'); }
-			});
-		}
-
-		// Unlock whenever a save or delete completes (fpro:changed fires from body)
-		document.body.addEventListener('fpro:changed', _fpro_unlockTable);
-	</script>
-}
-
 templ SearchPopupScript() {
 	<script>
         // Toggle popup visibility
@@ -935,7 +904,12 @@ templ FileSelectScript() {
         async function openFileDialog() {
             try {
                 const [fileHandle] = await window.showOpenFilePicker({
-                    types: [{
+                    types: [
+						{
+                        description: 'XML Files',
+                        accept: { 'text/xml': ['.xml']}, 
+						},
+						{
                         description: 'CSV Files',
                         accept: { 'text/csv': ['.csv'] }
                     }]
@@ -1015,4 +989,82 @@ templ FileSelectScript() {
             }
         }
     </script>
+}
+
+templ RestrictNumericInputScript() {
+	<script>
+		// Restrict input to numeric values with optional decimal and negative sign
+		// Usage: <input type="text" oninput="restrictNumericInput(this)" data-decimals="2"> 
+
+		function restrictNumericInput(input) {
+			// Store cursor position
+			const start = input.selectionStart;
+			const end = input.selectionEnd;
+			
+			// Get current value
+			let value = input.value;
+			
+			// Allow: numbers, negative sign, decimal point
+			// Remove any other characters
+			let cleaned = value.replace(/[^0-9.-]/g, '');
+			
+			// Handle negative sign: only allow one at the beginning
+			const negMatches = cleaned.match(/-/g);
+			if (negMatches && negMatches.length > 1) {
+				// Remove extra negative signs
+				const firstNeg = cleaned.indexOf('-');
+				cleaned = cleaned.substring(0, firstNeg + 1) + 
+						cleaned.substring(firstNeg + 1).replace(/-/g, '');
+			}
+			
+			// Handle decimal points: only allow one
+			const decMatches = cleaned.match(/\./g);
+			if (decMatches && decMatches.length > 1) {
+				const firstDec = cleaned.indexOf('.');
+				cleaned = cleaned.substring(0, firstDec + 1) + 
+						cleaned.substring(firstDec + 1).replace(/\./g, '');
+			}
+			
+			// If the input has a negative sign, it must be at the beginning
+			if (cleaned.indexOf('-') > 0) {
+				// Move negative sign to front
+				cleaned = cleaned.replace(/-/g, '');
+				cleaned = '-' + cleaned;
+			}
+			
+			// Apply decimal places limit
+			const decimalPlaces = parseInt(input.dataset.decimals) || 0;
+			if (decimalPlaces >= 0 && cleaned.includes('.')) {
+				const parts = cleaned.split('.');
+				if (parts[1] && parts[1].length > decimalPlaces) {
+					cleaned = parts[0] + '.' + parts[1].substring(0, decimalPlaces);
+				}
+			}
+			
+			// Update value only if changed
+			if (input.value !== cleaned) {
+				input.value = cleaned;
+				// Restore cursor position if possible
+				if (start !== null) {
+					const newPos = Math.min(start, cleaned.length);
+					input.setSelectionRange(newPos, newPos);
+				}
+			}
+		}
+		// Add this to your component or use with hx-on::after-request
+		function cleanNumberInput(input) {
+			const value = input.value;
+			if (value === '' || value === '-') {
+				input.value = '';
+				return;
+			}
+			
+			const num = parseFloat(value);
+			if (!isNaN(num)) {
+				const decimalPlaces = parseInt(input.dataset.decimals) || 0;
+				// Only format if it's a valid number
+				input.value = num.toFixed(decimalPlaces);
+			}
+		}
+	</script>
 }

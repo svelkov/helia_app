@@ -40,7 +40,7 @@ func Base(isLoggedIn bool, content templ.Component, menuItems domain.MenuDataIte
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<body class=\"flex flex-col h-screen m-0 p-0 bg-gray-100 text-sm dark:bg-gray-900 dark:text-gray-100\"><!-- Header -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<style>\r\n\t\t\t.content-with-bg {\r\n\t\t\t\tbackground-image: url('/frontend/static/helia_background.png');\r\n\t\t\t\tbackground-size: cover;\r\n\t\t\t\tbackground-position: center;\r\n\t\t\t\tbackground-repeat: no-repeat;\r\n\t\t\t\tbackground-attachment: fixed;\r\n\t\t\t}\r\n\t\t</style><body class=\"flex flex-col h-screen m-0 p-0 bg-gray-100 text-sm dark:bg-gray-900 dark:text-gray-100\"><!-- Header -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -72,7 +72,7 @@ func Base(isLoggedIn bool, content templ.Component, menuItems domain.MenuDataIte
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<!-- Content Area --><main id=\"content\" class=\"flex-1 p-2 overflow-y-auto text-sm w-full min-h-0\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<!-- Content Area --><main id=\"content\" class=\"flex-1 p-1 overflow-y-auto text-sm w-full min-h-0 content-with-bg\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"helia/config"
-	tmpl "helia/frontend/templates"
+	"helia/frontend/components"
 	tmpl_fin "helia/frontend/templates/finansijsko"
 	"helia/i18n"
 	"helia/internal/common"
@@ -22,8 +22,6 @@ const (
 	fproContentTitle string = "FPRO"
 	fproTableID      string = "fpro-table"
 	fproURLPrefix    string = "/api/fpro/"
-	fproURLGetAll    string = "/api/fpro/nalog/:id"
-	fproURLStavka    string = "/api/fpro/stavka"
 	fproURLNextFpro  string = "/api/fpro/nextfpro"
 	fproURLDelete    string = "/api/fpro/confirm-delete"
 	fproURLUpdate    string = "/api/fpro/stavka/update"
@@ -67,7 +65,7 @@ func (h *FproHandler) DeleteFpro(c *gin.Context) {
 }
 
 func (h *FproHandler) confirmDeleteHandler(c *gin.Context) {
-	utils.ConfirmDeleteHelper(c, h.fproService.GetTableStavkeFields(), "#dialog-delete-message")
+	utils.ConfirmDeleteHelper(c, h.fproService.GetTableStavkeFields(), "#nalog-stavke-table")
 }
 
 func (h *FproHandler) confirmAddHandler(c *gin.Context) {
@@ -86,18 +84,21 @@ func (h *FproHandler) GetNalogStavke(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusBadRequest, false, nil, common.ErrMsgInvalidID)
 		return
 	}
-
+	urlNalog := fmt.Sprintf("/api/fpro/nalog/%d", idFnal)
 	searchQuery := c.Query("query")
-	searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), fproURLGetAll, fmt.Sprintf("#%s", naloziStavkeTableID), "")
+	searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), urlNalog, fmt.Sprintf("#%s", naloziStavkeTableID), "")
 	page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
-	tblStavke := common.SetTableBasicData("STAVKE NALOGA", naloziStavkeTableID, h.fproService.GetTableStavkeFields(), fproURLGetAll, fproURLGetAll, 0, 0, 0, 0, h.cfg)
-	common.SetTableConfig(&tblStavke, "", fproURLStavka, false, false, false)
-	tblStavke.BtnDelete.HxActionURL = fproURLDelete
-	tblStavke.BtnUpdate.HxActionURL = fproURLUpdate
+	tblStavke := common.SetTableBasicData("STAVKE NALOGA", naloziStavkeTableID, h.fproService.GetTableStavkeFields(), urlNalog, urlNalog, 0, 0, 0, 0, h.cfg)
+	common.SetTableConfig(&tblStavke, "", urlNalog, false, false, false)
+	tblStavke.URLGetAll = fmt.Sprintf("/api/fpro/nalog/%d", idFnal)
+	tblStavke.URLPrefix = fmt.Sprintf("/api/fpro/nalog/%d", idFnal)
+	tblStavke.BtnDelete.HxActionURL = "/api/fpro/confirm-delete"
+	tblStavke.BtnDelete.HxTarget = "#dialog-fpro-delete-container"
+	tblStavke.BtnUpdate.HxActionURL = "/api/fpro/stavka/update"
 	tblStavke.BtnUpdate.HxOnAfterRequest = "populateFproUpdateFormFromEvent(event)"
 	tblStavke.BtnUpdate.HxSwap = "none"
 	tblStavke.BtnUpdate.HxRequestType = "GET"
-	tblStavke.DetailURL = fproURLGetAll
+	tblStavke.DetailURL = fmt.Sprintf("/api/fpro/nalog/%d", idFnal)
 
 	if idFnal == 0 && searchQuery == "" {
 		err := tmpl_fin.NaloziDetail(domain.TableData{}, searchInput, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
@@ -114,9 +115,8 @@ func (h *FproHandler) GetNalogStavke(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData)
 		return
 	}
-	//tblStavke.URLGetAll = fproURLGetAll
 	if requestSource == "btnpage" || requestSource == "searchinput" {
-		tmpl.Table(tblStavke, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+		components.Table(tblStavke, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 		return
 	}
 	err = tmpl_fin.NaloziDetail(tblStavke, searchInput, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
@@ -129,7 +129,7 @@ func (h *FproHandler) GetNalogStavke(c *gin.Context) {
 // SaveNalogStavke handles the request to save the stavke (items) of a nalog (order) for a given ID.
 func (h *FproHandler) SaveNalogStavke(c *gin.Context) {
 	var fproStavke domain.FproPayload
-	fnalID, err := utils.GetInt64FromParameterRequest(c, "id")
+	fnalID, err := utils.GetInt64FromParameterRequest(c, "idnalog")
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusBadRequest, false, []domain.FieldError{}, common.ErrMsgInvalidID+": "+err.Error())
 		return
@@ -160,6 +160,7 @@ func (h *FproHandler) SaveNalogStavke(c *gin.Context) {
 	tblStavke.BtnUpdate.HxOnAfterRequest = "populateFproUpdateFormFromEvent(event)"
 	tblStavke.BtnUpdate.HxSwap = "none"
 	tblStavke.BtnUpdate.HxRequestType = "GET"
+	tblStavke.DetailURL = fmt.Sprintf("/api/fpro/nalog/%d", fnalID)
 	err = h.fproService.GetAllFproByFnalID(c.Request.Context(), &fproStavke, &tblStavke, fnalID, currentPage, pageSize, "")
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, common.ErrMsgReadData)
@@ -170,9 +171,15 @@ func (h *FproHandler) SaveNalogStavke(c *gin.Context) {
 	tblStavke.BtnPrint.IsVisible = false
 	tblStavke.ShowActions = true
 	c.Header("HX-Trigger", "fpro:changed")
-	common.WriteJSONResponse(c, http.StatusOK, true, nil, "Uspešno upisani podaci...")
+	c.JSON(http.StatusOK, domain.Response{
+		StatusCode:  http.StatusOK,
+		Success:     true,
+		Errors:      nil,
+		Message:     "Uspešno upisani podaci...",
+		CloseDialog: false,
+	})
 
-	//tmpl.Table(tblStavke, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+	//components.Table(tblStavke, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 }
 
 func (h *FproHandler) UpdateFproStavke(c *gin.Context) {
@@ -210,6 +217,7 @@ func (h *FproHandler) GetNalogTotalValues(c *gin.Context) {
 func setUpdateValues(fpro *domain.Fpro) map[string]interface{} {
 	result := map[string]interface{}{
 		"idfpro":     fmt.Sprintf("%d", fpro.IDFpro),
+		"rbr":        fmt.Sprintf("%d", fpro.Rbr),
 		"konto":      fpro.Konto,
 		"kontonaziv": fpro.NazivKonta,
 		"sifra":      fpro.Sifra,
@@ -272,7 +280,7 @@ func (h *FproHandler) GetMestoTroskaOptions(c *gin.Context) {
 		c.String(http.StatusInternalServerError, "")
 		return
 	}
-	tmpl.ComboBoxField(domain.ComboFieldConfig{
+	components.ComboBoxField(domain.ComboFieldConfig{
 		ID:           "mestotrid",
 		Name:         "mestotrid",
 		Placeholder:  "izaberite mesto troska...",
@@ -295,9 +303,9 @@ func (h *FproHandler) AddRoutes(r *gin.Engine) {
 	r.GET("/api/fpro/confirm-update", h.getFproStavkeHandler)
 	r.GET("/api/fpro/confirm-add", h.confirmAddHandler)
 	r.GET("/api/fpro/:id", h.GetFpro)
-	r.DELETE("/api/fpro/stavka/:id", h.DeleteFpro)
-	r.POST("/api/fpro/nalog/:id/stavke/save", h.SaveNalogStavke)
-	r.PUT("/api/fpro/nalog/:id/stavke/save", h.SaveNalogStavke)
+	r.DELETE("/api/fpro/nalog/:idnalog/:id", h.DeleteFpro)
+	r.POST("/api/fpro/:idnalog/stavke/save", h.SaveNalogStavke)
+	r.PUT("/api/fpro/:idnalog/stavke/save", h.SaveNalogStavke)
 	r.GET("/api/fpro/stavka/update", h.UpdateFproStavke)
 
 	// r.GET /api/fpro/prepis", h.FproPrepis))
@@ -306,9 +314,10 @@ func (h *FproHandler) AddRoutes(r *gin.Engine) {
 }
 
 func (h *FproHandler) setHandlerFieldValues() {
+	translator := i18n.GetInstance()
 	h.btnSave = domain.Button{
 		Id:            "btn-save",
-		LabelText:     "Snimi Fpro",
+		LabelText:     translator.Button("Snimi"),
 		HxActionURL:   fproURLPrefix,
 		HxTarget:      "this",
 		HxSwap:        "innerHTML",
@@ -316,7 +325,7 @@ func (h *FproHandler) setHandlerFieldValues() {
 	}
 	h.btnNazad = domain.Button{
 		Id:            "btn-nazad-fpro",
-		LabelText:     "Nazad",
+		LabelText:     translator.Button("Nazad"),
 		HxActionURL:   fproURLNextFpro,
 		HxRequestType: "GET",
 	}

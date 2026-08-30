@@ -3,18 +3,20 @@ package templates
 import "helia/i18n"
 
 templ Content(isLoggedIn bool, translator *i18n.Service) {
-	<div class={ map[bool]string{
-		true:  "flex flex-col h-full w-full",
-		false: "bg-white p-6 rounded-lg shadow-md",
-	}[isLoggedIn] }>
-		if isLoggedIn {
-			<div class="flex flex-col h-full w-full p-6">
-				<h2 class="text-2xl font-bold mb-4">{ translator.Label("Pocetna") }</h2>
-				<p class="text-gray-700">{ translator.Label("Izaberite opciju iz menija") }</p>
-			</div>
-		} else {
+	if isLoggedIn {
+		<style>
+			.content-with-bg {
+				background-image: url('/frontend/static/helia_background.png');
+				background-size: cover;
+				background-position: center;
+				background-repeat: no-repeat;
+			}
+		</style>
+
+	} else {
+		<div class="bg-white p-6 rounded-lg shadow-md">
 			<h2 class="text-2xl font-bold mb-4">{ translator.Label("Niste prijavljeni") }</h2>
 			<p class="text-gray-700">{ translator.Label("Prijavite se ili se registrujte") }</p>
-		}
-	</div>
+		</div>
+	}
 }

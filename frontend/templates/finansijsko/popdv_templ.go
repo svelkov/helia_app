@@ -10,6 +10,7 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import (
 	"fmt"
+	"helia/frontend/components"
 	tmpl "helia/frontend/templates"
 	"helia/i18n"
 	"helia/internal/common"
@@ -39,7 +40,7 @@ func PopdvMain(tabs domain.TabData, tblPolja domain.TableData, searchInput domai
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!-- Tab Content --><div id=\"tab-content\" class=\"flex flex-col h-full\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!-- Tab Content --><div id=\"tab-content\" class=\"bg-blue-100 p-1 flex flex-col h-full\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -77,7 +78,7 @@ func PopdvPolja(tabs domain.TabData, tbl domain.TableData, searchInput domain.In
 			templ_7745c5c3_Var2 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<!-- Container with full height --><div class=\"flex flex-col h-full\"><!-- Tab Navigation --><div class=\"border-b border-blue-600\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<!-- Container with full height --><div class=\"bg-blue-100 p-1 flex flex-col h-full\"><!-- Tab Navigation --><div class=\"border-b border-blue-600\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -89,7 +90,7 @@ func PopdvPolja(tabs domain.TabData, tbl domain.TableData, searchInput domain.In
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Search_Part(tbl, searchInput).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Search_Part(tbl, searchInput).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -97,7 +98,7 @@ func PopdvPolja(tabs domain.TabData, tbl domain.TableData, searchInput domain.In
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -135,7 +136,7 @@ func PopdvPrijava(tabs domain.TabData, tbl domain.TableData, btnObrada, btnDelet
 			templ_7745c5c3_Var3 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<!-- Container with full height --><div class=\"flex flex-col h-full\"><!-- Tab Navigation --><div class=\"border-b border-blue-600\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<!-- Container with full height --><div class=\"bg-blue-100 p-1 flex flex-col h-full\"><!-- Tab Navigation --><div class=\"border-b border-blue-600\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -147,7 +148,7 @@ func PopdvPrijava(tabs domain.TabData, tbl domain.TableData, btnObrada, btnDelet
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "oddatuma",
 			LabelText:  translator.Label("Od datuma"),
 			ClassLabel: common.ClassLabel + " w-32",
@@ -155,7 +156,7 @@ func PopdvPrijava(tabs domain.TabData, tbl domain.TableData, btnObrada, btnDelet
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "oddatuma",
 			Name:       "oddatuma",
 			FieldType:  "date",
@@ -166,7 +167,7 @@ func PopdvPrijava(tabs domain.TabData, tbl domain.TableData, btnObrada, btnDelet
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "dodatuma",
 			LabelText:  translator.Label("Do datuma"),
 			ClassLabel: common.ClassLabel + " w-28",
@@ -174,7 +175,7 @@ func PopdvPrijava(tabs domain.TabData, tbl domain.TableData, btnObrada, btnDelet
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "dodatuma",
 			Name:       "dodatuma",
 			FieldType:  "date",
@@ -185,7 +186,7 @@ func PopdvPrijava(tabs domain.TabData, tbl domain.TableData, btnObrada, btnDelet
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Button(btnObrada).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Button(btnObrada).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -193,7 +194,7 @@ func PopdvPrijava(tabs domain.TabData, tbl domain.TableData, btnObrada, btnDelet
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Search_Part(tbl, searchInput).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Search_Part(tbl, searchInput).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -201,7 +202,7 @@ func PopdvPrijava(tabs domain.TabData, tbl domain.TableData, btnObrada, btnDelet
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -251,7 +252,7 @@ func PopdvStampa(tabs domain.TabData, tbl domain.TableData, btnPrint domain.Butt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Search_Part(tbl, searchInput).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Search_Part(tbl, searchInput).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -259,7 +260,7 @@ func PopdvStampa(tabs domain.TabData, tbl domain.TableData, btnPrint domain.Butt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -304,7 +305,7 @@ func DialogPopdvPolja(model domain.Popdv, dlg domain.Dialog, btnSave, btnCancel,
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(dlg.Id)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/popdv.templ`, Line: 130, Col: 17}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/popdv.templ`, Line: 131, Col: 17}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
@@ -317,7 +318,7 @@ func DialogPopdvPolja(model domain.Popdv, dlg domain.Dialog, btnSave, btnCancel,
 		var templ_7745c5c3_Var7 string
 		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Title("Unos/izmene podataka - Polja POPDV"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/popdv.templ`, Line: 134, Col: 99}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/popdv.templ`, Line: 135, Col: 99}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {
@@ -327,7 +328,7 @@ func DialogPopdvPolja(model domain.Popdv, dlg domain.Dialog, btnSave, btnCancel,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.CloseButton(btnClose).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.CloseButton(btnClose).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -338,7 +339,7 @@ func DialogPopdvPolja(model domain.Popdv, dlg domain.Dialog, btnSave, btnCancel,
 		var templ_7745c5c3_Var8 string
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(csrfToken)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/popdv.templ`, Line: 140, Col: 55}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/popdv.templ`, Line: 141, Col: 55}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {
@@ -351,7 +352,7 @@ func DialogPopdvPolja(model domain.Popdv, dlg domain.Dialog, btnSave, btnCancel,
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Osnovni podaci"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/popdv.templ`, Line: 142, Col: 117}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/popdv.templ`, Line: 143, Col: 117}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
@@ -361,7 +362,7 @@ func DialogPopdvPolja(model domain.Popdv, dlg domain.Dialog, btnSave, btnCancel,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "tip",
 			LabelText:  translator.Label("Tip podatka"),
 			ClassLabel: "w-32",
@@ -369,7 +370,7 @@ func DialogPopdvPolja(model domain.Popdv, dlg domain.Dialog, btnSave, btnCancel,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "tip",
 			Name:       "tip",
 			FieldType:  "text",
@@ -384,7 +385,7 @@ func DialogPopdvPolja(model domain.Popdv, dlg domain.Dialog, btnSave, btnCancel,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "deo",
 			LabelText:  translator.Label("Deo"),
 			ClassLabel: "w-32",
@@ -392,7 +393,7 @@ func DialogPopdvPolja(model domain.Popdv, dlg domain.Dialog, btnSave, btnCancel,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "deo",
 			Name:       "deo",
 			FieldType:  "number",
@@ -407,7 +408,7 @@ func DialogPopdvPolja(model domain.Popdv, dlg domain.Dialog, btnSave, btnCancel,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "polje",
 			LabelText:  translator.Label("Polje"),
 			ClassLabel: "w-32",
@@ -415,7 +416,7 @@ func DialogPopdvPolja(model domain.Popdv, dlg domain.Dialog, btnSave, btnCancel,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "polje",
 			Name:       "polje",
 			FieldType:  "text",
@@ -430,7 +431,7 @@ func DialogPopdvPolja(model domain.Popdv, dlg domain.Dialog, btnSave, btnCancel,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "opis",
 			LabelText:  translator.Label("Opis"),
 			ClassLabel: "w-32",
@@ -438,7 +439,7 @@ func DialogPopdvPolja(model domain.Popdv, dlg domain.Dialog, btnSave, btnCancel,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "opis",
 			Name:       "opis",
 			FieldType:  "text",
@@ -456,7 +457,7 @@ func DialogPopdvPolja(model domain.Popdv, dlg domain.Dialog, btnSave, btnCancel,
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Iznosi"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/popdv.templ`, Line: 208, Col: 109}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/popdv.templ`, Line: 209, Col: 109}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
@@ -466,7 +467,7 @@ func DialogPopdvPolja(model domain.Popdv, dlg domain.Dialog, btnSave, btnCancel,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "osn1",
 			LabelText:  translator.Label("Osn. 1"),
 			ClassLabel: "w-32",
@@ -474,7 +475,7 @@ func DialogPopdvPolja(model domain.Popdv, dlg domain.Dialog, btnSave, btnCancel,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "osn1",
 			Name:       "osn1",
 			FieldType:  "number",
@@ -489,7 +490,7 @@ func DialogPopdvPolja(model domain.Popdv, dlg domain.Dialog, btnSave, btnCancel,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "pdv1",
 			LabelText:  translator.Label("PDV 1"),
 			ClassLabel: "w-32",
@@ -497,7 +498,7 @@ func DialogPopdvPolja(model domain.Popdv, dlg domain.Dialog, btnSave, btnCancel,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "pdv1",
 			Name:       "pdv1",
 			FieldType:  "number",
@@ -512,7 +513,7 @@ func DialogPopdvPolja(model domain.Popdv, dlg domain.Dialog, btnSave, btnCancel,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "osn2",
 			LabelText:  translator.Label("Osn. 2"),
 			ClassLabel: "w-32",
@@ -520,7 +521,7 @@ func DialogPopdvPolja(model domain.Popdv, dlg domain.Dialog, btnSave, btnCancel,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "osn2",
 			Name:       "osn2",
 			FieldType:  "number",
@@ -535,7 +536,7 @@ func DialogPopdvPolja(model domain.Popdv, dlg domain.Dialog, btnSave, btnCancel,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "pdv2",
 			LabelText:  translator.Label("PDV 2"),
 			ClassLabel: "w-32",
@@ -543,7 +544,7 @@ func DialogPopdvPolja(model domain.Popdv, dlg domain.Dialog, btnSave, btnCancel,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "pdv2",
 			Name:       "pdv2",
 			FieldType:  "number",
@@ -558,7 +559,7 @@ func DialogPopdvPolja(model domain.Popdv, dlg domain.Dialog, btnSave, btnCancel,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "poljvred",
 			LabelText:  translator.Label("Poljvred"),
 			ClassLabel: "w-32",
@@ -566,7 +567,7 @@ func DialogPopdvPolja(model domain.Popdv, dlg domain.Dialog, btnSave, btnCancel,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "poljvred",
 			Name:       "poljvred",
 			FieldType:  "number",
@@ -581,7 +582,7 @@ func DialogPopdvPolja(model domain.Popdv, dlg domain.Dialog, btnSave, btnCancel,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "poljpdv",
 			LabelText:  translator.Label("Poljpdv"),
 			ClassLabel: "w-32",
@@ -589,7 +590,7 @@ func DialogPopdvPolja(model domain.Popdv, dlg domain.Dialog, btnSave, btnCancel,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "poljpdv",
 			Name:       "poljpdv",
 			FieldType:  "number",
@@ -607,7 +608,7 @@ func DialogPopdvPolja(model domain.Popdv, dlg domain.Dialog, btnSave, btnCancel,
 		var templ_7745c5c3_Var11 string
 		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Aktivnost"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/popdv.templ`, Line: 308, Col: 112}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/popdv.templ`, Line: 309, Col: 112}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {
@@ -617,7 +618,7 @@ func DialogPopdvPolja(model domain.Popdv, dlg domain.Dialog, btnSave, btnCancel,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.CheckboxField(domain.CheckboxFieldConfig{
+		templ_7745c5c3_Err = components.CheckboxField(domain.CheckboxFieldConfig{
 			ID:            "aktosn1",
 			Name:          "aktosn1",
 			IsChecked:     model.Aktosn1,
@@ -627,7 +628,7 @@ func DialogPopdvPolja(model domain.Popdv, dlg domain.Dialog, btnSave, btnCancel,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.CheckboxField(domain.CheckboxFieldConfig{
+		templ_7745c5c3_Err = components.CheckboxField(domain.CheckboxFieldConfig{
 			ID:            "aktpdv1",
 			Name:          "aktpdv1",
 			IsChecked:     model.Aktpdv1,
@@ -637,7 +638,7 @@ func DialogPopdvPolja(model domain.Popdv, dlg domain.Dialog, btnSave, btnCancel,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.CheckboxField(domain.CheckboxFieldConfig{
+		templ_7745c5c3_Err = components.CheckboxField(domain.CheckboxFieldConfig{
 			ID:            "aktosn2",
 			Name:          "aktosn2",
 			IsChecked:     model.Aktosn2,
@@ -647,7 +648,7 @@ func DialogPopdvPolja(model domain.Popdv, dlg domain.Dialog, btnSave, btnCancel,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.CheckboxField(domain.CheckboxFieldConfig{
+		templ_7745c5c3_Err = components.CheckboxField(domain.CheckboxFieldConfig{
 			ID:            "aktpdv2",
 			Name:          "aktpdv2",
 			IsChecked:     model.Aktpdv2,
@@ -664,7 +665,7 @@ func DialogPopdvPolja(model domain.Popdv, dlg domain.Dialog, btnSave, btnCancel,
 		var templ_7745c5c3_Var12 string
 		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Datumi"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/popdv.templ`, Line: 344, Col: 109}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/popdv.templ`, Line: 345, Col: 109}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 		if templ_7745c5c3_Err != nil {
@@ -674,7 +675,7 @@ func DialogPopdvPolja(model domain.Popdv, dlg domain.Dialog, btnSave, btnCancel,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "oddat",
 			LabelText:  translator.Label("Od datuma"),
 			ClassLabel: "w-32",
@@ -682,7 +683,7 @@ func DialogPopdvPolja(model domain.Popdv, dlg domain.Dialog, btnSave, btnCancel,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "oddat",
 			Name:       "oddat",
 			FieldType:  "date",
@@ -693,7 +694,7 @@ func DialogPopdvPolja(model domain.Popdv, dlg domain.Dialog, btnSave, btnCancel,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "dodat",
 			LabelText:  translator.Label("Do datuma"),
 			ClassLabel: "w-32",
@@ -701,7 +702,7 @@ func DialogPopdvPolja(model domain.Popdv, dlg domain.Dialog, btnSave, btnCancel,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "dodat",
 			Name:       "dodat",
 			FieldType:  "date",
@@ -716,11 +717,11 @@ func DialogPopdvPolja(model domain.Popdv, dlg domain.Dialog, btnSave, btnCancel,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Button(btnSave).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Button(btnSave).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Button(btnCancel).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Button(btnCancel).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

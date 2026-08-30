@@ -12,6 +12,7 @@ import (
 	"reflect"
 	"strings"
 
+	"helia/frontend/components"
 	tmpl "helia/frontend/templates"
 	tmpl_opsti "helia/frontend/templates/opstipodaci"
 
@@ -97,7 +98,7 @@ func RenderContent(c *gin.Context, table domain.TableData, tmplName ...string) {
 	var err error
 	switch templateName {
 	case "Table":
-		err = tmpl.Table(table, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+		err = components.Table(table, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -136,7 +137,6 @@ func RenderDialogContent(c *gin.Context, dialog domain.Dialog, fields []domain.F
 	csrfToken := common.GetCsrfToken(c)
 	switch actionType {
 	case "DELETE":
-		btnSave.HxOnAfterRequest = "handleDeleteResponse"
 		component = tmpl.DeleteDialog(csrfToken, dialog, btnSave, btnCancel, btnClose, rowID, translator)
 	case "ADD", "UPDATE":
 		component = tmpl_opsti.AddUpdateForm(csrfToken, dialog, fields, btnSave, btnCancel, btnClose, translator)
@@ -165,7 +165,35 @@ func RenderDialogOK(c *gin.Context, id, message string) {
 		IdDialog:     dialog.Id,
 		BtnClass:     common.ClassSaveButton,
 		HxOnClick:    "closeDialog",
-		HxOnClickArg: dialog.Id,
+		HxOnClickArg: []any{dialog.Id},
+	}
+
+	tmpl.DialogOk(message, dialog, btnClose, btnOk, translator).Render(c.Request.Context(), c.Writer)
+}
+
+// RenderDialogOKWithRefresh renders a success dialog where OK button refreshes a table
+// refreshEndpoint: the GET endpoint that returns the refreshed table content
+// tableSelector: the table element ID or selector (e.g., "#izvodi-master-table")
+func RenderDialogOKWithRefresh(c *gin.Context, id, message, refreshEndpoint, tableSelector string) {
+	translator := i18n.GetInstance()
+	dialog := domain.Dialog{
+		Id:    id,
+		Title: "Info",
+	}
+	btnClose := domain.Button{
+		Id:        "btn-close",
+		IsVisible: true,
+		IdDialog:  dialog.Id,
+		BtnClass:  common.ClassDialogCloseButton,
+	}
+	btnOk := domain.Button{
+		Id:          "btn-ok",
+		LabelText:   "OK",
+		IsVisible:   true,
+		IdDialog:    dialog.Id,
+		BtnClass:    common.ClassSaveButton,
+		HxActionURL: refreshEndpoint,
+		HxTarget:    tableSelector,
 	}
 
 	tmpl.DialogOk(message, dialog, btnClose, btnOk, translator).Render(c.Request.Context(), c.Writer)

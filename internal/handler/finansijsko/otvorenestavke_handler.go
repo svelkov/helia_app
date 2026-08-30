@@ -5,7 +5,7 @@ import (
 	"helia/config"
 	"time"
 
-	tmpl "helia/frontend/templates"
+	"helia/frontend/components"
 	tmpl_fin "helia/frontend/templates/finansijsko"
 	tmpl_rep_fin "helia/frontend/templates/reports/finansijsko"
 	"helia/i18n"
@@ -184,7 +184,7 @@ func (h *OtvoreneStavkeHandler) OtvoreneStavkeMain(c *gin.Context) {
 
 	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", otvoreneStavkeURLPPartneri, fmt.Sprintf("#%s", otvorenestavkeTableID), "innerHTML", "GET", "", hxValsOtvoreneStavke, true, common.ClassSaveButton, "handleBackendResponse")
 	btnPrint := common.SetPrintButton("btn-print-otvorene", translator.Button("Štampa"), "fin_stampa", otvoreneStavkeURLPartneriStampa, "GET", true, common.ClassPrintButton, "konto,odsifre,dosifre,poddatumom,otvstavkedana,otvorene-selected-id,stampaotvstavke")
-	btnOpomene := common.SetPrintButton("btn-print-opomene", translator.Button("Štampa Opomene"), "fin_stampa_opomene", otvoreneStavkeURLPartneriStampa, "GET", true, common.ClassStampaOpomenaButton, "konto,odsifre,dosifre,poddatumom,otvstavkedana,otvorene-selected-id,stampaopomena")
+	btnOpomene := common.SetPrintButton("btn-print-opomene", translator.Button("Štampa Opomena"), "fin_stampa_opomene", otvoreneStavkeURLPartneriStampa, "GET", true, common.ClassStampaOpomenaButton, "konto,odsifre,dosifre,poddatumom,otvstavkedana,otvorene-selected-id,stampaopomena")
 
 	tblPartneri := common.SetTableBasicData(otvorenestavkeContentTitle, otvorenestavkeTableID, h.service.GetPartneriFields(), "", "", 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tblPartneri, otvorenestavkeContentTitle, "", false, false, false)
@@ -205,7 +205,7 @@ func (h *OtvoreneStavkeHandler) OtvoreneStavke(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusUnauthorized, false, nil, "Unauthorized")
 		return
 	}
-
+	translator := i18n.GetInstance()
 	gnGod := userSession.SelectedGod
 	tblPartneri := common.SetTableBasicData(otvorenestavkeContentTitle, otvorenestavkeTableID, h.service.GetPartneriFields(), "", "", 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tblPartneri, otvorenestavkeContentTitle, "", false, false, false)
@@ -223,7 +223,7 @@ func (h *OtvoreneStavkeHandler) OtvoreneStavke(c *gin.Context) {
 	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", otvoreneStavkeURLPPartneri, fmt.Sprintf("#%s", otvorenestavkeTableID), "innerHTML", "GET", "", hxValsOtvoreneStavke, true, common.ClassSaveButton, "handleBackendResponse")
 
 	btnPrint := common.SetPrintButton("btn-print-otvorene", "Štampa", "fin_stampa", otvoreneStavkeURLPartneriStampa, "GET", true, common.ClassPrintButton, "konto,odsifre,dosifre,poddatumom,otvstavkedana,otvorene-selected-id,stampaotvstavke")
-	btnOpomene := common.SetPrintButton("btn-print-opomene", "Štampa Opomene", "fin_stampa_opomene", otvoreneStavkeURLPartneriStampa, "GET", true, common.ClassStampaOpomenaButton, "konto,odsifre,dosifre,poddatumom,otvstavkedana,otvorene-selected-id,stampaopomena")
+	btnOpomene := common.SetPrintButton("btn-print-opomene", translator.Button("Štampa opomena"), "fin_stampa_opomene", otvoreneStavkeURLPartneriStampa, "GET", true, common.ClassStampaOpomenaButton, "konto,odsifre,dosifre,poddatumom,otvstavkedana,otvorene-selected-id,stampaopomena")
 	h.setOtvoreneStavkeActiveTab("otvorenestavke")
 
 	tblPartneri.DetailTarget = fmt.Sprintf("#%s", otvorenestavkeDetaljiTableID)
@@ -297,7 +297,7 @@ func (h *OtvoreneStavkeHandler) OtvoreneStavkeDetalji(c *gin.Context) {
 	tblDetalji.Pagination.HxVals = hxValsOtvoreneStavkeDetalji
 	tblDetalji.URLGetAll = otvoreneStavkeURLPartneriDetalji
 	tblDetalji.URLPrefix = otvoreneStavkeURLPartneriDetalji
-	tmpl.Table(tblDetalji, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+	components.Table(tblDetalji, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 }
 
 // PregledOtvorenihStavkiStampa renders a printable open items overview report for all partners.
@@ -478,7 +478,7 @@ func (h *OtvoreneStavkeHandler) ZatvoreneStavkeDetalji(c *gin.Context) {
 	tblDetalji.Pagination.HxVals = hxValsZatvoreneStavkeDetalji
 	tblDetalji.URLGetAll = zatvoreneStavkeURLPartneriDetalji
 	tblDetalji.URLPrefix = zatvoreneStavkeURLPartneriDetalji
-	tmpl.Table(tblDetalji, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+	components.Table(tblDetalji, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 }
 
 // PregledZatvorenihStavkiStampa renders a printable closed items overview report grouped by partner.
@@ -645,7 +645,7 @@ func (h *OtvoreneStavkeHandler) IOSDetalji(c *gin.Context) {
 	tblDetalji.Pagination.HxVals = hxValsIOSDetalji
 	tblDetalji.URLGetAll = iosURLPartneriDetalji
 	tblDetalji.URLPrefix = iosURLPartneriDetalji
-	tmpl.Table(tblDetalji, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+	components.Table(tblDetalji, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 }
 
 // IOSDetaljiStampa renders a printable IOS (Izvod otvorenih stavki) report for a selected partner.
@@ -810,7 +810,7 @@ func (h *OtvoreneStavkeHandler) DospelaPotrazivanjaDetalji(c *gin.Context) {
 	tblDetalji.Pagination.HxVals = hxValsDospelaDetalji
 	tblDetalji.URLGetAll = dospelaURLPartneriDetalji
 	tblDetalji.URLPrefix = dospelaURLPartneriDetalji
-	tmpl.Table(tblDetalji, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+	components.Table(tblDetalji, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 }
 
 // DugovanjaObavezeStampa renders the analytical print report for dospela potrazivanja grouped by partner.

@@ -9,6 +9,7 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
+	"helia/frontend/components"
 	tmpl "helia/frontend/templates"
 	"helia/i18n"
 	"helia/internal/common"
@@ -37,7 +38,7 @@ func SaldaMain(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada do
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!-- Tab Content --><div id=\"tab-content\" class=\"flex flex-col h-full\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!-- Tab Content --><div id=\"tab-content\" class=\"bg-blue-100 p-1 flex flex-col h-full\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -65,11 +66,11 @@ func SaldaMain(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada do
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SpinnerScript().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.SpinnerScript().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.HandleDialogResponseScript("").Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.HandleDialogResponseScript().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -107,7 +108,7 @@ func SaldaPojedinacnihKonta(tabs domain.TabData, tbl domain.TableData, btnObrada
 			templ_7745c5c3_Var2 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<!-- Tab Navigation --><div class=\"border-b border-blue-600\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<!-- Tab Navigation --><div class=\"bg-blue-100 border-b border-blue-600\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -122,7 +123,7 @@ func SaldaPojedinacnihKonta(tabs domain.TabData, tbl domain.TableData, btnObrada
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Parametri"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 39, Col: 35}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 40, Col: 35}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
@@ -135,7 +136,7 @@ func SaldaPojedinacnihKonta(tabs domain.TabData, tbl domain.TableData, btnObrada
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Sintetika"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 45, Col: 73}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 46, Col: 73}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
@@ -148,7 +149,7 @@ func SaldaPojedinacnihKonta(tabs domain.TabData, tbl domain.TableData, btnObrada
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Subsintetika"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 49, Col: 76}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 50, Col: 76}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
@@ -161,7 +162,7 @@ func SaldaPojedinacnihKonta(tabs domain.TabData, tbl domain.TableData, btnObrada
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Analitika"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 53, Col: 73}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 54, Col: 73}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
@@ -171,7 +172,7 @@ func SaldaPojedinacnihKonta(tabs domain.TabData, tbl domain.TableData, btnObrada
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "konto",
 			LabelText:  translator.Label("Konto"),
 			ClassLabel: common.ClassLabel + " w-28",
@@ -179,7 +180,7 @@ func SaldaPojedinacnihKonta(tabs domain.TabData, tbl domain.TableData, btnObrada
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:           "konto",
 			Name:         "konto",
 			FieldType:    "text",
@@ -197,7 +198,7 @@ func SaldaPojedinacnihKonta(tabs domain.TabData, tbl domain.TableData, btnObrada
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SearchButton(domain.SearchButtonConfig{
+		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
 			ID:          "konto",
 			Name:        "search-konto",
 			HxUrl:       "/api/promet/searchbutton",
@@ -209,7 +210,7 @@ func SaldaPojedinacnihKonta(tabs domain.TabData, tbl domain.TableData, btnObrada
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "kontonaziv",
 			Name:       "kontonaziv",
 			FieldType:  "text",
@@ -224,7 +225,7 @@ func SaldaPojedinacnihKonta(tabs domain.TabData, tbl domain.TableData, btnObrada
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "sifra",
 			LabelText:  translator.Label("Sifra"),
 			ClassLabel: common.ClassLabel + " w-28",
@@ -232,7 +233,7 @@ func SaldaPojedinacnihKonta(tabs domain.TabData, tbl domain.TableData, btnObrada
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:           "sifra",
 			Name:         "sifra",
 			FieldType:    "text",
@@ -250,7 +251,7 @@ func SaldaPojedinacnihKonta(tabs domain.TabData, tbl domain.TableData, btnObrada
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SearchButton(domain.SearchButtonConfig{
+		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
 			ID:          "sifra",
 			Name:        "search-sifra",
 			HxUrl:       "/api/promet/searchbutton",
@@ -263,7 +264,7 @@ func SaldaPojedinacnihKonta(tabs domain.TabData, tbl domain.TableData, btnObrada
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "sifranaziv",
 			Name:       "sifranaziv",
 			FieldType:  "text",
@@ -278,11 +279,11 @@ func SaldaPojedinacnihKonta(tabs domain.TabData, tbl domain.TableData, btnObrada
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.FormObradaButton(btnObrada, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.FormObradaButton(btnObrada, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Search_PartPrintButton(btnPrint).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Search_PartPrintButton(btnPrint).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -294,24 +295,24 @@ func SaldaPojedinacnihKonta(tabs domain.TabData, tbl domain.TableData, btnObrada
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</div></div><!-- Right Column - Monthly Data Table --><div class=\"border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg flex flex-col\"><div class=\"text-blue-800 font-bold text-xs mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</div></div><!-- Right Column - Monthly Data Table --><div class=\"border bg-blue-100 border border-blue-400 mt-1 mb-1 rounded-lg flex flex-col\"><div class=\"text-blue-800 font-bold text-xs p-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var7 string
 		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Mesečna salda"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 148, Col: 40}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 149, Col: 40}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</div><!-- Monthly Data Table --><div class=\"border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</div><!-- Monthly Data Table --><div class=\"border bg-blue-100 rounded-lg p-1 flex flex-col min-h-0 overflow-hidden flex-1 relative\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -319,18 +320,18 @@ func SaldaPojedinacnihKonta(tabs domain.TabData, tbl domain.TableData, btnObrada
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</div></div></div></div><!-- Chart Section --><div class=\"border bg-blue-50 border border-blue-400 mt-1 p-1 rounded-lg\"><div class=\"text-blue-800 font-bold text-xs mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</div></div></div></div><!-- Chart Section --><div class=\"border bg-blue-50 border border-blue-400 p-1 rounded-lg\"><div class=\"text-blue-800 font-bold text-xs mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var8 string
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Prikaz salda"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 162, Col: 37}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 163, Col: 37}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {
@@ -385,7 +386,7 @@ func SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Parametri"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 187, Col: 36}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 188, Col: 36}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
@@ -395,7 +396,7 @@ func SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "odkonta",
 			LabelText:  translator.Label("Od Konta"),
 			ClassLabel: common.ClassLabel + " w-36",
@@ -403,7 +404,7 @@ func SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:           "odkonta",
 			Name:         "odkonta",
 			FieldType:    "text",
@@ -421,7 +422,7 @@ func SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SearchButton(domain.SearchButtonConfig{
+		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
 			ID:          "btn-search-odkonta",
 			Name:        "search-odkonta",
 			HxUrl:       "/api/promet/searchbutton",
@@ -433,7 +434,7 @@ func SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "odkontanaziv",
 			Name:       "odkontanaziv",
 			FieldType:  "text",
@@ -448,7 +449,7 @@ func SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "dokonta",
 			LabelText:  translator.Label("Do Konta"),
 			ClassLabel: common.ClassLabel + " w-36",
@@ -456,7 +457,7 @@ func SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:           "dokonta",
 			Name:         "dokonta",
 			FieldType:    "text",
@@ -474,7 +475,7 @@ func SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SearchButton(domain.SearchButtonConfig{
+		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
 			ID:          "btn-search-dokonta",
 			Name:        "search-dokonta",
 			HxUrl:       "/api/promet/searchbutton",
@@ -486,7 +487,7 @@ func SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "dokontanaziv",
 			Name:       "dokontanaziv",
 			FieldType:  "text",
@@ -501,7 +502,7 @@ func SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "odsifre",
 			LabelText:  translator.Label("Počev od šifre"),
 			ClassLabel: common.ClassLabel + " w-36",
@@ -509,7 +510,7 @@ func SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:           "odsifre",
 			Name:         "odsifre",
 			FieldType:    "text",
@@ -529,7 +530,7 @@ func SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SearchButton(domain.SearchButtonConfig{
+		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
 			ID:          "btn-search-odsifre",
 			Name:        "search-odsifre",
 			HxUrl:       "/api/promet/searchbutton",
@@ -541,7 +542,7 @@ func SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "odsifrenaziv",
 			Name:       "odsifrenaziv",
 			FieldType:  "text",
@@ -555,7 +556,7 @@ func SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "dosifre",
 			LabelText:  translator.Label("Zakljucno sa šifrom"),
 			ClassLabel: common.ClassLabel + " w-36",
@@ -563,7 +564,7 @@ func SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:           "dosifre",
 			Name:         "dosifre",
 			FieldType:    "text",
@@ -583,7 +584,7 @@ func SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SearchButton(domain.SearchButtonConfig{
+		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
 			ID:          "btn-search-dosifre",
 			Name:        "search-dosifre",
 			HxUrl:       "/api/promet/searchbutton",
@@ -595,7 +596,7 @@ func SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "dosifrenaziv",
 			Name:       "dosifrenaziv",
 			FieldType:  "text",
@@ -609,7 +610,7 @@ func SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.CheckboxField(domain.CheckboxFieldConfig{
+		templ_7745c5c3_Err = components.CheckboxField(domain.CheckboxFieldConfig{
 			ID:                "chk_salda_valute",
 			Name:              "chk_salda_valute",
 			LabelText:         "Prikaz salda po valutama",
@@ -625,7 +626,7 @@ func SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "cbx_tipizvestaja",
 			LabelText:  translator.Label("Tip izveštaja"),
 			ClassLabel: common.ClassLabel + " w-36",
@@ -633,7 +634,7 @@ func SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.ComboBoxField(domain.ComboFieldConfig{
+		templ_7745c5c3_Err = components.ComboBoxField(domain.ComboFieldConfig{
 			ID:          "cbx_tipizvestaja",
 			Name:        "cbx_tipizvestaja",
 			Placeholder: "",
@@ -655,7 +656,7 @@ func SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "cbx_klasa",
 			LabelText:  translator.Label("Izbor klase"),
 			ClassLabel: common.ClassLabel + " w-36",
@@ -663,7 +664,7 @@ func SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.ComboBoxField(domain.ComboFieldConfig{
+		templ_7745c5c3_Err = components.ComboBoxField(domain.ComboFieldConfig{
 			ID:           "cbx_klasa",
 			Name:         "cbx_klasa",
 			Placeholder:  "",
@@ -679,7 +680,7 @@ func SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "cbx_odmeseca",
 			LabelText:  translator.Label("Od meseca"),
 			ClassLabel: common.ClassLabel + " w-36",
@@ -687,7 +688,7 @@ func SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.ComboBoxField(domain.ComboFieldConfig{
+		templ_7745c5c3_Err = components.ComboBoxField(domain.ComboFieldConfig{
 			ID:            "cbx_odmeseca",
 			Name:          "cbx_odmeseca",
 			Placeholder:   "",
@@ -704,7 +705,7 @@ func SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "cbx_domeseca",
 			LabelText:  translator.Label("Do meseca"),
 			ClassLabel: common.ClassLabel + " w-36",
@@ -712,7 +713,7 @@ func SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.ComboBoxField(domain.ComboFieldConfig{
+		templ_7745c5c3_Err = components.ComboBoxField(domain.ComboFieldConfig{
 			ID:            "cbx_domeseca",
 			Name:          "cbx_domeseca",
 			Placeholder:   "",
@@ -729,7 +730,7 @@ func SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "odsalda",
 			LabelText:  translator.Label("Od salda"),
 			ClassLabel: common.ClassLabel + " w-36",
@@ -737,7 +738,7 @@ func SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "odsalda",
 			Name:       "odsalda",
 			FieldType:  "number",
@@ -752,7 +753,7 @@ func SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "dosalda",
 			LabelText:  translator.Label("Do salda"),
 			ClassLabel: common.ClassLabel + " w-36",
@@ -760,7 +761,7 @@ func SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "dosalda",
 			Name:       "dosalda",
 			FieldType:  "number",
@@ -775,7 +776,7 @@ func SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "saldo_filter_label",
 			LabelText:  translator.Label("Prikaz salda"),
 			ClassLabel: common.ClassLabel + " w-36",
@@ -787,7 +788,7 @@ func SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.RadioButtonField(domain.RadioFieldConfig{
+		templ_7745c5c3_Err = components.RadioButtonField(domain.RadioFieldConfig{
 			ID:         "saldo_filter_sva_salda",
 			Name:       "saldo_filter",
 			Value:      "sva_salda",
@@ -797,7 +798,7 @@ func SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.RadioButtonField(domain.RadioFieldConfig{
+		templ_7745c5c3_Err = components.RadioButtonField(domain.RadioFieldConfig{
 			ID:         "saldo_filter_razl_nula",
 			Name:       "saldo_filter",
 			Value:      "razl_nula",
@@ -807,7 +808,7 @@ func SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.RadioButtonField(domain.RadioFieldConfig{
+		templ_7745c5c3_Err = components.RadioButtonField(domain.RadioFieldConfig{
 			ID:         "saldo_filter_vece_nula",
 			Name:       "saldo_filter",
 			Value:      "vece_nula",
@@ -817,7 +818,7 @@ func SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.RadioButtonField(domain.RadioFieldConfig{
+		templ_7745c5c3_Err = components.RadioButtonField(domain.RadioFieldConfig{
 			ID:         "saldo_filter_manje_nula",
 			Name:       "saldo_filter",
 			Value:      "manje_nula",
@@ -827,7 +828,7 @@ func SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.RadioButtonField(domain.RadioFieldConfig{
+		templ_7745c5c3_Err = components.RadioButtonField(domain.RadioFieldConfig{
 			ID:         "saldo_filter_nula",
 			Name:       "saldo_filter",
 			Value:      "nula",
@@ -841,11 +842,11 @@ func SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.FormObradaButton(btnObrada, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.FormObradaButton(btnObrada, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.PrintButton(btnPrint, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.PrintButton(btnPrint, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -853,11 +854,11 @@ func SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Search_Part(tbl, searchInput).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Search_Part(tbl, searchInput).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -865,11 +866,11 @@ func SaldaGrupeKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "</div></div></div></div><script>\n\t\t(function() {\n\t\t\tfunction setField(id, enabled) {\n\t\t\t\tconst el = document.getElementById(id);\n\t\t\t\tif (!el) return;\n\t\t\t\tel.disabled = !enabled;\n\t\t\t\t['!bg-gray-300', 'text-gray-500', 'cursor-not-allowed', 'opacity-75'].forEach(c => el.classList.toggle(c, !enabled));\n\t\t\t}\n\t\t\tfunction setBtn(name, enabled) {\n\t\t\t\tconst el = document.querySelector('[name=\"' + name + '\"]');\n\t\t\t\tif (!el) return;\n\t\t\t\tel.disabled = !enabled;\n\t\t\t\t['!bg-gray-300', 'text-gray-500', 'cursor-not-allowed', 'opacity-75'].forEach(c => el.classList.toggle(c, !enabled));\n\t\t\t}\n\t\t\tfunction applyTipIzvestaja(val) {\n\t\t\t\tconst kontoOn  = val === 'analitika' || val === 'subsintetika' || val === 'sintetika';\n\t\t\t\tconst sifreOn  = val === 'analitika' || val === 'klasa_sifra';\n\t\t\t\tconst klasaOn  = val === 'klasa_sifra' || val === 'klasa_subsintetika';\n\t\t\t\tsetField('odkonta',  kontoOn);  setBtn('search-odkonta',  kontoOn);\n\t\t\t\tsetField('dokonta',  kontoOn);  setBtn('search-dokonta',  kontoOn);\n\t\t\t\tsetField('odsifre',  sifreOn);  setBtn('search-odsifre',  sifreOn);\n\t\t\t\tsetField('dosifre',  sifreOn);  setBtn('search-dosifre',  sifreOn);\n\t\t\t\tsetField('cbx_klasa', klasaOn);\n\t\t\t}\n\t\t\tfunction applySaldoFilter(val) {\n\t\t\t\tconst saldoOn = val === 'vece_nula' || val === 'manje_nula';\n\t\t\t\tsetField('odsalda', saldoOn);\n\t\t\t\tsetField('dosalda', saldoOn);\n\t\t\t\tconst od = document.getElementById('odsalda');\n\t\t\t\tconst dod = document.getElementById('dosalda');\n\t\t\t\tif (!od || !dod) return;\n\t\t\t\tif (val === 'vece_nula') {\n\t\t\t\t\tod.value  = '0.01';\n\t\t\t\t\tdod.value = '9999999999999.99';\n\t\t\t\t} else if (val === 'manje_nula') {\n\t\t\t\t\tod.value  = '-9999999999999.99';\n\t\t\t\t\tdod.value = '-0.01';\n\t\t\t\t} else {\n\t\t\t\t\tod.value  = '0';\n\t\t\t\t\tdod.value = '0';\n\t\t\t\t}\n\t\t\t}\n\t\t\tfunction init() {\n\t\t\t\tconst sel = document.getElementById('cbx_tipizvestaja');\n\t\t\t\tif (!sel) return;\n\t\t\t\tsel.addEventListener('change', function() { applyTipIzvestaja(this.value); });\n\t\t\t\tapplyTipIzvestaja(sel.value);\n\t\t\t\tdocument.querySelectorAll('input[name=\"saldo_filter\"]').forEach(function(r) {\n\t\t\t\t\tr.addEventListener('change', function() { applySaldoFilter(this.value); });\n\t\t\t\t});\n\t\t\t\tconst checked = document.querySelector('input[name=\"saldo_filter\"]:checked');\n\t\t\t\tapplySaldoFilter(checked ? checked.value : '');\n\t\t\t}\n\t\t\tif (document.readyState === 'loading') {\n\t\t\t\tdocument.addEventListener('DOMContentLoaded', init);\n\t\t\t} else {\n\t\t\t\tinit();\n\t\t\t}\n\t\t})();\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "</div></div></div></div><script>\r\n\t\t(function() {\r\n\t\t\tfunction setField(id, enabled) {\r\n\t\t\t\tconst el = document.getElementById(id);\r\n\t\t\t\tif (!el) return;\r\n\t\t\t\tel.disabled = !enabled;\r\n\t\t\t\t['!bg-gray-300', 'text-gray-500', 'cursor-not-allowed', 'opacity-75'].forEach(c => el.classList.toggle(c, !enabled));\r\n\t\t\t}\r\n\t\t\tfunction setBtn(name, enabled) {\r\n\t\t\t\tconst el = document.querySelector('[name=\"' + name + '\"]');\r\n\t\t\t\tif (!el) return;\r\n\t\t\t\tel.disabled = !enabled;\r\n\t\t\t\t['!bg-gray-300', 'text-gray-500', 'cursor-not-allowed', 'opacity-75'].forEach(c => el.classList.toggle(c, !enabled));\r\n\t\t\t}\r\n\t\t\tfunction applyTipIzvestaja(val) {\r\n\t\t\t\tconst kontoOn  = val === 'analitika' || val === 'subsintetika' || val === 'sintetika';\r\n\t\t\t\tconst sifreOn  = val === 'analitika' || val === 'klasa_sifra';\r\n\t\t\t\tconst klasaOn  = val === 'klasa_sifra' || val === 'klasa_subsintetika';\r\n\t\t\t\tsetField('odkonta',  kontoOn);  setBtn('search-odkonta',  kontoOn);\r\n\t\t\t\tsetField('dokonta',  kontoOn);  setBtn('search-dokonta',  kontoOn);\r\n\t\t\t\tsetField('odsifre',  sifreOn);  setBtn('search-odsifre',  sifreOn);\r\n\t\t\t\tsetField('dosifre',  sifreOn);  setBtn('search-dosifre',  sifreOn);\r\n\t\t\t\tsetField('cbx_klasa', klasaOn);\r\n\t\t\t}\r\n\t\t\tfunction applySaldoFilter(val) {\r\n\t\t\t\tconst saldoOn = val === 'vece_nula' || val === 'manje_nula';\r\n\t\t\t\tsetField('odsalda', saldoOn);\r\n\t\t\t\tsetField('dosalda', saldoOn);\r\n\t\t\t\tconst od = document.getElementById('odsalda');\r\n\t\t\t\tconst dod = document.getElementById('dosalda');\r\n\t\t\t\tif (!od || !dod) return;\r\n\t\t\t\tif (val === 'vece_nula') {\r\n\t\t\t\t\tod.value  = '0.01';\r\n\t\t\t\t\tdod.value = '9999999999999.99';\r\n\t\t\t\t} else if (val === 'manje_nula') {\r\n\t\t\t\t\tod.value  = '-9999999999999.99';\r\n\t\t\t\t\tdod.value = '-0.01';\r\n\t\t\t\t} else {\r\n\t\t\t\t\tod.value  = '0';\r\n\t\t\t\t\tdod.value = '0';\r\n\t\t\t\t}\r\n\t\t\t}\r\n\t\t\tfunction init() {\r\n\t\t\t\tconst sel = document.getElementById('cbx_tipizvestaja');\r\n\t\t\t\tif (!sel) return;\r\n\t\t\t\tsel.addEventListener('change', function() { applyTipIzvestaja(this.value); });\r\n\t\t\t\tapplyTipIzvestaja(sel.value);\r\n\t\t\t\tdocument.querySelectorAll('input[name=\"saldo_filter\"]').forEach(function(r) {\r\n\t\t\t\t\tr.addEventListener('change', function() { applySaldoFilter(this.value); });\r\n\t\t\t\t});\r\n\t\t\t\tconst checked = document.querySelector('input[name=\"saldo_filter\"]:checked');\r\n\t\t\t\tapplySaldoFilter(checked ? checked.value : '');\r\n\t\t\t}\r\n\t\t\tif (document.readyState === 'loading') {\r\n\t\t\t\tdocument.addEventListener('DOMContentLoaded', init);\r\n\t\t\t} else {\r\n\t\t\t\tinit();\r\n\t\t\t}\r\n\t\t})();\r\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -914,7 +915,7 @@ func SaldaPartneri(tabs domain.TabData, tblPartneri domain.TableData, inputContr
 		var templ_7745c5c3_Var12 string
 		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Title("Partneri"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 612, Col: 42}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 613, Col: 42}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 		if templ_7745c5c3_Err != nil {
@@ -924,11 +925,11 @@ func SaldaPartneri(tabs domain.TabData, tblPartneri domain.TableData, inputContr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Search_Part(tblPartneri, inputControl).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Search_Part(tblPartneri, inputControl).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -936,11 +937,11 @@ func SaldaPartneri(tabs domain.TabData, tblPartneri domain.TableData, inputContr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Table(tblPartneri, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Table(tblPartneri, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "</div></div><!-- Right Column - Two Stacked Sections --><div id=\"saldapartneri-detalji\" class=\"flex flex-col h-full gap-1 overflow-hidden\"></div><div id=\"dialog-salda-partneri-stampa\" class=\"flex flex-col h-full gap-1\"></div></div></div></div><script>\n\t\t(function() {\n\t\t\tfunction clickFirstPartnerRow() {\n\t\t\t\tconst firstRow = document.querySelector('#saldapartneri-table tbody tr');\n\t\t\t\tif (firstRow) firstRow.click();\n\t\t\t}\n\t\t\tif (document.readyState === 'loading') {\n\t\t\t\tdocument.addEventListener('DOMContentLoaded', function() { setTimeout(clickFirstPartnerRow, 300); });\n\t\t\t} else {\n\t\t\t\tsetTimeout(clickFirstPartnerRow, 300);\n\t\t\t}\n\t\t})();\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "</div></div><!-- Right Column - Two Stacked Sections --><div id=\"saldapartneri-detalji\" class=\"flex flex-col h-full gap-1 overflow-hidden\"></div><div id=\"dialog-salda-partneri-stampa\" class=\"flex flex-col h-full gap-1\"></div></div></div></div><script>\r\n\t\t(function() {\r\n\t\t\tfunction clickFirstPartnerRow() {\r\n\t\t\t\tconst firstRow = document.querySelector('#saldapartneri-table tbody tr');\r\n\t\t\t\tif (firstRow) firstRow.click();\r\n\t\t\t}\r\n\t\t\tif (document.readyState === 'loading') {\r\n\t\t\t\tdocument.addEventListener('DOMContentLoaded', function() { setTimeout(clickFirstPartnerRow, 300); });\r\n\t\t\t} else {\r\n\t\t\t\tsetTimeout(clickFirstPartnerRow, 300);\r\n\t\t\t}\r\n\t\t})();\r\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -981,7 +982,7 @@ func SaldaPartneriStampaDialog(dialog domain.Dialog, btnPrint, btnCancel, btnClo
 		var templ_7745c5c3_Var15 string
 		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.Id)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 643, Col: 20}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 644, Col: 20}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 		if templ_7745c5c3_Err != nil {
@@ -1007,7 +1008,7 @@ func SaldaPartneriStampaDialog(dialog domain.Dialog, btnPrint, btnCancel, btnClo
 		var templ_7745c5c3_Var17 string
 		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Title(dialog.Title))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 647, Col: 75}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 648, Col: 75}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 		if templ_7745c5c3_Err != nil {
@@ -1017,7 +1018,7 @@ func SaldaPartneriStampaDialog(dialog domain.Dialog, btnPrint, btnCancel, btnClo
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.CloseButton(btnClose).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.CloseButton(btnClose).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1028,7 +1029,7 @@ func SaldaPartneriStampaDialog(dialog domain.Dialog, btnPrint, btnCancel, btnClo
 		var templ_7745c5c3_Var18 string
 		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Stampaj detalje"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 655, Col: 87}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 656, Col: 87}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
@@ -1041,7 +1042,7 @@ func SaldaPartneriStampaDialog(dialog domain.Dialog, btnPrint, btnCancel, btnClo
 		var templ_7745c5c3_Var19 string
 		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Novi partner nova strana"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 659, Col: 105}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 660, Col: 105}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 		if templ_7745c5c3_Err != nil {
@@ -1051,7 +1052,7 @@ func SaldaPartneriStampaDialog(dialog domain.Dialog, btnPrint, btnCancel, btnClo
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "odsifre",
 			LabelText:  translator.Label("Počev od sifre"),
 			ClassLabel: common.ClassLabel + " w-36",
@@ -1059,7 +1060,7 @@ func SaldaPartneriStampaDialog(dialog domain.Dialog, btnPrint, btnCancel, btnClo
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "odsifre",
 			Name:       "odsifre",
 			FieldType:  "text",
@@ -1077,7 +1078,7 @@ func SaldaPartneriStampaDialog(dialog domain.Dialog, btnPrint, btnCancel, btnClo
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "dosifre",
 			LabelText:  translator.Label("Zaključno sa sifrom"),
 			ClassLabel: common.ClassLabel + " w-36",
@@ -1085,7 +1086,7 @@ func SaldaPartneriStampaDialog(dialog domain.Dialog, btnPrint, btnCancel, btnClo
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "dosifre",
 			Name:       "dosifre",
 			FieldType:  "text",
@@ -1103,11 +1104,11 @@ func SaldaPartneriStampaDialog(dialog domain.Dialog, btnPrint, btnCancel, btnClo
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Search_PartPrintButton(btnPrint).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Search_PartPrintButton(btnPrint).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.CancelButton(btnCancel, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.CancelButton(btnCancel, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1147,7 +1148,7 @@ func SaldaPartneriDetalji(tblKonta, tblDetalji domain.TableData, translator *i18
 		var templ_7745c5c3_Var21 string
 		templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Title("Salda po kontima"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 712, Col: 41}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 713, Col: 41}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 		if templ_7745c5c3_Err != nil {
@@ -1157,7 +1158,7 @@ func SaldaPartneriDetalji(tblKonta, tblDetalji domain.TableData, translator *i18
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Table(tblKonta, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Table(tblKonta, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1168,7 +1169,7 @@ func SaldaPartneriDetalji(tblKonta, tblDetalji domain.TableData, translator *i18
 		var templ_7745c5c3_Var22 string
 		templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Title("Detalji"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 722, Col: 32}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 723, Col: 32}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
 		if templ_7745c5c3_Err != nil {
@@ -1178,7 +1179,7 @@ func SaldaPartneriDetalji(tblKonta, tblDetalji domain.TableData, translator *i18
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Table(tblDetalji, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Table(tblDetalji, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1226,7 +1227,7 @@ func SaldaPartneriPrelomljeno(tabs domain.TabData, tbl domain.TableData, btnObra
 		var templ_7745c5c3_Var24 string
 		templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Parametri"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 745, Col: 36}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 746, Col: 36}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 		if templ_7745c5c3_Err != nil {
@@ -1236,7 +1237,7 @@ func SaldaPartneriPrelomljeno(tabs domain.TabData, tbl domain.TableData, btnObra
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "sifra_od",
 			LabelText:  translator.Label("Počev od sifre"),
 			ClassLabel: common.ClassLabel + " w-36",
@@ -1244,7 +1245,7 @@ func SaldaPartneriPrelomljeno(tabs domain.TabData, tbl domain.TableData, btnObra
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "sifra_od",
 			Name:       "sifra_od",
 			FieldType:  "text",
@@ -1262,7 +1263,7 @@ func SaldaPartneriPrelomljeno(tabs domain.TabData, tbl domain.TableData, btnObra
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "sifra_do",
 			LabelText:  translator.Label("Zakljucno sa sifrom"),
 			ClassLabel: common.ClassLabel + " w-36",
@@ -1270,7 +1271,7 @@ func SaldaPartneriPrelomljeno(tabs domain.TabData, tbl domain.TableData, btnObra
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "sifra_do",
 			Name:       "sifra_do",
 			FieldType:  "text",
@@ -1288,11 +1289,11 @@ func SaldaPartneriPrelomljeno(tabs domain.TabData, tbl domain.TableData, btnObra
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.FormObradaButton(btnObrada, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.FormObradaButton(btnObrada, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Search_PartPrintButton(btnPrint).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Search_PartPrintButton(btnPrint).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1303,7 +1304,7 @@ func SaldaPartneriPrelomljeno(tabs domain.TabData, tbl domain.TableData, btnObra
 		var templ_7745c5c3_Var25 string
 		templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Rezime"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 793, Col: 33}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 794, Col: 33}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
 		if templ_7745c5c3_Err != nil {
@@ -1316,7 +1317,7 @@ func SaldaPartneriPrelomljeno(tabs domain.TabData, tbl domain.TableData, btnObra
 		var templ_7745c5c3_Var26 string
 		templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Kupac"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 796, Col: 80}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 797, Col: 80}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
 		if templ_7745c5c3_Err != nil {
@@ -1329,7 +1330,7 @@ func SaldaPartneriPrelomljeno(tabs domain.TabData, tbl domain.TableData, btnObra
 		var templ_7745c5c3_Var27 string
 		templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Dobavljač"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 797, Col: 85}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 798, Col: 85}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
 		if templ_7745c5c3_Err != nil {
@@ -1342,7 +1343,7 @@ func SaldaPartneriPrelomljeno(tabs domain.TabData, tbl domain.TableData, btnObra
 		var templ_7745c5c3_Var28 string
 		templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Primijen avans"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 798, Col: 89}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 799, Col: 89}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
 		if templ_7745c5c3_Err != nil {
@@ -1355,7 +1356,7 @@ func SaldaPartneriPrelomljeno(tabs domain.TabData, tbl domain.TableData, btnObra
 		var templ_7745c5c3_Var29 string
 		templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Dat avans"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 799, Col: 84}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 800, Col: 84}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
 		if templ_7745c5c3_Err != nil {
@@ -1365,11 +1366,11 @@ func SaldaPartneriPrelomljeno(tabs domain.TabData, tbl domain.TableData, btnObra
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Search_Part(tbl, searchInput).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Search_Part(tbl, searchInput).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1377,7 +1378,7 @@ func SaldaPartneriPrelomljeno(tabs domain.TabData, tbl domain.TableData, btnObra
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1417,20 +1418,20 @@ func SaldaTotalValues(total domain.SaldaDto, sourceUrl string, translator *i18n.
 		var templ_7745c5c3_Var31 string
 		templ_7745c5c3_Var31, templ_7745c5c3_Err = templ.JoinStringErrs(sourceUrl)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 820, Col: 20}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 821, Col: 20}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var31))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 70, "\" hx-trigger=\"click from:#obrada-btn\" hx-target=\"#totalvalues\" hx-swap=\"innerHTML\" hx-vals=\"js:{\n            konto: document.getElementById(&#39;konto&#39;)?.value,\n            sifra: document.getElementById(&#39;sifra&#39;)?.value,\n            tipkonta: document.querySelector(&#39;input[name=\\&#39;tipkonta\\&#39;]:checked&#39;)?.value,\n\t\t\todkonta: document.getElementById(&#39;odkonta&#39;)?.value,\n\t\t\tdokonta: document.getElementById(&#39;dokonta&#39;)?.value,\n\t\t\todsifre: document.getElementById(&#39;odsifre&#39;)?.value,\n\t\t\tdosifre: document.getElementById(&#39;dosifre&#39;)?.value,\n\t\t\toddatuma: document.getElementById(&#39;oddatuma&#39;)?.value,\n\t\t\tdodatuma: document.getElementById(&#39;dodatuma&#39;)?.value,\n\t\t\tklasa: document.querySelector(&#39;input[name=\\&#39;klasa\\&#39;]:checked&#39;)?.value\n        }\"><div class=\"grid grid-cols-4 gap-1 mb-px text-sm font-medium text-gray-700 h-6 items-center\"><div class=\"text-center\"></div><div class=\"text-center\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 70, "\" hx-trigger=\"click from:#obrada-btn\" hx-target=\"#totalvalues\" hx-swap=\"innerHTML\" hx-vals=\"js:{\r\n            konto: document.getElementById(&#39;konto&#39;)?.value,\r\n            sifra: document.getElementById(&#39;sifra&#39;)?.value,\r\n            tipkonta: document.querySelector(&#39;input[name=\\&#39;tipkonta\\&#39;]:checked&#39;)?.value,\r\n\t\t\todkonta: document.getElementById(&#39;odkonta&#39;)?.value,\r\n\t\t\tdokonta: document.getElementById(&#39;dokonta&#39;)?.value,\r\n\t\t\todsifre: document.getElementById(&#39;odsifre&#39;)?.value,\r\n\t\t\tdosifre: document.getElementById(&#39;dosifre&#39;)?.value,\r\n\t\t\toddatuma: document.getElementById(&#39;oddatuma&#39;)?.value,\r\n\t\t\tdodatuma: document.getElementById(&#39;dodatuma&#39;)?.value,\r\n\t\t\tklasa: document.querySelector(&#39;input[name=\\&#39;klasa\\&#39;]:checked&#39;)?.value\r\n        }\"><div class=\"grid grid-cols-4 gap-1 mb-px text-sm font-medium text-gray-700 h-6 items-center\"><div class=\"text-center\"></div><div class=\"text-center\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var32 string
 		templ_7745c5c3_Var32, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Duguje"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 839, Col: 56}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 840, Col: 56}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var32))
 		if templ_7745c5c3_Err != nil {
@@ -1443,7 +1444,7 @@ func SaldaTotalValues(total domain.SaldaDto, sourceUrl string, translator *i18n.
 		var templ_7745c5c3_Var33 string
 		templ_7745c5c3_Var33, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Potražuje"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 840, Col: 60}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 841, Col: 60}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var33))
 		if templ_7745c5c3_Err != nil {
@@ -1456,7 +1457,7 @@ func SaldaTotalValues(total domain.SaldaDto, sourceUrl string, translator *i18n.
 		var templ_7745c5c3_Var34 string
 		templ_7745c5c3_Var34, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Saldo"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 841, Col: 55}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 842, Col: 55}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var34))
 		if templ_7745c5c3_Err != nil {
@@ -1469,7 +1470,7 @@ func SaldaTotalValues(total domain.SaldaDto, sourceUrl string, translator *i18n.
 		var templ_7745c5c3_Var35 string
 		templ_7745c5c3_Var35, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Početno stanje"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 844, Col: 75}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 845, Col: 75}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var35))
 		if templ_7745c5c3_Err != nil {
@@ -1479,31 +1480,34 @@ func SaldaTotalValues(total domain.SaldaDto, sourceUrl string, translator *i18n.
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:            "pocstanjeduguje",
 			Value:         common.FormatNumberWithSystemLocale(total.PocStanjeDug, 2),
 			DecimalPlaces: 2,
 			Disabled:      true,
+			FieldType:     "number",
 			ClassInput:    common.ClassInputNumericDisabled,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:            "pocstanjepotrazuje",
 			Value:         common.FormatNumberWithSystemLocale(total.PocStanjePot, 2),
 			DecimalPlaces: 2,
 			Disabled:      true,
+			FieldType:     "number",
 			ClassInput:    common.ClassInputNumericDisabled,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:            "pocstanjesaldo",
 			Value:         common.FormatNumberWithSystemLocale(total.PocStanjeSaldo, 2),
 			DecimalPlaces: 2,
 			Disabled:      true,
+			FieldType:     "number",
 			ClassInput:    common.ClassInputNumericDisabled,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
@@ -1516,7 +1520,7 @@ func SaldaTotalValues(total domain.SaldaDto, sourceUrl string, translator *i18n.
 		var templ_7745c5c3_Var36 string
 		templ_7745c5c3_Var36, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Tekući promet"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 868, Col: 74}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 872, Col: 74}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var36))
 		if templ_7745c5c3_Err != nil {
@@ -1526,31 +1530,34 @@ func SaldaTotalValues(total domain.SaldaDto, sourceUrl string, translator *i18n.
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:            "tekucipromduguje",
 			Value:         common.FormatNumberWithSystemLocale(total.TekuciPromDug, 2),
 			DecimalPlaces: 2,
 			Disabled:      true,
+			FieldType:     "number",
 			ClassInput:    common.ClassInputNumericDisabled,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:            "tekuciprompotrazuje",
 			Value:         common.FormatNumberWithSystemLocale(total.TekuciPromPot, 2),
 			DecimalPlaces: 2,
 			Disabled:      true,
+			FieldType:     "number",
 			ClassInput:    common.ClassInputNumericDisabled,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:            "tekucipromsaldo",
 			Value:         common.FormatNumberWithSystemLocale(total.TekuciPromSaldo, 2),
 			DecimalPlaces: 2,
 			Disabled:      true,
+			FieldType:     "number",
 			ClassInput:    common.ClassInputNumericDisabled,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
@@ -1563,7 +1570,7 @@ func SaldaTotalValues(total domain.SaldaDto, sourceUrl string, translator *i18n.
 		var templ_7745c5c3_Var37 string
 		templ_7745c5c3_Var37, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Ukupan promet"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 892, Col: 73}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 899, Col: 73}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var37))
 		if templ_7745c5c3_Err != nil {
@@ -1573,30 +1580,33 @@ func SaldaTotalValues(total domain.SaldaDto, sourceUrl string, translator *i18n.
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:            "ukpromduguje",
 			Value:         common.FormatNumberWithSystemLocale(total.UkPromDug, 2),
 			DecimalPlaces: 2,
+			FieldType:     "number",
 			Disabled:      true,
 			ClassInput:    common.ClassInputNumericDisabled,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:            "ukprompotrazuje",
 			Value:         common.FormatNumberWithSystemLocale(total.UkPromPot, 2),
 			DecimalPlaces: 2,
+			FieldType:     "number",
 			Disabled:      true,
 			ClassInput:    common.ClassInputNumericDisabled,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:            "ukpromsaldo",
 			Value:         common.FormatNumberWithSystemLocale(total.UkPromSaldo, 2),
 			DecimalPlaces: 2,
+			FieldType:     "number",
 			Disabled:      true,
 			ClassInput:    common.ClassInputNumericDisabled,
 		}).Render(ctx, templ_7745c5c3_Buffer)
@@ -1644,7 +1654,7 @@ func SaldaKlase5i6analiticki(tabs domain.TabData, tbl domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "odsifre",
 			LabelText:  translator.Label("Od sifre"),
 			ClassLabel: common.ClassLabel + " w-24",
@@ -1652,7 +1662,7 @@ func SaldaKlase5i6analiticki(tabs domain.TabData, tbl domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:           "odsifre",
 			Name:         "odsifre",
 			FieldType:    "text",
@@ -1672,7 +1682,7 @@ func SaldaKlase5i6analiticki(tabs domain.TabData, tbl domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SearchButton(domain.SearchButtonConfig{
+		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
 			ID:          "btnodsifre",
 			Name:        "search-odsifre",
 			HxUrl:       "/api/promet/searchbutton",
@@ -1684,7 +1694,7 @@ func SaldaKlase5i6analiticki(tabs domain.TabData, tbl domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "odsifrenaziv",
 			Name:       "odsifrenaziv",
 			FieldType:  "text",
@@ -1698,7 +1708,7 @@ func SaldaKlase5i6analiticki(tabs domain.TabData, tbl domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "dosifre",
 			LabelText:  translator.Label("Do sifre"),
 			ClassLabel: common.ClassLabel + " w-24",
@@ -1706,7 +1716,7 @@ func SaldaKlase5i6analiticki(tabs domain.TabData, tbl domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:           "dosifre",
 			Name:         "dosifre",
 			FieldType:    "text",
@@ -1726,7 +1736,7 @@ func SaldaKlase5i6analiticki(tabs domain.TabData, tbl domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SearchButton(domain.SearchButtonConfig{
+		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
 			ID:          "btndosifre",
 			Name:        "search-dosifre",
 			HxUrl:       "/api/promet/searchbutton",
@@ -1738,7 +1748,7 @@ func SaldaKlase5i6analiticki(tabs domain.TabData, tbl domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "dosifrenaziv",
 			Name:       "dosifrenaziv",
 			FieldType:  "text",
@@ -1752,7 +1762,7 @@ func SaldaKlase5i6analiticki(tabs domain.TabData, tbl domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "oddatuma",
 			ClassLabel: common.ClassLabel + " w-24",
 			LabelText:  translator.Label("Od datuma"),
@@ -1760,7 +1770,7 @@ func SaldaKlase5i6analiticki(tabs domain.TabData, tbl domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "oddatuma",
 			Name:       "oddatuma",
 			FieldType:  "date",
@@ -1778,7 +1788,7 @@ func SaldaKlase5i6analiticki(tabs domain.TabData, tbl domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "dodatuma",
 			LabelText:  translator.Label("Do datuma"),
 			ClassLabel: common.ClassLabel + " w-24 ",
@@ -1786,7 +1796,7 @@ func SaldaKlase5i6analiticki(tabs domain.TabData, tbl domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "dodatuma",
 			Name:       "dodatuma",
 			FieldType:  "date",
@@ -1804,7 +1814,7 @@ func SaldaKlase5i6analiticki(tabs domain.TabData, tbl domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "klasa",
 			LabelText:  translator.Label("Klasa"),
 			ClassLabel: common.ClassLabel + " w-24",
@@ -1816,7 +1826,7 @@ func SaldaKlase5i6analiticki(tabs domain.TabData, tbl domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.RadioButtonField(domain.RadioFieldConfig{
+		templ_7745c5c3_Err = components.RadioButtonField(domain.RadioFieldConfig{
 			ID:         "klasa",
 			Name:       "klasa",
 			Value:      "5",
@@ -1826,7 +1836,7 @@ func SaldaKlase5i6analiticki(tabs domain.TabData, tbl domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.RadioButtonField(domain.RadioFieldConfig{
+		templ_7745c5c3_Err = components.RadioButtonField(domain.RadioFieldConfig{
 			ID:         "klasa",
 			Name:       "klasa",
 			Value:      "6",
@@ -1840,11 +1850,11 @@ func SaldaKlase5i6analiticki(tabs domain.TabData, tbl domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.FormObradaButton(btnObrada, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.FormObradaButton(btnObrada, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Search_PartPrintButton(btnPrint).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Search_PartPrintButton(btnPrint).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1860,11 +1870,11 @@ func SaldaKlase5i6analiticki(tabs domain.TabData, tbl domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Search_Part(tbl, searchInput).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Search_Part(tbl, searchInput).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1872,7 +1882,7 @@ func SaldaKlase5i6analiticki(tabs domain.TabData, tbl domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1917,7 +1927,7 @@ func SaldaKlase5i6MT(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "odkonta",
 			LabelText:  translator.Label("Od Konta"),
 			ClassLabel: common.ClassLabel + " w-24",
@@ -1925,7 +1935,7 @@ func SaldaKlase5i6MT(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:           "odkonta",
 			Name:         "odkonta",
 			FieldType:    "text",
@@ -1943,7 +1953,7 @@ func SaldaKlase5i6MT(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SearchButton(domain.SearchButtonConfig{
+		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
 			ID:          "btn-search-odkonta",
 			Name:        "search-odkonta",
 			HxUrl:       "/api/promet/searchbutton",
@@ -1955,7 +1965,7 @@ func SaldaKlase5i6MT(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "odkontanaziv",
 			Name:       "odkontanaziv",
 			FieldType:  "text",
@@ -1970,7 +1980,7 @@ func SaldaKlase5i6MT(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "dokonta",
 			LabelText:  translator.Label("Do Konta"),
 			ClassLabel: common.ClassLabel + " w-24",
@@ -1978,7 +1988,7 @@ func SaldaKlase5i6MT(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:           "dokonta",
 			Name:         "dokonta",
 			FieldType:    "text",
@@ -1996,7 +2006,7 @@ func SaldaKlase5i6MT(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SearchButton(domain.SearchButtonConfig{
+		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
 			ID:          "btn-search-dokonta",
 			Name:        "search-dokonta",
 			HxUrl:       "/api/promet/searchbutton",
@@ -2008,7 +2018,7 @@ func SaldaKlase5i6MT(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "dokontanaziv",
 			Name:       "dokontanaziv",
 			FieldType:  "text",
@@ -2023,7 +2033,7 @@ func SaldaKlase5i6MT(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "oddatuma",
 			ClassLabel: common.ClassLabel + " w-24",
 			LabelText:  translator.Label("Od datuma"),
@@ -2031,7 +2041,7 @@ func SaldaKlase5i6MT(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "oddatuma",
 			Name:       "oddatuma",
 			FieldType:  "date",
@@ -2048,7 +2058,7 @@ func SaldaKlase5i6MT(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "dodatuma",
 			LabelText:  translator.Label("Do datuma"),
 			ClassLabel: common.ClassLabel + " w-24 ",
@@ -2056,7 +2066,7 @@ func SaldaKlase5i6MT(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "dodatuma",
 			Name:       "dodatuma",
 			FieldType:  "date",
@@ -2074,7 +2084,7 @@ func SaldaKlase5i6MT(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "klasa",
 			LabelText:  translator.Label("Klasa"),
 			ClassLabel: common.ClassLabel + " w-24",
@@ -2086,7 +2096,7 @@ func SaldaKlase5i6MT(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.RadioButtonField(domain.RadioFieldConfig{
+		templ_7745c5c3_Err = components.RadioButtonField(domain.RadioFieldConfig{
 			ID:         "klasa",
 			Name:       "klasa",
 			Value:      "5",
@@ -2096,7 +2106,7 @@ func SaldaKlase5i6MT(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.RadioButtonField(domain.RadioFieldConfig{
+		templ_7745c5c3_Err = components.RadioButtonField(domain.RadioFieldConfig{
 			ID:         "klasa",
 			Name:       "klasa",
 			Value:      "6",
@@ -2110,11 +2120,11 @@ func SaldaKlase5i6MT(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.FormObradaButton(btnObrada, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.FormObradaButton(btnObrada, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Search_PartPrintButton(btnPrint).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Search_PartPrintButton(btnPrint).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2130,11 +2140,11 @@ func SaldaKlase5i6MT(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Search_Part(tbl, searchInput).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Search_Part(tbl, searchInput).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2142,7 +2152,7 @@ func SaldaKlase5i6MT(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2190,7 +2200,7 @@ func SaldaPoKomercijalistima(tabs domain.TabData, tbl domain.TableData, btnObrad
 		var templ_7745c5c3_Var41 string
 		templ_7745c5c3_Var41, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Parametri"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 1285, Col: 36}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 1295, Col: 36}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var41))
 		if templ_7745c5c3_Err != nil {
@@ -2200,7 +2210,7 @@ func SaldaPoKomercijalistima(tabs domain.TabData, tbl domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "pod_datumom",
 			LabelText:  translator.Label("Pod datumom"),
 			ClassLabel: common.ClassLabel + " w-36",
@@ -2208,7 +2218,7 @@ func SaldaPoKomercijalistima(tabs domain.TabData, tbl domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "pod_datumom",
 			Name:       "pod_datumom",
 			FieldType:  "date",
@@ -2226,7 +2236,7 @@ func SaldaPoKomercijalistima(tabs domain.TabData, tbl domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "od_komercijaliste",
 			LabelText:  translator.Label("Od komercijaliste"),
 			ClassLabel: common.ClassLabel + " w-36",
@@ -2234,7 +2244,7 @@ func SaldaPoKomercijalistima(tabs domain.TabData, tbl domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "od_komercijaliste",
 			Name:       "od_komercijaliste",
 			FieldType:  "text",
@@ -2248,7 +2258,7 @@ func SaldaPoKomercijalistima(tabs domain.TabData, tbl domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SearchButton(domain.SearchButtonConfig{
+		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
 			ID:          "od_komercijaliste",
 			Name:        "search-od-komercijaliste",
 			HxUrl:       "/api/salda/searchkomercijaliste",
@@ -2259,7 +2269,7 @@ func SaldaPoKomercijalistima(tabs domain.TabData, tbl domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "nazivod_komercijaliste",
 			Name:       "nazivod_komercijaliste",
 			FieldType:  "text",
@@ -2270,7 +2280,7 @@ func SaldaPoKomercijalistima(tabs domain.TabData, tbl domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "do_komercijaliste",
 			LabelText:  translator.Label("Do komercijaliste"),
 			ClassLabel: common.ClassLabel + " w-36",
@@ -2278,7 +2288,7 @@ func SaldaPoKomercijalistima(tabs domain.TabData, tbl domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "do_komercijaliste",
 			Name:       "do_komercijaliste",
 			FieldType:  "text",
@@ -2292,7 +2302,7 @@ func SaldaPoKomercijalistima(tabs domain.TabData, tbl domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SearchButton(domain.SearchButtonConfig{
+		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
 			ID:          "do_komercijaliste",
 			Name:        "search-do-komercijaliste",
 			HxUrl:       "/api/salda/searchkomercijaliste",
@@ -2303,7 +2313,7 @@ func SaldaPoKomercijalistima(tabs domain.TabData, tbl domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "nazivdo_komercijaliste",
 			Name:       "nazivdo_komercijaliste",
 			FieldType:  "text",
@@ -2318,11 +2328,7 @@ func SaldaPoKomercijalistima(tabs domain.TabData, tbl domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.FormObradaButton(btnObrada, translator).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = tmpl.PrintButton(btnPrint, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.FormObradaButton(btnObrada, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2330,11 +2336,11 @@ func SaldaPoKomercijalistima(tabs domain.TabData, tbl domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Search_Part(tbl, searchInput).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Search_Part(tbl, searchInput).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2342,7 +2348,7 @@ func SaldaPoKomercijalistima(tabs domain.TabData, tbl domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2350,7 +2356,7 @@ func SaldaPoKomercijalistima(tabs domain.TabData, tbl domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SpinnerScript().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.SpinnerScript().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2394,7 +2400,7 @@ func RealizacijaKomercijalisti(tabs domain.TabData, tbl domain.TableData, btnObr
 		var templ_7745c5c3_Var43 string
 		templ_7745c5c3_Var43, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Parametri"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 1408, Col: 36}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 1418, Col: 36}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var43))
 		if templ_7745c5c3_Err != nil {
@@ -2404,7 +2410,7 @@ func RealizacijaKomercijalisti(tabs domain.TabData, tbl domain.TableData, btnObr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "od_datuma",
 			LabelText:  translator.Label("Od datuma"),
 			ClassLabel: common.ClassLabel + " w-36",
@@ -2412,7 +2418,7 @@ func RealizacijaKomercijalisti(tabs domain.TabData, tbl domain.TableData, btnObr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "od_datuma",
 			Name:       "od_datuma",
 			FieldType:  "date",
@@ -2423,7 +2429,7 @@ func RealizacijaKomercijalisti(tabs domain.TabData, tbl domain.TableData, btnObr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "od_komercijaliste",
 			LabelText:  translator.Label("Od komercijaliste"),
 			ClassLabel: common.ClassLabel + " w-36",
@@ -2431,7 +2437,7 @@ func RealizacijaKomercijalisti(tabs domain.TabData, tbl domain.TableData, btnObr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "od_komercijaliste",
 			Name:       "od_komercijaliste",
 			FieldType:  "text",
@@ -2443,7 +2449,7 @@ func RealizacijaKomercijalisti(tabs domain.TabData, tbl domain.TableData, btnObr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SearchButton(domain.SearchButtonConfig{
+		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
 			ID:          "od_komercijaliste",
 			Name:        "search-od-komercijaliste",
 			HxUrl:       "/api/salda/searchkomercijaliste",
@@ -2454,7 +2460,7 @@ func RealizacijaKomercijalisti(tabs domain.TabData, tbl domain.TableData, btnObr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "nazivod_komercijaliste",
 			Name:       "nazivod_komercijaliste",
 			FieldType:  "text",
@@ -2469,7 +2475,7 @@ func RealizacijaKomercijalisti(tabs domain.TabData, tbl domain.TableData, btnObr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "do_datuma",
 			LabelText:  translator.Label("Do datuma"),
 			ClassLabel: common.ClassLabel + " w-36",
@@ -2477,7 +2483,7 @@ func RealizacijaKomercijalisti(tabs domain.TabData, tbl domain.TableData, btnObr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "do_datuma",
 			Name:       "do_datuma",
 			FieldType:  "date",
@@ -2488,7 +2494,7 @@ func RealizacijaKomercijalisti(tabs domain.TabData, tbl domain.TableData, btnObr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "do_komercijaliste",
 			LabelText:  translator.Label("Do komercijaliste"),
 			ClassLabel: common.ClassLabel + " w-36",
@@ -2496,7 +2502,7 @@ func RealizacijaKomercijalisti(tabs domain.TabData, tbl domain.TableData, btnObr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "do_komercijaliste",
 			Name:       "do_komercijaliste",
 			FieldType:  "text",
@@ -2508,7 +2514,7 @@ func RealizacijaKomercijalisti(tabs domain.TabData, tbl domain.TableData, btnObr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SearchButton(domain.SearchButtonConfig{
+		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
 			ID:          "do_komercijaliste",
 			Name:        "search-do-komercijaliste",
 			HxUrl:       "/api/salda/searchkomercijaliste",
@@ -2519,7 +2525,7 @@ func RealizacijaKomercijalisti(tabs domain.TabData, tbl domain.TableData, btnObr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "nazivdo_komercijaliste",
 			Name:       "nazivdo_komercijaliste",
 			FieldType:  "text",
@@ -2537,7 +2543,7 @@ func RealizacijaKomercijalisti(tabs domain.TabData, tbl domain.TableData, btnObr
 		var templ_7745c5c3_Var44 string
 		templ_7745c5c3_Var44, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Stampaj zbirno po komercijalistima"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 1510, Col: 99}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 1520, Col: 99}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var44))
 		if templ_7745c5c3_Err != nil {
@@ -2550,7 +2556,7 @@ func RealizacijaKomercijalisti(tabs domain.TabData, tbl domain.TableData, btnObr
 		var templ_7745c5c3_Var45 string
 		templ_7745c5c3_Var45, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Stampaj komercijalistu na novu stranu"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 1518, Col: 102}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/salda.templ`, Line: 1528, Col: 102}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var45))
 		if templ_7745c5c3_Err != nil {
@@ -2560,11 +2566,11 @@ func RealizacijaKomercijalisti(tabs domain.TabData, tbl domain.TableData, btnObr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.FormObradaButton(btnObrada, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.FormObradaButton(btnObrada, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.PrintButton(btnPrint, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.PrintButton(btnPrint, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2572,11 +2578,11 @@ func RealizacijaKomercijalisti(tabs domain.TabData, tbl domain.TableData, btnObr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Search_Part(tbl, searchInput).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Search_Part(tbl, searchInput).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2584,7 +2590,7 @@ func RealizacijaKomercijalisti(tabs domain.TabData, tbl domain.TableData, btnObr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2592,7 +2598,7 @@ func RealizacijaKomercijalisti(tabs domain.TabData, tbl domain.TableData, btnObr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SpinnerScript().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.SpinnerScript().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2621,7 +2627,7 @@ func ChartScript() templ.Component {
 			templ_7745c5c3_Var46 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 122, "<script>\n\t\tlet saldaChartInstance = null;\n\n\t\t// Helper function to get vkonta value based on radio selection\n\t\tfunction getVkontaValue() {\n\t\t\tconst checkedRadio = document.querySelector('input[name=\"tipkonta\"]:checked');\n\t\t\tif (!checkedRadio) return '';\n\t\t\t\n\t\t\t// Map radio values to vkonta values\n\t\t\tconst valueMap = {\n\t\t\t\t'1': '2',  // Analitika → 2\n\t\t\t\t'2': '2',  // Subsintetika → 2\n\t\t\t\t'3': '3'   // Sintetika → 3\n\t\t\t};\n\t\t\t\n\t\t\treturn valueMap[checkedRadio.value] || checkedRadio.value;\n\t\t}\n\n\t\tfunction initializeSaldaChart() {\n\t\t\tconst ctx = document.getElementById('saldachart');\n\t\t\tif (!ctx) return;\n\n\t\t\t// Get table data from the page - find the table in tab1\n\t\t\tconst months = [];\n\t\t\tconst duguje = [];\n\t\t\tconst potrazuje = [];\n\t\t\tconst saldo = [];\n\n\t\t\t// Extract data from table rows in tab1\n\t\t\tconst tab1 = document.getElementById('tab1');\n\t\t\tif (!tab1) return;\n\t\t\t\n\t\t\tconst tableRows = tab1.querySelectorAll('table tbody tr');\n\t\t\t\n\t\t\ttableRows.forEach(row => {\n\t\t\t\tconst cells = row.querySelectorAll('td');\n\t\t\t\tif (cells.length >= 4) {\n\t\t\t\t\tmonths.push(cells[0].textContent.trim());\n\t\t\t\t\tduguje.push(parseFloat(cells[1].textContent.replace(/,/g, '').replace(/\\./g, '')) || 0);\n\t\t\t\t\tpotrazuje.push(parseFloat(cells[2].textContent.replace(/,/g, '').replace(/\\./g, '')) || 0);\n\t\t\t\t\tsaldo.push(parseFloat(cells[3].textContent.replace(/,/g, '').replace(/\\./g, '')) || 0);\n\t\t\t\t}\n\t\t\t});\n\n\t\t\t// Only create chart if we have data\n\t\t\tif (months.length === 0) {\n\t\t\t\tconsole.log('No data found for chart');\n\t\t\t\treturn;\n\t\t\t}\n\n\t\t\t// Destroy previous chart instance if it exists\n\t\t\tif (saldaChartInstance) {\n\t\t\t\tsaldaChartInstance.destroy();\n\t\t\t}\n\n\t\t\t// Create new chart\n\t\t\tsaldaChartInstance = new Chart(ctx, {\n\t\t\t\ttype: 'bar',\n\t\t\t\tdata: {\n\t\t\t\t\tlabels: months,\n\t\t\t\t\tdatasets: [\n\t\t\t\t\t\t{\n\t\t\t\t\t\t\tlabel: 'Duguje',\n\t\t\t\t\t\t\tdata: duguje,\n\t\t\t\t\t\t\tbackgroundColor: 'rgba(59, 130, 246, 0.5)',\n\t\t\t\t\t\t\tborderColor: 'rgba(59, 130, 246, 1)',\n\t\t\t\t\t\t\tborderWidth: 1\n\t\t\t\t\t\t},\n\t\t\t\t\t\t{\n\t\t\t\t\t\t\tlabel: 'Potražuje',\n\t\t\t\t\t\t\tdata: potrazuje,\n\t\t\t\t\t\t\tbackgroundColor: 'rgba(34, 197, 94, 0.5)',\n\t\t\t\t\t\t\tborderColor: 'rgba(34, 197, 94, 1)',\n\t\t\t\t\t\t\tborderWidth: 1\n\t\t\t\t\t\t},\n\t\t\t\t\t\t{\n\t\t\t\t\t\t\tlabel: 'Saldo',\n\t\t\t\t\t\t\tdata: saldo,\n\t\t\t\t\t\t\tbackgroundColor: 'rgba(239, 68, 68, 0.5)',\n\t\t\t\t\t\t\tborderColor: 'rgba(239, 68, 68, 1)',\n\t\t\t\t\t\t\tborderWidth: 1\n\t\t\t\t\t\t}\n\t\t\t\t\t]\n\t\t\t\t},\n\t\t\t\toptions: {\n\t\t\t\t\tresponsive: true,\n\t\t\t\t\tmaintainAspectRatio: false,\n\t\t\t\t\tplugins: {\n\t\t\t\t\t\tlegend: {\n\t\t\t\t\t\t\tposition: 'top',\n\t\t\t\t\t\t},\n\t\t\t\t\t\ttitle: {\n\t\t\t\t\t\t\tdisplay: true,\n\t\t\t\t\t\t\ttext: 'Salda konta'\n\t\t\t\t\t\t}\n\t\t\t\t\t},\n\t\t\t\t\tscales: {\n\t\t\t\t\t\ty: {\n\t\t\t\t\t\t\tbeginAtZero: true\n\t\t\t\t\t\t}\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t});\n\t\t}\n\n\t\t// Initialize chart when data changes (after obrada)\n\t\tdocument.addEventListener('htmx:afterSwap', function(evt) {\n\t\t\tconst target = evt.detail.target;\n\t\t\t// Check if we're in tab1 or if table body was swapped\n\t\t\tif (target.id === 'tab1' || target.closest('table') || target.parentElement?.querySelector('table')) {\n\t\t\t\tsetTimeout(initializeSaldaChart, 100);\n\t\t\t}\n\t\t    // Only auto-click first row on initial tab3 load, NOT on detail updates\n\t\t    if (target.id === 'tab3' && !target.dataset.initialized) {\n\t\t\t\tconsole.log('Selecting first row in saldapartneri-table after HTMX swap');\n\t\t    \ttarget.dataset.initialized = 'true';\n        \t    setTimeout(() => {\n            \t    const firstRow = document.querySelector('#tab3 table tbody tr');\n                \tif (firstRow) firstRow.click();\n            \t}, 600);\n        \t}\n\t\t});\n\n\t\t// Enable/disable sifra field based on tipkonta selection\n\t\tfunction enableDisableField() {\n\t\t\tconst checkedRadio = document.querySelector('input[name=\"tipkonta\"]:checked');\n\t\t\tif (!checkedRadio) return;\n\t\t\t\n\t\t\tconst isAnalitika = checkedRadio.value === '1';\n\t\t\tconst sifraInput = document.getElementById('sifra');\n\t\t\tconst sifraSearchBtn = document.querySelector('[name=\"search-sifra\"]');\n\t\t\t\n\t\t\tif (sifraInput) {\n\t\t\t\tsifraInput.disabled = !isAnalitika;\n\t\t\t\tif (!isAnalitika) {\n\t\t\t\t\tsifraInput.value = '';\n\t\t\t\t\tconst sifraNaziv = document.getElementById('sifranaziv');\n\t\t\t\t\tif (sifraNaziv) {\n\t\t\t\t\t\tsifraNaziv.value = '';\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\t\t\tif (sifraSearchBtn) {\n\t\t\t\tsifraSearchBtn.disabled = !isAnalitika;\n\t\t\t\tsifraSearchBtn.classList.toggle('cursor-pointer', isAnalitika);\n\t\t\t\tsifraSearchBtn.classList.toggle('cursor-not-allowed', !isAnalitika);\n\t\t\t}\n\t\t}\n\t\t\n\t\t// Initialize on page load\n\t\tdocument.addEventListener('DOMContentLoaded', function() {\n\t\t\tinitializeSaldaChart();\n\t\t});\n\n\t\t// Use event delegation for radio button changes\n\t\tdocument.addEventListener('change', function(evt) {\n\t\t\tif (evt.target.name === 'tipkonta') {\n\t\t\t\tenableDisableField();\n\t\t\t}\n\t\t});\n\n\t\t// Re-attach after HTMX swaps\n\t\tdocument.addEventListener('htmx:afterSwap', function(evt) {\n\t\t\tconst targetId = evt.detail.target.id;\n\t\t\tif (targetId === 'tab1') {\n\t\t\t\tsetTimeout(enableDisableField, 50);\n\t\t\t}\n\t\t});\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 122, "<script>\r\n\t\tlet saldaChartInstance = null;\r\n\r\n\t\t// Helper function to get vkonta value based on radio selection\r\n\t\tfunction getVkontaValue() {\r\n\t\t\tconst checkedRadio = document.querySelector('input[name=\"tipkonta\"]:checked');\r\n\t\t\tif (!checkedRadio) return '';\r\n\t\t\t\r\n\t\t\t// Map radio values to vkonta values\r\n\t\t\tconst valueMap = {\r\n\t\t\t\t'1': '2',  // Analitika → 2\r\n\t\t\t\t'2': '2',  // Subsintetika → 2\r\n\t\t\t\t'3': '3'   // Sintetika → 3\r\n\t\t\t};\r\n\t\t\t\r\n\t\t\treturn valueMap[checkedRadio.value] || checkedRadio.value;\r\n\t\t}\r\n\r\n\t\tfunction initializeSaldaChart() {\r\n\t\t\tconst ctx = document.getElementById('saldachart');\r\n\t\t\tif (!ctx) return;\r\n\r\n\t\t\t// Get table data from the page - find the table in tab1\r\n\t\t\tconst months = [];\r\n\t\t\tconst duguje = [];\r\n\t\t\tconst potrazuje = [];\r\n\t\t\tconst saldo = [];\r\n\r\n\t\t\t// Extract data from table rows in tab1\r\n\t\t\tconst tab1 = document.getElementById('tab1');\r\n\t\t\tif (!tab1) return;\r\n\t\t\t\r\n\t\t\tconst tableRows = tab1.querySelectorAll('table tbody tr');\r\n\t\t\t\r\n\t\t\ttableRows.forEach(row => {\r\n\t\t\t\tconst cells = row.querySelectorAll('td');\r\n\t\t\t\tif (cells.length >= 4) {\r\n\t\t\t\t\tmonths.push(cells[0].textContent.trim());\r\n\t\t\t\t\tduguje.push(parseFloat(cells[1].textContent.replace(/,/g, '').replace(/\\./g, '')) || 0);\r\n\t\t\t\t\tpotrazuje.push(parseFloat(cells[2].textContent.replace(/,/g, '').replace(/\\./g, '')) || 0);\r\n\t\t\t\t\tsaldo.push(parseFloat(cells[3].textContent.replace(/,/g, '').replace(/\\./g, '')) || 0);\r\n\t\t\t\t}\r\n\t\t\t});\r\n\r\n\t\t\t// Only create chart if we have data\r\n\t\t\tif (months.length === 0) {\r\n\t\t\t\tconsole.log('No data found for chart');\r\n\t\t\t\treturn;\r\n\t\t\t}\r\n\r\n\t\t\t// Destroy previous chart instance if it exists\r\n\t\t\tif (saldaChartInstance) {\r\n\t\t\t\tsaldaChartInstance.destroy();\r\n\t\t\t}\r\n\r\n\t\t\t// Create new chart\r\n\t\t\tsaldaChartInstance = new Chart(ctx, {\r\n\t\t\t\ttype: 'bar',\r\n\t\t\t\tdata: {\r\n\t\t\t\t\tlabels: months,\r\n\t\t\t\t\tdatasets: [\r\n\t\t\t\t\t\t{\r\n\t\t\t\t\t\t\tlabel: 'Duguje',\r\n\t\t\t\t\t\t\tdata: duguje,\r\n\t\t\t\t\t\t\tbackgroundColor: 'rgba(59, 130, 246, 0.5)',\r\n\t\t\t\t\t\t\tborderColor: 'rgba(59, 130, 246, 1)',\r\n\t\t\t\t\t\t\tborderWidth: 1\r\n\t\t\t\t\t\t},\r\n\t\t\t\t\t\t{\r\n\t\t\t\t\t\t\tlabel: 'Potražuje',\r\n\t\t\t\t\t\t\tdata: potrazuje,\r\n\t\t\t\t\t\t\tbackgroundColor: 'rgba(34, 197, 94, 0.5)',\r\n\t\t\t\t\t\t\tborderColor: 'rgba(34, 197, 94, 1)',\r\n\t\t\t\t\t\t\tborderWidth: 1\r\n\t\t\t\t\t\t},\r\n\t\t\t\t\t\t{\r\n\t\t\t\t\t\t\tlabel: 'Saldo',\r\n\t\t\t\t\t\t\tdata: saldo,\r\n\t\t\t\t\t\t\tbackgroundColor: 'rgba(239, 68, 68, 0.5)',\r\n\t\t\t\t\t\t\tborderColor: 'rgba(239, 68, 68, 1)',\r\n\t\t\t\t\t\t\tborderWidth: 1\r\n\t\t\t\t\t\t}\r\n\t\t\t\t\t]\r\n\t\t\t\t},\r\n\t\t\t\toptions: {\r\n\t\t\t\t\tresponsive: true,\r\n\t\t\t\t\tmaintainAspectRatio: false,\r\n\t\t\t\t\tplugins: {\r\n\t\t\t\t\t\tlegend: {\r\n\t\t\t\t\t\t\tposition: 'top',\r\n\t\t\t\t\t\t},\r\n\t\t\t\t\t\ttitle: {\r\n\t\t\t\t\t\t\tdisplay: true,\r\n\t\t\t\t\t\t\ttext: 'Salda konta'\r\n\t\t\t\t\t\t}\r\n\t\t\t\t\t},\r\n\t\t\t\t\tscales: {\r\n\t\t\t\t\t\ty: {\r\n\t\t\t\t\t\t\tbeginAtZero: true\r\n\t\t\t\t\t\t}\r\n\t\t\t\t\t}\r\n\t\t\t\t}\r\n\t\t\t});\r\n\t\t}\r\n\r\n\t\t// Initialize chart when data changes (after obrada)\r\n\t\tdocument.addEventListener('htmx:afterSwap', function(evt) {\r\n\t\t\tconst target = evt.detail.target;\r\n\t\t\t// Check if we're in tab1 or if table body was swapped\r\n\t\t\tif (target.id === 'tab1' || target.closest('table') || target.parentElement?.querySelector('table')) {\r\n\t\t\t\tsetTimeout(initializeSaldaChart, 100);\r\n\t\t\t}\r\n\t\t    // Only auto-click first row on initial tab3 load, NOT on detail updates\r\n\t\t    if (target.id === 'tab3' && !target.dataset.initialized) {\r\n\t\t\t\tconsole.log('Selecting first row in saldapartneri-table after HTMX swap');\r\n\t\t    \ttarget.dataset.initialized = 'true';\r\n        \t    setTimeout(() => {\r\n            \t    const firstRow = document.querySelector('#tab3 table tbody tr');\r\n                \tif (firstRow) firstRow.click();\r\n            \t}, 600);\r\n        \t}\r\n\t\t});\r\n\r\n\t\t// Enable/disable sifra field based on tipkonta selection\r\n\t\tfunction enableDisableField() {\r\n\t\t\tconst checkedRadio = document.querySelector('input[name=\"tipkonta\"]:checked');\r\n\t\t\tif (!checkedRadio) return;\r\n\t\t\t\r\n\t\t\tconst isAnalitika = checkedRadio.value === '1';\r\n\t\t\tconst sifraInput = document.getElementById('sifra');\r\n\t\t\tconst sifraSearchBtn = document.querySelector('[name=\"search-sifra\"]');\r\n\t\t\t\r\n\t\t\tif (sifraInput) {\r\n\t\t\t\tsifraInput.disabled = !isAnalitika;\r\n\t\t\t\tif (!isAnalitika) {\r\n\t\t\t\t\tsifraInput.value = '';\r\n\t\t\t\t\tconst sifraNaziv = document.getElementById('sifranaziv');\r\n\t\t\t\t\tif (sifraNaziv) {\r\n\t\t\t\t\t\tsifraNaziv.value = '';\r\n\t\t\t\t\t}\r\n\t\t\t\t}\r\n\t\t\t}\r\n\t\t\tif (sifraSearchBtn) {\r\n\t\t\t\tsifraSearchBtn.disabled = !isAnalitika;\r\n\t\t\t\tsifraSearchBtn.classList.toggle('cursor-pointer', isAnalitika);\r\n\t\t\t\tsifraSearchBtn.classList.toggle('cursor-not-allowed', !isAnalitika);\r\n\t\t\t}\r\n\t\t}\r\n\t\t\r\n\t\t// Initialize on page load\r\n\t\tdocument.addEventListener('DOMContentLoaded', function() {\r\n\t\t\tinitializeSaldaChart();\r\n\t\t});\r\n\r\n\t\t// Use event delegation for radio button changes\r\n\t\tdocument.addEventListener('change', function(evt) {\r\n\t\t\tif (evt.target.name === 'tipkonta') {\r\n\t\t\t\tenableDisableField();\r\n\t\t\t}\r\n\t\t});\r\n\r\n\t\t// Re-attach after HTMX swaps\r\n\t\tdocument.addEventListener('htmx:afterSwap', function(evt) {\r\n\t\t\tconst targetId = evt.detail.target.id;\r\n\t\t\tif (targetId === 'tab1') {\r\n\t\t\t\tsetTimeout(enableDisableField, 50);\r\n\t\t\t}\r\n\t\t});\r\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

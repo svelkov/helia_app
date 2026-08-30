@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"context"
 	"fmt"
 	"helia/config"
 	"helia/i18n"
@@ -52,15 +51,17 @@ func ConfirmDeleteHelper(c *gin.Context, tableFields []domain.Fields, hxTarget s
 	url = fmt.Sprintf("%s/%d", url, id)
 	dialog := SetDialogValues("dialog-delete", url, "Brisanje podataka", "DELETE")
 	btnConfirm := domain.Button{
-		Id:            "btn-delete",
-		LabelText:     "Obriši",
-		IsVisible:     true,
-		BtnClass:      common.ClassDeleteButton,
-		HxActionURL:   url,
-		HxRequestType: "DELETE",
-		IdDialog:      "dialog-delete",
-		HxTarget:      hxTarget,
-		HxSwap:        "innerHTML",
+		Id:                   "btn-delete",
+		LabelText:            "Obriši",
+		IsVisible:            true,
+		BtnClass:             common.ClassDeleteButton,
+		HxActionURL:          url,
+		HxRequestType:        "DELETE",
+		IdDialog:             "dialog-delete",
+		HxTarget:             hxTarget,
+		HxSwap:               "innerHTML",
+		HxOnAfterRequest:     "handleDialogResponse",
+		HxOnAfterRequestArgs: []any{"dialog-delete"},
 	}
 	btnCancel := domain.Button{
 		Id:        "btn-cancel",
@@ -175,9 +176,9 @@ func CreateHelper[T any](
 		common.WriteJSONResponse(c, http.StatusBadRequest, false, nil, err.Error())
 		return nil, err
 	}
-
+	ctx := c.Request.Context()
 	tableFields = service.MapEntityToValues(entity, tableFields)
-	fieldErrors, _, err := service.Create(c, entity, idField, tableFields)
+	fieldErrors, _, err := service.Create(ctx, entity, idField, tableFields)
 	if err != nil || len(fieldErrors) > 0 {
 		return fieldErrors, err
 	}
@@ -386,38 +387,6 @@ func GetEntityHelper[T any](
 		return
 	}
 	c.JSON(http.StatusOK, entity)
-}
-
-// FvrRepository is the minimal interface needed to fetch FVR (company) data.
-type FvrRepository interface {
-	GetHasGodHasKar() (bool, bool)
-	GetAllCustom(ctx context.Context, queryText, whereText string, args []interface{}, limitOffset, sortBy string) (*[]domain.Fvr, error)
-}
-
-// GetFvrData retrieves company (FVR) data filtered by the current user session (god, kar, firma).
-func GetFvrData(ctx context.Context, repo FvrRepository) (domain.Fvr, error) {
-	session := domain.GetSessionFromStdContext(ctx)
-	if session == nil {
-		return domain.Fvr{}, fmt.Errorf("user session not found")
-	}
-	qb := common.NewQueryBuilder(`SELECT naziv, adresa, pobro, mesto, pib, matbr, sifdel FROM fvr`, true)
-	hasGod, hasKar := repo.GetHasGodHasKar()
-	if hasGod {
-		qb.AddEqual("god", session.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("kar", session.SelectedKar)
-	}
-	qb.AddEqual("fvr.naziv", session.Firma)
-	sqlQuery, args := qb.Build()
-	entities, err := repo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
-		return domain.Fvr{}, err
-	}
-	if len(*entities) > 0 {
-		return (*entities)[0], nil
-	}
-	return domain.Fvr{}, nil
 }
 
 func SearchButtonDialog(c *gin.Context) {

@@ -1,6 +1,7 @@
 package common
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"helia/config"
@@ -504,11 +505,7 @@ func CreateSearchInput(id string, translator *i18n.Service, hxActionURL, hxTarge
 // SetupTablePagination configures common table pagination and display settings
 // This function sets up search, pagination, actions visibility, and button visibility
 func SetupTablePagination(tbl *domain.TableData, currentPage, pageSize int) {
-	tbl.SearchEnabled = false
 	tbl.ShowPagination = true
-	tbl.ShowActions = false
-	tbl.BtnAdd.IsVisible = false
-	tbl.BtnPrint.IsVisible = false
 	tbl.Pagination.CurrentPage = currentPage
 	tbl.Pagination.StartRecord = (currentPage-1)*pageSize + 1
 	tbl.Pagination.EndRecord = tbl.Pagination.StartRecord + pageSize - 1
@@ -524,6 +521,7 @@ func SetupTablePagination(tbl *domain.TableData, currentPage, pageSize int) {
 // SetTableTotalRecords sets the total records and calculates pagination values
 // Returns true if the operation was to get total records only (no data processing needed)
 func SetTableTotalRecords(tbl *domain.TableData, totalRecords, pageSize int) {
+	tbl.ShowPagination = true
 	tbl.Pagination.TotalRecords = totalRecords
 	tbl.Pagination.StartRecord = (tbl.Pagination.CurrentPage-1)*pageSize + 1
 	tbl.Pagination.EndRecord = tbl.Pagination.StartRecord + pageSize - 1
@@ -536,9 +534,9 @@ func SetTableTotalRecords(tbl *domain.TableData, totalRecords, pageSize int) {
 	}
 }
 
-func SetActiveTab(tabs *domain.TabData, tabName string) {
-	for i, tab := range tabs.Tabs {
-		if tab.Name == tabName {
+func SetActiveTab(tabs *domain.TabData, index int) {
+	for i := range tabs.Tabs {
+		if i == index {
 			tabs.Tabs[i].IsActive = true
 		} else {
 			tabs.Tabs[i].IsActive = false
@@ -560,4 +558,43 @@ func SetUnlockButtonProperties(btn *domain.Button, url string) {
 	btn.HxInclude = "input[name='_csrf']"
 	btn.HxRequestType = "POST"
 	btn.HxOnAfterRequest = "closeDialog"
+}
+
+func TruncateString(s string, maxLen int) string {
+	if len(s) <= maxLen {
+		return s
+	}
+	return s[:maxLen]
+}
+
+// FvrRepository is the minimal interface needed to fetch FVR (company) data.
+type FvrRepository interface {
+	GetHasGodHasKar() (bool, bool)
+	GetAllCustom(ctx context.Context, queryText, whereText string, args []interface{}, limitOffset, sortBy string) (*[]domain.Fvr, error)
+}
+
+// GetFvrData retrieves company (FVR) data filtered by the current user session (god, kar, firma).
+func GetFvrData(ctx context.Context, repo FvrRepository) (domain.Fvr, error) {
+	session := domain.GetSessionFromStdContext(ctx)
+	if session == nil {
+		return domain.Fvr{}, fmt.Errorf("user session not found")
+	}
+	qb := NewQueryBuilder(`SELECT naziv, adresa, pobro, mesto, pib, matbr, sifdel FROM fvr`, true)
+	hasGod, hasKar := repo.GetHasGodHasKar()
+	if hasGod {
+		qb.AddEqual("god", session.SelectedGod)
+	}
+	if hasKar {
+		qb.AddEqual("kar", session.SelectedKar)
+	}
+	qb.AddEqual("fvr.naziv", session.Firma)
+	sqlQuery, args := qb.Build()
+	entities, err := repo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	if err != nil {
+		return domain.Fvr{}, err
+	}
+	if len(*entities) > 0 {
+		return (*entities)[0], nil
+	}
+	return domain.Fvr{}, nil
 }

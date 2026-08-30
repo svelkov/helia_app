@@ -1,0 +1,41 @@
+package templates
+
+import "helia/i18n"
+
+templ Verify2FA(translator *i18n.Service, csrfToken string, username string) {
+	<div class="max-w-md mx-auto bg-white mt-20 p-6 rounded-lg shadow-md">
+		<h2 class="text-2xl font-bold mb-4">{ translator.Label("2fa") }</h2>
+		<p class="text-gray-600 mb-4">{ translator.Label("enter_2fa_code") }</p>
+		<form action="/verify-2fa" method="POST">
+			<input type="hidden" name="_csrf" value={ csrfToken }/>
+			<input type="hidden" name="username" value={ username }/>
+			<div class="mb-4">
+				<label for="totp_code" class="block text-gray-700">{ translator.Label("2fa code") }</label>
+				<input 
+					type="text" 
+					id="totp_code" 
+					name="totp_code" 
+					maxlength="6"
+					class="w-full px-3 py-2 border rounded-lg text-center text-2xl tracking-widest" 
+					required
+					placeholder="000000"
+					inputmode="numeric"
+					pattern="[0-9]{6}"
+				/>
+			</div>
+			<div class="mb-4">
+				<label for="use_backup" class="flex items-center">
+					<input type="checkbox" id="use_backup" name="use_backup" class="w-4 h-4"/>
+					<span class="ml-2 text-gray-700">{ translator.Label("use backup code") }</span>
+				</label>
+			</div>
+			<div class="flex gap-2">
+				<button type="submit" class="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">{ translator.Button("Potvrdi") }</button>
+				<a href="/login" class="flex-1 text-center bg-gray-600 text-white py-2 rounded-lg hover:bg-gray-700">{ translator.Button("Odustani") }</a>
+			</div>
+		</form>
+		<div class="mt-4 text-center">
+			<p class="text-sm text-gray-500">{ translator.Label("backup code info") }</p>
+		</div>
+	</div>
+}

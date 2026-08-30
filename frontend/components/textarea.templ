@@ -1,0 +1,42 @@
+package components
+
+import (
+	"fmt"
+
+	"helia/internal/domain"
+)
+
+templ TextAreaField(config domain.InputFieldConfig) {
+	<textarea
+		id={ config.ID }
+		name={ config.Name }
+		class={ config.ClassInput }
+		if config.Disabled {
+			disabled
+		}
+		if config.MinLength != "" {
+			minlength={ config.MinLength }
+		}
+		if config.MaxLength != "" {
+			maxlength={ config.MaxLength }
+		}
+		if config.TabIndex != "" {
+			tabindex={ config.TabIndex }
+		}
+		if config.HxVals != "" {
+			hx-vals={ config.HxVals }
+		}
+		if config.BlurEndpoint != "" {
+			hx-trigger="blur"
+			hx-get={ config.BlurEndpoint }
+			if config.HxTarget != "" {
+				hx-target={ fmt.Sprintf("#%s", config.HxTarget) }
+				hx-swap="innerHTML"
+			}
+		}
+		if config.OnInput != "" {
+			oninput={ templ.JSFuncCall(fmt.Sprintf("%s", config.OnInput), config.ID) }
+		}
+		placeholder={ config.Placeholder }
+	>{ config.Value }</textarea>
+}

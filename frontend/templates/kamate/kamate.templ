@@ -1,0 +1,673 @@
+package finansijsko
+
+import (
+	"fmt"
+	"helia/frontend/components"
+	tmpl "helia/frontend/templates"
+	"helia/i18n"
+	"helia/internal/common"
+	"helia/internal/domain"
+	"time"
+)
+
+// Main entry point for Kamate module
+templ KamateMain(tabs domain.TabData, tbl domain.TableData, searchInput domain.InputControl, translator *i18n.Service) {
+	<!-- Tab Content -->
+	<div id="tab-content" class="flex flex-col h-full">
+		@TipoviKamate(tabs, tbl, searchInput, translator)
+	</div>
+	@tmpl.ShowMessageScript()
+	@tmpl.ShowSearchDialogScript()
+	@tmpl.HideDropdownScript()
+	@tmpl.ClearFieldErrorScript()
+	@tmpl.HandleDblClickKontoSelectionScript()
+	@tmpl.CloseDialogScript()
+	@tmpl.HandleBackendResponseScript()
+}
+
+// Tab 1 - Tipovi kamate
+templ TipoviKamate(tabs domain.TabData, tblTipKamate domain.TableData, searchInput domain.InputControl, translator *i18n.Service) {
+	<!-- Container with full height -->
+	<div class="flex flex-col h-full">
+		<!-- Tab Navigation -->
+		<div class="border-b border-blue-600">
+			@tmpl.TabNav(translator.Title("Kamate"), tabs, "#tab-content", "kamate-panel", translator)
+		</div>
+		<!-- Tab 1 Content -->
+		<div id="tab1" class="flex-1 min-h-0 flex flex-col gap-1">
+			<!-- Group Data Table -->
+			<div class="border bg-blue-100 border border-blue-400 mt-1 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
+				@components.LoadingSpinner()
+				@components.Search_Part(tblTipKamate, searchInput)
+				<!-- Table -->
+				<div id="otvorenestavketable" class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+					@components.Table(tblTipKamate, translator)
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- Dialog display container-->
+	<div id="dialog-tipovi-kamate"></div>
+}
+
+// Tab 2 - Kamatne stope (Interest Rates)
+templ KamatneStope(tabs domain.TabData, tbl domain.TableData, searchInput domain.InputControl, translator *i18n.Service) {
+	<!-- Container with full height -->
+	<div class="flex flex-col h-full">
+		<!-- Tab Navigation -->
+		<div class="border-b border-blue-600">
+			@tmpl.TabNav(translator.Title("Kamate"), tabs, "#tab-content", "kamate-panel", translator)
+		</div>
+		<!-- Tab 2 Content -->
+		<div id="tab2" class="flex-1 min-h-0 flex flex-col gap-1">
+			<!-- Group Data Table -->
+			<div class="border bg-blue-100 border border-blue-400 mt-1 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
+				@components.LoadingSpinner()
+				@components.Search_Part(tbl, searchInput)
+				<!-- Table -->
+				<div id="kamatnestope-table" class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+					@components.Table(tbl, translator)
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- Dialog display container-->
+	<div id="dialog-tipovi-kamate"></div>
+	<!-- Dialog display container-->
+	<div id="dialog-content"></div>
+}
+
+// Tab 2 - Formiranje kamatnih listova (Forming Interest Lists)
+templ FormiranjeKamatnihListova(tabs domain.TabData, tblPartneri, tblDokumenta domain.TableData, btnObrada, btnFormiraj domain.Button, searchInput, searchInputDok domain.InputControl, translator *i18n.Service, gnGod int) {
+	<!-- Container with full height -->
+	<div class="flex flex-col h-full">
+		<!-- Tab Navigation -->
+		<div class="border-b border-blue-600">
+			@tmpl.TabNav(translator.Title("Kamate"), tabs, "#tab-content", "kamate-panel", translator)
+		</div>
+		<!-- Tab 3 Content -->
+		<div id="tab3" class="flex-1 min-h-0 flex flex-col gap-1">
+			<!-- Parameters Section - Single Row Compact Layout -->
+			<div class="border bg-blue-100 border-blue-400 mt-1 p-2 rounded-lg">
+				<div class="flex items-center gap-1 flex-wrap">
+					<!-- Od Konta -->
+					<div class="flex items-center gap-1 flex-1">
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "konto",
+							LabelText:  translator.Label("Konto"),
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "konto",
+							Name:       "konto",
+							FieldType:  "text",
+							ClassInput: common.ClassInputTextEnabled + " w-20",
+							TabIndex:   "1",
+							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError",
+						})
+						@components.SearchButton(domain.SearchButtonConfig{
+							ID:          "btn-search-konto",
+							Name:        "search-konto",
+							HxUrl:       "/api/promet/searchbutton",
+							HxTarget:    "#search-dropdown",
+							HxSwap:      "innerHTML",
+							HxVals:      `{"vkonta": "2", "destfield": "konto"}`,
+							ClassButton: common.ClassButton,
+						})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "kontonaziv",
+							Name:       "kontonaziv",
+							FieldType:  "text",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextDisabled + " flex-1",
+						})
+					</div>
+					<!-- Od Šifre -->
+					<div class="flex items-center gap-1 flex-1">
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "odsifre",
+							LabelText:  translator.Label("Od Šifre"),
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "odsifre",
+							Name:       "odsifre",
+							FieldType:  "text",
+							Value:      "00",
+							ClassInput: common.ClassInputTextEnabled + " w-20",
+							TabIndex:   "2",
+							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError",
+						})
+						@components.SearchButton(domain.SearchButtonConfig{
+							ID:          "btn-search-odosifre",
+							Name:        "search-odsifre",
+							HxUrl:       "/api/promet/searchbutton",
+							HxTarget:    "#search-dropdown",
+							HxSwap:      "innerHTML",
+							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1", "destfield": "odsifre"}`,
+							ClassButton: common.ClassButton,
+						})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "odsifrenaziv",
+							Name:       "odsifrenaziv",
+							FieldType:  "text",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextDisabled + " flex-1",
+						})
+					</div>
+					<!-- Do Šifre -->
+					<div class="flex items-center gap-1 flex-1">
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "dosifre",
+							LabelText:  translator.Label("Do Šifre"),
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "dosifre",
+							Name:       "dosifre",
+							FieldType:  "text",
+							Value:      "999999",
+							ClassInput: common.ClassInputTextEnabled + " w-20",
+							TabIndex:   "3",
+							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError",
+						})
+						@components.SearchButton(domain.SearchButtonConfig{
+							ID:          "btn-search-dosifre",
+							Name:        "search-dosifre",
+							HxUrl:       "/api/promet/searchbutton",
+							HxTarget:    "#search-dropdown",
+							HxSwap:      "innerHTML",
+							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1", "destfield": "dosifre"}`,
+							ClassButton: common.ClassButton,
+						})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "dosifrenaziv",
+							Name:       "dosifrenaziv",
+							FieldType:  "text",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextDisabled + " flex-1",
+						})
+					</div>
+				</div>
+				<div class="flex items-center gap-1 flex-wrap">
+					<!-- Od Datuma -->
+					<div class="flex items-center gap-1">
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "oddatuma",
+							LabelText:  translator.Label("Od datuma"),
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "oddatuma",
+							Name:       "oddatuma",
+							FieldType:  "date",
+							Value:      time.Date(gnGod, 1, 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
+							ClassInput: common.ClassInputTextEnabled + " w-28",
+							TabIndex:   "4",
+							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError",
+						})
+					</div>
+					<!-- Do Datuma -->
+					<div class="flex items-center gap-1">
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "dodatuma",
+							LabelText:  translator.Label("Do datuma"),
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "dodatuma",
+							Name:       "dodatuma",
+							FieldType:  "date",
+							Value:      time.Date(gnGod, time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
+							ClassInput: common.ClassInputTextEnabled + " w-28 text-xs",
+							TabIndex:   "5",
+							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError",
+						})
+					</div>
+					<!-- Checkboxes -->
+					<div class="flex items-center gap-3">
+						@components.CheckboxField(domain.CheckboxFieldConfig{
+							ID:                "prikaz_otvorene",
+							Name:              "prikaz_otvorene",
+							Value:             "Y",
+							LabelText:         "Prikaz otvorene stavke",
+							IsChecked:         true,
+							ClassLabel:        common.ClassCheckboxLabel,
+							ClassCheckbox:     common.ClassCheckbox,
+							ClassCheckboxSpan: common.ClassCheckboxSpan,
+						}, translator)
+						@components.CheckboxField(domain.CheckboxFieldConfig{
+							ID:                "prikaz_zatvorene",
+							Name:              "prikaz_zatvorene",
+							Value:             "Y",
+							LabelText:         "Prikaz zatvorene stavke",
+							IsChecked:         false,
+							ClassLabel:        common.ClassCheckboxLabel,
+							ClassCheckbox:     common.ClassCheckbox,
+							ClassCheckboxSpan: common.ClassCheckboxSpan,
+						}, translator)
+					</div>
+					<!-- Buttons -->
+					<div class="flex gap-1 mt-1 ml-auto">
+						@components.Button(btnObrada)
+						@components.Button(btnFormiraj)
+					</div>
+				</div>
+			</div>
+			<!-- Two-column layout for Partners and Documents (2/5 - 3/5 ratio) -->
+			<div class="flex flex-row gap-1 flex-1 min-h-0">
+				<!-- Partners Column (2/5) -->
+				<div class="border bg-blue-100 border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden w-2/5">
+					<!-- Group Data Table -->
+					@components.LoadingSpinner()
+					@components.Search_Part(tblPartneri, searchInput)
+					<!-- Table -->
+					<div class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+						@components.Table(tblPartneri, translator)
+					</div>
+				</div>
+				<!-- Documents Column (3/5) -->
+				<div class="border bg-blue-100 border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden w-3/5">
+					<!-- Group Data Table -->
+					@components.LoadingSpinner()
+					@components.Search_Part(tblDokumenta, searchInputDok)
+					<!-- Table -->
+					<div class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+						@components.Table(tblDokumenta, translator)
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- Dialog display container-->
+	<div id="dialog-content"></div>
+}
+
+// Tab 3 - Obracun kamate (Interest Calculation)
+templ ObracunKamate(tabs domain.TabData, tbl domain.TableData, translator *i18n.Service, gnGod int) {
+	<!-- Container with full height -->
+	<div class="flex flex-col h-full">
+		<!-- Tab Navigation -->
+		<div class="border-b border-blue-600">
+			@tmpl.TabNav(translator.Title("Kamate"), tabs, "#tab-content", "kamate-panel", translator)
+		</div>
+		<!-- Tab 3 Content -->
+		<div id="tab3" class="flex-1 min-h-0 flex flex-col gap-1">
+			<!-- Parameters Section -->
+			<div class="grid grid-cols-2 gap-1">
+				<!-- Left Column - Izbor liste Parameters -->
+				<div class="border bg-blue-100 border border-blue-400 mt-1 p-1 rounded-lg flex flex-col">
+					<div class="text-blue-800 font-bold text-xs mb-1 border-b border-gray-400 pb-1">
+						{ translator.Text("Parametri - Izbor liste") }
+					</div>
+					<!-- Izbor kamatnog lista -->
+					<div class="flex items-center gap-1 mb-1">
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "izbor_kamatnog_lista",
+							LabelText:  translator.Label("Izbor kamatnog lista"),
+							ClassLabel: common.ClassLabel + " w-40",
+						})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "izbor_kamatnog_lista",
+							Name:       "izbor_kamatnog_lista",
+							FieldType:  "text",
+							ClassInput: common.ClassInputTextEnabled + " w-40",
+							TabIndex:   "1",
+						})
+					</div>
+					<!-- Od broja liste -->
+					<div class="flex items-center gap-1 mb-1">
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "od_broja_liste",
+							LabelText:  translator.Label("Od broja liste"),
+							ClassLabel: common.ClassLabel + " w-40",
+						})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "od_broja_liste",
+							Name:       "od_broja_liste",
+							FieldType:  "number",
+							Value:      "0",
+							ClassInput: common.ClassInputTextEnabled + " w-32",
+							TabIndex:   "2",
+						})
+					</div>
+					<!-- Do broja liste -->
+					<div class="flex items-center gap-1 mb-2">
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "do_broja_liste",
+							LabelText:  translator.Label("Do broja liste"),
+							ClassLabel: common.ClassLabel + " w-40",
+						})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "do_broja_liste",
+							Name:       "do_broja_liste",
+							FieldType:  "number",
+							Value:      "0",
+							ClassInput: common.ClassInputTextEnabled + " w-32",
+							TabIndex:   "3",
+						})
+					</div>
+				</div>
+				<!-- Right Column - Obracun Parameters -->
+				<div class="border bg-blue-100 border border-blue-400 mt-1 p-1 rounded-lg flex flex-col">
+					<div class="text-blue-800 font-bold text-xs mb-1 border-b border-gray-400 pb-1">
+						{ translator.Text("Parametri - Obračun") }
+					</div>
+					<!-- Pod datumom -->
+					<div class="flex items-center gap-1 mb-1">
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "pod_datumom",
+							LabelText:  translator.Label("Pod datumom"),
+							ClassLabel: common.ClassLabel + " w-40",
+						})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "pod_datumom",
+							Name:       "pod_datumom",
+							FieldType:  "date",
+							Value:      time.Date(gnGod, 1, 29, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout),
+							ClassInput: common.ClassInputTextEnabled + " w-40",
+							TabIndex:   "4",
+						})
+					</div>
+					<!-- Tabela za obracun -->
+					<div class="flex items-center gap-1 mb-2">
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "tabela_obracun",
+							LabelText:  translator.Label("Tabela za obračun"),
+							ClassLabel: common.ClassLabel + " w-40",
+						})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "tabela_obracun",
+							Name:       "tabela_obracun",
+							FieldType:  "text",
+							ClassInput: common.ClassInputTextEnabled + " w-40",
+							TabIndex:   "5",
+						})
+					</div>
+					<!-- Checkboxes -->
+					@components.CheckboxField(domain.CheckboxFieldConfig{
+						ID:                "zalno_nacitamu",
+						Name:              "zalno_nacitamu",
+						Value:             "Y",
+						LabelText:         translator.Label("Žalno po načitanju"),
+						IsChecked:         false,
+						ClassLabel:        common.ClassCheckboxLabel + " mt-1",
+						ClassCheckbox:     common.ClassCheckbox,
+						ClassCheckboxSpan: common.ClassCheckboxSpan,
+					}, translator)
+					@components.CheckboxField(domain.CheckboxFieldConfig{
+						ID:                "kamata_kraj_perioda",
+						Name:              "kamata_kraj_perioda",
+						Value:             "Y",
+						LabelText:         translator.Label("Kamata do kraja perioda"),
+						IsChecked:         false,
+						ClassLabel:        common.ClassCheckboxLabel + " mt-1",
+						ClassCheckbox:     common.ClassCheckbox,
+						ClassCheckboxSpan: common.ClassCheckboxSpan,
+					}, translator)
+					<!-- Button -->
+					<div class="flex justify-end gap-1 mt-auto">
+						<button class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded">{ translator.Label("Obradi") }</button>
+					</div>
+				</div>
+			</div>
+			<!-- Data Table -->
+			<div class="border bg-blue-100 border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
+				<div class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+					@components.Table(tbl, translator)
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- Dialog display container-->
+	<div id="dialog-content"></div>
+}
+
+// Dialog for adding/editing Tipovi Kamate
+templ TipoviKamateDialog(model domain.Kam, dialog domain.Dialog, btnSave, btnCancel, btnClose domain.Button, csrfToken string, translator *i18n.Service) {
+	<!-- Dialog Container -->
+	<div id={ dialog.Id } class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+		<div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+			<!-- Header -->
+			<div class="bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg">
+				<h2 class="text-lg font-semibold ml-4">{ translator.Title("Tipovi kamate") }</h2>
+				@components.CloseButton(btnClose)
+			</div>
+			<form
+				id="tipovi-kamate-form"
+				class="p-1 h-full flex flex-col min-h-0"
+				if btnSave.HxRequestType == "PUT" {
+					hx-put={ btnSave.HxActionURL }
+					hx-on::after-request="handleFormResponse(event, 'PUT', 'dialog-tipovi-kamate-unos', true, 'btn-save')"
+				}
+				if btnSave.HxRequestType == "POST" {
+					hx-post={ btnSave.HxActionURL }
+					hx-on::after-request="handleFormResponse(event, 'POST', 'dialog-tipovi-kamate-unos', true, 'btn-save')"
+				}
+				hx-swap="none"
+				hx-boost="false"
+				onsubmit="return false;"
+			>
+				<input type="hidden" name="id" value={ fmt.Sprintf("%d", model.Idkam) }/>
+				<input type="hidden" name="_csrf" value={ csrfToken }/>
+				<!-- Form Content -->
+				<div class="p-2 space-y-1">
+					<!-- Section 1: Podaci o tipu kamate -->
+					<div class="pl-2 pb-1">
+						<div class="space-y-1 pt-2">
+							<!-- Row 1: Tip kamate -->
+							<div class="flex items-center gap-1">
+								<div class="flex items-center gap-2 flex-1">
+									@components.LabelField(domain.LabelFieldConfig{
+										ID:         "tipkam",
+										LabelText:  translator.Label("Tip kamate"),
+										ClassLabel: "w-32",
+									})
+									@components.TextInputField(domain.InputFieldConfig{
+										ID:         "tipkam",
+										Name:       "tipkam",
+										FieldType:  "number",
+										ClassInput: common.ClassInputTextEnabled + " w-40",
+										TabIndex:   "1",
+										Value:      fmt.Sprintf("%d", model.Tipkam),
+										OnInput:    "clearFieldError",
+										OnFocus:    "clearFieldError",
+									})
+								</div>
+							</div>
+							<!-- Row 2:  -->
+							<div class="flex items-center gap-1">
+								<div class="flex items-center gap-2 flex-1">
+									@components.LabelField(domain.LabelFieldConfig{
+										ID:         "opis",
+										LabelText:  translator.Label("Opis tipa kamate"),
+										ClassLabel: "w-32",
+									})
+									@components.TextInputField(domain.InputFieldConfig{
+										ID:         "opis",
+										Name:       "opis",
+										FieldType:  "text",
+										ClassInput: common.ClassInputTextEnabled + " flex-1 w-40",
+										TabIndex:   "2",
+										Value:      fmt.Sprintf("%s", *model.Opis),
+										OnInput:    "clearFieldError",
+										OnFocus:    "clearFieldError",
+									})
+								</div>
+							</div>
+							<div class="flex items-center gap-1">
+								<div class="flex items-center gap-2 flex-1">
+									@components.LabelField(domain.LabelFieldConfig{
+										ID:         "model",
+										LabelText:  translator.Label("Model kamate M/G"),
+										ClassLabel: "w-32",
+									})
+									@components.ComboBoxField(domain.ComboFieldConfig{
+										ID:          "model",
+										Name:        "model",
+										LabelText:   translator.Label("Model kamate M/G"),
+										ClassSelect: common.ClassInputTextEnabled + " flex-1 w-40",
+										TabIndex:    "3",
+										OnInput:     "clearFieldError",
+										OnFocus:     "clearFieldError",
+										OptionValues: []domain.ComboItem{
+											{Key: "M", Value: translator.Label("Mesecna")},
+											{Key: "G", Value: translator.Label("Godisnja")},
+										},
+										Value: fmt.Sprintf("%s", *model.Model),
+									}, translator)
+								</div>
+							</div>
+						</div>
+					</div>
+					<!-- Section 2: Kamatna stopa i opis -->
+					<div class="pl-2 pb-1">
+						<div class="col-span-2 flex justify-end gap-1 pt-2 border-t border-gray-300">
+							@components.ConfirmButton(btnSave, translator)
+							@components.CancelButton(btnCancel, translator)
+						</div>
+					</div>
+				</div>
+				<!-- Message Display Area at Bottom -->
+				<div id="dialog-form-message" class="hidden w-full whitespace-normal break-words" hx-on:tkam:changed="this.classList.add('hidden'); this.textContent=''"></div>
+			</form>
+		</div>
+	</div>
+	@tmpl.CloseDialogScript()
+	@tmpl.ClearFieldErrorScript()
+	@tmpl.HandleFormResponseScript()
+	@tmpl.ClearFormScript()
+}
+
+// Dialog for adding/editing Kamatne stope
+templ KamatneStopeDialog(model domain.Tkam, dialog domain.Dialog, btnSave, btnCancel, btnClose domain.Button, csrfToken string, translator *i18n.Service) {
+	<!-- Dialog Container -->
+	<div id={ dialog.Id } class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+		<div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+			<!-- Header -->
+			<div class="bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg">
+				<h2 class="text-lg font-semibold ml-4">{ translator.Title("Kamatne stope") }</h2>
+				@components.CloseButton(btnClose)
+			</div>
+			<form
+				id="kamatne-stope-form"
+				class="p-1 h-full flex flex-col min-h-0"
+				if btnSave.HxRequestType == "PUT" {
+					hx-put={ btnSave.HxActionURL }
+					hx-on::after-request="handleFormResponse(event, 'PUT', 'dialog-kamatne-stope-unos', true, 'btn-save')"
+				}
+				if btnSave.HxRequestType == "POST" {
+					hx-post={ btnSave.HxActionURL }
+					hx-on::after-request="handleFormResponse(event, 'POST', 'dialog-kamatne-stope-unos', true, 'btn-save')"
+				}
+				hx-swap="none"
+				hx-boost="false"
+				onsubmit="return false;"
+			>
+				<input type="hidden" name="_csrf" value={ csrfToken }/>
+				<input type="hidden" name="id" value={ fmt.Sprintf("%d", model.Idtkam) }/>
+				<!-- Form Content -->
+				<div class="p-2 space-y-1">
+					<!-- Section 1: Podaci o kamatnoj stopi -->
+					<div class="pl-2 pb-1">
+						<div class="space-y-1 pt-2">
+							<!-- Row 1: Tip kamate -->
+							<div class="flex items-center gap-1">
+								<div class="flex items-center gap-2 flex-1">
+									@components.LabelField(domain.LabelFieldConfig{
+										ID:         "idkam",
+										LabelText:  translator.Label("Tip kamate"),
+										ClassLabel: "w-32",
+									})
+									@components.ComboBoxField(domain.ComboFieldConfig{
+										ID:           "idkam",
+										Name:         "idkam",
+										LabelText:    translator.Label("Tip kamate"),
+										ClassSelect:  common.ClassInputTextEnabled + " flex-1 w-40",
+										TabIndex:     "1",
+										OptionValues: model.TipKamateOptions,
+										Value:        fmt.Sprintf("%d", model.Tipkam),
+									}, translator)
+								</div>
+							</div>
+							<!-- Row 2: Periodi primene -->
+							<div class="flex items-center gap-1">
+								<div class="flex items-center gap-2 flex-1">
+									@components.LabelField(domain.LabelFieldConfig{
+										ID:         "odd",
+										LabelText:  translator.Label("Stopa od datuma"),
+										ClassLabel: "w-32",
+									})
+									@components.TextInputField(domain.InputFieldConfig{
+										ID:         "odd",
+										Name:       "odd",
+										FieldType:  "date",
+										ClassInput: common.ClassInputTextEnabled + " w-32",
+										TabIndex:   "2",
+										Value:      model.Odd.Format(common.HtmlLayout),
+										OnInput:    "clearFieldError",
+										OnFocus:    "clearFieldError",
+									})
+								</div>
+								<div class="flex items-center gap-2 flex-1">
+									@components.LabelField(domain.LabelFieldConfig{
+										ID:         "dod",
+										LabelText:  translator.Label("Stopa do datuma"),
+										ClassLabel: "w-32",
+									})
+									@components.TextInputField(domain.InputFieldConfig{
+										ID:         "dod",
+										Name:       "dod",
+										FieldType:  "date",
+										ClassInput: common.ClassInputTextEnabled + " flex-1 w-32",
+										TabIndex:   "3",
+										Value:      model.Dod.Format(common.HtmlLayout),
+										OnInput:    "clearFieldError",
+										OnFocus:    "clearFieldError",
+									})
+								</div>
+							</div>
+							<!-- Row 3: Stopa -->
+							<div class="flex items-center gap-1">
+								<div class="flex items-center gap-2 flex-1">
+									@components.LabelField(domain.LabelFieldConfig{
+										ID:         "kst",
+										LabelText:  translator.Label("Kamatna stopa (%)"),
+										ClassLabel: "w-32",
+									})
+									@components.TextInputField(domain.InputFieldConfig{
+										ID:            "kst",
+										Name:          "kst",
+										FieldType:     "number",
+										Value:         fmt.Sprintf("%.4f", model.Kst),
+										ClassInput:    common.ClassInputTextEnabled + " w-32 text-right",
+										DecimalPlaces: 4,
+										TabIndex:      "4",
+									
+										OnInput: "clearFieldError",
+										OnFocus: "clearFieldError",
+									})
+								</div>
+							</div>
+							<div class="flex justify-end gap-1 pt-2 border-t border-gray-300">
+								@components.ConfirmButton(btnSave, translator)
+								@components.CancelButton(btnCancel, translator)
+							</div>
+						</div>
+					</div>
+				</div>
+				<!-- Message Display Area at Bottom -->
+				<div id="dialog-form-message" class="hidden w-full whitespace-normal break-words" hx-on:tkam:changed="this.classList.add('hidden'); this.textContent=''"></div>
+			</form>
+		</div>
+	</div>
+	@tmpl.CloseDialogScript()
+	@tmpl.ClearFieldErrorScript()
+	@tmpl.HandleFormResponseScript()
+	@tmpl.ClearFormScript()
+}

@@ -6,16 +6,18 @@ import (
 )
 
 type Fvr struct {
-	God     int    `json:"god" db:"god"`
-	Kar     int    `json:"kar" db:"kar"`
-	Naziv   string `json:"naziv" db:"naziv"`
-	Adresa  string `json:"adresa" db:"adresa"`
-	GodZatv bool   `json:"god_zatv" db:"godzatv"`
-	PIB     string `json:"pib" db:"pib"`
-	SifDel  string `json:"sifdel" db:"sifdel"`
-	Matbr   string `json:"matbr" db:"matbr"`
-	Pobro   string `json:"pobro" db:"pobro"`
-	Mesto   string `json:"mesto" db:"mesto"`
+	God       int    `json:"god" db:"god"`
+	Kar       int    `json:"kar" db:"kar"`
+	Naziv     string `json:"naziv" db:"naziv"`
+	Adresa    string `json:"adresa" db:"adresa"`
+	GodZatv   bool   `json:"god_zatv" db:"godzatv"`
+	PIB       string `json:"pib" db:"pib"`
+	SifDel    string `json:"sifdel" db:"sifdel"`
+	Matbr     string `json:"matbr" db:"matbr"`
+	Pobro     string `json:"pobro" db:"pobro"`
+	Mesto     string `json:"mesto" db:"mesto"`
+	KontaKup1 string `json:"konta_kup_1" db:"kontakup_1"`
+	KontaDob1 string `json:"konta_dob_1" db:"kontadob_1"`
 }
 
 type Firma struct {
@@ -47,7 +49,7 @@ type Drzave struct {
 
 // Banke Model
 type Banke struct {
-	IDBanKe    int            `json:"idbanke" db:"idbanke"`
+	IDBanke    int            `json:"idbanke" db:"idbanke"`
 	God        int            `json:"god" db:"god"`
 	Kar        int            `json:"kar" db:"kar"`
 	BrRac      string         `json:"brrac" db:"brrac"`
@@ -328,29 +330,6 @@ type Valute struct {
 	XDatIzmene sql.NullTime   `json:"xdat_izmene" db:"xdatizmene"`
 	XOpUnos    sql.NullString `json:"xop_unos" db:"xopunos"`
 	XOpIzmene  sql.NullString `json:"xop_izmene" db:"xopizmene"`
-}
-
-// KOMERCIJALISTI Model
-type Komercijalisti struct {
-	God          int          `json:"god" db:"god"`
-	Kar          int          `json:"kar" db:"kar"`
-	KomID        int          `json:"komid" db:"komid"`
-	Sifkom       int          `json:"sifkom" db:"sifkom"`
-	Sifnadred    int          `json:"sifnadred" db:"sifnadred"`
-	Imeprezime   string       `json:"imeprezime" db:"imeprezime"`
-	Adresa       string       `json:"adresa" db:"adresa"`
-	Mesto        string       `json:"mesto" db:"mesto"`
-	Telposao     string       `json:"telposao" db:"telposao"`
-	Telmob       string       `json:"telmob" db:"telmob"`
-	Totprod      float64      `json:"totprod" db:"totprod"`
-	Totprofit    float64      `json:"totprofit" db:"totprofit"`
-	Zaddatprod   time.Time    `json:"zaddatprod" db:"zaddatprod"`
-	Totnaplaceno float64      `json:"totnaplaceno" db:"totnaplaceno"`
-	Loginname    string       `json:"loginname" db:"loginname"`
-	XDatUnosa    sql.NullTime `json:"xdat_unosa" db:"xdatunosa"`
-	XDatIzmene   sql.NullTime `json:"xdat_izmene" db:"xdatizmene"`
-	XOpUnos      string       `json:"xop_unos" db:"xopunos"`
-	XOpIzmene    string       `json:"xop_izmene" db:"xopizmene"`
 }
 
 type Bnkizv struct {

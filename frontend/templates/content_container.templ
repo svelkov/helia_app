@@ -1,6 +1,7 @@
 package templates
 
 import (
+	"helia/frontend/components"
 	"helia/i18n"
 	"helia/internal/domain"
 )
@@ -10,17 +11,22 @@ templ ContentContainer(tbl domain.TableData, inputControl domain.InputControl, t
 	<div class="flex flex-col h-full">
 		<!-- Dialog container placed first so it is outside overflow wrappers -->
 		<div id="dialog-container"></div>
+		<!-- Dialog container for partneri print -->
+		<div id="dialog-partneri-stampa-grupe"></div>
+		<!-- Dialog container for info messages -->
+		<div id="info-message"></div>
 		<!-- Tab Content -->
 		<div id="content" class="flex-1 min-h-0 flex flex-col gap-1">
 			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
-				@Search_Part(tbl, inputControl)
+				@components.Search_Part(tbl, inputControl)
 				<div class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
-					@Table(tbl, translator)
+					@components.Table(tbl, translator)
 				</div>
 			</div>
 		</div>
 	</div>
 	<script>
+		htmx.logAll = true; // Enable HTMX logging for debugging
 	    document.addEventListener('htmx:afterSwap', (event) => {
 	        if (event.detail.target.id === 'table') {
 	            const currentPage = event.detail.xhr.responseURL.match(/page=(\d+)/);

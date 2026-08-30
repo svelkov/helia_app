@@ -1,7 +1,11 @@
 package templates
 
 templ Footer(year string) {
-    <footer class="bg-blue-600 text-white text-center p-2">
-        <p>&copy; { year } Helia</p>
-    </footer>
+	<footer class="bg-blue-600 text-white text-center p-2">
+		<div class="flex items-center justify-center gap-2 whitespace-nowrap">
+			<span>&copy; { year } Helia</span>
+			<img src="/frontend/static/lav_logo.png" alt="HELIA Logo" class="h-6 w-auto"/>
+			<span>Lav kompjueri d.o.o.</span>
+		</div>
+	</footer>
 }

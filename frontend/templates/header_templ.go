@@ -8,8 +8,11 @@ package templates
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-import "helia/internal/domain"
-import "helia/i18n"
+import (
+	"helia/frontend/components"
+	"helia/i18n"
+	"helia/internal/domain"
+)
 
 func Header(isLoggedIn bool, comboCompany, comboPoslGod, comboKar, comboLanguage domain.ComboFieldConfig, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
@@ -32,7 +35,7 @@ func Header(isLoggedIn bool, comboCompany, comboPoslGod, comboKar, comboLanguage
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<header class=\"bg-blue-600 text-white p-1 flex justify-between items-center shadow-xl shadow-blue-600/50\"><div class=\"flex items-center ml-4\"><img src=\"/frontend/static/lav_logo.png\" alt=\"HELIA Logo\" class=\"h-10 w-auto\"> <img src=\"/frontend/static/helia.png\" alt=\"HELIA text\" class=\"h-9 w-auto\"></div><nav class=\"flex items-center space-x-4\"><!-- Right-aligned Combo Boxes --><div class=\"ml-auto flex items-center space-x-4 pr-4\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<header class=\"bg-blue-600 text-white p-1 flex justify-between items-center shadow-xl shadow-blue-600/50\"><div class=\"flex items-justify\"><img src=\"/frontend/static/helia_logo.png\" alt=\"HELIA text\" class=\"h-9 w-52\"></div><nav class=\"flex items-center space-x-4\"><!-- Right-aligned Combo Boxes --><div class=\"ml-auto flex items-center space-x-4 pr-4\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -41,7 +44,7 @@ func Header(isLoggedIn bool, comboCompany, comboPoslGod, comboKar, comboLanguage
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = ComboBoxField(comboCompany, translator).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = components.ComboBoxField(comboCompany, translator).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -49,7 +52,7 @@ func Header(isLoggedIn bool, comboCompany, comboPoslGod, comboKar, comboLanguage
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = ComboBoxField(comboPoslGod, translator).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = components.ComboBoxField(comboPoslGod, translator).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -57,7 +60,7 @@ func Header(isLoggedIn bool, comboCompany, comboPoslGod, comboKar, comboLanguage
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = ComboBoxField(comboKar, translator).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = components.ComboBoxField(comboKar, translator).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -70,7 +73,7 @@ func Header(isLoggedIn bool, comboCompany, comboPoslGod, comboKar, comboLanguage
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = ComboBoxField(comboLanguage, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.ComboBoxField(comboLanguage, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

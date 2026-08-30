@@ -2,11 +2,35 @@ package opstipodaci
 
 import (
 	"fmt"
+	"helia/frontend/components"
 	tmpl "helia/frontend/templates"
 	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
 )
+
+templ PartneriMain(tableData domain.TableData, searchInput domain.InputControl, btnPrint domain.Button, translator *i18n.Service) {
+	<!-- Container with full height -->
+	<div class="bg-blue-100 p-1 flex flex-col h-full">
+		<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1">
+			<!-- Search bar with button in flex row -->
+			<div class="flex items-center justify-between">
+				<div class="flex-1">
+					@components.Search_Part(tableData, searchInput)
+				</div>
+				<div class="flex-shrink-0 mb-1">
+					@components.PrintButton(btnPrint, translator)
+				</div>
+			</div>
+			<!-- Table -->
+			<div class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+				@components.Table(tableData, translator)
+			</div>
+		</div>
+		<div id="dialog-partneri-stampa"></div>
+	</div>
+	@tmpl.OpenPrintWithParamsScript()
+}
 
 templ PartneriFormMain(partneriData domain.Partneri, tekRacuni domain.TableData, dialog domain.Dialog, tipoviAnalitike []domain.ComboItem, btnSave, btnCancel, btnClose, btnProveriPIB domain.Button, translator *i18n.Service, csrfToken string) {
 	<div id={ dialog.Id } class={ common.ClassMainDialogDiv }>
@@ -14,7 +38,7 @@ templ PartneriFormMain(partneriData domain.Partneri, tekRacuni domain.TableData,
 			<!-- Title Bar -->
 			<div class="bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg sticky top-0 z-10">
 				<h2 class="text-lg font-semibold ml-4">{ translator.Title(dialog.Title) }</h2>
-				@tmpl.CloseButton(btnClose)
+				@components.CloseButton(btnClose)
 			</div>
 			<form
 				if dialog.HxRequestType == "PUT" {
@@ -31,12 +55,12 @@ templ PartneriFormMain(partneriData domain.Partneri, tekRacuni domain.TableData,
 				<input type="hidden" name="_csrf" value={ csrfToken }/>
 				<!-- Tipovi Analitike -->
 				<div class="flex items-center gap-2 border-b-2 border-blue-900 pb-1">
-					@tmpl.LabelField(domain.LabelFieldConfig{
+					@components.LabelField(domain.LabelFieldConfig{
 						ID:         "tipanalitike",
 						LabelText:  translator.Label("Tip analitike"),
 						ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
 					})
-					@tmpl.ComboBoxField(domain.ComboFieldConfig{
+					@components.ComboBoxField(domain.ComboFieldConfig{
 						ID:          "tipanalitike",
 						Name:        "tipanalitike",
 						Placeholder: translator.Placeholder("Select"),
@@ -63,15 +87,15 @@ templ PartneriFormMain(partneriData domain.Partneri, tekRacuni domain.TableData,
 				<!-- Action Buttons - Full Width at Bottom -->
 				<div class="flex items-center justify-end gap-3 border-t border-gray-300 pt-3 mt-4">
 					<div class="flex items-center justify-end pt-2 pb-2 space-x-1">
-						@tmpl.SaveButton(btnSave, translator)
-						@tmpl.CancelButton(btnCancel, translator)
+						@components.SaveButton(btnSave, translator)
+						@components.CancelButton(btnCancel, translator)
 					</div>
 				</div>
 			</form>
 		</div>
 	</div>
 	@PartneriScript()
-	@tmpl.HandleDialogResponseScript("")
+	@tmpl.HandleDialogResponseScript()
 	@tmpl.ClearFieldErrorScript()
 	@tmpl.CloseDialogScript()
 }
@@ -89,12 +113,12 @@ templ PartneriFormKomintenti(partneriData domain.Partneri, tekRacuni domain.Tabl
 				<input type="hidden" name="sifra" value={ partneriData.Sifra }/>
 			}
 			<div class="flex items-center gap-2">
-				@tmpl.LabelField(domain.LabelFieldConfig{
+				@components.LabelField(domain.LabelFieldConfig{
 					ID:         "sifra",
 					LabelText:  translator.Label("Sifra partnera"),
 					ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
 				})
-				@tmpl.TextInputField(domain.InputFieldConfig{
+				@components.TextInputField(domain.InputFieldConfig{
 					ID:        "sifra",
 					Name:      "sifra",
 					FieldType: "text",
@@ -118,12 +142,12 @@ templ PartneriFormKomintenti(partneriData domain.Partneri, tekRacuni domain.Tabl
 			</div>
 			<!-- Naziv Partnera -->
 			<div class="flex items-center gap-2">
-				@tmpl.LabelField(domain.LabelFieldConfig{
+				@components.LabelField(domain.LabelFieldConfig{
 					ID:         "naziv",
 					LabelText:  translator.Label("Naziv partnera"),
 					ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
 				})
-				@tmpl.TextInputField(domain.InputFieldConfig{
+				@components.TextInputField(domain.InputFieldConfig{
 					ID:         "naziv",
 					Name:       "naziv",
 					FieldType:  "text",
@@ -138,12 +162,12 @@ templ PartneriFormKomintenti(partneriData domain.Partneri, tekRacuni domain.Tabl
 			</div>
 			<!-- Pun Naziv Partnera -->
 			<div class="flex items-center gap-2">
-				@tmpl.LabelField(domain.LabelFieldConfig{
+				@components.LabelField(domain.LabelFieldConfig{
 					ID:         "naziv1",
 					LabelText:  translator.Label("Pun naziv partnera"),
 					ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
 				})
-				@tmpl.TextInputField(domain.InputFieldConfig{
+				@components.TextInputField(domain.InputFieldConfig{
 					ID:         "naziv1",
 					Name:       "naziv1",
 					FieldType:  "text",
@@ -156,12 +180,12 @@ templ PartneriFormKomintenti(partneriData domain.Partneri, tekRacuni domain.Tabl
 			</div>
 			<!-- Adresa -->
 			<div class="flex items-center gap-2">
-				@tmpl.LabelField(domain.LabelFieldConfig{
+				@components.LabelField(domain.LabelFieldConfig{
 					ID:         "adresa",
 					LabelText:  translator.Label("Adresa"),
 					ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
 				})
-				@tmpl.TextInputField(domain.InputFieldConfig{
+				@components.TextInputField(domain.InputFieldConfig{
 					ID:         "adresa",
 					Name:       "adresa",
 					FieldType:  "text",
@@ -175,12 +199,12 @@ templ PartneriFormKomintenti(partneriData domain.Partneri, tekRacuni domain.Tabl
 			<!-- Poštanski broj i Mjesto -->
 			<div class="grid grid-cols-2 gap-2">
 				<div class="flex items-center gap-2">
-					@tmpl.LabelField(domain.LabelFieldConfig{
+					@components.LabelField(domain.LabelFieldConfig{
 						ID:         "postbroj",
 						LabelText:  translator.Label("Postanski broj"),
 						ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
 					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
+					@components.TextInputField(domain.InputFieldConfig{
 						ID:         "pobro",
 						Name:       "pobro",
 						FieldType:  "text",
@@ -192,12 +216,12 @@ templ PartneriFormKomintenti(partneriData domain.Partneri, tekRacuni domain.Tabl
 					})
 				</div>
 				<div class="flex items-center gap-2">
-					@tmpl.LabelField(domain.LabelFieldConfig{
+					@components.LabelField(domain.LabelFieldConfig{
 						ID:         "mesto",
 						LabelText:  translator.Label("Mesto"),
 						ClassLabel: common.ClassLabel + " w-10 flex-shrink-0",
 					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
+					@components.TextInputField(domain.InputFieldConfig{
 						ID:         "mesto",
 						Name:       "mesto",
 						FieldType:  "text",
@@ -209,14 +233,15 @@ templ PartneriFormKomintenti(partneriData domain.Partneri, tekRacuni domain.Tabl
 						OnInput:    "clearFieldError",
 						OnFocus:    "clearFieldError",
 					})
-					@tmpl.LabelField(domain.LabelFieldConfig{
+					@components.LabelField(domain.LabelFieldConfig{
 						ID:         "pak",
 						LabelText:  translator.Label("PAK"),
 						ClassLabel: common.ClassLabel + " w-8 flex-shrink-0",
 					})
-					@tmpl.NumericInputField(domain.InputFieldConfig{
+					@components.TextInputField(domain.InputFieldConfig{
 						ID:         "pak",
 						Name:       "pak",
+						FieldType:  "number",
 						Disabled:   false,
 						ClassInput: common.ClassInputTextEnabled + " w-24 flex-shrink-0",
 						MaxLength:  "10",
@@ -227,12 +252,12 @@ templ PartneriFormKomintenti(partneriData domain.Partneri, tekRacuni domain.Tabl
 			</div>
 			<!-- Sistema PDV -->
 			<div class="flex items-center gap-2">
-				@tmpl.LabelField(domain.LabelFieldConfig{
+				@components.LabelField(domain.LabelFieldConfig{
 					ID:         "tippdv",
 					LabelText:  translator.Label("Sistem PDV"),
 					ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
 				})
-				@tmpl.ComboBoxField(domain.ComboFieldConfig{
+				@components.ComboBoxField(domain.ComboFieldConfig{
 					ID:          "tippdv",
 					Name:        "tippdv",
 					Placeholder: translator.Placeholder("Select"),
@@ -250,14 +275,15 @@ templ PartneriFormKomintenti(partneriData domain.Partneri, tekRacuni domain.Tabl
 					OnFocus:       "clearFieldError",
 					SelectedValue: fmt.Sprintf("%d", partneriData.TipPDV),
 				}, translator)
-				@tmpl.LabelField(domain.LabelFieldConfig{
+				@components.LabelField(domain.LabelFieldConfig{
 					ID:         "gln",
 					LabelText:  translator.Label("GLN"),
 					ClassLabel: common.ClassLabel + " w-8 flex-shrink-0",
 				})
-				@tmpl.NumericInputField(domain.InputFieldConfig{
+				@components.TextInputField(domain.InputFieldConfig{
 					ID:         "gln",
 					Name:       "gln",
+					FieldType:  "number",
 					Disabled:   false,
 					ClassInput: common.ClassInputTextEnabled + " w-24 flex-shrink-0",
 					MaxLength:  "10",
@@ -267,13 +293,13 @@ templ PartneriFormKomintenti(partneriData domain.Partneri, tekRacuni domain.Tabl
 			</div>
 			<!-- PIB i Button Check PIB -->
 			<div class="flex items-center gap-2">
-				@tmpl.LabelField(domain.LabelFieldConfig{
+				@components.LabelField(domain.LabelFieldConfig{
 					ID:         "pib",
 					LabelText:  translator.Label("PIB"),
 					ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
 				})
 				<div class="flex items-center gap-2 flex-1">
-					@tmpl.TextInputField(domain.InputFieldConfig{
+					@components.TextInputField(domain.InputFieldConfig{
 						ID:         "pib",
 						Name:       "pib",
 						FieldType:  "text",
@@ -283,17 +309,17 @@ templ PartneriFormKomintenti(partneriData domain.Partneri, tekRacuni domain.Tabl
 						TabIndex:   "10",
 						Value:      partneriData.PIB,
 					})
-					@tmpl.Button(btnProveriPIB)
+					@components.Button(btnProveriPIB)
 				</div>
 			</div>
 			<!-- Matični broj -->
 			<div class="flex items-center gap-2">
-				@tmpl.LabelField(domain.LabelFieldConfig{
+				@components.LabelField(domain.LabelFieldConfig{
 					ID:         "maticnibroj",
 					LabelText:  translator.Label("Maticni broj"),
 					ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
 				})
-				@tmpl.TextInputField(domain.InputFieldConfig{
+				@components.TextInputField(domain.InputFieldConfig{
 					ID:         "maticnibroj",
 					Name:       "maticnibroj",
 					FieldType:  "text",
@@ -306,12 +332,12 @@ templ PartneriFormKomintenti(partneriData domain.Partneri, tekRacuni domain.Tabl
 			</div>
 			<!-- Matični broj -->
 			<div class="flex items-center gap-2">
-				@tmpl.LabelField(domain.LabelFieldConfig{
+				@components.LabelField(domain.LabelFieldConfig{
 					ID:         "konta",
 					LabelText:  translator.Label("Konta partnera"),
 					ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
 				})
-				@tmpl.TextInputField(domain.InputFieldConfig{
+				@components.TextInputField(domain.InputFieldConfig{
 					ID:         "konta",
 					Name:       "konta",
 					FieldType:  "text",
@@ -324,7 +350,7 @@ templ PartneriFormKomintenti(partneriData domain.Partneri, tekRacuni domain.Tabl
 			</div>
 			<!-- Teritorija - Radio Set -->
 			<div class="flex items-center gap-2">
-				@tmpl.LabelField(domain.LabelFieldConfig{
+				@components.LabelField(domain.LabelFieldConfig{
 					ID:         "teritorija",
 					LabelText:  translator.Label("Teritorija"),
 					ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
@@ -393,12 +419,12 @@ templ PartneriFormKomintenti(partneriData domain.Partneri, tekRacuni domain.Tabl
 				<div class="space-y-1">
 					<!-- Web stranica -->
 					<div class="flex items-center gap-1">
-						@tmpl.LabelField(domain.LabelFieldConfig{
+						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "webstranica",
 							LabelText:  translator.Label("Web stranica"),
 							ClassLabel: common.ClassLabel + " w-28 flex-shrink-0",
 						})
-						@tmpl.TextInputField(domain.InputFieldConfig{
+						@components.TextInputField(domain.InputFieldConfig{
 							ID:         "webstranica",
 							Name:       "webstranica",
 							FieldType:  "url",
@@ -411,12 +437,12 @@ templ PartneriFormKomintenti(partneriData domain.Partneri, tekRacuni domain.Tabl
 					</div>
 					<!-- E-mail -->
 					<div class="flex items-center gap-1">
-						@tmpl.LabelField(domain.LabelFieldConfig{
+						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "email",
 							LabelText:  translator.Label("E-mail"),
 							ClassLabel: common.ClassLabel + " w-28 flex-shrink-0",
 						})
-						@tmpl.TextInputField(domain.InputFieldConfig{
+						@components.TextInputField(domain.InputFieldConfig{
 							ID:         "email",
 							Name:       "email",
 							FieldType:  "email",
@@ -429,12 +455,12 @@ templ PartneriFormKomintenti(partneriData domain.Partneri, tekRacuni domain.Tabl
 					</div>
 					<!-- Broj telefona -->
 					<div class="flex items-center gap-1">
-						@tmpl.LabelField(domain.LabelFieldConfig{
+						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "telefon",
 							LabelText:  translator.Label("Broj telefona"),
 							ClassLabel: common.ClassLabel + " w-28 flex-shrink-0",
 						})
-						@tmpl.TextInputField(domain.InputFieldConfig{
+						@components.TextInputField(domain.InputFieldConfig{
 							ID:         "telefon",
 							Name:       "telefon",
 							FieldType:  "tel",
@@ -447,12 +473,12 @@ templ PartneriFormKomintenti(partneriData domain.Partneri, tekRacuni domain.Tabl
 					</div>
 					<!-- Kontakt osoba -->
 					<div class="flex items-center gap-1">
-						@tmpl.LabelField(domain.LabelFieldConfig{
+						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "kontakosoba",
 							LabelText:  translator.Label("Kontakt osoba"),
 							ClassLabel: common.ClassLabel + " w-28 flex-shrink-0",
 						})
-						@tmpl.TextInputField(domain.InputFieldConfig{
+						@components.TextInputField(domain.InputFieldConfig{
 							ID:         "kontakosoba",
 							Name:       "kontakosoba",
 							FieldType:  "text",
@@ -465,12 +491,12 @@ templ PartneriFormKomintenti(partneriData domain.Partneri, tekRacuni domain.Tabl
 					</div>
 					<!-- Opština -->
 					<div class="flex items-center gap-1">
-						@tmpl.LabelField(domain.LabelFieldConfig{
+						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "opstina",
 							LabelText:  translator.Label("Opstina"),
 							ClassLabel: common.ClassLabel + " w-28 flex-shrink-0",
 						})
-						@tmpl.TextInputField(domain.InputFieldConfig{
+						@components.TextInputField(domain.InputFieldConfig{
 							ID:         "opstina",
 							Name:       "opstina",
 							FieldType:  "text",
@@ -483,12 +509,12 @@ templ PartneriFormKomintenti(partneriData domain.Partneri, tekRacuni domain.Tabl
 					</div>
 					<!-- JMBG -->
 					<div class="flex items-center gap-1">
-						@tmpl.LabelField(domain.LabelFieldConfig{
+						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "jmbg",
 							LabelText:  translator.Label("JMBG"),
 							ClassLabel: common.ClassLabel + " w-28 flex-shrink-0",
 						})
-						@tmpl.TextInputField(domain.InputFieldConfig{
+						@components.TextInputField(domain.InputFieldConfig{
 							ID:         "jmbg",
 							Name:       "jmbg",
 							FieldType:  "text",
@@ -501,12 +527,12 @@ templ PartneriFormKomintenti(partneriData domain.Partneri, tekRacuni domain.Tabl
 					</div>
 					<!-- BPG -->
 					<div class="flex items-center gap-1">
-						@tmpl.LabelField(domain.LabelFieldConfig{
+						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "bpg",
 							LabelText:  translator.Label("BPG"),
 							ClassLabel: common.ClassLabel + " w-28 flex-shrink-0",
 						})
-						@tmpl.TextInputField(domain.InputFieldConfig{
+						@components.TextInputField(domain.InputFieldConfig{
 							ID:         "bpg",
 							Name:       "bpg",
 							FieldType:  "text",
@@ -519,12 +545,12 @@ templ PartneriFormKomintenti(partneriData domain.Partneri, tekRacuni domain.Tabl
 					</div>
 					<!-- BPG -->
 					<div class="flex items-center gap-1">
-						@tmpl.LabelField(domain.LabelFieldConfig{
+						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "indeks",
 							LabelText:  translator.Label("Indeks"),
 							ClassLabel: common.ClassLabel + " w-28 flex-shrink-0",
 						})
-						@tmpl.TextInputField(domain.InputFieldConfig{
+						@components.TextInputField(domain.InputFieldConfig{
 							ID:         "indeks",
 							Name:       "indeks",
 							FieldType:  "text",
@@ -534,12 +560,12 @@ templ PartneriFormKomintenti(partneriData domain.Partneri, tekRacuni domain.Tabl
 							TabIndex:   "21",
 							Value:      partneriData.Index,
 						})
-						@tmpl.LabelField(domain.LabelFieldConfig{
+						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "sifrakodpartnera",
 							LabelText:  translator.Label("Šifra kod partnera"),
 							ClassLabel: common.ClassLabel + " w-34 flex-shrink-0",
 						})
-						@tmpl.TextInputField(domain.InputFieldConfig{
+						@components.TextInputField(domain.InputFieldConfig{
 							ID:         "sifrakodpartnera",
 							Name:       "sifrakodpartnera",
 							FieldType:  "text",
@@ -560,12 +586,12 @@ templ PartneriFormKomintenti(partneriData domain.Partneri, tekRacuni domain.Tabl
 				<div class="space-y-1 text-xs">
 					<!-- Kredit limit -->
 					<div class="flex items-center gap-1">
-						@tmpl.LabelField(domain.LabelFieldConfig{
+						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "limitkredita",
 							LabelText:  translator.Label("Kredit limit"),
 							ClassLabel: common.ClassLabel + " w-52 flex-shrink-0",
 						})
-						@tmpl.NumericInputField(domain.InputFieldConfig{
+						@components.TextInputField(domain.InputFieldConfig{
 							ID:            "limitkredita",
 							Name:          "limitkredita",
 							FieldType:     "number",
@@ -578,12 +604,12 @@ templ PartneriFormKomintenti(partneriData domain.Partneri, tekRacuni domain.Tabl
 					</div>
 					<!-- Limit na dospela potraživa -->
 					<div class="flex items-center gap-1">
-						@tmpl.LabelField(domain.LabelFieldConfig{
+						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "limitdospela",
 							LabelText:  translator.Label("Limit na dospela potraživanja"),
 							ClassLabel: common.ClassLabel + " w-52 flex-shrink-0",
 						})
-						@tmpl.NumericInputField(domain.InputFieldConfig{
+						@components.TextInputField(domain.InputFieldConfig{
 							ID:            "limitdospela",
 							Name:          "limitdospela",
 							FieldType:     "number",
@@ -596,12 +622,12 @@ templ PartneriFormKomintenti(partneriData domain.Partneri, tekRacuni domain.Tabl
 					</div>
 					<!-- Valuta plaćanja prodaja + Rabat -->
 					<div class="flex items-center gap-1">
-						@tmpl.LabelField(domain.LabelFieldConfig{
+						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "valutaprodaja",
 							LabelText:  translator.Label("Valuta placanja (prodaja)"),
 							ClassLabel: common.ClassLabel + " w-44 flex-shrink-0",
 						})
-						@tmpl.NumericInputField(domain.InputFieldConfig{
+						@components.TextInputField(domain.InputFieldConfig{
 							ID:            "valutaprodaja",
 							Name:          "valutaprodaja",
 							FieldType:     "number",
@@ -611,12 +637,12 @@ templ PartneriFormKomintenti(partneriData domain.Partneri, tekRacuni domain.Tabl
 							DecimalPlaces: 2,
 							TabIndex:      "25",
 						})
-						@tmpl.LabelField(domain.LabelFieldConfig{
+						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "rabatprodaja",
 							LabelText:  translator.Label("Ugovoreni Rabat %"),
 							ClassLabel: common.ClassLabel + " w-28 flex-shrink-0",
 						})
-						@tmpl.NumericInputField(domain.InputFieldConfig{
+						@components.TextInputField(domain.InputFieldConfig{
 							ID:            "rabatprodaja",
 							Name:          "rabatprodaja",
 							FieldType:     "number",
@@ -629,12 +655,12 @@ templ PartneriFormKomintenti(partneriData domain.Partneri, tekRacuni domain.Tabl
 					</div>
 					<!-- Valuta plaćanja nabavka + Rabat -->
 					<div class="flex items-center gap-1">
-						@tmpl.LabelField(domain.LabelFieldConfig{
+						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "valutanabavka",
 							LabelText:  translator.Label("Valuta placanja (nabavka)"),
 							ClassLabel: common.ClassLabel + " w-44 flex-shrink-0",
 						})
-						@tmpl.NumericInputField(domain.InputFieldConfig{
+						@components.TextInputField(domain.InputFieldConfig{
 							ID:            "valutanabavka",
 							Name:          "valutanabavka",
 							FieldType:     "number",
@@ -644,12 +670,12 @@ templ PartneriFormKomintenti(partneriData domain.Partneri, tekRacuni domain.Tabl
 							DecimalPlaces: 2,
 							TabIndex:      "27",
 						})
-						@tmpl.LabelField(domain.LabelFieldConfig{
+						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "rabatnaabavka",
 							LabelText:  translator.Label("Procenat marze %"),
 							ClassLabel: common.ClassLabel + " w-28",
 						})
-						@tmpl.NumericInputField(domain.InputFieldConfig{
+						@components.TextInputField(domain.InputFieldConfig{
 							ID:            "rabatnaabavka",
 							Name:          "rabatnaabavka",
 							FieldType:     "number",
@@ -662,12 +688,12 @@ templ PartneriFormKomintenti(partneriData domain.Partneri, tekRacuni domain.Tabl
 					</div>
 					<!-- Komercijalista -->
 					<div class="flex items-center gap-1">
-						@tmpl.LabelField(domain.LabelFieldConfig{
+						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "komercijalista",
 							LabelText:  translator.Label("Komercijalista"),
 							ClassLabel: common.ClassLabel + " w-44",
 						})
-						@tmpl.TextInputField(domain.InputFieldConfig{
+						@components.TextInputField(domain.InputFieldConfig{
 							ID:         "komercijalista",
 							Name:       "komercijalista",
 							FieldType:  "text",
@@ -680,12 +706,12 @@ templ PartneriFormKomintenti(partneriData domain.Partneri, tekRacuni domain.Tabl
 					</div>
 					<!-- Napomena -->
 					<div class="flex items-center gap-1">
-						@tmpl.LabelField(domain.LabelFieldConfig{
+						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "napomena",
 							LabelText:  translator.Label("Napomena"),
 							ClassLabel: common.ClassLabel + " w-44 text-top",
 						})
-						@tmpl.TextAreaField(domain.InputFieldConfig{
+						@components.TextAreaField(domain.InputFieldConfig{
 							ID:         "napomena",
 							Name:       "napomena",
 							Value:      partneriData.Napomena,
@@ -714,12 +740,12 @@ templ PartneriFormFizickaLica(partneriData domain.Partneri, tekRacuni domain.Tab
 				<input type="hidden" name="sifra" value={ partneriData.Sifra }/>
 			}
 			<div class="flex items-center gap-2">
-				@tmpl.LabelField(domain.LabelFieldConfig{
+				@components.LabelField(domain.LabelFieldConfig{
 					ID:         "sifra",
 					LabelText:  translator.Label("Sifra partnera"),
 					ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
 				})
-				@tmpl.TextInputField(domain.InputFieldConfig{
+				@components.TextInputField(domain.InputFieldConfig{
 					ID:        "sifra",
 					Name:      "sifra",
 					FieldType: "text",
@@ -739,12 +765,12 @@ templ PartneriFormFizickaLica(partneriData domain.Partneri, tekRacuni domain.Tab
 			</div>
 			<!-- Naziv Partnera -->
 			<div class="flex items-center gap-2">
-				@tmpl.LabelField(domain.LabelFieldConfig{
+				@components.LabelField(domain.LabelFieldConfig{
 					ID:         "naziv",
 					LabelText:  translator.Label("Ime i prezime"),
 					ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
 				})
-				@tmpl.TextInputField(domain.InputFieldConfig{
+				@components.TextInputField(domain.InputFieldConfig{
 					ID:         "naziv",
 					Name:       "naziv",
 					FieldType:  "text",
@@ -759,12 +785,12 @@ templ PartneriFormFizickaLica(partneriData domain.Partneri, tekRacuni domain.Tab
 			</div>
 			<!-- Adresa -->
 			<div class="flex items-center gap-2">
-				@tmpl.LabelField(domain.LabelFieldConfig{
+				@components.LabelField(domain.LabelFieldConfig{
 					ID:         "adresa",
 					LabelText:  translator.Label("Adresa"),
 					ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
 				})
-				@tmpl.TextInputField(domain.InputFieldConfig{
+				@components.TextInputField(domain.InputFieldConfig{
 					ID:         "adresa",
 					Name:       "adresa",
 					FieldType:  "text",
@@ -778,12 +804,12 @@ templ PartneriFormFizickaLica(partneriData domain.Partneri, tekRacuni domain.Tab
 			<!-- Poštanski broj i Mjesto -->
 			<div class="grid grid-cols-2 gap-2">
 				<div class="flex items-center gap-2">
-					@tmpl.LabelField(domain.LabelFieldConfig{
+					@components.LabelField(domain.LabelFieldConfig{
 						ID:         "postbroj",
 						LabelText:  translator.Label("Postanski broj"),
 						ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
 					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
+					@components.TextInputField(domain.InputFieldConfig{
 						ID:         "pobro",
 						Name:       "pobro",
 						FieldType:  "text",
@@ -795,12 +821,12 @@ templ PartneriFormFizickaLica(partneriData domain.Partneri, tekRacuni domain.Tab
 					})
 				</div>
 				<div class="flex items-center gap-2">
-					@tmpl.LabelField(domain.LabelFieldConfig{
+					@components.LabelField(domain.LabelFieldConfig{
 						ID:         "mesto",
 						LabelText:  translator.Label("Mesto"),
 						ClassLabel: common.ClassLabel + " w-10 flex-shrink-0",
 					})
-					@tmpl.TextInputField(domain.InputFieldConfig{
+					@components.TextInputField(domain.InputFieldConfig{
 						ID:         "mesto",
 						Name:       "mesto",
 						FieldType:  "text",
@@ -816,12 +842,12 @@ templ PartneriFormFizickaLica(partneriData domain.Partneri, tekRacuni domain.Tab
 			</div>
 			<!-- Opština -->
 			<div class="flex items-center gap-2">
-				@tmpl.LabelField(domain.LabelFieldConfig{
+				@components.LabelField(domain.LabelFieldConfig{
 					ID:         "opstina",
 					LabelText:  translator.Label("Opstina"),
 					ClassLabel: common.ClassLabel + " w-32 flex-shrink-0",
 				})
-				@tmpl.TextInputField(domain.InputFieldConfig{
+				@components.TextInputField(domain.InputFieldConfig{
 					ID:         "opstina",
 					Name:       "opstina",
 					FieldType:  "text",
@@ -843,12 +869,12 @@ templ PartneriFormFizickaLica(partneriData domain.Partneri, tekRacuni domain.Tab
 				<div class="space-y-1">
 					<!-- Web stranica -->
 					<div class="flex items-center gap-1">
-						@tmpl.LabelField(domain.LabelFieldConfig{
+						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "webstranica",
 							LabelText:  translator.Label("Web stranica"),
 							ClassLabel: common.ClassLabel + " w-28 flex-shrink-0",
 						})
-						@tmpl.TextInputField(domain.InputFieldConfig{
+						@components.TextInputField(domain.InputFieldConfig{
 							ID:         "webstranica",
 							Name:       "webstranica",
 							FieldType:  "url",
@@ -861,12 +887,12 @@ templ PartneriFormFizickaLica(partneriData domain.Partneri, tekRacuni domain.Tab
 					</div>
 					<!-- E-mail -->
 					<div class="flex items-center gap-1">
-						@tmpl.LabelField(domain.LabelFieldConfig{
+						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "email",
 							LabelText:  translator.Label("E-mail"),
 							ClassLabel: common.ClassLabel + " w-28 flex-shrink-0",
 						})
-						@tmpl.TextInputField(domain.InputFieldConfig{
+						@components.TextInputField(domain.InputFieldConfig{
 							ID:         "email",
 							Name:       "email",
 							FieldType:  "email",
@@ -879,12 +905,12 @@ templ PartneriFormFizickaLica(partneriData domain.Partneri, tekRacuni domain.Tab
 					</div>
 					<!-- Broj telefona -->
 					<div class="flex items-center gap-1">
-						@tmpl.LabelField(domain.LabelFieldConfig{
+						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "telefon",
 							LabelText:  translator.Label("Broj telefona"),
 							ClassLabel: common.ClassLabel + " w-28 flex-shrink-0",
 						})
-						@tmpl.TextInputField(domain.InputFieldConfig{
+						@components.TextInputField(domain.InputFieldConfig{
 							ID:         "telefon",
 							Name:       "telefon",
 							FieldType:  "tel",
@@ -897,12 +923,12 @@ templ PartneriFormFizickaLica(partneriData domain.Partneri, tekRacuni domain.Tab
 					</div>
 					<!-- JMBG -->
 					<div class="flex items-center gap-1">
-						@tmpl.LabelField(domain.LabelFieldConfig{
+						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "jmbg",
 							LabelText:  translator.Label("JMBG"),
 							ClassLabel: common.ClassLabel + " w-28 flex-shrink-0",
 						})
-						@tmpl.TextInputField(domain.InputFieldConfig{
+						@components.TextInputField(domain.InputFieldConfig{
 							ID:         "jmbg",
 							Name:       "jmbg",
 							FieldType:  "text",
@@ -921,7 +947,7 @@ templ PartneriFormFizickaLica(partneriData domain.Partneri, tekRacuni domain.Tab
 
 templ PartneriList(tableData domain.TableData, translator *i18n.Service) {
 	<div class="mt-4">
-		@tmpl.Table(tableData, translator)
+		@components.Table(tableData, translator)
 	</div>
 }
 
@@ -1313,19 +1339,156 @@ templ PartneriScript() {
 		// Also call immediately for dynamically inserted forms
 		console.log("About to call initTekRacuniTable immediately");
 		initTekRacuniTable();
-		
-		// Fallback: attach listener at document level for htmx:configRequest events
-		// This is the ideal place to add FormData values before request is sent
-		document.addEventListener('htmx:configRequest', function(event) {
-			console.log("Document-level htmx:configRequest fired!", event);
-			const target = event.detail.target;
-			console.log("Event target:", target, "Target tag:", target?.tagName);
-			
-			// Check if this is a form or inside a form
-			if (target && (target.tagName === 'FORM' || target.closest('form'))) {
-				console.log("This is a form submission - calling addTekRacuniDataToRequest from document listener");
-				addTekRacuniDataToRequest(event);
-			}
-		});
 	</script>
+}
+
+templ PartnerStampaDialog(dialog domain.Dialog, btnClose, btnCancel domain.Button, translator *i18n.Service) {
+	<div id={ dialog.Id } class={ common.ClassMainDialogDiv }>
+		<div class="bg-white rounded-lg shadow-2xl relative animate-fade-in w-auto min-w-[500px]">
+			<!-- Title Bar -->
+			<div class="bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg">
+				<h2 class="text-lg font-semibold ml-4">{ translator.Title(dialog.Title) }</h2>
+				@components.CloseButton(btnClose)
+			</div>
+			<!-- Content -->
+			<div class="p-3">
+				<fieldset class="border-2 border-blue-500 rounded-lg p-1">
+					<legend class="text-sm font-bold text-blue-700 px-1">{ translator.Text("Selekcija parametara za štampu poslovnih partnera") }</legend>
+					<!-- Od/Do broja -->
+					<div class="flex items-center gap-2 mb-1">
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "odsifre",
+							LabelText:  "Od šifre",
+							ClassLabel: common.ClassLabel + " w-48",
+						})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:            "odsifre",
+							Name:          "odsifre",
+							Value:         "0",
+							Disabled:      false,
+							FieldType:     "number",
+							ClassInput:    common.ClassInputNumericEnabled + " w-40",
+							DecimalPlaces: 0,
+						})
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "dosifre",
+							LabelText:  "Do šifre",
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@components.TextInputField(domain.InputFieldConfig{
+							FieldType:     "number",
+							ID:            "dosifre",
+							Name:          "dosifre",
+							Value:         "99999",
+							Disabled:      false,
+							ClassInput:    common.ClassInputNumericEnabled + " w-24",
+							DecimalPlaces: 0,
+						})
+					</div>
+					<!-- Od/Do mesta -->
+					<div class="flex items-center gap-2 mb-1">
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "odmesta",
+							LabelText:  "Od mesta",
+							ClassLabel: common.ClassLabel + " w-48",
+						})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "odmesta",
+							Name:       "odmesta",
+							FieldType:  "text",
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " w-40",
+							MaxLength:  "60",
+						})
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "domesta",
+							LabelText:  "Do mesta",
+							ClassLabel: common.ClassLabel + " w-24",
+						})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "domesta",
+							Name:       "domesta",
+							FieldType:  "text",
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " w-full",
+							MaxLength:  "60",
+						})
+					</div>
+					<!-- Partneri koji u nazivu sadrže reč -->
+					<div class="flex items-center gap-2 mb-1">
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "partnernaziv",
+							LabelText:  "Partner naziv sadrži",
+							ClassLabel: common.ClassLabel + " w-48",
+						})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "partnernaziv",
+							Name:       "partnernaziv",
+							FieldType:  "text",
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " w-full",
+							MaxLength:  "100",
+						})
+					</div>
+					<!-- Konto -->
+					<div class="flex items-center gap-2 mb-1">
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "konto",
+							LabelText:  "Konto",
+							ClassLabel: common.ClassLabel + " w-48",
+						})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "konto",
+							Name:       "konto",
+							FieldType:  "text",
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " w-40",
+							MaxLength:  "20",
+						})
+					</div>
+					<!-- Sorting Radio Buttons -->
+					<div class="flex border-t mb-2 border-gray-300">
+						<div class="text-sm font-bold text-blue-700 mb-1 mr-2 mt-2 mb-2">{ translator.Text("Sortiraj štampu") }</div>
+						@components.RadioButtonField(domain.RadioFieldConfig{
+							ID:         "sortirajstampu",
+							Name:       "sortirajstampu",
+							Value:      "analitickasifra",
+							LabelText:  "Analitičkoj šifri",
+							IsSelected: true,
+							ClassLabel: common.ClassCheckboxLabel + " w-48",
+						}, translator)
+						@components.RadioButtonField(domain.RadioFieldConfig{
+							ID:         "sortirajstampu",
+							Name:       "sortirajstampu",
+							Value:      "nazivpartnera",
+							LabelText:  "Nazivu partnera",
+							IsSelected: false,
+							ClassLabel: common.ClassCheckboxLabel + " w-48",
+						}, translator)
+						@components.RadioButtonField(domain.RadioFieldConfig{
+							ID:         "sortirajstampu",
+							Name:       "sortirajstampu",
+							Value:      "sediste",
+							LabelText:  "Sedištu partnera",
+							IsSelected: false,
+							ClassLabel: common.ClassCheckboxLabel + " w-48",
+						}, translator)
+					</div>
+				</fieldset>
+			</div>
+			<!-- Buttons -->
+			<div class="px-3 py-3 flex justify-end space-x-1">
+				@components.Search_PartPrintButton(domain.Button{
+					Id:          "btn-print-partneri",
+					LabelText:   translator.Button("Štampa"),
+					BtnClass:    common.ClassPrintButton,
+					HxActionURL: "/api/partneri/stampa",
+					DataFields:  "odsifre,dosifre,odmesta,domesta,partnernaziv,konto,sortirajstampu",
+				})
+				@components.CancelButton(btnCancel, translator)
+			</div>
+		</div>
+		<div id="dialog-partneri-stampa"></div>
+	</div>
+	@tmpl.CloseDialogScript()
 }

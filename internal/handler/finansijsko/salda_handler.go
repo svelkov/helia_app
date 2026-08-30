@@ -687,7 +687,24 @@ func (h *SaldaHandler) RealizacijaKomercijalisti(c *gin.Context) {
 }
 
 func (h *SaldaHandler) Klase5i6TotalValues(c *gin.Context) {
-	totalValues, err := h.service.GetSaldaKlase5i6TotalValues(c.Request.Context())
+	odSifre := c.Query("odsifre")
+	doSifre := c.Query("dosifre")
+	odKonta := c.Query("odkonta")
+	dokonta := c.Query("dokonta")
+	odDatuma := c.Query("oddatuma")
+	doDatuma := c.Query("dodatuma")
+	klasa := c.Query("klasa")
+
+	saldaParam := domain.SaldaParam{
+		OdKonta:  odKonta,
+		DoKonta:  dokonta,
+		OdSifre:  odSifre,
+		DoSifre:  doSifre,
+		OdDatuma: odDatuma,
+		DoDatuma: doDatuma,
+		Klasa:    klasa,
+	}
+	totalValues, err := h.service.GetSaldaKlase5i6TotalValues(c.Request.Context(), saldaParam)
 	if err != nil {
 		log.Printf("Error getting total values for klase 5 i 6: %v", err)
 	}

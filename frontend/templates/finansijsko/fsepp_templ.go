@@ -10,6 +10,7 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import (
 	"fmt"
+	"helia/frontend/components"
 	tmpl "helia/frontend/templates"
 	"helia/i18n"
 	"helia/internal/common"
@@ -39,7 +40,7 @@ func FseppMain(tabs domain.TabData, tblSekcije domain.TableData, searchInput dom
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!-- Tab Content --><div id=\"tab-content\" class=\"flex flex-col h-full\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!-- Tab Content --><div id=\"tab-content\" class=\"bg-blue-100 p-1 flex flex-col h-full\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -77,7 +78,7 @@ func FseppSekcijeIzvori(tabs domain.TabData, tbl domain.TableData, searchInput d
 			templ_7745c5c3_Var2 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<!-- Container with full height --><div class=\"flex flex-col h-full\"><!-- Tab Navigation --><div class=\"border-b border-blue-600\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<!-- Container with full height --><div class=\"bg-blue-100 p-1 flex flex-col h-full\"><!-- Tab Navigation --><div class=\"border-b border-blue-600\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -89,7 +90,7 @@ func FseppSekcijeIzvori(tabs domain.TabData, tbl domain.TableData, searchInput d
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Search_Part(tbl, searchInput).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Search_Part(tbl, searchInput).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -97,7 +98,7 @@ func FseppSekcijeIzvori(tabs domain.TabData, tbl domain.TableData, searchInput d
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -147,7 +148,7 @@ func FseppEvidencija(tabs domain.TabData, tbl domain.TableData, btnObrada, btnDe
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "oddatuma",
 			LabelText:  translator.Label("Od datuma"),
 			ClassLabel: common.ClassLabel + " w-32",
@@ -155,7 +156,7 @@ func FseppEvidencija(tabs domain.TabData, tbl domain.TableData, btnObrada, btnDe
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "oddatuma",
 			Name:       "oddatuma",
 			FieldType:  "date",
@@ -166,7 +167,7 @@ func FseppEvidencija(tabs domain.TabData, tbl domain.TableData, btnObrada, btnDe
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "dodatuma",
 			LabelText:  translator.Label("Do datuma"),
 			ClassLabel: common.ClassLabel + " w-28",
@@ -174,7 +175,7 @@ func FseppEvidencija(tabs domain.TabData, tbl domain.TableData, btnObrada, btnDe
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "dodatuma",
 			Name:       "dodatuma",
 			FieldType:  "date",
@@ -185,7 +186,7 @@ func FseppEvidencija(tabs domain.TabData, tbl domain.TableData, btnObrada, btnDe
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Button(btnObrada).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Button(btnObrada).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -193,7 +194,7 @@ func FseppEvidencija(tabs domain.TabData, tbl domain.TableData, btnObrada, btnDe
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Search_Part(tbl, searchInput).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Search_Part(tbl, searchInput).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -201,7 +202,7 @@ func FseppEvidencija(tabs domain.TabData, tbl domain.TableData, btnObrada, btnDe
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -254,7 +255,7 @@ func FseppSefKpr(tabs domain.TabData, tbl domain.TableData, btnImport domain.But
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(btnImport.HxActionURL)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/fsepp.templ`, Line: 115, Col: 35}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/fsepp.templ`, Line: 116, Col: 35}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
@@ -267,7 +268,7 @@ func FseppSefKpr(tabs domain.TabData, tbl domain.TableData, btnImport domain.But
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(btnImport.HxTarget)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/fsepp.templ`, Line: 116, Col: 34}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/fsepp.templ`, Line: 117, Col: 34}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
@@ -280,7 +281,7 @@ func FseppSefKpr(tabs domain.TabData, tbl domain.TableData, btnImport domain.But
 		var templ_7745c5c3_Var7 string
 		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(btnImport.HxVals)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/fsepp.templ`, Line: 119, Col: 30}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/fsepp.templ`, Line: 120, Col: 30}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {
@@ -293,7 +294,7 @@ func FseppSefKpr(tabs domain.TabData, tbl domain.TableData, btnImport domain.But
 		var templ_7745c5c3_Var8 string
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(csrfToken)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/fsepp.templ`, Line: 121, Col: 55}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/fsepp.templ`, Line: 122, Col: 55}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {
@@ -303,7 +304,7 @@ func FseppSefKpr(tabs domain.TabData, tbl domain.TableData, btnImport domain.But
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "oddatuma",
 			LabelText:  "Od Datuma",
 			ClassLabel: common.ClassLabel + " w-20",
@@ -311,7 +312,7 @@ func FseppSefKpr(tabs domain.TabData, tbl domain.TableData, btnImport domain.But
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "oddatuma",
 			Name:       "oddatuma",
 			FieldType:  "date",
@@ -322,7 +323,7 @@ func FseppSefKpr(tabs domain.TabData, tbl domain.TableData, btnImport domain.But
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "dodatuma",
 			LabelText:  "Do Datuma",
 			ClassLabel: common.ClassLabel + " w-20",
@@ -330,7 +331,7 @@ func FseppSefKpr(tabs domain.TabData, tbl domain.TableData, btnImport domain.But
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "dodatuma",
 			Name:       "dodatuma",
 			FieldType:  "date",
@@ -341,7 +342,7 @@ func FseppSefKpr(tabs domain.TabData, tbl domain.TableData, btnImport domain.But
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "filepath",
 			LabelText:  "CSV fajl",
 			ClassLabel: common.ClassLabel + " w-24",
@@ -349,7 +350,7 @@ func FseppSefKpr(tabs domain.TabData, tbl domain.TableData, btnImport domain.But
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "filepath",
 			Name:       "filepath",
 			FieldType:  "text",
@@ -382,14 +383,14 @@ func FseppSefKpr(tabs domain.TabData, tbl domain.TableData, btnImport domain.But
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Icon("file-select", common.ClassIcon).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Icon("file-select", common.ClassIcon).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var11 string
 		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Izaberi fajl"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/fsepp.templ`, Line: 173, Col: 41}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/fsepp.templ`, Line: 174, Col: 41}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {
@@ -399,7 +400,7 @@ func FseppSefKpr(tabs domain.TabData, tbl domain.TableData, btnImport domain.But
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.RadioButtonField(domain.RadioFieldConfig{
+		templ_7745c5c3_Err = components.RadioButtonField(domain.RadioFieldConfig{
 			ID:          "sve",
 			Name:        "filter_type",
 			LabelText:   "Sve",
@@ -411,7 +412,7 @@ func FseppSefKpr(tabs domain.TabData, tbl domain.TableData, btnImport domain.But
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.RadioButtonField(domain.RadioFieldConfig{
+		templ_7745c5c3_Err = components.RadioButtonField(domain.RadioFieldConfig{
 			ID:          "razlike",
 			Name:        "filter_type",
 			LabelText:   "Razlike",
@@ -426,7 +427,7 @@ func FseppSefKpr(tabs domain.TabData, tbl domain.TableData, btnImport domain.But
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Button(btnImport).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Button(btnImport).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -434,7 +435,7 @@ func FseppSefKpr(tabs domain.TabData, tbl domain.TableData, btnImport domain.But
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Search_Part(tbl, searchInput).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Search_Part(tbl, searchInput).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -442,7 +443,7 @@ func FseppSefKpr(tabs domain.TabData, tbl domain.TableData, btnImport domain.But
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -495,7 +496,7 @@ func DialogFseppSekcije(model domain.Fsepp, dlg domain.Dialog, btnSave, btnCance
 		var templ_7745c5c3_Var13 string
 		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(dlg.Id)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/fsepp.templ`, Line: 217, Col: 17}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/fsepp.templ`, Line: 218, Col: 17}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 		if templ_7745c5c3_Err != nil {
@@ -508,7 +509,7 @@ func DialogFseppSekcije(model domain.Fsepp, dlg domain.Dialog, btnSave, btnCance
 		var templ_7745c5c3_Var14 string
 		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Title("Unos/izmene podataka - Sekcije i izvori"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/fsepp.templ`, Line: 221, Col: 104}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/fsepp.templ`, Line: 222, Col: 104}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 		if templ_7745c5c3_Err != nil {
@@ -518,7 +519,7 @@ func DialogFseppSekcije(model domain.Fsepp, dlg domain.Dialog, btnSave, btnCance
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.CloseButton(btnClose).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.CloseButton(btnClose).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -529,7 +530,7 @@ func DialogFseppSekcije(model domain.Fsepp, dlg domain.Dialog, btnSave, btnCance
 		var templ_7745c5c3_Var15 string
 		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(csrfToken)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/fsepp.templ`, Line: 227, Col: 55}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/fsepp.templ`, Line: 228, Col: 55}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 		if templ_7745c5c3_Err != nil {
@@ -542,7 +543,7 @@ func DialogFseppSekcije(model domain.Fsepp, dlg domain.Dialog, btnSave, btnCance
 		var templ_7745c5c3_Var16 string
 		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Osnovni podaci"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/fsepp.templ`, Line: 229, Col: 117}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/fsepp.templ`, Line: 230, Col: 117}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 		if templ_7745c5c3_Err != nil {
@@ -552,7 +553,7 @@ func DialogFseppSekcije(model domain.Fsepp, dlg domain.Dialog, btnSave, btnCance
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "tip",
 			LabelText:  translator.Label("Tip podatka"),
 			ClassLabel: "w-24",
@@ -560,7 +561,7 @@ func DialogFseppSekcije(model domain.Fsepp, dlg domain.Dialog, btnSave, btnCance
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.ComboBoxField(domain.ComboFieldConfig{
+		templ_7745c5c3_Err = components.ComboBoxField(domain.ComboFieldConfig{
 			ID:          "tip",
 			Name:        "tip",
 			Placeholder: "Tip podatka",
@@ -582,7 +583,7 @@ func DialogFseppSekcije(model domain.Fsepp, dlg domain.Dialog, btnSave, btnCance
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "deo",
 			LabelText:  translator.Label("Deo"),
 			ClassLabel: "w-24",
@@ -590,7 +591,7 @@ func DialogFseppSekcije(model domain.Fsepp, dlg domain.Dialog, btnSave, btnCance
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "deo",
 			Name:       "deo",
 			FieldType:  "text",
@@ -605,7 +606,7 @@ func DialogFseppSekcije(model domain.Fsepp, dlg domain.Dialog, btnSave, btnCance
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "sekcija",
 			LabelText:  translator.Label("Sekcija"),
 			ClassLabel: "w-24",
@@ -613,7 +614,7 @@ func DialogFseppSekcije(model domain.Fsepp, dlg domain.Dialog, btnSave, btnCance
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "sekcija",
 			Name:       "sekcija",
 			FieldType:  "text",
@@ -628,7 +629,7 @@ func DialogFseppSekcije(model domain.Fsepp, dlg domain.Dialog, btnSave, btnCance
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "izvor",
 			LabelText:  translator.Label("Izvor"),
 			ClassLabel: "w-24",
@@ -636,7 +637,7 @@ func DialogFseppSekcije(model domain.Fsepp, dlg domain.Dialog, btnSave, btnCance
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "izvor",
 			Name:       "izvor",
 			FieldType:  "text",
@@ -651,7 +652,7 @@ func DialogFseppSekcije(model domain.Fsepp, dlg domain.Dialog, btnSave, btnCance
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "polje",
 			LabelText:  translator.Label("Polje"),
 			ClassLabel: "w-24",
@@ -659,7 +660,7 @@ func DialogFseppSekcije(model domain.Fsepp, dlg domain.Dialog, btnSave, btnCance
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "polje",
 			Name:       "polje",
 			FieldType:  "text",
@@ -674,7 +675,7 @@ func DialogFseppSekcije(model domain.Fsepp, dlg domain.Dialog, btnSave, btnCance
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "nivo",
 			LabelText:  translator.Label("Nivo"),
 			ClassLabel: "w-24",
@@ -682,7 +683,7 @@ func DialogFseppSekcije(model domain.Fsepp, dlg domain.Dialog, btnSave, btnCance
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "nivo",
 			Name:       "nivo",
 			FieldType:  "text",
@@ -700,7 +701,7 @@ func DialogFseppSekcije(model domain.Fsepp, dlg domain.Dialog, btnSave, btnCance
 		var templ_7745c5c3_Var17 string
 		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Vrste naloga, PDV računi"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/fsepp.templ`, Line: 332, Col: 128}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/fsepp.templ`, Line: 333, Col: 128}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 		if templ_7745c5c3_Err != nil {
@@ -710,7 +711,7 @@ func DialogFseppSekcije(model domain.Fsepp, dlg domain.Dialog, btnSave, btnCance
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "grpdok",
 			LabelText:  translator.Label("Vrste naloga"),
 			ClassLabel: "w-24 pt-1",
@@ -718,7 +719,7 @@ func DialogFseppSekcije(model domain.Fsepp, dlg domain.Dialog, btnSave, btnCance
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:          "grpdok",
 			Name:        "grpdok",
 			FieldType:   "text",
@@ -734,7 +735,7 @@ func DialogFseppSekcije(model domain.Fsepp, dlg domain.Dialog, btnSave, btnCance
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "polje_pdv_da",
 			LabelText:  translator.Label("PDV Da"),
 			ClassLabel: "w-24",
@@ -742,7 +743,7 @@ func DialogFseppSekcije(model domain.Fsepp, dlg domain.Dialog, btnSave, btnCance
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "polje_pdv_da",
 			Name:       "polje_pdv_da",
 			FieldType:  "text",
@@ -757,7 +758,7 @@ func DialogFseppSekcije(model domain.Fsepp, dlg domain.Dialog, btnSave, btnCance
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "polje_pdv_ne",
 			LabelText:  translator.Label("PDV Ne"),
 			ClassLabel: "w-24",
@@ -765,7 +766,7 @@ func DialogFseppSekcije(model domain.Fsepp, dlg domain.Dialog, btnSave, btnCance
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "polje_pdv_ne",
 			Name:       "polje_pdv_ne",
 			FieldType:  "text",
@@ -780,7 +781,7 @@ func DialogFseppSekcije(model domain.Fsepp, dlg domain.Dialog, btnSave, btnCance
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "pozic_1",
 			LabelText:  translator.Label("Pozicije"),
 			ClassLabel: common.ClassLabel + " w-24",
@@ -788,10 +789,10 @@ func DialogFseppSekcije(model domain.Fsepp, dlg domain.Dialog, btnSave, btnCance
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "pozic_1",
 			Name:       "pozic_1",
-			FieldType:  "text",
+			FieldType:  "number",
 			Value:      model.Pozic1,
 			ClassInput: common.ClassInputTextEnabled + " w-16 text-right",
 			MaxLength:  "4",
@@ -800,10 +801,10 @@ func DialogFseppSekcije(model domain.Fsepp, dlg domain.Dialog, btnSave, btnCance
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "pozic_2",
 			Name:       "pozic_2",
-			FieldType:  "text",
+			FieldType:  "number",
 			Value:      model.Pozic2,
 			ClassInput: common.ClassInputTextEnabled + " w-16 text-right",
 			MaxLength:  "4",
@@ -812,10 +813,10 @@ func DialogFseppSekcije(model domain.Fsepp, dlg domain.Dialog, btnSave, btnCance
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "pozic_3",
 			Name:       "pozic_3",
-			FieldType:  "text",
+			FieldType:  "number",
 			Value:      model.Pozic3,
 			ClassInput: common.ClassInputTextEnabled + " w-16 text-right",
 			MaxLength:  "4",
@@ -824,10 +825,10 @@ func DialogFseppSekcije(model domain.Fsepp, dlg domain.Dialog, btnSave, btnCance
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "pozic_4",
 			Name:       "pozic_4",
-			FieldType:  "text",
+			FieldType:  "number",
 			Value:      model.Pozic4,
 			ClassInput: common.ClassInputTextEnabled + " w-16 text-right",
 			MaxLength:  "4",
@@ -836,10 +837,10 @@ func DialogFseppSekcije(model domain.Fsepp, dlg domain.Dialog, btnSave, btnCance
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "pozic_5",
 			Name:       "pozic_5",
-			FieldType:  "text",
+			FieldType:  "number",
 			Value:      model.Pozic5,
 			ClassInput: common.ClassInputTextEnabled + " w-16 text-right",
 			MaxLength:  "4",
@@ -855,7 +856,7 @@ func DialogFseppSekcije(model domain.Fsepp, dlg domain.Dialog, btnSave, btnCance
 		var templ_7745c5c3_Var18 string
 		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Aktivna polja"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/fsepp.templ`, Line: 447, Col: 116}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/fsepp.templ`, Line: 448, Col: 116}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
@@ -865,11 +866,11 @@ func DialogFseppSekcije(model domain.Fsepp, dlg domain.Dialog, btnSave, btnCance
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.ConfirmButton(btnSave, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.ConfirmButton(btnSave, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.CancelButton(btnCancel, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.CancelButton(btnCancel, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

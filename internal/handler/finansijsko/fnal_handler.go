@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"helia/config"
+	"helia/frontend/components"
 	tmpl "helia/frontend/templates"
 	tmpl_fin "helia/frontend/templates/finansijsko"
 	tmpl_rep_fin "helia/frontend/templates/reports/finansijsko"
@@ -20,6 +21,7 @@ import (
 	finservice "helia/internal/service/finansijsko"
 	"helia/pkg/utils"
 
+	"github.com/a-h/templ"
 	"github.com/gin-gonic/gin"
 )
 
@@ -33,7 +35,7 @@ const (
 	naloziURLCreate            string = "/api/nalozi/new"
 	naloziURLUpdate            string = "/api/nalozi/update"
 	naloziURLUpdateCopy        string = "/api/nalozi/update/copy"
-	naloziURLSaveStavke        string = "/api/fpro/nalog/%d/stavke/save"
+	naloziURLSaveStavke        string = "/api/fpro/%d/stavke/save"
 	naloziURLPrintStavke       string = "/api/print/nalog/stavke"
 	naloziURLStorniraj         string = "/api/nalozi/storniraj"
 	naloziURLStampa            string = "/api/nalozi/prikaz"
@@ -138,7 +140,7 @@ func (h *FnalHandler) GetUpdateDataNalog(c *gin.Context) {
 func (h *FnalHandler) CreateNalog(c *gin.Context) {
 	var entity domain.Fnal
 	var req domain.FnalPayload
-
+	translator := i18n.GetInstance()
 	ctx := c.Request.Context()
 	userSession := domain.GetSessionFromStdContext(ctx)
 	if userSession == nil {
@@ -173,8 +175,9 @@ func (h *FnalHandler) CreateNalog(c *gin.Context) {
 	urlGetAll := fmt.Sprintf("/api/fpro/nalog/%d", lastInsertedID)
 	searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), urlGetAll, fmt.Sprintf("#%s", naloziStavkeTableID), "")
 	tblStavke := common.SetTableBasicData("Stavke Naloga", naloziStavkeTableID, h.service.MapEntityToValues(&entity, h.naloziService.GetNaloziTableFields()), "", "", 10, 0, 0, 0, h.cfg)
-	common.SetTableConfig(&tblStavke, "NALOZI STAVKE", urlGetAll, true, false, false)
+	common.SetTableConfig(&tblStavke, "NALOZI STAVKE", urlGetAll, false, false, false)
 	tblStavke.BtnDelete.HxActionURL = "/api/fpro/confirm-delete"
+	tblStavke.BtnDelete.HxTarget = "#dialog-fpro-delete-container"
 	tblStavke.BtnUpdate.HxActionURL = "/api/fpro/stavka/update"
 	tblStavke.BtnUpdate.HxOnAfterRequest = "populateFproUpdateFormFromEvent(event)"
 	tblStavke.BtnUpdate.HxSwap = "none"
@@ -183,6 +186,7 @@ func (h *FnalHandler) CreateNalog(c *gin.Context) {
 	btnClose := domain.Button{
 		Id:            "btn-close",
 		IsVisible:     true,
+		LabelText:     translator.Button("Zatvori"),
 		IdDialog:      "nalog-stavke-dialog",
 		BtnClass:      common.ClassDialogCloseButton,
 		HxActionURL:   fmt.Sprintf("/api/nalozi/unlock/%d", lastInsertedID),
@@ -191,25 +195,26 @@ func (h *FnalHandler) CreateNalog(c *gin.Context) {
 	}
 	btnCancel := domain.Button{
 		Id:           "btn-stavke-cancel",
-		LabelText:    "Odustani",
+		LabelText:    translator.Button("Odustani"),
 		IsVisible:    true,
 		IsDisabled:   true,
 		IdDialog:     "nalog-stavke-dialog",
 		BtnClass:     common.ClassButtonDisabled,
 		HxOnClick:    "clearForm",
-		HxOnClickArg: "nalog-stavke-form",
+		HxOnClickArg: []any{"nalog-stavke-dialog-form"},
 	}
 	btnNazad := domain.Button{
-		Id:               "btn-nazad",
-		IsVisible:        true,
-		IdDialog:         "nalog-stavke-dialog",
-		LabelText:        "Back",
-		Icon:             "back",
-		BtnClass:         common.ClassCloseButton,
-		HxActionURL:      fmt.Sprintf("/api/nalozi/unlock/%d", lastInsertedID),
-		HxInclude:        "input[name='_csrf']",
-		HxRequestType:    "POST",
-		HxOnAfterRequest: "closeDialog",
+		Id:                   "btn-nazad",
+		IsVisible:            true,
+		IdDialog:             "nalog-stavke-dialog",
+		LabelText:            translator.Button("Nazad"),
+		Icon:                 "back",
+		BtnClass:             common.ClassCloseButton,
+		HxActionURL:          fmt.Sprintf("/api/nalozi/unlock/%d", lastInsertedID),
+		HxInclude:            "input[name='_csrf']",
+		HxRequestType:        "POST",
+		HxOnAfterRequest:     "closeDialog",
+		HxOnAfterRequestArgs: []any{"nalog-stavke-dialog"},
 	}
 	// Lock the header for the newly created nalog
 	err = h.ls.Lock(c, "fnal", lastInsertedID, userSession.UserName)
@@ -234,6 +239,7 @@ func (h *FnalHandler) CreateNalog(c *gin.Context) {
 // UpdateNalog handles the update of an existing "fnal" entity.
 func (h *FnalHandler) UpdateNalog(c *gin.Context) {
 	ctx := c.Request.Context()
+	translator := i18n.GetInstance()
 	var tblStavke domain.TableData
 	idParam := c.Param("id")
 	searchText := c.Query("query")
@@ -277,34 +283,36 @@ func (h *FnalHandler) UpdateNalog(c *gin.Context) {
 	}
 	btnCancel := domain.Button{
 		Id:           "btn-stavke-cancel",
-		LabelText:    "Odustani",
+		LabelText:    translator.Button("Odustani"),
 		IsVisible:    true,
 		IsDisabled:   true,
 		IdDialog:     "nalog-stavke-dialog",
 		BtnClass:     common.ClassButtonDisabled,
 		HxOnClick:    "clearForm",
-		HxOnClickArg: "nalog-stavke-form",
+		HxOnClickArg: []any{"nalog-stavke-dialog-form"},
 	}
 	btnNazad := domain.Button{
-		Id:               "btn-nazad",
-		IsVisible:        true,
-		IdDialog:         "nalog-stavke-dialog",
-		LabelText:        "Back",
-		Icon:             "back",
-		BtnClass:         common.ClassCloseButton,
-		HxActionURL:      fmt.Sprintf("/api/nalozi/unlock/%d", fnalID),
-		HxRequestType:    "POST",
-		HxInclude:        "input[name='_csrf']",
-		HxOnAfterRequest: "closeDialog",
+		Id:                   "btn-nazad",
+		IsVisible:            true,
+		IdDialog:             "nalog-stavke-dialog",
+		LabelText:            translator.Button("Nazad"),
+		Icon:                 "back",
+		BtnClass:             common.ClassCloseButton,
+		HxActionURL:          fmt.Sprintf("/api/nalozi/unlock/%d", fnalID),
+		HxRequestType:        "POST",
+		HxInclude:            "input[name='_csrf']",
+		HxOnAfterRequest:     "closeDialog",
+		HxOnAfterRequestArgs: []any{"nalog-stavke-dialog"},
 	}
-	tblStavke.URLGetAll = urlGetAll
-	tblStavke.URLPrefix = urlGetAll
+	tblStavke.URLGetAll = fmt.Sprintf("/api/fpro/nalog/%d", fnalID)
+	tblStavke.URLPrefix = fmt.Sprintf("/api/fpro/nalog/%d", fnalID)
 	tblStavke.BtnDelete.HxActionURL = "/api/fpro/confirm-delete"
+	tblStavke.BtnDelete.HxTarget = "#dialog-fpro-delete-container"
 	tblStavke.BtnUpdate.HxActionURL = "/api/fpro/stavka/update"
 	tblStavke.BtnUpdate.HxOnAfterRequest = "populateFproUpdateFormFromEvent(event)"
 	tblStavke.BtnUpdate.HxSwap = "none"
 	tblStavke.BtnUpdate.HxRequestType = "GET"
-	tblStavke.DetailURL = urlGetAll
+	tblStavke.DetailURL = fmt.Sprintf("/api/fpro/nalog/%d", fnalID)
 	tblStavke.SearchEnabled = true
 	tblStavke.ShowActions = true
 	nalogTotal := domain.NalogTotalValues{}
@@ -403,13 +411,14 @@ func (h *FnalHandler) confirmAddHandler(c *gin.Context) {
 	}
 
 	btnSacuvaj := domain.Button{
-		Id:        "btn-sacuvaj",
-		IsVisible: true,
-		LabelText: "Da",
-		HxVals:    hxVals,
-		IdDialog:  dialog.Id,
-		HxTarget:  "#dialog-stavkenaloga",
-		BtnClass:  common.ClassSaveButton,
+		Id:               "btn-sacuvaj",
+		IsVisible:        true,
+		LabelText:        "Da",
+		HxVals:           hxVals,
+		IdDialog:         dialog.Id,
+		HxTarget:         "#dialog-stavkenaloga",
+		BtnClass:         common.ClassSaveButton,
+		HxOnAfterRequest: "closeDialog",
 	}
 	btnCancel := domain.Button{
 		Id:        "btn-cancel",
@@ -510,7 +519,7 @@ func (h *FnalHandler) GetNalogMainView(c *gin.Context) {
 	} else {
 		// HTMX request, just render the table component
 		c.Header("Content-Type", "text/html; charset=utf-8")
-		tmpl.Table(tbl, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+		components.Table(tbl, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 	}
 }
 
@@ -566,7 +575,7 @@ func (h *FnalHandler) FnalPrepis(c *gin.Context) {
 		}
 	} else {
 		// If this is an HTMX request, we just render the table component
-		tmpl.Table(tbl, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+		components.Table(tbl, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 	}
 }
 
@@ -662,13 +671,14 @@ func copyToExistingNalog(c *gin.Context, req domain.FnalPayload, idfnal int64) {
 	}
 
 	btnSacuvaj := domain.Button{
-		Id:        "btn-sacuvaj",
-		IsVisible: true,
-		LabelText: "Da",
-		HxVals:    hxVals,
-		IdDialog:  dialog.Id,
-		HxTarget:  "#dialog-confirm",
-		BtnClass:  common.ClassSaveButton,
+		Id:               "btn-sacuvaj",
+		IsVisible:        true,
+		LabelText:        "Da",
+		HxVals:           hxVals,
+		IdDialog:         dialog.Id,
+		HxTarget:         "#dialog-confirm",
+		BtnClass:         common.ClassSaveButton,
+		HxOnAfterRequest: "closeDialog",
 	}
 	btnCancel := domain.Button{
 		Id:        "btn-cancel",
@@ -689,6 +699,7 @@ func copyToExistingNalog(c *gin.Context, req domain.FnalPayload, idfnal int64) {
 
 // FnalPrepis, FnalStorniraj, FnalPrikaz:
 func (h *FnalHandler) FnalPrepisDialog(c *gin.Context) {
+	translator := i18n.GetInstance()
 	userSession := domain.GetSessionFromContext(c)
 	if userSession == nil {
 		common.WriteJSONResponse(c, http.StatusUnauthorized, false, []domain.FieldError{}, "Unauthorized")
@@ -751,7 +762,7 @@ func (h *FnalHandler) FnalPrepisDialog(c *gin.Context) {
 	}
 	btnSave := domain.Button{
 		Id:            "btn-save",
-		LabelText:     "Kopiraj nalog",
+		LabelText:     translator.Button("Kopiraj nalog"),
 		IsVisible:     true,
 		IdDialog:      dialog.Id,
 		BtnClass:      common.ClassSaveButton,
@@ -763,7 +774,7 @@ func (h *FnalHandler) FnalPrepisDialog(c *gin.Context) {
 	}
 	btnCancel := domain.Button{
 		Id:        "btn-cancel",
-		LabelText: "Odustani ",
+		LabelText: translator.Button("Odustani"),
 		IsVisible: true,
 		IdDialog:  dialog.Id,
 		BtnClass:  common.ClassCloseButton,
@@ -798,7 +809,7 @@ func (h *FnalHandler) FnalPrepisDialog(c *gin.Context) {
 			HxActionURL: fmt.Sprintf("/api/nalozi/prepis/stavke/%d", idFnal),
 		}
 		btnNazad := btnCancel
-		btnNazad.LabelText = "Back"
+		btnNazad.LabelText = translator.Button("Nazad")
 		btnNazad.Icon = "back"
 		tmpl_fin.NaloziKopiranjeDialogDeo(dialog, modelView, btnSave, btnClose, btnPrikazi, btnNazad, tblOriginal, tblCopy, i18n.GetInstance(), csrfToken).Render(c.Request.Context(), c.Writer)
 	}
@@ -852,7 +863,7 @@ func (h *FnalHandler) FnalStorniraj(c *gin.Context) {
 		}
 	} else {
 		// If this is an HTMX request, we just render the table component
-		err = tmpl.Table(tbl, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+		err = components.Table(tbl, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, common.ErrMsgRenderTemplate)
 			return
@@ -1076,7 +1087,7 @@ func (h *FnalHandler) FnalPrikazStampa(c *gin.Context) {
 
 	page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
 	tblHdr := common.SetTableBasicData("NALOZI STAMPANJE", "nalozi-stampanje-table", h.naloziService.GetNaloziStampaTableFields(), naloziURLStampa, naloziURLStampa, pageSize, page, 0, 0, h.cfg)
-	common.SetTableConfig(&tblHdr, "PREGLED NALOGA", naloziURLStampa, true, false, false)
+	common.SetTableConfig(&tblHdr, "PREGLED NALOGA", naloziURLStampa, false, false, false)
 	tblHdr.HxVals = hxValsStampa
 	tblHdr.Pagination.HxVals = hxValsStampa
 
@@ -1154,7 +1165,7 @@ func (h *FnalHandler) FnalPrikazStampa(c *gin.Context) {
 		}
 	} else {
 		// If this is an HTMX request, we just render the table component
-		err = tmpl.Table(tblHdr, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+		err = components.Table(tblHdr, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, common.ErrMsgRenderTemplate)
 			return
@@ -1198,7 +1209,7 @@ func (h *FnalHandler) FnalPrikazStampaDetalji(c *gin.Context) {
 	}
 	// If this is an HTMX request, we just render the table component
 	if requestSource == "searchinput" || requestSource == "btnpage" || requestSource == "tblheader" || hxTarget == "stavke-naloga-stampa" {
-		tmpl.Table(tblDet, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+		components.Table(tblDet, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 	} else {
 		searchControlDetalji := domain.InputControl{
 			ID:           "search-control-detalji",
@@ -1252,18 +1263,21 @@ func (h *FnalHandler) populateTableRows(tableData domain.TableData, entities []d
 	return tableRows
 }
 func setStavkeButtons(requestType string, idFnal int64) (domain.Button, domain.Button) {
-	btnSave := domain.Button{
-		Id:               "btn-save-stavke",
-		IsVisible:        true,
-		LabelText:        "Sačuvaj ",
-		BtnClass:         common.ClassSaveButton,
-		HxTarget:         "#nalog-stavke-table",
-		HxActionURL:      fmt.Sprintf(naloziURLSaveStavke, idFnal),
-		HxRequestType:    requestType,
-		HxSwap:           "innerHTML",
-		HxOnAfterRequest: "",
-	}
 
+	btnSave := domain.Button{
+		Id:                   "btn-save-stavke",
+		IdDialog:             "nalog-stavke-dialog",
+		IsVisible:            true,
+		LabelText:            "Sačuvaj",
+		Icon:                 "save",
+		BtnClass:             common.ClassSaveButton,
+		HxTarget:             "#nalog-stavke-table",
+		HxActionURL:          fmt.Sprintf(naloziURLSaveStavke, idFnal),
+		HxRequestType:        requestType,
+		HxSwap:               "innerHTML",
+		HxOnAfterRequest:     "handleFproFormResponse",
+		HxOnAfterRequestArgs: []any{templ.JSExpression("event"), requestType, "nalog-stavke-dialog", true},
+	}
 	btnPrint := domain.Button{
 		Id:            "btn-print-stavke",
 		IsVisible:     true,

@@ -10,6 +10,7 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import (
 	"helia/config"
+	"helia/frontend/components"
 	tmpl "helia/frontend/templates"
 	"helia/i18n"
 	"helia/internal/common"
@@ -39,7 +40,7 @@ func KompenzacijeContent(tabs domain.TabData, tbl domain.TableData, searchContro
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div id=\"tab-content\" class=\"flex flex-col h-full\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div id=\"tab-content\" class=\"bg-blue-100 p-1 flex flex-col h-full\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -85,7 +86,7 @@ func KompenzacijePregledPartnera(tabs domain.TabData, tbl domain.TableData, sear
 			templ_7745c5c3_Var2 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<!-- Container with full height --><div id=\"tab-content\" class=\"flex flex-col h-full\"><!-- Tab Navigation --><div class=\"border-b border-blue-600\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<!-- Container with full height --><div id=\"tab-content\" class=\"bg-blue-100 p-1 flex flex-col h-full\"><!-- Tab Navigation --><div class=\"border-b border-blue-600\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -97,7 +98,7 @@ func KompenzacijePregledPartnera(tabs domain.TabData, tbl domain.TableData, sear
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.FormObradaButton(btnObrada, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.FormObradaButton(btnObrada, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -105,11 +106,11 @@ func KompenzacijePregledPartnera(tabs domain.TabData, tbl domain.TableData, sear
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Search_Part(tbl, searchControl).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Search_Part(tbl, searchControl).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -117,7 +118,7 @@ func KompenzacijePregledPartnera(tabs domain.TabData, tbl domain.TableData, sear
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -125,7 +126,7 @@ func KompenzacijePregledPartnera(tabs domain.TabData, tbl domain.TableData, sear
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SpinnerScript().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.SpinnerScript().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -155,7 +156,7 @@ func KompenzacijeFormiranje(tabs domain.TabData, duznikData, poverilacData domai
 			templ_7745c5c3_Var3 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<!-- Container with full height --><div id=\"tab-content\" class=\"flex flex-col h-full\"><!-- Tab Navigation --><div class=\"border-b border-blue-600\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<!-- Container with full height --><div id=\"tab-content\" class=\"bg-blue-100 p-1 flex flex-col h-full\"><!-- Tab Navigation --><div class=\"border-b border-blue-600\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -170,7 +171,7 @@ func KompenzacijeFormiranje(tabs domain.TabData, duznikData, poverilacData domai
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Dužnik"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/kompenzacije.templ`, Line: 64, Col: 34}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/kompenzacije.templ`, Line: 65, Col: 34}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
@@ -180,7 +181,7 @@ func KompenzacijeFormiranje(tabs domain.TabData, duznikData, poverilacData domai
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "konto_duznika",
 			LabelText:  translator.Label("Konto"),
 			ClassLabel: common.ClassLabel + " w-24",
@@ -188,10 +189,11 @@ func KompenzacijeFormiranje(tabs domain.TabData, duznikData, poverilacData domai
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:           "konto_duznika",
 			Name:         "konto_duznika",
 			Disabled:     false,
+			FieldType:    "number",
 			ClassInput:   common.ClassInputTextEnabled + " w-24",
 			BlurEndpoint: "api/fkpl/trazikonto",
 			HxTarget:     "kontoduznikanaziv",
@@ -206,7 +208,7 @@ func KompenzacijeFormiranje(tabs domain.TabData, duznikData, poverilacData domai
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SearchButton(domain.SearchButtonConfig{
+		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
 			ID:          "btnkonto_duznika",
 			Name:        "search-konto-duznika",
 			HxUrl:       "/api/promet/searchbutton",
@@ -218,7 +220,7 @@ func KompenzacijeFormiranje(tabs domain.TabData, duznikData, poverilacData domai
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "kontoduznikanaziv",
 			Name:       "kontoduznikanaziv",
 			FieldType:  "text",
@@ -232,7 +234,7 @@ func KompenzacijeFormiranje(tabs domain.TabData, duznikData, poverilacData domai
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "sifra_duznika",
 			LabelText:  translator.Label("Šifra"),
 			ClassLabel: common.ClassLabel + " w-24",
@@ -240,10 +242,11 @@ func KompenzacijeFormiranje(tabs domain.TabData, duznikData, poverilacData domai
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:           "sifra_duznika",
 			Name:         "sifra_duznika",
 			Disabled:     false,
+			FieldType:    "number",
 			ClassInput:   common.ClassInputTextEnabled + " w-24",
 			BlurEndpoint: "api/fkpl/trazikonto",
 			HxTarget:     "sifra_duznika_naziv",
@@ -257,7 +260,7 @@ func KompenzacijeFormiranje(tabs domain.TabData, duznikData, poverilacData domai
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SearchButton(domain.SearchButtonConfig{
+		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
 			ID:          "btnsifra_duznika",
 			Name:        "search-sifra-duznika",
 			HxUrl:       "/api/promet/searchbutton",
@@ -269,7 +272,7 @@ func KompenzacijeFormiranje(tabs domain.TabData, duznikData, poverilacData domai
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "sifra_duznika_naziv",
 			Name:       "sifra_duznika_naziv",
 			FieldType:  "text",
@@ -286,7 +289,7 @@ func KompenzacijeFormiranje(tabs domain.TabData, duznikData, poverilacData domai
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Poverilac"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/kompenzacije.templ`, Line: 147, Col: 36}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/kompenzacije.templ`, Line: 150, Col: 36}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
@@ -296,7 +299,7 @@ func KompenzacijeFormiranje(tabs domain.TabData, duznikData, poverilacData domai
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "konto_poverioca",
 			LabelText:  translator.Label("Konto"),
 			ClassLabel: common.ClassLabel + " w-24",
@@ -304,10 +307,11 @@ func KompenzacijeFormiranje(tabs domain.TabData, duznikData, poverilacData domai
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:           "konto_poverioca",
 			Name:         "konto_poverioca",
 			Disabled:     false,
+			FieldType:    "number",
 			ClassInput:   common.ClassInputTextEnabled + " w-24",
 			BlurEndpoint: "api/fkpl/trazikonto",
 			HxTarget:     "konto_poverioca_naziv",
@@ -322,7 +326,7 @@ func KompenzacijeFormiranje(tabs domain.TabData, duznikData, poverilacData domai
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SearchButton(domain.SearchButtonConfig{
+		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
 			ID:          "btnkonto_poverioca",
 			Name:        "search-konto_poverioca",
 			HxUrl:       "/api/promet/searchbutton",
@@ -334,7 +338,7 @@ func KompenzacijeFormiranje(tabs domain.TabData, duznikData, poverilacData domai
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "konto_poverioca_naziv",
 			Name:       "konto_poverioca_naziv",
 			FieldType:  "text",
@@ -348,7 +352,7 @@ func KompenzacijeFormiranje(tabs domain.TabData, duznikData, poverilacData domai
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "sifra_poverioca",
 			LabelText:  translator.Label("Šifra"),
 			ClassLabel: common.ClassLabel + " w-24",
@@ -356,10 +360,11 @@ func KompenzacijeFormiranje(tabs domain.TabData, duznikData, poverilacData domai
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.NumericInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:           "sifra_poverioca",
 			Name:         "sifra_poverioca",
 			Disabled:     false,
+			FieldType:    "number",
 			ClassInput:   common.ClassInputTextEnabled + " w-24",
 			BlurEndpoint: "api/fkpl/trazikonto",
 			HxTarget:     "sifra_poverioca_naziv",
@@ -374,7 +379,7 @@ func KompenzacijeFormiranje(tabs domain.TabData, duznikData, poverilacData domai
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SearchButton(domain.SearchButtonConfig{
+		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
 			ID:          "btnsifra_poverioca",
 			Name:        "search-sifra_poverioca",
 			HxUrl:       "/api/promet/searchbutton",
@@ -386,7 +391,7 @@ func KompenzacijeFormiranje(tabs domain.TabData, duznikData, poverilacData domai
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "sifra_poverioca_naziv",
 			Name:       "sifra_poverioca_naziv",
 			FieldType:  "text",
@@ -403,7 +408,7 @@ func KompenzacijeFormiranje(tabs domain.TabData, duznikData, poverilacData domai
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Parametri"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/kompenzacije.templ`, Line: 231, Col: 36}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/kompenzacije.templ`, Line: 236, Col: 36}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
@@ -416,7 +421,7 @@ func KompenzacijeFormiranje(tabs domain.TabData, duznikData, poverilacData domai
 		var templ_7745c5c3_Var7 string
 		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(csrfToken)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/kompenzacije.templ`, Line: 234, Col: 67}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/kompenzacije.templ`, Line: 239, Col: 67}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {
@@ -426,7 +431,7 @@ func KompenzacijeFormiranje(tabs domain.TabData, duznikData, poverilacData domai
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "stanje_na_dan",
 			LabelText:  translator.Label("Stanje na dan"),
 			ClassLabel: common.ClassLabel + " w-32",
@@ -434,7 +439,7 @@ func KompenzacijeFormiranje(tabs domain.TabData, duznikData, poverilacData domai
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "stanje_na_dan",
 			Name:       "stanje_na_dan",
 			FieldType:  "date",
@@ -454,7 +459,7 @@ func KompenzacijeFormiranje(tabs domain.TabData, duznikData, poverilacData domai
 		var templ_7745c5c3_Var8 string
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Dospeli računi"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/kompenzacije.templ`, Line: 256, Col: 101}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/kompenzacije.templ`, Line: 261, Col: 101}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {
@@ -464,7 +469,7 @@ func KompenzacijeFormiranje(tabs domain.TabData, duznikData, poverilacData domai
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "datum_kompenzacije",
 			LabelText:  translator.Label("Datum kompenzacije"),
 			ClassLabel: common.ClassLabel + " w-32",
@@ -472,7 +477,7 @@ func KompenzacijeFormiranje(tabs domain.TabData, duznikData, poverilacData domai
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "datum_kompenzacije",
 			Name:       "datum_kompenzacije",
 			FieldType:  "date",
@@ -489,7 +494,7 @@ func KompenzacijeFormiranje(tabs domain.TabData, duznikData, poverilacData domai
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.FormObradaButton(btnObrada, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.FormObradaButton(btnObrada, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -500,7 +505,7 @@ func KompenzacijeFormiranje(tabs domain.TabData, duznikData, poverilacData domai
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(csrfToken)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/kompenzacije.templ`, Line: 283, Col: 34}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/kompenzacije.templ`, Line: 288, Col: 34}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
@@ -513,7 +518,7 @@ func KompenzacijeFormiranje(tabs domain.TabData, duznikData, poverilacData domai
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label(btnFormKomp.LabelText))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/kompenzacije.templ`, Line: 287, Col: 48}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/kompenzacije.templ`, Line: 292, Col: 48}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
@@ -526,7 +531,7 @@ func KompenzacijeFormiranje(tabs domain.TabData, duznikData, poverilacData domai
 		var templ_7745c5c3_Var11 string
 		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Message("napomena_kompenzacije"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/kompenzacije.templ`, Line: 293, Col: 173}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/kompenzacije.templ`, Line: 298, Col: 173}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {
@@ -552,7 +557,7 @@ func KompenzacijeFormiranje(tabs domain.TabData, duznikData, poverilacData domai
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SpinnerScript().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.SpinnerScript().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -593,11 +598,11 @@ func KompenzacijeFormirajDetalji(duznikData, poverilacData domain.TableData, tra
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Search_Part(duznikData, domain.InputControl{}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Search_Part(duznikData, domain.InputControl{}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -605,7 +610,7 @@ func KompenzacijeFormirajDetalji(duznikData, poverilacData domain.TableData, tra
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Table(duznikData, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Table(duznikData, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -613,11 +618,11 @@ func KompenzacijeFormirajDetalji(duznikData, poverilacData domain.TableData, tra
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Search_Part(poverilacData, domain.InputControl{}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Search_Part(poverilacData, domain.InputControl{}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -625,7 +630,7 @@ func KompenzacijeFormirajDetalji(duznikData, poverilacData domain.TableData, tra
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Table(poverilacData, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Table(poverilacData, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -674,7 +679,7 @@ func KompenzacijePregled(tabs domain.TabData, tbl domain.TableData, dokumentaDat
 		var templ_7745c5c3_Var14 string
 		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("KOMPENZACIJE - Prikaz dokumenata"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/kompenzacije.templ`, Line: 443, Col: 96}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/kompenzacije.templ`, Line: 448, Col: 96}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 		if templ_7745c5c3_Err != nil {
@@ -687,7 +692,7 @@ func KompenzacijePregled(tabs domain.TabData, tbl domain.TableData, dokumentaDat
 		var templ_7745c5c3_Var15 string
 		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Nepotvrdjeni"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/kompenzacije.templ`, Line: 447, Col: 64}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/kompenzacije.templ`, Line: 452, Col: 64}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 		if templ_7745c5c3_Err != nil {
@@ -700,7 +705,7 @@ func KompenzacijePregled(tabs domain.TabData, tbl domain.TableData, dokumentaDat
 		var templ_7745c5c3_Var16 string
 		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Potvrdjeni"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/kompenzacije.templ`, Line: 451, Col: 62}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/kompenzacije.templ`, Line: 456, Col: 62}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 		if templ_7745c5c3_Err != nil {
@@ -713,7 +718,7 @@ func KompenzacijePregled(tabs domain.TabData, tbl domain.TableData, dokumentaDat
 		var templ_7745c5c3_Var17 string
 		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Proknjiženi"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/kompenzacije.templ`, Line: 455, Col: 64}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/kompenzacije.templ`, Line: 460, Col: 64}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 		if templ_7745c5c3_Err != nil {
@@ -726,7 +731,7 @@ func KompenzacijePregled(tabs domain.TabData, tbl domain.TableData, dokumentaDat
 		var templ_7745c5c3_Var18 string
 		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Svi"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/kompenzacije.templ`, Line: 459, Col: 55}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/kompenzacije.templ`, Line: 464, Col: 55}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
@@ -736,11 +741,11 @@ func KompenzacijePregled(tabs domain.TabData, tbl domain.TableData, dokumentaDat
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.FormObradaButton(btnObrada, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.FormObradaButton(btnObrada, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.PrintButton(btnPrint, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.PrintButton(btnPrint, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -748,7 +753,7 @@ func KompenzacijePregled(tabs domain.TabData, tbl domain.TableData, dokumentaDat
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Search_Part(tbl, searchControl).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Search_Part(tbl, searchControl).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -756,7 +761,7 @@ func KompenzacijePregled(tabs domain.TabData, tbl domain.TableData, dokumentaDat
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -767,7 +772,7 @@ func KompenzacijePregled(tabs domain.TabData, tbl domain.TableData, dokumentaDat
 		var templ_7745c5c3_Var19 string
 		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Title("DOKUMENTA SADRŽANA U KOMPENZACIJI"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/kompenzacije.templ`, Line: 492, Col: 114}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/kompenzacije.templ`, Line: 497, Col: 114}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 		if templ_7745c5c3_Err != nil {
@@ -777,7 +782,7 @@ func KompenzacijePregled(tabs domain.TabData, tbl domain.TableData, dokumentaDat
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Table(dokumentaData, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Table(dokumentaData, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -785,7 +790,7 @@ func KompenzacijePregled(tabs domain.TabData, tbl domain.TableData, dokumentaDat
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SpinnerScript().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.SpinnerScript().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -830,7 +835,7 @@ func KompenzacijeKnjizenje(tabs domain.TabData, tbl domain.TableData, dokumentaD
 		var templ_7745c5c3_Var21 string
 		templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Period"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/kompenzacije.templ`, Line: 518, Col: 33}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/kompenzacije.templ`, Line: 523, Col: 33}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 		if templ_7745c5c3_Err != nil {
@@ -840,7 +845,7 @@ func KompenzacijeKnjizenje(tabs domain.TabData, tbl domain.TableData, dokumentaD
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "od-datuma-kompenz",
 			LabelText:  translator.Label("Od datuma kompenzacije"),
 			ClassLabel: common.ClassLabel + " w-48",
@@ -848,7 +853,7 @@ func KompenzacijeKnjizenje(tabs domain.TabData, tbl domain.TableData, dokumentaD
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "od-datuma-kompenz",
 			Name:       "od-datuma-kompenz",
 			FieldType:  "date",
@@ -863,7 +868,7 @@ func KompenzacijeKnjizenje(tabs domain.TabData, tbl domain.TableData, dokumentaD
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "do-datuma-kompenz",
 			LabelText:  translator.Label("Do datuma kompenzacije"),
 			ClassLabel: common.ClassLabel + " w-48",
@@ -871,7 +876,7 @@ func KompenzacijeKnjizenje(tabs domain.TabData, tbl domain.TableData, dokumentaD
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "do-datuma-kompenz",
 			Name:       "do-datuma-kompenz",
 			FieldType:  "date",
@@ -886,7 +891,7 @@ func KompenzacijeKnjizenje(tabs domain.TabData, tbl domain.TableData, dokumentaD
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "od-broja-komp",
 			LabelText:  translator.Label("Od broja kompenzacije"),
 			ClassLabel: common.ClassLabel + " w-48",
@@ -894,7 +899,7 @@ func KompenzacijeKnjizenje(tabs domain.TabData, tbl domain.TableData, dokumentaD
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "od-broja-komp",
 			Name:       "od-broja-komp",
 			FieldType:  "number",
@@ -909,7 +914,7 @@ func KompenzacijeKnjizenje(tabs domain.TabData, tbl domain.TableData, dokumentaD
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "do-broja-komp",
 			LabelText:  translator.Label("Do broja kompenzacije"),
 			ClassLabel: common.ClassLabel + " w-48",
@@ -917,7 +922,7 @@ func KompenzacijeKnjizenje(tabs domain.TabData, tbl domain.TableData, dokumentaD
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "do-broja-komp",
 			Name:       "do-broja-komp",
 			FieldType:  "number",
@@ -935,7 +940,7 @@ func KompenzacijeKnjizenje(tabs domain.TabData, tbl domain.TableData, dokumentaD
 		var templ_7745c5c3_Var22 string
 		templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Parametri"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/kompenzacije.templ`, Line: 588, Col: 36}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/kompenzacije.templ`, Line: 593, Col: 36}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
 		if templ_7745c5c3_Err != nil {
@@ -945,7 +950,7 @@ func KompenzacijeKnjizenje(tabs domain.TabData, tbl domain.TableData, dokumentaD
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "tipdok-knjizenje",
 			LabelText:  translator.Label("Vrsta naloga za knjiženje"),
 			ClassLabel: common.ClassLabel + " w-40",
@@ -953,7 +958,7 @@ func KompenzacijeKnjizenje(tabs domain.TabData, tbl domain.TableData, dokumentaD
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.ComboBoxField(domain.ComboFieldConfig{
+		templ_7745c5c3_Err = components.ComboBoxField(domain.ComboFieldConfig{
 			ID:           "tipdok-knjizenje",
 			Name:         "tipdok-knjizenje",
 			ClassSelect:  common.ClassSelect + " flex-1",
@@ -967,7 +972,7 @@ func KompenzacijeKnjizenje(tabs domain.TabData, tbl domain.TableData, dokumentaD
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "opis-knjizenja",
 			LabelText:  translator.Label("Opis knjiženja"),
 			ClassLabel: common.ClassLabel + " w-40",
@@ -975,7 +980,7 @@ func KompenzacijeKnjizenje(tabs domain.TabData, tbl domain.TableData, dokumentaD
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "opis-knjizenja",
 			Name:       "opis-knjizenja",
 			FieldType:  "text",
@@ -989,7 +994,7 @@ func KompenzacijeKnjizenje(tabs domain.TabData, tbl domain.TableData, dokumentaD
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "broj-naloga",
 			LabelText:  translator.Label("Broj naloga"),
 			ClassLabel: common.ClassLabel + " w-40",
@@ -997,7 +1002,7 @@ func KompenzacijeKnjizenje(tabs domain.TabData, tbl domain.TableData, dokumentaD
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "broj-naloga",
 			Name:       "broj-naloga",
 			FieldType:  "text",
@@ -1011,7 +1016,7 @@ func KompenzacijeKnjizenje(tabs domain.TabData, tbl domain.TableData, dokumentaD
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "datum-naloga",
 			LabelText:  translator.Label("Datum naloga"),
 			ClassLabel: common.ClassLabel + " w-32",
@@ -1019,7 +1024,7 @@ func KompenzacijeKnjizenje(tabs domain.TabData, tbl domain.TableData, dokumentaD
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "datum-naloga",
 			Name:       "datum-naloga",
 			FieldType:  "date",
@@ -1034,7 +1039,7 @@ func KompenzacijeKnjizenje(tabs domain.TabData, tbl domain.TableData, dokumentaD
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.LabelField(domain.LabelFieldConfig{
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "datum-obrade",
 			LabelText:  translator.Label("Datum obrade"),
 			ClassLabel: common.ClassLabel + " w-36",
@@ -1042,7 +1047,7 @@ func KompenzacijeKnjizenje(tabs domain.TabData, tbl domain.TableData, dokumentaD
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TextInputField(domain.InputFieldConfig{
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "datum-obrade",
 			Name:       "datum-obrade",
 			FieldType:  "date",
@@ -1057,15 +1062,15 @@ func KompenzacijeKnjizenje(tabs domain.TabData, tbl domain.TableData, dokumentaD
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.FormObradaButton(btnPrikazi, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.FormObradaButton(btnPrikazi, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.AddButton(btnRavnoteza, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.AddButton(btnRavnoteza, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.SaveButton(btnKnjizi, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.SaveButton(btnKnjizi, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1076,7 +1081,7 @@ func KompenzacijeKnjizenje(tabs domain.TabData, tbl domain.TableData, dokumentaD
 		var templ_7745c5c3_Var23 string
 		templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Title("KOMPENZACIJE"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/kompenzacije.templ`, Line: 679, Col: 92}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/kompenzacije.templ`, Line: 684, Col: 92}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 		if templ_7745c5c3_Err != nil {
@@ -1086,7 +1091,7 @@ func KompenzacijeKnjizenje(tabs domain.TabData, tbl domain.TableData, dokumentaD
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1097,7 +1102,7 @@ func KompenzacijeKnjizenje(tabs domain.TabData, tbl domain.TableData, dokumentaD
 		var templ_7745c5c3_Var24 string
 		templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Title("DOKUMENTA SADRŽANA U KOMPENZACIJI"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/kompenzacije.templ`, Line: 686, Col: 114}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/kompenzacije.templ`, Line: 691, Col: 114}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 		if templ_7745c5c3_Err != nil {
@@ -1107,7 +1112,7 @@ func KompenzacijeKnjizenje(tabs domain.TabData, tbl domain.TableData, dokumentaD
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.Table(dokumentaData, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Table(dokumentaData, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

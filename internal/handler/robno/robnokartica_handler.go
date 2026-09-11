@@ -1,25 +1,51 @@
 package robno
 
 import (
+	"fmt"
 	"net/http"
 
 	"helia/config"
+	tmpl_rep_rob "helia/frontend/templates/reports/robno"
 	tmpl_robno "helia/frontend/templates/robno"
 	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
 	"helia/internal/middleware"
 	robnosvc "helia/internal/service/robno"
+	"helia/pkg/utils"
 
 	"github.com/gin-gonic/gin"
 )
 
 const (
-	robnoKarticaURLPrefix  = "/api/robno-kartica"
-	robnoKarticaArticleTab = robnoKarticaURLPrefix + "/artikla"
-	robnoKarticaArticle    = robnoKarticaArticleTab + "/table"
-	robnoKarticaSubTab     = robnoKarticaURLPrefix + "/subsintetickog-konta"
-	robnoKarticaSub        = robnoKarticaSubTab + "/table"
+	robnoKarticaArtikalTitle          = "Prikaz kartice artikla"
+	robnoKarticaURLArtikal            = "/api/robno-kartica/artikla"
+	robnoKarticaArtikalTableID        = "robnokartica-artikli-table"
+	robnoKarticaURLArtikalStampa      = "/api/robno-kartica/artikla/stampa"
+	robnoKarticaURLSubsintetika       = "/api/robno-kartica/subsintetickog-konta"
+	robnoKarticaURLSubsintetikaStampa = "/api/robno-kartica/subsintetickog-konta/stampa"
+	robnoKarticaSubsintetikaTableID   = "robnokartica-subsintetika-table"
+	robnoKarticaSubsintetikaTitle     = "PRIKAZ KARTICE SUBSINTETIČKOG KONTA"
+
+	hxValsRobnaKarticaSubsntetika = `js:{
+            "magacin": document.getElementById("magacin")?.value,
+			"konto": document.getElementById("konto")?.value,
+			"brojnaloga": document.getElementById("brojnaloga")?.value,
+            "oddatumanaloga": document.getElementById("oddatumanaloga")?.value,
+            "dodatumanaloga": document.getElementById("dodatumanaloga")?.value,
+			"chkpobrojunaloga": document.getElementById("chkpobrojunaloga")?.value,
+			"chkpodatumunaloga": document.getElementById("chkpodatumunaloga")?.value,
+			"chkpoiznosu": document.getElementById("chkpoiznosu")?.value,
+		}`
+	hxValsRobnaKarticaArtikal = `js:{
+            "magacin": document.getElementById("magacin")?.value,
+			"konto": document.getElementById("konto")?.value,
+            "oddatuma": document.getElementById("oddatuma")?.value,
+            "dodatuma": document.getElementById("dodatuma")?.value,
+			"chkpobrojunaloga": document.getElementById("chkpobrojunaloga")?.value,
+			"chkpodatumunaloga": document.getElementById("chkpodatumunaloga")?.value,
+			"chkpoiznosu": document.getElementById("chkpoiznosu")?.value,
+		}`
 )
 
 type RobnoKarticaHandler struct {
@@ -33,62 +59,246 @@ func NewRobnoKarticaHandler(service robnosvc.RobnoKarticaService, cfg config.Con
 }
 
 func (h *RobnoKarticaHandler) RobnoKarticaMain(c *gin.Context) {
-	articleTable := h.newTable("Prikaz kartice artikla", "robnokartica-artikli", h.service.GetKarticaArtiklaTableFields(), robnoKarticaArticle)
-	subTable := h.newTable("Prikaz kartice subsintetičkog konta", "robnokartica-subsintetika", h.service.GetKarticaSubsintetickogKontaTableFields(), robnoKarticaSub)
-	articleButton := common.SetButton("robno-kartica-article-process", "Obradi", "obrada", robnoKarticaArticle, "#robnokartica-artikli", "innerHTML", "GET", "", "", true, common.ClassSaveButton, "")
-	articlePrintButton := common.SetButton("robno-kartica-article-print", "Štampa", "stampa", "", "", "", "GET", "", "", true, common.ClassPrintButton, "")
-	subButton := common.SetButton("robno-kartica-sub-process", "Obradi", "obrada", robnoKarticaSub, "#robnokartica-subsintetika", "innerHTML", "GET", "", "", true, common.ClassSaveButton, "")
-	subPrintButton := common.SetButton("robno-kartica-sub-print", "Štampa", "stampa", "", "", "", "GET", "", "", true, common.ClassPrintButton, "")
-	magacini := []domain.ComboItem{}
-	if err := tmpl_robno.RobnoKarticaMain(*h.tabs, articleTable, subTable, articleButton, articlePrintButton, subButton, subPrintButton, magacini, i18n.GetInstance()).Render(c.Request.Context(), c.Writer); err != nil {
-		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
-	}
-}
-
-func (h *RobnoKarticaHandler) GetPrikazKarticeArtikla(c *gin.Context) {
-	tbl := h.newTable("Prikaz kartice artikla", "robnokartica-artikli", h.service.GetKarticaArtiklaTableFields(), robnoKarticaArticle)
-	params := domain.PrometParam{Sifra: c.Query("sifra"), OdDatuma: c.Query("oddatuma"), DoDatuma: c.Query("dodatuma"), SearchText: c.Query("query"), ReportTip: "karticaankonta"}
-	if err := h.service.GetKarticaArtikla(c.Request.Context(), &tbl, true, 0, 0, params); err != nil {
+	translator := i18n.GetInstance()
+	common.SetActiveTab(h.tabs, 0)
+	magValues, err := h.service.GetMagacinComboValues(c.Request.Context())
+	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, err.Error())
 		return
 	}
-	_ = tmpl_robno.RobnoKarticaArticleTable(tbl, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
-}
+	tblData := common.SetTableBasicData(robnoKarticaArtikalTitle, robnoKarticaURLArtikal, h.service.GetKarticaArtiklaTableFields(), "", "", 0, 0, 0, 0, h.cfg)
+	common.SetTableConfig(&tblData, robnoKarticaArtikalTitle, "", false, false, false)
+	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", robnoKarticaURLArtikal, "#"+robnoKarticaURLArtikal, "innerHTML", "GET", "", hxValsRobnaKarticaArtikal, true, common.ClassSaveButton, "handleDialogResponse")
+	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", robnoKarticaURLArtikalStampa, "#"+robnoKarticaURLArtikal, "innerHTML", "GET", "", hxValsRobnaKarticaArtikal, true, common.ClassPrintButton, "")
+	searchInput := common.CreateSearchInput("search-input", translator, robnoKarticaURLArtikal, fmt.Sprintf("#%s", robnoKarticaURLArtikal), hxValsRobnaKarticaArtikal)
 
-func (h *RobnoKarticaHandler) GetPrikazKarticeArtiklaTab(c *gin.Context) {
+	tmpl_robno.RobnoKarticaMain(*h.tabs, tblData, magValues, btnObrada, btnPrint, searchInput, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+}
+func (h *RobnoKarticaHandler) GetPrikazKarticeArtikla(c *gin.Context) {
+	ctx := c.Request.Context()
+	requestSource := c.Request.Header.Get("X-Request-Source")
 	common.SetActiveTab(h.tabs, 0)
-	tbl := h.newTable("Prikaz kartice artikla", "robnokartica-artikli", h.service.GetKarticaArtiklaTableFields(), robnoKarticaArticle)
-	button := common.SetButton("robno-kartica-article-process", "Obradi", "obrada", robnoKarticaArticle, "#robnokartica-artikli", "innerHTML", "GET", "", "", true, common.ClassSaveButton, "")
-	printButton := common.SetButton("robno-kartica-article-print", "Štampa", "stampa", "", "", "", "GET", "", "", true, common.ClassPrintButton, "")
-	magacini := []domain.ComboItem{}
-	_ = tmpl_robno.RobnoKarticaArticle(*h.tabs, tbl, button, printButton, magacini, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+	translator := i18n.GetInstance()
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, "no user session found")
+		return
+	}
+	tbl := common.SetTableBasicData(robnoKarticaArtikalTitle, robnoKarticaURLArtikal, h.service.GetKarticaArtiklaTableFields(), "", "", 0, 0, 0, 0, h.cfg)
+	common.SetTableConfig(&tbl, robnoKarticaArtikalTitle, "", false, false, false)
+	tbl.HasTotals = true
+	if requestSource == "menu" || requestSource == "tab" {
+		magValues, err := h.service.GetMagacinComboValues(ctx)
+		if err != nil {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
+			return
+		}
+		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", robnoKarticaURLArtikal, "#"+robnoKarticaURLArtikal, "innerHTML", "GET", "", hxValsRobnaKarticaArtikal, true, common.ClassSaveButton, "handleDialogResponse")
+		btnPrint := common.SetButton("print-btn", "Štampa", "stampa", robnoKarticaURLArtikalStampa, "#"+robnoKarticaURLArtikal, "innerHTML", "GET", "", hxValsRobnaKarticaArtikal, true, common.ClassPrintButton, "")
+		searchInput := common.CreateSearchInput("search-input", translator, robnoKarticaURLArtikal, fmt.Sprintf("#%s", robnoKarticaURLArtikal), hxValsRobnaKarticaArtikal)
+		tmpl_robno.RobnoKarticaArtikla(*h.tabs, tbl, magValues, btnObrada, btnPrint, searchInput, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+		if err != nil {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
+			return
+		}
+	}
+	// If it's a POST request, the make obrada
+	if requestSource == "btnobrada" || requestSource == "btnpage" || requestSource == "searchinput" {
+		ctx := c.Request.Context()
+		magacin, err := utils.GetIntFromQueryRequest(c, "magacin")
+		if err != nil {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgValidation)
+			return
+		}
+		odIznosa, _ := utils.GetFloat64FromQueryRequest(c, "odiznosa")
+		doIznosa, _ := utils.GetFloat64FromQueryRequest(c, "doiznosa")
+		params := domain.RobnoKarticaParams{
+			Magacin:       magacin,
+			Konto:         c.Query("konto"),
+			OdDanal:       c.Query("oddatuma"),
+			DoDanal:       c.Query("dodatuma"),
+			OdIznosa:      odIznosa,
+			DoIznosa:      doIznosa,
+			CbxDatum:      c.Query("cbxpodatumunaloga") == "true",
+			CbxBrojNaloga: c.Query("chkpobrojunaloga") == "true",
+			CbxIznos:      c.Query("chkpoiznosu") == "true",
+			SearchText:    c.Query("query"),
+			ReportTip:     "karticasubsintetickogkonta",
+		}
+		//validacija input parametre:
+		fieldsError := h.service.ValidacijaKarticaArtikla(params)
+		if len(fieldsError) > 0 {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldsError, common.ErrMsgValidation)
+			return
+		}
+
+		page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
+		tbl := common.SetTableBasicData(robnoKarticaArtikalTitle, robnoKarticaArtikalTableID, h.service.GetKarticaArtiklaTableFields(), "", robnoKarticaURLArtikal, 0, 0, 0, 0, h.cfg)
+		common.SetTableConfig(&tbl, "", robnoKarticaURLArtikal, false, false, false)
+		tbl.Pagination.HxVals = hxValsRobnaKarticaArtikal
+
+		err = h.service.GetKarticaArtikla(ctx, &tbl, true, pageSize, page, params)
+		if err != nil {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
+			return
+		}
+
+		err = h.service.GetKarticaArtikla(ctx, &tbl, true, pageSize, page, params)
+		if err != nil {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
+			return
+		}
+		tbl.HasTotals = true
+		utils.RenderContent(c, tbl)
+		return
+	}
 }
 
 func (h *RobnoKarticaHandler) GetKarticaSubsintetickogKonta(c *gin.Context) {
+	ctx := c.Request.Context()
+	requestSource := c.Request.Header.Get("X-Request-Source")
+	translator := i18n.GetInstance()
 	common.SetActiveTab(h.tabs, 1)
-	tbl := h.newTable("Prikaz kartice subsintetičkog konta", "robnokartica-subsintetika", h.service.GetKarticaSubsintetickogKontaTableFields(), robnoKarticaSub)
-	params := domain.PrometParam{OdKonta: c.Query("odkonta"), DoKonta: c.Query("dokonta"), OdDatuma: c.Query("oddatuma"), DoDatuma: c.Query("dodatuma"), SearchText: c.Query("query"), ReportTip: "subsintetickakonta"}
-	if err := h.service.GetKarticaSubsintetickogKonta(c.Request.Context(), &tbl, true, 0, 0, params); err != nil {
-		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, err.Error())
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, "no user session found")
 		return
 	}
-	_ = tmpl_robno.RobnoKarticaSubsyntheticTable(tbl, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
-}
-
-func (h *RobnoKarticaHandler) GetKarticaSubsintetickogKontaTab(c *gin.Context) {
-	common.SetActiveTab(h.tabs, 1)
-	tbl := h.newTable("Prikaz kartice subsintetičkog konta", "robnokartica-subsintetika", h.service.GetKarticaSubsintetickogKontaTableFields(), robnoKarticaSub)
-	button := common.SetButton("robno-kartica-sub-process", "Obradi", "obrada", robnoKarticaSub, "#robnokartica-subsintetika", "innerHTML", "GET", "", "", true, common.ClassSaveButton, "")
-	printButton := common.SetButton("robno-kartica-sub-print", "Štampa", "stampa", "", "", "", "GET", "", "", true, common.ClassPrintButton, "")
-	magacini := []domain.ComboItem{}
-	_ = tmpl_robno.RobnoKarticaSubsynthetic(*h.tabs, tbl, button, printButton, magacini, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
-}
-
-func (h *RobnoKarticaHandler) newTable(title, id string, fields []domain.Fields, url string) domain.TableData {
-	tbl := common.SetTableBasicData(title, id, fields, "", "", 0, 0, 0, 0, h.cfg)
-	common.SetTableConfig(&tbl, title, url, false, false, false)
+	tbl := common.SetTableBasicData(robnoKarticaSubsintetikaTitle, robnoKarticaSubsintetikaTableID, h.service.GetKarticaSubsintetickogKontaTableFields(), "", "", 0, 0, 0, 0, h.cfg)
+	common.SetTableConfig(&tbl, robnoKarticaSubsintetikaTitle, "", false, false, false)
 	tbl.HasTotals = true
-	return tbl
+	if requestSource == "menu" || requestSource == "tab" {
+		magValues, err := h.service.GetMagacinComboValues(ctx)
+		if err != nil {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
+			return
+		}
+		printFields := "magacin,konto,oddatumanaloga,dodatumanaloga,odiznosa,doiznosa, cbxbrojnaloga,chkpodatumunaloga,chkpoiznosu"
+		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", robnoKarticaURLSubsintetika, "#"+robnoKarticaSubsintetikaTableID, "innerHTML", "GET", "", hxValsRobnaKarticaSubsntetika, true, common.ClassSaveButton, "handleDialogResponse")
+		btnPrint := common.SetPrintButton("stampa-btn", "Štampa", "fin_print", robnoKarticaURLSubsintetikaStampa, "GET", true, common.ClassPrintButton, printFields)
+		searchInput := common.CreateSearchInput("search-input", translator, robnoKarticaURLSubsintetika, fmt.Sprintf("#%s", robnoKarticaSubsintetikaTableID), hxValsRobnaKarticaSubsntetika)
+		tmpl_robno.RobnoKarticaSubsintetickoKonto(*h.tabs, tbl, magValues, btnObrada, btnPrint, searchInput, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+		return
+	}
+	// If it's a POST request, the make obrada
+	if requestSource == "btn" || requestSource == "btnpage" || requestSource == "searchinput" {
+		ctx := c.Request.Context()
+		magacin, err := utils.GetIntFromQueryRequest(c, "magacin")
+		if err != nil {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgValidation)
+			return
+		}
+		odIznosa, _ := utils.GetFloat64FromQueryRequest(c, "odiznosa")
+		doIznosa, _ := utils.GetFloat64FromQueryRequest(c, "doiznosa")
+		params := domain.RobnoKarticaParams{
+			Magacin:       magacin,
+			Konto:         c.Query("konto"),
+			OdDanal:       c.Query("oddatumanaloga"),
+			DoDanal:       c.Query("dodatumanaloga"),
+			OdIznosa:      odIznosa,
+			DoIznosa:      doIznosa,
+			CbxDatum:      c.Query("chkpodatumunaloga") == "true",
+			CbxBrojNaloga: c.Query("chkpobrojunaloga") == "true",
+			CbxIznos:      c.Query("chkpoiznosu") == "true",
+			SearchText:    c.Query("query"),
+			ReportTip:     "karticasubsintetickogkonta",
+		}
+		//validacija input parametre:
+		fieldsError := h.service.ValidacijaSubsintetickogKonta(params)
+		if len(fieldsError) > 0 {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldsError, common.ErrMsgValidation)
+			return
+		}
+
+		page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
+		tbl := common.SetTableBasicData(robnoKarticaSubsintetikaTitle, robnoKarticaSubsintetikaTableID, h.service.GetKarticaSubsintetickogKontaTableFields(), "", robnoKarticaURLSubsintetika, 0, 0, 0, 0, h.cfg)
+		common.SetTableConfig(&tbl, robnoKarticaSubsintetikaTableID, robnoKarticaURLSubsintetika, false, false, false)
+		tbl.Pagination.HxVals = hxValsRobnaKarticaSubsntetika
+
+		err = h.service.GetKarticaSubsintetickogKonta(ctx, &tbl, true, pageSize, page, params)
+		if err != nil {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
+			return
+		}
+
+		err = h.service.GetKarticaSubsintetickogKonta(ctx, &tbl, false, pageSize, page, params)
+		if err != nil {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
+			return
+		}
+		tbl.HasTotals = true
+		utils.RenderContent(c, tbl)
+		return
+	}
+}
+
+func (h *RobnoKarticaHandler) GetPrikazKarticeArtiklaStampa(c *gin.Context) {
+
+}
+
+func (h *RobnoKarticaHandler) GetKarticaSubsintetickogKontaStampa(c *gin.Context) {
+	ctx := c.Request.Context()
+	//translator := i18n.GetInstance()
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		common.WriteJSONResponse(c, http.StatusUnauthorized, false, nil, common.ErrMsgUnauthorized)
+		return
+	}
+	magacin, err := utils.GetIntFromQueryRequest(c, "magacin")
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgValidation)
+		return
+	}
+	odIznosa, _ := utils.GetFloat64FromQueryRequest(c, "odiznosa")
+	doIznosa, _ := utils.GetFloat64FromQueryRequest(c, "doiznosa")
+	params := domain.RobnoKarticaParams{
+		Magacin:       magacin,
+		Konto:         c.Query("konto"),
+		Nalozi:        c.Query("brojnaloga"),
+		OdDanal:       c.Query("oddatumanaloga"),
+		DoDanal:       c.Query("dodatumanaloga"),
+		OdIznosa:      odIznosa,
+		DoIznosa:      doIznosa,
+		CbxDatum:      c.Query("chkpodatumunaloga") == "true",
+		CbxBrojNaloga: c.Query("chkpobrojunaloga") == "true",
+		CbxIznos:      c.Query("chkpoiznosu") == "true",
+		SearchText:    c.Query("query"),
+		ReportTip:     "karticasubsintetickogkonta",
+	}
+
+	fvrData, err := h.service.GetFvrData(ctx)
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetData)
+		return
+	}
+	tbl := common.SetTableBasicData(robnoKarticaSubsintetikaTitle, robnoKarticaSubsintetikaTableID, h.service.GetKarticaSubsintetickogKontaStampaTableFields(), "", "", 0, 0, 0, 0, h.cfg)
+	err = h.service.GetKarticaSubsintetickogKontaStampa(ctx, &tbl, params)
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetData)
+		return
+	}
+	repParams := domain.ReportParameters{
+		Orientation: "landscape",
+		CompanyName: fvrData.Naziv,
+		Adress:      fvrData.Adresa,
+		Postcode:    fvrData.Pobro,
+		City:        fvrData.Mesto,
+		PIB:         fvrData.PIB,
+		MatBroj:     fvrData.Matbr,
+		ReportName:  "Kartica subsintetičkog konta",
+		ParameterItems: map[string]domain.ParameterItem{
+			"Magacin":        {Name: "Magacin", Value: fmt.Sprintf("%d", magacin)},
+			"Konto":          {Name: "Konto", Value: params.Konto},
+			"BrojNaloga":     {Name: "Broj naloga", Value: params.Nalozi},
+			"OdDatumaNaloga": {Name: "Od datuma naloga", Value: params.OdDanal},
+			"DoDatumaNaloga": {Name: "Do datuma naloga", Value: params.DoDanal},
+			"OdIznosa":       {Name: "Od iznosa", Value: common.FormatNumberWithSystemLocale(params.OdIznosa, 2)},
+			"DoIznosa":       {Name: "Do iznosa", Value: common.FormatNumberWithSystemLocale(params.DoIznosa, 2)},
+		},
+	}
+
+	tmpl_rep_rob.RobnoKarticaSubsintetickogKontaStampa(repParams, params, tbl, i18n.GetInstance()).Render(ctx, c.Writer)
+
 }
 
 func (h *RobnoKarticaHandler) AddRoutes(r *gin.Engine) {
@@ -97,16 +307,16 @@ func (h *RobnoKarticaHandler) AddRoutes(r *gin.Engine) {
 
 	// Define routes for Robno Promet.
 	r.GET("/api/robno-kartica", h.RobnoKarticaMain)
-	r.GET("/api/robno-kartica/artikla", h.GetPrikazKarticeArtiklaTab)
-	r.GET("/api/robno-kartica/artikla/table", h.GetPrikazKarticeArtikla)
-	r.GET("/api/robno-kartica/subsintetickog-konta", h.GetKarticaSubsintetickogKontaTab)
-	r.GET("/api/robno-kartica/subsintetickog-konta/table", h.GetKarticaSubsintetickogKonta)
+	r.GET("/api/robno-kartica/artikla", h.GetPrikazKarticeArtikla)
+	r.GET("/api/robno-kartica/artikla/stampa", h.GetPrikazKarticeArtiklaStampa)
+	r.GET("/api/robno-kartica/subsintetickog-konta", h.GetKarticaSubsintetickogKonta)
+	r.GET("/api/robno-kartica/subsintetickog-konta/stampa", h.GetKarticaSubsintetickogKontaStampa)
 }
 
 func robnoKarticaTabs() *domain.TabData {
 	translator := i18n.GetInstance()
 	return &domain.TabData{Tabs: []domain.TabItem{
-		{ID: "robnokartica-artikli", Label: translator.Label("Prikaz kartice artikla"), HXRequestUrl: robnoKarticaArticleTab, IsActive: true, Name: "artikli"},
-		{ID: "robnokartica-subsintetika", Label: translator.Label("Prikaz kartice subsintetičkog konta"), HXRequestUrl: robnoKarticaSubTab, IsActive: false, Name: "subsintetika"},
+		{ID: "robnokartica-artikli", Label: translator.Label("Prikaz kartice artikla"), HXRequestUrl: robnoKarticaURLArtikal, IsActive: true, Name: "artikli"},
+		{ID: "robnokartica-subsintetika", Label: translator.Label("Prikaz kartice subsintetičkog konta"), HXRequestUrl: robnoKarticaURLSubsintetika, IsActive: false, Name: "subsintetika"},
 	}}
 }

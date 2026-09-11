@@ -1,0 +1,75 @@
+package robno
+
+import (
+	rep "helia/frontend/templates/reports"
+	"helia/i18n"
+	"helia/internal/common"
+	"helia/internal/domain"
+	"time"
+)
+
+// MagaciniStampa renders a printable Magacini report.
+templ RobnoKarticaSubsintetickogKontaStampa(repParams domain.ReportParameters, params domain.RobnoKarticaParams, tbl domain.TableData, translator *i18n.Service) {
+	@rep.Report(repParams, domain.TableData{}, translator, nil, RobnoKarticaSubsintetickogKontaContent(repParams, params, tbl, translator))
+}
+
+templ RobnoKarticaSubsintetickogKontaContent(repParams domain.ReportParameters, params domain.RobnoKarticaParams, tbl domain.TableData, translator *i18n.Service) {
+	@rep.ReportHeader(repParams)
+	@rep.ReportTitle(repParams)
+	@RobnoKarticaSubsintetickogKontaParam(params, translator)
+	@rep.ReportTableSection(tbl, translator)
+	@rep.ReportEnd(nil)
+}
+
+// RobnoKarticaSubsintetickogKontaParam displays the selection/processing parameters used to
+// build the report, mirroring the on-screen checkboxes from the Kartica subsintetičkog konta form.
+templ RobnoKarticaSubsintetickogKontaParam(params domain.RobnoKarticaParams, translator *i18n.Service) {
+	<div class="mb-2 text-sm print:text-[9pt]">
+		<div class="flex items-center gap-2 mb-1">
+			<span class="font-semibold">{ translator.Label("Magacin") }</span>
+			<span class="font-bold">{ common.FormatNumberWithSystemLocale(params.Magacin, 0) }</span>
+			<span class="font-semibold ml-6">{ translator.Label("Konto") }:</span>
+			<span class="font-bold">{ params.Konto }</span>
+		</div>
+		<div class="grid grid-cols-2 gap-2">
+			<div class="flex items-center gap-1">
+				@robnoKarticaStampaCheckbox(params.CbxBrojNaloga)
+				<span>{ translator.Label("Po broju naloga") }</span>
+			</div>
+			<div class="flex items-center gap-1">
+				@robnoKarticaStampaCheckbox(params.CbxIznos)
+				<span>{ translator.Label("Po iznosu") }</span>
+			</div>
+			<div class="flex items-center gap-1 flex-wrap">
+				@robnoKarticaStampaCheckbox(params.CbxDatum)
+				<span>{ translator.Label("Po datumu naloga") }</span>
+				<span class="ml-4">{ translator.Label("Od datuma naloga") }: <span class="font-bold">{ robnoKarticaStampaFormatDate(params.OdDanal) }</span></span>
+				<span class="ml-4">{ translator.Label("Do datuma naloga") }: <span class="font-bold">{ robnoKarticaStampaFormatDate(params.DoDanal) }</span></span>
+			</div>
+			<div class="flex items-center gap-1 flex-wrap">
+				<span>{ translator.Label("Od iznosa") }: <span class="font-bold">{ common.FormatNumberWithSystemLocale(params.OdIznosa, 2) }</span></span>
+				<span class="ml-4">{ translator.Label("Do iznosa") }: <span class="font-bold">{ common.FormatNumberWithSystemLocale(params.DoIznosa, 2) }</span></span>
+			</div>
+		</div>
+	</div>
+}
+
+templ robnoKarticaStampaCheckbox(checked bool) {
+	<span class="inline-flex items-center justify-center w-3 h-3 border border-black text-[9px] leading-none">
+		if checked {
+			X
+		}
+	</span>
+}
+
+func robnoKarticaStampaFormatDate(value string) string {
+	if value == "" {
+		return ""
+	}
+	parsed, err := time.Parse("2006-01-02", value)
+	if err != nil {
+		return value
+	}
+	return parsed.Format(common.DateLayout)
+}
+

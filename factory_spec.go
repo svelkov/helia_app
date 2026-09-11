@@ -2,6 +2,8 @@ package main
 
 import (
 	"helia/internal/validation/robno"
+	"syscall"
+	"time"
 
 	"context"
 	"encoding/json"
@@ -11,8 +13,6 @@ import (
 	"os"
 	"os/signal"
 	"strings"
-	"syscall"
-	"time"
 
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-contrib/sessions"
@@ -719,20 +719,33 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 
 	// Robno kartica artikla
 	robnoKarticaRepo := repository.NewBaseRepository[domain.RobnoStanjeDto](db, "robnostanjedto")
-	robnoKarticaService := robnosvc.NewRobnoKarticaService(robnoKarticaRepo)
+	robnoKarticaService := robnosvc.NewRobnoKarticaService(robnoKarticaRepo, magaciniRepo, fvrRepo)
 	robnoKarticaHandler := robnohand.NewRobnoKarticaHandler(robnoKarticaService, cfg)
 	robnoKarticaHandler.AddRoutes(r)
 
 	// Robno stanja
 	robnoStanjaRepo := repository.NewBaseRepository[domain.RobnoStanjeDto](db, "robnostanjedto")
-	robnoStanjaService := robnosvc.NewRobnoStanjaService(*robnoStanjaRepo)
+	tipdokRepo := repository.NewBaseRepository[domain.Tipdok](db, "tipdok")
+	ojRepo := repository.NewBaseRepository[domain.Orgjed](db, "orgjed")
+	mestoTroskaRepo := repository.NewBaseRepository[domain.Mestotr](db, "mestotr")
+	robnoStanjaService := robnosvc.NewRobnoStanjaService(*robnoStanjaRepo, *magaciniRepo, *tipdokRepo, *ojRepo, *mestoTroskaRepo, *fvrRepo)
 	robnoStanjaHandler := robnohand.NewRobnoStanjaHandler(robnoStanjaService, cfg)
 	robnoStanjaHandler.AddRoutes(r)
 
 	// Robno promet reports
-	robnoprometService := robnosvc.NewRobnoPrometService(prometService)
+	rproRepo := repository.NewBaseRepository[domain.Rpro](db, "rpro")
+	magRepo := repository.NewBaseRepository[domain.Magacini](db, "magacini")
+	rgruRepo := repository.NewBaseRepository[domain.Rgru](db, "rgru")
+
+	robnoprometService := robnosvc.NewRobnoPrometService(rproRepo, magRepo, rgruRepo, fvrRepo)
 	robnoprometHandler := robnohand.NewRobnoPrometHandler(robnoprometService, cfg)
 	robnoprometHandler.AddRoutes(r)
+
+	// Robno komercijalni podaci
+	robnoKomPodaciRepo := repository.NewBaseRepository[domain.RobnoKomPodaciDto](db, "robnokompodacidto")
+	robnoKompodaciService := robnosvc.NewRobnoKompodaciService(partneriRepo, fproRepo, rproRepo, rgruRepo, fvrRepo, robnoKomPodaciRepo)
+	robnoKompodaciHandler := robnohand.NewRobnoKompodaciHandler(robnoKompodaciService, cfg)
+	robnoKompodaciHandler.AddRoutes(r)
 
 	// Salda
 	saldaRepo := repository.NewBaseRepository[domain.SaldaDto](db, "saldadto")
@@ -782,7 +795,6 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 	izvhdrRepo := repository.NewBaseRepository[domain.Fizvzag](db, "fizvzag")
 	izvdetRepo := repository.NewBaseRepository[domain.Fizvdet](db, "fizvdet")
 	bankeRepo := repository.NewBaseRepository[domain.Banke](db, "banke")
-	tipdokRepo := repository.NewBaseRepository[domain.Tipdok](db, "tipdok")
 	sifplizvRepo := repository.NewBaseRepository[domain.Sifplizv](db, "sifplizv")
 	izvodiService := finservice.NewIzvodiResource(izvhdrRepo, izvdetRepo, bankeRepo, tipdokRepo, fnalRepo, partneriRepo, tekracuniRepo, sifplizvRepo, fkplRepo, fvrRepo, cfg)
 	izvodiHandler := fin.NewIzvodiHandler(izvodiService, cfg, lm)

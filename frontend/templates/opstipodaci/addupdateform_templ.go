@@ -50,13 +50,13 @@ func AddUpdateForm(csrfToken string, dialog domain.Dialog, fields []domain.Field
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.Id)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/addupdateform.templ`, Line: 13, Col: 20}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/addupdateform.templ`, Line: 14, Col: 16}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\" class=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\" role=\"dialog\" aria-modal=\"true\" class=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -69,14 +69,14 @@ func AddUpdateForm(csrfToken string, dialog domain.Dialog, fields []domain.Field
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\"><div class=\"bg-white rounded-lg shadow-2xl relative animate-fade-in max-w-full w-auto\"><!-- Title Bar (Flush on Left, Top, Right) --><div class=\"bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg\"><h2 class=\"text-lg font-semibold ml-4\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\" tabindex=\"-1\"><div class=\"bg-white rounded-lg shadow-2xl relative animate-fade-in max-w-full w-auto\"><!-- Title Bar (Flush on Left, Top, Right) --><div class=\"bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg\"><h2 class=\"text-lg font-semibold ml-4\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.Title)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/addupdateform.templ`, Line: 17, Col: 57}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/addupdateform.templ`, Line: 23, Col: 57}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
@@ -102,7 +102,7 @@ func AddUpdateForm(csrfToken string, dialog domain.Dialog, fields []domain.Field
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.HxActionURL)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/addupdateform.templ`, Line: 23, Col: 32}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/addupdateform.templ`, Line: 29, Col: 32}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
@@ -121,7 +121,7 @@ func AddUpdateForm(csrfToken string, dialog domain.Dialog, fields []domain.Field
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.HxActionURL)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/addupdateform.templ`, Line: 27, Col: 33}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/addupdateform.templ`, Line: 33, Col: 33}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
@@ -139,7 +139,7 @@ func AddUpdateForm(csrfToken string, dialog domain.Dialog, fields []domain.Field
 		var templ_7745c5c3_Var8 string
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.Id)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/addupdateform.templ`, Line: 30, Col: 30}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/addupdateform.templ`, Line: 36, Col: 30}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {
@@ -152,7 +152,7 @@ func AddUpdateForm(csrfToken string, dialog domain.Dialog, fields []domain.Field
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs("#" + dialog.Id + "-message")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/addupdateform.templ`, Line: 31, Col: 44}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/addupdateform.templ`, Line: 37, Col: 44}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
@@ -165,7 +165,7 @@ func AddUpdateForm(csrfToken string, dialog domain.Dialog, fields []domain.Field
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(csrfToken)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/addupdateform.templ`, Line: 36, Col: 54}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/addupdateform.templ`, Line: 42, Col: 55}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
@@ -176,138 +176,36 @@ func AddUpdateForm(csrfToken string, dialog domain.Dialog, fields []domain.Field
 			return templ_7745c5c3_Err
 		}
 		for i, field := range fields {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<div class=\"flex flex-col\"><label for=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<div class=\"flex flex-row items-center gap-1\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var11 string
-			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(field.Name)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/addupdateform.templ`, Line: 39, Col: 29}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "\" class=\"block text-sm font-sm text-blue-700\">")
+			templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
+				ID:         field.Name,
+				LabelText:  translator.Label(field.Label),
+				ClassLabel: common.ClassLabel + " w-40",
+			}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var12 string
-			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label(field.Label))
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/addupdateform.templ`, Line: 39, Col: 107}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "</label> ")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var13 = []any{fmt.Sprintf("mt-1 block p-1 w-[%sch] border border-gray-300 rounded-md shadow-sm focus:ring-blue-100 focus:border-blue-100 w-full min-w-0", field.Width)}
-			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var13...)
+			templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
+				ID:         field.Name,
+				Name:       field.Name,
+				FieldType:  field.Type,
+				TabIndex:   fmt.Sprintf("%d", i+1),
+				Value:      field.Value,
+				MaxLength:  field.MaxLength,
+				ClassInput: common.ClassInputTextEnabled + field.ControlWidth,
+			}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<input id=\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var14 string
-			templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(field.Name)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/addupdateform.templ`, Line: 41, Col: 22}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "\" class=\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var15 string
-			templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var13).String())
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/addupdateform.templ`, Line: 1, Col: 0}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "\" type=\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var16 string
-			templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(field.Type)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/addupdateform.templ`, Line: 43, Col: 24}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "\" maxlength=\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var17 string
-			templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(field.Width)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/addupdateform.templ`, Line: 44, Col: 30}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "\" tabindex=\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var18 string
-			templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", i))
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/addupdateform.templ`, Line: 45, Col: 38}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "\" name=\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var19 string
-			templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(field.Name)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/addupdateform.templ`, Line: 46, Col: 24}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "\" value=\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var20 string
-			templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(field.Value)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/addupdateform.templ`, Line: 47, Col: 26}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "\"></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "<div class=\"bg-white col-span-2 px-3 py-3 flex items-center justify-end pt-4 gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<div class=\"bg-white col-span-2 px-3 py-3 flex items-center justify-end pt-4 gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -319,20 +217,20 @@ func AddUpdateForm(csrfToken string, dialog domain.Dialog, fields []domain.Field
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "</div></form><!-- Message Display Area at Bottom --><div id=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</div></form><!-- Message Display Area at Bottom --><div id=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var21 string
-		templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.Id + "-message")
+		var templ_7745c5c3_Var11 string
+		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.Id + "-message")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/addupdateform.templ`, Line: 57, Col: 35}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/opstipodaci/addupdateform.templ`, Line: 67, Col: 35}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "\" class=\"hidden\"></div></div></div><script>\r\n\t\r\n\t\tdocument.addEventListener(\"keydown\", function (event) {\r\n\t\t\t// if escape key is pressed then close the open dialog\r\n\t\t\tif (event.key === \"Escape\") {\r\n\t\t\t\tconst openDialog = document.querySelector(\".fixed:not(.hidden)\");\r\n\t\t\t\tif (openDialog) {\r\n\t\t\t\t\tcloseDialog(openDialog.id);\r\n\t\t\t\t}\r\n\t\t\t};\r\n\t\t\tif (event.key === \"Enter\") {\r\n\t\t\t\tevent.preventDefault();\r\n\r\n\t\t\t\t// Find all input fields inside the dialog\r\n\t\t\t\tconst inputs = Array.from(document.querySelectorAll(\"#addupdate-dialog input\"));\r\n\t\t\t\t// Filter out any non-focusable elements (just in case)\r\n\t\t\t\tconst focusableInputs = inputs.filter(input => \r\n\t\t\t\t\t!input.disabled && \r\n\t\t\t\t\tinput.getAttribute('tabindex') !== '-1' && \r\n\t\t\t\t\tinput.offsetParent !== null // checks if element is visible\r\n\t\t\t\t);\r\n\r\n\t\t\t\t// Sort inputs by `tabindex` (if defined), else use DOM order\r\n\t\t\t\tfocusableInputs.sort((a, b) => {\r\n\t\t\t\t\tconst aIndex = parseInt(a.getAttribute(\"tabindex\") || \"9999\", 10);\r\n\t\t\t\t\tconst bIndex = parseInt(b.getAttribute(\"tabindex\") || \"9999\", 10);\r\n\t\t\t\t\treturn aIndex - bIndex;\r\n\t\t\t\t});\r\n\r\n\t\t\t\t// Get the currently focused element\r\n\t\t\t\tconst currentInput = document.activeElement;\r\n\r\n\t\t\t\t// Find the current input's index in the sorted list\r\n\t\t\t\tconst currentIndex = focusableInputs.indexOf(currentInput);\r\n\r\n\t\t\t\tif (currentIndex !== -1) {\r\n\t\t\t\t\t// Move to next input or wrap around\r\n\t\t\t\t\tconst nextIndex = (currentIndex + 1) % focusableInputs.length;\r\n\t\t\t\t\tfocusableInputs[nextIndex].focus();\r\n\t\t\t\t} else if (focusableInputs.length > 0) {\r\n\t\t\t\t\t// If no input currently focused, focus the first one\r\n\t\t\t\t\tfocusableInputs[0].focus();\r\n\t\t\t\t}\r\n\t\t\t}\r\n\t\t});\r\n\r\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "\" class=\"hidden\"></div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -341,6 +239,39 @@ func AddUpdateForm(csrfToken string, dialog domain.Dialog, fields []domain.Field
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = tmpl.CloseDialogScript().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = DialogFocusTrapScript().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+func DialogFocusTrapScript() templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var12 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var12 == nil {
+			templ_7745c5c3_Var12 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<script>\r\n\t\t(function () {\r\n\t\t\tif (window.__dialogFocusTrapInitialized) return;\r\n\t\t\twindow.__dialogFocusTrapInitialized = true;\r\n\r\n\t\t\tconst DIALOG_SELECTOR = '[role=\"dialog\"][aria-modal=\"true\"]';\r\n\t\t\tconst FOCUSABLE_SELECTOR = [\r\n\t\t\t\t'button:not([disabled])',\r\n\t\t\t\t'[href]:not([disabled])',\r\n\t\t\t\t'input:not([disabled]):not([type=\"hidden\"])',\r\n\t\t\t\t'select:not([disabled])',\r\n\t\t\t\t'textarea:not([disabled])',\r\n\t\t\t\t'[tabindex]:not([tabindex=\"-1\"]):not([disabled])'\r\n\t\t\t].join(', ');\r\n\r\n\t\t\tfunction isVisible(el) {\r\n\t\t\t\tif (!el) return false;\r\n\t\t\t\tconst style = window.getComputedStyle(el);\r\n\t\t\t\tif (style.display === 'none' || style.visibility === 'hidden') return false;\r\n\t\t\t\treturn el.getClientRects().length > 0;\r\n\t\t\t}\r\n\r\n\t\t\tfunction getFocusable(dialog) {\r\n\t\t\t\treturn Array.from(dialog.querySelectorAll(FOCUSABLE_SELECTOR))\r\n\t\t\t\t\t.filter(isVisible)\r\n\t\t\t\t\t.sort((a, b) => {\r\n\t\t\t\t\t\t// Respect explicit positive tabindex ordering WITHIN the dialog only.\r\n\t\t\t\t\t\tconst at = parseInt(a.getAttribute('tabindex') || '0', 10);\r\n\t\t\t\t\t\tconst bt = parseInt(b.getAttribute('tabindex') || '0', 10);\r\n\t\t\t\t\t\tif (at > 0 && bt > 0 && at !== bt) return at - bt;\r\n\t\t\t\t\t\tif (at > 0 && bt <= 0) return -1;\r\n\t\t\t\t\t\tif (bt > 0 && at <= 0) return 1;\r\n\t\t\t\t\t\treturn 0; // fall back to DOM order for tabindex 0 / default\r\n\t\t\t\t\t});\r\n\t\t\t}\r\n\r\n\t\t\tfunction getActiveDialog() {\r\n\t\t\t\tconst dialogs = Array.from(document.querySelectorAll(DIALOG_SELECTOR)).filter(isVisible);\r\n\t\t\t\treturn dialogs.length ? dialogs[dialogs.length - 1] : null;\r\n\t\t\t}\r\n\r\n\t\t\t// THE KEY FIX: make every sibling of the active dialog's top-level\r\n\t\t\t// container inert, so the browser's native Tab traversal (which is\r\n\t\t\t// what actually escapes with positive tabindex values) has nothing\r\n\t\t\t// outside the dialog to land on.\r\n\t\t\tfunction updateInertState() {\r\n\t\t\t\tconst activeDialog = getActiveDialog();\r\n\t\t\t\tArray.from(document.body.children).forEach(function (child) {\r\n\t\t\t\t\tif (!activeDialog) {\r\n\t\t\t\t\t\tchild.inert = false;\r\n\t\t\t\t\t\treturn;\r\n\t\t\t\t\t}\r\n\t\t\t\t\tif (child === activeDialog || child.contains(activeDialog)) {\r\n\t\t\t\t\t\tchild.inert = false;\r\n\t\t\t\t\t} else {\r\n\t\t\t\t\t\tchild.inert = true;\r\n\t\t\t\t\t}\r\n\t\t\t\t});\r\n\t\t\t}\r\n\r\n\t\t\tfunction focusFirstField(dialog) {\r\n\t\t\t\tconst focusable = getFocusable(dialog);\r\n\t\t\t\tif (focusable.length > 0) focusable[0].focus();\r\n\t\t\t\telse dialog.focus();\r\n\t\t\t}\r\n\r\n\t\t\tfunction primeNewDialogs(root) {\r\n\t\t\t\t(root || document).querySelectorAll(DIALOG_SELECTOR).forEach(function (dialog) {\r\n\t\t\t\t\tif (dialog.dataset.focusPrimed === 'true') return;\r\n\t\t\t\t\tdialog.dataset.focusPrimed = 'true';\r\n\t\t\t\t\tsetTimeout(function () {\r\n\t\t\t\t\t\tupdateInertState();\r\n\t\t\t\t\t\tif (isVisible(dialog)) focusFirstField(dialog);\r\n\t\t\t\t\t}, 50);\r\n\t\t\t\t});\r\n\t\t\t}\r\n\r\n\t\t\t// Wraparound is still needed even with inert, since Tab past the\r\n\t\t\t// last focusable element normally goes to the browser chrome, not\r\n\t\t\t// back to the first field.\r\n\t\t\tdocument.addEventListener('keydown', function (e) {\r\n\t\t\t\tconst dialog = getActiveDialog();\r\n\t\t\t\tif (!dialog) return;\r\n\r\n\t\t\t\tconst focusable = getFocusable(dialog);\r\n\t\t\t\tif (focusable.length === 0) return;\r\n\r\n\t\t\t\tconst first = focusable[0];\r\n\t\t\t\tconst last = focusable[focusable.length - 1];\r\n\t\t\t\tconst active = document.activeElement;\r\n\r\n\t\t\t\tif (e.key === 'Tab') {\r\n\t\t\t\t\tif (e.shiftKey && active === first) {\r\n\t\t\t\t\t\te.preventDefault();\r\n\t\t\t\t\t\tlast.focus();\r\n\t\t\t\t\t} else if (!e.shiftKey && active === last) {\r\n\t\t\t\t\t\te.preventDefault();\r\n\t\t\t\t\t\tfirst.focus();\r\n\t\t\t\t\t}\r\n\t\t\t\t\treturn;\r\n\t\t\t\t}\r\n\r\n\t\t\t\tif (e.key === 'Escape') {\r\n\t\t\t\t\te.preventDefault();\r\n\t\t\t\t\tif (typeof closeDialog === 'function') closeDialog(dialog.id);\r\n\t\t\t\t\treturn;\r\n\t\t\t\t}\r\n\r\n\t\t\t\tif (e.key === 'Enter') {\r\n\t\t\t\t\tconst tag = (active.tagName || '').toLowerCase();\r\n\t\t\t\t\tif (tag === 'button' || tag === 'a') return;\r\n\r\n\t\t\t\t\te.preventDefault();\r\n\t\t\t\t\tconst inputs = focusable.filter(el => el.tagName === 'INPUT' && el.type !== 'hidden');\r\n\t\t\t\t\tif (inputs.length === 0) return;\r\n\t\t\t\t\tconst idx = inputs.indexOf(active);\r\n\t\t\t\t\tconst next = idx !== -1 ? inputs[(idx + 1) % inputs.length] : inputs[0];\r\n\t\t\t\t\tnext.focus();\r\n\t\t\t\t}\r\n\t\t\t}, true);\r\n\r\n\t\t\t// Recompute inert state whenever the DOM changes (dialog opens/closes\r\n\t\t\t// via htmx swap, class toggle, etc.) — catches it regardless of how\r\n\t\t\t// your app shows/hides dialogs.\r\n\t\t\tconst observer = new MutationObserver(function () {\r\n\t\t\t\twindow.requestAnimationFrame(updateInertState);\r\n\t\t\t\tprimeNewDialogs(document);\r\n\t\t\t});\r\n\t\t\tobserver.observe(document.body, {\r\n\t\t\t\tchildList: true,\r\n\t\t\t\tsubtree: true,\r\n\t\t\t\tattributes: true,\r\n\t\t\t\tattributeFilter: ['class', 'style', 'hidden']\r\n\t\t\t});\r\n\r\n\t\t\tdocument.addEventListener('DOMContentLoaded', function () {\r\n\t\t\t\tprimeNewDialogs(document);\r\n\t\t\t\tupdateInertState();\r\n\t\t\t});\r\n\t\t\tdocument.body.addEventListener('htmx:afterSettle', function (e) {\r\n\t\t\t\tprimeNewDialogs(e.target);\r\n\t\t\t\tupdateInertState();\r\n\t\t\t});\r\n\t\t\tif (document.readyState !== 'loading') {\r\n\t\t\t\tprimeNewDialogs(document);\r\n\t\t\t\tupdateInertState();\r\n\t\t\t}\r\n\t\t})();\r\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

@@ -8,47 +8,66 @@ import (
 	"helia/internal/domain"
 )
 
-templ RobnoPrometMain(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
+templ RobnoPrometMain(tabs domain.TabData, tbl domain.TableData, magValues, grupeValues []domain.ComboItem, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
 	<div id="robno-promet-reports-content" class="flex flex-col h-full">
-		@RobnoPrometGrupe1(tabs, tbl, btnObrada, btnPrint, translator)
+		@RobnoPrometPoGrupiArtikala1(tabs, tbl, magValues, grupeValues, btnObrada, btnPrint, translator)
 	</div>
 	@tmpl.ShowSearchDialogScript()
 	@tmpl.HideDropdownScript()
 }
 
-templ RobnoPrometGrupe1(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
-	@robnoPrometFrame(tabs, "Promet artikala po grupama za period", tbl, btnObrada, btnPrint, translator, robnoPrometGrupeParameters(translator))
-}
-
-templ RobnoPrometGrupe2(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
-	@robnoPrometFrame(tabs, "Promet artikala po grupama za period", tbl, btnObrada, btnPrint, translator, robnoPrometGrupeParameters(translator))
-}
-
-templ RobnoPrometDobavljaci(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
-	@robnoPrometFrame(tabs, "Promet artikala po dobavljačima za period", tbl, btnObrada, btnPrint, translator, robnoPrometDobavljaciParameters(translator))
-}
-
-templ RobnoPrometRuc(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
-	@robnoPrometFrame(tabs, "Pregled ulaza / izlaza, lager liste", tbl, btnObrada, btnPrint, translator, robnoPrometRucParameters(translator))
-}
-
-templ RobnoPrometGradiliste(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
-	@robnoPrometFrame(tabs, "Zaduženje gradilišta", tbl, btnObrada, btnPrint, translator, robnoPrometGradilisteParameters(translator))
-}
-
-templ RobnoPrometGradilisteVpcNc(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
-	@robnoPrometFrame(tabs, "Zaduženje gradilišta (VP cena - Nabavna)", tbl, btnObrada, btnPrint, translator, robnoPrometGradilisteParameters(translator))
-}
-
-templ robnoPrometFrame(tabs domain.TabData, title string, tbl domain.TableData, btnObrada, btnPrint domain.Button, translator *i18n.Service, parameters templ.Component) {
+templ RobnoPrometPoGrupiArtikala1(tabs domain.TabData, tbl domain.TableData, magValues, grupeValues []domain.ComboItem, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
 	<div class="bg-blue-100 p-1 flex flex-col h-full">
 		<div class="border-b border-blue-600">
 			@tmpl.TabNav(translator.Title("Robno promet"), tabs, "#robno-promet-reports-content", "robno-promet-reports-panel", translator)
 		</div>
 		<div class="flex-1 min-h-0 flex flex-col gap-1 pt-1">
-			<div class="border bg-blue-100 border-blue-400 p-1 rounded-lg">
-				<h2 class="font-semibold text-sm text-blue-900 mb-1">{ translator.Title(title) }</h2>
-				@parameters
+			<div class="no-border bg-blue-100 p-1 rounded-lg">
+				<!-- Two columns: magacin + šifre artikla (left) | datumi + grupe (right) -->
+				<div class="grid grid-cols-2 gap-2 items-start">
+					<!-- Left fieldset: magacin + šifre artikla -->
+					<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1">
+						<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Parametri") }</legend>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "odmagacina", LabelText: translator.Label("Od magacina"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.ComboBoxField(domain.ComboFieldConfig{ID: "odmagacina", Name: "odmagacina", ClassSelect: common.ClassInputTextEnabled + " flex-1", OptionValues: magValues, TabIndex: "1"}, translator)
+						</div>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "domagacina", LabelText: translator.Label("Do magacina"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.ComboBoxField(domain.ComboFieldConfig{ID: "domagacina", Name: "domagacina", ClassSelect: common.ClassInputTextEnabled + " flex-1", OptionValues: magValues, TabIndex: "2"}, translator)
+						</div>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "odsifre", LabelText: translator.Label("Od šifre artikla"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "odsifre", Name: "odsifre", FieldType: "number", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "3"})
+							@components.SearchButton(domain.SearchButtonConfig{ID: "odsifre", Name: "search-odsifre", HxUrl: "/api/promet/searchbutton", HxTarget: "#search-dropdown", HxSwap: "innerHTML", HxVals: `js:{"destfield": "odsifre"}`, ClassButton: common.ClassButton})
+						</div>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "dosifre", LabelText: translator.Label("Do šifre artikla"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "dosifre", Name: "dosifre", FieldType: "number", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "4"})
+							@components.SearchButton(domain.SearchButtonConfig{ID: "dosifre", Name: "search-dosifre", HxUrl: "/api/promet/searchbutton", HxTarget: "#search-dropdown", HxSwap: "innerHTML", HxVals: `js:{"destfield": "dosifre"}`, ClassButton: common.ClassButton})
+						</div>
+					</fieldset>
+					<!-- Right fieldset: datumi + grupe -->
+					<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1">
+						<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Datum / grupa") }</legend>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "odgrupe", LabelText: translator.Label("Od grupe"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.ComboBoxField(domain.ComboFieldConfig{ID: "odgrupe", Name: "odgrupe", ClassSelect: common.ClassInputTextEnabled + " flex-1", OptionValues: grupeValues, TabIndex: "5"}, translator)
+						</div>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "dogrupe", LabelText: translator.Label("Do grupe"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.ComboBoxField(domain.ComboFieldConfig{ID: "dogrupe", Name: "dogrupe", ClassSelect: common.ClassInputTextEnabled + " flex-1", OptionValues: grupeValues, TabIndex: "6"}, translator)
+						</div>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "oddatuma", LabelText: translator.Label("Od datuma"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " flex-1", TabIndex: "7"})
+						</div>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "dodatuma", LabelText: translator.Label("Do datuma"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " flex-1", TabIndex: "8"})
+						</div>
+					</fieldset>
+				</div>
 				<div class="flex justify-end gap-1 pt-2">
 					@components.Button(btnObrada)
 					@components.Search_PartPrintButton(btnPrint)
@@ -61,69 +80,331 @@ templ robnoPrometFrame(tabs domain.TabData, title string, tbl domain.TableData, 
 	</div>
 }
 
-templ robnoPrometGrupeParameters(translator *i18n.Service) {
-	<div class="grid grid-cols-4 gap-1 items-center">
-		@robnoPrometInput("Od magacina", "odmagacina", "text", translator)
-		@robnoPrometInput("Do magacina", "domagacina", "text", translator)
-		@robnoPrometInput("Od datuma", "oddatuma", "date", translator)
-		@robnoPrometInput("Do datuma", "dodatuma", "date", translator)
-		@robnoPrometInput("Od šifre artikla", "odsifre", "number", translator)
-		@robnoPrometInput("Do šifre artikla", "dosifre", "number", translator)
-		@robnoPrometInput("Od grupe", "odgrupe", "number", translator)
-		@robnoPrometInput("Do grupe", "dogrupe", "number", translator)
+templ RobnoPrometPoKupcima(tabs domain.TabData, tbl domain.TableData, magValues, grupeValues []domain.ComboItem, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
+	<div class="bg-blue-100 p-1 flex flex-col h-full">
+		<div class="border-b border-blue-600">
+			@tmpl.TabNav(translator.Title("Robno promet"), tabs, "#robno-promet-reports-content", "robno-promet-reports-panel", translator)
+		</div>
+		<div class="flex-1 min-h-0 flex flex-col gap-1 pt-1">
+			<div class="no-border bg-blue-100 p-1 rounded-lg">
+				<!-- Two columns: magacin + šifre artikla (left) | datumi + grupe (right) -->
+				<div class="grid grid-cols-2 gap-2 items-start">
+					<!-- Left fieldset: magacin + šifre artikla -->
+					<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1">
+						<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Parametri") }</legend>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "odmagacina", LabelText: translator.Label("Od magacina"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.ComboBoxField(domain.ComboFieldConfig{ID: "odmagacina", Name: "odmagacina", ClassSelect: common.ClassInputTextEnabled + " flex-1", OptionValues: magValues, TabIndex: "1"}, translator)
+						</div>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "domagacina", LabelText: translator.Label("Do magacina"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.ComboBoxField(domain.ComboFieldConfig{ID: "domagacina", Name: "domagacina", ClassSelect: common.ClassInputTextEnabled + " flex-1", OptionValues: magValues, TabIndex: "2"}, translator)
+						</div>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "odsifre", LabelText: translator.Label("Od šifre artikla"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "odsifre", Name: "odsifre", FieldType: "number", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "3"})
+							@components.SearchButton(domain.SearchButtonConfig{ID: "odsifre", Name: "search-odsifre", HxUrl: "/api/promet/searchbutton", HxTarget: "#search-dropdown", HxSwap: "innerHTML", HxVals: `js:{"destfield": "odsifre"}`, ClassButton: common.ClassButton})
+						</div>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "dosifre", LabelText: translator.Label("Do šifre artikla"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "dosifre", Name: "dosifre", FieldType: "number", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "4"})
+							@components.SearchButton(domain.SearchButtonConfig{ID: "dosifre", Name: "search-dosifre", HxUrl: "/api/promet/searchbutton", HxTarget: "#search-dropdown", HxSwap: "innerHTML", HxVals: `js:{"destfield": "dosifre"}`, ClassButton: common.ClassButton})
+						</div>
+					</fieldset>
+					<!-- Right fieldset: datumi + grupe -->
+					<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1">
+						<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Datum / grupa") }</legend>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "odgrupe", LabelText: translator.Label("Od grupe"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.ComboBoxField(domain.ComboFieldConfig{ID: "odgrupe", Name: "odgrupe", ClassSelect: common.ClassInputTextEnabled + " flex-1", OptionValues: grupeValues, TabIndex: "5"}, translator)
+						</div>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "dogrupe", LabelText: translator.Label("Do grupe"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.ComboBoxField(domain.ComboFieldConfig{ID: "dogrupe", Name: "dogrupe", ClassSelect: common.ClassInputTextEnabled + " flex-1", OptionValues: grupeValues, TabIndex: "6"}, translator)
+						</div>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "oddatuma", LabelText: translator.Label("Od datuma"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " flex-1", TabIndex: "7"})
+						</div>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "dodatuma", LabelText: translator.Label("Do datuma"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " flex-1", TabIndex: "8"})
+						</div>
+					</fieldset>
+				</div>
+				<div class="flex justify-end gap-1 pt-2">
+					@components.Button(btnObrada)
+					@components.Search_PartPrintButton(btnPrint)
+				</div>
+			</div>
+			<div class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex-1 min-h-0 overflow-hidden">
+				@components.Table(tbl, translator)
+			</div>
+		</div>
 	</div>
 }
 
-templ robnoPrometDobavljaciParameters(translator *i18n.Service) {
-	<div class="grid grid-cols-4 gap-1 items-center">
-		@robnoPrometInput("Od magacina", "odmagacina", "text", translator)
-		@robnoPrometInput("Do magacina", "domagacina", "text", translator)
-		@robnoPrometInput("Od grupe", "odgrupe", "number", translator)
-		@robnoPrometInput("Do grupe", "dogrupe", "number", translator)
-		@robnoPrometInput("Od šifre artikla", "odsifre", "number", translator)
-		@robnoPrometInput("Do šifre artikla", "dosifre", "number", translator)
-		@robnoPrometInput("Od datuma", "oddatuma", "date", translator)
-		@robnoPrometInput("Do datuma", "dodatuma", "date", translator)
+templ RobnoPrometPoDobavljacima(tabs domain.TabData, tbl domain.TableData, magValues, grupeValues []domain.ComboItem, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
+	<div class="bg-blue-100 p-1 flex flex-col h-full">
+		<div class="border-b border-blue-600">
+			@tmpl.TabNav(translator.Title("Robno promet"), tabs, "#robno-promet-reports-content", "robno-promet-reports-panel", translator)
+		</div>
+		<div class="flex-1 min-h-0 flex flex-col gap-1 pt-1">
+			<div class="no-border bg-blue-100 p-1 rounded-lg">
+				<!-- Two columns: magacin + šifre artikla (left) | datumi + grupe (right) -->
+				<div class="grid grid-cols-2 gap-2 items-start">
+					<!-- Left fieldset: magacin + šifre artikla -->
+					<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1">
+						<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Parametri") }</legend>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "odmagacina", LabelText: translator.Label("Od magacina"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.ComboBoxField(domain.ComboFieldConfig{ID: "odmagacina", Name: "odmagacina", ClassSelect: common.ClassInputTextEnabled + " flex-1", OptionValues: magValues, TabIndex: "1"}, translator)
+						</div>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "domagacina", LabelText: translator.Label("Do magacina"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.ComboBoxField(domain.ComboFieldConfig{ID: "domagacina", Name: "domagacina", ClassSelect: common.ClassInputTextEnabled + " flex-1", OptionValues: magValues, TabIndex: "2"}, translator)
+						</div>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "odsifre", LabelText: translator.Label("Od šifre artikla"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "odsifre", Name: "odsifre", FieldType: "number", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "3"})
+							@components.SearchButton(domain.SearchButtonConfig{ID: "odsifre", Name: "search-odsifre", HxUrl: "/api/promet/searchbutton", HxTarget: "#search-dropdown", HxSwap: "innerHTML", HxVals: `js:{"destfield": "odsifre"}`, ClassButton: common.ClassButton})
+						</div>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "dosifre", LabelText: translator.Label("Do šifre artikla"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "dosifre", Name: "dosifre", FieldType: "number", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "4"})
+							@components.SearchButton(domain.SearchButtonConfig{ID: "dosifre", Name: "search-dosifre", HxUrl: "/api/promet/searchbutton", HxTarget: "#search-dropdown", HxSwap: "innerHTML", HxVals: `js:{"destfield": "dosifre"}`, ClassButton: common.ClassButton})
+						</div>
+					</fieldset>
+					<!-- Right fieldset: datumi + grupe -->
+					<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1">
+						<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Datum / grupa") }</legend>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "odgrupe", LabelText: translator.Label("Od grupe"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.ComboBoxField(domain.ComboFieldConfig{ID: "odgrupe", Name: "odgrupe", ClassSelect: common.ClassInputTextEnabled + " flex-1", OptionValues: grupeValues, TabIndex: "5"}, translator)
+						</div>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "dogrupe", LabelText: translator.Label("Do grupe"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.ComboBoxField(domain.ComboFieldConfig{ID: "dogrupe", Name: "dogrupe", ClassSelect: common.ClassInputTextEnabled + " flex-1", OptionValues: grupeValues, TabIndex: "6"}, translator)
+						</div>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "oddatuma", LabelText: translator.Label("Od datuma"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " flex-1", TabIndex: "7"})
+						</div>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "dodatuma", LabelText: translator.Label("Do datuma"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " flex-1", TabIndex: "8"})
+						</div>
+					</fieldset>
+				</div>
+				<div class="flex justify-end gap-1 pt-2">
+					@components.Button(btnObrada)
+					@components.Search_PartPrintButton(btnPrint)
+				</div>
+			</div>
+			<div class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex-1 min-h-0 overflow-hidden">
+				@components.Table(tbl, translator)
+			</div>
+		</div>
 	</div>
 }
 
-templ robnoPrometRucParameters(translator *i18n.Service) {
-	<div class="grid grid-cols-4 gap-1 items-center">
-		@robnoPrometInput("Od magacina", "odmagacina", "text", translator)
-		@robnoPrometInput("Do magacina", "domagacina", "text", translator)
-		@robnoPrometInput("Od grupe", "odgrupe", "number", translator)
-		@robnoPrometInput("Do grupe", "dogrupe", "number", translator)
-		@robnoPrometInput("Stanje na dan", "stanjenadan", "date", translator)
-		@robnoPrometCheck("Zalihe < 0", "zalihemanje0", translator)
-		@robnoPrometCheck("Štampaj zalihe po grupama", "stampajgrupe", translator)
+templ RobnoPrometRucLagerLista(tabs, subTabs domain.TabData, tbl domain.TableData, magValues, grupeValues []domain.ComboItem, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
+	<div class="bg-blue-100 p-1 flex flex-col h-full">
+		<div class="border-b border-blue-600">
+			@tmpl.TabNav(translator.Title("Robno promet"), tabs, "#robno-promet-reports-content", "robno-promet-reports-panel", translator)
+		</div>
+		<div class="border-b border-blue-600 pt-1">
+			@tmpl.TabNav("", subTabs, "#robno-promet-reports-content", "robno-promet-reports-panel", translator)
+		</div>
+		<div class="flex-1 min-h-0 flex flex-col gap-1 pt-1">
+			<div class="no-border bg-blue-100 p-1 rounded-lg">
+				<!-- Vrsta lager liste -->
+				<div class="grid grid-cols-2 gap-2 items-start">
+					<!-- Left: magacini + stanje -->
+					<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1 h-full">
+						<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Parametri") }</legend>
+						<div class="flex flex-wrap items-center gap-x-4 gap-y-1 mb-1">
+							@components.RadioButtonField(domain.RadioFieldConfig{ID: "tipcene-netofakturna", Name: "tipcene", LabelText: translator.Label("Lager po neto fakturnim cenama"), ClassLabel: common.ClassLabel, ClassSelect: common.ClassRadioSet, Value: "netofakturna", IsSelected: true, TabIndex: "1"}, translator)
+							@components.RadioButtonField(domain.RadioFieldConfig{ID: "tipcene-prosecnanabavna", Name: "tipcene", LabelText: translator.Label("Lager po prosek. nabavnim cenama"), ClassLabel: common.ClassLabel, ClassSelect: common.ClassRadioSet, Value: "prosecnanabavna", TabIndex: "2"}, translator)
+							@components.RadioButtonField(domain.RadioFieldConfig{ID: "tipcene-prodajna", Name: "tipcene", LabelText: translator.Label("Lager po prodajnim cenama"), ClassLabel: common.ClassLabel, ClassSelect: common.ClassRadioSet, Value: "prodajna", TabIndex: "3"}, translator)
+						</div>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "odmagacina", LabelText: translator.Label("Od magacina"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.ComboBoxField(domain.ComboFieldConfig{ID: "odmagacina", Name: "odmagacina", ClassSelect: common.ClassInputTextEnabled + " flex-1", OptionValues: magValues, TabIndex: "4"}, translator)
+						</div>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "domagacina", LabelText: translator.Label("Do magacina"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.ComboBoxField(domain.ComboFieldConfig{ID: "domagacina", Name: "domagacina", ClassSelect: common.ClassInputTextEnabled + " flex-1", OptionValues: magValues, TabIndex: "5"}, translator)
+						</div>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "stanjenadan", LabelText: translator.Label("Stanje na dan"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "stanjenadan", Name: "stanjenadan", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " flex-1", TabIndex: "6"})
+						</div>
+					</fieldset>
+					<!-- Right: opcije + grupe/podgrupe -->
+					<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1">
+						<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Opcije prikaza/štampe") }</legend>
+						<div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+							@components.CheckboxField(domain.CheckboxFieldConfig{ID: "stampajgrupapodgrupa", Name: "stampajgrupapodgrupa", LabelText: translator.Label("Štampaj zalihe po grupama i podgrupama"), ClassCheckbox: common.ClassCheckbox + " mr-2", ClassLabel: common.ClassLabel + " flex items-center", TabIndex: "7"}, translator)
+							@components.CheckboxField(domain.CheckboxFieldConfig{ID: "zaliheodnule", Name: "zaliheodnule", LabelText: translator.Label("Zalihe <> 0"), ClassCheckbox: common.ClassCheckbox + " mr-2", ClassLabel: common.ClassLabel + " flex items-center", TabIndex: "8"}, translator)
+							@components.CheckboxField(domain.CheckboxFieldConfig{ID: "azbucnired", Name: "azbucnired", LabelText: translator.Label("Štampaj zalihe po azbučnom redosledu"), ClassCheckbox: common.ClassCheckbox + " mr-2", ClassLabel: common.ClassLabel + " flex items-center", TabIndex: "9"}, translator)
+						</div>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "odgrupe", LabelText: translator.Label("Od grupe"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.ComboBoxField(domain.ComboFieldConfig{ID: "odgrupe", Name: "odgrupe", ClassSelect: common.ClassInputTextEnabled + " flex-1", OptionValues: grupeValues, TabIndex: "10"}, translator)
+						</div>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "dogrupe", LabelText: translator.Label("Do grupe"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.ComboBoxField(domain.ComboFieldConfig{ID: "dogrupe", Name: "dogrupe", ClassSelect: common.ClassInputTextEnabled + " flex-1", OptionValues: grupeValues, TabIndex: "11"}, translator)
+						</div>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "odpodgrupe", LabelText: translator.Label("Od podgrupe"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.ComboBoxField(domain.ComboFieldConfig{ID: "odpodgrupe", Name: "odpodgrupe", ClassSelect: common.ClassInputTextEnabled + " flex-1", TabIndex: "12"}, translator)
+						</div>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "dopodgrupe", LabelText: translator.Label("Do podgrupe"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.ComboBoxField(domain.ComboFieldConfig{ID: "dopodgrupe", Name: "dopodgrupe", ClassSelect: common.ClassInputTextEnabled + " flex-1", TabIndex: "13"}, translator)
+						</div>
+					</fieldset>
+				</div>
+				<div class="flex justify-end gap-1 pt-2">
+					@components.Button(btnObrada)
+					@components.Search_PartPrintButton(btnPrint)
+				</div>
+			</div>
+			<div class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex-1 min-h-0 overflow-hidden">
+				@components.Table(tbl, translator)
+			</div>
+		</div>
 	</div>
 }
 
-templ robnoPrometGradilisteParameters(translator *i18n.Service) {
-	<div class="grid grid-cols-4 gap-1 items-center">
-		@robnoPrometInput("Od magacina", "odmagacina", "text", translator)
-		@robnoPrometInput("Do magacina", "domagacina", "text", translator)
-		@robnoPrometInput("Od datuma", "oddatuma", "date", translator)
-		@robnoPrometInput("Do datuma", "dodatuma", "date", translator)
-		@robnoPrometInput("Od šifre artikla", "odsifre", "number", translator)
-		@robnoPrometInput("Do šifre artikla", "dosifre", "number", translator)
-		@robnoPrometInput("Od grupe", "odgrupe", "number", translator)
-		@robnoPrometInput("Do grupe", "dogrupe", "number", translator)
+templ RobnoPrometGradiliste(tabs domain.TabData, tbl domain.TableData, magValues, grupeValues []domain.ComboItem, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
+	<div class="bg-blue-100 p-1 flex flex-col h-full">
+		<div class="border-b border-blue-600">
+			@tmpl.TabNav(translator.Title("Robno promet"), tabs, "#robno-promet-reports-content", "robno-promet-reports-panel", translator)
+		</div>
+		<div class="flex-1 min-h-0 flex flex-col gap-1 pt-1">
+			<div class="no-border bg-blue-100 p-1 rounded-lg">
+				<!-- Two columns: magacin + šifre artikla (left) | datumi + grupe (right) -->
+				<div class="grid grid-cols-2 gap-2 items-start">
+					<!-- Left fieldset: magacin + šifre artikla -->
+					<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1">
+						<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Parametri") }</legend>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "odmagacina", LabelText: translator.Label("Od magacina"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.ComboBoxField(domain.ComboFieldConfig{ID: "odmagacina", Name: "odmagacina", ClassSelect: common.ClassInputTextEnabled + " flex-1", OptionValues: magValues, TabIndex: "1"}, translator)
+						</div>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "domagacina", LabelText: translator.Label("Do magacina"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.ComboBoxField(domain.ComboFieldConfig{ID: "domagacina", Name: "domagacina", ClassSelect: common.ClassInputTextEnabled + " flex-1", OptionValues: magValues, TabIndex: "2"}, translator)
+						</div>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "odsifre", LabelText: translator.Label("Od šifre artikla"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "odsifre", Name: "odsifre", FieldType: "number", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "3"})
+							@components.SearchButton(domain.SearchButtonConfig{ID: "odsifre", Name: "search-odsifre", HxUrl: "/api/promet/searchbutton", HxTarget: "#search-dropdown", HxSwap: "innerHTML", HxVals: `js:{"destfield": "odsifre"}`, ClassButton: common.ClassButton})
+						</div>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "dosifre", LabelText: translator.Label("Do šifre artikla"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "dosifre", Name: "dosifre", FieldType: "number", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "4"})
+							@components.SearchButton(domain.SearchButtonConfig{ID: "dosifre", Name: "search-dosifre", HxUrl: "/api/promet/searchbutton", HxTarget: "#search-dropdown", HxSwap: "innerHTML", HxVals: `js:{"destfield": "dosifre"}`, ClassButton: common.ClassButton})
+						</div>
+					</fieldset>
+					<!-- Right fieldset: datumi + grupe -->
+					<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1">
+						<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Datum / grupa") }</legend>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "oddatuma", LabelText: translator.Label("Od datuma"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " flex-1", TabIndex: "5"})
+						</div>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "dodatuma", LabelText: translator.Label("Do datuma"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " flex-1", TabIndex: "6"})
+						</div>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "odgrupe", LabelText: translator.Label("Od grupe"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.ComboBoxField(domain.ComboFieldConfig{ID: "odgrupe", Name: "odgrupe", ClassSelect: common.ClassInputTextEnabled + " flex-1", OptionValues: grupeValues, TabIndex: "7"}, translator)
+						</div>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "dogrupe", LabelText: translator.Label("Do grupe"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.ComboBoxField(domain.ComboFieldConfig{ID: "dogrupe", Name: "dogrupe", ClassSelect: common.ClassInputTextEnabled + " flex-1", OptionValues: grupeValues, TabIndex: "8"}, translator)
+						</div>
+					</fieldset>
+				</div>
+				<div class="flex justify-end gap-1 pt-2">
+					@components.Button(btnObrada)
+					@components.Search_PartPrintButton(btnPrint)
+				</div>
+			</div>
+			<div class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex-1 min-h-0 overflow-hidden">
+				@components.Table(tbl, translator)
+			</div>
+		</div>
 	</div>
 }
 
-templ robnoPrometInput(label, name, fieldType string, translator *i18n.Service) {
-	<div class="flex items-center gap-1">
-		@components.LabelField(domain.LabelFieldConfig{ID: name, LabelText: translator.Label(label), ClassLabel: common.ClassLabel + " w-28"})
-		@components.TextInputField(domain.InputFieldConfig{ID: name, Name: name, FieldType: fieldType, ClassInput: common.ClassInputTextEnabled + " flex-1"})
+templ RobnoPrometGradilisteVpcNc(tabs domain.TabData, tbl domain.TableData, magValues, grupeValues []domain.ComboItem, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
+	<div class="bg-blue-100 p-1 flex flex-col h-full">
+		<div class="border-b border-blue-600">
+			@tmpl.TabNav(translator.Title("Robno promet"), tabs, "#robno-promet-reports-content", "robno-promet-reports-panel", translator)
+		</div>
+		<div class="flex-1 min-h-0 flex flex-col gap-1 pt-1">
+			<div class="no-border bg-blue-100 p-1 rounded-lg">
+				<!-- Two columns: magacin + šifre artikla (left) | datumi + grupe (right) -->
+				<div class="grid grid-cols-2 gap-2 items-start">
+					<!-- Left fieldset: magacin + šifre artikla -->
+					<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1">
+						<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Parametri") }</legend>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "odmagacina", LabelText: translator.Label("Od magacina"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.ComboBoxField(domain.ComboFieldConfig{ID: "odmagacina", Name: "odmagacina", ClassSelect: common.ClassInputTextEnabled + " flex-1", OptionValues: magValues, TabIndex: "1"}, translator)
+						</div>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "domagacina", LabelText: translator.Label("Do magacina"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.ComboBoxField(domain.ComboFieldConfig{ID: "domagacina", Name: "domagacina", ClassSelect: common.ClassInputTextEnabled + " flex-1", OptionValues: magValues, TabIndex: "2"}, translator)
+						</div>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "odsifre", LabelText: translator.Label("Od šifre artikla"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "odsifre", Name: "odsifre", FieldType: "number", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "3"})
+							@components.SearchButton(domain.SearchButtonConfig{ID: "odsifre", Name: "search-odsifre", HxUrl: "/api/promet/searchbutton", HxTarget: "#search-dropdown", HxSwap: "innerHTML", HxVals: `js:{"destfield": "odsifre"}`, ClassButton: common.ClassButton})
+						</div>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "dosifre", LabelText: translator.Label("Do šifre artikla"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "dosifre", Name: "dosifre", FieldType: "number", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "4"})
+							@components.SearchButton(domain.SearchButtonConfig{ID: "dosifre", Name: "search-dosifre", HxUrl: "/api/promet/searchbutton", HxTarget: "#search-dropdown", HxSwap: "innerHTML", HxVals: `js:{"destfield": "dosifre"}`, ClassButton: common.ClassButton})
+						</div>
+					</fieldset>
+					<!-- Right fieldset: datumi + grupe -->
+					<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1">
+						<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Datum / grupa") }</legend>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "oddatuma", LabelText: translator.Label("Od datuma"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " flex-1", TabIndex: "5"})
+						</div>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "dodatuma", LabelText: translator.Label("Do datuma"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " flex-1", TabIndex: "6"})
+						</div>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "odgrupe", LabelText: translator.Label("Od grupe"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.ComboBoxField(domain.ComboFieldConfig{ID: "odgrupe", Name: "odgrupe", ClassSelect: common.ClassInputTextEnabled + " flex-1", OptionValues: grupeValues, TabIndex: "7"}, translator)
+						</div>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "dogrupe", LabelText: translator.Label("Do grupe"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.ComboBoxField(domain.ComboFieldConfig{ID: "dogrupe", Name: "dogrupe", ClassSelect: common.ClassInputTextEnabled + " flex-1", OptionValues: grupeValues, TabIndex: "8"}, translator)
+						</div>
+					</fieldset>
+				</div>
+				<div class="flex justify-end gap-1 pt-2">
+					@components.Button(btnObrada)
+					@components.Search_PartPrintButton(btnPrint)
+				</div>
+			</div>
+			<div class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex-1 min-h-0 overflow-hidden">
+				@components.Table(tbl, translator)
+			</div>
+		</div>
 	</div>
-}
-
-templ robnoPrometCheck(label, name string, translator *i18n.Service) {
-	<label class={ common.ClassLabel + " flex items-center gap-1" }>
-		<input type="checkbox" name={ name } id={ name } class={ common.ClassCheckbox }/>
-		<span>{ translator.Label(label) }</span>
-	</label>
 }
 
 templ RobnoPrometGrupe1Table(tbl domain.TableData, translator *i18n.Service) {
@@ -132,4 +413,160 @@ templ RobnoPrometGrupe1Table(tbl domain.TableData, translator *i18n.Service) {
 
 templ RobnoPrometTable(tbl domain.TableData, translator *i18n.Service) {
 	@components.Table(tbl, translator)
+}
+
+// RobnoPrometRucUlazIzlaz renders the "Ulaz/izlaz za period" RUC sub-report.
+templ RobnoPrometRucUlazIzlaz(tabs, subTabs domain.TabData, tbl domain.TableData, magValues []domain.ComboItem, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
+	<div class="bg-blue-100 p-1 flex flex-col h-full">
+		<div class="border-b border-blue-600">
+			@tmpl.TabNav(translator.Title("Robno promet"), tabs, "#robno-promet-reports-content", "robno-promet-reports-panel", translator)
+		</div>
+		<div class="border-b border-blue-600 pt-1">
+			@tmpl.TabNav("", subTabs, "#robno-promet-reports-content", "robno-promet-reports-panel", translator)
+		</div>
+		<div class="flex-1 min-h-0 flex flex-col gap-1 pt-1">
+			<div class="no-border bg-blue-100 p-1 rounded-lg">
+				<div class="grid grid-cols-2 gap-2 items-start">
+					<!-- Left: vrsta prometa + magacini -->
+					<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1 h-full">
+						<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Parametri") }</legend>
+						<div class="flex flex-wrap items-center gap-x-4 gap-y-1">
+							@components.RadioButtonField(domain.RadioFieldConfig{ID: "ulazizlaz-ulaz", Name: "ulazizlaz", LabelText: translator.Label("Ulaz robe"), ClassLabel: common.ClassLabel, ClassSelect: common.ClassRadioSet, Value: "ulaz", IsSelected: true, TabIndex: "1"}, translator)
+							@components.RadioButtonField(domain.RadioFieldConfig{ID: "ulazizlaz-izlaz", Name: "ulazizlaz", LabelText: translator.Label("Izlaz robe"), ClassLabel: common.ClassLabel, ClassSelect: common.ClassRadioSet, Value: "izlaz", TabIndex: "2"}, translator)
+							@components.RadioButtonField(domain.RadioFieldConfig{ID: "ulazizlaz-sve", Name: "ulazizlaz", LabelText: translator.Label("Ulaz i izlaz robe"), ClassLabel: common.ClassLabel, ClassSelect: common.ClassRadioSet, Value: "ulazizlaz", TabIndex: "3"}, translator)
+						</div>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "odmagacina", LabelText: translator.Label("Od magacina"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.ComboBoxField(domain.ComboFieldConfig{ID: "odmagacina", Name: "odmagacina", ClassSelect: common.ClassInputTextEnabled + " flex-1", OptionValues: magValues, TabIndex: "4"}, translator)
+						</div>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "domagacina", LabelText: translator.Label("Do magacina"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.ComboBoxField(domain.ComboFieldConfig{ID: "domagacina", Name: "domagacina", ClassSelect: common.ClassInputTextEnabled + " flex-1", OptionValues: magValues, TabIndex: "5"}, translator)
+						</div>
+					</fieldset>
+					<!-- Right: datumi + opcije -->
+					<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1 h-full">
+						<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Opcije prikaza/štampe") }</legend>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "oddatuma", LabelText: translator.Label("Od datuma"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " flex-1", TabIndex: "6"})
+						</div>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "dodatuma", LabelText: translator.Label("Do datuma"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " flex-1", TabIndex: "7"})
+						</div>
+						@components.CheckboxField(domain.CheckboxFieldConfig{ID: "zbirmagacina", Name: "zbirmagacina", LabelText: translator.Label("Zbir izabranih magacina"), ClassCheckbox: common.ClassCheckbox + " mr-2", ClassLabel: common.ClassLabel + " flex items-center", TabIndex: "8"}, translator)
+					</fieldset>
+				</div>
+				<div class="flex justify-end gap-1 pt-2">
+					@components.Button(btnObrada)
+					@components.Search_PartPrintButton(btnPrint)
+				</div>
+			</div>
+			<div class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex-1 min-h-0 overflow-hidden">
+				@components.Table(tbl, translator)
+			</div>
+		</div>
+	</div>
+}
+
+// RobnoPrometRucMagacinima renders the "RUC po magacinima" RUC sub-report.
+templ RobnoPrometRucMagacinima(tabs, subTabs domain.TabData, tbl domain.TableData, magValues []domain.ComboItem, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
+	<div class="bg-blue-100 p-1 flex flex-col h-full">
+		<div class="border-b border-blue-600">
+			@tmpl.TabNav(translator.Title("Robno promet"), tabs, "#robno-promet-reports-content", "robno-promet-reports-panel", translator)
+		</div>
+		<div class="border-b border-blue-600 pt-1">
+			@tmpl.TabNav("", subTabs, "#robno-promet-reports-content", "robno-promet-reports-panel", translator)
+		</div>
+		<div class="flex-1 min-h-0 flex flex-col gap-1 pt-1">
+			<div class="no-border bg-blue-100 p-1 rounded-lg">
+				<div class="grid grid-cols-2 gap-2 items-start">
+					<!-- Left: magacini -->
+					<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1 h-full">
+						<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Parametri") }</legend>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "odmagacina", LabelText: translator.Label("Od magacina"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.ComboBoxField(domain.ComboFieldConfig{ID: "odmagacina", Name: "odmagacina", ClassSelect: common.ClassInputTextEnabled + " flex-1", OptionValues: magValues, TabIndex: "1"}, translator)
+						</div>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "domagacina", LabelText: translator.Label("Do magacina"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.ComboBoxField(domain.ComboFieldConfig{ID: "domagacina", Name: "domagacina", ClassSelect: common.ClassInputTextEnabled + " flex-1", OptionValues: magValues, TabIndex: "2"}, translator)
+						</div>
+					</fieldset>
+					<!-- Right: datumi + opcije -->
+					<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1 h-full">
+						<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Opcije prikaza/štampe") }</legend>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "oddatuma", LabelText: translator.Label("Od datuma"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " flex-1", TabIndex: "3"})
+						</div>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "dodatuma", LabelText: translator.Label("Do datuma"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " flex-1", TabIndex: "4"})
+						</div>
+						@components.CheckboxField(domain.CheckboxFieldConfig{ID: "stampajsamoZbir", Name: "stampajsamoZbir", LabelText: translator.Label("Štampaj samo zbir po magacinima"), ClassCheckbox: common.ClassCheckbox + " mr-2", ClassLabel: common.ClassLabel + " flex items-center", TabIndex: "5"}, translator)
+					</fieldset>
+				</div>
+				<div class="flex justify-end gap-1 pt-2">
+					@components.Button(btnObrada)
+					@components.Search_PartPrintButton(btnPrint)
+				</div>
+			</div>
+			<div class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex-1 min-h-0 overflow-hidden">
+				@components.Table(tbl, translator)
+			</div>
+		</div>
+	</div>
+}
+
+// RobnoPrometRucIzlazneFakture renders the "Izlazne fakture" RUC sub-report.
+templ RobnoPrometRucIzlazneFakture(tabs, subTabs domain.TabData, tbl domain.TableData, magValues []domain.ComboItem, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
+	<div class="bg-blue-100 p-1 flex flex-col h-full">
+		<div class="border-b border-blue-600">
+			@tmpl.TabNav(translator.Title("Robno promet"), tabs, "#robno-promet-reports-content", "robno-promet-reports-panel", translator)
+		</div>
+		<div class="border-b border-blue-600 pt-1">
+			@tmpl.TabNav("", subTabs, "#robno-promet-reports-content", "robno-promet-reports-panel", translator)
+		</div>
+		<div class="flex-1 min-h-0 flex flex-col gap-1 pt-1">
+			<div class="no-border bg-blue-100 p-1 rounded-lg">
+				<div class="grid grid-cols-2 gap-2 items-start">
+					<!-- Left: magacini -->
+					<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1 h-full">
+						<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Parametri") }</legend>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "odmagacina", LabelText: translator.Label("Od magacina"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.ComboBoxField(domain.ComboFieldConfig{ID: "odmagacina", Name: "odmagacina", ClassSelect: common.ClassInputTextEnabled + " flex-1", OptionValues: magValues, TabIndex: "1"}, translator)
+						</div>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "domagacina", LabelText: translator.Label("Do magacina"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.ComboBoxField(domain.ComboFieldConfig{ID: "domagacina", Name: "domagacina", ClassSelect: common.ClassInputTextEnabled + " flex-1", OptionValues: magValues, TabIndex: "2"}, translator)
+						</div>
+					</fieldset>
+					<!-- Right: datumi + opcije -->
+					<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1 h-full">
+						<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Opcije prikaza/štampe") }</legend>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "oddatuma", LabelText: translator.Label("Od datuma"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " flex-1", TabIndex: "3"})
+						</div>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "dodatuma", LabelText: translator.Label("Do datuma"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " flex-1", TabIndex: "4"})
+						</div>
+						@components.CheckboxField(domain.CheckboxFieldConfig{ID: "stampajsamoZbir", Name: "stampajsamoZbir", LabelText: translator.Label("Štampaj samo zbir po magacinima"), ClassCheckbox: common.ClassCheckbox + " mr-2", ClassLabel: common.ClassLabel + " flex items-center", TabIndex: "5"}, translator)
+						@components.CheckboxField(domain.CheckboxFieldConfig{ID: "ukljuceneusluge", Name: "ukljuceneusluge", LabelText: translator.Label("Uključene usluge"), ClassCheckbox: common.ClassCheckbox + " mr-2", ClassLabel: common.ClassLabel + " flex items-center", TabIndex: "6"}, translator)
+					</fieldset>
+				</div>
+				<div class="flex justify-end gap-1 pt-2">
+					@components.Button(btnObrada)
+					@components.Search_PartPrintButton(btnPrint)
+				</div>
+			</div>
+			<div class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex-1 min-h-0 overflow-hidden">
+				@components.Table(tbl, translator)
+			</div>
+		</div>
+	</div>
 }

@@ -16,7 +16,7 @@ import (
 	"helia/internal/domain"
 )
 
-func RobnoKarticaMain(tabs domain.TabData, articleTable, subsyntheticTable domain.TableData, articleButton, articlePrintButton, subsyntheticButton, subsyntheticPrintButton domain.Button, magacini []domain.ComboItem, translator *i18n.Service) templ.Component {
+func RobnoKarticaMain(tabs domain.TabData, tblData domain.TableData, magacini []domain.ComboItem, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -37,15 +37,19 @@ func RobnoKarticaMain(tabs domain.TabData, articleTable, subsyntheticTable domai
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div id=\"robno-kartica-content\" class=\"flex flex-col h-full\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div id=\"tab-content\" class=\"flex flex-col h-full\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = RobnoKarticaArticle(tabs, articleTable, articleButton, articlePrintButton, magacini, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = RobnoKarticaArtikla(tabs, tblData, magacini, btnObrada, btnPrint, searchInput, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</div>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = RobnoKarticaScripts().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -57,11 +61,23 @@ func RobnoKarticaMain(tabs domain.TabData, articleTable, subsyntheticTable domai
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
+		templ_7745c5c3_Err = tmpl.ClearFieldErrorScript().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.HandleDblClickKontoSelectionScript().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.HandleDialogResponseScript().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
 		templ_7745c5c3_Err = tmpl.CloseDialogScript().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = RobnoKarticaScripts().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.OpenPrintWithParamsScript().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -69,7 +85,7 @@ func RobnoKarticaMain(tabs domain.TabData, articleTable, subsyntheticTable domai
 	})
 }
 
-func RobnoKarticaArticle(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint domain.Button, magacini []domain.ComboItem, translator *i18n.Service) templ.Component {
+func RobnoKarticaArtikla(tabs domain.TabData, tbl domain.TableData, magValues []domain.ComboItem, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -94,7 +110,7 @@ func RobnoKarticaArticle(tabs domain.TabData, tbl domain.TableData, btnObrada, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TabNav(translator.Title("ROBNO KARTICA"), tabs, "#robno-kartica-content", "robno-kartica-panel", translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.TabNav(translator.Title("ROBNO KARTICA"), tabs, "#tab-content", "robno-kartica-panel", translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -105,7 +121,7 @@ func RobnoKarticaArticle(tabs domain.TabData, tbl domain.TableData, btnObrada, b
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Selekcija"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnokartica.templ`, Line: 30, Col: 98}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnokartica.templ`, Line: 34, Col: 98}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
@@ -115,31 +131,31 @@ func RobnoKarticaArticle(tabs domain.TabData, tbl domain.TableData, btnObrada, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = RobnoKarticaCheck("chkpobrojunaloga", "Po broju naloga ?", `["brojnaloga"]`, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = RobnoKarticaCheckBox("chkpobrojunaloga", "Po broju naloga ?", `["brojnaloga"]`, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = RobnoKarticaCheck("chkpodatumunaloga", "Po datumu naloga ?", `["oddatumanaloga","dodatumanaloga"]`, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = RobnoKarticaCheckBox("chkpodatumunaloga", "Po datumu naloga ?", `["oddatumanaloga","dodatumanaloga"]`, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = RobnoKarticaCheck("chkpodatumuobrade", "Po datumu obrade ?", `["oddatumaobrade","dodatumaobrade"]`, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = RobnoKarticaCheckBox("chkpodatumuobrade", "Po datumu obrade ?", `["oddatumaobrade","dodatumaobrade"]`, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = RobnoKarticaCheck("chkpovrstidokumenta", "Po vrsti dokumenta ?", `["sifvrstedokumenta"]`, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = RobnoKarticaCheckBox("chkpovrstidokumenta", "Po vrsti dokumenta ?", `["sifvrstedokumenta"]`, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = RobnoKarticaCheck("chkpobrojudokumenta", "Po broju dokumenta ?", `["brojdokumenta"]`, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = RobnoKarticaCheckBox("chkpobrojudokumenta", "Po broju dokumenta ?", `["brojdokumenta"]`, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = RobnoKarticaCheck("chkpodatumdokumenta", "Po datumu dokumenta ?", `["oddatumadok","dodatumaadok"]`, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = RobnoKarticaCheckBox("chkpodatumdokumenta", "Po datumu dokumenta ?", `["oddatumadok","dodatumaadok"]`, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = RobnoKarticaCheck("chkpoiznosu", "Po iznosu ?", `["odiznosa","doiznosa"]`, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = RobnoKarticaCheckBox("chkpoiznosu", "Po iznosu ?", `["odiznosa","doiznosa"]`, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -150,7 +166,7 @@ func RobnoKarticaArticle(tabs domain.TabData, tbl domain.TableData, btnObrada, b
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Parametri za obradu"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnokartica.templ`, Line: 40, Col: 103}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnokartica.templ`, Line: 44, Col: 103}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
@@ -160,11 +176,11 @@ func RobnoKarticaArticle(tabs domain.TabData, tbl domain.TableData, btnObrada, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "magacin", LabelText: translator.Label("Magacin"), ClassLabel: common.ClassLabel + " w-32"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "magacin", LabelText: translator.Label("Magacin"), ClassLabel: common.ClassLabel + " w-40"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.ComboBoxField(domain.ComboFieldConfig{ID: "magacin", Name: "magacin", LabelText: translator.Label("Magacin"), ClassLabel: common.ClassLabel, ClassSelect: common.ClassInputTextEnabled + " flex-1", OptionValues: magacini, TabIndex: "1"}, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.ComboBoxField(domain.ComboFieldConfig{ID: "magacin", Name: "magacin", LabelText: translator.Label("Magacin"), ClassLabel: common.ClassLabel, ClassSelect: common.ClassInputTextEnabled + " flex-1", OptionValues: magValues, TabIndex: "1"}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -172,7 +188,7 @@ func RobnoKarticaArticle(tabs domain.TabData, tbl domain.TableData, btnObrada, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "brojnaloga", LabelText: translator.Label("Broj naloga"), ClassLabel: common.ClassLabel + " w-32"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "brojnaloga", LabelText: translator.Label("Broj naloga"), ClassLabel: common.ClassLabel + " w-40"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -184,7 +200,7 @@ func RobnoKarticaArticle(tabs domain.TabData, tbl domain.TableData, btnObrada, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "oddatumanaloga", LabelText: translator.Label("Od datuma naloga"), ClassLabel: common.ClassLabel + " w-32"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "oddatumanaloga", LabelText: translator.Label("Od datuma naloga"), ClassLabel: common.ClassLabel + " w-40"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -196,7 +212,7 @@ func RobnoKarticaArticle(tabs domain.TabData, tbl domain.TableData, btnObrada, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "dodatumanaloga", LabelText: translator.Label("Do datuma naloga"), ClassLabel: common.ClassLabel + " w-32"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "dodatumanaloga", LabelText: translator.Label("Do datuma naloga"), ClassLabel: common.ClassLabel + " w-40"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -208,7 +224,7 @@ func RobnoKarticaArticle(tabs domain.TabData, tbl domain.TableData, btnObrada, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "oddatumaobrade", LabelText: translator.Label("Od datuma obrade"), ClassLabel: common.ClassLabel + " w-32"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "oddatumaobrade", LabelText: translator.Label("Od datuma obrade"), ClassLabel: common.ClassLabel + " w-40"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -220,7 +236,7 @@ func RobnoKarticaArticle(tabs domain.TabData, tbl domain.TableData, btnObrada, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "dodatumaobrade", LabelText: translator.Label("Do datuma obrade"), ClassLabel: common.ClassLabel + " w-32"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "dodatumaobrade", LabelText: translator.Label("Do datuma obrade"), ClassLabel: common.ClassLabel + " w-40"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -232,7 +248,7 @@ func RobnoKarticaArticle(tabs domain.TabData, tbl domain.TableData, btnObrada, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "sifvrstedokumenta", LabelText: translator.Label("Šifra vrste dokumenta"), ClassLabel: common.ClassLabel + " w-32"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "sifvrstedokumenta", LabelText: translator.Label("Šifra vrste dokumenta"), ClassLabel: common.ClassLabel + " w-40"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -244,7 +260,7 @@ func RobnoKarticaArticle(tabs domain.TabData, tbl domain.TableData, btnObrada, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "brojdokumenta", LabelText: translator.Label("Broj dokumenta"), ClassLabel: common.ClassLabel + " w-32"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "brojdokumenta", LabelText: translator.Label("Broj dokumenta"), ClassLabel: common.ClassLabel + " w-40"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -256,7 +272,7 @@ func RobnoKarticaArticle(tabs domain.TabData, tbl domain.TableData, btnObrada, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "oddatumadok", LabelText: translator.Label("Od datuma dokumenta"), ClassLabel: common.ClassLabel + " w-32"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "oddatumadok", LabelText: translator.Label("Od datuma dokumenta"), ClassLabel: common.ClassLabel + " w-40"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -268,7 +284,7 @@ func RobnoKarticaArticle(tabs domain.TabData, tbl domain.TableData, btnObrada, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "dodatumaadok", LabelText: translator.Label("Do datuma dokumenta"), ClassLabel: common.ClassLabel + " w-32"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "dodatumaadok", LabelText: translator.Label("Do datuma dokumenta"), ClassLabel: common.ClassLabel + " w-40"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -280,7 +296,7 @@ func RobnoKarticaArticle(tabs domain.TabData, tbl domain.TableData, btnObrada, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "odiznosa", LabelText: translator.Label("Od iznosa"), ClassLabel: common.ClassLabel + " w-32"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "odiznosa", LabelText: translator.Label("Od iznosa"), ClassLabel: common.ClassLabel + " w-40"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -292,7 +308,7 @@ func RobnoKarticaArticle(tabs domain.TabData, tbl domain.TableData, btnObrada, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "doiznosa", LabelText: translator.Label("Do iznosa"), ClassLabel: common.ClassLabel + " w-32"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "doiznosa", LabelText: translator.Label("Do iznosa"), ClassLabel: common.ClassLabel + " w-40"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -304,11 +320,11 @@ func RobnoKarticaArticle(tabs domain.TabData, tbl domain.TableData, btnObrada, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = RobnoKarticaArticleRange(translator.Label("Od šifre artikla"), "odsifre", "").Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = RobnoKarticaArtikalRange(translator.Label("Od šifre artikla"), "odsifre", "").Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = RobnoKarticaArticleRange(translator.Label("Do šifre artikla"), "dosifre", "").Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = RobnoKarticaArtikalRange(translator.Label("Do šifre artikla"), "dosifre", "").Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -319,7 +335,7 @@ func RobnoKarticaArticle(tabs domain.TabData, tbl domain.TableData, btnObrada, b
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Dodatni parametri"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnokartica.templ`, Line: 103, Col: 101}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnokartica.templ`, Line: 107, Col: 101}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
@@ -329,11 +345,11 @@ func RobnoKarticaArticle(tabs domain.TabData, tbl domain.TableData, btnObrada, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = RobnoKarticaCheck("chkpRPROID", "po RPROID", `[]`, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = RobnoKarticaCheckBox("chkpRPROID", "po RPROID", `[]`, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = RobnoKarticaCheck("stampajpomesecima", "Štampaj po mesecima", `[]`, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = RobnoKarticaCheckBox("stampajpomesecima", "Štampaj po mesecima", `[]`, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -377,7 +393,7 @@ func RobnoKarticaArticle(tabs domain.TabData, tbl domain.TableData, btnObrada, b
 	})
 }
 
-func RobnoKarticaSubsynthetic(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint domain.Button, magacini []domain.ComboItem, translator *i18n.Service) templ.Component {
+func RobnoKarticaSubsintetickoKonto(tabs domain.TabData, tbl domain.TableData, magValues []domain.ComboItem, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -402,7 +418,7 @@ func RobnoKarticaSubsynthetic(tabs domain.TabData, tbl domain.TableData, btnObra
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tmpl.TabNav(translator.Title("Robno kartica"), tabs, "#robno-kartica-content", "robno-kartica-panel", translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tmpl.TabNav(translator.Title("Robno kartica"), tabs, "#tab-content", "robno-kartica-panel", translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -413,7 +429,7 @@ func RobnoKarticaSubsynthetic(tabs domain.TabData, tbl domain.TableData, btnObra
 		var templ_7745c5c3_Var7 string
 		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Selekcija"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnokartica.templ`, Line: 131, Col: 99}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnokartica.templ`, Line: 135, Col: 99}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {
@@ -423,15 +439,15 @@ func RobnoKarticaSubsynthetic(tabs domain.TabData, tbl domain.TableData, btnObra
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = RobnoKarticaCheck("chkpobrojunaloga", "Po broju naloga ?", `["brojunaloga"]`, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = RobnoKarticaCheckBox("chkpobrojunaloga", "Po broju naloga ?", `["brojnaloga"]`, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = RobnoKarticaCheck("chkpodatumunaloga", "Po datumu naloga ?", `["oddatumanaloga","dodatumanaloga"]`, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = RobnoKarticaCheckBox("chkpodatumunaloga", "Po datumu naloga ?", `["oddatumanaloga","dodatumanaloga"]`, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = RobnoKarticaCheck("chkpoiznosu", "Po iznosu ?", `["odiznosa","doiznosa"]`, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = RobnoKarticaCheckBox("chkpoiznosu", "Po iznosu ?", `["odiznosa","doiznosa"]`, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -442,7 +458,7 @@ func RobnoKarticaSubsynthetic(tabs domain.TabData, tbl domain.TableData, btnObra
 		var templ_7745c5c3_Var8 string
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Parametri za obradu"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnokartica.templ`, Line: 137, Col: 103}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnokartica.templ`, Line: 141, Col: 103}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {
@@ -452,11 +468,21 @@ func RobnoKarticaSubsynthetic(tabs domain.TabData, tbl domain.TableData, btnObra
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "magacin", LabelText: translator.Label("Magacin"), ClassLabel: common.ClassLabel + " w-32"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
+			ID:         "magacin",
+			LabelText:  translator.Label("Magacin"),
+			ClassLabel: common.ClassLabel + " w-40"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.ComboBoxField(domain.ComboFieldConfig{ID: "magacin", Name: "magacin", LabelText: translator.Label("Magacin"), ClassLabel: common.ClassLabel, ClassSelect: common.ClassInputTextEnabled + " flex-1", OptionValues: magacini, TabIndex: "1"}, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.ComboBoxField(domain.ComboFieldConfig{
+			ID:           "magacin",
+			Name:         "magacin",
+			LabelText:    translator.Label("Magacin"),
+			ClassLabel:   common.ClassLabel,
+			ClassSelect:  common.ClassInputTextEnabled + " flex-1",
+			OptionValues: magValues,
+			TabIndex:     "1"}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -464,19 +490,51 @@ func RobnoKarticaSubsynthetic(tabs domain.TabData, tbl domain.TableData, btnObra
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "konto", LabelText: translator.Label("Subsintetički konto"), ClassLabel: common.ClassLabel + " w-32"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
+			ID:         "konto",
+			LabelText:  translator.Label("Subsintetički konto"),
+			ClassLabel: common.ClassLabel + " w-40"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "konto", Name: "konto", FieldType: "text", Value: "", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "2", MinLength: "4", MaxLength: "4"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
+			ID:           "konto",
+			Name:         "konto",
+			FieldType:    "text",
+			Disabled:     false,
+			ClassInput:   common.ClassInputTextEnabled + " w-24",
+			BlurEndpoint: "api/fkpl/trazikonto",
+			HxTarget:     "kontonaziv",
+			HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "2", "destfield": "konto"}`,
+			HxInclude:    "this",
+			MinLength:    "2",
+			MaxLength:    "6",
+			TabIndex:     "1",
+			OnInput:      "clearFieldError",
+			OnFocus:      "clearFieldError",
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{ID: "konto", Name: "search-konto", HxUrl: "/api/kartica/searchbutton", HxTarget: "#search-dropdown", HxSwap: "innerHTML", HxVals: `js:{"vkonta": "2", "destfield": "konto"}`, ClassButton: common.ClassButton}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
+			ID:          "btn-search-konto",
+			Name:        "search-konto",
+			HxUrl:       "/api/promet/searchbutton",
+			HxTarget:    "#search-dropdown",
+			HxSwap:      "innerHTML",
+			HxVals:      `{"vkonta": "2", "destfield": "konto"}`,
+			ClassButton: common.ClassButton,
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "kontonaziv", Name: "kontonaziv", FieldType: "text", Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1", TabIndex: "-1"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
+			ID:         "kontonaziv",
+			Name:       "kontonaziv",
+			FieldType:  "text",
+			Disabled:   true,
+			ClassInput: common.ClassInputTextDisabled + " w-full",
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -484,11 +542,21 @@ func RobnoKarticaSubsynthetic(tabs domain.TabData, tbl domain.TableData, btnObra
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "brojnaloga", LabelText: translator.Label("Broj naloga"), ClassLabel: common.ClassLabel + " w-32"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
+			ID:         "brojnaloga",
+			LabelText:  translator.Label("Broj naloga"),
+			ClassLabel: common.ClassLabel + " w-40",
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "brojnaloga", Name: "brojnaloga", Disabled: true, ClassInput: common.ClassInputTextEnabled + " w-40", TabIndex: "2"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
+			ID:         "brojnaloga",
+			Name:       "brojnaloga",
+			Disabled:   true,
+			ClassInput: common.ClassInputTextEnabled + " w-40",
+			TabIndex:   "2",
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -496,11 +564,22 @@ func RobnoKarticaSubsynthetic(tabs domain.TabData, tbl domain.TableData, btnObra
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "oddatumanaloga", LabelText: translator.Label("Od datuma naloga"), ClassLabel: common.ClassLabel + " w-32"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
+			ID:         "oddatumanaloga",
+			LabelText:  translator.Label("Od datuma naloga"),
+			ClassLabel: common.ClassLabel + " w-40",
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "oddatumanaloga", Name: "oddatumanaloga", Disabled: true, FieldType: "date", ClassInput: common.ClassInputTextEnabled + "  w-40", TabIndex: "3"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
+			ID:         "oddatumanaloga",
+			Name:       "oddatumanaloga",
+			Disabled:   true,
+			FieldType:  "date",
+			ClassInput: common.ClassInputTextEnabled + "  w-40",
+			TabIndex:   "3",
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -508,11 +587,22 @@ func RobnoKarticaSubsynthetic(tabs domain.TabData, tbl domain.TableData, btnObra
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "dodatumanaloga", LabelText: translator.Label("Do datuma naloga"), ClassLabel: common.ClassLabel + " w-32"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
+			ID:         "dodatumanaloga",
+			LabelText:  translator.Label("Do datuma naloga"),
+			ClassLabel: common.ClassLabel + " w-40",
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "dodatumanaloga", Name: "dodatumanaloga", Disabled: true, FieldType: "date", ClassInput: common.ClassInputTextEnabled + "  w-40", TabIndex: "4"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
+			ID:         "dodatumanaloga",
+			Name:       "dodatumanaloga",
+			Disabled:   true,
+			FieldType:  "date",
+			ClassInput: common.ClassInputTextEnabled + "  w-40",
+			TabIndex:   "4",
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -520,11 +610,22 @@ func RobnoKarticaSubsynthetic(tabs domain.TabData, tbl domain.TableData, btnObra
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "odiznosa", LabelText: translator.Label("Od iznosa"), ClassLabel: common.ClassLabel + " w-32"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
+			ID:         "odiznosa",
+			LabelText:  translator.Label("Od iznosa"),
+			ClassLabel: common.ClassLabel + " w-40",
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "odiznosa", Name: "odiznosa", Disabled: true, FieldType: "number", ClassInput: common.ClassInputTextEnabled + "  w-40", TabIndex: "3"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
+			ID:         "odiznosa",
+			Name:       "odiznosa",
+			Disabled:   true,
+			FieldType:  "number",
+			ClassInput: common.ClassInputTextEnabled + "  w-40",
+			TabIndex:   "3",
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -532,11 +633,22 @@ func RobnoKarticaSubsynthetic(tabs domain.TabData, tbl domain.TableData, btnObra
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "doiznosa", LabelText: translator.Label("Do iznosa"), ClassLabel: common.ClassLabel + " w-32"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
+			ID:         "doiznosa",
+			LabelText:  translator.Label("Do iznosa"),
+			ClassLabel: common.ClassLabel + " w-40",
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "doiznosa", Name: "doiznosa", Disabled: true, FieldType: "number", ClassInput: common.ClassInputTextEnabled + "  w-40", TabIndex: "4"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
+			ID:         "doiznosa",
+			Name:       "doiznosa",
+			Disabled:   true,
+			FieldType:  "number",
+			ClassInput: common.ClassInputTextEnabled + "  w-40",
+			TabIndex:   "4",
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -552,7 +664,32 @@ func RobnoKarticaSubsynthetic(tabs domain.TabData, tbl domain.TableData, btnObra
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "</div><div class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex-1 min-h-0 overflow-hidden\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "</div><!-- Group Data Table --><div class=\"border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = components.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = components.Search_Part(tbl, searchInput).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "<!-- Table --><div id=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var9 string
+		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(tbl.TableID)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnokartica.templ`, Line: 283, Col: 25}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "\" class=\"flex-1 overflow-x-auto overflow-y-auto min-h-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -560,7 +697,7 @@ func RobnoKarticaSubsynthetic(tabs domain.TabData, tbl domain.TableData, btnObra
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "</div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "</div></div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -568,7 +705,7 @@ func RobnoKarticaSubsynthetic(tabs domain.TabData, tbl domain.TableData, btnObra
 	})
 }
 
-func RobnoKarticaCheck(id, labelText, fields string, translator *i18n.Service) templ.Component {
+func RobnoKarticaCheckBox(id, labelText, fields string, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -584,35 +721,35 @@ func RobnoKarticaCheck(id, labelText, fields string, translator *i18n.Service) t
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var9 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var9 == nil {
-			templ_7745c5c3_Var9 = templ.NopComponent
+		templ_7745c5c3_Var10 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var10 == nil {
+			templ_7745c5c3_Var10 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		var templ_7745c5c3_Var10 = []any{common.ClassCheckboxLabel + " w-44 flex-shrink-0 h-8 sm:h-7 md:h-6 mb-1"}
-		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var10...)
+		var templ_7745c5c3_Var11 = []any{common.ClassCheckboxLabel + " w-44 flex-shrink-0 h-8 sm:h-7 md:h-6 mb-1"}
+		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var11...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "<label class=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "<label class=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var11 string
-		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var10).String())
+		var templ_7745c5c3_Var12 string
+		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var11).String())
 		if templ_7745c5c3_Err != nil {
 			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnokartica.templ`, Line: 1, Col: 0}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var12 = []any{common.ClassCheckbox}
-		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var12...)
+		var templ_7745c5c3_Var13 = []any{common.ClassCheckbox}
+		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var13...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -620,90 +757,90 @@ func RobnoKarticaCheck(id, labelText, fields string, translator *i18n.Service) t
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "<input type=\"checkbox\" id=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var13 string
-		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(id)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnokartica.templ`, Line: 189, Col: 10}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "\" name=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "<input type=\"checkbox\" id=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var14 string
 		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(id)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnokartica.templ`, Line: 190, Col: 12}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnokartica.templ`, Line: 295, Col: 10}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "\" class=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "\" name=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var15 string
-		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var12).String())
+		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(id)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnokartica.templ`, Line: 1, Col: 0}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnokartica.templ`, Line: 296, Col: 12}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "\" onchange=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "\" class=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var16 templ.ComponentScript = templ.JSFuncCall("sakToggle", templ.JSExpression("this"), templ.JSExpression(fields))
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var16.Call)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "\"> ")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var17 = []any{common.ClassCheckboxSpan}
-		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var17...)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "<span class=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var18 string
-		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var17).String())
+		var templ_7745c5c3_Var16 string
+		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var13).String())
 		if templ_7745c5c3_Err != nil {
 			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnokartica.templ`, Line: 1, Col: 0}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "\" onchange=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var17 templ.ComponentScript = templ.JSFuncCall("sakToggle", templ.JSExpression("this"), templ.JSExpression(fields))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var17.Call)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "\"> ")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var18 = []any{common.ClassCheckboxSpan}
+		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var18...)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "<span class=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var19 string
-		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label(labelText))
+		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var18).String())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnokartica.templ`, Line: 194, Col: 72}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnokartica.templ`, Line: 1, Col: 0}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "</span></label>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, "\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var20 string
+		templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label(labelText))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnokartica.templ`, Line: 300, Col: 72}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, "</span></label>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -711,48 +848,7 @@ func RobnoKarticaCheck(id, labelText, fields string, translator *i18n.Service) t
 	})
 }
 
-func RobnoKarticaInput(label, name, fieldType, tabIndex string) templ.Component {
-	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
-		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
-		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
-			return templ_7745c5c3_CtxErr
-		}
-		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
-		if !templ_7745c5c3_IsBuffer {
-			defer func() {
-				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
-				if templ_7745c5c3_Err == nil {
-					templ_7745c5c3_Err = templ_7745c5c3_BufErr
-				}
-			}()
-		}
-		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var20 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var20 == nil {
-			templ_7745c5c3_Var20 = templ.NopComponent
-		}
-		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, "<div class=\"flex items-center gap-1\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: name, LabelText: label, ClassLabel: common.ClassLabel + " w-32"}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: name, Name: name, FieldType: fieldType, ClassInput: common.ClassInputTextEnabled + " flex-1", TabIndex: tabIndex}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, "</div>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		return nil
-	})
-}
-
-func RobnoKarticaArticleRange(label, name, shortcut string) templ.Component {
+func RobnoKarticaArtikalRange(label, name, shortcut string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -777,7 +873,7 @@ func RobnoKarticaArticleRange(label, name, shortcut string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: name, LabelText: label, ClassLabel: common.ClassLabel + " w-32"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: name, LabelText: label, ClassLabel: common.ClassLabel + " w-40"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -801,7 +897,7 @@ func RobnoKarticaArticleRange(label, name, shortcut string) templ.Component {
 	})
 }
 
-func RobnoKarticaArticleTable(tbl domain.TableData, translator *i18n.Service) templ.Component {
+func RobnoKarticaScripts() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -820,64 +916,6 @@ func RobnoKarticaArticleTable(tbl domain.TableData, translator *i18n.Service) te
 		templ_7745c5c3_Var22 := templ.GetChildren(ctx)
 		if templ_7745c5c3_Var22 == nil {
 			templ_7745c5c3_Var22 = templ.NopComponent
-		}
-		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = components.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		return nil
-	})
-}
-
-func RobnoKarticaSubsyntheticTable(tbl domain.TableData, translator *i18n.Service) templ.Component {
-	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
-		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
-		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
-			return templ_7745c5c3_CtxErr
-		}
-		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
-		if !templ_7745c5c3_IsBuffer {
-			defer func() {
-				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
-				if templ_7745c5c3_Err == nil {
-					templ_7745c5c3_Err = templ_7745c5c3_BufErr
-				}
-			}()
-		}
-		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var23 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var23 == nil {
-			templ_7745c5c3_Var23 = templ.NopComponent
-		}
-		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = components.Table(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		return nil
-	})
-}
-
-func RobnoKarticaScripts() templ.Component {
-	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
-		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
-		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
-			return templ_7745c5c3_CtxErr
-		}
-		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
-		if !templ_7745c5c3_IsBuffer {
-			defer func() {
-				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
-				if templ_7745c5c3_Err == nil {
-					templ_7745c5c3_Err = templ_7745c5c3_BufErr
-				}
-			}()
-		}
-		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var24 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var24 == nil {
-			templ_7745c5c3_Var24 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
 		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 54, "<script>\r\n\t\tfunction sakToggle(chk, ids) {\r\n\t\t\tids.forEach(function(id) {\r\n\t\t\t\tvar el = document.getElementById(id);\r\n\t\t\t\tif (el) el.disabled = !chk.checked;\r\n\t\t\t});\r\n\t\t}\r\n\t</script>")

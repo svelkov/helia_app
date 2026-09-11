@@ -370,13 +370,7 @@ func getSubmenuKey(menuName, submenuName string) string {
 
 // **********************************************
 // WriteJSONResponse writes a JSON response with the given status, success, errors, and message.
-func WriteJSONResponse(
-	c *gin.Context,
-	status int,
-	success bool,
-	errors []domain.FieldError,
-	message string,
-) {
+func WriteJSONResponse(c *gin.Context, status int, success bool, errors []domain.FieldError, message string) {
 	c.JSON(status, domain.Response{
 		StatusCode: status,
 		Success:    success,
@@ -597,4 +591,12 @@ func GetFvrData(ctx context.Context, repo FvrRepository) (domain.Fvr, error) {
 		return (*entities)[0], nil
 	}
 	return domain.Fvr{}, nil
+}
+func IsDataRequest(c *gin.Context) bool {
+	switch c.Request.Header.Get("X-Request-Source") {
+	case "", "menu", "tab":
+		return false
+	default:
+		return true
+	}
 }

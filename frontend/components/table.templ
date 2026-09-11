@@ -98,6 +98,23 @@ templ TableHeader(tbl domain.TableData, translator *i18n.Service) {
 templ TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service) {
 	<tbody id={ fmt.Sprintf("%s-body", tbl.TableID) } class="bg-white divide-y divide-gray-200">
 		for i, row := range tbl.Rows {
+			if row.ClassRow == "group-header" {
+				<tr class="bg-yellow-100 text-blue-900 font-bold">
+					<td colspan={ fmt.Sprintf("%d", len(tbl.Headers)) } class="px-1 py-1 text-sm font-bold whitespace-nowrap">
+						if len(row.Fields) > 0 {
+							{ row.Fields[0] }
+						}
+					</td>
+				</tr>
+			} else if row.ClassRow == "group-total" {
+				<tr class="bg-gray-200 font-bold">
+					for j, cell := range row.Fields {
+						<td name={ fmt.Sprintf("td-%d-%s", i, tbl.Headers[j].Name) } class={ fmt.Sprintf("px-1 py-1 text-sm font-bold whitespace-nowrap border-r text-%s", tbl.Headers[j].TextAlign) }>
+							{ cell }
+						</td>
+					}
+				</tr>
+			} else {
 			<tr
 				data-row-id={ row.ID }
 				hx-on:click="handleRowClick(this)"
@@ -253,6 +270,7 @@ templ TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service
 					</td>
 				}
 			</tr>
+			}
 		}
 	</tbody>
 	if tbl.HasTotals && len(tbl.Totals) > 0 {

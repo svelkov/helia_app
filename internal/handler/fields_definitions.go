@@ -4,15 +4,15 @@ import "helia/internal/domain"
 
 func SetBankeFields() []domain.Fields {
 	return []domain.Fields{
-		{Name: "brrac", Label: "Broj Racuna", Width: "45", Sortable: true},
-		{Name: "banka", Label: "Banka", Width: "60", Sortable: true},
-		{Name: "konto", Label: "Konto", Width: "8", Sortable: true},
-		{Name: "sifra", Label: "Sifra", Width: "8", Sortable: true},
-		{Name: "bnkcod", Label: "Kod Banke", Width: "4", Sortable: true},
-		{Name: "ebank", Label: "E-Banking", Width: "60", Sortable: true},
-		{Name: "pocnazfajl", Label: "Poc Naz Fajla", Width: "10", Sortable: true},
-		{Name: "tipdok", Label: "Tip Dokumenta", Width: "6", Sortable: true},
-		{Name: "nafakne", Label: "Na Fakt Ne", Width: "1", Sortable: true},
+		{Name: "brrac", Label: "Broj Racuna", ControlWidth: " w-60", MaxLength: "30", Sortable: true},
+		{Name: "banka", Label: "Banka", ControlWidth: " w-96", MaxLength: "120", Sortable: true},
+		{Name: "konto", Label: "Konto", ControlWidth: " w-16", MaxLength: "6", Sortable: true},
+		{Name: "sifra", Label: "Sifra", ControlWidth: " w-16", MaxLength: "6", Sortable: true},
+		{Name: "bnkcod", Label: "Kod Banke", ControlWidth: " w-12", MaxLength: "4", Sortable: true},
+		{Name: "ebank", Label: "E-Banking", ControlWidth: " w-60", MaxLength: "60", Sortable: true},
+		{Name: "pocnazfajl", Label: "Poc Naz Fajla", ControlWidth: " w-12", MaxLength: "10", Sortable: true},
+		{Name: "tipdok", Label: "Tip Dokumenta", ControlWidth: " w-12", MaxLength: "4", Sortable: true},
+		{Name: "nafakne", Label: "Na Fakt Ne", ControlWidth: " w-4", MaxLength: "2", Sortable: true},
 	}
 }
 
@@ -98,8 +98,8 @@ func SetSifmestoFields() []domain.Fields {
 
 func SetSifopFields() []domain.Fields {
 	return []domain.Fields{
-		{Name: "ops", Label: "Sifra Opstine", Width: "6", Sortable: true},
-		{Name: "naziv", Label: "Naziv Opstine", Width: "60", Sortable: true},
+		{Name: "ops", Label: "Sifra Opstine", MaxLength: "6", ControlWidth: " w-12", Sortable: true},
+		{Name: "naziv", Label: "Naziv Opstine", MaxLength: "60", ControlWidth: " w-96", Sortable: true},
 	}
 }
 func SetSifplizvFields() []domain.Fields {

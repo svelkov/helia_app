@@ -1,0 +1,320 @@
+package robno
+
+import (
+	"helia/frontend/components"
+	tmpl "helia/frontend/templates"
+	"helia/i18n"
+	"helia/internal/common"
+	"helia/internal/domain"
+	"time"
+)
+
+templ RobnoKompodaciMain(tabs domain.TabData, tbl domain.TableData, grpValues []domain.ComboItem, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, gnGod int, translator *i18n.Service) {
+	<div id="tab-content" class="flex flex-col h-full">
+		@RobnoKompodaciPregledRealizacijePoKupcimaArtiklima(tabs, tbl, grpValues, btnObrada, btnPrint, searchInput, gnGod, translator)
+	</div>
+	@tmpl.ShowSearchDialogScript()
+	@tmpl.HideDropdownScript()
+	@tmpl.ClearFieldErrorScript()
+	@tmpl.HandleDblClickKontoSelectionScript()
+	@tmpl.HandleDialogResponseScript()
+	@tmpl.CloseDialogScript()
+	@tmpl.OpenPrintWithParamsScript()
+}
+
+templ RobnoKompodaciPregledRealizacijePoKupcimaArtiklima(tabs domain.TabData, tbl domain.TableData, grpValues []domain.ComboItem, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, gnGod int, translator *i18n.Service) {
+	<!-- Container with full height -->
+	<div class="bg-blue-100 p-1 flex flex-col h-full">
+		<div class="border-b border-blue-600">
+			@tmpl.TabNav(translator.Title("Pregled realizacije po kupcima i artiklima"), tabs, "#tab-content", "robno-kompodaci-panel", translator)
+		</div>
+		<div id="robno-kompodaci-content" class="flex-1 min-h-0 flex flex-col gap-1 pt-1">
+			<div class="flex-1 min-h-0 flex flex-col gap-1">
+				<div class="no-border bg-blue-100 p-1 rounded-lg">
+					<div class="grid grid-cols-[1fr_2fr] gap-2 items-stretch">
+						<!-- Left Panel: Radiosets and Checkbox -->
+						<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1">
+							<legend class="px-1 font-semibold text-sm text-blue-900">Opcije izveštaja</legend>
+							<div class="border-b pb-1">
+								<div class="text-sm font-semibold text-blue-900 mb-1">Tip izveštaja</div>
+								<div class="flex gap-2">
+									<div class="flex gap-3">
+										@components.RadioButtonField(domain.RadioFieldConfig{
+											ID:         "tip_izvestaja-artikli",
+											Name:       "tip_izvestaja",
+											Value:      "1",
+											LabelText:  "Izveštaj po artiklima",
+											IsSelected: true,
+											TabIndex:   "1",
+										}, translator)
+										@components.RadioButtonField(domain.RadioFieldConfig{
+											ID:         "tip_izvestaja-kupci",
+											Name:       "tip_izvestaja",
+											Value:      "2",
+											LabelText:  "Izveštaj po kupcima",
+											IsSelected: false,
+											TabIndex:   "2",
+										}, translator)
+									</div>
+								</div>
+							</div>
+							<div class="border-b pb-1">
+								<div class="text-sm font-semibold text-blue-900 mb-1">Izbor tržišta</div>
+								<div class="flex gap-2">
+									<div class="flex gap-3">
+										@components.RadioButtonField(domain.RadioFieldConfig{
+											ID:         "trziste_domace",
+											Name:       "trziste",
+											Value:      "1",
+											LabelText:  "Domaće tržište",
+											IsSelected: true,
+											TabIndex:   "1",
+										}, translator)
+										@components.RadioButtonField(domain.RadioFieldConfig{
+											ID:         "trziste_izvoz",
+											Name:       "trziste",
+											Value:      "2",
+											LabelText:  "Izvoz",
+											IsSelected: false,
+											TabIndex:   "2",
+										}, translator)
+										@components.RadioButtonField(domain.RadioFieldConfig{
+											ID:         "trziste_ukupno",
+											Name:       "trziste",
+											Value:      "3",
+											LabelText:  "Ukupno",
+											IsSelected: false,
+											TabIndex:   "3",
+										}, translator)
+									</div>
+								</div>
+							</div>
+							<div>
+								<input type="checkbox" id="expand_all" name="expand_all" class="form-checkbox"/>
+								<label for="expand_all" class="text-sm">Expand all</label>
+							</div>
+						</fieldset>
+						<!-- Right Panel: Input Fields -->
+						<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1">
+							<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Parametri") }</legend>
+							<div class="flex items-center gap-1">
+								@components.LabelField(domain.LabelFieldConfig{ID: "odgrupe", LabelText: "Od grupe", ClassLabel: common.ClassLabel + " w-32"})
+								@components.ComboBoxField(domain.ComboFieldConfig{ID: "odgrupe", Name: "odgrupe", OptionValues: grpValues, ClassSelect: common.ClassInputTextEnabled + " flex-1", TabIndex: "1"}, translator)
+								@components.LabelField(domain.LabelFieldConfig{ID: "dogrupe", LabelText: "Do grupe", ClassLabel: common.ClassLabel + " w-20"})
+								@components.ComboBoxField(domain.ComboFieldConfig{ID: "dogrupe", Name: "dogrupe", OptionValues: grpValues, ClassSelect: common.ClassInputTextEnabled + " flex-1", TabIndex: "2"}, translator)
+							</div>
+							<div class="flex items-center gap-1">
+								@components.LabelField(domain.LabelFieldConfig{ID: "odsifreartikla", LabelText: "Od šifre artikla", ClassLabel: common.ClassLabel + " w-32"})
+								@components.TextInputField(domain.InputFieldConfig{ID: "odsifreartikla", Name: "odsifreartikla", FieldType: "text", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "3"})
+								@components.SearchButton(domain.SearchButtonConfig{ID: "search-odsifreartikla", Name: "search-odsifreartikla", HxUrl: "/api/promet/searchbutton", HxTarget: "#search-dropdown", HxSwap: "innerHTML", HxVals: `js:{"destfield": "odsifreartikla"}`, ClassButton: common.ClassButton})
+								@components.TextInputField(domain.InputFieldConfig{ID: "odsifranaziv", Name: "odsifranaziv", FieldType: "text", Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1"})
+							</div>
+							<div class="flex items-center gap-1">
+								@components.LabelField(domain.LabelFieldConfig{ID: "dosifreartikla", LabelText: "Do šifre artikla", ClassLabel: common.ClassLabel + " w-32"})
+								@components.TextInputField(domain.InputFieldConfig{ID: "dosifreartikla", Name: "dosifreartikla", FieldType: "text", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "4"})
+								@components.SearchButton(domain.SearchButtonConfig{ID: "search-dosifreartikla", Name: "search-dosifreartikla", HxUrl: "/api/promet/searchbutton", HxTarget: "#search-dropdown", HxSwap: "innerHTML", HxVals: `js:{"destfield": "dosifreartikla"}`, ClassButton: common.ClassButton})
+								@components.TextInputField(domain.InputFieldConfig{ID: "dosifranaziv", Name: "dosifranaziv", FieldType: "text", Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1"})
+							</div>
+							<div class="flex items-center justify-between gap-1">
+								<div class="flex items-center gap-1">
+									@components.LabelField(domain.LabelFieldConfig{ID: "oddatuma", LabelText: "Od datuma", ClassLabel: common.ClassLabel + " w-32"})
+									@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month(), 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "3"})
+									@components.LabelField(domain.LabelFieldConfig{ID: "dodatuma", LabelText: "Do datuma", ClassLabel: common.ClassLabel + " w-32"})
+									@components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month()+1, 0, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "4"})
+								</div>
+								<div class="flex gap-1">
+									@components.Button(btnObrada)
+									@components.Search_PartPrintButton(btnPrint)
+								</div>
+							</div>
+						</fieldset>
+					</div>
+				</div>
+				<!-- Group Data Table -->
+				<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative">
+					@components.LoadingSpinner()
+					@components.Search_Part(tbl, searchInput)
+					<!-- Table -->
+					<div id={ tbl.TableID } class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+						@components.Table(tbl, translator)
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+templ RobnoKompodaciPregledRealizacijePoArtiklima(tabs domain.TabData, tbl domain.TableData, grpValues []domain.ComboItem, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, gnGod int, translator *i18n.Service) {
+	<!-- Container with full height -->
+	<div class="bg-blue-100 p-1 flex flex-col h-full">
+		<div class="border-b border-blue-600">
+			@tmpl.TabNav(translator.Title("Pregled realizacije po artiklima"), tabs, "#tab-content", "robno-kompodaci-panel", translator)
+		</div>
+		<div id="robno-kompodaci-content" class="flex-1 min-h-0 flex flex-col gap-1 pt-1">
+			<div class="flex-1 min-h-0 flex flex-col gap-1">
+				<div class="no-border bg-blue-100 p-1 rounded-lg">
+					<div class="grid grid-cols-[1fr_2fr] gap-2 items-stretch">
+						<!-- Left Panel: Izbor tržišta -->
+						<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1">
+							<legend class="px-1 font-semibold text-sm text-blue-900">Opcije izveštaja</legend>
+							<div class="border-b pb-1">
+								<div class="text-sm font-semibold text-blue-900 mb-1">Izbor tržišta</div>
+								<div class="flex gap-2">
+									<div class="flex items-center gap-1">
+										<input type="radio" id="trziste_domace" name="trziste" value="domace" checked class="form-radio"/>
+										<label for="trziste_domace" class="text-sm">Domaće</label>
+									</div>
+									<div class="flex items-center gap-1">
+										<input type="radio" id="trziste_izvoz" name="trziste" value="izvoz" class="form-radio"/>
+										<label for="trziste_izvoz" class="text-sm">Izvoz</label>
+									</div>
+									<div class="flex items-center gap-1">
+										<input type="radio" id="trziste_ukupno" name="trziste" value="ukupno" class="form-radio"/>
+										<label for="trziste_ukupno" class="text-sm">Ukupno</label>
+									</div>
+								</div>
+							</div>
+						</fieldset>
+						<!-- Right Panel: Input Fields -->
+						<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1">
+							<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Parametri") }</legend>
+							<div class="flex items-center gap-1">
+								@components.LabelField(domain.LabelFieldConfig{ID: "odgrupe", LabelText: "Od grupe", ClassLabel: common.ClassLabel + " w-32"})
+								@components.ComboBoxField(domain.ComboFieldConfig{ID: "odgrupe", Name: "odgrupe", OptionValues: grpValues, ClassSelect: common.ClassInputTextEnabled + " flex-1", TabIndex: "1"}, translator)
+								@components.LabelField(domain.LabelFieldConfig{ID: "dogrupe", LabelText: "Do grupe", ClassLabel: common.ClassLabel + " w-20"})
+								@components.ComboBoxField(domain.ComboFieldConfig{ID: "dogrupe", Name: "dogrupe", OptionValues: grpValues, ClassSelect: common.ClassInputTextEnabled + " flex-1", TabIndex: "2"}, translator)
+							</div>
+							<div class="flex items-center gap-1">
+								@components.LabelField(domain.LabelFieldConfig{ID: "odsifreartikla", LabelText: "Od šifre artikla", ClassLabel: common.ClassLabel + " w-32"})
+								@components.TextInputField(domain.InputFieldConfig{ID: "odsifreartikla", Name: "odsifreartikla", FieldType: "text", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "3"})
+								@components.SearchButton(domain.SearchButtonConfig{ID: "search-odsifreartikla", Name: "search-odsifreartikla", HxUrl: "/api/promet/searchbutton", HxTarget: "#search-dropdown", HxSwap: "innerHTML", HxVals: `js:{"destfield": "odsifreartikla"}`, ClassButton: common.ClassButton})
+								@components.TextInputField(domain.InputFieldConfig{ID: "odsifranaziv", Name: "odsifranaziv", FieldType: "text", Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1"})
+							</div>
+							<div class="flex items-center gap-1">
+								@components.LabelField(domain.LabelFieldConfig{ID: "dosifreartikla", LabelText: "Do šifre artikla", ClassLabel: common.ClassLabel + " w-32"})
+								@components.TextInputField(domain.InputFieldConfig{ID: "dosifreartikla", Name: "dosifreartikla", FieldType: "text", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "4"})
+								@components.SearchButton(domain.SearchButtonConfig{ID: "search-dosifreartikla", Name: "search-dosifreartikla", HxUrl: "/api/promet/searchbutton", HxTarget: "#search-dropdown", HxSwap: "innerHTML", HxVals: `js:{"destfield": "dosifreartikla"}`, ClassButton: common.ClassButton})
+								@components.TextInputField(domain.InputFieldConfig{ID: "dosifranaziv", Name: "dosifranaziv", FieldType: "text", Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1"})
+							</div>
+							<div class="flex items-center justify-between gap-1">
+								<div class="flex items-center gap-1">
+									@components.LabelField(domain.LabelFieldConfig{ID: "oddatuma", LabelText: "Od datuma", ClassLabel: common.ClassLabel + " w-32"})
+									@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month(), 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "3"})
+									@components.LabelField(domain.LabelFieldConfig{ID: "dodatuma", LabelText: "Do datuma", ClassLabel: common.ClassLabel + " w-32"})
+									@components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month()+1, 0, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "4"})
+								</div>
+								<div class="flex gap-1">
+									@components.Button(btnObrada)
+									@components.Search_PartPrintButton(btnPrint)
+								</div>
+							</div>
+						</fieldset>
+					</div>
+				</div>
+				<!-- Group Data Table -->
+				<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative">
+					@components.LoadingSpinner()
+					@components.Search_Part(tbl, searchInput)
+					<!-- Table -->
+					<div id={ tbl.TableID } class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+						@components.Table(tbl, translator)
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+templ RobnoKompodaciPregledUcescaArtikla(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, gnGod int, translator *i18n.Service) {
+	<!-- Container with full height -->
+	<div class="bg-blue-100 p-1 flex flex-col h-full">
+		<div class="border-b border-blue-600">
+			@tmpl.TabNav(translator.Title("Pregled učešća artikla u ukupnom prometu"), tabs, "#tab-content", "robno-kompodaci-panel", translator)
+		</div>
+		<div id="robno-kompodaci-content" class="flex-1 min-h-0 flex flex-col gap-1 pt-1">
+			<div class="flex-1 min-h-0 flex flex-col gap-1">
+				<div class="no-border bg-blue-100 p-1 rounded-lg">
+					<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1">
+						<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Parametri") }</legend>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "odsifreartikla", LabelText: "Od šifre artikla", ClassLabel: common.ClassLabel + " w-32"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "odsifreartikla", Name: "odsifreartikla", FieldType: "text", Value: "0", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "1"})
+							@components.SearchButton(domain.SearchButtonConfig{ID: "search-odsifreartikla", Name: "search-odsifreartikla", HxUrl: "/api/promet/searchbutton", HxTarget: "#search-dropdown", HxSwap: "innerHTML", HxVals: `js:{"destfield": "odsifreartikla"}`, ClassButton: common.ClassButton})
+							@components.TextInputField(domain.InputFieldConfig{ID: "odsifranaziv", Name: "odsifranaziv", FieldType: "text", Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1"})
+							@components.LabelField(domain.LabelFieldConfig{ID: "dosifreartikla", LabelText: "Do šifre artikla", ClassLabel: common.ClassLabel + " w-32"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "dosifreartikla", Name: "dosifreartikla", FieldType: "text", Value: "999999", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "2"})
+							@components.SearchButton(domain.SearchButtonConfig{ID: "search-dosifreartikla", Name: "search-dosifreartikla", HxUrl: "/api/promet/searchbutton", HxTarget: "#search-dropdown", HxSwap: "innerHTML", HxVals: `js:{"destfield": "dosifreartikla"}`, ClassButton: common.ClassButton})
+							@components.TextInputField(domain.InputFieldConfig{ID: "dosifranaziv", Name: "dosifranaziv", FieldType: "text", Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1"})
+						</div>
+						<div class="flex items-center justify-between gap-1">
+							<div class="flex items-center gap-1">
+								@components.LabelField(domain.LabelFieldConfig{ID: "oddatuma", LabelText: "Od datuma", ClassLabel: common.ClassLabel + " w-32"})
+								@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month(), 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "3"})
+								@components.LabelField(domain.LabelFieldConfig{ID: "dodatuma", LabelText: "Do datuma", ClassLabel: common.ClassLabel + " w-32"})
+								@components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month()+1, 0, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "4"})
+							</div>
+							<div class="flex gap-1">
+								@components.Button(btnObrada)
+								@components.Search_PartPrintButton(btnPrint)
+							</div>
+						</div>
+					</fieldset>
+				</div>
+				<!-- Group Data Table -->
+				<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative">
+					@components.LoadingSpinner()
+					@components.Search_Part(tbl, searchInput)
+					<!-- Table -->
+					<div id={ tbl.TableID } class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+						@components.Table(tbl, translator)
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+templ RobnoKompodaciPregledUcescaGrupeArtikala(tabs domain.TabData, tbl domain.TableData, grpValues []domain.ComboItem, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, gnGod int, translator *i18n.Service) {
+	<!-- Container with full height -->
+	<div class="bg-blue-100 p-1 flex flex-col h-full">
+		<div class="border-b border-blue-600">
+			@tmpl.TabNav(translator.Title("Pregled učešća grupe artikala u ukupnom prometu"), tabs, "#tab-content", "robno-kompodaci-panel", translator)
+		</div>
+		<div id="robno-kompodaci-content" class="flex-1 min-h-0 flex flex-col gap-1 pt-1">
+			<div class="flex-1 min-h-0 flex flex-col gap-1">
+				<div class="no-border bg-blue-100 p-1 rounded-lg">
+					<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1">
+						<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Parametri") }</legend>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "odgrupe", LabelText: "Od grupe", ClassLabel: common.ClassLabel + " w-32"})
+							@components.ComboBoxField(domain.ComboFieldConfig{ID: "odgrupe", Name: "odgrupe", OptionValues: grpValues, ClassSelect: common.ClassInputTextEnabled + " flex-1", TabIndex: "1"}, translator)
+							@components.LabelField(domain.LabelFieldConfig{ID: "dogrupe", LabelText: "Do grupe", ClassLabel: common.ClassLabel + " w-32"})
+							@components.ComboBoxField(domain.ComboFieldConfig{ID: "dogrupe", Name: "dogrupe", OptionValues: grpValues, ClassSelect: common.ClassInputTextEnabled + " flex-1", TabIndex: "2"}, translator)
+						</div>
+						<div class="flex items-center justify-between gap-1">
+							<div class="flex items-center gap-1">
+								@components.LabelField(domain.LabelFieldConfig{ID: "oddatuma", LabelText: "Od datuma", ClassLabel: common.ClassLabel + " w-32"})
+								@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month(), 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "3"})
+								@components.LabelField(domain.LabelFieldConfig{ID: "dodatuma", LabelText: "Do datuma", ClassLabel: common.ClassLabel + " w-32"})
+								@components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month()+1, 0, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "4"})
+							</div>
+							<div class="flex gap-1">
+								@components.Button(btnObrada)
+								@components.Search_PartPrintButton(btnPrint)
+							</div>
+						</div>
+					</fieldset>
+				</div>
+				<!-- Group Data Table -->
+				<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative">
+					@components.LoadingSpinner()
+					@components.Search_Part(tbl, searchInput)
+					<!-- Table -->
+					<div id={ tbl.TableID } class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+						@components.Table(tbl, translator)
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+}

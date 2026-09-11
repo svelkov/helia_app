@@ -1,12 +1,12 @@
 package finansijsko
 
 import (
+	"helia/frontend/components"
 	tmpl "helia/frontend/templates"
 	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
 	"time"
-	"helia/frontend/components"
 )
 
 templ PrometMain(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.TotalValues, searchInput domain.InputControl, gnGod int, checkBoxURL string, translator *i18n.Service) {
@@ -609,8 +609,8 @@ templ DodatniKriterijumi(prometParams domain.PrometParam, translator *i18n.Servi
 
 // Tab 2 - Analiticka kartica po mestima isporuke
 templ AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.TotalValues, searchInput domain.InputControl, gnGod int, translator *i18n.Service) {
-	<!-- Tab Navigation -->
-	<div class="flex flex-col h-full">
+	<!-- Container with full height -->
+	<div class="bg-blue-100 p-1 flex flex-col h-full">
 		<!-- Tab Navigation -->
 		<div class="border-b border-blue-600">
 			@tmpl.TabNav(translator.Title("Promet"), tabs, "#tab-content", "promet-panel", translator)
@@ -849,8 +849,8 @@ templ AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint,
 
 // Tab 3 - Promet deviznih analitickih konta
 templ PrometDeviznihAnalitickihKonta(tabs domain.TabData, tblHdr domain.TableData, tblDevizni domain.TableData, btnPrint, btnObrada domain.Button, total domain.TotalValues, gnGod int, searchInput domain.InputControl, translator *i18n.Service) {
-	<!-- Tab Navigation -->
-	<div class="flex flex-col h-full">
+	<!-- Container with full height -->
+	<div class="bg-blue-100 p-1 flex flex-col h-full">
 		<!-- Tab Navigation -->
 		<div class="border-b border-blue-600">
 			@tmpl.TabNav(translator.Title("Promet"), tabs, "#tab-content", "promet-panel", translator)
@@ -1020,7 +1020,7 @@ templ PrometDeviznaKontaTables(tblHdr domain.TableData, tblDevizni domain.TableD
 
 templ PrometSubsintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.TotalValues, searchInput domain.InputControl, gnGod int, translator *i18n.Service) {
 	<!-- Container with full height -->
-	<div class="flex flex-col h-full">
+	<div class="bg-blue-100 p-1 flex flex-col h-full">
 		<!-- Tab Navigation -->
 		<div class="border-b border-blue-600">
 			@tmpl.TabNav(translator.Title("Promet"), tabs, "#tab-content", "promet-panel", translator)
@@ -1305,7 +1305,7 @@ templ PrometSubsintetickihKontaDialog(dialog domain.Dialog, btnPrint, btnCancel,
 
 templ PrometSintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.TotalValues, searchInput domain.InputControl, gnGod int, translator *i18n.Service) {
 	<!-- Container with full height -->
-	<div class="flex flex-col h-full">
+	<div class="bg-blue-100 p-1 flex flex-col h-full">
 		<!-- Tab Navigation -->
 		<div class="border-b border-blue-600">
 			@tmpl.TabNav(translator.Title("Promet"), tabs, "#tab-content", "promet-panel", translator)
@@ -1511,7 +1511,7 @@ templ PrometSintetickihKontaDialog(dialog domain.Dialog, btnPrint, btnCancel, bt
 
 templ KarticaSintetickiKonta(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.TotalValues, searchInput domain.InputControl, gnGod int, translator *i18n.Service) {
 	<!-- Container with full height -->
-	<div class="flex flex-col h-full">
+	<div class="bg-blue-100 p-1 flex flex-col h-full">
 		<!-- Tab Navigation -->
 		<div class="border-b border-blue-600">
 			@tmpl.TabNav(translator.Title("Promet"), tabs, "#tab-content", "promet-panel", translator)
@@ -1630,7 +1630,7 @@ templ KarticaSintetickiKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 
 templ PrometKontaPoVRD(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.TotalValues, searchInput domain.InputControl, gnGod int, translator *i18n.Service) {
 	<!-- Container with full height -->
-	<div class="flex flex-col h-full">
+	<div class="bg-blue-100 p-1 flex flex-col h-full">
 		<!-- Tab Navigation -->
 		<div class="border-b border-blue-600">
 			@tmpl.TabNav(translator.Title("Promet"), tabs, "#tab-content", "promet-panel", translator)
@@ -1747,7 +1747,7 @@ templ PrometKontaPoVRD(tabs domain.TabData, tbl domain.TableData, btnPrint, btnO
 
 templ PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint, btnObrada domain.Button, total domain.TotalValues, searchInput domain.InputControl, gnGod int, translator *i18n.Service) {
 	<!-- Container with full height -->
-	<div class="flex flex-col h-full">
+	<div class="bg-blue-100 p-1 flex flex-col h-full">
 		<!-- Tab Navigation -->
 		<div class="border-b border-blue-600">
 			@tmpl.TabNav(translator.Title("Promet"), tabs, "#tab-content", "promet-panel", translator)

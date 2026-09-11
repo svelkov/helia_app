@@ -106,6 +106,8 @@ type Fields struct {
 	ValidationText  string
 	Value           string
 	Width           string
+	MaxLength       string
+	ControlWidth    string
 	TabIndex        string
 	SkipInSearch    bool
 	Field           string
@@ -219,6 +221,7 @@ type InputFieldConfig struct {
 	OnInput          string
 	OnFocus          string
 	DecimalPlaces    int
+	ControlWidth     string
 	DataDestField    string // Optional: ID of the field where the value should be stored, used for search popups
 }
 

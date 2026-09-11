@@ -52,15 +52,15 @@ type Banke struct {
 	IDBanke    int            `json:"idbanke" db:"idbanke"`
 	God        int            `json:"god" db:"god"`
 	Kar        int            `json:"kar" db:"kar"`
-	BrRac      string         `json:"brrac" db:"brrac"`
-	Banka      string         `json:"banka" db:"banka"`
-	Konto      string         `json:"konto" db:"konto"`
-	Sifra      string         `json:"sifra" db:"sifra"`
-	BnkCod     string         `json:"bnkcod" db:"bnkcod"`
-	EBank      string         `json:"ebank" db:"ebank"`
-	PocNazFajl string         `json:"pocnazfajl" db:"pocnazfajl"`
-	TipDok     string         `json:"tipdok" db:"tipdok"`
-	NaFakNe    bool           `json:"nafakne" db:"nafakne"`
+	BrRac      string         `json:"brrac" db:"brrac" form:"brrac"`
+	Banka      string         `json:"banka" db:"banka" form:"banka"`
+	Konto      string         `json:"konto" db:"konto" form:"konto"`
+	Sifra      string         `json:"sifra" db:"sifra" form:"sifra"`
+	BnkCod     string         `json:"bnkcod" db:"bnkcod" form:"bnkcod"`
+	EBank      string         `json:"ebank" db:"ebank" form:"ebank"`
+	PocNazFajl string         `json:"pocnazfajl" db:"pocnazfajl" form:"pocnazfajl"`
+	TipDok     string         `json:"tipdok" db:"tipdok" form:"tipdok"`
+	NaFakNe    bool           `json:"nafakne" db:"nafakne" form:"nafakne"`
 	XDatUnosa  sql.NullTime   `json:"xdatunosa" db:"xdatunosa"`
 	XDatIzmene sql.NullTime   `json:"xdatizmene" db:"xdatizmene"`
 	XOpuNos    string         `json:"xopunos" db:"xopunos"`
@@ -72,8 +72,8 @@ type Sifop struct {
 	IDSifop    int            `json:"id_sifop" db:"idsifop"`
 	God        int            `json:"god" db:"god"`
 	Kar        int            `json:"kar" db:"kar"`
-	Ops        string         `json:"ops" db:"ops"`
-	Naziv      string         `json:"naziv" db:"naziv"`
+	Ops        string         `json:"ops" db:"ops" form:"ops"`
+	Naziv      string         `json:"naziv" db:"naziv" form:"naziv"`
 	XDatUnosa  sql.NullTime   `json:"xdat_unosa" db:"xdatunosa"`
 	XDatIzmene sql.NullTime   `json:"xdat_izmene" db:"xdatizmene"`
 	XOpuNos    sql.NullString `json:"xop_unos" db:"xopunos"`
@@ -82,14 +82,14 @@ type Sifop struct {
 
 // Partneri Model
 type Partneri struct {
-	IDPartneri  int            `json:"id_partneri" db:"idpartneri"`
+	IDPartneri  int            `json:"id_partneri" db:"idpartneri" form:"idpartneri"`
 	God         int            `json:"god" db:"god"`
 	Kar         int            `json:"kar" db:"kar"`
 	Naziv       string         `json:"naziv" db:"naziv" form:"naziv"`
 	Mesto       string         `json:"mesto" db:"mesto" form:"mesto"`
 	PoBro       int            `json:"pobro" db:"pobro" form:"pobro"`
 	Adresa      string         `json:"adresa" db:"adresa" form:"adresa"`
-	Ziro        string         `json:"ziro" db:"ziro"`
+	Ziro        string         `json:"ziro" db:"ziro" form:"ziro"`
 	TipPDV      int            `json:"tip_pdv" db:"tippdv" form:"tippdv"`
 	Mar         float32        `json:"mar" db:"mar"`
 	Ter         int            `json:"ter" db:"ter" form:"ter"`
@@ -263,9 +263,9 @@ type Mestotr struct {
 	MestoTrID  int            `json:"mestotrid" db:"mestotrid"`
 	God        int            `json:"god" db:"god"`
 	Kar        int            `json:"kar" db:"kar"`
-	Mtroska    string         `json:"mtroska" db:"mtroska"`
-	Opis       string         `json:"opis" db:"opis"`
-	IDOrgjed   int            `json:"idorgjed" db:"idorgjed"`
+	Mtroska    string         `json:"mtroska" db:"mtroska" form:"mtroska"`
+	Opis       string         `json:"opis" db:"opis" form:"opis"`
+	IDOrgjed   int            `json:"idorgjed" db:"idorgjed" form:"idorgjed"`
 	XDatUnosa  sql.NullTime   `json:"xdat_unosa" db:"xdatunosa"`
 	XDatIzmene sql.NullTime   `json:"xdat_izmene" db:"xdatizmene"`
 	XOpUnos    string         `json:"xop_unos" db:"xopunos"`
@@ -276,12 +276,12 @@ type Mestotr struct {
 type Sifmesto struct {
 	God        int            `json:"god" db:"god"`
 	Kar        int            `json:"kar" db:"kar"`
-	SifM       int            `json:"sifm" db:"sifm"`
-	Naziv      string         `json:"naziv" db:"naziv"`
-	Ops        string         `json:"ops" db:"ops"`
-	Pobro      int            `json:"pobro" db:"pobro"`
+	SifM       int            `json:"sifm" db:"sifm" form:"sifm"`
+	Naziv      string         `json:"naziv" db:"naziv" form:"naziv"`
+	Ops        string         `json:"ops" db:"ops" form:"ops"`
+	Pobro      int            `json:"pobro" db:"pobro" form:"pobro"`
 	IDDrzave   string         `json:"iddrzave" db:"iddrzave"`
-	Km         int            `json:"km" db:"km"`
+	Km         int            `json:"km" db:"km" form:"km"`
 	XDatUnosa  sql.NullTime   `json:"xdat_unosa" db:"xdatunosa"`
 	XDatIzmene sql.NullTime   `json:"xdat_izmene" db:"xdatizmene"`
 	XOpUnos    string         `json:"xop_unos" db:"xopunos"`
@@ -291,12 +291,12 @@ type Sifmesto struct {
 // SIFPLIZV Model
 type Sifplizv struct {
 	SifPlizvID int            `json:"sifplizvid" db:"sifplizvid"`
-	SifPlac    int            `json:"sifplac" db:"sifplac"`
-	Oblik      int            `json:"oblik" db:"oblik"`
-	Osnov      int            `json:"osnov" db:"osnov"`
-	Opis       string         `json:"opis" db:"opis"`
-	Konto      string         `json:"konto" db:"konto"`
-	Sifra      string         `json:"sifra" db:"sifra"`
+	SifPlac    int            `json:"sifplac" db:"sifplac" form:"sifplac"`
+	Oblik      int            `json:"oblik" db:"oblik" form:"oblik"`
+	Osnov      int            `json:"osnov" db:"osnov" form:"osnov"`
+	Opis       string         `json:"opis" db:"opis" form:"opis"`
+	Konto      string         `json:"konto" db:"konto" form:"konto"`
+	Sifra      string         `json:"sifra" db:"sifra" form:"sifra"`
 	XOpUnos    string         `json:"xop_unos" db:"xopunos"`
 	XDatUnosa  sql.NullTime   `json:"xdat_unosa" db:"xdatunosa"`
 	XOpIzmene  sql.NullString `json:"xop_izmene" db:"xopizmene"`
@@ -308,10 +308,10 @@ type Fvknjrac struct {
 	IDFvknjrac int            `json:"idfvknjrac" db:"idfvknjrac"`
 	God        int            `json:"god" db:"god"`
 	Kar        int            `json:"kar" db:"kar"`
-	VkTip      string         `json:"vktip" db:"vktip"`
-	VkRbr      int            `json:"vkrbr" db:"vkrbr"`
-	Opis       string         `json:"opis" db:"opis"`
-	Konta      string         `json:"konta" db:"konta"`
+	VkTip      string         `json:"vktip" db:"vktip" form:"vktip"`
+	VkRbr      int            `json:"vkrbr" db:"vkrbr" form:"vkrbr"`
+	Opis       string         `json:"opis" db:"opis" form:"opis"`
+	Konta      string         `json:"konta" db:"konta" form:"konta"`
 	XDatUnosa  sql.NullTime   `json:"xdat_unosa" db:"xdatunosa"`
 	XDatIzmene sql.NullTime   `json:"xdat_izmene" db:"xdatizmene"`
 	XOpUnos    string         `json:"xop_unos" db:"xopunos"`
@@ -336,16 +336,16 @@ type Bnkizv struct {
 	Bnkizvid    int            `json:"bnkizvid" db:"bnkizvid"`
 	God         int            `json:"god" db:"god"`
 	Kar         int            `json:"kar" db:"kar"`
-	Sifbank     int            `json:"sifbank" db:"sifbank"`
-	Bnkdes      string         `json:"bnkdes" db:"bnkdes"`
-	Swiftadr    string         `json:"swiftadr" db:"swiftadr"`
-	Brojrac     string         `json:"brojrac" db:"brojrac"`
-	Beneficiary string         `json:"beneficiary" db:"beneficiary"`
-	Corrbank    string         `json:"corrbank" db:"corrbank"`
-	Tel         string         `json:"tel" db:"tel"`
-	Fax         string         `json:"fax" db:"fax"`
-	Address     string         `json:"address" db:"address"`
-	Komentar    string         `json:"komentar" db:"komentar"`
+	Sifbank     int            `json:"sifbank" db:"sifbank" form:"sifbank"`
+	Bnkdes      string         `json:"bnkdes" db:"bnkdes" form:"bnkdes"`
+	Swiftadr    string         `json:"swiftadr" db:"swiftadr" form:"swiftadr"`
+	Brojrac     string         `json:"brojrac" db:"brojrac" form:"brojrac"`
+	Beneficiary string         `json:"beneficiary" db:"beneficiary" form:"beneficiary"`
+	Corrbank    string         `json:"corrbank" db:"corrbank" form:"corrbank"`
+	Tel         string         `json:"tel" db:"tel" form:"tel"`
+	Fax         string         `json:"fax" db:"fax" form:"fax"`
+	Address     string         `json:"address" db:"address" form:"address"`
+	Komentar    string         `json:"komentar" db:"komentar" form:"komentar"`
 	Xopunos     sql.NullString `json:"xopunos" db:"xopunos"`
 	Xdatunosa   time.Time      `json:"xdatunosa" db:"xdatunosa"`
 	Xopizmene   sql.NullString `json:"xopizmene" db:"xopizmene"`
@@ -356,10 +356,10 @@ type Fvepdv struct {
 	Fvepdvid   int            `json:"fvepdvid" db:"fvepdvid"`
 	God        int            `json:"god" db:"god"`
 	Kar        int            `json:"kar" db:"kar"`
-	Vktip      string         `json:"vktip" db:"vktip"`
-	Vkrbr      int            `json:"vkrbr" db:"vkrbr"`
-	Opis       string         `json:"opis" db:"opis"`
-	Obrazac    string         `json:"obrazac" db:"obrazac"`
+	Vktip      string         `json:"vktip" db:"vktip" form:"vktip"`
+	Vkrbr      int            `json:"vkrbr" db:"vkrbr" form:"vkrbr"`
+	Opis       string         `json:"opis" db:"opis" form:"opis"`
+	Obrazac    string         `json:"obrazac" db:"obrazac" form:"obrazac"`
 	Xdatunosa  time.Time      `json:"xdatunosa" db:"xdatunosa"`
 	Xdatizmene sql.NullTime   `json:"xdatizmene" db:"xdatizmene"`
 	Xopunos    string         `json:"xopunos" db:"xopunos"`

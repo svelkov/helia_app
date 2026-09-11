@@ -1,0 +1,240 @@
+package robno
+
+import (
+	"fmt"
+	rep "helia/frontend/templates/reports"
+	"helia/i18n"
+	"helia/internal/common"
+	"helia/internal/domain"
+	"time"
+)
+
+// RobnoKompodaciUcescaGrupeArtikalaStampa renders a printable "Pregled ucesca grupe artikala" report.
+templ RobnoKompodaciUcescaGrupeArtikalaStampa(repParams domain.ReportParameters, params domain.RobnoKomPodaciParams, tbl domain.TableData, translator *i18n.Service) {
+	@rep.Report(repParams, domain.TableData{}, translator, nil, RobnoKompodaciUcescaGrupeArtikalaContent(repParams, params, tbl, translator))
+}
+
+templ RobnoKompodaciUcescaGrupeArtikalaContent(repParams domain.ReportParameters, params domain.RobnoKomPodaciParams, tbl domain.TableData, translator *i18n.Service) {
+	@rep.ReportHeader(repParams)
+	@rep.ReportTitle(repParams)
+	@RobnoKompodaciUcescaGrupeArtikalaParam(params, translator)
+	@rep.ReportTableSection(tbl, translator)
+	@rep.ReportEnd(nil)
+}
+
+// RobnoKompodaciUcescaGrupeArtikalaParam displays the selection/processing parameters used to
+// build the report, mirroring the on-screen filters from the Pregled ucesca grupe artikala form.
+templ RobnoKompodaciUcescaGrupeArtikalaParam(params domain.RobnoKomPodaciParams, translator *i18n.Service) {
+	<div class="mb-2 text-sm print:text-[9pt]">
+		<div class="flex items-center justify-between gap-2 mb-1">
+			<div class="flex items-center gap-2">
+				<span class="font-semibold">{ translator.Label("Od grupe") }:</span>
+				<span class="font-bold">{ params.OdGrupe }</span>
+				<span class="font-semibold ml-6">{ translator.Label("Do grupe") }:</span>
+				<span class="font-bold">{ params.DoGrupe }</span>
+			</div>
+		</div>
+		<div class="flex items-center justify-between gap-2">
+			<div class="flex items-center gap-2">
+				<span class="font-semibold">{ translator.Label("Od datuma") }:</span>
+				<span class="font-bold">{ robnoKompodaciStampaFormatDate(params.OdDatuma) }</span>
+				<span class="font-semibold ml-6">{ translator.Label("Do datuma") }:</span>
+				<span class="font-bold">{ robnoKompodaciStampaFormatDate(params.DoDatuma) }</span>
+			</div>
+		</div>
+	</div>
+}
+
+// RobnoKompodaciUcescaArtiklaStampa renders a printable "Pregled ucesca artikla" report.
+templ RobnoKompodaciUcescaArtiklaStampa(repParams domain.ReportParameters, params domain.RobnoKomPodaciParams, tbl domain.TableData, translator *i18n.Service) {
+	@rep.Report(repParams, domain.TableData{}, translator, nil, RobnoKompodaciUcescaArtiklaContent(repParams, params, tbl, translator))
+}
+
+templ RobnoKompodaciUcescaArtiklaContent(repParams domain.ReportParameters, params domain.RobnoKomPodaciParams, tbl domain.TableData, translator *i18n.Service) {
+	@rep.ReportHeader(repParams)
+	@rep.ReportTitle(repParams)
+	@RobnoKompodaciUcescaArtiklaParam(params, translator)
+	@rep.ReportTableSection(tbl, translator)
+	@rep.ReportEnd(nil)
+}
+
+// RobnoKompodaciUcescaArtiklaParam displays the selection/processing parameters used to
+// build the report, mirroring the on-screen filters from the Pregled ucesca artikla form.
+templ RobnoKompodaciUcescaArtiklaParam(params domain.RobnoKomPodaciParams, translator *i18n.Service) {
+	<div class="mb-2 text-sm print:text-[9pt]">
+		<div class="flex items-center justify-between gap-2 mb-1">
+			<div class="flex items-center gap-2">
+				<span class="font-semibold">{ translator.Label("Od artikla") }:</span>
+				<span class="font-bold">{ params.OdArtikla }</span>
+				<span class="font-semibold ml-6">{ translator.Label("Do artikla") }:</span>
+				<span class="font-bold">{ params.DoArtikla }</span>
+			</div>
+		</div>
+		<div class="flex items-center justify-between gap-2">
+			<div class="flex items-center gap-2">
+				<span class="font-semibold">{ translator.Label("Od datuma") }:</span>
+				<span class="font-bold">{ robnoKompodaciStampaFormatDate(params.OdDatuma) }</span>
+				<span class="font-semibold ml-6">{ translator.Label("Do datuma") }:</span>
+				<span class="font-bold">{ robnoKompodaciStampaFormatDate(params.DoDatuma) }</span>
+			</div>
+		</div>
+	</div>
+}
+
+func robnoKompodaciStampaFormatDate(value string) string {
+	if value == "" {
+		return ""
+	}
+	parsed, err := time.Parse("2006-01-02", value)
+	if err != nil {
+		return value
+	}
+	return parsed.Format(common.DateLayout)
+}
+
+// RobnoKompodaciPregledRealizacijePoArtiklimaStampa renders a printable "Pregled realizacije po artiklima" report.
+templ RobnoKompodaciPregledRealizacijePoArtiklimaStampa(repParams domain.ReportParameters, params domain.RobnoKomPodaciParams, tbl domain.TableData, translator *i18n.Service) {
+	@rep.Report(repParams, domain.TableData{}, translator, nil, RobnoKompodaciPregledRealizacijePoArtiklimaContent(repParams, params, tbl, translator))
+}
+
+templ RobnoKompodaciPregledRealizacijePoArtiklimaContent(repParams domain.ReportParameters, params domain.RobnoKomPodaciParams, tbl domain.TableData, translator *i18n.Service) {
+	@rep.ReportHeader(repParams)
+	@rep.ReportTitle(repParams)
+	@RobnoKompodaciPregledRealizacijePoArtiklimaParam(params, translator, repParams.ParameterItems)
+	@RobnoKompodaciPregledRealizacijePoArtiklimaTable(tbl, translator)
+	@rep.ReportEnd(nil)
+}
+
+// RobnoKompodaciPregledRealizacijePoArtiklimaTable renders the report grouped per article:
+// an article header row, one row per customer/delivery place and an article TOTAL row.
+templ RobnoKompodaciPregledRealizacijePoArtiklimaTable(tbl domain.TableData, translator *i18n.Service) {
+	<div class="mb-1 overflow-x-auto print:overflow-visible print:mt-4 print:mb-4 print:mx-0">
+		<table class="w-full border-collapse report-table mt-2 print:w-full print:text-[9pt] print:table-auto print:border-collapse">
+			@rep.ReportTableHeader(tbl, translator)
+			<tbody>
+				for _, row := range tbl.Rows {
+					if row.ClassRow == "group-header" {
+						<tr class="bg-gray-300 print:bg-gray-300 print:page-break-inside-avoid">
+							<td colspan={ fmt.Sprintf("%d", len(tbl.Headers)) } class="border border-gray-300 px-2 text-sm font-bold print:text-[9pt]">
+								if len(row.Fields) > 0 {
+									{ row.Fields[0] }
+								}
+							</td>
+						</tr>
+					} else if row.ClassRow == "group-total" {
+						<tr class="bg-blue-50 font-bold border-t border-gray-400 print:bg-blue-50 print:page-break-inside-avoid">
+							for j, cell := range row.Fields {
+								<td
+									class={ fmt.Sprintf("border border-gray-300 px-1 text-sm font-bold print:text-[9pt] print:px-1 %s",
+										func() string {
+											if tbl.Headers[j].TextAlign != "" {
+												return fmt.Sprintf("text-%s", tbl.Headers[j].TextAlign)
+											}
+											return ""
+										}()) }
+								>
+									{ cell }
+								</td>
+							}
+						</tr>
+					} else {
+						<tr class="hover:bg-yellow-50 print:hover:bg-white print:page-break-inside-avoid">
+							for j, cell := range row.Fields {
+								<td
+									class={ fmt.Sprintf("border border-gray-300 px-1 text-sm print:text-[9pt] print:px-1 print:break-words print:whitespace-normal %s",
+										func() string {
+											if tbl.Headers[j].TextAlign != "" {
+												return fmt.Sprintf("text-%s", tbl.Headers[j].TextAlign)
+											}
+											return ""
+										}()) }
+								>
+									{ cell }
+								</td>
+							}
+						</tr>
+					}
+				}
+			</tbody>
+		</table>
+	</div>
+}
+
+// RobnoKompodaciPregledRealizacijePoArtiklimaParam displays the selection/processing parameters used to
+// build the report, mirroring the on-screen filters from the Pregled realizacije po artiklima form.
+templ RobnoKompodaciPregledRealizacijePoArtiklimaParam(params domain.RobnoKomPodaciParams, translator *i18n.Service, paramItems map[string]domain.ParameterItem) {
+	<div class="mb-2 text-sm print:text-[9pt]">
+		<div class="flex items-center justify-between gap-2 mb-1">
+			<div class="flex items-center gap-2">
+				<span class="font-semibold">{ translator.Label("Od grupe") }:</span>
+				<span class="font-bold">{ params.OdGrupe }</span>
+				<span class="font-semibold ml-6">{ translator.Label("Do grupe") }:</span>
+				<span class="font-bold">{ params.DoGrupe }</span>
+				<span class="font-semibold ml-6">{ translator.Label("Od artikla") }:</span>
+				<span class="font-bold">{ params.OdArtikla }</span>
+				<span class="font-semibold ml-2">{ translator.Label("Do artikla") }:</span>
+				<span class="font-bold">{ params.DoArtikla }</span>
+			</div>
+		</div>
+		<div class="flex items-center justify-between gap-2">
+			<div class="flex items-center gap-2">
+				<span class="font-semibold">{ translator.Label("Od datuma") }:</span>
+				<span class="font-bold">{ robnoKompodaciStampaFormatDate(params.OdDatuma) }</span>
+				<span class="font-semibold ml-6">{ translator.Label("Do datuma") }:</span>
+				<span class="font-bold">{ robnoKompodaciStampaFormatDate(params.DoDatuma) }</span>
+			</div>
+		</div>
+	</div>
+}
+
+// RobnoKompodaciPregledRealizacijePoKupcimaArtiklimaStampa renders a printable "Pregled realizacije po kupcima i artiklima" report.
+templ RobnoKompodaciPregledRealizacijePoKupcimaArtiklimaStampa(repParams domain.ReportParameters, params domain.RobnoKomPodaciParams, tbl domain.TableData, translator *i18n.Service) {
+	@rep.Report(repParams, domain.TableData{}, translator, nil, RobnoKompodaciPregledRealizacijePoKupcimaArtiklimaContent(repParams, params, tbl, translator))
+}
+
+templ RobnoKompodaciPregledRealizacijePoKupcimaArtiklimaContent(repParams domain.ReportParameters, params domain.RobnoKomPodaciParams, tbl domain.TableData, translator *i18n.Service) {
+	@rep.ReportHeader(repParams)
+	@rep.ReportTitle(repParams)
+	@RobnoKompodaciPregledRealizacijePoKupcimaArtiklimaParam(params, translator, repParams.ParameterItems)
+	@rep.ReportTableSection(tbl, translator)
+	@rep.ReportEnd(nil)
+}
+
+// RobnoKompodaciPregledRealizacijePoKupcimaArtiklimaParam displays the selection/processing parameters used to
+// build the report, mirroring the on-screen filters from the Pregled realizacije po kupcima i artiklima form.
+templ RobnoKompodaciPregledRealizacijePoKupcimaArtiklimaParam(params domain.RobnoKomPodaciParams, translator *i18n.Service, paramItems map[string]domain.ParameterItem) {
+	<div class="mb-2 text-sm print:text-[9pt]">
+		<div class="flex items-center justify-between gap-2 mb-1">
+			<div class="flex items-center gap-2">
+				<span class="font-semibold">{ translator.Label("Tržište") }:</span>
+				if trziste, ok := paramItems["Trziste"]; ok {
+					<span class="font-bold">{ trziste.Value }</span>
+				}
+				<span class="font-semibold ml-6">{ translator.Label("Od grupe") }:</span>
+				<span class="font-bold">{ params.OdGrupe }</span>
+				<span class="font-semibold ml-6">{ translator.Label("Do grupe") }:</span>
+				<span class="font-bold">{ params.DoGrupe }</span>
+			</div>
+		</div>
+		<div class="flex items-center justify-between gap-2 mb-1">
+			<div class="flex items-center gap-2">
+				<span class="font-semibold">{ translator.Label("Konto") }:</span>
+				if konto, ok := paramItems["Konto"]; ok {
+					<span class="font-bold">{ konto.Value }</span>
+				}
+				<span class="font-semibold ml-6">{ translator.Label("Od artikla") }:</span>
+				<span class="font-bold">{ params.OdArtikla }</span>
+				<span class="font-semibold ml-2">{ translator.Label("Do artikla") }:</span>
+				<span class="font-bold">{ params.DoArtikla }</span>
+			</div>
+		</div>
+		<div class="flex items-center justify-between gap-2">
+			<div class="flex items-center gap-2">
+				<span class="font-semibold">{ translator.Label("Od datuma") }:</span>
+				<span class="font-bold">{ robnoKompodaciStampaFormatDate(params.OdDatuma) }</span>
+				<span class="font-semibold ml-6">{ translator.Label("Do datuma") }:</span>
+				<span class="font-bold">{ robnoKompodaciStampaFormatDate(params.DoDatuma) }</span>
+			</div>
+		</div>
+	</div>
+}

@@ -8,42 +8,257 @@ import (
 	"helia/internal/domain"
 )
 
-templ RobnoStanjaMain(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
-	<div id="robno-stanja-content" class="flex flex-col h-full">
-		@RobnoStanjePojedinacnogArtikla(tabs, tbl, btnObrada, btnPrint, translator)
+templ RobnoStanjaMain(tabs domain.TabData, tbl domain.TableData, magValues []domain.ComboItem, btnObrada, btnPrint domain.Button, total domain.SaldaDto, saldaURLtotals string, translator *i18n.Service) {
+	<div id="tab-content" class="bg-blue-100 p-1 flex flex-col h-full">
+		@RobnoStanjePojedinacnogArtikla(tabs, tbl, magValues, btnObrada, btnPrint, total, saldaURLtotals, translator)
 	</div>
 	@tmpl.ShowSearchDialogScript()
 	@tmpl.HideDropdownScript()
+	@tmpl.ClearFieldErrorScript()
+	@tmpl.HandleDblClickKontoSelectionScript()
+	@components.SpinnerScript()
+	@tmpl.HandleDialogResponseScript()
+	@tmpl.OpenPrintWithParamsScript()
+	@tmpl.CloseDialogScript()
 }
 
-templ RobnoStanjePojedinacnogArtikla(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
-	@robnoStanjeTabFrame(tabs, "artikl", "Prikaz stanja artikla", tbl, btnObrada, btnPrint, translator, robnoStanjePojedinacnogArtiklaParameters(tbl, translator))
+// Tab 1 - Prikaz stanja pojedinačnog artikla
+templ RobnoStanjePojedinacnogArtikla(tabs domain.TabData, tbl domain.TableData, magValues []domain.ComboItem, btnObrada, btnPrint domain.Button, total domain.SaldaDto, saldaURLtotals string, translator *i18n.Service) {
+	<div class="bg-blue-100 p-1 flex flex-col h-full">
+		<!-- Tab Navigation -->
+		<div class="border-b border-blue-600">
+			@tmpl.TabNav(translator.Title("Prikaz stanja artikla"), tabs, "#tab-content", "robno-stanja-panel", translator)
+		</div>
+		<!-- Tab Content -->
+		<div class="flex-1 min-h-0 flex flex-col gap-1 pt-1">
+			<!-- Top row: parametri (left) + prikaz ukupne obrade (right) -->
+			<div class="grid grid-cols-[3fr_2fr] gap-2 items-stretch">
+				<!-- Left - Parametri -->
+				<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1">
+					<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Parametri") }</legend>
+					<!-- Magacin Combo -->
+					<div class="flex items-center gap-1">
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "magacin",
+							LabelText:  translator.Label("Magacin"),
+							ClassLabel: common.ClassLabel + " w-28",
+						})
+						@components.ComboBoxField(domain.ComboFieldConfig{
+							ID:           "magacin",
+							Name:         "magacin",
+							LabelText:    translator.Label("Magacin"),
+							ClassLabel:   common.ClassLabel,
+							ClassSelect:  common.ClassInputTextEnabled + " flex-1",
+							OptionValues: magValues,
+							TabIndex:     "1",
+						}, translator)
+					</div>
+					<!-- Konto Field -->
+					<div class="flex items-center gap-1">
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "konto",
+							LabelText:  translator.Label("Konto"),
+							ClassLabel: common.ClassLabel + " w-28",
+						})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:           "konto",
+							Name:         "konto",
+							FieldType:    "text",
+							Disabled:     false,
+							ClassInput:   common.ClassInputTextEnabled + " w-24",
+							BlurEndpoint: "api/fkpl/trazikonto",
+							HxTarget:     "kontonaziv",
+							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": 2, "destfield": "konto"}`,
+							HxInclude:    "this",
+							MinLength:    "2",
+							MaxLength:    "6",
+							TabIndex:     "2",
+							OnInput:      "clearFieldError",
+							OnFocus:      "clearFieldError"})
+						@components.SearchButton(domain.SearchButtonConfig{
+							ID:          "konto",
+							Name:        "search-konto",
+							HxUrl:       "/api/promet/searchbutton",
+							HxTarget:    "#search-dropdown",
+							HxSwap:      "innerHTML",
+							HxVals:      `js:{"vkonta": 2, "destfield": "konto"}`,
+							ClassButton: common.ClassButton,
+						})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "kontonaziv",
+							Name:       "kontonaziv",
+							FieldType:  "text",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextDisabled + " flex-1",
+						})
+					</div>
+					<!-- Šifra Artikla Field (F3) -->
+					<div class="flex items-center gap-1">
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "sifra",
+							LabelText:  translator.Label("Šifra artikla"),
+							ClassLabel: common.ClassLabel + " w-28",
+						})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "sifra",
+							Name:       "sifra",
+							FieldType:  "text",
+							Disabled:   false,
+							ClassInput: common.ClassInputTextEnabled + " w-24",
+							TabIndex:   "3",
+							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError"})
+						@components.SearchButton(domain.SearchButtonConfig{
+							ID:          "sifra",
+							Name:        "search-sifra",
+							HxUrl:       "/api/promet/searchbutton",
+							HxTarget:    "#search-dropdown",
+							HxSwap:      "innerHTML",
+							HxVals:      `js:{"destfield": "sifra"}`,
+							ClassButton: common.ClassButton,
+						})
+						<!-- Naziv Artikla -->
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "naziv",
+							Name:       "naziv",
+							FieldType:  "text",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextDisabled + " flex-1",
+						})
+					</div>
+					<!-- JM + Cena -->
+					<div class="flex items-center gap-1">
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "jm",
+							LabelText:  translator.Label("JM"),
+							ClassLabel: common.ClassLabel + " w-28",
+						})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "jm",
+							Name:       "jm",
+							FieldType:  "text",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextDisabled + " w-24",
+						})
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "cena",
+							LabelText:  translator.Label("Cena"),
+							ClassLabel: common.ClassLabel + " w-20",
+						})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:            "cena",
+							Name:          "cena",
+							FieldType:     "number",
+							Disabled:      true,
+							DecimalPlaces: 2,
+							Value:         common.FormatNumberWithSystemLocale(0, 2),
+							ClassInput:    common.ClassInputNumericDisabled + " flex-1",
+						})
+					</div>
+				</fieldset>
+				<!-- Right - Prikaz ukupne obrade -->
+				<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1">
+					<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Prikaz ukupne obrade") }</legend>
+					@RobnoStanjeArtikalUkupnaObrada(total, saldaURLtotals, translator)
+				</fieldset>
+			</div>
+			<!-- Buttons: Obradi + Štampaj -->
+			<div class="flex justify-end gap-1">
+				@components.FormObradaButton(btnObrada, translator)
+				@components.Search_PartPrintButton(btnPrint)
+			</div>
+			<!-- Monthly Data Table -->
+			<div class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex-1 min-h-0 overflow-hidden relative">
+				@components.LoadingSpinner()
+				<div class="flex-1 overflow-y-auto">
+					@components.Table(tbl, translator)
+				</div>
+			</div>
+		</div>
+	</div>
 }
 
-templ RobnoStanjeViseArtikala(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
-	@robnoStanjeTabFrame(tabs, "vise-artikala", "Prikaz stanja više artikala", tbl, btnObrada, btnPrint, translator, robnoStanjeViseArtikalaParameters(translator))
+templ RobnoStanjeViseArtikalaMain(tabs domain.TabData, subTabs domain.TabData, tbl domain.TableData, magValues []domain.ComboItem, btnObrada, btnPrint, btnEan13, btnNalepnice domain.Button, translator *i18n.Service) {
+	@RobnoStanjeViseArtikalaSifra(tabs, subTabs, "vise-artikala", "Prikaz stanja više artikala", tbl, magValues, btnObrada, btnPrint, btnEan13, btnNalepnice, translator)
 }
 
-templ RobnoStanjeSubsintetickogKonta(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
-	@robnoStanjeTabFrame(tabs, "saldo-subsintetickog-konta", "Saldo subsintetičkog konta", tbl, btnObrada, btnPrint, translator, robnoStanjeSubsintetickogKontaParameters(translator))
-}
-
-templ RobnoSvodjenjeZaliha(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
-	@robnoStanjeTabFrame(tabs, "svodjenje-zalihe", "Svodjenje stanja zalihe", tbl, btnObrada, btnPrint, translator, robnoStanjeSvodjenjeZalihaParameters(translator))
-}
-
-templ robnoStanjeTabFrame(tabs domain.TabData, tabName, title string, tbl domain.TableData, btnObrada, btnPrint domain.Button, translator *i18n.Service, parameters templ.Component) {
+templ RobnoStanjeViseArtikalaSifra(tabs, subTabs domain.TabData, tabName, title string, tbl domain.TableData, magValues []domain.ComboItem, btnObrada, btnPrint, btnEan13, btnNalepnice domain.Button, translator *i18n.Service) {
 	<div class="bg-blue-100 p-1 flex flex-col h-full">
 		<div class="border-b border-blue-600">
-			@tmpl.TabNav(translator.Title("Robno stanje"), tabs, "#robno-stanja-content", "robno-stanja-panel", translator)
+			@tmpl.TabNav(translator.Title("Robno stanje"), tabs, "#tab-content", "robno-stanja-panel", translator)
+		</div>
+		<div class="border-b border-blue-600 pt-1">
+			@tmpl.TabNav("", subTabs, "#tab-content", "robno-stanja-subpanel", translator)
 		</div>
 		<div class="flex-1 min-h-0 flex flex-col gap-1 pt-1">
-			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg">
-				<div class="font-semibold text-sm text-blue-900 mb-1">{ translator.Title(title) }</div>
-				@parameters
+			<div class="no-border bg-blue-100 p-1 rounded-lg">
+				<!-- Parameters in two columns -->
+				<div class="grid grid-cols-2 gap-2 items-start">
+					<!-- First column: magacin, konto range, sifra range, dobavljac -->
+					<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1">
+						<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Parametri") }</legend>
+						<!-- Magacin Combo -->
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "magacin", LabelText: translator.Label("Magacin"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.ComboBoxField(domain.ComboFieldConfig{ID: "magacin", Name: "magacin", ClassSelect: common.ClassSelect + " flex-1", OptionValues: magValues, TabIndex: "1"}, translator)
+						</div>
+						<!-- Konto range -->
+						<div class="grid grid-cols-2 gap-1">
+							<div class="flex items-center gap-1 min-w-0">
+								@components.LabelField(domain.LabelFieldConfig{ID: "odkonta", LabelText: translator.Label("Počev od konta"), ClassLabel: common.ClassLabel + " w-28"})
+								@components.TextInputField(domain.InputFieldConfig{ID: "odkonta", Name: "odkonta", Value: "", FieldType: "text", ClassInput: common.ClassInputTextEnabled + " flex-1 w-full", TabIndex: "2"})
+							</div>
+							<div class="flex items-center gap-1 min-w-0">
+								@components.LabelField(domain.LabelFieldConfig{ID: "dokonta", LabelText: translator.Label("Zaključno sa kontom"), ClassLabel: common.ClassLabel + " w-36"})
+								@components.TextInputField(domain.InputFieldConfig{ID: "dokonta", Name: "dokonta", Value: "", FieldType: "text", ClassInput: common.ClassInputTextEnabled + " flex-1 w-full", TabIndex: "3"})
+							</div>
+						</div>
+						<!-- Sifra range -->
+						<div class="grid grid-cols-2 gap-1">
+							<div class="flex items-center gap-1 min-w-0">
+								@components.LabelField(domain.LabelFieldConfig{ID: "odsifre", LabelText: translator.Label("Počev od šifre"), ClassLabel: common.ClassLabel + " w-28"})
+								@components.TextInputField(domain.InputFieldConfig{ID: "odsifre", Name: "odsifre", Value: "", FieldType: "text", ClassInput: common.ClassInputTextEnabled + " flex-1 w-full", TabIndex: "4"})
+							</div>
+							<div class="flex items-center gap-1 min-w-0">
+								@components.LabelField(domain.LabelFieldConfig{ID: "dosifre", LabelText: translator.Label("Zaključno sa šifrom"), ClassLabel: common.ClassLabel + " w-36"})
+								@components.TextInputField(domain.InputFieldConfig{ID: "dosifre", Name: "dosifre", Value: "", FieldType: "text", ClassInput: common.ClassInputTextEnabled + " flex-1 w-full", TabIndex: "5"})
+							</div>
+						</div>
+					</fieldset>
+					<!-- Second column: opcije prikaza/štampe + mesec range -->
+					<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1">
+						<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Opcije prikaza/štampe") }</legend>
+						<!-- Checkboxes in two columns + month range in the third column -->
+						<div class="grid grid-cols-3 gap-x-2 items-start">
+							<!-- Checkboxes (first two columns) -->
+							<div class="grid grid-cols-2 gap-x-3 gap-y-1 col-span-2">
+								@components.CheckboxField(domain.CheckboxFieldConfig{ID: "finansijskiiznos", Name: "finansijskiiznos", LabelText: translator.Label("Finansijski iznos"), IsChecked: true, ClassCheckbox: common.ClassCheckbox + " mr-2", ClassLabel: common.ClassLabel + " flex items-center"}, translator)
+								@components.CheckboxField(domain.CheckboxFieldConfig{ID: "artiklisastanjem", Name: "artiklisastanjem", LabelText: translator.Label("Artikli sa stanjem"), ClassCheckbox: common.ClassCheckbox + " mr-2", ClassLabel: common.ClassLabel + " flex items-center"}, translator)
+								@components.CheckboxField(domain.CheckboxFieldConfig{ID: "artiklibezstanja", Name: "artiklibezstanja", LabelText: translator.Label("Artikli bez stanja"), ClassCheckbox: common.ClassCheckbox + " mr-2", ClassLabel: common.ClassLabel + " flex items-center"}, translator)
+								@components.CheckboxField(domain.CheckboxFieldConfig{ID: "prosecnacenastanje", Name: "prosecnacenastanje", LabelText: translator.Label("Prosečna cena - stanje"), ClassCheckbox: common.ClassCheckbox + " mr-2", ClassLabel: common.ClassLabel + " flex items-center"}, translator)
+								@components.CheckboxField(domain.CheckboxFieldConfig{ID: "prosecnacenaulaz", Name: "prosecnacenaulaz", LabelText: translator.Label("Prosečna cena - ulaz"), ClassCheckbox: common.ClassCheckbox + " mr-2", ClassLabel: common.ClassLabel + " flex items-center"}, translator)
+								@components.CheckboxField(domain.CheckboxFieldConfig{ID: "zadobavljaca", Name: "zadobavljaca", LabelText: translator.Label("Za dobavljača"), ClassCheckbox: common.ClassCheckbox + " mr-2", ClassLabel: common.ClassLabel + " flex items-center"}, translator)
+							</div>
+							<!-- Month range (third column) -->
+							<div class="flex flex-col gap-1">
+								<div class="flex items-center gap-1 min-w-0">
+									@components.LabelField(domain.LabelFieldConfig{ID: "odmeseca", LabelText: translator.Label("Počev od meseca"), ClassLabel: common.ClassLabel + " w-40"})
+									@components.TextInputField(domain.InputFieldConfig{ID: "odmeseca", Name: "odmeseca", Value: "1", MaxLength: "2", FieldType: "text", ClassInput: common.ClassInputTextEnabled + " flex-1 w-full", TabIndex: "4"})
+								</div>
+								<div class="flex items-center gap-1 min-w-0">
+									@components.LabelField(domain.LabelFieldConfig{ID: "domeseca", LabelText: translator.Label("Zaključno sa mesecom"), ClassLabel: common.ClassLabel + " w-40"})
+									@components.TextInputField(domain.InputFieldConfig{ID: "domeseca", Name: "domeseca", Value: "99", MaxLength: "2", FieldType: "text", ClassInput: common.ClassInputTextEnabled + " flex-1 w-full", TabIndex: "5"})
+								</div>
+							</div>
+						</div>
+					</fieldset>
+				</div>
+				<!-- Buttons row: all four buttons side by side -->
 				<div class="flex justify-end gap-1 pt-2">
-					@components.Button(btnObrada)
+					@components.FormObradaButton(btnObrada, translator)
 					@components.Search_PartPrintButton(btnPrint)
+					@components.Button(btnEan13)
+					@components.Button(btnNalepnice)
 				</div>
 			</div>
 			<div class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex-1 min-h-0 overflow-hidden">
@@ -53,76 +268,635 @@ templ robnoStanjeTabFrame(tabs domain.TabData, tabName, title string, tbl domain
 	</div>
 }
 
-templ robnoStanjePojedinacnogArtiklaParameters(tbl domain.TableData, translator *i18n.Service) {
-	<div class="grid grid-cols-2 gap-2 items-center">
-		@robnoStanjeInput("Magacin", "magacin", "text", "1", translator)
-		@robnoStanjeInput("Konto", "konto", "text", "2", translator)
-		@robnoStanjeInput("Šifra artikla", "sifra", "text", "3", translator)
-		@robnoStanjeInput("Naziv artikla", "naziv", "text", "4", translator)
-		@robnoStanjeInput("JM", "jm", "text", "5", translator)
-		@robnoStanjeInput("Cena", "cena", "number", "6", translator)
+templ RobnoStanjeViseArtikalGrupa(tabs, subTabs domain.TabData, tabName, title string, tbl domain.TableData, magValues []domain.ComboItem, btnObrada, btnPrint, btnEan13, btnNalepnice domain.Button, translator *i18n.Service) {
+	<div class="bg-blue-100 p-1 flex flex-col h-full">
+		<div class="border-b border-blue-600">
+			@tmpl.TabNav(translator.Title("Robno stanje"), tabs, "#tab-content", "robno-stanja-panel", translator)
+		</div>
+		<div class="border-b border-blue-600 pt-1">
+			@tmpl.TabNav("", subTabs, "#tab-content", "robno-stanja-subpanel", translator)
+		</div>
+		<div class="flex-1 min-h-0 flex flex-col gap-1 pt-1">
+			<div class="no-border bg-blue-100 p-1 rounded-lg">
+				<!-- Parameters in two columns -->
+				<div class="grid grid-cols-2 gap-2 items-stretch">
+					<!-- First column: magacin, grupa range, sifra range -->
+					<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1">
+						<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Parametri") }</legend>
+						<!-- Magacin Combo -->
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "magacin", LabelText: translator.Label("Magacin"), ClassLabel: common.ClassLabel + " w-40"})
+							@components.ComboBoxField(domain.ComboFieldConfig{ID: "magacin", Name: "magacin", LabelText: translator.Label("Magacin"), ClassLabel: common.ClassLabel, ClassSelect: common.ClassInputTextEnabled + " flex-1", OptionValues: magValues, TabIndex: "1"}, translator)
+						</div>
+						<!-- Group range -->
+						<div class="grid grid-cols-2 gap-2">
+							<div class="flex items-center gap-1 min-w-0">
+								@components.LabelField(domain.LabelFieldConfig{ID: "odgrupe", LabelText: translator.Label("Počev od grupe"), ClassLabel: common.ClassLabel + " w-40"})
+								@components.TextInputField(domain.InputFieldConfig{ID: "odgrupe", Name: "odgrupe", Value: "0", FieldType: "text", ClassInput: common.ClassInputTextEnabled + " flex-1 w-full", TabIndex: "2"})
+							</div>
+							<div class="flex items-center gap-1 min-w-0">
+								@components.LabelField(domain.LabelFieldConfig{ID: "dogrupe", LabelText: translator.Label("Zaključno sa grupom"), ClassLabel: common.ClassLabel + " w-40"})
+								@components.TextInputField(domain.InputFieldConfig{ID: "dogrupe", Name: "dogrupe", Value: "999", FieldType: "text", ClassInput: common.ClassInputTextEnabled + " flex-1 w-full", TabIndex: "3"})
+							</div>
+						</div>
+						<!-- Sifra range -->
+						<div class="grid grid-cols-2 gap-2">
+							<div class="flex items-center gap-1 min-w-0">
+								@components.LabelField(domain.LabelFieldConfig{ID: "odsifre", LabelText: translator.Label("Počev od šifre"), ClassLabel: common.ClassLabel + " w-40"})
+								@components.TextInputField(domain.InputFieldConfig{ID: "odsifre", Name: "odsifre", Value: "1", FieldType: "text", ClassInput: common.ClassInputTextEnabled + " flex-1 w-full", TabIndex: "4"})
+							</div>
+							<div class="flex items-center gap-1 min-w-0">
+								@components.LabelField(domain.LabelFieldConfig{ID: "dosifre", LabelText: translator.Label("Zaključno sa šifrom"), ClassLabel: common.ClassLabel + " w-40"})
+								@components.TextInputField(domain.InputFieldConfig{ID: "dosifre", Name: "dosifre", Value: "999999", FieldType: "text", ClassInput: common.ClassInputTextEnabled + " flex-1 w-full", TabIndex: "5"})
+							</div>
+						</div>
+					</fieldset>
+					<!-- Second column: prikaži opcije štampe + mesec range -->
+					<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1">
+						<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Prikaži opcije štampe") }</legend>
+						<!-- Two-column layout: checkboxes stacked (left) + month range (right) -->
+						<div class="grid grid-cols-2 gap-x-2 items-start">
+							<!-- Checkboxes (first column, one under the other) -->
+							<div class="flex flex-col gap-1">
+								@components.CheckboxField(domain.CheckboxFieldConfig{ID: "finansijskiiznos", Name: "finansijskiiznos", LabelText: translator.Label("Finansijski iznos"), ClassCheckbox: common.ClassCheckbox + " mr-2", ClassLabel: common.ClassLabel + " flex items-center"}, translator)
+								@components.CheckboxField(domain.CheckboxFieldConfig{ID: "novastranapogrupi", Name: "novastranapogrupi", LabelText: translator.Label("Nova strana po grupi"), ClassCheckbox: common.ClassCheckbox + " mr-2", ClassLabel: common.ClassLabel + " flex items-center"}, translator)
+							</div>
+							<!-- Month range (second column) -->
+							<div class="flex flex-col gap-1">
+								<div class="flex items-center gap-1 min-w-0">
+									@components.LabelField(domain.LabelFieldConfig{ID: "odmeseca", LabelText: translator.Label("Počev od meseca"), ClassLabel: common.ClassLabel + " w-40"})
+									@components.TextInputField(domain.InputFieldConfig{ID: "odmeseca", Name: "odmeseca", Value: "1", FieldType: "text", ClassInput: common.ClassInputTextEnabled + " w-16", TabIndex: "6"})
+								</div>
+								<div class="flex items-center gap-1 min-w-0">
+									@components.LabelField(domain.LabelFieldConfig{ID: "domeseca", LabelText: translator.Label("Zaključno sa mesecom"), ClassLabel: common.ClassLabel + " w-40"})
+									@components.TextInputField(domain.InputFieldConfig{ID: "domeseca", Name: "domeseca", Value: "12", FieldType: "text", ClassInput: common.ClassInputTextEnabled + " w-16", TabIndex: "7"})
+								</div>
+							</div>
+						</div>
+					</fieldset>
+				</div>
+				<!-- Buttons row: all four buttons side by side -->
+				<div class="flex justify-end gap-1 pt-2">
+					@components.FormObradaButton(btnObrada, translator)
+					@components.Search_PartPrintButton(btnPrint)
+					@components.Button(btnEan13)
+					@components.Button(btnNalepnice)
+				</div>
+			</div>
+			<div class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex-1 min-h-0 overflow-hidden">
+				@components.Table(tbl, translator)
+			</div>
+		</div>
 	</div>
 }
 
-templ robnoStanjeViseArtikalaParameters(translator *i18n.Service) {
-	<div class="flex gap-1 mb-1">
-		<button type="button" class="whitespace-nowrap rounded-t-lg py-1 px-2 font-medium text-sm text-white bg-blue-600 hover:bg-blue-700" hx-get="/api/robno-stanja/vise-artikala/po-sifri" hx-target="#robnostanja-vise-artikala-parameters" hx-swap="innerHTML">Po šifri</button>
-		<button type="button" class="whitespace-nowrap rounded-t-lg py-1 px-2 font-medium text-sm text-gray-600 bg-white border border-gray-300 hover:text-blue-700 hover:bg-blue-50" hx-get="/api/robno-stanja/vise-artikala/po-grupi" hx-target="#robnostanja-vise-artikala-parameters" hx-swap="innerHTML">Po grupi</button>
+templ RobnoStanjeSubsintetickogKonta(tabs domain.TabData, tbl domain.TableData, magValues []domain.ComboItem, btnObrada, btnPrint domain.Button, total domain.SaldaDto, saldaURLtotals string, translator *i18n.Service) {
+	<div class="bg-blue-100 p-1 flex flex-col h-full">
+		<!-- Tab Navigation -->
+		<div class="bg-blue-100 border-b border-blue-600">
+			@tmpl.TabNav(translator.Title("Saldo subsintetičkog konta"), tabs, "#tab-content", "salda-panel", translator)
+		</div>
+		<!-- Tab Content -->
+		<div id="tab3">
+			<!-- Main Grid - Two columns 1/2 to 1/2 -->
+			<div class="grid grid-cols-2 gap-1">
+				<!-- Left Column - Parameters -->
+				<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg flex flex-col">
+					<div class="text-blue-800 font-bold text-xs mb-1 border-b border-gray-400 pb-1">
+						{ translator.Text("Parametri") }
+					</div>
+					<!-- Magacin Combo -->
+					<div class="flex items-center gap-1 mb-1">
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "magacin",
+							LabelText:  translator.Label("Magacin"),
+							ClassLabel: common.ClassLabel + " w-28",
+						})
+						@components.ComboBoxField(domain.ComboFieldConfig{
+							ID:           "magacin",
+							Name:         "magacin",
+							LabelText:    translator.Label("Magacin"),
+							ClassLabel:   common.ClassLabel,
+							ClassSelect:  common.ClassInputTextEnabled + " flex-1",
+							OptionValues: magValues,
+							TabIndex:     "1",
+						}, translator)
+					</div>
+					<!-- Konto Field -->
+					<div class="flex items-center gap-1 mb-1">
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "konto",
+							LabelText:  translator.Label("Konto"),
+							ClassLabel: common.ClassLabel + " w-28",
+						})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:           "konto",
+							Name:         "konto",
+							FieldType:    "text",
+							Disabled:     false,
+							ClassInput:   common.ClassInputTextEnabled + " w-24",
+							BlurEndpoint: "api/fkpl/trazikonto",
+							HxTarget:     "kontonaziv",
+							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": 2, "destfield": "konto"}`,
+							HxInclude:    "this",
+							MinLength:    "2",
+							MaxLength:    "6",
+							TabIndex:     "1",
+							OnInput:      "clearFieldError",
+							OnFocus:      "clearFieldError"})
+						@components.SearchButton(domain.SearchButtonConfig{
+							ID:          "konto",
+							Name:        "search-konto",
+							HxUrl:       "/api/promet/searchbutton",
+							HxTarget:    "#search-dropdown",
+							HxSwap:      "innerHTML",
+							HxVals:      `js:{"vkonta": 2, "destfield": "konto"}`,
+							ClassButton: common.ClassButton,
+						})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "kontonaziv",
+							Name:       "kontonaziv",
+							FieldType:  "text",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextEnabled + " w-full",
+							TabIndex:   "-1",
+						})
+					</div>
+					<!-- Obradi Button -->
+					<div class="flex justify-end gap-1 mb-1">
+						@components.FormObradaButton(btnObrada, translator)
+						@components.Search_PartPrintButton(btnPrint)
+					</div>
+					<div class="no-border mt-auto mb-1 bg-blue-100 border-0 mt-2 p-1 rounded-lg">
+						@SaldaTotalValues(total, saldaURLtotals, translator)
+					</div>
+				</div>
+				<!-- Right Column - Monthly Data Table -->
+				<div class="border bg-blue-100 border border-blue-400 mt-1 mb-1 rounded-lg flex flex-col">
+					<div class="text-blue-800 font-bold text-xs p-1 mb-1">
+						{ translator.Text("Mesečna salda") }
+					</div>
+					<!-- Monthly Data Table -->
+					<div class="border bg-blue-100 rounded-lg p-1 flex flex-col min-h-0 overflow-hidden flex-1 relative">
+						@components.LoadingSpinner()
+						<div class="flex-1 overflow-y-auto">
+							@components.Table(tbl, translator)
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- Chart Section -->
+			<div class="border bg-blue-50 border border-blue-400 p-1 rounded-lg">
+				<div class="text-blue-800 font-bold text-xs mb-1">
+					{ translator.Text("Prikaz salda") }
+				</div>
+				<div id="subsintetickikontochart-container" class="flex-1 min-h-80 bg-white rounded border border-gray-300 p-2">
+					<canvas id="subsintetickikontochart"></canvas>
+				</div>
+			</div>
+		</div>
 	</div>
-	<div id="robnostanja-vise-artikala-parameters">
-		@robnoStanjeMultipleFields(translator)
+	@ChartScript()
+}
+
+templ RobnoSvodjenjeZaliha(tabs domain.TabData, tbl domain.TableData, magValues, tipdokValues, ojValues, mestoTroskaValues []domain.ComboItem, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
+	<div class="bg-blue-100 p-1 flex flex-col h-full">
+		<div class="border-b border-blue-600">
+			@tmpl.TabNav(translator.Title("Robno stanje"), tabs, "#tab-content", "robno-stanja-panel", translator)
+		</div>
+		<div class="flex-1 min-h-0 flex flex-col gap-1 pt-1">
+			<div class="grid grid-cols-2 gap-2 items-stretch">
+				<!-- Left column: magacin, način svođenja, opseg šifri, obrada -->
+				<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1">
+					<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Parametri za obradu") }</legend>
+					<div class="flex items-center gap-1 mb-1">
+						@components.LabelField(domain.LabelFieldConfig{ID: "magacin", LabelText: translator.Label("Magacin"), ClassLabel: common.ClassLabel + " w-32"})
+						@components.ComboBoxField(domain.ComboFieldConfig{ID: "magacin", Name: "magacin", LabelText: translator.Label("Magacin"), ClassLabel: common.ClassLabel, ClassSelect: common.ClassInputTextEnabled + " flex-1", OptionValues: magValues, TabIndex: "1"}, translator)
+					</div>
+					<!-- Two columns: radio set (left) + šifre range i obrada (right) -->
+					<div class="grid grid-cols-2 gap-2 items-start mb-1">
+						<!-- Left column: način svođenja -->
+						<div class="flex flex-col gap-1">
+							@components.RadioButtonField(domain.RadioFieldConfig{ID: "svodjenjenacin-zadnja", Name: "svodjenjenacin", LabelText: "Svodjenje zaliha na zadnju prodajnu cenu", ClassLabel: common.ClassLabel, ClassSelect: common.ClassRadioSet, Value: "zadnjaprodajna"}, translator)
+							@components.RadioButtonField(domain.RadioFieldConfig{ID: "svodjenjenacin-planska", Name: "svodjenjenacin", LabelText: "Svodjenje zaliha na plansku cenu", ClassLabel: common.ClassLabel, ClassSelect: common.ClassRadioSet, Value: "planska"}, translator)
+							@components.RadioButtonField(domain.RadioFieldConfig{ID: "svodjenjenacin-prosecna", Name: "svodjenjenacin", LabelText: "Svodjenje zaliha na prosečnu nabavnu cenu", ClassLabel: common.ClassLabel, ClassSelect: common.ClassRadioSet, Value: "prosecnanabavna", IsSelected: true}, translator)
+							@components.RadioButtonField(domain.RadioFieldConfig{ID: "svodjenjenacin-mp", Name: "svodjenjenacin", LabelText: "Svodjenje zaliha na MP cenu", ClassLabel: common.ClassLabel, ClassSelect: common.ClassRadioSet, Value: "mpcena"}, translator)
+						</div>
+						<!-- Right column: opseg šifri + checkbox -->
+						<div class="flex flex-col gap-1">
+							<div class="flex items-center gap-1">
+								@components.LabelField(domain.LabelFieldConfig{ID: "odsifre", LabelText: translator.Label("Od šifre artikla"), ClassLabel: common.ClassLabel + " w-36"})
+								@components.TextInputField(domain.InputFieldConfig{ID: "odsifre", Name: "odsifre", FieldType: "number", ClassInput: common.ClassInputTextEnabled + " flex-1", TabIndex: "2"})
+							</div>
+							<div class="flex items-center gap-1">
+								@components.LabelField(domain.LabelFieldConfig{ID: "dosifre", LabelText: translator.Label("Do šifre artikla"), ClassLabel: common.ClassLabel + " w-36"})
+								@components.TextInputField(domain.InputFieldConfig{ID: "dosifre", Name: "dosifre", FieldType: "number", ClassInput: common.ClassInputTextEnabled + " flex-1", TabIndex: "3"})
+							</div>
+							<div class="flex items-center gap-1">
+								@components.CheckboxField(domain.CheckboxFieldConfig{ID: "obradiartiklesastanjem", Name: "obradiartiklesastanjem", LabelText: "Obradi artikle sa stanjem <> 0", ClassCheckbox: common.ClassCheckbox + " mr-2", ClassLabel: common.ClassLabel + " flex items-center"}, translator)
+							</div>
+							<!-- Obradi / Štampaj (right aligned in this column) -->
+							<div class="flex justify-end gap-1">
+								@components.Button(btnObrada)
+								@components.Search_PartPrintButton(btnPrint)
+							</div>
+						</div>
+					</div>
+				</fieldset>
+				<!-- Right column: vrsta naloga za knjiženje -->
+				<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1">
+					<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Podaci za knjizenje") }</legend>
+					<!-- Row 1: Vrsta naloga -->
+					<div class="flex items-center gap-1">
+						@components.LabelField(domain.LabelFieldConfig{ID: "vrstanaloga", LabelText: translator.Label("Vrsta naloga"), ClassLabel: common.ClassLabel + " w-36"})
+						@components.ComboBoxField(domain.ComboFieldConfig{ID: "vrstanaloga", Name: "vrstanaloga", Disabled: false, OptionValues: tipdokValues, ClassSelect: common.ClassInputTextEnabled + " flex-1"}, translator)
+					</div>
+					<!-- Row 2: OJ + Mesto troška -->
+					<div class="grid grid-cols-2 gap-1">
+						<div class="flex items-center gap-1 min-w-0">
+							@components.LabelField(domain.LabelFieldConfig{ID: "idorgjed", LabelText: translator.Label("OJ"), ClassLabel: common.ClassLabel + " w-36"})
+							@components.ComboBoxField(domain.ComboFieldConfig{
+								ID:             "idorgjed",
+								Name:           "idorgjed",
+								Disabled:       false,
+								OptionValues:   ojValues,
+								ClassSelect:    common.ClassInputTextEnabled + " flex-1",
+								ChangeEndpoint: "/api/mestotroska",
+								HxChangeTarget: "mestotrid",
+								HxSwap:         "outerHTML",
+							}, translator)
+						</div>
+						<div class="flex items-center gap-1 min-w-0">
+							@components.LabelField(domain.LabelFieldConfig{ID: "mestotrid", LabelText: translator.Label("Mesto troška"), ClassLabel: common.ClassLabel + " w-36"})
+							@components.ComboBoxField(domain.ComboFieldConfig{ID: "mestotrid", Name: "mestotrid", Disabled: false, OptionValues: mestoTroskaValues, ClassSelect: common.ClassInputTextEnabled + " flex-1"}, translator)
+						</div>
+					</div>
+					<!-- Row 3: Broj naloga, Datum naloga, Datum obrade -->
+					<div class="grid grid-cols-3 gap-1">
+						<div class="flex items-center gap-1 min-w-0">
+							@components.LabelField(domain.LabelFieldConfig{ID: "brojnaloga", LabelText: translator.Label("Broj naloga"), ClassLabel: common.ClassLabel + " w-36"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "brojnaloga", Name: "brojnaloga", FieldType: "text", ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0", TabIndex: "4"})
+						</div>
+						<div class="flex items-center gap-1 min-w-0">
+							@components.LabelField(domain.LabelFieldConfig{ID: "datumnaloga", LabelText: translator.Label("Datum naloga"), ClassLabel: common.ClassLabel + " w-36"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "datumnaloga", Name: "datumnaloga", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0", TabIndex: "5"})
+						</div>
+						<div class="flex items-center gap-1 min-w-0">
+							@components.LabelField(domain.LabelFieldConfig{ID: "datumobradenaloga", LabelText: translator.Label("Datum obrade"), ClassLabel: common.ClassLabel + " w-36"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "datumobradenaloga", Name: "datumobradenaloga", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0", TabIndex: "6"})
+						</div>
+					</div>
+					<!-- Row 4: Opis knjiženja -->
+					<div class="flex items-center gap-1">
+						@components.LabelField(domain.LabelFieldConfig{ID: "opisknjizenja", LabelText: translator.Label("Opis knjiženja"), ClassLabel: common.ClassLabel + " w-36"})
+						@components.TextInputField(domain.InputFieldConfig{ID: "opisknjizenja", Name: "opisknjizenja", ClassInput: common.ClassInputTextEnabled + " flex-1"})
+					</div>
+					<!-- Row 5: Knjiži -->
+					<div class="flex justify-end mt-auto">
+						@components.Button(domain.Button{LabelText: translator.Button("Knjizi"), BtnClass: common.ClassSaveButton, IsVisible: true, IsDisabled: true})
+					</div>
+				</fieldset>
+			</div>
+			<div class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex-1 min-h-0 overflow-hidden">
+				@components.Table(tbl, translator)
+			</div>
+		</div>
 	</div>
 }
 
-templ robnoStanjeMultipleFields(translator *i18n.Service) {
-	<div class="grid grid-cols-2 gap-2 items-center">
-		@robnoStanjeInput("Magacin", "magacin", "text", "1", translator)
-		@robnoStanjeInput("Početak od konta", "odkonta", "text", "2", translator)
-		@robnoStanjeInput("Zaključno sa kontom", "dokonta", "text", "3", translator)
-		@robnoStanjeInput("Početak od šifre", "odsifre", "text", "4", translator)
-		@robnoStanjeInput("Zaključno sa šifrom", "dosifre", "text", "5", translator)
-		@robnoStanjeCheck("Za dobavljača", "zadobavljaca", translator)
-		@robnoStanjeCheck("Finansijski iznos", "finansijskiiznos", translator)
+// RobnoStanjeArtikalUkupnaObrada renders the "Prikaz ukupne obrade" summary panel
+// for the "Prikaz stanja pojedinačnog artikla" view. It is initially rendered
+// server-side and refreshed from the backend totals endpoint (sourceUrl) when
+// the Obradi button (#obrada-btn) is clicked.
+templ RobnoStanjeArtikalUkupnaObrada(total domain.SaldaDto, sourceUrl string, translator *i18n.Service) {
+	<div
+		id="robnostanja-artikal-ukupna-obrada"
+		class="flex flex-col gap-1"
+		hx-get={ sourceUrl }
+		hx-trigger="click from:#obrada-btn"
+		hx-target="#robnostanja-artikal-ukupna-obrada"
+		hx-swap="innerHTML"
+		hx-vals="js:{
+            magacin: document.getElementById('magacin')?.value,
+            konto: document.getElementById('konto')?.value,
+            sifra: document.getElementById('sifra')?.value
+        }"
+	>
+		<!-- Ulaz | Duguje -->
+		<div class="grid grid-cols-2 gap-1 items-center">
+			<div class="flex items-center gap-1">
+				@components.LabelField(domain.LabelFieldConfig{ID: "ukulaz", LabelText: translator.Label("Ulaz"), ClassLabel: common.ClassLabel + " w-20"})
+				@components.TextInputField(domain.InputFieldConfig{ID: "ukulaz", Name: "ukulaz", Value: common.FormatNumberWithSystemLocale(0, 3), DecimalPlaces: 3, Disabled: true, FieldType: "number", ClassInput: common.ClassInputNumericDisabled + " flex-1"})
+			</div>
+			<div class="flex items-center gap-1">
+				@components.LabelField(domain.LabelFieldConfig{ID: "ukduguje", LabelText: translator.Label("Duguje"), ClassLabel: common.ClassLabel + " w-24"})
+				@components.TextInputField(domain.InputFieldConfig{ID: "ukduguje", Name: "ukduguje", Value: common.FormatNumberWithSystemLocale(0, 2), DecimalPlaces: 2, Disabled: true, FieldType: "number", ClassInput: common.ClassInputNumericDisabled + " flex-1"})
+			</div>
+		</div>
+		<!-- Izlaz | Potražuje -->
+		<div class="grid grid-cols-2 gap-1 items-center">
+			<div class="flex items-center gap-1">
+				@components.LabelField(domain.LabelFieldConfig{ID: "ukizlaz", LabelText: translator.Label("Izlaz"), ClassLabel: common.ClassLabel + " w-20"})
+				@components.TextInputField(domain.InputFieldConfig{ID: "ukizlaz", Name: "ukizlaz", Value: common.FormatNumberWithSystemLocale(0, 3), DecimalPlaces: 3, Disabled: true, FieldType: "number", ClassInput: common.ClassInputNumericDisabled + " flex-1"})
+			</div>
+			<div class="flex items-center gap-1">
+				@components.LabelField(domain.LabelFieldConfig{ID: "ukpotrazuje", LabelText: translator.Label("Potražuje"), ClassLabel: common.ClassLabel + " w-24"})
+				@components.TextInputField(domain.InputFieldConfig{ID: "ukpotrazuje", Name: "ukpotrazuje", Value: common.FormatNumberWithSystemLocale(0, 2), DecimalPlaces: 2, Disabled: true, FieldType: "number", ClassInput: common.ClassInputNumericDisabled + " flex-1"})
+			</div>
+		</div>
+		<!-- Stanje | Saldo -->
+		<div class="grid grid-cols-2 gap-1 items-center">
+			<div class="flex items-center gap-1">
+				@components.LabelField(domain.LabelFieldConfig{ID: "ukstanje", LabelText: translator.Label("Stanje"), ClassLabel: common.ClassLabel + " w-20"})
+				@components.TextInputField(domain.InputFieldConfig{ID: "ukstanje", Name: "ukstanje", Value: common.FormatNumberWithSystemLocale(0, 3), DecimalPlaces: 3, Disabled: true, FieldType: "number", ClassInput: common.ClassInputNumericDisabled + " flex-1"})
+			</div>
+			<div class="flex items-center gap-1">
+				@components.LabelField(domain.LabelFieldConfig{ID: "uksaldo", LabelText: translator.Label("Saldo"), ClassLabel: common.ClassLabel + " w-24"})
+				@components.TextInputField(domain.InputFieldConfig{ID: "uksaldo", Name: "uksaldo", Value: common.FormatNumberWithSystemLocale(0, 2), DecimalPlaces: 2, Disabled: true, FieldType: "number", ClassInput: common.ClassInputNumericDisabled + " flex-1"})
+			</div>
+		</div>
 	</div>
 }
 
-templ RobnoStanjeMultipleSubtab(translator *i18n.Service) {
-	@robnoStanjeMultipleFields(translator)
-}
-
-templ robnoStanjeSubsintetickogKontaParameters(translator *i18n.Service) {
-	<div class="grid grid-cols-2 gap-2 items-center">
-		@robnoStanjeInput("Magacin", "magacin", "text", "1", translator)
-		@robnoStanjeInput("Konto", "konto", "text", "2", translator)
-		@robnoStanjeInput("Naziv konta", "naziv", "text", "3", translator)
+templ SaldaTotalValues(total domain.SaldaDto, sourceUrl string, translator *i18n.Service) {
+	<div
+		id="totalvalues"
+		class="border p-1 rounded-lg flex flex-col"
+		hx-get={ sourceUrl }
+		hx-trigger="click from:#obrada-btn"
+		hx-target="#totalvalues"
+		hx-swap="innerHTML"
+		hx-vals="js:{
+            konto: document.getElementById('konto')?.value,
+            sifra: document.getElementById('sifra')?.value,
+            tipkonta: document.querySelector('input[name=\'tipkonta\']:checked')?.value,
+			odkonta: document.getElementById('odkonta')?.value,
+			dokonta: document.getElementById('dokonta')?.value,
+			odsifre: document.getElementById('odsifre')?.value,
+			dosifre: document.getElementById('dosifre')?.value,
+			oddatuma: document.getElementById('oddatuma')?.value,
+			dodatuma: document.getElementById('dodatuma')?.value,
+			klasa: document.querySelector('input[name=\'klasa\']:checked')?.value
+        }"
+	>
+		<div class="grid grid-cols-4 gap-1 mb-px text-sm font-medium text-gray-700 h-6 items-center">
+			<div class="text-center"></div>
+			<div class="text-center">{ translator.Label("Duguje") }</div>
+			<div class="text-center">{ translator.Label("Potražuje") }</div>
+			<div class="text-center">{ translator.Label("Saldo") }</div>
+		</div>
+		<div class="grid grid-cols-4 gap-1 mb-1 h-6 items-center">
+			<div class="text-sm text-gray-600">{ translator.Label("Početno stanje") }</div>
+			@components.TextInputField(domain.InputFieldConfig{
+				ID:            "pocstanjeduguje",
+				Value:         common.FormatNumberWithSystemLocale(total.PocStanjeDug, 2),
+				DecimalPlaces: 2,
+				Disabled:      true,
+				FieldType:     "number",
+				ClassInput:    common.ClassInputNumericDisabled,
+			})
+			@components.TextInputField(domain.InputFieldConfig{
+				ID:            "pocstanjepotrazuje",
+				Value:         common.FormatNumberWithSystemLocale(total.PocStanjePot, 2),
+				DecimalPlaces: 2,
+				Disabled:      true,
+				FieldType:     "number",
+				ClassInput:    common.ClassInputNumericDisabled,
+			})
+			@components.TextInputField(domain.InputFieldConfig{
+				ID:            "pocstanjesaldo",
+				Value:         common.FormatNumberWithSystemLocale(total.PocStanjeSaldo, 2),
+				DecimalPlaces: 2,
+				Disabled:      true,
+				FieldType:     "number",
+				ClassInput:    common.ClassInputNumericDisabled,
+			})
+		</div>
+		<div class="grid grid-cols-4 gap-1 mb-1 h-6 items-center">
+			<div class="text-sm text-gray-600">{ translator.Label("Tekući promet") }</div>
+			@components.TextInputField(domain.InputFieldConfig{
+				ID:            "tekucipromduguje",
+				Value:         common.FormatNumberWithSystemLocale(total.TekuciPromDug, 2),
+				DecimalPlaces: 2,
+				Disabled:      true,
+				FieldType:     "number",
+				ClassInput:    common.ClassInputNumericDisabled,
+			})
+			@components.TextInputField(domain.InputFieldConfig{
+				ID:            "tekuciprompotrazuje",
+				Value:         common.FormatNumberWithSystemLocale(total.TekuciPromPot, 2),
+				DecimalPlaces: 2,
+				Disabled:      true,
+				FieldType:     "number",
+				ClassInput:    common.ClassInputNumericDisabled,
+			})
+			@components.TextInputField(domain.InputFieldConfig{
+				ID:            "tekucipromsaldo",
+				Value:         common.FormatNumberWithSystemLocale(total.TekuciPromSaldo, 2),
+				DecimalPlaces: 2,
+				Disabled:      true,
+				FieldType:     "number",
+				ClassInput:    common.ClassInputNumericDisabled,
+			})
+		</div>
+		<div class="grid grid-cols-4 gap-1 h-6 items-center mt-auto">
+			<div class="text-sm text-gray-600">{ translator.Label("Ukupan promet") }</div>
+			@components.TextInputField(domain.InputFieldConfig{
+				ID:            "ukpromduguje",
+				Value:         common.FormatNumberWithSystemLocale(total.UkPromDug, 2),
+				DecimalPlaces: 2,
+				FieldType:     "number",
+				Disabled:      true,
+				ClassInput:    common.ClassInputNumericDisabled,
+			})
+			@components.TextInputField(domain.InputFieldConfig{
+				ID:            "ukprompotrazuje",
+				Value:         common.FormatNumberWithSystemLocale(total.UkPromPot, 2),
+				DecimalPlaces: 2,
+				FieldType:     "number",
+				Disabled:      true,
+				ClassInput:    common.ClassInputNumericDisabled,
+			})
+			@components.TextInputField(domain.InputFieldConfig{
+				ID:            "ukpromsaldo",
+				Value:         common.FormatNumberWithSystemLocale(total.UkPromSaldo, 2),
+				DecimalPlaces: 2,
+				FieldType:     "number",
+				Disabled:      true,
+				ClassInput:    common.ClassInputNumericDisabled,
+			})
+		</div>
 	</div>
 }
 
-templ robnoStanjeSvodjenjeZalihaParameters(translator *i18n.Service) {
-	<div class="grid grid-cols-2 gap-2 items-center">
-		@robnoStanjeInput("Magacin", "magacin", "text", "1", translator)
-		@robnoStanjeInput("Od šifre artikla", "odsifre", "text", "2", translator)
-		@robnoStanjeInput("Do šifre artikla", "dosifre", "text", "3", translator)
-		@robnoStanjeInput("Datum obrade", "datumobrade", "date", "4", translator)
-		@robnoStanjeInput("Opis knjiženja", "opisknjizenja", "text", "5", translator)
-	</div>
-}
+templ ChartScript() {
+	<script>
+		// Use a flag to prevent duplicate initialization
+		if (typeof window._chartInitialized === 'undefined') {
+			window._chartInitialized = false;
+		}
 
-templ robnoStanjeInput(label, name, fieldType, tabIndex string, translator *i18n.Service) {
-	<div class="flex items-center gap-1">
-		@components.LabelField(domain.LabelFieldConfig{ID: name, LabelText: translator.Label(label), ClassLabel: common.ClassLabel + " w-36"})
-		@components.TextInputField(domain.InputFieldConfig{ID: name, Name: name, FieldType: fieldType, ClassInput: common.ClassInputTextEnabled + " flex-1", TabIndex: tabIndex})
-	</div>
-}
+		var subsintetickiKontoChartInstance = null;
 
-templ robnoStanjeCheck(label, name string, translator *i18n.Service) {
-	@components.CheckboxField(domain.CheckboxFieldConfig{ID: name, Name: name, LabelText: translator.Label(label), ClassCheckbox: common.ClassCheckbox + " mr-2", ClassLabel: common.ClassLabel + " flex items-center"}, translator)
-}
+		function initializeSubsintetickiKontoChart() {
+			const ctxElement = document.getElementById('subsintetickikontochart');
+			console.log("ctxElement:", ctxElement);
+			if (!ctxElement) {
+				console.log('Chart canvas not found');
+				return;
+			}
 
-templ RobnoStanjaPojedinacnogArtiklaTable(tbl domain.TableData, translator *i18n.Service) {
-	@components.Table(tbl, translator)
-}
+			// Get the context properly
+			const ctx = ctxElement.getContext('2d');
 
-templ RobnoStanjaTable(tbl domain.TableData, translator *i18n.Service) {
-	@components.Table(tbl, translator)
+			// Extract data from table rows in tab3
+			const tab3 = document.getElementById('tab3');
+			console.log("tab3:", tab3);
+			if (!tab3) {
+				return;
+			}
+			
+			// Get table data from the page - find the table in tab1
+			const months = [];
+			const duguje = [];
+			const potrazuje = [];
+			const saldo = [];
+			
+			const tableRows = tab3.querySelectorAll('table tbody tr');
+			
+			
+			if (tableRows.length === 0) {
+				console.log('No table rows found');
+				return;
+			}
+			
+			tableRows.forEach(row => {
+				const cells = row.querySelectorAll('td');
+				if (cells.length >= 4) {
+					months.push(cells[0].textContent.trim());
+					duguje.push(parseFloat(cells[1].textContent.replace(/,/g, '').replace(/\./g, '')) || 0);
+					potrazuje.push(parseFloat(cells[2].textContent.replace(/,/g, '').replace(/\./g, '')) || 0);
+					saldo.push(parseFloat(cells[3].textContent.replace(/,/g, '').replace(/\./g, '')) || 0);
+				}
+			});
+
+			// Only create chart if we have data
+			if (months.length === 0) {
+				console.log('No data found for chart');
+				return;
+			}
+
+			// Destroy previous chart instance if it exists
+			if (subsintetickiKontoChartInstance) {
+				subsintetickiKontoChartInstance.destroy();
+				subsintetickiKontoChartInstance = null;
+			}
+
+			// Create new chart
+			try {
+				subsintetickiKontoChartInstance = new Chart(ctx, {
+					type: 'bar',
+					data: {
+						labels: months,
+						datasets: [
+							{
+								label: 'Duguje',
+								data: duguje,
+								backgroundColor: 'rgba(59, 130, 246, 0.5)',
+								borderColor: 'rgba(59, 130, 246, 1)',
+								borderWidth: 1
+							},
+							{
+								label: 'Potražuje',
+								data: potrazuje,
+								backgroundColor: 'rgba(34, 197, 94, 0.5)',
+								borderColor: 'rgba(34, 197, 94, 1)',
+								borderWidth: 1
+							},
+							{
+								label: 'Saldo',
+								data: saldo,
+								backgroundColor: 'rgba(239, 68, 68, 0.5)',
+								borderColor: 'rgba(239, 68, 68, 1)',
+								borderWidth: 1
+							}
+						]
+					},
+					options: {
+						responsive: true,
+						maintainAspectRatio: false,
+						plugins: {
+							legend: {
+								position: 'top',
+							},
+							title: {
+								display: true,
+								text: 'Subsintetičko konto'
+							}
+						},
+						scales: {
+							y: {
+								beginAtZero: true
+							}
+						}
+					}
+				});
+				// console.log('Chart created successfully');
+			} catch (error) {
+				console.error('Error creating chart:', error);
+			}
+		}
+
+		// Function to initialize chart safely
+		function safeInitializeChart() {
+			// Wait a bit for DOM to be ready
+			setTimeout(() => {
+				initializeSubsintetickiKontoChart();
+			}, 50);
+		}
+
+		// Initialize chart when data changes (after obrada)
+		document.addEventListener('htmx:afterSwap', function(evt) {
+			const target = evt.detail.target;
+			
+			// Check if we're in tab3 or if table body was swapped
+			if (target.id === 'tab3' || target.closest('table') || target.parentElement?.querySelector('table')) {
+				// console.log('Chart should reinitialize');
+				safeInitializeChart();
+			}
+		    
+			// Only auto-click first row on initial tab3 load, NOT on detail updates
+			if (target.id === 'tab3' && !target.dataset.initialized) {
+				// console.log('Selecting first row in subsinteticko-konto-table after HTMX swap');
+				target.dataset.initialized = 'true';
+				setTimeout(() => {
+					const firstRow = document.querySelector('#tab3 table tbody tr');
+					if (firstRow) firstRow.click();
+				}, 600);
+			}
+		});
+
+		// Initialize on page load - try multiple strategies
+		function initOnPageLoad() {
+			console.log('DOMContentLoaded or page load detected');
+			if (document.readyState === 'complete' || document.readyState === 'interactive') {
+				safeInitializeChart();
+			} else {
+				document.addEventListener('DOMContentLoaded', function() {
+					console.log("DOMContentLoaded fired");
+					safeInitializeChart();
+				});
+			}
+		}
+
+		// Call initialization immediately if DOM is ready
+		if (document.readyState === 'complete' || document.readyState === 'interactive') {
+			safeInitializeChart();
+		} else {
+			document.addEventListener('DOMContentLoaded', initOnPageLoad);
+		}
+
+		// Also try after a short delay for HTMX content
+		setTimeout(safeInitializeChart, 500);
+	</script>
 }

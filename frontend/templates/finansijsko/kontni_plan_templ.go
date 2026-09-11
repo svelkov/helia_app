@@ -38,7 +38,7 @@ func KontniPlan(tbl domain.TableData, searchInput domain.InputControl, btnPrint 
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!-- Container with full height --><div class=\"flex flex-col h-full\"><!-- Tab Content --><div id=\"tab1\" class=\"flex-1 min-h-0 flex flex-col gap-1 pt-1\"><!-- Title --><div class=\"text-xl font-semibold mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!-- Container with full height --><div class=\"bg-blue-100 p-1 flex flex-col h-full\"><!-- Tab Content --><div id=\"tab1\" class=\"flex-1 min-h-0 flex flex-col gap-1 pt-1\"><!-- Title --><div class=\"text-xl font-semibold mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

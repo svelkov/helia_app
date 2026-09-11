@@ -36,7 +36,7 @@ type Fkpl struct {
 
 // Tipanalitike represents the "baza.tipanalitike" table.
 type Tipanalitike struct {
-	TipanalitikeID int64          `db:"tipanalitikeid"`
+	TipanalitikeID int64          `db:"tipanalitikeid" form:"tipanalitikeid"`
 	Naziv          string         `db:"naziv" form:"naziv"`
 	Xdatunosa      sql.NullTime   `db:"xdatunosa" format:"datetime"`
 	Xopunos        sql.NullString `db:"xopunos"`

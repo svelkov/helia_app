@@ -24,3 +24,23 @@ clearFieldError
 - ako je specificna samo za prozor gde se potziva onda je definisi u taj templ.
 - ako je listener definisi je u templ gde se poziva u suprotnom moze da pravi probleme
 
+
+
+
+
+Tailwind Width Classes (px → rem)
+Class	px	rem	Good For
+w-8	  32px	2rem	4 digits
+w-10	40px	2.5rem	4-5 digits
+w-12	48px	3rem	6 digits
+w-16	64px	4rem	8 digits
+w-20	80px	5rem	10 chars
+w-24	96px	6rem	12 chars
+w-28	112px	7rem	14 chars
+w-32	128px	8rem	16 chars
+w-36	144px	9rem	18 chars
+w-40	160px	10rem	20 chars
+w-48	192px	12rem	24 chars
+w-56	224px	14rem	28 chars
+w-60	240px	15rem	30 chars
+w-64	256px	16rem	32 chars

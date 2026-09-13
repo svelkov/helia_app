@@ -1,0 +1,35 @@
+package robno
+
+import (
+	"fmt"
+	"helia/frontend/components"
+	tmpl "helia/frontend/templates"
+	"helia/i18n"
+	"helia/internal/common"
+	"helia/internal/domain"
+)
+
+templ Fisp(tbl domain.TableData, searchInput domain.InputControl, btnPrint domain.Button, translator *i18n.Service) {
+	<div class="bg-blue-100 p-1 flex flex-col h-full"><div class="border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1"><div class="flex items-center justify-between"><div class="flex-1">@components.Search_Part(tbl, searchInput)</div><div class="flex-shrink-0 mb-1">@components.Search_PartPrintButton(btnPrint)</div></div><div class="flex-1 overflow-x-auto overflow-y-auto min-h-0">@components.Table(tbl, translator)</div></div><div id="dialog-fisp-stampa"></div></div>
+	@tmpl.OpenPrintWithParamsScript()
+}
+
+templ FispDialog(dialog domain.Dialog, action string, model domain.Fisp, btnSave domain.Button, btnCancel domain.Button, btnClose domain.Button, translator *i18n.Service, csrfToken string) { @tmpl.Dialog("fisp-form", csrfToken, fispFormContent(model, translator), dialog, btnSave, btnCancel, btnClose, translator) }
+
+templ fispFormContent(model domain.Fisp, translator *i18n.Service) {
+	<div class="grid grid-cols-2 gap-2">
+		<input type="hidden" id="idpartneri" name="idpartneri" value={ fmt.Sprint(model.IDPartneri) } />
+		<div class="flex items-center"><label class={ common.ClassLabel + " w-28" } for="konto">{ translator.Label("Konto") }</label><input id="konto" name="konto" value={ model.Konto } required class={ common.ClassInputTextEnabled + " flex-1" } /></div>
+		<div class="flex items-center"><label class={ common.ClassLabel + " w-28" } for="sifra">{ translator.Label("Sifra partnera") }</label><input id="sifra" name="sifra" value={ model.Sifra } required class={ common.ClassInputTextEnabled + " flex-1" } /></div>
+		<div class="flex items-center"><label class={ common.ClassLabel + " w-28" } for="mi">{ translator.Label("MI") }</label><input id="mi" name="mi" type="number" value={ fmt.Sprint(model.MI) } class={ common.ClassInputTextEnabled + " flex-1" } /></div>
+		<div class="flex items-center"><label class={ common.ClassLabel + " w-28" } for="naziv">{ translator.Label("Naziv") }</label><input id="naziv" name="naziv" value={ model.Naziv } required class={ common.ClassInputTextEnabled + " flex-1" } /></div>
+		<div class="flex items-center"><label class={ common.ClassLabel + " w-28" } for="adresa">{ translator.Label("Adresa") }</label><input id="adresa" name="adresa" value={ model.Adresa } class={ common.ClassInputTextEnabled + " flex-1" } /></div>
+		<div class="flex items-center"><label class={ common.ClassLabel + " w-28" } for="pobro">{ translator.Label("Pobro") }</label><input id="pobro" name="pobro" type="number" value={ fmt.Sprint(model.Pobro) } class={ common.ClassInputTextEnabled + " flex-1" } /></div>
+		<div class="flex items-center"><label class={ common.ClassLabel + " w-28" } for="mesto">{ translator.Label("Mesto") }</label><input id="mesto" name="mesto" value={ model.Mesto } class={ common.ClassInputTextEnabled + " flex-1" } /></div>
+		<div class="flex items-center"><label class={ common.ClassLabel + " w-28" } for="pib">{ translator.Label("PIB") }</label><input id="pib" name="pib" value={ model.PIB } class={ common.ClassInputTextEnabled + " flex-1" } /></div>
+		<div class="flex items-center"><label class={ common.ClassLabel + " w-28" } for="kontaktosb">{ translator.Label("KontaktOsb") }</label><input id="kontaktosb" name="kontaktosb" value={ model.KontaktOsb } class={ common.ClassInputTextEnabled + " flex-1" } /></div>
+		<div class="flex items-center"><label class={ common.ClassLabel + " w-28" } for="gln">{ translator.Label("GLN") }</label><input id="gln" name="gln" type="number" value={ fmt.Sprint(model.GLN) } class={ common.ClassInputTextEnabled + " flex-1" } /></div>
+		<div class="flex items-center"><label class={ common.ClassLabel + " w-28" } for="email">{ translator.Label("Email") }</label><input id="email" name="email" type="email" value={ model.Email } class={ common.ClassInputTextEnabled + " flex-1" } /></div>
+		<div class="flex items-center gap-4"><span class={ common.ClassLabel + " w-28" }>{ translator.Label("Ter") }</span><label><input type="radio" name="ter" value="0" checked?={ model.Ter == 0 } /> 0</label><label><input type="radio" name="ter" value="1" checked?={ model.Ter == 1 } /> 1</label></div>
+	</div>
+}

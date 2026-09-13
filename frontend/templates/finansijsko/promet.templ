@@ -401,14 +401,7 @@ templ PrometAnalitickihKontaDialog(dialog domain.Dialog, btnPrint, btnCancel, bt
 			</div>
 		</div>
 	</div>
-	<script>
-		function sakToggle(chk, ids) {
-			ids.forEach(function(id) {
-				var el = document.getElementById(id);
-				if (el) el.disabled = !chk.checked;
-			});
-		}
-	</script>
+	@tmpl.EnableDisableFieldsScripts()
 }
 
 templ PrometAnalitickihKontaDodatniParametri(dialog domain.Dialog, btnClose, btnSelect, btnCancel domain.Button, prometParams domain.PrometParam, translator *i18n.Service) {
@@ -441,7 +434,7 @@ templ DodatniKriterijumi(prometParams domain.PrometParam, translator *i18n.Servi
 						id="chkpogrupinaloga"
 						name="chkpogrupinaloga"
 						class={ common.ClassCheckbox }
-						onchange="sakToggle(this,['odvrstenaloga','dovrstenaloga'])"
+						onchange="controlToggle(this,['odvrstenaloga','dovrstenaloga'])"
 					/>
 					<span class={ common.ClassCheckboxSpan }>{ translator.Label("Po grupi naloga ?") }</span>
 				</label>
@@ -479,7 +472,7 @@ templ DodatniKriterijumi(prometParams domain.PrometParam, translator *i18n.Servi
 						id="chkpobrojunaloga"
 						name="chkpobrojunaloga"
 						class={ common.ClassCheckbox }
-						onchange="sakToggle(this,['odbrojanaloga','dobrojanaloga'])"
+						onchange="controlToggle(this,['odbrojanaloga','dobrojanaloga'])"
 					/>
 					<span class={ common.ClassCheckboxSpan }>{ translator.Label("Po broju naloga ?") }</span>
 				</label>
@@ -496,7 +489,7 @@ templ DodatniKriterijumi(prometParams domain.PrometParam, translator *i18n.Servi
 						id="chkpodatumnaloga"
 						name="chkpodatumnaloga"
 						class={ common.ClassCheckbox }
-						onchange="sakToggle(this,['oddatumnaloga','dodatumnaloga'])"
+						onchange="controlToggle(this,['oddatumnaloga','dodatumnaloga'])"
 					/>
 					<span class={ common.ClassCheckboxSpan }>{ translator.Label("Po datumu naloga ?") }</span>
 				</label>
@@ -513,7 +506,7 @@ templ DodatniKriterijumi(prometParams domain.PrometParam, translator *i18n.Servi
 						id="chkpodatumuobrade"
 						name="chkpodatumuobrade"
 						class={ common.ClassCheckbox }
-						onchange="sakToggle(this,['oddatumobrade','dodatumobrade'])"
+						onchange="controlToggle(this,['oddatumobrade','dodatumobrade'])"
 					/>
 					<span class={ common.ClassCheckboxSpan }>{ translator.Label("Po datumu obrade ?") }</span>
 				</label>
@@ -530,7 +523,7 @@ templ DodatniKriterijumi(prometParams domain.PrometParam, translator *i18n.Servi
 						id="chkpovrstidokumenta"
 						name="chkpovrstidokumenta"
 						class={ common.ClassCheckbox }
-						onchange="sakToggle(this,['vrstedokumenta'])"
+						onchange="controlToggle(this,['vrstedokumenta'])"
 					/>
 					<span class={ common.ClassCheckboxSpan }>{ translator.Label("Po vrsti dokumenta ?") }</span>
 				</label>
@@ -545,7 +538,7 @@ templ DodatniKriterijumi(prometParams domain.PrometParam, translator *i18n.Servi
 						id="chkpobrojudokumenta"
 						name="chkpobrojudokumenta"
 						class={ common.ClassCheckbox }
-						onchange="sakToggle(this,['odbrojadokumenta','dobrojadokumenta'])"
+						onchange="controlToggle(this,['odbrojadokumenta','dobrojadokumenta'])"
 					/>
 					<span class={ common.ClassCheckboxSpan }>{ translator.Label("Po broju dokumenta ?") }</span>
 				</label>
@@ -562,7 +555,7 @@ templ DodatniKriterijumi(prometParams domain.PrometParam, translator *i18n.Servi
 						id="chkpodatumudokumenta"
 						name="chkpodatumudokumenta"
 						class={ common.ClassCheckbox }
-						onchange="sakToggle(this,['oddatumadokumenta','dodatumadokumenta'])"
+						onchange="controlToggle(this,['oddatumadokumenta','dodatumadokumenta'])"
 					/>
 					<span class={ common.ClassCheckboxSpan }>{ translator.Label("Po datumu dokumenta ?") }</span>
 				</label>
@@ -579,7 +572,7 @@ templ DodatniKriterijumi(prometParams domain.PrometParam, translator *i18n.Servi
 						id="chkpoiznosu"
 						name="chkpoiznosu"
 						class={ common.ClassCheckbox }
-						onchange="sakToggle(this,['odiznosa','doiznosa'])"
+						onchange="controlToggle(this,['odiznosa','doiznosa'])"
 					/>
 					<span class={ common.ClassCheckboxSpan }>{ translator.Label("Po iznosu ?") }</span>
 				</label>
@@ -596,7 +589,7 @@ templ DodatniKriterijumi(prometParams domain.PrometParam, translator *i18n.Servi
 						id="chkponacinuknjizenja"
 						name="chkponacinuknjizenja"
 						class={ common.ClassCheckbox }
-						onchange="sakToggle(this,['nacinknjizenja'])"
+						onchange="controlToggle(this,['nacinknjizenja'])"
 					/>
 					<span class={ common.ClassCheckboxSpan }>{ translator.Label("Po načinu knjiženja ?") }</span>
 				</label>

@@ -34,6 +34,14 @@ func SetJedmereFields() []domain.Fields {
 	}
 }
 
+// SetTipknpismaFields returns the fields configuration for Tipknpisma table.
+func SetTipknpismaFields() []domain.Fields {
+	return []domain.Fields{
+		{Name: "sifrazlog", Label: "Šifra razloga", Width: "15"},
+		{Name: "opis", Label: "Opis", Width: "50"},
+	}
+}
+
 // SetMagkontoFields returns the fields configuration for Magkonto table
 func SetMagkontoFields() []domain.Fields {
 	return []domain.Fields{

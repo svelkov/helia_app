@@ -12,7 +12,6 @@ templ RobnoKarticaMain(tabs domain.TabData, tblData domain.TableData, magacini [
 	<div id="tab-content" class="flex flex-col h-full">
 		@RobnoKarticaArtikla(tabs, tblData, magacini, btnObrada, btnPrint, searchInput, translator)
 	</div>
-	@RobnoKarticaScripts()
 	@tmpl.ShowSearchDialogScript()
 	@tmpl.HideDropdownScript()
 	@tmpl.ClearFieldErrorScript()
@@ -20,6 +19,7 @@ templ RobnoKarticaMain(tabs domain.TabData, tblData domain.TableData, magacini [
 	@tmpl.HandleDialogResponseScript()
 	@tmpl.CloseDialogScript()
 	@tmpl.OpenPrintWithParamsScript()
+	@tmpl.EnableDisableFieldsScripts()
 }
 
 templ RobnoKarticaArtikla(tabs domain.TabData, tbl domain.TableData, magValues []domain.ComboItem, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
@@ -295,7 +295,7 @@ templ RobnoKarticaCheckBox(id, labelText, fields string, translator *i18n.Servic
 			id={ id }
 			name={ id }
 			class={ common.ClassCheckbox }
-			onchange={ templ.JSFuncCall("sakToggle", templ.JSExpression("this"), templ.JSExpression(fields)) }
+			onchange={ templ.JSFuncCall("controlToggle", templ.JSExpression("this"), templ.JSExpression(fields)) }
 		/>
 		<span class={ common.ClassCheckboxSpan }>{ translator.Label(labelText) }</span>
 	</label>
@@ -308,15 +308,4 @@ templ RobnoKarticaArtikalRange(label, name, shortcut string) {
 		@components.SearchButton(domain.SearchButtonConfig{ID: name, Name: "search-" + name, HxUrl: "/api/kartica/searchbutton", HxTarget: "#search-dropdown", HxSwap: "innerHTML", HxVals: `{"destfield": "` + name + `"}`, ClassButton: common.ClassButton})
 		@components.TextInputField(domain.InputFieldConfig{ID: name + "naziv", Name: name + "naziv", FieldType: "text", Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1", Placeholder: shortcut})
 	</div>
-}
-
-templ RobnoKarticaScripts() {
-	<script>
-		function sakToggle(chk, ids) {
-			ids.forEach(function(id) {
-				var el = document.getElementById(id);
-				if (el) el.disabled = !chk.checked;
-			});
-		}
-	</script>
 }

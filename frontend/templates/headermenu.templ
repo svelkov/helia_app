@@ -2,8 +2,10 @@ package templates
 
 import (
 	"fmt"
-	"helia/internal/domain"
+	"helia/frontend/components"
 	"helia/i18n"
+	"helia/internal/common"
+	"helia/internal/domain"
 	"net/url"
 	"strings"
 )
@@ -27,18 +29,19 @@ templ TopMenu(isLoggedIn bool, username string, menuItems domain.MenuDataItems, 
 					}
 					type="button"
 				>
+					@components.MainMenuIcon(item.Icon, common.ClassIcon + " h-6 w-6")
 					{ translator.Menu(item.MenuName) }
 				</button>
 			}
 			<!-- Right-aligned items  -->
 			<div class="ml-auto flex items-center space-x-4 pr-4">
-				<a href="/" class="hover:text-blue-200">{translator.Label("Pocetna") }</a>
+				<a href="/" class="hover:text-blue-200">{ translator.Label("Pocetna") }</a>
 				if !isLoggedIn {
-					<a href="/login" class="hover:text-blue-200">{translator.Label("Prijava") }</a>
-					<a href="/register" class="hover:text-blue-200">{translator.Label("Registracija") }</a>
+					<a href="/login" class="hover:text-blue-200">{ translator.Label("Prijava") }</a>
+					<a href="/register" class="hover:text-blue-200">{ translator.Label("Registracija") }</a>
 				} else {
-					<a href="/logout" class="hover:text-blue-200">{translator.Label("Odjava") }</a>
-					<span class="ml-4">{translator.Label("Dobrodosli") }, { username }</span>
+					<a href="/logout" class="hover:text-blue-200">{ translator.Label("Odjava") }</a>
+					<span class="ml-4">{ translator.Label("Dobrodosli") }, { username }</span>
 				}
 				<!-- Theme Toggle Button -->
 				<button id="theme-toggle" class="p-2 rounded-full hover:bg-blue-700 focus:outline-none">

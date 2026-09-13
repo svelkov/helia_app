@@ -70,6 +70,10 @@ func KomercijalistiMain(tbl domain.TableData, searchInput domain.InputControl, b
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
+		templ_7745c5c3_Err = tmpl.RestrictNumericInputScript().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
 		return nil
 	})
 }
@@ -124,14 +128,14 @@ func komercijalistiFormContent(model domain.Komercijalisti, translator *i18n.Ser
 			templ_7745c5c3_Var3 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<div class=\"grid grid-cols-3 gap-2\"><!-- Left Column: Main Fields --><div class=\"col-span-2\"><!-- Šifra komercijaliste (required) --><div class=\"flex items-center mt-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<div class=\"grid grid-cols-1 md:grid-cols-2 gap-1\"><!-- Šifra komercijaliste (required) --><div class=\"flex items-center\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "sifkom",
 			LabelText:  translator.Label("Šifra komercijaliste"),
-			ClassLabel: common.ClassLabel + " w-32",
+			ClassLabel: common.ClassLabel + " w-44",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -143,7 +147,7 @@ func komercijalistiFormContent(model domain.Komercijalisti, translator *i18n.Ser
 			FieldType:  "number",
 			Required:   true,
 			Disabled:   false,
-			ClassInput: common.ClassInputTextEnabled + " flex-1",
+			ClassInput: common.ClassInputTextEnabled + " w-16",
 			TabIndex:   "1",
 			OnInput:    "clearFieldError",
 			OnFocus:    "clearFieldError",
@@ -151,14 +155,14 @@ func komercijalistiFormContent(model domain.Komercijalisti, translator *i18n.Ser
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</div><!-- Šifra nadređene osobe --><div class=\"flex items-center mt-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</div><!-- Šifra nadređene osobe --><div class=\"flex items-center\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "sifnadred",
 			LabelText:  translator.Label("Šifra nadređene osobe"),
-			ClassLabel: common.ClassLabel + " w-32",
+			ClassLabel: common.ClassLabel + " w-44",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -170,20 +174,20 @@ func komercijalistiFormContent(model domain.Komercijalisti, translator *i18n.Ser
 			FieldType:  "number",
 			Required:   false,
 			Disabled:   false,
-			ClassInput: common.ClassInputTextEnabled + " flex-1",
+			ClassInput: common.ClassInputTextEnabled + " w-16",
 			TabIndex:   "2",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</div><!-- Ime i prezime (required) --><div class=\"flex items-center mt-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</div><!-- Ime i prezime (required) --><div class=\"flex items-center\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "imeprezime",
 			LabelText:  translator.Label("Ime i prezime"),
-			ClassLabel: common.ClassLabel + " w-32",
+			ClassLabel: common.ClassLabel + " w-44",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -195,7 +199,7 @@ func komercijalistiFormContent(model domain.Komercijalisti, translator *i18n.Ser
 			FieldType:  "text",
 			Required:   true,
 			Disabled:   false,
-			ClassInput: common.ClassInputTextEnabled + " flex-1",
+			ClassInput: common.ClassInputTextEnabled + " w-64",
 			MaxLength:  "100",
 			TabIndex:   "3",
 			OnInput:    "clearFieldError",
@@ -204,14 +208,14 @@ func komercijalistiFormContent(model domain.Komercijalisti, translator *i18n.Ser
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</div><!-- Adresa --><div class=\"flex items-center mt-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</div><!-- Adresa --><div class=\"flex items-center\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "adresa",
 			LabelText:  translator.Label("Adresa"),
-			ClassLabel: common.ClassLabel + " w-32",
+			ClassLabel: common.ClassLabel + " w-44",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -223,21 +227,21 @@ func komercijalistiFormContent(model domain.Komercijalisti, translator *i18n.Ser
 			FieldType:  "text",
 			Required:   false,
 			Disabled:   false,
-			ClassInput: common.ClassInputTextEnabled + " flex-1",
+			ClassInput: common.ClassInputTextEnabled + " w-64",
 			MaxLength:  "100",
 			TabIndex:   "4",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</div><!-- Mesto --><div class=\"flex items-center mt-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</div><!-- Mesto --><div class=\"flex items-center\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "mesto",
 			LabelText:  translator.Label("Mesto"),
-			ClassLabel: common.ClassLabel + " w-32",
+			ClassLabel: common.ClassLabel + " w-44",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -249,21 +253,21 @@ func komercijalistiFormContent(model domain.Komercijalisti, translator *i18n.Ser
 			FieldType:  "text",
 			Required:   false,
 			Disabled:   false,
-			ClassInput: common.ClassInputTextEnabled + " flex-1",
+			ClassInput: common.ClassInputTextEnabled + " w-64",
 			MaxLength:  "100",
 			TabIndex:   "5",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</div><!-- Telefon posao --><div class=\"flex items-center mt-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</div><!-- Telefon posao --><div class=\"flex items-center\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "telposao",
 			LabelText:  translator.Label("Telefon posao"),
-			ClassLabel: common.ClassLabel + " w-32",
+			ClassLabel: common.ClassLabel + " w-44",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -275,21 +279,21 @@ func komercijalistiFormContent(model domain.Komercijalisti, translator *i18n.Ser
 			FieldType:  "text",
 			Required:   false,
 			Disabled:   false,
-			ClassInput: common.ClassInputTextEnabled + " flex-1",
+			ClassInput: common.ClassInputTextEnabled + " w-48",
 			MaxLength:  "20",
 			TabIndex:   "6",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</div><!-- Telefon mobilni --><div class=\"flex items-center mt-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</div><!-- Telefon mobilni --><div class=\"flex items-center\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "telmob",
 			LabelText:  translator.Label("Telefon mobilni"),
-			ClassLabel: common.ClassLabel + " w-32",
+			ClassLabel: common.ClassLabel + " w-44",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -301,21 +305,21 @@ func komercijalistiFormContent(model domain.Komercijalisti, translator *i18n.Ser
 			FieldType:  "text",
 			Required:   false,
 			Disabled:   false,
-			ClassInput: common.ClassInputTextEnabled + " flex-1",
+			ClassInput: common.ClassInputTextEnabled + " w-48",
 			MaxLength:  "20",
 			TabIndex:   "7",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</div><!-- Login name --><div class=\"flex items-center mt-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</div><!-- Login name --><div class=\"flex items-center\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "loginname",
 			LabelText:  translator.Label("Login name"),
-			ClassLabel: common.ClassLabel + " w-32",
+			ClassLabel: common.ClassLabel + " w-44",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -327,127 +331,14 @@ func komercijalistiFormContent(model domain.Komercijalisti, translator *i18n.Ser
 			FieldType:  "text",
 			Required:   false,
 			Disabled:   false,
-			ClassInput: common.ClassInputTextEnabled + " flex-1",
+			ClassInput: common.ClassInputTextEnabled + " w-48",
 			MaxLength:  "15",
 			TabIndex:   "8",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</div></div><!-- Right Column: Statistics --><div class=\"col-span-1 bg-blue-50 p-2 rounded border border-blue-300\"><div class=\"font-bold text-left mb-3\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var4 string
-		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Stanje"))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/komercijalisti.templ`, Line: 201, Col: 69}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</div><!-- Ukupna prodaja --><div class=\"flex items-center mt-1\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
-			ID:         "totprod-label",
-			LabelText:  translator.Label("Ukupna prodaja"),
-			ClassLabel: common.ClassLabel + " text-xs",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
-			ID:         "totprod",
-			Name:       "totprod",
-			Value:      fmt.Sprintf("%.2f", model.TotProd),
-			FieldType:  "number",
-			Required:   false,
-			Disabled:   true,
-			ClassInput: common.ClassInputTextDisabled + " w-24",
-			TabIndex:   "9",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</div><!-- Ukupan profit --><div class=\"flex items-center mt-1\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
-			ID:         "totprofit-label",
-			LabelText:  translator.Label("Ukupan profit"),
-			ClassLabel: common.ClassLabel + " text-xs",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
-			ID:         "totprofit",
-			Name:       "totprofit",
-			Value:      fmt.Sprintf("%.2f", model.TotProfit),
-			FieldType:  "number",
-			Required:   false,
-			Disabled:   true,
-			ClassInput: common.ClassInputTextDisabled + " w-24",
-			TabIndex:   "10",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "</div><!-- Ukupno naplaćeno --><div class=\"flex items-center mt-1\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
-			ID:         "totnaplaceno-label",
-			LabelText:  translator.Label("Ukupno naplaćeno"),
-			ClassLabel: common.ClassLabel + " text-xs",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
-			ID:         "totnaplaceno",
-			Name:       "totnaplaceno",
-			Value:      fmt.Sprintf("%.2f", model.TotNaplaceno),
-			FieldType:  "number",
-			Required:   false,
-			Disabled:   true,
-			ClassInput: common.ClassInputTextDisabled + " w-24",
-			TabIndex:   "11",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</div><!-- Poslednji datum prodaje --><div class=\"flex items-center mt-1\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
-			ID:         "zaddatprod-label",
-			LabelText:  translator.Label("Poslednji datum"),
-			ClassLabel: common.ClassLabel + " text-xs",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
-			ID:         "zaddatprod",
-			Name:       "zaddatprod",
-			Value:      model.ZadDatProd.Format("2006-01-02"),
-			FieldType:  "date",
-			Required:   false,
-			Disabled:   false,
-			ClassInput: common.ClassInputTextEnabled + " w-24",
-			TabIndex:   "12",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</div><div id=\"dialog-message\"></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

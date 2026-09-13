@@ -1,0 +1,75 @@
+package robno
+
+import (
+	"helia/frontend/components"
+	tmpl "helia/frontend/templates"
+	"helia/i18n"
+	"helia/internal/common"
+	"helia/internal/domain"
+)
+
+templ KrajPoslovneGodineMain(tabs, subtabs domain.TabData, tbl domain.TableData, mag []domain.ComboItem, tr *i18n.Service) {
+	<div id="tab-content" class="bg-blue-100 p-1 flex flex-col h-full">
+		@KrajPoslovneGodinePopis(tabs, subtabs, tbl, mag, tr)
+	</div>
+	@tmpl.HideDropdownScript()
+}
+
+templ KrajPoslovneGodinePopis(tabs, subtabs domain.TabData, tbl domain.TableData, mag []domain.ComboItem, tr *i18n.Service) {
+	<div class="bg-blue-100 p-1 flex flex-col h-full">
+		<div class="border-b border-blue-600">@tmpl.TabNav(tr.Title("Kraj poslovne godine"), tabs, "#tab-content", "kpg-panel", tr)</div>
+		<div class="border-b border-blue-600 pt-1">@tmpl.TabNav("", subtabs, "#tab-content", "kpg-subpanel", tr)</div>
+		@KrajPoslovneGodineParameters(mag, tr, "/api/robno-kraj-poslovne-godine/popis")
+		<div class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex-1 min-h-0 overflow-auto">@components.Table(tbl, tr)</div>
+	</div>
+}
+
+templ KrajPoslovneGodineParameters(mag []domain.ComboItem, tr *i18n.Service, action string) {
+	<form class="border border-blue-400 p-1 rounded-lg grid grid-cols-1 md:grid-cols-3 gap-1" hx-get={ action } hx-target="#kpg-table" hx-swap="outerHTML" hx-headers='{"X-Request-Source":"btnobrada"}'>
+		<div class="flex items-center gap-1"><label class={ common.ClassLabel + " w-24" } for="magacin">{ tr.Label("Magacin") }</label>@components.ComboBoxField(domain.ComboFieldConfig{ID: "magacin", Name: "magacin", OptionValues: mag, ClassSelect: common.ClassInputTextEnabled + " flex-1"}, tr)</div>
+		<div class="flex items-center gap-1"><label class={ common.ClassLabel + " w-24" } for="odkonta">{ tr.Label("Od konta") }</label><input id="odkonta" name="odkonta" class={ common.ClassInputTextEnabled + " flex-1" } /></div>
+		<div class="flex items-center gap-1"><label class={ common.ClassLabel + " w-24" } for="dokonta">{ tr.Label("Do konta") }</label><input id="dokonta" name="dokonta" class={ common.ClassInputTextEnabled + " flex-1" } /></div>
+		<div class="flex items-center gap-1"><label class={ common.ClassLabel + " w-24" } for="odsifre">{ tr.Label("Od šifre") }</label><input id="odsifre" name="odsifre" type="number" class={ common.ClassInputTextEnabled + " flex-1" } /></div>
+		<div class="flex items-center gap-1"><label class={ common.ClassLabel + " w-24" } for="dosifre">{ tr.Label("Do šifre") }</label><input id="dosifre" name="dosifre" type="number" class={ common.ClassInputTextEnabled + " flex-1" } /></div>
+		<div class="flex items-center gap-1"><label class={ common.ClassLabel + " w-24" } for="obradinule">{ tr.Label("Obradi nule") }</label><input id="obradinule" name="obradinule" type="checkbox" /></div>
+		<div class="md:col-span-3 flex justify-end gap-1"><button class={ common.ClassSaveButton } type="submit">{ tr.Button("Obradi") }</button><button class={ common.ClassPrintButton } type="button" hx-get="/api/robno-kraj-poslovne-godine/popis/stampa" hx-target="body" hx-include="closest form">{ tr.Button("Štampaj") }</button><button class={ common.ClassPrintButton } type="button" hx-get="/api/robno-kraj-poslovne-godine/popis/stampa2" hx-target="body" hx-include="closest form">{ tr.Button("Štampaj 2") }</button></div>
+	</form>
+}
+
+templ KrajPoslovneGodineObrada(tabs domain.TabData, tbl domain.TableData, mag []domain.ComboItem, tr *i18n.Service) {
+	<div class="bg-blue-100 p-1 flex flex-col h-full"><div class="border-b border-blue-600">@tmpl.TabNav(tr.Title("Kraj poslovne godine"), tabs, "#tab-content", "kpg-panel", tr)</div>
+		<form class="border border-blue-400 p-1 rounded-lg grid grid-cols-1 md:grid-cols-3 gap-1" hx-get="/api/robno-kraj-poslovne-godine/obrada" hx-headers='{"X-Request-Source":"btnobrada"}'><div class="flex items-center gap-1"><label class={ common.ClassLabel + " w-28" } for="magacin">{ tr.Label("Magacin") }</label>@components.ComboBoxField(domain.ComboFieldConfig{ID: "magacin", Name: "magacin", OptionValues: mag, ClassSelect: common.ClassInputTextEnabled + " flex-1"}, tr)</div><div class="flex items-center gap-1"><label class={ common.ClassLabel + " w-28" } for="novagod">{ tr.Label("Nova godina") }</label><input id="novagod" name="novagod" type="number" class={ common.ClassInputTextEnabled + " flex-1" } /></div><div class="flex items-center gap-1"><label class={ common.ClassLabel + " w-28" } for="nalog">{ tr.Label("Nalog") }</label><input id="nalog" name="nalog" type="number" class={ common.ClassInputTextEnabled + " flex-1" } /></div><div class="flex items-center gap-1"><label class={ common.ClassLabel + " w-28" } for="dokum">{ tr.Label("Dokument") }</label><input id="dokum" name="dokum" type="number" class={ common.ClassInputTextEnabled + " flex-1" } /></div><div class="flex items-center gap-1"><label class={ common.ClassLabel + " w-28" } for="vrd">{ tr.Label("Vrsta dokumenta") }</label><input id="vrd" name="vrd" type="number" class={ common.ClassInputTextEnabled + " flex-1" } /></div>
+			<div class="flex items-center gap-1"><label class={ common.ClassLabel + " w-28" } for="tipzal">TIPZAL</label><select id="tipzal" name="tipzal" class={ common.ClassInputTextEnabled + " flex-1" }><option value="1">1</option><option value="2">2</option></select></div></form>
+		<div class="flex justify-end p-1"><button class={ common.ClassSaveButton } hx-get="/api/robno-kraj-poslovne-godine/obrada" hx-headers='{"X-Request-Source":"btnobrada"}' hx-include="form">{ tr.Button("Obradi viškove/manjkove") }</button></div>
+		<div class="flex-1 min-h-0 overflow-auto">@components.Table(tbl, tr)</div></div>
+}
+
+templ KrajPoslovneGodinePrepis(tabs domain.TabData, tbl domain.TableData, mag []domain.ComboItem, tr *i18n.Service) {
+	<div class="bg-blue-100 p-1 flex flex-col h-full"><div class="border-b border-blue-600">@tmpl.TabNav(tr.Title("Kraj poslovne godine"), tabs, "#tab-content", "kpg-panel", tr)</div>
+		<form class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1" hx-get="/api/robno-kraj-poslovne-godine/prepis" hx-headers='{"X-Request-Source":"btnprepis"}'>
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-1">
+				@kpgInput("magacin", "Magacin", "text", "", tr)
+				@kpgInput("vrd", "Vrsta naloga za knjiženje", "text", "00 - POČETNO STANJE", tr)
+				@kpgInput("orgjed", "OJ", "text", "", tr)
+				@kpgInput("danobrade", "Datum obrade", "date", "", tr)
+				@kpgInput("mestotroska", "Mesto troška", "text", "", tr)
+				@kpgInput("opis", "Opis knjiženja", "text", "", tr)
+				@kpgInput("staragod", "Stara godina", "number", "", tr)
+				@kpgInput("nalog", "Broj naloga", "number", "", tr)
+				@kpgInput("dannalog", "Datum naloga", "date", "", tr)
+				@kpgInput("dokum", "Broj dokumenta", "number", "", tr)
+				@kpgInput("dandokum", "Datum dokumenta", "date", "", tr)
+			</div>
+			<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1">
+				@components.RadioButtonField(domain.RadioFieldConfig{ID: "cena1", Name: "cena", Value: "1", LabelText: "Prepis zaliha po zadnjim prodajnim cenama", IsSelected: true, ClassSelect: common.ClassRadioSet}, tr)
+				@components.RadioButtonField(domain.RadioFieldConfig{ID: "cena2", Name: "cena", Value: "2", LabelText: "Prepis zaliha po prosečnim nabavnim cenama", ClassSelect: common.ClassRadioSet}, tr)
+				@components.RadioButtonField(domain.RadioFieldConfig{ID: "cena3", Name: "cena", Value: "3", LabelText: "Prepis zaliha po MP cenama", ClassSelect: common.ClassRadioSet}, tr)
+				@components.RadioButtonField(domain.RadioFieldConfig{ID: "cena4", Name: "cena", Value: "4", LabelText: "Prepis zaliha po planskim cenama", ClassSelect: common.ClassRadioSet}, tr)
+			</div>
+			<div class="flex justify-end"><button class={ common.ClassSaveButton } type="submit">{ tr.Button("Prepis (F4)") }</button></div>
+		</form><div class="flex-1 min-h-0 overflow-auto">@components.Table(tbl, tr)</div></div>
+}
+
+templ kpgInput(id, label, inputType, value string, tr *i18n.Service) {
+	<div class="flex items-center gap-1"><label class={ common.ClassLabel + " w-40" } for={ id }>{ tr.Label(label) }</label><input id={ id } name={ id } type={ inputType } value={ value } class={ common.ClassInputTextEnabled + " flex-1 min-w-0" } /></div>
+}

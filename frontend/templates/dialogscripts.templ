@@ -1068,3 +1068,14 @@ templ RestrictNumericInputScript() {
 		}
 	</script>
 }
+
+templ EnableDisableFieldsScripts() {
+	<script>
+		function controlToggle(chk, ids) {
+			ids.forEach(function(id) {
+				var el = document.getElementById(id);
+				if (el) el.disabled = !chk.checked;
+			});
+		}
+	</script>
+}

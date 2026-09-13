@@ -1,0 +1,10 @@
+package robno
+
+import (
+	rep "helia/frontend/templates/reports"
+	"helia/i18n"
+	"helia/internal/domain"
+)
+
+templ FispStampa(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) { @rep.Report(repParams, domain.TableData{}, translator, nil, FispContent(repParams, tbl, translator)) }
+templ FispContent(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) { @rep.ReportHeader(repParams); @rep.ReportTitle(repParams); @rep.ReportTableSection(tbl, translator); @rep.ReportEnd(nil) }

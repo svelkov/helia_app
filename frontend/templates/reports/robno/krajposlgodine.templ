@@ -1,0 +1,27 @@
+package robno
+
+import (
+	"fmt"
+	rep "helia/frontend/templates/reports"
+	"helia/i18n"
+	"helia/internal/domain"
+)
+
+templ KrajPoslovneGodineStampa(params domain.KrajPoslovneGodineParams, tbl domain.TableData, rp domain.ReportParameters, tr *i18n.Service) {
+	@rep.Report(rp, tbl, tr, nil, KrajPoslovneGodineContent(params, tbl, rp, tr))
+}
+
+templ ROB_RPT_POPISNALISTA(params domain.KrajPoslovneGodineParams, tbl domain.TableData, tr *i18n.Service) {
+	@KrajPoslovneGodineStampa(params, tbl, domain.ReportParameters{ReportName: "ROB_RPT_POPISNALISTA"}, tr)
+}
+
+templ ROB_RPT_POPISNALISTA2(params domain.KrajPoslovneGodineParams, tbl domain.TableData, tr *i18n.Service) {
+	@KrajPoslovneGodineStampa(params, tbl, domain.ReportParameters{ReportName: "ROB_RPT_POPISNALISTA2"}, tr)
+}
+
+templ KrajPoslovneGodineContent(params domain.KrajPoslovneGodineParams, tbl domain.TableData, rp domain.ReportParameters, tr *i18n.Service) {
+	@rep.ReportTitle(rp)
+	<div class="text-sm mb-2">{ tr.Label("Magacin") }: { fmt.Sprint(params.Magacin) } | { tr.Label("Konto") }: { params.OdKonta } - { params.DoKonta }</div>
+	@rep.ReportTableSection(tbl, tr)
+	@rep.ReportEnd(nil)
+}

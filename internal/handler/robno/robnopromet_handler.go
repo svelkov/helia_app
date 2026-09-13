@@ -106,9 +106,7 @@ func (h *RobnoPrometHandler) RobnoPrometArtikal(c *gin.Context) {
 		}
 		return
 	}
-	params := h.params(c)
-	if err := h.service.GetPrometArtikala(ctx, &tbl, true, 0, 0, params); err != nil {
-		h.error(c, err)
+	if !h.getPaginatedReport(c, &tbl, h.service.GetPrometArtikala) {
 		return
 	}
 	utils.RenderContent(c, tbl)
@@ -127,12 +125,15 @@ func (h *RobnoPrometHandler) RobnoPrometKupci(c *gin.Context) {
 			h.error(c, err)
 			return
 		}
-		tmpl_robno.RobnoPrometPoKupcima(*h.tabs, tbl, magValues, grupeValues, obrada, stampaj, i18n.GetInstance()).Render(ctx, c.Writer)
+		if err := tmpl_robno.RobnoPrometPoKupcima(*h.tabs, tbl, magValues, grupeValues, obrada, stampaj, i18n.GetInstance()).Render(ctx, c.Writer); err != nil {
+			h.error(c, err)
+		}
 		return
 	}
-	// TODO: kupci ("Promet artikala po kupcima") data is not wired yet - add a
-	// service method (e.g. GetKupci) and fetch/populate the table here.
-	return
+	if !h.getPaginatedReport(c, &tbl, h.service.GetPrometPoKupcima) {
+		return
+	}
+	utils.RenderContent(c, tbl)
 }
 
 // RobnoPrometDobavljaci renders the "dobavljaci" report form when the tab is
@@ -153,9 +154,7 @@ func (h *RobnoPrometHandler) RobnoPrometDobavljaci(c *gin.Context) {
 		}
 		return
 	}
-	params := h.params(c)
-	if err := h.service.GetNabavkeOdDobavljaca(ctx, &tbl, true, 0, 0, params); err != nil {
-		h.error(c, err)
+	if !h.getPaginatedReport(c, &tbl, h.service.GetNabavkeOdDobavljaca) {
 		return
 	}
 	utils.RenderContent(c, tbl)
@@ -181,9 +180,7 @@ func (h *RobnoPrometHandler) RobnoPrometRucMain(c *gin.Context) {
 		}
 		return
 	}
-	params := h.params(c)
-	if err := h.service.GetPrometRucLagerLista(ctx, &tbl, true, 0, 0, params); err != nil {
-		h.error(c, err)
+	if !h.getPaginatedReport(c, &tbl, h.service.GetPrometRucLagerLista) {
 		return
 	}
 	utils.RenderContent(c, tbl)
@@ -243,7 +240,7 @@ func (h *RobnoPrometHandler) renderRucSubReport(c *gin.Context, subIndex int) {
 		}
 		return
 	}
-	// TODO: implement the data request (service) for this sub-report.
+	common.WriteJSONResponse(c, http.StatusNotImplemented, false, nil, "RUC sub-report data is not implemented")
 }
 
 // RobnoPrometGradiliste renders the "gradiliste" report form when the tab is
@@ -264,9 +261,7 @@ func (h *RobnoPrometHandler) RobnoPrometGradiliste(c *gin.Context) {
 		}
 		return
 	}
-	params := h.params(c)
-	if err := h.service.GetPrometGradilista(ctx, &tbl, true, 0, 0, params); err != nil {
-		h.error(c, err)
+	if !h.getPaginatedReport(c, &tbl, h.service.GetPrometGradilista) {
 		return
 	}
 	utils.RenderContent(c, tbl)
@@ -290,9 +285,7 @@ func (h *RobnoPrometHandler) RobnoPrometGradilisteVpcNc(c *gin.Context) {
 		}
 		return
 	}
-	params := h.params(c)
-	if err := h.service.GetPrometGradilisteVpcNc(ctx, &tbl, true, 0, 0, params); err != nil {
-		h.error(c, err)
+	if !h.getPaginatedReport(c, &tbl, h.service.GetPrometGradilisteVpcNc) {
 		return
 	}
 	utils.RenderContent(c, tbl)
@@ -340,6 +333,22 @@ func (h *RobnoPrometHandler) comboValues(ctx context.Context) ([]domain.ComboIte
 
 func (h *RobnoPrometHandler) params(c *gin.Context) domain.PrometParam {
 	return domain.PrometParam{OdKonta: c.Query("odmagacina"), DoKonta: c.Query("domagacina"), OdSifre: c.Query("odsifre"), DoSifre: c.Query("dosifre"), OdDatuma: c.Query("oddatuma"), DoDatuma: c.Query("dodatuma"), SearchText: c.Query("query")}
+}
+
+type robnoPrometFetchFunc func(context.Context, *domain.TableData, bool, int, int, domain.PrometParam) error
+
+// getPaginatedReport loads the count first and then the requested page. This
+// keeps all report tabs consistent with the table pagination contract.
+func (h *RobnoPrometHandler) getPaginatedReport(c *gin.Context, tbl *domain.TableData, fetch robnoPrometFetchFunc) bool {
+	page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
+	params := h.params(c)
+	for _, getTotalRecords := range []bool{true, false} {
+		if err := fetch(c.Request.Context(), tbl, getTotalRecords, pageSize, page, params); err != nil {
+			h.error(c, err)
+			return false
+		}
+	}
+	return true
 }
 
 func (h *RobnoPrometHandler) error(c *gin.Context, err error) {

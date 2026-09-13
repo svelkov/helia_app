@@ -31,18 +31,6 @@ const (
 	magaciniURLUpdate    string = "/api/magacini/confirm-update"
 )
 
-func SetMagaciniFields() []domain.Fields {
-	return []domain.Fields{
-		{Name: "mag", Label: "Magacin", Width: "8"},
-		{Name: "nadmag", Label: "Nadređeni", Width: "12"},
-		{Name: "tipmag", Label: "Tip", Width: "8"},
-		{Name: "opis", Label: "Opis magacina", Width: "30"},
-		{Name: "magosoba", Label: "Osoba magacina", Width: "20"},
-		{Name: "nacvodzal", Label: "Način vođenja", Width: "12"},
-		{Name: "tipcene", Label: "Tip cena", Width: "10"},
-	}
-}
-
 type MagaciniHandler struct {
 	service         service.Service[domain.Magacini]
 	magaciniService robnosvc.MagaciniService
@@ -76,26 +64,7 @@ func (h *MagaciniHandler) CreateMagacini(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusBadRequest, false, fieldErrors, "Validation errors")
 		return
 	}
-	fields := []domain.Fields{
-		{Name: "mag"},
-		{Name: "opis"},
-		{Name: "tipmag"},
-		{Name: "adresa"},
-		{Name: "pobro"},
-		{Name: "mesto"},
-		{Name: "nadmag"},
-		{Name: "magosoba"},
-		{Name: "tel"},
-		{Name: "fax"},
-		{Name: "tipzal"},
-		{Name: "tipcene"},
-		{Name: "nacvodzal"},
-		{Name: "analiza"},
-		{Name: "email"},
-		{Name: "tipart"},
-	}
-
-	_, _, err := h.magaciniService.Create(ctx, &dto, common.IDmagacin, fields)
+	_, _, err := h.magaciniService.Create(ctx, &dto, common.IDmagacin, setFieldsForUpdate(&dto))
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, err.Error())
 		return
@@ -124,24 +93,8 @@ func (h *MagaciniHandler) UpdateMagacini(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusBadRequest, false, nil, "Invalid request body: "+err.Error())
 		return
 	}
-	fields := []domain.Fields{
-		{Name: "opis", Value: magacini.Opis},
-		{Name: "tipmag", Value: magacini.Tipmag},
-		{Name: "adresa", Value: magacini.Adresa},
-		{Name: "pobro", Value: fmt.Sprintf("%d", magacini.Pobro)},
-		{Name: "mesto", Value: magacini.Mesto},
-		{Name: "nadmag", Value: fmt.Sprintf("%d", magacini.Nadmag)},
-		{Name: "magosoba", Value: magacini.Magosoba},
-		{Name: "tel", Value: magacini.Tel},
-		{Name: "fax", Value: magacini.Fax},
-		{Name: "tipzal", Value: fmt.Sprintf("%d", magacini.Tipzal)},
-		{Name: "tipcene", Value: fmt.Sprintf("%d", magacini.Tipcene)},
-		{Name: "nacvodzal", Value: fmt.Sprintf("%d", magacini.Nacvodzal)},
-		{Name: "analiza", Value: fmt.Sprintf("%d", magacini.Analiza)},
-		{Name: "email", Value: magacini.Email},
-		{Name: "tipart", Value: magacini.Tipart},
-	}
-	fieldErrors, err := h.magaciniService.Update(c.Request.Context(), &magacini, common.IDmagacin, id, fields)
+
+	fieldErrors, err := h.magaciniService.Update(c.Request.Context(), &magacini, common.IDmagacin, id, setFieldsForUpdate(&magacini))
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, err.Error())
 		return
@@ -170,7 +123,7 @@ func (h *MagaciniHandler) DeleteMagacini(c *gin.Context) {
 }
 
 func (h *MagaciniHandler) confirmDeleteHandler(c *gin.Context) {
-	utils.ConfirmDeleteHelper(c, SetMagaciniFields(), "#info-message")
+	utils.ConfirmDeleteHelper(c, h.magaciniService.GetMagaciniTableFields(), "#info-message")
 }
 
 func (h *MagaciniHandler) confirmAddHandler(c *gin.Context) {
@@ -244,7 +197,7 @@ func (h *MagaciniHandler) confirmUpdateHandler(c *gin.Context) {
 }
 
 func (h *MagaciniHandler) GetMagacini(c *gin.Context) {
-	utils.GetEntityHelper(c, h.service, SetMagaciniFields(), common.IDmagacin)
+	utils.GetEntityHelper(c, h.service, h.magaciniService.GetMagaciniTableFields(), common.IDmagacin)
 }
 
 func (h *MagaciniHandler) GetAllMagacini(c *gin.Context) {
@@ -336,6 +289,26 @@ func (h *MagaciniHandler) MagaciniStampa(c *gin.Context) {
 
 	translator := i18n.GetInstance()
 	tmpl_robno_rep.MagaciniStampa(repParams, tbl, translator).Render(ctx, c.Writer)
+}
+func setFieldsForUpdate(magacini *domain.Magacini) []domain.Fields {
+	fields := []domain.Fields{
+		{Name: "opis", Value: magacini.Opis},
+		{Name: "tipmag", Value: magacini.Tipmag},
+		{Name: "adresa", Value: magacini.Adresa},
+		{Name: "pobro", Value: fmt.Sprintf("%d", magacini.Pobro)},
+		{Name: "mesto", Value: magacini.Mesto},
+		{Name: "nadmag", Value: fmt.Sprintf("%d", magacini.Nadmag)},
+		{Name: "magosoba", Value: magacini.Magosoba},
+		{Name: "tel", Value: magacini.Tel},
+		{Name: "fax", Value: magacini.Fax},
+		{Name: "tipzal", Value: fmt.Sprintf("%d", magacini.Tipzal)},
+		{Name: "tipcene", Value: fmt.Sprintf("%d", magacini.Tipcene)},
+		{Name: "nacvodzal", Value: fmt.Sprintf("%d", magacini.Nacvodzal)},
+		{Name: "analiza", Value: fmt.Sprintf("%d", magacini.Analiza)},
+		{Name: "email", Value: magacini.Email},
+		{Name: "tipart", Value: magacini.Tipart},
+	}
+	return fields
 }
 
 func (h *MagaciniHandler) UnlockMagacini(c *gin.Context) {

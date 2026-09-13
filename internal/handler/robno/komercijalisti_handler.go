@@ -33,18 +33,18 @@ const (
 )
 
 type KomercijalistiHandler struct {
-	service               service.Service[domain.Komercijalisti]
-	komercijalistiService robnosvc.KomercijalistiService
-	cfg                   config.Config
-	lm                    *middleware.LockMiddleware
+	service    service.Service[domain.Komercijalisti]
+	komService robnosvc.KomercijalistiService
+	cfg        config.Config
+	lm         *middleware.LockMiddleware
 }
 
-func NewKomercijalistiHandler(service *service.BaseService[domain.Komercijalisti], komercijalistiService robnosvc.KomercijalistiService, cfg config.Config, lm *middleware.LockMiddleware) *KomercijalistiHandler {
+func NewKomercijalistiHandler(service *service.BaseService[domain.Komercijalisti], komService robnosvc.KomercijalistiService, cfg config.Config, lm *middleware.LockMiddleware) *KomercijalistiHandler {
 	return &KomercijalistiHandler{
-		service:               service,
-		komercijalistiService: komercijalistiService,
-		cfg:                   cfg,
-		lm:                    lm,
+		service:    service,
+		komService: komService,
+		cfg:        cfg,
+		lm:         lm,
 	}
 }
 
@@ -60,27 +60,12 @@ func (h *KomercijalistiHandler) CreateKomercijalisti(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusBadRequest, false, nil, "Invalid request body: "+err.Error())
 		return
 	}
-	fieldErrors := h.komercijalistiService.ValidateEntity(ctx, &dto)
+	fieldErrors := h.komService.ValidateEntity(ctx, &dto)
 	if len(fieldErrors) > 0 {
 		common.WriteJSONResponse(c, http.StatusBadRequest, false, fieldErrors, "Validation errors")
 		return
 	}
-	fields := []domain.Fields{
-		{Name: "sifkom"},
-		{Name: "sifnadred"},
-		{Name: "imeprezime"},
-		{Name: "adresa"},
-		{Name: "mesto"},
-		{Name: "telposao"},
-		{Name: "telmob"},
-		{Name: "totprod"},
-		{Name: "totprofit"},
-		{Name: "zaddatprod"},
-		{Name: "totnaplaceno"},
-		{Name: "loginname"},
-	}
-
-	_, _, err := h.komercijalistiService.Create(ctx, &dto, common.IDkomercijalista, fields)
+	_, _, err := h.komService.Create(ctx, &dto, common.IDkomercijalista, h.komService.GetKomercijalistiTableFields())
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, err.Error())
 		return
@@ -95,7 +80,7 @@ func (h *KomercijalistiHandler) UpdateKomercijalisti(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusBadRequest, false, nil, common.ErrMsgInvalidID)
 		return
 	}
-	getEntity, err := h.komercijalistiService.GetByID(c.Request.Context(), common.IDkomercijalista, id)
+	getEntity, err := h.komService.GetByID(c.Request.Context(), common.IDkomercijalista, id)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, err.Error())
 		return
@@ -123,7 +108,7 @@ func (h *KomercijalistiHandler) UpdateKomercijalisti(c *gin.Context) {
 		{Name: "totnaplaceno", Value: fmt.Sprintf("%f", komercijalisti.TotNaplaceno)},
 		{Name: "loginname", Value: komercijalisti.LoginName},
 	}
-	fieldErrors, err := h.komercijalistiService.Update(c.Request.Context(), &komercijalisti, common.IDkomercijalista, id, fields)
+	fieldErrors, err := h.komService.Update(c.Request.Context(), &komercijalisti, common.IDkomercijalista, id, fields)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, err.Error())
 		return
@@ -143,7 +128,7 @@ func (h *KomercijalistiHandler) DeleteKomercijalisti(c *gin.Context) {
 		return
 	}
 
-	err = h.komercijalistiService.Delete(ctx, common.IDkomercijalista, id)
+	err = h.komService.Delete(ctx, common.IDkomercijalista, id)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, fmt.Sprintf(common.ErrMsgDeleteData, err.Error()))
 		return
@@ -196,7 +181,7 @@ func (h *KomercijalistiHandler) confirmUpdateHandler(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusBadRequest, false, nil, common.ErrMsgInvalidID)
 		return
 	}
-	entity, err := h.komercijalistiService.GetByID(ctx, common.IDkomercijalista, int64(id))
+	entity, err := h.komService.GetByID(ctx, common.IDkomercijalista, int64(id))
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, err.Error())
 		return
@@ -241,7 +226,7 @@ func (h *KomercijalistiHandler) GetAllKomercijalisti(c *gin.Context) {
 	searchText := c.Query("query")
 	currentPage, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
 
-	tbl := common.SetTableBasicData(komercijalistiContentTitle, komercijalistiTableID, h.komercijalistiService.GetKomercijalistiTableFields(), "", komercijalistiURLGetAll, pageSize, currentPage, 0, 0, h.cfg)
+	tbl := common.SetTableBasicData(komercijalistiContentTitle, komercijalistiTableID, h.komService.GetKomercijalistiTableFields(), "", komercijalistiURLGetAll, pageSize, currentPage, 0, 0, h.cfg)
 	common.SetTableConfig(&tbl, "KOMERCIJALISTI", komercijalistiURLGetAll, true, true, false)
 	tbl.ShowPagination = true
 	tbl.ShowActions = true
@@ -254,12 +239,12 @@ func (h *KomercijalistiHandler) GetAllKomercijalisti(c *gin.Context) {
 	tbl.URLGetAll = komercijalistiURLGetAll
 	tbl.URLPrefix = komercijalistiURLPrefix
 
-	err := h.komercijalistiService.GetAllKomercijalisti(ctx, &tbl, currentPage, pageSize, true, sortBy, sortOrder, searchText, common.TipStampePreview)
+	err := h.komService.GetAllKomercijalisti(ctx, &tbl, currentPage, pageSize, true, sortBy, sortOrder, searchText, common.TipStampePreview)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, err.Error())
 		return
 	}
-	err = h.komercijalistiService.GetAllKomercijalisti(ctx, &tbl, currentPage, pageSize, false, sortBy, sortOrder, searchText, common.TipStampePreview)
+	err = h.komService.GetAllKomercijalisti(ctx, &tbl, currentPage, pageSize, false, sortBy, sortOrder, searchText, common.TipStampePreview)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, err.Error())
 		return
@@ -287,7 +272,7 @@ func (h *KomercijalistiHandler) KomercijalistiStampa(c *gin.Context) {
 	searchText := c.Query("query")
 	page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
 
-	fvrData, err := h.komercijalistiService.GetFvrData(ctx)
+	fvrData, err := h.komService.GetFvrData(ctx)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, err.Error())
 		return
@@ -305,8 +290,8 @@ func (h *KomercijalistiHandler) KomercijalistiStampa(c *gin.Context) {
 		ParameterItems: map[string]domain.ParameterItem{},
 	}
 
-	tbl := common.SetTableBasicData(komercijalistiContentTitle, komercijalistiTableID, h.komercijalistiService.GetKomercijalistiTableFields(), "", komercijalistiURLGetAll, 0, 0, 0, 0, h.cfg)
-	err = h.komercijalistiService.GetAllKomercijalisti(ctx, &tbl, page, pageSize, true, sortBy, sortOrder, searchText, common.TipStampePrint)
+	tbl := common.SetTableBasicData(komercijalistiContentTitle, komercijalistiTableID, h.komService.GetKomercijalistiTableFields(), "", komercijalistiURLGetAll, 0, 0, 0, 0, h.cfg)
+	err = h.komService.GetAllKomercijalisti(ctx, &tbl, page, pageSize, true, sortBy, sortOrder, searchText, common.TipStampePrint)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, err.Error())
 		return

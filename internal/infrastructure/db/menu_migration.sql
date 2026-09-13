@@ -136,7 +136,7 @@ SELECT id, 'Robne grupe', '', '', 7 FROM menuitems WHERE menuname = 'robno'
 UNION ALL
 SELECT id, 'Robne podgrupe', '', '', 8 FROM menuitems WHERE menuname = 'robno'
 UNION ALL
-SELECT id, 'Mesta isporuke', '', '', 9 FROM menuitems WHERE menuname = 'robno'
+SELECT id, 'Mesta isporuke', '/api/fisp/all', '', 9 FROM menuitems WHERE menuname = 'robno'
 UNION ALL
 SELECT id, 'Komercijalisti', '', '', 10 FROM menuitems WHERE menuname = 'robno'
 UNION ALL
@@ -146,14 +146,36 @@ SELECT id, 'Vrste dokumenata', '', '', 12 FROM menuitems WHERE menuname = 'robno
 UNION ALL
 SELECT id, 'Cenovnik', '', '', 13 FROM menuitems WHERE menuname = 'robno'
 UNION ALL
-SELECT id, 'Tipovi knjižnih pisama', '', '', 14 FROM menuitems WHERE menuname = 'robno'
+SELECT id, 'Tipovi knjižnih pisama', '/api/tipknpisma/all', '', 14 FROM menuitems WHERE menuname = 'robno'
 UNION ALL
 SELECT id, 'Magacini', '', '', 15 FROM menuitems WHERE menuname = 'robno'
 UNION ALL
 SELECT id, 'Komercijalni podaci', '', '', 16 FROM menuitems WHERE menuname = 'robno'
 UNION ALL
-SELECT id, 'Kraj poslovne godine', '', '', 17 FROM menuitems WHERE menuname = 'robno'
+SELECT id, 'Kraj poslovne godine', '/api/robno-kraj-poslovne-godine', '', 17 FROM menuitems WHERE menuname = 'robno'
 ON CONFLICT DO NOTHING;
+
+UPDATE submenuitems s
+SET urlmenu = '/api/fisp/all'
+FROM menuitems m
+WHERE s.menuid = m.id
+  AND m.menuname = 'robno'
+  AND s.submenuname = 'Mesta isporuke';
+
+-- Migrate the existing Robno menu entry as well as new installations.
+UPDATE submenuitems s
+SET urlmenu = '/api/robno-kraj-poslovne-godine'
+FROM menuitems m
+WHERE s.menuid = m.id
+  AND m.menuname = 'robno'
+  AND s.submenuname = 'Kraj poslovne godine';
+
+UPDATE submenuitems s
+SET urlmenu = '/api/tipknpisma/all'
+FROM menuitems m
+WHERE s.menuid = m.id
+  AND m.menuname = 'robno'
+  AND s.submenuname = 'Tipovi knjižnih pisama';
 
 -- Insert Sub-Menu Items for "Blagajna"
 INSERT INTO submenuitems (menuid, submenuname, urlmenu, icon, sortorder) 

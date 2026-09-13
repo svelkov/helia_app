@@ -5,6 +5,19 @@ import (
 	"time"
 )
 
+// TIPKNPISMA Model (tip knjižnog pisma)
+type Tipknpisma struct {
+	Tipknjid   int64          `json:"tipknjid" db:"tipknjid"`
+	God        int            `json:"god" db:"god"`
+	Kar        int            `json:"kar" db:"kar"`
+	Sifrazlog  int16          `json:"sifrazlog" db:"sifrazlog" form:"sifrazlog"`
+	Opis       string         `json:"opis" db:"opis" form:"opis"`
+	XOpUnos    sql.NullString `json:"xop_unos" db:"xopunos"`
+	XDatUnosa  sql.NullTime   `json:"xdat_unosa" db:"xdatunosa"`
+	XOpIzmene  sql.NullString `json:"xop_izmene" db:"xopizmene"`
+	XDatIzmene sql.NullTime   `json:"xdat_izmene" db:"xdatizmene"`
+}
+
 // MAGACINI Model
 type Magacini struct {
 	MagaciniID int          `json:"magaciniid" db:"magaciniid"`
@@ -34,32 +47,33 @@ type Magacini struct {
 
 // FISP Model
 type Fisp struct {
-	IDPartneri int          `json:"idpartneri" db:"idpartneri"`
-	FispID     int          `json:"fispid" db:"fispid"`
-	God        int          `json:"god" db:"god"`
-	Kar        int          `json:"kar" db:"kar"`
-	Konto      string       `json:"konto" db:"konto"`
-	Sifra      string       `json:"sifra" db:"sifra"`
-	Vk         int          `json:"vk" db:"vk"`
-	Mag        int          `json:"mag" db:"mag"`
-	Naziv      string       `json:"naziv" db:"naziv"`
-	Adresa     string       `json:"adresa" db:"adresa"`
-	Mesto      string       `json:"mesto" db:"mesto"`
-	Pobro      int          `json:"pobro" db:"pobro"`
-	XDatUnosa  sql.NullTime `json:"xdat_unosa" db:"xdatunosa"`
-	XOpUnos    string       `json:"xop_unos" db:"xopunos"`
-	XDatIzmene sql.NullTime `json:"xdat_izmene" db:"xdatizmene"`
-	XOpIzmene  string       `json:"xop_izmene" db:"xopizmene"`
-	PIB        string       `json:"pib" db:"pib"`
-	JIB        string       `json:"jib" db:"jib"`
-	KontaktOsb string       `json:"kontaktosb" db:"kontaktosb"`
-	Ziro       string       `json:"ziro" db:"ziro"`
-	TipPDV     int          `json:"tippdv" db:"tippdv"`
-	MI         int64        `json:"mi" db:"mi"`
-	Ter        int          `json:"ter" db:"ter"`
-	Flg        string       `json:"flg" db:"flg"`
-	GLN        int64        `json:"gln" db:"gln"`
-	Email      string       `json:"email" db:"email"`
+	IDPartneri   int          `json:"idpartneri" db:"idpartneri"`
+	FispID       int          `json:"fispid" db:"fispid"`
+	God          int          `json:"god" db:"god"`
+	Kar          int          `json:"kar" db:"kar"`
+	Konto        string       `json:"konto" db:"konto"`
+	Sifra        string       `json:"sifra" db:"sifra"`
+	Vk           int          `json:"vk" db:"vk"`
+	Mag          int          `json:"mag" db:"mag"`
+	Naziv        string       `json:"naziv" db:"naziv"`
+	Adresa       string       `json:"adresa" db:"adresa"`
+	Mesto        string       `json:"mesto" db:"mesto"`
+	Pobro        int          `json:"pobro" db:"pobro"`
+	XDatUnosa    sql.NullTime `json:"xdat_unosa" db:"xdatunosa"`
+	XOpUnos      string       `json:"xop_unos" db:"xopunos"`
+	XDatIzmene   sql.NullTime `json:"xdat_izmene" db:"xdatizmene"`
+	XOpIzmene    string       `json:"xop_izmene" db:"xopizmene"`
+	PIB          string       `json:"pib" db:"pib"`
+	JIB          string       `json:"jib" db:"jib"`
+	KontaktOsb   string       `json:"kontaktosb" db:"kontaktosb"`
+	Ziro         string       `json:"ziro" db:"ziro"`
+	TipPDV       int          `json:"tippdv" db:"tippdv"`
+	MI           int64        `json:"mi" db:"mi"`
+	Ter          int          `json:"ter" db:"ter"`
+	Flg          string       `json:"flg" db:"flg"`
+	GLN          int64        `json:"gln" db:"gln"`
+	Email        string       `json:"email" db:"email"`
+	PartnerNaziv string       `json:"partnernaziv" db:"partnernaziv"`
 }
 
 // ARTIKLI Model
@@ -357,15 +371,32 @@ type RobnoKarticaParams struct {
 	SearchText    string
 }
 type RobnoKomPodaciParams struct {
-	OdArtikla  string
-	DoArtikla  string
-	OdGrupe    string
-	DoGrupe    string
-	OdDatuma   string
-	DoDatuma   string
-	Trziste    string // 1 = domaće, 2 = izvoz, 3 = ukupno
-	ReportTip  string
-	SearchText string
+	OdArtikla    string
+	DoArtikla    string
+	OdGrupe      string
+	DoGrupe      string
+	OdSifreKupca string
+	DoSifreKupca string
+	OdDatuma     string
+	DoDatuma     string
+	TipIzvestaja string // 1 = po artiklima, 2 = po kupcima
+	Trziste      string // 1 = domaće, 2 = izvoz, 3 = ukupno
+	ReportTip    string
+	SearchText   string
+}
+
+// TrzisteName returns the human-readable name for the Trziste code.
+func (p RobnoKomPodaciParams) TrzisteName() string {
+	switch p.Trziste {
+	case "1":
+		return "DOMAĆE"
+	case "2":
+		return "IZVOZ"
+	case "3":
+		return "UKUPNO"
+	default:
+		return "-"
+	}
 }
 
 type RobnoKomPodaciDto struct {
@@ -379,10 +410,94 @@ type RobnoKomPodaciDto struct {
 	XRab          float64 `json:"xrab" db:"xrab"`
 	XUgrabat      float64 `json:"xugrabat" db:"xugrabat"`
 	XKasa         float64 `json:"xkasa" db:"xkasa"`
+	NabIznos      float64 `json:"nabiznos" db:"nabiznos"`
 	TotKolic      float64 `json:"totkolic" db:"totkolic"`
 	TotalNetvalue float64 `json:"total_netvalue" db:"total_netvalue"`
 	Kupac         string  `json:"kupac" db:"kupac"`
 	Mi            int     `json:"mi" db:"mi"`
 	NazivKupca    string  `json:"naziv_kupca" db:"nazivkupca"`
 	NazivMesta    string  `json:"naziv_mesta" db:"nazivmesta"`
+}
+
+type KrajPopisType1Row struct {
+	RedBr          int     `json:"redbr" db:"redbr"`
+	Konto          string  `json:"konto" db:"konto"`
+	Sifra          int     `json:"sifra" db:"sifra"`
+	Naziv          string  `json:"naziv" db:"naziv"`
+	JM             string  `json:"jm" db:"jm"`
+	Grupa          int     `json:"grupa" db:"grupa"`
+	NazivGrupe     string  `json:"naziv_grupe" db:"nazivgrupe"`
+	Cena           float64 `json:"cena" db:"cena"`
+	Kolicina1      float64 `json:"kolicina1" db:"kolicina1"`
+	Kolicina2      float64 `json:"kolicina2" db:"kolicina2"`
+	Kolicina3      float64 `json:"kolicina3" db:"kolicina3"`
+	UkupnaKolicina float64 `json:"ukupna_kolicina" db:"ukupnakolicina"`
+	StanjeZaliha   float64 `json:"stanje_zaliha" db:"stanjezaliha"`
+}
+
+type KrajPopisType2Row struct {
+	RedBr          int     `json:"redbr" db:"redbr"`
+	Konto          string  `json:"konto" db:"konto"`
+	Sifra          int     `json:"sifra" db:"sifra"`
+	Naziv          string  `json:"naziv" db:"naziv"`
+	JM             string  `json:"jm" db:"jm"`
+	Grupa          int     `json:"grupa" db:"grupa"`
+	NazivGrupe     string  `json:"naziv_grupe" db:"nazivgrupe"`
+	OTK            string  `json:"otk" db:"otk"`
+	Serija         string  `json:"serija" db:"serija"`
+	Rok            string  `json:"rok" db:"rok"`
+	Kolicina1      float64 `json:"kolicina1" db:"kolicina1"`
+	Kolicina2      float64 `json:"kolicina2" db:"kolicina2"`
+	Kolicina3      float64 `json:"kolicina3" db:"kolicina3"`
+	UkupnaKolicina float64 `json:"ukupna_kolicina" db:"ukupnakolicina"`
+	StanjeZaliha   float64 `json:"stanje_zaliha" db:"stanjezaliha"`
+}
+
+type KrajPopisData struct {
+	TipZal int                 `json:"tipzal"`
+	Type1  []KrajPopisType1Row `json:"type1"`
+	Type2  []KrajPopisType2Row `json:"type2"`
+}
+
+// The tab-2 report has sixteen source/calculation columns.
+type KrajVisakManjakRow struct {
+	RedBr                 int     `json:"redbr" db:"redbr"`
+	Konto                 string  `json:"konto" db:"konto"`
+	Sifra                 int     `json:"sifra" db:"sifra"`
+	Naziv                 string  `json:"naziv" db:"naziv"`
+	JM                    string  `json:"jm" db:"jm"`
+	Cena                  float64 `json:"cena" db:"cena"`
+	KolicinaPopisa        float64 `json:"kolicina_popisa" db:"kolicinapopisa"`
+	IznosPopisa           float64 `json:"iznos_popisa" db:"iznospopisa"`
+	StanjeKnjigovodstveno float64 `json:"stanje_knjigovodstveno" db:"stanjeknjigovodstveno"`
+	IznosKnjigovodstveno  float64 `json:"iznos_knjigovodstveno" db:"iznosknjigovodstveno"`
+	Visak                 float64 `json:"visak" db:"visak"`
+	IznosViska            float64 `json:"iznos_viska" db:"iznosviska"`
+	Manjak                float64 `json:"manjak" db:"manjak"`
+	IznosManjka           float64 `json:"iznos_manjka" db:"iznosmanjka"`
+	FinansijskiVisak      float64 `json:"finansijski_visak" db:"finansijskivisak"`
+	FinansijskiManjak     float64 `json:"finansijski_manjak" db:"finansijskimanjak"`
+}
+
+type KrajPoslovneGodineParams struct {
+	Magacin     int    `json:"magacin"`
+	OdKonta     string `json:"odkonta"`
+	DoKonta     string `json:"dokonta"`
+	OdSifre     int    `json:"odsifre"`
+	DoSifre     int    `json:"dosifre"`
+	Cena        int    `json:"cena"` // 1=CENA, 2=PROSNC, 3=NCENA, 4=VPCENA
+	ObradiNule  bool   `json:"obradinule"`
+	Tip         string `json:"tip"`
+	TipZal      int    `json:"tipzal"`
+	Nalog       int    `json:"nalog"`
+	Dokum       int    `json:"dokum"`
+	Vrd         int    `json:"vrd"`
+	NovaGod     int    `json:"novagod"`
+	StaraGod    int    `json:"staragod"`
+	OrgJed      int    `json:"orgjed"`
+	MestoTroska int    `json:"mestotroska"`
+	DanObrade   string `json:"danobrade"`
+	Opis        string `json:"opis"`
+	DanNalog    string `json:"dannalog"`
+	DanDokum    string `json:"dandokum"`
 }

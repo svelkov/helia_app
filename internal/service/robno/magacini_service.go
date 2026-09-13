@@ -38,11 +38,10 @@ func NewMagaciniResource(service *service.BaseService[domain.Magacini], magacini
 		fvrRepo:      fvrRepo,
 		cfg:          cfg,
 	}
-	rs.setMagaciniTableFields()
+	rs.SetMagaciniTableFields()
 	return rs
 }
-
-func (s *MagaciniResource) setMagaciniTableFields() {
+func (s *MagaciniResource) SetMagaciniTableFields() {
 	s.magaciniTableFields = []domain.Fields{
 		{Name: "mag", Label: "Magacin", Width: "8"},
 		{Name: "nadmag", Label: "Nadređeni", Width: "12"},

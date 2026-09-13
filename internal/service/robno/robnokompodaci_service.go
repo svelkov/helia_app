@@ -16,11 +16,7 @@ import (
 // RobnoKompodaciService defines the commercial-data reports shown in the
 // Robno module. Query implementations can be added independently per tab.
 type RobnoKompodaciService interface {
-	GetPrikazKarticeKupcaDobavljaca(context.Context, *domain.TableData, bool, int, int, domain.RobnoKomPodaciParams) error
-	GetPrikazSaldaKupcaDobavljaca(context.Context, *domain.TableData, bool, int, int, domain.RobnoKomPodaciParams) error
-	GetPrikazProdajePoMI(context.Context, *domain.TableData, bool, int, int, domain.RobnoKomPodaciParams) error
 	GetPregledRealizacijePoKupcimaArtiklima(context.Context, *domain.TableData, bool, int, int, domain.RobnoKomPodaciParams, string) error
-	GetPregledRealizacijePoKupcimaGrupama(context.Context, *domain.TableData, bool, int, int, domain.RobnoKomPodaciParams) error
 	GetPregledRealizacijePoArtiklima(context.Context, *domain.TableData, bool, int, int, domain.RobnoKomPodaciParams, string) error
 	GetPregledUcescaArtikla(context.Context, *domain.TableData, bool, int, int, domain.RobnoKomPodaciParams, string) error
 	GetPregledUcescaGrupeArtikala(context.Context, *domain.TableData, bool, int, int, domain.RobnoKomPodaciParams, string) error
@@ -59,19 +55,117 @@ func NewRobnoKompodaciService(partnerRepo *repository.BaseRepository[domain.Part
 	return s
 }
 
-func (s *RobnoKompodaciResource) GetPrikazKarticeKupcaDobavljaca(ctx context.Context, tbl *domain.TableData, totalRecords bool, pageSize, page int, params domain.RobnoKomPodaciParams) error {
-	return nil
-}
-func (s *RobnoKompodaciResource) GetPrikazSaldaKupcaDobavljaca(ctx context.Context, tbl *domain.TableData, totalRecords bool, pageSize, page int, params domain.RobnoKomPodaciParams) error {
-	return nil
-}
-func (s *RobnoKompodaciResource) GetPrikazProdajePoMI(ctx context.Context, tbl *domain.TableData, totalRecords bool, pageSize, page int, params domain.RobnoKomPodaciParams) error {
-	return nil
-}
 func (s *RobnoKompodaciResource) GetPregledRealizacijePoKupcimaArtiklima(ctx context.Context, tbl *domain.TableData, totalRecords bool, pageSize, page int, params domain.RobnoKomPodaciParams, tipStampe string) error {
-	return nil
-}
-func (s *RobnoKompodaciResource) GetPregledRealizacijePoKupcimaGrupama(ctx context.Context, tbl *domain.TableData, totalRecords bool, pageSize, page int, params domain.RobnoKomPodaciParams) error {
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		return errors.New("user session not found")
+	}
+
+	common.SetupTablePagination(tbl, page, pageSize)
+	hasGod, hasKar := s.rproRepo.GetHasGodHasKar()
+	fkplGodKar := ""
+	if hasGod {
+		fkplGodKar = " and fkpl.god = rdok.god"
+	}
+	if hasKar {
+		fkplGodKar += " and fkpl.kar = rdok.kar"
+	}
+	customerSelect := "concat(rdok.fkto, ' ', rdok.fana) as kupac"
+	customerNameSelect := "max(coalesce(p.naziv, '')) as nazivkupca"
+	groupBy := "rdok.fkto, rdok.fana, rsif.sifra"
+	orderBy := "rdok.fkto, rdok.fana, rsif.sifra"
+	if params.TipIzvestaja == "1" {
+		// ObradaPOARTIKLU aggregates aaFAKT by article, not by customer.
+		customerSelect = "'' as kupac"
+		customerNameSelect = "'' as nazivkupca"
+		groupBy = "rsif.sifra"
+		orderBy = "rsif.sifra"
+	}
+
+	qb := common.NewQueryBuilder(`
+		select
+			`+customerSelect+`,
+			`+customerNameSelect+`,
+			rsif.sifra,
+			max(rsif.naziv) as naziv,
+			max(rsif.jm) as jm,
+			sum(rpro.kolic) as kolic,
+			sum(round(rpro.kolic * rpro.fcena, 2)) as xiznos,
+			sum(round(rpro.kolic * rpro.fcena * rpro.rab / 100, 2)) as xrab,
+			sum(round((round(rpro.kolic * rpro.fcena, 2) - round(rpro.kolic * rpro.fcena * rpro.rab / 100, 2)) * rdok.ugrabat / 100, 2)) as xugrabat,
+			sum(round((round(rpro.kolic * rpro.fcena, 2) - round(rpro.kolic * rpro.fcena * rpro.rab / 100, 2) - round((round(rpro.kolic * rpro.fcena, 2) - round(rpro.kolic * rpro.fcena * rpro.rab / 100, 2)) * rdok.ugrabat / 100, 2)) * rdok.pkase / 100, 2)) as xkasa
+			,sum(round(case when rpro.ncena > 0 then rpro.kolic * rpro.ncena else rpro.kolic * rpro.cena end, 2)) as nabiznos
+		from rdok
+		inner join rpro on rdok.rdokid = rpro.rdokid
+		inner join rsif on rsif.rsifid = rpro.rsifid`, true)
+	qb.AddJoin("left join fkpl on fkpl.vkonta = 1 and fkpl.konto = rdok.fkto and fkpl.sifra = rdok.fana" + fkplGodKar)
+	qb.AddJoin("left join partneri p on p.idpartneri = fkpl.idpartneri")
+	if hasGod {
+		qb.AddEqual("rpro.god", userSession.SelectedGod)
+	}
+	if hasKar {
+		qb.AddEqual("rpro.kar", userSession.SelectedKar)
+	}
+	qb.AddIn("rdok.vrd", []any{130, 131, 188, 189})
+	qb.AddCondition("rsif.sifra", params.OdArtikla, ">=")
+	qb.AddCondition("rsif.sifra", params.DoArtikla, "<=")
+	qb.AddCondition("rdok.dadok", params.OdDatuma, ">=")
+	qb.AddCondition("rdok.dadok", params.DoDatuma, "<=")
+
+	if params.OdGrupe == "-" {
+		params.OdGrupe = "0"
+	}
+	if params.DoGrupe == "-" {
+		params.DoGrupe = "99999"
+	}
+	qb.AddCondition("rsif.gru", params.OdGrupe, ">=")
+	qb.AddCondition("rsif.gru", params.DoGrupe, "<=")
+	switch params.Trziste {
+	case "1":
+		qb.AddCustomCondition("coalesce(rdok.sifval, 0) = 0")
+	case "2":
+		qb.AddCustomCondition("coalesce(rdok.sifval, 0) > 0")
+	}
+	if tipStampe == common.TipStampePreview && params.SearchText != "" {
+		qb.SetEntityType(reflect.TypeOf(domain.RobnoKomPodaciDto{}))
+		qb.AddSearchConditions(s.GetPregledRealizacijePoKupcimaArtiklimaTableFields(), params.SearchText)
+	}
+
+	qb.AddGroupBy(groupBy)
+	qb.AddOrderBy(orderBy)
+	if tipStampe == common.TipStampePreview && !totalRecords {
+		qb.SetLimit(pageSize)
+		qb.SetOffset((page - 1) * pageSize)
+	}
+	sqlQuery, args := qb.Build()
+	entities, err := s.komPodaciRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	if err != nil {
+		return err
+	}
+	if entities == nil || len(*entities) == 0 {
+		return errors.New("no data found")
+	}
+	if tipStampe == common.TipStampePreview && totalRecords {
+		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
+		return nil
+	}
+
+	for _, entity := range *entities {
+		neto := entity.XIznos - entity.XRab - entity.XUgrabat - entity.XKasa
+		tbl.Rows = append(tbl.Rows, domain.TableRow{Fields: []string{
+			entity.Kupac,
+			entity.NazivKupca,
+			entity.Sifra,
+			entity.Naziv,
+			entity.Jm,
+			common.FormatNumberWithSystemLocale(entity.Kolic, 2),
+			common.FormatNumberWithSystemLocale(entity.XIznos, 2),
+			common.FormatNumberWithSystemLocale(entity.XRab, 2),
+			common.FormatNumberWithSystemLocale(entity.XUgrabat, 2),
+			common.FormatNumberWithSystemLocale(entity.XKasa, 2),
+			common.FormatNumberWithSystemLocale(neto, 2),
+		}})
+	}
 	return nil
 }
 
@@ -87,7 +181,6 @@ func (s *RobnoKompodaciResource) GetPregledRealizacijePoArtiklima(ctx context.Co
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 	hasGod, hasKar := s.rproRepo.GetHasGodHasKar()
 
-	// WinDev resolved the customer through FKPL -> PARTNERI and the delivery place through FISP
 	fkplGodKar, fispGodKar := "", ""
 	if hasGod {
 		fkplGodKar += " and fkpl.god = rdok.god"

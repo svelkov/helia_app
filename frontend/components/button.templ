@@ -259,7 +259,7 @@ templ FormObradaButton(btn domain.Button, translator *i18n.Service) {
 }
 
 // Icon renders an SVG icon by name
-templ Icon(name, classIcon string) {
+templ OldIcon(name, classIcon string) {
 	if svg, ok := common.IconSVG[name]; ok {
 		<svg class={ classIcon } xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 			@templ.Raw(svg)
@@ -271,6 +271,33 @@ templ Icon(name, classIcon string) {
 		</svg>
 	}
 }
+// Icon renders an SVG icon by name (sa gradient-om za glavni menu)
+templ Icon(name, classIcon string) {
+	if svg := common.GetIconGradient(name); svg != "" {
+		<svg class={ classIcon } xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+			@templ.Raw(svg)
+		</svg>
+	} else {
+		<!-- Fallback icon if not found -->
+		<svg class="h-5 w-5 mr-2 inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+			<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"></path>
+		</svg>
+	}
+}
+// Icon renders an SVG icon by name
+templ MainMenuIcon(name, classIcon string) {
+	if svg, ok := common.MainMenuIconsSVG[name]; ok {
+		<svg class={ classIcon } xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+			@templ.Raw(svg)
+		</svg>
+	} else {
+		<!-- Fallback icon if not found -->
+		<svg class="h-5 w-5 mr-2 inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+			<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"></path>
+		</svg>
+	}
+}
+
 
 templ PrintButton(btn domain.Button, translator *i18n.Service) {
 	<button

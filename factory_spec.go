@@ -567,6 +567,21 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 		lm,
 	)
 
+	// Tipovi knjižnih pisama
+	registerGenericEntity[domain.Tipknpisma](
+		r, db, "tipknpisma",
+		robno.TipknpismaValidationRules(),
+		handler.SetTipknpismaFields(),
+		domain.HandlerConfig{
+			ContentTitle: "TIPOVI KNJIŽNIH PISAMA",
+			TableID:      "tipknpisma-table",
+			APIPrefix:    "/api/tipknpisma",
+			IDField:      common.IDtipknjid,
+		},
+		cfg,
+		lm,
+	)
+
 	// Rpor
 	registerGenericEntity[domain.Rpor](
 		r, db, "rpor",
@@ -642,6 +657,13 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 	partneriService := service.NewPartneriService(partnerBaseService, partneriValidator, partneriRepo, tekracuniRepo, tipAnalitikeRepo, fvrRepo)
 	partneriHandler := handler.NewPartneriHandler(partneriService, cfg, lm)
 	partneriHandler.AddRoutes(r)
+	// MESTA ISPORUKE
+	fispRepo := repository.NewBaseRepository[domain.Fisp](db, "fisp")
+	fispValidator := validation.NewRuleBasedValidator[domain.Fisp](robno.FispValidationRules())
+	fispBaseService := service.NewBaseService(*fispRepo, fispValidator)
+	fispService := robnosvc.NewFispResource(fispBaseService, fispRepo, partneriRepo, fvrRepo, cfg)
+	fispHandler := robnohand.NewFispHandler(fispBaseService, fispService, cfg, lm)
+	fispHandler.AddRoutes(r)
 	// Fkpl
 	fkplRepo := repository.NewBaseRepository[domain.Fkpl](db, "fkpl")
 	fkplValidator := validation.NewRuleBasedValidator[domain.Fkpl](finval.FkplValidationRules())
@@ -746,6 +768,11 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 	robnoKompodaciService := robnosvc.NewRobnoKompodaciService(partneriRepo, fproRepo, rproRepo, rgruRepo, fvrRepo, robnoKomPodaciRepo)
 	robnoKompodaciHandler := robnohand.NewRobnoKompodaciHandler(robnoKompodaciService, cfg)
 	robnoKompodaciHandler.AddRoutes(r)
+
+	// Robno year-end processing
+	krajPoslovneGodineService := robnosvc.NewKrajPoslovneGodineService(db, magaciniRepo)
+	krajPoslovneGodineHandler := robnohand.NewKrajPoslovneGodineHandler(krajPoslovneGodineService, cfg)
+	krajPoslovneGodineHandler.AddRoutes(r)
 
 	// Salda
 	saldaRepo := repository.NewBaseRepository[domain.SaldaDto](db, "saldadto")

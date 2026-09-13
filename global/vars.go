@@ -199,7 +199,7 @@ func FormatLockError(lock *EntityLock) string {
 	if minutes < 1 {
 		return fmt.Sprintf("%s je zaključan od strane korisnika '%s' (upravo sada)", entityName, lock.Username)
 	} else if minutes == 1 {
-		return fmt.Sprintf("%s je zaključan od strane korisnika '%s' (pre 1 minut)", entityName, lock.Username, minutes)
+		return fmt.Sprintf("%s je zaključan od strane korisnika '%s' (pre 1 minut)", entityName, lock.Username)
 	} else if minutes < 60 {
 		return fmt.Sprintf("%s je zaključan od strane korisnika '%s' (pre %d minuta)", entityName, lock.Username, minutes)
 	} else {

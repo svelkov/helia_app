@@ -69,8 +69,8 @@ func SetMestotroskaFields() []domain.Fields {
 
 func SetOrgjedFields() []domain.Fields {
 	return []domain.Fields{
-		{Name: "ojozn", Label: "Sifra Orgjed", Width: "6", Sortable: true},
-		{Name: "naziv", Label: "Naziv Orgjed", Width: "45", Sortable: true},
+		{Name: "ojozn", Label: "Sifra Orgjed", Width: "6", ControlWidth: " w-12", Sortable: true},
+		{Name: "naziv", Label: "Naziv Orgjed", Width: "45", ControlWidth: " w-96", Sortable: true},
 	}
 }
 

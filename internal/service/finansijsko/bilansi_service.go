@@ -311,11 +311,15 @@ func (s *BilansiResource) GetZakljucniList(ctx context.Context, tbl *domain.Tabl
 	// if err != nil {
 	// 	return err
 	// }
-	entities, err := s.getZakljucniQuery(ctx, tbl, getTotalRecords, params, "O", pageSize, currentPage) // "O" for data version of the query (with pagination and total count)
+	entities, err := s.getZakljucniQuery(ctx, tbl, getTotalRecords, params, common.TipStampePreview, pageSize, currentPage) // "O" for data version of the query (with pagination and total count)
 	if err != nil {
 		return err
 	}
 
+	if getTotalRecords {
+		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
+		return nil
+	}
 	// Populate table rows - pagination is already applied at SQL level
 	start := (currentPage - 1) * pageSize
 	rowNum := 1
@@ -373,7 +377,7 @@ func (s *BilansiResource) GetZakljucniList(ctx context.Context, tbl *domain.Tabl
 // Subgroup = same konto value; group = konto[0:nDuzSint].
 func (s *BilansiResource) GetZakljucniListZaStampu(ctx context.Context, tbl, tblSummary *domain.TableData, params domain.ZakljucniParams, nDuzSint int) error {
 
-	entities, err := s.getZakljucniQuery(ctx, nil, false, params, "S", 0, 0) // "S" for stampa/print version of the query (no pagination, no total count)
+	entities, err := s.getZakljucniQuery(ctx, nil, false, params, common.TipStampePrint, 0, 0)
 	if err != nil {
 		return err
 	}
@@ -605,7 +609,6 @@ func (s *BilansiResource) GetZakljucniListZaStampu(ctx context.Context, tbl, tbl
 
 // getZakljucniQuery builds and executes the SQL query for Zakljucni list based on the provided parameters and print type.
 func (s *BilansiResource) getZakljucniQuery(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, params domain.ZakljucniParams, printType string, pageSize, currentPage int) (*[]domain.FproDto, error) {
-	// printType: "S" - stampa , ili "O" - obrada
 	session := domain.GetSessionFromStdContext(ctx)
 	if session == nil {
 		return nil, fmt.Errorf("user session not found")
@@ -659,7 +662,7 @@ func (s *BilansiResource) getZakljucniQuery(ctx context.Context, tbl *domain.Tab
 		innerQb.AddCondition("COALESCE(NULLIF(fpro.konto, '')::numeric, 0)", params.DoKonta, "<=")
 	}
 	// Apply Klasa 9 filter only for printing, not for data retrieval for processing
-	if printType == "S" {
+	if printType == common.TipStampePrint {
 		if params.Klasa9 == "false" {
 			innerQb.AddCustomCondition("fpro.konto NOT LIKE '9%'")
 		}
@@ -689,10 +692,17 @@ func (s *BilansiResource) getZakljucniQuery(ctx context.Context, tbl *domain.Tab
 	case "1":
 		outerQb := common.NewQueryBuilder(fmt.Sprintf(`SELECT agg.*, COALESCE(fkpl.naziv, '') as naziv FROM (%s) agg`, innerSql), true)
 		outerQb.AddJoin("left join fkpl on fkpl.idfkpl = agg.idfkpl")
-		outerQb.AddOrderBy(config.OrderByCols)
 		outerQb.AddArgs(innerArgs...)
+		// Add search filter if provided
+		if params.SearchText != "" {
+			nbrParam := len(outerQb.GetArgs()) + 1
+			customCondition := fmt.Sprintf(` (naziv ilike '%%' || $%d || '%%' OR agg.konto ilike '%%' || $%d || '%%' OR agg.sifra ilike '%%' || $%d || '%%') `, nbrParam, nbrParam, nbrParam)
+			outerQb.AddCustomCondition(customCondition, params.SearchText)
+		}
+
+		outerQb.AddOrderBy(config.OrderByCols)
 		// Add pagination using QueryBuilder
-		if !getTotalRecords && printType == "O" { // Apply pagination only for data retrieval for processing, not for printing
+		if !getTotalRecords && printType == common.TipStampePreview { // Apply pagination only for data retrieval for processing, not for printing
 			outerQb.SetLimit(pageSize)
 			outerQb.SetOffset((currentPage - 1) * pageSize)
 		}
@@ -704,10 +714,16 @@ func (s *BilansiResource) getZakljucniQuery(ctx context.Context, tbl *domain.Tab
 		distinctQb.AddOrderBy("konto, god DESC, kar DESC")
 		distinctSql, distinctArgs := distinctQb.Build()
 		outerQb := common.NewQueryBuilder(fmt.Sprintf(`SELECT agg.*, COALESCE(fkpl_data.naziv, '') as naziv FROM (%s) agg LEFT JOIN (%s) fkpl_data ON fkpl_data.konto = agg.konto`, innerSql, distinctSql), true)
-		outerQb.AddOrderBy(config.OrderByCols)
 		outerQb.AddArgs(distinctArgs...)
+		// Add search filter if provided
+		if params.SearchText != "" {
+			nbrParam := len(outerQb.GetArgs()) + 1
+			customCondition := fmt.Sprintf(` (naziv ilike '%%' || $%d || '%%' OR agg.konto ilike '%%' || $%d || '%%') `, nbrParam, nbrParam)
+			outerQb.AddCustomCondition(customCondition, params.SearchText)
+		}
+		outerQb.AddOrderBy(config.OrderByCols)
 		// Add pagination using QueryBuilder
-		if !getTotalRecords && printType == "O" { // Apply pagination only for data retrieval for processing, not for printing
+		if !getTotalRecords && printType == common.TipStampePreview { // Apply pagination only for data retrieval for processing, not for printing
 			outerQb.SetLimit(pageSize)
 			outerQb.SetOffset((currentPage - 1) * pageSize)
 		}
@@ -719,22 +735,27 @@ func (s *BilansiResource) getZakljucniQuery(ctx context.Context, tbl *domain.Tab
 		distinctQb.AddOrderBy(fmt.Sprintf("LEFT(konto, %d), god DESC, kar DESC", s.cfg.NDuzSint))
 		distinctSql, distinctArgs := distinctQb.Build()
 		outerQb := common.NewQueryBuilder(fmt.Sprintf(`SELECT agg.*, COALESCE(fkpl_data.naziv, '') as naziv FROM (%s) agg LEFT JOIN (%s) fkpl_data ON fkpl_data.konto_trunc = agg.konto`, innerSql, distinctSql), true)
-		outerQb.AddOrderBy(config.OrderByCols)
 		outerQb.AddArgs(distinctArgs...)
+		// Add search filter if provided
+		if params.SearchText != "" {
+			nbrParam := len(outerQb.GetArgs()) + 1
+			customCondition := fmt.Sprintf(` (naziv ilike '%%' || $%d || '%%' OR agg.konto ilike '%%' || $%d || '%%') `, nbrParam, nbrParam)
+			outerQb.AddCustomCondition(customCondition, params.SearchText)
+		}
+		outerQb.AddOrderBy(config.OrderByCols)
 		// Add pagination using QueryBuilder
-		if !getTotalRecords && printType == "O" { // Apply pagination only for data retrieval for processing, not for printing
+		if !getTotalRecords && printType == common.TipStampePreview { // Apply pagination only for data retrieval for processing, not for printing
 			outerQb.SetLimit(pageSize)
 			outerQb.SetOffset((currentPage - 1) * pageSize)
 		}
 		outerSql, allArgs = outerQb.Build()
 	}
-
 	entities, err := s.fproRepo.GetAllCustom(ctx, outerSql, "", allArgs, "", "")
 	if err != nil {
 		return nil, err
 	}
 	// Count filtered items if needed for total records
-	if printType == "O" && getTotalRecords {
+	if printType == common.TipStampePreview && getTotalRecords {
 		count := len(*entities)
 		common.SetTableTotalRecords(tbl, count, pageSize)
 		tbl.Totals = make([]string, len(tbl.Headers))

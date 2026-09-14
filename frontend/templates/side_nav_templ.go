@@ -36,7 +36,7 @@ func Side_nav(submenu []domain.SubMenuItem) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div id=\"side-menu\" class=\"bg-gray-700 text-white w-64 text-sm border-b rounded-sm h-full flex flex-col\"><ul class=\"flex flex-col gap-1 overflow-y-auto flex-1\"><!-- Use 'gap-1' for tighter spacing -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div id=\"side-menu\" class=\"bg-gray-700 text-white text-sm border-b rounded-sm h-full flex flex-col transition-all duration-200 ease-in-out w-64\"><!-- Toggle button --><div class=\"flex items-center justify-end px-2 py-1 border-b border-gray-600\"><button id=\"side-menu-toggle\" type=\"button\" aria-expanded=\"true\" aria-controls=\"side-menu\" class=\"p-1 rounded-md hover:bg-blue-600 text-gray-300 hover:text-white transition-colors\" title=\"Collapse menu\"><svg id=\"side-menu-toggle-icon\" class=\"h-5 w-5 transition-transform duration-200\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M11 19l-7-7 7-7m8 14l-7-7 7-7\"></path></svg></button></div><ul class=\"flex flex-col gap-1 overflow-y-auto flex-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -48,39 +48,52 @@ func Side_nav(submenu []domain.SubMenuItem) templ.Component {
 			var templ_7745c5c3_Var2 string
 			templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%s", item.Url))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/side_nav.templ`, Line: 18, Col: 42}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/side_nav.templ`, Line: 35, Col: 42}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\" hx-target=\"#content\" hx-swap=\"innerHTML\" class=\"side-nav-item flex items-center py-2 px-3 hover:bg-blue-600  border-b rounded-md\" onclick=\"\r\n                        document.querySelectorAll(&#39;#side-menu .side-nav-item&#39;).forEach(function(a) {\r\n                            a.className = &#39;side-nav-item flex items-center py-2 px-3  hover:bg-blue-600  border-b rounded-md text-gray-300&#39;;\r\n                        });\r\n                        this.className = &#39;side-nav-item flex items-center py-2 px-3 bg-white border-b text-blue-800&#39;;\r\n                    \">")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = components.Icon(item.Icon, common.ClassIcon).Render(ctx, templ_7745c5c3_Buffer)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<span class=\"medium\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\" hx-target=\"#content\" hx-swap=\"innerHTML\" class=\"side-nav-item flex items-center py-2 px-3 hover:bg-blue-600 border-b rounded-md text-gray-300\" title=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(item.SubMenuName)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/side_nav.templ`, Line: 33, Col: 45}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/side_nav.templ`, Line: 39, Col: 30}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</span></a></li>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = components.Icon(item.Icon, common.ClassIcon+" shrink-0").Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<span class=\"medium nav-label ml-2 whitespace-nowrap overflow-hidden transition-opacity duration-150\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var4 string
+			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(item.SubMenuName)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/side_nav.templ`, Line: 42, Col: 126}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</span></a></li>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</ul></div><script>\r\n    document.addEventListener('DOMContentLoaded', () => {\r\n        const sideNavItems = document.querySelectorAll('.side-nav-item');\r\n\r\n        function handleSideNavItemClick(event) {\r\n            sideNavItems.forEach(item => {\r\n                item.classList.remove('bg-blue-600');\r\n            });\r\n            event.currentTarget.classList.add('bg-blue-600');\r\n        }\r\n\r\n        sideNavItems.forEach(item => {\r\n            item.addEventListener('click', handleSideNavItemClick);\r\n        });\r\n    });\r\n</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</ul></div><script>\r\n\t\t(function () {\r\n\t\t\tif (window.__sideNavInitialized) return;\r\n\t\t\twindow.__sideNavInitialized = true;\r\n\r\n\t\t\tconst STORAGE_KEY = 'side-menu-collapsed';\r\n\r\n\t\t\tfunction applyCollapsed(collapsed) {\r\n\t\t\t\tconst sideMenu = document.getElementById('side-menu');\r\n\t\t\t\tconst toggleBtn = document.getElementById('side-menu-toggle');\r\n\t\t\t\tconst toggleIcon = document.getElementById('side-menu-toggle-icon');\r\n\t\t\t\tif (!sideMenu) return;\r\n\r\n\t\t\t\tsideMenu.classList.toggle('w-64', !collapsed);\r\n\t\t\t\tsideMenu.classList.toggle('w-16', collapsed);\r\n\t\t\t\tsideMenu.querySelectorAll('.nav-label').forEach(function (label) {\r\n\t\t\t\t\tlabel.classList.toggle('hidden', collapsed);\r\n\t\t\t\t});\r\n\t\t\t\tif (toggleIcon) {\r\n\t\t\t\t\ttoggleIcon.style.transform = collapsed ? 'rotate(180deg)' : 'rotate(0deg)';\r\n\t\t\t\t}\r\n\t\t\t\tif (toggleBtn) {\r\n\t\t\t\t\ttoggleBtn.setAttribute('aria-expanded', String(!collapsed));\r\n\t\t\t\t\ttoggleBtn.title = collapsed ? 'Expand menu' : 'Collapse menu';\r\n\t\t\t\t}\r\n\t\t\t}\r\n\r\n\t\t\tfunction currentlyCollapsed() {\r\n\t\t\t\treturn localStorage.getItem(STORAGE_KEY) === 'true';\r\n\t\t\t}\r\n\r\n\t\t\t// Re-apply saved state any time the DOM settles — covers the\r\n\t\t\t// initial page load AND any htmx swap that re-renders #side-menu.\r\n\t\t\tfunction restoreState() {\r\n\t\t\t\tapplyCollapsed(currentlyCollapsed());\r\n\t\t\t}\r\n\r\n\t\t\trestoreState();\r\n\t\t\tdocument.body.addEventListener('htmx:afterSettle', restoreState);\r\n\r\n\t\t\t// Delegated listeners on document.body survive htmx swaps because\r\n\t\t\t// body itself is never replaced — only its descendants are.\r\n\t\t\tdocument.body.addEventListener('click', function (e) {\r\n\t\t\t\tconst toggleBtn = e.target.closest('#side-menu-toggle');\r\n\t\t\t\tif (toggleBtn) {\r\n\t\t\t\t\tconst next = !currentlyCollapsed();\r\n\t\t\t\t\tapplyCollapsed(next);\r\n\t\t\t\t\tlocalStorage.setItem(STORAGE_KEY, String(next));\r\n\t\t\t\t\treturn;\r\n\t\t\t\t}\r\n\r\n\t\t\t\tconst link = e.target.closest('#side-menu .side-nav-item');\r\n\t\t\t\tif (link) {\r\n\t\t\t\t\tdocument.querySelectorAll('#side-menu .side-nav-item').forEach(function (a) {\r\n\t\t\t\t\t\ta.classList.remove('bg-white', 'text-blue-800');\r\n\t\t\t\t\t\ta.classList.add('text-gray-300');\r\n\t\t\t\t\t});\r\n\t\t\t\t\tlink.classList.remove('text-gray-300');\r\n\t\t\t\t\tlink.classList.add('bg-white', 'text-blue-800');\r\n\t\t\t\t}\r\n\t\t\t});\r\n\t\t})();\r\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

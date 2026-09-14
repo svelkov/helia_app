@@ -151,6 +151,7 @@ func (h *BilansiHandler) ZakljucniList(c *gin.Context) {
 			TipLista:       c.Query("tip_zakljucni"),
 			Klasa9:         c.Query("klasa9"),
 			SamosaPrometom: c.Query("samosaprometom"),
+			SearchText:     c.Query("query"),
 		}
 		fieldParameters := []string{}
 		if params.TipLista == "1" {

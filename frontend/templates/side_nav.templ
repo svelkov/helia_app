@@ -8,53 +8,105 @@ import (
 )
 
 templ Side_nav(submenu []domain.SubMenuItem) {
-	// Side menu navigation area
-	<div id="side-menu" class="bg-gray-700 text-white w-64 text-sm border-b rounded-sm h-full flex flex-col">
+	<div
+		id="side-menu"
+		class="bg-gray-700 text-white text-sm border-b rounded-sm h-full flex flex-col transition-all duration-200 ease-in-out w-64"
+	>
+		<!-- Toggle button -->
+		<div class="flex items-center justify-end px-2 py-1 border-b border-gray-600">
+			<button
+				id="side-menu-toggle"
+				type="button"
+				aria-expanded="true"
+				aria-controls="side-menu"
+				class="p-1 rounded-md hover:bg-blue-600 text-gray-300 hover:text-white transition-colors"
+				title="Collapse menu"
+			>
+				<svg id="side-menu-toggle-icon" class="h-5 w-5 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path>
+				</svg>
+			</button>
+		</div>
+
 		<ul class="flex flex-col gap-1 overflow-y-auto flex-1">
-			<!-- Use 'gap-1' for tighter spacing -->
 			for _, item := range submenu {
 				<li class="nav-item">
 					<a
 						hx-get={ fmt.Sprintf("%s", item.Url) }
 						hx-target="#content"
 						hx-swap="innerHTML"
-						class="side-nav-item flex items-center py-2 px-3 hover:bg-blue-600  border-b rounded-md"
-						onclick="
-                        document.querySelectorAll('#side-menu .side-nav-item').forEach(function(a) {
-                            a.className = 'side-nav-item flex items-center py-2 px-3  hover:bg-blue-600  border-b rounded-md text-gray-300';
-                        });
-                        this.className = 'side-nav-item flex items-center py-2 px-3 bg-white border-b text-blue-800';
-                    "
+						class="side-nav-item flex items-center py-2 px-3 hover:bg-blue-600 border-b rounded-md text-gray-300"
+						title={ item.SubMenuName }
 					>
-						@components.Icon(item.Icon, common.ClassIcon)
-						// <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor">
-						//	<use href={ fmt.Sprintf("/frontend/static/icons/allicons.svg#%s", item.Icon) } xlink:href={ fmt.Sprintf("/frontend/static/icons/allicons.svg#%s", item.Icon) }></use>
-						// </svg>
-						<span class="medium">{ item.SubMenuName }</span>
-						// Replace with your Tailwind icon or text
-						// <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-						// 	<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d={ fmt.Sprintf("%s", item.Icon) }></path>
-						// </svg>
-						// <span class="medium">{ item.Name }</span>
+						@components.Icon(item.Icon, common.ClassIcon + " shrink-0")
+						<span class="medium nav-label ml-2 whitespace-nowrap overflow-hidden transition-opacity duration-150">{ item.SubMenuName }</span>
 					</a>
 				</li>
 			}
 		</ul>
 	</div>
+
 	<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const sideNavItems = document.querySelectorAll('.side-nav-item');
+		(function () {
+			if (window.__sideNavInitialized) return;
+			window.__sideNavInitialized = true;
 
-        function handleSideNavItemClick(event) {
-            sideNavItems.forEach(item => {
-                item.classList.remove('bg-blue-600');
-            });
-            event.currentTarget.classList.add('bg-blue-600');
-        }
+			const STORAGE_KEY = 'side-menu-collapsed';
 
-        sideNavItems.forEach(item => {
-            item.addEventListener('click', handleSideNavItemClick);
-        });
-    });
-</script>
+			function applyCollapsed(collapsed) {
+				const sideMenu = document.getElementById('side-menu');
+				const toggleBtn = document.getElementById('side-menu-toggle');
+				const toggleIcon = document.getElementById('side-menu-toggle-icon');
+				if (!sideMenu) return;
+
+				sideMenu.classList.toggle('w-64', !collapsed);
+				sideMenu.classList.toggle('w-16', collapsed);
+				sideMenu.querySelectorAll('.nav-label').forEach(function (label) {
+					label.classList.toggle('hidden', collapsed);
+				});
+				if (toggleIcon) {
+					toggleIcon.style.transform = collapsed ? 'rotate(180deg)' : 'rotate(0deg)';
+				}
+				if (toggleBtn) {
+					toggleBtn.setAttribute('aria-expanded', String(!collapsed));
+					toggleBtn.title = collapsed ? 'Expand menu' : 'Collapse menu';
+				}
+			}
+
+			function currentlyCollapsed() {
+				return localStorage.getItem(STORAGE_KEY) === 'true';
+			}
+
+			// Re-apply saved state any time the DOM settles — covers the
+			// initial page load AND any htmx swap that re-renders #side-menu.
+			function restoreState() {
+				applyCollapsed(currentlyCollapsed());
+			}
+
+			restoreState();
+			document.body.addEventListener('htmx:afterSettle', restoreState);
+
+			// Delegated listeners on document.body survive htmx swaps because
+			// body itself is never replaced — only its descendants are.
+			document.body.addEventListener('click', function (e) {
+				const toggleBtn = e.target.closest('#side-menu-toggle');
+				if (toggleBtn) {
+					const next = !currentlyCollapsed();
+					applyCollapsed(next);
+					localStorage.setItem(STORAGE_KEY, String(next));
+					return;
+				}
+
+				const link = e.target.closest('#side-menu .side-nav-item');
+				if (link) {
+					document.querySelectorAll('#side-menu .side-nav-item').forEach(function (a) {
+						a.classList.remove('bg-white', 'text-blue-800');
+						a.classList.add('text-gray-300');
+					});
+					link.classList.remove('text-gray-300');
+					link.classList.add('bg-white', 'text-blue-800');
+				}
+			});
+		})();
+	</script>
 }

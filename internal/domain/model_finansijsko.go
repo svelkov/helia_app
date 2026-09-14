@@ -955,6 +955,7 @@ type ZakljucniParams struct {
 	TipLista       string
 	Klasa9         string
 	SamosaPrometom string
+	SearchText     string
 }
 
 // ZakljucniStampaParams holds header data and period for the Zakljucni list print view.

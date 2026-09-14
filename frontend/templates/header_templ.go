@@ -35,7 +35,7 @@ func Header(isLoggedIn bool, comboCompany, comboPoslGod, comboKar, comboLanguage
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<header class=\"bg-blue-600 text-white p-1 flex justify-between items-center shadow-xl shadow-blue-600/50\"><div class=\"flex items-justify\"><img src=\"/frontend/static/helia_logo.png\" alt=\"HELIA text\" class=\"h-9 w-52\"></div><nav class=\"flex items-center space-x-4\"><!-- Right-aligned Combo Boxes --><div class=\"ml-auto flex items-center space-x-4 pr-4\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<header class=\"bg-blue-600 text-white p-1 flex justify-between items-center shadow-xl shadow-blue-600/50\"><div class=\"flex items-justify\"><img src=\"/frontend/static/helia_logo.png\" alt=\"HELIA text\" class=\"h-10 w-60\"></div><nav class=\"flex items-center space-x-4\"><!-- Right-aligned Combo Boxes --><div class=\"ml-auto flex items-center space-x-4 pr-4\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

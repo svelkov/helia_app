@@ -28,23 +28,47 @@ const (
 	robnoKarticaSubsintetikaTitle     = "PRIKAZ KARTICE SUBSINTETIČKOG KONTA"
 
 	hxValsRobnaKarticaSubsntetika = `js:{
+			"sourceTab": "subsintetika",
             "magacin": document.getElementById("magacin")?.value,
 			"konto": document.getElementById("konto")?.value,
 			"brojnaloga": document.getElementById("brojnaloga")?.value,
             "oddatumanaloga": document.getElementById("oddatumanaloga")?.value,
             "dodatumanaloga": document.getElementById("dodatumanaloga")?.value,
-			"chkpobrojunaloga": document.getElementById("chkpobrojunaloga")?.value,
-			"chkpodatumunaloga": document.getElementById("chkpodatumunaloga")?.value,
-			"chkpoiznosu": document.getElementById("chkpoiznosu")?.value,
+			"odiznosa": document.getElementById("odiznosa")?.value,
+			"doiznosa": document.getElementById("doiznosa")?.value,
+			"chkpobrojunaloga": document.getElementById("chkpobrojunaloga")?.checked,
+			"chkpodatumunaloga": document.getElementById("chkpodatumunaloga")?.checked,
+			"chkpoiznosu": document.getElementById("chkpoiznosu")?.checked,
 		}`
 	hxValsRobnaKarticaArtikal = `js:{
+			"sourceTab": "artikli",
             "magacin": document.getElementById("magacin")?.value,
 			"konto": document.getElementById("konto")?.value,
+            "brojnaloga": document.getElementById("brojnaloga")?.value,
             "oddatuma": document.getElementById("oddatuma")?.value,
             "dodatuma": document.getElementById("dodatuma")?.value,
-			"chkpobrojunaloga": document.getElementById("chkpobrojunaloga")?.value,
-			"chkpodatumunaloga": document.getElementById("chkpodatumunaloga")?.value,
-			"chkpoiznosu": document.getElementById("chkpoiznosu")?.value,
+			"oddatumanaloga": document.getElementById("oddatumanaloga")?.value,
+			"dodatumanaloga": document.getElementById("dodatumanaloga")?.value,
+			"oddatumaobrade": document.getElementById("oddatumaobrade")?.value,
+			"dodatumaobrade": document.getElementById("dodatumaobrade")?.value,
+			"sifvrstedokumenta": document.getElementById("sifvrstedokumenta")?.value,
+			"brojdokumenta": document.getElementById("brojdokumenta")?.value,
+			"oddatumadok": document.getElementById("oddatumadok")?.value,
+			"dodatumaadok": document.getElementById("dodatumaadok")?.value,
+			"odiznosa": document.getElementById("odiznosa")?.value,
+			"doiznosa": document.getElementById("doiznosa")?.value,
+			"odsifre": document.getElementById("odsifre")?.value,
+			"dosifre": document.getElementById("dosifre")?.value,
+			"chkpobrojunaloga": document.getElementById("chkpobrojunaloga")?.checked,
+			"chkpodatumunaloga": document.getElementById("chkpodatumunaloga")?.checked,
+			"chkpodatumuobrade": document.getElementById("chkpodatumuobrade")?.checked,
+			"chkpovrstidokumenta": document.getElementById("chkpovrstidokumenta")?.checked,
+			"chkpobrojudokumenta": document.getElementById("chkpobrojudokumenta")?.checked,
+			"chkpodatumdokumenta": document.getElementById("chkpodatumdokumenta")?.checked,
+			"chkpoiznosu": document.getElementById("chkpoiznosu")?.checked,
+			"chkpRPROID": document.getElementById("chkpRPROID")?.checked,
+			"stampajpomesecima": document.getElementById("stampajpomesecima")?.checked,
+			"sortiranje": document.querySelector('input[name="sortiranje"]:checked')?.value,
 		}`
 )
 
@@ -66,11 +90,11 @@ func (h *RobnoKarticaHandler) RobnoKarticaMain(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, err.Error())
 		return
 	}
-	tblData := common.SetTableBasicData(robnoKarticaArtikalTitle, robnoKarticaURLArtikal, h.service.GetKarticaArtiklaTableFields(), "", "", 0, 0, 0, 0, h.cfg)
-	common.SetTableConfig(&tblData, robnoKarticaArtikalTitle, "", false, false, false)
-	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", robnoKarticaURLArtikal, "#"+robnoKarticaURLArtikal, "innerHTML", "GET", "", hxValsRobnaKarticaArtikal, true, common.ClassSaveButton, "handleDialogResponse")
-	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", robnoKarticaURLArtikalStampa, "#"+robnoKarticaURLArtikal, "innerHTML", "GET", "", hxValsRobnaKarticaArtikal, true, common.ClassPrintButton, "")
-	searchInput := common.CreateSearchInput("search-input", translator, robnoKarticaURLArtikal, fmt.Sprintf("#%s", robnoKarticaURLArtikal), hxValsRobnaKarticaArtikal)
+	tblData := common.SetTableBasicData(robnoKarticaArtikalTitle, robnoKarticaArtikalTableID, h.service.GetKarticaArtiklaTableFields(), robnoKarticaURLArtikal, robnoKarticaURLArtikal, 0, 0, 0, 0, h.cfg)
+	common.SetTableConfig(&tblData, robnoKarticaArtikalTableID, robnoKarticaURLArtikal, false, false, false)
+	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", robnoKarticaURLArtikal, "#"+robnoKarticaArtikalTableID, "innerHTML", "GET", "", hxValsRobnaKarticaArtikal, true, common.ClassSaveButton, "handleDialogResponse")
+	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", robnoKarticaURLArtikalStampa, "#"+robnoKarticaArtikalTableID, "innerHTML", "GET", "", hxValsRobnaKarticaArtikal, true, common.ClassPrintButton, "")
+	searchInput := common.CreateSearchInput("search-input", translator, robnoKarticaURLArtikal, fmt.Sprintf("#%s", robnoKarticaArtikalTableID), hxValsRobnaKarticaArtikal)
 
 	tmpl_robno.RobnoKarticaMain(*h.tabs, tblData, magValues, btnObrada, btnPrint, searchInput, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 }
@@ -93,9 +117,9 @@ func (h *RobnoKarticaHandler) GetPrikazKarticeArtikla(c *gin.Context) {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
 			return
 		}
-		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", robnoKarticaURLArtikal, "#"+robnoKarticaURLArtikal, "innerHTML", "GET", "", hxValsRobnaKarticaArtikal, true, common.ClassSaveButton, "handleDialogResponse")
-		btnPrint := common.SetButton("print-btn", "Štampa", "stampa", robnoKarticaURLArtikalStampa, "#"+robnoKarticaURLArtikal, "innerHTML", "GET", "", hxValsRobnaKarticaArtikal, true, common.ClassPrintButton, "")
-		searchInput := common.CreateSearchInput("search-input", translator, robnoKarticaURLArtikal, fmt.Sprintf("#%s", robnoKarticaURLArtikal), hxValsRobnaKarticaArtikal)
+		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", robnoKarticaURLArtikal, "#"+robnoKarticaArtikalTableID, "innerHTML", "GET", "", hxValsRobnaKarticaArtikal, true, common.ClassSaveButton, "handleDialogResponse")
+		btnPrint := common.SetButton("print-btn", "Štampa", "stampa", robnoKarticaURLArtikalStampa, "#"+robnoKarticaArtikalTableID, "innerHTML", "GET", "", hxValsRobnaKarticaArtikal, true, common.ClassPrintButton, "")
+		searchInput := common.CreateSearchInput("search-input", translator, robnoKarticaURLArtikal, fmt.Sprintf("#%s", robnoKarticaArtikalTableID), hxValsRobnaKarticaArtikal)
 		tmpl_robno.RobnoKarticaArtikla(*h.tabs, tbl, magValues, btnObrada, btnPrint, searchInput, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
@@ -113,17 +137,33 @@ func (h *RobnoKarticaHandler) GetPrikazKarticeArtikla(c *gin.Context) {
 		odIznosa, _ := utils.GetFloat64FromQueryRequest(c, "odiznosa")
 		doIznosa, _ := utils.GetFloat64FromQueryRequest(c, "doiznosa")
 		params := domain.RobnoKarticaParams{
-			Magacin:       magacin,
-			Konto:         c.Query("konto"),
-			OdDanal:       c.Query("oddatuma"),
-			DoDanal:       c.Query("dodatuma"),
-			OdIznosa:      odIznosa,
-			DoIznosa:      doIznosa,
-			CbxDatum:      c.Query("cbxpodatumunaloga") == "true",
-			CbxBrojNaloga: c.Query("chkpobrojunaloga") == "true",
-			CbxIznos:      c.Query("chkpoiznosu") == "true",
-			SearchText:    c.Query("query"),
-			ReportTip:     "karticasubsintetickogkonta",
+			Magacin:           magacin,
+			Konto:             c.Query("konto"),
+			Nalozi:            c.Query("brojnaloga"),
+			OdDanal:           c.Query("oddatumanaloga"),
+			DoDanal:           c.Query("dodatumanaloga"),
+			OdDatumObrade:     c.Query("oddatumaobrade"),
+			DoDatumObrade:     c.Query("dodatumaobrade"),
+			SifVrsteDokumenta: c.Query("sifvrstedokumenta"),
+			BrojDokumenta:     c.Query("brojdokumenta"),
+			OdDatumDok:        c.Query("oddatumadok"),
+			DoDatumDok:        c.Query("dodatumaadok"),
+			OdIznosa:          odIznosa,
+			DoIznosa:          doIznosa,
+			OdSifre:           c.Query("odsifre"),
+			DoSifre:           c.Query("dosifre"),
+			CbxDatum:          c.Query("chkpodatumunaloga") == "true",
+			CbxBrojNaloga:     c.Query("chkpobrojunaloga") == "true",
+			CbxDatumObrade:    c.Query("chkpodatumuobrade") == "true",
+			CbxVrstaDokumenta: c.Query("chkpovrstidokumenta") == "true",
+			CbxBrojDokumenta:  c.Query("chkpobrojudokumenta") == "true",
+			CbxDatumDokumenta: c.Query("chkpodatumdokumenta") == "true",
+			CbxIznos:          c.Query("chkpoiznosu") == "true",
+			CbxRPROID:         c.Query("chkpRPROID") == "true",
+			StampajPoMesecima: c.Query("stampajpomesecima") == "true",
+			Sortiranje:        c.Query("sortiranje"),
+			SearchText:        c.Query("query"),
+			ReportTip:         "karticaartikla",
 		}
 		//validacija input parametre:
 		fieldsError := h.service.ValidacijaKarticaArtikla(params)
@@ -173,7 +213,7 @@ func (h *RobnoKarticaHandler) GetKarticaSubsintetickogKonta(c *gin.Context) {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
 			return
 		}
-		printFields := "magacin,konto,oddatumanaloga,dodatumanaloga,odiznosa,doiznosa, cbxbrojnaloga,chkpodatumunaloga,chkpoiznosu"
+		printFields := "magacin,konto,brojnaloga,oddatumanaloga,dodatumanaloga,odiznosa,doiznosa,chkpobrojunaloga,chkpodatumunaloga,chkpoiznosu"
 		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", robnoKarticaURLSubsintetika, "#"+robnoKarticaSubsintetikaTableID, "innerHTML", "GET", "", hxValsRobnaKarticaSubsntetika, true, common.ClassSaveButton, "handleDialogResponse")
 		btnPrint := common.SetPrintButton("stampa-btn", "Štampa", "fin_print", robnoKarticaURLSubsintetikaStampa, "GET", true, common.ClassPrintButton, printFields)
 		searchInput := common.CreateSearchInput("search-input", translator, robnoKarticaURLSubsintetika, fmt.Sprintf("#%s", robnoKarticaSubsintetikaTableID), hxValsRobnaKarticaSubsntetika)

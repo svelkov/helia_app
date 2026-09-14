@@ -356,19 +356,34 @@ type RobnoStanjaParams struct {
 	ReportTip    string  `json:"report_tip" db:"reporttip"`
 }
 type RobnoKarticaParams struct {
-	Magacin       int
-	Konto         string
-	Nalozi        string
-	OdDanal       string
-	DoDanal       string
-	OdIznosa      float64
-	DoIznosa      float64
-	Cena          float64
-	CbxBrojNaloga bool
-	CbxDatum      bool
-	CbxIznos      bool
-	ReportTip     string
-	SearchText    string
+	Magacin           int
+	Konto             string
+	Nalozi            string
+	OdDanal           string
+	DoDanal           string
+	OdDatumObrade     string
+	DoDatumObrade     string
+	SifVrsteDokumenta string
+	BrojDokumenta     string
+	OdDatumDok        string
+	DoDatumDok        string
+	OdIznosa          float64
+	DoIznosa          float64
+	OdSifre           string
+	DoSifre           string
+	Cena              float64
+	CbxBrojNaloga     bool
+	CbxDatum          bool
+	CbxDatumObrade    bool
+	CbxVrstaDokumenta bool
+	CbxBrojDokumenta  bool
+	CbxDatumDokumenta bool
+	CbxIznos          bool
+	CbxRPROID         bool
+	StampajPoMesecima bool
+	Sortiranje        string
+	ReportTip         string
+	SearchText        string
 }
 type RobnoKomPodaciParams struct {
 	OdArtikla    string

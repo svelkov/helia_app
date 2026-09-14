@@ -1106,21 +1106,31 @@ type OtvStavkeParam struct {
 }
 
 type PrometParam struct {
-	Konto       string
-	Sifra       string
-	OdKonta     string
-	DoKonta     string
-	OdSifre     string
-	DoSifre     string
-	OdDatuma    string
-	DoDatuma    string
-	OdMI        string
-	DoMI        string
-	Vkonta      string
-	Analitika   string
-	ReportTip   string
-	SearchText  string
-	StanjeNaDan string
+	Konto                string
+	Sifra                string
+	OdKonta              string
+	DoKonta              string
+	OdSifre              string
+	DoSifre              string
+	OdDatuma             string
+	DoDatuma             string
+	OdMI                 string
+	DoMI                 string
+	Vkonta               string
+	Analitika            string
+	ReportTip            string
+	SearchText           string
+	StanjeNaDan          string
+	TipCene              string
+	UlazIzlaz            string
+	StampajGrupaPodgrupa bool
+	ZaliheOdNule         bool
+	AzbucniRed           bool
+	OdPodgrupe           string
+	DoPodgrupe           string
+	ZbirMagacina         bool
+	StampajSamoZbir      bool
+	UkljuceneUsluge      bool
 }
 type PrometStampaParam struct {
 	SaldaPoMesecima      bool

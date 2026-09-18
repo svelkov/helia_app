@@ -132,7 +132,7 @@ func (h *PrometHandler) PrometMain(c *gin.Context) {
 		gnGod = session.SelectedGod
 	}
 	common.SetActiveTab(&h.tabData, 0)
-	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", prometURLAnKonta, "#promettable", "innerHTML", "GET", "#konto, #sifra, #oddatuma, #dodatuma", hxValsAnalitickihKonta, true, common.ClassSaveButton, "handleDialogResponse")
+	btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", prometURLAnKonta, "#promettable", "innerHTML", "GET", "#konto, #sifra, #oddatuma, #dodatuma", hxValsAnalitickihKonta, true, common.ClassSaveButton, "handleDialogResponse")
 	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", prometURLAnalitickaKarticaStampaDialog, "#dialog-proment-analitika-stampa", "innerHTML", "GET", "", hxValsAnalitickihKonta, true, common.ClassPrintButton, "")
 	searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), prometURLAnKonta, fmt.Sprintf("#%s", prometTableID), hxValsAnalitickihKonta)
 
@@ -163,7 +163,7 @@ func (h *PrometHandler) PrometAnalitickihKonta(c *gin.Context) {
 			gnGod = session.SelectedGod
 		}
 
-		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", prometURLAnKonta, "#promettable", "innerHTML", "GET", "", hxValsAnalitickihKonta, true, common.ClassSaveButton, "handleDialogResponse")
+		btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", prometURLAnKonta, "#promettable", "innerHTML", "GET", "", hxValsAnalitickihKonta, true, common.ClassSaveButton, "handleDialogResponse")
 		btnPrint := common.SetButton("print-btn", "Štampa", "stampa", prometURLAnalitickaKarticaStampaDialog, "#dialog-proment-analitika-stampa", "innerHTML", "GET", "", hxValsAnalitickihKonta, true, common.ClassPrintButton, "")
 		searchInput := common.CreateSearchInput("search-input", translator, prometURLAnKonta, fmt.Sprintf("#%s", prometTableID), hxValsAnalitickihKonta)
 		err := tmpl_fin.PrometAnalitickihKonta(h.tabData, tbl, btnPrint, btnObrada, domain.TotalValues{}, searchInput, gnGod, prometKontaAnalitickiDodatniParametriURL, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
@@ -393,7 +393,7 @@ func (h *PrometHandler) PrometAnalitickihKontaPoMI(c *gin.Context) {
 			gnGod = session.SelectedGod
 		}
 
-		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", prometURLAnKontaMi, "#promettable", "innerHTML", "GET", "", hxValsMI, true, common.ClassSaveButton, "handleDialogResponse")
+		btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", prometURLAnKontaMi, "#promettable", "innerHTML", "GET", "", hxValsMI, true, common.ClassSaveButton, "handleDialogResponse")
 		btnPrint := common.SetPrintButton("print-btn", "Štampa", "print", prometURLAnalitickaKarticaPoMIStampa, "GET", true, common.ClassPrintButton, stampaAnKarticaMIFields)
 		searchInput := common.CreateSearchInput("search-input", translator, prometURLAnKontaMi, fmt.Sprintf("#%s", prometTableID), hxValsMI)
 		err := tmpl_fin.AnalitickaKarticaPoMI(h.tabData, tbl, btnPrint, btnObrada, domain.TotalValues{}, searchInput, gnGod, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
@@ -461,7 +461,7 @@ func (h *PrometHandler) PrometDeviznihAnalitickihKonta(c *gin.Context) {
 	tblPromet.Pagination.HxVals = hxValsDeviznaKonta
 
 	if requestSource == "menu" || requestSource == "tab" {
-		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", prometURLDeviznaKonta, "#promettable-container", "innerHTML", "GET", "", hxValsDeviznaKonta, true, common.ClassSaveButton, "handleDialogResponse")
+		btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", prometURLDeviznaKonta, "#promettable-container", "innerHTML", "GET", "", hxValsDeviznaKonta, true, common.ClassSaveButton, "handleDialogResponse")
 		btnPrint := common.SetButton("print-btn", "Štampa", "stampa", prometURLAnalitickaKarticaStampaDialog, "#dialog-proment-analitika-stampa", "innerHTML", "GET", "", hxValsAnalitickihKonta, true, common.ClassPrintButton, "")
 		err := tmpl_fin.PrometDeviznihAnalitickihKonta(h.tabData, tblPromet, tblDeviznaKonta, btnPrint, btnObrada, domain.TotalValues{}, gnGod, searchInput, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 		if err != nil {
@@ -521,7 +521,7 @@ func (h *PrometHandler) PrometSubsintetickihKonta(c *gin.Context) {
 			gnGod = session.SelectedGod
 		}
 
-		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", prometURLSubsintetika, "#promettable", "innerHTML", "GET", "", hxValsSubsintetika, true, common.ClassSaveButton, "handleDialogResponse")
+		btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", prometURLSubsintetika, "#promettable", "innerHTML", "GET", "", hxValsSubsintetika, true, common.ClassSaveButton, "handleDialogResponse")
 		btnPrint := common.SetButton("print-btn", "Štampa", "stampa", prometURLSubsintetikaStampaDialog, "#dialog-promet-subsint-stampa", "innerHTML", "GET", "", hxValsSubsintetika, true, common.ClassPrintButton, "")
 		searchInput := common.CreateSearchInput("search-input", translator, prometURLSubsintetika, fmt.Sprintf("#%s", prometTableID), hxValsSubsintetika)
 
@@ -585,7 +585,7 @@ func (h *PrometHandler) PrometSintetickihKonta(c *gin.Context) {
 			gnGod = session.SelectedGod
 		}
 
-		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", prometURLSintetika, "#promettable", "innerHTML", "GET", "", hxValsSintetika, true, common.ClassSaveButton, "handleDialogResponse")
+		btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", prometURLSintetika, "#promettable", "innerHTML", "GET", "", hxValsSintetika, true, common.ClassSaveButton, "handleDialogResponse")
 		btnPrint := common.SetButton("print-btn", "Štampa", "stampa", prometURLSintetikaStampaDialog, "#dialog-promet-sint-stampa", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
 		searchInput := common.CreateSearchInput("search-input", translator, prometURLSintetika, fmt.Sprintf("#%s", prometTableID), hxValsSintetika)
 
@@ -707,7 +707,7 @@ func (h *PrometHandler) PrometKarticaSintetickihKonta(c *gin.Context) {
 			gnGod = session.SelectedGod
 		}
 
-		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", prometURLKarticaSintetika, "#promettable", "innerHTML", "GET", "", hxValsKarticaSintetika, true, common.ClassSaveButton, "handleDialogResponse")
+		btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", prometURLKarticaSintetika, "#promettable", "innerHTML", "GET", "", hxValsKarticaSintetika, true, common.ClassSaveButton, "handleDialogResponse")
 		btnPrint := common.SetPrintButton("print-btn", "Štampa", "stampa", prometURLKarticaSintetikaStampa, "GET", true, common.ClassPrintButton, stampaKarticaSintKontaFields)
 		searchInput := common.CreateSearchInput("search-input", translator, prometURLKarticaSintetika, fmt.Sprintf("#%s", prometTableID), hxValsKarticaSintetika)
 
@@ -838,7 +838,7 @@ func (h *PrometHandler) PrometSubsintetickaKontaPoVRD(c *gin.Context) {
 			gnGod = session.SelectedGod
 		}
 
-		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", prometURLSubsintetikaVrd, "#promettable", "innerHTML", "GET", "", hxValsSubsintetikaVrd, true, common.ClassSaveButton, "handleDialogResponse")
+		btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", prometURLSubsintetikaVrd, "#promettable", "innerHTML", "GET", "", hxValsSubsintetikaVrd, true, common.ClassSaveButton, "handleDialogResponse")
 		btnPrint := common.SetPrintButton("print-btn", "Štampa", "stampa", prometURLSubsintetikaVrdStampa, "GET", true, common.ClassPrintButton, stampaSubsintetikaVrdFields)
 		searchInput := common.CreateSearchInput("search-input", translator, prometURLSubsintetikaVrd, fmt.Sprintf("#%s", prometTableID), hxValsSubsintetikaVrd)
 
@@ -945,7 +945,7 @@ func (h *PrometHandler) PrometKontaAnaliticki(c *gin.Context) {
 			gnGod = session.SelectedGod
 		}
 
-		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", prometURLKontaAnaliticki, "#promettable", "innerHTML", "GET", "", hxValsKontaAnaliticki, true, common.ClassSaveButton, "handleDialogResponse")
+		btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", prometURLKontaAnaliticki, "#promettable", "innerHTML", "GET", "", hxValsKontaAnaliticki, true, common.ClassSaveButton, "handleDialogResponse")
 		btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#dialog-proment-analitika-stampa", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
 		searchInput := common.CreateSearchInput("search-input", translator, prometURLKontaAnaliticki, fmt.Sprintf("#%s", prometTableID), hxValsKontaAnaliticki)
 

@@ -65,7 +65,7 @@ func (h *PoreskeKnjigeHandler) PoreskeKnjigeMain(c *gin.Context) {
 		gnGod = session.SelectedGod
 	}
 
-	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", poreskeKnjigeURLIzdatih, "#"+poreskeKnjigeTableID, "innerHTML", "GET", "", hxValsKirKpr, true, common.ClassSaveButton, "handleBackendResponse")
+	btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", poreskeKnjigeURLIzdatih, "#"+poreskeKnjigeTableID, "innerHTML", "GET", "", hxValsKirKpr, true, common.ClassSaveButton, "handleBackendResponse")
 	btnPrint := common.SetPrintButton("btn-print-kir", "Štampa", "fin_print", poreskeKnjigeURLIzdatihPrint, "GET", true, common.ClassPrintButton, "knjiga,oddatuma,dodatuma,stampaponalozima,stampaponalozimazbirno")
 	searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), poreskeKnjigeURLIzdatih, fmt.Sprintf("#%s", poreskeKnjigeTableID), hxValsKirKpr)
 
@@ -111,7 +111,7 @@ func (h *PoreskeKnjigeHandler) KnjigaIzdatihRacuna(c *gin.Context) {
 			gnGod = session.SelectedGod
 		}
 
-		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", poreskeKnjigeURLIzdatih, "#"+poreskeKnjigeTableID, "innerHTML", "GET", "", hxValsKirKpr, true, common.ClassSaveButton, "handleBackendResponse")
+		btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", poreskeKnjigeURLIzdatih, "#"+poreskeKnjigeTableID, "innerHTML", "GET", "", hxValsKirKpr, true, common.ClassSaveButton, "handleBackendResponse")
 		btnPrint := common.SetPrintButton("btn-print-kir", "Štampa", "fin_print", poreskeKnjigeURLIzdatihPrint, "GET", true, common.ClassPrintButton, "knjiga,oddatuma,dodatuma,stampaponalozima,stampaponalozimazbirno")
 		searchInput := common.CreateSearchInput("search-input", translator, poreskeKnjigeURLIzdatih, fmt.Sprintf("#%s", poreskeKnjigeTableID), hxValsKirKpr)
 		knjigaValues := []domain.ComboItem{}
@@ -248,7 +248,7 @@ func (h *PoreskeKnjigeHandler) KnjigaPrimljenihRacuna(c *gin.Context) {
 			gnGod = session.SelectedGod
 		}
 
-		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", poreskeKnjigeURLPrimljenih, "#"+poreskeKnjigeTableID, "innerHTML", "GET", "", hxValsKirKpr, true, common.ClassSaveButton, "handleBackendResponse")
+		btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", poreskeKnjigeURLPrimljenih, "#"+poreskeKnjigeTableID, "innerHTML", "GET", "", hxValsKirKpr, true, common.ClassSaveButton, "handleBackendResponse")
 		btnPrint := common.SetPrintButton("btn-print-kpr", "Štampa", "fin_print", poreskeKnjigeURLPrimljenihPrint, "GET", true, common.ClassPrintButton, "knjiga,oddatuma,dodatuma,stampaponalozima,stampaponalozimazbirno")
 		searchInput := common.CreateSearchInput("search-input", translator, poreskeKnjigeURLPrimljenih, fmt.Sprintf("#%s", poreskeKnjigeTableID), hxValsKirKpr)
 
@@ -321,7 +321,7 @@ func (h *PoreskeKnjigeHandler) PoreskaPrijava(c *gin.Context) {
 			gnGod = session.SelectedGod
 		}
 
-		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", poreskeKnjigeURLPrijava, "#poreska-prijava-form", "innerHTML", "GET", "", hxValsPoreskaPrijava, true, common.ClassSaveButton, "")
+		btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", poreskeKnjigeURLPrijava, "#poreska-prijava-form", "innerHTML", "GET", "", hxValsPoreskaPrijava, true, common.ClassSaveButton, "")
 		btnPrint := common.SetButton("stampa", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
 		btnObrada.HxOnClick = "handlePoreskaPrijavaResponse(evt)"
 		tbl := common.SetTableBasicData(poreskeKnjigeContentTitle, poreskeKnjigeTableID, h.service.GetTableFields(), "", "", 0, 0, 0, 0, h.cfg)

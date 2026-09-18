@@ -112,7 +112,7 @@ func NewSaldaHandler(service finservice.SaldaService, cfg config.Config) *SaldaH
 
 func (h *SaldaHandler) SaldaMain(c *gin.Context) {
 	// Create configuration
-	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/salda/pojedinacnihkonta", "#saldapojedinacnihkonta-table", "innerHTML", "GET", "#konto", hxValsSaldaPojedinacnihKonta, true, common.ClassSaveButton, "handleDialogResponse")
+	btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", "/api/salda/pojedinacnihkonta", "#saldapojedinacnihkonta-table", "innerHTML", "GET", "#konto", hxValsSaldaPojedinacnihKonta, true, common.ClassSaveButton, "handleDialogResponse")
 	btnPrint := domain.Button{
 		Id:            "btn-print-salda",
 		IsVisible:     true,
@@ -140,7 +140,7 @@ func (h *SaldaHandler) SaldaPojedinacnihKonta(c *gin.Context) {
 	// Get our custom header
 	total := domain.SaldaDto{}
 	requestSource := c.Request.Header.Get("X-Request-Source")
-	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", saldaURLPojedinacnihKonta, "#saldapojedinacnihkonta-table", "innerHTML", "GET", "", hxValsSaldaPojedinacnihKonta, true, common.ClassSaveButton, "handleDialogResponse")
+	btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", saldaURLPojedinacnihKonta, "#saldapojedinacnihkonta-table", "innerHTML", "GET", "", hxValsSaldaPojedinacnihKonta, true, common.ClassSaveButton, "handleDialogResponse")
 	btnPrint := domain.Button{
 		Id:            "btn-print-salda",
 		IsVisible:     true,
@@ -204,7 +204,7 @@ func (h *SaldaHandler) SaldaGrupeKonta(c *gin.Context) {
 	requestSource := c.Request.Header.Get("X-Request-Source")
 	translator := i18n.GetInstance()
 	tbl := common.SetTableBasicData(saldaContentTitle, saldaGrupeKontaTableID, h.service.GetGrupeKontaTableFields(), "", "", 0, 0, 0, 0, h.cfg)
-	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", saldaURLSaldaGrupeKonta, "#saldagrupekonta-table", "innerHTML", "GET", "", hxValsSaldaGrupeKonta, true, common.ClassSaveButton, "handleDialogResponse")
+	btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", saldaURLSaldaGrupeKonta, "#saldagrupekonta-table", "innerHTML", "GET", "", hxValsSaldaGrupeKonta, true, common.ClassSaveButton, "handleDialogResponse")
 	btnPrint := common.SetButton("stampa", "Stampaj", "fin_print", saldaURLSaldaGrupeKonta+"/print", "#saldagrupekonta-table", "innerHTML", "GET", "", hxValsSaldaGrupeKonta, true, common.ClassPrintButton, "")
 	searchInput := common.CreateSearchInput("search-input", translator, saldaURLSaldaGrupeKonta, fmt.Sprintf("#%s", saldaGrupeKontaTableID), hxValsSaldaGrupeKonta)
 	common.SetTableConfig(&tbl, "", saldaURLSaldaGrupeKonta, false, false, false)
@@ -355,7 +355,7 @@ func (h *SaldaHandler) SaldaPartneriPrelomljeno(c *gin.Context) {
 	tbl := common.SetTableBasicData(saldaContentTitle, saldaTablePrelomljenoID, h.service.GetSaldaPartneriPrelomljenoTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 	searchInput := common.CreateSearchInput("search-input", translator, saldaURLPartneriPrelomljeno, fmt.Sprintf("#%s", saldaTablePrelomljenoID), "")
 	common.SetTableConfig(&tbl, "PREGLED SALDA PARTNERA", saldaURLPartneriPrelomljeno, false, false, false)
-	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/salda/partneriprelomljeno", "#saldatable-prelomljeno", "innerHTML", "GET", "", hxValsSaldaPartneriPrelomljeno, true, common.ClassSaveButton, "handleDialogResponse")
+	btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", "/api/salda/partneriprelomljeno", "#saldatable-prelomljeno", "innerHTML", "GET", "", hxValsSaldaPartneriPrelomljeno, true, common.ClassSaveButton, "handleDialogResponse")
 	btnPrint := common.SetPrintButton("stampa-btn", "Štampa", "fin_print", saldaURLPartneriPrelomljenoStampa, "GET", true, common.ClassPrintButton, "sifra_od,sifra_do")
 	setActiveSaldaTab(&h.tabData, "saldapartneriprelomljeno")
 
@@ -482,7 +482,7 @@ func (h *SaldaHandler) SaldaKlase5i6Analitika(c *gin.Context) {
 		return
 	}
 	gnGod := userSession.SelectedGod
-	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", saldaURLKlase5i6Analitika, fmt.Sprintf("#%s", saldaTableKlase5i6AnalitikaID), "innerHTML", "GET", "", hxValsSaldaKlase5i6Analitika, true, common.ClassSaveButton, "handleDialogResponse")
+	btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", saldaURLKlase5i6Analitika, fmt.Sprintf("#%s", saldaTableKlase5i6AnalitikaID), "innerHTML", "GET", "", hxValsSaldaKlase5i6Analitika, true, common.ClassSaveButton, "handleDialogResponse")
 	btnPrint := common.SetPrintButton("stampa-btn", "Štampa", "fin_print", saldaURLKlase5i6AnalitikaStampa, "GET", true, common.ClassPrintButton, "odsifre,dosifre,oddatuma,dodatuma,klasa")
 	searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), saldaURLKlase5i6Analitika, fmt.Sprintf("#%s", saldaTableKlase5i6AnalitikaID), "")
 
@@ -538,7 +538,7 @@ func (h *SaldaHandler) SaldaKlase5i6MT(c *gin.Context) {
 		return
 	}
 	gnGod := userSession.SelectedGod
-	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", saldaURLKlase5i6MT, fmt.Sprintf("#%s", saldaTableKlase5i6MTID), "innerHTML", "GET", "", hxValsSaldaKlase5i6MT, true, common.ClassSaveButton, "handleDialogResponse")
+	btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", saldaURLKlase5i6MT, fmt.Sprintf("#%s", saldaTableKlase5i6MTID), "innerHTML", "GET", "", hxValsSaldaKlase5i6MT, true, common.ClassSaveButton, "handleDialogResponse")
 	btnPrint := common.SetPrintButton("stampa-btn", "Štampa", "fin_print", saldaURLKlase5i6MTStampa, "GET", true, common.ClassPrintButton, "odkonta,dokonta,oddatuma,dodatuma,klasa")
 	searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), saldaURLKlase5i6MT, fmt.Sprintf("#%s", saldaTableKlase5i6MTID), "")
 
@@ -599,7 +599,7 @@ func (h *SaldaHandler) SaldaKomercijalisti(c *gin.Context) {
 	common.SetTableConfig(&tbl, "SALDA PO KOMERCIJALISTIMA", saldaURLKomercijalisti, false, false, false)
 
 	if requestSource == "menu" || requestSource == "tab" {
-		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", saldaURLKomercijalisti, "#saldatable-komercijalisti", "innerHTML", "GET", "", hxValsSaldaKomercijalisti, true, common.ClassSaveButton, "handleDialogResponse")
+		btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", saldaURLKomercijalisti, "#saldatable-komercijalisti", "innerHTML", "GET", "", hxValsSaldaKomercijalisti, true, common.ClassSaveButton, "handleDialogResponse")
 		btnPrint := common.SetButton("stampa", "Štampaj", "fin_print", saldaURLKomercijalisti+"/print", "#saldatable-komercijalisti", "innerHTML", "GET", "", hxValsSaldaKomercijalisti, true, common.ClassPrintButton, "")
 		setActiveSaldaTab(&h.tabData, "saldakomercijalisti")
 		err := tmpl_fin.SaldaPoKomercijalistima(h.tabData, tbl, btnObrada, btnPrint, searchInput, gnGod, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
@@ -649,7 +649,7 @@ func (h *SaldaHandler) RealizacijaKomercijalisti(c *gin.Context) {
 	common.SetTableConfig(&tbl, "REALIZACIJA PO KOMERCIJALISTIMA", saldaURLrealizacijakomercijalisti, false, false, false)
 
 	if requestSource == "menu" || requestSource == "tab" {
-		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", saldaURLrealizacijakomercijalisti, "#realizacija-komercijalisti-table", "innerHTML", "GET", "", hxValsSaldaRealizacijakomercijalisti, true, common.ClassSaveButton, "handleDialogResponse")
+		btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", saldaURLrealizacijakomercijalisti, "#realizacija-komercijalisti-table", "innerHTML", "GET", "", hxValsSaldaRealizacijakomercijalisti, true, common.ClassSaveButton, "handleDialogResponse")
 		btnPrint := common.SetButton("stampa", "Štampaj", "fin_print", saldaURLrealizacijakomercijalisti+"/print", "#realizacija-komercijalisti-table", "innerHTML", "GET", "", hxValsSaldaRealizacijakomercijalisti, true, common.ClassPrintButton, "")
 
 		setActiveSaldaTab(&h.tabData, "realizacijakomercijalisti")

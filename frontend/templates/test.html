@@ -14,15 +14,15 @@
     <div class="test">
         <h2>Test 1: Direct SVG Use</h2>
         <svg width="40" height="40" style="color: red;">
-            <use href="/frontend/static/icons/allicons.svg#fin_obrada"></use>
+            <use href="/frontend/static/icons/allicons.svg#obrada"></use>
         </svg>
-        <div>Using: /frontend/static/icons/allicons.svg#fin_obrada</div>
+        <div>Using: /frontend/static/icons/allicons.svg#obrada</div>
     </div>
 
     <div class="test">
         <h2>Test 2: With full URL</h2>
         <svg width="40" height="40" style="color: blue;">
-            <use href="http://localhost:8080/frontend/static/icons/allicons.svg#fin_obrada"></use>
+            <use href="http://localhost:8080/frontend/static/icons/allicons.svg#obrada"></use>
         </svg>
         <div>Using full URL</div>
     </div>
@@ -51,7 +51,7 @@
             const container = document.getElementById('js-loaded-icon');
             container.innerHTML = `
                 <svg width="40" height="40" style="color: purple;">
-                    <use href="/frontend/static/icons/allicons.svg#fin_obrada"></use>
+                    <use href="/frontend/static/icons/allicons.svg#obrada"></use>
                 </svg>
                 <div>Loaded via JavaScript</div>
             `;
@@ -65,7 +65,7 @@
                 debugInfo.innerHTML = `
                     <div>✅ SVG file loaded successfully</div>
                     <div>File size: ${svgText.length} bytes</div>
-                    <div>Contains fin_obrada: ${svgText.includes('id="fin_obrada"') ? '✅ Yes' : '❌ No'}</div>
+                    <div>Contains obrada: ${svgText.includes('id="obrada"') ? '✅ Yes' : '❌ No'}</div>
                     <div>First 200 chars: ${svgText.substring(0, 200)}...</div>
                 `;
             })

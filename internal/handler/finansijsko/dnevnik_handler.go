@@ -72,7 +72,7 @@ func (h *DnevnikHandler) DnevnikKnjizenja(c *gin.Context) {
 			HxRequestType: "GET",
 		}
 
-		btnObrada := common.SetButton("btnobrada", "Obrada", "fin_obrada", dnevnikURLMain, fmt.Sprintf("#%s", dnevnikTableID), "innerHTML", "GET", "", hxValsDnevnik, true, common.ClassSaveButton, "handleBackendResponse")
+		btnObrada := common.SetButton("btnobrada", "Obrada", "obrada", dnevnikURLMain, fmt.Sprintf("#%s", dnevnikTableID), "innerHTML", "GET", "", hxValsDnevnik, true, common.ClassSaveButton, "handleBackendResponse")
 		tmpl_fin.DnevnikKnjizenja(tbl, searchInput, btnObrada, btnPrint, i18n.GetInstance(), gnGod).Render(c.Request.Context(), c.Writer)
 		return
 	}

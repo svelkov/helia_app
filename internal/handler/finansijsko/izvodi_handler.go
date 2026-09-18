@@ -252,7 +252,7 @@ func (h *IzvodiHandler) KnjizenjeIzvoda(c *gin.Context) {
 			gnGod = session.SelectedGod
 		}
 		csrfToken := common.GetCsrfToken(c)
-		btnObrada := common.SetButton("obrada-btn", translator.Button("Obrada"), "fin_obrada", izvodiURLKnjizenje, "#izvodi-master-table", "innerHTML", "GET", "", hxValsKnjizenjeIzvoda, true, common.ClassSaveButton, "")
+		btnObrada := common.SetButton("obrada-btn", translator.Button("Obrada"), "obrada", izvodiURLKnjizenje, "#izvodi-master-table", "innerHTML", "GET", "", hxValsKnjizenjeIzvoda, true, common.ClassSaveButton, "")
 		btnRavnoteza := common.SetButton("ravnoteza-btn", translator.Button("Proveri ravnotežu"), "fin_ravnoteza", izvodiURLRaznoteza, "#izvodi-detail-table", "innerHTML", "POST", "", hxValsKnjizenjeIzvoda, true, common.ClassSaveButton, "")
 		btnKnjizenje := common.SetButton("knjizenje-btn", translator.Button("Knjiženje"), "fin_knjizenje", izvodiURLKnjizenje, "#izvodi-master-table", "innerHTML", "POST", "", hxValsKnjizenjeIzvoda, true, common.ClassSaveButton, "")
 		searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), izvodiURLKnjizenje, fmt.Sprintf("#%s", izvodiTableMasterID), "")

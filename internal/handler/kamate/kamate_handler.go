@@ -531,7 +531,7 @@ func (h *KamateHandler) FormiranjeKamatnihListova(c *gin.Context) {
 		if session != nil {
 			gnGod = session.SelectedGod
 		}
-		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", kamateURLFormiranje, "#"+kamatePartneriTableID, "innerHTML", "GET", "", hxValsFormiranjeKamListova, true, common.ClassSaveButton, "handleBackendResponse")
+		btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", kamateURLFormiranje, "#"+kamatePartneriTableID, "innerHTML", "GET", "", hxValsFormiranjeKamListova, true, common.ClassSaveButton, "handleBackendResponse")
 		btnFormiraj := common.SetButton("form-kamlistova-btn", "Formiraj Kam. Listova", "fin_save", kamateURLFormiranje, "#kamate-detalji", "innerHTML", "POST", "", hxValsFormiranjeKamListova, true, common.ClassAddButton, "")
 
 		searchInput := common.CreateSearchInput("search-input", translator, kamateURLFormiranje, fmt.Sprintf("#%s", kamatePartneriTableID), hxValsFormiranjeKamListova)

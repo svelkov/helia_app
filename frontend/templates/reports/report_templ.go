@@ -77,7 +77,7 @@ func Report(parameters domain.ReportParameters, tableData domain.TableData, tran
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</title><style>\r\n\t\t\t/* @page must be at top level, not inside @media print */\r\n\t\t\t/* @top-right requires Chrome 128+ — thead::before below is the Chrome fallback */\r\n\t\t\t@page {\r\n\t\t\t\tsize: A4 { parameters.Orientation };\r\n\t\t\t\tmargin: 12mm 8mm 12mm 8mm;\r\n\t\t\t\t@bottom-right {\r\n\t\t\t\t\tcontent: \"Strana: \" counter(page) \" / \" counter(pages);\r\n\t\t\t\t\tfont-size: 9pt;\r\n\t\t\t\t\tfont-family: sans-serif;\r\n\t\t\t\t\tcolor: #374151;\r\n\t\t\t\t\tvertical-align: bottom;\r\n\t\t\t\t\tpadding-bottom: 6mm;\r\n\t\t\t\t}\r\n\t\t\t}\r\n\r\n\t\t\t@media print {\r\n\t\t\t\t.page-info {\r\n\t\t\t\t\tfont-size: 8pt;\r\n\t\t\t\t\tcolor: #374151;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t/* Ensure page numbers appear on each printed page */\r\n\t\t\t\t.page-break {\r\n\t\t\t\t\tposition: relative;\r\n\t\t\t\t\tpage-break-after: always;\r\n\t\t\t\t}\r\n\t\t\r\n\t\t\t\thtml, body {\r\n\t\t\t\t\tmargin: 0;\r\n\t\t\t\t\tpadding: 0;\r\n\t\t\t\t\twidth: 100%;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\tbody {\r\n\t\t\t\t\tbackground: white;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t.no-print {\r\n\t\t\t\t\tdisplay: none !important;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t.print-container {\r\n\t\t\t\t\twidth: 100%;\r\n\t\t\t\t\tmargin: 0;\r\n\t\t\t\t\tpadding: 0;\r\n\t\t\t\t\tbackground: white;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t.no-break {\r\n\t\t\t\t\tpage-break-inside: avoid;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t/* Table should break naturally across pages */\r\n\t\t\t\ttable {\r\n\t\t\t\t\twidth: 100%;\r\n\t\t\t\t\tborder-collapse: collapse;\r\n\t\t\t\t\tpage-break-inside: auto;\r\n\t\t\t\t\ttable-layout: fixed;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t/* Repeat header on each page */\r\n\t\t\t\tthead {\r\n\t\t\t\t\tdisplay: table-header-group;\r\n\t\t\t\t\tpage-break-inside: avoid;\r\n\t\t\t\t}\r\n\r\n\t\t\t\ttbody {\r\n\t\t\t\t\tdisplay: table-row-group;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t/* Table header rows - keep with content */\r\n\t\t\t\tthead tr {\r\n\t\t\t\t\tpage-break-inside: avoid;\r\n\t\t\t\t\tpage-break-after: avoid;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t/* Keep group headers with next row */\r\n\t\t\t\ttr.group-header {\r\n\t\t\t\t\tpage-break-inside: avoid;\r\n\t\t\t\t\tpage-break-after: avoid;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\ttr.subgroup-header {\r\n\t\t\t\t\tpage-break-inside: avoid;\r\n\t\t\t\t\tpage-break-after: auto;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\ttr.group-total {\r\n\t\t\t\t\tpage-break-inside: avoid;\r\n\t\t\t\t\tpage-break-after: avoid;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\ttr.group-footer {\r\n\t\t\t\t\tpage-break-inside: avoid;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\ttr.grand-total {\r\n\t\t\t\t\tpage-break-inside: avoid;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t/* Regular data rows can break */\r\n\t\t\t\ttr {\r\n\t\t\t\t\tpage-break-inside: auto;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\ttfoot {\r\n\t\t\t\t\tdisplay: table-row-group;\r\n\t\t\t\t\tpage-break-inside: avoid;\r\n\t\t\t\t}\r\n\t\t\t}\r\n\t\t\t/* Screen view */\r\n\t\t\t@media screen {\r\n\t\t\t\t\r\n\t\t\t\t.page-break {\r\n\t\t\t\t\twidth: 210mm;\r\n\t\t\t\t\tmargin: 10px auto;\r\n\t\t\t\t\tpadding: 15mm;\r\n\t\t\t\t\tbackground: white;\r\n\t\t\t\t\tbox-shadow: 0 0 10px rgba(0,0,0,0.1);\r\n\t\t\t\t\tmin-height: 297mm;\r\n\t\t\t\t}\r\n\t\t\t}\r\n\t\t</style></head><body class=\"bg-gray-100 print:bg-white print:h-auto font-sans\"><!-- Print Controls --><div class=\"fixed top-2 right-2 z-50 bg-white p-2 rounded shadow-lg flex gap-2 items-center print:hidden\"><button onclick=\"window.print()\" class=\"bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-sm font-semibold\">🖨️ ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</title><style>\r\n\t\t\t/* @page must be at top level, not inside @media print */\r\n\t\t\t/* @top-right requires Chrome 128+ — thead::before below is the Chrome fallback */\r\n\t\t\t@page {\r\n\t\t\t\tsize: A4 { parameters.Orientation };\r\n\t\t\t\tmargin: 14mm 8mm 14mm 8mm;\r\n\t\t\t\t@bottom-right {\r\n\t\t\t\t\tcontent: \"Strana: \" counter(page) \" / \" counter(pages);\r\n\t\t\t\t\tfont-size: 9pt;\r\n\t\t\t\t\tfont-family: sans-serif;\r\n\t\t\t\t\tcolor: #374151;\r\n\t\t\t\t\tvertical-align: bottom;\r\n\t\t\t\t\tpadding-bottom: 6mm;\r\n\t\t\t\t}\r\n\t\t\t}\r\n\r\n\t\t\t@media print {\r\n\t\t\t\t.page-info {\r\n\t\t\t\t\tfont-size: 8pt;\r\n\t\t\t\t\tcolor: #374151;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t/* Ensure page numbers appear on each printed page */\r\n\t\t\t\t.page-break {\r\n\t\t\t\t\tposition: relative;\r\n\t\t\t\t\tpage-break-after: always;\r\n\t\t\t\t}\r\n\t\t\r\n\t\t\t\thtml, body {\r\n\t\t\t\t\tmargin: 0;\r\n\t\t\t\t\tpadding: 0;\r\n\t\t\t\t\twidth: 100%;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\tbody {\r\n\t\t\t\t\tbackground: white;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t.no-print {\r\n\t\t\t\t\tdisplay: none !important;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t.print-container {\r\n\t\t\t\t\twidth: 100%;\r\n\t\t\t\t\tmargin: 0;\r\n\t\t\t\t\tpadding: 0;\r\n\t\t\t\t\tbackground: white;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t.no-break {\r\n\t\t\t\t\tpage-break-inside: avoid;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t/* Table should break naturally across pages */\r\n\t\t\t\ttable {\r\n\t\t\t\t\twidth: 100%;\r\n\t\t\t\t\tborder-collapse: collapse;\r\n\t\t\t\t\tpage-break-inside: auto;\r\n\t\t\t\t\ttable-layout: fixed;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t/* Repeat header on each page */\r\n\t\t\t\tthead {\r\n\t\t\t\t\tdisplay: table-header-group;\r\n\t\t\t\t\tpage-break-inside: avoid;\r\n\t\t\t\t}\r\n\r\n\t\t\t\ttbody {\r\n\t\t\t\t\tdisplay: table-row-group;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t/* Table header rows - keep with content */\r\n\t\t\t\tthead tr {\r\n\t\t\t\t\tpage-break-inside: avoid;\r\n\t\t\t\t\tpage-break-after: avoid;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t/* Keep group headers with next row */\r\n\t\t\t\ttr.group-header {\r\n\t\t\t\t\tpage-break-inside: avoid;\r\n\t\t\t\t\tpage-break-after: avoid;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\ttr.subgroup-header {\r\n\t\t\t\t\tpage-break-inside: avoid;\r\n\t\t\t\t\tpage-break-after: auto;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\ttr.group-total {\r\n\t\t\t\t\tpage-break-inside: avoid;\r\n\t\t\t\t\tpage-break-after: avoid;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\ttr.group-footer {\r\n\t\t\t\t\tpage-break-inside: avoid;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\ttr.grand-total {\r\n\t\t\t\t\tpage-break-inside: avoid;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t/* Regular data rows can break */\r\n\t\t\t\ttr {\r\n\t\t\t\t\tpage-break-inside: auto;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\ttfoot {\r\n\t\t\t\t\tdisplay: table-row-group;\r\n\t\t\t\t\tpage-break-inside: avoid;\r\n\t\t\t\t}\r\n\t\t\t}\r\n\t\t\t/* Screen view */\r\n\t\t\t@media screen {\r\n\t\t\t\t\r\n\t\t\t\t.page-break {\r\n\t\t\t\t\twidth: 210mm;\r\n\t\t\t\t\tmargin: 10px auto;\r\n\t\t\t\t\tpadding: 15mm;\r\n\t\t\t\t\tbackground: white;\r\n\t\t\t\t\tbox-shadow: 0 0 10px rgba(0,0,0,0.1);\r\n\t\t\t\t\tmin-height: 297mm;\r\n\t\t\t\t}\r\n\t\t\t}\r\n\t\t</style></head><body class=\"bg-gray-100 print:bg-white print:h-auto font-sans\"><!-- Print Controls --><div class=\"fixed top-2 right-2 z-50 bg-white p-2 rounded shadow-lg flex gap-2 items-center print:hidden\"><button onclick=\"window.print()\" class=\"bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-sm font-semibold\">🖨️ ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -90,14 +90,14 @@ func Report(parameters domain.ReportParameters, tableData domain.TableData, tran
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</button> <button onclick=\"exportToPDF()\" class=\"bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-sm font-semibold\">📄 Download PDF</button> <button onclick=\"exportToExcel()\" class=\"bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-sm font-semibold\">📊 Export Excel</button> <button onclick=\"window.close()\" class=\"bg-gray-600 text-white px-3 py-1 rounded hover:bg-gray-700 text-sm font-semibold\">❌ ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</button> <button onclick=\"exportToExcel()\" class=\"bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-sm font-semibold\">📊 Export Excel</button> <button onclick=\"window.close()\" class=\"bg-gray-600 text-white px-3 py-1 rounded hover:bg-gray-700 text-sm font-semibold\">❌ ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Button("Zatvori"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 165, Col: 39}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 162, Col: 39}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
@@ -225,7 +225,7 @@ func ReportHeader(parameters domain.ReportParameters) templ.Component {
 		var templ_7745c5c3_Var8 string
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(parameters.CompanyName)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 209, Col: 91}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 206, Col: 91}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {
@@ -238,7 +238,7 @@ func ReportHeader(parameters domain.ReportParameters) templ.Component {
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(parameters.Adress)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 210, Col: 84}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 207, Col: 84}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
@@ -251,7 +251,7 @@ func ReportHeader(parameters domain.ReportParameters) templ.Component {
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(parameters.Postcode)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 210, Col: 109}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 207, Col: 109}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
@@ -264,7 +264,7 @@ func ReportHeader(parameters domain.ReportParameters) templ.Component {
 		var templ_7745c5c3_Var11 string
 		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(parameters.City)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 210, Col: 129}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 207, Col: 129}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {
@@ -277,7 +277,7 @@ func ReportHeader(parameters domain.ReportParameters) templ.Component {
 		var templ_7745c5c3_Var12 string
 		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", time.Now().Year()))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 210, Col: 172}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 207, Col: 172}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 		if templ_7745c5c3_Err != nil {
@@ -290,7 +290,7 @@ func ReportHeader(parameters domain.ReportParameters) templ.Component {
 		var templ_7745c5c3_Var13 string
 		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(time.Now().Format("02.01.2006 15:04:05"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 214, Col: 77}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 211, Col: 77}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 		if templ_7745c5c3_Err != nil {
@@ -333,7 +333,7 @@ func ReportTitle(parameters domain.ReportParameters) templ.Component {
 		var templ_7745c5c3_Var15 string
 		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(parameters.ReportName)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 224, Col: 26}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 221, Col: 26}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 		if templ_7745c5c3_Err != nil {
@@ -386,7 +386,7 @@ func ReportParametersHeader(parameters domain.ReportParameters) templ.Component 
 				var templ_7745c5c3_Var17 string
 				templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(param.Name)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 235, Col: 45}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 232, Col: 45}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 				if templ_7745c5c3_Err != nil {
@@ -409,7 +409,7 @@ func ReportParametersHeader(parameters domain.ReportParameters) templ.Component 
 			var templ_7745c5c3_Var18 string
 			templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(param.Value)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 239, Col: 41}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 236, Col: 41}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 			if templ_7745c5c3_Err != nil {
@@ -495,7 +495,7 @@ func ReportGroup(groupName string, groupData interface{}) templ.Component {
 		var templ_7745c5c3_Var21 string
 		templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(groupName)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 256, Col: 14}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 253, Col: 14}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 		if templ_7745c5c3_Err != nil {
@@ -538,7 +538,7 @@ func ReportSubgroup(subgroupName string, subgroupData interface{}) templ.Compone
 		var templ_7745c5c3_Var23 string
 		templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(subgroupName)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 265, Col: 17}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 262, Col: 17}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 		if templ_7745c5c3_Err != nil {
@@ -625,7 +625,7 @@ func ReportFooter(parameters domain.ReportParameters) templ.Component {
 		var templ_7745c5c3_Var26 string
 		templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(time.Now().Format("January 2, 2006"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 289, Col: 54}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 286, Col: 54}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
 		if templ_7745c5c3_Err != nil {
@@ -638,7 +638,7 @@ func ReportFooter(parameters domain.ReportParameters) templ.Component {
 		var templ_7745c5c3_Var27 string
 		templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinStringErrs(time.Now().Format("15:04:05"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 289, Col: 91}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 286, Col: 91}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
 		if templ_7745c5c3_Err != nil {
@@ -651,7 +651,7 @@ func ReportFooter(parameters domain.ReportParameters) templ.Component {
 		var templ_7745c5c3_Var28 string
 		templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(parameters.UserName)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 290, Col: 27}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 287, Col: 27}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
 		if templ_7745c5c3_Err != nil {
@@ -664,7 +664,7 @@ func ReportFooter(parameters domain.ReportParameters) templ.Component {
 		var templ_7745c5c3_Var29 string
 		templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(parameters.CompanyName)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 293, Col: 27}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 290, Col: 27}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
 		if templ_7745c5c3_Err != nil {
@@ -699,7 +699,7 @@ func ReportPaginationScript() templ.Component {
 			templ_7745c5c3_Var30 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "<script>\r\n\t\tasync function exportToExcel() {\r\n\t\t\tconst btn = event.target;\r\n\t\t\tconst originalText = btn.innerText;\r\n\t\t\tbtn.innerText = 'Exporting...';\r\n\t\t\tbtn.disabled = true;\r\n\t\t\ttry {\r\n\t\t\t\t// Load SheetJS from CDN\r\n\t\t\t\tawait new Promise((resolve, reject) => {\r\n\t\t\t\t\tif (window.XLSX) { resolve(); return; }\r\n\t\t\t\t\tconst s = document.createElement('script');\r\n\t\t\t\t\ts.src = 'https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js';\r\n\t\t\t\t\ts.onload = resolve;\r\n\t\t\t\t\ts.onerror = reject;\r\n\t\t\t\t\tdocument.head.appendChild(s);\r\n\t\t\t\t});\r\n\t\t\t\t// Find the first table in the report container\r\n\t\t\t\tconst table = document.querySelector('table');\r\n\t\t\t\tif (!table) { alert('No table found to export.'); return; }\r\n\t\t\t\tconst wb = XLSX.utils.table_to_book(table, { sheet: 'Izvestaj', raw: false });\r\n\t\t\t\tconst excelName = document.querySelector('meta[name=\"report-name\"]')?.content || 'Izvestaj';\r\n\t\t\t\tXLSX.writeFile(wb, excelName + '.xlsx');\r\n\t\t\t} catch (error) {\r\n\t\t\t\tconsole.error('Excel export failed:', error);\r\n\t\t\t\talert('Export failed: ' + error.message);\r\n\t\t\t} finally {\r\n\t\t\t\tbtn.innerText = originalText;\r\n\t\t\t\tbtn.disabled = false;\r\n\t\t\t}\r\n\t\t}\r\n\r\n\t\tasync function exportToPDF() {\r\n\t\t\t// Show loading state\r\n\t\t\tconst btn = event.target;\r\n\t\t\tconst originalText = btn.innerText;\r\n\t\t\tbtn.innerText = 'Generating PDF...';\r\n\t\t\tbtn.disabled = true;\r\n\t\t\t\r\n\t\t\ttry {\r\n\t\t\t\t// Dynamic import for better performance\r\n\t\t\t\tconst html2pdf = (await import('https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js')).default;\r\n\t\t\t\t\r\n\t\t\t\tconst element = document.querySelector('.print-container') || document.querySelector('.bg-white');\r\n\t\t\t\tconst pdfName = document.querySelector('meta[name=\"report-name\"]')?.content || 'Report';\r\n\t\t\t\tconst opt = {\r\n\t\t\t\t\tmargin: [0.6, 0.5, 0.6, 0.5], // top, right, bottom, left (in inches)\r\n\t\t\t\t\tfilename: pdfName + '.pdf',\r\n\t\t\t\t\timage: { type: 'jpeg', quality: 0.98 },\r\n\t\t\t\t\thtml2canvas: { scale: 2, letterRendering: true, useCORS: true },\r\n\t\t\t\t\tjsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }\r\n\t\t\t\t};\r\n\t\t\t\tawait html2pdf().set(opt).from(element).save();\r\n\t\t\t} catch (error) {\r\n\t\t\t\tconsole.error('PDF generation failed:', error);\r\n\t\t\t\t// Fallback to print\r\n\t\t\t\twindow.print();\r\n\t\t\t} finally {\r\n\t\t\t\tbtn.innerText = originalText;\r\n\t\t\t\tbtn.disabled = false;\r\n\t\t\t}\r\n\t\t}\r\n\t\t\r\n\t\tfunction updatePageNumbers() {\r\n\t\t\tconst currentPageSpan = document.getElementById('current-page');\r\n\t\t\tconst totalPagesSpan = document.getElementById('total-pages');\r\n\t\t\t\r\n\t\t\t// A4 page height at 96dpi minus margins (~24mm total vertical margin)\r\n\t\t\tconst pageHeightPx = (297 - 24) * 96 / 25.4;\r\n\t\t\tconst totalHeight = document.body.scrollHeight;\r\n\t\t\tconst totalPages = Math.max(1, Math.ceil(totalHeight / pageHeightPx));\r\n\t\t\t\r\n\t\t\tconst scrollPosition = window.scrollY;\r\n\t\t\tconst currentPage = Math.min(totalPages, Math.max(1, Math.floor(scrollPosition / pageHeightPx) + 1));\r\n\t\t\t\r\n\t\t\tif (currentPageSpan) currentPageSpan.textContent = currentPage;\r\n\t\t\tif (totalPagesSpan) totalPagesSpan.textContent = totalPages;\r\n\t\t\t\r\n\t\t\t// Store for print\r\n\t\t\twindow._totalPages = totalPages;\r\n\t\t}\r\n\t\t\r\n\t\t// Debounced update\r\n\t\tlet timeout;\r\n\t\tfunction debouncedUpdate() {\r\n\t\t\tclearTimeout(timeout);\r\n\t\t\ttimeout = setTimeout(updatePageNumbers, 100);\r\n\t\t}\r\n\t\t\r\n\t\t// Watch for content changes\r\n\t\tconst observer = new MutationObserver(debouncedUpdate);\r\n\t\tobserver.observe(document.body, {\r\n\t\t\tchildList: true,\r\n\t\t\tsubtree: true,\r\n\t\t\tattributes: true,\r\n\t\t\tattributeFilter: ['style', 'class']\r\n\t\t});\r\n\t\t\r\n\t\t// Event listeners\r\n\t\twindow.addEventListener('scroll', debouncedUpdate);\r\n\t\twindow.addEventListener('resize', debouncedUpdate);\r\n\t\twindow.addEventListener('load', updatePageNumbers);\r\n\t\t\r\n\t\t// Initial update\r\n\t\tupdatePageNumbers();\r\n\t\t\r\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "<script>\r\n\t\tasync function exportToExcel() {\r\n\t\t\tconst btn = event.target;\r\n\t\t\tconst originalText = btn.innerText;\r\n\t\t\tbtn.innerText = 'Exporting...';\r\n\t\t\tbtn.disabled = true;\r\n\t\t\ttry {\r\n\t\t\t\t// Load SheetJS from CDN\r\n\t\t\t\tawait new Promise((resolve, reject) => {\r\n\t\t\t\t\tif (window.XLSX) { resolve(); return; }\r\n\t\t\t\t\tconst s = document.createElement('script');\r\n\t\t\t\t\ts.src = 'https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js';\r\n\t\t\t\t\ts.onload = resolve;\r\n\t\t\t\t\ts.onerror = reject;\r\n\t\t\t\t\tdocument.head.appendChild(s);\r\n\t\t\t\t});\r\n\t\t\t\t// Find the first table in the report container\r\n\t\t\t\tconst table = document.querySelector('table');\r\n\t\t\t\tif (!table) { alert('No table found to export.'); return; }\r\n\t\t\t\t// Print-only helper rows (e.g. repeating print headers) must not leak into the sheet\r\n\t\t\t\tconst exportTable = table.cloneNode(true);\r\n\t\t\t\texportTable.querySelectorAll('.no-export').forEach(el => el.remove());\r\n\t\t\t\tconst wb = XLSX.utils.table_to_book(exportTable, { sheet: 'Izvestaj', raw: false });\r\n\t\t\t\tconst excelName = document.querySelector('meta[name=\"report-name\"]')?.content || 'Izvestaj';\r\n\t\t\t\tXLSX.writeFile(wb, excelName + '.xlsx');\r\n\t\t\t} catch (error) {\r\n\t\t\t\tconsole.error('Excel export failed:', error);\r\n\t\t\t\talert('Export failed: ' + error.message);\r\n\t\t\t} finally {\r\n\t\t\t\tbtn.innerText = originalText;\r\n\t\t\t\tbtn.disabled = false;\r\n\t\t\t}\r\n\t\t}\r\n\r\n\t\tfunction updatePageNumbers() {\r\n\t\t\tconst currentPageSpan = document.getElementById('current-page');\r\n\t\t\tconst totalPagesSpan = document.getElementById('total-pages');\r\n\t\t\t\r\n\t\t\t// A4 page height at 96dpi minus margins (~24mm total vertical margin)\r\n\t\t\tconst pageHeightPx = (297 - 24) * 96 / 25.4;\r\n\t\t\tconst totalHeight = document.body.scrollHeight;\r\n\t\t\tconst totalPages = Math.max(1, Math.ceil(totalHeight / pageHeightPx));\r\n\t\t\t\r\n\t\t\tconst scrollPosition = window.scrollY;\r\n\t\t\tconst currentPage = Math.min(totalPages, Math.max(1, Math.floor(scrollPosition / pageHeightPx) + 1));\r\n\t\t\t\r\n\t\t\tif (currentPageSpan) currentPageSpan.textContent = currentPage;\r\n\t\t\tif (totalPagesSpan) totalPagesSpan.textContent = totalPages;\r\n\t\t\t\r\n\t\t\t// Store for print\r\n\t\t\twindow._totalPages = totalPages;\r\n\t\t}\r\n\t\t\r\n\t\t// Debounced update\r\n\t\tlet timeout;\r\n\t\tfunction debouncedUpdate() {\r\n\t\t\tclearTimeout(timeout);\r\n\t\t\ttimeout = setTimeout(updatePageNumbers, 100);\r\n\t\t}\r\n\t\t\r\n\t\t// Watch for content changes\r\n\t\tconst observer = new MutationObserver(debouncedUpdate);\r\n\t\tobserver.observe(document.body, {\r\n\t\t\tchildList: true,\r\n\t\t\tsubtree: true,\r\n\t\t\tattributes: true,\r\n\t\t\tattributeFilter: ['style', 'class']\r\n\t\t});\r\n\t\t\r\n\t\t// Event listeners\r\n\t\twindow.addEventListener('scroll', debouncedUpdate);\r\n\t\twindow.addEventListener('resize', debouncedUpdate);\r\n\t\twindow.addEventListener('load', updatePageNumbers);\r\n\t\t\r\n\t\t// Initial update\r\n\t\tupdatePageNumbers();\r\n\t\t\r\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -728,7 +728,7 @@ func ReportKeyboardShortcutsScript() templ.Component {
 			templ_7745c5c3_Var31 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "<script>\r\n\t\tdocument.addEventListener('keydown', (e) => {\r\n\t\t\t// Ctrl/Cmd + P for print\r\n\t\t\tif ((e.ctrlKey || e.metaKey) && e.key === 'p') {\r\n\t\t\t\te.preventDefault();\r\n\t\t\t\twindow.print();\r\n\t\t\t}\r\n\t\t\t// Ctrl/Cmd + Shift + E for export\r\n\t\t\tif ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'E') {\r\n\t\t\t\te.preventDefault();\r\n\t\t\t\texportToPDF();\r\n\t\t\t}\r\n\t\t\t// Escape to close\r\n\t\t\tif (e.key === 'Escape') {\r\n\t\t\t\twindow.close();\r\n\t\t\t}\r\n\t\t});\r\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "<script>\r\n\t\tdocument.addEventListener('keydown', (e) => {\r\n\t\t\t// Ctrl/Cmd + P for print\r\n\t\t\tif ((e.ctrlKey || e.metaKey) && e.key === 'p') {\r\n\t\t\t\te.preventDefault();\r\n\t\t\t\twindow.print();\r\n\t\t\t}\r\n\t\t\t// Escape to close\r\n\t\t\tif (e.key === 'Escape') {\r\n\t\t\t\twindow.close();\r\n\t\t\t}\r\n\t\t});\r\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

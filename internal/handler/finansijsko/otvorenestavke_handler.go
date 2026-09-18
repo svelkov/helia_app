@@ -182,7 +182,7 @@ func (h *OtvoreneStavkeHandler) OtvoreneStavkeMain(c *gin.Context) {
 	searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), otvoreneStavkeURLPPartneri, fmt.Sprintf("#%s", otvorenestavkeTableID), hxValsOtvoreneStavke)
 	searchInputDetalji := common.CreateSearchInput("search-input-detalji", i18n.GetInstance(), otvoreneStavkeURLPartneriDetalji, fmt.Sprintf("#%s", otvorenestavkeDetaljiTableID), hxValsOtvoreneStavkeDetalji)
 
-	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", otvoreneStavkeURLPPartneri, fmt.Sprintf("#%s", otvorenestavkeTableID), "innerHTML", "GET", "", hxValsOtvoreneStavke, true, common.ClassSaveButton, "handleBackendResponse")
+	btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", otvoreneStavkeURLPPartneri, fmt.Sprintf("#%s", otvorenestavkeTableID), "innerHTML", "GET", "", hxValsOtvoreneStavke, true, common.ClassSaveButton, "handleBackendResponse")
 	btnPrint := common.SetPrintButton("btn-print-otvorene", translator.Button("Štampa"), "fin_stampa", otvoreneStavkeURLPartneriStampa, "GET", true, common.ClassPrintButton, "konto,odsifre,dosifre,poddatumom,otvstavkedana,otvorene-selected-id,stampaotvstavke")
 	btnOpomene := common.SetPrintButton("btn-print-opomene", translator.Button("Štampa Opomena"), "fin_stampa_opomene", otvoreneStavkeURLPartneriStampa, "GET", true, common.ClassStampaOpomenaButton, "konto,odsifre,dosifre,poddatumom,otvstavkedana,otvorene-selected-id,stampaopomena")
 
@@ -220,7 +220,7 @@ func (h *OtvoreneStavkeHandler) OtvoreneStavke(c *gin.Context) {
 	tblPartneri.URLPrefix = otvoreneStavkeURLPPartneri
 	tblDetalji.URLGetAll = otvoreneStavkeURLPartneriDetalji
 	tblDetalji.URLPrefix = otvoreneStavkeURLPartneriDetalji
-	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", otvoreneStavkeURLPPartneri, fmt.Sprintf("#%s", otvorenestavkeTableID), "innerHTML", "GET", "", hxValsOtvoreneStavke, true, common.ClassSaveButton, "handleBackendResponse")
+	btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", otvoreneStavkeURLPPartneri, fmt.Sprintf("#%s", otvorenestavkeTableID), "innerHTML", "GET", "", hxValsOtvoreneStavke, true, common.ClassSaveButton, "handleBackendResponse")
 
 	btnPrint := common.SetPrintButton("btn-print-otvorene", "Štampa", "fin_stampa", otvoreneStavkeURLPartneriStampa, "GET", true, common.ClassPrintButton, "konto,odsifre,dosifre,poddatumom,otvstavkedana,otvorene-selected-id,stampaotvstavke")
 	btnOpomene := common.SetPrintButton("btn-print-opomene", translator.Button("Štampa opomena"), "fin_stampa_opomene", otvoreneStavkeURLPartneriStampa, "GET", true, common.ClassStampaOpomenaButton, "konto,odsifre,dosifre,poddatumom,otvstavkedana,otvorene-selected-id,stampaopomena")
@@ -403,7 +403,7 @@ func (h *OtvoreneStavkeHandler) ZatvoreneStavke(c *gin.Context) {
 	tblPartneri.URLPrefix = zatvoreneStavkeURLPartneri
 	tblDetalji.URLGetAll = zatvoreneStavkeURLPartneriDetalji
 	tblDetalji.URLPrefix = zatvoreneStavkeURLPartneriDetalji
-	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", zatvoreneStavkeURLPartneri, fmt.Sprintf("#%s", zatvoreneStavkeTableID), "innerHTML", "GET", "", hxValsZatvoreneStavke, true, common.ClassSaveButton, "handleBackendResponse")
+	btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", zatvoreneStavkeURLPartneri, fmt.Sprintf("#%s", zatvoreneStavkeTableID), "innerHTML", "GET", "", hxValsZatvoreneStavke, true, common.ClassSaveButton, "handleBackendResponse")
 	btnPrint := common.SetPrintButton("btn-print-zatvorene", translator.Button("Štampa"), "fin_print", zatvoreneStavkeURLPartneriStampa, "GET", true, common.ClassPrintButton, "konto,odsifre,dosifre,oddatuma,dodatuma,zatvorene-selected-id")
 	h.setOtvoreneStavkeActiveTab("zatvorenestavke")
 	tblPartneri.DetailTarget = fmt.Sprintf("#%s", zatvoreneStavkeDetaljiTableID)
@@ -570,7 +570,7 @@ func (h *OtvoreneStavkeHandler) IOS(c *gin.Context) {
 	tblPartneri.URLPrefix = iosURLPartneri
 	tblDetalji.URLGetAll = iosURLPartneriDetalji
 	tblDetalji.URLPrefix = iosURLPartneriDetalji
-	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", iosURLPartneri, fmt.Sprintf("#%s", iosTableID), "innerHTML", "GET", "", hxValsIOS, true, common.ClassSaveButton, "handleBackendResponse")
+	btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", iosURLPartneri, fmt.Sprintf("#%s", iosTableID), "innerHTML", "GET", "", hxValsIOS, true, common.ClassSaveButton, "handleBackendResponse")
 	btnPrint := common.SetPrintButton("btn-print-ios", translator.Button("Štampa"), "fin_stampa", iosURLPartneriStampa, "GET", true, common.ClassPrintButton, "konto,odsifre,dosifre,poddatumom,otvstavkedana,ios-selected-id")
 
 	tblPartneri.DetailTarget = fmt.Sprintf("#%s", iosDetaljiTableID)
@@ -735,7 +735,7 @@ func (h *OtvoreneStavkeHandler) DospelaPotrazivanja(c *gin.Context) {
 	tblPartneri.URLPrefix = dospelaURLPartneri
 	tblDetalji.URLGetAll = dospelaURLPartneriDetalji
 	tblDetalji.URLPrefix = dospelaURLPartneriDetalji
-	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", dospelaURLPartneri, fmt.Sprintf("#%s", dospelaTableID), "innerHTML", "GET", "", hxValsDospela, true, common.ClassSaveButton, "handleBackendResponse")
+	btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", dospelaURLPartneri, fmt.Sprintf("#%s", dospelaTableID), "innerHTML", "GET", "", hxValsDospela, true, common.ClassSaveButton, "handleBackendResponse")
 	btnPrint := common.SetPrintButton("btn-print-dospela", translator.Button("Štampa"), "fin_stampa", dospelaStampaAnalitickiURL, "GET", true, common.ClassPrintButton, "konto,odsifre,dosifre,poddatumom,brojdana,tip_pregleda,tip_potrazivanja")
 
 	tblPartneri.DetailTarget = fmt.Sprintf("#%s", dospelaDetaljiTableID)
@@ -888,7 +888,7 @@ func (h *OtvoreneStavkeHandler) PregledPotrazivanjaObaveze(c *gin.Context) {
 	tbl.URLGetAll = dugovanjaURL
 	tbl.URLPrefix = dugovanjaURL
 	tbl.HasTotals = true
-	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", dugovanjaURL, fmt.Sprintf("#%s", dugovanjaTableID), "innerHTML", "GET", "", hxValsDugovanja, true, common.ClassSaveButton, "handleBackendResponse")
+	btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", dugovanjaURL, fmt.Sprintf("#%s", dugovanjaTableID), "innerHTML", "GET", "", hxValsDugovanja, true, common.ClassSaveButton, "handleBackendResponse")
 	btnPrint := common.SetPrintButton("btn-print-dugovanja", translator.Button("Štampa"), "fin_stampa", dugovanjaURLStampa, "GET", true, common.ClassPrintButton, "odkonta,dokonta,odsifre,dosifre,stanjenadan,dospece15,dospece30,dospece60,dospece90,dospece120,tip_pregleda,stampaj_samo_zbir")
 
 	if requestSource == "menu" || requestSource == "tab" {
@@ -1024,7 +1024,7 @@ func (h *OtvoreneStavkeHandler) PregledDospelogDugaPoStarosti(c *gin.Context) {
 	tbl.Pagination.HxVals = hxValsDugovanja
 	tbl.URLGetAll = dospelaStarostiURL
 	tbl.URLPrefix = dospelaStarostiURL
-	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", dospelaStarostiURL, fmt.Sprintf("#%s", dospelaStarostiTableID), "innerHTML", "GET", "", hxValsDugovanja, true, common.ClassSaveButton, "handleBackendResponse")
+	btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", dospelaStarostiURL, fmt.Sprintf("#%s", dospelaStarostiTableID), "innerHTML", "GET", "", hxValsDugovanja, true, common.ClassSaveButton, "handleBackendResponse")
 	btnPrint := common.SetPrintButton("stampa-btn", translator.Button("Štampa"), "fin_stampa", dospelaStarostiStampaURL, "GET", true, common.ClassPrintButton, "odkonta,dokonta,odsifre,dosifre,stanjenadan,dospece15,dospece30,dospece60,dospece90,dospece120,tip_pregleda")
 
 	if requestSource == "menu" || requestSource == "tab" {
@@ -1157,8 +1157,8 @@ func (h *OtvoreneStavkeHandler) PovezivanjeRacunaUplata(c *gin.Context) {
 	common.SetTableConfig(&tblFakture, "RAČUNI", "", false, false, false)
 	tblFakture.HasTotals = true
 
-	btnObrada := common.SetButton("btn-obrada", "Obradi", "fin_obrada", "api/otvorenestavke/povezivanje", "#"+povezivanjePartneriTableID, "innerHTML", "GET", "", hxValsPovezivanje, true, common.ClassSaveButton, "handleBackendResponse")
-	btnZatvaranje := common.SetButton("btn-zatvori-racun", "Zatv. račun", "fin_obrada", "api/otvorenestavke/povezivanje", "#pov-dialog-content", "innerHTML", "POST", "", hxValsPovezivanje, true, common.ClassPrintButton, "handleBackendResponse")
+	btnObrada := common.SetButton("btn-obrada", "Obradi", "obrada", "api/otvorenestavke/povezivanje", "#"+povezivanjePartneriTableID, "innerHTML", "GET", "", hxValsPovezivanje, true, common.ClassSaveButton, "handleBackendResponse")
+	btnZatvaranje := common.SetButton("btn-zatvori-racun", "Zatv. račun", "obrada", "api/otvorenestavke/povezivanje", "#pov-dialog-content", "innerHTML", "POST", "", hxValsPovezivanje, true, common.ClassPrintButton, "handleBackendResponse")
 	btnNazad := common.SetButton("btn-nazad", "Nazad", "", "", "", "", "", "", "", true, common.ClassButton, "")
 
 	searchPartneri := common.CreateSearchInput("search-partneri", i18n.GetInstance(), "api/otvorenestavke/povezivanje", "#"+povezivanjePartneriTableID, hxValsPovezivanje)

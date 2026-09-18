@@ -1,0 +1,137 @@
+package robno
+
+import (
+	"fmt"
+	rep "helia/frontend/templates/reports"
+	"helia/i18n"
+	"helia/internal/common"
+	"helia/internal/domain"
+)
+
+// RobnoStanjaArtikalStampa renders a printable "Prikaz stanja artikla" report:
+// the article header (identification, names and totals) followed by the monthly
+// movements table (Ulaz/Izlaz/Duguje/Potražuje).
+templ RobnoStanjaArtikalStampa(repParams domain.ReportParameters, params domain.RobnoStanjaParams, total domain.RobnoStanjaTotal, tbl domain.TableData, translator *i18n.Service) {
+	@rep.Report(repParams, domain.TableData{}, translator, nil, RobnoStanjaArtikalContent(repParams, params, total, tbl, translator))
+}
+
+templ RobnoStanjaArtikalContent(repParams domain.ReportParameters, params domain.RobnoStanjaParams, total domain.RobnoStanjaTotal, tbl domain.TableData, translator *i18n.Service) {
+	@rep.ReportHeader(repParams)
+	@rep.ReportTitle(repParams)
+	@RobnoStanjaArtikalParam(params, total, translator)
+	@RobnoStanjaArtikalTable(tbl, translator)
+	@rep.ReportEnd(nil)
+}
+
+// RobnoStanjaArtikalParam displays the article identification, names and the
+// overall totals (Ulaz/Izlaz/Stanje/Duguje/Potražuje/Saldo), mirroring the
+// on-screen "Prikaz stanja pojedinačnog artikla" form.
+templ RobnoStanjaArtikalParam(params domain.RobnoStanjaParams, total domain.RobnoStanjaTotal, translator *i18n.Service) {
+	<div class="mb-3 text-sm print:text-[9pt]">
+		<div class="grid grid-cols-[2fr_3fr_2fr] gap-x-6 gap-y-1 items-start">
+			<!-- Identifikacija -->
+			<div class="flex flex-col gap-1">
+				<div class="flex items-center gap-2">
+					<span class="font-semibold w-24">{ translator.Label("Šifra artikla") }</span>
+					<span class="font-bold">{ total.Sifra }</span>
+				</div>
+				<div class="flex items-center gap-2">
+					<span class="font-semibold w-24">{ translator.Label("Konto") }</span>
+					<span class="font-bold">{ params.Konto }</span>
+				</div>
+				<div class="flex items-center gap-2">
+					<span class="font-semibold w-24">{ translator.Label("Magacin") }</span>
+					<span class="font-bold">{ fmt.Sprintf("%d", params.Magacin) }</span>
+				</div>
+				<div class="flex items-center gap-2">
+					<span class="font-semibold w-24">{ translator.Label("JM") }</span>
+					<span class="font-bold">{ total.Jm }</span>
+				</div>
+			</div>
+			<!-- Nazivi -->
+			<div class="flex flex-col gap-1">
+				<div class="font-bold">{ total.NazivArtikla }</div>
+				<div class="font-bold">{ total.KontoNaziv }</div>
+				<div class="font-bold">{ total.MagacinNaziv }</div>
+				<div class="flex items-center gap-2">
+					<span class="font-semibold w-24">{ translator.Label("Cena") }</span>
+					<span class="font-bold">{ common.FormatNumberWithSystemLocale(total.Cena, 2) }</span>
+				</div>
+			</div>
+			<!-- Ukupno -->
+			<div class="flex flex-col gap-1">
+				<div class="flex items-center justify-end gap-2">
+					<span class="font-semibold w-20 text-right">{ translator.Label("Ulaz") }</span>
+					<span class="font-bold w-24 text-right">{ common.FormatNumberWithSystemLocale(total.Ulaz, 3) }</span>
+					<span class="font-semibold w-24 text-right ml-4">{ translator.Label("Duguje") }</span>
+					<span class="font-bold w-24 text-right">{ common.FormatNumberWithSystemLocale(total.Duguje, 2) }</span>
+				</div>
+				<div class="flex items-center justify-end gap-2">
+					<span class="font-semibold w-20 text-right">{ translator.Label("Izlaz") }</span>
+					<span class="font-bold w-24 text-right">{ common.FormatNumberWithSystemLocale(total.Izlaz, 3) }</span>
+					<span class="font-semibold w-24 text-right ml-4">{ translator.Label("Potražuje") }</span>
+					<span class="font-bold w-24 text-right">{ common.FormatNumberWithSystemLocale(total.Potrazuje, 2) }</span>
+				</div>
+				<div class="flex items-center justify-end gap-2">
+					<span class="font-semibold w-20 text-right">{ translator.Label("Stanje") }</span>
+					<span class="font-bold w-24 text-right">{ common.FormatNumberWithSystemLocale(total.Stanje, 3) }</span>
+					<span class="font-semibold w-24 text-right ml-4">{ translator.Label("Saldo") }</span>
+					<span class="font-bold w-24 text-right">{ common.FormatNumberWithSystemLocale(total.Saldo, 2) }</span>
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+templ RobnoStanjaArtikalTable(tbl domain.TableData, translator *i18n.Service) {
+	<div class="mb-8">
+		<table class="w-full border-collapse report-table mt-2 print:w-full print:text-[10pt] print:table-auto print:border-collapse">
+			@rep.ReportTableHeader(tbl, translator)
+			<tbody>
+				for i, row := range tbl.Rows {
+					if row.ClassRow == "group-total" {
+						<tr class="bg-blue-50 font-bold border-t-2 border-blue-900 print:bg-blue-50 print:page-break-inside-avoid">
+							for j, cell := range row.Fields {
+								<td
+									class={ fmt.Sprintf("border border-gray-300 px-1 text-sm font-bold print:text-[10pt] print:px-1 %s",
+										func() string {
+											if j == 0 {
+												return "text-left"
+											}
+											return "text-right"
+										}()) }
+								>
+									{ cell }
+								</td>
+							}
+						</tr>
+					} else {
+						<tr
+							class={ fmt.Sprintf("hover:bg-yellow-50 print:hover:bg-white print:page-break-inside-avoid %s",
+								func() string {
+									if i%2 == 1 {
+										return "bg-gray-50 print:bg-gray-50"
+									}
+									return "bg-white print:bg-white"
+								}()) }
+						>
+							for j, cell := range row.Fields {
+								<td
+									class={ fmt.Sprintf("border border-gray-300 px-1 text-sm print:text-[10pt] print:px-1 print:break-words print:whitespace-normal %s",
+										func() string {
+											if j < len(tbl.Headers) && tbl.Headers[j].TextAlign != "" {
+												return fmt.Sprintf("text-%s", tbl.Headers[j].TextAlign)
+											}
+											return ""
+										}()) }
+								>
+									{ cell }
+								</td>
+							}
+						</tr>
+					}
+				}
+			</tbody>
+		</table>
+	</div>
+}

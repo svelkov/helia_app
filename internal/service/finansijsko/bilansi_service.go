@@ -328,17 +328,17 @@ func (s *BilansiResource) GetZakljucniList(ctx context.Context, tbl *domain.Tabl
 		// Calculate combined saldo
 		saldoDug := entity.PocStanjeDug + entity.PrometDug
 		saldoPot := entity.PocStanjePot + entity.PrometPot
-
-		if saldoDug > saldoPot {
-			saldoDug = saldoDug - saldoPot
+		switch {
+		case saldoDug > saldoPot:
+			saldoDug -= saldoPot
 			saldoPot = 0
-		} else if saldoPot > saldoDug {
-			saldoPot = saldoPot - saldoDug
+		case saldoDug < saldoPot:
+			saldoPot -= saldoDug
 			saldoDug = 0
-		} else {
-			saldoDug = 0
-			saldoPot = 0
+		default: // jednake vrednosti
+			saldoDug, saldoPot = 0, 0
 		}
+
 		// Build fields based on tipLista
 		fields := []string{
 			fmt.Sprintf("%d", start+rowNum),
@@ -393,13 +393,14 @@ func (s *BilansiResource) GetZakljucniListZaStampu(ctx context.Context, tbl, tbl
 		ukupPot := pstPot + promPot
 		saldoDug := ukupDug
 		saldoPot := ukupPot
-		if saldoDug > saldoPot {
+		switch {
+		case saldoDug > saldoPot:
 			saldoDug -= saldoPot
 			saldoPot = 0
-		} else if saldoPot > saldoDug {
+		case saldoDug < saldoPot:
 			saldoPot -= saldoDug
 			saldoDug = 0
-		} else {
+		default: // jednake vrednosti
 			saldoDug, saldoPot = 0, 0
 		}
 		return domain.TableRow{
@@ -644,7 +645,8 @@ func (s *BilansiResource) getZakljucniQuery(ctx context.Context, tbl *domain.Tab
 		COALESCE(SUM(CASE WHEN fpro.tipdok = '00' AND fpro.kat NOT IN (1,2) THEN fpro.iznos ELSE 0 END), 0) as pocstanjepot,
 		COALESCE(SUM(CASE WHEN fpro.tipdok != '00' AND (fpro.kat = 1 OR fpro.kat = 2) THEN fpro.iznos ELSE 0 END), 0) as prometdug,
 		COALESCE(SUM(CASE WHEN fpro.tipdok != '00' AND fpro.kat NOT IN (1,2) THEN fpro.iznos ELSE 0 END), 0) as prometpot
-		FROM fpro`, fmt.Sprintf("SELECT %s", config.SelectCols))
+		FROM fpro
+		inner join fnal on fnal.fnalid = fpro.fnalid`, fmt.Sprintf("SELECT %s", config.SelectCols))
 
 	innerQb := common.NewQueryBuilder(aggregationSQL, true)
 	if hasGod {
@@ -653,8 +655,8 @@ func (s *BilansiResource) getZakljucniQuery(ctx context.Context, tbl *domain.Tab
 	if hasKar {
 		innerQb.AddEqual("fpro.kar", session.SelectedKar)
 	}
-	innerQb.AddCondition("fpro.danal", params.OdDatuma, ">=")
-	innerQb.AddCondition("fpro.danal", params.DoDatuma, "<=")
+	innerQb.AddCondition("fnal.danal", params.OdDatuma, ">=")
+	innerQb.AddCondition("fnal.danal", params.DoDatuma, "<=")
 	if params.OdKonta != "" {
 		innerQb.AddCondition("COALESCE(NULLIF(fpro.konto, '')::numeric, 0)", params.OdKonta, ">=")
 	}
@@ -750,6 +752,7 @@ func (s *BilansiResource) getZakljucniQuery(ctx context.Context, tbl *domain.Tab
 		}
 		outerSql, allArgs = outerQb.Build()
 	}
+	fmt.Println(outerSql, allArgs)
 	entities, err := s.fproRepo.GetAllCustom(ctx, outerSql, "", allArgs, "", "")
 	if err != nil {
 		return nil, err
@@ -760,21 +763,35 @@ func (s *BilansiResource) getZakljucniQuery(ctx context.Context, tbl *domain.Tab
 		common.SetTableTotalRecords(tbl, count, pageSize)
 		tbl.Totals = make([]string, len(tbl.Headers))
 		tbl.Totals[0] = i18n.GetInstance().Label("Ukupno") // Set label for totals column
-		var pstPotTotal, pstDugTotal, dugTotal, potTotal float64
+		var pstPotTotal, pstDugTotal, prometDugTotal, prometPotTotal, saldoDugTotal, saldoPotTotal float64
 
 		for _, entity := range *entities {
 			// Calculate combined saldo for counting total records
 			pstDugTotal += entity.PocStanjeDug
 			pstPotTotal += entity.PocStanjePot
-			dugTotal += entity.PrometDug
-			potTotal += entity.PrometPot
+			prometDugTotal += entity.PrometDug
+			prometPotTotal += entity.PrometPot
+			saldoDug := entity.PocStanjeDug + entity.PrometDug
+			saldoPot := entity.PocStanjePot + entity.PrometPot
+			switch {
+			case saldoDug > saldoPot:
+				saldoDug -= saldoPot
+				saldoPot = 0
+			case saldoDug < saldoPot:
+				saldoPot -= saldoDug
+				saldoDug = 0
+			default: // jednake vrednosti
+				saldoDug, saldoPot = 0, 0
+			}
+			saldoDugTotal += saldoDug
+			saldoPotTotal += saldoPot
 		}
-		tbl.Totals[4] = common.FormatNumberWithSystemLocale(pstDugTotal, 2)                    // Total for Tekuća godina (can be calculated if needed)
-		tbl.Totals[5] = common.FormatNumberWithSystemLocale(pstDugTotal, 2)                    // Total for Prethodna godina (can be calculated if needed)
-		tbl.Totals[6] = common.FormatNumberWithSystemLocale(dugTotal, 2)                       // Total for Prethodna godina - početno stanje (can be calculated if needed)
-		tbl.Totals[7] = common.FormatNumberWithSystemLocale(potTotal, 2)                       // Total for Promet potražuje (can be calculated if needed)
-		tbl.Totals[8] = common.FormatNumberWithSystemLocale(math.Abs(pstDugTotal+dugTotal), 2) // Total for Saldo duguje (can be calculated if needed)
-		tbl.Totals[9] = common.FormatNumberWithSystemLocale(math.Abs(pstPotTotal+potTotal), 2) // Total for Saldo potražuje (can be calculated if needed)
+		tbl.Totals[4] = common.FormatNumberWithSystemLocale(pstDugTotal, 2)             // Total for Tekuća godina (can be calculated if needed)
+		tbl.Totals[5] = common.FormatNumberWithSystemLocale(pstPotTotal, 2)             // Total for Prethodna godina (can be calculated if needed)
+		tbl.Totals[6] = common.FormatNumberWithSystemLocale(prometDugTotal, 2)          // Total for Prethodna godina - početno stanje (can be calculated if needed)
+		tbl.Totals[7] = common.FormatNumberWithSystemLocale(prometPotTotal, 2)          // Total for Promet potražuje (can be calculated if needed)
+		tbl.Totals[8] = common.FormatNumberWithSystemLocale(math.Abs(saldoDugTotal), 2) // Total for Saldo duguje (can be calculated if needed)
+		tbl.Totals[9] = common.FormatNumberWithSystemLocale(math.Abs(saldoPotTotal), 2) // Total for Saldo potražuje (can be calculated if needed)
 		return entities, nil
 	}
 

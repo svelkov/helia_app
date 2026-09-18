@@ -1554,7 +1554,7 @@ func FormObradaButton(btn domain.Button, translator *i18n.Service) templ.Compone
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = Icon("fin_obrada", common.ClassIcon).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = Icon("obrada", common.ClassIcon).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

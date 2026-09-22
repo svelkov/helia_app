@@ -4,7 +4,7 @@
         "db_port": 5432,
         "db_user": "postgres",
         "db_password": "postgres",
-        "db_name": "agencija",
+        "db_name": "testconto",
         "db_search_path": "baza"
     },
     "page_size": 15,

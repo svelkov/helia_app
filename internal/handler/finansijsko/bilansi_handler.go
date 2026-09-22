@@ -20,6 +20,7 @@ import (
 
 const (
 	bilansiContentTitle              string = "BILANSI"
+	zakljucniListTitle               string = "ZAKLJUČNI LIST"
 	bilansiTableID                   string = "bilansitable"
 	bilansizakljucniTableID          string = "zakljucnitable"
 	bilansiURLPrefix                 string = "/api/bilansi/"
@@ -97,7 +98,7 @@ func (h *BilansiHandler) BilansiMain(c *gin.Context) {
 	searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), bilansiURLZakljucni, fmt.Sprintf("#%s", bilansiTableID), hxValsZakljucni)
 
 	tbl := common.SetTableBasicData(bilansiContentTitle, bilansiTableID, h.service.GetZakljucniTableFields(), "", "", 0, 0, 0, 0, h.cfg)
-	common.SetTableConfig(&tbl, "ZAKLJUCNI LIST", "", false, false, false)
+	common.SetTableConfig(&tbl, zakljucniListTitle, "", false, false, false)
 	tbl.HxVals = hxValsZakljucni
 	err := tmpl_fin.BilansiMain(h.tabData, tbl, btnObrada, btnPrint, searchInput, i18n.GetInstance(), gnGod, h.cfg.NDuzSint).Render(ctx, c.Writer)
 	if err != nil {
@@ -107,11 +108,10 @@ func (h *BilansiHandler) BilansiMain(c *gin.Context) {
 }
 
 func (h *BilansiHandler) ZakljucniList(c *gin.Context) {
-	requestSource := c.Request.Header.Get("X-Request-Source")
 	translator := i18n.GetInstance()
 	ctx := c.Request.Context()
 	tbl := common.SetTableBasicData(bilansiContentTitle, bilansiTableID, h.service.GetZakljucniTableFields(), bilansiURLZakljucni, bilansiURLZakljucni, 0, 0, 0, 0, h.cfg)
-	if requestSource == "menu" || requestSource == "tab" {
+	if !common.IsDataRequest(c) {
 		btnPrint := domain.Button{
 			Id:            "btn-print-zakljucni",
 			IsVisible:     true,
@@ -130,64 +130,84 @@ func (h *BilansiHandler) ZakljucniList(c *gin.Context) {
 		if session != nil {
 			gnGod = session.SelectedGod
 		}
-		common.SetTableConfig(&tbl, "ZAKLJUCNI LIST", bilansiURLZakljucni, false, false, false)
+		common.SetTableConfig(&tbl, zakljucniListTitle, bilansiURLZakljucni, false, false, false)
 
 		common.SetActiveTab(&h.tabData, 0)
-		err := tmpl_fin.ZakljucniList(h.tabData, tbl, btnObrada, btnPrint, searchInput, translator, gnGod, h.cfg.NDuzSint).Render(ctx, c.Writer)
-		if err != nil {
-			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
-			return
-		}
+		tmpl_fin.ZakljucniList(h.tabData, tbl, btnObrada, btnPrint, searchInput, translator, gnGod, h.cfg.NDuzSint).Render(ctx, c.Writer)
+		return
 	}
-	if requestSource == "btnobrada" || requestSource == "btnpage" || requestSource == "searchinput" {
-		//validacija input parametre:
-		params := domain.ZakljucniParams{
-			OdKonta:        c.Query("odkonta"),
-			DoKonta:        c.Query("dokonta"),
-			OdSifre:        c.Query("odsifre"),
-			DoSifre:        c.Query("dosifre"),
-			OdDatuma:       c.Query("oddatuma"),
-			DoDatuma:       c.Query("dodatuma"),
-			TipLista:       c.Query("tip_zakljucni"),
-			Klasa9:         c.Query("klasa9"),
-			SamosaPrometom: c.Query("samosaprometom"),
-			SearchText:     c.Query("query"),
-		}
-		fieldParameters := []string{}
-		if params.TipLista == "1" {
-			fieldParameters = []string{"odkonta", "dokonta", "odsifre", "dosifre", "oddatuma", "dodatuma", "tip_zakljucni", "analitickakonta", "klasa9", "samosaprometom", "zabanku"}
-		} else {
-			fieldParameters = []string{"oddatuma", "dodatuma", "tip_zakljucni", "analitickakonta", "klasa9", "samosaprometom", "zabanku"}
-		}
+	//validacija input parametre:
+	params := domain.ZakljucniParams{
+		OdKonta:        c.Query("odkonta"),
+		DoKonta:        c.Query("dokonta"),
+		OdSifre:        c.Query("odsifre"),
+		DoSifre:        c.Query("dosifre"),
+		OdDatuma:       c.Query("oddatuma"),
+		DoDatuma:       c.Query("dodatuma"),
+		TipLista:       c.Query("tip_zakljucni"),
+		Klasa9:         c.Query("klasa9"),
+		SamosaPrometom: c.Query("samosaprometom"),
+		SearchText:     c.Query("query"),
+	}
+	fieldParameters := []string{}
+	if params.TipLista == "1" {
+		fieldParameters = []string{"odkonta", "dokonta", "odsifre", "dosifre", "oddatuma", "dodatuma", "tip_zakljucni", "analitickakonta", "klasa9", "samosaprometom", "zabanku"}
+	} else {
+		fieldParameters = []string{"oddatuma", "dodatuma", "tip_zakljucni", "analitickakonta", "klasa9", "samosaprometom", "zabanku"}
+	}
 
-		fieldsError := common.ValidateRequiredParams(c, fieldParameters)
-		if len(fieldsError) > 0 {
-			common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldsError, common.ErrMsgValidation)
-			return
-		}
-		page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
-		tbl.Pagination.HxVals = hxValsZakljucni
-		err := h.service.GetZakljucniList(ctx, &tbl, params, true, pageSize, page)
-		if err != nil {
-			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
-			return
-		}
-		err = h.service.GetZakljucniList(ctx, &tbl, params, false, pageSize, page)
+	fieldsError := common.ValidateRequiredParams(c, fieldParameters)
+	if len(fieldsError) > 0 {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldsError, common.ErrMsgValidation)
+		return
+	}
+	page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
+	tbl.Pagination.HxVals = hxValsZakljucni
+	if params.TipLista == "1" {
+		tbl.HasTotals = true
+		err := h.service.GetZakljucniListAnalitika(ctx, &tbl, params, true, pageSize, page)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetData)
 			return
 		}
-		tbl.HxVals = hxValsZakljucni
-		tbl.Pagination.HxVals = hxValsZakljucni
-		tbl.URLGetAll = bilansiURLZakljucni
-		tbl.HasTotals = true
+		err = h.service.GetZakljucniListAnalitika(ctx, &tbl, params, false, pageSize, page)
 		if err != nil {
-			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetData)
 			return
 		}
-
-		utils.RenderContent(c, tbl)
 	}
+	if params.TipLista == "2" {
+		tbl.HasTotals = true
+		err := h.service.GetZakljucniListSubsintetika(ctx, &tbl, params, true, pageSize, page)
+		if err != nil {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetData)
+			return
+		}
+		err = h.service.GetZakljucniListSubsintetika(ctx, &tbl, params, false, pageSize, page)
+		if err != nil {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetData)
+			return
+		}
+	}
+	if params.TipLista == "3" {
+		tbl.HasTotals = true
+		err := h.service.GetZakljucniListSintetika(ctx, &tbl, params, true, pageSize, page)
+		if err != nil {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetData)
+			return
+		}
+		err = h.service.GetZakljucniListSintetika(ctx, &tbl, params, false, pageSize, page)
+		if err != nil {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetData)
+			return
+		}
+	}
+	common.SetTableConfig(&tbl, zakljucniListTitle, bilansiURLZakljucni, false, false, false)
+	tbl.HxVals = hxValsZakljucni
+	tbl.Pagination.HxVals = hxValsZakljucni
+	tbl.URLGetAll = bilansiURLZakljucni
+	tbl.HasTotals = true
+	utils.RenderContent(c, tbl)
 }
 
 func (h *BilansiHandler) ZakljucniListObrazacStampa(c *gin.Context) {
@@ -272,7 +292,6 @@ func (h *BilansiHandler) ZakljucniListObrazacStampa(c *gin.Context) {
 }
 
 func (h *BilansiHandler) BilansStanja(c *gin.Context) {
-	requestSource := c.Request.Header.Get("X-Request-Source")
 	translator := i18n.GetInstance()
 	ctx := c.Request.Context()
 	searchText := c.Query("query")
@@ -281,7 +300,7 @@ func (h *BilansiHandler) BilansStanja(c *gin.Context) {
 	tbl := common.SetTableBasicData(bilansiContentTitle, bilansiTableID, h.service.GetBilansStanjaTableFields(), bilansiURLStanja, bilansiURLStanja, 0, 0, 0, 0, h.cfg)
 	tbl.BtnExportPDF.IsVisible = true
 	tbl.BtnExportExcel.IsVisible = true
-	if requestSource == "menu" || requestSource == "tab" {
+	if !common.IsDataRequest(c) {
 		session := domain.GetSessionFromStdContext(ctx)
 		gnGod := 0
 		if session != nil {
@@ -305,29 +324,25 @@ func (h *BilansiHandler) BilansStanja(c *gin.Context) {
 		tbl.BtnPrint.IsVisible = false
 		tbl.ShowPagination = false
 		tbl.HasTotals = true
-		err = tmpl_fin.BilansStanja(h.tabData, tbl, totals, searchInput, translator, gnGod).Render(c.Request.Context(), c.Writer)
-		if err != nil {
-			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
-			return
-		}
+		tmpl_fin.BilansStanja(h.tabData, tbl, totals, searchInput, translator, gnGod).Render(c.Request.Context(), c.Writer)
+		return
 	}
-	if requestSource == "btnobrada" || requestSource == "btnpage" || requestSource == "searchinput" {
-		totals := domain.BilansiTotals{}
-		err := h.service.GetBilansStanja(ctx, &tbl, &totals, searchText, skraceni)
-		if err != nil {
-			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
-			return
-		}
+	totals := domain.BilansiTotals{}
+	err := h.service.GetBilansStanja(ctx, &tbl, &totals, searchText, skraceni)
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
+		return
+	}
 
-		common.SetTableButtons(&tbl, bilansiURLStanja)
-		tbl.BtnAdd.IsVisible = true
-		tbl.HxVals = hxValsStanja
-		tbl.URLGetAll = bilansiURLStanja
-		tbl.BtnPrint.IsVisible = false
-		tbl.ShowActions = true
-		tbl.HasTotals = true
-		utils.RenderContent(c, tbl)
-	}
+	common.SetTableButtons(&tbl, bilansiURLStanja)
+	tbl.BtnAdd.IsVisible = true
+	tbl.HxVals = hxValsStanja
+	tbl.URLGetAll = bilansiURLStanja
+	tbl.BtnPrint.IsVisible = false
+	tbl.ShowActions = true
+	tbl.HasTotals = true
+	utils.RenderContent(c, tbl)
+
 }
 func (h *BilansiHandler) ConfirmAddBilansStanja(c *gin.Context) {
 	//ctx := c.Request.Context()
@@ -387,7 +402,6 @@ func (h *BilansiHandler) CreateBilansStanja(c *gin.Context) {
 	}
 
 	common.WriteJSONResponse(c, http.StatusOK, true, nil, common.OkMsgSaveData)
-	//c.Redirect(http.StatusSeeOther, utils.GetRedirectURL(c))
 }
 func (h *BilansiHandler) ConfirmUpdateBilansStanja(c *gin.Context) {
 	id, err := utils.GetInt64FromQueryRequest(c, "id")
@@ -486,13 +500,12 @@ func (h *BilansiHandler) DeleteBilansStanja(c *gin.Context) {
 	common.WriteJSONResponse(c, http.StatusOK, true, nil, common.OkMsgDeleteData)
 }
 func (h *BilansiHandler) ObradaStampanjeBilansaStanja(c *gin.Context) {
-	requestSource := c.Request.Header.Get("X-Request-Source")
 	translator := i18n.GetInstance()
 	ctx := c.Request.Context()
 	//stanjeNaDan := c.Query("stanjenadan")
 
 	skraceni := c.Query("skraceni") == "true" || c.Query("skraceni") == "1"
-	if requestSource == "menu" || requestSource == "tab" {
+	if !common.IsDataRequest(c) {
 		session := domain.GetSessionFromStdContext(ctx)
 		gnGod := 0
 		if session != nil {
@@ -522,34 +535,28 @@ func (h *BilansiHandler) ObradaStampanjeBilansaStanja(c *gin.Context) {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetData)
 			return
 		}
-		err = tmpl_fin.StampanjeBilansaStanja(h.tabData, tbl, btnObrada, btnPrint, btnExportXML, searchInput, translator, gnGod).Render(c.Request.Context(), c.Writer)
-		if err != nil {
-			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
-			return
-		}
+		tmpl_fin.StampanjeBilansaStanja(h.tabData, tbl, btnObrada, btnPrint, btnExportXML, searchInput, translator, gnGod).Render(c.Request.Context(), c.Writer)
+		return
 	}
-	if requestSource == "btnobrada" || requestSource == "btnpage" || requestSource == "searchinput" {
-		//validacija input parametre:
-		fieldParameters := []string{"stanjenadan"}
-		fieldsError := common.ValidateRequiredParams(c, fieldParameters)
-		if len(fieldsError) > 0 {
-			common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldsError, common.ErrMsgValidation)
-			return
-		}
-		stanjeNaDan := c.Query("stanjenadan")
-		skraceni := c.Query("skraceni") == "true" || c.Query("skraceni") == "1"
-		lPGODizPS := c.Query("pocstanjepg") == "true" || c.Query("pocstanjepg") == "1"
-		totals := domain.BilansiTotals{}
+	//validacija input parametre:
+	fieldParameters := []string{"stanjenadan"}
+	fieldsError := common.ValidateRequiredParams(c, fieldParameters)
+	if len(fieldsError) > 0 {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldsError, common.ErrMsgValidation)
+		return
+	}
+	stanjeNaDan := c.Query("stanjenadan")
+	lPGODizPS := c.Query("pocstanjepg") == "true" || c.Query("pocstanjepg") == "1"
+	totals := domain.BilansiTotals{}
 
-		tbl := common.SetTableBasicData("", bilansiTableID, h.service.GetBilansStanjaTableFields(), "", bilansiURLZakljucni, 0, 0, 0, 0, h.cfg)
-		common.SetTableConfig(&tbl, "", bilansiURLZakljucni, false, false, false)
-		err := h.service.GetBilansStanjaObrada(ctx, &tbl, &totals, stanjeNaDan, skraceni, lPGODizPS)
-		if err != nil {
-			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
-			return
-		}
-		utils.RenderContent(c, tbl)
+	tbl := common.SetTableBasicData("", bilansiTableID, h.service.GetBilansStanjaTableFields(), "", bilansiURLZakljucni, 0, 0, 0, 0, h.cfg)
+	common.SetTableConfig(&tbl, "", bilansiURLZakljucni, false, false, false)
+	err := h.service.GetBilansStanjaObrada(ctx, &tbl, &totals, stanjeNaDan, skraceni, lPGODizPS)
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
+		return
 	}
+	utils.RenderContent(c, tbl)
 }
 func (h *BilansiHandler) BilansStanjaObrazacStampa(c *gin.Context) {
 	stanjeNaDan := c.Query("stanjenadan")
@@ -598,7 +605,6 @@ func (h *BilansiHandler) BilansStanjaObrazacStampa(c *gin.Context) {
 // Bilans Uspeha Functions
 func (h *BilansiHandler) BilansUspeha(c *gin.Context) {
 	totals := domain.BilansiTotals{}
-	requestSource := c.Request.Header.Get("X-Request-Source")
 	ctx := c.Request.Context()
 	searchText := c.Query("query")
 	skraceni := c.Query("skraceni") == "true" || c.Query("skraceni") == "1"
@@ -612,7 +618,7 @@ func (h *BilansiHandler) BilansUspeha(c *gin.Context) {
 	tbl.ShowActions = true
 	tbl.BtnPrint.IsVisible = false
 	tbl.HasTotals = true
-	if requestSource == "menu" || requestSource == "tab" {
+	if !common.IsDataRequest(c) {
 		session := domain.GetSessionFromStdContext(ctx)
 		gnGod := 0
 		if session != nil {
@@ -626,21 +632,16 @@ func (h *BilansiHandler) BilansUspeha(c *gin.Context) {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
 			return
 		}
+		tmpl_fin.BilansUspeha(h.tabData, tbl, searchInput, &totals, translator, gnGod).Render(ctx, c.Writer)
+		return
+	}
+	err := h.service.GetBilansUspeha(ctx, &tbl, &totals, searchText, skraceni)
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
+		return
+	}
+	utils.RenderContent(c, tbl)
 
-		err = tmpl_fin.BilansUspeha(h.tabData, tbl, searchInput, &totals, translator, gnGod).Render(ctx, c.Writer)
-		if err != nil {
-			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
-			return
-		}
-	}
-	if requestSource == "btnobrada" || requestSource == "btnpage" || requestSource == "searchinput" {
-		err := h.service.GetBilansUspeha(ctx, &tbl, &totals, searchText, skraceni)
-		if err != nil {
-			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
-			return
-		}
-		utils.RenderContent(c, tbl)
-	}
 }
 func (h *BilansiHandler) ConfirmAddBilansUspeha(c *gin.Context) {
 	dialog := domain.Dialog{
@@ -795,11 +796,10 @@ func (h *BilansiHandler) DeleteBilansUspeha(c *gin.Context) {
 	common.WriteJSONResponse(c, http.StatusOK, true, nil, common.OkMsgDeleteData)
 }
 func (h *BilansiHandler) ObradaStampanjeBilansUspeha(c *gin.Context) {
-	requestSource := c.Request.Header.Get("X-Request-Source")
 	ctx := c.Request.Context()
 	translator := i18n.GetInstance()
 	common.SetActiveTab(&h.tabData, 4)
-	if requestSource == "menu" || requestSource == "tab" {
+	if !common.IsDataRequest(c) {
 		session := domain.GetSessionFromStdContext(ctx)
 		gnGod := 0
 		if session != nil {
@@ -825,32 +825,29 @@ func (h *BilansiHandler) ObradaStampanjeBilansUspeha(c *gin.Context) {
 			return
 		}
 		tmpl_fin.StampanjeBilansaUspeha(h.tabData, tbl, btnObrada, btnPrint, btnExportXML, translator, gnGod).Render(c.Request.Context(), c.Writer)
+		return
 	}
-	if requestSource == "btnobrada" || requestSource == "btnpage" {
-		//validacija input parametre:
-		fieldParameters := []string{"oddatuma", "dodatuma"}
-		fieldsError := common.ValidateRequiredParams(c, fieldParameters)
-		if len(fieldsError) > 0 {
-			common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldsError, common.ErrMsgValidation)
-			return
-		}
-		odDatuma := c.Query("oddatuma")
-		doDatuma := c.Query("dodatuma")
-		skraceni := c.Query("skraceni") == "true" || c.Query("skraceni") == "1"
-		lPGODizPG := c.Query("pocstanjepg") == "true" || c.Query("pocstanjepg") == "1"
-
-		tbl := common.SetTableBasicData("", bilansiTableID, h.service.GetBilansUspehaStampaTableFields(), "", bilansiURLUspehaStampanje, 0, 0, 0, 0, h.cfg)
-		common.SetTableConfig(&tbl, "", bilansiURLUspehaStampanje, false, false, false)
-		totals := domain.BilansiTotals{}
-		ctx := c.Request.Context()
-		err := h.service.GetBilansUspehaObrada(ctx, &tbl, &totals, odDatuma, doDatuma, skraceni, lPGODizPG)
-		if err != nil {
-			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
-			return
-		}
-
-		utils.RenderContent(c, tbl)
+	//validacija input parametre:
+	fieldParameters := []string{"oddatuma", "dodatuma"}
+	fieldsError := common.ValidateRequiredParams(c, fieldParameters)
+	if len(fieldsError) > 0 {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldsError, common.ErrMsgValidation)
+		return
 	}
+	odDatuma := c.Query("oddatuma")
+	doDatuma := c.Query("dodatuma")
+	skraceni := c.Query("skraceni") == "true" || c.Query("skraceni") == "1"
+	lPGODizPG := c.Query("pocstanjepg") == "true" || c.Query("pocstanjepg") == "1"
+
+	tbl := common.SetTableBasicData("", bilansiTableID, h.service.GetBilansUspehaStampaTableFields(), "", bilansiURLUspehaStampanje, 0, 0, 0, 0, h.cfg)
+	common.SetTableConfig(&tbl, "", bilansiURLUspehaStampanje, false, false, false)
+	totals := domain.BilansiTotals{}
+	err := h.service.GetBilansUspehaObrada(ctx, &tbl, &totals, odDatuma, doDatuma, skraceni, lPGODizPG)
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
+		return
+	}
+	utils.RenderContent(c, tbl)
 }
 func (h *BilansiHandler) BilansUspehaObrazacStampa(c *gin.Context) {
 	odDatuma := c.Query("oddatuma")

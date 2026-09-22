@@ -475,7 +475,7 @@ func ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrin
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</div></div></div></div><!-- Dialog display container--><div id=\"dialog-container\"></div><script>\r\n\t\t// Enable/disable sifra field based on tip_zakljucni selection\r\n\t\tfunction enableDisableField() {\r\n\t\t\tconst checkedRadio = document.querySelector('input[name=\"tip_zakljucni\"]:checked');\r\n\t\t\tif (!checkedRadio) return;\r\n\t\t\t\r\n\t\t\tconst isAnalitika = checkedRadio.value === '1';\r\n\t\t\tconst nDuzSintetika = document.getElementById('nduzsintetika');\r\n\t\t\t\r\n\t\t\tconst odKontaInput = document.getElementById('odkonta');\r\n\t\t\tconst doKontaInput = document.getElementById('dokonta');\r\n\t\t\tconst odSifraInput = document.getElementById('odsifre');\r\n\t\t\tconst doSifraInput = document.getElementById('dosifre');\r\n\t\t\tconst cbxAnalitika = document.getElementById('analitickakonta');\r\n\r\n\t\t\tconst odSifreBtn = document.querySelector('[name=\"search-odsifre\"]');\r\n\t\t\tconst doSifreBtn = document.querySelector('[name=\"search-dosifre\"]');\r\n\t\t\tif (odSifreBtn) {\r\n\t\t\t\todSifreBtn.disabled = !isAnalitika;\r\n\t\t\t\todSifreBtn.classList.toggle('cursor-pointer', isAnalitika);\r\n\t\t\t\todSifreBtn.classList.toggle('cursor-not-allowed', !isAnalitika);\r\n\t\t\t}\r\n\t\t\tif (doSifreBtn) {\r\n\t\t\t\tdoSifreBtn.disabled = !isAnalitika;\r\n\t\t\t\tdoSifreBtn.classList.toggle('cursor-pointer', isAnalitika);\r\n\t\t\t\tdoSifreBtn.classList.toggle('cursor-not-allowed', !isAnalitika);\r\n\t\t\t}\r\n\r\n\t\t\tif (odSifraInput) {\r\n\t\t\t\todSifraInput.disabled = !isAnalitika;\r\n\t\t\t\tdoSifraInput.disabled = !isAnalitika;\r\n\t\t\t\tif (!isAnalitika) {\r\n\t\t\t\t\todSifraInput.value = '';\r\n\t\t\t\t\tdoSifraInput.value = '';\r\n\t\t\t\t}else {\r\n\t\t\t\t\todSifraInput.value = '00';\r\n\t\t\t\t\tdoSifraInput.value = '999999';\r\n\t\t\t\t}\r\n\t\t\t}\r\n\t\t\tif (cbxAnalitika) {\r\n\t\t\t\tcbxAnalitika.disabled = !isAnalitika;\r\n\t\t\t}\r\n\t\t\tif (nDuzSintetika) {\r\n\t\t\t\tconst isSintetika = checkedRadio.value === '3';\r\n\t\t\t\tconst duzinaSintetike = parseInt(nDuzSintetika.value, 10) || 0;\r\n\r\n\t\t\t\tif (isSintetika && duzinaSintetike > 0) {\r\n\t\t\t\t\t// Sintetika: od konta = 0...0, do konta = 9...9 (duzina = nDuzSintetika)\r\n\t\t\t\t\todKontaInput.value = '0'.repeat(duzinaSintetike);\r\n\t\t\t\t\tdoKontaInput.value = '9'.repeat(duzinaSintetike);\r\n\t\t\t\t} else {\r\n\t\t\t\t\todKontaInput.value = '0'.repeat(duzinaSintetike+1);\r\n\t\t\t\t\tdoKontaInput.value = '999999';\r\n\t\t\t\t}\r\n\t\t\t}\r\n\t\t}\r\n\t\t\r\n\t\t// Use event delegation for radio button changes\r\n\t\tdocument.addEventListener('change', function(evt) {\r\n\t\t\tdocument.querySelectorAll('.input-error').forEach(el => el.remove());\r\n\t\t\tdocument.querySelectorAll('.field-error-inline').forEach(el => { el.textContent = ''; });\r\n\t\t\tdocument.querySelectorAll('input').forEach(el => el.classList.remove('border-red-500'));\r\n\t\t\tif (evt.target.name === 'tip_zakljucni') {\r\n\t\t\t\t// Clear all validation errors when radio group changes\r\n\t\t\t\tenableDisableField();\r\n\t\t\t} \r\n\t\t});\r\n\r\n\t\t// Re-attach after HTMX swaps\r\n\t\tdocument.addEventListener('htmx:afterSwap', function(evt) {\r\n\t\t\tconst targetId = evt.detail.target.id;\r\n\t\t\tif (targetId === 'tab1') {\r\n\t\t\t\tsetTimeout(enableDisableField, 50);\r\n\t\t\t}\r\n\t\t});\r\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</div></div></div></div><!-- Dialog display container--><div id=\"dialog-container\"></div><script>\r\n\t\t// Sets the min/max allowed length of an input and trims a value that is now too long.\r\n\t\tfunction applyLengthLimits(input, minLength, maxLength) {\r\n\t\t\tif (!input || maxLength <= 0) return;\r\n\t\t\tinput.minLength = minLength;\r\n\t\t\tinput.maxLength = maxLength;\r\n\t\t\tif (input.value.length > maxLength) {\r\n\t\t\t\tinput.value = input.value.slice(0, maxLength);\r\n\t\t\t}\r\n\t\t}\r\n\r\n\t\t// Konto and sifra contain digits only.\r\n\t\tconst DIGITS_ONLY_FIELDS = ['odkonta', 'dokonta', 'odsifre', 'dosifre'];\r\n\r\n\t\tfunction digitsOnly(input) {\r\n\t\t\tconst cleaned = input.value.replace(/\\D+/g, '');\r\n\t\t\tif (cleaned === input.value) return;\r\n\t\t\t// Keep the caret in front of the same digit it was before the cleanup.\r\n\t\t\tconst caret = input.selectionStart === null ? cleaned.length : input.selectionStart;\r\n\t\t\tconst digitsBeforeCaret = input.value.slice(0, caret).replace(/\\D/g, '').length;\r\n\t\t\tinput.value = cleaned;\r\n\t\t\tinput.setSelectionRange(digitsBeforeCaret, digitsBeforeCaret);\r\n\t\t}\r\n\r\n\t\t// Block non-digit typing/IME input as early as possible.\r\n\t\tdocument.addEventListener('beforeinput', function(evt) {\r\n\t\t\tif (DIGITS_ONLY_FIELDS.indexOf(evt.target.id) === -1) return;\r\n\t\t\tif (evt.data && /\\D/.test(evt.data)) evt.preventDefault();\r\n\t\t});\r\n\r\n\t\t// Safety net for paste, drag & drop and any value set outside beforeinput.\r\n\t\tdocument.addEventListener('input', function(evt) {\r\n\t\t\tif (DIGITS_ONLY_FIELDS.indexOf(evt.target.id) === -1) return;\r\n\t\t\tdigitsOnly(evt.target);\r\n\t\t});\r\n\r\n\t\t// Enable/disable sifra field based on tip_zakljucni selection\r\n\t\tfunction enableDisableField() {\r\n\t\t\tconst checkedRadio = document.querySelector('input[name=\"tip_zakljucni\"]:checked');\r\n\t\t\tif (!checkedRadio) return;\r\n\t\t\t\r\n\t\t\tconst isAnalitika = checkedRadio.value === '1';\r\n\t\t\tconst nDuzSintetika = document.getElementById('nduzsintetika');\r\n\t\t\t\r\n\t\t\tconst odKontaInput = document.getElementById('odkonta');\r\n\t\t\tconst doKontaInput = document.getElementById('dokonta');\r\n\t\t\tconst odSifraInput = document.getElementById('odsifre');\r\n\t\t\tconst doSifraInput = document.getElementById('dosifre');\r\n\t\t\tconst cbxAnalitika = document.getElementById('analitickakonta');\r\n\r\n\t\t\t// Numeric keyboards on touch devices for the digit-only fields.\r\n\t\t\t[odKontaInput, doKontaInput, odSifraInput, doSifraInput].forEach(input => {\r\n\t\t\t\tif (!input) return;\r\n\t\t\t\tinput.setAttribute('inputmode', 'numeric');\r\n\t\t\t\tinput.setAttribute('pattern', '[0-9]*');\r\n\t\t\t});\r\n\r\n\t\t\tconst odSifreBtn = document.querySelector('[name=\"search-odsifre\"]');\r\n\t\t\tconst doSifreBtn = document.querySelector('[name=\"search-dosifre\"]');\r\n\t\t\tif (odSifreBtn) {\r\n\t\t\t\todSifreBtn.disabled = !isAnalitika;\r\n\t\t\t\todSifreBtn.classList.toggle('cursor-pointer', isAnalitika);\r\n\t\t\t\todSifreBtn.classList.toggle('cursor-not-allowed', !isAnalitika);\r\n\t\t\t}\r\n\t\t\tif (doSifreBtn) {\r\n\t\t\t\tdoSifreBtn.disabled = !isAnalitika;\r\n\t\t\t\tdoSifreBtn.classList.toggle('cursor-pointer', isAnalitika);\r\n\t\t\t\tdoSifreBtn.classList.toggle('cursor-not-allowed', !isAnalitika);\r\n\t\t\t}\r\n\r\n\t\t\tif (odSifraInput) {\r\n\t\t\t\todSifraInput.disabled = !isAnalitika;\r\n\t\t\t\tdoSifraInput.disabled = !isAnalitika;\r\n\t\t\t\t// Sifra is always kept between 2 and 6 characters, whatever the tip is.\r\n\t\t\t\tapplyLengthLimits(odSifraInput, 2, 6);\r\n\t\t\t\tapplyLengthLimits(doSifraInput, 2, 6);\r\n\t\t\t\tif (!isAnalitika) {\r\n\t\t\t\t\todSifraInput.value = '';\r\n\t\t\t\t\tdoSifraInput.value = '';\r\n\t\t\t\t}else {\r\n\t\t\t\t\todSifraInput.value = '00';\r\n\t\t\t\t\tdoSifraInput.value = '999999';\r\n\t\t\t\t}\r\n\t\t\t}\r\n\t\t\tif (cbxAnalitika) {\r\n\t\t\t\tcbxAnalitika.disabled = !isAnalitika;\r\n\t\t\t}\r\n\t\t\tif (nDuzSintetika) {\r\n\t\t\t\tconst isSintetika = checkedRadio.value === '3';\r\n\t\t\t\tconst duzinaSintetike = parseInt(nDuzSintetika.value, 10) || 0;\r\n\r\n\t\t\t\tif (duzinaSintetike > 0) {\r\n\t\t\t\t\tif (isSintetika) {\r\n\t\t\t\t\t\t// Sintetika: konto ima tacno duzinu sintetike (0...0 do 9...9).\r\n\t\t\t\t\t\tapplyLengthLimits(odKontaInput, duzinaSintetike, duzinaSintetike);\r\n\t\t\t\t\t\tapplyLengthLimits(doKontaInput, duzinaSintetike, duzinaSintetike);\r\n\t\t\t\t\t\todKontaInput.value = '0'.repeat(duzinaSintetike);\r\n\t\t\t\t\t\tdoKontaInput.value = '9'.repeat(duzinaSintetike);\r\n\t\t\t\t\t} else {\r\n\t\t\t\t\t\t// Analitika i subsintetika: konto je duzi od sintetike, najvise 6 karaktera.\r\n\t\t\t\t\t\tapplyLengthLimits(odKontaInput, duzinaSintetike + 1, 6);\r\n\t\t\t\t\t\tapplyLengthLimits(doKontaInput, duzinaSintetike + 1, 6);\r\n\t\t\t\t\t\todKontaInput.value = '0'.repeat(duzinaSintetike + 1);\r\n\t\t\t\t\t\tdoKontaInput.value = '999999';\r\n\t\t\t\t\t}\r\n\t\t\t\t}\r\n\t\t\t}\r\n\t\t}\r\n\r\n\t\t// Apply the initial state: the HTMX swap that inserted this script already fired.\r\n\t\tif (document.readyState === 'loading') {\r\n\t\t\tdocument.addEventListener('DOMContentLoaded', enableDisableField);\r\n\t\t} else {\r\n\t\t\tenableDisableField();\r\n\t\t}\r\n\t\t\r\n\t\t// Use event delegation for radio button changes\r\n\t\tdocument.addEventListener('change', function(evt) {\r\n\t\t\tdocument.querySelectorAll('.input-error').forEach(el => el.remove());\r\n\t\t\tdocument.querySelectorAll('.field-error-inline').forEach(el => { el.textContent = ''; });\r\n\t\t\tdocument.querySelectorAll('input').forEach(el => el.classList.remove('border-red-500'));\r\n\t\t\tif (evt.target.name === 'tip_zakljucni') {\r\n\t\t\t\t// Clear all validation errors when radio group changes\r\n\t\t\t\tenableDisableField();\r\n\t\t\t} \r\n\t\t});\r\n\r\n\t\t// Re-attach after HTMX swaps\r\n\t\tdocument.addEventListener('htmx:afterSwap', function(evt) {\r\n\t\t\tconst targetId = evt.detail.target.id;\r\n\t\t\tif (targetId === 'tab1') {\r\n\t\t\t\tsetTimeout(enableDisableField, 50);\r\n\t\t\t}\r\n\t\t});\r\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -733,7 +733,7 @@ func BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dial
 		var templ_7745c5c3_Var7 string
 		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.Id)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 521, Col: 20}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 580, Col: 20}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {
@@ -759,7 +759,7 @@ func BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dial
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Title(dialog.Title))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 525, Col: 75}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 584, Col: 75}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
@@ -785,7 +785,7 @@ func BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dial
 			var templ_7745c5c3_Var10 string
 			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.HxActionURL)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 530, Col: 32}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 589, Col: 32}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
@@ -804,7 +804,7 @@ func BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dial
 			var templ_7745c5c3_Var11 string
 			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.HxActionURL)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 534, Col: 33}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 593, Col: 33}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {
@@ -822,7 +822,7 @@ func BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dial
 		var templ_7745c5c3_Var12 string
 		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.Id)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 537, Col: 30}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 596, Col: 30}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 		if templ_7745c5c3_Err != nil {
@@ -835,7 +835,7 @@ func BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dial
 		var templ_7745c5c3_Var13 string
 		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs("#" + dialog.Id + "-message")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 538, Col: 44}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 597, Col: 44}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 		if templ_7745c5c3_Err != nil {
@@ -848,7 +848,7 @@ func BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dial
 		var templ_7745c5c3_Var14 string
 		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(csrfToken)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 545, Col: 56}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 604, Col: 56}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 		if templ_7745c5c3_Err != nil {
@@ -1208,7 +1208,7 @@ func BilansStanjaForm(csrfToken string, bilsData domain.Bils, dialog domain.Dial
 		var templ_7745c5c3_Var15 string
 		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.Id + "-message")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 804, Col: 35}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 863, Col: 35}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 		if templ_7745c5c3_Err != nil {
@@ -1288,7 +1288,7 @@ func StampanjeBilansaStanja(tabs domain.TabData, tbl domain.TableData, btnObrada
 		var templ_7745c5c3_Var17 string
 		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Stanje na dan"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 838, Col: 79}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 897, Col: 79}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 		if templ_7745c5c3_Err != nil {
@@ -1394,7 +1394,7 @@ func BilansUspeha(tabs domain.TabData, tbl domain.TableData, searchInput domain.
 		var templ_7745c5c3_Var19 string
 		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(tbl.DetailURL)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 888, Col: 28}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 947, Col: 28}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 		if templ_7745c5c3_Err != nil {
@@ -1562,7 +1562,7 @@ func BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dial
 		var templ_7745c5c3_Var22 string
 		templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.Id)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 985, Col: 20}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 1044, Col: 20}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
 		if templ_7745c5c3_Err != nil {
@@ -1588,7 +1588,7 @@ func BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dial
 		var templ_7745c5c3_Var24 string
 		templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Title(dialog.Title))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 989, Col: 75}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 1048, Col: 75}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 		if templ_7745c5c3_Err != nil {
@@ -1614,7 +1614,7 @@ func BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dial
 			var templ_7745c5c3_Var25 string
 			templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.HxActionURL)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 994, Col: 32}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 1053, Col: 32}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
 			if templ_7745c5c3_Err != nil {
@@ -1633,7 +1633,7 @@ func BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dial
 			var templ_7745c5c3_Var26 string
 			templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.HxActionURL)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 998, Col: 33}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 1057, Col: 33}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
 			if templ_7745c5c3_Err != nil {
@@ -1651,7 +1651,7 @@ func BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dial
 		var templ_7745c5c3_Var27 string
 		templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.Id)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 1001, Col: 30}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 1060, Col: 30}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
 		if templ_7745c5c3_Err != nil {
@@ -1664,7 +1664,7 @@ func BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dial
 		var templ_7745c5c3_Var28 string
 		templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs("#" + dialog.Id + "-message")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 1002, Col: 44}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 1061, Col: 44}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
 		if templ_7745c5c3_Err != nil {
@@ -1677,7 +1677,7 @@ func BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dial
 		var templ_7745c5c3_Var29 string
 		templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(csrfToken)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 1009, Col: 56}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 1068, Col: 56}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
 		if templ_7745c5c3_Err != nil {
@@ -2037,7 +2037,7 @@ func BilansUspehaForm(csrfToken string, bilsData domain.Bilu, dialog domain.Dial
 		var templ_7745c5c3_Var30 string
 		templ_7745c5c3_Var30, templ_7745c5c3_Err = templ.JoinStringErrs(dialog.Id + "-message")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 1268, Col: 35}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/bilansi.templ`, Line: 1327, Col: 35}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var30))
 		if templ_7745c5c3_Err != nil {

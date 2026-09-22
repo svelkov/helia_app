@@ -300,6 +300,41 @@ templ ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPri
 	<!-- Dialog display container-->
 	<div id="dialog-container"></div>
 	<script>
+		// Sets the min/max allowed length of an input and trims a value that is now too long.
+		function applyLengthLimits(input, minLength, maxLength) {
+			if (!input || maxLength <= 0) return;
+			input.minLength = minLength;
+			input.maxLength = maxLength;
+			if (input.value.length > maxLength) {
+				input.value = input.value.slice(0, maxLength);
+			}
+		}
+
+		// Konto and sifra contain digits only.
+		const DIGITS_ONLY_FIELDS = ['odkonta', 'dokonta', 'odsifre', 'dosifre'];
+
+		function digitsOnly(input) {
+			const cleaned = input.value.replace(/\D+/g, '');
+			if (cleaned === input.value) return;
+			// Keep the caret in front of the same digit it was before the cleanup.
+			const caret = input.selectionStart === null ? cleaned.length : input.selectionStart;
+			const digitsBeforeCaret = input.value.slice(0, caret).replace(/\D/g, '').length;
+			input.value = cleaned;
+			input.setSelectionRange(digitsBeforeCaret, digitsBeforeCaret);
+		}
+
+		// Block non-digit typing/IME input as early as possible.
+		document.addEventListener('beforeinput', function(evt) {
+			if (DIGITS_ONLY_FIELDS.indexOf(evt.target.id) === -1) return;
+			if (evt.data && /\D/.test(evt.data)) evt.preventDefault();
+		});
+
+		// Safety net for paste, drag & drop and any value set outside beforeinput.
+		document.addEventListener('input', function(evt) {
+			if (DIGITS_ONLY_FIELDS.indexOf(evt.target.id) === -1) return;
+			digitsOnly(evt.target);
+		});
+
 		// Enable/disable sifra field based on tip_zakljucni selection
 		function enableDisableField() {
 			const checkedRadio = document.querySelector('input[name="tip_zakljucni"]:checked');
@@ -313,6 +348,13 @@ templ ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPri
 			const odSifraInput = document.getElementById('odsifre');
 			const doSifraInput = document.getElementById('dosifre');
 			const cbxAnalitika = document.getElementById('analitickakonta');
+
+			// Numeric keyboards on touch devices for the digit-only fields.
+			[odKontaInput, doKontaInput, odSifraInput, doSifraInput].forEach(input => {
+				if (!input) return;
+				input.setAttribute('inputmode', 'numeric');
+				input.setAttribute('pattern', '[0-9]*');
+			});
 
 			const odSifreBtn = document.querySelector('[name="search-odsifre"]');
 			const doSifreBtn = document.querySelector('[name="search-dosifre"]');
@@ -330,6 +372,9 @@ templ ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPri
 			if (odSifraInput) {
 				odSifraInput.disabled = !isAnalitika;
 				doSifraInput.disabled = !isAnalitika;
+				// Sifra is always kept between 2 and 6 characters, whatever the tip is.
+				applyLengthLimits(odSifraInput, 2, 6);
+				applyLengthLimits(doSifraInput, 2, 6);
 				if (!isAnalitika) {
 					odSifraInput.value = '';
 					doSifraInput.value = '';
@@ -345,15 +390,29 @@ templ ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPri
 				const isSintetika = checkedRadio.value === '3';
 				const duzinaSintetike = parseInt(nDuzSintetika.value, 10) || 0;
 
-				if (isSintetika && duzinaSintetike > 0) {
-					// Sintetika: od konta = 0...0, do konta = 9...9 (duzina = nDuzSintetika)
-					odKontaInput.value = '0'.repeat(duzinaSintetike);
-					doKontaInput.value = '9'.repeat(duzinaSintetike);
-				} else {
-					odKontaInput.value = '0'.repeat(duzinaSintetike+1);
-					doKontaInput.value = '999999';
+				if (duzinaSintetike > 0) {
+					if (isSintetika) {
+						// Sintetika: konto ima tacno duzinu sintetike (0...0 do 9...9).
+						applyLengthLimits(odKontaInput, duzinaSintetike, duzinaSintetike);
+						applyLengthLimits(doKontaInput, duzinaSintetike, duzinaSintetike);
+						odKontaInput.value = '0'.repeat(duzinaSintetike);
+						doKontaInput.value = '9'.repeat(duzinaSintetike);
+					} else {
+						// Analitika i subsintetika: konto je duzi od sintetike, najvise 6 karaktera.
+						applyLengthLimits(odKontaInput, duzinaSintetike + 1, 6);
+						applyLengthLimits(doKontaInput, duzinaSintetike + 1, 6);
+						odKontaInput.value = '0'.repeat(duzinaSintetike + 1);
+						doKontaInput.value = '999999';
+					}
 				}
 			}
+		}
+
+		// Apply the initial state: the HTMX swap that inserted this script already fired.
+		if (document.readyState === 'loading') {
+			document.addEventListener('DOMContentLoaded', enableDisableField);
+		} else {
+			enableDisableField();
 		}
 		
 		// Use event delegation for radio button changes

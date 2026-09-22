@@ -213,7 +213,7 @@ func (h *BasicHandler) handleLoginPost(c *gin.Context, selections defaultSelecti
 	// If 2FA is enabled, redirect to 2FA verification page
 	if user != nil && user.TwoFAEnabled {
 		// Store username in session temporarily for 2FA verification
-		c.SetCookie("pending_2fa_user", loginData.Username, 900, "/", "", true, true)
+		c.SetCookie("pending_2fa_user", loginData.Username, 900, "/", "", common.CookieSecure(c), true)
 
 		// Get CSRF token
 		csrfToken := c.GetString("_csrf")
@@ -259,7 +259,7 @@ func (h *BasicHandler) handleLoginPost(c *gin.Context, selections defaultSelecti
 }
 
 func (h *BasicHandler) setAuthCookie(c *gin.Context, token string) {
-	c.SetCookie("auth_token", token, int(tokenExpiry/time.Second), "/", "", true, true)
+	c.SetCookie("auth_token", token, int(tokenExpiry/time.Second), "/", "", common.CookieSecure(c), true)
 }
 
 func (h *BasicHandler) updateUserSession(c *gin.Context, selections defaultSelections) {
@@ -583,8 +583,8 @@ func (h *BasicHandler) LogoutHandler(c *gin.Context) {
 		-1,
 		"/",
 		"",
-		true, // Secure
-		true, // HttpOnly
+		common.CookieSecure(c), // Secure (HTTPS only)
+		true,                   // HttpOnly
 	)
 
 	// Clear the session
@@ -690,7 +690,7 @@ func (h *BasicHandler) Verify2FAPostHandler(c *gin.Context) {
 	}
 
 	// Clear pending 2FA cookie
-	c.SetCookie("pending_2fa_user", "", -1, "/", "", true, true)
+	c.SetCookie("pending_2fa_user", "", -1, "/", "", common.CookieSecure(c), true)
 
 	// Get selections for token generation
 	fvrData := h.getFirma()

@@ -430,6 +430,31 @@ func GetCsrfTokenFromSession(c *gin.Context) string {
 	return csrfToken
 }
 
+// CookieSecure reports whether the auth cookies should carry the Secure attribute.
+//
+// A Secure cookie is stored by the browser only over HTTPS, so hardcoding true breaks
+// every plain-HTTP deployment that is not reached through localhost (for example the app
+// published on a LAN address like http://192.168.1.5:8080). The browser silently drops
+// the cookie, so the login looks successful and then every request is redirected to
+// /login with "No auth token cookie found".
+//
+// The flag therefore follows the actual request: true for TLS connections and for
+// requests forwarded by a reverse proxy that terminated TLS (X-Forwarded-Proto: https).
+func CookieSecure(c *gin.Context) bool {
+	if c == nil || c.Request == nil {
+		return false
+	}
+	if c.Request.TLS != nil {
+		return true
+	}
+	if proto := c.GetHeader("X-Forwarded-Proto"); proto != "" {
+		// May be a comma separated list when several proxies are chained.
+		first := strings.TrimSpace(strings.Split(proto, ",")[0])
+		return strings.EqualFold(first, "https")
+	}
+	return false
+}
+
 func ExtractInnerXML(s, startTag, endTag string) string {
 	start := strings.Index(s, startTag)
 	end := strings.Index(s, endTag)

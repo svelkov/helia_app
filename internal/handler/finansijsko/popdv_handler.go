@@ -177,7 +177,7 @@ func (h *PopdvHandler) PopdvPrijava(c *gin.Context) {
 		if session != nil {
 			gnGod = session.SelectedGod
 		}
-		btnObrada := common.SetButton("obrada-btn", translator.Button("Obrada"), "fin_obrada", popdvURLPrijava, "#"+popdvTableID, "innerHTML", "GET", "", hxValsPopdvPrijava, true, common.ClassSaveButton, "")
+		btnObrada := common.SetButton("obrada-btn", translator.Button("Obrada"), "obrada", popdvURLPrijava, "#"+popdvTableID, "innerHTML", "GET", "", hxValsPopdvPrijava, true, common.ClassSaveButton, "")
 		btnDelete := common.SetButton("delete-btn", "Obriši", "fin_delete", "", "", "innerHTML", "GET", "", hxValsPopdvPrijava, true, common.ClassButton, "")
 		searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), popdvURLPrijava, fmt.Sprintf("#%s", popdvTableID), hxValsPopdvPrijava)
 
@@ -235,7 +235,7 @@ func (h *PopdvHandler) PppdvPrijava(c *gin.Context) {
 		if session != nil {
 			gnGod = session.SelectedGod
 		}
-		btnObrada := common.SetButton("obrada-btn", translator.Button("Obrada"), "fin_obrada", popdvURLPrijava, "#"+popdvTableID, "innerHTML", "GET", "", hxValsPopdvPrijava, true, common.ClassSaveButton, "")
+		btnObrada := common.SetButton("obrada-btn", translator.Button("Obrada"), "obrada", popdvURLPrijava, "#"+popdvTableID, "innerHTML", "GET", "", hxValsPopdvPrijava, true, common.ClassSaveButton, "")
 		btnDelete := common.SetButton("delete-btn", "Obriši", "fin_delete", "", "", "innerHTML", "GET", "", hxValsPopdvPrijava, true, common.ClassButton, "")
 		searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), popdvURLPrijava, fmt.Sprintf("#%s", popdvTableID), hxValsPopdvPrijava)
 

@@ -32,7 +32,7 @@ func (s *MenuResource) GetMenuData(ctx context.Context) ([]domain.MenuItem, erro
 	if userSesssion == nil {
 		return nil, errors.New("user session not found in context")
 	}
-	qb := common.NewQueryBuilder(` SELECT id, menuname, displayname, icon, sortorder FROM menuitems`, true)
+	qb := common.NewQueryBuilder(` SELECT id, menuname, coalesce(displayname, '') as displayname, coalesce(icon, '') as icon, coalesce(sortorder, 0) as sortorder FROM menuitems`, true)
 	qb.AddOrderBy("sortorder")
 
 	sqlQuery, args := qb.Build()
@@ -49,7 +49,7 @@ func (s *MenuResource) GetSubmenuData(ctx context.Context, menuName string) ([]d
 	if userSesssion == nil {
 		return nil, errors.New("user session not found in context")
 	}
-	qb := common.NewQueryBuilder(` SELECT sb.id, sb.menuid, sb.submenuname, sb.urlmenu, sb.icon, sb.sortorder FROM menuitems m`, true)
+	qb := common.NewQueryBuilder(` SELECT sb.id, sb.menuid, sb.submenuname, sb.urlmenu, coalesce(sb.icon, '') as icon, coalesce(sb.sortorder, 0) as sortorder FROM menuitems m`, true)
 	qb.AddJoin(`inner join submenuitems sb on sb.menuid = m.id`)
 	qb.AddEqual("m.menuname", menuName)
 	qb.AddOrderBy("sortorder")

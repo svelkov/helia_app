@@ -80,7 +80,7 @@ func (h *KompenzacijeHandler) KompenzacijeMain(c *gin.Context) {
 	searchInput := common.CreateSearchInput("search-input", translator, kompenzacijeURLPregledPartnera, fmt.Sprintf("#%s", kompenzacijePregledTableID), hxValsKompenzacijePregledPartnera)
 
 	// Create configuration
-	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", "/api/kompenzacije/pregledpartnera", fmt.Sprintf("#%s", kompenzacijePregledTableID), "innerHTML", "GET", "", hxValsKompenzacijePregledPartnera, true, common.ClassSaveButton, "handleDialogResponse")
+	btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", "/api/kompenzacije/pregledpartnera", fmt.Sprintf("#%s", kompenzacijePregledTableID), "innerHTML", "GET", "", hxValsKompenzacijePregledPartnera, true, common.ClassSaveButton, "handleDialogResponse")
 	btnPrint := common.SetButton("stampa", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
 
 	tbl := common.SetTableBasicData(kompenzacijeContentTitle, kompenzacijePregledTableID, h.service.GetPregledPartneraTableFields(), "", "", 0, 0, 0, 0, h.cfg)
@@ -106,7 +106,7 @@ func (h *KompenzacijeHandler) KompenzacijePregledPartnera(c *gin.Context) {
 	common.SetTableConfig(&tbl, "PREGLED PARTNERA ZA FORMIRANJE KOMPENZACIJE", kompenzacijeURLPregledPartnera, false, false, false)
 
 	if requestSource == "menu" || requestSource == "tab" {
-		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", kompenzacijeURLPregledPartnera, fmt.Sprintf("#%s", kompenzacijePregledTableID), "innerHTML", "GET", "", hxValsKompenzacijePregledPartnera, true, common.ClassSaveButton, "handleDialogResponse")
+		btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", kompenzacijeURLPregledPartnera, fmt.Sprintf("#%s", kompenzacijePregledTableID), "innerHTML", "GET", "", hxValsKompenzacijePregledPartnera, true, common.ClassSaveButton, "handleDialogResponse")
 		btnPrint := common.SetButton("stampa", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
 
 		setActiveKompenzacijeTab(&h.tabData, "pregledpartnera")
@@ -165,7 +165,7 @@ func (h *KompenzacijeHandler) KompenzacijeFormiranje(c *gin.Context) {
 	poverilacData.ShowActions = true
 
 	if requestSource == "menu" || requestSource == "tab" {
-		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", kompenzacijeURLFormiranje, "#kompenzacije-detalji", "innerHTML", "GET", "", hxValsKompenzacijeFormiranje, true, common.ClassSaveButton, "handleDialogResponse")
+		btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", kompenzacijeURLFormiranje, "#kompenzacije-detalji", "innerHTML", "GET", "", hxValsKompenzacijeFormiranje, true, common.ClassSaveButton, "handleDialogResponse")
 		btnFormKomp := common.SetButton("form-komp-btn", "Formiraj kompenzaciju", "fin_save", kompenzacijeURLFormiranje+"/formiraj", "#kompenzacije-detalji", "innerHTML", "POST", "", hxValsKompenzacijeFormiranje, true, common.ClassAddButton, "")
 
 		setActiveKompenzacijeTab(&h.tabData, "formiranje")
@@ -271,7 +271,7 @@ func (h *KompenzacijeHandler) KompenzacijePregled(c *gin.Context) {
 	}
 
 	searchInput := common.CreateSearchInput("search-input", translator, kompenzacijeURLPregled, fmt.Sprintf("#%s", kompenzacijePregledKompenzacijaTableID), hxValsKompenzacijePregled)
-	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", kompenzacijeURLPregled, fmt.Sprintf("#%s", kompenzacijePregledKompenzacijaTableID), "innerHTML", "GET", "", hxValsKompenzacijePregled, true, common.ClassSaveButton, "handleDialogResponse")
+	btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", kompenzacijeURLPregled, fmt.Sprintf("#%s", kompenzacijePregledKompenzacijaTableID), "innerHTML", "GET", "", hxValsKompenzacijePregled, true, common.ClassSaveButton, "handleDialogResponse")
 	btnPrint := common.SetButton("stampa-btn", "Štampa", "fin_print", kompenzacijeURLPregled+"/print", "", "innerHTML", "GET", "", hxValsKompenzacijePregled, true, common.ClassPrintButton, "")
 
 	tblHdr := common.SetTableBasicData("", kompenzacijePregledKompenzacijaTableID, h.service.GetKompenzacijeTableFields(), "", "", 0, 0, 0, 0, h.cfg)
@@ -335,7 +335,7 @@ func (h *KompenzacijeHandler) KompenzacijeKnjizenje(c *gin.Context) {
 	dokumentaData.ShowPagination = false
 
 	if requestSource == "menu" || requestSource == "tab" {
-		btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", kompenzacijeURLKnjizenje, fmt.Sprintf("#%s", kompenzacijeKnjizenjeTableID), "innerHTML", "GET", "", hxValsKompenzacijeKnjizenje, true, common.ClassSaveButton, "handleDialogResponse")
+		btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", kompenzacijeURLKnjizenje, fmt.Sprintf("#%s", kompenzacijeKnjizenjeTableID), "innerHTML", "GET", "", hxValsKompenzacijeKnjizenje, true, common.ClassSaveButton, "handleDialogResponse")
 		btnRavnoteza := common.SetButton("ravnoteza-btn", "Pr. Ravnotezu", "fin_ravnoteza", kompenzacijeURLKnjizenje+"/ravnoteza", "", "innerHTML", "POST", "", hxValsKompenzacijeKnjizenje, true, common.ClassAddButton, "")
 		btnKnjizi := common.SetButton("knjizi-btn", "Knjiži", "fin_save", kompenzacijeURLKnjizenje+"/knjizi", "", "innerHTML", "POST", "", hxValsKompenzacijeKnjizenje, true, common.ClassSaveButton, "")
 

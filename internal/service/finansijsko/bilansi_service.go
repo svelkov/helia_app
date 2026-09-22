@@ -17,12 +17,9 @@ import (
 
 // BilansiService defines the interface for operations related to Bilansi (Balance Sheets).
 type BilansiService interface {
-	GetZakljucniTableFields() []domain.Fields
-	GetBilansStanjaTableFields() []domain.Fields
-	GetBilansStanjaStampaTableFields() []domain.Fields
-	GetBilansUspehaTableFields() []domain.Fields
-	GetBilansUspehaStampaTableFields() []domain.Fields
-	GetZakljucniList(ctx context.Context, tbl *domain.TableData, params domain.ZakljucniParams, getTotalRecords bool, pageSize, currentPage int) error
+	GetZakljucniListAnalitika(ctx context.Context, tbl *domain.TableData, params domain.ZakljucniParams, getTotalRecords bool, pageSize, currentPage int) error
+	GetZakljucniListSintetika(ctx context.Context, tbl *domain.TableData, params domain.ZakljucniParams, getTotalRecords bool, pageSize, currentPage int) error
+	GetZakljucniListSubsintetika(ctx context.Context, tbl *domain.TableData, params domain.ZakljucniParams, getTotalRecords bool, pageSize, currentPage int) error
 	GetZakljucniListZaStampu(ctx context.Context, tbl *domain.TableData, tblSummary *domain.TableData, params domain.ZakljucniParams, nDuzSint int) error
 	GetBilansStanja(ctx context.Context, tbl *domain.TableData, totals *domain.BilansiTotals, searchText string, skraceni bool) error
 	GetBilansStanjaObrada(ctx context.Context, tbl *domain.TableData, totals *domain.BilansiTotals, stanjeNaDan string, skraceni, lPGODizPS bool) error
@@ -38,6 +35,11 @@ type BilansiService interface {
 	DeleteBilansStanja(ctx context.Context, id int64) error
 	GetFieldCache() map[string]reflect.StructField
 	GetFvrData(ctx context.Context) (domain.Fvr, error)
+	GetZakljucniTableFields() []domain.Fields
+	GetBilansStanjaTableFields() []domain.Fields
+	GetBilansStanjaStampaTableFields() []domain.Fields
+	GetBilansUspehaTableFields() []domain.Fields
+	GetBilansUspehaStampaTableFields() []domain.Fields
 	// Bilu (Bilans Uspeha) methods
 	GetByIDBilu(ctx context.Context, idField string, idValue int64) (*domain.Bilu, error)
 	UpdateBilu(ctx context.Context, entity *domain.Bilu, idField string, idValue interface{}, tableFields []domain.Fields) error
@@ -129,279 +131,702 @@ func (s *BilansiResource) GetBilansUspehaStampaTableFields() []domain.Fields {
 	return s.bilansUspehaStampaTableFields
 }
 
-// GetZakljucniList retrieves data for Zakljucni list (closing account balance)
-func (s *BilansiResource) GetZakljucniList(ctx context.Context, tbl *domain.TableData, params domain.ZakljucniParams, getTotalRecords bool, pageSize, currentPage int) error {
+// GetZakljucniListAnalitika retrieves the analitika Zakljucni list (tipLista "1") in a single
+// pass: one query returns every hierarchy level (analitika, sintetika, grupa, klasa) and the
+// rows are mapped into tbl with the level marker in Fields[0]:
+//
+//	"1", "2", ... analitika rows (konto + sifra), numbered
+//	"G1"          sintetika subtotal (LEFT(konto, cfg.NDuzSint))
+//	"G2"          grupa subtotal (LEFT(konto, 2))
+//	"G3"          klasa subtotal (LEFT(konto, 1))
+//
+// On the totals pass (getTotalRecords) only the analitika leaves are counted and summed, so the
+// subtotal levels are not counted twice.
+func (s *BilansiResource) GetZakljucniListAnalitika(ctx context.Context, tbl *domain.TableData, params domain.ZakljucniParams, getTotalRecords bool, pageSize, currentPage int) error {
+
 	session := domain.GetSessionFromStdContext(ctx)
 	if session == nil {
 		return fmt.Errorf("user session not found")
 	}
+	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
 
-	common.SetTableConfig(tbl, "", "", false, false, false)
-	tbl.SearchEnabled = true
+	sqlQuery, queryArgs := s.buildZakljucniListAnalitikaQuery(session, hasGod, hasKar, params, common.TipStampePreview)
+	if !getTotalRecords {
+		sqlQuery = fmt.Sprintf("%s LIMIT %d OFFSET %d", sqlQuery, pageSize, (currentPage-1)*pageSize)
+	}
+
+	tbl.Headers = s.GetZakljucniTableFields()
 	common.SetupTablePagination(tbl, currentPage, pageSize)
-	// hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
-	// // =============================================================================
-	// // STEP 1: Define query structure based on tipLista (analytical level)
-	// // =============================================================================
 
-	// var config domain.QueryConfig
-	// switch params.TipLista {
-	// case "1": // Analitička (detailed by konto + sifra)
-	// 	config = domain.QueryConfig{
-	// 		SelectCols:  "fpro.konto, COALESCE(fpro.sifra, '') as sifra, fpro.idfkpl,",
-	// 		GroupByCols: "fpro.konto, fpro.sifra, fpro.idfkpl",
-	// 		OrderByCols: "COALESCE(NULLIF(agg.konto, '')::numeric, 0) ASC, COALESCE(NULLIF(agg.sifra, '')::numeric, 0) ASC",
-	// 	}
-	// case "2": // Sintetička (summary by konto only)
-	// 	config = domain.QueryConfig{
-	// 		SelectCols:  "fpro.konto,",
-	// 		GroupByCols: "fpro.konto",
-	// 		OrderByCols: "COALESCE(NULLIF(agg.konto, '')::numeric, 0) ASC",
-	// 	}
-	// case "3": // Grupa (summary by truncated konto)
-	// 	config = domain.QueryConfig{
-	// 		SelectCols:  fmt.Sprintf("LEFT(fpro.konto, %d) as konto,", s.cfg.NDuzSint),
-	// 		GroupByCols: fmt.Sprintf("LEFT(fpro.konto, %d)", s.cfg.NDuzSint),
-	// 		OrderByCols: "COALESCE(NULLIF(agg.konto, '')::numeric, 0) ASC",
-	// 	}
-	// }
-
-	// // =============================================================================
-	// // STEP 2: Build INNER aggregation query (fpro transactions grouped by account)
-	// // =============================================================================
-	// aggregationSQL := fmt.Sprintf(`%s
-	// 	COALESCE(SUM(CASE WHEN fpro.tipdok = '00' AND (fpro.kat = 1 OR fpro.kat = 2) THEN fpro.iznos ELSE 0 END), 0) as pocstanjedug,
-	// 	COALESCE(SUM(CASE WHEN fpro.tipdok = '00' AND fpro.kat NOT IN (1,2) THEN fpro.iznos ELSE 0 END), 0) as pocstanjepot,
-	// 	COALESCE(SUM(CASE WHEN fpro.tipdok != '00' AND (fpro.kat = 1 OR fpro.kat = 2) THEN fpro.iznos ELSE 0 END), 0) as prometdug,
-	// 	COALESCE(SUM(CASE WHEN fpro.tipdok != '00' AND fpro.kat NOT IN (1,2) THEN fpro.iznos ELSE 0 END), 0) as prometpot
-	// 	FROM fpro`, fmt.Sprintf("SELECT %s", config.SelectCols))
-
-	// innerQb := common.NewQueryBuilder(aggregationSQL, true)
-
-	// // Add period filters (god/kar)
-	// if hasGod {
-	// 	innerQb.AddEqual("fpro.god", session.SelectedGod)
-	// }
-	// if hasKar {
-	// 	innerQb.AddEqual("fpro.kar", session.SelectedKar)
-	// }
-
-	// // Add date range filters
-	// innerQb.AddCondition("fpro.danal", params.OdDatuma, ">=")
-	// innerQb.AddCondition("fpro.danal", params.DoDatuma, "<=")
-
-	// // Add konta (account) range filters
-	// if params.OdKonta != "" {
-	// 	innerQb.AddCondition("COALESCE(NULLIF(fpro.konto, '')::numeric, 0)", params.OdKonta, ">=")
-	// }
-	// if params.DoKonta != "" {
-	// 	innerQb.AddCondition("COALESCE(NULLIF(fpro.konto, '')::numeric, 0)", params.DoKonta, "<=")
-	// }
-
-	// // // Add specific filters
-	// // if params.Klasa9 == "true" {
-	// // 	innerQb.AddLikeBegin("fpro.konto", "9") // Filter for class 9 accounts only
-	// // }
-
-	// // Add sifra (code) range filters only for tipLista "1"
-	// if params.TipLista == "1" {
-	// 	if params.OdSifre != "" {
-	// 		innerQb.AddCondition("COALESCE(NULLIF(fpro.sifra, '')::numeric, 0)", params.OdSifre, ">=")
-	// 	}
-	// 	if params.DoSifre != "" {
-	// 		innerQb.AddCondition("COALESCE(NULLIF(fpro.sifra, '')::numeric, 0)", params.DoSifre, "<=")
-	// 	}
-	// }
-
-	// // Filter vkonta (account type): only 1 (assets) and 2 (liabilities) for tipLista 1 and 2
-	// if params.TipLista == "1" || params.TipLista == "2" {
-	// 	innerQb.AddIn("fpro.vkonta", []interface{}{"1", "2"})
-	// }
-
-	// // Apply grouping to aggregate transactions
-	// innerQb.AddGroupBy(config.GroupByCols)
-
-	// // Filter by samosaprometom if needed (exclude zero saldo rows)
-	// if params.SamosaPrometom == "true" {
-	// 	innerQb.AddHaving("((COALESCE(SUM(CASE WHEN fpro.tipdok = '00' AND (fpro.kat = 1 OR fpro.kat = 2) THEN fpro.iznos ELSE 0 END), 0) + COALESCE(SUM(CASE WHEN fpro.tipdok != '00' AND (fpro.kat = 1 OR fpro.kat = 2) THEN fpro.iznos ELSE 0 END), 0)) != 0 OR (COALESCE(SUM(CASE WHEN fpro.tipdok = '00' AND fpro.kat NOT IN (1,2) THEN fpro.iznos ELSE 0 END), 0) + COALESCE(SUM(CASE WHEN fpro.tipdok != '00' AND fpro.kat NOT IN (1,2) THEN fpro.iznos ELSE 0 END), 0)) != 0)")
-	// }
-
-	// // Build inner aggregation query
-	// innerSql, innerArgs := innerQb.Build()
-
-	// // =============================================================================
-	// // STEP 3: Build OUTER query - join with account names from fkpl table
-	// // =============================================================================
-	// var outerSql string
-	// var allArgs []interface{}
-
-	// switch params.TipLista {
-	// case "1": // Analitička - join directly to fkpl by idfkpl
-	// 	// Build outer query builder with inner SQL embedded
-	// 	outerQb := common.NewQueryBuilder(fmt.Sprintf(
-	// 		`SELECT agg.*, COALESCE(fkpl.naziv, '') as naziv FROM (%s) agg`, innerSql), true)
-	// 	outerQb.AddJoin("left join fkpl on fkpl.idfkpl = agg.idfkpl")
-	// 	outerQb.AddOrderBy(config.OrderByCols)
-
-	// 	// Add pagination using QueryBuilder
-	// 	if !getTotalRecords {
-	// 		outerQb.SetLimit(pageSize)
-	// 		outerQb.SetOffset((currentPage - 1) * pageSize)
-	// 	}
-	// 	outerQb.AddArgs(innerArgs...) // Add inner query parameters
-	// 	// Build outer query - it should not create new parameters since no WHERE conditions
-	// 	outerSql, allArgs = outerQb.Build()
-
-	// case "2": // Sintetička - get distinct naziv per konto
-	// 	// Build distinct subquery for fkpl names
-	// 	distinctQb := common.NewQueryBuilder(
-	// 		`SELECT DISTINCT ON (konto) konto, naziv FROM fkpl`, true)
-	// 	distinctQb.AddArgs(innerArgs...) // Add inner query parameters if needed for filtering
-	// 	distinctQb.AddEqual("vkonta", 2)
-	// 	distinctQb.AddOrderBy("konto, god DESC, kar DESC")
-	// 	distinctSql, distinctArgs := distinctQb.Build()
-
-	// 	// Build outer query builder with inner SQL and distinct subquery embedded
-	// 	outerQb := common.NewQueryBuilder(fmt.Sprintf(
-	// 		`SELECT agg.*, COALESCE(fkpl_data.naziv, '') as naziv FROM (%s) agg LEFT JOIN (%s) fkpl_data ON fkpl_data.konto = agg.konto`,
-	// 		innerSql, distinctSql), true)
-	// 	outerQb.AddOrderBy(config.OrderByCols)
-
-	// 	// Add pagination using QueryBuilder
-	// 	if !getTotalRecords {
-	// 		outerQb.SetLimit(pageSize)
-	// 		outerQb.SetOffset((currentPage - 1) * pageSize)
-	// 	}
-	// 	outerQb.AddArgs(distinctArgs...) // Add distinct query parameters (if any)
-	// 	// Add inner query parameters
-	// 	// Build outer query - combine parameters from inner and distinct queries only
-	// 	outerSql, allArgs = outerQb.Build()
-
-	// case "3": // Grupa - get distinct naziv per truncated konto group
-	// 	// Build distinct subquery for fkpl names grouped by truncated konto
-	// 	distinctQb := common.NewQueryBuilder(fmt.Sprintf(
-	// 		`SELECT DISTINCT ON (LEFT(konto, %d)) LEFT(konto, %d) as konto_trunc, naziv FROM fkpl`,
-	// 		s.cfg.NDuzSint, s.cfg.NDuzSint), true)
-	// 	distinctQb.AddArgs(innerArgs...)
-	// 	distinctQb.AddEqual("vkonta", 3)
-	// 	distinctQb.AddOrderBy(fmt.Sprintf("LEFT(konto, %d), god DESC, kar DESC", s.cfg.NDuzSint))
-	// 	distinctSql, distinctArgs := distinctQb.Build()
-
-	// 	// Build outer query builder with inner SQL and distinct subquery embedded
-	// 	outerQb := common.NewQueryBuilder(fmt.Sprintf(
-	// 		`SELECT agg.*, COALESCE(fkpl_data.naziv, '') as naziv FROM (%s) agg LEFT JOIN (%s) fkpl_data ON fkpl_data.konto_trunc = agg.konto`,
-	// 		innerSql, distinctSql), true)
-	// 	outerQb.AddOrderBy(config.OrderByCols)
-
-	// 	// Add pagination using QueryBuilder
-	// 	if !getTotalRecords {
-	// 		outerQb.SetLimit(pageSize)
-	// 		outerQb.SetOffset((currentPage - 1) * pageSize)
-	// 	}
-	// 	outerQb.AddArgs(distinctArgs...) // Add distinct query parameters (if any)
-	// 	// Build outer query - combine parameters from inner and distinct queries only
-	// 	outerSql, allArgs = outerQb.Build()
-	// }
-
-	// // =============================================================================
-	// // STEP 4: Execute query with pagination applied at SQL level
-	// // =============================================================================
-	// //fmt.Println("SQL Query for Zakljucni list:", outerSql, allArgs)
-	// entities, err := s.fproRepo.GetAllCustom(ctx, outerSql, "", allArgs, "", "")
-	// if err != nil {
-	// 	return err
-	// }
-	entities, err := s.getZakljucniQuery(ctx, tbl, getTotalRecords, params, common.TipStampePreview, pageSize, currentPage) // "O" for data version of the query (with pagination and total count)
+	entities, err := s.fproRepo.GetAllCustom(ctx, sqlQuery, "", queryArgs, "", "")
 	if err != nil {
 		return err
 	}
 
+	// Totals pass: every hierarchy level is an aggregate of the analitika rows, so only the
+	// leaves are counted and summed - adding the subtotal levels up would count twice.
 	if getTotalRecords {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
+		leaves := make([]domain.FproDto, 0, len(*entities))
+		for _, entity := range *entities {
+			if entity.NivoOrder == zakljucniNivoAnalitika {
+				leaves = append(leaves, entity)
+			}
+		}
+		setZakljucniTotals(tbl, leaves, pageSize)
 		return nil
 	}
-	// Populate table rows - pagination is already applied at SQL level
-	start := (currentPage - 1) * pageSize
+
+	// The query returns the hierarchy already ordered level by level, so every subtotal row
+	// follows the rows it aggregates. Fields[0] carries the level marker: the running row
+	// number for analitika rows, G1/G2/G3 for the sintetika/grupa/klasa subtotals.
+	//
+	// The hierarchy is always returned complete - slicing it with LIMIT/OFFSET would separate
+	// subtotal rows from their children - so pageSize/currentPage only drive the pagination
+	// counters (the total is the number of analitika rows).
 	rowNum := 1
-
-	for _, entity := range *entities {
-		// Calculate combined saldo
-		saldoDug := entity.PocStanjeDug + entity.PrometDug
-		saldoPot := entity.PocStanjePot + entity.PrometPot
-
-		if saldoDug > saldoPot {
-			saldoDug = saldoDug - saldoPot
-			saldoPot = 0
-		} else if saldoPot > saldoDug {
-			saldoPot = saldoPot - saldoDug
-			saldoDug = 0
-		} else {
-			saldoDug = 0
-			saldoPot = 0
+	// Every subtotal row shows the sum of the netted sides below it, so the saldo columns foot
+	// at every level and the grid shows the same numbers as the printed report.
+	saldoAcc := zakljucniSaldoAccumulatorFromDetails(s.cfg, params.TipLista, *entities)
+	nazivCache := make(map[string]string)
+	for i, entity := range *entities {
+		marker := zakljucniNivoMarker(entity.NivoOrder, rowNum)
+		if entity.NivoOrder == zakljucniNivoAnalitika {
+			rowNum++
 		}
-		// Build fields based on tipLista
+		if marker == "" {
+			continue // unknown level: skip it rather than render a nameless row
+		}
+
+		// The account names are not part of the aggregation, so they are resolved per unique
+		// hierarchy key (cached, so every key is looked up only once).
+		naziv, cached := nazivCache[entity.Konto]
+		if !cached {
+			naziv = s.getKontoNaziv(ctx, entity.Konto)
+			nazivCache[entity.Konto] = naziv
+		}
+
+		saldoDug, saldoPot := saldoAcc.saldo(entity)
 		fields := []string{
-			fmt.Sprintf("%d", start+rowNum),
+			fmt.Sprintf("%d", i+1),
 			entity.Konto,
-		}
-		sifra := ""
-		// Add sifra only for tipLista "1"
-		if params.TipLista == "1" {
-			sifra = entity.Sifra
-		}
-		fields = append(fields, []string{
-			sifra,
-			entity.Naziv,
+			entity.Sifra,
+			naziv,
 			common.FormatNumberWithSystemLocale(entity.PocStanjeDug, 2),
 			common.FormatNumberWithSystemLocale(entity.PocStanjePot, 2),
 			common.FormatNumberWithSystemLocale(entity.PrometDug, 2),
 			common.FormatNumberWithSystemLocale(entity.PrometPot, 2),
 			common.FormatNumberWithSystemLocale(saldoDug, 2),
 			common.FormatNumberWithSystemLocale(saldoPot, 2),
-		}...)
-
-		tblRow := domain.TableRow{Fields: fields, HasUpdate: false, HasDelete: false}
-		tbl.Rows = append(tbl.Rows, tblRow)
-
-		rowNum++
+		}
+		tbl.Rows = append(tbl.Rows, domain.TableRow{ID: marker, Fields: fields, HasUpdate: false, HasDelete: false})
 	}
-
-	// Set table headers
-	tbl.Headers = s.GetZakljucniTableFields()
 
 	return nil
 }
 
-// GetZakljucniListZaStampu returns all zakljucni list rows for printing, including embedded
-// subgroup (sintetika) and group (group prefix) total rows with row-type markers.
-// Subgroup = same konto value; group = konto[0:nDuzSint].
-func (s *BilansiResource) GetZakljucniListZaStampu(ctx context.Context, tbl, tblSummary *domain.TableData, params domain.ZakljucniParams, nDuzSint int) error {
+// Hierarchy levels of the analitika Zakljucni list (GROUPING SETS); the values double as the
+// "nivo_order" of the query result.
+const (
+	zakljucniNivoKlasa     = 1 // LEFT(konto, 1)
+	zakljucniNivoGrupa     = 2 // LEFT(konto, 2)
+	zakljucniNivoSintetika = 3 // LEFT(konto, cfg.NDuzSint)
+	zakljucniNivoAnalitika = 4 // konto + sifra
+)
 
-	entities, err := s.getZakljucniQuery(ctx, nil, false, params, common.TipStampePrint, 0, 0)
+// zakljucniNivoMarker maps a hierarchy level to the marker used in Fields[0] of the analitika
+// report rows: the running row number for the analitika (detail) rows and G1/G2/G3 for the
+// sintetika/grupa/klasa subtotals. An unknown level returns "", and the caller skips that row.
+func zakljucniNivoMarker(nivo, rowNum int) string {
+	if nivo == zakljucniNivoAnalitika {
+		return fmt.Sprintf("%d", rowNum) // detail rows are numbered, not grouped
+	}
+	return zakljucniNivoGroupMarker(nivo, zakljucniNivoSintetika)
+}
+
+// zakljucniNivoGroupMarker maps a hierarchy level to the G<n> marker of a hierarchy whose
+// innermost subtotal level is topNivo: G1 is the innermost subtotal and the outermost level
+// (klasa) gets the highest number, so every list numbers its subtotals from its own finest
+// level. Levels outside klasa..topNivo return "", and the caller skips that row.
+func zakljucniNivoGroupMarker(nivo, topNivo int) string {
+	if nivo < zakljucniNivoKlasa || nivo > topNivo {
+		return ""
+	}
+	return fmt.Sprintf("G%d", topNivo-nivo+1)
+}
+
+// zakljucniDetailNivo returns the finest level of the hierarchy of a tipLista, i.e. the level
+// that the grid and the printed report show as detail rows: konto + sifra (analitika), konto
+// (subsintetika) or LEFT(konto, NDuzSint) (sintetika).
+func zakljucniDetailNivo(tipLista string) int {
+	if tipLista == "3" {
+		return zakljucniNivoSintetika
+	}
+	return zakljucniNivoAnalitika
+}
+
+// zakljucniSaldoAccumulator accumulates the netted saldo of the detail rows per subtotal key, so
+// every subtotal row shows the sum of the sides below it instead of a netting of its own level.
+// The saldo columns then add up at every level and the grid and the printed report agree.
+//
+// The subtotal rows themselves come from the query (they carry the raw column sums); only their
+// saldo columns are taken from this accumulator.
+type zakljucniSaldoAccumulator struct {
+	nduzSint   int
+	detailNivo int
+	byKey      map[string][2]float64 // "<nivo>|<konto>" -> netted duguje, potražuje
+	dugPot     [2]float64            // grand total of the netted sides of every detail row
+}
+
+// newZakljucniSaldoAccumulator creates an accumulator for a list whose finest level is detailNivo.
+func newZakljucniSaldoAccumulator(nduzSint, detailNivo int) *zakljucniSaldoAccumulator {
+	return &zakljucniSaldoAccumulator{
+		nduzSint:   nduzSint,
+		detailNivo: detailNivo,
+		byKey:      make(map[string][2]float64),
+	}
+}
+
+// zakljucniSaldoAccumulatorFromDetails builds the accumulator of a list: every row of the finest
+// (detail) level is accumulated into its subtotal levels.
+func zakljucniSaldoAccumulatorFromDetails(cfg config.Config, tipLista string, entities []domain.FproDto) *zakljucniSaldoAccumulator {
+	acc := newZakljucniSaldoAccumulator(cfg.NDuzSint, zakljucniDetailNivo(tipLista))
+	for _, entity := range entities {
+		if entity.NivoOrder == acc.detailNivo {
+			acc.addDetail(entity)
+		}
+	}
+	return acc
+}
+
+// zakljucniSaldoKey builds the accumulator key of one subtotal level.
+func zakljucniSaldoKey(nivo int, konto string) string {
+	return fmt.Sprintf("%d|%s", nivo, konto)
+}
+
+// addDetail accumulates one detail row into its subtotal levels and into the grand total. The
+// levels above the detail level are the konto prefixes: LEFT(konto, NDuzSint), LEFT(konto, 2)
+// and LEFT(konto, 1).
+func (a *zakljucniSaldoAccumulator) addDetail(ent domain.FproDto) {
+	dug, pot := netirajSaldo(ent.PocStanjeDug+ent.PrometDug, ent.PocStanjePot+ent.PrometPot)
+	a.dugPot[0] += dug
+	a.dugPot[1] += pot
+
+	if a.detailNivo > zakljucniNivoSintetika && a.nduzSint < len(ent.Konto) {
+		a.add(zakljucniNivoSintetika, ent.Konto[:a.nduzSint], dug, pot)
+	}
+	if a.detailNivo > zakljucniNivoGrupa && len(ent.Konto) > 2 {
+		a.add(zakljucniNivoGrupa, ent.Konto[:2], dug, pot)
+	}
+	if a.detailNivo > zakljucniNivoKlasa && len(ent.Konto) > 1 {
+		a.add(zakljucniNivoKlasa, ent.Konto[:1], dug, pot)
+	}
+}
+
+func (a *zakljucniSaldoAccumulator) add(nivo int, konto string, dug, pot float64) {
+	key := zakljucniSaldoKey(nivo, konto)
+	cur := a.byKey[key]
+	a.byKey[key] = [2]float64{cur[0] + dug, cur[1] + pot}
+}
+
+// saldo returns the saldo to display for a row: its own netted side for a detail row and the
+// accumulated sides of the rows below it for a subtotal row.
+func (a *zakljucniSaldoAccumulator) saldo(ent domain.FproDto) (float64, float64) {
+	if ent.NivoOrder == a.detailNivo {
+		return netirajSaldo(ent.PocStanjeDug+ent.PrometDug, ent.PocStanjePot+ent.PrometPot)
+	}
+	v := a.byKey[zakljucniSaldoKey(ent.NivoOrder, ent.Konto)]
+	return v[0], v[1]
+}
+
+// total returns the grand total: the sum of the netted sides of every detail row.
+func (a *zakljucniSaldoAccumulator) total() (float64, float64) {
+	return a.dugPot[0], a.dugPot[1]
+}
+
+// zakljucniPrintMarker maps a hierarchy level to the marker used in Fields[0] of the printed
+// rows: the finest level of the printed list (finestNivo) is printed as a numbered detail row
+// and every level above it gets the G<n> marker of its distance from it, so G1 stays the
+// innermost subtotal. A level that is neither the finest one nor one of its parents returns "".
+func zakljucniPrintMarker(nivo, finestNivo, rowNum int) string {
+	if nivo == finestNivo {
+		return fmt.Sprintf("%d", rowNum)
+	}
+	return zakljucniNivoGroupMarker(nivo, finestNivo-1)
+}
+
+// buildZakljucniListAnalitikaQuery builds the single-pass hierarchy query of the analitika
+// Zakljucni list with the QueryBuilder:
+//
+//	filtered  the fpro transactions of the report (period filters only)
+//	agg       GROUPING SETS produce one row per level: analitika (konto + sifra),
+//	          sintetika (LEFT(konto, cfg.NDuzSint)), grupa (LEFT(konto, 2)) and klasa
+//	          (LEFT(konto, 1))
+//	outer     the level is mapped to nivo_order/konto/sifra and the result is ordered by the
+//	          level aware sort key, so every subtotal row follows the rows it aggregates
+//
+// Nothing is hardcoded: the period comes from params, god/kar from the session (only when the
+// ledger carries them) and the sintetika prefix length from the configuration. The search text
+// matches the hierarchy key (konto and sifra).
+func (s *BilansiResource) buildZakljucniListAnalitikaQuery(session *domain.UserSession, hasGod, hasKar bool, params domain.ZakljucniParams, printType string) (string, []any) {
+	filterQb := common.NewQueryBuilder(`SELECT konto, sifra, fnal.tipdok, kat, iznos FROM fpro`, true)
+	filterQb.AddJoin(" inner join fnal on fnal.idfnal = fpro.idfnal ")
+	if hasGod {
+		filterQb.AddEqual("fpro.god", session.SelectedGod)
+	}
+	if hasKar {
+		filterQb.AddEqual("fpro.kar", session.SelectedKar)
+	}
+	filterQb.AddEqual("fpro.vkonta", 1)
+	filterQb.AddCondition("fnal.danal", params.OdDatuma, ">=")
+	filterQb.AddCondition("fnal.danal", params.DoDatuma, "<=")
+	// Klasa 9 accounts are excluded for printing only, exactly like the flattened
+	// zakljucniInnerQuery does it.
+	if printType == common.TipStampePrint && params.Klasa9 == "false" {
+		filterQb.AddCustomCondition("fpro.konto NOT LIKE '9%'")
+	}
+	filterSql, filterArgs := filterQb.Build()
+
+	// The sintetika prefix length is a parameter as well, so its placeholder has to continue
+	// the numbering of the placeholders already used by the "filtered" CTE above.
+	sintParam := len(filterArgs) + 1
+	nivoOrderCase := fmt.Sprintf("CASE WHEN k4 IS NOT NULL THEN %d WHEN k3 IS NOT NULL THEN %d WHEN k2 IS NOT NULL THEN %d ELSE %d END AS nivo_order",
+		zakljucniNivoAnalitika, zakljucniNivoSintetika, zakljucniNivoGrupa, zakljucniNivoKlasa)
+
+	baseSql := fmt.Sprintf(`WITH filtered AS (%s),
+	agg AS (
+		SELECT
+			LEFT(konto, 1) AS k1,
+			LEFT(konto, 2) AS k2,
+			LEFT(konto, $%d) AS k3,
+			konto AS k4,
+			sifra AS s4,
+			SUM(CASE WHEN tipdok = '00' AND kat IN (1,2) THEN iznos ELSE 0 END) AS pocstanjedug,
+			SUM(CASE WHEN tipdok = '00' AND kat IN (3,4) THEN iznos ELSE 0 END) AS pocstanjepot,
+			SUM(CASE WHEN tipdok <> '00' AND kat IN (1,2) THEN iznos ELSE 0 END) AS prometdug,
+			SUM(CASE WHEN tipdok <> '00' AND kat IN (3,4) THEN iznos ELSE 0 END) AS prometpot
+		FROM filtered
+		GROUP BY GROUPING SETS (
+			(konto, sifra),
+			(LEFT(konto, $%d)),
+			(LEFT(konto, 2)),
+			(LEFT(konto, 1))
+		)
+	)
+	SELECT
+		nivo_order,
+		konto_grp AS konto,
+		sifra_grp AS sifra,
+		pocstanjedug, pocstanjepot, prometdug, prometpot
+	FROM (
+		SELECT
+			%s,
+			COALESCE(k4, k3, k2, k1) AS konto_grp,
+			COALESCE(s4, '') AS sifra_grp,
+			RPAD(COALESCE(k4, k3, k2, k1), 6, '~') AS sort_key,
+			pocstanjedug, pocstanjepot, prometdug, prometpot
+		FROM agg
+	) sub`, filterSql, sintParam, sintParam, nivoOrderCase)
+
+	qb := common.NewQueryBuilder(baseSql, false)
+	qb.AddArgs(filterArgs...)  // $1..$n : the "filtered" CTE
+	qb.AddArgs(s.cfg.NDuzSint) // $n+1   : the sintetika prefix length
+
+	// The search placeholder follows the CTE arguments and the prefix length.
+	if params.SearchText != "" {
+		qb.Where(zakljucniSearchCondition(len(filterArgs)+2, "sub.konto", "sub.sifra"), params.SearchText)
+	}
+	qb.AddOrderBy(`sort_key COLLATE "C", sifra_grp COLLATE "C" NULLS LAST`)
+
+	return qb.Build()
+}
+
+// GetZakljucniListSintetika retrieves the sintetika Zakljucni list (tipLista "3") in a single
+// pass: one query returns the three aggregation levels (sintetika, grupa, klasa) and the rows
+// are mapped into tbl with the level marker in Fields[0]:
+//
+//	"G1" sintetika subtotal (LEFT(konto, cfg.NDuzSint))
+//	"G2" grupa subtotal (LEFT(konto, 2))
+//	"G3" klasa subtotal (LEFT(konto, 1))
+//
+// There are no detail rows - every row is a subtotal - and on the totals pass the finest level
+// (sintetika) is counted and summed, so the outer levels are not counted twice.
+func (s *BilansiResource) GetZakljucniListSintetika(ctx context.Context, tbl *domain.TableData, params domain.ZakljucniParams, getTotalRecords bool, pageSize, currentPage int) error {
+
+	session := domain.GetSessionFromStdContext(ctx)
+	if session == nil {
+		return fmt.Errorf("user session not found")
+	}
+	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
+
+	sqlQuery, queryArgs := s.buildZakljucniListSintetikaQuery(session, hasGod, hasKar, params, common.TipStampePreview)
+	if !getTotalRecords {
+		sqlQuery = fmt.Sprintf("%s LIMIT %d OFFSET %d", sqlQuery, pageSize, (currentPage-1)*pageSize)
+	}
+
+	tbl.Headers = s.GetZakljucniTableFields()
+	common.SetupTablePagination(tbl, currentPage, pageSize)
+
+	entities, err := s.fproRepo.GetAllCustom(ctx, sqlQuery, "", queryArgs, "", "")
 	if err != nil {
 		return err
 	}
-	// ── Build rows with embedded group total rows ──────────────────────────────
-	// Row [0] encodes type: "1","2",... = data, "G1".."G4" = group totals, "T" = grand total.
+
+	// Totals pass: every level aggregates the same transactions, so only the finest level is
+	// counted and summed - adding the grupa/klasa levels up would count twice.
+	if getTotalRecords {
+		sintetike := make([]domain.FproDto, 0, len(*entities))
+		for _, entity := range *entities {
+			if entity.NivoOrder == zakljucniNivoSintetika {
+				sintetike = append(sintetike, entity)
+			}
+		}
+		setZakljucniTotals(tbl, sintetike, pageSize)
+		return nil
+	}
+
+	// The query returns the hierarchy already ordered level by level, so every subtotal row
+	// follows the rows it aggregates. Fields[0] carries the level marker (G1/G2/G3): there are
+	// no detail rows, so the marker is never a row number.
 	//
-	// Group levels per tipLista (innermost → outermost):
-	//   tipLista=1 (analitika):    G1=subsintetika(full konto), G2=sintetika(nDuzSint), G3=grupa(2), G4=klasa(1)
-	//   tipLista=2 (subsintetika): G1=sintetika(nDuzSint), G2=grupa(2), G3=klasa(1)
-	//   tipLista=3 (sintetika):    G1=grupa(2), G2=klasa(1)
-	formatRow := func(marker, konto, sifra, naziv string, pstDug, pstPot, promDug, promPot float64) domain.TableRow {
+	// The hierarchy is always returned complete - slicing it with LIMIT/OFFSET would separate
+	// subtotal rows from their children - so pageSize/currentPage only drive the pagination
+	// counters (the total is the number of sintetika rows).
+	// Every subtotal row shows the sum of the netted sides below it, so the saldo columns foot
+	// at every level and the grid shows the same numbers as the printed report.
+	saldoAcc := zakljucniSaldoAccumulatorFromDetails(s.cfg, params.TipLista, *entities)
+	nazivCache := make(map[string]string)
+	for i, entity := range *entities {
+		marker := zakljucniNivoMarker(entity.NivoOrder, 0) // no detail rows, so no row numbering
+		if marker == "" {
+			continue // unknown level: skip it rather than render a nameless row
+		}
+
+		// The account names are not part of the aggregation, so they are resolved per unique
+		// hierarchy key (cached, so every key is looked up only once).
+		naziv, cached := nazivCache[entity.Konto]
+		if !cached {
+			naziv = s.getKontoNaziv(ctx, entity.Konto)
+			nazivCache[entity.Konto] = naziv
+		}
+
+		saldoDug, saldoPot := saldoAcc.saldo(entity)
+		fields := []string{
+			fmt.Sprintf("%d", i+1),
+			entity.Konto,
+			"", // sifra: this list aggregates by konto prefix only
+			naziv,
+			common.FormatNumberWithSystemLocale(entity.PocStanjeDug, 2),
+			common.FormatNumberWithSystemLocale(entity.PocStanjePot, 2),
+			common.FormatNumberWithSystemLocale(entity.PrometDug, 2),
+			common.FormatNumberWithSystemLocale(entity.PrometPot, 2),
+			common.FormatNumberWithSystemLocale(saldoDug, 2),
+			common.FormatNumberWithSystemLocale(saldoPot, 2),
+		}
+		tbl.Rows = append(tbl.Rows, domain.TableRow{ID: marker, Fields: fields, HasUpdate: false, HasDelete: false})
+	}
+
+	return nil
+}
+
+// buildZakljucniListSintetikaQuery builds the single-pass sintetika hierarchy query with the
+// QueryBuilder - the analitika query without the konto + sifra detail level:
+//
+//	filtered  the fpro transactions of the report (period filters only)
+//	agg       GROUPING SETS produce one row per level: sintetika (LEFT(konto, cfg.NDuzSint)),
+//	          grupa (LEFT(konto, 2)) and klasa (LEFT(konto, 1))
+//	outer     the level is mapped to nivo_order/konto and the result is ordered by the level
+//	          aware sort key, so every subtotal row follows the rows it aggregates
+//
+// Nothing is hardcoded: the period comes from params, god/kar from the session (only when the
+// ledger carries them) and the sintetika prefix length from the configuration. The search text
+// matches the hierarchy key (konto).
+func (s *BilansiResource) buildZakljucniListSintetikaQuery(session *domain.UserSession, hasGod, hasKar bool, params domain.ZakljucniParams, printType string) (string, []any) {
+	filterQb := common.NewQueryBuilder(`SELECT konto, fnal.tipdok, kat, iznos FROM fpro`, true)
+	filterQb.AddJoin(" inner join fnal on fnal.idfnal = fpro.idfnal ")
+	if hasGod {
+		filterQb.AddEqual("fpro.god", session.SelectedGod)
+	}
+	if hasKar {
+		filterQb.AddEqual("fpro.kar", session.SelectedKar)
+	}
+	filterQb.AddCondition(fmt.Sprintf("left(fpro.konto, %d)", s.cfg.NDuzSint), params.OdKonta, ">=")
+	filterQb.AddCondition(fmt.Sprintf("left(fpro.konto, %d)", s.cfg.NDuzSint), params.DoKonta, "<=")
+	filterQb.AddCondition("fnal.danal", params.OdDatuma, ">=")
+	filterQb.AddCondition("fnal.danal", params.DoDatuma, "<=")
+	// Klasa 9 accounts are excluded for printing only, exactly like the flattened
+	// zakljucniInnerQuery does it.
+	if printType == common.TipStampePrint && params.Klasa9 == "false" {
+		filterQb.AddCustomCondition("fpro.konto NOT LIKE '9%'")
+	}
+	filterSql, filterArgs := filterQb.Build()
+
+	// The sintetika prefix length is a parameter as well, so its placeholder has to continue
+	// the numbering of the placeholders already used by the "filtered" CTE above.
+	sintParam := len(filterArgs) + 1
+	nivoOrderCase := fmt.Sprintf("CASE WHEN k3 IS NOT NULL THEN %d WHEN k2 IS NOT NULL THEN %d ELSE %d END AS nivo_order",
+		zakljucniNivoSintetika, zakljucniNivoGrupa, zakljucniNivoKlasa)
+
+	baseSql := fmt.Sprintf(`WITH filtered AS (%s),
+	agg AS (
+		SELECT
+			LEFT(konto, 1) AS k1,
+			LEFT(konto, 2) AS k2,
+			LEFT(konto, $%d) AS k3,
+			SUM(CASE WHEN tipdok = '00' AND kat IN (1,2) THEN iznos ELSE 0 END) AS pocstanjedug,
+			SUM(CASE WHEN tipdok = '00' AND kat IN (3,4) THEN iznos ELSE 0 END) AS pocstanjepot,
+			SUM(CASE WHEN tipdok <> '00' AND kat IN (1,2) THEN iznos ELSE 0 END) AS prometdug,
+			SUM(CASE WHEN tipdok <> '00' AND kat IN (3,4) THEN iznos ELSE 0 END) AS prometpot
+		FROM filtered
+		GROUP BY GROUPING SETS (
+			(LEFT(konto, $%d)),
+			(LEFT(konto, 2)),
+			(LEFT(konto, 1))
+		)
+	)
+	SELECT
+		nivo_order,
+		konto_grp AS konto,
+		pocstanjedug, pocstanjepot, prometdug, prometpot
+	FROM (
+		SELECT
+			%s,
+			COALESCE(k3, k2, k1) AS konto_grp,
+			RPAD(COALESCE(k3, k2, k1), 6, '~') AS sort_key,
+			pocstanjedug, pocstanjepot, prometdug, prometpot
+		FROM agg
+	) sub`, filterSql, sintParam, sintParam, nivoOrderCase)
+
+	qb := common.NewQueryBuilder(baseSql, false)
+	qb.AddArgs(filterArgs...)  // $1..$n : the "filtered" CTE
+	qb.AddArgs(s.cfg.NDuzSint) // $n+1   : the sintetika prefix length
+
+	// The search placeholder follows the CTE arguments and the prefix length.
+	if params.SearchText != "" {
+		qb.Where(zakljucniSearchCondition(len(filterArgs)+2, "sub.konto"), params.SearchText)
+	}
+	qb.AddOrderBy(`sort_key COLLATE "C" NULLS LAST`)
+
+	return qb.Build()
+}
+
+// GetZakljucniListSubsintetika retrieves the subsintetika Zakljucni list (tipLista "2") in a
+// single pass: one query returns every hierarchy level (subsintetika, sintetika, grupa, klasa)
+// and the rows are mapped into tbl with the level marker in Fields[0]:
+//
+//	"G1" subsintetika subtotal (konto)
+//	"G2" sintetika subtotal (LEFT(konto, cfg.NDuzSint))
+//	"G3" grupa subtotal (LEFT(konto, 2))
+//	"G4" klasa subtotal (LEFT(konto, 1))
+//
+// There are no detail rows - every row is a subtotal - and on the totals pass the finest level
+// (subsintetika) is counted and summed, so the outer levels are not counted twice.
+func (s *BilansiResource) GetZakljucniListSubsintetika(ctx context.Context, tbl *domain.TableData, params domain.ZakljucniParams, getTotalRecords bool, pageSize, currentPage int) error {
+
+	session := domain.GetSessionFromStdContext(ctx)
+	if session == nil {
+		return fmt.Errorf("user session not found")
+	}
+	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
+
+	sqlQuery, queryArgs := s.buildZakljucniListSubsintetikaQuery(session, hasGod, hasKar, params, common.TipStampePreview)
+	if !getTotalRecords {
+		sqlQuery = fmt.Sprintf("%s LIMIT %d OFFSET %d", sqlQuery, pageSize, (currentPage-1)*pageSize)
+	}
+	tbl.Headers = s.GetZakljucniTableFields()
+	common.SetupTablePagination(tbl, currentPage, pageSize)
+
+	entities, err := s.fproRepo.GetAllCustom(ctx, sqlQuery, "", queryArgs, "", "")
+	if err != nil {
+		return err
+	}
+
+	// Totals pass: every level aggregates the same transactions, so only the finest level (the
+	// konto level, nivo 4 in this list) is counted and summed - adding the outer levels up would
+	// count twice.
+	if getTotalRecords {
+		konta := make([]domain.FproDto, 0, len(*entities))
+		for _, entity := range *entities {
+			if entity.NivoOrder == zakljucniNivoAnalitika {
+				konta = append(konta, entity)
+			}
+		}
+		setZakljucniTotals(tbl, konta, pageSize)
+		return nil
+	}
+
+	// The query returns the hierarchy already ordered level by level, so every subtotal row
+	// follows the rows it aggregates. Fields[0] carries the level marker (G1..G4): there are no
+	// detail rows, so the marker is never a row number.
+	//
+	// The hierarchy is always returned complete - slicing it with LIMIT/OFFSET would separate
+	// subtotal rows from their children - so pageSize/currentPage only drive the pagination
+	// counters (the total is the number of subsintetika rows).
+	// Every subtotal row shows the sum of the netted sides below it, so the saldo columns foot
+	// at every level and the grid shows the same numbers as the printed report.
+	saldoAcc := zakljucniSaldoAccumulatorFromDetails(s.cfg, params.TipLista, *entities)
+	nazivCache := make(map[string]string)
+	for i, entity := range *entities {
+		marker := zakljucniNivoGroupMarker(entity.NivoOrder, zakljucniNivoAnalitika)
+		if marker == "" {
+			continue // unknown level: skip it rather than render a nameless row
+		}
+
+		// The account names are not part of the aggregation, so they are resolved per unique
+		// hierarchy key (cached, so every key is looked up only once).
+		naziv, cached := nazivCache[entity.Konto]
+		if !cached {
+			naziv = s.getKontoNaziv(ctx, entity.Konto)
+			nazivCache[entity.Konto] = naziv
+		}
+
+		saldoDug, saldoPot := saldoAcc.saldo(entity)
+		fields := []string{
+			fmt.Sprintf("%d", i+1),
+			entity.Konto,
+			"", // sifra: this list aggregates by konto only
+			naziv,
+			common.FormatNumberWithSystemLocale(entity.PocStanjeDug, 2),
+			common.FormatNumberWithSystemLocale(entity.PocStanjePot, 2),
+			common.FormatNumberWithSystemLocale(entity.PrometDug, 2),
+			common.FormatNumberWithSystemLocale(entity.PrometPot, 2),
+			common.FormatNumberWithSystemLocale(saldoDug, 2),
+			common.FormatNumberWithSystemLocale(saldoPot, 2),
+		}
+		tbl.Rows = append(tbl.Rows, domain.TableRow{ID: fmt.Sprintf("%d", i), Fields: fields, HasUpdate: false, HasDelete: false})
+	}
+
+	return nil
+}
+
+// buildZakljucniListSubsintetikaQuery builds the single-pass subsintetika hierarchy query with
+// the QueryBuilder - the analitika query without the sifra detail level:
+//
+//	filtered  the fpro transactions of the report (period and konta range filters)
+//	agg       GROUPING SETS produce one row per level: subsintetika (konto), sintetika
+//	          (LEFT(konto, cfg.NDuzSint)), grupa (LEFT(konto, 2)) and klasa (LEFT(konto, 1))
+//	outer     the level is mapped to nivo_order/konto and the result is ordered by the level
+//	          aware sort key, so every subtotal row follows the rows it aggregates
+//
+// Nothing is hardcoded: the period and the konta range come from params, god/kar from the
+// session (only when the ledger carries them) and the sintetika prefix length from the
+// configuration. The search text matches the hierarchy key (konto).
+func (s *BilansiResource) buildZakljucniListSubsintetikaQuery(session *domain.UserSession, hasGod, hasKar bool, params domain.ZakljucniParams, printType string) (string, []any) {
+	filterQb := common.NewQueryBuilder(`SELECT fpro.konto, fnal.tipdok, fpro.kat, fpro.iznos FROM fpro`, true)
+	filterQb.AddJoin(" inner join fnal on fnal.idfnal = fpro.idfnal ")
+	if hasGod {
+		filterQb.AddEqual("fpro.god", session.SelectedGod)
+	}
+	if hasKar {
+		filterQb.AddEqual("fpro.kar", session.SelectedKar)
+	}
+	filterQb.AddCondition("fpro.konto", params.OdKonta, ">=")
+	filterQb.AddCondition("fpro.konto", params.DoKonta, "<=")
+	filterQb.AddCondition("fnal.danal", params.OdDatuma, ">=")
+	filterQb.AddCondition("fnal.danal", params.DoDatuma, "<=")
+	// Klasa 9 accounts are excluded for printing only, exactly like the flattened
+	// zakljucniInnerQuery does it.
+	if printType == common.TipStampePrint && params.Klasa9 == "false" {
+		filterQb.AddCustomCondition("fpro.konto NOT LIKE '9%'")
+	}
+	filterSql, filterArgs := filterQb.Build()
+
+	// The sintetika prefix length is a parameter as well, so its placeholder has to continue
+	// the numbering of the placeholders already used by the "filtered" CTE above.
+	sintParam := len(filterArgs) + 1
+	nivoOrderCase := fmt.Sprintf("CASE WHEN k4 IS NOT NULL THEN %d WHEN k3 IS NOT NULL THEN %d WHEN k2 IS NOT NULL THEN %d ELSE %d END AS nivo_order",
+		zakljucniNivoAnalitika, zakljucniNivoSintetika, zakljucniNivoGrupa, zakljucniNivoKlasa)
+
+	baseSql := fmt.Sprintf(`WITH filtered AS (%s),
+	agg AS (
+		SELECT
+			LEFT(konto, 1) AS k1,
+			LEFT(konto, 2) AS k2,
+			LEFT(konto, $%d) AS k3,
+			konto AS k4,
+			SUM(CASE WHEN tipdok = '00' AND kat IN (1,2) THEN iznos ELSE 0 END) AS pocstanjedug,
+			SUM(CASE WHEN tipdok = '00' AND kat IN (3,4) THEN iznos ELSE 0 END) AS pocstanjepot,
+			SUM(CASE WHEN tipdok <> '00' AND kat IN (1,2) THEN iznos ELSE 0 END) AS prometdug,
+			SUM(CASE WHEN tipdok <> '00' AND kat IN (3,4) THEN iznos ELSE 0 END) AS prometpot
+		FROM filtered
+		GROUP BY GROUPING SETS (
+			(konto),
+			(LEFT(konto, $%d)),
+			(LEFT(konto, 2)),
+			(LEFT(konto, 1))
+		)
+	)
+	SELECT
+		nivo_order,
+		konto_grp AS konto,
+		pocstanjedug, pocstanjepot, prometdug, prometpot
+	FROM (
+		SELECT
+			%s,
+			COALESCE(k4, k3, k2, k1) AS konto_grp,
+			RPAD(COALESCE(k4, k3, k2, k1), 6, '~') AS sort_key,
+			pocstanjedug, pocstanjepot, prometdug, prometpot
+		FROM agg
+	) sub`, filterSql, sintParam, sintParam, nivoOrderCase)
+
+	qb := common.NewQueryBuilder(baseSql, false)
+	qb.AddArgs(filterArgs...)  // $1..$n : the "filtered" CTE
+	qb.AddArgs(s.cfg.NDuzSint) // $n+1   : the sintetika prefix length
+
+	// The search placeholder follows the CTE arguments and the prefix length.
+	if params.SearchText != "" {
+		qb.Where(zakljucniSearchCondition(len(filterArgs)+2, "sub.konto"), params.SearchText)
+	}
+	qb.AddOrderBy(`sort_key COLLATE "C" NULLS LAST`)
+
+	return qb.Build()
+}
+
+// GetZakljucniListZaStampu returns all zakljucni list rows for printing, with the hierarchy
+// produced by the same single-pass query the preview uses, so printed and previewed levels can
+// never drift apart. TipLista selects the hierarchy:
+//
+//	"1" analitika:    detail rows (konto + sifra) numbered, then G1=sintetika, G2=grupa, G3=klasa
+//	"2" subsintetika: detail rows (konto) numbered, then G1=sintetika, G2=grupa, G3=klasa
+//	"3" sintetika:    detail rows (sintetika) numbered, then G1=grupa, G2=klasa
+//
+// The grand total is the sum of the detail level and tblSummary gets one row per klasa.
+func (s *BilansiResource) GetZakljucniListZaStampu(ctx context.Context, tbl, tblSummary *domain.TableData, params domain.ZakljucniParams, nDuzSint int) error {
+
+	session := domain.GetSessionFromStdContext(ctx)
+	if session == nil {
+		return fmt.Errorf("user session not found")
+	}
+	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
+	// nDuzSint is not used any more: the hierarchy queries take the prefix length from the
+	// configuration (s.cfg.NDuzSint), which is the value the handler passes in.
+
+	// detailNivo is the level printed as numbered detail rows; every level above it is printed
+	// as a G<n> subtotal, exactly like the preview shows them.
+	detailNivo := zakljucniDetailNivo(params.TipLista)
+	var sqlQuery string
+	var queryArgs []any
+	switch params.TipLista {
+	case "1":
+		sqlQuery, queryArgs = s.buildZakljucniListAnalitikaQuery(session, hasGod, hasKar, params, common.TipStampePrint)
+	case "2":
+		sqlQuery, queryArgs = s.buildZakljucniListSubsintetikaQuery(session, hasGod, hasKar, params, common.TipStampePrint)
+	case "3":
+		sqlQuery, queryArgs = s.buildZakljucniListSintetikaQuery(session, hasGod, hasKar, params, common.TipStampePrint)
+	default:
+		return fmt.Errorf("invalid tip_lista: %s", params.TipLista)
+	}
+
+	entities, err := s.fproRepo.GetAllCustom(ctx, sqlQuery, "", queryArgs, "", "")
+	if err != nil {
+		return err
+	}
+	// ── Row markers ──────────────────────────────
+	// Row [0] encodes the row type: the detail rows carry their running number, the subtotal
+	// rows carry G1..G<n> (G1 = the innermost subtotal) and "T" is the grand total. The levels
+	// come from the query of the selected list, so they are the same ones the preview shows.
+	formatRow := func(marker, konto, sifra, naziv string, pstDug, pstPot, promDug, promPot, saldoDug, saldoPot float64) domain.TableRow {
 		ukupDug := pstDug + promDug
 		ukupPot := pstPot + promPot
-		saldoDug := ukupDug
-		saldoPot := ukupPot
-		if saldoDug > saldoPot {
-			saldoDug -= saldoPot
-			saldoPot = 0
-		} else if saldoPot > saldoDug {
-			saldoPot -= saldoDug
-			saldoDug = 0
-		} else {
-			saldoDug, saldoPot = 0, 0
-		}
 		return domain.TableRow{
 			ID: marker,
 			Fields: []string{
@@ -418,233 +843,216 @@ func (s *BilansiResource) GetZakljucniListZaStampu(ctx context.Context, tbl, tbl
 		}
 	}
 
-	// groupLevel describes one aggregation tier.
-	type groupLevel struct {
-		marker string // "G1", "G2", "G3", or "G4"
-		keyLen int    // 0 = full konto; >0 = konto[:keyLen]
-	}
-	keyOf := func(konto string, keyLen int) string {
-		if keyLen <= 0 || keyLen >= len(konto) {
-			return konto
-		}
-		return konto[:keyLen]
-	}
-
-	var levels []groupLevel
-	switch params.TipLista {
-	case "1": // analitika: 4 levels
-		levels = []groupLevel{
-			{"G1", 4},        // subsintetika = full konto (e.g. "0112")
-			{"G2", nDuzSint}, // sintetika     (e.g. "011", nDuzSint=3)
-			{"G3", 2},        // grupa         (e.g. "01")
-			{"G4", 1},        // klasa         (e.g. "0")
-		}
-	case "2": // subsintetika: 3 levels
-		levels = []groupLevel{
-			{"G1", nDuzSint}, // sintetika     (e.g. "011")
-			{"G2", 2},        // grupa         (e.g. "01")
-			{"G3", 1},        // klasa         (e.g. "0")
-		}
-	default: // "3" sintetika: 2 levels
-		levels = []groupLevel{
-			{"G1", 2}, // grupa  (e.g. "01")
-			{"G2", 1}, // klasa  (e.g. "0")
-		}
-	}
-
-	// Per-level running state.
-	type levelState struct {
-		pstDug, pstPot   float64
-		promDug, promPot float64
-		prevKey          string
-		naziv            string
-	}
-	states := make([]levelState, len(levels))
-
-	// Per-klasa summary state (key = first digit of konto).
-	type klasaState struct {
-		pstDug, pstPot   float64
-		promDug, promPot float64
-	}
-	klasaMap := make(map[string]*klasaState)
-	var klasaKeys []string // preserve insertion order
-
 	var grandPstDug, grandPstPot, grandPromDug, grandPromPot float64
 	rbr := 1
 
+	// Every subtotal row shows the sum of the netted sides below it, so the saldo columns foot
+	// at every level and the printed report shows the same numbers as the grid.
+	saldoAcc := zakljucniSaldoAccumulatorFromDetails(s.cfg, params.TipLista, *entities)
+
+	nazivCache := make(map[string]string)
 	for _, ent := range *entities {
-		if params.SamosaPrometom == "true" && ent.PrometDug == 0 && ent.PrometPot == 0 {
-			continue // skip zero-promet rows if samosaprometom filter is on
+		marker := zakljucniPrintMarker(ent.NivoOrder, detailNivo, rbr)
+		if marker == "" {
+			continue // unknown level: skip it rather than print a nameless row
 		}
-		// Compute key for each level.
-		keys := make([]string, len(levels))
-		for i, lv := range levels {
-			keys[i] = keyOf(ent.Konto, lv.keyLen)
-		}
-
-		// Find the outermost (highest index) level whose key changed.
-		changedAt := -1
-		for i := len(levels) - 1; i >= 0; i-- {
-			if keys[i] != states[i].prevKey {
-				changedAt = i
-				break
-			}
+		if ent.NivoOrder == detailNivo {
+			rbr++
+			grandPstDug += ent.PocStanjeDug
+			grandPstPot += ent.PocStanjePot
+			grandPromDug += ent.PrometDug
+			grandPromPot += ent.PrometPot
 		}
 
-		// Flush levels 0..changedAt (innermost first).
-		if changedAt >= 0 {
-			for i := 0; i <= changedAt; i++ {
-				if states[i].prevKey != "" {
-					tbl.Rows = append(tbl.Rows, formatRow(
-						levels[i].marker, states[i].prevKey, "", states[i].naziv,
-						states[i].pstDug, states[i].pstPot, states[i].promDug, states[i].promPot,
-					))
-				}
-				states[i] = levelState{}
-			}
+		// The account names are not part of the aggregation, so they are resolved per unique
+		// hierarchy key (cached, so every key is looked up only once).
+		naziv, cached := nazivCache[ent.Konto]
+		if !cached {
+			naziv = s.getKontoNaziv(ctx, ent.Konto)
+			nazivCache[ent.Konto] = naziv
 		}
 
-		// Data row.
-		sifra := ""
-		if params.TipLista == "1" {
-			sifra = ent.Sifra
-		}
+		saldoDug, saldoPot := saldoAcc.saldo(ent)
+		tbl.Rows = append(tbl.Rows, formatRow(marker, ent.Konto, ent.Sifra, naziv,
+			ent.PocStanjeDug, ent.PocStanjePot, ent.PrometDug, ent.PrometPot, saldoDug, saldoPot))
 
-		tbl.Rows = append(tbl.Rows, formatRow(
-			fmt.Sprintf("%d", rbr), ent.Konto, sifra, ent.Naziv,
-			ent.PocStanjeDug, ent.PocStanjePot, ent.PrometDug, ent.PrometPot,
-		))
-		rbr++
-
-		// Accumulate into all levels.
-		for i := range levels {
-			states[i].pstDug += ent.PocStanjeDug
-			states[i].pstPot += ent.PocStanjePot
-			states[i].promDug += ent.PrometDug
-			states[i].promPot += ent.PrometPot
-			states[i].prevKey = keys[i]
-
-			if params.TipLista == "1" {
-
-				switch i {
-				case 0:
-					states[i].naziv = s.getKontoNaziv(ctx, ent.Konto)
-				case 1:
-					states[i].naziv = s.getKontoNaziv(ctx, ent.Konto[:nDuzSint])
-				case 2:
-					states[i].naziv = s.getKontoNaziv(ctx, ent.Konto[:2])
-				case 3:
-					states[i].naziv = s.getKontoNaziv(ctx, ent.Konto[:1])
-				}
-			}
-
-			if params.TipLista == "2" {
-				switch i {
-				case 0:
-					states[i].naziv = s.getKontoNaziv(ctx, ent.Konto[:nDuzSint])
-				case 1:
-					states[i].naziv = s.getKontoNaziv(ctx, ent.Konto[:2])
-				case 2:
-					states[i].naziv = s.getKontoNaziv(ctx, ent.Konto[:1])
-				}
-			}
-			if params.TipLista == "3" {
-				switch i {
-				case 0:
-					states[i].naziv = s.getKontoNaziv(ctx, ent.Konto[:2])
-				case 1:
-					states[i].naziv = s.getKontoNaziv(ctx, ent.Konto[:1])
-				}
-			}
-			//states[i].naziv = ent.Naziv
-
-		}
-		grandPstDug += ent.PocStanjeDug
-		grandPstPot += ent.PocStanjePot
-		grandPromDug += ent.PrometDug
-		grandPromPot += ent.PrometPot
-
-		// Accumulate per-klasa (first digit of konto).
-		if len(ent.Konto) > 0 {
-			k := ent.Konto[:1]
-			if _, ok := klasaMap[k]; !ok {
-				klasaMap[k] = &klasaState{}
-				klasaKeys = append(klasaKeys, k)
-			}
-			klasaMap[k].pstDug += ent.PocStanjeDug
-			klasaMap[k].pstPot += ent.PocStanjePot
-			klasaMap[k].promDug += ent.PrometDug
-			klasaMap[k].promPot += ent.PrometPot
+		// The klasa rows also feed the summary table (one line per klasa).
+		if ent.NivoOrder == zakljucniNivoKlasa {
+			tblSummary.Rows = append(tblSummary.Rows, formatRow("K", ent.Konto, "",
+				i18n.GetInstance().Label("klasa")+": "+ent.Konto,
+				ent.PocStanjeDug, ent.PocStanjePot, ent.PrometDug, ent.PrometPot, saldoDug, saldoPot))
 		}
 	}
 
-	// Flush remaining levels (innermost first).
-	for i := 0; i < len(levels); i++ {
-		if states[i].prevKey != "" {
-			tbl.Rows = append(tbl.Rows, formatRow(
-				levels[i].marker, states[i].prevKey, "", states[i].naziv,
-				states[i].pstDug, states[i].pstPot, states[i].promDug, states[i].promPot,
-			))
-		}
-	}
-
-	// Grand total row.
+	// Grand total row: the sum of the netted sides of every detail row, exactly like the total
+	// row at the bottom of the grid.
+	grandSaldoDug, grandSaldoPot := saldoAcc.total()
 	tbl.Rows = append(tbl.Rows, formatRow("T", "", "", i18n.GetInstance().Label("Ukupno"),
-		grandPstDug, grandPstPot, grandPromDug, grandPromPot))
+		grandPstDug, grandPstPot, grandPromDug, grandPromPot, grandSaldoDug, grandSaldoPot))
 
-	// Populate tblSummary: one row per klasa (key = first digit of konto).
-	for _, k := range klasaKeys {
-		st := klasaMap[k]
-		tblSummary.Rows = append(tblSummary.Rows, formatRow(
-			"K", k, "", i18n.GetInstance().Label("klasa")+": "+k,
-			st.pstDug, st.pstPot, st.promDug, st.promPot,
-		))
-	}
 	// Grand total for summary.
 	tblSummary.Rows = append(tblSummary.Rows, formatRow("T", "", "", "TOTAL:",
-		grandPstDug, grandPstPot, grandPromDug, grandPromPot))
+		grandPstDug, grandPstPot, grandPromDug, grandPromPot, grandSaldoDug, grandSaldoPot))
 
 	return nil
 }
 
-// getZakljucniQuery builds and executes the SQL query for Zakljucni list based on the provided parameters and print type.
-func (s *BilansiResource) getZakljucniQuery(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, params domain.ZakljucniParams, printType string, pageSize, currentPage int) (*[]domain.FproDto, error) {
-	session := domain.GetSessionFromStdContext(ctx)
-	if session == nil {
-		return nil, fmt.Errorf("user session not found")
+// netirajSaldo netira duguje/potražuje: veća strana se umanjuje za manju, a manja se
+// postavlja na 0; ako su jednake, obe strane su 0 (WinDev ekvivalent:
+// IF SALDODUG > SALDOPOT THEN ... / IF SALDODUG < SALDOPOT THEN ... / IF = THEN 0/0).
+func netirajSaldo(dug, pot float64) (float64, float64) {
+	switch {
+	case dug > pot:
+		return dug - pot, 0
+	case pot > dug:
+		return 0, pot - dug
+	default:
+		return 0, 0
 	}
-	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
+}
 
-	var config domain.QueryConfig
+// zakljucniSearchCondition builds the OR-ed ILIKE filter of the Zakljucni list search box.
+// Every field reuses the same placeholder, so the search term is passed only once.
+func zakljucniSearchCondition(placeholder int, fields ...string) string {
+	parts := make([]string, 0, len(fields))
+	for _, f := range fields {
+		parts = append(parts, fmt.Sprintf("%s ILIKE '%%' || $%d || '%%'", f, placeholder))
+	}
+	return " ( " + strings.Join(parts, " OR ") + " ) "
+}
+
+// ---- Zakljucni list queries -------------------------------------------------
+//
+// One query per tipLista, because the aggregation grain and the way the account name is
+// resolved differ:
+//
+//	tipLista 1 (analitika)    one row per konto+sifra, name via fkpl.idfkpl of the row
+//	tipLista 2 (subsintetika) one row per konto,        name = newest fkpl row of that konto
+//	tipLista 3 (sintetika)    one row per konto prefix, name = newest fkpl row of that prefix
+//
+// Everything the three share (period/konta/sifra filters, search, ordering, pagination and
+// the totals pass) lives in the helpers below.
+
+// zakljucniQueryOptions carries the call parameters plus the per-variant SQL bits.
+type zakljucniQueryOptions struct {
+	params          domain.ZakljucniParams
+	printType       string
+	getTotalRecords bool
+	pageSize        int
+	currentPage     int
+
+	// filled in by the tipLista query that is running:
+	orderByCols string // ORDER BY of the outer query (agg.* aliases)
+	nameExpr    string // expression with the account name (SELECT + search filter)
+	withSifra   bool   // tipLista 1 aggregates and searches by sifra as well
+}
+
+// getZakljucniQuery builds and executes the query for the requested tipLista of the
+// Zakljucni list (1 = analitika, 2 = subsintetika, 3 = sintetika).
+func (s *BilansiResource) getZakljucniQuery(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, params domain.ZakljucniParams, printType string, pageSize, currentPage int) (*[]domain.FproDto, error) {
+	o := zakljucniQueryOptions{
+		params:          params,
+		printType:       printType,
+		getTotalRecords: getTotalRecords,
+		pageSize:        pageSize,
+		currentPage:     currentPage,
+	}
 	switch params.TipLista {
 	case "1":
-		config = domain.QueryConfig{
-			SelectCols:  "fpro.konto, COALESCE(fpro.sifra, '') as sifra, fpro.idfkpl,",
-			GroupByCols: "fpro.konto, fpro.sifra, fpro.idfkpl",
-			OrderByCols: "COALESCE(NULLIF(agg.konto, '')::numeric, 0) ASC, COALESCE(NULLIF(agg.sifra, '')::numeric, 0) ASC",
-		}
+		return s.getZakljucniAnalitikaQuery(ctx, tbl, o)
 	case "2":
-		config = domain.QueryConfig{
-			SelectCols:  "fpro.konto,",
-			GroupByCols: "fpro.konto",
-			OrderByCols: "COALESCE(NULLIF(agg.konto, '')::numeric, 0) ASC",
-		}
+		return s.getZakljucniSubsintetikaQuery(ctx, tbl, o)
 	case "3":
-		config = domain.QueryConfig{
-			SelectCols:  fmt.Sprintf("LEFT(fpro.konto, %d) as konto,", s.cfg.NDuzSint),
-			GroupByCols: fmt.Sprintf("LEFT(fpro.konto, %d)", s.cfg.NDuzSint),
-			OrderByCols: "COALESCE(NULLIF(agg.konto, '')::numeric, 0) ASC",
-		}
+		return s.getZakljucniSintetikaQuery(ctx, tbl, o)
 	default:
 		return nil, fmt.Errorf("invalid tip_lista: %s", params.TipLista)
 	}
+}
+
+// getZakljucniAnalitikaQuery (tipLista "1"): one row per konto + sifra. The name comes from
+// the fkpl row the transaction itself points to (fkpl.idfkpl), so it joins directly.
+func (s *BilansiResource) getZakljucniAnalitikaQuery(ctx context.Context, tbl *domain.TableData, o zakljucniQueryOptions) (*[]domain.FproDto, error) {
+	innerSql, innerArgs, err := s.zakljucniInnerQuery(ctx, o.params, o.printType,
+		"fpro.konto, COALESCE(fpro.sifra, '') as sifra, fpro.idfkpl,",
+		"fpro.konto, fpro.sifra, fpro.idfkpl", true, true)
+	if err != nil {
+		return nil, err
+	}
+
+	o.orderByCols = "COALESCE(NULLIF(agg.konto, '')::numeric, 0) ASC, COALESCE(NULLIF(agg.sifra, '')::numeric, 0) ASC"
+	o.nameExpr = "fkpl.naziv"
+	o.withSifra = true
+
+	needName := zakljucniNeedsName(o.getTotalRecords, o.params.SearchText)
+	qb := zakljucniOuterQueryBuilder(innerSql, "left join fkpl on fkpl.idfkpl = agg.idfkpl", o.nameExpr, innerArgs, needName)
+	return s.executeZakljucniQuery(ctx, tbl, qb, innerArgs, o)
+}
+
+// getZakljucniSubsintetikaQuery (tipLista "2"): one row per konto. The name is the naziv of
+// the newest fkpl row of that konto (DISTINCT ON lookup, joined on konto).
+func (s *BilansiResource) getZakljucniSubsintetikaQuery(ctx context.Context, tbl *domain.TableData, o zakljucniQueryOptions) (*[]domain.FproDto, error) {
+	innerSql, innerArgs, err := s.zakljucniInnerQuery(ctx, o.params, o.printType,
+		"fpro.konto,", "fpro.konto", false, true)
+	if err != nil {
+		return nil, err
+	}
+
+	o.orderByCols = "COALESCE(NULLIF(agg.konto, '')::numeric, 0) ASC"
+	o.nameExpr = "fkpl_data.naziv"
+
+	needName := zakljucniNeedsName(o.getTotalRecords, o.params.SearchText)
+	nameJoin, args := "", innerArgs
+	if needName {
+		nameJoin, args = zakljucniNameLookupJoin("konto", 2, innerArgs)
+	}
+	qb := zakljucniOuterQueryBuilder(innerSql, nameJoin, o.nameExpr, args, needName)
+	return s.executeZakljucniQuery(ctx, tbl, qb, args, o)
+}
+
+// getZakljucniSintetikaQuery (tipLista "3"): one row per konto prefix
+// (LEFT(konto, NDuzSint)). The name is the naziv of the newest fkpl row of that prefix.
+func (s *BilansiResource) getZakljucniSintetikaQuery(ctx context.Context, tbl *domain.TableData, o zakljucniQueryOptions) (*[]domain.FproDto, error) {
+	innerSql, innerArgs, err := s.zakljucniInnerQuery(ctx, o.params, o.printType,
+		fmt.Sprintf("LEFT(fpro.konto, %d) as konto,", s.cfg.NDuzSint),
+		fmt.Sprintf("LEFT(fpro.konto, %d)", s.cfg.NDuzSint), false, false)
+	if err != nil {
+		return nil, err
+	}
+
+	o.orderByCols = "COALESCE(NULLIF(agg.konto, '')::numeric, 0) ASC"
+	o.nameExpr = "fkpl_data.naziv"
+
+	needName := zakljucniNeedsName(o.getTotalRecords, o.params.SearchText)
+	nameJoin, args := "", innerArgs
+	if needName {
+		nameJoin, args = zakljucniNameLookupJoin(fmt.Sprintf("LEFT(konto, %d)", s.cfg.NDuzSint), 3, innerArgs)
+	}
+	qb := zakljucniOuterQueryBuilder(innerSql, nameJoin, o.nameExpr, args, needName)
+	return s.executeZakljucniQuery(ctx, tbl, qb, args, o)
+}
+
+// zakljucniInnerQuery builds the INNER aggregation of the Zakljucni list - one row per
+// tipLista grain - with all the report filters: period, konta (and sifra) range, klasa 9,
+// vkonta and samosaprometom.
+//
+//	selectCols   the grouping columns (must end with a comma)
+//	groupByCols  the matching GROUP BY expression
+//	filterSifra  apply OdSifre/DoSifre (analitika only)
+//	filterVkonta only vkonta 1 and 2 (analitika and subsintetika)
+func (s *BilansiResource) zakljucniInnerQuery(ctx context.Context, params domain.ZakljucniParams, printType, selectCols, groupByCols string, filterSifra, filterVkonta bool) (string, []any, error) {
+	session := domain.GetSessionFromStdContext(ctx)
+	if session == nil {
+		return "", nil, fmt.Errorf("user session not found")
+	}
+	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
 
 	aggregationSQL := fmt.Sprintf(`%s
-		COALESCE(SUM(CASE WHEN fpro.tipdok = '00' AND (fpro.kat = 1 OR fpro.kat = 2) THEN fpro.iznos ELSE 0 END), 0) as pocstanjedug,
-		COALESCE(SUM(CASE WHEN fpro.tipdok = '00' AND fpro.kat NOT IN (1,2) THEN fpro.iznos ELSE 0 END), 0) as pocstanjepot,
-		COALESCE(SUM(CASE WHEN fpro.tipdok != '00' AND (fpro.kat = 1 OR fpro.kat = 2) THEN fpro.iznos ELSE 0 END), 0) as prometdug,
-		COALESCE(SUM(CASE WHEN fpro.tipdok != '00' AND fpro.kat NOT IN (1,2) THEN fpro.iznos ELSE 0 END), 0) as prometpot
-		FROM fpro`, fmt.Sprintf("SELECT %s", config.SelectCols))
+		COALESCE(SUM(CASE WHEN fnal.tipdok = '00' AND (fpro.kat = 1 OR fpro.kat = 2) THEN fpro.iznos ELSE 0 END), 0) as pocstanjedug,
+		COALESCE(SUM(CASE WHEN fnal.tipdok = '00' AND fpro.kat NOT IN (1,2) THEN fpro.iznos ELSE 0 END), 0) as pocstanjepot,
+		COALESCE(SUM(CASE WHEN fnal.tipdok != '00' AND (fpro.kat = 1 OR fpro.kat = 2) THEN fpro.iznos ELSE 0 END), 0) as prometdug,
+		COALESCE(SUM(CASE WHEN fnal.tipdok != '00' AND fpro.kat NOT IN (1,2) THEN fpro.iznos ELSE 0 END), 0) as prometpot
+		FROM fpro
+		inner join fnal on fnal.idfnal = fpro.idfnal `, "SELECT "+selectCols)
 
 	innerQb := common.NewQueryBuilder(aggregationSQL, true)
 	if hasGod {
@@ -653,13 +1061,13 @@ func (s *BilansiResource) getZakljucniQuery(ctx context.Context, tbl *domain.Tab
 	if hasKar {
 		innerQb.AddEqual("fpro.kar", session.SelectedKar)
 	}
-	innerQb.AddCondition("fpro.danal", params.OdDatuma, ">=")
-	innerQb.AddCondition("fpro.danal", params.DoDatuma, "<=")
+	innerQb.AddCondition("fnal.danal", params.OdDatuma, ">=")
+	innerQb.AddCondition("fnal.danal", params.DoDatuma, "<=")
 	if params.OdKonta != "" {
-		innerQb.AddCondition("COALESCE(NULLIF(fpro.konto, '')::numeric, 0)", params.OdKonta, ">=")
+		innerQb.AddCondition(fmt.Sprintf(" left(fpro.konto, %d)", s.cfg.NDuzSint), params.OdKonta, ">=")
 	}
 	if params.DoKonta != "" {
-		innerQb.AddCondition("COALESCE(NULLIF(fpro.konto, '')::numeric, 0)", params.DoKonta, "<=")
+		innerQb.AddCondition(fmt.Sprintf(" left(fpro.konto, %d)", s.cfg.NDuzSint), params.DoKonta, "<=")
 	}
 	// Apply Klasa 9 filter only for printing, not for data retrieval for processing
 	if printType == common.TipStampePrint {
@@ -667,7 +1075,7 @@ func (s *BilansiResource) getZakljucniQuery(ctx context.Context, tbl *domain.Tab
 			innerQb.AddCustomCondition("fpro.konto NOT LIKE '9%'")
 		}
 	}
-	if params.TipLista == "1" {
+	if filterSifra {
 		if params.OdSifre != "" {
 			innerQb.AddCondition("COALESCE(NULLIF(fpro.sifra, '')::numeric, 0)", params.OdSifre, ">=")
 		}
@@ -675,110 +1083,123 @@ func (s *BilansiResource) getZakljucniQuery(ctx context.Context, tbl *domain.Tab
 			innerQb.AddCondition("COALESCE(NULLIF(fpro.sifra, '')::numeric, 0)", params.DoSifre, "<=")
 		}
 	}
-	if params.TipLista == "1" || params.TipLista == "2" {
+	if filterVkonta {
 		innerQb.AddIn("fpro.vkonta", []interface{}{"1", "2"})
 	}
 	// Filter by samosaprometom if needed (exclude zero saldo rows)
 	if params.SamosaPrometom == "true" {
-		innerQb.AddHaving("((COALESCE(SUM(CASE WHEN fpro.tipdok = '00' AND (fpro.kat = 1 OR fpro.kat = 2) THEN fpro.iznos ELSE 0 END), 0) + COALESCE(SUM(CASE WHEN fpro.tipdok != '00' AND (fpro.kat = 1 OR fpro.kat = 2) THEN fpro.iznos ELSE 0 END), 0)) != 0 OR (COALESCE(SUM(CASE WHEN fpro.tipdok = '00' AND fpro.kat NOT IN (1,2) THEN fpro.iznos ELSE 0 END), 0) + COALESCE(SUM(CASE WHEN fpro.tipdok != '00' AND fpro.kat NOT IN (1,2) THEN fpro.iznos ELSE 0 END), 0)) != 0)")
+		innerQb.AddHaving("((COALESCE(SUM(CASE WHEN fnal.tipdok = '00' AND (fpro.kat = 1 OR fpro.kat = 2) THEN fpro.iznos ELSE 0 END), 0) + COALESCE(SUM(CASE WHEN fnal.tipdok != '00' AND (fpro.kat = 1 OR fpro.kat = 2) THEN fpro.iznos ELSE 0 END), 0)) != 0 OR (COALESCE(SUM(CASE WHEN fnal.tipdok = '00' AND fpro.kat NOT IN (1,2) THEN fpro.iznos ELSE 0 END), 0) + COALESCE(SUM(CASE WHEN fnal.tipdok != '00' AND fpro.kat NOT IN (1,2) THEN fpro.iznos ELSE 0 END), 0)) != 0)")
 	}
 
-	innerQb.AddGroupBy(config.GroupByCols)
+	innerQb.AddGroupBy(groupByCols)
 	innerSql, innerArgs := innerQb.Build()
+	return innerSql, innerArgs, nil
+}
 
-	var outerSql string
-	var allArgs []interface{}
-	switch params.TipLista {
-	case "1":
-		outerQb := common.NewQueryBuilder(fmt.Sprintf(`SELECT agg.*, COALESCE(fkpl.naziv, '') as naziv FROM (%s) agg`, innerSql), true)
-		outerQb.AddJoin("left join fkpl on fkpl.idfkpl = agg.idfkpl")
-		outerQb.AddArgs(innerArgs...)
-		// Add search filter if provided
-		if params.SearchText != "" {
-			nbrParam := len(outerQb.GetArgs()) + 1
-			customCondition := fmt.Sprintf(` (naziv ilike '%%' || $%d || '%%' OR agg.konto ilike '%%' || $%d || '%%' OR agg.sifra ilike '%%' || $%d || '%%') `, nbrParam, nbrParam, nbrParam)
-			outerQb.AddCustomCondition(customCondition, params.SearchText)
-		}
+// zakljucniNeedsName reports whether the account name (join / lookup subquery) is needed:
+// always for the data and print pass, and on the totals pass only when the search matches
+// on the name.
+func zakljucniNeedsName(getTotalRecords bool, searchText string) bool {
+	return !getTotalRecords || searchText != ""
+}
 
-		outerQb.AddOrderBy(config.OrderByCols)
-		// Add pagination using QueryBuilder
-		if !getTotalRecords && printType == common.TipStampePreview { // Apply pagination only for data retrieval for processing, not for printing
-			outerQb.SetLimit(pageSize)
-			outerQb.SetOffset((currentPage - 1) * pageSize)
-		}
-		outerSql, allArgs = outerQb.Build()
-	case "2":
-		distinctQb := common.NewQueryBuilder(`SELECT DISTINCT ON (konto) konto, naziv FROM fkpl`, true)
-		distinctQb.AddArgs(innerArgs...)
-		distinctQb.AddEqual("vkonta", 2)
-		distinctQb.AddOrderBy("konto, god DESC, kar DESC")
-		distinctSql, distinctArgs := distinctQb.Build()
-		outerQb := common.NewQueryBuilder(fmt.Sprintf(`SELECT agg.*, COALESCE(fkpl_data.naziv, '') as naziv FROM (%s) agg LEFT JOIN (%s) fkpl_data ON fkpl_data.konto = agg.konto`, innerSql, distinctSql), true)
-		outerQb.AddArgs(distinctArgs...)
-		// Add search filter if provided
-		if params.SearchText != "" {
-			nbrParam := len(outerQb.GetArgs()) + 1
-			customCondition := fmt.Sprintf(` (naziv ilike '%%' || $%d || '%%' OR agg.konto ilike '%%' || $%d || '%%') `, nbrParam, nbrParam)
-			outerQb.AddCustomCondition(customCondition, params.SearchText)
-		}
-		outerQb.AddOrderBy(config.OrderByCols)
-		// Add pagination using QueryBuilder
-		if !getTotalRecords && printType == common.TipStampePreview { // Apply pagination only for data retrieval for processing, not for printing
-			outerQb.SetLimit(pageSize)
-			outerQb.SetOffset((currentPage - 1) * pageSize)
-		}
-		outerSql, allArgs = outerQb.Build()
-	case "3":
-		distinctQb := common.NewQueryBuilder(fmt.Sprintf(`SELECT DISTINCT ON (LEFT(konto, %d)) LEFT(konto, %d) as konto_trunc, naziv FROM fkpl`, s.cfg.NDuzSint, s.cfg.NDuzSint), true)
-		distinctQb.AddArgs(innerArgs...)
-		distinctQb.AddEqual("vkonta", 3)
-		distinctQb.AddOrderBy(fmt.Sprintf("LEFT(konto, %d), god DESC, kar DESC", s.cfg.NDuzSint))
-		distinctSql, distinctArgs := distinctQb.Build()
-		outerQb := common.NewQueryBuilder(fmt.Sprintf(`SELECT agg.*, COALESCE(fkpl_data.naziv, '') as naziv FROM (%s) agg LEFT JOIN (%s) fkpl_data ON fkpl_data.konto_trunc = agg.konto`, innerSql, distinctSql), true)
-		outerQb.AddArgs(distinctArgs...)
-		// Add search filter if provided
-		if params.SearchText != "" {
-			nbrParam := len(outerQb.GetArgs()) + 1
-			customCondition := fmt.Sprintf(` (naziv ilike '%%' || $%d || '%%' OR agg.konto ilike '%%' || $%d || '%%') `, nbrParam, nbrParam)
-			outerQb.AddCustomCondition(customCondition, params.SearchText)
-		}
-		outerQb.AddOrderBy(config.OrderByCols)
-		// Add pagination using QueryBuilder
-		if !getTotalRecords && printType == common.TipStampePreview { // Apply pagination only for data retrieval for processing, not for printing
-			outerQb.SetLimit(pageSize)
-			outerQb.SetOffset((currentPage - 1) * pageSize)
-		}
-		outerSql, allArgs = outerQb.Build()
+// zakljucniNameLookupJoin builds the DISTINCT ON subquery that resolves a konto (or konto
+// prefix) to the naziv of the newest fkpl row, wrapped in the join clause of the outer query.
+//
+// The subquery is embedded AFTER the inner query, so its $n placeholders must continue after
+// the inner ones: innerArgs seed the builder, and the returned args are therefore
+// innerArgs + the subquery's own values - in SQL text order.
+func zakljucniNameLookupJoin(nameKey string, vkonta int, innerArgs []any) (string, []any) {
+	subQb := common.NewQueryBuilder(fmt.Sprintf(`SELECT DISTINCT ON (%s) %s as konto_key, naziv FROM fkpl`, nameKey, nameKey), true)
+	subQb.AddArgs(innerArgs...)
+	subQb.AddEqual("vkonta", vkonta)
+	subQb.AddOrderBy(fmt.Sprintf("%s, god DESC, kar DESC", nameKey))
+	subSql, args := subQb.Build()
+	return fmt.Sprintf(`left join (%s) fkpl_data on fkpl_data.konto_key = agg.konto`, subSql), args
+}
+
+// zakljucniOuterQueryBuilder wraps the inner aggregation in the OUTER query that adds the
+// account name. Without a join the name stays empty (”), which is fine for the totals pass -
+// those rows are only counted and summed.
+func zakljucniOuterQueryBuilder(innerSql, nameJoin, nameExpr string, args []any, needName bool) *common.QueryBuilder {
+	outerSelect := "agg.*, '' as naziv"
+	if needName {
+		outerSelect = fmt.Sprintf("agg.*, COALESCE(%s, '') as naziv", nameExpr)
+	} else {
+		nameJoin = ""
 	}
-	entities, err := s.fproRepo.GetAllCustom(ctx, outerSql, "", allArgs, "", "")
+
+	qb := common.NewQueryBuilder(fmt.Sprintf(`SELECT %s FROM (%s) agg`, outerSelect, innerSql), true)
+	if nameJoin != "" {
+		qb.AddJoin(nameJoin)
+	}
+	qb.AddArgs(args...) // keeps the $n numbering aligned with the embedded inner SQL
+	return qb
+}
+
+// executeZakljucniQuery adds the search filter, ordering and pagination to the outer query,
+// runs it and - on the totals pass - fills the pagination counters and the totals row.
+func (s *BilansiResource) executeZakljucniQuery(ctx context.Context, tbl *domain.TableData, qb *common.QueryBuilder, args []any, o zakljucniQueryOptions) (*[]domain.FproDto, error) {
+	// Add search filter if provided (all fields share one placeholder)
+	if o.params.SearchText != "" {
+		searchFields := []string{o.nameExpr, "agg.konto"}
+		if o.withSifra {
+			searchFields = append(searchFields, "agg.sifra")
+		}
+		qb.AddCustomCondition(zakljucniSearchCondition(len(args)+1, searchFields...), o.params.SearchText)
+	}
+
+	// The totals pass needs neither ORDER BY nor LIMIT/OFFSET (rows are only summed).
+	if !o.getTotalRecords {
+		qb.AddOrderBy(o.orderByCols)
+		if o.printType == common.TipStampePreview { // printing/processing fetches the whole report
+			qb.SetLimit(o.pageSize)
+			qb.SetOffset((o.currentPage - 1) * o.pageSize)
+		}
+	}
+
+	outerSql, queryArgs := qb.Build()
+	entities, err := s.fproRepo.GetAllCustom(ctx, outerSql, "", queryArgs, "", "")
 	if err != nil {
 		return nil, err
 	}
-	// Count filtered items if needed for total records
-	if printType == common.TipStampePreview && getTotalRecords {
-		count := len(*entities)
-		common.SetTableTotalRecords(tbl, count, pageSize)
-		tbl.Totals = make([]string, len(tbl.Headers))
-		tbl.Totals[0] = i18n.GetInstance().Label("Ukupno") // Set label for totals column
-		var pstPotTotal, pstDugTotal, dugTotal, potTotal float64
 
-		for _, entity := range *entities {
-			// Calculate combined saldo for counting total records
-			pstDugTotal += entity.PocStanjeDug
-			pstPotTotal += entity.PocStanjePot
-			dugTotal += entity.PrometDug
-			potTotal += entity.PrometPot
-		}
-		tbl.Totals[4] = common.FormatNumberWithSystemLocale(pstDugTotal, 2)                    // Total for Tekuća godina (can be calculated if needed)
-		tbl.Totals[5] = common.FormatNumberWithSystemLocale(pstDugTotal, 2)                    // Total for Prethodna godina (can be calculated if needed)
-		tbl.Totals[6] = common.FormatNumberWithSystemLocale(dugTotal, 2)                       // Total for Prethodna godina - početno stanje (can be calculated if needed)
-		tbl.Totals[7] = common.FormatNumberWithSystemLocale(potTotal, 2)                       // Total for Promet potražuje (can be calculated if needed)
-		tbl.Totals[8] = common.FormatNumberWithSystemLocale(math.Abs(pstDugTotal+dugTotal), 2) // Total for Saldo duguje (can be calculated if needed)
-		tbl.Totals[9] = common.FormatNumberWithSystemLocale(math.Abs(pstPotTotal+potTotal), 2) // Total for Saldo potražuje (can be calculated if needed)
-		return entities, nil
+	// Count filtered items if needed for total records. The rows were fetched by the totals
+	// pass (no ORDER BY / name lookup), so they are only counted and summed.
+	if o.printType == common.TipStampePreview && o.getTotalRecords {
+		setZakljucniTotals(tbl, *entities, o.pageSize)
+	}
+	return entities, nil
+}
+
+// setZakljucniTotals fills the pagination counters and the totals row (columns 4..9) of the
+// Zakljucni list grid from the unpaged aggregate rows.
+func setZakljucniTotals(tbl *domain.TableData, entities []domain.FproDto, pageSize int) {
+	common.SetTableTotalRecords(tbl, len(entities), pageSize)
+	if len(tbl.Headers) <= 9 {
+		return
 	}
 
-	return entities, nil
+	tbl.Totals = make([]string, len(tbl.Headers))
+	tbl.Totals[0] = i18n.GetInstance().Label("Ukupno") // Set label for totals column
+
+	var pstDug, pstPot, promDug, promPot, saldoDug, saldoPot float64
+	for _, e := range entities {
+		pstDug += e.PocStanjeDug
+		pstPot += e.PocStanjePot
+		promDug += e.PrometDug
+		promPot += e.PrometPot
+		d, p := netirajSaldo(e.PocStanjeDug+e.PrometDug, e.PocStanjePot+e.PrometPot)
+		saldoDug += d
+		saldoPot += p
+	}
+
+	tbl.Totals[4] = common.FormatNumberWithSystemLocale(pstDug, 2)             // Početno stanje duguje
+	tbl.Totals[5] = common.FormatNumberWithSystemLocale(pstPot, 2)             // Početno stanje potražuje
+	tbl.Totals[6] = common.FormatNumberWithSystemLocale(promDug, 2)            // Promet duguje
+	tbl.Totals[7] = common.FormatNumberWithSystemLocale(promPot, 2)            // Promet potražuje
+	tbl.Totals[8] = common.FormatNumberWithSystemLocale(math.Abs(saldoDug), 2) // Saldo duguje
+	tbl.Totals[9] = common.FormatNumberWithSystemLocale(math.Abs(saldoPot), 2) // Saldo potražuje
 }
 
 // GetBilansStanja retrieves data for Bilans stanja (balance sheet)
@@ -1294,8 +1715,8 @@ func (s *BilansiResource) queryFproBilsAggregate(ctx context.Context, hasGod, ha
 	if hasKar {
 		qbP.AddEqual("kar", kar)
 	}
-	qbP.AddCustomCondition("tipdok = '00'")
-	qbP.AddLikeBegin("konto", sKonto)
+	qbP.AddCustomCondition("fnal.tipdok = '00'")
+	qbP.AddLikeBegin("fnal.konto", sKonto)
 	sqlP, argsP := qbP.Build()
 	rowsP, err := s.fproRepo.GetAllCustom(ctx, sqlP, "", argsP, "", "")
 	if err == nil && rowsP != nil && len(*rowsP) > 0 {
@@ -1307,15 +1728,15 @@ func (s *BilansiResource) queryFproBilsAggregate(ctx context.Context, hasGod, ha
 	qbM := common.NewQueryBuilder(`select
 		coalesce(sum(case when kat in (1,2) then iznos else 0 end), 0) as dug,
 		coalesce(sum(case when kat in (3,4) then iznos else 0 end), 0) as pot
-		from fpro`, true)
+		from fpro fnal`, true)
 	if hasGod {
 		qbM.AddEqual("god", god)
 	}
 	if hasKar {
 		qbM.AddEqual("kar", kar)
 	}
-	qbM.AddCustomCondition("tipdok != '00'")
-	qbM.AddLikeBegin("konto", sKonto)
+	qbM.AddCustomCondition("fnal.tipdok != '00'")
+	qbM.AddLikeBegin("fnal.konto", sKonto)
 	if odMes > 0 {
 		qbM.AddCondition("extract(month from danal)::int", odMes, ">=")
 	}
@@ -2169,7 +2590,7 @@ func (s *BilansiResource) queryFproAggregate(ctx context.Context, hasGod, hasKar
 	}
 
 	// Only movements, not opening balance postings
-	qb.AddCustomCondition("tipdok != '00'")
+	qb.AddCustomCondition("fnal.tipdok != '00'")
 
 	// Prefix match covers all sub-accounts at every depth:
 	// sKonto="20"  matches fpro konto "20","204","2042","20420", ...

@@ -99,7 +99,7 @@ func (h *RobnoKompodaciHandler) RobnoKompodaciMain(c *gin.Context) {
 	currentPage, pageSize, totalPages := common.GetPaginationData(c, 0, h.cfg)
 	tbl := common.SetTableBasicData(robnoKompodaciKupciArtTitle, robnoKompodaciKupciArtTableID, h.service.GetPrikazKarticeKupcaDobavljacaTableFields(), robnoKompodaciURLKupciArt, robnoKompodaciURLKupciArt, pageSize, currentPage, totalPages, 0, h.cfg)
 	common.SetTableConfig(&tbl, robnoKompodaciKupciArtTableID, robnoKompodaciURLKupciArt, false, false, false)
-	btnObrada := common.SetButton("obrada-btn", "Obrada", "fin_obrada", robnoKompodaciURLKupciArt, "#"+robnoKompodaciKupciArtTableID, "innerHTML", "GET", "", hxValsRobnoKompodaciRealizKupciArt, true, common.ClassSaveButton, "handleDialogResponse")
+	btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", robnoKompodaciURLKupciArt, "#"+robnoKompodaciKupciArtTableID, "innerHTML", "GET", "", hxValsRobnoKompodaciRealizKupciArt, true, common.ClassSaveButton, "handleDialogResponse")
 	btnPrint := common.SetPrintButton("print-btn", "Štampa", "stampa", robnoKompodaciURLKupciArtStampa, "GET", true, common.ClassPrintButton, "trziste,tip_izvestaja,odgrupe,dogrupe,odsifreartikla,dosifreartikla,oddatuma,dodatuma")
 	searchInput := common.CreateSearchInput("search-input", translator, robnoKompodaciURLKupciArt, fmt.Sprintf("#%s", robnoKompodaciURLKupciArt), hxValsRobnoKompodaciRealizKupciArt)
 
@@ -119,19 +119,19 @@ func (h *RobnoKompodaciHandler) PregledRealizacijePoKupcimaArtiklima(c *gin.Cont
 	tbl := common.SetTableBasicData(robnoKompodaciKupciArtTitle, robnoKompodaciKupciArtTableID, h.service.GetPregledRealizacijePoKupcimaArtiklimaTableFields(), robnoKompodaciURLKupciArt, "", 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tbl, robnoKompodaciKupciArtTableID, robnoKompodaciURLKupciArt, false, false, false)
 	if common.IsDataRequest(c) {
-		fieldsError := common.ValidateRequiredParams(c, []string{"odgrupe", "dogrupe","konto", "odsifrekupca", "dosifrekupca", "odsifreartikla", "dosifreartikla", "oddatuma", "dodatuma"})
+		fieldsError := common.ValidateRequiredParams(c, []string{"odgrupe", "dogrupe", "konto", "odsifrekupca", "dosifrekupca", "odsifreartikla", "dosifreartikla", "oddatuma", "dodatuma"})
 		if len(fieldsError) > 0 {
 			common.WriteJSONResponse(c, http.StatusBadRequest, false, fieldsError, common.ErrMsgValidation)
 			return
 		}
 		if !h.getPaginatedReport(c, &tbl, h.service.GetPregledRealizacijePoKupcimaArtiklima) {
 			return
-		}	
+		}
 		utils.RenderContent(c, tbl)
 		return
 	}
 	grpValues, _ := h.service.GetRobneGrupeComboValues(ctx)
-	btnObrada := common.SetButton("obrada-btn", "Obradi", "fin_obrada", robnoKompodaciURLKupciArt, "#"+robnoKompodaciKupciArtTableID, "innerHTML", "GET", "", hxValsRobnoKompodaciRealizKupciArt, true, common.ClassSaveButton, "handleDialogResponse")
+	btnObrada := common.SetButton("obrada-btn", "Obradi", "obrada", robnoKompodaciURLKupciArt, "#"+robnoKompodaciKupciArtTableID, "innerHTML", "GET", "", hxValsRobnoKompodaciRealizKupciArt, true, common.ClassSaveButton, "handleDialogResponse")
 	btnPrint := common.SetPrintButton("print-btn", "Štampa", "stampa", robnoKompodaciURLArtStampa, "GET", true, common.ClassPrintButton, "trziste,tip_izvestaja,odgrupe,dogrupe,odsifreartikla,dosifreartikla,oddatuma,dodatuma")
 	searchInput := common.CreateSearchInput("search-input", translator, robnoKompodaciURLKupciArt, fmt.Sprintf("#%s", robnoKompodaciURLKupciArt), hxValsRobnoKompodaciRealizKupciArt)
 
@@ -218,7 +218,7 @@ func (h *RobnoKompodaciHandler) PregledRealizacijePoArtiklima(c *gin.Context) {
 	}
 	grpValues, _ := h.service.GetRobneGrupeComboValues(ctx)
 	btnObrada := common.SetButton("obrada-btn", "Obradi",
-		"fin_obrada", robnoKompodaciURLArt, "#"+robnoKompodaciArtTableID, "innerHTML", "GET", "", hxValsRobnoKompodaciArt, true, common.ClassSaveButton, "handleDialogResponse")
+		"obrada", robnoKompodaciURLArt, "#"+robnoKompodaciArtTableID, "innerHTML", "GET", "", hxValsRobnoKompodaciArt, true, common.ClassSaveButton, "handleDialogResponse")
 	btnPrint := common.SetPrintButton("print-btn", "Štampa", "stampa", robnoKompodaciURLArtStampa, "GET", true, common.ClassPrintButton, "trziste,odgrupe,dogrupe,odsifreartikla,dosifreartikla,oddatuma,dodatuma")
 	searchInput := common.CreateSearchInput("search-input", translator, robnoKompodaciURLArt, fmt.Sprintf("#%s", robnoKompodaciURLArt), hxValsRobnoKompodaciArt)
 
@@ -307,7 +307,7 @@ func (h *RobnoKompodaciHandler) PregledUcescaArtikla(c *gin.Context) {
 		utils.RenderContent(c, tbl)
 		return
 	}
-	btnObrada := common.SetButton("obrada-btn", "Obradi", "fin_obrada", robnoKompodaciURLUcesceArt, "#"+robnoKompodaciUcesceArtTableID, "innerHTML", "GET", "", hxValsRobnoKompodaciUcesceArt, true, common.ClassSaveButton, "handleDialogResponse")
+	btnObrada := common.SetButton("obrada-btn", "Obradi", "obrada", robnoKompodaciURLUcesceArt, "#"+robnoKompodaciUcesceArtTableID, "innerHTML", "GET", "", hxValsRobnoKompodaciUcesceArt, true, common.ClassSaveButton, "handleDialogResponse")
 	btnPrint := common.SetPrintButton("print-btn", "Štampa", "stampa", robnoKompodaciURLUcesceArtStampa, "GET", true, common.ClassPrintButton, "odsifreartikla,dosifreartikla,oddatuma,dodatuma")
 	searchInput := common.CreateSearchInput("search-input", translator, robnoKompodaciURLUcesceArt, fmt.Sprintf("#%s", robnoKompodaciUcesceArtTableID), hxValsRobnoKompodaciUcesceArt)
 
@@ -392,7 +392,7 @@ func (h *RobnoKompodaciHandler) PregledUcescaGrupeArtikala(c *gin.Context) {
 		return
 	}
 	grpValues, _ := h.service.GetRobneGrupeComboValues(ctx)
-	btnObrada := common.SetButton("obrada-btn", "Obradi", "fin_obrada", robnoKompodaciURLUcesceGr, "#"+robnoKompodaciUcesceGrTableID, "innerHTML", "GET", "", hxValsRobnoKompodaciUcesceGr, true, common.ClassSaveButton, "handleDialogResponse")
+	btnObrada := common.SetButton("obrada-btn", "Obradi", "obrada", robnoKompodaciURLUcesceGr, "#"+robnoKompodaciUcesceGrTableID, "innerHTML", "GET", "", hxValsRobnoKompodaciUcesceGr, true, common.ClassSaveButton, "handleDialogResponse")
 	btnPrint := common.SetPrintButton("print-btn", "Štampa", "stampa", robnoKompodaciURLUcesceGrStampa, "GET", true, common.ClassPrintButton, "odgrupe,dogrupe,oddatuma,dodatuma")
 
 	searchInput := common.CreateSearchInput("search-input", translator, robnoKompodaciURLUcesceGr, fmt.Sprintf("#%s", robnoKompodaciURLUcesceGr), hxValsRobnoKompodaciUcesceGr)

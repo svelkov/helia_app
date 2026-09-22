@@ -8,7 +8,7 @@ import (
 	"helia/internal/domain"
 )
 
-templ RobnoStanjaMain(tabs domain.TabData, tbl domain.TableData, magValues []domain.ComboItem, btnObrada, btnPrint domain.Button, total domain.SaldaDto, saldaURLtotals string, translator *i18n.Service) {
+templ RobnoStanjaMain(tabs domain.TabData, tbl domain.TableData, magValues []domain.ComboItem, btnObrada, btnPrint domain.Button, total domain.RobnoStanjaTotal, saldaURLtotals string, translator *i18n.Service) {
 	<div id="tab-content" class="bg-blue-100 p-1 flex flex-col h-full">
 		@RobnoStanjePojedinacnogArtikla(tabs, tbl, magValues, btnObrada, btnPrint, total, saldaURLtotals, translator)
 	</div>
@@ -23,7 +23,7 @@ templ RobnoStanjaMain(tabs domain.TabData, tbl domain.TableData, magValues []dom
 }
 
 // Tab 1 - Prikaz stanja pojedinačnog artikla
-templ RobnoStanjePojedinacnogArtikla(tabs domain.TabData, tbl domain.TableData, magValues []domain.ComboItem, btnObrada, btnPrint domain.Button, total domain.SaldaDto, saldaURLtotals string, translator *i18n.Service) {
+templ RobnoStanjePojedinacnogArtikla(tabs domain.TabData, tbl domain.TableData, magValues []domain.ComboItem, btnObrada, btnPrint domain.Button, total domain.RobnoStanjaTotal, saldaURLtotals string, translator *i18n.Service) {
 	<div class="bg-blue-100 p-1 flex flex-col h-full">
 		<!-- Tab Navigation -->
 		<div class="border-b border-blue-600">
@@ -159,7 +159,7 @@ templ RobnoStanjePojedinacnogArtikla(tabs domain.TabData, tbl domain.TableData, 
 				<!-- Right - Prikaz ukupne obrade -->
 				<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1">
 					<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Prikaz ukupne obrade") }</legend>
-					@RobnoStanjeArtikalUkupnaObrada(total, saldaURLtotals, translator)
+					@RobnoStanjeArtikalUkupnaObrada(total, translator)
 				</fieldset>
 			</div>
 			<!-- Buttons: Obradi + Štampaj -->
@@ -167,14 +167,16 @@ templ RobnoStanjePojedinacnogArtikla(tabs domain.TabData, tbl domain.TableData, 
 				@components.FormObradaButton(btnObrada, translator)
 				@components.Search_PartPrintButton(btnPrint)
 			</div>
-			<!-- Monthly Data Table -->
-			<div class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex-1 min-h-0 overflow-hidden relative">
+			<!-- Group Data Table -->
+			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative">
 				@components.LoadingSpinner()
-				<div class="flex-1 overflow-y-auto">
+				<!-- Table -->
+				<div id={ tbl.TableID } class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
 					@components.Table(tbl, translator)
 				</div>
 			</div>
 		</div>
+		<div id="info-message-dialog"></div>
 	</div>
 }
 
@@ -497,7 +499,7 @@ templ RobnoSvodjenjeZaliha(tabs domain.TabData, tbl domain.TableData, magValues,
 							</div>
 							<!-- Obradi / Štampaj (right aligned in this column) -->
 							<div class="flex justify-end gap-1">
-								@components.Button(btnObrada)
+								@components.FormObradaButton(btnObrada, translator)
 								@components.Search_PartPrintButton(btnPrint)
 							</div>
 						</div>
@@ -521,7 +523,7 @@ templ RobnoSvodjenjeZaliha(tabs domain.TabData, tbl domain.TableData, magValues,
 								Disabled:       false,
 								OptionValues:   ojValues,
 								ClassSelect:    common.ClassInputTextEnabled + " flex-1",
-								ChangeEndpoint: "/api/mestotroska",
+								ChangeEndpoint: "/api/robno-stanja/mesto-troska",
 								HxChangeTarget: "mestotrid",
 								HxSwap:         "outerHTML",
 							}, translator)
@@ -568,11 +570,11 @@ templ RobnoSvodjenjeZaliha(tabs domain.TabData, tbl domain.TableData, magValues,
 // for the "Prikaz stanja pojedinačnog artikla" view. It is initially rendered
 // server-side and refreshed from the backend totals endpoint (sourceUrl) when
 // the Obradi button (#obrada-btn) is clicked.
-templ RobnoStanjeArtikalUkupnaObrada(total domain.SaldaDto, sourceUrl string, translator *i18n.Service) {
+templ RobnoStanjeArtikalUkupnaObrada(total domain.RobnoStanjaTotal, translator *i18n.Service) {
 	<div
 		id="robnostanja-artikal-ukupna-obrada"
 		class="flex flex-col gap-1"
-		hx-get={ sourceUrl }
+		hx-get="/api/robno-stanja/ukupna-obrada"
 		hx-trigger="click from:#obrada-btn"
 		hx-target="#robnostanja-artikal-ukupna-obrada"
 		hx-swap="innerHTML"
@@ -586,33 +588,33 @@ templ RobnoStanjeArtikalUkupnaObrada(total domain.SaldaDto, sourceUrl string, tr
 		<div class="grid grid-cols-2 gap-1 items-center">
 			<div class="flex items-center gap-1">
 				@components.LabelField(domain.LabelFieldConfig{ID: "ukulaz", LabelText: translator.Label("Ulaz"), ClassLabel: common.ClassLabel + " w-20"})
-				@components.TextInputField(domain.InputFieldConfig{ID: "ukulaz", Name: "ukulaz", Value: common.FormatNumberWithSystemLocale(0, 3), DecimalPlaces: 3, Disabled: true, FieldType: "number", ClassInput: common.ClassInputNumericDisabled + " flex-1"})
+				@components.TextInputField(domain.InputFieldConfig{ID: "ukulaz", Name: "ukulaz", Value: common.FormatNumberWithSystemLocale(total.Ulaz, 3), DecimalPlaces: 3, Disabled: true, FieldType: "number", ClassInput: common.ClassInputNumericDisabled + " flex-1"})
 			</div>
 			<div class="flex items-center gap-1">
 				@components.LabelField(domain.LabelFieldConfig{ID: "ukduguje", LabelText: translator.Label("Duguje"), ClassLabel: common.ClassLabel + " w-24"})
-				@components.TextInputField(domain.InputFieldConfig{ID: "ukduguje", Name: "ukduguje", Value: common.FormatNumberWithSystemLocale(0, 2), DecimalPlaces: 2, Disabled: true, FieldType: "number", ClassInput: common.ClassInputNumericDisabled + " flex-1"})
+				@components.TextInputField(domain.InputFieldConfig{ID: "ukduguje", Name: "ukduguje", Value: common.FormatNumberWithSystemLocale(total.Duguje, 2), DecimalPlaces: 2, Disabled: true, FieldType: "number", ClassInput: common.ClassInputNumericDisabled + " flex-1"})
 			</div>
 		</div>
 		<!-- Izlaz | Potražuje -->
 		<div class="grid grid-cols-2 gap-1 items-center">
 			<div class="flex items-center gap-1">
 				@components.LabelField(domain.LabelFieldConfig{ID: "ukizlaz", LabelText: translator.Label("Izlaz"), ClassLabel: common.ClassLabel + " w-20"})
-				@components.TextInputField(domain.InputFieldConfig{ID: "ukizlaz", Name: "ukizlaz", Value: common.FormatNumberWithSystemLocale(0, 3), DecimalPlaces: 3, Disabled: true, FieldType: "number", ClassInput: common.ClassInputNumericDisabled + " flex-1"})
+				@components.TextInputField(domain.InputFieldConfig{ID: "ukizlaz", Name: "ukizlaz", Value: common.FormatNumberWithSystemLocale(total.Izlaz, 3), DecimalPlaces: 3, Disabled: true, FieldType: "number", ClassInput: common.ClassInputNumericDisabled + " flex-1"})
 			</div>
 			<div class="flex items-center gap-1">
 				@components.LabelField(domain.LabelFieldConfig{ID: "ukpotrazuje", LabelText: translator.Label("Potražuje"), ClassLabel: common.ClassLabel + " w-24"})
-				@components.TextInputField(domain.InputFieldConfig{ID: "ukpotrazuje", Name: "ukpotrazuje", Value: common.FormatNumberWithSystemLocale(0, 2), DecimalPlaces: 2, Disabled: true, FieldType: "number", ClassInput: common.ClassInputNumericDisabled + " flex-1"})
+				@components.TextInputField(domain.InputFieldConfig{ID: "ukpotrazuje", Name: "ukpotrazuje", Value: common.FormatNumberWithSystemLocale(total.Potrazuje, 2), DecimalPlaces: 2, Disabled: true, FieldType: "number", ClassInput: common.ClassInputNumericDisabled + " flex-1"})
 			</div>
 		</div>
 		<!-- Stanje | Saldo -->
 		<div class="grid grid-cols-2 gap-1 items-center">
 			<div class="flex items-center gap-1">
 				@components.LabelField(domain.LabelFieldConfig{ID: "ukstanje", LabelText: translator.Label("Stanje"), ClassLabel: common.ClassLabel + " w-20"})
-				@components.TextInputField(domain.InputFieldConfig{ID: "ukstanje", Name: "ukstanje", Value: common.FormatNumberWithSystemLocale(0, 3), DecimalPlaces: 3, Disabled: true, FieldType: "number", ClassInput: common.ClassInputNumericDisabled + " flex-1"})
+				@components.TextInputField(domain.InputFieldConfig{ID: "ukstanje", Name: "ukstanje", Value: common.FormatNumberWithSystemLocale(total.Stanje, 3), DecimalPlaces: 3, Disabled: true, FieldType: "number", ClassInput: common.ClassInputNumericDisabled + " flex-1"})
 			</div>
 			<div class="flex items-center gap-1">
 				@components.LabelField(domain.LabelFieldConfig{ID: "uksaldo", LabelText: translator.Label("Saldo"), ClassLabel: common.ClassLabel + " w-24"})
-				@components.TextInputField(domain.InputFieldConfig{ID: "uksaldo", Name: "uksaldo", Value: common.FormatNumberWithSystemLocale(0, 2), DecimalPlaces: 2, Disabled: true, FieldType: "number", ClassInput: common.ClassInputNumericDisabled + " flex-1"})
+				@components.TextInputField(domain.InputFieldConfig{ID: "uksaldo", Name: "uksaldo", Value: common.FormatNumberWithSystemLocale(total.Saldo, 2), DecimalPlaces: 2, Disabled: true, FieldType: "number", ClassInput: common.ClassInputNumericDisabled + " flex-1"})
 			</div>
 		</div>
 	</div>

@@ -197,7 +197,7 @@ func (h *FseppHandler) FseppEvidencija(c *gin.Context) {
 		if session != nil {
 			gnGod = session.SelectedGod
 		}
-		btnObrada := common.SetButton("obrada-btn", translator.Button("Obrada"), "fin_obrada", fseppURLEvidencija, "#"+fseppTableID, "innerHTML", "GET", "", hxValsFseppEvidencija, true, common.ClassSaveButton, "")
+		btnObrada := common.SetButton("obrada-btn", translator.Button("Obrada"), "obrada", fseppURLEvidencija, "#"+fseppTableID, "innerHTML", "GET", "", hxValsFseppEvidencija, true, common.ClassSaveButton, "")
 		btnDelete := common.SetButton("delete-btn", "Obriši", "fin_delete", "", "", "innerHTML", "GET", "", hxValsFseppEvidencija, true, common.ClassButton, "")
 		searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), fseppURLEvidencija, fmt.Sprintf("#%s", fseppTableID), hxValsFseppEvidencija)
 

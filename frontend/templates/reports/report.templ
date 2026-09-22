@@ -23,7 +23,7 @@ templ Report(parameters domain.ReportParameters, tableData domain.TableData, tra
 			/* @top-right requires Chrome 128+ — thead::before below is the Chrome fallback */
 			@page {
 				size: A4 { parameters.Orientation };
-				margin: 12mm 8mm 12mm 8mm;
+				margin: 14mm 8mm 14mm 8mm;
 				@bottom-right {
 					content: "Strana: " counter(page) " / " counter(pages);
 					font-size: 9pt;
@@ -151,9 +151,6 @@ templ Report(parameters domain.ReportParameters, tableData domain.TableData, tra
 					class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-sm font-semibold"
 				>
 					🖨️ { translator.Button("Stampa") }
-				</button>
-				<button onclick="exportToPDF()"  class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-sm font-semibold">
-					📄 Download PDF
 				</button>
 				<button onclick="exportToExcel()" class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-sm font-semibold">
 					📊 Export Excel
@@ -315,7 +312,10 @@ templ ReportPaginationScript() {
 				// Find the first table in the report container
 				const table = document.querySelector('table');
 				if (!table) { alert('No table found to export.'); return; }
-				const wb = XLSX.utils.table_to_book(table, { sheet: 'Izvestaj', raw: false });
+				// Print-only helper rows (e.g. repeating print headers) must not leak into the sheet
+				const exportTable = table.cloneNode(true);
+				exportTable.querySelectorAll('.no-export').forEach(el => el.remove());
+				const wb = XLSX.utils.table_to_book(exportTable, { sheet: 'Izvestaj', raw: false });
 				const excelName = document.querySelector('meta[name="report-name"]')?.content || 'Izvestaj';
 				XLSX.writeFile(wb, excelName + '.xlsx');
 			} catch (error) {
@@ -327,37 +327,6 @@ templ ReportPaginationScript() {
 			}
 		}
 
-		async function exportToPDF() {
-			// Show loading state
-			const btn = event.target;
-			const originalText = btn.innerText;
-			btn.innerText = 'Generating PDF...';
-			btn.disabled = true;
-			
-			try {
-				// Dynamic import for better performance
-				const html2pdf = (await import('https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js')).default;
-				
-				const element = document.querySelector('.print-container') || document.querySelector('.bg-white');
-				const pdfName = document.querySelector('meta[name="report-name"]')?.content || 'Report';
-				const opt = {
-					margin: [0.6, 0.5, 0.6, 0.5], // top, right, bottom, left (in inches)
-					filename: pdfName + '.pdf',
-					image: { type: 'jpeg', quality: 0.98 },
-					html2canvas: { scale: 2, letterRendering: true, useCORS: true },
-					jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
-				};
-				await html2pdf().set(opt).from(element).save();
-			} catch (error) {
-				console.error('PDF generation failed:', error);
-				// Fallback to print
-				window.print();
-			} finally {
-				btn.innerText = originalText;
-				btn.disabled = false;
-			}
-		}
-		
 		function updatePageNumbers() {
 			const currentPageSpan = document.getElementById('current-page');
 			const totalPagesSpan = document.getElementById('total-pages');
@@ -411,11 +380,6 @@ templ ReportKeyboardShortcutsScript() {
 			if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
 				e.preventDefault();
 				window.print();
-			}
-			// Ctrl/Cmd + Shift + E for export
-			if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'E') {
-				e.preventDefault();
-				exportToPDF();
 			}
 			// Escape to close
 			if (e.key === 'Escape') {

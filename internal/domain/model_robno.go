@@ -338,22 +338,233 @@ type Rsif struct {
 	KontoNaziv   string       `json:"kontonaziv" db:"kontonaziv"`
 }
 
+// Drsta represents the baza.drsta table
+type Drsta struct {
+	God        int     `db:"god" json:"god"`
+	Kar        int     `db:"kar" json:"kar"`
+	Konto      string  `db:"konto" json:"konto"`
+	Dug        float64 `db:"dug" json:"dug"`
+	Pot        float64 `db:"pot" json:"pot"`
+	Mdug1      float64 `db:"mdug_1" json:"mdug_1"`
+	Mdug2      float64 `db:"mdug_2" json:"mdug_2"`
+	Mdug3      float64 `db:"mdug_3" json:"mdug_3"`
+	Mdug4      float64 `db:"mdug_4" json:"mdug_4"`
+	Mdug5      float64 `db:"mdug_5" json:"mdug_5"`
+	Mdug6      float64 `db:"mdug_6" json:"mdug_6"`
+	Mdug7      float64 `db:"mdug_7" json:"mdug_7"`
+	Mdug8      float64 `db:"mdug_8" json:"mdug_8"`
+	Mdug9      float64 `db:"mdug_9" json:"mdug_9"`
+	Mdug10     float64 `db:"mdug_10" json:"mdug_10"`
+	Mdug11     float64 `db:"mdug_11" json:"mdug_11"`
+	Mdug12     float64 `db:"mdug_12" json:"mdug_12"`
+	Mpot1      float64 `db:"mpot_1" json:"mpot_1"`
+	Mpot2      float64 `db:"mpot_2" json:"mpot_2"`
+	Mpot3      float64 `db:"mpot_3" json:"mpot_3"`
+	Mpot4      float64 `db:"mpot_4" json:"mpot_4"`
+	Mpot5      float64 `db:"mpot_5" json:"mpot_5"`
+	Mpot6      float64 `db:"mpot_6" json:"mpot_6"`
+	Mpot7      float64 `db:"mpot_7" json:"mpot_7"`
+	Mpot8      float64 `db:"mpot_8" json:"mpot_8"`
+	Mpot9      float64 `db:"mpot_9" json:"mpot_9"`
+	Mpot10     float64 `db:"mpot_10" json:"mpot_10"`
+	Mpot11     float64 `db:"mpot_11" json:"mpot_11"`
+	Mpot12     float64 `db:"mpot_12" json:"mpot_12"`
+	Ulaz       float64 `db:"ulaz" json:"ulaz"`
+	Izlaz      float64 `db:"izlaz" json:"izlaz"`
+	Mul1       float64 `db:"mul_1" json:"mul_1"`
+	Mul2       float64 `db:"mul_2" json:"mul_2"`
+	Mul3       float64 `db:"mul_3" json:"mul_3"`
+	Mul4       float64 `db:"mul_4" json:"mul_4"`
+	Mul5       float64 `db:"mul_5" json:"mul_5"`
+	Mul6       float64 `db:"mul_6" json:"mul_6"`
+	Mul7       float64 `db:"mul_7" json:"mul_7"`
+	Mul8       float64 `db:"mul_8" json:"mul_8"`
+	Mul9       float64 `db:"mul_9" json:"mul_9"`
+	Mul10      float64 `db:"mul_10" json:"mul_10"`
+	Mul11      float64 `db:"mul_11" json:"mul_11"`
+	Mul12      float64 `db:"mul_12" json:"mul_12"`
+	Miz1       float64 `db:"miz_1" json:"miz_1"`
+	Miz2       float64 `db:"miz_2" json:"miz_2"`
+	Miz3       float64 `db:"miz_3" json:"miz_3"`
+	Miz4       float64 `db:"miz_4" json:"miz_4"`
+	Miz5       float64 `db:"miz_5" json:"miz_5"`
+	Miz6       float64 `db:"miz_6" json:"miz_6"`
+	Miz7       float64 `db:"miz_7" json:"miz_7"`
+	Miz8       float64 `db:"miz_8" json:"miz_8"`
+	Miz9       float64 `db:"miz_9" json:"miz_9"`
+	Miz10      float64 `db:"miz_10" json:"miz_10"`
+	Miz11      float64 `db:"miz_11" json:"miz_11"`
+	Miz12      float64 `db:"miz_12" json:"miz_12"`
+	Pos        float64 `db:"pos" json:"pos"`
+	Pov        float64 `db:"pov" json:"pov"`
+	Sifra      int     `db:"sifra" json:"sifra"`
+	Nivel      float64 `db:"nivel" json:"nivel"`
+	Cena       float64 `db:"cena" json:"cena"`
+	Rez        float64 `db:"rez" json:"rez"`
+	Rstaid     int     `db:"rstaid" json:"rstaid"`
+	Rsifid     int     `db:"rsifid" json:"rsifid"`
+	Magaciniid int     `db:"magaciniid" json:"magaciniid"`
+	Mag        int16   `db:"mag" json:"mag"`
+	Ncena      float64 `db:"ncena" json:"ncena"`
+	Otk        string  `db:"otk" json:"otk"`
+	Serija     string  `db:"serija" json:"serija"`
+	Roktr      float64 `db:"roktr" json:"roktr"`
+	Zstatus    string  `db:"zstatus" json:"zstatus"`
+	Kolicner   float64 `db:"kolicner" json:"kolicner"`
+	Prosnc     float64 `db:"prosnc" json:"prosnc"`
+	Vpcena     float64 `db:"vpcena" json:"vpcena"`
+}
+
 type RobnoStanjeDto struct {
 	Magacin      int     `json:"magacin" db:"magacin"`
 	Konto        string  `json:"konto" db:"konto"`
+	Sifra        string  `json:"sifra" db:"sifra"`
 	SifraArtikla string  `json:"sifra_artikla" db:"sifra_artikla"`
 	NazivArtikla string  `json:"naziv_artikla" db:"naziv_artikla"`
+	Jm           string  `json:"jm" db:"jm"`
 	Cena         float64 `json:"cena" db:"cena"`
+	KontoNaziv   string  `json:"kontonaziv" db:"kontonaziv"`
+	MagacinNaziv string  `json:"magacinnaziv" db:"magacinnaziv"`
+	Mesec        int     `json:"mesec" db:"mesec"`
+	MDug1        float64 `json:"mdug_1" db:"mdug_1"`
+	MDug2        float64 `json:"mdug_2" db:"mdug_2"`
+	MDug3        float64 `json:"mdug_3" db:"mdug_3"`
+	MDug4        float64 `json:"mdug_4" db:"mdug_4"`
+	MDug5        float64 `json:"mdug_5" db:"mdug_5"`
+	MDug6        float64 `json:"mdug_6" db:"mdug_6"`
+	MDug7        float64 `json:"mdug_7" db:"mdug_7"`
+	MDug8        float64 `json:"mdug_8" db:"mdug_8"`
+	MDug9        float64 `json:"mdug_9" db:"mdug_9"`
+	MDug10       float64 `json:"mdug_10" db:"mdug_10"`
+	MDug11       float64 `json:"mdug_11" db:"mdug_11"`
+	MDug12       float64 `json:"mdug_12" db:"mdug_12"`
+	MPot1        float64 `json:"mpot_1" db:"mpot_1"`
+	MPot2        float64 `json:"mpot_2" db:"mpot_2"`
+	MPot3        float64 `json:"mpot_3" db:"mpot_3"`
+	MPot4        float64 `json:"mpot_4" db:"mpot_4"`
+	MPot5        float64 `json:"mpot_5" db:"mpot_5"`
+	MPot6        float64 `json:"mpot_6" db:"mpot_6"`
+	MPot7        float64 `json:"mpot_7" db:"mpot_7"`
+	MPot8        float64 `json:"mpot_8" db:"mpot_8"`
+	MPot9        float64 `json:"mpot_9" db:"mpot_9"`
+	MPot10       float64 `json:"mpot_10" db:"mpot_10"`
+	MPot11       float64 `json:"mpot_11" db:"mpot_11"`
+	MPot12       float64 `json:"mpot_12" db:"mpot_12"`
+	MUl1         float64 `json:"mul_1" db:"mul_1"`
+	MUl2         float64 `json:"mul_2" db:"mul_2"`
+	MUl3         float64 `json:"mul_3" db:"mul_3"`
+	MUl4         float64 `json:"mul_4" db:"mul_4"`
+	MUl5         float64 `json:"mul_5" db:"mul_5"`
+	MUl6         float64 `json:"mul_6" db:"mul_6"`
+	MUl7         float64 `json:"mul_7" db:"mul_7"`
+	MUl8         float64 `json:"mul_8" db:"mul_8"`
+	MUl9         float64 `json:"mul_9" db:"mul_9"`
+	MUl10        float64 `json:"mul_10" db:"mul_10"`
+	MUl11        float64 `json:"mul_11" db:"mul_11"`
+	MUl12        float64 `json:"mul_12" db:"mul_12"`
+	MIz1         float64 `json:"miz_1" db:"miz_1"`
+	MIz2         float64 `json:"miz_2" db:"miz_2"`
+	MIz3         float64 `json:"miz_3" db:"miz_3"`
+	MIz4         float64 `json:"miz_4" db:"miz_4"`
+	MIz5         float64 `json:"miz_5" db:"miz_5"`
+	MIz6         float64 `json:"miz_6" db:"miz_6"`
+	MIz7         float64 `json:"miz_7" db:"miz_7"`
+	MIz8         float64 `json:"miz_8" db:"miz_8"`
+	MIz9         float64 `json:"miz_9" db:"miz_9"`
+	MIz10        float64 `json:"miz_10" db:"miz_10"`
+	MIz11        float64 `json:"miz_11" db:"miz_11"`
+	MIz12        float64 `json:"miz_12" db:"miz_12"`
 	ReportTip    string  `json:"report_tip" db:"reporttip"`
+	Ulaz         float64 `json:"ulaz" db:"ulaz"`
+	Izlaz        float64 `json:"izlaz" db:"izlaz"`
+	Stanje       float64 `json:"stanje" db:"stanje"`
+	Duguje       float64 `json:"duguje" db:"duguje"`
+	Potrazuje    float64 `json:"potrazuje" db:"potrazuje"`
+	Saldo        float64 `json:"saldo" db:"saldo"`
+}
+type RobnoStanjaTotal struct {
+	Ulaz         float64 `json:"ulaz" db:"ulaz"`
+	Izlaz        float64 `json:"izlaz" db:"izlaz"`
+	Stanje       float64 `json:"saldo" db:"stanje"`
+	Duguje       float64 `json:"duguje" db:"duguje"`
+	Potrazuje    float64 `json:"potrazuje" db:"potrazuje"`
+	Saldo        float64 `json:"fin_saldo" db:"saldo"`
+	Sifra        string  `json:"sifra" db:"sifra"`
+	NazivArtikla string  `json:"naziv_artikla" db:"naziv_artikla"`
+	Jm           string  `json:"jm" db:"jm"`
+	Cena         float64 `json:"cena" db:"cena"`
+	KontoNaziv   string  `json:"kontonaziv" db:"kontonaziv"`
+	MagacinNaziv string  `json:"magacinnaziv" db:"magacinnaziv"`
 }
 
 type RobnoStanjaParams struct {
-	Magacin      int     `json:"magacin" db:"magacin"`
-	Konto        string  `json:"konto" db:"konto"`
-	SifraArtikla string  `json:"sifra_artikla" db:"sifra_artikla"`
-	NazivArtikla string  `json:"naziv_artikla" db:"naziv_artikla"`
-	Cena         float64 `json:"cena" db:"cena"`
-	ReportTip    string  `json:"report_tip" db:"reporttip"`
+	MagaciniID             int     `json:"magaciniid" db:"magaciniid"`
+	Magacin                int     `json:"magacin" db:"magacin"`
+	Konto                  string  `json:"konto" db:"konto"`
+	SifraArtikla           string  `json:"sifra_artikla" db:"sifra_artikla"`
+	OdKonta                string  `json:"odkonta" db:"odkonta"`
+	DoKonta                string  `json:"dokonta" db:"dokonta"`
+	OdSifre                string  `json:"odsifre" db:"odsifre"`
+	DoSifre                string  `json:"dosifre" db:"dosifre"`
+	OdGrupe                string  `json:"odgrupe" db:"odgrupe"`
+	DoGrupe                string  `json:"dogrupe" db:"dogrupe"`
+	OdMeseca               string  `json:"odmeseca" db:"odmeseca"`
+	DoMeseca               string  `json:"domeseca" db:"domeseca"`
+	FinansijskiIznos       bool    `json:"finansijskiiznos" db:"finansijskiiznos"`
+	ArtikliSaStanjem       bool    `json:"artiklisastanjem" db:"artiklisastanjem"`
+	ArtikliBezStanja       bool    `json:"artiklibezstanja" db:"artiklibezstanja"`
+	ProsecnaCenaStanje     bool    `json:"prosecnacenastanje" db:"prosecnacenastanje"`
+	ProsecnaCenaUlaz       bool    `json:"prosecnacenaulaz" db:"prosecnacenaulaz"`
+	ZaDobavljaca           bool    `json:"zadobavljaca" db:"zadobavljaca"`
+	NovaStranaPoGrupi      bool    `json:"novastranapogrupi" db:"novastranapogrupi"`
+	NacinSvodjenja         string  `json:"nacinsvodjenja" db:"nacinsvodjenja"`
+	ObradiArtikleSaStanjem bool    `json:"obradiartiklesastanjem" db:"obradiartiklesastanjem"`
+	VrstaNaloga            string  `json:"vrstanaloga" db:"vrstanaloga"`
+	IdOrgJed               int     `json:"idorgjed" db:"idorgjed"`
+	MestoTroskaID          int     `json:"mestotroskaid" db:"mestotroskaid"`
+	BrojNaloga             string  `json:"brojnaloga" db:"brojnaloga"`
+	DatumNaloga            string  `json:"datumnaloga" db:"datumnaloga"`
+	DatumObradeNaloga      string  `json:"datumobradenaloga" db:"datumobradenaloga"`
+	OpisKnjizenja          string  `json:"opisknjizenja" db:"opisknjizenja"`
+	NazivArtikla           string  `json:"naziv_artikla" db:"naziv_artikla"`
+	Cena                   float64 `json:"cena" db:"cena"`
+	ReportTip              string  `json:"report_tip" db:"reporttip"`
+	SearchText             string  `json:"searchtext" db:"searchtext"`
+}
+type RobnoKarticaDto struct {
+	Magacin      int       `json:"magacin" db:"magacin"`
+	Konto        string    `json:"konto" db:"konto"`
+	Tipdok       string    `json:"tipdok" db:"tipdok"`
+	Nalog        int       `json:"nalog" db:"nalog"`
+	Danal        time.Time `json:"danal" db:"danal"`
+	Vrd          string    `json:"vrd" db:"vrd"`
+	Dokum        int       `json:"dokum" db:"dokum"`
+	Dadok        time.Time `json:"dadok" db:"dadok"`
+	Opis         string    `json:"opis" db:"opis"`
+	Sifra        string    `json:"sifra" db:"sifra"`
+	NazivArtikla string    `json:"naziv_artikla" db:"naziv_artikla"`
+	Cena         float64   `json:"cena" db:"cena"`
+	Fcena        float64   `json:"fcena" db:"fcena"`
+	Ulaz         float64   `json:"ulaz" db:"ulaz"`
+	Izlaz        float64   `json:"izlaz" db:"izlaz"`
+	Iznos        float64   `json:"iznos" db:"iznos"`
+	Duguje       float64   `json:"duguje" db:"duguje"`
+	Potrazuje    float64   `json:"potrazuje" db:"potrazuje"`
+	Saldo        float64   `json:"saldo" db:"saldo"`
+	Stanje       float64   `json:"stanje" db:"stanje"`
+	Fkto         string    `json:"fkto" db:"fkto"`
+	Fana         string    `json:"fana" db:"fana"`
+	Fkplnaz      string    `json:"fkplnaz" db:"fkplnaz"`
+	Valuta       string    `json:"valuta" db:"valuta"`
+	Kurs         float64   `json:"kurs" db:"kurs"`
+	CenaVal      float64   `json:"cenaval" db:"cenaval"`
+	Mesec        int       `json:"mesec" db:"mesec"`
+	Dokiz        string    `json:"dokiz" db:"dokiz"`
+	Dadokiz      time.Time `json:"dadokiz" db:"dadokiz"`
+	Otk          string    `json:"otk" db:"otk"`
+	Serija       string    `json:"serija" db:"serija"`
+	Roktr        int       `json:"rok" db:"roktr"`
+	Napomena     string    `json:"napomena" db:"napomena"`
 }
 type RobnoKarticaParams struct {
 	Magacin           int
@@ -365,15 +576,15 @@ type RobnoKarticaParams struct {
 	DoDatumObrade     string
 	SifVrsteDokumenta string
 	BrojDokumenta     string
-	OdDatumDok        string
-	DoDatumDok        string
+	OdDatumaDok       string
+	DoDatumaDok       string
 	OdIznosa          float64
 	DoIznosa          float64
 	OdSifre           string
 	DoSifre           string
 	Cena              float64
 	CbxBrojNaloga     bool
-	CbxDatum          bool
+	CbxDatumNaloga    bool
 	CbxDatumObrade    bool
 	CbxVrstaDokumenta bool
 	CbxBrojDokumenta  bool

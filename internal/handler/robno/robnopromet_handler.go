@@ -322,7 +322,7 @@ func (h *RobnoPrometHandler) validate(c *gin.Context, required []string) bool {
 }
 
 func (h *RobnoPrometHandler) obradaButton(url, tableID, vals string) domain.Button {
-	return common.SetButton(tableID+"-obrada", "Obradi", "fin_obrada", url, "#"+tableID, "innerHTML", "GET", "", vals, true, common.ClassSaveButton, "handleDialogResponse")
+	return common.SetButton(tableID+"-obrada", "Obradi", "obrada", url, "#"+tableID, "innerHTML", "GET", "", vals, true, common.ClassSaveButton, "handleDialogResponse")
 }
 
 func (h *RobnoPrometHandler) comboValues(ctx context.Context) ([]domain.ComboItem, []domain.ComboItem, error) {

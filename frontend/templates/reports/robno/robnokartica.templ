@@ -1,12 +1,177 @@
 package robno
 
 import (
+	"fmt"
 	rep "helia/frontend/templates/reports"
 	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
 	"time"
 )
+
+templ RobnoKarticaArtikalStampa(repParams domain.ReportParameters, params domain.RobnoKarticaParams, tbl domain.TableData, translator *i18n.Service) {
+	@rep.Report(repParams, domain.TableData{}, translator, nil, RobnoKarticaArtikalContent(repParams, params, tbl, translator))
+}
+
+templ RobnoKarticaArtikalContent(repParams domain.ReportParameters, params domain.RobnoKarticaParams, tbl domain.TableData, translator *i18n.Service) {
+	@rep.ReportHeader(repParams)
+	@rep.ReportTitle(repParams)
+	@RobnoKarticaArtikalParam(params, translator)
+	@RobnoKarticaArtikalTable(tbl, translator)
+	@rep.ReportEnd(nil)
+}
+
+templ RobnoKarticaArtikalParam(params domain.RobnoKarticaParams, translator *i18n.Service) {
+	<div class="mb-2 text-sm print:text-[9pt]">
+		<div class="flex items-center gap-2 mb-1">
+			<span class="font-semibold">{ translator.Label("Magacin") }:</span>
+			<span class="font-bold">{ fmt.Sprintf("%d", params.Magacin) }</span>
+			<span class="font-semibold ml-6">{ translator.Label("Od artikla") }:</span>
+			<span class="font-bold">{ params.OdSifre }</span>
+			<span class="font-semibold ml-4">{ translator.Label("Do artikla") }:</span>
+			<span class="font-bold">{ params.DoSifre }</span>
+		</div>
+		<div class="grid grid-cols-2 gap-2">
+			<div class="flex items-center gap-1 flex-wrap">
+				@robnoKarticaStampaCheckbox(params.CbxBrojNaloga)
+				<span>{ translator.Label("Po broju naloga") }</span>
+				<span class="ml-2 font-bold">{ params.Nalozi }</span>
+			</div>
+			<div class="flex items-center gap-1 flex-wrap">
+				@robnoKarticaStampaCheckbox(params.CbxIznos)
+				<span>{ translator.Label("Po iznosu") }</span>
+				<span class="ml-4">{ translator.Label("Od iznosa") }: <span class="font-bold">{ common.FormatNumberWithSystemLocale(params.OdIznosa, 2) }</span></span>
+				<span class="ml-4">{ translator.Label("Do iznosa") }: <span class="font-bold">{ common.FormatNumberWithSystemLocale(params.DoIznosa, 2) }</span></span>
+			</div>
+			<div class="flex items-center gap-1 flex-wrap">
+				@robnoKarticaStampaCheckbox(params.CbxDatumNaloga)
+				<span>{ translator.Label("Po datumu naloga") }</span>
+				<span class="ml-4">{ translator.Label("Od datuma naloga") }: <span class="font-bold">{ robnoKarticaStampaFormatDate(params.OdDanal) }</span></span>
+				<span class="ml-4">{ translator.Label("Do datuma naloga") }: <span class="font-bold">{ robnoKarticaStampaFormatDate(params.DoDanal) }</span></span>
+			</div>
+			<div class="flex items-center gap-1 flex-wrap">
+				@robnoKarticaStampaCheckbox(params.CbxDatumObrade)
+				<span>{ translator.Label("Po datumu obrade") }</span>
+				<span class="ml-4">{ translator.Label("Od datuma obrade") }: <span class="font-bold">{ robnoKarticaStampaFormatDate(params.OdDatumObrade) }</span></span>
+				<span class="ml-4">{ translator.Label("Do datuma obrade") }: <span class="font-bold">{ robnoKarticaStampaFormatDate(params.DoDatumObrade) }</span></span>
+			</div>
+			<div class="flex items-center gap-1 flex-wrap">
+				@robnoKarticaStampaCheckbox(params.CbxVrstaDokumenta)
+				<span>{ translator.Label("Po vrsti dokumenta") }</span>
+				<span class="ml-2 font-bold">{ params.SifVrsteDokumenta }</span>
+			</div>
+			<div class="flex items-center gap-1 flex-wrap">
+				@robnoKarticaStampaCheckbox(params.CbxBrojDokumenta)
+				<span>{ translator.Label("Po broju dokumenta") }</span>
+				<span class="ml-2 font-bold">{ params.BrojDokumenta }</span>
+			</div>
+			<div class="flex items-center gap-1 flex-wrap">
+				@robnoKarticaStampaCheckbox(params.CbxDatumDokumenta)
+				<span>{ translator.Label("Po datumu dokumenta") }</span>
+				<span class="ml-4">{ translator.Label("Od datuma dokumenta") }: <span class="font-bold">{ robnoKarticaStampaFormatDate(params.OdDatumaDok) }</span></span>
+				<span class="ml-4">{ translator.Label("Do datuma dokumenta") }: <span class="font-bold">{ robnoKarticaStampaFormatDate(params.DoDatumaDok) }</span></span>
+			</div>
+			<div class="flex items-center gap-1">
+				@robnoKarticaStampaCheckbox(params.CbxRPROID)
+				<span>po RPROID</span>
+			</div>
+			<div class="flex items-center gap-2">
+				<span class="font-semibold">{ translator.Label("Sortiranje") }:</span>
+				if params.Sortiranje == "dokument" {
+					<span class="font-bold">{ translator.Label("Sortiranje po datumu dokumenta") }</span>
+				} else {
+					<span class="font-bold">{ translator.Label("Sortiranje po datumu naloga") }</span>
+				}
+			</div>
+			<div class="flex items-center gap-2">
+				<span class="font-semibold">{ translator.Label("Štampaj po mesecima") }:</span>
+				@robnoKarticaStampaCheckbox(params.StampajPoMesecima)
+			</div>
+			<div class="flex items-center gap-2">
+				<span class="font-semibold">Grupisanje:</span>
+				if params.StampajPoMesecima {
+					<span class="font-bold">Po artiklu i mesecu</span>
+				} else {
+					<span class="font-bold">Po artiklu</span>
+				}
+			</div>
+		</div>
+	</div>
+}
+
+templ RobnoKarticaArtikalTable(tbl domain.TableData, translator *i18n.Service) {
+	<div class="mb-8">
+		<table class="w-full border-collapse report-table mt-2 print:w-full print:text-[10pt] print:table-auto print:border-collapse">
+			@rep.ReportTableHeader(tbl, translator)
+			<tbody>
+				for i, row := range tbl.Rows {
+					if row.ClassRow == "group-header" {
+						<tr class="bg-gray-200 print:bg-gray-200 print:page-break-inside-avoid print:page-break-after-avoid">
+							<td colspan="4" class="border border-gray-300 px-1 font-bold text-sm text-left print:text-[10pt]">
+								if len(row.Fields) > 0 {
+									{ row.Fields[0] }
+								}
+							</td>
+							for j := 4; j < len(tbl.Headers); j++ {
+								<td class="border border-gray-300 px-1 text-sm print:text-[10pt]"></td>
+							}
+						</tr>
+					} else if row.ClassRow == "subgroup-header" {
+						<tr class="bg-gray-100 print:bg-gray-100 print:page-break-inside-avoid print:page-break-after-avoid">
+							<td colspan="4" class="border border-gray-300 px-1 font-bold text-sm text-left print:text-[10pt]">
+								if len(row.Fields) > 0 {
+									{ row.Fields[0] }
+								}
+							</td>
+							for j := 4; j < len(tbl.Headers); j++ {
+								<td class="border border-gray-300 px-1 text-sm print:text-[10pt]"></td>
+							}
+						</tr>
+					} else if row.ClassRow == "group-total" {
+						<tr class="bg-blue-50 font-bold border-t-2 border-blue-900 print:bg-blue-50 print:page-break-inside-avoid">
+							<td colspan="4" class="border border-gray-300 px-1 text-sm font-bold text-left print:text-[10pt] print:px-1">
+								if len(row.Fields) > 0 {
+									{ row.Fields[0] }
+								}
+							</td>
+							for j := 4; j < len(tbl.Headers); j++ {
+								<td class="border border-gray-300 px-1 text-sm font-bold text-right print:text-[10pt] print:px-1">
+									if j < len(row.Fields) {
+										{ row.Fields[j] }
+									}
+								</td>
+							}
+						</tr>
+					} else {
+						<tr
+							class={ fmt.Sprintf("hover:bg-yellow-50 print:hover:bg-white print:page-break-inside-avoid %s",
+								func() string {
+									if i%2 == 1 {
+										return "bg-gray-50 print:bg-gray-50"
+									}
+									return "bg-white print:bg-white"
+								}()) }
+						>
+							for j, cell := range row.Fields {
+								<td
+									class={ fmt.Sprintf("border border-gray-300 px-1 text-sm print:text-[10pt] print:px-1 print:break-words print:whitespace-normal %s",
+										func() string {
+											if j < len(tbl.Headers) && tbl.Headers[j].TextAlign != "" {
+												return fmt.Sprintf("text-%s", tbl.Headers[j].TextAlign)
+											}
+											return ""
+										}()) }
+								>
+									{ cell }
+								</td>
+							}
+						</tr>
+					}
+				}
+			</tbody>
+		</table>
+	</div>
+}
 
 // MagaciniStampa renders a printable Magacini report.
 templ RobnoKarticaSubsintetickogKontaStampa(repParams domain.ReportParameters, params domain.RobnoKarticaParams, tbl domain.TableData, translator *i18n.Service) {
@@ -41,7 +206,7 @@ templ RobnoKarticaSubsintetickogKontaParam(params domain.RobnoKarticaParams, tra
 				<span>{ translator.Label("Po iznosu") }</span>
 			</div>
 			<div class="flex items-center gap-1 flex-wrap">
-				@robnoKarticaStampaCheckbox(params.CbxDatum)
+				@robnoKarticaStampaCheckbox(params.CbxDatumNaloga)
 				<span>{ translator.Label("Po datumu naloga") }</span>
 				<span class="ml-4">{ translator.Label("Od datuma naloga") }: <span class="font-bold">{ robnoKarticaStampaFormatDate(params.OdDanal) }</span></span>
 				<span class="ml-4">{ translator.Label("Do datuma naloga") }: <span class="font-bold">{ robnoKarticaStampaFormatDate(params.DoDanal) }</span></span>

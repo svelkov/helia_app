@@ -14,48 +14,94 @@ templ ZakljucniListObrazacStampa(repParams domain.ReportParameters, params domai
 }
 
 templ ZakljucniListReport(params domain.ZakljucniStampaParams, tbl domain.TableData, tblSummary domain.TableData, translator *i18n.Service) {
-	@ZakljucniListReportHeader(params, translator)
+	<!-- Screen preview header, hidden in print: the printed report repeats it on every page through
+	     the table's <thead>. -->
+	<div class="print:hidden">
+		@ZakljucniListReportHeader(params, translator)
+	</div>
 	@ZakljucniListReportBody(params, tbl, translator)
 	@ZakljucniListReportSummary(params, tblSummary, translator)
 	@rep.ReportEnd(nil)
 }
 
 templ ZakljucniListReportHeader(params domain.ZakljucniStampaParams, translator *i18n.Service) {
-	<!-- Company info + date/page -->
-	<div class="flex justify-between items-start text-[10px] mb-2">
-		<!-- Left: company block -->
-		<div>
+	<!-- 12-col grid: 3/12 | 8/12 | 1/12 - identical on screen, in print and in the PDF export -->
+	<div class="grid grid-cols-12 items-start gap-2 text-[10px] mb-2">
+		<!-- Column 1 (3/12): Naziv, Adresa, Post broj / Mesto, Matični broj, Šifra delatnosti -->
+		<div class="text-left col-span-3">
 			<div class="font-bold text-sm">{ params.Naziv }</div>
 			<div>{ params.Adresa }, { params.PostBroj } { params.Mesto } - { fmt.Sprintf("%d", params.God) }. { translator.Label("godina") }</div>
 			<div>{ translator.Label("Matični broj") } : { params.MaticniBroj }</div>
 			<div>{ translator.Label("Šifra delatnosti") } : { params.SifraDelatnosti }</div>
 		</div>
-		<!-- Right: date/time and page (browser/CSS handles page number) -->
-		<div class="text-right">
+		<!-- Column 2 (6/12): Report name + parameters (period, datum obrade) -->
+		<div class="text-center col-span-6">
+			<h1 class="text-[13px] font-bold tracking-wide mb-1">{ translator.Title(params.ReportTitle) }</h1>
+			<div class="text-[11px] font-semibold">
+				{ translator.Label("Za period od") }: <span class="font-bold">{ params.OdDatuma }</span>
+				&nbsp;&nbsp;{ translator.Label("do") }: <span class="font-bold">{ params.DoDatuma }</span>
+				&nbsp;&nbsp;&nbsp;&nbsp;{ translator.Label("Datum obrade") }: <span class="font-bold">{ params.DatumObrade }</span>
+			</div>
+		</div>
+		<!-- Column 3 (3/12): date/time and page (browser/CSS handles page number) -->
+		<div class="text-right col-span-3">
 			<div class="page-info">{ time.Now().Format("02.01.2006 15:04:05") }</div>
 		</div>
-	</div>
-	<!-- Title -->
-	<div class="text-center mb-1">
-		<h1 class="text-[13px] font-bold tracking-wide">{ translator.Title(params.ReportTitle) }</h1>
-	</div>
-	<!-- Period line -->
-	<div class="text-center text-[11px] font-semibold mb-3">
-		{ translator.Label("Za period od") }: <span class="font-bold">{ params.OdDatuma }</span>
-		&nbsp;&nbsp;{ translator.Label("do") }: <span class="font-bold">{ params.DoDatuma }</span>
-		&nbsp;&nbsp;&nbsp;&nbsp;{ translator.Label("Datum obrade") }: <span class="font-bold">{ params.DatumObrade }</span>
 	</div>
 }
 
 templ ZakljucniListReportBody(params domain.ZakljucniStampaParams, tbl domain.TableData, translator *i18n.Service) {
-	<table class="w-full table-fixed border-collapse text-[10px] border border-black [border-collapse:collapse]">
+	<!-- No border on the <table> itself: the repeating print header row must stay borderless.
+	     The grid borders come from the individual th/td cells. -->
+	<table class="w-full table-fixed border-collapse text-[10px] [border-collapse:collapse]">
+		<!-- Explicit column widths: keeps the layout identical in print, where the repeating
+		     header row below becomes the first row of the table (table-layout: fixed). -->
+		if params.ZaBanku == "false" {
+			<colgroup>
+				<col style="width:4%"/>
+				<col style="width:4%"/>
+				<col style="width:4%"/>
+				<col style="width:21%"/>
+				<col style="width:12%"/>
+				<col style="width:12%"/>
+				<col style="width:12%"/>
+				<col style="width:12%"/>
+				<col style="width:12%"/>
+				<col style="width:12%"/>
+				<col style="width:12%"/>
+				<col style="width:12%"/>
+			</colgroup>
+		} else {
+			<colgroup>
+				<col style="width:4%"/>
+				<col style="width:4%"/>
+				<col style="width:4%"/>
+				<col style="width:37%"/>
+				<col style="width:12%"/>
+				<col style="width:12%"/>
+				<col style="width:12%"/>
+				<col style="width:12%"/>
+			</colgroup>
+		}
 		<thead class="text-[10px] bg-gray-200">
+			<!-- Print only (no-export keeps it out of the Excel export). thead => repeated on every printed page. -->
+			<tr class="report-repeat-header no-export hidden print:table-row">
+				if params.ZaBanku == "false" {
+					<td colspan="12" class="border-0 bg-white p-1 align-top">
+						@ZakljucniListReportHeader(params, translator)
+					</td>
+				} else {
+					<td colspan="8" class="border-0 bg-white p-1 align-top">
+						@ZakljucniListReportHeader(params, translator)
+					</td>
+				}
+			</tr>
 			if params.ZaBanku == "false" {
 				<!-- Row 1: full columns (početno stanje + tekući promet + ukupan promet + saldo) -->
 				<tr>
 					<th rowspan="2" class="border border-black px-1 w-[4%] text-center">{ translator.Label("Redni broj") }</th>
-					<th rowspan="2" class="border border-black px-1 w-[6%] text-center">{ translator.Label("Konto") }</th>
-					<th rowspan="2" class="border border-black px-1 w-[5%] text-center">{ translator.Label("Šifra") }</th>
+					<th rowspan="2" class="border border-black px-1 w-[4%] text-center">{ translator.Label("Konto") }</th>
+					<th rowspan="2" class="border border-black px-1 w-[4%] text-center">{ translator.Label("Šifra") }</th>
 					<th rowspan="2" class="border border-black px-1 w-[21%] text-center">{ translator.Label("NAZIV") }</th>
 					<th colspan="2" class="border border-black px-1 text-center">{ translator.Label("POČETNO STANJE") }</th>
 					<th colspan="2" class="border border-black px-1 text-center">{ translator.Label("TEKUĆI PROMET") }</th>
@@ -63,30 +109,30 @@ templ ZakljucniListReportBody(params domain.ZakljucniStampaParams, tbl domain.Ta
 					<th colspan="2" class="border border-black px-1 text-center">{ translator.Label("SALDO") }</th>
 				</tr>
 				<tr>
-					<th class="border border-black px-1 text-right w-[8%]">{ translator.Label("Duguje") }</th>
-					<th class="border border-black px-1 text-right w-[8%]">{ translator.Label("Potražuje") }</th>
-					<th class="border border-black px-1 text-right w-[8%]">{ translator.Label("Duguje") }</th>
-					<th class="border border-black px-1 text-right w-[8%]">{ translator.Label("Potražuje") }</th>
-					<th class="border border-black px-1 text-right w-[8%]">{ translator.Label("Duguje") }</th>
-					<th class="border border-black px-1 text-right w-[8%]">{ translator.Label("Potražuje") }</th>
-					<th class="border border-black px-1 text-right w-[8%]">{ translator.Label("Duguje") }</th>
-					<th class="border border-black px-1 text-right w-[8%]">{ translator.Label("Potražuje") }</th>
+					<th class="border border-black px-1 text-center w-[12%]">{ translator.Label("Duguje") }</th>
+					<th class="border border-black px-1 text-center w-[12%]">{ translator.Label("Potražuje") }</th>
+					<th class="border border-black px-1 text-center w-[12%]">{ translator.Label("Duguje") }</th>
+					<th class="border border-black px-1 text-center w-[12%]">{ translator.Label("Potražuje") }</th>
+					<th class="border border-black px-1 text-center w-[12%]">{ translator.Label("Duguje") }</th>
+					<th class="border border-black px-1 text-center w-[12%]">{ translator.Label("Potražuje") }</th>
+					<th class="border border-black px-1 text-center w-[12%]">{ translator.Label("Duguje") }</th>
+					<th class="border border-black px-1 text-center w-[12%]">{ translator.Label("Potražuje") }</th>
 				</tr>
 			} else {
 				<!-- Row 1: za banku columns (ukupan promet + saldo only) -->
 				<tr>
-					<th rowspan="2" class="border border-black px-1 w-[5%] text-center">{ translator.Label("Redni broj") }</th>
-					<th rowspan="2" class="border border-black px-1 w-[8%] text-center">{ translator.Label("Konto") }</th>
-					<th rowspan="2" class="border border-black px-1 w-[6%] text-center">{ translator.Label("Šifra") }</th>
+					<th rowspan="2" class="border border-black px-1 w-[4%] text-center">{ translator.Label("Redni broj") }</th>
+					<th rowspan="2" class="border border-black px-1 w-[4%] text-center">{ translator.Label("Konto") }</th>
+					<th rowspan="2" class="border border-black px-1 w-[4%] text-center">{ translator.Label("Šifra") }</th>
 					<th rowspan="2" class="border border-black px-1 w-[37%] text-center">{ translator.Label("NAZIV") }</th>
 					<th colspan="2" class="border border-black px-1 text-center">{ translator.Label("UKUPAN PROMET") }</th>
 					<th colspan="2" class="border border-black px-1 text-center">{ translator.Label("SALDO") }</th>
 				</tr>
 				<tr>
-					<th class="border border-black px-1 text-right w-[10%]">{ translator.Label("Duguje") }</th>
-					<th class="border border-black px-1 text-right w-[10%]">{ translator.Label("Potražuje") }</th>
-					<th class="border border-black px-1 text-right w-[10%]">{ translator.Label("Duguje") }</th>
-					<th class="border border-black px-1 text-right w-[10%]">{ translator.Label("Potražuje") }</th>
+					<th class="border border-black px-1 text-center w-[12%]">{ translator.Label("Duguje") }</th>
+					<th class="border border-black px-1 text-center w-[12%]">{ translator.Label("Potražuje") }</th>
+					<th class="border border-black px-1 text-center w-[12%]">{ translator.Label("Duguje") }</th>
+					<th class="border border-black px-1 text-center w-[12%]">{ translator.Label("Potražuje") }</th>
 				</tr>
 			}
 		</thead>
@@ -234,26 +280,26 @@ templ ZakljucniListReportSummary(params domain.ZakljucniStampaParams, tblSummary
 					<col style="width:4%"/>
 					<col style="width:6%"/>
 					<col style="width:5%"/>
-					<col style="width:21%"/>
-					<col style="width:8%"/>
-					<col style="width:8%"/>
-					<col style="width:8%"/>
-					<col style="width:8%"/>
-					<col style="width:8%"/>
-					<col style="width:8%"/>
-					<col style="width:8%"/>
-					<col style="width:8%"/>
+					<col style="width:18%"/>
+					<col style="width:12%"/>
+					<col style="width:12%"/>
+					<col style="width:12%"/>
+					<col style="width:12%"/>
+					<col style="width:12%"/>
+					<col style="width:12%"/>
+					<col style="width:12%"/>
+					<col style="width:12%"/>
 				</colgroup>
 			} else {
 				<colgroup>
-					<col style="width:5%"/>
+					<col style="width:4%"/>
 					<col style="width:8%"/>
 					<col style="width:6%"/>
-					<col style="width:32%"/>
-					<col style="width:10%"/>
-					<col style="width:10%"/>
-					<col style="width:10%"/>
-					<col style="width:10%"/>
+					<col style="width:31%"/>
+					<col style="width:12%"/>
+					<col style="width:12%"/>
+					<col style="width:12%"/>
+					<col style="width:12%"/>
 				</colgroup>
 			}
 			<tbody>
@@ -318,9 +364,5 @@ templ ZakljucniListReportSummary(params domain.ZakljucniStampaParams, tblSummary
 			<div class="border-b border-black w-full"></div>
 			<div>{ translator.Label("rukovodilac pravnog lica") }</div>
 		</div>
-	</div>
-	<!-- Software footer -->
-	<div class="mt-6 text-right text-[9px] text-gray-500">
-		Lav kompjuteri - lavsoft@yahoo.com
 	</div>
 }

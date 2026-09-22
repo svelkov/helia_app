@@ -27,6 +27,7 @@ templ TabNav(title string, tabs domain.TabData, targetId string, ariaControls st
 				}
 				hx-get={ item.HXRequestUrl }
 				hx-target={ targetId }
+				data-tab-navigation-target={ targetId }
 				hx-swap="innerHTML"
 				if targetId == "#tab-content" {
 					hx-headers='{"X-Request-Source": "tab"}'
@@ -38,4 +39,88 @@ templ TabNav(title string, tabs domain.TabData, targetId string, ariaControls st
 			</button>
 		}
 	</nav>
+	@TabKeyboardNavigationScript()
+}
+
+templ TabKeyboardNavigationScript() {
+	<script>
+		(function () {
+			if (window.__tabKeyboardNavigationInitialized) return;
+			window.__tabKeyboardNavigationInitialized = true;
+
+			const controlSelector = [
+				'input:not([type="hidden"]):not([disabled])',
+				'select:not([disabled])',
+				'textarea:not([disabled])'
+			].join(',');
+
+			function isVisible(control) {
+				if (!control) return false;
+				const style = window.getComputedStyle(control);
+				return style.display !== 'none' && style.visibility !== 'hidden' && control.getClientRects().length > 0;
+			}
+
+			function getControls(scope) {
+				return Array.from(scope.querySelectorAll(controlSelector))
+					.filter(isVisible)
+					.sort(function (a, b) {
+						const aTab = parseInt(a.getAttribute('tabindex') || '0', 10);
+						const bTab = parseInt(b.getAttribute('tabindex') || '0', 10);
+						if (aTab > 0 && bTab > 0 && aTab !== bTab) return aTab - bTab;
+						if (aTab > 0 && bTab <= 0) return -1;
+						if (bTab > 0 && aTab <= 0) return 1;
+						return 0;
+					});
+			}
+
+			function registerScopes(root) {
+				(root || document).querySelectorAll('[data-tab-navigation-target]').forEach(function (button) {
+					const target = document.querySelector(button.dataset.tabNavigationTarget);
+					if (target) target.dataset.tabNavigationScope = 'true';
+				});
+			}
+
+			function focusFirst(scope) {
+				if (!scope) return;
+				const controls = getControls(scope);
+				if (controls.length > 0) controls[0].focus();
+			}
+
+			document.addEventListener('keydown', function (event) {
+				if (event.key !== 'Tab' && event.key !== 'Enter') return;
+				if (event.isComposing) return;
+
+				const active = document.activeElement;
+				const scope = active && active.closest('[data-tab-navigation-scope="true"]');
+				if (!scope) return;
+
+				const controls = getControls(scope);
+				const currentIndex = controls.indexOf(active);
+				if (currentIndex === -1 || controls.length === 0) return;
+
+				event.preventDefault();
+				const nextIndex = event.key === 'Tab' && event.shiftKey
+					? (currentIndex - 1 + controls.length) % controls.length
+					: (currentIndex + 1) % controls.length;
+				controls[nextIndex].focus();
+			}, true);
+
+			document.addEventListener('htmx:afterSwap', function (event) {
+				registerScopes(document);
+				setTimeout(function () { focusFirst(event.detail && event.detail.target); }, 0);
+			});
+
+			document.addEventListener('DOMContentLoaded', function () {
+				registerScopes(document);
+				const activeTab = document.querySelector('[data-tab-navigation-target][aria-selected="true"]');
+				if (activeTab) focusFirst(document.querySelector(activeTab.dataset.tabNavigationTarget));
+			});
+
+			registerScopes(document);
+			setTimeout(function () {
+				const activeTab = document.querySelector('[data-tab-navigation-target][aria-selected="true"]');
+				if (activeTab) focusFirst(document.querySelector(activeTab.dataset.tabNavigationTarget));
+			}, 0);
+		})();
+	</script>
 }

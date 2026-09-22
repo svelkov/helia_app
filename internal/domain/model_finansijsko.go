@@ -168,6 +168,10 @@ type FproDto struct {
 	PocStanjePot float64 `db:"pocstanjepot"`
 	PrometDug    float64 `db:"prometdug"`
 	PrometPot    float64 `db:"prometpot"`
+	// NivoOrder is the hierarchy level of a Zakljucni list row produced by the grouping-sets
+	// query: 4 = analitika (konto + sifra), 3 = sintetika, 2 = grupa, 1 = klasa. It stays 0
+	// for the rows of every other query.
+	NivoOrder int `db:"nivo_order"`
 }
 
 type KopirajNalog struct {

@@ -740,22 +740,23 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 	prometHandler.AddRoutes(r)
 
 	// Robno kartica artikla
-	robnoKarticaRepo := repository.NewBaseRepository[domain.RobnoStanjeDto](db, "robnostanjedto")
-	robnoKarticaService := robnosvc.NewRobnoKarticaService(robnoKarticaRepo, magaciniRepo, fvrRepo)
+	robnoKarticaRepo := repository.NewBaseRepository[domain.RobnoKarticaDto](db, "robnokarticadto")
+	rproRepo := repository.NewBaseRepository[domain.Rpro](db, "rpro")
+	robnoKarticaService := robnosvc.NewRobnoKarticaService(robnoKarticaRepo, rproRepo, magaciniRepo, fvrRepo)
 	robnoKarticaHandler := robnohand.NewRobnoKarticaHandler(robnoKarticaService, cfg)
 	robnoKarticaHandler.AddRoutes(r)
 
 	// Robno stanja
 	robnoStanjaRepo := repository.NewBaseRepository[domain.RobnoStanjeDto](db, "robnostanjedto")
+	drstaRepo := repository.NewBaseRepository[domain.Drsta](db, "drsta")
 	tipdokRepo := repository.NewBaseRepository[domain.Tipdok](db, "tipdok")
 	ojRepo := repository.NewBaseRepository[domain.Orgjed](db, "orgjed")
 	mestoTroskaRepo := repository.NewBaseRepository[domain.Mestotr](db, "mestotr")
-	robnoStanjaService := robnosvc.NewRobnoStanjaService(*robnoStanjaRepo, *magaciniRepo, *tipdokRepo, *ojRepo, *mestoTroskaRepo, *fvrRepo)
+	robnoStanjaService := robnosvc.NewRobnoStanjaService(*robnoStanjaRepo, *rproRepo, *drstaRepo, *magaciniRepo, *tipdokRepo, *ojRepo, *mestoTroskaRepo, *fvrRepo)
 	robnoStanjaHandler := robnohand.NewRobnoStanjaHandler(robnoStanjaService, cfg)
 	robnoStanjaHandler.AddRoutes(r)
 
 	// Robno promet reports
-	rproRepo := repository.NewBaseRepository[domain.Rpro](db, "rpro")
 	magRepo := repository.NewBaseRepository[domain.Magacini](db, "magacini")
 	rgruRepo := repository.NewBaseRepository[domain.Rgru](db, "rgru")
 

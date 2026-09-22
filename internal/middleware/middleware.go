@@ -80,8 +80,10 @@ func Auth(jwtSecret ...[]byte) gin.HandlerFunc {
 		cookie, err := c.Cookie("auth_token")
 		if err != nil {
 			gin.DefaultWriter.Write([]byte(fmt.Sprintf("No auth token cookie found: %v", err)))
+			// Abort, otherwise the page handler runs without a session and answers 500
+			// on top of the redirect ("Headers were already written").
 			c.Redirect(http.StatusSeeOther, "/login")
-			//c.Abort()
+			c.Abort()
 			return
 		}
 

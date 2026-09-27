@@ -685,7 +685,7 @@ func magaciniSelection(magaciniID int) string {
 // RobnoDokumentaPregled renders the "Štampa" sub-tab of "Pregled dokumenta": the filters (magacin,
 // vrsta dokumenta and the range of the dates of the nalog), the buttons "Obradi" and "Štampaj" and
 // the grid of the robni dokumenti with the partner of every document.
-func RobnoDokumentaPregled(tabs, subTabs domain.TabData, tbl domain.TableData, magValues, vrstaDokumentaValues []domain.ComboItem, params domain.PregledDokumentaParams, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service) templ.Component {
+func RobnoDokumentaPregled(tabs, subTabs domain.TabData, tbl domain.TableData, magValues, vrstaDokumentaValues []domain.ComboItem, params domain.RobnoDokumentaParams, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -716,7 +716,7 @@ func RobnoDokumentaPregled(tabs, subTabs domain.TabData, tbl domain.TableData, m
 
 // RobnoDokumentaPregledBody renders the body of the "Štampa" sub-tab. The parameters (left) and the
 // "Obrada i štampa" panel (right) have the same height, like the header of the "Unos dokumenta" tab.
-func RobnoDokumentaPregledBody(tbl domain.TableData, magValues, vrstaDokumentaValues []domain.ComboItem, params domain.PregledDokumentaParams, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service) templ.Component {
+func RobnoDokumentaPregledBody(tbl domain.TableData, magValues, vrstaDokumentaValues []domain.ComboItem, params domain.RobnoDokumentaParams, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -898,7 +898,7 @@ func RobnoDokumentaPregledBody(tbl domain.TableData, magValues, vrstaDokumentaVa
 // RobnoDokumentaEFaktura renders the "eFaktura" sub-tab of "Pregled dokumenta": the filters (grupe
 // dokumenata and the range of the dates of the documents), the actions of the eFaktura, the date of
 // the ažuriranje statusa and the grid with the status of every document.
-func RobnoDokumentaEFaktura(tabs, subTabs domain.TabData, tbl domain.TableData, magValues []domain.ComboItem, params domain.PregledDokumentaParams, btnObrada, btnPosalji, btnProveri, btnOtkazi, btnStorniraj, btnStornirajPE, btnAzurirajStatus domain.Button, searchInput domain.InputControl, translator *i18n.Service) templ.Component {
+func RobnoDokumentaEFaktura(tabs, subTabs domain.TabData, tbl domain.TableData, magValues []domain.ComboItem, params domain.RobnoDokumentaParams, btnObrada, btnPosalji, btnProveri, btnOtkazi, btnStorniraj, btnStornirajPE, btnAzurirajStatus domain.Button, searchInput domain.InputControl, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -930,7 +930,7 @@ func RobnoDokumentaEFaktura(tabs, subTabs domain.TabData, tbl domain.TableData, 
 // RobnoDokumentaEFakturaBody renders the body of the "eFaktura" sub-tab. The parameters with the
 // actions (left) and the "Status eFaktura" panel (right) have the same height, like the header of
 // the "Unos dokumenta" tab.
-func RobnoDokumentaEFakturaBody(tbl domain.TableData, params domain.PregledDokumentaParams, btnObrada, btnPosalji, btnProveri, btnOtkazi, btnStorniraj, btnStornirajPE, btnAzurirajStatus domain.Button, searchInput domain.InputControl, translator *i18n.Service) templ.Component {
+func RobnoDokumentaEFakturaBody(tbl domain.TableData, params domain.RobnoDokumentaParams, btnObrada, btnPosalji, btnProveri, btnOtkazi, btnStorniraj, btnStornirajPE, btnAzurirajStatus domain.Button, searchInput domain.InputControl, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -1176,7 +1176,7 @@ func RobnoDokumentaSpecifikacije(tabs, subTabs domain.TabData, tbl domain.TableD
 // dokumenta, magacin and the ranges of the broj naloga, the broj dokumenta and the datum naloga),
 // the buttons of the posting ("Obrada", "Proveri ravnotežu" and "Knjiži") and the grid of the robni
 // dokumenti.
-func RobnoDokumentaKontiranjeKnjizenje(tabs, subTabs domain.TabData, tbl domain.TableData, tipdokValues, vrstaDokumentaValues, magValues []domain.ComboItem, params domain.KontiranjeDokumentaParams, btnObrada, btnRavnoteza, btnKnjizi domain.Button, searchInput domain.InputControl, translator *i18n.Service) templ.Component {
+func RobnoDokumentaKontiranjeKnjizenje(tabs, subTabs domain.TabData, tbl domain.TableData, tipdokValues, vrstaDokumentaValues, magValues []domain.ComboItem, params domain.RobnoDokumentaParams, btnObrada, btnRavnoteza, btnKnjizi domain.Button, searchInput domain.InputControl, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -1208,7 +1208,7 @@ func RobnoDokumentaKontiranjeKnjizenje(tabs, subTabs domain.TabData, tbl domain.
 // RobnoDokumentaKontiranjeKnjizenjeBody renders the body of the "Knjiženje dokumenata" sub-tab. The
 // parameters (left) and the "Knjiženje" panel with the buttons (right) have the same height, like
 // the header of the "Unos dokumenta" tab.
-func RobnoDokumentaKontiranjeKnjizenjeBody(tbl domain.TableData, tipdokValues, vrstaDokumentaValues, magValues []domain.ComboItem, params domain.KontiranjeDokumentaParams, btnObrada, btnRavnoteza, btnKnjizi domain.Button, searchInput domain.InputControl, translator *i18n.Service) templ.Component {
+func RobnoDokumentaKontiranjeKnjizenjeBody(tbl domain.TableData, tipdokValues, vrstaDokumentaValues, magValues []domain.ComboItem, params domain.RobnoDokumentaParams, btnObrada, btnRavnoteza, btnKnjizi domain.Button, searchInput domain.InputControl, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -1403,7 +1403,7 @@ func RobnoDokumentaKontiranjeKnjizenjeBody(tbl domain.TableData, tipdokValues, v
 // sub-tab of "Kontiranje dokumenata": the parameters of the selection, the state of the posting
 // (the radio buttons "Proknjiženi dokumenti" / "Neproknjiženi dokumenti" and the checkbox that
 // marks the displayed documents as not posted) and the grid of the robni dokumenti.
-func RobnoDokumentaKontiranjePregled(tabs, subTabs domain.TabData, tbl domain.TableData, tipdokValues, magValues []domain.ComboItem, params domain.KontiranjeDokumentaParams, btnObrada, btnOznaci domain.Button, searchInput domain.InputControl, translator *i18n.Service) templ.Component {
+func RobnoDokumentaKontiranjePregled(tabs, subTabs domain.TabData, tbl domain.TableData, tipdokValues, magValues []domain.ComboItem, params domain.RobnoDokumentaParams, btnObrada, btnOznaci domain.Button, searchInput domain.InputControl, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -1434,7 +1434,7 @@ func RobnoDokumentaKontiranjePregled(tabs, subTabs domain.TabData, tbl domain.Ta
 
 // RobnoDokumentaKontiranjePregledBody renders the body of the "Pregled proknjiženih /
 // neproknjiženih dokumenata" sub-tab.
-func RobnoDokumentaKontiranjePregledBody(tbl domain.TableData, tipdokValues, magValues []domain.ComboItem, params domain.KontiranjeDokumentaParams, btnObrada, btnOznaci domain.Button, searchInput domain.InputControl, translator *i18n.Service) templ.Component {
+func RobnoDokumentaKontiranjePregledBody(tbl domain.TableData, tipdokValues, magValues []domain.ComboItem, params domain.RobnoDokumentaParams, btnObrada, btnOznaci domain.Button, searchInput domain.InputControl, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -1642,7 +1642,7 @@ func RobnoDokumentaKontiranjePregledBody(tbl domain.TableData, tipdokValues, mag
 // RobnoDokumentaKontiranjePoMagacinima renders the "Pregled proknjiženih / neproknjiženih
 // dokumenata po magacinima" sub-tab of "Kontiranje dokumenata": the same filters as the previous
 // sub-tab without the vrsta naloga (the grid is grouped by the magacin of the document).
-func RobnoDokumentaKontiranjePoMagacinima(tabs, subTabs domain.TabData, tbl domain.TableData, magValues []domain.ComboItem, params domain.KontiranjeDokumentaParams, btnObrada domain.Button, searchInput domain.InputControl, translator *i18n.Service) templ.Component {
+func RobnoDokumentaKontiranjePoMagacinima(tabs, subTabs domain.TabData, tbl domain.TableData, magValues []domain.ComboItem, params domain.RobnoDokumentaParams, btnObrada domain.Button, searchInput domain.InputControl, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -1673,7 +1673,7 @@ func RobnoDokumentaKontiranjePoMagacinima(tabs, subTabs domain.TabData, tbl doma
 
 // RobnoDokumentaKontiranjePoMagacinimaBody renders the body of the "Pregled ... po magacinima"
 // sub-tab.
-func RobnoDokumentaKontiranjePoMagacinimaBody(tbl domain.TableData, magValues []domain.ComboItem, params domain.KontiranjeDokumentaParams, btnObrada domain.Button, searchInput domain.InputControl, translator *i18n.Service) templ.Component {
+func RobnoDokumentaKontiranjePoMagacinimaBody(tbl domain.TableData, magValues []domain.ComboItem, params domain.RobnoDokumentaParams, btnObrada domain.Button, searchInput domain.InputControl, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -2066,7 +2066,7 @@ func RobnoDokumentaPrikazUkupneObradeBody(tbl domain.TableData, translator *i18n
 // naloga and the range of the broj naloga. The three checkboxes ("Po datumu naloga", "Po datumu
 // obrade" and "Po operateru") enable their fields when they are checked (controlToggle of
 // EnableDisableFieldsScripts, like "Prikaz kartice artikla" of the robno kartica does).
-func RobnoDokumentaPrikazNaloga(tabs, subTabs domain.TabData, tbl domain.TableData, magValues, tipdokValues []domain.ComboItem, params domain.PrikazNalogaParams, btnObrada, btnPrint domain.Button, translator *i18n.Service) templ.Component {
+func RobnoDokumentaPrikazNaloga(tabs, subTabs domain.TabData, tbl domain.TableData, magValues, tipdokValues []domain.ComboItem, params domain.RobnoDokumentaParams, btnObrada, btnPrint domain.Button, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -2104,7 +2104,7 @@ func RobnoDokumentaPrikazNaloga(tabs, subTabs domain.TabData, tbl domain.TableDa
 // tab - the buttons "Obrada" and "Štampaj" are in the row of the "Po operateru" checkbox, aligned
 // to the right) and the grid of the tab (the columns come from the table of the tab). Every checkbox
 // is in the same row as the fields it enables.
-func RobnoDokumentaParametriNalogaBody(tbl domain.TableData, magValues, tipdokValues []domain.ComboItem, params domain.PrikazNalogaParams, btnObrada, btnPrint domain.Button, translator *i18n.Service) templ.Component {
+func RobnoDokumentaParametriNalogaBody(tbl domain.TableData, magValues, tipdokValues []domain.ComboItem, params domain.RobnoDokumentaParams, btnObrada, btnPrint domain.Button, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -2610,7 +2610,7 @@ func RobnoDokumentaCheckBox(id, labelText, fields string, isChecked bool, tabInd
 // The tab shows the robni dokumenti of the selected nalozi: it uses the same parameters and the
 // same layout as the "Prikaz naloga" tab (the body of the two tabs is shared), only the columns of
 // its grid differ.
-func RobnoDokumentaPrikazDokumenataUNalogu(tabs, subTabs domain.TabData, tbl domain.TableData, magValues, tipdokValues []domain.ComboItem, params domain.PrikazNalogaParams, btnObrada, btnPrint domain.Button, translator *i18n.Service) templ.Component {
+func RobnoDokumentaPrikazDokumenataUNalogu(tabs, subTabs domain.TabData, tbl domain.TableData, magValues, tipdokValues []domain.ComboItem, params domain.RobnoDokumentaParams, btnObrada, btnPrint domain.Button, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -2649,7 +2649,7 @@ func RobnoDokumentaPrikazDokumenataUNalogu(tabs, subTabs domain.TabData, tbl dom
 // operater. Its panel has no magacin / vrsta naloga selection (the legacy screen of the tab has none
 // either): the parameters are shown in three columns, like the legacy screen draws them (the
 // checkboxes of the filters, the "Od" fields and the "Do" fields).
-func RobnoDokumentaPrikazDokumenataPooperateru(tabs, subTabs domain.TabData, tbl domain.TableData, params domain.PrikazNalogaParams, btnObrada, btnPrint domain.Button, translator *i18n.Service) templ.Component {
+func RobnoDokumentaPrikazDokumenataPooperateru(tabs, subTabs domain.TabData, tbl domain.TableData, params domain.RobnoDokumentaParams, btnObrada, btnPrint domain.Button, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -2688,7 +2688,7 @@ func RobnoDokumentaPrikazDokumenataPooperateru(tabs, subTabs domain.TabData, tbl
 // vrsta naloga controls (magaciniid, odvrd and dovrd are not part of its parameters) and with its
 // controls in the three columns of the legacy screen (the checkboxes, the "Od" fields and the "Do"
 // fields); every checkbox enables its own fields (the dates and the operater), like the other tabs.
-func RobnoDokumentaPrikazDokumenataPooperateruBody(tbl domain.TableData, params domain.PrikazNalogaParams, btnObrada, btnPrint domain.Button, translator *i18n.Service) templ.Component {
+func RobnoDokumentaPrikazDokumenataPooperateruBody(tbl domain.TableData, params domain.RobnoDokumentaParams, btnObrada, btnPrint domain.Button, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {

@@ -2,6 +2,7 @@ package robno
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strings"
 
@@ -129,10 +130,14 @@ func (h *RobnoPrometHandler) RobnoPrometMain(c *gin.Context) {
 }
 
 func (h *RobnoPrometHandler) RobnoPrometArtikal(c *gin.Context) {
-	ctx, _, ok := h.context(c, 0)
-	if !ok {
+	common.SetActiveTab(h.tabs, 0)
+	ctx := c.Request.Context()
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		h.error(c, errors.New("user session is nil"))
 		return
 	}
+
 	tbl := common.SetTableBasicData(robnoPrometGrupe1Title, robnoPrometGrupe1TableID, h.service.GetPrometArtiklaTableFields(), robnoPrometGrupe1URL, robnoPrometGrupe1URL, 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tbl, robnoPrometGrupe1TableID, robnoPrometGrupe1URL, false, false, false)
 	if common.IsDataRequest(c) {
@@ -155,28 +160,34 @@ func (h *RobnoPrometHandler) RobnoPrometArtikal(c *gin.Context) {
 	btnObrada := h.obradaButton(robnoPrometGrupe1URL, robnoPrometGrupe1TableID, groupVals)
 	btnPrint := common.SetPrintButton("print-btn", "Stampa", "stampa", robnoPrometGrupe1URLStampa, "GET", true, common.ClassPrintButton, "odmagacina,domagacina,odsifre,dosifre,odgrupe,dogrupe,oddatuma,dodatuma")
 	search := common.CreateSearchInput("search-input", translator, robnoPrometGrupe1URL, "#"+robnoPrometGrupe1TableID, groupVals)
-	if err := tmpl_robno.RobnoPrometMain(*h.tabs, tbl, magValues, grupeValues, btnObrada, btnPrint, search, translator).Render(ctx, c.Writer); err != nil {
+	if err := tmpl_robno.RobnoPrometMain(*h.tabs, tbl, magValues, grupeValues, btnObrada, btnPrint, search, userSession.SelectedGod, translator).Render(ctx, c.Writer); err != nil {
 		h.error(c, err)
 	}
 }
 
 func (h *RobnoPrometHandler) RobnoPrometKupci(c *gin.Context) {
-	ctx, _, ok := h.context(c, 1)
-	if !ok {
+	common.SetActiveTab(h.tabs, 1)
+	ctx := c.Request.Context()
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		h.error(c, errors.New("user Session is nil."))
 		return
 	}
 	h.renderStandard(c, ctx, robnoPrometKupciTitle, robnoPrometKupciTableID, robnoPrometKupciURL, h.service.GetPrometKupcaTableFields(), h.service.GetPrometPoKupcima, robnoPrometKupciURLStampa, hxValsRobnoPrometGrupeForTab("kupci"), []string{"odmagacina", "domagacina", "odsifre", "dosifre", "odgrupe", "dogrupe", "oddatuma", "dodatuma"}, func(tbl domain.TableData, magValues, grupeValues []domain.ComboItem, b, p domain.Button, s domain.InputControl) error {
-		return tmpl_robno.RobnoPrometPoKupcima(*h.tabs, tbl, magValues, grupeValues, b, p, s, i18n.GetInstance()).Render(ctx, c.Writer)
+		return tmpl_robno.RobnoPrometPoKupcima(*h.tabs, tbl, magValues, grupeValues, b, p, s, userSession.SelectedGod, i18n.GetInstance()).Render(ctx, c.Writer)
 	})
 }
 
 func (h *RobnoPrometHandler) RobnoPrometDobavljaci(c *gin.Context) {
-	ctx, _, ok := h.context(c, 2)
-	if !ok {
+	common.SetActiveTab(h.tabs, 2)
+	ctx := c.Request.Context()
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		h.error(c, errors.New("user Session is nil."))
 		return
 	}
 	h.renderStandard(c, ctx, robnoPrometDobavljaciTitle, robnoPrometDobavljaciTableID, robnoPrometDobavljaciURL, h.service.GetPrometOdDobavljacaTableFields(), h.service.GetNabavkeOdDobavljaca, robnoPrometDobavljaciURLStampa, hxValsRobnoPrometGrupeForTab("dobavljaci"), []string{"odmagacina", "domagacina", "odsifre", "dosifre", "odgrupe", "dogrupe", "oddatuma", "dodatuma"}, func(tbl domain.TableData, magValues, grupeValues []domain.ComboItem, b, p domain.Button, s domain.InputControl) error {
-		return tmpl_robno.RobnoPrometPoDobavljacima(*h.tabs, tbl, magValues, grupeValues, b, p, s, i18n.GetInstance()).Render(ctx, c.Writer)
+		return tmpl_robno.RobnoPrometPoDobavljacima(*h.tabs, tbl, magValues, grupeValues, b, p, s, userSession.SelectedGod, i18n.GetInstance()).Render(ctx, c.Writer)
 	})
 }
 
@@ -188,8 +199,12 @@ func (h *RobnoPrometHandler) RobnoPrometRucMagacinima(c *gin.Context)     { h.re
 func (h *RobnoPrometHandler) RobnoPrometRucIzlazneFakture(c *gin.Context) { h.renderRuc(c, 3) }
 
 func (h *RobnoPrometHandler) renderRuc(c *gin.Context, subIndex int) {
-	ctx, _, ok := h.context(c, 3)
-	if !ok {
+	common.SetActiveTab(h.tabs, 3)
+	common.SetActiveTab(h.subtabs, 0)
+	ctx := c.Request.Context()
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		h.error(c, errors.New("user Session is nil."))
 		return
 	}
 	common.SetActiveTab(h.subtabs, subIndex)
@@ -238,18 +253,18 @@ func (h *RobnoPrometHandler) renderRuc(c *gin.Context, subIndex int) {
 	var renderErr error
 	switch subIndex {
 	case 1:
-		renderErr = tmpl_robno.RobnoPrometRucUlazIzlaz(*h.tabs, *h.subtabs, tbl, magValues, btnObrada, btnPrint, search, translator).Render(ctx, c.Writer)
+		renderErr = tmpl_robno.RobnoPrometRucUlazIzlaz(*h.tabs, *h.subtabs, tbl, magValues, btnObrada, btnPrint, search, userSession.SelectedGod, translator).Render(ctx, c.Writer)
 	case 2:
-		renderErr = tmpl_robno.RobnoPrometRucMagacinima(*h.tabs, *h.subtabs, tbl, magValues, btnObrada, btnPrint, search, translator).Render(ctx, c.Writer)
+		renderErr = tmpl_robno.RobnoPrometRucMagacinima(*h.tabs, *h.subtabs, tbl, magValues, btnObrada, btnPrint, search, userSession.SelectedGod, translator).Render(ctx, c.Writer)
 	case 3:
-		renderErr = tmpl_robno.RobnoPrometRucIzlazneFakture(*h.tabs, *h.subtabs, tbl, magValues, btnObrada, btnPrint, search, translator).Render(ctx, c.Writer)
+		renderErr = tmpl_robno.RobnoPrometRucIzlazneFakture(*h.tabs, *h.subtabs, tbl, magValues, btnObrada, btnPrint, search, userSession.SelectedGod, translator).Render(ctx, c.Writer)
 	default:
 		grupeValues, comboErr := h.service.GetRobneGrupeComboValues(ctx)
 		if comboErr != nil {
 			h.error(c, comboErr)
 			return
 		}
-		renderErr = tmpl_robno.RobnoPrometRucLagerLista(*h.tabs, *h.subtabs, tbl, magValues, grupeValues, btnObrada, btnPrint, search, translator).Render(ctx, c.Writer)
+		renderErr = tmpl_robno.RobnoPrometRucLagerLista(*h.tabs, *h.subtabs, tbl, magValues, grupeValues, btnObrada, btnPrint, search, userSession.SelectedGod, translator).Render(ctx, c.Writer)
 	}
 	if renderErr != nil {
 		h.error(c, renderErr)
@@ -257,22 +272,28 @@ func (h *RobnoPrometHandler) renderRuc(c *gin.Context, subIndex int) {
 }
 
 func (h *RobnoPrometHandler) RobnoPrometGradiliste(c *gin.Context) {
-	ctx, _, ok := h.context(c, 4)
-	if !ok {
+	common.SetActiveTab(h.tabs, 4)
+	ctx := c.Request.Context()
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		h.error(c, errors.New("user Session is nil."))
 		return
 	}
 	h.renderStandard(c, ctx, robnoPrometGradilisteTitle, robnoPrometGradilisteTableID, robnoPrometGradilisteURL, h.service.GetPrometGradilistaTableFields(), h.service.GetPrometGradilista, robnoPrometGradilisteURLStampa, hxValsRobnoPrometGrupeForTab("gradiliste"), []string{"odmagacina", "domagacina", "odsifre", "dosifre", "oddatuma", "dodatuma", "odgrupe", "dogrupe"}, func(tbl domain.TableData, magValues, grupeValues []domain.ComboItem, b, p domain.Button, s domain.InputControl) error {
-		return tmpl_robno.RobnoPrometGradiliste(*h.tabs, tbl, magValues, grupeValues, b, p, s, i18n.GetInstance()).Render(ctx, c.Writer)
+		return tmpl_robno.RobnoPrometGradiliste(*h.tabs, tbl, magValues, grupeValues, b, p, s, userSession.SelectedGod, i18n.GetInstance()).Render(ctx, c.Writer)
 	})
 }
 
 func (h *RobnoPrometHandler) RobnoPrometGradilisteVpcNc(c *gin.Context) {
-	ctx, _, ok := h.context(c, 5)
-	if !ok {
+	common.SetActiveTab(h.tabs, 5)
+	ctx := c.Request.Context()
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		h.error(c, errors.New("user Session is nil."))
 		return
 	}
 	h.renderStandard(c, ctx, robnoPrometGradVpcTitle, robnoPrometGradVpcTableID, robnoPrometGradVpcURL, h.service.GetPrometGradilisteVpcNcTableFields(), h.service.GetPrometGradilisteVpcNc, robnoPrometGradVpcURLStampa, hxValsRobnoPrometGrupeForTab("gradiliste-vpc"), []string{"odmagacina", "domagacina", "odsifre", "dosifre", "oddatuma", "dodatuma", "odgrupe", "dogrupe"}, func(tbl domain.TableData, magValues, grupeValues []domain.ComboItem, b, p domain.Button, s domain.InputControl) error {
-		return tmpl_robno.RobnoPrometGradilisteVpcNc(*h.tabs, tbl, magValues, grupeValues, b, p, s, i18n.GetInstance()).Render(ctx, c.Writer)
+		return tmpl_robno.RobnoPrometGradilisteVpcNc(*h.tabs, tbl, magValues, grupeValues, b, p, s, userSession.SelectedGod, i18n.GetInstance()).Render(ctx, c.Writer)
 	})
 }
 

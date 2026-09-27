@@ -39,7 +39,7 @@ const (
 	robnoStanjaURLViseArtikalaGrupaStampa   = robnoStanjaURLViseArtikalaGrupa + "/stampa"
 	robnoStanjaURLSubsintetickogKonta       = robnoStanjaURLPrefix + "/subsintetickog-konta"
 	robnoStanjaURLSubsintetickogKontaStampa = robnoStanjaURLSubsintetickogKonta + "/stampa"
-	robnoStanjaURLSvodjenjeZaliha           = robnoStanjaURLPrefix + "/svodjenje-zalihe"
+	robnoStanjaURLSvodjenjeZaliha           = robnoStanjaURLPrefix + "/svodjenje-zaliha"
 	robnoStanjaURLMestoTroska               = robnoStanjaURLPrefix + "/mesto-troska"
 	robnoStanjaURLtotals                    = robnoStanjaURLPrefix + "/totalvalues"
 	robnoStanjaSubsintetikaURLTotalValues   = robnoStanjaURLPrefix + "/subsintetika/totalvalues"
@@ -157,7 +157,7 @@ func (h *RobnoStanjaHandler) PrikazStanjaPojedinacnogArtikla(c *gin.Context) {
 			return
 		}
 		params := domain.RobnoStanjaParams{
-			Magacin:      magacin,
+			MagaciniID:   magacin,
 			Konto:        c.Query("konto"),
 			SifraArtikla: c.Query("sifra"),
 			ReportTip:    "robnostanjaartikal",
@@ -201,7 +201,7 @@ func (h *RobnoStanjaHandler) PrikazStanjaArtikalaStampa(c *gin.Context) {
 		return
 	}
 	params := domain.RobnoStanjaParams{
-		Magacin:      magacin,
+		MagaciniID:      magacin,
 		Konto:        c.Query("konto"),
 		SifraArtikla: c.Query("sifra"),
 		ReportTip:    "robnostanjaartikal",

@@ -56,11 +56,10 @@ const (
 	robnoDokumentaURLPregled     = robnoDokumentaURLPrefix + "/pregled"
 
 	// Tab 2, sub-tab 1 - Štampa
-	robnoDokumentaPregledStampaTitle     = "Pregled dokumenata - štampa"
-	robnoDokumentaPregledStampaTableID   = "robno-dokumenta-pregled-stampa-table"
-	robnoDokumentaURLPregledStampa       = robnoDokumentaURLPregled + "/stampa"
-	robnoDokumentaURLPregledStampaPrint  = robnoDokumentaURLPregledStampa + "/print"
-	robnoDokumentaPregledStampaPrintFlds = "magaciniid,vrd,oddanal,dodanal"
+	robnoDokumentaPregledStampaTitle    = "Pregled dokumenata - štampa"
+	robnoDokumentaPregledStampaTableID  = "robno-dokumenta-pregled-stampa-table"
+	robnoDokumentaURLPregledStampa      = robnoDokumentaURLPregled + "/stampa"
+	robnoDokumentaURLPregledStampaPrint = robnoDokumentaURLPregledStampa + "/print"
 
 	// Tab 2, sub-tab 2 - eFaktura
 	robnoDokumentaEFakturaTitle          = "Pregled dokumenata - eFaktura"
@@ -73,7 +72,6 @@ const (
 	robnoDokumentaURLEFakturaOtkazi      = robnoDokumentaURLEFaktura + "/otkazi"
 	robnoDokumentaURLEFakturaStorniraj   = robnoDokumentaURLEFaktura + "/storniraj"
 	robnoDokumentaURLEFakturaStornirajPE = robnoDokumentaURLEFaktura + "/storniraj-pe"
-	robnoDokumentaEFakturaPrintFlds      = "grupedokumenata,oddanal,dodanal"
 
 	// robnoDokumentaGrupeEFaktura is the default of the "Grupe dokumenata" filter of the eFaktura
 	// sub-tab: the groups of documents (dokvrsta.grpdok) that can be sent as an eFaktura (the legacy
@@ -100,7 +98,6 @@ const (
 	robnoDokumentaURLKnjizenje       = robnoDokumentaURLKontiranje + "/knjizenje"
 	robnoDokumentaURLKnjizenjeKnjizi = robnoDokumentaURLKnjizenje + "/knjizi"
 	robnoDokumentaURLKnjizenjeRavnot = robnoDokumentaURLKnjizenje + "/ravnoteza"
-	robnoDokumentaKnjizenjePrintFlds = "tipdok,vrd,magaciniid,odnaloga,donaloga,oddokum,dodokum,oddanal,dodanal"
 
 	// Tab 4, sub-tab 2 - Pregled proknjiženih / neproknjiženih dokumenata
 	robnoDokumentaKontiranjePregledTitle   = "Kontiranje dokumenata - pregled"
@@ -143,25 +140,31 @@ const (
 	robnoDokumentaPrikazNalogaTableID   = "robno-dokumenta-prikaz-naloga-table"
 	robnoDokumentaURLPrikazNaloga       = robnoDokumentaURLPrefix + "/prikaz-naloga"
 	robnoDokumentaURLPrikazNalogaStampa = robnoDokumentaURLPrikazNaloga + "/stampa"
-	robnoDokumentaPrikazNalogaPrintFlds = "magaciniid,odvrd,dovrd,odnaloga,donaloga,chkpodatumunaloga,oddanal,dodanal,chkpodatumuobrade,oddatob,dodatob,chkpooperateru,oper"
 
 	// Tab 8 - Prikaz dokumenata u nalogu
 	robnoDokumentaUNaloguTitle     = "Prikaz dokumenata u nalogu"
 	robnoDokumentaUNaloguTableID   = "robno-dokumenta-u-nalogu-table"
 	robnoDokumentaURLUNalogu       = robnoDokumentaURLPrefix + "/u-nalogu"
 	robnoDokumentaURLUNaloguStampa = robnoDokumentaURLUNalogu + "/stampa"
-	robnoDokumentaUNaloguPrintFlds = "magaciniid,odvrd,dovrd,odnaloga,donaloga,chkpodatumunaloga,oddanal,dodanal,chkpodatumuobrade,oddatob,dodatob,chkpooperateru,oper"
 
 	// Tab 9 - Prikaz dokumenata po operateru
 	robnoDokumentaPooperateruTitle     = "Prikaz dokumenata po operateru"
 	robnoDokumentaPooperateruTableID   = "robno-dokumenta-po-operateru-table"
 	robnoDokumentaURLPooperateru       = robnoDokumentaURLPrefix + "/po-operateru"
 	robnoDokumentaURLPooperateruStampa = robnoDokumentaURLPooperateru + "/stampa"
-	robnoDokumentaPooperateruPrintFlds = "odnaloga,donaloga,chkpodatumunaloga,oddanal,dodanal,chkpodatumuobrade,oddatob,dodatob,chkpooperateru,oper"
 
 	// Common element ids.
 	robnoDokumentaSearchInputID = "robno-dokumenta-search-input"
 	robnoDokumentaObradaBtnID   = "obrada-btn"
+	// robnoDokumentaPrintFlds is the print (štampa) contract of every tab of the option: the ids of
+	// the fields of the parameter panels of the tabs (the panel of a tab renders only its own fields,
+	// the ones of the other tabs are skipped by openPrintWithParams). The parameters of the print of
+	// a tab are then read from the request into the single domain.RobnoDokumentaParams structure.
+	robnoDokumentaPrintFlds = "tipdok,vrd,magaciniid,nalog,danal,datob,opis," +
+		"grupedokumenata,datumstatusa," +
+		"odvrd,dovrd,odnaloga,donaloga,oddokum,dodokum,oddanal,dodanal," +
+		"oddatob,dodatob,chkpodatumunaloga,chkpodatumuobrade,chkpooperateru,oper," +
+		"proknjizen,oznacineproknjizenim"
 	// robnoDokumentaInfoMessageID is the staging element of the messages of the actions of the
 	// tabs (it is emitted by the layout of the option).
 	robnoDokumentaInfoMessageID = "info-message"
@@ -643,7 +646,8 @@ func (h *RobnoDokumentaHandler) context(c *gin.Context, tabIndex int) (context.C
 	return c.Request.Context(), *session, true
 }
 
-// unosParams reads the header of the nalog and the grid filters of the tab from the request.
+// unosParams reads the header of the nalog and the grid filters of the tab from the request into the
+// single params structure of the option (only the fields of this tab are filled).
 func (h *RobnoDokumentaHandler) unosParams(c *gin.Context) domain.RobnoDokumentaParams {
 	return domain.RobnoDokumentaParams{
 		Tipdok:     c.Query("tipdok"),
@@ -739,7 +743,7 @@ func (h *RobnoDokumentaHandler) pregledStampa(c *gin.Context) {
 
 	translator := i18n.GetInstance()
 	btnObrada := h.obradaButton(robnoDokumentaURLPregledStampa, robnoDokumentaPregledStampaTableID, hxValsRobnoDokumentaPregledStampa)
-	btnPrint := common.SetPrintButton("stampa-btn", "Štampaj", "fin_print", robnoDokumentaURLPregledStampaPrint, "GET", true, common.ClassPrintButton, robnoDokumentaPregledStampaPrintFlds)
+	btnPrint := common.SetPrintButton("stampa-btn", "Štampaj", "fin_print", robnoDokumentaURLPregledStampaPrint, "GET", true, common.ClassPrintButton, robnoDokumentaPrintFlds)
 	btnPrint.HxTarget = "#info-message"
 	btnPrint.HxSwap = "innerHTML"
 	btnPrint.HxOnAfterRequest = "handleDialogResponse"
@@ -750,7 +754,7 @@ func (h *RobnoDokumentaHandler) pregledStampa(c *gin.Context) {
 }
 
 // getPregledStampa fills the grid of the "Štampa" sub-tab (first the total records, then the rows).
-func (h *RobnoDokumentaHandler) getPregledStampa(c *gin.Context, tbl *domain.TableData, params domain.PregledDokumentaParams) bool {
+func (h *RobnoDokumentaHandler) getPregledStampa(c *gin.Context, tbl *domain.TableData, params domain.RobnoDokumentaParams) bool {
 	page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
 	tbl.Pagination.HxVals = hxValsRobnoDokumentaPregledStampa
 	for _, total := range []bool{true, false} {
@@ -809,7 +813,7 @@ func (h *RobnoDokumentaHandler) PregledEFaktura(c *gin.Context) {
 
 // getPregledEFaktura fills the grid of the "eFaktura" sub-tab (first the total records, then the
 // rows).
-func (h *RobnoDokumentaHandler) getPregledEFaktura(c *gin.Context, tbl *domain.TableData, params domain.PregledDokumentaParams) bool {
+func (h *RobnoDokumentaHandler) getPregledEFaktura(c *gin.Context, tbl *domain.TableData, params domain.RobnoDokumentaParams) bool {
 	page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
 	tbl.Pagination.HxVals = hxValsRobnoDokumentaPregledEFaktura
 	for _, total := range []bool{true, false} {
@@ -821,11 +825,13 @@ func (h *RobnoDokumentaHandler) getPregledEFaktura(c *gin.Context, tbl *domain.T
 	return true
 }
 
-// pregledParams reads the filters of the "Pregled dokumenta" tab from the request. The grupe
-// dokumenata of the eFaktura sub-tab default to robnoDokumentaGrupeEFaktura and the date of the
-// ažuriranje statusa to the current date of the business year, like the legacy screen shows them.
-func (h *RobnoDokumentaHandler) pregledParams(c *gin.Context) domain.PregledDokumentaParams {
-	params := domain.PregledDokumentaParams{
+// pregledParams reads the filters of the "Pregled dokumenta" tab from the request into the single
+// params structure of the option (only the fields of the two sub-tabs of the tab are filled). The
+// grupe dokumenata of the eFaktura sub-tab default to robnoDokumentaGrupeEFaktura and the date of
+// the ažuriranje statusa to the current date of the business year, like the legacy screen shows
+// them.
+func (h *RobnoDokumentaHandler) pregledParams(c *gin.Context) domain.RobnoDokumentaParams {
+	params := domain.RobnoDokumentaParams{
 		MagaciniID:      common.StringToInt(c.Query("magaciniid")),
 		Vrd:             c.Query("vrd"),
 		OdDanal:         c.Query("oddanal"),
@@ -962,7 +968,7 @@ func (h *RobnoDokumentaHandler) kontiranjeKnjizenje(c *gin.Context) {
 
 // getKontiranjeKnjizenje fills the grid of the "Knjiženje dokumenata" sub-tab (first the total
 // records, then the rows of the page).
-func (h *RobnoDokumentaHandler) getKontiranjeKnjizenje(c *gin.Context, tbl *domain.TableData, params domain.KontiranjeDokumentaParams) bool {
+func (h *RobnoDokumentaHandler) getKontiranjeKnjizenje(c *gin.Context, tbl *domain.TableData, params domain.RobnoDokumentaParams) bool {
 	page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
 	tbl.Pagination.HxVals = hxValsRobnoDokumentaKnjizenje
 	for _, total := range []bool{true, false} {
@@ -1023,7 +1029,7 @@ func (h *RobnoDokumentaHandler) KontiranjePregled(c *gin.Context) {
 
 // getKontiranjePregled fills the grid of the "Pregled proknjiženih / neproknjiženih dokumenata"
 // sub-tab (first the total records, then the rows of the page).
-func (h *RobnoDokumentaHandler) getKontiranjePregled(c *gin.Context, tbl *domain.TableData, params domain.KontiranjeDokumentaParams) bool {
+func (h *RobnoDokumentaHandler) getKontiranjePregled(c *gin.Context, tbl *domain.TableData, params domain.RobnoDokumentaParams) bool {
 	page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
 	tbl.Pagination.HxVals = hxValsRobnoDokumentaKontiranjePregled
 	for _, total := range []bool{true, false} {
@@ -1074,7 +1080,7 @@ func (h *RobnoDokumentaHandler) KontiranjePoMagacinima(c *gin.Context) {
 
 // getKontiranjePoMagacinima fills the grid of the "Pregled ... po magacinima" sub-tab (first the
 // total records, then the rows of the page).
-func (h *RobnoDokumentaHandler) getKontiranjePoMagacinima(c *gin.Context, tbl *domain.TableData, params domain.KontiranjeDokumentaParams) bool {
+func (h *RobnoDokumentaHandler) getKontiranjePoMagacinima(c *gin.Context, tbl *domain.TableData, params domain.RobnoDokumentaParams) bool {
 	page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
 	tbl.Pagination.HxVals = hxValsRobnoDokumentaPoMagacinima
 	for _, total := range []bool{true, false} {
@@ -1086,12 +1092,13 @@ func (h *RobnoDokumentaHandler) getKontiranjePoMagacinima(c *gin.Context, tbl *d
 	return true
 }
 
-// kontiranjeParams reads the parameters of the "Kontiranje dokumenata" tab from the request. The
-// ranges of the selection keep the defaults of the legacy screen (0 - 999999 for the broj naloga
-// and the broj dokumenta and the last week for the datum naloga) and the state of the posting
-// defaults to the posted documents of the radio buttons.
-func (h *RobnoDokumentaHandler) kontiranjeParams(c *gin.Context) domain.KontiranjeDokumentaParams {
-	params := domain.KontiranjeDokumentaParams{
+// kontiranjeParams reads the parameters of the "Kontiranje dokumenata" tab from the request into the
+// single params structure of the option (only the fields of the tab are filled). The ranges of the
+// selection keep the defaults of the legacy screen (0 - 999999 for the broj naloga and the broj
+// dokumenta and the last week for the datum naloga) and the state of the posting defaults to the
+// posted documents of the radio buttons.
+func (h *RobnoDokumentaHandler) kontiranjeParams(c *gin.Context) domain.RobnoDokumentaParams {
+	params := domain.RobnoDokumentaParams{
 		MagaciniID:           common.StringToInt(c.Query("magaciniid")),
 		Tipdok:               c.Query("tipdok"),
 		Vrd:                  c.Query("vrd"),
@@ -1265,7 +1272,7 @@ func (h *RobnoDokumentaHandler) PrikazNaloga(c *gin.Context) {
 	}
 
 	translator := i18n.GetInstance()
-	btnPrint := common.SetPrintButton("prikaz-naloga-stampa-btn", "Štampaj", "stampa", robnoDokumentaURLPrikazNalogaStampa, "GET", true, common.ClassPrintButton, robnoDokumentaPrikazNalogaPrintFlds)
+	btnPrint := common.SetPrintButton("prikaz-naloga-stampa-btn", "Štampaj", "stampa", robnoDokumentaURLPrikazNalogaStampa, "GET", true, common.ClassPrintButton, robnoDokumentaPrintFlds)
 	btnPrint.HxTarget = "#" + robnoDokumentaInfoMessageID
 	btnPrint.HxSwap = "innerHTML"
 	btnPrint.HxOnAfterRequest = "handleDialogResponse"
@@ -1279,7 +1286,7 @@ func (h *RobnoDokumentaHandler) PrikazNaloga(c *gin.Context) {
 
 // getPrikazNaloga fills the grid of the "Prikaz naloga" tab (first the total records, then the rows
 // of the page).
-func (h *RobnoDokumentaHandler) getPrikazNaloga(c *gin.Context, tbl *domain.TableData, params domain.PrikazNalogaParams) bool {
+func (h *RobnoDokumentaHandler) getPrikazNaloga(c *gin.Context, tbl *domain.TableData, params domain.RobnoDokumentaParams) bool {
 	page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
 	tbl.Pagination.HxVals = hxValsRobnoDokumentaPrikazNaloga
 	for _, total := range []bool{true, false} {
@@ -1291,11 +1298,14 @@ func (h *RobnoDokumentaHandler) getPrikazNaloga(c *gin.Context, tbl *domain.Tabl
 	return true
 }
 
-// prikazNalogaParams reads the parameters of the "Prikaz naloga" tab from the request. The ranges
-// of the broj naloga keep the defaults of the legacy screen (0 - 999999) and the dates of the two
-// date filters the last week of the business year, like the other tabs of the option.
-func (h *RobnoDokumentaHandler) prikazNalogaParams(c *gin.Context) domain.PrikazNalogaParams {
-	params := domain.PrikazNalogaParams{
+// prikazNalogaParams reads the parameters of the "Prikaz naloga" tab from the request into the
+// single params structure of the option (only the fields of the tab are filled; the same selection
+// of nalozi is read by the "Prikaz dokumenata u nalogu" and the "Prikaz dokumenata po operateru"
+// tabs). The ranges of the broj naloga keep the defaults of the legacy screen (0 - 999999) and the
+// dates of the two date filters the last week of the business year, like the other tabs of the
+// option.
+func (h *RobnoDokumentaHandler) prikazNalogaParams(c *gin.Context) domain.RobnoDokumentaParams {
+	params := domain.RobnoDokumentaParams{
 		MagaciniID:     common.StringToInt(c.Query("magaciniid")),
 		OdVrd:          c.Query("odvrd"),
 		DoVrd:          c.Query("dovrd"),
@@ -1378,7 +1388,7 @@ func (h *RobnoDokumentaHandler) PrikazDokumenataUNalogu(c *gin.Context) {
 	}
 
 	translator := i18n.GetInstance()
-	btnPrint := common.SetPrintButton("u-nalogu-stampa-btn", "Štampaj", "stampa", robnoDokumentaURLUNaloguStampa, "GET", true, common.ClassPrintButton, robnoDokumentaUNaloguPrintFlds)
+	btnPrint := common.SetPrintButton("u-nalogu-stampa-btn", "Štampaj", "stampa", robnoDokumentaURLUNaloguStampa, "GET", true, common.ClassPrintButton, robnoDokumentaPrintFlds)
 	btnPrint.HxTarget = "#" + robnoDokumentaInfoMessageID
 	btnPrint.HxSwap = "innerHTML"
 	btnPrint.HxOnAfterRequest = "handleDialogResponse"
@@ -1392,7 +1402,7 @@ func (h *RobnoDokumentaHandler) PrikazDokumenataUNalogu(c *gin.Context) {
 
 // getPrikazDokumenataUNalogu fills the grid of the "Prikaz dokumenata u nalogu" tab (first the total
 // records, then the rows of the page).
-func (h *RobnoDokumentaHandler) getPrikazDokumenataUNalogu(c *gin.Context, tbl *domain.TableData, params domain.PrikazNalogaParams) bool {
+func (h *RobnoDokumentaHandler) getPrikazDokumenataUNalogu(c *gin.Context, tbl *domain.TableData, params domain.RobnoDokumentaParams) bool {
 	page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
 	tbl.Pagination.HxVals = hxValsRobnoDokumentaUNalogu
 	for _, total := range []bool{true, false} {
@@ -1438,7 +1448,7 @@ func (h *RobnoDokumentaHandler) PrikazDokumenataPooperateru(c *gin.Context) {
 	}
 
 	translator := i18n.GetInstance()
-	btnPrint := common.SetPrintButton("po-operateru-stampa-btn", "Štampaj", "stampa", robnoDokumentaURLPooperateruStampa, "GET", true, common.ClassPrintButton, robnoDokumentaPooperateruPrintFlds)
+	btnPrint := common.SetPrintButton("po-operateru-stampa-btn", "Štampaj", "stampa", robnoDokumentaURLPooperateruStampa, "GET", true, common.ClassPrintButton, robnoDokumentaPrintFlds)
 	btnPrint.HxTarget = "#" + robnoDokumentaInfoMessageID
 	btnPrint.HxSwap = "innerHTML"
 	btnPrint.HxOnAfterRequest = "handleDialogResponse"
@@ -1452,7 +1462,7 @@ func (h *RobnoDokumentaHandler) PrikazDokumenataPooperateru(c *gin.Context) {
 
 // getPrikazDokumenataPooperateru fills the grid of the "Prikaz dokumenata po operateru" tab (first
 // the total records, then the rows of the page).
-func (h *RobnoDokumentaHandler) getPrikazDokumenataPooperateru(c *gin.Context, tbl *domain.TableData, params domain.PrikazNalogaParams) bool {
+func (h *RobnoDokumentaHandler) getPrikazDokumenataPooperateru(c *gin.Context, tbl *domain.TableData, params domain.RobnoDokumentaParams) bool {
 	page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
 	tbl.Pagination.HxVals = hxValsRobnoDokumentaPooperateru
 	for _, total := range []bool{true, false} {
@@ -1504,8 +1514,8 @@ func (h *RobnoDokumentaHandler) render(c *gin.Context, tabIndex int) {
 
 	translator := i18n.GetInstance()
 	btnObrada := h.obradaButton(url, tableID, "")
-	// TODO: pass the print parameters of the tab as the last argument (dataFields).
-	btnPrint := common.SetPrintButton(tableID+"-stampa", "Štampa", "stampa", printURL, "GET", true, common.ClassPrintButton, "")
+	// The print of every tab receives the whole selection of the option (the same print contract).
+	btnPrint := common.SetPrintButton(tableID+"-stampa", "Štampa", "stampa", printURL, "GET", true, common.ClassPrintButton, robnoDokumentaPrintFlds)
 	// TODO: pass the hxVals of the tab instead of "".
 	search := common.CreateSearchInput(robnoDokumentaSearchInputID, translator, url, "#"+tableID, "")
 

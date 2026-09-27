@@ -14,9 +14,10 @@ import (
 	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
+	"time"
 )
 
-func RobnoPrometMain(tabs domain.TabData, tbl domain.TableData, magValues, grupeValues []domain.ComboItem, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service) templ.Component {
+func RobnoPrometMain(tabs domain.TabData, tbl domain.TableData, magValues, grupeValues []domain.ComboItem, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, gnGod int, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -41,7 +42,7 @@ func RobnoPrometMain(tabs domain.TabData, tbl domain.TableData, magValues, grupe
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = RobnoPrometPoGrupiArtikala1(tabs, tbl, magValues, grupeValues, btnObrada, btnPrint, searchInput, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = RobnoPrometPoGrupiArtikala1(tabs, tbl, magValues, grupeValues, btnObrada, btnPrint, searchInput, gnGod, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -61,7 +62,7 @@ func RobnoPrometMain(tabs domain.TabData, tbl domain.TableData, magValues, grupe
 	})
 }
 
-func RobnoPrometPoGrupiArtikala1(tabs domain.TabData, tbl domain.TableData, magValues, grupeValues []domain.ComboItem, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service) templ.Component {
+func RobnoPrometPoGrupiArtikala1(tabs domain.TabData, tbl domain.TableData, magValues, grupeValues []domain.ComboItem, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, gnGod int, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -97,7 +98,7 @@ func RobnoPrometPoGrupiArtikala1(tabs domain.TabData, tbl domain.TableData, magV
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Parametri"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnopromet.templ`, Line: 30, Col: 94}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnopromet.templ`, Line: 31, Col: 94}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
@@ -135,11 +136,15 @@ func RobnoPrometPoGrupiArtikala1(tabs domain.TabData, tbl domain.TableData, magV
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "odsifre", Name: "odsifre", FieldType: "number", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "3"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "odsifre", Name: "odsifre", FieldType: "number", Value: "0", MaxLength: "6", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "3"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{ID: "odsifre", Name: "search-odsifre", HxUrl: "/api/promet/searchbutton", HxTarget: "#search-dropdown", HxSwap: "innerHTML", HxVals: `js:{"destfield": "odsifre"}`, ClassButton: common.ClassButton}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "dosifrenaziv", Name: "odsifrenaziv", FieldType: "text", Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -151,7 +156,7 @@ func RobnoPrometPoGrupiArtikala1(tabs domain.TabData, tbl domain.TableData, magV
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "dosifre", Name: "dosifre", FieldType: "number", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "4"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "dosifre", Name: "dosifre", FieldType: "number", Value: "999999", MaxLength: "6", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "4"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -159,20 +164,28 @@ func RobnoPrometPoGrupiArtikala1(tabs domain.TabData, tbl domain.TableData, magV
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</div></fieldset><!-- Right fieldset: datumi + grupe --><fieldset class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1\"><legend class=\"px-1 font-semibold text-sm text-blue-900\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<!-- Naziv doArtikla -->")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "dosifrenaziv", Name: "dosifrenaziv", FieldType: "text", Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1"}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</div></fieldset><!-- Right fieldset: datumi + grupe --><fieldset class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1\"><legend class=\"px-1 font-semibold text-sm text-blue-900\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Datum / grupa"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnopromet.templ`, Line: 52, Col: 98}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnopromet.templ`, Line: 56, Col: 98}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</legend><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</legend><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -184,7 +197,7 @@ func RobnoPrometPoGrupiArtikala1(tabs domain.TabData, tbl domain.TableData, magV
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -196,7 +209,7 @@ func RobnoPrometPoGrupiArtikala1(tabs domain.TabData, tbl domain.TableData, magV
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -204,11 +217,11 @@ func RobnoPrometPoGrupiArtikala1(tabs domain.TabData, tbl domain.TableData, magV
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "7"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month(), 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "7"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -216,11 +229,11 @@ func RobnoPrometPoGrupiArtikala1(tabs domain.TabData, tbl domain.TableData, magV
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "8"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "8"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</div></fieldset></div><div class=\"flex justify-end gap-1 pt-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</div></fieldset></div><div class=\"flex justify-end gap-1 pt-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -232,7 +245,7 @@ func RobnoPrometPoGrupiArtikala1(tabs domain.TabData, tbl domain.TableData, magV
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</div></div><div class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex-1 min-h-0 overflow-hidden\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "</div></div><div class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex-1 min-h-0 overflow-hidden\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -244,7 +257,7 @@ func RobnoPrometPoGrupiArtikala1(tabs domain.TabData, tbl domain.TableData, magV
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "</div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -252,7 +265,7 @@ func RobnoPrometPoGrupiArtikala1(tabs domain.TabData, tbl domain.TableData, magV
 	})
 }
 
-func RobnoPrometPoKupcima(tabs domain.TabData, tbl domain.TableData, magValues, grupeValues []domain.ComboItem, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service) templ.Component {
+func RobnoPrometPoKupcima(tabs domain.TabData, tbl domain.TableData, magValues, grupeValues []domain.ComboItem, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, gnGod int, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -273,7 +286,7 @@ func RobnoPrometPoKupcima(tabs domain.TabData, tbl domain.TableData, magValues, 
 			templ_7745c5c3_Var5 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<div class=\"bg-blue-100 p-1 flex flex-col h-full\"><div class=\"border-b border-blue-600\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "<div class=\"bg-blue-100 p-1 flex flex-col h-full\"><div class=\"border-b border-blue-600\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -281,20 +294,20 @@ func RobnoPrometPoKupcima(tabs domain.TabData, tbl domain.TableData, magValues, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</div><div class=\"flex-1 min-h-0 flex flex-col gap-1\"><div class=\"no-border bg-blue-100 rounded-lg\"><!-- Two columns: magacin + šifre artikla (left) | datumi + grupe (right) --><div class=\"grid grid-cols-2 gap-1 items-start\"><!-- Left fieldset: magacin + šifre artikla --><fieldset class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1\"><legend class=\"px-1 font-semibold text-sm text-blue-900\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</div><div class=\"flex-1 min-h-0 flex flex-col gap-1\"><div class=\"no-border bg-blue-100 rounded-lg\"><!-- Two columns: magacin + šifre artikla (left) | datumi + grupe (right) --><div class=\"grid grid-cols-2 gap-1 items-start\"><!-- Left fieldset: magacin + šifre artikla --><fieldset class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1\"><legend class=\"px-1 font-semibold text-sm text-blue-900\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Parametri"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnopromet.templ`, Line: 95, Col: 94}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnopromet.templ`, Line: 99, Col: 94}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</legend><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</legend><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -306,7 +319,7 @@ func RobnoPrometPoKupcima(tabs domain.TabData, tbl domain.TableData, magValues, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -318,7 +331,7 @@ func RobnoPrometPoKupcima(tabs domain.TabData, tbl domain.TableData, magValues, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -326,7 +339,7 @@ func RobnoPrometPoKupcima(tabs domain.TabData, tbl domain.TableData, magValues, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "odsifre", Name: "odsifre", FieldType: "number", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "3"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "odsifre", Name: "odsifre", FieldType: "number", Value: "0", MaxLength: "6", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "3"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -334,7 +347,11 @@ func RobnoPrometPoKupcima(tabs domain.TabData, tbl domain.TableData, magValues, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "odsifrenaziv", Name: "odsifrenaziv", FieldType: "text", Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1"}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "</div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -342,7 +359,7 @@ func RobnoPrometPoKupcima(tabs domain.TabData, tbl domain.TableData, magValues, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "dosifre", Name: "dosifre", FieldType: "number", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "4"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "dosifre", Name: "dosifre", FieldType: "number", Value: "999999", MaxLength: "6", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "4"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -350,20 +367,24 @@ func RobnoPrometPoKupcima(tabs domain.TabData, tbl domain.TableData, magValues, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "</div></fieldset><!-- Right fieldset: datumi + grupe --><fieldset class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1\"><legend class=\"px-1 font-semibold text-sm text-blue-900\">")
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "dosifrenaziv", Name: "dosifrenaziv", FieldType: "text", Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1"}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "</div></fieldset><!-- Right fieldset: datumi + grupe --><fieldset class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1\"><legend class=\"px-1 font-semibold text-sm text-blue-900\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var7 string
 		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Datum / grupa"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnopromet.templ`, Line: 117, Col: 98}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnopromet.templ`, Line: 123, Col: 98}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "</legend><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "</legend><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -375,7 +396,7 @@ func RobnoPrometPoKupcima(tabs domain.TabData, tbl domain.TableData, magValues, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "</div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -387,7 +408,7 @@ func RobnoPrometPoKupcima(tabs domain.TabData, tbl domain.TableData, magValues, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "</div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -395,11 +416,11 @@ func RobnoPrometPoKupcima(tabs domain.TabData, tbl domain.TableData, magValues, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "7"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month(), 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "7"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "</div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -407,11 +428,11 @@ func RobnoPrometPoKupcima(tabs domain.TabData, tbl domain.TableData, magValues, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "8"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "8"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "</div></fieldset></div><div class=\"flex justify-end gap-1 pt-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "</div></fieldset></div><div class=\"flex justify-end gap-1 pt-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -423,7 +444,7 @@ func RobnoPrometPoKupcima(tabs domain.TabData, tbl domain.TableData, magValues, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "</div></div><div class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex-1 min-h-0 overflow-hidden\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "</div></div><div class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex-1 min-h-0 overflow-hidden\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -435,7 +456,7 @@ func RobnoPrometPoKupcima(tabs domain.TabData, tbl domain.TableData, magValues, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "</div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "</div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -443,7 +464,7 @@ func RobnoPrometPoKupcima(tabs domain.TabData, tbl domain.TableData, magValues, 
 	})
 }
 
-func RobnoPrometPoDobavljacima(tabs domain.TabData, tbl domain.TableData, magValues, grupeValues []domain.ComboItem, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service) templ.Component {
+func RobnoPrometPoDobavljacima(tabs domain.TabData, tbl domain.TableData, magValues, grupeValues []domain.ComboItem, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, gnGod int, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -464,7 +485,7 @@ func RobnoPrometPoDobavljacima(tabs domain.TabData, tbl domain.TableData, magVal
 			templ_7745c5c3_Var8 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "<div class=\"bg-blue-100 p-1 flex flex-col h-full\"><div class=\"border-b border-blue-600\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "<div class=\"bg-blue-100 p-1 flex flex-col h-full\"><div class=\"border-b border-blue-600\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -472,20 +493,20 @@ func RobnoPrometPoDobavljacima(tabs domain.TabData, tbl domain.TableData, magVal
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "</div><div class=\"flex-1 min-h-0 flex flex-col gap-1\"><div class=\"no-border bg-blue-100 rounded-lg\"><!-- Two columns: magacin + šifre artikla (left) | datumi + grupe (right) --><div class=\"grid grid-cols-2 gap-1 items-start\"><!-- Left fieldset: magacin + šifre artikla --><fieldset class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1\"><legend class=\"px-1 font-semibold text-sm text-blue-900\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "</div><div class=\"flex-1 min-h-0 flex flex-col gap-1\"><div class=\"no-border bg-blue-100 rounded-lg\"><!-- Two columns: magacin + šifre artikla (left) | datumi + grupe (right) --><div class=\"grid grid-cols-2 gap-1 items-start\"><!-- Left fieldset: magacin + šifre artikla --><fieldset class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1\"><legend class=\"px-1 font-semibold text-sm text-blue-900\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Parametri"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnopromet.templ`, Line: 160, Col: 94}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnopromet.templ`, Line: 166, Col: 94}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "</legend><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "</legend><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -497,7 +518,7 @@ func RobnoPrometPoDobavljacima(tabs domain.TabData, tbl domain.TableData, magVal
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "</div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -509,7 +530,7 @@ func RobnoPrometPoDobavljacima(tabs domain.TabData, tbl domain.TableData, magVal
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "</div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -517,7 +538,7 @@ func RobnoPrometPoDobavljacima(tabs domain.TabData, tbl domain.TableData, magVal
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "odsifre", Name: "odsifre", FieldType: "number", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "3"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "odsifre", Name: "odsifre", FieldType: "number", Value: "0", MaxLength: "6", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "3"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -525,7 +546,11 @@ func RobnoPrometPoDobavljacima(tabs domain.TabData, tbl domain.TableData, magVal
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "odsifrenaziv", Name: "dosifrenaziv", FieldType: "text", Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1"}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "</div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -533,7 +558,7 @@ func RobnoPrometPoDobavljacima(tabs domain.TabData, tbl domain.TableData, magVal
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "dosifre", Name: "dosifre", FieldType: "number", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "4"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "dosifre", Name: "dosifre", FieldType: "number", Value: "999999", MaxLength: "6", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "4"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -541,20 +566,24 @@ func RobnoPrometPoDobavljacima(tabs domain.TabData, tbl domain.TableData, magVal
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "</div></fieldset><!-- Right fieldset: datumi + grupe --><fieldset class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1\"><legend class=\"px-1 font-semibold text-sm text-blue-900\">")
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "dosifrenaziv", Name: "dosifrenaziv", FieldType: "text", Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1"}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "</div></fieldset><!-- Right fieldset: datumi + grupe --><fieldset class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1\"><legend class=\"px-1 font-semibold text-sm text-blue-900\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Datum / grupa"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnopromet.templ`, Line: 182, Col: 98}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnopromet.templ`, Line: 190, Col: 98}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "</legend><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "</legend><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -566,7 +595,7 @@ func RobnoPrometPoDobavljacima(tabs domain.TabData, tbl domain.TableData, magVal
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "</div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -578,7 +607,7 @@ func RobnoPrometPoDobavljacima(tabs domain.TabData, tbl domain.TableData, magVal
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "</div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -586,11 +615,11 @@ func RobnoPrometPoDobavljacima(tabs domain.TabData, tbl domain.TableData, magVal
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "7"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month(), 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "7"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "</div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -598,11 +627,11 @@ func RobnoPrometPoDobavljacima(tabs domain.TabData, tbl domain.TableData, magVal
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "8"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "8"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "</div></fieldset></div><div class=\"flex justify-end gap-1 pt-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "</div></fieldset></div><div class=\"flex justify-end gap-1 pt-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -614,7 +643,7 @@ func RobnoPrometPoDobavljacima(tabs domain.TabData, tbl domain.TableData, magVal
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "</div></div><div class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex-1 min-h-0 overflow-hidden\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "</div></div><div class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex-1 min-h-0 overflow-hidden\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -626,7 +655,7 @@ func RobnoPrometPoDobavljacima(tabs domain.TabData, tbl domain.TableData, magVal
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "</div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "</div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -634,7 +663,7 @@ func RobnoPrometPoDobavljacima(tabs domain.TabData, tbl domain.TableData, magVal
 	})
 }
 
-func RobnoPrometRucLagerLista(tabs, subTabs domain.TabData, tbl domain.TableData, magValues, grupeValues []domain.ComboItem, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service) templ.Component {
+func RobnoPrometRucLagerLista(tabs, subTabs domain.TabData, tbl domain.TableData, magValues, grupeValues []domain.ComboItem, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, gnGod int, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -655,7 +684,7 @@ func RobnoPrometRucLagerLista(tabs, subTabs domain.TabData, tbl domain.TableData
 			templ_7745c5c3_Var11 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "<div class=\"bg-blue-100 p-1 flex flex-col h-full\"><div class=\"border-b border-blue-600\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "<div class=\"bg-blue-100 p-1 flex flex-col h-full\"><div class=\"border-b border-blue-600\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -663,7 +692,7 @@ func RobnoPrometRucLagerLista(tabs, subTabs domain.TabData, tbl domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "</div><div class=\"border-b border-blue-600 pt-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "</div><div class=\"border-b border-blue-600 pt-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -671,20 +700,20 @@ func RobnoPrometRucLagerLista(tabs, subTabs domain.TabData, tbl domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "</div><div class=\"flex-1 min-h-0 flex flex-col gap-1\"><div class=\"no-border bg-blue-100 rounded-lg\"><!-- Vrsta lager liste --><div class=\"grid grid-cols-2 gap-1 items-start\"><!-- Left: magacini + stanje --><fieldset class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1 h-full\"><legend class=\"px-1 font-semibold text-sm text-blue-900\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "</div><div class=\"flex-1 min-h-0 flex flex-col gap-1\"><div class=\"no-border bg-blue-100 rounded-lg\"><!-- Vrsta lager liste --><div class=\"grid grid-cols-2 gap-1 items-start\"><!-- Left: magacini + stanje --><fieldset class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1 h-full\"><legend class=\"px-1 font-semibold text-sm text-blue-900\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var12 string
 		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Parametri"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnopromet.templ`, Line: 228, Col: 94}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnopromet.templ`, Line: 236, Col: 94}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "</legend><div class=\"flex flex-wrap items-center gap-x-4 gap-y-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "</legend><div class=\"flex flex-wrap items-center gap-x-4 gap-y-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -700,7 +729,7 @@ func RobnoPrometRucLagerLista(tabs, subTabs domain.TabData, tbl domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, "</div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -712,7 +741,7 @@ func RobnoPrometRucLagerLista(tabs, subTabs domain.TabData, tbl domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, "</div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -724,7 +753,7 @@ func RobnoPrometRucLagerLista(tabs, subTabs domain.TabData, tbl domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "</div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -732,24 +761,24 @@ func RobnoPrometRucLagerLista(tabs, subTabs domain.TabData, tbl domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "stanjenadan", Name: "stanjenadan", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "6"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "stanjenadan", Name: "stanjenadan", FieldType: "date", Value: time.Date(gnGod, time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "6"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "</div></fieldset><!-- Right: opcije + grupe/podgrupe --><fieldset class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1\"><legend class=\"px-1 font-semibold text-sm text-blue-900\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 53, "</div></fieldset><!-- Right: opcije + grupe/podgrupe --><fieldset class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1\"><legend class=\"px-1 font-semibold text-sm text-blue-900\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var13 string
 		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Opcije prikaza/štampe"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnopromet.templ`, Line: 249, Col: 107}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnopromet.templ`, Line: 257, Col: 107}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 53, "</legend><div class=\"flex flex-wrap items-center gap-x-3 gap-y-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 54, "</legend><div class=\"flex flex-wrap items-center gap-x-3 gap-y-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -765,7 +794,7 @@ func RobnoPrometRucLagerLista(tabs, subTabs domain.TabData, tbl domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 54, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 55, "</div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -777,7 +806,7 @@ func RobnoPrometRucLagerLista(tabs, subTabs domain.TabData, tbl domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 55, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 56, "</div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -789,7 +818,7 @@ func RobnoPrometRucLagerLista(tabs, subTabs domain.TabData, tbl domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 56, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 57, "</div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -797,11 +826,11 @@ func RobnoPrometRucLagerLista(tabs, subTabs domain.TabData, tbl domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.ComboBoxField(domain.ComboFieldConfig{ID: "odpodgrupe", Name: "odpodgrupe", ClassSelect: common.ClassInputTextEnabled + " flex-1", TabIndex: "12"}, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "odpodgrupe", Name: "odpodgrupe", FieldType: "number", Value: "0", MaxLength: "4", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "12"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 57, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 58, "</div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -809,11 +838,11 @@ func RobnoPrometRucLagerLista(tabs, subTabs domain.TabData, tbl domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.ComboBoxField(domain.ComboFieldConfig{ID: "dopodgrupe", Name: "dopodgrupe", ClassSelect: common.ClassInputTextEnabled + " flex-1", TabIndex: "13"}, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "dopodgrupe", Name: "dopodgrupe", FieldType: "number", Value: "9999", MaxLength: "4", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "13"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 58, "</div></fieldset></div><div class=\"flex justify-end gap-1 pt-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 59, "</div></fieldset></div><div class=\"flex justify-end gap-1 pt-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -825,7 +854,7 @@ func RobnoPrometRucLagerLista(tabs, subTabs domain.TabData, tbl domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 59, "</div></div><div class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex-1 min-h-0 overflow-hidden\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 60, "</div></div><div class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex-1 min-h-0 overflow-hidden\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -837,7 +866,7 @@ func RobnoPrometRucLagerLista(tabs, subTabs domain.TabData, tbl domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 60, "</div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 61, "</div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -845,7 +874,7 @@ func RobnoPrometRucLagerLista(tabs, subTabs domain.TabData, tbl domain.TableData
 	})
 }
 
-func RobnoPrometGradiliste(tabs domain.TabData, tbl domain.TableData, magValues, grupeValues []domain.ComboItem, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service) templ.Component {
+func RobnoPrometGradiliste(tabs domain.TabData, tbl domain.TableData, magValues, grupeValues []domain.ComboItem, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, gnGod int, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -866,7 +895,7 @@ func RobnoPrometGradiliste(tabs domain.TabData, tbl domain.TableData, magValues,
 			templ_7745c5c3_Var14 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 61, "<div class=\"bg-blue-100 p-1 flex flex-col h-full\"><div class=\"border-b border-blue-600\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 62, "<div class=\"bg-blue-100 p-1 flex flex-col h-full\"><div class=\"border-b border-blue-600\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -874,20 +903,20 @@ func RobnoPrometGradiliste(tabs domain.TabData, tbl domain.TableData, magValues,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 62, "</div><div class=\"flex-1 min-h-0 flex flex-col gap-1\"><div class=\"no-border bg-blue-100 rounded-lg\"><!-- Two columns: magacin + šifre artikla (left) | datumi + grupe (right) --><div class=\"grid grid-cols-2 gap-1 items-start\"><!-- Left fieldset: magacin + šifre artikla --><fieldset class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1\"><legend class=\"px-1 font-semibold text-sm text-blue-900\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 63, "</div><div class=\"flex-1 min-h-0 flex flex-col gap-1\"><div class=\"no-border bg-blue-100 rounded-lg\"><!-- Two columns: magacin + šifre artikla (left) | datumi + grupe (right) --><div class=\"grid grid-cols-2 gap-1 items-start\"><!-- Left fieldset: magacin + šifre artikla --><fieldset class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1\"><legend class=\"px-1 font-semibold text-sm text-blue-900\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var15 string
 		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Parametri"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnopromet.templ`, Line: 297, Col: 94}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnopromet.templ`, Line: 305, Col: 94}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 63, "</legend><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 64, "</legend><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -899,7 +928,7 @@ func RobnoPrometGradiliste(tabs domain.TabData, tbl domain.TableData, magValues,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 64, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 65, "</div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -911,7 +940,7 @@ func RobnoPrometGradiliste(tabs domain.TabData, tbl domain.TableData, magValues,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 65, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 66, "</div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -927,7 +956,11 @@ func RobnoPrometGradiliste(tabs domain.TabData, tbl domain.TableData, magValues,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 66, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "odsifrenaziv", Name: "dosifrenaziv", FieldType: "text", Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1"}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 67, "</div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -943,44 +976,24 @@ func RobnoPrometGradiliste(tabs domain.TabData, tbl domain.TableData, magValues,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 67, "</div></fieldset><!-- Right fieldset: datumi + grupe --><fieldset class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1\"><legend class=\"px-1 font-semibold text-sm text-blue-900\">")
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "dosifrenaziv", Name: "dosifrenaziv", FieldType: "text", Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1"}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 68, "</div></fieldset><!-- Right fieldset: datumi + grupe --><fieldset class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1\"><legend class=\"px-1 font-semibold text-sm text-blue-900\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var16 string
 		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Datum / grupa"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnopromet.templ`, Line: 319, Col: 98}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnopromet.templ`, Line: 329, Col: 98}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 68, "</legend><div class=\"flex items-center gap-1\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "oddatuma", LabelText: translator.Label("Od datuma"), ClassLabel: common.ClassLabel + " w-28"}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "5"}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 69, "</div><div class=\"flex items-center gap-1\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "dodatuma", LabelText: translator.Label("Do datuma"), ClassLabel: common.ClassLabel + " w-28"}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "6"}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 70, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 69, "</legend><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -988,11 +1001,11 @@ func RobnoPrometGradiliste(tabs domain.TabData, tbl domain.TableData, magValues,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.ComboBoxField(domain.ComboFieldConfig{ID: "odgrupe", Name: "odgrupe", ClassSelect: common.ClassInputTextEnabled + " flex-1", OptionValues: grupeValues, TabIndex: "7"}, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.ComboBoxField(domain.ComboFieldConfig{ID: "odgrupe", Name: "odgrupe", ClassSelect: common.ClassInputTextEnabled + " flex-1", OptionValues: grupeValues, TabIndex: "5"}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 71, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 70, "</div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1000,11 +1013,35 @@ func RobnoPrometGradiliste(tabs domain.TabData, tbl domain.TableData, magValues,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.ComboBoxField(domain.ComboFieldConfig{ID: "dogrupe", Name: "dogrupe", ClassSelect: common.ClassInputTextEnabled + " flex-1", OptionValues: grupeValues, TabIndex: "8"}, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.ComboBoxField(domain.ComboFieldConfig{ID: "dogrupe", Name: "dogrupe", ClassSelect: common.ClassInputTextEnabled + " flex-1", OptionValues: grupeValues, TabIndex: "6"}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 72, "</div></fieldset></div><div class=\"flex justify-end gap-1 pt-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 71, "</div><div class=\"flex items-center gap-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "oddatuma", LabelText: translator.Label("Od datuma"), ClassLabel: common.ClassLabel + " w-28"}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month(), 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "7"}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 72, "</div><div class=\"flex items-center gap-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "dodatuma", LabelText: translator.Label("Do datuma"), ClassLabel: common.ClassLabel + " w-28"}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "8"}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 73, "</div></fieldset></div><div class=\"flex justify-end gap-1 pt-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1016,7 +1053,7 @@ func RobnoPrometGradiliste(tabs domain.TabData, tbl domain.TableData, magValues,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 73, "</div></div><div class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex-1 min-h-0 overflow-hidden\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 74, "</div></div><div class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex-1 min-h-0 overflow-hidden\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1028,7 +1065,7 @@ func RobnoPrometGradiliste(tabs domain.TabData, tbl domain.TableData, magValues,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 74, "</div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 75, "</div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1036,7 +1073,7 @@ func RobnoPrometGradiliste(tabs domain.TabData, tbl domain.TableData, magValues,
 	})
 }
 
-func RobnoPrometGradilisteVpcNc(tabs domain.TabData, tbl domain.TableData, magValues, grupeValues []domain.ComboItem, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service) templ.Component {
+func RobnoPrometGradilisteVpcNc(tabs domain.TabData, tbl domain.TableData, magValues, grupeValues []domain.ComboItem, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, gnGod int, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -1057,7 +1094,7 @@ func RobnoPrometGradilisteVpcNc(tabs domain.TabData, tbl domain.TableData, magVa
 			templ_7745c5c3_Var17 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 75, "<div class=\"bg-blue-100 p-1 flex flex-col h-full\"><div class=\"border-b border-blue-600\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 76, "<div class=\"bg-blue-100 p-1 flex flex-col h-full\"><div class=\"border-b border-blue-600\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1065,20 +1102,20 @@ func RobnoPrometGradilisteVpcNc(tabs domain.TabData, tbl domain.TableData, magVa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 76, "</div><div class=\"flex-1 min-h-0 flex flex-col gap-1\"><div class=\"no-border bg-blue-100 rounded-lg\"><!-- Two columns: magacin + šifre artikla (left) | datumi + grupe (right) --><div class=\"grid grid-cols-2 gap-1 items-start\"><!-- Left fieldset: magacin + šifre artikla --><fieldset class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1\"><legend class=\"px-1 font-semibold text-sm text-blue-900\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 77, "</div><div class=\"flex-1 min-h-0 flex flex-col gap-1\"><div class=\"no-border bg-blue-100 rounded-lg\"><!-- Two columns: magacin + šifre artikla (left) | datumi + grupe (right) --><div class=\"grid grid-cols-2 gap-1 items-start\"><!-- Left fieldset: magacin + šifre artikla --><fieldset class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1\"><legend class=\"px-1 font-semibold text-sm text-blue-900\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var18 string
 		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Parametri"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnopromet.templ`, Line: 362, Col: 94}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnopromet.templ`, Line: 372, Col: 94}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 77, "</legend><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 78, "</legend><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1090,7 +1127,7 @@ func RobnoPrometGradilisteVpcNc(tabs domain.TabData, tbl domain.TableData, magVa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 78, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 79, "</div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1102,7 +1139,7 @@ func RobnoPrometGradilisteVpcNc(tabs domain.TabData, tbl domain.TableData, magVa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 79, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 80, "</div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1118,7 +1155,11 @@ func RobnoPrometGradilisteVpcNc(tabs domain.TabData, tbl domain.TableData, magVa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 80, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "odsifrenaziv", Name: "dosifrenaziv", FieldType: "text", Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1"}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 81, "</div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1134,44 +1175,24 @@ func RobnoPrometGradilisteVpcNc(tabs domain.TabData, tbl domain.TableData, magVa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 81, "</div></fieldset><!-- Right fieldset: datumi + grupe --><fieldset class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1\"><legend class=\"px-1 font-semibold text-sm text-blue-900\">")
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "dosifrenaziv", Name: "dosifrenaziv", FieldType: "text", Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1"}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 82, "</div></fieldset><!-- Right fieldset: datumi + grupe --><fieldset class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1\"><legend class=\"px-1 font-semibold text-sm text-blue-900\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var19 string
 		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Datum / grupa"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnopromet.templ`, Line: 384, Col: 98}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnopromet.templ`, Line: 396, Col: 98}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 82, "</legend><div class=\"flex items-center gap-1\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "oddatuma", LabelText: translator.Label("Od datuma"), ClassLabel: common.ClassLabel + " w-28"}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "5"}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 83, "</div><div class=\"flex items-center gap-1\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "dodatuma", LabelText: translator.Label("Do datuma"), ClassLabel: common.ClassLabel + " w-28"}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "6"}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 84, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 83, "</legend><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1183,7 +1204,7 @@ func RobnoPrometGradilisteVpcNc(tabs domain.TabData, tbl domain.TableData, magVa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 85, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 84, "</div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1195,7 +1216,31 @@ func RobnoPrometGradilisteVpcNc(tabs domain.TabData, tbl domain.TableData, magVa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 86, "</div></fieldset></div><div class=\"flex justify-end gap-1 pt-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 85, "</div><div class=\"flex items-center gap-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "oddatuma", LabelText: translator.Label("Od datuma"), ClassLabel: common.ClassLabel + " w-28"}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month(), 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "7"}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 86, "</div><div class=\"flex items-center gap-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "dodatuma", LabelText: translator.Label("Do datuma"), ClassLabel: common.ClassLabel + " w-28"}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "8"}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 87, "</div></fieldset></div><div class=\"flex justify-end gap-1 pt-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1207,7 +1252,7 @@ func RobnoPrometGradilisteVpcNc(tabs domain.TabData, tbl domain.TableData, magVa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 87, "</div></div><div class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex-1 min-h-0 overflow-hidden\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 88, "</div></div><div class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex-1 min-h-0 overflow-hidden\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1219,7 +1264,7 @@ func RobnoPrometGradilisteVpcNc(tabs domain.TabData, tbl domain.TableData, magVa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 88, "</div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 89, "</div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1294,7 +1339,7 @@ func RobnoPrometTable(tbl domain.TableData, searchInput domain.InputControl, tra
 }
 
 // RobnoPrometRucUlazIzlaz renders the "Ulaz/izlaz za period" RUC sub-report.
-func RobnoPrometRucUlazIzlaz(tabs, subTabs domain.TabData, tbl domain.TableData, magValues []domain.ComboItem, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service) templ.Component {
+func RobnoPrometRucUlazIzlaz(tabs, subTabs domain.TabData, tbl domain.TableData, magValues []domain.ComboItem, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, gnGod int, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -1315,7 +1360,7 @@ func RobnoPrometRucUlazIzlaz(tabs, subTabs domain.TabData, tbl domain.TableData,
 			templ_7745c5c3_Var22 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 89, "<div class=\"bg-blue-100 p-1 flex flex-col h-full\"><div class=\"border-b border-blue-600\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 90, "<div class=\"bg-blue-100 p-1 flex flex-col h-full\"><div class=\"border-b border-blue-600\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1323,7 +1368,7 @@ func RobnoPrometRucUlazIzlaz(tabs, subTabs domain.TabData, tbl domain.TableData,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 90, "</div><div class=\"border-b border-blue-600 pt-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 91, "</div><div class=\"border-b border-blue-600 pt-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1331,20 +1376,20 @@ func RobnoPrometRucUlazIzlaz(tabs, subTabs domain.TabData, tbl domain.TableData,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 91, "</div><div class=\"flex-1 min-h-0 flex flex-col gap-1\"><div class=\"no-border bg-blue-100 rounded-lg\"><div class=\"grid grid-cols-2 gap-1 items-start\"><!-- Left: vrsta prometa + magacini --><fieldset class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1 h-full\"><legend class=\"px-1 font-semibold text-sm text-blue-900\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 92, "</div><div class=\"flex-1 min-h-0 flex flex-col gap-1\"><div class=\"no-border bg-blue-100 rounded-lg\"><div class=\"grid grid-cols-2 gap-1 items-start\"><!-- Left: vrsta prometa + magacini --><fieldset class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1 h-full\"><legend class=\"px-1 font-semibold text-sm text-blue-900\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var23 string
 		templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Parametri"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnopromet.templ`, Line: 440, Col: 94}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnopromet.templ`, Line: 452, Col: 94}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 92, "</legend><div class=\"flex flex-wrap items-center gap-x-4 gap-y-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 93, "</legend><div class=\"flex flex-wrap items-center gap-x-4 gap-y-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1360,7 +1405,7 @@ func RobnoPrometRucUlazIzlaz(tabs, subTabs domain.TabData, tbl domain.TableData,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 93, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 94, "</div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1372,7 +1417,7 @@ func RobnoPrometRucUlazIzlaz(tabs, subTabs domain.TabData, tbl domain.TableData,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 94, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 95, "</div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1384,20 +1429,20 @@ func RobnoPrometRucUlazIzlaz(tabs, subTabs domain.TabData, tbl domain.TableData,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 95, "</div></fieldset><!-- Right: datumi + opcije --><fieldset class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1 h-full\"><legend class=\"px-1 font-semibold text-sm text-blue-900\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 96, "</div></fieldset><!-- Right: datumi + opcije --><fieldset class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1 h-full\"><legend class=\"px-1 font-semibold text-sm text-blue-900\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var24 string
 		templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Opcije prikaza/štampe"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnopromet.templ`, Line: 457, Col: 107}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnopromet.templ`, Line: 469, Col: 107}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 96, "</legend><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 97, "</legend><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1405,11 +1450,11 @@ func RobnoPrometRucUlazIzlaz(tabs, subTabs domain.TabData, tbl domain.TableData,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "6"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month(), 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "6"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 97, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 98, "</div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1417,11 +1462,11 @@ func RobnoPrometRucUlazIzlaz(tabs, subTabs domain.TabData, tbl domain.TableData,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "7"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "7"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 98, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 99, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1429,7 +1474,7 @@ func RobnoPrometRucUlazIzlaz(tabs, subTabs domain.TabData, tbl domain.TableData,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 99, "</fieldset></div><div class=\"flex justify-end gap-1 pt-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 100, "</fieldset></div><div class=\"flex justify-end gap-1 pt-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1441,7 +1486,7 @@ func RobnoPrometRucUlazIzlaz(tabs, subTabs domain.TabData, tbl domain.TableData,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 100, "</div></div><div class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex-1 min-h-0 overflow-hidden\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 101, "</div></div><div class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex-1 min-h-0 overflow-hidden\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1453,7 +1498,7 @@ func RobnoPrometRucUlazIzlaz(tabs, subTabs domain.TabData, tbl domain.TableData,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 101, "</div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 102, "</div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1462,7 +1507,7 @@ func RobnoPrometRucUlazIzlaz(tabs, subTabs domain.TabData, tbl domain.TableData,
 }
 
 // RobnoPrometRucMagacinima renders the "RUC po magacinima" RUC sub-report.
-func RobnoPrometRucMagacinima(tabs, subTabs domain.TabData, tbl domain.TableData, magValues []domain.ComboItem, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service) templ.Component {
+func RobnoPrometRucMagacinima(tabs, subTabs domain.TabData, tbl domain.TableData, magValues []domain.ComboItem, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, gnGod int, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -1483,7 +1528,7 @@ func RobnoPrometRucMagacinima(tabs, subTabs domain.TabData, tbl domain.TableData
 			templ_7745c5c3_Var25 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 102, "<div class=\"bg-blue-100 p-1 flex flex-col h-full\"><div class=\"border-b border-blue-600\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 103, "<div class=\"bg-blue-100 p-1 flex flex-col h-full\"><div class=\"border-b border-blue-600\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1491,7 +1536,7 @@ func RobnoPrometRucMagacinima(tabs, subTabs domain.TabData, tbl domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 103, "</div><div class=\"border-b border-blue-600 pt-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 104, "</div><div class=\"border-b border-blue-600 pt-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1499,20 +1544,20 @@ func RobnoPrometRucMagacinima(tabs, subTabs domain.TabData, tbl domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 104, "</div><div class=\"flex-1 min-h-0 flex flex-col gap-1\"><div class=\"no-border bg-blue-100 rounded-lg\"><div class=\"grid grid-cols-2 gap-1 items-start\"><!-- Left: magacini --><fieldset class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1 h-full\"><legend class=\"px-1 font-semibold text-sm text-blue-900\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 105, "</div><div class=\"flex-1 min-h-0 flex flex-col gap-1\"><div class=\"no-border bg-blue-100 rounded-lg\"><div class=\"grid grid-cols-2 gap-1 items-start\"><!-- Left: magacini --><fieldset class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1 h-full\"><legend class=\"px-1 font-semibold text-sm text-blue-900\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var26 string
 		templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Parametri"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnopromet.templ`, Line: 496, Col: 94}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnopromet.templ`, Line: 508, Col: 94}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 105, "</legend><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 106, "</legend><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1524,7 +1569,7 @@ func RobnoPrometRucMagacinima(tabs, subTabs domain.TabData, tbl domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 106, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 107, "</div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1536,20 +1581,20 @@ func RobnoPrometRucMagacinima(tabs, subTabs domain.TabData, tbl domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 107, "</div></fieldset><!-- Right: datumi + opcije --><fieldset class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1 h-full\"><legend class=\"px-1 font-semibold text-sm text-blue-900\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 108, "</div></fieldset><!-- Right: datumi + opcije --><fieldset class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1 h-full\"><legend class=\"px-1 font-semibold text-sm text-blue-900\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var27 string
 		templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Opcije prikaza/štampe"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnopromet.templ`, Line: 508, Col: 107}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnopromet.templ`, Line: 520, Col: 107}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 108, "</legend><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 109, "</legend><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1557,11 +1602,11 @@ func RobnoPrometRucMagacinima(tabs, subTabs domain.TabData, tbl domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "3"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month(), 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "3"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 109, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 110, "</div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1569,11 +1614,11 @@ func RobnoPrometRucMagacinima(tabs, subTabs domain.TabData, tbl domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "4"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "4"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 110, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 111, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1581,7 +1626,7 @@ func RobnoPrometRucMagacinima(tabs, subTabs domain.TabData, tbl domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 111, "</fieldset></div><div class=\"flex justify-end gap-1 pt-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 112, "</fieldset></div><div class=\"flex justify-end gap-1 pt-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1593,7 +1638,7 @@ func RobnoPrometRucMagacinima(tabs, subTabs domain.TabData, tbl domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 112, "</div></div><div class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex-1 min-h-0 overflow-hidden\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 113, "</div></div><div class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex-1 min-h-0 overflow-hidden\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1605,7 +1650,7 @@ func RobnoPrometRucMagacinima(tabs, subTabs domain.TabData, tbl domain.TableData
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 113, "</div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 114, "</div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1614,7 +1659,7 @@ func RobnoPrometRucMagacinima(tabs, subTabs domain.TabData, tbl domain.TableData
 }
 
 // RobnoPrometRucIzlazneFakture renders the "Izlazne fakture" RUC sub-report.
-func RobnoPrometRucIzlazneFakture(tabs, subTabs domain.TabData, tbl domain.TableData, magValues []domain.ComboItem, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service) templ.Component {
+func RobnoPrometRucIzlazneFakture(tabs, subTabs domain.TabData, tbl domain.TableData, magValues []domain.ComboItem, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, gnGod int, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -1635,7 +1680,7 @@ func RobnoPrometRucIzlazneFakture(tabs, subTabs domain.TabData, tbl domain.Table
 			templ_7745c5c3_Var28 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 114, "<div class=\"bg-blue-100 p-1 flex flex-col h-full\"><div class=\"border-b border-blue-600\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 115, "<div class=\"bg-blue-100 p-1 flex flex-col h-full\"><div class=\"border-b border-blue-600\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1643,7 +1688,7 @@ func RobnoPrometRucIzlazneFakture(tabs, subTabs domain.TabData, tbl domain.Table
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 115, "</div><div class=\"border-b border-blue-600 pt-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 116, "</div><div class=\"border-b border-blue-600 pt-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1651,20 +1696,20 @@ func RobnoPrometRucIzlazneFakture(tabs, subTabs domain.TabData, tbl domain.Table
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 116, "</div><div class=\"flex-1 min-h-0 flex flex-col gap-1\"><div class=\"no-border bg-blue-100 rounded-lg\"><div class=\"grid grid-cols-2 gap-1 items-start\"><!-- Left: magacini --><fieldset class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1 h-full\"><legend class=\"px-1 font-semibold text-sm text-blue-900\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 117, "</div><div class=\"flex-1 min-h-0 flex flex-col gap-1\"><div class=\"no-border bg-blue-100 rounded-lg\"><div class=\"grid grid-cols-2 gap-1 items-start\"><!-- Left: magacini --><fieldset class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1 h-full\"><legend class=\"px-1 font-semibold text-sm text-blue-900\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var29 string
 		templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Parametri"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnopromet.templ`, Line: 547, Col: 94}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnopromet.templ`, Line: 559, Col: 94}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 117, "</legend><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 118, "</legend><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1676,7 +1721,7 @@ func RobnoPrometRucIzlazneFakture(tabs, subTabs domain.TabData, tbl domain.Table
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 118, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 119, "</div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1688,20 +1733,20 @@ func RobnoPrometRucIzlazneFakture(tabs, subTabs domain.TabData, tbl domain.Table
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 119, "</div></fieldset><!-- Right: datumi + opcije --><fieldset class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1 h-full\"><legend class=\"px-1 font-semibold text-sm text-blue-900\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 120, "</div></fieldset><!-- Right: datumi + opcije --><fieldset class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1 h-full\"><legend class=\"px-1 font-semibold text-sm text-blue-900\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var30 string
 		templ_7745c5c3_Var30, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Opcije prikaza/štampe"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnopromet.templ`, Line: 559, Col: 107}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnopromet.templ`, Line: 571, Col: 107}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var30))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 120, "</legend><!-- Two columns: the date range in the first column, the print options in the second. --><div class=\"grid grid-cols-2 gap-x-2 items-start\"><div class=\"flex flex-col gap-1\"><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 121, "</legend><!-- Two columns: the date range in the first column, the print options in the second. --><div class=\"grid grid-cols-2 gap-x-2 items-start\"><div class=\"flex flex-col gap-1\"><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1709,11 +1754,11 @@ func RobnoPrometRucIzlazneFakture(tabs, subTabs domain.TabData, tbl domain.Table
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "3"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month(), 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "3"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 121, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 122, "</div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1721,11 +1766,11 @@ func RobnoPrometRucIzlazneFakture(tabs, subTabs domain.TabData, tbl domain.Table
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "4"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "4"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 122, "</div></div><div class=\"flex flex-col gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 123, "</div></div><div class=\"flex flex-col gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1737,7 +1782,7 @@ func RobnoPrometRucIzlazneFakture(tabs, subTabs domain.TabData, tbl domain.Table
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 123, "</div></div></fieldset></div><div class=\"flex justify-end gap-1 pt-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 124, "</div></div></fieldset></div><div class=\"flex justify-end gap-1 pt-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1749,7 +1794,7 @@ func RobnoPrometRucIzlazneFakture(tabs, subTabs domain.TabData, tbl domain.Table
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 124, "</div></div><div class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex-1 min-h-0 overflow-hidden\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 125, "</div></div><div class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex-1 min-h-0 overflow-hidden\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1761,7 +1806,7 @@ func RobnoPrometRucIzlazneFakture(tabs, subTabs domain.TabData, tbl domain.Table
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 125, "</div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 126, "</div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

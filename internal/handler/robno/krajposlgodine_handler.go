@@ -29,7 +29,7 @@ type KrajPoslovneGodineHandler struct {
 func NewKrajPoslovneGodineHandler(service robnosvc.KrajPoslovneGodineService, cfg config.Config) *KrajPoslovneGodineHandler {
 	return &KrajPoslovneGodineHandler{service: service, cfg: cfg,
 		tabs: &domain.TabData{Tabs: []domain.TabItem{
-			{ID: "kpg-popis", Label: "Popisne liste", HXRequestUrl: krajPoslovneGodineURL + "/popis", IsActive: true},
+			{ID: "kpg-popis", Label: "Popisne liste", HXRequestUrl: krajPoslovneGodineURL + "/popis/sifra", IsActive: true},
 			{ID: "kpg-visak", Label: "Obrada viškova/manjkova", HXRequestUrl: krajPoslovneGodineURL + "/obrada"},
 			{ID: "kpg-prepis", Label: "Prepis stanja", HXRequestUrl: krajPoslovneGodineURL + "/prepis"},
 		},
@@ -58,7 +58,32 @@ func (h *KrajPoslovneGodineHandler) Main(c *gin.Context) {
 	}
 }
 
-func (h *KrajPoslovneGodineHandler) Popis(c *gin.Context) {
+func (h *KrajPoslovneGodineHandler) PopisPoSifri(c *gin.Context) {
+	common.SetActiveTab(h.tabs, 0)
+	common.SetActiveTab(h.subtabs, 0)
+	data, err := h.service.GetPopis(c.Request.Context(), h.params(c))
+	if err != nil {
+		common.WriteJSONResponse(c, 500, false, nil, err.Error())
+		return
+	}
+	tbl := h.tablePopisRows("Popisne liste", data)
+	if c.Request.Header.Get("X-Request-Source") == "btnobrada" || c.Request.Header.Get("X-Request-Source") == "btnpage" {
+		utils.RenderContent(c, tbl)
+		return
+	}
+	mag, _ := h.service.GetMagacini(c.Request.Context())
+	if err := tmpl_robno.KrajPoslovneGodinePopis(*h.tabs, *h.subtabs, tbl, mag, i18n.GetInstance()).Render(c, c.Writer); err != nil {
+		common.WriteJSONResponse(c, 500, false, nil, common.ErrMsgRenderTemplate)
+	}
+}
+
+func (h *KrajPoslovneGodineHandler) PopisPoNazivu(c *gin.Context) {
+	h.renderRows(c, 0, false)
+}
+func (h *KrajPoslovneGodineHandler) PopisPoGrupi(c *gin.Context) {
+	h.renderRows(c, 0, false)
+}
+func (h *KrajPoslovneGodineHandler) PopisPoGrupiNazivu(c *gin.Context) {
 	h.renderRows(c, 0, false)
 }
 
@@ -188,7 +213,10 @@ func (h *KrajPoslovneGodineHandler) table(title string, fields []domain.Fields) 
 func (h *KrajPoslovneGodineHandler) AddRoutes(r *gin.Engine) {
 	r.Use(middleware.Auth())
 	r.GET("/api/robno/krajposlovnegodine", h.Main)
-	r.GET("/api/robno/krajposlovnegodine/popis", h.Popis)
+	r.GET("/api/robno/krajposlovnegodine/popis/sifra", h.PopisPoSifri)
+	r.GET("/api/robno/krajposlovnegodine/popis/naziv", h.PopisPoNazivu)
+	r.GET("/api/robno/krajposlovnegodine/popis/grupa", h.PopisPoGrupi)
+	r.GET("/api/robno/krajposlovnegodine/popis/grupanaziv", h.PopisPoGrupiNazivu)
 	r.GET("/api/robno/krajposlovnegodine/obrada", h.Obrada)
 	r.GET("/api/robno/krajposlovnegodine/prepis", h.Prepis)
 	r.GET("/api/robno/krajposlovnegodine/popis/stampa", func(c *gin.Context) { h.renderRows(c, 0, true) })

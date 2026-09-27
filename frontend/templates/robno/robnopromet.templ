@@ -21,10 +21,10 @@ templ RobnoPrometPoGrupiArtikala1(tabs domain.TabData, tbl domain.TableData, mag
 		<div class="border-b border-blue-600">
 			@tmpl.TabNav(translator.Title("Robno promet"), tabs, "#robno-promet-reports-content", "robno-promet-reports-panel", translator)
 		</div>
-		<div class="flex-1 min-h-0 flex flex-col gap-1 pt-1">
-			<div class="no-border bg-blue-100 p-1 rounded-lg">
+		<div class="flex-1 min-h-0 flex flex-col gap-1">
+			<div class="no-border bg-blue-100 rounded-lg">
 				<!-- Two columns: magacin + šifre artikla (left) | datumi + grupe (right) -->
-				<div class="grid grid-cols-2 gap-2 items-start">
+				<div class="grid grid-cols-2 gap-1 items-start">
 					<!-- Left fieldset: magacin + šifre artikla -->
 					<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1">
 						<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Parametri") }</legend>
@@ -60,11 +60,11 @@ templ RobnoPrometPoGrupiArtikala1(tabs domain.TabData, tbl domain.TableData, mag
 						</div>
 						<div class="flex items-center gap-1">
 							@components.LabelField(domain.LabelFieldConfig{ID: "oddatuma", LabelText: translator.Label("Od datuma"), ClassLabel: common.ClassLabel + " w-28"})
-							@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " flex-1", TabIndex: "7"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "7"})
 						</div>
 						<div class="flex items-center gap-1">
 							@components.LabelField(domain.LabelFieldConfig{ID: "dodatuma", LabelText: translator.Label("Do datuma"), ClassLabel: common.ClassLabel + " w-28"})
-							@components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " flex-1", TabIndex: "8"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "8"})
 						</div>
 					</fieldset>
 				</div>
@@ -86,10 +86,10 @@ templ RobnoPrometPoKupcima(tabs domain.TabData, tbl domain.TableData, magValues,
 		<div class="border-b border-blue-600">
 			@tmpl.TabNav(translator.Title("Robno promet"), tabs, "#robno-promet-reports-content", "robno-promet-reports-panel", translator)
 		</div>
-		<div class="flex-1 min-h-0 flex flex-col gap-1 pt-1">
-			<div class="no-border bg-blue-100 p-1 rounded-lg">
+		<div class="flex-1 min-h-0 flex flex-col gap-1">
+			<div class="no-border bg-blue-100 rounded-lg">
 				<!-- Two columns: magacin + šifre artikla (left) | datumi + grupe (right) -->
-				<div class="grid grid-cols-2 gap-2 items-start">
+				<div class="grid grid-cols-2 gap-1 items-start">
 					<!-- Left fieldset: magacin + šifre artikla -->
 					<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1">
 						<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Parametri") }</legend>
@@ -125,11 +125,11 @@ templ RobnoPrometPoKupcima(tabs domain.TabData, tbl domain.TableData, magValues,
 						</div>
 						<div class="flex items-center gap-1">
 							@components.LabelField(domain.LabelFieldConfig{ID: "oddatuma", LabelText: translator.Label("Od datuma"), ClassLabel: common.ClassLabel + " w-28"})
-							@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " flex-1", TabIndex: "7"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "7"})
 						</div>
 						<div class="flex items-center gap-1">
 							@components.LabelField(domain.LabelFieldConfig{ID: "dodatuma", LabelText: translator.Label("Do datuma"), ClassLabel: common.ClassLabel + " w-28"})
-							@components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " flex-1", TabIndex: "8"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "8"})
 						</div>
 					</fieldset>
 				</div>
@@ -151,10 +151,10 @@ templ RobnoPrometPoDobavljacima(tabs domain.TabData, tbl domain.TableData, magVa
 		<div class="border-b border-blue-600">
 			@tmpl.TabNav(translator.Title("Robno promet"), tabs, "#robno-promet-reports-content", "robno-promet-reports-panel", translator)
 		</div>
-		<div class="flex-1 min-h-0 flex flex-col gap-1 pt-1">
-			<div class="no-border bg-blue-100 p-1 rounded-lg">
+		<div class="flex-1 min-h-0 flex flex-col gap-1">
+			<div class="no-border bg-blue-100 rounded-lg">
 				<!-- Two columns: magacin + šifre artikla (left) | datumi + grupe (right) -->
-				<div class="grid grid-cols-2 gap-2 items-start">
+				<div class="grid grid-cols-2 gap-1 items-start">
 					<!-- Left fieldset: magacin + šifre artikla -->
 					<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1">
 						<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Parametri") }</legend>
@@ -190,11 +190,11 @@ templ RobnoPrometPoDobavljacima(tabs domain.TabData, tbl domain.TableData, magVa
 						</div>
 						<div class="flex items-center gap-1">
 							@components.LabelField(domain.LabelFieldConfig{ID: "oddatuma", LabelText: translator.Label("Od datuma"), ClassLabel: common.ClassLabel + " w-28"})
-							@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " flex-1", TabIndex: "7"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "7"})
 						</div>
 						<div class="flex items-center gap-1">
 							@components.LabelField(domain.LabelFieldConfig{ID: "dodatuma", LabelText: translator.Label("Do datuma"), ClassLabel: common.ClassLabel + " w-28"})
-							@components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " flex-1", TabIndex: "8"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "8"})
 						</div>
 					</fieldset>
 				</div>
@@ -219,10 +219,10 @@ templ RobnoPrometRucLagerLista(tabs, subTabs domain.TabData, tbl domain.TableDat
 		<div class="border-b border-blue-600 pt-1">
 			@tmpl.TabNav("", subTabs, "#robno-promet-reports-content", "robno-promet-reports-panel", translator)
 		</div>
-		<div class="flex-1 min-h-0 flex flex-col gap-1 pt-1">
-			<div class="no-border bg-blue-100 p-1 rounded-lg">
+		<div class="flex-1 min-h-0 flex flex-col gap-1">
+			<div class="no-border bg-blue-100 rounded-lg">
 				<!-- Vrsta lager liste -->
-				<div class="grid grid-cols-2 gap-2 items-start">
+				<div class="grid grid-cols-2 gap-1 items-start">
 					<!-- Left: magacini + stanje -->
 					<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1 h-full">
 						<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Parametri") }</legend>
@@ -241,7 +241,7 @@ templ RobnoPrometRucLagerLista(tabs, subTabs domain.TabData, tbl domain.TableDat
 						</div>
 						<div class="flex items-center gap-1">
 							@components.LabelField(domain.LabelFieldConfig{ID: "stanjenadan", LabelText: translator.Label("Stanje na dan"), ClassLabel: common.ClassLabel + " w-28"})
-							@components.TextInputField(domain.InputFieldConfig{ID: "stanjenadan", Name: "stanjenadan", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " flex-1", TabIndex: "6"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "stanjenadan", Name: "stanjenadan", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "6"})
 						</div>
 					</fieldset>
 					<!-- Right: opcije + grupe/podgrupe -->
@@ -288,10 +288,10 @@ templ RobnoPrometGradiliste(tabs domain.TabData, tbl domain.TableData, magValues
 		<div class="border-b border-blue-600">
 			@tmpl.TabNav(translator.Title("Robno promet"), tabs, "#robno-promet-reports-content", "robno-promet-reports-panel", translator)
 		</div>
-		<div class="flex-1 min-h-0 flex flex-col gap-1 pt-1">
-			<div class="no-border bg-blue-100 p-1 rounded-lg">
+		<div class="flex-1 min-h-0 flex flex-col gap-1">
+			<div class="no-border bg-blue-100 rounded-lg">
 				<!-- Two columns: magacin + šifre artikla (left) | datumi + grupe (right) -->
-				<div class="grid grid-cols-2 gap-2 items-start">
+				<div class="grid grid-cols-2 gap-1 items-start">
 					<!-- Left fieldset: magacin + šifre artikla -->
 					<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1">
 						<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Parametri") }</legend>
@@ -319,11 +319,11 @@ templ RobnoPrometGradiliste(tabs domain.TabData, tbl domain.TableData, magValues
 						<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Datum / grupa") }</legend>
 						<div class="flex items-center gap-1">
 							@components.LabelField(domain.LabelFieldConfig{ID: "oddatuma", LabelText: translator.Label("Od datuma"), ClassLabel: common.ClassLabel + " w-28"})
-							@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " flex-1", TabIndex: "5"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "5"})
 						</div>
 						<div class="flex items-center gap-1">
 							@components.LabelField(domain.LabelFieldConfig{ID: "dodatuma", LabelText: translator.Label("Do datuma"), ClassLabel: common.ClassLabel + " w-28"})
-							@components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " flex-1", TabIndex: "6"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "6"})
 						</div>
 						<div class="flex items-center gap-1">
 							@components.LabelField(domain.LabelFieldConfig{ID: "odgrupe", LabelText: translator.Label("Od grupe"), ClassLabel: common.ClassLabel + " w-28"})
@@ -353,10 +353,10 @@ templ RobnoPrometGradilisteVpcNc(tabs domain.TabData, tbl domain.TableData, magV
 		<div class="border-b border-blue-600">
 			@tmpl.TabNav(translator.Title("Robno promet"), tabs, "#robno-promet-reports-content", "robno-promet-reports-panel", translator)
 		</div>
-		<div class="flex-1 min-h-0 flex flex-col gap-1 pt-1">
-			<div class="no-border bg-blue-100 p-1 rounded-lg">
+		<div class="flex-1 min-h-0 flex flex-col gap-1">
+			<div class="no-border bg-blue-100 rounded-lg">
 				<!-- Two columns: magacin + šifre artikla (left) | datumi + grupe (right) -->
-				<div class="grid grid-cols-2 gap-2 items-start">
+				<div class="grid grid-cols-2 gap-1 items-start">
 					<!-- Left fieldset: magacin + šifre artikla -->
 					<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1">
 						<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Parametri") }</legend>
@@ -384,11 +384,11 @@ templ RobnoPrometGradilisteVpcNc(tabs domain.TabData, tbl domain.TableData, magV
 						<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Datum / grupa") }</legend>
 						<div class="flex items-center gap-1">
 							@components.LabelField(domain.LabelFieldConfig{ID: "oddatuma", LabelText: translator.Label("Od datuma"), ClassLabel: common.ClassLabel + " w-28"})
-							@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " flex-1", TabIndex: "5"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "5"})
 						</div>
 						<div class="flex items-center gap-1">
 							@components.LabelField(domain.LabelFieldConfig{ID: "dodatuma", LabelText: translator.Label("Do datuma"), ClassLabel: common.ClassLabel + " w-28"})
-							@components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " flex-1", TabIndex: "6"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "6"})
 						</div>
 						<div class="flex items-center gap-1">
 							@components.LabelField(domain.LabelFieldConfig{ID: "odgrupe", LabelText: translator.Label("Od grupe"), ClassLabel: common.ClassLabel + " w-28"})
@@ -432,9 +432,9 @@ templ RobnoPrometRucUlazIzlaz(tabs, subTabs domain.TabData, tbl domain.TableData
 		<div class="border-b border-blue-600 pt-1">
 			@tmpl.TabNav("", subTabs, "#robno-promet-reports-content", "robno-promet-reports-panel", translator)
 		</div>
-		<div class="flex-1 min-h-0 flex flex-col gap-1 pt-1">
-			<div class="no-border bg-blue-100 p-1 rounded-lg">
-				<div class="grid grid-cols-2 gap-2 items-start">
+		<div class="flex-1 min-h-0 flex flex-col gap-1">
+			<div class="no-border bg-blue-100 rounded-lg">
+				<div class="grid grid-cols-2 gap-1 items-start">
 					<!-- Left: vrsta prometa + magacini -->
 					<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1 h-full">
 						<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Parametri") }</legend>
@@ -457,11 +457,11 @@ templ RobnoPrometRucUlazIzlaz(tabs, subTabs domain.TabData, tbl domain.TableData
 						<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Opcije prikaza/štampe") }</legend>
 						<div class="flex items-center gap-1">
 							@components.LabelField(domain.LabelFieldConfig{ID: "oddatuma", LabelText: translator.Label("Od datuma"), ClassLabel: common.ClassLabel + " w-28"})
-							@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " flex-1", TabIndex: "6"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "6"})
 						</div>
 						<div class="flex items-center gap-1">
 							@components.LabelField(domain.LabelFieldConfig{ID: "dodatuma", LabelText: translator.Label("Do datuma"), ClassLabel: common.ClassLabel + " w-28"})
-							@components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " flex-1", TabIndex: "7"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "7"})
 						</div>
 						@components.CheckboxField(domain.CheckboxFieldConfig{ID: "zbirmagacina", Name: "zbirmagacina", LabelText: translator.Label("Zbir izabranih magacina"), ClassCheckbox: common.ClassCheckbox + " mr-2", ClassLabel: common.ClassLabel + " flex items-center", TabIndex: "8"}, translator)
 					</fieldset>
@@ -488,9 +488,9 @@ templ RobnoPrometRucMagacinima(tabs, subTabs domain.TabData, tbl domain.TableDat
 		<div class="border-b border-blue-600 pt-1">
 			@tmpl.TabNav("", subTabs, "#robno-promet-reports-content", "robno-promet-reports-panel", translator)
 		</div>
-		<div class="flex-1 min-h-0 flex flex-col gap-1 pt-1">
-			<div class="no-border bg-blue-100 p-1 rounded-lg">
-				<div class="grid grid-cols-2 gap-2 items-start">
+		<div class="flex-1 min-h-0 flex flex-col gap-1">
+			<div class="no-border bg-blue-100 rounded-lg">
+				<div class="grid grid-cols-2 gap-1 items-start">
 					<!-- Left: magacini -->
 					<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1 h-full">
 						<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Parametri") }</legend>
@@ -508,11 +508,11 @@ templ RobnoPrometRucMagacinima(tabs, subTabs domain.TabData, tbl domain.TableDat
 						<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Opcije prikaza/štampe") }</legend>
 						<div class="flex items-center gap-1">
 							@components.LabelField(domain.LabelFieldConfig{ID: "oddatuma", LabelText: translator.Label("Od datuma"), ClassLabel: common.ClassLabel + " w-28"})
-							@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " flex-1", TabIndex: "3"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "3"})
 						</div>
 						<div class="flex items-center gap-1">
 							@components.LabelField(domain.LabelFieldConfig{ID: "dodatuma", LabelText: translator.Label("Do datuma"), ClassLabel: common.ClassLabel + " w-28"})
-							@components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " flex-1", TabIndex: "4"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "4"})
 						</div>
 						@components.CheckboxField(domain.CheckboxFieldConfig{ID: "stampajsamoZbir", Name: "stampajsamoZbir", LabelText: translator.Label("Štampaj samo zbir po magacinima"), ClassCheckbox: common.ClassCheckbox + " mr-2", ClassLabel: common.ClassLabel + " flex items-center", TabIndex: "5"}, translator)
 					</fieldset>
@@ -539,9 +539,9 @@ templ RobnoPrometRucIzlazneFakture(tabs, subTabs domain.TabData, tbl domain.Tabl
 		<div class="border-b border-blue-600 pt-1">
 			@tmpl.TabNav("", subTabs, "#robno-promet-reports-content", "robno-promet-reports-panel", translator)
 		</div>
-		<div class="flex-1 min-h-0 flex flex-col gap-1 pt-1">
-			<div class="no-border bg-blue-100 p-1 rounded-lg">
-				<div class="grid grid-cols-2 gap-2 items-start">
+		<div class="flex-1 min-h-0 flex flex-col gap-1">
+			<div class="no-border bg-blue-100 rounded-lg">
+				<div class="grid grid-cols-2 gap-1 items-start">
 					<!-- Left: magacini -->
 					<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1 h-full">
 						<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Parametri") }</legend>
@@ -557,16 +557,23 @@ templ RobnoPrometRucIzlazneFakture(tabs, subTabs domain.TabData, tbl domain.Tabl
 					<!-- Right: datumi + opcije -->
 					<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1 h-full">
 						<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Opcije prikaza/štampe") }</legend>
-						<div class="flex items-center gap-1">
-							@components.LabelField(domain.LabelFieldConfig{ID: "oddatuma", LabelText: translator.Label("Od datuma"), ClassLabel: common.ClassLabel + " w-28"})
-							@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " flex-1", TabIndex: "3"})
+						<!-- Two columns: the date range in the first column, the print options in the second. -->
+						<div class="grid grid-cols-2 gap-x-2 items-start">
+							<div class="flex flex-col gap-1">
+								<div class="flex items-center gap-1">
+									@components.LabelField(domain.LabelFieldConfig{ID: "oddatuma", LabelText: translator.Label("Od datuma"), ClassLabel: common.ClassLabel + " w-28"})
+									@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "3"})
+								</div>
+								<div class="flex items-center gap-1">
+									@components.LabelField(domain.LabelFieldConfig{ID: "dodatuma", LabelText: translator.Label("Do datuma"), ClassLabel: common.ClassLabel + " w-28"})
+									@components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "4"})
+								</div>
+							</div>
+							<div class="flex flex-col gap-1">
+								@components.CheckboxField(domain.CheckboxFieldConfig{ID: "stampajsamoZbir", Name: "stampajsamoZbir", LabelText: translator.Label("Štampaj samo zbir po magacinima"), ClassCheckbox: common.ClassCheckbox + " mr-2", ClassLabel: common.ClassLabel + " flex items-center", TabIndex: "5"}, translator)
+								@components.CheckboxField(domain.CheckboxFieldConfig{ID: "ukljuceneusluge", Name: "ukljuceneusluge", LabelText: translator.Label("Uključene usluge"), ClassCheckbox: common.ClassCheckbox + " mr-2", ClassLabel: common.ClassLabel + " flex items-center", TabIndex: "6"}, translator)
+							</div>
 						</div>
-						<div class="flex items-center gap-1">
-							@components.LabelField(domain.LabelFieldConfig{ID: "dodatuma", LabelText: translator.Label("Do datuma"), ClassLabel: common.ClassLabel + " w-28"})
-							@components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " flex-1", TabIndex: "4"})
-						</div>
-						@components.CheckboxField(domain.CheckboxFieldConfig{ID: "stampajsamoZbir", Name: "stampajsamoZbir", LabelText: translator.Label("Štampaj samo zbir po magacinima"), ClassCheckbox: common.ClassCheckbox + " mr-2", ClassLabel: common.ClassLabel + " flex items-center", TabIndex: "5"}, translator)
-						@components.CheckboxField(domain.CheckboxFieldConfig{ID: "ukljuceneusluge", Name: "ukljuceneusluge", LabelText: translator.Label("Uključene usluge"), ClassCheckbox: common.ClassCheckbox + " mr-2", ClassLabel: common.ClassLabel + " flex items-center", TabIndex: "6"}, translator)
 					</fieldset>
 				</div>
 				<div class="flex justify-end gap-1 pt-2">

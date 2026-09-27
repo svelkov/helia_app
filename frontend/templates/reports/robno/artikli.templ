@@ -8,12 +8,5 @@ import (
 
 // ArtikliStampa renders a printable Artikli report.
 templ ArtikliStampa(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
-	@rep.Report(repParams, domain.TableData{}, translator, nil, ArtikliContent(repParams, tbl, translator))
-}
-
-templ ArtikliContent(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
-	@rep.ReportHeader(repParams)
-	@rep.ReportTitle(repParams)
-	@rep.ReportTableSection(tbl, translator)
-	@rep.ReportEnd(nil)
+	@rep.Report(repParams, tbl, translator, nil, nil, nil)
 }

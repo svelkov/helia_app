@@ -2,11 +2,11 @@ package robno
 
 import (
 	"context"
-	"fmt"
 
 	"helia/internal/common"
 	"helia/internal/domain"
 	"helia/internal/repository"
+	commonsvc "helia/internal/service/common"
 )
 
 type RobnoPrometService interface {
@@ -33,6 +33,7 @@ type RobnoPrometResource struct {
 	magRepo                          *repository.BaseRepository[domain.Magacini]
 	grupaRepo                        *repository.BaseRepository[domain.Rgru]
 	fvrRepo                          *repository.BaseRepository[domain.Fvr]
+	commonSvc                        commonsvc.CommonService
 	prometGrupeArtikalaTableFields   []domain.Fields
 	prometKupciTableFields           []domain.Fields
 	prometDobavljaciTableFields      []domain.Fields
@@ -42,12 +43,13 @@ type RobnoPrometResource struct {
 	prometGradilisteVpcNcTableFields []domain.Fields
 }
 
-func NewRobnoPrometService(rproRepo *repository.BaseRepository[domain.Rpro], magRepo *repository.BaseRepository[domain.Magacini], grupaRepo *repository.BaseRepository[domain.Rgru], fvrRepo *repository.BaseRepository[domain.Fvr]) *RobnoPrometResource {
+func NewRobnoPrometService(rproRepo *repository.BaseRepository[domain.Rpro], magRepo *repository.BaseRepository[domain.Magacini], grupaRepo *repository.BaseRepository[domain.Rgru], fvrRepo *repository.BaseRepository[domain.Fvr], commonSvc commonsvc.CommonService) *RobnoPrometResource {
 	rs := &RobnoPrometResource{
 		rproRepo:                         rproRepo,
 		magRepo:                          magRepo,
 		grupaRepo:                        grupaRepo,
 		fvrRepo:                          fvrRepo,
+		commonSvc:                        commonSvc,
 		prometGrupeArtikalaTableFields:   []domain.Fields{},
 		prometKupciTableFields:           []domain.Fields{},
 		prometDobavljaciTableFields:      []domain.Fields{},
@@ -110,61 +112,15 @@ func (s *RobnoPrometResource) GetPrometGradilisteVpcNc(context.Context, *domain.
 	//TODO implememt
 	return nil
 }
+
+// GetMagacinComboValues returns the magacini of the current period keyed by mag (CommonService).
 func (s *RobnoPrometResource) GetMagacinComboValues(ctx context.Context) ([]domain.ComboItem, error) {
-	userSession := domain.GetSessionFromStdContext(ctx)
-	if userSession == nil {
-		return nil, fmt.Errorf("no user session found")
-	}
-	hasGod, haskar := s.magRepo.GetHasGodHasKar()
-	qb := common.NewQueryBuilder(" select mag, opis from magacini", true)
-	if hasGod {
-		qb.AddEqual("god", userSession.SelectedGod)
-	}
-	if haskar {
-		qb.AddEqual("kar", userSession.SelectedKar)
-	}
-	qb.AddOrderBy("mag")
-	sqlQuery, args := qb.Build()
-	entites, err := s.magRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
-		return nil, err
-	}
-	comboItems := make([]domain.ComboItem, len(*entites))
-	for i, entity := range *entites {
-		comboItems[i] = domain.ComboItem{
-			Key:   fmt.Sprintf("%d", entity.Mag),
-			Value: fmt.Sprintf("%d - %s", entity.Mag, entity.Opis),
-		}
-	}
-	return comboItems, nil
+	return s.commonSvc.GetMagacinByMagComboValues(ctx)
 }
+
+// GetRobneGrupeComboValues returns the robne grupe of the current period (CommonService).
 func (s *RobnoPrometResource) GetRobneGrupeComboValues(ctx context.Context) ([]domain.ComboItem, error) {
-	userSession := domain.GetSessionFromStdContext(ctx)
-	if userSession == nil {
-		return nil, fmt.Errorf("no user session found")
-	}
-	hasGod, haskar := s.grupaRepo.GetHasGodHasKar()
-	qb := common.NewQueryBuilder(" select gru, naziv from rgru", true)
-	if hasGod {
-		qb.AddEqual("god", userSession.SelectedGod)
-	}
-	if haskar {
-		qb.AddEqual("kar", userSession.SelectedKar)
-	}
-	qb.AddOrderBy("gru")
-	sqlQuery, args := qb.Build()
-	entites, err := s.grupaRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
-		return nil, err
-	}
-	comboItems := make([]domain.ComboItem, len(*entites))
-	for i, entity := range *entites {
-		comboItems[i] = domain.ComboItem{
-			Key:   fmt.Sprintf("%d", entity.Gru),
-			Value: fmt.Sprintf("%d - %s", entity.Gru, entity.Naziv),
-		}
-	}
-	return comboItems, nil
+	return s.commonSvc.GetRobneGrupeComboValues(ctx)
 }
 
 func (s *RobnoPrometResource) setTableFields() {

@@ -11,6 +11,7 @@ import (
 	"helia/internal/common"
 	"helia/internal/domain"
 	"helia/internal/repository"
+	commonsvc "helia/internal/service/common"
 )
 
 // RobnoKarticaService exposes the two inventory-card views used by the Robno module.
@@ -34,18 +35,20 @@ type RobnoKarticaResource struct {
 	rproRepo                              *repository.BaseRepository[domain.Rpro]
 	magRepo                               *repository.BaseRepository[domain.Magacini]
 	fvrRepo                               *repository.BaseRepository[domain.Fvr]
+	commonSvc                             commonsvc.CommonService
 	karticaArtiklaTableFields             []domain.Fields
 	karticaArtiklaStampaTableFields       []domain.Fields
 	subsintetickaKarticaKontaTableFields  []domain.Fields
 	subsintetickaKarticaStampaTableFields []domain.Fields
 }
 
-func NewRobnoKarticaService(robnoKarticaRepo *repository.BaseRepository[domain.RobnoKarticaDto], rproRepo *repository.BaseRepository[domain.Rpro], magRepo *repository.BaseRepository[domain.Magacini], fvrRepo *repository.BaseRepository[domain.Fvr]) *RobnoKarticaResource {
+func NewRobnoKarticaService(robnoKarticaRepo *repository.BaseRepository[domain.RobnoKarticaDto], rproRepo *repository.BaseRepository[domain.Rpro], magRepo *repository.BaseRepository[domain.Magacini], fvrRepo *repository.BaseRepository[domain.Fvr], commonSvc commonsvc.CommonService) *RobnoKarticaResource {
 	rs := &RobnoKarticaResource{
 		robnoKarticaRepo: robnoKarticaRepo,
 		rproRepo:         rproRepo,
 		magRepo:          magRepo,
 		fvrRepo:          fvrRepo,
+		commonSvc:        commonSvc,
 	}
 	rs.setTableFields()
 	return rs
@@ -533,33 +536,10 @@ func (s *RobnoKarticaResource) GetKarticaSubsintetickogKontaTableFields() []doma
 func (s *RobnoKarticaResource) GetKarticaSubsintetickogKontaStampaTableFields() []domain.Fields {
 	return s.subsintetickaKarticaStampaTableFields
 }
+
+// GetMagacinComboValues returns the magacini of the current period (CommonService).
 func (s *RobnoKarticaResource) GetMagacinComboValues(ctx context.Context) ([]domain.ComboItem, error) {
-	userSession := domain.GetSessionFromStdContext(ctx)
-	if userSession == nil {
-		return nil, fmt.Errorf("no user session found")
-	}
-	hasGod, haskar := s.magRepo.GetHasGodHasKar()
-	qb := common.NewQueryBuilder(" select magaciniid, mag, opis from magacini", true)
-	if hasGod {
-		qb.AddEqual("god", userSession.SelectedGod)
-	}
-	if haskar {
-		qb.AddEqual("kar", userSession.SelectedKar)
-	}
-	qb.AddOrderBy("mag")
-	sqlQuery, args := qb.Build()
-	entites, err := s.magRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
-		return nil, err
-	}
-	comboItems := make([]domain.ComboItem, len(*entites))
-	for i, entity := range *entites {
-		comboItems[i] = domain.ComboItem{
-			Key:   fmt.Sprintf("%d", entity.MagaciniID),
-			Value: fmt.Sprintf("%d - %s", entity.Mag, entity.Opis),
-		}
-	}
-	return comboItems, nil
+	return s.commonSvc.GetMagacinComboValues(ctx)
 }
 func (s *RobnoKarticaResource) setTableFields() {
 	// Initialize the table fields for the RobnoKarticaResource

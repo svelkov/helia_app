@@ -10,28 +10,25 @@ import (
 // NalogStampa renders a printable full-page report for a single nalog,
 // reusing the shared report layout components.
 templ NalogStampa(tblStavke domain.TableData, tblKonta domain.TableData, params domain.ReportParameters, translator *i18n.Service) {
-	@rep.Report(params, tblStavke, translator, ReportSummary(params, tblKonta, translator), nil)
+	@rep.Report(params, tblStavke, translator, nil, ReportSummary(params, tblKonta, translator), nil)
 }
 
 templ ReportSummary(params domain.ReportParameters, tblKonta domain.TableData, translator *i18n.Service) {
-	@rep.ReportHeader(params)
-	@rep.ReportTitle(params)
 	<div class="mt-2">
 		<h2 class="text-sm font-bold text-gray-700 mb-1">{ translator.Title("Promet po kontima za nalog") }</h2>
-		@rep.ReportTableSection(tblKonta, translator)
+		@rep.ReportTable(tblKonta, translator)
 	</div>
-	@rep.ReportEnd(nil)
 }
 
 // StampanjeGrupeNaloga renders the group nalozi print report.
 templ StampanjeGrupeNaloga(items []domain.NalogStampaItem, grandKontaSummary domain.TableData, params domain.ReportParameters, prikazPoNalogu, prikazPoListi, noviNalogNovaSrana bool, translator *i18n.Service) {
-	@rep.Report(params, domain.TableData{}, translator, nil, GrupeNaloziReport(items, grandKontaSummary, params, prikazPoNalogu, prikazPoListi, noviNalogNovaSrana, translator))
+	@rep.Report(params, domain.TableData{}, translator, nil, nil, GrupeNaloziReport(items, grandKontaSummary, params, prikazPoNalogu, prikazPoListi, noviNalogNovaSrana, translator))
 }
 
 // GrupeNaloziReport is the custom report body for group nalozi printing.
 templ GrupeNaloziReport(items []domain.NalogStampaItem, grandKontaSummary domain.TableData, params domain.ReportParameters, prikazPoNalogu, prikazPoListi, noviNalogNovaSrana bool, translator *i18n.Service) {
 	if !noviNalogNovaSrana {
-		@rep.ReportHeader(params)
+		@rep.ReportPageHeader(params, nil, translator)
 		
 	}
 	for i, item := range items {
@@ -40,7 +37,7 @@ templ GrupeNaloziReport(items []domain.NalogStampaItem, grandKontaSummary domain
 				<div class="print:hidden -mx-8 h-8 bg-gray-200 border-y border-gray-300 my-4"></div>
 				<div class="hidden print:block" style="page-break-before: always;"></div>
 			}
-			@rep.ReportHeader(params)
+			@rep.ReportPageHeader(params, nil, translator)
 		
 		}
 		@NalogGrupaBlock(item, prikazPoNalogu, translator)
@@ -48,10 +45,9 @@ templ GrupeNaloziReport(items []domain.NalogStampaItem, grandKontaSummary domain
 	if prikazPoListi && len(grandKontaSummary.Rows) > 0 {
 		<div class="print:hidden -mx-8 h-8 bg-gray-200 border-y border-gray-300 my-4"></div>
 		<div class="hidden print:block" style="page-break-before: always;"></div>
-		@rep.ReportHeader(params)
 		<div class="mt-2">
 			<h2 class="text-sm font-bold text-gray-700 mb-1">{ translator.Title("Promet po kontima za listu") }</h2>
-			@rep.ReportTableSection(grandKontaSummary, translator)
+			@rep.ReportTable(grandKontaSummary, translator)
 		</div>
 	}
 	@rep.ReportEnd(nil)
@@ -81,7 +77,7 @@ templ NalogGrupaBlock(item domain.NalogStampaItem, showKontaSummary bool, transl
 		if showKontaSummary && len(item.KontaSummary.Rows) > 0 {
 			<div class="mt-2">
 				<h3 class="text-sm font-bold text-gray-700 mb-1">{ translator.Title("Promet po kontima za nalog") }</h3>
-				@rep.ReportTableSection(item.KontaSummary, translator)
+				@rep.ReportTable(item.KontaSummary, translator)
 			</div>
 		}
 	</div>

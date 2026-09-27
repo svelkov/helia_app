@@ -8,12 +8,6 @@ import (
 
 // MagacinKontoStampa renders a printable Magacin Konto report.
 templ MagacinKontoStampa(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
-	@rep.Report(repParams, domain.TableData{}, translator, nil, MagacinKontoContent(repParams, tbl, translator))
+	@rep.Report(repParams, tbl, translator, nil, nil, nil)
 }
 
-templ MagacinKontoContent(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
-	@rep.ReportHeader(repParams)
-	@rep.ReportTitle(repParams)
-	@rep.ReportTableSection(tbl, translator)
-	@rep.ReportEnd(nil)
-}

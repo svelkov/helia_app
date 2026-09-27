@@ -10,7 +10,7 @@ import (
 
 // SaldaPojedinacnihKontaStampa renders a printable full-page Salda pojedinačnih konta report.
 templ SaldaPojedinacnihKontaStampa(tbl domain.TableData, total domain.SaldaDto, params domain.ReportParameters, translator *i18n.Service) {
-	@rep.Report(params, tbl, translator, nil, SaldaPojedinacnihKontaReport(tbl, total, params, translator))
+	@rep.Report(params, tbl, translator, nil, nil, SaldaPojedinacnihKontaReport(tbl, total, params, translator))
 }
 
 templ SaldaPojedinacnihKontaReport(tbl domain.TableData, total domain.SaldaDto, params domain.ReportParameters, translator *i18n.Service) {
@@ -189,38 +189,42 @@ templ SaldaPojedinacnihKontaReportChart(translator *i18n.Service) {
 
 // SaldaPartneriPrelomljenoStampa renders a printable Pregled stanja partnera - prelomljeno report.
 templ SaldaPartneriPrelomljenoStampa(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
-	@rep.Report(repParams, domain.TableData{}, translator, nil, SaldaPartneriPrelomljenoStampaContent(repParams, tbl, translator))
+	@rep.Report(repParams, tbl, translator, SaldaPartneriPrelomljenoStampaParam(repParams, translator), nil, SaldaPartneriPrelomljenoStampaContent(repParams, tbl, translator))
 }
 
 templ SaldaPartneriPrelomljenoStampaContent(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
 	@rep.ReportHeader(repParams)
 	@rep.ReportTitle(repParams)
-	<div class="text-center text-[11px] font-semibold mb-3">
-		{ translator.Label("Od partnera") }: <span class="font-bold">{ repParams.ParameterItems["OdPartnera"].Value }</span>
-		&nbsp;&nbsp;&nbsp;{ translator.Label("Do partnera") }: <span class="font-bold">{ repParams.ParameterItems["DoPartnera"].Value }</span>
-		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ repParams.ParameterItems["StanjeNaDan"].Name }: <span class="font-bold">{ repParams.ParameterItems["StanjeNaDan"].Value }</span>
-	</div>
+	@SaldaPartneriPrelomljenoStampaParam(repParams, translator)
 	@rep.ReportTable(tbl, translator)
 	@rep.ReportEnd(nil)
 }
+templ SaldaPartneriPrelomljenoStampaParam(repParams domain.ReportParameters, translator *i18n.Service) {
+	<div class="text-center text-[11px] font-semibold mb-3">
+		{ translator.Label("Od Partnera") }: <span class="font-bold">{ repParams.ParameterItems["OdPartnera"].Value }</span>
+		&nbsp;&nbsp;&nbsp;{ translator.Label("Do Partnera") }: <span class="font-bold">{ repParams.ParameterItems["DoPartnera"].Value }</span>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ repParams.ParameterItems["StanjeNaDan"].Name }: <span class="font-bold">{ repParams.ParameterItems["StanjeNaDan"].Value }</span>
+	</div>
+}
 
 templ SaldaKlase56AnalitikaStampa(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
-	@rep.Report(repParams, domain.TableData{}, translator, nil, SaldaKlase56AnalitikaStampaContent(repParams, tbl, translator))
+	@rep.Report(repParams, tbl, translator, SaldaKlase56AnalitikaStampaParam(repParams, translator), nil, SaldaKlase56AnalitikaStampaContent(repParams, tbl, translator))
 }
 
 templ SaldaKlase56AnalitikaStampaContent(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
 	@rep.ReportHeader(repParams)
 	@rep.ReportTitle(repParams)
-	<div class="flex flex-wrap justify-center gap-x-8 text-sm font-semibold mb-3">
+	@SaldaKlase56AnalitikaGroupTable(tbl, translator)
+	@rep.ReportEnd(nil)
+}
+templ SaldaKlase56AnalitikaStampaParam(repParams domain.ReportParameters, translator *i18n.Service) {
+		<div class="flex flex-wrap justify-center gap-x-8 text-sm font-semibold mb-3">
 		<div>{ repParams.ParameterItems["OdSifre"].Name }: <span class="font-bold">{ repParams.ParameterItems["OdSifre"].Value }</span></div>
 		<div>{ repParams.ParameterItems["DoSifre"].Name }: <span class="font-bold">{ repParams.ParameterItems["DoSifre"].Value }</span></div>
 		<div>{ repParams.ParameterItems["OdDatuma"].Name }: <span class="font-bold">{ repParams.ParameterItems["OdDatuma"].Value }</span></div>
 		<div>{ repParams.ParameterItems["DoDatuma"].Name }: <span class="font-bold">{ repParams.ParameterItems["DoDatuma"].Value }</span></div>
 	</div>
-	@SaldaKlase56AnalitikaGroupTable(tbl, translator)
-	@rep.ReportEnd(nil)
 }
-
 templ SaldaKlase56AnalitikaGroupTable(tbl domain.TableData, translator *i18n.Service) {
 	<table class="w-full border-collapse report-table mt-2 print:w-full print:text-[10pt] print:table-auto print:border-collapse">
 		<thead>
@@ -326,20 +330,23 @@ templ SaldaKlase56AnalitikaGroupTable(tbl domain.TableData, translator *i18n.Ser
 }
 
 templ SaldaKlase56MTStampa(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
-	@rep.Report(repParams, domain.TableData{}, translator, nil, SaldaKlase56MTStampaContent(repParams, tbl, translator))
+	@rep.Report(repParams, tbl, translator, SaldaKlase56MTStampaParam(repParams, translator), nil, SaldaKlase56MTStampaContent(repParams, tbl, translator))
 }
 
 templ SaldaKlase56MTStampaContent(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
 	@rep.ReportHeader(repParams)
 	@rep.ReportTitle(repParams)
+	@SaldaKlase56MTGroupTable(tbl, translator)
+	@rep.ReportEnd(nil)
+}
+
+templ SaldaKlase56MTStampaParam(repParams domain.ReportParameters, translator *i18n.Service) {
 	<div class="flex flex-wrap justify-center gap-x-8 text-sm font-semibold mb-3">
 		<div>{ repParams.ParameterItems["OdKonta"].Name }: <span class="font-bold">{ repParams.ParameterItems["OdKonta"].Value }</span></div>
 		<div>{ repParams.ParameterItems["DoKonta"].Name }: <span class="font-bold">{ repParams.ParameterItems["DoKonta"].Value }</span></div>
 		<div>{ repParams.ParameterItems["OdDatuma"].Name }: <span class="font-bold">{ repParams.ParameterItems["OdDatuma"].Value }</span></div>
 		<div>{ repParams.ParameterItems["DoDatuma"].Name }: <span class="font-bold">{ repParams.ParameterItems["DoDatuma"].Value }</span></div>
 	</div>
-	@SaldaKlase56MTGroupTable(tbl, translator)
-	@rep.ReportEnd(nil)
 }
 
 templ SaldaKlase56MTGroupTable(tbl domain.TableData, translator *i18n.Service) {
@@ -425,19 +432,22 @@ templ SaldaKlase56MTGroupTable(tbl domain.TableData, translator *i18n.Service) {
 
 // SaldaPartneraPoKontimaStampa renders printable Pregled stanja partnera po kontima.
 templ SaldaPartneraPoKontimaStampa(repParams domain.ReportParameters, tbl domain.TableData, stampajDetalje bool, noviPartnerNovaSt bool, translator *i18n.Service) {
-	@rep.Report(repParams, domain.TableData{}, translator, nil, SaldaPartneraPoKontimaContent(repParams, tbl, stampajDetalje, noviPartnerNovaSt, translator))
+	@rep.Report(repParams, tbl, translator,SaldaPartneraPoKontimaParam(repParams, translator), nil, SaldaPartneraPoKontimaContent(repParams, tbl, stampajDetalje, noviPartnerNovaSt, translator))
 }
 
 templ SaldaPartneraPoKontimaContent(repParams domain.ReportParameters, tbl domain.TableData, stampajDetalje bool, noviPartnerNovaSt bool, translator *i18n.Service) {
 	@rep.ReportHeader(repParams)
 	@rep.ReportTitle(repParams)
+	@SaldaPartneraPoKontimaTable(tbl, stampajDetalje, noviPartnerNovaSt, translator)
+	@rep.ReportEnd(nil)
+}
+
+templ SaldaPartneraPoKontimaParam(repParams domain.ReportParameters, translator *i18n.Service) {
 	<div class="text-center text-[11px] font-semibold mb-3">
 		{ translator.Label("Od Partnera") }: <span class="font-bold">{ repParams.ParameterItems["OdPartnera"].Value }</span>
 		&nbsp;&nbsp;&nbsp;{ translator.Label("Do Partnera") }: <span class="font-bold">{ repParams.ParameterItems["DoPartnera"].Value }</span>
 		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ repParams.ParameterItems["StanjeNaDan"].Name }: <span class="font-bold">{ repParams.ParameterItems["StanjeNaDan"].Value }</span>
 	</div>
-	@SaldaPartneraPoKontimaTable(tbl, stampajDetalje, noviPartnerNovaSt, translator)
-	@rep.ReportEnd(nil)
 }
 
 templ SaldaPartneraPoKontimaTable(tbl domain.TableData, stampajDetalje bool, noviPartnerNovaSt bool, translator *i18n.Service) {

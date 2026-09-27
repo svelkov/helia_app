@@ -115,6 +115,10 @@ type Fields struct {
 	Params          map[string]string
 	IncludeInTotals bool
 	TextAlign       string
+	// IsNull writes a NULL to the column instead of the (empty) Value of the field. It is needed for
+	// the nullable columns whose column default points to a row that does not exist in the
+	// referenced table (the legacy foreign keys), where inserting the default would fail.
+	IsNull bool
 }
 type FieldError struct {
 	Field        string `json:"field"`
@@ -307,6 +311,7 @@ type SearchButtonConfig struct {
 
 type ReportParameters struct {
 	ReportName     string
+	ReportTitle    string
 	CompanyName    string
 	PIB            string
 	MatBroj        string
@@ -317,6 +322,7 @@ type ReportParameters struct {
 	TekRac         string
 	Telefon        string
 	CompanyLogo    string
+	God            int
 	UserName       string
 	ParameterItems map[string]ParameterItem
 	Orientation    string

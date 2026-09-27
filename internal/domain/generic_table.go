@@ -1,11 +1,14 @@
 package domain
 
 type TableRow struct {
-	ID        string
-	Fields    []string
-	HasUpdate bool
-	HasDelete bool
-	ClassRow  string
+	ID            string
+	Fields        []string
+	HasUpdate     bool
+	HasDelete     bool
+	ClassRow      string
+	GroupLabel    string
+	SubgroupLabel string
+	IsGroupTotal  bool
 }
 
 type TableData struct {

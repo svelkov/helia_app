@@ -10,6 +10,7 @@ import (
 	"helia/internal/common"
 	"helia/internal/domain"
 	"helia/internal/middleware"
+	commonsvc "helia/internal/service/common"
 	finservice "helia/internal/service/finansijsko"
 	"helia/pkg/utils"
 
@@ -30,10 +31,11 @@ const (
 )
 
 type KompenzacijeHandler struct {
-	tabData domain.TabData
-	cfg     config.Config
-	service *finservice.KompenzacijeResource
-	lm      *middleware.LockMiddleware
+	tabData   domain.TabData
+	cfg       config.Config
+	service   *finservice.KompenzacijeResource
+	lm        *middleware.LockMiddleware
+	commonSvc commonsvc.CommonService
 }
 
 const (
@@ -63,11 +65,12 @@ const (
         }`
 )
 
-func NewKompenzacijeHandler(service *finservice.KompenzacijeResource, cfg config.Config, lm *middleware.LockMiddleware) *KompenzacijeHandler {
+func NewKompenzacijeHandler(service *finservice.KompenzacijeResource, cfg config.Config, lm *middleware.LockMiddleware, commonSvc commonsvc.CommonService) *KompenzacijeHandler {
 	handler := &KompenzacijeHandler{
-		cfg:     cfg,
-		service: service,
-		lm:      lm,
+		cfg:       cfg,
+		service:   service,
+		lm:        lm,
+		commonSvc: commonSvc,
 	}
 	handler.tabData = GetKompenzacijeTabData()
 	return handler
@@ -320,11 +323,11 @@ func (h *KompenzacijeHandler) KompenzacijeKnjizenje(c *gin.Context) {
 	translator := i18n.GetInstance()
 	csrfToken, _ := c.Cookie("csrf_token")
 
-	// TODO: Replace with actual combo values from service
-	tipdokValues := []domain.ComboItem{
-		{Key: "1", Value: "Finansijski nalog"},
-		{Key: "2", Value: "Kompenzacija"},
-		{Key: "3", Value: "Drugi tip"},
+	// Vrste naloga koje se mogu knjižiti (grpdok FIN/SVI) iz zajedničkog servisa
+	tipdokValues, err := h.commonSvc.GetTipdokFinComboValues(c.Request.Context())
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetData)
+		return
 	}
 
 	tbl := common.SetTableBasicData("", kompenzacijeKnjizenjeTableID, h.service.GetKompenzacijeTableFields(), "", "", 0, 0, 0, 0, h.cfg)

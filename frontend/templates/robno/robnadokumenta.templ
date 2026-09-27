@@ -1,0 +1,1374 @@
+package robno
+
+import (
+	"strconv"
+
+	"helia/frontend/components"
+	tmpl "helia/frontend/templates"
+	"helia/i18n"
+	"helia/internal/common"
+	"helia/internal/domain"
+)
+
+// hxValsRobnoDokumentaUnos sends the whole header of the nalog. It is used by the requests of the
+// tab (search, paging, reload on the change of the vrsta naloga) so that the typed values of the
+// form are kept.
+const hxValsRobnoDokumentaUnos = `js:{"tipdok": document.getElementById("tipdok")?.value, ` +
+	`"vrd": document.getElementById("vrd")?.value, ` +
+	`"magaciniid": document.getElementById("magaciniid")?.value, ` +
+	`"nalog": document.getElementById("nalog")?.value, ` +
+	`"danal": document.getElementById("danal")?.value, ` +
+	`"datob": document.getElementById("datob")?.value, ` +
+	`"opis": document.getElementById("opis")?.value}`
+
+// hxValsRobnoDokumentaTipdok is sent when the vrsta naloga changes. The source parameter tells the
+// handler to render only the grid (the header of the form is kept) and the hidden #nalog-trigger
+// element then asks for the next broj naloga of the new vrsta naloga.
+const hxValsRobnoDokumentaTipdok = `js:{"tipdok": document.getElementById("tipdok")?.value, ` +
+	`"vrd": document.getElementById("vrd")?.value, ` +
+	`"magaciniid": document.getElementById("magaciniid")?.value, ` +
+	`"source": "tipdok"}`
+
+// hxValsRobnoDokumentaNalog sends the vrsta naloga and the broj naloga of the header to the check
+// of an existing nalog (GET /api/robno-dokumenta/nalog-data).
+const hxValsRobnoDokumentaNalog = `js:{"tipdok": document.getElementById("tipdok")?.value, ` +
+	`"nalog": document.getElementById("nalog")?.value}`
+
+	// RobnoDokumentaMain renders the "Robna dokumenta" option (robni nalozi / robni dokumenti).
+	// The first tab ("Unos dokumenta") is rendered inside the container that the tab navigation
+	// replaces with the content of the active tab, like "Robno stanja" and "Robno promet" do.
+
+templ RobnoDokumentaMain(tabs, subTabs domain.TabData, tbl domain.TableData, tipdokValues, vrstaDokumentaValues, magValues []domain.ComboItem, total domain.RobnoDokumentaTotal, payload domain.RobnoDokumentaParams, btnSave, btnNoviNalog domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
+	<div id="robno-dokumenta-content" class="bg-blue-100 p-1 flex flex-col h-full">
+		@RobnoDokumentaUnos(tabs, subTabs, tbl, tipdokValues, vrstaDokumentaValues, magValues, total, payload, btnSave, btnNoviNalog, searchInput, translator)
+	</div>
+	@tmpl.ShowSearchDialogScript()
+	@tmpl.HideDropdownScript()
+	@tmpl.ClearFieldErrorScript()
+	@components.SpinnerScript()
+	@tmpl.HandleDialogResponseScript()
+	@tmpl.CloseDialogScript()
+	<!-- Scripts of the header of the "Unos dokumenta" tab (the same ones the "Nalozi" screen uses) -->
+	@tmpl.HandleNextNalogResponseScript()
+	@tmpl.HandleUpdateNalogDataResponseScript()
+	@tmpl.HandleTipdokAfterRequestScript()
+	@tmpl.HandleDblClickNalogSelectionScript()
+	@tmpl.SelectRowScript()
+}
+
+// RobnoDokumentaShell renders the tab bar of the option - followed by the sub-tab bar when the
+// active tab has sub-tabs - and then the body of the active tab. Every tab uses it so the
+// navigation markup stays in one place.
+templ RobnoDokumentaShell(tabs, subTabs domain.TabData, translator *i18n.Service, body templ.Component) {
+	<div class="bg-blue-100 flex flex-col h-full">
+		<!-- Tab navigation -->
+		<div class="border-b border-blue-600">
+			@tmpl.TabNav(translator.Title("Robna dokumenta"), tabs, "#robno-dokumenta-content", "robno-dokumenta-panel", translator)
+		</div>
+		<!-- Sub-tab navigation of the active tab (not rendered while it has no sub-tabs) -->
+		if len(subTabs.Tabs) > 0 {
+			<div class="border-b border-blue-600 pt-1">
+				@tmpl.TabNav("", subTabs, "#robno-dokumenta-content", "robno-dokumenta-panel", translator)
+			</div>
+		}
+		<!-- Tab body -->
+		<div class="flex-1 min-h-0 flex flex-col gap-1">
+			@body
+		</div>
+	</div>
+}
+
+// RobnoDokumentaEmptyBody is the placeholder body of a tab that is not implemented yet: an empty
+// parameter box and an empty grid. It is replaced by the real content of the tab as soon as the
+// tab is built.
+templ RobnoDokumentaEmptyBody(tabLabel string, tbl domain.TableData, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
+	<!-- Parameters - TODO: parameters of the tab -->
+	<div class="no-border bg-blue-100 rounded-lg">
+		<div class="grid grid-cols-2 gap-1 items-start">
+			<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1">
+				<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Parametri") }</legend>
+				<div class="p-1 text-sm text-gray-600">{ tabLabel } - TODO</div>
+			</fieldset>
+		</div>
+		<div class="flex justify-end gap-1 pt-2">
+			@components.Button(btnObrada)
+			@components.Search_PartPrintButton(btnPrint)
+		</div>
+	</div>
+	<!-- Group Data Table -->
+	<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative">
+		@components.LoadingSpinner()
+		@components.Search_Part(tbl, searchInput)
+		<!-- Table -->
+		<div id={ tbl.TableID } class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+			@components.Table(tbl, translator)
+		</div>
+	</div>
+}
+
+//
+// Tab 1 - Unos dokumenta
+//
+templ RobnoDokumentaUnos(tabs, subTabs domain.TabData, tbl domain.TableData, tipdokValues, vrstaDokumentaValues, magValues []domain.ComboItem, total domain.RobnoDokumentaTotal, payload domain.RobnoDokumentaParams, btnSave, btnNoviNalog domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
+	@RobnoDokumentaShell(tabs, subTabs, translator, RobnoDokumentaUnosForm(tbl, tipdokValues, vrstaDokumentaValues, magValues, total, payload, btnSave, btnNoviNalog, searchInput, translator))
+}
+
+// RobnoDokumentaUnosForm renders the header of the robni nalog ("Vrsta naloga za knjiženje",
+// "Vrsta dokumenta", "Datum obrade", "Broj naloga", "Datum naloga", "Opis knjiženja" i "Magacin"),
+// the "Prikaz ukupne obrade" panel and the grid of the nalozi of the selected vrsta naloga.
+templ RobnoDokumentaUnosForm(tbl domain.TableData, tipdokValues, vrstaDokumentaValues, magValues []domain.ComboItem, total domain.RobnoDokumentaTotal, payload domain.RobnoDokumentaParams, btnSave, btnNoviNalog domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
+	<!-- Header of the nalog (left) + "Prikaz ukupne obrade" (right). items-stretch makes
+	     "Prikaz ukupne obrade" exactly as tall as "Parametri" (the default align-items of a grid). -->
+	<div class="no-border bg-blue-100 rounded-lg">
+		<div class="grid grid-cols-3 gap-2 items-stretch">
+			<!-- Header of the nalog -->
+			<fieldset class="col-span-2 border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1">
+				<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Parametri") }</legend>
+				<form id="robno-dokumenta-unos-form" onsubmit="return false;">
+					<!-- Next broj naloga of the selected vrsta naloga: fired when the vrsta naloga changes
+					     and answered by handleNextNalogResponse, like the "Nalozi" screen -->
+					<div
+						id="nalog-trigger"
+						hx-get="/api/robno-dokumenta/nextnalog"
+						hx-trigger="tipdokChanged"
+						hx-vals='js:{"tipdok": document.getElementById("tipdok").value}'
+						hx-on::after-request="handleNextNalogResponse('robno-dokumenta-unos-form')"
+						style="display:none;"
+					></div>
+					<!-- Vrsta naloga za knjiženje: changing it reloads the grid and, through the trigger
+					     above, the broj naloga of the new vrsta naloga -->
+					<div class="flex items-center gap-1 mb-1">
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "tipdok",
+							LabelText:  translator.Label("Vrsta naloga za knjiženje"),
+							ClassLabel: common.ClassLabel + " w-44",
+						})
+						@components.ComboBoxField(domain.ComboFieldConfig{
+							ID:               "tipdok",
+							Name:             "tipdok",
+							HasLabel:         false,
+							ClassSelect:      common.ClassInputTextEnabled + " flex-1",
+							OptionValues:     tipdokValues,
+							SelectedValue:    payload.Tipdok,
+							ChangeEndpoint:   "/api/robno-dokumenta/unos",
+							HxChangeTarget:   "robno-dokumenta-unos-table",
+							HxSwap:           "innerHTML",
+							HxVals:           hxValsRobnoDokumentaTipdok,
+							HxOnAfterRequest: "handleTipdokAfterRequest",
+							TabIndex:         "1",
+						}, translator)
+					</div>
+					<!-- Vrsta dokumenta: TODO: the legacy "+" and "..." buttons next to the combo -->
+					<div class="flex items-center gap-1 mb-1">
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "vrd",
+							LabelText:  translator.Label("Vrsta dokumenta"),
+							ClassLabel: common.ClassLabel + " w-44",
+						})
+						@components.ComboBoxField(domain.ComboFieldConfig{
+							ID:            "vrd",
+							Name:          "vrd",
+							HasLabel:      false,
+							ClassSelect:   common.ClassInputTextEnabled + " flex-1",
+							OptionValues:  vrstaDokumentaValues,
+							SelectedValue: payload.Vrd,
+							TabIndex:      "2",
+						}, translator)
+					</div>
+					<!-- Datum obrade, Broj naloga i Datum naloga in one row. The label of Datum obrade
+					     keeps the width of the labels of the other rows, so the fields are aligned. -->
+					<div class="flex items-center gap-1 mb-1">
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "datob",
+							LabelText:  translator.Label("Datum obrade"),
+							ClassLabel: common.ClassLabel + " w-44",
+						})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "datob",
+							Name:       "datob",
+							FieldType:  "date",
+							Value:      payload.Datob,
+							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
+							TabIndex:   "3",
+							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError"})
+						<!-- Broj naloga: when the user leaves it, the data of an existing nalog is loaded -->
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "nalog",
+							LabelText:  translator.Label("Broj naloga"),
+							ClassLabel: common.ClassLabel + " pl-2",
+						})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:               "nalog",
+							Name:             "nalog",
+							FieldType:        "text",
+							Value:            payload.Nalog,
+							ClassInput:       common.ClassInputTextEnabled + " flex-1 min-w-0",
+							HxGet:            "/api/robno-dokumenta/nalog-data",
+							HxTrigger:        "blur delay:100ms",
+							HxInclude:        "select[name='tipdok']",
+							HxVals:           hxValsRobnoDokumentaNalog,
+							HxSwap:           "none",
+							HxOnAfterRequest: "handleUpdateNalogDataResponse",
+							MinLength:        "1",
+							MaxLength:        "10",
+							TabIndex:         "4",
+							OnInput:          "clearFieldError",
+							OnFocus:          "clearFieldError"})
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "danal",
+							LabelText:  translator.Label("Datum naloga"),
+							ClassLabel: common.ClassLabel + " pl-2",
+						})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "danal",
+							Name:       "danal",
+							FieldType:  "date",
+							Value:      payload.Danal,
+							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
+							TabIndex:   "5",
+							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError"})
+					</div>
+					<!-- Opis knjiženja -->
+					<div class="flex items-center gap-1 mb-1">
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "opis",
+							LabelText:  translator.Label("Opis knjiženja"),
+							ClassLabel: common.ClassLabel + " w-44",
+						})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "opis",
+							Name:       "opis",
+							FieldType:  "text",
+							Value:      payload.Opis,
+							ClassInput: common.ClassInputTextEnabled + " flex-1",
+							MinLength:  "0",
+							MaxLength:  "120",
+							TabIndex:   "6"})
+					</div>
+					<!-- Magacin: TODO: the legacy "+" and "..." buttons next to the combo -->
+					<div class="flex items-center gap-1 mb-1">
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "magaciniid",
+							LabelText:  translator.Label("Magacin"),
+							ClassLabel: common.ClassLabel + " w-44",
+						})
+						@components.ComboBoxField(domain.ComboFieldConfig{
+							ID:            "magaciniid",
+							Name:          "magaciniid",
+							HasLabel:      false,
+							ClassSelect:   common.ClassInputTextEnabled + " flex-1",
+							OptionValues:  magValues,
+							SelectedValue: magaciniSelection(payload.MagaciniID),
+							TabIndex:      "7",
+						}, translator)
+					</div>
+					<!-- Buttons -->
+					<div class="flex justify-end gap-1 pt-1">
+						@components.SaveButton(btnSave, translator)
+						@components.AddButton(btnNoviNalog, translator)
+					</div>
+				</form>
+			</fieldset>
+			<!-- Prikaz ukupne obrade -->
+			<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1">
+				<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Prikaz ukupne obrade") }</legend>
+				@RobnoDokumentaUnosTotalRow("ukupnoNaloga", translator.Label("Ukupno naloga"), total.UkNaloga, translator)
+				@RobnoDokumentaUnosTotalRow("ukupnoDokumenata", translator.Label("Ukupno dokumenata"), total.UkDokumenata, translator)
+				@RobnoDokumentaUnosTotalRow("ukupnoStavki", translator.Label("Ukupno stavki"), total.UkStavki, translator)
+				@RobnoDokumentaUnosTotalRow("ukupnoDuguje", translator.Label("Duguje"), total.Duguje, translator)
+				@RobnoDokumentaUnosTotalRow("ukupnoPotrazuje", translator.Label("Potražuje"), total.Potrazuje, translator)
+				@RobnoDokumentaUnosTotalRow("ukupnoSaldo", translator.Label("Saldo"), total.Saldo, translator)
+			</fieldset>
+		</div>
+	</div>
+	<!-- Grid of the nalozi of the selected vrsta naloga -->
+	<div class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col min-h-0 flex-1 overflow-hidden">
+		@components.Search_Part(tbl, searchInput)
+		<!-- Table: the grid scrolls while the page navigator stays at the bottom of the tab -->
+		<div class="flex-1 min-h-0">
+			@components.Table(tbl, translator)
+		</div>
+	</div>
+	<!-- Staging element of the confirm dialog of the save (like the "Nalozi" screen) -->
+	<div id="dialog-confirm" class="top-0 z-50"></div>
+}
+
+// RobnoDokumentaUnosTotalRow renders one read only row of the "Prikaz ukupne obrade" panel. The
+// value is right aligned and bold, like the numeric cells of the grids.
+templ RobnoDokumentaUnosTotalRow(id, label, value string, translator *i18n.Service) {
+	<div class="flex items-center gap-1">
+		@components.LabelField(domain.LabelFieldConfig{ID: id, LabelText: label, ClassLabel: common.ClassLabel + " w-[60%]"})
+		@components.TextInputField(domain.InputFieldConfig{
+			ID:         id,
+			Value:      value,
+			FieldType:  "text",
+			Disabled:   true,
+			ClassInput: common.ClassInputTextDisabled + " text-right font-bold",
+		})
+	</div>
+}
+
+// magaciniSelection returns the key of the selected magacin ("" when no magacin is selected).
+func magaciniSelection(magaciniID int) string {
+	if magaciniID <= 0 {
+		return ""
+	}
+	return strconv.Itoa(magaciniID)
+}
+
+//
+// Tab 2 - Pregled dokumenta (sub-tabs "Štampa" and "eFaktura")
+//
+
+// RobnoDokumentaPregled renders the "Štampa" sub-tab of "Pregled dokumenta": the filters (magacin,
+// vrsta dokumenta and the range of the dates of the nalog), the buttons "Obradi" and "Štampaj" and
+// the grid of the robni dokumenti with the partner of every document.
+templ RobnoDokumentaPregled(tabs, subTabs domain.TabData, tbl domain.TableData, magValues, vrstaDokumentaValues []domain.ComboItem, params domain.PregledDokumentaParams, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
+	@RobnoDokumentaShell(tabs, subTabs, translator, RobnoDokumentaPregledBody(tbl, magValues, vrstaDokumentaValues, params, btnObrada, btnPrint, searchInput, translator))
+}
+
+// RobnoDokumentaPregledBody renders the body of the "Štampa" sub-tab. The parameters (left) and the
+// "Obrada i štampa" panel (right) have the same height, like the header of the "Unos dokumenta" tab.
+templ RobnoDokumentaPregledBody(tbl domain.TableData, magValues, vrstaDokumentaValues []domain.ComboItem, params domain.PregledDokumentaParams, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
+	<!-- Parameters -->
+	<div class="no-border bg-blue-100 rounded-lg">
+		<div class="grid grid-cols-3 gap-2">
+			<fieldset class="col-span-2 border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1">
+				<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Parametri") }</legend>
+				<div class="grid grid-cols-2 gap-x-2">
+					<!-- Magacin -->
+					<div class="flex items-center gap-1 mb-1">
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "magaciniid",
+							LabelText:  translator.Label("Magacin"),
+							ClassLabel: common.ClassLabel + " w-44",
+						})
+						@components.ComboBoxField(domain.ComboFieldConfig{
+							ID:            "magaciniid",
+							Name:          "magaciniid",
+							HasLabel:      false,
+							ClassSelect:   common.ClassInputTextEnabled + " flex-1",
+							OptionValues:  magValues,
+							SelectedValue: magaciniSelection(params.MagaciniID),
+							TabIndex:      "1",
+						}, translator)
+					</div>
+					<!-- Vrsta dokumenta -->
+					<div class="flex items-center gap-1 mb-1">
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "vrd",
+							LabelText:  translator.Label("Vrsta dokumenta"),
+							ClassLabel: common.ClassLabel + " w-44",
+						})
+						@components.ComboBoxField(domain.ComboFieldConfig{
+							ID:            "vrd",
+							Name:          "vrd",
+							HasLabel:      false,
+							ClassSelect:   common.ClassInputTextEnabled + " flex-1",
+							OptionValues:  vrstaDokumentaValues,
+							SelectedValue: params.Vrd,
+							TabIndex:      "2",
+						}, translator)
+					</div>
+					<!-- Od datuma naloga -->
+					<div class="flex items-center gap-1 mb-1">
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "oddanal",
+							LabelText:  translator.Label("Od datuma naloga"),
+							ClassLabel: common.ClassLabel + " w-44",
+						})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "oddanal",
+							Name:       "oddanal",
+							FieldType:  "date",
+							Value:      params.OdDanal,
+							ClassInput: common.ClassInputTextEnabled + " w-32",
+							TabIndex:   "3",
+							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError"})
+					</div>
+					<!-- Do datuma naloga -->
+					<div class="flex items-center gap-1 mb-1">
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "dodanal",
+							LabelText:  translator.Label("Do datuma naloga"),
+							ClassLabel: common.ClassLabel + " w-44",
+						})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "dodanal",
+							Name:       "dodanal",
+							FieldType:  "date",
+							Value:      params.DoDanal,
+							ClassInput: common.ClassInputTextEnabled + " w-32",
+							TabIndex:   "4",
+							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError"})
+					</div>
+				</div>
+			</fieldset>
+			<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1">
+				<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Obrada i štampa") }</legend>
+				<!-- The buttons are aligned to the bottom of the panel, like the parameters on the left -->
+				<div class="flex items-center justify-end gap-1 mt-auto mb-1">
+					@components.FormObradaButton(btnObrada, translator)
+					@components.PrintButton(btnPrint, translator)
+				</div>
+			</fieldset>
+		</div>
+	</div>
+	<!-- Grid of the documents -->
+	<div class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col min-h-0 flex-1 overflow-hidden">
+		@components.Search_Part(tbl, searchInput)
+		<!-- Table: the grid scrolls while the page navigator stays at the bottom of the tab -->
+		<div class="flex-1 min-h-0">
+			@components.Table(tbl, translator)
+		</div>
+	</div>
+}
+
+// RobnoDokumentaEFaktura renders the "eFaktura" sub-tab of "Pregled dokumenta": the filters (grupe
+// dokumenata and the range of the dates of the documents), the actions of the eFaktura, the date of
+// the ažuriranje statusa and the grid with the status of every document.
+templ RobnoDokumentaEFaktura(tabs, subTabs domain.TabData, tbl domain.TableData, magValues []domain.ComboItem, params domain.PregledDokumentaParams, btnObrada, btnPosalji, btnProveri, btnOtkazi, btnStorniraj, btnStornirajPE, btnAzurirajStatus domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
+	@RobnoDokumentaShell(tabs, subTabs, translator, RobnoDokumentaEFakturaBody(tbl, params, btnObrada, btnPosalji, btnProveri, btnOtkazi, btnStorniraj, btnStornirajPE, btnAzurirajStatus, searchInput, translator))
+}
+
+// RobnoDokumentaEFakturaBody renders the body of the "eFaktura" sub-tab. The parameters with the
+// actions (left) and the "Status eFaktura" panel (right) have the same height, like the header of
+// the "Unos dokumenta" tab.
+templ RobnoDokumentaEFakturaBody(tbl domain.TableData, params domain.PregledDokumentaParams, btnObrada, btnPosalji, btnProveri, btnOtkazi, btnStorniraj, btnStornirajPE, btnAzurirajStatus domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
+	<!-- Parameters and actions -->
+	<div class="no-border bg-blue-100 rounded-lg">
+		<div class="grid grid-cols-3 gap-2">
+			<fieldset class="col-span-2 border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1">
+				<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Parametri") }</legend>
+				<!-- Grupe dokumenata -->
+				<div class="flex items-center gap-1 mb-1">
+					@components.LabelField(domain.LabelFieldConfig{
+						ID:         "grupedokumenata",
+						LabelText:  translator.Label("Grupe dokumenata"),
+						ClassLabel: common.ClassLabel + " w-44",
+					})
+					@components.TextInputField(domain.InputFieldConfig{
+						ID:         "grupedokumenata",
+						Name:       "grupedokumenata",
+						FieldType:  "text",
+						Value:      params.GrupeDokumenata,
+						ClassInput: common.ClassInputTextEnabled + " flex-1",
+						MaxLength:  "120",
+						TabIndex:   "1",
+						OnInput:    "clearFieldError",
+						OnFocus:    "clearFieldError"})
+				</div>
+				<div class="grid grid-cols-2 gap-x-2">
+					<!-- Od datuma -->
+					<div class="flex items-center gap-1 mb-1">
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "oddanal",
+							LabelText:  translator.Label("Od datuma"),
+							ClassLabel: common.ClassLabel + " w-44",
+						})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "oddanal",
+							Name:       "oddanal",
+							FieldType:  "date",
+							Value:      params.OdDanal,
+							ClassInput: common.ClassInputTextEnabled + " w-32",
+							TabIndex:   "2",
+							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError"})
+					</div>
+					<!-- Do datuma -->
+					<div class="flex items-center gap-1 mb-1">
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "dodanal",
+							LabelText:  translator.Label("Do datuma"),
+							ClassLabel: common.ClassLabel + " w-44",
+						})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "dodanal",
+							Name:       "dodanal",
+							FieldType:  "date",
+							Value:      params.DoDanal,
+							ClassInput: common.ClassInputTextEnabled + " w-32",
+							TabIndex:   "3",
+							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError"})
+					</div>
+				</div>
+				<!-- Obrada and the actions of the eFaktura -->
+				<div class="flex flex-wrap items-center justify-end gap-1 mb-1">
+					@components.FormObradaButton(btnObrada, translator)
+					@components.Button(btnPosalji)
+					@components.Button(btnProveri)
+					@components.Button(btnStornirajPE)
+				</div>
+			</fieldset>
+			<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1">
+				<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Status eFaktura") }</legend>
+				<!-- Datum za ažuriranje statusa -->
+				<div class="flex items-center gap-1 mb-1">
+					@components.LabelField(domain.LabelFieldConfig{
+						ID:         "datumstatusa",
+						LabelText:  translator.Label("Datum za ažuriranje statusa"),
+						ClassLabel: common.ClassLabel + " w-44",
+					})
+					@components.TextInputField(domain.InputFieldConfig{
+						ID:         "datumstatusa",
+						Name:       "datumstatusa",
+						FieldType:  "date",
+						Value:      params.DatumStatusa,
+						ClassInput: common.ClassInputTextEnabled + " w-32",
+						TabIndex:   "4"})
+				</div>
+				<!-- The buttons are aligned to the bottom of the panel, like the parameters on the left -->
+				<div class="flex flex-wrap items-center justify-end gap-1 mt-auto mb-1">
+					@components.Button(btnOtkazi)
+					@components.Button(btnStorniraj)
+					@components.Button(btnAzurirajStatus)
+				</div>
+			</fieldset>
+		</div>
+	</div>
+	<!-- Grid of the documents with their eFaktura status -->
+	<div class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col min-h-0 flex-1 overflow-hidden">
+		@components.Search_Part(tbl, searchInput)
+		<!-- Table: the grid scrolls while the page navigator stays at the bottom of the tab -->
+		<div class="flex-1 min-h-0">
+			@components.Table(tbl, translator)
+		</div>
+	</div>
+}
+
+//
+// Tabs that are still empty
+//
+
+// Tab 3 - Specifikacije dokumenta
+templ RobnoDokumentaSpecifikacije(tabs, subTabs domain.TabData, tbl domain.TableData, magValues []domain.ComboItem, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
+	@RobnoDokumentaShell(tabs, subTabs, translator, RobnoDokumentaEmptyBody("Specifikacije dokumenta", tbl, btnObrada, btnPrint, searchInput, translator))
+}
+
+//
+// Tab 4 - Kontiranje dokumenata (sub-tabs "Knjiženje dokumenata", "Pregled proknjiženih /
+// neproknjiženih dokumenata" and "Pregled proknjiženih / neproknjiženih dokumenata po magacinima")
+//
+
+// RobnoDokumentaKontiranjeKnjizenje renders the "Knjiženje dokumenata" sub-tab of "Kontiranje
+// dokumentata": the parameters of the selection of the documents (vrsta naloga za knjiženje, vrsta
+// dokumenta, magacin and the ranges of the broj naloga, the broj dokumenta and the datum naloga),
+// the buttons of the posting ("Obrada", "Proveri ravnotežu" and "Knjiži") and the grid of the robni
+// dokumenti.
+templ RobnoDokumentaKontiranjeKnjizenje(tabs, subTabs domain.TabData, tbl domain.TableData, tipdokValues, vrstaDokumentaValues, magValues []domain.ComboItem, params domain.KontiranjeDokumentaParams, btnObrada, btnRavnoteza, btnKnjizi domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
+	@RobnoDokumentaShell(tabs, subTabs, translator, RobnoDokumentaKontiranjeKnjizenjeBody(tbl, tipdokValues, vrstaDokumentaValues, magValues, params, btnObrada, btnRavnoteza, btnKnjizi, searchInput, translator))
+}
+
+// RobnoDokumentaKontiranjeKnjizenjeBody renders the body of the "Knjiženje dokumenata" sub-tab. The
+// parameters (left) and the "Knjiženje" panel with the buttons (right) have the same height, like
+// the header of the "Unos dokumenta" tab.
+templ RobnoDokumentaKontiranjeKnjizenjeBody(tbl domain.TableData, tipdokValues, vrstaDokumentaValues, magValues []domain.ComboItem, params domain.KontiranjeDokumentaParams, btnObrada, btnRavnoteza, btnKnjizi domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
+	<!-- Parameters of the selection -->
+	<div class="no-border bg-blue-100 rounded-lg">
+		<div class="grid grid-cols-3 gap-2">
+			<fieldset class="col-span-2 border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1">
+				<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Parametri") }</legend>
+				<!-- The first column (the combos) takes the free space, the ranges and the dates are right aligned -->
+				<div class="grid grid-cols-[1fr_auto_auto] gap-x-2">
+					<div class="flex flex-col">
+						<!-- Vrsta naloga za knjiženje -->
+						<div class="flex items-center gap-1 mb-1">
+							@components.LabelField(domain.LabelFieldConfig{
+								ID:         "tipdok",
+								LabelText:  translator.Label("Vrsta naloga za knjiženje"),
+								ClassLabel: common.ClassLabel + " w-44",
+							})
+							@components.ComboBoxField(domain.ComboFieldConfig{
+								ID:            "tipdok",
+								Name:          "tipdok",
+								HasLabel:      false,
+								ClassSelect:   common.ClassInputTextEnabled + " flex-1",
+								OptionValues:  tipdokValues,
+								SelectedValue: params.Tipdok,
+								TabIndex:      "1",
+							}, translator)
+						</div>
+						<!-- Vrsta dokumenta -->
+						<div class="flex items-center gap-1 mb-1">
+							@components.LabelField(domain.LabelFieldConfig{
+								ID:         "vrd",
+								LabelText:  translator.Label("Vrsta dokumenta"),
+								ClassLabel: common.ClassLabel + " w-44",
+							})
+							@components.ComboBoxField(domain.ComboFieldConfig{
+								ID:            "vrd",
+								Name:          "vrd",
+								HasLabel:      false,
+								ClassSelect:   common.ClassInputTextEnabled + " flex-1",
+								OptionValues:  vrstaDokumentaValues,
+								SelectedValue: params.Vrd,
+								TabIndex:      "2",
+							}, translator)
+						</div>
+						<!-- Magacin -->
+						<div class="flex items-center gap-1 mb-1">
+							@components.LabelField(domain.LabelFieldConfig{
+								ID:         "magaciniid",
+								LabelText:  translator.Label("Magacin"),
+								ClassLabel: common.ClassLabel + " w-44",
+							})
+							@components.ComboBoxField(domain.ComboFieldConfig{
+								ID:            "magaciniid",
+								Name:          "magaciniid",
+								HasLabel:      false,
+								ClassSelect:   common.ClassInputTextEnabled + " flex-1",
+								OptionValues:  magValues,
+								SelectedValue: magaciniSelection(params.MagaciniID),
+								TabIndex:      "3",
+							}, translator)
+						</div>
+					</div>
+					<!-- Ranges of the broj naloga and the broj dokumenta -->
+					<div class="flex flex-col">
+						@RobnoDokumentaRangeField("odnaloga", "Od broja naloga", params.OdNaloga, "4", translator)
+						@RobnoDokumentaRangeField("donaloga", "Do broja naloga", params.DoNaloga, "5", translator)
+						@RobnoDokumentaRangeField("oddokum", "Od broja dokumenta", params.OdDokum, "6", translator)
+						@RobnoDokumentaRangeField("dodokum", "Do broja dokumenta", params.DoDokum, "7", translator)
+					</div>
+					<!-- Range of the datum naloga -->
+					<div class="flex flex-col">
+						@RobnoDokumentaDateField("oddanal", "Od datuma naloga", params.OdDanal, "8", translator)
+						@RobnoDokumentaDateField("dodanal", "Do datuma naloga", params.DoDanal, "9", translator)
+					</div>
+				</div>
+			</fieldset>
+			<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1">
+				<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Knjiženje") }</legend>
+				<!-- The buttons are aligned to the bottom of the panel, like the parameters on the left -->
+				<div class="flex flex-wrap items-center justify-end gap-1 mt-auto mb-1">
+					@components.FormObradaButton(btnObrada, translator)
+					@components.Button(btnRavnoteza)
+					@components.Button(btnKnjizi)
+				</div>
+			</fieldset>
+		</div>
+	</div>
+	<!-- Grid of the robni dokumenti of the selection -->
+	<div class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col min-h-0 flex-1 overflow-hidden">
+		@components.Search_Part(tbl, searchInput)
+		<!-- Table: the grid scrolls while the page navigator stays at the bottom of the tab -->
+		<div class="flex-1 min-h-0">
+			@components.Table(tbl, translator)
+		</div>
+	</div>
+}
+
+// RobnoDokumentaKontiranjePregled renders the "Pregled proknjiženih / neproknjiženih dokumenata"
+// sub-tab of "Kontiranje dokumenata": the parameters of the selection, the state of the posting
+// (the radio buttons "Proknjiženi dokumenti" / "Neproknjiženi dokumenti" and the checkbox that
+// marks the displayed documents as not posted) and the grid of the robni dokumenti.
+templ RobnoDokumentaKontiranjePregled(tabs, subTabs domain.TabData, tbl domain.TableData, tipdokValues, magValues []domain.ComboItem, params domain.KontiranjeDokumentaParams, btnObrada, btnOznaci domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
+	@RobnoDokumentaShell(tabs, subTabs, translator, RobnoDokumentaKontiranjePregledBody(tbl, tipdokValues, magValues, params, btnObrada, btnOznaci, searchInput, translator))
+}
+
+// RobnoDokumentaKontiranjePregledBody renders the body of the "Pregled proknjiženih /
+// neproknjiženih dokumenata" sub-tab.
+templ RobnoDokumentaKontiranjePregledBody(tbl domain.TableData, tipdokValues, magValues []domain.ComboItem, params domain.KontiranjeDokumentaParams, btnObrada, btnOznaci domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
+	<!-- Parameters of the selection and the state of the posting -->
+	<div class="no-border bg-blue-100 rounded-lg">
+		<div class="grid grid-cols-3 gap-2">
+			<fieldset class="col-span-2 border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1">
+				<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Parametri") }</legend>
+				<!-- The first column (the combos) takes the free space, the ranges and the dates are right aligned -->
+				<div class="grid grid-cols-[1fr_auto_auto] gap-x-2">
+					<div class="flex flex-col">
+						<!-- Magacin -->
+						<div class="flex items-center gap-1 mb-1">
+							@components.LabelField(domain.LabelFieldConfig{
+								ID:         "magaciniid",
+								LabelText:  translator.Label("Magacin"),
+								ClassLabel: common.ClassLabel + " w-44",
+							})
+							@components.ComboBoxField(domain.ComboFieldConfig{
+								ID:            "magaciniid",
+								Name:          "magaciniid",
+								HasLabel:      false,
+								ClassSelect:   common.ClassInputTextEnabled + " flex-1",
+								OptionValues:  magValues,
+								SelectedValue: magaciniSelection(params.MagaciniID),
+								TabIndex:      "1",
+							}, translator)
+						</div>
+						<!-- Vrsta naloga za knjiženje -->
+						<div class="flex items-center gap-1 mb-1">
+							@components.LabelField(domain.LabelFieldConfig{
+								ID:         "tipdok",
+								LabelText:  translator.Label("Vrsta naloga za knjiženje"),
+								ClassLabel: common.ClassLabel + " w-44",
+							})
+							@components.ComboBoxField(domain.ComboFieldConfig{
+								ID:            "tipdok",
+								Name:          "tipdok",
+								HasLabel:      false,
+								ClassSelect:   common.ClassInputTextEnabled + " flex-1",
+								OptionValues:  tipdokValues,
+								SelectedValue: params.Tipdok,
+								TabIndex:      "2",
+							}, translator)
+						</div>
+					</div>
+					<!-- Ranges of the broj naloga and the broj dokumenta -->
+					<div class="flex flex-col">
+						@RobnoDokumentaRangeField("odnaloga", "Od broja naloga", params.OdNaloga, "3", translator)
+						@RobnoDokumentaRangeField("donaloga", "Do broja naloga", params.DoNaloga, "4", translator)
+						@RobnoDokumentaRangeField("oddokum", "Od broja dokumenta", params.OdDokum, "5", translator)
+						@RobnoDokumentaRangeField("dodokum", "Do broja dokumenta", params.DoDokum, "6", translator)
+					</div>
+					<!-- Range of the datum naloga -->
+					<div class="flex flex-col">
+						@RobnoDokumentaDateField("oddanal", "Od datuma naloga", params.OdDanal, "7", translator)
+						@RobnoDokumentaDateField("dodanal", "Do datuma naloga", params.DoDanal, "8", translator)
+					</div>
+				</div>
+				<!-- State of the posting: the radio buttons "Proknjiženi / Neproknjiženi dokumenti" and the
+				     checkbox that marks the displayed documents as not posted, in one row -->
+				<div class="flex flex-wrap items-center gap-3 pl-44 mb-1">
+					@components.RadioButtonField(domain.RadioFieldConfig{
+						ID:          "proknjizeni",
+						Name:        "proknjizen",
+						LabelText:   "Proknjiženi dokumenti",
+						Value:       "D",
+						ClassSelect: common.ClassRadioSet,
+						ClassLabel:  "text-sm text-black whitespace-nowrap",
+						IsSelected:  params.Proknjizen == "D",
+						TabIndex:    "9",
+					}, translator)
+					@components.RadioButtonField(domain.RadioFieldConfig{
+						ID:          "neproknjizeni",
+						Name:        "proknjizen",
+						LabelText:   "Neproknjiženi dokumenti",
+						Value:       "N",
+						ClassSelect: common.ClassRadioSet,
+						ClassLabel:  "text-sm text-black whitespace-nowrap",
+						IsSelected:  params.Proknjizen == "N",
+						TabIndex:    "10",
+					}, translator)
+					@components.CheckboxField(domain.CheckboxFieldConfig{
+						ID:                "oznacineproknjizenim",
+						Name:              "oznacineproknjizenim",
+						LabelText:         "Označi prikazana dokumenta kao neproknjižena",
+						ClassLabel:        common.ClassCheckboxLabel,
+						ClassCheckbox:     common.ClassCheckbox,
+						ClassCheckboxSpan: common.ClassCheckboxSpan,
+						IsChecked:         params.OznaciNeproknjizenim,
+					}, translator)
+				</div>
+			</fieldset>
+			<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1">
+				<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Pregled dokumenta") }</legend>
+				<!-- The buttons are aligned to the bottom of the panel, like the parameters on the left -->
+				<div class="flex flex-wrap items-center justify-end gap-1 mt-auto mb-1">
+					@components.FormObradaButton(btnObrada, translator)
+					@components.Button(btnOznaci)
+				</div>
+			</fieldset>
+		</div>
+	</div>
+	<!-- Grid of the robni dokumenti of the selection -->
+	<div class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col min-h-0 flex-1 overflow-hidden">
+		@components.Search_Part(tbl, searchInput)
+		<!-- Table: the grid scrolls while the page navigator stays at the bottom of the tab -->
+		<div class="flex-1 min-h-0">
+			@components.Table(tbl, translator)
+		</div>
+	</div>
+}
+
+// RobnoDokumentaKontiranjePoMagacinima renders the "Pregled proknjiženih / neproknjiženih
+// dokumenata po magacinima" sub-tab of "Kontiranje dokumenata": the same filters as the previous
+// sub-tab without the vrsta naloga (the grid is grouped by the magacin of the document).
+templ RobnoDokumentaKontiranjePoMagacinima(tabs, subTabs domain.TabData, tbl domain.TableData, magValues []domain.ComboItem, params domain.KontiranjeDokumentaParams, btnObrada domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
+	@RobnoDokumentaShell(tabs, subTabs, translator, RobnoDokumentaKontiranjePoMagacinimaBody(tbl, magValues, params, btnObrada, searchInput, translator))
+}
+
+// RobnoDokumentaKontiranjePoMagacinimaBody renders the body of the "Pregled ... po magacinima"
+// sub-tab.
+templ RobnoDokumentaKontiranjePoMagacinimaBody(tbl domain.TableData, magValues []domain.ComboItem, params domain.KontiranjeDokumentaParams, btnObrada domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
+	<!-- Parameters of the selection and the state of the posting -->
+	<div class="no-border bg-blue-100 rounded-lg">
+		<div class="grid grid-cols-3 gap-2">
+			<fieldset class="col-span-2 border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1">
+				<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Parametri") }</legend>
+				<!-- The first column (the magacin and the radios) takes the free space, the ranges and the dates
+				     are right aligned -->
+				<div class="grid grid-cols-[1fr_auto_auto] gap-x-2">
+					<div class="flex flex-col">
+						<!-- Magacin -->
+						<div class="flex items-center gap-1 mb-1">
+							@components.LabelField(domain.LabelFieldConfig{
+								ID:         "magaciniid",
+								LabelText:  translator.Label("Magacin"),
+								ClassLabel: common.ClassLabel + " w-44",
+							})
+							@components.ComboBoxField(domain.ComboFieldConfig{
+								ID:            "magaciniid",
+								Name:          "magaciniid",
+								HasLabel:      false,
+								ClassSelect:   common.ClassInputTextEnabled + " flex-1",
+								OptionValues:  magValues,
+								SelectedValue: magaciniSelection(params.MagaciniID),
+								TabIndex:      "1",
+							}, translator)
+						</div>
+						<!-- State of the posting: proknjiženi / neproknjiženi dokumenti -->
+						<div class="flex flex-wrap items-center gap-2 pt-1">
+							@components.RadioButtonField(domain.RadioFieldConfig{
+								ID:          "proknjizeni",
+								Name:        "proknjizen",
+								LabelText:   "Proknjiženi dokumenti",
+								Value:       "D",
+								ClassSelect: common.ClassRadioSet,
+								ClassLabel:  "text-sm text-black whitespace-nowrap",
+								IsSelected:  params.Proknjizen == "D",
+								TabIndex:    "2",
+							}, translator)
+							@components.RadioButtonField(domain.RadioFieldConfig{
+								ID:          "neproknjizeni",
+								Name:        "proknjizen",
+								LabelText:   "Neproknjiženi dokumenti",
+								Value:       "N",
+								ClassSelect: common.ClassRadioSet,
+								ClassLabel:  "text-sm text-black whitespace-nowrap",
+								IsSelected:  params.Proknjizen == "N",
+								TabIndex:    "3",
+							}, translator)
+						</div>
+					</div>
+					<!-- Ranges of the broj naloga and the broj dokumenta -->
+					<div class="flex flex-col">
+						@RobnoDokumentaRangeField("odnaloga", "Od broja naloga", params.OdNaloga, "4", translator)
+						@RobnoDokumentaRangeField("donaloga", "Do broja naloga", params.DoNaloga, "5", translator)
+						@RobnoDokumentaRangeField("oddokum", "Od broja dokumenta", params.OdDokum, "6", translator)
+						@RobnoDokumentaRangeField("dodokum", "Do broja dokumenta", params.DoDokum, "7", translator)
+					</div>
+					<!-- Range of the datum naloga -->
+					<div class="flex flex-col">
+						@RobnoDokumentaDateField("oddanal", "Od datuma naloga", params.OdDanal, "8", translator)
+						@RobnoDokumentaDateField("dodanal", "Do datuma naloga", params.DoDanal, "9", translator)
+					</div>
+				</div>
+			</fieldset>
+			<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1">
+				<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Pregled dokumenta") }</legend>
+				<!-- The button is aligned to the bottom of the panel, like the parameters on the left -->
+				<div class="flex items-center justify-end gap-1 mt-auto mb-1">
+					@components.FormObradaButton(btnObrada, translator)
+				</div>
+			</fieldset>
+		</div>
+	</div>
+	<!-- Grid of the robni dokumenti of the selection, grouped by magacin -->
+	<div class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col min-h-0 flex-1 overflow-hidden">
+		@components.Search_Part(tbl, searchInput)
+		<!-- Table: the grid scrolls while the page navigator stays at the bottom of the tab -->
+		<div class="flex-1 min-h-0">
+			@components.Table(tbl, translator)
+		</div>
+	</div>
+}
+
+// RobnoDokumentaRangeField renders one "Od/Do broja ..." range of the "Kontiranje dokumenata" tab
+// (a whole number typed as text).
+templ RobnoDokumentaRangeField(id, label, value, tabIndex string, translator *i18n.Service) {
+	<div class="flex items-center gap-1 mb-1">
+		@components.LabelField(domain.LabelFieldConfig{
+			ID:         id,
+			LabelText:  translator.Label(label),
+			ClassLabel: common.ClassLabel + " w-32",
+		})
+		@components.TextInputField(domain.InputFieldConfig{
+			ID:         id,
+			Name:       id,
+			FieldType:  "text",
+			Value:      value,
+			ClassInput: common.ClassInputTextEnabled + " !w-24 text-right",
+			MaxLength:  "9",
+			TabIndex:   tabIndex,
+			OnInput:    "clearFieldError",
+			OnFocus:    "clearFieldError"})
+	</div>
+}
+
+// RobnoDokumentaDateField renders one "Od/Do datuma naloga" date of the "Kontiranje dokumenata" tab.
+templ RobnoDokumentaDateField(id, label, value, tabIndex string, translator *i18n.Service) {
+	<div class="flex items-center gap-1 mb-1">
+		@components.LabelField(domain.LabelFieldConfig{
+			ID:         id,
+			LabelText:  translator.Label(label),
+			ClassLabel: common.ClassLabel + " w-32",
+		})
+		@components.TextInputField(domain.InputFieldConfig{
+			ID:         id,
+			Name:       id,
+			FieldType:  "date",
+			Value:      value,
+			ClassInput: common.ClassInputTextEnabled + " !w-32",
+			TabIndex:   tabIndex,
+			OnInput:    "clearFieldError",
+			OnFocus:    "clearFieldError"})
+	</div>
+}
+
+// Tab 5 - Prepis dokumenta
+templ RobnoDokumentaPrepis(tabs, subTabs domain.TabData, tbl domain.TableData, magValues []domain.ComboItem, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
+	@RobnoDokumentaShell(tabs, subTabs, translator, RobnoDokumentaEmptyBody("Prepis dokumenta", tbl, btnObrada, btnPrint, searchInput, translator))
+}
+
+// Tab 6 - Prikaz ukupne obrade
+//
+// The tab has no parameters of the selection and no "Obrada" button: it shows the totals of the
+// robni nalozi of every magacin of the current period (the "Prikaz ukupne obrade" panel of the
+// first tab, per magacin) and the print button of the list in the toolbar of the grid.
+templ RobnoDokumentaPrikazUkupneObrade(tabs, subTabs domain.TabData, tbl domain.TableData, translator *i18n.Service) {
+	@RobnoDokumentaShell(tabs, subTabs, translator, RobnoDokumentaPrikazUkupneObradeBody(tbl, translator))
+}
+
+// RobnoDokumentaPrikazUkupneObradeBody renders the body of the "Prikaz ukupne obrade" tab: the grid
+// with the totals. The search input is not rendered (the tab has no parameters), only the title and
+// the print button of the toolbar of the grid (tbl.BtnPrint).
+templ RobnoDokumentaPrikazUkupneObradeBody(tbl domain.TableData, translator *i18n.Service) {
+	<!-- Grid of the totals of the robni nalozi of every magacin -->
+	<div class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col min-h-0 flex-1 overflow-hidden">
+		@components.Search_Part(tbl, domain.InputControl{})
+		<!-- Table: the grid scrolls while the page navigator stays at the bottom of the tab -->
+		<div class="flex-1 min-h-0">
+			@components.Table(tbl, translator)
+		</div>
+	</div>
+}
+
+// Tab 7 - Prikaz naloga
+//
+// The tab shows the robni nalozi of the current period filtered by magacin, the range of the vrste
+// naloga and the range of the broj naloga. The three checkboxes ("Po datumu naloga", "Po datumu
+// obrade" and "Po operateru") enable their fields when they are checked (controlToggle of
+// EnableDisableFieldsScripts, like "Prikaz kartice artikla" of the robno kartica does).
+templ RobnoDokumentaPrikazNaloga(tabs, subTabs domain.TabData, tbl domain.TableData, magValues, tipdokValues []domain.ComboItem, params domain.PrikazNalogaParams, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
+	@RobnoDokumentaShell(tabs, subTabs, translator, RobnoDokumentaParametriNalogaBody(tbl, magValues, tipdokValues, params, btnObrada, btnPrint, translator))
+	@tmpl.EnableDisableFieldsScripts()
+}
+
+// RobnoDokumentaParametriNalogaBody renders the body of the tabs that select robni nalozi ("Prikaz
+// naloga" and "Prikaz dokumenata u nalogu"): the parameters of the selection (the only panel of the
+// tab - the buttons "Obrada" and "Štampaj" are in the row of the "Po operateru" checkbox, aligned
+// to the right) and the grid of the tab (the columns come from the table of the tab). Every checkbox
+// is in the same row as the fields it enables.
+templ RobnoDokumentaParametriNalogaBody(tbl domain.TableData, magValues, tipdokValues []domain.ComboItem, params domain.PrikazNalogaParams, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
+	<!-- Parameters of the selection (the only panel of the tab): the fields of the nalog in the first
+	     third of the panel and, in the other two thirds, every checkbox with the fields it enables in
+	     one row. The buttons "Obrada" and "Štampaj" are at the bottom right of the panel. -->
+	<div class="no-border bg-blue-100 rounded-lg">
+		<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1">
+			<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Parametri") }</legend>
+			<!-- The rows of the second column are one below the other (mb-2) and the free space of every
+			     row is distributed between its controls (justify-between); the date fields are kept
+			     narrow (w-40) so that there is enough space between the controls. -->
+			<div class="grid grid-cols-3 gap-x-2">
+				<!-- Magacin, the range of the vrste naloga and the range of the broj naloga -->
+				<div class="flex flex-col">
+					<div class="flex items-center gap-1 mb-1">
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "magaciniid",
+							LabelText:  translator.Label("Magacin"),
+							ClassLabel: common.ClassLabel + " w-44",
+						})
+						@components.ComboBoxField(domain.ComboFieldConfig{
+							ID:            "magaciniid",
+							Name:          "magaciniid",
+							HasLabel:      false,
+							ClassSelect:   common.ClassInputTextEnabled + " flex-1",
+							OptionValues:  magValues,
+							SelectedValue: magaciniSelection(params.MagaciniID),
+							TabIndex:      "1",
+						}, translator)
+					</div>
+					<div class="flex items-center gap-1 mb-1">
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "odvrd",
+							LabelText:  translator.Label("Od vrste naloga"),
+							ClassLabel: common.ClassLabel + " w-44",
+						})
+						@components.ComboBoxField(domain.ComboFieldConfig{
+							ID:            "odvrd",
+							Name:          "odvrd",
+							HasLabel:      false,
+							ClassSelect:   common.ClassInputTextEnabled + " flex-1",
+							OptionValues:  tipdokValues,
+							SelectedValue: params.OdVrd,
+							TabIndex:      "2",
+						}, translator)
+					</div>
+					<div class="flex items-center gap-1 mb-1">
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "dovrd",
+							LabelText:  translator.Label("Do vrste naloga"),
+							ClassLabel: common.ClassLabel + " w-44",
+						})
+						@components.ComboBoxField(domain.ComboFieldConfig{
+							ID:            "dovrd",
+							Name:          "dovrd",
+							HasLabel:      false,
+							ClassSelect:   common.ClassInputTextEnabled + " flex-1",
+							OptionValues:  tipdokValues,
+							SelectedValue: params.DoVrd,
+							TabIndex:      "3",
+						}, translator)
+					</div>
+					<!-- Od broja naloga (the label has the width of the labels of the fields above) -->
+					<div class="flex items-center gap-1 mb-1">
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "odnaloga",
+							LabelText:  translator.Label("Od broja naloga"),
+							ClassLabel: common.ClassLabel + " w-44",
+						})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "odnaloga",
+							Name:       "odnaloga",
+							FieldType:  "text",
+							Value:      params.OdNaloga,
+							ClassInput: common.ClassInputTextEnabled + " !w-24 text-right",
+							MaxLength:  "9",
+							TabIndex:   "4",
+							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError"})
+					</div>
+					<!-- Do broja naloga -->
+					<div class="flex items-center gap-1 mb-1">
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "donaloga",
+							LabelText:  translator.Label("Do broja naloga"),
+							ClassLabel: common.ClassLabel + " w-44",
+						})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "donaloga",
+							Name:       "donaloga",
+							FieldType:  "text",
+							Value:      params.DoNaloga,
+							ClassInput: common.ClassInputTextEnabled + " !w-24 text-right",
+							MaxLength:  "9",
+							TabIndex:   "5",
+							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError"})
+					</div>
+				</div>
+				<!-- The checkbox of every filter with the fields it enables, in one row -->
+				<div class="col-span-2 flex flex-col">
+					<!-- Po datumu naloga -->
+					<div class="flex items-center gap-1 mb-1">
+						@RobnoDokumentaCheckBox("chkpodatumunaloga", "Po datumu naloga", `["oddanal","dodanal"]`, params.ChkDatumNaloga, "6", translator)
+						<!-- The controls of the row start right after the checkbox (flex-1 wrapper), so the
+						     labels of all the rows are aligned one below the other. Every label stays with
+						     its own field (as in the first column), so the fields of rows 1-3 all start at
+						     the same x -->
+						<div class="flex-1 flex items-center justify-between gap-1">
+						<div class="flex items-center gap-1">
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "oddanal",
+							LabelText:  translator.Label("Od datuma naloga"),
+							ClassLabel: common.ClassLabel + " w-32",
+						})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "oddanal",
+							Name:       "oddanal",
+							FieldType:  "date",
+							Value:      params.OdDanal,
+							Disabled:   !params.ChkDatumNaloga,
+							ClassInput: common.ClassInputTextEnabled + " !w-40",
+							TabIndex:   "7"})
+						</div>
+						<div class="flex items-center gap-1">
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "dodanal",
+							LabelText:  translator.Label("Do datuma naloga"),
+							ClassLabel: common.ClassLabel + " w-32 pl-2",
+						})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "dodanal",
+							Name:       "dodanal",
+							FieldType:  "date",
+							Value:      params.DoDanal,
+							Disabled:   !params.ChkDatumNaloga,
+							ClassInput: common.ClassInputTextEnabled + " !w-40",
+							TabIndex:   "8"})
+						</div>
+						</div>
+					</div>
+					<!-- Po datumu obrade -->
+					<div class="flex items-center gap-1 mb-1">
+						@RobnoDokumentaCheckBox("chkpodatumuobrade", "Po datumu obrade", `["oddatob","dodatob"]`, params.ChkDatumObrade, "9", translator)
+						<div class="flex-1 flex items-center justify-between gap-1">
+						<div class="flex items-center gap-1">
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "oddatob",
+							LabelText:  translator.Label("Od datuma obrade"),
+							ClassLabel: common.ClassLabel + " w-32",
+						})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "oddatob",
+							Name:       "oddatob",
+							FieldType:  "date",
+							Value:      params.OdDatob,
+							Disabled:   !params.ChkDatumObrade,
+							ClassInput: common.ClassInputTextEnabled + " !w-40",
+							TabIndex:   "10"})
+						</div>
+						<div class="flex items-center gap-1">
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "dodatob",
+							LabelText:  translator.Label("Do datuma obrade"),
+							ClassLabel: common.ClassLabel + " w-32 pl-2",
+						})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "dodatob",
+							Name:       "dodatob",
+							FieldType:  "date",
+							Value:      params.DoDatob,
+							Disabled:   !params.ChkDatumObrade,
+							ClassInput: common.ClassInputTextEnabled + " !w-40",
+							TabIndex:   "11"})
+						</div>
+						</div>
+					</div>
+					<!-- Po operateru: the checkbox and the operator, in the third row of the panel, so the
+					     operator control is in line with the "Do vrste naloga" combo box of the first
+					     column (that row has the same height and spacing as the rows of the first column). -->
+					<div class="flex items-center gap-1 mb-1">
+						@RobnoDokumentaCheckBox("chkpooperateru", "Po operateru", `["oper"]`, params.ChkOperator, "12", translator)
+						<div class="flex-1 flex items-center justify-between gap-1">
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "oper",
+							LabelText:  translator.Label("Operater"),
+							ClassLabel: common.ClassLabel + " w-32",
+						})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "oper",
+							Name:       "oper",
+							FieldType:  "text",
+							Value:      params.Oper,
+							Disabled:   !params.ChkOperator,
+							ClassInput: common.ClassInputTextEnabled + " flex-1",
+							MaxLength:  "20",
+							TabIndex:   "13"})
+						</div>
+					</div>
+					<!-- The buttons of the tab, at the bottom right of the panel (in line with the "Do broja
+					     naloga" field of the first column) -->
+					<div class="flex items-center justify-end gap-1 mt-auto">
+						@components.FormObradaButton(btnObrada, translator)
+						@components.PrintButton(btnPrint, translator)
+					</div>
+				</div>
+			</div>
+		</fieldset>
+	</div>
+	<!-- Grid of the selected robni nalozi (or of their documents) -->
+	<div class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col min-h-0 flex-1 overflow-hidden">
+		@components.Search_Part(tbl, domain.InputControl{})
+		<!-- Table: the grid scrolls while the page navigator stays at the bottom of the tab -->
+		<div class="flex-1 min-h-0">
+			@components.Table(tbl, translator)
+		</div>
+	</div>
+}
+
+// RobnoDokumentaCheckBox renders one of the checkboxes of the "Prikaz naloga" tab that enable the
+// fields of a filter (the same pattern as "Prikaz kartice artikla": controlToggle switches the
+// disabled state of the fields listed in the JSON array of the onchange handler).
+templ RobnoDokumentaCheckBox(id, labelText, fields string, isChecked bool, tabIndex string, translator *i18n.Service) {
+	<label class={ common.ClassCheckboxLabel + " w-44 flex-shrink-0 h-8 sm:h-7 md:h-6" }>
+		<input
+			type="checkbox"
+			id={ id }
+			name={ id }
+			class={ common.ClassCheckbox }
+			tabindex={ tabIndex }
+			if isChecked {
+				checked="checked"
+			}
+			onchange={ templ.JSFuncCall("controlToggle", templ.JSExpression("this"), templ.JSExpression(fields)) }
+		/>
+		<span class={ common.ClassCheckboxSpan }>{ translator.Label(labelText) }</span>
+	</label>
+}
+
+// Tab 8 - Prikaz dokumenata u nalogu
+//
+// The tab shows the robni dokumenti of the selected nalozi: it uses the same parameters and the
+// same layout as the "Prikaz naloga" tab (the body of the two tabs is shared), only the columns of
+// its grid differ.
+templ RobnoDokumentaPrikazDokumenataUNalogu(tabs, subTabs domain.TabData, tbl domain.TableData, magValues, tipdokValues []domain.ComboItem, params domain.PrikazNalogaParams, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
+	@RobnoDokumentaShell(tabs, subTabs, translator, RobnoDokumentaParametriNalogaBody(tbl, magValues, tipdokValues, params, btnObrada, btnPrint, translator))
+	@tmpl.EnableDisableFieldsScripts()
+}
+
+// Tab 9 - Prikaz dokumenata po operateru
+//
+// The tab shows the same robni dokumenti as the "Prikaz dokumenata u nalogu" tab, grouped by the
+// operater. Its panel has no magacin / vrsta naloga selection (the legacy screen of the tab has none
+// either): the parameters are shown in three columns, like the legacy screen draws them (the
+// checkboxes of the filters, the "Od" fields and the "Do" fields).
+templ RobnoDokumentaPrikazDokumenataPooperateru(tabs, subTabs domain.TabData, tbl domain.TableData, params domain.PrikazNalogaParams, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
+	@RobnoDokumentaShell(tabs, subTabs, translator, RobnoDokumentaPrikazDokumenataPooperateruBody(tbl, params, btnObrada, btnPrint, translator))
+	@tmpl.EnableDisableFieldsScripts()
+}
+
+// RobnoDokumentaPrikazDokumenataPooperateruBody renders the body of the "Prikaz dokumenata po
+// operateru" tab: the parameters of the selection (the only panel of the tab) and the grid. The
+// panel of this tab is the same as the one of the two tabs before it but without the magacin and the
+// vrsta naloga controls (magaciniid, odvrd and dovrd are not part of its parameters) and with its
+// controls in the three columns of the legacy screen (the checkboxes, the "Od" fields and the "Do"
+// fields); every checkbox enables its own fields (the dates and the operater), like the other tabs.
+templ RobnoDokumentaPrikazDokumenataPooperateruBody(tbl domain.TableData, params domain.PrikazNalogaParams, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
+	<!-- Parameters of the selection (the only panel of the tab) in the three columns of the legacy
+	     screen: the checkboxes of the filters, the "Od" fields and the "Do" fields. The buttons
+	     "Obrada" and "Štampaj" are at the bottom right of the panel. -->
+	<div class="no-border bg-blue-100 rounded-lg">
+		<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1">
+			<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Parametri") }</legend>
+			<div class="grid grid-cols-[11rem_1fr_1fr] gap-x-4 gap-y-1 items-center">
+				<!-- Row 1: the range of the broj naloga (it has no checkbox of its own) -->
+				<div></div>
+				<div class="flex items-center gap-1">
+					@components.LabelField(domain.LabelFieldConfig{
+						ID:         "odnaloga",
+						LabelText:  translator.Label("Od broja naloga"),
+						ClassLabel: common.ClassLabel + " w-32",
+					})
+					@components.TextInputField(domain.InputFieldConfig{
+						ID:         "odnaloga",
+						Name:       "odnaloga",
+						FieldType:  "text",
+						Value:      params.OdNaloga,
+						ClassInput: common.ClassInputTextEnabled + " !w-24 text-right",
+						MaxLength:  "9",
+						TabIndex:   "1",
+						OnInput:    "clearFieldError",
+						OnFocus:    "clearFieldError"})
+				</div>
+				<div class="flex items-center gap-1">
+					@components.LabelField(domain.LabelFieldConfig{
+						ID:         "donaloga",
+						LabelText:  translator.Label("Do broja naloga"),
+						ClassLabel: common.ClassLabel + " w-32",
+					})
+					@components.TextInputField(domain.InputFieldConfig{
+						ID:         "donaloga",
+						Name:       "donaloga",
+						FieldType:  "text",
+						Value:      params.DoNaloga,
+						ClassInput: common.ClassInputTextEnabled + " !w-24 text-right",
+						MaxLength:  "9",
+						TabIndex:   "2",
+						OnInput:    "clearFieldError",
+						OnFocus:    "clearFieldError"})
+				</div>
+				<!-- Row 2: Po datumu naloga with the range of the datuma naloga -->
+				@RobnoDokumentaCheckBox("chkpodatumunaloga", "Po datumu naloga", `["oddanal","dodanal"]`, params.ChkDatumNaloga, "3", translator)
+				<div class="flex items-center gap-1">
+					@components.LabelField(domain.LabelFieldConfig{
+						ID:         "oddanal",
+						LabelText:  translator.Label("Od datuma naloga"),
+						ClassLabel: common.ClassLabel + " w-32",
+					})
+					@components.TextInputField(domain.InputFieldConfig{
+						ID:         "oddanal",
+						Name:       "oddanal",
+						FieldType:  "date",
+						Value:      params.OdDanal,
+						Disabled:   !params.ChkDatumNaloga,
+						ClassInput: common.ClassInputTextEnabled + " !w-40",
+						TabIndex:   "4"})
+				</div>
+				<div class="flex items-center gap-1">
+					@components.LabelField(domain.LabelFieldConfig{
+						ID:         "dodanal",
+						LabelText:  translator.Label("Do datuma naloga"),
+						ClassLabel: common.ClassLabel + " w-32",
+					})
+					@components.TextInputField(domain.InputFieldConfig{
+						ID:         "dodanal",
+						Name:       "dodanal",
+						FieldType:  "date",
+						Value:      params.DoDanal,
+						Disabled:   !params.ChkDatumNaloga,
+						ClassInput: common.ClassInputTextEnabled + " !w-40",
+						TabIndex:   "5"})
+				</div>
+				<!-- Row 3: Po datumu obrade with the range of the datuma obrade -->
+				@RobnoDokumentaCheckBox("chkpodatumuobrade", "Po datumu obrade", `["oddatob","dodatob"]`, params.ChkDatumObrade, "6", translator)
+				<div class="flex items-center gap-1">
+					@components.LabelField(domain.LabelFieldConfig{
+						ID:         "oddatob",
+						LabelText:  translator.Label("Od datuma obrade"),
+						ClassLabel: common.ClassLabel + " w-32",
+					})
+					@components.TextInputField(domain.InputFieldConfig{
+						ID:         "oddatob",
+						Name:       "oddatob",
+						FieldType:  "date",
+						Value:      params.OdDatob,
+						Disabled:   !params.ChkDatumObrade,
+						ClassInput: common.ClassInputTextEnabled + " !w-40",
+						TabIndex:   "7"})
+				</div>
+				<div class="flex items-center gap-1">
+					@components.LabelField(domain.LabelFieldConfig{
+						ID:         "dodatob",
+						LabelText:  translator.Label("Do datuma obrade"),
+						ClassLabel: common.ClassLabel + " w-32",
+					})
+					@components.TextInputField(domain.InputFieldConfig{
+						ID:         "dodatob",
+						Name:       "dodatob",
+						FieldType:  "date",
+						Value:      params.DoDatob,
+						Disabled:   !params.ChkDatumObrade,
+						ClassInput: common.ClassInputTextEnabled + " !w-40",
+						TabIndex:   "8"})
+				</div>
+				<!-- Row 4: Po operateru with the operator (the row has no field in the third column) -->
+				@RobnoDokumentaCheckBox("chkpooperateru", "Po operateru", `["oper"]`, params.ChkOperator, "9", translator)
+				<div class="flex items-center gap-1">
+					@components.LabelField(domain.LabelFieldConfig{
+						ID:         "oper",
+						LabelText:  translator.Label("Operater"),
+						ClassLabel: common.ClassLabel + " w-32",
+					})
+					@components.TextInputField(domain.InputFieldConfig{
+						ID:         "oper",
+						Name:       "oper",
+						FieldType:  "text",
+						Value:      params.Oper,
+						Disabled:   !params.ChkOperator,
+						ClassInput: common.ClassInputTextEnabled + " flex-1",
+						MaxLength:  "20",
+						TabIndex:   "10"})
+				</div>
+			</div>
+			<!-- The buttons of the tab, at the bottom right of the panel -->
+			<div class="flex items-center justify-end gap-1 mt-auto">
+				@components.FormObradaButton(btnObrada, translator)
+				@components.PrintButton(btnPrint, translator)
+			</div>
+		</fieldset>
+	</div>
+	<!-- Grid of the documents of the selection -->
+	<div class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col min-h-0 flex-1 overflow-hidden">
+		@components.Search_Part(tbl, domain.InputControl{})
+		<!-- Table: the grid scrolls while the page navigator stays at the bottom of the tab -->
+		<div class="flex-1 min-h-0">
+			@components.Table(tbl, translator)
+		</div>
+	</div>
+}

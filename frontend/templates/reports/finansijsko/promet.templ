@@ -9,13 +9,13 @@ import (
 
 // PrometAnalitickaKarticaStampa renders a printable Analitička kartica report.
 templ PrometAnalitickaKarticaStampa(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
-	@rep.Report(repParams, domain.TableData{}, translator, nil, PrometAnalitickaKarticaContent(repParams, tbl, translator))
+	@rep.Report(repParams,tbl, translator, PrometAnalitickaKarticaParam(repParams, translator),nil, PrometAnalitickaKarticaContent(repParams, tbl, translator))
 }
 
 templ PrometAnalitickaKarticaContent(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
 	@rep.ReportHeader(repParams)
 	@rep.ReportTitle(repParams)
-	@PrometAnalitickaKarticaParam(repParams, translator)
+	
 	@PrometAnalitickaKarticaTable(tbl, translator)
 	@rep.ReportEnd(nil)
 }
@@ -120,13 +120,13 @@ templ PrometAnalitickaKarticaTable(tbl domain.TableData, translator *i18n.Servic
 
 // PrometSubsintetickihKontaKarticaStampa renders a printable Promet subsintetičkih konta report.
 templ PrometSubsintetickihKontaKarticaStampa(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
-	@rep.Report(repParams, domain.TableData{}, translator, nil, PrometSubsintetickihKontaKarticaContent(repParams, tbl, translator))
+	@rep.Report(repParams,tbl, translator, PrometSubsintetickihKontaKarticaParam(repParams, translator), nil, PrometSubsintetickihKontaKarticaContent(repParams, tbl, translator))
 }
 
 templ PrometSubsintetickihKontaKarticaContent(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
 	@rep.ReportHeader(repParams)
 	@rep.ReportTitle(repParams)
-	@PrometSubsintetickihKontaKarticaParam(repParams, translator)
+	
 	@PrometSubsintetickihKontaKarticaTable(tbl, translator)
 	@rep.ReportEnd(nil)
 }
@@ -257,13 +257,12 @@ templ PrometSubsintetickihKontaKarticaTable(tbl domain.TableData, translator *i1
 
 // KarticaSintetickihKontaStampa renders a printable Sintetička kartica report.
 templ KarticaSintetickihKontaStampa(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
-	@rep.Report(repParams, domain.TableData{}, translator, nil, KarticaSintetickihKontaStampaContent(repParams, tbl, translator))
+	@rep.Report(repParams,tbl, translator, KarticaSintetickihKontaStampaParam(repParams, translator), nil, KarticaSintetickihKontaStampaContent(repParams, tbl, translator))
 }
 
 templ KarticaSintetickihKontaStampaContent(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
 	@rep.ReportHeader(repParams)
 	@rep.ReportTitle(repParams)
-	@KarticaSintetickihKontaStampaParam(repParams, translator)
 	@PrometSubsintetickihKontaKarticaTable(tbl, translator)
 	@rep.ReportEnd(nil)
 }
@@ -278,13 +277,12 @@ templ KarticaSintetickihKontaStampaParam(repParams domain.ReportParameters, tran
 
 // KarticaSintKontaStampa renders a printable Kartica sintetičkog konta report (direct, no dialog).
 templ KarticaSintKontaStampa(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
-	@rep.Report(repParams, domain.TableData{}, translator, nil, KarticaSintKontaStampaContent(repParams, tbl, translator))
+	@rep.Report(repParams,tbl, translator,KarticaSintKontaStampaParam(repParams, translator), nil, KarticaSintKontaStampaContent(repParams, tbl, translator))
 }
 
 templ KarticaSintKontaStampaContent(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
 	@rep.ReportHeader(repParams)
-	@rep.ReportTitle(repParams)
-	@KarticaSintKontaStampaParam(repParams, translator)
+	@rep.ReportTitle(repParams)	
 	@KarticaSintKontaStampaTable(tbl, translator)
 	@rep.ReportEnd(nil)
 }
@@ -349,13 +347,12 @@ templ KarticaSintKontaStampaTable(tbl domain.TableData, translator *i18n.Service
 
 // PrometSubsintetikaVrdStampa renders a printable Promet subsintetike po VRD report.
 templ PrometSubsintetikaVrdStampa(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
-	@rep.Report(repParams, domain.TableData{}, translator, nil, PrometSubsintetikaVrdStampaContent(repParams, tbl, translator))
+	@rep.Report(repParams,tbl, translator, PrometSubsintetikaVrdStampaParam(repParams, translator), nil, PrometSubsintetikaVrdStampaContent(repParams, tbl, translator))
 }
 
 templ PrometSubsintetikaVrdStampaContent(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
 	@rep.ReportHeader(repParams)
 	@rep.ReportTitle(repParams)
-	@PrometSubsintetikaVrdStampaParam(repParams, translator)
 	@PrometSubsintetikaVrdStampaTable(tbl, translator)
 	@rep.ReportEnd(nil)
 }
@@ -374,13 +371,12 @@ templ PrometSubsintetikaVrdStampaTable(tbl domain.TableData, translator *i18n.Se
 
 // PrometAnalitickaKarticaPoMIStampa renders a printable Analitička kartica po mestima isporuke report.
 templ PrometAnalitickaKarticaPoMIStampa(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
-	@rep.Report(repParams, domain.TableData{}, translator, nil, PrometAnalitickaKarticaPoMIContent(repParams, tbl, translator))
+	@rep.Report(repParams,tbl, translator, PrometAnalitickaKarticaPoMIParam(repParams, translator), nil, PrometAnalitickaKarticaPoMIContent(repParams, tbl, translator))
 }
 
 templ PrometAnalitickaKarticaPoMIContent(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
-	@rep.ReportHeader(repParams)
+	
 	@rep.ReportTitle(repParams)
-	@PrometAnalitickaKarticaPoMIParam(repParams, translator)
 	@PrometAnalitickaKarticaPoMITable(tbl, translator)
 	@rep.ReportEnd(nil)
 }

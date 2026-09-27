@@ -9,6 +9,7 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
+	"fmt"
 	"helia/frontend/components"
 	tmpl "helia/frontend/templates"
 	"helia/i18n"
@@ -107,7 +108,7 @@ func RobnoStanjePojedinacnogArtikla(tabs domain.TabData, tbl domain.TableData, m
 			templ_7745c5c3_Var2 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div class=\"bg-blue-100 p-1 flex flex-col h-full\"><!-- Tab Navigation --><div class=\"border-b border-blue-600\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div class=\"bg-blue-100 flex flex-col h-full\"><!-- Tab Navigation --><div class=\"border-b border-blue-600\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -115,14 +116,14 @@ func RobnoStanjePojedinacnogArtikla(tabs domain.TabData, tbl domain.TableData, m
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</div><!-- Tab Content --><div class=\"flex-1 min-h-0 flex flex-col gap-1 pt-1\"><!-- Top row: parametri (left) + prikaz ukupne obrade (right) --><div class=\"grid grid-cols-[3fr_2fr] gap-2 items-stretch\"><!-- Left - Parametri --><fieldset class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1\"><legend class=\"px-1 font-semibold text-sm text-blue-900\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</div><!-- Tab Content --><div class=\"flex-1 min-h-0 flex flex-col gap-1\"><!-- Top row: parametri (left) + prikaz ukupne obrade (right) --><div class=\"grid grid-cols-[3fr_2fr] gap-1 items-stretch\"><!-- Left - Parametri --><fieldset class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1\"><legend class=\"px-1 font-semibold text-sm text-blue-900\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Parametri"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnostanja.templ`, Line: 38, Col: 93}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnostanja.templ`, Line: 39, Col: 93}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
@@ -303,7 +304,7 @@ func RobnoStanjePojedinacnogArtikla(tabs domain.TabData, tbl domain.TableData, m
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Prikaz ukupne obrade"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnostanja.templ`, Line: 161, Col: 104}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnostanja.templ`, Line: 162, Col: 104}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
@@ -344,7 +345,7 @@ func RobnoStanjePojedinacnogArtikla(tabs domain.TabData, tbl domain.TableData, m
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(tbl.TableID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnostanja.templ`, Line: 174, Col: 25}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnostanja.templ`, Line: 175, Col: 25}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
@@ -366,7 +367,7 @@ func RobnoStanjePojedinacnogArtikla(tabs domain.TabData, tbl domain.TableData, m
 	})
 }
 
-func RobnoStanjeViseArtikalaMain(tabs domain.TabData, subTabs domain.TabData, tbl domain.TableData, magValues []domain.ComboItem, btnObrada, btnPrint, btnEan13, btnNalepnice domain.Button, translator *i18n.Service) templ.Component {
+func RobnoStanjeViseArtikalaMain(tabs domain.TabData, subTabs domain.TabData, tbl domain.TableData, magValues []domain.ComboItem, btnObrada, btnPrint, btnEan13, btnNalepnice domain.Button, searchInput domain.InputControl, nDuzSint int, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -387,7 +388,7 @@ func RobnoStanjeViseArtikalaMain(tabs domain.TabData, subTabs domain.TabData, tb
 			templ_7745c5c3_Var6 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = RobnoStanjeViseArtikalaSifra(tabs, subTabs, "vise-artikala", "Prikaz stanja više artikala", tbl, magValues, btnObrada, btnPrint, btnEan13, btnNalepnice, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = RobnoStanjeViseArtikalaSifra(tabs, subTabs, "vise-artikala", "Prikaz stanja više artikala", tbl, magValues, btnObrada, btnPrint, btnEan13, btnNalepnice, searchInput, nDuzSint, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -395,7 +396,7 @@ func RobnoStanjeViseArtikalaMain(tabs domain.TabData, subTabs domain.TabData, tb
 	})
 }
 
-func RobnoStanjeViseArtikalaSifra(tabs, subTabs domain.TabData, tabName, title string, tbl domain.TableData, magValues []domain.ComboItem, btnObrada, btnPrint, btnEan13, btnNalepnice domain.Button, translator *i18n.Service) templ.Component {
+func RobnoStanjeViseArtikalaSifra(tabs, subTabs domain.TabData, tabName, title string, tbl domain.TableData, magValues []domain.ComboItem, btnObrada, btnPrint, btnEan13, btnNalepnice domain.Button, searchInput domain.InputControl, nDuzSint int, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -416,7 +417,7 @@ func RobnoStanjeViseArtikalaSifra(tabs, subTabs domain.TabData, tabName, title s
 			templ_7745c5c3_Var7 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<div class=\"bg-blue-100 p-1 flex flex-col h-full\"><div class=\"border-b border-blue-600\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<div class=\"bg-blue-100 flex flex-col h-full\"><div class=\"border-b border-blue-600\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -424,7 +425,7 @@ func RobnoStanjeViseArtikalaSifra(tabs, subTabs domain.TabData, tabName, title s
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</div><div class=\"border-b border-blue-600 pt-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</div><div class=\"border-b border-blue-600\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -432,14 +433,14 @@ func RobnoStanjeViseArtikalaSifra(tabs, subTabs domain.TabData, tabName, title s
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</div><div class=\"flex-1 min-h-0 flex flex-col gap-1 pt-1\"><div class=\"no-border bg-blue-100 p-1 rounded-lg\"><!-- Parameters in two columns --><div class=\"grid grid-cols-2 gap-2 items-start\"><!-- First column: magacin, konto range, sifra range, dobavljac --><fieldset class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1\"><legend class=\"px-1 font-semibold text-sm text-blue-900\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</div><div class=\"flex-1 min-h-0 flex flex-col gap-1\"><div class=\"no-border bg-blue-100 rounded-lg\"><!-- Parameters in two columns --><div class=\"grid grid-cols-2 gap-1 items-start\"><!-- First column: magacin, konto range, sifra range, dobavljac --><fieldset class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1\"><legend class=\"px-1 font-semibold text-sm text-blue-900\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var8 string
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Parametri"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnostanja.templ`, Line: 201, Col: 94}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnostanja.templ`, Line: 202, Col: 94}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {
@@ -465,7 +466,7 @@ func RobnoStanjeViseArtikalaSifra(tabs, subTabs domain.TabData, tabName, title s
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "odkonta", Name: "odkonta", Value: "", FieldType: "text", ClassInput: common.ClassInputTextEnabled + " flex-1 w-full", TabIndex: "2"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "odkonta", Name: "odkonta", Value: "0000", FieldType: "text", MinLength: fmt.Sprintf("%d", nDuzSint+1), MaxLength: "6", ClassInput: common.ClassInputTextEnabled + " flex-1 w-full", TabIndex: "2"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -477,7 +478,7 @@ func RobnoStanjeViseArtikalaSifra(tabs, subTabs domain.TabData, tabName, title s
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "dokonta", Name: "dokonta", Value: "", FieldType: "text", ClassInput: common.ClassInputTextEnabled + " flex-1 w-full", TabIndex: "3"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "dokonta", Name: "dokonta", Value: "9999999", FieldType: "text", MinLength: fmt.Sprintf("%d", nDuzSint+1), MaxLength: "6", ClassInput: common.ClassInputTextEnabled + " flex-1 w-full", TabIndex: "3"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -489,7 +490,7 @@ func RobnoStanjeViseArtikalaSifra(tabs, subTabs domain.TabData, tabName, title s
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "odsifre", Name: "odsifre", Value: "", FieldType: "text", ClassInput: common.ClassInputTextEnabled + " flex-1 w-full", TabIndex: "4"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "odsifre", Name: "odsifre", Value: "00", FieldType: "text", MaxLength: "6", ClassInput: common.ClassInputTextEnabled + " flex-1 w-full", TabIndex: "4"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -501,7 +502,7 @@ func RobnoStanjeViseArtikalaSifra(tabs, subTabs domain.TabData, tabName, title s
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "dosifre", Name: "dosifre", Value: "", FieldType: "text", ClassInput: common.ClassInputTextEnabled + " flex-1 w-full", TabIndex: "5"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "dosifre", Name: "dosifre", Value: "999999", FieldType: "text", MaxLength: "6", ClassInput: common.ClassInputTextEnabled + " flex-1 w-full", TabIndex: "5"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -512,7 +513,7 @@ func RobnoStanjeViseArtikalaSifra(tabs, subTabs domain.TabData, tabName, title s
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Opcije prikaza/štampe"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnostanja.templ`, Line: 232, Col: 107}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnostanja.templ`, Line: 233, Col: 107}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
@@ -522,27 +523,27 @@ func RobnoStanjeViseArtikalaSifra(tabs, subTabs domain.TabData, tabName, title s
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.CheckboxField(domain.CheckboxFieldConfig{ID: "finansijskiiznos", Name: "finansijskiiznos", LabelText: translator.Label("Finansijski iznos"), IsChecked: true, ClassCheckbox: common.ClassCheckbox + " mr-2", ClassLabel: common.ClassLabel + " flex items-center"}, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.CheckboxField(domain.CheckboxFieldConfig{ID: "finansijskiiznos", Name: "finansijskiiznos", LabelText: translator.Label("Finansijski iznos"), IsChecked: true, ClassCheckbox: common.ClassCheckbox + " mr-2", ClassLabel: common.ClassLabel + " flex items-center", TabIndex: "6"}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.CheckboxField(domain.CheckboxFieldConfig{ID: "artiklisastanjem", Name: "artiklisastanjem", LabelText: translator.Label("Artikli sa stanjem"), ClassCheckbox: common.ClassCheckbox + " mr-2", ClassLabel: common.ClassLabel + " flex items-center"}, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.CheckboxField(domain.CheckboxFieldConfig{ID: "artiklisastanjem", Name: "artiklisastanjem", LabelText: translator.Label("Artikli sa stanjem"), ClassCheckbox: common.ClassCheckbox + " mr-2", ClassLabel: common.ClassLabel + " flex items-center", TabIndex: "7"}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.CheckboxField(domain.CheckboxFieldConfig{ID: "artiklibezstanja", Name: "artiklibezstanja", LabelText: translator.Label("Artikli bez stanja"), ClassCheckbox: common.ClassCheckbox + " mr-2", ClassLabel: common.ClassLabel + " flex items-center"}, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.CheckboxField(domain.CheckboxFieldConfig{ID: "artiklibezstanja", Name: "artiklibezstanja", LabelText: translator.Label("Artikli bez stanja"), ClassCheckbox: common.ClassCheckbox + " mr-2", ClassLabel: common.ClassLabel + " flex items-center", TabIndex: "8"}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.CheckboxField(domain.CheckboxFieldConfig{ID: "prosecnacenastanje", Name: "prosecnacenastanje", LabelText: translator.Label("Prosečna cena - stanje"), ClassCheckbox: common.ClassCheckbox + " mr-2", ClassLabel: common.ClassLabel + " flex items-center"}, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.CheckboxField(domain.CheckboxFieldConfig{ID: "prosecnacenastanje", Name: "prosecnacenastanje", LabelText: translator.Label("Prosečna cena - stanje"), ClassCheckbox: common.ClassCheckbox + " mr-2", ClassLabel: common.ClassLabel + " flex items-center", TabIndex: "9"}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.CheckboxField(domain.CheckboxFieldConfig{ID: "prosecnacenaulaz", Name: "prosecnacenaulaz", LabelText: translator.Label("Prosečna cena - ulaz"), ClassCheckbox: common.ClassCheckbox + " mr-2", ClassLabel: common.ClassLabel + " flex items-center"}, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.CheckboxField(domain.CheckboxFieldConfig{ID: "prosecnacenaulaz", Name: "prosecnacenaulaz", LabelText: translator.Label("Prosečna cena - ulaz"), ClassCheckbox: common.ClassCheckbox + " mr-2", ClassLabel: common.ClassLabel + " flex items-center", TabIndex: "10"}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.CheckboxField(domain.CheckboxFieldConfig{ID: "zadobavljaca", Name: "zadobavljaca", LabelText: translator.Label("Za dobavljača"), ClassCheckbox: common.ClassCheckbox + " mr-2", ClassLabel: common.ClassLabel + " flex items-center"}, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.CheckboxField(domain.CheckboxFieldConfig{ID: "zadobavljaca", Name: "zadobavljaca", LabelText: translator.Label("Za dobavljača"), ClassCheckbox: common.ClassCheckbox + " mr-2", ClassLabel: common.ClassLabel + " flex items-center", TabIndex: "11"}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -554,7 +555,7 @@ func RobnoStanjeViseArtikalaSifra(tabs, subTabs domain.TabData, tabName, title s
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "odmeseca", Name: "odmeseca", Value: "1", MaxLength: "2", FieldType: "text", ClassInput: common.ClassInputTextEnabled + " flex-1 w-full", TabIndex: "4"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "odmeseca", Name: "odmeseca", Value: "1", MaxLength: "2", FieldType: "text", ClassInput: common.ClassInputTextEnabled + " flex-1 w-full", TabIndex: "12"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -566,7 +567,7 @@ func RobnoStanjeViseArtikalaSifra(tabs, subTabs domain.TabData, tabName, title s
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "domeseca", Name: "domeseca", Value: "99", MaxLength: "2", FieldType: "text", ClassInput: common.ClassInputTextEnabled + " flex-1 w-full", TabIndex: "5"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "domeseca", Name: "domeseca", Value: "12", MaxLength: "2", FieldType: "text", ClassInput: common.ClassInputTextEnabled + " flex-1 w-full", TabIndex: "13"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -590,7 +591,19 @@ func RobnoStanjeViseArtikalaSifra(tabs, subTabs domain.TabData, tabName, title s
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "</div></div><div class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex-1 min-h-0 overflow-hidden\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "</div></div><!-- Group Data Table --><div class=\"border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = components.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = components.Search_Part(tbl, searchInput).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "<!-- Table --><div class=\"flex-1 overflow-x-auto overflow-y-auto min-h-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -598,7 +611,7 @@ func RobnoStanjeViseArtikalaSifra(tabs, subTabs domain.TabData, tabName, title s
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "</div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "</div></div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -606,7 +619,7 @@ func RobnoStanjeViseArtikalaSifra(tabs, subTabs domain.TabData, tabName, title s
 	})
 }
 
-func RobnoStanjeViseArtikalGrupa(tabs, subTabs domain.TabData, tabName, title string, tbl domain.TableData, magValues []domain.ComboItem, btnObrada, btnPrint, btnEan13, btnNalepnice domain.Button, translator *i18n.Service) templ.Component {
+func RobnoStanjeViseArtikalGrupa(tabs, subTabs domain.TabData, tabName, title string, tbl domain.TableData, magValues []domain.ComboItem, btnObrada, btnPrint, btnEan13, btnNalepnice domain.Button, searchInput domain.InputControl, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -627,7 +640,7 @@ func RobnoStanjeViseArtikalGrupa(tabs, subTabs domain.TabData, tabName, title st
 			templ_7745c5c3_Var10 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "<div class=\"bg-blue-100 p-1 flex flex-col h-full\"><div class=\"border-b border-blue-600\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "<div class=\"bg-blue-100 flex flex-col h-full\"><div class=\"border-b border-blue-600\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -635,7 +648,7 @@ func RobnoStanjeViseArtikalGrupa(tabs, subTabs domain.TabData, tabName, title st
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "</div><div class=\"border-b border-blue-600 pt-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "</div><div class=\"border-b border-blue-600\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -643,20 +656,20 @@ func RobnoStanjeViseArtikalGrupa(tabs, subTabs domain.TabData, tabName, title st
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "</div><div class=\"flex-1 min-h-0 flex flex-col gap-1 pt-1\"><div class=\"no-border bg-blue-100 p-1 rounded-lg\"><!-- Parameters in two columns --><div class=\"grid grid-cols-2 gap-2 items-stretch\"><!-- First column: magacin, grupa range, sifra range --><fieldset class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1\"><legend class=\"px-1 font-semibold text-sm text-blue-900\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "</div><div class=\"flex-1 min-h-0 flex flex-col gap-1\"><div class=\"no-border bg-blue-100 rounded-lg\"><!-- Parameters in two columns --><div class=\"grid grid-cols-2 gap-1 items-stretch\"><!-- First column: magacin, grupa range, sifra range --><fieldset class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1\"><legend class=\"px-1 font-semibold text-sm text-blue-900\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var11 string
 		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Parametri"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnostanja.templ`, Line: 287, Col: 94}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnostanja.templ`, Line: 294, Col: 94}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "</legend><!-- Magacin Combo --><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "</legend><!-- Magacin Combo --><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -668,7 +681,7 @@ func RobnoStanjeViseArtikalGrupa(tabs, subTabs domain.TabData, tabName, title st
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "</div><!-- Group range --><div class=\"grid grid-cols-2 gap-2\"><div class=\"flex items-center gap-1 min-w-0\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "</div><!-- Group range --><div class=\"grid grid-cols-2 gap-2\"><div class=\"flex items-center gap-1 min-w-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -680,7 +693,7 @@ func RobnoStanjeViseArtikalGrupa(tabs, subTabs domain.TabData, tabName, title st
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "</div><div class=\"flex items-center gap-1 min-w-0\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "</div><div class=\"flex items-center gap-1 min-w-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -692,7 +705,7 @@ func RobnoStanjeViseArtikalGrupa(tabs, subTabs domain.TabData, tabName, title st
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "</div></div><!-- Sifra range --><div class=\"grid grid-cols-2 gap-2\"><div class=\"flex items-center gap-1 min-w-0\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "</div></div><!-- Sifra range --><div class=\"grid grid-cols-2 gap-2\"><div class=\"flex items-center gap-1 min-w-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -704,7 +717,7 @@ func RobnoStanjeViseArtikalGrupa(tabs, subTabs domain.TabData, tabName, title st
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "</div><div class=\"flex items-center gap-1 min-w-0\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "</div><div class=\"flex items-center gap-1 min-w-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -716,20 +729,20 @@ func RobnoStanjeViseArtikalGrupa(tabs, subTabs domain.TabData, tabName, title st
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "</div></div></fieldset><!-- Second column: prikaži opcije štampe + mesec range --><fieldset class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1\"><legend class=\"px-1 font-semibold text-sm text-blue-900\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "</div></div></fieldset><!-- Second column: prikaži opcije štampe + mesec range --><fieldset class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1\"><legend class=\"px-1 font-semibold text-sm text-blue-900\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var12 string
 		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Prikaži opcije štampe"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnostanja.templ`, Line: 318, Col: 108}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnostanja.templ`, Line: 325, Col: 108}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "</legend><!-- Two-column layout: checkboxes stacked (left) + month range (right) --><div class=\"grid grid-cols-2 gap-x-2 items-start\"><!-- Checkboxes (first column, one under the other) --><div class=\"flex flex-col gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "</legend><!-- Two-column layout: checkboxes stacked (left) + month range (right) --><div class=\"grid grid-cols-2 gap-x-2 items-start\"><!-- Checkboxes (first column, one under the other) --><div class=\"flex flex-col gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -741,7 +754,7 @@ func RobnoStanjeViseArtikalGrupa(tabs, subTabs domain.TabData, tabName, title st
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "</div><!-- Month range (second column) --><div class=\"flex flex-col gap-1\"><div class=\"flex items-center gap-1 min-w-0\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "</div><!-- Month range (second column) --><div class=\"flex flex-col gap-1\"><div class=\"flex items-center gap-1 min-w-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -753,7 +766,7 @@ func RobnoStanjeViseArtikalGrupa(tabs, subTabs domain.TabData, tabName, title st
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "</div><div class=\"flex items-center gap-1 min-w-0\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "</div><div class=\"flex items-center gap-1 min-w-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -765,7 +778,7 @@ func RobnoStanjeViseArtikalGrupa(tabs, subTabs domain.TabData, tabName, title st
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "</div></div></div></fieldset></div><!-- Buttons row: all four buttons side by side --><div class=\"flex justify-end gap-1 pt-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "</div></div></div></fieldset></div><!-- Buttons row: all four buttons side by side --><div class=\"flex justify-end gap-1 pt-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -785,7 +798,19 @@ func RobnoStanjeViseArtikalGrupa(tabs, subTabs domain.TabData, tabName, title st
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "</div></div><div class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex-1 min-h-0 overflow-hidden\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "</div></div><!-- Group Data Table --><div class=\"border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = components.LoadingSpinner().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = components.Search_Part(tbl, searchInput).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "<!-- Table --><div class=\"flex-1 overflow-x-auto overflow-y-auto min-h-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -793,7 +818,7 @@ func RobnoStanjeViseArtikalGrupa(tabs, subTabs domain.TabData, tabName, title st
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "</div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "</div></div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -801,7 +826,7 @@ func RobnoStanjeViseArtikalGrupa(tabs, subTabs domain.TabData, tabName, title st
 	})
 }
 
-func RobnoStanjeSubsintetickogKonta(tabs domain.TabData, tbl domain.TableData, magValues []domain.ComboItem, btnObrada, btnPrint domain.Button, total domain.SaldaDto, saldaURLtotals string, translator *i18n.Service) templ.Component {
+func RobnoStanjeSubsintetickogKonta(tabs domain.TabData, tbl domain.TableData, magValues []domain.ComboItem, btnObrada, btnPrint domain.Button, total domain.RobnoStanjaTotal, saldaURLtotals string, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -822,7 +847,7 @@ func RobnoStanjeSubsintetickogKonta(tabs domain.TabData, tbl domain.TableData, m
 			templ_7745c5c3_Var13 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "<div class=\"bg-blue-100 p-1 flex flex-col h-full\"><!-- Tab Navigation --><div class=\"bg-blue-100 border-b border-blue-600\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "<div class=\"bg-blue-100 flex flex-col h-full\"><!-- Tab Navigation --><div class=\"bg-blue-100 border-b border-blue-600\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -830,20 +855,20 @@ func RobnoStanjeSubsintetickogKonta(tabs domain.TabData, tbl domain.TableData, m
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "</div><!-- Tab Content --><div id=\"tab3\"><!-- Main Grid - Two columns 1/2 to 1/2 --><div class=\"grid grid-cols-2 gap-1\"><!-- Left Column - Parameters --><div class=\"border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg flex flex-col\"><div class=\"text-blue-800 font-bold text-xs mb-1 border-b border-gray-400 pb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, "</div><!-- Tab Content --><div id=\"tab3\"><!-- Main Grid - Two columns 1/2 to 1/2 --><div class=\"grid grid-cols-2 gap-1\"><!-- Left Column - Parameters --><div class=\"border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg flex flex-col\"><div class=\"text-blue-800 font-bold text-xs mb-1 border-b border-gray-400 pb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var14 string
 		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Parametri"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnostanja.templ`, Line: 368, Col: 36}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnostanja.templ`, Line: 381, Col: 36}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "</div><!-- Magacin Combo --><div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, "</div><!-- Magacin Combo --><div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -867,7 +892,7 @@ func RobnoStanjeSubsintetickogKonta(tabs domain.TabData, tbl domain.TableData, m
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, "</div><!-- Konto Field --><div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "</div><!-- Konto Field --><div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -920,7 +945,7 @@ func RobnoStanjeSubsintetickogKonta(tabs domain.TabData, tbl domain.TableData, m
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, "</div><!-- Obradi Button --><div class=\"flex justify-end gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 53, "</div><!-- Obradi Button --><div class=\"flex justify-end gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -932,28 +957,41 @@ func RobnoStanjeSubsintetickogKonta(tabs domain.TabData, tbl domain.TableData, m
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "</div><div class=\"no-border mt-auto mb-1 bg-blue-100 border-0 mt-2 p-1 rounded-lg\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 54, "</div><div class=\"no-border mt-auto bg-blue-100 border-0 mt-2 rounded-lg\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = SaldaTotalValues(total, saldaURLtotals, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = RobnoStanjaSubsintetikaTotalValues(total, saldaURLtotals, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 53, "</div></div><!-- Right Column - Monthly Data Table --><div class=\"border bg-blue-100 border border-blue-400 mt-1 mb-1 rounded-lg flex flex-col\"><div class=\"text-blue-800 font-bold text-xs p-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 55, "</div></div><!-- Right Column - Monthly Data Table --><div class=\"border bg-blue-100 border border-blue-400 mt-1 mb-1 rounded-lg flex flex-col\"><div class=\"text-blue-800 font-bold text-xs p-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var15 string
 		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Mesečna salda"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnostanja.templ`, Line: 439, Col: 41}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnostanja.templ`, Line: 452, Col: 41}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 54, "</div><!-- Monthly Data Table --><div class=\"border bg-blue-100 rounded-lg p-1 flex flex-col min-h-0 overflow-hidden flex-1 relative\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 56, "</div><!-- Monthly Data Table --><div id=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var16 string
+		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(tbl.TableID)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnostanja.templ`, Line: 455, Col: 26}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 57, "\" class=\"border bg-blue-100 rounded-lg p-1 flex flex-col min-h-0 overflow-hidden flex-1 relative\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -961,7 +999,20 @@ func RobnoStanjeSubsintetickogKonta(tabs domain.TabData, tbl domain.TableData, m
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 55, "<div class=\"flex-1 overflow-y-auto\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 58, "<div id=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var17 string
+		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(tbl.TableID)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnostanja.templ`, Line: 457, Col: 27}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 59, "\" class=\"flex-1 overflow-y-auto\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -969,20 +1020,20 @@ func RobnoStanjeSubsintetickogKonta(tabs domain.TabData, tbl domain.TableData, m
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 56, "</div></div></div></div><!-- Chart Section --><div class=\"border bg-blue-50 border border-blue-400 p-1 rounded-lg\"><div class=\"text-blue-800 font-bold text-xs mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 60, "</div></div></div></div><!-- Chart Section --><div class=\"border bg-blue-50 border border-blue-400 p-1 rounded-lg\"><div class=\"text-blue-800 font-bold text-xs mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var16 string
-		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Prikaz salda"))
+		var templ_7745c5c3_Var18 string
+		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Text("Prikaz salda"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnostanja.templ`, Line: 453, Col: 38}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnostanja.templ`, Line: 466, Col: 38}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 57, "</div><div id=\"subsintetickikontochart-container\" class=\"flex-1 min-h-80 bg-white rounded border border-gray-300 p-2\"><canvas id=\"subsintetickikontochart\"></canvas></div></div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 61, "</div><div id=\"subsintetickikontochart-container\" class=\"flex-1 min-h-80 bg-white rounded border border-gray-300 p-2\"><canvas id=\"subsintetickikontochart\"></canvas></div></div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1010,12 +1061,12 @@ func RobnoSvodjenjeZaliha(tabs domain.TabData, tbl domain.TableData, magValues, 
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var17 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var17 == nil {
-			templ_7745c5c3_Var17 = templ.NopComponent
+		templ_7745c5c3_Var19 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var19 == nil {
+			templ_7745c5c3_Var19 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 58, "<div class=\"bg-blue-100 p-1 flex flex-col h-full\"><div class=\"border-b border-blue-600\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 62, "<div class=\"bg-blue-100 p-1 flex flex-col h-full\"><div class=\"border-b border-blue-600\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1023,20 +1074,20 @@ func RobnoSvodjenjeZaliha(tabs domain.TabData, tbl domain.TableData, magValues, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 59, "</div><div class=\"flex-1 min-h-0 flex flex-col gap-1 pt-1\"><div class=\"grid grid-cols-2 gap-2 items-stretch\"><!-- Left column: magacin, način svođenja, opseg šifri, obrada --><fieldset class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1\"><legend class=\"px-1 font-semibold text-sm text-blue-900\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 63, "</div><div class=\"flex-1 min-h-0 flex flex-col gap-1 pt-1\"><div class=\"grid grid-cols-2 gap-2 items-stretch\"><!-- Left column: magacin, način svođenja, opseg šifri, obrada --><fieldset class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1\"><legend class=\"px-1 font-semibold text-sm text-blue-900\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var18 string
-		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Parametri za obradu"))
+		var templ_7745c5c3_Var20 string
+		templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Parametri za obradu"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnostanja.templ`, Line: 473, Col: 103}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnostanja.templ`, Line: 486, Col: 103}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 60, "</legend><div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 64, "</legend><div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1048,7 +1099,7 @@ func RobnoSvodjenjeZaliha(tabs domain.TabData, tbl domain.TableData, magValues, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 61, "</div><!-- Two columns: radio set (left) + šifre range i obrada (right) --><div class=\"grid grid-cols-2 gap-2 items-start mb-1\"><!-- Left column: način svođenja --><div class=\"flex flex-col gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 65, "</div><!-- Two columns: radio set (left) + šifre range i obrada (right) --><div class=\"grid grid-cols-2 gap-2 items-start mb-1\"><!-- Left column: način svođenja --><div class=\"flex flex-col gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1068,7 +1119,7 @@ func RobnoSvodjenjeZaliha(tabs domain.TabData, tbl domain.TableData, magValues, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 62, "</div><!-- Right column: opseg šifri + checkbox --><div class=\"flex flex-col gap-1\"><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 66, "</div><!-- Right column: opseg šifri + checkbox --><div class=\"flex flex-col gap-1\"><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1080,7 +1131,7 @@ func RobnoSvodjenjeZaliha(tabs domain.TabData, tbl domain.TableData, magValues, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 63, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 67, "</div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1092,7 +1143,7 @@ func RobnoSvodjenjeZaliha(tabs domain.TabData, tbl domain.TableData, magValues, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 64, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 68, "</div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1100,7 +1151,7 @@ func RobnoSvodjenjeZaliha(tabs domain.TabData, tbl domain.TableData, magValues, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 65, "</div><!-- Obradi / Štampaj (right aligned in this column) --><div class=\"flex justify-end gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 69, "</div><!-- Obradi / Štampaj (right aligned in this column) --><div class=\"flex justify-end gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1112,20 +1163,20 @@ func RobnoSvodjenjeZaliha(tabs domain.TabData, tbl domain.TableData, magValues, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 66, "</div></div></div></fieldset><!-- Right column: vrsta naloga za knjiženje --><fieldset class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1\"><legend class=\"px-1 font-semibold text-sm text-blue-900\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 70, "</div></div></div></fieldset><!-- Right column: vrsta naloga za knjiženje --><fieldset class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1\"><legend class=\"px-1 font-semibold text-sm text-blue-900\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var19 string
-		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Podaci za knjizenje"))
+		var templ_7745c5c3_Var21 string
+		templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Podaci za knjizenje"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnostanja.templ`, Line: 510, Col: 103}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnostanja.templ`, Line: 523, Col: 103}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 67, "</legend><!-- Row 1: Vrsta naloga --><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 71, "</legend><!-- Row 1: Vrsta naloga --><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1137,7 +1188,7 @@ func RobnoSvodjenjeZaliha(tabs domain.TabData, tbl domain.TableData, magValues, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 68, "</div><!-- Row 2: OJ + Mesto troška --><div class=\"grid grid-cols-2 gap-1\"><div class=\"flex items-center gap-1 min-w-0\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 72, "</div><!-- Row 2: OJ + Mesto troška --><div class=\"grid grid-cols-2 gap-1\"><div class=\"flex items-center gap-1 min-w-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1158,7 +1209,7 @@ func RobnoSvodjenjeZaliha(tabs domain.TabData, tbl domain.TableData, magValues, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 69, "</div><div class=\"flex items-center gap-1 min-w-0\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 73, "</div><div class=\"flex items-center gap-1 min-w-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1170,7 +1221,7 @@ func RobnoSvodjenjeZaliha(tabs domain.TabData, tbl domain.TableData, magValues, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 70, "</div></div><!-- Row 3: Broj naloga, Datum naloga, Datum obrade --><div class=\"grid grid-cols-3 gap-1\"><div class=\"flex items-center gap-1 min-w-0\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 74, "</div></div><!-- Row 3: Broj naloga, Datum naloga, Datum obrade --><div class=\"grid grid-cols-3 gap-1\"><div class=\"flex items-center gap-1 min-w-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1182,7 +1233,7 @@ func RobnoSvodjenjeZaliha(tabs domain.TabData, tbl domain.TableData, magValues, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 71, "</div><div class=\"flex items-center gap-1 min-w-0\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 75, "</div><div class=\"flex items-center gap-1 min-w-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1194,7 +1245,7 @@ func RobnoSvodjenjeZaliha(tabs domain.TabData, tbl domain.TableData, magValues, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 72, "</div><div class=\"flex items-center gap-1 min-w-0\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 76, "</div><div class=\"flex items-center gap-1 min-w-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1206,7 +1257,7 @@ func RobnoSvodjenjeZaliha(tabs domain.TabData, tbl domain.TableData, magValues, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 73, "</div></div><!-- Row 4: Opis knjiženja --><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 77, "</div></div><!-- Row 4: Opis knjiženja --><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1218,7 +1269,7 @@ func RobnoSvodjenjeZaliha(tabs domain.TabData, tbl domain.TableData, magValues, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 74, "</div><!-- Row 5: Knjiži --><div class=\"flex justify-end mt-auto\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 78, "</div><!-- Row 5: Knjiži --><div class=\"flex justify-end mt-auto\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1226,7 +1277,7 @@ func RobnoSvodjenjeZaliha(tabs domain.TabData, tbl domain.TableData, magValues, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 75, "</div></fieldset></div><div class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex-1 min-h-0 overflow-hidden\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 79, "</div></fieldset></div><div class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex-1 min-h-0 overflow-hidden\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1234,7 +1285,7 @@ func RobnoSvodjenjeZaliha(tabs domain.TabData, tbl domain.TableData, magValues, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 76, "</div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 80, "</div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1262,12 +1313,12 @@ func RobnoStanjeArtikalUkupnaObrada(total domain.RobnoStanjaTotal, translator *i
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var20 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var20 == nil {
-			templ_7745c5c3_Var20 = templ.NopComponent
+		templ_7745c5c3_Var22 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var22 == nil {
+			templ_7745c5c3_Var22 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 77, "<div id=\"robnostanja-artikal-ukupna-obrada\" class=\"flex flex-col gap-1\" hx-get=\"/api/robno-stanja/ukupna-obrada\" hx-trigger=\"click from:#obrada-btn\" hx-target=\"#robnostanja-artikal-ukupna-obrada\" hx-swap=\"innerHTML\" hx-vals=\"js:{\r\n            magacin: document.getElementById(&#39;magacin&#39;)?.value,\r\n            konto: document.getElementById(&#39;konto&#39;)?.value,\r\n            sifra: document.getElementById(&#39;sifra&#39;)?.value\r\n        }\"><!-- Ulaz | Duguje --><div class=\"grid grid-cols-2 gap-1 items-center\"><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 81, "<div id=\"robnostanja-artikal-ukupna-obrada\" class=\"flex flex-col gap-1\" hx-get=\"/api/robno-stanja/totalvalues\" hx-trigger=\"click from:#obrada-btn\" hx-target=\"#totalvalues\" hx-swap=\"innerHTML\" hx-vals=\"js:{\r\n            magacin: document.getElementById(&#39;magacin&#39;)?.value,\r\n            konto: document.getElementById(&#39;konto&#39;)?.value,\r\n            sifra: document.getElementById(&#39;sifra&#39;)?.value\r\n        }\"><!-- Ulaz | Duguje --><div class=\"grid grid-cols-2 gap-1 items-center\"><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1279,7 +1330,7 @@ func RobnoStanjeArtikalUkupnaObrada(total domain.RobnoStanjaTotal, translator *i
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 78, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 82, "</div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1291,7 +1342,7 @@ func RobnoStanjeArtikalUkupnaObrada(total domain.RobnoStanjaTotal, translator *i
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 79, "</div></div><!-- Izlaz | Potražuje --><div class=\"grid grid-cols-2 gap-1 items-center\"><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 83, "</div></div><!-- Izlaz | Potražuje --><div class=\"grid grid-cols-2 gap-1 items-center\"><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1303,7 +1354,7 @@ func RobnoStanjeArtikalUkupnaObrada(total domain.RobnoStanjaTotal, translator *i
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 80, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 84, "</div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1315,7 +1366,7 @@ func RobnoStanjeArtikalUkupnaObrada(total domain.RobnoStanjaTotal, translator *i
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 81, "</div></div><!-- Stanje | Saldo --><div class=\"grid grid-cols-2 gap-1 items-center\"><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 85, "</div></div><!-- Stanje | Saldo --><div class=\"grid grid-cols-2 gap-1 items-center\"><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1327,7 +1378,7 @@ func RobnoStanjeArtikalUkupnaObrada(total domain.RobnoStanjaTotal, translator *i
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 82, "</div><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 86, "</div><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1339,7 +1390,7 @@ func RobnoStanjeArtikalUkupnaObrada(total domain.RobnoStanjaTotal, translator *i
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 83, "</div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 87, "</div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1347,7 +1398,7 @@ func RobnoStanjeArtikalUkupnaObrada(total domain.RobnoStanjaTotal, translator *i
 	})
 }
 
-func SaldaTotalValues(total domain.SaldaDto, sourceUrl string, translator *i18n.Service) templ.Component {
+func RobnoStanjaSubsintetikaTotalValues(total domain.RobnoStanjaTotal, sourceUrl string, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -1363,77 +1414,64 @@ func SaldaTotalValues(total domain.SaldaDto, sourceUrl string, translator *i18n.
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var21 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var21 == nil {
-			templ_7745c5c3_Var21 = templ.NopComponent
+		templ_7745c5c3_Var23 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var23 == nil {
+			templ_7745c5c3_Var23 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 84, "<div id=\"totalvalues\" class=\"border p-1 rounded-lg flex flex-col\" hx-get=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var22 string
-		templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(sourceUrl)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnostanja.templ`, Line: 627, Col: 20}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 85, "\" hx-trigger=\"click from:#obrada-btn\" hx-target=\"#totalvalues\" hx-swap=\"innerHTML\" hx-vals=\"js:{\r\n            konto: document.getElementById(&#39;konto&#39;)?.value,\r\n            sifra: document.getElementById(&#39;sifra&#39;)?.value,\r\n            tipkonta: document.querySelector(&#39;input[name=\\&#39;tipkonta\\&#39;]:checked&#39;)?.value,\r\n\t\t\todkonta: document.getElementById(&#39;odkonta&#39;)?.value,\r\n\t\t\tdokonta: document.getElementById(&#39;dokonta&#39;)?.value,\r\n\t\t\todsifre: document.getElementById(&#39;odsifre&#39;)?.value,\r\n\t\t\tdosifre: document.getElementById(&#39;dosifre&#39;)?.value,\r\n\t\t\toddatuma: document.getElementById(&#39;oddatuma&#39;)?.value,\r\n\t\t\tdodatuma: document.getElementById(&#39;dodatuma&#39;)?.value,\r\n\t\t\tklasa: document.querySelector(&#39;input[name=\\&#39;klasa\\&#39;]:checked&#39;)?.value\r\n        }\"><div class=\"grid grid-cols-4 gap-1 mb-px text-sm font-medium text-gray-700 h-6 items-center\"><div class=\"text-center\"></div><div class=\"text-center\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var23 string
-		templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Duguje"))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnostanja.templ`, Line: 646, Col: 56}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 86, "</div><div class=\"text-center\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 88, "<div id=\"robnostanja-subsintetika-totalvalues\" class=\"border border-blue-300 p-1 rounded-lg flex flex-col\" hx-get=\"/api/robno-stanja/subsintetika/totalvalues\" hx-trigger=\"click from:#obrada-btn\" hx-target=\"#robnostanja-subsintetika-totalvalues\" hx-swap=\"innerHTML\" hx-vals=\"js:{\r\n            konto: document.getElementById(&#39;konto&#39;)?.value,\r\n\t\t\tmagacin: document.getElementById(&#39;magacin&#39;)?.value,\r\n            sifra: document.getElementById(&#39;sifra&#39;)?.value,\r\n        }\"><div class=\"grid grid-cols-4 gap-1 mb-px text-sm font-medium text-gray-700 h-6 items-center\"><div class=\"text-center\"></div><div class=\"text-center\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var24 string
-		templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Potražuje"))
+		templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Duguje"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnostanja.templ`, Line: 647, Col: 60}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnostanja.templ`, Line: 652, Col: 56}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 87, "</div><div class=\"text-center\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 89, "</div><div class=\"text-center\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var25 string
-		templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Saldo"))
+		templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Potražuje"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnostanja.templ`, Line: 648, Col: 55}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnostanja.templ`, Line: 653, Col: 60}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 88, "</div></div><div class=\"grid grid-cols-4 gap-1 mb-1 h-6 items-center\"><div class=\"text-sm text-gray-600\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 90, "</div><div class=\"text-center\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var26 string
-		templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Početno stanje"))
+		templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Saldo"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnostanja.templ`, Line: 651, Col: 75}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnostanja.templ`, Line: 654, Col: 55}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 89, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 91, "</div></div><div class=\"grid grid-cols-4 gap-1 mb-1 h-6 items-center\"><div class=\"text-sm text-gray-600\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var27 string
+		templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Početno stanje"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnostanja.templ`, Line: 657, Col: 75}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 92, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1470,20 +1508,20 @@ func SaldaTotalValues(total domain.SaldaDto, sourceUrl string, translator *i18n.
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 90, "</div><div class=\"grid grid-cols-4 gap-1 mb-1 h-6 items-center\"><div class=\"text-sm text-gray-600\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 93, "</div><div class=\"grid grid-cols-4 gap-1 mb-1 h-6 items-center\"><div class=\"text-sm text-gray-600\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var27 string
-		templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Tekući promet"))
+		var templ_7745c5c3_Var28 string
+		templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Tekući promet"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnostanja.templ`, Line: 678, Col: 74}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnostanja.templ`, Line: 684, Col: 74}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 91, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 94, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1520,20 +1558,20 @@ func SaldaTotalValues(total domain.SaldaDto, sourceUrl string, translator *i18n.
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 92, "</div><div class=\"grid grid-cols-4 gap-1 h-6 items-center mt-auto\"><div class=\"text-sm text-gray-600\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 95, "</div><div class=\"grid grid-cols-4 gap-1 h-6 items-center mt-auto\"><div class=\"text-sm text-gray-600\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var28 string
-		templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Ukupan promet"))
+		var templ_7745c5c3_Var29 string
+		templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Ukupan promet"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnostanja.templ`, Line: 705, Col: 73}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnostanja.templ`, Line: 711, Col: 73}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 93, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 96, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1570,7 +1608,7 @@ func SaldaTotalValues(total domain.SaldaDto, sourceUrl string, translator *i18n.
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 94, "</div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 97, "</div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1594,12 +1632,12 @@ func ChartScript() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var29 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var29 == nil {
-			templ_7745c5c3_Var29 = templ.NopComponent
+		templ_7745c5c3_Var30 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var30 == nil {
+			templ_7745c5c3_Var30 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 95, "<script>\r\n\t\t// Use a flag to prevent duplicate initialization\r\n\t\tif (typeof window._chartInitialized === 'undefined') {\r\n\t\t\twindow._chartInitialized = false;\r\n\t\t}\r\n\r\n\t\tvar subsintetickiKontoChartInstance = null;\r\n\r\n\t\tfunction initializeSubsintetickiKontoChart() {\r\n\t\t\tconst ctxElement = document.getElementById('subsintetickikontochart');\r\n\t\t\tconsole.log(\"ctxElement:\", ctxElement);\r\n\t\t\tif (!ctxElement) {\r\n\t\t\t\tconsole.log('Chart canvas not found');\r\n\t\t\t\treturn;\r\n\t\t\t}\r\n\r\n\t\t\t// Get the context properly\r\n\t\t\tconst ctx = ctxElement.getContext('2d');\r\n\r\n\t\t\t// Extract data from table rows in tab3\r\n\t\t\tconst tab3 = document.getElementById('tab3');\r\n\t\t\tconsole.log(\"tab3:\", tab3);\r\n\t\t\tif (!tab3) {\r\n\t\t\t\treturn;\r\n\t\t\t}\r\n\t\t\t\r\n\t\t\t// Get table data from the page - find the table in tab1\r\n\t\t\tconst months = [];\r\n\t\t\tconst duguje = [];\r\n\t\t\tconst potrazuje = [];\r\n\t\t\tconst saldo = [];\r\n\t\t\t\r\n\t\t\tconst tableRows = tab3.querySelectorAll('table tbody tr');\r\n\t\t\t\r\n\t\t\t\r\n\t\t\tif (tableRows.length === 0) {\r\n\t\t\t\tconsole.log('No table rows found');\r\n\t\t\t\treturn;\r\n\t\t\t}\r\n\t\t\t\r\n\t\t\ttableRows.forEach(row => {\r\n\t\t\t\tconst cells = row.querySelectorAll('td');\r\n\t\t\t\tif (cells.length >= 4) {\r\n\t\t\t\t\tmonths.push(cells[0].textContent.trim());\r\n\t\t\t\t\tduguje.push(parseFloat(cells[1].textContent.replace(/,/g, '').replace(/\\./g, '')) || 0);\r\n\t\t\t\t\tpotrazuje.push(parseFloat(cells[2].textContent.replace(/,/g, '').replace(/\\./g, '')) || 0);\r\n\t\t\t\t\tsaldo.push(parseFloat(cells[3].textContent.replace(/,/g, '').replace(/\\./g, '')) || 0);\r\n\t\t\t\t}\r\n\t\t\t});\r\n\r\n\t\t\t// Only create chart if we have data\r\n\t\t\tif (months.length === 0) {\r\n\t\t\t\tconsole.log('No data found for chart');\r\n\t\t\t\treturn;\r\n\t\t\t}\r\n\r\n\t\t\t// Destroy previous chart instance if it exists\r\n\t\t\tif (subsintetickiKontoChartInstance) {\r\n\t\t\t\tsubsintetickiKontoChartInstance.destroy();\r\n\t\t\t\tsubsintetickiKontoChartInstance = null;\r\n\t\t\t}\r\n\r\n\t\t\t// Create new chart\r\n\t\t\ttry {\r\n\t\t\t\tsubsintetickiKontoChartInstance = new Chart(ctx, {\r\n\t\t\t\t\ttype: 'bar',\r\n\t\t\t\t\tdata: {\r\n\t\t\t\t\t\tlabels: months,\r\n\t\t\t\t\t\tdatasets: [\r\n\t\t\t\t\t\t\t{\r\n\t\t\t\t\t\t\t\tlabel: 'Duguje',\r\n\t\t\t\t\t\t\t\tdata: duguje,\r\n\t\t\t\t\t\t\t\tbackgroundColor: 'rgba(59, 130, 246, 0.5)',\r\n\t\t\t\t\t\t\t\tborderColor: 'rgba(59, 130, 246, 1)',\r\n\t\t\t\t\t\t\t\tborderWidth: 1\r\n\t\t\t\t\t\t\t},\r\n\t\t\t\t\t\t\t{\r\n\t\t\t\t\t\t\t\tlabel: 'Potražuje',\r\n\t\t\t\t\t\t\t\tdata: potrazuje,\r\n\t\t\t\t\t\t\t\tbackgroundColor: 'rgba(34, 197, 94, 0.5)',\r\n\t\t\t\t\t\t\t\tborderColor: 'rgba(34, 197, 94, 1)',\r\n\t\t\t\t\t\t\t\tborderWidth: 1\r\n\t\t\t\t\t\t\t},\r\n\t\t\t\t\t\t\t{\r\n\t\t\t\t\t\t\t\tlabel: 'Saldo',\r\n\t\t\t\t\t\t\t\tdata: saldo,\r\n\t\t\t\t\t\t\t\tbackgroundColor: 'rgba(239, 68, 68, 0.5)',\r\n\t\t\t\t\t\t\t\tborderColor: 'rgba(239, 68, 68, 1)',\r\n\t\t\t\t\t\t\t\tborderWidth: 1\r\n\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t]\r\n\t\t\t\t\t},\r\n\t\t\t\t\toptions: {\r\n\t\t\t\t\t\tresponsive: true,\r\n\t\t\t\t\t\tmaintainAspectRatio: false,\r\n\t\t\t\t\t\tplugins: {\r\n\t\t\t\t\t\t\tlegend: {\r\n\t\t\t\t\t\t\t\tposition: 'top',\r\n\t\t\t\t\t\t\t},\r\n\t\t\t\t\t\t\ttitle: {\r\n\t\t\t\t\t\t\t\tdisplay: true,\r\n\t\t\t\t\t\t\t\ttext: 'Subsintetičko konto'\r\n\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t},\r\n\t\t\t\t\t\tscales: {\r\n\t\t\t\t\t\t\ty: {\r\n\t\t\t\t\t\t\t\tbeginAtZero: true\r\n\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t}\r\n\t\t\t\t\t}\r\n\t\t\t\t});\r\n\t\t\t\t// console.log('Chart created successfully');\r\n\t\t\t} catch (error) {\r\n\t\t\t\tconsole.error('Error creating chart:', error);\r\n\t\t\t}\r\n\t\t}\r\n\r\n\t\t// Function to initialize chart safely\r\n\t\tfunction safeInitializeChart() {\r\n\t\t\t// Wait a bit for DOM to be ready\r\n\t\t\tsetTimeout(() => {\r\n\t\t\t\tinitializeSubsintetickiKontoChart();\r\n\t\t\t}, 50);\r\n\t\t}\r\n\r\n\t\t// Initialize chart when data changes (after obrada)\r\n\t\tdocument.addEventListener('htmx:afterSwap', function(evt) {\r\n\t\t\tconst target = evt.detail.target;\r\n\t\t\t\r\n\t\t\t// Check if we're in tab3 or if table body was swapped\r\n\t\t\tif (target.id === 'tab3' || target.closest('table') || target.parentElement?.querySelector('table')) {\r\n\t\t\t\t// console.log('Chart should reinitialize');\r\n\t\t\t\tsafeInitializeChart();\r\n\t\t\t}\r\n\t\t    \r\n\t\t\t// Only auto-click first row on initial tab3 load, NOT on detail updates\r\n\t\t\tif (target.id === 'tab3' && !target.dataset.initialized) {\r\n\t\t\t\t// console.log('Selecting first row in subsinteticko-konto-table after HTMX swap');\r\n\t\t\t\ttarget.dataset.initialized = 'true';\r\n\t\t\t\tsetTimeout(() => {\r\n\t\t\t\t\tconst firstRow = document.querySelector('#tab3 table tbody tr');\r\n\t\t\t\t\tif (firstRow) firstRow.click();\r\n\t\t\t\t}, 600);\r\n\t\t\t}\r\n\t\t});\r\n\r\n\t\t// Initialize on page load - try multiple strategies\r\n\t\tfunction initOnPageLoad() {\r\n\t\t\tconsole.log('DOMContentLoaded or page load detected');\r\n\t\t\tif (document.readyState === 'complete' || document.readyState === 'interactive') {\r\n\t\t\t\tsafeInitializeChart();\r\n\t\t\t} else {\r\n\t\t\t\tdocument.addEventListener('DOMContentLoaded', function() {\r\n\t\t\t\t\tconsole.log(\"DOMContentLoaded fired\");\r\n\t\t\t\t\tsafeInitializeChart();\r\n\t\t\t\t});\r\n\t\t\t}\r\n\t\t}\r\n\r\n\t\t// Call initialization immediately if DOM is ready\r\n\t\tif (document.readyState === 'complete' || document.readyState === 'interactive') {\r\n\t\t\tsafeInitializeChart();\r\n\t\t} else {\r\n\t\t\tdocument.addEventListener('DOMContentLoaded', initOnPageLoad);\r\n\t\t}\r\n\r\n\t\t// Also try after a short delay for HTMX content\r\n\t\tsetTimeout(safeInitializeChart, 500);\r\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 98, "<script>\r\n\t\t// Use a flag to prevent duplicate initialization\r\n\t\tif (typeof window._chartInitialized === 'undefined') {\r\n\t\t\twindow._chartInitialized = false;\r\n\t\t}\r\n\r\n\t\tvar subsintetickiKontoChartInstance = null;\r\n\r\n\t\tfunction initializeSubsintetickiKontoChart() {\r\n\t\t\tconst ctxElement = document.getElementById('subsintetickikontochart');\r\n\t\t\tconsole.log(\"ctxElement:\", ctxElement);\r\n\t\t\tif (!ctxElement) {\r\n\t\t\t\tconsole.log('Chart canvas not found');\r\n\t\t\t\treturn;\r\n\t\t\t}\r\n\r\n\t\t\t// Get the context properly\r\n\t\t\tconst ctx = ctxElement.getContext('2d');\r\n\r\n\t\t\t// Extract data from table rows in tab3\r\n\t\t\tconst tab3 = document.getElementById('tab3');\r\n\t\t\tconsole.log(\"tab3:\", tab3);\r\n\t\t\tif (!tab3) {\r\n\t\t\t\treturn;\r\n\t\t\t}\r\n\t\t\t\r\n\t\t\t// Get table data from the page - find the table in tab1\r\n\t\t\tconst months = [];\r\n\t\t\tconst duguje = [];\r\n\t\t\tconst potrazuje = [];\r\n\t\t\tconst saldo = [];\r\n\t\t\t\r\n\t\t\tconst tableRows = tab3.querySelectorAll('table tbody tr');\r\n\t\t\t\r\n\t\t\t\r\n\t\t\tif (tableRows.length === 0) {\r\n\t\t\t\tconsole.log('No table rows found');\r\n\t\t\t\treturn;\r\n\t\t\t}\r\n\t\t\t\r\n\t\t\t// Parses a number formatted with the server locale (\"1,234,567.89\" or \"1.234.567,89\"):\r\n\t\t\t// the last separator is the decimal separator, the other one is the thousand separator.\r\n\t\t\tconst parseNum = (value) => {\r\n\t\t\t\tlet clean = value.trim().replace(/\\s/g, '').replace(/[^\\d,.-]/g, '');\r\n\t\t\t\tconst lastComma = clean.lastIndexOf(',');\r\n\t\t\t\tconst lastDot = clean.lastIndexOf('.');\r\n\t\t\t\tclean = lastComma > lastDot\r\n\t\t\t\t\t? clean.replace(/\\./g, '').replace(',', '.')\r\n\t\t\t\t\t: clean.replace(/,/g, '');\r\n\t\t\t\treturn parseFloat(clean) || 0;\r\n\t\t\t};\r\n\r\n\t\t\ttableRows.forEach(row => {\r\n\t\t\t\tconst cells = row.querySelectorAll('td');\r\n\t\t\t\tif (cells.length >= 4) {\r\n\t\t\t\t\tmonths.push(cells[0].textContent.trim());\r\n\t\t\t\t\tduguje.push(parseNum(cells[1].textContent));\r\n\t\t\t\t\tpotrazuje.push(parseNum(cells[2].textContent));\r\n\t\t\t\t\tsaldo.push(parseNum(cells[3].textContent));\r\n\t\t\t\t}\r\n\t\t\t});\r\n\r\n\t\t\t// Only create chart if we have data\r\n\t\t\tif (months.length === 0) {\r\n\t\t\t\tconsole.log('No data found for chart');\r\n\t\t\t\treturn;\r\n\t\t\t}\r\n\r\n\t\t\t// Destroy previous chart instance if it exists\r\n\t\t\tif (subsintetickiKontoChartInstance) {\r\n\t\t\t\tsubsintetickiKontoChartInstance.destroy();\r\n\t\t\t\tsubsintetickiKontoChartInstance = null;\r\n\t\t\t}\r\n\r\n\t\t\t// Create new chart\r\n\t\t\ttry {\r\n\t\t\t\tsubsintetickiKontoChartInstance = new Chart(ctx, {\r\n\t\t\t\t\ttype: 'bar',\r\n\t\t\t\t\tdata: {\r\n\t\t\t\t\t\tlabels: months,\r\n\t\t\t\t\t\tdatasets: [\r\n\t\t\t\t\t\t\t{\r\n\t\t\t\t\t\t\t\tlabel: 'Duguje',\r\n\t\t\t\t\t\t\t\tdata: duguje,\r\n\t\t\t\t\t\t\t\tbackgroundColor: 'rgba(59, 130, 246, 0.5)',\r\n\t\t\t\t\t\t\t\tborderColor: 'rgba(59, 130, 246, 1)',\r\n\t\t\t\t\t\t\t\tborderWidth: 1\r\n\t\t\t\t\t\t\t},\r\n\t\t\t\t\t\t\t{\r\n\t\t\t\t\t\t\t\tlabel: 'Potražuje',\r\n\t\t\t\t\t\t\t\tdata: potrazuje,\r\n\t\t\t\t\t\t\t\tbackgroundColor: 'rgba(34, 197, 94, 0.5)',\r\n\t\t\t\t\t\t\t\tborderColor: 'rgba(34, 197, 94, 1)',\r\n\t\t\t\t\t\t\t\tborderWidth: 1\r\n\t\t\t\t\t\t\t},\r\n\t\t\t\t\t\t\t{\r\n\t\t\t\t\t\t\t\tlabel: 'Saldo',\r\n\t\t\t\t\t\t\t\tdata: saldo,\r\n\t\t\t\t\t\t\t\tbackgroundColor: 'rgba(239, 68, 68, 0.5)',\r\n\t\t\t\t\t\t\t\tborderColor: 'rgba(239, 68, 68, 1)',\r\n\t\t\t\t\t\t\t\tborderWidth: 1\r\n\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t]\r\n\t\t\t\t\t},\r\n\t\t\t\t\toptions: {\r\n\t\t\t\t\t\tresponsive: true,\r\n\t\t\t\t\t\tmaintainAspectRatio: false,\r\n\t\t\t\t\t\tplugins: {\r\n\t\t\t\t\t\t\tlegend: {\r\n\t\t\t\t\t\t\t\tposition: 'top',\r\n\t\t\t\t\t\t\t},\r\n\t\t\t\t\t\t\ttitle: {\r\n\t\t\t\t\t\t\t\tdisplay: true,\r\n\t\t\t\t\t\t\t\ttext: 'Subsintetičko konto'\r\n\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t},\r\n\t\t\t\t\t\tscales: {\r\n\t\t\t\t\t\t\ty: {\r\n\t\t\t\t\t\t\t\tbeginAtZero: true\r\n\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t}\r\n\t\t\t\t\t}\r\n\t\t\t\t});\r\n\t\t\t\t// console.log('Chart created successfully');\r\n\t\t\t} catch (error) {\r\n\t\t\t\tconsole.error('Error creating chart:', error);\r\n\t\t\t}\r\n\t\t}\r\n\r\n\t\t// Function to initialize chart safely\r\n\t\tfunction safeInitializeChart() {\r\n\t\t\t// Wait a bit for DOM to be ready\r\n\t\t\tsetTimeout(() => {\r\n\t\t\t\tinitializeSubsintetickiKontoChart();\r\n\t\t\t}, 50);\r\n\t\t}\r\n\r\n\t\t// Initialize chart when data changes (after obrada)\r\n\t\tdocument.addEventListener('htmx:afterSwap', function(evt) {\r\n\t\t\tconst target = evt.detail.target;\r\n\t\t\t\r\n\t\t\t// Check if we're in tab3 or if table body was swapped\r\n\t\t\tif (target.id === 'tab3' || target.closest('table') || target.parentElement?.querySelector('table')) {\r\n\t\t\t\t// console.log('Chart should reinitialize');\r\n\t\t\t\tsafeInitializeChart();\r\n\t\t\t}\r\n\t\t    \r\n\t\t\t// Only auto-click first row on initial tab3 load, NOT on detail updates\r\n\t\t\tif (target.id === 'tab3' && !target.dataset.initialized) {\r\n\t\t\t\t// console.log('Selecting first row in subsinteticko-konto-table after HTMX swap');\r\n\t\t\t\ttarget.dataset.initialized = 'true';\r\n\t\t\t\tsetTimeout(() => {\r\n\t\t\t\t\tconst firstRow = document.querySelector('#tab3 table tbody tr');\r\n\t\t\t\t\tif (firstRow) firstRow.click();\r\n\t\t\t\t}, 600);\r\n\t\t\t}\r\n\t\t});\r\n\r\n\t\t// Initialize on page load - try multiple strategies\r\n\t\tfunction initOnPageLoad() {\r\n\t\t\tconsole.log('DOMContentLoaded or page load detected');\r\n\t\t\tif (document.readyState === 'complete' || document.readyState === 'interactive') {\r\n\t\t\t\tsafeInitializeChart();\r\n\t\t\t} else {\r\n\t\t\t\tdocument.addEventListener('DOMContentLoaded', function() {\r\n\t\t\t\t\tconsole.log(\"DOMContentLoaded fired\");\r\n\t\t\t\t\tsafeInitializeChart();\r\n\t\t\t\t});\r\n\t\t\t}\r\n\t\t}\r\n\r\n\t\t// Call initialization immediately if DOM is ready\r\n\t\tif (document.readyState === 'complete' || document.readyState === 'interactive') {\r\n\t\t\tsafeInitializeChart();\r\n\t\t} else {\r\n\t\t\tdocument.addEventListener('DOMContentLoaded', initOnPageLoad);\r\n\t\t}\r\n\r\n\t\t// Also try after a short delay for HTMX content\r\n\t\tsetTimeout(safeInitializeChart, 500);\r\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

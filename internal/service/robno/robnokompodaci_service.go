@@ -9,6 +9,7 @@ import (
 	"helia/internal/common"
 	"helia/internal/domain"
 	"helia/internal/repository"
+	commonsvc "helia/internal/service/common"
 
 	"github.com/lib/pq"
 )
@@ -39,6 +40,7 @@ type RobnoKompodaciResource struct {
 	grupaRepo                           *repository.BaseRepository[domain.Rgru]
 	fvrRepo                             *repository.BaseRepository[domain.Fvr]
 	komPodaciRepo                       *repository.BaseRepository[domain.RobnoKomPodaciDto]
+	commonSvc                           commonsvc.CommonService
 	karticaKupcaDobavljacaFields        []domain.Fields
 	saldoKupcaDobavljacaFields          []domain.Fields
 	prodajaPoMesecuProdajeFields        []domain.Fields
@@ -49,8 +51,8 @@ type RobnoKompodaciResource struct {
 	ucesceGrupeArtikalaFields           []domain.Fields
 }
 
-func NewRobnoKompodaciService(partnerRepo *repository.BaseRepository[domain.Partneri], fproRepo *repository.BaseRepository[domain.Fpro], rproRepo *repository.BaseRepository[domain.Rpro], grupaRepo *repository.BaseRepository[domain.Rgru], fvrRepo *repository.BaseRepository[domain.Fvr], komPodaciRepo *repository.BaseRepository[domain.RobnoKomPodaciDto]) *RobnoKompodaciResource {
-	s := &RobnoKompodaciResource{partnerRepo: partnerRepo, fproRepo: fproRepo, rproRepo: rproRepo, grupaRepo: grupaRepo, fvrRepo: fvrRepo, komPodaciRepo: komPodaciRepo}
+func NewRobnoKompodaciService(partnerRepo *repository.BaseRepository[domain.Partneri], fproRepo *repository.BaseRepository[domain.Fpro], rproRepo *repository.BaseRepository[domain.Rpro], grupaRepo *repository.BaseRepository[domain.Rgru], fvrRepo *repository.BaseRepository[domain.Fvr], komPodaciRepo *repository.BaseRepository[domain.RobnoKomPodaciDto], commonSvc commonsvc.CommonService) *RobnoKompodaciResource {
+	s := &RobnoKompodaciResource{partnerRepo: partnerRepo, fproRepo: fproRepo, rproRepo: rproRepo, grupaRepo: grupaRepo, fvrRepo: fvrRepo, komPodaciRepo: komPodaciRepo, commonSvc: commonSvc}
 	s.setTableFields()
 	return s
 }
@@ -632,33 +634,9 @@ func (s *RobnoKompodaciResource) GetPregledUcescaGrupeArtikalaTableFields() []do
 	return s.ucesceGrupeArtikalaFields
 }
 
+// GetRobneGrupeComboValues returns the robne grupe of the current period (CommonService).
 func (s *RobnoKompodaciResource) GetRobneGrupeComboValues(ctx context.Context) ([]domain.ComboItem, error) {
-	userSession := domain.GetSessionFromStdContext(ctx)
-	if userSession == nil {
-		return nil, fmt.Errorf("no user session found")
-	}
-	hasGod, haskar := s.grupaRepo.GetHasGodHasKar()
-	qb := common.NewQueryBuilder(" select gru, naziv from rgru", true)
-	if hasGod {
-		qb.AddEqual("god", userSession.SelectedGod)
-	}
-	if haskar {
-		qb.AddEqual("kar", userSession.SelectedKar)
-	}
-	qb.AddOrderBy("gru")
-	sqlQuery, args := qb.Build()
-	entites, err := s.grupaRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
-		return nil, err
-	}
-	comboItems := []domain.ComboItem{{Key: "-", Value: "-"}}
-	for _, entity := range *entites {
-		comboItems = append(comboItems, domain.ComboItem{
-			Key:   fmt.Sprintf("%d", entity.Gru),
-			Value: fmt.Sprintf("%d - %s", entity.Gru, entity.Naziv),
-		})
-	}
-	return comboItems, nil
+	return s.commonSvc.GetRobneGrupeComboValues(ctx, commonsvc.WithEmptyOption())
 }
 
 func (s *RobnoKompodaciResource) setTableFields() {

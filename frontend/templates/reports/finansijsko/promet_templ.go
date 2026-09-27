@@ -37,7 +37,7 @@ func PrometAnalitickaKarticaStampa(repParams domain.ReportParameters, tbl domain
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = rep.Report(repParams, domain.TableData{}, translator, nil, PrometAnalitickaKarticaContent(repParams, tbl, translator)).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = rep.Report(repParams, tbl, translator, PrometAnalitickaKarticaParam(repParams, translator), nil, PrometAnalitickaKarticaContent(repParams, tbl, translator)).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -71,10 +71,6 @@ func PrometAnalitickaKarticaContent(repParams domain.ReportParameters, tbl domai
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = rep.ReportTitle(repParams).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = PrometAnalitickaKarticaParam(repParams, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -586,7 +582,7 @@ func PrometSubsintetickihKontaKarticaStampa(repParams domain.ReportParameters, t
 			templ_7745c5c3_Var31 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = rep.Report(repParams, domain.TableData{}, translator, nil, PrometSubsintetickihKontaKarticaContent(repParams, tbl, translator)).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = rep.Report(repParams, tbl, translator, PrometSubsintetickihKontaKarticaParam(repParams, translator), nil, PrometSubsintetickihKontaKarticaContent(repParams, tbl, translator)).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -620,10 +616,6 @@ func PrometSubsintetickihKontaKarticaContent(repParams domain.ReportParameters, 
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = rep.ReportTitle(repParams).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = PrometSubsintetickihKontaKarticaParam(repParams, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1210,7 +1202,7 @@ func KarticaSintetickihKontaStampa(repParams domain.ReportParameters, tbl domain
 			templ_7745c5c3_Var65 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = rep.Report(repParams, domain.TableData{}, translator, nil, KarticaSintetickihKontaStampaContent(repParams, tbl, translator)).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = rep.Report(repParams, tbl, translator, KarticaSintetickihKontaStampaParam(repParams, translator), nil, KarticaSintetickihKontaStampaContent(repParams, tbl, translator)).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1244,10 +1236,6 @@ func KarticaSintetickihKontaStampaContent(repParams domain.ReportParameters, tbl
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = rep.ReportTitle(repParams).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = KarticaSintetickihKontaStampaParam(repParams, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1291,7 +1279,7 @@ func KarticaSintetickihKontaStampaParam(repParams domain.ReportParameters, trans
 		var templ_7745c5c3_Var68 string
 		templ_7745c5c3_Var68, templ_7745c5c3_Err = templ.JoinStringErrs(repParams.ParameterItems["OdKonta"].Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 273, Col: 44}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 272, Col: 44}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var68))
 		if templ_7745c5c3_Err != nil {
@@ -1304,7 +1292,7 @@ func KarticaSintetickihKontaStampaParam(repParams domain.ReportParameters, trans
 		var templ_7745c5c3_Var69 string
 		templ_7745c5c3_Var69, templ_7745c5c3_Err = templ.JoinStringErrs(repParams.ParameterItems["OdKonta"].Value)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 273, Col: 115}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 272, Col: 115}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var69))
 		if templ_7745c5c3_Err != nil {
@@ -1317,7 +1305,7 @@ func KarticaSintetickihKontaStampaParam(repParams domain.ReportParameters, trans
 		var templ_7745c5c3_Var70 string
 		templ_7745c5c3_Var70, templ_7745c5c3_Err = templ.JoinStringErrs(repParams.ParameterItems["DoKonta"].Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 274, Col: 62}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 273, Col: 62}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var70))
 		if templ_7745c5c3_Err != nil {
@@ -1330,7 +1318,7 @@ func KarticaSintetickihKontaStampaParam(repParams domain.ReportParameters, trans
 		var templ_7745c5c3_Var71 string
 		templ_7745c5c3_Var71, templ_7745c5c3_Err = templ.JoinStringErrs(repParams.ParameterItems["DoKonta"].Value)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 274, Col: 133}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 273, Col: 133}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var71))
 		if templ_7745c5c3_Err != nil {
@@ -1343,7 +1331,7 @@ func KarticaSintetickihKontaStampaParam(repParams domain.ReportParameters, trans
 		var templ_7745c5c3_Var72 string
 		templ_7745c5c3_Var72, templ_7745c5c3_Err = templ.JoinStringErrs(repParams.ParameterItems["StanjeNaDan"].Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 275, Col: 78}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 274, Col: 78}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var72))
 		if templ_7745c5c3_Err != nil {
@@ -1356,7 +1344,7 @@ func KarticaSintetickihKontaStampaParam(repParams domain.ReportParameters, trans
 		var templ_7745c5c3_Var73 string
 		templ_7745c5c3_Var73, templ_7745c5c3_Err = templ.JoinStringErrs(repParams.ParameterItems["StanjeNaDan"].Value)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 275, Col: 153}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 274, Col: 153}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var73))
 		if templ_7745c5c3_Err != nil {
@@ -1392,7 +1380,7 @@ func KarticaSintKontaStampa(repParams domain.ReportParameters, tbl domain.TableD
 			templ_7745c5c3_Var74 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = rep.Report(repParams, domain.TableData{}, translator, nil, KarticaSintKontaStampaContent(repParams, tbl, translator)).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = rep.Report(repParams, tbl, translator, KarticaSintKontaStampaParam(repParams, translator), nil, KarticaSintKontaStampaContent(repParams, tbl, translator)).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1426,10 +1414,6 @@ func KarticaSintKontaStampaContent(repParams domain.ReportParameters, tbl domain
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = rep.ReportTitle(repParams).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = KarticaSintKontaStampaParam(repParams, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1473,7 +1457,7 @@ func KarticaSintKontaStampaParam(repParams domain.ReportParameters, translator *
 		var templ_7745c5c3_Var77 string
 		templ_7745c5c3_Var77, templ_7745c5c3_Err = templ.JoinStringErrs(repParams.ParameterItems["Konto"].Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 294, Col: 42}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 292, Col: 42}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var77))
 		if templ_7745c5c3_Err != nil {
@@ -1486,7 +1470,7 @@ func KarticaSintKontaStampaParam(repParams domain.ReportParameters, translator *
 		var templ_7745c5c3_Var78 string
 		templ_7745c5c3_Var78, templ_7745c5c3_Err = templ.JoinStringErrs(repParams.ParameterItems["Konto"].Value)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 294, Col: 111}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 292, Col: 111}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var78))
 		if templ_7745c5c3_Err != nil {
@@ -1499,7 +1483,7 @@ func KarticaSintKontaStampaParam(repParams domain.ReportParameters, translator *
 		var templ_7745c5c3_Var79 string
 		templ_7745c5c3_Var79, templ_7745c5c3_Err = templ.JoinStringErrs(repParams.ParameterItems["OdDatuma"].Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 295, Col: 63}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 293, Col: 63}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var79))
 		if templ_7745c5c3_Err != nil {
@@ -1512,7 +1496,7 @@ func KarticaSintKontaStampaParam(repParams domain.ReportParameters, translator *
 		var templ_7745c5c3_Var80 string
 		templ_7745c5c3_Var80, templ_7745c5c3_Err = templ.JoinStringErrs(repParams.ParameterItems["OdDatuma"].Value)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 295, Col: 135}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 293, Col: 135}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var80))
 		if templ_7745c5c3_Err != nil {
@@ -1525,7 +1509,7 @@ func KarticaSintKontaStampaParam(repParams domain.ReportParameters, translator *
 		var templ_7745c5c3_Var81 string
 		templ_7745c5c3_Var81, templ_7745c5c3_Err = templ.JoinStringErrs(repParams.ParameterItems["DoDatuma"].Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 296, Col: 63}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 294, Col: 63}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var81))
 		if templ_7745c5c3_Err != nil {
@@ -1538,7 +1522,7 @@ func KarticaSintKontaStampaParam(repParams domain.ReportParameters, translator *
 		var templ_7745c5c3_Var82 string
 		templ_7745c5c3_Var82, templ_7745c5c3_Err = templ.JoinStringErrs(repParams.ParameterItems["DoDatuma"].Value)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 296, Col: 135}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 294, Col: 135}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var82))
 		if templ_7745c5c3_Err != nil {
@@ -1585,7 +1569,7 @@ func KarticaSintKontaStampaTable(tbl domain.TableData, translator *i18n.Service)
 			var templ_7745c5c3_Var84 string
 			templ_7745c5c3_Var84, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label(header.Label))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 306, Col: 38}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 304, Col: 38}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var84))
 			if templ_7745c5c3_Err != nil {
@@ -1636,7 +1620,7 @@ func KarticaSintKontaStampaTable(tbl domain.TableData, translator *i18n.Service)
 				var templ_7745c5c3_Var87 string
 				templ_7745c5c3_Var87, templ_7745c5c3_Err = templ.JoinStringErrs(cell)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 323, Col: 13}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 321, Col: 13}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var87))
 				if templ_7745c5c3_Err != nil {
@@ -1692,7 +1676,7 @@ func KarticaSintKontaStampaTable(tbl domain.TableData, translator *i18n.Service)
 				var templ_7745c5c3_Var90 string
 				templ_7745c5c3_Var90, templ_7745c5c3_Err = templ.JoinStringErrs(total)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 341, Col: 14}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 339, Col: 14}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var90))
 				if templ_7745c5c3_Err != nil {
@@ -1738,7 +1722,7 @@ func PrometSubsintetikaVrdStampa(repParams domain.ReportParameters, tbl domain.T
 			templ_7745c5c3_Var91 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = rep.Report(repParams, domain.TableData{}, translator, nil, PrometSubsintetikaVrdStampaContent(repParams, tbl, translator)).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = rep.Report(repParams, tbl, translator, PrometSubsintetikaVrdStampaParam(repParams, translator), nil, PrometSubsintetikaVrdStampaContent(repParams, tbl, translator)).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1772,10 +1756,6 @@ func PrometSubsintetikaVrdStampaContent(repParams domain.ReportParameters, tbl d
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = rep.ReportTitle(repParams).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = PrometSubsintetikaVrdStampaParam(repParams, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1819,7 +1799,7 @@ func PrometSubsintetikaVrdStampaParam(repParams domain.ReportParameters, transla
 		var templ_7745c5c3_Var94 string
 		templ_7745c5c3_Var94, templ_7745c5c3_Err = templ.JoinStringErrs(repParams.ParameterItems["Konto"].Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 365, Col: 42}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 362, Col: 42}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var94))
 		if templ_7745c5c3_Err != nil {
@@ -1832,7 +1812,7 @@ func PrometSubsintetikaVrdStampaParam(repParams domain.ReportParameters, transla
 		var templ_7745c5c3_Var95 string
 		templ_7745c5c3_Var95, templ_7745c5c3_Err = templ.JoinStringErrs(repParams.ParameterItems["Konto"].Value)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 365, Col: 111}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 362, Col: 111}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var95))
 		if templ_7745c5c3_Err != nil {
@@ -1845,7 +1825,7 @@ func PrometSubsintetikaVrdStampaParam(repParams domain.ReportParameters, transla
 		var templ_7745c5c3_Var96 string
 		templ_7745c5c3_Var96, templ_7745c5c3_Err = templ.JoinStringErrs(repParams.ParameterItems["OdDatuma"].Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 366, Col: 63}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 363, Col: 63}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var96))
 		if templ_7745c5c3_Err != nil {
@@ -1858,7 +1838,7 @@ func PrometSubsintetikaVrdStampaParam(repParams domain.ReportParameters, transla
 		var templ_7745c5c3_Var97 string
 		templ_7745c5c3_Var97, templ_7745c5c3_Err = templ.JoinStringErrs(repParams.ParameterItems["OdDatuma"].Value)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 366, Col: 135}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 363, Col: 135}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var97))
 		if templ_7745c5c3_Err != nil {
@@ -1871,7 +1851,7 @@ func PrometSubsintetikaVrdStampaParam(repParams domain.ReportParameters, transla
 		var templ_7745c5c3_Var98 string
 		templ_7745c5c3_Var98, templ_7745c5c3_Err = templ.JoinStringErrs(repParams.ParameterItems["DoDatuma"].Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 367, Col: 63}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 364, Col: 63}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var98))
 		if templ_7745c5c3_Err != nil {
@@ -1884,7 +1864,7 @@ func PrometSubsintetikaVrdStampaParam(repParams domain.ReportParameters, transla
 		var templ_7745c5c3_Var99 string
 		templ_7745c5c3_Var99, templ_7745c5c3_Err = templ.JoinStringErrs(repParams.ParameterItems["DoDatuma"].Value)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 367, Col: 135}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 364, Col: 135}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var99))
 		if templ_7745c5c3_Err != nil {
@@ -1949,7 +1929,7 @@ func PrometAnalitickaKarticaPoMIStampa(repParams domain.ReportParameters, tbl do
 			templ_7745c5c3_Var101 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = rep.Report(repParams, domain.TableData{}, translator, nil, PrometAnalitickaKarticaPoMIContent(repParams, tbl, translator)).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = rep.Report(repParams, tbl, translator, PrometAnalitickaKarticaPoMIParam(repParams, translator), nil, PrometAnalitickaKarticaPoMIContent(repParams, tbl, translator)).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1978,15 +1958,7 @@ func PrometAnalitickaKarticaPoMIContent(repParams domain.ReportParameters, tbl d
 			templ_7745c5c3_Var102 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = rep.ReportHeader(repParams).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
 		templ_7745c5c3_Err = rep.ReportTitle(repParams).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = PrometAnalitickaKarticaPoMIParam(repParams, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2031,7 +2003,7 @@ func PrometAnalitickaKarticaPoMIParam(repParams domain.ReportParameters, transla
 			var templ_7745c5c3_Var104 string
 			templ_7745c5c3_Var104, templ_7745c5c3_Err = templ.JoinStringErrs(repParams.ParameterItems["Konto"].Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 391, Col: 43}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 387, Col: 43}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var104))
 			if templ_7745c5c3_Err != nil {
@@ -2044,7 +2016,7 @@ func PrometAnalitickaKarticaPoMIParam(repParams domain.ReportParameters, transla
 			var templ_7745c5c3_Var105 string
 			templ_7745c5c3_Var105, templ_7745c5c3_Err = templ.JoinStringErrs(repParams.ParameterItems["Konto"].Value)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 391, Col: 112}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 387, Col: 112}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var105))
 			if templ_7745c5c3_Err != nil {
@@ -2063,7 +2035,7 @@ func PrometAnalitickaKarticaPoMIParam(repParams domain.ReportParameters, transla
 			var templ_7745c5c3_Var106 string
 			templ_7745c5c3_Var106, templ_7745c5c3_Err = templ.JoinStringErrs(repParams.ParameterItems["Sifra"].Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 394, Col: 61}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 390, Col: 61}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var106))
 			if templ_7745c5c3_Err != nil {
@@ -2076,7 +2048,7 @@ func PrometAnalitickaKarticaPoMIParam(repParams domain.ReportParameters, transla
 			var templ_7745c5c3_Var107 string
 			templ_7745c5c3_Var107, templ_7745c5c3_Err = templ.JoinStringErrs(repParams.ParameterItems["Sifra"].Value)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 394, Col: 130}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 390, Col: 130}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var107))
 			if templ_7745c5c3_Err != nil {
@@ -2095,7 +2067,7 @@ func PrometAnalitickaKarticaPoMIParam(repParams domain.ReportParameters, transla
 			var templ_7745c5c3_Var108 string
 			templ_7745c5c3_Var108, templ_7745c5c3_Err = templ.JoinStringErrs(repParams.ParameterItems["OdDatuma"].Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 397, Col: 64}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 393, Col: 64}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var108))
 			if templ_7745c5c3_Err != nil {
@@ -2108,7 +2080,7 @@ func PrometAnalitickaKarticaPoMIParam(repParams domain.ReportParameters, transla
 			var templ_7745c5c3_Var109 string
 			templ_7745c5c3_Var109, templ_7745c5c3_Err = templ.JoinStringErrs(repParams.ParameterItems["OdDatuma"].Value)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 397, Col: 136}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 393, Col: 136}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var109))
 			if templ_7745c5c3_Err != nil {
@@ -2127,7 +2099,7 @@ func PrometAnalitickaKarticaPoMIParam(repParams domain.ReportParameters, transla
 			var templ_7745c5c3_Var110 string
 			templ_7745c5c3_Var110, templ_7745c5c3_Err = templ.JoinStringErrs(repParams.ParameterItems["DoDatuma"].Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 400, Col: 64}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 396, Col: 64}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var110))
 			if templ_7745c5c3_Err != nil {
@@ -2140,7 +2112,7 @@ func PrometAnalitickaKarticaPoMIParam(repParams domain.ReportParameters, transla
 			var templ_7745c5c3_Var111 string
 			templ_7745c5c3_Var111, templ_7745c5c3_Err = templ.JoinStringErrs(repParams.ParameterItems["DoDatuma"].Value)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 400, Col: 136}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 396, Col: 136}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var111))
 			if templ_7745c5c3_Err != nil {
@@ -2159,7 +2131,7 @@ func PrometAnalitickaKarticaPoMIParam(repParams domain.ReportParameters, transla
 			var templ_7745c5c3_Var112 string
 			templ_7745c5c3_Var112, templ_7745c5c3_Err = templ.JoinStringErrs(repParams.ParameterItems["OdMI"].Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 403, Col: 60}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 399, Col: 60}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var112))
 			if templ_7745c5c3_Err != nil {
@@ -2172,7 +2144,7 @@ func PrometAnalitickaKarticaPoMIParam(repParams domain.ReportParameters, transla
 			var templ_7745c5c3_Var113 string
 			templ_7745c5c3_Var113, templ_7745c5c3_Err = templ.JoinStringErrs(repParams.ParameterItems["OdMI"].Value)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 403, Col: 128}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 399, Col: 128}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var113))
 			if templ_7745c5c3_Err != nil {
@@ -2191,7 +2163,7 @@ func PrometAnalitickaKarticaPoMIParam(repParams domain.ReportParameters, transla
 			var templ_7745c5c3_Var114 string
 			templ_7745c5c3_Var114, templ_7745c5c3_Err = templ.JoinStringErrs(repParams.ParameterItems["DoMI"].Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 406, Col: 60}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 402, Col: 60}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var114))
 			if templ_7745c5c3_Err != nil {
@@ -2204,7 +2176,7 @@ func PrometAnalitickaKarticaPoMIParam(repParams domain.ReportParameters, transla
 			var templ_7745c5c3_Var115 string
 			templ_7745c5c3_Var115, templ_7745c5c3_Err = templ.JoinStringErrs(repParams.ParameterItems["DoMI"].Value)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 406, Col: 128}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 402, Col: 128}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var115))
 			if templ_7745c5c3_Err != nil {
@@ -2257,7 +2229,7 @@ func PrometAnalitickaKarticaPoMITable(tbl domain.TableData, translator *i18n.Ser
 				var templ_7745c5c3_Var117 string
 				templ_7745c5c3_Var117, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", len(tbl.Headers)))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 418, Col: 55}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 414, Col: 55}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var117))
 				if templ_7745c5c3_Err != nil {
@@ -2271,7 +2243,7 @@ func PrometAnalitickaKarticaPoMITable(tbl domain.TableData, translator *i18n.Ser
 					var templ_7745c5c3_Var118 string
 					templ_7745c5c3_Var118, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Konto"))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 420, Col: 35}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 416, Col: 35}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var118))
 					if templ_7745c5c3_Err != nil {
@@ -2284,7 +2256,7 @@ func PrometAnalitickaKarticaPoMITable(tbl domain.TableData, translator *i18n.Ser
 					var templ_7745c5c3_Var119 string
 					templ_7745c5c3_Var119, templ_7745c5c3_Err = templ.JoinStringErrs(row.Fields[0])
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 420, Col: 54}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 416, Col: 54}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var119))
 					if templ_7745c5c3_Err != nil {
@@ -2303,7 +2275,7 @@ func PrometAnalitickaKarticaPoMITable(tbl domain.TableData, translator *i18n.Ser
 					var templ_7745c5c3_Var120 string
 					templ_7745c5c3_Var120, templ_7745c5c3_Err = templ.JoinStringErrs(row.Fields[1])
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 423, Col: 48}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 419, Col: 48}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var120))
 					if templ_7745c5c3_Err != nil {
@@ -2322,7 +2294,7 @@ func PrometAnalitickaKarticaPoMITable(tbl domain.TableData, translator *i18n.Ser
 					var templ_7745c5c3_Var121 string
 					templ_7745c5c3_Var121, templ_7745c5c3_Err = templ.JoinStringErrs(row.Fields[2])
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 426, Col: 48}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 422, Col: 48}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var121))
 					if templ_7745c5c3_Err != nil {
@@ -2341,7 +2313,7 @@ func PrometAnalitickaKarticaPoMITable(tbl domain.TableData, translator *i18n.Ser
 					var templ_7745c5c3_Var122 string
 					templ_7745c5c3_Var122, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label(header.Label))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 433, Col: 40}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 429, Col: 40}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var122))
 					if templ_7745c5c3_Err != nil {
@@ -2364,7 +2336,7 @@ func PrometAnalitickaKarticaPoMITable(tbl domain.TableData, translator *i18n.Ser
 				var templ_7745c5c3_Var123 string
 				templ_7745c5c3_Var123, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", len(tbl.Headers)))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 439, Col: 55}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 435, Col: 55}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var123))
 				if templ_7745c5c3_Err != nil {
@@ -2377,7 +2349,7 @@ func PrometAnalitickaKarticaPoMITable(tbl domain.TableData, translator *i18n.Ser
 				var templ_7745c5c3_Var124 string
 				templ_7745c5c3_Var124, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Mesto Isporuke"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 440, Col: 43}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 436, Col: 43}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var124))
 				if templ_7745c5c3_Err != nil {
@@ -2391,7 +2363,7 @@ func PrometAnalitickaKarticaPoMITable(tbl domain.TableData, translator *i18n.Ser
 					var templ_7745c5c3_Var125 string
 					templ_7745c5c3_Var125, templ_7745c5c3_Err = templ.JoinStringErrs(row.Fields[0])
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 442, Col: 23}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 438, Col: 23}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var125))
 					if templ_7745c5c3_Err != nil {
@@ -2410,7 +2382,7 @@ func PrometAnalitickaKarticaPoMITable(tbl domain.TableData, translator *i18n.Ser
 				var templ_7745c5c3_Var126 string
 				templ_7745c5c3_Var126, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", len(tbl.Headers)-3))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 448, Col: 57}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 444, Col: 57}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var126))
 				if templ_7745c5c3_Err != nil {
@@ -2424,7 +2396,7 @@ func PrometAnalitickaKarticaPoMITable(tbl domain.TableData, translator *i18n.Ser
 					var templ_7745c5c3_Var127 string
 					templ_7745c5c3_Var127, templ_7745c5c3_Err = templ.JoinStringErrs(row.Fields[0])
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 450, Col: 23}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 446, Col: 23}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var127))
 					if templ_7745c5c3_Err != nil {
@@ -2439,7 +2411,7 @@ func PrometAnalitickaKarticaPoMITable(tbl domain.TableData, translator *i18n.Ser
 					var templ_7745c5c3_Var128 string
 					templ_7745c5c3_Var128, templ_7745c5c3_Err = templ.JoinStringErrs(row.Fields[1])
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 455, Col: 23}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 451, Col: 23}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var128))
 					if templ_7745c5c3_Err != nil {
@@ -2454,7 +2426,7 @@ func PrometAnalitickaKarticaPoMITable(tbl domain.TableData, translator *i18n.Ser
 					var templ_7745c5c3_Var129 string
 					templ_7745c5c3_Var129, templ_7745c5c3_Err = templ.JoinStringErrs(row.Fields[2])
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 460, Col: 23}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 456, Col: 23}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var129))
 					if templ_7745c5c3_Err != nil {
@@ -2469,7 +2441,7 @@ func PrometAnalitickaKarticaPoMITable(tbl domain.TableData, translator *i18n.Ser
 					var templ_7745c5c3_Var130 string
 					templ_7745c5c3_Var130, templ_7745c5c3_Err = templ.JoinStringErrs(row.Fields[3])
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 465, Col: 23}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 461, Col: 23}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var130))
 					if templ_7745c5c3_Err != nil {
@@ -2488,7 +2460,7 @@ func PrometAnalitickaKarticaPoMITable(tbl domain.TableData, translator *i18n.Ser
 				var templ_7745c5c3_Var131 string
 				templ_7745c5c3_Var131, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", len(tbl.Headers)-3))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 471, Col: 57}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 467, Col: 57}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var131))
 				if templ_7745c5c3_Err != nil {
@@ -2502,7 +2474,7 @@ func PrometAnalitickaKarticaPoMITable(tbl domain.TableData, translator *i18n.Ser
 					var templ_7745c5c3_Var132 string
 					templ_7745c5c3_Var132, templ_7745c5c3_Err = templ.JoinStringErrs(row.Fields[0])
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 473, Col: 23}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 469, Col: 23}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var132))
 					if templ_7745c5c3_Err != nil {
@@ -2517,7 +2489,7 @@ func PrometAnalitickaKarticaPoMITable(tbl domain.TableData, translator *i18n.Ser
 					var templ_7745c5c3_Var133 string
 					templ_7745c5c3_Var133, templ_7745c5c3_Err = templ.JoinStringErrs(row.Fields[1])
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 478, Col: 23}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 474, Col: 23}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var133))
 					if templ_7745c5c3_Err != nil {
@@ -2532,7 +2504,7 @@ func PrometAnalitickaKarticaPoMITable(tbl domain.TableData, translator *i18n.Ser
 					var templ_7745c5c3_Var134 string
 					templ_7745c5c3_Var134, templ_7745c5c3_Err = templ.JoinStringErrs(row.Fields[2])
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 483, Col: 23}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 479, Col: 23}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var134))
 					if templ_7745c5c3_Err != nil {
@@ -2547,7 +2519,7 @@ func PrometAnalitickaKarticaPoMITable(tbl domain.TableData, translator *i18n.Ser
 					var templ_7745c5c3_Var135 string
 					templ_7745c5c3_Var135, templ_7745c5c3_Err = templ.JoinStringErrs(row.Fields[3])
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 488, Col: 23}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 484, Col: 23}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var135))
 					if templ_7745c5c3_Err != nil {
@@ -2566,7 +2538,7 @@ func PrometAnalitickaKarticaPoMITable(tbl domain.TableData, translator *i18n.Ser
 				var templ_7745c5c3_Var136 string
 				templ_7745c5c3_Var136, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", len(tbl.Headers)-3))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 494, Col: 57}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 490, Col: 57}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var136))
 				if templ_7745c5c3_Err != nil {
@@ -2580,7 +2552,7 @@ func PrometAnalitickaKarticaPoMITable(tbl domain.TableData, translator *i18n.Ser
 					var templ_7745c5c3_Var137 string
 					templ_7745c5c3_Var137, templ_7745c5c3_Err = templ.JoinStringErrs(row.Fields[0])
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 496, Col: 23}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 492, Col: 23}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var137))
 					if templ_7745c5c3_Err != nil {
@@ -2595,7 +2567,7 @@ func PrometAnalitickaKarticaPoMITable(tbl domain.TableData, translator *i18n.Ser
 					var templ_7745c5c3_Var138 string
 					templ_7745c5c3_Var138, templ_7745c5c3_Err = templ.JoinStringErrs(row.Fields[1])
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 501, Col: 23}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 497, Col: 23}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var138))
 					if templ_7745c5c3_Err != nil {
@@ -2610,7 +2582,7 @@ func PrometAnalitickaKarticaPoMITable(tbl domain.TableData, translator *i18n.Ser
 					var templ_7745c5c3_Var139 string
 					templ_7745c5c3_Var139, templ_7745c5c3_Err = templ.JoinStringErrs(row.Fields[2])
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 506, Col: 23}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 502, Col: 23}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var139))
 					if templ_7745c5c3_Err != nil {
@@ -2625,7 +2597,7 @@ func PrometAnalitickaKarticaPoMITable(tbl domain.TableData, translator *i18n.Ser
 					var templ_7745c5c3_Var140 string
 					templ_7745c5c3_Var140, templ_7745c5c3_Err = templ.JoinStringErrs(row.Fields[3])
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 511, Col: 23}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 507, Col: 23}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var140))
 					if templ_7745c5c3_Err != nil {
@@ -2672,7 +2644,7 @@ func PrometAnalitickaKarticaPoMITable(tbl domain.TableData, translator *i18n.Ser
 					var templ_7745c5c3_Var143 string
 					templ_7745c5c3_Var143, templ_7745c5c3_Err = templ.JoinStringErrs(cell)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 526, Col: 14}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 522, Col: 14}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var143))
 					if templ_7745c5c3_Err != nil {
@@ -2729,7 +2701,7 @@ func PrometAnalitickaKarticaPoMITable(tbl domain.TableData, translator *i18n.Ser
 				var templ_7745c5c3_Var146 string
 				templ_7745c5c3_Var146, templ_7745c5c3_Err = templ.JoinStringErrs(total)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 545, Col: 14}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/promet.templ`, Line: 541, Col: 14}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var146))
 				if templ_7745c5c3_Err != nil {

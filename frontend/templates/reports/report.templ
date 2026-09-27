@@ -8,8 +8,9 @@ import (
 	"time"
 )
 
+// ============================================================================
 // Main Report Template
-templ Report(parameters domain.ReportParameters, tableData domain.TableData, translator *i18n.Service, summaryComponent templ.Component, customReport templ.Component) {
+templ Report(parameters domain.ReportParameters, tableData domain.TableData, translator *i18n.Service, paramBlock templ.Component, summaryComponent templ.Component, customReport templ.Component) {
 	<html lang="en">
 		<head>
 			<meta charset="UTF-8"/>
@@ -20,139 +21,132 @@ templ Report(parameters domain.ReportParameters, tableData domain.TableData, tra
 			<title>{ parameters.ReportName } - { parameters.CompanyName }</title>
 			<style>
 			/* @page must be at top level, not inside @media print */
-			/* @top-right requires Chrome 128+ — thead::before below is the Chrome fallback */
-			@page {
-				size: A4 { parameters.Orientation };
-				margin: 14mm 8mm 14mm 8mm;
-				@bottom-right {
-					content: "Strana: " counter(page) " / " counter(pages);
-					font-size: 9pt;
-					font-family: sans-serif;
-					color: #374151;
-					vertical-align: bottom;
-					padding-bottom: 6mm;
-				}
-			}
-
-			@media print {
-				.page-info {
-					font-size: 8pt;
-					color: #374151;
-				}
-				
-				/* Ensure page numbers appear on each printed page */
-				.page-break {
-					position: relative;
-					page-break-after: always;
-				}
-		
-				html, body {
-					margin: 0;
-					padding: 0;
-					width: 100%;
-				}
-				
-				body {
-					background: white;
-				}
-				
-				.no-print {
-					display: none !important;
-				}
-				
-				.print-container {
-					width: 100%;
-					margin: 0;
-					padding: 0;
-					background: white;
-				}
-				
-				.no-break {
-					page-break-inside: avoid;
-				}
-				
-				/* Table should break naturally across pages */
-				table {
-					width: 100%;
-					border-collapse: collapse;
-					page-break-inside: auto;
-					table-layout: fixed;
-				}
-				
-				/* Repeat header on each page */
-				thead {
-					display: table-header-group;
-					page-break-inside: avoid;
+			    @page {
+					size: A4 { parameters.Orientation };
+					margin: 14mm 8mm 14mm 8mm;
+					@bottom-right {
+						content: "Strana: " counter(page) " / " counter(pages);
+						font-size: 9pt;
+						font-family: sans-serif;
+						color: #374151;
+						vertical-align: bottom;
+						padding-bottom: 6mm;
+					}
 				}
 
-				tbody {
-					display: table-row-group;
+				@media print {
+					.page-info {
+						font-size: 8pt;
+						color: #374151;
+					}
+
+					html, body {
+						margin: 0;
+						padding: 0;
+						width: 100%;
+					}
+
+					body {
+						background: white;
+					}
+
+					/* Note: .no-export must NOT be hidden here — it only marks elements for the Excel
+					   exporter (the export script strips them from the cloned table), and the repeating
+					   page header row carries it. Hiding it in print removes the page header. */
+					.no-print {
+						display: none !important;
+					}
+
+					/* Repeating page header row (first row of the report table <thead>): hidden on
+					   screen, a real table row in print so the browser repeats it on every page. */
+					tr.report-repeat-header {
+						display: table-row !important;
+					}
+
+					.print-container {
+						width: 100%;
+						margin: 0;
+						padding: 0;
+						background: white;
+					}
+
+					.no-break {
+						page-break-inside: avoid;
+						break-inside: avoid;
+					}
+
+					table {
+						width: 100%;
+						border-collapse: collapse;
+						page-break-inside: auto;
+						table-layout: fixed;
+					}
+
+					/* Repeat header on each printed page */
+					thead {
+						display: table-header-group;
+					}
+
+					tbody {
+						display: table-row-group;
+					}
+
+					thead tr {
+						page-break-inside: avoid;
+						page-break-after: avoid;
+					}
+
+					tr.group-header {
+						page-break-inside: avoid;
+						page-break-after: avoid;
+					}
+
+					tr.subgroup-header {
+						page-break-inside: avoid;
+						page-break-after: auto;
+					}
+
+					tr.group-total {
+						page-break-inside: avoid;
+						page-break-after: avoid;
+					}
+
+					tr.grand-total {
+						page-break-inside: avoid;
+					}
+
+					tr {
+						page-break-inside: auto;
+					}
+
+					tfoot {
+						display: table-row-group;
+						page-break-inside: avoid;
+					}
 				}
-				
-				/* Table header rows - keep with content */
-				thead tr {
-					page-break-inside: avoid;
-					page-break-after: avoid;
+
+				@media screen {
+					.page-break {
+						width: 210mm;
+						margin: 10px auto;
+						padding: 15mm;
+						background: white;
+						box-shadow: 0 0 10px rgba(0,0,0,0.1);
+						min-height: 297mm;
+					}
 				}
-				
-				/* Keep group headers with next row */
-				tr.group-header {
-					page-break-inside: avoid;
-					page-break-after: avoid;
-				}
-				
-				tr.subgroup-header {
-					page-break-inside: avoid;
-					page-break-after: auto;
-				}
-				
-				tr.group-total {
-					page-break-inside: avoid;
-					page-break-after: avoid;
-				}
-				
-				tr.group-footer {
-					page-break-inside: avoid;
-				}
-				
-				tr.grand-total {
-					page-break-inside: avoid;
-				}
-				
-				/* Regular data rows can break */
-				tr {
-					page-break-inside: auto;
-				}
-				
-				tfoot {
-					display: table-row-group;
-					page-break-inside: avoid;
-				}
-			}
-			/* Screen view */
-			@media screen {
-				
-				.page-break {
-					width: 210mm;
-					margin: 10px auto;
-					padding: 15mm;
-					background: white;
-					box-shadow: 0 0 10px rgba(0,0,0,0.1);
-					min-height: 297mm;
-				}
-			}
-		</style>
+			</style>
 		</head>
-		<body class="bg-gray-100 print:bg-white print:h-auto font-sans">
+		<body class="bg-gray-100 mb-4 print:bg-white print:h-auto font-sans">
 			<!-- Print Controls -->
-			<div class="fixed top-2 right-2 z-50 bg-white p-2 rounded shadow-lg flex gap-2 items-center print:hidden">
+			<div class="fixed top-2 right-2 z-50 bg-white p-2 rounded shadow-lg flex gap-2 items-center print:hidden no-export">
 				<button
 					onclick="window.print()"
 					class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-sm font-semibold"
 				>
 					🖨️ { translator.Button("Stampa") }
 				</button>
-				<button onclick="exportToExcel()" class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-sm font-semibold">
+				<button onclick="exportToExcel(event)" class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-sm font-semibold">
 					📊 Export Excel
 				</button>
 				<button
@@ -168,35 +162,16 @@ templ Report(parameters domain.ReportParameters, tableData domain.TableData, tra
 					if customReport != nil {
 						@customReport
 					} else {
-						<!-- Header: Company Info, Date/Time, Page -->
-						@ReportHeader(parameters)
-						<!-- Report Title -->
-						@ReportTitle(parameters)
-						<!-- Report Parameters as Headers (Two Columns) -->
-						@ReportParametersHeader(parameters)
-						<!-- Report Data/Table -->
-						@ReportTableSection(tableData, translator)
-						if summaryComponent != nil {
-							<!-- Page break: gray gap on screen, real break on print -->
-							<div class="print:hidden -mx-8 h-16 bg-gray-200 border-y border-gray-300"></div>
-							<div class="hidden print:block" style="page-break-before: always;"></div>
-							<!-- Summary Section (e.g., Totals, Averages) -->
-							<div class="pt-10 print:pt-8">
-								@summaryComponent
-							</div>
-						}
-						<!-- Footer -->
-						@ReportFooter(parameters)
+						@ReportContent(parameters, paramBlock, tableData, translator, summaryComponent)
 					}
 				</div>
 			</div>
-			@ReportPaginationScript()
+			@ReportExcelExportScript()
 			@ReportKeyboardShortcutsScript()
 			@tmpl.OpenPrintWithParamsScript()
 		</body>
 	</html>
 }
-
 // Header with Company Info (Left), Date/Time and Page (Right)
 templ ReportHeader(parameters domain.ReportParameters) {
 	<div class="mb-2 border-b-2 border-gray-300 print:m-0 print:mb-1 print:pb-1 print:border-b print:border-gray-300">
@@ -211,9 +186,12 @@ templ ReportHeader(parameters domain.ReportParameters) {
 				<p class="print:leading-tight">{ time.Now().Format("02.01.2006 15:04:05") }</p>
 			</div>
 		</div>
+		<!-- Column 3 (2/12): date/time and page (browser/CSS handles page number) -->
+		<div class="text-right col-span-2">
+			<div class="page-info">{ time.Now().Format("02.01.2006 15:04:05") }</div>
+		</div>
 	</div>
 }
-
 // Report Title
 templ ReportTitle(parameters domain.ReportParameters) {
 	<div class="mb-1 text-center print:m-0 print:mb-1">
@@ -222,66 +200,116 @@ templ ReportTitle(parameters domain.ReportParameters) {
 		</h2>
 	</div>
 }
+// ============================================================================
+// Repeating Page Header (3 / 8 / 1 grid)
+// ============================================================================
 
-// Report Parameters as Two-Column Headers
-templ ReportParametersHeader(parameters domain.ReportParameters) {
-	<div class="mb-1 grid grid-cols-2 gap-1 print:gap-2 print:m-0 print:mb-2 print:pb-1 print:border-b print:border-gray-300">
-		for _, param := range parameters.ParameterItems {
-			<div class="flex gap-1 items-center text-sm text-gray-700 print:text-[8pt] print:leading-tight">
-			if param.Name != "" {
-					<span class="font-semibold">{ param.Name }:</span>
-				}else{
-					<span></span>
+// ReportPageHeader renders the header content that repeats on every printed
+// page: company info (3/12) | report title + parameters (8/12) | date & time
+// (1/12). This is the single source of truth for that content — it's used
+// both inside <thead> for print (see ReportTableHeadWithPageHeader in
+// tablereport.templ) and, unconditionally, for the screen preview via
+// ReportPageHeaderScreen below.
+templ ReportPageHeader(repParams domain.ReportParameters, paramBlock templ.Component, translator *i18n.Service) {
+	<!-- 12-col grid: 2/12 | 8/12 | 2/12. The outer columns MUST stay equal, otherwise the centre column
+	     (and the title inside it) ends up off-centre on the page. -->
+	<div class="grid grid-cols-12 items-start gap-2 text-[10px] w-full">
+		<!-- Column 1 (2/12): company info -->
+		<div class="text-left col-span-2">
+			<div class="font-bold text-sm print:text-sm print:leading-tight">{ repParams.CompanyName }</div>
+			<div class="print:leading-tight">
+				{ repParams.Adress }, { repParams.Postcode } { repParams.City } - { fmt.Sprintf("%d", time.Now().Year()) }. { translator.Label("godina") }
+			</div>
+		</div>
+		<!-- Column 2 (8/12): title + parameters, centred on the page (2/12 + 4/12 = 6/12) -->
+		<div class="text-center col-span-8">
+			<h1 class="text-[14px] font-bold tracking-wide uppercase print:leading-tight">{ repParams.ReportName }</h1>
+			<!-- Centred parameter block with no bottom margin of its own ([&>*]:!mb-0 neutralises the
+			     margins of the parameter components) so no blank line shows up above the table. -->
+			<div class="mt-0.5 flex flex-col items-center [&>*]:max-w-full [&>*]:!mb-0">
+				if paramBlock != nil {
+					@paramBlock
+				} else if len(repParams.ParameterItems) > 0 {
+					@ReportPageHeaderParams(repParams)
+				}
+			</div>
+		</div>
+		<!-- Column 3 (2/12): date & time; page number comes from the @page counter -->
+		<div class="text-right col-span-2">
+			<div class="page-info whitespace-nowrap">{ time.Now().Format("02.01.2006") }</div>
+			<div class="page-info whitespace-nowrap">{ time.Now().Format("15:04:05") }</div>
+		</div>
+	</div>
+}
+
+// ReportPageHeaderParams renders ReportParameters.ParameterItems as centred
+// inline items; used when the caller doesn't supply its own paramBlock.
+templ ReportPageHeaderParams(repParams domain.ReportParameters) {
+	<div class="flex flex-wrap items-center justify-center gap-x-4 gap-y-0.5 text-[10px] print:text-[9pt] leading-tight print:gap-x-2 print:gap-y-0">
+		for _, param := range repParams.ParameterItems {
+			<span class="whitespace-nowrap">
+				if param.Name != "" {
+					<span class="font-semibold">{ param.Name }</span>
+					<span>:</span>
 				}
 				<span class="font-bold">{ param.Value }</span>
-			</div>
+			</span>
 		}
 	</div>
 }
 
-// Report Table Section - uses ReportTable from tablereport.templ
-templ ReportTableSection(tableData domain.TableData, translator *i18n.Service) {
-	<div class="mb-1 overflow-x-auto print:overflow-visible print:mt-4 print:mb-4 print:mx-0">
-		@ReportTable(tableData, translator)
+// ReportPageHeaderScreen renders the same header content for the on-screen
+// preview, hidden on print (print:hidden) since the print copy is rendered
+// separately inside the table's <thead> so it repeats on every page.
+templ ReportPageHeaderScreen(repParams domain.ReportParameters, paramBlock templ.Component, translator *i18n.Service) {
+	<div class="print:hidden mb-1 pb-1 border-b border-gray-300">
+		@ReportPageHeader(repParams, paramBlock, translator)
 	</div>
 }
 
-// Group Template (for grouped report data)
-templ ReportGroup(groupName string, groupData interface{}) {
-	<div class="mt-2 mb-4">
-		<h3 class="text-lg font-bold text-gray-800 bg-gray-100 px-3 py-2 border-l-4 border-blue-900">
-			{ groupName }
-		</h3>
+// ============================================================================
+// Content orchestration (default, non-customReport path)
+// ============================================================================
+templ ReportContent(repParams domain.ReportParameters, paramBlock templ.Component, tableData domain.TableData, translator *i18n.Service, summaryComponent templ.Component) {
+	@ReportPageHeaderScreen(repParams, paramBlock, translator)
+	<div class="overflow-x-auto print:overflow-visible print:mt-0 print:mb-4 print:mx-0">
+		@ReportTableWithPageHeader(tableData, translator, ReportPageHeader(repParams, paramBlock, translator))
 	</div>
+	if summaryComponent != nil {
+		<!-- Page break: gray gap on screen, real break on print -->
+		<div class="print:hidden -mx-8 h-16 bg-gray-200 border-y border-gray-300"></div>
+		<div class="hidden print:block" style="break-before: page;"></div>
+		<div class="pt-10 print:pt-8 no-break">
+			@summaryComponent
+		</div>
+	}
+	@ReportEnd(nil)
+	@ReportFooter(repParams)
 }
 
-// Subgroup Template (for nested grouping)
-templ ReportSubgroup(subgroupName string, subgroupData interface{}) {
-	<div class="mt-4 mb-2 ml-4">
-		<h4 class="text-base font-semibold text-gray-700 bg-gray-50 px-3 py-1 border-l-4 border-gray-400">
-			{ subgroupName }
-		</h4>
-	</div>
-}
-
+// ============================================================================
+// End-of-report marker
+// ============================================================================
 templ ReportEnd(endOfReport templ.Component) {
 	if endOfReport != nil {
 		<div class="mt-2">
 			@endOfReport
 		</div>
-		<div class="mt-6 text-left text-gray-700 print:mt-4 print:text-[7pt]">
+		<div class="mt-6 text-left text-gray-700 print:mt-4 print:text-[7pt] no-break">
 			*** KRAJ IZVEŠTAJA ***
 		</div>
 	} else {
-		<div class="mt-6 text-left text-xs text-gray-700 print:mt-4 print:text-[7pt]">
+		<div class="mt-6 text-left text-xs text-gray-700 print:mt-4 print:text-[7pt] no-break">
 			*** KRAJ IZVEŠTAJA ***
 		</div>
 	}
 }
 
+// ============================================================================
 // Footer
+// ============================================================================
 templ ReportFooter(parameters domain.ReportParameters) {
-	<div class="mt-1 pt-1 border-t-2 border-gray-300 text-center text-xs text-gray-600 space-y-1 print:m-0 print:mt-2 print:pt-1 print:text-[7pt] print:space-y-0 print:border-t print:border-gray-300">
+	<div class="mt-1 pt-1 border-t-2 border-gray-300 text-center text-xs text-gray-600 space-y-1 print:m-0 print:mt-2 print:pt-1 print:text-[7pt] print:space-y-0 print:border-t print:border-gray-300 no-break">
 		<p class="print:leading-tight">
 			Generated on { time.Now().Format("January 2, 2006") } at { time.Now().Format("15:04:05") }
 			by { parameters.UserName }
@@ -292,15 +320,18 @@ templ ReportFooter(parameters domain.ReportParameters) {
 	</div>
 }
 
-templ ReportPaginationScript() {
+
+// ============================================================================
+// Client-side scripts
+// ============================================================================
+templ ReportExcelExportScript() {
 	<script>
-		async function exportToExcel() {
+		async function exportToExcel(event) {
 			const btn = event.target;
 			const originalText = btn.innerText;
 			btn.innerText = 'Exporting...';
 			btn.disabled = true;
 			try {
-				// Load SheetJS from CDN
 				await new Promise((resolve, reject) => {
 					if (window.XLSX) { resolve(); return; }
 					const s = document.createElement('script');
@@ -309,10 +340,10 @@ templ ReportPaginationScript() {
 					s.onerror = reject;
 					document.head.appendChild(s);
 				});
-				// Find the first table in the report container
 				const table = document.querySelector('table');
 				if (!table) { alert('No table found to export.'); return; }
-				// Print-only helper rows (e.g. repeating print headers) must not leak into the sheet
+				// Print-only helper rows (e.g. the repeating page header) must
+				// not leak into the exported sheet.
 				const exportTable = table.cloneNode(true);
 				exportTable.querySelectorAll('.no-export').forEach(el => el.remove());
 				const wb = XLSX.utils.table_to_book(exportTable, { sheet: 'Izvestaj', raw: false });
@@ -326,62 +357,16 @@ templ ReportPaginationScript() {
 				btn.disabled = false;
 			}
 		}
-
-		function updatePageNumbers() {
-			const currentPageSpan = document.getElementById('current-page');
-			const totalPagesSpan = document.getElementById('total-pages');
-			
-			// A4 page height at 96dpi minus margins (~24mm total vertical margin)
-			const pageHeightPx = (297 - 24) * 96 / 25.4;
-			const totalHeight = document.body.scrollHeight;
-			const totalPages = Math.max(1, Math.ceil(totalHeight / pageHeightPx));
-			
-			const scrollPosition = window.scrollY;
-			const currentPage = Math.min(totalPages, Math.max(1, Math.floor(scrollPosition / pageHeightPx) + 1));
-			
-			if (currentPageSpan) currentPageSpan.textContent = currentPage;
-			if (totalPagesSpan) totalPagesSpan.textContent = totalPages;
-			
-			// Store for print
-			window._totalPages = totalPages;
-		}
-		
-		// Debounced update
-		let timeout;
-		function debouncedUpdate() {
-			clearTimeout(timeout);
-			timeout = setTimeout(updatePageNumbers, 100);
-		}
-		
-		// Watch for content changes
-		const observer = new MutationObserver(debouncedUpdate);
-		observer.observe(document.body, {
-			childList: true,
-			subtree: true,
-			attributes: true,
-			attributeFilter: ['style', 'class']
-		});
-		
-		// Event listeners
-		window.addEventListener('scroll', debouncedUpdate);
-		window.addEventListener('resize', debouncedUpdate);
-		window.addEventListener('load', updatePageNumbers);
-		
-		// Initial update
-		updatePageNumbers();
-		
 	</script>
 }
 
 templ ReportKeyboardShortcutsScript() {
 	<script>
 		document.addEventListener('keydown', (e) => {
-			// Ctrl/Cmd + P for print
 			if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
 				e.preventDefault();
 				window.print();
 			}
-			// Escape to close
 			if (e.key === 'Escape') {
 				window.close();
 			}

@@ -98,9 +98,11 @@ func (h *GenericHandler[T]) GetAllPrint(c *gin.Context) {
 		PIB:         fvrData.PIB,
 		MatBroj:     fvrData.Matbr,
 		SifDel:      fvrData.SifDel,
+		God:         userSession.SelectedGod,
+		ReportTitle: h.hconfig.ContentTitle,
 		Orientation: "portrait",
 	}
-	rep.Report(reportParams, *tbl, i18n.GetInstance(), nil, nil).Render(c.Request.Context(), c.Writer)
+	rep.Report(reportParams, *tbl, i18n.GetInstance(), nil, nil, nil).Render(c.Request.Context(), c.Writer)
 
 }
 func (h *GenericHandler[T]) GetAllPdf(c *gin.Context) {

@@ -7,8 +7,8 @@ import (
 
 	"helia/internal/common"
 	"helia/internal/domain"
-	"helia/internal/infrastructure/db"
 	"helia/internal/repository"
+	commonsvc "helia/internal/service/common"
 )
 
 type KrajPoslovneGodineService interface {
@@ -24,24 +24,17 @@ type KrajPoslovneGodineService interface {
 }
 
 type KrajPoslovneGodineResource struct {
-	database    db.Database
-	mag         *repository.BaseRepository[domain.Magacini]
+	magRepo     *repository.BaseRepository[domain.Magacini]
+	drstaRepo   *repository.BaseRepository[domain.Drsta]
+	commonSvc   commonsvc.CommonService
 	type1Fields []domain.Fields
 	type2Fields []domain.Fields
 	visakFields []domain.Fields
 }
 
-func NewKrajPoslovneGodineService(database db.Database, mag *repository.BaseRepository[domain.Magacini]) *KrajPoslovneGodineResource {
-	s := &KrajPoslovneGodineResource{database: database, mag: mag}
-	s.type1Fields = []domain.Fields{
-		{Name: "redbr", Label: "Red.br.", Field: "redbr"}, {Name: "konto", Label: "Konto", Field: "konto"}, {Name: "sifra", Label: "Šifra", Field: "sifra"}, {Name: "naziv", Label: "Naziv", Field: "naziv"}, {Name: "jm", Label: "JM", Field: "jm"}, {Name: "grupa", Label: "Grupa", Field: "grupa"}, {Name: "nazivgrupe", Label: "Naziv grupe", Field: "nazivgrupe"}, {Name: "cena", Label: "Cena", Field: "cena", TextAlign: "right"}, {Name: "kolicina1", Label: "Količina 1", Field: "kolicina1", TextAlign: "right"}, {Name: "kolicina2", Label: "Količina 2", Field: "kolicina2", TextAlign: "right"}, {Name: "kolicina3", Label: "Količina 3", Field: "kolicina3", TextAlign: "right"}, {Name: "ukupnakolicina", Label: "Ukupna količina", Field: "ukupnakolicina", TextAlign: "right"}, {Name: "stanjezaliha", Label: "Stanje zaliha", Field: "stanjezaliha", TextAlign: "right"},
-	}
-	s.type2Fields = []domain.Fields{
-		{Name: "redbr", Label: "Red.br.", Field: "redbr"}, {Name: "konto", Label: "Konto", Field: "konto"}, {Name: "sifra", Label: "Šifra", Field: "sifra"}, {Name: "naziv", Label: "Naziv", Field: "naziv"}, {Name: "jm", Label: "JM", Field: "jm"}, {Name: "grupa", Label: "Grupa", Field: "grupa"}, {Name: "nazivgrupe", Label: "Naziv grupe", Field: "nazivgrupe"}, {Name: "otk", Label: "OTK", Field: "otk"}, {Name: "serija", Label: "Serija", Field: "serija"}, {Name: "rok", Label: "Rok", Field: "rok"}, {Name: "kolicina1", Label: "Količina 1", Field: "kolicina1", TextAlign: "right"}, {Name: "kolicina2", Label: "Količina 2", Field: "kolicina2", TextAlign: "right"}, {Name: "kolicina3", Label: "Količina 3", Field: "kolicina3", TextAlign: "right"}, {Name: "ukupnakolicina", Label: "Ukupna količina", Field: "ukupnakolicina", TextAlign: "right"}, {Name: "stanjezaliha", Label: "Stanje zaliha", Field: "stanjezaliha", TextAlign: "right"},
-	}
-	s.visakFields = []domain.Fields{
-		{Name: "redbr", Label: "Red.br.", Field: "redbr"}, {Name: "sifra", Label: "Šifra", Field: "sifra"}, {Name: "konto", Label: "Konto", Field: "konto"}, {Name: "naziv", Label: "Naziv", Field: "naziv"}, {Name: "jm", Label: "JM", Field: "jm"}, {Name: "cena", Label: "Cena", Field: "cena", TextAlign: "right"}, {Name: "kolicinapopisa", Label: "Popisano stanje", Field: "kolicinapopisa", TextAlign: "right"}, {Name: "iznospopisa", Label: "Iznos popisa", Field: "iznospopisa", TextAlign: "right"}, {Name: "stanjeknjigovodstveno", Label: "Knjigovodstveno stanje", Field: "stanjeknjigovodstveno", TextAlign: "right"}, {Name: "iznosknjigovodstveno", Label: "Knjigovodstveni iznos", Field: "iznosknjigovodstveno", TextAlign: "right"}, {Name: "visak", Label: "Višak", Field: "visak", TextAlign: "right"}, {Name: "iznosviska", Label: "Iznos viška", Field: "iznosviska", TextAlign: "right"}, {Name: "manjak", Label: "Manjak", Field: "manjak", TextAlign: "right"}, {Name: "iznosmanjka", Label: "Iznos manjka", Field: "iznosmanjka", TextAlign: "right"}, {Name: "finansijskivisak", Label: "Finansijski višak", Field: "finansijskivisak", TextAlign: "right"}, {Name: "finansijskimanjak", Label: "Finansijski manjak", Field: "finansijskimanjak", TextAlign: "right"},
-	}
+func NewKrajPoslovneGodineService(magRepo *repository.BaseRepository[domain.Magacini], drstaRepo *repository.BaseRepository[domain.Drsta], commonSvc commonsvc.CommonService) *KrajPoslovneGodineResource {
+	s := &KrajPoslovneGodineResource{magRepo: magRepo, drstaRepo: drstaRepo, commonSvc: commonSvc}
+	s.setTableFields()
 	return s
 }
 
@@ -92,50 +85,44 @@ func (s *KrajPoslovneGodineResource) ValidateObrada(p domain.KrajPoslovneGodineP
 	return errors
 }
 
+// GetMagacini returns the magacini of the current period keyed by mag (CommonService).
 func (s *KrajPoslovneGodineResource) GetMagacini(ctx context.Context) ([]domain.ComboItem, error) {
-	user := domain.GetSessionFromStdContext(ctx)
-	if user == nil {
-		return nil, fmt.Errorf("no user session found")
-	}
-	qb := common.NewQueryBuilder("SELECT magaciniid, mag, opis FROM magacini", true)
-	god, kar := s.mag.GetHasGodHasKar()
-	if god {
-		qb.AddEqual("god", user.SelectedGod)
-	}
-	if kar {
-		qb.AddEqual("kar", user.SelectedKar)
-	}
-	qb.AddOrderBy("mag")
-	query, args := qb.Build()
-	rows, err := s.mag.GetAllCustom(ctx, query, "", args, "", "")
-	if err != nil {
-		return nil, err
-	}
-	result := make([]domain.ComboItem, 0, len(*rows))
-	for _, row := range *rows {
-		result = append(result, domain.ComboItem{Key: fmt.Sprint(row.Mag), Value: fmt.Sprintf("%d - %s", row.Mag, row.Opis)})
-	}
-	return result, nil
+	return s.commonSvc.GetMagacinByMagComboValues(ctx)
 }
 
-func (s *KrajPoslovneGodineResource) GetPopis(ctx context.Context, p domain.KrajPoslovneGodineParams) (domain.KrajPopisData, error) {
-	user := domain.GetSessionFromStdContext(ctx)
-	if user == nil {
+func (s *KrajPoslovneGodineResource) GetPopis(ctx context.Context, params domain.KrajPoslovneGodineParams) (domain.KrajPopisData, error) {
+	popisData := domain.KrajPopisData{}
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
 		return domain.KrajPopisData{}, fmt.Errorf("no user session found")
 	}
-	tipzal := p.TipZal
-	if tipzal == 0 {
-		if err := s.database.GetContext(ctx, &tipzal, `SELECT tipzal FROM magacini WHERE mag=$1 AND god=$2 AND kar=$3`, p.Magacin, user.SelectedGod, user.SelectedKar); err != nil {
+	if params.TipZal == 0 {
+		qb := common.NewQueryBuilder(`SELECT tipzal FROM magacini `, true)
+		hasGod, hasKar := s.magRepo.GetHasGodHasKar()
+		if hasGod {
+			qb.AddEqual("god", userSession.SelectedGod)
+		}
+		if hasKar {
+			qb.AddEqual("kar", userSession.SelectedKar)
+		}
+		qb.AddEqual("mag", params.Magacin)
+		sqlQuery, args := qb.Build()
+		entities, err := s.magRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+		if err != nil {
 			return domain.KrajPopisData{}, fmt.Errorf("get TIPZAL: %w", err)
 		}
+		if entities == nil || len(*entities) == 0 {
+			return domain.KrajPopisData{}, fmt.Errorf("no TIPZAL found")
+		}
+		popisData.TipZal = (*entities)[0].Tipzal
 	}
-	if tipzal == 1 {
-		return s.getPopisType1(ctx, p, user.SelectedGod, user.SelectedKar)
+	if params.TipZal == 1 {
+		return s.getPopisType1(ctx, params, userSession.SelectedGod, userSession.SelectedKar)
 	}
-	if tipzal == 2 {
-		return s.getPopisType2(ctx, p, user.SelectedGod, user.SelectedKar)
+	if params.TipZal == 2 {
+		return s.getPopisType2(ctx, params, userSession.SelectedGod, userSession.SelectedKar)
 	}
-	return domain.KrajPopisData{}, fmt.Errorf("unsupported TIPZAL %d; expected 1 or 2", tipzal)
+	return domain.KrajPopisData{}, fmt.Errorf("unsupported TIPZAL %d; expected 1 or 2", params.TipZal)
 }
 
 func (s *KrajPoslovneGodineResource) getPopisType1(ctx context.Context, p domain.KrajPoslovneGodineParams, god, kar int) (domain.KrajPopisData, error) {
@@ -155,7 +142,7 @@ func (s *KrajPoslovneGodineResource) getPopisType1(ctx context.Context, p domain
  LEFT JOIN magacini m ON m.mag=s.mag AND m.god=s.god AND m.kar=s.kar WHERE s.god=$1 AND s.kar=$2 AND ($3=0 OR s.mag=$3) AND ($4='' OR s.konto>=$4) AND ($5='' OR s.konto<=$5) AND ($6=0 OR s.sifra>=$6) AND ($7=0 OR s.sifra<=$7)
 	 GROUP BY s.konto,s.sifra,a.naziv,a.jm,a.gru,g.naziv,m.nacvodzal HAVING ($8 OR sum(s.ulaz-s.izlaz)<>0) ORDER BY %s`, order, order)
 	var rows []domain.KrajPopisType1Row
-	err = s.database.SelectContext(ctx, &rows, query, god, kar, p.Magacin, p.OdKonta, p.DoKonta, p.OdSifre, p.DoSifre, p.ObradiNule)
+	err = s.drstaRepo.DB.SelectContext(ctx, &rows, query, god, kar, p.Magacin, p.OdKonta, p.DoKonta, p.OdSifre, p.DoSifre, p.ObradiNule)
 	return domain.KrajPopisData{TipZal: 1, Type1: rows}, err
 }
 
@@ -173,7 +160,7 @@ func (s *KrajPoslovneGodineResource) getPopisType2(ctx context.Context, p domain
 	 coalesce((SELECT sum(s.ulaz-s.izlaz) FROM rsta s WHERE s.god=$1 AND s.kar=$2 AND s.mag=d.mag AND s.sifra=d.sifra AND s.konto=d.konto),0) stanjezaliha
  FROM drsta d LEFT JOIN rsif a ON a.sifra=d.sifra AND a.god=d.god AND a.kar=d.kar LEFT JOIN rgru g ON g.gru=a.gru AND g.god=d.god AND g.kar=d.kar WHERE d.god=$1 AND d.kar=$2 AND ($3=0 OR d.mag=$3) AND ($4='' OR d.konto>=$4) AND ($5='' OR d.konto<=$5) AND ($6=0 OR d.sifra>=$6) AND ($7=0 OR d.sifra<=$7) ORDER BY %s`, order, order)
 	var rows []domain.KrajPopisType2Row
-	err = s.database.SelectContext(ctx, &rows, query, god, kar, p.Magacin, p.OdKonta, p.DoKonta, p.OdSifre, p.DoSifre)
+	err = s.drstaRepo.DB.SelectContext(ctx, &rows, query, god, kar, p.Magacin, p.OdKonta, p.DoKonta, p.OdSifre, p.DoSifre)
 	return domain.KrajPopisData{TipZal: 2, Type2: rows}, err
 }
 
@@ -202,7 +189,7 @@ func (s *KrajPoslovneGodineResource) GetVisakManjak(ctx context.Context, p domai
 	}
 	query := `WITH book AS (SELECT s.konto,s.sifra,sum(s.ulaz-s.izlaz) stanje,sum(s.dug-s.pot) iznos,max(s.cena) cena FROM rsta s WHERE s.god=$1 AND s.kar=$2 AND ($7=0 OR s.mag=$7) GROUP BY s.konto,s.sifra), popis AS (SELECT p.konto,p.sifra,sum(p.kolic) kolicina,sum(p.iznos) iznos FROM rpro p JOIN rdok d ON d.rdokid=p.rdokid WHERE p.god=$3 AND p.kar=$2 AND p.nalog=$4 AND p.dokum=$5 AND p.vrd=$6 AND ($7=0 OR p.mag=$7) GROUP BY p.konto,p.sifra), data_rows AS (SELECT b.konto,b.sifra,coalesce(a.naziv,'') naziv,coalesce(a.jm,'') jm,b.cena,b.iznos,b.stanje,coalesce(p.kolicina,0) kolicina,coalesce(p.iznos,0) popis_iznos,coalesce(p.kolicina,0)-b.stanje razlika FROM book b LEFT JOIN popis p ON p.konto=b.konto AND p.sifra=b.sifra LEFT JOIN rsif a ON a.sifra=b.sifra AND a.god=$1 AND a.kar=$2) SELECT row_number() over (ORDER BY sifra)::int redbr,sifra,konto,naziv,jm,cena,kolicina kolicinapopisa,popis_iznos iznospopisa,stanje stanjeknjigovodstveno,iznos iznosknjigovodstveno,case when razlika>0 then razlika else 0 end visak,case when razlika>0 then (popis_iznos-iznos) else 0 end iznosviska,case when razlika<0 then -razlika else 0 end manjak,case when razlika<0 then (iznos-popis_iznos) else 0 end iznosmanjka,case when razlika>0 and popis_iznos-iznos>0 then popis_iznos-iznos else 0 end finansijskivisak,case when razlika<0 and iznos-popis_iznos>0 then iznos-popis_iznos else 0 end finansijskimanjak FROM data_rows WHERE razlika<>0 ORDER BY sifra`
 	var rows []domain.KrajVisakManjakRow
-	err := s.database.SelectContext(ctx, &rows, query, user.SelectedGod, user.SelectedKar, p.NovaGod, p.Nalog, p.Dokum, p.Vrd, p.Magacin)
+	err := s.drstaRepo.DB.SelectContext(ctx, &rows, query, user.SelectedGod, user.SelectedKar, p.NovaGod, p.Nalog, p.Dokum, p.Vrd, p.Magacin)
 	return rows, err
 }
 
@@ -214,7 +201,7 @@ func (s *KrajPoslovneGodineResource) PrepisStanja(ctx context.Context, p domain.
 	if err != nil {
 		return err
 	}
-	tx, err := s.database.Beginx()
+	tx, err := s.drstaRepo.DB.Beginx()
 	if err != nil {
 		return fmt.Errorf("begin prepis transaction: %w", err)
 	}
@@ -247,7 +234,7 @@ func prepisPriceColumn(choice int) (string, error) {
 func (s *KrajPoslovneGodineResource) requireTables(ctx context.Context, tables ...string) error {
 	for _, table := range tables {
 		var exists bool
-		if err := s.database.GetContext(ctx, &exists, `SELECT to_regclass($1) IS NOT NULL`, table); err != nil {
+		if err := s.drstaRepo.DB.GetContext(ctx, &exists, `SELECT to_regclass($1) IS NOT NULL`, table); err != nil {
 			return fmt.Errorf("verify %s schema: %w", strings.ToUpper(table), err)
 		}
 		if !exists {
@@ -255,4 +242,57 @@ func (s *KrajPoslovneGodineResource) requireTables(ctx context.Context, tables .
 		}
 	}
 	return nil
+}
+
+func (s *KrajPoslovneGodineResource) setTableFields() {
+	s.type1Fields = []domain.Fields{
+		{Name: "redbr", Label: "Red.br.", Field: "redbr"},
+		{Name: "konto", Label: "Konto", Field: "konto"},
+		{Name: "sifra", Label: "Šifra", Field: "sifra"},
+		{Name: "naziv", Label: "Naziv", Field: "naziv"},
+		{Name: "jm", Label: "JM", Field: "jm"},
+		{Name: "grupa", Label: "Grupa", Field: "grupa"},
+		{Name: "nazivgrupe", Label: "Naziv grupe", Field: "nazivgrupe"},
+		{Name: "cena", Label: "Cena", Field: "cena", TextAlign: "right"},
+		{Name: "kolicina1", Label: "Količina 1", Field: "kolicina1", TextAlign: "right"},
+		{Name: "kolicina2", Label: "Količina 2", Field: "kolicina2", TextAlign: "right"},
+		{Name: "kolicina3", Label: "Količina 3", Field: "kolicina3", TextAlign: "right"},
+		{Name: "ukupnakolicina", Label: "Ukupna količina", Field: "ukupnakolicina", TextAlign: "right"},
+		{Name: "stanjezaliha", Label: "Stanje zaliha", Field: "stanjezaliha", TextAlign: "right"},
+	}
+	s.type2Fields = []domain.Fields{
+		{Name: "redbr", Label: "Red.br.", Field: "redbr"},
+		{Name: "konto", Label: "Konto", Field: "konto"},
+		{Name: "sifra", Label: "Šifra", Field: "sifra"},
+		{Name: "naziv", Label: "Naziv", Field: "naziv"},
+		{Name: "jm", Label: "JM", Field: "jm"},
+		{Name: "grupa", Label: "Grupa", Field: "grupa"},
+		{Name: "nazivgrupe", Label: "Naziv grupe", Field: "nazivgrupe"},
+		{Name: "otk", Label: "OTK", Field: "otk"},
+		{Name: "serija", Label: "Serija", Field: "serija"},
+		{Name: "rok", Label: "Rok", Field: "rok"},
+		{Name: "kolicina1", Label: "Količina 1", Field: "kolicina1", TextAlign: "right"},
+		{Name: "kolicina2", Label: "Količina 2", Field: "kolicina2", TextAlign: "right"},
+		{Name: "kolicina3", Label: "Količina 3", Field: "kolicina3", TextAlign: "right"},
+		{Name: "ukupnakolicina", Label: "Ukupna količina", Field: "ukupnakolicina", TextAlign: "right"},
+		{Name: "stanjezaliha", Label: "Stanje zaliha", Field: "stanjezaliha", TextAlign: "right"},
+	}
+	s.visakFields = []domain.Fields{
+		{Name: "redbr", Label: "Red.br.", Field: "redbr"},
+		{Name: "sifra", Label: "Šifra", Field: "sifra"},
+		{Name: "konto", Label: "Konto", Field: "konto"},
+		{Name: "naziv", Label: "Naziv", Field: "naziv"},
+		{Name: "jm", Label: "JM", Field: "jm"},
+		{Name: "cena", Label: "Cena", Field: "cena", TextAlign: "right"},
+		{Name: "kolicinapopisa", Label: "Popisano stanje", Field: "kolicinapopisa", TextAlign: "right"},
+		{Name: "iznospopisa", Label: "Iznos popisa", Field: "iznospopisa", TextAlign: "right"},
+		{Name: "stanjeknjigovodstveno", Label: "Knjigovodstveno stanje", Field: "stanjeknjigovodstveno", TextAlign: "right"},
+		{Name: "iznosknjigovodstveno", Label: "Knjigovodstveni iznos", Field: "iznosknjigovodstveno", TextAlign: "right"},
+		{Name: "visak", Label: "Višak", Field: "visak", TextAlign: "right"},
+		{Name: "iznosviska", Label: "Iznos viška", Field: "iznosviska", TextAlign: "right"},
+		{Name: "manjak", Label: "Manjak", Field: "manjak", TextAlign: "right"},
+		{Name: "iznosmanjka", Label: "Iznos manjka", Field: "iznosmanjka", TextAlign: "right"},
+		{Name: "finansijskivisak", Label: "Finansijski višak", Field: "finansijskivisak", TextAlign: "right"},
+		{Name: "finansijskimanjak", Label: "Finansijski manjak", Field: "finansijskimanjak", TextAlign: "right"},
+	}
 }

@@ -1392,6 +1392,7 @@ func (h *BasicHandler) renderFullPage(c *gin.Context) {
 	}
 
 	// Update handler state
+	h.menuItems.MenuItems = menuDataItems.MenuItems
 	h.subMenuItems = subMenus
 	h.menuItems.CurrentMenu = menuName
 

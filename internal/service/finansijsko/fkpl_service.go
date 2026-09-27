@@ -9,6 +9,7 @@ import (
 	"helia/internal/domain"
 	"helia/internal/repository"
 	"helia/internal/service"
+	commonsvc "helia/internal/service/common"
 	"reflect"
 )
 
@@ -33,9 +34,10 @@ type FkplResource struct {
 	partneriRepo     *repository.BaseRepository[domain.Partneri]
 	fkplTableFields  []domain.Fields
 	cfg              config.Config
+	commonSvc        commonsvc.CommonService
 }
 
-func NewFkplResource(service *service.BaseService[domain.Fkpl], fkplRepo *repository.BaseRepository[domain.Fkpl], fvrRepo *repository.BaseRepository[domain.Fvr], tipAnalitikeRepo *repository.BaseRepository[domain.Tipanalitike], partneriRepo *repository.BaseRepository[domain.Partneri], cfg config.Config) *FkplResource {
+func NewFkplResource(service *service.BaseService[domain.Fkpl], fkplRepo *repository.BaseRepository[domain.Fkpl], fvrRepo *repository.BaseRepository[domain.Fvr], tipAnalitikeRepo *repository.BaseRepository[domain.Tipanalitike], partneriRepo *repository.BaseRepository[domain.Partneri], cfg config.Config, commonSvc commonsvc.CommonService) *FkplResource {
 	rs := &FkplResource{
 		service:          service,
 		fkplRepo:         fkplRepo,
@@ -43,7 +45,8 @@ func NewFkplResource(service *service.BaseService[domain.Fkpl], fkplRepo *reposi
 		tipAnalitikeRepo: tipAnalitikeRepo,
 		partneriRepo:     partneriRepo,
 		cfg:              cfg,
-	}	
+		commonSvc:        commonSvc,
+	}
 	rs.setKontniPlanTableFields()
 	return rs
 }
@@ -54,34 +57,11 @@ func (s *FkplResource) GetFvrData(ctx context.Context) (domain.Fvr, error) {
 	}
 	return common.GetFvrData(ctx, s.fvrRepo)
 }
+
+// GetAnalitikaForSelect returns the tipovi analitike that can be selected for a konto
+// (CommonService).
 func (s *FkplResource) GetAnalitikaForSelect(ctx context.Context) ([]domain.ComboItem, error) {
-	if s.tipAnalitikeRepo == nil {
-		return nil, fmt.Errorf("tipAnalitikeRepo not initialized")
-	}
-	userSession := domain.GetSessionFromStdContext(ctx)
-	if userSession == nil {
-		return nil, errors.New(common.ErrMsgUserSessionNotFound)
-	}
-	hasGod, hasKar := s.tipAnalitikeRepo.GetHasGodHasKar()
-	qb := common.NewQueryBuilder("SELECT tipanalitikeid, naziv FROM tipanalitike", true)
-	if hasGod || hasKar {
-		qb.AddGodKarConditions(hasGod, hasKar, userSession.SelectedGod, userSession.SelectedKar)
-	}
-
-	sqlQuery, args := qb.Build()
-	entiteis, err := s.tipAnalitikeRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
-		return nil, fmt.Errorf("error fetching tip analitike: %w", err)
-	}
-	comboItems := []domain.ComboItem{}
-	for entity := range *entiteis {
-		comboItems = append(comboItems, domain.ComboItem{
-			Key:   fmt.Sprintf("%d", (*entiteis)[entity].TipanalitikeID),
-			Value: (*entiteis)[entity].Naziv,
-		})
-	}
-
-	return comboItems, nil
+	return s.commonSvc.GetTipoviAnalitikeComboValues(ctx)
 }
 
 func (s *FkplResource) GetFieldCache() map[string]reflect.StructField {

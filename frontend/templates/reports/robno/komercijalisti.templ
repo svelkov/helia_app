@@ -8,12 +8,6 @@ import (
 
 // KomercijalistiStampa renders a printable Komercijalisti report.
 templ KomercijalistiStampa(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
-	@rep.Report(repParams, domain.TableData{}, translator, nil, KomercijalistiContent(repParams, tbl, translator))
+	@rep.Report(repParams, tbl, translator, nil, nil, nil)
 }
 
-templ KomercijalistiContent(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
-	@rep.ReportHeader(repParams)
-	@rep.ReportTitle(repParams)
-	@rep.ReportTableSection(tbl, translator)
-	@rep.ReportEnd(nil)
-}

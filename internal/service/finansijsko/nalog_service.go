@@ -11,6 +11,7 @@ import (
 	"helia/internal/domain"
 	"helia/internal/repository"
 	"helia/internal/service"
+	commonsvc "helia/internal/service/common"
 	finval "helia/internal/validation/finansijsko"
 	"log"
 	"strings"
@@ -29,7 +30,7 @@ const (
 type NalogViewData struct {
 	FnalEntities     []domain.Fnal
 	TableData        domain.TableData
-	TipdokOptions    *[]domain.Tipdok     // Pointer to allow nil if not needed
+	TipdokOptions    *[]domain.ComboItem  // Pointer to allow nil if not needed
 	UkupnaObrada     *domain.UkupnaObrada // Pointer to allow nil if not needed
 	IsInitialLoad    bool                 // True if it's the first full page load, false for HTMX partials
 	DefaultTipdok    string               // The default tipdok if none is selected
@@ -47,7 +48,7 @@ type NalogService interface {
 	GetNalogPrepisData(ctx context.Context, tbl *domain.TableData, currentPage, pageSize int, searchText, sortBy, sortOrder string) error
 	GetNalogStornirajData(ctx context.Context, tbl *domain.TableData, page, pageSize int, searchText, sortBy, sortOrder string) (NalogViewData, error)
 	GetNextNalog(ctx context.Context, tipdok string) (int64, error)
-	GetTipdokOptions(ctx context.Context) ([]domain.Tipdok, error)
+	GetTipdokOptions(ctx context.Context) ([]domain.ComboItem, error)
 	NalogValidation(ctx context.Context, entity domain.Fnal, action string) ([]domain.FieldError, error)
 	ValidateCopyNalog(ctx context.Context, req domain.FnalPayload, entity domain.Fnal) ([]domain.FieldError, error)
 	GetByTipdokNalog(ctx context.Context, tipdok string, nalog int64) (domain.Fnal, error)
@@ -92,6 +93,7 @@ type NalogResource struct {
 	nalogStampaTableFields        []domain.Fields
 	nalogGrupaStampaTableFields   []domain.Fields
 	cfg                           config.Config
+	commonSvc                     commonsvc.CommonService
 }
 
 func NewNalogService(
@@ -108,6 +110,7 @@ func NewNalogService(
 	nalogIDFieldName string,
 
 	cfg config.Config,
+	commonSvc commonsvc.CommonService,
 ) *NalogResource {
 	rs := &NalogResource{
 		service:          service,
@@ -122,6 +125,7 @@ func NewNalogService(
 		fvrRepo:          fvrRepo,
 		fproRepo:         fproRepo,
 		cfg:              cfg,
+		commonSvc:        commonSvc,
 	}
 	rs.setServiceFieldValues()
 	return rs
@@ -345,28 +349,9 @@ func (s *NalogResource) UpdateNalog(ctx context.Context, fnalID int64, payload *
 	return fproPayload, []domain.FieldError{}, nil
 }
 
-// Update implements NalogService.
+// GetNextNalog returns the next broj naloga of the given vrsta naloga (CommonService).
 func (s *NalogResource) GetNextNalog(ctx context.Context, tipdok string) (int64, error) {
-	userSession := domain.GetSessionFromStdContext(ctx)
-	if userSession == nil {
-		return 0, fmt.Errorf("user session not found")
-	}
-
-	hasGod, hasKar := s.fnalRepo.GetHasGodHasKar()
-	qb := common.NewQueryBuilder(` SELECT COALESCE(MAX(nalog), 0) + 1 as nalog FROM fnal`, true)
-	qb.AddGodKarConditions(hasGod, hasKar, userSession.SelectedGod, userSession.SelectedKar)
-	qb.AddEqual("tipdok", tipdok)
-	sqlQuery, args := qb.Build()
-	entities, err := s.fnalRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
-		return 0, fmt.Errorf("failed to get Fnal entities: %w", err)
-	}
-	if len(*entities) == 0 {
-		return 1, nil
-	}
-
-	return (*entities)[0].Nalog, nil
-
+	return s.commonSvc.GetNextFnalNalog(ctx, tipdok)
 }
 
 // GetByTipdokNalog retrieves a Fnal entity based on tipdok and nalog values.
@@ -393,28 +378,9 @@ func (s *NalogResource) GetByTipdokNalog(ctx context.Context, tipdok string, nal
 	return entity, nil
 }
 
-// GetIdTipdokByTipdok retrieves the ID of a Tipdok based on its name.
+// GetIdTipdokByTipdok retrieves the ID of a Tipdok based on its name (CommonService).
 func (s *NalogResource) GetIdTipdokByTipdok(ctx context.Context, tipdok string) (int64, error) {
-	userSession := domain.GetSessionFromStdContext(ctx)
-	if userSession == nil {
-		return 0, fmt.Errorf("user session not found")
-	}
-
-	entity := domain.Tipdok{}
-	hasGod, hasKar := s.tipdokRepo.GetHasGodHasKar()
-	qb := common.NewQueryBuilder(` SELECT idtipdok, tipdok, opis FROM tipdok`, true)
-	qb.AddGodKarConditions(hasGod, hasKar, userSession.SelectedGod, userSession.SelectedKar)
-	qb.AddEqual("tipdok", tipdok)
-	sqlQuery, args := qb.Build()
-	tipdokEntities, err := s.tipdokRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
-		return 0, errors.New(common.ErrMsgGetData)
-	}
-	if len(*tipdokEntities) > 0 {
-		entity = (*tipdokEntities)[0]
-		return int64(entity.IDTipDok), nil
-	}
-	return 0, errors.New(common.ErrNoDataFound)
+	return s.commonSvc.GetTipdokIDByCode(ctx, tipdok)
 }
 
 // GetNalogViewData fetches all data required to render the Nalog list page.
@@ -438,12 +404,12 @@ func (s *NalogResource) GetNalogViewData(ctx context.Context, tbl *domain.TableD
 		}
 		viewData.TipdokOptions = &tipdokOptions
 		for _, td := range tipdokOptions {
-			viewData.TipdokComboItems = append(viewData.TipdokComboItems, domain.ComboItem{Key: td.TipDok, Value: td.TipDok + " - " + td.Opis})
+			viewData.TipdokComboItems = append(viewData.TipdokComboItems, td)
 		}
 
 		if tipdok == "" && len(tipdokOptions) > 0 {
-			viewData.DefaultTipdok = tipdokOptions[0].TipDok
-			tipdok = tipdokOptions[0].TipDok
+			viewData.DefaultTipdok = tipdokOptions[0].Key
+			tipdok = tipdokOptions[0].Key
 		} else {
 			viewData.DefaultTipdok = tipdok // Use the provided one if available
 		}
@@ -647,26 +613,12 @@ func (s *NalogResource) KopirajNalog(ctx context.Context, idFnal int64, entity d
 		return fmt.Errorf("required database function fn_kopiraj_nalog_sa_stavkama is missing")
 	}
 	// get the idtipdok for the provided tipdok in the request body to pass to the copy function
-	var newFnalID, newIdTipdok int64
-	hasgod, haskar := s.tipdokRepo.GetHasGodHasKar()
-	qb := common.NewQueryBuilder(`SELECT idtipdok FROM tipdok `, true)
-	if hasgod {
-		qb.AddEqual("god", userSession.SelectedGod)
-	}
-	if haskar {
-		qb.AddEqual("kar", userSession.SelectedKar)
-	}
-	qb.AddEqual("tipdok", entity.Tipdok)
-	sqlQueryTipdok, argsTipdok := qb.Build()
-	entites, err := s.tipdokRepo.GetAllCustom(ctx, sqlQueryTipdok, "", argsTipdok, "", "")
+	newIdTipdok, err := s.commonSvc.GetTipdokIDByCode(ctx, entity.Tipdok)
 	if err != nil {
 		return fmt.Errorf("failed to get tipdok ID: %w", err)
 	}
-	if len(*entites) == 0 {
-		return fmt.Errorf("tipdok not found: %s", entity.Tipdok)
-	}
-	newIdTipdok = int64((*entites)[0].IDTipDok)
 
+	var newFnalID int64
 	err = s.fnalRepo.DB.QueryRowContext(ctx,
 		`SELECT fn_kopiraj_nalog_sa_stavkama($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
 		idFnal,
@@ -1397,24 +1349,13 @@ func (s *NalogResource) GetGrupeNaloziStampaData(ctx context.Context, tipdok str
 	return items, buildKontaSummary(grandKontoOrder, grandKontoMap), nil
 }
 
-// GetTipdokOptions fetches the list of tipdok options for filtering. This method stays the same.
-func (s *NalogResource) GetTipdokOptions(ctx context.Context) ([]domain.Tipdok, error) {
-	userSession := domain.GetSessionFromStdContext(ctx)
-	if userSession == nil {
-		return nil, fmt.Errorf("user session not found")
-	}
-
-	hasGod, hasKar := s.tipdokRepo.GetHasGodHasKar()
-	qb := common.NewQueryBuilder(`SELECT idtipdok, tipdok, opis FROM tipdok`, true)
-	qb.AddGodKarConditions(hasGod, hasKar, userSession.SelectedGod, userSession.SelectedKar)
-	qb.AddCustomCondition("(grpdok = 'FIN' OR grpdok = 'SVI')")
-	qb.AddOrderBy("tipdok::NUMERIC ASC")
-	sqlQuery, args := qb.Build()
-	tipdokValues, err := s.tipdokRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+// GetTipdokOptions fetches the list of tipdok options for filtering (CommonService).
+func (s *NalogResource) GetTipdokOptions(ctx context.Context) ([]domain.ComboItem, error) {
+	items, err := s.commonSvc.GetTipdokFinComboValues(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get tipdok options: %w", err)
 	}
-	return *tipdokValues, nil
+	return items, nil
 }
 
 // GetNaloziTableFields returns the field definitions for the nalozi table.

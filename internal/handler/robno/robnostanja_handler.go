@@ -24,6 +24,7 @@ const (
 	robnoStanjaSubsintetickoKontoTitle      = "Saldo subsintetičkog konta"
 	robnoStanjaSubsintetickoKontoTableID    = "robnostanja-subsinteticko-konto-table"
 	robnoStanjaViseArtikalaTitle            = "Prikaz stanja više artikala"
+	robnoStanjaArtikalaStampaTitle          = "Prikaz stanja artikala"
 	robnoStanjaViseArtikalaSifraTableID     = "robnostanja-vise-artikala-sifra-table"
 	robnoStanjaViseArtikalaGrupaTableID     = "robnostanja-vise-artikala-grupa-table"
 	robnoStanjaSvodjenjeTitle               = "Svođenje stanja zalihe"
@@ -41,6 +42,7 @@ const (
 	robnoStanjaURLSvodjenjeZaliha           = robnoStanjaURLPrefix + "/svodjenje-zalihe"
 	robnoStanjaURLMestoTroska               = robnoStanjaURLPrefix + "/mesto-troska"
 	robnoStanjaURLtotals                    = robnoStanjaURLPrefix + "/totalvalues"
+	robnoStanjaSubsintetikaURLTotalValues   = robnoStanjaURLPrefix + "/subsintetika/totalvalues"
 	robnoStanjaInfoMessageDialogID          = "info-message-dialog"
 
 	robnoStanjaPrintFieldsArtikal            = "magacin,konto,sifra"
@@ -245,24 +247,22 @@ func (h *RobnoStanjaHandler) RobnoStanjeArtikalUkupnaObrada(c *gin.Context) {
 	}
 	magacin, err := utils.GetIntFromQueryRequest(c, "magacin")
 	if err != nil {
-		utils.RenderDialogOK(c, robnoStanjaInfoMessageDialogID, err.Error())
+		tmpl_robno.RobnoStanjeArtikalUkupnaObrada(domain.RobnoStanjaTotal{}, i18n.GetInstance()).Render(ctx, c.Writer)
 		return
 	}
 	totalValues := domain.RobnoStanjaTotal{}
 
 	params := domain.RobnoStanjaParams{
-		Magacin:      magacin,
-		Konto:        c.Query("konto"),
-		SifraArtikla: c.Query("sifra"),
-		ReportTip:    "robnostanjaartikal",
+		MagaciniID: magacin,
+		Konto:      c.Query("konto"),
+		ReportTip:  "robnostanjaartikal",
 	}
 	err = h.service.GetUkupnaObrada(ctx, &totalValues, params)
 	if err != nil {
-		utils.RenderDialogOK(c, robnoStanjaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
 		return
 	}
 	tmpl_robno.RobnoStanjeArtikalUkupnaObrada(totalValues, i18n.GetInstance()).Render(ctx, c.Writer)
-	// Implement the handler logic for RobnoStanjeArtikalUkupnaObrada here
 }
 
 func (h *RobnoStanjaHandler) PrikazStanjaViseArtikalaMain(c *gin.Context) {
@@ -280,9 +280,9 @@ func (h *RobnoStanjaHandler) PrikazStanjaViseArtikalaSifra(c *gin.Context) {
 	translator := i18n.GetInstance()
 	tbl := common.SetTableBasicData(robnoStanjaViseArtikalaTitle, robnoStanjaViseArtikalaSifraTableID, h.service.GetViseArtikalaTableFields(), "", robnoStanjaURLViseArtikalaSifra, 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tbl, robnoStanjaViseArtikalaSifraTableID, robnoStanjaURLViseArtikalaSifra, false, false, false)
-	h.service.SetDefaultTableData(&tbl)
+	tbl.HasTotals = true
 	if common.IsDataRequest(c) {
-		fieldsError := common.ValidateRequiredParams(c, []string{"magacin"})
+		fieldsError := common.ValidateRequiredParams(c, []string{"magacin", "odkonta", "dokonta", "odsifre", "dosifre", "odmeseca", "domeseca"})
 		if len(fieldsError) > 0 {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldsError, common.ErrMsgValidation)
 			return
@@ -312,14 +312,15 @@ func (h *RobnoStanjaHandler) PrikazStanjaViseArtikalaSifra(c *gin.Context) {
 
 		page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
 		tbl.Pagination.HxVals = hxValsRobnoStanjaViseArtikalaSifra
-		if err := h.service.GetStanjaViseArtikalaSifra(ctx, &tbl, true, pageSize, page, params); err != nil {
+		if err := h.service.GetStanjaViseArtikalaSifra(ctx, &tbl, true, pageSize, page, params, common.TipStampePreview); err != nil {
 			utils.RenderDialogOK(c, robnoStanjaInfoMessageDialogID, common.ErrMsgGetTotalRecords+": "+err.Error())
 			return
 		}
-		if err := h.service.GetStanjaViseArtikalaSifra(ctx, &tbl, false, pageSize, page, params); err != nil {
+		if err := h.service.GetStanjaViseArtikalaSifra(ctx, &tbl, false, pageSize, page, params, common.TipStampePreview); err != nil {
 			utils.RenderDialogOK(c, robnoStanjaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
 			return
 		}
+		tbl.HasTotals = true
 		utils.RenderContent(c, tbl)
 		return
 	}
@@ -330,11 +331,11 @@ func (h *RobnoStanjaHandler) PrikazStanjaViseArtikalaSifra(c *gin.Context) {
 	}
 	btnObrada := h.obradaButton(robnoStanjaURLViseArtikalaSifra, robnoStanjaViseArtikalaSifraTableID, hxValsRobnoStanjaViseArtikalaSifra)
 	btnPrint := common.SetPrintButton("stampa-btn", "Štampa", "fin_print", robnoStanjaURLViseArtikalaSifraStampa, "GET", true, common.ClassPrintButton, robnoStanjaPrintFieldsViseArtikalaSifra)
-	btnEan13 := common.SetButton("robnostanja-vise-sifra-ean13", "Šifra -> EAN13", "sifraean13", "", "", "", "GET", "", "", true, common.ClassButton, "")
-	btnNalepnice := common.SetButton("robnostanja-vise-sifra-nalepnice", "Nalepnice", "nalepnice", "", "", "", "GET", "", "", true, common.ClassButton, "")
-	if err := tmpl_robno.RobnoStanjeViseArtikalaSifra(*h.tabs, *h.subtabs, "vise-artikala", robnoStanjaViseArtikalaTitle, tbl, magValues, btnObrada, btnPrint, btnEan13, btnNalepnice, translator).Render(ctx, c.Writer); err != nil {
-		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
-	}
+	btnEan13 := common.SetButton("robnostanja-vise-sifra-ean13", "Šifra -> EAN13", "sifraean13", "", "", "", "GET", "", "", true, common.ClassEanButton, "")
+	btnNalepnice := common.SetButton("robnostanja-vise-sifra-nalepnice", "Nalepnice", "nalepnice", "", "", "", "GET", "", "", true, common.ClassEanButton, "")
+	searchInput := common.CreateSearchInput("search-input", translator, robnoStanjaURLViseArtikalaSifra, fmt.Sprintf("#%s", robnoStanjaViseArtikalaSifraTableID), hxValsRobnoStanjaViseArtikalaSifra)
+
+	tmpl_robno.RobnoStanjeViseArtikalaSifra(*h.tabs, *h.subtabs, "vise-artikala", robnoStanjaViseArtikalaTitle, tbl, magValues, btnObrada, btnPrint, btnEan13, btnNalepnice, searchInput, h.cfg.NDuzSint, translator).Render(ctx, c.Writer)
 }
 
 func (h *RobnoStanjaHandler) PrikazStanjaViseArtikalaGrupa(c *gin.Context) {
@@ -348,7 +349,7 @@ func (h *RobnoStanjaHandler) PrikazStanjaViseArtikalaGrupa(c *gin.Context) {
 	translator := i18n.GetInstance()
 	tbl := common.SetTableBasicData(robnoStanjaViseArtikalaTitle, robnoStanjaViseArtikalaGrupaTableID, h.service.GetViseArtikalaTableFields(), "", robnoStanjaURLViseArtikalaGrupa, 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tbl, robnoStanjaViseArtikalaGrupaTableID, robnoStanjaURLViseArtikalaGrupa, false, false, false)
-	h.service.SetDefaultTableData(&tbl)
+	tbl.HasTotals = true
 	if common.IsDataRequest(c) {
 		fieldsError := common.ValidateRequiredParams(c, []string{"magacin"})
 		if len(fieldsError) > 0 {
@@ -376,14 +377,20 @@ func (h *RobnoStanjaHandler) PrikazStanjaViseArtikalaGrupa(c *gin.Context) {
 
 		page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
 		tbl.Pagination.HxVals = hxValsRobnoStanjaViseArtikalaGrupa
-		if err := h.service.GetStanjaViseArtikalaGrupa(ctx, &tbl, true, pageSize, page, params); err != nil {
+		if err := h.service.GetStanjaViseArtikalaGrupa(ctx, &tbl, true, pageSize, page, params, common.TipStampePreview); err != nil {
 			utils.RenderDialogOK(c, robnoStanjaInfoMessageDialogID, common.ErrMsgGetTotalRecords+": "+err.Error())
 			return
 		}
-		if err := h.service.GetStanjaViseArtikalaGrupa(ctx, &tbl, false, pageSize, page, params); err != nil {
+		if err := h.service.GetStanjaViseArtikalaGrupa(ctx, &tbl, false, pageSize, page, params, common.TipStampePreview); err != nil {
 			utils.RenderDialogOK(c, robnoStanjaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
 			return
 		}
+		// Legacy: Info("Nepostoji nijedan podatak za uneti opseg podataka !")
+		if len(tbl.Rows) == 0 {
+			utils.RenderDialogOK(c, robnoStanjaInfoMessageDialogID, "Nepostoji nijedan podatak za uneti opseg podataka !")
+			return
+		}
+		tbl.HasTotals = true
 		utils.RenderContent(c, tbl)
 		return
 	}
@@ -394,24 +401,25 @@ func (h *RobnoStanjaHandler) PrikazStanjaViseArtikalaGrupa(c *gin.Context) {
 	}
 	btnObrada := h.obradaButton(robnoStanjaURLViseArtikalaGrupa, robnoStanjaViseArtikalaGrupaTableID, hxValsRobnoStanjaViseArtikalaGrupa)
 	btnPrint := common.SetPrintButton("stampa-btn", "Štampa", "fin_print", robnoStanjaURLViseArtikalaGrupaStampa, "GET", true, common.ClassPrintButton, robnoStanjaPrintFieldsViseArtikalaGrupa)
-	btnEan13 := common.SetButton("robnostanja-vise-grupa-ean13", "Šifra -> EAN13", "sifraean13", "", "", "", "GET", "", "", true, common.ClassButton, "")
-	btnNalepnice := common.SetButton("robnostanja-vise-grupa-nalepnice", "Nalepnice", "nalepnice", "", "", "", "GET", "", "", true, common.ClassButton, "")
-	if err := tmpl_robno.RobnoStanjeViseArtikalGrupa(*h.tabs, *h.subtabs, "vise-artikala", robnoStanjaViseArtikalaTitle, tbl, magValues, btnObrada, btnPrint, btnEan13, btnNalepnice, translator).Render(ctx, c.Writer); err != nil {
-		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
-	}
+	btnEan13 := common.SetButton("robnostanja-vise-grupa-ean13", "Šifra -> EAN13", "sifraean13", "", "", "", "GET", "", "", true, common.ClassEanButton, "")
+	btnNalepnice := common.SetButton("robnostanja-vise-grupa-nalepnice", "Nalepnice", "nalepnice", "", "", "", "GET", "", "", true, common.ClassEanButton, "")
+	searchInput := common.CreateSearchInput("search-input", translator, robnoStanjaURLViseArtikalaGrupa, fmt.Sprintf("#%s", robnoStanjaViseArtikalaGrupaTableID), hxValsRobnoStanjaViseArtikalaGrupa)
+
+	tmpl_robno.RobnoStanjeViseArtikalGrupa(*h.tabs, *h.subtabs, "vise-artikala", robnoStanjaViseArtikalaTitle, tbl, magValues, btnObrada, btnPrint, btnEan13, btnNalepnice, searchInput, translator).Render(ctx, c.Writer)
+
 }
 
-func (h *RobnoStanjaHandler) PrikazSaldaSubsintetickogKonta(c *gin.Context) {
+func (h *RobnoStanjaHandler) PrikazStanjaSubsintetickogKonta(c *gin.Context) {
 	ctx := c.Request.Context()
 	if domain.GetSessionFromStdContext(ctx) == nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, "no user session found")
 		return
 	}
 	common.SetActiveTab(h.tabs, 2)
-	total := domain.SaldaDto{}
 	tbl := common.SetTableBasicData(robnoStanjaSubsintetickoKontoTitle, robnoStanjaSubsintetickoKontoTableID, h.service.GetSubsintetiskogKontaTableFields(), "", robnoStanjaURLSubsintetickogKonta, 0, 0, 0, 0, h.cfg)
-	common.SetTableConfig(&tbl, robnoStanjaSubsintetickoKontoTableID, robnoStanjaURLSubsintetickogKonta, false, false, false)
+	common.SetTableConfig(&tbl, "SALDA SUBSINTETICKOG KONTA", robnoStanjaURLSubsintetickogKonta, false, false, false)
 	h.service.SetDefaultTableData(&tbl)
+	total := domain.RobnoStanjaTotal{}
 	if common.IsDataRequest(c) {
 		fieldsError := common.ValidateRequiredParams(c, []string{"magacin", "konto"})
 		if len(fieldsError) > 0 {
@@ -424,13 +432,12 @@ func (h *RobnoStanjaHandler) PrikazSaldaSubsintetickogKonta(c *gin.Context) {
 			return
 		}
 		params := domain.RobnoStanjaParams{
-			Magacin:    magacin,
+			MagaciniID: magacin,
 			Konto:      c.Query("konto"),
 			ReportTip:  "robnostanjasubsintetickogkonta",
 			SearchText: c.Query("query"),
 		}
-
-		if err := h.service.GetStanjaSubsintetickogKonta(ctx, &tbl, params); err != nil {
+		if err := h.service.GetStanjaSubsintetickogKonta(ctx, &tbl, &total, false, params, common.TipStampePreview); err != nil {
 			utils.RenderDialogOK(c, robnoStanjaInfoMessageDialogID, common.ErrMsgGetTotalRecords+": "+err.Error())
 			return
 		}
@@ -445,9 +452,95 @@ func (h *RobnoStanjaHandler) PrikazSaldaSubsintetickogKonta(c *gin.Context) {
 	}
 	btnObrada := h.obradaButton(robnoStanjaURLSubsintetickogKonta, robnoStanjaSubsintetickoKontoTableID, hxValsRobnoStanjaSubsintetickoKonto)
 	btnPrint := common.SetPrintButton("stampa-btn", "Štampa", "fin_print", robnoStanjaURLSubsintetickogKontaStampa, "GET", true, common.ClassPrintButton, robnoStanjaPrintFieldsSubsintetickoKonto)
-	if err := tmpl_robno.RobnoStanjeSubsintetickogKonta(*h.tabs, tbl, magValues, btnObrada, btnPrint, total, robnoStanjaURLtotals, i18n.GetInstance()).Render(ctx, c.Writer); err != nil {
-		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
+	tmpl_robno.RobnoStanjeSubsintetickogKonta(*h.tabs, tbl, magValues, btnObrada, btnPrint, total, robnoStanjaURLtotals, i18n.GetInstance()).Render(ctx, c.Writer)
+}
+func (h *RobnoStanjaHandler) RobnoStanjaSubsintetikaUkupnaObrada(c *gin.Context) {
+	ctx := c.Request.Context()
+	if domain.GetSessionFromStdContext(ctx) == nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, "no user session found")
+		return
 	}
+	magacin, err := utils.GetIntFromQueryRequest(c, "magacin")
+	if err != nil {
+		tmpl_robno.RobnoStanjaSubsintetikaTotalValues(domain.RobnoStanjaTotal{}, robnoStanjaSubsintetikaURLTotalValues, i18n.GetInstance()).Render(ctx, c.Writer)
+		return
+	}
+	totalValues := domain.RobnoStanjaTotal{}
+
+	params := domain.RobnoStanjaParams{
+		MagaciniID: magacin,
+		Konto:      c.Query("konto"),
+		ReportTip:  "robnostanjasubsintetika",
+	}
+	if params.Konto == "" {
+		common.WriteJSONResponse(c, http.StatusBadRequest, false, nil, "Obavezan podatak: Konto")
+		return
+	}
+	err = h.service.GetStanjaSubsintetickogKonta(ctx, &domain.TableData{}, &totalValues, true, params, common.TipStampePreview)
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+		return
+	}
+	tmpl_robno.RobnoStanjaSubsintetikaTotalValues(totalValues, robnoStanjaSubsintetikaURLTotalValues, i18n.GetInstance()).Render(ctx, c.Writer)
+}
+
+// StanjaSubsintetickogKontaStampa renders the printable "Saldo subsintetičkog konta" report: the
+// summary (početno stanje / tekući promet / ukupan promet), the monthly saldo table and the chart.
+func (h *RobnoStanjaHandler) StanjaSubsintetickogKontaStampa(c *gin.Context) {
+	ctx := c.Request.Context()
+	translator := i18n.GetInstance()
+	if domain.GetSessionFromStdContext(ctx) == nil {
+		utils.RenderDialogOK(c, robnoStanjaInfoMessageDialogID, common.ErrMsgUnauthorized)
+		return
+	}
+	magacin, err := utils.GetIntFromQueryRequest(c, "magacin")
+	if err != nil {
+		utils.RenderDialogOK(c, robnoStanjaInfoMessageDialogID, err.Error())
+		return
+	}
+	params := domain.RobnoStanjaParams{
+		MagaciniID: magacin,
+		Konto:      c.Query("konto"),
+		ReportTip:  "robnostanjasubsintetickogkonta",
+	}
+	if params.Konto == "" {
+		utils.RenderDialogOK(c, robnoStanjaInfoMessageDialogID, "Obavezan podatak: Konto")
+		return
+	}
+	fvrData, err := h.service.GetFvrData(ctx)
+	if err != nil {
+		utils.RenderDialogOK(c, robnoStanjaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+		return
+	}
+	// Monthly table of the printed report: the "Početno stanje" row plus the 12 month rows, which the
+	// service fills in place (print type TipStampePrint).
+	tbl := common.SetTableBasicData(robnoStanjaSubsintetickoKontoTitle, robnoStanjaSubsintetickoKontoTableID, h.service.GetSubsintetiskogKontaTableFields(), "", "", 0, 0, 0, 0, h.cfg)
+	h.service.SetDefaultTableData(&tbl)
+	if err := h.service.GetStanjaSubsintetickogKonta(ctx, &tbl, &domain.RobnoStanjaTotal{}, false, params, common.TipStampePrint); err != nil {
+		utils.RenderDialogOK(c, robnoStanjaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+		return
+	}
+	// The second call only collects the summary rows (getTotals = true).
+	totalValues := domain.RobnoStanjaTotal{}
+	if err := h.service.GetStanjaSubsintetickogKonta(ctx, &domain.TableData{}, &totalValues, true, params, common.TipStampePrint); err != nil {
+		utils.RenderDialogOK(c, robnoStanjaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+		return
+	}
+	repParams := domain.ReportParameters{
+		Orientation: "portrait",
+		CompanyName: fvrData.Naziv,
+		Adress:      fvrData.Adresa,
+		Postcode:    fvrData.Pobro,
+		City:        fvrData.Mesto,
+		PIB:         fvrData.PIB,
+		MatBroj:     fvrData.Matbr,
+		ReportName:  robnoStanjaSubsintetickoKontoTitle,
+		ParameterItems: map[string]domain.ParameterItem{
+			"Magacin": {Name: translator.Label("Magacin"), Value: h.magacinNaziv(ctx, magacin)},
+			"Konto":   {Name: translator.Label("Konto"), Value: params.Konto},
+		},
+	}
+	tmpl_rep_rob.StanjaSubsintetickogKontaStampa(tbl, totalValues, repParams, translator).Render(ctx, c.Writer)
 }
 
 func (h *RobnoStanjaHandler) SvodjenjeStanjaZaliha(c *gin.Context) {
@@ -554,8 +647,121 @@ func (h *RobnoStanjaHandler) obradaButton(url, tableID, vals string) domain.Butt
 	return common.SetButton("obrada-btn", "Obrada", "obrada", url, "#"+tableID, "innerHTML", "GET", "", vals, true, common.ClassSaveButton, "handleDialogResponse")
 }
 
-func (h *RobnoStanjaHandler) stampaNotImplemented(c *gin.Context) {
-	common.WriteJSONResponse(c, http.StatusNotImplemented, false, nil, "Robno stanja stampa jos nije implementirana")
+func (h *RobnoStanjaHandler) StanjeViseArtiklaSifraStampa(c *gin.Context) {
+	ctx := c.Request.Context()
+	if domain.GetSessionFromStdContext(ctx) == nil {
+		utils.RenderDialogOK(c, robnoStanjaInfoMessageDialogID, common.ErrMsgUnauthorized)
+		return
+	}
+	magacin, err := utils.GetIntFromQueryRequest(c, "magacin")
+	if err != nil {
+		utils.RenderDialogOK(c, robnoStanjaInfoMessageDialogID, err.Error())
+		return
+	}
+	params := domain.RobnoStanjaParams{
+		Magacin:            magacin,
+		OdKonta:            c.Query("odkonta"),
+		DoKonta:            c.Query("dokonta"),
+		OdSifre:            c.Query("odsifre"),
+		DoSifre:            c.Query("dosifre"),
+		OdMeseca:           c.Query("odmeseca"),
+		DoMeseca:           c.Query("domeseca"),
+		FinansijskiIznos:   c.Query("finansijskiiznos") == "true",
+		ArtikliSaStanjem:   c.Query("artiklisastanjem") == "true",
+		ArtikliBezStanja:   c.Query("artiklibezstanja") == "true",
+		ProsecnaCenaStanje: c.Query("prosecnacenastanje") == "true",
+		ProsecnaCenaUlaz:   c.Query("prosecnacenaulaz") == "true",
+		ZaDobavljaca:       c.Query("zadobavljaca") == "true",
+		ReportTip:          "robnostanjaviseartikalasifra",
+	}
+
+	fvrData, err := h.service.GetFvrData(ctx)
+	if err != nil {
+		utils.RenderDialogOK(c, robnoStanjaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+		return
+	}
+	// The service switches to the print columns (and prints all rows, without paging) when the
+	// print type is TipStampePrint.
+	tbl := common.SetTableBasicData(robnoStanjaArtikalaStampaTitle, robnoStanjaViseArtikalaSifraTableID, h.service.GetViseArtikalaTableFields(), "", "", 0, 0, 0, 0, h.cfg)
+	if err := h.service.GetStanjaViseArtikalaSifra(ctx, &tbl, true, 0, 0, params, common.TipStampePrint); err != nil {
+		utils.RenderDialogOK(c, robnoStanjaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+		return
+	}
+	repParams := domain.ReportParameters{
+		Orientation: "landscape",
+		CompanyName: fvrData.Naziv,
+		Adress:      fvrData.Adresa,
+		Postcode:    fvrData.Pobro,
+		City:        fvrData.Mesto,
+		PIB:         fvrData.PIB,
+		MatBroj:     fvrData.Matbr,
+		ReportName:  robnoStanjaArtikalaStampaTitle,
+	}
+	tmpl_rep_rob.RobnoStanjaViseArtikalaSifraStampa(repParams, params, h.magacinNaziv(ctx, magacin), tbl, i18n.GetInstance()).Render(ctx, c.Writer)
+}
+
+// magacinNaziv returns the "<mag> - <opis>" label of the magazine, for the report header.
+func (h *RobnoStanjaHandler) magacinNaziv(ctx context.Context, magaciniID int) string {
+	key := fmt.Sprintf("%d", magaciniID)
+	values, err := h.service.GetMagacinComboValues(ctx)
+	if err != nil {
+		return key
+	}
+	for _, value := range values {
+		if value.Key == key {
+			return value.Value
+		}
+	}
+	return key
+}
+
+func (h *RobnoStanjaHandler) StanjeViseArtiklaGrupaStampa(c *gin.Context) {
+	ctx := c.Request.Context()
+	if domain.GetSessionFromStdContext(ctx) == nil {
+		utils.RenderDialogOK(c, robnoStanjaInfoMessageDialogID, common.ErrMsgUnauthorized)
+		return
+	}
+	magacin, err := utils.GetIntFromQueryRequest(c, "magacin")
+	if err != nil {
+		utils.RenderDialogOK(c, robnoStanjaInfoMessageDialogID, err.Error())
+		return
+	}
+	params := domain.RobnoStanjaParams{
+		Magacin:           magacin,
+		OdGrupe:           c.Query("odgrupe"),
+		DoGrupe:           c.Query("dogrupe"),
+		OdSifre:           c.Query("odsifre"),
+		DoSifre:           c.Query("dosifre"),
+		OdMeseca:          c.Query("odmeseca"),
+		DoMeseca:          c.Query("domeseca"),
+		FinansijskiIznos:  c.Query("finansijskiiznos") == "true",
+		NovaStranaPoGrupi: c.Query("novastranapogrupi") == "true",
+		ReportTip:         "robnostanjaviseartikalagrupa",
+	}
+
+	fvrData, err := h.service.GetFvrData(ctx)
+	if err != nil {
+		utils.RenderDialogOK(c, robnoStanjaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+		return
+	}
+	// The service switches to the print columns (with or without the financial columns, and
+	// grouped by group) and prints all rows, without paging.
+	tbl := common.SetTableBasicData(robnoStanjaArtikalaStampaTitle, robnoStanjaViseArtikalaGrupaTableID, h.service.GetViseArtikalaTableFields(), "", "", 0, 0, 0, 0, h.cfg)
+	if err := h.service.GetStanjaViseArtikalaGrupa(ctx, &tbl, true, 0, 0, params, common.TipStampePrint); err != nil {
+		utils.RenderDialogOK(c, robnoStanjaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+		return
+	}
+	repParams := domain.ReportParameters{
+		Orientation: "landscape",
+		CompanyName: fvrData.Naziv,
+		Adress:      fvrData.Adresa,
+		Postcode:    fvrData.Pobro,
+		City:        fvrData.Mesto,
+		PIB:         fvrData.PIB,
+		MatBroj:     fvrData.Matbr,
+		ReportName:  robnoStanjaArtikalaStampaTitle,
+	}
+	tmpl_rep_rob.RobnoStanjaViseArtikalaGrupaStampa(repParams, params, h.magacinNaziv(ctx, magacin), tbl, i18n.GetInstance()).Render(ctx, c.Writer)
 }
 
 func (h *RobnoStanjaHandler) AddRoutes(r *gin.Engine) {
@@ -568,14 +774,15 @@ func (h *RobnoStanjaHandler) AddRoutes(r *gin.Engine) {
 	r.GET("/api/robno-stanja/artikal/stampa", h.PrikazStanjaArtikalaStampa)
 	r.GET("/api/robno-stanja/vise-artikala", h.PrikazStanjaViseArtikalaMain)
 	r.GET("/api/robno-stanja/vise-artikala/sifra", h.PrikazStanjaViseArtikalaSifra)
-	r.GET("/api/robno-stanja/vise-artikala/sifra/stampa", h.stampaNotImplemented)
+	r.GET("/api/robno-stanja/vise-artikala/sifra/stampa", h.StanjeViseArtiklaSifraStampa)
 	r.GET("/api/robno-stanja/vise-artikala/grupa", h.PrikazStanjaViseArtikalaGrupa)
-	r.GET("/api/robno-stanja/vise-artikala/grupa/stampa", h.stampaNotImplemented)
-	r.GET("/api/robno-stanja/subsintetickog-konta", h.PrikazSaldaSubsintetickogKonta)
-	r.GET("/api/robno-stanja/subsinteticko-konta/stampa", h.stampaNotImplemented)
+	r.GET("/api/robno-stanja/vise-artikala/grupa/stampa", h.StanjeViseArtiklaGrupaStampa)
+	r.GET("/api/robno-stanja/subsintetickog-konta", h.PrikazStanjaSubsintetickogKonta)
+	r.GET("/api/robno-stanja/subsintetickog-konta/stampa", h.StanjaSubsintetickogKontaStampa)
+	r.GET("/api/robno-stanja/subsintetika/totalvalues", h.RobnoStanjaSubsintetikaUkupnaObrada)
 	r.GET("/api/robno-stanja/svodjenje-zaliha", h.SvodjenjeStanjaZaliha)
 	r.GET("/api/robno-stanja/mesto-troska", h.GetMestoTroskaComboValues)
-	r.GET("/api/robno-stanja/ukupna-obrada", h.RobnoStanjeArtikalUkupnaObrada)
+	r.GET("/api/robno-stanja/totalvalues", h.RobnoStanjeArtikalUkupnaObrada)
 }
 
 func robnoStanjaTabs() *domain.TabData {

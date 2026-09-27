@@ -1,0 +1,289 @@
+package reports
+
+import (
+	"fmt"
+	"strconv"
+	"strings"
+
+	"helia/i18n"
+	"helia/internal/domain"
+)
+
+// ReportColumnWidths normalises the per-column Fields.Width values into percentages of the total,
+// so the table keeps the column proportions the service declared. Returns nil when no field declares
+// a width (the table then falls back to the browser's automatic layout).
+func ReportColumnWidths(headers []domain.Fields) []string {
+	total := 0
+	values := make([]int, len(headers))
+	for i, h := range headers {
+		if w, err := strconv.Atoi(strings.TrimSpace(h.Width)); err == nil && w > 0 {
+			values[i] = w
+			total += w
+		}
+	}
+	if total == 0 {
+		return nil
+	}
+	widths := make([]string, len(headers))
+	for i, w := range values {
+		if w > 0 {
+			widths[i] = fmt.Sprintf("%.2f%%", float64(w)*100/float64(total))
+		}
+	}
+	return widths
+}
+
+// ReportTableClass returns the CSS classes of the shared report tables. The tables always use the
+// browser's automatic layout, so every column auto-fits its content; the declared Fields.Width values
+// are applied as <colgroup> hints (see ReportColumnWidths/ReportTableColgroup) and act as preferred
+// proportions only - a column grows when its content needs more room.
+func ReportTableClass() string {
+	return "w-full border-collapse report-table mt-2 print:w-full print:text-[10pt] print:table-auto print:border-collapse"
+}
+
+// ReportTableColgroup renders the <colgroup> with the column widths declared in Fields.Width;
+// renders nothing when no width is declared.
+templ ReportTableColgroup(widths []string) {
+	if len(widths) > 0 {
+		<colgroup>
+			for _, w := range widths {
+				if w != "" {
+					<col style={ "width: " + w }/>
+				} else {
+					<col/>
+				}
+			}
+		</colgroup>
+	}
+}
+
+// ReportTable renders a table for reports with print-friendly styling
+templ ReportTable(tbl domain.TableData, translator *i18n.Service) {
+	@ReportTableInternal(tbl, translator)
+}
+
+templ ReportTableInternal(tbl domain.TableData, translator *i18n.Service) {
+	<table class={ ReportTableClass() }>
+		@ReportTableColgroup(ReportColumnWidths(tbl.Headers))
+		@ReportTableHeader(tbl, translator)
+		@ReportTableBody(tbl, tbl.URLPrefix, translator)
+		if tbl.HasTotals {
+			@ReportTableFooter(tbl)
+		}
+	</table>
+}
+
+// ReportHeaderMinWidth returns the minimum width of a column caption cell. A caption should not be
+// squeezed into a cramped multi-line cell, so every column gets at least len(caption)+2 characters
+// (1ch scales with the cell font size, so it works on screen and in print). Capped at 10ch so that a
+// very long caption wraps instead of stealing width from the data columns.
+func ReportHeaderMinWidth(caption string) string {
+	n := len([]rune(strings.TrimSpace(caption)))
+	if n == 0 {
+		return ""
+	}
+	if n > 8 {
+		n = 8
+	}
+	return fmt.Sprintf("min-width:%dch", n+2)
+}
+
+// ReportTableHeaderCell renders one column caption cell with the wrapping rules and the caption-based
+// minimum width.
+templ ReportTableHeaderCell(caption string) {
+	<th
+		scope="col"
+		style={ ReportHeaderMinWidth(caption) }
+		class="border border-gray-300 px-1 text-center text-sm font-semibold align-middle whitespace-normal break-words print:bg-gray-200 print:text-black print:px-1 print:text-align-center print:whitespace-normal print:break-words"
+	>
+		{ caption }
+	</th>
+}
+
+// ReportTableHeadWithPageHeader renders the table <thead>: an optional print-only repeating page
+// header row ("no-export" keeps it out of the Excel export; the rows of the first <thead> are repeated
+// at the top of every printed page) followed by the translatable column header row.
+templ ReportTableHeadWithPageHeader(tbl domain.TableData, translator *i18n.Service, pageHeader templ.Component) {
+	<thead>
+		if pageHeader != nil {
+			<tr class="report-repeat-header no-export hidden print:table-row">
+				<td colspan={ fmt.Sprintf("%d", len(tbl.Headers)) } class="border-0 bg-white p-1 align-top">
+					@pageHeader
+				</td>
+			</tr>
+		}
+		<tr class="bg-blue-900 text-white text-center print:bg-gray-200 print:text-black print:page-break-inside-auto">
+			for _, header := range tbl.Headers {
+				if header.Params != nil {
+					@ReportTableHeaderCell(translator.LabelWithParams(header.Label, header.Params))
+				} else {
+					@ReportTableHeaderCell(translator.Label(header.Label))
+				}
+			}
+		</tr>
+	</thead>
+}
+
+// ReportTableWithPageHeader renders the shared report table (rows and optional totals) with a
+// repeating page header, i.e. the page header is repeated at the top of every printed page.
+templ ReportTableWithPageHeader(tbl domain.TableData, translator *i18n.Service, pageHeader templ.Component) {
+	<table class={ ReportTableClass() }>
+		@ReportTableColgroup(ReportColumnWidths(tbl.Headers))
+		@ReportTableHeadWithPageHeader(tbl, translator, pageHeader)
+		@ReportTableBody(tbl, tbl.URLPrefix, translator)
+		if tbl.HasTotals {
+			@ReportTableFooter(tbl)
+		}
+	</table>
+}
+
+// ReportTableHeader renders the table header (caption cells use the shared wrapping/min-width rules)
+templ ReportTableHeader(tbl domain.TableData, translator *i18n.Service) {
+	<thead>
+		<tr class="bg-blue-900 text-white text-center print:bg-gray-200 print:text-black print:page-break-inside-auto">
+			for _, header := range tbl.Headers {
+				if header.Params != nil {
+					@ReportTableHeaderCell(translator.LabelWithParams(header.Label, header.Params))
+				} else {
+					@ReportTableHeaderCell(translator.Label(header.Label))
+				}
+			}
+		</tr>
+	</thead>
+}
+
+// ReportTableBody renders the table body, including group headers, subgroup
+// headers, and per-group totals wherever a row declares them. Rows that set
+// none of GroupLabel/SubgroupLabel/IsGroupTotal render exactly as plain rows
+// (unchanged from the original behavior).
+templ ReportTableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service) {
+	<tbody>
+		for i, row := range tbl.Rows {
+			if row.GroupLabel != "" {
+				@ReportGroupRow(row.GroupLabel, len(tbl.Headers))
+			}
+			if row.SubgroupLabel != "" {
+				@ReportSubgroupRow(row.SubgroupLabel, len(tbl.Headers))
+			}
+			if row.IsGroupTotal {
+				@ReportGroupTotalRow(row.Fields, tbl.Headers)
+			} else {
+				<tr
+					class={ fmt.Sprintf("hover:bg-yellow-50 print:hover:bg-white print:page-break-inside-avoid %s",
+						func() string {
+							if i%2 == 1 {
+								return "bg-gray-50 print:bg-gray-50"
+							}
+							return "bg-white print:bg-white"
+						}()) }
+				>
+					for j, cell := range row.Fields {
+						<td
+							class={ fmt.Sprintf("border border-gray-300 px-1 text-sm print:text-[10pt] print:px-1 print:break-words print:whitespace-normal %s",
+								func() string {
+									if tbl.Headers[j].TextAlign != "" {
+										return fmt.Sprintf("text-%s", tbl.Headers[j].TextAlign)
+									}
+									return ""
+								}()) }
+						>
+							{ cell }
+						</td>
+					}
+				</tr>
+			}
+		}
+	</tbody>
+}
+
+// ReportGroupRow renders a full-width group-header row. class "group-header"
+// matches the print CSS in report.templ (page-break-inside/after: avoid),
+// so a group heading is never orphaned at the bottom of a printed page.
+templ ReportGroupRow(groupName string, colCount int) {
+	<tr class="group-header bg-gray-100 print:bg-gray-100">
+		<td colspan={ fmt.Sprintf("%d", colCount) } class="border border-gray-300 px-2 py-1.5 font-bold text-gray-800 border-l-4 border-l-blue-900">
+			{ groupName }
+		</td>
+	</tr>
+}
+
+// ReportSubgroupRow renders a full-width subgroup-header row, indented to
+// read as nested under its parent group.
+templ ReportSubgroupRow(subgroupName string, colCount int) {
+	<tr class="subgroup-header bg-gray-50 print:bg-gray-50">
+		<td colspan={ fmt.Sprintf("%d", colCount) } class="border border-gray-300 px-2 py-1 pl-6 font-semibold text-gray-700 border-l-4 border-l-gray-400">
+			{ subgroupName }
+		</td>
+	</tr>
+}
+
+// ReportGroupTotalRow renders a totals row for one group, honoring each
+// header's TextAlign the same way ReportTableFooter honors IncludeInTotals
+// for the grand total.
+templ ReportGroupTotalRow(fields []string, headers []domain.Fields) {
+	<tr class="group-total bg-blue-50 font-semibold border-t border-blue-900 print:bg-blue-50">
+		for j, cell := range fields {
+			<td
+				class={ fmt.Sprintf("border border-gray-300 px-1 text-sm print:text-[10pt] print:px-1 %s",
+					func() string {
+						if j < len(headers) && headers[j].TextAlign != "" {
+							return fmt.Sprintf("text-%s", headers[j].TextAlign)
+						}
+						return ""
+					}()) }
+			>
+				{ cell }
+			</td>
+		}
+	</tr>
+}
+
+// ReportTableFooter renders the grand-totals row
+templ ReportTableFooter(tbl domain.TableData) {
+	<tfoot>
+		<tr class="grand-total bg-blue-50 font-bold border-t-2 border-blue-900 print:bg-blue-50 print:page-break-inside-avoid">
+			for j, header := range tbl.Headers {
+				if header.IncludeInTotals {
+					<td class="border border-gray-300 px-1 text-sm print:text-[10pt] print:px-1 font-bold text-right">
+						{ tbl.Totals[j] }
+					</td>
+				} else {
+					<td class="border border-gray-300 px-1 text-sm print:text-[10pt] print:px-1 bg-blue-50"></td>
+				}
+			}
+		</tr>
+	</tfoot>
+}
+
+// SimpleReportTable renders a minimal report table for static data
+templ SimpleReportTable(headers []string, rows [][]string) {
+	<table class="w-full border-collapse report-table">
+		<thead>
+			<tr class="bg-blue-900 text-white print:bg-blue-900">
+				for _, header := range headers {
+					<th class="border border-gray-300 px-1 text-left text-sm font-semibold print:text-sm">
+						{ header }
+					</th>
+				}
+			</tr>
+		</thead>
+		<tbody>
+			for i, row := range rows {
+				<tr
+					class={ func() string {
+						if i%2 == 1 {
+							return "bg-gray-50 print:bg-gray-50"
+						}
+						return "bg-white print:bg-white"
+					}() }
+				>
+					for _, cell := range row {
+						<td class="border border-gray-300 px-1 text-sm print:text-sm">
+							{ cell }
+						</td>
+					}
+				</tr>
+			}
+		</tbody>
+	</table>
+}

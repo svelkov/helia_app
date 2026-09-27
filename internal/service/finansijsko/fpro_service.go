@@ -10,6 +10,7 @@ import (
 	"helia/internal/infrastructure/db"
 	"helia/internal/repository"
 	"helia/internal/service"
+	commonsvc "helia/internal/service/common"
 	"math"
 	"reflect"
 	"strings"
@@ -61,6 +62,7 @@ type FproResource struct {
 	komercijalistiRepo      repository.BaseRepository[domain.Komercijalisti]
 	miRepo                  repository.BaseRepository[domain.Fisp]
 	magaciniRepo            repository.BaseRepository[domain.Magacini]
+	commonSvc               commonsvc.CommonService
 	fproIDFieldName         string
 	naloziTableFields       []domain.Fields
 	naloziStavkeTableFields []domain.Fields
@@ -80,6 +82,7 @@ func NewFproService(
 	komercijalistiRepo repository.BaseRepository[domain.Komercijalisti],
 	miRepo repository.BaseRepository[domain.Fisp],
 	magaciniRepo repository.BaseRepository[domain.Magacini],
+	commonSvc commonsvc.CommonService,
 	fproIDFieldName string,
 	naloziTableFields []domain.Fields,
 	naloziStavkeTableFields []domain.Fields,
@@ -98,6 +101,7 @@ func NewFproService(
 		komercijalistiRepo:      komercijalistiRepo,
 		miRepo:                  miRepo,
 		magaciniRepo:            magaciniRepo,
+		commonSvc:               commonSvc,
 		fproIDFieldName:         fproIDFieldName,
 		naloziTableFields:       naloziTableFields,
 		naloziStavkeTableFields: naloziStavkeTableFields,
@@ -546,166 +550,34 @@ func (s *FproResource) mapFieldsToValues(fproStavke *domain.FproPayload) []domai
 }
 
 // GetOrgJedinice fetches the list of orgjed options for filtering.
+// GetOrgJedinice returns the organizacione jedinice of the current period (CommonService).
 func (s *FproResource) GetOrgJedinice(ctx context.Context) ([]domain.ComboItem, error) {
-	session := domain.GetSessionFromStdContext(ctx)
-	if session == nil {
-		return nil, fmt.Errorf("user session not found")
-	}
-
-	comboItems := []domain.ComboItem{}
-	comboItems = append(comboItems, domain.ComboItem{Key: "-", Value: "-"}) // Default option when no records are found
-	hasGod, hasKar := s.ojRepo.GetHasGodHasKar()
-	qb := common.NewQueryBuilder(`select idorgjed, ojozn, naziv from orgjed`, true)
-	qb.AddGodKarConditions(hasGod, hasKar, session.SelectedGod, session.SelectedKar)
-	qb.AddOrderBy("ojozn ASC")
-	sqlQuery, args := qb.Build()
-	ojEntites, err := s.ojRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
-		return comboItems, err
-	}
-	for _, oj := range *ojEntites {
-		comboItems = append(comboItems, domain.ComboItem{
-			Key:   fmt.Sprintf("%d", oj.IDOrgjed),
-			Value: fmt.Sprintf("%s - %s", oj.OjOzn, oj.Naziv),
-		})
-	}
-	return comboItems, nil
+	return s.commonSvc.GetOrgJedComboValues(ctx, commonsvc.WithEmptyOption())
 }
 
-// GetMestoTroska fetches the list of Mesto Troska options based on the provided idorgjed.
+// GetMestoTroska returns the mesta troška of one organizaciona jedinica (CommonService).
 func (s *FproResource) GetMestoTroska(ctx context.Context, idorgjed int64) ([]domain.ComboItem, error) {
-	userSession := domain.GetSessionFromStdContext(ctx)
-	if userSession == nil {
-		return nil, fmt.Errorf("user session not found")
-	}
-
-	comboItems := []domain.ComboItem{}
-	comboItems = append(comboItems, domain.ComboItem{Key: "-", Value: "-"}) // Default option when no records are found
-	qb := common.NewQueryBuilder(`select mestotrid, mtroska, opis, idorgjed from mestotr`, true)
-	hasGod, hasKar := s.mtroskaRepo.GetHasGodHasKar()
-	qb.AddGodKarConditions(hasGod, hasKar, userSession.SelectedGod, userSession.SelectedKar)
-	qb.AddEqual("idorgjed", idorgjed)
-	qb.AddOrderBy("mtroska ASC")
-	sqlQuery, args := qb.Build()
-	mtroskaEntites, err := s.mtroskaRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
-		return comboItems, err
-	}
-	for _, mtroska := range *mtroskaEntites {
-		comboItems = append(comboItems, domain.ComboItem{
-			Key:   fmt.Sprintf("%d", mtroska.MestoTrID),
-			Value: fmt.Sprintf("%s - %s", mtroska.Mtroska, mtroska.Opis),
-		})
-	}
-	return comboItems, nil
+	return s.commonSvc.GetMestoTroskaComboValues(ctx, idorgjed, commonsvc.WithEmptyOption())
 }
 
-// GetValute fetches the list of valute options for filtering.
+// GetValute returns the valute of the current period (CommonService).
 func (s *FproResource) GetValute(ctx context.Context) ([]domain.ComboItem, error) {
-	session := domain.GetSessionFromStdContext(ctx)
-	if session == nil {
-		return nil, fmt.Errorf("user session not found")
-	}
-
-	comboItems := []domain.ComboItem{}
-	comboItems = append(comboItems, domain.ComboItem{Key: "-", Value: "-"}) // Default option when no records are found
-	hasGod, hasKar := s.valuteRepo.GetHasGodHasKar()
-	qb := common.NewQueryBuilder(`select idvalute, sifval, naziv from valute`, true)
-	qb.AddGodKarConditions(hasGod, hasKar, session.SelectedGod, session.SelectedKar)
-	qb.AddOrderBy("sifval ASC")
-	sqlQuery, args := qb.Build()
-	valuteEntites, err := s.valuteRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
-		return comboItems, err
-	}
-	for _, valute := range *valuteEntites {
-		comboItems = append(comboItems, domain.ComboItem{
-			Key:   fmt.Sprintf("%d", valute.IDValute),
-			Value: fmt.Sprintf("%d - %s", valute.Sifval, valute.Naziv.String),
-		})
-	}
-	return comboItems, nil
+	return s.commonSvc.GetValuteComboValues(ctx, commonsvc.WithEmptyOption())
 }
 
-// GetKomercijalisti fetches the list of komercijalisti options for filtering.
+// GetKomercijalisti returns the komercijalisti of the current period (CommonService).
 func (s *FproResource) GetKomercijalisti(ctx context.Context) ([]domain.ComboItem, error) {
-	session := domain.GetSessionFromStdContext(ctx)
-	if session == nil {
-		return nil, fmt.Errorf("user session not found")
-	}
-
-	comboItems := []domain.ComboItem{}
-	comboItems = append(comboItems, domain.ComboItem{Key: "-", Value: "-"}) // Default option when no records are found
-	hasGod, hasKar := s.komercijalistiRepo.GetHasGodHasKar()
-	qb := common.NewQueryBuilder(`select komid, sifkom, imeprezime from komercijalisti`, true)
-	qb.AddGodKarConditions(hasGod, hasKar, session.SelectedGod, session.SelectedKar)
-	qb.AddOrderBy("sifkom ASC")
-	sqlQuery, args := qb.Build()
-	komercijalistiEntites, err := s.komercijalistiRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
-		return comboItems, err
-	}
-	for _, komercijalista := range *komercijalistiEntites {
-		comboItems = append(comboItems, domain.ComboItem{
-			Key:   fmt.Sprintf("%d", komercijalista.KomID),
-			Value: fmt.Sprintf("%d - %s", komercijalista.Sifkom, komercijalista.ImePrezime),
-		})
-	}
-	return comboItems, nil
+	return s.commonSvc.GetKomercijalistiComboValues(ctx, commonsvc.WithEmptyOption())
 }
 
-// GetMagacini fetches the list of magacini
+// GetMagacini returns the magacini of the current period (CommonService).
 func (s *FproResource) GetMagacini(ctx context.Context) ([]domain.ComboItem, error) {
-	session := domain.GetSessionFromStdContext(ctx)
-	if session == nil {
-		return nil, fmt.Errorf("user session not found")
-	}
-
-	comboItems := []domain.ComboItem{}
-	comboItems = append(comboItems, domain.ComboItem{Key: "-", Value: "-"}) // Default option when no records are found
-	hasGod, hasKar := s.magaciniRepo.GetHasGodHasKar()
-	qb := common.NewQueryBuilder(`select magaciniid, mag, opis from magacini`, true)
-	qb.AddGodKarConditions(hasGod, hasKar, session.SelectedGod, session.SelectedKar)
-	qb.AddOrderBy("mag ASC")
-	sqlQuery, args := qb.Build()
-	magaciniEntites, err := s.magaciniRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
-		return comboItems, err
-	}
-	for _, magacin := range *magaciniEntites {
-		comboItems = append(comboItems, domain.ComboItem{
-			Key:   fmt.Sprintf("%d", magacin.MagaciniID),
-			Value: fmt.Sprintf("%d - %s", magacin.Mag, magacin.Opis),
-		})
-	}
-	return comboItems, nil
+	return s.commonSvc.GetMagacinComboValues(ctx, commonsvc.WithEmptyOption())
 }
 
-// GetMI fetches the list of MI options for filtering.
+// GetMI returns the mesta isporuke of the current period (CommonService).
 func (s *FproResource) GetMI(ctx context.Context) ([]domain.ComboItem, error) {
-	session := domain.GetSessionFromStdContext(ctx)
-	if session == nil {
-		return nil, fmt.Errorf("user session not found")
-	}
-
-	comboItems := []domain.ComboItem{}
-	comboItems = append(comboItems, domain.ComboItem{Key: "-", Value: "-"}) // Default option when no records are found
-	hasGod, hasKar := s.komercijalistiRepo.GetHasGodHasKar()
-	qb := common.NewQueryBuilder(`select fispid, mi, naziv from fisp`, true)
-	qb.AddGodKarConditions(hasGod, hasKar, session.SelectedGod, session.SelectedKar)
-	qb.AddOrderBy("mi ASC")
-	sqlQuery, args := qb.Build()
-	miEntites, err := s.miRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
-		return comboItems, err
-	}
-	for _, mi := range *miEntites {
-		comboItems = append(comboItems, domain.ComboItem{
-			Key:   fmt.Sprintf("%d", mi.FispID),
-			Value: fmt.Sprintf("%d - %s", mi.MI, mi.Naziv),
-		})
-	}
-	return comboItems, nil
+	return s.commonSvc.GetMestoIsporukeComboValues(ctx, commonsvc.WithEmptyOption())
 }
 
 func (s *FproResource) GetNalogTotalValues(ctx context.Context, nalogTotal *domain.NalogTotalValues, idFnal int64) error {

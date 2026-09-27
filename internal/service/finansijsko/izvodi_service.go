@@ -10,6 +10,7 @@ import (
 	"helia/internal/domain"
 	"helia/internal/repository"
 	"helia/internal/service"
+	commonsvc "helia/internal/service/common"
 	"log"
 	"strings"
 	"time"
@@ -46,12 +47,13 @@ type IzvodiResource struct {
 	fkplRepo                *repository.BaseRepository[domain.Fkpl]
 	fvrRepo                 *repository.BaseRepository[domain.Fvr]
 	cfg                     config.Config
+	commonSvc               commonsvc.CommonService
 	izvodiHeaderTableFields []domain.Fields
 	izvodiDetailTableFields []domain.Fields
 }
 
 func NewIzvodiResource(izvhdrRepo *repository.BaseRepository[domain.Fizvzag], izvdetRepo *repository.BaseRepository[domain.Fizvdet],
-	bankeRepo *repository.BaseRepository[domain.Banke], tipdokRepo *repository.BaseRepository[domain.Tipdok], fnalRepo *repository.BaseRepository[domain.Fnal], partneriRepo *repository.BaseRepository[domain.Partneri], tekracuniRepo *repository.BaseRepository[domain.TekRacuni], sifplizvRepo *repository.BaseRepository[domain.Sifplizv], fkplRepo *repository.BaseRepository[domain.Fkpl], fvrRepo *repository.BaseRepository[domain.Fvr], cfg config.Config) *IzvodiResource {
+	bankeRepo *repository.BaseRepository[domain.Banke], tipdokRepo *repository.BaseRepository[domain.Tipdok], fnalRepo *repository.BaseRepository[domain.Fnal], partneriRepo *repository.BaseRepository[domain.Partneri], tekracuniRepo *repository.BaseRepository[domain.TekRacuni], sifplizvRepo *repository.BaseRepository[domain.Sifplizv], fkplRepo *repository.BaseRepository[domain.Fkpl], fvrRepo *repository.BaseRepository[domain.Fvr], cfg config.Config, commonSvc commonsvc.CommonService) *IzvodiResource {
 	rs := &IzvodiResource{
 		izvhdrRepo:    izvhdrRepo,
 		izvdetRepo:    izvdetRepo,
@@ -64,6 +66,7 @@ func NewIzvodiResource(izvhdrRepo *repository.BaseRepository[domain.Fizvzag], iz
 		fkplRepo:      fkplRepo,
 		fvrRepo:       fvrRepo,
 		cfg:           cfg,
+		commonSvc:     commonSvc,
 	}
 	rs.SetIzvodiFields()
 	return rs
@@ -253,84 +256,20 @@ func (s *IzvodiResource) GetIzvodiDetail(ctx context.Context, tbl *domain.TableD
 	return nil
 }
 
+// GetBanke returns the banke of the current period (CommonService).
 func (s *IzvodiResource) GetBanke(ctx context.Context) ([]domain.ComboItem, error) {
-	userSession := domain.GetSessionFromStdContext(ctx)
-	if userSession == nil {
-		return nil, fmt.Errorf("user session not found")
-	}
-
-	hasGod, hasKar := s.bankeRepo.GetHasGodHasKar()
-	qb := common.NewQueryBuilder(`SELECT idbanke, banka, bnkcod FROM banke`, true)
-	if hasGod {
-		qb.AddEqual("god", userSession.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("kar", userSession.SelectedKar)
-	}
-	sqlQuery, args := qb.Build()
-	banke, err := s.bankeRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
-		return nil, err
-	}
-	var comboItems []domain.ComboItem
-	for _, banka := range *banke {
-		comboItems = append(comboItems, domain.ComboItem{
-			Key:   fmt.Sprintf("%d", banka.IDBanke),
-			Value: fmt.Sprintf("%s - %s", banka.BnkCod, banka.Banka),
-		})
-	}
-	return comboItems, nil
+	return s.commonSvc.GetBankeComboValues(ctx)
 }
 
-// GetTipdokOptions fetches the list of tipdok options for filtering. This method stays the same.
+// GetTipdokOptions returns the vrste naloga that can be used for knjiženje izvoda
+// (grpdok FIN/SVI) keyed by the tipdok code (CommonService).
 func (s *IzvodiResource) GetTipdokOptions(ctx context.Context) ([]domain.ComboItem, error) {
-	userSession := domain.GetSessionFromStdContext(ctx)
-	if userSession == nil {
-		return nil, fmt.Errorf("user session not found")
-	}
-
-	hasGod, hasKar := s.tipdokRepo.GetHasGodHasKar()
-	qb := common.NewQueryBuilder(`SELECT idtipdok, tipdok, opis FROM tipdok`, true)
-	qb.AddGodKarConditions(hasGod, hasKar, userSession.SelectedGod, userSession.SelectedKar)
-	qb.AddCustomCondition("(grpdok = 'FIN' OR grpdok = 'SVI')")
-	qb.AddOrderBy("tipdok::NUMERIC ASC")
-	sqlQuery, args := qb.Build()
-	entites, err := s.tipdokRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
-		return nil, fmt.Errorf("failed to get tipdok options: %w", err)
-	}
-	var comboItems []domain.ComboItem
-	for _, entity := range *entites {
-		comboItems = append(comboItems, domain.ComboItem{
-			Key:   entity.TipDok,
-			Value: fmt.Sprintf("%s - %s", entity.TipDok, entity.Opis),
-		})
-	}
-	return comboItems, nil
+	return s.commonSvc.GetTipdokFinComboValues(ctx)
 }
 
-// Update implements NalogService.
+// GetNextNalog returns the next broj naloga of the given vrsta naloga (CommonService).
 func (s *IzvodiResource) GetNextNalog(ctx context.Context, tipdok string) (int64, error) {
-	userSession := domain.GetSessionFromStdContext(ctx)
-	if userSession == nil {
-		return 0, fmt.Errorf("user session not found")
-	}
-
-	hasGod, hasKar := s.fnalRepo.GetHasGodHasKar()
-	qb := common.NewQueryBuilder(` SELECT COALESCE(MAX(nalog), 0) + 1 as nalog FROM fnal`, true)
-	qb.AddGodKarConditions(hasGod, hasKar, userSession.SelectedGod, userSession.SelectedKar)
-	qb.AddEqual("tipdok", tipdok)
-	sqlQuery, args := qb.Build()
-	entities, err := s.fnalRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
-		return 0, fmt.Errorf("failed to get Fnal entities: %w", err)
-	}
-	if len(*entities) == 0 {
-		return 1, nil
-	}
-
-	return (*entities)[0].Nalog, nil
-
+	return s.commonSvc.GetNextFnalNalog(ctx, tipdok)
 }
 
 func (s *IzvodiResource) ImportIzvod(ctx context.Context, fileData string, software string, prekoJMBG bool) error {

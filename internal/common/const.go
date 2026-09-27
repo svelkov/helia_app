@@ -45,6 +45,7 @@ const (
 	IDrpgru          = "rpgruid"
 	IDrpor           = "rporid"
 	IDrsif           = "rsifid"
+	IDrnal           = "rnalid"
 )
 
 const (
@@ -157,6 +158,8 @@ const (
 	ClassButton = "h-8 sm:h-7 md:h-6 px-2 sm:px-1.5 md:px-1 text-xs sm:text-sm bg-gray-200 hover:bg-gray-300 rounded border border-blue-400 flex items-center justify-center flex-shrink-0 whitespace-nowrap"
 	// Search Input
 	ClassSearchInput = "search-input border rounded px-3 sm:px-2 h-9 sm:h-8 md:h-7 py-1 text-xs sm:text-sm w-full sm:w-72 md:w-64 pl-9 sm:pl-8"
+	ClassEanButton   = "bg-green-600 hover:bg-green-700 rounded h-9 sm:h-8 md:h-7 px-2 sm:px-2 md:px-1 py-1 text-xs sm:text-sm flex text-white items-center justify-center whitespace-nowrap gap-1 min-w-max sm:w-24 md:w-30"
+
 	// Action Buttons - Mobile optimized
 	ClassAddButton = "bg-green-600 hover:bg-green-700 rounded h-9 sm:h-8 md:h-7 px-2 sm:px-2 md:px-1 py-1 text-xs sm:text-sm flex text-white items-center justify-center whitespace-nowrap gap-1 min-w-max sm:w-24 md:w-24"
 	ClassNewButton = "bg-blue-600 hover:bg-blue-700 rounded h-9 sm:h-8 md:h-7 px-2 sm:px-2 md:px-1 py-1 text-xs sm:text-sm flex text-white items-center justify-center whitespace-nowrap gap-1 min-w-max sm:w-24 md:w-24"

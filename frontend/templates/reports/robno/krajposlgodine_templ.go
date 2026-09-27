@@ -15,7 +15,7 @@ import (
 	"helia/internal/domain"
 )
 
-func KrajPoslovneGodineStampa(params domain.KrajPoslovneGodineParams, tbl domain.TableData, rp domain.ReportParameters, tr *i18n.Service) templ.Component {
+func KrajPoslovneGodineStampa(params domain.KrajPoslovneGodineParams, tbl domain.TableData, rp domain.ReportParameters, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -36,7 +36,7 @@ func KrajPoslovneGodineStampa(params domain.KrajPoslovneGodineParams, tbl domain
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = rep.Report(rp, tbl, tr, nil, KrajPoslovneGodineContent(params, tbl, rp, tr)).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = rep.Report(rp, tbl, translator, KrajPoslovneGodineParam(params, translator), nil, KrajPoslovneGodineContent(params, tbl, rp, translator)).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -44,7 +44,7 @@ func KrajPoslovneGodineStampa(params domain.KrajPoslovneGodineParams, tbl domain
 	})
 }
 
-func ROB_RPT_POPISNALISTA(params domain.KrajPoslovneGodineParams, tbl domain.TableData, tr *i18n.Service) templ.Component {
+func ROB_RPT_POPISNALISTA(params domain.KrajPoslovneGodineParams, tbl domain.TableData, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -65,7 +65,7 @@ func ROB_RPT_POPISNALISTA(params domain.KrajPoslovneGodineParams, tbl domain.Tab
 			templ_7745c5c3_Var2 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = KrajPoslovneGodineStampa(params, tbl, domain.ReportParameters{ReportName: "ROB_RPT_POPISNALISTA"}, tr).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = KrajPoslovneGodineStampa(params, tbl, domain.ReportParameters{ReportName: "POPISNALISTA"}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -73,7 +73,7 @@ func ROB_RPT_POPISNALISTA(params domain.KrajPoslovneGodineParams, tbl domain.Tab
 	})
 }
 
-func ROB_RPT_POPISNALISTA2(params domain.KrajPoslovneGodineParams, tbl domain.TableData, tr *i18n.Service) templ.Component {
+func ROB_RPT_POPISNALISTA2(params domain.KrajPoslovneGodineParams, tbl domain.TableData, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -94,7 +94,7 @@ func ROB_RPT_POPISNALISTA2(params domain.KrajPoslovneGodineParams, tbl domain.Ta
 			templ_7745c5c3_Var3 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = KrajPoslovneGodineStampa(params, tbl, domain.ReportParameters{ReportName: "ROB_RPT_POPISNALISTA2"}, tr).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = KrajPoslovneGodineStampa(params, tbl, domain.ReportParameters{ReportName: "POPISNALISTA2"}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -102,7 +102,7 @@ func ROB_RPT_POPISNALISTA2(params domain.KrajPoslovneGodineParams, tbl domain.Ta
 	})
 }
 
-func KrajPoslovneGodineContent(params domain.KrajPoslovneGodineParams, tbl domain.TableData, rp domain.ReportParameters, tr *i18n.Service) templ.Component {
+func KrajPoslovneGodineContent(params domain.KrajPoslovneGodineParams, tbl domain.TableData, rp domain.ReportParameters, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -123,84 +123,103 @@ func KrajPoslovneGodineContent(params domain.KrajPoslovneGodineParams, tbl domai
 			templ_7745c5c3_Var4 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = rep.ReportTitle(rp).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = rep.ReportContentWithPageHeader(rp, KrajPoslovneGodineParam(params, translator), tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"text-sm mb-2\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
+		return nil
+	})
+}
+
+// KrajPoslovneGodineParam prints the magacin and konto range the report was run with; it is rendered
+// inside the centre column of the report header, directly below the report title.
+func KrajPoslovneGodineParam(params domain.KrajPoslovneGodineParams, translator *i18n.Service) templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
 		}
-		var templ_7745c5c3_Var5 string
-		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(tr.Label("Magacin"))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/robno/krajposlgodine.templ`, Line: 24, Col: 48}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var5 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var5 == nil {
+			templ_7745c5c3_Var5 = templ.NopComponent
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, ": ")
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"text-[10px] print:text-[9pt] leading-tight\"><div class=\"flex flex-wrap items-center justify-center gap-x-4 gap-y-0.5 print:gap-x-2 print:gap-y-0\"><span class=\"whitespace-nowrap\"><span class=\"font-semibold\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var6 string
-		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(params.Magacin))
+		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Magacin"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/robno/krajposlgodine.templ`, Line: 24, Col: 80}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/robno/krajposlgodine.templ`, Line: 32, Col: 61}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, " | ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</span> <span class=\"font-bold\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var7 string
-		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(tr.Label("Konto"))
+		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(params.Magacin))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/robno/krajposlgodine.templ`, Line: 24, Col: 104}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/robno/krajposlgodine.templ`, Line: 33, Col: 56}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, ": ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</span></span> <span class=\"whitespace-nowrap\"><span class=\"font-semibold\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var8 string
-		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(params.OdKonta)
+		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Konto"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/robno/krajposlgodine.templ`, Line: 24, Col: 124}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/robno/krajposlgodine.templ`, Line: 36, Col: 59}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, " - ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</span> <span class=\"font-bold\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var9 string
-		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(params.DoKonta)
+		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(params.OdKonta)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/robno/krajposlgodine.templ`, Line: 24, Col: 145}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/robno/krajposlgodine.templ`, Line: 37, Col: 44}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</span> <span class=\"font-bold\">-</span> <span class=\"font-bold\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = rep.ReportTableSection(tbl, tr).Render(ctx, templ_7745c5c3_Buffer)
+		var templ_7745c5c3_Var10 string
+		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(params.DoKonta)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/robno/krajposlgodine.templ`, Line: 39, Col: 44}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = rep.ReportEnd(nil).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</span></span></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

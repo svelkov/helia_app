@@ -14,6 +14,7 @@ import (
 	"helia/internal/handler"
 	"helia/internal/middleware"
 	"helia/internal/service"
+	commonsvc "helia/internal/service/common"
 	robnosvc "helia/internal/service/robno"
 	"helia/pkg/utils"
 
@@ -37,6 +38,7 @@ type ArtikliHandler struct {
 	artikliService robnosvc.ArtikliService
 	cfg            config.Config
 	lm             *middleware.LockMiddleware
+	commonSvc      commonsvc.CommonService
 }
 
 func NewArtikliHandler(
@@ -44,12 +46,14 @@ func NewArtikliHandler(
 	artikliService robnosvc.ArtikliService,
 	cfg config.Config,
 	lm *middleware.LockMiddleware,
+	commonSvc commonsvc.CommonService,
 ) *ArtikliHandler {
 	return &ArtikliHandler{
 		service:        service,
 		artikliService: artikliService,
 		cfg:            cfg,
 		lm:             lm,
+		commonSvc:      commonSvc,
 	}
 }
 
@@ -188,11 +192,23 @@ func (h *ArtikliHandler) confirmAddHandler(c *gin.Context) {
 	translator := i18n.GetInstance()
 	csrfToken := common.GetCsrfToken(c)
 
-	// Empty combo options for now
+	// Šifarnici for the dialog (jedinice mere, robne grupe i podgrupe)
 	modelCombo := []domain.ComboItem{}
-	jmCombo := []domain.ComboItem{}
-	gruCombo := []domain.ComboItem{}
-	pgruCombo := []domain.ComboItem{}
+	jmCombo, err := h.commonSvc.GetJediniceMereComboValues(c.Request.Context())
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, err.Error())
+		return
+	}
+	gruCombo, err := h.commonSvc.GetRobneGrupeComboValues(c.Request.Context())
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, err.Error())
+		return
+	}
+	pgruCombo, err := h.commonSvc.GetRobnePodgrupeComboValues(c.Request.Context(), 0)
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, err.Error())
+		return
+	}
 
 	tmpl_robno.ArtikliDialog(dialog, common.ActionAdd, model, btnSave, btnCancel, btnClose, modelCombo, jmCombo, gruCombo, pgruCombo, translator, csrfToken).Render(c.Request.Context(), c.Writer)
 }
@@ -236,11 +252,23 @@ func (h *ArtikliHandler) confirmUpdateHandler(c *gin.Context) {
 	translator := i18n.GetInstance()
 	csrfToken := common.GetCsrfToken(c)
 
-	// Empty combo options for now
+	// Šifarnici for the dialog (jedinice mere, robne grupe i podgrupe)
 	modelCombo := []domain.ComboItem{}
-	jmCombo := []domain.ComboItem{}
-	gruCombo := []domain.ComboItem{}
-	pgruCombo := []domain.ComboItem{}
+	jmCombo, err := h.commonSvc.GetJediniceMereComboValues(ctx)
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, err.Error())
+		return
+	}
+	gruCombo, err := h.commonSvc.GetRobneGrupeComboValues(ctx)
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, err.Error())
+		return
+	}
+	pgruCombo, err := h.commonSvc.GetRobnePodgrupeComboValues(ctx, 0)
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, err.Error())
+		return
+	}
 
 	tmpl_robno.ArtikliDialog(dialog, common.ActionUpdate, *entity, btnSave, btnCancel, btnClose, modelCombo, jmCombo, gruCombo, pgruCombo, translator, csrfToken).Render(c.Request.Context(), c.Writer)
 }

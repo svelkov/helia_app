@@ -7,6 +7,7 @@ import (
 	"helia/internal/common"
 	"helia/internal/domain"
 	"helia/internal/repository"
+	commonsvc "helia/internal/service/common"
 	"helia/internal/validation"
 
 	"html"
@@ -49,9 +50,10 @@ type PartneriResource struct {
 	partneriTableFields     []domain.Fields
 	tekuciRacuniTableFields []domain.Fields
 	partneriStampaFields    []domain.Fields
+	commonSvc               commonsvc.CommonService
 }
 
-func NewPartneriService(service *BaseService[domain.Partneri], validator *validation.RuleBasedValidator[domain.Partneri], partneriRepo *repository.BaseRepository[domain.Partneri], tekracuniRepo *repository.BaseRepository[domain.TekRacuni], tipanalitikeRepo *repository.BaseRepository[domain.Tipanalitike], fvrRepo *repository.BaseRepository[domain.Fvr]) *PartneriResource {
+func NewPartneriService(service *BaseService[domain.Partneri], validator *validation.RuleBasedValidator[domain.Partneri], partneriRepo *repository.BaseRepository[domain.Partneri], tekracuniRepo *repository.BaseRepository[domain.TekRacuni], tipanalitikeRepo *repository.BaseRepository[domain.Tipanalitike], fvrRepo *repository.BaseRepository[domain.Fvr], commonSvc commonsvc.CommonService) *PartneriResource {
 	rs := &PartneriResource{
 		service:          service,
 		validator:        validator,
@@ -59,6 +61,7 @@ func NewPartneriService(service *BaseService[domain.Partneri], validator *valida
 		tekracuniRepo:    tekracuniRepo,
 		tipanalitikeRepo: tipanalitikeRepo,
 		fvrRepo:          fvrRepo,
+		commonSvc:        commonSvc,
 	}
 	rs.setServiceFieldValues()
 	return rs
@@ -629,22 +632,9 @@ func (s *PartneriResource) ValidacijaPartneri(ctx context.Context, entity *domai
 	return fieldErrors, nil
 }
 
+// GetTipoveAnalitike returns the tipovi analitike (CommonService).
 func (s *PartneriResource) GetTipoveAnalitike(ctx context.Context) ([]domain.ComboItem, error) {
-	qb := common.NewQueryBuilder("SELECT tipanalitikeid, naziv FROM tipanalitike", true)
-	qb.AddOrderBy("tipanalitikeid")
-	sqlQuery, args := qb.Build()
-	entities, err := s.tipanalitikeRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
-		return nil, err
-	}
-	var comboItems []domain.ComboItem
-	for _, entity := range *entities {
-		comboItems = append(comboItems, domain.ComboItem{
-			Key:   fmt.Sprintf("%d", entity.TipanalitikeID),
-			Value: entity.Naziv,
-		})
-	}
-	return comboItems, nil
+	return s.commonSvc.GetTipoviAnalitikeComboValues(ctx)
 }
 func (s *PartneriResource) ExistsByField(ctx context.Context, filedName string, filedValue interface{}) (bool, error) {
 	session := domain.GetSessionFromStdContext(ctx)

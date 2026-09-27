@@ -9,6 +9,7 @@ import (
 	"helia/internal/domain"
 	"helia/internal/repository"
 	"helia/internal/service"
+	commonsvc "helia/internal/service/common"
 	"math"
 	"reflect"
 )
@@ -48,9 +49,10 @@ type PoreskeKnjigeResource struct {
 	kprTableFields       []domain.Fields
 	kirStampaTableFields []domain.Fields
 	kprStampaTableFields []domain.Fields
+	commonSvc            commonsvc.CommonService
 }
 
-func NewPoreskeKnjigeService(kirService *service.BaseService[domain.Kir], kprService *service.BaseService[domain.Kpr], kirRepo *repository.BaseRepository[domain.Kir], kprRepo *repository.BaseRepository[domain.Kpr], fvknjracRepo *repository.BaseRepository[domain.Fvknjrac], tipdokRepo *repository.BaseRepository[domain.Tipdok], fvrRepo *repository.BaseRepository[domain.Fvr]) *PoreskeKnjigeResource {
+func NewPoreskeKnjigeService(kirService *service.BaseService[domain.Kir], kprService *service.BaseService[domain.Kpr], kirRepo *repository.BaseRepository[domain.Kir], kprRepo *repository.BaseRepository[domain.Kpr], fvknjracRepo *repository.BaseRepository[domain.Fvknjrac], tipdokRepo *repository.BaseRepository[domain.Tipdok], fvrRepo *repository.BaseRepository[domain.Fvr], commonSvc commonsvc.CommonService) *PoreskeKnjigeResource {
 	rs := &PoreskeKnjigeResource{
 		kirService:   kirService,
 		kprService:   kprService,
@@ -59,6 +61,7 @@ func NewPoreskeKnjigeService(kirService *service.BaseService[domain.Kir], kprSer
 		fvknjracRepo: fvknjracRepo,
 		tipdokRepo:   tipdokRepo,
 		fvrRepo:      fvrRepo,
+		commonSvc:    commonSvc,
 	}
 	rs.setServiceFieldValues()
 	return rs
@@ -93,68 +96,28 @@ func (s *PoreskeKnjigeResource) GetKprStampaTableFields() []domain.Fields {
 	return s.kprStampaTableFields
 }
 
-// GetKnjigaValues returns the available knjiga (book type) options
+// GetTipoveKnjigaValues returns the vrste poreskih knjiga (CommonService) optionally followed by
+// the legacy "999 - Sve knjige" option.
 func (s *PoreskeKnjigeResource) GetTipoveKnjigaValues(ctx context.Context, comboValues *[]domain.ComboItem, ipVkTip string) error {
-	session := domain.GetSessionFromStdContext(ctx)
-	if session == nil {
-		return fmt.Errorf("user session not found")
-	}
-
-	qb := common.NewQueryBuilder(`SELECT vkrbr, opis FROM fvknjrac `, true)
-
-	hasGod, hasKar := s.fvknjracRepo.GetHasGodHasKar()
-	if hasGod {
-		qb.AddEqual("god", session.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("kar", session.SelectedKar)
-	}
-	qb.AddEqual("vktip", ipVkTip)
-
-	qb.AddOrderBy("vktip ASC, vkrbr ASC")
-	sqlQuery, args := qb.Build()
-	entities, err := s.fvknjracRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	items, err := s.commonSvc.GetTipovePoreskihKnjigaComboValues(ctx, ipVkTip)
 	if err != nil {
 		return fmt.Errorf("failed to get knjiga values: %w", err)
 	}
-
-	if entities != nil && len(*entities) > 0 {
-		for _, entity := range *entities {
-			*comboValues = append(*comboValues, domain.ComboItem{
-				Key:   fmt.Sprintf("%v", entity.VkRbr),
-				Value: fmt.Sprintf("%d - %s", entity.VkRbr, entity.Opis),
-			})
-		}
+	*comboValues = append(*comboValues, items...)
+	if len(items) > 0 {
 		*comboValues = append(*comboValues, domain.ComboItem{Key: "999", Value: "999 - Sve knjige"})
 	}
 	return nil
 }
 
-// GetTipdokOptions fetches the list of tipdok options for filtering. This method stays the same.
+// GetTipdokValues returns the vrste naloga that can be used for knjiženje (grpdok FIN/SVI)
+// (CommonService).
 func (s *PoreskeKnjigeResource) GetTipdokValues(ctx context.Context, comboValues *[]domain.ComboItem) error {
-	userSession := domain.GetSessionFromStdContext(ctx)
-	if userSession == nil {
-		return fmt.Errorf("user session not found")
-	}
-
-	hasGod, hasKar := s.tipdokRepo.GetHasGodHasKar()
-	qb := common.NewQueryBuilder(`SELECT idtipdok, tipdok, opis FROM tipdok`, true)
-	qb.AddGodKarConditions(hasGod, hasKar, userSession.SelectedGod, userSession.SelectedKar)
-	qb.AddCustomCondition("(grpdok = 'FIN' OR grpdok = 'SVI')")
-	qb.AddOrderBy("tipdok::NUMERIC ASC")
-	sqlQuery, args := qb.Build()
-	tipdokValues, err := s.tipdokRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	items, err := s.commonSvc.GetTipdokFinComboValues(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get tipdok options: %w", err)
 	}
-	if tipdokValues != nil && len(*tipdokValues) > 0 {
-		for _, entity := range *tipdokValues {
-			*comboValues = append(*comboValues, domain.ComboItem{
-				Key:   fmt.Sprintf("%s", entity.TipDok),
-				Value: fmt.Sprintf("%s - %s", entity.TipDok, entity.Opis),
-			})
-		}
-	}
+	*comboValues = append(*comboValues, items...)
 	return nil
 }
 

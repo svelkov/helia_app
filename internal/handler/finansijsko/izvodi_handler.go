@@ -277,7 +277,7 @@ func (h *IzvodiHandler) KnjizenjeIzvoda(c *gin.Context) {
 		}
 		nextNalog := int64(0)
 		if len(tipdokValues) > 0 {
-			nextNalog, err = h.service.GetNextNalog(c.Request.Context(), tipdokValues[0].Value) // Get next nalog for the first tipdok value
+			nextNalog, err = h.service.GetNextNalog(c.Request.Context(), tipdokValues[0].Key) // Get next nalog for the first tipdok
 			if err != nil {
 				common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetData)
 				return

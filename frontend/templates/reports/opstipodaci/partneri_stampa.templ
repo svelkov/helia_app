@@ -8,16 +8,7 @@ import (
 
 // PartneriStampa renders a printable full-page Partneri report.
 templ PartneriStampa(tblPartneri domain.TableData, reportParamers domain.ReportParameters, translator *i18n.Service) {
-	@rep.Report(reportParamers, tblPartneri, translator, nil, PartneriReport(reportParamers, tblPartneri, translator))
-}
-
-// PartneriReport renders the complete Partneri report content with header, title, and table.
-templ PartneriReport(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
-	@rep.ReportHeader(repParams)
-	@rep.ReportTitle(repParams)
-	@PartneriParam(repParams, translator)
-	@rep.ReportTableSection(tbl, translator)
-	@rep.ReportEnd(nil)
+	@rep.Report(reportParamers, tblPartneri, translator, PartneriParam(reportParamers, translator), nil, nil)
 }
 
 templ PartneriParam(repParams domain.ReportParameters, translator *i18n.Service) {

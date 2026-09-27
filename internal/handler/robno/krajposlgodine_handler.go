@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/gin-gonic/gin"
 	"helia/config"
 	tmpl_rep_robno "helia/frontend/templates/reports/robno"
 	tmpl_robno "helia/frontend/templates/robno"
@@ -14,6 +13,8 @@ import (
 	"helia/internal/middleware"
 	robnosvc "helia/internal/service/robno"
 	"helia/pkg/utils"
+
+	"github.com/gin-gonic/gin"
 )
 
 const krajPoslovneGodineURL = "/api/robno/krajposlovnegodine"
@@ -26,10 +27,20 @@ type KrajPoslovneGodineHandler struct {
 }
 
 func NewKrajPoslovneGodineHandler(service robnosvc.KrajPoslovneGodineService, cfg config.Config) *KrajPoslovneGodineHandler {
-	tr := i18n.GetInstance()
 	return &KrajPoslovneGodineHandler{service: service, cfg: cfg,
-		tabs:    &domain.TabData{Tabs: []domain.TabItem{{ID: "kpg-popis", Label: tr.Title("Popisne liste"), HXRequestUrl: krajPoslovneGodineURL + "/popis", IsActive: true}, {ID: "kpg-visak", Label: tr.Title("Obrada viškova/manjkova"), HXRequestUrl: krajPoslovneGodineURL + "/obrada"}, {ID: "kpg-prepis", Label: tr.Title("Prepis stanja"), HXRequestUrl: krajPoslovneGodineURL + "/prepis"}}},
-		subtabs: &domain.TabData{Tabs: []domain.TabItem{{ID: "kpg-sifra", Label: tr.Title("Po šifri"), HXRequestUrl: krajPoslovneGodineURL + "/popis?tip=sifra", IsActive: true}, {ID: "kpg-naziv", Label: tr.Title("Po nazivu"), HXRequestUrl: krajPoslovneGodineURL + "/popis?tip=naziv"}, {ID: "kpg-grupa", Label: tr.Title("Po grupi"), HXRequestUrl: krajPoslovneGodineURL + "/popis?tip=grupa"}, {ID: "kpg-grupa-naziv", Label: tr.Title("Po grupi i nazivu"), HXRequestUrl: krajPoslovneGodineURL + "/popis?tip=grupa-naziv"}}},
+		tabs: &domain.TabData{Tabs: []domain.TabItem{
+			{ID: "kpg-popis", Label: "Popisne liste", HXRequestUrl: krajPoslovneGodineURL + "/popis", IsActive: true},
+			{ID: "kpg-visak", Label: "Obrada viškova/manjkova", HXRequestUrl: krajPoslovneGodineURL + "/obrada"},
+			{ID: "kpg-prepis", Label: "Prepis stanja", HXRequestUrl: krajPoslovneGodineURL + "/prepis"},
+		},
+		},
+		subtabs: &domain.TabData{Tabs: []domain.TabItem{
+			{ID: "kpg-sifra", Label: "Po šifri", HXRequestUrl: krajPoslovneGodineURL + "/popis?tip=sifra", IsActive: true},
+			{ID: "kpg-naziv", Label: "Po nazivu", HXRequestUrl: krajPoslovneGodineURL + "/popis?tip=naziv"},
+			{ID: "kpg-grupa", Label: "Po grupi", HXRequestUrl: krajPoslovneGodineURL + "/popis?tip=grupa"},
+			{ID: "kpg-grupa-naziv", Label: "Po grupi i nazivu", HXRequestUrl: krajPoslovneGodineURL + "/popis?tip=grupa-naziv"},
+		},
+		},
 	}
 }
 
@@ -47,7 +58,10 @@ func (h *KrajPoslovneGodineHandler) Main(c *gin.Context) {
 	}
 }
 
-func (h *KrajPoslovneGodineHandler) Popis(c *gin.Context) { h.renderRows(c, 0, false) }
+func (h *KrajPoslovneGodineHandler) Popis(c *gin.Context) {
+	h.renderRows(c, 0, false)
+}
+
 func (h *KrajPoslovneGodineHandler) Obrada(c *gin.Context) {
 	common.SetActiveTab(h.tabs, 1)
 	var rows []domain.KrajVisakManjakRow

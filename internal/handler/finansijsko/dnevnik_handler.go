@@ -92,13 +92,13 @@ func (h *DnevnikHandler) DnevnikKnjizenja(c *gin.Context) {
 		searchText := c.Query("query")
 		ctx := c.Request.Context()
 
-		err := h.service.GetDnevnikKnjizenja(ctx, &tbl, true, page, pageSize, odDatuma, doDatuma, searchText, "O")
+		err := h.service.GetDnevnikKnjizenja(ctx, &tbl, true, page, pageSize, odDatuma, doDatuma, searchText, common.TipStampePreview)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
 			return
 		}
 		tbl.Pagination.HxVals = hxValsDnevnik
-		err = h.service.GetDnevnikKnjizenja(ctx, &tbl, false, page, pageSize, odDatuma, doDatuma, searchText, "O")
+		err = h.service.GetDnevnikKnjizenja(ctx, &tbl, false, page, pageSize, odDatuma, doDatuma, searchText, common.TipStampePreview)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -135,11 +135,11 @@ func (h *DnevnikHandler) DnevnikKnjizenjaStampa(c *gin.Context) {
 	tbl := common.SetTableBasicData(dnevnikContentTitle, dnevnikTableID, h.service.GetDnevnikStampaTableFields(), "", "", 999999, 1, 1, 0, h.cfg)
 	tbl.HasTotals = true
 
-	if err := h.service.GetDnevnikKnjizenja(ctx, &tbl, true, 1, 999999, odDatuma, doDatuma, "", "S"); err != nil {
+	if err := h.service.GetDnevnikKnjizenja(ctx, &tbl, true, 1, 999999, odDatuma, doDatuma, "", common.TipStampePrint); err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData+" "+err.Error())
 		return
 	}
-	if err := h.service.GetDnevnikKnjizenja(ctx, &tbl, false, 1, 999999, odDatuma, doDatuma, "", "S"); err != nil {
+	if err := h.service.GetDnevnikKnjizenja(ctx, &tbl, false, 1, 999999, odDatuma, doDatuma, "", common.TipStampePrint); err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData+" "+err.Error())
 		return
 	}
@@ -161,7 +161,6 @@ func (h *DnevnikHandler) DnevnikKnjizenjaStampa(c *gin.Context) {
 	paramItems["OdDatuma"] = domain.ParameterItem{Name: translator.Label("Za period od"), Value: odDatumaFmt}
 	paramItems["DoDatuma"] = domain.ParameterItem{Name: translator.Label("do"), Value: doDatumaFmt}
 	params.ParameterItems = paramItems
-	c.Header("Content-Type", "text/html; charset=utf-8")
 	tmpl_rep_fin.DnevnikKnjizenjaStampa(tbl, domain.TableData{}, params, translator).Render(ctx, c.Writer)
 }
 

@@ -750,15 +750,15 @@ func (h *FnalHandler) FnalPrepisDialog(c *gin.Context) {
 		return
 	}
 	if len(tipdokValues) > 0 {
-		tipdok := tipdokValues[0].TipDok
+		tipdok := tipdokValues[0].Key
 		nextNalog, _ := h.naloziService.GetNextNalog(ctx, tipdok)
 		modelView.NalogNew = fmt.Sprintf("%d", nextNalog)
 	}
 	for _, item := range tipdokValues {
-		if strings.Trim(strings.ToLower(item.TipDok), " ") == strings.Trim(strings.ToLower(result.Tipdok), " ") {
-			modelView.TipdokOld = fmt.Sprintf("%s-%s", result.Tipdok, item.Opis)
+		if strings.Trim(strings.ToLower(item.Key), " ") == strings.Trim(strings.ToLower(result.Tipdok), " ") {
+			modelView.TipdokOld = item.Value
 		}
-		modelView.TipdokValues = append(modelView.TipdokValues, domain.ComboItem{Key: item.TipDok, Value: item.TipDok + "-" + item.Opis})
+		modelView.TipdokValues = append(modelView.TipdokValues, item)
 	}
 	btnSave := domain.Button{
 		Id:            "btn-save",
@@ -926,10 +926,10 @@ func (h *FnalHandler) FnalStornirajDialog(c *gin.Context) {
 	modelView.NalogNew = fmt.Sprintf("%d", nextNalog)
 
 	for _, item := range tipdokValues {
-		if strings.Trim(strings.ToLower(item.TipDok), " ") == strings.Trim(strings.ToLower(result.Tipdok), " ") {
-			modelView.Tipdok_Old = fmt.Sprintf("%s-%s", result.Tipdok, item.Opis)
+		if strings.Trim(strings.ToLower(item.Key), " ") == strings.Trim(strings.ToLower(result.Tipdok), " ") {
+			modelView.Tipdok_Old = item.Value
 		}
-		modelView.TipdokValues = append(modelView.TipdokValues, domain.ComboItem{Key: item.TipDok, Value: item.TipDok + "-" + item.Opis})
+		modelView.TipdokValues = append(modelView.TipdokValues, item)
 	}
 	btnSave := domain.Button{
 		Id:            "btn-save",
@@ -1293,16 +1293,12 @@ func setStavkeButtons(requestType string, idFnal int64) (domain.Button, domain.B
 // NaloziStampaGrupaDialog renders the dialog for group nalog printing.
 func (h *FnalHandler) NaloziStampaGrupaDialog(c *gin.Context) {
 	ctx := c.Request.Context()
-	tipdokOptions, err := h.naloziService.GetTipdokOptions(ctx)
+	tipdokValues, err := h.naloziService.GetTipdokOptions(ctx)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, "Failed to get Tipdok options")
 		return
 	}
-	var tipdokValues []domain.ComboItem
 	selectedTipdok := ""
-	for _, item := range tipdokOptions {
-		tipdokValues = append(tipdokValues, domain.ComboItem{Key: item.TipDok, Value: item.TipDok + "-" + item.Opis})
-	}
 	if len(tipdokValues) > 0 {
 		selectedTipdok = tipdokValues[0].Key
 	}

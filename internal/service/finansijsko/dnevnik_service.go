@@ -91,7 +91,7 @@ func (s *DnevnikResource) GetDnevnikKnjizenja(ctx context.Context, tbl *domain.T
 	qb.AddJoin("left join fkpl on fkpl.idfkpl = fpro.idfkpl")
 	qb.AddJoin("left join partneri p on p.sifra = fpro.sifra and p.tipanalitikeid = fkpl.tipanalitikeid")
 	qb.AddJoin("left join orgjed o on o.idorgjed = fpro.idorgjed")
-	qb.AddJoin("left join valute v on v.idvalute = fpro.idvalute")
+	qb.AddJoin("left join valute v on v.sifval = fpro.sifval")
 
 	// Add WHERE conditions
 	if hasGod {
@@ -117,7 +117,7 @@ func (s *DnevnikResource) GetDnevnikKnjizenja(ctx context.Context, tbl *domain.T
 	// Order by
 	qb.AddOrderBy("fpro.danal, fpro.nalog, fpro.rbr")
 
-	if !getTotalRecords {
+	if !getTotalRecords && printType == common.TipStampePreview {
 		qb.SetLimit(pageSize)
 		qb.SetOffset((currentPage - 1) * pageSize)
 	}
@@ -128,48 +128,27 @@ func (s *DnevnikResource) GetDnevnikKnjizenja(ctx context.Context, tbl *domain.T
 	if err != nil {
 		return fmt.Errorf("failed to query fpro: %s", err.Error())
 	}
+	// set totals for duguje, potrazuje, saldo, devdug, devpot
+	var totalDuguje, totalPotrazuje, totalSaldo, totalDevDug, totalDevPot float64
 
 	// Set total records and pagination
-	if getTotalRecords {
+	if getTotalRecords && printType == common.TipStampePreview {
 		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
-		// set totals for duguje, potrazuje, saldo, devdug, devpot
-		var totalDuguje, totalPotrazuje, totalSaldo, totalDevDug, totalDevPot float64
-		for _, entity := range *entities {
-			totalDuguje += entity.Duguje
-			totalPotrazuje += entity.Potrazuje
-			totalSaldo += entity.Saldo
-			totalDevDug += entity.Devdug
-			totalDevPot += entity.Devpot
-		}
-		tbl.Totals = make([]string, len(tbl.Headers))
-		tbl.Totals[0] = i18n.GetInstance().Label("Ukupno") // Set label for totals column
-
-		for i, header := range tbl.Headers {
-			if header.IncludeInTotals {
-				switch header.Field {
-				case "duguje":
-					tbl.Totals[i] = common.FormatNumberWithSystemLocale(totalDuguje, 2)
-				case "potrazuje":
-					tbl.Totals[i] = common.FormatNumberWithSystemLocale(totalPotrazuje, 2)
-				case "saldo":
-					tbl.Totals[i] = common.FormatNumberWithSystemLocale(totalSaldo, 2)
-				case "devdug":
-					tbl.Totals[i] = common.FormatNumberWithSystemLocale(totalDevDug, 2)
-				case "devpot":
-					tbl.Totals[i] = common.FormatNumberWithSystemLocale(totalDevPot, 2)
-				}
-			}
-		}
-
 		return nil
 	}
+
 	rbr := 0
 	// Process results and populate table
 	if entities != nil && len(*entities) > 0 {
 		for _, entity := range *entities {
 			rbr++
+			totalDuguje += entity.Duguje
+			totalPotrazuje += entity.Potrazuje
+			totalSaldo += entity.Saldo
+			totalDevDug += entity.Devdug
+			totalDevPot += entity.Devpot
 			fields := []string{}
-			if printType == "O" { //obrada - samo polja potrebna za prikaz u obradi
+			if printType == common.TipStampePreview { //obrada - samo polja potrebna za prikaz u obradi
 				fields = []string{
 					fmt.Sprintf("%d", rbr),
 					entity.Danal.Time.Format(common.DateLayout),
@@ -190,7 +169,7 @@ func (s *DnevnikResource) GetDnevnikKnjizenja(ctx context.Context, tbl *domain.T
 					common.FormatNumberWithSystemLocale(entity.Devpot, 2),
 				}
 			}
-			if printType == "S" { //stampa - polja potrebna za štampu
+			if printType == common.TipStampePrint { //stampa - polja potrebna za štampu
 				fields = []string{
 					fmt.Sprintf("%d", rbr),
 					fmt.Sprintf("%d", entity.Rbr),
@@ -206,6 +185,26 @@ func (s *DnevnikResource) GetDnevnikKnjizenja(ctx context.Context, tbl *domain.T
 			}
 			tblRow := domain.TableRow{Fields: fields, HasUpdate: false, HasDelete: false}
 			tbl.Rows = append(tbl.Rows, tblRow)
+		}
+	}
+
+	tbl.Totals = make([]string, len(tbl.Headers))
+	tbl.Totals[0] = i18n.GetInstance().Label("Ukupno") // Set label for totals column
+
+	for i, header := range tbl.Headers {
+		if header.IncludeInTotals {
+			switch header.Field {
+			case "duguje":
+				tbl.Totals[i] = common.FormatNumberWithSystemLocale(totalDuguje, 2)
+			case "potrazuje":
+				tbl.Totals[i] = common.FormatNumberWithSystemLocale(totalPotrazuje, 2)
+			case "saldo":
+				tbl.Totals[i] = common.FormatNumberWithSystemLocale(totalSaldo, 2)
+			case "devdug":
+				tbl.Totals[i] = common.FormatNumberWithSystemLocale(totalDevDug, 2)
+			case "devpot":
+				tbl.Totals[i] = common.FormatNumberWithSystemLocale(totalDevPot, 2)
+			}
 		}
 	}
 

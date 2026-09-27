@@ -2,6 +2,7 @@ package robno
 
 import (
 	"fmt"
+
 	rep "helia/frontend/templates/reports"
 	"helia/i18n"
 	"helia/internal/common"
@@ -12,15 +13,7 @@ import (
 // the article header (identification, names and totals) followed by the monthly
 // movements table (Ulaz/Izlaz/Duguje/Potražuje).
 templ RobnoStanjaArtikalStampa(repParams domain.ReportParameters, params domain.RobnoStanjaParams, total domain.RobnoStanjaTotal, tbl domain.TableData, translator *i18n.Service) {
-	@rep.Report(repParams, domain.TableData{}, translator, nil, RobnoStanjaArtikalContent(repParams, params, total, tbl, translator))
-}
-
-templ RobnoStanjaArtikalContent(repParams domain.ReportParameters, params domain.RobnoStanjaParams, total domain.RobnoStanjaTotal, tbl domain.TableData, translator *i18n.Service) {
-	@rep.ReportHeader(repParams)
-	@rep.ReportTitle(repParams)
-	@RobnoStanjaArtikalParam(params, total, translator)
-	@RobnoStanjaArtikalTable(tbl, translator)
-	@rep.ReportEnd(nil)
+	@rep.Report(repParams, tbl, translator, RobnoStanjaArtikalParam(params, total, translator), nil, nil)
 }
 
 // RobnoStanjaArtikalParam displays the article identification, names and the
@@ -83,13 +76,32 @@ templ RobnoStanjaArtikalParam(params domain.RobnoStanjaParams, total domain.Robn
 	</div>
 }
 
+// RobnoStanjaArtikalTable renders the report grid. When pageHeader is set, it is rendered as the
+// first row of the table <thead>, which makes the browser repeat it at the top of every printed page.
 templ RobnoStanjaArtikalTable(tbl domain.TableData, translator *i18n.Service) {
 	<div class="mb-8">
-		<table class="w-full border-collapse report-table mt-2 print:w-full print:text-[10pt] print:table-auto print:border-collapse">
-			@rep.ReportTableHeader(tbl, translator)
+		<table class={ rep.ReportTableClass() }>
+			@rep.ReportTableColgroup(rep.ReportColumnWidths(tbl.Headers))
+			// @rep.ReportTableHeadWithPageHeader(tbl, translator, pageHeader)
 			<tbody>
 				for i, row := range tbl.Rows {
-					if row.ClassRow == "group-total" {
+					if row.ClassRow == "group-header" || row.ClassRow == "group-header-new-page" {
+						<tr
+							class={ func() string {
+								if row.ClassRow == "group-header-new-page" {
+									return "bg-gray-200 font-bold print:bg-gray-200 page-break-before"
+								}
+								return "bg-gray-200 font-bold print:bg-gray-200"
+							}() }
+						>
+							<td
+								colspan={ fmt.Sprintf("%d", len(tbl.Headers)) }
+								class="border border-gray-300 px-1 text-sm font-bold text-left print:text-[10pt] print:px-1"
+							>
+								{ row.Fields[0] }
+							</td>
+						</tr>
+					} else if row.ClassRow == "group-total" {
 						<tr class="bg-blue-50 font-bold border-t-2 border-blue-900 print:bg-blue-50 print:page-break-inside-avoid">
 							for j, cell := range row.Fields {
 								<td
@@ -134,4 +146,313 @@ templ RobnoStanjaArtikalTable(tbl domain.TableData, translator *i18n.Service) {
 			</tbody>
 		</table>
 	</div>
+}
+
+// RobnoStanjaViseArtikalaSifraStampa renders the printable "Prikaz stanja artikala" report
+// (variant "po šifri"): the parameter block, one line per article and the total line.
+templ RobnoStanjaViseArtikalaSifraStampa(repParams domain.ReportParameters, params domain.RobnoStanjaParams, magacinNaziv string, tbl domain.TableData, translator *i18n.Service) {
+	@rep.Report(repParams, tbl, translator, nil, nil, RobnoStanjaViseArtikalaSifraContent(repParams, params, magacinNaziv, tbl, translator))
+}
+
+templ RobnoStanjaViseArtikalaSifraContent(repParams domain.ReportParameters, params domain.RobnoStanjaParams, magacinNaziv string, tbl domain.TableData, translator *i18n.Service) {
+	@rep.ReportPageHeader(repParams, RobnoStanjaViseArtikalaSifraParam(params, magacinNaziv, translator), translator)
+	@RobnoStanjaArtikalTable(tbl, translator)
+	@rep.ReportEnd(nil)
+}
+
+// RobnoStanjaViseArtikalaSifraParam prints the parameters the report was run with, including the
+// state of the display options, like the legacy report does. It is rendered inside the centre
+// column of the report header, directly below the report title.
+templ RobnoStanjaViseArtikalaSifraParam(params domain.RobnoStanjaParams, magacinNaziv string, translator *i18n.Service) {
+	<div class="text-[10px] print:text-[9pt] leading-tight">
+		<!-- Line 1: ranges the report was run with (whitespace-nowrap keeps every item intact so the
+		     whole row fits on a single printed line). -->
+		<div class="flex flex-wrap items-center justify-center gap-x-4 gap-y-0.5 print:gap-x-2 print:gap-y-0">
+			<div class="flex items-center gap-1 whitespace-nowrap">
+				<span class="font-semibold">{ translator.Label("Magacin") }</span>
+				<span class="font-bold">{ magacinNaziv }</span>
+			</div>
+			<div class="flex items-center gap-1 whitespace-nowrap">
+				<span class="font-semibold">{ translator.Label("Od konta") }:</span>
+				<span class="font-bold">{ params.OdKonta }</span>
+			</div>
+			<div class="flex items-center gap-1 whitespace-nowrap">
+				<span class="font-semibold">{ translator.Label("Do konta") }:</span>
+				<span class="font-bold">{ params.DoKonta }</span>
+			</div>
+			<div class="flex items-center gap-1 whitespace-nowrap">
+				<span class="font-semibold">{ translator.Label("Od šifre") }:</span>
+				<span class="font-bold">{ params.OdSifre }</span>
+			</div>
+			<div class="flex items-center gap-1 whitespace-nowrap">
+				<span class="font-semibold">{ translator.Label("Do šifre") }:</span>
+				<span class="font-bold">{ params.DoSifre }</span>
+			</div>
+			<div class="flex items-center gap-1 whitespace-nowrap">
+				<span class="font-semibold">{ translator.Label("Od meseca") }:</span>
+				<span class="font-bold">{ fmt.Sprintf("%d", robnoStanjeMesec(params.OdMeseca, 1)) }</span>
+			</div>
+			<div class="flex items-center gap-1 whitespace-nowrap">
+				<span class="font-semibold">{ translator.Label("Do meseca") }:</span>
+				<span class="font-bold">{ fmt.Sprintf("%d", robnoStanjeMesec(params.DoMeseca, 12)) }</span>
+			</div>
+		</div>
+		<!-- Line 2: state of the display options. -->
+		<div class="flex flex-wrap items-center justify-center gap-x-4 gap-y-0.5 mt-0.5 print:mt-0 print:gap-x-2 print:gap-y-0">
+			<span class="whitespace-nowrap">{ robnoStanjeCbx(params.FinansijskiIznos) } { translator.Label("Finansijski iznos") }</span>
+			<span class="whitespace-nowrap">{ robnoStanjeCbx(params.ArtikliSaStanjem) } { translator.Label("Artikli sa stanjem") }</span>
+			<span class="whitespace-nowrap">{ robnoStanjeCbx(params.ArtikliBezStanja) } { translator.Label("Artikli bez stanja") }</span>
+			<span class="whitespace-nowrap">{ robnoStanjeCbx(params.ProsecnaCenaStanje) } { translator.Label("Pros. cena / stanje") }</span>
+			<span class="whitespace-nowrap">{ robnoStanjeCbx(params.ProsecnaCenaUlaz) } { translator.Label("Pros. cena / ulaz") }</span>
+			<span class="whitespace-nowrap">{ robnoStanjeCbx(params.ZaDobavljaca) } { translator.Label("Za dobavljača") }</span>
+		</div>
+	</div>
+}
+
+// robnoStanjeCbx prints the state of a report option as a checkbox glyph.
+func robnoStanjeCbx(checked bool) string {
+	if checked {
+		return "☑"
+	}
+	return "☐"
+}
+
+// robnoStanjeMesec clamps a month form value into 1..12 for the report header (fallback is used
+// when the value is empty or out of range, e.g. 99 for "through the end of the year").
+func robnoStanjeMesec(value string, fallback int) int {
+	month := common.StringToInt(value)
+	if month < 1 || month > 12 {
+		return fallback
+	}
+	return month
+}
+
+// RobnoStanjaViseArtikalaGrupaStampa renders the printable "Prikaz stanja artikala" report
+// (variant "po grupi"): the parameter block, one group per band with its articles and the total
+// line. When "Nova strana po grupi" is selected every group starts on a new page.
+templ RobnoStanjaViseArtikalaGrupaStampa(repParams domain.ReportParameters, params domain.RobnoStanjaParams, magacinNaziv string, tbl domain.TableData, translator *i18n.Service) {
+	@rep.Report(repParams, tbl, translator, nil, nil, RobnoStanjaViseArtikalaGrupaContent(repParams, params, magacinNaziv, tbl, translator))
+}
+
+templ RobnoStanjaViseArtikalaGrupaContent(repParams domain.ReportParameters, params domain.RobnoStanjaParams, magacinNaziv string, tbl domain.TableData, translator *i18n.Service) {
+	@rep.ReportPageHeader(repParams, RobnoStanjaViseArtikalaGrupaParam(params, magacinNaziv, translator), translator)
+	@RobnoStanjaArtikalTable(tbl, translator)
+	@rep.ReportEnd(nil)
+}
+
+// RobnoStanjaViseArtikalaGrupaParam prints the parameters of the grouped report, including the
+// state of its two options ("Finansijski iznos" and "Nova strana po grupi"). It is rendered inside
+// the centre column of the report header, directly below the report title.
+templ RobnoStanjaViseArtikalaGrupaParam(params domain.RobnoStanjaParams, magacinNaziv string, translator *i18n.Service) {
+	<div class="text-[10px] print:text-[9pt] leading-tight">
+		<!-- Line 1: ranges the report was run with (whitespace-nowrap keeps every item intact so the
+		     whole row fits on a single printed line). -->
+		<div class="flex flex-wrap items-center justify-center gap-x-4 gap-y-0.5 print:gap-x-2 print:gap-y-0">
+			<div class="flex items-center gap-1 whitespace-nowrap">
+				<span class="font-semibold">{ translator.Label("Magacin") }</span>
+				<span class="font-bold">{ magacinNaziv }</span>
+			</div>
+			<div class="flex items-center gap-1 whitespace-nowrap">
+				<span class="font-semibold">{ translator.Label("Od grupe") }:</span>
+				<span class="font-bold">{ params.OdGrupe }</span>
+			</div>
+			<div class="flex items-center gap-1 whitespace-nowrap">
+				<span class="font-semibold">{ translator.Label("Do grupe") }:</span>
+				<span class="font-bold">{ params.DoGrupe }</span>
+			</div>
+			<div class="flex items-center gap-1 whitespace-nowrap">
+				<span class="font-semibold">{ translator.Label("Od šifre") }:</span>
+				<span class="font-bold">{ params.OdSifre }</span>
+			</div>
+			<div class="flex items-center gap-1 whitespace-nowrap">
+				<span class="font-semibold">{ translator.Label("Do šifre") }:</span>
+				<span class="font-bold">{ params.DoSifre }</span>
+			</div>
+			<div class="flex items-center gap-1 whitespace-nowrap">
+				<span class="font-semibold">{ translator.Label("Od meseca") }:</span>
+				<span class="font-bold">{ fmt.Sprintf("%d", robnoStanjeMesec(params.OdMeseca, 1)) }</span>
+			</div>
+			<div class="flex items-center gap-1 whitespace-nowrap">
+				<span class="font-semibold">{ translator.Label("Do meseca") }:</span>
+				<span class="font-bold">{ fmt.Sprintf("%d", robnoStanjeMesec(params.DoMeseca, 12)) }</span>
+			</div>
+		</div>
+		<!-- Line 2: state of the report options. -->
+		<div class="flex flex-wrap items-center justify-center gap-x-4 gap-y-0.5 mt-0.5 print:mt-0 print:gap-x-2 print:gap-y-0">
+			<span class="whitespace-nowrap">{ robnoStanjeCbx(params.FinansijskiIznos) } { translator.Label("Finansijski iznos") }</span>
+			<span class="whitespace-nowrap">{ robnoStanjeCbx(params.NovaStranaPoGrupi) } { translator.Label("Nova strana po grupi") }</span>
+		</div>
+	</div>
+}
+
+// StanjaSubsintetickogKontaStampa renders the printable "Saldo subsintetičkog konta" report: the
+// summary (početno stanje / tekući promet / ukupan promet), the monthly saldo table and the bar
+// chart - the same layout as the "Salda pojedinačnih konta" report.
+templ StanjaSubsintetickogKontaStampa(tbl domain.TableData, total domain.RobnoStanjaTotal, repParams domain.ReportParameters, translator *i18n.Service) {
+	@rep.Report(repParams, tbl, translator, nil, nil, StanjaSubsintetickogKontaReport(tbl, total, repParams, translator))
+}
+
+templ StanjaSubsintetickogKontaReport(tbl domain.TableData, total domain.RobnoStanjaTotal, repParams domain.ReportParameters, translator *i18n.Service) {
+	@rep.ReportPageHeader(repParams, StanjaSubsintetickogKontaParam(repParams, translator), translator)
+	@StanjaSubsintetickogKontaReportBody(tbl, translator)
+	@StanjaSubsintetickogKontaReportChart()
+	@rep.ReportEnd(nil)
+}
+
+templ StanjaSubsintetickogKontaParam(repParams domain.ReportParameters, translator *i18n.Service) {
+	<!-- Parameters (magacin, konto) -->
+	<div class="text-center text-[11px] font-semibold mb-3 print:text-[9pt] print:mb-1">
+		{ translator.Label("Magacin") }: <span class="font-bold">{ repParams.ParameterItems["Magacin"].Value }</span>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ translator.Label("Konto") }: <span class="font-bold">{ repParams.ParameterItems["Konto"].Value }</span>
+	</div>
+}
+
+// StanjaSubsintetickogKontaReportSummary renders the opening balance, the turnover of the current
+// period and the total turnover of the account.
+templ StanjaSubsintetickogKontaReportSummary(total domain.RobnoStanjaTotal, translator *i18n.Service) {
+	<div class="mb-4">
+		<table class="w-full border-collapse report-table mt-4 print:w-full print:text-[11pt] print:table-auto print:border-collapse">
+			<colgroup>
+				<col style="width:72px"/>
+				<col style="width:100px"/>
+				<col style="width:100px"/>
+				<col style="width:100px"/>
+			</colgroup>
+			<thead>
+				<tr class="bg-blue-900 text-white print:bg-gray-200 print:text-black print:page-break-inside-auto">
+					<th class="border border-gray-300 px-1"></th>
+					<th class="border border-gray-300 px-1 text-sm text-center">{ translator.Label("Duguje") }</th>
+					<th class="border border-gray-300 px-1 text-sm text-center">{ translator.Label("Potražuje") }</th>
+					<th class="border border-gray-300 px-1 text-sm text-center">{ translator.Label("Saldo") }</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr class="bg-gray-50 print:bg-gray-50 print:page-break-inside-avoid">
+					<td class="border border-gray-300 px-1 text-sm">{ translator.Label("Početno stanje") }</td>
+					<td class="border border-gray-300 px-1 text-sm text-right">{ common.FormatNumberWithSystemLocale(total.PocStanjeDug, 2) }</td>
+					<td class="border border-gray-300 px-1 text-sm text-right">{ common.FormatNumberWithSystemLocale(total.PocStanjePot, 2) }</td>
+					<td class="border border-gray-300 px-1 text-sm text-right">{ common.FormatNumberWithSystemLocale(total.PocStanjeSaldo, 2) }</td>
+				</tr>
+				<tr class="bg-white print:bg-white print:page-break-inside-avoid">
+					<td class="border border-gray-300 px-1 text-sm">{ translator.Label("Tekući promet") }</td>
+					<td class="border border-gray-300 px-1 text-sm text-right">{ common.FormatNumberWithSystemLocale(total.TekuciPromDug, 2) }</td>
+					<td class="border border-gray-300 px-1 text-sm text-right">{ common.FormatNumberWithSystemLocale(total.TekuciPromPot, 2) }</td>
+					<td class="border border-gray-300 px-1 text-sm text-right">{ common.FormatNumberWithSystemLocale(total.TekuciPromSaldo, 2) }</td>
+				</tr>
+				<tr class="bg-gray-50 print:bg-gray-50 print:page-break-inside-avoid">
+					<td class="border border-gray-300 px-1 text-sm">{ translator.Label("Ukupan promet") }</td>
+					<td class="border border-gray-300 px-1 text-sm text-right">{ common.FormatNumberWithSystemLocale(total.UkPromDug, 2) }</td>
+					<td class="border border-gray-300 px-1 text-sm text-right">{ common.FormatNumberWithSystemLocale(total.UkPromPot, 2) }</td>
+					<td class="border border-gray-300 px-1 text-sm text-right">{ common.FormatNumberWithSystemLocale(total.UkPromSaldo, 2) }</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+}
+
+// StanjaSubsintetickogKontaReportBody renders the monthly table (početno stanje + duguje/potražuje,
+// saldo u mesecu and saldo na kraju meseca for every month).
+templ StanjaSubsintetickogKontaReportBody(tbl domain.TableData, translator *i18n.Service) {
+	@rep.ReportTable(tbl, translator)
+}
+
+// StanjaSubsintetickogKontaReportChart renders the bar chart of the monthly duguje / potražuje /
+// saldo. The chart is built on the client from the monthly table (the table that has 5 columns),
+// exactly like in the "Salda pojedinačnih konta" report.
+templ StanjaSubsintetickogKontaReportChart() {
+	<div class="mt-6 no-break" id="subsintetickokonta-report-chart-wrap">
+		<div class="text-[11px] font-bold mb-2">Grafički prikaz salda</div>
+		<canvas id="subsintetickokonta-report-chart" style="width:100%;height:260px;max-height:260px;"></canvas>
+	</div>
+	<script>
+		(function() {
+			function buildSubsintetickoKontaReportChart() {
+				var canvas = document.getElementById('subsintetickokonta-report-chart');
+				if (!canvas || typeof Chart === 'undefined') return;
+
+				// Read data from the monthly table (the first table on page that has 5 columns)
+				var months = [], duguje = [], potrazuje = [], saldo = [];
+				var tables = document.querySelectorAll('table');
+				var dataTable = null;
+				for (var i = 0; i < tables.length; i++) {
+					var th = tables[i].querySelectorAll('thead th');
+					if (th.length === 5) { dataTable = tables[i]; break; }
+				}
+				if (!dataTable) return;
+
+				// Parses a number formatted with the server locale ("1,234,567.89" or "1.234.567,89"):
+				// the last separator is the decimal separator, the other one is the thousand separator.
+				function parseNum(s) {
+					var clean = s.trim().replace(/\s/g, '').replace(/[^\d,.-]/g, '');
+					var lastComma = clean.lastIndexOf(',');
+					var lastDot = clean.lastIndexOf('.');
+					if (lastComma > lastDot) {
+						clean = clean.replace(/\./g, '').replace(',', '.');
+					} else {
+						clean = clean.replace(/,/g, '');
+					}
+					return parseFloat(clean) || 0;
+				}
+
+				var rows = dataTable.querySelectorAll('tbody tr');
+				rows.forEach(function(row) {
+					var cells = row.querySelectorAll('td');
+					if (cells.length < 4) return;
+					months.push(cells[0].textContent.trim());
+					duguje.push(parseNum(cells[1].textContent));
+					potrazuje.push(parseNum(cells[2].textContent));
+					saldo.push(parseNum(cells[3].textContent));
+				});
+
+				if (months.length === 0) return;
+
+				new Chart(canvas, {
+					type: 'bar',
+					data: {
+						labels: months,
+						datasets: [
+							{
+								label: 'Duguje',
+								data: duguje,
+								backgroundColor: 'rgba(59,130,246,0.55)',
+								borderColor: 'rgba(59,130,246,1)',
+								borderWidth: 1
+							},
+							{
+								label: 'Potražuje',
+								data: potrazuje,
+								backgroundColor: 'rgba(34,197,94,0.55)',
+								borderColor: 'rgba(34,197,94,1)',
+								borderWidth: 1
+							},
+							{
+								label: 'Saldo',
+								data: saldo,
+								backgroundColor: 'rgba(239,68,68,0.55)',
+								borderColor: 'rgba(239,68,68,1)',
+								borderWidth: 1
+							}
+						]
+					},
+					options: {
+						responsive: true,
+						maintainAspectRatio: false,
+						animation: { duration: 0 },
+						plugins: {
+							legend: { position: 'top' },
+							title: { display: false }
+						},
+						scales: { y: { beginAtZero: true } }
+					}
+				});
+			}
+
+			// Run after DOM + Chart.js are ready
+			if (document.readyState === 'loading') {
+				document.addEventListener('DOMContentLoaded', buildSubsintetickoKontaReportChart);
+			} else {
+				buildSubsintetickoKontaReportChart();
+			}
+		})();
+	</script>
 }

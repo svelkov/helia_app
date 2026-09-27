@@ -9,7 +9,7 @@ import (
 
 // OtvoreneStavkePregledStampa renders a printable open items overview report, one page per partner.
 templ OtvoreneStavkePregledStampa(repParams domain.ReportParameters, tbl domain.TableData, tipStampe string, translator *i18n.Service) {
-	@rep.Report(repParams, tbl, translator, OtvoreneStavkePregledSummary(translator), OtvoreneStavkePregledReport(repParams, tbl, tipStampe, translator))
+	@rep.Report(repParams, tbl, translator, nil, OtvoreneStavkePregledSummary(translator), OtvoreneStavkePregledReport(repParams, tbl, tipStampe, translator))
 }
 
 templ OtvoreneStavkePregledReport(repParams domain.ReportParameters, tbl domain.TableData, tipStampe string, translator *i18n.Service) {
@@ -100,11 +100,10 @@ templ OpomenePregledSummary(repParams domain.ReportParameters, translator *i18n.
 
 // ZatvoreneStavkeStampa renders a printable closed items overview report grouped by partner.
 templ ZatvoreneStavkeStampa(reportParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
-	@rep.Report(reportParams, tbl, translator, nil, ZatvoreneStavkeReport(tbl, reportParams, translator))
+	@rep.Report(reportParams, tbl, translator, nil, nil, ZatvoreneStavkeReport(tbl, reportParams, translator))
 }
 
 templ ZatvoreneStavkeReport(tbl domain.TableData, reportParams domain.ReportParameters, translator *i18n.Service) {
-	@rep.ReportHeader(reportParams)
 	@rep.ReportTitle(reportParams)
 	@ZatvoreneStavkeReportHeader(reportParams, translator)
 	<!-- Report table -->
@@ -128,7 +127,7 @@ templ ZatvoreneStavkeReportHeader(params domain.ReportParameters, translator *i1
 
 // IOSStampa renders a printable IOS (Izvod otvorenih stavki) report for a selected partner.
 templ IOSStampa(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
-	@rep.Report(repParams, tbl, translator, IOSSummary(repParams, translator), IOSReport(repParams, tbl, translator))
+	@rep.Report(repParams, tbl, translator, nil, IOSSummary(repParams, translator), IOSReport(repParams, tbl, translator))
 }
 
 templ IOSReport(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
@@ -177,11 +176,10 @@ templ IOSSummary(repParams domain.ReportParameters, translator *i18n.Service) {
 
 // DugovanjaObavezeStampa renders the print report for dospela potrazivanja grouped by partner.
 templ DugovanjaObavezeStampa(repParams domain.ReportParameters, partners []domain.DospelaPartnerReport, translator *i18n.Service) {
-	@rep.Report(repParams, domain.TableData{}, translator, nil, DugovanjaObavezeStampaContent(repParams, partners, translator))
+	@rep.Report(repParams,domain.TableData{}, translator,nil,  nil, DugovanjaObavezeStampaContent(repParams, partners, translator))
 }
 
 templ DugovanjaObavezeStampaContent(repParams domain.ReportParameters, partners []domain.DospelaPartnerReport, translator *i18n.Service) {
-	@rep.ReportHeader(repParams)
 	@rep.ReportTitle(repParams)
 	<!-- Parameters -->
 	<div class="text-center text-[11px] font-semibold mb-1">
@@ -293,11 +291,10 @@ templ DugovanjaObavezeStampaContent(repParams domain.ReportParameters, partners 
 
 // PotrazivanjaDugovanjaStampa renders the printable pregled potrazivanja/obaveze report grouped by partner.
 templ PotrazivanjaDugovanjaStampa(repParams domain.ReportParameters, partners []domain.PregledPotrazivanjaPartnerReport, translator *i18n.Service) {
-	@rep.Report(repParams, domain.TableData{}, translator, nil, PotrazivanjaDugovanjaContent(repParams, partners, translator))
+	@rep.Report(repParams,domain.TableData{}, translator, nil,nil, PotrazivanjaDugovanjaContent(repParams, partners, translator))
 }
 
 templ PotrazivanjaDugovanjaContent(repParams domain.ReportParameters, partners []domain.PregledPotrazivanjaPartnerReport, translator *i18n.Service) {
-	@rep.ReportHeader(repParams)
 	@rep.ReportTitle(repParams)
 	<div class="text-center text-[11px] font-semibold mb-3">
 		{ repParams.ParameterItems["StanjeNaDan"].Name }: <span class="font-bold">{ repParams.ParameterItems["StanjeNaDan"].Value }</span>
@@ -449,11 +446,11 @@ templ PotrazivanjaDugovanjaContent(repParams domain.ReportParameters, partners [
 }
 // DospelogDugaPoStarostiStampa renders the printable dospeli dug po starosti report grouped by partner.
 templ DospelogDugaPoStarostiStampa(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
-	@rep.Report(repParams, domain.TableData{}, translator, nil, DospelogDugaPoStarostiContent(repParams, tbl, translator))
+	@rep.Report(repParams,tbl, translator, nil, nil, DospelogDugaPoStarostiContent(repParams, tbl, translator))
 }
 
 templ DospelogDugaPoStarostiContent(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
-	@rep.ReportHeader(repParams)
+
 	@rep.ReportTitle(repParams)
 	<div class="text-center text-[11px] font-semibold mb-3">
 		{ repParams.ParameterItems["StanjeNaDan"].Name }: <span class="font-bold">{ repParams.ParameterItems["StanjeNaDan"].Value }</span>

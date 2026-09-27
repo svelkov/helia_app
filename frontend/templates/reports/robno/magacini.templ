@@ -8,12 +8,5 @@ import (
 
 // MagaciniStampa renders a printable Magacini report.
 templ MagaciniStampa(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
-	@rep.Report(repParams, domain.TableData{}, translator, nil, MagaciniContent(repParams, tbl, translator))
-}
-
-templ MagaciniContent(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
-	@rep.ReportHeader(repParams)
-	@rep.ReportTitle(repParams)
-	@rep.ReportTableSection(tbl, translator)
-	@rep.ReportEnd(nil)
+	@rep.Report(repParams, tbl, translator, nil, nil, nil)
 }

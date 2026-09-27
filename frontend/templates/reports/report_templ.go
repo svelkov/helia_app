@@ -16,8 +16,9 @@ import (
 	"time"
 )
 
+// ============================================================================
 // Main Report Template
-func Report(parameters domain.ReportParameters, tableData domain.TableData, translator *i18n.Service, summaryComponent templ.Component, customReport templ.Component) templ.Component {
+func Report(parameters domain.ReportParameters, tableData domain.TableData, translator *i18n.Service, paramBlock templ.Component, summaryComponent templ.Component, customReport templ.Component) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -45,7 +46,7 @@ func Report(parameters domain.ReportParameters, tableData domain.TableData, tran
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(parameters.ReportName)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 17, Col: 59}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 18, Col: 59}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
@@ -58,7 +59,7 @@ func Report(parameters domain.ReportParameters, tableData domain.TableData, tran
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(parameters.ReportName)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 20, Col: 33}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 21, Col: 33}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
@@ -71,33 +72,33 @@ func Report(parameters domain.ReportParameters, tableData domain.TableData, tran
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(parameters.CompanyName)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 20, Col: 62}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 21, Col: 62}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</title><style>\r\n\t\t\t/* @page must be at top level, not inside @media print */\r\n\t\t\t/* @top-right requires Chrome 128+ — thead::before below is the Chrome fallback */\r\n\t\t\t@page {\r\n\t\t\t\tsize: A4 { parameters.Orientation };\r\n\t\t\t\tmargin: 14mm 8mm 14mm 8mm;\r\n\t\t\t\t@bottom-right {\r\n\t\t\t\t\tcontent: \"Strana: \" counter(page) \" / \" counter(pages);\r\n\t\t\t\t\tfont-size: 9pt;\r\n\t\t\t\t\tfont-family: sans-serif;\r\n\t\t\t\t\tcolor: #374151;\r\n\t\t\t\t\tvertical-align: bottom;\r\n\t\t\t\t\tpadding-bottom: 6mm;\r\n\t\t\t\t}\r\n\t\t\t}\r\n\r\n\t\t\t@media print {\r\n\t\t\t\t.page-info {\r\n\t\t\t\t\tfont-size: 8pt;\r\n\t\t\t\t\tcolor: #374151;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t/* Ensure page numbers appear on each printed page */\r\n\t\t\t\t.page-break {\r\n\t\t\t\t\tposition: relative;\r\n\t\t\t\t\tpage-break-after: always;\r\n\t\t\t\t}\r\n\t\t\r\n\t\t\t\thtml, body {\r\n\t\t\t\t\tmargin: 0;\r\n\t\t\t\t\tpadding: 0;\r\n\t\t\t\t\twidth: 100%;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\tbody {\r\n\t\t\t\t\tbackground: white;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t.no-print {\r\n\t\t\t\t\tdisplay: none !important;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t.print-container {\r\n\t\t\t\t\twidth: 100%;\r\n\t\t\t\t\tmargin: 0;\r\n\t\t\t\t\tpadding: 0;\r\n\t\t\t\t\tbackground: white;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t.no-break {\r\n\t\t\t\t\tpage-break-inside: avoid;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t/* Table should break naturally across pages */\r\n\t\t\t\ttable {\r\n\t\t\t\t\twidth: 100%;\r\n\t\t\t\t\tborder-collapse: collapse;\r\n\t\t\t\t\tpage-break-inside: auto;\r\n\t\t\t\t\ttable-layout: fixed;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t/* Repeat header on each page */\r\n\t\t\t\tthead {\r\n\t\t\t\t\tdisplay: table-header-group;\r\n\t\t\t\t\tpage-break-inside: avoid;\r\n\t\t\t\t}\r\n\r\n\t\t\t\ttbody {\r\n\t\t\t\t\tdisplay: table-row-group;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t/* Table header rows - keep with content */\r\n\t\t\t\tthead tr {\r\n\t\t\t\t\tpage-break-inside: avoid;\r\n\t\t\t\t\tpage-break-after: avoid;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t/* Keep group headers with next row */\r\n\t\t\t\ttr.group-header {\r\n\t\t\t\t\tpage-break-inside: avoid;\r\n\t\t\t\t\tpage-break-after: avoid;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\ttr.subgroup-header {\r\n\t\t\t\t\tpage-break-inside: avoid;\r\n\t\t\t\t\tpage-break-after: auto;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\ttr.group-total {\r\n\t\t\t\t\tpage-break-inside: avoid;\r\n\t\t\t\t\tpage-break-after: avoid;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\ttr.group-footer {\r\n\t\t\t\t\tpage-break-inside: avoid;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\ttr.grand-total {\r\n\t\t\t\t\tpage-break-inside: avoid;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t/* Regular data rows can break */\r\n\t\t\t\ttr {\r\n\t\t\t\t\tpage-break-inside: auto;\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\ttfoot {\r\n\t\t\t\t\tdisplay: table-row-group;\r\n\t\t\t\t\tpage-break-inside: avoid;\r\n\t\t\t\t}\r\n\t\t\t}\r\n\t\t\t/* Screen view */\r\n\t\t\t@media screen {\r\n\t\t\t\t\r\n\t\t\t\t.page-break {\r\n\t\t\t\t\twidth: 210mm;\r\n\t\t\t\t\tmargin: 10px auto;\r\n\t\t\t\t\tpadding: 15mm;\r\n\t\t\t\t\tbackground: white;\r\n\t\t\t\t\tbox-shadow: 0 0 10px rgba(0,0,0,0.1);\r\n\t\t\t\t\tmin-height: 297mm;\r\n\t\t\t\t}\r\n\t\t\t}\r\n\t\t</style></head><body class=\"bg-gray-100 print:bg-white print:h-auto font-sans\"><!-- Print Controls --><div class=\"fixed top-2 right-2 z-50 bg-white p-2 rounded shadow-lg flex gap-2 items-center print:hidden\"><button onclick=\"window.print()\" class=\"bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-sm font-semibold\">🖨️ ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</title><style>\r\n\t\t\t/* @page must be at top level, not inside @media print */\r\n\t\t\t    @page {\r\n\t\t\t\t\tsize: A4 { parameters.Orientation };\r\n\t\t\t\t\tmargin: 14mm 8mm 14mm 8mm;\r\n\t\t\t\t\t@bottom-right {\r\n\t\t\t\t\t\tcontent: \"Strana: \" counter(page) \" / \" counter(pages);\r\n\t\t\t\t\t\tfont-size: 9pt;\r\n\t\t\t\t\t\tfont-family: sans-serif;\r\n\t\t\t\t\t\tcolor: #374151;\r\n\t\t\t\t\t\tvertical-align: bottom;\r\n\t\t\t\t\t\tpadding-bottom: 6mm;\r\n\t\t\t\t\t}\r\n\t\t\t\t}\r\n\r\n\t\t\t\t@media print {\r\n\t\t\t\t\t.page-info {\r\n\t\t\t\t\t\tfont-size: 8pt;\r\n\t\t\t\t\t\tcolor: #374151;\r\n\t\t\t\t\t}\r\n\r\n\t\t\t\t\thtml, body {\r\n\t\t\t\t\t\tmargin: 0;\r\n\t\t\t\t\t\tpadding: 0;\r\n\t\t\t\t\t\twidth: 100%;\r\n\t\t\t\t\t}\r\n\r\n\t\t\t\t\tbody {\r\n\t\t\t\t\t\tbackground: white;\r\n\t\t\t\t\t}\r\n\r\n\t\t\t\t\t/* Note: .no-export must NOT be hidden here — it only marks elements for the Excel\r\n\t\t\t\t\t   exporter (the export script strips them from the cloned table), and the repeating\r\n\t\t\t\t\t   page header row carries it. Hiding it in print removes the page header. */\r\n\t\t\t\t\t.no-print {\r\n\t\t\t\t\t\tdisplay: none !important;\r\n\t\t\t\t\t}\r\n\r\n\t\t\t\t\t/* Repeating page header row (first row of the report table <thead>): hidden on\r\n\t\t\t\t\t   screen, a real table row in print so the browser repeats it on every page. */\r\n\t\t\t\t\ttr.report-repeat-header {\r\n\t\t\t\t\t\tdisplay: table-row !important;\r\n\t\t\t\t\t}\r\n\r\n\t\t\t\t\t.print-container {\r\n\t\t\t\t\t\twidth: 100%;\r\n\t\t\t\t\t\tmargin: 0;\r\n\t\t\t\t\t\tpadding: 0;\r\n\t\t\t\t\t\tbackground: white;\r\n\t\t\t\t\t}\r\n\r\n\t\t\t\t\t.no-break {\r\n\t\t\t\t\t\tpage-break-inside: avoid;\r\n\t\t\t\t\t\tbreak-inside: avoid;\r\n\t\t\t\t\t}\r\n\r\n\t\t\t\t\ttable {\r\n\t\t\t\t\t\twidth: 100%;\r\n\t\t\t\t\t\tborder-collapse: collapse;\r\n\t\t\t\t\t\tpage-break-inside: auto;\r\n\t\t\t\t\t\ttable-layout: fixed;\r\n\t\t\t\t\t}\r\n\r\n\t\t\t\t\t/* Repeat header on each printed page */\r\n\t\t\t\t\tthead {\r\n\t\t\t\t\t\tdisplay: table-header-group;\r\n\t\t\t\t\t}\r\n\r\n\t\t\t\t\ttbody {\r\n\t\t\t\t\t\tdisplay: table-row-group;\r\n\t\t\t\t\t}\r\n\r\n\t\t\t\t\tthead tr {\r\n\t\t\t\t\t\tpage-break-inside: avoid;\r\n\t\t\t\t\t\tpage-break-after: avoid;\r\n\t\t\t\t\t}\r\n\r\n\t\t\t\t\ttr.group-header {\r\n\t\t\t\t\t\tpage-break-inside: avoid;\r\n\t\t\t\t\t\tpage-break-after: avoid;\r\n\t\t\t\t\t}\r\n\r\n\t\t\t\t\ttr.subgroup-header {\r\n\t\t\t\t\t\tpage-break-inside: avoid;\r\n\t\t\t\t\t\tpage-break-after: auto;\r\n\t\t\t\t\t}\r\n\r\n\t\t\t\t\ttr.group-total {\r\n\t\t\t\t\t\tpage-break-inside: avoid;\r\n\t\t\t\t\t\tpage-break-after: avoid;\r\n\t\t\t\t\t}\r\n\r\n\t\t\t\t\ttr.grand-total {\r\n\t\t\t\t\t\tpage-break-inside: avoid;\r\n\t\t\t\t\t}\r\n\r\n\t\t\t\t\ttr {\r\n\t\t\t\t\t\tpage-break-inside: auto;\r\n\t\t\t\t\t}\r\n\r\n\t\t\t\t\ttfoot {\r\n\t\t\t\t\t\tdisplay: table-row-group;\r\n\t\t\t\t\t\tpage-break-inside: avoid;\r\n\t\t\t\t\t}\r\n\t\t\t\t}\r\n\r\n\t\t\t\t@media screen {\r\n\t\t\t\t\t.page-break {\r\n\t\t\t\t\t\twidth: 210mm;\r\n\t\t\t\t\t\tmargin: 10px auto;\r\n\t\t\t\t\t\tpadding: 15mm;\r\n\t\t\t\t\t\tbackground: white;\r\n\t\t\t\t\t\tbox-shadow: 0 0 10px rgba(0,0,0,0.1);\r\n\t\t\t\t\t\tmin-height: 297mm;\r\n\t\t\t\t\t}\r\n\t\t\t\t}\r\n\t\t\t</style></head><body class=\"bg-gray-100 mb-4 print:bg-white print:h-auto font-sans\"><!-- Print Controls --><div class=\"fixed top-2 right-2 z-50 bg-white p-2 rounded shadow-lg flex gap-2 items-center print:hidden no-export\"><button onclick=\"window.print()\" class=\"bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-sm font-semibold\">🖨️ ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Button("Stampa"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 153, Col: 42}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 147, Col: 42}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</button> <button onclick=\"exportToExcel()\" class=\"bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-sm font-semibold\">📊 Export Excel</button> <button onclick=\"window.close()\" class=\"bg-gray-600 text-white px-3 py-1 rounded hover:bg-gray-700 text-sm font-semibold\">❌ ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</button> <button onclick=\"exportToExcel(event)\" class=\"bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-sm font-semibold\">📊 Export Excel</button> <button onclick=\"window.close()\" class=\"bg-gray-600 text-white px-3 py-1 rounded hover:bg-gray-700 text-sm font-semibold\">❌ ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Button("Zatvori"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 162, Col: 39}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 156, Col: 39}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
@@ -113,70 +114,16 @@ func Report(parameters domain.ReportParameters, tableData domain.TableData, tran
 				return templ_7745c5c3_Err
 			}
 		} else {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<!-- Header: Company Info, Date/Time, Page --> ")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = ReportHeader(parameters).Render(ctx, templ_7745c5c3_Buffer)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, " <!-- Report Title --> ")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = ReportTitle(parameters).Render(ctx, templ_7745c5c3_Buffer)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, " <!-- Report Parameters as Headers (Two Columns) --> ")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = ReportParametersHeader(parameters).Render(ctx, templ_7745c5c3_Buffer)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, " <!-- Report Data/Table --> ")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = ReportTableSection(tableData, translator).Render(ctx, templ_7745c5c3_Buffer)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, " ")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			if summaryComponent != nil {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<!-- Page break: gray gap on screen, real break on print --> <div class=\"print:hidden -mx-8 h-16 bg-gray-200 border-y border-gray-300\"></div><div class=\"hidden print:block\" style=\"page-break-before: always;\"></div><!-- Summary Section (e.g., Totals, Averages) --> <div class=\"pt-10 print:pt-8\">")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = summaryComponent.Render(ctx, templ_7745c5c3_Buffer)
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</div>")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, " <!-- Footer --> ")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = ReportFooter(parameters).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = ReportContent(parameters, paramBlock, tableData, translator, summaryComponent).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = ReportPaginationScript().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = ReportExcelExportScript().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -188,7 +135,7 @@ func Report(parameters domain.ReportParameters, tableData domain.TableData, tran
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "</body></html>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -218,85 +165,98 @@ func ReportHeader(parameters domain.ReportParameters) templ.Component {
 			templ_7745c5c3_Var7 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<div class=\"mb-2 border-b-2 border-gray-300 print:m-0 print:mb-1 print:pb-1 print:border-b print:border-gray-300\"><div class=\"flex justify-between items-start\"><!-- Left: Company Info --><div class=\"text-xs text-gray-700 space-y-0.5 print:text-[9pt]\"><p class=\"font-bold text-sm print:text-sm print:leading-tight\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<div class=\"mb-2 border-b-2 border-gray-300 print:m-0 print:mb-1 print:pb-1 print:border-b print:border-gray-300\"><div class=\"flex justify-between items-start\"><!-- Left: Company Info --><div class=\"text-xs text-gray-700 space-y-0.5 print:text-[9pt]\"><p class=\"font-bold text-sm print:text-sm print:leading-tight\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var8 string
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(parameters.CompanyName)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 206, Col: 91}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 181, Col: 91}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</p><p class=\"text-xs text-black print:text-black print:text-xs\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</p><p class=\"text-xs text-black print:text-black print:text-xs\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(parameters.Adress)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 207, Col: 84}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 182, Col: 84}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, ", ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, ", ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(parameters.Postcode)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 207, Col: 109}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 182, Col: 109}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, " ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, " ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var11 string
 		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(parameters.City)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 207, Col: 129}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 182, Col: 129}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, " - ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, " - ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var12 string
 		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", time.Now().Year()))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 207, Col: 172}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 182, Col: 172}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, " godine</p></div><!-- Right: Date/Time and Page Info --><div class=\"text-xs text-gray-700 text-right space-y-0.5 print:text-[8pt]\"><p class=\"print:leading-tight\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, " godine</p></div><!-- Right: Date/Time and Page Info --><div class=\"text-xs text-gray-700 text-right space-y-0.5 print:text-[8pt]\"><p class=\"print:leading-tight\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var13 string
 		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(time.Now().Format("02.01.2006 15:04:05"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 211, Col: 77}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 186, Col: 77}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "</p></div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</p></div></div><!-- Column 3 (2/12): date/time and page (browser/CSS handles page number) --><div class=\"text-right col-span-2\"><div class=\"page-info\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var14 string
+		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(time.Now().Format("02.01.2006 15:04:05"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 191, Col: 68}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "</div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -321,25 +281,25 @@ func ReportTitle(parameters domain.ReportParameters) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var14 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var14 == nil {
-			templ_7745c5c3_Var14 = templ.NopComponent
+		templ_7745c5c3_Var15 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var15 == nil {
+			templ_7745c5c3_Var15 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "<div class=\"mb-1 text-center print:m-0 print:mb-1\"><h2 class=\"text-xl font-bold text-gray-900 uppercase print:text-base print:leading-tight\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<div class=\"mb-1 text-center print:m-0 print:mb-1\"><h2 class=\"text-xl font-bold text-gray-900 uppercase print:text-base print:leading-tight\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var15 string
-		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(parameters.ReportName)
+		var templ_7745c5c3_Var16 string
+		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(parameters.ReportName)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 221, Col: 26}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 199, Col: 26}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "</h2></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</h2></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -347,8 +307,17 @@ func ReportTitle(parameters domain.ReportParameters) templ.Component {
 	})
 }
 
-// Report Parameters as Two-Column Headers
-func ReportParametersHeader(parameters domain.ReportParameters) templ.Component {
+// ============================================================================
+// Repeating Page Header (3 / 8 / 1 grid)
+// ============================================================================
+
+// ReportPageHeader renders the header content that repeats on every printed
+// page: company info (3/12) | report title + parameters (8/12) | date & time
+// (1/12). This is the single source of truth for that content — it's used
+// both inside <thead> for print (see ReportTableHeadWithPageHeader in
+// tablereport.templ) and, unconditionally, for the screen preview via
+// ReportPageHeaderScreen below.
+func ReportPageHeader(repParams domain.ReportParameters, paramBlock templ.Component, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -364,313 +333,144 @@ func ReportParametersHeader(parameters domain.ReportParameters) templ.Component 
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var16 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var16 == nil {
-			templ_7745c5c3_Var16 = templ.NopComponent
+		templ_7745c5c3_Var17 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var17 == nil {
+			templ_7745c5c3_Var17 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "<div class=\"mb-1 grid grid-cols-2 gap-1 print:gap-2 print:m-0 print:mb-2 print:pb-1 print:border-b print:border-gray-300\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<!-- 12-col grid: 2/12 | 8/12 | 2/12. The outer columns MUST stay equal, otherwise the centre column\r\n\t     (and the title inside it) ends up off-centre on the page. --><div class=\"grid grid-cols-12 items-start gap-2 text-[10px] w-full\"><!-- Column 1 (2/12): company info --><div class=\"text-left col-span-2\"><div class=\"font-bold text-sm print:text-sm print:leading-tight\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		for _, param := range parameters.ParameterItems {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "<div class=\"flex gap-1 items-center text-sm text-gray-700 print:text-[8pt] print:leading-tight\">")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			if param.Name != "" {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "<span class=\"font-semibold\">")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var17 string
-				templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(param.Name)
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 232, Col: 45}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, ":</span> ")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-			} else {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "<span></span> ")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "<span class=\"font-bold\">")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var18 string
-			templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(param.Value)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 236, Col: 41}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "</span></div>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
+		var templ_7745c5c3_Var18 string
+		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(repParams.CompanyName)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 219, Col: 91}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "</div>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		return nil
-	})
-}
-
-// Report Table Section - uses ReportTable from tablereport.templ
-func ReportTableSection(tableData domain.TableData, translator *i18n.Service) templ.Component {
-	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
-		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
-		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
-			return templ_7745c5c3_CtxErr
-		}
-		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
-		if !templ_7745c5c3_IsBuffer {
-			defer func() {
-				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
-				if templ_7745c5c3_Err == nil {
-					templ_7745c5c3_Err = templ_7745c5c3_BufErr
-				}
-			}()
-		}
-		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var19 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var19 == nil {
-			templ_7745c5c3_Var19 = templ.NopComponent
-		}
-		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "<div class=\"mb-1 overflow-x-auto print:overflow-visible print:mt-4 print:mb-4 print:mx-0\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</div><div class=\"print:leading-tight\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = ReportTable(tableData, translator).Render(ctx, templ_7745c5c3_Buffer)
+		var templ_7745c5c3_Var19 string
+		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(repParams.Adress)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 221, Col: 22}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, ", ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		return nil
-	})
-}
-
-// Group Template (for grouped report data)
-func ReportGroup(groupName string, groupData interface{}) templ.Component {
-	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
-		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
-		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
-			return templ_7745c5c3_CtxErr
+		var templ_7745c5c3_Var20 string
+		templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(repParams.Postcode)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 221, Col: 46}
 		}
-		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
-		if !templ_7745c5c3_IsBuffer {
-			defer func() {
-				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
-				if templ_7745c5c3_Err == nil {
-					templ_7745c5c3_Err = templ_7745c5c3_BufErr
-				}
-			}()
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
 		}
-		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var20 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var20 == nil {
-			templ_7745c5c3_Var20 = templ.NopComponent
-		}
-		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "<div class=\"mt-2 mb-4\"><h3 class=\"text-lg font-bold text-gray-800 bg-gray-100 px-3 py-2 border-l-4 border-blue-900\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, " ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var21 string
-		templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(groupName)
+		templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(repParams.City)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 253, Col: 14}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 221, Col: 65}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "</h3></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, " - ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		return nil
-	})
-}
-
-// Subgroup Template (for nested grouping)
-func ReportSubgroup(subgroupName string, subgroupData interface{}) templ.Component {
-	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
-		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
-		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
-			return templ_7745c5c3_CtxErr
+		var templ_7745c5c3_Var22 string
+		templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", time.Now().Year()))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 221, Col: 108}
 		}
-		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
-		if !templ_7745c5c3_IsBuffer {
-			defer func() {
-				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
-				if templ_7745c5c3_Err == nil {
-					templ_7745c5c3_Err = templ_7745c5c3_BufErr
-				}
-			}()
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
 		}
-		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var22 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var22 == nil {
-			templ_7745c5c3_Var22 = templ.NopComponent
-		}
-		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "<div class=\"mt-4 mb-2 ml-4\"><h4 class=\"text-base font-semibold text-gray-700 bg-gray-50 px-3 py-1 border-l-4 border-gray-400\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, ". ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var23 string
-		templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(subgroupName)
+		templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("godina"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 262, Col: 17}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 221, Col: 140}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "</h4></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "</div></div><!-- Column 2 (8/12): title + parameters, centred on the page (2/12 + 4/12 = 6/12) --><div class=\"text-center col-span-8\"><h1 class=\"text-[14px] font-bold tracking-wide uppercase print:leading-tight\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		return nil
-	})
-}
-
-func ReportEnd(endOfReport templ.Component) templ.Component {
-	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
-		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
-		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
-			return templ_7745c5c3_CtxErr
+		var templ_7745c5c3_Var24 string
+		templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(repParams.ReportName)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 226, Col: 103}
 		}
-		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
-		if !templ_7745c5c3_IsBuffer {
-			defer func() {
-				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
-				if templ_7745c5c3_Err == nil {
-					templ_7745c5c3_Err = templ_7745c5c3_BufErr
-				}
-			}()
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
 		}
-		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var24 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var24 == nil {
-			templ_7745c5c3_Var24 = templ.NopComponent
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "</h1><!-- Centred parameter block with no bottom margin of its own ([&>*]:!mb-0 neutralises the\r\n\t\t\t     margins of the parameter components) so no blank line shows up above the table. --><div class=\"mt-0.5 flex flex-col items-center [&amp;&gt;*]:max-w-full [&amp;&gt;*]:!mb-0\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
 		}
-		ctx = templ.ClearChildren(ctx)
-		if endOfReport != nil {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "<div class=\"mt-2\">")
+		if paramBlock != nil {
+			templ_7745c5c3_Err = paramBlock.Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = endOfReport.Render(ctx, templ_7745c5c3_Buffer)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "</div><div class=\"mt-6 text-left text-gray-700 print:mt-4 print:text-[7pt]\">*** KRAJ IZVEŠTAJA ***</div>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		} else {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "<div class=\"mt-6 text-left text-xs text-gray-700 print:mt-4 print:text-[7pt]\">*** KRAJ IZVEŠTAJA ***</div>")
+		} else if len(repParams.ParameterItems) > 0 {
+			templ_7745c5c3_Err = ReportPageHeaderParams(repParams).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		return nil
-	})
-}
-
-// Footer
-func ReportFooter(parameters domain.ReportParameters) templ.Component {
-	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
-		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
-		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
-			return templ_7745c5c3_CtxErr
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "</div></div><!-- Column 3 (2/12): date & time; page number comes from the @page counter --><div class=\"text-right col-span-2\"><div class=\"page-info whitespace-nowrap\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
-		if !templ_7745c5c3_IsBuffer {
-			defer func() {
-				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
-				if templ_7745c5c3_Err == nil {
-					templ_7745c5c3_Err = templ_7745c5c3_BufErr
-				}
-			}()
+		var templ_7745c5c3_Var25 string
+		templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(time.Now().Format("02.01.2006"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 239, Col: 77}
 		}
-		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var25 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var25 == nil {
-			templ_7745c5c3_Var25 = templ.NopComponent
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
 		}
-		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "<div class=\"mt-1 pt-1 border-t-2 border-gray-300 text-center text-xs text-gray-600 space-y-1 print:m-0 print:mt-2 print:pt-1 print:text-[7pt] print:space-y-0 print:border-t print:border-gray-300\"><p class=\"print:leading-tight\">Generated on ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "</div><div class=\"page-info whitespace-nowrap\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var26 string
-		templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(time.Now().Format("January 2, 2006"))
+		templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(time.Now().Format("15:04:05"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 286, Col: 54}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 240, Col: 75}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, " at ")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var27 string
-		templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinStringErrs(time.Now().Format("15:04:05"))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 286, Col: 91}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, " by ")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var28 string
-		templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(parameters.UserName)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 287, Col: 27}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "</p><p class=\"text-gray-500 print:text-gray-600 print:leading-tight\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var29 string
-		templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(parameters.CompanyName)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 290, Col: 27}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, " • Confidential</p></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "</div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -678,7 +478,87 @@ func ReportFooter(parameters domain.ReportParameters) templ.Component {
 	})
 }
 
-func ReportPaginationScript() templ.Component {
+// ReportPageHeaderParams renders ReportParameters.ParameterItems as centred
+// inline items; used when the caller doesn't supply its own paramBlock.
+func ReportPageHeaderParams(repParams domain.ReportParameters) templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var27 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var27 == nil {
+			templ_7745c5c3_Var27 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "<div class=\"flex flex-wrap items-center justify-center gap-x-4 gap-y-0.5 text-[10px] print:text-[9pt] leading-tight print:gap-x-2 print:gap-y-0\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		for _, param := range repParams.ParameterItems {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "<span class=\"whitespace-nowrap\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			if param.Name != "" {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "<span class=\"font-semibold\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var28 string
+				templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(param.Name)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 252, Col: 45}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "</span> <span>:</span> ")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "<span class=\"font-bold\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var29 string
+			templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(param.Value)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 255, Col: 41}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "</span></span>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "</div>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+// ReportPageHeaderScreen renders the same header content for the on-screen
+// preview, hidden on print (print:hidden) since the print copy is rendered
+// separately inside the table's <thead> so it repeats on every page.
+func ReportPageHeaderScreen(repParams domain.ReportParameters, paramBlock templ.Component, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -699,7 +579,244 @@ func ReportPaginationScript() templ.Component {
 			templ_7745c5c3_Var30 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "<script>\r\n\t\tasync function exportToExcel() {\r\n\t\t\tconst btn = event.target;\r\n\t\t\tconst originalText = btn.innerText;\r\n\t\t\tbtn.innerText = 'Exporting...';\r\n\t\t\tbtn.disabled = true;\r\n\t\t\ttry {\r\n\t\t\t\t// Load SheetJS from CDN\r\n\t\t\t\tawait new Promise((resolve, reject) => {\r\n\t\t\t\t\tif (window.XLSX) { resolve(); return; }\r\n\t\t\t\t\tconst s = document.createElement('script');\r\n\t\t\t\t\ts.src = 'https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js';\r\n\t\t\t\t\ts.onload = resolve;\r\n\t\t\t\t\ts.onerror = reject;\r\n\t\t\t\t\tdocument.head.appendChild(s);\r\n\t\t\t\t});\r\n\t\t\t\t// Find the first table in the report container\r\n\t\t\t\tconst table = document.querySelector('table');\r\n\t\t\t\tif (!table) { alert('No table found to export.'); return; }\r\n\t\t\t\t// Print-only helper rows (e.g. repeating print headers) must not leak into the sheet\r\n\t\t\t\tconst exportTable = table.cloneNode(true);\r\n\t\t\t\texportTable.querySelectorAll('.no-export').forEach(el => el.remove());\r\n\t\t\t\tconst wb = XLSX.utils.table_to_book(exportTable, { sheet: 'Izvestaj', raw: false });\r\n\t\t\t\tconst excelName = document.querySelector('meta[name=\"report-name\"]')?.content || 'Izvestaj';\r\n\t\t\t\tXLSX.writeFile(wb, excelName + '.xlsx');\r\n\t\t\t} catch (error) {\r\n\t\t\t\tconsole.error('Excel export failed:', error);\r\n\t\t\t\talert('Export failed: ' + error.message);\r\n\t\t\t} finally {\r\n\t\t\t\tbtn.innerText = originalText;\r\n\t\t\t\tbtn.disabled = false;\r\n\t\t\t}\r\n\t\t}\r\n\r\n\t\tfunction updatePageNumbers() {\r\n\t\t\tconst currentPageSpan = document.getElementById('current-page');\r\n\t\t\tconst totalPagesSpan = document.getElementById('total-pages');\r\n\t\t\t\r\n\t\t\t// A4 page height at 96dpi minus margins (~24mm total vertical margin)\r\n\t\t\tconst pageHeightPx = (297 - 24) * 96 / 25.4;\r\n\t\t\tconst totalHeight = document.body.scrollHeight;\r\n\t\t\tconst totalPages = Math.max(1, Math.ceil(totalHeight / pageHeightPx));\r\n\t\t\t\r\n\t\t\tconst scrollPosition = window.scrollY;\r\n\t\t\tconst currentPage = Math.min(totalPages, Math.max(1, Math.floor(scrollPosition / pageHeightPx) + 1));\r\n\t\t\t\r\n\t\t\tif (currentPageSpan) currentPageSpan.textContent = currentPage;\r\n\t\t\tif (totalPagesSpan) totalPagesSpan.textContent = totalPages;\r\n\t\t\t\r\n\t\t\t// Store for print\r\n\t\t\twindow._totalPages = totalPages;\r\n\t\t}\r\n\t\t\r\n\t\t// Debounced update\r\n\t\tlet timeout;\r\n\t\tfunction debouncedUpdate() {\r\n\t\t\tclearTimeout(timeout);\r\n\t\t\ttimeout = setTimeout(updatePageNumbers, 100);\r\n\t\t}\r\n\t\t\r\n\t\t// Watch for content changes\r\n\t\tconst observer = new MutationObserver(debouncedUpdate);\r\n\t\tobserver.observe(document.body, {\r\n\t\t\tchildList: true,\r\n\t\t\tsubtree: true,\r\n\t\t\tattributes: true,\r\n\t\t\tattributeFilter: ['style', 'class']\r\n\t\t});\r\n\t\t\r\n\t\t// Event listeners\r\n\t\twindow.addEventListener('scroll', debouncedUpdate);\r\n\t\twindow.addEventListener('resize', debouncedUpdate);\r\n\t\twindow.addEventListener('load', updatePageNumbers);\r\n\t\t\r\n\t\t// Initial update\r\n\t\tupdatePageNumbers();\r\n\t\t\r\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "<div class=\"print:hidden mb-1 pb-1 border-b border-gray-300\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = ReportPageHeader(repParams, paramBlock, translator).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "</div>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+// ============================================================================
+// Content orchestration (default, non-customReport path)
+// ============================================================================
+func ReportContent(repParams domain.ReportParameters, paramBlock templ.Component, tableData domain.TableData, translator *i18n.Service, summaryComponent templ.Component) templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var31 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var31 == nil {
+			templ_7745c5c3_Var31 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = ReportPageHeaderScreen(repParams, paramBlock, translator).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "<div class=\"overflow-x-auto print:overflow-visible print:mt-0 print:mb-4 print:mx-0\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = ReportTableWithPageHeader(tableData, translator, ReportPageHeader(repParams, paramBlock, translator)).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "</div>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		if summaryComponent != nil {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "<!-- Page break: gray gap on screen, real break on print --> <div class=\"print:hidden -mx-8 h-16 bg-gray-200 border-y border-gray-300\"></div><div class=\"hidden print:block\" style=\"break-before: page;\"></div><div class=\"pt-10 print:pt-8 no-break\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = summaryComponent.Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "</div>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		templ_7745c5c3_Err = ReportEnd(nil).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = ReportFooter(repParams).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+// ============================================================================
+// End-of-report marker
+// ============================================================================
+func ReportEnd(endOfReport templ.Component) templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var32 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var32 == nil {
+			templ_7745c5c3_Var32 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		if endOfReport != nil {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "<div class=\"mt-2\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = endOfReport.Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "</div><div class=\"mt-6 text-left text-gray-700 print:mt-4 print:text-[7pt] no-break\">*** KRAJ IZVEŠTAJA ***</div>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		} else {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "<div class=\"mt-6 text-left text-xs text-gray-700 print:mt-4 print:text-[7pt] no-break\">*** KRAJ IZVEŠTAJA ***</div>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		return nil
+	})
+}
+
+// ============================================================================
+// Footer
+// ============================================================================
+func ReportFooter(parameters domain.ReportParameters) templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var33 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var33 == nil {
+			templ_7745c5c3_Var33 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "<div class=\"mt-1 pt-1 border-t-2 border-gray-300 text-center text-xs text-gray-600 space-y-1 print:m-0 print:mt-2 print:pt-1 print:text-[7pt] print:space-y-0 print:border-t print:border-gray-300 no-break\"><p class=\"print:leading-tight\">Generated on ")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var34 string
+		templ_7745c5c3_Var34, templ_7745c5c3_Err = templ.JoinStringErrs(time.Now().Format("January 2, 2006"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 314, Col: 54}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var34))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, " at ")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var35 string
+		templ_7745c5c3_Var35, templ_7745c5c3_Err = templ.JoinStringErrs(time.Now().Format("15:04:05"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 314, Col: 91}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var35))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, " by ")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var36 string
+		templ_7745c5c3_Var36, templ_7745c5c3_Err = templ.JoinStringErrs(parameters.UserName)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 315, Col: 27}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var36))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "</p><p class=\"text-gray-500 print:text-gray-600 print:leading-tight\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var37 string
+		templ_7745c5c3_Var37, templ_7745c5c3_Err = templ.JoinStringErrs(parameters.CompanyName)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/report.templ`, Line: 318, Col: 27}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var37))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, " • Confidential</p></div>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+// ============================================================================
+// Client-side scripts
+// ============================================================================
+func ReportExcelExportScript() templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var38 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var38 == nil {
+			templ_7745c5c3_Var38 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, "<script>\r\n\t\tasync function exportToExcel(event) {\r\n\t\t\tconst btn = event.target;\r\n\t\t\tconst originalText = btn.innerText;\r\n\t\t\tbtn.innerText = 'Exporting...';\r\n\t\t\tbtn.disabled = true;\r\n\t\t\ttry {\r\n\t\t\t\tawait new Promise((resolve, reject) => {\r\n\t\t\t\t\tif (window.XLSX) { resolve(); return; }\r\n\t\t\t\t\tconst s = document.createElement('script');\r\n\t\t\t\t\ts.src = 'https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js';\r\n\t\t\t\t\ts.onload = resolve;\r\n\t\t\t\t\ts.onerror = reject;\r\n\t\t\t\t\tdocument.head.appendChild(s);\r\n\t\t\t\t});\r\n\t\t\t\tconst table = document.querySelector('table');\r\n\t\t\t\tif (!table) { alert('No table found to export.'); return; }\r\n\t\t\t\t// Print-only helper rows (e.g. the repeating page header) must\r\n\t\t\t\t// not leak into the exported sheet.\r\n\t\t\t\tconst exportTable = table.cloneNode(true);\r\n\t\t\t\texportTable.querySelectorAll('.no-export').forEach(el => el.remove());\r\n\t\t\t\tconst wb = XLSX.utils.table_to_book(exportTable, { sheet: 'Izvestaj', raw: false });\r\n\t\t\t\tconst excelName = document.querySelector('meta[name=\"report-name\"]')?.content || 'Izvestaj';\r\n\t\t\t\tXLSX.writeFile(wb, excelName + '.xlsx');\r\n\t\t\t} catch (error) {\r\n\t\t\t\tconsole.error('Excel export failed:', error);\r\n\t\t\t\talert('Export failed: ' + error.message);\r\n\t\t\t} finally {\r\n\t\t\t\tbtn.innerText = originalText;\r\n\t\t\t\tbtn.disabled = false;\r\n\t\t\t}\r\n\t\t}\r\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -723,12 +840,12 @@ func ReportKeyboardShortcutsScript() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var31 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var31 == nil {
-			templ_7745c5c3_Var31 = templ.NopComponent
+		templ_7745c5c3_Var39 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var39 == nil {
+			templ_7745c5c3_Var39 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "<script>\r\n\t\tdocument.addEventListener('keydown', (e) => {\r\n\t\t\t// Ctrl/Cmd + P for print\r\n\t\t\tif ((e.ctrlKey || e.metaKey) && e.key === 'p') {\r\n\t\t\t\te.preventDefault();\r\n\t\t\t\twindow.print();\r\n\t\t\t}\r\n\t\t\t// Escape to close\r\n\t\t\tif (e.key === 'Escape') {\r\n\t\t\t\twindow.close();\r\n\t\t\t}\r\n\t\t});\r\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "<script>\r\n\t\tdocument.addEventListener('keydown', (e) => {\r\n\t\t\tif ((e.ctrlKey || e.metaKey) && e.key === 'p') {\r\n\t\t\t\te.preventDefault();\r\n\t\t\t\twindow.print();\r\n\t\t\t}\r\n\t\t\tif (e.key === 'Escape') {\r\n\t\t\t\twindow.close();\r\n\t\t\t}\r\n\t\t});\r\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

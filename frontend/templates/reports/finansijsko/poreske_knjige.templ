@@ -9,13 +9,11 @@ import (
 
 // KnjigaIzlaznihRacunaStampa renders the printable Knjiga izdatih računa report.
 templ KnjigaIzlaznihRacunaStampa(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
-	@rep.Report(repParams, domain.TableData{}, translator, nil, KnjigaIzlaznihRacunaContent(repParams, tbl, translator))
+	@rep.Report(repParams, tbl, translator, KnjigaIzlaznihRacunaParam(repParams, translator), nil, KnjigaIzlaznihRacunaContent(repParams, tbl, translator))
 }
 
 templ KnjigaIzlaznihRacunaContent(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
-	@rep.ReportHeader(repParams)
 	@rep.ReportTitle(repParams)
-	@KnjigaIzlaznihRacunaParam(repParams, translator)
 	@KnjigaIzlaznihRacunaTable(tbl, translator)
 	@rep.ReportEnd(nil)
 }
@@ -154,13 +152,11 @@ templ KnjigaIzlaznihRacunaTable(tbl domain.TableData, translator *i18n.Service) 
 
 // KnjigaPrimljenihRacunaStampa renders the printable Knjiga primljenih računa report.
 templ KnjigaPrimljenihRacunaStampa(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
-	@rep.Report(repParams, domain.TableData{}, translator, nil, KnjigaPrimljenihRacunaContent(repParams, tbl, translator))
+	@rep.Report(repParams, tbl, translator, KnjigaPrimljenihRacunaParam(repParams), nil, KnjigaPrimljenihRacunaContent(repParams, tbl, translator))
 }
 
 templ KnjigaPrimljenihRacunaContent(repParams domain.ReportParameters, tbl domain.TableData, translator *i18n.Service) {
-	@rep.ReportHeader(repParams)
 	@rep.ReportTitle(repParams)
-	@KnjigaPrimljenihRacunaParam(repParams)
 	@KnjigaPrimljenihRacunaTable(tbl, translator)
 	@rep.ReportEnd(nil)
 }

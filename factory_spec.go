@@ -35,6 +35,7 @@ import (
 	"helia/internal/middleware"
 	"helia/internal/repository"
 	"helia/internal/service"
+	commonsvc "helia/internal/service/common"
 	finservice "helia/internal/service/finansijsko"
 	robnosvc "helia/internal/service/robno"
 	"helia/internal/validation"
@@ -623,6 +624,29 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 	magaciniHandler := robnohand.NewMagaciniHandler(magaciniBaseService, magaciniService, cfg, lm)
 	magaciniHandler.AddRoutes(r)
 
+	// ZAJEDNIČKI ŠIFARNICI (CommonService)
+	// Combo liste koje koristi više modula (magacini, vrste naloga i dokumenata, organizacione
+	// jedinice, mesta troška, robne grupe i podgrupe, valute, komercijalisti, mesta isporuke,
+	// banke, tipovi analitike, jedinice mere).
+	commonService := commonsvc.NewCommonService(
+		*magaciniRepo,
+		*repository.NewBaseRepository[domain.Tipdok](db, "tipdok"),
+		*repository.NewBaseRepository[domain.Dokvrsta](db, "dokvrsta"),
+		*repository.NewBaseRepository[domain.Orgjed](db, "orgjed"),
+		*repository.NewBaseRepository[domain.Mestotr](db, "mestotr"),
+		*repository.NewBaseRepository[domain.Rgru](db, "rgru"),
+		*repository.NewBaseRepository[domain.Rpgru](db, "rpgru"),
+		*repository.NewBaseRepository[domain.Valute](db, "valute"),
+		*repository.NewBaseRepository[domain.Komercijalisti](db, "komercijalisti"),
+		*repository.NewBaseRepository[domain.Fisp](db, "fisp"),
+		*repository.NewBaseRepository[domain.Banke](db, "banke"),
+		*repository.NewBaseRepository[domain.Tipanalitike](db, "tipanalitike"),
+		*repository.NewBaseRepository[domain.Jedmere](db, "jedmere"),
+		*repository.NewBaseRepository[domain.Fvknjrac](db, "fvknjrac"),
+		*repository.NewBaseRepository[domain.Fnal](db, "fnal"),
+		*repository.NewBaseRepository[domain.RobnoDokumentaDto](db, "rnal"),
+	)
+
 	// MAGACIN KONTO
 	magacinKontoRepo := repository.NewBaseRepository[domain.Magkonto](db, "magkonto")
 	magacinKontoValidator := validation.NewRuleBasedValidator[domain.Magkonto]([]validation.ValidationRule{})
@@ -644,7 +668,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 	artikliValidator := validation.NewRuleBasedValidator[domain.Rsif]([]validation.ValidationRule{})
 	artikliBaseService := service.NewBaseService(*artikliRepo, artikliValidator)
 	artikliService := robnosvc.NewArtikliResource(artikliBaseService, artikliRepo, fvrRepo, cfg)
-	artikliHandler := robnohand.NewArtikliHandler(artikliBaseService, artikliService, cfg, lm)
+	artikliHandler := robnohand.NewArtikliHandler(artikliBaseService, artikliService, cfg, lm, commonService)
 	artikliHandler.AddRoutes(r)
 
 	// Complex entities with custom services (non-generic)
@@ -654,7 +678,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 	tipAnalitikeRepo := repository.NewBaseRepository[domain.Tipanalitike](db, "tipanalitike")
 	partneriValidator := validation.NewRuleBasedValidator[domain.Partneri](validation.PartneriValidationRules())
 	partnerBaseService := service.NewBaseService(*partneriRepo, partneriValidator)
-	partneriService := service.NewPartneriService(partnerBaseService, partneriValidator, partneriRepo, tekracuniRepo, tipAnalitikeRepo, fvrRepo)
+	partneriService := service.NewPartneriService(partnerBaseService, partneriValidator, partneriRepo, tekracuniRepo, tipAnalitikeRepo, fvrRepo, commonService)
 	partneriHandler := handler.NewPartneriHandler(partneriService, cfg, lm)
 	partneriHandler.AddRoutes(r)
 	// MESTA ISPORUKE
@@ -668,7 +692,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 	fkplRepo := repository.NewBaseRepository[domain.Fkpl](db, "fkpl")
 	fkplValidator := validation.NewRuleBasedValidator[domain.Fkpl](finval.FkplValidationRules())
 	baseService := service.NewBaseService(*fkplRepo, fkplValidator)
-	fkplService := finservice.NewFkplResource(baseService, fkplRepo, fvrRepo, tipAnalitikeRepo, partneriRepo, cfg)
+	fkplService := finservice.NewFkplResource(baseService, fkplRepo, fvrRepo, tipAnalitikeRepo, partneriRepo, cfg, commonService)
 	fkplHandler := fin.NewFkplHandler(baseService, fkplService, cfg, lm)
 	fkplHandler.AddRoutes(r)
 
@@ -699,6 +723,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 		*fproKomercijalistiRepo,
 		*fproMiRepo,
 		*fproMagaciniRepo,
+		commonService,
 		common.IDfpro,
 		[]domain.Fields{},
 		[]domain.Fields{},
@@ -723,6 +748,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 		*fproRepo,
 		"",
 		cfg,
+		commonService,
 	)
 	fnalHandler := fin.NewFnalHandler(fnalService, fnalBaseService, cfg, lm, ls)
 	fnalHandler.AddRoutes(r)
@@ -742,7 +768,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 	// Robno kartica artikla
 	robnoKarticaRepo := repository.NewBaseRepository[domain.RobnoKarticaDto](db, "robnokarticadto")
 	rproRepo := repository.NewBaseRepository[domain.Rpro](db, "rpro")
-	robnoKarticaService := robnosvc.NewRobnoKarticaService(robnoKarticaRepo, rproRepo, magaciniRepo, fvrRepo)
+	robnoKarticaService := robnosvc.NewRobnoKarticaService(robnoKarticaRepo, rproRepo, magaciniRepo, fvrRepo, commonService)
 	robnoKarticaHandler := robnohand.NewRobnoKarticaHandler(robnoKarticaService, cfg)
 	robnoKarticaHandler.AddRoutes(r)
 
@@ -752,26 +778,42 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 	tipdokRepo := repository.NewBaseRepository[domain.Tipdok](db, "tipdok")
 	ojRepo := repository.NewBaseRepository[domain.Orgjed](db, "orgjed")
 	mestoTroskaRepo := repository.NewBaseRepository[domain.Mestotr](db, "mestotr")
-	robnoStanjaService := robnosvc.NewRobnoStanjaService(*robnoStanjaRepo, *rproRepo, *drstaRepo, *magaciniRepo, *tipdokRepo, *ojRepo, *mestoTroskaRepo, *fvrRepo)
+	robnoStanjaService := robnosvc.NewRobnoStanjaService(*robnoStanjaRepo, *rproRepo, *drstaRepo, *magaciniRepo, *tipdokRepo, *ojRepo, *mestoTroskaRepo, *fvrRepo, commonService)
 	robnoStanjaHandler := robnohand.NewRobnoStanjaHandler(robnoStanjaService, cfg)
 	robnoStanjaHandler.AddRoutes(r)
+
+	// Robna dokumenta (robni nalozi / robni dokumenti)
+	robnoDokumentaRepo := repository.NewBaseRepository[domain.RobnoDokumentaDto](db, "rnal")
+	robnoDokumentaTotalsRepo := repository.NewBaseRepository[domain.RobnoDokumentaTotalsDto](db, "rnal")
+	robnoDokumentaHeaderRepo := repository.NewBaseRepository[domain.Rnal](db, "rnal")
+	robnoDokumentaPregledStampaRepo := repository.NewBaseRepository[domain.PregledStampaDto](db, "rnal")
+	robnoDokumentaPregledEFakturaRepo := repository.NewBaseRepository[domain.PregledEFakturaDto](db, "rnal")
+	robnoDokumentaKontiranjeRepo := repository.NewBaseRepository[domain.KontiranjeDokumentaDto](db, "rdok")
+	robnoDokumentaPrikazUkupneObradeRepo := repository.NewBaseRepository[domain.PrikazUkupneObradeDto](db, "magacini")
+	robnoDokumentaPrikazNalogaRepo := repository.NewBaseRepository[domain.PrikazNalogaDto](db, "rnal")
+	robnoDokumentaPrikazDokumenataUNaloguRepo := repository.NewBaseRepository[domain.PrikazDokumenataUNaloguDto](db, "rdok")
+	robnoDokumentaPrikazDokumenataPooperateruRepo := repository.NewBaseRepository[domain.PrikazDokumenataPooperateruDto](db, "rdok")
+	dokvrstaRepo := repository.NewBaseRepository[domain.Dokvrsta](db, "dokvrsta")
+	robnoDokumentaService := robnosvc.NewRobnoDokumentaService(*robnoDokumentaRepo, *robnoDokumentaTotalsRepo, *robnoDokumentaHeaderRepo, *robnoDokumentaPregledStampaRepo, *robnoDokumentaPregledEFakturaRepo, *robnoDokumentaKontiranjeRepo, *robnoDokumentaPrikazUkupneObradeRepo, *robnoDokumentaPrikazNalogaRepo, *robnoDokumentaPrikazDokumenataUNaloguRepo, *robnoDokumentaPrikazDokumenataPooperateruRepo, *tipdokRepo, *dokvrstaRepo, *magaciniRepo, *fvrRepo, commonService)
+	robnoDokumentaHandler := robnohand.NewRobnoDokumentaHandler(robnoDokumentaService, cfg, lm, ls)
+	robnoDokumentaHandler.AddRoutes(r)
 
 	// Robno promet reports
 	magRepo := repository.NewBaseRepository[domain.Magacini](db, "magacini")
 	rgruRepo := repository.NewBaseRepository[domain.Rgru](db, "rgru")
 
-	robnoprometService := robnosvc.NewRobnoPrometService(rproRepo, magRepo, rgruRepo, fvrRepo)
+	robnoprometService := robnosvc.NewRobnoPrometService(rproRepo, magRepo, rgruRepo, fvrRepo, commonService)
 	robnoprometHandler := robnohand.NewRobnoPrometHandler(robnoprometService, cfg)
 	robnoprometHandler.AddRoutes(r)
 
 	// Robno komercijalni podaci
 	robnoKomPodaciRepo := repository.NewBaseRepository[domain.RobnoKomPodaciDto](db, "robnokompodacidto")
-	robnoKompodaciService := robnosvc.NewRobnoKompodaciService(partneriRepo, fproRepo, rproRepo, rgruRepo, fvrRepo, robnoKomPodaciRepo)
+	robnoKompodaciService := robnosvc.NewRobnoKompodaciService(partneriRepo, fproRepo, rproRepo, rgruRepo, fvrRepo, robnoKomPodaciRepo, commonService)
 	robnoKompodaciHandler := robnohand.NewRobnoKompodaciHandler(robnoKompodaciService, cfg)
 	robnoKompodaciHandler.AddRoutes(r)
 
 	// Robno year-end processing
-	krajPoslovneGodineService := robnosvc.NewKrajPoslovneGodineService(db, magaciniRepo)
+	krajPoslovneGodineService := robnosvc.NewKrajPoslovneGodineService(magRepo, drstaRepo, commonService)
 	krajPoslovneGodineHandler := robnohand.NewKrajPoslovneGodineHandler(krajPoslovneGodineService, cfg)
 	krajPoslovneGodineHandler.AddRoutes(r)
 
@@ -804,7 +846,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 		// repository.NewBaseRepository[domain.SaldaKomercijalistiDto](db, "saldakomercijalistidto"),
 	)
 
-	kompHandler := fin.NewKompenzacijeHandler(kompService, cfg, lm)
+	kompHandler := fin.NewKompenzacijeHandler(kompService, cfg, lm, commonService)
 	kompHandler.AddRoutes(r)
 
 	// DnevnikHandler
@@ -824,7 +866,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 	izvdetRepo := repository.NewBaseRepository[domain.Fizvdet](db, "fizvdet")
 	bankeRepo := repository.NewBaseRepository[domain.Banke](db, "banke")
 	sifplizvRepo := repository.NewBaseRepository[domain.Sifplizv](db, "sifplizv")
-	izvodiService := finservice.NewIzvodiResource(izvhdrRepo, izvdetRepo, bankeRepo, tipdokRepo, fnalRepo, partneriRepo, tekracuniRepo, sifplizvRepo, fkplRepo, fvrRepo, cfg)
+	izvodiService := finservice.NewIzvodiResource(izvhdrRepo, izvdetRepo, bankeRepo, tipdokRepo, fnalRepo, partneriRepo, tekracuniRepo, sifplizvRepo, fkplRepo, fvrRepo, cfg, commonService)
 	izvodiHandler := fin.NewIzvodiHandler(izvodiService, cfg, lm)
 	izvodiHandler.AddRoutes(r)
 
@@ -858,7 +900,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 	kprValidator := validation.NewRuleBasedValidator[domain.Kpr]([]validation.ValidationRule{})
 	kirService := service.NewBaseService(*kirRepo, kirValidator)
 	kprService := service.NewBaseService(*kprRepo, kprValidator)
-	poreskeKnjigeService := finservice.NewPoreskeKnjigeService(kirService, kprService, kirRepo, kprRepo, fvknjracRepo, tipdokRepo, fvrRepo)
+	poreskeKnjigeService := finservice.NewPoreskeKnjigeService(kirService, kprService, kirRepo, kprRepo, fvknjracRepo, tipdokRepo, fvrRepo, commonService)
 	poreskeKnjigeHandler := fin.NewPoreskeKnjigeHandler(poreskeKnjigeService, cfg, lm)
 	poreskeKnjigeHandler.RegisterRoutes(r)
 

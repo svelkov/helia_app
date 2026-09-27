@@ -11,16 +11,9 @@ import (
 
 // RobnoKompodaciUcescaGrupeArtikalaStampa renders a printable "Pregled ucesca grupe artikala" report.
 templ RobnoKompodaciUcescaGrupeArtikalaStampa(repParams domain.ReportParameters, params domain.RobnoKomPodaciParams, tbl domain.TableData, translator *i18n.Service) {
-	@rep.Report(repParams, domain.TableData{}, translator, nil, RobnoKompodaciUcescaGrupeArtikalaContent(repParams, params, tbl, translator))
+	@rep.Report(repParams, tbl, translator, RobnoKompodaciUcescaGrupeArtikalaParam(params, translator), nil, nil)
 }
 
-templ RobnoKompodaciUcescaGrupeArtikalaContent(repParams domain.ReportParameters, params domain.RobnoKomPodaciParams, tbl domain.TableData, translator *i18n.Service) {
-	@rep.ReportHeader(repParams)
-	@rep.ReportTitle(repParams)
-	@RobnoKompodaciUcescaGrupeArtikalaParam(params, translator)
-	@rep.ReportTableSection(tbl, translator)
-	@rep.ReportEnd(nil)
-}
 
 // RobnoKompodaciUcescaGrupeArtikalaParam displays the selection/processing parameters used to
 // build the report, mirroring the on-screen filters from the Pregled ucesca grupe artikala form.
@@ -47,15 +40,7 @@ templ RobnoKompodaciUcescaGrupeArtikalaParam(params domain.RobnoKomPodaciParams,
 
 // RobnoKompodaciUcescaArtiklaStampa renders a printable "Pregled ucesca artikla" report.
 templ RobnoKompodaciUcescaArtiklaStampa(repParams domain.ReportParameters, params domain.RobnoKomPodaciParams, tbl domain.TableData, translator *i18n.Service) {
-	@rep.Report(repParams, domain.TableData{}, translator, nil, RobnoKompodaciUcescaArtiklaContent(repParams, params, tbl, translator))
-}
-
-templ RobnoKompodaciUcescaArtiklaContent(repParams domain.ReportParameters, params domain.RobnoKomPodaciParams, tbl domain.TableData, translator *i18n.Service) {
-	@rep.ReportHeader(repParams)
-	@rep.ReportTitle(repParams)
-	@RobnoKompodaciUcescaArtiklaParam(params, translator)
-	@rep.ReportTableSection(tbl, translator)
-	@rep.ReportEnd(nil)
+	@rep.Report(repParams, tbl, translator, RobnoKompodaciUcescaArtiklaParam(params, translator), nil, nil)
 }
 
 // RobnoKompodaciUcescaArtiklaParam displays the selection/processing parameters used to
@@ -94,15 +79,11 @@ func robnoKompodaciStampaFormatDate(value string) string {
 
 // RobnoKompodaciPregledRealizacijePoArtiklimaStampa renders a printable "Pregled realizacije po artiklima" report.
 templ RobnoKompodaciPregledRealizacijePoArtiklimaStampa(repParams domain.ReportParameters, params domain.RobnoKomPodaciParams, tbl domain.TableData, translator *i18n.Service) {
-	@rep.Report(repParams, domain.TableData{}, translator, nil, RobnoKompodaciPregledRealizacijePoArtiklimaContent(repParams, params, tbl, translator))
+	@rep.Report(repParams, tbl, translator, RobnoKompodaciPregledRealizacijePoArtiklimaParam(params, translator, repParams.ParameterItems), nil, RobnoKompodaciPregledRealizacijePoArtiklimaContent(repParams, params, tbl, translator))
 }
 
 templ RobnoKompodaciPregledRealizacijePoArtiklimaContent(repParams domain.ReportParameters, params domain.RobnoKomPodaciParams, tbl domain.TableData, translator *i18n.Service) {
-	@rep.ReportHeader(repParams)
-	@rep.ReportTitle(repParams)
-	@RobnoKompodaciPregledRealizacijePoArtiklimaParam(params, translator, repParams.ParameterItems)
 	@RobnoKompodaciPregledRealizacijePoArtiklimaTable(tbl, translator)
-	@rep.ReportEnd(nil)
 }
 
 // RobnoKompodaciPregledRealizacijePoArtiklimaTable renders the report grouped per article:
@@ -189,15 +170,7 @@ templ RobnoKompodaciPregledRealizacijePoArtiklimaParam(params domain.RobnoKomPod
 
 // RobnoKompodaciPregledRealizacijePoKupcimaArtiklimaStampa renders a printable "Pregled realizacije po kupcima i artiklima" report.
 templ RobnoKompodaciPregledRealizacijePoKupcimaArtiklimaStampa(repParams domain.ReportParameters, params domain.RobnoKomPodaciParams, tbl domain.TableData, translator *i18n.Service) {
-	@rep.Report(repParams, domain.TableData{}, translator, nil, RobnoKompodaciPregledRealizacijePoKupcimaArtiklimaContent(repParams, params, tbl, translator))
-}
-
-templ RobnoKompodaciPregledRealizacijePoKupcimaArtiklimaContent(repParams domain.ReportParameters, params domain.RobnoKomPodaciParams, tbl domain.TableData, translator *i18n.Service) {
-	@rep.ReportHeader(repParams)
-	@rep.ReportTitle(repParams)
-	@RobnoKompodaciPregledRealizacijePoKupcimaArtiklimaParam(params, translator, repParams.ParameterItems)
-	@rep.ReportTableSection(tbl, translator)
-	@rep.ReportEnd(nil)
+	@rep.Report(repParams, tbl, translator, RobnoKompodaciPregledRealizacijePoKupcimaArtiklimaParam(params, translator, repParams.ParameterItems), nil, nil)
 }
 
 // RobnoKompodaciPregledRealizacijePoKupcimaArtiklimaParam displays the selection/processing parameters used to

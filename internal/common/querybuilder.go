@@ -420,6 +420,10 @@ func (qb *QueryBuilder) BuildInsert(ctx context.Context, fields []domain.Fields,
 		}
 		columns = append(columns, strings.ToLower(field.Name))
 		placeholders = append(placeholders, fmt.Sprintf("$%d", len(columns)))
+		if field.IsNull {
+			values = append(values, nil)
+			continue
+		}
 		values = append(values, field.Value)
 	}
 
@@ -455,6 +459,10 @@ func (qb *QueryBuilder) BuildUpdate(ctx context.Context, fields []domain.Fields,
 			continue // Skip update timestamp and user if provided in fields
 		}
 		columns = append(columns, fmt.Sprintf(` %s = $%d`, strings.ToLower(field.Name), len(values)+1))
+		if field.IsNull {
+			values = append(values, nil)
+			continue
+		}
 		values = append(values, field.Value)
 	}
 

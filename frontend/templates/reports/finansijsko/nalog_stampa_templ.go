@@ -38,7 +38,7 @@ func NalogStampa(tblStavke domain.TableData, tblKonta domain.TableData, params d
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = rep.Report(params, tblStavke, translator, ReportSummary(params, tblKonta, translator), nil).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = rep.Report(params, tblStavke, translator, nil, ReportSummary(params, tblKonta, translator), nil).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -67,14 +67,6 @@ func ReportSummary(params domain.ReportParameters, tblKonta domain.TableData, tr
 			templ_7745c5c3_Var2 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = rep.ReportHeader(params).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = rep.ReportTitle(params).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
 		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"mt-2\"><h2 class=\"text-sm font-bold text-gray-700 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -82,7 +74,7 @@ func ReportSummary(params domain.ReportParameters, tblKonta domain.TableData, tr
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Title("Promet po kontima za nalog"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/nalog_stampa.templ`, Line: 20, Col: 99}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/nalog_stampa.templ`, Line: 18, Col: 99}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
@@ -92,15 +84,11 @@ func ReportSummary(params domain.ReportParameters, tblKonta domain.TableData, tr
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = rep.ReportTableSection(tblKonta, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = rep.ReportTable(tblKonta, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</div>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = rep.ReportEnd(nil).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -130,7 +118,7 @@ func StampanjeGrupeNaloga(items []domain.NalogStampaItem, grandKontaSummary doma
 			templ_7745c5c3_Var4 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = rep.Report(params, domain.TableData{}, translator, nil, GrupeNaloziReport(items, grandKontaSummary, params, prikazPoNalogu, prikazPoListi, noviNalogNovaSrana, translator)).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = rep.Report(params, domain.TableData{}, translator, nil, nil, GrupeNaloziReport(items, grandKontaSummary, params, prikazPoNalogu, prikazPoListi, noviNalogNovaSrana, translator)).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -161,7 +149,7 @@ func GrupeNaloziReport(items []domain.NalogStampaItem, grandKontaSummary domain.
 		}
 		ctx = templ.ClearChildren(ctx)
 		if !noviNalogNovaSrana {
-			templ_7745c5c3_Err = rep.ReportHeader(params).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = rep.ReportPageHeader(params, nil, translator).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -178,7 +166,7 @@ func GrupeNaloziReport(items []domain.NalogStampaItem, grandKontaSummary domain.
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = rep.ReportHeader(params).Render(ctx, templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = rep.ReportPageHeader(params, nil, translator).Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -193,36 +181,28 @@ func GrupeNaloziReport(items []domain.NalogStampaItem, grandKontaSummary domain.
 			}
 		}
 		if prikazPoListi && len(grandKontaSummary.Rows) > 0 {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<div class=\"print:hidden -mx-8 h-8 bg-gray-200 border-y border-gray-300 my-4\"></div><div class=\"hidden print:block\" style=\"page-break-before: always;\"></div>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = rep.ReportHeader(params).Render(ctx, templ_7745c5c3_Buffer)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, " <div class=\"mt-2\"><h2 class=\"text-sm font-bold text-gray-700 mb-1\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<div class=\"print:hidden -mx-8 h-8 bg-gray-200 border-y border-gray-300 my-4\"></div><div class=\"hidden print:block\" style=\"page-break-before: always;\"></div><div class=\"mt-2\"><h2 class=\"text-sm font-bold text-gray-700 mb-1\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Title("Promet po kontima za listu"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/nalog_stampa.templ`, Line: 53, Col: 100}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/nalog_stampa.templ`, Line: 49, Col: 100}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</h2>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</h2>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = rep.ReportTableSection(grandKontaSummary, translator).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = rep.ReportTable(grandKontaSummary, translator).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -257,82 +237,82 @@ func NalogGrupaBlock(item domain.NalogStampaItem, showKontaSummary bool, transla
 			templ_7745c5c3_Var7 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<div class=\"mt-4 print:mt-3\"><div class=\"mb-1 text-center print:m-0 print:mb-1\"><h2 class=\"text-base font-bold text-gray-900 uppercase print:text-[11pt] print:leading-tight\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<div class=\"mt-4 print:mt-3\"><div class=\"mb-1 text-center print:m-0 print:mb-1\"><h2 class=\"text-base font-bold text-gray-900 uppercase print:text-[11pt] print:leading-tight\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var8 string
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%s.: %s - %d", translator.Title("NALOG ZA KNJIZENJE BR"), item.Fnal.Tipdok, item.Fnal.Nalog))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/nalog_stampa.templ`, Line: 65, Col: 111}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/nalog_stampa.templ`, Line: 61, Col: 111}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</h2></div><div class=\"mb-1 grid grid-cols-2 gap-1 print:gap-2 print:m-0 print:mb-2 print:pb-1 print:border-b print:border-gray-300\"><div class=\"flex gap-1 items-center text-sm text-gray-700 print:text-[9pt] print:leading-tight\"><span class=\"font-semibold\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</h2></div><div class=\"mb-1 grid grid-cols-2 gap-1 print:gap-2 print:m-0 print:mb-2 print:pb-1 print:border-b print:border-gray-300\"><div class=\"flex gap-1 items-center text-sm text-gray-700 print:text-[9pt] print:leading-tight\"><span class=\"font-semibold\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Datum naloga"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/nalog_stampa.templ`, Line: 70, Col: 66}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/nalog_stampa.templ`, Line: 66, Col: 66}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, ":</span> <span class=\"font-bold\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, ":</span> <span class=\"font-bold\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(item.Fnal.Danal.Format("02.01.2006."))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/nalog_stampa.templ`, Line: 71, Col: 67}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/nalog_stampa.templ`, Line: 67, Col: 67}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</span></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</span></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if item.Fnal.Opis != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<div class=\"flex gap-1 items-center text-sm text-gray-700 print:text-[9pt] print:leading-tight\"><span class=\"font-semibold\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<div class=\"flex gap-1 items-center text-sm text-gray-700 print:text-[9pt] print:leading-tight\"><span class=\"font-semibold\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var11 string
 			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Opis"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/nalog_stampa.templ`, Line: 75, Col: 59}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/nalog_stampa.templ`, Line: 71, Col: 59}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, ":</span> <span class=\"font-bold\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, ":</span> <span class=\"font-bold\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var12 string
 			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(item.Fnal.Opis)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/nalog_stampa.templ`, Line: 76, Col: 45}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/nalog_stampa.templ`, Line: 72, Col: 45}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</span></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "</span></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -341,33 +321,33 @@ func NalogGrupaBlock(item domain.NalogStampaItem, showKontaSummary bool, transla
 			return templ_7745c5c3_Err
 		}
 		if showKontaSummary && len(item.KontaSummary.Rows) > 0 {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<div class=\"mt-2\"><h3 class=\"text-sm font-bold text-gray-700 mb-1\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "<div class=\"mt-2\"><h3 class=\"text-sm font-bold text-gray-700 mb-1\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var13 string
 			templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Title("Promet po kontima za nalog"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/nalog_stampa.templ`, Line: 83, Col: 101}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/nalog_stampa.templ`, Line: 79, Col: 101}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</h3>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</h3>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = rep.ReportTableSection(item.KontaSummary, translator).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = rep.ReportTable(item.KontaSummary, translator).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

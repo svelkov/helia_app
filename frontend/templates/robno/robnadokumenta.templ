@@ -325,13 +325,13 @@ func magaciniSelection(magaciniID int) string {
 // RobnoDokumentaPregled renders the "Štampa" sub-tab of "Pregled dokumenta": the filters (magacin,
 // vrsta dokumenta and the range of the dates of the nalog), the buttons "Obradi" and "Štampaj" and
 // the grid of the robni dokumenti with the partner of every document.
-templ RobnoDokumentaPregled(tabs, subTabs domain.TabData, tbl domain.TableData, magValues, vrstaDokumentaValues []domain.ComboItem, params domain.PregledDokumentaParams, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
+templ RobnoDokumentaPregled(tabs, subTabs domain.TabData, tbl domain.TableData, magValues, vrstaDokumentaValues []domain.ComboItem, params domain.RobnoDokumentaParams, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
 	@RobnoDokumentaShell(tabs, subTabs, translator, RobnoDokumentaPregledBody(tbl, magValues, vrstaDokumentaValues, params, btnObrada, btnPrint, searchInput, translator))
 }
 
 // RobnoDokumentaPregledBody renders the body of the "Štampa" sub-tab. The parameters (left) and the
 // "Obrada i štampa" panel (right) have the same height, like the header of the "Unos dokumenta" tab.
-templ RobnoDokumentaPregledBody(tbl domain.TableData, magValues, vrstaDokumentaValues []domain.ComboItem, params domain.PregledDokumentaParams, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
+templ RobnoDokumentaPregledBody(tbl domain.TableData, magValues, vrstaDokumentaValues []domain.ComboItem, params domain.RobnoDokumentaParams, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
 	<!-- Parameters -->
 	<div class="no-border bg-blue-100 rounded-lg">
 		<div class="grid grid-cols-3 gap-2">
@@ -431,14 +431,14 @@ templ RobnoDokumentaPregledBody(tbl domain.TableData, magValues, vrstaDokumentaV
 // RobnoDokumentaEFaktura renders the "eFaktura" sub-tab of "Pregled dokumenta": the filters (grupe
 // dokumenata and the range of the dates of the documents), the actions of the eFaktura, the date of
 // the ažuriranje statusa and the grid with the status of every document.
-templ RobnoDokumentaEFaktura(tabs, subTabs domain.TabData, tbl domain.TableData, magValues []domain.ComboItem, params domain.PregledDokumentaParams, btnObrada, btnPosalji, btnProveri, btnOtkazi, btnStorniraj, btnStornirajPE, btnAzurirajStatus domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
+templ RobnoDokumentaEFaktura(tabs, subTabs domain.TabData, tbl domain.TableData, magValues []domain.ComboItem, params domain.RobnoDokumentaParams, btnObrada, btnPosalji, btnProveri, btnOtkazi, btnStorniraj, btnStornirajPE, btnAzurirajStatus domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
 	@RobnoDokumentaShell(tabs, subTabs, translator, RobnoDokumentaEFakturaBody(tbl, params, btnObrada, btnPosalji, btnProveri, btnOtkazi, btnStorniraj, btnStornirajPE, btnAzurirajStatus, searchInput, translator))
 }
 
 // RobnoDokumentaEFakturaBody renders the body of the "eFaktura" sub-tab. The parameters with the
 // actions (left) and the "Status eFaktura" panel (right) have the same height, like the header of
 // the "Unos dokumenta" tab.
-templ RobnoDokumentaEFakturaBody(tbl domain.TableData, params domain.PregledDokumentaParams, btnObrada, btnPosalji, btnProveri, btnOtkazi, btnStorniraj, btnStornirajPE, btnAzurirajStatus domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
+templ RobnoDokumentaEFakturaBody(tbl domain.TableData, params domain.RobnoDokumentaParams, btnObrada, btnPosalji, btnProveri, btnOtkazi, btnStorniraj, btnStornirajPE, btnAzurirajStatus domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
 	<!-- Parameters and actions -->
 	<div class="no-border bg-blue-100 rounded-lg">
 		<div class="grid grid-cols-3 gap-2">
@@ -561,14 +561,14 @@ templ RobnoDokumentaSpecifikacije(tabs, subTabs domain.TabData, tbl domain.Table
 // dokumenta, magacin and the ranges of the broj naloga, the broj dokumenta and the datum naloga),
 // the buttons of the posting ("Obrada", "Proveri ravnotežu" and "Knjiži") and the grid of the robni
 // dokumenti.
-templ RobnoDokumentaKontiranjeKnjizenje(tabs, subTabs domain.TabData, tbl domain.TableData, tipdokValues, vrstaDokumentaValues, magValues []domain.ComboItem, params domain.KontiranjeDokumentaParams, btnObrada, btnRavnoteza, btnKnjizi domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
+templ RobnoDokumentaKontiranjeKnjizenje(tabs, subTabs domain.TabData, tbl domain.TableData, tipdokValues, vrstaDokumentaValues, magValues []domain.ComboItem, params domain.RobnoDokumentaParams, btnObrada, btnRavnoteza, btnKnjizi domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
 	@RobnoDokumentaShell(tabs, subTabs, translator, RobnoDokumentaKontiranjeKnjizenjeBody(tbl, tipdokValues, vrstaDokumentaValues, magValues, params, btnObrada, btnRavnoteza, btnKnjizi, searchInput, translator))
 }
 
 // RobnoDokumentaKontiranjeKnjizenjeBody renders the body of the "Knjiženje dokumenata" sub-tab. The
 // parameters (left) and the "Knjiženje" panel with the buttons (right) have the same height, like
 // the header of the "Unos dokumenta" tab.
-templ RobnoDokumentaKontiranjeKnjizenjeBody(tbl domain.TableData, tipdokValues, vrstaDokumentaValues, magValues []domain.ComboItem, params domain.KontiranjeDokumentaParams, btnObrada, btnRavnoteza, btnKnjizi domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
+templ RobnoDokumentaKontiranjeKnjizenjeBody(tbl domain.TableData, tipdokValues, vrstaDokumentaValues, magValues []domain.ComboItem, params domain.RobnoDokumentaParams, btnObrada, btnRavnoteza, btnKnjizi domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
 	<!-- Parameters of the selection -->
 	<div class="no-border bg-blue-100 rounded-lg">
 		<div class="grid grid-cols-3 gap-2">
@@ -668,13 +668,13 @@ templ RobnoDokumentaKontiranjeKnjizenjeBody(tbl domain.TableData, tipdokValues, 
 // sub-tab of "Kontiranje dokumenata": the parameters of the selection, the state of the posting
 // (the radio buttons "Proknjiženi dokumenti" / "Neproknjiženi dokumenti" and the checkbox that
 // marks the displayed documents as not posted) and the grid of the robni dokumenti.
-templ RobnoDokumentaKontiranjePregled(tabs, subTabs domain.TabData, tbl domain.TableData, tipdokValues, magValues []domain.ComboItem, params domain.KontiranjeDokumentaParams, btnObrada, btnOznaci domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
+templ RobnoDokumentaKontiranjePregled(tabs, subTabs domain.TabData, tbl domain.TableData, tipdokValues, magValues []domain.ComboItem, params domain.RobnoDokumentaParams, btnObrada, btnOznaci domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
 	@RobnoDokumentaShell(tabs, subTabs, translator, RobnoDokumentaKontiranjePregledBody(tbl, tipdokValues, magValues, params, btnObrada, btnOznaci, searchInput, translator))
 }
 
 // RobnoDokumentaKontiranjePregledBody renders the body of the "Pregled proknjiženih /
 // neproknjiženih dokumenata" sub-tab.
-templ RobnoDokumentaKontiranjePregledBody(tbl domain.TableData, tipdokValues, magValues []domain.ComboItem, params domain.KontiranjeDokumentaParams, btnObrada, btnOznaci domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
+templ RobnoDokumentaKontiranjePregledBody(tbl domain.TableData, tipdokValues, magValues []domain.ComboItem, params domain.RobnoDokumentaParams, btnObrada, btnOznaci domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
 	<!-- Parameters of the selection and the state of the posting -->
 	<div class="no-border bg-blue-100 rounded-lg">
 		<div class="grid grid-cols-3 gap-2">
@@ -788,13 +788,13 @@ templ RobnoDokumentaKontiranjePregledBody(tbl domain.TableData, tipdokValues, ma
 // RobnoDokumentaKontiranjePoMagacinima renders the "Pregled proknjiženih / neproknjiženih
 // dokumenata po magacinima" sub-tab of "Kontiranje dokumenata": the same filters as the previous
 // sub-tab without the vrsta naloga (the grid is grouped by the magacin of the document).
-templ RobnoDokumentaKontiranjePoMagacinima(tabs, subTabs domain.TabData, tbl domain.TableData, magValues []domain.ComboItem, params domain.KontiranjeDokumentaParams, btnObrada domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
+templ RobnoDokumentaKontiranjePoMagacinima(tabs, subTabs domain.TabData, tbl domain.TableData, magValues []domain.ComboItem, params domain.RobnoDokumentaParams, btnObrada domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
 	@RobnoDokumentaShell(tabs, subTabs, translator, RobnoDokumentaKontiranjePoMagacinimaBody(tbl, magValues, params, btnObrada, searchInput, translator))
 }
 
 // RobnoDokumentaKontiranjePoMagacinimaBody renders the body of the "Pregled ... po magacinima"
 // sub-tab.
-templ RobnoDokumentaKontiranjePoMagacinimaBody(tbl domain.TableData, magValues []domain.ComboItem, params domain.KontiranjeDokumentaParams, btnObrada domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
+templ RobnoDokumentaKontiranjePoMagacinimaBody(tbl domain.TableData, magValues []domain.ComboItem, params domain.RobnoDokumentaParams, btnObrada domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
 	<!-- Parameters of the selection and the state of the posting -->
 	<div class="no-border bg-blue-100 rounded-lg">
 		<div class="grid grid-cols-3 gap-2">
@@ -954,7 +954,7 @@ templ RobnoDokumentaPrikazUkupneObradeBody(tbl domain.TableData, translator *i18
 // naloga and the range of the broj naloga. The three checkboxes ("Po datumu naloga", "Po datumu
 // obrade" and "Po operateru") enable their fields when they are checked (controlToggle of
 // EnableDisableFieldsScripts, like "Prikaz kartice artikla" of the robno kartica does).
-templ RobnoDokumentaPrikazNaloga(tabs, subTabs domain.TabData, tbl domain.TableData, magValues, tipdokValues []domain.ComboItem, params domain.PrikazNalogaParams, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
+templ RobnoDokumentaPrikazNaloga(tabs, subTabs domain.TabData, tbl domain.TableData, magValues, tipdokValues []domain.ComboItem, params domain.RobnoDokumentaParams, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
 	@RobnoDokumentaShell(tabs, subTabs, translator, RobnoDokumentaParametriNalogaBody(tbl, magValues, tipdokValues, params, btnObrada, btnPrint, translator))
 	@tmpl.EnableDisableFieldsScripts()
 }
@@ -964,7 +964,7 @@ templ RobnoDokumentaPrikazNaloga(tabs, subTabs domain.TabData, tbl domain.TableD
 // tab - the buttons "Obrada" and "Štampaj" are in the row of the "Po operateru" checkbox, aligned
 // to the right) and the grid of the tab (the columns come from the table of the tab). Every checkbox
 // is in the same row as the fields it enables.
-templ RobnoDokumentaParametriNalogaBody(tbl domain.TableData, magValues, tipdokValues []domain.ComboItem, params domain.PrikazNalogaParams, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
+templ RobnoDokumentaParametriNalogaBody(tbl domain.TableData, magValues, tipdokValues []domain.ComboItem, params domain.RobnoDokumentaParams, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
 	<!-- Parameters of the selection (the only panel of the tab): the fields of the nalog in the first
 	     third of the panel and, in the other two thirds, every checkbox with the fields it enables in
 	     one row. The buttons "Obrada" and "Štampaj" are at the bottom right of the panel. -->
@@ -1207,7 +1207,7 @@ templ RobnoDokumentaCheckBox(id, labelText, fields string, isChecked bool, tabIn
 // The tab shows the robni dokumenti of the selected nalozi: it uses the same parameters and the
 // same layout as the "Prikaz naloga" tab (the body of the two tabs is shared), only the columns of
 // its grid differ.
-templ RobnoDokumentaPrikazDokumenataUNalogu(tabs, subTabs domain.TabData, tbl domain.TableData, magValues, tipdokValues []domain.ComboItem, params domain.PrikazNalogaParams, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
+templ RobnoDokumentaPrikazDokumenataUNalogu(tabs, subTabs domain.TabData, tbl domain.TableData, magValues, tipdokValues []domain.ComboItem, params domain.RobnoDokumentaParams, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
 	@RobnoDokumentaShell(tabs, subTabs, translator, RobnoDokumentaParametriNalogaBody(tbl, magValues, tipdokValues, params, btnObrada, btnPrint, translator))
 	@tmpl.EnableDisableFieldsScripts()
 }
@@ -1218,7 +1218,7 @@ templ RobnoDokumentaPrikazDokumenataUNalogu(tabs, subTabs domain.TabData, tbl do
 // operater. Its panel has no magacin / vrsta naloga selection (the legacy screen of the tab has none
 // either): the parameters are shown in three columns, like the legacy screen draws them (the
 // checkboxes of the filters, the "Od" fields and the "Do" fields).
-templ RobnoDokumentaPrikazDokumenataPooperateru(tabs, subTabs domain.TabData, tbl domain.TableData, params domain.PrikazNalogaParams, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
+templ RobnoDokumentaPrikazDokumenataPooperateru(tabs, subTabs domain.TabData, tbl domain.TableData, params domain.RobnoDokumentaParams, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
 	@RobnoDokumentaShell(tabs, subTabs, translator, RobnoDokumentaPrikazDokumenataPooperateruBody(tbl, params, btnObrada, btnPrint, translator))
 	@tmpl.EnableDisableFieldsScripts()
 }
@@ -1229,7 +1229,7 @@ templ RobnoDokumentaPrikazDokumenataPooperateru(tabs, subTabs domain.TabData, tb
 // vrsta naloga controls (magaciniid, odvrd and dovrd are not part of its parameters) and with its
 // controls in the three columns of the legacy screen (the checkboxes, the "Od" fields and the "Do"
 // fields); every checkbox enables its own fields (the dates and the operater), like the other tabs.
-templ RobnoDokumentaPrikazDokumenataPooperateruBody(tbl domain.TableData, params domain.PrikazNalogaParams, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
+templ RobnoDokumentaPrikazDokumenataPooperateruBody(tbl domain.TableData, params domain.RobnoDokumentaParams, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
 	<!-- Parameters of the selection (the only panel of the tab) in the three columns of the legacy
 	     screen: the checkboxes of the filters, the "Od" fields and the "Do" fields. The buttons
 	     "Obrada" and "Štampaj" are at the bottom right of the panel. -->

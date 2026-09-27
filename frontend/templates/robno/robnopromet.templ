@@ -6,17 +6,18 @@ import (
 	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
+	"time"
 )
 
-templ RobnoPrometMain(tabs domain.TabData, tbl domain.TableData, magValues, grupeValues []domain.ComboItem, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
+templ RobnoPrometMain(tabs domain.TabData, tbl domain.TableData, magValues, grupeValues []domain.ComboItem, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, gnGod int, translator *i18n.Service) {
 	<div id="robno-promet-reports-content" class="flex flex-col h-full">
-		@RobnoPrometPoGrupiArtikala1(tabs, tbl, magValues, grupeValues, btnObrada, btnPrint, searchInput, translator)
+		@RobnoPrometPoGrupiArtikala1(tabs, tbl, magValues, grupeValues, btnObrada, btnPrint, searchInput, gnGod, translator)
 	</div>
 	@tmpl.ShowSearchDialogScript()
 	@tmpl.HideDropdownScript()
 }
 
-templ RobnoPrometPoGrupiArtikala1(tabs domain.TabData, tbl domain.TableData, magValues, grupeValues []domain.ComboItem, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
+templ RobnoPrometPoGrupiArtikala1(tabs domain.TabData, tbl domain.TableData, magValues, grupeValues []domain.ComboItem, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, gnGod int, translator *i18n.Service) {
 	<div class="bg-blue-100 p-1 flex flex-col h-full">
 		<div class="border-b border-blue-600">
 			@tmpl.TabNav(translator.Title("Robno promet"), tabs, "#robno-promet-reports-content", "robno-promet-reports-panel", translator)
@@ -38,13 +39,16 @@ templ RobnoPrometPoGrupiArtikala1(tabs domain.TabData, tbl domain.TableData, mag
 						</div>
 						<div class="flex items-center gap-1">
 							@components.LabelField(domain.LabelFieldConfig{ID: "odsifre", LabelText: translator.Label("Od šifre artikla"), ClassLabel: common.ClassLabel + " w-28"})
-							@components.TextInputField(domain.InputFieldConfig{ID: "odsifre", Name: "odsifre", FieldType: "number", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "3"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "odsifre", Name: "odsifre", FieldType: "number", Value: "0", MaxLength: "6", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "3"})
 							@components.SearchButton(domain.SearchButtonConfig{ID: "odsifre", Name: "search-odsifre", HxUrl: "/api/promet/searchbutton", HxTarget: "#search-dropdown", HxSwap: "innerHTML", HxVals: `js:{"destfield": "odsifre"}`, ClassButton: common.ClassButton})
+							@components.TextInputField(domain.InputFieldConfig{ID: "dosifrenaziv", Name: "odsifrenaziv", FieldType: "text", Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1"})
 						</div>
 						<div class="flex items-center gap-1">
 							@components.LabelField(domain.LabelFieldConfig{ID: "dosifre", LabelText: translator.Label("Do šifre artikla"), ClassLabel: common.ClassLabel + " w-28"})
-							@components.TextInputField(domain.InputFieldConfig{ID: "dosifre", Name: "dosifre", FieldType: "number", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "4"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "dosifre", Name: "dosifre", FieldType: "number", Value: "999999", MaxLength: "6", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "4"})
 							@components.SearchButton(domain.SearchButtonConfig{ID: "dosifre", Name: "search-dosifre", HxUrl: "/api/promet/searchbutton", HxTarget: "#search-dropdown", HxSwap: "innerHTML", HxVals: `js:{"destfield": "dosifre"}`, ClassButton: common.ClassButton})
+							<!-- Naziv doArtikla -->
+							@components.TextInputField(domain.InputFieldConfig{ID: "dosifrenaziv", Name: "dosifrenaziv", FieldType: "text", Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1"})
 						</div>
 					</fieldset>
 					<!-- Right fieldset: datumi + grupe -->
@@ -60,11 +64,11 @@ templ RobnoPrometPoGrupiArtikala1(tabs domain.TabData, tbl domain.TableData, mag
 						</div>
 						<div class="flex items-center gap-1">
 							@components.LabelField(domain.LabelFieldConfig{ID: "oddatuma", LabelText: translator.Label("Od datuma"), ClassLabel: common.ClassLabel + " w-28"})
-							@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "7"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month(), 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "7"})
 						</div>
 						<div class="flex items-center gap-1">
 							@components.LabelField(domain.LabelFieldConfig{ID: "dodatuma", LabelText: translator.Label("Do datuma"), ClassLabel: common.ClassLabel + " w-28"})
-							@components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "8"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "8"})
 						</div>
 					</fieldset>
 				</div>
@@ -81,7 +85,7 @@ templ RobnoPrometPoGrupiArtikala1(tabs domain.TabData, tbl domain.TableData, mag
 	</div>
 }
 
-templ RobnoPrometPoKupcima(tabs domain.TabData, tbl domain.TableData, magValues, grupeValues []domain.ComboItem, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
+templ RobnoPrometPoKupcima(tabs domain.TabData, tbl domain.TableData, magValues, grupeValues []domain.ComboItem, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, gnGod int, translator *i18n.Service) {
 	<div class="bg-blue-100 p-1 flex flex-col h-full">
 		<div class="border-b border-blue-600">
 			@tmpl.TabNav(translator.Title("Robno promet"), tabs, "#robno-promet-reports-content", "robno-promet-reports-panel", translator)
@@ -103,13 +107,15 @@ templ RobnoPrometPoKupcima(tabs domain.TabData, tbl domain.TableData, magValues,
 						</div>
 						<div class="flex items-center gap-1">
 							@components.LabelField(domain.LabelFieldConfig{ID: "odsifre", LabelText: translator.Label("Od šifre artikla"), ClassLabel: common.ClassLabel + " w-28"})
-							@components.TextInputField(domain.InputFieldConfig{ID: "odsifre", Name: "odsifre", FieldType: "number", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "3"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "odsifre", Name: "odsifre", FieldType: "number", Value: "0", MaxLength: "6", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "3"})
 							@components.SearchButton(domain.SearchButtonConfig{ID: "odsifre", Name: "search-odsifre", HxUrl: "/api/promet/searchbutton", HxTarget: "#search-dropdown", HxSwap: "innerHTML", HxVals: `js:{"destfield": "odsifre"}`, ClassButton: common.ClassButton})
+							@components.TextInputField(domain.InputFieldConfig{ID: "odsifrenaziv", Name: "odsifrenaziv", FieldType: "text", Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1"})
 						</div>
 						<div class="flex items-center gap-1">
 							@components.LabelField(domain.LabelFieldConfig{ID: "dosifre", LabelText: translator.Label("Do šifre artikla"), ClassLabel: common.ClassLabel + " w-28"})
-							@components.TextInputField(domain.InputFieldConfig{ID: "dosifre", Name: "dosifre", FieldType: "number", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "4"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "dosifre", Name: "dosifre", FieldType: "number", Value: "999999", MaxLength: "6", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "4"})
 							@components.SearchButton(domain.SearchButtonConfig{ID: "dosifre", Name: "search-dosifre", HxUrl: "/api/promet/searchbutton", HxTarget: "#search-dropdown", HxSwap: "innerHTML", HxVals: `js:{"destfield": "dosifre"}`, ClassButton: common.ClassButton})
+							@components.TextInputField(domain.InputFieldConfig{ID: "dosifrenaziv", Name: "dosifrenaziv", FieldType: "text", Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1"})
 						</div>
 					</fieldset>
 					<!-- Right fieldset: datumi + grupe -->
@@ -125,11 +131,11 @@ templ RobnoPrometPoKupcima(tabs domain.TabData, tbl domain.TableData, magValues,
 						</div>
 						<div class="flex items-center gap-1">
 							@components.LabelField(domain.LabelFieldConfig{ID: "oddatuma", LabelText: translator.Label("Od datuma"), ClassLabel: common.ClassLabel + " w-28"})
-							@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "7"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month(), 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "7"})
 						</div>
 						<div class="flex items-center gap-1">
 							@components.LabelField(domain.LabelFieldConfig{ID: "dodatuma", LabelText: translator.Label("Do datuma"), ClassLabel: common.ClassLabel + " w-28"})
-							@components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "8"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "8"})
 						</div>
 					</fieldset>
 				</div>
@@ -146,7 +152,7 @@ templ RobnoPrometPoKupcima(tabs domain.TabData, tbl domain.TableData, magValues,
 	</div>
 }
 
-templ RobnoPrometPoDobavljacima(tabs domain.TabData, tbl domain.TableData, magValues, grupeValues []domain.ComboItem, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
+templ RobnoPrometPoDobavljacima(tabs domain.TabData, tbl domain.TableData, magValues, grupeValues []domain.ComboItem, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, gnGod int, translator *i18n.Service) {
 	<div class="bg-blue-100 p-1 flex flex-col h-full">
 		<div class="border-b border-blue-600">
 			@tmpl.TabNav(translator.Title("Robno promet"), tabs, "#robno-promet-reports-content", "robno-promet-reports-panel", translator)
@@ -168,13 +174,15 @@ templ RobnoPrometPoDobavljacima(tabs domain.TabData, tbl domain.TableData, magVa
 						</div>
 						<div class="flex items-center gap-1">
 							@components.LabelField(domain.LabelFieldConfig{ID: "odsifre", LabelText: translator.Label("Od šifre artikla"), ClassLabel: common.ClassLabel + " w-28"})
-							@components.TextInputField(domain.InputFieldConfig{ID: "odsifre", Name: "odsifre", FieldType: "number", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "3"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "odsifre", Name: "odsifre", FieldType: "number", Value: "0", MaxLength: "6", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "3"})
 							@components.SearchButton(domain.SearchButtonConfig{ID: "odsifre", Name: "search-odsifre", HxUrl: "/api/promet/searchbutton", HxTarget: "#search-dropdown", HxSwap: "innerHTML", HxVals: `js:{"destfield": "odsifre"}`, ClassButton: common.ClassButton})
+							@components.TextInputField(domain.InputFieldConfig{ID: "odsifrenaziv", Name: "dosifrenaziv", FieldType: "text", Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1"})
 						</div>
 						<div class="flex items-center gap-1">
 							@components.LabelField(domain.LabelFieldConfig{ID: "dosifre", LabelText: translator.Label("Do šifre artikla"), ClassLabel: common.ClassLabel + " w-28"})
-							@components.TextInputField(domain.InputFieldConfig{ID: "dosifre", Name: "dosifre", FieldType: "number", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "4"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "dosifre", Name: "dosifre", FieldType: "number", Value: "999999", MaxLength: "6", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "4"})
 							@components.SearchButton(domain.SearchButtonConfig{ID: "dosifre", Name: "search-dosifre", HxUrl: "/api/promet/searchbutton", HxTarget: "#search-dropdown", HxSwap: "innerHTML", HxVals: `js:{"destfield": "dosifre"}`, ClassButton: common.ClassButton})
+							@components.TextInputField(domain.InputFieldConfig{ID: "dosifrenaziv", Name: "dosifrenaziv", FieldType: "text", Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1"})
 						</div>
 					</fieldset>
 					<!-- Right fieldset: datumi + grupe -->
@@ -190,11 +198,11 @@ templ RobnoPrometPoDobavljacima(tabs domain.TabData, tbl domain.TableData, magVa
 						</div>
 						<div class="flex items-center gap-1">
 							@components.LabelField(domain.LabelFieldConfig{ID: "oddatuma", LabelText: translator.Label("Od datuma"), ClassLabel: common.ClassLabel + " w-28"})
-							@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "7"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month(), 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "7"})
 						</div>
 						<div class="flex items-center gap-1">
 							@components.LabelField(domain.LabelFieldConfig{ID: "dodatuma", LabelText: translator.Label("Do datuma"), ClassLabel: common.ClassLabel + " w-28"})
-							@components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "8"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "8"})
 						</div>
 					</fieldset>
 				</div>
@@ -211,7 +219,7 @@ templ RobnoPrometPoDobavljacima(tabs domain.TabData, tbl domain.TableData, magVa
 	</div>
 }
 
-templ RobnoPrometRucLagerLista(tabs, subTabs domain.TabData, tbl domain.TableData, magValues, grupeValues []domain.ComboItem, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
+templ RobnoPrometRucLagerLista(tabs, subTabs domain.TabData, tbl domain.TableData, magValues, grupeValues []domain.ComboItem, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, gnGod int, translator *i18n.Service) {
 	<div class="bg-blue-100 p-1 flex flex-col h-full">
 		<div class="border-b border-blue-600">
 			@tmpl.TabNav(translator.Title("Robno promet"), tabs, "#robno-promet-reports-content", "robno-promet-reports-panel", translator)
@@ -241,7 +249,7 @@ templ RobnoPrometRucLagerLista(tabs, subTabs domain.TabData, tbl domain.TableDat
 						</div>
 						<div class="flex items-center gap-1">
 							@components.LabelField(domain.LabelFieldConfig{ID: "stanjenadan", LabelText: translator.Label("Stanje na dan"), ClassLabel: common.ClassLabel + " w-28"})
-							@components.TextInputField(domain.InputFieldConfig{ID: "stanjenadan", Name: "stanjenadan", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "6"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "stanjenadan", Name: "stanjenadan", FieldType: "date", Value: time.Date(gnGod, time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "6"})
 						</div>
 					</fieldset>
 					<!-- Right: opcije + grupe/podgrupe -->
@@ -262,11 +270,11 @@ templ RobnoPrometRucLagerLista(tabs, subTabs domain.TabData, tbl domain.TableDat
 						</div>
 						<div class="flex items-center gap-1">
 							@components.LabelField(domain.LabelFieldConfig{ID: "odpodgrupe", LabelText: translator.Label("Od podgrupe"), ClassLabel: common.ClassLabel + " w-28"})
-							@components.ComboBoxField(domain.ComboFieldConfig{ID: "odpodgrupe", Name: "odpodgrupe", ClassSelect: common.ClassInputTextEnabled + " flex-1", TabIndex: "12"}, translator)
+							@components.TextInputField(domain.InputFieldConfig{ID: "odpodgrupe", Name: "odpodgrupe", FieldType: "number", Value: "0", MaxLength: "4", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "12"})
 						</div>
 						<div class="flex items-center gap-1">
 							@components.LabelField(domain.LabelFieldConfig{ID: "dopodgrupe", LabelText: translator.Label("Do podgrupe"), ClassLabel: common.ClassLabel + " w-28"})
-							@components.ComboBoxField(domain.ComboFieldConfig{ID: "dopodgrupe", Name: "dopodgrupe", ClassSelect: common.ClassInputTextEnabled + " flex-1", TabIndex: "13"}, translator)
+							@components.TextInputField(domain.InputFieldConfig{ID: "dopodgrupe", Name: "dopodgrupe", FieldType: "number", Value: "9999", MaxLength: "4", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "13"})
 						</div>
 					</fieldset>
 				</div>
@@ -283,7 +291,7 @@ templ RobnoPrometRucLagerLista(tabs, subTabs domain.TabData, tbl domain.TableDat
 	</div>
 }
 
-templ RobnoPrometGradiliste(tabs domain.TabData, tbl domain.TableData, magValues, grupeValues []domain.ComboItem, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
+templ RobnoPrometGradiliste(tabs domain.TabData, tbl domain.TableData, magValues, grupeValues []domain.ComboItem, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, gnGod int, translator *i18n.Service) {
 	<div class="bg-blue-100 p-1 flex flex-col h-full">
 		<div class="border-b border-blue-600">
 			@tmpl.TabNav(translator.Title("Robno promet"), tabs, "#robno-promet-reports-content", "robno-promet-reports-panel", translator)
@@ -307,31 +315,33 @@ templ RobnoPrometGradiliste(tabs domain.TabData, tbl domain.TableData, magValues
 							@components.LabelField(domain.LabelFieldConfig{ID: "odsifre", LabelText: translator.Label("Od šifre artikla"), ClassLabel: common.ClassLabel + " w-28"})
 							@components.TextInputField(domain.InputFieldConfig{ID: "odsifre", Name: "odsifre", FieldType: "number", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "3"})
 							@components.SearchButton(domain.SearchButtonConfig{ID: "odsifre", Name: "search-odsifre", HxUrl: "/api/promet/searchbutton", HxTarget: "#search-dropdown", HxSwap: "innerHTML", HxVals: `js:{"destfield": "odsifre"}`, ClassButton: common.ClassButton})
+							@components.TextInputField(domain.InputFieldConfig{ID: "odsifrenaziv", Name: "dosifrenaziv", FieldType: "text", Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1"})
 						</div>
 						<div class="flex items-center gap-1">
 							@components.LabelField(domain.LabelFieldConfig{ID: "dosifre", LabelText: translator.Label("Do šifre artikla"), ClassLabel: common.ClassLabel + " w-28"})
 							@components.TextInputField(domain.InputFieldConfig{ID: "dosifre", Name: "dosifre", FieldType: "number", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "4"})
 							@components.SearchButton(domain.SearchButtonConfig{ID: "dosifre", Name: "search-dosifre", HxUrl: "/api/promet/searchbutton", HxTarget: "#search-dropdown", HxSwap: "innerHTML", HxVals: `js:{"destfield": "dosifre"}`, ClassButton: common.ClassButton})
+							@components.TextInputField(domain.InputFieldConfig{ID: "dosifrenaziv", Name: "dosifrenaziv", FieldType: "text", Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1"})
 						</div>
 					</fieldset>
 					<!-- Right fieldset: datumi + grupe -->
 					<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1">
 						<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Datum / grupa") }</legend>
 						<div class="flex items-center gap-1">
-							@components.LabelField(domain.LabelFieldConfig{ID: "oddatuma", LabelText: translator.Label("Od datuma"), ClassLabel: common.ClassLabel + " w-28"})
-							@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "5"})
-						</div>
-						<div class="flex items-center gap-1">
-							@components.LabelField(domain.LabelFieldConfig{ID: "dodatuma", LabelText: translator.Label("Do datuma"), ClassLabel: common.ClassLabel + " w-28"})
-							@components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "6"})
-						</div>
-						<div class="flex items-center gap-1">
 							@components.LabelField(domain.LabelFieldConfig{ID: "odgrupe", LabelText: translator.Label("Od grupe"), ClassLabel: common.ClassLabel + " w-28"})
-							@components.ComboBoxField(domain.ComboFieldConfig{ID: "odgrupe", Name: "odgrupe", ClassSelect: common.ClassInputTextEnabled + " flex-1", OptionValues: grupeValues, TabIndex: "7"}, translator)
+							@components.ComboBoxField(domain.ComboFieldConfig{ID: "odgrupe", Name: "odgrupe", ClassSelect: common.ClassInputTextEnabled + " flex-1", OptionValues: grupeValues, TabIndex: "5"}, translator)
 						</div>
 						<div class="flex items-center gap-1">
 							@components.LabelField(domain.LabelFieldConfig{ID: "dogrupe", LabelText: translator.Label("Do grupe"), ClassLabel: common.ClassLabel + " w-28"})
-							@components.ComboBoxField(domain.ComboFieldConfig{ID: "dogrupe", Name: "dogrupe", ClassSelect: common.ClassInputTextEnabled + " flex-1", OptionValues: grupeValues, TabIndex: "8"}, translator)
+							@components.ComboBoxField(domain.ComboFieldConfig{ID: "dogrupe", Name: "dogrupe", ClassSelect: common.ClassInputTextEnabled + " flex-1", OptionValues: grupeValues, TabIndex: "6"}, translator)
+						</div>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "oddatuma", LabelText: translator.Label("Od datuma"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month(), 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "7"})
+						</div>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "dodatuma", LabelText: translator.Label("Do datuma"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "8"})
 						</div>
 					</fieldset>
 				</div>
@@ -348,7 +358,7 @@ templ RobnoPrometGradiliste(tabs domain.TabData, tbl domain.TableData, magValues
 	</div>
 }
 
-templ RobnoPrometGradilisteVpcNc(tabs domain.TabData, tbl domain.TableData, magValues, grupeValues []domain.ComboItem, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
+templ RobnoPrometGradilisteVpcNc(tabs domain.TabData, tbl domain.TableData, magValues, grupeValues []domain.ComboItem, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, gnGod int, translator *i18n.Service) {
 	<div class="bg-blue-100 p-1 flex flex-col h-full">
 		<div class="border-b border-blue-600">
 			@tmpl.TabNav(translator.Title("Robno promet"), tabs, "#robno-promet-reports-content", "robno-promet-reports-panel", translator)
@@ -372,24 +382,18 @@ templ RobnoPrometGradilisteVpcNc(tabs domain.TabData, tbl domain.TableData, magV
 							@components.LabelField(domain.LabelFieldConfig{ID: "odsifre", LabelText: translator.Label("Od šifre artikla"), ClassLabel: common.ClassLabel + " w-28"})
 							@components.TextInputField(domain.InputFieldConfig{ID: "odsifre", Name: "odsifre", FieldType: "number", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "3"})
 							@components.SearchButton(domain.SearchButtonConfig{ID: "odsifre", Name: "search-odsifre", HxUrl: "/api/promet/searchbutton", HxTarget: "#search-dropdown", HxSwap: "innerHTML", HxVals: `js:{"destfield": "odsifre"}`, ClassButton: common.ClassButton})
+							@components.TextInputField(domain.InputFieldConfig{ID: "odsifrenaziv", Name: "dosifrenaziv", FieldType: "text", Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1"})
 						</div>
 						<div class="flex items-center gap-1">
 							@components.LabelField(domain.LabelFieldConfig{ID: "dosifre", LabelText: translator.Label("Do šifre artikla"), ClassLabel: common.ClassLabel + " w-28"})
 							@components.TextInputField(domain.InputFieldConfig{ID: "dosifre", Name: "dosifre", FieldType: "number", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "4"})
 							@components.SearchButton(domain.SearchButtonConfig{ID: "dosifre", Name: "search-dosifre", HxUrl: "/api/promet/searchbutton", HxTarget: "#search-dropdown", HxSwap: "innerHTML", HxVals: `js:{"destfield": "dosifre"}`, ClassButton: common.ClassButton})
+							@components.TextInputField(domain.InputFieldConfig{ID: "dosifrenaziv", Name: "dosifrenaziv", FieldType: "text", Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1"})
 						</div>
 					</fieldset>
 					<!-- Right fieldset: datumi + grupe -->
 					<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1">
 						<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Datum / grupa") }</legend>
-						<div class="flex items-center gap-1">
-							@components.LabelField(domain.LabelFieldConfig{ID: "oddatuma", LabelText: translator.Label("Od datuma"), ClassLabel: common.ClassLabel + " w-28"})
-							@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "5"})
-						</div>
-						<div class="flex items-center gap-1">
-							@components.LabelField(domain.LabelFieldConfig{ID: "dodatuma", LabelText: translator.Label("Do datuma"), ClassLabel: common.ClassLabel + " w-28"})
-							@components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "6"})
-						</div>
 						<div class="flex items-center gap-1">
 							@components.LabelField(domain.LabelFieldConfig{ID: "odgrupe", LabelText: translator.Label("Od grupe"), ClassLabel: common.ClassLabel + " w-28"})
 							@components.ComboBoxField(domain.ComboFieldConfig{ID: "odgrupe", Name: "odgrupe", ClassSelect: common.ClassInputTextEnabled + " flex-1", OptionValues: grupeValues, TabIndex: "7"}, translator)
@@ -397,6 +401,14 @@ templ RobnoPrometGradilisteVpcNc(tabs domain.TabData, tbl domain.TableData, magV
 						<div class="flex items-center gap-1">
 							@components.LabelField(domain.LabelFieldConfig{ID: "dogrupe", LabelText: translator.Label("Do grupe"), ClassLabel: common.ClassLabel + " w-28"})
 							@components.ComboBoxField(domain.ComboFieldConfig{ID: "dogrupe", Name: "dogrupe", ClassSelect: common.ClassInputTextEnabled + " flex-1", OptionValues: grupeValues, TabIndex: "8"}, translator)
+						</div>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "oddatuma", LabelText: translator.Label("Od datuma"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month(), 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "7"})
+						</div>
+						<div class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "dodatuma", LabelText: translator.Label("Do datuma"), ClassLabel: common.ClassLabel + " w-28"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "8"})
 						</div>
 					</fieldset>
 				</div>
@@ -424,7 +436,7 @@ templ RobnoPrometTable(tbl domain.TableData, searchInput domain.InputControl, tr
 }
 
 // RobnoPrometRucUlazIzlaz renders the "Ulaz/izlaz za period" RUC sub-report.
-templ RobnoPrometRucUlazIzlaz(tabs, subTabs domain.TabData, tbl domain.TableData, magValues []domain.ComboItem, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
+templ RobnoPrometRucUlazIzlaz(tabs, subTabs domain.TabData, tbl domain.TableData, magValues []domain.ComboItem, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, gnGod int, translator *i18n.Service) {
 	<div class="bg-blue-100 p-1 flex flex-col h-full">
 		<div class="border-b border-blue-600">
 			@tmpl.TabNav(translator.Title("Robno promet"), tabs, "#robno-promet-reports-content", "robno-promet-reports-panel", translator)
@@ -457,11 +469,11 @@ templ RobnoPrometRucUlazIzlaz(tabs, subTabs domain.TabData, tbl domain.TableData
 						<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Opcije prikaza/štampe") }</legend>
 						<div class="flex items-center gap-1">
 							@components.LabelField(domain.LabelFieldConfig{ID: "oddatuma", LabelText: translator.Label("Od datuma"), ClassLabel: common.ClassLabel + " w-28"})
-							@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "6"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month(), 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "6"})
 						</div>
 						<div class="flex items-center gap-1">
 							@components.LabelField(domain.LabelFieldConfig{ID: "dodatuma", LabelText: translator.Label("Do datuma"), ClassLabel: common.ClassLabel + " w-28"})
-							@components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "7"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "7"})
 						</div>
 						@components.CheckboxField(domain.CheckboxFieldConfig{ID: "zbirmagacina", Name: "zbirmagacina", LabelText: translator.Label("Zbir izabranih magacina"), ClassCheckbox: common.ClassCheckbox + " mr-2", ClassLabel: common.ClassLabel + " flex items-center", TabIndex: "8"}, translator)
 					</fieldset>
@@ -480,7 +492,7 @@ templ RobnoPrometRucUlazIzlaz(tabs, subTabs domain.TabData, tbl domain.TableData
 }
 
 // RobnoPrometRucMagacinima renders the "RUC po magacinima" RUC sub-report.
-templ RobnoPrometRucMagacinima(tabs, subTabs domain.TabData, tbl domain.TableData, magValues []domain.ComboItem, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
+templ RobnoPrometRucMagacinima(tabs, subTabs domain.TabData, tbl domain.TableData, magValues []domain.ComboItem, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, gnGod int, translator *i18n.Service) {
 	<div class="bg-blue-100 p-1 flex flex-col h-full">
 		<div class="border-b border-blue-600">
 			@tmpl.TabNav(translator.Title("Robno promet"), tabs, "#robno-promet-reports-content", "robno-promet-reports-panel", translator)
@@ -508,11 +520,11 @@ templ RobnoPrometRucMagacinima(tabs, subTabs domain.TabData, tbl domain.TableDat
 						<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Opcije prikaza/štampe") }</legend>
 						<div class="flex items-center gap-1">
 							@components.LabelField(domain.LabelFieldConfig{ID: "oddatuma", LabelText: translator.Label("Od datuma"), ClassLabel: common.ClassLabel + " w-28"})
-							@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "3"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month(), 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "3"})
 						</div>
 						<div class="flex items-center gap-1">
 							@components.LabelField(domain.LabelFieldConfig{ID: "dodatuma", LabelText: translator.Label("Do datuma"), ClassLabel: common.ClassLabel + " w-28"})
-							@components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "4"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "4"})
 						</div>
 						@components.CheckboxField(domain.CheckboxFieldConfig{ID: "stampajsamoZbir", Name: "stampajsamoZbir", LabelText: translator.Label("Štampaj samo zbir po magacinima"), ClassCheckbox: common.ClassCheckbox + " mr-2", ClassLabel: common.ClassLabel + " flex items-center", TabIndex: "5"}, translator)
 					</fieldset>
@@ -531,7 +543,7 @@ templ RobnoPrometRucMagacinima(tabs, subTabs domain.TabData, tbl domain.TableDat
 }
 
 // RobnoPrometRucIzlazneFakture renders the "Izlazne fakture" RUC sub-report.
-templ RobnoPrometRucIzlazneFakture(tabs, subTabs domain.TabData, tbl domain.TableData, magValues []domain.ComboItem, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
+templ RobnoPrometRucIzlazneFakture(tabs, subTabs domain.TabData, tbl domain.TableData, magValues []domain.ComboItem, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, gnGod int, translator *i18n.Service) {
 	<div class="bg-blue-100 p-1 flex flex-col h-full">
 		<div class="border-b border-blue-600">
 			@tmpl.TabNav(translator.Title("Robno promet"), tabs, "#robno-promet-reports-content", "robno-promet-reports-panel", translator)
@@ -562,11 +574,11 @@ templ RobnoPrometRucIzlazneFakture(tabs, subTabs domain.TabData, tbl domain.Tabl
 							<div class="flex flex-col gap-1">
 								<div class="flex items-center gap-1">
 									@components.LabelField(domain.LabelFieldConfig{ID: "oddatuma", LabelText: translator.Label("Od datuma"), ClassLabel: common.ClassLabel + " w-28"})
-									@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "3"})
+									@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month(), 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "3"})
 								</div>
 								<div class="flex items-center gap-1">
 									@components.LabelField(domain.LabelFieldConfig{ID: "dodatuma", LabelText: translator.Label("Do datuma"), ClassLabel: common.ClassLabel + " w-28"})
-									@components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "4"})
+									@components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "4"})
 								</div>
 							</div>
 							<div class="flex flex-col gap-1">

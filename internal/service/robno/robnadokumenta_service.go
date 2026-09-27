@@ -36,29 +36,29 @@ type RobnoDokumentaService interface {
 	UpdateUnosDokumenta(ctx context.Context, rnalID int64, params domain.RobnoDokumentaParams) error
 
 	// Tab 2 - Pregled dokumenta (sub-tabs "Štampa" and "eFaktura")
-	GetPregledStampa(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.PregledDokumentaParams) error
-	GetPregledEFaktura(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.PregledDokumentaParams) error
+	GetPregledStampa(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.RobnoDokumentaParams) error
+	GetPregledEFaktura(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.RobnoDokumentaParams) error
 
 	// Tab 4 - Kontiranje dokumenata (sub-tabs "Knjiženje dokumenata", "Pregled proknjiženih /
 	// neproknjiženih dokumenata" and "Pregled proknjiženih / neproknjiženih dokumenata po
 	// magacinima").
-	GetKontiranjeKnjizenje(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.KontiranjeDokumentaParams) error
-	GetKontiranjePregled(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.KontiranjeDokumentaParams) error
-	GetKontiranjePoMagacinima(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.KontiranjeDokumentaParams) error
+	GetKontiranjeKnjizenje(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.RobnoDokumentaParams) error
+	GetKontiranjePregled(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.RobnoDokumentaParams) error
+	GetKontiranjePoMagacinima(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.RobnoDokumentaParams) error
 
 	// Tab 6 - Prikaz ukupne obrade
 	GetPrikazUkupneObrade(ctx context.Context, tbl *domain.TableData, pageSize int) error
 
 	// Tab 7 - Prikaz naloga
-	GetPrikazNaloga(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.PrikazNalogaParams) error
+	GetPrikazNaloga(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.RobnoDokumentaParams) error
 
 	// Tab 8 - Prikaz dokumenata u nalogu (the parameters of the tab are the same selection of nalozi
 	// as the "Prikaz naloga" tab, its rows are the robni dokumenti of those nalozi).
-	GetPrikazDokumenataUNalogu(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.PrikazNalogaParams) error
+	GetPrikazDokumenataUNalogu(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.RobnoDokumentaParams) error
 
 	// Tab 9 - Prikaz dokumenata po operateru (the same robni dokumenti as tab 8, grouped by the
 	// operater of the document).
-	GetPrikazDokumenataPooperateru(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.PrikazNalogaParams) error
+	GetPrikazDokumenataPooperateru(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.RobnoDokumentaParams) error
 
 	GetUnosDokumentaTableFields() []domain.Fields
 	GetPregledDokumentaTableFields() []domain.Fields
@@ -76,30 +76,31 @@ type RobnoDokumentaService interface {
 }
 
 type RobnoDokumentaResource struct {
+	// rnalRepo, rnalTotalsRepo and rnalHeaderRepo are the repositories of the robni nalozi (rnal):
+	// the grid of the "Unos dokumenta" tab, the totals behind its "Prikaz ukupne obrade" panel and
+	// the header of a nalog used by the save of that tab.
 	rnalRepo       repository.BaseRepository[domain.RobnoDokumentaDto]
 	rnalTotalsRepo repository.BaseRepository[domain.RobnoDokumentaTotalsDto]
-	// rnalHeaderRepo is the repository of the header of a robni nalog (rnal) used by the save of
-	// the "Unos dokumenta" tab.
 	rnalHeaderRepo repository.BaseRepository[domain.Rnal]
 	// pregledStampaRepo and pregledEFakturaRepo are the repositories of the grids of the "Pregled
-	// dokumenta" tab (they only carry the row type of the query: rnal joined with rdok).
-	pregledStampaRepo   repository.BaseRepository[domain.PregledStampaDto]
-	pregledEFakturaRepo repository.BaseRepository[domain.PregledEFakturaDto]
+	// dokumenta" tab (they only carry the row type and the table of the query: rnal joined with rdok).
+	pregledStampaRepo   repository.BaseRepository[domain.RobnoDokumentaDto]
+	pregledEFakturaRepo repository.BaseRepository[domain.RobnoDokumentaDto]
 	// kontiranjeRepo is the repository of the grids of the "Kontiranje dokumenata" tab (they all
 	// read the robni dokumenti of the current period from rdok).
-	kontiranjeRepo repository.BaseRepository[domain.KontiranjeDokumentaDto]
+	kontiranjeRepo repository.BaseRepository[domain.RobnoDokumentaDto]
 	// prikazUkupneObradeRepo is the repository of the grid of the "Prikaz ukupne obrade" tab (the
 	// magacini of the current period with the totals of their robni nalozi).
 	prikazUkupneObradeRepo repository.BaseRepository[domain.PrikazUkupneObradeDto]
 	// prikazNalogaRepo is the repository of the grid of the "Prikaz naloga" tab (the robni nalozi
 	// of the current period).
-	prikazNalogaRepo repository.BaseRepository[domain.PrikazNalogaDto]
+	prikazNalogaRepo repository.BaseRepository[domain.RobnoDokumentaDto]
 	// prikazDokumenataUNaloguRepo is the repository of the grid of the "Prikaz dokumenata u nalogu"
 	// tab (the robni dokumenti of the selected nalozi).
-	prikazDokumenataUNaloguRepo repository.BaseRepository[domain.PrikazDokumenataUNaloguDto]
+	prikazDokumenataUNaloguRepo repository.BaseRepository[domain.RobnoDokumentaDto]
 	// prikazDokumenataPooperateruRepo is the repository of the grid of the "Prikaz dokumenata po
 	// operateru" tab (the same robni dokumenti, grouped by their operater).
-	prikazDokumenataPooperateruRepo repository.BaseRepository[domain.PrikazDokumenataPooperateruDto]
+	prikazDokumenataPooperateruRepo repository.BaseRepository[domain.RobnoDokumentaDto]
 	tipdokRepo                      repository.BaseRepository[domain.Tipdok]
 	dokvrstaRepo                    repository.BaseRepository[domain.Dokvrsta]
 	magRepo                         repository.BaseRepository[domain.Magacini]
@@ -107,7 +108,8 @@ type RobnoDokumentaResource struct {
 	commonSvc                       commonsvc.CommonService
 
 	// TODO: add the repositories needed by the remaining tabs (rdok - robni dokument,
-	// rpro - robni promet, rsif - artikli, fkpl, ...).
+	// rpro - robni promet, rsif - artikli, fkpl, ...). All the grids of the option share the row type
+	// domain.RobnoDokumentaDto, so the repositories differ in the table of their queries only.
 
 	unosDokumentaTableFields               []domain.Fields
 	pregledDokumentaTableFields            []domain.Fields
@@ -129,13 +131,13 @@ func NewRobnoDokumentaService(
 	rnalRepo repository.BaseRepository[domain.RobnoDokumentaDto],
 	rnalTotalsRepo repository.BaseRepository[domain.RobnoDokumentaTotalsDto],
 	rnalHeaderRepo repository.BaseRepository[domain.Rnal],
-	pregledStampaRepo repository.BaseRepository[domain.PregledStampaDto],
-	pregledEFakturaRepo repository.BaseRepository[domain.PregledEFakturaDto],
-	kontiranjeRepo repository.BaseRepository[domain.KontiranjeDokumentaDto],
+	pregledStampaRepo repository.BaseRepository[domain.RobnoDokumentaDto],
+	pregledEFakturaRepo repository.BaseRepository[domain.RobnoDokumentaDto],
+	kontiranjeRepo repository.BaseRepository[domain.RobnoDokumentaDto],
 	prikazUkupneObradeRepo repository.BaseRepository[domain.PrikazUkupneObradeDto],
-	prikazNalogaRepo repository.BaseRepository[domain.PrikazNalogaDto],
-	prikazDokumenataUNaloguRepo repository.BaseRepository[domain.PrikazDokumenataUNaloguDto],
-	prikazDokumenataPooperateruRepo repository.BaseRepository[domain.PrikazDokumenataPooperateruDto],
+	prikazNalogaRepo repository.BaseRepository[domain.RobnoDokumentaDto],
+	prikazDokumenataUNaloguRepo repository.BaseRepository[domain.RobnoDokumentaDto],
+	prikazDokumenataPooperateruRepo repository.BaseRepository[domain.RobnoDokumentaDto],
 	tipdokRepo repository.BaseRepository[domain.Tipdok],
 	dokvrstaRepo repository.BaseRepository[domain.Dokvrsta],
 	magRepo repository.BaseRepository[domain.Magacini],
@@ -448,7 +450,7 @@ func (s *RobnoDokumentaResource) magacinByID(ctx context.Context, magaciniID int
 //
 // The rows are ordered by the broj naloga and the broj dokumenta (the order in which the legacy
 // report prints them).
-func (s *RobnoDokumentaResource) GetPregledStampa(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.PregledDokumentaParams) error {
+func (s *RobnoDokumentaResource) GetPregledStampa(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.RobnoDokumentaParams) error {
 	userSession := domain.GetSessionFromStdContext(ctx)
 	if userSession == nil {
 		return fmt.Errorf("no user session found")
@@ -555,7 +557,7 @@ func (s *RobnoDokumentaResource) GetPregledStampa(ctx context.Context, tbl *doma
 // given groups of documents (dokvrsta.grpdok) with their status in the eFaktura (SEF) system,
 // filtered by the range of the dates of the documents. The list is a working list, so the newest
 // documents come first.
-func (s *RobnoDokumentaResource) GetPregledEFaktura(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.PregledDokumentaParams) error {
+func (s *RobnoDokumentaResource) GetPregledEFaktura(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.RobnoDokumentaParams) error {
 	userSession := domain.GetSessionFromStdContext(ctx)
 	if userSession == nil {
 		return fmt.Errorf("no user session found")
@@ -677,7 +679,7 @@ func (s *RobnoDokumentaResource) GetPregledEFaktura(ctx context.Context, tbl *do
 // TODO: the posting ("Knjiži") and the check of the balance ("Pr. ravnotežu") of the legacy screen
 // work on this list; whether the legacy screen also hides the documents that are already posted
 // (rdok.knjige_1 = 'D') is verified together with those actions.
-func (s *RobnoDokumentaResource) GetKontiranjeKnjizenje(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.KontiranjeDokumentaParams) error {
+func (s *RobnoDokumentaResource) GetKontiranjeKnjizenje(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.RobnoDokumentaParams) error {
 	userSession := domain.GetSessionFromStdContext(ctx)
 	if userSession == nil {
 		return fmt.Errorf("no user session found")
@@ -704,7 +706,7 @@ func (s *RobnoDokumentaResource) GetKontiranjeKnjizenje(ctx context.Context, tbl
 // GetKontiranjePregled fills the grid of the "Pregled proknjiženih / neproknjiženih dokumenata"
 // sub-tab: the robni dokumenti (rdok) of the selection, either the posted (rdok.knjige_1 = 'D') or
 // the not posted ones, according to the radio buttons of the sub-tab.
-func (s *RobnoDokumentaResource) GetKontiranjePregled(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.KontiranjeDokumentaParams) error {
+func (s *RobnoDokumentaResource) GetKontiranjePregled(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.RobnoDokumentaParams) error {
 	tbl.Headers = s.kontiranjePregledTableFields
 	return s.getKontiranjePregledList(ctx, tbl, getTotalRecords, pageSize, currentPage, params, "rdok.nalog, rdok.dokum")
 }
@@ -712,7 +714,7 @@ func (s *RobnoDokumentaResource) GetKontiranjePregled(ctx context.Context, tbl *
 // GetKontiranjePoMagacinima fills the grid of the "Pregled proknjiženih / neproknjiženih dokumenata
 // po magacinima" sub-tab: the same rows as GetKontiranjePregled, grouped by magacin (the legacy
 // screen differs from the previous one by the magacin of the row and shows the vrsta naloga).
-func (s *RobnoDokumentaResource) GetKontiranjePoMagacinima(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.KontiranjeDokumentaParams) error {
+func (s *RobnoDokumentaResource) GetKontiranjePoMagacinima(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.RobnoDokumentaParams) error {
 	tbl.Headers = s.kontiranjePoMagacinimaTableFields
 	return s.getKontiranjePregledList(ctx, tbl, getTotalRecords, pageSize, currentPage, params, "rdok.magaciniid, rdok.nalog, rdok.dokum")
 }
@@ -720,7 +722,7 @@ func (s *RobnoDokumentaResource) GetKontiranjePoMagacinima(ctx context.Context, 
 // getKontiranjePregledList runs the query of the two "Pregled ..." sub-tabs of the "Kontiranje
 // dokumenata" tab (they share the filters and the date of the rows, they differ in the order and in
 // the columns).
-func (s *RobnoDokumentaResource) getKontiranjePregledList(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.KontiranjeDokumentaParams, orderBy string) error {
+func (s *RobnoDokumentaResource) getKontiranjePregledList(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.RobnoDokumentaParams, orderBy string) error {
 	userSession := domain.GetSessionFromStdContext(ctx)
 	if userSession == nil {
 		return fmt.Errorf("no user session found")
@@ -771,7 +773,7 @@ const kontiranjeSelectQuery = `
 // the magacin, the vrsta naloga za knjiženje, the vrsta dokumenta and the ranges of the broj
 // naloga, the broj dokumenta and the datum naloga. An empty range is not filtered; a range that is
 // not a number (or not a date) is ignored so that a partially typed form never breaks the query.
-func addKontiranjeConditions(qb *common.QueryBuilder, params domain.KontiranjeDokumentaParams, hasGod, hasKar bool, god, kar int) {
+func addKontiranjeConditions(qb *common.QueryBuilder, params domain.RobnoDokumentaParams, hasGod, hasKar bool, god, kar int) {
 	if hasGod {
 		qb.AddEqual("rdok.god", god)
 	}
@@ -827,7 +829,7 @@ func addNumberCondition(qb *common.QueryBuilder, field, value, operator string) 
 
 // setKontiranjeRows sets the total number of records or the rows of the page (the cells are built
 // from the headers of the grid, so every sub-tab shows its own columns in its own order).
-func (s *RobnoDokumentaResource) setKontiranjeRows(tbl *domain.TableData, entities *[]domain.KontiranjeDokumentaDto, getTotalRecords bool, pageSize int) error {
+func (s *RobnoDokumentaResource) setKontiranjeRows(tbl *domain.TableData, entities *[]domain.RobnoDokumentaDto, getTotalRecords bool, pageSize int) error {
 	if getTotalRecords {
 		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
 		return nil
@@ -844,7 +846,7 @@ func (s *RobnoDokumentaResource) setKontiranjeRows(tbl *domain.TableData, entiti
 }
 
 // kontiranjeCell renders one cell of the grids of the "Kontiranje dokumenata" tab.
-func kontiranjeCell(entity domain.KontiranjeDokumentaDto, field string) string {
+func kontiranjeCell(entity domain.RobnoDokumentaDto, field string) string {
 	switch field {
 	case "tipdok":
 		return entity.Tipdok
@@ -1004,7 +1006,7 @@ func (s *RobnoDokumentaResource) GetPrikazUkupneObrade(ctx context.Context, tbl 
 // operateru" are applied only when their checkbox is checked, like the legacy screen does.
 //
 // The rows are ordered by the vrsta naloga and the broj naloga.
-func (s *RobnoDokumentaResource) GetPrikazNaloga(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.PrikazNalogaParams) error {
+func (s *RobnoDokumentaResource) GetPrikazNaloga(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.RobnoDokumentaParams) error {
 	userSession := domain.GetSessionFromStdContext(ctx)
 	if userSession == nil {
 		return fmt.Errorf("no user session found")
@@ -1108,7 +1110,7 @@ func (s *RobnoDokumentaResource) GetPrikazNaloga(ctx context.Context, tbl *domai
 // and "Po operateru" are applied only when their checkbox is checked, like the legacy screen.
 //
 // The rows are ordered by the vrsta naloga, the broj naloga and the broj dokumenta.
-func (s *RobnoDokumentaResource) GetPrikazDokumenataUNalogu(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.PrikazNalogaParams) error {
+func (s *RobnoDokumentaResource) GetPrikazDokumenataUNalogu(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.RobnoDokumentaParams) error {
 	userSession := domain.GetSessionFromStdContext(ctx)
 	if userSession == nil {
 		return fmt.Errorf("no user session found")
@@ -1214,7 +1216,7 @@ func (s *RobnoDokumentaResource) GetPrikazDokumenataUNalogu(ctx context.Context,
 // checked, like the legacy screen does.
 //
 // The rows are ordered by the operater, the vrsta naloga, the broj naloga and the broj dokumenta.
-func (s *RobnoDokumentaResource) GetPrikazDokumenataPooperateru(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.PrikazNalogaParams) error {
+func (s *RobnoDokumentaResource) GetPrikazDokumenataPooperateru(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.RobnoDokumentaParams) error {
 	userSession := domain.GetSessionFromStdContext(ctx)
 	if userSession == nil {
 		return fmt.Errorf("no user session found")

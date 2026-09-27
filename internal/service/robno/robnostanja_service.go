@@ -88,7 +88,7 @@ func (s *RobnoStanjaResource) GetStanjePojedinacnogArtikla(ctx context.Context, 
 		qb.AddEqual("drsta.kar", userSession.SelectedKar)
 	}
 	if params.Magacin != 0 {
-		qb.AddEqual("drsta.magaciniid", params.Magacin)
+		qb.AddEqual("drsta.magaciniid", params.MagaciniID)
 	}
 	if params.Konto != "" {
 		qb.AddEqual("drsta.konto", params.Konto)
@@ -101,10 +101,7 @@ func (s *RobnoStanjaResource) GetStanjePojedinacnogArtikla(ctx context.Context, 
 		qb.SetLimit(pageSize)
 		qb.SetOffset((currentPage - 1) * pageSize)
 	}
-	if !getTotalRecords && printType == common.TipStampePreview {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
-	}
+
 	sqlQuery, args := qb.Build()
 	entities, err := s.robnostanjeRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
 	if err != nil {

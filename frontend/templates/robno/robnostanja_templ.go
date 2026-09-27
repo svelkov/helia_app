@@ -1066,7 +1066,7 @@ func RobnoSvodjenjeZaliha(tabs domain.TabData, tbl domain.TableData, magValues, 
 			templ_7745c5c3_Var19 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 62, "<div class=\"bg-blue-100 p-1 flex flex-col h-full\"><div class=\"border-b border-blue-600\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 62, "<div class=\"bg-blue-100 flex flex-col h-full\"><div class=\"border-b border-blue-600\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1074,7 +1074,7 @@ func RobnoSvodjenjeZaliha(tabs domain.TabData, tbl domain.TableData, magValues, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 63, "</div><div class=\"flex-1 min-h-0 flex flex-col gap-1 pt-1\"><div class=\"grid grid-cols-2 gap-2 items-stretch\"><!-- Left column: magacin, način svođenja, opseg šifri, obrada --><fieldset class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1\"><legend class=\"px-1 font-semibold text-sm text-blue-900\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 63, "</div><div class=\"flex-1 min-h-0 flex flex-col gap-1\"><div class=\"grid grid-cols-2 gap-1 items-stretch\"><!-- Left column: magacin, način svođenja, opseg šifri, obrada --><fieldset class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1\"><legend class=\"px-1 font-semibold text-sm text-blue-900\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1127,7 +1127,7 @@ func RobnoSvodjenjeZaliha(tabs domain.TabData, tbl domain.TableData, magValues, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "odsifre", Name: "odsifre", FieldType: "number", ClassInput: common.ClassInputTextEnabled + " flex-1", TabIndex: "2"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "odsifre", Name: "odsifre", FieldType: "number", Value: "0", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "2"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1139,7 +1139,7 @@ func RobnoSvodjenjeZaliha(tabs domain.TabData, tbl domain.TableData, magValues, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "dosifre", Name: "dosifre", FieldType: "number", ClassInput: common.ClassInputTextEnabled + " flex-1", TabIndex: "3"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "dosifre", Name: "dosifre", FieldType: "number", Value: "999999", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "3"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1318,7 +1318,7 @@ func RobnoStanjeArtikalUkupnaObrada(total domain.RobnoStanjaTotal, translator *i
 			templ_7745c5c3_Var22 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 81, "<div id=\"robnostanja-artikal-ukupna-obrada\" class=\"flex flex-col gap-1\" hx-get=\"/api/robno-stanja/totalvalues\" hx-trigger=\"click from:#obrada-btn\" hx-target=\"#totalvalues\" hx-swap=\"innerHTML\" hx-vals=\"js:{\r\n            magacin: document.getElementById(&#39;magacin&#39;)?.value,\r\n            konto: document.getElementById(&#39;konto&#39;)?.value,\r\n            sifra: document.getElementById(&#39;sifra&#39;)?.value\r\n        }\"><!-- Ulaz | Duguje --><div class=\"grid grid-cols-2 gap-1 items-center\"><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 81, "<div id=\"robnostanja-artikal-ukupna-obrada\" class=\"flex flex-col gap-1\" hx-get=\"/api/robno-stanja/totalvalues\" hx-trigger=\"click from:#obrada-btn\" hx-target=\"#robnostanja-artikal-ukupna-obrada\" hx-swap=\"innerHTML\" hx-vals=\"js:{\r\n            magacin: document.getElementById(&#39;magacin&#39;)?.value,\r\n            konto: document.getElementById(&#39;konto&#39;)?.value,\r\n            sifra: document.getElementById(&#39;sifra&#39;)?.value\r\n        }\"><!-- Ulaz | Duguje --><div class=\"grid grid-cols-2 gap-1 items-center\"><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

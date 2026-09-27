@@ -475,12 +475,12 @@ templ RobnoStanjeSubsintetickogKonta(tabs domain.TabData, tbl domain.TableData, 
 }
 
 templ RobnoSvodjenjeZaliha(tabs domain.TabData, tbl domain.TableData, magValues, tipdokValues, ojValues, mestoTroskaValues []domain.ComboItem, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
-	<div class="bg-blue-100 p-1 flex flex-col h-full">
+	<div class="bg-blue-100 flex flex-col h-full">
 		<div class="border-b border-blue-600">
 			@tmpl.TabNav(translator.Title("Robno stanje"), tabs, "#tab-content", "robno-stanja-panel", translator)
 		</div>
-		<div class="flex-1 min-h-0 flex flex-col gap-1 pt-1">
-			<div class="grid grid-cols-2 gap-2 items-stretch">
+		<div class="flex-1 min-h-0 flex flex-col gap-1">
+			<div class="grid grid-cols-2 gap-1 items-stretch">
 				<!-- Left column: magacin, način svođenja, opseg šifri, obrada -->
 				<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1">
 					<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Parametri za obradu") }</legend>
@@ -501,11 +501,11 @@ templ RobnoSvodjenjeZaliha(tabs domain.TabData, tbl domain.TableData, magValues,
 						<div class="flex flex-col gap-1">
 							<div class="flex items-center gap-1">
 								@components.LabelField(domain.LabelFieldConfig{ID: "odsifre", LabelText: translator.Label("Od šifre artikla"), ClassLabel: common.ClassLabel + " w-36"})
-								@components.TextInputField(domain.InputFieldConfig{ID: "odsifre", Name: "odsifre", FieldType: "number", ClassInput: common.ClassInputTextEnabled + " flex-1", TabIndex: "2"})
+								@components.TextInputField(domain.InputFieldConfig{ID: "odsifre", Name: "odsifre", FieldType: "number", Value: "0", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "2"})
 							</div>
 							<div class="flex items-center gap-1">
 								@components.LabelField(domain.LabelFieldConfig{ID: "dosifre", LabelText: translator.Label("Do šifre artikla"), ClassLabel: common.ClassLabel + " w-36"})
-								@components.TextInputField(domain.InputFieldConfig{ID: "dosifre", Name: "dosifre", FieldType: "number", ClassInput: common.ClassInputTextEnabled + " flex-1", TabIndex: "3"})
+								@components.TextInputField(domain.InputFieldConfig{ID: "dosifre", Name: "dosifre", FieldType: "number", Value: "999999", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "3"})
 							</div>
 							<div class="flex items-center gap-1">
 								@components.CheckboxField(domain.CheckboxFieldConfig{ID: "obradiartiklesastanjem", Name: "obradiartiklesastanjem", LabelText: "Obradi artikle sa stanjem <> 0", ClassCheckbox: common.ClassCheckbox + " mr-2", ClassLabel: common.ClassLabel + " flex items-center"}, translator)
@@ -589,7 +589,7 @@ templ RobnoStanjeArtikalUkupnaObrada(total domain.RobnoStanjaTotal, translator *
 		class="flex flex-col gap-1"
 		hx-get="/api/robno-stanja/totalvalues"
 		hx-trigger="click from:#obrada-btn"
-		hx-target="#totalvalues"
+		hx-target="#robnostanja-artikal-ukupna-obrada"
 		hx-swap="innerHTML"
 		hx-vals="js:{
             magacin: document.getElementById('magacin')?.value,

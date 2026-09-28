@@ -1742,91 +1742,86 @@ func ZakljucniListReportSummary(params domain.ZakljucniStampaParams, tblSummary 
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 145, "<!-- Rekapitulacija po klasama --><div class=\"mt-6\"><div class=\"text-[11px] font-bold mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 145, "<!-- Page break: gray gap on screen, real break on print - the rekapitulacija and the signatures are\r\n\t     printed on a page of their own (same markup the shared report layout uses before its summary). --><div class=\"print:hidden -mx-8 h-16 bg-gray-200 border-y border-gray-300\"></div><div class=\"hidden print:block\" style=\"break-before: page;\"></div><!-- Rekapitulacija po klasama: no-break keeps the table on the page it starts on --><div class=\"pt-10 print:pt-8 no-break\"><!-- The header of the report is printed on the page of the summary as well (on screen it stays\r\n\t\t     only above the table; on the other pages the main table repeats it through its <thead>). --><div class=\"hidden print:block mb-2 no-export\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = ZakljucniListReportHeader(params, translator).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 146, "</div><div class=\"text-[11px] font-bold mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var113 string
 		templ_7745c5c3_Var113, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("rekapitulacija_po_klasama"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 277, Col: 89}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 286, Col: 89}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var113))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 146, ":</div><table class=\"w-full table-fixed border-collapse text-[10px] border border-black [border-collapse:collapse]\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 147, ":</div><table class=\"w-full table-fixed border-collapse text-[10px] border border-black [border-collapse:collapse]\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if params.ZaBanku == "false" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 147, "<colgroup><col style=\"width:4%\"> <col style=\"width:6%\"> <col style=\"width:5%\"> <col style=\"width:18%\"> <col style=\"width:12%\"> <col style=\"width:12%\"> <col style=\"width:12%\"> <col style=\"width:12%\"> <col style=\"width:12%\"> <col style=\"width:12%\"> <col style=\"width:12%\"> <col style=\"width:12%\"></colgroup> ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 148, "<colgroup><col style=\"width:4%\"> <col style=\"width:6%\"> <col style=\"width:5%\"> <col style=\"width:18%\"> <col style=\"width:12%\"> <col style=\"width:12%\"> <col style=\"width:12%\"> <col style=\"width:12%\"> <col style=\"width:12%\"> <col style=\"width:12%\"> <col style=\"width:12%\"> <col style=\"width:12%\"></colgroup> ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		} else {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 148, "<colgroup><col style=\"width:4%\"> <col style=\"width:8%\"> <col style=\"width:6%\"> <col style=\"width:31%\"> <col style=\"width:12%\"> <col style=\"width:12%\"> <col style=\"width:12%\"> <col style=\"width:12%\"></colgroup> ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 149, "<colgroup><col style=\"width:4%\"> <col style=\"width:8%\"> <col style=\"width:6%\"> <col style=\"width:31%\"> <col style=\"width:12%\"> <col style=\"width:12%\"> <col style=\"width:12%\"> <col style=\"width:12%\"></colgroup> ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 149, "<tbody>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 150, "<tbody>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		for _, row := range tblSummary.Rows {
 			if len(row.Fields) < 12 {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 150, "continue")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 151, "continue")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 151, " ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 152, " ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			if row.Fields[0] == "T" {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 152, "<tr class=\"font-bold bg-gray-400 border-t-2 border-black\"><td colspan=\"4\" class=\"border border-black px-1 py-[2px] text-right font-bold\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 153, "<tr class=\"font-bold bg-gray-400 border-t-2 border-black\"><td colspan=\"4\" class=\"border border-black px-1 py-[2px] text-right font-bold\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var114 string
 				templ_7745c5c3_Var114, templ_7745c5c3_Err = templ.JoinStringErrs(row.Fields[3])
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 313, Col: 101}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 322, Col: 101}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var114))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 153, "</td>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 154, "</td>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				if params.ZaBanku == "false" {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 154, "<td class=\"border border-black px-1 py-[2px] text-right font-bold\">")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 155, "<td class=\"border border-black px-1 py-[2px] text-right font-bold\">")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 					var templ_7745c5c3_Var115 string
 					templ_7745c5c3_Var115, templ_7745c5c3_Err = templ.JoinStringErrs(row.Fields[4])
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 315, Col: 90}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 324, Col: 90}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var115))
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 155, "</td><td class=\"border border-black px-1 py-[2px] text-right font-bold\">")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					var templ_7745c5c3_Var116 string
-					templ_7745c5c3_Var116, templ_7745c5c3_Err = templ.JoinStringErrs(row.Fields[5])
-					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 316, Col: 90}
-					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var116))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -1834,12 +1829,12 @@ func ZakljucniListReportSummary(params domain.ZakljucniStampaParams, tblSummary 
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					var templ_7745c5c3_Var117 string
-					templ_7745c5c3_Var117, templ_7745c5c3_Err = templ.JoinStringErrs(row.Fields[6])
+					var templ_7745c5c3_Var116 string
+					templ_7745c5c3_Var116, templ_7745c5c3_Err = templ.JoinStringErrs(row.Fields[5])
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 317, Col: 90}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 325, Col: 90}
 					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var117))
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var116))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -1847,43 +1842,43 @@ func ZakljucniListReportSummary(params domain.ZakljucniStampaParams, tblSummary 
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
+					var templ_7745c5c3_Var117 string
+					templ_7745c5c3_Var117, templ_7745c5c3_Err = templ.JoinStringErrs(row.Fields[6])
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 326, Col: 90}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var117))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 158, "</td><td class=\"border border-black px-1 py-[2px] text-right font-bold\">")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
 					var templ_7745c5c3_Var118 string
 					templ_7745c5c3_Var118, templ_7745c5c3_Err = templ.JoinStringErrs(row.Fields[7])
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 318, Col: 90}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 327, Col: 90}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var118))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 158, "</td>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 159, "</td>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 159, "<td class=\"border border-black px-1 py-[2px] text-right font-bold\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 160, "<td class=\"border border-black px-1 py-[2px] text-right font-bold\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var119 string
 				templ_7745c5c3_Var119, templ_7745c5c3_Err = templ.JoinStringErrs(row.Fields[8])
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 320, Col: 89}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 329, Col: 89}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var119))
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 160, "</td><td class=\"border border-black px-1 py-[2px] text-right font-bold\">")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var120 string
-				templ_7745c5c3_Var120, templ_7745c5c3_Err = templ.JoinStringErrs(row.Fields[9])
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 321, Col: 89}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var120))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -1891,12 +1886,12 @@ func ZakljucniListReportSummary(params domain.ZakljucniStampaParams, tblSummary 
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var121 string
-				templ_7745c5c3_Var121, templ_7745c5c3_Err = templ.JoinStringErrs(row.Fields[10])
+				var templ_7745c5c3_Var120 string
+				templ_7745c5c3_Var120, templ_7745c5c3_Err = templ.JoinStringErrs(row.Fields[9])
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 322, Col: 90}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 330, Col: 89}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var121))
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var120))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -1904,61 +1899,61 @@ func ZakljucniListReportSummary(params domain.ZakljucniStampaParams, tblSummary 
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
+				var templ_7745c5c3_Var121 string
+				templ_7745c5c3_Var121, templ_7745c5c3_Err = templ.JoinStringErrs(row.Fields[10])
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 331, Col: 90}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var121))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 163, "</td><td class=\"border border-black px-1 py-[2px] text-right font-bold\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
 				var templ_7745c5c3_Var122 string
 				templ_7745c5c3_Var122, templ_7745c5c3_Err = templ.JoinStringErrs(row.Fields[11])
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 323, Col: 90}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 332, Col: 90}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var122))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 163, "</td></tr>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 164, "</td></tr>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			} else {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 164, "<tr class=\"border-t border-black\"><td colspan=\"4\" class=\"border border-black px-1 py-[2px] text-right\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 165, "<tr class=\"border-t border-black bg-gray-200 print:bg-gray-200\"><td colspan=\"4\" class=\"border border-black px-1 py-[2px] text-right\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var123 string
 				templ_7745c5c3_Var123, templ_7745c5c3_Err = templ.JoinStringErrs(row.Fields[3])
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 327, Col: 91}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 336, Col: 91}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var123))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 165, "</td>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 166, "</td>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				if params.ZaBanku == "false" {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 166, "<td class=\"border border-black px-1 py-[2px] text-right\">")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 167, "<td class=\"border border-black px-1 py-[2px] text-right\">")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 					var templ_7745c5c3_Var124 string
 					templ_7745c5c3_Var124, templ_7745c5c3_Err = templ.JoinStringErrs(row.Fields[4])
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 329, Col: 80}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 338, Col: 80}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var124))
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 167, "</td><td class=\"border border-black px-1 py-[2px] text-right\">")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					var templ_7745c5c3_Var125 string
-					templ_7745c5c3_Var125, templ_7745c5c3_Err = templ.JoinStringErrs(row.Fields[5])
-					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 330, Col: 80}
-					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var125))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -1966,12 +1961,12 @@ func ZakljucniListReportSummary(params domain.ZakljucniStampaParams, tblSummary 
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					var templ_7745c5c3_Var126 string
-					templ_7745c5c3_Var126, templ_7745c5c3_Err = templ.JoinStringErrs(row.Fields[6])
+					var templ_7745c5c3_Var125 string
+					templ_7745c5c3_Var125, templ_7745c5c3_Err = templ.JoinStringErrs(row.Fields[5])
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 331, Col: 80}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 339, Col: 80}
 					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var126))
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var125))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -1979,43 +1974,43 @@ func ZakljucniListReportSummary(params domain.ZakljucniStampaParams, tblSummary 
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
+					var templ_7745c5c3_Var126 string
+					templ_7745c5c3_Var126, templ_7745c5c3_Err = templ.JoinStringErrs(row.Fields[6])
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 340, Col: 80}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var126))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 170, "</td><td class=\"border border-black px-1 py-[2px] text-right\">")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
 					var templ_7745c5c3_Var127 string
 					templ_7745c5c3_Var127, templ_7745c5c3_Err = templ.JoinStringErrs(row.Fields[7])
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 332, Col: 80}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 341, Col: 80}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var127))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 170, "</td>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 171, "</td>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 171, "<td class=\"border border-black px-1 py-[2px] text-right\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 172, "<td class=\"border border-black px-1 py-[2px] text-right\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var128 string
 				templ_7745c5c3_Var128, templ_7745c5c3_Err = templ.JoinStringErrs(row.Fields[8])
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 334, Col: 79}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 343, Col: 79}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var128))
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 172, "</td><td class=\"border border-black px-1 py-[2px] text-right\">")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var129 string
-				templ_7745c5c3_Var129, templ_7745c5c3_Err = templ.JoinStringErrs(row.Fields[9])
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 335, Col: 79}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var129))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -2023,12 +2018,12 @@ func ZakljucniListReportSummary(params domain.ZakljucniStampaParams, tblSummary 
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var130 string
-				templ_7745c5c3_Var130, templ_7745c5c3_Err = templ.JoinStringErrs(row.Fields[10])
+				var templ_7745c5c3_Var129 string
+				templ_7745c5c3_Var129, templ_7745c5c3_Err = templ.JoinStringErrs(row.Fields[9])
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 336, Col: 80}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 344, Col: 79}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var130))
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var129))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -2036,74 +2031,87 @@ func ZakljucniListReportSummary(params domain.ZakljucniStampaParams, tblSummary 
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
+				var templ_7745c5c3_Var130 string
+				templ_7745c5c3_Var130, templ_7745c5c3_Err = templ.JoinStringErrs(row.Fields[10])
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 345, Col: 80}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var130))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 175, "</td><td class=\"border border-black px-1 py-[2px] text-right\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
 				var templ_7745c5c3_Var131 string
 				templ_7745c5c3_Var131, templ_7745c5c3_Err = templ.JoinStringErrs(row.Fields[11])
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 337, Col: 80}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 346, Col: 80}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var131))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 175, "</td></tr>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 176, "</td></tr>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 176, "</tbody></table></div><!-- Signature block --><div class=\"mt-8 flex justify-between items-end text-[10px]\"><!-- Left: U / Dana --><div class=\"flex flex-col gap-4 w-[22%]\"><div class=\"flex items-end gap-1\"><span>U</span><div class=\"border-b border-black flex-1 mb-[2px]\"></div></div><div class=\"flex items-end gap-1\"><span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 177, "</tbody></table></div><!-- Signature block: kept on the same page as the rekapitulacija (no-break) --><div class=\"mt-8 flex justify-between items-end text-[10px] no-break\"><!-- Left: U / Dana --><div class=\"flex flex-col gap-4 w-[22%]\"><div class=\"flex items-end gap-1\"><span>U</span><div class=\"border-b border-black flex-1 mb-[2px]\"></div></div><div class=\"flex items-end gap-1\"><span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var132 string
 		templ_7745c5c3_Var132, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Dana"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 353, Col: 36}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 362, Col: 36}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var132))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 177, "</span><div class=\"border-b border-black flex-1 mb-[2px]\"></div><span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 178, "</span><div class=\"border-b border-black flex-1 mb-[2px]\"></div><span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var133 string
 		templ_7745c5c3_Var133, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("godine"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 355, Col: 38}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 364, Col: 38}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var133))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 178, "</span></div></div><!-- Center: Lice odgovorno --><div class=\"flex flex-col items-center gap-4 w-[32%]\"><div class=\"border-b border-black w-full\"></div><div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 179, "</span></div></div><!-- Center: Lice odgovorno --><div class=\"flex flex-col items-center gap-4 w-[32%]\"><div class=\"border-b border-black w-full\"></div><div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var134 string
 		templ_7745c5c3_Var134, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("lice odgovorno za sastavljanje bilansa"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 361, Col: 68}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 370, Col: 68}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var134))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 179, "</div></div><!-- Right: Rukovodilac --><div class=\"flex flex-col items-center gap-4 w-[32%]\"><div class=\"border-b border-black w-full\"></div><div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 180, "</div></div><!-- Right: Rukovodilac --><div class=\"flex flex-col items-center gap-4 w-[32%]\"><div class=\"border-b border-black w-full\"></div><div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var135 string
 		templ_7745c5c3_Var135, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("rukovodilac pravnog lica"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 366, Col: 54}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 375, Col: 54}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var135))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 180, "</div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 181, "</div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2200,274 +2208,274 @@ func BilansStanjaReportHeader(params domain.BilansiStampaParams, tbl domain.Tabl
 			templ_7745c5c3_Var138 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 181, "<div class=\"mb-2 text-right font-semibold\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 182, "<div class=\"mb-2 text-right font-semibold\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var139 string
 		templ_7745c5c3_Var139, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Prilog 2"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 385, Col: 32}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 394, Col: 32}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var139))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 182, "</div><!-- Official header --><table class=\"mb-3 w-full table-fixed border border-black text-center text-[10px] [border-collapse:collapse]\"><colgroup><col span=\"24\" class=\"w-[4.166%]\"></colgroup> <tbody><tr><td colspan=\"24\" class=\"h-5 border border-black font-semibold\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 183, "</div><!-- Official header --><table class=\"mb-3 w-full table-fixed border border-black text-center text-[10px] [border-collapse:collapse]\"><colgroup><col span=\"24\" class=\"w-[4.166%]\"></colgroup> <tbody><tr><td colspan=\"24\" class=\"h-5 border border-black font-semibold\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var140 string
 		templ_7745c5c3_Var140, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Popunjava pravno lice - preduzetnik"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 395, Col: 62}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 404, Col: 62}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var140))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 183, "</td></tr><!-- 24 small boxes --><tr>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 184, "</td></tr><!-- 24 small boxes --><tr>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		for i := 0; i < 8; i++ {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 184, "<td class=\"border border-black text-sm font-bold\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 185, "<td class=\"border border-black text-sm font-bold\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var141 string
 			templ_7745c5c3_Var141, templ_7745c5c3_Err = templ.JoinStringErrs(common.BilansCharAt(params.MaticniBroj, i))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 401, Col: 99}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 410, Col: 99}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var141))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 185, "</td>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 186, "</td>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 186, "<td class=\"border border-black\"></td><td class=\"border border-black\"></td><td class=\"border border-black\"></td><td class=\"border border-black\"></td><td class=\"border border-black\"></td><td class=\"border border-black\"></td><td class=\"border border-black\"></td>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 187, "<td class=\"border border-black\"></td><td class=\"border border-black\"></td><td class=\"border border-black\"></td><td class=\"border border-black\"></td><td class=\"border border-black\"></td><td class=\"border border-black\"></td><td class=\"border border-black\"></td>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		for i := 0; i < 9; i++ {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 187, "<td class=\"border border-black text-sm font-bold\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 188, "<td class=\"border border-black text-sm font-bold\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var142 string
 			templ_7745c5c3_Var142, templ_7745c5c3_Err = templ.JoinStringErrs(common.BilansCharAt(params.PIB, i))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 411, Col: 91}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 420, Col: 91}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var142))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 188, "</td>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 189, "</td>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 189, "</tr><!-- Labels --><tr><td colspan=\"8\" class=\"h-5 border border-black font-semibold\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 190, "</tr><!-- Labels --><tr><td colspan=\"8\" class=\"h-5 border border-black font-semibold\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var143 string
 		templ_7745c5c3_Var143, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Matični broj"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 417, Col: 40}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 426, Col: 40}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var143))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 190, "</td><td class=\"border border-black\"></td><td colspan=\"5\" class=\"border border-black font-semibold\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 191, "</td><td class=\"border border-black\"></td><td colspan=\"5\" class=\"border border-black font-semibold\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var144 string
 		templ_7745c5c3_Var144, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Šifra delatnosti"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 421, Col: 44}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 430, Col: 44}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var144))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 191, "</td><td class=\"border border-black\"></td><td colspan=\"9\" class=\"border border-black font-semibold\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 192, "</td><td class=\"border border-black\"></td><td colspan=\"9\" class=\"border border-black font-semibold\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var145 string
 		templ_7745c5c3_Var145, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("PIB"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 425, Col: 30}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 434, Col: 30}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var145))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 192, "</td></tr><tr><td colspan=\"24\" class=\"h-5 border border-black font-semibold\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 193, "</td></tr><tr><td colspan=\"24\" class=\"h-5 border border-black font-semibold\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var146 string
 		templ_7745c5c3_Var146, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Popunjava Agencija za privredne registre"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 430, Col: 67}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 439, Col: 67}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var146))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 193, "</td></tr><!-- Empty APR row above numbers --><tr><td class=\"h-7 border border-black\"></td><td class=\"border border-black\"></td><td class=\"border border-black\"></td><td colspan=\"9\" class=\"border border-black\"></td><td class=\"border border-black\"></td><td colspan=\"4\" class=\"border border-black\"></td><td class=\"border border-black\"></td><td class=\"border border-black\"></td><td class=\"border border-black\"></td><td class=\"border border-black\"></td><td class=\"border border-black\"></td><td class=\"border border-black\"></td><td class=\"border border-black\"></td></tr><!-- Number row: 1 2 3, 19, 20-26 --><tr><td class=\"border border-black\">1</td><td class=\"border border-black\">2</td><td class=\"border border-black\">3</td><td colspan=\"9\" class=\"border border-black\"></td><td class=\"border border-black\">19</td><td colspan=\"4\" class=\"border border-black\"></td><td class=\"border border-black\">20</td><td class=\"border border-black\">21</td><td class=\"border border-black\">22</td><td class=\"border border-black\">23</td><td class=\"border border-black\">24</td><td class=\"border border-black\">25</td><td class=\"border border-black\">26</td></tr><tr><td colspan=\"3\" class=\"h-5 border border-black font-semibold\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 194, "</td></tr><!-- Empty APR row above numbers --><tr><td class=\"h-7 border border-black\"></td><td class=\"border border-black\"></td><td class=\"border border-black\"></td><td colspan=\"9\" class=\"border border-black\"></td><td class=\"border border-black\"></td><td colspan=\"4\" class=\"border border-black\"></td><td class=\"border border-black\"></td><td class=\"border border-black\"></td><td class=\"border border-black\"></td><td class=\"border border-black\"></td><td class=\"border border-black\"></td><td class=\"border border-black\"></td><td class=\"border border-black\"></td></tr><!-- Number row: 1 2 3, 19, 20-26 --><tr><td class=\"border border-black\">1</td><td class=\"border border-black\">2</td><td class=\"border border-black\">3</td><td colspan=\"9\" class=\"border border-black\"></td><td class=\"border border-black\">19</td><td colspan=\"4\" class=\"border border-black\"></td><td class=\"border border-black\">20</td><td class=\"border border-black\">21</td><td class=\"border border-black\">22</td><td class=\"border border-black\">23</td><td class=\"border border-black\">24</td><td class=\"border border-black\">25</td><td class=\"border border-black\">26</td></tr><tr><td colspan=\"3\" class=\"h-5 border border-black font-semibold\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var147 string
 		templ_7745c5c3_Var147, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Vrsta posla"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 467, Col: 38}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 476, Col: 38}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var147))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 194, "</td><td colspan=\"21\" class=\"border border-black\"></td></tr></tbody></table><div class=\"mt-4 space-y-3\"><div class=\"flex gap-2\"><span class=\"text-xs\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 195, "</td><td colspan=\"21\" class=\"border border-black\"></td></tr></tbody></table><div class=\"mt-4 space-y-3\"><div class=\"flex gap-2\"><span class=\"text-xs\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var148 string
 		templ_7745c5c3_Var148, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Naziv"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 475, Col: 52}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 484, Col: 52}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var148))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 195, ":</span><div class=\"flex-1 text-sm font-bold border-b border-black\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 196, ":</span><div class=\"flex-1 text-sm font-bold border-b border-black\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var149 string
 		templ_7745c5c3_Var149, templ_7745c5c3_Err = templ.JoinStringErrs(params.Naziv)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 476, Col: 77}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 485, Col: 77}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var149))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 196, "</div></div><div class=\"flex gap-2\"><span class=\"text-xs\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 197, "</div></div><div class=\"flex gap-2\"><span class=\"text-xs\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var150 string
 		templ_7745c5c3_Var150, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Sedište"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 479, Col: 55}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 488, Col: 55}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var150))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 197, ":</span><div class=\"flex-1 text-sm font-bold border-b border-black\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 198, ":</span><div class=\"flex-1 text-sm font-bold border-b border-black\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var151 string
 		templ_7745c5c3_Var151, templ_7745c5c3_Err = templ.JoinStringErrs(params.Adresa)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 480, Col: 78}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 489, Col: 78}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var151))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 198, ", ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 199, ", ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var152 string
 		templ_7745c5c3_Var152, templ_7745c5c3_Err = templ.JoinStringErrs(params.PostBroj)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 480, Col: 99}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 489, Col: 99}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var152))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 199, " ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 200, " ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var153 string
 		templ_7745c5c3_Var153, templ_7745c5c3_Err = templ.JoinStringErrs(params.Mesto)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 480, Col: 116}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 489, Col: 116}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var153))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 200, "</div></div></div><div class=\"mt-8 mb-4 text-center\"><h1 class=\"text-lg font-bold tracking-wide\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 201, "</div></div></div><div class=\"mt-8 mb-4 text-center\"><h1 class=\"text-lg font-bold tracking-wide\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var154 string
 		templ_7745c5c3_Var154, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Title("Bilans stanja"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 484, Col: 81}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 493, Col: 81}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var154))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 201, "</h1><div class=\"text-sm font-semibold\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 202, "</h1><div class=\"text-sm font-semibold\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var155 string
 		templ_7745c5c3_Var155, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Na dan"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 486, Col: 31}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 495, Col: 31}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var155))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 202, ": ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 203, ": ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var156 string
 		templ_7745c5c3_Var156, templ_7745c5c3_Err = templ.JoinStringErrs(params.OdDatuma)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 486, Col: 52}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 495, Col: 52}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var156))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 203, " ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 204, " ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var157 string
 		templ_7745c5c3_Var157, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("godine"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 486, Col: 83}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 495, Col: 83}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var157))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 204, "</div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 205, "</div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2496,163 +2504,163 @@ func BilansStanjaReportBody(params domain.BilansiStampaParams, tblStavke domain.
 			templ_7745c5c3_Var158 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 205, "<div class=\"mb-1 text-right text-[10px]\">- ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 206, "<div class=\"mb-1 text-right text-[10px]\">- ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var159 string
 		templ_7745c5c3_Var159, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("u hiljadama dinara"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 493, Col: 44}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 502, Col: 44}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var159))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 206, " -</div><table class=\"w-full table-fixed border bg-gray-200 border-black text-center [border-collapse:collapse]\"><!-- HEADER --><thead class=\"text-[11px]\"><!-- Row 1 --><tr><th rowspan=\"3\" class=\"border border-black px-1 w-[14%]\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 207, " -</div><table class=\"w-full table-fixed border bg-gray-200 border-black text-center [border-collapse:collapse]\"><!-- HEADER --><thead class=\"text-[11px]\"><!-- Row 1 --><tr><th rowspan=\"3\" class=\"border border-black px-1 w-[14%]\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var160 string
 		templ_7745c5c3_Var160, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Grupa računa,"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 501, Col: 41}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 510, Col: 41}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var160))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 207, "<br>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 208, "<br>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var161 string
 		templ_7745c5c3_Var161, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("račun"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 503, Col: 33}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 512, Col: 33}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var161))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 208, "</th><th rowspan=\"3\" class=\"border border-black px-1 w-[36%] tracking-[0.3em]\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 209, "</th><th rowspan=\"3\" class=\"border border-black px-1 w-[36%] tracking-[0.3em]\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var162 string
 		templ_7745c5c3_Var162, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("POZICIJA"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 506, Col: 35}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 515, Col: 35}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var162))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 209, "</th><th rowspan=\"3\" class=\"border border-black px-1 w-[6%]\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 210, "</th><th rowspan=\"3\" class=\"border border-black px-1 w-[6%]\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var163 string
 		templ_7745c5c3_Var163, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("AOP"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 509, Col: 30}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 518, Col: 30}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var163))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 210, "</th><th rowspan=\"3\" class=\"border border-black px-1 w-[10%]\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 211, "</th><th rowspan=\"3\" class=\"border border-black px-1 w-[10%]\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var164 string
 		templ_7745c5c3_Var164, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Napomena"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 512, Col: 35}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 521, Col: 35}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var164))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 211, "<br>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 212, "<br>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var165 string
 		templ_7745c5c3_Var165, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("broj"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 514, Col: 31}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 523, Col: 31}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var165))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 212, "</th><th colspan=\"3\" class=\"border border-black px-1 w-[34%]\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 213, "</th><th colspan=\"3\" class=\"border border-black px-1 w-[34%]\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var166 string
 		templ_7745c5c3_Var166, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Iznos"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 517, Col: 32}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 526, Col: 32}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var166))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 213, "</th></tr><!-- Row 2 --><tr><th rowspan=\"2\" class=\"border border-black px-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 214, "</th></tr><!-- Row 2 --><tr><th rowspan=\"2\" class=\"border border-black px-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var167 string
 		templ_7745c5c3_Var167, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Tekuća godina"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 523, Col: 41}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 532, Col: 41}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var167))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 214, "</th><th colspan=\"2\" class=\"border border-black px-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 215, "</th><th colspan=\"2\" class=\"border border-black px-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var168 string
 		templ_7745c5c3_Var168, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Prethodna godina"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 526, Col: 43}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 535, Col: 43}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var168))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 215, "</th></tr><!-- Row 3 --><tr><th class=\"border border-black px-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 216, "</th></tr><!-- Row 3 --><tr><th class=\"border border-black px-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var169 string
 		templ_7745c5c3_Var169, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Krajnje stanje"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 532, Col: 41}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 541, Col: 41}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var169))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 216, "<br>__ 20__</th><th class=\"border border-black px-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 217, "<br>__ 20__</th><th class=\"border border-black px-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var170 string
 		templ_7745c5c3_Var170, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Početno stanje"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 537, Col: 42}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 546, Col: 42}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var170))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 217, "<br>01.01.20__</th></tr><!-- Column numbers --><tr><th class=\"border border-black\">1</th><th class=\"border border-black\">2</th><th class=\"border border-black\">3</th><th class=\"border border-black\">4</th><th class=\"border border-black\">5</th><th class=\"border border-black\">6</th><th class=\"border border-black\">7</th></tr></thead>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 218, "<br>01.01.20__</th></tr><!-- Column numbers --><tr><th class=\"border border-black\">1</th><th class=\"border border-black\">2</th><th class=\"border border-black\">3</th><th class=\"border border-black\">4</th><th class=\"border border-black\">5</th><th class=\"border border-black\">6</th><th class=\"border border-black\">7</th></tr></thead>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2660,7 +2668,7 @@ func BilansStanjaReportBody(params domain.BilansiStampaParams, tblStavke domain.
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 218, "</table>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 219, "</table>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2689,98 +2697,98 @@ func BilansStanjaReportSummary(params domain.BilansiStampaParams, tblKonta domai
 			templ_7745c5c3_Var171 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 219, "<!-- FOOTER --><div class=\"mt-16 text-[11px]\"><!-- Top row --><div class=\"flex justify-between items-start\"><!-- Left --><div class=\"w-1/3\"><div class=\"mb-6\"><span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 220, "<!-- FOOTER --><div class=\"mt-16 text-[11px]\"><!-- Top row --><div class=\"flex justify-between items-start\"><!-- Left --><div class=\"w-1/3\"><div class=\"mb-6\"><span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var172 string
 		templ_7745c5c3_Var172, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("U"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 565, Col: 34}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 574, Col: 34}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var172))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 220, "</span><div class=\"border-b border-black w-40 mt-1\"></div></div><div class=\"flex items-end gap-2\"><span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 221, "</span><div class=\"border-b border-black w-40 mt-1\"></div></div><div class=\"flex items-end gap-2\"><span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var173 string
 		templ_7745c5c3_Var173, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Dana"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 569, Col: 37}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 578, Col: 37}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var173))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 221, "</span><div class=\"border-b border-black w-24\"></div><span>20</span><div class=\"border-b border-black w-12\"></div><span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 222, "</span><div class=\"border-b border-black w-24\"></div><span>20</span><div class=\"border-b border-black w-12\"></div><span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var174 string
 		templ_7745c5c3_Var174, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("godine"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 573, Col: 39}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 582, Col: 39}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var174))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 222, ".</span></div></div><!-- Center --><div class=\"w-1/3 text-center\"><div class=\"font-semibold leading-tight\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 223, ".</span></div></div><!-- Center --><div class=\"w-1/3 text-center\"><div class=\"font-semibold leading-tight\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var175 string
 		templ_7745c5c3_Var175, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Lice odgovorno za sastavljanje"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 579, Col: 57}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 588, Col: 57}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var175))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 223, "<br>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 224, "<br>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var176 string
 		templ_7745c5c3_Var176, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("finansijskog izveštaja"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 581, Col: 50}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 590, Col: 50}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var176))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 224, "</div><div class=\"border-b border-black w-56 mx-auto mt-8\"></div></div><!-- Right --><div class=\"w-1/3 text-center\"><div class=\"font-semibold\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 225, "</div><div class=\"border-b border-black w-56 mx-auto mt-8\"></div></div><!-- Right --><div class=\"w-1/3 text-center\"><div class=\"font-semibold\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var177 string
 		templ_7745c5c3_Var177, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Zakonski zastupnik"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 588, Col: 45}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 597, Col: 45}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var177))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 225, "</div><div class=\"border-b border-black w-56 mx-auto mt-8\"></div></div></div><!-- Bottom center --><div class=\"text-center mt-12 font-semibold text-lg\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 226, "</div><div class=\"border-b border-black w-56 mx-auto mt-8\"></div></div></div><!-- Bottom center --><div class=\"text-center mt-12 font-semibold text-lg\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var178 string
 		templ_7745c5c3_Var178, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("M.P."))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 595, Col: 29}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 604, Col: 29}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var178))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 226, "</div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 227, "</div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2877,257 +2885,244 @@ func BilansUspehaReportHeader(params domain.BilansiStampaParams, tbl domain.Tabl
 			templ_7745c5c3_Var181 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 227, "<div class=\"mb-2 text-right font-semibold\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 228, "<div class=\"mb-2 text-right font-semibold\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var182 string
 		templ_7745c5c3_Var182, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Prilog 2"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 614, Col: 32}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 623, Col: 32}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var182))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 228, "</div><!-- Official header --><table class=\"mb-3 w-full table-fixed border border-black text-center text-[10px] [border-collapse:collapse]\"><colgroup><col span=\"24\" class=\"w-[4.166%]\"></colgroup> <tbody><tr><td colspan=\"24\" class=\"h-5 border border-black font-semibold\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 229, "</div><!-- Official header --><table class=\"mb-3 w-full table-fixed border border-black text-center text-[10px] [border-collapse:collapse]\"><colgroup><col span=\"24\" class=\"w-[4.166%]\"></colgroup> <tbody><tr><td colspan=\"24\" class=\"h-5 border border-black font-semibold\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var183 string
 		templ_7745c5c3_Var183, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Popunjava pravno lice - preduzetnik"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 624, Col: 62}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 633, Col: 62}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var183))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 229, "</td></tr><!-- 24 small boxes --><tr>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 230, "</td></tr><!-- 24 small boxes --><tr>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		for i := 0; i < 8; i++ {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 230, "<td class=\"border border-black text-sm font-bold\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 231, "<td class=\"border border-black text-sm font-bold\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var184 string
 			templ_7745c5c3_Var184, templ_7745c5c3_Err = templ.JoinStringErrs(common.BilansCharAt(params.MaticniBroj, i))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 630, Col: 99}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 639, Col: 99}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var184))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 231, "</td>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 232, "</td>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 232, "<td class=\"border border-black\"></td><td class=\"border border-black\"></td><td class=\"border border-black\"></td><td class=\"border border-black\"></td><td class=\"border border-black\"></td><td class=\"border border-black\"></td><td class=\"border border-black\"></td>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 233, "<td class=\"border border-black\"></td><td class=\"border border-black\"></td><td class=\"border border-black\"></td><td class=\"border border-black\"></td><td class=\"border border-black\"></td><td class=\"border border-black\"></td><td class=\"border border-black\"></td>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		for i := 0; i < 9; i++ {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 233, "<td class=\"border border-black text-sm font-bold\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 234, "<td class=\"border border-black text-sm font-bold\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var185 string
 			templ_7745c5c3_Var185, templ_7745c5c3_Err = templ.JoinStringErrs(common.BilansCharAt(params.PIB, i))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 640, Col: 91}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 649, Col: 91}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var185))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 234, "</td>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 235, "</td>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 235, "</tr><!-- Labels --><tr><td colspan=\"8\" class=\"h-5 border border-black font-semibold\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 236, "</tr><!-- Labels --><tr><td colspan=\"8\" class=\"h-5 border border-black font-semibold\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var186 string
 		templ_7745c5c3_Var186, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Matični broj"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 646, Col: 40}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 655, Col: 40}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var186))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 236, "</td><td class=\"border border-black\"></td><td colspan=\"5\" class=\"border border-black font-semibold\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 237, "</td><td class=\"border border-black\"></td><td colspan=\"5\" class=\"border border-black font-semibold\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var187 string
 		templ_7745c5c3_Var187, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Šifra delatnosti"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 650, Col: 44}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 659, Col: 44}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var187))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 237, "</td><td class=\"border border-black\"></td><td colspan=\"9\" class=\"border border-black font-semibold\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 238, "</td><td class=\"border border-black\"></td><td colspan=\"9\" class=\"border border-black font-semibold\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var188 string
 		templ_7745c5c3_Var188, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("PIB"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 654, Col: 30}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 663, Col: 30}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var188))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 238, "</td></tr><tr><td colspan=\"24\" class=\"h-5 border border-black font-semibold\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 239, "</td></tr><tr><td colspan=\"24\" class=\"h-5 border border-black font-semibold\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var189 string
 		templ_7745c5c3_Var189, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Popunjava Agencija za privredne registre"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 659, Col: 67}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 668, Col: 67}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var189))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 239, "</td></tr><!-- Empty APR row above numbers --><tr><td class=\"h-7 border border-black\"></td><td class=\"border border-black\"></td><td class=\"border border-black\"></td><td colspan=\"9\" class=\"border border-black\"></td><td class=\"border border-black\"></td><td colspan=\"4\" class=\"border border-black\"></td><td class=\"border border-black\"></td><td class=\"border border-black\"></td><td class=\"border border-black\"></td><td class=\"border border-black\"></td><td class=\"border border-black\"></td><td class=\"border border-black\"></td><td class=\"border border-black\"></td></tr><!-- Number row: 1 2 3, 19, 20-26 --><tr><td class=\"border border-black\">1</td><td class=\"border border-black\">2</td><td class=\"border border-black\">3</td><td colspan=\"9\" class=\"border border-black\"></td><td class=\"border border-black\">19</td><td colspan=\"4\" class=\"border border-black\"></td><td class=\"border border-black\">20</td><td class=\"border border-black\">21</td><td class=\"border border-black\">22</td><td class=\"border border-black\">23</td><td class=\"border border-black\">24</td><td class=\"border border-black\">25</td><td class=\"border border-black\">26</td></tr><tr><td colspan=\"3\" class=\"h-5 border border-black font-semibold\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 240, "</td></tr><!-- Empty APR row above numbers --><tr><td class=\"h-7 border border-black\"></td><td class=\"border border-black\"></td><td class=\"border border-black\"></td><td colspan=\"9\" class=\"border border-black\"></td><td class=\"border border-black\"></td><td colspan=\"4\" class=\"border border-black\"></td><td class=\"border border-black\"></td><td class=\"border border-black\"></td><td class=\"border border-black\"></td><td class=\"border border-black\"></td><td class=\"border border-black\"></td><td class=\"border border-black\"></td><td class=\"border border-black\"></td></tr><!-- Number row: 1 2 3, 19, 20-26 --><tr><td class=\"border border-black\">1</td><td class=\"border border-black\">2</td><td class=\"border border-black\">3</td><td colspan=\"9\" class=\"border border-black\"></td><td class=\"border border-black\">19</td><td colspan=\"4\" class=\"border border-black\"></td><td class=\"border border-black\">20</td><td class=\"border border-black\">21</td><td class=\"border border-black\">22</td><td class=\"border border-black\">23</td><td class=\"border border-black\">24</td><td class=\"border border-black\">25</td><td class=\"border border-black\">26</td></tr><tr><td colspan=\"3\" class=\"h-5 border border-black font-semibold\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var190 string
 		templ_7745c5c3_Var190, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Vrsta posla"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 696, Col: 38}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 705, Col: 38}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var190))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 240, "</td><td colspan=\"21\" class=\"border border-black\"></td></tr></tbody></table><div class=\"mt-4 space-y-3\"><div class=\"flex gap-2\"><span class=\"text-xs\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 241, "</td><td colspan=\"21\" class=\"border border-black\"></td></tr></tbody></table><div class=\"mt-4 space-y-3\"><div class=\"flex gap-2\"><span class=\"text-xs\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var191 string
 		templ_7745c5c3_Var191, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Naziv"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 704, Col: 52}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 713, Col: 52}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var191))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 241, ":</span><div class=\"flex-1 text-sm font-bold border-b border-black\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 242, ":</span><div class=\"flex-1 text-sm font-bold border-b border-black\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var192 string
 		templ_7745c5c3_Var192, templ_7745c5c3_Err = templ.JoinStringErrs(params.Naziv)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 705, Col: 77}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 714, Col: 77}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var192))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 242, "</div></div><div class=\"flex gap-2\"><span class=\"text-xs\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 243, "</div></div><div class=\"flex gap-2\"><span class=\"text-xs\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var193 string
 		templ_7745c5c3_Var193, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Sedište"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 708, Col: 55}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 717, Col: 55}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var193))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 243, ":</span><div class=\"flex-1 text-sm font-bold border-b border-black\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 244, ":</span><div class=\"flex-1 text-sm font-bold border-b border-black\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var194 string
 		templ_7745c5c3_Var194, templ_7745c5c3_Err = templ.JoinStringErrs(params.Adresa)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 709, Col: 78}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 718, Col: 78}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var194))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 244, ", ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 245, ", ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var195 string
 		templ_7745c5c3_Var195, templ_7745c5c3_Err = templ.JoinStringErrs(params.PostBroj)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 709, Col: 99}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 718, Col: 99}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var195))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 245, " ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 246, " ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var196 string
 		templ_7745c5c3_Var196, templ_7745c5c3_Err = templ.JoinStringErrs(params.Mesto)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 709, Col: 116}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 718, Col: 116}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var196))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 246, "</div></div></div><div class=\"mt-8 mb-4 text-center\"><h1 class=\"text-lg font-bold tracking-wide\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 247, "</div></div></div><div class=\"mt-8 mb-4 text-center\"><h1 class=\"text-lg font-bold tracking-wide\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var197 string
 		templ_7745c5c3_Var197, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Title("Bilans uspeha"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 713, Col: 81}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 722, Col: 81}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var197))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 247, "</h1><div class=\"text-sm font-semibold\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 248, "</h1><div class=\"text-sm font-semibold\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var198 string
 		templ_7745c5c3_Var198, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("u periodu od"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 715, Col: 37}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 724, Col: 37}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var198))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 248, " ")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var199 string
-		templ_7745c5c3_Var199, templ_7745c5c3_Err = templ.JoinStringErrs(params.OdDatuma)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 715, Col: 57}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var199))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -3135,12 +3130,12 @@ func BilansUspehaReportHeader(params domain.BilansiStampaParams, tbl domain.Tabl
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var200 string
-		templ_7745c5c3_Var200, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("do"))
+		var templ_7745c5c3_Var199 string
+		templ_7745c5c3_Var199, templ_7745c5c3_Err = templ.JoinStringErrs(params.OdDatuma)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 715, Col: 84}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 724, Col: 57}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var200))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var199))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -3148,12 +3143,12 @@ func BilansUspehaReportHeader(params domain.BilansiStampaParams, tbl domain.Tabl
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var201 string
-		templ_7745c5c3_Var201, templ_7745c5c3_Err = templ.JoinStringErrs(params.DoDatuma)
+		var templ_7745c5c3_Var200 string
+		templ_7745c5c3_Var200, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("do"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 715, Col: 104}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 724, Col: 84}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var201))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var200))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -3161,16 +3156,29 @@ func BilansUspehaReportHeader(params domain.BilansiStampaParams, tbl domain.Tabl
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
+		var templ_7745c5c3_Var201 string
+		templ_7745c5c3_Var201, templ_7745c5c3_Err = templ.JoinStringErrs(params.DoDatuma)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 724, Col: 104}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var201))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 252, " ")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
 		var templ_7745c5c3_Var202 string
 		templ_7745c5c3_Var202, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("godine"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 715, Col: 135}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 724, Col: 135}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var202))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 252, "</div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 253, "</div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -3199,163 +3207,163 @@ func BilansUspehaReportBody(params domain.BilansiStampaParams, tblStavke domain.
 			templ_7745c5c3_Var203 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 253, "<div class=\"mb-1 text-right text-[10px]\">- ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 254, "<div class=\"mb-1 text-right text-[10px]\">- ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var204 string
 		templ_7745c5c3_Var204, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("u hiljadama dinara"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 722, Col: 44}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 731, Col: 44}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var204))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 254, " -</div><table class=\"w-full table-fixed border bg-gray-200 border-black text-center [border-collapse:collapse]\"><!-- HEADER --><thead class=\"text-[11px]\"><tr><th rowspan=\"2\" class=\"w-[13%] border border-black px-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 255, " -</div><table class=\"w-full table-fixed border bg-gray-200 border-black text-center [border-collapse:collapse]\"><!-- HEADER --><thead class=\"text-[11px]\"><tr><th rowspan=\"2\" class=\"w-[13%] border border-black px-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var205 string
 		templ_7745c5c3_Var205, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Grupa računa,"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 729, Col: 41}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 738, Col: 41}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var205))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 255, "<br>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 256, "<br>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var206 string
 		templ_7745c5c3_Var206, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("račun"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 731, Col: 33}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 740, Col: 33}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var206))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 256, "</th><th rowspan=\"2\" class=\"w-[42%] border border-black px-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 257, "</th><th rowspan=\"2\" class=\"w-[42%] border border-black px-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var207 string
 		templ_7745c5c3_Var207, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("POZICIJA"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 734, Col: 35}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 743, Col: 35}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var207))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 257, "</th><th rowspan=\"2\" class=\"w-[6%] border border-black px-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 258, "</th><th rowspan=\"2\" class=\"w-[6%] border border-black px-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var208 string
 		templ_7745c5c3_Var208, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("AOP"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 737, Col: 30}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 746, Col: 30}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var208))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 258, "</th><th rowspan=\"2\" class=\"w-[10%] border border-black px-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 259, "</th><th rowspan=\"2\" class=\"w-[10%] border border-black px-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var209 string
 		templ_7745c5c3_Var209, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Napomena"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 740, Col: 35}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 749, Col: 35}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var209))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 259, "<br>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 260, "<br>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var210 string
 		templ_7745c5c3_Var210, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("broj"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 742, Col: 31}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 751, Col: 31}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var210))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 260, "</th><th colspan=\"2\" class=\"w-[29%] border border-black px-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 261, "</th><th colspan=\"2\" class=\"w-[29%] border border-black px-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var211 string
 		templ_7745c5c3_Var211, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Iznos"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 745, Col: 32}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 754, Col: 32}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var211))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 261, "</th></tr><tr><th class=\"border border-black px-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 262, "</th></tr><tr><th class=\"border border-black px-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var212 string
 		templ_7745c5c3_Var212, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Tekuća"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 749, Col: 70}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 758, Col: 70}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var212))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 262, "<br>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 263, "<br>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var213 string
 		templ_7745c5c3_Var213, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("godina"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 749, Col: 105}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 758, Col: 105}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var213))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 263, "</th><th class=\"border border-black px-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 264, "</th><th class=\"border border-black px-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var214 string
 		templ_7745c5c3_Var214, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Prethodna"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 750, Col: 72}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 759, Col: 72}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var214))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 264, "<br>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 265, "<br>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var215 string
 		templ_7745c5c3_Var215, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("godina"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 750, Col: 107}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 759, Col: 107}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var215))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 265, "</th></tr><tr><th class=\"border border-black\">1</th><th class=\"border border-black\">2</th><th class=\"border border-black\">3</th><th class=\"border border-black\">4</th><th class=\"border border-black\">5</th><th class=\"border border-black\">6</th></tr></thead>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 266, "</th></tr><tr><th class=\"border border-black\">1</th><th class=\"border border-black\">2</th><th class=\"border border-black\">3</th><th class=\"border border-black\">4</th><th class=\"border border-black\">5</th><th class=\"border border-black\">6</th></tr></thead>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -3363,7 +3371,7 @@ func BilansUspehaReportBody(params domain.BilansiStampaParams, tblStavke domain.
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 266, "</table>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 267, "</table>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -3392,98 +3400,98 @@ func BilansUspehaReportSummary(params domain.BilansiStampaParams, tblKonta domai
 			templ_7745c5c3_Var216 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 267, "<!-- FOOTER --><div class=\"mt-16 text-[11px]\"><!-- Top row --><div class=\"flex justify-between items-start\"><!-- Left --><div class=\"w-1/3\"><div class=\"mb-6\"><span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 268, "<!-- FOOTER --><div class=\"mt-16 text-[11px]\"><!-- Top row --><div class=\"flex justify-between items-start\"><!-- Left --><div class=\"w-1/3\"><div class=\"mb-6\"><span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var217 string
 		templ_7745c5c3_Var217, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("U"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 773, Col: 34}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 782, Col: 34}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var217))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 268, "</span><div class=\"border-b border-black w-40 mt-1\"></div></div><div class=\"flex items-end gap-2\"><span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 269, "</span><div class=\"border-b border-black w-40 mt-1\"></div></div><div class=\"flex items-end gap-2\"><span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var218 string
 		templ_7745c5c3_Var218, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Dana"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 777, Col: 37}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 786, Col: 37}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var218))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 269, "</span><div class=\"border-b border-black w-24\"></div><span>20</span><div class=\"border-b border-black w-12\"></div><span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 270, "</span><div class=\"border-b border-black w-24\"></div><span>20</span><div class=\"border-b border-black w-12\"></div><span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var219 string
 		templ_7745c5c3_Var219, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("godine"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 781, Col: 39}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 790, Col: 39}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var219))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 270, ".</span></div></div><!-- Center --><div class=\"w-1/3 text-center\"><div class=\"font-semibold leading-tight\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 271, ".</span></div></div><!-- Center --><div class=\"w-1/3 text-center\"><div class=\"font-semibold leading-tight\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var220 string
 		templ_7745c5c3_Var220, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Lice odgovorno za sastavljanje"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 787, Col: 57}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 796, Col: 57}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var220))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 271, "<br>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 272, "<br>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var221 string
 		templ_7745c5c3_Var221, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("finansijskog izveštaja"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 789, Col: 50}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 798, Col: 50}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var221))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 272, "</div><div class=\"border-b border-black w-56 mx-auto mt-8\"></div></div><!-- Right --><div class=\"w-1/3 text-center\"><div class=\"font-semibold\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 273, "</div><div class=\"border-b border-black w-56 mx-auto mt-8\"></div></div><!-- Right --><div class=\"w-1/3 text-center\"><div class=\"font-semibold\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var222 string
 		templ_7745c5c3_Var222, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Zakonski zastupnik"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 796, Col: 45}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 805, Col: 45}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var222))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 273, "</div><div class=\"border-b border-black w-56 mx-auto mt-8\"></div></div></div><!-- Bottom center --><div class=\"text-center mt-12 font-semibold text-lg\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 274, "</div><div class=\"border-b border-black w-56 mx-auto mt-8\"></div></div></div><!-- Bottom center --><div class=\"text-center mt-12 font-semibold text-lg\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var223 string
 		templ_7745c5c3_Var223, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("M.P."))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 803, Col: 29}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/reports/finansijsko/bilansi.templ`, Line: 812, Col: 29}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var223))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 274, "</div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 275, "</div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

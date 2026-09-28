@@ -1384,7 +1384,6 @@ func (h *FnalHandler) NaloziStampaGrupaReport(c *gin.Context) {
 func (h *FnalHandler) AddRoutes(r *gin.Engine) {
 	// Create API group with prefix
 	//api := r.Group(naloziURLPrefix)
-	r.Use(middleware.Auth()) // Apply auth middleware to all routes in group
 
 	// Consolidate main view routes
 	r.GET("/api/nalozi/all", h.GetNalogMainView)

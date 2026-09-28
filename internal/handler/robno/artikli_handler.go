@@ -370,8 +370,6 @@ func (h *ArtikliHandler) UnlockArtikli(c *gin.Context) {
 }
 
 func (h *ArtikliHandler) AddRoutes(r *gin.Engine) {
-	r.Use(middleware.Auth())
-
 	r.POST("/api/artikli", h.CreateArtikli)
 	r.GET("/api/artikli/all", h.GetAllArtikli)
 	r.GET("/api/artikli/stampa", h.ArtikliStampa)

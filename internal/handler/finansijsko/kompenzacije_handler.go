@@ -89,7 +89,7 @@ func (h *KompenzacijeHandler) KompenzacijeMain(c *gin.Context) {
 	tbl := common.SetTableBasicData(kompenzacijeContentTitle, kompenzacijePregledTableID, h.service.GetPregledPartneraTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tbl, "PREGLED PARTNERA ZA FORMIRANJE KOMPENZACIJE", kompenzacijeURLPregledPartnera, false, false, false)
 
-	setActiveKompenzacijeTab(&h.tabData, "pregledpartnera")
+	setActiveKompenzacijeTab(h.tabData, "pregledpartnera")
 	err := tmpl_fin.KompenzacijePregledPartnera(h.tabData, tbl, searchInput, btnObrada, btnPrint, translator, csrfToken).Render(c.Request.Context(), c.Writer)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
@@ -112,7 +112,7 @@ func (h *KompenzacijeHandler) KompenzacijePregledPartnera(c *gin.Context) {
 		btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", kompenzacijeURLPregledPartnera, fmt.Sprintf("#%s", kompenzacijePregledTableID), "innerHTML", "GET", "", hxValsKompenzacijePregledPartnera, true, common.ClassSaveButton, "handleDialogResponse")
 		btnPrint := common.SetButton("stampa", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
 
-		setActiveKompenzacijeTab(&h.tabData, "pregledpartnera")
+		setActiveKompenzacijeTab(h.tabData, "pregledpartnera")
 		err := tmpl_fin.KompenzacijePregledPartnera(h.tabData, tbl, searchInput, btnObrada, btnPrint, translator, csrfToken).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
@@ -171,7 +171,7 @@ func (h *KompenzacijeHandler) KompenzacijeFormiranje(c *gin.Context) {
 		btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", kompenzacijeURLFormiranje, "#kompenzacije-detalji", "innerHTML", "GET", "", hxValsKompenzacijeFormiranje, true, common.ClassSaveButton, "handleDialogResponse")
 		btnFormKomp := common.SetButton("form-komp-btn", "Formiraj kompenzaciju", "fin_save", kompenzacijeURLFormiranje+"/formiraj", "#kompenzacije-detalji", "innerHTML", "POST", "", hxValsKompenzacijeFormiranje, true, common.ClassAddButton, "")
 
-		setActiveKompenzacijeTab(&h.tabData, "formiranje")
+		setActiveKompenzacijeTab(h.tabData, "formiranje")
 		err := tmpl_fin.KompenzacijeFormiranje(h.tabData, duznikData, poverilacData, btnObrada, btnFormKomp, translator, csrfToken, session.SelectedGod, h.cfg.Konta).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
@@ -286,7 +286,7 @@ func (h *KompenzacijeHandler) KompenzacijePregled(c *gin.Context) {
 
 	if requestSource == "menu" || requestSource == "tab" {
 
-		setActiveKompenzacijeTab(&h.tabData, "pregled")
+		setActiveKompenzacijeTab(h.tabData, "pregled")
 		err := tmpl_fin.KompenzacijePregled(h.tabData, tblHdr, tblDet, searchInput, btnObrada, btnPrint, translator).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
@@ -342,7 +342,7 @@ func (h *KompenzacijeHandler) KompenzacijeKnjizenje(c *gin.Context) {
 		btnRavnoteza := common.SetButton("ravnoteza-btn", "Pr. Ravnotezu", "fin_ravnoteza", kompenzacijeURLKnjizenje+"/ravnoteza", "", "innerHTML", "POST", "", hxValsKompenzacijeKnjizenje, true, common.ClassAddButton, "")
 		btnKnjizi := common.SetButton("knjizi-btn", "Knjiži", "fin_save", kompenzacijeURLKnjizenje+"/knjizi", "", "innerHTML", "POST", "", hxValsKompenzacijeKnjizenje, true, common.ClassSaveButton, "")
 
-		setActiveKompenzacijeTab(&h.tabData, "knjizenje")
+		setActiveKompenzacijeTab(h.tabData, "knjizenje")
 		err := tmpl_fin.KompenzacijeKnjizenje(h.tabData, tbl, dokumentaData, tipdokValues, btnObrada, btnRavnoteza, btnKnjizi, translator, csrfToken).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
@@ -365,8 +365,6 @@ func (h *KompenzacijeHandler) KompenzacijeKnjizenje(c *gin.Context) {
 
 // AddRoutes registers all kompenzacije routes
 func (h *KompenzacijeHandler) AddRoutes(r *gin.Engine) {
-	r.Use(middleware.Auth())                         // Apply auth middleware to all routes in group
-	r.Use(middleware.ContextWithSessionMiddleware()) // Ensure session is available in context for all handlers
 	// Define routes for kompenzacije
 	r.GET("/api/kompenzacije", h.KompenzacijeMain)
 	r.GET("/api/kompenzacije/pregledpartnera", h.KompenzacijePregledPartnera)
@@ -392,8 +390,6 @@ func GetKompenzacijeTabData() domain.TabData {
 }
 
 // setActiveKompenzacijeTab sets the active tab in the tab data
-func setActiveKompenzacijeTab(tabs *domain.TabData, tabName string) {
-	for i := range tabs.Tabs {
-		tabs.Tabs[i].IsActive = tabs.Tabs[i].Name == tabName
-	}
+func setActiveKompenzacijeTab(tabs domain.TabData, tabName string) domain.TabData {
+	return common.SetActiveTabByName(tabs, tabName)
 }

@@ -294,8 +294,6 @@ func (h *FproHandler) GetMestoTroskaOptions(c *gin.Context) {
 }
 
 func (h *FproHandler) AddRoutes(r *gin.Engine) {
-
-	r.Use(middleware.Auth()) // Apply auth middleware to all routes in group
 	r.GET("/api/mestotroska", h.GetMestoTroskaOptions)
 	r.GET("/api/fpro/nalog/:id", h.GetNalogStavke)
 	r.GET("/api/fpro/nalog/total/:id", h.GetNalogTotalValues)

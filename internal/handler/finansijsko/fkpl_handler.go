@@ -384,7 +384,6 @@ func (h *FkplHandler) UnlockFkpl(c *gin.Context) {
 func (h *FkplHandler) AddRoutes(r *gin.Engine) {
 	// Create API group with prefix
 	//api := r.Group(fkplURLPrefix)
-	r.Use(middleware.Auth()) // Apply auth middleware to all routes in group
 
 	// Define routes for fkpl
 	r.POST("/api/fkpl", h.CreateFkpl)

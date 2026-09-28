@@ -11,7 +11,6 @@ import (
 	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
-	"helia/internal/middleware"
 	"helia/internal/service/finansijsko"
 	"helia/pkg/utils"
 	"net/http"
@@ -1216,8 +1215,6 @@ func setHeaderTextfromRequest(c *gin.Context, headerFields *[]domain.Fields) {
 
 // RegisterRoutes registers the routes for the Otvorene Stavke handler
 func (h *OtvoreneStavkeHandler) RegisterRoutes(r *gin.Engine) {
-	r.Use(middleware.Auth())
-
 	r.GET("api/otvorenestavke", h.OtvoreneStavkeMain)
 	r.GET("api/otvorenestavke/partneri", h.OtvoreneStavke)
 	r.GET("api/otvorenestavke/partneri/stampa", h.PregledOtvorenihStavkiStampa)

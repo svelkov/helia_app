@@ -316,8 +316,6 @@ func (h *MagaciniHandler) UnlockMagacini(c *gin.Context) {
 }
 
 func (h *MagaciniHandler) AddRoutes(r *gin.Engine) {
-	r.Use(middleware.Auth())
-
 	r.POST("/api/magacini", h.CreateMagacini)
 	r.GET("/api/magacini/all", h.GetAllMagacini)
 	r.GET("/api/magacini/stampa", h.MagaciniStampa)

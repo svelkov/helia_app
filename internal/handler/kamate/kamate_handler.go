@@ -660,8 +660,6 @@ func (h *KamateHandler) ObracunKamate(c *gin.Context) {
 
 // RegisterRoutes registers the routes for the Kamate handler
 func (h *KamateHandler) RegisterRoutes(r *gin.Engine) {
-	r.Use(middleware.Auth())
-
 	r.GET("api/kamate", h.KamateMain)
 	r.GET("api/kamate/tipovikamate", h.TipoveKamate)
 	r.GET("api/kamate/tipovikamate/confirm-add", h.TipoviKamateAddUpdate)

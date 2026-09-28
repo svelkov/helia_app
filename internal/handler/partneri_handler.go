@@ -592,8 +592,6 @@ func (h *PartneriHandler) PartnerStampa(c *gin.Context) {
 }
 
 func (h *PartneriHandler) AddRoutes(r *gin.Engine) {
-	r.Use(middleware.Auth()) // Apply auth middleware to all routes in group
-
 	r.GET("/api/partneri/all", h.GetAllPartneri)
 	r.POST("/api/partneri/create", h.PartneriCreate)
 	r.PUT("/api/partneri/update/:id", h.PartneriUpdate)

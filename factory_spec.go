@@ -182,6 +182,19 @@ func setupRouter(translator *i18n.Service, jwtSecret []byte, sessionSecret strin
 	// CSRF middleware AFTER static files
 	router.Use(middleware.CSRFMiddleware()) // Apply to all routes except static
 	router.Use(middleware.UserSession(jwtSecret))
+
+	// Authentication is registered exactly ONCE, here.
+	//
+	// Feature handlers must not call r.Use(middleware.Auth()) inside AddRoutes:
+	// gin's Use appends to the engine-wide chain, so every handler that did so made
+	// auth run again for all routes registered afterwards (up to ~28 times per
+	// request for the last-registered routes).
+	//
+	// Placed after the static route registrations above so assets stay public, and
+	// before setEntities() registers the API routes below, so all feature routes are
+	// still authenticated. The middleware itself also skips its publicPaths list.
+	router.Use(middleware.Auth(jwtSecret))
+
 	// Add request logging to debug
 	// router.Use(func(c *gin.Context) {
 	// 	log.Printf("Request: %s %s", c.Request.Method, c.Request.URL.Path)
@@ -801,8 +814,9 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 	// Robno promet reports
 	magRepo := repository.NewBaseRepository[domain.Magacini](db, "magacini")
 	rgruRepo := repository.NewBaseRepository[domain.Rgru](db, "rgru")
+	robnoPrometRepo := repository.NewBaseRepository[domain.RobnoPrometDto](db, "rpro")
 
-	robnoprometService := robnosvc.NewRobnoPrometService(rproRepo, magRepo, rgruRepo, fvrRepo, commonService)
+	robnoprometService := robnosvc.NewRobnoPrometService(rproRepo, magRepo, rgruRepo, fvrRepo, robnoPrometRepo, commonService)
 	robnoprometHandler := robnohand.NewRobnoPrometHandler(robnoprometService, cfg)
 	robnoprometHandler.AddRoutes(r)
 

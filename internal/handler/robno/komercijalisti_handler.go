@@ -306,8 +306,6 @@ func (h *KomercijalistiHandler) UnlockKomercijalisti(c *gin.Context) {
 }
 
 func (h *KomercijalistiHandler) AddRoutes(r *gin.Engine) {
-	r.Use(middleware.Auth())
-
 	r.POST("/api/komercijalisti", h.CreateKomercijalisti)
 	r.GET("/api/komercijalisti/all", h.GetAllKomercijalisti)
 	r.GET("/api/komercijalisti/stampa", h.KomercijalistiStampa)

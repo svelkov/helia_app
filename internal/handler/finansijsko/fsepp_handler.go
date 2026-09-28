@@ -361,8 +361,6 @@ func (h *FseppHandler) FseppSefKprImport(c *gin.Context) {
 
 // RegisterRoutes registers the routes for the EPP handler
 func (h *FseppHandler) RegisterRoutes(r *gin.Engine) {
-	r.Use(middleware.Auth())
-
 	r.GET("api/fsepp", h.FseppMain)
 	r.GET("api/fsepp/sekcije", h.FseppSekcijeIzvori)
 	r.POST("api/fsepp/sekcije/save", h.FseppSekcijeSave)

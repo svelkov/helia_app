@@ -321,8 +321,6 @@ func (h *MagacinKontoHandler) UnlockMagacinKonto(c *gin.Context) {
 }
 
 func (h *MagacinKontoHandler) AddRoutes(r *gin.Engine) {
-	r.Use(middleware.Auth())
-
 	r.POST("/api/magacin-konto", h.CreateMagacinKonto)
 	r.GET("/api/magacin-konto/all", h.GetAllMagacinKonto)
 	r.GET("/api/magacin-konto/stampa", h.MagacinKontoStampa)

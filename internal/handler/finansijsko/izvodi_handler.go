@@ -453,8 +453,6 @@ func (h *IzvodiHandler) BrisanjeIzvoda(c *gin.Context) {
 
 }
 func (h *IzvodiHandler) AddRoutes(r *gin.Engine) {
-	r.Use(middleware.Auth())
-
 	r.GET("/api/izvodi", h.IzvodiMain)
 	r.GET("/api/izvodi/ucitavanje", h.UcitavanjeIzvoda)
 	r.GET("/api/izvodi/knjizenje", h.KnjizenjeIzvoda)

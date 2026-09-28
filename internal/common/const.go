@@ -93,6 +93,7 @@ const (
 	ErrMsgUnauthorized          = "Niste autorizovani za ovu akciju"
 	ErrMsgMissingParameter      = "Nedostaje parametar konto ili vkonta"
 	ErrMsgUserSessionNotFound   = "User session not found"
+	ErrMsgInternal              = "Došlo je do greške na serveru"
 	ErrMsgNotFound              = "Nije pronađena šifra"
 	ErrMsgSessionNotFound       = "Korisnička sesija nije dostupna"
 	ErrMsgSearchKonto           = "Greška prilikom pretrage konta"

@@ -207,6 +207,8 @@ func (h *BilansiHandler) ZakljucniList(c *gin.Context) {
 	tbl.Pagination.HxVals = hxValsZakljucni
 	tbl.URLGetAll = bilansiURLZakljucni
 	tbl.HasTotals = true
+	// The pager of the zakljucni list counts the rows of the whole hierarchy (the totals pass of the
+	// service counts them), so every row of the list is reachable with it.
 	utils.RenderContent(c, tbl)
 }
 

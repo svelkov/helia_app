@@ -272,8 +272,17 @@ templ ZakljucniListReportSummary(params domain.ZakljucniStampaParams, tblSummary
 	if len(tblSummary.Rows) == 0 {
 		return
 	}
-	<!-- Rekapitulacija po klasama -->
-	<div class="mt-6">
+	<!-- Page break: gray gap on screen, real break on print - the rekapitulacija and the signatures are
+	     printed on a page of their own (same markup the shared report layout uses before its summary). -->
+	<div class="print:hidden -mx-8 h-16 bg-gray-200 border-y border-gray-300"></div>
+	<div class="hidden print:block" style="break-before: page;"></div>
+	<!-- Rekapitulacija po klasama: no-break keeps the table on the page it starts on -->
+	<div class="pt-10 print:pt-8 no-break">
+		<!-- The header of the report is printed on the page of the summary as well (on screen it stays
+		     only above the table; on the other pages the main table repeats it through its <thead>). -->
+		<div class="hidden print:block mb-2 no-export">
+			@ZakljucniListReportHeader(params, translator)
+		</div>
 		<div class="text-[11px] font-bold mb-1">{ translator.Label("rekapitulacija_po_klasama") }:</div>
 		<table class="w-full table-fixed border-collapse text-[10px] border border-black [border-collapse:collapse]">
 			if params.ZaBanku == "false" {
@@ -323,7 +332,7 @@ templ ZakljucniListReportSummary(params domain.ZakljucniStampaParams, tblSummary
 							<td class="border border-black px-1 py-[2px] text-right font-bold">{ row.Fields[11] }</td>
 						</tr>
 					} else {
-						<tr class="border-t border-black">
+						<tr class="border-t border-black bg-gray-200 print:bg-gray-200">
 							<td colspan="4" class="border border-black px-1 py-[2px] text-right">{ row.Fields[3] }</td>
 							if params.ZaBanku == "false" {
 								<td class="border border-black px-1 py-[2px] text-right">{ row.Fields[4] }</td>
@@ -341,8 +350,8 @@ templ ZakljucniListReportSummary(params domain.ZakljucniStampaParams, tblSummary
 			</tbody>
 		</table>
 	</div>
-	<!-- Signature block -->
-	<div class="mt-8 flex justify-between items-end text-[10px]">
+	<!-- Signature block: kept on the same page as the rekapitulacija (no-break) -->
+	<div class="mt-8 flex justify-between items-end text-[10px] no-break">
 		<!-- Left: U / Dana -->
 		<div class="flex flex-col gap-4 w-[22%]">
 			<div class="flex items-end gap-1">

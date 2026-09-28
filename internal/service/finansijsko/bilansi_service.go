@@ -151,8 +151,12 @@ func (s *BilansiResource) GetZakljucniListAnalitika(ctx context.Context, tbl *do
 	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
 
 	sqlQuery, queryArgs := s.buildZakljucniListAnalitikaQuery(session, hasGod, hasKar, params, common.TipStampePreview)
+	// Everything up to the end of the requested page is fetched (the totals pass fetches the whole
+	// hierarchy without LIMIT): the pagination counters are the number of hierarchy rows - detail
+	// rows and subtotals - and the rows before the page are the ones that continue the redni broj of
+	// the accounts across the pages.
 	if !getTotalRecords {
-		sqlQuery = fmt.Sprintf("%s LIMIT %d OFFSET %d", sqlQuery, pageSize, (currentPage-1)*pageSize)
+		sqlQuery = fmt.Sprintf("%s LIMIT %d", sqlQuery, currentPage*pageSize)
 	}
 
 	tbl.Headers = s.GetZakljucniTableFields()
@@ -164,7 +168,8 @@ func (s *BilansiResource) GetZakljucniListAnalitika(ctx context.Context, tbl *do
 	}
 
 	// Totals pass: every hierarchy level is an aggregate of the analitika rows, so only the
-	// leaves are counted and summed - adding the subtotal levels up would count twice.
+	// leaves are counted and summed - adding the subtotal levels up would count twice. The
+	// pagination counters however count the whole hierarchy (the number of rendered rows).
 	if getTotalRecords {
 		leaves := make([]domain.FproDto, 0, len(*entities))
 		for _, entity := range *entities {
@@ -172,25 +177,28 @@ func (s *BilansiResource) GetZakljucniListAnalitika(ctx context.Context, tbl *do
 				leaves = append(leaves, entity)
 			}
 		}
-		setZakljucniTotals(tbl, leaves, pageSize)
+		setZakljucniTotals(tbl, leaves, pageSize, len(*entities))
 		return nil
 	}
 
 	// The query returns the hierarchy already ordered level by level, so every subtotal row
-	// follows the rows it aggregates. Fields[0] carries the level marker: the running row
-	// number for analitika rows, G1/G2/G3 for the sintetika/grupa/klasa subtotals.
+	// follows the rows it aggregates. TableRow.ID carries the level marker: the running row
+	// number of the analitika rows and G1/G2/G3 for the sintetika/grupa/klasa subtotals.
 	//
-	// The hierarchy is always returned complete - slicing it with LIMIT/OFFSET would separate
-	// subtotal rows from their children - so pageSize/currentPage only drive the pagination
-	// counters (the total is the number of analitika rows).
-	rowNum := 1
+	// The redni broj column (Fields[0]) numbers the analitika rows only: the subtotal rows
+	// (sintetika, grupa, klasa) leave it empty and do not consume a number. The numbering continues
+	// across the pages (see zakljucniPageRows), so the first account of a page follows the last
+	// account of the page before it.
+	pageRows, rowNum := zakljucniPageRows(*entities, currentPage, pageSize, zakljucniNivoAnalitika)
 	// Every subtotal row shows the sum of the netted sides below it, so the saldo columns foot
 	// at every level and the grid shows the same numbers as the printed report.
 	saldoAcc := zakljucniSaldoAccumulatorFromDetails(s.cfg, params.TipLista, *entities)
 	nazivCache := make(map[string]string)
-	for i, entity := range *entities {
+	for _, entity := range pageRows {
 		marker := zakljucniNivoMarker(entity.NivoOrder, rowNum)
+		redniBroj := ""
 		if entity.NivoOrder == zakljucniNivoAnalitika {
+			redniBroj = fmt.Sprintf("%d", rowNum)
 			rowNum++
 		}
 		if marker == "" {
@@ -207,7 +215,7 @@ func (s *BilansiResource) GetZakljucniListAnalitika(ctx context.Context, tbl *do
 
 		saldoDug, saldoPot := saldoAcc.saldo(entity)
 		fields := []string{
-			fmt.Sprintf("%d", i+1),
+			redniBroj,
 			entity.Konto,
 			entity.Sifra,
 			naziv,
@@ -262,6 +270,32 @@ func zakljucniDetailNivo(tipLista string) int {
 		return zakljucniNivoSintetika
 	}
 	return zakljucniNivoAnalitika
+}
+
+// zakljucniPageRows returns the rows of the requested page together with the redni broj the first
+// account of the page gets.
+//
+// The data pass fetches the hierarchy from its beginning up to the end of the requested page (see
+// the queries below), so the accounts rendered on the pages before it are known: the redni broj
+// continues across the pages instead of restarting with 1 on every page.
+//
+//	rows       the rows fetched for the request (the whole hierarchy up to the end of the page)
+//	detailNivo the level that carries the redni broj (the accounts of the list)
+func zakljucniPageRows(rows []domain.FproDto, currentPage, pageSize, detailNivo int) ([]domain.FproDto, int) {
+	firstRowNum := 1
+	pageStart := (currentPage - 1) * pageSize
+	if pageStart <= 0 {
+		return rows, firstRowNum
+	}
+	if pageStart >= len(rows) {
+		return nil, firstRowNum
+	}
+	for _, entity := range rows[:pageStart] {
+		if entity.NivoOrder == detailNivo {
+			firstRowNum++
+		}
+	}
+	return rows[pageStart:], firstRowNum
 }
 
 // zakljucniSaldoAccumulator accumulates the netted saldo of the detail rows per subtotal key, so
@@ -376,9 +410,28 @@ func (s *BilansiResource) buildZakljucniListAnalitikaQuery(session *domain.UserS
 	if hasKar {
 		filterQb.AddEqual("fpro.kar", session.SelectedKar)
 	}
-	filterQb.AddEqual("fpro.vkonta", 1)
+	// Both kinds of booking lines belong to this list: vkonta 1 = konto iz kontnog plana and
+	// vkonta 2 = konto analitike/partnera (the filter the flattened zakljucniInnerQuery used for the
+	// analitika and subsintetika lists). With only vkonta = 1 the list stopped at konto 4654,
+	// although the bookings of the period go up to 8941.
+	filterQb.AddIn("fpro.vkonta", []interface{}{"1"})
+	// The range of the konta is compared on the sintetika prefix (like the other two lists of the
+	// report and like the legacy query did).
+	if params.OdKonta != "" {
+		filterQb.AddCondition(fmt.Sprintf("left(fpro.konto, %d)", s.cfg.NDuzSint), params.OdKonta, ">=")
+	}
+	if params.DoKonta != "" {
+		filterQb.AddCondition(fmt.Sprintf("left(fpro.konto, %d)", s.cfg.NDuzSint), params.DoKonta, "<=")
+	}
 	filterQb.AddCondition("fnal.danal", params.OdDatuma, ">=")
 	filterQb.AddCondition("fnal.danal", params.DoDatuma, "<=")
+	// The range of the sifre applies to this list only (it books konto + sifra).
+	if params.OdSifre != "" {
+		filterQb.AddCondition("COALESCE(NULLIF(fpro.sifra, '')::numeric, 0)", params.OdSifre, ">=")
+	}
+	if params.DoSifre != "" {
+		filterQb.AddCondition("COALESCE(NULLIF(fpro.sifra, '')::numeric, 0)", params.DoSifre, "<=")
+	}
 	// Klasa 9 accounts are excluded for printing only, exactly like the flattened
 	// zakljucniInnerQuery does it.
 	if printType == common.TipStampePrint && params.Klasa9 == "false" {
@@ -459,8 +512,12 @@ func (s *BilansiResource) GetZakljucniListSintetika(ctx context.Context, tbl *do
 	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
 
 	sqlQuery, queryArgs := s.buildZakljucniListSintetikaQuery(session, hasGod, hasKar, params, common.TipStampePreview)
+	// Everything up to the end of the requested page is fetched (the totals pass fetches the whole
+	// hierarchy without LIMIT): the pagination counters are the number of hierarchy rows - detail
+	// rows and subtotals - and the rows before the page are the ones that continue the redni broj of
+	// the accounts across the pages.
 	if !getTotalRecords {
-		sqlQuery = fmt.Sprintf("%s LIMIT %d OFFSET %d", sqlQuery, pageSize, (currentPage-1)*pageSize)
+		sqlQuery = fmt.Sprintf("%s LIMIT %d", sqlQuery, currentPage*pageSize)
 	}
 
 	tbl.Headers = s.GetZakljucniTableFields()
@@ -480,23 +537,28 @@ func (s *BilansiResource) GetZakljucniListSintetika(ctx context.Context, tbl *do
 				sintetike = append(sintetike, entity)
 			}
 		}
-		setZakljucniTotals(tbl, sintetike, pageSize)
+		setZakljucniTotals(tbl, sintetike, pageSize, len(*entities))
 		return nil
 	}
 
 	// The query returns the hierarchy already ordered level by level, so every subtotal row
-	// follows the rows it aggregates. Fields[0] carries the level marker (G1/G2/G3): there are
-	// no detail rows, so the marker is never a row number.
+	// follows the rows it aggregates. TableRow.ID carries the level marker (G1/G2/G3).
 	//
-	// The hierarchy is always returned complete - slicing it with LIMIT/OFFSET would separate
-	// subtotal rows from their children - so pageSize/currentPage only drive the pagination
-	// counters (the total is the number of sintetika rows).
+	// The redni broj column (Fields[0]) numbers the sintetika rows only - in this list they are
+	// the accounts: the grupa and klasa subtotal rows leave it empty and do not consume a number.
+	// The numbering continues across the pages (see zakljucniPageRows).
 	// Every subtotal row shows the sum of the netted sides below it, so the saldo columns foot
 	// at every level and the grid shows the same numbers as the printed report.
 	saldoAcc := zakljucniSaldoAccumulatorFromDetails(s.cfg, params.TipLista, *entities)
 	nazivCache := make(map[string]string)
-	for i, entity := range *entities {
-		marker := zakljucniNivoMarker(entity.NivoOrder, 0) // no detail rows, so no row numbering
+	pageRows, rowNum := zakljucniPageRows(*entities, currentPage, pageSize, zakljucniNivoSintetika)
+	for _, entity := range pageRows {
+		marker := zakljucniNivoMarker(entity.NivoOrder, rowNum)
+		redniBroj := ""
+		if entity.NivoOrder == zakljucniNivoSintetika {
+			redniBroj = fmt.Sprintf("%d", rowNum)
+			rowNum++
+		}
 		if marker == "" {
 			continue // unknown level: skip it rather than render a nameless row
 		}
@@ -511,7 +573,7 @@ func (s *BilansiResource) GetZakljucniListSintetika(ctx context.Context, tbl *do
 
 		saldoDug, saldoPot := saldoAcc.saldo(entity)
 		fields := []string{
-			fmt.Sprintf("%d", i+1),
+			redniBroj,
 			entity.Konto,
 			"", // sifra: this list aggregates by konto prefix only
 			naziv,
@@ -629,8 +691,12 @@ func (s *BilansiResource) GetZakljucniListSubsintetika(ctx context.Context, tbl 
 	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
 
 	sqlQuery, queryArgs := s.buildZakljucniListSubsintetikaQuery(session, hasGod, hasKar, params, common.TipStampePreview)
+	// Everything up to the end of the requested page is fetched (the totals pass fetches the whole
+	// hierarchy without LIMIT): the pagination counters are the number of hierarchy rows - detail
+	// rows and subtotals - and the rows before the page are the ones that continue the redni broj of
+	// the accounts across the pages.
 	if !getTotalRecords {
-		sqlQuery = fmt.Sprintf("%s LIMIT %d OFFSET %d", sqlQuery, pageSize, (currentPage-1)*pageSize)
+		sqlQuery = fmt.Sprintf("%s LIMIT %d", sqlQuery, currentPage*pageSize)
 	}
 	tbl.Headers = s.GetZakljucniTableFields()
 	common.SetupTablePagination(tbl, currentPage, pageSize)
@@ -650,23 +716,28 @@ func (s *BilansiResource) GetZakljucniListSubsintetika(ctx context.Context, tbl 
 				konta = append(konta, entity)
 			}
 		}
-		setZakljucniTotals(tbl, konta, pageSize)
+		setZakljucniTotals(tbl, konta, pageSize, len(*entities))
 		return nil
 	}
 
 	// The query returns the hierarchy already ordered level by level, so every subtotal row
-	// follows the rows it aggregates. Fields[0] carries the level marker (G1..G4): there are no
-	// detail rows, so the marker is never a row number.
+	// follows the rows it aggregates. TableRow.ID carries the level marker (G1..G4).
 	//
-	// The hierarchy is always returned complete - slicing it with LIMIT/OFFSET would separate
-	// subtotal rows from their children - so pageSize/currentPage only drive the pagination
-	// counters (the total is the number of subsintetika rows).
+	// The redni broj column (Fields[0]) numbers the konto rows only - in this list they are the
+	// accounts: the sintetika, grupa and klasa subtotal rows leave it empty and do not consume a
+	// number. The numbering continues across the pages (see zakljucniPageRows).
 	// Every subtotal row shows the sum of the netted sides below it, so the saldo columns foot
 	// at every level and the grid shows the same numbers as the printed report.
 	saldoAcc := zakljucniSaldoAccumulatorFromDetails(s.cfg, params.TipLista, *entities)
 	nazivCache := make(map[string]string)
-	for i, entity := range *entities {
+	pageRows, rowNum := zakljucniPageRows(*entities, currentPage, pageSize, zakljucniNivoAnalitika)
+	for _, entity := range pageRows {
 		marker := zakljucniNivoGroupMarker(entity.NivoOrder, zakljucniNivoAnalitika)
+		redniBroj := ""
+		if entity.NivoOrder == zakljucniNivoAnalitika {
+			redniBroj = fmt.Sprintf("%d", rowNum)
+			rowNum++
+		}
 		if marker == "" {
 			continue // unknown level: skip it rather than render a nameless row
 		}
@@ -681,7 +752,7 @@ func (s *BilansiResource) GetZakljucniListSubsintetika(ctx context.Context, tbl 
 
 		saldoDug, saldoPot := saldoAcc.saldo(entity)
 		fields := []string{
-			fmt.Sprintf("%d", i+1),
+			redniBroj,
 			entity.Konto,
 			"", // sifra: this list aggregates by konto only
 			naziv,
@@ -692,7 +763,7 @@ func (s *BilansiResource) GetZakljucniListSubsintetika(ctx context.Context, tbl 
 			common.FormatNumberWithSystemLocale(saldoDug, 2),
 			common.FormatNumberWithSystemLocale(saldoPot, 2),
 		}
-		tbl.Rows = append(tbl.Rows, domain.TableRow{ID: fmt.Sprintf("%d", i), Fields: fields, HasUpdate: false, HasDelete: false})
+		tbl.Rows = append(tbl.Rows, domain.TableRow{ID: marker, Fields: fields, HasUpdate: false, HasDelete: false})
 	}
 
 	return nil
@@ -1167,15 +1238,20 @@ func (s *BilansiResource) executeZakljucniQuery(ctx context.Context, tbl *domain
 	// Count filtered items if needed for total records. The rows were fetched by the totals
 	// pass (no ORDER BY / name lookup), so they are only counted and summed.
 	if o.printType == common.TipStampePreview && o.getTotalRecords {
-		setZakljucniTotals(tbl, *entities, o.pageSize)
+		setZakljucniTotals(tbl, *entities, o.pageSize, len(*entities))
 	}
 	return entities, nil
 }
 
 // setZakljucniTotals fills the pagination counters and the totals row (columns 4..9) of the
-// Zakljucni list grid from the unpaged aggregate rows.
-func setZakljucniTotals(tbl *domain.TableData, entities []domain.FproDto, pageSize int) {
-	common.SetTableTotalRecords(tbl, len(entities), pageSize)
+// Zakljucni list grid.
+//
+// entities are the rows of the level that is summed - the accounts of the list - so the totals
+// count every transaction once. totalRows is the number of rows the whole hierarchy renders
+// (accounts + subtotals) and is the number the pager counts, so every row of the list can be
+// reached with it.
+func setZakljucniTotals(tbl *domain.TableData, entities []domain.FproDto, pageSize, totalRows int) {
+	common.SetTableTotalRecords(tbl, totalRows, pageSize)
 	if len(tbl.Headers) <= 9 {
 		return
 	}

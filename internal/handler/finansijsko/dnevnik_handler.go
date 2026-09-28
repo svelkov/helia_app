@@ -11,7 +11,6 @@ import (
 	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
-	"helia/internal/middleware"
 	finservice "helia/internal/service/finansijsko"
 	"helia/pkg/utils"
 
@@ -166,8 +165,6 @@ func (h *DnevnikHandler) DnevnikKnjizenjaStampa(c *gin.Context) {
 
 // AddRoutes registers all dnevnik routes
 func (h *DnevnikHandler) AddRoutes(r *gin.Engine) {
-	r.Use(middleware.Auth()) // Apply auth middleware to all routes in group
-
 	// Define routes for dnevnik
 	r.GET("api/dnevnik", h.DnevnikKnjizenja)
 	r.GET("api/dnevnik/stampa", h.DnevnikKnjizenjaStampa)

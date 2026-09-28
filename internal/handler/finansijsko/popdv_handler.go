@@ -334,8 +334,6 @@ func (h *PopdvHandler) PopdvStampa(c *gin.Context) {
 
 // RegisterRoutes registers the routes for the EPP handler
 func (h *PopdvHandler) RegisterRoutes(r *gin.Engine) {
-	r.Use(middleware.Auth())
-
 	r.GET("api/popdv", h.PopdvMain)
 	r.GET("api/popdv/polja", h.PopdvPolja)
 	r.POST("api/popdv/polja/save", h.PopdvPoljaSave)

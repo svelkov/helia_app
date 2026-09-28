@@ -147,7 +147,6 @@ func (h *GenericHandler[T]) RegisterRoutes(r *gin.Engine) {
 
 	// Create API group with prefix
 	//api := r.Group(prefix)
-	r.Use(middleware.Auth()) // Apply auth middleware to all routes in group
 
 	r.POST(prefix, h.Create)
 	r.GET(prefix+"/all", h.GetAll)

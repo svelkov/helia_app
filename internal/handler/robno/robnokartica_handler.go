@@ -10,7 +10,6 @@ import (
 	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
-	"helia/internal/middleware"
 	robnosvc "helia/internal/service/robno"
 	"helia/pkg/utils"
 
@@ -77,7 +76,7 @@ const (
 type RobnoKarticaHandler struct {
 	service robnosvc.RobnoKarticaService
 	cfg     config.Config
-	tabs    *domain.TabData
+	tabs    domain.TabData
 }
 
 func NewRobnoKarticaHandler(service robnosvc.RobnoKarticaService, cfg config.Config) *RobnoKarticaHandler {
@@ -86,7 +85,7 @@ func NewRobnoKarticaHandler(service robnosvc.RobnoKarticaService, cfg config.Con
 
 func (h *RobnoKarticaHandler) RobnoKarticaMain(c *gin.Context) {
 	translator := i18n.GetInstance()
-	common.SetActiveTab(h.tabs, 0)
+	tabs := common.SetActiveTab(h.tabs, 0)
 	magValues, err := h.service.GetMagacinComboValues(c.Request.Context())
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, err.Error())
@@ -98,11 +97,11 @@ func (h *RobnoKarticaHandler) RobnoKarticaMain(c *gin.Context) {
 	btnPrint := common.SetPrintButton("stampa-btn", "Štampa", "fin_print", robnoKarticaURLArtikalStampa, "GET", true, common.ClassPrintButton, printFieldsArtikal)
 	searchInput := common.CreateSearchInput("search-input", translator, robnoKarticaURLArtikal, fmt.Sprintf("#%s", robnoKarticaArtikalTableID), hxValsRobnaKarticaArtikal)
 
-	tmpl_robno.RobnoKarticaMain(*h.tabs, tblData, magValues, btnObrada, btnPrint, searchInput, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+	tmpl_robno.RobnoKarticaMain(tabs, tblData, magValues, btnObrada, btnPrint, searchInput, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 }
 func (h *RobnoKarticaHandler) GetPrikazKarticeArtikla(c *gin.Context) {
 	ctx := c.Request.Context()
-	common.SetActiveTab(h.tabs, 0)
+	tabs := common.SetActiveTab(h.tabs, 0)
 	translator := i18n.GetInstance()
 	userSession := domain.GetSessionFromStdContext(ctx)
 	if userSession == nil {
@@ -184,7 +183,7 @@ func (h *RobnoKarticaHandler) GetPrikazKarticeArtikla(c *gin.Context) {
 	btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", robnoKarticaURLArtikal, "#"+robnoKarticaArtikalTableID, "innerHTML", "GET", "", hxValsRobnaKarticaArtikal, true, common.ClassSaveButton, "handleDialogResponse")
 	btnPrint := common.SetPrintButton("stampa-btn", "Štampa", "fin_print", robnoKarticaURLArtikalStampa, "GET", true, common.ClassPrintButton, printFieldsArtikal)
 	searchInput := common.CreateSearchInput("search-input", translator, robnoKarticaURLArtikal, fmt.Sprintf("#%s", robnoKarticaArtikalTableID), hxValsRobnaKarticaArtikal)
-	tmpl_robno.RobnoKarticaArtikla(*h.tabs, tbl, magValues, btnObrada, btnPrint, searchInput, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+	tmpl_robno.RobnoKarticaArtikla(tabs, tbl, magValues, btnObrada, btnPrint, searchInput, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 }
 
 func (h *RobnoKarticaHandler) GetPrikazKarticeArtiklaStampa(c *gin.Context) {
@@ -341,7 +340,7 @@ func (h *RobnoKarticaHandler) GetKarticaSubsintetickogKonta(c *gin.Context) {
 	btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", robnoKarticaURLSubsintetika, "#"+robnoKarticaSubsintetikaTableID, "innerHTML", "GET", "", hxValsRobnaKarticaSubsntetika, true, common.ClassSaveButton, "handleDialogResponse")
 	btnPrint := common.SetPrintButton("stampa-btn", "Štampa", "fin_print", robnoKarticaURLSubsintetikaStampa, "GET", true, common.ClassPrintButton, printFieldsSubsintetika)
 	searchInput := common.CreateSearchInput("search-input", translator, robnoKarticaURLSubsintetika, fmt.Sprintf("#%s", robnoKarticaSubsintetikaTableID), hxValsRobnaKarticaSubsntetika)
-	tmpl_robno.RobnoKarticaSubsintetickoKonto(*h.tabs, tbl, magValues, btnObrada, btnPrint, searchInput, userSession.SelectedGod, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+	tmpl_robno.RobnoKarticaSubsintetickoKonto(h.tabs, tbl, magValues, btnObrada, btnPrint, searchInput, userSession.SelectedGod, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 }
 
 func (h *RobnoKarticaHandler) GetKarticaSubsintetickogKontaStampa(c *gin.Context) {
@@ -410,9 +409,6 @@ func (h *RobnoKarticaHandler) GetKarticaSubsintetickogKontaStampa(c *gin.Context
 }
 
 func (h *RobnoKarticaHandler) AddRoutes(r *gin.Engine) {
-	// Apply auth middleware to all Robno Promet routes.
-	r.Use(middleware.Auth())
-
 	// Define routes for Robno Promet.
 	r.GET("/api/robno-kartica", h.RobnoKarticaMain)
 	r.GET("/api/robno-kartica/artikla", h.GetPrikazKarticeArtikla)
@@ -421,9 +417,9 @@ func (h *RobnoKarticaHandler) AddRoutes(r *gin.Engine) {
 	r.GET("/api/robno-kartica/subsintetickog-konta/stampa", h.GetKarticaSubsintetickogKontaStampa)
 }
 
-func robnoKarticaTabs() *domain.TabData {
+func robnoKarticaTabs() domain.TabData {
 	translator := i18n.GetInstance()
-	return &domain.TabData{Tabs: []domain.TabItem{
+	return domain.TabData{Tabs: []domain.TabItem{
 		{ID: "robnokartica-artikli", Label: translator.Label("Prikaz kartice artikla"), HXRequestUrl: robnoKarticaURLArtikal, IsActive: true, Name: "artikli"},
 		{ID: "robnokartica-subsintetika", Label: translator.Label("Prikaz kartice subsintetičkog konta"), HXRequestUrl: robnoKarticaURLSubsintetika, IsActive: false, Name: "subsintetika"},
 	}}

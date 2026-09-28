@@ -477,8 +477,6 @@ func (h *PoreskeKnjigeHandler) KnjigaPrimljenihRacunaStampa(c *gin.Context) {
 
 // RegisterRoutes registers the routes for the PoreskeKnjige handler
 func (h *PoreskeKnjigeHandler) RegisterRoutes(r *gin.Engine) {
-	r.Use(middleware.Auth())
-
 	r.GET("api/poreskeknjige", h.PoreskeKnjigeMain)
 	r.GET("api/poreskeknjige/izdatih", h.KnjigaIzdatihRacuna)
 	r.GET("api/poreskeknjige/izdatih/print", h.KnjigaIzdatihRacunaStampa)

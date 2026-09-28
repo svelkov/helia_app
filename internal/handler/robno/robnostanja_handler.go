@@ -11,7 +11,6 @@ import (
 	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
-	"helia/internal/middleware"
 	robnosvc "helia/internal/service/robno"
 	"helia/pkg/utils"
 
@@ -102,8 +101,8 @@ const (
 type RobnoStanjaHandler struct {
 	service robnosvc.RobnoStanjaService
 	cfg     config.Config
-	tabs    *domain.TabData
-	subtabs *domain.TabData
+	tabs    domain.TabData
+	subtabs domain.TabData
 }
 
 func NewRobnoStanjaHandler(s robnosvc.RobnoStanjaService, cfg config.Config) *RobnoStanjaHandler {
@@ -128,7 +127,7 @@ func (h *RobnoStanjaHandler) RobnoStanjaMain(c *gin.Context) {
 	tbl.HasTotals = true
 	btnObrada := h.obradaButton(robnoStanjaURLArtikal, robnoStanjaArtikalTableID, hxValsRobnoStanjaArtikal)
 	btnPrint := common.SetPrintButton("stampa-btn", "Štampa", "fin_print", robnoStanjaURLArtikalStampa, "GET", true, common.ClassPrintButton, robnoStanjaPrintFieldsArtikal)
-	if err := tmpl_robno.RobnoStanjaMain(*h.tabs, tbl, magValues, btnObrada, btnPrint, total, robnoStanjaURLtotals, i18n.GetInstance()).Render(ctx, c.Writer); err != nil {
+	if err := tmpl_robno.RobnoStanjaMain(h.tabs, tbl, magValues, btnObrada, btnPrint, total, robnoStanjaURLtotals, i18n.GetInstance()).Render(ctx, c.Writer); err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 	}
 }
@@ -139,7 +138,7 @@ func (h *RobnoStanjaHandler) PrikazStanjaPojedinacnogArtikla(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, "no user session found")
 		return
 	}
-	common.SetActiveTab(h.tabs, 0)
+	tabs := common.SetActiveTab(h.tabs, 0)
 	translator := i18n.GetInstance()
 	total := domain.RobnoStanjaTotal{}
 	tbl := common.SetTableBasicData(robnoStanjaArtikalTitle, robnoStanjaArtikalTableID, h.service.GetPojedinacnogArtiklaTableFields(), "", robnoStanjaURLArtikal, 0, 0, 0, 0, h.cfg)
@@ -185,7 +184,7 @@ func (h *RobnoStanjaHandler) PrikazStanjaPojedinacnogArtikla(c *gin.Context) {
 	}
 	btnObrada := h.obradaButton(robnoStanjaURLArtikal, robnoStanjaArtikalTableID, hxValsRobnoStanjaArtikal)
 	btnPrint := common.SetPrintButton("stampa-btn", "Štampa", "fin_print", robnoStanjaURLArtikalStampa, "GET", true, common.ClassPrintButton, robnoStanjaPrintFieldsArtikal)
-	tmpl_robno.RobnoStanjePojedinacnogArtikla(*h.tabs, tbl, magValues, btnObrada, btnPrint, total, robnoStanjaURLtotals, translator).Render(ctx, c.Writer)
+	tmpl_robno.RobnoStanjePojedinacnogArtikla(tabs, tbl, magValues, btnObrada, btnPrint, total, robnoStanjaURLtotals, translator).Render(ctx, c.Writer)
 }
 
 func (h *RobnoStanjaHandler) PrikazStanjaArtikalaStampa(c *gin.Context) {
@@ -275,7 +274,7 @@ func (h *RobnoStanjaHandler) PrikazStanjaViseArtikalaSifra(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, "no user session found")
 		return
 	}
-	common.SetActiveTab(h.tabs, 1)
+	tabs := common.SetActiveTab(h.tabs, 1)
 	common.SetActiveTab(h.subtabs, 0)
 	translator := i18n.GetInstance()
 	tbl := common.SetTableBasicData(robnoStanjaViseArtikalaTitle, robnoStanjaViseArtikalaSifraTableID, h.service.GetViseArtikalaTableFields(), "", robnoStanjaURLViseArtikalaSifra, 0, 0, 0, 0, h.cfg)
@@ -335,7 +334,7 @@ func (h *RobnoStanjaHandler) PrikazStanjaViseArtikalaSifra(c *gin.Context) {
 	btnNalepnice := common.SetButton("robnostanja-vise-sifra-nalepnice", "Nalepnice", "nalepnice", "", "", "", "GET", "", "", true, common.ClassEanButton, "")
 	searchInput := common.CreateSearchInput("search-input", translator, robnoStanjaURLViseArtikalaSifra, fmt.Sprintf("#%s", robnoStanjaViseArtikalaSifraTableID), hxValsRobnoStanjaViseArtikalaSifra)
 
-	tmpl_robno.RobnoStanjeViseArtikalaSifra(*h.tabs, *h.subtabs, "vise-artikala", robnoStanjaViseArtikalaTitle, tbl, magValues, btnObrada, btnPrint, btnEan13, btnNalepnice, searchInput, h.cfg.NDuzSint, translator).Render(ctx, c.Writer)
+	tmpl_robno.RobnoStanjeViseArtikalaSifra(tabs, h.subtabs, "vise-artikala", robnoStanjaViseArtikalaTitle, tbl, magValues, btnObrada, btnPrint, btnEan13, btnNalepnice, searchInput, h.cfg.NDuzSint, translator).Render(ctx, c.Writer)
 }
 
 func (h *RobnoStanjaHandler) PrikazStanjaViseArtikalaGrupa(c *gin.Context) {
@@ -344,8 +343,8 @@ func (h *RobnoStanjaHandler) PrikazStanjaViseArtikalaGrupa(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, "no user session found")
 		return
 	}
-	common.SetActiveTab(h.tabs, 1)
-	common.SetActiveTab(h.subtabs, 1)
+	tabs := common.SetActiveTab(h.tabs, 1)
+	subtabs := common.SetActiveTab(h.subtabs, 1)
 	translator := i18n.GetInstance()
 	tbl := common.SetTableBasicData(robnoStanjaViseArtikalaTitle, robnoStanjaViseArtikalaGrupaTableID, h.service.GetViseArtikalaTableFields(), "", robnoStanjaURLViseArtikalaGrupa, 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tbl, robnoStanjaViseArtikalaGrupaTableID, robnoStanjaURLViseArtikalaGrupa, false, false, false)
@@ -405,7 +404,7 @@ func (h *RobnoStanjaHandler) PrikazStanjaViseArtikalaGrupa(c *gin.Context) {
 	btnNalepnice := common.SetButton("robnostanja-vise-grupa-nalepnice", "Nalepnice", "nalepnice", "", "", "", "GET", "", "", true, common.ClassEanButton, "")
 	searchInput := common.CreateSearchInput("search-input", translator, robnoStanjaURLViseArtikalaGrupa, fmt.Sprintf("#%s", robnoStanjaViseArtikalaGrupaTableID), hxValsRobnoStanjaViseArtikalaGrupa)
 
-	tmpl_robno.RobnoStanjeViseArtikalGrupa(*h.tabs, *h.subtabs, "vise-artikala", robnoStanjaViseArtikalaTitle, tbl, magValues, btnObrada, btnPrint, btnEan13, btnNalepnice, searchInput, translator).Render(ctx, c.Writer)
+	tmpl_robno.RobnoStanjeViseArtikalGrupa(tabs, subtabs, "vise-artikala", robnoStanjaViseArtikalaTitle, tbl, magValues, btnObrada, btnPrint, btnEan13, btnNalepnice, searchInput, translator).Render(ctx, c.Writer)
 
 }
 
@@ -415,7 +414,7 @@ func (h *RobnoStanjaHandler) PrikazStanjaSubsintetickogKonta(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, "no user session found")
 		return
 	}
-	common.SetActiveTab(h.tabs, 2)
+	tabs := common.SetActiveTab(h.tabs, 2)
 	tbl := common.SetTableBasicData(robnoStanjaSubsintetickoKontoTitle, robnoStanjaSubsintetickoKontoTableID, h.service.GetSubsintetiskogKontaTableFields(), "", robnoStanjaURLSubsintetickogKonta, 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tbl, "SALDA SUBSINTETICKOG KONTA", robnoStanjaURLSubsintetickogKonta, false, false, false)
 	h.service.SetDefaultTableData(&tbl)
@@ -452,8 +451,9 @@ func (h *RobnoStanjaHandler) PrikazStanjaSubsintetickogKonta(c *gin.Context) {
 	}
 	btnObrada := h.obradaButton(robnoStanjaURLSubsintetickogKonta, robnoStanjaSubsintetickoKontoTableID, hxValsRobnoStanjaSubsintetickoKonto)
 	btnPrint := common.SetPrintButton("stampa-btn", "Štampa", "fin_print", robnoStanjaURLSubsintetickogKontaStampa, "GET", true, common.ClassPrintButton, robnoStanjaPrintFieldsSubsintetickoKonto)
-	tmpl_robno.RobnoStanjeSubsintetickogKonta(*h.tabs, tbl, magValues, btnObrada, btnPrint, total, robnoStanjaURLtotals, i18n.GetInstance()).Render(ctx, c.Writer)
+	tmpl_robno.RobnoStanjeSubsintetickogKonta(tabs, tbl, magValues, btnObrada, btnPrint, total, robnoStanjaURLtotals, i18n.GetInstance()).Render(ctx, c.Writer)
 }
+
 func (h *RobnoStanjaHandler) RobnoStanjaSubsintetikaUkupnaObrada(c *gin.Context) {
 	ctx := c.Request.Context()
 	if domain.GetSessionFromStdContext(ctx) == nil {
@@ -549,7 +549,7 @@ func (h *RobnoStanjaHandler) SvodjenjeStanjaZaliha(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, "no user session found")
 		return
 	}
-	common.SetActiveTab(h.tabs, 3)
+	tabs := common.SetActiveTab(h.tabs, 3)
 	tbl := common.SetTableBasicData(robnoStanjaSvodjenjeTitle, robnoStanjaSvodjenjeTableID, h.service.GetSvodjenjeZalihaTableFields(), "", robnoStanjaURLSvodjenjeZaliha, 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tbl, robnoStanjaSvodjenjeTableID, robnoStanjaURLSvodjenjeZaliha, false, false, false)
 	if common.IsDataRequest(c) {
@@ -616,7 +616,7 @@ func (h *RobnoStanjaHandler) SvodjenjeStanjaZaliha(c *gin.Context) {
 	}
 	btnObrada := h.obradaButton(robnoStanjaURLSvodjenjeZaliha, robnoStanjaSvodjenjeTableID, hxValsRobnoSvodjenjeZaliha)
 	btnPrint := common.SetButton("robnostanja-svodjenje-stampa", "Štampaj", "stampa", "", "", "", "GET", "", "", true, common.ClassPrintButton, "")
-	if err := tmpl_robno.RobnoSvodjenjeZaliha(*h.tabs, tbl, magValues, tipDokValues, ojValues, mestoTroskaValues, btnObrada, btnPrint, i18n.GetInstance()).Render(ctx, c.Writer); err != nil {
+	if err := tmpl_robno.RobnoSvodjenjeZaliha(tabs, tbl, magValues, tipDokValues, ojValues, mestoTroskaValues, btnObrada, btnPrint, i18n.GetInstance()).Render(ctx, c.Writer); err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 	}
 }
@@ -765,9 +765,6 @@ func (h *RobnoStanjaHandler) StanjeViseArtiklaGrupaStampa(c *gin.Context) {
 }
 
 func (h *RobnoStanjaHandler) AddRoutes(r *gin.Engine) {
-	// Apply auth middleware to all Robno Stanja routes.
-	r.Use(middleware.Auth())
-
 	// Define routes for Robno Stanja.
 	r.GET("/api/robno-stanja", h.RobnoStanjaMain)
 	r.GET("/api/robno-stanja/artikal", h.PrikazStanjaPojedinacnogArtikla)
@@ -785,9 +782,9 @@ func (h *RobnoStanjaHandler) AddRoutes(r *gin.Engine) {
 	r.GET("/api/robno-stanja/totalvalues", h.RobnoStanjeArtikalUkupnaObrada)
 }
 
-func robnoStanjaTabs() *domain.TabData {
+func robnoStanjaTabs() domain.TabData {
 	translator := i18n.GetInstance()
-	return &domain.TabData{Tabs: []domain.TabItem{
+	return domain.TabData{Tabs: []domain.TabItem{
 		{ID: "robnostanja-artikl", Label: translator.T("Prikaz stanja pojedinačnog artikla"), HXRequestUrl: robnoStanjaURLArtikal, IsActive: true, Name: "artikl"},
 		{ID: "robnostanja-vise", Label: translator.T("Prikaz stanja više artikala"), HXRequestUrl: robnoStanjaURLViseArtikala, Name: "vise-artikala"},
 		{ID: "robnostanja-sub", Label: translator.T("Prikaz salda subsintetičkog konta"), HXRequestUrl: robnoStanjaURLSubsintetickogKonta, Name: "subsinteticki-konto"},
@@ -795,9 +792,9 @@ func robnoStanjaTabs() *domain.TabData {
 	}}
 }
 
-func robnoStanjaSubTabs() *domain.TabData {
+func robnoStanjaSubTabs() domain.TabData {
 	translator := i18n.GetInstance()
-	return &domain.TabData{Tabs: []domain.TabItem{
+	return domain.TabData{Tabs: []domain.TabItem{
 		{ID: "robnostanja-vise-sifra", Label: translator.T("Po Sifri"), HXRequestUrl: robnoStanjaURLViseArtikalaSifra, Name: "vise-artikala-sifra"},
 		{ID: "robnostanja-vise-grupa", Label: translator.T("Po Grupi"), HXRequestUrl: robnoStanjaURLViseArtikalaGrupa, Name: "vise-artikala-grupa"},
 	}}

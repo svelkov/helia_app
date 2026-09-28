@@ -11,7 +11,6 @@ import (
 	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
-	"helia/internal/middleware"
 	robnosvc "helia/internal/service/robno"
 	"helia/pkg/utils"
 
@@ -80,7 +79,7 @@ const (
 type RobnoKompodaciHandler struct {
 	service robnosvc.RobnoKompodaciService
 	cfg     config.Config
-	tabs    *domain.TabData
+	tabs    domain.TabData
 }
 
 func NewRobnoKompodaciHandler(service robnosvc.RobnoKompodaciService, cfg config.Config) *RobnoKompodaciHandler {
@@ -103,7 +102,7 @@ func (h *RobnoKompodaciHandler) RobnoKompodaciMain(c *gin.Context) {
 	btnPrint := common.SetPrintButton("print-btn", "Štampa", "stampa", robnoKompodaciURLKupciArtStampa, "GET", true, common.ClassPrintButton, "trziste,tip_izvestaja,odgrupe,dogrupe,odsifreartikla,dosifreartikla,oddatuma,dodatuma")
 	searchInput := common.CreateSearchInput("search-input", translator, robnoKompodaciURLKupciArt, fmt.Sprintf("#%s", robnoKompodaciURLKupciArt), hxValsRobnoKompodaciRealizKupciArt)
 
-	tmpl_robno.RobnoKompodaciMain(*h.tabs, tbl, grpValues, btnObrada, btnPrint, searchInput, userSession.SelectedGod, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+	tmpl_robno.RobnoKompodaciMain(h.tabs, tbl, grpValues, btnObrada, btnPrint, searchInput, userSession.SelectedGod, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
 
 }
 
@@ -135,7 +134,7 @@ func (h *RobnoKompodaciHandler) PregledRealizacijePoKupcimaArtiklima(c *gin.Cont
 	btnPrint := common.SetPrintButton("print-btn", "Štampa", "stampa", robnoKompodaciURLArtStampa, "GET", true, common.ClassPrintButton, "trziste,tip_izvestaja,odgrupe,dogrupe,odsifreartikla,dosifreartikla,oddatuma,dodatuma")
 	searchInput := common.CreateSearchInput("search-input", translator, robnoKompodaciURLKupciArt, fmt.Sprintf("#%s", robnoKompodaciURLKupciArt), hxValsRobnoKompodaciRealizKupciArt)
 
-	tmpl_robno.RobnoKompodaciPregledRealizacijePoKupcimaArtiklima(*h.tabs, tbl, grpValues, btnObrada, btnPrint, searchInput, userSession.SelectedGod, translator).Render(ctx, c.Writer)
+	tmpl_robno.RobnoKompodaciPregledRealizacijePoKupcimaArtiklima(h.tabs, tbl, grpValues, btnObrada, btnPrint, searchInput, userSession.SelectedGod, translator).Render(ctx, c.Writer)
 
 }
 
@@ -222,7 +221,7 @@ func (h *RobnoKompodaciHandler) PregledRealizacijePoArtiklima(c *gin.Context) {
 	btnPrint := common.SetPrintButton("print-btn", "Štampa", "stampa", robnoKompodaciURLArtStampa, "GET", true, common.ClassPrintButton, "trziste,odgrupe,dogrupe,odsifreartikla,dosifreartikla,oddatuma,dodatuma")
 	searchInput := common.CreateSearchInput("search-input", translator, robnoKompodaciURLArt, fmt.Sprintf("#%s", robnoKompodaciURLArt), hxValsRobnoKompodaciArt)
 
-	tmpl_robno.RobnoKompodaciPregledRealizacijePoArtiklima(*h.tabs, tbl, grpValues, btnObrada, btnPrint, searchInput, userSession.SelectedGod, translator).Render(ctx, c.Writer)
+	tmpl_robno.RobnoKompodaciPregledRealizacijePoArtiklima(h.tabs, tbl, grpValues, btnObrada, btnPrint, searchInput, userSession.SelectedGod, translator).Render(ctx, c.Writer)
 
 }
 
@@ -311,7 +310,7 @@ func (h *RobnoKompodaciHandler) PregledUcescaArtikla(c *gin.Context) {
 	btnPrint := common.SetPrintButton("print-btn", "Štampa", "stampa", robnoKompodaciURLUcesceArtStampa, "GET", true, common.ClassPrintButton, "odsifreartikla,dosifreartikla,oddatuma,dodatuma")
 	searchInput := common.CreateSearchInput("search-input", translator, robnoKompodaciURLUcesceArt, fmt.Sprintf("#%s", robnoKompodaciUcesceArtTableID), hxValsRobnoKompodaciUcesceArt)
 
-	tmpl_robno.RobnoKompodaciPregledUcescaArtikla(*h.tabs, tbl, btnObrada, btnPrint, searchInput, userSession.SelectedGod, translator).Render(ctx, c.Writer)
+	tmpl_robno.RobnoKompodaciPregledUcescaArtikla(h.tabs, tbl, btnObrada, btnPrint, searchInput, userSession.SelectedGod, translator).Render(ctx, c.Writer)
 }
 
 func (h *RobnoKompodaciHandler) GetPregledUcescaArtiklaStampa(c *gin.Context) {
@@ -396,7 +395,7 @@ func (h *RobnoKompodaciHandler) PregledUcescaGrupeArtikala(c *gin.Context) {
 	btnPrint := common.SetPrintButton("print-btn", "Štampa", "stampa", robnoKompodaciURLUcesceGrStampa, "GET", true, common.ClassPrintButton, "odgrupe,dogrupe,oddatuma,dodatuma")
 
 	searchInput := common.CreateSearchInput("search-input", translator, robnoKompodaciURLUcesceGr, fmt.Sprintf("#%s", robnoKompodaciURLUcesceGr), hxValsRobnoKompodaciUcesceGr)
-	tmpl_robno.RobnoKompodaciPregledUcescaGrupeArtikala(*h.tabs, tbl, grpValues, btnObrada, btnPrint, searchInput, session.SelectedGod, translator).Render(ctx, c.Writer)
+	tmpl_robno.RobnoKompodaciPregledUcescaGrupeArtikala(h.tabs, tbl, grpValues, btnObrada, btnPrint, searchInput, session.SelectedGod, translator).Render(ctx, c.Writer)
 }
 
 func (h *RobnoKompodaciHandler) params(c *gin.Context) domain.RobnoKomPodaciParams {
@@ -472,8 +471,6 @@ func (h *RobnoKompodaciHandler) GetPregledUcescaGrupeArtikalaStampa(c *gin.Conte
 }
 
 func (h *RobnoKompodaciHandler) AddRoutes(r *gin.Engine) {
-	r.Use(middleware.Auth())
-
 	r.GET("/api/robno-kompodaci", h.RobnoKompodaciMain)
 	r.GET("/api/robno-kompodaci/realizacija-po-kupcima-artiklima", h.PregledRealizacijePoKupcimaArtiklima)
 	r.GET("/api/robno-kompodaci/realizacija-po-kupcima-artiklima/stampa", h.GetPregledRealizacijePoKupcimaArtiklimaStampa)
@@ -485,8 +482,8 @@ func (h *RobnoKompodaciHandler) AddRoutes(r *gin.Engine) {
 	r.GET("/api/robno-kompodaci/ucesce-grupe-artikala/stampa", h.GetPregledUcescaGrupeArtikalaStampa)
 }
 
-func robnoKompodaciTabs() *domain.TabData {
-	return &domain.TabData{Tabs: []domain.TabItem{
+func robnoKompodaciTabs() domain.TabData {
+	return domain.TabData{Tabs: []domain.TabItem{
 		{ID: "robno-kompodaci-real-kupci-artikli", Label: "Realizacija po artiklima i kupcima", HXRequestUrl: robnoKompodaciURLKupciArt, Name: "real-kupci-artikli"},
 		{ID: "robno-kompodaci-real-artikli", Label: "Realizacija po artiklima", HXRequestUrl: robnoKompodaciURLArt, Name: "real-artikli"},
 		{ID: "robno-kompodaci-ucesce-artikal", Label: "Ucesce artikla u ukupnom prometu", HXRequestUrl: robnoKompodaciURLUcesceArt, Name: "ucesce-artikal"},

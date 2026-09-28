@@ -553,14 +553,63 @@ func SetTableTotalRecords(tbl *domain.TableData, totalRecords, pageSize int) {
 	}
 }
 
-func SetActiveTab(tabs *domain.TabData, index int) {
-	for i := range tabs.Tabs {
-		if i == index {
-			tabs.Tabs[i].IsActive = true
-		} else {
-			tabs.Tabs[i].IsActive = false
+// WithActive returns a copy of base with exactly one Tab marked Active,
+// matched by ID. base is never mutated, so it is safe to store once on a
+// handler at construction time and reuse across every concurrent request
+// without a mutex.
+func SetActiveTab(base domain.TabData, activeID int) domain.TabData {
+	if activeID == 0 || len(base.Tabs) == 0 {
+		return cloneTabData(base) // still return a safe copy, nothing marked active
+	}
+	tabs := make([]domain.TabItem, len(base.Tabs))
+	for i, t := range base.Tabs {
+		t.IsActive = i == activeID
+		tabs[i] = t
+	}
+	return domain.TabData{Tabs: tabs}
+}
+
+// WithActive returns a copy of base with exactly one Tab marked Active,
+// matched by ID. base is never mutated, so it is safe to store once on a
+// handler at construction time and reuse across every concurrent request
+// without a mutex.
+func SetActiveTabByName(base domain.TabData, activeTabName string) domain.TabData {
+	if activeTabName == "" || len(base.Tabs) == 0 {
+		return cloneTabData(base) // still return a safe copy, nothing marked active
+	}
+	tabs := make([]domain.TabItem, len(base.Tabs))
+	for i, t := range base.Tabs {
+		t.IsActive = t.Name == activeTabName
+		tabs[i] = t
+	}
+	return domain.TabData{Tabs: tabs}
+}
+
+// ActiveTabID pulls the active tab's ID back out of a TabData that has
+// already had WithActive applied — handy when a subtab set depends on
+// which top-level tab is active.
+func ActiveTabID(td domain.TabData) string {
+	for _, t := range td.Tabs {
+		if t.IsActive {
+			return t.ID
 		}
 	}
+	return ""
+}
+
+// DefaultActiveID returns the first tab's ID, for use when no tab param is
+// present on the request (e.g. the bare /robno-promet landing route).
+func DefaultActiveID(td domain.TabData) string {
+	if len(td.Tabs) == 0 {
+		return ""
+	}
+	return td.Tabs[0].ID
+}
+
+func cloneTabData(td domain.TabData) domain.TabData {
+	tabs := make([]domain.TabItem, len(td.Tabs))
+	copy(tabs, td.Tabs)
+	return domain.TabData{Tabs: tabs}
 }
 
 // BilansCharAt returns the rune at position i in s as a string, or " " if out of range.

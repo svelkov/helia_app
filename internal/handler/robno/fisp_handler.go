@@ -181,7 +181,6 @@ func (h *FispHandler) Print(c *gin.Context) {
 	rep.FispStampa(domain.ReportParameters{Orientation: "landscape", CompanyName: f.Naziv, Adress: f.Adresa, Postcode: f.Pobro, City: f.Mesto, PIB: f.PIB, MatBroj: f.Matbr, ReportName: "Mesta isporuke", ParameterItems: map[string]domain.ParameterItem{}}, tbl, i18n.GetInstance()).Render(ctx, c.Writer)
 }
 func (h *FispHandler) AddRoutes(r *gin.Engine) {
-	r.Use(middleware.Auth())
 	r.POST("/api/fisp/", h.Create)
 	r.POST("/api/fisp/save", h.Create)
 	r.PUT("/api/fisp/:id", h.Update)

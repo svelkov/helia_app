@@ -743,6 +743,7 @@ type RobnoStanjaParams struct {
 	ReportTip              string  `json:"report_tip" db:"reporttip"`
 	SearchText             string  `json:"searchtext" db:"searchtext"`
 }
+
 type RobnoKarticaDto struct {
 	Magacin      int       `json:"magacin" db:"magacin"`
 	Konto        string    `json:"konto" db:"konto"`
@@ -855,6 +856,74 @@ type RobnoKomPodaciDto struct {
 	Mi            int     `json:"mi" db:"mi"`
 	NazivKupca    string  `json:"naziv_kupca" db:"nazivkupca"`
 	NazivMesta    string  `json:"naziv_mesta" db:"nazivmesta"`
+}
+
+type RobnoPrometParams struct {
+	OdMagacina     string
+	DoMagacina     string
+	OdSifreArtikla string
+	DoSifreArtikla string
+	OdGrupe        string
+	DoGrupe        string
+	OdDatuma       string
+	DoDatuma       string
+}
+
+// RobnoPrometDto is the single row type of the reports of the "Robno promet" option. Every report
+// query selects only the columns of its own report (the fields that are not selected keep their
+// zero value), so one type carries both the article rows of "Promet artikala po grupama" and the
+// partner rows (konto + šifra of the stavka) of "Promet artikala po kupcima", "Nabavka po
+// dobavljačima" and the two gradilišta reports (konto + šifra = pkto + pana of the document).
+//
+// The money columns are already the rounded per-stavka values summed in SQL (numeric), because the
+// legacy procedures round (and tax) every stavka before summing it.
+//
+// SifraArt is the ARTICLE code (rpro.sifra) and Sifra the PARTNER code (rdok.fana), so the two never
+// collide. Konto, Naziv and JM are shared on purpose: in the article report they hold the konto and
+// the naziv/jm of the ARTICLE (rpro.konto, rsif.naziv, rsif.jm), in the two partner reports the
+// ones of the PARTNER (rdok.fkto/fana -> fkpl -> partneri).
+type RobnoPrometDto struct {
+	// Shared: the konto and the naziv/jm of the article (tab 1) or of the partner (tabs 2 and 3).
+	Konto string `json:"konto" db:"konto"`
+	Naziv string `json:"naziv" db:"naziv"`
+	JM    string `json:"jm" db:"jm"`
+
+	// Tab 1 - Promet artikala po grupama za period: one row per article.
+	SifraArt int     `json:"sifra_art" db:"sifra_art"`
+	Gru      int     `json:"gru" db:"gru"`
+	Ulaz     float64 `json:"ulaz" db:"ulaz"`
+	Izlaz    float64 `json:"izlaz" db:"izlaz"`
+	Finulaz  float64 `json:"finulaz" db:"finulaz"`
+	Finizlaz float64 `json:"finizlaz" db:"finizlaz"`
+
+	// Tabs 2, 3, 4 and 5 - the partner of the staves: his šifra and the naziv/adresa/mesto of the
+	// partner (tabs 2 and 3, rdok.fana -> fkpl) or of the gradilište (tabs 4 and 5, rdok.pana).
+	Sifra  string `json:"sifra" db:"sifra"`
+	Adresa string `json:"adresa" db:"adresa"`
+	Mesto  string `json:"mesto" db:"mesto"`
+
+	// Tab 2 - Promet artikala po kupcima za period. Rabat is shared with tab 3.
+	Iznos     float64 `json:"iznos" db:"iznos"`
+	Ugrabat   float64 `json:"ugrabat" db:"ugrabat"`
+	Rabat     float64 `json:"rabat" db:"rabat"`
+	Kasa      float64 `json:"kasa" db:"kasa"`
+	Netrezpdv float64 `json:"netrezpdv" db:"netrezpdv"`
+	Neto      float64 `json:"neto" db:"neto"`
+
+	// Tab 3 - Nabavka po dobavljačima.
+	Fakvred     float64 `json:"fakvred" db:"fakvred"`
+	Netofakvred float64 `json:"netofakvred" db:"netofakvred"`
+	Ztrovred    float64 `json:"ztrovred" db:"ztrovred"`
+	Nabvred     float64 `json:"nabvred" db:"nabvred"`
+	Ruc         float64 `json:"ruc" db:"ruc"`
+	Procruc     float64 `json:"procruc" db:"procruc"`
+	Vpvred      float64 `json:"vpvred" db:"vpvred"`
+
+	// Tab 5 - Izveštaj zaduženja gradilišta VPC-NC: the VP amount (sum of kolic * cena), the NC
+	// amount (sum of kolic * ncena) and Razlika = the difference of the two accumulated totals.
+	Vpiznos float64 `json:"vpiznos" db:"vpiznos"`
+	Nciznos float64 `json:"nciznos" db:"nciznos"`
+	Razlika float64 `json:"razlika" db:"razlika"`
 }
 
 type KrajPopisType1Row struct {

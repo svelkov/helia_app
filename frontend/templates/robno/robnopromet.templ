@@ -77,9 +77,14 @@ templ RobnoPrometPoGrupiArtikala1(tabs domain.TabData, tbl domain.TableData, mag
 					@components.Search_PartPrintButton(btnPrint)
 				</div>
 			</div>
-			<div class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex-1 min-h-0 overflow-hidden">
+			<!-- Group Data Table -->
+			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative">
+				@components.LoadingSpinner()
 				@components.Search_Part(tbl, searchInput)
-				@components.Table(tbl, translator)
+				<!-- Table -->
+				<div id={ tbl.TableID } class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+					@components.Table(tbl, translator)
+				</div>
 			</div>
 		</div>
 	</div>
@@ -144,9 +149,14 @@ templ RobnoPrometPoKupcima(tabs domain.TabData, tbl domain.TableData, magValues,
 					@components.Search_PartPrintButton(btnPrint)
 				</div>
 			</div>
-			<div class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex-1 min-h-0 overflow-hidden">
+			<!-- Group Data Table -->
+			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative">
+				@components.LoadingSpinner()
 				@components.Search_Part(tbl, searchInput)
-				@components.Table(tbl, translator)
+				<!-- Table -->
+				<div id={ tbl.TableID } class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+					@components.Table(tbl, translator)
+				</div>
 			</div>
 		</div>
 	</div>
@@ -211,9 +221,14 @@ templ RobnoPrometPoDobavljacima(tabs domain.TabData, tbl domain.TableData, magVa
 					@components.Search_PartPrintButton(btnPrint)
 				</div>
 			</div>
-			<div class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex-1 min-h-0 overflow-hidden">
+			<!-- Group Data Table -->
+			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative">
+				@components.LoadingSpinner()
 				@components.Search_Part(tbl, searchInput)
-				@components.Table(tbl, translator)
+				<!-- Table -->
+				<div id={ tbl.TableID } class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+					@components.Table(tbl, translator)
+				</div>
 			</div>
 		</div>
 	</div>
@@ -283,9 +298,14 @@ templ RobnoPrometRucLagerLista(tabs, subTabs domain.TabData, tbl domain.TableDat
 					@components.Search_PartPrintButton(btnPrint)
 				</div>
 			</div>
-			<div class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex-1 min-h-0 overflow-hidden">
+			<!-- Group Data Table -->
+			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative">
+				@components.LoadingSpinner()
 				@components.Search_Part(tbl, searchInput)
-				@components.Table(tbl, translator)
+				<!-- Table -->
+				<div id={ tbl.TableID } class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+					@components.Table(tbl, translator)
+				</div>
 			</div>
 		</div>
 	</div>
@@ -313,13 +333,13 @@ templ RobnoPrometGradiliste(tabs domain.TabData, tbl domain.TableData, magValues
 						</div>
 						<div class="flex items-center gap-1">
 							@components.LabelField(domain.LabelFieldConfig{ID: "odsifre", LabelText: translator.Label("Od šifre artikla"), ClassLabel: common.ClassLabel + " w-28"})
-							@components.TextInputField(domain.InputFieldConfig{ID: "odsifre", Name: "odsifre", FieldType: "number", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "3"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "odsifre", Name: "odsifre", FieldType: "number", Value: "0", MaxLength: "6",  ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "3"})
 							@components.SearchButton(domain.SearchButtonConfig{ID: "odsifre", Name: "search-odsifre", HxUrl: "/api/promet/searchbutton", HxTarget: "#search-dropdown", HxSwap: "innerHTML", HxVals: `js:{"destfield": "odsifre"}`, ClassButton: common.ClassButton})
 							@components.TextInputField(domain.InputFieldConfig{ID: "odsifrenaziv", Name: "dosifrenaziv", FieldType: "text", Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1"})
 						</div>
 						<div class="flex items-center gap-1">
 							@components.LabelField(domain.LabelFieldConfig{ID: "dosifre", LabelText: translator.Label("Do šifre artikla"), ClassLabel: common.ClassLabel + " w-28"})
-							@components.TextInputField(domain.InputFieldConfig{ID: "dosifre", Name: "dosifre", FieldType: "number", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "4"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "dosifre", Name: "dosifre", FieldType: "number", Value: "999999", MaxLength: "6", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "4"})
 							@components.SearchButton(domain.SearchButtonConfig{ID: "dosifre", Name: "search-dosifre", HxUrl: "/api/promet/searchbutton", HxTarget: "#search-dropdown", HxSwap: "innerHTML", HxVals: `js:{"destfield": "dosifre"}`, ClassButton: common.ClassButton})
 							@components.TextInputField(domain.InputFieldConfig{ID: "dosifrenaziv", Name: "dosifrenaziv", FieldType: "text", Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1"})
 						</div>
@@ -350,9 +370,14 @@ templ RobnoPrometGradiliste(tabs domain.TabData, tbl domain.TableData, magValues
 					@components.Search_PartPrintButton(btnPrint)
 				</div>
 			</div>
-			<div class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex-1 min-h-0 overflow-hidden">
+			<!-- Group Data Table -->
+			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative">
+				@components.LoadingSpinner()
 				@components.Search_Part(tbl, searchInput)
-				@components.Table(tbl, translator)
+				<!-- Table -->
+				<div id={ tbl.TableID } class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+					@components.Table(tbl, translator)
+				</div>
 			</div>
 		</div>
 	</div>
@@ -417,9 +442,14 @@ templ RobnoPrometGradilisteVpcNc(tabs domain.TabData, tbl domain.TableData, magV
 					@components.Search_PartPrintButton(btnPrint)
 				</div>
 			</div>
-			<div class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex-1 min-h-0 overflow-hidden">
+			<!-- Group Data Table -->
+			<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative">
+				@components.LoadingSpinner()
 				@components.Search_Part(tbl, searchInput)
-				@components.Table(tbl, translator)
+				<!-- Table -->
+				<div id={ tbl.TableID } class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+					@components.Table(tbl, translator)
+				</div>
 			</div>
 		</div>
 	</div>

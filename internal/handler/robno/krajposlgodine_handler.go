@@ -10,7 +10,6 @@ import (
 	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
-	"helia/internal/middleware"
 	robnosvc "helia/internal/service/robno"
 	"helia/pkg/utils"
 
@@ -22,19 +21,19 @@ const krajPoslovneGodineURL = "/api/robno/krajposlovnegodine"
 type KrajPoslovneGodineHandler struct {
 	service robnosvc.KrajPoslovneGodineService
 	cfg     config.Config
-	tabs    *domain.TabData
-	subtabs *domain.TabData
+	tabs    domain.TabData
+	subtabs domain.TabData
 }
 
 func NewKrajPoslovneGodineHandler(service robnosvc.KrajPoslovneGodineService, cfg config.Config) *KrajPoslovneGodineHandler {
 	return &KrajPoslovneGodineHandler{service: service, cfg: cfg,
-		tabs: &domain.TabData{Tabs: []domain.TabItem{
+		tabs: domain.TabData{Tabs: []domain.TabItem{
 			{ID: "kpg-popis", Label: "Popisne liste", HXRequestUrl: krajPoslovneGodineURL + "/popis/sifra", IsActive: true},
 			{ID: "kpg-visak", Label: "Obrada viškova/manjkova", HXRequestUrl: krajPoslovneGodineURL + "/obrada"},
 			{ID: "kpg-prepis", Label: "Prepis stanja", HXRequestUrl: krajPoslovneGodineURL + "/prepis"},
 		},
 		},
-		subtabs: &domain.TabData{Tabs: []domain.TabItem{
+		subtabs: domain.TabData{Tabs: []domain.TabItem{
 			{ID: "kpg-sifra", Label: "Po šifri", HXRequestUrl: krajPoslovneGodineURL + "/popis?tip=sifra", IsActive: true},
 			{ID: "kpg-naziv", Label: "Po nazivu", HXRequestUrl: krajPoslovneGodineURL + "/popis?tip=naziv"},
 			{ID: "kpg-grupa", Label: "Po grupi", HXRequestUrl: krajPoslovneGodineURL + "/popis?tip=grupa"},
@@ -53,7 +52,7 @@ func (h *KrajPoslovneGodineHandler) Main(c *gin.Context) {
 		return
 	}
 	tbl := h.table("Popisne liste", h.service.GetType1Fields())
-	if err := tmpl_robno.KrajPoslovneGodineMain(*h.tabs, *h.subtabs, tbl, mag, i18n.GetInstance()).Render(c, c.Writer); err != nil {
+	if err := tmpl_robno.KrajPoslovneGodineMain(h.tabs, h.subtabs, tbl, mag, i18n.GetInstance()).Render(c, c.Writer); err != nil {
 		common.WriteJSONResponse(c, 500, false, nil, common.ErrMsgRenderTemplate)
 	}
 }
@@ -72,7 +71,7 @@ func (h *KrajPoslovneGodineHandler) PopisPoSifri(c *gin.Context) {
 		return
 	}
 	mag, _ := h.service.GetMagacini(c.Request.Context())
-	if err := tmpl_robno.KrajPoslovneGodinePopis(*h.tabs, *h.subtabs, tbl, mag, i18n.GetInstance()).Render(c, c.Writer); err != nil {
+	if err := tmpl_robno.KrajPoslovneGodinePopis(h.tabs, h.subtabs, tbl, mag, i18n.GetInstance()).Render(c, c.Writer); err != nil {
 		common.WriteJSONResponse(c, 500, false, nil, common.ErrMsgRenderTemplate)
 	}
 }
@@ -104,7 +103,7 @@ func (h *KrajPoslovneGodineHandler) Obrada(c *gin.Context) {
 		}
 	}
 	mag, _ := h.service.GetMagacini(c.Request.Context())
-	if err := tmpl_robno.KrajPoslovneGodineObrada(*h.tabs, h.tableVisakRows("Obrada viškova i manjkova", rows), mag, i18n.GetInstance()).Render(c, c.Writer); err != nil {
+	if err := tmpl_robno.KrajPoslovneGodineObrada(h.tabs, h.tableVisakRows("Obrada viškova i manjkova", rows), mag, i18n.GetInstance()).Render(c, c.Writer); err != nil {
 		common.WriteJSONResponse(c, 500, false, nil, common.ErrMsgRenderTemplate)
 	}
 }
@@ -124,7 +123,7 @@ func (h *KrajPoslovneGodineHandler) Prepis(c *gin.Context) {
 		}
 	}
 	mag, _ := h.service.GetMagacini(c.Request.Context())
-	if err := tmpl_robno.KrajPoslovneGodinePrepis(*h.tabs, h.table("Prepis stanja", h.service.GetType1Fields()), mag, i18n.GetInstance()).Render(c, c.Writer); err != nil {
+	if err := tmpl_robno.KrajPoslovneGodinePrepis(h.tabs, h.table("Prepis stanja", h.service.GetType1Fields()), mag, i18n.GetInstance()).Render(c, c.Writer); err != nil {
 		common.WriteJSONResponse(c, 500, false, nil, common.ErrMsgRenderTemplate)
 	}
 }
@@ -149,7 +148,7 @@ func (h *KrajPoslovneGodineHandler) renderRows(c *gin.Context, tab int, print bo
 		return
 	}
 	mag, _ := h.service.GetMagacini(c.Request.Context())
-	if err := tmpl_robno.KrajPoslovneGodinePopis(*h.tabs, *h.subtabs, tbl, mag, i18n.GetInstance()).Render(c, c.Writer); err != nil {
+	if err := tmpl_robno.KrajPoslovneGodinePopis(h.tabs, h.subtabs, tbl, mag, i18n.GetInstance()).Render(c, c.Writer); err != nil {
 		common.WriteJSONResponse(c, 500, false, nil, common.ErrMsgRenderTemplate)
 	}
 }
@@ -211,7 +210,6 @@ func (h *KrajPoslovneGodineHandler) table(title string, fields []domain.Fields) 
 	return t
 }
 func (h *KrajPoslovneGodineHandler) AddRoutes(r *gin.Engine) {
-	r.Use(middleware.Auth())
 	r.GET("/api/robno/krajposlovnegodine", h.Main)
 	r.GET("/api/robno/krajposlovnegodine/popis/sifra", h.PopisPoSifri)
 	r.GET("/api/robno/krajposlovnegodine/popis/naziv", h.PopisPoNazivu)

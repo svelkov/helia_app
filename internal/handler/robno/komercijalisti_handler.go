@@ -33,14 +33,16 @@ const (
 )
 
 type KomercijalistiHandler struct {
+	translator *i18n.Service
 	service    service.Service[domain.Komercijalisti]
 	komService robnosvc.KomercijalistiService
 	cfg        config.Config
 	lm         *middleware.LockMiddleware
 }
 
-func NewKomercijalistiHandler(service *service.BaseService[domain.Komercijalisti], komService robnosvc.KomercijalistiService, cfg config.Config, lm *middleware.LockMiddleware) *KomercijalistiHandler {
+func NewKomercijalistiHandler(service *service.BaseService[domain.Komercijalisti], komService robnosvc.KomercijalistiService, cfg config.Config, lm *middleware.LockMiddleware, translator *i18n.Service) *KomercijalistiHandler {
 	return &KomercijalistiHandler{
+		translator: translator,
 		service:    service,
 		komService: komService,
 		cfg:        cfg,
@@ -162,10 +164,9 @@ func (h *KomercijalistiHandler) confirmAddHandler(c *gin.Context) {
 	btnCancel := common.SetButton("cancel-btn", "Odustani", "cancel", "", "", "", "", "", "", true, common.ClassOdustaniButton, "")
 	btnCancel.IdDialog = dialog.Id
 
-	translator := i18n.GetInstance()
 	csrfToken := common.GetCsrfToken(c)
 
-	tmpl_robno.KomercijalistiDialog(dialog, common.ActionAdd, model, btnSave, btnCancel, btnClose, translator, csrfToken).Render(c.Request.Context(), c.Writer)
+	tmpl_robno.KomercijalistiDialog(dialog, common.ActionAdd, model, btnSave, btnCancel, btnClose, h.translator, csrfToken).Render(c.Request.Context(), c.Writer)
 }
 
 func (h *KomercijalistiHandler) confirmUpdateHandler(c *gin.Context) {
@@ -204,9 +205,8 @@ func (h *KomercijalistiHandler) confirmUpdateHandler(c *gin.Context) {
 	common.SetUnlockButtonProperties(&btnCancel, fmt.Sprintf("/api/komercijalisti/unlock/%d", id))
 	common.SetUnlockButtonProperties(&btnClose, fmt.Sprintf("/api/komercijalisti/unlock/%d", id))
 
-	translator := i18n.GetInstance()
 	csrfToken := common.GetCsrfToken(c)
-	tmpl_robno.KomercijalistiDialog(dialog, common.ActionUpdate, *entity, btnSave, btnCancel, btnClose, translator, csrfToken).Render(c.Request.Context(), c.Writer)
+	tmpl_robno.KomercijalistiDialog(dialog, common.ActionUpdate, *entity, btnSave, btnCancel, btnClose, h.translator, csrfToken).Render(c.Request.Context(), c.Writer)
 }
 
 func (h *KomercijalistiHandler) GetKomercijalisti(c *gin.Context) {
@@ -252,9 +252,9 @@ func (h *KomercijalistiHandler) GetAllKomercijalisti(c *gin.Context) {
 	tbl.BtnDelete.IsVisible = false
 
 	if requestSource == "menu" || requestSource == "" {
-		searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), komercijalistiURLGetAll, fmt.Sprintf("#%s", komercijalistiTableID), "")
+		searchInput := common.CreateSearchInput("search-input", h.translator, komercijalistiURLGetAll, fmt.Sprintf("#%s", komercijalistiTableID), "")
 		btnPrint := common.SetPrintButton("btn-print-komercijalisti", "Štampa", "fin_print", komercijalistiURLPrint, "GET", true, common.ClassPrintButton, "")
-		tmpl_robno.KomercijalistiMain(tbl, searchInput, btnPrint, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+		tmpl_robno.KomercijalistiMain(tbl, searchInput, btnPrint, h.translator).Render(c.Request.Context(), c.Writer)
 	} else {
 		utils.RenderContent(c, tbl)
 	}
@@ -297,8 +297,7 @@ func (h *KomercijalistiHandler) KomercijalistiStampa(c *gin.Context) {
 		return
 	}
 
-	translator := i18n.GetInstance()
-	tmpl_robno_rep.KomercijalistiStampa(repParams, tbl, translator).Render(ctx, c.Writer)
+	tmpl_robno_rep.KomercijalistiStampa(repParams, tbl, h.translator).Render(ctx, c.Writer)
 }
 
 func (h *KomercijalistiHandler) UnlockKomercijalisti(c *gin.Context) {

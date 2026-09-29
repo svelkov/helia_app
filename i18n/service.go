@@ -63,17 +63,34 @@ func (s *Service) loadTranslations(dir string, languages []string, fallbackLang 
 	return nil
 }
 
-// SetLanguage changes the current language at runtime
+// SetLanguage changes the current language at runtime. The language is matched against the loaded ones
+// without regard to case: the configuration lists "SR"/"СР"/"EN" while the language cookie, the
+// Accept-Language header and the UI send the lower case form ("sr"/"en"), and both have to work.
 func (s *Service) SetLanguage(lang string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if _, exists := s.translations[lang]; !exists {
+	key, ok := s.languageKey(lang)
+	if !ok {
 		return fmt.Errorf("language %s not loaded", lang)
 	}
 
-	s.currentLang = lang
+	s.currentLang = key
 	return nil
+}
+
+// languageKey returns the key the translations of lang are stored under (the match is case
+// insensitive) and reports whether the language is loaded at all.
+func (s *Service) languageKey(lang string) (string, bool) {
+	if _, exists := s.translations[lang]; exists {
+		return lang, true
+	}
+	for key := range s.translations {
+		if strings.EqualFold(key, lang) {
+			return key, true
+		}
+	}
+	return "", false
 }
 
 // GetCurrentLanguage returns the current active language

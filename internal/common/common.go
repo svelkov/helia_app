@@ -558,9 +558,6 @@ func SetTableTotalRecords(tbl *domain.TableData, totalRecords, pageSize int) {
 // handler at construction time and reuse across every concurrent request
 // without a mutex.
 func SetActiveTab(base domain.TabData, activeID int) domain.TabData {
-	if activeID == 0 || len(base.Tabs) == 0 {
-		return cloneTabData(base) // still return a safe copy, nothing marked active
-	}
 	tabs := make([]domain.TabItem, len(base.Tabs))
 	for i, t := range base.Tabs {
 		t.IsActive = i == activeID

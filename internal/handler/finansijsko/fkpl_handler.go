@@ -53,14 +53,15 @@ var fkplSearchTableFields = []domain.Fields{
 }
 
 type FkplHandler struct {
+	translator  *i18n.Service
 	service     service.Service[domain.Fkpl]
 	fkplService finservice.FkplService
 	cfg         config.Config
 	lm          *middleware.LockMiddleware
 }
 
-func NewFkplHandler(service *service.BaseService[domain.Fkpl], fkplService finservice.FkplService, cfg config.Config, lm *middleware.LockMiddleware) *FkplHandler {
-	return &FkplHandler{service: service, fkplService: fkplService, cfg: cfg, lm: lm}
+func NewFkplHandler(service *service.BaseService[domain.Fkpl], fkplService finservice.FkplService, cfg config.Config, lm *middleware.LockMiddleware, translator *i18n.Service) *FkplHandler {
+	return &FkplHandler{translator: translator, service: service, fkplService: fkplService, cfg: cfg, lm: lm}
 }
 
 func (h *FkplHandler) CreateFkpl(c *gin.Context) {
@@ -183,10 +184,9 @@ func (h *FkplHandler) confirmAddHandler(c *gin.Context) {
 	btnCancel := common.SetButton("cancel-btn", "Odustani", "cancel", "", "", "", "", "", "", true, common.ClassOdustaniButton, "")
 	btnCancel.IdDialog = dialog.Id
 
-	translator := i18n.GetInstance()
 	csrfToken := common.GetCsrfToken(c)
 
-	tmpl_fin.KontniPlanDialog(dialog, common.ActionAdd, tipAnalitike, model, btnSave, btnCancel, btnClose, translator, csrfToken).Render(c.Request.Context(), c.Writer)
+	tmpl_fin.KontniPlanDialog(dialog, common.ActionAdd, tipAnalitike, model, btnSave, btnCancel, btnClose, h.translator, csrfToken).Render(c.Request.Context(), c.Writer)
 }
 
 func (h *FkplHandler) confirmUpdateHandler(c *gin.Context) {
@@ -232,9 +232,8 @@ func (h *FkplHandler) confirmUpdateHandler(c *gin.Context) {
 	common.SetUnlockButtonProperties(&btnCancel, fmt.Sprintf("/api/fkpl/unlock/%d", id))
 	common.SetUnlockButtonProperties(&btnClose, fmt.Sprintf("/api/fkpl/unlock/%d", id))
 
-	translator := i18n.GetInstance()
 	csrfToken := common.GetCsrfToken(c)
-	tmpl_fin.KontniPlanDialog(dialog, common.ActionUpdate, tipAnalitike, *entity, btnSave, btnCancel, btnClose, translator, csrfToken).Render(c.Request.Context(), c.Writer)
+	tmpl_fin.KontniPlanDialog(dialog, common.ActionUpdate, tipAnalitike, *entity, btnSave, btnCancel, btnClose, h.translator, csrfToken).Render(c.Request.Context(), c.Writer)
 }
 
 func (h *FkplHandler) GetFkpl(c *gin.Context) {
@@ -281,11 +280,11 @@ func (h *FkplHandler) GetAllFkpl(c *gin.Context) {
 		return
 	}
 	tbl.BtnDelete.IsVisible = false // Hide Delete button in the table header
-	
+
 	if requestSource == "menu" || requestSource == "" {
-		searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), fkplURLGetAll, fmt.Sprintf("#%s", fkplTableID), hxValsFkpl)
+		searchInput := common.CreateSearchInput("search-input", h.translator, fkplURLGetAll, fmt.Sprintf("#%s", fkplTableID), hxValsFkpl)
 		btnPrint := common.SetPrintButton("btn-print-fkpl", "Štampa", "fin_print", fkplURLPrint, "GET", true, common.ClassPrintButton, "vkonta")
-		tmpl_fin.KontniPlan(tbl, searchInput, btnPrint, vkonta, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+		tmpl_fin.KontniPlan(tbl, searchInput, btnPrint, vkonta, h.translator).Render(c.Request.Context(), c.Writer)
 	} else {
 		utils.RenderContent(c, tbl)
 	}
@@ -330,8 +329,7 @@ func (h *FkplHandler) KontniPlanStampa(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, err.Error())
 		return
 	}
-	translator := i18n.GetInstance()
-	tmpl_fin_rep.KontniPlanStampa(repParams, tbl, translator).Render(ctx, c.Writer)
+	tmpl_fin_rep.KontniPlanStampa(repParams, tbl, h.translator).Render(ctx, c.Writer)
 }
 
 func (h *FkplHandler) TraziKonto(c *gin.Context) {

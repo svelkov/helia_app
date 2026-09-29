@@ -152,17 +152,18 @@ func hxValsRobnoPrometGrupeForTab(tabName string) string {
 // common.SetActiveTab, which returns a request-scoped copy. Mutating the prototypes
 // directly (or sharing them with a template) would race between concurrent requests.
 type RobnoPrometHandler struct {
-	service robnosvc.RobnoPrometService
-	cfg     config.Config
-	tabs    domain.TabData
-	subtabs domain.TabData
+	translator *i18n.Service
+	service    robnosvc.RobnoPrometService
+	cfg        config.Config
+	tabs       domain.TabData
+	subtabs    domain.TabData
 }
 
-func NewRobnoPrometHandler(service robnosvc.RobnoPrometService, cfg config.Config) *RobnoPrometHandler {
-	return &RobnoPrometHandler{service: service,
+func NewRobnoPrometHandler(service robnosvc.RobnoPrometService, cfg config.Config, translator *i18n.Service) *RobnoPrometHandler {
+	return &RobnoPrometHandler{translator: translator, service: service,
 		cfg:     cfg,
-		tabs:    robnoPrometTabs(),
-		subtabs: robnoPrometRucSubTabs(),
+		tabs:    robnoPrometTabs(translator),
+		subtabs: robnoPrometRucSubTabs(translator),
 	}
 }
 
@@ -220,11 +221,10 @@ func (h *RobnoPrometHandler) RobnoPrometArtikal(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, err.Error())
 		return
 	}
-	translator := i18n.GetInstance()
 	btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", robnoPrometArtikalURL, "#"+robnoPrometArtikalTableID, "innerHTML", "GET", "", hxValsRobnoPrometArtikal, true, common.ClassSaveButton, "handleDialogResponse")
 	btnPrint := common.SetPrintButton("print-btn", "Stampa", "stampa", robnoPrometArtikalURLStampa, "GET", true, common.ClassPrintButton, "odmagacina,domagacina,odsifre,dosifre,odgrupe,dogrupe,oddatuma,dodatuma")
-	search := common.CreateSearchInput("search-input", translator, robnoPrometArtikalURL, "#"+robnoPrometArtikalTableID, hxValsRobnoPrometArtikal)
-	if err := tmpl_robno.RobnoPrometMain(tabs, tbl, magValues, grupeValues, btnObrada, btnPrint, search, session.SelectedGod, translator).Render(ctx, c.Writer); err != nil {
+	search := common.CreateSearchInput("search-input", h.translator, robnoPrometArtikalURL, "#"+robnoPrometArtikalTableID, hxValsRobnoPrometArtikal)
+	if err := tmpl_robno.RobnoPrometMain(tabs, tbl, magValues, grupeValues, btnObrada, btnPrint, search, session.SelectedGod, h.translator).Render(ctx, c.Writer); err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 	}
 }
@@ -278,11 +278,10 @@ func (h *RobnoPrometHandler) RobnoPrometKupci(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, err.Error())
 		return
 	}
-	translator := i18n.GetInstance()
 	btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", robnoPrometKupciURL, "#"+robnoPrometKupciTableID, "innerHTML", "GET", "", hxValsRobnoPrometKupci, true, common.ClassSaveButton, "handleDialogResponse")
 	btnPrint := common.SetPrintButton(robnoPrometKupciTableID+"-stampa", "Stampa", "stampa", robnoPrometKupciURLStampa, "GET", true, common.ClassPrintButton, "odmagacina,domagacina,odsifre,dosifre,odgrupe,dogrupe,oddatuma,dodatuma")
-	search := common.CreateSearchInput("search-input", translator, robnoPrometKupciURL, "#"+robnoPrometKupciTableID, hxValsRobnoPrometKupci)
-	if err := tmpl_robno.RobnoPrometPoKupcima(tabs, tbl, magValues, grupeValues, btnObrada, btnPrint, search, session.SelectedGod, translator).Render(ctx, c.Writer); err != nil {
+	search := common.CreateSearchInput("search-input", h.translator, robnoPrometKupciURL, "#"+robnoPrometKupciTableID, hxValsRobnoPrometKupci)
+	if err := tmpl_robno.RobnoPrometPoKupcima(tabs, tbl, magValues, grupeValues, btnObrada, btnPrint, search, session.SelectedGod, h.translator).Render(ctx, c.Writer); err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 	}
 }
@@ -336,11 +335,10 @@ func (h *RobnoPrometHandler) RobnoPrometDobavljaci(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, err.Error())
 		return
 	}
-	translator := i18n.GetInstance()
 	btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", robnoPrometDobavljaciURL, "#"+robnoPrometDobavljaciTableID, "innerHTML", "GET", "", hxValsRobnoPrometDobavljaci, true, common.ClassSaveButton, "handleDialogResponse")
 	btnPrint := common.SetPrintButton(robnoPrometDobavljaciTableID+"-stampa", "Stampa", "stampa", robnoPrometDobavljaciURLStampa, "GET", true, common.ClassPrintButton, "odmagacina,domagacina,odsifre,dosifre,odgrupe,dogrupe,oddatuma,dodatuma")
-	search := common.CreateSearchInput("search-input", translator, robnoPrometDobavljaciURL, "#"+robnoPrometDobavljaciTableID, hxValsRobnoPrometDobavljaci)
-	if err := tmpl_robno.RobnoPrometPoDobavljacima(tabs, tbl, magValues, grupeValues, btnObrada, btnPrint, search, session.SelectedGod, translator).Render(ctx, c.Writer); err != nil {
+	search := common.CreateSearchInput("search-input", h.translator, robnoPrometDobavljaciURL, "#"+robnoPrometDobavljaciTableID, hxValsRobnoPrometDobavljaci)
+	if err := tmpl_robno.RobnoPrometPoDobavljacima(tabs, tbl, magValues, grupeValues, btnObrada, btnPrint, search, session.SelectedGod, h.translator).Render(ctx, c.Writer); err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 	}
 }
@@ -394,11 +392,10 @@ func (h *RobnoPrometHandler) RobnoPrometRucMain(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, err.Error())
 		return
 	}
-	translator := i18n.GetInstance()
 	btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", robnoPrometRucURL, "#"+robnoPrometRucTableID, "innerHTML", "GET", "", hxValsRobnoPrometRucLager, true, common.ClassSaveButton, "handleDialogResponse")
 	btnPrint := common.SetPrintButton(robnoPrometRucTableID+"-stampa", "Stampa", "stampa", robnoPrometRucURLStampa, "GET", true, common.ClassPrintButton, "tipcene,odmagacina,domagacina,stanjenadan,stampajgrupapodgrupa,zaliheodnule,azbucnired,odgrupe,dogrupe,odpodgrupe,dopodgrupe")
-	search := common.CreateSearchInput("search-input", translator, robnoPrometRucURL, "#"+robnoPrometRucTableID, hxValsRobnoPrometRucLager)
-	if err := tmpl_robno.RobnoPrometRucLagerLista(tabs, subtabs, tbl, magValues, grupeValues, btnObrada, btnPrint, search, session.SelectedGod, translator).Render(ctx, c.Writer); err != nil {
+	search := common.CreateSearchInput("search-input", h.translator, robnoPrometRucURL, "#"+robnoPrometRucTableID, hxValsRobnoPrometRucLager)
+	if err := tmpl_robno.RobnoPrometRucLagerLista(tabs, subtabs, tbl, magValues, grupeValues, btnObrada, btnPrint, search, session.SelectedGod, h.translator).Render(ctx, c.Writer); err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 	}
 }
@@ -429,11 +426,10 @@ func (h *RobnoPrometHandler) RobnoPrometRucUlazIzlaz(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, err.Error())
 		return
 	}
-	translator := i18n.GetInstance()
 	btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", robnoPrometRucUlazIzlazURL, "#"+robnoPrometRucUlazIzlazTableID, "innerHTML", "GET", "", hxValsRobnoPrometRucLager, true, common.ClassSaveButton, "handleDialogResponse")
 	btnPrint := common.SetPrintButton(robnoPrometRucUlazIzlazTableID+"-stampa", "Stampa", "stampa", robnoPrometRucUlazIzlazURLStampa, "GET", true, common.ClassPrintButton, "ulazizlaz,odmagacina,domagacina,oddatuma,dodatuma,zbirmagacina")
-	search := common.CreateSearchInput("search-input", translator, robnoPrometRucUlazIzlazURL, "#"+robnoPrometRucUlazIzlazTableID, hxValsRobnoPrometRucUlazIzlaz)
-	if err := tmpl_robno.RobnoPrometRucUlazIzlaz(tabs, subtabs, tbl, magValues, btnObrada, btnPrint, search, session.SelectedGod, translator).Render(ctx, c.Writer); err != nil {
+	search := common.CreateSearchInput("search-input", h.translator, robnoPrometRucUlazIzlazURL, "#"+robnoPrometRucUlazIzlazTableID, hxValsRobnoPrometRucUlazIzlaz)
+	if err := tmpl_robno.RobnoPrometRucUlazIzlaz(tabs, subtabs, tbl, magValues, btnObrada, btnPrint, search, session.SelectedGod, h.translator).Render(ctx, c.Writer); err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 	}
 }
@@ -463,11 +459,10 @@ func (h *RobnoPrometHandler) RobnoPrometRucMagacinima(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, err.Error())
 		return
 	}
-	translator := i18n.GetInstance()
 	btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", robnoPrometRucMagacinimaURL, "#"+robnoPrometRucMagacinimaTableID, "innerHTML", "GET", "", hxValsRobnoPrometRucLager, true, common.ClassSaveButton, "handleDialogResponse")
 	btnPrint := common.SetPrintButton(robnoPrometRucMagacinimaTableID+"-stampa", "Stampa", "stampa", robnoPrometRucMagacinimaURLStampa, "GET", true, common.ClassPrintButton, "odmagacina,domagacina,oddatuma,dodatuma,stampajsamoZbir")
-	search := common.CreateSearchInput("search-input", translator, robnoPrometRucMagacinimaURL, "#"+robnoPrometRucMagacinimaTableID, hxValsRobnoPrometRucMagacinima)
-	if err := tmpl_robno.RobnoPrometRucMagacinima(tabs, subtabs, tbl, magValues, btnObrada, btnPrint, search, session.SelectedGod, translator).Render(ctx, c.Writer); err != nil {
+	search := common.CreateSearchInput("search-input", h.translator, robnoPrometRucMagacinimaURL, "#"+robnoPrometRucMagacinimaTableID, hxValsRobnoPrometRucMagacinima)
+	if err := tmpl_robno.RobnoPrometRucMagacinima(tabs, subtabs, tbl, magValues, btnObrada, btnPrint, search, session.SelectedGod, h.translator).Render(ctx, c.Writer); err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 	}
 }
@@ -497,11 +492,10 @@ func (h *RobnoPrometHandler) RobnoPrometRucIzlazneFakture(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, err.Error())
 		return
 	}
-	translator := i18n.GetInstance()
 	btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", robnoPrometRucIzlazneFaktureURL, "#"+robnoPrometRucIzlazneFaktureTableID, "innerHTML", "GET", "", hxValsRobnoPrometRucLager, true, common.ClassSaveButton, "handleDialogResponse")
 	btnPrint := common.SetPrintButton(robnoPrometRucIzlazneFaktureTableID+"-stampa", "Stampa", "stampa", robnoPrometRucIzlazneFaktureURLStampa, "GET", true, common.ClassPrintButton, "odmagacina,domagacina,oddatuma,dodatuma,stampajsamoZbir,ukljuceneusluge")
-	search := common.CreateSearchInput("search-input", translator, robnoPrometRucIzlazneFaktureURL, "#"+robnoPrometRucIzlazneFaktureTableID, hxValsRobnoPrometRucIzlazne)
-	if err := tmpl_robno.RobnoPrometRucIzlazneFakture(tabs, subtabs, tbl, magValues, btnObrada, btnPrint, search, session.SelectedGod, translator).Render(ctx, c.Writer); err != nil {
+	search := common.CreateSearchInput("search-input", h.translator, robnoPrometRucIzlazneFaktureURL, "#"+robnoPrometRucIzlazneFaktureTableID, hxValsRobnoPrometRucIzlazne)
+	if err := tmpl_robno.RobnoPrometRucIzlazneFakture(tabs, subtabs, tbl, magValues, btnObrada, btnPrint, search, session.SelectedGod, h.translator).Render(ctx, c.Writer); err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 	}
 }
@@ -556,11 +550,10 @@ func (h *RobnoPrometHandler) RobnoPrometGradiliste(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, err.Error())
 		return
 	}
-	translator := i18n.GetInstance()
 	btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", robnoPrometGradilisteURL, "#"+robnoPrometGradilisteTableID, "innerHTML", "GET", "", hxValsRobnoPrometGradiliste, true, common.ClassSaveButton, "handleDialogResponse")
 	btnPrint := common.SetPrintButton(robnoPrometGradilisteTableID+"-stampa", "Stampa", "stampa", robnoPrometGradilisteURLStampa, "GET", true, common.ClassPrintButton, "odmagacina,domagacina,odsifre,dosifre,odgrupe,dogrupe,oddatuma,dodatuma")
-	search := common.CreateSearchInput("search-input", translator, robnoPrometGradilisteURL, "#"+robnoPrometGradilisteTableID, hxValsRobnoPrometGradiliste)
-	if err := tmpl_robno.RobnoPrometGradiliste(tabs, tbl, magValues, grupeValues, btnObrada, btnPrint, search, session.SelectedGod, translator).Render(ctx, c.Writer); err != nil {
+	search := common.CreateSearchInput("search-input", h.translator, robnoPrometGradilisteURL, "#"+robnoPrometGradilisteTableID, hxValsRobnoPrometGradiliste)
+	if err := tmpl_robno.RobnoPrometGradiliste(tabs, tbl, magValues, grupeValues, btnObrada, btnPrint, search, session.SelectedGod, h.translator).Render(ctx, c.Writer); err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 	}
 }
@@ -614,11 +607,10 @@ func (h *RobnoPrometHandler) RobnoPrometGradilisteVpcNc(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, err.Error())
 		return
 	}
-	translator := i18n.GetInstance()
 	btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", robnoPrometGradVpcURL, "#"+robnoPrometGradVpcTableID, "innerHTML", "GET", "", hxValsRobnoPrometRucLager, true, common.ClassSaveButton, "handleDialogResponse")
 	btnPrint := common.SetPrintButton(robnoPrometGradVpcTableID+"-stampa", "Stampa", "stampa", robnoPrometGradVpcURLStampa, "GET", true, common.ClassPrintButton, "odmagacina,domagacina,odsifre,dosifre,odgrupe,dogrupe,oddatuma,dodatuma")
-	search := common.CreateSearchInput("search-input", translator, robnoPrometGradVpcURL, "#"+robnoPrometGradVpcTableID, hxValsRobnoPrometGradiliste)
-	if err := tmpl_robno.RobnoPrometGradilisteVpcNc(tabs, tbl, magValues, grupeValues, btnObrada, btnPrint, search, session.SelectedGod, translator).Render(ctx, c.Writer); err != nil {
+	search := common.CreateSearchInput("search-input", h.translator, robnoPrometGradVpcURL, "#"+robnoPrometGradVpcTableID, hxValsRobnoPrometGradiliste)
+	if err := tmpl_robno.RobnoPrometGradilisteVpcNc(tabs, tbl, magValues, grupeValues, btnObrada, btnPrint, search, session.SelectedGod, h.translator).Render(ctx, c.Writer); err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 	}
 }
@@ -658,8 +650,7 @@ func (h *RobnoPrometHandler) printNotImplemented(c *gin.Context) {
 	common.WriteJSONResponse(c, http.StatusNotImplemented, false, nil, "Robno promet stampa jos nije implementirana")
 }
 
-func robnoPrometRucSubTabs() domain.TabData {
-	translator := i18n.GetInstance()
+func robnoPrometRucSubTabs(translator *i18n.Service) domain.TabData {
 	return domain.TabData{Tabs: []domain.TabItem{
 		{ID: "robnopromet-ruc-lager", Label: translator.Label("Lager lista"), HXRequestUrl: robnoPrometRucURL, IsActive: true, Name: "ruc-lager"},
 		{ID: "robnopromet-ruc-ulaz-izlaz", Label: translator.Label("Ulaz/izlaz za period"), HXRequestUrl: robnoPrometRucUlazIzlazURL, Name: "ruc-ulaz-izlaz"},
@@ -667,8 +658,7 @@ func robnoPrometRucSubTabs() domain.TabData {
 		{ID: "robnopromet-ruc-izlazne-fakture", Label: translator.Label("Izlazne fakture"), HXRequestUrl: robnoPrometRucIzlazneFaktureURL, Name: "ruc-izlazne-fakture"}},
 	}
 }
-func robnoPrometTabs() domain.TabData {
-	translator := i18n.GetInstance()
+func robnoPrometTabs(translator *i18n.Service) domain.TabData {
 	return domain.TabData{Tabs: []domain.TabItem{
 		{ID: "robnopromet-grupe1", Label: translator.Label("Promet po grupi artikala 1"), HXRequestUrl: robnoPrometArtikalURL, IsActive: true, Name: "grupe1"},
 		{ID: "robnopromet-kupci", Label: translator.Label("Promet po kupcima"), HXRequestUrl: robnoPrometKupciURL, Name: "kupci"},

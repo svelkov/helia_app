@@ -32,14 +32,16 @@ const (
 )
 
 type MagaciniHandler struct {
+	translator      *i18n.Service
 	service         service.Service[domain.Magacini]
 	magaciniService robnosvc.MagaciniService
 	cfg             config.Config
 	lm              *middleware.LockMiddleware
 }
 
-func NewMagaciniHandler(service *service.BaseService[domain.Magacini], magaciniService robnosvc.MagaciniService, cfg config.Config, lm *middleware.LockMiddleware) *MagaciniHandler {
+func NewMagaciniHandler(service *service.BaseService[domain.Magacini], magaciniService robnosvc.MagaciniService, cfg config.Config, lm *middleware.LockMiddleware, translator *i18n.Service) *MagaciniHandler {
 	return &MagaciniHandler{
+		translator:      translator,
 		service:         service,
 		magaciniService: magaciniService,
 		cfg:             cfg,
@@ -149,10 +151,9 @@ func (h *MagaciniHandler) confirmAddHandler(c *gin.Context) {
 	btnCancel := common.SetButton("cancel-btn", "Odustani", "cancel", "", "", "", "", "", "", true, common.ClassOdustaniButton, "")
 	btnCancel.IdDialog = dialog.Id
 
-	translator := i18n.GetInstance()
 	csrfToken := common.GetCsrfToken(c)
 
-	tmpl_robno.MagaciniDialog(dialog, common.ActionAdd, model, btnSave, btnCancel, btnClose, translator, csrfToken).Render(c.Request.Context(), c.Writer)
+	tmpl_robno.MagaciniDialog(dialog, common.ActionAdd, model, btnSave, btnCancel, btnClose, h.translator, csrfToken).Render(c.Request.Context(), c.Writer)
 }
 
 func (h *MagaciniHandler) confirmUpdateHandler(c *gin.Context) {
@@ -191,9 +192,8 @@ func (h *MagaciniHandler) confirmUpdateHandler(c *gin.Context) {
 	common.SetUnlockButtonProperties(&btnCancel, fmt.Sprintf("/api/magacini/unlock/%d", id))
 	common.SetUnlockButtonProperties(&btnClose, fmt.Sprintf("/api/magacini/unlock/%d", id))
 
-	translator := i18n.GetInstance()
 	csrfToken := common.GetCsrfToken(c)
-	tmpl_robno.MagaciniDialog(dialog, common.ActionUpdate, *entity, btnSave, btnCancel, btnClose, translator, csrfToken).Render(c.Request.Context(), c.Writer)
+	tmpl_robno.MagaciniDialog(dialog, common.ActionUpdate, *entity, btnSave, btnCancel, btnClose, h.translator, csrfToken).Render(c.Request.Context(), c.Writer)
 }
 
 func (h *MagaciniHandler) GetMagacini(c *gin.Context) {
@@ -242,9 +242,9 @@ func (h *MagaciniHandler) GetAllMagacini(c *gin.Context) {
 	tbl.BtnDelete.IsVisible = false
 
 	if requestSource == "menu" || requestSource == "" {
-		searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), magaciniURLGetAll, fmt.Sprintf("#%s", magaciniTableID), "")
+		searchInput := common.CreateSearchInput("search-input", h.translator, magaciniURLGetAll, fmt.Sprintf("#%s", magaciniTableID), "")
 		btnPrint := common.SetPrintButton("btn-print-fkpl", "Štampa", "fin_print", magaciniURLPrint, "GET", true, common.ClassPrintButton, "")
-		tmpl_robno.Magacini(tbl, searchInput, btnPrint, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+		tmpl_robno.Magacini(tbl, searchInput, btnPrint, h.translator).Render(c.Request.Context(), c.Writer)
 	} else {
 		utils.RenderContent(c, tbl)
 	}
@@ -287,8 +287,7 @@ func (h *MagaciniHandler) MagaciniStampa(c *gin.Context) {
 		return
 	}
 
-	translator := i18n.GetInstance()
-	tmpl_robno_rep.MagaciniStampa(repParams, tbl, translator).Render(ctx, c.Writer)
+	tmpl_robno_rep.MagaciniStampa(repParams, tbl, h.translator).Render(ctx, c.Writer)
 }
 func setFieldsForUpdate(magacini *domain.Magacini) []domain.Fields {
 	fields := []domain.Fields{

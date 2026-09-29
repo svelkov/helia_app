@@ -175,7 +175,7 @@ func (s *RobnoPrometResource) GetPrometArtikala(ctx context.Context, tbl *domain
 	for i, entity := range *entities {
 		tbl.Rows = append(tbl.Rows, domain.TableRow{
 			Fields: []string{
-				"plus.gif",
+				"🔽",
 				fmt.Sprintf("%d", (currentPage-1)*pageSize+i+1),
 				fmt.Sprintf("%d", entity.Gru),
 				fmt.Sprintf("%d", entity.SifraArt),
@@ -312,7 +312,7 @@ func (s *RobnoPrometResource) GetPrometPoKupcima(ctx context.Context, tbl *domai
 	for i, entity := range *entities {
 		tbl.Rows = append(tbl.Rows, domain.TableRow{
 			Fields: []string{
-				"plus.gif",
+				"🔽",
 				fmt.Sprintf("%d", (currentPage-1)*pageSize+i+1),
 				entity.Konto,
 				entity.Sifra,
@@ -447,7 +447,7 @@ func (s *RobnoPrometResource) GetNabavkeOdDobavljaca(ctx context.Context, tbl *d
 	for i, entity := range *entities {
 		tbl.Rows = append(tbl.Rows, domain.TableRow{
 			Fields: []string{
-				"plus.gif",
+				"🔽",
 				fmt.Sprintf("%d", (currentPage-1)*pageSize+i+1),
 				entity.Konto,
 				entity.Sifra,
@@ -562,7 +562,7 @@ func (s *RobnoPrometResource) GetPrometGradilista(ctx context.Context, tbl *doma
 	for i, entity := range *entities {
 		tbl.Rows = append(tbl.Rows, domain.TableRow{
 			Fields: []string{
-				"plus.gif",
+				"🔽",
 				fmt.Sprintf("%d", (currentPage-1)*pageSize+i+1),
 				entity.Konto,
 				entity.Sifra,
@@ -677,7 +677,7 @@ func (s *RobnoPrometResource) GetPrometGradilisteVpcNc(ctx context.Context, tbl 
 	for i, entity := range *entities {
 		tbl.Rows = append(tbl.Rows, domain.TableRow{
 			Fields: []string{
-				"plus.gif",
+				"🔽",
 				fmt.Sprintf("%d", (currentPage-1)*pageSize+i+1),
 				entity.Konto,
 				entity.Sifra,

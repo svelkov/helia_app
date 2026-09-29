@@ -1,7 +1,6 @@
 package robno
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 
@@ -77,13 +76,14 @@ const (
 )
 
 type RobnoKompodaciHandler struct {
-	service robnosvc.RobnoKompodaciService
-	cfg     config.Config
-	tabs    domain.TabData
+	translator *i18n.Service
+	service    robnosvc.RobnoKompodaciService
+	cfg        config.Config
+	tabs       domain.TabData
 }
 
-func NewRobnoKompodaciHandler(service robnosvc.RobnoKompodaciService, cfg config.Config) *RobnoKompodaciHandler {
-	return &RobnoKompodaciHandler{service: service, cfg: cfg, tabs: robnoKompodaciTabs()}
+func NewRobnoKompodaciHandler(service robnosvc.RobnoKompodaciService, cfg config.Config, translator *i18n.Service) *RobnoKompodaciHandler {
+	return &RobnoKompodaciHandler{translator: translator, service: service, cfg: cfg, tabs: robnoKompodaciTabs()}
 }
 
 func (h *RobnoKompodaciHandler) RobnoKompodaciMain(c *gin.Context) {
@@ -92,17 +92,16 @@ func (h *RobnoKompodaciHandler) RobnoKompodaciMain(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusUnauthorized, false, []domain.FieldError{}, common.ErrMsgUnauthorized)
 		return
 	}
-	translator := i18n.GetInstance()
-	common.SetActiveTab(h.tabs, 0)
+	tabs := common.SetActiveTab(h.tabs, 0)
 	grpValues, _ := h.service.GetRobneGrupeComboValues(c.Request.Context())
 	currentPage, pageSize, totalPages := common.GetPaginationData(c, 0, h.cfg)
 	tbl := common.SetTableBasicData(robnoKompodaciKupciArtTitle, robnoKompodaciKupciArtTableID, h.service.GetPrikazKarticeKupcaDobavljacaTableFields(), robnoKompodaciURLKupciArt, robnoKompodaciURLKupciArt, pageSize, currentPage, totalPages, 0, h.cfg)
 	common.SetTableConfig(&tbl, robnoKompodaciKupciArtTableID, robnoKompodaciURLKupciArt, false, false, false)
 	btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", robnoKompodaciURLKupciArt, "#"+robnoKompodaciKupciArtTableID, "innerHTML", "GET", "", hxValsRobnoKompodaciRealizKupciArt, true, common.ClassSaveButton, "handleDialogResponse")
 	btnPrint := common.SetPrintButton("print-btn", "Štampa", "stampa", robnoKompodaciURLKupciArtStampa, "GET", true, common.ClassPrintButton, "trziste,tip_izvestaja,odgrupe,dogrupe,odsifreartikla,dosifreartikla,oddatuma,dodatuma")
-	searchInput := common.CreateSearchInput("search-input", translator, robnoKompodaciURLKupciArt, fmt.Sprintf("#%s", robnoKompodaciURLKupciArt), hxValsRobnoKompodaciRealizKupciArt)
+	searchInput := common.CreateSearchInput("search-input", h.translator, robnoKompodaciURLKupciArt, fmt.Sprintf("#%s", robnoKompodaciURLKupciArt), hxValsRobnoKompodaciRealizKupciArt)
 
-	tmpl_robno.RobnoKompodaciMain(h.tabs, tbl, grpValues, btnObrada, btnPrint, searchInput, userSession.SelectedGod, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+	tmpl_robno.RobnoKompodaciMain(tabs, tbl, grpValues, btnObrada, btnPrint, searchInput, userSession.SelectedGod, h.translator).Render(c.Request.Context(), c.Writer)
 
 }
 
@@ -113,8 +112,7 @@ func (h *RobnoKompodaciHandler) PregledRealizacijePoKupcimaArtiklima(c *gin.Cont
 		return
 	}
 	ctx := c.Request.Context()
-	translator := i18n.GetInstance()
-	common.SetActiveTab(h.tabs, 0)
+	tabs := common.SetActiveTab(h.tabs, 0)
 	tbl := common.SetTableBasicData(robnoKompodaciKupciArtTitle, robnoKompodaciKupciArtTableID, h.service.GetPregledRealizacijePoKupcimaArtiklimaTableFields(), robnoKompodaciURLKupciArt, "", 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tbl, robnoKompodaciKupciArtTableID, robnoKompodaciURLKupciArt, false, false, false)
 	if common.IsDataRequest(c) {
@@ -123,18 +121,26 @@ func (h *RobnoKompodaciHandler) PregledRealizacijePoKupcimaArtiklima(c *gin.Cont
 			common.WriteJSONResponse(c, http.StatusBadRequest, false, fieldsError, common.ErrMsgValidation)
 			return
 		}
-		if !h.getPaginatedReport(c, &tbl, h.service.GetPregledRealizacijePoKupcimaArtiklima) {
+		page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
+		params := h.params(c)
+		if err := h.service.GetPregledRealizacijePoKupcimaArtiklima(ctx, &tbl, true, pageSize, page, params, common.TipStampePreview); err != nil {
+			utils.RenderDialogOK(c, "robnokompodaci-dialog-message-id", fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
 			return
 		}
+		if err := h.service.GetPregledRealizacijePoKupcimaArtiklima(ctx, &tbl, false, pageSize, page, params, common.TipStampePreview); err != nil {
+			utils.RenderDialogOK(c, "robnokompodaci-dialog-message-id", fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+			return
+		}
+		tbl.HasTotals = true
 		utils.RenderContent(c, tbl)
 		return
 	}
 	grpValues, _ := h.service.GetRobneGrupeComboValues(ctx)
 	btnObrada := common.SetButton("obrada-btn", "Obradi", "obrada", robnoKompodaciURLKupciArt, "#"+robnoKompodaciKupciArtTableID, "innerHTML", "GET", "", hxValsRobnoKompodaciRealizKupciArt, true, common.ClassSaveButton, "handleDialogResponse")
 	btnPrint := common.SetPrintButton("print-btn", "Štampa", "stampa", robnoKompodaciURLArtStampa, "GET", true, common.ClassPrintButton, "trziste,tip_izvestaja,odgrupe,dogrupe,odsifreartikla,dosifreartikla,oddatuma,dodatuma")
-	searchInput := common.CreateSearchInput("search-input", translator, robnoKompodaciURLKupciArt, fmt.Sprintf("#%s", robnoKompodaciURLKupciArt), hxValsRobnoKompodaciRealizKupciArt)
+	searchInput := common.CreateSearchInput("search-input", h.translator, robnoKompodaciURLKupciArt, fmt.Sprintf("#%s", robnoKompodaciURLKupciArt), hxValsRobnoKompodaciRealizKupciArt)
 
-	tmpl_robno.RobnoKompodaciPregledRealizacijePoKupcimaArtiklima(h.tabs, tbl, grpValues, btnObrada, btnPrint, searchInput, userSession.SelectedGod, translator).Render(ctx, c.Writer)
+	tmpl_robno.RobnoKompodaciPregledRealizacijePoKupcimaArtiklima(tabs, tbl, grpValues, btnObrada, btnPrint, searchInput, userSession.SelectedGod, h.translator).Render(ctx, c.Writer)
 
 }
 
@@ -189,7 +195,7 @@ func (h *RobnoKompodaciHandler) GetPregledRealizacijePoKupcimaArtiklimaStampa(c 
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldsError, common.ErrMsgMissingRequiredParams)
 		return
 	}
-	tmpl_rep_rob.RobnoKompodaciPregledRealizacijePoKupcimaArtiklimaStampa(repParams, params, tbl, i18n.GetInstance()).Render(ctx, c.Writer)
+	tmpl_rep_rob.RobnoKompodaciPregledRealizacijePoKupcimaArtiklimaStampa(repParams, params, tbl, h.translator).Render(ctx, c.Writer)
 }
 
 func (h *RobnoKompodaciHandler) PregledRealizacijePoArtiklima(c *gin.Context) {
@@ -199,8 +205,7 @@ func (h *RobnoKompodaciHandler) PregledRealizacijePoArtiklima(c *gin.Context) {
 		return
 	}
 	ctx := c.Request.Context()
-	translator := i18n.GetInstance()
-	common.SetActiveTab(h.tabs, 1)
+	tabs := common.SetActiveTab(h.tabs, 1)
 	tbl := common.SetTableBasicData(robnoKompodaciArtTitle, robnoKompodaciArtTableID, h.service.GetPregledRealizacijePoArtiklimaTableFields(), "", robnoKompodaciURLArt, 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tbl, robnoKompodaciArtTableID, robnoKompodaciURLArt, false, false, false)
 	if common.IsDataRequest(c) {
@@ -209,9 +214,17 @@ func (h *RobnoKompodaciHandler) PregledRealizacijePoArtiklima(c *gin.Context) {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldsError, common.ErrMsgMissingRequiredParams)
 			return
 		}
-		if !h.getPaginatedReport(c, &tbl, h.service.GetPregledRealizacijePoArtiklima) {
+		page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
+		params := h.params(c)
+		if err := h.service.GetPregledRealizacijePoArtiklima(ctx, &tbl, true, pageSize, page, params, common.TipStampePreview); err != nil {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, common.ErrMsgGetTotalRecords+": "+err.Error())
 			return
 		}
+		if err := h.service.GetPregledRealizacijePoArtiklima(ctx, &tbl, false, pageSize, page, params, common.TipStampePreview); err != nil {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+			return
+		}
+		tbl.HasTotals = true
 		utils.RenderContent(c, tbl)
 		return
 	}
@@ -219,10 +232,9 @@ func (h *RobnoKompodaciHandler) PregledRealizacijePoArtiklima(c *gin.Context) {
 	btnObrada := common.SetButton("obrada-btn", "Obradi",
 		"obrada", robnoKompodaciURLArt, "#"+robnoKompodaciArtTableID, "innerHTML", "GET", "", hxValsRobnoKompodaciArt, true, common.ClassSaveButton, "handleDialogResponse")
 	btnPrint := common.SetPrintButton("print-btn", "Štampa", "stampa", robnoKompodaciURLArtStampa, "GET", true, common.ClassPrintButton, "trziste,odgrupe,dogrupe,odsifreartikla,dosifreartikla,oddatuma,dodatuma")
-	searchInput := common.CreateSearchInput("search-input", translator, robnoKompodaciURLArt, fmt.Sprintf("#%s", robnoKompodaciURLArt), hxValsRobnoKompodaciArt)
+	searchInput := common.CreateSearchInput("search-input", h.translator, robnoKompodaciURLArt, fmt.Sprintf("#%s", robnoKompodaciURLArt), hxValsRobnoKompodaciArt)
 
-	tmpl_robno.RobnoKompodaciPregledRealizacijePoArtiklima(h.tabs, tbl, grpValues, btnObrada, btnPrint, searchInput, userSession.SelectedGod, translator).Render(ctx, c.Writer)
-
+	tmpl_robno.RobnoKompodaciPregledRealizacijePoArtiklima(tabs, tbl, grpValues, btnObrada, btnPrint, searchInput, userSession.SelectedGod, h.translator).Render(ctx, c.Writer)
 }
 
 func (h *RobnoKompodaciHandler) GetPregledRealizacijePoArtiklimaStampa(c *gin.Context) {
@@ -277,7 +289,7 @@ func (h *RobnoKompodaciHandler) GetPregledRealizacijePoArtiklimaStampa(c *gin.Co
 		},
 	}
 
-	tmpl_rep_rob.RobnoKompodaciPregledRealizacijePoArtiklimaStampa(repParams, params, tbl, i18n.GetInstance()).Render(ctx, c.Writer)
+	tmpl_rep_rob.RobnoKompodaciPregledRealizacijePoArtiklimaStampa(repParams, params, tbl, h.translator).Render(ctx, c.Writer)
 }
 
 func (h *RobnoKompodaciHandler) PregledUcescaArtikla(c *gin.Context) {
@@ -287,8 +299,7 @@ func (h *RobnoKompodaciHandler) PregledUcescaArtikla(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusUnauthorized, false, []domain.FieldError{}, common.ErrMsgUnauthorized)
 		return
 	}
-	translator := i18n.GetInstance()
-	common.SetActiveTab(h.tabs, 2)
+	tabs := common.SetActiveTab(h.tabs, 2)
 	tbl := common.SetTableBasicData(robnoKompodaciUcesceArtTitle, robnoKompodaciUcesceArtTableID, h.service.GetPregledUcescaArtiklaTableFields(), "", robnoKompodaciURLUcesceArt, 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tbl, robnoKompodaciUcesceArtTableID, robnoKompodaciURLUcesceArt, false, false, false)
 	tbl.URLGetAll = robnoKompodaciURLUcesceArt
@@ -300,17 +311,25 @@ func (h *RobnoKompodaciHandler) PregledUcescaArtikla(c *gin.Context) {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldsError, common.ErrMsgMissingRequiredParams)
 			return
 		}
-		if !h.getPaginatedReport(c, &tbl, h.service.GetPregledUcescaArtikla) {
+		page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
+		params := h.params(c)
+		if err := h.service.GetPregledUcescaArtikla(ctx, &tbl, true, pageSize, page, params, common.TipStampePreview); err != nil {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, common.ErrMsgGetTotalRecords+": "+err.Error())
 			return
 		}
+		if err := h.service.GetPregledUcescaArtikla(ctx, &tbl, false, pageSize, page, params, common.TipStampePreview); err != nil {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+			return
+		}
+		tbl.HasTotals = true
 		utils.RenderContent(c, tbl)
 		return
 	}
 	btnObrada := common.SetButton("obrada-btn", "Obradi", "obrada", robnoKompodaciURLUcesceArt, "#"+robnoKompodaciUcesceArtTableID, "innerHTML", "GET", "", hxValsRobnoKompodaciUcesceArt, true, common.ClassSaveButton, "handleDialogResponse")
 	btnPrint := common.SetPrintButton("print-btn", "Štampa", "stampa", robnoKompodaciURLUcesceArtStampa, "GET", true, common.ClassPrintButton, "odsifreartikla,dosifreartikla,oddatuma,dodatuma")
-	searchInput := common.CreateSearchInput("search-input", translator, robnoKompodaciURLUcesceArt, fmt.Sprintf("#%s", robnoKompodaciUcesceArtTableID), hxValsRobnoKompodaciUcesceArt)
+	searchInput := common.CreateSearchInput("search-input", h.translator, robnoKompodaciURLUcesceArt, fmt.Sprintf("#%s", robnoKompodaciUcesceArtTableID), hxValsRobnoKompodaciUcesceArt)
 
-	tmpl_robno.RobnoKompodaciPregledUcescaArtikla(h.tabs, tbl, btnObrada, btnPrint, searchInput, userSession.SelectedGod, translator).Render(ctx, c.Writer)
+	tmpl_robno.RobnoKompodaciPregledUcescaArtikla(tabs, tbl, btnObrada, btnPrint, searchInput, userSession.SelectedGod, h.translator).Render(ctx, c.Writer)
 }
 
 func (h *RobnoKompodaciHandler) GetPregledUcescaArtiklaStampa(c *gin.Context) {
@@ -362,7 +381,7 @@ func (h *RobnoKompodaciHandler) GetPregledUcescaArtiklaStampa(c *gin.Context) {
 		},
 	}
 
-	tmpl_rep_rob.RobnoKompodaciUcescaArtiklaStampa(repParams, params, tbl, i18n.GetInstance()).Render(ctx, c.Writer)
+	tmpl_rep_rob.RobnoKompodaciUcescaArtiklaStampa(repParams, params, tbl, h.translator).Render(ctx, c.Writer)
 }
 
 func (h *RobnoKompodaciHandler) PregledUcescaGrupeArtikala(c *gin.Context) {
@@ -372,8 +391,7 @@ func (h *RobnoKompodaciHandler) PregledUcescaGrupeArtikala(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusUnauthorized, false, []domain.FieldError{}, common.ErrMsgUnauthorized)
 		return
 	}
-	translator := i18n.GetInstance()
-	common.SetActiveTab(h.tabs, 3)
+	tabs := common.SetActiveTab(h.tabs, 3)
 	tbl := common.SetTableBasicData(robnoKompodaciUcesceGrTitle, robnoKompodaciUcesceGrTableID, h.service.GetPregledUcescaGrupeArtikalaTableFields(), "", robnoKompodaciURLUcesceGr, 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tbl, robnoKompodaciUcesceGrTableID, robnoKompodaciURLUcesceGr, false, false, false)
 	if common.IsDataRequest(c) {
@@ -383,10 +401,16 @@ func (h *RobnoKompodaciHandler) PregledUcescaGrupeArtikala(c *gin.Context) {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, fieldsError, common.ErrMsgMissingRequiredParams)
 			return
 		}
-		if err := h.service.GetPregledUcescaGrupeArtikala(ctx, &tbl, true, pageSize, page, h.params(c), common.TipStampePreview); err != nil {
+		params := h.params(c)
+		if err := h.service.GetPregledUcescaGrupeArtikala(ctx, &tbl, true, pageSize, page, params, common.TipStampePreview); err != nil {
+			common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, common.ErrMsgGetTotalRecords+": "+err.Error())
+			return
+		}
+		if err := h.service.GetPregledUcescaGrupeArtikala(ctx, &tbl, false, pageSize, page, params, common.TipStampePreview); err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
 			return
 		}
+		tbl.HasTotals = true
 		utils.RenderContent(c, tbl)
 		return
 	}
@@ -394,28 +418,12 @@ func (h *RobnoKompodaciHandler) PregledUcescaGrupeArtikala(c *gin.Context) {
 	btnObrada := common.SetButton("obrada-btn", "Obradi", "obrada", robnoKompodaciURLUcesceGr, "#"+robnoKompodaciUcesceGrTableID, "innerHTML", "GET", "", hxValsRobnoKompodaciUcesceGr, true, common.ClassSaveButton, "handleDialogResponse")
 	btnPrint := common.SetPrintButton("print-btn", "Štampa", "stampa", robnoKompodaciURLUcesceGrStampa, "GET", true, common.ClassPrintButton, "odgrupe,dogrupe,oddatuma,dodatuma")
 
-	searchInput := common.CreateSearchInput("search-input", translator, robnoKompodaciURLUcesceGr, fmt.Sprintf("#%s", robnoKompodaciURLUcesceGr), hxValsRobnoKompodaciUcesceGr)
-	tmpl_robno.RobnoKompodaciPregledUcescaGrupeArtikala(h.tabs, tbl, grpValues, btnObrada, btnPrint, searchInput, session.SelectedGod, translator).Render(ctx, c.Writer)
+	searchInput := common.CreateSearchInput("search-input", h.translator, robnoKompodaciURLUcesceGr, fmt.Sprintf("#%s", robnoKompodaciURLUcesceGr), hxValsRobnoKompodaciUcesceGr)
+	tmpl_robno.RobnoKompodaciPregledUcescaGrupeArtikala(tabs, tbl, grpValues, btnObrada, btnPrint, searchInput, session.SelectedGod, h.translator).Render(ctx, c.Writer)
 }
 
 func (h *RobnoKompodaciHandler) params(c *gin.Context) domain.RobnoKomPodaciParams {
 	return domain.RobnoKomPodaciParams{OdGrupe: c.Query("odgrupe"), DoGrupe: c.Query("dogrupe"), OdArtikla: c.Query("odsifreartikla"), DoArtikla: c.Query("dosifreartikla"), OdDatuma: c.Query("oddatuma"), DoDatuma: c.Query("dodatuma"), TipIzvestaja: c.Query("tip_izvestaja"), Trziste: c.Query("trziste"), SearchText: c.Query("query")}
-}
-
-type robnoKompodaciFetchFunc func(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, page int, params domain.RobnoKomPodaciParams, tipStampe string) error
-
-// getPaginatedReport fetches the total record count and the current page of data
-// for a report. Returns false (and writes an error response) on failure.
-func (h *RobnoKompodaciHandler) getPaginatedReport(c *gin.Context, tbl *domain.TableData, fetch robnoKompodaciFetchFunc) bool {
-	page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
-	params := h.params(c)
-	for _, getTotalRecords := range []bool{true, false} {
-		if err := fetch(c.Request.Context(), tbl, getTotalRecords, pageSize, page, params, common.TipStampePreview); err != nil {
-			common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
-			return false
-		}
-	}
-	return true
 }
 
 func (h *RobnoKompodaciHandler) GetPregledUcescaGrupeArtikalaStampa(c *gin.Context) {
@@ -467,7 +475,7 @@ func (h *RobnoKompodaciHandler) GetPregledUcescaGrupeArtikalaStampa(c *gin.Conte
 		},
 	}
 
-	tmpl_rep_rob.RobnoKompodaciUcescaGrupeArtikalaStampa(repParams, params, tbl, i18n.GetInstance()).Render(ctx, c.Writer)
+	tmpl_rep_rob.RobnoKompodaciUcescaGrupeArtikalaStampa(repParams, params, tbl, h.translator).Render(ctx, c.Writer)
 }
 
 func (h *RobnoKompodaciHandler) AddRoutes(r *gin.Engine) {

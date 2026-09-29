@@ -156,7 +156,7 @@ templ RobnoStanjaViseArtikalaSifraStampa(repParams domain.ReportParameters, para
 
 templ RobnoStanjaViseArtikalaSifraContent(repParams domain.ReportParameters, params domain.RobnoStanjaParams, magacinNaziv string, tbl domain.TableData, translator *i18n.Service) {
 	@rep.ReportPageHeader(repParams, RobnoStanjaViseArtikalaSifraParam(params, magacinNaziv, translator), translator)
-	@RobnoStanjaArtikalTable(tbl, translator)
+	@rep.ReportTable(tbl, translator)
 	@rep.ReportEnd(nil)
 }
 

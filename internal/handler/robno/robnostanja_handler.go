@@ -99,14 +99,15 @@ const (
 )
 
 type RobnoStanjaHandler struct {
-	service robnosvc.RobnoStanjaService
-	cfg     config.Config
-	tabs    domain.TabData
-	subtabs domain.TabData
+	translator *i18n.Service
+	service    robnosvc.RobnoStanjaService
+	cfg        config.Config
+	tabs       domain.TabData
+	subtabs    domain.TabData
 }
 
-func NewRobnoStanjaHandler(s robnosvc.RobnoStanjaService, cfg config.Config) *RobnoStanjaHandler {
-	return &RobnoStanjaHandler{service: s, cfg: cfg, tabs: robnoStanjaTabs(), subtabs: robnoStanjaSubTabs()}
+func NewRobnoStanjaHandler(s robnosvc.RobnoStanjaService, cfg config.Config, translator *i18n.Service) *RobnoStanjaHandler {
+	return &RobnoStanjaHandler{translator: translator, service: s, cfg: cfg, tabs: robnoStanjaTabs(translator), subtabs: robnoStanjaSubTabs(translator)}
 }
 
 func (h *RobnoStanjaHandler) RobnoStanjaMain(c *gin.Context) {
@@ -127,7 +128,7 @@ func (h *RobnoStanjaHandler) RobnoStanjaMain(c *gin.Context) {
 	tbl.HasTotals = true
 	btnObrada := h.obradaButton(robnoStanjaURLArtikal, robnoStanjaArtikalTableID, hxValsRobnoStanjaArtikal)
 	btnPrint := common.SetPrintButton("stampa-btn", "Štampa", "fin_print", robnoStanjaURLArtikalStampa, "GET", true, common.ClassPrintButton, robnoStanjaPrintFieldsArtikal)
-	if err := tmpl_robno.RobnoStanjaMain(h.tabs, tbl, magValues, btnObrada, btnPrint, total, robnoStanjaURLtotals, i18n.GetInstance()).Render(ctx, c.Writer); err != nil {
+	if err := tmpl_robno.RobnoStanjaMain(h.tabs, tbl, magValues, btnObrada, btnPrint, total, robnoStanjaURLtotals, h.translator).Render(ctx, c.Writer); err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 	}
 }
@@ -139,7 +140,6 @@ func (h *RobnoStanjaHandler) PrikazStanjaPojedinacnogArtikla(c *gin.Context) {
 		return
 	}
 	tabs := common.SetActiveTab(h.tabs, 0)
-	translator := i18n.GetInstance()
 	total := domain.RobnoStanjaTotal{}
 	tbl := common.SetTableBasicData(robnoStanjaArtikalTitle, robnoStanjaArtikalTableID, h.service.GetPojedinacnogArtiklaTableFields(), "", robnoStanjaURLArtikal, 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tbl, robnoStanjaArtikalTableID, robnoStanjaURLArtikal, false, false, false)
@@ -184,7 +184,7 @@ func (h *RobnoStanjaHandler) PrikazStanjaPojedinacnogArtikla(c *gin.Context) {
 	}
 	btnObrada := h.obradaButton(robnoStanjaURLArtikal, robnoStanjaArtikalTableID, hxValsRobnoStanjaArtikal)
 	btnPrint := common.SetPrintButton("stampa-btn", "Štampa", "fin_print", robnoStanjaURLArtikalStampa, "GET", true, common.ClassPrintButton, robnoStanjaPrintFieldsArtikal)
-	tmpl_robno.RobnoStanjePojedinacnogArtikla(tabs, tbl, magValues, btnObrada, btnPrint, total, robnoStanjaURLtotals, translator).Render(ctx, c.Writer)
+	tmpl_robno.RobnoStanjePojedinacnogArtikla(tabs, tbl, magValues, btnObrada, btnPrint, total, robnoStanjaURLtotals, h.translator).Render(ctx, c.Writer)
 }
 
 func (h *RobnoStanjaHandler) PrikazStanjaArtikalaStampa(c *gin.Context) {
@@ -200,7 +200,7 @@ func (h *RobnoStanjaHandler) PrikazStanjaArtikalaStampa(c *gin.Context) {
 		return
 	}
 	params := domain.RobnoStanjaParams{
-		MagaciniID:      magacin,
+		MagaciniID:   magacin,
 		Konto:        c.Query("konto"),
 		SifraArtikla: c.Query("sifra"),
 		ReportTip:    "robnostanjaartikal",
@@ -236,7 +236,7 @@ func (h *RobnoStanjaHandler) PrikazStanjaArtikalaStampa(c *gin.Context) {
 			"Artikal": {Name: "Šifra artikla", Value: params.SifraArtikla},
 		},
 	}
-	tmpl_rep_rob.RobnoStanjaArtikalStampa(repParams, params, totalValues, tbl, i18n.GetInstance()).Render(ctx, c.Writer)
+	tmpl_rep_rob.RobnoStanjaArtikalStampa(repParams, params, totalValues, tbl, h.translator).Render(ctx, c.Writer)
 }
 func (h *RobnoStanjaHandler) RobnoStanjeArtikalUkupnaObrada(c *gin.Context) {
 	ctx := c.Request.Context()
@@ -246,7 +246,7 @@ func (h *RobnoStanjaHandler) RobnoStanjeArtikalUkupnaObrada(c *gin.Context) {
 	}
 	magacin, err := utils.GetIntFromQueryRequest(c, "magacin")
 	if err != nil {
-		tmpl_robno.RobnoStanjeArtikalUkupnaObrada(domain.RobnoStanjaTotal{}, i18n.GetInstance()).Render(ctx, c.Writer)
+		tmpl_robno.RobnoStanjeArtikalUkupnaObrada(domain.RobnoStanjaTotal{}, h.translator).Render(ctx, c.Writer)
 		return
 	}
 	totalValues := domain.RobnoStanjaTotal{}
@@ -261,7 +261,7 @@ func (h *RobnoStanjaHandler) RobnoStanjeArtikalUkupnaObrada(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
 		return
 	}
-	tmpl_robno.RobnoStanjeArtikalUkupnaObrada(totalValues, i18n.GetInstance()).Render(ctx, c.Writer)
+	tmpl_robno.RobnoStanjeArtikalUkupnaObrada(totalValues, h.translator).Render(ctx, c.Writer)
 }
 
 func (h *RobnoStanjaHandler) PrikazStanjaViseArtikalaMain(c *gin.Context) {
@@ -276,7 +276,6 @@ func (h *RobnoStanjaHandler) PrikazStanjaViseArtikalaSifra(c *gin.Context) {
 	}
 	tabs := common.SetActiveTab(h.tabs, 1)
 	common.SetActiveTab(h.subtabs, 0)
-	translator := i18n.GetInstance()
 	tbl := common.SetTableBasicData(robnoStanjaViseArtikalaTitle, robnoStanjaViseArtikalaSifraTableID, h.service.GetViseArtikalaTableFields(), "", robnoStanjaURLViseArtikalaSifra, 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tbl, robnoStanjaViseArtikalaSifraTableID, robnoStanjaURLViseArtikalaSifra, false, false, false)
 	tbl.HasTotals = true
@@ -332,9 +331,9 @@ func (h *RobnoStanjaHandler) PrikazStanjaViseArtikalaSifra(c *gin.Context) {
 	btnPrint := common.SetPrintButton("stampa-btn", "Štampa", "fin_print", robnoStanjaURLViseArtikalaSifraStampa, "GET", true, common.ClassPrintButton, robnoStanjaPrintFieldsViseArtikalaSifra)
 	btnEan13 := common.SetButton("robnostanja-vise-sifra-ean13", "Šifra -> EAN13", "sifraean13", "", "", "", "GET", "", "", true, common.ClassEanButton, "")
 	btnNalepnice := common.SetButton("robnostanja-vise-sifra-nalepnice", "Nalepnice", "nalepnice", "", "", "", "GET", "", "", true, common.ClassEanButton, "")
-	searchInput := common.CreateSearchInput("search-input", translator, robnoStanjaURLViseArtikalaSifra, fmt.Sprintf("#%s", robnoStanjaViseArtikalaSifraTableID), hxValsRobnoStanjaViseArtikalaSifra)
+	searchInput := common.CreateSearchInput("search-input", h.translator, robnoStanjaURLViseArtikalaSifra, fmt.Sprintf("#%s", robnoStanjaViseArtikalaSifraTableID), hxValsRobnoStanjaViseArtikalaSifra)
 
-	tmpl_robno.RobnoStanjeViseArtikalaSifra(tabs, h.subtabs, "vise-artikala", robnoStanjaViseArtikalaTitle, tbl, magValues, btnObrada, btnPrint, btnEan13, btnNalepnice, searchInput, h.cfg.NDuzSint, translator).Render(ctx, c.Writer)
+	tmpl_robno.RobnoStanjeViseArtikalaSifra(tabs, h.subtabs, "vise-artikala", robnoStanjaViseArtikalaTitle, tbl, magValues, btnObrada, btnPrint, btnEan13, btnNalepnice, searchInput, h.cfg.NDuzSint, h.translator).Render(ctx, c.Writer)
 }
 
 func (h *RobnoStanjaHandler) PrikazStanjaViseArtikalaGrupa(c *gin.Context) {
@@ -345,7 +344,6 @@ func (h *RobnoStanjaHandler) PrikazStanjaViseArtikalaGrupa(c *gin.Context) {
 	}
 	tabs := common.SetActiveTab(h.tabs, 1)
 	subtabs := common.SetActiveTab(h.subtabs, 1)
-	translator := i18n.GetInstance()
 	tbl := common.SetTableBasicData(robnoStanjaViseArtikalaTitle, robnoStanjaViseArtikalaGrupaTableID, h.service.GetViseArtikalaTableFields(), "", robnoStanjaURLViseArtikalaGrupa, 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tbl, robnoStanjaViseArtikalaGrupaTableID, robnoStanjaURLViseArtikalaGrupa, false, false, false)
 	tbl.HasTotals = true
@@ -402,9 +400,9 @@ func (h *RobnoStanjaHandler) PrikazStanjaViseArtikalaGrupa(c *gin.Context) {
 	btnPrint := common.SetPrintButton("stampa-btn", "Štampa", "fin_print", robnoStanjaURLViseArtikalaGrupaStampa, "GET", true, common.ClassPrintButton, robnoStanjaPrintFieldsViseArtikalaGrupa)
 	btnEan13 := common.SetButton("robnostanja-vise-grupa-ean13", "Šifra -> EAN13", "sifraean13", "", "", "", "GET", "", "", true, common.ClassEanButton, "")
 	btnNalepnice := common.SetButton("robnostanja-vise-grupa-nalepnice", "Nalepnice", "nalepnice", "", "", "", "GET", "", "", true, common.ClassEanButton, "")
-	searchInput := common.CreateSearchInput("search-input", translator, robnoStanjaURLViseArtikalaGrupa, fmt.Sprintf("#%s", robnoStanjaViseArtikalaGrupaTableID), hxValsRobnoStanjaViseArtikalaGrupa)
+	searchInput := common.CreateSearchInput("search-input", h.translator, robnoStanjaURLViseArtikalaGrupa, fmt.Sprintf("#%s", robnoStanjaViseArtikalaGrupaTableID), hxValsRobnoStanjaViseArtikalaGrupa)
 
-	tmpl_robno.RobnoStanjeViseArtikalGrupa(tabs, subtabs, "vise-artikala", robnoStanjaViseArtikalaTitle, tbl, magValues, btnObrada, btnPrint, btnEan13, btnNalepnice, searchInput, translator).Render(ctx, c.Writer)
+	tmpl_robno.RobnoStanjeViseArtikalGrupa(tabs, subtabs, "vise-artikala", robnoStanjaViseArtikalaTitle, tbl, magValues, btnObrada, btnPrint, btnEan13, btnNalepnice, searchInput, h.translator).Render(ctx, c.Writer)
 
 }
 
@@ -451,7 +449,7 @@ func (h *RobnoStanjaHandler) PrikazStanjaSubsintetickogKonta(c *gin.Context) {
 	}
 	btnObrada := h.obradaButton(robnoStanjaURLSubsintetickogKonta, robnoStanjaSubsintetickoKontoTableID, hxValsRobnoStanjaSubsintetickoKonto)
 	btnPrint := common.SetPrintButton("stampa-btn", "Štampa", "fin_print", robnoStanjaURLSubsintetickogKontaStampa, "GET", true, common.ClassPrintButton, robnoStanjaPrintFieldsSubsintetickoKonto)
-	tmpl_robno.RobnoStanjeSubsintetickogKonta(tabs, tbl, magValues, btnObrada, btnPrint, total, robnoStanjaURLtotals, i18n.GetInstance()).Render(ctx, c.Writer)
+	tmpl_robno.RobnoStanjeSubsintetickogKonta(tabs, tbl, magValues, btnObrada, btnPrint, total, robnoStanjaURLtotals, h.translator).Render(ctx, c.Writer)
 }
 
 func (h *RobnoStanjaHandler) RobnoStanjaSubsintetikaUkupnaObrada(c *gin.Context) {
@@ -462,7 +460,7 @@ func (h *RobnoStanjaHandler) RobnoStanjaSubsintetikaUkupnaObrada(c *gin.Context)
 	}
 	magacin, err := utils.GetIntFromQueryRequest(c, "magacin")
 	if err != nil {
-		tmpl_robno.RobnoStanjaSubsintetikaTotalValues(domain.RobnoStanjaTotal{}, robnoStanjaSubsintetikaURLTotalValues, i18n.GetInstance()).Render(ctx, c.Writer)
+		tmpl_robno.RobnoStanjaSubsintetikaTotalValues(domain.RobnoStanjaTotal{}, robnoStanjaSubsintetikaURLTotalValues, h.translator).Render(ctx, c.Writer)
 		return
 	}
 	totalValues := domain.RobnoStanjaTotal{}
@@ -481,14 +479,13 @@ func (h *RobnoStanjaHandler) RobnoStanjaSubsintetikaUkupnaObrada(c *gin.Context)
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
 		return
 	}
-	tmpl_robno.RobnoStanjaSubsintetikaTotalValues(totalValues, robnoStanjaSubsintetikaURLTotalValues, i18n.GetInstance()).Render(ctx, c.Writer)
+	tmpl_robno.RobnoStanjaSubsintetikaTotalValues(totalValues, robnoStanjaSubsintetikaURLTotalValues, h.translator).Render(ctx, c.Writer)
 }
 
 // StanjaSubsintetickogKontaStampa renders the printable "Saldo subsintetičkog konta" report: the
 // summary (početno stanje / tekući promet / ukupan promet), the monthly saldo table and the chart.
 func (h *RobnoStanjaHandler) StanjaSubsintetickogKontaStampa(c *gin.Context) {
 	ctx := c.Request.Context()
-	translator := i18n.GetInstance()
 	if domain.GetSessionFromStdContext(ctx) == nil {
 		utils.RenderDialogOK(c, robnoStanjaInfoMessageDialogID, common.ErrMsgUnauthorized)
 		return
@@ -536,11 +533,11 @@ func (h *RobnoStanjaHandler) StanjaSubsintetickogKontaStampa(c *gin.Context) {
 		MatBroj:     fvrData.Matbr,
 		ReportName:  robnoStanjaSubsintetickoKontoTitle,
 		ParameterItems: map[string]domain.ParameterItem{
-			"Magacin": {Name: translator.Label("Magacin"), Value: h.magacinNaziv(ctx, magacin)},
-			"Konto":   {Name: translator.Label("Konto"), Value: params.Konto},
+			"Magacin": {Name: h.translator.Label("Magacin"), Value: h.magacinNaziv(ctx, magacin)},
+			"Konto":   {Name: h.translator.Label("Konto"), Value: params.Konto},
 		},
 	}
-	tmpl_rep_rob.StanjaSubsintetickogKontaStampa(tbl, totalValues, repParams, translator).Render(ctx, c.Writer)
+	tmpl_rep_rob.StanjaSubsintetickogKontaStampa(tbl, totalValues, repParams, h.translator).Render(ctx, c.Writer)
 }
 
 func (h *RobnoStanjaHandler) SvodjenjeStanjaZaliha(c *gin.Context) {
@@ -616,7 +613,7 @@ func (h *RobnoStanjaHandler) SvodjenjeStanjaZaliha(c *gin.Context) {
 	}
 	btnObrada := h.obradaButton(robnoStanjaURLSvodjenjeZaliha, robnoStanjaSvodjenjeTableID, hxValsRobnoSvodjenjeZaliha)
 	btnPrint := common.SetButton("robnostanja-svodjenje-stampa", "Štampaj", "stampa", "", "", "", "GET", "", "", true, common.ClassPrintButton, "")
-	if err := tmpl_robno.RobnoSvodjenjeZaliha(tabs, tbl, magValues, tipDokValues, ojValues, mestoTroskaValues, btnObrada, btnPrint, i18n.GetInstance()).Render(ctx, c.Writer); err != nil {
+	if err := tmpl_robno.RobnoSvodjenjeZaliha(tabs, tbl, magValues, tipDokValues, ojValues, mestoTroskaValues, btnObrada, btnPrint, h.translator).Render(ctx, c.Writer); err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 	}
 }
@@ -697,7 +694,7 @@ func (h *RobnoStanjaHandler) StanjeViseArtiklaSifraStampa(c *gin.Context) {
 		MatBroj:     fvrData.Matbr,
 		ReportName:  robnoStanjaArtikalaStampaTitle,
 	}
-	tmpl_rep_rob.RobnoStanjaViseArtikalaSifraStampa(repParams, params, h.magacinNaziv(ctx, magacin), tbl, i18n.GetInstance()).Render(ctx, c.Writer)
+	tmpl_rep_rob.RobnoStanjaViseArtikalaSifraStampa(repParams, params, h.magacinNaziv(ctx, magacin), tbl, h.translator).Render(ctx, c.Writer)
 }
 
 // magacinNaziv returns the "<mag> - <opis>" label of the magazine, for the report header.
@@ -761,7 +758,7 @@ func (h *RobnoStanjaHandler) StanjeViseArtiklaGrupaStampa(c *gin.Context) {
 		MatBroj:     fvrData.Matbr,
 		ReportName:  robnoStanjaArtikalaStampaTitle,
 	}
-	tmpl_rep_rob.RobnoStanjaViseArtikalaGrupaStampa(repParams, params, h.magacinNaziv(ctx, magacin), tbl, i18n.GetInstance()).Render(ctx, c.Writer)
+	tmpl_rep_rob.RobnoStanjaViseArtikalaGrupaStampa(repParams, params, h.magacinNaziv(ctx, magacin), tbl, h.translator).Render(ctx, c.Writer)
 }
 
 func (h *RobnoStanjaHandler) AddRoutes(r *gin.Engine) {
@@ -782,8 +779,7 @@ func (h *RobnoStanjaHandler) AddRoutes(r *gin.Engine) {
 	r.GET("/api/robno-stanja/totalvalues", h.RobnoStanjeArtikalUkupnaObrada)
 }
 
-func robnoStanjaTabs() domain.TabData {
-	translator := i18n.GetInstance()
+func robnoStanjaTabs(translator *i18n.Service) domain.TabData {
 	return domain.TabData{Tabs: []domain.TabItem{
 		{ID: "robnostanja-artikl", Label: translator.T("Prikaz stanja pojedinačnog artikla"), HXRequestUrl: robnoStanjaURLArtikal, IsActive: true, Name: "artikl"},
 		{ID: "robnostanja-vise", Label: translator.T("Prikaz stanja više artikala"), HXRequestUrl: robnoStanjaURLViseArtikala, Name: "vise-artikala"},
@@ -792,8 +788,7 @@ func robnoStanjaTabs() domain.TabData {
 	}}
 }
 
-func robnoStanjaSubTabs() domain.TabData {
-	translator := i18n.GetInstance()
+func robnoStanjaSubTabs(translator *i18n.Service) domain.TabData {
 	return domain.TabData{Tabs: []domain.TabItem{
 		{ID: "robnostanja-vise-sifra", Label: translator.T("Po Sifri"), HXRequestUrl: robnoStanjaURLViseArtikalaSifra, Name: "vise-artikala-sifra"},
 		{ID: "robnostanja-vise-grupa", Label: translator.T("Po Grupi"), HXRequestUrl: robnoStanjaURLViseArtikalaGrupa, Name: "vise-artikala-grupa"},

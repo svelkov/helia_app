@@ -29,6 +29,7 @@ const (
 
 // FproHandler handles requests related to "fpro" entities.
 type FproHandler struct {
+	translator  *i18n.Service
 	fproService finservice.FproService // Use the interface
 	btnSave     domain.Button
 	btnNazad    domain.Button
@@ -36,8 +37,8 @@ type FproHandler struct {
 	lm          *middleware.LockMiddleware
 }
 
-func NewFproHandler(service finservice.FproService, cfg config.Config, lm *middleware.LockMiddleware) *FproHandler {
-	handler := &FproHandler{fproService: service, cfg: cfg, lm: lm}
+func NewFproHandler(service finservice.FproService, cfg config.Config, lm *middleware.LockMiddleware, translator *i18n.Service) *FproHandler {
+	handler := &FproHandler{translator: translator, fproService: service, cfg: cfg, lm: lm}
 	handler.setHandlerFieldValues()
 	return handler
 }
@@ -86,7 +87,7 @@ func (h *FproHandler) GetNalogStavke(c *gin.Context) {
 	}
 	urlNalog := fmt.Sprintf("/api/fpro/nalog/%d", idFnal)
 	searchQuery := c.Query("query")
-	searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), urlNalog, fmt.Sprintf("#%s", naloziStavkeTableID), "")
+	searchInput := common.CreateSearchInput("search-input", h.translator, urlNalog, fmt.Sprintf("#%s", naloziStavkeTableID), "")
 	page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
 	tblStavke := common.SetTableBasicData("STAVKE NALOGA", naloziStavkeTableID, h.fproService.GetTableStavkeFields(), urlNalog, urlNalog, 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tblStavke, "", urlNalog, false, false, false)
@@ -101,7 +102,7 @@ func (h *FproHandler) GetNalogStavke(c *gin.Context) {
 	tblStavke.DetailURL = fmt.Sprintf("/api/fpro/nalog/%d", idFnal)
 
 	if idFnal == 0 && searchQuery == "" {
-		err := tmpl_fin.NaloziDetail(domain.TableData{}, searchInput, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+		err := tmpl_fin.NaloziDetail(domain.TableData{}, searchInput, h.translator).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -116,10 +117,10 @@ func (h *FproHandler) GetNalogStavke(c *gin.Context) {
 		return
 	}
 	if requestSource == "btnpage" || requestSource == "searchinput" {
-		components.Table(tblStavke, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+		components.Table(tblStavke, h.translator).Render(c.Request.Context(), c.Writer)
 		return
 	}
-	err = tmpl_fin.NaloziDetail(tblStavke, searchInput, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+	err = tmpl_fin.NaloziDetail(tblStavke, searchInput, h.translator).Render(c.Request.Context(), c.Writer)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData)
 		return
@@ -211,7 +212,7 @@ func (h *FproHandler) GetNalogTotalValues(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData)
 		return
 	}
-	tmpl_fin.NalogTotalValues(nalogTotal, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+	tmpl_fin.NalogTotalValues(nalogTotal, h.translator).Render(c.Request.Context(), c.Writer)
 }
 
 func setUpdateValues(fpro *domain.Fpro) map[string]interface{} {
@@ -290,7 +291,7 @@ func (h *FproHandler) GetMestoTroskaOptions(c *gin.Context) {
 		OnInput:      "clearFieldError",
 		OnFocus:      "clearFieldError",
 		OptionValues: items,
-	}, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+	}, h.translator).Render(c.Request.Context(), c.Writer)
 }
 
 func (h *FproHandler) AddRoutes(r *gin.Engine) {
@@ -312,10 +313,9 @@ func (h *FproHandler) AddRoutes(r *gin.Engine) {
 }
 
 func (h *FproHandler) setHandlerFieldValues() {
-	translator := i18n.GetInstance()
 	h.btnSave = domain.Button{
 		Id:            "btn-save",
-		LabelText:     translator.Button("Snimi"),
+		LabelText:     h.translator.Button("Snimi"),
 		HxActionURL:   fproURLPrefix,
 		HxTarget:      "this",
 		HxSwap:        "innerHTML",
@@ -323,7 +323,7 @@ func (h *FproHandler) setHandlerFieldValues() {
 	}
 	h.btnNazad = domain.Button{
 		Id:            "btn-nazad-fpro",
-		LabelText:     translator.Button("Nazad"),
+		LabelText:     h.translator.Button("Nazad"),
 		HxActionURL:   fproURLNextFpro,
 		HxRequestType: "GET",
 	}

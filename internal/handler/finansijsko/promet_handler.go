@@ -53,9 +53,10 @@ const (
 )
 
 type PrometHandler struct {
-	tabData domain.TabData
-	service finservice.PrometService
-	cfg     config.Config
+	translator *i18n.Service
+	tabData    domain.TabData
+	service    finservice.PrometService
+	cfg        config.Config
 }
 
 const (
@@ -113,10 +114,11 @@ const (
 			}`
 )
 
-func NewPrometHandler(service finservice.PrometService, cfg config.Config) *PrometHandler {
+func NewPrometHandler(service finservice.PrometService, cfg config.Config, translator *i18n.Service) *PrometHandler {
 	handler := &PrometHandler{
-		service: service,
-		cfg:     cfg,
+		translator: translator,
+		service:    service,
+		cfg:        cfg,
 	}
 	handler.tabData = GetTabData()
 	handler.service = service
@@ -133,13 +135,13 @@ func (h *PrometHandler) PrometMain(c *gin.Context) {
 	common.SetActiveTab(h.tabData, 0)
 	btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", prometURLAnKonta, "#promettable", "innerHTML", "GET", "#konto, #sifra, #oddatuma, #dodatuma", hxValsAnalitickihKonta, true, common.ClassSaveButton, "handleDialogResponse")
 	btnPrint := common.SetButton("print-btn", "Štampa", "stampa", prometURLAnalitickaKarticaStampaDialog, "#dialog-proment-analitika-stampa", "innerHTML", "GET", "", hxValsAnalitickihKonta, true, common.ClassPrintButton, "")
-	searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), prometURLAnKonta, fmt.Sprintf("#%s", prometTableID), hxValsAnalitickihKonta)
+	searchInput := common.CreateSearchInput("search-input", h.translator, prometURLAnKonta, fmt.Sprintf("#%s", prometTableID), hxValsAnalitickihKonta)
 
 	tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetAnkontaTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tbl, prometContentTitle, "", false, false, false)
 	tbl.FuncClick = "selectRow"                             // naziv js function for Click
 	tbl.FuncDblClick = "handleDblClickKontoSelection(this)" // naziv js function for dblClick
-	err := tmpl_fin.PrometMain(h.tabData, tbl, btnPrint, btnObrada, domain.TotalValues{}, searchInput, gnGod, prometKontaAnalitickiDodatniParametriURL, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+	err := tmpl_fin.PrometMain(h.tabData, tbl, btnPrint, btnObrada, domain.TotalValues{}, searchInput, gnGod, prometKontaAnalitickiDodatniParametriURL, h.translator).Render(c.Request.Context(), c.Writer)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 		return
@@ -149,7 +151,6 @@ func (h *PrometHandler) PrometMain(c *gin.Context) {
 func (h *PrometHandler) PrometAnalitickihKonta(c *gin.Context) {
 	// Get our custom header
 	requestSource := c.Request.Header.Get("X-Request-Source")
-	translator := i18n.GetInstance()
 	//if the call come from menu click or tab click then render the page with parameters and empty table
 	tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetAnkontaTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tbl, prometContentTitle, "", false, false, false)
@@ -164,8 +165,8 @@ func (h *PrometHandler) PrometAnalitickihKonta(c *gin.Context) {
 
 		btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", prometURLAnKonta, "#promettable", "innerHTML", "GET", "", hxValsAnalitickihKonta, true, common.ClassSaveButton, "handleDialogResponse")
 		btnPrint := common.SetButton("print-btn", "Štampa", "stampa", prometURLAnalitickaKarticaStampaDialog, "#dialog-proment-analitika-stampa", "innerHTML", "GET", "", hxValsAnalitickihKonta, true, common.ClassPrintButton, "")
-		searchInput := common.CreateSearchInput("search-input", translator, prometURLAnKonta, fmt.Sprintf("#%s", prometTableID), hxValsAnalitickihKonta)
-		err := tmpl_fin.PrometAnalitickihKonta(h.tabData, tbl, btnPrint, btnObrada, domain.TotalValues{}, searchInput, gnGod, prometKontaAnalitickiDodatniParametriURL, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+		searchInput := common.CreateSearchInput("search-input", h.translator, prometURLAnKonta, fmt.Sprintf("#%s", prometTableID), hxValsAnalitickihKonta)
+		err := tmpl_fin.PrometAnalitickihKonta(h.tabData, tbl, btnPrint, btnObrada, domain.TotalValues{}, searchInput, gnGod, prometKontaAnalitickiDodatniParametriURL, h.translator).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -213,7 +214,6 @@ func (h *PrometHandler) PrometAnalitickihKonta(c *gin.Context) {
 
 func (h *PrometHandler) PrometAnalitickihKontaStampaDialog(c *gin.Context) {
 	ctx := c.Request.Context()
-	translator := i18n.GetInstance()
 	userSession := domain.GetSessionFromStdContext(ctx)
 	if userSession == nil {
 		common.WriteJSONResponse(c, http.StatusUnauthorized, false, nil, common.ErrMsgUnauthorized)
@@ -245,7 +245,7 @@ func (h *PrometHandler) PrometAnalitickihKontaStampaDialog(c *gin.Context) {
 	btnPrint := common.SetPrintButton("stampa-btn", "Štampa", "print", prometURLAnalitickaKarticaStampa, "GET", true, common.ClassPrintButton, stampaAnKarticaFileds)
 	btnClose.IdDialog = "dialog-proment-analitika-stampa-dlg"
 	btnCancel.IdDialog = "dialog-proment-analitika-stampa-dlg"
-	tmpl_fin.PrometAnalitickihKontaDialog(dialog, btnPrint, btnCancel, btnClose, prometParams, userSession.SelectedGod, translator).Render(ctx, c.Writer)
+	tmpl_fin.PrometAnalitickihKontaDialog(dialog, btnPrint, btnCancel, btnClose, prometParams, userSession.SelectedGod, h.translator).Render(ctx, c.Writer)
 }
 
 // Handler for additional parameters for printing Analiticka Kartica
@@ -264,7 +264,7 @@ func (h *PrometHandler) PrometAnalitickihKontaDodatniParametri(c *gin.Context) {
 	btnCancel := common.SetButton("cancel-btn", "Odustani", "cancel", "", "", "", "", "", "", true, common.ClassOdustaniButton, "")
 	btnClose.IdDialog = "dialog-proment-analitika-stampa-dlg"
 	btnCancel.IdDialog = "dialog-proment-analitika-stampa-dlg"
-	tmpl_fin.PrometAnalitickihKontaDodatniParametri(dialog, btnClose, btnSelect, btnCancel, domain.PrometParam{}, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+	tmpl_fin.PrometAnalitickihKontaDodatniParametri(dialog, btnClose, btnSelect, btnCancel, domain.PrometParam{}, h.translator).Render(c.Request.Context(), c.Writer)
 }
 
 // Handler for printing Analiticka Kartica with selected parameters
@@ -309,7 +309,7 @@ func (h *PrometHandler) PrometAnalitickihKontaStampa(c *gin.Context) {
 		},
 	}
 
-	tmpl_rep_fin.PrometAnalitickaKarticaStampa(repParams, tbl, i18n.GetInstance()).Render(ctx, c.Writer)
+	tmpl_rep_fin.PrometAnalitickaKarticaStampa(repParams, tbl, h.translator).Render(ctx, c.Writer)
 }
 
 // Handler for printing Analiticka Kartica Po MI
@@ -351,7 +351,7 @@ func (h *PrometHandler) PrometAnalitickihKontaPoMIStampa(c *gin.Context) {
 			"DoMI":     {Name: "Do mesta isporuke", Value: c.Query("domi")},
 		},
 	}
-	tmpl_rep_fin.PrometAnalitickaKarticaPoMIStampa(repParams, tbl, i18n.GetInstance()).Render(ctx, c.Writer)
+	tmpl_rep_fin.PrometAnalitickaKarticaPoMIStampa(repParams, tbl, h.translator).Render(ctx, c.Writer)
 }
 
 func getAnKarticaMIParameterValues(c *gin.Context) domain.PrometStampaParam {
@@ -380,7 +380,6 @@ func getAnKarticaMIParameterValues(c *gin.Context) domain.PrometStampaParam {
 func (h *PrometHandler) PrometAnalitickihKontaPoMI(c *gin.Context) {
 	// Get our custom header
 	requestSource := c.Request.Header.Get("X-Request-Source")
-	translator := i18n.GetInstance()
 	//if the call come from menu click or tab click then render the page with parameters and empty table
 	tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetAnKontaMiTableFields(), "", prometURLAnKontaMi, 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tbl, prometContentTitle, prometURLAnKontaMi, false, false, false)
@@ -394,8 +393,8 @@ func (h *PrometHandler) PrometAnalitickihKontaPoMI(c *gin.Context) {
 
 		btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", prometURLAnKontaMi, "#promettable", "innerHTML", "GET", "", hxValsMI, true, common.ClassSaveButton, "handleDialogResponse")
 		btnPrint := common.SetPrintButton("print-btn", "Štampa", "print", prometURLAnalitickaKarticaPoMIStampa, "GET", true, common.ClassPrintButton, stampaAnKarticaMIFields)
-		searchInput := common.CreateSearchInput("search-input", translator, prometURLAnKontaMi, fmt.Sprintf("#%s", prometTableID), hxValsMI)
-		err := tmpl_fin.AnalitickaKarticaPoMI(h.tabData, tbl, btnPrint, btnObrada, domain.TotalValues{}, searchInput, gnGod, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+		searchInput := common.CreateSearchInput("search-input", h.translator, prometURLAnKontaMi, fmt.Sprintf("#%s", prometTableID), hxValsMI)
+		err := tmpl_fin.AnalitickaKarticaPoMI(h.tabData, tbl, btnPrint, btnObrada, domain.TotalValues{}, searchInput, gnGod, h.translator).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -449,8 +448,7 @@ func (h *PrometHandler) PrometDeviznihAnalitickihKonta(c *gin.Context) {
 	if session != nil {
 		gnGod = session.SelectedGod
 	}
-	translator := i18n.GetInstance()
-	searchInput := common.CreateSearchInput("search-input", translator, prometURLDeviznaKonta, fmt.Sprintf("#%s", prometTableID), hxValsMI)
+	searchInput := common.CreateSearchInput("search-input", h.translator, prometURLDeviznaKonta, fmt.Sprintf("#%s", prometTableID), hxValsMI)
 
 	tblPromet := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetAnDeviznaKontaTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tblPromet, "PROMET DEVIZNIH KONTA", prometURLDeviznaKonta, false, false, false)
@@ -462,7 +460,7 @@ func (h *PrometHandler) PrometDeviznihAnalitickihKonta(c *gin.Context) {
 	if requestSource == "menu" || requestSource == "tab" {
 		btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", prometURLDeviznaKonta, "#promettable-container", "innerHTML", "GET", "", hxValsDeviznaKonta, true, common.ClassSaveButton, "handleDialogResponse")
 		btnPrint := common.SetButton("print-btn", "Štampa", "stampa", prometURLAnalitickaKarticaStampaDialog, "#dialog-proment-analitika-stampa", "innerHTML", "GET", "", hxValsAnalitickihKonta, true, common.ClassPrintButton, "")
-		err := tmpl_fin.PrometDeviznihAnalitickihKonta(h.tabData, tblPromet, tblDeviznaKonta, btnPrint, btnObrada, domain.TotalValues{}, gnGod, searchInput, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+		err := tmpl_fin.PrometDeviznihAnalitickihKonta(h.tabData, tblPromet, tblDeviznaKonta, btnPrint, btnObrada, domain.TotalValues{}, gnGod, searchInput, h.translator).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -502,7 +500,7 @@ func (h *PrometHandler) PrometDeviznihAnalitickihKonta(c *gin.Context) {
 		}
 		tblPromet.HasTotals = true
 		if requestSource == "btnobrada" {
-			tmpl_fin.PrometDeviznaKontaTables(tblPromet, tblDeviznaKonta, searchInput, translator).Render(c.Request.Context(), c.Writer)
+			tmpl_fin.PrometDeviznaKontaTables(tblPromet, tblDeviznaKonta, searchInput, h.translator).Render(c.Request.Context(), c.Writer)
 		}
 		if requestSource == "btnpage" || requestSource == "searchinput" {
 			utils.RenderContent(c, tblPromet)
@@ -512,7 +510,6 @@ func (h *PrometHandler) PrometDeviznihAnalitickihKonta(c *gin.Context) {
 func (h *PrometHandler) PrometSubsintetickihKonta(c *gin.Context) {
 	// Get our custom header
 	requestSource := c.Request.Header.Get("X-Request-Source")
-	translator := i18n.GetInstance()
 	if requestSource == "menu" || requestSource == "tab" {
 		session := domain.GetSessionFromContext(c)
 		gnGod := 0
@@ -522,13 +519,13 @@ func (h *PrometHandler) PrometSubsintetickihKonta(c *gin.Context) {
 
 		btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", prometURLSubsintetika, "#promettable", "innerHTML", "GET", "", hxValsSubsintetika, true, common.ClassSaveButton, "handleDialogResponse")
 		btnPrint := common.SetButton("print-btn", "Štampa", "stampa", prometURLSubsintetikaStampaDialog, "#dialog-promet-subsint-stampa", "innerHTML", "GET", "", hxValsSubsintetika, true, common.ClassPrintButton, "")
-		searchInput := common.CreateSearchInput("search-input", translator, prometURLSubsintetika, fmt.Sprintf("#%s", prometTableID), hxValsSubsintetika)
+		searchInput := common.CreateSearchInput("search-input", h.translator, prometURLSubsintetika, fmt.Sprintf("#%s", prometTableID), hxValsSubsintetika)
 
 		//if the call come from menu click or tab click then render the page with parameters and empty table
 		tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetSubsintetickihKontaTableFields(), "", prometURLSubsintetika, 0, 0, 0, 0, h.cfg)
 		common.SetTableConfig(&tbl, prometContentTitle, prometURLSubsintetika, false, false, false)
 		common.SetActiveTab(h.tabData, 3)
-		err := tmpl_fin.PrometSubsintetickihKonta(h.tabData, tbl, btnPrint, btnObrada, domain.TotalValues{}, searchInput, gnGod, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+		err := tmpl_fin.PrometSubsintetickihKonta(h.tabData, tbl, btnPrint, btnObrada, domain.TotalValues{}, searchInput, gnGod, h.translator).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -576,7 +573,6 @@ func (h *PrometHandler) PrometSubsintetickihKonta(c *gin.Context) {
 func (h *PrometHandler) PrometSintetickihKonta(c *gin.Context) {
 	// Get our custom header
 	requestSource := c.Request.Header.Get("X-Request-Source")
-	translator := i18n.GetInstance()
 	if requestSource == "menu" || requestSource == "tab" {
 		session := domain.GetSessionFromContext(c)
 		gnGod := 0
@@ -586,13 +582,13 @@ func (h *PrometHandler) PrometSintetickihKonta(c *gin.Context) {
 
 		btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", prometURLSintetika, "#promettable", "innerHTML", "GET", "", hxValsSintetika, true, common.ClassSaveButton, "handleDialogResponse")
 		btnPrint := common.SetButton("print-btn", "Štampa", "stampa", prometURLSintetikaStampaDialog, "#dialog-promet-sint-stampa", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
-		searchInput := common.CreateSearchInput("search-input", translator, prometURLSintetika, fmt.Sprintf("#%s", prometTableID), hxValsSintetika)
+		searchInput := common.CreateSearchInput("search-input", h.translator, prometURLSintetika, fmt.Sprintf("#%s", prometTableID), hxValsSintetika)
 
 		//if the call come from menu click or tab click then render the page with parameters and empty table
 		tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetSintetickihKontaTableFields(), "", prometURLSintetika, 0, 0, 0, 0, h.cfg)
 		common.SetTableConfig(&tbl, prometContentTitle, prometURLSintetika, false, false, false)
 		common.SetActiveTab(h.tabData, 4)
-		err := tmpl_fin.PrometSintetickihKonta(h.tabData, tbl, btnPrint, btnObrada, domain.TotalValues{}, searchInput, gnGod, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+		err := tmpl_fin.PrometSintetickihKonta(h.tabData, tbl, btnPrint, btnObrada, domain.TotalValues{}, searchInput, gnGod, h.translator).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -642,7 +638,6 @@ func (h *PrometHandler) PrometSintetickihKontaStampaDialog(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusUnauthorized, false, nil, common.ErrMsgUnauthorized)
 		return
 	}
-	translator := i18n.GetInstance()
 	konto := c.Query("konto")
 	prometParams := domain.PrometParam{Konto: konto}
 	dialog := domain.Dialog{Id: "dialog-sint-stampa-dlg", Title: "Sintetička kartica - parametri štampe"}
@@ -651,7 +646,7 @@ func (h *PrometHandler) PrometSintetickihKontaStampaDialog(c *gin.Context) {
 	btnPrint := common.SetPrintButton("stampa-btn", "Štampaj", "print", prometURLSintetikaStampa, "GET", true, common.ClassPrintButton, stampaSintetikaFields)
 	btnClose.IdDialog = "dialog-sint-stampa-dlg"
 	btnCancel.IdDialog = "dialog-sint-stampa-dlg"
-	tmpl_fin.PrometSintetickihKontaDialog(dialog, btnPrint, btnCancel, btnClose, prometParams, userSession.SelectedGod, translator).Render(ctx, c.Writer)
+	tmpl_fin.PrometSintetickihKontaDialog(dialog, btnPrint, btnCancel, btnClose, prometParams, userSession.SelectedGod, h.translator).Render(ctx, c.Writer)
 }
 
 func (h *PrometHandler) PrometSintetickihKontaStampa(c *gin.Context) {
@@ -691,14 +686,13 @@ func (h *PrometHandler) PrometSintetickihKontaStampa(c *gin.Context) {
 			"StanjeNaDan": {Name: "Stanje kartica na dan", Value: stampParams.DatumStampe},
 		},
 	}
-	tmpl_rep_fin.KarticaSintetickihKontaStampa(repParams, tbl, i18n.GetInstance()).Render(ctx, c.Writer)
+	tmpl_rep_fin.KarticaSintetickihKontaStampa(repParams, tbl, h.translator).Render(ctx, c.Writer)
 }
 
 // Handler for Promet Kartica Sintetickih Konta
 func (h *PrometHandler) PrometKarticaSintetickihKonta(c *gin.Context) {
 	// Get our custom header
 	requestSource := c.Request.Header.Get("X-Request-Source")
-	translator := i18n.GetInstance()
 	if requestSource == "menu" || requestSource == "tab" {
 		session := domain.GetSessionFromContext(c)
 		gnGod := 0
@@ -708,13 +702,13 @@ func (h *PrometHandler) PrometKarticaSintetickihKonta(c *gin.Context) {
 
 		btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", prometURLKarticaSintetika, "#promettable", "innerHTML", "GET", "", hxValsKarticaSintetika, true, common.ClassSaveButton, "handleDialogResponse")
 		btnPrint := common.SetPrintButton("print-btn", "Štampa", "stampa", prometURLKarticaSintetikaStampa, "GET", true, common.ClassPrintButton, stampaKarticaSintKontaFields)
-		searchInput := common.CreateSearchInput("search-input", translator, prometURLKarticaSintetika, fmt.Sprintf("#%s", prometTableID), hxValsKarticaSintetika)
+		searchInput := common.CreateSearchInput("search-input", h.translator, prometURLKarticaSintetika, fmt.Sprintf("#%s", prometTableID), hxValsKarticaSintetika)
 
 		//if the call come from menu click or tab click then render the page with parameters and empty table
 		tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetKarticaSintetikaTableFields(), "", prometURLKarticaSintetika, 0, 0, 0, 0, h.cfg)
 		common.SetTableConfig(&tbl, prometContentTitle, prometURLKarticaSintetika, false, false, false)
 		common.SetActiveTab(h.tabData, 5)
-		err := tmpl_fin.KarticaSintetickiKonta(h.tabData, tbl, btnPrint, btnObrada, domain.TotalValues{}, searchInput, gnGod, translator).Render(c.Request.Context(), c.Writer)
+		err := tmpl_fin.KarticaSintetickiKonta(h.tabData, tbl, btnPrint, btnObrada, domain.TotalValues{}, searchInput, gnGod, h.translator).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -797,7 +791,7 @@ func (h *PrometHandler) PrometKarticaSintetickihKontaStampa(c *gin.Context) {
 			"DoDatuma": {Name: "Do datuma", Value: stampParams.DoDatuma},
 		},
 	}
-	tmpl_rep_fin.KarticaSintKontaStampa(repParams, tbl, i18n.GetInstance()).Render(ctx, c.Writer)
+	tmpl_rep_fin.KarticaSintKontaStampa(repParams, tbl, h.translator).Render(ctx, c.Writer)
 }
 
 func getKarticaSintKontaParameterValues(c *gin.Context) domain.PrometStampaParam {
@@ -829,7 +823,6 @@ func getKarticaSintParameterValues(c *gin.Context) domain.PrometStampaParam {
 func (h *PrometHandler) PrometSubsintetickaKontaPoVRD(c *gin.Context) {
 	// Get our custom header
 	requestSource := c.Request.Header.Get("X-Request-Source")
-	translator := i18n.GetInstance()
 	if requestSource == "menu" || requestSource == "tab" {
 		session := domain.GetSessionFromContext(c)
 		gnGod := 0
@@ -839,13 +832,13 @@ func (h *PrometHandler) PrometSubsintetickaKontaPoVRD(c *gin.Context) {
 
 		btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", prometURLSubsintetikaVrd, "#promettable", "innerHTML", "GET", "", hxValsSubsintetikaVrd, true, common.ClassSaveButton, "handleDialogResponse")
 		btnPrint := common.SetPrintButton("print-btn", "Štampa", "stampa", prometURLSubsintetikaVrdStampa, "GET", true, common.ClassPrintButton, stampaSubsintetikaVrdFields)
-		searchInput := common.CreateSearchInput("search-input", translator, prometURLSubsintetikaVrd, fmt.Sprintf("#%s", prometTableID), hxValsSubsintetikaVrd)
+		searchInput := common.CreateSearchInput("search-input", h.translator, prometURLSubsintetikaVrd, fmt.Sprintf("#%s", prometTableID), hxValsSubsintetikaVrd)
 
 		//if the call come from menu click or tab click then render the page with parameters and empty table
 		tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetSubsintetikaVrdTableFields(), "", prometURLSubsintetikaVrd, 0, 0, 0, 0, h.cfg)
 		common.SetTableConfig(&tbl, prometContentTitle, prometURLSubsintetikaVrd, false, false, false)
 		common.SetActiveTab(h.tabData, 6)
-		err := tmpl_fin.PrometKontaPoVRD(h.tabData, tbl, btnPrint, btnObrada, domain.TotalValues{}, searchInput, gnGod, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+		err := tmpl_fin.PrometKontaPoVRD(h.tabData, tbl, btnPrint, btnObrada, domain.TotalValues{}, searchInput, gnGod, h.translator).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -930,13 +923,12 @@ func (h *PrometHandler) PrometSubsintetickaKontaPoVRDStampa(c *gin.Context) {
 			"DoDatuma": {Name: "Do datuma", Value: params.DoDatuma},
 		},
 	}
-	tmpl_rep_fin.PrometSubsintetikaVrdStampa(repParams, tbl, i18n.GetInstance()).Render(ctx, c.Writer)
+	tmpl_rep_fin.PrometSubsintetikaVrdStampa(repParams, tbl, h.translator).Render(ctx, c.Writer)
 }
 
 func (h *PrometHandler) PrometKontaAnaliticki(c *gin.Context) {
 	// Get our custom header
 	requestSource := c.Request.Header.Get("X-Request-Source")
-	translator := i18n.GetInstance()
 	if requestSource == "menu" || requestSource == "tab" {
 		session := domain.GetSessionFromContext(c)
 		gnGod := 0
@@ -946,13 +938,13 @@ func (h *PrometHandler) PrometKontaAnaliticki(c *gin.Context) {
 
 		btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", prometURLKontaAnaliticki, "#promettable", "innerHTML", "GET", "", hxValsKontaAnaliticki, true, common.ClassSaveButton, "handleDialogResponse")
 		btnPrint := common.SetButton("print-btn", "Štampa", "stampa", "", "#dialog-proment-analitika-stampa", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
-		searchInput := common.CreateSearchInput("search-input", translator, prometURLKontaAnaliticki, fmt.Sprintf("#%s", prometTableID), hxValsKontaAnaliticki)
+		searchInput := common.CreateSearchInput("search-input", h.translator, prometURLKontaAnaliticki, fmt.Sprintf("#%s", prometTableID), hxValsKontaAnaliticki)
 
 		//if the call come from menu click or tab click then render the page with parameters and empty table
 		tbl := common.SetTableBasicData(prometContentTitle, prometTableID, h.service.GetKontaAnalitickiTableFields(), "", prometURLKontaAnaliticki, 0, 0, 0, 0, h.cfg)
 		common.SetTableConfig(&tbl, prometContentTitle, prometURLKontaAnaliticki, false, false, false)
 		common.SetActiveTab(h.tabData, 7)
-		err := tmpl_fin.PrometKontaAnaliticki(h.tabData, tbl, btnPrint, btnObrada, domain.TotalValues{}, searchInput, gnGod, translator).Render(c.Request.Context(), c.Writer)
+		err := tmpl_fin.PrometKontaAnaliticki(h.tabData, tbl, btnPrint, btnObrada, domain.TotalValues{}, searchInput, gnGod, h.translator).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -1023,7 +1015,7 @@ func (h *PrometHandler) TotalValues(c *gin.Context) {
 		return
 	}
 
-	err = tmpl_fin.PrometTotalValues(response.Totals, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+	err = tmpl_fin.PrometTotalValues(response.Totals, h.translator).Render(c.Request.Context(), c.Writer)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 		return
@@ -1033,7 +1025,6 @@ func (h *PrometHandler) TotalValues(c *gin.Context) {
 
 func (h *PrometHandler) PrometSubsintetickihKontaStampaDialog(c *gin.Context) {
 	ctx := c.Request.Context()
-	translator := i18n.GetInstance()
 	userSession := domain.GetSessionFromStdContext(ctx)
 	if userSession == nil {
 		common.WriteJSONResponse(c, http.StatusUnauthorized, false, nil, common.ErrMsgUnauthorized)
@@ -1056,7 +1047,7 @@ func (h *PrometHandler) PrometSubsintetickihKontaStampaDialog(c *gin.Context) {
 	btnPrint := common.SetPrintButton("stampa-btn", "Štampaj", "print", prometURLSubsintetikaStampa, "GET", true, common.ClassPrintButton, stampaSubsKarticaFields)
 	btnClose.IdDialog = "dialog-promet-subsint-stampa-dlg"
 	btnCancel.IdDialog = "dialog-promet-subsint-stampa-dlg"
-	tmpl_fin.PrometSubsintetickihKontaDialog(dialog, btnPrint, btnCancel, btnClose, prometParams, userSession.SelectedGod, translator).Render(ctx, c.Writer)
+	tmpl_fin.PrometSubsintetickihKontaDialog(dialog, btnPrint, btnCancel, btnClose, prometParams, userSession.SelectedGod, h.translator).Render(ctx, c.Writer)
 }
 
 func (h *PrometHandler) PrometSubsintetickihKontaStampa(c *gin.Context) {
@@ -1100,7 +1091,7 @@ func (h *PrometHandler) PrometSubsintetickihKontaStampa(c *gin.Context) {
 		},
 	}
 
-	tmpl_rep_fin.PrometSubsintetickihKontaKarticaStampa(repParams, tbl, i18n.GetInstance()).Render(ctx, c.Writer)
+	tmpl_rep_fin.PrometSubsintetickihKontaKarticaStampa(repParams, tbl, h.translator).Render(ctx, c.Writer)
 }
 
 func getSubsKarticaParameterValues(c *gin.Context) domain.PrometStampaParam {

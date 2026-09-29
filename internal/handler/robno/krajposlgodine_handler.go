@@ -19,14 +19,15 @@ import (
 const krajPoslovneGodineURL = "/api/robno/krajposlovnegodine"
 
 type KrajPoslovneGodineHandler struct {
-	service robnosvc.KrajPoslovneGodineService
-	cfg     config.Config
-	tabs    domain.TabData
-	subtabs domain.TabData
+	translator *i18n.Service
+	service    robnosvc.KrajPoslovneGodineService
+	cfg        config.Config
+	tabs       domain.TabData
+	subtabs    domain.TabData
 }
 
-func NewKrajPoslovneGodineHandler(service robnosvc.KrajPoslovneGodineService, cfg config.Config) *KrajPoslovneGodineHandler {
-	return &KrajPoslovneGodineHandler{service: service, cfg: cfg,
+func NewKrajPoslovneGodineHandler(service robnosvc.KrajPoslovneGodineService, cfg config.Config, translator *i18n.Service) *KrajPoslovneGodineHandler {
+	return &KrajPoslovneGodineHandler{translator: translator, service: service, cfg: cfg,
 		tabs: domain.TabData{Tabs: []domain.TabItem{
 			{ID: "kpg-popis", Label: "Popisne liste", HXRequestUrl: krajPoslovneGodineURL + "/popis/sifra", IsActive: true},
 			{ID: "kpg-visak", Label: "Obrada viškova/manjkova", HXRequestUrl: krajPoslovneGodineURL + "/obrada"},
@@ -52,7 +53,7 @@ func (h *KrajPoslovneGodineHandler) Main(c *gin.Context) {
 		return
 	}
 	tbl := h.table("Popisne liste", h.service.GetType1Fields())
-	if err := tmpl_robno.KrajPoslovneGodineMain(h.tabs, h.subtabs, tbl, mag, i18n.GetInstance()).Render(c, c.Writer); err != nil {
+	if err := tmpl_robno.KrajPoslovneGodineMain(h.tabs, h.subtabs, tbl, mag, h.translator).Render(c, c.Writer); err != nil {
 		common.WriteJSONResponse(c, 500, false, nil, common.ErrMsgRenderTemplate)
 	}
 }
@@ -71,7 +72,7 @@ func (h *KrajPoslovneGodineHandler) PopisPoSifri(c *gin.Context) {
 		return
 	}
 	mag, _ := h.service.GetMagacini(c.Request.Context())
-	if err := tmpl_robno.KrajPoslovneGodinePopis(h.tabs, h.subtabs, tbl, mag, i18n.GetInstance()).Render(c, c.Writer); err != nil {
+	if err := tmpl_robno.KrajPoslovneGodinePopis(h.tabs, h.subtabs, tbl, mag, h.translator).Render(c, c.Writer); err != nil {
 		common.WriteJSONResponse(c, 500, false, nil, common.ErrMsgRenderTemplate)
 	}
 }
@@ -103,7 +104,7 @@ func (h *KrajPoslovneGodineHandler) Obrada(c *gin.Context) {
 		}
 	}
 	mag, _ := h.service.GetMagacini(c.Request.Context())
-	if err := tmpl_robno.KrajPoslovneGodineObrada(h.tabs, h.tableVisakRows("Obrada viškova i manjkova", rows), mag, i18n.GetInstance()).Render(c, c.Writer); err != nil {
+	if err := tmpl_robno.KrajPoslovneGodineObrada(h.tabs, h.tableVisakRows("Obrada viškova i manjkova", rows), mag, h.translator).Render(c, c.Writer); err != nil {
 		common.WriteJSONResponse(c, 500, false, nil, common.ErrMsgRenderTemplate)
 	}
 }
@@ -123,7 +124,7 @@ func (h *KrajPoslovneGodineHandler) Prepis(c *gin.Context) {
 		}
 	}
 	mag, _ := h.service.GetMagacini(c.Request.Context())
-	if err := tmpl_robno.KrajPoslovneGodinePrepis(h.tabs, h.table("Prepis stanja", h.service.GetType1Fields()), mag, i18n.GetInstance()).Render(c, c.Writer); err != nil {
+	if err := tmpl_robno.KrajPoslovneGodinePrepis(h.tabs, h.table("Prepis stanja", h.service.GetType1Fields()), mag, h.translator).Render(c, c.Writer); err != nil {
 		common.WriteJSONResponse(c, 500, false, nil, common.ErrMsgRenderTemplate)
 	}
 }
@@ -148,7 +149,7 @@ func (h *KrajPoslovneGodineHandler) renderRows(c *gin.Context, tab int, print bo
 		return
 	}
 	mag, _ := h.service.GetMagacini(c.Request.Context())
-	if err := tmpl_robno.KrajPoslovneGodinePopis(h.tabs, h.subtabs, tbl, mag, i18n.GetInstance()).Render(c, c.Writer); err != nil {
+	if err := tmpl_robno.KrajPoslovneGodinePopis(h.tabs, h.subtabs, tbl, mag, h.translator).Render(c, c.Writer); err != nil {
 		common.WriteJSONResponse(c, 500, false, nil, common.ErrMsgRenderTemplate)
 	}
 }
@@ -195,9 +196,9 @@ func (h *KrajPoslovneGodineHandler) renderReport(c *gin.Context, tbl domain.Tabl
 	params := h.params(c)
 	var err error
 	if c.Request.URL.Path == "/api/robno/krajposlovnegodine/popis/stampa2" {
-		err = tmpl_rep_robno.ROB_RPT_POPISNALISTA2(params, tbl, i18n.GetInstance()).Render(c, c.Writer)
+		err = tmpl_rep_robno.ROB_RPT_POPISNALISTA2(params, tbl, h.translator).Render(c, c.Writer)
 	} else {
-		err = tmpl_rep_robno.ROB_RPT_POPISNALISTA(params, tbl, i18n.GetInstance()).Render(c, c.Writer)
+		err = tmpl_rep_robno.ROB_RPT_POPISNALISTA(params, tbl, h.translator).Render(c, c.Writer)
 	}
 	if err != nil {
 		common.WriteJSONResponse(c, 500, false, nil, common.ErrMsgRenderTemplate)

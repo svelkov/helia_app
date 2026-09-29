@@ -100,46 +100,46 @@ templ RobnoKompodaciPregledRealizacijePoKupcimaArtiklima(tabs domain.TabData, tb
 							<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Parametri") }</legend>
 							<div class="flex items-center gap-1">
 								@components.LabelField(domain.LabelFieldConfig{ID: "odgrupe", LabelText: translator.Label("Od grupe"), ClassLabel: common.ClassLabel + " w-32"})
-								@components.ComboBoxField(domain.ComboFieldConfig{ID: "odgrupe", Name: "odgrupe", OptionValues: grpValues, ClassSelect: common.ClassInputTextEnabled + " flex-1", TabIndex: "1"}, translator)
+								@components.ComboBoxField(domain.ComboFieldConfig{ID: "odgrupe", Name: "odgrupe", OptionValues: grpValues, OnInput: "clearFieldError", OnFocus: "clearFieldError", ClassSelect: common.ClassInputTextEnabled + " flex-1", TabIndex: "1"}, translator)
 								@components.LabelField(domain.LabelFieldConfig{ID: "dogrupe", LabelText: translator.Label("Do grupe"), ClassLabel: common.ClassLabel + " w-20"})
-								@components.ComboBoxField(domain.ComboFieldConfig{ID: "dogrupe", Name: "dogrupe", OptionValues: grpValues, ClassSelect: common.ClassInputTextEnabled + " flex-1", TabIndex: "2"}, translator)
+								@components.ComboBoxField(domain.ComboFieldConfig{ID: "dogrupe", Name: "dogrupe", OptionValues: grpValues, OnInput: "clearFieldError", OnFocus: "clearFieldError", ClassSelect: common.ClassInputTextEnabled + " flex-1", TabIndex: "2"}, translator)
 							</div>
 							<div class="flex items-center gap-1">
 								@components.LabelField(domain.LabelFieldConfig{ID: "konto", LabelText: translator.Label("Konto"), ClassLabel: common.ClassLabel + " w-32"})
-								@components.TextInputField(domain.InputFieldConfig{ID: "konto", Name: "konto", FieldType: "text", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "3"})
+								@components.TextInputField(domain.InputFieldConfig{ID: "konto", Name: "konto", FieldType: "text", OnInput: "clearFieldError", OnFocus: "clearFieldError", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "3"})
 								@components.SearchButton(domain.SearchButtonConfig{ID: "search-konto", Name: "search-konto", HxUrl: "/api/promet/searchbutton", HxTarget: "#search-dropdown", HxSwap: "innerHTML", HxVals: `{"vkonta": "2", "destfield": "konto"}`, ClassButton: common.ClassButton})
 								@components.TextInputField(domain.InputFieldConfig{ID: "kontonaziv", Name: "kontonaziv", FieldType: "text", Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1"})
 							</div>
 							<div class="flex items-center gap-1">
 								@components.LabelField(domain.LabelFieldConfig{ID: "odsifrekupca", LabelText: translator.Label("Od šifre kupca"), ClassLabel: common.ClassLabel + " w-32"})
-								@components.TextInputField(domain.InputFieldConfig{ID: "odsifrekupca", Name: "odsifrekupca", FieldType: "text", Value: "0", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "3"})
+								@components.TextInputField(domain.InputFieldConfig{ID: "odsifrekupca", Name: "odsifrekupca", FieldType: "text", Value: "0", OnInput: "clearFieldError", OnFocus: "clearFieldError", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "3"})
 								@components.SearchButton(domain.SearchButtonConfig{ID: "search-odsifrekupca", Name: "search-odsifrekupca", HxUrl: "/api/promet/searchbutton", HxTarget: "#search-dropdown", HxSwap: "innerHTML", HxVals: `js:{"destfield": "odsifrekupca"}`, ClassButton: common.ClassButton})
 								@components.TextInputField(domain.InputFieldConfig{ID: "odsifrekupcanaziv", Name: "odsifrekupcanaziv", FieldType: "text", Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1"})
 							</div>
 							<div class="flex items-center gap-1">
 								@components.LabelField(domain.LabelFieldConfig{ID: "dosifrekupca", LabelText: translator.Label("Do šifre kupca"), ClassLabel: common.ClassLabel + " w-32"})
-								@components.TextInputField(domain.InputFieldConfig{ID: "dosifrekupca", Name: "dosifrekupca", FieldType: "text", Value: "999999", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "3"})
+								@components.TextInputField(domain.InputFieldConfig{ID: "dosifrekupca", Name: "dosifrekupca", FieldType: "text", Value: "999999", OnInput: "clearFieldError", OnFocus: "clearFieldError", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "3"})
 								@components.SearchButton(domain.SearchButtonConfig{ID: "search-dosifrekupca", Name: "search-dosifrekupca", HxUrl: "/api/promet/searchbutton", HxTarget: "#search-dropdown", HxSwap: "innerHTML", HxVals: `js:{"destfield": "dosifrekupca"}`, ClassButton: common.ClassButton})
 								@components.TextInputField(domain.InputFieldConfig{ID: "dosifrekupcanaziv", Name: "dosifrekupcanaziv", FieldType: "text", Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1"})
 							</div>
 							<div class="flex items-center gap-1">
 								@components.LabelField(domain.LabelFieldConfig{ID: "odsifreartikla", LabelText: translator.Label("Od šifre artikla"), ClassLabel: common.ClassLabel + " w-32"})
-								@components.TextInputField(domain.InputFieldConfig{ID: "odsifreartikla", Name: "odsifreartikla", FieldType: "text",  Value: "0", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "3"})
+								@components.TextInputField(domain.InputFieldConfig{ID: "odsifreartikla", Name: "odsifreartikla", FieldType: "text", Value: "0",  OnInput: "clearFieldError", OnFocus: "clearFieldError", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "3"})
 								@components.SearchButton(domain.SearchButtonConfig{ID: "search-odsifreartikla", Name: "search-odsifreartikla", HxUrl: "/api/promet/searchbutton", HxTarget: "#search-dropdown", HxSwap: "innerHTML", HxVals: `js:{"destfield": "odsifreartikla"}`, ClassButton: common.ClassButton})
 								@components.TextInputField(domain.InputFieldConfig{ID: "odsifranaziv", Name: "odsifranaziv", FieldType: "text", Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1"})
 							</div>
 							<div class="flex items-center gap-1">
 								@components.LabelField(domain.LabelFieldConfig{ID: "dosifreartikla", LabelText: translator.Label("Do šifre artikla"), ClassLabel: common.ClassLabel + " w-32"})
-								@components.TextInputField(domain.InputFieldConfig{ID: "dosifreartikla", Name: "dosifreartikla", FieldType: "text", Value: "999999", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "4"})
+								@components.TextInputField(domain.InputFieldConfig{ID: "dosifreartikla", Name: "dosifreartikla", FieldType: "text", Value: "999999", OnInput: "clearFieldError", OnFocus: "clearFieldError", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "4"})
 								@components.SearchButton(domain.SearchButtonConfig{ID: "search-dosifreartikla", Name: "search-dosifreartikla", HxUrl: "/api/promet/searchbutton", HxTarget: "#search-dropdown", HxSwap: "innerHTML", HxVals: `js:{"destfield": "dosifreartikla"}`, ClassButton: common.ClassButton})
 								@components.TextInputField(domain.InputFieldConfig{ID: "dosifranaziv", Name: "dosifranaziv", FieldType: "text", Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1"})
 							</div>
 							<div class="flex items-center justify-between gap-1">
 								<div class="flex items-center gap-1">
 									@components.LabelField(domain.LabelFieldConfig{ID: "oddatuma", LabelText: translator.Label("Od datuma"), ClassLabel: common.ClassLabel + " w-32"})
-									@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month(), 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "3"})
+									@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date",  OnInput: "clearFieldError", OnFocus: "clearFieldError", Value: time.Date(gnGod, time.Now().Month(), 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "3"})
 									@components.LabelField(domain.LabelFieldConfig{ID: "dodatuma", LabelText: translator.Label("Do datuma"), ClassLabel: common.ClassLabel + " w-32"})
-									@components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month()+1, 0, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "4"})
+									@components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", OnInput: "clearFieldError", OnFocus: "clearFieldError", Value: time.Date(gnGod, time.Now().Month()+1, 0, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "4"})
 								</div>
 								<div class="flex gap-1">
 									@components.Button(btnObrada)
@@ -160,6 +160,7 @@ templ RobnoKompodaciPregledRealizacijePoKupcimaArtiklima(tabs domain.TabData, tb
 				</div>
 			</div>
 		</div>
+		<div id="robnokompodaci-dialog-message-id"></div>
 	</div>
 }
 
@@ -199,28 +200,28 @@ templ RobnoKompodaciPregledRealizacijePoArtiklima(tabs domain.TabData, tbl domai
 							<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Parametri") }</legend>
 							<div class="flex items-center gap-1">
 								@components.LabelField(domain.LabelFieldConfig{ID: "odgrupe", LabelText: translator.Label("Od grupe"), ClassLabel: common.ClassLabel + " w-32"})
-								@components.ComboBoxField(domain.ComboFieldConfig{ID: "odgrupe", Name: "odgrupe", OptionValues: grpValues, ClassSelect: common.ClassInputTextEnabled + " flex-1", TabIndex: "1"}, translator)
+								@components.ComboBoxField(domain.ComboFieldConfig{ID: "odgrupe", Name: "odgrupe", OptionValues: grpValues, OnInput: "clearFieldError", OnFocus: "clearFieldError", ClassSelect: common.ClassInputTextEnabled + " flex-1", TabIndex: "1"}, translator)
 								@components.LabelField(domain.LabelFieldConfig{ID: "dogrupe", LabelText: translator.Label("Do grupe"), ClassLabel: common.ClassLabel + " w-20"})
-								@components.ComboBoxField(domain.ComboFieldConfig{ID: "dogrupe", Name: "dogrupe", OptionValues: grpValues, ClassSelect: common.ClassInputTextEnabled + " flex-1", TabIndex: "2"}, translator)
+								@components.ComboBoxField(domain.ComboFieldConfig{ID: "dogrupe", Name: "dogrupe", OptionValues: grpValues, OnInput: "clearFieldError", OnFocus: "clearFieldError", ClassSelect: common.ClassInputTextEnabled + " flex-1", TabIndex: "2"}, translator)
 							</div>
 							<div class="flex items-center gap-1">
 								@components.LabelField(domain.LabelFieldConfig{ID: "odsifreartikla", LabelText: translator.Label("Od šifre artikla"), ClassLabel: common.ClassLabel + " w-32"})
-								@components.TextInputField(domain.InputFieldConfig{ID: "odsifreartikla", Name: "odsifreartikla", FieldType: "text", Value: "0", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "3"})
+								@components.TextInputField(domain.InputFieldConfig{ID: "odsifreartikla", Name: "odsifreartikla", FieldType: "text", Value: "0",  OnInput: "clearFieldError", OnFocus: "clearFieldError", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "3"})
 								@components.SearchButton(domain.SearchButtonConfig{ID: "search-odsifreartikla", Name: "search-odsifreartikla", HxUrl: "/api/promet/searchbutton", HxTarget: "#search-dropdown", HxSwap: "innerHTML", HxVals: `js:{"destfield": "odsifreartikla"}`, ClassButton: common.ClassButton})
 								@components.TextInputField(domain.InputFieldConfig{ID: "odsifranaziv", Name: "odsifranaziv", FieldType: "text", Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1"})
 							</div>
 							<div class="flex items-center gap-1">
 								@components.LabelField(domain.LabelFieldConfig{ID: "dosifreartikla", LabelText: translator.Label("Do šifre artikla"), ClassLabel: common.ClassLabel + " w-32"})
-								@components.TextInputField(domain.InputFieldConfig{ID: "dosifreartikla", Name: "dosifreartikla", FieldType: "text", Value: "999999", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "4"})
+								@components.TextInputField(domain.InputFieldConfig{ID: "dosifreartikla", Name: "dosifreartikla", FieldType: "text", Value: "999999", OnInput: "clearFieldError", OnFocus: "clearFieldError", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "4"})
 								@components.SearchButton(domain.SearchButtonConfig{ID: "search-dosifreartikla", Name: "search-dosifreartikla", HxUrl: "/api/promet/searchbutton", HxTarget: "#search-dropdown", HxSwap: "innerHTML", HxVals: `js:{"destfield": "dosifreartikla"}`, ClassButton: common.ClassButton})
 								@components.TextInputField(domain.InputFieldConfig{ID: "dosifranaziv", Name: "dosifranaziv", FieldType: "text", Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1"})
 							</div>
 							<div class="flex items-center justify-between gap-1">
 								<div class="flex items-center gap-1">
 									@components.LabelField(domain.LabelFieldConfig{ID: "oddatuma", LabelText: translator.Label("Od datuma"), ClassLabel: common.ClassLabel + " w-32"})
-									@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month(), 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "3"})
+									@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month(), 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), OnInput: "clearFieldError", OnFocus: "clearFieldError", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "3"})
 									@components.LabelField(domain.LabelFieldConfig{ID: "dodatuma", LabelText: translator.Label("Do datuma"), ClassLabel: common.ClassLabel + " w-32"})
-									@components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month()+1, 0, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "4"})
+									@components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month()+1, 0, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), OnInput: "clearFieldError", OnFocus: "clearFieldError", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "4"})
 								</div>
 								<div class="flex gap-1">
 									@components.Button(btnObrada)
@@ -241,6 +242,7 @@ templ RobnoKompodaciPregledRealizacijePoArtiklima(tabs domain.TabData, tbl domai
 				</div>
 			</div>
 		</div>
+		<div id="robnokompodaci-dialog-message-id"></div>
 	</div>
 }
 
@@ -257,20 +259,20 @@ templ RobnoKompodaciPregledUcescaArtikla(tabs domain.TabData, tbl domain.TableDa
 						<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Parametri") }</legend>
 						<div class="flex items-center gap-1">
 							@components.LabelField(domain.LabelFieldConfig{ID: "odsifreartikla", LabelText: translator.Label("Od šifre artikla"), ClassLabel: common.ClassLabel + " w-32"})
-							@components.TextInputField(domain.InputFieldConfig{ID: "odsifreartikla", Name: "odsifreartikla", FieldType: "text", Value: "0", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "1"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "odsifreartikla", Name: "odsifreartikla", FieldType: "text", Value: "0", OnInput: "clearFieldError", OnFocus: "clearFieldError", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "1"})
 							@components.SearchButton(domain.SearchButtonConfig{ID: "search-odsifreartikla", Name: "search-odsifreartikla", HxUrl: "/api/promet/searchbutton", HxTarget: "#search-dropdown", HxSwap: "innerHTML", HxVals: `js:{"destfield": "odsifreartikla"}`, ClassButton: common.ClassButton})
 							@components.TextInputField(domain.InputFieldConfig{ID: "odsifranaziv", Name: "odsifranaziv", FieldType: "text", Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1"})
 							@components.LabelField(domain.LabelFieldConfig{ID: "dosifreartikla", LabelText: translator.Label("Do šifre artikla"), ClassLabel: common.ClassLabel + " w-32"})
-							@components.TextInputField(domain.InputFieldConfig{ID: "dosifreartikla", Name: "dosifreartikla", FieldType: "text", Value: "999999", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "2"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "dosifreartikla", Name: "dosifreartikla", FieldType: "text", Value: "999999", OnInput: "clearFieldError", OnFocus: "clearFieldError", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "2"})
 							@components.SearchButton(domain.SearchButtonConfig{ID: "search-dosifreartikla", Name: "search-dosifreartikla", HxUrl: "/api/promet/searchbutton", HxTarget: "#search-dropdown", HxSwap: "innerHTML", HxVals: `js:{"destfield": "dosifreartikla"}`, ClassButton: common.ClassButton})
 							@components.TextInputField(domain.InputFieldConfig{ID: "dosifranaziv", Name: "dosifranaziv", FieldType: "text", Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1"})
 						</div>
 						<div class="flex items-center justify-between gap-1">
 							<div class="flex items-center gap-1">
 								@components.LabelField(domain.LabelFieldConfig{ID: "oddatuma", LabelText: translator.Label("Od datuma"), ClassLabel: common.ClassLabel + " w-32"})
-								@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month(), 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "3"})
+								@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month(), 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), OnInput: "clearFieldError", OnFocus: "clearFieldError", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "3"})
 								@components.LabelField(domain.LabelFieldConfig{ID: "dodatuma", LabelText: translator.Label("Do datuma"), ClassLabel: common.ClassLabel + " w-32"})
-								@components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month()+1, 0, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "4"})
+								@components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month()+1, 0, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), OnInput: "clearFieldError", OnFocus: "clearFieldError", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "4"})
 							</div>
 							<div class="flex gap-1">
 								@components.Button(btnObrada)
@@ -290,6 +292,7 @@ templ RobnoKompodaciPregledUcescaArtikla(tabs domain.TabData, tbl domain.TableDa
 				</div>
 			</div>
 		</div>
+		<div id="robnokompodaci-dialog-message-id"></div>
 	</div>
 }
 
@@ -306,16 +309,16 @@ templ RobnoKompodaciPregledUcescaGrupeArtikala(tabs domain.TabData, tbl domain.T
 						<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Parametri") }</legend>
 						<div class="flex items-center gap-1">
 							@components.LabelField(domain.LabelFieldConfig{ID: "odgrupe", LabelText: translator.Label("Od grupe"), ClassLabel: common.ClassLabel + " w-32"})
-							@components.ComboBoxField(domain.ComboFieldConfig{ID: "odgrupe", Name: "odgrupe", OptionValues: grpValues, ClassSelect: common.ClassInputTextEnabled + " flex-1", TabIndex: "1"}, translator)
+							@components.ComboBoxField(domain.ComboFieldConfig{ID: "odgrupe", Name: "odgrupe", OptionValues: grpValues, OnInput: "clearFieldError", OnFocus: "clearFieldError", ClassSelect: common.ClassInputTextEnabled + " flex-1", TabIndex: "1"}, translator)
 							@components.LabelField(domain.LabelFieldConfig{ID: "dogrupe", LabelText: translator.Label("Do grupe"), ClassLabel: common.ClassLabel + " w-32"})
-							@components.ComboBoxField(domain.ComboFieldConfig{ID: "dogrupe", Name: "dogrupe", OptionValues: grpValues, ClassSelect: common.ClassInputTextEnabled + " flex-1", TabIndex: "2"}, translator)
+							@components.ComboBoxField(domain.ComboFieldConfig{ID: "dogrupe", Name: "dogrupe", OptionValues: grpValues, OnInput: "clearFieldError", OnFocus: "clearFieldError", ClassSelect: common.ClassInputTextEnabled + " flex-1", TabIndex: "2"}, translator)
 						</div>
 						<div class="flex items-center justify-between gap-1">
 							<div class="flex items-center gap-1">
 								@components.LabelField(domain.LabelFieldConfig{ID: "oddatuma", LabelText: translator.Label("Od datuma"), ClassLabel: common.ClassLabel + " w-32"})
-								@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month(), 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "3"})
+								@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month(), 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), OnInput: "clearFieldError", OnFocus: "clearFieldError", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "3"})
 								@components.LabelField(domain.LabelFieldConfig{ID: "dodatuma", LabelText: translator.Label("Do datuma"), ClassLabel: common.ClassLabel + " w-32"})
-								@components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month()+1, 0, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "4"})
+								@components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month()+1, 0, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), OnInput: "clearFieldError", OnFocus: "clearFieldError", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "4"})
 							</div>
 							<div class="flex gap-1">
 								@components.Button(btnObrada)
@@ -335,5 +338,6 @@ templ RobnoKompodaciPregledUcescaGrupeArtikala(tabs domain.TabData, tbl domain.T
 				</div>
 			</div>
 		</div>
+		<div id="robnokompodaci-dialog-message-id"></div>
 	</div>
 }

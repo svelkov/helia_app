@@ -60,16 +60,18 @@ const (
 )
 
 type IzvodiHandler struct {
-	tabData domain.TabData
-	service finservice.IzvodiService
-	cfg     config.Config
-	lm      *middleware.LockMiddleware
+	translator *i18n.Service
+	tabData    domain.TabData
+	service    finservice.IzvodiService
+	cfg        config.Config
+	lm         *middleware.LockMiddleware
 }
 
-func NewIzvodiHandler(service finservice.IzvodiService, cfg config.Config, lm *middleware.LockMiddleware) *IzvodiHandler {
+func NewIzvodiHandler(service finservice.IzvodiService, cfg config.Config, lm *middleware.LockMiddleware, translator *i18n.Service) *IzvodiHandler {
 	handler := &IzvodiHandler{
-		cfg: cfg,
-		lm:  lm,
+		translator: translator,
+		cfg:        cfg,
+		lm:         lm,
 	}
 	handler.tabData = GetIzvodiTabData()
 	handler.service = service
@@ -83,14 +85,13 @@ func (h *IzvodiHandler) IzvodiMain(c *gin.Context) {
 	if session != nil {
 		gnGod = session.SelectedGod
 	}
-	translator := i18n.GetInstance()
 	csrfToken := common.GetCsrfToken(c)
 	currentPage, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
 	// Create configuration
-	btnImport := common.SetButton("import-btn", translator.Button("Import"), "fin_import", izvodiURLImport, "#dialog-form-message", "innerHTML", "POST", "", "", true, common.ClassSaveButton, "")
-	btnAzurKonta := common.SetButton("azur-konta-btn", translator.Button("Ažuriraj konta"), "fin_azurirajkonta", izvodiURLAzurirajKonta, "#izvodi-master-table", "innerHTML", "POST", "", hxValsAzurirajKonta, true, common.ClassSaveButton, "")
-	searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), izvodiURLUcitavanje, fmt.Sprintf("#%s", izvodiTableMasterID), "")
-	searchInputDetail := common.CreateSearchInput("search-input-detail", i18n.GetInstance(), izvodiURLPregledDetalji, fmt.Sprintf("#%s", izvodiTableDetailID), "")
+	btnImport := common.SetButton("import-btn", h.translator.Button("Import"), "fin_import", izvodiURLImport, "#dialog-form-message", "innerHTML", "POST", "", "", true, common.ClassSaveButton, "")
+	btnAzurKonta := common.SetButton("azur-konta-btn", h.translator.Button("Ažuriraj konta"), "fin_azurirajkonta", izvodiURLAzurirajKonta, "#izvodi-master-table", "innerHTML", "POST", "", hxValsAzurirajKonta, true, common.ClassSaveButton, "")
+	searchInput := common.CreateSearchInput("search-input", h.translator, izvodiURLUcitavanje, fmt.Sprintf("#%s", izvodiTableMasterID), "")
+	searchInputDetail := common.CreateSearchInput("search-input-detail", h.translator, izvodiURLPregledDetalji, fmt.Sprintf("#%s", izvodiTableDetailID), "")
 
 	tblMaster := common.SetTableBasicData(izvodiHeaderTitle, izvodiTableMasterID, h.service.GetMasterTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tblMaster, izvodiHeaderTitle, "", true, false, false)
@@ -126,7 +127,7 @@ func (h *IzvodiHandler) IzvodiMain(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
 		return
 	}
-	err = tmpl_fin.IzvodiMain(h.tabData, tblMaster, tblDetail, btnImport, btnAzurKonta, bankValues, gnGod, searchInput, searchInputDetail, i18n.GetInstance(), csrfToken).Render(c.Request.Context(), c.Writer)
+	err = tmpl_fin.IzvodiMain(h.tabData, tblMaster, tblDetail, btnImport, btnAzurKonta, bankValues, gnGod, searchInput, searchInputDetail, h.translator, csrfToken).Render(c.Request.Context(), c.Writer)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 		return
@@ -135,7 +136,6 @@ func (h *IzvodiHandler) IzvodiMain(c *gin.Context) {
 
 func (h *IzvodiHandler) UcitavanjeIzvoda(c *gin.Context) {
 	requestSource := c.Request.Header.Get("X-Request-Source")
-	translator := i18n.GetInstance()
 	csrfToken := common.GetCsrfToken(c)
 	ctx := c.Request.Context()
 	h.tabData = setIzvodiActiveTab(h.tabData, "ucitavanje")
@@ -147,10 +147,10 @@ func (h *IzvodiHandler) UcitavanjeIzvoda(c *gin.Context) {
 			gnGod = session.SelectedGod
 		}
 
-		btnImport := common.SetButton("import-btn", translator.Button("Import"), "fin_import", izvodiURLImport, "#dialog-form-message", "innerHTML", "POST", "", "", true, common.ClassSaveButton, "")
-		btnAzurKonta := common.SetButton("azur-konta-btn", translator.Button("Ažuriraj konta"), "fin_azurirajkonta", izvodiURLAzurirajKonta, "#dialog-form-message", "innerHTML", "POST", "", hxValsAzurirajKonta, true, common.ClassSaveButton, "")
-		searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), izvodiURLUcitavanje, fmt.Sprintf("#%s", izvodiTableMasterID), "")
-		searchInputDetail := common.CreateSearchInput("search-input-detail", i18n.GetInstance(), izvodiURLPregledDetalji, fmt.Sprintf("#%s", izvodiTableDetailID), "")
+		btnImport := common.SetButton("import-btn", h.translator.Button("Import"), "fin_import", izvodiURLImport, "#dialog-form-message", "innerHTML", "POST", "", "", true, common.ClassSaveButton, "")
+		btnAzurKonta := common.SetButton("azur-konta-btn", h.translator.Button("Ažuriraj konta"), "fin_azurirajkonta", izvodiURLAzurirajKonta, "#dialog-form-message", "innerHTML", "POST", "", hxValsAzurirajKonta, true, common.ClassSaveButton, "")
+		searchInput := common.CreateSearchInput("search-input", h.translator, izvodiURLUcitavanje, fmt.Sprintf("#%s", izvodiTableMasterID), "")
+		searchInputDetail := common.CreateSearchInput("search-input-detail", h.translator, izvodiURLPregledDetalji, fmt.Sprintf("#%s", izvodiTableDetailID), "")
 
 		tblMaster := common.SetTableBasicData(izvodiHeaderTitle, izvodiTableMasterID, h.service.GetMasterTableFields(), izvodiURLUcitavanje, izvodiURLUcitavanje, 0, 0, 0, 0, h.cfg)
 		common.SetTableConfig(&tblMaster, izvodiHeaderTitle, izvodiURLUcitavanje, true, false, false)
@@ -194,11 +194,11 @@ func (h *IzvodiHandler) UcitavanjeIzvoda(c *gin.Context) {
 			return
 		}
 		if requestSource == "btnpage" || requestSource == "searchinput" {
-			components.Table(tblMaster, translator).Render(c.Request.Context(), c.Writer)
+			components.Table(tblMaster, h.translator).Render(c.Request.Context(), c.Writer)
 			return
 
 		}
-		tmpl_fin.UcitavanjeIzvoda(h.tabData, tblMaster, tblDetail, btnImport, btnAzurKonta, bankeValues, gnGod, searchInput, searchInputDetail, translator, csrfToken).Render(c.Request.Context(), c.Writer)
+		tmpl_fin.UcitavanjeIzvoda(h.tabData, tblMaster, tblDetail, btnImport, btnAzurKonta, bankeValues, gnGod, searchInput, searchInputDetail, h.translator, csrfToken).Render(c.Request.Context(), c.Writer)
 		return
 	}
 
@@ -243,7 +243,6 @@ func (h *IzvodiHandler) AzuriranjeKonta(c *gin.Context) {
 }
 func (h *IzvodiHandler) KnjizenjeIzvoda(c *gin.Context) {
 	requestSource := c.Request.Header.Get("X-Request-Source")
-	translator := i18n.GetInstance()
 
 	if requestSource == "menu" || requestSource == "tab" {
 		session := domain.GetSessionFromContext(c)
@@ -252,11 +251,11 @@ func (h *IzvodiHandler) KnjizenjeIzvoda(c *gin.Context) {
 			gnGod = session.SelectedGod
 		}
 		csrfToken := common.GetCsrfToken(c)
-		btnObrada := common.SetButton("obrada-btn", translator.Button("Obrada"), "obrada", izvodiURLKnjizenje, "#izvodi-master-table", "innerHTML", "GET", "", hxValsKnjizenjeIzvoda, true, common.ClassSaveButton, "")
-		btnRavnoteza := common.SetButton("ravnoteza-btn", translator.Button("Proveri ravnotežu"), "fin_ravnoteza", izvodiURLRaznoteza, "#izvodi-detail-table", "innerHTML", "POST", "", hxValsKnjizenjeIzvoda, true, common.ClassSaveButton, "")
-		btnKnjizenje := common.SetButton("knjizenje-btn", translator.Button("Knjiženje"), "fin_knjizenje", izvodiURLKnjizenje, "#izvodi-master-table", "innerHTML", "POST", "", hxValsKnjizenjeIzvoda, true, common.ClassSaveButton, "")
-		searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), izvodiURLKnjizenje, fmt.Sprintf("#%s", izvodiTableMasterID), "")
-		searchInputDetail := common.CreateSearchInput("search-input-detail", i18n.GetInstance(), izvodiURLPregledDetalji, fmt.Sprintf("#%s", izvodiTableDetailID), "")
+		btnObrada := common.SetButton("obrada-btn", h.translator.Button("Obrada"), "obrada", izvodiURLKnjizenje, "#izvodi-master-table", "innerHTML", "GET", "", hxValsKnjizenjeIzvoda, true, common.ClassSaveButton, "")
+		btnRavnoteza := common.SetButton("ravnoteza-btn", h.translator.Button("Proveri ravnotežu"), "fin_ravnoteza", izvodiURLRaznoteza, "#izvodi-detail-table", "innerHTML", "POST", "", hxValsKnjizenjeIzvoda, true, common.ClassSaveButton, "")
+		btnKnjizenje := common.SetButton("knjizenje-btn", h.translator.Button("Knjiženje"), "fin_knjizenje", izvodiURLKnjizenje, "#izvodi-master-table", "innerHTML", "POST", "", hxValsKnjizenjeIzvoda, true, common.ClassSaveButton, "")
+		searchInput := common.CreateSearchInput("search-input", h.translator, izvodiURLKnjizenje, fmt.Sprintf("#%s", izvodiTableMasterID), "")
+		searchInputDetail := common.CreateSearchInput("search-input-detail", h.translator, izvodiURLPregledDetalji, fmt.Sprintf("#%s", izvodiTableDetailID), "")
 
 		tblHeader := common.SetTableBasicData(izvodiHeaderTitle, izvodiTableMasterID, h.service.GetMasterTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 		common.SetTableConfig(&tblHeader, izvodiHeaderTitle, "", false, false, false)
@@ -284,7 +283,7 @@ func (h *IzvodiHandler) KnjizenjeIzvoda(c *gin.Context) {
 			}
 		}
 		h.tabData = setIzvodiActiveTab(h.tabData, "knjizenje")
-		tmpl_fin.KnjizenjeIzvoda(h.tabData, tblHeader, tblDetail, btnObrada, btnRavnoteza, btnKnjizenje, bankeValues, tipdokValues, gnGod, fmt.Sprintf("%d", nextNalog), searchInput, searchInputDetail, csrfToken, translator).Render(c.Request.Context(), c.Writer)
+		tmpl_fin.KnjizenjeIzvoda(h.tabData, tblHeader, tblDetail, btnObrada, btnRavnoteza, btnKnjizenje, bankeValues, tipdokValues, gnGod, fmt.Sprintf("%d", nextNalog), searchInput, searchInputDetail, csrfToken, h.translator).Render(c.Request.Context(), c.Writer)
 		return
 	}
 
@@ -320,14 +319,13 @@ func (h *IzvodiHandler) KnjizenjeIzvoda(c *gin.Context) {
 			return
 		}
 
-		components.Table(tblHeader, translator).Render(c.Request.Context(), c.Writer)
+		components.Table(tblHeader, h.translator).Render(c.Request.Context(), c.Writer)
 		return
 	}
 }
 
 func (h *IzvodiHandler) PregledIzvoda(c *gin.Context) {
 	requestSource := c.Request.Header.Get("X-Request-Source")
-	translator := i18n.GetInstance()
 
 	tblHeader := common.SetTableBasicData(izvodiHeaderTitle, izvodiTableMasterID, h.service.GetMasterTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tblHeader, izvodiHeaderTitle, "", false, false, false)
@@ -352,7 +350,7 @@ func (h *IzvodiHandler) PregledIzvoda(c *gin.Context) {
 		}
 
 		h.tabData = setIzvodiActiveTab(h.tabData, "pregled")
-		err = tmpl_fin.PregledIzvoda(h.tabData, tblHeader, tblDetail, btnObrada, bankeValues, gnGod, translator).Render(c.Request.Context(), c.Writer)
+		err = tmpl_fin.PregledIzvoda(h.tabData, tblHeader, tblDetail, btnObrada, bankeValues, gnGod, h.translator).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -365,7 +363,6 @@ func (h *IzvodiHandler) PregledIzvoda(c *gin.Context) {
 }
 func (h *IzvodiHandler) RenderPregledIzvodaHdrTable(c *gin.Context) {
 	ctx := c.Request.Context()
-	translator := i18n.GetInstance()
 	requestSource := c.Request.Header.Get("X-Request-Source")
 	fmt.Println(requestSource)
 	page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
@@ -405,7 +402,7 @@ func (h *IzvodiHandler) RenderPregledIzvodaHdrTable(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
 		return
 	}
-	components.Table(tblHeader, translator).Render(c.Request.Context(), c.Writer)
+	components.Table(tblHeader, h.translator).Render(c.Request.Context(), c.Writer)
 }
 func (h *IzvodiHandler) GetIzvodiDetalji(c *gin.Context) {
 	idFizvzag, err := utils.GetInt64FromParameterRequest(c, "id")
@@ -433,7 +430,7 @@ func (h *IzvodiHandler) GetIzvodiDetalji(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetData)
 		return
 	}
-	components.Table(tblDetail, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+	components.Table(tblDetail, h.translator).Render(c.Request.Context(), c.Writer)
 }
 func (h *IzvodiHandler) BrisanjeIzvodaConfirm(c *gin.Context) {
 	utils.ConfirmDeleteHelper(c, h.service.GetMasterTableFields(), "#info-message")

@@ -26,8 +26,9 @@ const (
 )
 
 type DnevnikHandler struct {
-	cfg     config.Config
-	service finservice.DnevnikService
+	translator *i18n.Service
+	cfg        config.Config
+	service    finservice.DnevnikService
 }
 
 const (
@@ -38,10 +39,11 @@ const (
         }`
 )
 
-func NewDnevnikHandler(service finservice.DnevnikService, cfg config.Config) *DnevnikHandler {
+func NewDnevnikHandler(service finservice.DnevnikService, cfg config.Config, translator *i18n.Service) *DnevnikHandler {
 	handler := &DnevnikHandler{
-		cfg:     cfg,
-		service: service,
+		translator: translator,
+		cfg:        cfg,
+		service:    service,
 	}
 	return handler
 }
@@ -58,7 +60,7 @@ func (h *DnevnikHandler) DnevnikKnjizenja(c *gin.Context) {
 
 	tbl := common.SetTableBasicData(dnevnikContentTitle, dnevnikTableID, h.service.GetDnevnikTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tbl, "", dnevnikURLMain, false, false, false)
-	searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), dnevnikURLMain, fmt.Sprintf("#%s", dnevnikTableID), hxValsDnevnik)
+	searchInput := common.CreateSearchInput("search-input", h.translator, dnevnikURLMain, fmt.Sprintf("#%s", dnevnikTableID), hxValsDnevnik)
 	tbl.HasTotals = true
 	if requestSource == "menu" || requestSource == "" {
 		btnPrint := domain.Button{
@@ -72,7 +74,7 @@ func (h *DnevnikHandler) DnevnikKnjizenja(c *gin.Context) {
 		}
 
 		btnObrada := common.SetButton("btnobrada", "Obrada", "obrada", dnevnikURLMain, fmt.Sprintf("#%s", dnevnikTableID), "innerHTML", "GET", "", hxValsDnevnik, true, common.ClassSaveButton, "handleBackendResponse")
-		tmpl_fin.DnevnikKnjizenja(tbl, searchInput, btnObrada, btnPrint, i18n.GetInstance(), gnGod).Render(c.Request.Context(), c.Writer)
+		tmpl_fin.DnevnikKnjizenja(tbl, searchInput, btnObrada, btnPrint, h.translator, gnGod).Render(c.Request.Context(), c.Writer)
 		return
 	}
 
@@ -110,7 +112,6 @@ func (h *DnevnikHandler) DnevnikKnjizenja(c *gin.Context) {
 // DnevnikKnjizenjaStampa renders a full-page printable Dnevnik knjizenja report.
 func (h *DnevnikHandler) DnevnikKnjizenjaStampa(c *gin.Context) {
 	ctx := c.Request.Context()
-	translator := i18n.GetInstance()
 	userSession := domain.GetSessionFromStdContext(ctx)
 	if userSession == nil {
 		common.WriteJSONResponse(c, http.StatusUnauthorized, false, nil, common.ErrMsgUnauthorized)
@@ -149,7 +150,7 @@ func (h *DnevnikHandler) DnevnikKnjizenjaStampa(c *gin.Context) {
 	}
 	paramItems := make(map[string]domain.ParameterItem)
 	params := domain.ReportParameters{
-		ReportName:     translator.Title("DNEVNIK KNJIŽENJA"),
+		ReportName:     h.translator.Title("DNEVNIK KNJIŽENJA"),
 		CompanyName:    fvrData.Naziv,
 		Adress:         fvrData.Adresa,
 		Postcode:       fvrData.Pobro,
@@ -157,10 +158,10 @@ func (h *DnevnikHandler) DnevnikKnjizenjaStampa(c *gin.Context) {
 		Orientation:    "landscape",
 		ParameterItems: paramItems,
 	}
-	paramItems["OdDatuma"] = domain.ParameterItem{Name: translator.Label("Za period od"), Value: odDatumaFmt}
-	paramItems["DoDatuma"] = domain.ParameterItem{Name: translator.Label("do"), Value: doDatumaFmt}
+	paramItems["OdDatuma"] = domain.ParameterItem{Name: h.translator.Label("Za period od"), Value: odDatumaFmt}
+	paramItems["DoDatuma"] = domain.ParameterItem{Name: h.translator.Label("do"), Value: doDatumaFmt}
 	params.ParameterItems = paramItems
-	tmpl_rep_fin.DnevnikKnjizenjaStampa(tbl, domain.TableData{}, params, translator).Render(ctx, c.Writer)
+	tmpl_rep_fin.DnevnikKnjizenjaStampa(tbl, domain.TableData{}, params, h.translator).Render(ctx, c.Writer)
 }
 
 // AddRoutes registers all dnevnik routes

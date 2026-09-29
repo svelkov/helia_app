@@ -34,6 +34,7 @@ const (
 )
 
 type ArtikliHandler struct {
+	translator     *i18n.Service
 	service        service.Service[domain.Rsif]
 	artikliService robnosvc.ArtikliService
 	cfg            config.Config
@@ -47,8 +48,9 @@ func NewArtikliHandler(
 	cfg config.Config,
 	lm *middleware.LockMiddleware,
 	commonSvc commonsvc.CommonService,
-) *ArtikliHandler {
+	translator *i18n.Service) *ArtikliHandler {
 	return &ArtikliHandler{
+		translator:     translator,
 		service:        service,
 		artikliService: artikliService,
 		cfg:            cfg,
@@ -189,7 +191,6 @@ func (h *ArtikliHandler) confirmAddHandler(c *gin.Context) {
 	btnCancel := common.SetButton("cancel-btn", "Odustani", "cancel", "", "", "", "", "", "", true, common.ClassOdustaniButton, "")
 	btnCancel.IdDialog = dialog.Id
 
-	translator := i18n.GetInstance()
 	csrfToken := common.GetCsrfToken(c)
 
 	// Šifarnici for the dialog (jedinice mere, robne grupe i podgrupe)
@@ -210,7 +211,7 @@ func (h *ArtikliHandler) confirmAddHandler(c *gin.Context) {
 		return
 	}
 
-	tmpl_robno.ArtikliDialog(dialog, common.ActionAdd, model, btnSave, btnCancel, btnClose, modelCombo, jmCombo, gruCombo, pgruCombo, translator, csrfToken).Render(c.Request.Context(), c.Writer)
+	tmpl_robno.ArtikliDialog(dialog, common.ActionAdd, model, btnSave, btnCancel, btnClose, modelCombo, jmCombo, gruCombo, pgruCombo, h.translator, csrfToken).Render(c.Request.Context(), c.Writer)
 }
 
 func (h *ArtikliHandler) confirmUpdateHandler(c *gin.Context) {
@@ -249,7 +250,6 @@ func (h *ArtikliHandler) confirmUpdateHandler(c *gin.Context) {
 	common.SetUnlockButtonProperties(&btnCancel, fmt.Sprintf("/api/artikli/unlock/%d", id))
 	common.SetUnlockButtonProperties(&btnClose, fmt.Sprintf("/api/artikli/unlock/%d", id))
 
-	translator := i18n.GetInstance()
 	csrfToken := common.GetCsrfToken(c)
 
 	// Šifarnici for the dialog (jedinice mere, robne grupe i podgrupe)
@@ -270,7 +270,7 @@ func (h *ArtikliHandler) confirmUpdateHandler(c *gin.Context) {
 		return
 	}
 
-	tmpl_robno.ArtikliDialog(dialog, common.ActionUpdate, *entity, btnSave, btnCancel, btnClose, modelCombo, jmCombo, gruCombo, pgruCombo, translator, csrfToken).Render(c.Request.Context(), c.Writer)
+	tmpl_robno.ArtikliDialog(dialog, common.ActionUpdate, *entity, btnSave, btnCancel, btnClose, modelCombo, jmCombo, gruCombo, pgruCombo, h.translator, csrfToken).Render(c.Request.Context(), c.Writer)
 }
 
 func (h *ArtikliHandler) GetArtikli(c *gin.Context) {
@@ -316,9 +316,9 @@ func (h *ArtikliHandler) GetAllArtikli(c *gin.Context) {
 	tbl.BtnDelete.IsVisible = false
 
 	if requestSource == "menu" || requestSource == "" {
-		searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), artikliURLGetAll, fmt.Sprintf("#%s", artikliTableID), "")
+		searchInput := common.CreateSearchInput("search-input", h.translator, artikliURLGetAll, fmt.Sprintf("#%s", artikliTableID), "")
 		btnPrint := common.SetPrintButton("btn-print-artikli", "Štampa", "fin_print", artikliURLPrint, "GET", true, common.ClassPrintButton, "")
-		tmpl_robno.ArtikliMain(tbl, searchInput, btnPrint, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+		tmpl_robno.ArtikliMain(tbl, searchInput, btnPrint, h.translator).Render(c.Request.Context(), c.Writer)
 	} else {
 		utils.RenderContent(c, tbl)
 	}
@@ -361,8 +361,7 @@ func (h *ArtikliHandler) ArtikliStampa(c *gin.Context) {
 		return
 	}
 
-	translator := i18n.GetInstance()
-	tmpl_robno_rep.ArtikliStampa(repParams, tbl, translator).Render(ctx, c.Writer)
+	tmpl_robno_rep.ArtikliStampa(repParams, tbl, h.translator).Render(ctx, c.Writer)
 }
 
 func (h *ArtikliHandler) UnlockArtikli(c *gin.Context) {

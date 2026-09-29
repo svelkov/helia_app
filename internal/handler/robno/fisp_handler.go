@@ -30,14 +30,15 @@ const (
 )
 
 type FispHandler struct {
+	translator  *i18n.Service
 	service     service.Service[domain.Fisp]
 	fispService robnosvc.FispService
 	cfg         config.Config
 	lm          *middleware.LockMiddleware
 }
 
-func NewFispHandler(base *service.BaseService[domain.Fisp], resource robnosvc.FispService, cfg config.Config, lm *middleware.LockMiddleware) *FispHandler {
-	return &FispHandler{service: base, fispService: resource, cfg: cfg, lm: lm}
+func NewFispHandler(base *service.BaseService[domain.Fisp], resource robnosvc.FispService, cfg config.Config, lm *middleware.LockMiddleware, translator *i18n.Service) *FispHandler {
+	return &FispHandler{translator: translator, service: base, fispService: resource, cfg: cfg, lm: lm}
 }
 
 func fispFields(e *domain.Fisp) []domain.Fields {
@@ -108,7 +109,7 @@ func (h *FispHandler) confirmAdd(c *gin.Context) {
 	close.IdDialog = d.Id
 	cancel := common.SetButton("cancel-btn", "Odustani", "cancel", "", "", "", "", "", "", true, common.ClassOdustaniButton, "")
 	cancel.IdDialog = d.Id
-	tmpl.FispDialog(d, common.ActionAdd, domain.Fisp{}, save, cancel, close, i18n.GetInstance(), common.GetCsrfToken(c)).Render(c.Request.Context(), c.Writer)
+	tmpl.FispDialog(d, common.ActionAdd, domain.Fisp{}, save, cancel, close, h.translator, common.GetCsrfToken(c)).Render(c.Request.Context(), c.Writer)
 }
 func (h *FispHandler) confirmUpdate(c *gin.Context) {
 	id, err := strconv.Atoi(c.Query("id"))
@@ -129,7 +130,7 @@ func (h *FispHandler) confirmUpdate(c *gin.Context) {
 	cancel.IdDialog = d.Id
 	common.SetUnlockButtonProperties(&close, fmt.Sprintf("%s/unlock/%d", fispURL, id))
 	common.SetUnlockButtonProperties(&cancel, fmt.Sprintf("%s/unlock/%d", fispURL, id))
-	tmpl.FispDialog(d, common.ActionUpdate, *e, save, cancel, close, i18n.GetInstance(), common.GetCsrfToken(c)).Render(c.Request.Context(), c.Writer)
+	tmpl.FispDialog(d, common.ActionUpdate, *e, save, cancel, close, h.translator, common.GetCsrfToken(c)).Render(c.Request.Context(), c.Writer)
 }
 func (h *FispHandler) GetAll(c *gin.Context) {
 	ctx := c.Request.Context()
@@ -160,7 +161,7 @@ func (h *FispHandler) GetAll(c *gin.Context) {
 		return
 	}
 	if c.GetHeader("X-Request-Source") == "menu" || c.GetHeader("X-Request-Source") == "" {
-		tmpl.Fisp(tbl, common.CreateSearchInput("search-input", i18n.GetInstance(), fispAll, "#"+fispTableID, ""), common.SetPrintButton("btn-print-fisp", "Štampa", "fin_print", fispPrint, "GET", true, common.ClassPrintButton, ""), i18n.GetInstance()).Render(ctx, c.Writer)
+		tmpl.Fisp(tbl, common.CreateSearchInput("search-input", h.translator, fispAll, "#"+fispTableID, ""), common.SetPrintButton("btn-print-fisp", "Štampa", "fin_print", fispPrint, "GET", true, common.ClassPrintButton, ""), h.translator).Render(ctx, c.Writer)
 	} else {
 		utils.RenderContent(c, tbl)
 	}
@@ -178,7 +179,7 @@ func (h *FispHandler) Print(c *gin.Context) {
 		common.WriteJSONResponse(c, 500, false, nil, err.Error())
 		return
 	}
-	rep.FispStampa(domain.ReportParameters{Orientation: "landscape", CompanyName: f.Naziv, Adress: f.Adresa, Postcode: f.Pobro, City: f.Mesto, PIB: f.PIB, MatBroj: f.Matbr, ReportName: "Mesta isporuke", ParameterItems: map[string]domain.ParameterItem{}}, tbl, i18n.GetInstance()).Render(ctx, c.Writer)
+	rep.FispStampa(domain.ReportParameters{Orientation: "landscape", CompanyName: f.Naziv, Adress: f.Adresa, Postcode: f.Pobro, City: f.Mesto, PIB: f.PIB, MatBroj: f.Matbr, ReportName: "Mesta isporuke", ParameterItems: map[string]domain.ParameterItem{}}, tbl, h.translator).Render(ctx, c.Writer)
 }
 func (h *FispHandler) AddRoutes(r *gin.Engine) {
 	r.POST("/api/fisp/", h.Create)

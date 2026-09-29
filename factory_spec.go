@@ -89,7 +89,7 @@ func factory() {
 	lockService := middleware.NewLockService(db)
 	lm := middleware.NewLockMiddleware(lockService)
 	// Entity settings
-	setEntities(c, db, router, jwtSecret, cfg, lm, lockService)
+	setEntities(c, db, router, jwtSecret, cfg, lm, lockService, translator)
 
 	// Create server
 	srv := &http.Server{
@@ -181,7 +181,12 @@ func setupRouter(translator *i18n.Service, jwtSecret []byte, sessionSecret strin
 
 	// CSRF middleware AFTER static files
 	router.Use(middleware.CSRFMiddleware()) // Apply to all routes except static
-	router.Use(middleware.UserSession(jwtSecret))
+
+	// NOTE: middleware.UserSession is NOT registered here: it is already part of the chain
+	// (see the "UserSession middleware" registration above), and registering it a second time
+	// made it run twice for every API route (gin prints the size of the chain, so the routes
+	// showed one handler more than they need). CSRF does not use the user session (it reads the
+	// gin session), so running UserSession before it is enough.
 
 	// Authentication is registered exactly ONCE, here.
 	//
@@ -331,17 +336,18 @@ func registerGenericEntity[T any](
 	config domain.HandlerConfig,
 	cfg config.Config,
 	lm *middleware.LockMiddleware, // Optional lock middleware for entities that require it
+	translator *i18n.Service,
 ) {
 	fvrRepo := repository.NewBaseRepository[domain.Fvr](db, "fvr")
 	repo := repository.NewBaseRepository[T](db, tableName)
 	validator := validation.NewRuleBasedValidator[T](validationRules)
 	svc := service.NewBaseService(*repo, validator)
-	h := handler.NewGenericHandler(svc, fields, config, cfg, lm, fvrRepo)
+	h := handler.NewGenericHandler(svc, fields, config, cfg, lm, fvrRepo, translator)
 	h.RegisterRoutes(r)
 }
 
 // setEntities registers all entity routes
-func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte, cfg config.Config, lm *middleware.LockMiddleware, ls *middleware.LockService) {
+func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte, cfg config.Config, lm *middleware.LockMiddleware, ls *middleware.LockService, translator *i18n.Service) {
 	// Drzave
 	registerGenericEntity[domain.Drzave](
 		r, db, "drzave",
@@ -355,6 +361,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 		},
 		cfg,
 		lm,
+		translator,
 	)
 
 	// Tipdok
@@ -370,6 +377,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 		},
 		cfg,
 		lm,
+		translator,
 	)
 
 	// Dokvrsta
@@ -385,6 +393,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 		},
 		cfg,
 		lm,
+		translator,
 	)
 
 	// Opstine
@@ -400,6 +409,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 		},
 		cfg,
 		lm,
+		translator,
 	)
 
 	// Sifmesto
@@ -415,6 +425,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 		},
 		cfg,
 		lm,
+		translator,
 	)
 
 	// Mestotr
@@ -430,6 +441,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 		},
 		cfg,
 		lm,
+		translator,
 	)
 
 	// Orgjed
@@ -445,6 +457,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 		},
 		cfg,
 		lm,
+		translator,
 	)
 
 	// Banke
@@ -460,6 +473,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 		},
 		cfg,
 		lm,
+		translator,
 	)
 
 	// Sifplizv
@@ -475,6 +489,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 		},
 		cfg,
 		lm,
+		translator,
 	)
 
 	// Fvknjrac
@@ -490,6 +505,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 		},
 		cfg,
 		lm,
+		translator,
 	)
 
 	// Bnkizv
@@ -505,6 +521,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 		},
 		cfg,
 		lm,
+		translator,
 	)
 
 	// Fvepdv
@@ -520,6 +537,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 		},
 		cfg,
 		lm,
+		translator,
 	)
 	// Tipanalitike
 	registerGenericEntity[domain.Tipanalitike](
@@ -534,6 +552,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 		},
 		cfg,
 		lm,
+		translator,
 	)
 	// ROBNO
 	// Rgru
@@ -549,6 +568,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 		},
 		cfg,
 		lm,
+		translator,
 	)
 
 	// Rpgru
@@ -564,6 +584,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 		},
 		cfg,
 		lm,
+		translator,
 	)
 
 	// Jedmere
@@ -579,6 +600,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 		},
 		cfg,
 		lm,
+		translator,
 	)
 
 	// Tipovi knjižnih pisama
@@ -594,6 +616,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 		},
 		cfg,
 		lm,
+		translator,
 	)
 
 	// Rpor
@@ -609,6 +632,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 		},
 		cfg,
 		lm,
+		translator,
 	)
 
 	// OSNOVNA SREDSTVA
@@ -625,6 +649,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 		},
 		cfg,
 		lm,
+		translator,
 	)
 
 	fvrRepo := repository.NewBaseRepository[domain.Fvr](db, "fvr")
@@ -634,7 +659,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 	magaciniValidator := validation.NewRuleBasedValidator[domain.Magacini]([]validation.ValidationRule{})
 	magaciniBaseService := service.NewBaseService(*magaciniRepo, magaciniValidator)
 	magaciniService := robnosvc.NewMagaciniResource(magaciniBaseService, magaciniRepo, fvrRepo, cfg)
-	magaciniHandler := robnohand.NewMagaciniHandler(magaciniBaseService, magaciniService, cfg, lm)
+	magaciniHandler := robnohand.NewMagaciniHandler(magaciniBaseService, magaciniService, cfg, lm, translator)
 	magaciniHandler.AddRoutes(r)
 
 	// ZAJEDNIČKI ŠIFARNICI (CommonService)
@@ -665,7 +690,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 	magacinKontoValidator := validation.NewRuleBasedValidator[domain.Magkonto]([]validation.ValidationRule{})
 	magacinKontoBaseService := service.NewBaseService(*magacinKontoRepo, magacinKontoValidator)
 	magacinKontoService := robnosvc.NewMagacinKontoResource(magacinKontoBaseService, magacinKontoRepo, fvrRepo, cfg)
-	magacinKontoHandler := robnohand.NewMagacinKontoHandler(magacinKontoBaseService, magacinKontoService, cfg, lm)
+	magacinKontoHandler := robnohand.NewMagacinKontoHandler(magacinKontoBaseService, magacinKontoService, cfg, lm, translator)
 	magacinKontoHandler.AddRoutes(r)
 
 	// KOMERCIJALISTI
@@ -673,7 +698,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 	komercijalistiValidator := validation.NewRuleBasedValidator[domain.Komercijalisti]([]validation.ValidationRule{})
 	komercijalistiBaseService := service.NewBaseService(*komercijalistiRepo, komercijalistiValidator)
 	komercijalistiService := robnosvc.NewKomercijalistiResource(komercijalistiBaseService, komercijalistiRepo, fvrRepo, cfg)
-	komercijalistiHandler := robnohand.NewKomercijalistiHandler(komercijalistiBaseService, komercijalistiService, cfg, lm)
+	komercijalistiHandler := robnohand.NewKomercijalistiHandler(komercijalistiBaseService, komercijalistiService, cfg, lm, translator)
 	komercijalistiHandler.AddRoutes(r)
 
 	// ARTIKLI
@@ -681,7 +706,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 	artikliValidator := validation.NewRuleBasedValidator[domain.Rsif]([]validation.ValidationRule{})
 	artikliBaseService := service.NewBaseService(*artikliRepo, artikliValidator)
 	artikliService := robnosvc.NewArtikliResource(artikliBaseService, artikliRepo, fvrRepo, cfg)
-	artikliHandler := robnohand.NewArtikliHandler(artikliBaseService, artikliService, cfg, lm, commonService)
+	artikliHandler := robnohand.NewArtikliHandler(artikliBaseService, artikliService, cfg, lm, commonService, translator)
 	artikliHandler.AddRoutes(r)
 
 	// Complex entities with custom services (non-generic)
@@ -692,21 +717,21 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 	partneriValidator := validation.NewRuleBasedValidator[domain.Partneri](validation.PartneriValidationRules())
 	partnerBaseService := service.NewBaseService(*partneriRepo, partneriValidator)
 	partneriService := service.NewPartneriService(partnerBaseService, partneriValidator, partneriRepo, tekracuniRepo, tipAnalitikeRepo, fvrRepo, commonService)
-	partneriHandler := handler.NewPartneriHandler(partneriService, cfg, lm)
+	partneriHandler := handler.NewPartneriHandler(partneriService, cfg, lm, translator)
 	partneriHandler.AddRoutes(r)
 	// MESTA ISPORUKE
 	fispRepo := repository.NewBaseRepository[domain.Fisp](db, "fisp")
 	fispValidator := validation.NewRuleBasedValidator[domain.Fisp](robno.FispValidationRules())
 	fispBaseService := service.NewBaseService(*fispRepo, fispValidator)
 	fispService := robnosvc.NewFispResource(fispBaseService, fispRepo, partneriRepo, fvrRepo, cfg)
-	fispHandler := robnohand.NewFispHandler(fispBaseService, fispService, cfg, lm)
+	fispHandler := robnohand.NewFispHandler(fispBaseService, fispService, cfg, lm, translator)
 	fispHandler.AddRoutes(r)
 	// Fkpl
 	fkplRepo := repository.NewBaseRepository[domain.Fkpl](db, "fkpl")
 	fkplValidator := validation.NewRuleBasedValidator[domain.Fkpl](finval.FkplValidationRules())
 	baseService := service.NewBaseService(*fkplRepo, fkplValidator)
 	fkplService := finservice.NewFkplResource(baseService, fkplRepo, fvrRepo, tipAnalitikeRepo, partneriRepo, cfg, commonService)
-	fkplHandler := fin.NewFkplHandler(baseService, fkplService, cfg, lm)
+	fkplHandler := fin.NewFkplHandler(baseService, fkplService, cfg, lm, translator)
 	fkplHandler.AddRoutes(r)
 
 	// Fpro
@@ -742,7 +767,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 		[]domain.Fields{},
 		cfg,
 	)
-	fproHandler := fin.NewFproHandler(fproService, cfg, lm)
+	fproHandler := fin.NewFproHandler(fproService, cfg, lm, translator)
 	fproHandler.AddRoutes(r)
 	// Fnal
 	fnalRepo := repository.NewBaseRepository[domain.Fnal](db, "fnal")
@@ -763,7 +788,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 		cfg,
 		commonService,
 	)
-	fnalHandler := fin.NewFnalHandler(fnalService, fnalBaseService, cfg, lm, ls)
+	fnalHandler := fin.NewFnalHandler(fnalService, fnalBaseService, cfg, lm, ls, translator)
 	fnalHandler.AddRoutes(r)
 
 	// Promet
@@ -775,14 +800,14 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 		fkplRepo,
 		fvrRepo,
 	)
-	prometHandler := fin.NewPrometHandler(prometService, cfg)
+	prometHandler := fin.NewPrometHandler(prometService, cfg, translator)
 	prometHandler.AddRoutes(r)
 
 	// Robno kartica artikla
 	robnoKarticaRepo := repository.NewBaseRepository[domain.RobnoKarticaDto](db, "robnokarticadto")
 	rproRepo := repository.NewBaseRepository[domain.Rpro](db, "rpro")
 	robnoKarticaService := robnosvc.NewRobnoKarticaService(robnoKarticaRepo, rproRepo, magaciniRepo, fvrRepo, commonService)
-	robnoKarticaHandler := robnohand.NewRobnoKarticaHandler(robnoKarticaService, cfg)
+	robnoKarticaHandler := robnohand.NewRobnoKarticaHandler(robnoKarticaService, cfg, translator)
 	robnoKarticaHandler.AddRoutes(r)
 
 	// Robno stanja
@@ -792,7 +817,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 	ojRepo := repository.NewBaseRepository[domain.Orgjed](db, "orgjed")
 	mestoTroskaRepo := repository.NewBaseRepository[domain.Mestotr](db, "mestotr")
 	robnoStanjaService := robnosvc.NewRobnoStanjaService(*robnoStanjaRepo, *rproRepo, *drstaRepo, *magaciniRepo, *tipdokRepo, *ojRepo, *mestoTroskaRepo, *fvrRepo, commonService)
-	robnoStanjaHandler := robnohand.NewRobnoStanjaHandler(robnoStanjaService, cfg)
+	robnoStanjaHandler := robnohand.NewRobnoStanjaHandler(robnoStanjaService, cfg, translator)
 	robnoStanjaHandler.AddRoutes(r)
 
 	// Robna dokumenta (robni nalozi / robni dokumenti)
@@ -808,7 +833,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 	robnoDokumentaPrikazDokumenataPooperateruRepo := repository.NewBaseRepository[domain.RobnoDokumentaDto](db, "rdok")
 	dokvrstaRepo := repository.NewBaseRepository[domain.Dokvrsta](db, "dokvrsta")
 	robnoDokumentaService := robnosvc.NewRobnoDokumentaService(*robnoDokumentaRepo, *robnoDokumentaTotalsRepo, *robnoDokumentaHeaderRepo, *robnoDokumentaPregledStampaRepo, *robnoDokumentaPregledEFakturaRepo, *robnoDokumentaKontiranjeRepo, *robnoDokumentaPrikazUkupneObradeRepo, *robnoDokumentaPrikazNalogaRepo, *robnoDokumentaPrikazDokumenataUNaloguRepo, *robnoDokumentaPrikazDokumenataPooperateruRepo, *tipdokRepo, *dokvrstaRepo, *magaciniRepo, *fvrRepo, commonService)
-	robnoDokumentaHandler := robnohand.NewRobnoDokumentaHandler(robnoDokumentaService, cfg, lm, ls)
+	robnoDokumentaHandler := robnohand.NewRobnoDokumentaHandler(robnoDokumentaService, cfg, lm, ls, translator)
 	robnoDokumentaHandler.AddRoutes(r)
 
 	// Robno promet reports
@@ -817,18 +842,18 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 	robnoPrometRepo := repository.NewBaseRepository[domain.RobnoPrometDto](db, "rpro")
 
 	robnoprometService := robnosvc.NewRobnoPrometService(rproRepo, magRepo, rgruRepo, fvrRepo, robnoPrometRepo, commonService)
-	robnoprometHandler := robnohand.NewRobnoPrometHandler(robnoprometService, cfg)
+	robnoprometHandler := robnohand.NewRobnoPrometHandler(robnoprometService, cfg, translator)
 	robnoprometHandler.AddRoutes(r)
 
 	// Robno komercijalni podaci
 	robnoKomPodaciRepo := repository.NewBaseRepository[domain.RobnoKomPodaciDto](db, "robnokompodacidto")
 	robnoKompodaciService := robnosvc.NewRobnoKompodaciService(partneriRepo, fproRepo, rproRepo, rgruRepo, fvrRepo, robnoKomPodaciRepo, commonService)
-	robnoKompodaciHandler := robnohand.NewRobnoKompodaciHandler(robnoKompodaciService, cfg)
+	robnoKompodaciHandler := robnohand.NewRobnoKompodaciHandler(robnoKompodaciService, cfg, translator)
 	robnoKompodaciHandler.AddRoutes(r)
 
 	// Robno year-end processing
 	krajPoslovneGodineService := robnosvc.NewKrajPoslovneGodineService(magRepo, drstaRepo, commonService)
-	krajPoslovneGodineHandler := robnohand.NewKrajPoslovneGodineHandler(krajPoslovneGodineService, cfg)
+	krajPoslovneGodineHandler := robnohand.NewKrajPoslovneGodineHandler(krajPoslovneGodineService, cfg, translator)
 	krajPoslovneGodineHandler.AddRoutes(r)
 
 	// Salda
@@ -845,7 +870,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 		repository.NewBaseRepository[domain.Fvr](db, "fvr"),
 	)
 
-	saldaHandler := fin.NewSaldaHandler(saldaService, cfg)
+	saldaHandler := fin.NewSaldaHandler(saldaService, cfg, translator)
 	saldaHandler.AddRoutes(r)
 
 	// SaKompenzacije
@@ -860,7 +885,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 		// repository.NewBaseRepository[domain.SaldaKomercijalistiDto](db, "saldakomercijalistidto"),
 	)
 
-	kompHandler := fin.NewKompenzacijeHandler(kompService, cfg, lm, commonService)
+	kompHandler := fin.NewKompenzacijeHandler(kompService, cfg, lm, commonService, translator)
 	kompHandler.AddRoutes(r)
 
 	// DnevnikHandler
@@ -872,7 +897,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 		fproRepo,
 		fvrRepo,
 	)
-	dnevnikHandler := fin.NewDnevnikHandler(dnevnikService, cfg)
+	dnevnikHandler := fin.NewDnevnikHandler(dnevnikService, cfg, translator)
 	dnevnikHandler.AddRoutes(r)
 
 	// Izvodi
@@ -881,7 +906,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 	bankeRepo := repository.NewBaseRepository[domain.Banke](db, "banke")
 	sifplizvRepo := repository.NewBaseRepository[domain.Sifplizv](db, "sifplizv")
 	izvodiService := finservice.NewIzvodiResource(izvhdrRepo, izvdetRepo, bankeRepo, tipdokRepo, fnalRepo, partneriRepo, tekracuniRepo, sifplizvRepo, fkplRepo, fvrRepo, cfg, commonService)
-	izvodiHandler := fin.NewIzvodiHandler(izvodiService, cfg, lm)
+	izvodiHandler := fin.NewIzvodiHandler(izvodiService, cfg, lm, translator)
 	izvodiHandler.AddRoutes(r)
 
 	// BasicHandler
@@ -903,6 +928,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 		fvrService,
 		cfg,
 		userService,
+		translator,
 	)
 	basicHandler.AddRoutes(r)
 
@@ -915,14 +941,14 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 	kirService := service.NewBaseService(*kirRepo, kirValidator)
 	kprService := service.NewBaseService(*kprRepo, kprValidator)
 	poreskeKnjigeService := finservice.NewPoreskeKnjigeService(kirService, kprService, kirRepo, kprRepo, fvknjracRepo, tipdokRepo, fvrRepo, commonService)
-	poreskeKnjigeHandler := fin.NewPoreskeKnjigeHandler(poreskeKnjigeService, cfg, lm)
+	poreskeKnjigeHandler := fin.NewPoreskeKnjigeHandler(poreskeKnjigeService, cfg, lm, translator)
 	poreskeKnjigeHandler.RegisterRoutes(r)
 
 	//otvorene stavke
 	otvFvrRepo := repository.NewBaseRepository[domain.Fvr](db, "fvr")
 	otvPartneriRepo := repository.NewBaseRepository[domain.Partneri](db, "partneri")
 	otvoreneStavkeService := finservice.NewOtvoreneStavkeService(*fproRepo, otvFvrRepo, otvPartneriRepo)
-	otvoreneStavkeHandler := fin.NewOtvoreneStavkeHandler(otvoreneStavkeService, cfg)
+	otvoreneStavkeHandler := fin.NewOtvoreneStavkeHandler(otvoreneStavkeService, cfg, translator)
 	otvoreneStavkeHandler.RegisterRoutes(r)
 
 	// Kamatne stope (Kam)
@@ -931,7 +957,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 	tkamRepo := repository.NewBaseRepository[domain.Tkam](db, "tkam")
 
 	kamateService := finservice.NewKamateService(fkplRepo, kamRepo, tkamRepo, fproRepo)
-	kamateHandler := kamate.NewKamateHandler(kamateService, cfg, lm)
+	kamateHandler := kamate.NewKamateHandler(kamateService, cfg, lm, translator)
 	kamateHandler.RegisterRoutes(r)
 
 	// Bilansi
@@ -952,7 +978,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 		repository.NewBaseRepository[domain.Fkpl](db, "fkpl"),
 		cfg,
 	)
-	bilansiHandler := fin.NewBilansiHandler(bilansiService, cfg, lm)
+	bilansiHandler := fin.NewBilansiHandler(bilansiService, cfg, lm, translator)
 	bilansiHandler.RegisterRoutes(r)
 
 	// FSEPP
@@ -971,7 +997,7 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 		fseppSefKprRepo,
 		kprRepo,
 	)
-	fseppHandler := fin.NewFseppHandler(fseppService, cfg, lm)
+	fseppHandler := fin.NewFseppHandler(fseppService, cfg, lm, translator)
 	fseppHandler.RegisterRoutes(r)
 	// POPDV
 	popdvRepo := repository.NewBaseRepository[domain.Popdv](db, "popdv")
@@ -982,6 +1008,6 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 		popdvBaseService,
 		popdvRepo,
 	)
-	popdvHandler := fin.NewPopdvHandler(popdvService, cfg, lm)
+	popdvHandler := fin.NewPopdvHandler(popdvService, cfg, lm, translator)
 	popdvHandler.RegisterRoutes(r)
 }

@@ -219,6 +219,165 @@ const (
 	}`
 )
 
+// hxValsRobnoDokumentaTipdok is sent when the vrsta naloga changes. The source parameter tells the
+// handler to render only the grid (the header of the form is kept) and the hidden #nalog-trigger
+// element then asks for the next broj naloga of the new vrsta naloga.
+const hxValsRobnoDokumentaTipdok = `js:{"tipdok": document.getElementById("tipdok")?.value, ` +
+	`"vrd": document.getElementById("vrd")?.value, ` +
+	`"magaciniid": document.getElementById("magaciniid")?.value, ` +
+	`"source": "tipdok"}`
+
+// hxValsRobnoDokumentaNalog sends the vrsta naloga and the broj naloga of the header to the check
+// of an existing nalog (GET /api/robno-dokumenta/nalog-data).
+const hxValsRobnoDokumentaNalog = `js:{"tipdok": document.getElementById("tipdok")?.value, ` +
+	`"nalog": document.getElementById("nalog")?.value}`
+
+// The declarations of the "Fakture veleprodaje" screen (the templates RobnoFakture and
+// RobnoFaktureDialog of frontend/templates/robno/robnadokumenta.templ). The template package cannot
+// import this package, so every url, element id and hx-vals string the markup of the screen uses is
+// declared here: the urls and the ids reach the templates as domain.RobnoFaktureUI (see
+// robnoFaktureUI) and the two hx-vals strings of the header of the nalog as plain arguments, while
+// robnoFaktureButtonsFor builds the buttons of the screen with the same constants.
+const (
+	// URLs of the screen. TODO (temporary): the handler and the routes of the fakture are not written
+	// yet; the urls are the ones the screen will use (the prefix of the other tabs of "Robna
+	// dokumenta").
+	robnoFaktureURL           = robnoDokumentaURLPrefix + "/fakture"
+	robnoFaktureSaveURL       = robnoFaktureURL + "/save"
+	robnoFaktureNoviURL       = robnoFaktureURL + "/novi"
+	robnoFaktureDeleteURL     = robnoFaktureURL + "/brisi"
+	robnoFaktureStavkaSaveURL = robnoFaktureURL + "/stavka/save"
+	robnoFaktureStavkaDelURL  = robnoFaktureURL + "/stavka/brisi"
+	robnoFaktureArtikalSearch = "/api/promet/searchbutton"
+	robnoFakturePartnerSearch = "/api/partneri/searchbutton"
+
+	// Ids of the two collapsible controls of the screen. They are given to the script of the screen
+	// (RobnoFaktureScript) and to the buttons (robnoFaktureButtonsFor), so that every id is written in
+	// one place only.
+	robnoFaktureHeaderPanelID = "robno-fakture-header-panel"
+	robnoFaktureStavkePanelID = "robno-fakture-stavke-panel"
+
+	// robnoDokumentaFaktureDialogStagingID is the element of the "Unos dokumenta" tab (the template
+	// RobnoDokumentaMain) the dialog of the "Fakture veleprodaje" screen is rendered into and
+	// robnoFaktureDialogID the id of the dialog itself (the one closeDialog hides). The staging element
+	// is the hx-target of the button that opens the dialog and the dialog id is the IdDialog of the
+	// "Zatvori" button of the dialog.
+	robnoDokumentaFaktureDialogStagingID = "robno-fakture-dialog-staging"
+	robnoFaktureDialogID                 = "robno-fakture-dialog"
+)
+
+// robnoFaktureUI groups the urls and the element ids of the "Fakture veleprodaje" screen (the consts
+// above) so that the handler can pass them to the templates of the screen.
+func robnoFaktureUI() domain.RobnoFaktureUI {
+	return domain.RobnoFaktureUI{
+		HeaderPanelID:    robnoFaktureHeaderPanelID,
+		StavkePanelID:    robnoFaktureStavkePanelID,
+		ContentID:        "#" + robnoDokumentaContentID,
+		DialogID:         robnoFaktureDialogID,
+		DialogStagingID:  robnoDokumentaFaktureDialogStagingID,
+		ArtikalSearchURL: robnoFaktureArtikalSearch,
+		PartnerSearchURL: robnoFakturePartnerSearch,
+	}
+}
+
+// robnoFaktureButtonsFor builds the buttons of the "Fakture veleprodaje" screen with the default
+// endpoints and with the two ids the script of the screen works on. The handler that renders the
+// screen can change every button after the call (the targets, the swap, the dialog the errors are
+// shown in), but the arguments of robnoFaktureAfterHeaderSave and robnoFaktureModifyHeader have to
+// stay the ids of the two controls, otherwise the screen does not switch the editable control.
+func robnoFaktureButtonsFor() domain.RobnoFaktureButtons {
+	return domain.RobnoFaktureButtons{
+		Save: domain.Button{
+			Id:            "robno-fakture-sacuvaj",
+			LabelText:     "Sačuvaj",
+			Icon:          "save",
+			BtnClass:      common.ClassButton,
+			HxActionURL:   robnoFaktureSaveURL,
+			HxRequestType: "POST",
+			// Only the fields of the header are sent (the read only values of the strips are disabled,
+			// so the browser does not send them; the handler reads them from the dokument/kupac).
+			HxInclude: "#" + robnoFaktureHeaderPanelID + " [data-panel-fields]",
+			// The handler answers with the standard JSON response; the state of the two controls is
+			// switched by the script of the screen (RobnoFaktureScript) after the request. The same
+			// script also works when the handler swaps the whole tab (hx-target = robnoFaktureUI's
+			// ContentID), because the swapped markup carries the state of the saved dokument.
+			HxSwap:               "none",
+			HxOnAfterRequest:     "robnoFaktureAfterHeaderSave",
+			HxOnAfterRequestArgs: []any{robnoFaktureHeaderPanelID, robnoFaktureStavkePanelID},
+		},
+		Modify: domain.Button{
+			Id:           "robno-fakture-izmeni",
+			LabelText:    "Izmeni",
+			Icon:         "refresh",
+			BtnClass:     common.ClassButton,
+			HxOnClick:    "robnoFaktureModifyHeader",
+			HxOnClickArg: []any{robnoFaktureHeaderPanelID, robnoFaktureStavkePanelID},
+		},
+		New: domain.Button{
+			Id:               "robno-fakture-novi",
+			LabelText:        "Novi dok.",
+			Icon:             "add",
+			BtnClass:         common.ClassButton,
+			HxActionURL:      robnoFaktureNoviURL,
+			HxRequestType:    "GET",
+			HxTarget:         "#" + robnoDokumentaContentID,
+			HxSwap:           "innerHTML",
+			HxOnAfterRequest: "robnoFaktureAfterHeaderSave",
+			HxOnAfterRequestArgs: []any{
+				robnoFaktureHeaderPanelID, robnoFaktureStavkePanelID},
+		},
+		Delete: domain.Button{
+			Id:            "robno-fakture-brisi",
+			LabelText:     "Briši",
+			Icon:          "delete",
+			BtnClass:      common.ClassButton,
+			HxActionURL:   robnoFaktureDeleteURL,
+			HxRequestType: "DELETE",
+			HxInclude:     "#" + robnoFaktureHeaderPanelID + " [data-panel-fields]",
+			HxSwap:        "none",
+		},
+		Back: domain.Button{
+			Id:        "robno-fakture-nazad",
+			LabelText: "Nazad",
+			Icon:      "back",
+			BtnClass:  common.ClassButton,
+			// TODO: the route of the "Fakture veleprodaje" menu entry
+			HxActionURL:   "/api/robna-dokumenta",
+			HxRequestType: "GET",
+			HxTarget:      "#main-content",
+			HxSwap:        "innerHTML",
+		},
+		SaveStavka: domain.Button{
+			Id:            "robno-fakture-stavka-sacuvaj",
+			LabelText:     "Sačuvaj",
+			Icon:          "save",
+			BtnClass:      common.ClassButton,
+			HxActionURL:   robnoFaktureStavkaSaveURL,
+			HxRequestType: "POST",
+			HxInclude:     "#" + robnoFaktureStavkePanelID + " [data-panel-fields]",
+			HxTarget:      "#" + robnoFaktureStavkePanelID,
+			HxSwap:        "none",
+		},
+		ModifyStavka: domain.Button{
+			Id:        "robno-fakture-stavka-izmeni",
+			LabelText: "Izmeni",
+			Icon:      "refresh",
+			BtnClass:  common.ClassButton,
+		},
+		DeleteStavka: domain.Button{
+			Id:            "robno-fakture-stavka-brisi",
+			LabelText:     "Briši",
+			Icon:          "delete",
+			BtnClass:      common.ClassButton,
+			HxActionURL:   robnoFaktureStavkaDelURL,
+			HxRequestType: "DELETE",
+			HxInclude:     "#" + robnoFaktureStavkePanelID + " [data-panel-fields]",
+			HxTarget:      "#" + robnoFaktureStavkePanelID,
+			HxSwap:        "none",
+		},
+	}
+}
+
 // Sub-tab indexes of the "Pregled dokumenta" tab (the two sub-tabs that are implemented).
 const (
 	robnoDokumentaSubTabPregledStampa = iota
@@ -337,11 +496,12 @@ const hxValsRobnoDokumentaPooperateru = `js:{
 }`
 
 type RobnoDokumentaHandler struct {
-	service robnosvc.RobnoDokumentaService
-	cfg     config.Config
-	lm      *middleware.LockMiddleware
-	ls      *middleware.LockService
-	tabs    domain.TabData
+	translator *i18n.Service
+	service    robnosvc.RobnoDokumentaService
+	cfg        config.Config
+	lm         *middleware.LockMiddleware
+	ls         *middleware.LockService
+	tabs       domain.TabData
 	// subTabs holds the sub-tabs of every tab, indexed like robnoDokumentaTabs (a tab without
 	// sub-tabs has an empty set and its sub-tab bar is then not rendered).
 	subTabs []domain.TabData
@@ -353,14 +513,15 @@ type RobnoDokumentaHandler struct {
 	btnFakture domain.Button
 }
 
-func NewRobnoDokumentaHandler(s robnosvc.RobnoDokumentaService, cfg config.Config, lm *middleware.LockMiddleware, ls *middleware.LockService) *RobnoDokumentaHandler {
+func NewRobnoDokumentaHandler(s robnosvc.RobnoDokumentaService, cfg config.Config, lm *middleware.LockMiddleware, ls *middleware.LockService, translator *i18n.Service) *RobnoDokumentaHandler {
 	h := &RobnoDokumentaHandler{
-		service: s,
-		cfg:     cfg,
-		lm:      lm,
-		ls:      ls,
-		tabs:    robnoDokumentaTabs(),
-		subTabs: robnoDokumentaSubTabs(),
+		translator: translator,
+		service:    s,
+		cfg:        cfg,
+		lm:         lm,
+		ls:         ls,
+		tabs:       robnoDokumentaTabs(translator),
+		subTabs:    robnoDokumentaSubTabs(translator),
 	}
 	h.setHandlerFieldValues()
 	return h
@@ -406,7 +567,7 @@ func (h *RobnoDokumentaHandler) setHandlerFieldValues() {
 		LabelText:     "Fakture veleprodaje (preview)",
 		HxActionURL:   robnoDokumentaURLFakturePreview,
 		HxRequestType: "GET",
-		HxTarget:      "#" + tmpl_robno.RobnoDokumentaFaktureDialogStagingID,
+		HxTarget:      "#" + robnoDokumentaFaktureDialogStagingID,
 		HxSwap:        "innerHTML",
 		BtnClass:      common.ClassButton,
 	}
@@ -469,9 +630,8 @@ func (h *RobnoDokumentaHandler) RobnoDokumentaMain(c *gin.Context) {
 		return
 	}
 
-	translator := i18n.GetInstance()
-	search := common.CreateSearchInput(robnoDokumentaSearchInputID, translator, robnoDokumentaURLUnos, "#"+robnoDokumentaUnosTableID, hxValsRobnoDokumentaUnos)
-	if err := tmpl_robno.RobnoDokumentaMain(h.tabs, h.subTabsFor(robnoDokumentaTabUnos), tbl, tipdokValues, vrstaDokumentaValues, magValues, total, payload, h.btnSave, h.btnNoviNalog, h.btnFakture, search, translator).Render(ctx, c.Writer); err != nil {
+	search := common.CreateSearchInput(robnoDokumentaSearchInputID, h.translator, robnoDokumentaURLUnos, "#"+robnoDokumentaUnosTableID, hxValsRobnoDokumentaUnos)
+	if err := tmpl_robno.RobnoDokumentaMain(robnoFaktureUI(), hxValsRobnoDokumentaTipdok, hxValsRobnoDokumentaNalog, h.tabs, h.subTabsFor(robnoDokumentaTabUnos), tbl, tipdokValues, vrstaDokumentaValues, magValues, total, payload, h.btnSave, h.btnNoviNalog, h.btnFakture, search, h.translator).Render(ctx, c.Writer); err != nil {
 		h.error(c, err)
 	}
 }
@@ -513,30 +673,29 @@ func (h *RobnoDokumentaHandler) FakturePreview(c *gin.Context) {
 
 	// The header of the faktura is empty (the documents and the kupac are read by the handler of the
 	// fakture); only the date of the fakturisanja defaults to today of the selected business year.
-	header := tmpl_robno.RobnoFaktureHeader{
+	header := domain.RobnoFaktureHeader{
 		Snimljen:          c.Query("snimljen") == "true",
 		DatumFakturisanja: h.businessToday(ctx),
 	}
 	// The buttons of the screen point to the preview routes; "Nazad" closes the dialog instead of
 	// navigating back to the tab (TODO: the real endpoints of the fakture).
-	btns := tmpl_robno.RobnoFaktureButtonsFor()
+	btns := robnoFaktureButtonsFor()
 	btns.Save.HxActionURL = robnoDokumentaURLFakturePreviewSave
 	btns.Back.HxActionURL = ""
 	btns.Back.HxRequestType = ""
 	btns.Back.HxOnClick = "closeDialog"
-	btns.Back.HxOnClickArg = []any{tmpl_robno.RobnoFaktureDialogID}
+	btns.Back.HxOnClickArg = []any{robnoFaktureDialogID}
 	// The "Zatvori" button of the title bar of the dialog (CloseButton calls closeDialog with the
 	// dialog id).
 	btnClose := domain.Button{
 		Id:       "robno-fakture-dialog-close",
-		IdDialog: tmpl_robno.RobnoFaktureDialogID,
+		IdDialog: robnoFaktureDialogID,
 		BtnClass: common.ClassDialogCloseButton,
 	}
 
-	translator := i18n.GetInstance()
-	search := common.CreateSearchInput(robnoDokumentaSearchInputID, translator, robnoDokumentaURLFakturePreview, "#"+robnoDokumentaFaktureStavkeTableID, "")
+	search := common.CreateSearchInput(robnoDokumentaSearchInputID, h.translator, robnoDokumentaURLFakturePreview, "#"+robnoDokumentaFaktureStavkeTableID, "")
 	// TODO: the combos of the valute and of the sistemi PDV of the screen.
-	if err := tmpl_robno.RobnoFaktureDialog(tbl, avansiTbl, header, tmpl_robno.RobnoFaktureStavka{}, vrstaDokumentaValues, nil, nil, btns, btnClose, search, translator).Render(ctx, c.Writer); err != nil {
+	if err := tmpl_robno.RobnoFaktureDialog(robnoFaktureUI(), tbl, avansiTbl, header, domain.RobnoFaktureStavka{}, vrstaDokumentaValues, nil, nil, btns, btnClose, search, h.translator).Render(ctx, c.Writer); err != nil {
 		h.error(c, err)
 	}
 }
@@ -630,7 +789,6 @@ func (h *RobnoDokumentaHandler) GetNalogData(c *gin.Context) {
 // header, depending on the answer.
 func (h *RobnoDokumentaHandler) ConfirmUnosDokumenta(c *gin.Context) {
 	ctx := c.Request.Context()
-	translator := i18n.GetInstance()
 	var params domain.RobnoDokumentaParams
 	if err := c.ShouldBind(&params); err != nil {
 		common.WriteJSONResponse(c, http.StatusBadRequest, false, []domain.FieldError{}, common.ErrMsgFormDecode)
@@ -656,13 +814,13 @@ func (h *RobnoDokumentaHandler) ConfirmUnosDokumenta(c *gin.Context) {
 	}
 
 	dialogTitle := "Novi nalog"
-	msg := []string{translator.Message(`Otvaranje novog naloga?`)}
+	msg := []string{h.translator.Message(`Otvaranje novog naloga?`)}
 	if action == common.ActionUpdate {
 		dialogTitle = "Nastavak knjiženja naloga"
 		msg = []string{
-			translator.Message(`Nastavak knjiženja naloga?`),
-			fmt.Sprintf("%s: %s", translator.Message(`Vrsta naloga`), params.Tipdok),
-			fmt.Sprintf("%s: %s", translator.Message(`Broj naloga`), params.Nalog),
+			h.translator.Message(`Nastavak knjiženja naloga?`),
+			fmt.Sprintf("%s: %s", h.translator.Message(`Vrsta naloga`), params.Tipdok),
+			fmt.Sprintf("%s: %s", h.translator.Message(`Broj naloga`), params.Nalog),
 		}
 	}
 
@@ -707,7 +865,7 @@ func (h *RobnoDokumentaHandler) ConfirmUnosDokumenta(c *gin.Context) {
 		IdDialog:  dialog.Id,
 		BtnClass:  common.ClassOdustaniButton,
 	}
-	tmpl.DialogConfirm(msg, dialog, btnClose, btnSacuvaj, btnCancel, translator, common.GetCsrfTokenFromSession(c)).Render(ctx, c.Writer)
+	tmpl.DialogConfirm(msg, dialog, btnClose, btnSacuvaj, btnCancel, h.translator, common.GetCsrfTokenFromSession(c)).Render(ctx, c.Writer)
 }
 
 // SaveUnosDokumenta inserts the header of a new robni nalog (rnal) and locks it for the user, like
@@ -882,14 +1040,13 @@ func (h *RobnoDokumentaHandler) pregledStampa(c *gin.Context) {
 		return
 	}
 
-	translator := i18n.GetInstance()
 	btnObrada := h.obradaButton(robnoDokumentaURLPregledStampa, robnoDokumentaPregledStampaTableID, hxValsRobnoDokumentaPregledStampa)
 	btnPrint := common.SetPrintButton("stampa-btn", "Štampaj", "fin_print", robnoDokumentaURLPregledStampaPrint, "GET", true, common.ClassPrintButton, robnoDokumentaPrintFlds)
 	btnPrint.HxTarget = "#info-message"
 	btnPrint.HxSwap = "innerHTML"
 	btnPrint.HxOnAfterRequest = "handleDialogResponse"
-	search := common.CreateSearchInput(robnoDokumentaSearchInputID, translator, robnoDokumentaURLPregledStampa, "#"+robnoDokumentaPregledStampaTableID, hxValsRobnoDokumentaPregledStampa)
-	if err := tmpl_robno.RobnoDokumentaPregled(h.tabs, subTabs, tbl, magValues, vrstaDokumentaValues, params, btnObrada, btnPrint, search, translator).Render(ctx, c.Writer); err != nil {
+	search := common.CreateSearchInput(robnoDokumentaSearchInputID, h.translator, robnoDokumentaURLPregledStampa, "#"+robnoDokumentaPregledStampaTableID, hxValsRobnoDokumentaPregledStampa)
+	if err := tmpl_robno.RobnoDokumentaPregled(h.tabs, subTabs, tbl, magValues, vrstaDokumentaValues, params, btnObrada, btnPrint, search, h.translator).Render(ctx, c.Writer); err != nil {
 		h.error(c, err)
 	}
 }
@@ -938,7 +1095,6 @@ func (h *RobnoDokumentaHandler) PregledEFaktura(c *gin.Context) {
 		return
 	}
 
-	translator := i18n.GetInstance()
 	btnObrada := h.obradaButton(robnoDokumentaURLEFaktura, robnoDokumentaEFakturaTableID, hxValsRobnoDokumentaPregledEFaktura)
 	btnPosalji := h.efakturaActionButton("efaktura-posalji-btn", "Pošalji eFakturu", "komercijala_otpremanjerobe", robnoDokumentaURLEFakturaPosalji)
 	btnProveri := h.efakturaActionButton("efaktura-proveri-status-btn", "Proveri status EF", "refresh", robnoDokumentaURLEFakturaProveri)
@@ -946,8 +1102,8 @@ func (h *RobnoDokumentaHandler) PregledEFaktura(c *gin.Context) {
 	btnStorniraj := h.efakturaActionButton("efaktura-storniraj-btn", "Storniraj eFakturu", "back", robnoDokumentaURLEFakturaStorniraj)
 	btnStornirajPE := h.efakturaActionButton("efaktura-storniraj-pe-btn", "Storniraj PE", "back", robnoDokumentaURLEFakturaStornirajPE)
 	btnAzurirajStatus := h.efakturaActionButton("efaktura-status-btn", "Ažuriranje statusa eFaktura", "refresh", robnoDokumentaURLEFakturaStatus)
-	search := common.CreateSearchInput(robnoDokumentaSearchInputID, translator, robnoDokumentaURLEFaktura, "#"+robnoDokumentaEFakturaTableID, hxValsRobnoDokumentaPregledEFaktura)
-	if err := tmpl_robno.RobnoDokumentaEFaktura(h.tabs, subTabs, tbl, magValues, params, btnObrada, btnPosalji, btnProveri, btnOtkazi, btnStorniraj, btnStornirajPE, btnAzurirajStatus, search, translator).Render(ctx, c.Writer); err != nil {
+	search := common.CreateSearchInput(robnoDokumentaSearchInputID, h.translator, robnoDokumentaURLEFaktura, "#"+robnoDokumentaEFakturaTableID, hxValsRobnoDokumentaPregledEFaktura)
+	if err := tmpl_robno.RobnoDokumentaEFaktura(h.tabs, subTabs, tbl, magValues, params, btnObrada, btnPosalji, btnProveri, btnOtkazi, btnStorniraj, btnStornirajPE, btnAzurirajStatus, search, h.translator).Render(ctx, c.Writer); err != nil {
 		h.error(c, err)
 	}
 }
@@ -995,7 +1151,7 @@ func (h *RobnoDokumentaHandler) pregledParams(c *gin.Context) domain.RobnoDokume
 // grid, and every action keeps its own icon. The label is translated here because the generic
 // button component (which renders the icon) does not translate it.
 func (h *RobnoDokumentaHandler) efakturaActionButton(id, label, icon, url string) domain.Button {
-	return common.SetButton(id, i18n.GetInstance().Button(label), icon, url, "#"+robnoDokumentaInfoMessageID, "innerHTML", "POST", "", hxValsRobnoDokumentaPregledEFaktura, true, common.ClassSaveButton, "handleDialogResponse")
+	return common.SetButton(id, h.translator.Button(label), icon, url, "#"+robnoDokumentaInfoMessageID, "innerHTML", "POST", "", hxValsRobnoDokumentaPregledEFaktura, true, common.ClassSaveButton, "handleDialogResponse")
 }
 
 // businessToday returns the current date of the selected business year as the form of the tab
@@ -1097,12 +1253,11 @@ func (h *RobnoDokumentaHandler) kontiranjeKnjizenje(c *gin.Context) {
 		return
 	}
 
-	translator := i18n.GetInstance()
 	btnObrada := h.obradaButton(robnoDokumentaURLKnjizenje, robnoDokumentaKnjizenjeTableID, hxValsRobnoDokumentaKnjizenje)
 	btnRavnoteza := h.kontiranjeActionButton(robnoDokumentaRavnotezaBtnID, "Proveri ravnotežu", "fin_ravnoteza", robnoDokumentaURLKnjizenjeRavnot, hxValsRobnoDokumentaKnjizenje)
 	btnKnjizi := h.kontiranjeActionButton(robnoDokumentaKontiranjeBtnID, "Knjiži", "fin_knjizenje", robnoDokumentaURLKnjizenjeKnjizi, hxValsRobnoDokumentaKnjizenje)
-	search := common.CreateSearchInput(robnoDokumentaSearchInputID, translator, robnoDokumentaURLKnjizenje, "#"+robnoDokumentaKnjizenjeTableID, hxValsRobnoDokumentaKnjizenje)
-	if err := tmpl_robno.RobnoDokumentaKontiranjeKnjizenje(h.tabs, subTabs, tbl, tipdokValues, vrstaDokumentaValues, magValues, params, btnObrada, btnRavnoteza, btnKnjizi, search, translator).Render(ctx, c.Writer); err != nil {
+	search := common.CreateSearchInput(robnoDokumentaSearchInputID, h.translator, robnoDokumentaURLKnjizenje, "#"+robnoDokumentaKnjizenjeTableID, hxValsRobnoDokumentaKnjizenje)
+	if err := tmpl_robno.RobnoDokumentaKontiranjeKnjizenje(h.tabs, subTabs, tbl, tipdokValues, vrstaDokumentaValues, magValues, params, btnObrada, btnRavnoteza, btnKnjizi, search, h.translator).Render(ctx, c.Writer); err != nil {
 		h.error(c, err)
 	}
 }
@@ -1156,14 +1311,13 @@ func (h *RobnoDokumentaHandler) KontiranjePregled(c *gin.Context) {
 		return
 	}
 
-	translator := i18n.GetInstance()
 	btnObrada := h.obradaButton(robnoDokumentaURLKontiranjePregled, robnoDokumentaKontiranjePregledTableID, hxValsRobnoDokumentaKontiranjePregled)
 	// The action of the checkbox "Označi prikazana dokumenta kao neproknjižena..." of the legacy
 	// screen: the checkbox is sent with the parameters of the grid, the marking of the displayed
 	// documents is then executed by the action (TODO: not implemented yet).
 	btnOznaci := h.kontiranjeActionButton(robnoDokumentaOznaciBtnID, "Označi kao neproknjižena", "cancel", robnoDokumentaURLOznaciNeproknjizene, hxValsRobnoDokumentaKontiranjePregled)
-	search := common.CreateSearchInput(robnoDokumentaSearchInputID, translator, robnoDokumentaURLKontiranjePregled, "#"+robnoDokumentaKontiranjePregledTableID, hxValsRobnoDokumentaKontiranjePregled)
-	if err := tmpl_robno.RobnoDokumentaKontiranjePregled(h.tabs, subTabs, tbl, tipdokValues, magValues, params, btnObrada, btnOznaci, search, translator).Render(ctx, c.Writer); err != nil {
+	search := common.CreateSearchInput(robnoDokumentaSearchInputID, h.translator, robnoDokumentaURLKontiranjePregled, "#"+robnoDokumentaKontiranjePregledTableID, hxValsRobnoDokumentaKontiranjePregled)
+	if err := tmpl_robno.RobnoDokumentaKontiranjePregled(h.tabs, subTabs, tbl, tipdokValues, magValues, params, btnObrada, btnOznaci, search, h.translator).Render(ctx, c.Writer); err != nil {
 		h.error(c, err)
 	}
 }
@@ -1211,10 +1365,9 @@ func (h *RobnoDokumentaHandler) KontiranjePoMagacinima(c *gin.Context) {
 		return
 	}
 
-	translator := i18n.GetInstance()
 	btnObrada := h.obradaButton(robnoDokumentaURLPoMagacinima, robnoDokumentaPoMagacinimaTableID, hxValsRobnoDokumentaPoMagacinima)
-	search := common.CreateSearchInput(robnoDokumentaSearchInputID, translator, robnoDokumentaURLPoMagacinima, "#"+robnoDokumentaPoMagacinimaTableID, hxValsRobnoDokumentaPoMagacinima)
-	if err := tmpl_robno.RobnoDokumentaKontiranjePoMagacinima(h.tabs, subTabs, tbl, magValues, params, btnObrada, search, translator).Render(ctx, c.Writer); err != nil {
+	search := common.CreateSearchInput(robnoDokumentaSearchInputID, h.translator, robnoDokumentaURLPoMagacinima, "#"+robnoDokumentaPoMagacinimaTableID, hxValsRobnoDokumentaPoMagacinima)
+	if err := tmpl_robno.RobnoDokumentaKontiranjePoMagacinima(h.tabs, subTabs, tbl, magValues, params, btnObrada, search, h.translator).Render(ctx, c.Writer); err != nil {
 		h.error(c, err)
 	}
 }
@@ -1283,7 +1436,7 @@ func (h *RobnoDokumentaHandler) kontiranjeParams(c *gin.Context) domain.RobnoDok
 // request of the grid) and the label is translated here because the generic button component
 // (which renders the icon) does not translate it.
 func (h *RobnoDokumentaHandler) kontiranjeActionButton(id, label, icon, url, hxVals string) domain.Button {
-	return common.SetButton(id, i18n.GetInstance().Button(label), icon, url, "#"+robnoDokumentaInfoMessageID, "innerHTML", "POST", "", hxVals, true, common.ClassSaveButton, "handleDialogResponse")
+	return common.SetButton(id, h.translator.Button(label), icon, url, "#"+robnoDokumentaInfoMessageID, "innerHTML", "POST", "", hxVals, true, common.ClassSaveButton, "handleDialogResponse")
 }
 
 // businessDaysBefore returns the date of the selected business year that lies the given number of
@@ -1344,7 +1497,6 @@ func (h *RobnoDokumentaHandler) PrikazUkupneObrade(c *gin.Context) {
 	common.SetTableConfig(&tbl, robnoDokumentaUkupnaObradaTitle, robnoDokumentaURLUkupnaObrada, false, false, true)
 	tbl.HasTotals = true
 
-	translator := i18n.GetInstance()
 	tbl.BtnPrint = common.SetPrintButton("ukupna-obrada-stampa-btn", "Štampaj", "stampa", robnoDokumentaURLUkupnaObradaStampa, "GET", true, common.ClassPrintButton, "")
 	tbl.BtnPrint.HxTarget = "#" + robnoDokumentaInfoMessageID
 	tbl.BtnPrint.HxSwap = "innerHTML"
@@ -1363,7 +1515,7 @@ func (h *RobnoDokumentaHandler) PrikazUkupneObrade(c *gin.Context) {
 		h.error(c, err)
 		return
 	}
-	if renderErr := tmpl_robno.RobnoDokumentaPrikazUkupneObrade(h.tabs, h.subTabsFor(robnoDokumentaTabPrikazUkupneObrade), tbl, translator).Render(ctx, c.Writer); renderErr != nil {
+	if renderErr := tmpl_robno.RobnoDokumentaPrikazUkupneObrade(h.tabs, h.subTabsFor(robnoDokumentaTabPrikazUkupneObrade), tbl, h.translator).Render(ctx, c.Writer); renderErr != nil {
 		h.error(c, renderErr)
 	}
 }
@@ -1412,7 +1564,6 @@ func (h *RobnoDokumentaHandler) PrikazNaloga(c *gin.Context) {
 		return
 	}
 
-	translator := i18n.GetInstance()
 	btnPrint := common.SetPrintButton("prikaz-naloga-stampa-btn", "Štampaj", "stampa", robnoDokumentaURLPrikazNalogaStampa, "GET", true, common.ClassPrintButton, robnoDokumentaPrintFlds)
 	btnPrint.HxTarget = "#" + robnoDokumentaInfoMessageID
 	btnPrint.HxSwap = "innerHTML"
@@ -1420,7 +1571,7 @@ func (h *RobnoDokumentaHandler) PrikazNaloga(c *gin.Context) {
 	btnPrint.HxVals = hxValsRobnoDokumentaPrikazNaloga
 
 	btnObrada := h.obradaButton(robnoDokumentaURLPrikazNaloga, robnoDokumentaPrikazNalogaTableID, hxValsRobnoDokumentaPrikazNaloga)
-	if renderErr := tmpl_robno.RobnoDokumentaPrikazNaloga(h.tabs, h.subTabsFor(robnoDokumentaTabPrikazNaloga), tbl, magValues, tipdokValues, params, btnObrada, btnPrint, translator).Render(ctx, c.Writer); renderErr != nil {
+	if renderErr := tmpl_robno.RobnoDokumentaPrikazNaloga(h.tabs, h.subTabsFor(robnoDokumentaTabPrikazNaloga), tbl, magValues, tipdokValues, params, btnObrada, btnPrint, h.translator).Render(ctx, c.Writer); renderErr != nil {
 		h.error(c, renderErr)
 	}
 }
@@ -1528,7 +1679,6 @@ func (h *RobnoDokumentaHandler) PrikazDokumenataUNalogu(c *gin.Context) {
 		return
 	}
 
-	translator := i18n.GetInstance()
 	btnPrint := common.SetPrintButton("u-nalogu-stampa-btn", "Štampaj", "stampa", robnoDokumentaURLUNaloguStampa, "GET", true, common.ClassPrintButton, robnoDokumentaPrintFlds)
 	btnPrint.HxTarget = "#" + robnoDokumentaInfoMessageID
 	btnPrint.HxSwap = "innerHTML"
@@ -1536,7 +1686,7 @@ func (h *RobnoDokumentaHandler) PrikazDokumenataUNalogu(c *gin.Context) {
 	btnPrint.HxVals = hxValsRobnoDokumentaUNalogu
 
 	btnObrada := h.obradaButton(robnoDokumentaURLUNalogu, robnoDokumentaUNaloguTableID, hxValsRobnoDokumentaUNalogu)
-	if renderErr := tmpl_robno.RobnoDokumentaPrikazDokumenataUNalogu(h.tabs, h.subTabsFor(robnoDokumentaTabPrikazDokumenataUNalogu), tbl, magValues, tipdokValues, params, btnObrada, btnPrint, translator).Render(ctx, c.Writer); renderErr != nil {
+	if renderErr := tmpl_robno.RobnoDokumentaPrikazDokumenataUNalogu(h.tabs, h.subTabsFor(robnoDokumentaTabPrikazDokumenataUNalogu), tbl, magValues, tipdokValues, params, btnObrada, btnPrint, h.translator).Render(ctx, c.Writer); renderErr != nil {
 		h.error(c, renderErr)
 	}
 }
@@ -1588,7 +1738,6 @@ func (h *RobnoDokumentaHandler) PrikazDokumenataPooperateru(c *gin.Context) {
 		return
 	}
 
-	translator := i18n.GetInstance()
 	btnPrint := common.SetPrintButton("po-operateru-stampa-btn", "Štampaj", "stampa", robnoDokumentaURLPooperateruStampa, "GET", true, common.ClassPrintButton, robnoDokumentaPrintFlds)
 	btnPrint.HxTarget = "#" + robnoDokumentaInfoMessageID
 	btnPrint.HxSwap = "innerHTML"
@@ -1596,7 +1745,7 @@ func (h *RobnoDokumentaHandler) PrikazDokumenataPooperateru(c *gin.Context) {
 	btnPrint.HxVals = hxValsRobnoDokumentaPooperateru
 
 	btnObrada := h.obradaButton(robnoDokumentaURLPooperateru, robnoDokumentaPooperateruTableID, hxValsRobnoDokumentaPooperateru)
-	if renderErr := tmpl_robno.RobnoDokumentaPrikazDokumenataPooperateru(h.tabs, h.subTabsFor(robnoDokumentaTabPrikazDokumenataPooperateru), tbl, params, btnObrada, btnPrint, translator).Render(ctx, c.Writer); renderErr != nil {
+	if renderErr := tmpl_robno.RobnoDokumentaPrikazDokumenataPooperateru(h.tabs, h.subTabsFor(robnoDokumentaTabPrikazDokumenataPooperateru), tbl, params, btnObrada, btnPrint, h.translator).Render(ctx, c.Writer); renderErr != nil {
 		h.error(c, renderErr)
 	}
 }
@@ -1653,12 +1802,11 @@ func (h *RobnoDokumentaHandler) render(c *gin.Context, tabIndex int) {
 		return
 	}
 
-	translator := i18n.GetInstance()
 	btnObrada := h.obradaButton(url, tableID, "")
 	// The print of every tab receives the whole selection of the option (the same print contract).
 	btnPrint := common.SetPrintButton(tableID+"-stampa", "Štampa", "stampa", printURL, "GET", true, common.ClassPrintButton, robnoDokumentaPrintFlds)
 	// TODO: pass the hxVals of the tab instead of "".
-	search := common.CreateSearchInput(robnoDokumentaSearchInputID, translator, url, "#"+tableID, "")
+	search := common.CreateSearchInput(robnoDokumentaSearchInputID, h.translator, url, "#"+tableID, "")
 
 	if renderErr := h.renderTab(c, tabIndex, tbl, magValues, btnObrada, btnPrint, search); renderErr != nil {
 		h.error(c, renderErr)
@@ -1698,12 +1846,11 @@ func (h *RobnoDokumentaHandler) renderTab(c *gin.Context, tabIndex int, tbl doma
 	ctx := c.Request.Context()
 	tabs := h.tabs
 	subTabs := h.subTabsFor(tabIndex)
-	translator := i18n.GetInstance()
 	switch tabIndex {
 	case robnoDokumentaTabSpecifikacije:
-		return tmpl_robno.RobnoDokumentaSpecifikacije(tabs, subTabs, tbl, magValues, btnObrada, btnPrint, search, translator).Render(ctx, c.Writer)
+		return tmpl_robno.RobnoDokumentaSpecifikacije(tabs, subTabs, tbl, magValues, btnObrada, btnPrint, search, h.translator).Render(ctx, c.Writer)
 	case robnoDokumentaTabPrepis:
-		return tmpl_robno.RobnoDokumentaPrepis(tabs, subTabs, tbl, magValues, btnObrada, btnPrint, search, translator).Render(ctx, c.Writer)
+		return tmpl_robno.RobnoDokumentaPrepis(tabs, subTabs, tbl, magValues, btnObrada, btnPrint, search, h.translator).Render(ctx, c.Writer)
 	default:
 		return fmt.Errorf("unknown tab %d of the Robna dokumenta option", tabIndex)
 	}
@@ -1777,9 +1924,8 @@ func (h *RobnoDokumentaHandler) AddRoutes(r *gin.Engine) {
 // robnoDokumentaTabs defines the tabs of the "Robna dokumenta" option, in the order of the
 // legacy menu: Unos dokumenta, Pregled dokumenta, Specifikacije dokumenta, Kontiranje dokumenata,
 // Prepis dokumenta, Prikaz ukupne obrade, Prikaz naloga, Prikaz dokumenata u nalogu and
-// Prikaz dokumenata po operateru.
-func robnoDokumentaTabs() domain.TabData {
-	translator := i18n.GetInstance()
+// Prikaz dokumenata po operateru. The translator comes from the handler (see the constructor).
+func robnoDokumentaTabs(translator *i18n.Service) domain.TabData {
 	return domain.TabData{Tabs: []domain.TabItem{
 		{ID: "robno-dokumenta-unos", Label: translator.T("Unos dokumenta"), HXRequestUrl: robnoDokumentaURLUnos, IsActive: true, Name: "unos"},
 		{ID: "robno-dokumenta-pregled", Label: translator.T("Pregled dokumenta"), HXRequestUrl: robnoDokumentaURLPregled, Name: "pregled"},
@@ -1800,8 +1946,7 @@ func robnoDokumentaTabs() domain.TabData {
 // ("Unos dokumenta", "Prepis dokumenta" and "Prikaz naloga"), e.g.:
 //
 //	{ID: "robno-dokumenta-unos-ulaz", Label: translator.T("..."), HXRequestUrl: "...", Name: "..."}
-func robnoDokumentaSubTabs() []domain.TabData {
-	translator := i18n.GetInstance()
+func robnoDokumentaSubTabs(translator *i18n.Service) []domain.TabData {
 	empty := func() domain.TabData { return domain.TabData{Tabs: []domain.TabItem{}} }
 	return []domain.TabData{
 		empty(), // 0 - Unos dokumenta

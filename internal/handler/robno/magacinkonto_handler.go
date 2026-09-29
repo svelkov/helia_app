@@ -44,14 +44,16 @@ func SetMagacinKontoFields() []domain.Fields {
 }
 
 type MagacinKontoHandler struct {
+	translator          *i18n.Service
 	service             service.Service[domain.Magkonto]
 	magacinKontoService robnosvc.MagacinKontoService
 	cfg                 config.Config
 	lm                  *middleware.LockMiddleware
 }
 
-func NewMagacinKontoHandler(service *service.BaseService[domain.Magkonto], magacinKontoService robnosvc.MagacinKontoService, cfg config.Config, lm *middleware.LockMiddleware) *MagacinKontoHandler {
+func NewMagacinKontoHandler(service *service.BaseService[domain.Magkonto], magacinKontoService robnosvc.MagacinKontoService, cfg config.Config, lm *middleware.LockMiddleware, translator *i18n.Service) *MagacinKontoHandler {
 	return &MagacinKontoHandler{
+		translator:          translator,
 		service:             service,
 		magacinKontoService: magacinKontoService,
 		cfg:                 cfg,
@@ -177,10 +179,9 @@ func (h *MagacinKontoHandler) confirmAddHandler(c *gin.Context) {
 	btnCancel := common.SetButton("cancel-btn", "Odustani", "cancel", "", "", "", "", "", "", true, common.ClassOdustaniButton, "")
 	btnCancel.IdDialog = dialog.Id
 
-	translator := i18n.GetInstance()
 	csrfToken := common.GetCsrfToken(c)
 
-	tmpl_robno.MagacinKontoDialog(dialog, common.ActionAdd, model, btnSave, btnCancel, btnClose, translator, csrfToken).Render(c.Request.Context(), c.Writer)
+	tmpl_robno.MagacinKontoDialog(dialog, common.ActionAdd, model, btnSave, btnCancel, btnClose, h.translator, csrfToken).Render(c.Request.Context(), c.Writer)
 }
 
 func (h *MagacinKontoHandler) confirmUpdateHandler(c *gin.Context) {
@@ -219,9 +220,8 @@ func (h *MagacinKontoHandler) confirmUpdateHandler(c *gin.Context) {
 	common.SetUnlockButtonProperties(&btnCancel, fmt.Sprintf("/api/magacin-konto/unlock/%d", id))
 	common.SetUnlockButtonProperties(&btnClose, fmt.Sprintf("/api/magacin-konto/unlock/%d", id))
 
-	translator := i18n.GetInstance()
 	csrfToken := common.GetCsrfToken(c)
-	tmpl_robno.MagacinKontoDialog(dialog, common.ActionUpdate, *entity, btnSave, btnCancel, btnClose, translator, csrfToken).Render(c.Request.Context(), c.Writer)
+	tmpl_robno.MagacinKontoDialog(dialog, common.ActionUpdate, *entity, btnSave, btnCancel, btnClose, h.translator, csrfToken).Render(c.Request.Context(), c.Writer)
 }
 
 func (h *MagacinKontoHandler) GetMagacinKonto(c *gin.Context) {
@@ -267,9 +267,9 @@ func (h *MagacinKontoHandler) GetAllMagacinKonto(c *gin.Context) {
 	tbl.BtnDelete.IsVisible = false
 
 	if requestSource == "menu" || requestSource == "" {
-		searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), magacinKontoURLGetAll, fmt.Sprintf("#%s", magacinKontoTableID), "")
+		searchInput := common.CreateSearchInput("search-input", h.translator, magacinKontoURLGetAll, fmt.Sprintf("#%s", magacinKontoTableID), "")
 		btnPrint := common.SetPrintButton("btn-print-magacin-konto", "Štampa", "fin_print", magacinKontoURLPrint, "GET", true, common.ClassPrintButton, "")
-		tmpl_robno.MagacinKonto(tbl, searchInput, btnPrint, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+		tmpl_robno.MagacinKonto(tbl, searchInput, btnPrint, h.translator).Render(c.Request.Context(), c.Writer)
 	} else {
 		utils.RenderContent(c, tbl)
 	}
@@ -312,8 +312,7 @@ func (h *MagacinKontoHandler) MagacinKontoStampa(c *gin.Context) {
 		return
 	}
 
-	translator := i18n.GetInstance()
-	tmpl_robno_rep.MagacinKontoStampa(repParams, tbl, translator).Render(ctx, c.Writer)
+	tmpl_robno_rep.MagacinKontoStampa(repParams, tbl, h.translator).Render(ctx, c.Writer)
 }
 
 func (h *MagacinKontoHandler) UnlockMagacinKonto(c *gin.Context) {

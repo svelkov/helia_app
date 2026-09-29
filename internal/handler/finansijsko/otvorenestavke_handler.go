@@ -151,19 +151,21 @@ const (
 
 // OtvoreneStavkeHandler handles all requests for Otvorene Stavke module
 type OtvoreneStavkeHandler struct {
-	tabData domain.TabData
-	service finansijsko.OtvoreneStavkeService
-	cfg     config.Config
+	translator *i18n.Service
+	tabData    domain.TabData
+	service    finansijsko.OtvoreneStavkeService
+	cfg        config.Config
 }
 
 // NewOtvoreneStavkeHandler creates a new handler instance
 func NewOtvoreneStavkeHandler(
 	service finansijsko.OtvoreneStavkeService,
 	cfg config.Config,
-) *OtvoreneStavkeHandler {
+	translator *i18n.Service) *OtvoreneStavkeHandler {
 	handler := &OtvoreneStavkeHandler{
-		service: service,
-		cfg:     cfg,
+		translator: translator,
+		service:    service,
+		cfg:        cfg,
 	}
 	handler.tabData = GetOtvoreneStavkeTabData()
 	return handler
@@ -172,24 +174,23 @@ func NewOtvoreneStavkeHandler(
 // OtvoreneStavkeMain - Main entry point for Otvorene Stavke
 func (h *OtvoreneStavkeHandler) OtvoreneStavkeMain(c *gin.Context) {
 	session := domain.GetSessionFromContext(c)
-	translator := i18n.GetInstance()
 	gnGod := 0
 	if session != nil {
 		gnGod = session.SelectedGod
 	}
 	h.setOtvoreneStavkeActiveTab("otvorenestavke")
-	searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), otvoreneStavkeURLPPartneri, fmt.Sprintf("#%s", otvorenestavkeTableID), hxValsOtvoreneStavke)
-	searchInputDetalji := common.CreateSearchInput("search-input-detalji", i18n.GetInstance(), otvoreneStavkeURLPartneriDetalji, fmt.Sprintf("#%s", otvorenestavkeDetaljiTableID), hxValsOtvoreneStavkeDetalji)
+	searchInput := common.CreateSearchInput("search-input", h.translator, otvoreneStavkeURLPPartneri, fmt.Sprintf("#%s", otvorenestavkeTableID), hxValsOtvoreneStavke)
+	searchInputDetalji := common.CreateSearchInput("search-input-detalji", h.translator, otvoreneStavkeURLPartneriDetalji, fmt.Sprintf("#%s", otvorenestavkeDetaljiTableID), hxValsOtvoreneStavkeDetalji)
 
 	btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", otvoreneStavkeURLPPartneri, fmt.Sprintf("#%s", otvorenestavkeTableID), "innerHTML", "GET", "", hxValsOtvoreneStavke, true, common.ClassSaveButton, "handleBackendResponse")
-	btnPrint := common.SetPrintButton("btn-print-otvorene", translator.Button("Štampa"), "fin_stampa", otvoreneStavkeURLPartneriStampa, "GET", true, common.ClassPrintButton, "konto,odsifre,dosifre,poddatumom,otvstavkedana,otvorene-selected-id,stampaotvstavke")
-	btnOpomene := common.SetPrintButton("btn-print-opomene", translator.Button("Štampa Opomena"), "fin_stampa_opomene", otvoreneStavkeURLPartneriStampa, "GET", true, common.ClassStampaOpomenaButton, "konto,odsifre,dosifre,poddatumom,otvstavkedana,otvorene-selected-id,stampaopomena")
+	btnPrint := common.SetPrintButton("btn-print-otvorene", h.translator.Button("Štampa"), "fin_stampa", otvoreneStavkeURLPartneriStampa, "GET", true, common.ClassPrintButton, "konto,odsifre,dosifre,poddatumom,otvstavkedana,otvorene-selected-id,stampaotvstavke")
+	btnOpomene := common.SetPrintButton("btn-print-opomene", h.translator.Button("Štampa Opomena"), "fin_stampa_opomene", otvoreneStavkeURLPartneriStampa, "GET", true, common.ClassStampaOpomenaButton, "konto,odsifre,dosifre,poddatumom,otvstavkedana,otvorene-selected-id,stampaopomena")
 
 	tblPartneri := common.SetTableBasicData(otvorenestavkeContentTitle, otvorenestavkeTableID, h.service.GetPartneriFields(), "", "", 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tblPartneri, otvorenestavkeContentTitle, "", false, false, false)
 	tblDetalji := common.SetTableBasicData("Otvorene stavke - detalji", otvorenestavkeDetaljiTableID, h.service.GetOtvoreneStavkeDetaljiFields(), "", "", 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tblDetalji, "OTVORENE STAVKE - DETALJI", "", false, false, false)
-	err := tmpl_fin.OtvoreneStavkeMain(h.tabData, tblPartneri, tblDetalji, btnObrada, btnPrint, btnOpomene, searchInput, searchInputDetalji, i18n.GetInstance(), gnGod).Render(c.Request.Context(), c.Writer)
+	err := tmpl_fin.OtvoreneStavkeMain(h.tabData, tblPartneri, tblDetalji, btnObrada, btnPrint, btnOpomene, searchInput, searchInputDetalji, h.translator, gnGod).Render(c.Request.Context(), c.Writer)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 		return
@@ -204,14 +205,13 @@ func (h *OtvoreneStavkeHandler) OtvoreneStavke(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusUnauthorized, false, nil, "Unauthorized")
 		return
 	}
-	translator := i18n.GetInstance()
 	gnGod := userSession.SelectedGod
 	tblPartneri := common.SetTableBasicData(otvorenestavkeContentTitle, otvorenestavkeTableID, h.service.GetPartneriFields(), "", "", 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tblPartneri, otvorenestavkeContentTitle, "", false, false, false)
 	tblDetalji := common.SetTableBasicData("Otvorene stavke - detalji", otvorenestavkeDetaljiTableID, h.service.GetOtvoreneStavkeDetaljiFields(), "", "", 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tblDetalji, "OTVORENE STAVKE - DETALJI", "", false, false, false)
-	searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), otvoreneStavkeURLPPartneri, fmt.Sprintf("#%s", otvorenestavkeTableID), hxValsOtvoreneStavke)
-	searchInputDetalji := common.CreateSearchInput("search-input-detalji", i18n.GetInstance(), otvoreneStavkeURLPartneriDetalji, fmt.Sprintf("#%s", otvorenestavkeDetaljiTableID), hxValsOtvoreneStavkeDetalji)
+	searchInput := common.CreateSearchInput("search-input", h.translator, otvoreneStavkeURLPPartneri, fmt.Sprintf("#%s", otvorenestavkeTableID), hxValsOtvoreneStavke)
+	searchInputDetalji := common.CreateSearchInput("search-input-detalji", h.translator, otvoreneStavkeURLPartneriDetalji, fmt.Sprintf("#%s", otvorenestavkeDetaljiTableID), hxValsOtvoreneStavkeDetalji)
 	tblPartneri.Pagination.HxVals = hxValsOtvoreneStavke
 	tblPartneri.HasTotals = true
 	tblDetalji.Pagination.HxVals = hxValsOtvoreneStavkeDetalji
@@ -222,7 +222,7 @@ func (h *OtvoreneStavkeHandler) OtvoreneStavke(c *gin.Context) {
 	btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", otvoreneStavkeURLPPartneri, fmt.Sprintf("#%s", otvorenestavkeTableID), "innerHTML", "GET", "", hxValsOtvoreneStavke, true, common.ClassSaveButton, "handleBackendResponse")
 
 	btnPrint := common.SetPrintButton("btn-print-otvorene", "Štampa", "fin_stampa", otvoreneStavkeURLPartneriStampa, "GET", true, common.ClassPrintButton, "konto,odsifre,dosifre,poddatumom,otvstavkedana,otvorene-selected-id,stampaotvstavke")
-	btnOpomene := common.SetPrintButton("btn-print-opomene", translator.Button("Štampa opomena"), "fin_stampa_opomene", otvoreneStavkeURLPartneriStampa, "GET", true, common.ClassStampaOpomenaButton, "konto,odsifre,dosifre,poddatumom,otvstavkedana,otvorene-selected-id,stampaopomena")
+	btnOpomene := common.SetPrintButton("btn-print-opomene", h.translator.Button("Štampa opomena"), "fin_stampa_opomene", otvoreneStavkeURLPartneriStampa, "GET", true, common.ClassStampaOpomenaButton, "konto,odsifre,dosifre,poddatumom,otvstavkedana,otvorene-selected-id,stampaopomena")
 	h.setOtvoreneStavkeActiveTab("otvorenestavke")
 
 	tblPartneri.DetailTarget = fmt.Sprintf("#%s", otvorenestavkeDetaljiTableID)
@@ -233,7 +233,7 @@ func (h *OtvoreneStavkeHandler) OtvoreneStavke(c *gin.Context) {
 
 	if requestSource == "menu" || requestSource == "tab" {
 		tblPartneri.ShowPagination = true
-		err := tmpl_fin.OtvoreneStavke(h.tabData, tblPartneri, tblDetalji, btnObrada, btnPrint, btnOpomene, searchInput, searchInputDetalji, i18n.GetInstance(), gnGod).Render(c.Request.Context(), c.Writer)
+		err := tmpl_fin.OtvoreneStavke(h.tabData, tblPartneri, tblDetalji, btnObrada, btnPrint, btnOpomene, searchInput, searchInputDetalji, h.translator, gnGod).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -296,12 +296,11 @@ func (h *OtvoreneStavkeHandler) OtvoreneStavkeDetalji(c *gin.Context) {
 	tblDetalji.Pagination.HxVals = hxValsOtvoreneStavkeDetalji
 	tblDetalji.URLGetAll = otvoreneStavkeURLPartneriDetalji
 	tblDetalji.URLPrefix = otvoreneStavkeURLPartneriDetalji
-	components.Table(tblDetalji, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+	components.Table(tblDetalji, h.translator).Render(c.Request.Context(), c.Writer)
 }
 
 // PregledOtvorenihStavkiStampa renders a printable open items overview report for all partners.
 func (h *OtvoreneStavkeHandler) PregledOtvorenihStavkiStampa(c *gin.Context) {
-	translator := i18n.GetInstance()
 	userSession := domain.GetSessionFromContext(c)
 	if userSession == nil {
 		common.WriteJSONResponse(c, http.StatusUnauthorized, false, nil, "Unauthorized")
@@ -333,7 +332,7 @@ func (h *OtvoreneStavkeHandler) PregledOtvorenihStavkiStampa(c *gin.Context) {
 	common.SetTableConfig(&tbl, "OTVORENE STAVKE - DETALJI", "", false, false, false)
 	fvrData, err := h.service.GetFvrData(ctx)
 	repParams := domain.ReportParameters{
-		ReportName:  translator.Title("PREGLED OTVORENIH STAVKI"),
+		ReportName:  h.translator.Title("PREGLED OTVORENIH STAVKI"),
 		Orientation: "portrait",
 		CompanyName: fvrData.Naziv,
 		Adress:      fvrData.Adresa,
@@ -343,16 +342,16 @@ func (h *OtvoreneStavkeHandler) PregledOtvorenihStavkiStampa(c *gin.Context) {
 		MatBroj:     fvrData.Matbr,
 		SifDel:      fvrData.SifDel,
 		ParameterItems: map[string]domain.ParameterItem{
-			"Naziv":       {Name: translator.Label("Naziv"), Value: "KUPAC"},
-			"Adresa":      {Name: translator.Label("Adresa"), Value: "Adresa"},
-			"Postcode":    {Name: translator.Label("Postcode"), Value: "Postbroj"},
-			"Mesto":       {Name: translator.Label("Mesto"), Value: "Mesto"},
-			"ObvPDV":      {Name: translator.Label("Obveznik PDV Br."), Value: "Obveznik PDV"},
-			"PIB":         {Name: translator.Label("PIB"), Value: "PIB"},
-			"Telefon":     {Name: translator.Label("Telefon"), Value: "Telefon"},
-			"Konto":       {Name: translator.Label("Konto"), Value: "Konto"},
-			"Sifra":       {Name: translator.Label("Sifra"), Value: "Šifra"},
-			"Stanjenadan": {Name: translator.Label("Stanjenadan"), Value: podDatumomFmt},
+			"Naziv":       {Name: h.translator.Label("Naziv"), Value: "KUPAC"},
+			"Adresa":      {Name: h.translator.Label("Adresa"), Value: "Adresa"},
+			"Postcode":    {Name: h.translator.Label("Postcode"), Value: "Postbroj"},
+			"Mesto":       {Name: h.translator.Label("Mesto"), Value: "Mesto"},
+			"ObvPDV":      {Name: h.translator.Label("Obveznik PDV Br."), Value: "Obveznik PDV"},
+			"PIB":         {Name: h.translator.Label("PIB"), Value: "PIB"},
+			"Telefon":     {Name: h.translator.Label("Telefon"), Value: "Telefon"},
+			"Konto":       {Name: h.translator.Label("Konto"), Value: "Konto"},
+			"Sifra":       {Name: h.translator.Label("Sifra"), Value: "Šifra"},
+			"Stanjenadan": {Name: h.translator.Label("Stanjenadan"), Value: podDatumomFmt},
 		},
 	}
 	tbl.HasTotals = true
@@ -369,21 +368,20 @@ func (h *OtvoreneStavkeHandler) PregledOtvorenihStavkiStampa(c *gin.Context) {
 	c.Header("Content-Type", "text/html; charset=utf-8")
 	tipStampe := "otvstavke"
 	if tipStampeOtvStavke == "otvstavke" {
-		repParams.ReportName = translator.Title("PREGLED OTVORENIH STAVKI")
-		tmpl_rep_fin.OtvoreneStavkePregledStampa(repParams, tbl, tipStampe, translator).Render(ctx, c.Writer)
+		repParams.ReportName = h.translator.Title("PREGLED OTVORENIH STAVKI")
+		tmpl_rep_fin.OtvoreneStavkePregledStampa(repParams, tbl, tipStampe, h.translator).Render(ctx, c.Writer)
 	}
 	if tipStampeOpomena == "opomena" {
 		tipStampe = "opomena"
-		repParams.ReportName = translator.Title("OPOMENA ZA NEPLAĆENE RAČUNE")
-		repParams.ParameterItems["otvstavkedana"] = domain.ParameterItem{Name: translator.Label("Otvorene stavke dana"), Value: c.Query("otvstavkedana")}
-		tmpl_rep_fin.OtvoreneStavkePregledStampa(repParams, tbl, tipStampe, translator).Render(ctx, c.Writer)
+		repParams.ReportName = h.translator.Title("OPOMENA ZA NEPLAĆENE RAČUNE")
+		repParams.ParameterItems["otvstavkedana"] = domain.ParameterItem{Name: h.translator.Label("Otvorene stavke dana"), Value: c.Query("otvstavkedana")}
+		tmpl_rep_fin.OtvoreneStavkePregledStampa(repParams, tbl, tipStampe, h.translator).Render(ctx, c.Writer)
 	}
 }
 
 // ZatvoreneStavke - Tab 2: Zatvorene stavke (Closed Items)
 func (h *OtvoreneStavkeHandler) ZatvoreneStavke(c *gin.Context) {
 	requestSource := c.Request.Header.Get("X-Request-Source")
-	translator := i18n.GetInstance()
 	userSession := domain.GetSessionFromContext(c)
 	if userSession == nil {
 		common.WriteJSONResponse(c, http.StatusUnauthorized, false, nil, "Unauthorized")
@@ -394,8 +392,8 @@ func (h *OtvoreneStavkeHandler) ZatvoreneStavke(c *gin.Context) {
 	common.SetTableConfig(&tblPartneri, zatvoreneStavkeContentTitle, "", false, false, false)
 	tblDetalji := common.SetTableBasicData("Zatvorene stavke - detalji", zatvoreneStavkeDetaljiTableID, h.service.GetZatvoreneStavkeDetaljiFields(), "", "", 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tblDetalji, "ZATVORENE STAVKE - DETALJI", "", false, false, false)
-	searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), zatvoreneStavkeURLPartneri, fmt.Sprintf("#%s", zatvoreneStavkeTableID), hxValsZatvoreneStavke)
-	searchInputDetalji := common.CreateSearchInput("search-input-detalji", i18n.GetInstance(), zatvoreneStavkeURLPartneriDetalji, fmt.Sprintf("#%s", zatvoreneStavkeDetaljiTableID), hxValsZatvoreneStavkeDetalji)
+	searchInput := common.CreateSearchInput("search-input", h.translator, zatvoreneStavkeURLPartneri, fmt.Sprintf("#%s", zatvoreneStavkeTableID), hxValsZatvoreneStavke)
+	searchInputDetalji := common.CreateSearchInput("search-input-detalji", h.translator, zatvoreneStavkeURLPartneriDetalji, fmt.Sprintf("#%s", zatvoreneStavkeDetaljiTableID), hxValsZatvoreneStavkeDetalji)
 	tblPartneri.Pagination.HxVals = hxValsZatvoreneStavke
 	tblDetalji.Pagination.HxVals = hxValsZatvoreneStavkeDetalji
 	tblPartneri.URLGetAll = zatvoreneStavkeURLPartneri
@@ -403,7 +401,7 @@ func (h *OtvoreneStavkeHandler) ZatvoreneStavke(c *gin.Context) {
 	tblDetalji.URLGetAll = zatvoreneStavkeURLPartneriDetalji
 	tblDetalji.URLPrefix = zatvoreneStavkeURLPartneriDetalji
 	btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", zatvoreneStavkeURLPartneri, fmt.Sprintf("#%s", zatvoreneStavkeTableID), "innerHTML", "GET", "", hxValsZatvoreneStavke, true, common.ClassSaveButton, "handleBackendResponse")
-	btnPrint := common.SetPrintButton("btn-print-zatvorene", translator.Button("Štampa"), "fin_print", zatvoreneStavkeURLPartneriStampa, "GET", true, common.ClassPrintButton, "konto,odsifre,dosifre,oddatuma,dodatuma,zatvorene-selected-id")
+	btnPrint := common.SetPrintButton("btn-print-zatvorene", h.translator.Button("Štampa"), "fin_print", zatvoreneStavkeURLPartneriStampa, "GET", true, common.ClassPrintButton, "konto,odsifre,dosifre,oddatuma,dodatuma,zatvorene-selected-id")
 	h.setOtvoreneStavkeActiveTab("zatvorenestavke")
 	tblPartneri.DetailTarget = fmt.Sprintf("#%s", zatvoreneStavkeDetaljiTableID)
 	tblPartneri.DetailURL = "/api/otvorenestavke/zatvorene/partneridetails"
@@ -413,7 +411,7 @@ func (h *OtvoreneStavkeHandler) ZatvoreneStavke(c *gin.Context) {
 
 	if requestSource == "menu" || requestSource == "tab" {
 		tblPartneri.ShowPagination = true
-		err := tmpl_fin.ZatvoreneStavke(h.tabData, tblPartneri, tblDetalji, btnObrada, btnPrint, searchInput, searchInputDetalji, i18n.GetInstance(), gnGod).Render(c.Request.Context(), c.Writer)
+		err := tmpl_fin.ZatvoreneStavke(h.tabData, tblPartneri, tblDetalji, btnObrada, btnPrint, searchInput, searchInputDetalji, h.translator, gnGod).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -477,12 +475,11 @@ func (h *OtvoreneStavkeHandler) ZatvoreneStavkeDetalji(c *gin.Context) {
 	tblDetalji.Pagination.HxVals = hxValsZatvoreneStavkeDetalji
 	tblDetalji.URLGetAll = zatvoreneStavkeURLPartneriDetalji
 	tblDetalji.URLPrefix = zatvoreneStavkeURLPartneriDetalji
-	components.Table(tblDetalji, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+	components.Table(tblDetalji, h.translator).Render(c.Request.Context(), c.Writer)
 }
 
 // PregledZatvorenihStavkiStampa renders a printable closed items overview report grouped by partner.
 func (h *OtvoreneStavkeHandler) PregledZatvorenihStavkiStampa(c *gin.Context) {
-	translator := i18n.GetInstance()
 	userSession := domain.GetSessionFromContext(c)
 	if userSession == nil {
 		common.WriteJSONResponse(c, http.StatusUnauthorized, false, nil, "Unauthorized")
@@ -510,7 +507,7 @@ func (h *OtvoreneStavkeHandler) PregledZatvorenihStavkiStampa(c *gin.Context) {
 	common.SetTableConfig(&tbl, "ZATVORENE STAVKE - DETALJI", "", false, false, false)
 	fvrData, err := h.service.GetFvrData(ctx)
 	repParams := domain.ReportParameters{
-		ReportName:  translator.Title("PREGLED ZATVORENIH STAVKI"),
+		ReportName:  h.translator.Title("PREGLED ZATVORENIH STAVKI"),
 		Orientation: "portrait",
 		CompanyName: fvrData.Naziv,
 		Adress:      fvrData.Adresa,
@@ -520,13 +517,13 @@ func (h *OtvoreneStavkeHandler) PregledZatvorenihStavkiStampa(c *gin.Context) {
 		MatBroj:     fvrData.Matbr,
 		SifDel:      fvrData.SifDel,
 		ParameterItems: map[string]domain.ParameterItem{
-			"Konto":    {Name: translator.Label("Konto"), Value: c.Query("konto")},
+			"Konto":    {Name: h.translator.Label("Konto"), Value: c.Query("konto")},
 			"empty":    {Name: "", Value: ""},
-			"Od Šifre": {Name: translator.Label("Od Šifre"), Value: c.Query("odsifre")},
-			"Do Šifre": {Name: translator.Label("Do Šifre"), Value: c.Query("dosifre")},
-			"OdDatuma": {Name: translator.Label("Od Datuma"), Value: odDatumaFmt},
-			"DoDatuma": {Name: translator.Label("Do Datuma"), Value: doDatumaFmt},
-			"Partner":  {Name: translator.Label("Partner"), Value: ""},
+			"Od Šifre": {Name: h.translator.Label("Od Šifre"), Value: c.Query("odsifre")},
+			"Do Šifre": {Name: h.translator.Label("Do Šifre"), Value: c.Query("dosifre")},
+			"OdDatuma": {Name: h.translator.Label("Od Datuma"), Value: odDatumaFmt},
+			"DoDatuma": {Name: h.translator.Label("Do Datuma"), Value: doDatumaFmt},
+			"Partner":  {Name: h.translator.Label("Partner"), Value: ""},
 		},
 	}
 
@@ -542,13 +539,12 @@ func (h *OtvoreneStavkeHandler) PregledZatvorenihStavkiStampa(c *gin.Context) {
 	}
 
 	c.Header("Content-Type", "text/html; charset=utf-8")
-	tmpl_rep_fin.ZatvoreneStavkeStampa(repParams, tbl, translator).Render(ctx, c.Writer)
+	tmpl_rep_fin.ZatvoreneStavkeStampa(repParams, tbl, h.translator).Render(ctx, c.Writer)
 }
 
 // IOS - Tab 3: IOS (Izvod otvorenih stavki)
 func (h *OtvoreneStavkeHandler) IOS(c *gin.Context) {
 	requestSource := c.Request.Header.Get("X-Request-Source")
-	translator := i18n.GetInstance()
 	userSession := domain.GetSessionFromContext(c)
 	if userSession == nil {
 		common.WriteJSONResponse(c, http.StatusUnauthorized, false, nil, "Unauthorized")
@@ -561,8 +557,8 @@ func (h *OtvoreneStavkeHandler) IOS(c *gin.Context) {
 	common.SetTableConfig(&tblPartneri, iosContentTitle, "", false, false, false)
 	tblDetalji := common.SetTableBasicData("IOS - detalji", iosDetaljiTableID, h.service.GetOtvoreneStavkeDetaljiFields(), "", "", 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tblDetalji, "IOS - DETALJI", "", false, false, false)
-	searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), iosURLPartneri, fmt.Sprintf("#%s", iosTableID), hxValsIOS)
-	searchInputDetalji := common.CreateSearchInput("search-input-detalji", i18n.GetInstance(), iosURLPartneriDetalji, fmt.Sprintf("#%s", iosDetaljiTableID), hxValsIOSDetalji)
+	searchInput := common.CreateSearchInput("search-input", h.translator, iosURLPartneri, fmt.Sprintf("#%s", iosTableID), hxValsIOS)
+	searchInputDetalji := common.CreateSearchInput("search-input-detalji", h.translator, iosURLPartneriDetalji, fmt.Sprintf("#%s", iosDetaljiTableID), hxValsIOSDetalji)
 	tblPartneri.Pagination.HxVals = hxValsIOS
 	tblDetalji.Pagination.HxVals = hxValsIOSDetalji
 	tblPartneri.URLGetAll = iosURLPartneri
@@ -570,7 +566,7 @@ func (h *OtvoreneStavkeHandler) IOS(c *gin.Context) {
 	tblDetalji.URLGetAll = iosURLPartneriDetalji
 	tblDetalji.URLPrefix = iosURLPartneriDetalji
 	btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", iosURLPartneri, fmt.Sprintf("#%s", iosTableID), "innerHTML", "GET", "", hxValsIOS, true, common.ClassSaveButton, "handleBackendResponse")
-	btnPrint := common.SetPrintButton("btn-print-ios", translator.Button("Štampa"), "fin_stampa", iosURLPartneriStampa, "GET", true, common.ClassPrintButton, "konto,odsifre,dosifre,poddatumom,otvstavkedana,ios-selected-id")
+	btnPrint := common.SetPrintButton("btn-print-ios", h.translator.Button("Štampa"), "fin_stampa", iosURLPartneriStampa, "GET", true, common.ClassPrintButton, "konto,odsifre,dosifre,poddatumom,otvstavkedana,ios-selected-id")
 
 	tblPartneri.DetailTarget = fmt.Sprintf("#%s", iosDetaljiTableID)
 	tblPartneri.DetailURL = "/api/otvorenestavke/ios/partneridetails"
@@ -580,7 +576,7 @@ func (h *OtvoreneStavkeHandler) IOS(c *gin.Context) {
 
 	if requestSource == "menu" || requestSource == "tab" {
 		tblPartneri.ShowPagination = true
-		err := tmpl_fin.IOS(h.tabData, tblPartneri, tblDetalji, btnObrada, btnPrint, searchInput, searchInputDetalji, i18n.GetInstance(), gnGod).Render(c.Request.Context(), c.Writer)
+		err := tmpl_fin.IOS(h.tabData, tblPartneri, tblDetalji, btnObrada, btnPrint, searchInput, searchInputDetalji, h.translator, gnGod).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -644,12 +640,11 @@ func (h *OtvoreneStavkeHandler) IOSDetalji(c *gin.Context) {
 	tblDetalji.Pagination.HxVals = hxValsIOSDetalji
 	tblDetalji.URLGetAll = iosURLPartneriDetalji
 	tblDetalji.URLPrefix = iosURLPartneriDetalji
-	components.Table(tblDetalji, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+	components.Table(tblDetalji, h.translator).Render(c.Request.Context(), c.Writer)
 }
 
 // IOSDetaljiStampa renders a printable IOS (Izvod otvorenih stavki) report for a selected partner.
 func (h *OtvoreneStavkeHandler) IOSDetaljiStampa(c *gin.Context) {
-	translator := i18n.GetInstance()
 	userSession := domain.GetSessionFromContext(c)
 	if userSession == nil {
 		common.WriteJSONResponse(c, http.StatusUnauthorized, false, nil, "Unauthorized")
@@ -670,7 +665,7 @@ func (h *OtvoreneStavkeHandler) IOSDetaljiStampa(c *gin.Context) {
 	common.SetTableConfig(&tbl, "IOS - DETALJI", "", false, false, false)
 	fvrData, err := h.service.GetFvrData(ctx)
 	repParams := domain.ReportParameters{
-		ReportName:  translator.Title("IZVOD OTVORENIH STAVKI"),
+		ReportName:  h.translator.Title("IZVOD OTVORENIH STAVKI"),
 		Orientation: "portrait",
 		CompanyName: fvrData.Naziv,
 		Adress:      fvrData.Adresa,
@@ -680,16 +675,16 @@ func (h *OtvoreneStavkeHandler) IOSDetaljiStampa(c *gin.Context) {
 		MatBroj:     fvrData.Matbr,
 		SifDel:      fvrData.SifDel,
 		ParameterItems: map[string]domain.ParameterItem{
-			"Naziv":       {Name: translator.Label("Naziv"), Value: ""},
-			"Adresa":      {Name: translator.Label("Adresa"), Value: ""},
-			"Postcode":    {Name: translator.Label("Postcode"), Value: ""},
-			"Mesto":       {Name: translator.Label("Mesto"), Value: ""},
-			"ObvPDV":      {Name: translator.Label("Obveznik PDV Br."), Value: ""},
-			"PIB":         {Name: translator.Label("PIB"), Value: ""},
-			"Telefon":     {Name: translator.Label("Telefon"), Value: ""},
-			"Konto":       {Name: translator.Label("Konto"), Value: c.Query("konto")},
-			"Sifra":       {Name: translator.Label("Sifra"), Value: ""},
-			"Stanjenadan": {Name: translator.Label("Stanjenadan"), Value: podDatumomFmt},
+			"Naziv":       {Name: h.translator.Label("Naziv"), Value: ""},
+			"Adresa":      {Name: h.translator.Label("Adresa"), Value: ""},
+			"Postcode":    {Name: h.translator.Label("Postcode"), Value: ""},
+			"Mesto":       {Name: h.translator.Label("Mesto"), Value: ""},
+			"ObvPDV":      {Name: h.translator.Label("Obveznik PDV Br."), Value: ""},
+			"PIB":         {Name: h.translator.Label("PIB"), Value: ""},
+			"Telefon":     {Name: h.translator.Label("Telefon"), Value: ""},
+			"Konto":       {Name: h.translator.Label("Konto"), Value: c.Query("konto")},
+			"Sifra":       {Name: h.translator.Label("Sifra"), Value: ""},
+			"Stanjenadan": {Name: h.translator.Label("Stanjenadan"), Value: podDatumomFmt},
 		},
 	}
 	tbl.HasTotals = true
@@ -703,13 +698,12 @@ func (h *OtvoreneStavkeHandler) IOSDetaljiStampa(c *gin.Context) {
 		return
 	}
 	c.Header("Content-Type", "text/html; charset=utf-8")
-	tmpl_rep_fin.IOSStampa(repParams, tbl, translator).Render(ctx, c.Writer)
+	tmpl_rep_fin.IOSStampa(repParams, tbl, h.translator).Render(ctx, c.Writer)
 }
 
 // DospelaPotraživanja - Tab 4: Dospela potraživanja/dugovanja
 func (h *OtvoreneStavkeHandler) DospelaPotrazivanja(c *gin.Context) {
 	requestSource := c.Request.Header.Get("X-Request-Source")
-	translator := i18n.GetInstance()
 	userSession := domain.GetSessionFromContext(c)
 	if userSession == nil {
 		common.WriteJSONResponse(c, http.StatusUnauthorized, false, nil, "Unauthorized")
@@ -726,8 +720,8 @@ func (h *OtvoreneStavkeHandler) DospelaPotrazivanja(c *gin.Context) {
 	common.SetTableConfig(&tblPartneri, dospelaContentTitle, "", false, false, false)
 	tblDetalji := common.SetTableBasicData("Dospela potraživanja - detalji", dospelaDetaljiTableID, h.service.GetDospelaDetaljiFields(), "", "", 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tblDetalji, "DOSPELA POTRAŽIVANJA - DETALJI", "", false, false, false)
-	searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), dospelaURLPartneri, fmt.Sprintf("#%s", dospelaTableID), hxValsDospela)
-	searchInputDetalji := common.CreateSearchInput("search-input-detalji", i18n.GetInstance(), dospelaURLPartneriDetalji, fmt.Sprintf("#%s", dospelaDetaljiTableID), hxValsDospelaDetalji)
+	searchInput := common.CreateSearchInput("search-input", h.translator, dospelaURLPartneri, fmt.Sprintf("#%s", dospelaTableID), hxValsDospela)
+	searchInputDetalji := common.CreateSearchInput("search-input-detalji", h.translator, dospelaURLPartneriDetalji, fmt.Sprintf("#%s", dospelaDetaljiTableID), hxValsDospelaDetalji)
 	tblPartneri.Pagination.HxVals = hxValsDospela
 	tblDetalji.Pagination.HxVals = hxValsDospelaDetalji
 	tblPartneri.URLGetAll = dospelaURLPartneri
@@ -735,7 +729,7 @@ func (h *OtvoreneStavkeHandler) DospelaPotrazivanja(c *gin.Context) {
 	tblDetalji.URLGetAll = dospelaURLPartneriDetalji
 	tblDetalji.URLPrefix = dospelaURLPartneriDetalji
 	btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", dospelaURLPartneri, fmt.Sprintf("#%s", dospelaTableID), "innerHTML", "GET", "", hxValsDospela, true, common.ClassSaveButton, "handleBackendResponse")
-	btnPrint := common.SetPrintButton("btn-print-dospela", translator.Button("Štampa"), "fin_stampa", dospelaStampaAnalitickiURL, "GET", true, common.ClassPrintButton, "konto,odsifre,dosifre,poddatumom,brojdana,tip_pregleda,tip_potrazivanja")
+	btnPrint := common.SetPrintButton("btn-print-dospela", h.translator.Button("Štampa"), "fin_stampa", dospelaStampaAnalitickiURL, "GET", true, common.ClassPrintButton, "konto,odsifre,dosifre,poddatumom,brojdana,tip_pregleda,tip_potrazivanja")
 
 	tblPartneri.DetailTarget = fmt.Sprintf("#%s", dospelaDetaljiTableID)
 	tblPartneri.DetailURL = "/api/otvorenestavke/dospela/partneridetails"
@@ -745,7 +739,7 @@ func (h *OtvoreneStavkeHandler) DospelaPotrazivanja(c *gin.Context) {
 
 	if requestSource == "menu" || requestSource == "tab" {
 		tblPartneri.ShowPagination = true
-		err := tmpl_fin.DospelaPotrazivanja(h.tabData, tblPartneri, tblDetalji, btnObrada, btnPrint, searchInput, searchInputDetalji, i18n.GetInstance(), gnGod).Render(c.Request.Context(), c.Writer)
+		err := tmpl_fin.DospelaPotrazivanja(h.tabData, tblPartneri, tblDetalji, btnObrada, btnPrint, searchInput, searchInputDetalji, h.translator, gnGod).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -809,12 +803,11 @@ func (h *OtvoreneStavkeHandler) DospelaPotrazivanjaDetalji(c *gin.Context) {
 	tblDetalji.Pagination.HxVals = hxValsDospelaDetalji
 	tblDetalji.URLGetAll = dospelaURLPartneriDetalji
 	tblDetalji.URLPrefix = dospelaURLPartneriDetalji
-	components.Table(tblDetalji, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+	components.Table(tblDetalji, h.translator).Render(c.Request.Context(), c.Writer)
 }
 
 // DugovanjaObavezeStampa renders the analytical print report for dospela potrazivanja grouped by partner.
 func (h *OtvoreneStavkeHandler) DugovanjaObavezeStampa(c *gin.Context) {
-	translator := i18n.GetInstance()
 	userSession := domain.GetSessionFromContext(c)
 	if userSession == nil {
 		common.WriteJSONResponse(c, http.StatusUnauthorized, false, nil, "Unauthorized")
@@ -839,9 +832,9 @@ func (h *OtvoreneStavkeHandler) DugovanjaObavezeStampa(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgReadData+" "+err.Error())
 		return
 	}
-	brojDanaLabel := translator.Label("Potrazivanja koja dospevaju u narednih")
+	brojDanaLabel := h.translator.Label("Potrazivanja koja dospevaju u narednih")
 	repParams := domain.ReportParameters{
-		ReportName:  translator.Title("PREGLED DOSPELIH POTRAZIVANJA"),
+		ReportName:  h.translator.Title("PREGLED DOSPELIH POTRAZIVANJA"),
 		Orientation: "landscape",
 		CompanyName: fvrData.Naziv,
 		Adress:      fvrData.Adresa,
@@ -851,7 +844,7 @@ func (h *OtvoreneStavkeHandler) DugovanjaObavezeStampa(c *gin.Context) {
 		MatBroj:     fvrData.Matbr,
 		SifDel:      fvrData.SifDel,
 		ParameterItems: map[string]domain.ParameterItem{
-			"Stanjenadan": {Name: translator.Label("Stanje na dan"), Value: podDatumomFmt},
+			"Stanjenadan": {Name: h.translator.Label("Stanje na dan"), Value: podDatumomFmt},
 			"Brojdana":    {Name: brojDanaLabel, Value: params.BrojDana},
 			"TipPregleda": {Name: "", Value: params.TipPregleda},
 		},
@@ -862,13 +855,12 @@ func (h *OtvoreneStavkeHandler) DugovanjaObavezeStampa(c *gin.Context) {
 		return
 	}
 	c.Header("Content-Type", "text/html; charset=utf-8")
-	tmpl_rep_fin.DugovanjaObavezeStampa(repParams, partners, translator).Render(ctx, c.Writer)
+	tmpl_rep_fin.DugovanjaObavezeStampa(repParams, partners, h.translator).Render(ctx, c.Writer)
 }
 
 // PregledPotrazivanjaObaveze - Tab 5: Pregled potraživanja po obavezama
 func (h *OtvoreneStavkeHandler) PregledPotrazivanjaObaveze(c *gin.Context) {
 	requestSource := c.Request.Header.Get("X-Request-Source")
-	translator := i18n.GetInstance()
 	userSession := domain.GetSessionFromContext(c)
 	if userSession == nil {
 		common.WriteJSONResponse(c, http.StatusUnauthorized, false, nil, "Unauthorized")
@@ -882,17 +874,17 @@ func (h *OtvoreneStavkeHandler) PregledPotrazivanjaObaveze(c *gin.Context) {
 	common.SetTableConfig(&tbl, dospelaContentTitle, "", false, false, false)
 	tblDetalji := common.SetTableBasicData("Dospela potraživanja - detalji", dospelaDetaljiTableID, h.service.GetDospelaDetaljiFields(), "", "", 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tblDetalji, "PREGLED POTRAŽIVANJA/OBAVEZE", "", false, false, false)
-	searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), dugovanjaURL, fmt.Sprintf("#%s", dugovanjaTableID), hxValsDugovanja)
+	searchInput := common.CreateSearchInput("search-input", h.translator, dugovanjaURL, fmt.Sprintf("#%s", dugovanjaTableID), hxValsDugovanja)
 	tbl.Pagination.HxVals = hxValsDugovanja
 	tbl.URLGetAll = dugovanjaURL
 	tbl.URLPrefix = dugovanjaURL
 	tbl.HasTotals = true
 	btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", dugovanjaURL, fmt.Sprintf("#%s", dugovanjaTableID), "innerHTML", "GET", "", hxValsDugovanja, true, common.ClassSaveButton, "handleBackendResponse")
-	btnPrint := common.SetPrintButton("btn-print-dugovanja", translator.Button("Štampa"), "fin_stampa", dugovanjaURLStampa, "GET", true, common.ClassPrintButton, "odkonta,dokonta,odsifre,dosifre,stanjenadan,dospece15,dospece30,dospece60,dospece90,dospece120,tip_pregleda,stampaj_samo_zbir")
+	btnPrint := common.SetPrintButton("btn-print-dugovanja", h.translator.Button("Štampa"), "fin_stampa", dugovanjaURLStampa, "GET", true, common.ClassPrintButton, "odkonta,dokonta,odsifre,dosifre,stanjenadan,dospece15,dospece30,dospece60,dospece90,dospece120,tip_pregleda,stampaj_samo_zbir")
 
 	if requestSource == "menu" || requestSource == "tab" {
 		tbl.ShowPagination = true
-		err := tmpl_fin.PregledPotrazivanjaObaveze(h.tabData, tbl, btnObrada, btnPrint, searchInput, i18n.GetInstance(), gnGod).Render(c.Request.Context(), c.Writer)
+		err := tmpl_fin.PregledPotrazivanjaObaveze(h.tabData, tbl, btnObrada, btnPrint, searchInput, h.translator, gnGod).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -940,7 +932,6 @@ func (h *OtvoreneStavkeHandler) PregledPotrazivanjaObaveze(c *gin.Context) {
 
 // PotrazivanjaDugovanjaStampa renders the printable pregled potrazivanja/obaveze report grouped by partner.
 func (h *OtvoreneStavkeHandler) PotrazivanjaDugovanjaStampa(c *gin.Context) {
-	translator := i18n.GetInstance()
 	userSession := domain.GetSessionFromContext(c)
 	if userSession == nil {
 		common.WriteJSONResponse(c, http.StatusUnauthorized, false, nil, "Unauthorized")
@@ -974,7 +965,7 @@ func (h *OtvoreneStavkeHandler) PotrazivanjaDugovanjaStampa(c *gin.Context) {
 	val60, _ := strconv.Atoi(params.Dospece60)
 	val90, _ := strconv.Atoi(params.Dospece90)
 	repParams := domain.ReportParameters{
-		ReportName:  translator.Title("PREGLED POTRAZIVANJA/DUGOVANJA"),
+		ReportName:  h.translator.Title("PREGLED POTRAZIVANJA/DUGOVANJA"),
 		Orientation: "landscape",
 		CompanyName: fvrData.Naziv,
 		Adress:      fvrData.Adresa,
@@ -984,14 +975,14 @@ func (h *OtvoreneStavkeHandler) PotrazivanjaDugovanjaStampa(c *gin.Context) {
 		MatBroj:     fvrData.Matbr,
 		SifDel:      fvrData.SifDel,
 		ParameterItems: map[string]domain.ParameterItem{
-			"StanjeNaDan":     {Name: translator.Label("Stanje na dan"), Value: standeNaDanFmt},
+			"StanjeNaDan":     {Name: h.translator.Label("Stanje na dan"), Value: standeNaDanFmt},
 			"TipPregleda":     {Name: "", Value: params.TipPregleda},
-			"DLabel15":        {Name: "", Value: "0-" + params.Dospece15 + " " + translator.Label("Dana")},
-			"DLabel30":        {Name: "", Value: strconv.Itoa(val15+1) + "-" + params.Dospece30 + " " + translator.Label("Dana")},
-			"DLabel60":        {Name: "", Value: strconv.Itoa(val30+1) + "-" + params.Dospece60 + " " + translator.Label("Dana")},
-			"DLabel90":        {Name: "", Value: strconv.Itoa(val60+1) + "-" + params.Dospece90 + " " + translator.Label("Dana")},
-			"DLabel120":       {Name: "", Value: strconv.Itoa(val90+1) + "-" + params.Dospece120 + " " + translator.Label("Dana")},
-			"DLabel120Plus":   {Name: "", Value: ">" + params.Dospece120 + " " + translator.Label("Dana")},
+			"DLabel15":        {Name: "", Value: "0-" + params.Dospece15 + " " + h.translator.Label("Dana")},
+			"DLabel30":        {Name: "", Value: strconv.Itoa(val15+1) + "-" + params.Dospece30 + " " + h.translator.Label("Dana")},
+			"DLabel60":        {Name: "", Value: strconv.Itoa(val30+1) + "-" + params.Dospece60 + " " + h.translator.Label("Dana")},
+			"DLabel90":        {Name: "", Value: strconv.Itoa(val60+1) + "-" + params.Dospece90 + " " + h.translator.Label("Dana")},
+			"DLabel120":       {Name: "", Value: strconv.Itoa(val90+1) + "-" + params.Dospece120 + " " + h.translator.Label("Dana")},
+			"DLabel120Plus":   {Name: "", Value: ">" + params.Dospece120 + " " + h.translator.Label("Dana")},
 			"StampajSamoZbir": {Name: "", Value: c.Query("stampaj_samo_zbir")},
 		},
 	}
@@ -1001,13 +992,12 @@ func (h *OtvoreneStavkeHandler) PotrazivanjaDugovanjaStampa(c *gin.Context) {
 		return
 	}
 	c.Header("Content-Type", "text/html; charset=utf-8")
-	tmpl_rep_fin.PotrazivanjaDugovanjaStampa(repParams, partners, translator).Render(ctx, c.Writer)
+	tmpl_rep_fin.PotrazivanjaDugovanjaStampa(repParams, partners, h.translator).Render(ctx, c.Writer)
 }
 
 // PregledDospelogDugaPoStarosti - Tab 7: Pregled dospelog duga po starosti
 func (h *OtvoreneStavkeHandler) PregledDospelogDugaPoStarosti(c *gin.Context) {
 	requestSource := c.Request.Header.Get("X-Request-Source")
-	translator := i18n.GetInstance()
 	userSession := domain.GetSessionFromContext(c)
 	if userSession == nil {
 		common.WriteJSONResponse(c, http.StatusUnauthorized, false, nil, "Unauthorized")
@@ -1019,16 +1009,16 @@ func (h *OtvoreneStavkeHandler) PregledDospelogDugaPoStarosti(c *gin.Context) {
 
 	tbl := common.SetTableBasicData(dospelaStarostiContentTitle, dospelaStarostiTableID, headerFileds, "", "", 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tbl, dospelaStarostiContentTitle, "", false, false, false)
-	searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), dospelaStarostiURL, fmt.Sprintf("#%s", dospelaStarostiTableID), hxValsDugovanja)
+	searchInput := common.CreateSearchInput("search-input", h.translator, dospelaStarostiURL, fmt.Sprintf("#%s", dospelaStarostiTableID), hxValsDugovanja)
 	tbl.Pagination.HxVals = hxValsDugovanja
 	tbl.URLGetAll = dospelaStarostiURL
 	tbl.URLPrefix = dospelaStarostiURL
 	btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", dospelaStarostiURL, fmt.Sprintf("#%s", dospelaStarostiTableID), "innerHTML", "GET", "", hxValsDugovanja, true, common.ClassSaveButton, "handleBackendResponse")
-	btnPrint := common.SetPrintButton("stampa-btn", translator.Button("Štampa"), "fin_stampa", dospelaStarostiStampaURL, "GET", true, common.ClassPrintButton, "odkonta,dokonta,odsifre,dosifre,stanjenadan,dospece15,dospece30,dospece60,dospece90,dospece120,tip_pregleda")
+	btnPrint := common.SetPrintButton("stampa-btn", h.translator.Button("Štampa"), "fin_stampa", dospelaStarostiStampaURL, "GET", true, common.ClassPrintButton, "odkonta,dokonta,odsifre,dosifre,stanjenadan,dospece15,dospece30,dospece60,dospece90,dospece120,tip_pregleda")
 
 	if requestSource == "menu" || requestSource == "tab" {
 		tbl.ShowPagination = true
-		err := tmpl_fin.PregledDospelogDugaPoStarosti(h.tabData, tbl, btnObrada, btnPrint, searchInput, i18n.GetInstance(), gnGod).Render(c.Request.Context(), c.Writer)
+		err := tmpl_fin.PregledDospelogDugaPoStarosti(h.tabData, tbl, btnObrada, btnPrint, searchInput, h.translator, gnGod).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -1081,7 +1071,6 @@ func (h *OtvoreneStavkeHandler) PregledDospelogDugaPoStarosti(c *gin.Context) {
 
 // PregledDospelogDugaPoStarostiStampa - Tab 7: Print report for dospeli dug po starosti
 func (h *OtvoreneStavkeHandler) PregledDospelogDugaPoStarostiStampa(c *gin.Context) {
-	translator := i18n.GetInstance()
 	userSession := domain.GetSessionFromContext(c)
 	if userSession == nil {
 		common.WriteJSONResponse(c, http.StatusUnauthorized, false, nil, "Unauthorized")
@@ -1112,7 +1101,7 @@ func (h *OtvoreneStavkeHandler) PregledDospelogDugaPoStarostiStampa(c *gin.Conte
 	}
 
 	repParams := domain.ReportParameters{
-		ReportName:  translator.Title("PREGLED DUGOVANJA KUPACA / DOSPELI DUG PO STAROSTI"),
+		ReportName:  h.translator.Title("PREGLED DUGOVANJA KUPACA / DOSPELI DUG PO STAROSTI"),
 		Orientation: "landscape",
 		CompanyName: fvrData.Naziv,
 		Adress:      fvrData.Adresa,
@@ -1122,7 +1111,7 @@ func (h *OtvoreneStavkeHandler) PregledDospelogDugaPoStarostiStampa(c *gin.Conte
 		MatBroj:     fvrData.Matbr,
 		SifDel:      fvrData.SifDel,
 		ParameterItems: map[string]domain.ParameterItem{
-			"StanjeNaDan": {Name: translator.Label("Stanje na dan"), Value: standeNaDanFmt},
+			"StanjeNaDan": {Name: h.translator.Label("Stanje na dan"), Value: standeNaDanFmt},
 		},
 	}
 	tbl := common.SetTableBasicData(dospelaStarostiContentTitle, dospelaStarostiTableID, h.service.GetDugovanjaStarostiStampaFields(), "", "", 0, 0, 0, 0, h.cfg)
@@ -1134,7 +1123,7 @@ func (h *OtvoreneStavkeHandler) PregledDospelogDugaPoStarostiStampa(c *gin.Conte
 	}
 
 	c.Header("Content-Type", "text/html; charset=utf-8")
-	tmpl_rep_fin.DospelogDugaPoStarostiStampa(repParams, tbl, translator).Render(ctx, c.Writer)
+	tmpl_rep_fin.DospelogDugaPoStarostiStampa(repParams, tbl, h.translator).Render(ctx, c.Writer)
 }
 
 // PovezivanjeRacunaUplata - Tab 8: Povezivanje računa i uplata
@@ -1160,7 +1149,7 @@ func (h *OtvoreneStavkeHandler) PovezivanjeRacunaUplata(c *gin.Context) {
 	btnZatvaranje := common.SetButton("btn-zatvori-racun", "Zatv. račun", "obrada", "api/otvorenestavke/povezivanje", "#pov-dialog-content", "innerHTML", "POST", "", hxValsPovezivanje, true, common.ClassPrintButton, "handleBackendResponse")
 	btnNazad := common.SetButton("btn-nazad", "Nazad", "", "", "", "", "", "", "", true, common.ClassButton, "")
 
-	searchPartneri := common.CreateSearchInput("search-partneri", i18n.GetInstance(), "api/otvorenestavke/povezivanje", "#"+povezivanjePartneriTableID, hxValsPovezivanje)
+	searchPartneri := common.CreateSearchInput("search-partneri", h.translator, "api/otvorenestavke/povezivanje", "#"+povezivanjePartneriTableID, hxValsPovezivanje)
 	tblPartneri.URLGetAll = "api/otvorenestavke/povezivanje"
 	tblPartneri.URLPrefix = "api/otvorenestavke/povezivanje"
 	tblPartneri.Pagination.HxVals = hxValsPovezivanje
@@ -1168,7 +1157,7 @@ func (h *OtvoreneStavkeHandler) PovezivanjeRacunaUplata(c *gin.Context) {
 	h.setOtvoreneStavkeActiveTab("povezivanje")
 
 	if requestSource == "menu" || requestSource == "tab" {
-		err := tmpl_fin.PovezivanjeRacunaUplata(h.tabData, tblPartneri, tblUplate, tblFakture, btnObrada, btnZatvaranje, btnNazad, searchPartneri, i18n.GetInstance(), gnGod).Render(c.Request.Context(), c.Writer)
+		err := tmpl_fin.PovezivanjeRacunaUplata(h.tabData, tblPartneri, tblUplate, tblFakture, btnObrada, btnZatvaranje, btnNazad, searchPartneri, h.translator, gnGod).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 		}
@@ -1176,7 +1165,7 @@ func (h *OtvoreneStavkeHandler) PovezivanjeRacunaUplata(c *gin.Context) {
 	}
 
 	// For btnobrada: render the template with data (service is TODO)
-	err := tmpl_fin.PovezivanjeRacunaUplata(h.tabData, tblPartneri, tblUplate, tblFakture, btnObrada, btnZatvaranje, btnNazad, searchPartneri, i18n.GetInstance(), gnGod).Render(c.Request.Context(), c.Writer)
+	err := tmpl_fin.PovezivanjeRacunaUplata(h.tabData, tblPartneri, tblUplate, tblFakture, btnObrada, btnZatvaranje, btnNazad, searchPartneri, h.translator, gnGod).Render(c.Request.Context(), c.Writer)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 	}

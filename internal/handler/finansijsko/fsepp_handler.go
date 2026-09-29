@@ -49,16 +49,18 @@ const (
 )
 
 type FseppHandler struct {
-	tabData domain.TabData
-	service finservice.FseppService
-	cfg     config.Config
-	lm      *middleware.LockMiddleware
+	translator *i18n.Service
+	tabData    domain.TabData
+	service    finservice.FseppService
+	cfg        config.Config
+	lm         *middleware.LockMiddleware
 }
 
-func NewFseppHandler(service finservice.FseppService, cfg config.Config, lm *middleware.LockMiddleware) *FseppHandler {
+func NewFseppHandler(service finservice.FseppService, cfg config.Config, lm *middleware.LockMiddleware, translator *i18n.Service) *FseppHandler {
 	handler := &FseppHandler{
-		cfg: cfg,
-		lm:  lm,
+		translator: translator,
+		cfg:        cfg,
+		lm:         lm,
 	}
 	handler.tabData = GetFseppTabData()
 	handler.service = service
@@ -72,8 +74,7 @@ func (h *FseppHandler) FseppMain(c *gin.Context) {
 		gnGod = session.SelectedGod
 	}
 	h.tabData = setFseppActiveTab(h.tabData, "sekcije-izvori")
-	translator := i18n.GetInstance()
-	searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), fseppURLEvidencija, fmt.Sprintf("#%s", fseppTableID), hxValsFseppEvidencija)
+	searchInput := common.CreateSearchInput("search-input", h.translator, fseppURLEvidencija, fmt.Sprintf("#%s", fseppTableID), hxValsFseppEvidencija)
 
 	tbl := common.SetTableBasicData(fseppContentTitle, fseppTableID, h.service.GetSekcijeIzvoriTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 	tbl.Pagination.HxVals = hxValsFseppEvidencija
@@ -101,12 +102,11 @@ func (h *FseppHandler) FseppMain(c *gin.Context) {
 	tbl.URLPrefix = fseppURLSekcije
 	tbl.BtnAdd.IsVisible = true
 	tbl.BtnAdd.HxActionURL = fseppURLSekcijeUnos
-	tmpl_fin.FseppMain(h.tabData, tbl, searchInput, gnGod, translator).Render(c.Request.Context(), c.Writer)
+	tmpl_fin.FseppMain(h.tabData, tbl, searchInput, gnGod, h.translator).Render(c.Request.Context(), c.Writer)
 }
 
 func (h *FseppHandler) FseppSekcijeIzvori(c *gin.Context) {
 	requestSource := c.Request.Header.Get("X-Request-Source")
-	translator := i18n.GetInstance()
 	h.tabData = setFseppActiveTab(h.tabData, "sekcije-izvori")
 
 	session := domain.GetSessionFromStdContext(c)
@@ -114,7 +114,7 @@ func (h *FseppHandler) FseppSekcijeIzvori(c *gin.Context) {
 	if session != nil {
 		gnGod = session.SelectedGod
 	}
-	searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), fseppURLSekcije, fmt.Sprintf("#%s", fseppTableID), "")
+	searchInput := common.CreateSearchInput("search-input", h.translator, fseppURLSekcije, fmt.Sprintf("#%s", fseppTableID), "")
 
 	tbl := common.SetTableBasicData(fseppContentTitle, fseppTableID, h.service.GetSekcijeIzvoriTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 
@@ -142,14 +142,13 @@ func (h *FseppHandler) FseppSekcijeIzvori(c *gin.Context) {
 	tbl.BtnAdd.HxActionURL = fseppURLSekcijeUnos
 	tbl.BtnAdd.HxTarget = "#dialog-content"
 	if requestSource == "btnobrada" || requestSource == "btnpage" || requestSource == "searchinput" {
-		components.Table(tbl, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+		components.Table(tbl, h.translator).Render(c.Request.Context(), c.Writer)
 	} else {
-		tmpl_fin.FseppSekcijeIzvori(h.tabData, tbl, searchInput, gnGod, translator).Render(c.Request.Context(), c.Writer)
+		tmpl_fin.FseppSekcijeIzvori(h.tabData, tbl, searchInput, gnGod, h.translator).Render(c.Request.Context(), c.Writer)
 	}
 }
 
 func (h *FseppHandler) FseppSekcijeUnos(c *gin.Context) {
-	translator := i18n.GetInstance()
 	dialog := domain.Dialog{
 		Id: "dialog-fsepp-unos",
 	}
@@ -178,7 +177,7 @@ func (h *FseppHandler) FseppSekcijeUnos(c *gin.Context) {
 	}
 	model := domain.Fsepp{}
 	csrfToken := common.GetCsrfToken(c)
-	tmpl_fin.DialogFseppSekcije(model, dialog, btnSave, btnCancel, btnClose, translator, csrfToken).Render(c.Request.Context(), c.Writer)
+	tmpl_fin.DialogFseppSekcije(model, dialog, btnSave, btnCancel, btnClose, h.translator, csrfToken).Render(c.Request.Context(), c.Writer)
 
 }
 
@@ -189,7 +188,6 @@ func (h *FseppHandler) FseppSekcijeSave(c *gin.Context) {
 
 func (h *FseppHandler) FseppEvidencija(c *gin.Context) {
 	requestSource := c.Request.Header.Get("X-Request-Source")
-	translator := i18n.GetInstance()
 
 	if requestSource == "menu" || requestSource == "tab" {
 		session := domain.GetSessionFromContext(c)
@@ -197,9 +195,9 @@ func (h *FseppHandler) FseppEvidencija(c *gin.Context) {
 		if session != nil {
 			gnGod = session.SelectedGod
 		}
-		btnObrada := common.SetButton("obrada-btn", translator.Button("Obrada"), "obrada", fseppURLEvidencija, "#"+fseppTableID, "innerHTML", "GET", "", hxValsFseppEvidencija, true, common.ClassSaveButton, "")
+		btnObrada := common.SetButton("obrada-btn", h.translator.Button("Obrada"), "obrada", fseppURLEvidencija, "#"+fseppTableID, "innerHTML", "GET", "", hxValsFseppEvidencija, true, common.ClassSaveButton, "")
 		btnDelete := common.SetButton("delete-btn", "Obriši", "fin_delete", "", "", "innerHTML", "GET", "", hxValsFseppEvidencija, true, common.ClassButton, "")
-		searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), fseppURLEvidencija, fmt.Sprintf("#%s", fseppTableID), hxValsFseppEvidencija)
+		searchInput := common.CreateSearchInput("search-input", h.translator, fseppURLEvidencija, fmt.Sprintf("#%s", fseppTableID), hxValsFseppEvidencija)
 
 		tbl := common.SetTableBasicData(fseppContentTitle, fseppTableID, h.service.GetEvidencijaTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 		tbl.Pagination.HxVals = hxValsFseppEvidencija
@@ -208,7 +206,7 @@ func (h *FseppHandler) FseppEvidencija(c *gin.Context) {
 		common.SetTableConfig(&tbl, "EVIDENCIJA PP", fseppURLEvidencija, false, false, false)
 
 		h.tabData = setFseppActiveTab(h.tabData, "evidencija")
-		err := tmpl_fin.FseppEvidencija(h.tabData, tbl, btnObrada, btnDelete, searchInput, gnGod, translator).Render(c.Request.Context(), c.Writer)
+		err := tmpl_fin.FseppEvidencija(h.tabData, tbl, btnObrada, btnDelete, searchInput, gnGod, h.translator).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -252,7 +250,6 @@ func (h *FseppHandler) FseppEvidencija(c *gin.Context) {
 
 func (h *FseppHandler) FseppSefKpr(c *gin.Context) {
 	requestSource := c.Request.Header.Get("X-Request-Source")
-	translator := i18n.GetInstance()
 	csrftoken := common.GetCsrfToken(c)
 	if requestSource == "menu" || requestSource == "tab" {
 		session := domain.GetSessionFromContext(c)
@@ -262,7 +259,7 @@ func (h *FseppHandler) FseppSefKpr(c *gin.Context) {
 		}
 
 		btnImport := common.SetButton("import-btn", "Import", "fin_import", fseppURLSefKprImport, "#"+fseppTableID, "innerHTML", "POST", "", hxValsFseppImport, true, common.ClassSaveButton, "handleDialogResponse")
-		searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), fseppURLSefKpr, fmt.Sprintf("#%s", fseppTableID), hxValsFseppImport)
+		searchInput := common.CreateSearchInput("search-input", h.translator, fseppURLSefKpr, fmt.Sprintf("#%s", fseppTableID), hxValsFseppImport)
 
 		tbl := common.SetTableBasicData(fseppContentTitle, fseppTableID, h.service.GetSefKprTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 		tbl.Pagination.HxVals = hxValsFseppImport
@@ -271,7 +268,7 @@ func (h *FseppHandler) FseppSefKpr(c *gin.Context) {
 		common.SetTableConfig(&tbl, "SEF-KPR", fseppURLSefKpr, false, false, false)
 
 		h.tabData = setFseppActiveTab(h.tabData, "sef-kpr")
-		err := tmpl_fin.FseppSefKpr(h.tabData, tbl, btnImport, searchInput, gnGod, csrftoken, translator).Render(c.Request.Context(), c.Writer)
+		err := tmpl_fin.FseppSefKpr(h.tabData, tbl, btnImport, searchInput, gnGod, csrftoken, h.translator).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -310,7 +307,6 @@ func (h *FseppHandler) FseppSefKpr(c *gin.Context) {
 }
 
 func (h *FseppHandler) FseppSefKprImport(c *gin.Context) {
-	translator := i18n.GetInstance()
 	dialog := domain.Dialog{
 		Id:    "dialog-fsepp-import",
 		Title: "Import rezultat",
@@ -339,11 +335,11 @@ func (h *FseppHandler) FseppSefKprImport(c *gin.Context) {
 	doDatuma := c.PostForm("dodatuma")
 
 	if fileContent == "" {
-		tmpl.DialogOk("Niste izabrali fajl za import ili je fajl prazan. Molimo izaberite fajl i pokušajte ponovo.", dialog, btnClose, btnOk, translator).Render(c.Request.Context(), c.Writer)
+		tmpl.DialogOk("Niste izabrali fajl za import ili je fajl prazan. Molimo izaberite fajl i pokušajte ponovo.", dialog, btnClose, btnOk, h.translator).Render(c.Request.Context(), c.Writer)
 		return
 	}
 	if fileType != "csv" {
-		tmpl.DialogOk("Nepodržani tip fajla. Molimo izaberite CSV fajl i pokušajte ponovo.", dialog, btnClose, btnOk, translator).Render(c.Request.Context(), c.Writer)
+		tmpl.DialogOk("Nepodržani tip fajla. Molimo izaberite CSV fajl i pokušajte ponovo.", dialog, btnClose, btnOk, h.translator).Render(c.Request.Context(), c.Writer)
 		return
 	}
 	tbl := common.SetTableBasicData("", fseppTableID, h.service.GetSefKprTableFields(), "", fseppURLSefKpr, 0, 0, 0, 0, h.cfg)
@@ -354,7 +350,7 @@ func (h *FseppHandler) FseppSefKprImport(c *gin.Context) {
 
 	err := h.service.FseppSefKprImport(c.Request.Context(), &tbl, fileContent, filterType, odDatuma, doDatuma, true, pageSize, currentPage)
 	if err != nil {
-		tmpl.DialogOk("Došlo je do greške prilikom obrade fajla: "+err.Error(), dialog, btnClose, btnOk, translator).Render(c.Request.Context(), c.Writer)
+		tmpl.DialogOk("Došlo je do greške prilikom obrade fajla: "+err.Error(), dialog, btnClose, btnOk, h.translator).Render(c.Request.Context(), c.Writer)
 		return
 	}
 }

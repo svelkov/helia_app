@@ -92,6 +92,7 @@ type responseWriter struct {
 
 // BasicHandler handles base application functionality
 type BasicHandler struct {
+	translator   *i18n.Service
 	menuService  service.MenuService
 	isLoggedIn   bool
 	menuItems    domain.MenuDataItems
@@ -104,8 +105,9 @@ type BasicHandler struct {
 }
 
 // NewBasicHandler creates and initializes a new BasicHandler
-func NewBasicHandler(c *gin.Context, menuService service.MenuService, isLoggedIn bool, fvrService finservice.FvrService, cfg config.Config, userService service.UserService) *BasicHandler {
+func NewBasicHandler(c *gin.Context, menuService service.MenuService, isLoggedIn bool, fvrService finservice.FvrService, cfg config.Config, userService service.UserService, translator *i18n.Service) *BasicHandler {
 	handler := &BasicHandler{
+		translator:  translator,
 		menuService: menuService,
 		isLoggedIn:  isLoggedIn,
 		fvrService:  fvrService,
@@ -145,7 +147,7 @@ func (h *BasicHandler) renderLoginPage(c *gin.Context, fvrData domain.Firma, sel
 
 	c.Header("content-type", "text/html")
 	err := templates.Base(false,
-		templates.Login(i18n.GetInstance(), csrfToken),
+		templates.Login(h.translator, csrfToken),
 		h.menuItems,
 		h.subMenuItems,
 		"Helia",
@@ -156,7 +158,7 @@ func (h *BasicHandler) renderLoginPage(c *gin.Context, fvrData domain.Firma, sel
 		setComboPoslGodConfig(fvrData, selections.firma, selections.god),
 		setComboKarConfig(fvrData, selections.firma, selections.god, selections.kar),
 		setComboLanguageConfig(selections.language, h.cfg),
-		i18n.GetInstance(),
+		h.translator,
 	).Render(c.Request.Context(), c.Writer)
 
 	if err != nil {
@@ -287,9 +289,24 @@ func (h *BasicHandler) updateUserSession(c *gin.Context, selections defaultSelec
 }
 
 // getDefaultSelections returns default values for firma, god, kar, and language
+// layoutLanguage returns the language the language combo of the layout has to show. The page is being
+// rendered in the language middleware.I18n resolved for this request, so that is the language the combo
+// has to show; the language of the session (what the JWT carried) and "SR" are only fallbacks.
+func (h *BasicHandler) layoutLanguage(sessionLanguage string) string {
+	if lang := h.translator.GetCurrentLanguage(); lang != "" {
+		return lang
+	}
+	if sessionLanguage != "" {
+		return sessionLanguage
+	}
+	return "SR"
+}
+
 func (h *BasicHandler) getDefaultSelections(fvrData domain.Firma) defaultSelections {
 	selections := defaultSelections{
-		language: "sr", // Default language
+		// The language of the request, not a hardcoded one: the combo has to show the language the page
+		// is rendered in (the middleware applied it).
+		language: h.layoutLanguage(""),
 	}
 
 	if len(fvrData.Firme) > 0 {
@@ -475,7 +492,7 @@ func (h *BasicHandler) RegisterHandler(c *gin.Context) {
 	if c.Request.Method == http.MethodGet {
 		err := templates.Base(
 			false,
-			templates.Register(i18n.GetInstance()),
+			templates.Register(h.translator),
 			h.menuItems,
 			h.subMenuItems,
 			"Helia - Registration",
@@ -486,7 +503,7 @@ func (h *BasicHandler) RegisterHandler(c *gin.Context) {
 			setComboPoslGodConfig(fvrData, selections.firma, selections.god),
 			setComboKarConfig(fvrData, selections.firma, selections.god, selections.kar),
 			setComboLanguageConfig(selections.language, h.cfg),
-			i18n.GetInstance(),
+			h.translator,
 		).Render(c.Request.Context(), c.Writer)
 
 		if err != nil {
@@ -624,7 +641,7 @@ func (h *BasicHandler) Verify2FAHandler(c *gin.Context) {
 
 	err := templates.Base(
 		false,
-		templates.Verify2FA(i18n.GetInstance(), csrfToken, username),
+		templates.Verify2FA(h.translator, csrfToken, username),
 		h.menuItems,
 		h.subMenuItems,
 		"Helia - 2FA Verification",
@@ -635,7 +652,7 @@ func (h *BasicHandler) Verify2FAHandler(c *gin.Context) {
 		setComboPoslGodConfig(fvrData, selections.firma, selections.god),
 		setComboKarConfig(fvrData, selections.firma, selections.god, selections.kar),
 		setComboLanguageConfig(selections.language, h.cfg),
-		i18n.GetInstance(),
+		h.translator,
 	).Render(c.Request.Context(), c.Writer)
 
 	if err != nil {
@@ -876,7 +893,7 @@ func (h *BasicHandler) indexHandler(c *gin.Context) {
 	// Get firma data and selections
 	selections := h.getUserSessionSelections(userSession, fvrData)
 	//set the selected language
-	i18n.GetInstance().SetLanguage(selections.language)
+	h.translator.SetLanguage(selections.language)
 	// if !isLoggedIn {
 	// 	h.renderLoginPage(c, fvrData, selections)
 	// 	return
@@ -920,7 +937,7 @@ func (h *BasicHandler) indexHandler(c *gin.Context) {
 	// Render the page
 	err = tmpl.Base(
 		isLoggedIn,
-		tmpl.Content(isLoggedIn, i18n.GetInstance()),
+		tmpl.Content(isLoggedIn, h.translator),
 		h.menuItems,
 		h.subMenuItems,
 		"HELIA",
@@ -931,7 +948,7 @@ func (h *BasicHandler) indexHandler(c *gin.Context) {
 		setComboPoslGodConfig(fvrData, selections.firma, selections.god),
 		setComboKarConfig(fvrData, selections.firma, selections.god, selections.kar),
 		setComboLanguageConfig(selections.language, h.cfg),
-		i18n.GetInstance(),
+		h.translator,
 	).Render(c.Request.Context(), c.Writer)
 
 	if err != nil {
@@ -978,7 +995,7 @@ func (h *BasicHandler) getUserSessionSelections(userSession *domain.UserSession,
 		firma:    userSession.Firma,
 		god:      userSession.SelectedGod,
 		kar:      userSession.SelectedKar,
-		language: userSession.Language,
+		language: h.layoutLanguage(userSession.Language),
 	}
 
 	// Set defaults if session values are empty
@@ -993,7 +1010,7 @@ func (h *BasicHandler) getUserSessionSelections(userSession *domain.UserSession,
 		selections.kar = fvrData.Firme[0].Godine[0].Kar[0]
 	}
 	if selections.language == "" {
-		selections.language = "en" // default language
+		selections.language = h.layoutLanguage("")
 	}
 	return selections
 }
@@ -1224,18 +1241,26 @@ func (h *BasicHandler) SelectComboKar(c *gin.Context) {
 }
 func (h *BasicHandler) SelectComboLanguage(c *gin.Context) {
 	lang := c.Query("language")
+	if lang == "" {
+		lang = c.PostForm("language")
+	}
 
-	// Update user session in context (per-user, request-scoped)
+	// Update the session first: the token and the layout are built from it below, so the choice of the
+	// user has to be in the session before they are regenerated/rendered.
 	userSession := domain.GetSessionFromContext(c)
-
-	// Regenerate JWT token with new preferences
-	h.regenerateToken(c, userSession)
-	if userSession != nil {
+	if userSession != nil && lang != "" {
 		userSession.Language = lang
 		c.Set("userSession", userSession)
 	}
 
-	i18n.GetInstance().SetLanguage(lang)
+	// Persist the choice in the session token (the next requests read the language from it).
+	h.regenerateToken(c, userSession)
+
+	// Apply it to this request as well: the middleware already ran with the previous language.
+	if lang != "" {
+		h.translator.SetLanguage(lang)
+		c.SetCookie("lang", lang, 86400*30, "/", "", false, false)
+	}
 
 	h.renderFullPage(c)
 }
@@ -1415,7 +1440,7 @@ func (h *BasicHandler) renderFullPage(c *gin.Context) {
 		LanguageConf domain.ComboFieldConfig
 	}{
 		IsLoggedIn:   true,
-		Content:      tmpl.Content(true, i18n.GetInstance()),
+		Content:      tmpl.Content(true, h.translator),
 		MenuItems:    h.menuItems,
 		SubMenus:     h.subMenuItems,
 		Title:        "HELIA",
@@ -1446,7 +1471,7 @@ func (h *BasicHandler) renderFullPage(c *gin.Context) {
 		pageData.GodConf,
 		pageData.KarConf,
 		pageData.LanguageConf,
-		i18n.GetInstance(),
+		h.translator,
 	).Render(c.Request.Context(), c.Writer)
 }
 
@@ -1685,7 +1710,7 @@ func (h *BasicHandler) Setup2FAHandler(c *gin.Context) {
 	c.Header("content-type", "text/html")
 	err = templates.Base(
 		false,
-		templates.Setup2FA(i18n.GetInstance(), qrCodeDataURL, backupCodesArray),
+		templates.Setup2FA(h.translator, qrCodeDataURL, backupCodesArray),
 		h.menuItems,
 		h.subMenuItems,
 		"Helia - 2FA Setup",
@@ -1696,7 +1721,7 @@ func (h *BasicHandler) Setup2FAHandler(c *gin.Context) {
 		setComboPoslGodConfig(fvrData, selections.firma, selections.god),
 		setComboKarConfig(fvrData, selections.firma, selections.god, selections.kar),
 		setComboLanguageConfig(selections.language, h.cfg),
-		i18n.GetInstance(),
+		h.translator,
 	).Render(c.Request.Context(), c.Writer)
 
 	if err != nil {

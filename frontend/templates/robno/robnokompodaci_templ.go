@@ -251,7 +251,7 @@ func RobnoKompodaciPregledRealizacijePoKupcimaArtiklima(tabs domain.TabData, tbl
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.ComboBoxField(domain.ComboFieldConfig{ID: "odgrupe", Name: "odgrupe", OptionValues: grpValues, ClassSelect: common.ClassInputTextEnabled + " flex-1", TabIndex: "1"}, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.ComboBoxField(domain.ComboFieldConfig{ID: "odgrupe", Name: "odgrupe", OptionValues: grpValues, OnInput: "clearFieldError", OnFocus: "clearFieldError", ClassSelect: common.ClassInputTextEnabled + " flex-1", TabIndex: "1"}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -259,7 +259,7 @@ func RobnoKompodaciPregledRealizacijePoKupcimaArtiklima(tabs domain.TabData, tbl
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.ComboBoxField(domain.ComboFieldConfig{ID: "dogrupe", Name: "dogrupe", OptionValues: grpValues, ClassSelect: common.ClassInputTextEnabled + " flex-1", TabIndex: "2"}, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.ComboBoxField(domain.ComboFieldConfig{ID: "dogrupe", Name: "dogrupe", OptionValues: grpValues, OnInput: "clearFieldError", OnFocus: "clearFieldError", ClassSelect: common.ClassInputTextEnabled + " flex-1", TabIndex: "2"}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -271,7 +271,7 @@ func RobnoKompodaciPregledRealizacijePoKupcimaArtiklima(tabs domain.TabData, tbl
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "konto", Name: "konto", FieldType: "text", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "3"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "konto", Name: "konto", FieldType: "text", OnInput: "clearFieldError", OnFocus: "clearFieldError", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "3"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -291,7 +291,7 @@ func RobnoKompodaciPregledRealizacijePoKupcimaArtiklima(tabs domain.TabData, tbl
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "odsifrekupca", Name: "odsifrekupca", FieldType: "text", Value: "0", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "3"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "odsifrekupca", Name: "odsifrekupca", FieldType: "text", Value: "0", OnInput: "clearFieldError", OnFocus: "clearFieldError", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "3"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -311,7 +311,7 @@ func RobnoKompodaciPregledRealizacijePoKupcimaArtiklima(tabs domain.TabData, tbl
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "dosifrekupca", Name: "dosifrekupca", FieldType: "text", Value: "999999", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "3"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "dosifrekupca", Name: "dosifrekupca", FieldType: "text", Value: "999999", OnInput: "clearFieldError", OnFocus: "clearFieldError", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "3"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -331,7 +331,7 @@ func RobnoKompodaciPregledRealizacijePoKupcimaArtiklima(tabs domain.TabData, tbl
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "odsifreartikla", Name: "odsifreartikla", FieldType: "text", Value: "0", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "3"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "odsifreartikla", Name: "odsifreartikla", FieldType: "text", Value: "0", OnInput: "clearFieldError", OnFocus: "clearFieldError", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "3"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -351,7 +351,7 @@ func RobnoKompodaciPregledRealizacijePoKupcimaArtiklima(tabs domain.TabData, tbl
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "dosifreartikla", Name: "dosifreartikla", FieldType: "text", Value: "999999", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "4"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "dosifreartikla", Name: "dosifreartikla", FieldType: "text", Value: "999999", OnInput: "clearFieldError", OnFocus: "clearFieldError", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "4"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -371,7 +371,7 @@ func RobnoKompodaciPregledRealizacijePoKupcimaArtiklima(tabs domain.TabData, tbl
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month(), 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "3"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", OnInput: "clearFieldError", OnFocus: "clearFieldError", Value: time.Date(gnGod, time.Now().Month(), 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "3"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -379,7 +379,7 @@ func RobnoKompodaciPregledRealizacijePoKupcimaArtiklima(tabs domain.TabData, tbl
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month()+1, 0, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "4"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", OnInput: "clearFieldError", OnFocus: "clearFieldError", Value: time.Date(gnGod, time.Now().Month()+1, 0, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "4"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -428,7 +428,7 @@ func RobnoKompodaciPregledRealizacijePoKupcimaArtiklima(tabs domain.TabData, tbl
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</div></div></div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</div></div></div></div><div id=\"robnokompodaci-dialog-message-id\"></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -472,7 +472,7 @@ func RobnoKompodaciPregledRealizacijePoArtiklima(tabs domain.TabData, tbl domain
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Opcije izveštaja"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnokompodaci.templ`, Line: 178, Col: 103}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnokompodaci.templ`, Line: 179, Col: 103}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
@@ -485,7 +485,7 @@ func RobnoKompodaciPregledRealizacijePoArtiklima(tabs domain.TabData, tbl domain
 		var templ_7745c5c3_Var11 string
 		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Izbor tržišta"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnokompodaci.templ`, Line: 180, Col: 99}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnokompodaci.templ`, Line: 181, Col: 99}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {
@@ -498,7 +498,7 @@ func RobnoKompodaciPregledRealizacijePoArtiklima(tabs domain.TabData, tbl domain
 		var templ_7745c5c3_Var12 string
 		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Domaće"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnokompodaci.templ`, Line: 184, Col: 83}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnokompodaci.templ`, Line: 185, Col: 83}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 		if templ_7745c5c3_Err != nil {
@@ -511,7 +511,7 @@ func RobnoKompodaciPregledRealizacijePoArtiklima(tabs domain.TabData, tbl domain
 		var templ_7745c5c3_Var13 string
 		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Izvoz"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnokompodaci.templ`, Line: 188, Col: 80}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnokompodaci.templ`, Line: 189, Col: 80}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 		if templ_7745c5c3_Err != nil {
@@ -524,7 +524,7 @@ func RobnoKompodaciPregledRealizacijePoArtiklima(tabs domain.TabData, tbl domain
 		var templ_7745c5c3_Var14 string
 		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("ukupno_trziste"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnokompodaci.templ`, Line: 192, Col: 90}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnokompodaci.templ`, Line: 193, Col: 90}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 		if templ_7745c5c3_Err != nil {
@@ -537,7 +537,7 @@ func RobnoKompodaciPregledRealizacijePoArtiklima(tabs domain.TabData, tbl domain
 		var templ_7745c5c3_Var15 string
 		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Parametri"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnokompodaci.templ`, Line: 199, Col: 95}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnokompodaci.templ`, Line: 200, Col: 95}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 		if templ_7745c5c3_Err != nil {
@@ -551,7 +551,7 @@ func RobnoKompodaciPregledRealizacijePoArtiklima(tabs domain.TabData, tbl domain
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.ComboBoxField(domain.ComboFieldConfig{ID: "odgrupe", Name: "odgrupe", OptionValues: grpValues, ClassSelect: common.ClassInputTextEnabled + " flex-1", TabIndex: "1"}, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.ComboBoxField(domain.ComboFieldConfig{ID: "odgrupe", Name: "odgrupe", OptionValues: grpValues, OnInput: "clearFieldError", OnFocus: "clearFieldError", ClassSelect: common.ClassInputTextEnabled + " flex-1", TabIndex: "1"}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -559,7 +559,7 @@ func RobnoKompodaciPregledRealizacijePoArtiklima(tabs domain.TabData, tbl domain
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.ComboBoxField(domain.ComboFieldConfig{ID: "dogrupe", Name: "dogrupe", OptionValues: grpValues, ClassSelect: common.ClassInputTextEnabled + " flex-1", TabIndex: "2"}, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.ComboBoxField(domain.ComboFieldConfig{ID: "dogrupe", Name: "dogrupe", OptionValues: grpValues, OnInput: "clearFieldError", OnFocus: "clearFieldError", ClassSelect: common.ClassInputTextEnabled + " flex-1", TabIndex: "2"}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -571,7 +571,7 @@ func RobnoKompodaciPregledRealizacijePoArtiklima(tabs domain.TabData, tbl domain
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "odsifreartikla", Name: "odsifreartikla", FieldType: "text", Value: "0", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "3"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "odsifreartikla", Name: "odsifreartikla", FieldType: "text", Value: "0", OnInput: "clearFieldError", OnFocus: "clearFieldError", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "3"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -591,7 +591,7 @@ func RobnoKompodaciPregledRealizacijePoArtiklima(tabs domain.TabData, tbl domain
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "dosifreartikla", Name: "dosifreartikla", FieldType: "text", Value: "999999", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "4"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "dosifreartikla", Name: "dosifreartikla", FieldType: "text", Value: "999999", OnInput: "clearFieldError", OnFocus: "clearFieldError", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "4"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -611,7 +611,7 @@ func RobnoKompodaciPregledRealizacijePoArtiklima(tabs domain.TabData, tbl domain
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month(), 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "3"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month(), 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), OnInput: "clearFieldError", OnFocus: "clearFieldError", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "3"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -619,7 +619,7 @@ func RobnoKompodaciPregledRealizacijePoArtiklima(tabs domain.TabData, tbl domain
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month()+1, 0, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "4"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month()+1, 0, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), OnInput: "clearFieldError", OnFocus: "clearFieldError", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "4"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -654,7 +654,7 @@ func RobnoKompodaciPregledRealizacijePoArtiklima(tabs domain.TabData, tbl domain
 		var templ_7745c5c3_Var16 string
 		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(tbl.TableID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnokompodaci.templ`, Line: 238, Col: 26}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnokompodaci.templ`, Line: 239, Col: 26}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 		if templ_7745c5c3_Err != nil {
@@ -668,7 +668,7 @@ func RobnoKompodaciPregledRealizacijePoArtiklima(tabs domain.TabData, tbl domain
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "</div></div></div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "</div></div></div></div><div id=\"robnokompodaci-dialog-message-id\"></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -712,7 +712,7 @@ func RobnoKompodaciPregledUcescaArtikla(tabs domain.TabData, tbl domain.TableDat
 		var templ_7745c5c3_Var18 string
 		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Parametri"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnokompodaci.templ`, Line: 257, Col: 94}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnokompodaci.templ`, Line: 259, Col: 94}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
@@ -726,7 +726,7 @@ func RobnoKompodaciPregledUcescaArtikla(tabs domain.TabData, tbl domain.TableDat
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "odsifreartikla", Name: "odsifreartikla", FieldType: "text", Value: "0", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "1"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "odsifreartikla", Name: "odsifreartikla", FieldType: "text", Value: "0", OnInput: "clearFieldError", OnFocus: "clearFieldError", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "1"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -742,7 +742,7 @@ func RobnoKompodaciPregledUcescaArtikla(tabs domain.TabData, tbl domain.TableDat
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "dosifreartikla", Name: "dosifreartikla", FieldType: "text", Value: "999999", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "2"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "dosifreartikla", Name: "dosifreartikla", FieldType: "text", Value: "999999", OnInput: "clearFieldError", OnFocus: "clearFieldError", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "2"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -762,7 +762,7 @@ func RobnoKompodaciPregledUcescaArtikla(tabs domain.TabData, tbl domain.TableDat
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month(), 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "3"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month(), 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), OnInput: "clearFieldError", OnFocus: "clearFieldError", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "3"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -770,7 +770,7 @@ func RobnoKompodaciPregledUcescaArtikla(tabs domain.TabData, tbl domain.TableDat
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month()+1, 0, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "4"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month()+1, 0, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), OnInput: "clearFieldError", OnFocus: "clearFieldError", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "4"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -805,7 +805,7 @@ func RobnoKompodaciPregledUcescaArtikla(tabs domain.TabData, tbl domain.TableDat
 		var templ_7745c5c3_Var19 string
 		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(tbl.TableID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnokompodaci.templ`, Line: 287, Col: 26}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnokompodaci.templ`, Line: 289, Col: 26}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 		if templ_7745c5c3_Err != nil {
@@ -819,7 +819,7 @@ func RobnoKompodaciPregledUcescaArtikla(tabs domain.TabData, tbl domain.TableDat
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "</div></div></div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "</div></div></div></div><div id=\"robnokompodaci-dialog-message-id\"></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -863,7 +863,7 @@ func RobnoKompodaciPregledUcescaGrupeArtikala(tabs domain.TabData, tbl domain.Ta
 		var templ_7745c5c3_Var21 string
 		templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Parametri"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnokompodaci.templ`, Line: 306, Col: 94}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnokompodaci.templ`, Line: 309, Col: 94}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 		if templ_7745c5c3_Err != nil {
@@ -877,7 +877,7 @@ func RobnoKompodaciPregledUcescaGrupeArtikala(tabs domain.TabData, tbl domain.Ta
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.ComboBoxField(domain.ComboFieldConfig{ID: "odgrupe", Name: "odgrupe", OptionValues: grpValues, ClassSelect: common.ClassInputTextEnabled + " flex-1", TabIndex: "1"}, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.ComboBoxField(domain.ComboFieldConfig{ID: "odgrupe", Name: "odgrupe", OptionValues: grpValues, OnInput: "clearFieldError", OnFocus: "clearFieldError", ClassSelect: common.ClassInputTextEnabled + " flex-1", TabIndex: "1"}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -885,7 +885,7 @@ func RobnoKompodaciPregledUcescaGrupeArtikala(tabs domain.TabData, tbl domain.Ta
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.ComboBoxField(domain.ComboFieldConfig{ID: "dogrupe", Name: "dogrupe", OptionValues: grpValues, ClassSelect: common.ClassInputTextEnabled + " flex-1", TabIndex: "2"}, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.ComboBoxField(domain.ComboFieldConfig{ID: "dogrupe", Name: "dogrupe", OptionValues: grpValues, OnInput: "clearFieldError", OnFocus: "clearFieldError", ClassSelect: common.ClassInputTextEnabled + " flex-1", TabIndex: "2"}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -897,7 +897,7 @@ func RobnoKompodaciPregledUcescaGrupeArtikala(tabs domain.TabData, tbl domain.Ta
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month(), 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "3"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month(), 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), OnInput: "clearFieldError", OnFocus: "clearFieldError", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "3"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -905,7 +905,7 @@ func RobnoKompodaciPregledUcescaGrupeArtikala(tabs domain.TabData, tbl domain.Ta
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month()+1, 0, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "4"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", Value: time.Date(gnGod, time.Now().Month()+1, 0, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), OnInput: "clearFieldError", OnFocus: "clearFieldError", ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "4"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -940,7 +940,7 @@ func RobnoKompodaciPregledUcescaGrupeArtikala(tabs domain.TabData, tbl domain.Ta
 		var templ_7745c5c3_Var22 string
 		templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(tbl.TableID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnokompodaci.templ`, Line: 332, Col: 26}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnokompodaci.templ`, Line: 335, Col: 26}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
 		if templ_7745c5c3_Err != nil {
@@ -954,7 +954,7 @@ func RobnoKompodaciPregledUcescaGrupeArtikala(tabs domain.TabData, tbl domain.Ta
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 56, "</div></div></div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 56, "</div></div></div></div><div id=\"robnokompodaci-dialog-message-id\"></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

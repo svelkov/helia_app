@@ -42,16 +42,18 @@ const (
 )
 
 type PoreskeKnjigeHandler struct {
-	tabData domain.TabData
-	service finservice.PoreskeKnjigeService
-	cfg     config.Config
-	lm      *middleware.LockMiddleware
+	translator *i18n.Service
+	tabData    domain.TabData
+	service    finservice.PoreskeKnjigeService
+	cfg        config.Config
+	lm         *middleware.LockMiddleware
 }
 
-func NewPoreskeKnjigeHandler(service finservice.PoreskeKnjigeService, cfg config.Config, lm *middleware.LockMiddleware) *PoreskeKnjigeHandler {
+func NewPoreskeKnjigeHandler(service finservice.PoreskeKnjigeService, cfg config.Config, lm *middleware.LockMiddleware, translator *i18n.Service) *PoreskeKnjigeHandler {
 	handler := &PoreskeKnjigeHandler{
-		cfg: cfg,
-		lm:  lm,
+		translator: translator,
+		cfg:        cfg,
+		lm:         lm,
 	}
 	handler.tabData = GetPoreskeKnjigeTabData()
 	handler.service = service
@@ -67,7 +69,7 @@ func (h *PoreskeKnjigeHandler) PoreskeKnjigeMain(c *gin.Context) {
 
 	btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", poreskeKnjigeURLIzdatih, "#"+poreskeKnjigeTableID, "innerHTML", "GET", "", hxValsKirKpr, true, common.ClassSaveButton, "handleBackendResponse")
 	btnPrint := common.SetPrintButton("btn-print-kir", "Štampa", "fin_print", poreskeKnjigeURLIzdatihPrint, "GET", true, common.ClassPrintButton, "knjiga,oddatuma,dodatuma,stampaponalozima,stampaponalozimazbirno")
-	searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), poreskeKnjigeURLIzdatih, fmt.Sprintf("#%s", poreskeKnjigeTableID), hxValsKirKpr)
+	searchInput := common.CreateSearchInput("search-input", h.translator, poreskeKnjigeURLIzdatih, fmt.Sprintf("#%s", poreskeKnjigeTableID), hxValsKirKpr)
 
 	tbl := common.SetTableBasicData(poreskeKnjigeContentTitle, poreskeKnjigeTableID, h.service.GetTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 	tbl.Pagination.HxVals = hxValsKirKpr
@@ -85,7 +87,7 @@ func (h *PoreskeKnjigeHandler) PoreskeKnjigeMain(c *gin.Context) {
 		return
 	}
 
-	err = tmpl_fin.PoreskeKnjigeMain(h.tabData, tbl, btnObrada, btnPrint, searchInput, knjigaValues, gnGod, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+	err = tmpl_fin.PoreskeKnjigeMain(h.tabData, tbl, btnObrada, btnPrint, searchInput, knjigaValues, gnGod, h.translator).Render(c.Request.Context(), c.Writer)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 		return
@@ -94,7 +96,6 @@ func (h *PoreskeKnjigeHandler) PoreskeKnjigeMain(c *gin.Context) {
 
 func (h *PoreskeKnjigeHandler) KnjigaIzdatihRacuna(c *gin.Context) {
 	requestSource := c.Request.Header.Get("X-Request-Source")
-	translator := i18n.GetInstance()
 	page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
 	tbl := common.SetTableBasicData("", poreskeKnjigeTableID, h.service.GetKirTableFields(), "", poreskeKnjigeURLIzdatih, 0, 0, 0, 0, h.cfg)
 	tbl.Pagination.HxVals = hxValsKirKpr
@@ -113,7 +114,7 @@ func (h *PoreskeKnjigeHandler) KnjigaIzdatihRacuna(c *gin.Context) {
 
 		btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", poreskeKnjigeURLIzdatih, "#"+poreskeKnjigeTableID, "innerHTML", "GET", "", hxValsKirKpr, true, common.ClassSaveButton, "handleBackendResponse")
 		btnPrint := common.SetPrintButton("btn-print-kir", "Štampa", "fin_print", poreskeKnjigeURLIzdatihPrint, "GET", true, common.ClassPrintButton, "knjiga,oddatuma,dodatuma,stampaponalozima,stampaponalozimazbirno")
-		searchInput := common.CreateSearchInput("search-input", translator, poreskeKnjigeURLIzdatih, fmt.Sprintf("#%s", poreskeKnjigeTableID), hxValsKirKpr)
+		searchInput := common.CreateSearchInput("search-input", h.translator, poreskeKnjigeURLIzdatih, fmt.Sprintf("#%s", poreskeKnjigeTableID), hxValsKirKpr)
 		knjigaValues := []domain.ComboItem{}
 		// Get knjiga values
 		err := h.service.GetTipoveKnjigaValues(c.Request.Context(), &knjigaValues, "I")
@@ -123,7 +124,7 @@ func (h *PoreskeKnjigeHandler) KnjigaIzdatihRacuna(c *gin.Context) {
 		}
 
 		h.tabData = setPoreskeKnjigeActiveTab(h.tabData, "izdatih")
-		err = tmpl_fin.KnjigaIzdatihRacuna(h.tabData, tbl, btnObrada, btnPrint, searchInput, knjigaValues, gnGod, translator).Render(c.Request.Context(), c.Writer)
+		err = tmpl_fin.KnjigaIzdatihRacuna(h.tabData, tbl, btnObrada, btnPrint, searchInput, knjigaValues, gnGod, h.translator).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -158,7 +159,6 @@ func (h *PoreskeKnjigeHandler) KnjigaIzdatihRacuna(c *gin.Context) {
 	}
 }
 func (h *PoreskeKnjigeHandler) KnjigaIzdatihRacunaUnos(c *gin.Context) {
-	translator := i18n.GetInstance()
 	dialog := domain.Dialog{
 		Id: "dialog-kir-unos",
 	}
@@ -198,7 +198,7 @@ func (h *PoreskeKnjigeHandler) KnjigaIzdatihRacunaUnos(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, err.Error())
 		return
 	}
-	tmpl_fin.DialogKirUnos(dialog, knjigaValues, tipdokValues, btnSave, btnCancel, btnClose, common.GetCsrfToken(c), translator).Render(c.Request.Context(), c.Writer)
+	tmpl_fin.DialogKirUnos(dialog, knjigaValues, tipdokValues, btnSave, btnCancel, btnClose, common.GetCsrfToken(c), h.translator).Render(c.Request.Context(), c.Writer)
 }
 
 // KnjigaIzdatihRacunaSave handles both creation and update of Kir entries based on the presence of an ID in the URL.
@@ -240,7 +240,6 @@ func (h *PoreskeKnjigeHandler) KnjigaIzdatihRacunaSave(c *gin.Context) {
 
 func (h *PoreskeKnjigeHandler) KnjigaPrimljenihRacuna(c *gin.Context) {
 	requestSource := c.Request.Header.Get("X-Request-Source")
-	translator := i18n.GetInstance()
 	if requestSource == "menu" || requestSource == "tab" {
 		session := domain.GetSessionFromContext(c)
 		gnGod := 0
@@ -250,7 +249,7 @@ func (h *PoreskeKnjigeHandler) KnjigaPrimljenihRacuna(c *gin.Context) {
 
 		btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", poreskeKnjigeURLPrimljenih, "#"+poreskeKnjigeTableID, "innerHTML", "GET", "", hxValsKirKpr, true, common.ClassSaveButton, "handleBackendResponse")
 		btnPrint := common.SetPrintButton("btn-print-kpr", "Štampa", "fin_print", poreskeKnjigeURLPrimljenihPrint, "GET", true, common.ClassPrintButton, "knjiga,oddatuma,dodatuma,stampaponalozima,stampaponalozimazbirno")
-		searchInput := common.CreateSearchInput("search-input", translator, poreskeKnjigeURLPrimljenih, fmt.Sprintf("#%s", poreskeKnjigeTableID), hxValsKirKpr)
+		searchInput := common.CreateSearchInput("search-input", h.translator, poreskeKnjigeURLPrimljenih, fmt.Sprintf("#%s", poreskeKnjigeTableID), hxValsKirKpr)
 
 		tbl := common.SetTableBasicData(poreskeKnjigeContentTitle, poreskeKnjigeTableID, h.service.GetTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 		tbl.Pagination.HxVals = hxValsKirKpr
@@ -270,7 +269,7 @@ func (h *PoreskeKnjigeHandler) KnjigaPrimljenihRacuna(c *gin.Context) {
 		}
 
 		h.tabData = setPoreskeKnjigeActiveTab(h.tabData, "primljenih")
-		err = tmpl_fin.KnjigaPrimljenihRacuna(h.tabData, tbl, btnObrada, btnPrint, searchInput, knjigaValues, gnGod, translator).Render(c.Request.Context(), c.Writer)
+		err = tmpl_fin.KnjigaPrimljenihRacuna(h.tabData, tbl, btnObrada, btnPrint, searchInput, knjigaValues, gnGod, h.translator).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -312,7 +311,6 @@ func (h *PoreskeKnjigeHandler) KnjigaPrimljenihRacuna(c *gin.Context) {
 
 func (h *PoreskeKnjigeHandler) PoreskaPrijava(c *gin.Context) {
 	requestSource := c.Request.Header.Get("X-Request-Source")
-	translator := i18n.GetInstance()
 	poreskaPrijavaData := &domain.PoreskaPrijavaData{}
 	if requestSource == "menu" || requestSource == "tab" {
 		session := domain.GetSessionFromContext(c)
@@ -329,7 +327,7 @@ func (h *PoreskeKnjigeHandler) PoreskaPrijava(c *gin.Context) {
 
 		h.tabData = setPoreskeKnjigeActiveTab(h.tabData, "prijava")
 
-		err := tmpl_fin.PoreskaPrijava(h.tabData, *poreskaPrijavaData, btnObrada, btnPrint, gnGod, translator).Render(c.Request.Context(), c.Writer)
+		err := tmpl_fin.PoreskaPrijava(h.tabData, *poreskaPrijavaData, btnObrada, btnPrint, gnGod, h.translator).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -341,7 +339,7 @@ func (h *PoreskeKnjigeHandler) PoreskaPrijava(c *gin.Context) {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, err.Error())
 			return
 		}
-		err = tmpl_fin.PoreskaPrijavaForm(*poreskaPrijavaData, translator).Render(c.Request.Context(), c.Writer)
+		err = tmpl_fin.PoreskaPrijavaForm(*poreskaPrijavaData, h.translator).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -352,7 +350,6 @@ func (h *PoreskeKnjigeHandler) PoreskaPrijava(c *gin.Context) {
 // KnjigaIzdatihRacunaStampa renders the full printable KIR report.
 func (h *PoreskeKnjigeHandler) KnjigaIzdatihRacunaStampa(c *gin.Context) {
 	ctx := c.Request.Context()
-	translator := i18n.GetInstance()
 	userSession := domain.GetSessionFromStdContext(ctx)
 	if userSession == nil {
 		common.WriteJSONResponse(c, http.StatusUnauthorized, false, nil, common.ErrMsgUnauthorized)
@@ -409,13 +406,12 @@ func (h *PoreskeKnjigeHandler) KnjigaIzdatihRacunaStampa(c *gin.Context) {
 	}
 
 	c.Header("Content-Type", "text/html; charset=utf-8")
-	tmpl_rep_fin.KnjigaIzlaznihRacunaStampa(repParams, tbl, translator).Render(ctx, c.Writer)
+	tmpl_rep_fin.KnjigaIzlaznihRacunaStampa(repParams, tbl, h.translator).Render(ctx, c.Writer)
 }
 
 // KnjigaPrimljenihRacunaStampa renders the full printable KPR report.
 func (h *PoreskeKnjigeHandler) KnjigaPrimljenihRacunaStampa(c *gin.Context) {
 	ctx := c.Request.Context()
-	translator := i18n.GetInstance()
 	userSession := domain.GetSessionFromStdContext(ctx)
 	if userSession == nil {
 		common.WriteJSONResponse(c, http.StatusUnauthorized, false, nil, common.ErrMsgUnauthorized)
@@ -472,7 +468,7 @@ func (h *PoreskeKnjigeHandler) KnjigaPrimljenihRacunaStampa(c *gin.Context) {
 	}
 
 	c.Header("Content-Type", "text/html; charset=utf-8")
-	tmpl_rep_fin.KnjigaPrimljenihRacunaStampa(repParams, tbl, translator).Render(ctx, c.Writer)
+	tmpl_rep_fin.KnjigaPrimljenihRacunaStampa(repParams, tbl, h.translator).Render(ctx, c.Writer)
 }
 
 // RegisterRoutes registers the routes for the PoreskeKnjige handler

@@ -712,7 +712,7 @@ func RobnoStanjaViseArtikalaSifraContent(repParams domain.ReportParameters, para
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = RobnoStanjaArtikalTable(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = rep.ReportTable(tbl, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

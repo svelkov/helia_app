@@ -19,23 +19,26 @@ import (
 
 // GenericHandler provides CRUD operations for any entity
 type GenericHandler[T any] struct {
-	service service.Service[T]
-	fields  []domain.Fields
-	hconfig domain.HandlerConfig
-	cfg     config.Config
-	lm      *middleware.LockMiddleware
-	fvrRepo *repository.BaseRepository[domain.Fvr]
+	service    service.Service[T]
+	fields     []domain.Fields
+	hconfig    domain.HandlerConfig
+	cfg        config.Config
+	lm         *middleware.LockMiddleware
+	fvrRepo    *repository.BaseRepository[domain.Fvr]
+	translator *i18n.Service
 }
 
-// NewGenericHandler creates a new generic handler
-func NewGenericHandler[T any](svc service.Service[T], fields []domain.Fields, hconfig domain.HandlerConfig, cfg config.Config, lm *middleware.LockMiddleware, fvrRepo *repository.BaseRepository[domain.Fvr]) *GenericHandler[T] {
+// NewGenericHandler creates a new generic handler. The translator is injected by the composition
+// (factory_spec.go), like in the other handlers.
+func NewGenericHandler[T any](svc service.Service[T], fields []domain.Fields, hconfig domain.HandlerConfig, cfg config.Config, lm *middleware.LockMiddleware, fvrRepo *repository.BaseRepository[domain.Fvr], translator *i18n.Service) *GenericHandler[T] {
 	return &GenericHandler[T]{
-		service: svc,
-		fields:  fields,
-		hconfig: hconfig,
-		cfg:     cfg,
-		lm:      lm,
-		fvrRepo: fvrRepo,
+		service:    svc,
+		fields:     fields,
+		hconfig:    hconfig,
+		cfg:        cfg,
+		lm:         lm,
+		fvrRepo:    fvrRepo,
+		translator: translator,
 	}
 }
 
@@ -102,7 +105,7 @@ func (h *GenericHandler[T]) GetAllPrint(c *gin.Context) {
 		ReportTitle: h.hconfig.ContentTitle,
 		Orientation: "portrait",
 	}
-	rep.Report(reportParams, *tbl, i18n.GetInstance(), nil, nil, nil).Render(c.Request.Context(), c.Writer)
+	rep.Report(reportParams, *tbl, h.translator, nil, nil, nil).Render(c.Request.Context(), c.Writer)
 
 }
 func (h *GenericHandler[T]) GetAllPdf(c *gin.Context) {

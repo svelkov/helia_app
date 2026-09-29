@@ -67,17 +67,19 @@ const (
 )
 
 type KamateHandler struct {
-	tabData domain.TabData
-	service finservice.KamateService
-	cfg     config.Config
-	lm      *middleware.LockMiddleware
+	translator *i18n.Service
+	tabData    domain.TabData
+	service    finservice.KamateService
+	cfg        config.Config
+	lm         *middleware.LockMiddleware
 }
 
-func NewKamateHandler(service finservice.KamateService, cfg config.Config, lm *middleware.LockMiddleware) *KamateHandler {
+func NewKamateHandler(service finservice.KamateService, cfg config.Config, lm *middleware.LockMiddleware, translator *i18n.Service) *KamateHandler {
 	handler := &KamateHandler{
-		service: service,
-		cfg:     cfg,
-		lm:      lm,
+		translator: translator,
+		service:    service,
+		cfg:        cfg,
+		lm:         lm,
 	}
 	handler.tabData = GetKamateTabData()
 	return handler
@@ -89,10 +91,9 @@ func (h *KamateHandler) KamateMain(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusUnauthorized, false, nil, common.ErrMsgSessionNotFound)
 		return
 	}
-	translator := i18n.GetInstance()
 	h.tabData = setKamateActiveTab(h.tabData, "tipovikamate")
 
-	searchInput := common.CreateSearchInput("search-input", translator, kamateURLTipovikamate, fmt.Sprintf("#%s", tipoviKamateTableID), "")
+	searchInput := common.CreateSearchInput("search-input", h.translator, kamateURLTipovikamate, fmt.Sprintf("#%s", tipoviKamateTableID), "")
 	tbl := common.SetTableBasicData(tipoviKamateContentTitle, tipoviKamateTableID, h.service.GetTipoviKamateTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tbl, tipoviKamateContentTitle, kamateURLTipovikamate, true, true, true)
 	tbl.BtnAdd.IsVisible = true
@@ -125,7 +126,7 @@ func (h *KamateHandler) KamateMain(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 		return
 	}
-	tmpl_kam.KamateMain(h.tabData, tbl, searchInput, translator).Render(c.Request.Context(), c.Writer)
+	tmpl_kam.KamateMain(h.tabData, tbl, searchInput, h.translator).Render(c.Request.Context(), c.Writer)
 
 }
 func (h *KamateHandler) TipoveKamate(c *gin.Context) {
@@ -134,10 +135,9 @@ func (h *KamateHandler) TipoveKamate(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusUnauthorized, false, nil, common.ErrMsgSessionNotFound)
 		return
 	}
-	translator := i18n.GetInstance()
 	h.tabData = setKamateActiveTab(h.tabData, "tipovikamate")
 
-	searchInput := common.CreateSearchInput("search-input", translator, kamateURLTipovikamate, fmt.Sprintf("#%s", tipoviKamateTableID), "")
+	searchInput := common.CreateSearchInput("search-input", h.translator, kamateURLTipovikamate, fmt.Sprintf("#%s", tipoviKamateTableID), "")
 	tbl := common.SetTableBasicData(tipoviKamateContentTitle, tipoviKamateTableID, h.service.GetTipoviKamateTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tbl, tipoviKamateContentTitle, kamateURLTipovikamate, true, true, true)
 	tbl.BtnAdd.IsVisible = true
@@ -170,14 +170,13 @@ func (h *KamateHandler) TipoveKamate(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 		return
 	}
-	tmpl_kam.TipoviKamate(h.tabData, tbl, searchInput, translator).Render(c.Request.Context(), c.Writer)
+	tmpl_kam.TipoviKamate(h.tabData, tbl, searchInput, h.translator).Render(c.Request.Context(), c.Writer)
 
 }
 
 // TipoviKamateUnos displays the dialog for adding or editing a Tipovi Kamate record
 func (h *KamateHandler) TipoviKamateAddUpdate(c *gin.Context) {
 	var err error
-	translator := i18n.GetInstance()
 	dialog := domain.Dialog{
 		Id: "dialog-tipovikamate-unos",
 	}
@@ -217,7 +216,7 @@ func (h *KamateHandler) TipoviKamateAddUpdate(c *gin.Context) {
 		}
 	}
 
-	tmpl_kam.TipoviKamateDialog(*dto, dialog, btnSave, btnCancel, btnClose, common.GetCsrfToken(c), translator).Render(c.Request.Context(), c.Writer)
+	tmpl_kam.TipoviKamateDialog(*dto, dialog, btnSave, btnCancel, btnClose, common.GetCsrfToken(c), h.translator).Render(c.Request.Context(), c.Writer)
 }
 
 // TipoviKamateSave handles both creation and update of Tipovi Kamate entries based on the presence of an ID in the URL.
@@ -310,7 +309,6 @@ func (h *KamateHandler) TipoviKamateDelete(c *gin.Context) {
 }
 
 func (h *KamateHandler) KamatneStope(c *gin.Context) {
-	translator := i18n.GetInstance()
 	session := domain.GetSessionFromContext(c)
 	if session == nil {
 		common.WriteJSONResponse(c, http.StatusUnauthorized, false, nil, common.ErrMsgSessionNotFound)
@@ -318,7 +316,7 @@ func (h *KamateHandler) KamatneStope(c *gin.Context) {
 	}
 	h.tabData = setKamateActiveTab(h.tabData, "kamatnestope")
 
-	searchInput := common.CreateSearchInput("search-input", translator, kamateURLStope, fmt.Sprintf("#%s", kamateTableID), "")
+	searchInput := common.CreateSearchInput("search-input", h.translator, kamateURLStope, fmt.Sprintf("#%s", kamateTableID), "")
 	tbl := common.SetTableBasicData(kamatneStopeContentTitle, kamateTableID, h.service.GetKamatneStopeTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tbl, kamatneStopeContentTitle, kamateURLStope, true, true, true)
 	tbl.BtnAdd.IsVisible = true
@@ -351,12 +349,11 @@ func (h *KamateHandler) KamatneStope(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 		return
 	}
-	tmpl_kam.KamatneStope(h.tabData, tbl, searchInput, translator).Render(c.Request.Context(), c.Writer)
+	tmpl_kam.KamatneStope(h.tabData, tbl, searchInput, h.translator).Render(c.Request.Context(), c.Writer)
 }
 
 // KamatneStopeUnos displays the dialog for adding or editing a Kamatne stope record
 func (h *KamateHandler) confirmKamatneStopeAddUpdate(c *gin.Context) {
-	translator := i18n.GetInstance()
 	dialog := domain.Dialog{
 		Id: "dialog-kamatnestope-unos",
 	}
@@ -406,7 +403,7 @@ func (h *KamateHandler) confirmKamatneStopeAddUpdate(c *gin.Context) {
 	now := time.Now()
 	model.Odd = &now
 	model.Dod = &now
-	err = tmpl_kam.KamatneStopeDialog(*model, dialog, btnSave, btnCancel, btnClose, common.GetCsrfToken(c), translator).Render(c.Request.Context(), c.Writer)
+	err = tmpl_kam.KamatneStopeDialog(*model, dialog, btnSave, btnCancel, btnClose, common.GetCsrfToken(c), h.translator).Render(c.Request.Context(), c.Writer)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 		return
@@ -523,7 +520,6 @@ func (h *KamateHandler) KamatneStopeDelete(c *gin.Context) {
 
 func (h *KamateHandler) FormiranjeKamatnihListova(c *gin.Context) {
 	requestSource := c.Request.Header.Get("X-Request-Source")
-	translator := i18n.GetInstance()
 
 	if requestSource == "menu" || requestSource == "tab" {
 		session := domain.GetSessionFromContext(c)
@@ -534,8 +530,8 @@ func (h *KamateHandler) FormiranjeKamatnihListova(c *gin.Context) {
 		btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", kamateURLFormiranje, "#"+kamatePartneriTableID, "innerHTML", "GET", "", hxValsFormiranjeKamListova, true, common.ClassSaveButton, "handleBackendResponse")
 		btnFormiraj := common.SetButton("form-kamlistova-btn", "Formiraj Kam. Listova", "fin_save", kamateURLFormiranje, "#kamate-detalji", "innerHTML", "POST", "", hxValsFormiranjeKamListova, true, common.ClassAddButton, "")
 
-		searchInput := common.CreateSearchInput("search-input", translator, kamateURLFormiranje, fmt.Sprintf("#%s", kamatePartneriTableID), hxValsFormiranjeKamListova)
-		searchInputDok := common.CreateSearchInput("search-input-dok", translator, kamateURLFormiranjeDetalji, fmt.Sprintf("#%s", kamateDetaljiTableID), hxValsFormiranjeKamListova)
+		searchInput := common.CreateSearchInput("search-input", h.translator, kamateURLFormiranje, fmt.Sprintf("#%s", kamatePartneriTableID), hxValsFormiranjeKamListova)
+		searchInputDok := common.CreateSearchInput("search-input-dok", h.translator, kamateURLFormiranjeDetalji, fmt.Sprintf("#%s", kamateDetaljiTableID), hxValsFormiranjeKamListova)
 		tblPartneri := common.SetTableBasicData(kamateContentTitle, kamatePartneriTableID, h.service.GetFormiranjeListovaPartneriTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 		common.SetTableConfig(&tblPartneri, "PREGLED PARTNERA", kamateURLFormiranje, false, false, false)
 		tblPartneri.URLGetAll = kamateURLFormiranje
@@ -546,7 +542,7 @@ func (h *KamateHandler) FormiranjeKamatnihListova(c *gin.Context) {
 		common.SetTableConfig(&tblDokumenta, "PREGLED DOKUMENATA", kamateURLFormiranje, false, false, false)
 
 		h.tabData = setKamateActiveTab(h.tabData, "formiranje")
-		err := tmpl_kam.FormiranjeKamatnihListova(h.tabData, tblPartneri, tblDokumenta, btnObrada, btnFormiraj, searchInput, searchInputDok, translator, gnGod).Render(c.Request.Context(), c.Writer)
+		err := tmpl_kam.FormiranjeKamatnihListova(h.tabData, tblPartneri, tblDokumenta, btnObrada, btnFormiraj, searchInput, searchInputDok, h.translator, gnGod).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -607,7 +603,6 @@ func (h *KamateHandler) FormiranjeKamatnihListovaObrada(c *gin.Context) {
 
 func (h *KamateHandler) ObracunKamate(c *gin.Context) {
 	requestSource := c.Request.Header.Get("X-Request-Source")
-	translator := i18n.GetInstance()
 
 	if requestSource == "menu" || requestSource == "tab" {
 		session := domain.GetSessionFromContext(c)
@@ -620,7 +615,7 @@ func (h *KamateHandler) ObracunKamate(c *gin.Context) {
 		common.SetTableConfig(&tbl, "OBRACUN KAMATE", kamateURLObracun, false, false, false)
 
 		h.tabData = setKamateActiveTab(h.tabData, "obracun")
-		err := tmpl_kam.ObracunKamate(h.tabData, tbl, translator, gnGod).Render(c.Request.Context(), c.Writer)
+		err := tmpl_kam.ObracunKamate(h.tabData, tbl, h.translator, gnGod).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return

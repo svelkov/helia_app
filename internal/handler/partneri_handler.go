@@ -35,20 +35,21 @@ const (
 )
 
 type PartneriHandler struct {
-	Service service.PartneriService
-	cfg     config.Config
-	lm      *middleware.LockMiddleware
+	translator *i18n.Service
+	Service    service.PartneriService
+	cfg        config.Config
+	lm         *middleware.LockMiddleware
 }
 
-func NewPartneriHandler(service service.PartneriService, cfg config.Config, lm *middleware.LockMiddleware) *PartneriHandler {
-	return &PartneriHandler{Service: service, cfg: cfg, lm: lm}
+func NewPartneriHandler(service service.PartneriService, cfg config.Config, lm *middleware.LockMiddleware, translator *i18n.Service) *PartneriHandler {
+	return &PartneriHandler{translator: translator, Service: service, cfg: cfg, lm: lm}
 }
 
 func (h *PartneriHandler) GetAllPartneri(c *gin.Context) {
 	tbl := common.SetTableBasicData(partneriContentTitle, partneriTableID, SetPartneriFields(), partneriURLPrefix, partneriURLGetAll, 0, 0, 0, 0, h.cfg)
 
 	btnPrint := common.SetButton("stampa-btn", "Štampa", "fin_print", partneriURLPrint, "#dialog-partneri-stampa", "outerHTML", "GET", "", "", true, common.ClassPrintButton, "")
-	searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), partneriURLGetAll, fmt.Sprintf("#%s", partneriTableID), "")
+	searchInput := common.CreateSearchInput("search-input", h.translator, partneriURLGetAll, fmt.Sprintf("#%s", partneriTableID), "")
 
 	common.SetTableConfig(&tbl, partneriContentTitle, partneriTableID, true, true, false)
 	tbl.URLGetAll = partneriURLGetAll
@@ -74,7 +75,7 @@ func (h *PartneriHandler) GetAllPartneri(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, fmt.Sprintf("Error fetching partneri: %v", err))
 		return
 	}
-	tmpl1.PartneriMain(tbl, searchInput, btnPrint, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+	tmpl1.PartneriMain(tbl, searchInput, btnPrint, h.translator).Render(c.Request.Context(), c.Writer)
 }
 
 func (h *PartneriHandler) PartneriConfirmAdd(c *gin.Context) {
@@ -122,7 +123,7 @@ func (h *PartneriHandler) PartneriConfirmAdd(c *gin.Context) {
 		log.Printf("Error fetching tipove analitike: %v", err)
 		tipoviAnalitike = []domain.ComboItem{} // fallback to empty list
 	}
-	tmpl1.PartneriFormMain(entity, tblTekRacuni, dialog, tipoviAnalitike, btnSacuvaj, btnCancel, btnClose, btnProveriPIB, i18n.GetInstance(), csrfToken).Render(c.Request.Context(), c.Writer)
+	tmpl1.PartneriFormMain(entity, tblTekRacuni, dialog, tipoviAnalitike, btnSacuvaj, btnCancel, btnClose, btnProveriPIB, h.translator, csrfToken).Render(c.Request.Context(), c.Writer)
 }
 
 func (h *PartneriHandler) PartneriCreate(c *gin.Context) {
@@ -224,7 +225,7 @@ func (h *PartneriHandler) PartneriConfirmUpdate(c *gin.Context) {
 		log.Printf("Error fetching tipove analitike: %v", err)
 		tipoviAnalitike = []domain.ComboItem{}
 	}
-	tmpl1.PartneriFormMain(*entity, tblTekRacuni, dialog, tipoviAnalitike, btnSacuvaj, btnCancel, btnClose, btnProveriPIB, i18n.GetInstance(), csrfToken).Render(c.Request.Context(), c.Writer)
+	tmpl1.PartneriFormMain(*entity, tblTekRacuni, dialog, tipoviAnalitike, btnSacuvaj, btnCancel, btnClose, btnProveriPIB, h.translator, csrfToken).Render(c.Request.Context(), c.Writer)
 }
 
 func (h *PartneriHandler) PartneriUpdate(c *gin.Context) {
@@ -465,9 +466,9 @@ func (h *PartneriHandler) GetPartneriForm(c *gin.Context) {
 	switch tipAnalitike {
 	// Add cases here as you create new form templates, e.g.:
 	case "5": // Fizicka lica
-		tmpl1.PartneriFormFizickaLica(entity, tblTekRacuni, dialog, []domain.ComboItem{}, btnSacuvaj, btnCancel, btnClose, btnProveriPIB, i18n.GetInstance(), csrfToken).Render(ctx, c.Writer)
+		tmpl1.PartneriFormFizickaLica(entity, tblTekRacuni, dialog, []domain.ComboItem{}, btnSacuvaj, btnCancel, btnClose, btnProveriPIB, h.translator, csrfToken).Render(ctx, c.Writer)
 	default:
-		tmpl1.PartneriFormKomintenti(entity, tblTekRacuni, dialog, []domain.ComboItem{}, btnSacuvaj, btnCancel, btnClose, btnProveriPIB, i18n.GetInstance(), csrfToken).Render(ctx, c.Writer)
+		tmpl1.PartneriFormKomintenti(entity, tblTekRacuni, dialog, []domain.ComboItem{}, btnSacuvaj, btnCancel, btnClose, btnProveriPIB, h.translator, csrfToken).Render(ctx, c.Writer)
 	}
 }
 func (h *PartneriHandler) PartneriStampa(c *gin.Context) {
@@ -527,7 +528,7 @@ func (h *PartneriHandler) PartnerStampaDialog(c *gin.Context) {
 		IdDialog:  dialog.Id,
 		BtnClass:  common.ClassCloseButton,
 	}
-	err := tmpl1.PartnerStampaDialog(dialog, btnClose, btnCancel, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+	err := tmpl1.PartnerStampaDialog(dialog, btnClose, btnCancel, h.translator).Render(c.Request.Context(), c.Writer)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, common.ErrMsgRenderTemplate)
 	}
@@ -586,8 +587,7 @@ func (h *PartneriHandler) PartnerStampa(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, err.Error())
 		return
 	}
-	translator := i18n.GetInstance()
-	tmpl2.PartneriStampa(tbl, repParams, translator).Render(ctx, c.Writer)
+	tmpl2.PartneriStampa(tbl, repParams, h.translator).Render(ctx, c.Writer)
 
 }
 

@@ -60,16 +60,18 @@ const (
 )
 
 type BilansiHandler struct {
-	tabData domain.TabData
-	service finservice.BilansiService
-	cfg     config.Config
-	lm      *middleware.LockMiddleware
+	translator *i18n.Service
+	tabData    domain.TabData
+	service    finservice.BilansiService
+	cfg        config.Config
+	lm         *middleware.LockMiddleware
 }
 
-func NewBilansiHandler(service finservice.BilansiService, cfg config.Config, lm *middleware.LockMiddleware) *BilansiHandler {
+func NewBilansiHandler(service finservice.BilansiService, cfg config.Config, lm *middleware.LockMiddleware, translator *i18n.Service) *BilansiHandler {
 	handler := &BilansiHandler{
-		cfg: cfg,
-		lm:  lm,
+		translator: translator,
+		cfg:        cfg,
+		lm:         lm,
 	}
 	handler.tabData = GetBilansiTabData()
 	handler.service = service
@@ -95,12 +97,12 @@ func (h *BilansiHandler) BilansiMain(c *gin.Context) {
 
 	common.SetActiveTab(h.tabData, 0)
 	btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", bilansiURLZakljucni, "#bilansitable", "innerHTML", "GET", "", hxValsZakljucni, true, common.ClassSaveButton, "handleBackendResponse")
-	searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), bilansiURLZakljucni, fmt.Sprintf("#%s", bilansiTableID), hxValsZakljucni)
+	searchInput := common.CreateSearchInput("search-input", h.translator, bilansiURLZakljucni, fmt.Sprintf("#%s", bilansiTableID), hxValsZakljucni)
 
 	tbl := common.SetTableBasicData(bilansiContentTitle, bilansiTableID, h.service.GetZakljucniTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tbl, zakljucniListTitle, "", false, false, false)
 	tbl.HxVals = hxValsZakljucni
-	err := tmpl_fin.BilansiMain(h.tabData, tbl, btnObrada, btnPrint, searchInput, i18n.GetInstance(), gnGod, h.cfg.NDuzSint).Render(ctx, c.Writer)
+	err := tmpl_fin.BilansiMain(h.tabData, tbl, btnObrada, btnPrint, searchInput, h.translator, gnGod, h.cfg.NDuzSint).Render(ctx, c.Writer)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 		return
@@ -108,7 +110,6 @@ func (h *BilansiHandler) BilansiMain(c *gin.Context) {
 }
 
 func (h *BilansiHandler) ZakljucniList(c *gin.Context) {
-	translator := i18n.GetInstance()
 	ctx := c.Request.Context()
 	tbl := common.SetTableBasicData(bilansiContentTitle, bilansiTableID, h.service.GetZakljucniTableFields(), bilansiURLZakljucni, bilansiURLZakljucni, 0, 0, 0, 0, h.cfg)
 	if !common.IsDataRequest(c) {
@@ -123,7 +124,7 @@ func (h *BilansiHandler) ZakljucniList(c *gin.Context) {
 		}
 
 		btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", bilansiURLZakljucni, "#bilansitable", "innerHTML", "GET", "", hxValsZakljucni, true, common.ClassSaveButton, "handleBackendResponse")
-		searchInput := common.CreateSearchInput("search-input", translator, bilansiURLZakljucni, fmt.Sprintf("#%s", bilansiTableID), hxValsZakljucni)
+		searchInput := common.CreateSearchInput("search-input", h.translator, bilansiURLZakljucni, fmt.Sprintf("#%s", bilansiTableID), hxValsZakljucni)
 
 		session := domain.GetSessionFromStdContext(ctx)
 		gnGod := 0
@@ -133,7 +134,7 @@ func (h *BilansiHandler) ZakljucniList(c *gin.Context) {
 		common.SetTableConfig(&tbl, zakljucniListTitle, bilansiURLZakljucni, false, false, false)
 
 		common.SetActiveTab(h.tabData, 0)
-		tmpl_fin.ZakljucniList(h.tabData, tbl, btnObrada, btnPrint, searchInput, translator, gnGod, h.cfg.NDuzSint).Render(ctx, c.Writer)
+		tmpl_fin.ZakljucniList(h.tabData, tbl, btnObrada, btnPrint, searchInput, h.translator, gnGod, h.cfg.NDuzSint).Render(ctx, c.Writer)
 		return
 	}
 	//validacija input parametre:
@@ -289,12 +290,10 @@ func (h *BilansiHandler) ZakljucniListObrazacStampa(c *gin.Context) {
 		return
 	}
 
-	translator := i18n.GetInstance()
-	tmpl_rep.ZakljucniListObrazacStampa(repParams, params, tbl, tblSummary, translator).Render(ctx, c.Writer)
+	tmpl_rep.ZakljucniListObrazacStampa(repParams, params, tbl, tblSummary, h.translator).Render(ctx, c.Writer)
 }
 
 func (h *BilansiHandler) BilansStanja(c *gin.Context) {
-	translator := i18n.GetInstance()
 	ctx := c.Request.Context()
 	searchText := c.Query("query")
 	skraceni := c.Query("skraceni") == "true" || c.Query("skraceni") == "1"
@@ -310,7 +309,7 @@ func (h *BilansiHandler) BilansStanja(c *gin.Context) {
 		}
 		totals := domain.BilansiTotals{}
 		common.SetTableConfig(&tbl, "BILANS STANJA", bilansiURLStanja, true, true, false)
-		searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), bilansiURLStanja, fmt.Sprintf("#%s", bilansiTableID), hxValsStanja)
+		searchInput := common.CreateSearchInput("search-input", h.translator, bilansiURLStanja, fmt.Sprintf("#%s", bilansiTableID), hxValsStanja)
 		// get only totals after the get totals records call
 		err := h.service.GetBilansStanja(ctx, &tbl, &totals, searchText, skraceni)
 		if err != nil {
@@ -326,7 +325,7 @@ func (h *BilansiHandler) BilansStanja(c *gin.Context) {
 		tbl.BtnPrint.IsVisible = false
 		tbl.ShowPagination = false
 		tbl.HasTotals = true
-		tmpl_fin.BilansStanja(h.tabData, tbl, totals, searchInput, translator, gnGod).Render(c.Request.Context(), c.Writer)
+		tmpl_fin.BilansStanja(h.tabData, tbl, totals, searchInput, h.translator, gnGod).Render(c.Request.Context(), c.Writer)
 		return
 	}
 	totals := domain.BilansiTotals{}
@@ -375,7 +374,7 @@ func (h *BilansiHandler) ConfirmAddBilansStanja(c *gin.Context) {
 		BtnClass:  common.ClassDialogCloseButton,
 	}
 	csrfToken := common.GetCsrfToken(c)
-	tmpl_fin.BilansStanjaForm(csrfToken, domain.Bils{}, dialog, btnSacuvaj, btnCancel, btnClose, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+	tmpl_fin.BilansStanjaForm(csrfToken, domain.Bils{}, dialog, btnSacuvaj, btnCancel, btnClose, h.translator).Render(c.Request.Context(), c.Writer)
 }
 func (h *BilansiHandler) CreateBilansStanja(c *gin.Context) {
 	ctx := c.Request.Context()
@@ -449,7 +448,7 @@ func (h *BilansiHandler) ConfirmUpdateBilansStanja(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusNotFound, false, nil, common.ErrMsgNotFound)
 		return
 	}
-	tmpl_fin.BilansStanjaForm(csrfToken, *entity, dialog, btnSacuvaj, btnCancel, btnClose, i18n.GetInstance()).Render(ctx, c.Writer)
+	tmpl_fin.BilansStanjaForm(csrfToken, *entity, dialog, btnSacuvaj, btnCancel, btnClose, h.translator).Render(ctx, c.Writer)
 }
 func (h *BilansiHandler) UpdateBilansStanja(c *gin.Context) {
 	entity := &domain.Bils{}
@@ -502,7 +501,6 @@ func (h *BilansiHandler) DeleteBilansStanja(c *gin.Context) {
 	common.WriteJSONResponse(c, http.StatusOK, true, nil, common.OkMsgDeleteData)
 }
 func (h *BilansiHandler) ObradaStampanjeBilansaStanja(c *gin.Context) {
-	translator := i18n.GetInstance()
 	ctx := c.Request.Context()
 	//stanjeNaDan := c.Query("stanjenadan")
 
@@ -525,7 +523,7 @@ func (h *BilansiHandler) ObradaStampanjeBilansaStanja(c *gin.Context) {
 
 		btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", bilansiURLStanjaStampanje, "#bilansitable", "innerHTML", "GET", "", hxValsStanja, true, common.ClassSaveButton, "handleDialogResponse")
 		btnExportXML := common.SetButton("exportxml-btn", "Export XML", "exportxml", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassButton, "")
-		searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), bilansiURLStanja, fmt.Sprintf("#%s", bilansiTableID), hxValsStanja)
+		searchInput := common.CreateSearchInput("search-input", h.translator, bilansiURLStanja, fmt.Sprintf("#%s", bilansiTableID), hxValsStanja)
 
 		//if the call come from menu click or tab click then render the page with parameters and empty table
 		tbl := common.SetTableBasicData(bilansiContentTitle, bilansiTableID, h.service.GetBilansStanjaStampaTableFields(), "", "", 0, 0, 0, 0, h.cfg)
@@ -537,7 +535,7 @@ func (h *BilansiHandler) ObradaStampanjeBilansaStanja(c *gin.Context) {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetData)
 			return
 		}
-		tmpl_fin.StampanjeBilansaStanja(h.tabData, tbl, btnObrada, btnPrint, btnExportXML, searchInput, translator, gnGod).Render(c.Request.Context(), c.Writer)
+		tmpl_fin.StampanjeBilansaStanja(h.tabData, tbl, btnObrada, btnPrint, btnExportXML, searchInput, h.translator, gnGod).Render(c.Request.Context(), c.Writer)
 		return
 	}
 	//validacija input parametre:
@@ -600,8 +598,7 @@ func (h *BilansiHandler) BilansStanjaObrazacStampa(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 		return
 	}
-	translator := i18n.GetInstance()
-	tmpl_rep.BilansStanjaObrazacStampa(repParams, params, tbl, translator).Render(ctx, c.Writer)
+	tmpl_rep.BilansStanjaObrazacStampa(repParams, params, tbl, h.translator).Render(ctx, c.Writer)
 }
 
 // Bilans Uspeha Functions
@@ -610,7 +607,6 @@ func (h *BilansiHandler) BilansUspeha(c *gin.Context) {
 	ctx := c.Request.Context()
 	searchText := c.Query("query")
 	skraceni := c.Query("skraceni") == "true" || c.Query("skraceni") == "1"
-	translator := i18n.GetInstance()
 	common.SetActiveTab(h.tabData, 3)
 	tbl := common.SetTableBasicData(bilansiContentTitle, bilansiTableID, h.service.GetBilansUspehaTableFields(), bilansiURLUspeha, bilansiURLUspeha, 0, 0, 0, 0, h.cfg)
 	tbl.HxVals = hxValsUspeha
@@ -627,14 +623,14 @@ func (h *BilansiHandler) BilansUspeha(c *gin.Context) {
 			gnGod = session.SelectedGod
 		}
 		common.SetTableConfig(&tbl, "BILANS USPEHA", bilansiURLUspeha, true, true, false)
-		searchInput := common.CreateSearchInput("search-input", i18n.GetInstance(), bilansiURLUspeha, fmt.Sprintf("#%s", bilansiTableID), hxValsUspeha)
+		searchInput := common.CreateSearchInput("search-input", h.translator, bilansiURLUspeha, fmt.Sprintf("#%s", bilansiTableID), hxValsUspeha)
 
 		err := h.service.GetBilansUspeha(ctx, &tbl, &totals, searchText, skraceni)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
 			return
 		}
-		tmpl_fin.BilansUspeha(h.tabData, tbl, searchInput, &totals, translator, gnGod).Render(ctx, c.Writer)
+		tmpl_fin.BilansUspeha(h.tabData, tbl, searchInput, &totals, h.translator, gnGod).Render(ctx, c.Writer)
 		return
 	}
 	err := h.service.GetBilansUspeha(ctx, &tbl, &totals, searchText, skraceni)
@@ -673,7 +669,7 @@ func (h *BilansiHandler) ConfirmAddBilansUspeha(c *gin.Context) {
 		BtnClass:  common.ClassDialogCloseButton,
 	}
 	csrfToken := common.GetCsrfToken(c)
-	tmpl_fin.BilansUspehaForm(csrfToken, domain.Bilu{}, dialog, btnSacuvaj, btnCancel, btnClose, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+	tmpl_fin.BilansUspehaForm(csrfToken, domain.Bilu{}, dialog, btnSacuvaj, btnCancel, btnClose, h.translator).Render(c.Request.Context(), c.Writer)
 }
 func (h *BilansiHandler) CreateBilansUspeha(c *gin.Context) {
 	entity := &domain.Bilu{}
@@ -745,7 +741,7 @@ func (h *BilansiHandler) ConfirmUpdateBilansUspeha(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusNotFound, false, nil, common.ErrMsgNotFound)
 		return
 	}
-	tmpl_fin.BilansUspehaForm(csrfToken, *entity, dialog, btnSacuvaj, btnCancel, btnClose, i18n.GetInstance()).Render(c.Request.Context(), c.Writer)
+	tmpl_fin.BilansUspehaForm(csrfToken, *entity, dialog, btnSacuvaj, btnCancel, btnClose, h.translator).Render(c.Request.Context(), c.Writer)
 }
 func (h *BilansiHandler) UpdateBilansUspeha(c *gin.Context) {
 	entity := &domain.Bilu{}
@@ -799,7 +795,6 @@ func (h *BilansiHandler) DeleteBilansUspeha(c *gin.Context) {
 }
 func (h *BilansiHandler) ObradaStampanjeBilansUspeha(c *gin.Context) {
 	ctx := c.Request.Context()
-	translator := i18n.GetInstance()
 	common.SetActiveTab(h.tabData, 4)
 	if !common.IsDataRequest(c) {
 		session := domain.GetSessionFromStdContext(ctx)
@@ -826,7 +821,7 @@ func (h *BilansiHandler) ObradaStampanjeBilansUspeha(c *gin.Context) {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
 		}
-		tmpl_fin.StampanjeBilansaUspeha(h.tabData, tbl, btnObrada, btnPrint, btnExportXML, translator, gnGod).Render(c.Request.Context(), c.Writer)
+		tmpl_fin.StampanjeBilansaUspeha(h.tabData, tbl, btnObrada, btnPrint, btnExportXML, h.translator, gnGod).Render(c.Request.Context(), c.Writer)
 		return
 	}
 	//validacija input parametre:
@@ -896,8 +891,7 @@ func (h *BilansiHandler) BilansUspehaObrazacStampa(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 		return
 	}
-	translator := i18n.GetInstance()
-	tmpl_rep.BilansUspehaObrazacStampa(repParams, params, tbl, translator).Render(ctx, c.Writer)
+	tmpl_rep.BilansUspehaObrazacStampa(repParams, params, tbl, h.translator).Render(ctx, c.Writer)
 }
 func (h *BilansiHandler) ExportXMLBilansUspeha(c *gin.Context) {
 

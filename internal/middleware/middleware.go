@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -13,15 +14,38 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// I18n middleware - detects and sets language
+// I18n middleware - resolves the language of the request and applies it to the translator, so that
+// everything rendered for the request (handlers, templates, reports) uses the language of the user
+// instead of the one left behind by the previous request:
+//
+//  1. ?lang=xx - the explicit choice of the user, remembered in a cookie for the following requests,
+//  2. the lang cookie,
+//  3. the language of the logged in user (the Language of the session/JWT, set by the UI),
+//  4. the Accept-Language header of the browser.
+//
+// The resolved language is published in the context (c.Set("lang", lang)); the requests that ask for
+// none keep the language the translator already has. An unknown language (e.g. "de") is ignored as
+// well, so that a browser with an unloaded language cannot turn the whole UI into raw keys.
 func I18n(translator *i18n.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		lang := getLangFromRequest(c)
+		if lang != "" {
+			if err := translator.SetLanguage(lang); err != nil {
+				log.Printf("i18n: %v, keeping %s", err, translator.GetCurrentLanguage())
+			}
+			// The session is what the layout (the language combo) and the handlers read: keep it in sync
+			// with the language of the request, otherwise the combo shows a language the page is not
+			// rendered in.
+			if userSession := domain.GetSessionFromContext(c); userSession != nil {
+				userSession.Language = lang
+			}
+		}
 		c.Set("lang", lang)
 		c.Next()
 	}
 }
 
+// getLangFromRequest returns the language requested by the request, or "" when it asks for none.
 func getLangFromRequest(c *gin.Context) string {
 	// 1. Check query parameter
 	if lang := c.Query("lang"); lang != "" {
@@ -35,19 +59,26 @@ func getLangFromRequest(c *gin.Context) string {
 		return lang
 	}
 
-	// 3. Check Accept-Language header
+	// 3. The language the user selected (stored in the session/JWT by the language combo)
+	if userSession := domain.GetSessionFromContext(c); userSession != nil && userSession.Language != "" {
+		return userSession.Language
+	}
+
+	// 4. Check Accept-Language header
 	acceptLang := c.GetHeader("Accept-Language")
 	if acceptLang != "" {
 		langs := strings.Split(acceptLang, ",")
 		if len(langs) > 0 {
 			lang := strings.Split(langs[0], ";")[0]
 			lang = strings.Split(lang, "-")[0]
-			return lang
+			if lang != "" {
+				return lang
+			}
 		}
 	}
 
-	// 4. Default language
-	return "sr"
+	// 5. No language requested: the caller keeps the current one.
+	return ""
 }
 func Auth(jwtSecret ...[]byte) gin.HandlerFunc {
 	return func(c *gin.Context) {

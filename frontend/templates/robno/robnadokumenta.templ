@@ -10,42 +10,23 @@ import (
 	"helia/internal/domain"
 )
 
-// hxValsRobnoDokumentaUnos sends the whole header of the nalog. It is used by the requests of the
-// tab (search, paging, reload on the change of the vrsta naloga) so that the typed values of the
-// form are kept.
-const hxValsRobnoDokumentaUnos = `js:{"tipdok": document.getElementById("tipdok")?.value, ` +
-	`"vrd": document.getElementById("vrd")?.value, ` +
-	`"magaciniid": document.getElementById("magaciniid")?.value, ` +
-	`"nalog": document.getElementById("nalog")?.value, ` +
-	`"danal": document.getElementById("danal")?.value, ` +
-	`"datob": document.getElementById("datob")?.value, ` +
-	`"opis": document.getElementById("opis")?.value}`
+// The hx-vals of the header of the nalog (hxValsRobnoDokumentaUnos / ...Tipdok / ...Nalog) are
+// declared in internal/handler/robno/robnadokumenta_handler.go and passed to the templates below,
+// together with the urls and the element ids of the screen (domain.RobnoFaktureUI): the template
+// package cannot import the handler package (the handler imports the templates), so the handler owns
+// every url, id and hx-vals string the markup uses.
 
-// hxValsRobnoDokumentaTipdok is sent when the vrsta naloga changes. The source parameter tells the
-// handler to render only the grid (the header of the form is kept) and the hidden #nalog-trigger
-// element then asks for the next broj naloga of the new vrsta naloga.
-const hxValsRobnoDokumentaTipdok = `js:{"tipdok": document.getElementById("tipdok")?.value, ` +
-	`"vrd": document.getElementById("vrd")?.value, ` +
-	`"magaciniid": document.getElementById("magaciniid")?.value, ` +
-	`"source": "tipdok"}`
-
-// hxValsRobnoDokumentaNalog sends the vrsta naloga and the broj naloga of the header to the check
-// of an existing nalog (GET /api/robno-dokumenta/nalog-data).
-const hxValsRobnoDokumentaNalog = `js:{"tipdok": document.getElementById("tipdok")?.value, ` +
-	`"nalog": document.getElementById("nalog")?.value}`
-
-	// RobnoDokumentaMain renders the "Robna dokumenta" option (robni nalozi / robni dokumenti).
-	// The first tab ("Unos dokumenta") is rendered inside the container that the tab navigation
-	// replaces with the content of the active tab, like "Robno stanja" and "Robno promet" do.
-
-templ RobnoDokumentaMain(tabs, subTabs domain.TabData, tbl domain.TableData, tipdokValues, vrstaDokumentaValues, magValues []domain.ComboItem, total domain.RobnoDokumentaTotal, payload domain.RobnoDokumentaParams, btnSave, btnNoviNalog, btnFakture domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
+// RobnoDokumentaMain renders the "Robna dokumenta" option (robni nalozi / robni dokumenti).
+// The first tab ("Unos dokumenta") is rendered inside the container that the tab navigation
+// replaces with the content of the active tab, like "Robno stanja" and "Robno promet" do.
+templ RobnoDokumentaMain(ui domain.RobnoFaktureUI, hxValsTipdok, hxValsNalog string, tabs, subTabs domain.TabData, tbl domain.TableData, tipdokValues, vrstaDokumentaValues, magValues []domain.ComboItem, total domain.RobnoDokumentaTotal, payload domain.RobnoDokumentaParams, btnSave, btnNoviNalog, btnFakture domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
 	<div id="robno-dokumenta-content" class="bg-blue-100 p-1 flex flex-col h-full">
-		@RobnoDokumentaUnos(tabs, subTabs, tbl, tipdokValues, vrstaDokumentaValues, magValues, total, payload, btnSave, btnNoviNalog, btnFakture, searchInput, translator)
+		@RobnoDokumentaUnos(hxValsTipdok, hxValsNalog, tabs, subTabs, tbl, tipdokValues, vrstaDokumentaValues, magValues, total, payload, btnSave, btnNoviNalog, btnFakture, searchInput, translator)
 		<!-- TODO (temporary): the dialog of the "Fakture veleprodaje" screen (RobnoFaktureDialog) is
 		     rendered into this element by the "Fakture veleprodaje (preview)" button of the tab. It
 		     sits inside the content of the tab, so a reload or a change of the tab closes the
 		     dialog. -->
-		<div id={ RobnoDokumentaFaktureDialogStagingID } class="top-0 z-50"></div>
+		<div id={ ui.DialogStagingID } class="top-0 z-50"></div>
 	</div>
 	@tmpl.ShowSearchDialogScript()
 	@tmpl.HideDropdownScript()
@@ -114,14 +95,14 @@ templ RobnoDokumentaEmptyBody(tabLabel string, tbl domain.TableData, btnObrada, 
 //
 // Tab 1 - Unos dokumenta
 //
-templ RobnoDokumentaUnos(tabs, subTabs domain.TabData, tbl domain.TableData, tipdokValues, vrstaDokumentaValues, magValues []domain.ComboItem, total domain.RobnoDokumentaTotal, payload domain.RobnoDokumentaParams, btnSave, btnNoviNalog, btnFakture domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
-	@RobnoDokumentaShell(tabs, subTabs, translator, RobnoDokumentaUnosForm(tbl, tipdokValues, vrstaDokumentaValues, magValues, total, payload, btnSave, btnNoviNalog, btnFakture, searchInput, translator))
+templ RobnoDokumentaUnos(hxValsTipdok, hxValsNalog string, tabs, subTabs domain.TabData, tbl domain.TableData, tipdokValues, vrstaDokumentaValues, magValues []domain.ComboItem, total domain.RobnoDokumentaTotal, payload domain.RobnoDokumentaParams, btnSave, btnNoviNalog, btnFakture domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
+	@RobnoDokumentaShell(tabs, subTabs, translator, RobnoDokumentaUnosForm(hxValsTipdok, hxValsNalog, tbl, tipdokValues, vrstaDokumentaValues, magValues, total, payload, btnSave, btnNoviNalog, btnFakture, searchInput, translator))
 }
 
 // RobnoDokumentaUnosForm renders the header of the robni nalog ("Vrsta naloga za knjiženje",
 // "Vrsta dokumenta", "Datum obrade", "Broj naloga", "Datum naloga", "Opis knjiženja" i "Magacin"),
 // the "Prikaz ukupne obrade" panel and the grid of the nalozi of the selected vrsta naloga.
-templ RobnoDokumentaUnosForm(tbl domain.TableData, tipdokValues, vrstaDokumentaValues, magValues []domain.ComboItem, total domain.RobnoDokumentaTotal, payload domain.RobnoDokumentaParams, btnSave, btnNoviNalog, btnFakture domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
+templ RobnoDokumentaUnosForm(hxValsTipdok, hxValsNalog string, tbl domain.TableData, tipdokValues, vrstaDokumentaValues, magValues []domain.ComboItem, total domain.RobnoDokumentaTotal, payload domain.RobnoDokumentaParams, btnSave, btnNoviNalog, btnFakture domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
 	<!-- Header of the nalog (left) + "Prikaz ukupne obrade" (right). items-stretch makes
 	     "Prikaz ukupne obrade" exactly as tall as "Parametri" (the default align-items of a grid). -->
 	<div class="no-border bg-blue-100 rounded-lg">
@@ -158,7 +139,7 @@ templ RobnoDokumentaUnosForm(tbl domain.TableData, tipdokValues, vrstaDokumentaV
 							ChangeEndpoint:   "/api/robno-dokumenta/unos",
 							HxChangeTarget:   "robno-dokumenta-unos-table",
 							HxSwap:           "innerHTML",
-							HxVals:           hxValsRobnoDokumentaTipdok,
+							HxVals:           hxValsTipdok,
 							HxOnAfterRequest: "handleTipdokAfterRequest",
 							TabIndex:         "1",
 						}, translator)
@@ -212,7 +193,7 @@ templ RobnoDokumentaUnosForm(tbl domain.TableData, tipdokValues, vrstaDokumentaV
 							HxGet:            "/api/robno-dokumenta/nalog-data",
 							HxTrigger:        "blur delay:100ms",
 							HxInclude:        "select[name='tipdok']",
-							HxVals:           hxValsRobnoDokumentaNalog,
+							HxVals:           hxValsNalog,
 							HxSwap:           "none",
 							HxOnAfterRequest: "handleUpdateNalogDataResponse",
 							MinLength:        "1",
@@ -1388,126 +1369,24 @@ templ RobnoDokumentaPrikazDokumenataPooperateruBody(tbl domain.TableData, params
 // The two WinDev windows of the option ("Fakture veleprodaje" and "Fakture veleprodaje - stavke") are
 // rendered as two collapsible controls (<details>/<summary>): the header of the faktura in the first
 // control and its stavke in the second one. Only one of the two controls is editable at a time:
-//   - while the header is not saved (RobnoFaktureHeader.Snimljen is false) the header is editable and
+//   - while the header is not saved (domain.RobnoFaktureHeader.Snimljen is false) the header is editable and
 //     the stavke control is closed, disabled and cannot even be opened,
 //   - after a successful save the header is locked and the stavke become available,
 //   - the "Izmeni" button of the header locks the stavke again and unlocks the header.
-// The initial state is rendered by the server (RobnoFaktureHeader.Snimljen) and the state is switched
+// The initial state is rendered by the server (domain.RobnoFaktureHeader.Snimljen) and the state is switched
 // by robnoFaktureSetMode (RobnoFaktureScript) after the save, so a reload of the tab and a save leave
 // the screen in the same state.
 //
-// TODO: the handler and the routes of the screen are not written yet; the URLs below are the ones the
-// screen will use (the prefix of the other tabs of "Robna dokumenta").
-const (
-	robnoFaktureURL           = "/api/robno-dokumenta/fakture"
-	robnoFaktureSaveURL       = robnoFaktureURL + "/save"
-	robnoFaktureNoviURL       = robnoFaktureURL + "/novi"
-	robnoFaktureDeleteURL     = robnoFaktureURL + "/brisi"
-	robnoFaktureStavkaSaveURL = robnoFaktureURL + "/stavka/save"
-	robnoFaktureStavkaDelURL  = robnoFaktureURL + "/stavka/brisi"
-	robnoFaktureArtikalSearch = "/api/promet/searchbutton"
-	robnoFakturePartnerSearch = "/api/partneri/searchbutton"
-
-	// Ids of the two collapsible controls. They are given to the script (see RobnoFaktureScript) so
-	// that every id is written in one place only.
-	robnoFaktureHeaderPanelID = "robno-fakture-header-panel"
-	robnoFaktureStavkePanelID = "robno-fakture-stavke-panel"
-
-	// RobnoDokumentaFaktureDialogStagingID is the element of the "Unos dokumenta" tab (see
-	// RobnoDokumentaMain) the dialog of the "Fakture veleprodaje" screen is rendered into and
-	// RobnoFaktureDialogID the id of the dialog itself (the one closeDialog hides). Both are exported
-	// because the handler of the tab builds the button that opens the dialog (its hx-target is the
-	// staging element) and the "Zatvori" button of the dialog (its IdDialog is the dialog id).
-	RobnoDokumentaFaktureDialogStagingID = "robno-fakture-dialog-staging"
-	RobnoFaktureDialogID                 = "robno-fakture-dialog"
-
-	// robnoFaktureContentID is the container the tab navigation swaps (see RobnoDokumentaShell); it is
-	// the target of the buttons that reload the whole screen.
-	robnoFaktureContentID = "#robno-dokumenta-content"
-)
-
-// RobnoFaktureHeader holds the values of the header of the faktura (the first window). The values are
-// the ones the handler reads from the form (all strings, the handler formats the numbers), so the
-// template only lays them out.
-type RobnoFaktureHeader struct {
-	// Snimljen tells whether the header is saved: while it is false the header is editable and the
-	// stavke control is disabled, afterwards the other way round.
-	Snimljen bool
-
-	// Nalog (the read only strip at the top of both windows).
-	VrNal, Nalog, DatumNaloga, UkDokum, UkStavki, Duguje, Potrazuje, IznosDokum, Magacin string
-
-	// Otpremnica / Račun and "Štampaj detalje u stavkama".
-	Otpremnica     bool
-	StampajDetalje bool
-
-	// Podaci o dokumentu.
-	Vrd, Brdok, DatumFakturisanja, BrdokOrg, DatumIzvora, Opis string
-	ZaPeriod                                                   bool
-	PeriodOd, PeriodDo, DatumSmanjenja                         string
-
-	// Podaci o kupcu.
-	KupacKonto, KupacSifra, KupacNaziv, KupacAdresa string
-	KupacPostanskiBroj, KupacMesto, KupacPib         string
-	SistemPdv                                        string
-
-	// Podaci o načinu otpreme, rokovima, valuti i avansima.
-	Valuta, Kurs, VaziZa, BrojRata, DatumPrveRate, IznosFakture string
-	UsloviPlacanja, Rok, Dospeva                                 string
-	BrojUgovora, Narudzbenica, IzvoRacun, NacinOtpreme           string
-	RegBr, Vozac, Teret, BrutoTezina                             string
-	BrojKutija, NetoTezina, BrojPaleta, IzvozIzjava              string
-	BankaUplatu, Popdv, IzvozniDokument                          string
-
-	// Podaci o porezom oslobođenju, nastanku PDV obaveze.
-	PbrKategorija, NapomenaPoresko, RbrPdv string
-	MestoTroska, MestoIsporuke, Komercijalista string
-	PostanskiBroj, IfBroj                   string
-	JavnaNabavka                           bool
-	BjkosNosilac, BrojTendera, Kst          string
-
-	// Finansijsko stanje kupca (realizovano / planirano / reprogramirano and the saldo columns).
-	Realizovana, Planirana, Reproknjizena, Ukupno string
-	Saldo, Dospeo, ReproDospeo, SaldoDospeo       string
-}
-
-// RobnoFaktureStavka holds the values of the entry form of one stavka (the second window). The first
-// group of fields is read only: it repeats the kupac and the podaci o dokumentu of the header.
-type RobnoFaktureStavka struct {
-	KontoMagacina, KontoKupca, Vrd, Brdok, DatumDokumenta string
-
-	SifraArtikla, SifraArtiklaNaziv string
-	JM, Stanje                       string
-	Tarifa, Dani                     string
-	Kolicina, Iznos                  string
-	ProdajnaCena, MagacinskaCena     string
-	Rabat, IznosRabata               string
-	NabavnaCena, NetoProdajnaCena    string
-	Deklaracije, BarKod, Serija, Rok string
-
-	// "Zadnja cena po kojoj je kupac kupovao ovaj artikal".
-	ZadnjaCena, ZadnjiRabat, ZadnjiDatum string
-	KoristiPoslednjiRabat                bool
-}
-
-// RobnoFaktureButtons groups the buttons of the screen so that the signature of the template stays
-// short: the header and the stavke have their own save/delete buttons.
-type RobnoFaktureButtons struct {
-	Save   domain.Button // "Sačuvaj" the header of the faktura
-	Modify domain.Button // "Izmeni" the header (unlocks the header, locks the stavke)
-	New    domain.Button // "Novi dok."
-	Delete domain.Button // "Briši" the document
-	Back   domain.Button // "Nazad"
-
-	SaveStavka   domain.Button
-	ModifyStavka domain.Button
-	DeleteStavka domain.Button
-}
+// The URLs, the element ids and the hx-vals of the screen are declared in
+// internal/handler/robno/robnadokumenta_handler.go and reach the templates as domain.RobnoFaktureUI
+// (see the note above RobnoDokumentaMain). The view structs (domain.RobnoFaktureHeader,
+// domain.RobnoFaktureStavka, domain.RobnoFaktureButtons) live in internal/domain/model_robnofakture.go
+// for the same reason: a type used in a templ parameter must be visible in the template package.
 
 // RobnoFakture renders the "Fakture veleprodaje" screen: the two collapsible controls inside the shell
 // of "Robna dokumenta" (tabs and sub-tabs) and the script that switches the editable control.
-templ RobnoFakture(tabs, subTabs domain.TabData, tbl, avansiTbl domain.TableData, header RobnoFaktureHeader, stavka RobnoFaktureStavka, vrstaDokumentaValues, valutaValues, sistemPdvValues []domain.ComboItem, btns RobnoFaktureButtons, searchInput domain.InputControl, translator *i18n.Service) {
-	@RobnoDokumentaShell(tabs, subTabs, translator, RobnoFaktureBody(tbl, avansiTbl, header, stavka, vrstaDokumentaValues, valutaValues, sistemPdvValues, btns, searchInput, translator))
+templ RobnoFakture(ui domain.RobnoFaktureUI, tabs, subTabs domain.TabData, tbl, avansiTbl domain.TableData, header domain.RobnoFaktureHeader, stavka domain.RobnoFaktureStavka, vrstaDokumentaValues, valutaValues, sistemPdvValues []domain.ComboItem, btns domain.RobnoFaktureButtons, searchInput domain.InputControl, translator *i18n.Service) {
+	@RobnoDokumentaShell(tabs, subTabs, translator, RobnoFaktureBody(ui, tbl, avansiTbl, header, stavka, vrstaDokumentaValues, valutaValues, sistemPdvValues, btns, searchInput, translator))
 	<!-- Scripts the screen shares with the other robno forms: the search popups (F3 / "...") and the
 	     inline validation errors -->
 	@tmpl.ShowSearchDialogScript()
@@ -1521,11 +1400,11 @@ templ RobnoFakture(tabs, subTabs domain.TabData, tbl, avansiTbl domain.TableData
 // as RobnoFakture without the tab bar of the option (the dialog covers the tab, which stays open
 // behind it) plus the title bar with the "Zatvori" button. It is the response of the "Fakture
 // veleprodaje (preview)" button of the "Unos dokumenta" tab, swapped into the
-// RobnoDokumentaFaktureDialogStagingID element (see RobnoDokumentaMain). The dialog is not removed when
+// ui.DialogStagingID element (see RobnoDokumentaMain). The dialog is not removed when
 // it is closed (closeDialog only hides it, so that the fade-out is visible): the next request renders
 // it again.
-templ RobnoFaktureDialog(tbl, avansiTbl domain.TableData, header RobnoFaktureHeader, stavka RobnoFaktureStavka, vrstaDokumentaValues, valutaValues, sistemPdvValues []domain.ComboItem, btns RobnoFaktureButtons, btnClose domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
-	<div id={ RobnoFaktureDialogID } class={ common.ClassMainDialogDiv }>
+templ RobnoFaktureDialog(ui domain.RobnoFaktureUI, tbl, avansiTbl domain.TableData, header domain.RobnoFaktureHeader, stavka domain.RobnoFaktureStavka, vrstaDokumentaValues, valutaValues, sistemPdvValues []domain.ComboItem, btns domain.RobnoFaktureButtons, btnClose domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
+	<div id={ ui.DialogID } class={ common.ClassMainDialogDiv }>
 		<div class="bg-blue-100 rounded-lg shadow-2xl flex flex-col w-[95vw] h-[90vh]">
 			<!-- Title bar of the dialog -->
 			<div class="bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg flex-shrink-0">
@@ -1535,7 +1414,7 @@ templ RobnoFaktureDialog(tbl, avansiTbl domain.TableData, header RobnoFaktureHea
 			<!-- Content: the strip of the vrsta fakture, the collapsible control of the header and the
 			     collapsible control of the stavke -->
 			<div class="flex-1 min-h-0 overflow-auto p-1">
-				@RobnoFaktureBody(tbl, avansiTbl, header, stavka, vrstaDokumentaValues, valutaValues, sistemPdvValues, btns, searchInput, translator)
+				@RobnoFaktureBody(ui, tbl, avansiTbl, header, stavka, vrstaDokumentaValues, valutaValues, sistemPdvValues, btns, searchInput, translator)
 			</div>
 		</div>
 	</div>
@@ -1550,11 +1429,11 @@ templ RobnoFaktureDialog(tbl, avansiTbl domain.TableData, header RobnoFaktureHea
 
 // RobnoFaktureBody renders the content of the screen: the strip with the vrsta fakture, the first
 // collapsible control (the header of the faktura) and the second one (the stavke).
-templ RobnoFaktureBody(tbl, avansiTbl domain.TableData, header RobnoFaktureHeader, stavka RobnoFaktureStavka, vrstaDokumentaValues, valutaValues, sistemPdvValues []domain.ComboItem, btns RobnoFaktureButtons, searchInput domain.InputControl, translator *i18n.Service) {
+templ RobnoFaktureBody(ui domain.RobnoFaktureUI, tbl, avansiTbl domain.TableData, header domain.RobnoFaktureHeader, stavka domain.RobnoFaktureStavka, vrstaDokumentaValues, valutaValues, sistemPdvValues []domain.ComboItem, btns domain.RobnoFaktureButtons, searchInput domain.InputControl, translator *i18n.Service) {
 	<div class="bg-blue-100 p-1 flex flex-col gap-1 h-full min-h-0">
 		@RobnoFaktureDokumentBar(header, btns.Back, translator)
-		@RobnoFaktureHeaderPanel(header, avansiTbl, vrstaDokumentaValues, valutaValues, sistemPdvValues, btns, translator)
-		@RobnoFaktureStavkePanel(tbl, header, stavka, btns, searchInput, translator)
+		@RobnoFaktureHeaderPanel(ui, header, avansiTbl, vrstaDokumentaValues, valutaValues, sistemPdvValues, btns, translator)
+		@RobnoFaktureStavkePanel(ui, tbl, header, stavka, btns, searchInput, translator)
 	</div>
 }
 
@@ -1595,7 +1474,7 @@ templ RobnoFakturePanel(id, title, stateText string, open, enabled bool, fields,
 // Račun) with the checkbox "Štampaj detalje u stavkama" and the "Nazad" button, like the blue bar of
 // the two WinDev windows. The radios are disabled while the header is saved (they belong to the
 // header), the checkbox too.
-templ RobnoFaktureDokumentBar(header RobnoFaktureHeader, btnBack domain.Button, translator *i18n.Service) {
+templ RobnoFaktureDokumentBar(header domain.RobnoFaktureHeader, btnBack domain.Button, translator *i18n.Service) {
 	<div class="flex items-center gap-2 border border-blue-400 bg-blue-100 rounded-lg px-1 py-0.5">
 		<label class="flex items-center gap-1">
 			<input
@@ -1642,29 +1521,21 @@ templ RobnoFaktureDokumentBar(header RobnoFaktureHeader, btnBack domain.Button, 
 // / valuti, the podaci o porezom oslobođenju, the finansijsko stanje kupca and the grid of the avansi.
 // The values of the fields that are not in the form yet are documented with a TODO (the same fields
 // the legacy windows read from the tables the robna dokumenta tabs do not show).
-templ RobnoFaktureHeaderPanel(header RobnoFaktureHeader, avansiTbl domain.TableData, vrstaDokumentaValues, valutaValues, sistemPdvValues []domain.ComboItem, btns RobnoFaktureButtons, translator *i18n.Service) {
-	@RobnoFakturePanel(robnoFaktureHeaderPanelID, translator.Label("Podaci o fakturi"), robnoFaktureHeaderStateText(header.Snimljen, translator), !header.Snimljen, !header.Snimljen, RobnoFaktureHeaderFields(header, avansiTbl, vrstaDokumentaValues, valutaValues, sistemPdvValues, translator), RobnoFaktureHeaderButtons(btns))
+templ RobnoFaktureHeaderPanel(ui domain.RobnoFaktureUI, header domain.RobnoFaktureHeader, avansiTbl domain.TableData, vrstaDokumentaValues, valutaValues, sistemPdvValues []domain.ComboItem, btns domain.RobnoFaktureButtons, translator *i18n.Service) {
+	@RobnoFakturePanel(ui.HeaderPanelID, translator.Label("Podaci o fakturi"), robnoFaktureHeaderStateText(header.Snimljen, translator), !header.Snimljen, !header.Snimljen, RobnoFaktureHeaderFields(ui, header, avansiTbl, vrstaDokumentaValues, valutaValues, sistemPdvValues, translator), RobnoFaktureHeaderButtons(btns))
 }
 
 // RobnoFaktureHeaderFields is the body of the header control: the strip of the nalog, the panels of
 // the header (podaci o dokumentu, kupac, način otpreme / rokovi / valuta, poresko oslobođenje,
 // finansijsko stanje kupca) and the grid of the avansi. The buttons of the control are rendered by
 // RobnoFaktureHeaderButtons, outside of the fields the script disables.
-templ RobnoFaktureHeaderFields(header RobnoFaktureHeader, avansiTbl domain.TableData, vrstaDokumentaValues, valutaValues, sistemPdvValues []domain.ComboItem, translator *i18n.Service) {
-	<!-- Nalog: the read only strip both windows show above the form -->
+templ RobnoFaktureHeaderFields(ui domain.RobnoFaktureUI, header domain.RobnoFaktureHeader, avansiTbl domain.TableData, vrstaDokumentaValues, valutaValues, sistemPdvValues []domain.ComboItem, translator *i18n.Service) {
+	<!-- Nalog: the read only strip both windows show above the form. It is laid out like the two row
+	     header of the legacy window: the first line is the label of the field, the second one its value
+	     (see robnoFaktureNalogStripFields). -->
 	<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg">
 		<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Nalog") }</legend>
-		<div class="grid grid-cols-5 gap-x-2 gap-y-1">
-			@RobnoFaktureReadOnly("vrnal", translator.Label("Vr. nal."), header.VrNal, translator)
-			@RobnoFaktureReadOnly("nalog", translator.Label("Nalog"), header.Nalog, translator)
-			@RobnoFaktureReadOnly("datumnaloga", translator.Label("Datum naloga"), header.DatumNaloga, translator)
-			@RobnoFaktureReadOnly("ukdokum", translator.Label("Uk. dokum."), header.UkDokum, translator)
-			@RobnoFaktureReadOnly("ukstavki", translator.Label("Uk. stavki"), header.UkStavki, translator)
-			@RobnoFaktureReadOnly("duguje", translator.Label("Duguje"), header.Duguje, translator)
-			@RobnoFaktureReadOnly("potrazuje", translator.Label("Potražuje"), header.Potrazuje, translator)
-			@RobnoFaktureReadOnly("iznosdokum", translator.Label("Iznos dokum."), header.IznosDokum, translator)
-			@RobnoFaktureReadOnly("magacin", translator.Label("Magacin"), header.Magacin, translator)
-		</div>
+		@RobnoFaktureReadOnlyStrip(robnoFaktureNalogStripFields(header, translator))
 	</fieldset>
 	<!-- Podaci o dokumentu -->
 	<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg">
@@ -1834,7 +1705,7 @@ templ RobnoFaktureHeaderFields(header RobnoFaktureHeader, avansiTbl domain.Table
 					ClassInput: robnoFaktureControlClass(!header.Snimljen, "flex-1 min-w-0"),
 					MaxLength:  "10",
 					TabIndex:   "11"})
-				@components.SearchButton(domain.SearchButtonConfig{ID: "kupackonto", Name: "search-kupackonto", HxUrl: robnoFakturePartnerSearch, HxTarget: "#search-dropdown", HxSwap: "innerHTML", HxVals: `js:{"destfield": "kupackonto"}`, ClassButton: common.ClassButton})
+				@components.SearchButton(domain.SearchButtonConfig{ID: "kupackonto", Name: "search-kupackonto", HxUrl: ui.PartnerSearchURL, HxTarget: "#search-dropdown", HxSwap: "innerHTML", HxVals: `js:{"destfield": "kupackonto"}`, ClassButton: common.ClassButton})
 			</div>
 			<div class="flex items-center gap-1">
 				@components.LabelField(domain.LabelFieldConfig{
@@ -1851,7 +1722,7 @@ templ RobnoFaktureHeaderFields(header RobnoFaktureHeader, avansiTbl domain.Table
 					ClassInput: robnoFaktureControlClass(!header.Snimljen, "flex-1 min-w-0"),
 					MaxLength:  "10",
 					TabIndex:   "12"})
-				@components.SearchButton(domain.SearchButtonConfig{ID: "kupacsifra", Name: "search-kupacsifra", HxUrl: robnoFakturePartnerSearch, HxTarget: "#search-dropdown", HxSwap: "innerHTML", HxVals: `js:{"destfield": "kupacsifra"}`, ClassButton: common.ClassButton})
+				@components.SearchButton(domain.SearchButtonConfig{ID: "kupacsifra", Name: "search-kupacsifra", HxUrl: ui.PartnerSearchURL, HxTarget: "#search-dropdown", HxSwap: "innerHTML", HxVals: `js:{"destfield": "kupacsifra"}`, ClassButton: common.ClassButton})
 			</div>
 			<div class="flex items-center gap-1">
 				@components.LabelField(domain.LabelFieldConfig{
@@ -2569,15 +2440,47 @@ templ RobnoFaktureReadOnly(id, label, value string, translator *i18n.Service) {
 	</div>
 }
 
+// RobnoFaktureReadOnlyStrip renders a read only strip of two lines: the first line is the label of
+// every field, the second one its value (the two row grid header of the legacy windows). The values are
+// disabled inputs, so the script of the screen (RobnoFaktureScript) treats them like the other read
+// only values of the form and never enables them.
+templ RobnoFaktureReadOnlyStrip(fields []domain.RobnoFaktureStripField) {
+	<table class="w-full table-fixed border-collapse">
+		<thead>
+			<tr>
+				for _, f := range fields {
+					<th class={ "border border-blue-400 bg-blue-200 px-1 py-0.5 text-xs font-normal text-blue-900 whitespace-nowrap " + f.WidthClass }>{ f.Label }</th>
+				}
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				for _, f := range fields {
+					<td class="border border-blue-400 bg-blue-100 px-0.5 py-0.5 align-middle">
+						<input
+							id={ f.ID }
+							name={ f.ID }
+							type="text"
+							value={ f.Value }
+							disabled
+							class={ common.ClassInputTextDisabled + " " + f.AlignClass }
+						/>
+					</td>
+				}
+			</tr>
+		</tbody>
+	</table>
+}
+
 // RobnoFaktureStavkePanel renders the second collapsible control: the entry form of one stavka and the
 // grid of the stavke of the dokument. The control is closed and disabled until the header is saved.
-templ RobnoFaktureStavkePanel(tbl domain.TableData, header RobnoFaktureHeader, stavka RobnoFaktureStavka, btns RobnoFaktureButtons, searchInput domain.InputControl, translator *i18n.Service) {
-	@RobnoFakturePanel(robnoFaktureStavkePanelID, translator.Label("Stavke fakture"), robnoFaktureStavkeStateText(header.Snimljen, translator), header.Snimljen, header.Snimljen, RobnoFaktureStavkeFields(tbl, stavka, searchInput, translator), RobnoFaktureStavkeButtons(btns))
+templ RobnoFaktureStavkePanel(ui domain.RobnoFaktureUI, tbl domain.TableData, header domain.RobnoFaktureHeader, stavka domain.RobnoFaktureStavka, btns domain.RobnoFaktureButtons, searchInput domain.InputControl, translator *i18n.Service) {
+	@RobnoFakturePanel(ui.StavkePanelID, translator.Label("Stavke fakture"), robnoFaktureStavkeStateText(header.Snimljen, translator), header.Snimljen, header.Snimljen, RobnoFaktureStavkeFields(ui, tbl, stavka, searchInput, translator), RobnoFaktureStavkeButtons(btns))
 }
 
 // RobnoFaktureStavkeFields is the body of the stavke control: the kupac and the podaci o dokumentu of
 // the header (read only), the entry form of the stavka and the grid of the stavke.
-templ RobnoFaktureStavkeFields(tbl domain.TableData, stavka RobnoFaktureStavka, searchInput domain.InputControl, translator *i18n.Service) {
+templ RobnoFaktureStavkeFields(ui domain.RobnoFaktureUI, tbl domain.TableData, stavka domain.RobnoFaktureStavka, searchInput domain.InputControl, translator *i18n.Service) {
 	<!-- KUPAC + Podaci o dokumentu: the two read only panels of the legacy window -->
 	<div class="grid grid-cols-2 gap-1">
 		<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg">
@@ -2618,7 +2521,7 @@ templ RobnoFaktureStavkeFields(tbl domain.TableData, stavka RobnoFaktureStavka, 
 						TabIndex:   "1",
 						OnInput:    "clearFieldError",
 						OnFocus:    "clearFieldError"})
-					@components.SearchButton(domain.SearchButtonConfig{ID: "sifraartikla", Name: "search-sifraartikla", HxUrl: robnoFaktureArtikalSearch, HxTarget: "#search-dropdown", HxSwap: "innerHTML", HxVals: `js:{"destfield": "sifraartikla"}`, ClassButton: common.ClassButton})
+					@components.SearchButton(domain.SearchButtonConfig{ID: "sifraartikla", Name: "search-sifraartikla", HxUrl: ui.ArtikalSearchURL, HxTarget: "#search-dropdown", HxSwap: "innerHTML", HxVals: `js:{"destfield": "sifraartikla"}`, ClassButton: common.ClassButton})
 					@components.TextInputField(domain.InputFieldConfig{
 						ID:         "nazivartikla",
 						Name:       "nazivartikla",
@@ -2936,7 +2839,7 @@ templ RobnoFaktureStavkeFields(tbl domain.TableData, stavka RobnoFaktureStavka, 
 
 // RobnoFaktureStavkeButtons renders the buttons of the stavke control (the "Sačuvaj", "Izmeni" and
 // "Briši" of the legacy window).
-templ RobnoFaktureStavkeButtons(btns RobnoFaktureButtons) {
+templ RobnoFaktureStavkeButtons(btns domain.RobnoFaktureButtons) {
 	@components.Button(btns.SaveStavka)
 	@components.Button(btns.ModifyStavka)
 	@components.Button(btns.DeleteStavka)
@@ -2946,113 +2849,15 @@ templ RobnoFaktureStavkeButtons(btns RobnoFaktureButtons) {
 // [data-panel-fields], so the script never disables them and the header can always be saved; "Izmeni"
 // is the button that unlocks the header again (it keeps the stavke locked, only one control is
 // editable at a time).
-templ RobnoFaktureHeaderButtons(btns RobnoFaktureButtons) {
+templ RobnoFaktureHeaderButtons(btns domain.RobnoFaktureButtons) {
 	@components.Button(btns.Modify)
 	@components.Button(btns.Save)
 	@components.Button(btns.New)
 	@components.Button(btns.Delete)
 }
 
-// RobnoFaktureButtonsFor builds the buttons of the "Fakture veleprodaje" screen with the default
-// endpoints and with the two ids the script works on. The handler that renders the screen can change
-// every button after the call (the targets, the swap, the dialog the errors are shown in), but the
-// arguments of robnoFaktureAfterHeaderSave and robnoFaktureModifyHeader have to stay the ids of the
-// two controls, otherwise the screen does not switch the editable control.
-func RobnoFaktureButtonsFor() RobnoFaktureButtons {
-	return RobnoFaktureButtons{
-		Save: domain.Button{
-			Id:            "robno-fakture-sacuvaj",
-			LabelText:     "Sačuvaj",
-			Icon:          "save",
-			BtnClass:      common.ClassButton,
-			HxActionURL:   robnoFaktureSaveURL,
-			HxRequestType: "POST",
-			// Only the fields of the header are sent (the read only values of the strips are disabled,
-			// so the browser does not send them; the handler reads them from the dokument/kupac).
-			HxInclude: "#robno-fakture-header-panel [data-panel-fields]",
-			// The handler answers with the standard JSON response; the state of the two controls is
-			// switched by the script below. The same script also works when the handler swaps the whole
-			// tab (hx-target = robnoFaktureContentID), because the swapped markup carries the state of
-			// the saved dokument.
-			HxSwap:               "none",
-			HxOnAfterRequest:     "robnoFaktureAfterHeaderSave",
-			HxOnAfterRequestArgs: []any{robnoFaktureHeaderPanelID, robnoFaktureStavkePanelID},
-		},
-		Modify: domain.Button{
-			Id:           "robno-fakture-izmeni",
-			LabelText:    "Izmeni",
-			Icon:         "refresh",
-			BtnClass:     common.ClassButton,
-			HxOnClick:    "robnoFaktureModifyHeader",
-			HxOnClickArg: []any{robnoFaktureHeaderPanelID, robnoFaktureStavkePanelID},
-		},
-		New: domain.Button{
-			Id:               "robno-fakture-novi",
-			LabelText:        "Novi dok.",
-			Icon:             "add",
-			BtnClass:         common.ClassButton,
-			HxActionURL:      robnoFaktureNoviURL,
-			HxRequestType:    "GET",
-			HxTarget:         robnoFaktureContentID,
-			HxSwap:           "innerHTML",
-			HxOnAfterRequest: "robnoFaktureAfterHeaderSave",
-			HxOnAfterRequestArgs: []any{
-				robnoFaktureHeaderPanelID, robnoFaktureStavkePanelID},
-		},
-		Delete: domain.Button{
-			Id:            "robno-fakture-brisi",
-			LabelText:     "Briši",
-			Icon:          "delete",
-			BtnClass:      common.ClassButton,
-			HxActionURL:   robnoFaktureDeleteURL,
-			HxRequestType: "DELETE",
-			HxInclude:     "#robno-fakture-header-panel [data-panel-fields]",
-			HxSwap:        "none",
-		},
-		Back: domain.Button{
-			Id:        "robno-fakture-nazad",
-			LabelText: "Nazad",
-			Icon:      "back",
-			BtnClass:  common.ClassButton,
-			// TODO: the route of the "Fakture veleprodaje" menu entry
-			HxActionURL:   "/api/robna-dokumenta",
-			HxRequestType: "GET",
-			HxTarget:      "#main-content",
-			HxSwap:        "innerHTML",
-		},
-		SaveStavka: domain.Button{
-			Id:            "robno-fakture-stavka-sacuvaj",
-			LabelText:     "Sačuvaj",
-			Icon:          "save",
-			BtnClass:      common.ClassButton,
-			HxActionURL:   robnoFaktureStavkaSaveURL,
-			HxRequestType: "POST",
-			HxInclude:     "#robno-fakture-stavke-panel [data-panel-fields]",
-			HxTarget:      "#" + robnoFaktureStavkePanelID,
-			HxSwap:        "none",
-		},
-		ModifyStavka: domain.Button{
-			Id:        "robno-fakture-stavka-izmeni",
-			LabelText: "Izmeni",
-			Icon:      "refresh",
-			BtnClass:  common.ClassButton,
-		},
-		DeleteStavka: domain.Button{
-			Id:            "robno-fakture-stavka-brisi",
-			LabelText:     "Briši",
-			Icon:          "delete",
-			BtnClass:      common.ClassButton,
-			HxActionURL:   robnoFaktureStavkaDelURL,
-			HxRequestType: "DELETE",
-			HxInclude:     "#robno-fakture-stavke-panel [data-panel-fields]",
-			HxTarget:      "#" + robnoFaktureStavkePanelID,
-			HxSwap:        "none",
-		},
-	}
-}
-
 // RobnoFaktureScript is the small script that keeps only one of the two controls editable. The server
-// renders the same state (RobnoFaktureHeader.Snimljen and the Disabled flags of the fields), so the
+// renders the same state (domain.RobnoFaktureHeader.Snimljen and the Disabled flags of the fields), so the
 // screen works both after a save and after a reload of the tab.
 templ RobnoFaktureScript() {
 	<script>
@@ -3167,4 +2972,24 @@ func robnoFaktureControlClass(enabled bool, extra string) string {
 		return common.ClassInputTextEnabled + " " + extra
 	}
 	return common.ClassInputTextDisabled + " " + extra
+}
+
+// robnoFaktureNalogStripFields defines the fields of the strip of the nalog (the two row header both
+// legacy windows show above the form): the nalog, its totals and the magacin of the dokument. Every
+// field is one column of the strip: the label is the first line, the value the second one. The widths
+// are percentages of the strip, so the strip always fits the form; the magacin has no width, so it
+// takes the rest of the strip.
+func robnoFaktureNalogStripFields(header domain.RobnoFaktureHeader, translator *i18n.Service) []domain.RobnoFaktureStripField {
+	return []domain.RobnoFaktureStripField{
+		{ID: "vrnal", Label: translator.Label("Vr. nal."), Value: header.VrNal, WidthClass: "w-[5%]"},
+		{ID: "nalog", Label: translator.Label("Nalog"), Value: header.Nalog, WidthClass: "w-[7%]"},
+		{ID: "datumnaloga", Label: translator.Label("Datum naloga"), Value: header.DatumNaloga, WidthClass: "w-[12%]"},
+		{ID: "ukdokum", Label: translator.Label("Uk. dokum."), Value: header.UkDokum, WidthClass: "w-[9%]"},
+		{ID: "ukstavki", Label: translator.Label("Uk. stavki"), Value: header.UkStavki, WidthClass: "w-[9%]"},
+		{ID: "duguje", Label: translator.Label("Duguje"), Value: header.Duguje, WidthClass: "w-[11%]", AlignClass: "text-right"},
+		{ID: "potrazuje", Label: translator.Label("Potražuje"), Value: header.Potrazuje, WidthClass: "w-[13%]", AlignClass: "text-right"},
+		{ID: "iznosdokum", Label: translator.Label("Iznos dokum."), Value: header.IznosDokum, WidthClass: "w-[13%]", AlignClass: "text-right"},
+		// The magacin is the last field of the strip and takes the rest of its width.
+		{ID: "magacin", Label: translator.Label("Magacin"), Value: header.Magacin},
+	}
 }

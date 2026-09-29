@@ -31,11 +31,12 @@ const (
 )
 
 type KompenzacijeHandler struct {
-	tabData   domain.TabData
-	cfg       config.Config
-	service   *finservice.KompenzacijeResource
-	lm        *middleware.LockMiddleware
-	commonSvc commonsvc.CommonService
+	translator *i18n.Service
+	tabData    domain.TabData
+	cfg        config.Config
+	service    *finservice.KompenzacijeResource
+	lm         *middleware.LockMiddleware
+	commonSvc  commonsvc.CommonService
 }
 
 const (
@@ -65,12 +66,13 @@ const (
         }`
 )
 
-func NewKompenzacijeHandler(service *finservice.KompenzacijeResource, cfg config.Config, lm *middleware.LockMiddleware, commonSvc commonsvc.CommonService) *KompenzacijeHandler {
+func NewKompenzacijeHandler(service *finservice.KompenzacijeResource, cfg config.Config, lm *middleware.LockMiddleware, commonSvc commonsvc.CommonService, translator *i18n.Service) *KompenzacijeHandler {
 	handler := &KompenzacijeHandler{
-		cfg:       cfg,
-		service:   service,
-		lm:        lm,
-		commonSvc: commonSvc,
+		translator: translator,
+		cfg:        cfg,
+		service:    service,
+		lm:         lm,
+		commonSvc:  commonSvc,
 	}
 	handler.tabData = GetKompenzacijeTabData()
 	return handler
@@ -78,9 +80,8 @@ func NewKompenzacijeHandler(service *finservice.KompenzacijeResource, cfg config
 
 // Main kompenzacije handler - displays the initial page with first tab
 func (h *KompenzacijeHandler) KompenzacijeMain(c *gin.Context) {
-	translator := i18n.GetInstance()
 	csrfToken, _ := c.Cookie("csrf_token")
-	searchInput := common.CreateSearchInput("search-input", translator, kompenzacijeURLPregledPartnera, fmt.Sprintf("#%s", kompenzacijePregledTableID), hxValsKompenzacijePregledPartnera)
+	searchInput := common.CreateSearchInput("search-input", h.translator, kompenzacijeURLPregledPartnera, fmt.Sprintf("#%s", kompenzacijePregledTableID), hxValsKompenzacijePregledPartnera)
 
 	// Create configuration
 	btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", "/api/kompenzacije/pregledpartnera", fmt.Sprintf("#%s", kompenzacijePregledTableID), "innerHTML", "GET", "", hxValsKompenzacijePregledPartnera, true, common.ClassSaveButton, "handleDialogResponse")
@@ -90,7 +91,7 @@ func (h *KompenzacijeHandler) KompenzacijeMain(c *gin.Context) {
 	common.SetTableConfig(&tbl, "PREGLED PARTNERA ZA FORMIRANJE KOMPENZACIJE", kompenzacijeURLPregledPartnera, false, false, false)
 
 	setActiveKompenzacijeTab(h.tabData, "pregledpartnera")
-	err := tmpl_fin.KompenzacijePregledPartnera(h.tabData, tbl, searchInput, btnObrada, btnPrint, translator, csrfToken).Render(c.Request.Context(), c.Writer)
+	err := tmpl_fin.KompenzacijePregledPartnera(h.tabData, tbl, searchInput, btnObrada, btnPrint, h.translator, csrfToken).Render(c.Request.Context(), c.Writer)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 		return
@@ -101,9 +102,8 @@ func (h *KompenzacijeHandler) KompenzacijeMain(c *gin.Context) {
 func (h *KompenzacijeHandler) KompenzacijePregledPartnera(c *gin.Context) {
 	requestSource := c.Request.Header.Get("X-Request-Source")
 	csrfToken, _ := c.Cookie("csrf_token")
-	translator := i18n.GetInstance()
 
-	searchInput := common.CreateSearchInput("search-input", translator, kompenzacijeURLPregledPartnera, fmt.Sprintf("#%s", kompenzacijePregledTableID), hxValsKompenzacijePregledPartnera)
+	searchInput := common.CreateSearchInput("search-input", h.translator, kompenzacijeURLPregledPartnera, fmt.Sprintf("#%s", kompenzacijePregledTableID), hxValsKompenzacijePregledPartnera)
 
 	tbl := common.SetTableBasicData(kompenzacijeContentTitle, kompenzacijePregledTableID, h.service.GetPregledPartneraTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tbl, "PREGLED PARTNERA ZA FORMIRANJE KOMPENZACIJE", kompenzacijeURLPregledPartnera, false, false, false)
@@ -113,7 +113,7 @@ func (h *KompenzacijeHandler) KompenzacijePregledPartnera(c *gin.Context) {
 		btnPrint := common.SetButton("stampa", "Štampa", "stampa", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassPrintButton, "")
 
 		setActiveKompenzacijeTab(h.tabData, "pregledpartnera")
-		err := tmpl_fin.KompenzacijePregledPartnera(h.tabData, tbl, searchInput, btnObrada, btnPrint, translator, csrfToken).Render(c.Request.Context(), c.Writer)
+		err := tmpl_fin.KompenzacijePregledPartnera(h.tabData, tbl, searchInput, btnObrada, btnPrint, h.translator, csrfToken).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -146,7 +146,6 @@ func (h *KompenzacijeHandler) KompenzacijePregledPartnera(c *gin.Context) {
 // Tab 2: Formiranje kompenzacije
 func (h *KompenzacijeHandler) KompenzacijeFormiranje(c *gin.Context) {
 	requestSource := c.Request.Header.Get("X-Request-Source")
-	translator := i18n.GetInstance()
 	session := domain.GetSessionFromContext(c)
 	if session == nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, "User session not found")
@@ -172,7 +171,7 @@ func (h *KompenzacijeHandler) KompenzacijeFormiranje(c *gin.Context) {
 		btnFormKomp := common.SetButton("form-komp-btn", "Formiraj kompenzaciju", "fin_save", kompenzacijeURLFormiranje+"/formiraj", "#kompenzacije-detalji", "innerHTML", "POST", "", hxValsKompenzacijeFormiranje, true, common.ClassAddButton, "")
 
 		setActiveKompenzacijeTab(h.tabData, "formiranje")
-		err := tmpl_fin.KompenzacijeFormiranje(h.tabData, duznikData, poverilacData, btnObrada, btnFormKomp, translator, csrfToken, session.SelectedGod, h.cfg.Konta).Render(c.Request.Context(), c.Writer)
+		err := tmpl_fin.KompenzacijeFormiranje(h.tabData, duznikData, poverilacData, btnObrada, btnFormKomp, h.translator, csrfToken, session.SelectedGod, h.cfg.Konta).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -231,7 +230,7 @@ func (h *KompenzacijeHandler) KompenzacijeFormiranje(c *gin.Context) {
 		poverilacData.HasTotals = true
 		duznikData.HasTotals = true
 		if requestSource == "btnobrada" {
-			err := tmpl_fin.KompenzacijeFormirajDetalji(duznikData, poverilacData, translator).Render(c.Request.Context(), c.Writer)
+			err := tmpl_fin.KompenzacijeFormirajDetalji(duznikData, poverilacData, h.translator).Render(c.Request.Context(), c.Writer)
 			if err != nil {
 				common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			}
@@ -266,14 +265,13 @@ func (h *KompenzacijeHandler) KompenzacijeFormiraj(c *gin.Context) {
 // Tab 3: Pregled kompenzacija
 func (h *KompenzacijeHandler) KompenzacijePregled(c *gin.Context) {
 	requestSource := c.Request.Header.Get("X-Request-Source")
-	translator := i18n.GetInstance()
 	session := domain.GetSessionFromContext(c)
 	if session == nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, "User session not found")
 		return
 	}
 
-	searchInput := common.CreateSearchInput("search-input", translator, kompenzacijeURLPregled, fmt.Sprintf("#%s", kompenzacijePregledKompenzacijaTableID), hxValsKompenzacijePregled)
+	searchInput := common.CreateSearchInput("search-input", h.translator, kompenzacijeURLPregled, fmt.Sprintf("#%s", kompenzacijePregledKompenzacijaTableID), hxValsKompenzacijePregled)
 	btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", kompenzacijeURLPregled, fmt.Sprintf("#%s", kompenzacijePregledKompenzacijaTableID), "innerHTML", "GET", "", hxValsKompenzacijePregled, true, common.ClassSaveButton, "handleDialogResponse")
 	btnPrint := common.SetButton("stampa-btn", "Štampa", "fin_print", kompenzacijeURLPregled+"/print", "", "innerHTML", "GET", "", hxValsKompenzacijePregled, true, common.ClassPrintButton, "")
 
@@ -287,7 +285,7 @@ func (h *KompenzacijeHandler) KompenzacijePregled(c *gin.Context) {
 	if requestSource == "menu" || requestSource == "tab" {
 
 		setActiveKompenzacijeTab(h.tabData, "pregled")
-		err := tmpl_fin.KompenzacijePregled(h.tabData, tblHdr, tblDet, searchInput, btnObrada, btnPrint, translator).Render(c.Request.Context(), c.Writer)
+		err := tmpl_fin.KompenzacijePregled(h.tabData, tblHdr, tblDet, searchInput, btnObrada, btnPrint, h.translator).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
@@ -320,7 +318,6 @@ func (h *KompenzacijeHandler) KompenzacijePregled(c *gin.Context) {
 // Tab 4: Knjiženje kompenzacija
 func (h *KompenzacijeHandler) KompenzacijeKnjizenje(c *gin.Context) {
 	requestSource := c.Request.Header.Get("X-Request-Source")
-	translator := i18n.GetInstance()
 	csrfToken, _ := c.Cookie("csrf_token")
 
 	// Vrste naloga koje se mogu knjižiti (grpdok FIN/SVI) iz zajedničkog servisa
@@ -343,7 +340,7 @@ func (h *KompenzacijeHandler) KompenzacijeKnjizenje(c *gin.Context) {
 		btnKnjizi := common.SetButton("knjizi-btn", "Knjiži", "fin_save", kompenzacijeURLKnjizenje+"/knjizi", "", "innerHTML", "POST", "", hxValsKompenzacijeKnjizenje, true, common.ClassSaveButton, "")
 
 		setActiveKompenzacijeTab(h.tabData, "knjizenje")
-		err := tmpl_fin.KompenzacijeKnjizenje(h.tabData, tbl, dokumentaData, tipdokValues, btnObrada, btnRavnoteza, btnKnjizi, translator, csrfToken).Render(c.Request.Context(), c.Writer)
+		err := tmpl_fin.KompenzacijeKnjizenje(h.tabData, tbl, dokumentaData, tipdokValues, btnObrada, btnRavnoteza, btnKnjizi, h.translator, csrfToken).Render(c.Request.Context(), c.Writer)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return

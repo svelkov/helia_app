@@ -3,6 +3,7 @@ package finansijsko
 import (
 	"context"
 	"fmt"
+	"helia/config"
 	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
@@ -82,6 +83,7 @@ type SaldaResource struct {
 	saldaKomercijalistiTableFields            []domain.Fields
 	saldaRealizacijakomercijalistiTableFields []domain.Fields
 	saldaPartneraPoKontimaStampaTableFields   []domain.Fields
+	cfg                                       config.Config
 }
 
 func NewSaldaService(service *service.BaseService[domain.SaldaDto],
@@ -91,7 +93,8 @@ func NewSaldaService(service *service.BaseService[domain.SaldaDto],
 	partneriRepo *repository.BaseRepository[domain.Partneri],
 	saldaPartneriRepo *repository.BaseRepository[domain.SaldaPartnerDto],
 	saldaKomRepo *repository.BaseRepository[domain.SaldaKomercijalistiDto],
-	fvrRepo *repository.BaseRepository[domain.Fvr]) *SaldaResource {
+	fvrRepo *repository.BaseRepository[domain.Fvr],
+	cfg config.Config) *SaldaResource {
 	rs := &SaldaResource{
 		service:           service,
 		saldaRepo:         saldaRepo,
@@ -101,6 +104,7 @@ func NewSaldaService(service *service.BaseService[domain.SaldaDto],
 		saldaPartneriRepo: saldaPartneriRepo,
 		saldaKomRepo:      saldaKomRepo,
 		fvrRepo:           fvrRepo,
+		cfg:               cfg,
 	}
 	rs.setServiceFieldValues()
 	return rs
@@ -171,7 +175,7 @@ func (s *SaldaResource) CheckSaldaGrupeParameters(ctx context.Context, requiredF
 		return []domain.FieldError{{Field: "session", ErrorMessage: "user session not found"}}
 	}
 
-	nduzsin := 3 // Default length of synthetic account TODO should be get from config
+	nduzsin := userSession.GetDuzSin(s.cfg.NDuzSint) // from the bookkeeping type of the selected firma
 	if params.OdKonta == "" {
 		fieldsError = append(fieldsError, domain.FieldError{Field: "odkonta", ErrorMessage: "obavezan podatak..."})
 	}

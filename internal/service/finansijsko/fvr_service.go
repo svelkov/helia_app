@@ -39,7 +39,9 @@ func (s *FvrResource) GetAllFvr(ctx context.Context) (*domain.Firma, error) {
 	args := []interface{}{}
 	firma := &domain.Firma{}
 
-	selectQuery := `SELECT DISTINCT ON (naziv) naziv FROM fvr
+	// knjigovod (the bookkeeping type of the firma) is selected as well: the handlers derive the
+	// length of the synthetic account prefix (nDuzSIN) from it.
+	selectQuery := `SELECT DISTINCT ON (naziv) naziv, knjigovod FROM fvr
 					WHERE god > 0
 					order by fvr.naziv`
 
@@ -67,8 +69,9 @@ func (s *FvrResource) GetAllFvr(ctx context.Context) (*domain.Firma, error) {
 			})
 		}
 		firma.Firme = append(firma.Firme, domain.FvrFirma{
-			Naziv:  item.Naziv,
-			Godine: poslGodine,
+			Naziv:     item.Naziv,
+			Knjigovod: item.Knjigovod,
+			Godine:    poslGodine,
 		},
 		)
 	}

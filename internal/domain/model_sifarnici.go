@@ -16,6 +16,7 @@ type Fvr struct {
 	Matbr     string `json:"matbr" db:"matbr"`
 	Pobro     string `json:"pobro" db:"pobro"`
 	Mesto     string `json:"mesto" db:"mesto"`
+	Knjigovod string `json:"knjigovod" db:"knjigovod"` // Bookkeeping type: "Finansijsko", "Pogonsko"
 	KontaKup1 string `json:"konta_kup_1" db:"kontakup_1"`
 	KontaDob1 string `json:"konta_dob_1" db:"kontadob_1"`
 }
@@ -24,10 +25,11 @@ type Firma struct {
 	Firme []FvrFirma `json:"firme"`
 }
 type FvrFirma struct {
-	IDFirma int      `json:"idfirma" db:"idfvr"`
-	Godine  []Godina `json:"god" db:"god"`
-	Naziv   string   `json:"naziv" db:"naziv"`
-	Adresa  string   `json:"adresa" db:"adresa"`
+	IDFirma   int      `json:"idfirma" db:"idfvr"`
+	Godine    []Godina `json:"god" db:"god"`
+	Naziv     string   `json:"naziv" db:"naziv"`
+	Adresa    string   `json:"adresa" db:"adresa"`
+	Knjigovod string   `json:"knjigovod" db:"knjigovod"` // Bookkeeping type of the firma (FVR.KNJIGOVOD)
 }
 type Godina struct {
 	God int   `json:"god" db:"god"`

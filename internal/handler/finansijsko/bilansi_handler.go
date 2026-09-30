@@ -102,7 +102,7 @@ func (h *BilansiHandler) BilansiMain(c *gin.Context) {
 	tbl := common.SetTableBasicData(bilansiContentTitle, bilansiTableID, h.service.GetZakljucniTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tbl, zakljucniListTitle, "", false, false, false)
 	tbl.HxVals = hxValsZakljucni
-	err := tmpl_fin.BilansiMain(h.tabData, tbl, btnObrada, btnPrint, searchInput, h.translator, gnGod, h.cfg.NDuzSint).Render(ctx, c.Writer)
+	err := tmpl_fin.BilansiMain(h.tabData, tbl, btnObrada, btnPrint, searchInput, h.translator, gnGod, common.NDuzSint(c, h.cfg)).Render(ctx, c.Writer)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 		return
@@ -134,7 +134,7 @@ func (h *BilansiHandler) ZakljucniList(c *gin.Context) {
 		common.SetTableConfig(&tbl, zakljucniListTitle, bilansiURLZakljucni, false, false, false)
 
 		common.SetActiveTab(h.tabData, 0)
-		tmpl_fin.ZakljucniList(h.tabData, tbl, btnObrada, btnPrint, searchInput, h.translator, gnGod, h.cfg.NDuzSint).Render(ctx, c.Writer)
+		tmpl_fin.ZakljucniList(h.tabData, tbl, btnObrada, btnPrint, searchInput, h.translator, gnGod, common.NDuzSint(c, h.cfg)).Render(ctx, c.Writer)
 		return
 	}
 	//validacija input parametre:
@@ -257,7 +257,7 @@ func (h *BilansiHandler) ZakljucniListObrazacStampa(c *gin.Context) {
 		DoDatuma:        doFmt,
 		DatumObrade:     time.Now().Format(common.DateLayout),
 		God:             session.SelectedGod,
-		NDuzSint:        h.cfg.NDuzSint,
+		NDuzSint:        common.NDuzSint(c, h.cfg),
 		TipLista:        c.Query("tip_zakljucni"),
 		ZaBanku:         c.Query("zabanku"),
 	}
@@ -285,7 +285,7 @@ func (h *BilansiHandler) ZakljucniListObrazacStampa(c *gin.Context) {
 	}
 	tbl := domain.TableData{}
 	tblSummary := domain.TableData{}
-	if err := h.service.GetZakljucniListZaStampu(ctx, &tbl, &tblSummary, zakljucniParams, h.cfg.NDuzSint); err != nil {
+	if err := h.service.GetZakljucniListZaStampu(ctx, &tbl, &tblSummary, zakljucniParams, common.NDuzSint(c, h.cfg)); err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetData)
 		return
 	}

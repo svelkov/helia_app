@@ -3,6 +3,7 @@ package config
 import (
 	"log"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -52,6 +53,25 @@ func (c *Config) GetPageSize() int {
 		return 20 // default page size
 	}
 	return c.PageSize
+}
+
+// NDuzSintForKnjigovod returns the length of the synthetic account prefix (nDuzSIN) for the
+// bookkeeping type of a firma (FVR.KNJIGOVOD):
+//
+//	IF FVR.KNJIGOVOD = "Finansijsko" OR FVR.KNJIGOVOD = "Pogonsko" THEN nDuzSIN = 3
+//	ELSE nDuzSIN = 4
+//	END
+//
+// The comparison ignores case and surrounding spaces. NDuzSint from the configuration is NOT used
+// here: it only serves as the fallback for requests that have no firma/bookkeeping type yet (see
+// common.NDuzSint).
+func (c Config) NDuzSintForKnjigovod(knjigovod string) int {
+	switch strings.ToLower(strings.TrimSpace(knjigovod)) {
+	case "finansijsko", "pogonsko":
+		return 3
+	default:
+		return 4
+	}
 }
 
 // GetAccessTokenTTL returns access token TTL with default fallback

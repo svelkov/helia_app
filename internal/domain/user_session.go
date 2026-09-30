@@ -16,7 +16,20 @@ type UserSession struct {
 	Mesto       string `json:"mesto"`        // User's city (for report headers)
 	SelectedGod int    `json:"selected_god"` // Fiscal year (user-mutable - can change per session)
 	SelectedKar int    `json:"selected_kar"` // Accounting period (user-mutable - can change per session)
-	Language    string `json:"language"`     // UI language preference (user-mutable)
+	// Length of the synthetic account prefix (nDuzSIN), derived from the bookkeeping type of the
+	// selected firma (FVR.KNJIGOVOD). 0 means "not resolved yet" -> the configured default is used.
+	DuzSin   int    `json:"duz_sin"`
+	Language string `json:"language"` // UI language preference (user-mutable)
+}
+
+// GetDuzSin returns the synthetic account prefix length (nDuzSIN) for this session, or fallback
+// when it has not been resolved yet (e.g. a token issued before the value was stored in the
+// session).
+func (s *UserSession) GetDuzSin(fallback int) int {
+	if s == nil || s.DuzSin <= 0 {
+		return fallback
+	}
+	return s.DuzSin
 }
 
 // GetSessionFromContext extracts UserSession from gin context

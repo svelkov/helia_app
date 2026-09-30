@@ -250,12 +250,13 @@ func (h *SaldaHandler) SaldaGrupeKonta(c *gin.Context) {
 			return
 		}
 		page, pageSize := common.GetPageAndPageSizeFromRequest(c, h.cfg)
-		err := h.service.GetSaldaGrupeKonta(ctx, &tbl, true, page, pageSize, params, h.cfg.NDuzSint)
+		duzSin := common.NDuzSint(c, h.cfg)
+		err := h.service.GetSaldaGrupeKonta(ctx, &tbl, true, page, pageSize, params, duzSin)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
 			return
 		}
-		err = h.service.GetSaldaGrupeKonta(ctx, &tbl, false, page, pageSize, params, h.cfg.NDuzSint)
+		err = h.service.GetSaldaGrupeKonta(ctx, &tbl, false, page, pageSize, params, duzSin)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return

@@ -868,8 +868,8 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 		repository.NewBaseRepository[domain.SaldaPartnerDto](db, "saldapartneridto"),
 		repository.NewBaseRepository[domain.SaldaKomercijalistiDto](db, "saldakomercijalistidto"),
 		repository.NewBaseRepository[domain.Fvr](db, "fvr"),
+		cfg,
 	)
-
 	saldaHandler := fin.NewSaldaHandler(saldaService, cfg, translator)
 	saldaHandler.AddRoutes(r)
 

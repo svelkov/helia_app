@@ -118,7 +118,10 @@ type RobnoFaktureUI struct {
 	DialogID        string
 	DialogStagingID string
 
-	// ArtikalSearchURL and PartnerSearchURL are the search popups of the stavka and of the kupac.
-	ArtikalSearchURL string
-	PartnerSearchURL string
+	// ArtikalSearchURL and PartnerSearchURL are the search popups of the stavka and of the kupac,
+	// DokumentSearchURL the one of the broj dokumenta (all of them are opened with the "..." buttons of
+	// the form).
+	ArtikalSearchURL  string
+	PartnerSearchURL  string
+	DokumentSearchURL string
 }

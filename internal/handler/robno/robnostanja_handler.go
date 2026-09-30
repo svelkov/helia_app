@@ -333,7 +333,7 @@ func (h *RobnoStanjaHandler) PrikazStanjaViseArtikalaSifra(c *gin.Context) {
 	btnNalepnice := common.SetButton("robnostanja-vise-sifra-nalepnice", "Nalepnice", "nalepnice", "", "", "", "GET", "", "", true, common.ClassEanButton, "")
 	searchInput := common.CreateSearchInput("search-input", h.translator, robnoStanjaURLViseArtikalaSifra, fmt.Sprintf("#%s", robnoStanjaViseArtikalaSifraTableID), hxValsRobnoStanjaViseArtikalaSifra)
 
-	tmpl_robno.RobnoStanjeViseArtikalaSifra(tabs, h.subtabs, "vise-artikala", robnoStanjaViseArtikalaTitle, tbl, magValues, btnObrada, btnPrint, btnEan13, btnNalepnice, searchInput, h.cfg.NDuzSint, h.translator).Render(ctx, c.Writer)
+	tmpl_robno.RobnoStanjeViseArtikalaSifra(tabs, 	subtabs, "vise-artikala", robnoStanjaViseArtikalaTitle, tbl, magValues, btnObrada, btnPrint, btnEan13, btnNalepnice, searchInput, common.NDuzSint(c, h.cfg), h.translator).Render(ctx, c.Writer)
 }
 
 func (h *RobnoStanjaHandler) PrikazStanjaViseArtikalaGrupa(c *gin.Context) {

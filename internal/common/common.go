@@ -70,6 +70,22 @@ func GetPaginationData(c *gin.Context, totalRecords int, cfg config.Config) (cur
 	return currentPage, pageSize, totalPages
 }
 
+// NDuzSint returns the length of the synthetic account prefix (nDuzSIN) that applies to the current
+// request: the value derived from the bookkeeping type of the firma selected in the session
+// (FVR.KNJIGOVOD: "Finansijsko" and "Pogonsko" -> 3, otherwise -> 4). The session is filled by the
+// authentication middleware (from the JWT) and refreshed when the user changes the firma. When the
+// session does not carry the value yet (a token issued before nDuzSIN became part of the session)
+// the configured default (cfg.NDuzSint) is used.
+func NDuzSint(c *gin.Context, cfg config.Config) int {
+	return domain.GetSessionFromContext(c).GetDuzSin(cfg.NDuzSint)
+}
+
+// NDuzSintFromContext is the service layer variant of NDuzSint: it reads the session from the
+// standard context the handlers pass down to the services.
+func NDuzSintFromContext(ctx context.Context, cfg config.Config) int {
+	return domain.GetSessionFromStdContext(ctx).GetDuzSin(cfg.NDuzSint)
+}
+
 // GetPageAndPageSizeFromRequest extracts "page" and "pageSize" query parameters.
 func GetPageAndPageSizeFromRequest(c *gin.Context, cfg config.Config) (page, pageSize int) {
 	pageStr := c.Query("page")

@@ -277,6 +277,9 @@ func (s *FkplResource) ValidateEntity(ctx context.Context, entity *domain.Fkpl) 
 		return []domain.FieldError{{Field: "session", ErrorMessage: "Korisnička sesija nije pronađena"}}
 	}
 
+	// nDuzSIN depends on the bookkeeping type of the selected firma (FVR.KNJIGOVOD)
+	duzSin := userSession.GetDuzSin(s.cfg.NDuzSint)
+
 	var fieldErrors []domain.FieldError
 	if entity.Konto == "" {
 		fieldErrors = append(fieldErrors, domain.FieldError{Field: "konto", ErrorMessage: "Obavezan podatak..."})
@@ -287,11 +290,11 @@ func (s *FkplResource) ValidateEntity(ctx context.Context, entity *domain.Fkpl) 
 	if entity.Vkonta == 1 && entity.TipanalitikeID == nil {
 		fieldErrors = append(fieldErrors, domain.FieldError{Field: "tipanalitikeid", ErrorMessage: "Obavezan podatak..."})
 	}
-	if entity.Vkonta == 2 && len(entity.Konto) <= s.cfg.NDuzSint {
-		fieldErrors = append(fieldErrors, domain.FieldError{Field: "konto", ErrorMessage: fmt.Sprintf("Subsintetički konto mora imati minimum %d karaktera", s.cfg.NDuzSint+1)})
+	if entity.Vkonta == 2 && len(entity.Konto) <= duzSin {
+		fieldErrors = append(fieldErrors, domain.FieldError{Field: "konto", ErrorMessage: fmt.Sprintf("Subsintetički konto mora imati minimum %d karaktera", duzSin+1)})
 	}
-	if entity.Vkonta == 3 && len(entity.Konto) != s.cfg.NDuzSint {
-		fieldErrors = append(fieldErrors, domain.FieldError{Field: "konto", ErrorMessage: fmt.Sprintf("Sintetički konto mora imati tačno %d karaktera", s.cfg.NDuzSint)})
+	if entity.Vkonta == 3 && len(entity.Konto) != duzSin {
+		fieldErrors = append(fieldErrors, domain.FieldError{Field: "konto", ErrorMessage: fmt.Sprintf("Sintetički konto mora imati tačno %d karaktera", duzSin)})
 	}
 	if entity.Vkonta == 4 && len(entity.Konto) != 2 {
 		fieldErrors = append(fieldErrors, domain.FieldError{Field: "konto", ErrorMessage: "Grupa konto mora imati tačno 2 karaktera"})

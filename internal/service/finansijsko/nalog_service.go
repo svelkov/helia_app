@@ -1075,7 +1075,8 @@ func (s *NalogResource) GetNalogStampaData(ctx context.Context, idFnal int64, cf
 			if entity.Sifra != "" {
 				key = entity.Konto
 			} else {
-				key = entity.Konto[:cfg.NDuzSint]
+				// nDuzSIN follows the bookkeeping type of the selected firma (FVR.KNJIGOVOD)
+				key = entity.Konto[:userSession.GetDuzSin(cfg.NDuzSint)]
 			}
 			if _, exists := kontoMap[key]; !exists {
 				kontoOrder = append(kontoOrder, key)
@@ -1319,7 +1320,7 @@ func (s *NalogResource) GetGrupeNaloziStampaData(ctx context.Context, tipdok str
 		totalDug += dug
 		totalPot += pot
 
-		sintLen := cfg.NDuzSint
+		sintLen := userSession.GetDuzSin(cfg.NDuzSint)
 		if len(entity.Konto) < sintLen {
 			sintLen = len(entity.Konto)
 		}

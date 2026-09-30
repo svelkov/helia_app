@@ -266,6 +266,7 @@ func UserSession(jwtSecret []byte) gin.HandlerFunc {
 					Firma:       claims.Firma,
 					SelectedGod: claims.SelectedGod,
 					SelectedKar: claims.SelectedKar,
+					DuzSin:      claims.DuzSin,
 					Language:    claims.Language,
 				}
 				c.Set("userSession", userSession)

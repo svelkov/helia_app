@@ -192,7 +192,7 @@ func (s *BilansiResource) GetZakljucniListAnalitika(ctx context.Context, tbl *do
 	pageRows, rowNum := zakljucniPageRows(*entities, currentPage, pageSize, zakljucniNivoAnalitika)
 	// Every subtotal row shows the sum of the netted sides below it, so the saldo columns foot
 	// at every level and the grid shows the same numbers as the printed report.
-	saldoAcc := zakljucniSaldoAccumulatorFromDetails(s.cfg, params.TipLista, *entities)
+	saldoAcc := zakljucniSaldoAccumulatorFromDetails(common.NDuzSintFromContext(ctx, s.cfg), params.TipLista, *entities)
 	nazivCache := make(map[string]string)
 	for _, entity := range pageRows {
 		marker := zakljucniNivoMarker(entity.NivoOrder, rowNum)
@@ -322,8 +322,8 @@ func newZakljucniSaldoAccumulator(nduzSint, detailNivo int) *zakljucniSaldoAccum
 
 // zakljucniSaldoAccumulatorFromDetails builds the accumulator of a list: every row of the finest
 // (detail) level is accumulated into its subtotal levels.
-func zakljucniSaldoAccumulatorFromDetails(cfg config.Config, tipLista string, entities []domain.FproDto) *zakljucniSaldoAccumulator {
-	acc := newZakljucniSaldoAccumulator(cfg.NDuzSint, zakljucniDetailNivo(tipLista))
+func zakljucniSaldoAccumulatorFromDetails(nduzSint int, tipLista string, entities []domain.FproDto) *zakljucniSaldoAccumulator {
+	acc := newZakljucniSaldoAccumulator(nduzSint, zakljucniDetailNivo(tipLista))
 	for _, entity := range entities {
 		if entity.NivoOrder == acc.detailNivo {
 			acc.addDetail(entity)
@@ -418,10 +418,10 @@ func (s *BilansiResource) buildZakljucniListAnalitikaQuery(session *domain.UserS
 	// The range of the konta is compared on the sintetika prefix (like the other two lists of the
 	// report and like the legacy query did).
 	if params.OdKonta != "" {
-		filterQb.AddCondition(fmt.Sprintf("left(fpro.konto, %d)", s.cfg.NDuzSint), params.OdKonta, ">=")
+		filterQb.AddCondition(fmt.Sprintf("left(fpro.konto, %d)", session.GetDuzSin(s.cfg.NDuzSint)), params.OdKonta, ">=")
 	}
 	if params.DoKonta != "" {
-		filterQb.AddCondition(fmt.Sprintf("left(fpro.konto, %d)", s.cfg.NDuzSint), params.DoKonta, "<=")
+		filterQb.AddCondition(fmt.Sprintf("left(fpro.konto, %d)", session.GetDuzSin(s.cfg.NDuzSint)), params.DoKonta, "<=")
 	}
 	filterQb.AddCondition("fnal.danal", params.OdDatuma, ">=")
 	filterQb.AddCondition("fnal.danal", params.DoDatuma, "<=")
@@ -481,8 +481,8 @@ func (s *BilansiResource) buildZakljucniListAnalitikaQuery(session *domain.UserS
 	) sub`, filterSql, sintParam, sintParam, nivoOrderCase)
 
 	qb := common.NewQueryBuilder(baseSql, false)
-	qb.AddArgs(filterArgs...)  // $1..$n : the "filtered" CTE
-	qb.AddArgs(s.cfg.NDuzSint) // $n+1   : the sintetika prefix length
+	qb.AddArgs(filterArgs...)                     // $1..$n : the "filtered" CTE
+	qb.AddArgs(session.GetDuzSin(s.cfg.NDuzSint)) // $n+1   : the sintetika prefix length
 
 	// The search placeholder follows the CTE arguments and the prefix length.
 	if params.SearchText != "" {
@@ -549,7 +549,7 @@ func (s *BilansiResource) GetZakljucniListSintetika(ctx context.Context, tbl *do
 	// The numbering continues across the pages (see zakljucniPageRows).
 	// Every subtotal row shows the sum of the netted sides below it, so the saldo columns foot
 	// at every level and the grid shows the same numbers as the printed report.
-	saldoAcc := zakljucniSaldoAccumulatorFromDetails(s.cfg, params.TipLista, *entities)
+	saldoAcc := zakljucniSaldoAccumulatorFromDetails(common.NDuzSintFromContext(ctx, s.cfg), params.TipLista, *entities)
 	nazivCache := make(map[string]string)
 	pageRows, rowNum := zakljucniPageRows(*entities, currentPage, pageSize, zakljucniNivoSintetika)
 	for _, entity := range pageRows {
@@ -611,8 +611,8 @@ func (s *BilansiResource) buildZakljucniListSintetikaQuery(session *domain.UserS
 	if hasKar {
 		filterQb.AddEqual("fpro.kar", session.SelectedKar)
 	}
-	filterQb.AddCondition(fmt.Sprintf("left(fpro.konto, %d)", s.cfg.NDuzSint), params.OdKonta, ">=")
-	filterQb.AddCondition(fmt.Sprintf("left(fpro.konto, %d)", s.cfg.NDuzSint), params.DoKonta, "<=")
+	filterQb.AddCondition(fmt.Sprintf("left(fpro.konto, %d)", session.GetDuzSin(s.cfg.NDuzSint)), params.OdKonta, ">=")
+	filterQb.AddCondition(fmt.Sprintf("left(fpro.konto, %d)", session.GetDuzSin(s.cfg.NDuzSint)), params.DoKonta, "<=")
 	filterQb.AddCondition("fnal.danal", params.OdDatuma, ">=")
 	filterQb.AddCondition("fnal.danal", params.DoDatuma, "<=")
 	// Klasa 9 accounts are excluded for printing only, exactly like the flattened
@@ -659,8 +659,8 @@ func (s *BilansiResource) buildZakljucniListSintetikaQuery(session *domain.UserS
 	) sub`, filterSql, sintParam, sintParam, nivoOrderCase)
 
 	qb := common.NewQueryBuilder(baseSql, false)
-	qb.AddArgs(filterArgs...)  // $1..$n : the "filtered" CTE
-	qb.AddArgs(s.cfg.NDuzSint) // $n+1   : the sintetika prefix length
+	qb.AddArgs(filterArgs...)                     // $1..$n : the "filtered" CTE
+	qb.AddArgs(session.GetDuzSin(s.cfg.NDuzSint)) // $n+1   : the sintetika prefix length
 
 	// The search placeholder follows the CTE arguments and the prefix length.
 	if params.SearchText != "" {
@@ -728,7 +728,7 @@ func (s *BilansiResource) GetZakljucniListSubsintetika(ctx context.Context, tbl 
 	// number. The numbering continues across the pages (see zakljucniPageRows).
 	// Every subtotal row shows the sum of the netted sides below it, so the saldo columns foot
 	// at every level and the grid shows the same numbers as the printed report.
-	saldoAcc := zakljucniSaldoAccumulatorFromDetails(s.cfg, params.TipLista, *entities)
+	saldoAcc := zakljucniSaldoAccumulatorFromDetails(common.NDuzSintFromContext(ctx, s.cfg), params.TipLista, *entities)
 	nazivCache := make(map[string]string)
 	pageRows, rowNum := zakljucniPageRows(*entities, currentPage, pageSize, zakljucniNivoAnalitika)
 	for _, entity := range pageRows {
@@ -840,8 +840,8 @@ func (s *BilansiResource) buildZakljucniListSubsintetikaQuery(session *domain.Us
 	) sub`, filterSql, sintParam, sintParam, nivoOrderCase)
 
 	qb := common.NewQueryBuilder(baseSql, false)
-	qb.AddArgs(filterArgs...)  // $1..$n : the "filtered" CTE
-	qb.AddArgs(s.cfg.NDuzSint) // $n+1   : the sintetika prefix length
+	qb.AddArgs(filterArgs...)                     // $1..$n : the "filtered" CTE
+	qb.AddArgs(session.GetDuzSin(s.cfg.NDuzSint)) // $n+1   : the sintetika prefix length
 
 	// The search placeholder follows the CTE arguments and the prefix length.
 	if params.SearchText != "" {
@@ -868,8 +868,9 @@ func (s *BilansiResource) GetZakljucniListZaStampu(ctx context.Context, tbl, tbl
 		return fmt.Errorf("user session not found")
 	}
 	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
-	// nDuzSint is not used any more: the hierarchy queries take the prefix length from the
-	// configuration (s.cfg.NDuzSint), which is the value the handler passes in.
+	// nDuzSint (the prefix length the handler resolved for this request) is passed in for explicitness;
+	// the hierarchy queries below resolve the same value from the request session
+	// (common.NDuzSintFromContext).
 
 	// detailNivo is the level printed as numbered detail rows; every level above it is printed
 	// as a G<n> subtotal, exactly like the preview shows them.
@@ -919,7 +920,7 @@ func (s *BilansiResource) GetZakljucniListZaStampu(ctx context.Context, tbl, tbl
 
 	// Every subtotal row shows the sum of the netted sides below it, so the saldo columns foot
 	// at every level and the printed report shows the same numbers as the grid.
-	saldoAcc := zakljucniSaldoAccumulatorFromDetails(s.cfg, params.TipLista, *entities)
+	saldoAcc := zakljucniSaldoAccumulatorFromDetails(common.NDuzSintFromContext(ctx, s.cfg), params.TipLista, *entities)
 
 	nazivCache := make(map[string]string)
 	for _, ent := range *entities {
@@ -1084,8 +1085,8 @@ func (s *BilansiResource) getZakljucniSubsintetikaQuery(ctx context.Context, tbl
 // (LEFT(konto, NDuzSint)). The name is the naziv of the newest fkpl row of that prefix.
 func (s *BilansiResource) getZakljucniSintetikaQuery(ctx context.Context, tbl *domain.TableData, o zakljucniQueryOptions) (*[]domain.FproDto, error) {
 	innerSql, innerArgs, err := s.zakljucniInnerQuery(ctx, o.params, o.printType,
-		fmt.Sprintf("LEFT(fpro.konto, %d) as konto,", s.cfg.NDuzSint),
-		fmt.Sprintf("LEFT(fpro.konto, %d)", s.cfg.NDuzSint), false, false)
+		fmt.Sprintf("LEFT(fpro.konto, %d) as konto,", common.NDuzSintFromContext(ctx, s.cfg)),
+		fmt.Sprintf("LEFT(fpro.konto, %d)", common.NDuzSintFromContext(ctx, s.cfg)), false, false)
 	if err != nil {
 		return nil, err
 	}
@@ -1096,7 +1097,7 @@ func (s *BilansiResource) getZakljucniSintetikaQuery(ctx context.Context, tbl *d
 	needName := zakljucniNeedsName(o.getTotalRecords, o.params.SearchText)
 	nameJoin, args := "", innerArgs
 	if needName {
-		nameJoin, args = zakljucniNameLookupJoin(fmt.Sprintf("LEFT(konto, %d)", s.cfg.NDuzSint), 3, innerArgs)
+		nameJoin, args = zakljucniNameLookupJoin(fmt.Sprintf("LEFT(konto, %d)", common.NDuzSintFromContext(ctx, s.cfg)), 3, innerArgs)
 	}
 	qb := zakljucniOuterQueryBuilder(innerSql, nameJoin, o.nameExpr, args, needName)
 	return s.executeZakljucniQuery(ctx, tbl, qb, args, o)
@@ -1135,10 +1136,10 @@ func (s *BilansiResource) zakljucniInnerQuery(ctx context.Context, params domain
 	innerQb.AddCondition("fnal.danal", params.OdDatuma, ">=")
 	innerQb.AddCondition("fnal.danal", params.DoDatuma, "<=")
 	if params.OdKonta != "" {
-		innerQb.AddCondition(fmt.Sprintf(" left(fpro.konto, %d)", s.cfg.NDuzSint), params.OdKonta, ">=")
+		innerQb.AddCondition(fmt.Sprintf(" left(fpro.konto, %d)", common.NDuzSintFromContext(ctx, s.cfg)), params.OdKonta, ">=")
 	}
 	if params.DoKonta != "" {
-		innerQb.AddCondition(fmt.Sprintf(" left(fpro.konto, %d)", s.cfg.NDuzSint), params.DoKonta, "<=")
+		innerQb.AddCondition(fmt.Sprintf(" left(fpro.konto, %d)", common.NDuzSintFromContext(ctx, s.cfg)), params.DoKonta, "<=")
 	}
 	// Apply Klasa 9 filter only for printing, not for data retrieval for processing
 	if printType == common.TipStampePrint {

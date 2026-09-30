@@ -250,6 +250,9 @@ const (
 	robnoFaktureStavkaDelURL  = robnoFaktureURL + "/stavka/brisi"
 	robnoFaktureArtikalSearch = "/api/promet/searchbutton"
 	robnoFakturePartnerSearch = "/api/partneri/searchbutton"
+	// TODO: the endpoint of the search of the robni dokumenti is not written yet (neither is the one of
+	// robnoFakturePartnerSearch); the button of the broj dokumenta already sends the request here.
+	robnoFaktureDokumentSearch = "/api/robno-dokumenta/searchbutton"
 
 	// Ids of the two collapsible controls of the screen. They are given to the script of the screen
 	// (RobnoFaktureScript) and to the buttons (robnoFaktureButtonsFor), so that every id is written in
@@ -270,13 +273,14 @@ const (
 // above) so that the handler can pass them to the templates of the screen.
 func robnoFaktureUI() domain.RobnoFaktureUI {
 	return domain.RobnoFaktureUI{
-		HeaderPanelID:    robnoFaktureHeaderPanelID,
-		StavkePanelID:    robnoFaktureStavkePanelID,
-		ContentID:        "#" + robnoDokumentaContentID,
-		DialogID:         robnoFaktureDialogID,
-		DialogStagingID:  robnoDokumentaFaktureDialogStagingID,
-		ArtikalSearchURL: robnoFaktureArtikalSearch,
-		PartnerSearchURL: robnoFakturePartnerSearch,
+		HeaderPanelID:     robnoFaktureHeaderPanelID,
+		StavkePanelID:     robnoFaktureStavkePanelID,
+		ContentID:         "#" + robnoDokumentaContentID,
+		DialogID:          robnoFaktureDialogID,
+		DialogStagingID:   robnoDokumentaFaktureDialogStagingID,
+		ArtikalSearchURL:  robnoFaktureArtikalSearch,
+		PartnerSearchURL:  robnoFakturePartnerSearch,
+		DokumentSearchURL: robnoFaktureDokumentSearch,
 	}
 }
 

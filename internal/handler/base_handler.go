@@ -37,6 +37,7 @@ type defaultSelections struct {
 	firma    string
 	god      int
 	kar      int
+	duzSin   int
 	language string
 }
 
@@ -280,6 +281,7 @@ func (h *BasicHandler) updateUserSession(c *gin.Context, selections defaultSelec
 	session.Firma = selections.firma
 	session.SelectedGod = selections.god
 	session.SelectedKar = selections.kar
+	session.DuzSin = selections.duzSin
 	if selections.language != "" {
 		session.Language = selections.language
 	}
@@ -311,6 +313,8 @@ func (h *BasicHandler) getDefaultSelections(fvrData domain.Firma) defaultSelecti
 
 	if len(fvrData.Firme) > 0 {
 		selections.firma = fvrData.Firme[0].Naziv
+		// nDuzSIN follows the bookkeeping type of the firma (FVR.KNJIGOVOD)
+		selections.duzSin = h.cfg.NDuzSintForKnjigovod(fvrData.Firme[0].Knjigovod)
 
 		if len(fvrData.Firme[0].Godine) > 0 {
 			selections.god = fvrData.Firme[0].Godine[0].God
@@ -370,6 +374,7 @@ func (h *BasicHandler) generateToken(username string, userID int64, selections d
 		Firma:       selections.firma,
 		SelectedGod: selections.god,
 		SelectedKar: selections.kar,
+		DuzSin:      selections.duzSin,
 		Language:    selections.language,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(tokenExpiry)),
@@ -393,11 +398,48 @@ func (h *BasicHandler) getJwtSecretFromContext(c *gin.Context) []byte {
 	return nil
 }
 
+// duzSinForFirma returns nDuzSIN (the length of the synthetic account prefix) for a firma, derived
+// from its bookkeeping type (FVR.KNJIGOVOD), and whether the firma was found in the cached list.
+func (h *BasicHandler) duzSinForFirma(naziv string) (int, bool) {
+	for _, firma := range h.getFirma().Firme {
+		if firma.Naziv == naziv {
+			return h.cfg.NDuzSintForKnjigovod(firma.Knjigovod), true
+		}
+	}
+	return 0, false
+}
+
+// setDuzSin resolves nDuzSIN (the length of the synthetic account prefix) for the firma selected in
+// the session and stores it on the session. The value is derived from the bookkeeping type of the
+// firma (FVR.KNJIGOVOD): "Finansijsko" and "Pogonsko" use 3, every other type uses 4. It is called
+// before the JWT is (re)signed, so the value travels with the session and every handler/service can
+// read it without another database round-trip.
+func (h *BasicHandler) setDuzSin(userSession *domain.UserSession) {
+	if userSession == nil {
+		return
+	}
+
+	if duzSin, ok := h.duzSinForFirma(userSession.Firma); ok {
+		userSession.DuzSin = duzSin
+		return
+	}
+
+	// The firma is not in the (cached) list: keep the configured default so the session never ends
+	// up with an unusable value.
+	if userSession.DuzSin <= 0 {
+		userSession.DuzSin = h.cfg.NDuzSint
+	}
+}
+
 // regenerateToken creates a new JWT token with updated UserSession preferences
 func (h *BasicHandler) regenerateToken(c *gin.Context, userSession *domain.UserSession) {
 	if userSession == nil {
 		return
 	}
+
+	// The bookkeeping dependent values (nDuzSIN) have to be up to date before they are signed into
+	// the token: the firma may have just changed.
+	h.setDuzSin(userSession)
 
 	jwtSecret := h.getJwtSecretFromContext(c)
 	if jwtSecret == nil {
@@ -419,6 +461,7 @@ func (h *BasicHandler) regenerateToken(c *gin.Context, userSession *domain.UserS
 		Firma:       userSession.Firma,
 		SelectedGod: userSession.SelectedGod,
 		SelectedKar: userSession.SelectedKar,
+		DuzSin:      userSession.DuzSin,
 		Language:    userSession.Language,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(tokenExpiry)),
@@ -995,6 +1038,7 @@ func (h *BasicHandler) getUserSessionSelections(userSession *domain.UserSession,
 		firma:    userSession.Firma,
 		god:      userSession.SelectedGod,
 		kar:      userSession.SelectedKar,
+		duzSin:   userSession.GetDuzSin(h.cfg.NDuzSint),
 		language: h.layoutLanguage(userSession.Language),
 	}
 
@@ -1011,6 +1055,11 @@ func (h *BasicHandler) getUserSessionSelections(userSession *domain.UserSession,
 	}
 	if selections.language == "" {
 		selections.language = h.layoutLanguage("")
+	}
+	// nDuzSIN is derived data: take it from the firma list (the bookkeeping type of the selected
+	// firma), so even a token issued before the value was stored in the session resolves correctly.
+	if duzSin, ok := h.duzSinForFirma(selections.firma); ok {
+		selections.duzSin = duzSin
 	}
 	return selections
 }

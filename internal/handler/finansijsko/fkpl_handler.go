@@ -39,17 +39,17 @@ const hxValsFkpl = `js:{
 
 func SetFkplFields() []domain.Fields {
 	return []domain.Fields{
-		{Name: "konto", Label: "Konto", Width: "10"},
-		{Name: "sifra", Label: "Sifra", Width: "10"},
-		{Name: "naziv", Label: "Naziv", Width: "120"},
-		{Name: "vkonta", Label: "Vrsta konta", Width: "4"},
+		{Name: "konto", Label: "Konto", ControlWidth: " w-12", MaxLength: "6", Width: "10"},
+		{Name: "sifra", Label: "Sifra", ControlWidth: " w-12", MaxLength: "6", Width: "10"},
+		{Name: "naziv", Label: "Naziv", ControlWidth: " w-200", MaxLength: "100", Width: "120"},
+		{Name: "vkonta", Label: "Vrsta konta", ControlWidth: " w-10", MaxLength: "5", Width: "4"},
 	}
 }
 
 var fkplSearchTableFields = []domain.Fields{
-	{Name: "konto", Label: "Konto", Width: "10"},
-	{Name: "sifra", Label: "Sifra", Width: "10"},
-	{Name: "naziv", Label: "Naziv", Width: "120"},
+	{Name: "konto", Label: "Konto", ControlWidth: " w-12", MaxLength: "6", Width: "10"},
+	{Name: "sifra", Label: "Sifra", ControlWidth: " w-12", MaxLength: "6", Width: "10"},
+	{Name: "naziv", Label: "Naziv", ControlWidth: " w-200", MaxLength: "100", Width: "120"},
 }
 
 type FkplHandler struct {

@@ -2,6 +2,7 @@ package robno
 
 import (
 	"strconv"
+	"time"
 
 	"helia/frontend/components"
 	tmpl "helia/frontend/templates"
@@ -13,7 +14,7 @@ import (
 // RobnoDokumentaMain renders the "Robna dokumenta" option (robni nalozi / robni dokumenti).
 // The first tab ("Unos dokumenta") is rendered inside the container that the tab navigation
 templ RobnoDokumentaMain(ui domain.RobnoFaktureUI, hxValsTipdok, hxValsNalog string, tabs, subTabs domain.TabData, tbl domain.TableData, tipdokValues, vrstaDokumentaValues, magValues []domain.ComboItem, total domain.RobnoDokumentaTotal, payload domain.RobnoDokumentaParams, btnSave, btnNoviNalog, btnFakture domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
-	<div id="robno-dokumenta-content" class="bg-blue-100 p-1 flex flex-col h-full">
+	<div id="robno-dokumenta-content" class="flex flex-col h-full">
 		@RobnoDokumentaUnos(hxValsTipdok, hxValsNalog, tabs, subTabs, tbl, tipdokValues, vrstaDokumentaValues, magValues, total, payload, btnSave, btnNoviNalog, btnFakture, searchInput, translator)
 		<!-- TODO (temporary): the dialog of the "Fakture veleprodaje" screen (RobnoFaktureDialog) is
 		     rendered into this element by the "Fakture veleprodaje (preview)" button of the tab. It
@@ -27,19 +28,20 @@ templ RobnoDokumentaMain(ui domain.RobnoFaktureUI, hxValsTipdok, hxValsNalog str
 	@components.SpinnerScript()
 	@tmpl.HandleDialogResponseScript()
 	@tmpl.CloseDialogScript()
-	<!-- Scripts of the header of the "Unos dokumenta" tab (the same ones the "Nalozi" screen uses) -->
 	@tmpl.HandleNextNalogResponseScript()
 	@tmpl.HandleUpdateNalogDataResponseScript()
 	@tmpl.HandleTipdokAfterRequestScript()
 	@tmpl.HandleDblClickNalogSelectionScript()
 	@tmpl.SelectRowScript()
+	@tmpl.OpenPrintWithParamsScript()
+	@tmpl.EnableDisableFieldsScripts()
 }
 
 // RobnoDokumentaShell renders the tab bar of the option - followed by the sub-tab bar when the
 // active tab has sub-tabs - and then the body of the active tab. Every tab uses it so the
 // navigation markup stays in one place.
 templ RobnoDokumentaShell(tabs, subTabs domain.TabData, translator *i18n.Service, body templ.Component) {
-	<div class="bg-blue-100 flex flex-col h-full">
+	<div class="bg-blue-100 p-1 flex flex-col h-full">
 		<!-- Tab navigation -->
 		<div class="border-b border-blue-600">
 			@tmpl.TabNav(translator.Title("Robna dokumenta"), tabs, "#robno-dokumenta-content", "robno-dokumenta-panel", translator)
@@ -54,6 +56,8 @@ templ RobnoDokumentaShell(tabs, subTabs domain.TabData, translator *i18n.Service
 		<div class="flex-1 min-h-0 flex flex-col gap-1">
 			@body
 		</div>
+		<!-- Staging element of the error dialogs of the tabs (utils.RenderDialogOK) -->
+		<div id="robnodokumenta-infomessage"></div>
 	</div>
 }
 
@@ -262,11 +266,12 @@ templ RobnoDokumentaUnosForm(hxValsTipdok, hxValsNalog string, tbl domain.TableD
 			</fieldset>
 		</div>
 	</div>
-	<!-- Grid of the nalozi of the selected vrsta naloga -->
-	<div class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col min-h-0 flex-1 overflow-hidden">
+	<!-- Group Data Table -->
+	<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative">
+		@components.LoadingSpinner()
 		@components.Search_Part(tbl, searchInput)
-		<!-- Table: the grid scrolls while the page navigator stays at the bottom of the tab -->
-		<div class="flex-1 min-h-0">
+		<!-- Table -->
+		<div id={ tbl.TableID } class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
 			@components.Table(tbl, translator)
 		</div>
 	</div>
@@ -334,6 +339,22 @@ templ RobnoDokumentaPregledBody(tbl domain.TableData, magValues, vrstaDokumentaV
 							TabIndex:      "1",
 						}, translator)
 					</div>
+					<!-- Od datuma naloga -->
+					<div class="flex items-center gap-1 mb-1">
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "oddanal",
+							LabelText:  translator.Label("Od datuma naloga"),
+							ClassLabel: common.ClassLabel + " w-44",
+						})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "oddanal",
+							Name:       "oddanal",
+							FieldType:  "date",
+							Value:      params.OdDanal,
+							ClassInput: common.ClassInputTextEnabled + " w-32",
+							TabIndex:   "2", OnInput: "clearFieldError",
+							OnFocus: "clearFieldError"})
+					</div>
 					<!-- Vrsta dokumenta -->
 					<div class="flex items-center gap-1 mb-1">
 						@components.LabelField(domain.LabelFieldConfig{
@@ -348,25 +369,8 @@ templ RobnoDokumentaPregledBody(tbl domain.TableData, magValues, vrstaDokumentaV
 							ClassSelect:   common.ClassInputTextEnabled + " flex-1",
 							OptionValues:  vrstaDokumentaValues,
 							SelectedValue: params.Vrd,
-							TabIndex:      "2",
+							TabIndex:      "3",
 						}, translator)
-					</div>
-					<!-- Od datuma naloga -->
-					<div class="flex items-center gap-1 mb-1">
-						@components.LabelField(domain.LabelFieldConfig{
-							ID:         "oddanal",
-							LabelText:  translator.Label("Od datuma naloga"),
-							ClassLabel: common.ClassLabel + " w-44",
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "oddanal",
-							Name:       "oddanal",
-							FieldType:  "date",
-							Value:      params.OdDanal,
-							ClassInput: common.ClassInputTextEnabled + " w-32",
-							TabIndex:   "3",
-							OnInput:    "clearFieldError",
-							OnFocus:    "clearFieldError"})
 					</div>
 					<!-- Do datuma naloga -->
 					<div class="flex items-center gap-1 mb-1">
@@ -392,19 +396,54 @@ templ RobnoDokumentaPregledBody(tbl domain.TableData, magValues, vrstaDokumentaV
 				<!-- The buttons are aligned to the bottom of the panel, like the parameters on the left -->
 				<div class="flex items-center justify-end gap-1 mt-auto mb-1">
 					@components.FormObradaButton(btnObrada, translator)
-					@components.PrintButton(btnPrint, translator)
+					@components.Search_PartPrintButton(btnPrint)
 				</div>
+				<!-- The rdokid of the row selected in the grid: the "Štampaj" button prints its faktura
+				     (empty: the fakture of the whole filter). -->
+				<input type="hidden" id="rdokid" name="rdokid" value=""/>
 			</fieldset>
 		</div>
 	</div>
-	<!-- Grid of the documents -->
-	<div class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col min-h-0 flex-1 overflow-hidden">
+	<!-- Group Data Table -->
+	<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative">
+		@components.LoadingSpinner()
 		@components.Search_Part(tbl, searchInput)
-		<!-- Table: the grid scrolls while the page navigator stays at the bottom of the tab -->
-		<div class="flex-1 min-h-0">
+		<!-- Table -->
+		<div id={ tbl.TableID } class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
 			@components.Table(tbl, translator)
 		</div>
 	</div>
+	@RobnoDokumentaPregledSelectScript()
+}
+
+// RobnoDokumentaPregledSelectScript selects the document of the "Štampa" sub-tab whose faktura the
+// "Štampaj" button prints: a click on a row of the grid selects it (its data-row-id is the rdokid
+// of the document) and a second click clears the selection. A reload of the grid (search, paging,
+// "Obrada") clears the selection when the selected row is no longer shown.
+templ RobnoDokumentaPregledSelectScript() {
+	<script>
+		function robnoPregledSelectDokument(row) {
+			const input = document.getElementById("rdokid");
+			const wasSelected = row.classList.contains("table-row-selected");
+			const table = row.closest("table") || document;
+			table.querySelectorAll("tr.table-row-selected").forEach(r => r.classList.remove("table-row-selected"));
+			if (wasSelected) {
+				if (input) input.value = "";
+				return;
+			}
+			row.classList.add("table-row-selected");
+			if (input) input.value = row.dataset.rowId || "";
+		}
+		if (!window.robnoPregledSelectListener) {
+			window.robnoPregledSelectListener = true;
+			document.body.addEventListener("htmx:afterSwap", function () {
+				const input = document.getElementById("rdokid");
+				if (input && input.value && !document.querySelector("tr.table-row-selected[data-row-id='" + input.value + "']")) {
+					input.value = "";
+				}
+			});
+		}
+	</script>
 }
 
 // RobnoDokumentaEFaktura renders the "eFaktura" sub-tab of "Pregled dokumenta": the filters (grupe
@@ -511,23 +550,276 @@ templ RobnoDokumentaEFakturaBody(tbl domain.TableData, params domain.RobnoDokume
 			</fieldset>
 		</div>
 	</div>
-	<!-- Grid of the documents with their eFaktura status -->
-	<div class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col min-h-0 flex-1 overflow-hidden">
+	<!-- Group Data Table -->
+	<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative">
+		@components.LoadingSpinner()
 		@components.Search_Part(tbl, searchInput)
-		<!-- Table: the grid scrolls while the page navigator stays at the bottom of the tab -->
-		<div class="flex-1 min-h-0">
+		<!-- Table -->
+		<div id={ tbl.TableID } class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
 			@components.Table(tbl, translator)
 		</div>
 	</div>
 }
 
-//
-// Tabs that are still empty
-//
-
 // Tab 3 - Specifikacije dokumenta
-templ RobnoDokumentaSpecifikacije(tabs, subTabs domain.TabData, tbl domain.TableData, magValues []domain.ComboItem, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
-	@RobnoDokumentaShell(tabs, subTabs, translator, RobnoDokumentaEmptyBody("Specifikacije dokumenta", tbl, btnObrada, btnPrint, searchInput, translator))
+//
+// The tab prints the specification of the documents of the selection (the report depends on the group
+templ RobnoDokumentaSpecifikacije(tabs, subTabs domain.TabData, tbl domain.TableData, magValues, tipdokValues, vrstaDokumentaValues []domain.ComboItem, params domain.RobnoDokumentaParams, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
+	@RobnoDokumentaShell(tabs, subTabs, translator, RobnoDokumentaSpecifikacijeBody(tbl, magValues, tipdokValues, vrstaDokumentaValues, params, btnObrada, btnPrint, searchInput, translator))
+}
+
+// RobnoDokumentaSpecifikacijeBody renders the body of the "Specifikacije dokumenta" tab: the print
+templ RobnoDokumentaSpecifikacijeBody(tbl domain.TableData, magValues, tipdokValues, vrstaDokumentaValues []domain.ComboItem, params domain.RobnoDokumentaParams, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
+	<!-- Parameters of the print -->
+	<div class="no-border bg-blue-100 rounded-lg">
+		<!-- The panel of the parameters takes 4/5 of the width, the "Obrada i štampa" panel 1/5: the
+		     two buttons of the print fit into it on one line. -->
+		<div class="grid grid-cols-5 gap-2">
+			<fieldset class="col-span-4 border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1">
+				<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Parametri") }</legend>
+				<!-- The first column (the combos) takes the free space, the ranges and the dates are right
+				     aligned; every field is one label + control row, like the "Pregled dokumenta" sub-tab. -->
+				<div class="grid grid-cols-[1fr_auto_auto] gap-x-2">
+					<!-- First column: the combos (they take the free space of the fieldset) -->
+					<div class="flex flex-col">
+						<!-- Magacin -->
+						<div class="flex items-center gap-1 mb-1">
+							@components.LabelField(domain.LabelFieldConfig{
+								ID:         "magaciniid",
+								LabelText:  translator.Label("Magacin"),
+								ClassLabel: common.ClassLabel + " w-44",
+							})
+							@components.ComboBoxField(domain.ComboFieldConfig{
+								ID:            "magaciniid",
+								Name:          "magaciniid",
+								HasLabel:      false,
+								ClassSelect:   common.ClassInputTextEnabled + " flex-1",
+								OptionValues:  magValues,
+								SelectedValue: magaciniSelection(params.MagaciniID),
+								TabIndex:      "1",
+							}, translator)
+						</div>
+						<!-- Od vrste naloga za knjiženje -->
+						<div class="flex items-center gap-1 mb-1">
+							@components.LabelField(domain.LabelFieldConfig{
+								ID:         "odvrd",
+								LabelText:  translator.Label("Od vrste naloga za knjiženje"),
+								ClassLabel: common.ClassLabel + " w-44",
+							})
+							@components.ComboBoxField(domain.ComboFieldConfig{
+								ID:            "odvrd",
+								Name:          "odvrd",
+								HasLabel:      false,
+								ClassSelect:   common.ClassInputTextEnabled + " flex-1",
+								OptionValues:  tipdokValues,
+								SelectedValue: params.OdVrd,
+								TabIndex:      "2",
+							}, translator)
+						</div>
+						<!-- Do vrste naloga za knjiženje -->
+						<div class="flex items-center gap-1 mb-1">
+							@components.LabelField(domain.LabelFieldConfig{
+								ID:         "dovrd",
+								LabelText:  translator.Label("Do vrste naloga za knjiženje"),
+								ClassLabel: common.ClassLabel + " w-44",
+							})
+							@components.ComboBoxField(domain.ComboFieldConfig{
+								ID:            "dovrd",
+								Name:          "dovrd",
+								HasLabel:      false,
+								ClassSelect:   common.ClassInputTextEnabled + " flex-1",
+								OptionValues:  tipdokValues,
+								SelectedValue: params.DoVrd,
+								TabIndex:      "3",
+							}, translator)
+						</div>
+						<!-- Vrsta dokumenta -->
+						<div class="flex items-center gap-1 mb-1">
+							@components.LabelField(domain.LabelFieldConfig{
+								ID:         "vrd",
+								LabelText:  translator.Label("Vrsta dokumenta"),
+								ClassLabel: common.ClassLabel + " w-44",
+							})
+							@components.ComboBoxField(domain.ComboFieldConfig{
+								ID:            "vrd",
+								Name:          "vrd",
+								HasLabel:      false,
+								ClassSelect:   common.ClassInputTextEnabled + " flex-1",
+								OptionValues:  vrstaDokumentaValues,
+								SelectedValue: params.Vrd,
+								TabIndex:      "4",
+							}, translator)
+						</div>
+					</div>
+					<!-- Second column: the ranges of the broj naloga and of the broj dokumenta -->
+					<div class="flex flex-col">
+						<!-- Od naloga -->
+						<div class="flex items-center gap-1 mb-1">
+							@components.LabelField(domain.LabelFieldConfig{
+								ID:         "odnaloga",
+								LabelText:  translator.Label("Od naloga"),
+								ClassLabel: common.ClassLabel + " w-32",
+							})
+							@components.TextInputField(domain.InputFieldConfig{
+								ID:         "odnaloga",
+								Name:       "odnaloga",
+								FieldType:  "text",
+								Value:      params.OdNaloga,
+								ClassInput: common.ClassInputTextEnabled + " w-32 text-right",
+								MinLength:  "0",
+								MaxLength:  "6",
+								TabIndex:   "5",
+								OnInput:    "clearFieldError",
+								OnFocus:    "clearFieldError"})
+						</div>
+						<!-- Do naloga -->
+						<div class="flex items-center gap-1 mb-1">
+							@components.LabelField(domain.LabelFieldConfig{
+								ID:         "donaloga",
+								LabelText:  translator.Label("Do naloga"),
+								ClassLabel: common.ClassLabel + " w-32",
+							})
+							@components.TextInputField(domain.InputFieldConfig{
+								ID:         "donaloga",
+								Name:       "donaloga",
+								FieldType:  "text",
+								Value:      params.DoNaloga,
+								ClassInput: common.ClassInputTextEnabled + " w-32 text-right",
+								MinLength:  "0",
+								MaxLength:  "6",
+								TabIndex:   "6",
+								OnInput:    "clearFieldError",
+								OnFocus:    "clearFieldError"})
+						</div>
+						<!-- Od dokumenta -->
+						<div class="flex items-center gap-1 mb-1">
+							@components.LabelField(domain.LabelFieldConfig{
+								ID:         "oddokum",
+								LabelText:  translator.Label("Od dokumenta"),
+								ClassLabel: common.ClassLabel + " w-32",
+							})
+							@components.TextInputField(domain.InputFieldConfig{
+								ID:         "oddokum",
+								Name:       "oddokum",
+								FieldType:  "text",
+								Value:      params.OdDokum,
+								ClassInput: common.ClassInputTextEnabled + " w-32 text-right",
+								MinLength:  "0",
+								MaxLength:  "6",
+								TabIndex:   "7",
+								OnInput:    "clearFieldError",
+								OnFocus:    "clearFieldError"})
+						</div>
+						<!-- Do dokumenta -->
+						<div class="flex items-center gap-1 mb-1">
+							@components.LabelField(domain.LabelFieldConfig{
+								ID:         "dodokum",
+								LabelText:  translator.Label("Do dokumenta"),
+								ClassLabel: common.ClassLabel + " w-32",
+							})
+							@components.TextInputField(domain.InputFieldConfig{
+								ID:         "dodokum",
+								Name:       "dodokum",
+								FieldType:  "text",
+								Value:      params.DoDokum,
+								ClassInput: common.ClassInputTextEnabled + " w-32 text-right",
+								MinLength:  "0",
+								MaxLength:  "6",
+								TabIndex:   "8",
+								OnInput:    "clearFieldError",
+								OnFocus:    "clearFieldError"})
+						</div>
+					</div>
+					<!-- Third column: the range of the dates -->
+					<div class="flex flex-col">
+						<!-- Od datuma -->
+						<div class="flex items-center gap-1 mb-1">
+							@components.LabelField(domain.LabelFieldConfig{
+								ID:         "oddanal",
+								LabelText:  translator.Label("Od datuma"),
+								ClassLabel: common.ClassLabel + " w-32",
+							})
+							@components.TextInputField(domain.InputFieldConfig{
+								ID:         "oddanal",
+								Name:       "oddanal",
+								FieldType:  "date",
+								Value:      params.OdDanal,
+								ClassInput: common.ClassInputTextEnabled + " w-32",
+								TabIndex:   "9",
+								OnInput:    "clearFieldError",
+								OnFocus:    "clearFieldError"})
+						</div>
+						<!-- Do datuma -->
+						<div class="flex items-center gap-1 mb-1">
+							@components.LabelField(domain.LabelFieldConfig{
+								ID:         "dodanal",
+								LabelText:  translator.Label("Do datuma"),
+								ClassLabel: common.ClassLabel + " w-32",
+							})
+							@components.TextInputField(domain.InputFieldConfig{
+								ID:         "dodanal",
+								Name:       "dodanal",
+								FieldType:  "date",
+								Value:      params.DoDanal,
+								ClassInput: common.ClassInputTextEnabled + " w-32",
+								TabIndex:   "10",
+								OnInput:    "clearFieldError",
+								OnFocus:    "clearFieldError"})
+						</div>
+					</div>
+				</div>
+				<!-- State of the print: "Štampaj samo zbir" and the radio buttons "Specifikacija" / "Fakturna knjiga" -->
+				<div class="flex flex-wrap items-center gap-3 pl-44 mb-1">
+					@components.CheckboxField(domain.CheckboxFieldConfig{
+						ID:                "stampajsamozbir",
+						Name:              "stampajsamozbir",
+						LabelText:         "Štampaj samo zbir",
+						ClassLabel:        common.ClassCheckboxLabel,
+						ClassCheckbox:     common.ClassCheckbox,
+						ClassCheckboxSpan: common.ClassCheckboxSpan,
+						IsChecked:         params.StampajSamoZbir,
+					}, translator)
+					@components.RadioButtonField(domain.RadioFieldConfig{
+						ID:          "specifikacija",
+						Name:        "tipspecifikacije",
+						LabelText:   "Specifikacija",
+						Value:       "1",
+						ClassSelect: common.ClassRadioSet,
+						ClassLabel:  "text-sm text-black whitespace-nowrap",
+						IsSelected:  params.TipSpecifikacije != "2",
+						TabIndex:    "11",
+					}, translator)
+					@components.RadioButtonField(domain.RadioFieldConfig{
+						ID:          "fakturnaknjiga",
+						Name:        "tipspecifikacije",
+						LabelText:   "Fakturna knjiga",
+						Value:       "2",
+						ClassSelect: common.ClassRadioSet,
+						ClassLabel:  "text-sm text-black whitespace-nowrap",
+						IsSelected:  params.TipSpecifikacije == "2",
+						TabIndex:    "12",
+					}, translator)
+				</div>
+			</fieldset>
+			<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1">
+				<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Obrada i štampa") }</legend>
+				<!-- The buttons are aligned to the bottom of the panel, like the parameters on the left -->
+				<div class="flex flex-wrap items-center justify-end gap-1 mt-auto mb-1">
+					@components.FormObradaButton(btnObrada, translator)
+					@components.Search_PartPrintButton(btnPrint)
+				</div>
+			</fieldset>
+		</div>
+	</div>
+	<!-- Group Data Table -->
+	<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative">
+		@components.LoadingSpinner()
+		@components.Search_Part(tbl, searchInput)
+		<!-- Table -->
+		<div id={ tbl.TableID } class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+			@components.Table(tbl, translator)
+		</div>
+	</div>
 }
 
 //
@@ -633,11 +925,12 @@ templ RobnoDokumentaKontiranjeKnjizenjeBody(tbl domain.TableData, tipdokValues, 
 			</fieldset>
 		</div>
 	</div>
-	<!-- Grid of the robni dokumenti of the selection -->
-	<div class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col min-h-0 flex-1 overflow-hidden">
+	<!-- Group Data Table -->
+	<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative">
+		@components.LoadingSpinner()
 		@components.Search_Part(tbl, searchInput)
-		<!-- Table: the grid scrolls while the page navigator stays at the bottom of the tab -->
-		<div class="flex-1 min-h-0">
+		<!-- Table -->
+		<div id={ tbl.TableID } class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
 			@components.Table(tbl, translator)
 		</div>
 	</div>
@@ -754,11 +1047,12 @@ templ RobnoDokumentaKontiranjePregledBody(tbl domain.TableData, tipdokValues, ma
 			</fieldset>
 		</div>
 	</div>
-	<!-- Grid of the robni dokumenti of the selection -->
-	<div class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col min-h-0 flex-1 overflow-hidden">
+	<!-- Group Data Table -->
+	<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative">
+		@components.LoadingSpinner()
 		@components.Search_Part(tbl, searchInput)
-		<!-- Table: the grid scrolls while the page navigator stays at the bottom of the tab -->
-		<div class="flex-1 min-h-0">
+		<!-- Table -->
+		<div id={ tbl.TableID } class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
 			@components.Table(tbl, translator)
 		</div>
 	</div>
@@ -847,11 +1141,12 @@ templ RobnoDokumentaKontiranjePoMagacinimaBody(tbl domain.TableData, magValues [
 			</fieldset>
 		</div>
 	</div>
-	<!-- Grid of the robni dokumenti of the selection, grouped by magacin -->
-	<div class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col min-h-0 flex-1 overflow-hidden">
+	<!-- Group Data Table -->
+	<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative">
+		@components.LoadingSpinner()
 		@components.Search_Part(tbl, searchInput)
-		<!-- Table: the grid scrolls while the page navigator stays at the bottom of the tab -->
-		<div class="flex-1 min-h-0">
+		<!-- Table -->
+		<div id={ tbl.TableID } class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
 			@components.Table(tbl, translator)
 		</div>
 	</div>
@@ -905,23 +1200,23 @@ templ RobnoDokumentaPrepis(tabs, subTabs domain.TabData, tbl domain.TableData, m
 }
 
 // Tab 6 - Prikaz ukupne obrade
-//
-// The tab has no parameters of the selection and no "Obrada" button: it shows the totals of the
-// robni nalozi of every magacin of the current period (the "Prikaz ukupne obrade" panel of the
-// first tab, per magacin) and the print button of the list in the toolbar of the grid.
-templ RobnoDokumentaPrikazUkupneObrade(tabs, subTabs domain.TabData, tbl domain.TableData, translator *i18n.Service) {
-	@RobnoDokumentaShell(tabs, subTabs, translator, RobnoDokumentaPrikazUkupneObradeBody(tbl, translator))
+templ RobnoDokumentaPrikazUkupneObrade(tabs, subTabs domain.TabData, tbl domain.TableData, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
+	@RobnoDokumentaShell(tabs, subTabs, translator, RobnoDokumentaPrikazUkupneObradeBody(tbl, btnPrint, searchInput, translator))
 }
 
 // RobnoDokumentaPrikazUkupneObradeBody renders the body of the "Prikaz ukupne obrade" tab: the grid
-// with the totals. The search input is not rendered (the tab has no parameters), only the title and
-// the print button of the toolbar of the grid (tbl.BtnPrint).
-templ RobnoDokumentaPrikazUkupneObradeBody(tbl domain.TableData, translator *i18n.Service) {
-	<!-- Grid of the totals of the robni nalozi of every magacin -->
-	<div class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col min-h-0 flex-1 overflow-hidden">
-		@components.Search_Part(tbl, domain.InputControl{})
-		<!-- Table: the grid scrolls while the page navigator stays at the bottom of the tab -->
-		<div class="flex-1 min-h-0">
+templ RobnoDokumentaPrikazUkupneObradeBody(tbl domain.TableData, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
+	<!-- The print button is the only control of the tab: it is pushed to the right, like the toolbar of
+	     the other tabs of the option ("justify-end" on the flex container that holds it). -->
+	<div class="flex items-center justify-end gap-1 mt-1 mb-1">
+		@components.Search_PartPrintButton(btnPrint)
+	</div>
+	<!-- Group Data Table -->
+	<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative">
+		@components.LoadingSpinner()
+		@components.Search_Part(tbl, searchInput)
+		<!-- Table -->
+		<div id={ tbl.TableID } class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
 			@components.Table(tbl, translator)
 		</div>
 	</div>
@@ -933,9 +1228,8 @@ templ RobnoDokumentaPrikazUkupneObradeBody(tbl domain.TableData, translator *i18
 // naloga and the range of the broj naloga. The three checkboxes ("Po datumu naloga", "Po datumu
 // obrade" and "Po operateru") enable their fields when they are checked (controlToggle of
 // EnableDisableFieldsScripts, like "Prikaz kartice artikla" of the robno kartica does).
-templ RobnoDokumentaPrikazNaloga(tabs, subTabs domain.TabData, tbl domain.TableData, magValues, tipdokValues []domain.ComboItem, params domain.RobnoDokumentaParams, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
-	@RobnoDokumentaShell(tabs, subTabs, translator, RobnoDokumentaParametriNalogaBody(tbl, magValues, tipdokValues, params, btnObrada, btnPrint, translator))
-	@tmpl.EnableDisableFieldsScripts()
+templ RobnoDokumentaPrikazNaloga(tabs, subTabs domain.TabData, tbl domain.TableData, magValues, tipdokValues []domain.ComboItem, params domain.RobnoDokumentaParams, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
+	@RobnoDokumentaShell(tabs, subTabs, translator, RobnoDokumentaParametriNalogaBody(tbl, magValues, tipdokValues, params, btnObrada, btnPrint, searchInput, translator))
 }
 
 // RobnoDokumentaParametriNalogaBody renders the body of the tabs that select robni nalozi ("Prikaz
@@ -943,17 +1237,19 @@ templ RobnoDokumentaPrikazNaloga(tabs, subTabs domain.TabData, tbl domain.TableD
 // tab - the buttons "Obrada" and "Štampaj" are in the row of the "Po operateru" checkbox, aligned
 // to the right) and the grid of the tab (the columns come from the table of the tab). Every checkbox
 // is in the same row as the fields it enables.
-templ RobnoDokumentaParametriNalogaBody(tbl domain.TableData, magValues, tipdokValues []domain.ComboItem, params domain.RobnoDokumentaParams, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
+templ RobnoDokumentaParametriNalogaBody(tbl domain.TableData, magValues, tipdokValues []domain.ComboItem, params domain.RobnoDokumentaParams, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
 	<!-- Parameters of the selection (the only panel of the tab): the fields of the nalog in the first
 	     third of the panel and, in the other two thirds, every checkbox with the fields it enables in
-	     one row. The buttons "Obrada" and "Štampaj" are at the bottom right of the panel. -->
-	<div class="no-border bg-blue-100 rounded-lg">
-		<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col gap-1">
+	     one row. The buttons "Obrada" and "Štampaj" are at the bottom right of the panel.
+	     The wrapper is a flex column that fills the body of the tab (flex-1 min-h-0), so that the grid
+	     under the parameters (flex-1) stretches to the bottom like the grids of the other tabs. -->
+	<div class="no-border bg-blue-100 rounded-lg flex-1 min-h-0 flex flex-col">
+		<fieldset class="border border-blue-400 bg-blue-100 p-1 mb-1 rounded-lg flex flex-col gap-1">
 			<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Parametri") }</legend>
 			<!-- The rows of the second column are one below the other (mb-2) and the free space of every
 			     row is distributed between its controls (justify-between); the date fields are kept
 			     narrow (w-40) so that there is enough space between the controls. -->
-			<div class="grid grid-cols-3 gap-x-2">
+			<div class="grid grid-cols-3 gap-x-2 mb-1">
 				<!-- Magacin, the range of the vrste naloga and the range of the broj naloga -->
 				<div class="flex flex-col">
 					<div class="flex items-center gap-1 mb-1">
@@ -1145,18 +1441,19 @@ templ RobnoDokumentaParametriNalogaBody(tbl domain.TableData, magValues, tipdokV
 					     naloga" field of the first column) -->
 					<div class="flex items-center justify-end gap-1 mt-auto">
 						@components.FormObradaButton(btnObrada, translator)
-						@components.PrintButton(btnPrint, translator)
+						@components.Search_PartPrintButton(btnPrint)
 					</div>
 				</div>
 			</div>
 		</fieldset>
-	</div>
-	<!-- Grid of the selected robni nalozi (or of their documents) -->
-	<div class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col min-h-0 flex-1 overflow-hidden">
-		@components.Search_Part(tbl, domain.InputControl{})
-		<!-- Table: the grid scrolls while the page navigator stays at the bottom of the tab -->
-		<div class="flex-1 min-h-0">
-			@components.Table(tbl, translator)
+		<!-- Group Data Table -->
+		<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative">
+			@components.LoadingSpinner()
+			@components.Search_Part(tbl, searchInput)
+			<!-- Table -->
+			<div id={ tbl.TableID } class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
+				@components.Table(tbl, translator)
+			</div>
 		</div>
 	</div>
 }
@@ -1186,29 +1483,17 @@ templ RobnoDokumentaCheckBox(id, labelText, fields string, isChecked bool, tabIn
 // The tab shows the robni dokumenti of the selected nalozi: it uses the same parameters and the
 // same layout as the "Prikaz naloga" tab (the body of the two tabs is shared), only the columns of
 // its grid differ.
-templ RobnoDokumentaPrikazDokumenataUNalogu(tabs, subTabs domain.TabData, tbl domain.TableData, magValues, tipdokValues []domain.ComboItem, params domain.RobnoDokumentaParams, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
-	@RobnoDokumentaShell(tabs, subTabs, translator, RobnoDokumentaParametriNalogaBody(tbl, magValues, tipdokValues, params, btnObrada, btnPrint, translator))
-	@tmpl.EnableDisableFieldsScripts()
+templ RobnoDokumentaPrikazDokumenataUNalogu(tabs, subTabs domain.TabData, tbl domain.TableData, magValues, tipdokValues []domain.ComboItem, params domain.RobnoDokumentaParams, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
+	@RobnoDokumentaShell(tabs, subTabs, translator, RobnoDokumentaParametriNalogaBody(tbl, magValues, tipdokValues, params, btnObrada, btnPrint, searchInput, translator))
 }
 
 // Tab 9 - Prikaz dokumenata po operateru
-//
-// The tab shows the same robni dokumenti as the "Prikaz dokumenata u nalogu" tab, grouped by the
-// operater. Its panel has no magacin / vrsta naloga selection (the legacy screen of the tab has none
-// either): the parameters are shown in three columns, like the legacy screen draws them (the
-// checkboxes of the filters, the "Od" fields and the "Do" fields).
-templ RobnoDokumentaPrikazDokumenataPooperateru(tabs, subTabs domain.TabData, tbl domain.TableData, params domain.RobnoDokumentaParams, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
-	@RobnoDokumentaShell(tabs, subTabs, translator, RobnoDokumentaPrikazDokumenataPooperateruBody(tbl, params, btnObrada, btnPrint, translator))
-	@tmpl.EnableDisableFieldsScripts()
+templ RobnoDokumentaPrikazDokumenataPoOperateru(tabs, subTabs domain.TabData, tbl domain.TableData, params domain.RobnoDokumentaParams, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
+	@RobnoDokumentaShell(tabs, subTabs, translator, RobnoDokumentaPrikazDokumenataPoOperateruBody(tbl, params, btnObrada, btnPrint, searchInput, translator))
 }
 
-// RobnoDokumentaPrikazDokumenataPooperateruBody renders the body of the "Prikaz dokumenata po
-// operateru" tab: the parameters of the selection (the only panel of the tab) and the grid. The
-// panel of this tab is the same as the one of the two tabs before it but without the magacin and the
-// vrsta naloga controls (magaciniid, odvrd and dovrd are not part of its parameters) and with its
-// controls in the three columns of the legacy screen (the checkboxes, the "Od" fields and the "Do"
-// fields); every checkbox enables its own fields (the dates and the operater), like the other tabs.
-templ RobnoDokumentaPrikazDokumenataPooperateruBody(tbl domain.TableData, params domain.RobnoDokumentaParams, btnObrada, btnPrint domain.Button, translator *i18n.Service) {
+// RobnoDokumentaPrikazDokumenataPoOperateruBody renders the body of the "Prikaz dokumenata po
+templ RobnoDokumentaPrikazDokumenataPoOperateruBody(tbl domain.TableData, params domain.RobnoDokumentaParams, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
 	<!-- Parameters of the selection (the only panel of the tab) in the three columns of the legacy
 	     screen: the checkboxes of the filters, the "Od" fields and the "Do" fields. The buttons
 	     "Obrada" and "Štampaj" are at the bottom right of the panel. -->
@@ -1334,19 +1619,21 @@ templ RobnoDokumentaPrikazDokumenataPooperateruBody(tbl domain.TableData, params
 						MaxLength:  "20",
 						TabIndex:   "10"})
 				</div>
-			</div>
-			<!-- The buttons of the tab, at the bottom right of the panel -->
-			<div class="flex items-center justify-end gap-1 mt-auto">
-				@components.FormObradaButton(btnObrada, translator)
-				@components.PrintButton(btnPrint, translator)
+				<!-- The buttons of the tab, at the bottom right of the panel (in line with the "Do broja
+					     naloga" field of the first column) -->
+				<div class="flex items-center justify-end gap-1 mt-auto">
+					@components.FormObradaButton(btnObrada, translator)
+					@components.Search_PartPrintButton(btnPrint)
+				</div>
 			</div>
 		</fieldset>
 	</div>
-	<!-- Grid of the documents of the selection -->
-	<div class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col min-h-0 flex-1 overflow-hidden">
-		@components.Search_Part(tbl, domain.InputControl{})
-		<!-- Table: the grid scrolls while the page navigator stays at the bottom of the tab -->
-		<div class="flex-1 min-h-0">
+	<!-- Group Data Table -->
+	<div class="border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative">
+		@components.LoadingSpinner()
+		@components.Search_Part(tbl, searchInput)
+		<!-- Table -->
+		<div id={ tbl.TableID } class="flex-1 overflow-x-auto overflow-y-auto min-h-0">
 			@components.Table(tbl, translator)
 		</div>
 	</div>
@@ -1354,28 +1641,10 @@ templ RobnoDokumentaPrikazDokumenataPooperateruBody(tbl domain.TableData, params
 
 //
 // Fakture veleprodaje - the header of the faktura and its stavke
-//
-// The two WinDev windows of the option ("Fakture veleprodaje" and "Fakture veleprodaje - stavke") are
-// rendered as two collapsible controls (<details>/<summary>): the header of the faktura in the first
-// control and its stavke in the second one. Only one of the two controls is editable at a time:
-//   - while the header is not saved (domain.RobnoFaktureHeader.Snimljen is false) the header is editable and
-//     the stavke control is closed, disabled and cannot even be opened,
-//   - after a successful save the header is locked and the stavke become available,
-//   - the "Izmeni" button of the header locks the stavke again and unlocks the header.
-// The initial state is rendered by the server (domain.RobnoFaktureHeader.Snimljen) and the state is switched
-// by robnoFaktureSetMode (RobnoFaktureScript) after the save, so a reload of the tab and a save leave
-// the screen in the same state.
-//
-// The URLs, the element ids and the hx-vals of the screen are declared in
-// internal/handler/robno/robnadokumenta_handler.go and reach the templates as domain.RobnoFaktureUI
-// (see the note above RobnoDokumentaMain). The view structs (domain.RobnoFaktureHeader,
-// domain.RobnoFaktureStavka, domain.RobnoFaktureButtons) live in internal/domain/model_robnofakture.go
-// for the same reason: a type used in a templ parameter must be visible in the template package.
-
 // RobnoFakture renders the "Fakture veleprodaje" screen: the two collapsible controls inside the shell
 // of "Robna dokumenta" (tabs and sub-tabs) and the script that switches the editable control.
-templ RobnoFakture(ui domain.RobnoFaktureUI, tabs, subTabs domain.TabData, tbl, avansiTbl domain.TableData, header domain.RobnoFaktureHeader, stavka domain.RobnoFaktureStavka, vrstaDokumentaValues, valutaValues, sistemPdvValues []domain.ComboItem, btns domain.RobnoFaktureButtons, searchInput domain.InputControl, translator *i18n.Service) {
-	@RobnoDokumentaShell(tabs, subTabs, translator, RobnoFaktureBody(ui, tbl, avansiTbl, header, stavka, vrstaDokumentaValues, valutaValues, sistemPdvValues, btns, searchInput, translator))
+templ RobnoFakture(ui domain.RobnoFaktureUI, tabs, subTabs domain.TabData, tbl, avansiTbl domain.TableData, header domain.RobnoFaktureHeaderView, stavka domain.RobnoFaktureStavka, vrstaDokumentaValues, valutaValues, sistemPdvValues, zirpRacunValues []domain.ComboItem, btns domain.RobnoFaktureButtons, searchInput domain.InputControl, translator *i18n.Service) {
+	@RobnoDokumentaShell(tabs, subTabs, translator, RobnoFaktureBody(ui, tbl, avansiTbl, header, stavka, vrstaDokumentaValues, valutaValues, sistemPdvValues, zirpRacunValues, btns, searchInput, translator))
 	<!-- Scripts the screen shares with the other robno forms: the search popups (F3 / "...") and the
 	     inline validation errors -->
 	@tmpl.ShowSearchDialogScript()
@@ -1392,7 +1661,7 @@ templ RobnoFakture(ui domain.RobnoFaktureUI, tabs, subTabs domain.TabData, tbl, 
 // ui.DialogStagingID element (see RobnoDokumentaMain). The dialog is not removed when
 // it is closed (closeDialog only hides it, so that the fade-out is visible): the next request renders
 // it again.
-templ RobnoFaktureDialog(ui domain.RobnoFaktureUI, tbl, avansiTbl domain.TableData, header domain.RobnoFaktureHeader, stavka domain.RobnoFaktureStavka, vrstaDokumentaValues, valutaValues, sistemPdvValues []domain.ComboItem, btns domain.RobnoFaktureButtons, btnClose domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
+templ RobnoFaktureDialog(ui domain.RobnoFaktureUI, tbl, avansiTbl domain.TableData, header domain.RobnoFaktureHeaderView, stavka domain.RobnoFaktureStavka, vrstaDokumentaValues, valutaValues, sistemPdvValues, zirpRacunValues []domain.ComboItem, btns domain.RobnoFaktureButtons, btnClose domain.Button, searchInput domain.InputControl, translator *i18n.Service) {
 	<div id={ ui.DialogID } class={ common.ClassMainDialogDiv }>
 		<div class="bg-blue-100 rounded-lg shadow-2xl flex flex-col w-[95vw] h-[90vh]">
 			<!-- Title bar of the dialog -->
@@ -1403,7 +1672,7 @@ templ RobnoFaktureDialog(ui domain.RobnoFaktureUI, tbl, avansiTbl domain.TableDa
 			<!-- Content: the strip of the vrsta fakture, the collapsible control of the header and the
 			     collapsible control of the stavke -->
 			<div class="flex-1 min-h-0 overflow-auto p-1">
-				@RobnoFaktureBody(ui, tbl, avansiTbl, header, stavka, vrstaDokumentaValues, valutaValues, sistemPdvValues, btns, searchInput, translator)
+				@RobnoFaktureBody(ui, tbl, avansiTbl, header, stavka, vrstaDokumentaValues, valutaValues, sistemPdvValues, zirpRacunValues, btns, searchInput, translator)
 			</div>
 		</div>
 	</div>
@@ -1418,10 +1687,10 @@ templ RobnoFaktureDialog(ui domain.RobnoFaktureUI, tbl, avansiTbl domain.TableDa
 
 // RobnoFaktureBody renders the content of the screen: the strip with the vrsta fakture, the first
 // collapsible control (the header of the faktura) and the second one (the stavke).
-templ RobnoFaktureBody(ui domain.RobnoFaktureUI, tbl, avansiTbl domain.TableData, header domain.RobnoFaktureHeader, stavka domain.RobnoFaktureStavka, vrstaDokumentaValues, valutaValues, sistemPdvValues []domain.ComboItem, btns domain.RobnoFaktureButtons, searchInput domain.InputControl, translator *i18n.Service) {
+templ RobnoFaktureBody(ui domain.RobnoFaktureUI, tbl, avansiTbl domain.TableData, header domain.RobnoFaktureHeaderView, stavka domain.RobnoFaktureStavka, vrstaDokumentaValues, valutaValues, sistemPdvValues, zirpRacunValues []domain.ComboItem, btns domain.RobnoFaktureButtons, searchInput domain.InputControl, translator *i18n.Service) {
 	<div class="bg-blue-100 p-1 flex flex-col gap-1 h-full min-h-0">
 		@RobnoFaktureDokumentBar(header, btns.Back, translator)
-		@RobnoFaktureHeaderPanel(ui, header, avansiTbl, vrstaDokumentaValues, valutaValues, sistemPdvValues, btns, translator)
+		@RobnoFaktureHeaderPanel(ui, header, avansiTbl, vrstaDokumentaValues, valutaValues, sistemPdvValues, zirpRacunValues, btns, translator)
 		@RobnoFaktureStavkePanel(ui, tbl, header, stavka, btns, searchInput, translator)
 	</div>
 }
@@ -1449,7 +1718,17 @@ templ RobnoFakturePanel(id, title, stateText string, open, enabled bool, fields,
 			<span class="ml-auto font-normal text-xs text-blue-800">{ stateText }</span>
 		</summary>
 		<div class="p-1 flex flex-col gap-1">
-			<div data-panel-fields inert?={ !enabled } class={ robnoFaktureFieldsClass(enabled) }>
+			<!-- The fields of a disabled control are dimmed and do not accept the mouse: the same
+			     classes robnoFaktureSetPanelEnabled toggles at runtime. -->
+			<div
+				data-panel-fields
+				inert?={ !enabled }
+				if enabled {
+					class="flex flex-col gap-1"
+				} else {
+					class="flex flex-col gap-1 opacity-60 pointer-events-none"
+				}
+			>
 				@fields
 			</div>
 			<div class="flex items-center justify-end gap-1">
@@ -1463,7 +1742,7 @@ templ RobnoFakturePanel(id, title, stateText string, open, enabled bool, fields,
 // Račun) with the checkbox "Štampaj detalje u stavkama" and the "Nazad" button, like the blue bar of
 // the two WinDev windows. The radios are disabled while the header is saved (they belong to the
 // header), the checkbox too.
-templ RobnoFaktureDokumentBar(header domain.RobnoFaktureHeader, btnBack domain.Button, translator *i18n.Service) {
+templ RobnoFaktureDokumentBar(header domain.RobnoFaktureHeaderView, btnBack domain.Button, translator *i18n.Service) {
 	<div class="flex items-center gap-2 border border-blue-400 bg-blue-100 rounded-lg px-1 py-0.5">
 		<label class="flex items-center gap-1">
 			<input
@@ -1506,41 +1785,24 @@ templ RobnoFaktureDokumentBar(header domain.RobnoFaktureHeader, btnBack domain.B
 }
 
 // RobnoFaktureHeaderPanel renders the first collapsible control: the header of the faktura, i.e. the
-// strip of the nalog, the podaci o dokumentu, the podaci o kupcu, the podaci o načinu otpreme / rokovima
-// / valuti, the podaci o porezom oslobođenju, the finansijsko stanje kupca and the grid of the avansi.
-// The values of the fields that are not in the form yet are documented with a TODO (the same fields
-// the legacy windows read from the tables the robna dokumenta tabs do not show).
-templ RobnoFaktureHeaderPanel(ui domain.RobnoFaktureUI, header domain.RobnoFaktureHeader, avansiTbl domain.TableData, vrstaDokumentaValues, valutaValues, sistemPdvValues []domain.ComboItem, btns domain.RobnoFaktureButtons, translator *i18n.Service) {
-	@RobnoFakturePanel(ui.HeaderPanelID, translator.Label("Podaci o fakturi"), robnoFaktureHeaderStateText(header.Snimljen, translator), !header.Snimljen, !header.Snimljen, RobnoFaktureHeaderFields(ui, header, avansiTbl, vrstaDokumentaValues, valutaValues, sistemPdvValues, translator), RobnoFaktureHeaderButtons(btns))
+templ RobnoFaktureHeaderPanel(ui domain.RobnoFaktureUI, header domain.RobnoFaktureHeaderView, avansiTbl domain.TableData, vrstaDokumentaValues, valutaValues, sistemPdvValues, zirpRacunValues []domain.ComboItem, btns domain.RobnoFaktureButtons, translator *i18n.Service) {
+	@RobnoFakturePanel(ui.HeaderPanelID, translator.Label("Podaci o fakturi"), robnoFaktureHeaderStateText(header.Snimljen, translator), !header.Snimljen, !header.Snimljen, RobnoFaktureHeaderFields(ui, header, avansiTbl, vrstaDokumentaValues, valutaValues, sistemPdvValues, zirpRacunValues, translator), RobnoFaktureHeaderButtons(btns))
 }
 
-// RobnoFaktureHeaderFields is the body of the header control: the strip of the nalog and, below it,
-// the panels of the header laid out in the two columns of the legacy window - podaci o dokumentu,
-// podaci o kupcu and podaci o načinu otpreme / rokovima / valuti on the left; podaci o porezom
-// oslobođenju, mesto isporuke / komercijalista / tender / napomena, finansijsko stanje kupca and the
-// grid of the avansi on the right. The buttons of the control are rendered by
-// RobnoFaktureHeaderButtons, outside of the fields the script disables.
-templ RobnoFaktureHeaderFields(ui domain.RobnoFaktureUI, header domain.RobnoFaktureHeader, avansiTbl domain.TableData, vrstaDokumentaValues, valutaValues, sistemPdvValues []domain.ComboItem, translator *i18n.Service) {
+// RobnoFaktureHeaderFields renders the fields of the header of the faktura: the strip of the nalog,
+templ RobnoFaktureHeaderFields(ui domain.RobnoFaktureUI, header domain.RobnoFaktureHeaderView, avansiTbl domain.TableData, vrstaDokumentaValues, valutaValues, sistemPdvValues, zirpRacunValues []domain.ComboItem, translator *i18n.Service) {
 	<!-- Nalog: the read only strip both windows show above the form. It is laid out like the two row
 	     header of the legacy window: the first line is the label of the field, the second one its value
 	     (see robnoFaktureNalogStripFields). It spans both columns. -->
 	<fieldset class="border border-blue-400 bg-blue-100">
 		@RobnoFaktureReadOnlyStrip(robnoFaktureNalogStripFields(header, translator))
 	</fieldset>
-	<!-- The panels of the header in the two columns of the legacy window. The contents of the columns
-	     are kept at their own indentation, the comments below mark where every column starts and ends.
-	     The tracks are minmax(0, 1fr), so a wide child (the grid of the avansi) scrolls inside its own
-	     container instead of widening the column. -->
-	<div class="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-1 items-start">
+	<div class="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-1">
 		<!-- ===== Left column: podaci o dokumentu, podaci o kupcu, podaci o načinu otpreme ===== -->
-		<div class="flex flex-col gap-1 min-w-0">
+		<div class="flex flex-col gap-1 min-w-0 h-full">
 			<!-- Podaci o dokumentu -->
 			<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg">
 				<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Podaci o dokumentu") }</legend>
-				<!-- The rows of the panel, like the legacy window draws them: the vrsta dokumenta (read only) with
-		     the broj dokumenta and its search button, the datum fakturisanja with the broj and the datum of
-		     the izvorni dokument, the opis, and the checkbox "Za period od / do" with its two dates and the
-		     datum smanjenja. Every row is one flex line, so the controls of a row share its width. -->
 				<div class="flex flex-col gap-y-1">
 					<!-- Row 1: the vrsta dokumenta (read only - it is chosen on the "Unos dokumenta" tab) and the
 			     broj dokumenta with the search of the robni dokumenti -->
@@ -1557,7 +1819,7 @@ templ RobnoFaktureHeaderFields(ui domain.RobnoFaktureUI, header domain.RobnoFakt
 								FieldType:  "text",
 								Value:      header.Vrd,
 								Disabled:   true,
-								ClassInput: common.ClassInputTextDisabled + " flex-1 min-w-0"})
+								ClassInput: common.ClassInputTextDisabled + " w-80 min-w-0"})
 						</div>
 						<div class="flex items-center gap-1 flex-1">
 							@components.LabelField(domain.LabelFieldConfig{
@@ -1569,9 +1831,9 @@ templ RobnoFaktureHeaderFields(ui domain.RobnoFaktureUI, header domain.RobnoFakt
 								ID:         "brdok",
 								Name:       "brdok",
 								FieldType:  "text",
-								Value:      header.Brdok,
+								Value:      header.BrojDokum,
 								Disabled:   header.Snimljen,
-								ClassInput: robnoFaktureControlClass(!header.Snimljen, "flex-1 min-w-0"),
+								ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
 								MaxLength:  "10",
 								TabIndex:   "1",
 								OnInput:    "clearFieldError",
@@ -1591,9 +1853,9 @@ templ RobnoFaktureHeaderFields(ui domain.RobnoFaktureUI, header domain.RobnoFakt
 								ID:         "datumfakturisanja",
 								Name:       "datumfakturisanja",
 								FieldType:  "date",
-								Value:      header.DatumFakturisanja,
+								Value:      robnoFaktureDate(header.DatumDokum),
 								Disabled:   header.Snimljen,
-								ClassInput: robnoFaktureControlClass(!header.Snimljen, "flex-1 min-w-0"),
+								ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
 								TabIndex:   "2",
 								OnInput:    "clearFieldError",
 								OnFocus:    "clearFieldError"})
@@ -1602,15 +1864,15 @@ templ RobnoFaktureHeaderFields(ui domain.RobnoFaktureUI, header domain.RobnoFakt
 							@components.LabelField(domain.LabelFieldConfig{
 								ID:         "brdokorg",
 								LabelText:  translator.Label("Broj orig. dokumenta"),
-								ClassLabel: common.ClassLabel + " w-32",
+								ClassLabel: common.ClassLabel + " w-28",
 							})
 							@components.TextInputField(domain.InputFieldConfig{
 								ID:         "brdokorg",
 								Name:       "brdokorg",
 								FieldType:  "text",
-								Value:      header.BrdokOrg,
+								Value:      header.IzvorniDokum,
 								Disabled:   header.Snimljen,
-								ClassInput: robnoFaktureControlClass(!header.Snimljen, " flex-1 min-w-0"),
+								ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
 								MaxLength:  "20",
 								TabIndex:   "3"})
 						</div>
@@ -1624,9 +1886,9 @@ templ RobnoFaktureHeaderFields(ui domain.RobnoFaktureUI, header domain.RobnoFakt
 								ID:         "datumizvora",
 								Name:       "datumizvora",
 								FieldType:  "date",
-								Value:      header.DatumIzvora,
+								Value:      robnoFaktureDate(header.IzvorniDokDatum),
 								Disabled:   header.Snimljen,
-								ClassInput: robnoFaktureControlClass(!header.Snimljen, "flex-1 min-w-0"),
+								ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
 								TabIndex:   "4"})
 						</div>
 					</div>
@@ -1643,7 +1905,7 @@ templ RobnoFaktureHeaderFields(ui domain.RobnoFaktureUI, header domain.RobnoFakt
 							FieldType:  "text",
 							Value:      header.Opis,
 							Disabled:   header.Snimljen,
-							ClassInput: robnoFaktureControlClass(!header.Snimljen, "flex-1 min-w-0"),
+							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
 							MaxLength:  "120",
 							TabIndex:   "5"})
 					</div>
@@ -1653,7 +1915,7 @@ templ RobnoFaktureHeaderFields(ui domain.RobnoFaktureUI, header domain.RobnoFakt
 							ID:                "zaperiod",
 							Name:              "zaperiod",
 							LabelText:         translator.Label("Za period"),
-							ClassLabel:        common.ClassLabel + " w-24",
+							ClassLabel:        common.ClassLabel + " w-28",
 							ClassCheckbox:     common.ClassCheckbox,
 							ClassCheckboxSpan: "text-sm",
 							IsChecked:         header.ZaPeriod,
@@ -1662,15 +1924,15 @@ templ RobnoFaktureHeaderFields(ui domain.RobnoFaktureUI, header domain.RobnoFakt
 						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "periodod",
 							LabelText:  translator.Label("Od"),
-							ClassLabel: common.ClassLabel ,
+							ClassLabel: common.ClassLabel + " w-7",
 						})
 						@components.TextInputField(domain.InputFieldConfig{
 							ID:         "periodod",
 							Name:       "periodod",
 							FieldType:  "date",
-							Value:      header.PeriodOd,
-							Disabled:   !header.ZaPeriod || header.Snimljen,
-							ClassInput: robnoFaktureControlClass(header.ZaPeriod && !header.Snimljen, "flex-1 min-w-[6rem]"),
+							Value:      robnoFaktureDate(header.PeriodOd),
+							Disabled:   true,
+							ClassInput: common.ClassInputTextEnabled + " w-32",
 							TabIndex:   "7"})
 						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "perioddo",
@@ -1681,9 +1943,9 @@ templ RobnoFaktureHeaderFields(ui domain.RobnoFaktureUI, header domain.RobnoFakt
 							ID:         "perioddo",
 							Name:       "perioddo",
 							FieldType:  "date",
-							Value:      header.PeriodDo,
+							Value:      robnoFaktureDate(header.PeriodDo),
 							Disabled:   !header.ZaPeriod || header.Snimljen,
-							ClassInput: robnoFaktureControlClass(header.ZaPeriod && !header.Snimljen, "flex-1 min-w-[6rem]"),
+							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-[6rem]",
 							TabIndex:   "8"})
 						<div class="flex items-center gap-1">
 							@components.LabelField(domain.LabelFieldConfig{
@@ -1695,9 +1957,9 @@ templ RobnoFaktureHeaderFields(ui domain.RobnoFaktureUI, header domain.RobnoFakt
 								ID:         "datumsmanjenja",
 								Name:       "datumsmanjenja",
 								FieldType:  "date",
-								Value:      header.DatumSmanjenja,
+								Value:      robnoFaktureDate(header.DatumSmanjenja),
 								Disabled:   header.Snimljen,
-								ClassInput: robnoFaktureControlClass(!header.Snimljen, "!w-32"),
+								ClassInput: common.ClassInputTextEnabled + " !w-32",
 								TabIndex:   "9"})
 						</div>
 					</div>
@@ -1706,12 +1968,18 @@ templ RobnoFaktureHeaderFields(ui domain.RobnoFaktureUI, header domain.RobnoFakt
 			<!-- Podaci o kupcu -->
 			<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg">
 				<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Podaci o kupcu") }</legend>
-				<div class="grid grid-cols-2 gap-x-2 gap-y-1">
-					<div class="flex items-center gap-1">
+				<!-- The rows of the panel, one line of the legacy box per row (the same layout as the panel
+				     "Mesto isporuke, komercijalista, tender, napomena..."): the konto and the analitička
+				     šifra with their searches of the partneri, the naziv with the adresa, the poštanski broj
+				     with the mesto and the PIB with the sistem PDV. Every label has the same width (w-36), so
+				     the controls of all the rows start at the same x. -->
+				<div class="grid grid-cols-4 gap-x-2 gap-y-1">
+					<!-- Konto kupca and the analitička šifra, every one with the search of the partneri -->
+					<div class="col-span-4 flex items-center gap-1 min-w-0">
 						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "kupackonto",
 							LabelText:  translator.Label("Konto kupca"),
-							ClassLabel: common.ClassLabel + " w-32",
+							ClassLabel: common.ClassLabel + " w-36",
 						})
 						@components.TextInputField(domain.InputFieldConfig{
 							ID:         "kupackonto",
@@ -1719,16 +1987,14 @@ templ RobnoFaktureHeaderFields(ui domain.RobnoFaktureUI, header domain.RobnoFakt
 							FieldType:  "text",
 							Value:      header.KupacKonto,
 							Disabled:   header.Snimljen,
-							ClassInput: robnoFaktureControlClass(!header.Snimljen, "flex-1 min-w-0"),
+							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
 							MaxLength:  "10",
-							TabIndex:   "11"})
+							TabIndex:   "10"})
 						@components.SearchButton(domain.SearchButtonConfig{ID: "kupackonto", Name: "search-kupackonto", HxUrl: ui.PartnerSearchURL, HxTarget: "#search-dropdown", HxSwap: "innerHTML", HxVals: `js:{"destfield": "kupackonto"}`, ClassButton: common.ClassButton})
-					</div>
-					<div class="flex items-center gap-1">
 						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "kupacsifra",
 							LabelText:  translator.Label("Analitička šifra"),
-							ClassLabel: common.ClassLabel + " w-32",
+							ClassLabel: common.ClassLabel + " w-36 pl-2",
 						})
 						@components.TextInputField(domain.InputFieldConfig{
 							ID:         "kupacsifra",
@@ -1736,192 +2002,240 @@ templ RobnoFaktureHeaderFields(ui domain.RobnoFaktureUI, header domain.RobnoFakt
 							FieldType:  "text",
 							Value:      header.KupacSifra,
 							Disabled:   header.Snimljen,
-							ClassInput: robnoFaktureControlClass(!header.Snimljen, "flex-1 min-w-0"),
+							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
 							MaxLength:  "10",
-							TabIndex:   "12"})
+							TabIndex:   "11"})
 						@components.SearchButton(domain.SearchButtonConfig{ID: "kupacsifra", Name: "search-kupacsifra", HxUrl: ui.PartnerSearchURL, HxTarget: "#search-dropdown", HxSwap: "innerHTML", HxVals: `js:{"destfield": "kupacsifra"}`, ClassButton: common.ClassButton})
 					</div>
-					<div class="flex items-center gap-1">
+					<!-- Naziv kupca and the adresa (both of them are read only) -->
+					<div class="col-span-4 flex items-center gap-1 min-w-0">
 						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "kupacnaziv",
 							LabelText:  translator.Label("Naziv kupca"),
-							ClassLabel: common.ClassLabel + " w-32",
+							ClassLabel: common.ClassLabel + " w-36",
 						})
 						@components.TextInputField(domain.InputFieldConfig{
 							ID:         "kupacnaziv",
 							Name:       "kupacnaziv",
 							FieldType:  "text",
 							Value:      header.KupacNaziv,
-							Disabled:   header.Snimljen,
-							ClassInput: robnoFaktureControlClass(!header.Snimljen, "flex-1 min-w-0"),
+							Disabled:   true,
+							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
 							MaxLength:  "60",
-							TabIndex:   "13"})
-					</div>
-					<div class="flex items-center gap-1">
+							TabIndex:   "12"})
 						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "kupacadresa",
 							LabelText:  translator.Label("Adresa"),
-							ClassLabel: common.ClassLabel + " w-24",
+							ClassLabel: common.ClassLabel + " w-36 pl-2",
 						})
 						@components.TextInputField(domain.InputFieldConfig{
 							ID:            "kupacadresa",
 							Name:          "kupacadresa",
 							FieldType:     "text",
 							Value:         header.KupacAdresa,
-							Disabled:      header.Snimljen,
-							ClassInput:    robnoFaktureControlClass(!header.Snimljen, "flex-1 min-w-0"),
+							Disabled:      true,
+							ClassInput:    common.ClassInputTextEnabled + " flex-1 min-w-0",
 							MaxLength:     "60",
-							TabIndex:      "14",
+							TabIndex:      "13",
 							DataDestField: "kupacadresa"})
 					</div>
-					<div class="flex items-center gap-1">
+					<!-- Poštanski broj and the mesto (both of them are read only) -->
+					<div class="col-span-4 flex items-center gap-1 min-w-0">
 						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "kupacpostanskibroj",
 							LabelText:  translator.Label("Poštanski broj"),
-							ClassLabel: common.ClassLabel + " w-32",
+							ClassLabel: common.ClassLabel + " w-36",
 						})
 						@components.TextInputField(domain.InputFieldConfig{
 							ID:         "kupacpostanskibroj",
 							Name:       "kupacpostanskibroj",
 							FieldType:  "text",
 							Value:      header.KupacPostanskiBroj,
-							Disabled:   header.Snimljen,
-							ClassInput: robnoFaktureControlClass(!header.Snimljen, "flex-1 min-w-0"),
+							Disabled:   true,
+							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
 							MaxLength:  "10",
-							TabIndex:   "15"})
-					</div>
-					<div class="flex items-center gap-1">
+							TabIndex:   "14"})
 						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "kupacmesto",
 							LabelText:  translator.Label("Mesto"),
-							ClassLabel: common.ClassLabel + " w-24",
+							ClassLabel: common.ClassLabel + " w-36 pl-2",
 						})
 						@components.TextInputField(domain.InputFieldConfig{
 							ID:            "kupacmesto",
 							Name:          "kupacmesto",
 							FieldType:     "text",
 							Value:         header.KupacMesto,
-							Disabled:      header.Snimljen,
-							ClassInput:    robnoFaktureControlClass(!header.Snimljen, "flex-1 min-w-0"),
+							Disabled:      true,
+							ClassInput:    common.ClassInputTextEnabled + " flex-1 min-w-0",
 							MaxLength:     "40",
-							TabIndex:      "16",
+							TabIndex:      "15",
 							DataDestField: "kupacmesto"})
 					</div>
-					<div class="flex items-center gap-1">
+					<!-- PIB / JIB and the sistem PDV (read only) -->
+					<div class="col-span-4 flex items-center gap-1 min-w-0">
 						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "kupacpib",
 							LabelText:  translator.Label("PIB / JIB"),
-							ClassLabel: common.ClassLabel + " w-32",
+							ClassLabel: common.ClassLabel + " w-36",
 						})
 						@components.TextInputField(domain.InputFieldConfig{
 							ID:         "kupacpib",
 							Name:       "kupacpib",
 							FieldType:  "text",
 							Value:      header.KupacPib,
-							Disabled:   header.Snimljen,
-							ClassInput: robnoFaktureControlClass(!header.Snimljen, "flex-1 min-w-0"),
+							Disabled:   true,
+							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
 							MaxLength:  "20",
-							TabIndex:   "17"})
-					</div>
-					<div class="flex items-center gap-1">
+							TabIndex:   "16"})
 						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "sistempdv",
 							LabelText:  translator.Label("Sistem PDV"),
-							ClassLabel: common.ClassLabel + " w-24",
+							ClassLabel: common.ClassLabel + " w-36 pl-2",
 						})
 						@components.ComboBoxField(domain.ComboFieldConfig{
 							ID:            "sistempdv",
 							Name:          "sistempdv",
 							HasLabel:      false,
-							Disabled:      header.Snimljen,
-							ClassSelect:   robnoFaktureControlClass(!header.Snimljen, "flex-1"),
+							Disabled:      true,
+							ClassSelect:   common.ClassInputTextEnabled + " flex-1 min-w-0",
 							OptionValues:  sistemPdvValues,
 							SelectedValue: header.SistemPdv,
-							TabIndex:      "18"}, translator)
+							TabIndex:      "17"}, translator)
 					</div>
 				</div>
 			</fieldset>
-			<!-- Podaci o načinu otpreme, rokovima, valuti... -->
-			<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg">
+			<!-- Podaci o načinu otpreme, rokovima, valuti... : it is the last panel of the column, so it grows
+			     to fill the space the right column leaves free at the bottom (both columns end on the same
+			     line) -->
+			<fieldset class="flex-1 border border-blue-400 bg-blue-100 p-1 rounded-lg">
 				<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Podaci o načinu otpreme, rokovima, valuti...") }</legend>
-				<div class="grid grid-cols-3 gap-x-2 gap-y-1">
-					<div class="flex items-center gap-1">
-						@components.LabelField(domain.LabelFieldConfig{
-							ID:         "valuta",
-							LabelText:  translator.Label("Šifra valute"),
-							ClassLabel: common.ClassLabel + " w-32",
-						})
-						@components.ComboBoxField(domain.ComboFieldConfig{
-							ID:            "valuta",
-							Name:          "valuta",
-							HasLabel:      false,
-							Disabled:      header.Snimljen,
-							ClassSelect:   robnoFaktureControlClass(!header.Snimljen, "flex-1"),
-							OptionValues:  valutaValues,
-							SelectedValue: header.Valuta,
-							TabIndex:      "19"}, translator)
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "kurs",
-							Name:       "kurs",
-							FieldType:  "text",
-							Value:      header.Kurs,
-							Disabled:   header.Snimljen,
-							ClassInput: robnoFaktureControlClass(!header.Snimljen, "!w-24 text-right"),
-							MaxLength:  "15",
-							TabIndex:   "20"})
+				<!-- The rows of the panel, one line of the legacy box per row (the same layout as the panel
+				     "Podaci o kupcu"): the fields of a line stay together in the row (the first row holds the
+				     valuta with its kurs and the "važi za", the rows of a single field keep the field over the
+				     whole row). Every label has the same width (w-36), so the controls of all the rows start at
+				     the same x. -->
+				<div class="grid grid-cols-4 gap-x-2 gap-y-1">
+					<!-- The šifra valute with its combo over 1/2 of the row and the other two controls (the
+					     "važi za" and the kurs) over the other 1/2, 1/4 of the row each -->
+					<div class="col-span-4 flex items-center gap-1 min-w-0">
+						<div class="flex-1 flex items-center gap-1 min-w-0">
+							@components.LabelField(domain.LabelFieldConfig{
+								ID:         "valuta",
+								LabelText:  translator.Label("Šifra valute"),
+								ClassLabel: common.ClassLabel + " w-36",
+							})
+							@components.ComboBoxField(domain.ComboFieldConfig{
+								ID:            "valuta",
+								Name:          "valuta",
+								HasLabel:      false,
+								Disabled:      header.Snimljen,
+								ClassSelect:   common.ClassInputTextEnabled + " flex-1 min-w-0",
+								OptionValues:  valutaValues,
+								SelectedValue: robnoFaktureInt(header.Valuta),
+								TabIndex:      "18"}, translator)
+						</div>
+						<div class="flex-1 flex items-center gap-1 min-w-0">
+							<div class="flex-1 flex items-center gap-1 min-w-0">
+								@components.LabelField(domain.LabelFieldConfig{
+									ID:         "vaziza",
+									LabelText:  translator.Label("Važi za (1,100)"),
+									ClassLabel: common.ClassLabel + " w-36 pl-2",
+								})
+								@components.TextInputField(domain.InputFieldConfig{
+									ID:         "vaziza",
+									Name:       "vaziza",
+									FieldType:  "text",
+									Value:      robnoFaktureInt(header.VaziZa),
+									Disabled:   header.Snimljen,
+									ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
+									MaxLength:  "3",
+									TabIndex:   "19"})
+							</div>
+							<div class="flex-1 flex items-center gap-1 min-w-0">
+								@components.LabelField(domain.LabelFieldConfig{
+									ID:         "kurs",
+									LabelText:  translator.Label("Kurs"),
+									ClassLabel: common.ClassLabel + " w-16 pl-2",
+								})
+								@components.TextInputField(domain.InputFieldConfig{
+									ID:         "kurs",
+									Name:       "kurs",
+									FieldType:  "text",
+									Value:      robnoFaktureDecimal(header.Kurs, 2),
+									Disabled:   header.Snimljen,
+									ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0 text-right",
+									MaxLength:  "15",
+									TabIndex:   "20"})
+							</div>
+						</div>
 					</div>
-					<div class="flex items-center gap-1">
+					<!-- BrojRata, DatumPrveRate -->
+					<div class="col-span-4 flex items-center gap-1 min-w-0">
 						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "brojrata",
 							LabelText:  translator.Label("Broj rata"),
-							ClassLabel: common.ClassLabel + " w-32",
+							ClassLabel: common.ClassLabel + " w-36",
 						})
 						@components.TextInputField(domain.InputFieldConfig{
 							ID:         "brojrata",
 							Name:       "brojrata",
 							FieldType:  "text",
-							Value:      header.BrojRata,
+							Value:      robnoFaktureInt(header.BrojRata),
 							Disabled:   header.Snimljen,
-							ClassInput: robnoFaktureControlClass(!header.Snimljen, "!w-20 text-right"),
+							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0 text-right",
 							MaxLength:  "3",
 							TabIndex:   "21"})
-					</div>
-					<div class="flex items-center gap-1">
 						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "datumprverate",
-							LabelText:  translator.Label("Datum dospeća prve rate"),
-							ClassLabel: common.ClassLabel + " w-44",
+							LabelText:  translator.Label("Dat. dosp. prve rate"),
+							ClassLabel: common.ClassLabel + " w-36 pl-2",
 						})
 						@components.TextInputField(domain.InputFieldConfig{
 							ID:         "datumprverate",
 							Name:       "datumprverate",
 							FieldType:  "date",
-							Value:      header.DatumPrveRate,
+							Value:      robnoFaktureDate(header.DatumPrveRate),
 							Disabled:   header.Snimljen,
-							ClassInput: robnoFaktureControlClass(!header.Snimljen, "flex-1 min-w-0"),
+							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
 							TabIndex:   "22"})
 					</div>
-					<div class="flex items-center gap-1">
+					<!-- IznosFakture, IznosPrveRate -->
+					<div class="col-span-4 flex items-center gap-1 min-w-0">
 						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "iznosfakture",
 							LabelText:  translator.Label("Iznos fakture"),
-							ClassLabel: common.ClassLabel + " w-32",
+							ClassLabel: common.ClassLabel + " w-36",
 						})
 						@components.TextInputField(domain.InputFieldConfig{
 							ID:         "iznosfakture",
 							Name:       "iznosfakture",
 							FieldType:  "text",
-							Value:      header.IznosFakture,
+							Value:      robnoFaktureDecimal(header.IznosFakture, 2),
 							Disabled:   header.Snimljen,
-							ClassInput: robnoFaktureControlClass(!header.Snimljen, "flex-1 min-w-0 text-right"),
+							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0 text-right",
 							MaxLength:  "15",
 							TabIndex:   "23"})
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "iznosprverate",
+							LabelText:  translator.Label("Iznos prve rate"),
+							ClassLabel: common.ClassLabel + " w-36 pl-2",
+						})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "iznosprverate",
+							Name:       "iznosprverate",
+							FieldType:  "text",
+							Value:      robnoFaktureDecimal(header.IznosPrveRate, 2),
+							Disabled:   header.Snimljen,
+							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0 text-right",
+							MaxLength:  "15",
+							TabIndex:   "24"})
 					</div>
-					<div class="flex items-center gap-1">
+					<!-- UsloviPlacanja, UsloviKamate -->
+					<div class="col-span-4 flex items-center gap-1 min-w-0">
 						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "usloviplacanja",
 							LabelText:  translator.Label("Uslovi plaćanja"),
-							ClassLabel: common.ClassLabel + " w-32",
+							ClassLabel: common.ClassLabel + " w-36",
 						})
 						@components.TextInputField(domain.InputFieldConfig{
 							ID:         "usloviplacanja",
@@ -1929,108 +2243,74 @@ templ RobnoFaktureHeaderFields(ui domain.RobnoFaktureUI, header domain.RobnoFakt
 							FieldType:  "text",
 							Value:      header.UsloviPlacanja,
 							Disabled:   header.Snimljen,
-							ClassInput: robnoFaktureControlClass(!header.Snimljen, "flex-1 min-w-0"),
+							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
 							MaxLength:  "20",
-							TabIndex:   "24"})
+							TabIndex:   "25"})
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "uslovikamate",
+							LabelText:  translator.Label("Uslovi kamate"),
+							ClassLabel: common.ClassLabel + " w-36 pl-2",
+						})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "uslovikamate",
+							Name:       "uslovikamate",
+							FieldType:  "text",
+							Value:      header.UsloviKamate,
+							Disabled:   header.Snimljen,
+							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
+							MaxLength:  "20",
+							TabIndex:   "26"})
 					</div>
-					<div class="flex items-center gap-1">
+					<!-- Rok, Dospeva -->
+					<div class="col-span-4 flex items-center gap-1 min-w-0">
 						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "rok",
 							LabelText:  translator.Label("Rok"),
-							ClassLabel: common.ClassLabel + " w-20",
+							ClassLabel: common.ClassLabel + " w-36",
 						})
 						@components.TextInputField(domain.InputFieldConfig{
 							ID:         "rok",
 							Name:       "rok",
 							FieldType:  "text",
-							Value:      header.Rok,
+							Value:      robnoFaktureInt(header.Rok),
 							Disabled:   header.Snimljen,
-							ClassInput: robnoFaktureControlClass(!header.Snimljen, "!w-20 text-right"),
+							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0 text-right",
 							MaxLength:  "3",
-							TabIndex:   "25"})
+							TabIndex:   "27"})
 						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "dospeva",
 							LabelText:  translator.Label("Dospeva"),
-							ClassLabel: common.ClassLabel + " pl-2",
+							ClassLabel: common.ClassLabel + " w-36 pl-2",
 						})
 						@components.TextInputField(domain.InputFieldConfig{
 							ID:         "dospeva",
 							Name:       "dospeva",
 							FieldType:  "date",
-							Value:      header.Dospeva,
+							Value:      robnoFaktureDate(header.Dospeva),
 							Disabled:   header.Snimljen,
-							ClassInput: robnoFaktureControlClass(!header.Snimljen, "flex-1 min-w-0"),
-							TabIndex:   "26"})
-					</div>
-					<div class="flex items-center gap-1">
-						@components.LabelField(domain.LabelFieldConfig{
-							ID:         "vaziza",
-							LabelText:  translator.Label("Važi za (1,100)"),
-							ClassLabel: common.ClassLabel + " w-32",
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "vaziza",
-							Name:       "vaziza",
-							FieldType:  "text",
-							Value:      header.VaziZa,
-							Disabled:   header.Snimljen,
-							ClassInput: robnoFaktureControlClass(!header.Snimljen, "!w-20 text-right"),
-							MaxLength:  "3",
-							TabIndex:   "27"})
-					</div>
-					<div class="flex items-center gap-1">
-						@components.LabelField(domain.LabelFieldConfig{
-							ID:         "brojugovora",
-							LabelText:  translator.Label("Broj ugovora"),
-							ClassLabel: common.ClassLabel + " w-32",
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "brojugovora",
-							Name:       "brojugovora",
-							FieldType:  "text",
-							Value:      header.BrojUgovora,
-							Disabled:   header.Snimljen,
-							ClassInput: robnoFaktureControlClass(!header.Snimljen, "flex-1 min-w-0"),
-							MaxLength:  "20",
+							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
 							TabIndex:   "28"})
 					</div>
-					<div class="flex items-center gap-1">
+					<!-- ZiroRacun -->
+					<div class="col-span-4 flex items-center gap-1 min-w-0">
 						@components.LabelField(domain.LabelFieldConfig{
-							ID:         "narudzbenica",
-							LabelText:  translator.Label("Narudžbenica"),
-							ClassLabel: common.ClassLabel + " w-32",
+							ID:         "ziroracun",
+							LabelText:  translator.Label("Ziro račun"),
+							ClassLabel: common.ClassLabel + " w-36",
 						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "narudzbenica",
-							Name:       "narudzbenica",
-							FieldType:  "text",
-							Value:      header.Narudzbenica,
-							Disabled:   header.Snimljen,
-							ClassInput: robnoFaktureControlClass(!header.Snimljen, "flex-1 min-w-0"),
-							MaxLength:  "20",
-							TabIndex:   "29"})
-					</div>
-					<div class="flex items-center gap-1">
-						@components.LabelField(domain.LabelFieldConfig{
-							ID:         "izvoracun",
-							LabelText:  translator.Label("Izvo račun"),
-							ClassLabel: common.ClassLabel + " w-32",
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "izvoracun",
-							Name:       "izvoracun",
-							FieldType:  "text",
-							Value:      header.IzvoRacun,
-							Disabled:   header.Snimljen,
-							ClassInput: robnoFaktureControlClass(!header.Snimljen, "flex-1 min-w-0"),
-							MaxLength:  "20",
-							TabIndex:   "30"})
-					</div>
-					<div class="flex items-center gap-1">
+						@components.ComboBoxField(domain.ComboFieldConfig{
+							ID:            "ziroracun",
+							Name:          "ziroracun",
+							HasLabel:      false,
+							Disabled:      header.Snimljen,
+							ClassSelect:   common.ClassInputTextEnabled + " flex-1 min-w-0",
+							OptionValues:  zirpRacunValues,
+							SelectedValue: header.ZirpRacun,
+							TabIndex:      "29"}, translator)
 						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "nacinotpreme",
 							LabelText:  translator.Label("Način otpreme"),
-							ClassLabel: common.ClassLabel + " w-32",
+							ClassLabel: common.ClassLabel + " w-36 pl-2",
 						})
 						@components.TextInputField(domain.InputFieldConfig{
 							ID:         "nacinotpreme",
@@ -2038,95 +2318,61 @@ templ RobnoFaktureHeaderFields(ui domain.RobnoFaktureUI, header domain.RobnoFakt
 							FieldType:  "text",
 							Value:      header.NacinOtpreme,
 							Disabled:   header.Snimljen,
-							ClassInput: robnoFaktureControlClass(!header.Snimljen, "flex-1 min-w-0"),
+							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
 							MaxLength:  "20",
-							TabIndex:   "31"})
+							TabIndex:   "30"})
 					</div>
-					<div class="flex items-center gap-1">
+					<!-- Broj ugovora, Narudžbenica -->
+					<div class="col-span-4 flex items-center gap-1 min-w-0">
 						@components.LabelField(domain.LabelFieldConfig{
-							ID:         "regbr",
-							LabelText:  translator.Label("Reg. br."),
-							ClassLabel: common.ClassLabel + " w-32",
+							ID:         "brojugovora",
+							LabelText:  translator.Label("Broj ugovora"),
+							ClassLabel: common.ClassLabel + " w-36",
 						})
 						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "regbr",
-							Name:       "regbr",
+							ID:         "brojugovora",
+							Name:       "brojugovora",
 							FieldType:  "text",
-							Value:      header.RegBr,
+							Value:      header.BrojUgovora,
 							Disabled:   header.Snimljen,
-							ClassInput: robnoFaktureControlClass(!header.Snimljen, "flex-1 min-w-0"),
+							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
+							MaxLength:  "20",
+							TabIndex:   "31"})
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "narudzbenica",
+							LabelText:  translator.Label("Narudžbenica"),
+							ClassLabel: common.ClassLabel + " w-36 pl-2",
+						})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "narudzbenica",
+							Name:       "narudzbenica",
+							FieldType:  "text",
+							Value:      header.Narudzbenica,
+							Disabled:   header.Snimljen,
+							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
 							MaxLength:  "20",
 							TabIndex:   "32"})
 					</div>
-					<div class="flex items-center gap-1">
+					<!-- Paritet, IzvozIzjava -->
+					<div class="col-span-4 flex items-center gap-1 min-w-0">
 						@components.LabelField(domain.LabelFieldConfig{
-							ID:         "vozac",
-							LabelText:  translator.Label("Vozač"),
-							ClassLabel: common.ClassLabel + " w-32",
+							ID:         "paritet",
+							LabelText:  translator.Label("Paritet"),
+							ClassLabel: common.ClassLabel + " w-36",
 						})
 						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "vozac",
-							Name:       "vozac",
+							ID:         "paritet",
+							Name:       "paritet",
 							FieldType:  "text",
-							Value:      header.Vozac,
+							Value:      header.Paritet,
 							Disabled:   header.Snimljen,
-							ClassInput: robnoFaktureControlClass(!header.Snimljen, "flex-1 min-w-0"),
-							MaxLength:  "40",
+							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
+							MaxLength:  "20",
 							TabIndex:   "33"})
-					</div>
-					<div class="flex items-center gap-1">
-						@components.LabelField(domain.LabelFieldConfig{
-							ID:         "teret",
-							LabelText:  translator.Label("Teret"),
-							ClassLabel: common.ClassLabel + " w-32",
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "teret",
-							Name:       "teret",
-							FieldType:  "text",
-							Value:      header.Teret,
-							Disabled:   header.Snimljen,
-							ClassInput: robnoFaktureControlClass(!header.Snimljen, "flex-1 min-w-0"),
-							MaxLength:  "40",
-							TabIndex:   "34"})
-					</div>
-					<div class="flex items-center gap-1">
-						@components.LabelField(domain.LabelFieldConfig{
-							ID:         "brutotezina",
-							LabelText:  translator.Label("Bruto težina"),
-							ClassLabel: common.ClassLabel + " w-32",
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "brutotezina",
-							Name:       "brutotezina",
-							FieldType:  "text",
-							Value:      header.BrutoTezina,
-							Disabled:   header.Snimljen,
-							ClassInput: robnoFaktureControlClass(!header.Snimljen, "!w-24 text-right"),
-							MaxLength:  "15",
-							TabIndex:   "35"})
-					</div>
-					<div class="flex items-center gap-1">
-						@components.LabelField(domain.LabelFieldConfig{
-							ID:         "brojkutija",
-							LabelText:  translator.Label("Broj kutija"),
-							ClassLabel: common.ClassLabel + " w-32",
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "brojkutija",
-							Name:       "brojkutija",
-							FieldType:  "text",
-							Value:      header.BrojKutija,
-							Disabled:   header.Snimljen,
-							ClassInput: robnoFaktureControlClass(!header.Snimljen, "!w-20 text-right"),
-							MaxLength:  "6",
-							TabIndex:   "36"})
-					</div>
-					<div class="flex items-center gap-1">
 						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "izvozizjava",
 							LabelText:  translator.Label("Izvoz. izjava"),
-							ClassLabel: common.ClassLabel + " w-32",
+							ClassLabel: common.ClassLabel + " w-36 pl-2",
 						})
 						@components.TextInputField(domain.InputFieldConfig{
 							ID:         "izvozizjava",
@@ -2134,63 +2380,33 @@ templ RobnoFaktureHeaderFields(ui domain.RobnoFaktureUI, header domain.RobnoFakt
 							FieldType:  "text",
 							Value:      header.IzvozIzjava,
 							Disabled:   header.Snimljen,
-							ClassInput: robnoFaktureControlClass(!header.Snimljen, "flex-1 min-w-0"),
+							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
 							MaxLength:  "20",
-							TabIndex:   "37"})
+							TabIndex:   "34"})
 					</div>
-					<div class="flex items-center gap-1">
-						@components.LabelField(domain.LabelFieldConfig{
-							ID:         "netotezina",
-							LabelText:  translator.Label("Neto težina"),
-							ClassLabel: common.ClassLabel + " w-32",
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "netotezina",
-							Name:       "netotezina",
-							FieldType:  "text",
-							Value:      header.NetoTezina,
-							Disabled:   header.Snimljen,
-							ClassInput: robnoFaktureControlClass(!header.Snimljen, "!w-24 text-right"),
-							MaxLength:  "15",
-							TabIndex:   "38"})
-					</div>
-					<div class="flex items-center gap-1">
-						@components.LabelField(domain.LabelFieldConfig{
-							ID:         "brojpaleta",
-							LabelText:  translator.Label("Broj paleta"),
-							ClassLabel: common.ClassLabel + " w-32",
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "brojpaleta",
-							Name:       "brojpaleta",
-							FieldType:  "text",
-							Value:      header.BrojPaleta,
-							Disabled:   header.Snimljen,
-							ClassInput: robnoFaktureControlClass(!header.Snimljen, "!w-20 text-right"),
-							MaxLength:  "6",
-							TabIndex:   "39"})
-					</div>
-					<div class="flex items-center gap-1">
+					<!-- BankaUplatu -->
+					<div class="col-span-4 flex items-center gap-1 min-w-0">
 						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "bankauplatu",
 							LabelText:  translator.Label("Banka za uplatu - izvoz"),
-							ClassLabel: common.ClassLabel + " w-44",
+							ClassLabel: common.ClassLabel + " w-36",
 						})
 						@components.TextInputField(domain.InputFieldConfig{
 							ID:         "bankauplatu",
 							Name:       "bankauplatu",
 							FieldType:  "text",
-							Value:      header.BankaUplatu,
+							Value:      header.BankaIzvozUplatu,
 							Disabled:   header.Snimljen,
-							ClassInput: robnoFaktureControlClass(!header.Snimljen, "flex-1 min-w-0"),
+							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
 							MaxLength:  "20",
-							TabIndex:   "40"})
+							TabIndex:   "35"})
 					</div>
-					<div class="flex items-center gap-1">
+					<!-- Popdv -->
+					<div class="col-span-4 flex items-center gap-1 min-w-0">
 						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "popdv",
 							LabelText:  translator.Label("Polje POPDV"),
-							ClassLabel: common.ClassLabel + " w-32",
+							ClassLabel: common.ClassLabel + " w-36",
 						})
 						@components.TextInputField(domain.InputFieldConfig{
 							ID:         "popdv",
@@ -2198,25 +2414,9 @@ templ RobnoFaktureHeaderFields(ui domain.RobnoFaktureUI, header domain.RobnoFakt
 							FieldType:  "text",
 							Value:      header.Popdv,
 							Disabled:   header.Snimljen,
-							ClassInput: robnoFaktureControlClass(!header.Snimljen, "flex-1 min-w-0"),
+							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
 							MaxLength:  "4",
-							TabIndex:   "41"})
-					</div>
-					<div class="flex items-center gap-1">
-						@components.LabelField(domain.LabelFieldConfig{
-							ID:         "izvoznidokument",
-							LabelText:  translator.Label("Izvozni dokument i/ili partner"),
-							ClassLabel: common.ClassLabel + " w-44",
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "izvoznidokument",
-							Name:       "izvoznidokument",
-							FieldType:  "text",
-							Value:      header.IzvozniDokument,
-							Disabled:   header.Snimljen,
-							ClassInput: robnoFaktureControlClass(!header.Snimljen, "flex-1 min-w-0"),
-							MaxLength:  "60",
-							TabIndex:   "42"})
+							TabIndex:   "36"})
 					</div>
 				</div>
 			</fieldset>
@@ -2226,142 +2426,257 @@ templ RobnoFaktureHeaderFields(ui domain.RobnoFaktureUI, header domain.RobnoFakt
 			<!-- Podaci o porezom oslobođenju, nastanku PDV obaveze -->
 			<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg">
 				<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Podaci o porezom oslobođenju, nastanku PDV obaveze") }</legend>
-				<div class="grid grid-cols-3 gap-x-2 gap-y-1">
-					<div class="flex items-center gap-1">
+				<!-- The rows of the panel: every row is one line of the legacy box. The first row holds the
+				     poreska kategorija (combo, 3/4 of the row) with the oznaka next to it (the last 1/4), the
+				     second one the napomena over the whole row; below them the nastanak PDV obaveze and, in
+				     the last row, the org. jedinica with the mesto troška. Every label of the panel has the
+				     same width (w-44), so the controls of all the rows start at the same x. -->
+				<div class="grid grid-cols-4 gap-x-2 gap-y-1">
+					<!-- Row 1: the poreska kategorija (3/4) and the oznaka (1/4) -->
+					<div class="col-span-3 flex items-center gap-1 min-w-0">
 						@components.LabelField(domain.LabelFieldConfig{
-							ID:         "pbrkategorija",
-							LabelText:  translator.Label("P.br. kategorija"),
-							ClassLabel: common.ClassLabel + " w-36",
+							ID:         "porkat",
+							LabelText:  translator.Label("Poreska kategorija"),
+							ClassLabel: common.ClassLabel + " w-40",
 						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "pbrkategorija",
-							Name:       "pbrkategorija",
-							FieldType:  "text",
-							Value:      header.PbrKategorija,
-							Disabled:   header.Snimljen,
-							ClassInput: robnoFaktureControlClass(!header.Snimljen, "flex-1 min-w-0"),
-							MaxLength:  "10",
-							TabIndex:   "43"})
+						@components.ComboBoxField(domain.ComboFieldConfig{
+							ID:           "porkat",
+							Name:         "porkat",
+							Placeholder:  translator.Placeholder("izaberite poresku kategoriju"),
+							Disabled:     false,
+							ClassSelect:  common.ClassInputTextEnabled + " flex-1 min-w-0",
+							TabIndex:     "37",
+							OptionValues: header.CbxPorKategorija,
+						}, translator)
 					</div>
-					<div class="col-span-2 flex items-center gap-1">
+					<div class="flex items-center gap-1 min-w-0">
 						@components.LabelField(domain.LabelFieldConfig{
-							ID:         "napomenaporesko",
-							LabelText:  translator.Label("Napomena o poreskom osl."),
-							ClassLabel: common.ClassLabel + " w-44",
+							ID:         "oznakakat",
+							LabelText:  translator.Label("Oznaka"),
+							ClassLabel: common.ClassLabel + " w-16",
 						})
 						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "napomenaporesko",
-							Name:       "napomenaporesko",
+							ID:         "oznakakat",
+							Name:       "oznakakat",
+							FieldType:  "text",
+							Value:      header.OznakaKat,
+							Disabled:   true,
+							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
+							MaxLength:  "120",
+							TabIndex:   "38"})
+					</div>
+					<!-- Row 2: the napomena o poreskom oslobođenju over the whole row -->
+					<div class="col-span-4 flex items-center gap-1 min-w-0">
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "napomporeskoosl",
+							LabelText:  translator.Label("Napom. o poreskom osl."),
+							ClassLabel: common.ClassLabel + " w-40",
+						})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "napomporeskoosl",
+							Name:       "napomporeskoosl",
 							FieldType:  "text",
 							Value:      header.NapomenaPoresko,
-							Disabled:   header.Snimljen,
-							ClassInput: robnoFaktureControlClass(!header.Snimljen, "flex-1 min-w-0"),
+							Disabled:   true,
+							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
 							MaxLength:  "120",
-							TabIndex:   "44"})
+							TabIndex:   "39"})
 					</div>
-					<div class="flex items-center gap-1">
+					<!-- Row 3: the nastanak PDV obaveze, as wide as the poreska kategorija above -->
+					<div class="col-span-4 flex items-center gap-1 min-w-0">
 						@components.LabelField(domain.LabelFieldConfig{
-							ID:         "rbrpdv",
-							LabelText:  translator.Label("R.br. PDV obaveze"),
-							ClassLabel: common.ClassLabel + " w-36",
+							ID:         "nastanakpdv",
+							LabelText:  translator.Label("Nastanak PDV obaveze"),
+							ClassLabel: common.ClassLabel + " w-40",
 						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "rbrpdv",
-							Name:       "rbrpdv",
-							FieldType:  "text",
-							Value:      header.RbrPdv,
-							Disabled:   header.Snimljen,
-							ClassInput: robnoFaktureControlClass(!header.Snimljen, "flex-1 min-w-0"),
-							MaxLength:  "10",
-							TabIndex:   "45"})
+						@components.ComboBoxField(domain.ComboFieldConfig{
+							ID:           "nastanakpdv",
+							Name:         "nastanakpdv",
+							Placeholder:  translator.Placeholder("izaberite nastanak PDV obaveze"),
+							Disabled:     false,
+							ClassSelect:  common.ClassInputTextEnabled + " flex-1 min-w-0",
+							TabIndex:     "40",
+							OptionValues: header.CbxNastanakPDV}, translator)
 					</div>
-					<div class="flex items-center gap-1">
+					<!-- Row 4: the org. jedinica (its change reloads the mesta troška) with the mesto troška -->
+					<div class="col-span-2 flex items-center gap-1 min-w-0">
 						@components.LabelField(domain.LabelFieldConfig{
-							ID:         "mestotroska",
-							LabelText:  translator.Label("Mesto troška"),
-							ClassLabel: common.ClassLabel + " w-32",
+							ID:         "idorgjed",
+							LabelText:  translator.Label("Org. Jedinica"),
+							ClassLabel: common.ClassLabel + " w-40 whitespace-nowrap",
 						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "mestotroska",
-							Name:       "mestotroska",
-							FieldType:  "text",
-							Value:      header.MestoTroska,
-							Disabled:   header.Snimljen,
-							ClassInput: robnoFaktureControlClass(!header.Snimljen, "flex-1 min-w-0"),
-							MaxLength:  "40",
-							TabIndex:   "46"})
+						@components.ComboBoxField(domain.ComboFieldConfig{
+							ID:             "idorgjed",
+							Name:           "idorgjed",
+							Placeholder:    translator.Placeholder("izaberite organizacionu jedinicu"),
+							Disabled:       false,
+							ClassSelect:    common.ClassInputTextEnabled + " flex-1 min-w-0",
+							TabIndex:       "41",
+							OptionValues:   header.CbxOrgjed,
+							ChangeEndpoint: "/api/mestotroska",
+							HxChangeTarget: "mestotrid",
+							HxSwap:         "outerHTML",
+						}, translator)
+					</div>
+					<div class="col-span-2 flex items-center gap-1 min-w-0">
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "mestotrid",
+							LabelText:  translator.Label("Mesto troska"),
+							ClassLabel: common.ClassLabel + " w-28 whitespace-nowrap",
+						})
+						@components.ComboBoxField(domain.ComboFieldConfig{
+							ID:           "mestotrid",
+							Name:         "mestotrid",
+							Placeholder:  "izaberite mesto troska...",
+							Disabled:     false,
+							ClassSelect:  common.ClassInputTextEnabled + " flex-1 min-w-0",
+							TabIndex:     "42",
+							OnInput:      "clearFieldError",
+							OnFocus:      "clearFieldError",
+							OptionValues: header.CbxMtroska,
+						}, translator)
 					</div>
 				</div>
 			</fieldset>
 			<!-- Mesto isporuke, komercijalista, tender, napomena... (the second panel of the legacy box) -->
 			<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg">
 				<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Mesto isporuke, komercijalista, tender, napomena...") }</legend>
-				<div class="grid grid-cols-3 gap-x-2 gap-y-1">
-					<div class="flex items-center gap-1">
+				<!-- The rows of the panel, one line of the legacy box per row: the mesto isporuke and the
+				     komercijalista over the whole row, then the IF broj with the checkbox "Javna nabavka",
+				     the BJKOS nosioca with the broj tendera and the KST and, in the last rows, the pairs of
+				     the fields of the otprema (broj ugovora / narudžbenica, vozač / reg. br., bruto / neto
+				     težina, broj kutija / broj paleta). Every label has the width of the labels of the panel
+				     above (w-44), so the controls of all the rows start at the same x. -->
+				<div class="grid grid-cols-4 gap-x-2 gap-y-1">
+					<!-- Mesto isporuke -->
+					<div class="col-span-4 flex items-center gap-1 min-w-0">
 						@components.LabelField(domain.LabelFieldConfig{
-							ID:         "mestoisporuke",
+							ID:         "fispid",
 							LabelText:  translator.Label("Mesto isporuke"),
-							ClassLabel: common.ClassLabel + " w-32",
+							ClassLabel: common.ClassLabel + " w-40",
 						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "mestoisporuke",
-							Name:       "mestoisporuke",
-							FieldType:  "text",
-							Value:      header.MestoIsporuke,
-							Disabled:   header.Snimljen,
-							ClassInput: robnoFaktureControlClass(!header.Snimljen, "flex-1 min-w-0"),
-							MaxLength:  "40",
-							TabIndex:   "47"})
+						@components.ComboBoxField(domain.ComboFieldConfig{
+							ID:           "fispid",
+							Name:         "fispid",
+							Placeholder:  translator.Placeholder("izaberite mesto isporuke"),
+							Disabled:     false,
+							ClassSelect:  common.ClassInputTextEnabled + " flex-1 min-w-0",
+							TabIndex:     "43",
+							OptionValues: header.CbxMi,
+						}, translator)
 					</div>
-					<div class="flex items-center gap-1">
+					<!-- Komercijalista -->
+					<div class="col-span-4 flex items-center gap-1 min-w-0">
 						@components.LabelField(domain.LabelFieldConfig{
-							ID:         "postanskibroj",
-							LabelText:  translator.Label("Poštanski broj"),
-							ClassLabel: common.ClassLabel + " w-36",
+							ID:         "komid",
+							LabelText:  translator.Label("Komercijalista"),
+							ClassLabel: common.ClassLabel + " w-40",
+						})
+						@components.ComboBoxField(domain.ComboFieldConfig{
+							ID:           "komid",
+							Name:         "komid",
+							Placeholder:  translator.Placeholder("izaberite komercijalistu"),
+							Disabled:     false,
+							ClassSelect:  common.ClassInputTextEnabled + " flex-1 min-w-0",
+							TabIndex:     "44",
+							OptionValues: header.CbxKomercijalista,
+						}, translator)
+					</div>
+					<!-- Vozač, Reg. br. -->
+					<div class="col-span-4 flex items-center gap-1 min-w-0">
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "vozac",
+							LabelText:  translator.Label("Vozač"),
+							ClassLabel: common.ClassLabel + " w-40",
 						})
 						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "postanskibroj",
-							Name:       "postanskibroj",
+							ID:         "vozac",
+							Name:       "vozac",
 							FieldType:  "text",
-							Value:      header.PostanskiBroj,
+							Value:      header.Vozac,
 							Disabled:   header.Snimljen,
-							ClassInput: robnoFaktureControlClass(!header.Snimljen, "!w-24"),
-							MaxLength:  "10",
+							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
+							MaxLength:  "40",
+							TabIndex:   "45"})
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "regbr",
+							LabelText:  translator.Label("Reg. br."),
+							ClassLabel: common.ClassLabel + " w-40",
+						})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "regbr",
+							Name:       "regbr",
+							FieldType:  "text",
+							Value:      header.RegBr,
+							Disabled:   header.Snimljen,
+							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
+							MaxLength:  "20",
+							TabIndex:   "46"})
+					</div>
+					<!-- Bruto težina, Neto težina -->
+					<div class="col-span-4 flex items-center gap-1 min-w-0">
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "brutotezina",
+							LabelText:  translator.Label("Bruto težina"),
+							ClassLabel: common.ClassLabel + " w-40",
+						})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "brutotezina",
+							Name:       "brutotezina",
+							FieldType:  "text",
+							Value:      robnoFaktureDecimal(header.BrutoTezina, 2),
+							Disabled:   header.Snimljen,
+							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0 text-right",
+							MaxLength:  "15",
+							TabIndex:   "47"})
+						@components.LabelField(domain.LabelFieldConfig{
+							ID:         "netotezina",
+							LabelText:  translator.Label("Neto težina"),
+							ClassLabel: common.ClassLabel + " w-40",
+						})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "netotezina",
+							Name:       "netotezina",
+							FieldType:  "text",
+							Value:      robnoFaktureDecimal(header.NetoTezina, 2),
+							Disabled:   header.Snimljen,
+							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0 text-right",
+							MaxLength:  "15",
 							TabIndex:   "48"})
 					</div>
-					<div class="flex items-center gap-1">
+					<!-- Broj kutija, Broj paleta -->
+					<div class="col-span-4 flex items-center gap-1 min-w-0">
 						@components.LabelField(domain.LabelFieldConfig{
-							ID:         "komercijalista",
-							LabelText:  translator.Label("Komercijalista"),
-							ClassLabel: common.ClassLabel + " w-32",
+							ID:         "brojkutija",
+							LabelText:  translator.Label("Broj kutija"),
+							ClassLabel: common.ClassLabel + " w-40",
 						})
 						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "komercijalista",
-							Name:       "komercijalista",
+							ID:         "brojkutija",
+							Name:       "brojkutija",
 							FieldType:  "text",
-							Value:      header.Komercijalista,
+							Value:      robnoFaktureInt(header.BrojKutija),
 							Disabled:   header.Snimljen,
-							ClassInput: robnoFaktureControlClass(!header.Snimljen, "flex-1 min-w-0"),
-							MaxLength:  "40",
+							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0 text-right",
+							MaxLength:  "6",
 							TabIndex:   "49"})
-					</div>
-					<div class="flex items-center gap-1">
 						@components.LabelField(domain.LabelFieldConfig{
-							ID:         "ifbroj",
-							LabelText:  translator.Label("IF broj"),
-							ClassLabel: common.ClassLabel + " w-24",
+							ID:         "brojpaleta",
+							LabelText:  translator.Label("Broj paleta"),
+							ClassLabel: common.ClassLabel + " w-40",
 						})
 						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "ifbroj",
-							Name:       "ifbroj",
+							ID:         "brojpaleta",
+							Name:       "brojpaleta",
 							FieldType:  "text",
-							Value:      header.IfBroj,
+							Value:      robnoFaktureInt(header.BrojPaleta),
 							Disabled:   header.Snimljen,
-							ClassInput: robnoFaktureControlClass(!header.Snimljen, "flex-1 min-w-0"),
-							MaxLength:  "10",
+							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0 text-right",
+							MaxLength:  "6",
 							TabIndex:   "50"})
 					</div>
-					<div class="flex items-center gap-1">
+					<!-- checkbox "Javna nabavka",  -->
+					<div class="col-span-4 flex items-center gap-1 min-w-0">
 						@components.CheckboxField(domain.CheckboxFieldConfig{
 							ID:                "javnanabavka",
 							Name:              "javnanabavka",
@@ -2372,28 +2687,24 @@ templ RobnoFaktureHeaderFields(ui domain.RobnoFaktureUI, header domain.RobnoFakt
 							IsChecked:         header.JavnaNabavka,
 							Disabled:          header.Snimljen,
 							TabIndex:          "51"}, translator)
-					</div>
-					<div class="flex items-center gap-1">
 						@components.LabelField(domain.LabelFieldConfig{
-							ID:         "bjkosnosilac",
-							LabelText:  translator.Label("BJKOS nosioca"),
-							ClassLabel: common.ClassLabel + " w-32",
+							ID:         "jbkjsnosilac",
+							LabelText:  translator.Label("JBKJS nosioca"),
+							ClassLabel: common.ClassLabel + " w-32 pl-2",
 						})
 						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "bjkosnosilac",
-							Name:       "bjkosnosilac",
+							ID:         "jbkjsnosilac",
+							Name:       "jbkjsnosilac",
 							FieldType:  "text",
-							Value:      header.BjkosNosilac,
+							Value:      header.JBKJNosioc,
 							Disabled:   header.Snimljen,
-							ClassInput: robnoFaktureControlClass(!header.Snimljen, "flex-1 min-w-0"),
+							ClassInput: common.ClassInputTextEnabled + " w-28",
 							MaxLength:  "20",
 							TabIndex:   "52"})
-					</div>
-					<div class="flex items-center gap-1">
 						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "brojtendera",
 							LabelText:  translator.Label("Broj tendera"),
-							ClassLabel: common.ClassLabel + " w-32",
+							ClassLabel: common.ClassLabel + " w-40",
 						})
 						@components.TextInputField(domain.InputFieldConfig{
 							ID:         "brojtendera",
@@ -2401,25 +2712,9 @@ templ RobnoFaktureHeaderFields(ui domain.RobnoFaktureUI, header domain.RobnoFakt
 							FieldType:  "text",
 							Value:      header.BrojTendera,
 							Disabled:   header.Snimljen,
-							ClassInput: robnoFaktureControlClass(!header.Snimljen, "flex-1 min-w-0"),
+							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
 							MaxLength:  "20",
 							TabIndex:   "53"})
-					</div>
-					<div class="flex items-center gap-1">
-						@components.LabelField(domain.LabelFieldConfig{
-							ID:         "kst",
-							LabelText:  translator.Label("KST"),
-							ClassLabel: common.ClassLabel + " w-12",
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "kst",
-							Name:       "kst",
-							FieldType:  "text",
-							Value:      header.Kst,
-							Disabled:   header.Snimljen,
-							ClassInput: robnoFaktureControlClass(!header.Snimljen, "!w-24"),
-							MaxLength:  "10",
-							TabIndex:   "54"})
 					</div>
 				</div>
 			</fieldset>
@@ -2428,16 +2723,19 @@ templ RobnoFaktureHeaderFields(ui domain.RobnoFaktureUI, header domain.RobnoFakt
 				<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Finansijsko stanje kupca") }</legend>
 				<div class="grid grid-cols-2 gap-x-4 gap-y-1">
 					<div class="flex flex-col">
-						@RobnoFaktureReadOnly("realizovana", translator.Label("Realizovana"), header.Realizovana, translator)
-						@RobnoFaktureReadOnly("planirana", translator.Label("Planirano"), header.Planirana, translator)
-						@RobnoFaktureReadOnly("reproknjizena", translator.Label("Reprogramirano"), header.Reproknjizena, translator)
-						@RobnoFaktureReadOnly("ukupno", translator.Label("Ukupno"), header.Ukupno, translator)
+						@RobnoFaktureReadOnly("ukrealiz", translator.Label("Realizovana"), robnoFaktureDecimal(header.UkRealiz, 2), translator)
+						@RobnoFaktureReadOnly("placeno", translator.Label("Plaćeno"), robnoFaktureDecimal(header.Placeno, 2), translator)
+						@RobnoFaktureReadOnly("saldopartnera", translator.Label("Saldo"), robnoFaktureDecimal(header.Saldo, 2), translator)
+						@RobnoFaktureReadOnly("dospelo", translator.Label("Dospelo"), robnoFaktureDecimal(header.Dospelo, 2), translator)
+						@RobnoFaktureReadOnly("nedospelo", translator.Label("Nedospelo"), robnoFaktureDecimal(header.Nedospelo, 2), translator)
 					</div>
 					<div class="flex flex-col">
-						@RobnoFaktureReadOnly("saldo", translator.Label("Saldo"), header.Saldo, translator)
-						@RobnoFaktureReadOnly("dospeo", translator.Label("Dospeo"), header.Dospeo, translator)
-						@RobnoFaktureReadOnly("repdospeo", translator.Label("Reprogramirano dospeo"), header.ReproDospeo, translator)
-						@RobnoFaktureReadOnly("saldodospeo", translator.Label("Saldo dospeo"), header.SaldoDospeo, translator)
+						@RobnoFaktureReadOnly("ukrealizrob", translator.Label("Realizovana roba"), robnoFaktureDecimal(header.UkRealizRob, 2), translator)
+						@RobnoFaktureReadOnly("dospelorob", translator.Label("Dospelo roba"), robnoFaktureDecimal(header.DospeloRob, 2), translator)
+						@RobnoFaktureReadOnly("nedospelorob", translator.Label("Nedospelo roba"), robnoFaktureDecimal(header.NedospeloRob, 2), translator)
+						@RobnoFaktureReadOnly("ukdospelo", translator.Label("Ukupno dospelo"), robnoFaktureDecimal(header.UkDospelo, 2), translator)
+						@RobnoFaktureReadOnly("uknedospelo", translator.Label("Ukupno nedospelo"), robnoFaktureDecimal(header.UkNedospelo, 2), translator)
+						@RobnoFaktureReadOnly("uksaldo", translator.Label("Ukupno saldo"), robnoFaktureDecimal(header.UkSaldo, 2), translator)
 					</div>
 				</div>
 			</fieldset>
@@ -2458,7 +2756,7 @@ templ RobnoFaktureHeaderFields(ui domain.RobnoFaktureUI, header domain.RobnoFakt
 // RobnoFaktureReadOnly renders one read only label + value row (the strips of the header and the
 // "Finansijsko stanje kupca" panel). The value is right aligned like the numeric cells of the grids.
 templ RobnoFaktureReadOnly(id, label, value string, translator *i18n.Service) {
-	<div class="flex items-center gap-1">
+	<div class="flex items-center gap-1 mb-1">
 		@components.LabelField(domain.LabelFieldConfig{ID: id, LabelText: label, ClassLabel: common.ClassLabel + " w-40"})
 		@components.TextInputField(domain.InputFieldConfig{
 			ID:         id,
@@ -2503,7 +2801,7 @@ templ RobnoFaktureReadOnlyStrip(fields []domain.RobnoFaktureStripField) {
 
 // RobnoFaktureStavkePanel renders the second collapsible control: the entry form of one stavka and the
 // grid of the stavke of the dokument. The control is closed and disabled until the header is saved.
-templ RobnoFaktureStavkePanel(ui domain.RobnoFaktureUI, tbl domain.TableData, header domain.RobnoFaktureHeader, stavka domain.RobnoFaktureStavka, btns domain.RobnoFaktureButtons, searchInput domain.InputControl, translator *i18n.Service) {
+templ RobnoFaktureStavkePanel(ui domain.RobnoFaktureUI, tbl domain.TableData, header domain.RobnoFaktureHeaderView, stavka domain.RobnoFaktureStavka, btns domain.RobnoFaktureButtons, searchInput domain.InputControl, translator *i18n.Service) {
 	@RobnoFakturePanel(ui.StavkePanelID, translator.Label("Stavke fakture"), robnoFaktureStavkeStateText(header.Snimljen, translator), header.Snimljen, header.Snimljen, RobnoFaktureStavkeFields(ui, tbl, stavka, searchInput, translator), RobnoFaktureStavkeButtons(btns))
 }
 
@@ -2886,7 +3184,7 @@ templ RobnoFaktureHeaderButtons(btns domain.RobnoFaktureButtons) {
 }
 
 // RobnoFaktureScript is the small script that keeps only one of the two controls editable. The server
-// renders the same state (domain.RobnoFaktureHeader.Snimljen and the Disabled flags of the fields), so the
+// renders the same state (domain.RobnoFaktureHeaderView.Snimljen and the Disabled flags of the fields), so the
 // screen works both after a save and after a reload of the tab.
 templ RobnoFaktureScript() {
 	<script>
@@ -2985,30 +3283,12 @@ func robnoFaktureState(enabled bool) string {
 	return "false"
 }
 
-// robnoFaktureFieldsClass returns the classes of the fields of a control: the disabled controls are
-// dimmed and do not accept the mouse (the classes robnoFaktureSetPanelEnabled toggles).
-func robnoFaktureFieldsClass(enabled bool) string {
-	if enabled {
-		return "flex flex-col gap-1"
-	}
-	return "flex flex-col gap-1 opacity-60 pointer-events-none"
-}
-
-// robnoFaktureControlClass returns the classes of one control of the screen: the editable controls use
-// the enabled classes of the module, the read only ones the disabled classes.
-func robnoFaktureControlClass(enabled bool, extra string) string {
-	if enabled {
-		return common.ClassInputTextEnabled + " " + extra
-	}
-	return common.ClassInputTextDisabled + " " + extra
-}
-
 // robnoFaktureNalogStripFields defines the fields of the strip of the nalog (the two row header both
 // legacy windows show above the form): the nalog, its totals and the magacin of the dokument. Every
 // field is one column of the strip: the label is the first line, the value the second one. The widths
 // are percentages of the strip, so the strip always fits the form; the magacin has no width, so it
 // takes the rest of the strip.
-func robnoFaktureNalogStripFields(header domain.RobnoFaktureHeader, translator *i18n.Service) []domain.RobnoFaktureStripField {
+func robnoFaktureNalogStripFields(header domain.RobnoFaktureHeaderView, translator *i18n.Service) []domain.RobnoFaktureStripField {
 	return []domain.RobnoFaktureStripField{
 		{ID: "vrnal", Label: translator.Label("Vr. nal."), Value: header.VrNal, WidthClass: "w-[5%]"},
 		{ID: "nalog", Label: translator.Label("Nalog"), Value: header.Nalog, WidthClass: "w-[7%]"},
@@ -3021,4 +3301,30 @@ func robnoFaktureNalogStripFields(header domain.RobnoFaktureHeader, translator *
 		// The magacin is the last field of the strip and takes the rest of its width.
 		{ID: "magacin", Label: translator.Label("Magacin"), Value: header.Magacin},
 	}
+}
+
+// robnoFaktureDate renders a date of the header of the faktura for the date input of the form (the ISO
+// layout of an <input type="date">, empty when the date is not set).
+func robnoFaktureDate(value time.Time) string {
+	if value.IsZero() {
+		return ""
+	}
+	return value.Format(common.HtmlLayout)
+}
+
+// robnoFaktureDecimal renders a decimal value of the header of the faktura the way the handler used to
+// format it (empty when the value is not set).
+func robnoFaktureDecimal(value float64, precision int) string {
+	if value == 0 {
+		return ""
+	}
+	return common.FormatNumberWithSystemLocale(value, precision)
+}
+
+// robnoFaktureInt renders a whole number of the header of the faktura (empty when it is not set).
+func robnoFaktureInt(value int) string {
+	if value == 0 {
+		return ""
+	}
+	return strconv.Itoa(value)
 }

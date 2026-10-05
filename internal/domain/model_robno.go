@@ -257,22 +257,14 @@ type Rnal struct {
 }
 
 // RobnoDokumentaDto is one row of the grids of the "Robna dokumenta" option: a robni nalog (rnal)
-// or a robni dokument (rdok) with the header of its nalog and the data of the document.
-//
-// One row type for every tab and sub-tab: the query of a tab selects only the columns it shows (and
-// for which its grid has a header) and the fields that are not selected keep their zero value, so
-// the same row type carries the nalog of the "Unos dokumenta" tab, the documents of the "Pregled
-// dokumenta" and "Kontiranje dokumenata" tabs, the eFaktura (SEF) status of a document and the
-// rows of the "Prikaz naloga", "Prikaz dokumenata u nalogu" and "Prikaz dokumenata po operateru"
-// tabs (the same row type is also the contract of the print of the tab).
 type RobnoDokumentaDto struct {
 	// Identifiers of the robni nalog (rnal) and of the robni dokument (rdok).
+	God    int64 `json:"god" db:"god"`
+	Kar    int64 `json:"kar" db:"kar"`
 	RnalID int64 `json:"rnalid" db:"rnalid"`
 	RdokID int64 `json:"rdokid" db:"rdokid"`
 
 	// Header of the nalog and of the document: the vrsta naloga (rnal.tipdok / rdok.tipdok), the
-	// broj naloga, the magacin, the datum naloga, the opis of the nalog, the datum obrade and the
-	// operater that entered the document.
 	Tipdok     string        `json:"tipdok" db:"tipdok"`
 	Nalog      int           `json:"nalog" db:"nalog"`
 	MagaciniID sql.NullInt64 `json:"magaciniid" db:"magaciniid"`
@@ -283,8 +275,6 @@ type RobnoDokumentaDto struct {
 	Oper       string        `json:"oper" db:"oper"`
 
 	// Document: the vrsta dokumenta (rdok.vrd), the broj dokumenta, its date and the date of its
-	// dospeće, the date and the broj of the izvorni dokument, the POPDV polje, the rok plaćanja (in
-	// days) and the flag of the posting (rdok.knjige_1: 'D' = proknjižen).
 	Vrd     sql.NullInt64 `json:"vrd" db:"vrd"`
 	Dokum   sql.NullInt64 `json:"dokum" db:"dokum"`
 	Dadok   sql.NullTime  `json:"dadok" db:"dadok"`
@@ -301,6 +291,11 @@ type RobnoDokumentaDto struct {
 	Dug   float64 `json:"dug" db:"dug"`
 	Pot   float64 `json:"pot" db:"pot"`
 	Iznos float64 `json:"iznos" db:"iznos"`
+
+	// Tab 3 - "Specifikacije dokumenta": the rows of the tab are the stavke (rpro) of the robni
+	Rabat float64 `json:"rabat" db:"rabat"`
+	Porez float64 `json:"porez" db:"porez"`
+	Stopa float64 `json:"stopa" db:"stopa"`
 
 	// Partner of the document (fkpl/partneri) and the broj avansnog računa it was created from.
 	Fkto        string        `json:"fkto" db:"fkto"`
@@ -328,33 +323,27 @@ type RobnoDokumentaDto struct {
 
 // RobnoDokumentaTotalsDto is the aggregate row behind the "Prikaz ukupne obrade" panel.
 type RobnoDokumentaTotalsDto struct {
-	UkNaloga     int     `json:"uknaloga" db:"uknaloga"`
-	UkDokumenata int     `json:"ukdokumenata" db:"ukdokumenata"`
-	UkStavki     int     `json:"ukstavki" db:"ukstavki"`
+	UkNaloga     int64   `json:"uknaloga" db:"uknaloga"`
+	UkDokumenata int64   `json:"ukdokumenata" db:"ukdokumenata"`
+	UkStavki     int64   `json:"ukstavki" db:"ukstavki"`
 	UkDuguje     float64 `json:"ukduguje" db:"ukduguje"`
 	UkPotrazuje  float64 `json:"ukpotrazuje" db:"ukpotrazuje"`
+	Duguje       float64 `json:"duguje" db:"duguje"`
+	Potrazuje    float64 `json:"potrazuje" db:"potrazuje"`
+	Saldo        float64 `json:"saldo" db:"saldo"`
 }
-
-// RobnoDokumentaTotal is the "Prikaz ukupne obrade" of the "Robna dokumenta" option.
 type RobnoDokumentaTotal struct {
 	UkNaloga     string
 	UkDokumenata string
 	UkStavki     string
+	UkDuguje     string
+	UkPotrazuje  string
 	Duguje       string
 	Potrazuje    string
 	Saldo        string
 }
 
 // RobnoDokumentaParams is the single parameter structure of the "Robna dokumenta" option: it holds
-// the parameters of every tab and sub-tab of the option, both the ones of the panel of the tab and
-// the search text of its grid.
-//
-// The tabs read from it only the fields of their own panel (the others keep their zero value), so
-// one structure covers the header of the "Unos dokumenta" tab, the filters of the "Pregled
-// dokumenta", "Kontiranje dokumenata" and "Prikaz naloga" tabs (and of their sub-tabs, and of the
-// "Prikaz dokumenata u nalogu" and "Prikaz dokumenata po operateru" tabs, which share the selection
-// of the nalozi of "Prikaz naloga"). The same structure is the contract of the print (štampa)
-// endpoints of the option: every print of a tab receives the whole selection of the tab.
 type RobnoDokumentaParams struct {
 	// Tab 1 - Unos dokumenta: the header of the robni nalog (vrsta naloga, vrsta dokumenta, broj
 	// naloga, datum naloga, datum obrade, opis knjiženja and magacin) and the filters of its grid.
@@ -367,44 +356,27 @@ type RobnoDokumentaParams struct {
 	MagaciniID int    `json:"magaciniid" form:"magaciniid"`
 
 	// Tab 2 - Pregled dokumenta: GrupeDokumenata is the comma separated list of the document groups
-	// (dokvrsta.grpdok) of the eFaktura sub-tab and DatumStatusa the date of its "Ažuriranje statusa
-	// eFaktura" action.
 	GrupeDokumenata string `json:"grupedokumenata" form:"grupedokumenata"`
 	DatumStatusa    string `json:"datumstatusa" form:"datumstatusa"`
 
 	// OdDanal/DoDanal is the range of the dates: the "Od/Do datuma naloga" of the Štampa sub-tab of
-	// "Pregled dokumenta" (rnal.danal), the "Od/Do datuma" of its eFaktura sub-tab (rdok.dadok, the
-	// date of the document), the "Od/Do dat. naloga" of "Kontiranje dokumenata" and the "Po datumu
-	// naloga" filter of the tabs "Prikaz naloga", "Prikaz dokumenata u nalogu" and "Prikaz
-	// dokumenata po operateru".
 	OdDanal string `json:"oddanal" form:"oddanal"`
 	DoDanal string `json:"dodanal" form:"dodanal"`
 
 	// Tab 4 - Kontiranje dokumenata: the ranges of the broj naloga (OdNaloga/DoNaloga) and of the
-	// broj dokumenta (OdDokum/DoDokum) of the selection of the documentation. The tabs "Prikaz
-	// naloga", "Prikaz dokumenata u nalogu" and "Prikaz dokumenata po operateru" use OD/DO NALOGA
-	// for the range of the broj naloga of the robni nalozi (rnal.nalog).
 	OdNaloga string `json:"odnaloga" form:"odnaloga"`
 	DoNaloga string `json:"donaloga" form:"donaloga"`
 	OdDokum  string `json:"oddokum" form:"oddokum"`
 	DoDokum  string `json:"dodokum" form:"dodokum"`
 	// Proknjizen is the state selected with the radio buttons of the last two sub-tabs of
-	// "Kontiranje dokumenata" (rdok.knjige_1 = 'D' proknjižen, anything else neproknjižen) and
-	// OznaciNeproknjizenim the checkbox "Označi prikazana dokumenta kao neproknjižena..." of the
-	// second sub-tab.
 	Proknjizen           string `json:"proknjizen" form:"proknjizen"`
 	OznaciNeproknjizenim bool   `json:"oznacineproknjizenim" form:"oznacineproknjizenim"`
 
 	// Tabs 7 and 8 - Prikaz naloga and Prikaz dokumenata u nalogu: OdVrd/DoVrd is the range of the
-	// vrste naloga (rnal.tipdok / rdok.tipdok).
 	OdVrd string `json:"odvrd" form:"odvrd"`
 	DoVrd string `json:"dovrd" form:"dovrd"`
 
 	// Tabs 7, 8 and 9 - the optional filters: every filter is applied only when its checkbox is
-	// checked (its fields are disabled until then, like the legacy screens).
-	//
-	// Po datumu naloga (rnal.danal / rdok.danal), po datumu obrade (rnal.datob / rdok.datob) and po
-	// operateru (rnal.oper / rdok.oper).
 	ChkDatumNaloga bool   `json:"chkpodatumunaloga" form:"chkpodatumunaloga"`
 	ChkDatumObrade bool   `json:"chkpodatumuobrade" form:"chkpodatumuobrade"`
 	OdDatob        string `json:"oddatob" form:"oddatob"`
@@ -412,13 +384,15 @@ type RobnoDokumentaParams struct {
 	ChkOperator    bool   `json:"chkpooperateru" form:"chkpooperateru"`
 	Oper           string `json:"oper" form:"oper"`
 
+	// Tab 3 - Specifikacije dokumenta: the state of the print (the "Štampaj samo zbir" checkbox and
+	StampajSamoZbir  bool   `json:"stampajsamozbir" form:"stampajsamozbir"`
+	TipSpecifikacije string `json:"tipspecifikacije" form:"tipspecifikacije"`
+
 	// SearchText is the text of the search box of the grid of the active tab.
 	SearchText string `json:"searchText" form:"query"`
 }
 
-// PrikazUkupneObradeDto is one row of the grid of the "Prikaz ukupne obrade" tab: the totals of the
-// robni nalozi (rnal) of one magacin of the current period. Every magacin of the period is shown,
-// also the ones without a nalog (their totals are 0), like the legacy screen lists them.
+// PrikazUkupneObradeDto is one row of the grid of the "Prikaz ukupne obrade" tab: one magacin of the
 type PrikazUkupneObradeDto struct {
 	Mag          int     `db:"mag"`
 	Opis         string  `db:"opis"`
@@ -867,6 +841,31 @@ type RobnoPrometParams struct {
 	DoGrupe        string
 	OdDatuma       string
 	DoDatuma       string
+
+	// Tab 4 - Lager lista ulaz/izlaz RUC (sub-tab "Lager lista"): the price of the lager (TipCene:
+	// "netofakturna", "prosecnanabavna" or "prodajna"), the date of the stanje (yyyy-mm-dd), the range
+	// of the podgrupe and the options of the list: only the articles with a stanje <> 0, in the
+	// azbučni red of their naziv, or by grupa and podgrupa.
+	TipCene              string
+	StanjeNaDan          string
+	OdPodgrupe           string
+	DoPodgrupe           string
+	ZaliheOdNule         bool
+	AzbucniRed           bool
+	StampajGrupaPodgrupa bool
+
+	// Tab 4 - sub-tab "Ulaz/izlaz za period": the promet of the period (UlazIzlaz: "ulaz", "izlaz" or
+	// "ulazizlaz") and the sum of the selected magacini (one row per article instead of one row per
+	// magacin and article). The period is OdDatuma - DoDatuma.
+	UlazIzlaz    string
+	ZbirMagacina bool
+
+	// Tab 4 - sub-tab "RUC po magacinima": print only the total of every magacin (the checkbox "Štampaj
+	// samo zbir po magacinima"). The period is OdDatuma - DoDatuma.
+	StampajSamoZbir bool
+
+	// Tab 4 - sub-tab "Izlazne fakture": include the stavke of the usluge (rsif.tip 'U').
+	UkljuceneUsluge bool
 }
 
 // RobnoPrometDto is the single row type of the reports of the "Robno promet" option. Every report
@@ -882,6 +881,26 @@ type RobnoPrometParams struct {
 // collide. Konto, Naziv and JM are shared on purpose: in the article report they hold the konto and
 // the naziv/jm of the ARTICLE (rpro.konto, rsif.naziv, rsif.jm), in the two partner reports the
 // ones of the PARTNER (rdok.fkto/fana -> fkpl -> partneri).
+// The ClassRow of the rows of the lager list printed by grupe and podgrupe: the header of a magacin, of
+// a robna grupa and of a robna podgrupa (Fields: the number and the naziv) and their totals (Fields:
+// the number, the naziv, the stanje and the vrednost).
+const (
+	RobnoPrometLagerMagacin        = "lager-magacin"
+	RobnoPrometLagerGrupa          = "lager-grupa"
+	RobnoPrometLagerPodgrupa       = "lager-podgrupa"
+	RobnoPrometLagerMagacinUkupno  = "lager-magacin-total"
+	RobnoPrometLagerGrupaUkupno    = "lager-grupa-total"
+	RobnoPrometLagerPodgrupaUkupno = "lager-podgrupa-total"
+)
+
+// The ClassRow of the rows of the print of the "RUC po magacinima" added by the service: the header of a
+// magacin (Fields: the magacin and its naziv) and its total (Fields: the magacin and its naziv in the
+// first two columns, then the totals in their columns).
+const (
+	RobnoPrometRucMagacin       = "ruc-magacin"
+	RobnoPrometRucMagacinUkupno = "ruc-magacin-total"
+)
+
 type RobnoPrometDto struct {
 	// Shared: the konto and the naziv/jm of the article (tab 1) or of the partner (tabs 2 and 3).
 	Konto string `json:"konto" db:"konto"`
@@ -924,6 +943,66 @@ type RobnoPrometDto struct {
 	Vpiznos float64 `json:"vpiznos" db:"vpiznos"`
 	Nciznos float64 `json:"nciznos" db:"nciznos"`
 	Razlika float64 `json:"razlika" db:"razlika"`
+
+	// Tab 4 - Lager lista: one stavka of the promet of an article (the legacy ROB_QRY_LAGER: the magacin,
+	// the vrsta and the kodknj of its document, the količina and the prices of the stavka) or one stanje
+	// of an article in a magacin (rsta: Ulaz, Izlaz and Cena), with the podgrupa and the serijski broj of
+	// the article (SifraArt, Naziv, JM and Gru are the ones of tab 1).
+	Mag        int     `json:"mag" db:"mag"`
+	MagaciniID int     `json:"magaciniid" db:"magaciniid"`
+	Pgru       int     `json:"pgru" db:"pgru"`
+	Serbr      string  `json:"serbr" db:"serbr"`
+	Kodknj     string  `json:"kodknj" db:"kodknj"`
+	Vrd        int     `json:"vrd" db:"vrd"`
+	Kolic      float64 `json:"kolic" db:"kolic"`
+	Fcena      float64 `json:"fcena" db:"fcena"`
+	Ncena      float64 `json:"ncena" db:"ncena"`
+	Cena       float64 `json:"cena" db:"cena"`
+	// The names of the magacin, of the robna grupa and of the robna podgrupa of the article (the
+	// headers and the totals of the lager list printed by grupe and podgrupe).
+	MagNaziv  string `json:"magnaziv" db:"magnaziv"`
+	GruNaziv  string `json:"grunaziv" db:"grunaziv"`
+	PgruNaziv string `json:"pgrunaziv" db:"pgrunaziv"`
+
+	// Tab 4, sub-tab "Ulaz/izlaz za period": the quantities and the fakturna, rabat and magacinska
+	// values before the period (do), in the period (Ulaz, Izlaz, Fakvrednost, Rabat, Magvrednost) and up
+	// to the end of the period (nadan), the stanje of the article (rsta) and the data of its producer.
+	Koldodat         float64 `json:"koldodat" db:"koldodat"`
+	Kolnadan         float64 `json:"kolnadan" db:"kolnadan"`
+	Stanje           float64 `json:"stanje" db:"stanje"`
+	Fakvreddo        float64 `json:"fakvreddo" db:"fakvreddo"`
+	Rabatdo          float64 `json:"rabatdo" db:"rabatdo"`
+	Magvreddo        float64 `json:"magvreddo" db:"magvreddo"`
+	Fakvrednost      float64 `json:"fakvrednost" db:"fakvrednost"`
+	Magvrednost      float64 `json:"magvrednost" db:"magvrednost"`
+	Fakvrednostnadan float64 `json:"fakvrednostnadan" db:"fakvrednostnadan"`
+	Rabatnadan       float64 `json:"rabatnadan" db:"rabatnadan"`
+	Magvrednostnadan float64 `json:"magvrednostnadan" db:"magvrednostnadan"`
+	Pro              string  `json:"pro" db:"pro"`
+	Proizsifra       string  `json:"proizsifra" db:"proizsifra"`
+	Komercopis       string  `json:"komercopis" db:"komercopis"`
+
+	// Tab 4, sub-tab "RUC po magacinima": one stavka of a faktura with the rabat of the stavka, the id
+	// of the article and the way the magacin keeps its stock (magacini.nacvodzal: 3 = the RUC is the
+	// fakturna cena less the cena, otherwise the cena less the nabavna cena).
+	Rab       float64 `json:"rab" db:"rab"`
+	RsifID    int     `json:"rsifid" db:"rsifid"`
+	Nacvodzal int     `json:"nacvodzal" db:"nacvodzal"`
+
+	// Tab 4, sub-tab "Izlazne fakture": the document of the stavka (rdokid, tipdok-nalog, datum naloga,
+	// broj, izvorni dokument, datum dokumenta and rok), its kupac (fkto, fana) and its komercijalista
+	// (rdok.kom and the ime i prezime).
+	RdokID int64        `json:"rdokid" db:"rdokid"`
+	Brnal  string       `json:"brnal" db:"brnal"`
+	Danal  sql.NullTime `json:"danal" db:"danal"`
+	Dokum  string       `json:"dokum" db:"dokum"`
+	Dokiz  string       `json:"dokiz" db:"dokiz"`
+	Dadok  sql.NullTime `json:"dadok" db:"dadok"`
+	Rok    int          `json:"rok" db:"rok"`
+	Fkto   string       `json:"fkto" db:"fkto"`
+	Fana   string       `json:"fana" db:"fana"`
+	Kom    int          `json:"kom" db:"kom"`
+	Komerc string       `json:"komerc" db:"komerc"`
 }
 
 type KrajPopisType1Row struct {

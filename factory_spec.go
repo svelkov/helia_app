@@ -824,15 +824,13 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 	robnoDokumentaRepo := repository.NewBaseRepository[domain.RobnoDokumentaDto](db, "rnal")
 	robnoDokumentaTotalsRepo := repository.NewBaseRepository[domain.RobnoDokumentaTotalsDto](db, "rnal")
 	robnoDokumentaHeaderRepo := repository.NewBaseRepository[domain.Rnal](db, "rnal")
-	robnoDokumentaPregledStampaRepo := repository.NewBaseRepository[domain.RobnoDokumentaDto](db, "rnal")
-	robnoDokumentaPregledEFakturaRepo := repository.NewBaseRepository[domain.RobnoDokumentaDto](db, "rnal")
-	robnoDokumentaKontiranjeRepo := repository.NewBaseRepository[domain.RobnoDokumentaDto](db, "rdok")
 	robnoDokumentaPrikazUkupneObradeRepo := repository.NewBaseRepository[domain.PrikazUkupneObradeDto](db, "magacini")
-	robnoDokumentaPrikazNalogaRepo := repository.NewBaseRepository[domain.RobnoDokumentaDto](db, "rnal")
-	robnoDokumentaPrikazDokumenataUNaloguRepo := repository.NewBaseRepository[domain.RobnoDokumentaDto](db, "rdok")
-	robnoDokumentaPrikazDokumenataPooperateruRepo := repository.NewBaseRepository[domain.RobnoDokumentaDto](db, "rdok")
 	dokvrstaRepo := repository.NewBaseRepository[domain.Dokvrsta](db, "dokvrsta")
-	robnoDokumentaService := robnosvc.NewRobnoDokumentaService(*robnoDokumentaRepo, *robnoDokumentaTotalsRepo, *robnoDokumentaHeaderRepo, *robnoDokumentaPregledStampaRepo, *robnoDokumentaPregledEFakturaRepo, *robnoDokumentaKontiranjeRepo, *robnoDokumentaPrikazUkupneObradeRepo, *robnoDokumentaPrikazNalogaRepo, *robnoDokumentaPrikazDokumenataUNaloguRepo, *robnoDokumentaPrikazDokumenataPooperateruRepo, *tipdokRepo, *dokvrstaRepo, *magaciniRepo, *fvrRepo, commonService)
+	robnoDokumentaService := robnosvc.NewRobnoDokumentaService(*robnoDokumentaRepo, *robnoDokumentaTotalsRepo, *robnoDokumentaHeaderRepo, *robnoDokumentaPrikazUkupneObradeRepo, *tipdokRepo, *dokvrstaRepo, *magaciniRepo, *fvrRepo, commonService,
+		*repository.NewBaseRepository[domain.RobnoStampaFakturaRowDto](db, "rpro"),
+		*repository.NewBaseRepository[domain.RobnoStampaFakturaAvansDto](db, "rpro"),
+		*repository.NewBaseRepository[domain.RobnoStampaFakturaRataDto](db, "faktrate"),
+		*repository.NewBaseRepository[domain.RobnoStampaFakturaFirmaDto](db, "fvr"))
 	robnoDokumentaHandler := robnohand.NewRobnoDokumentaHandler(robnoDokumentaService, cfg, lm, ls, translator)
 	robnoDokumentaHandler.AddRoutes(r)
 

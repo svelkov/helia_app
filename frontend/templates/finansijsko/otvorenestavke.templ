@@ -12,7 +12,7 @@ import (
 // Main entry point for Otvorene stavke module
 templ OtvoreneStavkeMain(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObrada, btnPrint, btnOpomene domain.Button, searchInput, searchInputDetalji domain.InputControl, translator *i18n.Service, gnGod int) {
 	<!-- Tab Content -->
-	<div id="tab-content" class="bg-blue-100 p-1 flex flex-col h-full">
+	<div id="tab-content" class="bg-blue-100 flex flex-col h-full">
 		@OtvoreneStavke(tabs, tblPartneri, tblDetalji, btnObrada, btnPrint, btnOpomene, searchInput, searchInputDetalji, translator, gnGod)
 	</div>
 	@tmpl.ShowSearchDialogScript()
@@ -21,7 +21,6 @@ templ OtvoreneStavkeMain(tabs domain.TabData, tblPartneri, tblDetalji domain.Tab
 	@tmpl.HandleDblClickKontoSelectionScript()
 	@components.SpinnerScript()
 	@tmpl.OpenPrintWithParamsScript()
-	¨
 	@tmpl.HandleBackendResponseScript()
 }
 
@@ -225,12 +224,12 @@ templ OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDa
 				</div>
 			</div>
 		</div>
+		<!-- Dialog display container-->
+		<div id="dialog-content"></div>
+		<input type="hidden" id="otvorene-selected-id" name="otvorene-selected-id" value=""/>
+		<input type="hidden" id="stampaotvstavke" name="stampaotvstavke" value="otvstavke"/>
+		<input type="hidden" id="stampaopomena" name="stampaopomena" value="opomena"/>
 	</div>
-	<!-- Dialog display container-->
-	<div id="dialog-content"></div>
-	<input type="hidden" id="otvorene-selected-id" name="otvorene-selected-id" value=""/>
-	<input type="hidden" id="stampaotvstavke" name="stampaotvstavke" value="otvstavke"/>
-	<input type="hidden" id="stampaopomena" name="stampaopomena" value="opomena"/>
 	<script>
 			// Capture selected row ID from hx-get attribute when a partneri row is clicked
 		if (!window.otvoreneStavkeRowIdListener) {
@@ -272,7 +271,7 @@ templ OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDa
 // Tab 2 - Zatvorene stavke (Closed Items)
 templ ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObrada, btnStampa domain.Button, searchInput, searchInputDetalji domain.InputControl, translator *i18n.Service, gnGod int) {
 	<!-- Container with full height -->
-	<div class="flex flex-col h-full">
+	<div class="bg-blue-100 p-1 flex flex-col h-full">
 		<!-- Tab Navigation -->
 		<div class="border-b border-blue-600">
 			@tmpl.TabNav(translator.Title("Otvorene stavke, dugovanja, potraživanja"), tabs, "#tab-content", "otvorene-stavke-panel", translator)
@@ -467,11 +466,11 @@ templ ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableD
 				</div>
 			</div>
 		</div>
+		<!-- Dialog display container-->
+		<div id="dialog-content"></div>
+		<!-- Hidden input: holds the ID of the currently selected partneri row for use by the print button -->
+		<input type="hidden" id="zatvorene-selected-id" name="zatvorene-selected-id" value=""/>
 	</div>
-	<!-- Dialog display container-->
-	<div id="dialog-content"></div>
-	<!-- Hidden input: holds the ID of the currently selected partneri row for use by the print button -->
-	<input type="hidden" id="zatvorene-selected-id" name="zatvorene-selected-id" value=""/>
 	<script>
 		// Capture selected row ID from hx-get attribute when a partneri row is clicked
 		if (!window.zatvoreneStavkeRowIdListener) {
@@ -517,7 +516,7 @@ templ ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableD
 // Tab 3 - IOS (Izvod otvorenih stavki - Statement of Open Items)
 templ IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObrada, btnIOS domain.Button, searchInput, searchInputDetalji domain.InputControl, translator *i18n.Service, gnGod int) {
 	<!-- Container with full height -->
-	<div class="flex flex-col h-full">
+	<div class="bg-blue-100 p-1 flex flex-col h-full">
 		<!-- Tab Navigation -->
 		<div class="border-b border-blue-600">
 			@tmpl.TabNav(translator.Title("Otvorene stavke, dugovanja, potraživanja"), tabs, "#tab-content", "otvorene-stavke-panel", translator)
@@ -713,11 +712,11 @@ templ IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObra
 				</div>
 			</div>
 		</div>
+		<!-- Dialog display container-->
+		<div id="dialog-content"></div>
+		<!-- Hidden input: holds the ID of the currently selected IOS partneri row for use by the print button -->
+		<input type="hidden" id="ios-selected-id" name="ios-selected-id" value=""/>
 	</div>
-	<!-- Dialog display container-->
-	<div id="dialog-content"></div>
-	<!-- Hidden input: holds the ID of the currently selected IOS partneri row for use by the print button -->
-	<input type="hidden" id="ios-selected-id" name="ios-selected-id" value=""/>
 	<script>
 		// Capture selected row ID from hx-get attribute when a partneri row is clicked
 		if (!window.iosRowIdListener) {
@@ -762,7 +761,7 @@ templ IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObra
 // Tab 4 - Dospela potraživanja/dugovanja (Due Receivables/Payables)
 templ DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObrada, btnPrint domain.Button, searchInput, searchInputDetalji domain.InputControl, translator *i18n.Service, gnGod int) {
 	<!-- Container with full height -->
-	<div class="flex flex-col h-full">
+	<div class="bg-blue-100 p-1 flex flex-col h-full">
 		<!-- Tab Navigation -->
 		<div class="border-b border-blue-600">
 			@tmpl.TabNav(translator.Title("Otvorene stavke, dugovanja, potraživanja"), tabs, "#tab-content", "dospela-potrazivanja-panel", translator)
@@ -979,9 +978,9 @@ templ DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Ta
 				</div>
 			</div>
 		</div>
+		<!-- Dialog display container-->
+		<div id="dialog-content"></div>
 	</div>
-	<!-- Dialog display container-->
-	<div id="dialog-content"></div>
 	@tmpl.HandleDialogResponseScript()
 	@tmpl.ClearFieldErrorScript()
 	@components.SpinnerScript()
@@ -1016,7 +1015,7 @@ templ DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Ta
 // Tab 5 - Pregled Dugovanja/Obaveze po starosti (Overview of Payables by Age)
 templ PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service, gnGod int) {
 	<!-- Container with full height -->
-	<div class="flex flex-col h-full">
+	<div class="bg-blue-100 p-1 flex flex-col h-full">
 		<!-- Tab Navigation -->
 		<div class="border-b border-blue-600">
 			@tmpl.TabNav(translator.Title("Otvorene stavke, dugovanja, potraživanja"), tabs, "#tab-content", "pregled-dugovanja-panel", translator)
@@ -1246,11 +1245,9 @@ templ PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnO
 				</div>
 			</div>
 		</div>
+		<!-- Dialog display container-->
+		<div id="dialog-content"></div>
 	</div>
-	<!-- Dialog display container-->
-	<div id="dialog-content"></div>
-	<!-- Dialog display container-->
-	<div id="dialog-content"></div>
 	@tmpl.HandleDialogResponseScript()
 	@tmpl.ClearFieldErrorScript()
 	@components.SpinnerScript()
@@ -1285,7 +1282,7 @@ templ PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnO
 // Tab 6 - Pregled dospelog duga po starosti (Overview of Due Debt by Age)
 templ PregledDospelogDugaPoStarosti(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPrint domain.Button, searchInput domain.InputControl, translator *i18n.Service, gnGod int) {
 	<!-- Container with full height -->
-	<div class="flex flex-col h-full">
+	<div class="bg-blue-100 p-1 flex flex-col h-full">
 		<!-- Tab Navigation -->
 		<div class="border-b border-blue-600">
 			@tmpl.TabNav(translator.Title("Otvorene stavke, dugovanja, potraživanja"), tabs, "#tab-content", "pregled-dospelog-duga-po-starosti-panel", translator)
@@ -1504,9 +1501,9 @@ templ PregledDospelogDugaPoStarosti(tabs domain.TabData, tbl domain.TableData, b
 				</div>
 			</div>
 		</div>
+		<!-- Dialog display container-->
+		<div id="dialog-content"></div>
 	</div>
-	<!-- Dialog display container-->
-	<div id="dialog-content"></div>
 	@tmpl.HandleDialogResponseScript()
 	@tmpl.ClearFieldErrorScript()
 	@components.SpinnerScript()
@@ -1515,7 +1512,7 @@ templ PregledDospelogDugaPoStarosti(tabs domain.TabData, tbl domain.TableData, b
 // Tab 7 - Povezivanje računa i uplata (Account and Payment Linking)
 templ PovezivanjeRacunaUplata(tabs domain.TabData, tblPartneri, tblUplate, tblFakture domain.TableData, btnObrada, btnZatvaranje, btnNazad domain.Button, searchPartneri domain.InputControl, translator *i18n.Service, gnGod int) {
 	<!-- Container with full height -->
-	<div class="flex flex-col h-full">
+	<div class="bg-blue-100 p-1 flex flex-col h-full">
 		<!-- Tab Navigation -->
 		<div class="border-b border-blue-600">
 			@tmpl.TabNav(translator.Title("Otvorene stavke, dugovanja, potraživanja"), tabs, "#tab-content", "otvorene-stavke-panel", translator)
@@ -1733,12 +1730,12 @@ templ PovezivanjeRacunaUplata(tabs domain.TabData, tblPartneri, tblUplate, tblFa
 				</div>
 			</div>
 		</div>
+		<!-- Dialog display container -->
+		<div id="pov-dialog-content"></div>
+		<div id="search-dropdown"></div>
 	</div>
-	<!-- Dialog display container -->
-	<div id="pov-dialog-content"></div>
 	@tmpl.ClearFieldErrorScript()
 	@components.SpinnerScript()
-	<div id="search-dropdown"></div>
 	@tmpl.ShowSearchDialogScript()
 	@tmpl.HideDropdownScript()
 	@tmpl.HandleDblClickKontoSelectionScript()

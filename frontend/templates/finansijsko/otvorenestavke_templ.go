@@ -39,7 +39,7 @@ func OtvoreneStavkeMain(tabs domain.TabData, tblPartneri, tblDetalji domain.Tabl
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!-- Tab Content --><div id=\"tab-content\" class=\"bg-blue-100 p-1 flex flex-col h-full\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!-- Tab Content --><div id=\"tab-content\" class=\"bg-blue-100 flex flex-col h-full\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -75,10 +75,6 @@ func OtvoreneStavkeMain(tabs domain.TabData, tblPartneri, tblDetalji domain.Tabl
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "¨")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
 		templ_7745c5c3_Err = tmpl.HandleBackendResponseScript().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -109,7 +105,7 @@ func OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDat
 			templ_7745c5c3_Var2 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<!-- Container with full height --><div class=\"bg-blue-100 p-1 flex flex-col h-full\"><!-- Tab Navigation --><div class=\"border-b border-blue-600\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<!-- Container with full height --><div class=\"bg-blue-100 p-1 flex flex-col h-full\"><!-- Tab Navigation --><div class=\"border-b border-blue-600\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -117,7 +113,7 @@ func OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDat
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</div><!-- Tab 1 Content --><div id=\"tab1\" class=\"flex-1 min-h-0 flex flex-col gap-1\"><!-- Parameters Section - Two Columns --><div class=\"grid grid-cols-2 gap-1\"><!-- Left Column - Konto and Sifre --><div class=\"border bg-blue-100 border border-blue-400 mt-1 p-1 rounded-lg flex flex-col\"><!-- Konto Field --><div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</div><!-- Tab 1 Content --><div id=\"tab1\" class=\"flex-1 min-h-0 flex flex-col gap-1\"><!-- Parameters Section - Two Columns --><div class=\"grid grid-cols-2 gap-1\"><!-- Left Column - Konto and Sifre --><div class=\"border bg-blue-100 border border-blue-400 mt-1 p-1 rounded-lg flex flex-col\"><!-- Konto Field --><div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -169,7 +165,7 @@ func OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDat
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</div><!-- Od Šifre --><div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</div><!-- Od Šifre --><div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -222,7 +218,7 @@ func OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDat
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</div><!-- Do Šifre --><div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</div><!-- Do Šifre --><div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -275,7 +271,7 @@ func OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDat
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</div></div><!-- Right Column - Date and Days --><div class=\"border bg-blue-100 border border-blue-400 mt-1 p-1 rounded-lg flex flex-col\"><!-- Pod datumom --><div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</div></div><!-- Right Column - Date and Days --><div class=\"border bg-blue-100 border border-blue-400 mt-1 p-1 rounded-lg flex flex-col\"><!-- Pod datumom --><div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -301,7 +297,7 @@ func OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDat
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</div><!-- Otv. stavke preko broja dana --><div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</div><!-- Otv. stavke preko broja dana --><div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -328,7 +324,7 @@ func OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDat
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</div><!-- Buttons --><div class=\"flex justify-end gap-1 mt-auto\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</div><!-- Buttons --><div class=\"flex justify-end gap-1 mt-auto\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -344,7 +340,7 @@ func OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDat
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</div></div></div><!-- Group Data Table --><div class=\"border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</div></div></div><!-- Group Data Table --><div class=\"border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -356,7 +352,7 @@ func OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDat
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<!-- Table --><div id=\"otvorenestavketable\" class=\"flex-1 overflow-x-auto overflow-y-auto min-h-0\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<!-- Table --><div id=\"otvorenestavketable\" class=\"flex-1 overflow-x-auto overflow-y-auto min-h-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -364,7 +360,7 @@ func OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDat
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</div></div><div class=\"border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</div></div><div class=\"border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -372,7 +368,7 @@ func OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDat
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<!-- Table --><div id=\"otvorenestavketabledetalji\" class=\"flex-1 overflow-x-auto overflow-y-auto min-h-0\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "<!-- Table --><div id=\"otvorenestavketabledetalji\" class=\"flex-1 overflow-x-auto overflow-y-auto min-h-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -380,7 +376,7 @@ func OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDat
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</div></div></div></div><!-- Dialog display container--><div id=\"dialog-content\"></div><input type=\"hidden\" id=\"otvorene-selected-id\" name=\"otvorene-selected-id\" value=\"\"> <input type=\"hidden\" id=\"stampaotvstavke\" name=\"stampaotvstavke\" value=\"otvstavke\"> <input type=\"hidden\" id=\"stampaopomena\" name=\"stampaopomena\" value=\"opomena\"><script>\r\n\t\t\t// Capture selected row ID from hx-get attribute when a partneri row is clicked\r\n\t\tif (!window.otvoreneStavkeRowIdListener) {\r\n\t\t\twindow.otvoreneStavkeRowIdListener = true;\r\n\t\t\tdocument.addEventListener('htmx:beforeRequest', function(evt) {\r\n\t\t\t\tconst el = evt.detail.elt;\r\n\t\t\t\tif (el.tagName === 'TR' && el.closest('#otvorenestavketable')) {\r\n\t\t\t\t\tconst hxGet = el.getAttribute('hx-get') || '';\r\n\t\t\t\t\tconst id = hxGet.split('/').pop();\r\n\t\t\t\t\tconst input = document.getElementById('otvorene-selected-id');\r\n\t\t\t\t\tif (input && id) input.value = id;\r\n\t\t\t\t}\r\n\t\t\t});\r\n\t\t}\r\n\t\t// Listen for table data to be loaded via HTMX, then auto-click first row once\r\n\t\tif (!window.otvoreneStavkeFirstRowListener) {\r\n\t\t\twindow.otvoreneStavkeFirstRowListener = true;\r\n\t\t\twindow.handleOtvoreneStavkeFirstRow = function(evt) {\r\n\t\t\t\tconst target = evt.detail.target;\r\n\t\t\t\t// Trigger ONLY when partneri table is swapped, NOT when details table is swapped\r\n\t\t\t\tif (target.id === 'otvorenestavketable') {\r\n\t\t\t\t\tconsole.log('Selecting first row after table data loaded');\r\n\t\t\t\t\tsetTimeout(() => {\r\n\t\t\t\t\t\tconst firstRow = document.querySelector('#tab1 table tbody tr');\r\n\t\t\t\t\t\tif (firstRow) {\r\n\t\t\t\t\t\t\t// Prevent this listener from running again\r\n\t\t\t\t\t\t\tdocument.removeEventListener('htmx:afterSwap', window.handleOtvoreneStavkeFirstRow);\r\n\t\t\t\t\t\t\tfirstRow.click();\r\n\t\t\t\t\t\t}\r\n\t\t\t\t\t}, 500);\r\n\t\t\t\t}\r\n\t\t\t};\r\n\t\t\t\r\n\t\t\tdocument.addEventListener('htmx:afterSwap', window.handleOtvoreneStavkeFirstRow);\r\n\t\t}\r\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</div></div></div><!-- Dialog display container--><div id=\"dialog-content\"></div><input type=\"hidden\" id=\"otvorene-selected-id\" name=\"otvorene-selected-id\" value=\"\"> <input type=\"hidden\" id=\"stampaotvstavke\" name=\"stampaotvstavke\" value=\"otvstavke\"> <input type=\"hidden\" id=\"stampaopomena\" name=\"stampaopomena\" value=\"opomena\"></div><script>\r\n\t\t\t// Capture selected row ID from hx-get attribute when a partneri row is clicked\r\n\t\tif (!window.otvoreneStavkeRowIdListener) {\r\n\t\t\twindow.otvoreneStavkeRowIdListener = true;\r\n\t\t\tdocument.addEventListener('htmx:beforeRequest', function(evt) {\r\n\t\t\t\tconst el = evt.detail.elt;\r\n\t\t\t\tif (el.tagName === 'TR' && el.closest('#otvorenestavketable')) {\r\n\t\t\t\t\tconst hxGet = el.getAttribute('hx-get') || '';\r\n\t\t\t\t\tconst id = hxGet.split('/').pop();\r\n\t\t\t\t\tconst input = document.getElementById('otvorene-selected-id');\r\n\t\t\t\t\tif (input && id) input.value = id;\r\n\t\t\t\t}\r\n\t\t\t});\r\n\t\t}\r\n\t\t// Listen for table data to be loaded via HTMX, then auto-click first row once\r\n\t\tif (!window.otvoreneStavkeFirstRowListener) {\r\n\t\t\twindow.otvoreneStavkeFirstRowListener = true;\r\n\t\t\twindow.handleOtvoreneStavkeFirstRow = function(evt) {\r\n\t\t\t\tconst target = evt.detail.target;\r\n\t\t\t\t// Trigger ONLY when partneri table is swapped, NOT when details table is swapped\r\n\t\t\t\tif (target.id === 'otvorenestavketable') {\r\n\t\t\t\t\tconsole.log('Selecting first row after table data loaded');\r\n\t\t\t\t\tsetTimeout(() => {\r\n\t\t\t\t\t\tconst firstRow = document.querySelector('#tab1 table tbody tr');\r\n\t\t\t\t\t\tif (firstRow) {\r\n\t\t\t\t\t\t\t// Prevent this listener from running again\r\n\t\t\t\t\t\t\tdocument.removeEventListener('htmx:afterSwap', window.handleOtvoreneStavkeFirstRow);\r\n\t\t\t\t\t\t\tfirstRow.click();\r\n\t\t\t\t\t\t}\r\n\t\t\t\t\t}, 500);\r\n\t\t\t\t}\r\n\t\t\t};\r\n\t\t\t\r\n\t\t\tdocument.addEventListener('htmx:afterSwap', window.handleOtvoreneStavkeFirstRow);\r\n\t\t}\r\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -410,7 +406,7 @@ func ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDa
 			templ_7745c5c3_Var3 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<!-- Container with full height --><div class=\"flex flex-col h-full\"><!-- Tab Navigation --><div class=\"border-b border-blue-600\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<!-- Container with full height --><div class=\"bg-blue-100 p-1 flex flex-col h-full\"><!-- Tab Navigation --><div class=\"border-b border-blue-600\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -418,7 +414,7 @@ func ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</div><!-- Tab 2 Content --><div id=\"tab2\" class=\"flex-1 min-h-0 flex flex-col gap-1\"><!-- Parameters Section - Two Columns --><div class=\"grid grid-cols-2 gap-1\"><!-- Left Column - Konto and Sifre --><div class=\"border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg flex flex-col\"><!-- Konto Field --><div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "</div><!-- Tab 2 Content --><div id=\"tab2\" class=\"flex-1 min-h-0 flex flex-col gap-1\"><!-- Parameters Section - Two Columns --><div class=\"grid grid-cols-2 gap-1\"><!-- Left Column - Konto and Sifre --><div class=\"border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg flex flex-col\"><!-- Konto Field --><div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -470,7 +466,7 @@ func ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</div><!-- Od Šifre --><div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</div><!-- Od Šifre --><div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -523,7 +519,7 @@ func ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</div><!-- Do Šifre --><div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</div><!-- Do Šifre --><div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -576,7 +572,7 @@ func ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</div></div><!-- Right Column - Date Range --><div class=\"border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg flex flex-col\"><!-- Od datuma --><div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</div></div><!-- Right Column - Date Range --><div class=\"border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg flex flex-col\"><!-- Od datuma --><div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -602,7 +598,7 @@ func ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</div><!-- Do datuma --><div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</div><!-- Do datuma --><div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -628,7 +624,7 @@ func ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</div><!-- Buttons --><div class=\"flex justify-end gap-1 mt-auto\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</div><!-- Buttons --><div class=\"flex justify-end gap-1 mt-auto\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -640,7 +636,7 @@ func ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "</div></div></div><!-- Group Data Table --><div class=\"border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</div></div></div><!-- Group Data Table --><div class=\"border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -652,7 +648,7 @@ func ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "<!-- Table --><div id=\"zatvorenestavketable\" class=\"flex-1 overflow-x-auto overflow-y-auto min-h-0\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "<!-- Table --><div id=\"zatvorenestavketable\" class=\"flex-1 overflow-x-auto overflow-y-auto min-h-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -660,7 +656,7 @@ func ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "</div></div><div class=\"border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "</div></div><div class=\"border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -668,7 +664,7 @@ func ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "<!-- Table --><div id=\"zatvorenestavketabledetalji\" class=\"flex-1 overflow-x-auto overflow-y-auto min-h-0\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "<!-- Table --><div id=\"zatvorenestavketabledetalji\" class=\"flex-1 overflow-x-auto overflow-y-auto min-h-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -676,7 +672,7 @@ func ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "</div></div></div></div><!-- Dialog display container--><div id=\"dialog-content\"></div><!-- Hidden input: holds the ID of the currently selected partneri row for use by the print button --><input type=\"hidden\" id=\"zatvorene-selected-id\" name=\"zatvorene-selected-id\" value=\"\"><script>\r\n\t\t// Capture selected row ID from hx-get attribute when a partneri row is clicked\r\n\t\tif (!window.zatvoreneStavkeRowIdListener) {\r\n\t\t\twindow.zatvoreneStavkeRowIdListener = true;\r\n\t\t\tdocument.addEventListener('htmx:beforeRequest', function(evt) {\r\n\t\t\t\tconst el = evt.detail.elt;\r\n\t\t\t\tif (el.tagName === 'TR' && el.closest('#zatvorenestavketable')) {\r\n\t\t\t\t\tconst hxGet = el.getAttribute('hx-get') || '';\r\n\t\t\t\t\tconst id = hxGet.split('/').pop();\r\n\t\t\t\t\tconst input = document.getElementById('zatvorene-selected-id');\r\n\t\t\t\t\tif (input && id) input.value = id;\r\n\t\t\t\t}\r\n\t\t\t});\r\n\t\t}\r\n\t\t// Listen for table data to be loaded via HTMX, then auto-click first row once\r\n\t\tif (!window.zatvoreneStavkeFirstRowListener) {\r\n\t\t\twindow.zatvoreneStavkeFirstRowListener = true;\r\n\t\t\t\r\n\t\t\twindow.handleZatvoreneStavkeFirstRow = function(evt) {\r\n\t\t\t\tconst target = evt.detail.target;\r\n\t\t\t\tconsole.log('ZatvoreneStavke afterSwap event, target ID:', target?.id);\r\n\t\t\t\t// Trigger ONLY when partneri table is swapped, NOT when details table is swapped\r\n\t\t\t\tif (target.id === 'zatvorenestavketable') {\r\n\t\t\t\t\tconsole.log('Selecting first row after table data loaded');\r\n\t\t\t\t\tsetTimeout(() => {\r\n\t\t\t\t\t\tconst firstRow = document.querySelector('#tab2 table tbody tr');\r\n\t\t\t\t\t\tconsole.log('First row element:', firstRow);\r\n\t\t\t\t\t\tif (firstRow) {\r\n\t\t\t\t\t\t\tconsole.log('Clicking first row, row has hx attributes:', firstRow.attributes);\r\n\t\t\t\t\t\t\t// Prevent this listener from running again\r\n\t\t\t\t\t\t\tdocument.removeEventListener('htmx:afterSwap', window.handleZatvoreneStavkeFirstRow);\r\n\t\t\t\t\t\t\tfirstRow.click();\r\n\t\t\t\t\t\t}\r\n\t\t\t\t\t}, 100);\r\n\t\t\t\t}\r\n\t\t\t};\r\n\t\t\t\r\n\t\t\tdocument.addEventListener('htmx:afterSwap', window.handleZatvoreneStavkeFirstRow);\r\n\t\t}\r\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "</div></div></div><!-- Dialog display container--><div id=\"dialog-content\"></div><!-- Hidden input: holds the ID of the currently selected partneri row for use by the print button --><input type=\"hidden\" id=\"zatvorene-selected-id\" name=\"zatvorene-selected-id\" value=\"\"></div><script>\r\n\t\t// Capture selected row ID from hx-get attribute when a partneri row is clicked\r\n\t\tif (!window.zatvoreneStavkeRowIdListener) {\r\n\t\t\twindow.zatvoreneStavkeRowIdListener = true;\r\n\t\t\tdocument.addEventListener('htmx:beforeRequest', function(evt) {\r\n\t\t\t\tconst el = evt.detail.elt;\r\n\t\t\t\tif (el.tagName === 'TR' && el.closest('#zatvorenestavketable')) {\r\n\t\t\t\t\tconst hxGet = el.getAttribute('hx-get') || '';\r\n\t\t\t\t\tconst id = hxGet.split('/').pop();\r\n\t\t\t\t\tconst input = document.getElementById('zatvorene-selected-id');\r\n\t\t\t\t\tif (input && id) input.value = id;\r\n\t\t\t\t}\r\n\t\t\t});\r\n\t\t}\r\n\t\t// Listen for table data to be loaded via HTMX, then auto-click first row once\r\n\t\tif (!window.zatvoreneStavkeFirstRowListener) {\r\n\t\t\twindow.zatvoreneStavkeFirstRowListener = true;\r\n\t\t\t\r\n\t\t\twindow.handleZatvoreneStavkeFirstRow = function(evt) {\r\n\t\t\t\tconst target = evt.detail.target;\r\n\t\t\t\tconsole.log('ZatvoreneStavke afterSwap event, target ID:', target?.id);\r\n\t\t\t\t// Trigger ONLY when partneri table is swapped, NOT when details table is swapped\r\n\t\t\t\tif (target.id === 'zatvorenestavketable') {\r\n\t\t\t\t\tconsole.log('Selecting first row after table data loaded');\r\n\t\t\t\t\tsetTimeout(() => {\r\n\t\t\t\t\t\tconst firstRow = document.querySelector('#tab2 table tbody tr');\r\n\t\t\t\t\t\tconsole.log('First row element:', firstRow);\r\n\t\t\t\t\t\tif (firstRow) {\r\n\t\t\t\t\t\t\tconsole.log('Clicking first row, row has hx attributes:', firstRow.attributes);\r\n\t\t\t\t\t\t\t// Prevent this listener from running again\r\n\t\t\t\t\t\t\tdocument.removeEventListener('htmx:afterSwap', window.handleZatvoreneStavkeFirstRow);\r\n\t\t\t\t\t\t\tfirstRow.click();\r\n\t\t\t\t\t\t}\r\n\t\t\t\t\t}, 100);\r\n\t\t\t\t}\r\n\t\t\t};\r\n\t\t\t\r\n\t\t\tdocument.addEventListener('htmx:afterSwap', window.handleZatvoreneStavkeFirstRow);\r\n\t\t}\r\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -706,7 +702,7 @@ func IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObrad
 			templ_7745c5c3_Var4 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "<!-- Container with full height --><div class=\"flex flex-col h-full\"><!-- Tab Navigation --><div class=\"border-b border-blue-600\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "<!-- Container with full height --><div class=\"bg-blue-100 p-1 flex flex-col h-full\"><!-- Tab Navigation --><div class=\"border-b border-blue-600\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -714,7 +710,7 @@ func IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "</div><!-- Tab 3 Content --><div id=\"tab3\" class=\"flex-1 min-h-0 flex flex-col gap-1\"><!-- Parameters Section - Two Columns --><div class=\"grid grid-cols-2 gap-1\"><!-- Left Column - Konto and Sifre --><div class=\"border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg flex flex-col\"><!-- Konto Field --><div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "</div><!-- Tab 3 Content --><div id=\"tab3\" class=\"flex-1 min-h-0 flex flex-col gap-1\"><!-- Parameters Section - Two Columns --><div class=\"grid grid-cols-2 gap-1\"><!-- Left Column - Konto and Sifre --><div class=\"border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg flex flex-col\"><!-- Konto Field --><div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -766,7 +762,7 @@ func IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "</div><!-- Od Šifre --><div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "</div><!-- Od Šifre --><div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -819,7 +815,7 @@ func IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "</div><!-- Do Šifre --><div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "</div><!-- Do Šifre --><div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -872,7 +868,7 @@ func IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "</div></div><!-- Right Column - Date and Days --><div class=\"border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg flex flex-col\"><!-- Od datuma --><div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "</div></div><!-- Right Column - Date and Days --><div class=\"border bg-blue-100 border border-blue-400 mt-1 mb-1 p-1 rounded-lg flex flex-col\"><!-- Od datuma --><div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -898,7 +894,7 @@ func IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "</div><!-- Otv. stavke preko broja dana --><div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "</div><!-- Otv. stavke preko broja dana --><div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -925,7 +921,7 @@ func IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "</div><!-- Buttons --><div class=\"flex justify-end gap-1 mt-auto\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "</div><!-- Buttons --><div class=\"flex justify-end gap-1 mt-auto\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -937,7 +933,7 @@ func IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "</div></div></div><!-- Group Data Table --><div class=\"border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "</div></div></div><!-- Group Data Table --><div class=\"border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -945,7 +941,7 @@ func IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "<!-- Table --><div id=\"iostable\" class=\"flex-1 overflow-x-auto overflow-y-auto min-h-0\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "<!-- Table --><div id=\"iostable\" class=\"flex-1 overflow-x-auto overflow-y-auto min-h-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -953,7 +949,7 @@ func IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "</div></div><div class=\"border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "</div></div><div class=\"border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -965,7 +961,7 @@ func IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "<!-- Table --><div id=\"iostabledetalji\" class=\"flex-1 overflow-x-auto overflow-y-auto min-h-0\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "<!-- Table --><div id=\"iostabledetalji\" class=\"flex-1 overflow-x-auto overflow-y-auto min-h-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -973,7 +969,7 @@ func IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "</div></div></div></div><!-- Dialog display container--><div id=\"dialog-content\"></div><!-- Hidden input: holds the ID of the currently selected IOS partneri row for use by the print button --><input type=\"hidden\" id=\"ios-selected-id\" name=\"ios-selected-id\" value=\"\"><script>\r\n\t\t// Capture selected row ID from hx-get attribute when a partneri row is clicked\r\n\t\tif (!window.iosRowIdListener) {\r\n\t\t\twindow.iosRowIdListener = true;\r\n\t\t\tdocument.addEventListener('htmx:beforeRequest', function(evt) {\r\n\t\t\t\tconst el = evt.detail.elt;\r\n\t\t\t\tif (el.tagName === 'TR' && el.closest('#iostable')) {\r\n\t\t\t\t\tconst hxGet = el.getAttribute('hx-get') || '';\r\n\t\t\t\t\tconst id = hxGet.split('/').pop();\r\n\t\t\t\t\tconst input = document.getElementById('ios-selected-id');\r\n\t\t\t\t\tif (input && id) input.value = id;\r\n\t\t\t\t}\r\n\t\t\t});\r\n\t\t}\r\n\t\t// Listen for table data to be loaded via HTMX, then auto-click first row once\r\n\t\tif (!window.iosFirstRowListener) {\r\n\t\t\twindow.iosFirstRowListener = true;\r\n\t\t\twindow.handleIOSFirstRow = function(evt) {\r\n\t\t\t\tconst target = evt.detail.target;\r\n\t\t\t\tconsole.log('IOS afterSwap event, target ID:', target?.id);\r\n\t\t\t\t// Trigger ONLY when partneri table is swapped, NOT when details table is swapped\r\n\t\t\t\tif (target.id === 'iostable') {\r\n\t\t\t\t\tconsole.log('Selecting first row after table data loaded');\r\n\t\t\t\t\tsetTimeout(() => {\r\n\t\t\t\t\t\tconst firstRow = document.querySelector('#tab3 table tbody tr');\r\n\t\t\t\t\t\tconsole.log('First row element:', firstRow);\r\n\t\t\t\t\t\tif (firstRow) {\r\n\t\t\t\t\t\t\tconsole.log('Clicking first row, row has hx attributes:', firstRow.attributes);\r\n\t\t\t\t\t\t\t// Prevent this listener from running again\r\n\t\t\t\t\t\t\tdocument.removeEventListener('htmx:afterSwap', window.handleIOSFirstRow);\r\n\t\t\t\t\t\t\tfirstRow.click();\r\n\t\t\t\t\t\t}\r\n\t\t\t\t\t}, 100);\r\n\t\t\t\t}\r\n\t\t\t};\r\n\t\t\t\r\n\t\t\tdocument.addEventListener('htmx:afterSwap', window.handleIOSFirstRow);\r\n\t\t}\r\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "</div></div></div><!-- Dialog display container--><div id=\"dialog-content\"></div><!-- Hidden input: holds the ID of the currently selected IOS partneri row for use by the print button --><input type=\"hidden\" id=\"ios-selected-id\" name=\"ios-selected-id\" value=\"\"></div><script>\r\n\t\t// Capture selected row ID from hx-get attribute when a partneri row is clicked\r\n\t\tif (!window.iosRowIdListener) {\r\n\t\t\twindow.iosRowIdListener = true;\r\n\t\t\tdocument.addEventListener('htmx:beforeRequest', function(evt) {\r\n\t\t\t\tconst el = evt.detail.elt;\r\n\t\t\t\tif (el.tagName === 'TR' && el.closest('#iostable')) {\r\n\t\t\t\t\tconst hxGet = el.getAttribute('hx-get') || '';\r\n\t\t\t\t\tconst id = hxGet.split('/').pop();\r\n\t\t\t\t\tconst input = document.getElementById('ios-selected-id');\r\n\t\t\t\t\tif (input && id) input.value = id;\r\n\t\t\t\t}\r\n\t\t\t});\r\n\t\t}\r\n\t\t// Listen for table data to be loaded via HTMX, then auto-click first row once\r\n\t\tif (!window.iosFirstRowListener) {\r\n\t\t\twindow.iosFirstRowListener = true;\r\n\t\t\twindow.handleIOSFirstRow = function(evt) {\r\n\t\t\t\tconst target = evt.detail.target;\r\n\t\t\t\tconsole.log('IOS afterSwap event, target ID:', target?.id);\r\n\t\t\t\t// Trigger ONLY when partneri table is swapped, NOT when details table is swapped\r\n\t\t\t\tif (target.id === 'iostable') {\r\n\t\t\t\t\tconsole.log('Selecting first row after table data loaded');\r\n\t\t\t\t\tsetTimeout(() => {\r\n\t\t\t\t\t\tconst firstRow = document.querySelector('#tab3 table tbody tr');\r\n\t\t\t\t\t\tconsole.log('First row element:', firstRow);\r\n\t\t\t\t\t\tif (firstRow) {\r\n\t\t\t\t\t\t\tconsole.log('Clicking first row, row has hx attributes:', firstRow.attributes);\r\n\t\t\t\t\t\t\t// Prevent this listener from running again\r\n\t\t\t\t\t\t\tdocument.removeEventListener('htmx:afterSwap', window.handleIOSFirstRow);\r\n\t\t\t\t\t\t\tfirstRow.click();\r\n\t\t\t\t\t\t}\r\n\t\t\t\t\t}, 100);\r\n\t\t\t\t}\r\n\t\t\t};\r\n\t\t\t\r\n\t\t\tdocument.addEventListener('htmx:afterSwap', window.handleIOSFirstRow);\r\n\t\t}\r\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1003,7 +999,7 @@ func DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Tab
 			templ_7745c5c3_Var5 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "<!-- Container with full height --><div class=\"flex flex-col h-full\"><!-- Tab Navigation --><div class=\"border-b border-blue-600\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "<!-- Container with full height --><div class=\"bg-blue-100 p-1 flex flex-col h-full\"><!-- Tab Navigation --><div class=\"border-b border-blue-600\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1011,7 +1007,7 @@ func DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Tab
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "</div><!-- Tab 4 Content --><div id=\"tab4\" class=\"flex-1 min-h-0 flex flex-col gap-1\"><!-- Parameters Section - Two Columns --><div class=\"grid grid-cols-2 gap-1\"><!-- Left Column - Konto and Sifre --><div class=\"border bg-blue-100 border border-blue-400 mt-1 p-1 rounded-lg flex flex-col\"><!-- Konto Field --><div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "</div><!-- Tab 4 Content --><div id=\"tab4\" class=\"flex-1 min-h-0 flex flex-col gap-1\"><!-- Parameters Section - Two Columns --><div class=\"grid grid-cols-2 gap-1\"><!-- Left Column - Konto and Sifre --><div class=\"border bg-blue-100 border border-blue-400 mt-1 p-1 rounded-lg flex flex-col\"><!-- Konto Field --><div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1063,7 +1059,7 @@ func DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Tab
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "</div><!-- Od Šifre --><div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "</div><!-- Od Šifre --><div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1116,7 +1112,7 @@ func DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Tab
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "</div><!-- Do Šifre --><div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "</div><!-- Do Šifre --><div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1169,33 +1165,33 @@ func DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Tab
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "</div></div><!-- Right Column - Radio Buttons --><div class=\"border bg-blue-100 border border-blue-400 mt-1 p-1 rounded-lg flex flex-col\"><!-- First Radio Set - Display Type with Date --><div class=\"mb-2 flex items-center gap-1\"><div class=\"flex flex-row gap-4\"><label class=\"flex items-center gap-2 cursor-pointer\"><input type=\"radio\" name=\"tip_pregleda\" value=\"A\" class=\"w-4 h-4\" tabindex=\"4\" checked> <span class=\"text-sm\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "</div></div><!-- Right Column - Radio Buttons --><div class=\"border bg-blue-100 border border-blue-400 mt-1 p-1 rounded-lg flex flex-col\"><!-- First Radio Set - Display Type with Date --><div class=\"mb-2 flex items-center gap-1\"><div class=\"flex flex-row gap-4\"><label class=\"flex items-center gap-2 cursor-pointer\"><input type=\"radio\" name=\"tip_pregleda\" value=\"A\" class=\"w-4 h-4\" tabindex=\"4\" checked> <span class=\"text-sm\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Prikaz analitički"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 903, Col: 70}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 902, Col: 70}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "</span></label> <label class=\"flex items-center gap-2 cursor-pointer\"><input type=\"radio\" name=\"tip_pregleda\" value=\"S\" class=\"w-4 h-4\" tabindex=\"5\"> <span class=\"text-sm\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "</span></label> <label class=\"flex items-center gap-2 cursor-pointer\"><input type=\"radio\" name=\"tip_pregleda\" value=\"S\" class=\"w-4 h-4\" tabindex=\"5\"> <span class=\"text-sm\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var7 string
 		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Prikaz sintetički"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 907, Col: 70}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 906, Col: 70}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "</span></label></div><div class=\"flex-1\"></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "</span></label></div><div class=\"flex-1\"></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1221,33 +1217,33 @@ func DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Tab
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "</div><!-- Second Radio Set - Date Filter --><div class=\"flex flex-col gap-1 mb-2\"><div class=\"flex items-center gap-1\"><label class=\"flex items-center gap-1 cursor-pointer\"><input type=\"radio\" name=\"tip_potrazivanja\" value=\"D\" class=\"w-4 h-4\" tabindex=\"7\" checked> <span class=\"text-sm\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "</div><!-- Second Radio Set - Date Filter --><div class=\"flex flex-col gap-1 mb-2\"><div class=\"flex items-center gap-1\"><label class=\"flex items-center gap-1 cursor-pointer\"><input type=\"radio\" name=\"tip_potrazivanja\" value=\"D\" class=\"w-4 h-4\" tabindex=\"7\" checked> <span class=\"text-sm\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var8 string
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Potraživanja koja dospevaju u narednih"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 933, Col: 91}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 932, Col: 91}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "</span></label></div><div class=\"flex items-center justify-between gap-1\"><div class=\"flex items-center gap-1\"><label class=\"flex items-center gap-1 cursor-pointer\"><input type=\"radio\" name=\"tip_potrazivanja\" value=\"S\" class=\"w-4 h-4\" tabindex=\"8\"> <span class=\"text-sm\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "</span></label></div><div class=\"flex items-center justify-between gap-1\"><div class=\"flex items-center gap-1\"><label class=\"flex items-center gap-1 cursor-pointer\"><input type=\"radio\" name=\"tip_potrazivanja\" value=\"S\" class=\"w-4 h-4\" tabindex=\"8\"> <span class=\"text-sm\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Potraživanja koja su starija od"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 940, Col: 85}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 939, Col: 85}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "</span></label>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "</span></label>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1266,20 +1262,20 @@ func DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Tab
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, "<span class=\"text-sm\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "<span class=\"text-sm\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("dana"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 954, Col: 56}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 953, Col: 56}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, "</span></div><!-- Buttons --><div class=\"flex gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, "</span></div><!-- Buttons --><div class=\"flex gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1291,7 +1287,7 @@ func DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Tab
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "</div></div></div></div></div><!-- Group Data Table --><div class=\"border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, "</div></div></div></div></div><!-- Group Data Table --><div class=\"border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1303,7 +1299,7 @@ func DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Tab
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 53, "<!-- Table --><div id=\"dospelatable\" class=\"flex-1 overflow-x-auto overflow-y-auto min-h-0\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "<!-- Table --><div id=\"dospelatable\" class=\"flex-1 overflow-x-auto overflow-y-auto min-h-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1311,7 +1307,7 @@ func DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Tab
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 54, "</div></div><div class=\"border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 53, "</div></div><div class=\"border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1319,7 +1315,7 @@ func DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Tab
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 55, "<!-- Table --><div id=\"dospelatabledetalji\" class=\"flex-1 overflow-x-auto overflow-y-auto min-h-0\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 54, "<!-- Table --><div id=\"dospelatabledetalji\" class=\"flex-1 overflow-x-auto overflow-y-auto min-h-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1327,7 +1323,7 @@ func DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Tab
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 56, "</div></div></div></div><!-- Dialog display container--><div id=\"dialog-content\"></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 55, "</div></div></div><!-- Dialog display container--><div id=\"dialog-content\"></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1343,7 +1339,7 @@ func DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Tab
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 57, "<script>\r\n\t\t// Listen for table data to be loaded via HTMX, then auto-click first row once\r\n\t\tif (!window.dospelaFirstRowListener) {\r\n\t\t\twindow.dospelaFirstRowListener = true;\r\n\t\t\twindow.handleDospelaFirstRow = function(evt) {\r\n\t\t\t\tconst target = evt.detail.target;\r\n\t\t\t\tconsole.log('dospela potrazivanja/obaveze afterSwap event, target ID:', target?.id);\r\n\t\t\t\t// Trigger ONLY when partneri table is swapped, NOT when details table is swapped\r\n\t\t\t\tif (target.id === 'dospelatable') {\r\n\t\t\t\t\tconsole.log('Selecting first row after table data loaded');\r\n\t\t\t\t\tsetTimeout(() => {\r\n\t\t\t\t\t\tconst firstRow = document.querySelector('#tab4 table tbody tr');\r\n\t\t\t\t\t\tconsole.log('First row element:', firstRow);\r\n\t\t\t\t\t\tif (firstRow) {\r\n\t\t\t\t\t\t\tconsole.log('Clicking first row, row has hx attributes:', firstRow.attributes);\r\n\t\t\t\t\t\t\t// Prevent this listener from running again\r\n\t\t\t\t\t\t\tdocument.removeEventListener('htmx:afterSwap', window.handleDospelaFirstRow);\r\n\t\t\t\t\t\t\tfirstRow.click();\r\n\t\t\t\t\t\t}\r\n\t\t\t\t\t}, 100);\r\n\t\t\t\t}\r\n\t\t\t};\r\n\t\t\t\r\n\t\t\tdocument.addEventListener('htmx:afterSwap', window.handleDospelaFirstRow);\r\n\t\t}\r\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 56, "<script>\r\n\t\t// Listen for table data to be loaded via HTMX, then auto-click first row once\r\n\t\tif (!window.dospelaFirstRowListener) {\r\n\t\t\twindow.dospelaFirstRowListener = true;\r\n\t\t\twindow.handleDospelaFirstRow = function(evt) {\r\n\t\t\t\tconst target = evt.detail.target;\r\n\t\t\t\tconsole.log('dospela potrazivanja/obaveze afterSwap event, target ID:', target?.id);\r\n\t\t\t\t// Trigger ONLY when partneri table is swapped, NOT when details table is swapped\r\n\t\t\t\tif (target.id === 'dospelatable') {\r\n\t\t\t\t\tconsole.log('Selecting first row after table data loaded');\r\n\t\t\t\t\tsetTimeout(() => {\r\n\t\t\t\t\t\tconst firstRow = document.querySelector('#tab4 table tbody tr');\r\n\t\t\t\t\t\tconsole.log('First row element:', firstRow);\r\n\t\t\t\t\t\tif (firstRow) {\r\n\t\t\t\t\t\t\tconsole.log('Clicking first row, row has hx attributes:', firstRow.attributes);\r\n\t\t\t\t\t\t\t// Prevent this listener from running again\r\n\t\t\t\t\t\t\tdocument.removeEventListener('htmx:afterSwap', window.handleDospelaFirstRow);\r\n\t\t\t\t\t\t\tfirstRow.click();\r\n\t\t\t\t\t\t}\r\n\t\t\t\t\t}, 100);\r\n\t\t\t\t}\r\n\t\t\t};\r\n\t\t\t\r\n\t\t\tdocument.addEventListener('htmx:afterSwap', window.handleDospelaFirstRow);\r\n\t\t}\r\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1373,7 +1369,7 @@ func PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnOb
 			templ_7745c5c3_Var11 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 58, "<!-- Container with full height --><div class=\"flex flex-col h-full\"><!-- Tab Navigation --><div class=\"border-b border-blue-600\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 57, "<!-- Container with full height --><div class=\"bg-blue-100 p-1 flex flex-col h-full\"><!-- Tab Navigation --><div class=\"border-b border-blue-600\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1381,33 +1377,33 @@ func PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnOb
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 59, "</div><!-- Tab 5 Content --><div id=\"tab5\" class=\"flex-1 min-h-0 flex flex-col gap-1\"><!-- Parameters Section - Two Columns --><div class=\"grid grid-cols-2 gap-1\"><!-- Left Column - Radio Buttons, Konto and Sifre --><div class=\"border bg-blue-100 border border-blue-400 mt-1 p-1 rounded-lg flex flex-col gap-1\"><!-- Row 1: Radio Set - Display Type (Horizontal) --><div class=\"flex flex-row gap-4\"><label class=\"flex items-center gap-2 cursor-pointer\"><input type=\"radio\" name=\"tip_pregleda\" value=\"K\" class=\"w-4 h-4\" tabindex=\"1\" checked> <span class=\"text-sm\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 58, "</div><!-- Tab 5 Content --><div id=\"tab5\" class=\"flex-1 min-h-0 flex flex-col gap-1\"><!-- Parameters Section - Two Columns --><div class=\"grid grid-cols-2 gap-1\"><!-- Left Column - Radio Buttons, Konto and Sifre --><div class=\"border bg-blue-100 border border-blue-400 mt-1 p-1 rounded-lg flex flex-col gap-1\"><!-- Row 1: Radio Set - Display Type (Horizontal) --><div class=\"flex flex-row gap-4\"><label class=\"flex items-center gap-2 cursor-pointer\"><input type=\"radio\" name=\"tip_pregleda\" value=\"K\" class=\"w-4 h-4\" tabindex=\"1\" checked> <span class=\"text-sm\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var12 string
 		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Pregled dugovanja kupaca"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 1034, Col: 75}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 1033, Col: 75}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 60, "</span></label> <label class=\"flex items-center gap-2 cursor-pointer\"><input type=\"radio\" name=\"tip_pregleda\" value=\"D\" class=\"w-4 h-4\" tabindex=\"2\"> <span class=\"text-sm\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 59, "</span></label> <label class=\"flex items-center gap-2 cursor-pointer\"><input type=\"radio\" name=\"tip_pregleda\" value=\"D\" class=\"w-4 h-4\" tabindex=\"2\"> <span class=\"text-sm\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var13 string
 		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Pregled obaveza prema dobavljačima"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 1038, Col: 86}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 1037, Col: 86}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 61, "</span></label></div><!-- Row 2: Od Konta and Od Šifre --><div class=\"flex gap-1\"><div class=\"flex items-center gap-1 flex-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 60, "</span></label></div><!-- Row 2: Od Konta and Od Šifre --><div class=\"flex gap-1\"><div class=\"flex items-center gap-1 flex-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1435,7 +1431,7 @@ func PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnOb
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 62, "</div><div class=\"flex items-center gap-1 flex-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 61, "</div><div class=\"flex items-center gap-1 flex-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1463,7 +1459,7 @@ func PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnOb
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 63, "</div></div><!-- Row 3: Do Konta and Do Šifre --><div class=\"flex gap-1\"><div class=\"flex items-center gap-1 flex-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 62, "</div></div><!-- Row 3: Do Konta and Do Šifre --><div class=\"flex gap-1\"><div class=\"flex items-center gap-1 flex-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1491,7 +1487,7 @@ func PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnOb
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 64, "</div><div class=\"flex items-center gap-1 flex-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 63, "</div><div class=\"flex items-center gap-1 flex-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1519,7 +1515,7 @@ func PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnOb
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 65, "</div></div></div><!-- Right Column - Date and Checkbox with Buttons --><div class=\"border bg-blue-100 border border-blue-400 mt-1 p-1 rounded-lg flex flex-col gap-1\"><!-- Row 1: Stanje na dan and Checkbox --><div class=\"flex items-center gap-1\"><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 64, "</div></div></div><!-- Right Column - Date and Checkbox with Buttons --><div class=\"border bg-blue-100 border border-blue-400 mt-1 p-1 rounded-lg flex flex-col gap-1\"><!-- Row 1: Stanje na dan and Checkbox --><div class=\"flex items-center gap-1\"><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1545,7 +1541,7 @@ func PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnOb
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 66, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 65, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1561,7 +1557,7 @@ func PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnOb
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 67, "</div><!-- Row 2: Buttons - Bottom Right Aligned --><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 66, "</div><!-- Row 2: Buttons - Bottom Right Aligned --><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1653,7 +1649,7 @@ func PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnOb
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 68, "</div><div class=\"flex gap-1 justify-end mt-auto\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 67, "</div><div class=\"flex gap-1 justify-end mt-auto\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1665,7 +1661,7 @@ func PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnOb
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 69, "</div></div></div><!-- Group Data Table --><div class=\"border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 68, "</div></div></div><!-- Group Data Table --><div class=\"border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1677,7 +1673,7 @@ func PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnOb
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 70, "<!-- Table --><div id=\"dugovanjatable\" class=\"flex-1 overflow-x-auto overflow-y-auto min-h-0\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 69, "<!-- Table --><div id=\"dugovanjatable\" class=\"flex-1 overflow-x-auto overflow-y-auto min-h-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1685,7 +1681,7 @@ func PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnOb
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 71, "</div></div></div></div><!-- Dialog display container--><div id=\"dialog-content\"></div><!-- Dialog display container--><div id=\"dialog-content\"></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 70, "</div></div></div><!-- Dialog display container--><div id=\"dialog-content\"></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1701,7 +1697,7 @@ func PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnOb
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 72, "<script>\r\n\t\t// Listen for table data to be loaded via HTMX, then auto-click first row once\r\n\t\tif (!window.dospelaFirstRowListener) {\r\n\t\t\twindow.dospelaFirstRowListener = true;\r\n\t\t\twindow.handleDospelaFirstRow = function(evt) {\r\n\t\t\t\tconst target = evt.detail.target;\r\n\t\t\t\tconsole.log('dospela potrazivanja/obaveze afterSwap event, target ID:', target?.id);\r\n\t\t\t\t// Trigger ONLY when partneri table is swapped, NOT when details table is swapped\r\n\t\t\t\tif (target.id === 'dospelatable') {\r\n\t\t\t\t\tconsole.log('Selecting first row after table data loaded');\r\n\t\t\t\t\tsetTimeout(() => {\r\n\t\t\t\t\t\tconst firstRow = document.querySelector('#tab4 table tbody tr');\r\n\t\t\t\t\t\tconsole.log('First row element:', firstRow);\r\n\t\t\t\t\t\tif (firstRow) {\r\n\t\t\t\t\t\t\tconsole.log('Clicking first row, row has hx attributes:', firstRow.attributes);\r\n\t\t\t\t\t\t\t// Prevent this listener from running again\r\n\t\t\t\t\t\t\tdocument.removeEventListener('htmx:afterSwap', window.handleDospelaFirstRow);\r\n\t\t\t\t\t\t\tfirstRow.click();\r\n\t\t\t\t\t\t}\r\n\t\t\t\t\t}, 100);\r\n\t\t\t\t}\r\n\t\t\t};\r\n\t\t\t\r\n\t\t\tdocument.addEventListener('htmx:afterSwap', window.handleDospelaFirstRow);\r\n\t\t}\r\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 71, "<script>\r\n\t\t// Listen for table data to be loaded via HTMX, then auto-click first row once\r\n\t\tif (!window.dospelaFirstRowListener) {\r\n\t\t\twindow.dospelaFirstRowListener = true;\r\n\t\t\twindow.handleDospelaFirstRow = function(evt) {\r\n\t\t\t\tconst target = evt.detail.target;\r\n\t\t\t\tconsole.log('dospela potrazivanja/obaveze afterSwap event, target ID:', target?.id);\r\n\t\t\t\t// Trigger ONLY when partneri table is swapped, NOT when details table is swapped\r\n\t\t\t\tif (target.id === 'dospelatable') {\r\n\t\t\t\t\tconsole.log('Selecting first row after table data loaded');\r\n\t\t\t\t\tsetTimeout(() => {\r\n\t\t\t\t\t\tconst firstRow = document.querySelector('#tab4 table tbody tr');\r\n\t\t\t\t\t\tconsole.log('First row element:', firstRow);\r\n\t\t\t\t\t\tif (firstRow) {\r\n\t\t\t\t\t\t\tconsole.log('Clicking first row, row has hx attributes:', firstRow.attributes);\r\n\t\t\t\t\t\t\t// Prevent this listener from running again\r\n\t\t\t\t\t\t\tdocument.removeEventListener('htmx:afterSwap', window.handleDospelaFirstRow);\r\n\t\t\t\t\t\t\tfirstRow.click();\r\n\t\t\t\t\t\t}\r\n\t\t\t\t\t}, 100);\r\n\t\t\t\t}\r\n\t\t\t};\r\n\t\t\t\r\n\t\t\tdocument.addEventListener('htmx:afterSwap', window.handleDospelaFirstRow);\r\n\t\t}\r\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1731,7 +1727,7 @@ func PregledDospelogDugaPoStarosti(tabs domain.TabData, tbl domain.TableData, bt
 			templ_7745c5c3_Var14 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 73, "<!-- Container with full height --><div class=\"flex flex-col h-full\"><!-- Tab Navigation --><div class=\"border-b border-blue-600\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 72, "<!-- Container with full height --><div class=\"bg-blue-100 p-1 flex flex-col h-full\"><!-- Tab Navigation --><div class=\"border-b border-blue-600\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1739,33 +1735,33 @@ func PregledDospelogDugaPoStarosti(tabs domain.TabData, tbl domain.TableData, bt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 74, "</div><!-- Tab 6 Content --><div id=\"tab6\" class=\"flex-1 min-h-0 flex flex-col gap-1\"><!-- Parameters Section - Two Columns --><div class=\"grid grid-cols-2 gap-1\"><!-- Left Column - Radio Buttons, Konto and Sifre --><div class=\"border bg-blue-100 border border-blue-400 mt-1 p-1 rounded-lg flex flex-col gap-1\"><!-- Row 1: Radio Set - Display Type (Horizontal) --><div class=\"flex flex-row gap-4\"><label class=\"flex items-center gap-2 cursor-pointer\"><input type=\"radio\" name=\"tip_pregleda\" value=\"K\" class=\"w-4 h-4\" tabindex=\"1\" checked> <span class=\"text-sm\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 73, "</div><!-- Tab 6 Content --><div id=\"tab6\" class=\"flex-1 min-h-0 flex flex-col gap-1\"><!-- Parameters Section - Two Columns --><div class=\"grid grid-cols-2 gap-1\"><!-- Left Column - Radio Buttons, Konto and Sifre --><div class=\"border bg-blue-100 border border-blue-400 mt-1 p-1 rounded-lg flex flex-col gap-1\"><!-- Row 1: Radio Set - Display Type (Horizontal) --><div class=\"flex flex-row gap-4\"><label class=\"flex items-center gap-2 cursor-pointer\"><input type=\"radio\" name=\"tip_pregleda\" value=\"K\" class=\"w-4 h-4\" tabindex=\"1\" checked> <span class=\"text-sm\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var15 string
 		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Pregled dugovanja kupaca"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 1303, Col: 75}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 1300, Col: 75}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 75, "</span></label> <label class=\"flex items-center gap-2 cursor-pointer\"><input type=\"radio\" name=\"tip_pregleda\" value=\"D\" class=\"w-4 h-4\" tabindex=\"2\"> <span class=\"text-sm\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 74, "</span></label> <label class=\"flex items-center gap-2 cursor-pointer\"><input type=\"radio\" name=\"tip_pregleda\" value=\"D\" class=\"w-4 h-4\" tabindex=\"2\"> <span class=\"text-sm\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var16 string
 		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Pregled obaveza prema dobavljačima"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 1307, Col: 86}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 1304, Col: 86}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 76, "</span></label></div><!-- Row 2: Od Konta and Od Šifre --><div class=\"flex gap-1\"><div class=\"flex items-center gap-1 flex-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 75, "</span></label></div><!-- Row 2: Od Konta and Od Šifre --><div class=\"flex gap-1\"><div class=\"flex items-center gap-1 flex-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1793,7 +1789,7 @@ func PregledDospelogDugaPoStarosti(tabs domain.TabData, tbl domain.TableData, bt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 77, "</div><div class=\"flex items-center gap-1 flex-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 76, "</div><div class=\"flex items-center gap-1 flex-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1821,7 +1817,7 @@ func PregledDospelogDugaPoStarosti(tabs domain.TabData, tbl domain.TableData, bt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 78, "</div></div><!-- Row 3: Do Konta and Do Šifre --><div class=\"flex gap-1\"><div class=\"flex items-center gap-1 flex-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 77, "</div></div><!-- Row 3: Do Konta and Do Šifre --><div class=\"flex gap-1\"><div class=\"flex items-center gap-1 flex-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1849,7 +1845,7 @@ func PregledDospelogDugaPoStarosti(tabs domain.TabData, tbl domain.TableData, bt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 79, "</div><div class=\"flex items-center gap-1 flex-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 78, "</div><div class=\"flex items-center gap-1 flex-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1877,7 +1873,7 @@ func PregledDospelogDugaPoStarosti(tabs domain.TabData, tbl domain.TableData, bt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 80, "</div></div></div><!-- Right Column - Date and Checkbox with Buttons --><div class=\"border bg-blue-100 border border-blue-400 mt-1 p-1 rounded-lg flex flex-col gap-1\"><!-- Row 1: Stanje na dan and Checkbox --><div class=\"flex items-center gap-1\"><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 79, "</div></div></div><!-- Right Column - Date and Checkbox with Buttons --><div class=\"border bg-blue-100 border border-blue-400 mt-1 p-1 rounded-lg flex flex-col gap-1\"><!-- Row 1: Stanje na dan and Checkbox --><div class=\"flex items-center gap-1\"><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1901,7 +1897,7 @@ func PregledDospelogDugaPoStarosti(tabs domain.TabData, tbl domain.TableData, bt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 81, "</div></div><!-- Row 2: Buttons - Bottom Right Aligned --><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 80, "</div></div><!-- Row 2: Buttons - Bottom Right Aligned --><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1993,7 +1989,7 @@ func PregledDospelogDugaPoStarosti(tabs domain.TabData, tbl domain.TableData, bt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 82, "</div><div class=\"flex gap-1 justify-end mt-auto\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 81, "</div><div class=\"flex gap-1 justify-end mt-auto\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2005,7 +2001,7 @@ func PregledDospelogDugaPoStarosti(tabs domain.TabData, tbl domain.TableData, bt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 83, "</div></div></div><!-- Group Data Table --><div class=\"border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 82, "</div></div></div><!-- Group Data Table --><div class=\"border bg-blue-100 border border-blue-400 p-1 rounded-lg flex flex-col min-h-0 overflow-hidden flex-1 relative\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2017,7 +2013,7 @@ func PregledDospelogDugaPoStarosti(tabs domain.TabData, tbl domain.TableData, bt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 84, "<!-- Table --><div id=\"dugovanjatable\" class=\"flex-1 overflow-x-auto overflow-y-auto min-h-0\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 83, "<!-- Table --><div id=\"dugovanjatable\" class=\"flex-1 overflow-x-auto overflow-y-auto min-h-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2025,7 +2021,7 @@ func PregledDospelogDugaPoStarosti(tabs domain.TabData, tbl domain.TableData, bt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 85, "</div></div></div></div><!-- Dialog display container--><div id=\"dialog-content\"></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 84, "</div></div></div><!-- Dialog display container--><div id=\"dialog-content\"></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2067,7 +2063,7 @@ func PovezivanjeRacunaUplata(tabs domain.TabData, tblPartneri, tblUplate, tblFak
 			templ_7745c5c3_Var17 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 86, "<!-- Container with full height --><div class=\"flex flex-col h-full\"><!-- Tab Navigation --><div class=\"border-b border-blue-600\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 85, "<!-- Container with full height --><div class=\"bg-blue-100 p-1 flex flex-col h-full\"><!-- Tab Navigation --><div class=\"border-b border-blue-600\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2075,7 +2071,7 @@ func PovezivanjeRacunaUplata(tabs domain.TabData, tblPartneri, tblUplate, tblFak
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 87, "</div><!-- Tab 7 Content --><div id=\"tab7\" class=\"flex-1 min-h-0 flex flex-col gap-1\"><!-- Parameters Section --><div class=\"border bg-blue-100 border-blue-400 mt-1 p-1 rounded-lg flex flex-row gap-2\"><!-- Left: Input fields --><div class=\"flex flex-col gap-1 flex-1\"><!-- Konto Field --><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 86, "</div><!-- Tab 7 Content --><div id=\"tab7\" class=\"flex-1 min-h-0 flex flex-col gap-1\"><!-- Parameters Section --><div class=\"border bg-blue-100 border-blue-400 mt-1 p-1 rounded-lg flex flex-row gap-2\"><!-- Left: Input fields --><div class=\"flex flex-col gap-1 flex-1\"><!-- Konto Field --><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2127,7 +2123,7 @@ func PovezivanjeRacunaUplata(tabs domain.TabData, tblPartneri, tblUplate, tblFak
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 88, "</div><!-- Počev od šifre --><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 87, "</div><!-- Počev od šifre --><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2180,7 +2176,7 @@ func PovezivanjeRacunaUplata(tabs domain.TabData, tblPartneri, tblUplate, tblFak
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 89, "</div><!-- Zaključno sa šifrom --><div class=\"flex items-center gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 88, "</div><!-- Zaključno sa šifrom --><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2233,7 +2229,7 @@ func PovezivanjeRacunaUplata(tabs domain.TabData, tblPartneri, tblUplate, tblFak
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 90, "</div></div><!-- Right: Buttons + Iznosi fieldset --><div class=\"flex flex-col gap-1 flex-1\"><!-- Buttons row --><div class=\"flex items-center gap-1 justify-end\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 89, "</div></div><!-- Right: Buttons + Iznosi fieldset --><div class=\"flex flex-col gap-1 flex-1\"><!-- Buttons row --><div class=\"flex items-center gap-1 justify-end\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2249,7 +2245,7 @@ func PovezivanjeRacunaUplata(tabs domain.TabData, tblPartneri, tblUplate, tblFak
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 91, "</div><!-- Iznosi fieldset - single row, fills parent --><fieldset class=\"px-2 pt-0 w-full\"><div class=\"grid grid-cols-3 gap-2\"><div class=\"flex flex-col gap-0.5\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 90, "</div><!-- Iznosi fieldset - single row, fills parent --><fieldset class=\"px-2 pt-0 w-full\"><div class=\"grid grid-cols-3 gap-2\"><div class=\"flex flex-col gap-0.5\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2274,7 +2270,7 @@ func PovezivanjeRacunaUplata(tabs domain.TabData, tblPartneri, tblUplate, tblFak
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 92, "</div><div class=\"flex flex-col gap-0.5\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 91, "</div><div class=\"flex flex-col gap-0.5\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2299,7 +2295,7 @@ func PovezivanjeRacunaUplata(tabs domain.TabData, tblPartneri, tblUplate, tblFak
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 93, "</div><div class=\"flex flex-col gap-0.5\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 92, "</div><div class=\"flex flex-col gap-0.5\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2324,7 +2320,7 @@ func PovezivanjeRacunaUplata(tabs domain.TabData, tblPartneri, tblUplate, tblFak
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 94, "</div></div></fieldset></div></div><!-- Data Section: Two Columns --><div class=\"flex flex-row gap-1 flex-1 min-h-0\"><!-- Left Column: PARTNERI --><div class=\"flex flex-col border bg-blue-100 border-blue-400 p-1 rounded-lg min-h-0 overflow-hidden w-1/2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 93, "</div></div></fieldset></div></div><!-- Data Section: Two Columns --><div class=\"flex flex-row gap-1 flex-1 min-h-0\"><!-- Left Column: PARTNERI --><div class=\"flex flex-col border bg-blue-100 border-blue-400 p-1 rounded-lg min-h-0 overflow-hidden w-1/2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2340,7 +2336,7 @@ func PovezivanjeRacunaUplata(tabs domain.TabData, tblPartneri, tblUplate, tblFak
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 95, "</div><!-- Right Column: UPLATE + RAČUNI stacked --><div class=\"flex flex-col gap-1 w-1/2 min-h-0\"><!-- UPLATE --><div class=\"flex flex-col border bg-blue-100 border-blue-400 p-1 rounded-lg min-h-0 overflow-hidden flex-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 94, "</div><!-- Right Column: UPLATE + RAČUNI stacked --><div class=\"flex flex-col gap-1 w-1/2 min-h-0\"><!-- UPLATE --><div class=\"flex flex-col border bg-blue-100 border-blue-400 p-1 rounded-lg min-h-0 overflow-hidden flex-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2348,7 +2344,7 @@ func PovezivanjeRacunaUplata(tabs domain.TabData, tblPartneri, tblUplate, tblFak
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 96, "</div><!-- RAČUNI --><div class=\"flex flex-col border bg-blue-100 border-blue-400 p-1 rounded-lg min-h-0 overflow-hidden flex-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 95, "</div><!-- RAČUNI --><div class=\"flex flex-col border bg-blue-100 border-blue-400 p-1 rounded-lg min-h-0 overflow-hidden flex-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2356,7 +2352,7 @@ func PovezivanjeRacunaUplata(tabs domain.TabData, tblPartneri, tblUplate, tblFak
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 97, "</div></div></div></div></div><!-- Dialog display container --><div id=\"pov-dialog-content\"></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 96, "</div></div></div></div><!-- Dialog display container --><div id=\"pov-dialog-content\"></div><div id=\"search-dropdown\"></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2365,10 +2361,6 @@ func PovezivanjeRacunaUplata(tabs domain.TabData, tblPartneri, tblUplate, tblFak
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = components.SpinnerScript().Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 98, "<div id=\"search-dropdown\"></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

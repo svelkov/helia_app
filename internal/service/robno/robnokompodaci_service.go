@@ -62,7 +62,7 @@ func (s *RobnoKompodaciResource) GetPregledRealizacijePoKupcimaArtiklima(ctx con
 	if userSession == nil {
 		return errors.New("user session not found")
 	}
-
+	vrdParam := []any{130, 131, 188, 189}
 	common.SetupTablePagination(tbl, page, pageSize)
 	hasGod, hasKar := s.rproRepo.GetHasGodHasKar()
 	fkplGodKar := ""
@@ -108,7 +108,7 @@ func (s *RobnoKompodaciResource) GetPregledRealizacijePoKupcimaArtiklima(ctx con
 	if hasKar {
 		qb.AddEqual("rpro.kar", userSession.SelectedKar)
 	}
-	qb.AddIn("rdok.vrd", []any{130, 131, 188, 189})
+	qb.AddIn("rdok.vrd", vrdParam)
 	qb.AddCondition("rsif.sifra", params.OdArtikla, ">=")
 	qb.AddCondition("rsif.sifra", params.DoArtikla, "<=")
 	qb.AddCondition("rdok.dadok", params.OdDatuma, ">=")

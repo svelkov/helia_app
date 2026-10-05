@@ -1,0 +1,21 @@
+Tailwind Width Classes (px → rem)
+Class	px	rem	Good For
+w-8	  32px	2rem	4 digits
+w-10	40px	2.5rem	4-5 digits
+w-12	48px	3rem	6 digits
+w-16	64px	4rem	8 digits
+w-20	80px	5rem	10 chars
+w-24	96px	6rem	12 chars
+w-28	112px	7rem	14 chars
+w-32	128px	8rem	16 chars
+w-36	144px	9rem	18 chars
+w-40	160px	10rem	20 chars
+w-48	192px	12rem	24 chars
+w-56	224px	14rem	28 chars
+w-60	240px	15rem	30 chars
+w-64	256px	16rem	32 chars
+w-80	320px	20rem	40 chars
+w-120	480px	30rem	60 chars
+w-160	640px	40rem	80 chars
+w-200	800px	50rem	100 chars
+w-240	960px	60rem	120 chars

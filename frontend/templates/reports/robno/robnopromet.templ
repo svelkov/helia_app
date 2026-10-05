@@ -1,0 +1,272 @@
+package robno
+
+import (
+	"fmt"
+
+	rep "helia/frontend/templates/reports"
+	"helia/i18n"
+	"helia/internal/domain"
+)
+
+// The prints of the "Robni promet" option: every print shows the same columns as the grid of its tab
+// (without the detail column) with the totals of the whole selection. paramItems is the selection of
+// the tab, rendered in the order the handler passes it (ReportParameters.ParameterItems is a map and
+// is iterated randomly).
+
+// RobnoPrometArtikalStampa renders the printable "Promet artikala po grupama za period" report (tab 1).
+templ RobnoPrometArtikalStampa(repParams domain.ReportParameters, tbl domain.TableData, paramItems []domain.ParameterItem, translator *i18n.Service) {
+	@rep.Report(repParams, tbl, translator, RobnoPrometParametri(paramItems), nil, nil)
+}
+
+// RobnoPrometKupciStampa renders the printable "Promet artikala po kupcima" report (tab 2).
+templ RobnoPrometKupciStampa(repParams domain.ReportParameters, tbl domain.TableData, paramItems []domain.ParameterItem, translator *i18n.Service) {
+	@rep.Report(repParams, tbl, translator, RobnoPrometParametri(paramItems), nil, nil)
+}
+
+// RobnoPrometDobavljaciStampa renders the printable "Nabavka po dobavljačima" report (tab 3).
+templ RobnoPrometDobavljaciStampa(repParams domain.ReportParameters, tbl domain.TableData, paramItems []domain.ParameterItem, translator *i18n.Service) {
+	@rep.Report(repParams, tbl, translator, RobnoPrometParametri(paramItems), nil, nil)
+}
+
+// RobnoPrometRucLagerStampa renders the printable "Lager lista" (tab 4, sub-tab "Lager lista") like the
+// legacy print: the columns šifra, naziv, JM, stanje, cena and vrednost and, at the end of the list,
+// the row "Ukupno za listu:" with the totals of the stanje and of the vrednost.
+templ RobnoPrometRucLagerStampa(repParams domain.ReportParameters, tbl domain.TableData, paramItems []domain.ParameterItem, translator *i18n.Service) {
+	@rep.Report(repParams, tbl, translator, RobnoPrometParametri(paramItems), nil, RobnoPrometRucLagerContent(repParams, tbl, paramItems, translator))
+}
+
+// RobnoPrometRucLagerContent renders the table of the lager list. The page header repeats on every
+// printed page through the <thead> of the table; the totals row carries the label of the legacy print
+// over the columns before the first total.
+templ RobnoPrometRucLagerContent(repParams domain.ReportParameters, tbl domain.TableData, paramItems []domain.ParameterItem, translator *i18n.Service) {
+	@rep.ReportPageHeaderScreen(repParams, RobnoPrometParametri(paramItems), translator)
+	<div class="overflow-x-auto print:overflow-visible print:mt-2 print:mb-2 print:mx-0">
+		<table class={ rep.ReportTableClass() }>
+			@rep.ReportTableColgroup(rep.ReportColumnWidths(tbl.Headers))
+			@rep.ReportTableHeadWithPageHeader(tbl, translator, rep.ReportPageHeader(repParams, RobnoPrometParametri(paramItems), translator))
+			@RobnoPrometRucLagerBody(tbl, translator)
+			if len(tbl.Totals) == len(tbl.Headers) {
+				<tfoot>
+					<tr class="grand-total bg-blue-50 font-bold border-t-2 border-blue-900 print:bg-blue-50 print:page-break-inside-avoid">
+						<td colspan={ fmt.Sprintf("%d", robnoPrometPrvaUkupnaKolona(tbl.Headers)) } class="border border-gray-300 px-1 text-sm text-right print:text-[10pt] print:px-1">
+							{ translator.Label("Ukupno za listu") }:
+						</td>
+						for j := robnoPrometPrvaUkupnaKolona(tbl.Headers); j < len(tbl.Headers); j++ {
+							<td class="border border-gray-300 px-1 text-sm text-right print:text-[10pt] print:px-1">{ tbl.Totals[j] }</td>
+						}
+					</tr>
+				</tfoot>
+			}
+		</table>
+	</div>
+	@rep.ReportEnd(nil)
+}
+
+// RobnoPrometRucLagerBody renders the rows of the lager list. When the list is printed by grupe and
+// podgrupe the service adds, like the legacy print, the header of every magacin, robna grupa and robna
+// podgrupa (the label, the number and the naziv) and their totals of the stanje and of the vrednost.
+templ RobnoPrometRucLagerBody(tbl domain.TableData, translator *i18n.Service) {
+	<tbody>
+		for _, row := range tbl.Rows {
+			switch row.ClassRow {
+				case domain.RobnoPrometLagerMagacin:
+					@robnoPrometLagerZaglavlje(translator.Label("Magacin"), row, len(tbl.Headers), "bg-gray-200 print:bg-gray-200 uppercase")
+				case domain.RobnoPrometLagerGrupa:
+					@robnoPrometLagerZaglavlje(translator.Label("Robna grupa"), row, len(tbl.Headers), "")
+				case domain.RobnoPrometLagerPodgrupa:
+					@robnoPrometLagerZaglavlje(translator.Label("Robna podgrupa"), row, len(tbl.Headers), "")
+				case domain.RobnoPrometLagerPodgrupaUkupno:
+					@robnoPrometLagerUkupno(translator.Label("Uk. za robnu podgrupu"), row, tbl.Headers, "")
+				case domain.RobnoPrometLagerGrupaUkupno:
+					@robnoPrometLagerUkupno(translator.Label("Ukupno za robnu grupu"), row, tbl.Headers, "")
+				case domain.RobnoPrometLagerMagacinUkupno:
+					@robnoPrometLagerUkupno(translator.Label("Ukupno za magacin"), row, tbl.Headers, "bg-gray-200 print:bg-gray-200 uppercase")
+				default:
+					<tr class="print:page-break-inside-avoid">
+						for j, cell := range row.Fields {
+							<td class={ robnoPrometCellClass(tbl.Headers, j) }>{ cell }</td>
+						}
+					</tr>
+			}
+		}
+	</tbody>
+}
+
+// robnoPrometLagerZaglavlje renders the header of a group of the lager list (magacin, robna grupa or
+// robna podgrupa): the label, the number in its own box and the naziv, over the whole row.
+templ robnoPrometLagerZaglavlje(label string, row domain.TableRow, columns int, class string) {
+	<tr class={ "font-bold print:page-break-inside-avoid print:page-break-after-avoid", class }>
+		<td colspan={ fmt.Sprintf("%d", columns) } class="border border-gray-400 p-0 text-sm print:text-[10pt]">
+			@robnoPrometLagerOznaka(label, row)
+		</td>
+	</tr>
+}
+
+// robnoPrometLagerUkupno renders the total of a group of the lager list: the label, the number and the
+// naziv of the group over the columns before the first total, then the total of the stanje and of the
+// vrednost in their columns.
+templ robnoPrometLagerUkupno(label string, row domain.TableRow, headers []domain.Fields, class string) {
+	<tr class={ "font-bold print:page-break-inside-avoid", class }>
+		<td colspan={ fmt.Sprintf("%d", robnoPrometPrvaUkupnaKolona(headers)) } class="border border-gray-400 p-0 text-sm print:text-[10pt]">
+			@robnoPrometLagerOznaka(label, row)
+		</td>
+		for j := robnoPrometPrvaUkupnaKolona(headers); j < len(headers); j++ {
+			<td class="border border-gray-400 px-1 text-sm text-right print:text-[10pt] print:px-1">{ robnoPrometLagerUkupnoCelija(headers[j].Name, row) }</td>
+		}
+	</tr>
+}
+
+// robnoPrometLagerOznaka renders the label, the number and the naziv of a group of the lager list.
+templ robnoPrometLagerOznaka(label string, row domain.TableRow) {
+	<div class="flex items-stretch">
+		<span class="w-44 shrink-0 px-1 text-right font-normal">{ label }:</span>
+		<span class="w-10 shrink-0 px-1 border-x border-gray-400">
+			if len(row.Fields) > 0 {
+				{ row.Fields[0] }
+			}
+		</span>
+		<span class="px-2">
+			if len(row.Fields) > 1 {
+				{ row.Fields[1] }
+			}
+		</span>
+	</div>
+}
+
+// robnoPrometLagerUkupnoCelija returns the value of a total row of the lager list for a column: the
+// stanje (Fields[2]) and the vrednost (Fields[3]); the other columns are empty.
+func robnoPrometLagerUkupnoCelija(column string, row domain.TableRow) string {
+	switch {
+	case column == "stanje" && len(row.Fields) > 2:
+		return row.Fields[2]
+	case column == "vrednost" && len(row.Fields) > 3:
+		return row.Fields[3]
+	}
+	return ""
+}
+
+// robnoPrometCellClass returns the classes of one cell of the lager list, honouring the alignment
+// declared by the column.
+func robnoPrometCellClass(headers []domain.Fields, index int) string {
+	align := ""
+	if index < len(headers) && headers[index].TextAlign != "" {
+		align = " text-" + headers[index].TextAlign
+	}
+	return "border border-gray-300 px-1 text-sm print:text-[10pt] print:px-1 print:break-words print:whitespace-normal" + align
+}
+
+// robnoPrometPrvaUkupnaKolona returns the index of the first column with a total: the label of the
+// totals row spans the columns before it.
+func robnoPrometPrvaUkupnaKolona(headers []domain.Fields) int {
+	for i, header := range headers {
+		if header.IncludeInTotals {
+			return i
+		}
+	}
+	return len(headers)
+}
+
+// RobnoPrometRucUlazIzlazStampa renders the printable "Ulaz/izlaz za period" (tab 4, sub-tab "Ulaz/izlaz
+// za period"): the classic report table of the columns of the chosen promet with the totals.
+templ RobnoPrometRucUlazIzlazStampa(repParams domain.ReportParameters, tbl domain.TableData, paramItems []domain.ParameterItem, translator *i18n.Service) {
+	@rep.Report(repParams, tbl, translator, RobnoPrometParametri(paramItems), nil, nil)
+}
+
+// RobnoPrometRucMagaciniStampa renders the printable "RUC po magacinima" (tab 4, sub-tab "RUC po
+// magacinima") like the legacy "PREGLED RUC-a PO MAGACINIMA": the articles under the header of their
+// magacin, the total of every magacin and, at the end of the list, the total of the list.
+templ RobnoPrometRucMagaciniStampa(repParams domain.ReportParameters, tbl domain.TableData, paramItems []domain.ParameterItem, translator *i18n.Service) {
+	@rep.Report(repParams, tbl, translator, RobnoPrometParametri(paramItems), nil, RobnoPrometRucMagaciniContent(repParams, tbl, paramItems, translator))
+}
+
+// RobnoPrometRucMagaciniContent renders the table of the RUC po magacinima. The page header repeats on
+// every printed page through the <thead> of the table.
+templ RobnoPrometRucMagaciniContent(repParams domain.ReportParameters, tbl domain.TableData, paramItems []domain.ParameterItem, translator *i18n.Service) {
+	@rep.ReportPageHeaderScreen(repParams, RobnoPrometParametri(paramItems), translator)
+	<div class="overflow-x-auto print:overflow-visible print:mt-2 print:mb-2 print:mx-0">
+		<table class={ rep.ReportTableClass() }>
+			@rep.ReportTableColgroup(rep.ReportColumnWidths(tbl.Headers))
+			@rep.ReportTableHeadWithPageHeader(tbl, translator, rep.ReportPageHeader(repParams, RobnoPrometParametri(paramItems), translator))
+			<tbody>
+				for _, row := range tbl.Rows {
+					switch row.ClassRow {
+						case domain.RobnoPrometRucMagacin:
+							@robnoPrometLagerZaglavlje(translator.Label("Magacin"), row, len(tbl.Headers), "")
+						case domain.RobnoPrometRucMagacinUkupno:
+							@robnoPrometRucUkupno(translator.Label("Ukupno za magacin")+": "+robnoPrometRucMagacin(row), row.Fields, tbl.Headers, "bg-gray-200 print:bg-gray-200")
+						default:
+							<tr class="print:page-break-inside-avoid">
+								for j, cell := range row.Fields {
+									<td class={ robnoPrometCellClass(tbl.Headers, j) }>{ cell }</td>
+								}
+							</tr>
+					}
+				}
+			</tbody>
+			if len(tbl.Totals) == len(tbl.Headers) {
+				<tfoot>
+					@robnoPrometRucUkupno(translator.Label("Ukupno za listu")+":", tbl.Totals, tbl.Headers, "grand-total bg-blue-50 print:bg-blue-50 border-t-2 border-blue-900")
+				</tfoot>
+			}
+		</table>
+	</div>
+	@rep.ReportEnd(nil)
+}
+
+// robnoPrometRucUkupno renders a total row of the RUC po magacinima: the label over the columns before
+// the first total, then the values from that column on.
+templ robnoPrometRucUkupno(label string, fields []string, headers []domain.Fields, class string) {
+	<tr class={ "font-bold print:page-break-inside-avoid", class }>
+		<td colspan={ fmt.Sprintf("%d", robnoPrometPrvaUkupnaKolona(headers)) } class="border border-gray-400 px-1 text-sm text-right print:text-[10pt] print:px-1">{ label }</td>
+		for j := robnoPrometPrvaUkupnaKolona(headers); j < len(headers); j++ {
+			<td class="border border-gray-400 px-1 text-sm text-right print:text-[10pt] print:px-1">
+				if j < len(fields) {
+					{ fields[j] }
+				}
+			</td>
+		}
+	</tr>
+}
+
+// robnoPrometRucMagacin returns "magacin - naziv" of a magacin row of the RUC po magacinima.
+func robnoPrometRucMagacin(row domain.TableRow) string {
+	if len(row.Fields) < 2 {
+		return ""
+	}
+	return row.Fields[0] + " - " + row.Fields[1]
+}
+
+// RobnoPrometRucFaktureStampa renders the printable "Izlazne fakture" (tab 4, sub-tab "Izlazne fakture")
+// like the legacy "PREGLED FAKTURA": the fakture under the header of their magacin, the total of every
+// magacin and the total of the list (the same layout as the RUC po magacinima).
+templ RobnoPrometRucFaktureStampa(repParams domain.ReportParameters, tbl domain.TableData, paramItems []domain.ParameterItem, translator *i18n.Service) {
+	@rep.Report(repParams, tbl, translator, RobnoPrometParametri(paramItems), nil, RobnoPrometRucMagaciniContent(repParams, tbl, paramItems, translator))
+}
+
+// RobnoPrometGradilisteStampa renders the printable "Izveštaj zaduženja gradilišta" report (tab 5).
+templ RobnoPrometGradilisteStampa(repParams domain.ReportParameters, tbl domain.TableData, paramItems []domain.ParameterItem, translator *i18n.Service) {
+	@rep.Report(repParams, tbl, translator, RobnoPrometParametri(paramItems), nil, nil)
+}
+
+// RobnoPrometGradilisteVpcNcStampa renders the printable "Izveštaj zaduženja gradilišta VPC-NC"
+// report (tab 6).
+templ RobnoPrometGradilisteVpcNcStampa(repParams domain.ReportParameters, tbl domain.TableData, paramItems []domain.ParameterItem, translator *i18n.Service) {
+	@rep.Report(repParams, tbl, translator, RobnoPrometParametri(paramItems), nil, nil)
+}
+
+// RobnoPrometParametri renders the selection of a robni promet print in the order of the slice (same
+// markup as the shared ReportPageHeaderParams, which cannot be used here because it renders the
+// unordered map).
+templ RobnoPrometParametri(items []domain.ParameterItem) {
+	<div class="flex flex-wrap items-center justify-center gap-x-4 gap-y-0.5 text-[10px] print:text-[9pt] leading-tight print:gap-x-2 print:gap-y-0">
+		for _, item := range items {
+			<span class="whitespace-nowrap">
+				if item.Name != "" {
+					<span class="font-semibold">{ item.Name }</span>
+					<span>:</span>
+				}
+				<span class="font-bold">{ item.Value }</span>
+			</span>
+		}
+	</div>
+}

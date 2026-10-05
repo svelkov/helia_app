@@ -4,9 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 
+	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
 	"helia/internal/repository"
@@ -27,7 +29,7 @@ type RobnoDokumentaService interface {
 	GetVrstaDokumentaComboValues(context.Context) ([]domain.ComboItem, error)
 
 	// Tab 1 - Unos dokumenta
-	GetUnosDokumenta(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.RobnoDokumentaParams) error
+	GetUnosDokumenta(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage, pageSize int, params domain.RobnoDokumentaParams) error
 	GetUnosDokumentaTotal(ctx context.Context, total *domain.RobnoDokumentaTotal) error
 	GetNextNalog(ctx context.Context, tipdok string) (int, error)
 	GetByTipdokNalog(ctx context.Context, tipdok string, nalog int) (domain.Rnal, error)
@@ -36,29 +38,38 @@ type RobnoDokumentaService interface {
 	UpdateUnosDokumenta(ctx context.Context, rnalID int64, params domain.RobnoDokumentaParams) error
 
 	// Tab 2 - Pregled dokumenta (sub-tabs "Štampa" and "eFaktura")
-	GetPregledStampa(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.RobnoDokumentaParams) error
-	GetPregledEFaktura(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.RobnoDokumentaParams) error
+	GetPregledStampa(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage, pageSize int, params domain.RobnoDokumentaParams, printType string) error
+	GetPregledEFaktura(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage, pageSize int, params domain.RobnoDokumentaParams) error
+
+	// Tab 3 - Specifikacije dokumenta (the grid is the one of the "Štampa" sub-tab of "Pregled
+	// dokumenta"; the tab adds the ranges of the vrste naloga, of the broj naloga and of the broj
+	// dokumenta and the state of the print).
+	GetSpecifikacijeDokumenta(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage, pageSize int, params domain.RobnoDokumentaParams, printType string) error
 
 	// Tab 4 - Kontiranje dokumenata (sub-tabs "Knjiženje dokumenata", "Pregled proknjiženih /
 	// neproknjiženih dokumenata" and "Pregled proknjiženih / neproknjiženih dokumenata po
 	// magacinima").
-	GetKontiranjeKnjizenje(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.RobnoDokumentaParams) error
-	GetKontiranjePregled(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.RobnoDokumentaParams) error
-	GetKontiranjePoMagacinima(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.RobnoDokumentaParams) error
+	GetKontiranjeKnjizenje(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage, pageSize int, params domain.RobnoDokumentaParams) error
+	GetKontiranjePregled(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage, pageSize int, params domain.RobnoDokumentaParams) error
+	GetKontiranjePoMagacinima(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage, pageSize int, params domain.RobnoDokumentaParams) error
 
 	// Tab 6 - Prikaz ukupne obrade
-	GetPrikazUkupneObrade(ctx context.Context, tbl *domain.TableData, pageSize int) error
+	GetPrikazUkupneObrade(ctx context.Context, tbl *domain.TableData, getTotRecords bool, currentPage, pageSize int, printType string) error
 
 	// Tab 7 - Prikaz naloga
-	GetPrikazNaloga(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.RobnoDokumentaParams) error
+	GetPrikazNaloga(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage, pageSize int, params domain.RobnoDokumentaParams, printType string) error
 
 	// Tab 8 - Prikaz dokumenata u nalogu (the parameters of the tab are the same selection of nalozi
 	// as the "Prikaz naloga" tab, its rows are the robni dokumenti of those nalozi).
-	GetPrikazDokumenataUNalogu(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.RobnoDokumentaParams) error
+	GetPrikazDokumenataUNalogu(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage, pageSize int, params domain.RobnoDokumentaParams, printType string) error
 
-	// Tab 9 - Prikaz dokumenata po operateru (the same robni dokumenti as tab 8, grouped by the
-	// operater of the document).
-	GetPrikazDokumenataPooperateru(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.RobnoDokumentaParams) error
+	// Tab 9 - Prikaz dokumenata po operateru (the robni dokumenti of tab 8 grouped by the operater of
+	// the document, with the number of his documents and of their stavke and his duguje/potražuje).
+	GetPrikazDokumenataPoOperateru(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage, pageSize int, params domain.RobnoDokumentaParams, printType string) error
+
+	// Štampa fakture: the fakture of the selection ready to print (the report RobnoStampaFaktura, the
+	// legacy ROB_RPT_STAMPA_FAKTURA) and the izdavalac (fvr) of the print.
+	GetStampaFaktura(ctx context.Context, params domain.RobnoStampaFakturaParams) ([]domain.RobnoStampaFakturaView, domain.RobnoStampaFakturaFirmaDto, error)
 
 	GetUnosDokumentaTableFields() []domain.Fields
 	GetPregledDokumentaTableFields() []domain.Fields
@@ -73,39 +84,27 @@ type RobnoDokumentaService interface {
 	GetPrikazNalogaTableFields() []domain.Fields
 	GetPrikazDokumenataUNaloguTableFields() []domain.Fields
 	GetPrikazDokumenataPooperateruTableFields() []domain.Fields
+	GetFaktureStavkeTableFields() []domain.Fields
+	GetFaktureAvansiTableFields() []domain.Fields
 }
 
 type RobnoDokumentaResource struct {
-	// rnalRepo, rnalTotalsRepo and rnalHeaderRepo are the repositories of the robni nalozi (rnal):
-	// the grid of the "Unos dokumenta" tab, the totals behind its "Prikaz ukupne obrade" panel and
-	// the header of a nalog used by the save of that tab.
-	rnalRepo       repository.BaseRepository[domain.RobnoDokumentaDto]
-	rnalTotalsRepo repository.BaseRepository[domain.RobnoDokumentaTotalsDto]
-	rnalHeaderRepo repository.BaseRepository[domain.Rnal]
-	// pregledStampaRepo and pregledEFakturaRepo are the repositories of the grids of the "Pregled
-	// dokumenta" tab (they only carry the row type and the table of the query: rnal joined with rdok).
-	pregledStampaRepo   repository.BaseRepository[domain.RobnoDokumentaDto]
-	pregledEFakturaRepo repository.BaseRepository[domain.RobnoDokumentaDto]
-	// kontiranjeRepo is the repository of the grids of the "Kontiranje dokumenata" tab (they all
-	// read the robni dokumenti of the current period from rdok).
-	kontiranjeRepo repository.BaseRepository[domain.RobnoDokumentaDto]
-	// prikazUkupneObradeRepo is the repository of the grid of the "Prikaz ukupne obrade" tab (the
-	// magacini of the current period with the totals of their robni nalozi).
+	robnaDokRepo           repository.BaseRepository[domain.RobnoDokumentaDto]
+	rnalTotalsRepo         repository.BaseRepository[domain.RobnoDokumentaTotalsDto]
+	rnalHeaderRepo         repository.BaseRepository[domain.Rnal]
 	prikazUkupneObradeRepo repository.BaseRepository[domain.PrikazUkupneObradeDto]
-	// prikazNalogaRepo is the repository of the grid of the "Prikaz naloga" tab (the robni nalozi
-	// of the current period).
-	prikazNalogaRepo repository.BaseRepository[domain.RobnoDokumentaDto]
-	// prikazDokumenataUNaloguRepo is the repository of the grid of the "Prikaz dokumenata u nalogu"
-	// tab (the robni dokumenti of the selected nalozi).
-	prikazDokumenataUNaloguRepo repository.BaseRepository[domain.RobnoDokumentaDto]
-	// prikazDokumenataPooperateruRepo is the repository of the grid of the "Prikaz dokumenata po
-	// operateru" tab (the same robni dokumenti, grouped by their operater).
-	prikazDokumenataPooperateruRepo repository.BaseRepository[domain.RobnoDokumentaDto]
-	tipdokRepo                      repository.BaseRepository[domain.Tipdok]
-	dokvrstaRepo                    repository.BaseRepository[domain.Dokvrsta]
-	magRepo                         repository.BaseRepository[domain.Magacini]
-	fvrRepo                         repository.BaseRepository[domain.Fvr]
-	commonSvc                       commonsvc.CommonService
+	tipdokRepo             repository.BaseRepository[domain.Tipdok]
+	dokvrstaRepo           repository.BaseRepository[domain.Dokvrsta]
+	magRepo                repository.BaseRepository[domain.Magacini]
+	fvrRepo                repository.BaseRepository[domain.Fvr]
+	commonSvc              commonsvc.CommonService
+
+	// The queries of the štampa fakture (GetStampaFaktura): the stavke with the header of their
+	// document, the avansi closed on the fakture, their rate and the izdavalac.
+	stampaFakturaRepo      repository.BaseRepository[domain.RobnoStampaFakturaRowDto]
+	stampaFakturaAvansRepo repository.BaseRepository[domain.RobnoStampaFakturaAvansDto]
+	stampaFakturaRateRepo  repository.BaseRepository[domain.RobnoStampaFakturaRataDto]
+	stampaFakturaFirmaRepo repository.BaseRepository[domain.RobnoStampaFakturaFirmaDto]
 
 	// TODO: add the repositories needed by the remaining tabs (rdok - robni dokument,
 	// rpro - robni promet, rsif - artikli, fkpl, ...). All the grids of the option share the row type
@@ -122,50 +121,49 @@ type RobnoDokumentaResource struct {
 	prepisDokumentaTableFields             []domain.Fields
 	prikazUkupneObradeTableFields          []domain.Fields
 	prikazNalogaTableFields                []domain.Fields
+	prikazNalogaPrintTableFields           []domain.Fields
 	prikazDokumenataUNaloguTableFields     []domain.Fields
 	prikazDokumenataPooperateruTableFields []domain.Fields
+	faktureStavkeTableFields               []domain.Fields
+	faktureAvansiTableFields               []domain.Fields
 }
 
 // NewRobnoDokumentaService creates the service of the "Robna dokumenta" option.
 func NewRobnoDokumentaService(
-	rnalRepo repository.BaseRepository[domain.RobnoDokumentaDto],
+	robnaDokRepo repository.BaseRepository[domain.RobnoDokumentaDto],
 	rnalTotalsRepo repository.BaseRepository[domain.RobnoDokumentaTotalsDto],
 	rnalHeaderRepo repository.BaseRepository[domain.Rnal],
-	pregledStampaRepo repository.BaseRepository[domain.RobnoDokumentaDto],
-	pregledEFakturaRepo repository.BaseRepository[domain.RobnoDokumentaDto],
-	kontiranjeRepo repository.BaseRepository[domain.RobnoDokumentaDto],
 	prikazUkupneObradeRepo repository.BaseRepository[domain.PrikazUkupneObradeDto],
-	prikazNalogaRepo repository.BaseRepository[domain.RobnoDokumentaDto],
-	prikazDokumenataUNaloguRepo repository.BaseRepository[domain.RobnoDokumentaDto],
-	prikazDokumenataPooperateruRepo repository.BaseRepository[domain.RobnoDokumentaDto],
 	tipdokRepo repository.BaseRepository[domain.Tipdok],
 	dokvrstaRepo repository.BaseRepository[domain.Dokvrsta],
 	magRepo repository.BaseRepository[domain.Magacini],
 	fvrRepo repository.BaseRepository[domain.Fvr],
 	commonSvc commonsvc.CommonService,
+	stampaFakturaRepo repository.BaseRepository[domain.RobnoStampaFakturaRowDto],
+	stampaFakturaAvansRepo repository.BaseRepository[domain.RobnoStampaFakturaAvansDto],
+	stampaFakturaRateRepo repository.BaseRepository[domain.RobnoStampaFakturaRataDto],
+	stampaFakturaFirmaRepo repository.BaseRepository[domain.RobnoStampaFakturaFirmaDto],
 ) *RobnoDokumentaResource {
 	s := &RobnoDokumentaResource{
-		rnalRepo:                        rnalRepo,
-		rnalTotalsRepo:                  rnalTotalsRepo,
-		rnalHeaderRepo:                  rnalHeaderRepo,
-		pregledStampaRepo:               pregledStampaRepo,
-		pregledEFakturaRepo:             pregledEFakturaRepo,
-		kontiranjeRepo:                  kontiranjeRepo,
-		prikazUkupneObradeRepo:          prikazUkupneObradeRepo,
-		prikazNalogaRepo:                prikazNalogaRepo,
-		prikazDokumenataUNaloguRepo:     prikazDokumenataUNaloguRepo,
-		prikazDokumenataPooperateruRepo: prikazDokumenataPooperateruRepo,
-		tipdokRepo:                      tipdokRepo,
-		dokvrstaRepo:                    dokvrstaRepo,
-		magRepo:                         magRepo,
-		fvrRepo:                         fvrRepo,
-		commonSvc:                       commonSvc,
+		robnaDokRepo:           robnaDokRepo,
+		rnalTotalsRepo:         rnalTotalsRepo,
+		rnalHeaderRepo:         rnalHeaderRepo,
+		prikazUkupneObradeRepo: prikazUkupneObradeRepo,
+		tipdokRepo:             tipdokRepo,
+		dokvrstaRepo:           dokvrstaRepo,
+		magRepo:                magRepo,
+		fvrRepo:                fvrRepo,
+		commonSvc:              commonSvc,
+		stampaFakturaRepo:      stampaFakturaRepo,
+		stampaFakturaAvansRepo: stampaFakturaAvansRepo,
+		stampaFakturaRateRepo:  stampaFakturaRateRepo,
+		stampaFakturaFirmaRepo: stampaFakturaFirmaRepo,
 	}
 	s.setTableFields()
 	return s
 }
 
-// GetFvrData retrieves company (fvr) data of the current session (used for the report headers).
+// GetFvrData retrieves company (fvr) data of the current session (report headers).
 func (s *RobnoDokumentaResource) GetFvrData(ctx context.Context) (domain.Fvr, error) {
 	return common.GetFvrData(ctx, &s.fvrRepo)
 }
@@ -175,8 +173,7 @@ func (s *RobnoDokumentaResource) GetMagacinComboValues(ctx context.Context) ([]d
 	return s.commonSvc.GetMagacinComboValues(ctx)
 }
 
-// GetTipdokComboValues returns the vrste naloga of the current period keyed by the tipdok code
-// (CommonService).
+// GetTipdokComboValues returns the vrste naloga of the current period keyed by the tipdok code.
 func (s *RobnoDokumentaResource) GetTipdokComboValues(ctx context.Context) ([]domain.ComboItem, error) {
 	return s.commonSvc.GetTipdokComboValues(ctx)
 }
@@ -186,10 +183,8 @@ func (s *RobnoDokumentaResource) GetVrstaDokumentaComboValues(ctx context.Contex
 	return s.commonSvc.GetVrstaDokumentaComboValues(ctx)
 }
 
-// GetUnosDokumenta returns the robni nalozi (rnal) of the selected vrsta naloga for the grid of
-// the "Unos dokumenta" tab. When getTotalRecords is true only the number of records is set on the
-// table (the query runs without LIMIT/OFFSET), otherwise the rows of the requested page are set.
-func (s *RobnoDokumentaResource) GetUnosDokumenta(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.RobnoDokumentaParams) error {
+// GetUnosDokumenta returns the robni nalozi (rnal) of the selected vrsta naloga for the grid.
+func (s *RobnoDokumentaResource) GetUnosDokumenta(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage, pageSize int, params domain.RobnoDokumentaParams) error {
 	userSession := domain.GetSessionFromStdContext(ctx)
 	if userSession == nil {
 		return fmt.Errorf("no user session found")
@@ -213,7 +208,7 @@ func (s *RobnoDokumentaResource) GetUnosDokumenta(ctx context.Context, tbl *doma
 		qb.SetOffset((currentPage - 1) * pageSize)
 	}
 	sqlQuery, args := qb.Build()
-	entities, err := s.rnalRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.robnaDokRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
 	if err != nil {
 		return err
 	}
@@ -243,8 +238,7 @@ func (s *RobnoDokumentaResource) GetUnosDokumenta(ctx context.Context, tbl *doma
 	return nil
 }
 
-// GetUnosDokumentaTotal fills the "Prikaz ukupne obrade" panel: the totals of all robni nalozi
-// of the current period (god/kar), like the legacy screen shows them.
+// GetUnosDokumentaTotal fills the "Prikaz ukupne obrade" panel of the tab.
 func (s *RobnoDokumentaResource) GetUnosDokumentaTotal(ctx context.Context, total *domain.RobnoDokumentaTotal) error {
 	userSession := domain.GetSessionFromStdContext(ctx)
 	if userSession == nil {
@@ -267,9 +261,9 @@ func (s *RobnoDokumentaResource) GetUnosDokumentaTotal(ctx context.Context, tota
 	if len(*entities) > 0 {
 		row = (*entities)[0]
 	}
-	total.UkNaloga = fmt.Sprintf("%d", row.UkNaloga)
-	total.UkDokumenata = fmt.Sprintf("%d", row.UkDokumenata)
-	total.UkStavki = fmt.Sprintf("%d", row.UkStavki)
+	total.UkNaloga = common.FormatNumberWithSystemLocale(row.UkNaloga, 0)
+	total.UkDokumenata = common.FormatNumberWithSystemLocale(row.UkDokumenata, 0)
+	total.UkStavki = common.FormatNumberWithSystemLocale(row.UkStavki, 0)
 	total.Duguje = common.FormatNumberWithSystemLocale(row.UkDuguje, 2)
 	total.Potrazuje = common.FormatNumberWithSystemLocale(row.UkPotrazuje, 2)
 	total.Saldo = common.FormatNumberWithSystemLocale(row.UkDuguje-row.UkPotrazuje, 2)
@@ -285,9 +279,7 @@ func (s *RobnoDokumentaResource) GetNextNalog(ctx context.Context, tipdok string
 	return int(nextNalog), nil
 }
 
-// GetByTipdokNalog returns the header of the robni nalog (rnal) of the given vrsta naloga and broj
-// naloga of the current period. A zero value is returned when the nalog does not exist yet (the
-// caller then saves a new one).
+// GetByTipdokNalog returns the header of the robni nalog of a vrsta naloga and broj naloga.
 func (s *RobnoDokumentaResource) GetByTipdokNalog(ctx context.Context, tipdok string, nalog int) (domain.Rnal, error) {
 	userSession := domain.GetSessionFromStdContext(ctx)
 	if userSession == nil {
@@ -309,9 +301,7 @@ func (s *RobnoDokumentaResource) GetByTipdokNalog(ctx context.Context, tipdok st
 	return (*entities)[0], nil
 }
 
-// ValidateUnosDokumenta validates the header of the nalog of the "Unos dokumenta" tab: the vrsta
-// naloga, the broj naloga and both dates are obligatory and the vrsta naloga and the magacin have
-// to exist in the current period.
+// ValidateUnosDokumenta validates the header of the "Unos dokumenta" form.
 func (s *RobnoDokumentaResource) ValidateUnosDokumenta(ctx context.Context, params domain.RobnoDokumentaParams) []domain.FieldError {
 	fieldErrors := []domain.FieldError{}
 	if strings.TrimSpace(params.Tipdok) == "" {
@@ -338,9 +328,7 @@ func (s *RobnoDokumentaResource) ValidateUnosDokumenta(ctx context.Context, para
 	return fieldErrors
 }
 
-// CreateUnosDokumenta inserts the header of a new robni nalog (rnal). Only the columns of the
-// header are written: the totals (dug, pot, brdo, brst) stay 0 until the documents of the nalog are
-// saved, and god, kar, xopunos and xdatunosa are filled by the repository builder from the session.
+// CreateUnosDokumenta inserts the header of a new robni nalog (rnal).
 func (s *RobnoDokumentaResource) CreateUnosDokumenta(ctx context.Context, params domain.RobnoDokumentaParams) (int64, error) {
 	fields, err := s.unosDokumentaFields(ctx, params, true)
 	if err != nil {
@@ -351,10 +339,7 @@ func (s *RobnoDokumentaResource) CreateUnosDokumenta(ctx context.Context, params
 	return s.rnalHeaderRepo.Create(ctx, &domain.Rnal{}, common.IDrnal, fields)
 }
 
-// UpdateUnosDokumenta saves the header of an existing robni nalog (rnal): the vrsta naloga and the
-// broj naloga can be corrected together with the dates, the opis and the magacin. The totals are
-// left untouched (they belong to the documents of the nalog) and xopizmene/xdatizmene are filled
-// by the repository builder.
+// UpdateUnosDokumenta saves the header of an existing robni nalog (rnal).
 func (s *RobnoDokumentaResource) UpdateUnosDokumenta(ctx context.Context, rnalID int64, params domain.RobnoDokumentaParams) error {
 	fields, err := s.unosDokumentaFields(ctx, params, false)
 	if err != nil {
@@ -363,17 +348,7 @@ func (s *RobnoDokumentaResource) UpdateUnosDokumenta(ctx context.Context, rnalID
 	return s.rnalHeaderRepo.Update(ctx, &domain.Rnal{}, common.IDrnal, rnalID, fields)
 }
 
-// unosDokumentaFields returns the columns of the header of a robni nalog with the values of the
-// form of the "Unos dokumenta" tab. The vrsta naloga is resolved to idtipdok and the magacin to its
-// mag (both are what the documents of the nalog store) and god, kar, xopunos and xdatunosa are
-// added by the repository builder from the session.
-//
-// When insert is true the columns of a new nalog are added: it starts without documents, so rbr and
-// the totals are 0 and nalsts stays empty until the documents of the nalog are entered.
-//
-// TODO: the legacy save also fills rbr/nalsts of the header; they are set when the documents of the
-// nalog (rdok/rpro) are implemented. The vrsta dokumenta (vrd) is not a column of the header - it
-// selects the documents of the nalog.
+// unosDokumentaFields returns the columns of the header of a robni nalog (TODO: rbr/nalsts).
 func (s *RobnoDokumentaResource) unosDokumentaFields(ctx context.Context, params domain.RobnoDokumentaParams, insert bool) ([]domain.Fields, error) {
 	userSession := domain.GetSessionFromStdContext(ctx)
 	if userSession == nil {
@@ -440,33 +415,27 @@ func (s *RobnoDokumentaResource) magacinByID(ctx context.Context, magaciniID int
 	return (*entities)[0], nil
 }
 
-//
 // Tab 2 - Pregled dokumenta (sub-tabs "Štampa" and "eFaktura")
-//
-
-// GetPregledStampa fills the grid of the "Štampa" sub-tab: the robni dokumenti (rdok) with the
-// header of their nalog (rnal), the partner of the document (fkpl/partneri) and the data of the
-// document, filtered by magacin, vrsta dokumenta and the range of the dates of the nalog.
-//
-// The rows are ordered by the broj naloga and the broj dokumenta (the order in which the legacy
-// report prints them).
-func (s *RobnoDokumentaResource) GetPregledStampa(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.RobnoDokumentaParams) error {
+// GetPregledStampa fills the grid of the "Štampa" sub-tab of "Pregled dokumenta": the robni
+func (s *RobnoDokumentaResource) GetPregledStampa(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage, pageSize int, params domain.RobnoDokumentaParams, printType string) error {
 	userSession := domain.GetSessionFromStdContext(ctx)
 	if userSession == nil {
 		return fmt.Errorf("no user session found")
 	}
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 	tbl.Headers = s.pregledStampaTableFields
-	hasGod, hasKar := s.pregledStampaRepo.GetHasGodHasKar()
+	hasGod, hasKar := s.robnaDokRepo.GetHasGodHasKar()
 
 	qb := common.NewQueryBuilder(`
 		select
-			rnal.nalog,
-			rnal.danal,
-			rnal.datob,
+			rdok.rdokid,
+			rdok.tipdok,
+			rdok.nalog,
+			rdok.danal,
+			rdok.datob,
 			rdok.dokum,
 			rdok.dadok,
-			rdok.dop,
+			rdok.rok,
 			rdok.datiz,
 			coalesce(rdok.dokiz, '') as dokiz,
 			coalesce(rdok.iznos, 0) as iznos,
@@ -480,59 +449,61 @@ func (s *RobnoDokumentaResource) GetPregledStampa(ctx context.Context, tbl *doma
 			av.dokum as avansdokum,
 			coalesce(rdok.pornapomena, '') as pornapomena,
 			coalesce(rdok.tkonto, '') as tkonto
-		from rnal`, true)
-	qb.AddJoin("inner join rdok on rdok.rnalid = rnal.rnalid")
+		from rdok`, true)
 	qb.AddJoin("left join fkpl on fkpl.god = rdok.god and fkpl.kar = rdok.kar and fkpl.vkonta = 1 and fkpl.konto = rdok.fkto and fkpl.sifra = rdok.fana")
 	qb.AddJoin("left join partneri p on p.idpartneri = fkpl.idpartneri")
 	// The broj avansnog racuna of a document is the broj dokumenta of the avans it was created from
 	// (rdok.avansid points to that rdok row; it is 0 when the document has no avans).
 	qb.AddJoin("left join rdok av on av.rdokid = rdok.avansid")
 	if hasGod {
-		qb.AddEqual("rnal.god", userSession.SelectedGod)
+		qb.AddEqual("rdok.god", userSession.SelectedGod)
 	}
 	if hasKar {
-		qb.AddEqual("rnal.kar", userSession.SelectedKar)
-	}
-	if params.MagaciniID != 0 {
-		qb.AddEqual("rdok.magaciniid", params.MagaciniID)
+		qb.AddEqual("rdok.kar", userSession.SelectedKar)
 	}
 	if params.Vrd != "" {
 		qb.AddCondition("rdok.vrd", params.Vrd, "=")
 	}
+	if params.MagaciniID != 0 {
+		qb.AddEqual("rdok.magaciniid", params.MagaciniID)
+	}
 	if params.OdDanal != "" {
-		qb.AddCondition("rnal.danal", params.OdDanal, ">=")
+		qb.AddCondition("rdok.danal", params.OdDanal, ">=")
 	}
 	if params.DoDanal != "" {
-		qb.AddCondition("rnal.danal", params.DoDanal, "<=")
+		qb.AddCondition("rdok.danal", params.DoDanal, "<=")
 	}
 	if params.SearchText != "" {
 		qb.AddCustomSearchCondition([]string{"rdok.dokum", "rdok.dokiz", "rdok.fkto", "rdok.fana", "fkpl.naziv", "p.pib", "p.mesto"}, params.SearchText)
 	}
-	qb.AddOrderBy("rnal.nalog, rdok.dokum")
-	if !getTotalRecords {
+	qb.AddOrderBy("rdok.danal desc, rdok.tipdok desc, rdok.nalog desc, rdok.dadok desc, rdok.dokum desc")
+	if !getTotalRecords && printType != common.TipStampePrint {
 		qb.SetLimit(pageSize)
 		qb.SetOffset((currentPage - 1) * pageSize)
 	}
 	sqlQuery, args := qb.Build()
-	entities, err := s.pregledStampaRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.robnaDokRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
 	if err != nil {
 		return err
 	}
-	if getTotalRecords {
+	if getTotalRecords && printType != common.TipStampePrint {
 		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
 		return nil
 	}
 	tbl.Rows = []domain.TableRow{}
 	for _, entity := range *entities {
 		tbl.Rows = append(tbl.Rows, domain.TableRow{
+			// The id of the row is the rdokid of the document: the print of the sub-tab prints the
+			// faktura of the selected row.
+			ID: fmt.Sprintf("%d", entity.RdokID),
 			Fields: []string{
-				fmt.Sprintf("%d", entity.Nalog),
-				nullDateLabel(entity.Danal),
-				nullDateLabel(entity.Datob),
-				nullInt64Label(entity.Dokum),
-				nullDateLabel(entity.Dadok),
-				nullDateLabel(entity.Dop),
-				nullDateLabel(entity.Datiz),
+				fmt.Sprintf("%s-%d", entity.Tipdok, entity.Nalog),
+				common.FormatNullTime(entity.Danal, common.DateLayout),
+				common.FormatNullTime(entity.Datob, common.DateLayout),
+				fmt.Sprintf("%d", entity.Dokum.Int64),
+				common.FormatNullTime(entity.Dadok, common.DateLayout),
+				common.AddDaysToNullTime(entity.Dadok, int(entity.Rok.Int64), common.DateLayout),
+				common.FormatNullTime(entity.Datiz, common.DateLayout),
 				entity.Dokiz,
 				common.FormatNumberWithSystemLocale(entity.Iznos, 2),
 				entity.Fkto,
@@ -542,7 +513,7 @@ func (s *RobnoDokumentaResource) GetPregledStampa(ctx context.Context, tbl *doma
 				entity.Jbkjs,
 				entity.Adresa,
 				entity.Mesto,
-				nullInt64Label(entity.AvansDokum),
+				fmt.Sprintf("%d", entity.AvansDokum.Int64),
 				entity.Pornapomena,
 				entity.Tkonto,
 			},
@@ -553,18 +524,236 @@ func (s *RobnoDokumentaResource) GetPregledStampa(ctx context.Context, tbl *doma
 	return nil
 }
 
-// GetPregledEFaktura fills the grid of the "eFaktura" sub-tab: the robni dokumenti (rdok) of the
-// given groups of documents (dokvrsta.grpdok) with their status in the eFaktura (SEF) system,
-// filtered by the range of the dates of the documents. The list is a working list, so the newest
-// documents come first.
-func (s *RobnoDokumentaResource) GetPregledEFaktura(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.RobnoDokumentaParams) error {
+// Tab 3 - Specifikacije dokumenta
+// GetSpecifikacijeDokumenta fills the rows of the "Specifikacije dokumenta" tab: one row per stavka
+func (s *RobnoDokumentaResource) GetSpecifikacijeDokumenta(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage, pageSize int, params domain.RobnoDokumentaParams, printType string) error {
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		return fmt.Errorf("no user session found")
+	}
+	isPrint := printType == common.TipStampePrint
+	common.SetupTablePagination(tbl, currentPage, pageSize)
+	tbl.Headers = s.specifikacijeDokumentaTableFields
+	hasGod, hasKar := s.robnaDokRepo.GetHasGodHasKar()
+	qb := common.NewQueryBuilder(`
+		select
+			rdok.tipdok,
+			rdok.nalog,
+			rdok.danal,
+			rdok.vrd,
+			rdok.dokum,
+			rdok.dadok,
+			coalesce(rdok.rok, 0) as rok,
+			case when coalesce(rdok.sifval, 0) = 0 then ''
+				else coalesce(rdok.sifval::text || ' - ' || valute.naziv, rdok.sifval::text) end as valuta,
+			coalesce(rpro.fkto, '') as fkto,
+			coalesce(rpro.fana, '') as fana,
+			coalesce(fkpl.naziv, '') as naziv,
+			coalesce(rpro.iznos, 0) as iznos,
+			round(coalesce(rpro.iznos, 0) * coalesce(rpro.rab, 0) / 100, 2) as rabat,
+			round((coalesce(rpro.iznos, 0) - round(coalesce(rpro.iznos, 0) * coalesce(rpro.rab, 0) / 100, 2))
+				* coalesce(ps.pp, 0) / 100, 2) as porez,
+			coalesce(ps.pp, 0) as stopa,
+			rdok.rnalid
+		from rdok`, true)
+	qb.AddJoin("inner join rpro on rpro.rdokid = rdok.rdokid")
+	qb.AddJoin("inner join dokvrsta on dokvrsta.god = rdok.god and dokvrsta.kar = rdok.kar and dokvrsta.vrd = rdok.vrd")
+	qb.AddJoin("left join fkpl on fkpl.god = rdok.god and fkpl.kar = rdok.kar and fkpl.vkonta = 1 and fkpl.konto = rpro.fkto and fkpl.sifra = rpro.fana")
+	qb.AddJoin("left join valute on valute.sifval = rdok.sifval")
+	// The poreska stopa of the stavka (rpor.pp): the stopa of its "po" that was in force on the
+	// datum of the document, like the other robno reports read it.
+	qb.AddJoin(`left join lateral (select r.pp from rpor r
+		where r.po = rpro.po and r.datum <= rdok.dadok
+		order by r.datum desc limit 1) ps on true`)
+	// The groups of the vrste dokumenta the report covers (the legacy FAK, PRE, DIR, ARU and FZR).
+	qb.AddIn("dokvrsta.grpdok", []any{"FAK", "PRE", "DIR", "ARU", "FZR"})
+	if hasGod {
+		qb.AddEqual("rdok.god", userSession.SelectedGod)
+	}
+	if hasKar {
+		qb.AddEqual("rdok.kar", userSession.SelectedKar)
+	}
+	if params.MagaciniID != 0 {
+		qb.AddEqual("rdok.magaciniid", params.MagaciniID)
+	}
+	if params.Vrd != "" {
+		qb.AddCondition("rpro.vrd", params.Vrd, "=")
+	}
+	if params.OdVrd != "" {
+		qb.AddCondition("rdok.tipdok", params.OdVrd, ">=")
+	}
+	if params.DoVrd != "" {
+		qb.AddCondition("rdok.tipdok", params.DoVrd, "<=")
+	}
+	if params.OdDanal != "" {
+		qb.AddCondition("rdok.dadok", params.OdDanal, ">=")
+	}
+	if params.DoDanal != "" {
+		qb.AddCondition("rdok.dadok", params.DoDanal, "<=")
+	}
+	addNumberCondition(qb, "rdok.nalog", params.OdNaloga, ">=")
+	addNumberCondition(qb, "rdok.nalog", params.DoNaloga, "<=")
+	addNumberCondition(qb, "rdok.dokum", params.OdDokum, ">=")
+	addNumberCondition(qb, "rdok.dokum", params.DoDokum, "<=")
+	if params.SearchText != "" {
+		qb.AddCustomSearchCondition([]string{"rdok.dokum", "rpro.fkto", "rpro.fana", "fkpl.naziv"}, params.SearchText)
+	}
+	// The rows of a nalog and of a document stay together (the bands of the report are the nalog and
+	// the document), like the legacy ORDER BY RNALID, RDOKID.
+	qb.AddOrderBy("rdok.rnalid, rdok.rdokid, rpro.rproid")
+	if !getTotalRecords && !isPrint {
+		qb.SetLimit(pageSize)
+		qb.SetOffset((currentPage - 1) * pageSize)
+	}
+	sqlQuery, args := qb.Build()
+	entities, err := s.robnaDokRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	if err != nil {
+		return err
+	}
+	if getTotalRecords && !isPrint {
+		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
+		return nil
+	}
+
+	// The columns of the amounts of the report: the label of the bands is printed over the columns
+	// before them and every amount in its own column.
+	amountColumn := 0
+	for i, header := range tbl.Headers {
+		if header.Name == "iznos" {
+			amountColumn = i
+			break
+		}
+	}
+	type amounts struct {
+		iznos     float64
+		rabat     float64
+		porez     float64
+		zanaplatu float64
+	}
+	type stopaAmounts struct {
+		osnovica float64
+		pdv      float64
+	}
+	bandRow := func(classRow, label string, sums amounts) domain.TableRow {
+		cells := make([]string, len(tbl.Headers))
+		cells[amountColumn] = label
+		for i, value := range []float64{sums.iznos, sums.rabat, sums.porez, sums.zanaplatu} {
+			if column := amountColumn + i; column < len(cells) {
+				cells[column] = common.FormatNumberWithSystemLocale(value, 2)
+			}
+		}
+		return domain.TableRow{ClassRow: classRow, Fields: cells}
+	}
+
+	rbr := 0
+	currentNalog := int64(-1)
+	nalogSums := amounts{}
+	reportSums := amounts{}
+	stopaSums := map[float64]*stopaAmounts{}
+	var stopaOrder []float64
+	flushNalog := func() {
+		if currentNalog == -1 {
+			return
+		}
+		tbl.Rows = append(tbl.Rows, bandRow("nalog-total", i18n.GetInstance().Label("Ukupno za nalog")+":", nalogSums))
+	}
+	tbl.Rows = []domain.TableRow{}
+	for _, entity := range *entities {
+		if isPrint && entity.RnalID != currentNalog {
+			flushNalog()
+			currentNalog = entity.RnalID
+			nalogSums = amounts{}
+		}
+		rbr++
+		amountsOfStavka := amounts{
+			iznos:     entity.Iznos,
+			rabat:     entity.Rabat,
+			porez:     entity.Porez,
+			zanaplatu: entity.Iznos - entity.Rabat + entity.Porez,
+		}
+		tbl.Rows = append(tbl.Rows, domain.TableRow{
+			Fields: []string{
+				fmt.Sprintf("%d", rbr),
+				entity.Tipdok,
+				fmt.Sprintf("%d", entity.Nalog),
+				nullDateLabel(entity.Danal),
+				nullInt64Label(entity.Vrd),
+				nullInt64Label(entity.Dokum),
+				nullDateLabel(entity.Dadok),
+				nullInt64Label(entity.Rok),
+				entity.Valuta,
+				entity.Fkto,
+				entity.Fana,
+				entity.Naziv,
+				common.FormatNumberWithSystemLocale(amountsOfStavka.iznos, 2),
+				common.FormatNumberWithSystemLocale(amountsOfStavka.rabat, 2),
+				common.FormatNumberWithSystemLocale(amountsOfStavka.porez, 2),
+				common.FormatNumberWithSystemLocale(amountsOfStavka.zanaplatu, 2),
+			},
+			HasUpdate: false,
+			HasDelete: false,
+		})
+		if !isPrint {
+			continue
+		}
+		nalogSums.iznos += amountsOfStavka.iznos
+		nalogSums.rabat += amountsOfStavka.rabat
+		nalogSums.porez += amountsOfStavka.porez
+		nalogSums.zanaplatu += amountsOfStavka.zanaplatu
+		reportSums.iznos += amountsOfStavka.iznos
+		reportSums.rabat += amountsOfStavka.rabat
+		reportSums.porez += amountsOfStavka.porez
+		reportSums.zanaplatu += amountsOfStavka.zanaplatu
+		if _, found := stopaSums[entity.Stopa]; !found {
+			stopaSums[entity.Stopa] = &stopaAmounts{}
+			stopaOrder = append(stopaOrder, entity.Stopa)
+		}
+		stopaSums[entity.Stopa].osnovica += amountsOfStavka.iznos - amountsOfStavka.rabat
+		stopaSums[entity.Stopa].pdv += amountsOfStavka.porez
+	}
+	if !isPrint {
+		return nil
+	}
+	flushNalog()
+	tbl.Rows = append(tbl.Rows, bandRow("report-total", i18n.GetInstance().Label("Ukupno za izvestaj")+":", reportSums))
+
+	// The "Ambalaza" summary: the PDV of the selection per poreska stopa (the columns of the legacy
+	// report are Stopa, Osnovica and PDV) and the total of the two amount columns.
+	sort.Float64s(stopaOrder)
+	totalOsnovica, totalPdv := 0.0, 0.0
+	for _, stopa := range stopaOrder {
+		sums := stopaSums[stopa]
+		totalOsnovica += sums.osnovica
+		totalPdv += sums.pdv
+		tbl.Rows = append(tbl.Rows, domain.TableRow{
+			ClassRow: "ambalaza",
+			Fields: []string{
+				fmt.Sprintf("%s%%", common.FormatNumberWithSystemLocale(stopa, 2)),
+				common.FormatNumberWithSystemLocale(sums.osnovica, 2),
+				common.FormatNumberWithSystemLocale(sums.pdv, 2),
+			},
+		})
+	}
+	tbl.Rows = append(tbl.Rows, domain.TableRow{
+		ClassRow: "ambalaza-total",
+		Fields: []string{
+			i18n.GetInstance().Label("Ukupno") + ":",
+			common.FormatNumberWithSystemLocale(totalOsnovica, 2),
+			common.FormatNumberWithSystemLocale(totalPdv, 2),
+		},
+	})
+	return nil
+}
+
+// GetPregledEFaktura fills the grid of the "eFaktura" sub-tab (status of the documents).
+func (s *RobnoDokumentaResource) GetPregledEFaktura(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage, pageSize int, params domain.RobnoDokumentaParams) error {
 	userSession := domain.GetSessionFromStdContext(ctx)
 	if userSession == nil {
 		return fmt.Errorf("no user session found")
 	}
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 	tbl.Headers = s.pregledEFakturaTableFields
-	hasGod, hasKar := s.pregledEFakturaRepo.GetHasGodHasKar()
+	hasGod, hasKar := s.robnaDokRepo.GetHasGodHasKar()
 
 	qb := common.NewQueryBuilder(`
 		select
@@ -623,7 +812,7 @@ func (s *RobnoDokumentaResource) GetPregledEFaktura(ctx context.Context, tbl *do
 		qb.SetOffset((currentPage - 1) * pageSize)
 	}
 	sqlQuery, args := qb.Build()
-	entities, err := s.pregledEFakturaRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.robnaDokRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
 	if err != nil {
 		return err
 	}
@@ -669,24 +858,15 @@ func (s *RobnoDokumentaResource) GetPregledEFaktura(ctx context.Context, tbl *do
 // neproknjiženih dokumenata" and "Pregled proknjiženih / neproknjiženih dokumenata po magacinima")
 //
 
-// GetKontiranjeKnjizenje fills the grid of the "Knjiženje dokumenata" sub-tab: the robni dokumenti
-// (rdok) selected with the parameters of the tab (vrsta naloga za knjiženje, vrsta dokumenta,
-// magacin and the ranges of the broj naloga, the broj dokumenta and the datum naloga).
-//
-// The list is ordered by the broj naloga and the broj dokumenta, the order in which the documents
-// are posted.
-//
-// TODO: the posting ("Knjiži") and the check of the balance ("Pr. ravnotežu") of the legacy screen
-// work on this list; whether the legacy screen also hides the documents that are already posted
-// (rdok.knjige_1 = 'D') is verified together with those actions.
-func (s *RobnoDokumentaResource) GetKontiranjeKnjizenje(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.RobnoDokumentaParams) error {
+// GetKontiranjeKnjizenje fills the grid of the "Knjiženje dokumenata" sub-tab (TODO).
+func (s *RobnoDokumentaResource) GetKontiranjeKnjizenje(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage, pageSize int, params domain.RobnoDokumentaParams) error {
 	userSession := domain.GetSessionFromStdContext(ctx)
 	if userSession == nil {
 		return fmt.Errorf("no user session found")
 	}
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 	tbl.Headers = s.kontiranjeKnjizenjeTableFields
-	hasGod, hasKar := s.kontiranjeRepo.GetHasGodHasKar()
+	hasGod, hasKar := s.robnaDokRepo.GetHasGodHasKar()
 
 	qb := common.NewQueryBuilder(kontiranjeSelectQuery, true)
 	addKontiranjeConditions(qb, params, hasGod, hasKar, userSession.SelectedGod, userSession.SelectedKar)
@@ -696,39 +876,33 @@ func (s *RobnoDokumentaResource) GetKontiranjeKnjizenje(ctx context.Context, tbl
 		qb.SetOffset((currentPage - 1) * pageSize)
 	}
 	sqlQuery, args := qb.Build()
-	entities, err := s.kontiranjeRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.robnaDokRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
 	if err != nil {
 		return err
 	}
 	return s.setKontiranjeRows(tbl, entities, getTotalRecords, pageSize)
 }
 
-// GetKontiranjePregled fills the grid of the "Pregled proknjiženih / neproknjiženih dokumenata"
-// sub-tab: the robni dokumenti (rdok) of the selection, either the posted (rdok.knjige_1 = 'D') or
-// the not posted ones, according to the radio buttons of the sub-tab.
-func (s *RobnoDokumentaResource) GetKontiranjePregled(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.RobnoDokumentaParams) error {
+// GetKontiranjePregled fills the grid of the "Pregled proknjiženih / neproknjiženih" sub-tab.
+func (s *RobnoDokumentaResource) GetKontiranjePregled(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage, pageSize int, params domain.RobnoDokumentaParams) error {
 	tbl.Headers = s.kontiranjePregledTableFields
-	return s.getKontiranjePregledList(ctx, tbl, getTotalRecords, pageSize, currentPage, params, "rdok.nalog, rdok.dokum")
+	return s.getKontiranjePregledList(ctx, tbl, getTotalRecords, currentPage, pageSize, params, "rdok.nalog, rdok.dokum")
 }
 
-// GetKontiranjePoMagacinima fills the grid of the "Pregled proknjiženih / neproknjiženih dokumenata
-// po magacinima" sub-tab: the same rows as GetKontiranjePregled, grouped by magacin (the legacy
-// screen differs from the previous one by the magacin of the row and shows the vrsta naloga).
-func (s *RobnoDokumentaResource) GetKontiranjePoMagacinima(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.RobnoDokumentaParams) error {
+// GetKontiranjePoMagacinima fills the same grid grouped by the magacin of the document.
+func (s *RobnoDokumentaResource) GetKontiranjePoMagacinima(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage, pageSize int, params domain.RobnoDokumentaParams) error {
 	tbl.Headers = s.kontiranjePoMagacinimaTableFields
-	return s.getKontiranjePregledList(ctx, tbl, getTotalRecords, pageSize, currentPage, params, "rdok.magaciniid, rdok.nalog, rdok.dokum")
+	return s.getKontiranjePregledList(ctx, tbl, getTotalRecords, currentPage, pageSize, params, "rdok.magaciniid, rdok.nalog, rdok.dokum")
 }
 
-// getKontiranjePregledList runs the query of the two "Pregled ..." sub-tabs of the "Kontiranje
-// dokumenata" tab (they share the filters and the date of the rows, they differ in the order and in
-// the columns).
-func (s *RobnoDokumentaResource) getKontiranjePregledList(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.RobnoDokumentaParams, orderBy string) error {
+// getKontiranjePregledList runs the shared query of the two "Pregled ..." sub-tabs.
+func (s *RobnoDokumentaResource) getKontiranjePregledList(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage, pageSize int, params domain.RobnoDokumentaParams, orderBy string) error {
 	userSession := domain.GetSessionFromStdContext(ctx)
 	if userSession == nil {
 		return fmt.Errorf("no user session found")
 	}
 	common.SetupTablePagination(tbl, currentPage, pageSize)
-	hasGod, hasKar := s.kontiranjeRepo.GetHasGodHasKar()
+	hasGod, hasKar := s.robnaDokRepo.GetHasGodHasKar()
 
 	qb := common.NewQueryBuilder(kontiranjeSelectQuery, true)
 	addKontiranjeConditions(qb, params, hasGod, hasKar, userSession.SelectedGod, userSession.SelectedKar)
@@ -739,7 +913,7 @@ func (s *RobnoDokumentaResource) getKontiranjePregledList(ctx context.Context, t
 		qb.SetOffset((currentPage - 1) * pageSize)
 	}
 	sqlQuery, args := qb.Build()
-	entities, err := s.kontiranjeRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.robnaDokRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
 	if err != nil {
 		return err
 	}
@@ -769,10 +943,7 @@ const kontiranjeSelectQuery = `
 		coalesce(rdok.knjige_1, '') as knjige1
 	from rdok`
 
-// addKontiranjeConditions adds the filters of the "Kontiranje dokumenata" tab: the current period,
-// the magacin, the vrsta naloga za knjiženje, the vrsta dokumenta and the ranges of the broj
-// naloga, the broj dokumenta and the datum naloga. An empty range is not filtered; a range that is
-// not a number (or not a date) is ignored so that a partially typed form never breaks the query.
+// addKontiranjeConditions adds the filters of the "Kontiranje dokumenata" tab.
 func addKontiranjeConditions(qb *common.QueryBuilder, params domain.RobnoDokumentaParams, hasGod, hasKar bool, god, kar int) {
 	if hasGod {
 		qb.AddEqual("rdok.god", god)
@@ -804,9 +975,7 @@ func addKontiranjeConditions(qb *common.QueryBuilder, params domain.RobnoDokumen
 	}
 }
 
-// addKontiranjeStatusCondition adds the state of the posting selected with the radio buttons of the
-// "Pregled proknjiženih / neproknjiženih dokumenata" sub-tabs. The legacy screens keep the state of
-// every robni dokument in rdok.knjige_1 ('D' = proknjižen, 'N' = neproknjižen).
+// addKontiranjeStatusCondition adds the state of the posting (rdok.knjige_1).
 func addKontiranjeStatusCondition(qb *common.QueryBuilder, proknjizen string) {
 	if proknjizen == knjigeProknjizen {
 		qb.AddCustomCondition("rdok.knjige_1 = 'D'")
@@ -815,8 +984,7 @@ func addKontiranjeStatusCondition(qb *common.QueryBuilder, proknjizen string) {
 	qb.AddCustomCondition("coalesce(rdok.knjige_1, '') <> 'D'")
 }
 
-// addNumberCondition adds a condition of a whole number (the ranges of the grid are typed as text
-// and are only applied when they are a valid number).
+// addNumberCondition adds a condition of a whole number (validated ranges only).
 func addNumberCondition(qb *common.QueryBuilder, field, value, operator string) {
 	if value == "" {
 		return
@@ -827,8 +995,7 @@ func addNumberCondition(qb *common.QueryBuilder, field, value, operator string) 
 	qb.AddCondition(field, value, operator)
 }
 
-// setKontiranjeRows sets the total number of records or the rows of the page (the cells are built
-// from the headers of the grid, so every sub-tab shows its own columns in its own order).
+// setKontiranjeRows sets the total records or the rows of the page of the tab.
 func (s *RobnoDokumentaResource) setKontiranjeRows(tbl *domain.TableData, entities *[]domain.RobnoDokumentaDto, getTotalRecords bool, pageSize int) error {
 	if getTotalRecords {
 		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
@@ -874,8 +1041,7 @@ func kontiranjeCell(entity domain.RobnoDokumentaDto, field string) string {
 	return ""
 }
 
-// grupeDokumenata splits the "Grupe dokumenata" filter of the eFaktura sub-tab (a comma separated
-// list of dokvrsta.grpdok codes) into the values of an IN condition.
+// grupeDokumenata splits the "Grupe dokumenata" filter into the values of an IN condition.
 func grupeDokumenata(value string) []any {
 	groups := []any{}
 	for _, part := range strings.Split(value, ",") {
@@ -896,7 +1062,7 @@ func nullInt64Label(value sql.NullInt64) string {
 	return fmt.Sprintf("%d", value.Int64)
 }
 
-// nullFloat64Label renders a nullable decimal number of the grid ("" when there is none).
+// nullFloat64Label renders a nullable decimal number of the grid ("" when none).
 func nullFloat64Label(value sql.NullFloat64) string {
 	if !value.Valid {
 		return ""
@@ -923,61 +1089,81 @@ func nullDateLabel(value sql.NullTime) string {
 	return value.Time.Format(common.DateLayout)
 }
 
-//
-// Tab 6 - Prikaz ukupne obrade
-//
-
-// prikazUkupneObradeQuery is the row of the grid of the "Prikaz ukupne obrade" tab: every magacin
-// of the current period (god/kar) with the number of the robni nalozi (rnal) of that magacin and
-// their totals. The totals of a magacin without a nalog are 0 (left join), like the legacy screen
-// lists all magacini.
-//
-// The god/kar of the magacini are the first two parameters of the query; the sub query uses the
-// same values, so it reads them once more as $1/$2.
-const prikazUkupneObradeQuery = `
-	select
-		m.mag,
-		coalesce(m.opis, '') as opis,
-		coalesce(m.mesto, '') as mesto,
-		coalesce(t.brojnaloga, 0) as brojnaloga,
-		coalesce(t.ukdokumenata, 0) as ukdokumenata,
-		coalesce(t.brstavki, 0) as brstavki,
-		coalesce(t.duguje, 0) as duguje,
-		coalesce(t.potrazuje, 0) as potrazuje
-	from magacini m
-	left join (
-		select
-			rnal.magaciniid,
-			count(*) as brojnaloga,
-			coalesce(sum(rnal.brdo), 0)::int as ukdokumenata,
-			coalesce(sum(rnal.brst), 0)::int as brstavki,
-			coalesce(sum(rnal.dug), 0) as duguje,
-			coalesce(sum(rnal.pot), 0) as potrazuje
-		from rnal
-		where rnal.god = $1 and rnal.kar = $2
-		group by rnal.magaciniid
-	) t on t.magaciniid = m.magaciniid
-	where m.god = $1 and m.kar = $2
-	order by m.mag`
-
-// GetPrikazUkupneObrade fills the grid of the "Prikaz ukupne obrade" tab: the totals of the robni
-// nalozi of every magacin of the current period (the tab has no parameters of the selection and
-// the whole list fits on one page).
-func (s *RobnoDokumentaResource) GetPrikazUkupneObrade(ctx context.Context, tbl *domain.TableData, pageSize int) error {
+// GetPrikazUkupneObrade fills the grid of the "Prikaz ukupne obrade" tab (totals per magacin).
+func (s *RobnoDokumentaResource) GetPrikazUkupneObrade(ctx context.Context, tbl *domain.TableData, getTotRecords bool, currentPage, pageSize int, printType string) error {
 	userSession := domain.GetSessionFromStdContext(ctx)
 	if userSession == nil {
 		return fmt.Errorf("no user session found")
 	}
-	common.SetupTablePagination(tbl, 1, pageSize)
+	common.SetupTablePagination(tbl, currentPage, pageSize)
 	tbl.Headers = s.prikazUkupneObradeTableFields
-
-	entities, err := s.prikazUkupneObradeRepo.GetAllCustom(ctx, prikazUkupneObradeQuery, "", []any{userSession.SelectedGod, userSession.SelectedKar}, "", "")
+	qb := common.NewQueryBuilder(`SELECT
+			m.mag,
+				COALESCE(m.opis, '') AS opis,
+				COALESCE(m.mesto, '') AS mesto,
+				COALESCE(n.brojnaloga, 0)::int AS brojnaloga,
+				COALESCE(d.ukdokumenata, 0)::int AS ukdokumenata,
+				COALESCE(s.brstavki, 0)::int AS brstavki,
+				COALESCE(n.duguje, 0) AS duguje,
+				COALESCE(n.potrazuje, 0) AS potrazuje
+			FROM magacini m
+			LEFT JOIN (
+				SELECT
+					r.magaciniid,
+					COUNT(*) AS brojnaloga,
+					SUM(r.dug) AS duguje,
+					SUM(r.pot) AS potrazuje
+				FROM rnal r
+				GROUP BY r.magaciniid
+			) n
+				ON n.magaciniid = m.magaciniid
+			LEFT JOIN (
+				SELECT
+					r.magaciniid,
+					COUNT(DISTINCT d.rdokid) AS ukdokumenata
+				FROM rnal r
+				JOIN rdok d
+					ON d.rnalid = r.rnalid
+				GROUP BY r.magaciniid
+			) d
+				ON d.magaciniid = m.magaciniid
+			LEFT JOIN (
+				SELECT
+					r.magaciniid,
+					COUNT(*) AS brstavki
+				FROM rnal r
+				JOIN rdok d
+					ON d.rnalid = r.rnalid
+				JOIN rpro p
+					ON p.rdokid = d.rdokid
+				GROUP BY r.magaciniid
+			) s
+				ON s.magaciniid = m.magaciniid `, true)
+	qb.AddEqual("m.god", userSession.SelectedGod)
+	qb.AddEqual("m.kar", userSession.SelectedKar)
+	if !getTotRecords {
+		qb.SetLimit(pageSize)
+		qb.SetOffset((currentPage - 1) * pageSize)
+	}
+	qb.AddOrderBy("m.mag")
+	sqlQuery, args := qb.Build()
+	entities, err := s.prikazUkupneObradeRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
 	if err != nil {
 		return err
 	}
-	common.SetTableTotalRecords(tbl, len(*entities), pageSize)
+	if getTotRecords && printType == common.TipStampePreview {
+		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
+		return nil
+	}
 	tbl.Rows = []domain.TableRow{}
+	var ukupnoBrojNaloga, ukupnoDokumenata, ukupnoStavki int
+	var ukupnoDuguje, ukupnoPotrazuje float64
 	for _, entity := range *entities {
+		ukupnoBrojNaloga += entity.BrojNaloga
+		ukupnoDokumenata += entity.UkDokumenata
+		ukupnoStavki += entity.BrStavki
+		ukupnoDuguje += entity.Duguje
+		ukupnoPotrazuje += entity.Potrazuje
 		tbl.Rows = append(tbl.Rows, domain.TableRow{
 			Fields: []string{
 				fmt.Sprintf("%d", entity.Mag),
@@ -993,27 +1179,41 @@ func (s *RobnoDokumentaResource) GetPrikazUkupneObrade(ctx context.Context, tbl 
 			HasDelete: false,
 		})
 	}
+	// The printed report closes with the "Ukupno" line; the print preview of the tab (TipStampePreview)
+	// shows the rows of the magacini only.
+	if printType == common.TipStampePrint && len(tbl.Rows) > 0 {
+		tbl.Rows = append(tbl.Rows, domain.TableRow{
+			IsGroupTotal: true,
+			Fields: []string{
+				i18n.GetInstance().Label("Ukupno"),
+				"",
+				"",
+				fmt.Sprintf("%d", ukupnoBrojNaloga),
+				fmt.Sprintf("%d", ukupnoDokumenata),
+				fmt.Sprintf("%d", ukupnoStavki),
+				common.FormatNumberWithSystemLocale(ukupnoDuguje, 2),
+				common.FormatNumberWithSystemLocale(ukupnoPotrazuje, 2),
+			},
+			HasUpdate: false,
+			HasDelete: false,
+		})
+	}
 	return nil
 }
 
-//
 // Tab 7 - Prikaz naloga
-//
-
-// GetPrikazNaloga fills the grid of the "Prikaz naloga" tab: the robni nalozi (rnal) of the
-// current period selected with the parameters of the tab (magacin, range of the vrste naloga and
-// range of the broj naloga). The filters "Po datumu naloga", "Po datumu obrade" and "Po
-// operateru" are applied only when their checkbox is checked, like the legacy screen does.
-//
-// The rows are ordered by the vrsta naloga and the broj naloga.
-func (s *RobnoDokumentaResource) GetPrikazNaloga(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.RobnoDokumentaParams) error {
+// GetPrikazNaloga fills the grid of the "Prikaz naloga" tab (robni nalozi).
+func (s *RobnoDokumentaResource) GetPrikazNaloga(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage, pageSize int, params domain.RobnoDokumentaParams, printType string) error {
 	userSession := domain.GetSessionFromStdContext(ctx)
 	if userSession == nil {
 		return fmt.Errorf("no user session found")
 	}
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 	tbl.Headers = s.prikazNalogaTableFields
-	hasGod, hasKar := s.prikazNalogaRepo.GetHasGodHasKar()
+	if printType == common.TipStampePrint {
+		tbl.Headers = s.prikazNalogaPrintTableFields
+	}
+	hasGod, hasKar := s.robnaDokRepo.GetHasGodHasKar()
 
 	qb := common.NewQueryBuilder(`
 		select
@@ -1026,7 +1226,7 @@ func (s *RobnoDokumentaResource) GetPrikazNaloga(ctx context.Context, tbl *domai
 			coalesce(rnal.brst, 0) as brst,
 			coalesce(rnal.dug, 0) as dug,
 			coalesce(rnal.pot, 0) as pot,
-			coalesce(rnal.oper, '') as oper,
+			coalesce(rnal.xopunos, '') as oper,
 			rnal.magaciniid
 		from rnal`, true)
 	if hasGod {
@@ -1046,6 +1246,7 @@ func (s *RobnoDokumentaResource) GetPrikazNaloga(ctx context.Context, tbl *domai
 	}
 	addNumberCondition(qb, "rnal.nalog", params.OdNaloga, ">=")
 	addNumberCondition(qb, "rnal.nalog", params.DoNaloga, "<=")
+	// The three optional filters of the tab, each one applied only when its checkbox is on.
 	if params.ChkDatumNaloga {
 		if params.OdDanal != "" {
 			qb.AddCondition("rnal.danal", params.OdDanal, ">=")
@@ -1063,61 +1264,73 @@ func (s *RobnoDokumentaResource) GetPrikazNaloga(ctx context.Context, tbl *domai
 		}
 	}
 	if params.ChkOperator && params.Oper != "" {
-		qb.AddLike("rnal.oper", params.Oper)
+		qb.AddCustomSearchCondition([]string{"rnal.xopunos", "rnal.xopizmene"}, params.Oper)
 	}
 	if params.SearchText != "" {
-		qb.AddCustomSearchCondition([]string{"rnal.tipdok", "rnal.nalog", "rnal.oper", "rnal.opis"}, params.SearchText)
+		qb.AddCustomSearchCondition([]string{"rnal.tipdok", "rnal.nalog", "rnal.xopunos", "rnal.opis"}, params.SearchText)
 	}
-	qb.AddOrderBy("rnal.tipdok, rnal.nalog")
-	if !getTotalRecords {
+	qb.AddOrderBy("rnal.tipdok, rnal.nalog desc")
+	if !getTotalRecords && printType != common.TipStampePrint {
 		qb.SetLimit(pageSize)
 		qb.SetOffset((currentPage - 1) * pageSize)
 	}
 	sqlQuery, args := qb.Build()
-	entities, err := s.prikazNalogaRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.robnaDokRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
 	if err != nil {
 		return err
 	}
-	if getTotalRecords {
+	if getTotalRecords && printType != common.TipStampePrint {
 		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
 		return nil
 	}
 	tbl.Rows = []domain.TableRow{}
 	for i, entity := range *entities {
-		tbl.Rows = append(tbl.Rows, domain.TableRow{
-			Fields: []string{
-				fmt.Sprintf("%d", (currentPage-1)*pageSize+i+1),
-				fmt.Sprintf("%d", entity.RnalID),
-				fmt.Sprintf("%d", entity.Nalog),
-				nullDateLabel(entity.Danal),
-				nullDateLabel(entity.Datob),
-				fmt.Sprintf("%d", entity.Brdo),
-				fmt.Sprintf("%d", entity.Brst),
-				common.FormatNumberWithSystemLocale(entity.Dug, 2),
-				common.FormatNumberWithSystemLocale(entity.Pot, 2),
-				entity.Oper,
-			},
-			HasUpdate: false,
-			HasDelete: false,
-		})
+		if printType == common.TipStampePrint {
+			tbl.Rows = append(tbl.Rows, domain.TableRow{
+				Fields: []string{
+					fmt.Sprintf("%d", (currentPage-1)*pageSize+i+1),
+					fmt.Sprintf("%s-%d", entity.Tipdok, entity.Nalog),
+					nullDateLabel(entity.Danal),
+					nullDateLabel(entity.Datob),
+					fmt.Sprintf("%d", entity.Brdo),
+					fmt.Sprintf("%d", entity.Brst),
+					common.FormatNumberWithSystemLocale(entity.Dug, 2),
+					common.FormatNumberWithSystemLocale(entity.Pot, 2),
+					entity.Oper,
+				},
+				HasUpdate: false,
+				HasDelete: false})
+		} else {
+			tbl.Rows = append(tbl.Rows, domain.TableRow{
+				Fields: []string{
+					fmt.Sprintf("%d", (currentPage-1)*pageSize+i+1),
+					"🔽",
+					fmt.Sprintf("%s-%d", entity.Tipdok, entity.Nalog),
+					nullDateLabel(entity.Danal),
+					nullDateLabel(entity.Datob),
+					fmt.Sprintf("%d", entity.Brdo),
+					fmt.Sprintf("%d", entity.Brst),
+					common.FormatNumberWithSystemLocale(entity.Dug, 2),
+					common.FormatNumberWithSystemLocale(entity.Pot, 2),
+					entity.Oper,
+				},
+				HasUpdate: false,
+				HasDelete: false})
+		}
 	}
 	return nil
 }
 
+// Tab 8 - Prikaz dokumenata u nalogu
 // GetPrikazDokumenataUNalogu fills the grid of the "Prikaz dokumenata u nalogu" tab: the robni
-// dokumenti (rdok) of the nalozi selected with the parameters of the tab (magacin, range of the
-// vrste naloga and range of the broj naloga). The filters "Po datumu naloga", "Po datumu obrade"
-// and "Po operateru" are applied only when their checkbox is checked, like the legacy screen.
-//
-// The rows are ordered by the vrsta naloga, the broj naloga and the broj dokumenta.
-func (s *RobnoDokumentaResource) GetPrikazDokumenataUNalogu(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.RobnoDokumentaParams) error {
+func (s *RobnoDokumentaResource) GetPrikazDokumenataUNalogu(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage, pageSize int, params domain.RobnoDokumentaParams, printType string) error {
 	userSession := domain.GetSessionFromStdContext(ctx)
 	if userSession == nil {
 		return fmt.Errorf("no user session found")
 	}
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 	tbl.Headers = s.prikazDokumenataUNaloguTableFields
-	hasGod, hasKar := s.prikazDokumenataUNaloguRepo.GetHasGodHasKar()
+	hasGod, hasKar := s.robnaDokRepo.GetHasGodHasKar()
 
 	qb := common.NewQueryBuilder(`
 		select
@@ -1130,7 +1343,7 @@ func (s *RobnoDokumentaResource) GetPrikazDokumenataUNalogu(ctx context.Context,
 			coalesce(rdok.brst, 0) as brst,
 			coalesce(rdok.iznos, 0) as iznos,
 			rdok.datob,
-			coalesce(rdok.oper, '') as oper,
+			coalesce(nullif(rdok.xopunos, ''), rdok.xopunos, '') as oper,
 			rdok.magaciniid
 		from rdok`, true)
 	if hasGod {
@@ -1166,23 +1379,25 @@ func (s *RobnoDokumentaResource) GetPrikazDokumenataUNalogu(ctx context.Context,
 			qb.AddCondition("rdok.datob", params.DoDatob, "<=")
 		}
 	}
+	// The operater filter of the legacy screen looks in both the user of the insert (xopunos) and
+	// the user of the last change (xopizmene) of the document.
 	if params.ChkOperator && params.Oper != "" {
-		qb.AddLike("rdok.oper", params.Oper)
+		qb.AddCustomSearchCondition([]string{"rdok.xopunos", "rdok.xopizmene"}, params.Oper)
 	}
 	if params.SearchText != "" {
-		qb.AddCustomSearchCondition([]string{"rdok.tipdok", "rdok.nalog", "rdok.dokum", "rdok.opis", "rdok.oper"}, params.SearchText)
+		qb.AddCustomSearchCondition([]string{"rdok.tipdok", "rdok.nalog", "rdok.dokum", "rdok.opis", "rdok.xopunos", "rdok.xopizmene"}, params.SearchText)
 	}
-	qb.AddOrderBy("rdok.tipdok, rdok.nalog, rdok.dokum")
-	if !getTotalRecords {
+	qb.AddOrderBy("rdok.nalog, rdok.vrd, rdok.dokum")
+	if !getTotalRecords && printType != common.TipStampePrint {
 		qb.SetLimit(pageSize)
 		qb.SetOffset((currentPage - 1) * pageSize)
 	}
 	sqlQuery, args := qb.Build()
-	entities, err := s.prikazDokumenataUNaloguRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.robnaDokRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
 	if err != nil {
 		return err
 	}
-	if getTotalRecords {
+	if getTotalRecords && printType != common.TipStampePrint {
 		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
 		return nil
 	}
@@ -1208,43 +1423,34 @@ func (s *RobnoDokumentaResource) GetPrikazDokumenataUNalogu(ctx context.Context,
 	return nil
 }
 
-// GetPrikazDokumenataPooperateru fills the grid of the "Prikaz dokumenata po operateru" tab: the
-// same robni dokumenti (rdok) of the current period as the "Prikaz dokumenata u nalogu" tab, but
-// grouped by the operater of the document (the legacy screen prints them per operator). The panel of
-// the tab has no magacin and no vrsta naloga selection, so those filters are not applied; the filters
-// "Po datumu naloga", "Po datumu obrade" and "Po operateru" are applied only when their checkbox is
-// checked, like the legacy screen does.
-//
-// The rows are ordered by the operater, the vrsta naloga, the broj naloga and the broj dokumenta.
-func (s *RobnoDokumentaResource) GetPrikazDokumenataPooperateru(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.RobnoDokumentaParams) error {
+// Tab 9 - Prikaz dokumenata po operateru
+// GetPrikazDokumenataPoOperateru fills the grid of the "Prikaz dokumenata po operateru" tab: the
+// robni dokumenti (rdok) of the selection grouped by the operater of the document (its xopizmene
+// when it was changed, else its xopunos), with the number of his documents and of their stavke and
+// the sums of duguje/potražuje of his documents by the konta 'D'/'P' (dokvrsta.kodknj), like the
+// legacy procedure builds its per-operater table. With printType = TipStampePrint the whole result
+// is returned unpaginated (the print of the tab).
+func (s *RobnoDokumentaResource) GetPrikazDokumenataPoOperateru(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage, pageSize int, params domain.RobnoDokumentaParams, printType string) error {
 	userSession := domain.GetSessionFromStdContext(ctx)
 	if userSession == nil {
 		return fmt.Errorf("no user session found")
 	}
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 	tbl.Headers = s.prikazDokumenataPooperateruTableFields
-	hasGod, hasKar := s.prikazDokumenataPooperateruRepo.GetHasGodHasKar()
 
 	qb := common.NewQueryBuilder(`
 		select
-			rdok.tipdok,
-			rdok.nalog,
-			rdok.danal,
-			rdok.vrd,
-			rdok.dokum,
-			rdok.dadok,
-			coalesce(rdok.brst, 0) as brst,
-			coalesce(rdok.iznos, 0) as iznos,
-			rdok.datob,
-			coalesce(rdok.oper, '') as oper,
-			rdok.magaciniid
-		from rdok`, true)
-	if hasGod {
-		qb.AddEqual("rdok.god", userSession.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("rdok.kar", userSession.SelectedKar)
-	}
+			coalesce(nullif(rdok.xopunos, ''), rdok.xopunos, '') as oper,
+			count(*)::int as brdo,
+			coalesce(sum(rdok.brst), 0)::int as brst,
+			coalesce(sum(case when upper(coalesce(dokvrsta.kodknj, '')) = 'D' then coalesce(rdok.iznos, 0) else 0 end), 0) as dug,
+			coalesce(sum(case when upper(coalesce(dokvrsta.kodknj, '')) = 'P' then coalesce(rdok.iznos, 0) else 0 end), 0) as pot
+		from rdok
+		left join dokvrsta on dokvrsta.god = rdok.god and dokvrsta.kar = rdok.kar and dokvrsta.vrd = rdok.vrd`, true)
+	// The period of the session must scope the documents. The row type of this option has no
+	// god/kar db tags (GetHasGodHasKar reports false), so the two conditions are added explicitly.
+	qb.AddEqual("rdok.god", userSession.SelectedGod)
+	qb.AddEqual("rdok.kar", userSession.SelectedKar)
 	addNumberCondition(qb, "rdok.nalog", params.OdNaloga, ">=")
 	addNumberCondition(qb, "rdok.nalog", params.DoNaloga, "<=")
 	if params.ChkDatumNaloga {
@@ -1263,40 +1469,35 @@ func (s *RobnoDokumentaResource) GetPrikazDokumenataPooperateru(ctx context.Cont
 			qb.AddCondition("rdok.datob", params.DoDatob, "<=")
 		}
 	}
+	// The operater filter of the legacy screen looks in both the user of the insert (xopunos) and
+	// the user of the last change (xopizmene) of the document.
 	if params.ChkOperator && params.Oper != "" {
-		qb.AddLike("rdok.oper", params.Oper)
+		qb.AddCustomSearchCondition([]string{"rdok.xopunos", "rdok.xopizmene"}, params.Oper)
 	}
-	if params.SearchText != "" {
-		qb.AddCustomSearchCondition([]string{"rdok.tipdok", "rdok.nalog", "rdok.dokum", "rdok.opis", "rdok.oper"}, params.SearchText)
-	}
-	qb.AddOrderBy("rdok.oper, rdok.tipdok, rdok.nalog, rdok.dokum")
-	if !getTotalRecords {
+	qb.AddGroupBy("coalesce(nullif(rdok.xopunos, ''), rdok.xopunos, '')")
+	qb.AddOrderBy("oper")
+	if !getTotalRecords && printType != common.TipStampePrint {
 		qb.SetLimit(pageSize)
 		qb.SetOffset((currentPage - 1) * pageSize)
 	}
 	sqlQuery, args := qb.Build()
-	entities, err := s.prikazDokumenataPooperateruRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.robnaDokRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
 	if err != nil {
 		return err
 	}
-	if getTotalRecords {
+	if getTotalRecords && printType != common.TipStampePrint {
 		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
 		return nil
 	}
 	tbl.Rows = []domain.TableRow{}
-	for i, entity := range *entities {
+	for _, entity := range *entities {
 		tbl.Rows = append(tbl.Rows, domain.TableRow{
 			Fields: []string{
-				fmt.Sprintf("%d", (currentPage-1)*pageSize+i+1),
-				fmt.Sprintf("%d", entity.Nalog),
-				nullDateLabel(entity.Danal),
-				nullInt64Label(entity.Vrd),
-				nullInt64Label(entity.Dokum),
-				nullDateLabel(entity.Dadok),
-				fmt.Sprintf("%d", entity.Brst),
-				common.FormatNumberWithSystemLocale(entity.Iznos, 2),
-				nullDateLabel(entity.Datob),
 				entity.Oper,
+				fmt.Sprintf("%d", entity.Brdo),
+				fmt.Sprintf("%d", entity.Brst),
+				common.FormatNumberWithSystemLocale(entity.Dug, 2),
+				common.FormatNumberWithSystemLocale(entity.Pot, 2),
 			},
 			HasUpdate: false,
 			HasDelete: false,
@@ -1305,57 +1506,81 @@ func (s *RobnoDokumentaResource) GetPrikazDokumenataPooperateru(ctx context.Cont
 	return nil
 }
 
-// Table fields - one getter per tab.
+// GetUnosDokumentaTableFields returns the grid columns of the "Unos dokumenta" tab.
 func (s *RobnoDokumentaResource) GetUnosDokumentaTableFields() []domain.Fields {
 	return s.unosDokumentaTableFields
 }
 
+// GetPregledDokumentaTableFields returns the grid columns of the "Pregled dokumenta" tab.
 func (s *RobnoDokumentaResource) GetPregledDokumentaTableFields() []domain.Fields {
 	return s.pregledDokumentaTableFields
 }
 
+// GetPregledStampaTableFields returns the grid columns of the "Štampa" sub-tab.
 func (s *RobnoDokumentaResource) GetPregledStampaTableFields() []domain.Fields {
 	return s.pregledStampaTableFields
 }
 
+// GetPregledEFakturaTableFields returns the grid columns of the "eFaktura" sub-tab.
 func (s *RobnoDokumentaResource) GetPregledEFakturaTableFields() []domain.Fields {
 	return s.pregledEFakturaTableFields
 }
 
+// GetSpecifikacijeDokumentaTableFields returns the (still empty) grid columns of the tab.
 func (s *RobnoDokumentaResource) GetSpecifikacijeDokumentaTableFields() []domain.Fields {
 	return s.specifikacijeDokumentaTableFields
 }
 
+// GetKontiranjeKnjizenjeTableFields returns the grid columns of the "Knjiženje" sub-tab.
 func (s *RobnoDokumentaResource) GetKontiranjeKnjizenjeTableFields() []domain.Fields {
 	return s.kontiranjeKnjizenjeTableFields
 }
 
+// GetKontiranjePregledTableFields returns the grid columns of the "Pregled" sub-tab.
 func (s *RobnoDokumentaResource) GetKontiranjePregledTableFields() []domain.Fields {
 	return s.kontiranjePregledTableFields
 }
 
+// GetKontiranjePoMagacinimaTableFields returns the columns of the "po magacinima" sub-tab.
 func (s *RobnoDokumentaResource) GetKontiranjePoMagacinimaTableFields() []domain.Fields {
 	return s.kontiranjePoMagacinimaTableFields
 }
 
+// GetPrepisDokumentaTableFields returns the (still empty) grid columns of the tab.
 func (s *RobnoDokumentaResource) GetPrepisDokumentaTableFields() []domain.Fields {
 	return s.prepisDokumentaTableFields
 }
 
+// GetPrikazUkupneObradeTableFields returns the columns of the "Prikaz ukupne obrade" tab.
 func (s *RobnoDokumentaResource) GetPrikazUkupneObradeTableFields() []domain.Fields {
 	return s.prikazUkupneObradeTableFields
 }
 
+// GetPrikazNalogaTableFields returns the grid columns of the "Prikaz naloga" tab.
 func (s *RobnoDokumentaResource) GetPrikazNalogaTableFields() []domain.Fields {
 	return s.prikazNalogaTableFields
 }
 
+// GetPrikazDokumenataUNaloguTableFields returns the columns of the "u nalogu" tab.
 func (s *RobnoDokumentaResource) GetPrikazDokumenataUNaloguTableFields() []domain.Fields {
 	return s.prikazDokumenataUNaloguTableFields
 }
 
+// GetPrikazDokumenataPooperateruTableFields returns the columns of the "po operateru" tab.
 func (s *RobnoDokumentaResource) GetPrikazDokumenataPooperateruTableFields() []domain.Fields {
 	return s.prikazDokumenataPooperateruTableFields
+}
+
+// GetFaktureStavkeTableFields returns the columns of the grid of the stavke of the "Fakture
+// veleprodaje" screen.
+func (s *RobnoDokumentaResource) GetFaktureStavkeTableFields() []domain.Fields {
+	return s.faktureStavkeTableFields
+}
+
+// GetFaktureAvansiTableFields returns the columns of the grid of the avansi of the "Fakture
+// veleprodaje" screen.
+func (s *RobnoDokumentaResource) GetFaktureAvansiTableFields() []domain.Fields {
+	return s.faktureAvansiTableFields
 }
 
 // setTableFields defines the grid columns of every tab of the "Robna dokumenta" option.
@@ -1423,9 +1648,27 @@ func (s *RobnoDokumentaResource) setTableFields() {
 		{Name: "salesinvoiceid", Label: "Sales", Width: "10", TextAlign: "right", SkipInSearch: true},
 	}
 
-	// Tab 3 - "Specifikacije dokumenta"
-	// TODO: columns of the document specifications.
-	s.specifikacijeDokumentaTableFields = []domain.Fields{}
+	// Tab 3 - "Specifikacije dokumenta": one row per stavka (rpro) of the robni dokumenti (rdok) of
+	// the selection, with the columns of the legacy report RobSpecifikacijaFakture ("SPECIFIKACIJA
+	// EKSTERNIH RACUNA") - the header of the document, its partner and the amounts of the stavka.
+	s.specifikacijeDokumentaTableFields = []domain.Fields{
+		{Name: "rbr", Label: "Red. br.", Width: "4", TextAlign: "right", SkipInSearch: true},
+		{Name: "tipdok", Label: "Vrsta naloga", Width: "5", TextAlign: "center"},
+		{Name: "nalog", Label: "Broj naloga", Width: "5", TextAlign: "right"},
+		{Name: "danal", Label: "Datum naloga", Width: "7", TextAlign: "center"},
+		{Name: "vrd", Label: "Vrsta dokum.", Width: "5", TextAlign: "center"},
+		{Name: "dokum", Label: "Broj dokum.", Width: "5", TextAlign: "right"},
+		{Name: "dadok", Label: "Datum dokumenta", Width: "7", TextAlign: "center"},
+		{Name: "rok", Label: "Rok", Width: "4", TextAlign: "center", SkipInSearch: true},
+		{Name: "valuta", Label: "Valuta", Width: "5", SkipInSearch: true},
+		{Name: "fkto", Label: "Kupac", Width: "5"},
+		{Name: "fana", Label: "Šifra", Width: "5"},
+		{Name: "naziv", Label: "Naziv kupca", Width: "16"},
+		{Name: "iznos", Label: "Iznos", Width: "8", TextAlign: "right", SkipInSearch: true, IncludeInTotals: true},
+		{Name: "rabat", Label: "Rabat", Width: "7", TextAlign: "right", SkipInSearch: true, IncludeInTotals: true},
+		{Name: "porez", Label: "Porez", Width: "7", TextAlign: "right", SkipInSearch: true, IncludeInTotals: true},
+		{Name: "zanaplatu", Label: "Za naplatu", Width: "9", TextAlign: "right", SkipInSearch: true, IncludeInTotals: true},
+	}
 
 	// Tab 4 - "Kontiranje dokumenata": one row per robni dokument (rdok) with the data the legacy
 	// screen shows before the posting, with the vrsta naloga and the datum naloga of the document.
@@ -1488,7 +1731,7 @@ func (s *RobnoDokumentaResource) setTableFields() {
 	// Tab 7 - "Prikaz naloga": one row per robni nalog (rnal) with the totals it was saved with.
 	s.prikazNalogaTableFields = []domain.Fields{
 		{Name: "rbr", Label: "Red. broj", Width: "7", TextAlign: "right", SkipInSearch: true},
-		{Name: "rnalid", Label: "ID", Width: "8", TextAlign: "right", SkipInSearch: true},
+		{Name: "detalji", Label: "Detalji", Width: "8", TextAlign: "right", SkipInSearch: true},
 		{Name: "nalog", Label: "Broj naloga", Width: "9", TextAlign: "right", Sortable: true},
 		{Name: "danal", Label: "Datum naloga", Width: "9", TextAlign: "center", Sortable: true},
 		{Name: "datob", Label: "Datum obrade", Width: "9", TextAlign: "center", Sortable: true},
@@ -1497,6 +1740,16 @@ func (s *RobnoDokumentaResource) setTableFields() {
 		{Name: "dug", Label: "Duguje", Width: "12", TextAlign: "right", SkipInSearch: true},
 		{Name: "pot", Label: "Potražuje", Width: "12", TextAlign: "right", SkipInSearch: true},
 		{Name: "oper", Label: "Operater", Width: "10"},
+	}
+
+	// The printed "Prikaz naloga" report has no "Detalji" column (the expand arrow is a screen-only
+	// affordance): the same columns without it.
+	s.prikazNalogaPrintTableFields = make([]domain.Fields, 0, len(s.prikazNalogaTableFields))
+	for _, field := range s.prikazNalogaTableFields {
+		if field.Name == "detalji" {
+			continue
+		}
+		s.prikazNalogaPrintTableFields = append(s.prikazNalogaPrintTableFields, field)
 	}
 
 	// Tab 8 - "Prikaz dokumenata u nalogu": one row per robni dokument (rdok) of the selected
@@ -1514,18 +1767,39 @@ func (s *RobnoDokumentaResource) setTableFields() {
 		{Name: "oper", Label: "Operater", Width: "10"},
 	}
 
-	// Tab 9 - "Prikaz dokumenata po operateru": the same robni dokumenti as tab 8 (the legacy screen
-	// prints them per operator, so the operater is the first column of its grid).
+	// Tab 9 - "Prikaz dokumenata po operateru": one row per operater (the operater of a document is
+	// its xopizmene when it was changed, else its xopunos) with the number of his robni dokumenti and
+	// of their stavke and the sums of duguje/potražuje of his documents (the legacy procedure groups
+	// the documents by the operater and builds this table).
 	s.prikazDokumenataPooperateruTableFields = []domain.Fields{
-		{Name: "rbr", Label: "Red. br.", Width: "7", TextAlign: "right", SkipInSearch: true},
-		{Name: "nalog", Label: "Broj naloga", Width: "9", TextAlign: "right", Sortable: true},
-		{Name: "danal", Label: "Datum naloga", Width: "9", TextAlign: "center", Sortable: true},
-		{Name: "vrd", Label: "Vrsta dokum.", Width: "8", TextAlign: "center"},
-		{Name: "dokum", Label: "Dokument", Width: "9", TextAlign: "right"},
-		{Name: "dadok", Label: "Datum dokumenta", Width: "9", TextAlign: "center"},
-		{Name: "brst", Label: "Broj stavki", Width: "8", TextAlign: "right", SkipInSearch: true},
-		{Name: "iznos", Label: "Iznos", Width: "10", TextAlign: "right", SkipInSearch: true, IncludeInTotals: true},
-		{Name: "datob", Label: "Datum obrade", Width: "9", TextAlign: "center", SkipInSearch: true},
-		{Name: "oper", Label: "Operater", Width: "10"},
+		{Name: "oper", Label: "Operater", Width: "16"},
+		{Name: "nbrd", Label: "Broj dokumenata", Width: "10", TextAlign: "right"},
+		{Name: "nbrst", Label: "Broj stavki", Width: "10", TextAlign: "right"},
+		{Name: "xdug", Label: "Duguje", Width: "12", TextAlign: "right"},
+		{Name: "xpot", Label: "Potražuje", Width: "12", TextAlign: "right"},
+	}
+
+	// "Fakture veleprodaje" screen: the grid of the stavke of the faktura and the grid of the avansi
+	// that can be closed with it.
+	s.faktureStavkeTableFields = []domain.Fields{
+		{Name: "rbr", Label: "Redni broj", Width: "6", TextAlign: "right", SkipInSearch: true},
+		{Name: "konto", Label: "Konto", Width: "7", SkipInSearch: true},
+		{Name: "sifra", Label: "Šifra artikla", Width: "8", SkipInSearch: true},
+		{Name: "naziv", Label: "Naziv artikla", Width: "24"},
+		{Name: "jm", Label: "JM", Width: "4", TextAlign: "center"},
+		{Name: "kolicina", Label: "Količina", Width: "8", TextAlign: "right"},
+		{Name: "magacinskacena", Label: "Magacinska cena", Width: "9", TextAlign: "right"},
+		{Name: "iznos", Label: "Iznos", Width: "10", TextAlign: "right", IncludeInTotals: true},
+		{Name: "prodajnacena", Label: "Prodajna cena", Width: "9", TextAlign: "right"},
+		{Name: "rabat", Label: "Rabat", Width: "6", TextAlign: "right"},
+	}
+	s.faktureAvansiTableFields = []domain.Fields{
+		{Name: "trazi", Label: "Traži", Width: "5", SkipInSearch: true},
+		{Name: "brdok", Label: "Broj dok.", Width: "8", SkipInSearch: true},
+		{Name: "avansa", Label: "Avansa", Width: "8", TextAlign: "right", SkipInSearch: true},
+		{Name: "datumavansa", Label: "Datum avansa", Width: "10", SkipInSearch: true},
+		{Name: "iznosavansa", Label: "Iznos avansa", Width: "10", TextAlign: "right", SkipInSearch: true},
+		{Name: "ostatakavansa", Label: "Ostatak avansa", Width: "10", TextAlign: "right", SkipInSearch: true},
+		{Name: "zatvorenona", Label: "Iznos koji je zatv. na fakt.", Width: "12", TextAlign: "right", SkipInSearch: true},
 	}
 }

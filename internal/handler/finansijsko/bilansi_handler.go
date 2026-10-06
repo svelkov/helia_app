@@ -61,7 +61,7 @@ const (
 
 type BilansiHandler struct {
 	translator *i18n.Service
-	tabData    domain.TabData
+	tabs       domain.TabData
 	service    finservice.BilansiService
 	cfg        config.Config
 	lm         *middleware.LockMiddleware
@@ -73,7 +73,7 @@ func NewBilansiHandler(service finservice.BilansiService, cfg config.Config, lm 
 		cfg:        cfg,
 		lm:         lm,
 	}
-	handler.tabData = GetBilansiTabData()
+	handler.tabs = GetBilansiTabData()
 	handler.service = service
 	return handler
 }
@@ -95,14 +95,14 @@ func (h *BilansiHandler) BilansiMain(c *gin.Context) {
 		HxRequestType: "GET",
 	}
 
-	common.SetActiveTab(h.tabData, 0)
+	tabs := common.SetActiveTab(h.tabs, 0)
 	btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", bilansiURLZakljucni, "#bilansitable", "innerHTML", "GET", "", hxValsZakljucni, true, common.ClassSaveButton, "handleBackendResponse")
 	searchInput := common.CreateSearchInput("search-input", h.translator, bilansiURLZakljucni, fmt.Sprintf("#%s", bilansiTableID), hxValsZakljucni)
 
 	tbl := common.SetTableBasicData(bilansiContentTitle, bilansiTableID, h.service.GetZakljucniTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tbl, zakljucniListTitle, "", false, false, false)
 	tbl.HxVals = hxValsZakljucni
-	err := tmpl_fin.BilansiMain(h.tabData, tbl, btnObrada, btnPrint, searchInput, h.translator, gnGod, common.NDuzSint(c, h.cfg)).Render(ctx, c.Writer)
+	err := tmpl_fin.BilansiMain(tabs, tbl, btnObrada, btnPrint, searchInput, h.translator, gnGod, common.NDuzSint(c, h.cfg)).Render(ctx, c.Writer)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 		return
@@ -133,8 +133,8 @@ func (h *BilansiHandler) ZakljucniList(c *gin.Context) {
 		}
 		common.SetTableConfig(&tbl, zakljucniListTitle, bilansiURLZakljucni, false, false, false)
 
-		common.SetActiveTab(h.tabData, 0)
-		tmpl_fin.ZakljucniList(h.tabData, tbl, btnObrada, btnPrint, searchInput, h.translator, gnGod, common.NDuzSint(c, h.cfg)).Render(ctx, c.Writer)
+		tabs := common.SetActiveTab(h.tabs, 0)
+		tmpl_fin.ZakljucniList(tabs, tbl, btnObrada, btnPrint, searchInput, h.translator, gnGod, common.NDuzSint(c, h.cfg)).Render(ctx, c.Writer)
 		return
 	}
 	//validacija input parametre:
@@ -297,7 +297,7 @@ func (h *BilansiHandler) BilansStanja(c *gin.Context) {
 	ctx := c.Request.Context()
 	searchText := c.Query("query")
 	skraceni := c.Query("skraceni") == "true" || c.Query("skraceni") == "1"
-	common.SetActiveTab(h.tabData, 1)
+	tabs := common.SetActiveTab(h.tabs, 1)
 	tbl := common.SetTableBasicData(bilansiContentTitle, bilansiTableID, h.service.GetBilansStanjaTableFields(), bilansiURLStanja, bilansiURLStanja, 0, 0, 0, 0, h.cfg)
 	tbl.BtnExportPDF.IsVisible = true
 	tbl.BtnExportExcel.IsVisible = true
@@ -325,7 +325,7 @@ func (h *BilansiHandler) BilansStanja(c *gin.Context) {
 		tbl.BtnPrint.IsVisible = false
 		tbl.ShowPagination = false
 		tbl.HasTotals = true
-		tmpl_fin.BilansStanja(h.tabData, tbl, totals, searchInput, h.translator, gnGod).Render(c.Request.Context(), c.Writer)
+		tmpl_fin.BilansStanja(tabs, tbl, totals, searchInput, h.translator, gnGod).Render(c.Request.Context(), c.Writer)
 		return
 	}
 	totals := domain.BilansiTotals{}
@@ -528,14 +528,14 @@ func (h *BilansiHandler) ObradaStampanjeBilansaStanja(c *gin.Context) {
 		//if the call come from menu click or tab click then render the page with parameters and empty table
 		tbl := common.SetTableBasicData(bilansiContentTitle, bilansiTableID, h.service.GetBilansStanjaStampaTableFields(), "", "", 0, 0, 0, 0, h.cfg)
 		common.SetTableConfig(&tbl, bilansiContentTitle, "", false, false, false)
-		common.SetActiveTab(h.tabData, 2)
+		tabs := common.SetActiveTab(h.tabs, 2)
 		common.SetTableConfig(&tbl, "ŠTANPANJE BILANSA STANJA", bilansiURLStanja, false, false, false)
 		err := h.service.GetBilansStanjaZaStampu(ctx, &tbl, common.TipStampePreview, skraceni)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetData)
 			return
 		}
-		tmpl_fin.StampanjeBilansaStanja(h.tabData, tbl, btnObrada, btnPrint, btnExportXML, searchInput, h.translator, gnGod).Render(c.Request.Context(), c.Writer)
+		tmpl_fin.StampanjeBilansaStanja(tabs, tbl, btnObrada, btnPrint, btnExportXML, searchInput, h.translator, gnGod).Render(c.Request.Context(), c.Writer)
 		return
 	}
 	//validacija input parametre:
@@ -607,7 +607,7 @@ func (h *BilansiHandler) BilansUspeha(c *gin.Context) {
 	ctx := c.Request.Context()
 	searchText := c.Query("query")
 	skraceni := c.Query("skraceni") == "true" || c.Query("skraceni") == "1"
-	common.SetActiveTab(h.tabData, 3)
+	tabs := common.SetActiveTab(h.tabs, 3)
 	tbl := common.SetTableBasicData(bilansiContentTitle, bilansiTableID, h.service.GetBilansUspehaTableFields(), bilansiURLUspeha, bilansiURLUspeha, 0, 0, 0, 0, h.cfg)
 	tbl.HxVals = hxValsUspeha
 	tbl.Pagination.HxVals = hxValsUspeha
@@ -630,7 +630,7 @@ func (h *BilansiHandler) BilansUspeha(c *gin.Context) {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgGetTotalRecords)
 			return
 		}
-		tmpl_fin.BilansUspeha(h.tabData, tbl, searchInput, &totals, h.translator, gnGod).Render(ctx, c.Writer)
+		tmpl_fin.BilansUspeha(tabs, tbl, searchInput, &totals, h.translator, gnGod).Render(ctx, c.Writer)
 		return
 	}
 	err := h.service.GetBilansUspeha(ctx, &tbl, &totals, searchText, skraceni)
@@ -795,7 +795,7 @@ func (h *BilansiHandler) DeleteBilansUspeha(c *gin.Context) {
 }
 func (h *BilansiHandler) ObradaStampanjeBilansUspeha(c *gin.Context) {
 	ctx := c.Request.Context()
-	common.SetActiveTab(h.tabData, 4)
+	tabs := common.SetActiveTab(h.tabs, 4)
 	if !common.IsDataRequest(c) {
 		session := domain.GetSessionFromStdContext(ctx)
 		gnGod := 0
@@ -815,13 +815,12 @@ func (h *BilansiHandler) ObradaStampanjeBilansUspeha(c *gin.Context) {
 		common.SetTableConfig(&tbl, "STAMPANJE BILANSA USPEHA", bilansiURLUspehaStampanje, false, false, false)
 		btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", bilansiURLUspehaStampanje, "#bilu-print-area", "innerHTML", "GET", "", hxValsUspeha, true, common.ClassSaveButton, "handleDialogResponse")
 		btnExportXML := common.SetButton("exportxml-btn", "Export XML", "exportxml", "", "", "", "GET", "", hxValsUspeha, true, common.ClassButton, "handleExportXMLResponse")
-		common.SetActiveTab(h.tabData, 3)
 		err := h.service.GetBilansUspehaZaStampu(ctx, &tbl, common.TipStampePreview)
 		if err != nil {
 			common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgRenderTemplate)
 			return
 		}
-		tmpl_fin.StampanjeBilansaUspeha(h.tabData, tbl, btnObrada, btnPrint, btnExportXML, h.translator, gnGod).Render(c.Request.Context(), c.Writer)
+		tmpl_fin.StampanjeBilansaUspeha(tabs, tbl, btnObrada, btnPrint, btnExportXML, h.translator, gnGod).Render(c.Request.Context(), c.Writer)
 		return
 	}
 	//validacija input parametre:

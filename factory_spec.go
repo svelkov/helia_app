@@ -830,7 +830,11 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 		*repository.NewBaseRepository[domain.RobnoStampaFakturaRowDto](db, "rpro"),
 		*repository.NewBaseRepository[domain.RobnoStampaFakturaAvansDto](db, "rpro"),
 		*repository.NewBaseRepository[domain.RobnoStampaFakturaRataDto](db, "faktrate"),
-		*repository.NewBaseRepository[domain.RobnoStampaFakturaFirmaDto](db, "fvr"))
+		*repository.NewBaseRepository[domain.RobnoStampaFakturaFirmaDto](db, "fvr"),
+		*repository.NewBaseRepository[domain.RobnoStampaPopisRowDto](db, "rpro"),
+		*repository.NewBaseRepository[domain.RobnoStampaDokumentDto](db, "rdok"),
+		*repository.NewBaseRepository[domain.RobnoStampaKalkulacijaRowDto](db, "rpro"),
+		*repository.NewBaseRepository[domain.RobnoStampaFakturaIzvozRowDto](db, "rpro"))
 	robnoDokumentaHandler := robnohand.NewRobnoDokumentaHandler(robnoDokumentaService, cfg, lm, ls, translator)
 	robnoDokumentaHandler.AddRoutes(r)
 

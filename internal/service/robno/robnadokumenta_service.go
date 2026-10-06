@@ -38,7 +38,9 @@ type RobnoDokumentaService interface {
 	UpdateUnosDokumenta(ctx context.Context, rnalID int64, params domain.RobnoDokumentaParams) error
 
 	// Tab 2 - Pregled dokumenta (sub-tabs "Štampa" and "eFaktura")
-	GetPregledStampa(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage, pageSize int, params domain.RobnoDokumentaParams, printType string) error
+	// GetDokumentaPreview is the list of the robni dokumenti the "Obrada" of the "Štampa" sub-tab shows,
+	// the same for every vrsta dokumenta (the print of a document is chosen by its vrsta).
+	GetDokumentaPreview(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage, pageSize int, params domain.RobnoDokumentaParams, printType string) error
 	GetPregledEFaktura(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage, pageSize int, params domain.RobnoDokumentaParams) error
 
 	// Tab 3 - Specifikacije dokumenta (the grid is the one of the "Štampa" sub-tab of "Pregled
@@ -70,10 +72,20 @@ type RobnoDokumentaService interface {
 	// Štampa fakture: the fakture of the selection ready to print (the report RobnoStampaFaktura, the
 	// legacy ROB_RPT_STAMPA_FAKTURA) and the izdavalac (fvr) of the print.
 	GetStampaFaktura(ctx context.Context, params domain.RobnoStampaFakturaParams) ([]domain.RobnoStampaFakturaView, domain.RobnoStampaFakturaFirmaDto, error)
+	// Štampa popisa (vrsta dokumenta 101, the report RobnoStampaPopis) and the vrsta dokumenta of a robni
+	// dokument (the print of the selected document is chosen by its vrsta).
+	GetStampaPopis(ctx context.Context, params domain.RobnoStampaFakturaParams) ([]domain.RobnoStampaPopisView, domain.RobnoStampaFakturaFirmaDto, error)
+	GetStampaFakturaMP(ctx context.Context, params domain.RobnoStampaFakturaParams) ([]domain.RobnoStampaFakturaView, domain.RobnoStampaFakturaFirmaDto, error)
+	GetStampaOpstiDokument(ctx context.Context, params domain.RobnoStampaFakturaParams) ([]domain.RobnoStampaPopisView, domain.RobnoStampaFakturaFirmaDto, error)
+	GetStampaFakturaUsluge(ctx context.Context, params domain.RobnoStampaFakturaParams) ([]domain.RobnoStampaFakturaView, domain.RobnoStampaFakturaFirmaDto, error)
+	GetStampaFakturaAvansni(ctx context.Context, params domain.RobnoStampaFakturaParams) ([]domain.RobnoStampaFakturaView, domain.RobnoStampaFakturaFirmaDto, error)
+	GetStampaFakturaIzvoz(ctx context.Context, params domain.RobnoStampaFakturaParams, withKomercOpis bool) ([]domain.RobnoStampaFakturaIzvozView, domain.RobnoStampaFakturaFirmaDto, error)
+	GetStampaKalkulacija(ctx context.Context, params domain.RobnoStampaFakturaParams) ([]domain.RobnoStampaKalkulacijaView, domain.RobnoStampaFakturaFirmaDto, error)
+	GetStampaDokument(ctx context.Context, rdokID int64, vrd string) (domain.RobnoStampaDokumentDto, error)
 
 	GetUnosDokumentaTableFields() []domain.Fields
 	GetPregledDokumentaTableFields() []domain.Fields
-	GetPregledStampaTableFields() []domain.Fields
+	GetDokumentaPreviewTableFields() []domain.Fields
 	GetPregledEFakturaTableFields() []domain.Fields
 	GetSpecifikacijeDokumentaTableFields() []domain.Fields
 	GetKontiranjeKnjizenjeTableFields() []domain.Fields
@@ -105,6 +117,10 @@ type RobnoDokumentaResource struct {
 	stampaFakturaAvansRepo repository.BaseRepository[domain.RobnoStampaFakturaAvansDto]
 	stampaFakturaRateRepo  repository.BaseRepository[domain.RobnoStampaFakturaRataDto]
 	stampaFakturaFirmaRepo repository.BaseRepository[domain.RobnoStampaFakturaFirmaDto]
+	stampaPopisRepo        repository.BaseRepository[domain.RobnoStampaPopisRowDto]
+	stampaDokumentRepo     repository.BaseRepository[domain.RobnoStampaDokumentDto]
+	stampaKalkulacijaRepo  repository.BaseRepository[domain.RobnoStampaKalkulacijaRowDto]
+	stampaFakturaIzvozRepo repository.BaseRepository[domain.RobnoStampaFakturaIzvozRowDto]
 
 	// TODO: add the repositories needed by the remaining tabs (rdok - robni dokument,
 	// rpro - robni promet, rsif - artikli, fkpl, ...). All the grids of the option share the row type
@@ -143,6 +159,10 @@ func NewRobnoDokumentaService(
 	stampaFakturaAvansRepo repository.BaseRepository[domain.RobnoStampaFakturaAvansDto],
 	stampaFakturaRateRepo repository.BaseRepository[domain.RobnoStampaFakturaRataDto],
 	stampaFakturaFirmaRepo repository.BaseRepository[domain.RobnoStampaFakturaFirmaDto],
+	stampaPopisRepo repository.BaseRepository[domain.RobnoStampaPopisRowDto],
+	stampaDokumentRepo repository.BaseRepository[domain.RobnoStampaDokumentDto],
+	stampaKalkulacijaRepo repository.BaseRepository[domain.RobnoStampaKalkulacijaRowDto],
+	stampaFakturaIzvozRepo repository.BaseRepository[domain.RobnoStampaFakturaIzvozRowDto],
 ) *RobnoDokumentaResource {
 	s := &RobnoDokumentaResource{
 		robnaDokRepo:           robnaDokRepo,
@@ -158,6 +178,10 @@ func NewRobnoDokumentaService(
 		stampaFakturaAvansRepo: stampaFakturaAvansRepo,
 		stampaFakturaRateRepo:  stampaFakturaRateRepo,
 		stampaFakturaFirmaRepo: stampaFakturaFirmaRepo,
+		stampaPopisRepo:        stampaPopisRepo,
+		stampaDokumentRepo:     stampaDokumentRepo,
+		stampaKalkulacijaRepo:  stampaKalkulacijaRepo,
+		stampaFakturaIzvozRepo: stampaFakturaIzvozRepo,
 	}
 	s.setTableFields()
 	return s
@@ -416,8 +440,18 @@ func (s *RobnoDokumentaResource) magacinByID(ctx context.Context, magaciniID int
 }
 
 // Tab 2 - Pregled dokumenta (sub-tabs "Štampa" and "eFaktura")
-// GetPregledStampa fills the grid of the "Štampa" sub-tab of "Pregled dokumenta": the robni
-func (s *RobnoDokumentaResource) GetPregledStampa(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage, pageSize int, params domain.RobnoDokumentaParams, printType string) error {
+// GetDokumentaPreview fills the grid of the "Štampa" sub-tab of "Pregled dokumenta" (its "Obrada"): the
+// robni dokumenti of the vrsta dokumenta, of the magacin and of the range of the datum naloga of the
+// selection, the same list for every vrsta dokumenta. It is the Go translation of the WinDev procedure
+// Obrada of the screen: for every document the nalog, its dates and the dospeće (datum dokumenta + rok),
+// the izvorni dokument, the iznos, the kupac (fkto, fana) with the naziv of fkpl and the pib, jbkjs,
+// adresa and mesto of the partner, the avansni računi closed with the document (avansfakt, as
+// "god-kar-mag-vrd-dokum;"), the poreska napomena, the second konto (pkto, pana) with its naziv, the
+// valuta ("sifval-naziv") and the kurs. The lookups of the legacy loop are joins of one query; the
+// documents are ordered like the legacy (datum naloga, vrsta naloga, nalog, datum and broj dokumenta,
+// all descending). The id of a row is the rdokid of the document: the print of the sub-tab prints the
+// selected document with the print of its vrsta dokumenta.
+func (s *RobnoDokumentaResource) GetDokumentaPreview(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage, pageSize int, params domain.RobnoDokumentaParams, printType string) error {
 	userSession := domain.GetSessionFromStdContext(ctx)
 	if userSession == nil {
 		return fmt.Errorf("no user session found")
@@ -441,20 +475,36 @@ func (s *RobnoDokumentaResource) GetPregledStampa(ctx context.Context, tbl *doma
 			coalesce(rdok.iznos, 0) as iznos,
 			coalesce(rdok.fkto, '') as fkto,
 			coalesce(rdok.fana, '') as fana,
-			coalesce(fkpl.naziv, '') as naziv,
+			coalesce(kupac.naziv, '') as naziv,
 			coalesce(p.pib, '') as pib,
 			coalesce(p.jbkjs, '') as jbkjs,
 			coalesce(p.adresa, '') as adresa,
 			coalesce(p.mesto, '') as mesto,
-			av.dokum as avansdokum,
+			coalesce((select string_agg(av.god || '-' || av.kar || '-' || av.mag || '-' || av.vrd || '-' || av.dokum || ';', '' order by av.dokum)
+				from avansfakt af
+				inner join rdok av on av.rdokid = af.avansid
+				where af.rdokid = rdok.rdokid), '') as avansi,
 			coalesce(rdok.pornapomena, '') as pornapomena,
+			coalesce(rdok.pkto, '') as pkto,
+			coalesce(rdok.pana, '') as pana,
+			coalesce(drugi.naziv, '') as naziv1,
+			case when valute.sifval is null then coalesce(rdok.sifval, 0)::text
+				else rdok.sifval || '-' || coalesce(valute.naziv, '') end as valuta,
+			coalesce(rdok.kurs, 0) as kurs,
 			coalesce(rdok.tkonto, '') as tkonto
 		from rdok`, true)
-	qb.AddJoin("left join fkpl on fkpl.god = rdok.god and fkpl.kar = rdok.kar and fkpl.vkonta = 1 and fkpl.konto = rdok.fkto and fkpl.sifra = rdok.fana")
-	qb.AddJoin("left join partneri p on p.idpartneri = fkpl.idpartneri")
-	// The broj avansnog racuna of a document is the broj dokumenta of the avans it was created from
-	// (rdok.avansid points to that rdok row; it is 0 when the document has no avans).
-	qb.AddJoin("left join rdok av on av.rdokid = rdok.avansid")
+	// The naziv of the kupac (fkto, fana) and of the second konto (pkto, pana): the first fkpl of the
+	// konto and šifra, so that a konto and šifra with more fkpl rows does not repeat the document.
+	qb.AddJoin(`left join lateral (select f.naziv, f.idpartneri from fkpl f
+		where f.god = rdok.god and f.kar = rdok.kar and f.konto = rdok.fkto and f.sifra = rdok.fana
+			and coalesce(rdok.fkto, '') <> '' and coalesce(rdok.fana, '') <> ''
+		order by f.idfkpl limit 1) kupac on true`)
+	qb.AddJoin("left join partneri p on p.idpartneri = kupac.idpartneri")
+	qb.AddJoin(`left join lateral (select f.naziv from fkpl f
+		where f.god = rdok.god and f.kar = rdok.kar and f.konto = rdok.pkto and f.sifra = rdok.pana
+			and coalesce(rdok.pkto, '') <> '' and coalesce(rdok.pana, '') <> ''
+		order by f.idfkpl limit 1) drugi on true`)
+	qb.AddJoin("left join valute on valute.sifval = rdok.sifval")
 	if hasGod {
 		qb.AddEqual("rdok.god", userSession.SelectedGod)
 	}
@@ -474,7 +524,7 @@ func (s *RobnoDokumentaResource) GetPregledStampa(ctx context.Context, tbl *doma
 		qb.AddCondition("rdok.danal", params.DoDanal, "<=")
 	}
 	if params.SearchText != "" {
-		qb.AddCustomSearchCondition([]string{"rdok.dokum", "rdok.dokiz", "rdok.fkto", "rdok.fana", "fkpl.naziv", "p.pib", "p.mesto"}, params.SearchText)
+		qb.AddCustomSearchCondition([]string{"rdok.dokum", "rdok.dokiz", "rdok.fkto", "rdok.fana", "kupac.naziv", "p.pib", "p.mesto"}, params.SearchText)
 	}
 	qb.AddOrderBy("rdok.danal desc, rdok.tipdok desc, rdok.nalog desc, rdok.dadok desc, rdok.dokum desc")
 	if !getTotalRecords && printType != common.TipStampePrint {
@@ -494,7 +544,7 @@ func (s *RobnoDokumentaResource) GetPregledStampa(ctx context.Context, tbl *doma
 	for _, entity := range *entities {
 		tbl.Rows = append(tbl.Rows, domain.TableRow{
 			// The id of the row is the rdokid of the document: the print of the sub-tab prints the
-			// faktura of the selected row.
+			// selected document.
 			ID: fmt.Sprintf("%d", entity.RdokID),
 			Fields: []string{
 				fmt.Sprintf("%s-%d", entity.Tipdok, entity.Nalog),
@@ -513,8 +563,13 @@ func (s *RobnoDokumentaResource) GetPregledStampa(ctx context.Context, tbl *doma
 				entity.Jbkjs,
 				entity.Adresa,
 				entity.Mesto,
-				fmt.Sprintf("%d", entity.AvansDokum.Int64),
+				entity.Avansi,
 				entity.Pornapomena,
+				entity.Pkto,
+				entity.Pana,
+				entity.Naziv1,
+				entity.Valuta,
+				common.FormatNumberWithSystemLocale(entity.Kurs, 4),
 				entity.Tkonto,
 			},
 			HasUpdate: false,
@@ -1516,8 +1571,8 @@ func (s *RobnoDokumentaResource) GetPregledDokumentaTableFields() []domain.Field
 	return s.pregledDokumentaTableFields
 }
 
-// GetPregledStampaTableFields returns the grid columns of the "Štampa" sub-tab.
-func (s *RobnoDokumentaResource) GetPregledStampaTableFields() []domain.Fields {
+// GetDokumentaPreviewTableFields returns the grid columns of the "Štampa" sub-tab (the list of Obrada).
+func (s *RobnoDokumentaResource) GetDokumentaPreviewTableFields() []domain.Fields {
 	return s.pregledStampaTableFields
 }
 
@@ -1618,8 +1673,13 @@ func (s *RobnoDokumentaResource) setTableFields() {
 		{Name: "jbkjs", Label: "JBKJS", Width: "7", SkipInSearch: true},
 		{Name: "adresa", Label: "Adresa", Width: "16", SkipInSearch: true},
 		{Name: "mesto", Label: "Mesto", Width: "10"},
-		{Name: "avansdokum", Label: "Broj avansnog računa", Width: "8", TextAlign: "right", SkipInSearch: true},
+		{Name: "avansi", Label: "Avansi", Width: "12", SkipInSearch: true},
 		{Name: "pornapomena", Label: "Poreska napomena", Width: "14", SkipInSearch: true},
+		{Name: "pkto", Label: "Konto 2", Width: "6", SkipInSearch: true},
+		{Name: "pana", Label: "Šifra 2", Width: "6", SkipInSearch: true},
+		{Name: "naziv1", Label: "Naziv 2", Width: "16", SkipInSearch: true},
+		{Name: "valuta", Label: "Valuta", Width: "8", SkipInSearch: true},
+		{Name: "kurs", Label: "Kurs", Width: "6", TextAlign: "right", SkipInSearch: true},
 		{Name: "tkonto", Label: "Konto prodavnice", Width: "8", SkipInSearch: true},
 	}
 	s.pregledDokumentaTableFields = s.pregledStampaTableFields

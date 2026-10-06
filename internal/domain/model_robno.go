@@ -305,7 +305,10 @@ type RobnoDokumentaDto struct {
 	Jbkjs       string        `json:"jbkjs" db:"jbkjs"`
 	Adresa      string        `json:"adresa" db:"adresa"`
 	Mesto       string        `json:"mesto" db:"mesto"`
-	AvansDokum  sql.NullInt64 `json:"avansdokum" db:"avansdokum"`
+	Avansi      string        `json:"avansi" db:"avansi"`
+	Pkto        string        `json:"pkto" db:"pkto"`
+	Pana        string        `json:"pana" db:"pana"`
+	Naziv1      string        `json:"naziv1" db:"naziv1"`
 	Pornapomena string        `json:"pornapomena" db:"pornapomena"`
 	Tkonto      string        `json:"tkonto" db:"tkonto"`
 

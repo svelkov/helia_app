@@ -2,6 +2,7 @@ package domain
 
 import (
 	"database/sql"
+	"strings"
 	"time"
 )
 
@@ -255,6 +256,17 @@ type RobnoStampaFakturaView struct {
 	Nalog          string
 	MestoIzdavanja string
 
+	// The avansni račun: the datum of the avansna uplata (rdok.datiz) and the vezni dokument
+	// (rdok.dokiz) with its opis (rdok.opis).
+	DatumAvansneUplate string
+	VezniDokument      string
+	VezniDokumentOpis  string
+
+	// Skladište (the maloprodajni račun): the opis, the telefon and the e-mail of the magacin.
+	MagacinOpis  string
+	MagacinTel   string
+	MagacinEmail string
+
 	// The stavke of the document (the body of the report).
 	Stavke []RobnoStampaFakturaStavka
 
@@ -328,6 +340,8 @@ type RobnoStampaFakturaZaNaplatuDan struct {
 // RobnoStampaFakturaPdv is the osnovica and the PDV of one poreska stopa.
 type RobnoStampaFakturaPdv struct {
 	Stopa, Osnovica, Pdv string
+	// Iznos is the osnovica with the PDV (printed by the maloprodajni račun).
+	Iznos string
 }
 
 // RobnoStampaFakturaRata is one rata of the printed invoice.
@@ -372,22 +386,34 @@ type RobnoStampaFakturaParams struct {
 // kategorija of the oslobođenje).
 type RobnoStampaFakturaRowDto struct {
 	// Header of the document.
-	RdokID      int64        `db:"rdokid"`
-	Tipdok      string       `db:"tipdok"`
-	Nalog       int64        `db:"nalog"`
-	Vrd         int64        `db:"vrd"`
-	Dokum       int64        `db:"dokum"`
-	Dadok       sql.NullTime `db:"dadok"`
-	Datiz       sql.NullTime `db:"datiz"`
-	Rok         int64        `db:"rok"`
-	Pla         string       `db:"pla"`
-	Narudzb     string       `db:"narudzb"`
-	Vozac       string       `db:"vozac"`
-	Brvozila    string       `db:"brvozila"`
-	Foot        string       `db:"foot"`
-	Pornapomena string       `db:"pornapomena"`
-	Dokiz       string       `db:"dokiz"`
-	Zirorac     string       `db:"zirorac"`
+	RdokID int64        `db:"rdokid"`
+	Tipdok string       `db:"tipdok"`
+	Nalog  int64        `db:"nalog"`
+	Vrd    int64        `db:"vrd"`
+	Dokum  int64        `db:"dokum"`
+	Dadok  sql.NullTime `db:"dadok"`
+	Datiz  sql.NullTime `db:"datiz"`
+	Rok    int64        `db:"rok"`
+	Pla    string       `db:"pla"`
+	// Mcenap is the maloprodajna cena with the PDV of the stavka (rpro.mcenap), the cena of the
+	// maloprodajni račun.
+	Mcenap float64 `db:"mcenap"`
+	// Opis is the opis of the document (rdok.opis): the avansni račun prints it with its vezni dokument.
+	Opis string `db:"opis"`
+	// The mesto isporuke of the document (fisp of the kupac and of rdok.mi): naziv, adresa, poštanski
+	// broj, mesto and GLN.
+	MispNaziv   string `db:"mispnaziv"`
+	MispAdresa  string `db:"mispadresa"`
+	MispPobro   int64  `db:"misppobro"`
+	MispMesto   string `db:"mispmesto"`
+	MispGln     string `db:"mispgln"`
+	Narudzb     string `db:"narudzb"`
+	Vozac       string `db:"vozac"`
+	Brvozila    string `db:"brvozila"`
+	Foot        string `db:"foot"`
+	Pornapomena string `db:"pornapomena"`
+	Dokiz       string `db:"dokiz"`
+	Zirorac     string `db:"zirorac"`
 	// Profak is the comma separated list of the brojevi of the avansni računi (vrd 172) closed with the
 	// document and Posuslnab the tekući račun printed on the document ("", "-1" or "-": the računi of
 	// the firm).
@@ -470,4 +496,343 @@ type RobnoStampaFakturaFirmaDto struct {
 	Brobvpdv string `db:"brobvpdv"`
 	Banke    string `db:"banke"`
 	Logo     []byte `db:"logo"`
+}
+
+// RobnoStampaFakturaIzvozView is one printed izvozna faktura (the faktura in a foreign valuta, the
+// legacy PR_RPT_FAKTURA_OTPIZV, printed in English): the izdavalac, the kupac with the destination,
+// the data of the shipment, the stavke at the cena in the valuta of the document, the totals in the
+// valuta and in RSD, the notes, the weights, the izjava of the exporter and the bank instructions.
+// Every value is already formatted.
+type RobnoStampaFakturaIzvozView struct {
+	// Izdavalac (ITEM_Adresa .. ITEM_ZIRO): every value carries its caption, like the legacy items.
+	FirmaAdresa string
+	FirmaPib    string
+	FirmaApr    string
+	FirmaMbr    string
+	FirmaSifdel string
+	FirmaTel    string
+	FirmaZiro   string
+
+	// Kupac (ITEM_SIFRAKUPCA .. ITEM_TELKUPCA) and the destination (ITEM_MISP, ITEM_MISP1).
+	KupacSifra    string
+	KupacNaziv    string
+	KupacAdresa   string
+	KupacMesto    string
+	KupacPib      string // the PIB line by the PDV status of the partner (PIB, JBKJS, JMBG, BPG, INDEX)
+	KupacMbr      string
+	KupacTelefon  string
+	Destinacija   string
+	Destinacija2  string
+	Otpremnica    string // the despatch note: broj and datum of the otpremnica (edok)
+	UslovPlacanja string
+	Vozac         string
+	BrojVozila    string
+
+	// The document: "INVOICE No.: 136-43", the invoice date and the place of issue.
+	BrojDokumenta  string
+	DatumFakture   string
+	MestoIzdavanja string
+
+	// Valuta is the oznaka of the valuta of the document (e.g. "EUR").
+	Valuta string
+
+	Stavke []RobnoStampaFakturaIzvozStavka
+
+	// The totals in the valuta: TOTAL, DISCOUNT, the SUBTOTAL with the guarantee discount and the
+	// discount for payment in advance (only when the document has one of them) and the TOTAL FOR
+	// PAYMENT; UkupnoRsd is the total for payment in RSD (at the kurs of the document).
+	Svega       string
+	Rabat       string
+	ImaPopuste  bool
+	Neto        string
+	UgRabatProc string
+	UgRabat     string
+	KasaProc    string
+	Kasa        string
+	ZaNaplatu   string
+	UkupnoRsd   string
+
+	// The notes (rdok.foot), the delivery terms (paritet), the weights and the izjava of the exporter.
+	Napomena    string
+	Paritet     string
+	BrutoTezina string
+	NetoTezina  string
+	Izjava      string
+
+	// The bank instructions (bnkizv of rdok.sifbank): 57A the beneficiary's bank and its SWIFT, 59 the
+	// account and the beneficiary, 54A the correspondent bank.
+	BankaNaziv        string
+	BankaSwift        string
+	BankaRacun        string
+	BankaKorisnik     string
+	BankaKorespondent string
+}
+
+// RobnoStampaFakturaIzvozStavka is one stavka of the printed izvozna faktura.
+type RobnoStampaFakturaIzvozStavka struct {
+	Rbr, Sifra, Naziv, Zemlja, Pcn, Jm, Kolicina, Cena, Rabat, Iznos string
+}
+
+// RobnoStampaFakturaIzvozRowDto is one row of the query of the print of the izvozna faktura (the
+// legacy PR_QRY_FAKTURE): one stavka (rpro) with the header of its robni dokument (rdok), the kupac,
+// the destination, the otpremnica, the valuta and the bank of the document.
+type RobnoStampaFakturaIzvozRowDto struct {
+	RdokID    int64        `db:"rdokid"`
+	Vrd       int64        `db:"vrd"`
+	Dokum     int64        `db:"dokum"`
+	Dadok     sql.NullTime `db:"dadok"`
+	Fkto      string       `db:"fkto"`
+	Fana      string       `db:"fana"`
+	Pla       string       `db:"pla"`
+	Vozac     string       `db:"vozac"`
+	Brvozila  string       `db:"brvozila"`
+	Foot      string       `db:"foot"`
+	Kurs      float64      `db:"kurs"`
+	Pkase     float64      `db:"pkase"`
+	Ugrabat   float64      `db:"ugrabat"`
+	Zirorac   string       `db:"zirorac"`
+	Posuslnab string       `db:"posuslnab"`
+	Bttowght  float64      `db:"bttowght"`
+	Netwght   float64      `db:"netwght"`
+	Paritet   string       `db:"paritet"`
+	Izjizv    int64        `db:"izjizv"`
+	Valuta    string       `db:"valuta"`
+	Brotp     int64        `db:"brotp"`
+	Datotp    sql.NullTime `db:"datotp"`
+
+	KupacNaziv     string `db:"kupacnaziv"`
+	KupacAdresa    string `db:"kupacadresa"`
+	KupacPobro     int64  `db:"kupacpobro"`
+	KupacMesto     string `db:"kupacmesto"`
+	KupacTipPdv    int64  `db:"kupactippdv"`
+	KupacPib       string `db:"kupacpib"`
+	KupacBudzetski bool   `db:"kupacbudzetski"`
+	KupacJbkjs     string `db:"kupacjbkjs"`
+	KupacJmbg      string `db:"kupacjmbg"`
+	KupacBpg       string `db:"kupacbpg"`
+	KupacIndex     string `db:"kupacindex"`
+	KupacMbr       string `db:"kupacmbr"`
+	KupacTelefon   string `db:"kupactelefon"`
+
+	MispNaziv  string `db:"mispnaziv"`
+	MispAdresa string `db:"mispadresa"`
+	MispPobro  int64  `db:"misppobro"`
+	MispMesto  string `db:"mispmesto"`
+	MispGln    string `db:"mispgln"`
+
+	BankaNaziv        string `db:"bankanaziv"`
+	BankaSwift        string `db:"bankaswift"`
+	BankaRacun        string `db:"bankaracun"`
+	BankaKorisnik     string `db:"bankakorisnik"`
+	BankaKorespondent string `db:"bankakorespondent"`
+
+	Rbr        int64   `db:"rbr"`
+	Sifra      int64   `db:"sifra"`
+	Naziv      string  `db:"naziv"`
+	Komercopis string  `db:"komercopis"`
+	Zemlja     string  `db:"zemlja"`
+	Pcn        string  `db:"pcn"`
+	Jm         string  `db:"jm"`
+	Kolic      float64 `db:"kolic"`
+	Cenaval    float64 `db:"cenaval"`
+	Rab        float64 `db:"rab"`
+}
+
+// RobnoStampaPopisView is the printed popis (vrsta dokumenta 101), the model of the template
+// RobnoStampaPopis in frontend/templates/reports/robno/robnadokumenta.templ: the header of the
+// document (its broj and date, the vrsta dokumenta, the nalog, the magacin, the organizaciona jedinica
+// and the mesto troška and the ones the goods go to) and its stavke with the totals of the nabavna
+// vrednost and of the iznos. Every value is already formatted.
+type RobnoStampaPopisView struct {
+	BrojDokumenta     string // vrsta-broj, e.g. "101-1"
+	DatumDokumenta    string
+	VrstaDokumenta    string // vrsta-opis, e.g. "101-POPIS"
+	Nalog             string // tipdok-nalog, e.g. "00-1"
+	Magacin           string // mag-opis, e.g. "1-veleprodaja"
+	Oj                string
+	MestoTroska       string
+	OjPrijem          string // the organizaciona jedinica the goods go to
+	MestoTroskaPrijem string // the mesto troška the goods go to
+	// Grupa is the group of the vrsta dokumenta (dokvrsta.grpdok): the opšti dokumenti print their
+	// stavke by it (FIN only the iznos, KOL only the količina, the others like the popis).
+	Grupa string
+	// IzvorniDokument is the izvorni dokument of an opšti dokument (rdok.dokiz).
+	IzvorniDokument string
+
+	Stavke                []RobnoStampaPopisStavka
+	UkupnoNabavnaVrednost string
+	UkupnoIznos           string
+	UkupnoKolicina        string
+}
+
+// RobnoStampaPopisStavka is one stavka of the printed popis.
+type RobnoStampaPopisStavka struct {
+	Rbr, Konto, Sifra, Naziv, Jm, Kolicina, NabavnaCena, NabavnaVrednost, Cena, Iznos string
+}
+
+// RobnoStampaPopisRowDto is one row of the query of the print of the popis: one stavka (rpro) with the
+// header of its robni dokument (rdok) and the names joined to it.
+type RobnoStampaPopisRowDto struct {
+	RdokID            int64        `db:"rdokid"`
+	Grpdok            string       `db:"grpdok"`
+	Dokiz             string       `db:"dokiz"`
+	Tipdok            string       `db:"tipdok"`
+	Nalog             int64        `db:"nalog"`
+	Vrd               int64        `db:"vrd"`
+	VrdOpis           string       `db:"vrdopis"`
+	Dokum             int64        `db:"dokum"`
+	Dadok             sql.NullTime `db:"dadok"`
+	Mag               int64        `db:"mag"`
+	MagNaziv          string       `db:"magnaziv"`
+	Oj                string       `db:"oj"`
+	MestoTroska       string       `db:"mt"`
+	OjPrijem          string       `db:"ojprijem"`
+	MestoTroskaPrijem string       `db:"mtprijem"`
+	Rbr               int64        `db:"rbr"`
+	Konto             string       `db:"konto"`
+	Sifra             int64        `db:"sifra"`
+	Naz1              string       `db:"naz1"`
+	Jm                string       `db:"jm"`
+	Kolic             float64      `db:"kolic"`
+	Ncena             float64      `db:"ncena"`
+	Cena              float64      `db:"cena"`
+	Iznos             float64      `db:"iznos"`
+}
+
+// RobnoStampaDokumentDto is what the print of the "Štampa" sub-tab of "Pregled dokumenta" needs to
+// choose the print of a robni dokument, like the legacy print button (the SWITCH on the group of the
+// vrsta dokumenta, DOKVRSTA.GRPDOK): the vrsta and its group, the oznaka (DOKOZN) and the suffix of
+// the custom report of the vrsta (DODOZNFAK, the legacy report "<report>_<dodoznfak>"), the valuta of
+// the document and the domestic valuta of the firm (FVR.SIFVAL, the legacy nFVRSIFVAL), the knjige of
+// the document (kontiran when it starts with "D") and whether the document has stavke (rpro).
+type RobnoStampaDokumentDto struct {
+	RdokID       int64  `db:"rdokid"`
+	Vrd          int64  `db:"vrd"`
+	Grpdok       string `db:"grpdok"`
+	Dokozn       string `db:"dokozn"`
+	Dodoznfak    string `db:"dodoznfak"`
+	Sifval       int64  `db:"sifval"`
+	DomacaValuta int64  `db:"domacavaluta"`
+	Knjige       string `db:"knjige"`
+	ImaStavke    bool   `db:"imastavke"`
+}
+
+// Devizni reports whether the document is in a foreign valuta (the legacy RDOK.SIFVAL > 0 AND
+// RDOK.SIFVAL <> nFVRSIFVAL).
+func (d RobnoStampaDokumentDto) Devizni() bool {
+	return d.Sifval > 0 && d.Sifval != d.DomacaValuta
+}
+
+// Kontiran reports whether the document is kontiran (the legacy RDOK.KNJIGE[1] = "D", the column
+// rdok.knjige_1).
+func (d RobnoStampaDokumentDto) Kontiran() bool {
+	return strings.HasPrefix(strings.ToUpper(d.Knjige), "D")
+}
+
+// RobnoStampaKalkulacijaView is one printed kalkulacija veleprodaje (prijemni list, the group PLT of the
+// vrste dokumenta, the legacy RPT_ROB_KALKULACIJA): the header of the document with the dobavljač, its
+// stavke (two lines per artikal: the cene and the vrednosti) with the totals, the porezi of the
+// document of the dobavljač by poreska tarifa (a domestic document) and the valuta with the kurs (a
+// document in a foreign valuta, Devizni). Every value is already formatted.
+type RobnoStampaKalkulacijaView struct {
+	BrojDokumenta string // vrsta-broj, e.g. "110-285"
+	Devizni       bool   // the document is in a foreign valuta (the print of the foreign dobavljači)
+
+	KontoDobavljaca string
+	SifraDobavljaca string
+	DobavljacNaziv  string
+	DobavljacAdresa string
+	DobavljacMesto  string // poštanski broj and mesto
+	DobavljacPib    string
+
+	Magacin                  string // mag-opis, e.g. "1-VELEPRODAJA"
+	Nalog                    string // tipdok/nalog, e.g. "20/285"
+	DatumDokumenta           string
+	NacinDopremanja          string
+	DokumentDobavljaca       string
+	DatumDokumentaDobavljaca string
+	NacinPlacanja            string
+	RokPlacanja              string
+	Napomena                 string
+
+	Valuta string // sifval and oznaka, e.g. "978 EUR"
+	Oznaka string // oznaka of the valuta, e.g. "EUR"
+	Kurs   string
+
+	Stavke []RobnoStampaKalkulacijaStavka
+	Ukupno RobnoStampaKalkulacijaStavka // the totals of the vrednosti
+
+	Porezi       []RobnoStampaKalkulacijaPorez
+	UkupnoPorezi RobnoStampaKalkulacijaPorez
+}
+
+// RobnoStampaKalkulacijaStavka is one artikal of the printed kalkulacija: the first line holds the
+// cene (and the oznake of the troškova), the second line the vrednosti.
+type RobnoStampaKalkulacijaStavka struct {
+	Rbr, Sifra, Naziv, Jm, Kolicina string
+
+	FakturnaCena, Rabat, NetoCena string
+	OznakaTroska, ZavisniTrosak   string
+	ZavisniTrosakDobavljaca       string
+	OznakaInternog, InterniTrosak string
+	NabavnaCena, Marza, VpCena    string
+
+	FakturnaVrednost, VrednostRabata, NetoVrednost   string
+	VrednostTroska, VrednostTroskaDobavljaca         string
+	VrednostInternog, NabavnaVrednost, VrednostMarze string
+	VpVrednost                                       string
+}
+
+// RobnoStampaKalkulacijaPorez is one poreska tarifa of the document of the dobavljač ("Po dokumentu
+// dobavljača"): the iznos of the document, the osnovica, the obračunat porez, the tarifa and the stopa.
+type RobnoStampaKalkulacijaPorez struct {
+	IznosDokumenta, Osnovica, Porez, Tarifa, Stopa string
+}
+
+// RobnoStampaKalkulacijaRowDto is one row of the query of the print of the kalkulacija: one stavka
+// (rpro) with the header of its robni dokument (rdok), the dobavljač, the valuta and the poreska tarifa
+// of the stavka.
+type RobnoStampaKalkulacijaRowDto struct {
+	RdokID        int64        `db:"rdokid"`
+	Tipdok        string       `db:"tipdok"`
+	Nalog         int64        `db:"nalog"`
+	Vrd           int64        `db:"vrd"`
+	Dokum         int64        `db:"dokum"`
+	Dadok         sql.NullTime `db:"dadok"`
+	Datiz         sql.NullTime `db:"datiz"`
+	Dokiz         string       `db:"dokiz"`
+	Otp           string       `db:"otp"`
+	Pla           string       `db:"pla"`
+	Rok           int64        `db:"rok"`
+	Foot          string       `db:"foot"`
+	Mag           int64        `db:"mag"`
+	MagNaziv      string       `db:"magnaziv"`
+	Fkto          string       `db:"fkto"`
+	Fana          string       `db:"fana"`
+	PartnerNaziv  string       `db:"partnernaziv"`
+	PartnerAdresa string       `db:"partneradresa"`
+	PartnerMesto  string       `db:"partnermesto"`
+	PartnerPib    string       `db:"partnerpib"`
+	Sifval        int64        `db:"sifval"`
+	DomacaValuta  int64        `db:"domacavaluta"`
+	ValutaOznaka  string       `db:"valutaoznaka"`
+	Kurs          float64      `db:"kurs"`
+
+	Rbr    int64   `db:"rbr"`
+	Sifra  int64   `db:"sifra"`
+	Naz1   string  `db:"naz1"`
+	Jm     string  `db:"jm"`
+	Kolic  float64 `db:"kolic"`
+	Fcena  float64 `db:"fcena"`
+	Rab    float64 `db:"rab"`
+	Tz     string  `db:"tz"`
+	Ztro   float64 `db:"ztro"`
+	Ztrof  float64 `db:"ztrof"`
+	Tzi    string  `db:"tzi"`
+	Ztrin  float64 `db:"ztrin"`
+	Ncena  float64 `db:"ncena"`
+	Vpcena float64 `db:"vpcena"`
+	Po     int64   `db:"po"`
+	Tarifa string  `db:"tarifa"`
+	Stopa  float64 `db:"stopa"`
 }

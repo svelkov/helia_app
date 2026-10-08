@@ -1,0 +1,306 @@
+package components
+
+import (
+	"strings"
+
+	"helia/i18n"
+	"helia/internal/domain"
+)
+
+// TableCombo renders a searchable table combo (partneri, konta, artikli, ...): a text input that
+// calls cfg.SearchURL while the user types and shows the answer (TableComboResults) in a dropdown
+// table under the input. Selecting a row (click, or arrows and Enter) puts its key into the hidden
+// input cfg.Name and its text into the visible input; typing again clears the selected key. Pass
+// cfg.Value / cfg.DisplayValue / cfg.Details to render a row already selected (e.g. when editing an
+// existing document).
+//
+// Example (the search of the partneri):
+//
+//	@components.TableCombo(domain.TableComboConfig{
+//		ID:          "kupac",
+//		Name:        "kupac_sifra",
+//		HasLabel:    true,
+//		LabelText:   "Kupac",
+//		Placeholder: "Pretraži po šifri ili nazivu kupca...",
+//		SearchURL:   "/api/partneri/search",
+//		HxVals:      `{"konto": "2040"}`,
+//		TabIndex:    "3",
+//	}, translator)
+templ TableCombo(cfg domain.TableComboConfig, translator *i18n.Service) {
+	@tableComboScript.Once() {
+		<script>
+			// tableComboRows returns the selectable rows of the results of a table combo.
+			function tableComboRows(comboID) {
+				return Array.from(document.querySelectorAll('#' + comboID + '-results tr[data-key]'));
+			}
+			// tableComboClose empties the results of a table combo.
+			function tableComboClose(comboID) {
+				const results = document.getElementById(comboID + '-results');
+				if (results) results.innerHTML = '';
+			}
+			// tableComboValueInput returns the hidden input with the key of a table combo.
+			function tableComboValueInput(comboID) {
+				const input = document.getElementById(comboID + '-input');
+				return document.getElementById((input && input.dataset.valueid) || (comboID + '-value'));
+			}
+			// tableComboSelect selects a row of the results: its key into the hidden input, its text
+			// into the visible input and its details under them, then calls the OnSelect callback.
+			function tableComboSelect(row) {
+				const comboID = row.dataset.combo;
+				const input = document.getElementById(comboID + '-input');
+				const value = tableComboValueInput(comboID);
+				const details = document.getElementById(comboID + '-details');
+				value.value = row.dataset.key;
+				input.value = row.dataset.text;
+				if (details) details.textContent = row.dataset.details || '';
+				tableComboClose(comboID);
+				value.dispatchEvent(new Event('change', { bubbles: true }));
+				const callback = input.dataset.onselect;
+				if (callback && typeof window[callback] === 'function') {
+					const cells = Array.from(row.cells).map(c => c.textContent.trim());
+					window[callback](comboID, row.dataset.key, cells);
+				}
+			}
+			// tableComboKeydown moves through the results with the arrows, selects with Enter and
+			// closes them with Escape.
+			function tableComboKeydown(event, comboID) {
+				const rows = tableComboRows(comboID);
+				let active = rows.findIndex(r => r.classList.contains('table-combo-active'));
+				if (event.key === 'Escape') {
+					tableComboClose(comboID);
+					return;
+				}
+				if (rows.length === 0) return;
+				if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+					event.preventDefault();
+					if (active >= 0) rows[active].classList.remove('table-combo-active', '!bg-blue-200');
+					active = event.key === 'ArrowDown' ? Math.min(active + 1, rows.length - 1) : Math.max(active - 1, 0);
+					rows[active].classList.add('table-combo-active', '!bg-blue-200');
+					rows[active].scrollIntoView({ block: 'nearest' });
+				} else if (event.key === 'Enter') {
+					// Enter selects the highlighted row, or the first one when none is highlighted
+					// (e.g. the user typed the whole konto).
+					event.preventDefault();
+					tableComboSelect(rows[active >= 0 ? active : 0]);
+				} else if (event.key === 'Tab') {
+					// Tab selects the highlighted row, or the row whose key is the typed text (e.g.
+					// "2040"); the focus moves on to the next field.
+					if (active >= 0) {
+						tableComboSelect(rows[active]);
+					} else {
+						tableComboAutoSelect(comboID);
+					}
+				}
+			}
+			// tableComboAutoSelect selects the row whose key is the typed text when nothing is selected
+			// yet (the user typed the whole key and left the field without choosing a row).
+			function tableComboAutoSelect(comboID) {
+				const input = document.getElementById(comboID + '-input');
+				const value = tableComboValueInput(comboID);
+				const text = input ? input.value.trim() : '';
+				if (!value || !tableComboEmpty(input) || text === '') return;
+				const row = tableComboRows(comboID).find(r => r.dataset.key === text);
+				if (row) tableComboSelect(row);
+			}
+			// tableComboLeave runs when the input loses the focus: the typed key is selected and the
+			// results are closed (after the click on a row, which keeps the focus, is handled).
+			function tableComboLeave(comboID) {
+				setTimeout(() => {
+					tableComboAutoSelect(comboID);
+					tableComboClose(comboID);
+					// Nothing selected (the text cleared or not a key): the input shows the default value
+					// again, the value the search uses.
+					const input = document.getElementById(comboID + '-input');
+					const value = tableComboValueInput(comboID);
+					if (input && value && input.dataset.default && value.value === input.dataset.default) {
+						input.value = input.dataset.default;
+					}
+				}, 200);
+			}
+			// tableComboAfterSwap runs when the results arrive: when the user already left the field
+			// (the results of the last characters typed arrive later), the typed key is selected and
+			// the results are closed.
+			function tableComboAfterSwap(comboID) {
+				const input = document.getElementById(comboID + '-input');
+				if (input && document.activeElement !== input) {
+					tableComboAutoSelect(comboID);
+					tableComboClose(comboID);
+				}
+			}
+			// tableComboFocus selects the whole text of the input when it gets the focus, so the first
+			// character typed replaces the old content; the mouseup of the click that gave the focus
+			// would put the caret into the text again, so it is ignored once.
+			function tableComboFocus(input) {
+				input.select();
+				input.dataset.focused = '1';
+				// A focus by the keyboard (Tab) has no mouseup: the flag expires.
+				setTimeout(() => delete input.dataset.focused, 500);
+			}
+			function tableComboMouseUp(event, input) {
+				if (input.dataset.focused === '1') {
+					event.preventDefault();
+					delete input.dataset.focused;
+				}
+			}
+			// tableComboEmpty tells if nothing is selected in the combo of the input (the search on the
+			// focus runs only then; with a selected row the user types to search again).
+			function tableComboEmpty(input) {
+				const value = document.getElementById(input.dataset.valueid);
+				return !value || value.value === '' || value.value === (input.dataset.default || '');
+			}
+			// tableComboInput clears the selected key when the user types again.
+			function tableComboInput(comboID) {
+				const input = document.getElementById(comboID + '-input');
+				const value = tableComboValueInput(comboID);
+				const details = document.getElementById(comboID + '-details');
+				if (value) value.value = (input && input.dataset.default) || '';
+				if (details) details.textContent = '';
+			}
+		</script>
+	}
+	if cfg.HasLabel {
+		<label for={ cfg.ID + "-input" } class={ cfg.ClassLabel }>{ translator.Label(cfg.LabelText) }</label>
+	}
+	<div id={ cfg.ID } class={ tableComboValue(cfg.ClassWrapper, "relative w-full") }>
+		<input
+			id={ cfg.ID + "-input" }
+			type="text"
+			name={ tableComboValue(cfg.SearchParam, "q") }
+			value={ tableComboValue(cfg.DisplayValue, tableComboValue(cfg.Value, cfg.DefaultValue)) }
+			if cfg.DefaultValue != "" {
+				data-default={ cfg.DefaultValue }
+			}
+			if cfg.Placeholder != "" {
+				placeholder={ translator.Label(cfg.Placeholder) }
+			}
+			autocomplete="off"
+			data-valueid={ tableComboValue(cfg.ValueID, cfg.ID+"-value") }
+			class={ tableComboValue(cfg.ClassInput, "w-full border border-blue-400 rounded px-1 text-sm focus:bg-green-50 focus:border-green-500") }
+			if cfg.TabIndex != "" {
+				tabindex={ cfg.TabIndex }
+			}
+			if cfg.MinLength != "" {
+				minlength={ cfg.MinLength }
+			}
+			if cfg.Disabled {
+				disabled
+			}
+			if cfg.Required {
+				required
+			}
+			if cfg.OnSelect != "" {
+				data-onselect={ cfg.OnSelect }
+			}
+			if cfg.SearchURL != "" && !cfg.Disabled {
+				hx-get={ cfg.SearchURL }
+				hx-trigger={ tableComboValue(cfg.HxTrigger, "input changed delay:300ms, focus[tableComboEmpty(this)]") }
+				hx-target={ "#" + cfg.ID + "-results" }
+				hx-swap="innerHTML"
+				hx-sync="this:replace"
+				hx-on::after-swap={ templ.JSFuncCall("tableComboAfterSwap", cfg.ID) }
+				if cfg.HxVals != "" {
+					hx-vals={ cfg.HxVals }
+				}
+				if cfg.HxInclude != "" {
+					hx-include={ cfg.HxInclude }
+				}
+			}
+			oninput={ templ.JSFuncCall("tableComboInput", cfg.ID) }
+			onkeydown={ templ.JSFuncCall("tableComboKeydown", templ.JSExpression("event"), cfg.ID) }
+			onfocus={ templ.JSFuncCall("tableComboFocus", templ.JSExpression("this")) }
+			onmouseup={ templ.JSFuncCall("tableComboMouseUp", templ.JSExpression("event"), templ.JSExpression("this")) }
+			onblur={ templ.JSFuncCall("tableComboLeave", cfg.ID) }
+		/>
+		<!-- The key of the selected row: the value the form submits. -->
+		<input type="hidden" id={ tableComboValue(cfg.ValueID, cfg.ID+"-value") } name={ cfg.Name } value={ tableComboValue(cfg.Value, cfg.DefaultValue) }/>
+		<p id={ cfg.ID + "-details" } class="mt-0.5 text-xs text-gray-500">{ cfg.Details }</p>
+		<div
+			id={ cfg.ID + "-results" }
+			class="absolute z-50 mt-1 w-full max-h-72 overflow-auto rounded-md border border-blue-400 bg-white shadow-lg empty:hidden"
+		></div>
+	</div>
+}
+
+// TableComboResults renders the matching rows of the search of a TableCombo (the answer of its
+// SearchURL, swapped into its dropdown): the columns of res.Table.Headers and one selectable row per
+// res.Table.Rows (the ID of a row is its key).
+templ TableComboResults(res domain.TableComboResults, translator *i18n.Service) {
+	if len(res.Table.Rows) == 0 {
+		<p class="px-3 py-4 text-center text-sm text-gray-400">{ translator.Label(tableComboValue(res.EmptyText, "Nema rezultata")) }</p>
+	} else {
+		<table class="w-full text-sm">
+			<thead class="sticky top-0 z-10 bg-blue-900 text-white">
+				<tr>
+					for _, h := range res.Table.Headers {
+						<th
+							class={ "px-2 py-1 text-xs font-medium " + tableComboAlign(h.TextAlign) }
+							if h.Width != "" {
+								style={ "width: " + h.Width }
+							}
+						>{ translator.Label(h.Label) }</th>
+					}
+				</tr>
+			</thead>
+			<tbody>
+				for _, row := range res.Table.Rows {
+					<tr
+						class="cursor-pointer odd:bg-white even:bg-blue-50 hover:!bg-blue-100"
+						data-combo={ res.ComboID }
+						data-key={ row.ID }
+						data-text={ tableComboText(row.Fields, res.TextColumns, []int{0, 1}, " - ") }
+						data-details={ tableComboText(row.Fields, res.DetailColumns, nil, ", ") }
+						onmousedown="event.preventDefault(); tableComboSelect(this)"
+					>
+						for i, cell := range row.Fields {
+							<td class={ "px-2 py-1 " + tableComboAlign(tableComboHeaderAlign(res.Table.Headers, i)) }>{ cell }</td>
+						}
+					</tr>
+				}
+			</tbody>
+		</table>
+	}
+}
+
+var tableComboScript = templ.NewOnceHandle()
+
+// tableComboValue returns value, def when value is empty.
+func tableComboValue(value, def string) string {
+	if value == "" {
+		return def
+	}
+	return value
+}
+
+// tableComboText joins the cells of the columns (def when no columns are given) with sep, skipping
+// the empty ones and the columns out of the row.
+func tableComboText(fields []string, columns, def []int, sep string) string {
+	if len(columns) == 0 {
+		columns = def
+	}
+	parts := make([]string, 0, len(columns))
+	for _, c := range columns {
+		if c >= 0 && c < len(fields) && strings.TrimSpace(fields[c]) != "" {
+			parts = append(parts, strings.TrimSpace(fields[c]))
+		}
+	}
+	return strings.Join(parts, sep)
+}
+
+// tableComboHeaderAlign returns the TextAlign of the column i of the headers ("" when there is none).
+func tableComboHeaderAlign(headers []domain.Fields, i int) string {
+	if i < len(headers) {
+		return headers[i].TextAlign
+	}
+	return ""
+}
+
+// tableComboAlign returns the class of the alignment of a column ("right", "center", default left).
+func tableComboAlign(align string) string {
+	switch strings.ToLower(align) {
+	case "right":
+		return "text-right"
+	case "center":
+		return "text-center"
+	}
+	return "text-left"
+}

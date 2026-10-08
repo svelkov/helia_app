@@ -24,11 +24,12 @@ import (
 //	GetPregledDokumenata(context.Context, *domain.TableData, domain.RobnoDokumentaParams) error
 type RobnoDokumentaService interface {
 	GetFvrData(context.Context) (domain.Fvr, error)
-	GetMagacinComboValues(context.Context) ([]domain.ComboItem, error)
-	GetTipdokComboValues(context.Context) ([]domain.ComboItem, error)
-	GetVrstaDokumentaComboValues(context.Context) ([]domain.ComboItem, error)
+	GetMagacinComboValues(ctx context.Context, opts ...commonsvc.ComboOption) ([]domain.ComboItem, error)
+	GetTipdokComboValues(ctx context.Context, opts ...commonsvc.ComboOption) ([]domain.ComboItem, error)
+	GetVrstaDokumentaComboValues(ctx context.Context, opts ...commonsvc.ComboOption) ([]domain.ComboItem, error)
 
 	// Tab 1 - Unos dokumenta
+	GetUnosComboValues(ctx context.Context, tipdok string, moduli, tipoviMagacina []string) (magValues, vrstaDokumentaValues []domain.ComboItem, err error)
 	GetUnosDokumenta(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage, pageSize int, params domain.RobnoDokumentaParams) error
 	GetUnosDokumentaTotal(ctx context.Context, total *domain.RobnoDokumentaTotal) error
 	GetNextNalog(ctx context.Context, tipdok string) (int, error)
@@ -78,9 +79,27 @@ type RobnoDokumentaService interface {
 	GetStampaFakturaMP(ctx context.Context, params domain.RobnoStampaFakturaParams) ([]domain.RobnoStampaFakturaView, domain.RobnoStampaFakturaFirmaDto, error)
 	GetStampaOpstiDokument(ctx context.Context, params domain.RobnoStampaFakturaParams) ([]domain.RobnoStampaPopisView, domain.RobnoStampaFakturaFirmaDto, error)
 	GetStampaFakturaUsluge(ctx context.Context, params domain.RobnoStampaFakturaParams) ([]domain.RobnoStampaFakturaView, domain.RobnoStampaFakturaFirmaDto, error)
+	GetStampaZaduzenjeCO(ctx context.Context, params domain.RobnoStampaFakturaParams) ([]domain.RobnoStampaFakturaView, domain.RobnoStampaFakturaFirmaDto, error)
+	GetStampaRazduzenjeCO(ctx context.Context, params domain.RobnoStampaFakturaParams) ([]domain.RobnoStampaFakturaView, domain.RobnoStampaFakturaFirmaDto, error)
 	GetStampaFakturaAvansni(ctx context.Context, params domain.RobnoStampaFakturaParams) ([]domain.RobnoStampaFakturaView, domain.RobnoStampaFakturaFirmaDto, error)
 	GetStampaFakturaIzvoz(ctx context.Context, params domain.RobnoStampaFakturaParams, withKomercOpis bool) ([]domain.RobnoStampaFakturaIzvozView, domain.RobnoStampaFakturaFirmaDto, error)
+	GetStampaFakturaKnjizno(ctx context.Context, params domain.RobnoStampaFakturaParams) ([]domain.RobnoStampaFakturaView, domain.RobnoStampaFakturaFirmaDto, error)
+	GetStampaFakturaOtpremnica(ctx context.Context, params domain.RobnoStampaFakturaParams, tipFakture int) ([]domain.RobnoStampaFakturaView, domain.RobnoStampaFakturaFirmaDto, error)
+	GetStampaProfakturaIzvoz(ctx context.Context, params domain.RobnoStampaFakturaParams) ([]domain.RobnoStampaFakturaIzvozView, domain.RobnoStampaFakturaFirmaDto, error)
+	GetStampaProfaktura(ctx context.Context, params domain.RobnoStampaFakturaParams, tipProfakture int) ([]domain.RobnoStampaFakturaView, domain.RobnoStampaFakturaFirmaDto, error)
+	GetStampaPrenosnica(ctx context.Context, params domain.RobnoStampaFakturaParams, opcije RobnoStampaPrenosnicaOpcije) ([]domain.RobnoStampaPopisView, domain.RobnoStampaFakturaFirmaDto, error)
+	GetStampaKnjiznoPismo(ctx context.Context, params domain.RobnoStampaFakturaParams) ([]domain.RobnoStampaFakturaView, domain.RobnoStampaFakturaFirmaDto, error)
+	GetStampaKnjiznoPismoFin(ctx context.Context, params domain.RobnoStampaFakturaParams) ([]domain.RobnoStampaFakturaView, domain.RobnoStampaFakturaFirmaDto, error)
+	GetStampaPopisTekGod(ctx context.Context, params domain.RobnoStampaFakturaParams) ([]domain.RobnoStampaPopisView, domain.RobnoStampaFakturaFirmaDto, error)
+	GetStampaZaduzenjeSI(ctx context.Context, params domain.RobnoStampaFakturaParams) ([]domain.RobnoStampaPopisView, domain.RobnoStampaFakturaFirmaDto, error)
+	GetStampaZaduzenjeGradilista(ctx context.Context, params domain.RobnoStampaFakturaParams) ([]domain.RobnoStampaPopisView, domain.RobnoStampaFakturaFirmaDto, error)
+	GetStampaNivelacija(ctx context.Context, params domain.RobnoStampaFakturaParams) ([]domain.RobnoStampaPopisView, domain.RobnoStampaFakturaFirmaDto, error)
+	GetStampaInterniPrenosProizvodnje(ctx context.Context, params domain.RobnoStampaFakturaParams) ([]domain.RobnoStampaInterniPrenosView, domain.RobnoStampaFakturaFirmaDto, error)
+	GetStampaInternaZakljucnica(ctx context.Context, params domain.RobnoStampaFakturaParams) ([]domain.RobnoStampaInterniPrenosView, domain.RobnoStampaFakturaFirmaDto, error)
+	GetStampaInternaZakljucnicaRacun(ctx context.Context, params domain.RobnoStampaFakturaParams) ([]domain.RobnoStampaInternaZakljucnicaRacunView, domain.RobnoStampaFakturaFirmaDto, error)
+	GetStampaNivelacijaMaloprodaje(ctx context.Context, params domain.RobnoStampaFakturaParams) ([]domain.RobnoStampaNivelacijaMPView, domain.RobnoStampaFakturaFirmaDto, error)
 	GetStampaKalkulacija(ctx context.Context, params domain.RobnoStampaFakturaParams) ([]domain.RobnoStampaKalkulacijaView, domain.RobnoStampaFakturaFirmaDto, error)
+	GetStampaKalkulacijaMaloprodaje(ctx context.Context, params domain.RobnoStampaFakturaParams) ([]domain.RobnoStampaKalkulacijaView, domain.RobnoStampaFakturaFirmaDto, error)
 	GetStampaDokument(ctx context.Context, rdokID int64, vrd string) (domain.RobnoStampaDokumentDto, error)
 
 	GetUnosDokumentaTableFields() []domain.Fields
@@ -113,14 +132,18 @@ type RobnoDokumentaResource struct {
 
 	// The queries of the štampa fakture (GetStampaFaktura): the stavke with the header of their
 	// document, the avansi closed on the fakture, their rate and the izdavalac.
-	stampaFakturaRepo      repository.BaseRepository[domain.RobnoStampaFakturaRowDto]
-	stampaFakturaAvansRepo repository.BaseRepository[domain.RobnoStampaFakturaAvansDto]
-	stampaFakturaRateRepo  repository.BaseRepository[domain.RobnoStampaFakturaRataDto]
-	stampaFakturaFirmaRepo repository.BaseRepository[domain.RobnoStampaFakturaFirmaDto]
-	stampaPopisRepo        repository.BaseRepository[domain.RobnoStampaPopisRowDto]
-	stampaDokumentRepo     repository.BaseRepository[domain.RobnoStampaDokumentDto]
-	stampaKalkulacijaRepo  repository.BaseRepository[domain.RobnoStampaKalkulacijaRowDto]
-	stampaFakturaIzvozRepo repository.BaseRepository[domain.RobnoStampaFakturaIzvozRowDto]
+	stampaFakturaRepo             repository.BaseRepository[domain.RobnoStampaFakturaRowDto]
+	stampaFakturaAvansRepo        repository.BaseRepository[domain.RobnoStampaFakturaAvansDto]
+	stampaFakturaRateRepo         repository.BaseRepository[domain.RobnoStampaFakturaRataDto]
+	stampaFakturaFirmaRepo        repository.BaseRepository[domain.RobnoStampaFakturaFirmaDto]
+	stampaPopisRepo               repository.BaseRepository[domain.RobnoStampaPopisRowDto]
+	stampaDokumentRepo            repository.BaseRepository[domain.RobnoStampaDokumentDto]
+	stampaKalkulacijaRepo         repository.BaseRepository[domain.RobnoStampaKalkulacijaRowDto]
+	stampaFakturaIzvozRepo        repository.BaseRepository[domain.RobnoStampaFakturaIzvozRowDto]
+	stampaKnjiznoPismoRepo        repository.BaseRepository[domain.RobnoStampaKnjiznoPismoRowDto]
+	stampaKnjiznoPismoFakturaRepo repository.BaseRepository[domain.RobnoStampaKnjiznoPismoFakturaDto]
+	stampaInterniPrenosRepo       repository.BaseRepository[domain.RobnoStampaInterniPrenosRowDto]
+	stampaPoreskaStopaRepo        repository.BaseRepository[domain.RobnoStampaPoreskaStopaDto]
 
 	// TODO: add the repositories needed by the remaining tabs (rdok - robni dokument,
 	// rpro - robni promet, rsif - artikli, fkpl, ...). All the grids of the option share the row type
@@ -163,25 +186,33 @@ func NewRobnoDokumentaService(
 	stampaDokumentRepo repository.BaseRepository[domain.RobnoStampaDokumentDto],
 	stampaKalkulacijaRepo repository.BaseRepository[domain.RobnoStampaKalkulacijaRowDto],
 	stampaFakturaIzvozRepo repository.BaseRepository[domain.RobnoStampaFakturaIzvozRowDto],
+	stampaKnjiznoPismoRepo repository.BaseRepository[domain.RobnoStampaKnjiznoPismoRowDto],
+	stampaKnjiznoPismoFakturaRepo repository.BaseRepository[domain.RobnoStampaKnjiznoPismoFakturaDto],
+	stampaInterniPrenosRepo repository.BaseRepository[domain.RobnoStampaInterniPrenosRowDto],
+	stampaPoreskaStopaRepo repository.BaseRepository[domain.RobnoStampaPoreskaStopaDto],
 ) *RobnoDokumentaResource {
 	s := &RobnoDokumentaResource{
-		robnaDokRepo:           robnaDokRepo,
-		rnalTotalsRepo:         rnalTotalsRepo,
-		rnalHeaderRepo:         rnalHeaderRepo,
-		prikazUkupneObradeRepo: prikazUkupneObradeRepo,
-		tipdokRepo:             tipdokRepo,
-		dokvrstaRepo:           dokvrstaRepo,
-		magRepo:                magRepo,
-		fvrRepo:                fvrRepo,
-		commonSvc:              commonSvc,
-		stampaFakturaRepo:      stampaFakturaRepo,
-		stampaFakturaAvansRepo: stampaFakturaAvansRepo,
-		stampaFakturaRateRepo:  stampaFakturaRateRepo,
-		stampaFakturaFirmaRepo: stampaFakturaFirmaRepo,
-		stampaPopisRepo:        stampaPopisRepo,
-		stampaDokumentRepo:     stampaDokumentRepo,
-		stampaKalkulacijaRepo:  stampaKalkulacijaRepo,
-		stampaFakturaIzvozRepo: stampaFakturaIzvozRepo,
+		robnaDokRepo:                  robnaDokRepo,
+		rnalTotalsRepo:                rnalTotalsRepo,
+		rnalHeaderRepo:                rnalHeaderRepo,
+		prikazUkupneObradeRepo:        prikazUkupneObradeRepo,
+		tipdokRepo:                    tipdokRepo,
+		dokvrstaRepo:                  dokvrstaRepo,
+		magRepo:                       magRepo,
+		fvrRepo:                       fvrRepo,
+		commonSvc:                     commonSvc,
+		stampaFakturaRepo:             stampaFakturaRepo,
+		stampaFakturaAvansRepo:        stampaFakturaAvansRepo,
+		stampaFakturaRateRepo:         stampaFakturaRateRepo,
+		stampaFakturaFirmaRepo:        stampaFakturaFirmaRepo,
+		stampaPopisRepo:               stampaPopisRepo,
+		stampaDokumentRepo:            stampaDokumentRepo,
+		stampaKalkulacijaRepo:         stampaKalkulacijaRepo,
+		stampaFakturaIzvozRepo:        stampaFakturaIzvozRepo,
+		stampaKnjiznoPismoRepo:        stampaKnjiznoPismoRepo,
+		stampaKnjiznoPismoFakturaRepo: stampaKnjiznoPismoFakturaRepo,
+		stampaInterniPrenosRepo:       stampaInterniPrenosRepo,
+		stampaPoreskaStopaRepo:        stampaPoreskaStopaRepo,
 	}
 	s.setTableFields()
 	return s
@@ -192,19 +223,67 @@ func (s *RobnoDokumentaResource) GetFvrData(ctx context.Context) (domain.Fvr, er
 	return common.GetFvrData(ctx, &s.fvrRepo)
 }
 
-// GetMagacinComboValues returns the magacini of the current period (CommonService).
-func (s *RobnoDokumentaResource) GetMagacinComboValues(ctx context.Context) ([]domain.ComboItem, error) {
-	return s.commonSvc.GetMagacinComboValues(ctx)
+// GetMagacinComboValues returns the magacini of the current period keyed by magaciniid, filtered by the
+// options (CommonService).
+func (s *RobnoDokumentaResource) GetMagacinComboValues(ctx context.Context, opts ...commonsvc.ComboOption) ([]domain.ComboItem, error) {
+	return s.commonSvc.GetMagacinComboValues(ctx, opts...)
 }
 
-// GetTipdokComboValues returns the vrste naloga of the current period keyed by the tipdok code.
-func (s *RobnoDokumentaResource) GetTipdokComboValues(ctx context.Context) ([]domain.ComboItem, error) {
-	return s.commonSvc.GetTipdokComboValues(ctx)
+// GetTipdokComboValues returns the vrste naloga of the current period keyed by the tipdok code,
+// filtered by the options (e.g. commonsvc.WithGrupeDokumenata).
+func (s *RobnoDokumentaResource) GetTipdokComboValues(ctx context.Context, opts ...commonsvc.ComboOption) ([]domain.ComboItem, error) {
+	return s.commonSvc.GetTipdokComboValues(ctx, opts...)
 }
 
-// GetVrstaDokumentaComboValues returns the vrste dokumenata of the current period (CommonService).
-func (s *RobnoDokumentaResource) GetVrstaDokumentaComboValues(ctx context.Context) ([]domain.ComboItem, error) {
-	return s.commonSvc.GetVrstaDokumentaComboValues(ctx)
+// GetVrstaDokumentaComboValues returns the vrste dokumenata of the current period, filtered by the
+// options (CommonService).
+func (s *RobnoDokumentaResource) GetVrstaDokumentaComboValues(ctx context.Context, opts ...commonsvc.ComboOption) ([]domain.ComboItem, error) {
+	return s.commonSvc.GetVrstaDokumentaComboValues(ctx, opts...)
+}
+
+// GetUnosComboValues returns the magacini and the vrste dokumenata of the unos dokumenata for the vrsta
+// naloga tipdok, like the legacy PostaviComboBoxes (run on the selection of the vrsta naloga):
+//   - the magacini are the ones the user may work with (maguser) of the tipoviMagacina (magacini.tipmag,
+//     the configuration grupe_dokumenata.tipmag_rob, the legacy "V;M;D"), limited to the magacini of the
+//     vrsta naloga (tipdok.magacin, e.g. "1,") when it has them;
+//   - the vrste dokumenata are the ones of the moduli (dokvrsta.modul, the configuration
+//     grupe_dokumenata.dok_rob, the legacy gsDOKROB), limited to the vrste dokumenata of the vrsta
+//     naloga (tipdok.grpvrd, e.g. "188,189,") when it has them.
+//
+// Without a vrsta naloga (or with an unknown one) the lists are not limited by it.
+func (s *RobnoDokumentaResource) GetUnosComboValues(ctx context.Context, tipdok string, moduli, tipoviMagacina []string) (magValues, vrstaDokumentaValues []domain.ComboItem, err error) {
+	var listMag, listVrd []int
+	if tipdok = strings.TrimSpace(tipdok); tipdok != "" {
+		if t, err := s.commonSvc.GetTipdokByCode(ctx, tipdok); err == nil {
+			listMag = robnoDokumentaLista(t.Magacin)
+			listVrd = robnoDokumentaLista(t.GrpVrd)
+		}
+	}
+	magValues, err = s.commonSvc.GetMagacinKorisnikaComboValues(ctx,
+		commonsvc.WithIn("magacini.tipmag", tipoviMagacina...),
+		commonsvc.WithIn("magacini.mag", listMag...))
+	if err != nil {
+		return nil, nil, err
+	}
+	vrstaDokumentaValues, err = s.commonSvc.GetVrstaDokumentaComboValues(ctx,
+		commonsvc.WithIn("modul", moduli...),
+		commonsvc.WithIn("vrd", listVrd...))
+	if err != nil {
+		return nil, nil, err
+	}
+	return magValues, vrstaDokumentaValues, nil
+}
+
+// robnoDokumentaLista returns the numbers of a comma separated list of a vrsta naloga (tipdok.grpvrd,
+// tipdok.magacin, e.g. "188,189,"); the parts that are not numbers are skipped.
+func robnoDokumentaLista(lista string) []int {
+	var out []int
+	for _, part := range strings.FieldsFunc(lista, func(r rune) bool { return r == ',' || r == ';' }) {
+		if n, err := strconv.Atoi(strings.TrimSpace(part)); err == nil {
+			out = append(out, n)
+		}
+	}
+	return out
 }
 
 // GetUnosDokumenta returns the robni nalozi (rnal) of the selected vrsta naloga for the grid.

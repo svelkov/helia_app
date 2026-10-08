@@ -43,38 +43,18 @@ templ PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 							LabelText:  translator.Label("Konto"),
 							ClassLabel: common.ClassLabel + " w-24",
 						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:           "konto",
-							Name:         "konto",
-							FieldType:    "text",
-							Disabled:     false,
-							ClassInput:   common.ClassInputTextEnabled + " w-24",
-							BlurEndpoint: "api/fkpl/trazikonto",
-							HxTarget:     "kontonaziv",
-							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "2", "destfield": "konto"}`,
-							HxInclude:    "this",
-							MinLength:    "2",
-							MaxLength:    "6",
-							TabIndex:     "1",
-							OnInput:      "clearFieldError",
-							OnFocus:      "clearFieldError",
-						})
-						@components.SearchButton(domain.SearchButtonConfig{
-							ID:          "btn-search-konto",
-							Name:        "search-konto",
-							HxUrl:       "/api/promet/searchbutton",
-							HxTarget:    "#search-dropdown",
-							HxSwap:      "innerHTML",
-							HxVals:      `{"vkonta": "2", "destfield": "konto"}`,
-							ClassButton: common.ClassButton,
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "kontonaziv",
-							Name:       "kontonaziv",
-							FieldType:  "text",
-							Disabled:   true,
-							ClassInput: common.ClassInputTextDisabled + " w-full",
-						})
+						<!-- Konto: searched in the kontni plan (fkpl, /api/search/konta); the selected konto is
+						     shown as "konto - naziv konta" and its value stays in the field with the id
+						     "konto" that the buttons and the scripts of the tab read. -->
+						@components.TableCombo(domain.TableComboConfig{
+							ID:          "konto-combo",
+							Name:        "konto",
+							ValueID:     "konto",
+							Placeholder: "Pretraži po kontu ili nazivu",
+							ClassInput:  common.ClassInputTextEnabled + " w-full",
+							SearchURL:   "/api/search/konta",
+							TabIndex:    "1",
+						}, translator)
 					</div>
 					<div class="flex items-center gap-1 mb-1">
 						@components.LabelField(domain.LabelFieldConfig{
@@ -82,38 +62,23 @@ templ PrometAnalitickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 							LabelText:  translator.Label("Sifra"),
 							ClassLabel: common.ClassLabel + " w-24",
 						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:           "sifra",
-							Name:         "sifra",
-							FieldType:    "text",
-							Disabled:     false,
-							ClassInput:   common.ClassInputTextEnabled + " w-24",
-							BlurEndpoint: "api/fkpl/trazikonto",
-							HxTarget:     "sifranaziv",
-							HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('sifra').value, "vkonta": "1", "destfield": "sifra"}`,
-							HxInclude:    "this",
-							MinLength:    "2",
-							MaxLength:    "6",
-							TabIndex:     "2",
-							OnInput:      "clearFieldError",
-							OnFocus:      "clearFieldError",
-						})
-						@components.SearchButton(domain.SearchButtonConfig{
-							ID:          "sifra",
-							Name:        "search-sifra",
-							HxUrl:       "/api/promet/searchbutton",
-							HxTarget:    "#search-dropdown",
-							HxSwap:      "innerHTML",
-							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1", "destfield": "sifra"}`,
-							ClassButton: common.ClassButton,
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "sifranaziv",
-							Name:       "sifranaziv",
-							FieldType:  "text",
-							Disabled:   true,
-							ClassInput: common.ClassInputTextDisabled + " w-full",
-						})
+						<!-- Šifra: the analitika of the selected konto (fkpl, /api/search/analitika with the
+						     konto of the field "konto"); the selected šifra is shown as "šifra - naziv" and
+						     its value stays in the field with the id "sifra" that the buttons and the
+						     scripts of the tab read. -->
+						@components.TableCombo(domain.TableComboConfig{
+							ID:          "sifra-combo",
+							Name:        "sifra",
+							ValueID:     "sifra",
+							Placeholder: "Pretraži po šifri ili nazivu",
+							ClassInput:  common.ClassInputTextEnabled + " w-full",
+							SearchURL:   "/api/search/analitika",
+							HxInclude:   "#konto",
+							// The search also runs again when the konto is selected while the šifra has the
+							// focus (the konto typed and left with Tab before its results arrived).
+							HxTrigger: "input changed delay:300ms, focus[tableComboEmpty(this)], change[document.activeElement === this] from:#konto",
+							TabIndex:  "2",
+						}, translator)
 					</div>
 					<div class="flex items-center gap-1 mb-1">
 						@components.LabelField(domain.LabelFieldConfig{
@@ -620,38 +585,15 @@ templ AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint,
 							LabelText:  translator.Label("Konto"),
 							ClassLabel: common.ClassLabel + " w-24",
 						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:           "konto",
-							Name:         "konto",
-							FieldType:    "text",
-							Disabled:     false,
-							ClassInput:   common.ClassInputTextEnabled + " w-24",
-							BlurEndpoint: "api/fkpl/trazikonto",
-							HxTarget:     "kontonaziv",
-							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "2", "destfield": "konto"}`,
-							HxInclude:    "this",
-							MinLength:    "2",
-							MaxLength:    "6",
-							TabIndex:     "1",
-							OnInput:      "clearFieldError",
-							OnFocus:      "clearFieldError",
-						})
-						@components.SearchButton(domain.SearchButtonConfig{
-							ID:          "konto",
-							Name:        "search-konto",
-							HxUrl:       "/api/promet/searchbutton",
-							HxTarget:    "#search-dropdown",
-							HxSwap:      "innerHTML",
-							HxVals:      `{"vkonta": "2", "destfield": "konto"}`,
-							ClassButton: common.ClassButton,
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "kontonaziv",
-							Name:       "kontonaziv",
-							FieldType:  "text",
-							Disabled:   true,
-							ClassInput: common.ClassInputTextDisabled + " w-full",
-						})
+						@components.TableCombo(domain.TableComboConfig{
+							ID:          "konto-combo",
+							Name:        "konto",
+							ValueID:     "konto",
+							Placeholder: "Pretraži po kontu ili nazivu",
+							ClassInput:  common.ClassInputTextEnabled + " w-full",
+							SearchURL:   "/api/search/konta",
+							TabIndex:    "1",
+						}, translator)
 					</div>
 					<div class="flex items-center gap-1 mb-1">
 						@components.LabelField(domain.LabelFieldConfig{
@@ -659,38 +601,18 @@ templ AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint,
 							LabelText:  translator.Label("Sifra"),
 							ClassLabel: common.ClassLabel + " w-24",
 						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:           "sifra",
-							Name:         "sifra",
-							FieldType:    "text",
-							Disabled:     false,
-							ClassInput:   common.ClassInputTextEnabled + " w-24",
-							BlurEndpoint: "api/fkpl/trazikonto",
-							HxTarget:     "sifranaziv",
-							HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('sifra').value, "vkonta": "1", "destfield": "sifra"}`,
-							HxInclude:    "this",
-							MinLength:    "2",
-							MaxLength:    "6",
-							TabIndex:     "2",
-							OnInput:      "clearFieldError",
-							OnFocus:      "clearFieldError",
-						})
-						@components.SearchButton(domain.SearchButtonConfig{
-							ID:          "sifra",
-							Name:        "search-sifra",
-							HxUrl:       "/api/promet/searchbutton",
-							HxTarget:    "#search-dropdown",
-							HxSwap:      "innerHTML",
-							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1", "destfield": "sifra"}`,
-							ClassButton: common.ClassButton,
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "sifranaziv",
-							Name:       "sifranaziv",
-							FieldType:  "text",
-							Disabled:   true,
-							ClassInput: common.ClassInputTextDisabled + " w-full",
-						})
+						@components.TableCombo(domain.TableComboConfig{
+							ID:          "sifra-combo",
+							Name:        "sifra",
+							ValueID:     "sifra",
+							Placeholder: "Pretraži po šifri ili nazivu",
+							ClassInput:  common.ClassInputTextEnabled + " w-full",
+							SearchURL:   "/api/search/analitika",
+							HxInclude:   "#konto",
+							// The search also runs again when the konto is selected while this field has the focus.
+							HxTrigger: "input changed delay:300ms, focus[tableComboEmpty(this)], change[document.activeElement === this] from:#konto",
+							TabIndex:  "2",
+						}, translator)
 					</div>
 					<div class="flex items-center gap-1 mb-1">
 						@components.LabelField(domain.LabelFieldConfig{
@@ -734,36 +656,19 @@ templ AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint,
 							LabelText:  "Od Mesta Isp.",
 							ClassLabel: common.ClassLabel + " w-24",
 						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:           "odmi",
+						@components.TableCombo(domain.TableComboConfig{
+							ID:           "odmi-combo",
 							Name:         "odmi",
-							FieldType:    "text",
-							Disabled:     false,
-							ClassInput:   common.ClassInputTextEnabled + " w-24",
-							BlurEndpoint: "api/mi/trazimi",
-							HxTarget:     "odminaziv",
-							Value:        "0",
-							MinLength:    "1",
-							MaxLength:    "6",
-							TabIndex:     "5",
-							OnInput:      "clearFieldError",
-							OnFocus:      "clearFieldError",
-						})
-						@components.SearchButton(domain.SearchButtonConfig{
-							ID:          "odmi",
-							Name:        "search-odmi",
-							HxUrl:       "/api/promet/searchbutton",
-							HxTarget:    "#search-dropdown",
-							HxSwap:      "innerHTML",
-							ClassButton: common.ClassButton,
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "odminaziv",
-							Name:       "odminaziv",
-							FieldType:  "text",
-							Disabled:   true,
-							ClassInput: common.ClassInputTextDisabled + " w-full",
-						})
+							ValueID:      "odmi",
+							DefaultValue: "0",
+							Placeholder:  "Pretraži po mestu isporuke",
+							ClassInput:   common.ClassInputTextEnabled + " w-full",
+							SearchURL:    "/api/search/mesta-isporuke",
+							HxInclude:    "#konto, #sifra",
+							// The search also runs again when the konto is selected while this field has the focus.
+							HxTrigger: "input changed delay:300ms, focus[tableComboEmpty(this)], change[document.activeElement === this] from:#konto",
+							TabIndex:  "5",
+						}, translator)
 					</div>
 					<div class="flex items-center gap-1 mb-1">
 						@components.LabelField(domain.LabelFieldConfig{
@@ -771,36 +676,19 @@ templ AnalitickaKarticaPoMI(tabs domain.TabData, tbl domain.TableData, btnPrint,
 							LabelText:  "Do Mesta Isp.",
 							ClassLabel: common.ClassLabel + " w-24",
 						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:           "domi",
+						@components.TableCombo(domain.TableComboConfig{
+							ID:           "domi-combo",
 							Name:         "domi",
-							Value:        "999",
-							FieldType:    "text",
-							Disabled:     false,
-							ClassInput:   common.ClassInputTextEnabled + " w-24",
-							BlurEndpoint: "api/mi/trazimi",
-							HxTarget:     "dominaziv",
-							MinLength:    "1",
-							MaxLength:    "6",
-							TabIndex:     "6",
-							OnInput:      "clearFieldError",
-							OnFocus:      "clearFieldError",
-						})
-						@components.SearchButton(domain.SearchButtonConfig{
-							ID:          "search-domi",
-							Name:        "search-domi",
-							HxUrl:       "/api/promet/searchbutton",
-							HxTarget:    "#search-dropdown",
-							HxSwap:      "innerHTML",
-							ClassButton: common.ClassButton,
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "dominaziv",
-							Name:       "dominaziv",
-							FieldType:  "text",
-							Disabled:   true,
-							ClassInput: common.ClassInputTextDisabled + " w-full",
-						})
+							ValueID:      "domi",
+							DefaultValue: "999",
+							Placeholder:  "Pretraži po mestu isporuke",
+							ClassInput:   common.ClassInputTextEnabled + " w-full",
+							SearchURL:    "/api/search/mesta-isporuke",
+							HxInclude:    "#konto, #sifra",
+							// The search also runs again when the konto is selected while this field has the focus.
+							HxTrigger: "input changed delay:300ms, focus[tableComboEmpty(this)], change[document.activeElement === this] from:#konto",
+							TabIndex:  "6",
+						}, translator)
 					</div>
 					<div class="mb-1 flex items-center justify-between h-6">
 						<!-- saldo po mesecima checkbox on the left -->
@@ -860,38 +748,15 @@ templ PrometDeviznihAnalitickihKonta(tabs domain.TabData, tblHdr domain.TableDat
 							LabelText:  translator.Label("Konto"),
 							ClassLabel: common.ClassLabel + " w-24",
 						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:           "konto",
-							Name:         "konto",
-							FieldType:    "text",
-							Disabled:     false,
-							ClassInput:   common.ClassInputTextEnabled + " w-24",
-							BlurEndpoint: "api/fkpl/trazikonto",
-							HxTarget:     "kontonaziv",
-							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "2", "destfield": "konto"}`,
-							HxInclude:    "this",
-							MinLength:    "2",
-							MaxLength:    "6",
-							TabIndex:     "1",
-							OnInput:      "clearFieldError",
-							OnFocus:      "clearFieldError",
-						})
-						@components.SearchButton(domain.SearchButtonConfig{
-							ID:          "konto",
-							Name:        "search-konto",
-							HxUrl:       "/api/promet/searchbutton",
-							HxTarget:    "#search-dropdown",
-							HxSwap:      "innerHTML",
-							HxVals:      `{"vkonta": "2", "destfield": "konto"}`,
-							ClassButton: common.ClassButton,
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "kontonaziv",
-							Name:       "kontonaziv",
-							FieldType:  "text",
-							Disabled:   true,
-							ClassInput: common.ClassInputTextDisabled + " w-full",
-						})
+						@components.TableCombo(domain.TableComboConfig{
+							ID:          "konto-combo",
+							Name:        "konto",
+							ValueID:     "konto",
+							Placeholder: "Pretraži po kontu ili nazivu",
+							ClassInput:  common.ClassInputTextEnabled + " w-full",
+							SearchURL:   "/api/search/konta",
+							TabIndex:    "1",
+						}, translator)
 					</div>
 					<div class="flex items-center gap-1 mb-1">
 						@components.LabelField(domain.LabelFieldConfig{
@@ -899,38 +764,18 @@ templ PrometDeviznihAnalitickihKonta(tabs domain.TabData, tblHdr domain.TableDat
 							LabelText:  translator.Label("Sifra"),
 							ClassLabel: common.ClassLabel + " w-24",
 						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:           "sifra",
-							Name:         "sifra",
-							FieldType:    "text",
-							Disabled:     false,
-							ClassInput:   common.ClassInputTextEnabled + " w-24",
-							BlurEndpoint: "api/fkpl/trazikonto",
-							HxTarget:     "sifranaziv",
-							HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('sifra').value, "vkonta": "1", "destfield": "sifra"}`,
-							HxInclude:    "this",
-							MinLength:    "2",
-							MaxLength:    "6",
-							TabIndex:     "2",
-							OnInput:      "clearFieldError",
-							OnFocus:      "clearFieldError",
-						})
-						@components.SearchButton(domain.SearchButtonConfig{
-							ID:          "sifra",
-							Name:        "search-sifra",
-							HxUrl:       "/api/promet/searchbutton",
-							HxTarget:    "#search-dropdown",
-							HxSwap:      "innerHTML",
-							HxVals:      `{"vkonta": "1", "destfield": "sifra"}`,
-							ClassButton: common.ClassButton,
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "sifranaziv",
-							Name:       "sifranaziv",
-							FieldType:  "text",
-							Disabled:   true,
-							ClassInput: common.ClassInputTextDisabled + " w-full",
-						})
+						@components.TableCombo(domain.TableComboConfig{
+							ID:          "sifra-combo",
+							Name:        "sifra",
+							ValueID:     "sifra",
+							Placeholder: "Pretraži po šifri ili nazivu",
+							ClassInput:  common.ClassInputTextEnabled + " w-full",
+							SearchURL:   "/api/search/analitika",
+							HxInclude:   "#konto",
+							// The search also runs again when the konto is selected while this field has the focus.
+							HxTrigger: "input changed delay:300ms, focus[tableComboEmpty(this)], change[document.activeElement === this] from:#konto",
+							TabIndex:  "2",
+						}, translator)
 					</div>
 					<div class="flex items-center gap-1 mb-1">
 						@components.LabelField(domain.LabelFieldConfig{
@@ -1030,41 +875,16 @@ templ PrometSubsintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPr
 							LabelText:  translator.Label("Od konta"),
 							ClassLabel: common.ClassLabel + " w-24",
 						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:            "odkonta",
-							Name:          "odkonta",
-							FieldType:     "text",
-							DataDestField: "odkonta",
-							Disabled:      false,
-							ClassInput:    common.ClassInputTextEnabled + " w-24",
-							BlurEndpoint:  "api/fkpl/trazikonto",
-							HxTarget:      "odkontanaziv",
-							HxVals:        `js:{"konto": document.getElementById('odkonta').value, "vkonta": "2", "destfield": "odkonta"}`,
-							HxInclude:     "this",
-							Value:         "0000",
-							MinLength:     "4",
-							MaxLength:     "4",
-							TabIndex:      "1",
-							OnInput:       "clearFieldError",
-							OnFocus:       "clearFieldError",
-						})
-						@components.SearchButton(domain.SearchButtonConfig{
-							ID:          "odkonta",
-							Name:        "search-konto",
-							HxUrl:       "/api/promet/searchbutton",
-							HxTarget:    "#search-dropdown",
-							HxSwap:      "innerHTML",
-							HxVals:      `js:{"konto": document.getElementById('odkonta').value, "vkonta": "2", "destfield": "odkonta"}`,
-							ClassButton: common.ClassButton,
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "odkontanaziv",
-							Name:       "odkontanaziv",
-							FieldType:  "text",
-							Disabled:   true,
-							ClassInput: common.ClassInputTextDisabled + " w-full",
-							TabIndex:   "-1",
-						})
+						@components.TableCombo(domain.TableComboConfig{
+							ID:           "odkonta-combo",
+							Name:         "odkonta",
+							ValueID:      "odkonta",
+							DefaultValue: "0000",
+							Placeholder:  "Pretraži po kontu ili nazivu",
+							ClassInput:   common.ClassInputTextEnabled + " w-full",
+							SearchURL:    "/api/search/konta",
+							TabIndex:     "1",
+						}, translator)
 					</div>
 					<div class="flex items-center gap-1 mb-1">
 						@components.LabelField(domain.LabelFieldConfig{
@@ -1072,40 +892,16 @@ templ PrometSubsintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPr
 							LabelText:  translator.Label("Do konta"),
 							ClassLabel: common.ClassLabel + " w-24",
 						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:           "dokonta",
+						@components.TableCombo(domain.TableComboConfig{
+							ID:           "dokonta-combo",
 							Name:         "dokonta",
-							FieldType:    "text",
-							Disabled:     false,
-							ClassInput:   common.ClassInputTextEnabled + " w-24",
-							BlurEndpoint: "api/fkpl/trazikonto",
-							HxTarget:     "dokontanaziv",
-							HxVals:       `js:{"konto": document.getElementById('dokonta').value, "vkonta": "2", "destfield": "dokonta"}`,
-							HxInclude:    "this",
-							Value:        "9999",
-							MinLength:    "4",
-							MaxLength:    "4",
+							ValueID:      "dokonta",
+							DefaultValue: "9999",
+							Placeholder:  "Pretraži po kontu ili nazivu",
+							ClassInput:   common.ClassInputTextEnabled + " w-full",
+							SearchURL:    "/api/search/konta",
 							TabIndex:     "2",
-							OnInput:      "clearFieldError",
-							OnFocus:      "clearFieldError",
-						})
-						@components.SearchButton(domain.SearchButtonConfig{
-							ID:          "dokonta",
-							Name:        "search-konto",
-							HxUrl:       "/api/promet/searchbutton",
-							HxTarget:    "#search-dropdown",
-							HxSwap:      "innerHTML",
-							HxVals:      `js:{"konto": document.getElementById('dokonta').value, "vkonta": "2", "destfield": "dokonta"}`,
-							ClassButton: common.ClassButton,
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "dokontanaziv",
-							Name:       "dokontanaziv",
-							FieldType:  "text",
-							Disabled:   true,
-							ClassInput: common.ClassInputTextDisabled + " w-full",
-							TabIndex:   "-1",
-						})
+						}, translator)
 					</div>
 					<div class="flex items-center gap-1 mb-1">
 						@components.LabelField(domain.LabelFieldConfig{
@@ -1315,38 +1111,15 @@ templ PrometSintetickihKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 							LabelText:  translator.Label("Konto"),
 							ClassLabel: common.ClassLabel + " w-24",
 						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:           "konto",
-							Name:         "konto",
-							FieldType:    "text",
-							Disabled:     false,
-							ClassInput:   common.ClassInputTextEnabled + " w-24",
-							BlurEndpoint: "api/fkpl/trazikonto",
-							HxTarget:     "kontonaziv",
-							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "3", "destfield": "konto"}`,
-							HxInclude:    "this",
-							MinLength:    "3",
-							MaxLength:    "3",
-							TabIndex:     "1",
-							OnInput:      "clearFieldError",
-							OnFocus:      "clearFieldError",
-						})
-						@components.SearchButton(domain.SearchButtonConfig{
-							ID:          "konto",
-							Name:        "search-konto",
-							HxUrl:       "/api/promet/searchbutton",
-							HxTarget:    "#search-dropdown",
-							HxSwap:      "innerHTML",
-							HxVals:      `{"vkonta": "3", "destfield": "konto"}`,
-							ClassButton: common.ClassButton,
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "kontonaziv",
-							Name:       "kontonaziv",
-							FieldType:  "text",
-							Disabled:   true,
-							ClassInput: common.ClassInputTextDisabled + " w-full",
-						})
+						@components.TableCombo(domain.TableComboConfig{
+							ID:          "konto-combo",
+							Name:        "konto",
+							ValueID:     "konto",
+							Placeholder: "Pretraži po kontu ili nazivu",
+							ClassInput:  common.ClassInputTextEnabled + " w-full",
+							SearchURL:   "/api/search/sinteticka-konta",
+							TabIndex:    "1",
+						}, translator)
 					</div>
 					<div class="flex items-center gap-1 mb-1">
 						@components.LabelField(domain.LabelFieldConfig{
@@ -1520,37 +1293,15 @@ templ KarticaSintetickiKonta(tabs domain.TabData, tbl domain.TableData, btnPrint
 							LabelText:  translator.Label("Konto"),
 							ClassLabel: common.ClassLabel + " w-24",
 						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:           "konto",
-							Name:         "konto",
-							FieldType:    "text",
-							Disabled:     false,
-							ClassInput:   common.ClassInputTextEnabled + " w-28",
-							BlurEndpoint: "api/fkpl/trazikonto",
-							HxTarget:     "kontonaziv",
-							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "3", "destfield": "konto"}`,
-							HxInclude:    "this",
-							MinLength:    "2",
-							MaxLength:    "3",
-							TabIndex:     "1",
-							OnInput:      "clearFieldError",
-							OnFocus:      "clearFieldError"})
-						@components.SearchButton(domain.SearchButtonConfig{
-							ID:          "konto",
-							Name:        "search-konto",
-							HxUrl:       "/api/promet/searchbutton",
-							HxTarget:    "#search-dropdown",
-							HxSwap:      "innerHTML",
-							HxVals:      `{"vkonta": "3", "destfield": "konto"}`,
-							ClassButton: common.ClassButton,
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "kontonaziv",
-							Name:       "kontonaziv",
-							FieldType:  "text",
-							Disabled:   true,
-							ClassInput: common.ClassInputTextDisabled + " w-full",
-						})
+						@components.TableCombo(domain.TableComboConfig{
+							ID:          "konto-combo",
+							Name:        "konto",
+							ValueID:     "konto",
+							Placeholder: "Pretraži po kontu ili nazivu",
+							ClassInput:  common.ClassInputTextEnabled + " w-full",
+							SearchURL:   "/api/search/sinteticka-konta",
+							TabIndex:    "1",
+						}, translator)
 					</div>
 					<div class="flex items-center gap-1 mb-1">
 						@components.LabelField(domain.LabelFieldConfig{
@@ -1640,38 +1391,15 @@ templ PrometKontaPoVRD(tabs domain.TabData, tbl domain.TableData, btnPrint, btnO
 							LabelText:  translator.Label("Konto"),
 							ClassLabel: common.ClassLabel + " w-24",
 						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:           "konto",
-							Name:         "konto",
-							FieldType:    "text",
-							Disabled:     false,
-							ClassInput:   common.ClassInputTextEnabled + " w-24",
-							BlurEndpoint: "api/fkpl/trazikonto",
-							HxTarget:     "kontonaziv",
-							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "3", "destfield": "konto"}`,
-							HxInclude:    "this",
-							MinLength:    "4",
-							MaxLength:    "6",
-							TabIndex:     "1",
-							OnInput:      "clearFieldError",
-							OnFocus:      "clearFieldError",
-						})
-						@components.SearchButton(domain.SearchButtonConfig{
-							ID:          "konto",
-							Name:        "search-konto",
-							HxUrl:       "/api/promet/searchbutton",
-							HxTarget:    "#search-dropdown",
-							HxSwap:      "innerHTML",
-							HxVals:      `{"vkonta": "3", "destfield": "konto"}`,
-							ClassButton: common.ClassButton,
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "kontonaziv",
-							Name:       "kontonaziv",
-							FieldType:  "text",
-							Disabled:   true,
-							ClassInput: common.ClassInputTextDisabled + " w-full",
-						})
+						@components.TableCombo(domain.TableComboConfig{
+							ID:          "konto-combo",
+							Name:        "konto",
+							ValueID:     "konto",
+							Placeholder: "Pretraži po kontu ili nazivu",
+							ClassInput:  common.ClassInputTextEnabled + " w-full",
+							SearchURL:   "/api/search/sinteticka-konta",
+							TabIndex:    "1",
+						}, translator)
 					</div>
 					<div class="flex items-center gap-1 mb-1">
 						@components.LabelField(domain.LabelFieldConfig{
@@ -1757,37 +1485,15 @@ templ PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint,
 							LabelText:  translator.Label("Konto"),
 							ClassLabel: common.ClassLabel + " w-24",
 						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:           "konto",
-							Name:         "konto",
-							FieldType:    "text",
-							Disabled:     false,
-							ClassInput:   common.ClassInputTextEnabled + " w-24",
-							BlurEndpoint: "api/fkpl/trazikonto",
-							HxTarget:     "kontonaziv",
-							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "2", "destfield": "konto"}`,
-							HxInclude:    "this",
-							MinLength:    "4",
-							MaxLength:    "6",
-							TabIndex:     "1",
-							OnInput:      "clearFieldError",
-							OnFocus:      "clearFieldError"})
-						@components.SearchButton(domain.SearchButtonConfig{
-							ID:          "konto",
-							Name:        "search-konto",
-							HxUrl:       "/api/promet/searchbutton",
-							HxTarget:    "#search-dropdown",
-							HxSwap:      "innerHTML",
-							HxVals:      `{"vkonta": "2", "destfield": "konto"}`,
-							ClassButton: common.ClassButton,
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "kontonaziv",
-							Name:       "kontonaziv",
-							FieldType:  "text",
-							Disabled:   true,
-							ClassInput: common.ClassInputTextDisabled + " w-full",
-						})
+						@components.TableCombo(domain.TableComboConfig{
+							ID:          "konto-combo",
+							Name:        "konto",
+							ValueID:     "konto",
+							Placeholder: "Pretraži po kontu ili nazivu",
+							ClassInput:  common.ClassInputTextEnabled + " w-full",
+							SearchURL:   "/api/search/konta",
+							TabIndex:    "1",
+						}, translator)
 					</div>
 					<div class="flex items-center gap-1 mb-1">
 						@components.LabelField(domain.LabelFieldConfig{
@@ -1795,37 +1501,19 @@ templ PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint,
 							LabelText:  translator.Label("Od Sifre"),
 							ClassLabel: common.ClassLabel + " w-24",
 						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:           "odsifre",
-							FieldType:    "text",
-							Disabled:     false,
-							ClassInput:   common.ClassInputTextEnabled + " w-24",
-							BlurEndpoint: "api/fkpl/trazikonto",
-							HxTarget:     "sifranaziv",
-							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "1", "destfield": "odsifre"}`,
-							Value:        "00",
-							MinLength:    "2",
-							MaxLength:    "6",
-							TabIndex:     "2",
-							OnInput:      "clearFieldError",
-							OnFocus:      "clearFieldError",
-						})
-						@components.SearchButton(domain.SearchButtonConfig{
-							ID:          "odsifre",
-							Name:        "search-odsifre",
-							HxUrl:       "/api/promet/searchbutton",
-							HxTarget:    "#search-dropdown",
-							HxSwap:      "innerHTML",
-							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1", "destfield": "odsifre"}`,
-							ClassButton: common.ClassButton,
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "odsifrenaziv",
-							Name:       "odsifrenaziv",
-							FieldType:  "text",
-							Disabled:   true,
-							ClassInput: common.ClassInputTextDisabled + " w-full",
-						})
+						@components.TableCombo(domain.TableComboConfig{
+							ID:           "odsifre-combo",
+							Name:         "odsifre",
+							ValueID:      "odsifre",
+							DefaultValue: "00",
+							Placeholder:  "Pretraži po šifri ili nazivu",
+							ClassInput:   common.ClassInputTextEnabled + " w-full",
+							SearchURL:    "/api/search/analitika",
+							HxInclude:    "#konto",
+							// The search also runs again when the konto is selected while this field has the focus.
+							HxTrigger: "input changed delay:300ms, focus[tableComboEmpty(this)], change[document.activeElement === this] from:#konto",
+							TabIndex:  "2",
+						}, translator)
 					</div>
 					<div class="flex items-center gap-1 mb-1">
 						@components.LabelField(domain.LabelFieldConfig{
@@ -1833,37 +1521,19 @@ templ PrometKontaAnaliticki(tabs domain.TabData, tbl domain.TableData, btnPrint,
 							LabelText:  translator.Label("Do Sifre"),
 							ClassLabel: common.ClassLabel + " w-24",
 						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:           "dosifre",
-							FieldType:    "text",
-							Disabled:     false,
-							ClassInput:   common.ClassInputTextEnabled + " w-24",
-							BlurEndpoint: "api/fkpl/trazikonto",
-							HxTarget:     "sifranaziv",
-							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "1", "destfield": "dosifre"}`,
-							Value:        "999999",
-							MinLength:    "2",
-							MaxLength:    "6",
-							TabIndex:     "3",
-							OnInput:      "clearFieldError",
-							OnFocus:      "clearFieldError",
-						})
-						@components.SearchButton(domain.SearchButtonConfig{
-							ID:          "dosifre",
-							Name:        "search-dosifre",
-							HxUrl:       "/api/promet/searchbutton",
-							HxTarget:    "#search-dropdown",
-							HxSwap:      "innerHTML",
-							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1", "destfield": "dosifre"}`,
-							ClassButton: common.ClassButton,
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "dosifrenaziv",
-							Name:       "dosifrenaziv",
-							FieldType:  "text",
-							Disabled:   true,
-							ClassInput: common.ClassInputTextDisabled + " w-full",
-						})
+						@components.TableCombo(domain.TableComboConfig{
+							ID:           "dosifre-combo",
+							Name:         "dosifre",
+							ValueID:      "dosifre",
+							DefaultValue: "999999",
+							Placeholder:  "Pretraži po šifri ili nazivu",
+							ClassInput:   common.ClassInputTextEnabled + " w-full",
+							SearchURL:    "/api/search/analitika",
+							HxInclude:    "#konto",
+							// The search also runs again when the konto is selected while this field has the focus.
+							HxTrigger: "input changed delay:300ms, focus[tableComboEmpty(this)], change[document.activeElement === this] from:#konto",
+							TabIndex:  "3",
+						}, translator)
 					</div>
 					<div class="flex items-center justify-between gap-1 mb-1">
 						<div class="flex items-center gap-1">

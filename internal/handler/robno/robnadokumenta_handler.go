@@ -16,6 +16,7 @@ import (
 	"helia/internal/common"
 	"helia/internal/domain"
 	"helia/internal/middleware"
+	commonsvc "helia/internal/service/common"
 	robnosvc "helia/internal/service/robno"
 	"helia/pkg/utils"
 
@@ -73,6 +74,32 @@ const (
 	robnoDokumentaStampaFakturaIzvozTitle = "Invoice"
 	robnoDokumentaURLStampaFakturaIzvoz   = robnoDokumentaURLPrefix + "/fakture-izvoz/stampa"
 
+	// Štampa izvozne profakture (the report RobnoStampaProfakturaIzvoz, the profakture in a foreign
+	// valuta, the legacy ROB_RPT_PROFAKTURAIZV).
+	robnoDokumentaStampaProfakturaIzvozTitle = "Proforma invoice"
+	robnoDokumentaURLStampaProfakturaIzvoz   = robnoDokumentaURLPrefix + "/profakture-izvoz/stampa"
+
+	// Štampa profakture (the report RobnoStampaProfaktura, the group PRO in the domestic valuta, the
+	// legacy ROB_RPT_STAMPA_PROFAKTURA).
+	robnoDokumentaStampaProfakturaTitle = "Štampa profakture"
+	robnoDokumentaURLStampaProfaktura   = robnoDokumentaURLPrefix + "/profakture/stampa"
+
+	// Štampa knjižnog odobrenja i zaduženja (the report RobnoStampaFakturaKnjizno, the groups KPK and
+	// KPF, the legacy PR_RPT_KNJODOBRENJE).
+	robnoDokumentaStampaFakturaKnjiznoTitle = "Štampa knjižnog odobrenja"
+	robnoDokumentaURLStampaFakturaKnjizno   = robnoDokumentaURLPrefix + "/knjizno-odobrenje/stampa"
+
+	// Štampa knjižnog pisma (the report RobnoStampaKnjiznoPismo, the knjižna pisma with stavke of the
+	// groups KNO and KNZ, the legacy ROB_RPT_KNJPISMO).
+	robnoDokumentaStampaKnjiznoPismoTitle  = "Štampa knjižnog pisma"
+	robnoDokumentaURLStampaKnjiznoPismo    = robnoDokumentaURLPrefix + "/knjizna-pisma/stampa"
+	robnoDokumentaURLStampaKnjiznoPismoFin = robnoDokumentaURLPrefix + "/knjizna-pisma-fin/stampa"
+
+	// Štampa fakture-otpremnice (the report RobnoStampaFakturaOtpremnica, the group FZR, the legacy
+	// PR_RPT_FAKTURA_OTP).
+	robnoDokumentaStampaFakturaOtpremnicaTitle = "Štampa fakture"
+	robnoDokumentaURLStampaFakturaOtpremnica   = robnoDokumentaURLPrefix + "/fakture-otpremnice/stampa"
+
 	// Štampa maloprodajnog računa (the report RobnoStampaFakturaMP, the documents of the group DIR, the
 	// legacy ROB_RPT_STAMPA_FAKTURA_MP).
 	robnoDokumentaStampaFakturaMPTitle = "Štampa maloprodajnog računa"
@@ -82,6 +109,16 @@ const (
 	// ROB_RPT_STAMPA_FAKTURA_USLUGE2).
 	robnoDokumentaStampaFakturaUslugeTitle = "Štampa fakture usluga"
 	robnoDokumentaURLStampaFakturaUsluge   = robnoDokumentaURLPrefix + "/fakture-usluge/stampa"
+
+	// Štampa zaduženja za obaveze (the report RobnoStampaZaduzenjeCO, the group FCO, the legacy
+	// ROB_RPT_STAMPA_ZADUZENJA_CO).
+	robnoDokumentaStampaZaduzenjeCOTitle = "Zaduženje za obaveze"
+	robnoDokumentaURLStampaZaduzenjeCO   = robnoDokumentaURLPrefix + "/zaduzenje-co/stampa"
+
+	// Štampa razduženja za obaveze (the report RobnoStampaZaduzenjeCO, the group RCO, the legacy
+	// ROB_RPT_STAMPA_RAZDUZENJA_CO).
+	robnoDokumentaStampaRazduzenjeCOTitle = "Razduženje za obaveze"
+	robnoDokumentaURLStampaRazduzenjeCO   = robnoDokumentaURLPrefix + "/razduzenje-co/stampa"
 
 	// Štampa avansnog računa (the report RobnoStampaFakturaAvansni, the groups ARA and ARU, the legacy
 	// ROB_RPT_STAMPA_ARA).
@@ -96,12 +133,60 @@ const (
 	// group PLT, the legacy RPT_ROB_KALKULACIJA).
 	robnoDokumentaStampaKalkulacijaTitle = "Kalkulacija veleprodaje"
 	robnoDokumentaURLStampaKalkulacija   = robnoDokumentaURLPrefix + "/kalkulacija/stampa"
-	robnoDokumentaVrdPopis               = 101
+
+	// Štampa kalkulacije maloprodaje (the report RobnoStampaKalkulacija, the group KAL, the legacy
+	// RPT_ROB_KALKULACIJA_MP).
+	robnoDokumentaStampaKalkulacijaMPTitle = "Kalkulacija maloprodaje"
+	robnoDokumentaURLStampaKalkulacijaMP   = robnoDokumentaURLPrefix + "/kalkulacija-maloprodaje/stampa"
+	robnoDokumentaVrdPopis                 = 101
 
 	// Štampa opšteg dokumenta (the report RobnoStampaOpstiDokument, the groups OPD, POT, KOL and FIN,
 	// the legacy RPT_OPDSTAMPA).
 	robnoDokumentaStampaOpstiDokumentTitle = "Štampa opšteg dokumenta"
 	robnoDokumentaURLStampaOpstiDokument   = robnoDokumentaURLPrefix + "/opsti-dokument/stampa"
+
+	// Štampa prenosnice (the report RobnoStampaPrenosnica, the group PRI, the legacy RPT_ROB_PRENOSNICE).
+	robnoDokumentaStampaPrenosnicaTitle   = "Štampa prenosnice"
+	robnoDokumentaURLStampaPrenosnica     = robnoDokumentaURLPrefix + "/prenosnice/stampa"
+	robnoDokumentaURLStampaPrenosnicaUlaz = robnoDokumentaURLPrefix + "/prenosnice-ulaz/stampa"
+
+	// Popis tekuće godine (the report RobnoStampaPopisTekGod, the group PTG, the legacy RPT_POPIS_TEKGOD).
+	robnoDokumentaURLStampaPopisTekGod = robnoDokumentaURLPrefix + "/popis-tekgod/stampa"
+
+	// Štampa zaduženja sitnog inventara (the report RobnoStampaZaduzenjeSI, the group SIV, the legacy
+	// RPT_ROB_ZADUZ_SI).
+	robnoDokumentaStampaZaduzenjeSITitle = "Zaduženje sitnog inventara"
+	robnoDokumentaURLStampaZaduzenjeSI   = robnoDokumentaURLPrefix + "/zaduzenje-si/stampa"
+
+	// Štampa zaduženja gradilišta (the report RobnoStampaZaduzenjeGradilista, the group GRD, the legacy
+	// RPT_ROB_ZADGRADILISTA).
+	robnoDokumentaStampaZaduzenjeGradilistaTitle = "Zaduženje gradilišta"
+	robnoDokumentaURLStampaZaduzenjeGradilista   = robnoDokumentaURLPrefix + "/zaduzenje-gradilista/stampa"
+
+	// Štampa nivelacije cena (the report RobnoStampaNivelacija, the group NIV, the legacy
+	// RPT_ROB_NIVELACIJA).
+	robnoDokumentaStampaNivelacijaTitle = "Nivelacija cena"
+	robnoDokumentaURLStampaNivelacija   = robnoDokumentaURLPrefix + "/nivelacija/stampa"
+
+	// Štampa internog prenosa proizvodnje (the report RobnoStampaInterniPrenos, the group PPR, the
+	// legacy ROB_RPT_INTRAC_PROIZV).
+	robnoDokumentaStampaInterniPrenosTitle = "Interni prenos proizvodnje"
+	robnoDokumentaURLStampaInterniPrenos   = robnoDokumentaURLPrefix + "/interni-prenos-proizvodnje/stampa"
+
+	// Štampa interne zaključnice (the report RobnoStampaInterniPrenos, the group IRT, the legacy
+	// ROB_RPT_STAMPA_INTRAC).
+	robnoDokumentaStampaInternaZakljucnicaTitle = "Interna zaključnica"
+	robnoDokumentaURLStampaInternaZakljucnica   = robnoDokumentaURLPrefix + "/interna-zakljucnica/stampa"
+
+	// Štampa računa - otpremnice interne zaključnice (the report RobnoStampaInternaZakljucnicaRacun, the
+	// group IRT with the option irrn, the legacy ROB_RPT_STAMPA_INTRACFKT).
+	robnoDokumentaStampaInternaZakljucnicaRacunTitle = "Račun - otpremnica"
+	robnoDokumentaURLStampaInternaZakljucnicaRacun   = robnoDokumentaURLPrefix + "/interna-zakljucnica-racun/stampa"
+
+	// Štampa nivelacije maloprodaje (the report RobnoStampaNivelacijaMaloprodaje, the group MNI, the
+	// legacy RPT_NIVELACIJA_MALOPRODAJE).
+	robnoDokumentaStampaNivelacijaMaloprodajeTitle = "Nivelacija maloprodaje"
+	robnoDokumentaURLStampaNivelacijaMaloprodaje   = robnoDokumentaURLPrefix + "/nivelacija-maloprodaje/stampa"
 	// robnoDokumentaStampaFakturaFlds are the fields the "Štampaj" button of the "Štampa" sub-tab of
 	// "Pregled dokumenta" sends: the selected document (the hidden rdokid) and the filter of the
 	// sub-tab.
@@ -642,6 +727,29 @@ func (h *RobnoDokumentaHandler) setHandlerFieldValues() {
 	}
 }
 
+// tipdokComboValues returns the vrste naloga for knjiženje of the robno knjigovodstvo, the combo of
+// every tab: the groups of the configuration (tipdok.grpdok in grupe_dokumenata.dok_rob, the legacy
+// QRY_TIPDOK with "PST;ROB;SVI").
+func (h *RobnoDokumentaHandler) tipdokComboValues(ctx context.Context) ([]domain.ComboItem, error) {
+	return h.service.GetTipdokComboValues(ctx, commonsvc.WithGrupeDokumenata(h.cfg.GrupeDokumenata.GetDokRob()...))
+}
+
+// vrstaDokumentaComboValues returns the vrste dokumenata of the robno knjigovodstvo, the combo of every
+// tab: the moduli of the configuration (dokvrsta.modul in grupe_dokumenata.dok_rob, the legacy
+// ROB_QRY_DOKVRSTA with gsDOKROB). The unos dokumenata limits them further to the vrste dokumenata of
+// its vrsta naloga (see GetUnosComboValues).
+func (h *RobnoDokumentaHandler) vrstaDokumentaComboValues(ctx context.Context) ([]domain.ComboItem, error) {
+	return h.service.GetVrstaDokumentaComboValues(ctx, commonsvc.WithIn("modul", h.cfg.GrupeDokumenata.GetDokRob()...))
+}
+
+// magacinComboValues returns the magacini of the tipovi of the configuration (magacini.tipmag in
+// grupe_dokumenata.tipmag_rob, the legacy ROB_QRY_MAG with "V;M;D"), the combo of the tabs. The unos
+// dokumenata (the first tab) shows instead the magacini the user may work with (maguser, the legacy
+// ROB_QRY_MAGUSER) limited to the magacini of its vrsta naloga (see GetUnosComboValues).
+func (h *RobnoDokumentaHandler) magacinComboValues(ctx context.Context) ([]domain.ComboItem, error) {
+	return h.service.GetMagacinComboValues(ctx, commonsvc.WithIn("tipmag", h.cfg.GrupeDokumenata.GetTipmagRob()...))
+}
+
 // RobnoDokumentaMain renders the "Unos dokumenta" tab (header of the nalog and grid of the nalozi).
 func (h *RobnoDokumentaHandler) RobnoDokumentaMain(c *gin.Context) {
 	ctx := c.Request.Context()
@@ -666,24 +774,38 @@ func (h *RobnoDokumentaHandler) RobnoDokumentaMain(c *gin.Context) {
 	if !h.getUnosDokumenta(c, &tbl, params, page, pageSize) {
 		return
 	}
-	// Data request from the grid (search / paging) and the reload on the change of the vrsta
-	// naloga (source=tipdok): only the grid is rendered, the header of the form is kept.
-	if common.IsDataRequest(c) || c.Query("source") == robnoDokumentaSourceTipdok {
+	// Data request from the grid (search / paging): only the grid is rendered, the header of the form
+	// is kept.
+	if common.IsDataRequest(c) {
 		utils.RenderContent(c, tbl)
 		return
 	}
+	// The change of the vrsta naloga (source=tipdok): the grid, and out of band the magacini and the
+	// vrste dokumenata the new vrsta naloga allows (the legacy PostaviComboBoxes).
+	if c.Query("source") == robnoDokumentaSourceTipdok {
+		magValues, vrstaDokumentaValues, err := h.service.GetUnosComboValues(ctx, params.Tipdok, h.cfg.GrupeDokumenata.GetDokRob(), h.cfg.GrupeDokumenata.GetTipmagRob())
+		if err != nil {
+			utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+			return
+		}
+		utils.RenderContent(c, tbl)
+		_ = tmpl_robno.RobnoDokumentaUnosVrdCombo(vrstaDokumentaValues, params.Vrd, true, h.translator).Render(ctx, c.Writer)
+		_ = tmpl_robno.RobnoDokumentaUnosMagCombo(magValues, params.MagaciniID, true, h.translator).Render(ctx, c.Writer)
+		return
+	}
 
-	tipdokValues, err := h.service.GetTipdokComboValues(ctx)
+	tipdokValues, err := h.tipdokComboValues(ctx)
 	if err != nil {
 		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
 		return
 	}
-	vrstaDokumentaValues, err := h.service.GetVrstaDokumentaComboValues(ctx)
-	if err != nil {
-		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
-		return
+	// The magacini and the vrste dokumenata of the selected vrsta naloga (the first one of the combo
+	// when none is selected yet).
+	tipdok := params.Tipdok
+	if tipdok == "" && len(tipdokValues) > 0 {
+		tipdok = tipdokValues[0].Key
 	}
-	magValues, err := h.service.GetMagacinComboValues(ctx)
+	magValues, vrstaDokumentaValues, err := h.service.GetUnosComboValues(ctx, tipdok, h.cfg.GrupeDokumenata.GetDokRob(), h.cfg.GrupeDokumenata.GetTipmagRob())
 	if err != nil {
 		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
 		return
@@ -724,7 +846,7 @@ func (h *RobnoDokumentaHandler) FakturePreview(c *gin.Context) {
 	avansiTbl := common.SetTableBasicData("Avansi", robnoDokumentaFaktureAvansiTableID, h.service.GetFaktureAvansiTableFields(), "", robnoDokumentaURLFakturePreview, 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&avansiTbl, robnoDokumentaFaktureAvansiTableID, robnoDokumentaURLFakturePreview, false, false, false)
 
-	vrstaDokumentaValues, err := h.service.GetVrstaDokumentaComboValues(ctx)
+	vrstaDokumentaValues, err := h.vrstaDokumentaComboValues(ctx)
 	if err != nil {
 		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
 		return
@@ -875,6 +997,48 @@ func (h *RobnoDokumentaHandler) StampaFakturaUsluge(c *gin.Context) {
 	}
 }
 
+// StampaZaduzenjeCO prints the zaduženja za obaveze of the selection (the report RobnoStampaZaduzenjeCO,
+// the legacy ROB_RPT_STAMPA_ZADUZENJA_CO), one document per page. The selection is read by
+// robnoDokumentaStampaParams.
+func (h *RobnoDokumentaHandler) StampaZaduzenjeCO(c *gin.Context) {
+	ctx := c.Request.Context()
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, common.ErrMsgSessionNotFound)
+		return
+	}
+	fakture, firma, err := h.service.GetStampaZaduzenjeCO(ctx, robnoDokumentaStampaParams(c))
+	if err != nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+		return
+	}
+	repParams := robnoDokumentaStampaReportParams(firma, userSession, robnoDokumentaStampaZaduzenjeCOTitle)
+	if err := tmpl_rep_rob.RobnoStampaZaduzenjeCO(repParams, fakture, h.translator).Render(ctx, c.Writer); err != nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+	}
+}
+
+// StampaRazduzenjeCO prints the razduženja za obaveze of the selection (the report
+// RobnoStampaZaduzenjeCO, the legacy ROB_RPT_STAMPA_RAZDUZENJA_CO), one document per page. The selection
+// is read by robnoDokumentaStampaParams.
+func (h *RobnoDokumentaHandler) StampaRazduzenjeCO(c *gin.Context) {
+	ctx := c.Request.Context()
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, common.ErrMsgSessionNotFound)
+		return
+	}
+	razduzenja, firma, err := h.service.GetStampaRazduzenjeCO(ctx, robnoDokumentaStampaParams(c))
+	if err != nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+		return
+	}
+	repParams := robnoDokumentaStampaReportParams(firma, userSession, robnoDokumentaStampaRazduzenjeCOTitle)
+	if err := tmpl_rep_rob.RobnoStampaZaduzenjeCO(repParams, razduzenja, h.translator).Render(ctx, c.Writer); err != nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+	}
+}
+
 // StampaFakturaAvansni prints the avansni računi of the selection (the report
 // RobnoStampaFakturaAvansni, the legacy ROB_RPT_STAMPA_ARA), one račun per page. The selection is read
 // by robnoDokumentaStampaParams.
@@ -914,6 +1078,142 @@ func (h *RobnoDokumentaHandler) StampaFakturaIzvoz(c *gin.Context) {
 	}
 	repParams := robnoDokumentaStampaReportParams(firma, userSession, robnoDokumentaStampaFakturaIzvozTitle)
 	if err := tmpl_rep_rob.RobnoStampaFakturaIzvoz(repParams, fakture, h.translator).Render(ctx, c.Writer); err != nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+	}
+}
+
+// StampaFakturaKnjizno prints the knjižna odobrenja and zaduženja of the selection (the report
+// RobnoStampaFakturaKnjizno, the legacy PR_RPT_KNJODOBRENJE), one document per page. The selection is
+// read by robnoDokumentaStampaParams.
+func (h *RobnoDokumentaHandler) StampaFakturaKnjizno(c *gin.Context) {
+	ctx := c.Request.Context()
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, common.ErrMsgSessionNotFound)
+		return
+	}
+	fakture, firma, err := h.service.GetStampaFakturaKnjizno(ctx, robnoDokumentaStampaParams(c))
+	if err != nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+		return
+	}
+	repParams := robnoDokumentaStampaReportParams(firma, userSession, robnoDokumentaStampaFakturaKnjiznoTitle)
+	if err := tmpl_rep_rob.RobnoStampaFakturaKnjizno(repParams, fakture, h.translator).Render(ctx, c.Writer); err != nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+	}
+}
+
+// StampaFakturaOtpremnica prints the fakture-otpremnice of the selection (the report
+// RobnoStampaFakturaOtpremnica, the legacy PR_RPT_FAKTURA_OTP), one document per page. The selection
+// is read by robnoDokumentaStampaParams; "tipfakt" is the title of the documents (the legacy ipTIPFAKT:
+// 1 račun - otpremnica, 2 račun, 3 otpremnica; the račun by default).
+func (h *RobnoDokumentaHandler) StampaFakturaOtpremnica(c *gin.Context) {
+	ctx := c.Request.Context()
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, common.ErrMsgSessionNotFound)
+		return
+	}
+	tipFakture := common.StringToInt(c.Query("tipfakt"))
+	if tipFakture == 0 {
+		tipFakture = robnosvc.RobnoStampaTipFakturaRacun
+	}
+	fakture, firma, err := h.service.GetStampaFakturaOtpremnica(ctx, robnoDokumentaStampaParams(c), tipFakture)
+	if err != nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+		return
+	}
+	repParams := robnoDokumentaStampaReportParams(firma, userSession, robnoDokumentaStampaFakturaOtpremnicaTitle)
+	if err := tmpl_rep_rob.RobnoStampaFakturaOtpremnica(repParams, fakture, h.translator).Render(ctx, c.Writer); err != nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+	}
+}
+
+// StampaProfakturaIzvoz prints the izvozne profakture of the selection (the report
+// RobnoStampaProfakturaIzvoz, the legacy ROB_RPT_PROFAKTURAIZV), one profaktura per page. The selection
+// is read by robnoDokumentaStampaParams.
+func (h *RobnoDokumentaHandler) StampaProfakturaIzvoz(c *gin.Context) {
+	ctx := c.Request.Context()
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, common.ErrMsgSessionNotFound)
+		return
+	}
+	fakture, firma, err := h.service.GetStampaProfakturaIzvoz(ctx, robnoDokumentaStampaParams(c))
+	if err != nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+		return
+	}
+	repParams := robnoDokumentaStampaReportParams(firma, userSession, robnoDokumentaStampaProfakturaIzvozTitle)
+	if err := tmpl_rep_rob.RobnoStampaProfakturaIzvoz(repParams, fakture, h.translator).Render(ctx, c.Writer); err != nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+	}
+}
+
+// StampaProfaktura prints the profakture of the selection (the report RobnoStampaProfaktura, the legacy
+// ROB_RPT_STAMPA_PROFAKTURA), one profaktura per page. The selection is read by
+// robnoDokumentaStampaParams; "tipprof" is the title of the documents (the legacy ipTip, RADIO_Radio3:
+// 1 profaktura, 2 ponuda; the profaktura by default).
+func (h *RobnoDokumentaHandler) StampaProfaktura(c *gin.Context) {
+	ctx := c.Request.Context()
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, common.ErrMsgSessionNotFound)
+		return
+	}
+	tipProfakture := common.StringToInt(c.Query("tipprof"))
+	if tipProfakture == 0 {
+		tipProfakture = robnosvc.RobnoStampaTipProfakturaProfaktura
+	}
+	fakture, firma, err := h.service.GetStampaProfaktura(ctx, robnoDokumentaStampaParams(c), tipProfakture)
+	if err != nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+		return
+	}
+	repParams := robnoDokumentaStampaReportParams(firma, userSession, robnoDokumentaStampaProfakturaTitle)
+	if err := tmpl_rep_rob.RobnoStampaProfaktura(repParams, fakture, h.translator).Render(ctx, c.Writer); err != nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+	}
+}
+
+// StampaKnjiznoPismo prints the knjižna pisma with stavke of the selection (the report
+// RobnoStampaKnjiznoPismo, the legacy ROB_RPT_KNJPISMO), one knjižno pismo per page. The selection is
+// read by robnoDokumentaStampaParams.
+func (h *RobnoDokumentaHandler) StampaKnjiznoPismo(c *gin.Context) {
+	ctx := c.Request.Context()
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, common.ErrMsgSessionNotFound)
+		return
+	}
+	pisma, firma, err := h.service.GetStampaKnjiznoPismo(ctx, robnoDokumentaStampaParams(c))
+	if err != nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+		return
+	}
+	repParams := robnoDokumentaStampaReportParams(firma, userSession, robnoDokumentaStampaKnjiznoPismoTitle)
+	if err := tmpl_rep_rob.RobnoStampaKnjiznoPismo(repParams, pisma, h.translator).Render(ctx, c.Writer); err != nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+	}
+}
+
+// StampaKnjiznoPismoFin prints the finansijska knjižna pisma (without stavke) of the selection (the
+// report RobnoStampaKnjiznoPismoFin, the legacy ROB_RPT_KNJPISMOFIN), one knjižno pismo per page. The
+// selection is read by robnoDokumentaStampaParams.
+func (h *RobnoDokumentaHandler) StampaKnjiznoPismoFin(c *gin.Context) {
+	ctx := c.Request.Context()
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, common.ErrMsgSessionNotFound)
+		return
+	}
+	pisma, firma, err := h.service.GetStampaKnjiznoPismoFin(ctx, robnoDokumentaStampaParams(c))
+	if err != nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+		return
+	}
+	repParams := robnoDokumentaStampaReportParams(firma, userSession, robnoDokumentaStampaKnjiznoPismoTitle)
+	if err := tmpl_rep_rob.RobnoStampaKnjiznoPismoFin(repParams, pisma, h.translator).Render(ctx, c.Writer); err != nil {
 		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
 	}
 }
@@ -966,6 +1266,28 @@ func (h *RobnoDokumentaHandler) StampaKalkulacija(c *gin.Context) {
 	}
 }
 
+// StampaKalkulacijaMaloprodaje prints the kalkulacije maloprodaje of the selection (the report
+// RobnoStampaKalkulacija, the legacy RPT_ROB_KALKULACIJA_MP), one document per page in landscape. The
+// selection is read by robnoDokumentaStampaParams.
+func (h *RobnoDokumentaHandler) StampaKalkulacijaMaloprodaje(c *gin.Context) {
+	ctx := c.Request.Context()
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, common.ErrMsgSessionNotFound)
+		return
+	}
+	kalkulacije, firma, err := h.service.GetStampaKalkulacijaMaloprodaje(ctx, robnoDokumentaStampaParams(c))
+	if err != nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+		return
+	}
+	repParams := robnoDokumentaStampaReportParams(firma, userSession, robnoDokumentaStampaKalkulacijaMPTitle)
+	repParams.Orientation = "landscape"
+	if err := tmpl_rep_rob.RobnoStampaKalkulacija(repParams, kalkulacije, h.translator).Render(ctx, c.Writer); err != nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+	}
+}
+
 // StampaOpstiDokument prints the opšti dokumenti of the selection (the report RobnoStampaOpstiDokument,
 // the legacy RPT_OPDSTAMPA), one document per page, each by the group of its vrsta dokumenta. The
 // selection is read by robnoDokumentaStampaParams.
@@ -983,6 +1305,211 @@ func (h *RobnoDokumentaHandler) StampaOpstiDokument(c *gin.Context) {
 	}
 	repParams := robnoDokumentaStampaReportParams(firma, userSession, robnoDokumentaStampaOpstiDokumentTitle)
 	if err := tmpl_rep_rob.RobnoStampaOpstiDokument(repParams, dokumenti, h.translator).Render(ctx, c.Writer); err != nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+	}
+}
+
+// StampaPrenosnica prints the prenosnice izlaz of the selection (the report RobnoStampaPrenosnica, the
+// legacy RPT_ROB_PRENOSNICE), one prenosnica per page. The selection is read by
+// robnoDokumentaStampaParams; "komercopis" (the legacy ipCBOX_KOMERCOPIS) adds the komercijalni opis,
+// the proizvođač and its šifra to the naziv of the artikli.
+func (h *RobnoDokumentaHandler) StampaPrenosnica(c *gin.Context) {
+	h.stampaPrenosnica(c, false)
+}
+
+// StampaPrenosnicaUlaz prints the prenosnice ulaz of the selection (the report RobnoStampaPrenosnica,
+// the legacy RPT_ROB_PRENOSNICEULAZ: the vrednost of a stavka is the količina times the cena), like
+// StampaPrenosnica.
+func (h *RobnoDokumentaHandler) StampaPrenosnicaUlaz(c *gin.Context) {
+	h.stampaPrenosnica(c, true)
+}
+
+// stampaPrenosnica prints the prenosnice izlaz or (ulaz) ulaz of the selection.
+func (h *RobnoDokumentaHandler) stampaPrenosnica(c *gin.Context, ulaz bool) {
+	ctx := c.Request.Context()
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, common.ErrMsgSessionNotFound)
+		return
+	}
+	opcije := robnosvc.RobnoStampaPrenosnicaOpcije{Naziv: true, KomercOpis: c.Query("komercopis") == "true", Ulaz: ulaz}
+	dokumenti, firma, err := h.service.GetStampaPrenosnica(ctx, robnoDokumentaStampaParams(c), opcije)
+	if err != nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+		return
+	}
+	repParams := robnoDokumentaStampaReportParams(firma, userSession, robnoDokumentaStampaPrenosnicaTitle)
+	if err := tmpl_rep_rob.RobnoStampaPrenosnica(repParams, dokumenti, h.translator).Render(ctx, c.Writer); err != nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+	}
+}
+
+// StampaPopisTekGod prints the popisi tekuće godine of the selection (the report RobnoStampaPopisTekGod,
+// the legacy RPT_POPIS_TEKGOD), one popis per page. The selection is read by robnoDokumentaStampaParams.
+func (h *RobnoDokumentaHandler) StampaPopisTekGod(c *gin.Context) {
+	ctx := c.Request.Context()
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, common.ErrMsgSessionNotFound)
+		return
+	}
+	popisi, firma, err := h.service.GetStampaPopisTekGod(ctx, robnoDokumentaStampaParams(c))
+	if err != nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+		return
+	}
+	repParams := robnoDokumentaStampaReportParams(firma, userSession, robnoDokumentaStampaPopisTitle)
+	if err := tmpl_rep_rob.RobnoStampaPopisTekGod(repParams, popisi, h.translator).Render(ctx, c.Writer); err != nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+	}
+}
+
+// StampaZaduzenjeSI prints the zaduženja sitnog inventara of the selection (the report
+// RobnoStampaZaduzenjeSI, the legacy RPT_ROB_ZADUZ_SI), one document per page. The selection is read by
+// robnoDokumentaStampaParams.
+func (h *RobnoDokumentaHandler) StampaZaduzenjeSI(c *gin.Context) {
+	ctx := c.Request.Context()
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, common.ErrMsgSessionNotFound)
+		return
+	}
+	dokumenti, firma, err := h.service.GetStampaZaduzenjeSI(ctx, robnoDokumentaStampaParams(c))
+	if err != nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+		return
+	}
+	repParams := robnoDokumentaStampaReportParams(firma, userSession, robnoDokumentaStampaZaduzenjeSITitle)
+	if err := tmpl_rep_rob.RobnoStampaZaduzenjeSI(repParams, dokumenti, h.translator).Render(ctx, c.Writer); err != nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+	}
+}
+
+// StampaZaduzenjeGradilista prints the zaduženja gradilišta of the selection (the report
+// RobnoStampaZaduzenjeGradilista, the legacy RPT_ROB_ZADGRADILISTA), one document per page. The
+// selection is read by robnoDokumentaStampaParams.
+func (h *RobnoDokumentaHandler) StampaZaduzenjeGradilista(c *gin.Context) {
+	ctx := c.Request.Context()
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, common.ErrMsgSessionNotFound)
+		return
+	}
+	dokumenti, firma, err := h.service.GetStampaZaduzenjeGradilista(ctx, robnoDokumentaStampaParams(c))
+	if err != nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+		return
+	}
+	repParams := robnoDokumentaStampaReportParams(firma, userSession, robnoDokumentaStampaZaduzenjeGradilistaTitle)
+	if err := tmpl_rep_rob.RobnoStampaZaduzenjeGradilista(repParams, dokumenti, h.translator).Render(ctx, c.Writer); err != nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+	}
+}
+
+// StampaNivelacija prints the nivelacije cena of the selection (the report RobnoStampaNivelacija, the
+// legacy RPT_ROB_NIVELACIJA), one nivelacija per page. The selection is read by
+// robnoDokumentaStampaParams.
+func (h *RobnoDokumentaHandler) StampaNivelacija(c *gin.Context) {
+	ctx := c.Request.Context()
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, common.ErrMsgSessionNotFound)
+		return
+	}
+	dokumenti, firma, err := h.service.GetStampaNivelacija(ctx, robnoDokumentaStampaParams(c))
+	if err != nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+		return
+	}
+	repParams := robnoDokumentaStampaReportParams(firma, userSession, robnoDokumentaStampaNivelacijaTitle)
+	if err := tmpl_rep_rob.RobnoStampaNivelacija(repParams, dokumenti, h.translator).Render(ctx, c.Writer); err != nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+	}
+}
+
+// StampaInterniPrenosProizvodnje prints the interni prenosi proizvodnje of the selection (the report
+// RobnoStampaInterniPrenos, the legacy ROB_RPT_INTRAC_PROIZV), one document per page in landscape. The
+// selection is read by robnoDokumentaStampaParams.
+func (h *RobnoDokumentaHandler) StampaInterniPrenosProizvodnje(c *gin.Context) {
+	ctx := c.Request.Context()
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, common.ErrMsgSessionNotFound)
+		return
+	}
+	prenosi, firma, err := h.service.GetStampaInterniPrenosProizvodnje(ctx, robnoDokumentaStampaParams(c))
+	if err != nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+		return
+	}
+	repParams := robnoDokumentaStampaReportParams(firma, userSession, robnoDokumentaStampaInterniPrenosTitle)
+	repParams.Orientation = "landscape"
+	if err := tmpl_rep_rob.RobnoStampaInterniPrenos(repParams, prenosi, h.translator).Render(ctx, c.Writer); err != nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+	}
+}
+
+// StampaInternaZakljucnica prints the interne zaključnice of the selection (the report
+// RobnoStampaInterniPrenos, the legacy ROB_RPT_STAMPA_INTRAC), one document per page in landscape. The
+// selection is read by robnoDokumentaStampaParams.
+func (h *RobnoDokumentaHandler) StampaInternaZakljucnica(c *gin.Context) {
+	ctx := c.Request.Context()
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, common.ErrMsgSessionNotFound)
+		return
+	}
+	zakljucnice, firma, err := h.service.GetStampaInternaZakljucnica(ctx, robnoDokumentaStampaParams(c))
+	if err != nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+		return
+	}
+	repParams := robnoDokumentaStampaReportParams(firma, userSession, robnoDokumentaStampaInternaZakljucnicaTitle)
+	repParams.Orientation = "landscape"
+	if err := tmpl_rep_rob.RobnoStampaInterniPrenos(repParams, zakljucnice, h.translator).Render(ctx, c.Writer); err != nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+	}
+}
+
+// StampaInternaZakljucnicaRacun prints the računi - otpremnice of the interne zaključnice of the
+// selection (the report RobnoStampaInternaZakljucnicaRacun, the legacy ROB_RPT_STAMPA_INTRACFKT), one
+// document per page. The selection is read by robnoDokumentaStampaParams.
+func (h *RobnoDokumentaHandler) StampaInternaZakljucnicaRacun(c *gin.Context) {
+	ctx := c.Request.Context()
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, common.ErrMsgSessionNotFound)
+		return
+	}
+	racuni, firma, err := h.service.GetStampaInternaZakljucnicaRacun(ctx, robnoDokumentaStampaParams(c))
+	if err != nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+		return
+	}
+	repParams := robnoDokumentaStampaReportParams(firma, userSession, robnoDokumentaStampaInternaZakljucnicaRacunTitle)
+	if err := tmpl_rep_rob.RobnoStampaInternaZakljucnicaRacun(repParams, racuni, h.translator).Render(ctx, c.Writer); err != nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+	}
+}
+
+// StampaNivelacijaMaloprodaje prints the nivelacije maloprodaje of the selection (the report
+// RobnoStampaNivelacijaMaloprodaje, the legacy RPT_NIVELACIJA_MALOPRODAJE), one document per page in
+// landscape. The selection is read by robnoDokumentaStampaParams.
+func (h *RobnoDokumentaHandler) StampaNivelacijaMaloprodaje(c *gin.Context) {
+	ctx := c.Request.Context()
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, common.ErrMsgSessionNotFound)
+		return
+	}
+	nivelacije, firma, err := h.service.GetStampaNivelacijaMaloprodaje(ctx, robnoDokumentaStampaParams(c))
+	if err != nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+		return
+	}
+	repParams := robnoDokumentaStampaReportParams(firma, userSession, robnoDokumentaStampaNivelacijaMaloprodajeTitle)
+	repParams.Orientation = "landscape"
+	if err := tmpl_rep_rob.RobnoStampaNivelacijaMaloprodaje(repParams, nivelacije, h.translator).Render(ctx, c.Writer); err != nil {
 		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
 	}
 }
@@ -1243,12 +1770,12 @@ func (h *RobnoDokumentaHandler) StampaDokumentaObrada(c *gin.Context) {
 		return
 	}
 
-	magValues, err := h.service.GetMagacinComboValues(ctx)
+	magValues, err := h.magacinComboValues(ctx)
 	if err != nil {
 		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
 		return
 	}
-	vrstaDokumentaValues, err := h.service.GetVrstaDokumentaComboValues(ctx)
+	vrstaDokumentaValues, err := h.vrstaDokumentaComboValues(ctx)
 	if err != nil {
 		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
 		return
@@ -1328,12 +1855,12 @@ func (h *RobnoDokumentaHandler) robnoDokumentaStampe() map[string]robnoDokumenta
 		"IRS": intrac,
 		"IRP": intrac,
 		// Interni prenosi proizvodnje.
-		"PPR": robnoDokumentaStampaNijeImplementirana("ROB_RPT_INTRAC_PROIZV", true),
+		"PPR": func(c *gin.Context, _ domain.RobnoStampaDokumentDto) { h.StampaInterniPrenosProizvodnje(c) },
 		// Fakture usluga.
 		"PRE": usluge,
 		"FUR": usluge,
 		// Zaduženje i razduženje CO.
-		"FCO": robnoDokumentaStampaNijeImplementirana("ROB_RPT_STAMPA_ZADUZENJA_CO", false),
+		"FCO": func(c *gin.Context, _ domain.RobnoStampaDokumentDto) { h.StampaZaduzenjeCO(c) },
 		"RCO": h.stampaRazduzenjaCO,
 		// Popis (početno stanje).
 		"POP": func(c *gin.Context, _ domain.RobnoStampaDokumentDto) { h.StampaPopis(c) },
@@ -1343,23 +1870,23 @@ func (h *RobnoDokumentaHandler) robnoDokumentaStampe() map[string]robnoDokumenta
 		"KOL": opsti,
 		"FIN": opsti,
 		// Nivelacije veleprodaje.
-		"NIV": robnoDokumentaStampaNijeImplementirana("RPT_ROB_NIVELACIJA", false),
+		"NIV": func(c *gin.Context, _ domain.RobnoStampaDokumentDto) { h.StampaNivelacija(c) },
 		// Avansni računi.
 		"ARA": avansni,
 		"ARU": avansni,
 		// Kalkulacije maloprodaje (the selected document).
-		"KAL": robnoDokumentaStampaNijeImplementirana("RPT_ROB_KALKULACIJA_MP", true),
+		"KAL": func(c *gin.Context, _ domain.RobnoStampaDokumentDto) { h.StampaKalkulacijaMaloprodaje(c) },
 		// Prenosnice izlaz i ulaz.
-		"PRI": robnoDokumentaStampaNijeImplementirana("RPT_ROB_PRENOSNICE", false),
-		"PRU": robnoDokumentaStampaNijeImplementirana("RPT_ROB_PRENOSNICEULAZ", false),
+		"PRI": func(c *gin.Context, _ domain.RobnoStampaDokumentDto) { h.StampaPrenosnica(c) },
+		"PRU": func(c *gin.Context, _ domain.RobnoStampaDokumentDto) { h.StampaPrenosnicaUlaz(c) },
 		// Zaduženje gradilišta.
-		"GRD": robnoDokumentaStampaNijeImplementirana("RPT_ROB_ZADGRADILISTA", false),
+		"GRD": func(c *gin.Context, _ domain.RobnoStampaDokumentDto) { h.StampaZaduzenjeGradilista(c) },
 		// Profakture.
 		"PRO": h.stampaProfaktura,
 		// Popis tekuće godine (the selected document).
-		"PTG": robnoDokumentaStampaNijeImplementirana("RPT_POPIS_TEKGOD", false),
+		"PTG": func(c *gin.Context, _ domain.RobnoStampaDokumentDto) { h.StampaPopisTekGod(c) },
 		// Sitan inventar.
-		"SIV": robnoDokumentaStampaNijeImplementirana("RPT_ROB_ZADUZ_SI", false),
+		"SIV": func(c *gin.Context, _ domain.RobnoStampaDokumentDto) { h.StampaZaduzenjeSI(c) },
 		// Knjižna pisma.
 		"KNO": h.stampaKnjiznoPismo,
 		"KNZ": h.stampaKnjiznoPismo,
@@ -1397,9 +1924,6 @@ func robnoDokumentaStampaNijeImplementirana(izvestaj string, saVarijantom bool) 
 }
 
 // stampaFakturaDokumenta is the print of the fakture (groups FAK and FRP), the legacy case of Srbija
-// with the tip proizvodnje 1: a faktura in the domestic valuta is ROB_RPT_STAMPA_FAKTURA (or its
-// variant of DODOZNFAK, printed with the base report until the variant is translated), a faktura in a
-// foreign valuta is PR_RPT_FAKTURA_OTPIZV. The legacy prints of the tip proizvodnje 2
 // (PR_RPT_FAKTURA_OTP) and of Republika Srpska (ROB_RPT_STAMPA_FAKTURA_MED) are not translated.
 func (h *RobnoDokumentaHandler) stampaFakturaDokumenta(c *gin.Context, dok domain.RobnoStampaDokumentDto) {
 	if dok.Devizni() {
@@ -1414,10 +1938,10 @@ func (h *RobnoDokumentaHandler) stampaFakturaDokumenta(c *gin.Context, dok domai
 // its variant of DODOZNFAK).
 func (h *RobnoDokumentaHandler) stampaInterniPrenos(c *gin.Context, dok domain.RobnoStampaDokumentDto) {
 	if c.Query("irrn") == "true" {
-		robnoDokumentaStampaNijeImplementirana("ROB_RPT_STAMPA_INTRACFKT", false)(c, dok)
+		h.StampaInternaZakljucnicaRacun(c)
 		return
 	}
-	robnoDokumentaStampaNijeImplementirana("ROB_RPT_STAMPA_INTRAC", true)(c, dok)
+	h.StampaInternaZakljucnica(c)
 }
 
 // stampaRazduzenjaCO is the print of the razduženje CO (group RCO): only a kontiran document is printed
@@ -1427,27 +1951,27 @@ func (h *RobnoDokumentaHandler) stampaRazduzenjaCO(c *gin.Context, dok domain.Ro
 		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, "Dokument nije kontiran!")
 		return
 	}
-	robnoDokumentaStampaNijeImplementirana("ROB_RPT_STAMPA_RAZDUZENJA_CO", false)(c, dok)
+	h.StampaRazduzenjeCO(c)
 }
 
 // stampaProfaktura is the print of the profakture (group PRO): in the domestic valuta
 // ROB_RPT_STAMPA_PROFAKTURA, in a foreign valuta ROB_RPT_PROFAKTURAIZV (of the kupac of the kontni plan).
 func (h *RobnoDokumentaHandler) stampaProfaktura(c *gin.Context, dok domain.RobnoStampaDokumentDto) {
 	if dok.Devizni() {
-		robnoDokumentaStampaNijeImplementirana("ROB_RPT_PROFAKTURAIZV", false)(c, dok)
+		h.StampaProfakturaIzvoz(c)
 		return
 	}
-	robnoDokumentaStampaNijeImplementirana("ROB_RPT_STAMPA_PROFAKTURA", false)(c, dok)
+	h.StampaProfaktura(c)
 }
 
 // stampaKnjiznoPismo is the print of the knjižna pisma (groups KNO and KNZ): a document with stavke is
 // ROB_RPT_KNJPISMO, a document without stavke (finansijsko) ROB_RPT_KNJPISMOFIN.
 func (h *RobnoDokumentaHandler) stampaKnjiznoPismo(c *gin.Context, dok domain.RobnoStampaDokumentDto) {
 	if dok.ImaStavke {
-		robnoDokumentaStampaNijeImplementirana("ROB_RPT_KNJPISMO", false)(c, dok)
+		h.StampaKnjiznoPismo(c)
 		return
 	}
-	robnoDokumentaStampaNijeImplementirana("ROB_RPT_KNJPISMOFIN", false)(c, dok)
+	h.StampaKnjiznoPismoFin(c)
 }
 
 // stampaNivelacijaMaloprodaje is the print of the nivelacije maloprodaje (group MNI): only a document
@@ -1457,17 +1981,18 @@ func (h *RobnoDokumentaHandler) stampaNivelacijaMaloprodaje(c *gin.Context, dok 
 		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, "Dokument nema stavki")
 		return
 	}
-	robnoDokumentaStampaNijeImplementirana("RPT_NIVELACIJA_MALOPRODAJE", false)(c, dok)
+	h.StampaNivelacijaMaloprodaje(c)
 }
 
 // stampaFakturaZaRobu is the print of the group FZR (Srbija): a document in the domestic valuta is
-// PR_RPT_FAKTURA_OTP (or its variant of DODOZNFAK); the ino faktura has no print.
+// PR_RPT_FAKTURA_OTP (or its variant of DODOZNFAK), a document in a foreign valuta its export
+// variant PR_RPT_FAKTURA_OTPIZV (the legacy screen answered "Ino faktura nije implementirana!").
 func (h *RobnoDokumentaHandler) stampaFakturaZaRobu(c *gin.Context, dok domain.RobnoStampaDokumentDto) {
 	if dok.Devizni() {
-		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, "Ino faktura nije implementirana!")
+		h.StampaFakturaIzvoz(c)
 		return
 	}
-	robnoDokumentaStampaNijeImplementirana("PR_RPT_FAKTURA_OTP", true)(c, dok)
+	h.StampaFakturaOtpremnica(c)
 }
 
 // stampaKnjiznoOdobrenje is the print of the knjižna odobrenja (groups KPK and KPF): only a document in
@@ -1477,7 +2002,7 @@ func (h *RobnoDokumentaHandler) stampaKnjiznoOdobrenje(c *gin.Context, dok domai
 		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, "Štampa knjižnog odobrenja u stranoj valuti ne postoji")
 		return
 	}
-	robnoDokumentaStampaNijeImplementirana("PR_RPT_KNJODOBRENJE", false)(c, dok)
+	h.StampaFakturaKnjizno(c)
 }
 
 // PregledEFaktura renders the "eFaktura" sub-tab (filters, actions and grid).
@@ -1503,7 +2028,7 @@ func (h *RobnoDokumentaHandler) PregledEFaktura(c *gin.Context) {
 		return
 	}
 
-	magValues, err := h.service.GetMagacinComboValues(ctx)
+	magValues, err := h.magacinComboValues(ctx)
 	if err != nil {
 		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
 		return
@@ -1633,17 +2158,17 @@ func (h *RobnoDokumentaHandler) SpecifikacijeDokumenta(c *gin.Context) {
 		return
 	}
 
-	magValues, err := h.service.GetMagacinComboValues(ctx)
+	magValues, err := h.magacinComboValues(ctx)
 	if err != nil {
 		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
 		return
 	}
-	tipdokValues, err := h.service.GetTipdokComboValues(ctx)
+	tipdokValues, err := h.tipdokComboValues(ctx)
 	if err != nil {
 		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
 		return
 	}
-	vrstaDokumentaValues, err := h.service.GetVrstaDokumentaComboValues(ctx)
+	vrstaDokumentaValues, err := h.vrstaDokumentaComboValues(ctx)
 	if err != nil {
 		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
 		return
@@ -1808,17 +2333,17 @@ func (h *RobnoDokumentaHandler) kontiranjeKnjizenje(c *gin.Context) {
 		return
 	}
 
-	magValues, err := h.service.GetMagacinComboValues(ctx)
+	magValues, err := h.magacinComboValues(ctx)
 	if err != nil {
 		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
 		return
 	}
-	tipdokValues, err := h.service.GetTipdokComboValues(ctx)
+	tipdokValues, err := h.tipdokComboValues(ctx)
 	if err != nil {
 		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
 		return
 	}
-	vrstaDokumentaValues, err := h.service.GetVrstaDokumentaComboValues(ctx)
+	vrstaDokumentaValues, err := h.vrstaDokumentaComboValues(ctx)
 	if err != nil {
 		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
 		return
@@ -1869,12 +2394,12 @@ func (h *RobnoDokumentaHandler) KontiranjePregled(c *gin.Context) {
 		return
 	}
 
-	magValues, err := h.service.GetMagacinComboValues(ctx)
+	magValues, err := h.magacinComboValues(ctx)
 	if err != nil {
 		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
 		return
 	}
-	tipdokValues, err := h.service.GetTipdokComboValues(ctx)
+	tipdokValues, err := h.tipdokComboValues(ctx)
 	if err != nil {
 		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
 		return
@@ -1927,7 +2452,7 @@ func (h *RobnoDokumentaHandler) KontiranjePoMagacinima(c *gin.Context) {
 		return
 	}
 
-	magValues, err := h.service.GetMagacinComboValues(ctx)
+	magValues, err := h.magacinComboValues(ctx)
 	if err != nil {
 		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
 		return
@@ -2133,12 +2658,12 @@ func (h *RobnoDokumentaHandler) PrikazNaloga(c *gin.Context) {
 		return
 	}
 
-	magValues, err := h.service.GetMagacinComboValues(ctx)
+	magValues, err := h.magacinComboValues(ctx)
 	if err != nil {
 		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
 		return
 	}
-	tipdokValues, err := h.service.GetTipdokComboValues(ctx)
+	tipdokValues, err := h.tipdokComboValues(ctx)
 	if err != nil {
 		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
 		return
@@ -2293,12 +2818,12 @@ func (h *RobnoDokumentaHandler) PrikazDokumenataUNalogu(c *gin.Context) {
 		return
 	}
 
-	magValues, err := h.service.GetMagacinComboValues(ctx)
+	magValues, err := h.magacinComboValues(ctx)
 	if err != nil {
 		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
 		return
 	}
-	tipdokValues, err := h.service.GetTipdokComboValues(ctx)
+	tipdokValues, err := h.tipdokComboValues(ctx)
 	if err != nil {
 		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
 		return
@@ -2447,7 +2972,7 @@ func (h *RobnoDokumentaHandler) render(c *gin.Context, tabIndex int) {
 		return
 	}
 
-	magValues, err := h.service.GetMagacinComboValues(ctx)
+	magValues, err := h.magacinComboValues(ctx)
 	if err != nil {
 		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
 		return
@@ -2560,11 +3085,30 @@ func (h *RobnoDokumentaHandler) AddRoutes(r *gin.Engine) {
 	r.GET(robnoDokumentaURLStampaFaktura, h.StampaFakturaPrint)
 	r.GET(robnoDokumentaURLStampaPopis, h.StampaPopis)
 	r.GET(robnoDokumentaURLStampaKalkulacija, h.StampaKalkulacija)
+	r.GET(robnoDokumentaURLStampaKalkulacijaMP, h.StampaKalkulacijaMaloprodaje)
 	r.GET(robnoDokumentaURLStampaFakturaMP, h.StampaFakturaMP)
 	r.GET(robnoDokumentaURLStampaFakturaIzvoz, h.StampaFakturaIzvoz)
+	r.GET(robnoDokumentaURLStampaProfakturaIzvoz, h.StampaProfakturaIzvoz)
+	r.GET(robnoDokumentaURLStampaProfaktura, h.StampaProfaktura)
+	r.GET(robnoDokumentaURLStampaFakturaKnjizno, h.StampaFakturaKnjizno)
+	r.GET(robnoDokumentaURLStampaKnjiznoPismo, h.StampaKnjiznoPismo)
+	r.GET(robnoDokumentaURLStampaKnjiznoPismoFin, h.StampaKnjiznoPismoFin)
+	r.GET(robnoDokumentaURLStampaFakturaOtpremnica, h.StampaFakturaOtpremnica)
 	r.GET(robnoDokumentaURLStampaFakturaUsluge, h.StampaFakturaUsluge)
+	r.GET(robnoDokumentaURLStampaZaduzenjeCO, h.StampaZaduzenjeCO)
+	r.GET(robnoDokumentaURLStampaRazduzenjeCO, h.StampaRazduzenjeCO)
 	r.GET(robnoDokumentaURLStampaFakturaAvansni, h.StampaFakturaAvansni)
 	r.GET(robnoDokumentaURLStampaOpstiDokument, h.StampaOpstiDokument)
+	r.GET(robnoDokumentaURLStampaPrenosnica, h.StampaPrenosnica)
+	r.GET(robnoDokumentaURLStampaPrenosnicaUlaz, h.StampaPrenosnicaUlaz)
+	r.GET(robnoDokumentaURLStampaPopisTekGod, h.StampaPopisTekGod)
+	r.GET(robnoDokumentaURLStampaZaduzenjeSI, h.StampaZaduzenjeSI)
+	r.GET(robnoDokumentaURLStampaZaduzenjeGradilista, h.StampaZaduzenjeGradilista)
+	r.GET(robnoDokumentaURLStampaNivelacija, h.StampaNivelacija)
+	r.GET(robnoDokumentaURLStampaInterniPrenos, h.StampaInterniPrenosProizvodnje)
+	r.GET(robnoDokumentaURLStampaInternaZakljucnica, h.StampaInternaZakljucnica)
+	r.GET(robnoDokumentaURLStampaInternaZakljucnicaRacun, h.StampaInternaZakljucnicaRacun)
+	r.GET(robnoDokumentaURLStampaNivelacijaMaloprodaje, h.StampaNivelacijaMaloprodaje)
 
 	// TODO: add the stampa (print) routes of the tabs together with their print templates.
 }

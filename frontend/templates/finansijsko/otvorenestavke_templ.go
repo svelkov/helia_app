@@ -125,43 +125,15 @@ func OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDat
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
-			ID:           "konto",
-			Name:         "konto",
-			FieldType:    "text",
-			Disabled:     false,
-			ClassInput:   common.ClassInputTextEnabled + " w-24",
-			BlurEndpoint: "api/fkpl/trazikonto",
-			HxTarget:     "kontonaziv",
-			HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "2", "destfield": "konto"}`,
-			HxInclude:    "this",
-			MinLength:    "2",
-			MaxLength:    "6",
-			TabIndex:     "1",
-			OnInput:      "clearFieldError",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
-			ID:          "btn-search-konto",
-			Name:        "search-konto",
-			HxUrl:       "/api/promet/searchbutton",
-			HxTarget:    "#search-dropdown",
-			HxSwap:      "innerHTML",
-			HxVals:      `{"vkonta": "2", "destfield": "konto"}`,
-			ClassButton: common.ClassButton,
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
-			ID:         "kontonaziv",
-			Name:       "kontonaziv",
-			FieldType:  "text",
-			Disabled:   true,
-			ClassInput: common.ClassInputTextDisabled + " w-full",
-		}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TableCombo(domain.TableComboConfig{
+			ID:          "konto-combo",
+			Name:        "konto",
+			ValueID:     "konto",
+			Placeholder: "Pretraži po kontu ili nazivu",
+			ClassInput:  common.ClassInputTextEnabled + " w-full",
+			SearchURL:   "/api/search/konta",
+			TabIndex:    "1",
+		}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -177,44 +149,19 @@ func OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDat
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
-			ID:           "odsifre",
+		templ_7745c5c3_Err = components.TableCombo(domain.TableComboConfig{
+			ID:           "odsifre-combo",
 			Name:         "odsifre",
-			FieldType:    "text",
-			Disabled:     false,
-			ClassInput:   common.ClassInputTextEnabled + " w-24",
-			BlurEndpoint: "api/fkpl/trazikonto",
-			HxTarget:     "odsifrenaziv",
-			HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('odsifre').value, "vkonta": "1", "destfield": "odsifre"}`,
-			HxInclude:    "this",
-			Value:        "00",
-			MinLength:    "2",
-			MaxLength:    "6",
-			TabIndex:     "2",
-			OnInput:      "clearFieldError",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
-			ID:          "odsifre",
-			Name:        "search-odsifre",
-			HxUrl:       "/api/promet/searchbutton",
-			HxTarget:    "#search-dropdown",
-			HxSwap:      "innerHTML",
-			HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1", "destfield": "odsifre"}`,
-			ClassButton: common.ClassButton,
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
-			ID:         "odsifrenaziv",
-			Name:       "odsifrenaziv",
-			FieldType:  "text",
-			Disabled:   true,
-			ClassInput: common.ClassInputTextDisabled + " w-full",
-		}).Render(ctx, templ_7745c5c3_Buffer)
+			ValueID:      "odsifre",
+			DefaultValue: "00",
+			Placeholder:  "Pretraži po šifri ili nazivu",
+			ClassInput:   common.ClassInputTextEnabled + " w-full",
+			SearchURL:    "/api/search/analitika",
+			HxInclude:    "#konto",
+			// The search also runs again when the konto is selected while this field has the focus.
+			HxTrigger: "input changed delay:300ms, focus[tableComboEmpty(this)], change[document.activeElement === this] from:#konto",
+			TabIndex:  "2",
+		}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -230,44 +177,19 @@ func OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDat
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
-			ID:           "dosifre",
+		templ_7745c5c3_Err = components.TableCombo(domain.TableComboConfig{
+			ID:           "dosifre-combo",
 			Name:         "dosifre",
-			FieldType:    "text",
-			Disabled:     false,
-			ClassInput:   common.ClassInputTextEnabled + " w-24",
-			BlurEndpoint: "api/fkpl/trazikonto",
-			HxTarget:     "dosifrenaziv",
-			HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('dosifre').value, "vkonta": "1", "destfield": "dosifre"}`,
-			HxInclude:    "this",
-			Value:        "999999",
-			MinLength:    "2",
-			MaxLength:    "6",
-			TabIndex:     "2",
-			OnInput:      "clearFieldError",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
-			ID:          "dosifre",
-			Name:        "search-dosifre",
-			HxUrl:       "/api/promet/searchbutton",
-			HxTarget:    "#search-dropdown",
-			HxSwap:      "innerHTML",
-			HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1", "destfield": "dosifre"}`,
-			ClassButton: common.ClassButton,
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
-			ID:         "dosifrenaziv",
-			Name:       "dosifrenaziv",
-			FieldType:  "text",
-			Disabled:   true,
-			ClassInput: common.ClassInputTextDisabled + " w-full",
-		}).Render(ctx, templ_7745c5c3_Buffer)
+			ValueID:      "dosifre",
+			DefaultValue: "999999",
+			Placeholder:  "Pretraži po šifri ili nazivu",
+			ClassInput:   common.ClassInputTextEnabled + " w-full",
+			SearchURL:    "/api/search/analitika",
+			HxInclude:    "#konto",
+			// The search also runs again when the konto is selected while this field has the focus.
+			HxTrigger: "input changed delay:300ms, focus[tableComboEmpty(this)], change[document.activeElement === this] from:#konto",
+			TabIndex:  "2",
+		}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -426,43 +348,15 @@ func ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
-			ID:           "konto",
-			Name:         "konto",
-			FieldType:    "text",
-			Disabled:     false,
-			ClassInput:   common.ClassInputTextEnabled + " w-24",
-			BlurEndpoint: "api/fkpl/trazikonto",
-			HxTarget:     "kontonaziv",
-			HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "2", "destfield": "konto"}`,
-			HxInclude:    "this",
-			MinLength:    "2",
-			MaxLength:    "6",
-			TabIndex:     "1",
-			OnInput:      "clearFieldError",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
-			ID:          "btn-search-konto",
-			Name:        "search-konto",
-			HxUrl:       "/api/promet/searchbutton",
-			HxTarget:    "#search-dropdown",
-			HxSwap:      "innerHTML",
-			HxVals:      `{"vkonta": "2", "destfield": "konto"}`,
-			ClassButton: common.ClassButton,
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
-			ID:         "kontonaziv",
-			Name:       "kontonaziv",
-			FieldType:  "text",
-			Disabled:   true,
-			ClassInput: common.ClassInputTextDisabled + " w-full",
-		}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TableCombo(domain.TableComboConfig{
+			ID:          "konto-combo",
+			Name:        "konto",
+			ValueID:     "konto",
+			Placeholder: "Pretraži po kontu ili nazivu",
+			ClassInput:  common.ClassInputTextEnabled + " w-full",
+			SearchURL:   "/api/search/konta",
+			TabIndex:    "1",
+		}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -478,44 +372,19 @@ func ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
-			ID:           "odsifre",
+		templ_7745c5c3_Err = components.TableCombo(domain.TableComboConfig{
+			ID:           "odsifre-combo",
 			Name:         "odsifre",
-			FieldType:    "text",
-			Disabled:     false,
-			ClassInput:   common.ClassInputTextEnabled + " w-24",
-			BlurEndpoint: "api/fkpl/trazikonto",
-			HxTarget:     "odsifrenaziv",
-			HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('odsifre').value, "vkonta": "1", "destfield": "odsifre"}`,
-			HxInclude:    "this",
-			Value:        "00",
-			MinLength:    "2",
-			MaxLength:    "6",
-			TabIndex:     "2",
-			OnInput:      "clearFieldError",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
-			ID:          "odsifre",
-			Name:        "search-odsifre",
-			HxUrl:       "/api/promet/searchbutton",
-			HxTarget:    "#search-dropdown",
-			HxSwap:      "innerHTML",
-			HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1", "destfield": "odsifre"}`,
-			ClassButton: common.ClassButton,
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
-			ID:         "odsifrenaziv",
-			Name:       "odsifrenaziv",
-			FieldType:  "text",
-			Disabled:   true,
-			ClassInput: common.ClassInputTextDisabled + " w-full",
-		}).Render(ctx, templ_7745c5c3_Buffer)
+			ValueID:      "odsifre",
+			DefaultValue: "00",
+			Placeholder:  "Pretraži po šifri ili nazivu",
+			ClassInput:   common.ClassInputTextEnabled + " w-full",
+			SearchURL:    "/api/search/analitika",
+			HxInclude:    "#konto",
+			// The search also runs again when the konto is selected while this field has the focus.
+			HxTrigger: "input changed delay:300ms, focus[tableComboEmpty(this)], change[document.activeElement === this] from:#konto",
+			TabIndex:  "2",
+		}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -531,44 +400,19 @@ func ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
-			ID:           "dosifre",
+		templ_7745c5c3_Err = components.TableCombo(domain.TableComboConfig{
+			ID:           "dosifre-combo",
 			Name:         "dosifre",
-			FieldType:    "text",
-			Disabled:     false,
-			ClassInput:   common.ClassInputTextEnabled + " w-24",
-			BlurEndpoint: "api/fkpl/trazikonto",
-			HxTarget:     "dosifrenaziv",
-			HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('dosifre').value, "vkonta": "1", "destfield": "dosifre"}`,
-			HxInclude:    "this",
-			Value:        "999999",
-			MinLength:    "2",
-			MaxLength:    "6",
-			TabIndex:     "2",
-			OnInput:      "clearFieldError",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
-			ID:          "dosifre",
-			Name:        "search-dosifre",
-			HxUrl:       "/api/promet/searchbutton",
-			HxTarget:    "#search-dropdown",
-			HxSwap:      "innerHTML",
-			HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1", "destfield": "dosifre"}`,
-			ClassButton: common.ClassButton,
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
-			ID:         "dosifrenaziv",
-			Name:       "dosifrenaziv",
-			FieldType:  "text",
-			Disabled:   true,
-			ClassInput: common.ClassInputTextDisabled + " w-full",
-		}).Render(ctx, templ_7745c5c3_Buffer)
+			ValueID:      "dosifre",
+			DefaultValue: "999999",
+			Placeholder:  "Pretraži po šifri ili nazivu",
+			ClassInput:   common.ClassInputTextEnabled + " w-full",
+			SearchURL:    "/api/search/analitika",
+			HxInclude:    "#konto",
+			// The search also runs again when the konto is selected while this field has the focus.
+			HxTrigger: "input changed delay:300ms, focus[tableComboEmpty(this)], change[document.activeElement === this] from:#konto",
+			TabIndex:  "2",
+		}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -722,43 +566,15 @@ func IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
-			ID:           "konto",
-			Name:         "konto",
-			FieldType:    "text",
-			Disabled:     false,
-			ClassInput:   common.ClassInputTextEnabled + " w-24",
-			BlurEndpoint: "api/fkpl/trazikonto",
-			HxTarget:     "kontonaziv",
-			HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "2", "destfield": "konto"}`,
-			HxInclude:    "this",
-			MinLength:    "2",
-			MaxLength:    "6",
-			TabIndex:     "1",
-			OnInput:      "clearFieldError",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
-			ID:          "btn-search-konto",
-			Name:        "search-konto",
-			HxUrl:       "/api/promet/searchbutton",
-			HxTarget:    "#search-dropdown",
-			HxSwap:      "innerHTML",
-			HxVals:      `{"vkonta": "2", "destfield": "konto"}`,
-			ClassButton: common.ClassButton,
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
-			ID:         "kontonaziv",
-			Name:       "kontonaziv",
-			FieldType:  "text",
-			Disabled:   true,
-			ClassInput: common.ClassInputTextDisabled + " w-full",
-		}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TableCombo(domain.TableComboConfig{
+			ID:          "konto-combo",
+			Name:        "konto",
+			ValueID:     "konto",
+			Placeholder: "Pretraži po kontu ili nazivu",
+			ClassInput:  common.ClassInputTextEnabled + " w-full",
+			SearchURL:   "/api/search/konta",
+			TabIndex:    "1",
+		}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -774,44 +590,19 @@ func IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
-			ID:           "odsifre",
+		templ_7745c5c3_Err = components.TableCombo(domain.TableComboConfig{
+			ID:           "odsifre-combo",
 			Name:         "odsifre",
-			FieldType:    "text",
-			Disabled:     false,
-			ClassInput:   common.ClassInputTextEnabled + " w-24",
-			BlurEndpoint: "api/fkpl/trazikonto",
-			HxTarget:     "odsifrenaziv",
-			HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('odsifre').value, "vkonta": "1", "destfield": "odsifre"}`,
-			HxInclude:    "this",
-			Value:        "00",
-			MinLength:    "2",
-			MaxLength:    "6",
-			TabIndex:     "2",
-			OnInput:      "clearFieldError",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
-			ID:          "odsifre",
-			Name:        "search-odsifre",
-			HxUrl:       "/api/promet/searchbutton",
-			HxTarget:    "#search-dropdown",
-			HxSwap:      "innerHTML",
-			HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1", "destfield": "odsifre"}`,
-			ClassButton: common.ClassButton,
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
-			ID:         "odsifrenaziv",
-			Name:       "odsifrenaziv",
-			FieldType:  "text",
-			Disabled:   true,
-			ClassInput: common.ClassInputTextDisabled + " w-full",
-		}).Render(ctx, templ_7745c5c3_Buffer)
+			ValueID:      "odsifre",
+			DefaultValue: "00",
+			Placeholder:  "Pretraži po šifri ili nazivu",
+			ClassInput:   common.ClassInputTextEnabled + " w-full",
+			SearchURL:    "/api/search/analitika",
+			HxInclude:    "#konto",
+			// The search also runs again when the konto is selected while this field has the focus.
+			HxTrigger: "input changed delay:300ms, focus[tableComboEmpty(this)], change[document.activeElement === this] from:#konto",
+			TabIndex:  "2",
+		}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -827,44 +618,19 @@ func IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObrad
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
-			ID:           "dosifre",
+		templ_7745c5c3_Err = components.TableCombo(domain.TableComboConfig{
+			ID:           "dosifre-combo",
 			Name:         "dosifre",
-			FieldType:    "text",
-			Disabled:     false,
-			ClassInput:   common.ClassInputTextEnabled + " w-24",
-			BlurEndpoint: "api/fkpl/trazikonto",
-			HxTarget:     "dosifrenaziv",
-			HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('dosifre').value, "vkonta": "1", "destfield": "dosifre"}`,
-			HxInclude:    "this",
-			Value:        "999999",
-			MinLength:    "2",
-			MaxLength:    "6",
-			TabIndex:     "2",
-			OnInput:      "clearFieldError",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
-			ID:          "dosifre",
-			Name:        "search-dosifre",
-			HxUrl:       "/api/promet/searchbutton",
-			HxTarget:    "#search-dropdown",
-			HxSwap:      "innerHTML",
-			HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1", "destfield": "dosifre"}`,
-			ClassButton: common.ClassButton,
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
-			ID:         "dosifrenaziv",
-			Name:       "dosifrenaziv",
-			FieldType:  "text",
-			Disabled:   true,
-			ClassInput: common.ClassInputTextDisabled + " w-full",
-		}).Render(ctx, templ_7745c5c3_Buffer)
+			ValueID:      "dosifre",
+			DefaultValue: "999999",
+			Placeholder:  "Pretraži po šifri ili nazivu",
+			ClassInput:   common.ClassInputTextEnabled + " w-full",
+			SearchURL:    "/api/search/analitika",
+			HxInclude:    "#konto",
+			// The search also runs again when the konto is selected while this field has the focus.
+			HxTrigger: "input changed delay:300ms, focus[tableComboEmpty(this)], change[document.activeElement === this] from:#konto",
+			TabIndex:  "2",
+		}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1019,43 +785,15 @@ func DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Tab
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
-			ID:           "konto",
-			Name:         "konto",
-			FieldType:    "text",
-			Disabled:     false,
-			ClassInput:   common.ClassInputTextEnabled + " w-24",
-			BlurEndpoint: "api/fkpl/trazikonto",
-			HxTarget:     "kontonaziv",
-			HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "2", "destfield": "konto"}`,
-			HxInclude:    "this",
-			MinLength:    "2",
-			MaxLength:    "6",
-			TabIndex:     "1",
-			OnInput:      "clearFieldError",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
-			ID:          "btn-search-konto",
-			Name:        "search-konto",
-			HxUrl:       "/api/promet/searchbutton",
-			HxTarget:    "#search-dropdown",
-			HxSwap:      "innerHTML",
-			HxVals:      `{"vkonta": "2", "destfield": "konto"}`,
-			ClassButton: common.ClassButton,
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
-			ID:         "kontonaziv",
-			Name:       "kontonaziv",
-			FieldType:  "text",
-			Disabled:   true,
-			ClassInput: common.ClassInputTextDisabled + " w-full",
-		}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TableCombo(domain.TableComboConfig{
+			ID:          "konto-combo",
+			Name:        "konto",
+			ValueID:     "konto",
+			Placeholder: "Pretraži po kontu ili nazivu",
+			ClassInput:  common.ClassInputTextEnabled + " w-full",
+			SearchURL:   "/api/search/konta",
+			TabIndex:    "1",
+		}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1071,44 +809,19 @@ func DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Tab
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
-			ID:           "odsifre",
+		templ_7745c5c3_Err = components.TableCombo(domain.TableComboConfig{
+			ID:           "odsifre-combo",
 			Name:         "odsifre",
-			FieldType:    "text",
-			Disabled:     false,
-			ClassInput:   common.ClassInputTextEnabled + " w-24",
-			BlurEndpoint: "api/fkpl/trazikonto",
-			HxTarget:     "odsifrenaziv",
-			HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('odsifre').value, "vkonta": "1", "destfield": "odsifre"}`,
-			HxInclude:    "this",
-			Value:        "00",
-			MinLength:    "2",
-			MaxLength:    "6",
-			TabIndex:     "2",
-			OnInput:      "clearFieldError",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
-			ID:          "odsifre",
-			Name:        "search-odsifre",
-			HxUrl:       "/api/promet/searchbutton",
-			HxTarget:    "#search-dropdown",
-			HxSwap:      "innerHTML",
-			HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1", "destfield": "odsifre"}`,
-			ClassButton: common.ClassButton,
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
-			ID:         "odsifrenaziv",
-			Name:       "odsifrenaziv",
-			FieldType:  "text",
-			Disabled:   true,
-			ClassInput: common.ClassInputTextDisabled + " w-full",
-		}).Render(ctx, templ_7745c5c3_Buffer)
+			ValueID:      "odsifre",
+			DefaultValue: "00",
+			Placeholder:  "Pretraži po šifri ili nazivu",
+			ClassInput:   common.ClassInputTextEnabled + " w-full",
+			SearchURL:    "/api/search/analitika",
+			HxInclude:    "#konto",
+			// The search also runs again when the konto is selected while this field has the focus.
+			HxTrigger: "input changed delay:300ms, focus[tableComboEmpty(this)], change[document.activeElement === this] from:#konto",
+			TabIndex:  "2",
+		}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1124,44 +837,19 @@ func DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Tab
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
-			ID:           "dosifre",
+		templ_7745c5c3_Err = components.TableCombo(domain.TableComboConfig{
+			ID:           "dosifre-combo",
 			Name:         "dosifre",
-			FieldType:    "text",
-			Disabled:     false,
-			ClassInput:   common.ClassInputTextEnabled + " w-24",
-			BlurEndpoint: "api/fkpl/trazikonto",
-			HxTarget:     "dosifrenaziv",
-			HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('dosifre').value, "vkonta": "1", "destfield": "dosifre"}`,
-			HxInclude:    "this",
-			Value:        "999999",
-			MinLength:    "2",
-			MaxLength:    "6",
-			TabIndex:     "2",
-			OnInput:      "clearFieldError",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
-			ID:          "dosifre",
-			Name:        "search-dosifre",
-			HxUrl:       "/api/promet/searchbutton",
-			HxTarget:    "#search-dropdown",
-			HxSwap:      "innerHTML",
-			HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1", "destfield": "dosifre"}`,
-			ClassButton: common.ClassButton,
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
-			ID:         "dosifrenaziv",
-			Name:       "dosifrenaziv",
-			FieldType:  "text",
-			Disabled:   true,
-			ClassInput: common.ClassInputTextDisabled + " w-full",
-		}).Render(ctx, templ_7745c5c3_Buffer)
+			ValueID:      "dosifre",
+			DefaultValue: "999999",
+			Placeholder:  "Pretraži po šifri ili nazivu",
+			ClassInput:   common.ClassInputTextEnabled + " w-full",
+			SearchURL:    "/api/search/analitika",
+			HxInclude:    "#konto",
+			// The search also runs again when the konto is selected while this field has the focus.
+			HxTrigger: "input changed delay:300ms, focus[tableComboEmpty(this)], change[document.activeElement === this] from:#konto",
+			TabIndex:  "2",
+		}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1172,7 +860,7 @@ func DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Tab
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Prikaz analitički"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 902, Col: 70}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 662, Col: 70}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
@@ -1185,7 +873,7 @@ func DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Tab
 		var templ_7745c5c3_Var7 string
 		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Prikaz sintetički"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 906, Col: 70}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 666, Col: 70}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {
@@ -1224,7 +912,7 @@ func DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Tab
 		var templ_7745c5c3_Var8 string
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Potraživanja koja dospevaju u narednih"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 932, Col: 91}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 692, Col: 91}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {
@@ -1237,7 +925,7 @@ func DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Tab
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Potraživanja koja su starija od"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 939, Col: 85}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 699, Col: 85}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
@@ -1269,7 +957,7 @@ func DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Tab
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("dana"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 953, Col: 56}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 713, Col: 56}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
@@ -1384,7 +1072,7 @@ func PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnOb
 		var templ_7745c5c3_Var12 string
 		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Pregled dugovanja kupaca"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 1033, Col: 75}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 793, Col: 75}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 		if templ_7745c5c3_Err != nil {
@@ -1397,7 +1085,7 @@ func PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnOb
 		var templ_7745c5c3_Var13 string
 		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Pregled obaveza prema dobavljačima"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 1037, Col: 86}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 797, Col: 86}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 		if templ_7745c5c3_Err != nil {
@@ -1415,19 +1103,16 @@ func PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnOb
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
-			ID:         "odkonta",
-			Name:       "odkonta",
-			FieldType:  "text",
-			Value:      "0000",
-			Disabled:   false,
-			ClassInput: common.ClassInputTextEnabled + " w-24",
-			TabIndex:   "3",
-			OnInput:    "clearFieldError",
-			OnFocus:    "clearFieldError",
-			MinLength:  "4",
-			MaxLength:  "6",
-		}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TableCombo(domain.TableComboConfig{
+			ID:           "odkonta-combo",
+			Name:         "odkonta",
+			ValueID:      "odkonta",
+			DefaultValue: "0000",
+			Placeholder:  "Pretraži po kontu ili nazivu",
+			ClassInput:   common.ClassInputTextEnabled + " w-full",
+			SearchURL:    "/api/search/konta",
+			TabIndex:     "3",
+		}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1443,19 +1128,16 @@ func PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnOb
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
-			ID:         "odsifre",
-			Name:       "odsifre",
-			FieldType:  "text",
-			Value:      "00",
-			Disabled:   false,
-			ClassInput: common.ClassInputTextEnabled + " w-24",
-			TabIndex:   "5",
-			OnInput:    "clearFieldError",
-			OnFocus:    "clearFieldError",
-			MinLength:  "2",
-			MaxLength:  "6",
-		}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TableCombo(domain.TableComboConfig{
+			ID:           "odsifre-combo",
+			Name:         "odsifre",
+			ValueID:      "odsifre",
+			DefaultValue: "00",
+			Placeholder:  "Pretraži po šifri ili nazivu",
+			ClassInput:   common.ClassInputTextEnabled + " w-full",
+			SearchURL:    "/api/search/analitika",
+			TabIndex:     "5",
+		}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1471,19 +1153,16 @@ func PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnOb
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
-			ID:         "dokonta",
-			Name:       "dokonta",
-			FieldType:  "text",
-			Value:      "9999",
-			Disabled:   false,
-			ClassInput: common.ClassInputTextEnabled + " w-24",
-			TabIndex:   "4",
-			OnInput:    "clearFieldError",
-			OnFocus:    "clearFieldError",
-			MinLength:  "4",
-			MaxLength:  "6",
-		}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TableCombo(domain.TableComboConfig{
+			ID:           "dokonta-combo",
+			Name:         "dokonta",
+			ValueID:      "dokonta",
+			DefaultValue: "9999",
+			Placeholder:  "Pretraži po kontu ili nazivu",
+			ClassInput:   common.ClassInputTextEnabled + " w-full",
+			SearchURL:    "/api/search/konta",
+			TabIndex:     "4",
+		}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1499,19 +1178,16 @@ func PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnOb
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
-			ID:         "dosifre",
-			Name:       "dosifre",
-			FieldType:  "text",
-			Value:      "999999",
-			Disabled:   false,
-			ClassInput: common.ClassInputTextEnabled + " w-24",
-			TabIndex:   "6",
-			OnInput:    "clearFieldError",
-			OnFocus:    "clearFieldError",
-			MinLength:  "2",
-			MaxLength:  "6",
-		}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TableCombo(domain.TableComboConfig{
+			ID:           "dosifre-combo",
+			Name:         "dosifre",
+			ValueID:      "dosifre",
+			DefaultValue: "999999",
+			Placeholder:  "Pretraži po šifri ili nazivu",
+			ClassInput:   common.ClassInputTextEnabled + " w-full",
+			SearchURL:    "/api/search/analitika",
+			TabIndex:     "6",
+		}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1742,7 +1418,7 @@ func PregledDospelogDugaPoStarosti(tabs domain.TabData, tbl domain.TableData, bt
 		var templ_7745c5c3_Var15 string
 		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Pregled dugovanja kupaca"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 1300, Col: 75}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 1048, Col: 75}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 		if templ_7745c5c3_Err != nil {
@@ -1755,7 +1431,7 @@ func PregledDospelogDugaPoStarosti(tabs domain.TabData, tbl domain.TableData, bt
 		var templ_7745c5c3_Var16 string
 		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Pregled obaveza prema dobavljačima"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 1304, Col: 86}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/finansijsko/otvorenestavke.templ`, Line: 1052, Col: 86}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 		if templ_7745c5c3_Err != nil {
@@ -2083,43 +1759,15 @@ func PovezivanjeRacunaUplata(tabs domain.TabData, tblPartneri, tblUplate, tblFak
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
-			ID:           "konto",
-			Name:         "konto",
-			FieldType:    "text",
-			Disabled:     false,
-			ClassInput:   common.ClassInputTextEnabled + " w-24",
-			BlurEndpoint: "api/fkpl/trazikonto",
-			HxTarget:     "kontonaziv",
-			HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "2", "destfield": "konto"}`,
-			HxInclude:    "this",
-			MinLength:    "2",
-			MaxLength:    "6",
-			TabIndex:     "1",
-			OnInput:      "clearFieldError",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
-			ID:          "btn-search-konto",
-			Name:        "search-konto",
-			HxUrl:       "/api/promet/searchbutton",
-			HxTarget:    "#search-dropdown",
-			HxSwap:      "innerHTML",
-			HxVals:      `{"vkonta": "2", "destfield": "konto"}`,
-			ClassButton: common.ClassButton,
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
-			ID:         "kontonaziv",
-			Name:       "kontonaziv",
-			FieldType:  "text",
-			Disabled:   true,
-			ClassInput: common.ClassInputTextDisabled + " w-full",
-		}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TableCombo(domain.TableComboConfig{
+			ID:          "konto-combo",
+			Name:        "konto",
+			ValueID:     "konto",
+			Placeholder: "Pretraži po kontu ili nazivu",
+			ClassInput:  common.ClassInputTextEnabled + " w-full",
+			SearchURL:   "/api/search/konta",
+			TabIndex:    "1",
+		}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2135,44 +1783,19 @@ func PovezivanjeRacunaUplata(tabs domain.TabData, tblPartneri, tblUplate, tblFak
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
-			ID:           "odsifre",
+		templ_7745c5c3_Err = components.TableCombo(domain.TableComboConfig{
+			ID:           "odsifre-combo",
 			Name:         "odsifre",
-			FieldType:    "text",
-			Disabled:     false,
-			ClassInput:   common.ClassInputTextEnabled + " w-24",
-			BlurEndpoint: "api/fkpl/trazikonto",
-			HxTarget:     "odsifrenaziv",
-			HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('odsifre').value, "vkonta": "1", "destfield": "odsifre"}`,
-			HxInclude:    "this",
-			Value:        "00",
-			MinLength:    "2",
-			MaxLength:    "6",
-			TabIndex:     "2",
-			OnInput:      "clearFieldError",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
-			ID:          "btn-search-odsifre",
-			Name:        "search-odsifre",
-			HxUrl:       "/api/promet/searchbutton",
-			HxTarget:    "#search-dropdown",
-			HxSwap:      "innerHTML",
-			HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1", "destfield": "odsifre"}`,
-			ClassButton: common.ClassButton,
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
-			ID:         "odsifrenaziv",
-			Name:       "odsifrenaziv",
-			FieldType:  "text",
-			Disabled:   true,
-			ClassInput: common.ClassInputTextDisabled + " w-full",
-		}).Render(ctx, templ_7745c5c3_Buffer)
+			ValueID:      "odsifre",
+			DefaultValue: "00",
+			Placeholder:  "Pretraži po šifri ili nazivu",
+			ClassInput:   common.ClassInputTextEnabled + " w-full",
+			SearchURL:    "/api/search/analitika",
+			HxInclude:    "#konto",
+			// The search also runs again when the konto is selected while this field has the focus.
+			HxTrigger: "input changed delay:300ms, focus[tableComboEmpty(this)], change[document.activeElement === this] from:#konto",
+			TabIndex:  "2",
+		}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2188,44 +1811,19 @@ func PovezivanjeRacunaUplata(tabs domain.TabData, tblPartneri, tblUplate, tblFak
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
-			ID:           "dosifre",
+		templ_7745c5c3_Err = components.TableCombo(domain.TableComboConfig{
+			ID:           "dosifre-combo",
 			Name:         "dosifre",
-			FieldType:    "text",
-			Disabled:     false,
-			ClassInput:   common.ClassInputTextEnabled + " w-24",
-			BlurEndpoint: "api/fkpl/trazikonto",
-			HxTarget:     "dosifrenaziv",
-			HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('dosifre').value, "vkonta": "1", "destfield": "dosifre"}`,
-			HxInclude:    "this",
-			Value:        "999999",
-			MinLength:    "2",
-			MaxLength:    "6",
-			TabIndex:     "3",
-			OnInput:      "clearFieldError",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.SearchButton(domain.SearchButtonConfig{
-			ID:          "btn-search-dosifre",
-			Name:        "search-dosifre",
-			HxUrl:       "/api/promet/searchbutton",
-			HxTarget:    "#search-dropdown",
-			HxSwap:      "innerHTML",
-			HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1", "destfield": "dosifre"}`,
-			ClassButton: common.ClassButton,
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
-			ID:         "dosifrenaziv",
-			Name:       "dosifrenaziv",
-			FieldType:  "text",
-			Disabled:   true,
-			ClassInput: common.ClassInputTextDisabled + " w-full",
-		}).Render(ctx, templ_7745c5c3_Buffer)
+			ValueID:      "dosifre",
+			DefaultValue: "999999",
+			Placeholder:  "Pretraži po šifri ili nazivu",
+			ClassInput:   common.ClassInputTextEnabled + " w-full",
+			SearchURL:    "/api/search/analitika",
+			HxInclude:    "#konto",
+			// The search also runs again when the konto is selected while this field has the focus.
+			HxTrigger: "input changed delay:300ms, focus[tableComboEmpty(this)], change[document.activeElement === this] from:#konto",
+			TabIndex:  "3",
+		}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

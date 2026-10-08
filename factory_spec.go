@@ -685,6 +685,10 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 		*repository.NewBaseRepository[domain.RobnoDokumentaDto](db, "rnal"),
 	)
 
+	// SHARED SEARCHES (GET /api/search/:entity, the searches of components.TableCombo)
+	searchService := commonsvc.NewSearchService(*repository.NewBaseRepository[domain.SearchRowDto](db, "fkpl"))
+	handler.NewSearchHandler(searchService, translator).AddRoutes(r)
+
 	// MAGACIN KONTO
 	magacinKontoRepo := repository.NewBaseRepository[domain.Magkonto](db, "magkonto")
 	magacinKontoValidator := validation.NewRuleBasedValidator[domain.Magkonto]([]validation.ValidationRule{})
@@ -834,7 +838,11 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 		*repository.NewBaseRepository[domain.RobnoStampaPopisRowDto](db, "rpro"),
 		*repository.NewBaseRepository[domain.RobnoStampaDokumentDto](db, "rdok"),
 		*repository.NewBaseRepository[domain.RobnoStampaKalkulacijaRowDto](db, "rpro"),
-		*repository.NewBaseRepository[domain.RobnoStampaFakturaIzvozRowDto](db, "rpro"))
+		*repository.NewBaseRepository[domain.RobnoStampaFakturaIzvozRowDto](db, "rpro"),
+		*repository.NewBaseRepository[domain.RobnoStampaKnjiznoPismoRowDto](db, "rpro"),
+		*repository.NewBaseRepository[domain.RobnoStampaKnjiznoPismoFakturaDto](db, "rpro"),
+		*repository.NewBaseRepository[domain.RobnoStampaInterniPrenosRowDto](db, "rpro"),
+		*repository.NewBaseRepository[domain.RobnoStampaPoreskaStopaDto](db, "rpor"))
 	robnoDokumentaHandler := robnohand.NewRobnoDokumentaHandler(robnoDokumentaService, cfg, lm, ls, translator)
 	robnoDokumentaHandler.AddRoutes(r)
 

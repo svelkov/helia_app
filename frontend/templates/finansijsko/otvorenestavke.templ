@@ -45,37 +45,15 @@ templ OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDa
 							LabelText:  translator.Label("Konto"),
 							ClassLabel: common.ClassLabel + " w-24",
 						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:           "konto",
-							Name:         "konto",
-							FieldType:    "text",
-							Disabled:     false,
-							ClassInput:   common.ClassInputTextEnabled + " w-24",
-							BlurEndpoint: "api/fkpl/trazikonto",
-							HxTarget:     "kontonaziv",
-							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "2", "destfield": "konto"}`,
-							HxInclude:    "this",
-							MinLength:    "2",
-							MaxLength:    "6",
-							TabIndex:     "1",
-							OnInput:      "clearFieldError",
-						})
-						@components.SearchButton(domain.SearchButtonConfig{
-							ID:          "btn-search-konto",
-							Name:        "search-konto",
-							HxUrl:       "/api/promet/searchbutton",
-							HxTarget:    "#search-dropdown",
-							HxSwap:      "innerHTML",
-							HxVals:      `{"vkonta": "2", "destfield": "konto"}`,
-							ClassButton: common.ClassButton,
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "kontonaziv",
-							Name:       "kontonaziv",
-							FieldType:  "text",
-							Disabled:   true,
-							ClassInput: common.ClassInputTextDisabled + " w-full",
-						})
+						@components.TableCombo(domain.TableComboConfig{
+							ID:          "konto-combo",
+							Name:        "konto",
+							ValueID:     "konto",
+							Placeholder: "Pretraži po kontu ili nazivu",
+							ClassInput:  common.ClassInputTextEnabled + " w-full",
+							SearchURL:   "/api/search/konta",
+							TabIndex:    "1",
+						}, translator)
 					</div>
 					<!-- Od Šifre -->
 					<div class="flex items-center gap-1 mb-1">
@@ -84,38 +62,19 @@ templ OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDa
 							LabelText:  translator.Label("Od šifre"),
 							ClassLabel: common.ClassLabel + " w-24",
 						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:           "odsifre",
+						@components.TableCombo(domain.TableComboConfig{
+							ID:           "odsifre-combo",
 							Name:         "odsifre",
-							FieldType:    "text",
-							Disabled:     false,
-							ClassInput:   common.ClassInputTextEnabled + " w-24",
-							BlurEndpoint: "api/fkpl/trazikonto",
-							HxTarget:     "odsifrenaziv",
-							HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('odsifre').value, "vkonta": "1", "destfield": "odsifre"}`,
-							HxInclude:    "this",
-							Value:        "00",
-							MinLength:    "2",
-							MaxLength:    "6",
-							TabIndex:     "2",
-							OnInput:      "clearFieldError",
-						})
-						@components.SearchButton(domain.SearchButtonConfig{
-							ID:          "odsifre",
-							Name:        "search-odsifre",
-							HxUrl:       "/api/promet/searchbutton",
-							HxTarget:    "#search-dropdown",
-							HxSwap:      "innerHTML",
-							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1", "destfield": "odsifre"}`,
-							ClassButton: common.ClassButton,
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "odsifrenaziv",
-							Name:       "odsifrenaziv",
-							FieldType:  "text",
-							Disabled:   true,
-							ClassInput: common.ClassInputTextDisabled + " w-full",
-						})
+							ValueID:      "odsifre",
+							DefaultValue: "00",
+							Placeholder:  "Pretraži po šifri ili nazivu",
+							ClassInput:   common.ClassInputTextEnabled + " w-full",
+							SearchURL:    "/api/search/analitika",
+							HxInclude:    "#konto",
+							// The search also runs again when the konto is selected while this field has the focus.
+							HxTrigger: "input changed delay:300ms, focus[tableComboEmpty(this)], change[document.activeElement === this] from:#konto",
+							TabIndex:  "2",
+						}, translator)
 					</div>
 					<!-- Do Šifre -->
 					<div class="flex items-center gap-1 mb-1">
@@ -124,38 +83,19 @@ templ OtvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableDa
 							LabelText:  translator.Label("Do šifre"),
 							ClassLabel: common.ClassLabel + " w-24",
 						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:           "dosifre",
+						@components.TableCombo(domain.TableComboConfig{
+							ID:           "dosifre-combo",
 							Name:         "dosifre",
-							FieldType:    "text",
-							Disabled:     false,
-							ClassInput:   common.ClassInputTextEnabled + " w-24",
-							BlurEndpoint: "api/fkpl/trazikonto",
-							HxTarget:     "dosifrenaziv",
-							HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('dosifre').value, "vkonta": "1", "destfield": "dosifre"}`,
-							HxInclude:    "this",
-							Value:        "999999",
-							MinLength:    "2",
-							MaxLength:    "6",
-							TabIndex:     "2",
-							OnInput:      "clearFieldError",
-						})
-						@components.SearchButton(domain.SearchButtonConfig{
-							ID:          "dosifre",
-							Name:        "search-dosifre",
-							HxUrl:       "/api/promet/searchbutton",
-							HxTarget:    "#search-dropdown",
-							HxSwap:      "innerHTML",
-							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1", "destfield": "dosifre"}`,
-							ClassButton: common.ClassButton,
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "dosifrenaziv",
-							Name:       "dosifrenaziv",
-							FieldType:  "text",
-							Disabled:   true,
-							ClassInput: common.ClassInputTextDisabled + " w-full",
-						})
+							ValueID:      "dosifre",
+							DefaultValue: "999999",
+							Placeholder:  "Pretraži po šifri ili nazivu",
+							ClassInput:   common.ClassInputTextEnabled + " w-full",
+							SearchURL:    "/api/search/analitika",
+							HxInclude:    "#konto",
+							// The search also runs again when the konto is selected while this field has the focus.
+							HxTrigger: "input changed delay:300ms, focus[tableComboEmpty(this)], change[document.activeElement === this] from:#konto",
+							TabIndex:  "2",
+						}, translator)
 					</div>
 				</div>
 				<!-- Right Column - Date and Days -->
@@ -289,37 +229,15 @@ templ ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableD
 							LabelText:  translator.Label("Konto"),
 							ClassLabel: common.ClassLabel + " w-24",
 						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:           "konto",
-							Name:         "konto",
-							FieldType:    "text",
-							Disabled:     false,
-							ClassInput:   common.ClassInputTextEnabled + " w-24",
-							BlurEndpoint: "api/fkpl/trazikonto",
-							HxTarget:     "kontonaziv",
-							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "2", "destfield": "konto"}`,
-							HxInclude:    "this",
-							MinLength:    "2",
-							MaxLength:    "6",
-							TabIndex:     "1",
-							OnInput:      "clearFieldError",
-						})
-						@components.SearchButton(domain.SearchButtonConfig{
-							ID:          "btn-search-konto",
-							Name:        "search-konto",
-							HxUrl:       "/api/promet/searchbutton",
-							HxTarget:    "#search-dropdown",
-							HxSwap:      "innerHTML",
-							HxVals:      `{"vkonta": "2", "destfield": "konto"}`,
-							ClassButton: common.ClassButton,
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "kontonaziv",
-							Name:       "kontonaziv",
-							FieldType:  "text",
-							Disabled:   true,
-							ClassInput: common.ClassInputTextDisabled + " w-full",
-						})
+						@components.TableCombo(domain.TableComboConfig{
+							ID:          "konto-combo",
+							Name:        "konto",
+							ValueID:     "konto",
+							Placeholder: "Pretraži po kontu ili nazivu",
+							ClassInput:  common.ClassInputTextEnabled + " w-full",
+							SearchURL:   "/api/search/konta",
+							TabIndex:    "1",
+						}, translator)
 					</div>
 					<!-- Od Šifre -->
 					<div class="flex items-center gap-1 mb-1">
@@ -328,38 +246,19 @@ templ ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableD
 							LabelText:  translator.Label("Od šifre"),
 							ClassLabel: common.ClassLabel + " w-24",
 						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:           "odsifre",
+						@components.TableCombo(domain.TableComboConfig{
+							ID:           "odsifre-combo",
 							Name:         "odsifre",
-							FieldType:    "text",
-							Disabled:     false,
-							ClassInput:   common.ClassInputTextEnabled + " w-24",
-							BlurEndpoint: "api/fkpl/trazikonto",
-							HxTarget:     "odsifrenaziv",
-							HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('odsifre').value, "vkonta": "1", "destfield": "odsifre"}`,
-							HxInclude:    "this",
-							Value:        "00",
-							MinLength:    "2",
-							MaxLength:    "6",
-							TabIndex:     "2",
-							OnInput:      "clearFieldError",
-						})
-						@components.SearchButton(domain.SearchButtonConfig{
-							ID:          "odsifre",
-							Name:        "search-odsifre",
-							HxUrl:       "/api/promet/searchbutton",
-							HxTarget:    "#search-dropdown",
-							HxSwap:      "innerHTML",
-							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1", "destfield": "odsifre"}`,
-							ClassButton: common.ClassButton,
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "odsifrenaziv",
-							Name:       "odsifrenaziv",
-							FieldType:  "text",
-							Disabled:   true,
-							ClassInput: common.ClassInputTextDisabled + " w-full",
-						})
+							ValueID:      "odsifre",
+							DefaultValue: "00",
+							Placeholder:  "Pretraži po šifri ili nazivu",
+							ClassInput:   common.ClassInputTextEnabled + " w-full",
+							SearchURL:    "/api/search/analitika",
+							HxInclude:    "#konto",
+							// The search also runs again when the konto is selected while this field has the focus.
+							HxTrigger: "input changed delay:300ms, focus[tableComboEmpty(this)], change[document.activeElement === this] from:#konto",
+							TabIndex:  "2",
+						}, translator)
 					</div>
 					<!-- Do Šifre -->
 					<div class="flex items-center gap-1 mb-1">
@@ -368,38 +267,19 @@ templ ZatvoreneStavke(tabs domain.TabData, tblPartneri, tblDetalji domain.TableD
 							LabelText:  translator.Label("Do šifre"),
 							ClassLabel: common.ClassLabel + " w-24",
 						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:           "dosifre",
+						@components.TableCombo(domain.TableComboConfig{
+							ID:           "dosifre-combo",
 							Name:         "dosifre",
-							FieldType:    "text",
-							Disabled:     false,
-							ClassInput:   common.ClassInputTextEnabled + " w-24",
-							BlurEndpoint: "api/fkpl/trazikonto",
-							HxTarget:     "dosifrenaziv",
-							HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('dosifre').value, "vkonta": "1", "destfield": "dosifre"}`,
-							HxInclude:    "this",
-							Value:        "999999",
-							MinLength:    "2",
-							MaxLength:    "6",
-							TabIndex:     "2",
-							OnInput:      "clearFieldError",
-						})
-						@components.SearchButton(domain.SearchButtonConfig{
-							ID:          "dosifre",
-							Name:        "search-dosifre",
-							HxUrl:       "/api/promet/searchbutton",
-							HxTarget:    "#search-dropdown",
-							HxSwap:      "innerHTML",
-							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1", "destfield": "dosifre"}`,
-							ClassButton: common.ClassButton,
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "dosifrenaziv",
-							Name:       "dosifrenaziv",
-							FieldType:  "text",
-							Disabled:   true,
-							ClassInput: common.ClassInputTextDisabled + " w-full",
-						})
+							ValueID:      "dosifre",
+							DefaultValue: "999999",
+							Placeholder:  "Pretraži po šifri ili nazivu",
+							ClassInput:   common.ClassInputTextEnabled + " w-full",
+							SearchURL:    "/api/search/analitika",
+							HxInclude:    "#konto",
+							// The search also runs again when the konto is selected while this field has the focus.
+							HxTrigger: "input changed delay:300ms, focus[tableComboEmpty(this)], change[document.activeElement === this] from:#konto",
+							TabIndex:  "2",
+						}, translator)
 					</div>
 				</div>
 				<!-- Right Column - Date Range -->
@@ -534,37 +414,15 @@ templ IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObra
 							LabelText:  translator.Label("Konto"),
 							ClassLabel: common.ClassLabel + " w-24",
 						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:           "konto",
-							Name:         "konto",
-							FieldType:    "text",
-							Disabled:     false,
-							ClassInput:   common.ClassInputTextEnabled + " w-24",
-							BlurEndpoint: "api/fkpl/trazikonto",
-							HxTarget:     "kontonaziv",
-							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "2", "destfield": "konto"}`,
-							HxInclude:    "this",
-							MinLength:    "2",
-							MaxLength:    "6",
-							TabIndex:     "1",
-							OnInput:      "clearFieldError",
-						})
-						@components.SearchButton(domain.SearchButtonConfig{
-							ID:          "btn-search-konto",
-							Name:        "search-konto",
-							HxUrl:       "/api/promet/searchbutton",
-							HxTarget:    "#search-dropdown",
-							HxSwap:      "innerHTML",
-							HxVals:      `{"vkonta": "2", "destfield": "konto"}`,
-							ClassButton: common.ClassButton,
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "kontonaziv",
-							Name:       "kontonaziv",
-							FieldType:  "text",
-							Disabled:   true,
-							ClassInput: common.ClassInputTextDisabled + " w-full",
-						})
+						@components.TableCombo(domain.TableComboConfig{
+							ID:          "konto-combo",
+							Name:        "konto",
+							ValueID:     "konto",
+							Placeholder: "Pretraži po kontu ili nazivu",
+							ClassInput:  common.ClassInputTextEnabled + " w-full",
+							SearchURL:   "/api/search/konta",
+							TabIndex:    "1",
+						}, translator)
 					</div>
 					<!-- Od Šifre -->
 					<div class="flex items-center gap-1 mb-1">
@@ -573,38 +431,19 @@ templ IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObra
 							LabelText:  translator.Label("Od šifre"),
 							ClassLabel: common.ClassLabel + " w-24",
 						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:           "odsifre",
+						@components.TableCombo(domain.TableComboConfig{
+							ID:           "odsifre-combo",
 							Name:         "odsifre",
-							FieldType:    "text",
-							Disabled:     false,
-							ClassInput:   common.ClassInputTextEnabled + " w-24",
-							BlurEndpoint: "api/fkpl/trazikonto",
-							HxTarget:     "odsifrenaziv",
-							HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('odsifre').value, "vkonta": "1", "destfield": "odsifre"}`,
-							HxInclude:    "this",
-							Value:        "00",
-							MinLength:    "2",
-							MaxLength:    "6",
-							TabIndex:     "2",
-							OnInput:      "clearFieldError",
-						})
-						@components.SearchButton(domain.SearchButtonConfig{
-							ID:          "odsifre",
-							Name:        "search-odsifre",
-							HxUrl:       "/api/promet/searchbutton",
-							HxTarget:    "#search-dropdown",
-							HxSwap:      "innerHTML",
-							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1", "destfield": "odsifre"}`,
-							ClassButton: common.ClassButton,
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "odsifrenaziv",
-							Name:       "odsifrenaziv",
-							FieldType:  "text",
-							Disabled:   true,
-							ClassInput: common.ClassInputTextDisabled + " w-full",
-						})
+							ValueID:      "odsifre",
+							DefaultValue: "00",
+							Placeholder:  "Pretraži po šifri ili nazivu",
+							ClassInput:   common.ClassInputTextEnabled + " w-full",
+							SearchURL:    "/api/search/analitika",
+							HxInclude:    "#konto",
+							// The search also runs again when the konto is selected while this field has the focus.
+							HxTrigger: "input changed delay:300ms, focus[tableComboEmpty(this)], change[document.activeElement === this] from:#konto",
+							TabIndex:  "2",
+						}, translator)
 					</div>
 					<!-- Do Šifre -->
 					<div class="flex items-center gap-1 mb-1">
@@ -613,38 +452,19 @@ templ IOS(tabs domain.TabData, tblPartneri, tblDetalji domain.TableData, btnObra
 							LabelText:  translator.Label("Do šifre"),
 							ClassLabel: common.ClassLabel + " w-24",
 						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:           "dosifre",
+						@components.TableCombo(domain.TableComboConfig{
+							ID:           "dosifre-combo",
 							Name:         "dosifre",
-							FieldType:    "text",
-							Disabled:     false,
-							ClassInput:   common.ClassInputTextEnabled + " w-24",
-							BlurEndpoint: "api/fkpl/trazikonto",
-							HxTarget:     "dosifrenaziv",
-							HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('dosifre').value, "vkonta": "1", "destfield": "dosifre"}`,
-							HxInclude:    "this",
-							Value:        "999999",
-							MinLength:    "2",
-							MaxLength:    "6",
-							TabIndex:     "2",
-							OnInput:      "clearFieldError",
-						})
-						@components.SearchButton(domain.SearchButtonConfig{
-							ID:          "dosifre",
-							Name:        "search-dosifre",
-							HxUrl:       "/api/promet/searchbutton",
-							HxTarget:    "#search-dropdown",
-							HxSwap:      "innerHTML",
-							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1", "destfield": "dosifre"}`,
-							ClassButton: common.ClassButton,
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "dosifrenaziv",
-							Name:       "dosifrenaziv",
-							FieldType:  "text",
-							Disabled:   true,
-							ClassInput: common.ClassInputTextDisabled + " w-full",
-						})
+							ValueID:      "dosifre",
+							DefaultValue: "999999",
+							Placeholder:  "Pretraži po šifri ili nazivu",
+							ClassInput:   common.ClassInputTextEnabled + " w-full",
+							SearchURL:    "/api/search/analitika",
+							HxInclude:    "#konto",
+							// The search also runs again when the konto is selected while this field has the focus.
+							HxTrigger: "input changed delay:300ms, focus[tableComboEmpty(this)], change[document.activeElement === this] from:#konto",
+							TabIndex:  "2",
+						}, translator)
 					</div>
 				</div>
 				<!-- Right Column - Date and Days -->
@@ -779,37 +599,15 @@ templ DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Ta
 							LabelText:  translator.Label("Konto"),
 							ClassLabel: common.ClassLabel + " w-24",
 						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:           "konto",
-							Name:         "konto",
-							FieldType:    "text",
-							Disabled:     false,
-							ClassInput:   common.ClassInputTextEnabled + " w-24",
-							BlurEndpoint: "api/fkpl/trazikonto",
-							HxTarget:     "kontonaziv",
-							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "2", "destfield": "konto"}`,
-							HxInclude:    "this",
-							MinLength:    "2",
-							MaxLength:    "6",
-							TabIndex:     "1",
-							OnInput:      "clearFieldError",
-						})
-						@components.SearchButton(domain.SearchButtonConfig{
-							ID:          "btn-search-konto",
-							Name:        "search-konto",
-							HxUrl:       "/api/promet/searchbutton",
-							HxTarget:    "#search-dropdown",
-							HxSwap:      "innerHTML",
-							HxVals:      `{"vkonta": "2", "destfield": "konto"}`,
-							ClassButton: common.ClassButton,
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "kontonaziv",
-							Name:       "kontonaziv",
-							FieldType:  "text",
-							Disabled:   true,
-							ClassInput: common.ClassInputTextDisabled + " w-full",
-						})
+						@components.TableCombo(domain.TableComboConfig{
+							ID:          "konto-combo",
+							Name:        "konto",
+							ValueID:     "konto",
+							Placeholder: "Pretraži po kontu ili nazivu",
+							ClassInput:  common.ClassInputTextEnabled + " w-full",
+							SearchURL:   "/api/search/konta",
+							TabIndex:    "1",
+						}, translator)
 					</div>
 					<!-- Od Šifre -->
 					<div class="flex items-center gap-1 mb-1">
@@ -818,38 +616,19 @@ templ DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Ta
 							LabelText:  translator.Label("Od šifre"),
 							ClassLabel: common.ClassLabel + " w-24",
 						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:           "odsifre",
+						@components.TableCombo(domain.TableComboConfig{
+							ID:           "odsifre-combo",
 							Name:         "odsifre",
-							FieldType:    "text",
-							Disabled:     false,
-							ClassInput:   common.ClassInputTextEnabled + " w-24",
-							BlurEndpoint: "api/fkpl/trazikonto",
-							HxTarget:     "odsifrenaziv",
-							HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('odsifre').value, "vkonta": "1", "destfield": "odsifre"}`,
-							HxInclude:    "this",
-							Value:        "00",
-							MinLength:    "2",
-							MaxLength:    "6",
-							TabIndex:     "2",
-							OnInput:      "clearFieldError",
-						})
-						@components.SearchButton(domain.SearchButtonConfig{
-							ID:          "odsifre",
-							Name:        "search-odsifre",
-							HxUrl:       "/api/promet/searchbutton",
-							HxTarget:    "#search-dropdown",
-							HxSwap:      "innerHTML",
-							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1", "destfield": "odsifre"}`,
-							ClassButton: common.ClassButton,
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "odsifrenaziv",
-							Name:       "odsifrenaziv",
-							FieldType:  "text",
-							Disabled:   true,
-							ClassInput: common.ClassInputTextDisabled + " w-full",
-						})
+							ValueID:      "odsifre",
+							DefaultValue: "00",
+							Placeholder:  "Pretraži po šifri ili nazivu",
+							ClassInput:   common.ClassInputTextEnabled + " w-full",
+							SearchURL:    "/api/search/analitika",
+							HxInclude:    "#konto",
+							// The search also runs again when the konto is selected while this field has the focus.
+							HxTrigger: "input changed delay:300ms, focus[tableComboEmpty(this)], change[document.activeElement === this] from:#konto",
+							TabIndex:  "2",
+						}, translator)
 					</div>
 					<!-- Do Šifre -->
 					<div class="flex items-center gap-1 mb-1">
@@ -858,38 +637,19 @@ templ DospelaPotrazivanja(tabs domain.TabData, tblPartneri, tblDetalji domain.Ta
 							LabelText:  translator.Label("Do šifre"),
 							ClassLabel: common.ClassLabel + " w-24",
 						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:           "dosifre",
+						@components.TableCombo(domain.TableComboConfig{
+							ID:           "dosifre-combo",
 							Name:         "dosifre",
-							FieldType:    "text",
-							Disabled:     false,
-							ClassInput:   common.ClassInputTextEnabled + " w-24",
-							BlurEndpoint: "api/fkpl/trazikonto",
-							HxTarget:     "dosifrenaziv",
-							HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('dosifre').value, "vkonta": "1", "destfield": "dosifre"}`,
-							HxInclude:    "this",
-							Value:        "999999",
-							MinLength:    "2",
-							MaxLength:    "6",
-							TabIndex:     "2",
-							OnInput:      "clearFieldError",
-						})
-						@components.SearchButton(domain.SearchButtonConfig{
-							ID:          "dosifre",
-							Name:        "search-dosifre",
-							HxUrl:       "/api/promet/searchbutton",
-							HxTarget:    "#search-dropdown",
-							HxSwap:      "innerHTML",
-							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1", "destfield": "dosifre"}`,
-							ClassButton: common.ClassButton,
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "dosifrenaziv",
-							Name:       "dosifrenaziv",
-							FieldType:  "text",
-							Disabled:   true,
-							ClassInput: common.ClassInputTextDisabled + " w-full",
-						})
+							ValueID:      "dosifre",
+							DefaultValue: "999999",
+							Placeholder:  "Pretraži po šifri ili nazivu",
+							ClassInput:   common.ClassInputTextEnabled + " w-full",
+							SearchURL:    "/api/search/analitika",
+							HxInclude:    "#konto",
+							// The search also runs again when the konto is selected while this field has the focus.
+							HxTrigger: "input changed delay:300ms, focus[tableComboEmpty(this)], change[document.activeElement === this] from:#konto",
+							TabIndex:  "2",
+						}, translator)
 					</div>
 				</div>
 				<!-- Right Column - Radio Buttons -->
@@ -1045,19 +805,16 @@ templ PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnO
 								LabelText:  translator.Label("Od konta"),
 								ClassLabel: common.ClassLabel + " w-24",
 							})
-							@components.TextInputField(domain.InputFieldConfig{
-								ID:         "odkonta",
-								Name:       "odkonta",
-								FieldType:  "text",
-								Value:      "0000",
-								Disabled:   false,
-								ClassInput: common.ClassInputTextEnabled + " w-24",
-								TabIndex:   "3",
-								OnInput:    "clearFieldError",
-								OnFocus:    "clearFieldError",
-								MinLength:  "4",
-								MaxLength:  "6",
-							})
+							@components.TableCombo(domain.TableComboConfig{
+								ID:           "odkonta-combo",
+								Name:         "odkonta",
+								ValueID:      "odkonta",
+								DefaultValue: "0000",
+								Placeholder:  "Pretraži po kontu ili nazivu",
+								ClassInput:   common.ClassInputTextEnabled + " w-full",
+								SearchURL:    "/api/search/konta",
+								TabIndex:     "3",
+							}, translator)
 						</div>
 						<div class="flex items-center gap-1 flex-1">
 							@components.LabelField(domain.LabelFieldConfig{
@@ -1065,19 +822,16 @@ templ PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnO
 								LabelText:  translator.Label("Od šifre"),
 								ClassLabel: common.ClassLabel + " w-24",
 							})
-							@components.TextInputField(domain.InputFieldConfig{
-								ID:         "odsifre",
-								Name:       "odsifre",
-								FieldType:  "text",
-								Value:      "00",
-								Disabled:   false,
-								ClassInput: common.ClassInputTextEnabled + " w-24",
-								TabIndex:   "5",
-								OnInput:    "clearFieldError",
-								OnFocus:    "clearFieldError",
-								MinLength:  "2",
-								MaxLength:  "6",
-							})
+							@components.TableCombo(domain.TableComboConfig{
+								ID:           "odsifre-combo",
+								Name:         "odsifre",
+								ValueID:      "odsifre",
+								DefaultValue: "00",
+								Placeholder:  "Pretraži po šifri ili nazivu",
+								ClassInput:   common.ClassInputTextEnabled + " w-full",
+								SearchURL:    "/api/search/analitika",
+								TabIndex:     "5",
+							}, translator)
 						</div>
 					</div>
 					<!-- Row 3: Do Konta and Do Šifre -->
@@ -1088,19 +842,16 @@ templ PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnO
 								LabelText:  translator.Label("Do konta"),
 								ClassLabel: common.ClassLabel + " w-24",
 							})
-							@components.TextInputField(domain.InputFieldConfig{
-								ID:         "dokonta",
-								Name:       "dokonta",
-								FieldType:  "text",
-								Value:      "9999",
-								Disabled:   false,
-								ClassInput: common.ClassInputTextEnabled + " w-24",
-								TabIndex:   "4",
-								OnInput:    "clearFieldError",
-								OnFocus:    "clearFieldError",
-								MinLength:  "4",
-								MaxLength:  "6",
-							})
+							@components.TableCombo(domain.TableComboConfig{
+								ID:           "dokonta-combo",
+								Name:         "dokonta",
+								ValueID:      "dokonta",
+								DefaultValue: "9999",
+								Placeholder:  "Pretraži po kontu ili nazivu",
+								ClassInput:   common.ClassInputTextEnabled + " w-full",
+								SearchURL:    "/api/search/konta",
+								TabIndex:     "4",
+							}, translator)
 						</div>
 						<div class="flex items-center gap-1 flex-1">
 							@components.LabelField(domain.LabelFieldConfig{
@@ -1108,19 +859,16 @@ templ PregledPotrazivanjaObaveze(tabs domain.TabData, tbl domain.TableData, btnO
 								LabelText:  translator.Label("Do šifre"),
 								ClassLabel: common.ClassLabel + " w-24",
 							})
-							@components.TextInputField(domain.InputFieldConfig{
-								ID:         "dosifre",
-								Name:       "dosifre",
-								FieldType:  "text",
-								Value:      "999999",
-								Disabled:   false,
-								ClassInput: common.ClassInputTextEnabled + " w-24",
-								TabIndex:   "6",
-								OnInput:    "clearFieldError",
-								OnFocus:    "clearFieldError",
-								MinLength:  "2",
-								MaxLength:  "6",
-							})
+							@components.TableCombo(domain.TableComboConfig{
+								ID:           "dosifre-combo",
+								Name:         "dosifre",
+								ValueID:      "dosifre",
+								DefaultValue: "999999",
+								Placeholder:  "Pretraži po šifri ili nazivu",
+								ClassInput:   common.ClassInputTextEnabled + " w-full",
+								SearchURL:    "/api/search/analitika",
+								TabIndex:     "6",
+							}, translator)
 						</div>
 					</div>
 				</div>
@@ -1530,37 +1278,15 @@ templ PovezivanjeRacunaUplata(tabs domain.TabData, tblPartneri, tblUplate, tblFa
 							LabelText:  translator.Label("Konto"),
 							ClassLabel: common.ClassLabel + " w-32",
 						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:           "konto",
-							Name:         "konto",
-							FieldType:    "text",
-							Disabled:     false,
-							ClassInput:   common.ClassInputTextEnabled + " w-24",
-							BlurEndpoint: "api/fkpl/trazikonto",
-							HxTarget:     "kontonaziv",
-							HxVals:       `js:{"konto": document.getElementById('konto').value, "vkonta": "2", "destfield": "konto"}`,
-							HxInclude:    "this",
-							MinLength:    "2",
-							MaxLength:    "6",
-							TabIndex:     "1",
-							OnInput:      "clearFieldError",
-						})
-						@components.SearchButton(domain.SearchButtonConfig{
-							ID:          "btn-search-konto",
-							Name:        "search-konto",
-							HxUrl:       "/api/promet/searchbutton",
-							HxTarget:    "#search-dropdown",
-							HxSwap:      "innerHTML",
-							HxVals:      `{"vkonta": "2", "destfield": "konto"}`,
-							ClassButton: common.ClassButton,
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "kontonaziv",
-							Name:       "kontonaziv",
-							FieldType:  "text",
-							Disabled:   true,
-							ClassInput: common.ClassInputTextDisabled + " w-full",
-						})
+						@components.TableCombo(domain.TableComboConfig{
+							ID:          "konto-combo",
+							Name:        "konto",
+							ValueID:     "konto",
+							Placeholder: "Pretraži po kontu ili nazivu",
+							ClassInput:  common.ClassInputTextEnabled + " w-full",
+							SearchURL:   "/api/search/konta",
+							TabIndex:    "1",
+						}, translator)
 					</div>
 					<!-- Počev od šifre -->
 					<div class="flex items-center gap-1">
@@ -1569,38 +1295,19 @@ templ PovezivanjeRacunaUplata(tabs domain.TabData, tblPartneri, tblUplate, tblFa
 							LabelText:  translator.Label("Počev od šifre"),
 							ClassLabel: common.ClassLabel + " w-32",
 						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:           "odsifre",
+						@components.TableCombo(domain.TableComboConfig{
+							ID:           "odsifre-combo",
 							Name:         "odsifre",
-							FieldType:    "text",
-							Disabled:     false,
-							ClassInput:   common.ClassInputTextEnabled + " w-24",
-							BlurEndpoint: "api/fkpl/trazikonto",
-							HxTarget:     "odsifrenaziv",
-							HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('odsifre').value, "vkonta": "1", "destfield": "odsifre"}`,
-							HxInclude:    "this",
-							Value:        "00",
-							MinLength:    "2",
-							MaxLength:    "6",
-							TabIndex:     "2",
-							OnInput:      "clearFieldError",
-						})
-						@components.SearchButton(domain.SearchButtonConfig{
-							ID:          "btn-search-odsifre",
-							Name:        "search-odsifre",
-							HxUrl:       "/api/promet/searchbutton",
-							HxTarget:    "#search-dropdown",
-							HxSwap:      "innerHTML",
-							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1", "destfield": "odsifre"}`,
-							ClassButton: common.ClassButton,
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "odsifrenaziv",
-							Name:       "odsifrenaziv",
-							FieldType:  "text",
-							Disabled:   true,
-							ClassInput: common.ClassInputTextDisabled + " w-full",
-						})
+							ValueID:      "odsifre",
+							DefaultValue: "00",
+							Placeholder:  "Pretraži po šifri ili nazivu",
+							ClassInput:   common.ClassInputTextEnabled + " w-full",
+							SearchURL:    "/api/search/analitika",
+							HxInclude:    "#konto",
+							// The search also runs again when the konto is selected while this field has the focus.
+							HxTrigger: "input changed delay:300ms, focus[tableComboEmpty(this)], change[document.activeElement === this] from:#konto",
+							TabIndex:  "2",
+						}, translator)
 					</div>
 					<!-- Zaključno sa šifrom -->
 					<div class="flex items-center gap-1">
@@ -1609,38 +1316,19 @@ templ PovezivanjeRacunaUplata(tabs domain.TabData, tblPartneri, tblUplate, tblFa
 							LabelText:  translator.Label("Zaključno sa šifrom"),
 							ClassLabel: common.ClassLabel + " w-32",
 						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:           "dosifre",
+						@components.TableCombo(domain.TableComboConfig{
+							ID:           "dosifre-combo",
 							Name:         "dosifre",
-							FieldType:    "text",
-							Disabled:     false,
-							ClassInput:   common.ClassInputTextEnabled + " w-24",
-							BlurEndpoint: "api/fkpl/trazikonto",
-							HxTarget:     "dosifrenaziv",
-							HxVals:       `js:{"konto": document.getElementById('konto').value, "sifra": document.getElementById('dosifre').value, "vkonta": "1", "destfield": "dosifre"}`,
-							HxInclude:    "this",
-							Value:        "999999",
-							MinLength:    "2",
-							MaxLength:    "6",
-							TabIndex:     "3",
-							OnInput:      "clearFieldError",
-						})
-						@components.SearchButton(domain.SearchButtonConfig{
-							ID:          "btn-search-dosifre",
-							Name:        "search-dosifre",
-							HxUrl:       "/api/promet/searchbutton",
-							HxTarget:    "#search-dropdown",
-							HxSwap:      "innerHTML",
-							HxVals:      `js:{"konto": document.getElementById('konto').value, "vkonta": "1", "destfield": "dosifre"}`,
-							ClassButton: common.ClassButton,
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "dosifrenaziv",
-							Name:       "dosifrenaziv",
-							FieldType:  "text",
-							Disabled:   true,
-							ClassInput: common.ClassInputTextDisabled + " w-full",
-						})
+							ValueID:      "dosifre",
+							DefaultValue: "999999",
+							Placeholder:  "Pretraži po šifri ili nazivu",
+							ClassInput:   common.ClassInputTextEnabled + " w-full",
+							SearchURL:    "/api/search/analitika",
+							HxInclude:    "#konto",
+							// The search also runs again when the konto is selected while this field has the focus.
+							HxTrigger: "input changed delay:300ms, focus[tableComboEmpty(this)], change[document.activeElement === this] from:#konto",
+							TabIndex:  "3",
+						}, translator)
 					</div>
 				</div>
 				<!-- Right: Buttons + Iznosi fieldset -->

@@ -27,5 +27,13 @@
     "Konta": {
         "konto_kupca": "2042",
         "konto_dobavljaca": "4350"
+    },
+    "grupe_dokumenata": {
+        "dok_rob": ["ROB", "SVI", "PST"],
+        "dok_pro": ["PRO", "SVI", "PST"],
+        "tipdok_osn": ["OSN", "SVI", "PST"],
+        "dok_uls": [198, 199],
+        "dok_ulgp": [202, 203],
+        "tipmag_rob": ["V", "M", "D"]
     }
 }

@@ -28,6 +28,9 @@ type Config struct {
 	SessionSecret   string        `json:"session_secret"`
 	NDuzSint        int           `json:"nDuzSint"`
 	Konta           KontaConfig   `json:"konta"`
+	// GrupeDokumenata are the groups of the vrste naloga and of the vrste dokumenata of the modules
+	// (the legacy global variables gsDOKROB, gsDOKPRO, gsTIPDOKOSN, gsDOKULS and gsDOKULGP).
+	GrupeDokumenata GrupeDokumenataConfig `json:"grupe_dokumenata"`
 
 	// JWT Token Configuration (Option B - JWT-only authentication)
 	AccessTokenTTL       int  `json:"access_token_ttl"`       // In minutes, default 15
@@ -39,6 +42,64 @@ type KontaConfig struct {
 	KontoKupca      string `json:"konto_kupca"`
 	KontoDobavljaca string `json:"konto_dobavljaca"`
 }
+
+// GrupeDokumenataConfig are the groups (tipdok.grpdok, dokvrsta.grpdok) of the documents of the modules
+// and the vrste dokumenata of the ulazi, like the legacy global variables. An empty value of the
+// configuration falls back to the legacy value (see the getters).
+type GrupeDokumenataConfig struct {
+	// DokRob are the groups of the robno knjigovodstvo (gsDOKROB "ROB;SVI;PST").
+	DokRob []string `json:"dok_rob"`
+	// DokPro are the groups of the proizvodnja (gsDOKPRO "PRO;SVI;PST").
+	DokPro []string `json:"dok_pro"`
+	// TipdokOsn are the groups of the vrste naloga of the osnovna sredstva (gsTIPDOKOSN "OSN;SVI;PST").
+	TipdokOsn []string `json:"tipdok_osn"`
+	// DokUls are the vrste dokumenata of the ulazi (gsDOKULS "198;199").
+	DokUls []int `json:"dok_uls"`
+	// DokUlgp are the vrste dokumenata of the ulazi (gsDOKULGP "202;203").
+	DokUlgp []int `json:"dok_ulgp"`
+	// TipmagRob are the tipovi of the magacini (magacini.tipmag) of the robno knjigovodstvo, the
+	// magacini of the unos dokumenata (the legacy ROB_QRY_MAGUSER with "V;M;D").
+	TipmagRob []string `json:"tipmag_rob"`
+}
+
+// GetDokRob returns the groups of the robno knjigovodstvo (default ROB, SVI, PST).
+func (g GrupeDokumenataConfig) GetDokRob() []string {
+	return orDefault(g.DokRob, []string{"ROB", "SVI", "PST"})
+}
+
+// GetDokPro returns the groups of the proizvodnja (default PRO, SVI, PST).
+func (g GrupeDokumenataConfig) GetDokPro() []string {
+	return orDefault(g.DokPro, []string{"PRO", "SVI", "PST"})
+}
+
+// GetTipdokOsn returns the groups of the vrste naloga of the osnovna sredstva (default OSN, SVI, PST).
+func (g GrupeDokumenataConfig) GetTipdokOsn() []string {
+	return orDefault(g.TipdokOsn, []string{"OSN", "SVI", "PST"})
+}
+
+// GetDokUls returns the vrste dokumenata of the ulazi (default 198, 199).
+func (g GrupeDokumenataConfig) GetDokUls() []int {
+	return orDefault(g.DokUls, []int{198, 199})
+}
+
+// GetDokUlgp returns the vrste dokumenata of the ulazi (default 202, 203).
+func (g GrupeDokumenataConfig) GetDokUlgp() []int {
+	return orDefault(g.DokUlgp, []int{202, 203})
+}
+
+// GetTipmagRob returns the tipovi of the magacini of the robno knjigovodstvo (default V, M, D).
+func (g GrupeDokumenataConfig) GetTipmagRob() []string {
+	return orDefault(g.TipmagRob, []string{"V", "M", "D"})
+}
+
+// orDefault returns the configured values, the default when none are configured.
+func orDefault[T any](values, def []T) []T {
+	if len(values) == 0 {
+		return def
+	}
+	return values
+}
+
 type DB_Connection struct {
 	DBHost       string `json:"db_host"`
 	DBPort       int    `json:"db_port"`

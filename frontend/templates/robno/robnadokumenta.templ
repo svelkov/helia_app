@@ -114,6 +114,8 @@ templ RobnoDokumentaUnosForm(hxValsTipdok, hxValsNalog string, tbl domain.TableD
 						hx-on::after-request="handleNextNalogResponse('robno-dokumenta-unos-form')"
 						style="display:none;"
 					></div>
+					<!-- Magacin: TODO: the legacy "+" and "..." buttons next to the combo -->
+					@RobnoDokumentaUnosMagCombo(magValues, payload.MagaciniID, false, translator)
 					<!-- Vrsta naloga za knjiženje: changing it reloads the grid and, through the trigger
 					     above, the broj naloga of the new vrsta naloga -->
 					<div class="flex items-center gap-1 mb-1">
@@ -134,26 +136,11 @@ templ RobnoDokumentaUnosForm(hxValsTipdok, hxValsNalog string, tbl domain.TableD
 							HxSwap:           "innerHTML",
 							HxVals:           hxValsTipdok,
 							HxOnAfterRequest: "handleTipdokAfterRequest",
-							TabIndex:         "1",
+							TabIndex:         "2",
 						}, translator)
 					</div>
 					<!-- Vrsta dokumenta: TODO: the legacy "+" and "..." buttons next to the combo -->
-					<div class="flex items-center gap-1 mb-1">
-						@components.LabelField(domain.LabelFieldConfig{
-							ID:         "vrd",
-							LabelText:  translator.Label("Vrsta dokumenta"),
-							ClassLabel: common.ClassLabel + " w-44",
-						})
-						@components.ComboBoxField(domain.ComboFieldConfig{
-							ID:            "vrd",
-							Name:          "vrd",
-							HasLabel:      false,
-							ClassSelect:   common.ClassInputTextEnabled + " flex-1",
-							OptionValues:  vrstaDokumentaValues,
-							SelectedValue: payload.Vrd,
-							TabIndex:      "2",
-						}, translator)
-					</div>
+					@RobnoDokumentaUnosVrdCombo(vrstaDokumentaValues, payload.Vrd, false, translator)
 					<!-- Datum obrade, Broj naloga i Datum naloga in one row. The label of Datum obrade
 					     keeps the width of the labels of the other rows, so the fields are aligned. -->
 					<div class="flex items-center gap-1 mb-1">
@@ -168,7 +155,7 @@ templ RobnoDokumentaUnosForm(hxValsTipdok, hxValsNalog string, tbl domain.TableD
 							FieldType:  "date",
 							Value:      payload.Datob,
 							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
-							TabIndex:   "3",
+							TabIndex:   "4",
 							OnInput:    "clearFieldError",
 							OnFocus:    "clearFieldError"})
 						<!-- Broj naloga: when the user leaves it, the data of an existing nalog is loaded -->
@@ -191,7 +178,7 @@ templ RobnoDokumentaUnosForm(hxValsTipdok, hxValsNalog string, tbl domain.TableD
 							HxOnAfterRequest: "handleUpdateNalogDataResponse",
 							MinLength:        "1",
 							MaxLength:        "10",
-							TabIndex:         "4",
+							TabIndex:         "5",
 							OnInput:          "clearFieldError",
 							OnFocus:          "clearFieldError"})
 						@components.LabelField(domain.LabelFieldConfig{
@@ -205,7 +192,7 @@ templ RobnoDokumentaUnosForm(hxValsTipdok, hxValsNalog string, tbl domain.TableD
 							FieldType:  "date",
 							Value:      payload.Danal,
 							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
-							TabIndex:   "5",
+							TabIndex:   "6",
 							OnInput:    "clearFieldError",
 							OnFocus:    "clearFieldError"})
 					</div>
@@ -224,24 +211,7 @@ templ RobnoDokumentaUnosForm(hxValsTipdok, hxValsNalog string, tbl domain.TableD
 							ClassInput: common.ClassInputTextEnabled + " flex-1",
 							MinLength:  "0",
 							MaxLength:  "120",
-							TabIndex:   "6"})
-					</div>
-					<!-- Magacin: TODO: the legacy "+" and "..." buttons next to the combo -->
-					<div class="flex items-center gap-1 mb-1">
-						@components.LabelField(domain.LabelFieldConfig{
-							ID:         "magaciniid",
-							LabelText:  translator.Label("Magacin"),
-							ClassLabel: common.ClassLabel + " w-44",
-						})
-						@components.ComboBoxField(domain.ComboFieldConfig{
-							ID:            "magaciniid",
-							Name:          "magaciniid",
-							HasLabel:      false,
-							ClassSelect:   common.ClassInputTextEnabled + " flex-1",
-							OptionValues:  magValues,
-							SelectedValue: magaciniSelection(payload.MagaciniID),
-							TabIndex:      "7",
-						}, translator)
+							TabIndex:   "7"})
 					</div>
 					<!-- Buttons -->
 					<div class="flex justify-end gap-1 pt-1">
@@ -291,6 +261,61 @@ templ RobnoDokumentaUnosTotalRow(id, label, value string, translator *i18n.Servi
 			Disabled:   true,
 			ClassInput: common.ClassInputTextDisabled + " text-right font-bold",
 		})
+	</div>
+}
+
+// RobnoDokumentaUnosVrdCombo renders the combo of the vrsta dokumenta of the unos dokumenata. With oob
+// it replaces the combo of the page out of band (the response to the change of the vrsta naloga, the
+// legacy PostaviComboBoxes).
+templ RobnoDokumentaUnosVrdCombo(values []domain.ComboItem, selected string, oob bool, translator *i18n.Service) {
+	<div
+		id="robno-dokumenta-unos-vrd"
+		class="flex items-center gap-1 mb-1"
+		if oob {
+			hx-swap-oob="true"
+		}
+	>
+		@components.LabelField(domain.LabelFieldConfig{
+			ID:         "vrd",
+			LabelText:  translator.Label("Vrsta dokumenta"),
+			ClassLabel: common.ClassLabel + " w-44",
+		})
+		@components.ComboBoxField(domain.ComboFieldConfig{
+			ID:            "vrd",
+			Name:          "vrd",
+			HasLabel:      false,
+			ClassSelect:   common.ClassInputTextEnabled + " flex-1",
+			OptionValues:  values,
+			SelectedValue: selected,
+			TabIndex:      "3",
+		}, translator)
+	</div>
+}
+
+// RobnoDokumentaUnosMagCombo renders the combo of the magacin of the unos dokumenata (with oob out of
+// band, see RobnoDokumentaUnosVrdCombo).
+templ RobnoDokumentaUnosMagCombo(values []domain.ComboItem, magaciniID int, oob bool, translator *i18n.Service) {
+	<div
+		id="robno-dokumenta-unos-mag"
+		class="flex items-center gap-1 mb-1"
+		if oob {
+			hx-swap-oob="true"
+		}
+	>
+		@components.LabelField(domain.LabelFieldConfig{
+			ID:         "magaciniid",
+			LabelText:  translator.Label("Magacin"),
+			ClassLabel: common.ClassLabel + " w-44",
+		})
+		@components.ComboBoxField(domain.ComboFieldConfig{
+			ID:            "magaciniid",
+			Name:          "magaciniid",
+			HasLabel:      false,
+			ClassSelect:   common.ClassInputTextEnabled + " flex-1",
+			OptionValues:  values,
+			SelectedValue: magaciniSelection(magaciniID),
+			TabIndex:      "1",
+		}, translator)
 	</div>
 }
 
@@ -848,6 +873,23 @@ templ RobnoDokumentaKontiranjeKnjizenjeBody(tbl domain.TableData, tipdokValues, 
 				<!-- The first column (the combos) takes the free space, the ranges and the dates are right aligned -->
 				<div class="grid grid-cols-[1fr_auto_auto] gap-x-2">
 					<div class="flex flex-col">
+						<!-- Magacin -->
+						<div class="flex items-center gap-1 mb-1">
+							@components.LabelField(domain.LabelFieldConfig{
+								ID:         "magaciniid",
+								LabelText:  translator.Label("Magacin"),
+								ClassLabel: common.ClassLabel + " w-44",
+							})
+							@components.ComboBoxField(domain.ComboFieldConfig{
+								ID:            "magaciniid",
+								Name:          "magaciniid",
+								HasLabel:      false,
+								ClassSelect:   common.ClassInputTextEnabled + " flex-1",
+								OptionValues:  magValues,
+								SelectedValue: magaciniSelection(params.MagaciniID),
+								TabIndex:      "1",
+							}, translator)
+						</div>
 						<!-- Vrsta naloga za knjiženje -->
 						<div class="flex items-center gap-1 mb-1">
 							@components.LabelField(domain.LabelFieldConfig{
@@ -862,7 +904,7 @@ templ RobnoDokumentaKontiranjeKnjizenjeBody(tbl domain.TableData, tipdokValues, 
 								ClassSelect:   common.ClassInputTextEnabled + " flex-1",
 								OptionValues:  tipdokValues,
 								SelectedValue: params.Tipdok,
-								TabIndex:      "1",
+								TabIndex:      "2",
 							}, translator)
 						</div>
 						<!-- Vrsta dokumenta -->
@@ -879,23 +921,6 @@ templ RobnoDokumentaKontiranjeKnjizenjeBody(tbl domain.TableData, tipdokValues, 
 								ClassSelect:   common.ClassInputTextEnabled + " flex-1",
 								OptionValues:  vrstaDokumentaValues,
 								SelectedValue: params.Vrd,
-								TabIndex:      "2",
-							}, translator)
-						</div>
-						<!-- Magacin -->
-						<div class="flex items-center gap-1 mb-1">
-							@components.LabelField(domain.LabelFieldConfig{
-								ID:         "magaciniid",
-								LabelText:  translator.Label("Magacin"),
-								ClassLabel: common.ClassLabel + " w-44",
-							})
-							@components.ComboBoxField(domain.ComboFieldConfig{
-								ID:            "magaciniid",
-								Name:          "magaciniid",
-								HasLabel:      false,
-								ClassSelect:   common.ClassInputTextEnabled + " flex-1",
-								OptionValues:  magValues,
-								SelectedValue: magaciniSelection(params.MagaciniID),
 								TabIndex:      "3",
 							}, translator)
 						</div>

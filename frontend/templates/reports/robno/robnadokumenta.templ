@@ -355,10 +355,11 @@ templ RobnoStampaFakturaZaglavlje(repParams domain.ReportParameters, fak domain.
 			</div>
 			<div class="mt-2 grid grid-cols-[1fr_auto] gap-x-1 leading-snug text-[12px] print:text-[10pt]">
 				@robnoStampaFakturaDesnoPolje(translator.Label("Datum prometa dobara"), fak.DatumPrometa)
-				@robnoStampaFakturaDesnoPolje(translator.Label("Valuta"), fak.Valuta)
+				@robnoStampaFakturaDesnoPolje(robnoStampaFakturaNaslov(fak.ValutaNaslov, translator.Label("Valuta")), fak.Valuta)
 				@robnoStampaFakturaDesnoPolje(translator.Label("Datum dokumenta"), fak.DatumDokumenta)
 				@robnoStampaFakturaDesnoPolje(translator.Label("Nalog"), fak.Nalog)
 				@robnoStampaFakturaDesnoPolje(translator.Label("Mesto izdavanja računa"), fak.MestoIzdavanja)
+				@robnoStampaFakturaDesnoPolje(translator.Label("Skladište"), fak.MagacinOpis)
 			</div>
 			if fak.FirmaBanka != "" {
 				<div class="mt-1 text-right">{ fak.FirmaBanka }</div>
@@ -414,7 +415,7 @@ templ RobnoStampaFakturaRekapitulacija(fak domain.RobnoStampaFakturaView, transl
 					@robnoStampaFakturaZbir("", translator.Label("Osnovica"), p.Osnovica, false)
 					@robnoStampaFakturaZbir(translator.Label("PDV po stopi"), p.Stopa, p.Pdv, false)
 				}
-				@robnoStampaFakturaZbir("", translator.Label("Za naplatu"), fak.ZaNaplatu, true)
+				@robnoStampaFakturaZbir("", robnoStampaFakturaNaslov(fak.ZaNaplatuNaslov, translator.Label("Za naplatu")), fak.ZaNaplatu, true)
 				for _, dan := range fak.ZaNaplatuPoDanima {
 					@robnoStampaFakturaZbir(translator.Label("Za naplatu do"), dan.Datum, dan.Iznos, false)
 				}
@@ -594,6 +595,15 @@ templ robnoStampaFakturaZbir(prefix, label, value string, bold bool) {
 	}
 }
 
+// robnoStampaFakturaNaslov returns the caption of the print when it has its own (naslov), else the
+// caption of the faktura.
+func robnoStampaFakturaNaslov(naslov, faktura string) string {
+	if naslov != "" {
+		return naslov
+	}
+	return faktura
+}
+
 // robnoStampaFakturaColumnWidths are the widths of the columns of the stavke of the invoice: Red. br.,
 // šifra, naziv, JM, količina, cena, % rabata, vrednost rabata, % PDV-a, iznos PDV-a and iznos.
 var robnoStampaFakturaColumnWidths = []string{"4%", "7%", "24%", "4%", "8%", "9%", "6%", "9%", "8%", "9%", "12%"}
@@ -723,26 +733,7 @@ templ RobnoStampaFakturaIzvozContent(repParams domain.ReportParameters, fak doma
 			</div>
 			<div>THE GOODS REMAIN PROPERTY OF SELLER UNTIL THE PAYMENT IS EFFECTED</div>
 		</div>
-		<!-- The bank instructions. -->
-		if fak.BankaNaziv != "" || fak.BankaRacun != "" {
-			<div class="mt-3 grid grid-cols-[auto_auto_1fr] gap-x-3 gap-y-1 no-break">
-				<span class="font-bold">By bank transfer to:</span>
-				<span>57A: beneficiary's bank:</span>
-				<div>
-					<div>{ fak.BankaNaziv }</div>
-					<div>{ fak.BankaSwift }</div>
-				</div>
-				<span></span>
-				<span>59: beneficiary:</span>
-				<div>
-					<div>{ fak.BankaRacun }</div>
-					<div>{ fak.BankaKorisnik }</div>
-				</div>
-				<span></span>
-				<span>54A: correspondent bank:</span>
-				<div>{ fak.BankaKorespondent }</div>
-			</div>
-		}
+		@robnoStampaFakturaIzvozBanka(fak)
 	</div>
 }
 
@@ -824,6 +815,31 @@ templ RobnoStampaFakturaIzvozZaglavlje(repParams domain.ReportParameters, fak do
 	</div>
 }
 
+// robnoStampaFakturaIzvozBanka renders the bank instructions of an izvozna faktura or profaktura
+// (when the document has a bank): 57A the beneficiary's bank with its SWIFT, 59 the account and the
+// beneficiary, 54A the correspondent bank.
+templ robnoStampaFakturaIzvozBanka(fak domain.RobnoStampaFakturaIzvozView) {
+	if fak.BankaNaziv != "" || fak.BankaRacun != "" {
+		<div class="mt-3 grid grid-cols-[auto_auto_1fr] gap-x-3 gap-y-1 no-break">
+			<span class="font-bold">By bank transfer to:</span>
+			<span>57A: beneficiary's bank:</span>
+			<div>
+				<div>{ fak.BankaNaziv }</div>
+				<div>{ fak.BankaSwift }</div>
+			</div>
+			<span></span>
+			<span>59: beneficiary:</span>
+			<div>
+				<div>{ fak.BankaRacun }</div>
+				<div>{ fak.BankaKorisnik }</div>
+			</div>
+			<span></span>
+			<span>54A: correspondent bank:</span>
+			<div>{ fak.BankaKorespondent }</div>
+		</div>
+	}
+}
+
 // robnoStampaFakturaIzvozZbir renders one row of the totals of the izvozna faktura: the label aligned to
 // the right and the amount over a line (bold for the totals).
 templ robnoStampaFakturaIzvozZbir(label, value string, bold bool) {
@@ -837,6 +853,833 @@ templ robnoStampaFakturaIzvozZbir(label, value string, bold bool) {
 // faktura: line no., product id, description, country of origin, PCN, measure unit, quantity, unit
 // price, % discount and total value.
 var robnoStampaFakturaIzvozColumnWidths = []string{"5%", "6%", "28%", "9%", "9%", "7%", "8%", "9%", "8%", "11%"}
+
+//
+// Štampa izvozne profakture: the report RobnoStampaProfakturaIzvoz (the profakture in a foreign
+// valuta, the legacy ROB_RPT_PROFAKTURAIZV). The legacy report is printed in English, so its captions
+// are not translated.
+//
+
+// RobnoStampaProfakturaIzvoz renders the printed izvozne profakture of the selection, every profaktura
+// from a new page.
+templ RobnoStampaProfakturaIzvoz(repParams domain.ReportParameters, fakture []domain.RobnoStampaFakturaIzvozView, translator *i18n.Service) {
+	@rep.Report(repParams, domain.TableData{}, translator, nil, nil, RobnoStampaDokumenti(robnoStampaProfakturaIzvozDokumenti(repParams, fakture), translator))
+}
+
+// robnoStampaProfakturaIzvozDokumenti returns the printed izvozne profakture for RobnoStampaDokumenti.
+func robnoStampaProfakturaIzvozDokumenti(repParams domain.ReportParameters, fakture []domain.RobnoStampaFakturaIzvozView) []templ.Component {
+	dokumenti := make([]templ.Component, 0, len(fakture))
+	for _, fak := range fakture {
+		dokumenti = append(dokumenti, RobnoStampaProfakturaIzvozContent(repParams, fak))
+	}
+	return dokumenti
+}
+
+// RobnoStampaProfakturaIzvozContent renders one izvozna profaktura like the legacy report: the header
+// and the header of the stavke are the <thead> of the table of the stavke (repeated on every printed
+// page); after the stavke the totals (TOTAL, DISCOUNT, SUBTOTAL with the guarantee discount and the
+// discount for payment in advance, TOTAL FOR PAYMENT), the notes, the delivery terms, the net weight,
+// the ownership clause, the PDV exemption, the izjava of the exporter and the sales department, the
+// currency with the total in RSD and the bank instructions.
+templ RobnoStampaProfakturaIzvozContent(repParams domain.ReportParameters, fak domain.RobnoStampaFakturaIzvozView) {
+	<div class="text-[11px] print:text-[9pt] text-black">
+		<table class="w-full border-collapse" style="table-layout: fixed;">
+			<colgroup>
+				for _, width := range robnoStampaProfakturaIzvozColumnWidths {
+					<col style={ "width: " + width }/>
+				}
+			</colgroup>
+			<thead>
+				<tr>
+					<td colspan={ fmt.Sprintf("%d", len(robnoStampaProfakturaIzvozColumnWidths)) } class="pb-2">
+						@RobnoStampaProfakturaIzvozZaglavlje(repParams, fak)
+					</td>
+				</tr>
+				<tr class="bg-gray-200 print:bg-gray-200">
+					<th class={ robnoStampaThClass }>Line No.</th>
+					<th class={ robnoStampaThClass }>Product ID</th>
+					<th class={ robnoStampaThClass }>DESCRIPTION</th>
+					<th class={ robnoStampaThClass }>Measure Unit</th>
+					<th class={ robnoStampaThClass }>Quantity</th>
+					<th class={ robnoStampaThClass }>Unit Price</th>
+					<th class={ robnoStampaThClass }>% Discount</th>
+					<th class={ robnoStampaThClass }>Discount</th>
+					<th class={ robnoStampaThClass }>TOTAL</th>
+				</tr>
+			</thead>
+			<tbody>
+				for _, s := range fak.Stavke {
+					<tr class="print:page-break-inside-avoid">
+						<td class={ robnoStampaTdClass + " text-right" }>{ s.Rbr }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ s.Sifra }</td>
+						<td class={ robnoStampaTdClass + " break-words" }>{ s.Naziv }</td>
+						<td class={ robnoStampaTdClass + " text-center" }>{ s.Jm }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ s.Kolicina }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ s.Cena }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ s.Rabat }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ s.Popust }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ s.Iznos }</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+		<!-- The totals. -->
+		<div class="mt-1 flex justify-end no-break">
+			<table class="w-[45%] border-collapse">
+				<colgroup>
+					<col style="width: 60%"/>
+					<col style="width: 40%"/>
+				</colgroup>
+				<tbody>
+					@robnoStampaFakturaIzvozZbir("TOTAL", fak.Svega, true)
+					@robnoStampaFakturaIzvozZbir("DISCOUNT", fak.Rabat, true)
+					if fak.ImaPopuste {
+						@robnoStampaFakturaIzvozZbir("SUBTOTAL", fak.Neto, true)
+						@robnoStampaFakturaIzvozZbir("Guarantee discount "+fak.UgRabatProc, fak.UgRabat, false)
+						@robnoStampaFakturaIzvozZbir("Discount for payment in advance "+fak.KasaProc, fak.Kasa, false)
+					}
+					@robnoStampaFakturaIzvozZbir("TOTAL FOR PAYMENT", fak.ZaNaplatu, true)
+				</tbody>
+			</table>
+		</div>
+		<!-- The notes, the delivery terms, the net weight, the clauses, the izjava and the sales
+		     department. -->
+		<div class="mt-2 grid grid-cols-[1fr_auto] gap-8 no-break">
+			<div class="space-y-1">
+				<div class="flex gap-2">
+					<span>Notes:</span>
+					<span class="whitespace-pre-line">{ fak.Napomena }</span>
+				</div>
+				<div class="pt-4">Delivery terms: <span class="ml-2">{ fak.Paritet }</span></div>
+				<div>Total net weight: <span class="ml-2 font-bold">{ fak.NetoTezina }</span> <span class="ml-2 font-bold">Kg</span></div>
+				<div class="pt-2">The goods remain property of seller until the payment is effected.</div>
+				<div>Oslobodjeno placanja PDV-a po clanu 24. stav 1 tacka 2, Zakona o PDV-u</div>
+				if fak.Izjava != "" {
+					<div class="pt-2">{ fak.Izjava }</div>
+				}
+			</div>
+			<div class="w-56 pt-10 text-center">
+				<div class="text-[13px] print:text-[11pt]">Sales department</div>
+				<div class="mt-8 border-b border-black"></div>
+			</div>
+		</div>
+		<!-- The currency, the total in RSD and the bank instructions. -->
+		<div class="mt-3 flex justify-between no-break">
+			<span>Currency: <span class="ml-2 font-bold">{ fak.Valuta }</span></span>
+			<span>Total RSD: <span class="ml-2 font-bold">{ fak.UkupnoRsd }</span></span>
+		</div>
+		@robnoStampaFakturaIzvozBanka(fak)
+	</div>
+}
+
+// RobnoStampaProfakturaIzvozZaglavlje renders the page header of the izvozna profaktura like the legacy
+// report: on the left the logo, the kupac (KUPAC, in a box marked by its corners) with the delivery
+// place, the despatch note, the payment condition and the sales person; on the right the izdavalac with
+// its tekući račun, the title ("PROFORMA No.: 900-5"), the proforma date, the due date and the place of
+// issue.
+templ RobnoStampaProfakturaIzvozZaglavlje(repParams domain.ReportParameters, fak domain.RobnoStampaFakturaIzvozView) {
+	<div class="grid grid-cols-2 gap-6 items-start text-left font-normal">
+		<!-- Left: logo, the kupac and the data of the sale. -->
+		<div>
+			if repParams.CompanyLogo != "" {
+				<img src={ repParams.CompanyLogo } alt="" class="h-16 mb-2 mx-auto object-contain"/>
+			}
+			<div class="relative px-3 py-2 leading-snug">
+				<span class="absolute top-0 left-0 w-4 h-4 border-t border-l border-black"></span>
+				<span class="absolute top-0 right-0 w-4 h-4 border-t border-r border-black"></span>
+				<span class="absolute bottom-0 left-0 w-4 h-4 border-b border-l border-black"></span>
+				<span class="absolute bottom-0 right-0 w-4 h-4 border-b border-r border-black"></span>
+				<div>
+					<span class="font-bold italic">KUPAC:</span>
+					<span class="ml-1">{ fak.KupacSifra }</span>
+				</div>
+				<div class="font-bold text-[14px] print:text-[12pt] mt-0.5 text-center">{ fak.KupacNaziv }</div>
+				<div class="text-center">{ fak.KupacAdresa }</div>
+				<div class="text-center">{ fak.KupacMesto }</div>
+				<div class="text-center">{ fak.KupacPib }</div>
+				<div class="flex justify-between gap-6">
+					<span>{ fak.KupacMbr }</span>
+					<span>{ fak.KupacTelefon }</span>
+				</div>
+			</div>
+			if fak.Destinacija != "" {
+				<div class="mt-1 text-center leading-snug">
+					<div>{ fak.Destinacija }</div>
+					<div>{ fak.Destinacija2 }</div>
+				</div>
+			}
+			<div class="mt-3 grid grid-cols-[auto_1fr] gap-x-3 leading-snug">
+				<span>Despatch note:</span>
+				<span class="font-bold">{ fak.Otpremnica }</span>
+				<span>Payment condition:</span>
+				<span class="font-bold">{ fak.UslovPlacanja }</span>
+				<span>Sales person :</span>
+				<span class="font-bold">{ fak.Komercijalista }</span>
+			</div>
+		</div>
+		<!-- Right: the izdavalac, the title and the dates. -->
+		<div>
+			<div class="text-center leading-snug">
+				<div class="font-bold text-[13px] print:text-[11pt]">{ repParams.CompanyName }</div>
+				<div>{ fak.FirmaAdresa }</div>
+			</div>
+			<div class="mt-1 text-[10px] print:text-[8pt] grid grid-cols-2 gap-x-4 leading-snug">
+				<div>{ fak.FirmaObveznik }</div>
+				<div>{ fak.FirmaApr }</div>
+				<div>{ fak.FirmaPib }</div>
+				<div>{ fak.FirmaMbr }</div>
+				<div>{ fak.FirmaSifdel }</div>
+				<div>{ fak.FirmaTel }</div>
+				if fak.FirmaZiro != "" {
+					<div class="col-span-2 mt-1 text-center font-bold">{ fak.FirmaZiro }</div>
+				}
+			</div>
+			<div class="mt-5 text-center">
+				<span class="font-bold text-[16px] print:text-[13pt]">PROFORMA No.:</span>
+				<span class="font-bold text-[16px] print:text-[13pt] ml-1">{ fak.BrojDokumenta }</span>
+			</div>
+			<div class="mt-2 grid grid-cols-[1fr_auto] gap-x-2 leading-snug text-[12px] print:text-[10pt]">
+				<span class="text-right">Proforma Date:</span>
+				<span class="font-bold">{ fak.DatumFakture }</span>
+				<span class="text-right">Due date:</span>
+				<span class="font-bold">{ fak.DatumDospeca }</span>
+				<span class="text-right">Place of issue:</span>
+				<span class="font-bold">{ fak.MestoIzdavanja }</span>
+			</div>
+		</div>
+	</div>
+}
+
+// robnoStampaProfakturaIzvozColumnWidths are the widths of the columns of the stavke of the izvozna
+// profaktura: line no., product id, description, measure unit, quantity, unit price, % discount,
+// discount and total.
+var robnoStampaProfakturaIzvozColumnWidths = []string{"5%", "7%", "35%", "7%", "9%", "9%", "8%", "9%", "11%"}
+
+//
+// Štampa profakture: the report RobnoStampaProfaktura (the group PRO of the vrste dokumenta in the
+// domestic valuta, the legacy ROB_RPT_STAMPA_PROFAKTURA)
+//
+
+// RobnoStampaProfaktura renders the printed profakture (ponude) of the selection, every profaktura from
+// a new page.
+templ RobnoStampaProfaktura(repParams domain.ReportParameters, fakture []domain.RobnoStampaFakturaView, translator *i18n.Service) {
+	@rep.Report(repParams, domain.TableData{}, translator, nil, nil, RobnoStampaDokumenti(robnoStampaProfakturaDokumenti(repParams, fakture, translator), translator))
+}
+
+// robnoStampaProfakturaDokumenti returns the printed profakture for RobnoStampaDokumenti.
+func robnoStampaProfakturaDokumenti(repParams domain.ReportParameters, fakture []domain.RobnoStampaFakturaView, translator *i18n.Service) []templ.Component {
+	dokumenti := make([]templ.Component, 0, len(fakture))
+	for _, fak := range fakture {
+		dokumenti = append(dokumenti, RobnoStampaProfakturaContent(repParams, fak, translator))
+	}
+	return dokumenti
+}
+
+// RobnoStampaProfakturaContent renders one profaktura like the legacy report: the header and the header
+// of the stavke are the <thead> of the table of the stavke (repeated on every printed page); after the
+// stavke the avans, the osnovica and the PDV per stopa, SVEGA, RABAT and ZA NAPLATU, the napomena with
+// the signature of who issued the document, the za naplatu po danima, the avansno uplaćen PDV, the
+// ambalaža and the poreska napomena.
+templ RobnoStampaProfakturaContent(repParams domain.ReportParameters, fak domain.RobnoStampaFakturaView, translator *i18n.Service) {
+	<div class="text-[11px] print:text-[9pt] text-black">
+		<table class="w-full border-collapse" style="table-layout: fixed;">
+			<colgroup>
+				for _, width := range robnoStampaFakturaColumnWidths {
+					<col style={ "width: " + width }/>
+				}
+			</colgroup>
+			<thead>
+				<tr>
+					<td colspan={ fmt.Sprintf("%d", len(robnoStampaFakturaColumnWidths)) } class="pb-2">
+						@RobnoStampaProfakturaZaglavlje(repParams, fak, translator)
+					</td>
+				</tr>
+				<tr class="bg-gray-200 print:bg-gray-200">
+					<th class={ robnoStampaThClass }>{ translator.Label("Red. Br.") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Šifra artikla") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Naziv artikla") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("J.M.") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Količina") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("VP Cena") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("% Rabata") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Vrednost rabata") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("% PDV") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("PDV") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Iznos") }</th>
+				</tr>
+			</thead>
+			<tbody>
+				for _, s := range fak.Stavke {
+					<tr class="print:page-break-inside-avoid">
+						<td class={ robnoStampaTdClass + " text-center" }>{ s.Rbr }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ s.Sifra }</td>
+						<td class={ robnoStampaTdClass + " break-words" }>{ s.Naziv }</td>
+						<td class={ robnoStampaTdClass }>{ s.Jm }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ s.Kolicina }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ s.Cena }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ s.ProcRabata }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ s.Rabat }</td>
+						<td class={ robnoStampaTdClass + " text-center" }>{ s.ProcPdv }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ s.Pdv }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ s.Iznos }</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+		<!-- AVANS, the osnovica and the PDV per stopa, SVEGA, RABAT and ZA NAPLATU. -->
+		<div class="mt-1 flex justify-end no-break">
+			<table class="w-[45%] border-collapse">
+				<colgroup>
+					<col style="width: 30%"/>
+					<col style="width: 35%"/>
+					<col style="width: 35%"/>
+				</colgroup>
+				<tbody>
+					@robnoStampaFakturaZbir("", translator.Label("Avans"), fak.UkupnoAvans, false)
+					for _, p := range fak.PdvPoStopama {
+						@robnoStampaFakturaZbir("", translator.Label("Osnovica"), p.Osnovica, false)
+						@robnoStampaFakturaZbir(translator.Label("PDV po stopi"), p.Stopa, p.Pdv, false)
+					}
+					@robnoStampaFakturaZbir("", translator.Label("Svega"), fak.Svega, false)
+					@robnoStampaFakturaZbir("", translator.Label("Rabat"), fak.Rabat, false)
+					@robnoStampaFakturaZbir("", translator.Label("Za naplatu"), fak.ZaNaplatu, false)
+					if fak.OstaloZaUplatu != "" {
+						@robnoStampaFakturaZbir("", translator.Label("Ostalo za uplatu"), fak.OstaloZaUplatu, true)
+					}
+				</tbody>
+			</table>
+		</div>
+		<!-- The napomena and who issued the document. -->
+		<div class="mt-3 grid grid-cols-[1fr_auto] gap-8 no-break">
+			<div class="min-h-[3rem] whitespace-pre-line">{ fak.Napomena }</div>
+			<div class="w-56 pt-10 text-center">
+				<div class="text-[13px] print:text-[11pt]">{ translator.Label("Dokument izdao") }</div>
+				<div class="mt-8 border-b border-black"></div>
+			</div>
+		</div>
+		<!-- ZA NAPLATU po danima and the avansno uplaćen PDV per stopa. -->
+		if len(fak.ZaNaplatuPoDanima) > 0 || len(fak.AvansniPdv) > 0 {
+			<div class="mt-2 flex justify-end no-break">
+				<table class="w-[70%] border-collapse">
+					<tbody>
+						for _, dan := range fak.ZaNaplatuPoDanima {
+							<tr class="font-bold border-b border-black">
+								<td class="px-1 py-0.5 text-right uppercase">{ translator.Label("Dospeva") } :</td>
+								<td class="px-1 py-0.5">{ dan.Datum }</td>
+								<td class="px-1 py-0.5 text-right uppercase">{ translator.Label("Za naplatu") } :</td>
+								<td class="px-1 py-0.5 text-right">{ dan.Iznos }</td>
+							</tr>
+						}
+						for _, p := range fak.AvansniPdv {
+							<tr class="font-bold border-b border-black">
+								<td class="px-1 py-0.5 text-right uppercase">{ translator.Label("Avansno uplaćen PDV po stopi") }: { p.Stopa }</td>
+								<td class="px-1 py-0.5">{ translator.Label("Osnovica") }: { p.Osnovica }</td>
+								<td class="px-1 py-0.5 text-right uppercase">{ translator.Label("PDV") } :</td>
+								<td class="px-1 py-0.5 text-right">{ p.Pdv }</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+			</div>
+		}
+		@RobnoStampaFakturaAmbalaza(fak, translator)
+		@RobnoStampaFakturaNapomene(fak, translator)
+	</div>
+}
+
+// RobnoStampaProfakturaZaglavlje renders the page header of the profaktura like the legacy report: on
+// the left the logo, the kupac (in a box marked by its corners), the uslovi and the rok plaćanja and the
+// komercijalista; on the right the firm with its tekući računi and their banks, the title
+// ("PROFAKTURA Br.: 900-5" or "PONUDA: 900-5") and the dates of the document.
+templ RobnoStampaProfakturaZaglavlje(repParams domain.ReportParameters, fak domain.RobnoStampaFakturaView, translator *i18n.Service) {
+	<div class="grid grid-cols-2 gap-6 items-start text-left font-normal">
+		<!-- Left: logo, the kupac and the data of the sale. -->
+		<div>
+			if repParams.CompanyLogo != "" {
+				<img src={ repParams.CompanyLogo } alt="" class="h-16 mb-2 mx-auto object-contain"/>
+			}
+			<div class="relative px-3 py-2 leading-snug">
+				<span class="absolute top-0 left-0 w-4 h-4 border-t border-l border-black"></span>
+				<span class="absolute top-0 right-0 w-4 h-4 border-t border-r border-black"></span>
+				<span class="absolute bottom-0 left-0 w-4 h-4 border-b border-l border-black"></span>
+				<span class="absolute bottom-0 right-0 w-4 h-4 border-b border-r border-black"></span>
+				<div>
+					<span class="font-bold italic uppercase">{ translator.Label("Kupac") }:</span>
+					<span class="ml-1">{ strings.TrimSpace(fak.KupacKonto + " " + fak.KupacSifra) }</span>
+				</div>
+				<div class="font-bold text-[14px] print:text-[12pt] mt-0.5">{ fak.KupacNaziv }</div>
+				<div class="mt-1">{ fak.KupacAdresa }</div>
+				<div class="flex justify-between gap-2">
+					<span>{ fak.KupacMesto }</span>
+					<span class="whitespace-nowrap mr-4">{ translator.Label("PAK") }<span class="ml-6">{ fak.KupacPak }</span></span>
+				</div>
+				<div>{ translator.Label("PIB") } : { fak.KupacPib }</div>
+				<div class="flex gap-6">
+					<span>{ translator.Label("Matični broj") } : { fak.KupacMbr }</span>
+					<span>{ translator.Label("Tel/fax") } : { fak.KupacTelefon }</span>
+				</div>
+				if fak.MestoIsporuke != "" {
+					<div class="mt-1">
+						<div>{ fak.MestoIsporuke }</div>
+						<div>{ fak.MestoIsporuke2 }</div>
+					</div>
+				}
+			</div>
+			<div class="mt-3 grid grid-cols-[auto_1fr] gap-x-3 leading-snug">
+				@robnoStampaFakturaPolje(translator.Label("Uslovi plaćanja"), fak.UsloviPlacanja)
+				@robnoStampaFakturaPolje(translator.Label("Rok plaćanja"), strings.TrimSpace(fak.RokPlacanja+" "+translator.Label("dana")))
+				@robnoStampaFakturaPolje(translator.Label("Komercijalista"), strings.TrimSpace(fak.Komercijalista+" "+fak.KomercijalistaOpis))
+			</div>
+		</div>
+		<!-- Right: the firm, the title and the dates of the document. -->
+		<div>
+			<div class="text-left leading-snug">
+				<div class="font-bold text-[13px] print:text-[11pt]">{ repParams.CompanyName }</div>
+				<div class="mt-1">{ fak.FirmaAdresa }</div>
+			</div>
+			<div class="text-[10px] print:text-[8pt] grid grid-cols-2 gap-x-4 leading-snug">
+				<div>{ fak.FirmaObveznik }</div>
+				<div>{ fak.FirmaApr }</div>
+				<div>{ fak.FirmaPib }</div>
+				<div>{ fak.FirmaMbr }</div>
+				<div>{ fak.FirmaSifdel }</div>
+				<div>{ fak.FirmaTel }</div>
+				if fak.FirmaZiro != "" {
+					<div class="col-span-2 mt-1 font-bold">{ fak.FirmaZiro }</div>
+				}
+				if fak.FirmaBankeNazivi != "" {
+					<div class="col-span-2">{ fak.FirmaBankeNazivi }</div>
+				}
+			</div>
+			<!-- "PROFAKTURA Br.: 900-5" -->
+			<div class="mt-5 text-center">
+				<span class="font-bold italic uppercase text-[16px] print:text-[13pt]">{ fak.Naslov }:</span>
+				<span class="font-bold text-[16px] print:text-[13pt] ml-1">{ fak.BrojDokumenta }</span>
+			</div>
+			<div class="mt-2 grid grid-cols-[1fr_auto] gap-x-1 leading-snug text-[12px] print:text-[10pt]">
+				@robnoStampaFakturaDesnoPolje(translator.Label("Datum prometa dobara"), fak.DatumPrometa)
+				@robnoStampaFakturaDesnoPolje(translator.Label("Valuta"), fak.Valuta)
+				@robnoStampaFakturaDesnoPolje(translator.Label("Datum dokumenta"), fak.DatumDokumenta)
+				@robnoStampaFakturaDesnoPolje(translator.Label("Nalog"), fak.Nalog)
+				@robnoStampaFakturaDesnoPolje(translator.Label("Mesto izdavanja dokumenta"), fak.MestoIzdavanja)
+			</div>
+		</div>
+	</div>
+}
+
+//
+// Štampa knjižnog odobrenja i zaduženja: the report RobnoStampaFakturaKnjizno (the groups KPK and KPF
+// of the vrste dokumenta, the legacy PR_RPT_KNJODOBRENJE)
+//
+
+// RobnoStampaFakturaKnjizno renders the printed knjižna odobrenja and zaduženja of the selection, every
+// document from a new page, with the header of the faktura (the title "Knjižno odobrenje" or "Knjižno
+// zaduženje"; the odobrenje with the datum of the smanjenje instead of the valuta).
+templ RobnoStampaFakturaKnjizno(repParams domain.ReportParameters, fakture []domain.RobnoStampaFakturaView, translator *i18n.Service) {
+	@rep.Report(repParams, domain.TableData{}, translator, nil, nil, RobnoStampaDokumenti(robnoStampaFakturaKnjiznoDokumenti(repParams, fakture, translator), translator))
+}
+
+// robnoStampaFakturaKnjiznoDokumenti returns the printed knjižna odobrenja and zaduženja for
+// RobnoStampaDokumenti.
+func robnoStampaFakturaKnjiznoDokumenti(repParams domain.ReportParameters, fakture []domain.RobnoStampaFakturaView, translator *i18n.Service) []templ.Component {
+	dokumenti := make([]templ.Component, 0, len(fakture))
+	for _, fak := range fakture {
+		dokumenti = append(dokumenti, RobnoStampaFakturaKnjiznoContent(repParams, fak, translator))
+	}
+	return dokumenti
+}
+
+// RobnoStampaFakturaKnjiznoContent renders one knjižno odobrenje or zaduženje like the legacy report:
+// the header of the faktura, the stavke with the barkod and the PDV of one unit, the avansi, the
+// totals (ZA POVRAĆAJ for the odobrenje), the rate, the poreska napomena and the end of the document
+// with the napomena on the izmena of the poreska osnovica (the odobrenje).
+templ RobnoStampaFakturaKnjiznoContent(repParams domain.ReportParameters, fak domain.RobnoStampaFakturaView, translator *i18n.Service) {
+	@robnoStampaFakturaPoJmContent(repParams, fak, true, translator)
+}
+
+// robnoStampaFakturaPoJmContent renders a faktura whose stavke show the PDV of one unit (the knjižno
+// odobrenje and the faktura-otpremnica): the header of the faktura, the stavke (with the barkod when
+// barkod is set), the avansi, the totals, the rate, the poreska napomena, the napomena on the izmena
+// of the poreska osnovica (when the view asks for it) and the end of the document.
+templ robnoStampaFakturaPoJmContent(repParams domain.ReportParameters, fak domain.RobnoStampaFakturaView, barkod bool, translator *i18n.Service) {
+	<div class="text-[11px] print:text-[9pt] text-black">
+		<table class="w-full border-collapse" style="table-layout: fixed;">
+			<colgroup>
+				for _, width := range robnoStampaFakturaPoJmColumnWidths(barkod) {
+					<col style={ "width: " + width }/>
+				}
+			</colgroup>
+			<thead>
+				<tr>
+					<td colspan={ fmt.Sprintf("%d", len(robnoStampaFakturaPoJmColumnWidths(barkod))) } class="pb-2">
+						@RobnoStampaFakturaZaglavlje(repParams, fak, translator)
+					</td>
+				</tr>
+				<tr class="bg-gray-200 print:bg-gray-200">
+					<th class={ robnoStampaThClass }>{ translator.Label("Red. Br.") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Šifra artikla") }</th>
+					if barkod {
+						<th class={ robnoStampaThClass }>{ translator.Label("Barkod") }</th>
+					}
+					<th class={ robnoStampaThClass }>{ translator.Label("Naziv artikla") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("J.M.") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Količina") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Prodajna cena") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("% Rabata") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Vrednost rabata") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("% PDV-a") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("PDV po JM") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Iznos") }</th>
+				</tr>
+			</thead>
+			<tbody>
+				for _, s := range fak.Stavke {
+					<tr class="print:page-break-inside-avoid">
+						<td class={ robnoStampaTdClass + " text-center" }>{ s.Rbr }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ s.Sifra }</td>
+						if barkod {
+							<td class={ robnoStampaTdClass }>{ s.Barkod }</td>
+						}
+						<td class={ robnoStampaTdClass + " break-words" }>{ s.Naziv }</td>
+						<td class={ robnoStampaTdClass + " text-center" }>{ s.Jm }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ s.Kolicina }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ s.Cena }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ s.ProcRabata }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ s.Rabat }</td>
+						<td class={ robnoStampaTdClass + " text-center" }>{ s.ProcPdv }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ s.PdvPoJm }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ s.Iznos }</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+		@RobnoStampaFakturaAvansi(fak, translator)
+		@RobnoStampaFakturaRekapitulacija(fak, translator)
+		@RobnoStampaFakturaRate(fak, translator)
+		@RobnoStampaFakturaNapomene(fak, translator)
+		if fak.NapomenaOsnovica {
+			<div class="mt-3 no-break">
+				<div>{ translator.Text("knjizno_odobrenje_osnovica") }</div>
+				<div>{ translator.Text("knjizno_odobrenje_saglasnost") }</div>
+			</div>
+		}
+		@RobnoStampaFakturaKrajDokumenta(fak, translator)
+	</div>
+}
+
+// robnoStampaFakturaPoJmColumnWidths returns the widths of the columns of the stavke of a faktura with
+// the PDV of one unit: Red. br., šifra, (barkod,) naziv, JM, količina, prodajna cena, % rabata,
+// vrednost rabata, % PDV-a, PDV po JM and iznos.
+func robnoStampaFakturaPoJmColumnWidths(barkod bool) []string {
+	if barkod {
+		return []string{"4%", "6%", "9%", "22%", "4%", "7%", "8%", "6%", "8%", "6%", "8%", "12%"}
+	}
+	return []string{"4%", "6%", "31%", "4%", "7%", "8%", "6%", "8%", "6%", "8%", "12%"}
+}
+
+//
+// Štampa fakture-otpremnice: the report RobnoStampaFakturaOtpremnica (the fakture of the tip
+// proizvodnje 2 and the group FZR, the legacy PR_RPT_FAKTURA_OTP)
+//
+
+// RobnoStampaFakturaOtpremnica renders the printed fakture-otpremnice of the selection, every document
+// from a new page, with the header of the faktura (the title "Račun", "Otpremnica", "Storno ..." or
+// "Konačni račun" and the Skladište) and the stavke with the PDV of one unit.
+templ RobnoStampaFakturaOtpremnica(repParams domain.ReportParameters, fakture []domain.RobnoStampaFakturaView, translator *i18n.Service) {
+	@rep.Report(repParams, domain.TableData{}, translator, nil, nil, RobnoStampaDokumenti(robnoStampaFakturaOtpremnicaDokumenti(repParams, fakture, translator), translator))
+}
+
+// robnoStampaFakturaOtpremnicaDokumenti returns the printed fakture-otpremnice for RobnoStampaDokumenti.
+func robnoStampaFakturaOtpremnicaDokumenti(repParams domain.ReportParameters, fakture []domain.RobnoStampaFakturaView, translator *i18n.Service) []templ.Component {
+	dokumenti := make([]templ.Component, 0, len(fakture))
+	for _, fak := range fakture {
+		dokumenti = append(dokumenti, robnoStampaFakturaPoJmContent(repParams, fak, false, translator))
+	}
+	return dokumenti
+}
+
+//
+// Štampa knjižnog pisma: the report RobnoStampaKnjiznoPismo (the knjižna pisma with stavke, the groups
+// KNO and KNZ, the legacy ROB_RPT_KNJPISMO)
+//
+
+// RobnoStampaKnjiznoPismo renders the printed knjižna pisma of the selection, every knjižno pismo from a
+// new page.
+templ RobnoStampaKnjiznoPismo(repParams domain.ReportParameters, pisma []domain.RobnoStampaFakturaView, translator *i18n.Service) {
+	@rep.Report(repParams, domain.TableData{}, translator, nil, nil, RobnoStampaDokumenti(robnoStampaKnjiznoPismoDokumenti(repParams, pisma, translator), translator))
+}
+
+// robnoStampaKnjiznoPismoDokumenti returns the printed knjižna pisma for RobnoStampaDokumenti.
+func robnoStampaKnjiznoPismoDokumenti(repParams domain.ReportParameters, pisma []domain.RobnoStampaFakturaView, translator *i18n.Service) []templ.Component {
+	dokumenti := make([]templ.Component, 0, len(pisma))
+	for _, fak := range pisma {
+		dokumenti = append(dokumenti, RobnoStampaKnjiznoPismoContent(repParams, fak, translator))
+	}
+	return dokumenti
+}
+
+// RobnoStampaKnjiznoPismoContent renders one knjižno pismo like the legacy report: the header of the
+// document and the header of the stavke are the <thead> of the table (repeated on every printed page);
+// after the stavke BRUTO, RABAT, the neto with the ugovoreni rabat and the kasa (when the document has
+// them), the poreska osnovica and the PDV per stopa (the difference to the faktura), the UKUPNA
+// NAKNADA, the naknada in words, the napomena, the signatures, the napomena on the izmena of the poreska
+// osnovica and the poreska napomena.
+templ RobnoStampaKnjiznoPismoContent(repParams domain.ReportParameters, fak domain.RobnoStampaFakturaView, translator *i18n.Service) {
+	<div class="text-[11px] print:text-[9pt] text-black">
+		<table class="w-full border-collapse" style="table-layout: fixed;">
+			<colgroup>
+				for _, width := range robnoStampaFakturaPoJmColumnWidths(false) {
+					<col style={ "width: " + width }/>
+				}
+			</colgroup>
+			<thead>
+				<tr>
+					<td colspan={ fmt.Sprintf("%d", len(robnoStampaFakturaPoJmColumnWidths(false))) } class="pb-2">
+						@RobnoStampaKnjiznoPismoZaglavlje(repParams, fak, translator)
+					</td>
+				</tr>
+				<tr class="bg-gray-200 print:bg-gray-200">
+					<th class={ robnoStampaThClass }>{ translator.Label("Red. Br.") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Šifra artikla") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Naziv artikla") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("J.M.") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Količina") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Ispravka cene") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("% Rabata") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Vrednost rabata") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("% PDV-a") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("PDV po JM") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Iznos") }</th>
+				</tr>
+			</thead>
+			<tbody>
+				for _, s := range fak.Stavke {
+					<tr class="print:page-break-inside-avoid">
+						<td class={ robnoStampaTdClass + " text-center" }>{ s.Rbr }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ s.Sifra }</td>
+						<td class={ robnoStampaTdClass + " break-words" }>{ s.Naziv }</td>
+						<td class={ robnoStampaTdClass + " text-center" }>{ s.Jm }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ s.Kolicina }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ s.Cena }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ s.ProcRabata }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ s.Rabat }</td>
+						<td class={ robnoStampaTdClass + " text-center" }>{ s.ProcPdv }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ s.PdvPoJm }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ s.Iznos }</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+		<!-- BRUTO, RABAT, the neto with the ugovoreni rabat and the kasa, the osnovica and the PDV per stopa
+		     and the UKUPNA NAKNADA. -->
+		<div class="mt-1 flex justify-end no-break">
+			<table class="w-[45%] border-collapse">
+				<colgroup>
+					<col style="width: 30%"/>
+					<col style="width: 35%"/>
+					<col style="width: 35%"/>
+				</colgroup>
+				<tbody>
+					@robnoStampaFakturaZbir("", translator.Label("Bruto"), fak.Svega, false)
+					@robnoStampaFakturaZbir("", translator.Label("Rabat"), fak.Rabat, false)
+					@robnoStampaFakturaZbir("", translator.Label("Neto"), fak.Neto, false)
+					@robnoStampaFakturaZbir("", translator.Label("Ugovoreni rabat"), fak.UgovoreniRabat, false)
+					@robnoStampaFakturaZbir("", translator.Label("Kasa"), fak.Kasa, false)
+					for _, p := range fak.PdvPoStopama {
+						@robnoStampaFakturaZbir("", translator.Label("Poreska osnovica"), p.Osnovica, false)
+						@robnoStampaFakturaZbir(translator.Label("PDV po stopi"), p.Stopa, p.Pdv, false)
+					}
+					@robnoStampaFakturaZbir("", translator.Label("Ukupna naknada"), fak.ZaNaplatu, true)
+				</tbody>
+			</table>
+		</div>
+		<!-- The naknada in words, the napomena, the signatures and the napomene. -->
+		<div class="mt-2 no-break">
+			<div class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-2">
+				<span>{ translator.Label("Slovima") }:</span>
+				<span class="font-bold">{ fak.Slovima }</span>
+				<span>{ translator.Label("Napomena") }:</span>
+				<span class="whitespace-pre-line">{ fak.Napomena }</span>
+			</div>
+			<div class="mt-6 grid grid-cols-3 gap-12 text-center text-[12px] print:text-[10pt]">
+				for _, potpis := range []string{"Kontrolisao", "Formirao", "Odgovorno lice"} {
+					<div>
+						<div>{ translator.Label(potpis) }:</div>
+						<div class="mt-8 border-b border-black"></div>
+					</div>
+				}
+			</div>
+			<div class="mt-6 grid grid-cols-2 gap-12 text-center text-[12px] print:text-[10pt] items-end">
+				<div>
+					<div>{ repParams.CompanyName }</div>
+					<div class="mt-6 border-b border-black"></div>
+					<div class="mt-1">{ translator.Label("Sektor prodaje") }</div>
+				</div>
+				<div>
+					<div>{ translator.Label("Saglasan") }:</div>
+					<div>{ fak.KupacNaziv }</div>
+					<div class="mt-6 border-b border-black"></div>
+				</div>
+			</div>
+			if fak.NapomenaPorez != "" {
+				<div class="mt-4 whitespace-pre-line">{ fak.NapomenaPorez }</div>
+			}
+			<div class="mt-4">{ translator.Text("dokument_punovazan_bez_pecata") }</div>
+			if fak.PoreskaNapomena != "" {
+				<div class="mt-2">{ translator.Label("Napomena") }: { translator.Label("Oslobođeno plaćanja PDV-a po") } { fak.PoreskaNapomena }</div>
+			}
+		</div>
+	</div>
+}
+
+// RobnoStampaKnjiznoPismoZaglavlje renders the page header of the knjižno pismo like the legacy report:
+// on the left the logo, the kupac (in a box marked by its corners) with the mesto isporuke, the tip of
+// the knjižno pismo, the vezni dokument and the komercijalista; on the right the firm, the title
+// ("KNJIŽNO ODOBRENJE Br.: 270-5" or "KNJIŽNO ZADUŽENJE Br."), the datum of the document, the nalog and
+// the mesto izdavanja dokumenta, and "Odobravamo/Zadužujemo Vas kako sledi".
+templ RobnoStampaKnjiznoPismoZaglavlje(repParams domain.ReportParameters, fak domain.RobnoStampaFakturaView, translator *i18n.Service) {
+	<div class="grid grid-cols-2 gap-6 items-start text-left font-normal">
+		<!-- Left: logo, the kupac and the data of the knjižno pismo. -->
+		<div>
+			if repParams.CompanyLogo != "" {
+				<img src={ repParams.CompanyLogo } alt="" class="h-16 mb-2 mx-auto object-contain"/>
+			}
+			<div class="relative px-3 py-2 leading-snug">
+				<span class="absolute top-0 left-0 w-4 h-4 border-t border-l border-black"></span>
+				<span class="absolute top-0 right-0 w-4 h-4 border-t border-r border-black"></span>
+				<span class="absolute bottom-0 left-0 w-4 h-4 border-b border-l border-black"></span>
+				<span class="absolute bottom-0 right-0 w-4 h-4 border-b border-r border-black"></span>
+				<div>
+					<span class="font-bold italic uppercase">{ translator.Label("Kupac") }:</span>
+					<span class="ml-1">{ strings.TrimSpace(fak.KupacKonto + " " + fak.KupacSifra) }</span>
+				</div>
+				<div class="font-bold text-[14px] print:text-[12pt] mt-0.5 text-center">{ fak.KupacNaziv }</div>
+				<div class="text-center">{ fak.KupacAdresa }</div>
+				<div class="text-center">{ fak.KupacMesto }</div>
+				<div class="text-center">{ fak.KupacPib }</div>
+				<div class="text-center">{ translator.Label("Tel/fax") } : { fak.KupacTelefon }</div>
+				if fak.MestoIsporuke != "" {
+					<div class="mt-1 text-center">
+						<div>{ fak.MestoIsporuke }</div>
+						<div>{ fak.MestoIsporuke2 }</div>
+					</div>
+				}
+			</div>
+			<div class="mt-3 grid grid-cols-[auto_1fr] gap-x-3 leading-snug">
+				<span>{ translator.Label("Tip knjižnog pisma") }:</span>
+				<span class="font-bold">{ fak.TipKnjiznogPisma }</span>
+				<span></span>
+				<span>{ fak.VezniDokument }</span>
+				@robnoStampaFakturaPolje(translator.Label("Komercijalista"), strings.TrimSpace(fak.Komercijalista+" "+fak.KomercijalistaOpis))
+			</div>
+		</div>
+		<!-- Right: the firm, the title and the data of the document. -->
+		<div>
+			<div class="text-center leading-snug">
+				<div class="font-bold text-[13px] print:text-[11pt]">{ repParams.CompanyName }</div>
+				<div>{ fak.FirmaAdresa }</div>
+			</div>
+			<div class="mt-1 text-[10px] print:text-[8pt] grid grid-cols-2 gap-x-4 leading-snug">
+				<div>{ fak.FirmaObveznik }</div>
+				<div>{ fak.FirmaApr }</div>
+				<div>{ fak.FirmaPib }</div>
+				<div>{ fak.FirmaMbr }</div>
+				<div>{ fak.FirmaSifdel }</div>
+				<div>{ fak.FirmaTel }</div>
+			</div>
+			<div class="mt-5 text-center">
+				<span class="font-bold italic uppercase text-[16px] print:text-[13pt]">{ fak.Naslov }</span>
+				<span class="font-bold text-[16px] print:text-[13pt] ml-1">{ fak.BrojDokumenta }</span>
+			</div>
+			<div class="mt-2 grid grid-cols-[1fr_auto] gap-x-1 leading-snug text-[12px] print:text-[10pt]">
+				@robnoStampaFakturaDesnoPolje(translator.Label("Datum dokumenta"), fak.DatumDokumenta)
+				@robnoStampaFakturaDesnoPolje(translator.Label("Nalog"), fak.Nalog)
+				@robnoStampaFakturaDesnoPolje(translator.Label("Mesto izdavanja dokumenta"), fak.MestoIzdavanja)
+			</div>
+			if fak.OdobravaZaduzuje != "" {
+				<div class="mt-3 text-right font-bold">{ fak.OdobravaZaduzuje }</div>
+			}
+		</div>
+	</div>
+}
+
+// RobnoStampaKnjiznoPismoFin renders the printed finansijska knjižna pisma (without stavke, the legacy
+// ROB_RPT_KNJPISMOFIN) of the selection, every knjižno pismo from a new page.
+templ RobnoStampaKnjiznoPismoFin(repParams domain.ReportParameters, pisma []domain.RobnoStampaFakturaView, translator *i18n.Service) {
+	@rep.Report(repParams, domain.TableData{}, translator, nil, nil, RobnoStampaDokumenti(robnoStampaKnjiznoPismoFinDokumenti(repParams, pisma, translator), translator))
+}
+
+// robnoStampaKnjiznoPismoFinDokumenti returns the printed finansijska knjižna pisma for
+// RobnoStampaDokumenti.
+func robnoStampaKnjiznoPismoFinDokumenti(repParams domain.ReportParameters, pisma []domain.RobnoStampaFakturaView, translator *i18n.Service) []templ.Component {
+	dokumenti := make([]templ.Component, 0, len(pisma))
+	for _, fak := range pisma {
+		dokumenti = append(dokumenti, RobnoStampaKnjiznoPismoFinContent(repParams, fak, translator))
+	}
+	return dokumenti
+}
+
+// RobnoStampaKnjiznoPismoFinContent renders one finansijsko knjižno pismo like the legacy report: the
+// header of the knjižno pismo, the poreska osnovica and the PDV with its stopa and the UKUPNA NAKNADA in
+// a frame, the naknada in words, the napomena, the napomena on the izmena of the poreska osnovica, the
+// signatures of the sektor prodaje and of the kupac (SAGLASAN, with the datum) and the poreska napomena.
+templ RobnoStampaKnjiznoPismoFinContent(repParams domain.ReportParameters, fak domain.RobnoStampaFakturaView, translator *i18n.Service) {
+	<div class="text-[11px] print:text-[9pt] text-black">
+		@RobnoStampaKnjiznoPismoZaglavlje(repParams, fak, translator)
+		<!-- The poreska osnovica, the PDV and the UKUPNA NAKNADA in a frame. -->
+		<div class="mt-3 border border-black no-break">
+			<div class="flex justify-end">
+				<table class="w-[45%] border-collapse">
+					<colgroup>
+						<col style="width: 30%"/>
+						<col style="width: 35%"/>
+						<col style="width: 35%"/>
+					</colgroup>
+					<tbody>
+						for _, p := range fak.PdvPoStopama {
+							@robnoStampaFakturaZbir("", translator.Label("Poreska osnovica"), p.Osnovica, false)
+							@robnoStampaFakturaZbir(translator.Label("PDV po stopi"), p.Stopa, p.Pdv, false)
+						}
+						@robnoStampaFakturaZbir("", translator.Label("Ukupna naknada"), fak.ZaNaplatu, true)
+					</tbody>
+				</table>
+			</div>
+		</div>
+		<!-- The naknada in words, the napomene and the signatures. -->
+		<div class="mt-3 no-break">
+			<div class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-2">
+				if fak.Slovima != "" {
+					<span>{ translator.Label("Slovima") }:</span>
+					<span class="font-bold">{ fak.Slovima }</span>
+				}
+				<span>{ translator.Label("Napomena") }:</span>
+				<span class="whitespace-pre-line">{ fak.Napomena }</span>
+			</div>
+			if fak.NapomenaPorez != "" {
+				<div class="mt-4 whitespace-pre-line">{ fak.NapomenaPorez }</div>
+			}
+			<div class="mt-16 grid grid-cols-2 gap-12 text-center text-[12px] print:text-[10pt] items-end">
+				<div>
+					<div>{ repParams.CompanyName }</div>
+					<div class="mt-6 border-b border-black"></div>
+					<div class="mt-1">{ translator.Label("Sektor prodaje") }</div>
+				</div>
+				<div>
+					<div>{ translator.Label("Saglasan") }:</div>
+					<div>{ fak.KupacNaziv }</div>
+					<div class="mt-6 border-b border-black"></div>
+					<div class="mt-1 flex items-end gap-2">
+						<span>{ translator.Label("Datum") }</span>
+						<span class="w-24 border-b border-black"></span>
+					</div>
+				</div>
+			</div>
+			if fak.PoreskaNapomena != "" {
+				<div class="mt-4">{ translator.Label("Napomena") }: { translator.Label("Oslobođeno plaćanja PDV-a po") } { fak.PoreskaNapomena }</div>
+			}
+		</div>
+	</div>
+}
 
 // Štampa popisa: the report RobnoStampaPopis (vrsta dokumenta 101)
 // RobnoStampaPopis renders the printed popisi of the selection, every popis from a new page: the
@@ -1019,7 +1862,9 @@ templ RobnoStampaKalkulacija(repParams domain.ReportParameters, kalkulacije []do
 func robnoStampaKalkulacijaDokumenti(repParams domain.ReportParameters, kalkulacije []domain.RobnoStampaKalkulacijaView, translator *i18n.Service) []templ.Component {
 	dokumenti := make([]templ.Component, 0, len(kalkulacije))
 	for _, kal := range kalkulacije {
-		if kal.Devizni {
+		if kal.Maloprodaja {
+			dokumenti = append(dokumenti, RobnoStampaKalkulacijaMPContent(repParams, kal, translator))
+		} else if kal.Devizni {
 			dokumenti = append(dokumenti, RobnoStampaKalkulacijaInoContent(repParams, kal, translator))
 		} else {
 			dokumenti = append(dokumenti, RobnoStampaKalkulacijaContent(repParams, kal, translator))
@@ -1285,6 +2130,560 @@ templ RobnoStampaKalkulacijaPotpisi(translator *i18n.Service) {
 // veleprodajna cena (the vrednosti on the second line share them).
 var robnoStampaKalkulacijaColumnWidths = []string{"3%", "4%", "14.5%", "3.5%", "6%", "6.5%", "6%", "6.5%", "2%", "6%", "7%", "2%", "5.5%", "7%", "7%", "7.5%"}
 
+// RobnoStampaKalkulacijaMPContent renders the kalkulacija maloprodaje (the legacy RPT_ROB_KALKULACIJA_MP):
+// the stavke at the maloprodajne cene, the porezi of the document of the dobavljač and of the kalkulacija
+// side by side and the signatures.
+templ RobnoStampaKalkulacijaMPContent(repParams domain.ReportParameters, kal domain.RobnoStampaKalkulacijaView, translator *i18n.Service) {
+	<div class="text-[11px] print:text-[9pt] text-black">
+		<table class="w-full border-collapse" style="table-layout: fixed;">
+			<colgroup>
+				for _, width := range robnoStampaKalkulacijaMPColumnWidths {
+					<col style={ "width: " + width }/>
+				}
+			</colgroup>
+			<thead>
+				<tr>
+					<td colspan={ fmt.Sprintf("%d", len(robnoStampaKalkulacijaMPColumnWidths)) } class="pb-2">
+						@RobnoStampaKalkulacijaMPZaglavlje(repParams, kal, translator)
+					</td>
+				</tr>
+				<tr class="bg-gray-200 print:bg-gray-200">
+					<th rowspan="2" class={ robnoStampaThClass }>{ translator.Label("Red. br.") }</th>
+					<th rowspan="2" class={ robnoStampaThClass }>{ translator.Label("Šifra artikla") }</th>
+					<th rowspan="2" class={ robnoStampaThClass }>{ translator.Label("Naziv artikla") }</th>
+					<th rowspan="2" class={ robnoStampaThClass }>{ translator.Label("J.M.") }</th>
+					<th rowspan="2" class={ robnoStampaThClass }>{ translator.Label("Količina") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Fakturna cena") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("% Rabata") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Neto fakt. cena") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Oz na") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Zavisni trošak") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Nabavna cena") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("% MP marže") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("% PDV-a") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Maloprodajna cena sa PDV") }</th>
+				</tr>
+				<tr class="bg-gray-200 print:bg-gray-200">
+					<th class={ robnoStampaThClass }>{ translator.Label("Fakturna vrednost") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Vrednost rabata") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Neto fakt. vrednost") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("ka tr.") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Vrednost zav.troška") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Nabavna vrednost") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Vrednost marže") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Vrednost PDV-a") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Maloprodajna vrednost") }</th>
+				</tr>
+			</thead>
+			for _, st := range kal.Stavke {
+				<tbody class="print:page-break-inside-avoid" style="break-inside: avoid;">
+					<tr>
+						<td rowspan="2" class={ robnoStampaTdClass + " text-right" }>{ st.Rbr }</td>
+						<td rowspan="2" class={ robnoStampaTdClass }>{ st.Sifra }</td>
+						<td rowspan="2" class={ robnoStampaTdClass + " break-words align-middle" }>{ st.Naziv }</td>
+						<td rowspan="2" class={ robnoStampaTdClass + " align-middle" }>{ st.Jm }</td>
+						<td rowspan="2" class={ robnoStampaTdClass + " text-right" }>{ st.Kolicina }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.FakturnaCena }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.Rabat }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.NetoCena }</td>
+						<td class={ robnoStampaTdClass + " text-center" }>{ st.OznakaTroska }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.ZavisniTrosak }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.NabavnaCena }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.Marza }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.StopaPdv }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.MpCena }</td>
+					</tr>
+					<tr>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.FakturnaVrednost }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.VrednostRabata }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.NetoVrednost }</td>
+						<td class={ robnoStampaTdClass }></td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.VrednostTroska }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.NabavnaVrednost }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.VrednostMarze }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.VrednostPdv }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.MpVrednost }</td>
+					</tr>
+				</tbody>
+			}
+			<tfoot>
+				<tr class="font-bold print:page-break-inside-avoid">
+					<td colspan="5" class="px-1 py-0.5 text-center text-[11px] print:text-[9pt]">{ translator.Label("Ukupno za dokument") }: { kal.BrojDokumenta }</td>
+					@robnoStampaKalkulacijaUkupno(kal.Ukupno.FakturnaVrednost)
+					@robnoStampaKalkulacijaUkupno(kal.Ukupno.VrednostRabata)
+					@robnoStampaKalkulacijaUkupno(kal.Ukupno.NetoVrednost)
+					<td></td>
+					@robnoStampaKalkulacijaUkupno(kal.Ukupno.VrednostTroska)
+					@robnoStampaKalkulacijaUkupno(kal.Ukupno.NabavnaVrednost)
+					@robnoStampaKalkulacijaUkupno(kal.Ukupno.VrednostMarze)
+					@robnoStampaKalkulacijaUkupno(kal.Ukupno.VrednostPdv)
+					@robnoStampaKalkulacijaUkupno(kal.Ukupno.MpVrednost)
+				</tr>
+			</tfoot>
+		</table>
+		<div class="mt-4 flex justify-between items-start gap-6 no-break">
+			<div class="flex-1">
+				@RobnoStampaKalkulacijaPorezi(kal, translator)
+			</div>
+			if len(kal.PoreziKalkulacije) > 0 {
+				<div class="w-[30%] mt-4">
+					<div class="font-bold uppercase">{ translator.Label("Po kalkulaciji") }:</div>
+					<table class="w-full border-collapse" style="table-layout: fixed;">
+						<thead>
+							<tr class="bg-gray-200 print:bg-gray-200">
+								<th class={ robnoStampaThClass }>{ translator.Label("Osnovica") }</th>
+								<th class={ robnoStampaThClass }>{ translator.Label("Ukalkulisani porez") }</th>
+								<th class={ robnoStampaThClass }>{ translator.Label("Poreska tarifa") }</th>
+								<th class={ robnoStampaThClass }>{ translator.Label("% Poreza") }</th>
+							</tr>
+						</thead>
+						<tbody>
+							for _, pz := range kal.PoreziKalkulacije {
+								<tr>
+									<td class={ robnoStampaTdClass + " text-right" }>{ pz.Osnovica }</td>
+									<td class={ robnoStampaTdClass + " text-right" }>{ pz.Porez }</td>
+									<td class={ robnoStampaTdClass + " text-center" }>{ pz.Tarifa }</td>
+									<td class={ robnoStampaTdClass + " text-right" }>{ pz.Stopa }</td>
+								</tr>
+							}
+							<tr class="font-bold">
+								@robnoStampaKalkulacijaUkupno(kal.UkupnoPoreziKalk.Osnovica)
+								@robnoStampaKalkulacijaUkupno(kal.UkupnoPoreziKalk.Porez)
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			}
+		</div>
+		<div class="mt-6 grid grid-cols-3 gap-16 px-8 text-center font-bold no-break">
+			for _, potpis := range []string{"Referent kalkulacije", "Robu primio", "Kontrolisao"} {
+				<div>
+					<div>{ translator.Label(potpis) }</div>
+					<div class="mt-10 border-b border-black"></div>
+				</div>
+			}
+		</div>
+	</div>
+}
+
+// RobnoStampaKalkulacijaMPZaglavlje renders the page header of the kalkulacija maloprodaje like the
+// legacy report: the firm (naziv, adresa and mesto, PIB with the šifra delatnosti and the matični broj,
+// telefon) and the title with the time of the print; the dobavljač, the prodavnica with the dates and the
+// documents, the nalog with the način and the rok plaćanja and the napomena.
+templ RobnoStampaKalkulacijaMPZaglavlje(repParams domain.ReportParameters, kal domain.RobnoStampaKalkulacijaView, translator *i18n.Service) {
+	<div class="text-left font-normal text-[10px] print:text-[8pt]">
+		<div class="grid grid-cols-[1fr_2fr_1fr] items-start">
+			<div class="text-center leading-snug">
+				<div>{ repParams.CompanyName }</div>
+				<div>{ kal.FirmaMesto }</div>
+				<div>{ kal.FirmaPib }</div>
+				<div>{ kal.FirmaTel }</div>
+			</div>
+			<div class="text-center text-[16px] print:text-[13pt] font-bold uppercase">
+				{ translator.Label("Kalkulacija maloprodaje br.") }: { kal.BrojDokumenta }
+			</div>
+			<div class="text-right">{ kal.VremeStampe }</div>
+		</div>
+		<div class="mt-3 grid grid-cols-[45%_30%_25%] items-end">
+			<div class="flex items-baseline gap-6 border-b border-black pb-0.5">
+				<span class="text-[15px] print:text-[12pt] font-bold uppercase">{ translator.Label("Dobavljač") }</span>
+				<span>{ translator.Label("Konto dobavljača") } <span class="ml-1 text-[13px] print:text-[10pt] font-bold">{ kal.KontoDobavljaca }</span></span>
+				<span>{ translator.Label("Analitička šifra") } <span class="ml-1 font-bold">{ kal.SifraDobavljaca }</span></span>
+			</div>
+			<div class="text-center">
+				{ translator.Label("Prodavnica") } <span class="ml-1 text-[13px] print:text-[10pt] font-bold">{ kal.Prodavnica }</span>
+			</div>
+			<div>
+				{ translator.Label("Vrsta/Broj naloga") } <span class="ml-1 text-[13px] print:text-[10pt] font-bold">{ kal.Nalog }</span>
+			</div>
+		</div>
+		<div class="mt-2 grid grid-cols-[45%_30%_25%] items-start">
+			<div>
+				<div class="font-bold">{ kal.DobavljacNaziv }</div>
+				<div class="mt-2 grid grid-cols-[2fr_2fr_1fr] gap-x-2 font-bold">
+					<span>{ kal.DobavljacAdresa }</span>
+					<span>{ kal.DobavljacMesto }</span>
+					<span><span class="font-normal">{ translator.Label("PIB") }</span> { kal.DobavljacPib }</span>
+				</div>
+			</div>
+			<div class="grid grid-cols-[1fr_1fr] gap-x-2">
+				<span class="text-right">{ translator.Label("Datum dokumenta") }</span>
+				<span class="font-bold">{ kal.DatumDokumenta }</span>
+				<span class="text-right">{ translator.Label("Način dopremanja") }</span>
+				<span class="font-bold">{ kal.NacinDopremanja }</span>
+				<span class="text-right">{ translator.Label("Br. dokum. dobavlj.") }</span>
+				<span>{ kal.DokumentDobavljaca }</span>
+				<span class="text-right">{ translator.Label("Datum dokum. dobavlj.") }</span>
+				<span class="font-bold">{ kal.DatumDokumentaDobavljaca }</span>
+			</div>
+			<div class="grid grid-cols-[auto_1fr] gap-x-2">
+				<span class="text-right">{ translator.Label("Način plaćanja") }</span>
+				<span class="font-bold">{ kal.NacinPlacanja }</span>
+				<span class="text-right">{ translator.Label("Rok plaćanja") }</span>
+				<span><span class="font-bold">{ kal.RokPlacanja }</span> <span class="ml-4">{ translator.Label("Dana") }</span></span>
+				<span class="text-right">{ translator.Label("Napomena") }</span>
+				<span>{ kal.Napomena }</span>
+			</div>
+		</div>
+	</div>
+}
+
+// robnoStampaKalkulacijaMPColumnWidths are the widths of the columns of the stavke of the kalkulacija
+// maloprodaje: Red. br., šifra, naziv, JM, količina, fakturna cena, % rabata, neto fakturna cena, oznaka,
+// zavisni trošak, nabavna cena, % MP marže, % PDV-a and maloprodajna cena sa PDV (the vrednosti on the
+// second line share them).
+var robnoStampaKalkulacijaMPColumnWidths = []string{"3%", "4.5%", "17%", "3.5%", "6.5%", "7.5%", "7%", "7.5%", "2.5%", "7%", "8%", "8%", "7.5%", "10.5%"}
+
+//
+// Štampa internog prenosa proizvodnje: the report RobnoStampaInterniPrenos (the group PPR of the vrste
+// dokumenta, the legacy ROB_RPT_INTRAC_PROIZV)
+//
+
+// RobnoStampaInterniPrenos renders the printed interni prenosi proizvodnje or interne zaključnice (the
+// legacy ROB_RPT_STAMPA_INTRAC, the view marked Interna: the VP cena and the veleprodajni rabat, the
+// barkod under the naziv, the mesto of the firm without the godina) of the selection, every document from
+// a new page.
+templ RobnoStampaInterniPrenos(repParams domain.ReportParameters, prenosi []domain.RobnoStampaInterniPrenosView, translator *i18n.Service) {
+	@rep.Report(repParams, domain.TableData{}, translator, nil, nil, RobnoStampaDokumenti(robnoStampaInterniPrenosDokumenti(repParams, prenosi, translator), translator))
+}
+
+// robnoStampaInterniPrenosDokumenti returns the printed interni prenosi for RobnoStampaDokumenti.
+func robnoStampaInterniPrenosDokumenti(repParams domain.ReportParameters, prenosi []domain.RobnoStampaInterniPrenosView, translator *i18n.Service) []templ.Component {
+	out := make([]templ.Component, 0, len(prenosi))
+	for _, p := range prenosi {
+		out = append(out, RobnoStampaInterniPrenosContent(repParams, p, translator))
+	}
+	return out
+}
+
+// RobnoStampaInterniPrenosContent renders one interni prenos proizvodnje like the legacy report: the
+// header of the document and the header of the stavke are the <thead> of the table (repeated on every
+// printed page); the stavke on two lines (the cene, the vrednosti), the totals of the document, the
+// signatures and the porezi per tarifa with their total.
+templ RobnoStampaInterniPrenosContent(repParams domain.ReportParameters, p domain.RobnoStampaInterniPrenosView, translator *i18n.Service) {
+	<div class="text-[11px] print:text-[9pt] text-black">
+		<table class="w-full border-collapse" style="table-layout: fixed;">
+			<colgroup>
+				for _, width := range robnoStampaInterniPrenosColumnWidths {
+					<col style={ "width: " + width }/>
+				}
+			</colgroup>
+			<thead>
+				<tr>
+					<td colspan={ fmt.Sprintf("%d", len(robnoStampaInterniPrenosColumnWidths)) } class="pb-2">
+						@RobnoStampaInterniPrenosZaglavlje(repParams, p, translator)
+					</td>
+				</tr>
+				<tr class="bg-gray-200 print:bg-gray-200">
+					<th class={ robnoStampaThClass }>{ translator.Label("Red. Br.") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Šifra artikla") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Naziv artikla") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("J.M.") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Količina") }</th>
+					if p.Interna {
+						<th class={ robnoStampaThClass }>{ translator.Label("VP Cena") }</th>
+						<th class={ robnoStampaThClass }>{ translator.Label("Velepr. rabat") }</th>
+					} else {
+						<th class={ robnoStampaThClass }>{ translator.Label("Proizvodna cena") }</th>
+						<th class={ robnoStampaThClass }>{ translator.Label("Rabat") }</th>
+					}
+					<th class={ robnoStampaThClass }>{ translator.Label("Nabavna vrednost") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Marža") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Malopr. cena bez poreza") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Taksa") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Poreska tarifa") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Poreska stopa") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Malopr. cena sa porezom") }</th>
+				</tr>
+			</thead>
+			for _, st := range p.Stavke {
+				<tbody class="print:page-break-inside-avoid" style="break-inside: avoid;">
+					<tr>
+						<td rowspan="2" class={ robnoStampaTdClass + " text-right" }>{ st.Rbr }</td>
+						<td rowspan="2" class={ robnoStampaTdClass + " text-right" }>{ st.Sifra }</td>
+						<td rowspan="2" class={ robnoStampaTdClass + " break-words" }>
+							<div class="whitespace-pre-line">{ st.Naziv }</div>
+							if st.Barkod != "" {
+								<div>{ st.Barkod }</div>
+							}
+						</td>
+						<td rowspan="2" class={ robnoStampaTdClass }>{ st.Jm }</td>
+						<td rowspan="2" class={ robnoStampaTdClass + " text-right" }>{ st.Kolicina }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.Cena }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.Rabat }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.NabavnaCena }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.Marza }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.McBezPoreza }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.Taksa }</td>
+						<td class={ robnoStampaTdClass + " text-center" }>{ st.Tarifa }</td>
+						<td class={ robnoStampaTdClass + " text-center" }>{ st.Stopa }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.Mc }</td>
+					</tr>
+					<tr>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.Vrednost }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.RabatIznos }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.NabavnaVrednost }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.MarzaVrednost }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.McBezPorezaVrednost }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.TaksaVrednost }</td>
+						<td class={ robnoStampaTdClass }></td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.PorezVrednost }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.McVrednost }</td>
+					</tr>
+				</tbody>
+			}
+			<tfoot>
+				<tr class="font-bold print:page-break-inside-avoid">
+					<td colspan="5" class="px-1 py-0.5 text-center">{ translator.Label("Ukupno za dokument") }: { p.BrojDokumenta }</td>
+					@robnoStampaKalkulacijaUkupno(p.Ukupno.Vrednost)
+					@robnoStampaKalkulacijaUkupno(p.Ukupno.RabatIznos)
+					@robnoStampaKalkulacijaUkupno(p.Ukupno.NabavnaVrednost)
+					@robnoStampaKalkulacijaUkupno(p.Ukupno.MarzaVrednost)
+					@robnoStampaKalkulacijaUkupno(p.Ukupno.McBezPorezaVrednost)
+					@robnoStampaKalkulacijaUkupno(p.Ukupno.TaksaVrednost)
+					<td></td>
+					@robnoStampaKalkulacijaUkupno(p.Ukupno.PorezVrednost)
+					@robnoStampaKalkulacijaUkupno(p.Ukupno.McVrednost)
+				</tr>
+			</tfoot>
+		</table>
+		<div class="mt-8 grid grid-cols-3 gap-8 no-break">
+			for _, potpis := range []string{"Fakturisao", "Robu izdao", "Robu primio"} {
+				<div class="flex items-end gap-2">
+					<span>{ translator.Label(potpis) } :</span>
+					<span class="flex-1 border-b border-black"></span>
+				</div>
+			}
+		</div>
+		@robnoStampaInterniPrenosPorezi(p, translator)
+	</div>
+}
+
+// robnoStampaInterniPrenosPorezi renders the porezi per tarifa of the interni prenos with their total
+// (the legacy ITERATION_PORHEDER, _PORBODY and _PDV_TOT).
+templ robnoStampaInterniPrenosPorezi(p domain.RobnoStampaInterniPrenosView, translator *i18n.Service) {
+	if len(p.Porezi) > 0 {
+		<table class="mt-4 border-collapse no-break" style="width: 55%; table-layout: fixed;">
+			<thead>
+				<tr class="bg-gray-200 print:bg-gray-200">
+					<th class={ robnoStampaThClass }>{ translator.Label("SP") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Tarifa") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Poreska osnovica") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Stopa") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("PDV") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Malopr. iznos") }</th>
+				</tr>
+			</thead>
+			<tbody>
+				for _, pz := range p.Porezi {
+					<tr>
+						<td class={ robnoStampaTdClass + " text-center" }>{ pz.Sp }</td>
+						<td class={ robnoStampaTdClass + " text-center" }>{ pz.Tarifa }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ pz.Osnovica }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ pz.Stopa }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ pz.Pdv }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ pz.MaloprodajniIznos }</td>
+					</tr>
+				}
+				<tr class="font-bold">
+					<td colspan="2" class="border border-gray-500 px-1 py-0.5 text-center uppercase">{ translator.Label("Ukupno") }</td>
+					<td class="border border-gray-500 px-1 py-0.5 text-right">{ p.UkupnoPorezi.Osnovica }</td>
+					<td class="border border-gray-500 px-1 py-0.5"></td>
+					<td class="border border-gray-500 px-1 py-0.5 text-right">{ p.UkupnoPorezi.Pdv }</td>
+					<td class="border border-gray-500 px-1 py-0.5 text-right">{ p.UkupnoPorezi.MaloprodajniIznos }</td>
+				</tr>
+			</tbody>
+		</table>
+	}
+}
+
+// RobnoStampaInterniPrenosZaglavlje renders the page header of the interni prenos proizvodnje like the
+// legacy report: the firm on the left, the opis of the vrsta dokumenta with the broj, the date and the
+// nalog in the middle, the objekat the goods come from (the magacin with its adresa) and the one they go
+// to (the konto and the šifra with the naziv) on the right.
+templ RobnoStampaInterniPrenosZaglavlje(repParams domain.ReportParameters, p domain.RobnoStampaInterniPrenosView, translator *i18n.Service) {
+	<div class="grid grid-cols-[1fr_1fr_1.4fr] gap-4 items-start text-left font-normal">
+		<div class="text-[10px]">
+			<div class="font-bold text-sm print:leading-tight">{ repParams.CompanyName }</div>
+			if p.Interna {
+				<div class="print:leading-tight">{ repParams.City }</div>
+			} else {
+				<div class="print:leading-tight">{ repParams.City } - { fmt.Sprintf("%d", robnoStampaGodina(repParams)) }. { translator.Label("godina") }</div>
+			}
+		</div>
+		<div class="text-center leading-snug">
+			<div class="font-bold text-[14px] print:text-[12pt]">{ p.Naslov } { p.BrojDokumenta }</div>
+			<div class="mt-2">{ translator.Label("Datum dokumenta") }: <span class="font-bold">{ p.DatumDokumenta }</span></div>
+			<div>{ translator.Label("Vrsta/Broj naloga") }: <span class="font-bold">{ p.Nalog }</span></div>
+		</div>
+		<div class="grid grid-cols-[auto_1fr] gap-x-2 leading-snug">
+			<span class="text-right">{ translator.Label("Objekat odakle dolazi roba") }:</span>
+			<div>
+				<div class="font-bold">{ p.MagacinIzlaz }</div>
+				<div>{ p.MagacinIzlazAdresa }</div>
+			</div>
+			<span class="text-right">{ translator.Label("Objekat gde ide roba") }:</span>
+			<div>
+				<div class="font-bold">{ p.ObjekatPrijem }</div>
+				<div>{ p.ObjekatPrijemNaziv }</div>
+			</div>
+		</div>
+	</div>
+}
+
+// robnoStampaInterniPrenosColumnWidths are the widths of the columns of the stavke of the interni prenos:
+// rbr, šifra, naziv, JM, količina, proizvodna cena, rabat, nabavna vrednost, marža, maloprodajna cena bez
+// poreza, taksa, poreska tarifa, poreska stopa and maloprodajna cena sa porezom.
+var robnoStampaInterniPrenosColumnWidths = []string{"3%", "4%", "24%", "3%", "6%", "7%", "6%", "7%", "6%", "8%", "6%", "6%", "6%", "8%"}
+
+//
+// Štampa računa - otpremnice interne zaključnice: the report RobnoStampaInternaZakljucnicaRacun (the group
+// IRT with the option irrn, the legacy ROB_RPT_STAMPA_INTRACFKT)
+//
+
+// RobnoStampaInternaZakljucnicaRacun renders the printed računi - otpremnice of the interne zaključnice of
+// the selection, every document from a new page.
+templ RobnoStampaInternaZakljucnicaRacun(repParams domain.ReportParameters, racuni []domain.RobnoStampaInternaZakljucnicaRacunView, translator *i18n.Service) {
+	@rep.Report(repParams, domain.TableData{}, translator, nil, nil, RobnoStampaDokumenti(robnoStampaInternaZakljucnicaRacunDokumenti(repParams, racuni, translator), translator))
+}
+
+// robnoStampaInternaZakljucnicaRacunDokumenti returns the printed računi for RobnoStampaDokumenti.
+func robnoStampaInternaZakljucnicaRacunDokumenti(repParams domain.ReportParameters, racuni []domain.RobnoStampaInternaZakljucnicaRacunView, translator *i18n.Service) []templ.Component {
+	out := make([]templ.Component, 0, len(racuni))
+	for _, r := range racuni {
+		out = append(out, RobnoStampaInternaZakljucnicaRacunContent(repParams, r, translator))
+	}
+	return out
+}
+
+// RobnoStampaInternaZakljucnicaRacunContent renders one račun - otpremnica like the legacy report: the
+// header and the header of the stavke are the <thead> of the table (repeated on every printed page); the
+// stavke at the maloprodajne cene, the end of the račun (the napomena, the kamata, the signatures, the
+// sud), the porezi per tarifa, the PDV per stopa with SVEGA, RABAT and ZA NAPLATU and the poreska
+// napomena.
+templ RobnoStampaInternaZakljucnicaRacunContent(repParams domain.ReportParameters, r domain.RobnoStampaInternaZakljucnicaRacunView, translator *i18n.Service) {
+	<div class="text-[11px] print:text-[9pt] text-black">
+		<table class="w-full border-collapse" style="table-layout: fixed;">
+			<colgroup>
+				for _, width := range robnoStampaInternaZakljucnicaRacunColumnWidths {
+					<col style={ "width: " + width }/>
+				}
+			</colgroup>
+			<thead>
+				<tr>
+					<td colspan={ fmt.Sprintf("%d", len(robnoStampaInternaZakljucnicaRacunColumnWidths)) } class="pb-2">
+						@RobnoStampaInternaZakljucnicaRacunZaglavlje(repParams, r.Faktura, translator)
+					</td>
+				</tr>
+				<tr class="bg-gray-200 print:bg-gray-200">
+					<th class={ robnoStampaThClass }>{ translator.Label("Red. Br.") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Šifra artikla") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Naziv artikla") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("J.M.") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Količina") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Malopr. cena bez poreza") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Poreska tarifa") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Poreska stopa") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Malopr. cena sa porezom") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Maloprodajna vrednost") }</th>
+				</tr>
+			</thead>
+			<tbody>
+				for _, st := range r.Prenos.Stavke {
+					<tr class="print:page-break-inside-avoid">
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.Rbr }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.Sifra }</td>
+						<td class={ robnoStampaTdClass + " break-words whitespace-pre-line" }>{ st.Naziv }</td>
+						<td class={ robnoStampaTdClass }>{ st.Jm }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.Kolicina }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.McBezPoreza }</td>
+						<td class={ robnoStampaTdClass + " text-center" }>{ st.Tarifa }</td>
+						<td class={ robnoStampaTdClass + " text-center" }>{ st.Stopa }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.Mc }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.McVrednost }</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+		@robnoStampaFakturaKraj(r.Faktura, "faktura_nadlezan_sud", translator)
+		@robnoStampaInterniPrenosPorezi(r.Prenos, translator)
+		@RobnoStampaFakturaMPRekapitulacija(r.Faktura, translator)
+		if r.Faktura.PoreskaNapomena != "" {
+			<div class="mt-2 no-break">{ translator.Label("Napomena") }: { translator.Label("Oslobođeno plaćanja PDV-a po") } { r.Faktura.PoreskaNapomena }</div>
+		}
+	</div>
+}
+
+// RobnoStampaInternaZakljucnicaRacunZaglavlje renders the page header of the račun - otpremnica like the
+// legacy report: on the left the logo, the kupac (in a box marked by its corners) with the mesto
+// isporuke and the otpremnica, the uslovi and the rok plaćanja; on the right the izdavalac, the title
+// with the broj and the dates of the document.
+templ RobnoStampaInternaZakljucnicaRacunZaglavlje(repParams domain.ReportParameters, fak domain.RobnoStampaFakturaView, translator *i18n.Service) {
+	<div class="grid grid-cols-2 gap-6 items-start text-left font-normal">
+		<div>
+			if repParams.CompanyLogo != "" {
+				<img src={ repParams.CompanyLogo } alt="" class="h-16 mb-2 mx-auto object-contain"/>
+			}
+			<div class="relative px-3 py-2 leading-snug">
+				<span class="absolute top-0 left-0 w-4 h-4 border-t border-l border-black"></span>
+				<span class="absolute top-0 right-0 w-4 h-4 border-t border-r border-black"></span>
+				<span class="absolute bottom-0 left-0 w-4 h-4 border-b border-l border-black"></span>
+				<span class="absolute bottom-0 right-0 w-4 h-4 border-b border-r border-black"></span>
+				<div>
+					<span class="font-bold italic uppercase">{ translator.Label("Kupac") }:</span>
+					if fak.KupacKonto != "" || fak.KupacSifra != "" {
+						<span class="ml-1">{ translator.Label("Šifra kupca") } : { strings.TrimSpace(fak.KupacKonto + " " + fak.KupacSifra) }</span>
+					}
+				</div>
+				<div class="font-bold text-[14px] print:text-[12pt] mt-0.5 text-center">{ fak.KupacNaziv }</div>
+				<div class="text-center">{ fak.KupacAdresa }</div>
+				<div class="text-center">{ fak.KupacPib }</div>
+				<div class="text-center">{ fak.KupacTelefon }</div>
+				if fak.MestoIsporuke != "" {
+					<div class="mt-1 text-center">
+						<div>{ fak.MestoIsporuke }</div>
+						<div>{ fak.MestoIsporuke2 }</div>
+					</div>
+				}
+			</div>
+			<div class="mt-3 grid grid-cols-[auto_1fr] gap-x-3 leading-snug">
+				@robnoStampaFakturaPolje(translator.Label("Na osnovu otpremnice"), fak.Otpremnica)
+				@robnoStampaFakturaPolje(translator.Label("Uslovi plaćanja"), fak.UsloviPlacanja)
+				@robnoStampaFakturaPolje(translator.Label("Rok plaćanja"), strings.TrimSpace(fak.RokPlacanja+" "+translator.Label("dana")))
+			</div>
+		</div>
+		<div>
+			<div class="text-center leading-snug">
+				<div class="font-bold text-[13px] print:text-[11pt]">{ repParams.CompanyName }</div>
+				<div>{ fak.FirmaAdresa }</div>
+				<div>{ fak.FirmaZiro }</div>
+				<div>{ fak.FirmaBankeNazivi }</div>
+			</div>
+			<div class="mt-1 text-[10px] print:text-[8pt] grid grid-cols-2 gap-x-4 leading-snug text-center">
+				<div>{ fak.FirmaPib }</div>
+				<div>{ fak.FirmaMbr }</div>
+				<div class="col-span-2">{ fak.FirmaTel }</div>
+			</div>
+			<div class="mt-5 text-center">
+				<span class="font-bold italic text-[16px] print:text-[13pt]">{ fak.Naslov } :</span>
+				<span class="font-bold text-[16px] print:text-[13pt] ml-1">{ fak.BrojDokumenta }</span>
+			</div>
+			<div class="mt-2 grid grid-cols-[1fr_auto] gap-x-1 leading-snug text-[12px] print:text-[10pt]">
+				@robnoStampaFakturaDesnoPolje(translator.Label("Datum prometa dobara"), fak.DatumPrometa)
+				@robnoStampaFakturaDesnoPolje(translator.Label("Valuta"), fak.Valuta)
+				@robnoStampaFakturaDesnoPolje(translator.Label("Datum dokumenta"), fak.DatumDokumenta)
+				@robnoStampaFakturaDesnoPolje(translator.Label("Nalog"), fak.Nalog)
+				@robnoStampaFakturaDesnoPolje(translator.Label("Mesto izdavanja računa"), fak.MestoIzdavanja)
+			</div>
+		</div>
+	</div>
+}
+
+// robnoStampaInternaZakljucnicaRacunColumnWidths are the widths of the columns of the stavke of the
+// račun - otpremnica: rbr, šifra, naziv, JM, količina, maloprodajna cena bez poreza, poreska tarifa,
+// poreska stopa, maloprodajna cena sa porezom and maloprodajna vrednost.
+var robnoStampaInternaZakljucnicaRacunColumnWidths = []string{"4%", "7%", "31%", "5%", "8%", "10%", "7%", "7%", "10%", "11%"}
+
 //
 // Štampa maloprodajnog računa: the report RobnoStampaFakturaMP (the group DIR of the vrste dokumenta,
 // the legacy ROB_RPT_STAMPA_FAKTURA_MP)
@@ -1441,7 +2840,7 @@ templ RobnoStampaFakturaMPZaglavlje(repParams domain.ReportParameters, fak domai
 			</div>
 			<div class="mt-2 grid grid-cols-[1fr_auto] gap-x-1 leading-snug text-[12px] print:text-[10pt]">
 				@robnoStampaFakturaDesnoPolje(translator.Label("Datum prometa dobara"), fak.DatumPrometa)
-				@robnoStampaFakturaDesnoPolje(translator.Label("Valuta"), fak.Valuta)
+				@robnoStampaFakturaDesnoPolje(robnoStampaFakturaNaslov(fak.ValutaNaslov, translator.Label("Valuta")), fak.Valuta)
 				@robnoStampaFakturaDesnoPolje(translator.Label("Datum dokumenta"), fak.DatumDokumenta)
 				@robnoStampaFakturaDesnoPolje(translator.Label("Nalog"), fak.Nalog)
 				@robnoStampaFakturaDesnoPolje(translator.Label("Mesto izdavanja računa"), fak.MestoIzdavanja)
@@ -1645,6 +3044,555 @@ templ RobnoStampaOpstiDokumentPotpisi(translator *i18n.Service) {
 var robnoStampaOpstiDokumentColumnWidths = []string{"6%", "6%", "8%", "50%", "6%", "24%"}
 
 //
+// Štampa prenosnice: the report RobnoStampaPrenosnica (the group PRI of the vrste dokumenta, the legacy
+// RPT_ROB_PRENOSNICE)
+//
+
+// RobnoStampaPrenosnica renders the printed prenosnice of the selection, every prenosnica from a new
+// page.
+templ RobnoStampaPrenosnica(repParams domain.ReportParameters, dokumenti []domain.RobnoStampaPopisView, translator *i18n.Service) {
+	@rep.Report(repParams, domain.TableData{}, translator, nil, nil, RobnoStampaDokumenti(robnoStampaPrenosnicaDokumenti(repParams, dokumenti, translator), translator))
+}
+
+// robnoStampaPrenosnicaDokumenti returns the printed prenosnice for RobnoStampaDokumenti.
+func robnoStampaPrenosnicaDokumenti(repParams domain.ReportParameters, dokumenti []domain.RobnoStampaPopisView, translator *i18n.Service) []templ.Component {
+	out := make([]templ.Component, 0, len(dokumenti))
+	for _, dok := range dokumenti {
+		out = append(out, RobnoStampaPrenosnicaContent(repParams, dok, translator))
+	}
+	return out
+}
+
+// RobnoStampaPrenosnicaContent renders one prenosnica like the legacy report: the header of the document
+// and the header of the stavke are the <thead> of the table (repeated on every printed page); the
+// stavke with the cena and the vrednost, UKUPNO and the signatures of who received, approved and
+// handed over the goods.
+templ RobnoStampaPrenosnicaContent(repParams domain.ReportParameters, dok domain.RobnoStampaPopisView, translator *i18n.Service) {
+	<div class="text-[11px] print:text-[9pt] text-black">
+		<table class="w-full border-collapse" style="table-layout: fixed;">
+			<colgroup>
+				for _, width := range robnoStampaPrenosnicaColumnWidths {
+					<col style={ "width: " + width }/>
+				}
+			</colgroup>
+			<thead>
+				<tr>
+					<td colspan={ fmt.Sprintf("%d", len(robnoStampaPrenosnicaColumnWidths)) } class="pb-2">
+						@RobnoStampaPrenosnicaZaglavlje(repParams, dok, translator)
+					</td>
+				</tr>
+				<tr class="bg-gray-200 print:bg-gray-200">
+					<th class={ robnoStampaThClass }>{ translator.Label("RBR.") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Konto") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Šifra artikla") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Naziv artikla") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("J.M.") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Količina") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Cena") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Vrednost") }</th>
+				</tr>
+			</thead>
+			<tbody>
+				for _, st := range dok.Stavke {
+					<tr class="print:page-break-inside-avoid">
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.Rbr }</td>
+						<td class={ robnoStampaTdClass }>{ st.Konto }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.Sifra }</td>
+						<td class={ robnoStampaTdClass + " break-words whitespace-pre-line" }>{ st.Naziv }</td>
+						<td class={ robnoStampaTdClass }>{ st.Jm }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.Kolicina }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.Cena }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.Iznos }</td>
+					</tr>
+				}
+			</tbody>
+			<tfoot>
+				<tr class="font-bold print:page-break-inside-avoid">
+					<td colspan="7" class="border border-gray-500 px-1 py-0.5 text-right uppercase">{ translator.Label("Ukupno") }</td>
+					<td class="border border-gray-500 px-1 py-0.5 text-right">{ dok.UkupnoIznos }</td>
+				</tr>
+			</tfoot>
+		</table>
+		@robnoStampaPrenosnicaPotpisi(translator)
+	</div>
+}
+
+// robnoStampaPrenosnicaPotpisi renders the signatures of who received, approved and handed over the
+// goods (the prenosnica and the zaduženje sitnog inventara).
+templ robnoStampaPrenosnicaPotpisi(translator *i18n.Service) {
+	<div class="mt-8 grid grid-cols-3 gap-8 no-break">
+		for _, potpis := range []string{"Primio", "Odobrio", "Predao"} {
+			<div class="flex items-end gap-2">
+				<span>{ translator.Label(potpis) }:</span>
+				<span class="flex-1 border-b border-black"></span>
+			</div>
+		}
+	</div>
+}
+
+// RobnoStampaPrenosnicaZaglavlje renders the page header of the prenosnica: the firm on the left and the
+// broj and the date of the document in the middle (like the popis); under them the nalog on the left,
+// the vrsta dokumenta, the magacin the goods come from and the one they go to on the right.
+templ RobnoStampaPrenosnicaZaglavlje(repParams domain.ReportParameters, dok domain.RobnoStampaPopisView, translator *i18n.Service) {
+	<div class="text-left font-normal">
+		<div class="grid grid-cols-[1fr_2fr_1fr] items-start">
+			<div class="text-[10px]">
+				<div class="font-bold text-sm print:leading-tight">{ repParams.CompanyName }</div>
+				<div class="print:leading-tight">
+					{ repParams.Adress }, { repParams.Postcode } { repParams.City } - { fmt.Sprintf("%d", robnoStampaGodina(repParams)) }. { translator.Label("godina") }
+				</div>
+			</div>
+			<div class="grid grid-cols-[auto_auto] justify-center gap-x-2 text-[15px] print:text-[13pt] leading-snug">
+				<span class="font-bold text-right">{ translator.Label("Broj dokumenta") }:</span>
+				<span>{ dok.BrojDokumenta }</span>
+				<span class="font-bold text-right">{ translator.Label("Datum dokumenta") }:</span>
+				<span>{ dok.DatumDokumenta }</span>
+			</div>
+			<div></div>
+		</div>
+		<div class="mt-2 grid grid-cols-2 gap-x-6 items-end">
+			<div>
+				@robnoStampaPopisPolje(translator.Label("Vrsta/Broj naloga"), dok.Nalog)
+			</div>
+			<div class="space-y-1">
+				@robnoStampaPopisPolje(translator.Label("Vrsta dokumenta"), dok.VrstaDokumenta)
+				@robnoStampaPopisPolje(translator.Label("Magacin odakle dolazi roba"), dok.Magacin)
+				@robnoStampaPopisPolje(translator.Label("Magacin gde ide roba"), dok.MagacinPrijem)
+			</div>
+		</div>
+	</div>
+}
+
+// robnoStampaPrenosnicaColumnWidths are the widths of the columns of the stavke of the prenosnica: rbr,
+// konto, šifra, naziv, JM, količina, cena and vrednost.
+var robnoStampaPrenosnicaColumnWidths = []string{"5%", "6%", "7%", "44%", "5%", "10%", "10%", "13%"}
+
+//
+// Štampa popisa tekuće godine: the report RobnoStampaPopisTekGod (the group PTG of the vrste dokumenta,
+// the legacy RPT_POPIS_TEKGOD)
+//
+
+// RobnoStampaPopisTekGod renders the printed popisi tekuće godine of the selection, every popis from a
+// new page.
+templ RobnoStampaPopisTekGod(repParams domain.ReportParameters, popisi []domain.RobnoStampaPopisView, translator *i18n.Service) {
+	@rep.Report(repParams, domain.TableData{}, translator, nil, nil, RobnoStampaDokumenti(robnoStampaPopisTekGodDokumenti(repParams, popisi, translator), translator))
+}
+
+// robnoStampaPopisTekGodDokumenti returns the printed popisi tekuće godine for RobnoStampaDokumenti.
+func robnoStampaPopisTekGodDokumenti(repParams domain.ReportParameters, popisi []domain.RobnoStampaPopisView, translator *i18n.Service) []templ.Component {
+	out := make([]templ.Component, 0, len(popisi))
+	for _, pop := range popisi {
+		out = append(out, RobnoStampaPopisTekGodContent(repParams, pop, translator))
+	}
+	return out
+}
+
+// RobnoStampaPopisTekGodContent renders one popis tekuće godine like the legacy report: the header of the
+// document and the header of the stavke are the <thead> of the table (repeated on every printed page);
+// the stavke with the otk, the serija and the rok trajanja, UKUPNO and the signatures of the popis.
+templ RobnoStampaPopisTekGodContent(repParams domain.ReportParameters, pop domain.RobnoStampaPopisView, translator *i18n.Service) {
+	<div class="text-[11px] print:text-[9pt] text-black">
+		<table class="w-full border-collapse" style="table-layout: fixed;">
+			<colgroup>
+				for _, width := range robnoStampaPopisTekGodColumnWidths {
+					<col style={ "width: " + width }/>
+				}
+			</colgroup>
+			<thead>
+				<tr>
+					<td colspan={ fmt.Sprintf("%d", len(robnoStampaPopisTekGodColumnWidths)) } class="pb-2">
+						@RobnoStampaPopisTekGodZaglavlje(repParams, pop, translator)
+					</td>
+				</tr>
+				<tr class="bg-gray-200 print:bg-gray-200">
+					<th class={ robnoStampaThClass }>{ translator.Label("Red. Br.") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Konto") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Šifra artikla") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Naziv artikla") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("J.M.") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("OTK") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Serija") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Rok") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Količina") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Cena") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Iznos") }</th>
+				</tr>
+			</thead>
+			<tbody>
+				for _, st := range pop.Stavke {
+					<tr class="print:page-break-inside-avoid">
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.Rbr }</td>
+						<td class={ robnoStampaTdClass }>{ st.Konto }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.Sifra }</td>
+						<td class={ robnoStampaTdClass + " break-words" }>{ st.Naziv }</td>
+						<td class={ robnoStampaTdClass }>{ st.Jm }</td>
+						<td class={ robnoStampaTdClass }>{ st.Otk }</td>
+						<td class={ robnoStampaTdClass }>{ st.Serija }</td>
+						<td class={ robnoStampaTdClass + " text-center" }>{ st.Rok }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.Kolicina }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.Cena }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.Iznos }</td>
+					</tr>
+				}
+			</tbody>
+			<tfoot>
+				<tr class="font-bold print:page-break-inside-avoid">
+					<td colspan="10" class="border border-gray-500 px-1 py-0.5 text-right uppercase">{ translator.Label("Ukupno") }</td>
+					<td class="border border-gray-500 px-1 py-0.5 text-right">{ pop.UkupnoIznos }</td>
+				</tr>
+			</tfoot>
+		</table>
+		@RobnoStampaPopisPotpisi(translator)
+	</div>
+}
+
+// RobnoStampaPopisTekGodZaglavlje renders the page header of the popis tekuće godine: the firm on the
+// left and the broj and the date of the document in the middle (like the popis); under them the nalog,
+// the organizaciona jedinica and the mesto troška on the left, the vrsta dokumenta and the magacin on the
+// right.
+templ RobnoStampaPopisTekGodZaglavlje(repParams domain.ReportParameters, pop domain.RobnoStampaPopisView, translator *i18n.Service) {
+	<div class="text-left font-normal">
+		<div class="grid grid-cols-[1fr_2fr_1fr] items-start">
+			<div class="text-[10px]">
+				<div class="font-bold text-sm print:leading-tight">{ repParams.CompanyName }</div>
+				<div class="print:leading-tight">
+					{ repParams.Adress }, { repParams.Postcode } { repParams.City } - { fmt.Sprintf("%d", robnoStampaGodina(repParams)) }. { translator.Label("godina") }
+				</div>
+			</div>
+			<div class="grid grid-cols-[auto_auto] justify-center gap-x-2 text-[15px] print:text-[13pt] leading-snug">
+				<span class="font-bold text-right">{ translator.Label("Broj dokumenta") }:</span>
+				<span>{ pop.BrojDokumenta }</span>
+				<span class="font-bold text-right">{ translator.Label("Datum dokumenta") }:</span>
+				<span>{ pop.DatumDokumenta }</span>
+			</div>
+			<div></div>
+		</div>
+		<div class="mt-2 grid grid-cols-2 gap-x-6 items-start">
+			<div class="space-y-1">
+				@robnoStampaPopisPolje(translator.Label("Vrsta/Broj naloga"), pop.Nalog)
+				@robnoStampaPopisPolje(translator.Label("OJ"), pop.Oj)
+				@robnoStampaPopisPolje(translator.Label("Mesto troška"), pop.MestoTroska)
+			</div>
+			<div class="space-y-1">
+				@robnoStampaPopisPolje(translator.Label("Vrsta dokum."), pop.VrstaDokumenta)
+				@robnoStampaPopisPolje(translator.Label("Magacin"), pop.Magacin)
+			</div>
+		</div>
+	</div>
+}
+
+// robnoStampaPopisTekGodColumnWidths are the widths of the columns of the stavke of the popis tekuće
+// godine: rbr, konto, šifra, naziv, JM, otk, serija, rok, količina, cena and iznos.
+var robnoStampaPopisTekGodColumnWidths = []string{"4%", "5%", "6%", "27%", "4%", "7%", "9%", "9%", "10%", "9%", "10%"}
+
+//
+// Štampa zaduženja sitnog inventara: the report RobnoStampaZaduzenjeSI (the group SIV of the vrste
+// dokumenta, the legacy RPT_ROB_ZADUZ_SI)
+//
+
+// RobnoStampaZaduzenjeSI renders the printed zaduženja sitnog inventara of the selection, every document
+// from a new page.
+templ RobnoStampaZaduzenjeSI(repParams domain.ReportParameters, dokumenti []domain.RobnoStampaPopisView, translator *i18n.Service) {
+	@rep.Report(repParams, domain.TableData{}, translator, nil, nil, RobnoStampaDokumenti(robnoStampaZaduzenjeSIDokumenti(repParams, dokumenti, translator), translator))
+}
+
+// robnoStampaZaduzenjeSIDokumenti returns the printed zaduženja sitnog inventara for RobnoStampaDokumenti.
+func robnoStampaZaduzenjeSIDokumenti(repParams domain.ReportParameters, dokumenti []domain.RobnoStampaPopisView, translator *i18n.Service) []templ.Component {
+	out := make([]templ.Component, 0, len(dokumenti))
+	for _, dok := range dokumenti {
+		out = append(out, RobnoStampaZaduzenjeSIContent(repParams, dok, translator))
+	}
+	return out
+}
+
+// RobnoStampaZaduzenjeSIContent renders one zaduženje sitnog inventara like the legacy report: the header
+// of the document and the header of the stavke are the <thead> of the table (repeated on every printed
+// page); the stavke, UKUPNO of the količina, of the cena and of the vrednost and the signatures of who
+// received, approved and handed over the goods.
+templ RobnoStampaZaduzenjeSIContent(repParams domain.ReportParameters, dok domain.RobnoStampaPopisView, translator *i18n.Service) {
+	@robnoStampaZaduzenjeContent(dok, RobnoStampaZaduzenjeSIZaglavlje(repParams, dok, translator), translator)
+}
+
+// robnoStampaZaduzenjeContent renders one zaduženje (sitnog inventara or gradilišta) with its header
+// (zaglavlje): the header of the document and the header of the stavke are the <thead> of the table
+// (repeated on every printed page); the stavke, UKUPNO of the količina, of the cena and of the vrednost
+// and the signatures of who received, approved and handed over the goods.
+templ robnoStampaZaduzenjeContent(dok domain.RobnoStampaPopisView, zaglavlje templ.Component, translator *i18n.Service) {
+	<div class="text-[11px] print:text-[9pt] text-black">
+		<table class="w-full border-collapse" style="table-layout: fixed;">
+			<colgroup>
+				for _, width := range robnoStampaPrenosnicaColumnWidths {
+					<col style={ "width: " + width }/>
+				}
+			</colgroup>
+			<thead>
+				<tr>
+					<td colspan={ fmt.Sprintf("%d", len(robnoStampaPrenosnicaColumnWidths)) } class="pb-2">
+						@zaglavlje
+					</td>
+				</tr>
+				<tr class="bg-gray-200 print:bg-gray-200">
+					<th class={ robnoStampaThClass }>{ translator.Label("Red. Br.") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Konto") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Šifra artikla") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Naziv artikla") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("J.M.") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Količina") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Cena") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Vrednost") }</th>
+				</tr>
+			</thead>
+			<tbody>
+				for _, st := range dok.Stavke {
+					<tr class="print:page-break-inside-avoid">
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.Rbr }</td>
+						<td class={ robnoStampaTdClass }>{ st.Konto }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.Sifra }</td>
+						<td class={ robnoStampaTdClass + " break-words whitespace-pre-line" }>{ st.Naziv }</td>
+						<td class={ robnoStampaTdClass }>{ st.Jm }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.Kolicina }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.Cena }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.Iznos }</td>
+					</tr>
+				}
+			</tbody>
+			<tfoot>
+				<tr class="font-bold print:page-break-inside-avoid">
+					<td colspan="5" class="border border-gray-500 px-1 py-0.5 text-right uppercase">{ translator.Label("Ukupno") }</td>
+					<td class="border border-gray-500 px-1 py-0.5 text-right">{ dok.UkupnoKolicina }</td>
+					<td class="border border-gray-500 px-1 py-0.5 text-right">{ dok.UkupnoCena }</td>
+					<td class="border border-gray-500 px-1 py-0.5 text-right">{ dok.UkupnoIznos }</td>
+				</tr>
+			</tfoot>
+		</table>
+		@robnoStampaPrenosnicaPotpisi(translator)
+	</div>
+}
+
+// RobnoStampaZaduzenjeSIZaglavlje renders the page header of the zaduženje sitnog inventara: the firm on
+// the left and the broj (nalog-vrsta-broj) and the date of the document in the middle; under them the
+// nalog, the organizaciona jedinica, the mesto troška and the konto of the radnik on the left, the vrsta
+// dokumenta, the magacin, the organizaciona jedinica and the mesto troška the goods go to and the radnik
+// on the right.
+templ RobnoStampaZaduzenjeSIZaglavlje(repParams domain.ReportParameters, dok domain.RobnoStampaPopisView, translator *i18n.Service) {
+	<div class="text-left font-normal">
+		<div class="grid grid-cols-[1fr_2fr_1fr] items-start">
+			<div class="text-[10px]">
+				<div class="font-bold text-sm print:leading-tight">{ repParams.CompanyName }</div>
+				<div class="print:leading-tight">
+					{ repParams.Adress }, { repParams.Postcode } { repParams.City } - { fmt.Sprintf("%d", robnoStampaGodina(repParams)) }. { translator.Label("godina") }
+				</div>
+			</div>
+			<div class="grid grid-cols-[auto_auto] justify-center gap-x-2 text-[15px] print:text-[13pt] leading-snug">
+				<span class="font-bold text-right">{ translator.Label("Broj dokumenta") }:</span>
+				<span>{ dok.BrojDokumenta }</span>
+				<span class="font-bold text-right">{ translator.Label("Datum dokumenta") }:</span>
+				<span>{ dok.DatumDokumenta }</span>
+			</div>
+			<div></div>
+		</div>
+		<div class="mt-2 grid grid-cols-2 gap-x-6 gap-y-1">
+			@robnoStampaPopisPolje("", "")
+			@robnoStampaPopisPolje(translator.Label("Vrsta dokumenta"), dok.VrstaDokumenta)
+			@robnoStampaPopisPolje(translator.Label("Vrsta/Broj naloga"), dok.Nalog)
+			@robnoStampaPopisPolje(translator.Label("Magacin"), dok.Magacin)
+			@robnoStampaPopisPolje(translator.Label("OJ"), dok.Oj)
+			@robnoStampaPopisPolje(translator.Label("OJ gde ide roba"), dok.OjPrijem)
+			@robnoStampaPopisPolje(translator.Label("Mesto troška"), dok.MestoTroska)
+			@robnoStampaPopisPolje(translator.Label("Mesto troška gde ide roba"), dok.MestoTroskaPrijem)
+			@robnoStampaPopisPolje(translator.Label("Konto radnika"), dok.KontoRadnika)
+			@robnoStampaPopisPolje(translator.Label("Šifra radnika"), dok.SifraRadnika)
+		</div>
+	</div>
+}
+
+//
+// Štampa zaduženja gradilišta: the report RobnoStampaZaduzenjeGradilista (the group GRD of the vrste
+// dokumenta, the legacy RPT_ROB_ZADGRADILISTA)
+//
+
+// RobnoStampaZaduzenjeGradilista renders the printed zaduženja gradilišta of the selection, every
+// document from a new page, like the zaduženje sitnog inventara with the gradilište in the header.
+templ RobnoStampaZaduzenjeGradilista(repParams domain.ReportParameters, dokumenti []domain.RobnoStampaPopisView, translator *i18n.Service) {
+	@rep.Report(repParams, domain.TableData{}, translator, nil, nil, RobnoStampaDokumenti(robnoStampaZaduzenjeGradilistaDokumenti(repParams, dokumenti, translator), translator))
+}
+
+// robnoStampaZaduzenjeGradilistaDokumenti returns the printed zaduženja gradilišta for
+// RobnoStampaDokumenti.
+func robnoStampaZaduzenjeGradilistaDokumenti(repParams domain.ReportParameters, dokumenti []domain.RobnoStampaPopisView, translator *i18n.Service) []templ.Component {
+	out := make([]templ.Component, 0, len(dokumenti))
+	for _, dok := range dokumenti {
+		out = append(out, robnoStampaZaduzenjeContent(dok, RobnoStampaZaduzenjeGradilistaZaglavlje(repParams, dok, translator), translator))
+	}
+	return out
+}
+
+// RobnoStampaZaduzenjeGradilistaZaglavlje renders the page header of the zaduženje gradilišta: the firm
+// on the left and the broj (nalog-vrsta-broj) and the date of the document in the middle; under them the
+// gradilište with its naziv on the left, the nalog, the vrsta dokumenta and the magacin the goods come
+// from on the right.
+templ RobnoStampaZaduzenjeGradilistaZaglavlje(repParams domain.ReportParameters, dok domain.RobnoStampaPopisView, translator *i18n.Service) {
+	<div class="text-left font-normal">
+		<div class="grid grid-cols-[1fr_2fr_1fr] items-start">
+			<div class="text-[10px]">
+				<div class="font-bold text-sm print:leading-tight">{ repParams.CompanyName }</div>
+				<div class="print:leading-tight">
+					{ repParams.Adress }, { repParams.Postcode } { repParams.City } - { fmt.Sprintf("%d", robnoStampaGodina(repParams)) }. { translator.Label("godina") }
+				</div>
+			</div>
+			<div class="grid grid-cols-[auto_auto] justify-center gap-x-2 text-[15px] print:text-[13pt] leading-snug">
+				<span class="font-bold text-right">{ translator.Label("Broj dokumenta") }:</span>
+				<span>{ dok.BrojDokumenta }</span>
+				<span class="font-bold text-right">{ translator.Label("Datum dokumenta") }:</span>
+				<span>{ dok.DatumDokumenta }</span>
+			</div>
+			<div></div>
+		</div>
+		<div class="mt-2 grid grid-cols-2 gap-x-6 items-start">
+			<div class="grid grid-cols-[auto_1fr] gap-x-2">
+				<span class="text-right">{ translator.Label("Gradilište") }:</span>
+				<div>
+					<div class="font-bold">{ dok.Gradiliste }</div>
+					<div>{ dok.GradilisteNaziv }</div>
+				</div>
+			</div>
+			<div class="space-y-1">
+				@robnoStampaPopisPolje(translator.Label("Vrsta/Broj naloga"), dok.Nalog)
+				@robnoStampaPopisPolje(translator.Label("Vrsta dokumenta"), dok.VrstaDokumenta)
+				@robnoStampaPopisPolje(translator.Label("Magacin odakle dolazi roba"), dok.Magacin)
+			</div>
+		</div>
+	</div>
+}
+
+//
+// Štampa nivelacije cena: the report RobnoStampaNivelacija (the group NIV of the vrste dokumenta, the
+// legacy RPT_ROB_NIVELACIJA)
+//
+
+// RobnoStampaNivelacija renders the printed nivelacije cena of the selection, every nivelacija from a
+// new page.
+templ RobnoStampaNivelacija(repParams domain.ReportParameters, dokumenti []domain.RobnoStampaPopisView, translator *i18n.Service) {
+	@rep.Report(repParams, domain.TableData{}, translator, nil, nil, RobnoStampaDokumenti(robnoStampaNivelacijaDokumenti(repParams, dokumenti, translator), translator))
+}
+
+// robnoStampaNivelacijaDokumenti returns the printed nivelacije cena for RobnoStampaDokumenti.
+func robnoStampaNivelacijaDokumenti(repParams domain.ReportParameters, dokumenti []domain.RobnoStampaPopisView, translator *i18n.Service) []templ.Component {
+	out := make([]templ.Component, 0, len(dokumenti))
+	for _, dok := range dokumenti {
+		out = append(out, RobnoStampaNivelacijaContent(repParams, dok, translator))
+	}
+	return out
+}
+
+// RobnoStampaNivelacijaContent renders one nivelacija cena like the legacy report: the header of the
+// document and the header of the stavke are the <thead> of the table (repeated on every printed page);
+// the stavke with the stara and the nova cena and vrednost, the procenat and the vrednost of the
+// nivelacija, the totals of the document, the signatures of the računopolagač and of the komisija and,
+// on the last document of a nalog of a print of more nalozi, the total of the nalog.
+templ RobnoStampaNivelacijaContent(repParams domain.ReportParameters, dok domain.RobnoStampaPopisView, translator *i18n.Service) {
+	<div class="text-[11px] print:text-[9pt] text-black">
+		<table class="w-full border-collapse" style="table-layout: fixed;">
+			<colgroup>
+				for _, width := range robnoStampaNivelacijaColumnWidths {
+					<col style={ "width: " + width }/>
+				}
+			</colgroup>
+			<thead>
+				<tr>
+					<td colspan={ fmt.Sprintf("%d", len(robnoStampaNivelacijaColumnWidths)) } class="pb-2">
+						@RobnoStampaNivelacijaZaglavlje(repParams, dok, translator)
+					</td>
+				</tr>
+				<tr class="bg-gray-200 print:bg-gray-200">
+					<th class={ robnoStampaThClass }>{ translator.Label("Red. Br.") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Šifra artikla") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Naziv artikla") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("J.M.") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Količina") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Stara cena") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Stara vrednost") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Procenat") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Nova cena") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Nova vrednost") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Vrednost nivelacije") }</th>
+				</tr>
+			</thead>
+			<tbody>
+				for _, st := range dok.Stavke {
+					<tr class="print:page-break-inside-avoid">
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.Rbr }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.Sifra }</td>
+						<td class={ robnoStampaTdClass + " break-words" }>{ st.Naziv }</td>
+						<td class={ robnoStampaTdClass }>{ st.Jm }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.Kolicina }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.StaraCena }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.StaraVrednost }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.Procenat }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.Cena }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.Iznos }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.Razlika }</td>
+					</tr>
+				}
+			</tbody>
+			<tfoot>
+				<tr class="font-bold print:page-break-inside-avoid">
+					<td colspan="6" class="px-1 py-0.5 text-right">{ translator.Label("Ukupno") }</td>
+					<td class="border border-gray-500 px-1 py-0.5 text-right">{ dok.UkupnoStaraVrednost }</td>
+					<td colspan="2"></td>
+					<td class="border border-gray-500 px-1 py-0.5 text-right">{ dok.UkupnoNovaVrednost }</td>
+					<td class="border border-gray-500 px-1 py-0.5 text-right">{ dok.UkupnoRazlika }</td>
+				</tr>
+			</tfoot>
+		</table>
+		<div class="mt-8 grid grid-cols-2 gap-16 no-break">
+			<div class="flex items-end gap-2">
+				<span>{ translator.Label("Računopolagač") }:</span>
+				<span class="flex-1 border-b border-black"></span>
+			</div>
+			<div class="flex items-end gap-2">
+				<span>{ translator.Label("Komisija") }:</span>
+				<span class="flex-1 border-b border-black"></span>
+			</div>
+		</div>
+		if dok.UkupnoZaNalog != "" {
+			<div class="mt-4 flex justify-end gap-6 font-bold no-break">
+				<span>{ translator.Label("Ukupno za nalog") }: { dok.NalogNivelacije }</span>
+				<span class="border-t border-black min-w-[8rem] text-right">{ dok.UkupnoZaNalog }</span>
+			</div>
+		}
+	</div>
+}
+
+// RobnoStampaNivelacijaZaglavlje renders the page header of the nivelacija cena like the legacy report:
+// the firm with its adresa and PIB, the nalog (on a print of more nalozi), the title "NIVELACIJA CENA
+// BR.:" with the broj of the document, the datum of the nivelacija and the napomena.
+templ RobnoStampaNivelacijaZaglavlje(repParams domain.ReportParameters, dok domain.RobnoStampaPopisView, translator *i18n.Service) {
+	<div class="text-left font-normal">
+		<div class="text-[10px] leading-snug">
+			<div class="font-bold text-sm">{ repParams.CompanyName }</div>
+			<div>{ repParams.Adress } , { repParams.Postcode } { repParams.City }</div>
+			<div>{ translator.Label("PIB") } { repParams.PIB }</div>
+		</div>
+		if dok.NalogNivelacije != "" {
+			<div class="mt-2 font-bold">{ translator.Label("Nalog") }: { dok.NalogNivelacije }</div>
+		}
+		<div class="mt-2 text-center text-[16px] print:text-[13pt] font-bold uppercase">
+			{ translator.Label("Nivelacija cena br.") }: { dok.BrojDokumenta }
+		</div>
+		<div class="mt-1 flex gap-10">
+			<span>{ translator.Label("Datum nivelacije") }: <span class="font-bold">{ dok.DatumDokumenta }</span></span>
+			<span>{ translator.Label("Napomena") }: <span class="font-bold">{ dok.Napomena }</span></span>
+		</div>
+	</div>
+}
+
+// robnoStampaNivelacijaColumnWidths are the widths of the columns of the stavke of the nivelacija cena:
+// rbr, šifra, naziv, JM, količina, stara cena, stara vrednost, procenat, nova cena, nova vrednost and
+// vrednost of the nivelacija.
+var robnoStampaNivelacijaColumnWidths = []string{"4%", "6%", "24%", "4%", "8%", "8%", "10%", "7%", "8%", "10%", "11%"}
+
+//
 // Štampa fakture usluga: the report RobnoStampaFakturaUsluge (the groups PRE and FUR of the vrste
 // dokumenta, the legacy ROB_RPT_STAMPA_FAKTURA_USLUGE2)
 //
@@ -1757,7 +3705,7 @@ templ RobnoStampaFakturaUslugeZaglavlje(repParams domain.ReportParameters, fak d
 			</div>
 			<div class="mt-2 grid grid-cols-[1fr_auto] gap-x-1 leading-snug text-[12px] print:text-[10pt]">
 				@robnoStampaFakturaDesnoPolje(translator.Label("Datum prometa dobara"), fak.DatumPrometa)
-				@robnoStampaFakturaDesnoPolje(translator.Label("Valuta"), fak.Valuta)
+				@robnoStampaFakturaDesnoPolje(robnoStampaFakturaNaslov(fak.ValutaNaslov, translator.Label("Valuta")), fak.Valuta)
 				@robnoStampaFakturaDesnoPolje(translator.Label("Datum dokumenta"), fak.DatumDokumenta)
 				@robnoStampaFakturaDesnoPolje(translator.Label("Nalog"), fak.Nalog)
 				@robnoStampaFakturaDesnoPolje(translator.Label("Mesto izdavanja računa"), fak.MestoIzdavanja)
@@ -2007,3 +3955,376 @@ templ RobnoStampaFakturaAvansniPotpisi(translator *i18n.Service) {
 // robnoStampaFakturaAvansniColumnWidths are the widths of the columns of the stavke of the avansni
 // račun: redni broj, opis, količina, cena, % rabata, poreska stopa and iznos.
 var robnoStampaFakturaAvansniColumnWidths = []string{"6%", "41%", "10%", "14%", "7%", "8%", "14%"}
+
+//
+// Štampa nivelacije maloprodaje: the report RobnoStampaNivelacijaMaloprodaje (the group MNI of the vrste
+// dokumenta, the legacy RPT_NIVELACIJA_MALOPRODAJE)
+//
+
+// RobnoStampaNivelacijaMaloprodaje renders the printed nivelacije maloprodaje of the selection, every
+// document from a new page.
+templ RobnoStampaNivelacijaMaloprodaje(repParams domain.ReportParameters, nivelacije []domain.RobnoStampaNivelacijaMPView, translator *i18n.Service) {
+	@rep.Report(repParams, domain.TableData{}, translator, nil, nil, RobnoStampaDokumenti(robnoStampaNivelacijaMPDokumenti(nivelacije, translator), translator))
+}
+
+// robnoStampaNivelacijaMPDokumenti returns the printed nivelacije for RobnoStampaDokumenti.
+func robnoStampaNivelacijaMPDokumenti(nivelacije []domain.RobnoStampaNivelacijaMPView, translator *i18n.Service) []templ.Component {
+	out := make([]templ.Component, 0, len(nivelacije))
+	for _, n := range nivelacije {
+		out = append(out, RobnoStampaNivelacijaMPContent(n, translator))
+	}
+	return out
+}
+
+// RobnoStampaNivelacijaMPContent renders one nivelacija maloprodaje like the legacy report: the header
+// and the header of the stavke (two lines: the cena per unit, the vrednost) are the <thead> of the table;
+// the stavke on two lines, the total of the document, the porezi per nova poreska oznaka and the
+// signatures.
+templ RobnoStampaNivelacijaMPContent(n domain.RobnoStampaNivelacijaMPView, translator *i18n.Service) {
+	<div class="text-[11px] print:text-[9pt] text-black">
+		<table class="w-full border-collapse" style="table-layout: fixed;">
+			<colgroup>
+				for _, width := range robnoStampaNivelacijaMPColumnWidths {
+					<col style={ "width: " + width }/>
+				}
+			</colgroup>
+			<thead>
+				<tr>
+					<td colspan={ fmt.Sprintf("%d", len(robnoStampaNivelacijaMPColumnWidths)) } class="pb-2">
+						@RobnoStampaNivelacijaMPZaglavlje(n, translator)
+					</td>
+				</tr>
+				<tr class="bg-gray-200 print:bg-gray-200">
+					<th rowspan="2" class={ robnoStampaThClass }>{ translator.Label("Red. Br.") }</th>
+					<th rowspan="2" class={ robnoStampaThClass }>{ translator.Label("Naziv artikla") }</th>
+					<th rowspan="2" class={ robnoStampaThClass }>{ translator.Label("Količina") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Stara MP cena") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Nova MP cena") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Razlika") }</th>
+					<th rowspan="2" class={ robnoStampaThClass }>{ translator.Label("St. SP") }</th>
+					<th rowspan="2" class={ robnoStampaThClass }>{ translator.Label("Stara stopa") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Stari porez") }</th>
+					<th rowspan="2" class={ robnoStampaThClass }>{ translator.Label("No. SP") }</th>
+					<th rowspan="2" class={ robnoStampaThClass }>{ translator.Label("Nova stopa") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Novi porez") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Razlika poreza") }</th>
+					<th class={ robnoStampaThClass }>RUC</th>
+				</tr>
+				<tr class="bg-gray-200 print:bg-gray-200">
+					for range 7 {
+						<th class={ robnoStampaThClass }>{ translator.Label("Vrednost") }</th>
+					}
+				</tr>
+			</thead>
+			for _, st := range n.Stavke {
+				<tbody class="print:page-break-inside-avoid" style="break-inside: avoid;">
+					<tr>
+						<td rowspan="2" class={ robnoStampaTdClass + " text-right" }>{ st.Rbr }</td>
+						<td rowspan="2" class={ robnoStampaTdClass + " break-words" }>{ st.Naziv }</td>
+						<td rowspan="2" class={ robnoStampaTdClass + " text-right" }>{ st.Kolicina }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.StaraCena }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.NovaCena }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.Razlika }</td>
+						<td rowspan="2" class={ robnoStampaTdClass + " text-center" }>{ st.StaraOznaka }</td>
+						<td rowspan="2" class={ robnoStampaTdClass + " text-center" }>{ st.StaraStopa }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.StariPorez }</td>
+						<td rowspan="2" class={ robnoStampaTdClass + " text-center" }>{ st.NovaOznaka }</td>
+						<td rowspan="2" class={ robnoStampaTdClass + " text-center" }>{ st.NovaStopa }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.NoviPorez }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.RazlikaPoreza }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.Ruc }</td>
+					</tr>
+					<tr>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.StaraVrednost }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.NovaVrednost }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.RazlikaVrednost }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.StariPorezVrednost }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.NoviPorezVrednost }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.RazlikaPorezaVrednost }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.RucVrednost }</td>
+					</tr>
+				</tbody>
+			}
+			<tfoot>
+				<tr class="font-bold bg-gray-200 print:bg-gray-200 print:page-break-inside-avoid">
+					<td colspan="3" class="px-1 py-0.5">{ translator.Label("Ukupno za dokument") }: { n.BrojDokumenta }</td>
+					@robnoStampaKalkulacijaUkupno(n.Ukupno.StaraVrednost)
+					@robnoStampaKalkulacijaUkupno(n.Ukupno.NovaVrednost)
+					@robnoStampaKalkulacijaUkupno(n.Ukupno.RazlikaVrednost)
+					<td colspan="2"></td>
+					@robnoStampaKalkulacijaUkupno(n.Ukupno.StariPorezVrednost)
+					<td colspan="2"></td>
+					@robnoStampaKalkulacijaUkupno(n.Ukupno.NoviPorezVrednost)
+					@robnoStampaKalkulacijaUkupno(n.Ukupno.RazlikaPorezaVrednost)
+					@robnoStampaKalkulacijaUkupno(n.Ukupno.RucVrednost)
+				</tr>
+			</tfoot>
+		</table>
+		if len(n.Porezi) > 0 {
+			<div class="mt-4 flex justify-center no-break">
+				<table class="border-collapse text-[11px] print:text-[9pt]" style="width: 75%; table-layout: fixed;">
+					<thead>
+						<tr class="font-bold">
+							for _, caption := range []string{"SP", "Tarifa", "Stara osnovica", "Nova osnovica", "Stopa", "Stari porez", "Novi porez", "Razlika poreza"} {
+								<th class="px-1 py-0.5 text-center">{ translator.Label(caption) }</th>
+							}
+						</tr>
+					</thead>
+					<tbody>
+						for _, pz := range n.Porezi {
+							<tr>
+								<td class="px-1 py-0.5 text-center">{ pz.Sp }</td>
+								<td class="px-1 py-0.5 text-center">{ pz.Tarifa }</td>
+								<td class="px-1 py-0.5 text-right">{ pz.StaraOsnovica }</td>
+								<td class="px-1 py-0.5 text-right">{ pz.NovaOsnovica }</td>
+								<td class="px-1 py-0.5 text-right">{ pz.Stopa }</td>
+								<td class="px-1 py-0.5 text-right">{ pz.StariPorez }</td>
+								<td class="px-1 py-0.5 text-right">{ pz.NoviPorez }</td>
+								<td class="px-1 py-0.5 text-right">{ pz.RazlikaPoreza }</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+			</div>
+		}
+		<div class="mt-12 grid grid-cols-3 gap-12 px-8 text-[12px] print:text-[10pt] no-break">
+			for _, potpis := range []string{"Sastavio", "Kontrolisao", "Odobrio"} {
+				<div class="flex items-end gap-2">
+					<span>{ translator.Label(potpis) }:</span>
+					<span class="flex-1 border-b border-black"></span>
+				</div>
+			}
+		</div>
+	</div>
+}
+
+// RobnoStampaNivelacijaMPZaglavlje renders the page header of the nivelacija maloprodaje like the legacy
+// report: the izdavalac on the left, "NIVELACIJA BR.: vrsta-broj" with the prodavnica in the middle, the
+// datum nivelacije and the date and time of the print on the right.
+templ RobnoStampaNivelacijaMPZaglavlje(n domain.RobnoStampaNivelacijaMPView, translator *i18n.Service) {
+	<div class="grid grid-cols-[1fr_1.4fr_1fr] gap-4 items-start text-left font-normal">
+		<div class="text-[10px] leading-snug">
+			<div class="font-bold text-sm">{ n.FirmaNaziv }</div>
+			<div>{ n.FirmaAdresa }</div>
+			<div class="flex gap-6">
+				<span>{ n.FirmaPib }</span>
+				<span>{ n.FirmaMbr }</span>
+			</div>
+			<div>{ n.FirmaRegbr }</div>
+		</div>
+		<div class="text-center leading-snug">
+			<div class="font-bold text-[14px] print:text-[12pt] uppercase">{ translator.Label("Nivelacija br.") }: { n.BrojDokumenta }</div>
+			if n.Prodavnica != "" {
+				<div class="mt-2">
+					<span class="font-bold">{ n.Prodavnica }</span>
+					<span class="ml-2">{ n.ProdavnicaNaziv }</span>
+				</div>
+			}
+		</div>
+		<div class="text-right leading-snug">
+			<div class="text-[10px]">{ n.DatumStampe }</div>
+			<div class="mt-1">{ translator.Label("Datum nivelacije") }: <span class="font-bold">{ n.DatumNivelacije }</span></div>
+		</div>
+	</div>
+}
+
+// robnoStampaNivelacijaMPColumnWidths are the widths of the columns of the stavke of the nivelacija
+// maloprodaje: rbr, naziv, količina, stara and nova MP cena, razlika, stara poreska oznaka and stopa,
+// stari porez, nova poreska oznaka and stopa, novi porez, razlika poreza and RUC.
+var robnoStampaNivelacijaMPColumnWidths = []string{"3%", "18%", "6%", "7.5%", "7.5%", "7%", "3%", "7%", "7.5%", "3%", "7%", "7.5%", "7.5%", "8.5%"}
+
+//
+// Štampa zaduženja za obaveze: the report RobnoStampaZaduzenjeCO (the group FCO of the vrste dokumenta,
+// the legacy ROB_RPT_STAMPA_ZADUZENJA_CO)
+//
+
+// RobnoStampaZaduzenjeCO renders the printed zaduženja za obaveze or (the view marked Razduzenje, the
+// legacy ROB_RPT_STAMPA_RAZDUZENJA_CO) razduženja za obaveze of the selection, every document from a new
+// page.
+templ RobnoStampaZaduzenjeCO(repParams domain.ReportParameters, fakture []domain.RobnoStampaFakturaView, translator *i18n.Service) {
+	@rep.Report(repParams, domain.TableData{}, translator, nil, nil, RobnoStampaDokumenti(robnoStampaZaduzenjeCODokumenti(repParams, fakture, translator), translator))
+}
+
+// robnoStampaZaduzenjeCODokumenti returns the printed zaduženja for RobnoStampaDokumenti.
+func robnoStampaZaduzenjeCODokumenti(repParams domain.ReportParameters, fakture []domain.RobnoStampaFakturaView, translator *i18n.Service) []templ.Component {
+	dokumenti := make([]templ.Component, 0, len(fakture))
+	for _, fak := range fakture {
+		dokumenti = append(dokumenti, RobnoStampaZaduzenjeCOContent(repParams, fak, translator))
+	}
+	return dokumenti
+}
+
+// RobnoStampaZaduzenjeCOContent renders one zaduženje za obaveze like the legacy report: the header and
+// the header of the stavke are the <thead> of the table (repeated on every printed page); the stavke
+// (konto, analitička šifra, naziv and iznos), the avansi, the totals (the PDV per stopa, SVEGA, RABAT, ZA
+// NAPLATU, za naplatu po danima, the avansni PDV), the ambalaža, the poreska napomena, the rate and the
+// end of the document (the napomena, Dokument izdao and the važne napomene on the payment).
+templ RobnoStampaZaduzenjeCOContent(repParams domain.ReportParameters, fak domain.RobnoStampaFakturaView, translator *i18n.Service) {
+	<div class="text-[11px] print:text-[9pt] text-black">
+		<table class="w-full border-collapse" style="table-layout: fixed;">
+			<colgroup>
+				for _, width := range robnoStampaZaduzenjeCOColumnWidths {
+					<col style={ "width: " + width }/>
+				}
+			</colgroup>
+			<thead>
+				<tr>
+					<td colspan={ fmt.Sprintf("%d", len(robnoStampaZaduzenjeCOColumnWidths)) } class="pb-2">
+						@RobnoStampaZaduzenjeCOZaglavlje(repParams, fak, translator)
+					</td>
+				</tr>
+				<tr class="bg-gray-200 print:bg-gray-200">
+					<th class={ robnoStampaThClass }>{ translator.Label("Red. br.") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Konto br.") }</th>
+					<th class={ robnoStampaThClass }>{ translator.Label("Anal. br.") }</th>
+					if fak.Razduzenje {
+						<th class={ robnoStampaThClass }>{ translator.Label("Naziv/oznaka razduženja") }</th>
+					} else {
+						<th class={ robnoStampaThClass }>{ translator.Label("Naziv/oznaka zaduženja") }</th>
+					}
+					<th class={ robnoStampaThClass }>{ translator.Label("Iznos dinara") }</th>
+				</tr>
+			</thead>
+			<tbody>
+				for _, st := range fak.Stavke {
+					<tr class="print:page-break-inside-avoid">
+						<td class={ robnoStampaTdClass + " text-center" }>{ st.Rbr }</td>
+						<td class={ robnoStampaTdClass + " text-center" }>{ st.Konto }</td>
+						<td class={ robnoStampaTdClass + " text-center" }>{ st.Analitika }</td>
+						<td class={ robnoStampaTdClass + " break-words" }>{ st.Naziv }</td>
+						<td class={ robnoStampaTdClass + " text-right" }>{ st.Iznos }</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+		@RobnoStampaFakturaAvansi(fak, translator)
+		@RobnoStampaFakturaRekapitulacija(fak, translator)
+		@RobnoStampaFakturaAmbalaza(fak, translator)
+		@RobnoStampaFakturaNapomene(fak, translator)
+		@RobnoStampaFakturaRate(fak, translator)
+		<div class="mt-4 no-break">
+			if fak.Razduzenje {
+				<div class="font-bold">{ translator.Label("Stanje na računu za prihode i rashode od imovine nakon razduženja") }:</div>
+				<div class="mt-1 grid grid-cols-[auto_auto] justify-start gap-x-4 leading-snug">
+					<span>{ translator.Label("Zaduženje") }:</span>
+					<span class="text-right">{ fak.StanjeFakture }</span>
+					<span>{ translator.Label("Uplate") }:</span>
+					<span class="text-right">{ fak.StanjeUplate }</span>
+					<span class="font-bold">{ translator.Label("Saldo") }:</span>
+					<span class="text-right font-bold">{ fak.StanjeSaldo }</span>
+				</div>
+			}
+			<div class="grid grid-cols-3 gap-4 items-end">
+				<div class="col-span-2 min-h-[3rem] whitespace-pre-line">{ fak.Napomena }</div>
+				<div class="text-center text-[13px] print:text-[11pt]">
+					<div>{ translator.Label("Dokument izdao") }</div>
+					<div class="mt-8 border-b border-black mx-4"></div>
+				</div>
+			</div>
+			<div class="mt-6 border-t border-dashed border-gray-500 pt-2 leading-snug">
+				<div class="font-bold">{ translator.Label("Važne napomene") }:</div>
+				<ol class="list-decimal ml-5">
+					if fak.Razduzenje {
+						<li>{ translator.Text("razduzenje_co_napomena_1") }</li>
+					} else {
+						<li>{ translator.Text("zaduzenje_co_napomena_1") }</li>
+						<li>{ translator.Text("zaduzenje_co_napomena_2") }</li>
+						<li>{ translator.Text("zaduzenje_co_napomena_3") }</li>
+					}
+				</ol>
+			</div>
+		</div>
+	</div>
+}
+
+// RobnoStampaZaduzenjeCOZaglavlje renders the page header of the zaduženje za obaveze like the legacy
+// report: on the left the logo and the firm (with the adresa of the magacin) with its data and the
+// tekući račun; on the right the kupac (in a box marked by its corners) with the mesto isporuke; under
+// them the title with the broj, the dates, the rok and the uslovi plaćanja, the mesto izdavanja and the
+// nalog.
+templ RobnoStampaZaduzenjeCOZaglavlje(repParams domain.ReportParameters, fak domain.RobnoStampaFakturaView, translator *i18n.Service) {
+	<div class="text-left font-normal">
+		<div class="grid grid-cols-2 gap-6 items-start">
+			<div>
+				if repParams.CompanyLogo != "" {
+					<img src={ repParams.CompanyLogo } alt="" class="h-16 mb-2 mx-auto object-contain"/>
+				}
+				<div class="leading-snug">
+					<div class="font-bold text-[13px] print:text-[11pt]">{ repParams.CompanyName }</div>
+					<div>{ fak.FirmaAdresa }</div>
+				</div>
+				<div class="mt-1 text-[10px] print:text-[8pt] grid grid-cols-2 gap-x-4 leading-snug">
+					<div>{ fak.FirmaObveznik }</div>
+					<div>{ fak.FirmaEmail }</div>
+					<div>{ fak.FirmaPib }</div>
+					<div>{ fak.FirmaMbr }</div>
+					<div>{ fak.FirmaSifdel }</div>
+					<div>{ fak.FirmaTel }</div>
+				</div>
+				<div class="mt-1">{ fak.FirmaZiro }</div>
+			</div>
+			<div class="relative px-3 py-2 leading-snug">
+				<span class="absolute top-0 left-0 w-4 h-4 border-t border-l border-black"></span>
+				<span class="absolute top-0 right-0 w-4 h-4 border-t border-r border-black"></span>
+				<span class="absolute bottom-0 left-0 w-4 h-4 border-b border-l border-black"></span>
+				<span class="absolute bottom-0 right-0 w-4 h-4 border-b border-r border-black"></span>
+				<div>
+					<span class="font-bold italic uppercase">{ translator.Label("Kupac") }:</span>
+					<span class="ml-1">{ strings.TrimSpace(fak.KupacKonto + " " + fak.KupacSifra) }</span>
+				</div>
+				<div class="font-bold text-[14px] print:text-[12pt] mt-0.5">{ fak.KupacNaziv }</div>
+				<div>{ fak.KupacAdresa }</div>
+				<div class="flex justify-between gap-2">
+					<span>{ fak.KupacMesto }</span>
+					<span class="whitespace-nowrap mr-4">{ translator.Label("PAK") }<span class="ml-6">{ fak.KupacPak }</span></span>
+				</div>
+				if fak.KupacPib != "" {
+					<div>{ translator.Label("PIB") } : { fak.KupacPib }</div>
+				}
+				if fak.KupacTelefon != "" {
+					<div>{ translator.Label("Tel/fax") } : { fak.KupacTelefon }</div>
+				}
+				if fak.MestoIsporuke != "" {
+					<div class="mt-1">
+						<div>{ fak.MestoIsporuke }</div>
+						<div>{ fak.MestoIsporuke2 }</div>
+					</div>
+				}
+			</div>
+		</div>
+		<div class="mt-6 grid grid-cols-2 gap-6 items-start">
+			<div>
+				<div class="ml-16">
+					<span class="font-bold italic uppercase text-[16px] print:text-[13pt]">{ fak.Naslov } :</span>
+					<span class="font-bold text-[16px] print:text-[13pt] ml-1">{ fak.BrojDokumenta }</span>
+				</div>
+				<div class="mt-2 grid grid-cols-[1fr_auto] gap-x-1 leading-snug text-[12px] print:text-[10pt]">
+					@robnoStampaFakturaDesnoPolje(translator.Label("Datum dokumenta"), fak.DatumDokumenta)
+					if !fak.Razduzenje {
+						@robnoStampaFakturaDesnoPolje(translator.Label("Rok plaćanja"), strings.TrimSpace(fak.RokPlacanja+" "+translator.Label("dana")))
+						@robnoStampaFakturaDesnoPolje(translator.Label("Valuta"), fak.Valuta)
+						@robnoStampaFakturaDesnoPolje(translator.Label("Uslovi plaćanja"), translator.Text("zaduzenje_co_uslovi_placanja"))
+					}
+				</div>
+				if fak.Razduzenje {
+					<div class="mt-1 grid grid-cols-[auto_1fr] gap-x-2 leading-snug text-[12px] print:text-[10pt] font-bold">
+						<span class="font-normal text-right">{ translator.Label("Način razduženja") } :</span>
+						<span>{ translator.TextWithParams("razduzenje_co_nacin_partija", map[string]string{"konto": strings.TrimSpace(fak.KupacKonto + " " + fak.KupacSifra)}) }</span>
+						<span class="font-normal text-right">{ translator.Label("ili") }</span>
+						<span>{ translator.Text("razduzenje_co_nacin_racun") }</span>
+						<span class="font-normal text-right">{ translator.Label("ili") }</span>
+						<span>{ translator.Text("razduzenje_co_nacin_blagajna") }</span>
+					</div>
+				}
+			</div>
+			<div class="mt-8 grid grid-cols-[1fr_auto] gap-x-1 leading-snug text-[12px] print:text-[10pt]">
+				@robnoStampaFakturaDesnoPolje(translator.Label("Mesto izdavanja"), fak.MestoIzdavanja)
+				@robnoStampaFakturaDesnoPolje(translator.Label("Nalog"), fak.Nalog)
+			</div>
+		</div>
+	</div>
+}
+
+// robnoStampaZaduzenjeCOColumnWidths are the widths of the columns of the stavke of the zaduženje za
+// obaveze: Red. br., konto, analitička šifra, naziv and iznos.
+var robnoStampaZaduzenjeCOColumnWidths = []string{"6%", "10%", "11%", "56%", "17%"}

@@ -13,6 +13,7 @@ templ TablePagination(tbl domain.TableData, translator *i18n.Service) {
 		<div class="flex items-center space-x-3">
 			<label for="pageSize" class="text-sm text-gray-700">{ translator.Label("Prikaz po stranici") }</label>
 			<select
+				tabindex="-1"
 				id="pageSize"
 				class="block w-auto px-1 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring focus:border-blue-300"
 				hx-get={ fmt.Sprintf("%s", tbl.URLGetAll) }

@@ -403,7 +403,7 @@ func DialogOk(message string, dialog domain.Dialog, btnClose, btnOk domain.Butto
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "\" class=\"fixed inset-0 bg-black bg-opacity-50 min-w-[220px] flex items-center justify-center p-4\"><div class=\"bg-white rounded-lg shadow-2xl w-[50vw] max-w-[220px] mx-auto sm:max-w-md md:max-w-sm relative animate-fade-in\"><!-- Title Bar (Flush on Left, Top, Right) --><div class=\"bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg\"><h2 class=\"text-lg font-semibold ml-4\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "\" class=\"fixed inset-0 bg-black bg-opacity-50 min-w-[220px] flex items-center justify-center p-4 z-[60]\"><div class=\"bg-white rounded-lg shadow-2xl w-[50vw] max-w-[220px] mx-auto sm:max-w-md md:max-w-sm relative animate-fade-in\"><!-- Title Bar (Flush on Left, Top, Right) --><div class=\"bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg\"><h2 class=\"text-lg font-semibold ml-4\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"helia/i18n"
 	"helia/internal/common"
@@ -34,9 +35,10 @@ type RobnoDokumentaService interface {
 	GetUnosDokumentaTotal(ctx context.Context, total *domain.RobnoDokumentaTotal) error
 	GetNextNalog(ctx context.Context, tipdok string) (int, error)
 	GetByTipdokNalog(ctx context.Context, tipdok string, nalog int) (domain.Rnal, error)
-	ValidateUnosDokumenta(ctx context.Context, params domain.RobnoDokumentaParams) []domain.FieldError
-	CreateUnosDokumenta(ctx context.Context, params domain.RobnoDokumentaParams) (int64, error)
-	UpdateUnosDokumenta(ctx context.Context, rnalID int64, params domain.RobnoDokumentaParams) error
+	GetByTipdokNalogMagacin(ctx context.Context, tipdok string, nalog, magaciniID int) (domain.Rnal, domain.Magacini, error)
+	ValidateRobnoUnosNaloga(ctx context.Context, params domain.RobnoDokumentaParams) []domain.FieldError
+	CreateRobnoNalog(ctx context.Context, params domain.RobnoDokumentaParams) (int64, error)
+	UpdateRobnoNalog(ctx context.Context, rnalID int64, params domain.RobnoDokumentaParams) error
 
 	// Tab 2 - Pregled dokumenta (sub-tabs "Štampa" and "eFaktura")
 	// GetDokumentaPreview is the list of the robni dokumenti the "Obrada" of the "Štampa" sub-tab shows,
@@ -115,6 +117,7 @@ type RobnoDokumentaService interface {
 	GetPrikazNalogaTableFields() []domain.Fields
 	GetPrikazDokumenataUNaloguTableFields() []domain.Fields
 	GetPrikazDokumenataPooperateruTableFields() []domain.Fields
+	GetGrupaDokumenta(ctx context.Context, vrd int) (string, error)
 	GetFaktureStavkeTableFields() []domain.Fields
 	GetFaktureAvansiTableFields() []domain.Fields
 }
@@ -382,6 +385,39 @@ func (s *RobnoDokumentaResource) GetNextNalog(ctx context.Context, tipdok string
 	return int(nextNalog), nil
 }
 
+// GetByTipdokNalogMagacin returns the header of the robni nalog of a vrsta naloga, broj naloga and
+// magacin (the legacy key GODKARNALOGTIPDOKMAG: the same broj naloga in another magacin is another
+// nalog) and the magacin. The nalog is empty (RnalID 0) when it does not exist, and both are empty when
+// the magacin does not exist (the validation reports it).
+func (s *RobnoDokumentaResource) GetByTipdokNalogMagacin(ctx context.Context, tipdok string, nalog, magaciniID int) (domain.Rnal, domain.Magacini, error) {
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		return domain.Rnal{}, domain.Magacini{}, fmt.Errorf("no user session found")
+	}
+	if magaciniID <= 0 {
+		return domain.Rnal{}, domain.Magacini{}, nil
+	}
+	magacin, err := s.magacinByID(ctx, magaciniID)
+	if err != nil {
+		return domain.Rnal{}, domain.Magacini{}, nil
+	}
+	qb := common.NewQueryBuilder(`select rnalid, tipdok, idtipdok, nalog, danal, datob, opis, magaciniid, mag, dug, pot, brdo, brst, oper from rnal`, true)
+	qb.AddEqual("rnal.god", userSession.SelectedGod)
+	qb.AddEqual("rnal.kar", userSession.SelectedKar)
+	qb.AddCondition("rnal.tipdok", strings.TrimSpace(tipdok), "=")
+	qb.AddEqual("rnal.nalog", nalog)
+	qb.AddEqual("rnal.magaciniid", magacin.MagaciniID)
+	sqlQuery, args := qb.Build()
+	entities, err := s.rnalHeaderRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	if err != nil {
+		return domain.Rnal{}, magacin, err
+	}
+	if entities == nil || len(*entities) == 0 {
+		return domain.Rnal{}, magacin, nil
+	}
+	return (*entities)[0], magacin, nil
+}
+
 // GetByTipdokNalog returns the header of the robni nalog of a vrsta naloga and broj naloga.
 func (s *RobnoDokumentaResource) GetByTipdokNalog(ctx context.Context, tipdok string, nalog int) (domain.Rnal, error) {
 	userSession := domain.GetSessionFromStdContext(ctx)
@@ -404,35 +440,193 @@ func (s *RobnoDokumentaResource) GetByTipdokNalog(ctx context.Context, tipdok st
 	return (*entities)[0], nil
 }
 
-// ValidateUnosDokumenta validates the header of the "Unos dokumenta" form.
-func (s *RobnoDokumentaResource) ValidateUnosDokumenta(ctx context.Context, params domain.RobnoDokumentaParams) []domain.FieldError {
+// ValidateRobnoUnosNaloga validates the header of the "Unos dokumenta" form before the robni nalog is
+// opened or continued ("Snimi nalog"), like the legacy validation of the robni nalozi and the checks of
+// "Snimi nalog":
+//   - the period of the knjiženje (fvr of god, kar and firma) must exist and its business year must not
+//     be closed (fvr.godzatv); without them nothing else is checked;
+//   - the vrsta naloga (tipdok) must exist and the broj naloga must be a whole number;
+//   - the datum obrade and the datum naloga must be valid dates of the business year;
+//   - the magacin must be given and exist, the vrsta dokumenta must be given and exist; a vrsta of the
+//     group IRS is worked only from a magacin of the proizvodnja (tipmag P or L);
+//   - a financial nalog (fnal) of the same vrsta and broj naloga fixes the datum naloga (the nalog is
+//     transferred into it automatically), and so does a robni nalog (rnal) of the same vrsta and broj
+//     naloga in another magacin.
+func (s *RobnoDokumentaResource) ValidateRobnoUnosNaloga(ctx context.Context, params domain.RobnoDokumentaParams) []domain.FieldError {
 	fieldErrors := []domain.FieldError{}
-	if strings.TrimSpace(params.Tipdok) == "" {
-		fieldErrors = append(fieldErrors, domain.FieldError{Field: "tipdok", ErrorMessage: common.ErrMsgObavezanPodatak})
-	} else if _, err := s.commonSvc.GetTipdokIDByCode(ctx, strings.TrimSpace(params.Tipdok)); err != nil {
-		fieldErrors = append(fieldErrors, domain.FieldError{Field: "tipdok", ErrorMessage: common.ErrMsgNotFound})
+	add := func(field, message string) {
+		fieldErrors = append(fieldErrors, domain.FieldError{Field: field, ErrorMessage: message})
 	}
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		add("nalog", common.ErrMsgSessionNotFound)
+		return fieldErrors
+	}
+	god := userSession.SelectedGod
+
+	// The period of the knjiženje and its business year.
+	fvr, found, err := s.periodKnjizenja(ctx)
+	if err != nil {
+		add("nalog", common.ErrMsgReadData)
+		return fieldErrors
+	}
+	if !found {
+		add("nalog", "Ne postoji otvoren period za knjiženje! Morate otvoriti period da biste mogli da nastavite knjiženje.")
+		return fieldErrors
+	}
+	if fvr.GodZatv {
+		add("nalog", "Poslovna godina je zatvorena, knjiženje nije dozvoljeno.")
+		return fieldErrors
+	}
+
+	// The vrsta naloga.
+	tipdok := strings.TrimSpace(params.Tipdok)
+	tipdokOK := false
+	if tipdok == "" {
+		add("tipdok", common.ErrMsgObavezanPodatak)
+	} else if _, err := s.commonSvc.GetTipdokByCode(ctx, tipdok); err != nil {
+		add("tipdok", "Nepostojeća vrsta naloga.")
+	} else {
+		tipdokOK = true
+	}
+
+	// The broj naloga.
+	nalog, nalogErr := strconv.Atoi(strings.TrimSpace(params.Nalog))
 	if strings.TrimSpace(params.Nalog) == "" {
-		fieldErrors = append(fieldErrors, domain.FieldError{Field: "nalog", ErrorMessage: common.ErrMsgObavezanPodatak})
-	} else if _, err := strconv.Atoi(strings.TrimSpace(params.Nalog)); err != nil {
-		fieldErrors = append(fieldErrors, domain.FieldError{Field: "nalog", ErrorMessage: "broj naloga mora biti ceo broj"})
+		add("nalog", common.ErrMsgObavezanPodatak)
+	} else if nalogErr != nil {
+		add("nalog", "Broj naloga mora biti ceo broj.")
 	}
-	if _, err := common.StringToTimeWithLayout(params.Danal, common.HtmlLayout); err != nil {
-		fieldErrors = append(fieldErrors, domain.FieldError{Field: "danal", ErrorMessage: common.ErrMsgObavezanPodatak})
+	nalogOK := strings.TrimSpace(params.Nalog) != "" && nalogErr == nil
+
+	// The datum obrade and the datum naloga: valid dates of the business year.
+	datob, err := common.StringToTimeWithLayout(params.Datob, common.HtmlLayout)
+	if err != nil {
+		add("datob", "Morate uneti korektan datum obrade naloga.")
+	} else if datob.Year() != god {
+		add("datob", fmt.Sprintf("Nekorektan datum obrade, godina mora biti jednaka poslovnoj godini %d.", god))
 	}
-	if _, err := common.StringToTimeWithLayout(params.Datob, common.HtmlLayout); err != nil {
-		fieldErrors = append(fieldErrors, domain.FieldError{Field: "datob", ErrorMessage: common.ErrMsgObavezanPodatak})
+	danal, err := common.StringToTimeWithLayout(params.Danal, common.HtmlLayout)
+	danalOK := err == nil && danal.Year() == god
+	if err != nil {
+		add("danal", "Morate uneti datum naloga.")
+	} else if danal.Year() != god {
+		add("danal", fmt.Sprintf("Nekorektan datum naloga, godina mora biti jednaka poslovnoj godini %d.", god))
 	}
-	if params.MagaciniID > 0 {
-		if _, err := s.magacinByID(ctx, params.MagaciniID); err != nil {
-			fieldErrors = append(fieldErrors, domain.FieldError{Field: "magaciniid", ErrorMessage: common.ErrMsgNotFound})
+
+	// The magacin.
+	var magacin domain.Magacini
+	magacinOK := false
+	if params.MagaciniID <= 0 {
+		add("magaciniid", "Morate izabrati magacin.")
+	} else if magacin, err = s.magacinByID(ctx, params.MagaciniID); err != nil {
+		add("magaciniid", "Nepostojeći magacin.")
+	} else {
+		magacinOK = true
+	}
+
+	// The vrsta dokumenta; IRS only from a magacin of the proizvodnja.
+	if strings.TrimSpace(params.Vrd) == "" {
+		add("vrd", "Ne postoji definisana vrsta dokumenta za izabranu vrstu naloga! Unesite vrste dokumenata za izabranu vrstu naloga.")
+	} else if vrd, err := strconv.Atoi(strings.TrimSpace(params.Vrd)); err != nil {
+		add("vrd", "Nepostojeća vrsta dokumenta.")
+	} else if grpdok, err := s.GetGrupaDokumenta(ctx, vrd); err != nil {
+		add("vrd", common.ErrMsgReadData)
+	} else if grpdok == "" {
+		add("vrd", "Nepostojeća vrsta dokumenta.")
+	} else if strings.EqualFold(strings.TrimSpace(grpdok), "IRS") && magacinOK && !robnoMagacinProizvodnje(magacin) {
+		add("vrd", "Ova vrsta dokumenta radi se samo iz magacina proizvodnje!")
+	}
+
+	if !tipdokOK || !nalogOK || !danalOK {
+		return fieldErrors
+	}
+	// A financial nalog of the same vrsta and broj naloga fixes the datum naloga.
+	fnal, found, err := s.commonSvc.GetFnalByTipdokNalog(ctx, tipdok, nalog)
+	if err != nil {
+		add("danal", common.ErrMsgReadData)
+		return fieldErrors
+	}
+	if found && !sameDate(fnal.Danal, danal) {
+		add("danal", fmt.Sprintf("Za izabranu vrstu naloga postoji otvoren nalog u finansijskom knjigovodstvu. "+
+			"Zbog automatskog prenošenja naloga datum naloga mora biti: %s.", fnal.Danal.Format(common.DateLayout)))
+	}
+	// A robni nalog of the same vrsta and broj naloga in another magacin fixes the datum naloga.
+	if magacinOK {
+		nalozi, err := s.rnalNalozi(ctx, tipdok, nalog)
+		if err != nil {
+			add("danal", common.ErrMsgReadData)
+			return fieldErrors
+		}
+		for _, r := range nalozi {
+			if r.Mag.Valid && int(r.Mag.Int64) != magacin.Mag && r.Danal.Valid && !sameDate(r.Danal.Time, danal) {
+				add("danal", fmt.Sprintf("Za vrstu naloga %s postoji otvoren nalog sa istim brojem u magacinu %d. "+
+					"Datum naloga mora imati vrednost: %s.", tipdok, r.Mag.Int64, r.Danal.Time.Format(common.DateLayout)))
+				break
+			}
 		}
 	}
 	return fieldErrors
 }
 
+// periodKnjizenja returns the period of the knjiženje of the session (fvr of god, kar and firma) with
+// the flag of the closed business year (found false when the period does not exist).
+func (s *RobnoDokumentaResource) periodKnjizenja(ctx context.Context) (domain.Fvr, bool, error) {
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		return domain.Fvr{}, false, fmt.Errorf("no user session found")
+	}
+	qb := common.NewQueryBuilder("select god, kar, naziv, coalesce(godzatv, false) as godzatv from fvr", true)
+	qb.AddEqual("god", userSession.SelectedGod)
+	qb.AddEqual("kar", userSession.SelectedKar)
+	qb.AddEqual("naziv", userSession.Firma)
+	sqlQuery, args := qb.Build()
+	entities, err := s.fvrRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	if err != nil {
+		return domain.Fvr{}, false, err
+	}
+	if entities == nil || len(*entities) == 0 {
+		return domain.Fvr{}, false, nil
+	}
+	return (*entities)[0], true, nil
+}
+
+// rnalNalozi returns the robni nalozi (rnal) of the vrsta naloga and broj naloga in the current period,
+// one per magacin.
+func (s *RobnoDokumentaResource) rnalNalozi(ctx context.Context, tipdok string, nalog int) ([]domain.Rnal, error) {
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		return nil, fmt.Errorf("no user session found")
+	}
+	qb := common.NewQueryBuilder(`select rnalid, tipdok, nalog, danal, magaciniid, mag from rnal`, true)
+	qb.AddEqual("rnal.god", userSession.SelectedGod)
+	qb.AddEqual("rnal.kar", userSession.SelectedKar)
+	qb.AddEqual("rnal.tipdok", tipdok)
+	qb.AddEqual("rnal.nalog", nalog)
+	sqlQuery, args := qb.Build()
+	entities, err := s.rnalHeaderRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	if err != nil {
+		return nil, err
+	}
+	if entities == nil {
+		return nil, nil
+	}
+	return *entities, nil
+}
+
+// robnoMagacinProizvodnje tells if a magacin is a magacin of the proizvodnja (tipmag P or L).
+func robnoMagacinProizvodnje(m domain.Magacini) bool {
+	tip := strings.ToUpper(strings.TrimSpace(m.Tipmag))
+	return tip == "P" || tip == "L"
+}
+
+// sameDate tells if two times are the same calendar day.
+func sameDate(a, b time.Time) bool {
+	return a.Year() == b.Year() && a.Month() == b.Month() && a.Day() == b.Day()
+}
+
 // CreateUnosDokumenta inserts the header of a new robni nalog (rnal).
-func (s *RobnoDokumentaResource) CreateUnosDokumenta(ctx context.Context, params domain.RobnoDokumentaParams) (int64, error) {
+func (s *RobnoDokumentaResource) CreateRobnoNalog(ctx context.Context, params domain.RobnoDokumentaParams) (int64, error) {
 	fields, err := s.unosDokumentaFields(ctx, params, true)
 	if err != nil {
 		return 0, err
@@ -443,7 +637,7 @@ func (s *RobnoDokumentaResource) CreateUnosDokumenta(ctx context.Context, params
 }
 
 // UpdateUnosDokumenta saves the header of an existing robni nalog (rnal).
-func (s *RobnoDokumentaResource) UpdateUnosDokumenta(ctx context.Context, rnalID int64, params domain.RobnoDokumentaParams) error {
+func (s *RobnoDokumentaResource) UpdateRobnoNalog(ctx context.Context, rnalID int64, params domain.RobnoDokumentaParams) error {
 	fields, err := s.unosDokumentaFields(ctx, params, false)
 	if err != nil {
 		return err
@@ -504,7 +698,7 @@ func (s *RobnoDokumentaResource) magacinByID(ctx context.Context, magaciniID int
 		return domain.Magacini{}, fmt.Errorf("no user session found")
 	}
 	hasGod, hasKar := s.magRepo.GetHasGodHasKar()
-	qb := common.NewQueryBuilder("select magaciniid, mag, opis from magacini", true)
+	qb := common.NewQueryBuilder("select magaciniid, mag, opis, coalesce(tipmag, '') as tipmag from magacini", true)
 	qb.AddGodKarConditions(hasGod, hasKar, userSession.SelectedGod, userSession.SelectedKar)
 	qb.AddEqual("magaciniid", magaciniID)
 	sqlQuery, args := qb.Build()

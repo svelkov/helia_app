@@ -2038,5 +2038,9 @@
   "text.razduzenje_co_napomena_1": "Ukoliko postoji neslaganje sa nekom od stavki pod gornjim red.br. 1-n, molimo Vas da dostavite dokaze, kako bi bila izvršena knjigovodstvena ispravka",
   "label.pretrazi_po_kontu_ili_nazivu": "Pretraži po kontu ili nazivu",
   "label.pretrazi_po_sifri_ili_nazivu": "Pretraži po šifri ili nazivu",
-  "label.pretrazi_po_mestu_isporuke": "Pretraži po mestu isporuke"
+  "label.pretrazi_po_mestu_isporuke": "Pretraži po mestu isporuke",
+  "label.pretrazi_po_sifri_ili_imenu": "Pretraži po šifri ili imenu",
+  "label.nema_rezultata": "Nisu pronađeni podaci za zadati kriterijum.",
+  "message.program_za_ovu_opciju_nije_instaliran": "Program za ovu opciju nije instaliran",
+  "message.magacin": "Magacin"
 }

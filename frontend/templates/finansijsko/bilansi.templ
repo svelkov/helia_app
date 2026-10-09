@@ -55,7 +55,7 @@ templ ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPri
 			<div class="flex gap-1">
 				<input type="hidden" id="nduzsintetika" name="nDuzSintetika" value={ fmt.Sprintf("%d", nDuzSintetika) }/>
 				<!-- Parameters Section - Left Column -->
-				<div class="w-2/5 border bg-blue-100 border-blue-400 mt-1 p-2 rounded-lg">
+				<div class="w-1/2 border bg-blue-100 border-blue-400 mt-1 p-2 rounded-lg">
 					<!-- Row 1: Tip zakljucnog lista -->
 					<div class="flex items-center gap-1 mb-1">
 						@components.LabelField(domain.LabelFieldConfig{
@@ -95,114 +95,70 @@ templ ZakljucniList(tabs domain.TabData, tbl domain.TableData, btnObrada, btnPri
 						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "odkonta",
 							LabelText:  translator.Label("Od konta"),
-							ClassLabel: common.ClassLabel + " w-32",
+							ClassLabel: common.ClassLabel + " w-16",
 						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "odkonta",
-							Name:       "odkonta",
-							FieldType:  "text",
-							Value:      "0000",
-							ClassInput: common.ClassInputTextEnabled + " w-20",
-							MinLength:  "3",
-							MaxLength:  "6",
-							TabIndex:   "4",
-							OnInput:    "clearFieldError",
-							OnFocus:    "clearFieldError",
-						})
-						@components.SearchButton(domain.SearchButtonConfig{
-							ID:          "odkonta",
-							Name:        "search-odkonta",
-							HxUrl:       "/api/promet/searchbutton",
-							HxTarget:    "#search-dropdown",
-							HxSwap:      "innerHTML",
-							HxVals:      `js:{"odkonta": document.getElementById('odkonta').value, "vkonta": "2"}`,
-							ClassButton: common.ClassButton,
-						})
+						@components.TableCombo(domain.TableComboConfig{
+							ID:           "odkonta-combo",
+							Name:         "odkonta",
+							ValueID:      "odkonta",
+							DefaultValue: "0000",
+							Placeholder:  "Pretraži po kontu ili nazivu",
+							ClassInput:   common.ClassInputTextEnabled + " w-full",
+							SearchURL:    "/api/search/konta",
+							TabIndex:     "4",
+						}, translator)
 						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "odsifre",
 							LabelText:  translator.Label("Od šifre"),
 							ClassLabel: common.ClassLabel + " w-20",
 						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "odsifre",
-							Name:       "odsifre",
-							FieldType:  "text",
-							Value:      "00",
-							ClassInput: common.ClassInputTextEnabled + " w-20",
-							MinLength:  "2",
-							MaxLength:  "6",
-							TabIndex:   "6",
-							OnInput:    "clearFieldError",
-							OnFocus:    "clearFieldError",
-						})
-						@components.SearchButton(domain.SearchButtonConfig{
-							ID:          "odsifre",
-							Name:        "search-odsifre",
-							HxUrl:       "/api/promet/searchbutton",
-							HxTarget:    "#search-dropdown",
-							HxSwap:      "innerHTML",
-							HxVals:      `js:{"konto": document.getElementById('odkonta').value, "vkonta": "1"}`,
-							ClassButton: common.ClassButton,
-						})
+						@components.TableCombo(domain.TableComboConfig{
+							ID:           "odsifre-combo",
+							Name:         "odsifre",
+							ValueID:      "odsifre",
+							DefaultValue: "00",
+							Placeholder:  "Pretraži po šifri ili nazivu",
+							ClassInput:   common.ClassInputTextEnabled + " w-full",
+							SearchURL:    "/api/search/analitika",
+							TabIndex:     "6",
+						}, translator)
 					</div>
 					<!-- Row 3: Do konta and Do sifre -->
 					<div class="flex items-center gap-1">
 						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "dokonta",
 							LabelText:  translator.Label("Do konta"),
-							ClassLabel: common.ClassLabel + " w-32",
+							ClassLabel: common.ClassLabel + " w-16",
 						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "dokonta",
-							Name:       "dokonta",
-							FieldType:  "text",
-							Value:      "999999",
-							ClassInput: common.ClassInputTextEnabled + " w-20",
-							MinLength:  "3",
-							MaxLength:  "6",
-							TabIndex:   "5",
-							OnInput:    "clearFieldError",
-							OnFocus:    "clearFieldError",
-						})
-						@components.SearchButton(domain.SearchButtonConfig{
-							ID:          "dokonta",
-							Name:        "search-dokonta",
-							HxUrl:       "/api/promet/searchbutton",
-							HxTarget:    "#search-dropdown",
-							HxSwap:      "innerHTML",
-							HxVals:      `js:{"konto": document.getElementById('dokonta').value, "vkonta": "2"}`,
-							ClassButton: common.ClassButton,
-						})
+						@components.TableCombo(domain.TableComboConfig{
+							ID:           "dokonta-combo",
+							Name:         "dokonta",
+							ValueID:      "dokonta",
+							DefaultValue: "999999",
+							Placeholder:  "Pretraži po kontu ili nazivu",
+							ClassInput:   common.ClassInputTextEnabled + " w-full",
+							SearchURL:    "/api/search/konta",
+							TabIndex:     "5",
+						}, translator)
 						@components.LabelField(domain.LabelFieldConfig{
 							ID:         "dosifre",
 							LabelText:  translator.Label("Do šifre"),
 							ClassLabel: common.ClassLabel + " w-20",
 						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "dosifre",
-							Name:       "dosifre",
-							FieldType:  "text",
-							Value:      "999999",
-							ClassInput: common.ClassInputTextEnabled + " w-20",
-							MinLength:  "2",
-							MaxLength:  "6",
-							TabIndex:   "7",
-							OnInput:    "clearFieldError",
-							OnFocus:    "clearFieldError",
-						})
-						@components.SearchButton(domain.SearchButtonConfig{
-							ID:          "dosifre",
-							Name:        "search-dosifre",
-							HxUrl:       "/api/promet/searchbutton",
-							HxTarget:    "#search-dropdown",
-							HxSwap:      "innerHTML",
-							HxVals:      `js:{"konto": document.getElementById('dokonta').value, "vkonta": "1"}`,
-							ClassButton: common.ClassButton,
-						})
+						@components.TableCombo(domain.TableComboConfig{
+							ID:           "dosifre-combo",
+							Name:         "dosifre",
+							ValueID:      "dosifre",
+							DefaultValue: "999999",
+							Placeholder:  "Pretraži po šifri ili nazivu",
+							ClassInput:   common.ClassInputTextEnabled + " w-full",
+							SearchURL:    "/api/search/analitika",
+							TabIndex:     "7",
+						}, translator)
 					</div>
 				</div>
 				<!-- Parameters Section - Right Column -->
-				<div class="w-3/5 border bg-blue-100 border-blue-400 mt-1 p-2 rounded-lg">
+				<div class="w-1/2 border bg-blue-100 border-blue-400 mt-1 p-2 rounded-lg">
 					<!-- Row 1: Checkboxes for display variants -->
 					<div class="flex items-center gap-2 mb-1">
 						@components.CheckboxField(domain.CheckboxFieldConfig{

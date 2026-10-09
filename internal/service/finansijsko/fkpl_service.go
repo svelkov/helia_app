@@ -178,13 +178,13 @@ func (s *FkplResource) GetAllByVkonta(ctx context.Context, vkonta string, tbl *d
 	qb := common.NewQueryBuilder("SELECT idfkpl, konto, coalesce(a.naziv, '') as annaziv, fkpl.naziv, devizni, kursirati, vkonta, kolicinski FROM fkpl", true)
 	qb.AddJoin(" left join tipanalitike a on a.tipanalitikeid = fkpl.tipanalitikeid")
 	if hasGod {
-		qb.AddEqual("god", userSession.SelectedGod)
+		qb.AddEqual("fkpl.god", userSession.SelectedGod)
 	}
 	if hasKar {
-		qb.AddEqual("kar", userSession.SelectedKar)
+		qb.AddEqual("fkpl.kar", userSession.SelectedKar)
 	}
 	if vkonta != "" {
-		qb.AddEqual("vkonta", vkonta)
+		qb.AddEqual("fkpl.vkonta", vkonta)
 	}
 	if searchText != "" && printType == common.TipStampePreview {
 		qb.AddCustomSearchCondition([]string{"konto", "a.naziv", "fkpl.naziv"}, searchText)

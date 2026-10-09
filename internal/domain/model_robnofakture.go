@@ -7,7 +7,7 @@ import (
 )
 
 // The view structs of the "Fakture veleprodaje" screen (RobnoFakture / RobnoFaktureDialog in
-// frontend/templates/robno/robnadokumenta.templ). They live here because both the templates and the
+// frontend/templates/robno/robnadokumentaunos.templ). They live here because both the templates and the
 // handler of the screen need them: the handler fills them and the templates lay them out, and the
 // template package cannot import the handler package (the handler imports the templates).
 
@@ -183,10 +183,8 @@ type RobnoFaktureUI struct {
 	// ContentID is the container the tab navigation swaps: the target of the buttons that reload the whole screen.
 	ContentID string
 
-	// DialogID is the id of the dialog of the screen and DialogStagingID the element of the "Unos
-	// dokumenta" tab the dialog is rendered into (see RobnoDokumentaMain).
-	DialogID        string
-	DialogStagingID string
+	// DialogID is the id of the dialog of the screen (RobnoFaktureDialog).
+	DialogID string
 
 	// ArtikalSearchURL and PartnerSearchURL are the search popups of the stavka and of the kupac,
 	// DokumentSearchURL the one of the broj dokumenta (all of them are opened with the "..." buttons of

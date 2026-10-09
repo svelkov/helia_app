@@ -2040,5 +2040,9 @@
   "text.razduzenje_co_napomena_1": "If you disagree with any of the items 1-n above, please send the proof so that the accounting correction can be made",
   "label.pretrazi_po_kontu_ili_nazivu": "Search by account or name",
   "label.pretrazi_po_sifri_ili_nazivu": "Search by code or name",
-  "label.pretrazi_po_mestu_isporuke": "Search by delivery place"
+  "label.pretrazi_po_mestu_isporuke": "Search by delivery place",
+  "label.pretrazi_po_sifri_ili_imenu": "Search by code or name",
+  "label.nema_rezultata": "No data found for the given criteria.",
+  "message.program_za_ovu_opciju_nije_instaliran": "The program for this option is not installed",
+  "message.magacin": "Warehouse"
 }

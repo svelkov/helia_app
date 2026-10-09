@@ -40,7 +40,11 @@ templ ConfirmButton(btn domain.Button, translator *i18n.Service) {
 			if btn.HxTarget != "" {
 				hx-target={ btn.HxTarget }
 			}
-			hx-include="closest form"
+			if btn.HxInclude != "" {
+				hx-include={ btn.HxInclude }
+			} else {
+				hx-include="closest form"
+			}
 			if btn.HxVals != "" {
 				hx-vals={ btn.HxVals }
 			}
@@ -271,6 +275,7 @@ templ OldIcon(name, classIcon string) {
 		</svg>
 	}
 }
+
 // Icon renders an SVG icon by name (sa gradient-om za glavni menu)
 templ Icon(name, classIcon string) {
 	if svg := common.GetIconGradient(name); svg != "" {
@@ -284,6 +289,7 @@ templ Icon(name, classIcon string) {
 		</svg>
 	}
 }
+
 // Icon renders an SVG icon by name
 templ MainMenuIcon(name, classIcon string) {
 	if svg, ok := common.MainMenuIconsSVG[name]; ok {
@@ -297,7 +303,6 @@ templ MainMenuIcon(name, classIcon string) {
 		</svg>
 	}
 }
-
 
 templ PrintButton(btn domain.Button, translator *i18n.Service) {
 	<button

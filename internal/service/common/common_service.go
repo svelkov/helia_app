@@ -53,6 +53,7 @@ type CommonService interface {
 
 	// Next broj naloga (finansijski nalog - fnal, robni nalog - rnal)
 	GetNextFnalNalog(ctx context.Context, tipdok string) (int64, error)
+	GetFnalByTipdokNalog(ctx context.Context, tipdok string, nalog int) (domain.Fnal, bool, error)
 	GetNextRnalNalog(ctx context.Context, tipdok string) (int64, error)
 }
 
@@ -565,6 +566,29 @@ func (s *CommonResource) GetTipovePoreskihKnjigaComboValues(ctx context.Context,
 // current period for the financial nalozi (fnal).
 func (s *CommonResource) GetNextFnalNalog(ctx context.Context, tipdok string) (int64, error) {
 	return nextNalogQuery(ctx, s.fnalRepo, "fnal", tipdok, func(f domain.Fnal) int64 { return f.Nalog })
+}
+
+// GetFnalByTipdokNalog returns the financial nalog (fnal) of the vrsta naloga and broj naloga in the
+// current period (found false when there is none).
+func (s *CommonResource) GetFnalByTipdokNalog(ctx context.Context, tipdok string, nalog int) (domain.Fnal, bool, error) {
+	session, err := sessionFrom(ctx)
+	if err != nil {
+		return domain.Fnal{}, false, err
+	}
+	qb := helcommon.NewQueryBuilder("select idfnal, tipdok, nalog, danal from fnal", true)
+	hasGod, hasKar := s.fnalRepo.GetHasGodHasKar()
+	qb.AddGodKarConditions(hasGod, hasKar, session.SelectedGod, session.SelectedKar)
+	qb.AddEqual("tipdok", tipdok)
+	qb.AddEqual("nalog", nalog)
+	query, args := qb.Build()
+	entities, err := s.fnalRepo.GetAllCustom(ctx, query, "", args, "", "")
+	if err != nil {
+		return domain.Fnal{}, false, err
+	}
+	if entities == nil || len(*entities) == 0 {
+		return domain.Fnal{}, false, nil
+	}
+	return (*entities)[0], true, nil
 }
 
 // GetNextRnalNalog returns the next broj naloga (max(nalog) + 1) of the given vrsta naloga in the

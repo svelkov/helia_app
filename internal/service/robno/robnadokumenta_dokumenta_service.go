@@ -627,6 +627,16 @@ func (s *RobnoDokumentaResource) stampaFakturaMagacin(ctx context.Context, userS
 	return robnoStampaFakturaMagacin{found: true, mesto: mag.Mesto, adresa: mag.Adresa, opis: mag.Opis, tel: mag.Tel, email: mag.Email}, nil
 }
 
+// GetGrupaDokumenta returns the group (dokvrsta.grpdok) of the vrsta dokumenta vrd of the current
+// period ("" when it does not exist).
+func (s *RobnoDokumentaResource) GetGrupaDokumenta(ctx context.Context, vrd int) (string, error) {
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		return "", fmt.Errorf("no user session found")
+	}
+	return s.stampaFakturaGrupa(ctx, userSession, strconv.Itoa(vrd))
+}
+
 // stampaFakturaGrupa returns the group (dokvrsta.grpdok) of the vrsta dokumenta "od" of the print,
 // like the legacy report reads it ("" when the vrsta is not given or does not exist).
 func (s *RobnoDokumentaResource) stampaFakturaGrupa(ctx context.Context, userSession *domain.UserSession, odVrd string) (string, error) {

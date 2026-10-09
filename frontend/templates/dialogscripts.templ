@@ -31,7 +31,7 @@ templ HandleDialogResponseScript() {
 				document.querySelectorAll('.field-error-inline').forEach(el => {
 					el.textContent = '';
 				});
-				document.querySelectorAll('input').forEach(input => {
+				document.querySelectorAll('input, select, textarea').forEach(input => {
 					input.classList.remove('border-red-500');
 				});
 				
@@ -40,7 +40,13 @@ templ HandleDialogResponseScript() {
 					//console.log("Errors found:", response.errors)
 					// Loop through errors and show error messages for each field
 					response.errors.forEach(error => {
-						const field = document.querySelector(`input[name="${error.field}"]`);
+						// The field of the error: an input, a combo (select) or a textarea with the name of
+						// the field; for the hidden input of a table combo the visible input of the combo
+						// (the one whose data-valueid is the id of the hidden input).
+						let field = document.querySelector(`input[name="${error.field}"], select[name="${error.field}"], textarea[name="${error.field}"]`);
+						if (field && field.type === 'hidden') {
+							field = (field.id && document.querySelector(`[data-valueid="${field.id}"]`)) || null;
+						}
 						if (field) {
 							field.classList.add('border-red-500'); // Add red border to invalid field
 							// Add error message immediately after the input field
@@ -103,7 +109,7 @@ templ HandleBackendResponseScript() {
 				document.querySelectorAll('.field-error-inline').forEach(el => {
 					el.textContent = '';
 				});
-				document.querySelectorAll('input').forEach(input => {
+				document.querySelectorAll('input, select, textarea').forEach(input => {
 					input.classList.remove('border-red-500');
 				});
 				
@@ -112,7 +118,13 @@ templ HandleBackendResponseScript() {
 					//console.log("Errors found:", response.errors)
 					// Loop through errors and show error messages for each field
 					response.errors.forEach(error => {
-						const field = document.querySelector(`input[name="${error.field}"]`);
+						// The field of the error: an input, a combo (select) or a textarea with the name of
+						// the field; for the hidden input of a table combo the visible input of the combo
+						// (the one whose data-valueid is the id of the hidden input).
+						let field = document.querySelector(`input[name="${error.field}"], select[name="${error.field}"], textarea[name="${error.field}"]`);
+						if (field && field.type === 'hidden') {
+							field = (field.id && document.querySelector(`[data-valueid="${field.id}"]`)) || null;
+						}
 						if (field) {
 							field.classList.add('border-red-500'); // Add red border to invalid field
 							// Add error message immediately after the input field

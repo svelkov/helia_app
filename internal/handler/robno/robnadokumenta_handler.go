@@ -3,6 +3,7 @@ package robno
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -52,18 +53,8 @@ const (
 	robnoDokumentaURLNextNalog = robnoDokumentaURLPrefix + "/nextnalog"
 	robnoDokumentaURLNalogData = robnoDokumentaURLPrefix + "/nalog-data"
 	robnoDokumentaURLConfirm   = robnoDokumentaURLPrefix + "/confirm-addupdate"
-
-	// TODO (temporary): the "Fakture veleprodaje" screen (the RobnoFakture template) has no handler
-	// yet. The button "Fakture veleprodaje (preview)" of the "Unos dokumenta" tab and these two routes
-	// only render the template so that it can be reviewed in the browser: the save route answers
-	// success without saving anything, so that the screen switches from the header to the entry of the
-	// stavke (robnoFaktureAfterHeaderSave). Remove the button, the routes and FakturePreview /
-	// FakturePreviewSave together with the two table ids when the handler of the
-	// fakture is written.
-	robnoDokumentaURLFakturePreview     = robnoDokumentaURLPrefix + "/fakture-preview"
-	robnoDokumentaURLFakturePreviewSave = robnoDokumentaURLFakturePreview + "/save"
-	robnoDokumentaFaktureStavkeTableID  = "robno-fakture-stavke-table"
-	robnoDokumentaFaktureAvansiTableID  = "robno-fakture-avansi-table"
+	// robnoDokumentaURLUnlockNalog (+ "/:id") releases the lock of a robni nalog (see UnlockRobnoNalog).
+	robnoDokumentaURLUnlockNalog = robnoDokumentaURLUnos + "/unlock"
 
 	// Štampa fakture (the report RobnoStampaFaktura, the legacy ROB_RPT_STAMPA_FAKTURA).
 	robnoDokumentaStampaFakturaTitle = "Štampa fakture"
@@ -371,151 +362,6 @@ const hxValsRobnoDokumentaTipdok = `js:{"tipdok": document.getElementById("tipdo
 const hxValsRobnoDokumentaNalog = `js:{"tipdok": document.getElementById("tipdok")?.value, ` +
 	`"nalog": document.getElementById("nalog")?.value}`
 
-// The declarations of the "Fakture veleprodaje" screen (the templates RobnoFakture and
-// RobnoFaktureDialog of frontend/templates/robno/robnadokumenta.templ). The template package cannot
-// import this package, so every url, element id and hx-vals string the markup of the screen uses is
-// declared here: the urls and the ids reach the templates as domain.RobnoFaktureUI (see
-// robnoFaktureUI) and the two hx-vals strings of the header of the nalog as plain arguments, while
-// robnoFaktureButtonsFor builds the buttons of the screen with the same constants.
-const (
-	// URLs of the screen. TODO (temporary): the handler and the routes of the fakture are not written
-	// yet; the urls are the ones the screen will use (the prefix of the other tabs of "Robna
-	// dokumenta").
-	robnoFaktureURL           = robnoDokumentaURLPrefix + "/fakture"
-	robnoFaktureSaveURL       = robnoFaktureURL + "/save"
-	robnoFaktureNoviURL       = robnoFaktureURL + "/novi"
-	robnoFaktureDeleteURL     = robnoFaktureURL + "/brisi"
-	robnoFaktureStavkaSaveURL = robnoFaktureURL + "/stavka/save"
-	robnoFaktureStavkaDelURL  = robnoFaktureURL + "/stavka/brisi"
-	robnoFaktureArtikalSearch = "/api/promet/searchbutton"
-	robnoFakturePartnerSearch = "/api/partneri/searchbutton"
-	// TODO: the endpoint of the search of the robni dokumenti is not written yet (neither is the one of
-	// robnoFakturePartnerSearch); the button of the broj dokumenta already sends the request here.
-	robnoFaktureDokumentSearch = "/api/robno-dokumenta/searchbutton"
-
-	// Ids of the two collapsible controls of the screen. They are given to the script of the screen
-	// (RobnoFaktureScript) and to the buttons (robnoFaktureButtonsFor), so that every id is written in
-	// one place only.
-	robnoFaktureHeaderPanelID = "robno-fakture-header-panel"
-	robnoFaktureStavkePanelID = "robno-fakture-stavke-panel"
-
-	// robnoDokumentaFaktureDialogStagingID is the element of the "Unos dokumenta" tab (the template
-	// RobnoDokumentaMain) the dialog of the "Fakture veleprodaje" screen is rendered into and
-	// robnoFaktureDialogID the id of the dialog itself (the one closeDialog hides). The staging element
-	// is the hx-target of the button that opens the dialog and the dialog id is the IdDialog of the
-	// "Zatvori" button of the dialog.
-	robnoDokumentaFaktureDialogStagingID = "robno-fakture-dialog-staging"
-	robnoFaktureDialogID                 = "robno-fakture-dialog"
-)
-
-// robnoFaktureUI groups the urls and the element ids of the "Fakture veleprodaje" screen.
-func robnoFaktureUI() domain.RobnoFaktureUI {
-	return domain.RobnoFaktureUI{
-		HeaderPanelID:     robnoFaktureHeaderPanelID,
-		StavkePanelID:     robnoFaktureStavkePanelID,
-		ContentID:         "#" + robnoDokumentaContentID,
-		DialogID:          robnoFaktureDialogID,
-		DialogStagingID:   robnoDokumentaFaktureDialogStagingID,
-		ArtikalSearchURL:  robnoFaktureArtikalSearch,
-		PartnerSearchURL:  robnoFakturePartnerSearch,
-		DokumentSearchURL: robnoFaktureDokumentSearch,
-	}
-}
-
-// robnoFaktureButtonsFor builds the buttons of the "Fakture veleprodaje" screen.
-func robnoFaktureButtonsFor() domain.RobnoFaktureButtons {
-	return domain.RobnoFaktureButtons{
-		Save: domain.Button{
-			Id:            "robno-fakture-sacuvaj",
-			LabelText:     "Sačuvaj",
-			Icon:          "save",
-			BtnClass:      common.ClassButton,
-			HxActionURL:   robnoFaktureSaveURL,
-			HxRequestType: "POST",
-			// Only the fields of the header are sent (the read only values of the strips are disabled,
-			// so the browser does not send them; the handler reads them from the dokument/kupac).
-			HxInclude: "#" + robnoFaktureHeaderPanelID + " [data-panel-fields]",
-			// The handler answers with the standard JSON response; the state of the two controls is
-			// switched by the script of the screen (RobnoFaktureScript) after the request. The same
-			// script also works when the handler swaps the whole tab (hx-target = robnoFaktureUI's
-			// ContentID), because the swapped markup carries the state of the saved dokument.
-			HxSwap:               "none",
-			HxOnAfterRequest:     "robnoFaktureAfterHeaderSave",
-			HxOnAfterRequestArgs: []any{robnoFaktureHeaderPanelID, robnoFaktureStavkePanelID},
-		},
-		Modify: domain.Button{
-			Id:           "robno-fakture-izmeni",
-			LabelText:    "Izmeni",
-			Icon:         "refresh",
-			BtnClass:     common.ClassButton,
-			HxOnClick:    "robnoFaktureModifyHeader",
-			HxOnClickArg: []any{robnoFaktureHeaderPanelID, robnoFaktureStavkePanelID},
-		},
-		New: domain.Button{
-			Id:               "robno-fakture-novi",
-			LabelText:        "Novi dok.",
-			Icon:             "add",
-			BtnClass:         common.ClassButton,
-			HxActionURL:      robnoFaktureNoviURL,
-			HxRequestType:    "GET",
-			HxTarget:         "#" + robnoDokumentaContentID,
-			HxSwap:           "innerHTML",
-			HxOnAfterRequest: "robnoFaktureAfterHeaderSave",
-			HxOnAfterRequestArgs: []any{
-				robnoFaktureHeaderPanelID, robnoFaktureStavkePanelID},
-		},
-		Delete: domain.Button{
-			Id:            "robno-fakture-brisi",
-			LabelText:     "Briši",
-			Icon:          "delete",
-			BtnClass:      common.ClassButton,
-			HxActionURL:   robnoFaktureDeleteURL,
-			HxRequestType: "DELETE",
-			HxInclude:     "#" + robnoFaktureHeaderPanelID + " [data-panel-fields]",
-			HxSwap:        "none",
-		},
-		Back: domain.Button{
-			Id:        "robno-fakture-nazad",
-			LabelText: "Nazad",
-			Icon:      "back",
-			BtnClass:  common.ClassButton,
-			// TODO: the route of the "Fakture veleprodaje" menu entry
-			HxActionURL:   "/api/robna-dokumenta",
-			HxRequestType: "GET",
-			HxTarget:      "#main-content",
-			HxSwap:        "innerHTML",
-		},
-		SaveStavka: domain.Button{
-			Id:            "robno-fakture-stavka-sacuvaj",
-			LabelText:     "Sačuvaj",
-			Icon:          "save",
-			BtnClass:      common.ClassButton,
-			HxActionURL:   robnoFaktureStavkaSaveURL,
-			HxRequestType: "POST",
-			HxInclude:     "#" + robnoFaktureStavkePanelID + " [data-panel-fields]",
-			HxTarget:      "#" + robnoFaktureStavkePanelID,
-			HxSwap:        "none",
-		},
-		ModifyStavka: domain.Button{
-			Id:        "robno-fakture-stavka-izmeni",
-			LabelText: "Izmeni",
-			Icon:      "refresh",
-			BtnClass:  common.ClassButton,
-		},
-		DeleteStavka: domain.Button{
-			Id:            "robno-fakture-stavka-brisi",
-			LabelText:     "Briši",
-			Icon:          "delete",
-			BtnClass:      common.ClassButton,
-			HxActionURL:   robnoFaktureStavkaDelURL,
-			HxRequestType: "DELETE",
-			HxInclude:     "#" + robnoFaktureStavkePanelID + " [data-panel-fields]",
-			HxTarget:      "#" + robnoFaktureStavkePanelID,
-			HxSwap:        "none",
-		},
-	}
-}
-
 // Sub-tab indexes of the "Pregled dokumenta" tab (the two sub-tabs that are implemented).
 const (
 	robnoDokumentaSubTabPregledStampa = iota
@@ -613,13 +459,9 @@ const hxValsRobnoDokumentaPrikazNaloga = `js:{
 }`
 
 // hxValsRobnoDokumentaUNalogu sends the parameters of the "Prikaz dokumenata u nalogu" tab. The
-// parameters of the tab are the same selection of nalozi as the "Prikaz naloga" tab, including the
-// state of the three checkboxes that enable the date and operator filters.
 const hxValsRobnoDokumentaUNalogu = hxValsRobnoDokumentaPrikazNaloga
 
 // hxValsRobnoDokumentaPooperateru sends the parameters of the "Prikaz dokumenata po operateru" tab.
-// The panel of the tab has no magacin and no vrsta naloga selection (the legacy screen has none), so
-// it sends the range of the broj naloga and the state of the three checkboxes with their fields.
 const hxValsRobnoDokumentaPooperateru = `js:{
 	"odnaloga": document.getElementById("odnaloga")?.value,
 	"donaloga": document.getElementById("donaloga")?.value,
@@ -634,8 +476,6 @@ const hxValsRobnoDokumentaPooperateru = `js:{
 }`
 
 // hxValsRobnoDokumentaSpecifikacije sends the parameters of the "Specifikacije dokumenta" tab: the
-// magacin, the ranges of the vrste naloga za knjiženje, of the broj naloga and of the broj dokumenta,
-// the vrsta dokumenta, the range of the dates and the state of the print.
 const hxValsRobnoDokumentaSpecifikacije = `js:{
 	"magaciniid": document.getElementById("magaciniid")?.value,
 	"odvrd": document.getElementById("odvrd")?.value,
@@ -665,8 +505,6 @@ type RobnoDokumentaHandler struct {
 	// defined once, like the "Nalozi" screen does).
 	btnSave      domain.Button
 	btnNoviNalog domain.Button
-	// TODO (temporary): btnFakture opens the new "Fakture veleprodaje" screen (RobnoFakture).
-	btnFakture domain.Button
 }
 
 // NewRobnoDokumentaHandler creates the handler of the "Robna dokumenta" option.
@@ -712,40 +550,19 @@ func (h *RobnoDokumentaHandler) setHandlerFieldValues() {
 		HxSwap:           "none",
 		BtnClass:         common.ClassNewButton,
 	}
-	// TODO (temporary): opens the new "Fakture veleprodaje" screen (RobnoFakture) for review; see
-	// robnoDokumentaURLFakturePreview. The screen is rendered as a dialog into the staging element of
-	// the "Unos dokumenta" tab (tmpl_robno.RobnoDokumentaFaktureDialogStagingID).
-	h.btnFakture = domain.Button{
-		Id:            "robno-dokumenta-fakture-btn",
-		IsVisible:     true,
-		LabelText:     "Fakture veleprodaje (preview)",
-		HxActionURL:   robnoDokumentaURLFakturePreview,
-		HxRequestType: "GET",
-		HxTarget:      "#" + robnoDokumentaFaktureDialogStagingID,
-		HxSwap:        "innerHTML",
-		BtnClass:      common.ClassButton,
-	}
 }
 
 // tipdokComboValues returns the vrste naloga for knjiženje of the robno knjigovodstvo, the combo of
-// every tab: the groups of the configuration (tipdok.grpdok in grupe_dokumenata.dok_rob, the legacy
-// QRY_TIPDOK with "PST;ROB;SVI").
 func (h *RobnoDokumentaHandler) tipdokComboValues(ctx context.Context) ([]domain.ComboItem, error) {
 	return h.service.GetTipdokComboValues(ctx, commonsvc.WithGrupeDokumenata(h.cfg.GrupeDokumenata.GetDokRob()...))
 }
 
 // vrstaDokumentaComboValues returns the vrste dokumenata of the robno knjigovodstvo, the combo of every
-// tab: the moduli of the configuration (dokvrsta.modul in grupe_dokumenata.dok_rob, the legacy
-// ROB_QRY_DOKVRSTA with gsDOKROB). The unos dokumenata limits them further to the vrste dokumenata of
-// its vrsta naloga (see GetUnosComboValues).
 func (h *RobnoDokumentaHandler) vrstaDokumentaComboValues(ctx context.Context) ([]domain.ComboItem, error) {
 	return h.service.GetVrstaDokumentaComboValues(ctx, commonsvc.WithIn("modul", h.cfg.GrupeDokumenata.GetDokRob()...))
 }
 
 // magacinComboValues returns the magacini of the tipovi of the configuration (magacini.tipmag in
-// grupe_dokumenata.tipmag_rob, the legacy ROB_QRY_MAG with "V;M;D"), the combo of the tabs. The unos
-// dokumenata (the first tab) shows instead the magacini the user may work with (maguser, the legacy
-// ROB_QRY_MAGUSER) limited to the magacini of its vrsta naloga (see GetUnosComboValues).
 func (h *RobnoDokumentaHandler) magacinComboValues(ctx context.Context) ([]domain.ComboItem, error) {
 	return h.service.GetMagacinComboValues(ctx, commonsvc.WithIn("tipmag", h.cfg.GrupeDokumenata.GetTipmagRob()...))
 }
@@ -822,70 +639,12 @@ func (h *RobnoDokumentaHandler) RobnoDokumentaMain(c *gin.Context) {
 	}
 
 	search := common.CreateSearchInput(robnoDokumentaSearchInputID, h.translator, robnoDokumentaURLUnos, "#"+robnoDokumentaUnosTableID, hxValsRobnoDokumentaUnos)
-	if err := tmpl_robno.RobnoDokumentaMain(robnoFaktureUI(), hxValsRobnoDokumentaTipdok, hxValsRobnoDokumentaNalog, tabs, subTabs, tbl, tipdokValues, vrstaDokumentaValues, magValues, total, payload, h.btnSave, h.btnNoviNalog, h.btnFakture, search, h.translator).Render(ctx, c.Writer); err != nil {
+	if err := tmpl_robno.RobnoDokumentaMain(hxValsRobnoDokumentaTipdok, hxValsRobnoDokumentaNalog, tabs, subTabs, tbl, tipdokValues, vrstaDokumentaValues, magValues, total, payload, h.btnSave, h.btnNoviNalog, search, h.translator, common.GetCsrfTokenFromSession(c)).Render(ctx, c.Writer); err != nil {
 		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
 	}
-}
-
-// FakturePreview renders the "Fakture veleprodaje" screen as a dialog (TODO: temporary preview).
-func (h *RobnoDokumentaHandler) FakturePreview(c *gin.Context) {
-	ctx := c.Request.Context()
-	userSession := domain.GetSessionFromStdContext(ctx)
-	if userSession == nil {
-		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, common.ErrMsgSessionNotFound)
-		return
-	}
-
-	// Both grids of the screen are empty: their queries belong to the handler of the fakture (TODO).
-	tbl := common.SetTableBasicData("Stavke fakture", robnoDokumentaFaktureStavkeTableID, h.service.GetFaktureStavkeTableFields(), "", robnoDokumentaURLFakturePreview, 0, 0, 0, 0, h.cfg)
-	common.SetTableConfig(&tbl, robnoDokumentaFaktureStavkeTableID, robnoDokumentaURLFakturePreview, false, false, false)
-	if common.IsDataRequest(c) && c.Request.Header.Get("X-Request-Source") != robnoDokumentaSourceBtn {
-		utils.RenderContent(c, tbl)
-		return
-	}
-	avansiTbl := common.SetTableBasicData("Avansi", robnoDokumentaFaktureAvansiTableID, h.service.GetFaktureAvansiTableFields(), "", robnoDokumentaURLFakturePreview, 0, 0, 0, 0, h.cfg)
-	common.SetTableConfig(&avansiTbl, robnoDokumentaFaktureAvansiTableID, robnoDokumentaURLFakturePreview, false, false, false)
-
-	vrstaDokumentaValues, err := h.vrstaDokumentaComboValues(ctx)
-	if err != nil {
-		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
-		return
-	}
-
-	header := domain.RobnoFaktureHeaderView{}
-	header.Snimljen = c.Query("snimljen") == "true"
-	btns := robnoFaktureButtonsFor()
-	btns.Save.HxActionURL = robnoDokumentaURLFakturePreviewSave
-	btns.Back.HxActionURL = ""
-	btns.Back.HxRequestType = ""
-	btns.Back.HxOnClick = "closeDialog"
-	btns.Back.HxOnClickArg = []any{robnoFaktureDialogID}
-	// The "Zatvori" button of the title bar of the dialog (CloseButton calls closeDialog with the dialog id).
-	btnClose := domain.Button{
-		Id:       "robno-fakture-dialog-close",
-		IdDialog: robnoFaktureDialogID,
-		BtnClass: common.ClassDialogCloseButton,
-	}
-
-	search := common.CreateSearchInput(robnoDokumentaSearchInputID, h.translator, robnoDokumentaURLFakturePreview, "#"+robnoDokumentaFaktureStavkeTableID, "")
-	// TODO: the combos of the valute, of the sistemi PDV and of the ZIRP računa of the screen (the
-	// last two are combos in the template).
-	if err := tmpl_robno.RobnoFaktureDialog(robnoFaktureUI(), tbl, avansiTbl, header, domain.RobnoFaktureStavka{}, vrstaDokumentaValues, nil, nil, nil, btns, btnClose, search, h.translator).Render(ctx, c.Writer); err != nil {
-		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
-	}
-}
-
-// FakturePreviewSave answers the preview save without saving anything (TODO: temporary).
-func (h *RobnoDokumentaHandler) FakturePreviewSave(c *gin.Context) {
-	common.WriteJSONResponse(c, http.StatusOK, true, nil, "Pregled: podaci fakture nisu sačuvani (handler faktura još nije implementiran)")
 }
 
 // robnoDokumentaStampaParams reads the selection of the print of the robni dokumenti (common to the
-// prints of every vrsta dokumenta): the one of the source query of the legacy reports - the vrsta
-// naloga (tipdok), the groups of the vrste dokumenta (grupedokumenata), the ranges of the broj naloga
-// (odnaloga/donaloga), of the broj dokumenta (oddokum/dodokum) and of the vrsta dokumenta (odvrd/dovrd)
-// and the magacin (magaciniid) - and the one of the "Štampa" sub-tab of "Pregled dokumenta": the
-// selected document (rdokid), the vrsta dokumenta (vrd) and the range of the datum naloga.
 func robnoDokumentaStampaParams(c *gin.Context) domain.RobnoStampaFakturaParams {
 	return domain.RobnoStampaFakturaParams{
 		Tipdok:          c.Query("tipdok"),
@@ -926,10 +685,6 @@ func robnoDokumentaStampaReportParams(firma domain.RobnoStampaFakturaFirmaDto, u
 }
 
 // StampaFakturaPrint prints the fakture of the selection (the report RobnoStampaFaktura, the legacy
-// ROB_RPT_STAMPA_FAKTURA), one faktura per page. The selection is read by robnoDokumentaStampaParams;
-// the groups of the vrste dokumenta are by default the group of the vrsta dokumenta odvrd, like the
-// legacy report. A single faktura is printed with odnaloga = donaloga and oddokum = dodokum (or with
-// the rdokid of the document).
 func (h *RobnoDokumentaHandler) StampaFakturaPrint(c *gin.Context) {
 	ctx := c.Request.Context()
 	userSession := domain.GetSessionFromStdContext(ctx)
@@ -956,8 +711,6 @@ func (h *RobnoDokumentaHandler) StampaFakturaPrint(c *gin.Context) {
 }
 
 // StampaFakturaMP prints the maloprodajni računi of the selection (the report RobnoStampaFakturaMP, the
-// legacy ROB_RPT_STAMPA_FAKTURA_MP), one račun per page. The selection is read by
-// robnoDokumentaStampaParams; without a selected document the računi of the group DIR are printed.
 func (h *RobnoDokumentaHandler) StampaFakturaMP(c *gin.Context) {
 	ctx := c.Request.Context()
 	userSession := domain.GetSessionFromStdContext(ctx)
@@ -977,8 +730,6 @@ func (h *RobnoDokumentaHandler) StampaFakturaMP(c *gin.Context) {
 }
 
 // StampaFakturaUsluge prints the fakture usluga of the selection (the report RobnoStampaFakturaUsluge,
-// the legacy ROB_RPT_STAMPA_FAKTURA_USLUGE2), one faktura per page. The selection is read by
-// robnoDokumentaStampaParams.
 func (h *RobnoDokumentaHandler) StampaFakturaUsluge(c *gin.Context) {
 	ctx := c.Request.Context()
 	userSession := domain.GetSessionFromStdContext(ctx)
@@ -998,8 +749,6 @@ func (h *RobnoDokumentaHandler) StampaFakturaUsluge(c *gin.Context) {
 }
 
 // StampaZaduzenjeCO prints the zaduženja za obaveze of the selection (the report RobnoStampaZaduzenjeCO,
-// the legacy ROB_RPT_STAMPA_ZADUZENJA_CO), one document per page. The selection is read by
-// robnoDokumentaStampaParams.
 func (h *RobnoDokumentaHandler) StampaZaduzenjeCO(c *gin.Context) {
 	ctx := c.Request.Context()
 	userSession := domain.GetSessionFromStdContext(ctx)
@@ -1019,8 +768,6 @@ func (h *RobnoDokumentaHandler) StampaZaduzenjeCO(c *gin.Context) {
 }
 
 // StampaRazduzenjeCO prints the razduženja za obaveze of the selection (the report
-// RobnoStampaZaduzenjeCO, the legacy ROB_RPT_STAMPA_RAZDUZENJA_CO), one document per page. The selection
-// is read by robnoDokumentaStampaParams.
 func (h *RobnoDokumentaHandler) StampaRazduzenjeCO(c *gin.Context) {
 	ctx := c.Request.Context()
 	userSession := domain.GetSessionFromStdContext(ctx)
@@ -1040,8 +787,6 @@ func (h *RobnoDokumentaHandler) StampaRazduzenjeCO(c *gin.Context) {
 }
 
 // StampaFakturaAvansni prints the avansni računi of the selection (the report
-// RobnoStampaFakturaAvansni, the legacy ROB_RPT_STAMPA_ARA), one račun per page. The selection is read
-// by robnoDokumentaStampaParams.
 func (h *RobnoDokumentaHandler) StampaFakturaAvansni(c *gin.Context) {
 	ctx := c.Request.Context()
 	userSession := domain.GetSessionFromStdContext(ctx)
@@ -1061,9 +806,6 @@ func (h *RobnoDokumentaHandler) StampaFakturaAvansni(c *gin.Context) {
 }
 
 // StampaFakturaIzvoz prints the izvozne fakture of the selection (the report RobnoStampaFakturaIzvoz,
-// the legacy PR_RPT_FAKTURA_OTPIZV), one faktura per page. The selection is read by
-// robnoDokumentaStampaParams; "komercopis" (the legacy ipCBOX_KOMERCOPIS) adds the komercijalni opis
-// of the artikli to their naziv.
 func (h *RobnoDokumentaHandler) StampaFakturaIzvoz(c *gin.Context) {
 	ctx := c.Request.Context()
 	userSession := domain.GetSessionFromStdContext(ctx)
@@ -1083,8 +825,6 @@ func (h *RobnoDokumentaHandler) StampaFakturaIzvoz(c *gin.Context) {
 }
 
 // StampaFakturaKnjizno prints the knjižna odobrenja and zaduženja of the selection (the report
-// RobnoStampaFakturaKnjizno, the legacy PR_RPT_KNJODOBRENJE), one document per page. The selection is
-// read by robnoDokumentaStampaParams.
 func (h *RobnoDokumentaHandler) StampaFakturaKnjizno(c *gin.Context) {
 	ctx := c.Request.Context()
 	userSession := domain.GetSessionFromStdContext(ctx)
@@ -1104,9 +844,6 @@ func (h *RobnoDokumentaHandler) StampaFakturaKnjizno(c *gin.Context) {
 }
 
 // StampaFakturaOtpremnica prints the fakture-otpremnice of the selection (the report
-// RobnoStampaFakturaOtpremnica, the legacy PR_RPT_FAKTURA_OTP), one document per page. The selection
-// is read by robnoDokumentaStampaParams; "tipfakt" is the title of the documents (the legacy ipTIPFAKT:
-// 1 račun - otpremnica, 2 račun, 3 otpremnica; the račun by default).
 func (h *RobnoDokumentaHandler) StampaFakturaOtpremnica(c *gin.Context) {
 	ctx := c.Request.Context()
 	userSession := domain.GetSessionFromStdContext(ctx)
@@ -1130,8 +867,6 @@ func (h *RobnoDokumentaHandler) StampaFakturaOtpremnica(c *gin.Context) {
 }
 
 // StampaProfakturaIzvoz prints the izvozne profakture of the selection (the report
-// RobnoStampaProfakturaIzvoz, the legacy ROB_RPT_PROFAKTURAIZV), one profaktura per page. The selection
-// is read by robnoDokumentaStampaParams.
 func (h *RobnoDokumentaHandler) StampaProfakturaIzvoz(c *gin.Context) {
 	ctx := c.Request.Context()
 	userSession := domain.GetSessionFromStdContext(ctx)
@@ -1151,9 +886,6 @@ func (h *RobnoDokumentaHandler) StampaProfakturaIzvoz(c *gin.Context) {
 }
 
 // StampaProfaktura prints the profakture of the selection (the report RobnoStampaProfaktura, the legacy
-// ROB_RPT_STAMPA_PROFAKTURA), one profaktura per page. The selection is read by
-// robnoDokumentaStampaParams; "tipprof" is the title of the documents (the legacy ipTip, RADIO_Radio3:
-// 1 profaktura, 2 ponuda; the profaktura by default).
 func (h *RobnoDokumentaHandler) StampaProfaktura(c *gin.Context) {
 	ctx := c.Request.Context()
 	userSession := domain.GetSessionFromStdContext(ctx)
@@ -1177,8 +909,6 @@ func (h *RobnoDokumentaHandler) StampaProfaktura(c *gin.Context) {
 }
 
 // StampaKnjiznoPismo prints the knjižna pisma with stavke of the selection (the report
-// RobnoStampaKnjiznoPismo, the legacy ROB_RPT_KNJPISMO), one knjižno pismo per page. The selection is
-// read by robnoDokumentaStampaParams.
 func (h *RobnoDokumentaHandler) StampaKnjiznoPismo(c *gin.Context) {
 	ctx := c.Request.Context()
 	userSession := domain.GetSessionFromStdContext(ctx)
@@ -1198,8 +928,6 @@ func (h *RobnoDokumentaHandler) StampaKnjiznoPismo(c *gin.Context) {
 }
 
 // StampaKnjiznoPismoFin prints the finansijska knjižna pisma (without stavke) of the selection (the
-// report RobnoStampaKnjiznoPismoFin, the legacy ROB_RPT_KNJPISMOFIN), one knjižno pismo per page. The
-// selection is read by robnoDokumentaStampaParams.
 func (h *RobnoDokumentaHandler) StampaKnjiznoPismoFin(c *gin.Context) {
 	ctx := c.Request.Context()
 	userSession := domain.GetSessionFromStdContext(ctx)
@@ -1548,8 +1276,8 @@ func (h *RobnoDokumentaHandler) GetNalogData(c *gin.Context) {
 	})
 }
 
-// ConfirmUnosDokumenta opens the confirm dialog of the save of the header.
-func (h *RobnoDokumentaHandler) ConfirmUnosDokumenta(c *gin.Context) {
+// ConfirmRobnoUnosNaloga opens the confirm dialog of the save of the header.
+func (h *RobnoDokumentaHandler) ConfirmRobnoUnosNaloga(c *gin.Context) {
 	ctx := c.Request.Context()
 	var params domain.RobnoDokumentaParams
 	if err := c.ShouldBind(&params); err != nil {
@@ -1557,7 +1285,9 @@ func (h *RobnoDokumentaHandler) ConfirmUnosDokumenta(c *gin.Context) {
 		return
 	}
 	action := common.ActionAdd
-	existing, err := h.service.GetByTipdokNalog(ctx, params.Tipdok, common.StringToInt(params.Nalog))
+	// The nalog of the vrsta naloga, broj naloga and magacin (like the legacy GODKARNALOGTIPDOKMAG: the
+	// same broj naloga in another magacin is a new nalog).
+	existing, magacin, err := h.service.GetByTipdokNalogMagacin(ctx, params.Tipdok, common.StringToInt(params.Nalog), params.MagaciniID)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, common.ErrMsgReadData)
 		return
@@ -1570,7 +1300,7 @@ func (h *RobnoDokumentaHandler) ConfirmUnosDokumenta(c *gin.Context) {
 		}
 		action = common.ActionUpdate
 	}
-	if fieldErrors := h.service.ValidateUnosDokumenta(ctx, params); len(fieldErrors) > 0 {
+	if fieldErrors := h.service.ValidateRobnoUnosNaloga(ctx, params); len(fieldErrors) > 0 {
 		common.WriteJSONResponse(c, http.StatusUnprocessableEntity, false, fieldErrors, common.ErrMsgValidation)
 		return
 	}
@@ -1582,6 +1312,7 @@ func (h *RobnoDokumentaHandler) ConfirmUnosDokumenta(c *gin.Context) {
 		msg = []string{
 			h.translator.Message(`Nastavak knjiženja naloga?`),
 			fmt.Sprintf("%s: %s", h.translator.Message(`Vrsta naloga`), params.Tipdok),
+			fmt.Sprintf("%s: %d-%s", h.translator.Message(`Magacin`), magacin.Mag, magacin.Opis),
 			fmt.Sprintf("%s: %s", h.translator.Message(`Broj naloga`), params.Nalog),
 		}
 	}
@@ -1630,8 +1361,8 @@ func (h *RobnoDokumentaHandler) ConfirmUnosDokumenta(c *gin.Context) {
 	tmpl.DialogConfirm(msg, dialog, btnClose, btnSacuvaj, btnCancel, h.translator, common.GetCsrfTokenFromSession(c)).Render(ctx, c.Writer)
 }
 
-// SaveUnosDokumenta inserts the header of a new robni nalog (rnal) and locks it.
-func (h *RobnoDokumentaHandler) SaveUnosDokumenta(c *gin.Context) {
+// SaveRobnoNalog inserts the header of a new robni nalog (rnal) and locks it.
+func (h *RobnoDokumentaHandler) SaveRobnoNalog(c *gin.Context) {
 	ctx := c.Request.Context()
 	userSession := domain.GetSessionFromStdContext(ctx)
 	if userSession == nil {
@@ -1643,11 +1374,11 @@ func (h *RobnoDokumentaHandler) SaveUnosDokumenta(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusBadRequest, false, []domain.FieldError{}, common.ErrMsgFormDecode)
 		return
 	}
-	if fieldErrors := h.service.ValidateUnosDokumenta(ctx, params); len(fieldErrors) > 0 {
+	if fieldErrors := h.service.ValidateRobnoUnosNaloga(ctx, params); len(fieldErrors) > 0 {
 		common.WriteJSONResponse(c, http.StatusUnprocessableEntity, false, fieldErrors, common.ErrMsgValidation)
 		return
 	}
-	rnalID, err := h.service.CreateUnosDokumenta(ctx, params)
+	rnalID, err := h.service.CreateRobnoNalog(ctx, params)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, common.ErrMsgSaveData+" error:"+err.Error())
 		return
@@ -1658,11 +1389,12 @@ func (h *RobnoDokumentaHandler) SaveUnosDokumenta(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, common.ErrMsgLockFailed)
 		return
 	}
+	robnoDokumentaOtvoriDokumentTrigger(c, rnalID, params)
 	common.WriteJSONResponse(c, http.StatusOK, true, nil, common.OkMsgSaveData)
 }
 
-// UpdateUnosDokumenta saves the header of an existing robni nalog (rnal).
-func (h *RobnoDokumentaHandler) UpdateUnosDokumenta(c *gin.Context) {
+// UpdateRobnoNalog saves the header of an existing robni nalog (rnal).
+func (h *RobnoDokumentaHandler) UpdateRobnoNalog(c *gin.Context) {
 	ctx := c.Request.Context()
 	rnalID, err := utils.GetInt64FromParameterRequest(c, "id")
 	if err != nil {
@@ -1674,15 +1406,41 @@ func (h *RobnoDokumentaHandler) UpdateUnosDokumenta(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusBadRequest, false, []domain.FieldError{}, common.ErrMsgFormDecode)
 		return
 	}
-	if fieldErrors := h.service.ValidateUnosDokumenta(ctx, params); len(fieldErrors) > 0 {
+	if fieldErrors := h.service.ValidateRobnoUnosNaloga(ctx, params); len(fieldErrors) > 0 {
 		common.WriteJSONResponse(c, http.StatusUnprocessableEntity, false, fieldErrors, common.ErrMsgValidation)
 		return
 	}
-	if err := h.service.UpdateUnosDokumenta(ctx, rnalID, params); err != nil {
+	if err := h.service.UpdateRobnoNalog(ctx, rnalID, params); err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, []domain.FieldError{}, common.ErrMsgUpdate+err.Error())
 		return
 	}
+	robnoDokumentaOtvoriDokumentTrigger(c, rnalID, params)
 	common.WriteJSONResponse(c, http.StatusOK, true, nil, common.OkMsgSaveData)
+}
+
+// robnoDokumentaOtvoriDokumentTrigger asks the page to open the screen of the entry of the documents of
+// the saved nalog, like the legacy "Snimi nalog" opens the window of the group of the vrsta dokumenta:
+// the response of the save (JSON) carries the event robnoNalogSnimljen (HX-Trigger) with the url of
+// RobnoDokumentaUnosHandler.OtvoriDokument, which the "Unos dokumenta" tab loads into its dialog
+// container (see RobnoDokumentaMain). The nalog stays locked while the screen is open (the save locked
+// it, the update holds the lock of its route) and the screen releases it with
+// robnoDokumentaURLUnlockNalog.
+func robnoDokumentaOtvoriDokumentTrigger(c *gin.Context, rnalID int64, params domain.RobnoDokumentaParams) {
+	url := fmt.Sprintf("%s?rnalid=%d&magaciniid=%d&vrd=%s", robnoDokumentaURLOtvoriDokument, rnalID, params.MagaciniID, strings.TrimSpace(params.Vrd))
+	// zatvori is the confirm dialog of the save: the "Da" button of an update (PUT) has no
+	// after-request hook (see components.ConfirmButton), so the page closes it with the event.
+	trigger, err := json.Marshal(map[string]any{"robnoNalogSnimljen": map[string]string{"url": url, "zatvori": robnoDokumentaConfirmDialogID}})
+	if err != nil {
+		return
+	}
+	c.Header("HX-Trigger", string(trigger))
+}
+
+// UnlockRobnoNalog releases the lock of a robni nalog (the route verifies the lock of the user and
+// releases it): the screens of the entry of the documents call it when they are closed, like the
+// dialog of the stavke of a financial nalog.
+func (h *RobnoDokumentaHandler) UnlockRobnoNalog(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Nalog unlocked..."})
 }
 
 // nullDateHtml renders a nullable date of the header for an HTML date input.
@@ -3071,44 +2829,40 @@ func (h *RobnoDokumentaHandler) AddRoutes(r *gin.Engine) {
 	r.GET("/api/robno-dokumenta/po-operateru/stampa", h.PrikazDokumenataPoOperateruPrint)
 	r.GET("/api/robno-dokumenta/nextnalog", h.GetNextNalog)
 	r.GET("/api/robno-dokumenta/nalog-data", h.GetNalogData)
-	r.POST("/api/robno-dokumenta/confirm-addupdate", h.ConfirmUnosDokumenta)
-	r.GET("/api/robno-dokumenta/confirm-addupdate", h.ConfirmUnosDokumenta)
-	r.POST("/api/robno-dokumenta/unos", h.SaveUnosDokumenta)
-	r.PUT("/api/robno-dokumenta/unos/:id", h.lm.WithEntityLockHold(robnoDokumentaEntityType, "id"), h.UpdateUnosDokumenta)
-
-	// TODO (temporary): the two routes of the preview of the "Fakture veleprodaje" screen
-	// (RobnoFakture). Remove them together with the "Fakture veleprodaje (preview)" button.
-	r.GET("/api/robno-dokumenta/fakture-preview", h.FakturePreview)
-	r.POST("/api/robno-dokumenta/fakture-preview/save", h.FakturePreviewSave)
+	r.POST("/api/robno-dokumenta/confirm-addupdate", h.ConfirmRobnoUnosNaloga)
+	r.GET("/api/robno-dokumenta/confirm-addupdate", h.ConfirmRobnoUnosNaloga)
+	r.POST("/api/robno-dokumenta/unos", h.SaveRobnoNalog)
+	r.PUT("/api/robno-dokumenta/unos/:id", h.lm.WithEntityLockHold(robnoDokumentaEntityType, "id"), h.UpdateRobnoNalog)
+	r.POST(robnoDokumentaURLUnlockNalog+"/:id", h.lm.WithEntityLockVerifyAndRelease(robnoDokumentaEntityType, "id"), h.UnlockRobnoNalog)
 
 	// Štampa fakture (RobnoStampaFaktura).
-	r.GET(robnoDokumentaURLStampaFaktura, h.StampaFakturaPrint)
-	r.GET(robnoDokumentaURLStampaPopis, h.StampaPopis)
-	r.GET(robnoDokumentaURLStampaKalkulacija, h.StampaKalkulacija)
-	r.GET(robnoDokumentaURLStampaKalkulacijaMP, h.StampaKalkulacijaMaloprodaje)
-	r.GET(robnoDokumentaURLStampaFakturaMP, h.StampaFakturaMP)
-	r.GET(robnoDokumentaURLStampaFakturaIzvoz, h.StampaFakturaIzvoz)
-	r.GET(robnoDokumentaURLStampaProfakturaIzvoz, h.StampaProfakturaIzvoz)
-	r.GET(robnoDokumentaURLStampaProfaktura, h.StampaProfaktura)
-	r.GET(robnoDokumentaURLStampaFakturaKnjizno, h.StampaFakturaKnjizno)
-	r.GET(robnoDokumentaURLStampaKnjiznoPismo, h.StampaKnjiznoPismo)
-	r.GET(robnoDokumentaURLStampaKnjiznoPismoFin, h.StampaKnjiznoPismoFin)
-	r.GET(robnoDokumentaURLStampaFakturaOtpremnica, h.StampaFakturaOtpremnica)
-	r.GET(robnoDokumentaURLStampaFakturaUsluge, h.StampaFakturaUsluge)
-	r.GET(robnoDokumentaURLStampaZaduzenjeCO, h.StampaZaduzenjeCO)
-	r.GET(robnoDokumentaURLStampaRazduzenjeCO, h.StampaRazduzenjeCO)
-	r.GET(robnoDokumentaURLStampaFakturaAvansni, h.StampaFakturaAvansni)
-	r.GET(robnoDokumentaURLStampaOpstiDokument, h.StampaOpstiDokument)
-	r.GET(robnoDokumentaURLStampaPrenosnica, h.StampaPrenosnica)
-	r.GET(robnoDokumentaURLStampaPrenosnicaUlaz, h.StampaPrenosnicaUlaz)
-	r.GET(robnoDokumentaURLStampaPopisTekGod, h.StampaPopisTekGod)
-	r.GET(robnoDokumentaURLStampaZaduzenjeSI, h.StampaZaduzenjeSI)
-	r.GET(robnoDokumentaURLStampaZaduzenjeGradilista, h.StampaZaduzenjeGradilista)
-	r.GET(robnoDokumentaURLStampaNivelacija, h.StampaNivelacija)
-	r.GET(robnoDokumentaURLStampaInterniPrenos, h.StampaInterniPrenosProizvodnje)
-	r.GET(robnoDokumentaURLStampaInternaZakljucnica, h.StampaInternaZakljucnica)
-	r.GET(robnoDokumentaURLStampaInternaZakljucnicaRacun, h.StampaInternaZakljucnicaRacun)
-	r.GET(robnoDokumentaURLStampaNivelacijaMaloprodaje, h.StampaNivelacijaMaloprodaje)
+	r.GET("/api/robno-dokumenta/stampa/faktura", h.StampaFakturaPrint)
+	r.GET("/api/robno-dokumenta/stampa/popis", h.StampaPopis)
+	r.GET("/api/robno-dokumenta/stampa/kalkulacija", h.StampaKalkulacija)
+	r.GET("/api/robno-dokumenta/stampa/kalkulacija-maloprodaje", h.StampaKalkulacijaMaloprodaje)
+	r.GET("/api/robno-dokumenta/stampa/faktura-maloprodaje", h.StampaFakturaMP)
+	r.GET("/api/robno-dokumenta/stampa/faktura-izvoz", h.StampaFakturaIzvoz)
+	r.GET("/api/robno-dokumenta/stampa/profaktura-izvoz", h.StampaProfakturaIzvoz)
+	r.GET("/api/robno-dokumenta/stampa/profaktura", h.StampaProfaktura)
+	r.GET("/api/robno-dokumenta/stampa/faktura-knjizno", h.StampaFakturaKnjizno)
+	r.GET("/api/robno-dokumenta/stampa/knjizno-pismo", h.StampaKnjiznoPismo)
+	r.GET("/api/robno-dokumenta/stampa/knjizno-pismo-fin", h.StampaKnjiznoPismoFin)
+	r.GET("/api/robno-dokumenta/stampa/faktura-otpremnica", h.StampaFakturaOtpremnica)
+	r.GET("/api/robno-dokumenta/stampa/faktura-usluge", h.StampaFakturaUsluge)
+	r.GET("/api/robno-dokumenta/stampa/zaduzenje-CO", h.StampaZaduzenjeCO)
+	r.GET("/api/robno-dokumenta/stampa/razduzenje-CO", h.StampaRazduzenjeCO)
+	r.GET("/api/robno-dokumenta/stampa/faktura-avansni", h.StampaFakturaAvansni)
+	r.GET("/api/robno-dokumenta/stampa/opsti-dokument", h.StampaOpstiDokument)
+	r.GET("/api/robno-dokumenta/stampa/prenosnica", h.StampaPrenosnica)
+	r.GET("/api/robno-dokumenta/stampa/prenosnica-ulaz", h.StampaPrenosnicaUlaz)
+	r.GET("/api/robno-dokumenta/stampa/popis-tekuca-godina", h.StampaPopisTekGod)
+	r.GET("/api/robno-dokumenta/stampa/zaduzenje-SI", h.StampaZaduzenjeSI)
+	r.GET("/api/robno-dokumenta/stampa/zaduzenje-gradilista", h.StampaZaduzenjeGradilista)
+	r.GET("/api/robno-dokumenta/stampa/nivelacija", h.StampaNivelacija)
+	r.GET("/api/robno-dokumenta/stampa/interni-prenos", h.StampaInterniPrenosProizvodnje)
+	r.GET("/api/robno-dokumenta/stampa/interna-zakljucnica", h.StampaInternaZakljucnica)
+	r.GET("/api/robno-dokumenta/stampa/interna-zakljucnica-racun", h.StampaInternaZakljucnicaRacun)
+	r.GET("/api/robno-dokumenta/stampa/nivelacija-maloprodaje", h.StampaNivelacijaMaloprodaje)
 
 	// TODO: add the stampa (print) routes of the tabs together with their print templates.
 }

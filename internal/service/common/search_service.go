@@ -126,6 +126,21 @@ var searchDefinitions = map[string]searchDefinition{
 		orderBy:     "f.konto",
 		textColumns: []int{0, 1},
 	},
+	// Kontni plan: the konta of the kontni plan of the kind the screen sends as "vkonta" (2 the konta,
+	// 3 the sintetička konta; without it all the konta, not the analitika).
+	"kontni-plan": {
+		headers: []domain.Fields{
+			{Label: "Konto", Width: "20%"},
+			{Label: "Naziv"},
+		},
+		query:       `select f.konto as key, f.konto as c1, coalesce(f.naziv, '') as c2 from fkpl f`,
+		period:      "f",
+		conditions:  []string{"f.vkonta <> 1"},
+		searchIn:    []string{"f.konto", "f.naziv"},
+		filters:     map[string][]string{"f.vkonta::text": {"vkonta"}},
+		orderBy:     "f.konto",
+		textColumns: []int{0, 1},
+	},
 	// Sintetička konta: the sintetička konta of the kontni plan (fkpl.vkonta 3).
 	"sinteticka-konta": {
 		headers: []domain.Fields{

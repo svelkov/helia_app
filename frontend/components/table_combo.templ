@@ -12,7 +12,8 @@ import (
 // table under the input. Selecting a row (click, or arrows and Enter) puts its key into the hidden
 // input cfg.Name and its text into the visible input; typing again clears the selected key. Pass
 // cfg.Value / cfg.DisplayValue / cfg.Details to render a row already selected (e.g. when editing an
-// existing document).
+// existing document). A disabled combo keeps its search attributes, so a screen can enable it later
+// (a disabled input fires no events, so it does not search while disabled).
 //
 // Example (the search of the partneri):
 //
@@ -125,6 +126,15 @@ templ TableCombo(cfg domain.TableComboConfig, translator *i18n.Service) {
 				if (input && document.activeElement !== input) {
 					tableComboAutoSelect(comboID);
 					tableComboClose(comboID);
+					return;
+				}
+				// The dropdown grows with its rows: when it would pass the right edge of the screen, it is
+				// moved to the left so it stays visible.
+				const results = document.getElementById(comboID + '-results');
+				if (results) {
+					results.style.left = '';
+					const overflow = results.getBoundingClientRect().right - (window.innerWidth - 8);
+					if (overflow > 0) results.style.left = (-overflow) + 'px';
 				}
 			}
 			// tableComboFocus selects the whole text of the input when it gets the focus, so the first
@@ -191,7 +201,7 @@ templ TableCombo(cfg domain.TableComboConfig, translator *i18n.Service) {
 			if cfg.OnSelect != "" {
 				data-onselect={ cfg.OnSelect }
 			}
-			if cfg.SearchURL != "" && !cfg.Disabled {
+			if cfg.SearchURL != "" {
 				hx-get={ cfg.SearchURL }
 				hx-trigger={ tableComboValue(cfg.HxTrigger, "input changed delay:300ms, focus[tableComboEmpty(this)]") }
 				hx-target={ "#" + cfg.ID + "-results" }
@@ -213,10 +223,10 @@ templ TableCombo(cfg domain.TableComboConfig, translator *i18n.Service) {
 		/>
 		<!-- The key of the selected row: the value the form submits. -->
 		<input type="hidden" id={ tableComboValue(cfg.ValueID, cfg.ID+"-value") } name={ cfg.Name } value={ tableComboValue(cfg.Value, cfg.DefaultValue) }/>
-		<p id={ cfg.ID + "-details" } class="mt-0.5 text-xs text-gray-500">{ cfg.Details }</p>
+		<p id={ cfg.ID + "-details" } class="mt-0.5 text-xs text-gray-500 empty:hidden">{ cfg.Details }</p>
 		<div
 			id={ cfg.ID + "-results" }
-			class="absolute z-50 mt-1 w-full max-h-72 overflow-auto rounded-md border border-blue-400 bg-white shadow-lg empty:hidden"
+			class="absolute z-50 mt-1 min-w-full w-max max-w-[90vw] max-h-72 overflow-auto rounded-md border border-blue-400 bg-white shadow-lg empty:hidden"
 		></div>
 	</div>
 }
@@ -228,12 +238,12 @@ templ TableComboResults(res domain.TableComboResults, translator *i18n.Service) 
 	if len(res.Table.Rows) == 0 {
 		<p class="px-3 py-4 text-center text-sm text-gray-400">{ translator.Label(tableComboValue(res.EmptyText, "Nema rezultata")) }</p>
 	} else {
-		<table class="w-full text-sm">
+		<table class="min-w-full text-sm">
 			<thead class="sticky top-0 z-10 bg-blue-900 text-white">
 				<tr>
 					for _, h := range res.Table.Headers {
 						<th
-							class={ "px-2 py-1 text-xs font-medium " + tableComboAlign(h.TextAlign) }
+							class={ "px-2 py-1 text-xs font-medium whitespace-nowrap " + tableComboAlign(h.TextAlign) }
 							if h.Width != "" {
 								style={ "width: " + h.Width }
 							}
@@ -252,7 +262,7 @@ templ TableComboResults(res domain.TableComboResults, translator *i18n.Service) 
 						onmousedown="event.preventDefault(); tableComboSelect(this)"
 					>
 						for i, cell := range row.Fields {
-							<td class={ "px-2 py-1 " + tableComboAlign(tableComboHeaderAlign(res.Table.Headers, i)) }>{ cell }</td>
+							<td class={ "px-2 py-1 " + tableComboCellWrap(cell) + " " + tableComboAlign(tableComboHeaderAlign(res.Table.Headers, i)) }>{ cell }</td>
 						}
 					</tr>
 				}
@@ -284,6 +294,18 @@ func tableComboText(fields []string, columns, def []int, sep string) string {
 		}
 	}
 	return strings.Join(parts, sep)
+}
+
+// tableComboLongCell is the length of the text of a cell from which it wraps (see tableComboCellWrap).
+const tableComboLongCell = 40
+
+// tableComboCellWrap returns the class of the wrapping of a cell: a short text stays on one line, a long
+// one (e.g. a long naziv) wraps at about 24rem, so the dropdown keeps a reasonable width.
+func tableComboCellWrap(cell string) string {
+	if len([]rune(cell)) > tableComboLongCell {
+		return "whitespace-normal min-w-[16rem] max-w-[24rem]"
+	}
+	return "whitespace-nowrap"
 }
 
 // tableComboHeaderAlign returns the TextAlign of the column i of the headers ("" when there is none).

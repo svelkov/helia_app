@@ -845,6 +845,9 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 		*repository.NewBaseRepository[domain.RobnoStampaPoreskaStopaDto](db, "rpor"))
 	robnoDokumentaHandler := robnohand.NewRobnoDokumentaHandler(robnoDokumentaService, cfg, lm, ls, translator)
 	robnoDokumentaHandler.AddRoutes(r)
+	// The entry of the robni dokumenti of a robni nalog (the screens opened by "Snimi nalog").
+	robnoDokumentaUnosHandler := robnohand.NewRobnoDokumentaUnosHandler(robnoDokumentaService, cfg, lm, ls, translator)
+	robnoDokumentaUnosHandler.AddRoutes(r)
 
 	// Robno promet reports
 	magRepo := repository.NewBaseRepository[domain.Magacini](db, "magacini")

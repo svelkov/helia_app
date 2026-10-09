@@ -243,7 +243,7 @@ func (h *FkplHandler) GetFkpl(c *gin.Context) {
 func (h *FkplHandler) GetAllFkpl(c *gin.Context) {
 	requestSource := c.Request.Header.Get("X-Request-Source")
 	ctx := c.Request.Context()
-	session := domain.GetSessionFromContext(c)
+	session := domain.GetSessionFromStdContext(ctx)
 	if session == nil {
 		common.WriteJSONResponse(c, http.StatusUnauthorized, false, nil, common.ErrMsgUserSessionNotFound)
 		return
@@ -294,7 +294,7 @@ func (h *FkplHandler) GetAllFkpl(c *gin.Context) {
 // KontniPlanStampa renders a printable view of the kontni plan.
 func (h *FkplHandler) KontniPlanStampa(c *gin.Context) {
 	ctx := c.Request.Context()
-	session := domain.GetSessionFromContext(c)
+	session := domain.GetSessionFromStdContext(ctx)
 	if session == nil {
 		common.WriteJSONResponse(c, http.StatusUnauthorized, false, nil, common.ErrMsgUserSessionNotFound)
 		return

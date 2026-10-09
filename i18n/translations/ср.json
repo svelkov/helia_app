@@ -2039,5 +2039,9 @@
   "text.razduzenje_co_napomena_1": "Уколико постоји неслагање са неком од ставки под горњим ред.бр. 1-n, молимо Вас да доставите доказе, како би била извршена књиговодствена исправка",
   "label.pretrazi_po_kontu_ili_nazivu": "Претражи по конту или називу",
   "label.pretrazi_po_sifri_ili_nazivu": "Претражи по шифри или називу",
-  "label.pretrazi_po_mestu_isporuke": "Претражи по месту испоруке"
+  "label.pretrazi_po_mestu_isporuke": "Претражи по месту испоруке",
+  "label.pretrazi_po_sifri_ili_imenu": "Претражи по шифри или имену",
+  "label.nema_rezultata": "Нису пронађени подаци за задати критеријум.",
+  "message.program_za_ovu_opciju_nije_instaliran": "Програм за ову опцију није инсталиран",
+  "message.magacin": "Магацин"
 }

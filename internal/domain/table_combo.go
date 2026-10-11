@@ -21,6 +21,9 @@ type TableComboConfig struct {
 	Value        string
 	DisplayValue string
 	Details      string
+	// HideDetails does not show the line of the details under the input (e.g. the kupac of a faktura,
+	// whose adresa and PIB have their own fields on the form).
+	HideDetails bool
 	// DefaultValue is the value of the hidden input while nothing is selected (e.g. "00" for the od
 	// šifre, "999999" for the do šifre of a range): it is the value at the start (shown in the input
 	// when DisplayValue is empty), after the text is cleared and when the user leaves the field without
@@ -32,8 +35,8 @@ type TableComboConfig struct {
 	Placeholder string // translated with translator.Label
 	ClassLabel  string
 	ClassInput  string
-	// ClassWrapper is the class of the element around the input and the dropdown (default
-	// "relative w-full").
+	// ClassWrapper is the class of the element around the input and the dropdown (default "w-full");
+	// the element is always "relative", the dropdown is positioned and sized by it.
 	ClassWrapper string
 
 	// SearchURL is called (GET) while the user types; it answers with components.TableComboResults.
@@ -49,6 +52,18 @@ type TableComboConfig struct {
 	HxInclude string
 	// MinLength is the number of characters the search needs ("" = search from the first one).
 	MinLength string
+
+	// AllowEmpty lets the user choose no row: the results start with the row "-" (an empty key, saved
+	// as NULL), and the input shows "-" while nothing is selected (e.g. the org. jedinica of a
+	// document).
+	AllowEmpty bool
+	// FreeText accepts a typed value that is not a row of the results: when the user leaves the input
+	// without selecting a row, the typed text is the value (e.g. the broj of a new document).
+	FreeText bool
+	// OnFreeText is the name of a JavaScript function that takes the typed text of FreeText instead of the
+	// hidden input: fn(comboID, text) (e.g. the broj of a document whose rows have the id as their key).
+	// The typed text is then never matched with the keys of the rows.
+	OnFreeText string
 
 	TabIndex string
 	Disabled bool

@@ -9,12 +9,13 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
-	"fmt"
 	"helia/frontend/components"
 	tmpl "helia/frontend/templates"
 	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
+	"strconv"
+	"strings"
 )
 
 func MagacinKonto(tbl domain.TableData, searchInput domain.InputControl, btnPrint domain.Button, translator *i18n.Service) templ.Component {
@@ -74,7 +75,11 @@ func MagacinKonto(tbl domain.TableData, searchInput domain.InputControl, btnPrin
 	})
 }
 
-func MagacinKontoDialog(dialog domain.Dialog, action string, model domain.Magkonto, btnSave domain.Button, btnCancel domain.Button, btnClose domain.Button, translator *i18n.Service, csrfToken string) templ.Component {
+// MagacinKontoDialog is the form of a konto zaliha of a magacin (new or changed): the magacin and the
+// konto zaliha are chosen from their lists (the magacini of the period; the konta and the analitike of the
+// kontni plan, fkpl.vkonta 2 and 1), the vrsta konta is the one of the chosen konto (read only), and the
+// konta of prihod, trošak, RUC and rabat are konta of the kontni plan (vkonta 2), optional.
+func MagacinKontoDialog(dialog domain.Dialog, action string, model domain.MagkontoView, btnSave domain.Button, btnCancel domain.Button, btnClose domain.Button, translator *i18n.Service, csrfToken string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -99,11 +104,23 @@ func MagacinKontoDialog(dialog domain.Dialog, action string, model domain.Magkon
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
+		templ_7745c5c3_Err = tmpl.HandleDialogResponseScript().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.HandleFormResponseScript().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<script>\n\t\t// The vrsta konta of the chosen konto zaliha (the last cell of its row: 1 analitika, 2 konto).\n\t\tfunction magacinKontoKontoSelected(comboID, key, cells) {\n\t\t\tconst vkonta = document.getElementById('vkonta');\n\t\t\tif (vkonta) vkonta.value = (cells && cells.length > 0) ? cells[cells.length - 1] : '';\n\t\t}\n\n\t\t// The answer of \"Sačuvaj\" (magacinKontoNoviResponse: a new konto zaliha, magacinKontoIzmenaResponse: a\n\t\t// changed one). The message is shown at the bottom of the dialog (dialog-form-message) like in the\n\t\t// other dialogs (_dlg_msg of HandleFormResponseScript: green, red for an error); the errors of the\n\t\t// fields are shown under them (handleDialogResponse, which also finds the combos). After a successful\n\t\t// save a new one empties the form for the next one (the dialog stays open), a changed one closes the\n\t\t// dialog after the message.\n\t\tfunction magacinKontoResponse(dialogID, novi) {\n\t\t\tlet response = null;\n\t\t\ttry { response = JSON.parse(event.detail.xhr.responseText); } catch (e) { response = null; }\n\t\t\tif (response && response.errors && response.errors.length > 0) {\n\t\t\t\thandleDialogResponse(dialogID);\n\t\t\t\treturn;\n\t\t\t}\n\t\t\tconst dialog = document.getElementById(dialogID);\n\t\t\tif (dialog) {\n\t\t\t\tdialog.querySelectorAll('.input-error').forEach(el => el.remove());\n\t\t\t\tdialog.querySelectorAll('.border-red-500').forEach(el => el.classList.remove('border-red-500'));\n\t\t\t}\n\t\t\tconst msgDiv = document.getElementById('dialog-form-message');\n\t\t\tif (!response || !response.success) {\n\t\t\t\t_dlg_msg(msgDiv, (response && response.message) || event.detail.xhr.statusText, true);\n\t\t\t\treturn;\n\t\t\t}\n\t\t\t_dlg_msg(msgDiv, response.message, false);\n\t\t\tif (!novi) {\n\t\t\t\tsetTimeout(() => closeDialog(dialogID), 3000);\n\t\t\t\treturn;\n\t\t\t}\n\t\t\t['magaciniid-combo', 'idfkpl-combo', 'kontoprih-combo', 'kontotroska-combo', 'kontoruc-combo', 'kontorab-combo'].forEach(tableComboClear);\n\t\t\tconst vkonta = document.getElementById('vkonta');\n\t\t\tif (vkonta) vkonta.value = '';\n\t\t\tconst first = document.getElementById('magaciniid-combo-input');\n\t\t\tif (first) first.focus();\n\t\t}\n\t\tfunction magacinKontoNoviResponse(dialogID) { magacinKontoResponse(dialogID, true); }\n\t\tfunction magacinKontoIzmenaResponse(dialogID) { magacinKontoResponse(dialogID, false); }\n\t</script>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
 		return nil
 	})
 }
 
-func magacinKontoFormContent(model domain.Magkonto, translator *i18n.Service) templ.Component {
+func magacinKontoFormContent(model domain.MagkontoView, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -124,95 +141,73 @@ func magacinKontoFormContent(model domain.Magkonto, translator *i18n.Service) te
 			templ_7745c5c3_Var3 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<div class=\"grid grid-cols-2 gap-2\"><!-- Magacin (required) --><div class=\"flex items-center\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<div class=\"grid grid-cols-2 gap-2 w-[48rem] max-w-full\"><!-- Magacin (required): the magacini of the period --><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
-			ID:         "mag",
+			ID:         "magaciniid",
 			LabelText:  translator.Label("Magacin"),
-			ClassLabel: common.ClassLabel + " w-24",
+			ClassLabel: common.ClassLabel + " w-28",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
-			ID:         "mag",
-			Name:       "mag",
-			Value:      fmt.Sprintf("%d", model.Mag),
-			FieldType:  "number",
-			Required:   true,
-			Disabled:   false,
-			ClassInput: common.ClassInputTextEnabled + " w-24",
-			TabIndex:   "1",
-			OnInput:    "clearFieldError",
-			OnFocus:    "clearFieldError",
-		}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TableCombo(domain.TableComboConfig{
+			ID:           "magaciniid-combo",
+			Name:         "magaciniid",
+			ValueID:      "magaciniid",
+			Value:        magacinKontoID(model.MagaciniID),
+			DisplayValue: magacinKontoText(magacinKontoID(model.Mag), model.MagacinOpis),
+			Placeholder:  "Pretraži po broju ili opisu",
+			ClassInput:   common.ClassInputTextEnabled + " w-full",
+			ClassWrapper: "flex-1 min-w-0",
+			SearchURL:    "/api/search/magacini",
+			HideDetails:  true,
+			Required:     true,
+			TabIndex:     "1",
+		}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</div><!-- Konto zaliha (required) --><div class=\"flex items-center\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</div><!-- Konto zaliha (required): a konto (vkonta 2) or an analitika (vkonta 1) of the kontni plan, by\n\t\t     its id (idfkpl); its vrsta konta goes to the field V konta --><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
-			ID:         "konto",
+			ID:         "idfkpl",
 			LabelText:  translator.Label("Konto zaliha"),
-			ClassLabel: common.ClassLabel + " w-24",
+			ClassLabel: common.ClassLabel + " w-28",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
-			ID:         "konto",
-			Name:       "konto",
-			Value:      model.Konto,
-			FieldType:  "text",
-			Required:   true,
-			Disabled:   false,
-			ClassInput: common.ClassInputTextEnabled + " flex-1",
-			TabIndex:   "2",
-			OnInput:    "clearFieldError",
-			OnFocus:    "clearFieldError",
-		}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.TableCombo(domain.TableComboConfig{
+			ID:           "idfkpl-combo",
+			Name:         "idfkpl",
+			ValueID:      "idfkpl",
+			Value:        magacinKontoID(model.IDFkpl),
+			DisplayValue: magacinKontoText(model.Konto, model.KontoSifra, model.KontoNaziv),
+			Placeholder:  "Pretraži po kontu, šifri ili nazivu",
+			ClassInput:   common.ClassInputTextEnabled + " w-full",
+			ClassWrapper: "flex-1 min-w-0",
+			SearchURL:    "/api/search/kontni-plan-id",
+			HideDetails:  true,
+			Required:     true,
+			OnSelect:     "magacinKontoKontoSelected",
+			TabIndex:     "2",
+		}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</div><!-- ID FKPL --><div class=\"flex items-center\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
-			ID:         "idfkpl",
-			LabelText:  translator.Label("ID FKPL"),
-			ClassLabel: common.ClassLabel + " w-24",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
-			ID:         "idfkpl",
-			Name:       "idfkpl",
-			Value:      fmt.Sprintf("%d", model.IDFkpl),
-			FieldType:  "number",
-			Required:   false,
-			Disabled:   false,
-			ClassInput: common.ClassInputTextEnabled + " w-24",
-			TabIndex:   "3",
-			OnInput:    "clearFieldError",
-			OnFocus:    "clearFieldError",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</div><!-- V Konta --><div class=\"flex items-center\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</div><!-- V konta: the vrsta of the konto zaliha (read only, set by the choice of the konto) --><div class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
 			ID:         "vkonta",
 			LabelText:  translator.Label("V Konta"),
-			ClassLabel: common.ClassLabel + " w-24",
+			ClassLabel: common.ClassLabel + " w-28",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -220,132 +215,120 @@ func magacinKontoFormContent(model domain.Magkonto, translator *i18n.Service) te
 		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
 			ID:         "vkonta",
 			Name:       "vkonta",
-			Value:      fmt.Sprintf("%d", model.VKonta),
-			FieldType:  "number",
-			Required:   false,
-			Disabled:   false,
-			ClassInput: common.ClassInputTextEnabled + " w-24",
-			TabIndex:   "4",
-			OnInput:    "clearFieldError",
-			OnFocus:    "clearFieldError",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</div><!-- Konto prihoda --><div class=\"flex items-center\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
-			ID:         "kontoprih",
-			LabelText:  translator.Label("Konto prihoda"),
-			ClassLabel: common.ClassLabel + " w-24",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
-			ID:         "kontoprih",
-			Name:       "kontoprih",
-			Value:      model.KontoPrih,
+			Value:      magacinKontoID(model.VKonta),
 			FieldType:  "text",
-			Required:   false,
-			Disabled:   false,
-			ClassInput: common.ClassInputTextEnabled + " flex-1",
-			TabIndex:   "5",
-			OnInput:    "clearFieldError",
-			OnFocus:    "clearFieldError",
+			Disabled:   true,
+			ClassInput: common.ClassInputTextDisabled + " w-16 text-right",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</div><!-- Konto troška --><div class=\"flex items-center\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</div><div></div><!-- The konta of prihod, trošak, RUC and rabat (optional): konta of the kontni plan (vkonta 2) -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
-			ID:         "kontotroska",
-			LabelText:  translator.Label("Konto troška"),
-			ClassLabel: common.ClassLabel + " w-24",
-		}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = magacinKontoKonto("kontoprih", "Konto prihoda", model.KontoPrih, model.KontoPrihNaziv, "3", translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
-			ID:         "kontotroska",
-			Name:       "kontotroska",
-			Value:      model.KontoTroska,
-			FieldType:  "text",
-			Required:   false,
-			Disabled:   false,
-			ClassInput: common.ClassInputTextEnabled + " flex-1",
-			TabIndex:   "6",
-			OnInput:    "clearFieldError",
-			OnFocus:    "clearFieldError",
-		}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = magacinKontoKonto("kontotroska", "Konto troška", model.KontoTroska, model.KontoTroskaNaziv, "4", translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</div><!-- Konto RUC --><div class=\"flex items-center\">")
+		templ_7745c5c3_Err = magacinKontoKonto("kontoruc", "Konto RUC", model.KontoRuc, model.KontoRucNaziv, "5", translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
-			ID:         "kontoruc",
-			LabelText:  translator.Label("Konto RUC"),
-			ClassLabel: common.ClassLabel + " w-24",
-		}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = magacinKontoKonto("kontorab", "Konto rabat", model.KontoRab, model.KontoRabNaziv, "6", translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
-			ID:         "kontoruc",
-			Name:       "kontoruc",
-			Value:      model.KontoRuc,
-			FieldType:  "text",
-			Required:   false,
-			Disabled:   false,
-			ClassInput: common.ClassInputTextEnabled + " flex-1",
-			TabIndex:   "7",
-			OnInput:    "clearFieldError",
-			OnFocus:    "clearFieldError",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</div><!-- Konto rabat --><div class=\"flex items-center\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
-			ID:         "kontorab",
-			LabelText:  translator.Label("Konto rabat"),
-			ClassLabel: common.ClassLabel + " w-24",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
-			ID:         "kontorab",
-			Name:       "kontorab",
-			Value:      model.KontoRab,
-			FieldType:  "text",
-			Required:   false,
-			Disabled:   false,
-			ClassInput: common.ClassInputTextEnabled + " flex-1",
-			TabIndex:   "8",
-			OnInput:    "clearFieldError",
-			OnFocus:    "clearFieldError",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		return nil
 	})
+}
+
+// magacinKontoKonto renders one of the optional konta of the form: a konto of the kontni plan (fkpl.vkonta
+// 2, the search "konta"), whose key is the konto; the row "-" clears it.
+func magacinKontoKonto(name, label, konto, naziv, tabIndex string, translator *i18n.Service) templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var4 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var4 == nil {
+			templ_7745c5c3_Var4 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<div class=\"flex items-center gap-1\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{
+			ID:         name,
+			LabelText:  translator.Label(label),
+			ClassLabel: common.ClassLabel + " w-28",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = components.TableCombo(domain.TableComboConfig{
+			ID:           name + "-combo",
+			Name:         name,
+			ValueID:      name,
+			Value:        konto,
+			DisplayValue: magacinKontoText(konto, naziv),
+			Placeholder:  "Pretraži po kontu ili nazivu",
+			ClassInput:   common.ClassInputTextEnabled + " w-full",
+			ClassWrapper: "flex-1 min-w-0",
+			SearchURL:    "/api/search/konta",
+			HideDetails:  true,
+			AllowEmpty:   true,
+			TabIndex:     tabIndex,
+		}, translator).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</div>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+// magacinKontoID returns a key of the form as text ("" for 0, nothing chosen yet).
+func magacinKontoID(id int) string {
+	if id == 0 {
+		return ""
+	}
+	return strconv.Itoa(id)
+}
+
+// magacinKontoText returns the text of a chosen row of a combo: its parts that are not empty joined with
+// " - " (like the text TableCombo shows after a selection).
+func magacinKontoText(parts ...string) string {
+	var out []string
+	for _, part := range parts {
+		if part = strings.TrimSpace(part); part != "" {
+			out = append(out, part)
+		}
+	}
+	return strings.Join(out, " - ")
 }
 
 var _ = templruntime.GeneratedTemplate

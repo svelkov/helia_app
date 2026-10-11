@@ -131,7 +131,7 @@ func fispFormContent(model domain.Fisp, translator *i18n.Service) templ.Componen
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(model.IDPartneri))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/fisp.templ`, Line: 21, Col: 93}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/fisp.templ`, Line: 26, Col: 93}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
@@ -166,7 +166,7 @@ func fispFormContent(model domain.Fisp, translator *i18n.Service) templ.Componen
 		var templ_7745c5c3_Var7 string
 		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Konto"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/fisp.templ`, Line: 22, Col: 117}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/fisp.templ`, Line: 27, Col: 117}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {
@@ -188,7 +188,7 @@ func fispFormContent(model domain.Fisp, translator *i18n.Service) templ.Componen
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(model.Konto)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/fisp.templ`, Line: 22, Col: 177}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/fisp.templ`, Line: 27, Col: 177}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
@@ -236,7 +236,7 @@ func fispFormContent(model domain.Fisp, translator *i18n.Service) templ.Componen
 		var templ_7745c5c3_Var13 string
 		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Sifra partnera"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/fisp.templ`, Line: 23, Col: 126}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/fisp.templ`, Line: 28, Col: 126}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 		if templ_7745c5c3_Err != nil {
@@ -258,7 +258,7 @@ func fispFormContent(model domain.Fisp, translator *i18n.Service) templ.Componen
 		var templ_7745c5c3_Var15 string
 		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(model.Sifra)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/fisp.templ`, Line: 23, Col: 186}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/fisp.templ`, Line: 28, Col: 186}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 		if templ_7745c5c3_Err != nil {
@@ -306,7 +306,7 @@ func fispFormContent(model domain.Fisp, translator *i18n.Service) templ.Componen
 		var templ_7745c5c3_Var19 string
 		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("MI"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/fisp.templ`, Line: 24, Col: 111}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/fisp.templ`, Line: 29, Col: 111}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 		if templ_7745c5c3_Err != nil {
@@ -328,7 +328,7 @@ func fispFormContent(model domain.Fisp, translator *i18n.Service) templ.Componen
 		var templ_7745c5c3_Var21 string
 		templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(model.MI))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/fisp.templ`, Line: 24, Col: 188}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/fisp.templ`, Line: 29, Col: 188}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 		if templ_7745c5c3_Err != nil {
@@ -376,7 +376,7 @@ func fispFormContent(model domain.Fisp, translator *i18n.Service) templ.Componen
 		var templ_7745c5c3_Var25 string
 		templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Naziv"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/fisp.templ`, Line: 25, Col: 117}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/fisp.templ`, Line: 30, Col: 117}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
 		if templ_7745c5c3_Err != nil {
@@ -398,7 +398,7 @@ func fispFormContent(model domain.Fisp, translator *i18n.Service) templ.Componen
 		var templ_7745c5c3_Var27 string
 		templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinStringErrs(model.Naziv)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/fisp.templ`, Line: 25, Col: 177}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/fisp.templ`, Line: 30, Col: 177}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
 		if templ_7745c5c3_Err != nil {
@@ -446,7 +446,7 @@ func fispFormContent(model domain.Fisp, translator *i18n.Service) templ.Componen
 		var templ_7745c5c3_Var31 string
 		templ_7745c5c3_Var31, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Adresa"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/fisp.templ`, Line: 26, Col: 119}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/fisp.templ`, Line: 31, Col: 119}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var31))
 		if templ_7745c5c3_Err != nil {
@@ -468,7 +468,7 @@ func fispFormContent(model domain.Fisp, translator *i18n.Service) templ.Componen
 		var templ_7745c5c3_Var33 string
 		templ_7745c5c3_Var33, templ_7745c5c3_Err = templ.JoinStringErrs(model.Adresa)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/fisp.templ`, Line: 26, Col: 182}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/fisp.templ`, Line: 31, Col: 182}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var33))
 		if templ_7745c5c3_Err != nil {
@@ -516,7 +516,7 @@ func fispFormContent(model domain.Fisp, translator *i18n.Service) templ.Componen
 		var templ_7745c5c3_Var37 string
 		templ_7745c5c3_Var37, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Pobro"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/fisp.templ`, Line: 27, Col: 117}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/fisp.templ`, Line: 32, Col: 117}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var37))
 		if templ_7745c5c3_Err != nil {
@@ -538,7 +538,7 @@ func fispFormContent(model domain.Fisp, translator *i18n.Service) templ.Componen
 		var templ_7745c5c3_Var39 string
 		templ_7745c5c3_Var39, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(model.Pobro))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/fisp.templ`, Line: 27, Col: 203}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/fisp.templ`, Line: 32, Col: 203}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var39))
 		if templ_7745c5c3_Err != nil {
@@ -586,7 +586,7 @@ func fispFormContent(model domain.Fisp, translator *i18n.Service) templ.Componen
 		var templ_7745c5c3_Var43 string
 		templ_7745c5c3_Var43, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Mesto"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/fisp.templ`, Line: 28, Col: 117}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/fisp.templ`, Line: 33, Col: 117}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var43))
 		if templ_7745c5c3_Err != nil {
@@ -608,7 +608,7 @@ func fispFormContent(model domain.Fisp, translator *i18n.Service) templ.Componen
 		var templ_7745c5c3_Var45 string
 		templ_7745c5c3_Var45, templ_7745c5c3_Err = templ.JoinStringErrs(model.Mesto)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/fisp.templ`, Line: 28, Col: 177}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/fisp.templ`, Line: 33, Col: 177}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var45))
 		if templ_7745c5c3_Err != nil {
@@ -656,7 +656,7 @@ func fispFormContent(model domain.Fisp, translator *i18n.Service) templ.Componen
 		var templ_7745c5c3_Var49 string
 		templ_7745c5c3_Var49, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("PIB"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/fisp.templ`, Line: 29, Col: 113}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/fisp.templ`, Line: 34, Col: 113}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var49))
 		if templ_7745c5c3_Err != nil {
@@ -678,7 +678,7 @@ func fispFormContent(model domain.Fisp, translator *i18n.Service) templ.Componen
 		var templ_7745c5c3_Var51 string
 		templ_7745c5c3_Var51, templ_7745c5c3_Err = templ.JoinStringErrs(model.PIB)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/fisp.templ`, Line: 29, Col: 167}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/fisp.templ`, Line: 34, Col: 167}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var51))
 		if templ_7745c5c3_Err != nil {
@@ -726,7 +726,7 @@ func fispFormContent(model domain.Fisp, translator *i18n.Service) templ.Componen
 		var templ_7745c5c3_Var55 string
 		templ_7745c5c3_Var55, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("KontaktOsb"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/fisp.templ`, Line: 30, Col: 127}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/fisp.templ`, Line: 35, Col: 127}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var55))
 		if templ_7745c5c3_Err != nil {
@@ -748,7 +748,7 @@ func fispFormContent(model domain.Fisp, translator *i18n.Service) templ.Componen
 		var templ_7745c5c3_Var57 string
 		templ_7745c5c3_Var57, templ_7745c5c3_Err = templ.JoinStringErrs(model.KontaktOsb)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/fisp.templ`, Line: 30, Col: 202}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/fisp.templ`, Line: 35, Col: 202}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var57))
 		if templ_7745c5c3_Err != nil {
@@ -796,7 +796,7 @@ func fispFormContent(model domain.Fisp, translator *i18n.Service) templ.Componen
 		var templ_7745c5c3_Var61 string
 		templ_7745c5c3_Var61, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("GLN"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/fisp.templ`, Line: 31, Col: 113}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/fisp.templ`, Line: 36, Col: 113}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var61))
 		if templ_7745c5c3_Err != nil {
@@ -818,7 +818,7 @@ func fispFormContent(model domain.Fisp, translator *i18n.Service) templ.Componen
 		var templ_7745c5c3_Var63 string
 		templ_7745c5c3_Var63, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(model.GLN))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/fisp.templ`, Line: 31, Col: 193}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/fisp.templ`, Line: 36, Col: 193}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var63))
 		if templ_7745c5c3_Err != nil {
@@ -866,7 +866,7 @@ func fispFormContent(model domain.Fisp, translator *i18n.Service) templ.Componen
 		var templ_7745c5c3_Var67 string
 		templ_7745c5c3_Var67, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Email"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/fisp.templ`, Line: 32, Col: 117}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/fisp.templ`, Line: 37, Col: 117}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var67))
 		if templ_7745c5c3_Err != nil {
@@ -888,7 +888,7 @@ func fispFormContent(model domain.Fisp, translator *i18n.Service) templ.Componen
 		var templ_7745c5c3_Var69 string
 		templ_7745c5c3_Var69, templ_7745c5c3_Err = templ.JoinStringErrs(model.Email)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/fisp.templ`, Line: 32, Col: 190}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/fisp.templ`, Line: 37, Col: 190}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var69))
 		if templ_7745c5c3_Err != nil {
@@ -936,7 +936,7 @@ func fispFormContent(model domain.Fisp, translator *i18n.Service) templ.Componen
 		var templ_7745c5c3_Var73 string
 		templ_7745c5c3_Var73, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Ter"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/fisp.templ`, Line: 33, Col: 108}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/fisp.templ`, Line: 38, Col: 108}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var73))
 		if templ_7745c5c3_Err != nil {

@@ -73,23 +73,13 @@ func (h *MagacinKontoHandler) CreateMagacinKonto(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusBadRequest, false, nil, "Invalid request body: "+err.Error())
 		return
 	}
+	// The validation also reads the broj of the magacin and the konto and vkonta of the konto zaliha.
 	fieldErrors := h.magacinKontoService.ValidateEntity(ctx, &dto)
 	if len(fieldErrors) > 0 {
-		common.WriteJSONResponse(c, http.StatusBadRequest, false, fieldErrors, "Validation errors")
+		common.WriteJSONResponse(c, http.StatusBadRequest, false, fieldErrors, common.ErrMsgValidation)
 		return
 	}
-	fields := []domain.Fields{
-		{Name: "mag"},
-		{Name: "konto"},
-		{Name: "idfkpl"},
-		{Name: "vkonta"},
-		{Name: "kontoprih"},
-		{Name: "kontotroska"},
-		{Name: "kontoruc"},
-		{Name: "kontorab"},
-	}
-
-	_, _, err := h.magacinKontoService.Create(ctx, &dto, common.IDmagacin, fields)
+	_, _, err := h.magacinKontoService.Create(ctx, &dto, common.IDmagkonto, magacinKontoSaveFields(dto))
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, err.Error())
 		return
@@ -98,13 +88,14 @@ func (h *MagacinKontoHandler) CreateMagacinKonto(c *gin.Context) {
 }
 
 func (h *MagacinKontoHandler) UpdateMagacinKonto(c *gin.Context) {
+	ctx := c.Request.Context()
 	var magacinKonto domain.Magkonto
 	id, err := utils.GetInt64FromParameterRequest(c, "id")
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusBadRequest, false, nil, common.ErrMsgInvalidID)
 		return
 	}
-	getEntity, err := h.magacinKontoService.GetByID(c.Request.Context(), common.IDmagacin, id)
+	getEntity, err := h.magacinKontoService.GetByID(ctx, common.IDmagkonto, id)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, err.Error())
 		return
@@ -118,16 +109,14 @@ func (h *MagacinKontoHandler) UpdateMagacinKonto(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusBadRequest, false, nil, "Invalid request body: "+err.Error())
 		return
 	}
-	fields := []domain.Fields{
-		{Name: "konto", Value: magacinKonto.Konto},
-		{Name: "idfkpl", Value: fmt.Sprintf("%d", magacinKonto.IDFkpl)},
-		{Name: "vkonta", Value: fmt.Sprintf("%d", magacinKonto.VKonta)},
-		{Name: "kontoprih", Value: magacinKonto.KontoPrih},
-		{Name: "kontotroska", Value: magacinKonto.KontoTroska},
-		{Name: "kontoruc", Value: magacinKonto.KontoRuc},
-		{Name: "kontorab", Value: magacinKonto.KontoRab},
+	// The row that is changed (the validation does not count it as a second konto of the magacin); the
+	// validation also reads the broj of the magacin and the konto and vkonta of the konto zaliha.
+	magacinKonto.MagkontoID = id
+	if fieldErrors := h.magacinKontoService.ValidateEntity(ctx, &magacinKonto); len(fieldErrors) > 0 {
+		common.WriteJSONResponse(c, http.StatusBadRequest, false, fieldErrors, common.ErrMsgValidation)
+		return
 	}
-	fieldErrors, err := h.magacinKontoService.Update(c.Request.Context(), &magacinKonto, common.IDmagacin, id, fields)
+	fieldErrors, err := h.magacinKontoService.Update(ctx, &magacinKonto, common.IDmagkonto, id, magacinKontoSaveFields(magacinKonto))
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, err.Error())
 		return
@@ -139,6 +128,22 @@ func (h *MagacinKontoHandler) UpdateMagacinKonto(c *gin.Context) {
 	common.WriteJSONResponse(c, http.StatusOK, true, nil, common.OkMsgSaveData)
 }
 
+// magacinKontoSaveFields returns the columns of magkonto a save writes, with their values (the magacin
+// and its broj, the konto zaliha with its konto and vkonta, the konta of prihod, trošak, RUC and rabat).
+func magacinKontoSaveFields(m domain.Magkonto) []domain.Fields {
+	return []domain.Fields{
+		{Name: "magaciniid", Value: strconv.Itoa(m.MagaciniID)},
+		{Name: "mag", Value: strconv.Itoa(m.Mag)},
+		{Name: "konto", Value: m.Konto},
+		{Name: "idfkpl", Value: strconv.Itoa(m.IDFkpl)},
+		{Name: "vkonta", Value: strconv.Itoa(m.VKonta)},
+		{Name: "kontoprih", Value: m.KontoPrih},
+		{Name: "kontotroska", Value: m.KontoTroska},
+		{Name: "kontoruc", Value: m.KontoRuc},
+		{Name: "kontorab", Value: m.KontoRab},
+	}
+}
+
 func (h *MagacinKontoHandler) DeleteMagacinKonto(c *gin.Context) {
 	ctx := c.Request.Context()
 	id, err := utils.GetInt64FromParameterRequest(c, "id")
@@ -147,7 +152,7 @@ func (h *MagacinKontoHandler) DeleteMagacinKonto(c *gin.Context) {
 		return
 	}
 
-	err = h.magacinKontoService.Delete(ctx, common.IDmagacin, id)
+	err = h.magacinKontoService.Delete(ctx, common.IDmagkonto, id)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, fmt.Sprintf(common.ErrMsgDeleteData, err.Error()))
 		return
@@ -169,11 +174,10 @@ func (h *MagacinKontoHandler) confirmAddHandler(c *gin.Context) {
 		CancelText:    "Odustani",
 	}
 
-	model := domain.Magkonto{
-		VKonta: 1,
-	}
+	model := domain.MagkontoView{}
 
-	btnSave := common.SetButton("btn-save-magacin-konto", "Sačuvaj", "save", magacinKontoURLSave, "", "", "POST", "#info-message", "", true, common.ClassSaveButton, "")
+	// A new one: after the save the form is emptied for the next one (magacinKontoNoviResponse).
+	btnSave := magacinKontoSaveButton(magacinKontoURLSave, "POST", dialog.Id, "magacinKontoNoviResponse")
 	btnClose := common.SetButton("close-btn", "", "close", "", "", "", "", "", "", true, common.ClassDialogCloseButton, "")
 	btnClose.IdDialog = dialog.Id
 	btnCancel := common.SetButton("cancel-btn", "Odustani", "cancel", "", "", "", "", "", "", true, common.ClassOdustaniButton, "")
@@ -182,6 +186,17 @@ func (h *MagacinKontoHandler) confirmAddHandler(c *gin.Context) {
 	csrfToken := common.GetCsrfToken(c)
 
 	tmpl_robno.MagacinKontoDialog(dialog, common.ActionAdd, model, btnSave, btnCancel, btnClose, h.translator, csrfToken).Render(c.Request.Context(), c.Writer)
+}
+
+// magacinKontoSaveButton is "Sačuvaj" of the form (POST of a new konto zaliha, PUT of a changed one): its
+// target is the message area at the bottom of tmpl.Dialog (dialog-form-message), but the answer (JSON) is
+// not swapped into it (hx-swap none); afterRequest (called with the id of the dialog) shows its
+// message at the bottom of the dialog or the errors under the fields: magacinKontoIzmenaResponse closes
+// the dialog after a successful save, magacinKontoNoviResponse empties the form for the next one.
+func magacinKontoSaveButton(url, requestType, dialogID, afterRequest string) domain.Button {
+	btn := common.SetButton("btn-save-magacin-konto", "Sačuvaj", "save", url, "#dialog-form-message", "none", requestType, "", "", true, common.ClassSaveButton, afterRequest)
+	btn.IdDialog = dialogID
+	return btn
 }
 
 func (h *MagacinKontoHandler) confirmUpdateHandler(c *gin.Context) {
@@ -197,7 +212,11 @@ func (h *MagacinKontoHandler) confirmUpdateHandler(c *gin.Context) {
 		common.WriteJSONResponse(c, http.StatusBadRequest, false, nil, common.ErrMsgInvalidID)
 		return
 	}
-	entity, err := h.magacinKontoService.GetByID(ctx, common.IDmagacin, int64(id))
+	// The row of the grid (its key is magkontoid) with the texts of its magacin and konta.
+	entity, found, err := h.magacinKontoService.GetMagacinKontoView(ctx, int64(id))
+	if err == nil && !found {
+		err = fmt.Errorf("%s", common.ErrMsgGetData)
+	}
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, err.Error())
 		return
@@ -211,7 +230,8 @@ func (h *MagacinKontoHandler) confirmUpdateHandler(c *gin.Context) {
 		HxRequestType: "PUT",
 	}
 
-	btnSave := common.SetButton("btn-save-magacin-konto", "Sačuvaj", "save", updateURL, "", "", "PUT", "#info-message", "", true, common.ClassSaveButton, "")
+	// A changed one: after the save the dialog is closed (magacinKontoIzmenaResponse).
+	btnSave := magacinKontoSaveButton(updateURL, "PUT", dialog.Id, "magacinKontoIzmenaResponse")
 	btnClose := common.SetButton("close-btn", "", "close", "", "", "", "", "", "", true, common.ClassDialogCloseButton, "")
 	btnClose.IdDialog = dialog.Id
 	btnCancel := common.SetButton("cancel-btn", "Odustani", "cancel", "", "", "", "", "", "", true, common.ClassOdustaniButton, "")
@@ -221,11 +241,11 @@ func (h *MagacinKontoHandler) confirmUpdateHandler(c *gin.Context) {
 	common.SetUnlockButtonProperties(&btnClose, fmt.Sprintf("/api/magacin-konto/unlock/%d", id))
 
 	csrfToken := common.GetCsrfToken(c)
-	tmpl_robno.MagacinKontoDialog(dialog, common.ActionUpdate, *entity, btnSave, btnCancel, btnClose, h.translator, csrfToken).Render(c.Request.Context(), c.Writer)
+	tmpl_robno.MagacinKontoDialog(dialog, common.ActionUpdate, entity, btnSave, btnCancel, btnClose, h.translator, csrfToken).Render(c.Request.Context(), c.Writer)
 }
 
 func (h *MagacinKontoHandler) GetMagacinKonto(c *gin.Context) {
-	utils.GetEntityHelper(c, h.service, SetMagacinKontoFields(), common.IDmagacin)
+	utils.GetEntityHelper(c, h.service, SetMagacinKontoFields(), common.IDmagkonto)
 }
 
 func (h *MagacinKontoHandler) GetAllMagacinKonto(c *gin.Context) {
@@ -323,8 +343,9 @@ func (h *MagacinKontoHandler) AddRoutes(r *gin.Engine) {
 	r.POST("/api/magacin-konto", h.CreateMagacinKonto)
 	r.GET("/api/magacin-konto/all", h.GetAllMagacinKonto)
 	r.GET("/api/magacin-konto/stampa", h.MagacinKontoStampa)
-	r.GET("/api/magacin-konto/confirm-delete", h.lm.WithEntityLockHold("magkonto", "magaciniid"), h.confirmDeleteHandler)
-	r.GET("/api/magacin-konto/confirm-update", h.lm.WithEntityLockHold("magkonto", "magaciniid"), h.confirmUpdateHandler)
+	// The grid sends the key of the row (magkontoid) as "id".
+	r.GET("/api/magacin-konto/confirm-delete", h.lm.WithEntityLockHold("magkonto", "id"), h.confirmDeleteHandler)
+	r.GET("/api/magacin-konto/confirm-update", h.lm.WithEntityLockHold("magkonto", "id"), h.confirmUpdateHandler)
 	r.GET("/api/magacin-konto/confirm-add", h.confirmAddHandler)
 	r.GET("/api/magacin-konto/:id", h.GetMagacinKonto)
 	r.POST("/api/magacin-konto/save", h.CreateMagacinKonto)

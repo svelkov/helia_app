@@ -64,8 +64,8 @@ type searchDefinition struct {
 // sifra, the kupac/dobavljač of the robni dokument (rdok.fkto, rdok.fana) and the prodavnica (rdok.pkto,
 // rdok.pana).
 var (
-	robnoSearchKonto = []string{"konto", "fkto", "pkto"}
-	robnoSearchSifra = []string{"sifra", "fana", "pana"}
+	robnoSearchKonto = []string{"konto", "fkto", "pkto", "kupackonto", "tkonto"}
+	robnoSearchSifra = []string{"sifra", "fana", "pana", "kupacsifra"}
 )
 
 // searchDefinitions are the searches of the application. A new search is a new entry here.
@@ -126,6 +126,37 @@ var searchDefinitions = map[string]searchDefinition{
 		orderBy:     "f.konto",
 		textColumns: []int{0, 1},
 	},
+	// Kontni plan by id: the konta (fkpl.vkonta 2) and the analitike of the konta (vkonta 1) of the
+	// kontni plan by their id (idfkpl), e.g. the konto zaliha of a magacin; a konto with analitike is
+	// there more times (once per šifra), so the key is the id of the row. The last column is the vkonta
+	// of the row (the screen shows it).
+	"kontni-plan-id": {
+		headers: []domain.Fields{
+			{Label: "Konto", Width: "15%"},
+			{Label: "Šifra", Width: "12%"},
+			{Label: "Naziv"},
+			{Label: "V. konta", Width: "10%", TextAlign: "center"},
+		},
+		query: `select f.idfkpl::text as key, f.konto as c1, coalesce(f.sifra, '') as c2, coalesce(f.naziv, '') as c3,
+			f.vkonta::text as c4 from fkpl f`,
+		period:      "f",
+		conditions:  []string{"f.vkonta in (1, 2)"},
+		searchIn:    []string{"f.konto", "f.sifra", "f.naziv"},
+		orderBy:     "f.konto, f.vkonta desc, f.sifra",
+		textColumns: []int{0, 1, 2},
+	},
+	// Magacini: the magacini of the period (key the magaciniid).
+	"magacini": {
+		headers: []domain.Fields{
+			{Label: "Magacin", Width: "15%", TextAlign: "right"},
+			{Label: "Opis"},
+		},
+		query:       `select m.magaciniid::text as key, m.mag::text as c1, coalesce(m.opis, '') as c2 from magacini m`,
+		period:      "m",
+		searchIn:    []string{"m.mag::text", "m.opis"},
+		orderBy:     "m.mag",
+		textColumns: []int{0, 1},
+	},
 	// Kontni plan: the konta of the kontni plan of the kind the screen sends as "vkonta" (2 the konta,
 	// 3 the sintetička konta; without it all the konta, not the analitika).
 	"kontni-plan": {
@@ -140,6 +171,32 @@ var searchDefinitions = map[string]searchDefinition{
 		filters:     map[string][]string{"f.vkonta::text": {"vkonta"}},
 		orderBy:     "f.konto",
 		textColumns: []int{0, 1},
+	},
+	// Robni dokumenti: the robni dokumenti (rdok) of the period with their kupac and iznos; the filters
+	// "vrd" and "rnalid" limit them to one vrsta dokumenta and one nalog (e.g. the broj dokumenta of the
+	// fakture veleprodaje: the documents of the nalog).
+	"robni-dokumenti": {
+		headers: []domain.Fields{
+			{Label: "Broj dokumenta", Width: "12%", TextAlign: "right"},
+			{Label: "Datum dokumenta", Width: "12%"},
+			{Label: "Konto/Šifra", Width: "14%"},
+			{Label: "Naziv partnera"},
+			{Label: "Iznos", TextAlign: "right"},
+		},
+		// The key is the id of the document (rdokid): the screen opens the selected document by it.
+		query: `select r.rdokid::text as key, r.dokum::text as c1, coalesce(to_char(r.dadok, 'DD.MM.YYYY'), '') as c2,
+			trim(coalesce(r.fkto, '') || ' ' || coalesce(r.fana, '')) as c3, coalesce(kup.naziv, '') as c4,
+			coalesce(to_char(r.iznos, 'FM999999999990.00'), '') as c5
+			from rdok r
+			left join lateral (select f.naziv from fkpl f
+				where f.god = r.god and f.kar = r.kar and f.konto = r.fkto and f.sifra = r.fana
+				order by f.vkonta desc, f.idfkpl limit 1) kup on true`,
+		period:        "r",
+		searchIn:      []string{"r.dokum::text", "r.fana", "kup.naziv"},
+		filters:       map[string][]string{"r.vrd::text": {"vrd"}, "r.rnalid::text": {"rnalid"}},
+		orderBy:       "r.dokum desc",
+		textColumns:   []int{0, 3},
+		detailColumns: []int{1},
 	},
 	// Sintetička konta: the sintetička konta of the kontni plan (fkpl.vkonta 3).
 	"sinteticka-konta": {
@@ -192,6 +249,128 @@ var searchDefinitions = map[string]searchDefinition{
 		period:      "k",
 		searchIn:    []string{"k.sifkom::text", "k.imeprezime", "k.mesto"},
 		orderBy:     "k.sifkom",
+		textColumns: []int{0, 1},
+	},
+	// The šifarnici of the combos of the documents, keyed by the primary key of the šifarnik and shown
+	// as šifra and naziv only.
+	// Org. jedinice (orgjed.idorgjed).
+	"org-jedinice": {
+		headers: []domain.Fields{
+			{Label: "Šifra", Width: "20%"},
+			{Label: "Naziv"},
+		},
+		query:       `select o.idorgjed::text as key, coalesce(o.ojozn, '') as c1, coalesce(o.naziv, '') as c2 from orgjed o`,
+		period:      "o",
+		searchIn:    []string{"o.ojozn", "o.naziv"},
+		orderBy:     "o.ojozn",
+		textColumns: []int{0, 1},
+	},
+	// Mesta troška (mestotr.mestotrid); the filter "idorgjed" limits them to one org. jedinica.
+	"mesta-troska": {
+		headers: []domain.Fields{
+			{Label: "Šifra", Width: "20%"},
+			{Label: "Naziv"},
+		},
+		query:       `select m.mestotrid::text as key, coalesce(m.mtroska, '') as c1, coalesce(m.opis, '') as c2 from mestotr m`,
+		period:      "m",
+		searchIn:    []string{"m.mtroska", "m.opis"},
+		filters:     map[string][]string{"m.idorgjed::text": {"idorgjed", "idorgjed1"}},
+		orderBy:     "m.mtroska",
+		textColumns: []int{0, 1},
+	},
+	// Mesta isporuke by fisp.fispid (the search "mesta-isporuke" is keyed by the MI); the konto and
+	// the šifra of the partner limit them to the ones of the kupac.
+	"mesta-isporuke-id": {
+		headers: []domain.Fields{
+			{Label: "MI", Width: "15%", TextAlign: "right"},
+			{Label: "Naziv"},
+		},
+		query:       `select f.fispid::text as key, coalesce(f.mi, 0)::bigint::text as c1, coalesce(f.naziv, '') as c2 from fisp f`,
+		period:      "f",
+		searchIn:    []string{"f.mi::text", "f.naziv"},
+		filters:     map[string][]string{"f.konto": robnoSearchKonto, "f.sifra": robnoSearchSifra},
+		orderBy:     "f.mi",
+		textColumns: []int{0, 1},
+	},
+	// Komercijalisti by komercijalisti.komid (the search "komercijalisti" is keyed by the šifra).
+	"komercijalisti-id": {
+		headers: []domain.Fields{
+			{Label: "Šifra", Width: "15%", TextAlign: "right"},
+			{Label: "Ime i prezime"},
+		},
+		query:       `select k.komid::text as key, coalesce(k.sifkom, 0)::text as c1, coalesce(k.imeprezime, '') as c2 from komercijalisti k`,
+		period:      "k",
+		searchIn:    []string{"k.sifkom::text", "k.imeprezime"},
+		orderBy:     "k.sifkom",
+		textColumns: []int{0, 1},
+	},
+	// Banke za uplatu - izvoz (bnkizv.bnkizvid) with their SWIFT, broj računa and beneficiary.
+	"banke-izvoz": {
+		headers: []domain.Fields{
+			{Label: "Šifra", TextAlign: "right"},
+			{Label: "Naziv"},
+			{Label: "SWIFT"},
+			{Label: "Broj računa"},
+			{Label: "Beneficiary"},
+		},
+		query: `select b.bnkizvid::text as key, coalesce(b.sifbank, 0)::text as c1, coalesce(b.bnkdes, '') as c2,
+			coalesce(b.swiftadr, '') as c3, coalesce(b.brojrac, '') as c4, coalesce(b.beneficiary, '') as c5 from bnkizv b`,
+		period:      "b",
+		searchIn:    []string{"b.sifbank::text", "b.bnkdes", "b.swiftadr", "b.brojrac", "b.beneficiary"},
+		orderBy:     "b.sifbank",
+		textColumns: []int{0, 1},
+	},
+	// POPDV polja of the evidencije PDV (fvepdv) of the type the screen sends as "vktip" (e.g. "I" for
+	// the izlazni računi), by the order of the evidencija and the polje; the key is the polje (the
+	// documents store it, e.g. rdok.polje).
+	"popdv": {
+		headers: []domain.Fields{
+			{Label: "Polje"},
+			{Label: "Opis"},
+			{Label: "Tip", TextAlign: "right"},
+			{Label: "Deo", TextAlign: "right"},
+		},
+		query: `select coalesce(p.polje, '') as key, coalesce(p.polje, '') as c1, coalesce(p.opis, '') as c2,
+			coalesce(p.tip, 0)::text as c3, coalesce(p.deo, 0)::text as c4
+			from popdv p join fvepdv e on e.fvepdvid = p.fvepdvid`,
+		period:      "e",
+		searchIn:    []string{"p.polje", "p.opis"},
+		filters:     map[string][]string{"e.vktip": {"vktip"}},
+		orderBy:     "e.vkrbr, p.polje",
+		textColumns: []int{0, 1},
+	},
+	// Poreske kategorije (porkat.porkatid) of the PDV obveznici or of the firms out of the PDV (the
+	// filter "obveznik", "true" or "false"), with the članovi of the zakon the napomena o poreskom
+	// oslobođenju is made of (the šifarnik is common to all the periods).
+	"poreske-kategorije": {
+		headers: []domain.Fields{
+			{Label: "Šifra"},
+			{Label: "Kategorija"},
+			{Label: "Tekst"},
+			{Label: "Zakon"},
+			{Label: "Član", TextAlign: "right"},
+			{Label: "Stav", TextAlign: "right"},
+			{Label: "Tačka", TextAlign: "right"},
+			{Label: "Podtačka", TextAlign: "right"},
+		},
+		query: `select p.porkatid::text as key, coalesce(p.keykat, '') as c1, coalesce(p.category, '') as c2,
+			coalesce(p.text, '') as c3, coalesce(p.law, '') as c4, coalesce(p.article, '') as c5,
+			coalesce(p.paragraph, '') as c6, coalesce(p.point, '') as c7, coalesce(p.subpoint, '') as c8
+			from porkat p`,
+		searchIn:    []string{"p.keykat", "p.category", "p.text"},
+		filters:     map[string][]string{"p.obveznik::text": {"obveznik"}},
+		orderBy:     "p.keykat, p.category",
+		textColumns: []int{0, 1},
+	},
+	// Valute (valute.idvalute; the šifarnik is common to all the periods).
+	"valute": {
+		headers: []domain.Fields{
+			{Label: "Šifra", Width: "15%", TextAlign: "right"},
+			{Label: "Naziv"},
+		},
+		query:       `select v.idvalute::text as key, coalesce(v.sifval, 0)::text as c1, coalesce(v.naziv, '') as c2 from valute v`,
+		searchIn:    []string{"v.sifval::text", "v.naziv", "v.oznval"},
+		orderBy:     "v.sifval",
 		textColumns: []int{0, 1},
 	},
 	// Artikli: the šifarnik of the artikli (rsif, the field Šifra of the robno).
@@ -255,7 +434,11 @@ func (s *SearchResource) Search(ctx context.Context, entity, text string, filter
 			}
 		}
 	}
-	if text = strings.TrimSpace(text); text != "" && len(def.searchIn) > 0 {
+	// "-" is the text of a combo without a selected row (TableComboConfig.AllowEmpty): no text.
+	if text = strings.TrimSpace(text); text == "-" {
+		text = ""
+	}
+	if text != "" && len(def.searchIn) > 0 {
 		n := qb.GetArgsCount() + 1
 		parts := make([]string, 0, len(def.searchIn))
 		for _, column := range def.searchIn {

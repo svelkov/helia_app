@@ -12,12 +12,12 @@ import (
 
 // RobnoDokumentaMain renders the "Robna dokumenta" option (robni nalozi / robni dokumenti).
 // The first tab ("Unos dokumenta") is rendered inside the container that the tab navigation
-templ RobnoDokumentaMain(hxValsTipdok, hxValsNalog string, tabs, subTabs domain.TabData, tbl domain.TableData, tipdokValues, vrstaDokumentaValues, magValues []domain.ComboItem, total domain.RobnoDokumentaTotal, payload domain.RobnoDokumentaParams, btnSave, btnNoviNalog domain.Button, searchInput domain.InputControl, translator *i18n.Service, csrfToken string) {
+templ RobnoDokumentaMain(hxValsTipdok, hxValsVrd, hxValsNalog, dokumentDialogID string, tabs, subTabs domain.TabData, tbl domain.TableData, tipdokValues, vrstaDokumentaValues, magValues []domain.ComboItem, total domain.RobnoDokumentaTotal, payload domain.RobnoDokumentaParams, btnSave, btnNoviNalog domain.Button, searchInput domain.InputControl, translator *i18n.Service, csrfToken string) {
 	<div id="robno-dokumenta-content" class="flex flex-col h-full">
-		@RobnoDokumentaUnos(hxValsTipdok, hxValsNalog, tabs, subTabs, tbl, tipdokValues, vrstaDokumentaValues, magValues, total, payload, btnSave, btnNoviNalog, searchInput, translator, csrfToken)
+		@RobnoDokumentaUnos(hxValsTipdok, hxValsVrd, hxValsNalog, tabs, subTabs, tbl, tipdokValues, vrstaDokumentaValues, magValues, total, payload, btnSave, btnNoviNalog, searchInput, translator, csrfToken)
 		<!-- The dialog of the screen of the entry of the documents of the saved nalog (or the message
 		     that the screen is not installed), opened by RobnoDokumentaOtvoriDokumentScript. -->
-		<div id={ robnoDokumentaDokumentDialogID }></div>
+		<div id={ dokumentDialogID }></div>
 	</div>
 	@RobnoDokumentaOtvoriDokumentScript()
 	@tmpl.ShowSearchDialogScript()
@@ -88,14 +88,14 @@ templ RobnoDokumentaEmptyBody(tabLabel string, tbl domain.TableData, btnObrada, 
 }
 
 // Tab 1 - Unos dokumenta
-templ RobnoDokumentaUnos(hxValsTipdok, hxValsNalog string, tabs, subTabs domain.TabData, tbl domain.TableData, tipdokValues, vrstaDokumentaValues, magValues []domain.ComboItem, total domain.RobnoDokumentaTotal, payload domain.RobnoDokumentaParams, btnSave, btnNoviNalog domain.Button, searchInput domain.InputControl, translator *i18n.Service, csrfToken string) {
-	@RobnoDokumentaShell(tabs, subTabs, translator, RobnoDokumentaUnosForm(hxValsTipdok, hxValsNalog, tbl, tipdokValues, vrstaDokumentaValues, magValues, total, payload, btnSave, btnNoviNalog, searchInput, translator, csrfToken))
+templ RobnoDokumentaUnos(hxValsTipdok, hxValsVrd, hxValsNalog string, tabs, subTabs domain.TabData, tbl domain.TableData, tipdokValues, vrstaDokumentaValues, magValues []domain.ComboItem, total domain.RobnoDokumentaTotal, payload domain.RobnoDokumentaParams, btnSave, btnNoviNalog domain.Button, searchInput domain.InputControl, translator *i18n.Service, csrfToken string) {
+	@RobnoDokumentaShell(tabs, subTabs, translator, RobnoDokumentaUnosForm(hxValsTipdok, hxValsVrd, hxValsNalog, tbl, tipdokValues, vrstaDokumentaValues, magValues, total, payload, btnSave, btnNoviNalog, searchInput, translator, csrfToken))
 }
 
 // RobnoDokumentaUnosForm renders the header of the robni nalog ("Vrsta naloga za knjiženje",
 // "Vrsta dokumenta", "Datum obrade", "Broj naloga", "Datum naloga", "Opis knjiženja" i "Magacin"),
 // the "Prikaz ukupne obrade" panel and the grid of the nalozi of the selected vrsta naloga.
-templ RobnoDokumentaUnosForm(hxValsTipdok, hxValsNalog string, tbl domain.TableData, tipdokValues, vrstaDokumentaValues, magValues []domain.ComboItem, total domain.RobnoDokumentaTotal, payload domain.RobnoDokumentaParams, btnSave, btnNoviNalog domain.Button, searchInput domain.InputControl, translator *i18n.Service, csrfToken string) {
+templ RobnoDokumentaUnosForm(hxValsTipdok, hxValsVrd, hxValsNalog string, tbl domain.TableData, tipdokValues, vrstaDokumentaValues, magValues []domain.ComboItem, total domain.RobnoDokumentaTotal, payload domain.RobnoDokumentaParams, btnSave, btnNoviNalog domain.Button, searchInput domain.InputControl, translator *i18n.Service, csrfToken string) {
 	<div class="no-border bg-blue-100 rounded-lg">
 		<div class="grid grid-cols-3 gap-2 items-stretch">
 			<!-- Header of the nalog -->
@@ -146,7 +146,7 @@ templ RobnoDokumentaUnosForm(hxValsTipdok, hxValsNalog string, tbl domain.TableD
 						}, translator)
 					</div>
 					<!-- Vrsta dokumenta: TODO: the legacy "+" and "..." buttons next to the combo -->
-					@RobnoDokumentaUnosVrdCombo(vrstaDokumentaValues, payload.Vrd, false, translator)
+					@RobnoDokumentaUnosVrdCombo(vrstaDokumentaValues, payload.Vrd, hxValsVrd, false, translator)
 					<!-- Datum obrade, Broj naloga i Datum naloga in one row. The label of Datum obrade
 					     keeps the width of the labels of the other rows, so the fields are aligned. -->
 					<div class="flex items-center gap-1 mb-1">
@@ -269,7 +269,7 @@ templ RobnoDokumentaUnosTotalRow(id, label, value string, translator *i18n.Servi
 // RobnoDokumentaUnosVrdCombo renders the combo of the vrsta dokumenta of the unos dokumenata. With oob
 // it replaces the combo of the page out of band (the response to the change of the vrsta naloga, the
 // legacy PostaviComboBoxes).
-templ RobnoDokumentaUnosVrdCombo(values []domain.ComboItem, selected string, oob bool, translator *i18n.Service) {
+templ RobnoDokumentaUnosVrdCombo(values []domain.ComboItem, selected, hxVals string, oob bool, translator *i18n.Service) {
 	<div
 		id="robno-dokumenta-unos-vrd"
 		class="flex items-center gap-1 mb-1"
@@ -289,7 +289,12 @@ templ RobnoDokumentaUnosVrdCombo(values []domain.ComboItem, selected string, oob
 			ClassSelect:   common.ClassInputTextEnabled + " flex-1",
 			OptionValues:  values,
 			SelectedValue: selected,
-			TabIndex:      "3",
+			// Its change reloads the grid: the nalozi with a document of the vrsta dokumenta.
+			ChangeEndpoint: "/api/robno-dokumenta/unos",
+			HxChangeTarget: "robno-dokumenta-unos-table",
+			HxSwap:         "innerHTML",
+			HxVals:         hxVals,
+			TabIndex:       "3",
 		}, translator)
 	</div>
 }
@@ -322,9 +327,6 @@ templ RobnoDokumentaUnosMagCombo(values []domain.ComboItem, magaciniID int, oob 
 }
 
 // magaciniSelection returns the key of the selected magacin ("" when no magacin is selected).
-// robnoDokumentaDokumentDialogID is the container of the dialog of the screen of the entry of the
-// documents of a nalog (see RobnoDokumentaOtvoriDokumentScript).
-const robnoDokumentaDokumentDialogID = "robno-dokumenta-dokument-dialog"
 
 // RobnoDokumentaOtvoriDokumentScript opens the screen of the entry of the documents after the nalog is
 // saved ("Snimi nalog"): the response of the save carries the event robnoNalogSnimljen with the url of

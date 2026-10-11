@@ -298,19 +298,19 @@ type RobnoDokumentaDto struct {
 	Stopa float64 `json:"stopa" db:"stopa"`
 
 	// Partner of the document (fkpl/partneri) and the broj avansnog računa it was created from.
-	Fkto        string        `json:"fkto" db:"fkto"`
-	Fana        string        `json:"fana" db:"fana"`
-	Naziv       string        `json:"naziv" db:"naziv"`
-	Pib         string        `json:"pib" db:"pib"`
-	Jbkjs       string        `json:"jbkjs" db:"jbkjs"`
-	Adresa      string        `json:"adresa" db:"adresa"`
-	Mesto       string        `json:"mesto" db:"mesto"`
-	Avansi      string        `json:"avansi" db:"avansi"`
-	Pkto        string        `json:"pkto" db:"pkto"`
-	Pana        string        `json:"pana" db:"pana"`
-	Naziv1      string        `json:"naziv1" db:"naziv1"`
-	Pornapomena string        `json:"pornapomena" db:"pornapomena"`
-	Tkonto      string        `json:"tkonto" db:"tkonto"`
+	Fkto        string `json:"fkto" db:"fkto"`
+	Fana        string `json:"fana" db:"fana"`
+	Naziv       string `json:"naziv" db:"naziv"`
+	Pib         string `json:"pib" db:"pib"`
+	Jbkjs       string `json:"jbkjs" db:"jbkjs"`
+	Adresa      string `json:"adresa" db:"adresa"`
+	Mesto       string `json:"mesto" db:"mesto"`
+	Avansi      string `json:"avansi" db:"avansi"`
+	Pkto        string `json:"pkto" db:"pkto"`
+	Pana        string `json:"pana" db:"pana"`
+	Naziv1      string `json:"naziv1" db:"naziv1"`
+	Pornapomena string `json:"pornapomena" db:"pornapomena"`
+	Tkonto      string `json:"tkonto" db:"tkonto"`
 
 	// eFaktura (SEF) status of the document.
 	StatusSalinv       string          `json:"statussalinv" db:"statussalinv"`
@@ -408,22 +408,42 @@ type PrikazUkupneObradeDto struct {
 }
 
 // MAGKONTO Model
+// Magkonto is a konto zaliha of a magacin (magkonto, the key magkontoid): the magacin (magaciniid, with
+// its broj mag) and the konto of the kontni plan (idfkpl: a konto, fkpl.vkonta 2, or an analitika of a
+// konto, vkonta 1; konto and vkonta are the ones of that fkpl row), with the konta of prihod, trošak,
+// RUC and rabat (konta of the kontni plan, vkonta 2). The form sends magaciniid, idfkpl and the four
+// konta; mag, konto and vkonta are read from the magacin and the kontni plan when it is saved.
 type Magkonto struct {
-	MagaciniID  int          `json:"magaciniid" db:"magaciniid"`
-	Mag         int          `json:"mag" db:"mag"`
-	God         int          `json:"god" db:"god"`
-	Kar         int          `json:"kar" db:"kar"`
-	XDatUnosa   sql.NullTime `json:"xdat_unosa" db:"xdatunosa"`
-	XDatIzmene  sql.NullTime `json:"xdat_izmene" db:"xdatizmene"`
-	XOpUnos     string       `json:"xop_unos" db:"xopunos"`
-	XOpIzmene   string       `json:"xop_izmene" db:"xopizmene"`
-	Konto       string       `json:"konto" db:"konto" form:"konto"`
-	IDFkpl      int          `json:"idfkpl" db:"idfkpl"`
-	VKonta      int          `json:"vkonta" db:"vkonta" form:"vkonta"`
-	KontoPrih   string       `json:"kontoprih" db:"kontoprih" form:"kontoprih"`
-	KontoTroska string       `json:"kontotroska" db:"kontotroska" form:"kontotroska"`
-	KontoRuc    string       `json:"kontoruc" db:"kontoruc" form:"kontoruc"`
-	KontoRab    string       `json:"kontorab" db:"kontorab" form:"kontorab"`
+	MagkontoID  int64          `json:"magkontoid" db:"magkontoid"`
+	MagaciniID  int            `json:"magaciniid" db:"magaciniid" form:"magaciniid"`
+	Mag         int            `json:"mag" db:"mag"`
+	God         int            `json:"god" db:"god"`
+	Kar         int            `json:"kar" db:"kar"`
+	XDatUnosa   sql.NullTime   `json:"xdat_unosa" db:"xdatunosa"`
+	XDatIzmene  sql.NullTime   `json:"xdat_izmene" db:"xdatizmene"`
+	XOpUnos     string         `json:"xop_unos" db:"xopunos"`
+	XOpIzmene   sql.NullString `json:"xop_izmene" db:"xopizmene"`
+	Konto       string         `json:"konto" db:"konto"`
+	IDFkpl      int            `json:"idfkpl" db:"idfkpl" form:"idfkpl"`
+	VKonta      int            `json:"vkonta" db:"vkonta"`
+	KontoPrih   string         `json:"kontoprih" db:"kontoprih" form:"kontoprih"`
+	KontoTroska string         `json:"kontotroska" db:"kontotroska" form:"kontotroska"`
+	KontoRuc    string         `json:"kontoruc" db:"kontoruc" form:"kontoruc"`
+	KontoRab    string         `json:"kontorab" db:"kontorab" form:"kontorab"`
+}
+
+// MagkontoView is a konto zaliha of a magacin with the texts of its keys for the grid and the form: the
+// opis of the magacin, the šifra and the naziv of the konto zaliha (fkpl of idfkpl) and the nazivi of
+// the konta of prihod, trošak, RUC and rabat.
+type MagkontoView struct {
+	Magkonto
+	MagacinOpis      string `db:"magacinopis"`
+	KontoSifra       string `db:"kontosifra"`
+	KontoNaziv       string `db:"kontonaziv"`
+	KontoPrihNaziv   string `db:"kontoprihnaziv"`
+	KontoTroskaNaziv string `db:"kontotroskanaziv"`
+	KontoRucNaziv    string `db:"kontorucnaziv"`
+	KontoRabNaziv    string `db:"kontorabnaziv"`
 }
 
 // KOMERCIJALISTI Model

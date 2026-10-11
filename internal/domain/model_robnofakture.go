@@ -19,6 +19,24 @@ type RobnoFaktureHeader struct {
 	// stavke control is disabled, afterwards the other way round.
 	Snimljen bool
 
+	// PdvObveznik is the firm a PDV obveznik (fvr.obv: the poreske kategorije of the obveznici) and
+	// Storno the vrsta dokumenta a storno (dokvrsta.predznak "-"); the selection of a poreska
+	// kategorija sets the nastanak PDV obaveze of an obveznik for a document that is not a storno.
+	PdvObveznik bool
+	Storno      bool
+	// Usluge: the header of a faktura usluga (the legacy rob_Fakture_Usluga: no paritet, izvozna izjava,
+	// banka za uplatu - izvoz, težine, kutije and palete); Knjizno: a knjižno pismo finansijsko (the group
+	// KPF: "Za period" and, for a storno, the datum smanjenja).
+	Usluge  bool
+	Knjizno bool
+
+	// The nalog, the magacin and the document the header belongs to (RdokID 0 for a new document);
+	// they are sent with the header (hidden fields) and limit the search of the broj dokumenta to the
+	// documents of the nalog.
+	RnalID     int64
+	MagaciniID int
+	RdokID     int64
+
 	// Nalog (the read only strip at the top of both windows).
 	VrNal, Nalog, DatumNaloga, UkDokum, UkStavki, Duguje, Potrazuje, IznosDokum, Magacin string
 
@@ -33,10 +51,10 @@ type RdokDto struct {
 	IzvorniDokum    string    `db:"dokiz" form:"dokiz"`
 	IzvorniDokDatum time.Time `db:"datiz" form:"datiz"`
 	Opis            string    `db:"opis" form:"opis"`
-	ZaPeriod        bool      `form:"za_period"`
-	PeriodOd        time.Time `db:"oddat1" form:"oddat1"`
-	PeriodDo        time.Time `db:"dodat1" form:"dodat1"`
-	DatumSmanjenja  time.Time `db:"datsmanj" form:"datsmanj"`
+	ZaPeriod        bool      `db:"kpperiod" form:"za_period"`
+	PeriodOd        time.Time `db:"oddat" form:"oddat1"`
+	PeriodDo        time.Time `db:"dodat" form:"dodat1"`
+	DatumSmanjenja  time.Time `db:"-" form:"datsmanj"`
 	// Podaci o kupcu.
 	KupacKonto         string `db:"fkto" form:"fkto"`
 	KupacSifra         string `db:"fana" form:"fana"`
@@ -46,57 +64,83 @@ type RdokDto struct {
 	KupacMesto         string
 	KupacPib           string
 	SistemPdv          string
+	// KupacInfo is the read only text of the kupac shown under its data (the box of the legacy window).
+	KupacInfo string
 	// Podaci o načinu otpreme, rokovima, valuti i avansima.
-	Valuta           int       `db:"sifval" form:"sifval"`
-	Kurs             float64   `db:"kurs" form:"kurs"`
-	VaziZa           int       `db:"vaziza" form:"vaziza"`
-	BrojRata         int       `db:"brojrate" form:"brojrate"`
-	DatumPrveRate    time.Time `db:"datumprrate" form:"datumprrate"`
-	IznosFakture     float64   `db:"iznfaktrate" form:"iznfaktrate"`
-	IznosPrveRate    float64   `db:"prvarata" form:"prvarata"`
-	UsloviPlacanja   string    `db:"pla" form:"pla"`
-	UsloviKamate     string    `db:"kam" form:"kam"`
-	Rok              int       `db:"rok" form:"rok"`
-	Dospeva          time.Time `db:"dospeva" form:"dospeva"`
-	BrojUgovora      string    `db:"ugovor" form:"ugovor"`
-	Narudzbenica     string    `db:"narudzb" form:"narudzb"`
-	ZirpRacun        string    `db:"ziro" form:"ziro"`
-	NacinOtpreme     string    `db:"otp" form:"otp"`
-	Vozac            string    `db:"vozac" form:"vozac"`
-	RegBr            string    `db:"brvozila" form:"brvozila"`
-	BrutoTezina      float64   `db:"bttowght" form:"bttowght"`
-	NetoTezina       float64   `db:"netwght" form:"netwght"`
-	BrojKutija       int       `db:"totboxs" form:"totboxs"`
-	BrojPaleta       int       `db:"brpaleta" form:"brpaleta"`
-	Paritet          string    `db:"paritet" form:"paritet"`
-	IzvozIzjava      string    `db:"izjizv" form:"izjizv"`
-	BankaIzvozUplatu string    `db:"sifbank" form:"sifbank"`
-	Popdv            string    `db:"popdv" form:"popdv"`
+	Valuta int `db:"sifval" form:"sifval"`
+	// IDValute is the valuta selected in the combo (rdok.idvalute, the primary key of the šifarnik
+	// valute); Valuta (rdok.sifval) is its šifra, which the prints and the other queries still read.
+	IDValute         sql.NullInt64 `db:"idvalute" form:"idvalute"`
+	Kurs             float64       `db:"kurs" form:"kurs"`
+	VaziZa           int           `db:"vaziza" form:"vaziza"`
+	BrojRata         int           `db:"brojrata" form:"brojrate"`
+	DatumPrveRate    time.Time     `db:"datumprrate" form:"datumprrate"`
+	IznosFakture     float64       `db:"-" form:"iznfaktrate"`
+	IznosPrveRate    float64       `db:"-" form:"prvarata"`
+	UsloviPlacanja   string        `db:"pla" form:"pla"`
+	UsloviKamate     string        `db:"kamt" form:"kam"`
+	Rok              int           `db:"rok" form:"rok"`
+	Dospeva          time.Time     `db:"-" form:"dospeva"`
+	BrojUgovora      string        `db:"brugov" form:"ugovor"`
+	Narudzbenica     string        `db:"narudzb" form:"narudzb"`
+	ZirpRacun        string        `db:"posuslnab" form:"ziro"`
+	NacinOtpreme     string        `db:"otp" form:"otp"`
+	Vozac            string        `db:"vozac" form:"vozac"`
+	RegBr            string        `db:"brvozila" form:"brvozila"`
+	BrutoTezina      float64       `db:"bttowght" form:"bttowght"`
+	NetoTezina       float64       `db:"netwght" form:"netwght"`
+	BrojKutija       int           `db:"totboxs" form:"totboxs"`
+	BrojPaleta       int           `db:"brpaleta" form:"brpaleta"`
+	Paritet          string        `db:"paritet" form:"paritet"`
+	IzvozIzjava      string        `db:"izjizv" form:"izjizv"`
+	BankaIzvozUplatu string        `db:"sifbank" form:"sifbank"`
+	// IDBankaIzvoz is the banka za uplatu - izvoz selected in the combo (rdok.bnkizvid, the primary key
+	// of bnkizv); BankaIzvozUplatu (rdok.sifbank) is its šifra.
+	IDBankaIzvoz sql.NullInt64 `db:"bnkizvid" form:"bnkizvid"`
+	// Popdv is the POPDV polje of the document (rdok.polje).
+	Popdv string `db:"polje" form:"popdv"`
 	// Podaci o porezom oslobođenju, nastanku PDV obaveze.
-	PorKategorija   string `db:"porkat" form:"porkat"`
-	OznakaKat       string `db:"oznpk" form:"oznpk"`
-	NapomenaPoresko string
-	NastanakPDV     string        `db:"nastanak" form:"nastanak"`
-	Orgejed         sql.NullInt64 `db:"idorgjed" form:"idorgjed"`
-	MestoTroska     sql.NullInt64 `db:"mtroska" form:"mtroska"`
-	MestoIsporuke   sql.NullInt64 `db:"fispid" form:"fispid"`
-	Komercijalista  sql.NullInt64 `db:"komid" form:"komid"`
-	JavnaNabavka    bool
-	JBKJNosioc      string `db:"jbkjsnjn" form:"jbkjsnjn"`
-	BrojTendera     string `db:"brtend" form:"brtend"`
+	// The poreska kategorija of the document: its key (rdok.keykat), its oznaka (rdok.category) and the
+	// napomena o poreskom oslobođenju (rdok.pornapomena); IDPorKat is the row of porkat selected in the
+	// combo (porkat.porkatid), from which the keykat and the category are saved.
+	PorKategorija   string        `db:"keykat"`
+	OznakaKat       string        `db:"category"`
+	NapomenaPoresko string        `db:"pornapomena" form:"napomporeskoosl"`
+	IDPorKat        sql.NullInt64 `db:"-" form:"porkatid"`
+	// NastanakPDV is the nastanak PDV obaveze (rdok.descriptioncode, the code of the e-faktura: 35,
+	// 3, 432, 0; 999 is "-", not chosen; see robno.RobFaktureNastanakPDV).
+	NastanakPDV string        `db:"descriptioncode" form:"nastanakpdv"`
+	Orgejed     sql.NullInt64 `db:"idorgjed" form:"idorgjed"`
+	MestoTroska sql.NullInt64 `db:"mestotrid" form:"mestotrid"`
+	// MestoIsporuke is the mesto isporuke selected in the combo (rdok.fispid, the primary key of fisp);
+	// rdok.mi keeps its MI for the queries that read it.
+	MestoIsporuke sql.NullInt64 `db:"fispid" form:"fispid"`
+	// The poštanski broj and the mesto of the mesto isporuke (read only).
+	MispPostanskiBroj string
+	MispMesto         string
+	// Tekst is the free text of the document (rdok.foot).
+	Tekst          string        `db:"foot" form:"foot"`
+	Komercijalista sql.NullInt64 `db:"komid" form:"komid"`
+	JavnaNabavka   bool          `db:"javnab"`
+	JBKJNosioc     string        `db:"jbkjsnjn" form:"jbkjsnjn"`
+	BrojTendera    string        `db:"brtend" form:"brtend"`
 }
 
 // The combo boxes of the header: the values are read from the database by the handler and passed
 type RobnoFaktureCombos struct {
-	CbxMi             []ComboItem
-	CbxKomercijalista []ComboItem
-	CbxPorKategorija  []ComboItem
-	CbxOrgjed         []ComboItem
-	CbxMtroska        []ComboItem
-	CbxNastanakPDV    []ComboItem
-	CbxMestoIsporuke  []ComboItem
-	CbxValuta         []ComboItem
-	CbxBankaIzvoz     []ComboItem
+	CbxNastanakPDV []ComboItem
+	CbxBankaIzvoz  []ComboItem
+
+	// The texts ("šifra naziv") the table combos of the valuta, of the org. jedinica, of the mesto
+	// troška, of the mesto isporuke, of the komercijalista, of the banka za uplatu - izvoz and of the POPDV polje show for their selected keys.
+	ValutaText         string
+	OrgjedText         string
+	MestoTroskaText    string
+	MestoIsporukeText  string
+	KomercijalistaText string
+	BankaIzvozText     string
+	PopdvText          string
+	PorKatText         string
 }
 
 // Finansijsko stanje kupca (realizovano / planirano / reprogramirano and the saldo columns).
@@ -120,7 +164,7 @@ type RobnoFaktureFinStanjeKupca struct {
 // dokument the header form is bound to (RdokDto), the combo boxes of its fields
 // (RobnoFaktureCombos) and the finansijsko stanje of the kupac shown next to them
 // (RobnoFaktureFinStanjeKupca). The template reads every field of the header (e.g. header.KupacNaziv,
-// header.Vrd or header.CbxPorKategorija) from this one value, so the header form has a single
+// header.Vrd) from this one value, so the header form has a single
 // parameter and its fields cannot be mixed with the ones of another part of the screen.
 type RobnoFaktureHeaderView struct {
 	RobnoFaktureHeader
@@ -129,10 +173,534 @@ type RobnoFaktureHeaderView struct {
 	RobnoFaktureFinStanjeKupca
 }
 
+// RobniDokumentRow is a robni dokument (rdok) of the entry of the documents with the texts of its
+// šifarnici (the mesto isporuke, the komercijalista, the valuta, the org. jedinica, the mesto troška,
+// the banka za uplatu - izvoz, the POPDV polje and the poreska kategorija), read by one query (see
+// robno.GetRobniDokument). The keys of the šifarnici are the ones of the document or, for a document
+// saved before them, the ones found by the old columns (mi, kom, sifval, sifbank).
+type RobniDokumentRow struct {
+	// God and kar are not read: they tell the insert of the repository to write them.
+	God             int             `db:"god"`
+	Kar             int             `db:"kar"`
+	RdokID          int64           `db:"rdokid"`
+	RnalID          int64           `db:"rnalid"`
+	MagaciniID      int             `db:"magaciniid"`
+	Tipdok          string          `db:"tipdok"`
+	Nalog           int             `db:"nalog"`
+	Danal           sql.NullTime    `db:"danal"`
+	Vrd             int             `db:"vrd"`
+	Dokum           int             `db:"dokum"`
+	Dadok           sql.NullTime    `db:"dadok"`
+	Dokiz           string          `db:"dokiz"`
+	Datiz           sql.NullTime    `db:"datiz"`
+	Opis            string          `db:"opis"`
+	Fkto            string          `db:"fkto"`
+	Fana            string          `db:"fana"`
+	Rok             int             `db:"rok"`
+	Iznos           float64         `db:"iznos"`
+	Sifval          int             `db:"sifval"`
+	Kurs            float64         `db:"kurs"`
+	Vaziza          int             `db:"vaziza"`
+	BrojRata        int             `db:"brojrata"`
+	DatumPrveRate   sql.NullTime    `db:"datumprrate"`
+	Pla             string          `db:"pla"`
+	Kamt            string          `db:"kamt"`
+	Otp             string          `db:"otp"`
+	Foot            string          `db:"foot"`
+	Brugov          string          `db:"brugov"`
+	Narudzb         string          `db:"narudzb"`
+	Posuslnab       string          `db:"posuslnab"`
+	Vozac           string          `db:"vozac"`
+	Brvozila        string          `db:"brvozila"`
+	Bttowght        float64         `db:"bttowght"`
+	Netwght         float64         `db:"netwght"`
+	Totboxs         int             `db:"totboxs"`
+	Brpaleta        int             `db:"brpaleta"`
+	Paritet         string          `db:"paritet"`
+	Izjizv          string          `db:"izjizv"`
+	Kpperiod        bool            `db:"kpperiod"`
+	Oddat           sql.NullTime    `db:"oddat"`
+	Dodat           sql.NullTime    `db:"dodat"`
+	Javnab          bool            `db:"javnab"`
+	Jbkjsnjn        string          `db:"jbkjsnjn"`
+	Brtend          string          `db:"brtend"`
+	Polje           string          `db:"polje"`
+	Keykat          string          `db:"keykat"`
+	Category        string          `db:"category"`
+	Pornapomena     string          `db:"pornapomena"`
+	Descriptioncode sql.NullInt64   `db:"descriptioncode"`
+	Knjizen         string          `db:"knjizen"`
+	Fiskalizovan    string          `db:"fiskalizovan"`
+	SalesInvoiceID  sql.NullFloat64 `db:"salesinvoiceid"`
+	IndividualVatID sql.NullFloat64 `db:"individualvatid"`
+	// The šifarnici: their keys and texts.
+	IDOrgjed    sql.NullInt64 `db:"idorgjed"`
+	OrgjedText  string        `db:"orgjedtext"`
+	MestoTrID   sql.NullInt64 `db:"mestotrid"`
+	MestoTrText string        `db:"mestotrtext"`
+	FispID      sql.NullInt64 `db:"fispid"`
+	FispText    string        `db:"fisptext"`
+	FispPobro   string        `db:"fisppobro"`
+	FispMesto   string        `db:"fispmesto"`
+	KomID       sql.NullInt64 `db:"komid"`
+	KomText     string        `db:"komtext"`
+	IDValute    sql.NullInt64 `db:"idvalute"`
+	ValutaText  string        `db:"valutatext"`
+	BnkizvID    sql.NullInt64 `db:"bnkizvid"`
+	BnkizvText  string        `db:"bnkizvtext"`
+	PopdvText   string        `db:"popdvtext"`
+	PorkatID    sql.NullInt64 `db:"porkatid"`
+	PorkatText  string        `db:"porkattext"`
+}
+
+// RobniDokumentSnimanje is a robni dokument to save (robno.SaveRobniDokument, the legacy SnimiRDOK):
+// the nalog, the magacin, the vrsta and the broj of the document, and Polja, the columns of rdok the
+// screen of the document writes (the ScreenToFile of the legacy; the columns of the nalog, the broj and
+// the counters are written by the save). Avansi are the avansi closed on the document (avansfakt.avansid)
+// when SaAvansima is set: the missing ones are added, the ones not in the list removed.
+type RobniDokumentSnimanje struct {
+	RnalID     int64
+	MagaciniID int
+	Vrd        int
+	Dokum      int
+	Polja      []Fields
+	SaAvansima bool
+	Avansi     []int64
+}
+
+// RobObracunStavkaDto is a stavka of a robni dokument for its obračun (robno.ObracunFakture, the legacy
+// ObracunFAKT) with the columns of the document it needs: the količina, the prodajna (fcena) and the
+// magacinska (cena) cena, the rabat, the poreska kategorija of the stavka and the poreska stopa of its
+// oznaka on the datum of the document. A document without stavke gives one row with zeros.
+type RobObracunStavkaDto struct {
+	Ugrabat     float64 `db:"ugrabat"`
+	Pkase       float64 `db:"pkase"`
+	Pornapomena string  `db:"pornapomena"`
+	Kolic       float64 `db:"kolic"`
+	Fcena       float64 `db:"fcena"`
+	Cena        float64 `db:"cena"`
+	Rab         float64 `db:"rab"`
+	Taxcat      string  `db:"taxcat"`
+	Stopa       float64 `db:"stopa"`
+}
+
+// RobObracunAvansDto is an avans closed on a document for the obračun of the document: its osnovice and
+// PDV and what the other documents closed of them (the avansi of the document by the datum of the
+// avans).
+type RobObracunAvansDto struct {
+	AvansID   int64   `db:"avansid"`
+	OsnAvans1 float64 `db:"osnavans1"`
+	OsnAvans2 float64 `db:"osnavans2"`
+	OsnAvans3 float64 `db:"osnavans3"`
+	PdvAvans1 float64 `db:"pdv1avans"`
+	PdvAvans2 float64 `db:"pdv2avans"`
+	OsnFakt1  float64 `db:"osnfakt1"`
+	OsnFakt2  float64 `db:"osnfakt2"`
+	OsnFakt3  float64 `db:"osnfakt3"`
+	PdvFakt1  float64 `db:"pdv1fakt"`
+	PdvFakt2  float64 `db:"pdv2fakt"`
+}
+
+// RobRataDto is a rata of the payment of a faktura (faktrate): its redni broj, its osnovica and the
+// procenat of the faktura it pays.
+type RobRataDto struct {
+	// God and kar are not read: they tell the repository the table has them.
+	God        int     `db:"god"`
+	Kar        int     `db:"kar"`
+	FaktrateID int64   `db:"faktrateid"`
+	Rbrrate    int     `db:"rbrrate"`
+	Osnovica   float64 `db:"osnovica"`
+	Procenat   float64 `db:"procenat"`
+}
+
+// RobDokumentaPrikazParams are the page, the search text and the sort of the grid of the documents of the
+// "Prikaz faktura" tab (robno.GetRobDokumentaPrikaz; PageSize 0 is all of them).
+type RobDokumentaPrikazParams struct {
+	Page      int
+	PageSize  int
+	Search    string
+	SortBy    string
+	SortOrder string
+}
+
+// RobDokumentPrikazRow is a robni dokument (rdok with the naziv of its partner, fkpl) of the grid of the
+// documents of the "Prikaz faktura" tab (robno.GetRobDokumentaPrikaz): the columns of the legacy grid.
+type RobDokumentPrikazRow struct {
+	RdokID int64        `db:"rdokid"`
+	Rbr    int          `db:"rbr"`
+	Tipdok string       `db:"tipdok"`
+	Nalog  int          `db:"nalog"`
+	Danal  sql.NullTime `db:"danal"`
+	Vrd    int          `db:"vrd"`
+	Dokum  int          `db:"dokum"`
+	Dadok  sql.NullTime `db:"dadok"`
+	Iznos  float64      `db:"iznos"`
+	Fkto   string       `db:"fkto"`
+	Fana   string       `db:"fana"`
+	Naziv  string       `db:"naziv"`
+	Opis   string       `db:"opis"`
+	Rok    int          `db:"rok"`
+	Datiz  sql.NullTime `db:"datiz"`
+	Datob  sql.NullTime `db:"datob"`
+	Mag    int          `db:"mag"`
+	Dokiz  string       `db:"dokiz"`
+	Mi     int          `db:"mi"`
+	Kamt   string       `db:"kamt"`
+	Otp    string       `db:"otp"`
+	Kom    int          `db:"kom"`
+	Oper   string       `db:"oper"`
+}
+
+// RobStavkaRow is a stavka of a robni dokument (rpro with the naziv of its artikal), the row of the grid
+// of the stavke of the document (robno.GetRobStavkeDokumenta, the legacy query of the grid of the stavke).
+type RobStavkaRow struct {
+	RproID    int64   `db:"rproid"`
+	RdokID    int64   `db:"rdokid"`
+	Rbr       int     `db:"rbr"`
+	Sifra     int     `db:"sifra"`
+	Konto     string  `db:"konto"`
+	Naziv     string  `db:"naziv"`
+	Naz1      string  `db:"naz1"`
+	Jm        string  `db:"jm"`
+	Kolic     float64 `db:"kolic"`
+	Cena      float64 `db:"cena"`
+	Fcena     float64 `db:"fcena"`
+	Mcena     float64 `db:"mcena"`
+	Mcenap    float64 `db:"mcenap"`
+	Ncena     float64 `db:"ncena"`
+	Rab       float64 `db:"rab"`
+	Po        int     `db:"po"`
+	Dani      int     `db:"dani"`
+	Mag       int     `db:"mag"`
+	Iznos     float64 `db:"iznos"`
+	IznosFak  float64 `db:"iznosfakpr"`
+	Cenaval   float64 `db:"cenaval"`
+	IznosVal  float64 `db:"iznval"`
+	Taxcat    string  `db:"taxcat"`
+	Taxexreco string  `db:"taxexreco"`
+	Otk       string  `db:"otk"`
+	Serija    string  `db:"serija"`
+	Roktr     float64 `db:"roktr"`
+	RsifID    int64   `db:"rsifid"`
+	RproID1   int64   `db:"rproid1"`
+	Vma       float64 `db:"vma"`
+	Mma       float64 `db:"mma"`
+	// Pcena is the planska cena of the stavka (rpro.pcena), Stopa the poreska stopa of its tarifa on its datum.
+	Pcena  float64 `db:"pcena"`
+	Stopa  float64 `db:"stopa"`
+	Vra    float64 `db:"vra"`
+	Mra    float64 `db:"mra"`
+	Itaksa float64 `db:"itaksa"`
+	Ptaksa float64 `db:"ptaksa"`
+	Ztrof  float64 `db:"ztrof"`
+	Ztrin  float64 `db:"ztrin"`
+	Ztro   float64 `db:"ztro"`
+	Tz     string  `db:"tz"`
+	Tzi    string  `db:"tzi"`
+}
+
+// RobStavkaParams are the values of the form of a stavka of a robni dokument (robno.ValidateRobStavka and
+// robno.SaveRobStavka, the legacy Validacija and CreateRpro of the window of the stavke): the stavka
+// (RproID 0 for a new one), its document and the fields of the form.
+type RobStavkaParams struct {
+	RproID      int64  `form:"rproid"`
+	RdokID      int64  `form:"rdokid"`
+	Sifra       string `form:"sifraartikla"`
+	Konto       string `form:"kontostavke"`
+	Kolicina    string `form:"kolicina"`
+	Cena        string `form:"prodajnacena"`
+	NabavnaCena string `form:"nabavnacena"`
+	Rabat       string `form:"rabatstavke"`
+	Tarifa      string `form:"tarifa"`
+	Dani        string `form:"dani"`
+	Otk         string `form:"otk"`
+	Serija      string `form:"serija"`
+	Rok         string `form:"rokstavke"`
+	Taxcat      string `form:"taxcat"`
+	Taxexreco   string `form:"taxexreco"`
+}
+
+// RobStavkeKontekst is what the stavke of a robni dokument need of their document, its nalog, its
+// magacin and its vrsta (robno.GetRobStavkeKontekst): the columns the stavka repeats, the tip zaliha of
+// the magacin (1 and 2: the zalihe by OTK, serija and rok, drsta), the storno, the knjiženje (dugovno /
+// potražno) and the cena of the stavke (the nabavna cena for the documents at the nabavna cena).
+type RobStavkeKontekst struct {
+	RdokID     int64        `db:"rdokid"`
+	RnalID     int64        `db:"rnalid"`
+	Tipdok     string       `db:"tipdok"`
+	Nalog      int          `db:"nalog"`
+	Danal      sql.NullTime `db:"danal"`
+	Vrd        int          `db:"vrd"`
+	DokvrstaID int64        `db:"dokvrstaid"`
+	Dokum      int          `db:"dokum"`
+	Dadok      sql.NullTime `db:"dadok"`
+	Fkto       string       `db:"fkto"`
+	Fana       string       `db:"fana"`
+	Kurs       float64      `db:"kurs"`
+	Vaziza     float64      `db:"vaziza"`
+	MagaciniID int          `db:"magaciniid"`
+	Mag        int          `db:"mag"`
+	Tipzal     int          `db:"tipzal"`
+	Predznak   string       `db:"predznak"`
+	Kodknj     string       `db:"kodknj"`
+	// Nacvodzal is how the magacin keeps its zalihe (magacini.nacvodzal: 1 by the veleprodajna cena, 3
+	// by the nabavna cena), Tipmag and Tipart its kind and the tipovi of its artikli.
+	Nacvodzal int    `db:"nacvodzal"`
+	Tipmag    string `db:"tipmag"`
+	Tipart    string `db:"tipart"`
+	// Sifval is the valuta of the document, DomacaValuta the one of the firm (fvr.sifval) and Valuta the
+	// oznaka of the valuta of the document.
+	Sifval       int    `db:"sifval"`
+	DomacaValuta int    `db:"domacavaluta"`
+	Valuta       string `db:"valuta"`
+}
+
+// NabavnaCena tells whether the magacin keeps its zalihe by the nabavna cena (the legacy bNabcena,
+// nacvodzal 3): the stavke are at the nabavna cena, a stavka without zalihe is not saved.
+func (k RobStavkeKontekst) NabavnaCena() bool {
+	return k.Nacvodzal == 3
+}
+
+// VpCena tells whether the magacin keeps its zalihe by the veleprodajna cena (the legacy bVpcena,
+// nacvodzal 1).
+func (k RobStavkeKontekst) VpCena() bool {
+	return k.Nacvodzal == 1
+}
+
+// Devizni tells whether the document is in a foreign valuta (the cene of the stavke are entered in it).
+func (k RobStavkeKontekst) Devizni() bool {
+	return k.Sifval > 0 && k.Sifval != k.DomacaValuta
+}
+
+// Dugovno and Potrazno tell how the vrsta of the document is posted on its nalog (the legacy lDugovno and
+// lpotrazno: dokvrsta.kodknj "D" on the duguje, "P" on the potražuje).
+func (k RobStavkeKontekst) Dugovno() bool {
+	return strings.ToUpper(strings.TrimSpace(k.Kodknj)) == "D"
+}
+func (k RobStavkeKontekst) Potrazno() bool {
+	return strings.ToUpper(strings.TrimSpace(k.Kodknj)) == "P"
+}
+
+// Storno tells whether the document is a storno (the predznak "-" of its vrsta).
+func (k RobStavkeKontekst) Storno() bool {
+	return strings.TrimSpace(k.Predznak) == "-"
+}
+
+// RobStavkaArtikal is the artikal of a stavka with what the form of the stavka shows of it (robno.
+// GetRobStavkaArtikal, the legacy exit of EDT_SIFRA): its šifarnik (naziv, JM, tarifa and its stopa on the
+// datum of the document, dani, konto), its stanje and cene in the konto of the magacin (rsta), the poreska
+// kategorija of its tarifa and the last cena to the kupac.
+type RobStavkaArtikal struct {
+	Sifra       int     `json:"sifra"`
+	Naziv       string  `json:"naziv"`
+	Jm          string  `json:"jm"`
+	Tarifa      int     `json:"tarifa"`
+	Stopa       float64 `json:"stopa"`
+	Dani        int     `json:"dani"`
+	Konto       string  `json:"konto"`
+	Stanje      float64 `json:"stanje"`
+	Cena        float64 `json:"cena"`
+	NabavnaCena float64 `json:"nabavnacena"`
+	MagCena     float64 `json:"magacinskacena"`
+	// NabavnaUnos: the nabavna cena is entered (it is 0).
+	NabavnaUnos bool   `json:"nabavnaunos"`
+	Taxcat      string `json:"taxcat"`
+	// The last cena to the kupac (ZadnjaCena): its prodajna cena, rabat and datum, or Poruka without it.
+	ZadnjaCena  float64 `json:"zadnjacena"`
+	ZadnjiRabat float64 `json:"zadnjirabat"`
+	ZadnjiDatum string  `json:"zadnjidatum"`
+	Poruka      string  `json:"poruka"`
+}
+
+// RobStavkaForma is a saved stavka in the form of the stavke (the legacy "Izmene"): its values as the
+// form shows them.
+type RobStavkaForma struct {
+	RproID      int64   `json:"rproid"`
+	Sifra       int     `json:"sifra"`
+	Naziv       string  `json:"naziv"`
+	Konto       string  `json:"konto"`
+	Jm          string  `json:"jm"`
+	Kolicina    float64 `json:"kolicina"`
+	Cena        float64 `json:"cena"`
+	Rabat       float64 `json:"rabat"`
+	Tarifa      int     `json:"tarifa"`
+	Stopa       float64 `json:"stopa"`
+	Dani        int     `json:"dani"`
+	NabavnaCena float64 `json:"nabavnacena"`
+	MagCena     float64 `json:"magacinskacena"`
+	Stanje      float64 `json:"stanje"`
+	Otk         string  `json:"otk"`
+	Serija      string  `json:"serija"`
+	Rok         string  `json:"rok"`
+	Taxcat      string  `json:"taxcat"`
+	Taxexreco   string  `json:"taxexreco"`
+}
+
+// RobArtikalStanjeDto is an artikal of the šifarnik (rsif) with its stanje in a konto of a magacin
+// (rsta: ulaz - izlaz, and the veleprodajna cena).
+type RobArtikalStanjeDto struct {
+	RsifID int64   `db:"rsifid"`
+	Sifra  int     `db:"sifra"`
+	Naziv  string  `db:"naziv"`
+	Jm     string  `db:"jm"`
+	Tip    string  `db:"tip"`
+	Po     int     `db:"po"`
+	Stanje float64 `db:"stanje"`
+	VpCena float64 `db:"vpcena"`
+}
+
+// RobZadnjaCenaDto is the last cena of an artikal to the kupac (robno.GetRobZadnjaCena, the legacy
+// ZadnjaCena): the prodajna cena, the rabat and the datum of the last stavka of the same vrsta.
+type RobZadnjaCenaDto struct {
+	Fcena float64      `db:"fcena"`
+	Rab   float64      `db:"rab"`
+	Dadok sql.NullTime `db:"dadok"`
+}
+
+// RobRproDto, RobRceneDto and RobRsifDto are the entities of the writes of the stavke (rpro), of the
+// cene (rcene) and of the šifarnik of the artikli (rsif): their god and kar tell the repository the tables
+// have them.
+type RobRproDto struct {
+	God    int   `db:"god"`
+	Kar    int   `db:"kar"`
+	RproID int64 `db:"rproid"`
+}
+type RobRceneDto struct {
+	God     int   `db:"god"`
+	Kar     int   `db:"kar"`
+	RceneID int64 `db:"rceneid"`
+}
+type RobRsifDto struct {
+	God    int   `db:"god"`
+	Kar    int   `db:"kar"`
+	RsifID int64 `db:"rsifid"`
+}
+
+// RobPromenaStanja is a change of the stanje of an artikal by a stavka of a robni dokument, the
+// parameters of the legacy GlobalProcROBNO.AzurirajRSTA and AzurirajDRSTA (robno.AzurirajRSTA,
+// robno.AzurirajDRSTA): the artikal in the konto of the magacin, the količina and the iznos (negative to
+// take a stavka back), the cene of the stavka, the datum (its month) and the vrsta of the nalog, the vrsta
+// dokumenta (the knjiženje dugovno / potražno and the group), and for the zalihe by lot the OTK, the
+// serija and the rok trajanja.
+type RobPromenaStanja struct {
+	MagaciniID int
+	Konto      string
+	Sifra      int
+	Kolicina   float64
+	Iznos      float64
+	Cena       float64
+	Danal      time.Time
+	DokvrstaID int64
+	Tipdok     string
+	Vma        float64
+	Mma        float64
+	Ztro       float64
+	Fcena      float64
+	Mcena      float64
+	Ncena      float64
+	Rab        float64
+	Ztrin      float64
+	Mcenap     float64
+	Tz         string
+	Tzi        string
+	Otk        string
+	Serija     string
+	Roktr      int64
+	// Brst is the change of the broj stavki of the stanje: 1 for a new stavka (the legacy RSTA.BRST++),
+	// -1 for a stavka taken back, 0 for none.
+	Brst int
+}
+
+// RobKupacDto is the kupac of a robni dokument (fkpl with its partner): its data on the screen, the
+// budžetski korisnik (the broj ugovora is required) and the kredit limiti of the faktura.
+type RobKupacDto struct {
+	Naziv       string  `db:"naziv"`
+	Adresa      string  `db:"adresa"`
+	Pobro       string  `db:"pobro"`
+	Mesto       string  `db:"mesto"`
+	Pib         string  `db:"pib"`
+	Tippdv      int     `db:"tippdv"`
+	Napomena    string  `db:"napomena"`
+	Budzetski   bool    `db:"budzetski"`
+	Krlimit     float64 `db:"krlimit"`
+	Krlimitdosp float64 `db:"krlimitdosp"`
+}
+
+// RobAvansDto is one avans closed on a faktura (avansfakt): the avansni račun, its iznos, what of it
+// is still open after all the fakture it is closed on, and the iznos closed on this faktura.
+type RobAvansDto struct {
+	// God and kar are not read: they tell the insert of the repository to write them.
+	God       int          `db:"god"`
+	Kar       int          `db:"kar"`
+	AvansID   int64        `db:"avansid"`
+	Dokum     int          `db:"dokum"`
+	Dadok     sql.NullTime `db:"dadok"`
+	Iznos     float64      `db:"iznos"`
+	Ostatak   float64      `db:"ostatak"`
+	Zatvoreno float64      `db:"zatvoreno"`
+}
+
+// RobSaldoKupcaDto are the sums of the saldo of a kupac (see robno.GetRobSaldoKupca): the fakture
+// (dospele, nedospele) and the uplate of the finansijsko knjigovodstvo, the fakture of the robno
+// knjigovodstvo not posted yet (dospele, nedospele).
+type RobSaldoKupcaDto struct {
+	Fakture      float64 `db:"fakture"`
+	Dospelo      float64 `db:"dospelo"`
+	Nedospelo    float64 `db:"nedospelo"`
+	Uplate       float64 `db:"uplate"`
+	DospeloRob   float64 `db:"dospelorob"`
+	NedospeloRob float64 `db:"nedospelorob"`
+}
+
+// RobnoFaktureDokumentParams select the document of the "Fakture veleprodaje" screen: the nalog, the
+// magacin, the vrsta and the broj dokumenta (empty for a new document with the next broj).
+type RobnoFaktureDokumentParams struct {
+	RnalID int64
+	// RdokID opens an existing document by its id (its magacin and vrsta are the ones of the document);
+	// else the document of the broj Dokum of the vrsta in the magacin (a new one when it does not exist).
+	RdokID int64
+	// MagaciniID 0 is the magacin of the nalog.
+	MagaciniID int
+	Vrd        int
+	Dokum      string
+}
+
+// RobnoFaktureDokument is the document of the "Fakture veleprodaje" screen (robno.GetRobFaktureDokument):
+// the header with its kupac and finansijsko stanje, the avansi closed on it, the values of the žiro
+// računi, and Poruka, the message why the selected broj could not be opened (the screen then has a new
+// document with the next broj).
+type RobnoFaktureDokument struct {
+	Header RobnoFaktureHeaderView
+	// Stavka is the entry of a stavka with the data of the document it repeats (konto magacina, konto
+	// kupca, vrsta, broj and datum dokumenta).
+	Stavka     RobnoFaktureStavka
+	Avansi     []TableRow
+	ZiroRacuni []ComboItem
+	Poruka     string
+}
+
 // RobnoFaktureStavka holds the values of the entry form of one stavka (the second window). The first
 // group of fields is read only: it repeats the kupac and the podaci o dokumentu of the header.
 type RobnoFaktureStavka struct {
 	KontoMagacina, KontoKupca, Vrd, Brdok, DatumDokumenta string
+	// RdokID is the document of the stavke, RproID the stavka of the form (0 for a new one); Konto the
+	// konto of the stavka (by default the first konto of the magacin), Otk its OTK broj, Stopa the poreska
+	// stopa of its tarifa.
+	RdokID, RproID    int64
+	Konto, Otk, Stopa string
+	// Taxcat and Taxexreco are the poreska kategorija of the stavka and its osnov oslobođenja, with their
+	// values (TaxexrecoVidljiv: shown for S10 and S20).
+	Taxcat, Taxexreco       string
+	CbxTaxcat, CbxTaxexreco []ComboItem
+	// Devizni: the cene are entered in the valuta of the document (ValutaPoruka), Kurs and VaziZa convert
+	// them to the domaća valuta.
+	Devizni      bool
+	ValutaPoruka string
+	Kurs, VaziZa float64
+	// NabavnaCenaDokumenta: the stavke are at the nabavna cena (the magacin keeps its zalihe by it).
+	NabavnaCenaDokumenta bool
+	// KupacNaziv is the naziv of the kupac and IznosDokumenta the iznos of the document (rdok.iznos).
+	KupacNaziv, IznosDokumenta string
 
 	SifraArtikla, SifraArtiklaNaziv  string
 	JM, Stanje                       string
@@ -156,10 +724,15 @@ type RobnoFaktureButtons struct {
 	New    Button // "Novi dok."
 	Delete Button // "Briši" the document
 	Back   Button // "Nazad"
+	// Print is "Štampaj" of the document of the form (the print of its vrsta dokumenta).
+	Print Button
 
-	SaveStavka   Button
-	ModifyStavka Button
-	DeleteStavka Button
+	// SaveStavka is "Sačuvaj" of the stavka; the change and the deletion of a stavka are the buttons of
+	// its row in the grid of the stavke.
+	SaveStavka Button
+	// CancelStavka is "Odustani" of the change of a stavka: it unlocks the grid of the stavke again (enabled
+	// only while a stavka of the grid is changed).
+	CancelStavka Button
 }
 
 // RobnoFaktureStripField is one cell of the two line read only strip of the "Fakture veleprodaje"
@@ -186,12 +759,39 @@ type RobnoFaktureUI struct {
 	// DialogID is the id of the dialog of the screen (RobnoFaktureDialog).
 	DialogID string
 
+	// BodyID is the content of the tab "Fakture" (RobnoFaktureBody), InfoID the element of the messages
+	// of the screen and StavkaInfoID the container of the dialog of the messages of the stavke.
+	BodyID       string
+	InfoID       string
+	StavkaInfoID string
+	// PrikazID is the content of the tab "Prikaz faktura", PrikazStavkeID the container of the grid of the
+	// stavke of its selected document and PrikazRdokID the hidden rdokid of that document.
+	PrikazID       string
+	PrikazStavkeID string
+	PrikazRdokID   string
+	// PrikazStampaID is "Štampaj" of the selected document of the tab, PrikazStavkeNaslov the title of its
+	// grid of the stavke ("Stavke dokumenta" when empty).
+	PrikazStampaID     string
+	PrikazStavkeNaslov string
+
 	// ArtikalSearchURL and PartnerSearchURL are the search popups of the stavka and of the kupac,
 	// DokumentSearchURL the one of the broj dokumenta (all of them are opened with the "..." buttons of
 	// the form).
 	ArtikalSearchURL  string
 	PartnerSearchURL  string
 	DokumentSearchURL string
+
+	// DokumentURL + "/{rdokid}" opens the existing document selected in the broj dokumenta, NoviURL a new
+	// document (the typed broj, or the next one; GET: the screen reloads its content with the document,
+	// see RobnoFaktureBody).
+	DokumentURL string
+	NoviURL     string
+	// PrikazURL fills the "Prikaz faktura" tab when it is shown (GET rnalid and vrd: the documents of the
+	// vrsta in the magacin of the nalog; see RobnoFakturePrikaz).
+	PrikazURL string
+
+	// ArtikalURL returns the artikal of a stavka (GET; see FaktureArtikal of the handler).
+	ArtikalURL string
 }
 
 // RobnoStampaFakturaView is the printed invoice of the "Fakture veleprodaje" screen (the legacy
@@ -590,7 +1190,7 @@ type RobnoStampaFakturaIzvozView struct {
 	KupacTelefon  string
 	Destinacija   string
 	Destinacija2  string
-	Otpremnica    string // the despatch note: broj and datum of the otpremnica (edok)
+	Otpremnica    string // the despatch note (not filled: the otpremnice of the table edok are not used)
 	UslovPlacanja string
 	Vozac         string
 	BrojVozila    string
@@ -673,8 +1273,6 @@ type RobnoStampaFakturaIzvozRowDto struct {
 	KomSifra  int64        `db:"komsifra"`
 	KomNaziv  string       `db:"komnaziv"`
 	Valuta    string       `db:"valuta"`
-	Brotp     int64        `db:"brotp"`
-	Datotp    sql.NullTime `db:"datotp"`
 
 	KupacNaziv     string `db:"kupacnaziv"`
 	KupacAdresa    string `db:"kupacadresa"`
@@ -1235,4 +1833,70 @@ type RobnoStampaKalkulacijaRowDto struct {
 	Osn  float64 `db:"osn"`
 	Ppor float64 `db:"ppor"`
 	Pdv  float64 `db:"pdv"`
+}
+
+// RobnoFaktureParams are the values of the header of the "Fakture veleprodaje" form the validation
+// of the faktura (ValidateRobFakture) needs, by the names of the fields of the form, plus the nalog,
+// the magacin and the document they belong to. The values are the texts of the form: the validation
+// parses them itself, so a wrong value is a field error and not a binding error.
+type RobnoFaktureParams struct {
+	RnalID int64 `form:"rnalid"`
+	RdokID int64 `form:"rdokid"`
+	// MagaciniID is the magacin of the nalog (set by the handler from the rnalid, not sent by the form).
+	MagaciniID int `form:"-"`
+
+	Vrd             string `form:"vrd"`
+	BrojDokum       string `form:"brdok"`
+	DatumDokum      string `form:"datumfakturisanja"`
+	IzvorniDokum    string `form:"brdokorg"`
+	IzvorniDokDatum string `form:"datumizvora"`
+	KupacKonto      string `form:"kupackonto"`
+	KupacSifra      string `form:"kupacsifra"`
+	MestoIsporuke   string `form:"fispid"`
+	Orgjed          string `form:"idorgjed"`
+	MestoTroska     string `form:"mestotrid"`
+	Komercijalista  string `form:"komid"`
+	Profaktura      string `form:"profak"`
+	Popdv           string `form:"popdv"`
+	PorKategorija   string `form:"porkatid"`
+	NapomenaPoresko string `form:"napomporeskoosl"`
+	BrojRata        string `form:"brojrata"`
+	DatumPrveRate   string `form:"datumprverate"`
+	BrojUgovora     string `form:"brojugovora"`
+	NastanakPDV     string `form:"nastanakpdv"`
+	BankaIzvoz      string `form:"bnkizvid"`
+	// The knjižno pismo finansijsko (KPF): "Za period" with its datumi, the datum smanjenja of a storno.
+	ZaPeriod       string `form:"zaperiod"`
+	PeriodOd       string `form:"periodod"`
+	PeriodDo       string `form:"perioddo"`
+	DatumSmanjenja string `form:"datumsmanjenja"`
+	// The rows of the grid of the avansi (parallel lists): the key of a saved row (empty for a new
+	// one), the broj of the avansni račun and the iznos closed on the faktura.
+	AvansID        []string `form:"avansid"`
+	AvansBrdok     []string `form:"avansbrdok"`
+	AvansZatvoreno []string `form:"avanszatvoreno"`
+
+	// The other fields of the header the save writes (SaveRobFaktura).
+	Opis           string `form:"opis"`
+	Rok            string `form:"rok"`
+	IDValute       string `form:"idvalute"`
+	Kurs           string `form:"kurs"`
+	VaziZa         string `form:"vaziza"`
+	UsloviPlacanja string `form:"usloviplacanja"`
+	UsloviKamate   string `form:"uslovikamate"`
+	NacinOtpreme   string `form:"nacinotpreme"`
+	ZiroRacun      string `form:"ziroracun"`
+	Narudzbenica   string `form:"narudzbenica"`
+	Paritet        string `form:"paritet"`
+	IzvozIzjava    string `form:"izvozizjava"`
+	Vozac          string `form:"vozac"`
+	RegBr          string `form:"regbr"`
+	BrutoTezina    string `form:"brutotezina"`
+	NetoTezina     string `form:"netotezina"`
+	BrojKutija     string `form:"brojkutija"`
+	BrojPaleta     string `form:"brojpaleta"`
+	JavnaNabavka   string `form:"javnanabavka"`
+	JBKJSNosilac   string `form:"jbkjsnosilac"`
+	BrojTendera    string `form:"brojtendera"`
+	Tekst          string `form:"foot"`
 }

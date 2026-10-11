@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	neturl "net/url"
 	"strings"
 	"time"
 
@@ -331,6 +332,8 @@ const (
 	// (only the grid is then rendered, the header of the form is kept).
 	robnoDokumentaEntityType   = "rnal"
 	robnoDokumentaSourceTipdok = "tipdok"
+	// robnoDokumentaSourceVrd is the change of the vrsta dokumenta: only the grid of the nalozi.
+	robnoDokumentaSourceVrd = "vrd"
 
 	// robnoDokumentaSourceBtn is the request source the buttons rendered by components.Button send
 	// (hx-headers of the component). A request with that source renders the whole screen the button
@@ -356,6 +359,14 @@ const hxValsRobnoDokumentaTipdok = `js:{"tipdok": document.getElementById("tipdo
 	`"vrd": document.getElementById("vrd")?.value, ` +
 	`"magaciniid": document.getElementById("magaciniid")?.value, ` +
 	`"source": "tipdok"}`
+
+// hxValsRobnoDokumentaVrd is sent when the vrsta dokumenta changes: the grid of the nalozi of the vrsta
+// naloga with a document of the vrsta dokumenta (source vrd: only the grid).
+const hxValsRobnoDokumentaVrd = `js:{"tipdok": document.getElementById("tipdok")?.value, ` +
+	`"vrd": document.getElementById("vrd")?.value, ` +
+	`"magaciniid": document.getElementById("magaciniid")?.value, ` +
+	`"query": document.getElementById("` + robnoDokumentaSearchInputID + `")?.value, ` +
+	`"source": "` + robnoDokumentaSourceVrd + `"}`
 
 // hxValsRobnoDokumentaNalog sends the vrsta naloga and the broj naloga of the header to the check
 // of an existing nalog (GET /api/robno-dokumenta/nalog-data).
@@ -588,43 +599,45 @@ func (h *RobnoDokumentaHandler) RobnoDokumentaMain(c *gin.Context) {
 	// "Nalozi" screen does with its "knjiženje" tab).
 	tbl.FuncDblClick = "handleDblClickNalogSelection(this)"
 	tbl.FuncClick = "selectRow(this)"
-	if !h.getUnosDokumenta(c, &tbl, params, page, pageSize) {
-		return
-	}
-	// Data request from the grid (search / paging): only the grid is rendered, the header of the form
-	// is kept.
-	if common.IsDataRequest(c) {
-		utils.RenderContent(c, tbl)
-		return
-	}
-	// The change of the vrsta naloga (source=tipdok): the grid, and out of band the magacini and the
-	// vrste dokumenata the new vrsta naloga allows (the legacy PostaviComboBoxes).
-	if c.Query("source") == robnoDokumentaSourceTipdok {
-		magValues, vrstaDokumentaValues, err := h.service.GetUnosComboValues(ctx, params.Tipdok, h.cfg.GrupeDokumenata.GetDokRob(), h.cfg.GrupeDokumenata.GetTipmagRob())
-		if err != nil {
-			utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
-			return
+	// Data request from the grid (search / paging) or the change of the vrsta dokumenta: only the grid is
+	// rendered, the header of the form is kept.
+	if common.IsDataRequest(c) || c.Query("source") == robnoDokumentaSourceVrd {
+		if h.getUnosDokumenta(c, &tbl, params, page, pageSize) {
+			utils.RenderContent(c, tbl)
 		}
-		utils.RenderContent(c, tbl)
-		_ = tmpl_robno.RobnoDokumentaUnosVrdCombo(vrstaDokumentaValues, params.Vrd, true, h.translator).Render(ctx, c.Writer)
-		_ = tmpl_robno.RobnoDokumentaUnosMagCombo(magValues, params.MagaciniID, true, h.translator).Render(ctx, c.Writer)
-		return
-	}
-
-	tipdokValues, err := h.tipdokComboValues(ctx)
-	if err != nil {
-		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
 		return
 	}
 	// The magacini and the vrste dokumenata of the selected vrsta naloga (the first one of the combo
-	// when none is selected yet).
+	// when none is selected yet), like the legacy PostaviComboBoxes. The grid shows the nalozi with a
+	// document of the vrsta dokumenta the combo shows: the selected one when the vrsta naloga allows it,
+	// else the first one of the combo.
+	var tipdokValues []domain.ComboItem
 	tipdok := params.Tipdok
-	if tipdok == "" && len(tipdokValues) > 0 {
-		tipdok = tipdokValues[0].Key
+	if c.Query("source") != robnoDokumentaSourceTipdok {
+		var err error
+		if tipdokValues, err = h.tipdokComboValues(ctx); err != nil {
+			utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+			return
+		}
+		if tipdok == "" && len(tipdokValues) > 0 {
+			tipdok = tipdokValues[0].Key
+		}
 	}
 	magValues, vrstaDokumentaValues, err := h.service.GetUnosComboValues(ctx, tipdok, h.cfg.GrupeDokumenata.GetDokRob(), h.cfg.GrupeDokumenata.GetTipmagRob())
 	if err != nil {
 		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+		return
+	}
+	params.Vrd = robnoDokumentaComboSelected(vrstaDokumentaValues, params.Vrd)
+	if !h.getUnosDokumenta(c, &tbl, params, page, pageSize) {
+		return
+	}
+	// The change of the vrsta naloga (source=tipdok): the grid, and out of band the magacini and the
+	// vrste dokumenata the new vrsta naloga allows.
+	if c.Query("source") == robnoDokumentaSourceTipdok {
+		utils.RenderContent(c, tbl)
+		_ = tmpl_robno.RobnoDokumentaUnosVrdCombo(vrstaDokumentaValues, params.Vrd, hxValsRobnoDokumentaVrd, true, h.translator).Render(ctx, c.Writer)
+		_ = tmpl_robno.RobnoDokumentaUnosMagCombo(magValues, params.MagaciniID, true, h.translator).Render(ctx, c.Writer)
 		return
 	}
 	total := domain.RobnoDokumentaTotal{}
@@ -639,9 +652,24 @@ func (h *RobnoDokumentaHandler) RobnoDokumentaMain(c *gin.Context) {
 	}
 
 	search := common.CreateSearchInput(robnoDokumentaSearchInputID, h.translator, robnoDokumentaURLUnos, "#"+robnoDokumentaUnosTableID, hxValsRobnoDokumentaUnos)
-	if err := tmpl_robno.RobnoDokumentaMain(hxValsRobnoDokumentaTipdok, hxValsRobnoDokumentaNalog, tabs, subTabs, tbl, tipdokValues, vrstaDokumentaValues, magValues, total, payload, h.btnSave, h.btnNoviNalog, search, h.translator, common.GetCsrfTokenFromSession(c)).Render(ctx, c.Writer); err != nil {
+	payload.Vrd = params.Vrd
+	if err := tmpl_robno.RobnoDokumentaMain(hxValsRobnoDokumentaTipdok, hxValsRobnoDokumentaVrd, hxValsRobnoDokumentaNalog, robnoDokumentaDokumentDialogID, tabs, subTabs, tbl, tipdokValues, vrstaDokumentaValues, magValues, total, payload, h.btnSave, h.btnNoviNalog, search, h.translator, common.GetCsrfTokenFromSession(c)).Render(ctx, c.Writer); err != nil {
 		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
 	}
+}
+
+// robnoDokumentaComboSelected returns the key a combo shows: the selected one when it is a key of the
+// values, else the first key (the browser shows the first option), "" without values.
+func robnoDokumentaComboSelected(values []domain.ComboItem, selected string) string {
+	for _, v := range values {
+		if v.Key == selected {
+			return selected
+		}
+	}
+	if len(values) > 0 {
+		return values[0].Key
+	}
+	return ""
 }
 
 // robnoDokumentaStampaParams reads the selection of the print of the robni dokumenti (common to the
@@ -1426,7 +1454,8 @@ func (h *RobnoDokumentaHandler) UpdateRobnoNalog(c *gin.Context) {
 // it, the update holds the lock of its route) and the screen releases it with
 // robnoDokumentaURLUnlockNalog.
 func robnoDokumentaOtvoriDokumentTrigger(c *gin.Context, rnalID int64, params domain.RobnoDokumentaParams) {
-	url := fmt.Sprintf("%s?rnalid=%d&magaciniid=%d&vrd=%s", robnoDokumentaURLOtvoriDokument, rnalID, params.MagaciniID, strings.TrimSpace(params.Vrd))
+	url := fmt.Sprintf("%s?rnalid=%d&magaciniid=%d&vrd=%s&tipdok=%s&nalog=%s", robnoDokumentaURLOtvoriDokument, rnalID, params.MagaciniID,
+		strings.TrimSpace(params.Vrd), neturl.QueryEscape(strings.TrimSpace(params.Tipdok)), neturl.QueryEscape(strings.TrimSpace(params.Nalog)))
 	// zatvori is the confirm dialog of the save: the "Da" button of an update (PUT) has no
 	// after-request hook (see components.ConfirmButton), so the page closes it with the event.
 	trigger, err := json.Marshal(map[string]any{"robnoNalogSnimljen": map[string]string{"url": url, "zatvori": robnoDokumentaConfirmDialogID}})
@@ -1681,8 +1710,8 @@ func robnoDokumentaStampaNijeImplementirana(izvestaj string, saVarijantom bool) 
 	}
 }
 
-// stampaFakturaDokumenta is the print of the fakture (groups FAK and FRP), the legacy case of Srbija
-// (PR_RPT_FAKTURA_OTP) and of Republika Srpska (ROB_RPT_STAMPA_FAKTURA_MED) are not translated.
+// stampaFakturaDokumenta is the print of the fakture (groups FAK and FRP), the legacy
+// PR_RPT_FAKTURA_OTP.
 func (h *RobnoDokumentaHandler) stampaFakturaDokumenta(c *gin.Context, dok domain.RobnoStampaDokumentDto) {
 	if dok.Devizni() {
 		h.StampaFakturaIzvoz(c)
@@ -1742,7 +1771,7 @@ func (h *RobnoDokumentaHandler) stampaNivelacijaMaloprodaje(c *gin.Context, dok 
 	h.StampaNivelacijaMaloprodaje(c)
 }
 
-// stampaFakturaZaRobu is the print of the group FZR (Srbija): a document in the domestic valuta is
+// stampaFakturaZaRobu is the print of the group FZR: a document in the domestic valuta is
 // PR_RPT_FAKTURA_OTP (or its variant of DODOZNFAK), a document in a foreign valuta its export
 // variant PR_RPT_FAKTURA_OTPIZV (the legacy screen answered "Ino faktura nije implementirana!").
 func (h *RobnoDokumentaHandler) stampaFakturaZaRobu(c *gin.Context, dok domain.RobnoStampaDokumentDto) {

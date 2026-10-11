@@ -693,7 +693,8 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 	magacinKontoRepo := repository.NewBaseRepository[domain.Magkonto](db, "magkonto")
 	magacinKontoValidator := validation.NewRuleBasedValidator[domain.Magkonto]([]validation.ValidationRule{})
 	magacinKontoBaseService := service.NewBaseService(*magacinKontoRepo, magacinKontoValidator)
-	magacinKontoService := robnosvc.NewMagacinKontoResource(magacinKontoBaseService, magacinKontoRepo, fvrRepo, cfg)
+	magacinKontoService := robnosvc.NewMagacinKontoResource(magacinKontoBaseService, magacinKontoRepo,
+		repository.NewBaseRepository[domain.MagkontoView](db, "magkonto"), fvrRepo, cfg)
 	magacinKontoHandler := robnohand.NewMagacinKontoHandler(magacinKontoBaseService, magacinKontoService, cfg, lm, translator)
 	magacinKontoHandler.AddRoutes(r)
 
@@ -842,7 +843,27 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 		*repository.NewBaseRepository[domain.RobnoStampaKnjiznoPismoRowDto](db, "rpro"),
 		*repository.NewBaseRepository[domain.RobnoStampaKnjiznoPismoFakturaDto](db, "rpro"),
 		*repository.NewBaseRepository[domain.RobnoStampaInterniPrenosRowDto](db, "rpro"),
-		*repository.NewBaseRepository[domain.RobnoStampaPoreskaStopaDto](db, "rpor"))
+		*repository.NewBaseRepository[domain.RobnoStampaPoreskaStopaDto](db, "rpor"),
+		// The queries of the entry of the documents.
+		robnosvc.RobnoDokumentaUnosRepos{
+			Dokument: *repository.NewBaseRepository[domain.RobniDokumentRow](db, "rdok"),
+			Kupac:    *repository.NewBaseRepository[domain.RobKupacDto](db, "fkpl"),
+			Avansi:   *repository.NewBaseRepository[domain.RobAvansDto](db, "avansfakt"),
+			Saldo:    *repository.NewBaseRepository[domain.RobSaldoKupcaDto](db, "fpro"),
+			Tekst:    *repository.NewBaseRepository[domain.SearchRowDto](db, "rdok"),
+			Stavke:   *repository.NewBaseRepository[domain.RobObracunStavkaDto](db, "rpro"),
+			Obracun:  *repository.NewBaseRepository[domain.RobObracunAvansDto](db, "avansfakt"),
+			Rate:     *repository.NewBaseRepository[domain.RobRataDto](db, "faktrate"),
+			// The stavke of the documents.
+			StavkeGrid: *repository.NewBaseRepository[domain.RobStavkaRow](db, "rpro"),
+			Kontekst:   *repository.NewBaseRepository[domain.RobStavkeKontekst](db, "rdok"),
+			Artikal:    *repository.NewBaseRepository[domain.RobArtikalStanjeDto](db, "rsif"),
+			ZadnjaCena: *repository.NewBaseRepository[domain.RobZadnjaCenaDto](db, "rpro"),
+			Rpro:       *repository.NewBaseRepository[domain.RobRproDto](db, "rpro"),
+			Rcene:      *repository.NewBaseRepository[domain.RobRceneDto](db, "rcene"),
+			Rsif:       *repository.NewBaseRepository[domain.RobRsifDto](db, "rsif"),
+			Prikaz:     *repository.NewBaseRepository[domain.RobDokumentPrikazRow](db, "rdok"),
+		})
 	robnoDokumentaHandler := robnohand.NewRobnoDokumentaHandler(robnoDokumentaService, cfg, lm, ls, translator)
 	robnoDokumentaHandler.AddRoutes(r)
 	// The entry of the robni dokumenti of a robni nalog (the screens opened by "Snimi nalog").

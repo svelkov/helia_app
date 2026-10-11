@@ -20,7 +20,7 @@ import (
 
 // RobnoDokumentaMain renders the "Robna dokumenta" option (robni nalozi / robni dokumenti).
 // The first tab ("Unos dokumenta") is rendered inside the container that the tab navigation
-func RobnoDokumentaMain(hxValsTipdok, hxValsNalog string, tabs, subTabs domain.TabData, tbl domain.TableData, tipdokValues, vrstaDokumentaValues, magValues []domain.ComboItem, total domain.RobnoDokumentaTotal, payload domain.RobnoDokumentaParams, btnSave, btnNoviNalog domain.Button, searchInput domain.InputControl, translator *i18n.Service, csrfToken string) templ.Component {
+func RobnoDokumentaMain(hxValsTipdok, hxValsVrd, hxValsNalog, dokumentDialogID string, tabs, subTabs domain.TabData, tbl domain.TableData, tipdokValues, vrstaDokumentaValues, magValues []domain.ComboItem, total domain.RobnoDokumentaTotal, payload domain.RobnoDokumentaParams, btnSave, btnNoviNalog domain.Button, searchInput domain.InputControl, translator *i18n.Service, csrfToken string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -45,7 +45,7 @@ func RobnoDokumentaMain(hxValsTipdok, hxValsNalog string, tabs, subTabs domain.T
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = RobnoDokumentaUnos(hxValsTipdok, hxValsNalog, tabs, subTabs, tbl, tipdokValues, vrstaDokumentaValues, magValues, total, payload, btnSave, btnNoviNalog, searchInput, translator, csrfToken).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = RobnoDokumentaUnos(hxValsTipdok, hxValsVrd, hxValsNalog, tabs, subTabs, tbl, tipdokValues, vrstaDokumentaValues, magValues, total, payload, btnSave, btnNoviNalog, searchInput, translator, csrfToken).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -54,9 +54,9 @@ func RobnoDokumentaMain(hxValsTipdok, hxValsNalog string, tabs, subTabs domain.T
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var2 string
-		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(robnoDokumentaDokumentDialogID)
+		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(dokumentDialogID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 20, Col: 42}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 20, Col: 28}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
@@ -296,7 +296,7 @@ func RobnoDokumentaEmptyBody(tabLabel string, tbl domain.TableData, btnObrada, b
 }
 
 // Tab 1 - Unos dokumenta
-func RobnoDokumentaUnos(hxValsTipdok, hxValsNalog string, tabs, subTabs domain.TabData, tbl domain.TableData, tipdokValues, vrstaDokumentaValues, magValues []domain.ComboItem, total domain.RobnoDokumentaTotal, payload domain.RobnoDokumentaParams, btnSave, btnNoviNalog domain.Button, searchInput domain.InputControl, translator *i18n.Service, csrfToken string) templ.Component {
+func RobnoDokumentaUnos(hxValsTipdok, hxValsVrd, hxValsNalog string, tabs, subTabs domain.TabData, tbl domain.TableData, tipdokValues, vrstaDokumentaValues, magValues []domain.ComboItem, total domain.RobnoDokumentaTotal, payload domain.RobnoDokumentaParams, btnSave, btnNoviNalog domain.Button, searchInput domain.InputControl, translator *i18n.Service, csrfToken string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -317,7 +317,7 @@ func RobnoDokumentaUnos(hxValsTipdok, hxValsNalog string, tabs, subTabs domain.T
 			templ_7745c5c3_Var8 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = RobnoDokumentaShell(tabs, subTabs, translator, RobnoDokumentaUnosForm(hxValsTipdok, hxValsNalog, tbl, tipdokValues, vrstaDokumentaValues, magValues, total, payload, btnSave, btnNoviNalog, searchInput, translator, csrfToken)).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = RobnoDokumentaShell(tabs, subTabs, translator, RobnoDokumentaUnosForm(hxValsTipdok, hxValsVrd, hxValsNalog, tbl, tipdokValues, vrstaDokumentaValues, magValues, total, payload, btnSave, btnNoviNalog, searchInput, translator, csrfToken)).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -328,7 +328,7 @@ func RobnoDokumentaUnos(hxValsTipdok, hxValsNalog string, tabs, subTabs domain.T
 // RobnoDokumentaUnosForm renders the header of the robni nalog ("Vrsta naloga za knjiženje",
 // "Vrsta dokumenta", "Datum obrade", "Broj naloga", "Datum naloga", "Opis knjiženja" i "Magacin"),
 // the "Prikaz ukupne obrade" panel and the grid of the nalozi of the selected vrsta naloga.
-func RobnoDokumentaUnosForm(hxValsTipdok, hxValsNalog string, tbl domain.TableData, tipdokValues, vrstaDokumentaValues, magValues []domain.ComboItem, total domain.RobnoDokumentaTotal, payload domain.RobnoDokumentaParams, btnSave, btnNoviNalog domain.Button, searchInput domain.InputControl, translator *i18n.Service, csrfToken string) templ.Component {
+func RobnoDokumentaUnosForm(hxValsTipdok, hxValsVrd, hxValsNalog string, tbl domain.TableData, tipdokValues, vrstaDokumentaValues, magValues []domain.ComboItem, total domain.RobnoDokumentaTotal, payload domain.RobnoDokumentaParams, btnSave, btnNoviNalog domain.Button, searchInput domain.InputControl, translator *i18n.Service, csrfToken string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -429,7 +429,7 @@ func RobnoDokumentaUnosForm(hxValsTipdok, hxValsNalog string, tbl domain.TableDa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = RobnoDokumentaUnosVrdCombo(vrstaDokumentaValues, payload.Vrd, false, translator).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = RobnoDokumentaUnosVrdCombo(vrstaDokumentaValues, payload.Vrd, hxValsVrd, false, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -679,7 +679,7 @@ func RobnoDokumentaUnosTotalRow(id, label, value string, translator *i18n.Servic
 // RobnoDokumentaUnosVrdCombo renders the combo of the vrsta dokumenta of the unos dokumenata. With oob
 // it replaces the combo of the page out of band (the response to the change of the vrsta naloga, the
 // legacy PostaviComboBoxes).
-func RobnoDokumentaUnosVrdCombo(values []domain.ComboItem, selected string, oob bool, translator *i18n.Service) templ.Component {
+func RobnoDokumentaUnosVrdCombo(values []domain.ComboItem, selected, hxVals string, oob bool, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -729,7 +729,12 @@ func RobnoDokumentaUnosVrdCombo(values []domain.ComboItem, selected string, oob 
 			ClassSelect:   common.ClassInputTextEnabled + " flex-1",
 			OptionValues:  values,
 			SelectedValue: selected,
-			TabIndex:      "3",
+			// Its change reloads the grid: the nalozi with a document of the vrsta dokumenta.
+			ChangeEndpoint: "/api/robno-dokumenta/unos",
+			HxChangeTarget: "robno-dokumenta-unos-table",
+			HxSwap:         "innerHTML",
+			HxVals:         hxVals,
+			TabIndex:       "3",
 		}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -808,9 +813,6 @@ func RobnoDokumentaUnosMagCombo(values []domain.ComboItem, magaciniID int, oob b
 }
 
 // magaciniSelection returns the key of the selected magacin ("" when no magacin is selected).
-// robnoDokumentaDokumentDialogID is the container of the dialog of the screen of the entry of the
-// documents of a nalog (see RobnoDokumentaOtvoriDokumentScript).
-const robnoDokumentaDokumentDialogID = "robno-dokumenta-dokument-dialog"
 
 // RobnoDokumentaOtvoriDokumentScript opens the screen of the entry of the documents after the nalog is
 // saved ("Snimi nalog"): the response of the save carries the event robnoNalogSnimljen with the url of
@@ -917,7 +919,7 @@ func RobnoDokumentaPregledBody(tbl domain.TableData, magValues, vrstaDokumentaVa
 		var templ_7745c5c3_Var21 string
 		templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Parametri"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 373, Col: 92}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 375, Col: 92}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 		if templ_7745c5c3_Err != nil {
@@ -1025,7 +1027,7 @@ func RobnoDokumentaPregledBody(tbl domain.TableData, magValues, vrstaDokumentaVa
 		var templ_7745c5c3_Var22 string
 		templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Obrada i štampa"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 445, Col: 99}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 447, Col: 99}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
 		if templ_7745c5c3_Err != nil {
@@ -1062,7 +1064,7 @@ func RobnoDokumentaPregledBody(tbl domain.TableData, magValues, vrstaDokumentaVa
 		var templ_7745c5c3_Var23 string
 		templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(tbl.TableID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 462, Col: 23}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 464, Col: 23}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 		if templ_7745c5c3_Err != nil {
@@ -1184,7 +1186,7 @@ func RobnoDokumentaEFakturaBody(tbl domain.TableData, params domain.RobnoDokumen
 		var templ_7745c5c3_Var27 string
 		templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Parametri"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 514, Col: 92}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 516, Col: 92}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
 		if templ_7745c5c3_Err != nil {
@@ -1290,7 +1292,7 @@ func RobnoDokumentaEFakturaBody(tbl domain.TableData, params domain.RobnoDokumen
 		var templ_7745c5c3_Var28 string
 		templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Status eFaktura"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 578, Col: 98}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 580, Col: 98}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
 		if templ_7745c5c3_Err != nil {
@@ -1353,7 +1355,7 @@ func RobnoDokumentaEFakturaBody(tbl domain.TableData, params domain.RobnoDokumen
 		var templ_7745c5c3_Var29 string
 		templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(tbl.TableID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 608, Col: 23}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 610, Col: 23}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
 		if templ_7745c5c3_Err != nil {
@@ -1436,7 +1438,7 @@ func RobnoDokumentaSpecifikacijeBody(tbl domain.TableData, magValues, tipdokValu
 		var templ_7745c5c3_Var32 string
 		templ_7745c5c3_Var32, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Parametri"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 629, Col: 92}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 631, Col: 92}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var32))
 		if templ_7745c5c3_Err != nil {
@@ -1739,7 +1741,7 @@ func RobnoDokumentaSpecifikacijeBody(tbl domain.TableData, magValues, tipdokValu
 		var templ_7745c5c3_Var33 string
 		templ_7745c5c3_Var33, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Obrada i štampa"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 855, Col: 99}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 857, Col: 99}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var33))
 		if templ_7745c5c3_Err != nil {
@@ -1776,7 +1778,7 @@ func RobnoDokumentaSpecifikacijeBody(tbl domain.TableData, magValues, tipdokValu
 		var templ_7745c5c3_Var34 string
 		templ_7745c5c3_Var34, templ_7745c5c3_Err = templ.JoinStringErrs(tbl.TableID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 869, Col: 23}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 871, Col: 23}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var34))
 		if templ_7745c5c3_Err != nil {
@@ -1868,7 +1870,7 @@ func RobnoDokumentaKontiranjeKnjizenjeBody(tbl domain.TableData, tipdokValues, v
 		var templ_7745c5c3_Var37 string
 		templ_7745c5c3_Var37, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Parametri"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 897, Col: 92}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 899, Col: 92}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var37))
 		if templ_7745c5c3_Err != nil {
@@ -1985,7 +1987,7 @@ func RobnoDokumentaKontiranjeKnjizenjeBody(tbl domain.TableData, tipdokValues, v
 		var templ_7745c5c3_Var38 string
 		templ_7745c5c3_Var38, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Knjiženje"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 968, Col: 93}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 970, Col: 93}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var38))
 		if templ_7745c5c3_Err != nil {
@@ -2026,7 +2028,7 @@ func RobnoDokumentaKontiranjeKnjizenjeBody(tbl domain.TableData, tipdokValues, v
 		var templ_7745c5c3_Var39 string
 		templ_7745c5c3_Var39, templ_7745c5c3_Err = templ.JoinStringErrs(tbl.TableID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 983, Col: 23}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 985, Col: 23}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var39))
 		if templ_7745c5c3_Err != nil {
@@ -2111,7 +2113,7 @@ func RobnoDokumentaKontiranjePregledBody(tbl domain.TableData, tipdokValues, mag
 		var templ_7745c5c3_Var42 string
 		templ_7745c5c3_Var42, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Parametri"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 1004, Col: 92}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 1006, Col: 92}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var42))
 		if templ_7745c5c3_Err != nil {
@@ -2246,7 +2248,7 @@ func RobnoDokumentaKontiranjePregledBody(tbl domain.TableData, tipdokValues, mag
 		var templ_7745c5c3_Var43 string
 		templ_7745c5c3_Var43, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Pregled dokumenta"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 1091, Col: 100}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 1093, Col: 100}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var43))
 		if templ_7745c5c3_Err != nil {
@@ -2283,7 +2285,7 @@ func RobnoDokumentaKontiranjePregledBody(tbl domain.TableData, tipdokValues, mag
 		var templ_7745c5c3_Var44 string
 		templ_7745c5c3_Var44, templ_7745c5c3_Err = templ.JoinStringErrs(tbl.TableID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 1105, Col: 23}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 1107, Col: 23}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var44))
 		if templ_7745c5c3_Err != nil {
@@ -2367,7 +2369,7 @@ func RobnoDokumentaKontiranjePoMagacinimaBody(tbl domain.TableData, magValues []
 		var templ_7745c5c3_Var47 string
 		templ_7745c5c3_Var47, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Parametri"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 1125, Col: 92}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 1127, Col: 92}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var47))
 		if templ_7745c5c3_Err != nil {
@@ -2466,7 +2468,7 @@ func RobnoDokumentaKontiranjePoMagacinimaBody(tbl domain.TableData, magValues []
 		var templ_7745c5c3_Var48 string
 		templ_7745c5c3_Var48, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Pregled dokumenta"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 1186, Col: 100}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 1188, Col: 100}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var48))
 		if templ_7745c5c3_Err != nil {
@@ -2499,7 +2501,7 @@ func RobnoDokumentaKontiranjePoMagacinimaBody(tbl domain.TableData, magValues []
 		var templ_7745c5c3_Var49 string
 		templ_7745c5c3_Var49, templ_7745c5c3_Err = templ.JoinStringErrs(tbl.TableID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 1199, Col: 23}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 1201, Col: 23}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var49))
 		if templ_7745c5c3_Err != nil {
@@ -2740,7 +2742,7 @@ func RobnoDokumentaPrikazUkupneObradeBody(tbl domain.TableData, btnPrint domain.
 		var templ_7745c5c3_Var55 string
 		templ_7745c5c3_Var55, templ_7745c5c3_Err = templ.JoinStringErrs(tbl.TableID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 1269, Col: 23}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 1271, Col: 23}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var55))
 		if templ_7745c5c3_Err != nil {
@@ -2830,7 +2832,7 @@ func RobnoDokumentaParametriNalogaBody(tbl domain.TableData, magValues, tipdokVa
 		var templ_7745c5c3_Var58 string
 		templ_7745c5c3_Var58, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Parametri"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 1298, Col: 91}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 1300, Col: 91}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var58))
 		if templ_7745c5c3_Err != nil {
@@ -3129,7 +3131,7 @@ func RobnoDokumentaParametriNalogaBody(tbl domain.TableData, magValues, tipdokVa
 		var templ_7745c5c3_Var59 string
 		templ_7745c5c3_Var59, templ_7745c5c3_Err = templ.JoinStringErrs(tbl.TableID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 1504, Col: 24}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 1506, Col: 24}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var59))
 		if templ_7745c5c3_Err != nil {
@@ -3213,7 +3215,7 @@ func RobnoDokumentaCheckBox(id, labelText, fields string, isChecked bool, tabInd
 		var templ_7745c5c3_Var64 string
 		templ_7745c5c3_Var64, templ_7745c5c3_Err = templ.JoinStringErrs(id)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 1518, Col: 10}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 1520, Col: 10}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var64))
 		if templ_7745c5c3_Err != nil {
@@ -3226,7 +3228,7 @@ func RobnoDokumentaCheckBox(id, labelText, fields string, isChecked bool, tabInd
 		var templ_7745c5c3_Var65 string
 		templ_7745c5c3_Var65, templ_7745c5c3_Err = templ.JoinStringErrs(id)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 1519, Col: 12}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 1521, Col: 12}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var65))
 		if templ_7745c5c3_Err != nil {
@@ -3252,7 +3254,7 @@ func RobnoDokumentaCheckBox(id, labelText, fields string, isChecked bool, tabInd
 		var templ_7745c5c3_Var67 string
 		templ_7745c5c3_Var67, templ_7745c5c3_Err = templ.JoinStringErrs(tabIndex)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 1521, Col: 22}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 1523, Col: 22}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var67))
 		if templ_7745c5c3_Err != nil {
@@ -3306,7 +3308,7 @@ func RobnoDokumentaCheckBox(id, labelText, fields string, isChecked bool, tabInd
 		var templ_7745c5c3_Var71 string
 		templ_7745c5c3_Var71, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label(labelText))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 1527, Col: 72}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 1529, Col: 72}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var71))
 		if templ_7745c5c3_Err != nil {
@@ -3413,7 +3415,7 @@ func RobnoDokumentaPrikazDokumenataPoOperateruBody(tbl domain.TableData, params 
 		var templ_7745c5c3_Var75 string
 		templ_7745c5c3_Var75, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Parametri"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 1552, Col: 91}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 1554, Col: 91}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var75))
 		if templ_7745c5c3_Err != nil {
@@ -3640,7 +3642,7 @@ func RobnoDokumentaPrikazDokumenataPoOperateruBody(tbl domain.TableData, params 
 		var templ_7745c5c3_Var76 string
 		templ_7745c5c3_Var76, templ_7745c5c3_Err = templ.JoinStringErrs(tbl.TableID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 1686, Col: 23}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robnadokumenta.templ`, Line: 1688, Col: 23}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var76))
 		if templ_7745c5c3_Err != nil {

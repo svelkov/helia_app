@@ -1,0 +1,947 @@
+package robno
+
+import (
+	"helia/frontend/components"
+	"helia/i18n"
+	"helia/internal/common"
+	"helia/internal/domain"
+	"strconv"
+	"strings"
+)
+
+//
+// Interni prenosi - dostavnice (the legacy rob_Interni_racuni, the vrste dokumenata of the groups IRT and
+// IRP): the header of the interni prenos and its stavke, like the faktura veleprodaje (the same dialog with
+// two tabs, the same collapsible controls, the same strip of the nalog and the same script, RobnoFaktureScript)
+// with the fields of the interni prenos only.
+//
+
+// Rob_InterniRacuni renders the "Interni prenosi - dostavnice" screen as a dialog with two tabs
+// (RobnoDokumentDialog): "Interni prenosi", the entry of the document (the header and the stavke as two
+// collapsible controls on one screen), and "Pregled internih prenosa", the documents with the stavke
+// (DETALJI) of the selected one and "Štampaj" of the selected document (RobnoFakturePrikaz, filled when the
+// tab is shown).
+templ Rob_InterniRacuni(ui domain.RobnoFaktureUI, header domain.RobnoInterniHeaderView, stavka domain.RobnoInterniStavka, tbl, dokumentaTbl, dokumentStavkeTbl domain.TableData, sistemPdvValues []domain.ComboItem, btns domain.RobnoFaktureButtons, btnClose domain.Button, translator *i18n.Service, csrfToken string) {
+	@RobnoDokumentDialog(ui.DialogID, translator.Label("Interni prenosi - dostavnice"), translator.Label("Interni prenosi"), translator.Label("Pregled internih prenosa"), btnClose, csrfToken,
+		RobInterniBody(ui, header, stavka, tbl, sistemPdvValues, btns, translator),
+		RobnoFakturePrikaz(ui, dokumentaTbl, dokumentStavkeTbl, domain.InputControl{}, translator))
+	<!-- The messages of the screen -->
+	<div id={ ui.InfoID }></div>
+	@RobnoFaktureScript()
+	@robInterniScript.Once() {
+		<script>
+			// OnSelect of the analitička šifra of the prodavnica (a table combo of the search "analitika", whose
+			// cells are konto, šifra, naziv, adresa, "poštanski broj mesto" and PIB): the data of the prodavnica.
+			function robInterniProdavnicaSelected(comboID, key, cells) {
+				const set = (id, value) => { const el = document.getElementById(id); if (el) el.value = value || ''; };
+				const mesto = (cells[4] || '').trim();
+				const m = mesto.match(/^(\d+)\s+(.*)$/);
+				set('prodnaziv', cells[2]);
+				set('prodadresa', cells[3]);
+				set('prodpostanskibroj', m ? m[1] : '');
+				set('prodmesto', m ? m[2] : mesto);
+			}
+			// ---- The stavke (the legacy rob_InterniRacuni_DET) ----
+			// The form of the stavke keeps the group of the document (IRT, IRP, IRS), the model and the taksa of
+			// the artikal (data-grupa, data-model, data-taksa).
+			function robInterniForma() {
+				return document.getElementById('robno-interni-stavka');
+			}
+			function robInterniUpisi(id, n, decimale) {
+				robnoUpisi(id, String(robnoZaokruzi(n, decimale)));
+			}
+			function robInterniModelD() {
+				const forma = robInterniForma();
+				return !!forma && forma.dataset.model.toUpperCase() === 'D';
+			}
+			function robInterniTaksa() {
+				const forma = robInterniForma();
+				return forma ? (parseFloat(forma.dataset.taksa) || 0) : 0;
+			}
+			function robInterniGrupa() {
+				const forma = robInterniForma();
+				return forma ? forma.dataset.grupa : '';
+			}
+			// All the cene of the stavka 0 (no stanje of the artikal in the konto).
+			function robInterniNulaCene() {
+				['magacinskacena', 'rabatstavke', 'nabavnacena', 'maloprmarza', 'maloprcena', 'mpcenasaporezom'].forEach(id => robnoUpisi(id, '0'));
+			}
+			function robInterniBezLota() {
+				['otk', 'serija', 'rokstavke'].forEach(id => robnoUpisi(id, ''));
+			}
+
+			// The vrednosti of the stavke (the exits of EDT_KOLIC, EDT_CENA and EDT_NCENA, OBRACUNAJ): the vrednost
+			// is the količina by the cena, the nabavna one (IRT, IRS) by the nabavna cena, the maloprodajna one with
+			// the PDV (IRP) by the maloprodajna cena with the porez.
+			function robInterniVrednosti() {
+				const kolicina = robnoBroj('kolicina'), grupa = robInterniGrupa();
+				robnoUpisi('vrednoststavke', (kolicina * robnoBroj('magacinskacena')).toFixed(2));
+				if (grupa === 'IRT' || grupa === 'IRS') robnoUpisi('nabavnavrednost', (kolicina * robnoBroj('nabavnacena')).toFixed(2));
+				if (grupa === 'IRP') robnoUpisi('mpvrednostpdv', (kolicina * robnoBroj('mpcenasaporezom')).toFixed(2));
+			}
+
+			// The exits of the rabat (EDT_VRA) and of the marža (EDT_MMA), not for the model "D": the nabavna cena
+			// is the cena without the rabat, the maloprodajna cena the nabavna one with the marža and the one with
+			// the porez the maloprodajna one with the porez of the stopa (without the taksa); the exit of the marža
+			// rounds the maloprodajne cene to 2 decimals.
+			function robInterniRabatMarza(zaokruzi) {
+				if (robInterniModelD()) return;
+				const cena = robnoBroj('magacinskacena'), vra = robnoBroj('rabatstavke'), mma = robnoBroj('maloprmarza');
+				const stopa = robnoBroj('stopastavke'), taksa = robInterniTaksa();
+				const iznosRabata = cena * vra / 100;
+				const iznosMarze = (cena - iznosRabata) * mma / 100;
+				const mcena = cena - iznosRabata + iznosMarze;
+				let mcenap = mcena + (mcena - taksa) * stopa / 100;
+				robInterniUpisi('nabavnacena', cena - iznosRabata, 4);
+				robInterniUpisi('maloprcena', mcena, zaokruzi ? 2 : 4);
+				robInterniUpisi('mpcenasaporezom', mcenap, zaokruzi ? 2 : 4);
+				robInterniVrednosti();
+			}
+
+			// The maloprodajna cena with the porez (whenever it is modified, EDT_MCENAP): the maloprodajna cena
+			// without the porez (the stopa from the cena with the porez, the taksa without porez) and the marža on
+			// the nabavna cena.
+			function robInterniMcenap() {
+				const mcenap = robnoBroj('mpcenasaporezom'), stopa = robnoBroj('stopastavke'), ncena = robnoBroj('nabavnacena');
+				const xs = robnoZaokruzi(stopa * 100 / (stopa + 100), 2);
+				const mcena = robnoZaokruzi(mcenap - (mcenap - robInterniTaksa()) * xs / 100, 2);
+				robInterniUpisi('maloprcena', mcena, 2);
+				robInterniUpisi('maloprmarza', ncena > 0 ? (mcena - ncena) / ncena * 100 : 0, 2);
+			}
+
+			// The artikal of the stavka from the server (GetRobInterniArtikal): izvor 'sifra' is the exit of
+			// EDT_SIFRA (the artikal, its stanje, its cene of an IRT, the last cena of the prodavnica), 'konto' the
+			// exit of EDT_KONTO (the stanje and the cene of rsta in the new konto).
+			function robInterniArtikal(izvor) {
+				const forma = robInterniForma();
+				const sifra = document.getElementById('sifraartikla');
+				const konto = document.getElementById('kontostavke');
+				if (!forma || !sifra || !konto) return;
+				const vrednost = sifra.value.trim();
+				if (vrednost === '' || vrednost === '0' || (izvor === 'konto' && konto.value.trim() === '')) return;
+				konto.value = konto.value.replace(/\s/g, '');
+				// The entry of the šifra clears the OTK broj, the serija and the rok (the legacy entry in EDT_SIFRA).
+				if (izvor === 'sifra') robInterniBezLota();
+				const url = forma.dataset.artikalUrl + '?' + new URLSearchParams({
+					rdokid: document.getElementById('stavkardokid').value, sifra: vrednost, konto: konto.value,
+				});
+				fetch(url, { headers: { 'Accept': 'application/json' } })
+					.then(r => r.json())
+					.then(odgovor => {
+						const grupa = robInterniGrupa();
+						if (!odgovor.found) {
+							// The artikal does not exist.
+							forma.dataset.model = '';
+							forma.dataset.taksa = '0';
+							['jm', 'tarifa', 'stopastavke', 'stanje'].forEach(id => robnoUpisi(id, ''));
+							if (izvor === 'sifra') {
+								robnoUpisi('magacinskacena', '0');
+								if (grupa === 'IRT') ['rabatstavke', 'maloprmarza'].forEach(id => robnoUpisi(id, '0'));
+								robInterniBezLota();
+							}
+							robInterniVrednosti();
+							return;
+						}
+						const a = odgovor.artikal;
+						forma.dataset.model = a.model || '';
+						forma.dataset.taksa = String(a.taksa || 0);
+						sifra.value = String(a.sifra);
+						robnoUpisi('sifraartikla-combo-input', a.sifra + ' - ' + a.naziv);
+						robnoUpisi('jm', a.jm);
+						robnoUpisi('tarifa', String(a.tarifa));
+						robnoUpisi('stopastavke', String(a.stopa));
+						if (izvor === 'konto') {
+							if (a.rsta) {
+								robnoUpisi('stanje', String(a.stanje));
+								robnoUpisi('magacinskacena', String(a.rstacena));
+								if (grupa === 'IRT') {
+									robInterniUpisi('rabatstavke', a.rstavra, 2);
+									robInterniUpisi('maloprmarza', a.rstamma, 2);
+								}
+								const cena = robnoBroj('magacinskacena');
+								robInterniUpisi('nabavnacena', robnoZaokruzi(cena - robnoZaokruzi(cena * robnoBroj('rabatstavke') / 100, 2), 2), 2);
+								if (a.mcenapmodel) robnoUpisi('mpcenasaporezom', String(a.rstamcenap));
+							} else {
+								robnoUpisi('stanje', '0');
+								robInterniNulaCene();
+							}
+							robInterniVrednosti();
+							return;
+						}
+						// ZadnjaCena: the last cena of the prodavnica, else the message.
+						robnoUpisi('zadnjampcena', String(a.zadnjamcena));
+						robInterniUpisi('zadnjirabat', a.zadnjivra, 2);
+						robnoUpisi('zadnjampcenapor', String(a.zadnjamcenap));
+						robInterniUpisi('zadnjamarza', a.zadnjamma, 2);
+						robnoUpisi('zadnjidatum', a.zadnjidatum);
+						const poruka = document.getElementById('zadnjacenaporuka');
+						if (poruka) poruka.textContent = a.poruka || '';
+						if (a.rsta) {
+							robnoUpisi('stanje', String(a.stanje));
+							if (a.cene) {
+								robnoUpisi('magacinskacena', String(a.cena));
+								robInterniUpisi('rabatstavke', a.vra, 2);
+								robnoUpisi('nabavnacena', String(a.ncena));
+								robInterniUpisi('maloprmarza', a.mma, 2);
+								robnoUpisi('maloprcena', String(a.mcena));
+								robnoUpisi('mpcenasaporezom', String(a.mcenap));
+							}
+							if (a.mcenapmodel) robnoUpisi('mpcenasaporezom', String(a.mcenap));
+						} else {
+							robnoUpisi('stanje', '0');
+							robInterniNulaCene();
+							robInterniBezLota();
+						}
+						robInterniVrednosti();
+						const kolicina = document.getElementById('kolicina');
+						if (kolicina) kolicina.focus();
+					});
+			}
+
+			// "Izmeni" of a row of the grid of the stavke (the legacy "Izmene"): the stavka of the answer (JSON) in
+			// the form (OBRACUNAJ: its vrednosti); it is saved as a change (the stanje gets the difference).
+			function robInterniStavkaUcitaj(evt) {
+				let odgovor;
+				try {
+					odgovor = JSON.parse(evt.detail.xhr.responseText);
+				} catch (e) {
+					return;
+				}
+				if (!odgovor.found) {
+					alert(odgovor.message || 'Stavka ne postoji.');
+					return;
+				}
+				const st = odgovor.stavka;
+				const forma = robInterniForma();
+				if (forma) {
+					forma.dataset.model = st.model || '';
+					forma.dataset.taksa = String(st.taksa || 0);
+				}
+				robnoUpisi('stavkarproid', String(st.rproid));
+				robnoUpisi('kontostavke', st.konto);
+				robnoUpisi('sifraartikla', String(st.sifra));
+				robnoUpisi('sifraartikla-combo-input', st.sifra + ' - ' + st.naziv);
+				robnoUpisi('jm', st.jm);
+				robnoUpisi('stanje', String(st.stanje));
+				robnoUpisi('kolicina', String(st.kolicina));
+				robnoUpisi('magacinskacena', String(st.cena));
+				robInterniUpisi('rabatstavke', st.vra, 2);
+				robnoUpisi('nabavnacena', String(st.ncena));
+				robInterniUpisi('maloprmarza', st.mma, 2);
+				robnoUpisi('maloprcena', String(st.mcena));
+				robnoUpisi('mpcenasaporezom', String(st.mcenap));
+				robnoUpisi('tarifa', String(st.tarifa));
+				robnoUpisi('stopastavke', String(st.stopa));
+				robnoUpisi('otk', st.otk);
+				robnoUpisi('serija', st.serija);
+				robnoUpisi('rokstavke', st.rok);
+				robInterniVrednosti();
+				robInterniStavkeGridEnabled(false);
+				robInterniOdustaniEnabled(true);
+				const kolicina = document.getElementById('kolicina');
+				if (kolicina) kolicina.focus();
+			}
+
+			// "Odustani" of the change of a stavka: the grid of the stavke is unlocked again and "Odustani" is
+			// disabled; the form is no more the stavka of the row (a next "Sačuvaj" adds a stavka).
+			function robInterniStavkaOdustani() {
+				robnoUpisi('stavkarproid', '0');
+				robInterniStavkeGridEnabled(true);
+				robInterniOdustaniEnabled(false);
+			}
+			function robInterniOdustaniEnabled(enabled) {
+				const btn = document.getElementById('robno-interni-stavka-odustani');
+				if (!btn) return;
+				btn.disabled = !enabled;
+				btn.classList.toggle('opacity-50', !enabled);
+				btn.classList.toggle('cursor-not-allowed', !enabled);
+			}
+			// The grid of the stavke: locked while a stavka is changed (no other row can be chosen), unlocked again
+			// by the content of the tab that comes back after "Sačuvaj".
+			function robInterniStavkeGridEnabled(enabled) {
+				const grid = document.getElementById('robno-interni-stavke-grid');
+				if (!grid) return;
+				grid.inert = !enabled;
+				grid.classList.toggle('opacity-50', !enabled);
+				grid.classList.toggle('pointer-events-none', !enabled);
+				grid.querySelectorAll('input, select, button').forEach(el => { el.disabled = !enabled; });
+			}
+
+			// The events of the form of the stavke (delegated: the form comes back with the content of the tab).
+			if (!window.robInterniStavkeListener) {
+				window.robInterniStavkeListener = true;
+				const uFormi = evt => evt.target && evt.target.id && robInterniForma() && evt.target.closest('#robno-interni-stavke-panel');
+				// The maloprodajna cena with the porez: whenever it is modified.
+				document.addEventListener('input', function (evt) {
+					if (uFormi(evt) && evt.target.id === 'mpcenasaporezom') robInterniMcenap();
+				});
+				// The exits of the fields.
+				document.addEventListener('change', function (evt) {
+					if (!uFormi(evt)) return;
+					switch (evt.target.id) {
+						case 'sifraartikla': robInterniArtikal('sifra'); break;
+						case 'kontostavke': robInterniArtikal('konto'); break;
+						case 'kolicina':
+						case 'magacinskacena':
+						case 'nabavnacena': robInterniVrednosti(); break;
+						case 'rabatstavke': robInterniRabatMarza(false); break;
+						case 'maloprmarza': robInterniRabatMarza(true); break;
+						case 'mpcenasaporezom': robInterniMcenap(); robInterniVrednosti(); break;
+					}
+				});
+			}
+
+			// A new konto of the prodavnica clears its šifra and its data (they belong to the old konto).
+			if (!window.robInterniProdavnicaListener) {
+				window.robInterniProdavnicaListener = true;
+				document.addEventListener('change', function (evt) {
+					if (!evt.target || evt.target.id !== 'pkto') return;
+					if (typeof tableComboClear === 'function') tableComboClear('pana-combo');
+					['prodnaziv', 'prodadresa', 'prodpostanskibroj', 'prodmesto'].forEach(id => {
+						const el = document.getElementById(id);
+						if (el) el.value = '';
+					});
+				});
+			}
+		</script>
+	}
+}
+
+var robInterniScript = templ.NewOnceHandle()
+
+// RobInterniBody renders the content of the tab "Interni prenosi": the strip with "Štampaj račun za
+// kupca", the first collapsible control (the header of the interni prenos) and the second one (the
+// stavke).
+templ RobInterniBody(ui domain.RobnoFaktureUI, header domain.RobnoInterniHeaderView, stavka domain.RobnoInterniStavka, tbl domain.TableData, sistemPdvValues []domain.ComboItem, btns domain.RobnoFaktureButtons, translator *i18n.Service) {
+	<div
+		id={ ui.BodyID }
+		data-stavke-aktivne={ robnoFaktureState(header.Snimljen) }
+		data-dokument-url={ ui.DokumentURL }
+		data-novi-url={ ui.NoviURL }
+		data-rnalid={ strconv.FormatInt(header.RnalID, 10) }
+		data-vrd={ header.Vrd }
+		class="bg-blue-100 p-1 flex flex-col gap-1 h-full min-h-0"
+	>
+		@RobInterniDokumentBar(header, btns.Print, btns.Back, translator)
+		@RobnoFakturePanel(ui.HeaderPanelID, translator.Label("Podaci o internom prenosu"), robInterniHeaderStateText(header.Snimljen, translator), !header.Snimljen, !header.Snimljen, false, btns.Save.Id, RobnoFaktureIzmeniZaglavlje(btns.Modify, header.Snimljen), RobInterniHeaderFields(header, sistemPdvValues, translator), RobnoFaktureHeaderButtons(btns))
+		@RobnoFakturePanel(ui.StavkePanelID, translator.Label("Stavke internog prenosa"), robInterniStavkeStateText(header.Snimljen, translator), header.Snimljen, header.Snimljen, true, btns.SaveStavka.Id, templ.NopComponent, RobInterniStavkeFields(ui, header, stavka, tbl, btns, translator), templ.NopComponent)
+		<!-- The dialog of the messages of the stavke -->
+		<div id={ ui.StavkaInfoID } class="contents"></div>
+	</div>
+}
+
+// RobInterniDokumentBar renders the strip above the two controls: "Štampaj račun za kupca", "Štampaj" of
+// the saved document and "Nazad".
+templ RobInterniDokumentBar(header domain.RobnoInterniHeaderView, btnPrint, btnBack domain.Button, translator *i18n.Service) {
+	<div class="flex items-center gap-2 border border-blue-400 bg-blue-100 rounded-lg px-1 py-0.5">
+		<div class="flex-1 flex justify-center">
+			@components.CheckboxField(domain.CheckboxFieldConfig{
+				ID:                "stampajracun",
+				Name:              "stampajracun",
+				LabelText:         translator.Label("Štampaj račun za kupca"),
+				ClassLabel:        common.ClassLabel,
+				ClassCheckbox:     common.ClassCheckbox,
+				ClassCheckboxSpan: "text-sm",
+				IsChecked:         header.StampajRacun,
+				TabIndex:          "0"}, translator)
+		</div>
+		<!-- "Štampaj" of the document of the form: only a saved document (a new one has nothing to print) -->
+		if header.RdokID > 0 {
+			@components.Search_PartPrintButton(btnPrint)
+		} else {
+			<span class={ btnPrint.BtnClass + " opacity-50 cursor-not-allowed" } title={ translator.Message("Dokument nije sačuvan") }>
+				@components.Icon("stampa", common.ClassIcon)
+				{ btnPrint.LabelText }
+			</span>
+		}
+		@components.Button(btnBack)
+	</div>
+}
+
+// RobInterniHeaderFields renders the fields of the header of the interni prenos: the strip of the nalog,
+// then two columns, the left one with the podaci o dokumentu, the napomena o poreskom oslobođenju and the
+// uslovi prodaje, the right one with the prodavnica, the org. jedinica, the mesto troška and the kupac.
+// The names of the fields are the ones of the faktura (the same columns of rdok).
+templ RobInterniHeaderFields(header domain.RobnoInterniHeaderView, sistemPdvValues []domain.ComboItem, translator *i18n.Service) {
+	<fieldset class="border border-blue-400 bg-blue-100">
+		@RobnoFaktureReadOnlyStrip(robnoFaktureNalogStripFields(header.RobnoFaktureHeaderView, translator))
+	</fieldset>
+	<!-- The nalog and the document the header belongs to; the vrsta dokumenta (its field is read only) -->
+	<input type="hidden" name="rnalid" value={ strconv.FormatInt(header.RnalID, 10) }/>
+	<input type="hidden" name="rdokid" value={ strconv.FormatInt(header.RdokID, 10) }/>
+	<input type="hidden" name="vrd" value={ header.Vrd }/>
+	<div class="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-1">
+		<!-- ===== Left column: podaci o dokumentu, napomena o poreskom oslobođenju, uslovi prodaje ===== -->
+		<div class="flex flex-col gap-1 min-w-0 h-full">
+			<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg">
+				<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Podaci o dokumentu") }</legend>
+				<div class="flex flex-col gap-y-1">
+					<div class="flex items-center gap-1">
+						@components.LabelField(domain.LabelFieldConfig{ID: "vrd", LabelText: translator.Label("Vrsta dokumenta"), ClassLabel: common.ClassLabel + " w-40"})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "vrd",
+							Name:       "vrd",
+							FieldType:  "text",
+							Value:      header.Vrd,
+							Disabled:   true,
+							ClassInput: common.ClassInputTextDisabled + " flex-1 min-w-0"})
+					</div>
+					<div class="flex items-center gap-1">
+						<div class="flex items-center gap-1 flex-1 min-w-0">
+							@components.LabelField(domain.LabelFieldConfig{ID: "brdok", LabelText: translator.Label("Broj dokumenta"), ClassLabel: common.ClassLabel + " w-40"})
+							<!-- The broj of the document for the save; the combo holds the id of the selected one. -->
+							<input type="hidden" id="brdok" name="brdok" value={ header.BrojDokum }/>
+							@components.TableCombo(domain.TableComboConfig{
+								ID:           "brdok-combo",
+								Name:         "brdokrdokid",
+								ValueID:      "brdokrdokid",
+								Value:        robnoFaktureID(header.RdokID),
+								DisplayValue: header.BrojDokum,
+								Placeholder:  "Pretraži po broju ili kupcu",
+								ClassInput:   common.ClassInputTextEnabled + " w-full",
+								ClassWrapper: "flex-1 min-w-0",
+								SearchURL:    "/api/search/robni-dokumenti",
+								// The documents of the vrsta in the nalog: a selected row opens its document by the id, a
+								// typed broj its document or a new one with that broj (like the faktura).
+								HxVals:     robnoFaktureDokumentSearchVals(header.RobnoFaktureHeaderView),
+								OnSelect:   "robnoFaktureOtvoriDokument",
+								FreeText:   true,
+								OnFreeText: "robnoFaktureNoviBroj",
+								TabIndex:   "1",
+							}, translator)
+						</div>
+						<div class="flex items-center gap-1 flex-1 min-w-0">
+							@components.LabelField(domain.LabelFieldConfig{ID: "datumfakturisanja", LabelText: translator.Label("Datum dokumenta"), ClassLabel: common.ClassLabel + " w-32 pl-2"})
+							@components.TextInputField(domain.InputFieldConfig{
+								ID:         "datumfakturisanja",
+								Name:       "datumfakturisanja",
+								FieldType:  "date",
+								Value:      robnoFaktureDate(header.DatumDokum),
+								ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
+								TabIndex:   "2",
+								OnInput:    "clearFieldError",
+								OnFocus:    "clearFieldError"})
+						</div>
+					</div>
+					<div class="flex items-center gap-1">
+						@components.LabelField(domain.LabelFieldConfig{ID: "brdokorg", LabelText: translator.Label("Broj orig. dokumenta"), ClassLabel: common.ClassLabel + " w-40"})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "brdokorg",
+							Name:       "brdokorg",
+							FieldType:  "text",
+							Value:      header.IzvorniDokum,
+							ClassInput: common.ClassInputTextEnabled + " !w-56",
+							MaxLength:  "20",
+							TabIndex:   "3"})
+					</div>
+					<div class="flex items-center gap-1">
+						@components.LabelField(domain.LabelFieldConfig{ID: "datumizvora", LabelText: translator.Label("Datum izv. dokumenta"), ClassLabel: common.ClassLabel + " w-40"})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "datumizvora",
+							Name:       "datumizvora",
+							FieldType:  "date",
+							Value:      robnoFaktureDate(header.IzvorniDokDatum),
+							ClassInput: common.ClassInputTextEnabled + " !w-40",
+							TabIndex:   "4"})
+					</div>
+					<div class="flex items-center gap-1">
+						@components.LabelField(domain.LabelFieldConfig{ID: "opis", LabelText: translator.Label("Opis"), ClassLabel: common.ClassLabel + " w-40"})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "opis",
+							Name:       "opis",
+							FieldType:  "text",
+							Value:      header.Opis,
+							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
+							MaxLength:  "120",
+							TabIndex:   "5"})
+					</div>
+				</div>
+			</fieldset>
+			<!-- Napomena o poreskom oslobođenju -->
+			<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg">
+				<div class="flex items-center gap-1">
+					@components.LabelField(domain.LabelFieldConfig{ID: "napomporeskoosl", LabelText: translator.Label("Napom. o poreskom osl."), ClassLabel: common.ClassLabel + " w-40"})
+					@components.TextInputField(domain.InputFieldConfig{
+						ID:         "napomporeskoosl",
+						Name:       "napomporeskoosl",
+						FieldType:  "text",
+						Value:      header.NapomenaPoresko,
+						ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
+						MaxLength:  "120",
+						TabIndex:   "6"})
+				</div>
+			</fieldset>
+			<!-- Uslovi prodaje: it is the last panel of the column, so it grows to the end of the right column -->
+			<fieldset class="flex-1 border border-blue-400 bg-blue-100 p-1 rounded-lg">
+				<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Uslovi prodaje") }</legend>
+				<div class="flex flex-col gap-y-1">
+					<div class="flex items-center gap-1">
+						@components.LabelField(domain.LabelFieldConfig{ID: "nacinotpreme", LabelText: translator.Label("Način otpreme"), ClassLabel: common.ClassLabel + " w-40"})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "nacinotpreme",
+							Name:       "nacinotpreme",
+							FieldType:  "text",
+							Value:      header.NacinOtpreme,
+							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
+							MaxLength:  "40",
+							TabIndex:   "7"})
+					</div>
+					<div class="flex items-center gap-1">
+						@components.LabelField(domain.LabelFieldConfig{ID: "usloviplacanja", LabelText: translator.Label("Uslovi plaćanja"), ClassLabel: common.ClassLabel + " w-40"})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "usloviplacanja",
+							Name:       "usloviplacanja",
+							FieldType:  "text",
+							Value:      header.UsloviPlacanja,
+							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
+							MaxLength:  "20",
+							TabIndex:   "8"})
+					</div>
+					<div class="flex items-center gap-1">
+						@components.LabelField(domain.LabelFieldConfig{ID: "rok", LabelText: translator.Label("Rok"), ClassLabel: common.ClassLabel + " w-40"})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "rok",
+							Name:       "rok",
+							FieldType:  "text",
+							Value:      robnoFaktureInt(header.Rok),
+							ClassInput: common.ClassInputTextEnabled + " !w-20 text-right",
+							MaxLength:  "3",
+							TabIndex:   "9"})
+						@components.LabelField(domain.LabelFieldConfig{ID: "dospeva", LabelText: translator.Label("Dospeva"), ClassLabel: common.ClassLabel + " pl-2"})
+						<!-- The datum dospeća follows from the datum dokumenta and the rok (read only) -->
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "dospeva",
+							Name:       "dospeva",
+							FieldType:  "date",
+							Value:      robnoFaktureDate(header.Dospeva),
+							Disabled:   true,
+							ClassInput: common.ClassInputTextDisabled + " !w-40"})
+					</div>
+					<div class="flex items-center gap-1">
+						@components.LabelField(domain.LabelFieldConfig{ID: "uslovikamate", LabelText: translator.Label("Uslovi kamate"), ClassLabel: common.ClassLabel + " w-40"})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "uslovikamate",
+							Name:       "uslovikamate",
+							FieldType:  "text",
+							Value:      header.UsloviKamate,
+							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
+							MaxLength:  "20",
+							TabIndex:   "10"})
+					</div>
+					<div class="flex items-start gap-1">
+						@components.LabelField(domain.LabelFieldConfig{ID: "foot", LabelText: translator.Label("Tekst"), ClassLabel: common.ClassLabel + " w-40"})
+						<textarea
+							id="foot"
+							name="foot"
+							rows="2"
+							tabindex="11"
+							class={ common.ClassInputTextEnabled + " flex-1 min-w-0 !h-auto" }
+						>{ header.Tekst }</textarea>
+					</div>
+				</div>
+			</fieldset>
+		</div>
+		<!-- ===== Right column: podaci o prodavnici i kupcu ===== -->
+		<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg min-w-0">
+			<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Podaci o prodavnici i kupcu") }</legend>
+			<div class="flex flex-col gap-y-1">
+				<!-- The prodavnica (rdok.pkto, rdok.pana): the konto and the analitička šifra with their searches,
+				     then its naziv, adresa, poštanski broj and mesto (read only) -->
+				<div class="flex items-center gap-1 min-w-0">
+					@components.LabelField(domain.LabelFieldConfig{ID: "pkto", LabelText: translator.Label("Konto prodav."), ClassLabel: common.ClassLabel + " w-32"})
+					@components.TableCombo(domain.TableComboConfig{
+						ID:           "pkto-combo",
+						Name:         "pkto",
+						ValueID:      "pkto",
+						Value:        header.ProdavnicaKonto,
+						DisplayValue: header.ProdavnicaKonto,
+						Placeholder:  "Pretraži po kontu ili nazivu",
+						ClassInput:   common.ClassInputTextEnabled + " w-full",
+						ClassWrapper: "flex-1 min-w-0",
+						SearchURL:    "/api/search/konta",
+						HideDetails:  true,
+						TabIndex:     "12",
+					}, translator)
+					@components.LabelField(domain.LabelFieldConfig{ID: "pana", LabelText: translator.Label("Analitička šifra"), ClassLabel: common.ClassLabel + " pl-2"})
+					@components.TableCombo(domain.TableComboConfig{
+						ID:           "pana-combo",
+						Name:         "pana",
+						ValueID:      "pana",
+						Value:        header.ProdavnicaSifra,
+						DisplayValue: header.ProdavnicaSifra,
+						Placeholder:  "Pretraži po šifri ili nazivu",
+						ClassInput:   common.ClassInputTextEnabled + " w-full",
+						ClassWrapper: "w-40",
+						// The šifre of the konto of the prodavnica (the parameter pkto of the search); the selected
+						// one fills the naziv, the adresa, the poštanski broj and the mesto of the prodavnica.
+						SearchURL:   "/api/search/analitika",
+						HxInclude:   "#pkto",
+						OnSelect:    "robInterniProdavnicaSelected",
+						HideDetails: true,
+						TabIndex:    "13",
+					}, translator)
+				</div>
+				@robInterniReadOnlyRow("prodnaziv", translator.Label("Naziv prodav."), header.ProdavnicaNaziv)
+				@robInterniReadOnlyRow("prodadresa", translator.Label("Adresa"), header.ProdavnicaAdresa)
+				@robInterniPostaMesto("prodpostanskibroj", "prodmesto", header.ProdavnicaPostanskiBroj, header.ProdavnicaMesto, translator)
+				<hr class="my-1 border-blue-400"/>
+				<!-- The org. jedinica and the mesto troška (searched in the org. jedinica) -->
+				<div class="flex items-center gap-1 min-w-0">
+					@components.LabelField(domain.LabelFieldConfig{ID: "idorgjed", LabelText: translator.Label("OJ"), ClassLabel: common.ClassLabel + " w-32"})
+					@components.TableCombo(domain.TableComboConfig{
+						ID:           "idorgjed-combo",
+						Name:         "idorgjed",
+						ValueID:      "idorgjed",
+						Value:        robnoFaktureNullID(header.Orgejed),
+						DisplayValue: header.OrgjedText,
+						Placeholder:  "Pretraži po šifri ili nazivu",
+						ClassWrapper: "relative flex-1 min-w-0",
+						ClassInput:   common.ClassInputTextEnabled + " w-full",
+						SearchURL:    "/api/search/org-jedinice",
+						AllowEmpty:   true,
+						TabIndex:     "14",
+					}, translator)
+				</div>
+				<div class="flex items-center gap-1 min-w-0">
+					@components.LabelField(domain.LabelFieldConfig{ID: "mestotrid", LabelText: translator.Label("Mesto troška"), ClassLabel: common.ClassLabel + " w-32"})
+					@components.TableCombo(domain.TableComboConfig{
+						ID:           "mestotrid-combo",
+						Name:         "mestotrid",
+						ValueID:      "mestotrid",
+						Value:        robnoFaktureNullID(header.MestoTroska),
+						DisplayValue: header.MestoTroskaText,
+						Placeholder:  "Pretraži po šifri ili nazivu",
+						ClassWrapper: "relative flex-1 min-w-0",
+						ClassInput:   common.ClassInputTextEnabled + " w-full",
+						SearchURL:    "/api/search/mesta-troska",
+						AllowEmpty:   true,
+						HxInclude:    "#idorgjed",
+						HxTrigger:    "input changed delay:300ms, focus[tableComboEmpty(this)], change[document.activeElement === this] from:#idorgjed",
+						TabIndex:     "15",
+					}, translator)
+				</div>
+				<!-- The kupac: the konto and the analitička šifra with the searches of the partneri (like the
+				     faktura: the selected kupac fills its naziv, adresa, poštanski broj, mesto and PIB) -->
+				<div class="flex items-center gap-1 min-w-0">
+					@components.LabelField(domain.LabelFieldConfig{ID: "kupackonto", LabelText: translator.Label("Konto kupca"), ClassLabel: common.ClassLabel + " w-32"})
+					@components.TableCombo(domain.TableComboConfig{
+						ID:           "kupackonto-combo",
+						Name:         "kupackonto",
+						ValueID:      "kupackonto",
+						Value:        header.KupacKonto,
+						DisplayValue: header.KupacKonto,
+						Placeholder:  "Pretraži po kontu ili nazivu",
+						ClassInput:   common.ClassInputTextEnabled + " w-full",
+						ClassWrapper: "flex-1 min-w-0",
+						SearchURL:    "/api/search/konta",
+						HideDetails:  true,
+						TabIndex:     "16",
+					}, translator)
+					@components.LabelField(domain.LabelFieldConfig{ID: "kupacsifra", LabelText: translator.Label("Analitička šifra"), ClassLabel: common.ClassLabel + " pl-2"})
+					@components.TableCombo(domain.TableComboConfig{
+						ID:           "kupacsifra-combo",
+						Name:         "kupacsifra",
+						ValueID:      "kupacsifra",
+						Value:        header.KupacSifra,
+						DisplayValue: header.KupacSifra,
+						Placeholder:  "Pretraži po šifri ili nazivu",
+						ClassInput:   common.ClassInputTextEnabled + " w-full",
+						ClassWrapper: "w-40",
+						SearchURL:    "/api/search/analitika",
+						HxInclude:    "#kupackonto",
+						HxTrigger:    "input[robnoFaktureKontoIzabran()] changed delay:300ms, focus[tableComboEmpty(this) && robnoFaktureKontoIzabran()], change[document.activeElement === this] from:#kupackonto",
+						OnSelect:     "robnoFaktureKupacSelected",
+						HideDetails:  true,
+						TabIndex:     "17",
+					}, translator)
+					<!-- The hint of the šifra without the konto (robnoFaktureKontoIzabran) -->
+					<span id="robno-fakture-konto-hint" class="hidden">{ translator.Label("Prvo izaberite konto kupca") }</span>
+				</div>
+				@robInterniReadOnlyRow("kupacnaziv", translator.Label("Naziv kupca"), header.KupacNaziv)
+				@robInterniReadOnlyRow("kupacadresa", translator.Label("Adresa"), header.KupacAdresa)
+				@robInterniPostaMesto("kupacpostanskibroj", "kupacmesto", header.KupacPostanskiBroj, header.KupacMesto, translator)
+				<div class="flex items-center gap-1 min-w-0">
+					@components.LabelField(domain.LabelFieldConfig{ID: "kupacpib", LabelText: translator.Label("PIB/JIB"), ClassLabel: common.ClassLabel + " w-32"})
+					@components.TextInputField(domain.InputFieldConfig{
+						ID:         "kupacpib",
+						Name:       "kupacpib",
+						FieldType:  "text",
+						Value:      header.KupacPib,
+						Disabled:   true,
+						ClassInput: common.ClassInputTextDisabled + " !w-40"})
+					@components.LabelField(domain.LabelFieldConfig{ID: "sistempdv", LabelText: translator.Label("Sistem PDV-a"), ClassLabel: common.ClassLabel + " pl-2"})
+					@components.ComboBoxField(domain.ComboFieldConfig{
+						ID:            "sistempdv",
+						Name:          "sistempdv",
+						Disabled:      true,
+						ClassSelect:   common.ClassInputTextEnabled + " flex-1 min-w-0",
+						OptionValues:  sistemPdvValues,
+						SelectedValue: header.SistemPdv}, translator)
+				</div>
+				<!-- The text of the kupac (read only, the box under the data of the kupac of the legacy window) -->
+				<textarea
+					id="kupacinfo"
+					name="kupacinfo"
+					rows="2"
+					disabled
+					class={ common.ClassInputTextDisabled + " w-full !h-auto resize-none" }
+				>{ header.KupacInfo }</textarea>
+			</div>
+		</fieldset>
+	</div>
+}
+
+// robInterniReadOnlyRow renders a read only value of the header over the whole row (the naziv and the
+// adresa of the prodavnica and of the kupac).
+templ robInterniReadOnlyRow(id, label, value string) {
+	<div class="flex items-center gap-1 min-w-0">
+		@components.LabelField(domain.LabelFieldConfig{ID: id, LabelText: label, ClassLabel: common.ClassLabel + " w-32"})
+		@components.TextInputField(domain.InputFieldConfig{
+			ID:         id,
+			Name:       id,
+			FieldType:  "text",
+			Value:      value,
+			Disabled:   true,
+			ClassInput: common.ClassInputTextDisabled + " flex-1 min-w-0"})
+	</div>
+}
+
+// robInterniPostaMesto renders the poštanski broj and the mesto of the prodavnica or of the kupac (read
+// only).
+templ robInterniPostaMesto(idPosta, idMesto, posta, mesto string, translator *i18n.Service) {
+	<div class="flex items-center gap-1 min-w-0">
+		@components.LabelField(domain.LabelFieldConfig{ID: idPosta, LabelText: translator.Label("Poštanski broj"), ClassLabel: common.ClassLabel + " w-32"})
+		@components.TextInputField(domain.InputFieldConfig{
+			ID:         idPosta,
+			Name:       idPosta,
+			FieldType:  "text",
+			Value:      posta,
+			Disabled:   true,
+			ClassInput: common.ClassInputTextDisabled + " !w-24"})
+		@components.LabelField(domain.LabelFieldConfig{ID: idMesto, LabelText: translator.Label("Mesto"), ClassLabel: common.ClassLabel + " pl-2"})
+		@components.TextInputField(domain.InputFieldConfig{
+			ID:         idMesto,
+			Name:       idMesto,
+			FieldType:  "text",
+			Value:      mesto,
+			Disabled:   true,
+			ClassInput: common.ClassInputTextDisabled + " flex-1 min-w-0"})
+	</div>
+}
+
+// RobInterniStavkeFields is the body of the stavke control: the prodajni objekat, the konto magacina and
+// the podaci o dokumentu (read only), the entry form of the stavka in three columns (the artikal with the
+// količina and the cene; the porez, the vrednosti, the OTK broj, the serija and the rok; the last
+// maloprodajna cena of the artikal) and the grid of the stavke. The names of the fields shared with the
+// faktura are the ones of the faktura.
+templ RobInterniStavkeFields(ui domain.RobnoFaktureUI, header domain.RobnoInterniHeaderView, stavka domain.RobnoInterniStavka, tbl domain.TableData, btns domain.RobnoFaktureButtons, translator *i18n.Service) {
+	<div class="flex items-center gap-1 min-w-0">
+		@components.LabelField(domain.LabelFieldConfig{ID: "prodajniobjekat", LabelText: translator.Label("Prodajni objekat"), ClassLabel: common.ClassLabel + " w-36 font-semibold"})
+		@components.TextInputField(domain.InputFieldConfig{
+			ID:         "prodajniobjekat",
+			FieldType:  "text",
+			Value:      stavka.ProdajniObjekat,
+			Disabled:   true,
+			ClassInput: common.ClassInputTextDisabled + " flex-1 min-w-0"})
+	</div>
+	<div class="grid grid-cols-[auto_minmax(0,1fr)] gap-1">
+		<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg">
+			<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Konto magacina") }</legend>
+			<!-- The konto of the stavka (the legacy EDT_KONTO: the first konto of the magacin, kept for the next stavka) -->
+			@components.TextInputField(domain.InputFieldConfig{
+				ID:         "kontostavke",
+				Name:       "kontostavke",
+				FieldType:  "text",
+				Value:      stavka.Konto,
+				ClassInput: common.ClassInputTextEnabled + " !w-28 text-right",
+				MaxLength:  "10",
+				OnInput:    "clearFieldError",
+				OnFocus:    "clearFieldError",
+				TabIndex:   "1"})
+		</fieldset>
+		<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg">
+			<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Podaci o dokumentu") }</legend>
+			<div class="flex items-center gap-2 min-w-0">
+				@RobnoFaktureStavkaInfo("vrdstavke", translator.Label("Vrsta dokumenta"), header.Vrd, "!w-24 text-right")
+				@RobnoFaktureStavkaInfo("brdokstavke", translator.Label("Broj dokumenta"), header.BrojDokum, "!w-28 text-right")
+				@RobnoFaktureStavkaInfo("datumdokstavke", translator.Label("Datum dokumenta"), robInterniDatum(header), "!w-32")
+			</div>
+		</fieldset>
+	</div>
+	<fieldset
+		id="robno-interni-stavka"
+		class="border border-blue-400 bg-blue-100 p-1 rounded-lg"
+		data-artikal-url={ ui.ArtikalURL }
+		data-grupa={ stavka.Grupa }
+		data-model=""
+		data-taksa="0"
+	>
+		<input type="hidden" id="stavkardokid" name="rdokid" value={ strconv.FormatInt(stavka.RdokID, 10) }/>
+		<input type="hidden" id="stavkarproid" name="rproid" value={ strconv.FormatInt(stavka.RproID, 10) }/>
+		<!-- The artikal over the whole row: the šifra with its search, its naziv, the JM and the stanje -->
+		<div class="flex items-center gap-1 mb-1 min-w-0">
+			@components.LabelField(domain.LabelFieldConfig{ID: "sifraartikla", LabelText: translator.Label("Šifra artikla"), ClassLabel: common.ClassLabel + " w-40"})
+			@components.TableCombo(domain.TableComboConfig{
+				ID:           "sifraartikla-combo",
+				Name:         "sifraartikla",
+				ValueID:      "sifraartikla",
+				Value:        stavka.SifraArtikla,
+				DisplayValue: strings.TrimSpace(stavka.SifraArtikla + " " + stavka.SifraArtiklaNaziv),
+				Placeholder:  "Pretraži po šifri, nazivu ili barkodu",
+				ClassInput:   common.ClassInputTextEnabled + " w-full",
+				ClassWrapper: "flex-1 min-w-0",
+				SearchURL:    "/api/search/artikli",
+				FreeText:     true,
+				HideDetails:  true,
+				TabIndex:     "2",
+			}, translator)
+			@RobnoFaktureStavkaInfo("jm", translator.Label("JM"), stavka.JM, "!w-16")
+			@RobnoFaktureStavkaInfo("stanje", translator.Label("Stanje"), stavka.Stanje, "!w-28 text-right")
+		</div>
+		<div class="grid grid-cols-3 gap-x-3">
+			<!-- First column: the količina and the cene -->
+			<div class="flex flex-col">
+				@robInterniBroj("kolicina", translator.Label("Količina"), stavka.Kolicina, "15", "3")
+				@robInterniBroj("magacinskacena", translator.Label("Magacinska cena"), stavka.MagacinskaCena, "15", "4")
+				@robInterniBroj("rabatstavke", translator.Label("Rabat"), stavka.Rabat, "6", "5")
+				@robInterniBroj("nabavnacena", translator.Label("Nabavna cena"), stavka.NabavnaCena, "15", "6")
+				@robInterniBroj("maloprmarza", translator.Label("Malopr. marža"), stavka.MaloprodajnaMarza, "6", "7")
+				@robInterniBroj("maloprcena", translator.Label("Maloprodajna cena"), stavka.MaloprodajnaCena, "15", "8")
+				@robInterniBroj("mpcenasaporezom", translator.Label("Malop. cena sa porezom"), stavka.MPCenaSaPorezom, "15", "9")
+			</div>
+			<!-- Second column: the porez, the vrednosti (read only), the OTK broj, the serija and the rok -->
+			<div class="flex flex-col">
+				<div class="flex items-center gap-1 mb-1">
+					@components.LabelField(domain.LabelFieldConfig{ID: "tarifa", LabelText: translator.Label("Šifra poreske stope"), ClassLabel: common.ClassLabel + " w-40"})
+					@components.TextInputField(domain.InputFieldConfig{
+						ID:         "tarifa",
+						Name:       "tarifa",
+						FieldType:  "text",
+						Value:      stavka.Tarifa,
+						ClassInput: common.ClassInputTextEnabled + " !w-16 text-right",
+						MaxLength:  "6",
+						TabIndex:   "10"})
+					@components.TextInputField(domain.InputFieldConfig{
+						ID:         "stopastavke",
+						FieldType:  "text",
+						Value:      stavka.Stopa,
+						Disabled:   true,
+						ClassInput: common.ClassInputTextDisabled + " !w-16 text-right"})
+					<span class="text-sm">{ translator.Label("% poreza") }</span>
+				</div>
+				@robInterniVrednost("vrednoststavke", translator.Label("Vrednost"), stavka.Vrednost)
+				@robInterniVrednost("nabavnavrednost", translator.Label("Nabavna vrednost"), stavka.NabavnaVrednost)
+				@robInterniVrednost("mpvrednostpdv", translator.Label("MP vrednost sa PDV"), stavka.MPVrednostPDV)
+				<div class="flex items-center gap-1 mb-1">
+					@components.LabelField(domain.LabelFieldConfig{ID: "otk", LabelText: translator.Label("OTK broj"), ClassLabel: common.ClassLabel + " w-40"})
+					@components.TextInputField(domain.InputFieldConfig{
+						ID:         "otk",
+						Name:       "otk",
+						FieldType:  "text",
+						Value:      stavka.Otk,
+						ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
+						MaxLength:  "20",
+						TabIndex:   "11"})
+				</div>
+				<div class="flex items-center gap-1 mb-1">
+					@components.LabelField(domain.LabelFieldConfig{ID: "serija", LabelText: translator.Label("Serija"), ClassLabel: common.ClassLabel + " w-40"})
+					@components.TextInputField(domain.InputFieldConfig{
+						ID:         "serija",
+						Name:       "serija",
+						FieldType:  "text",
+						Value:      stavka.Serija,
+						ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
+						MaxLength:  "20",
+						TabIndex:   "12"})
+				</div>
+				<div class="flex items-center gap-1 mb-1">
+					@components.LabelField(domain.LabelFieldConfig{ID: "rokstavke", LabelText: translator.Label("Rok"), ClassLabel: common.ClassLabel + " w-40"})
+					@components.TextInputField(domain.InputFieldConfig{
+						ID:         "rokstavke",
+						Name:       "rokstavke",
+						FieldType:  "date",
+						Value:      stavka.Rok,
+						ClassInput: common.ClassInputTextEnabled + " !w-40",
+						TabIndex:   "13"})
+				</div>
+			</div>
+			<!-- Third column: the last maloprodajna cena of the artikal (read only) -->
+			<div class="flex flex-col">
+				<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg">
+					<legend class="px-1 font-semibold text-xs text-blue-900">{ translator.Label("Zadnja cena po kojoj je uziman ovaj artikal") }</legend>
+					@robInterniVrednost("zadnjampcena", translator.Label("MP cena"), stavka.ZadnjaMPCena)
+					@robInterniVrednost("zadnjirabat", translator.Label("Velepr. rabat"), stavka.ZadnjiRabat)
+					@robInterniVrednost("zadnjampcenapor", translator.Label("MP cena sa por."), stavka.ZadnjaMPCenaSaPorezom)
+					@robInterniVrednost("zadnjamarza", translator.Label("Malopr. marža"), stavka.ZadnjaMarza)
+					@robInterniVrednost("zadnjidatum", translator.Label("Od datuma"), stavka.ZadnjiDatum)
+				</fieldset>
+				<span id="zadnjacenaporuka" class="text-sm text-red-700 px-1"></span>
+			</div>
+		</div>
+	</fieldset>
+	<div class="flex items-center justify-end gap-1">
+		@RobnoFaktureStavkeButtons(btns)
+	</div>
+	if tbl.TableID != "" {
+		<div id="robno-interni-stavke-grid" class="flex-1 min-h-0 overflow-auto">
+			@components.Table(tbl, translator)
+		</div>
+	}
+}
+
+// robInterniBroj renders an editable number of the stavka (a label of the width of the column and the
+// value right aligned).
+templ robInterniBroj(id, label, value, maxLength, tabIndex string) {
+	<div class="flex items-center gap-1 mb-1">
+		@components.LabelField(domain.LabelFieldConfig{ID: id, LabelText: label, ClassLabel: common.ClassLabel + " w-40"})
+		@components.TextInputField(domain.InputFieldConfig{
+			ID:         id,
+			Name:       id,
+			FieldType:  "text",
+			Value:      value,
+			ClassInput: common.ClassInputTextEnabled + " !w-32 text-right",
+			MaxLength:  maxLength,
+			TabIndex:   tabIndex,
+			OnInput:    "clearFieldError",
+			OnFocus:    "clearFieldError"})
+	</div>
+}
+
+// robInterniVrednost renders a read only value of the stavka (the vrednosti and the last cena).
+templ robInterniVrednost(id, label, value string) {
+	<div class="flex items-center gap-1 mb-1">
+		@components.LabelField(domain.LabelFieldConfig{ID: id, LabelText: label, ClassLabel: common.ClassLabel + " w-40"})
+		@components.TextInputField(domain.InputFieldConfig{
+			ID:         id,
+			Name:       id,
+			FieldType:  "text",
+			Value:      value,
+			Disabled:   true,
+			ClassInput: common.ClassInputTextDisabled + " flex-1 min-w-0 text-right"})
+	</div>
+}
+
+// robInterniHeaderStateText is the text of the title bar of the header control.
+func robInterniHeaderStateText(snimljen bool, translator *i18n.Service) string {
+	if snimljen {
+		return translator.Label("Podaci su sačuvani - koristite Izmeni za izmenu")
+	}
+	return translator.Label("Podaci o internom prenosu nisu sačuvani")
+}
+
+// robInterniStavkeStateText is the text of the title bar of the stavke control: the stavke are available
+// only after the header is saved.
+func robInterniStavkeStateText(snimljen bool, translator *i18n.Service) string {
+	if snimljen {
+		return translator.Label("Unos stavki je omogućen")
+	}
+	return translator.Label("Sačuvajte podatke o internom prenosu da bi ste mogli da radite sa stavkama")
+}
+
+// robInterniDatum is the datum dokumenta of the header for the read only field of the stavke (dd.mm.yyyy).
+func robInterniDatum(header domain.RobnoInterniHeaderView) string {
+	if header.DatumDokum.IsZero() {
+		return ""
+	}
+	return header.DatumDokum.Format(common.DateLayout)
+}

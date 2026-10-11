@@ -37,6 +37,35 @@ type RobnoDokumentaService interface {
 	GetByTipdokNalog(ctx context.Context, tipdok string, nalog int) (domain.Rnal, error)
 	GetByTipdokNalogMagacin(ctx context.Context, tipdok string, nalog, magaciniID int) (domain.Rnal, domain.Magacini, error)
 	ValidateRobnoUnosNaloga(ctx context.Context, params domain.RobnoDokumentaParams) []domain.FieldError
+	// The entry of the documents of the nalog (robnadokumenta_unos_service.go).
+	ValidateRobFakture(ctx context.Context, params domain.RobnoFaktureParams) []domain.FieldError
+	GetRobFaktureFlags(ctx context.Context, vrd int) (pdvObveznik, storno bool, err error)
+	GetRobFaktureDokument(ctx context.Context, params domain.RobnoFaktureDokumentParams) (domain.RobnoFaktureDokument, error)
+	// The functions of the entry every document can use (the legacy procedures of the windows).
+	GetRobniDokument(ctx context.Context, magaciniID, vrd, dokum int) (domain.RobniDokumentRow, bool, error)
+	GetRobniDokumentByID(ctx context.Context, rdokID int64) (domain.RobniDokumentRow, bool, error)
+	GetRobnoUnosNalog(ctx context.Context, rnalID int64) (domain.Rnal, bool, error)
+	GetNoviBrojDokumenta(ctx context.Context, magaciniID, vrd int) (int, error)
+	GetRobKupac(ctx context.Context, konto, sifra string) (domain.RobKupacDto, bool, error)
+	GetRobSaldoKupca(ctx context.Context, konto, sifra string, datum time.Time) (domain.RobnoFaktureFinStanjeKupca, error)
+	GetRobAvansiDokumenta(ctx context.Context, rdokID int64) ([]domain.RobAvansDto, error)
+	GetRobZiroRacuni(ctx context.Context) ([]domain.ComboItem, error)
+	SaveRobFaktura(ctx context.Context, params domain.RobnoFaktureParams) (int64, error)
+	SaveRobniDokument(ctx context.Context, dok domain.RobniDokumentSnimanje) (int64, error)
+	ObracunFakture(ctx context.Context, rdokID int64) error
+	PreracunRataDokumenta(ctx context.Context, rdokID int64) error
+	// The stavke of the documents.
+	GetRobStavkeDokumenta(ctx context.Context, rdokID int64) ([]domain.RobStavkaRow, error)
+	GetRobDokumentaPrikaz(ctx context.Context, magaciniID int, vrste []int, params domain.RobDokumentaPrikazParams) ([]domain.RobDokumentPrikazRow, int, error)
+	GetRobStavkeKontekst(ctx context.Context, rdokID int64) (domain.RobStavkeKontekst, bool, error)
+	GetRobArtikalStanje(ctx context.Context, magaciniID int, konto string, sifra int) (domain.RobArtikalStanjeDto, bool, error)
+	GetRobKontaMagacina(ctx context.Context, magaciniID int) ([]string, error)
+	GetRobZadnjaCena(ctx context.Context, rdokID int64, sifra int) (domain.RobZadnjaCenaDto, bool, error)
+	ValidateRobStavka(ctx context.Context, params domain.RobStavkaParams) []domain.FieldError
+	SaveRobStavka(ctx context.Context, params domain.RobStavkaParams) (int64, error)
+	GetRobStavkaArtikal(ctx context.Context, rdokID int64, sifraIliBarkod, konto string) (domain.RobStavkaArtikal, bool, error)
+	GetRobStavkaForma(ctx context.Context, rdokID, rproID int64) (domain.RobStavkaForma, bool, error)
+	DeleteRobStavka(ctx context.Context, rproID int64) (int64, error)
 	CreateRobnoNalog(ctx context.Context, params domain.RobnoDokumentaParams) (int64, error)
 	UpdateRobnoNalog(ctx context.Context, rnalID int64, params domain.RobnoDokumentaParams) error
 
@@ -120,6 +149,44 @@ type RobnoDokumentaService interface {
 	GetGrupaDokumenta(ctx context.Context, vrd int) (string, error)
 	GetFaktureStavkeTableFields() []domain.Fields
 	GetFaktureAvansiTableFields() []domain.Fields
+	GetFaktureDokumentaTableFields() []domain.Fields
+	GetFaktureDokumentStavkeTableFields() []domain.Fields
+	GetInterniStavkeTableFields() []domain.Fields
+	GetRobInterniDokument(ctx context.Context, params domain.RobnoFaktureDokumentParams) (domain.RobnoInterniDokument, error)
+	ValidateRobInterni(ctx context.Context, params domain.RobnoInterniParams) []domain.FieldError
+	SaveRobInterni(ctx context.Context, params domain.RobnoInterniParams) (int64, error)
+	DeleteRobFaktura(ctx context.Context, rdokID int64) (string, error)
+	DeleteRobInterni(ctx context.Context, rdokID int64) (string, error)
+	// Fakture usluga (the legacy rob_Fakture_Usluga and rob_FAKTURE_Usluga_DET2).
+	GetRobUslugeDokument(ctx context.Context, params domain.RobnoFaktureDokumentParams) (domain.RobnoUslugeDokument, error)
+	ValidateRobUsluge(ctx context.Context, params domain.RobnoFaktureParams) []domain.FieldError
+	SaveRobUsluge(ctx context.Context, params domain.RobnoFaktureParams) (int64, error)
+	DeleteRobFakturaUsluge(ctx context.Context, rdokID int64) (string, error)
+	GetRobUslugaArtikal(ctx context.Context, rdokID int64, sifraIliBarkod string) (domain.RobUslugaArtikal, bool, error)
+	GetRobUslugaStopa(ctx context.Context, rdokID int64, tarifa int) (domain.RobUslugaStopa, error)
+	ValidateRobUslugaStavka(ctx context.Context, params domain.RobUslugaStavkaParams) []domain.FieldError
+	SaveRobUslugaStavka(ctx context.Context, params domain.RobUslugaStavkaParams) (int64, error)
+	DeleteRobUslugaStavka(ctx context.Context, rproID int64) (int64, error)
+	GetRobUslugaStavkaForma(ctx context.Context, rdokID, rproID int64) (domain.RobUslugaStavkaForma, bool, error)
+	GetUslugeStavkeTableFields() []domain.Fields
+	GetVrsteGrupeDokumenta(ctx context.Context, vrd, vrdOd, vrdDo int) ([]int, error)
+	// Opšti dokumenti (the legacy rob_opsti_dokumenti_opd).
+	GetRobOpstiDokument(ctx context.Context, params domain.RobnoFaktureDokumentParams) (domain.RobnoOpstiDokument, error)
+	ValidateRobOpsti(ctx context.Context, params domain.RobnoOpstiParams) []domain.FieldError
+	SaveRobOpsti(ctx context.Context, params domain.RobnoOpstiParams) (int64, error)
+	GetRobOpstiArtikal(ctx context.Context, rdokID int64, sifraIliBarkod, konto, otk, serija, rok string) (domain.RobOpstiArtikal, bool, error)
+	ValidateRobOpstiStavka(ctx context.Context, params domain.RobOpstiStavkaParams) []domain.FieldError
+	SaveRobOpstiStavka(ctx context.Context, params domain.RobOpstiStavkaParams) (int64, error)
+	DeleteRobOpstiStavka(ctx context.Context, rproID int64) (int64, error)
+	GetOpstiStavkeTableFields() []domain.Fields
+	GetOpstiFinStavkeTableFields() []domain.Fields
+	GetRobInterniArtikal(ctx context.Context, rdokID int64, sifraIliBarkod, konto string) (domain.RobInterniArtikal, bool, error)
+	ValidateRobInterniStavka(ctx context.Context, params domain.RobInterniStavkaParams) []domain.FieldError
+	SaveRobInterniStavka(ctx context.Context, params domain.RobInterniStavkaParams) (int64, error)
+	DeleteRobInterniStavka(ctx context.Context, rproID int64) (int64, error)
+	GetRobInterniStavkaForma(ctx context.Context, rdokID, rproID int64) (domain.RobInterniStavkaForma, bool, error)
+	GetInterniDokumentaTableFields() []domain.Fields
+	GetInterniDokumentStavkeTableFields() []domain.Fields
 }
 
 type RobnoDokumentaResource struct {
@@ -148,6 +215,9 @@ type RobnoDokumentaResource struct {
 	stampaInterniPrenosRepo       repository.BaseRepository[domain.RobnoStampaInterniPrenosRowDto]
 	stampaPoreskaStopaRepo        repository.BaseRepository[domain.RobnoStampaPoreskaStopaDto]
 
+	// The queries of the entry of the documents (robnadokumenta_unos_service.go).
+	unos RobnoDokumentaUnosRepos
+
 	// TODO: add the repositories needed by the remaining tabs (rdok - robni dokument,
 	// rpro - robni promet, rsif - artikli, fkpl, ...). All the grids of the option share the row type
 	// domain.RobnoDokumentaDto, so the repositories differ in the table of their queries only.
@@ -167,7 +237,15 @@ type RobnoDokumentaResource struct {
 	prikazDokumenataUNaloguTableFields     []domain.Fields
 	prikazDokumenataPooperateruTableFields []domain.Fields
 	faktureStavkeTableFields               []domain.Fields
+	uslugeStavkeTableFields                []domain.Fields
+	opstiStavkeTableFields                 []domain.Fields
+	opstiFinStavkeTableFields              []domain.Fields
 	faktureAvansiTableFields               []domain.Fields
+	faktureDokumentaTableFields            []domain.Fields
+	faktureDokumentStavkeTableFields       []domain.Fields
+	interniStavkeTableFields               []domain.Fields
+	interniDokumentaTableFields            []domain.Fields
+	interniDokumentStavkeTableFields       []domain.Fields
 }
 
 // NewRobnoDokumentaService creates the service of the "Robna dokumenta" option.
@@ -193,6 +271,7 @@ func NewRobnoDokumentaService(
 	stampaKnjiznoPismoFakturaRepo repository.BaseRepository[domain.RobnoStampaKnjiznoPismoFakturaDto],
 	stampaInterniPrenosRepo repository.BaseRepository[domain.RobnoStampaInterniPrenosRowDto],
 	stampaPoreskaStopaRepo repository.BaseRepository[domain.RobnoStampaPoreskaStopaDto],
+	unos RobnoDokumentaUnosRepos,
 ) *RobnoDokumentaResource {
 	s := &RobnoDokumentaResource{
 		robnaDokRepo:                  robnaDokRepo,
@@ -216,6 +295,7 @@ func NewRobnoDokumentaService(
 		stampaKnjiznoPismoFakturaRepo: stampaKnjiznoPismoFakturaRepo,
 		stampaInterniPrenosRepo:       stampaInterniPrenosRepo,
 		stampaPoreskaStopaRepo:        stampaPoreskaStopaRepo,
+		unos:                          unos,
 	}
 	s.setTableFields()
 	return s
@@ -250,8 +330,10 @@ func (s *RobnoDokumentaResource) GetVrstaDokumentaComboValues(ctx context.Contex
 //     the configuration grupe_dokumenata.tipmag_rob, the legacy "V;M;D"), limited to the magacini of the
 //     vrsta naloga (tipdok.magacin, e.g. "1,") when it has them;
 //   - the vrste dokumenata are the ones of the moduli (dokvrsta.modul, the configuration
-//     grupe_dokumenata.dok_rob, the legacy gsDOKROB), limited to the vrste dokumenata of the vrsta
-//     naloga (tipdok.grpvrd, e.g. "188,189,") when it has them.
+//     grupe_dokumenata.dok_rob, the legacy gsDOKROB) that belong to the vrsta naloga: the ones whose
+//     dokvrsta.grpnal has the vrsta naloga (e.g. "70", or a list "70,71,"); when no vrsta dokumenta has
+//     it, all of them, limited to the vrste dokumenata of the vrsta naloga (tipdok.grpvrd, e.g.
+//     "188,189,") when it has them.
 //
 // Without a vrsta naloga (or with an unknown one) the lists are not limited by it.
 func (s *RobnoDokumentaResource) GetUnosComboValues(ctx context.Context, tipdok string, moduli, tipoviMagacina []string) (magValues, vrstaDokumentaValues []domain.ComboItem, err error) {
@@ -260,6 +342,14 @@ func (s *RobnoDokumentaResource) GetUnosComboValues(ctx context.Context, tipdok 
 		if t, err := s.commonSvc.GetTipdokByCode(ctx, tipdok); err == nil {
 			listMag = robnoDokumentaLista(t.Magacin)
 			listVrd = robnoDokumentaLista(t.GrpVrd)
+		}
+		// The vrste dokumenata of the vrsta naloga (dokvrsta.grpnal); without them the lists above.
+		grpnal, err := s.robnoDokumentaVrdGrpnal(ctx, tipdok)
+		if err != nil {
+			return nil, nil, err
+		}
+		if len(grpnal) > 0 {
+			listVrd = grpnal
 		}
 	}
 	magValues, err = s.commonSvc.GetMagacinKorisnikaComboValues(ctx,
@@ -277,6 +367,26 @@ func (s *RobnoDokumentaResource) GetUnosComboValues(ctx context.Context, tipdok 
 	return magValues, vrstaDokumentaValues, nil
 }
 
+// robnoDokumentaVrdGrpnal returns the vrste dokumenata (vrd) of the period that belong to the vrsta naloga
+// tipdok: the ones whose dokvrsta.grpnal has it (one vrsta naloga, e.g. "70", or a list of them, "70,71,").
+func (s *RobnoDokumentaResource) robnoDokumentaVrdGrpnal(ctx context.Context, tipdok string) ([]int, error) {
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		return nil, fmt.Errorf("no user session found")
+	}
+	entities, err := s.dokvrstaRepo.GetAllCustom(ctx, `select vrd from dokvrsta d where d.god = $1 and d.kar = $2
+		and exists (select 1 from regexp_split_to_table(coalesce(d.grpnal, ''), '[,;]') g where trim(g) = $3)
+		order by vrd`, "", []any{userSession.SelectedGod, userSession.SelectedKar, strings.TrimSpace(tipdok)}, "", "")
+	if err != nil || entities == nil {
+		return nil, err
+	}
+	vrd := make([]int, 0, len(*entities))
+	for _, d := range *entities {
+		vrd = append(vrd, d.Vrd)
+	}
+	return vrd, nil
+}
+
 // robnoDokumentaLista returns the numbers of a comma separated list of a vrsta naloga (tipdok.grpvrd,
 // tipdok.magacin, e.g. "188,189,"); the parts that are not numbers are skipped.
 func robnoDokumentaLista(lista string) []int {
@@ -289,7 +399,8 @@ func robnoDokumentaLista(lista string) []int {
 	return out
 }
 
-// GetUnosDokumenta returns the robni nalozi (rnal) of the selected vrsta naloga for the grid.
+// GetUnosDokumenta returns the robni nalozi (rnal) of the selected vrsta naloga for the grid: with a
+// selected vrsta dokumenta the nalozi that have a document (rdok) of it.
 func (s *RobnoDokumentaResource) GetUnosDokumenta(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage, pageSize int, params domain.RobnoDokumentaParams) error {
 	userSession := domain.GetSessionFromStdContext(ctx)
 	if userSession == nil {
@@ -307,6 +418,11 @@ func (s *RobnoDokumentaResource) GetUnosDokumenta(ctx context.Context, tbl *doma
 	}
 	if params.SearchText != "" {
 		qb.AddCustomSearchCondition([]string{"rnal.tipdok", "rnal.nalog", "rnal.opis", "rnal.oper"}, params.SearchText)
+	}
+	// The selected vrsta dokumenta: the nalozi that have a document of it (the last condition: it is
+	// numbered from the arguments so far).
+	if vrd, err := strconv.Atoi(strings.TrimSpace(params.Vrd)); err == nil && vrd > 0 {
+		qb.AddCustomCondition(fmt.Sprintf("exists (select 1 from rdok d where d.rnalid = rnal.rnalid and d.vrd = $%d)", qb.GetArgsCount()+1), vrd)
 	}
 	qb.AddOrderBy("rnal.nalog desc")
 	if !getTotalRecords {
@@ -1905,10 +2021,55 @@ func (s *RobnoDokumentaResource) GetFaktureStavkeTableFields() []domain.Fields {
 	return s.faktureStavkeTableFields
 }
 
+// GetOpstiFinStavkeTableFields returns the columns of the grid of the stavke of the finansijski opšti dokumenti.
+func (s *RobnoDokumentaResource) GetOpstiFinStavkeTableFields() []domain.Fields {
+	return s.opstiFinStavkeTableFields
+}
+
+// GetOpstiStavkeTableFields returns the columns of the grid of the stavke of the opšti dokumenti.
+func (s *RobnoDokumentaResource) GetOpstiStavkeTableFields() []domain.Fields {
+	return s.opstiStavkeTableFields
+}
+
+// GetUslugeStavkeTableFields returns the columns of the grid of the stavke of the fakture usluga.
+func (s *RobnoDokumentaResource) GetUslugeStavkeTableFields() []domain.Fields {
+	return s.uslugeStavkeTableFields
+}
+
 // GetFaktureAvansiTableFields returns the columns of the grid of the avansi of the "Fakture
 // veleprodaje" screen.
 func (s *RobnoDokumentaResource) GetFaktureAvansiTableFields() []domain.Fields {
 	return s.faktureAvansiTableFields
+}
+
+// GetFaktureDokumentaTableFields returns the columns of the grid of the documents of the nalog of the
+// "Prikaz faktura" tab of the "Fakture veleprodaje" screen.
+func (s *RobnoDokumentaResource) GetFaktureDokumentaTableFields() []domain.Fields {
+	return s.faktureDokumentaTableFields
+}
+
+// GetFaktureDokumentStavkeTableFields returns the columns of the grid of the stavke of the selected
+// document of the "Prikaz faktura" tab.
+func (s *RobnoDokumentaResource) GetFaktureDokumentStavkeTableFields() []domain.Fields {
+	return s.faktureDokumentStavkeTableFields
+}
+
+// GetInterniStavkeTableFields returns the columns of the grid of the stavke of the "Interni prenosi -
+// dostavnice" screen.
+func (s *RobnoDokumentaResource) GetInterniStavkeTableFields() []domain.Fields {
+	return s.interniStavkeTableFields
+}
+
+// GetInterniDokumentaTableFields returns the columns of the grid of the documents of the "Pregled internih
+// prenosa" tab.
+func (s *RobnoDokumentaResource) GetInterniDokumentaTableFields() []domain.Fields {
+	return s.interniDokumentaTableFields
+}
+
+// GetInterniDokumentStavkeTableFields returns the columns of the grid of the stavke (DETALJI) of the
+// selected document of the "Pregled internih prenosa" tab.
+func (s *RobnoDokumentaResource) GetInterniDokumentStavkeTableFields() []domain.Fields {
+	return s.interniDokumentStavkeTableFields
 }
 
 // setTableFields defines the grid columns of every tab of the "Robna dokumenta" option.
@@ -2126,13 +2287,130 @@ func (s *RobnoDokumentaResource) setTableFields() {
 		{Name: "prodajnacena", Label: "Prodajna cena", Width: "9", TextAlign: "right"},
 		{Name: "rabat", Label: "Rabat", Width: "6", TextAlign: "right"},
 	}
+	// The columns of the legacy TABLE_rpro of rob_opsti_dokumenti_FIN.
+	s.opstiFinStavkeTableFields = []domain.Fields{
+		{Name: "rbr", Label: "Red. broj", Width: "5", TextAlign: "right", SkipInSearch: true},
+		{Name: "konto", Label: "Konto", Width: "7", SkipInSearch: true},
+		{Name: "sifra", Label: "Šifra artikla", Width: "8", SkipInSearch: true},
+		{Name: "naziv", Label: "Naziv artikla", Width: "40"},
+		{Name: "jm", Label: "Jedinica mere", Width: "8", TextAlign: "center"},
+		{Name: "iznos", Label: "Iznos", Width: "12", TextAlign: "right", IncludeInTotals: true},
+	}
+	// The columns of the legacy TABLE_rpro of rob_opsti_dokumenti_opd.
+	s.opstiStavkeTableFields = []domain.Fields{
+		{Name: "rbr", Label: "Red. broj", Width: "5", TextAlign: "right", SkipInSearch: true},
+		{Name: "konto", Label: "Konto", Width: "7", SkipInSearch: true},
+		{Name: "sifra", Label: "Šifra artikla", Width: "8", SkipInSearch: true},
+		{Name: "naziv", Label: "Naziv artikla", Width: "26"},
+		{Name: "jm", Label: "JM", Width: "4", TextAlign: "center"},
+		{Name: "kolicina", Label: "Količina", Width: "8", TextAlign: "right"},
+		{Name: "cena", Label: "Cena", Width: "9", TextAlign: "right"},
+		{Name: "iznos", Label: "Iznos", Width: "10", TextAlign: "right", IncludeInTotals: true},
+		{Name: "otk", Label: "OTK", Width: "8"},
+		{Name: "serija", Label: "Serija", Width: "8"},
+		{Name: "rok", Label: "Rok", Width: "8", TextAlign: "center"},
+	}
+	// The columns of the legacy TABLE_rpro of rob_FAKTURE_Usluga_DET2 (the stopa is the porez of the tarifa).
+	s.uslugeStavkeTableFields = []domain.Fields{
+		{Name: "rbr", Label: "Red. broj", Width: "5", TextAlign: "right", SkipInSearch: true},
+		{Name: "konto", Label: "Konto usluge", Width: "7", SkipInSearch: true},
+		{Name: "sifra", Label: "Šifra usluge", Width: "7", SkipInSearch: true},
+		{Name: "naziv", Label: "Opis usluge", Width: "26"},
+		{Name: "jm", Label: "JM", Width: "4", TextAlign: "center"},
+		{Name: "kolicina", Label: "Količina", Width: "8", TextAlign: "right"},
+		{Name: "cena", Label: "Cena", Width: "9", TextAlign: "right"},
+		{Name: "rabat", Label: "Rabat", Width: "6", TextAlign: "right"},
+		{Name: "iznos", Label: "Iznos", Width: "10", TextAlign: "right", IncludeInTotals: true},
+		{Name: "porez", Label: "Porez", Width: "5", TextAlign: "right"},
+		{Name: "po", Label: "PO", Width: "4", TextAlign: "right"},
+		{Name: "taxcat", Label: "Por. kat.", Width: "6", TextAlign: "center"},
+		{Name: "taxexreco", Label: "Osnov osl.", Width: "8"},
+	}
 	s.faktureAvansiTableFields = []domain.Fields{
-		{Name: "trazi", Label: "Traži", Width: "5", SkipInSearch: true},
-		{Name: "brdok", Label: "Broj dok.", Width: "8", SkipInSearch: true},
-		{Name: "avansa", Label: "Avansa", Width: "8", TextAlign: "right", SkipInSearch: true},
-		{Name: "datumavansa", Label: "Datum avansa", Width: "10", SkipInSearch: true},
-		{Name: "iznosavansa", Label: "Iznos avansa", Width: "10", TextAlign: "right", SkipInSearch: true},
-		{Name: "ostatakavansa", Label: "Ostatak avansa", Width: "10", TextAlign: "right", SkipInSearch: true},
-		{Name: "zatvorenona", Label: "Iznos koji je zatv. na fakt.", Width: "12", TextAlign: "right", SkipInSearch: true},
+		// The columns of the legacy TABLE_AVANS (COL_TRAZI, COL_BRAVANS, COL_DATAVANS, COL_IZNAVANS,
+		// COL_OSTATAK, COL_IZNFAKT; the hidden AVANSID is the key of the row).
+		{Name: "trazi", Label: "Traži", Width: "4", TextAlign: "center", SkipInSearch: true},
+		{Name: "bravans", Label: "Broj avansa", Width: "10", TextAlign: "right", SkipInSearch: true},
+		{Name: "datavans", Label: "Datum avansa", Width: "10", TextAlign: "center", SkipInSearch: true},
+		{Name: "iznavans", Label: "Iznos avansa", Width: "12", TextAlign: "right", SkipInSearch: true},
+		{Name: "ostatak", Label: "Ostatak avansa", Width: "12", TextAlign: "right", SkipInSearch: true},
+		{Name: "iznfakt", Label: "Iznos koji je zatv. na fakt.", Width: "12", TextAlign: "right", SkipInSearch: true},
+	}
+	// The "Prikaz faktura" tab: the documents of the nalog and the stavke of the selected document,
+	// like the two grids of the legacy window.
+	s.faktureDokumentaTableFields = []domain.Fields{
+		{Name: "tipdok", Label: "Vrsta naloga", Width: "5", TextAlign: "center", SkipInSearch: true},
+		{Name: "nalog", Label: "Broj naloga", Width: "5", TextAlign: "right", SkipInSearch: true},
+		{Name: "danal", Label: "Datum naloga", Width: "7", TextAlign: "center", SkipInSearch: true},
+		{Name: "vrd", Label: "Vrsta dokum.", Width: "5", TextAlign: "right", SkipInSearch: true},
+		{Name: "dokum", Label: "Broj dokumenta", Width: "6", TextAlign: "right", Sortable: true},
+		{Name: "dadok", Label: "Datum dokumenta", Width: "7", TextAlign: "center", Sortable: true},
+		{Name: "iznos", Label: "Iznos", Width: "8", TextAlign: "right", SkipInSearch: true, IncludeInTotals: true},
+		{Name: "fkto", Label: "Konto partnera", Width: "5"},
+		{Name: "fana", Label: "Šifra", Width: "5"},
+		{Name: "naziv", Label: "Naziv partnera", Width: "18"},
+		{Name: "opis", Label: "Opis", Width: "10"},
+		{Name: "rok", Label: "Rok plaćanja", Width: "5", TextAlign: "right", SkipInSearch: true},
+		{Name: "datiz", Label: "Datum izvornog dokum.", Width: "7", TextAlign: "center", SkipInSearch: true},
+		{Name: "datob", Label: "Datum obrade", Width: "7", TextAlign: "center", SkipInSearch: true},
+		{Name: "mag", Label: "Magacin", Width: "4", TextAlign: "right", SkipInSearch: true},
+		{Name: "dokiz", Label: "Izvorni dokument", Width: "7", SkipInSearch: true},
+		{Name: "mi", Label: "Mesto isporuke", Width: "4", TextAlign: "right", SkipInSearch: true},
+		{Name: "kamt", Label: "Uslovi kamate", Width: "8", SkipInSearch: true},
+		{Name: "otp", Label: "Način otpreme", Width: "8", SkipInSearch: true},
+		{Name: "kom", Label: "Komercijalista", Width: "4", TextAlign: "right", SkipInSearch: true},
+		{Name: "oper", Label: "Operater", Width: "6", SkipInSearch: true},
+	}
+	s.faktureDokumentStavkeTableFields = []domain.Fields{
+		{Name: "rbr", Label: "Red. broj", Width: "5", TextAlign: "right", SkipInSearch: true},
+		{Name: "konto", Label: "Konto", Width: "10", SkipInSearch: true},
+		{Name: "sifra", Label: "Šifra artikla", Width: "8", TextAlign: "right"},
+		{Name: "naziv", Label: "Naziv artikla", Width: "35"},
+		{Name: "jm", Label: "JM", Width: "8", TextAlign: "center", SkipInSearch: true},
+		{Name: "kolic", Label: "Količina", Width: "9", TextAlign: "right", SkipInSearch: true},
+		{Name: "cena", Label: "Cena", Width: "9", TextAlign: "right", SkipInSearch: true},
+		{Name: "rab", Label: "Rabat", Width: "6", TextAlign: "right", SkipInSearch: true},
+		{Name: "iznos", Label: "Iznos", Width: "10", TextAlign: "right", SkipInSearch: true, IncludeInTotals: true},
+	}
+	// The "Interni prenosi - dostavnice" screen (the legacy rob_Interni_racuni): the stavke of the document
+	// and the two grids of the "Pregled internih prenosa" tab, the columns of the legacy grids.
+	s.interniStavkeTableFields = []domain.Fields{
+		{Name: "rbr", Label: "R. br.", Width: "4", TextAlign: "right", SkipInSearch: true},
+		{Name: "konto", Label: "Konto", Width: "7", SkipInSearch: true},
+		{Name: "sifra", Label: "Šifra artikla", Width: "8", SkipInSearch: true},
+		{Name: "naziv", Label: "Naziv artikla", Width: "22"},
+		{Name: "kolicina", Label: "Količina", Width: "8", TextAlign: "right", SkipInSearch: true},
+		{Name: "veleprcena", Label: "Velepr. cena", Width: "8", TextAlign: "right", SkipInSearch: true},
+		{Name: "veleprrabat", Label: "Velepr. rabat", Width: "7", TextAlign: "right", SkipInSearch: true},
+		{Name: "nabavnacena", Label: "Nabavna cena", Width: "8", TextAlign: "right", SkipInSearch: true},
+		{Name: "maloprmarza", Label: "Malopr. marža", Width: "7", TextAlign: "right", SkipInSearch: true},
+		{Name: "maloprcena", Label: "Malopr. cena", Width: "8", TextAlign: "right", SkipInSearch: true},
+		{Name: "maloprcenapor", Label: "Malopr. cena sa porezom", Width: "9", TextAlign: "right", SkipInSearch: true},
+	}
+	s.interniDokumentaTableFields = []domain.Fields{
+		{Name: "rbr", Label: "Red. broj", Width: "4", TextAlign: "right", SkipInSearch: true},
+		{Name: "tipdok", Label: "Vrsta naloga", Width: "5", TextAlign: "center", SkipInSearch: true},
+		{Name: "nalog", Label: "Broj naloga", Width: "5", TextAlign: "right", SkipInSearch: true},
+		{Name: "vrd", Label: "Vrsta dokum.", Width: "5", TextAlign: "right", SkipInSearch: true},
+		{Name: "dokum", Label: "Broj dokumenta", Width: "6", TextAlign: "right", Sortable: true},
+		{Name: "dadok", Label: "Datum dokumenta", Width: "7", TextAlign: "center", Sortable: true},
+		{Name: "iznos", Label: "Iznos", Width: "8", TextAlign: "right", SkipInSearch: true, IncludeInTotals: true},
+		{Name: "fkto", Label: "Konto dobavljača", Width: "6"},
+		{Name: "fana", Label: "Analitička šifra", Width: "6"},
+		{Name: "naziv", Label: "Naziv partnera", Width: "20"},
+		{Name: "opis", Label: "Opis", Width: "12"},
+	}
+	s.interniDokumentStavkeTableFields = []domain.Fields{
+		{Name: "konto", Label: "Konto", Width: "7", SkipInSearch: true},
+		{Name: "sifra", Label: "Šifra artikla", Width: "8"},
+		{Name: "naziv", Label: "Naziv artikla", Width: "24"},
+		{Name: "jm", Label: "JM", Width: "4", TextAlign: "center", SkipInSearch: true},
+		{Name: "kolic", Label: "Količina", Width: "7", TextAlign: "right", SkipInSearch: true},
+		{Name: "planskacena", Label: "Planska cena", Width: "7", TextAlign: "right", SkipInSearch: true},
+		{Name: "maloprcena", Label: "Malopr. cena", Width: "7", TextAlign: "right", SkipInSearch: true},
+		{Name: "veleprcena", Label: "Velepr. cena", Width: "7", TextAlign: "right", SkipInSearch: true},
+		{Name: "veleprrabat", Label: "Velepr. rabat", Width: "6", TextAlign: "right", SkipInSearch: true},
+		{Name: "maloprmarza", Label: "Malopr. marža", Width: "6", TextAlign: "right", SkipInSearch: true},
+		{Name: "maloprcenapor", Label: "Malopr. cena sa porezom", Width: "8", TextAlign: "right", SkipInSearch: true},
 	}
 }

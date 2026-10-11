@@ -1,12 +1,13 @@
 package robno
 
 import (
-	"fmt"
 	"helia/frontend/components"
 	tmpl "helia/frontend/templates"
 	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
+	"strconv"
+	"strings"
 )
 
 templ MagacinKonto(tbl domain.TableData, searchInput domain.InputControl, btnPrint domain.Button, translator *i18n.Service) {
@@ -32,171 +33,175 @@ templ MagacinKonto(tbl domain.TableData, searchInput domain.InputControl, btnPri
 	@tmpl.OpenPrintWithParamsScript()
 }
 
-templ MagacinKontoDialog(dialog domain.Dialog, action string, model domain.Magkonto, btnSave domain.Button, btnCancel domain.Button, btnClose domain.Button, translator *i18n.Service, csrfToken string) {
+// MagacinKontoDialog is the form of a konto zaliha of a magacin (new or changed): the magacin and the
+// konto zaliha are chosen from their lists (the magacini of the period; the konta and the analitike of the
+// kontni plan, fkpl.vkonta 2 and 1), the vrsta konta is the one of the chosen konto (read only), and the
+// konta of prihod, trošak, RUC and rabat are konta of the kontni plan (vkonta 2), optional.
+templ MagacinKontoDialog(dialog domain.Dialog, action string, model domain.MagkontoView, btnSave domain.Button, btnCancel domain.Button, btnClose domain.Button, translator *i18n.Service, csrfToken string) {
 	@tmpl.Dialog("magacin-konto-form", csrfToken, magacinKontoFormContent(model, translator), dialog, btnSave, btnCancel, btnClose, translator)
+	@tmpl.HandleDialogResponseScript()
+	@tmpl.HandleFormResponseScript()
+	<script>
+		// The vrsta konta of the chosen konto zaliha (the last cell of its row: 1 analitika, 2 konto).
+		function magacinKontoKontoSelected(comboID, key, cells) {
+			const vkonta = document.getElementById('vkonta');
+			if (vkonta) vkonta.value = (cells && cells.length > 0) ? cells[cells.length - 1] : '';
+		}
+
+		// The answer of "Sačuvaj" (magacinKontoNoviResponse: a new konto zaliha, magacinKontoIzmenaResponse: a
+		// changed one). The message is shown at the bottom of the dialog (dialog-form-message) like in the
+		// other dialogs (_dlg_msg of HandleFormResponseScript: green, red for an error); the errors of the
+		// fields are shown under them (handleDialogResponse, which also finds the combos). After a successful
+		// save a new one empties the form for the next one (the dialog stays open), a changed one closes the
+		// dialog after the message.
+		function magacinKontoResponse(dialogID, novi) {
+			let response = null;
+			try { response = JSON.parse(event.detail.xhr.responseText); } catch (e) { response = null; }
+			if (response && response.errors && response.errors.length > 0) {
+				handleDialogResponse(dialogID);
+				return;
+			}
+			const dialog = document.getElementById(dialogID);
+			if (dialog) {
+				dialog.querySelectorAll('.input-error').forEach(el => el.remove());
+				dialog.querySelectorAll('.border-red-500').forEach(el => el.classList.remove('border-red-500'));
+			}
+			const msgDiv = document.getElementById('dialog-form-message');
+			if (!response || !response.success) {
+				_dlg_msg(msgDiv, (response && response.message) || event.detail.xhr.statusText, true);
+				return;
+			}
+			_dlg_msg(msgDiv, response.message, false);
+			if (!novi) {
+				setTimeout(() => closeDialog(dialogID), 3000);
+				return;
+			}
+			['magaciniid-combo', 'idfkpl-combo', 'kontoprih-combo', 'kontotroska-combo', 'kontoruc-combo', 'kontorab-combo'].forEach(tableComboClear);
+			const vkonta = document.getElementById('vkonta');
+			if (vkonta) vkonta.value = '';
+			const first = document.getElementById('magaciniid-combo-input');
+			if (first) first.focus();
+		}
+		function magacinKontoNoviResponse(dialogID) { magacinKontoResponse(dialogID, true); }
+		function magacinKontoIzmenaResponse(dialogID) { magacinKontoResponse(dialogID, false); }
+	</script>
 }
 
-templ magacinKontoFormContent(model domain.Magkonto, translator *i18n.Service) {
-	<div class="grid grid-cols-2 gap-2">
-		<!-- Magacin (required) -->
-		<div class="flex items-center">
+templ magacinKontoFormContent(model domain.MagkontoView, translator *i18n.Service) {
+	<div class="grid grid-cols-2 gap-2 w-[48rem] max-w-full">
+		<!-- Magacin (required): the magacini of the period -->
+		<div class="flex items-center gap-1">
 			@components.LabelField(domain.LabelFieldConfig{
-				ID:         "mag",
+				ID:         "magaciniid",
 				LabelText:  translator.Label("Magacin"),
-				ClassLabel: common.ClassLabel + " w-24",
+				ClassLabel: common.ClassLabel + " w-28",
 			})
-			@components.TextInputField(domain.InputFieldConfig{
-				ID:         "mag",
-				Name:       "mag",
-				Value:      fmt.Sprintf("%d", model.Mag),
-				FieldType:  "number",
-				Required:   true,
-				Disabled:   false,
-				ClassInput: common.ClassInputTextEnabled + " w-24",
-				TabIndex:   "1",
-				OnInput:    "clearFieldError",
-				OnFocus:    "clearFieldError",
-			})
+			@components.TableCombo(domain.TableComboConfig{
+				ID:           "magaciniid-combo",
+				Name:         "magaciniid",
+				ValueID:      "magaciniid",
+				Value:        magacinKontoID(model.MagaciniID),
+				DisplayValue: magacinKontoText(magacinKontoID(model.Mag), model.MagacinOpis),
+				Placeholder:  "Pretraži po broju ili opisu",
+				ClassInput:   common.ClassInputTextEnabled + " w-full",
+				ClassWrapper: "flex-1 min-w-0",
+				SearchURL:    "/api/search/magacini",
+				HideDetails:  true,
+				Required:     true,
+				TabIndex:     "1",
+			}, translator)
 		</div>
-		<!-- Konto zaliha (required) -->
-		<div class="flex items-center">
+		<!-- Konto zaliha (required): a konto (vkonta 2) or an analitika (vkonta 1) of the kontni plan, by
+		     its id (idfkpl); its vrsta konta goes to the field V konta -->
+		<div class="flex items-center gap-1">
 			@components.LabelField(domain.LabelFieldConfig{
-				ID:         "konto",
+				ID:         "idfkpl",
 				LabelText:  translator.Label("Konto zaliha"),
-				ClassLabel: common.ClassLabel + " w-24",
+				ClassLabel: common.ClassLabel + " w-28",
 			})
-			@components.TextInputField(domain.InputFieldConfig{
-				ID:         "konto",
-				Name:       "konto",
-				Value:      model.Konto,
-				FieldType:  "text",
-				Required:   true,
-				Disabled:   false,
-				ClassInput: common.ClassInputTextEnabled + " flex-1",
-				TabIndex:   "2",
-				OnInput:    "clearFieldError",
-				OnFocus:    "clearFieldError",
-			})
+			@components.TableCombo(domain.TableComboConfig{
+				ID:           "idfkpl-combo",
+				Name:         "idfkpl",
+				ValueID:      "idfkpl",
+				Value:        magacinKontoID(model.IDFkpl),
+				DisplayValue: magacinKontoText(model.Konto, model.KontoSifra, model.KontoNaziv),
+				Placeholder:  "Pretraži po kontu, šifri ili nazivu",
+				ClassInput:   common.ClassInputTextEnabled + " w-full",
+				ClassWrapper: "flex-1 min-w-0",
+				SearchURL:    "/api/search/kontni-plan-id",
+				HideDetails:  true,
+				Required:     true,
+				OnSelect:     "magacinKontoKontoSelected",
+				TabIndex:     "2",
+			}, translator)
 		</div>
-		<!-- ID FKPL -->
-		<div class="flex items-center">
-			@components.LabelField(domain.LabelFieldConfig{
-				ID:         "idfkpl",
-				LabelText:  translator.Label("ID FKPL"),
-				ClassLabel: common.ClassLabel + " w-24",
-			})
-			@components.TextInputField(domain.InputFieldConfig{
-				ID:         "idfkpl",
-				Name:       "idfkpl",
-				Value:      fmt.Sprintf("%d", model.IDFkpl),
-				FieldType:  "number",
-				Required:   false,
-				Disabled:   false,
-				ClassInput: common.ClassInputTextEnabled + " w-24",
-				TabIndex:   "3",
-				OnInput:    "clearFieldError",
-				OnFocus:    "clearFieldError",
-			})
-		</div>
-		<!-- V Konta -->
-		<div class="flex items-center">
+		<!-- V konta: the vrsta of the konto zaliha (read only, set by the choice of the konto) -->
+		<div class="flex items-center gap-1">
 			@components.LabelField(domain.LabelFieldConfig{
 				ID:         "vkonta",
 				LabelText:  translator.Label("V Konta"),
-				ClassLabel: common.ClassLabel + " w-24",
+				ClassLabel: common.ClassLabel + " w-28",
 			})
 			@components.TextInputField(domain.InputFieldConfig{
 				ID:         "vkonta",
 				Name:       "vkonta",
-				Value:      fmt.Sprintf("%d", model.VKonta),
-				FieldType:  "number",
-				Required:   false,
-				Disabled:   false,
-				ClassInput: common.ClassInputTextEnabled + " w-24",
-				TabIndex:   "4",
-				OnInput:    "clearFieldError",
-				OnFocus:    "clearFieldError",
-			})
-		</div>
-		<!-- Konto prihoda -->
-		<div class="flex items-center">
-			@components.LabelField(domain.LabelFieldConfig{
-				ID:         "kontoprih",
-				LabelText:  translator.Label("Konto prihoda"),
-				ClassLabel: common.ClassLabel + " w-24",
-			})
-			@components.TextInputField(domain.InputFieldConfig{
-				ID:         "kontoprih",
-				Name:       "kontoprih",
-				Value:      model.KontoPrih,
+				Value:      magacinKontoID(model.VKonta),
 				FieldType:  "text",
-				Required:   false,
-				Disabled:   false,
-				ClassInput: common.ClassInputTextEnabled + " flex-1",
-				TabIndex:   "5",
-				OnInput:    "clearFieldError",
-				OnFocus:    "clearFieldError",
+				Disabled:   true,
+				ClassInput: common.ClassInputTextDisabled + " w-16 text-right",
 			})
 		</div>
-		<!-- Konto troška -->
-		<div class="flex items-center">
-			@components.LabelField(domain.LabelFieldConfig{
-				ID:         "kontotroska",
-				LabelText:  translator.Label("Konto troška"),
-				ClassLabel: common.ClassLabel + " w-24",
-			})
-			@components.TextInputField(domain.InputFieldConfig{
-				ID:         "kontotroska",
-				Name:       "kontotroska",
-				Value:      model.KontoTroska,
-				FieldType:  "text",
-				Required:   false,
-				Disabled:   false,
-				ClassInput: common.ClassInputTextEnabled + " flex-1",
-				TabIndex:   "6",
-				OnInput:    "clearFieldError",
-				OnFocus:    "clearFieldError",
-			})
-		</div>
-		<!-- Konto RUC -->
-		<div class="flex items-center">
-			@components.LabelField(domain.LabelFieldConfig{
-				ID:         "kontoruc",
-				LabelText:  translator.Label("Konto RUC"),
-				ClassLabel: common.ClassLabel + " w-24",
-			})
-			@components.TextInputField(domain.InputFieldConfig{
-				ID:         "kontoruc",
-				Name:       "kontoruc",
-				Value:      model.KontoRuc,
-				FieldType:  "text",
-				Required:   false,
-				Disabled:   false,
-				ClassInput: common.ClassInputTextEnabled + " flex-1",
-				TabIndex:   "7",
-				OnInput:    "clearFieldError",
-				OnFocus:    "clearFieldError",
-			})
-		</div>
-		<!-- Konto rabat -->
-		<div class="flex items-center">
-			@components.LabelField(domain.LabelFieldConfig{
-				ID:         "kontorab",
-				LabelText:  translator.Label("Konto rabat"),
-				ClassLabel: common.ClassLabel + " w-24",
-			})
-			@components.TextInputField(domain.InputFieldConfig{
-				ID:         "kontorab",
-				Name:       "kontorab",
-				Value:      model.KontoRab,
-				FieldType:  "text",
-				Required:   false,
-				Disabled:   false,
-				ClassInput: common.ClassInputTextEnabled + " flex-1",
-				TabIndex:   "8",
-				OnInput:    "clearFieldError",
-				OnFocus:    "clearFieldError",
-			})
-		</div>
+		<div></div>
+		<!-- The konta of prihod, trošak, RUC and rabat (optional): konta of the kontni plan (vkonta 2) -->
+		@magacinKontoKonto("kontoprih", "Konto prihoda", model.KontoPrih, model.KontoPrihNaziv, "3", translator)
+		@magacinKontoKonto("kontotroska", "Konto troška", model.KontoTroska, model.KontoTroskaNaziv, "4", translator)
+		@magacinKontoKonto("kontoruc", "Konto RUC", model.KontoRuc, model.KontoRucNaziv, "5", translator)
+		@magacinKontoKonto("kontorab", "Konto rabat", model.KontoRab, model.KontoRabNaziv, "6", translator)
 	</div>
+}
+
+// magacinKontoKonto renders one of the optional konta of the form: a konto of the kontni plan (fkpl.vkonta
+// 2, the search "konta"), whose key is the konto; the row "-" clears it.
+templ magacinKontoKonto(name, label, konto, naziv, tabIndex string, translator *i18n.Service) {
+	<div class="flex items-center gap-1">
+		@components.LabelField(domain.LabelFieldConfig{
+			ID:         name,
+			LabelText:  translator.Label(label),
+			ClassLabel: common.ClassLabel + " w-28",
+		})
+		@components.TableCombo(domain.TableComboConfig{
+			ID:           name + "-combo",
+			Name:         name,
+			ValueID:      name,
+			Value:        konto,
+			DisplayValue: magacinKontoText(konto, naziv),
+			Placeholder:  "Pretraži po kontu ili nazivu",
+			ClassInput:   common.ClassInputTextEnabled + " w-full",
+			ClassWrapper: "flex-1 min-w-0",
+			SearchURL:    "/api/search/konta",
+			HideDetails:  true,
+			AllowEmpty:   true,
+			TabIndex:     tabIndex,
+		}, translator)
+	</div>
+}
+
+// magacinKontoID returns a key of the form as text ("" for 0, nothing chosen yet).
+func magacinKontoID(id int) string {
+	if id == 0 {
+		return ""
+	}
+	return strconv.Itoa(id)
+}
+
+// magacinKontoText returns the text of a chosen row of a combo: its parts that are not empty joined with
+// " - " (like the text TableCombo shows after a selection).
+func magacinKontoText(parts ...string) string {
+	var out []string
+	for _, part := range parts {
+		if part = strings.TrimSpace(part); part != "" {
+			out = append(out, part)
+		}
+	}
+	return strings.Join(out, " - ")
 }

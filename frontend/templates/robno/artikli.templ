@@ -126,8 +126,8 @@ templ artikliFormContentNew(model domain.Rsif, modelCombo []domain.ComboItem, jm
 				@components.LabelField(domain.LabelFieldConfig{ID: "konto", LabelText: translator.Label("Konto"), ClassLabel: common.ClassLabel + " w-32"})
 				@components.TextInputField(domain.InputFieldConfig{Name: "konto", ID: "konto", FieldType: "text", Value: model.Konto, ClassInput: common.ClassInputTextEnabled + " w-28", TabIndex: "23"})
 				@components.SearchButton(domain.SearchButtonConfig{ID: "btn-search-konto", Name: "search-konto", HxUrl: "/api/promet/searchbutton", HxTarget: "#search-dropdown", HxSwap: "innerHTML", HxVals: `{"destfield": "konto"}`, ClassButton: common.ClassButton})
-			@components.TextInputField(domain.InputFieldConfig{Name: "kontonaziv", ID: "kontonaziv", FieldType: "text", Disabled: true, Value: model.KontoNaziv, ClassInput: common.ClassInputTextDisabled + " flex-1"})
-            </div>
+				@components.TextInputField(domain.InputFieldConfig{Name: "kontonaziv", ID: "kontonaziv", FieldType: "text", Disabled: true, Value: model.KontoNaziv, ClassInput: common.ClassInputTextDisabled + " flex-1"})
+			</div>
 		</div>
 		<div class="flex flex-col gap-1">
 			<div class="flex items-center gap-1">

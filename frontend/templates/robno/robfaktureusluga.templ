@@ -1,0 +1,605 @@
+package robno
+
+import (
+	"helia/frontend/components"
+	"helia/i18n"
+	"helia/internal/common"
+	"helia/internal/domain"
+	"strconv"
+	"strings"
+)
+
+//
+// Fakture usluga (the legacy rob_Fakture_Usluga and rob_FAKTURE_Usluga_DET2, the vrste dokumenata of the
+// groups PRE, FUR, FCO, RCO and KPF): the header is the one of the faktura (RobnoFaktureHeaderFields with
+// header.Usluge), the stavke are the ones of the usluge (a stavka of the šifra 0 has its own opis, JM and
+// tarifa), in the dialog with two tabs of the faktura.
+//
+
+// Rob_FaktureUsluga renders the "Fakture usluga" screen as a dialog with two tabs (RobnoDokumentDialog):
+// the entry of the document (the header and the stavke as two collapsible controls) and "Pregled faktura",
+// the documents of the group with the stavke of the selected one and "Štampaj" of the selected document
+// (RobnoFakturePrikaz, filled when the tab is shown).
+templ Rob_FaktureUsluga(ui domain.RobnoFaktureUI, naslov string, header domain.RobnoFaktureHeaderView, stavka domain.RobnoUslugeStavka, tbl, avansiTbl, dokumentaTbl, dokumentStavkeTbl domain.TableData, vrstaDokumentaValues, sistemPdvValues, ziroRacuni []domain.ComboItem, btns domain.RobnoFaktureButtons, btnClose domain.Button, translator *i18n.Service, csrfToken string) {
+	@RobnoDokumentDialog(ui.DialogID, translator.Label(naslov), translator.Label(naslov), translator.Label("Pregled faktura"), btnClose, csrfToken,
+		RobUslugeBody(ui, header, stavka, tbl, avansiTbl, vrstaDokumentaValues, sistemPdvValues, ziroRacuni, btns, translator),
+		RobnoFakturePrikaz(ui, dokumentaTbl, dokumentStavkeTbl, domain.InputControl{}, translator))
+	<!-- The messages of the screen -->
+	<div id={ ui.InfoID }></div>
+	@RobnoFaktureScript()
+	@robUslugeScript.Once() {
+		@robUslugeScriptBody()
+	}
+}
+
+var robUslugeScript = templ.NewOnceHandle()
+
+// RobUslugeBody renders the content of the first tab: the strip with "Štampaj" and "Nazad", the header of the
+// faktura (the fields of the faktura without the ones the usluge have not) and the stavke of the usluge.
+templ RobUslugeBody(ui domain.RobnoFaktureUI, header domain.RobnoFaktureHeaderView, stavka domain.RobnoUslugeStavka, tbl, avansiTbl domain.TableData, vrstaDokumentaValues, sistemPdvValues, ziroRacuni []domain.ComboItem, btns domain.RobnoFaktureButtons, translator *i18n.Service) {
+	<div
+		id={ ui.BodyID }
+		data-stavke-aktivne={ robnoFaktureState(header.Snimljen) }
+		data-dokument-url={ ui.DokumentURL }
+		data-novi-url={ ui.NoviURL }
+		data-rnalid={ strconv.FormatInt(header.RnalID, 10) }
+		data-vrd={ header.Vrd }
+		class="bg-blue-100 p-1 flex flex-col gap-1 h-full min-h-0"
+	>
+		@RobUslugeDokumentBar(header, btns.Print, btns.Back, translator)
+		@RobnoFakturePanel(ui.HeaderPanelID, translator.Label("Podaci o fakturi"), robnoFaktureHeaderStateText(header.Snimljen, translator), !header.Snimljen, !header.Snimljen, false, btns.Save.Id, RobnoFaktureIzmeniZaglavlje(btns.Modify, header.Snimljen), RobnoFaktureHeaderFields(ui, header, avansiTbl, vrstaDokumentaValues, nil, sistemPdvValues, ziroRacuni, translator), RobnoFaktureHeaderButtons(btns))
+		@RobnoFakturePanel(ui.StavkePanelID, translator.Label(stavka.Naslov), robUslugeStavkeStateText(header.Snimljen, translator), header.Snimljen, header.Snimljen, true, btns.SaveStavka.Id, templ.NopComponent, RobUslugeStavkeFields(ui, stavka, tbl, btns, translator), templ.NopComponent)
+		<!-- The dialogs of the stavke (an error of the save, the confirmation of the deletion) -->
+		<div id={ ui.StavkaInfoID } class="contents"></div>
+	</div>
+}
+
+// RobUslugeDokumentBar renders the strip above the two controls: "Štampaj" of the saved document and "Nazad".
+templ RobUslugeDokumentBar(header domain.RobnoFaktureHeaderView, btnPrint, btnBack domain.Button, translator *i18n.Service) {
+	<div class="flex items-center justify-end gap-2 border border-blue-400 bg-blue-100 rounded-lg px-1 py-0.5">
+		if header.RdokID > 0 {
+			@components.Search_PartPrintButton(btnPrint)
+		} else {
+			<span class={ btnPrint.BtnClass + " opacity-50 cursor-not-allowed" } title={ translator.Message("Dokument nije sačuvan") }>
+				@components.Icon("stampa", common.ClassIcon)
+				{ btnPrint.LabelText }
+			</span>
+		}
+		@components.Button(btnBack)
+	</div>
+}
+
+// RobUslugeStavkeFields renders the stavke of the faktura usluga (the legacy rob_FAKTURE_Usluga_DET2): the
+// konto magacina and the data of the document, the form of a stavka (the šifra with its search, the opis
+// usluge and the JM of a stavka of the šifra 0, the količina, the cena with its iznos, the rabat with its
+// iznos, the tarifa with its stopa and the poreska kategorija, the OTK broj, the serija and the rok of a
+// magacin of the tip zaliha 2, the magacinska and the nabavna cena with the stanje of an artikal of the
+// zalihe, the dodatni opis usluge of the document), its buttons and the grid of the stavke.
+templ RobUslugeStavkeFields(ui domain.RobnoFaktureUI, stavka domain.RobnoUslugeStavka, tbl domain.TableData, btns domain.RobnoFaktureButtons, translator *i18n.Service) {
+	<div class="grid grid-cols-[auto_minmax(0,1fr)] gap-1">
+		<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg">
+			<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Konto magacina") }</legend>
+			@components.TextInputField(domain.InputFieldConfig{
+				ID:         "kontostavke",
+				Name:       "kontostavke",
+				FieldType:  "text",
+				Value:      stavka.Konto,
+				ClassInput: common.ClassInputTextEnabled + " !w-28 text-right",
+				MaxLength:  "10",
+				OnInput:    "clearFieldError",
+				OnFocus:    "clearFieldError",
+				TabIndex:   "1"})
+		</fieldset>
+		<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg">
+			<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Podaci o dokumentu") }</legend>
+			<div class="flex flex-wrap items-center gap-2 min-w-0">
+				@RobnoFaktureStavkaInfo("vrdstavke", translator.Label("Vrsta dokumenta"), stavka.Vrd, "!w-16 text-right")
+				@RobnoFaktureStavkaInfo("brdokstavke", translator.Label("Broj dokumenta"), stavka.Brdok, "!w-24 text-right")
+				@RobnoFaktureStavkaInfo("datumdokstavke", translator.Label("Datum dokumenta"), stavka.DatumDokumenta, "!w-28 text-center")
+				if stavka.Devizni {
+					@RobnoFaktureStavkaInfo("kursstavke", translator.Label("Kurs"), strconv.FormatFloat(stavka.Kurs, 'f', -1, 64), "!w-24 text-right")
+					@RobnoFaktureStavkaInfo("vazizastavke", translator.Label("Važi za (1,100)"), strconv.FormatFloat(stavka.VaziZa, 'f', -1, 64), "!w-14 text-right")
+				}
+			</div>
+		</fieldset>
+	</div>
+	<fieldset
+		id="robno-usluge-stavka"
+		class="border border-blue-400 bg-blue-100 p-1 rounded-lg"
+		data-artikal-url={ ui.ArtikalURL }
+		data-stopa-url={ ui.ArtikalURL + "/stopa" }
+		data-grupa={ stavka.Grupa }
+		data-tipzal={ strconv.Itoa(stavka.Tipzal) }
+		data-vpcena={ robnoFaktureState(stavka.VpCena) }
+		data-nabcena={ robnoFaktureState(stavka.NabCena) }
+		data-kurs={ strconv.FormatFloat(stavka.Kurs, 'f', -1, 64) }
+		data-vaziza={ strconv.FormatFloat(stavka.VaziZa, 'f', -1, 64) }
+		data-valuta-poruka={ stavka.ValutaPoruka }
+	>
+		<input type="hidden" id="stavkardokid" name="rdokid" value={ strconv.FormatInt(stavka.RdokID, 10) }/>
+		<input type="hidden" id="stavkarproid" name="rproid" value={ strconv.FormatInt(stavka.RproID, 10) }/>
+		<!-- The cena as it was typed (in the valuta of the document) -->
+		<input type="hidden" id="cenaval" name="cenaval" value=""/>
+		<div class="grid grid-cols-[minmax(0,26rem)_minmax(0,1fr)] gap-x-3">
+			<!-- First column: the šifra, the količina, the cena, the rabat, the porez, the zalihe -->
+			<div class="flex flex-col min-w-0">
+				<div class="flex items-center gap-1 mb-1 min-w-0">
+					@components.LabelField(domain.LabelFieldConfig{ID: "sifraartikla", LabelText: translator.Label("Šifra usluge"), ClassLabel: common.ClassLabel + " w-36"})
+					if stavka.Grupa == "KPF" {
+						<!-- The knjižno pismo finansijsko has the šifra 0 only -->
+						<input type="hidden" id="sifraartikla" name="sifraartikla" value="0"/>
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "sifraartikla-prikaz",
+							FieldType:  "text",
+							Value:      "0",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextDisabled + " !w-24 text-right"})
+					} else {
+						@components.TableCombo(domain.TableComboConfig{
+							ID:           "sifraartikla-combo",
+							Name:         "sifraartikla",
+							ValueID:      "sifraartikla",
+							Value:        stavka.SifraArtikla,
+							DisplayValue: strings.TrimSpace(stavka.SifraArtikla + " " + stavka.SifraArtiklaNaziv),
+							Placeholder:  "Pretraži po šifri, nazivu ili barkodu",
+							ClassInput:   common.ClassInputTextEnabled + " w-full",
+							ClassWrapper: "flex-1 min-w-0",
+							SearchURL:    "/api/search/artikli",
+							FreeText:     true,
+							HideDetails:  true,
+							TabIndex:     "2",
+						}, translator)
+					}
+				</div>
+				@robUslugeBroj("kolicina", translator.Label("Količina"), stavka.Kolicina, "15", "3", false)
+				@robUslugeBroj("cenausluge", translator.Label("Cena"), stavka.ProdajnaCena, "18", "4", false)
+				@robUslugeBroj("iznosusluge", translator.Label("Iznos"), stavka.Iznos, "18", "", true)
+				@robUslugeBroj("rabatusluge", translator.Label("Rabat"), stavka.Rabat, "6", "5", false)
+				@robUslugeBroj("iznosrabatausluge", translator.Label("Iznos rabata"), stavka.IznosRabata, "18", "", true)
+				<!-- The tarifa with its stopa, the poreska kategorija and, for S10 and S20, its osnov oslobođenja -->
+				<div class="flex items-center gap-1 mb-1 min-w-0">
+					@components.LabelField(domain.LabelFieldConfig{ID: "tarifa", LabelText: translator.Label("Šifra poreske tarife"), ClassLabel: common.ClassLabel + " w-36"})
+					@components.TextInputField(domain.InputFieldConfig{
+						ID:         "tarifa",
+						Name:       "tarifa",
+						FieldType:  "text",
+						Value:      stavka.Tarifa,
+						ClassInput: common.ClassInputTextEnabled + " !w-12 text-right",
+						MaxLength:  "4",
+						OnInput:    "clearFieldError",
+						OnFocus:    "clearFieldError",
+						TabIndex:   "6"})
+					@components.TextInputField(domain.InputFieldConfig{
+						ID:         "stopastavke",
+						FieldType:  "text",
+						Value:      stavka.Stopa,
+						Disabled:   true,
+						ClassInput: common.ClassInputTextDisabled + " !w-14 text-right"})
+					<span class="text-sm">%</span>
+					@components.ComboBoxField(domain.ComboFieldConfig{
+						ID:            "taxcat",
+						Name:          "taxcat",
+						ClassSelect:   common.ClassInputTextEnabled + " !w-20",
+						OptionValues:  stavka.CbxTaxcat,
+						SelectedValue: stavka.Taxcat,
+						TabIndex:      "7"}, translator)
+					<span id="robno-usluge-taxexem" class={ robnoFaktureTaxexemClass(stavka.Taxcat) }>
+						@components.ComboBoxField(domain.ComboFieldConfig{
+							ID:            "taxexreco",
+							Name:          "taxexreco",
+							ClassSelect:   common.ClassInputTextEnabled + " !w-28",
+							OptionValues:  stavka.CbxTaxexreco,
+							SelectedValue: stavka.Taxexreco,
+							TabIndex:      "8"}, translator)
+					</span>
+				</div>
+				<!-- The zalihe by lot (a magacin of the tip zaliha 2): the OTK broj, the serija and the rok -->
+				<div id="robno-usluge-zalihe" class={ robUslugeVidljivo(stavka.Tipzal == 2) }>
+					@robUslugeTekst("otk", translator.Label("OTK broj"), stavka.Otk, "20", "9")
+					@robUslugeTekst("serija", translator.Label("Serija"), stavka.Serija, "20", "10")
+					<div class="flex items-center gap-1 mb-1">
+						@components.LabelField(domain.LabelFieldConfig{ID: "rokstavke", LabelText: translator.Label("Rok"), ClassLabel: common.ClassLabel + " w-36"})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "rokstavke",
+							Name:       "rokstavke",
+							FieldType:  "date",
+							Value:      stavka.Rok,
+							ClassInput: common.ClassInputTextEnabled + " !w-40",
+							TabIndex:   "11"})
+					</div>
+				</div>
+				<!-- The cene and the stanje of an artikal of the zalihe (not a usluga) -->
+				<div id="robno-usluge-zalcene" class="hidden">
+					<div class="flex items-center gap-1 mb-1 min-w-0">
+						<span id="robno-usluge-magcena" class={ "flex items-center gap-1" + robUslugeSkriveno(stavka.NabCena) }>
+							@RobnoFaktureStavkaInfo("magcenausluge", translator.Label("Magacinska cena"), stavka.MagacinskaCena, "!w-28 text-right")
+						</span>
+						<span id="robno-usluge-ncena" class={ "flex items-center gap-1" + robUslugeSkriveno(stavka.VpCena) }>
+							@components.LabelField(domain.LabelFieldConfig{ID: "nabavnacena", LabelText: translator.Label("Nabavna cena"), ClassLabel: common.ClassLabel + " whitespace-nowrap"})
+							<input
+								type="text"
+								id="nabavnacena"
+								name="nabavnacena"
+								value={ stavka.NabavnaCena }
+								readonly
+								class={ common.ClassInputTextDisabled + " !w-28 text-right" }
+							/>
+						</span>
+						@RobnoFaktureStavkaInfo("stanjeusluge", translator.Label("Stanje"), stavka.Stanje, "!w-28 text-right")
+					</div>
+				</div>
+			</div>
+			<!-- Second column: the JM, the opis usluge (a stavka of the šifra 0) and the dodatni opis usluge -->
+			<div class="flex flex-col min-w-0 gap-1">
+				<div class="flex items-center gap-1 min-w-0">
+					@components.LabelField(domain.LabelFieldConfig{ID: "jmusluge", LabelText: translator.Label("JM"), ClassLabel: common.ClassLabel + " w-28"})
+					<input
+						type="text"
+						id="jmusluge"
+						name="jmusluge"
+						value={ stavka.JM }
+						maxlength="6"
+						tabindex="12"
+						readonly?={ !robUslugeSifraNula(stavka) }
+						class={ common.ClassInputTextEnabled + " !w-20" }
+					/>
+				</div>
+				<div class="flex items-start gap-1 min-w-0">
+					@components.LabelField(domain.LabelFieldConfig{ID: "opisusluge", LabelText: translator.Label("Opis usluge"), ClassLabel: common.ClassLabel + " w-28"})
+					<textarea
+						id="opisusluge"
+						name="opisusluge"
+						rows="4"
+						maxlength="1000"
+						tabindex="13"
+						readonly?={ !robUslugeSifraNula(stavka) }
+						oninput="clearFieldError('opisusluge')"
+						class={ common.ClassInputTextEnabled + " flex-1 min-w-0 !h-auto" }
+					>{ stavka.OpisUsluge }</textarea>
+				</div>
+				<div class="flex items-start gap-1 min-w-0">
+					@components.LabelField(domain.LabelFieldConfig{ID: "opisdet", LabelText: translator.Label("Dod. opis usluge"), ClassLabel: common.ClassLabel + " w-28"})
+					<textarea
+						id="opisdet"
+						name="opisdet"
+						rows="3"
+						tabindex="14"
+						class={ common.ClassInputTextEnabled + " flex-1 min-w-0 !h-auto" }
+					>{ stavka.OpisDet }</textarea>
+				</div>
+			</div>
+		</div>
+	</fieldset>
+	<div class="flex items-center justify-end gap-1">
+		@RobnoFaktureStavkeButtons(btns)
+	</div>
+	if tbl.TableID != "" {
+		<div id="robno-usluge-stavke-grid" class="flex-1 min-h-0 overflow-auto">
+			@components.Table(tbl, translator)
+		</div>
+	}
+}
+
+// robUslugeBroj renders a number of the stavka (editable, or read only: the iznosi).
+templ robUslugeBroj(id, label, value, maxLength, tabIndex string, readOnly bool) {
+	<div class="flex items-center gap-1 mb-1">
+		@components.LabelField(domain.LabelFieldConfig{ID: id, LabelText: label, ClassLabel: common.ClassLabel + " w-36"})
+		if readOnly {
+			@components.TextInputField(domain.InputFieldConfig{
+				ID:         id,
+				FieldType:  "text",
+				Value:      value,
+				Disabled:   true,
+				ClassInput: common.ClassInputTextDisabled + " !w-36 text-right"})
+		} else {
+			@components.TextInputField(domain.InputFieldConfig{
+				ID:         id,
+				Name:       id,
+				FieldType:  "text",
+				Value:      value,
+				ClassInput: common.ClassInputTextEnabled + " !w-36 text-right",
+				MaxLength:  maxLength,
+				TabIndex:   tabIndex,
+				OnInput:    "clearFieldError",
+				OnFocus:    "clearFieldError"})
+		}
+	</div>
+}
+
+// robUslugeTekst renders a text of the stavka.
+templ robUslugeTekst(id, label, value, maxLength, tabIndex string) {
+	<div class="flex items-center gap-1 mb-1">
+		@components.LabelField(domain.LabelFieldConfig{ID: id, LabelText: label, ClassLabel: common.ClassLabel + " w-36"})
+		@components.TextInputField(domain.InputFieldConfig{
+			ID:         id,
+			Name:       id,
+			FieldType:  "text",
+			Value:      value,
+			ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
+			MaxLength:  maxLength,
+			TabIndex:   tabIndex})
+	</div>
+}
+
+// robUslugeSifraNula tells whether the stavka of the form has the šifra 0 (its opis usluge, JM and tarifa are
+// entered: the legacy EDT_OPISART active).
+func robUslugeSifraNula(stavka domain.RobnoUslugeStavka) bool {
+	return strings.TrimSpace(stavka.SifraArtikla) == "0"
+}
+
+// robUslugeVidljivo is "" for a part of the form that is shown, else "hidden".
+func robUslugeVidljivo(vidljivo bool) string {
+	if vidljivo {
+		return ""
+	}
+	return "hidden"
+}
+
+// robUslugeSkriveno is " hidden" for a part of the form that is hidden, else "".
+func robUslugeSkriveno(skriveno bool) string {
+	if skriveno {
+		return " hidden"
+	}
+	return ""
+}
+
+// robUslugeStavkeStateText is the text of the title bar of the stavke control: the stavke are available only
+// after the header is saved.
+func robUslugeStavkeStateText(snimljen bool, translator *i18n.Service) string {
+	if snimljen {
+		return translator.Label("Unos stavki je omogućen")
+	}
+	return translator.Label("Sačuvajte podatke o fakturi da bi ste mogli da radite sa stavkama")
+}
+
+// robUslugeScriptBody is the script of the stavke of the fakture usluga (the exits of the fields of the
+// legacy rob_FAKTURE_Usluga_DET2).
+templ robUslugeScriptBody() {
+	<script>
+		// The form of the stavke keeps the group of the document, the tip zaliha and how the magacin keeps its
+		// zalihe, the kurs of the document (data-*).
+		function robUslugeForma() {
+			return document.getElementById('robno-usluge-stavka');
+		}
+		function robUslugeSakrij(id, sakrij) {
+			const el = document.getElementById(id);
+			if (el) el.classList.toggle('hidden', sakrij);
+		}
+		function robUslugeReadOnly(id, readOnly) {
+			const el = document.getElementById(id);
+			if (el) el.readOnly = readOnly;
+		}
+
+		// The iznos of the stavke (the exits of EDT_KOLIC and EDT_CENA: the cena for the količina 0) and the iznos
+		// of the rabat (the exit of EDT_RAB).
+		function robUslugeIznosi() {
+			const kolicina = robnoBroj('kolicina'), cena = robnoBroj('cenausluge'), rabat = robnoBroj('rabatusluge');
+			robnoUpisi('iznosusluge', (kolicina === 0 ? cena : robnoZaokruzi(kolicina * cena, 2)).toFixed(2));
+			const rabatJedinice = robnoZaokruzi(cena * rabat / 100, 2);
+			robnoUpisi('iznosrabatausluge', (kolicina === 0 ? rabatJedinice : rabatJedinice * kolicina).toFixed(2));
+		}
+
+		// The osnov oslobođenja is shown for the poreske kategorije S10 and S20 (else "-").
+		function robUslugeTaxcat() {
+			const taxcat = document.getElementById('taxcat');
+			if (!taxcat) return;
+			const vidljiv = taxcat.value === 'S10' || taxcat.value === 'S20';
+			robUslugeSakrij('robno-usluge-taxexem', !vidljiv);
+			robnoUpisi('taxexreco', '-');
+		}
+		function robUslugeSetTaxcat(taxcat) {
+			const el = document.getElementById('taxcat');
+			if (!taxcat || !el || !Array.from(el.options).some(o => o.value === taxcat)) return;
+			el.value = taxcat;
+			robUslugeTaxcat();
+		}
+
+		// A stavka of the šifra 0 has its own opis usluge, JM and tarifa (the tarifa not for a KPF); an artikal
+		// has the ones of the šifarnik.
+		function robUslugeSifraNula(nula) {
+			const forma = robUslugeForma();
+			robUslugeReadOnly('opisusluge', !nula);
+			robUslugeReadOnly('jmusluge', !nula);
+			robUslugeReadOnly('tarifa', !!forma && forma.dataset.grupa === 'KPF');
+		}
+
+		// The parts of the form of an artikal of the zalihe (not the šifra 0, not of the tip U): the cene and the
+		// stanje, the zalihe by lot of a magacin of the tip zaliha 2.
+		function robUslugeZalihe(artikalZaliha) {
+			const forma = robUslugeForma();
+			if (!forma) return;
+			robUslugeSakrij('robno-usluge-zalcene', !artikalZaliha);
+			robUslugeSakrij('robno-usluge-zalihe', !(artikalZaliha && forma.dataset.tipzal === '2'));
+			robUslugeSakrij('robno-usluge-ncena', forma.dataset.vpcena === 'true');
+			robUslugeSakrij('robno-usluge-magcena', forma.dataset.nabcena === 'true');
+		}
+
+		// The artikal of the stavka (the legacy exit of EDT_SIFRA): the entry of the šifra clears the cena, the
+		// rabat and their iznosi; the šifra 0 takes the konto of its artikal and opens the opis usluge; an artikal
+		// gives its opis, JM, tarifa with its stopa and poreska kategorija, its konto, its cene and stanje.
+		function robUslugeArtikal() {
+			const forma = robUslugeForma();
+			const sifra = document.getElementById('sifraartikla');
+			const konto = document.getElementById('kontostavke');
+			if (!forma || !sifra || !konto) return;
+			['cenausluge', 'rabatusluge', 'iznosusluge', 'iznosrabatausluge'].forEach(id => robnoUpisi(id, '0'));
+			const vrednost = sifra.value.trim();
+			const nula = vrednost === '0';
+			// The legacy exit of EDT_SIFRA reads an artikal only with the konto; the šifra 0 without it too.
+			if (vrednost === '' || (!nula && konto.value.trim() === '')) return;
+			fetch(forma.dataset.artikalUrl + '?' + new URLSearchParams({ rdokid: document.getElementById('stavkardokid').value, sifra: vrednost }),
+				{ headers: { 'Accept': 'application/json' } })
+				.then(r => r.json())
+				.then(odgovor => {
+					if (nula) {
+						if (odgovor.found && odgovor.artikal.konto) konto.value = odgovor.artikal.konto;
+						robUslugeSifraNula(true);
+						robUslugeZalihe(false);
+						const opis = document.getElementById('opisusluge');
+						if (opis) opis.focus();
+						return;
+					}
+					robUslugeSifraNula(false);
+					if (!odgovor.found) {
+						['opisusluge', 'jmusluge', 'otk', 'serija', 'rokstavke'].forEach(id => robnoUpisi(id, ''));
+						['tarifa', 'stopastavke', 'stanjeusluge', 'nabavnacena', 'cenausluge', 'magcenausluge', 'iznosusluge'].forEach(id => robnoUpisi(id, '0'));
+						robUslugeZalihe(false);
+						return;
+					}
+					const a = odgovor.artikal;
+					sifra.value = String(a.sifra);
+					robnoUpisi('sifraartikla-combo-input', a.sifra + ' - ' + a.naziv);
+					robnoUpisi('opisusluge', a.naziv);
+					robnoUpisi('jmusluge', a.jm);
+					robnoUpisi('tarifa', String(a.tarifa));
+					robnoUpisi('stopastavke', String(a.stopa));
+					robUslugeSetTaxcat(a.taxcat);
+					if (a.konto) konto.value = a.konto;
+					robnoUpisi('nabavnacena', String(a.ncena));
+					robnoUpisi('cenausluge', String(a.cena));
+					robnoUpisi('magcenausluge', String(a.magcena));
+					robnoUpisi('stanjeusluge', String(a.stanje));
+					robUslugeZalihe(a.tip !== 'U');
+					robUslugeIznosi();
+					const kolicina = document.getElementById('kolicina');
+					if (kolicina) kolicina.focus();
+				});
+		}
+
+		// The stopa of the tarifa and its poreska kategorija (the legacy exit of EDT_po).
+		function robUslugeStopa() {
+			const forma = robUslugeForma();
+			const tarifa = document.getElementById('tarifa');
+			if (!forma || !tarifa || tarifa.value.trim() === '') return;
+			fetch(forma.dataset.stopaUrl + '?' + new URLSearchParams({ rdokid: document.getElementById('stavkardokid').value, tarifa: tarifa.value.trim() }),
+				{ headers: { 'Accept': 'application/json' } })
+				.then(r => r.json())
+				.then(s => {
+					robnoUpisi('stopastavke', String(s.stopa));
+					robUslugeSetTaxcat(s.taxcat);
+				});
+		}
+
+		// The cena is typed in the valuta of the document and converted by its kurs (the legacy exit of EDT_CENA;
+		// the cena as typed is kept for the stavka, cenaval).
+		function robUslugeCena() {
+			const forma = robUslugeForma();
+			if (!forma) return;
+			const cena = robnoBroj('cenausluge');
+			robnoUpisi('cenaval', String(cena));
+			const kurs = parseFloat(forma.dataset.kurs) || 0, vaziza = parseFloat(forma.dataset.vaziza) || 0;
+			if (kurs !== 0 && vaziza > 0) robnoUpisi('cenausluge', String(robnoZaokruzi(cena * kurs / vaziza, 4)));
+			robUslugeIznosi();
+		}
+
+		// "Izmeni" of a row of the grid of the stavke (the legacy "Izmene"): the stavka of the answer (JSON) in the
+		// form; it is saved as a change.
+		function robUslugeStavkaUcitaj(evt) {
+			let odgovor;
+			try {
+				odgovor = JSON.parse(evt.detail.xhr.responseText);
+			} catch (e) {
+				return;
+			}
+			if (!odgovor.found) {
+				alert(odgovor.message || 'Stavka ne postoji.');
+				return;
+			}
+			const st = odgovor.stavka;
+			robnoUpisi('stavkarproid', String(st.rproid));
+			robnoUpisi('kontostavke', st.konto);
+			robnoUpisi('sifraartikla', String(st.sifra));
+			robnoUpisi('sifraartikla-combo-input', st.sifra + ' - ' + st.naziv);
+			robnoUpisi('opisusluge', st.naziv);
+			robnoUpisi('jmusluge', st.jm);
+			robnoUpisi('kolicina', String(st.kolicina));
+			robnoUpisi('cenausluge', String(st.cena));
+			robnoUpisi('cenaval', '');
+			robnoUpisi('rabatusluge', String(st.rabat));
+			robnoUpisi('tarifa', String(st.tarifa));
+			robnoUpisi('stopastavke', String(st.stopa));
+			robnoUpisi('nabavnacena', String(st.ncena));
+			robnoUpisi('otk', st.otk);
+			robnoUpisi('serija', st.serija);
+			robnoUpisi('rokstavke', st.rok);
+			robnoUpisi('opisdet', st.opisdet);
+			const taxcat = document.getElementById('taxcat');
+			if (taxcat && st.taxcat) taxcat.value = st.taxcat;
+			robUslugeSakrij('robno-usluge-taxexem', !(taxcat && (taxcat.value === 'S10' || taxcat.value === 'S20')));
+			if (st.taxexreco) robnoUpisi('taxexreco', st.taxexreco);
+			robUslugeSifraNula(st.sifra === 0);
+			robUslugeSakrij('robno-usluge-zalcene', true);
+			robUslugeIznosi();
+			robUslugeStavkeGridEnabled(false);
+			robUslugeOdustaniEnabled(true);
+			const fokus = document.getElementById(st.sifra === 0 ? 'opisusluge' : 'kolicina');
+			if (fokus) fokus.focus();
+		}
+
+		// "Odustani" of the change of a stavka: the grid of the stavke is unlocked again and "Odustani" is
+		// disabled; the form is no more the stavka of the row (a next "Sačuvaj" adds a stavka).
+		function robUslugeStavkaOdustani() {
+			robnoUpisi('stavkarproid', '0');
+			robUslugeStavkeGridEnabled(true);
+			robUslugeOdustaniEnabled(false);
+		}
+		function robUslugeOdustaniEnabled(enabled) {
+			const btn = document.getElementById('robno-usluge-stavka-odustani');
+			if (!btn) return;
+			btn.disabled = !enabled;
+			btn.classList.toggle('opacity-50', !enabled);
+			btn.classList.toggle('cursor-not-allowed', !enabled);
+		}
+		function robUslugeStavkeGridEnabled(enabled) {
+			const grid = document.getElementById('robno-usluge-stavke-grid');
+			if (!grid) return;
+			grid.inert = !enabled;
+			grid.classList.toggle('opacity-50', !enabled);
+			grid.classList.toggle('pointer-events-none', !enabled);
+			grid.querySelectorAll('input, select, button').forEach(el => { el.disabled = !enabled; });
+		}
+
+		// "Za period" of the knjižno pismo finansijsko enables its datumi.
+		function robUslugeZaPeriod() {
+			const cbx = document.getElementById('zaperiod');
+			if (!cbx) return;
+			['periodod', 'perioddo'].forEach(id => {
+				const el = document.getElementById(id);
+				if (!el) return;
+				el.disabled = !cbx.checked;
+				if (!cbx.checked) el.value = '';
+			});
+		}
+
+		// The events of the form (delegated: the form comes back with the content of the tab).
+		if (!window.robUslugeListener) {
+			window.robUslugeListener = true;
+			const uFormi = evt => evt.target && evt.target.id && robUslugeForma() && evt.target.closest('#robno-usluge-stavke-panel');
+			document.addEventListener('input', function (evt) {
+				if (uFormi(evt) && evt.target.id === 'rabatusluge') robUslugeIznosi();
+			});
+			document.addEventListener('change', function (evt) {
+				if (evt.target && evt.target.id === 'zaperiod' && robUslugeForma()) {
+					robUslugeZaPeriod();
+					return;
+				}
+				if (!uFormi(evt)) return;
+				switch (evt.target.id) {
+					case 'sifraartikla': robUslugeArtikal(); break;
+					case 'kontostavke': evt.target.value = evt.target.value.replace(/\s/g, ''); break;
+					case 'kolicina':
+					case 'rabatusluge': robUslugeIznosi(); break;
+					case 'cenausluge': robUslugeCena(); break;
+					case 'tarifa': robUslugeStopa(); break;
+					case 'taxcat': robUslugeTaxcat(); break;
+				}
+			});
+			// The cena of a document in a foreign valuta is typed in its valuta (the legacy entry of EDT_CENA).
+			document.addEventListener('focusin', function (evt) {
+				const forma = robUslugeForma();
+				if (!forma || !evt.target || evt.target.id !== 'cenausluge' || !forma.dataset.valutaPoruka) return;
+				evt.target.title = forma.dataset.valutaPoruka;
+			});
+		}
+	</script>
+}

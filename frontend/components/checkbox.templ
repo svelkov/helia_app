@@ -18,6 +18,9 @@ templ CheckboxField(cfg domain.CheckboxFieldConfig, translator *i18n.Service) {
 				return "1"
 			}() }
 			class={ cfg.ClassCheckbox }
+			if cfg.TabIndex != "" {
+				tabindex={ cfg.TabIndex }
+			}
 			if cfg.IsChecked || cfg.Checked {
 				checked="checked"
 			}

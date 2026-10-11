@@ -18,7 +18,8 @@ import (
 // TableCombo renders a searchable table combo (partneri, konta, artikli, ...): a text input that
 // calls cfg.SearchURL while the user types and shows the answer (TableComboResults) in a dropdown
 // table under the input. Selecting a row (click, or arrows and Enter) puts its key into the hidden
-// input cfg.Name and its text into the visible input; typing again clears the selected key. Pass
+// input cfg.Name and its text into the visible input; typing again clears the selected key. With
+// cfg.AllowEmpty the results start with the row "-" that selects no row (an empty key). Pass
 // cfg.Value / cfg.DisplayValue / cfg.Details to render a row already selected (e.g. when editing an
 // existing document). A disabled combo keeps its search attributes, so a screen can enable it later
 // (a disabled input fires no events, so it does not search while disabled).
@@ -68,7 +69,7 @@ func TableCombo(cfg domain.TableComboConfig, translator *i18n.Service) templ.Com
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<script>\n\t\t\t// tableComboRows returns the selectable rows of the results of a table combo.\n\t\t\tfunction tableComboRows(comboID) {\n\t\t\t\treturn Array.from(document.querySelectorAll('#' + comboID + '-results tr[data-key]'));\n\t\t\t}\n\t\t\t// tableComboClose empties the results of a table combo.\n\t\t\tfunction tableComboClose(comboID) {\n\t\t\t\tconst results = document.getElementById(comboID + '-results');\n\t\t\t\tif (results) results.innerHTML = '';\n\t\t\t}\n\t\t\t// tableComboValueInput returns the hidden input with the key of a table combo.\n\t\t\tfunction tableComboValueInput(comboID) {\n\t\t\t\tconst input = document.getElementById(comboID + '-input');\n\t\t\t\treturn document.getElementById((input && input.dataset.valueid) || (comboID + '-value'));\n\t\t\t}\n\t\t\t// tableComboSelect selects a row of the results: its key into the hidden input, its text\n\t\t\t// into the visible input and its details under them, then calls the OnSelect callback.\n\t\t\tfunction tableComboSelect(row) {\n\t\t\t\tconst comboID = row.dataset.combo;\n\t\t\t\tconst input = document.getElementById(comboID + '-input');\n\t\t\t\tconst value = tableComboValueInput(comboID);\n\t\t\t\tconst details = document.getElementById(comboID + '-details');\n\t\t\t\tvalue.value = row.dataset.key;\n\t\t\t\tinput.value = row.dataset.text;\n\t\t\t\tif (details) details.textContent = row.dataset.details || '';\n\t\t\t\ttableComboClose(comboID);\n\t\t\t\tvalue.dispatchEvent(new Event('change', { bubbles: true }));\n\t\t\t\tconst callback = input.dataset.onselect;\n\t\t\t\tif (callback && typeof window[callback] === 'function') {\n\t\t\t\t\tconst cells = Array.from(row.cells).map(c => c.textContent.trim());\n\t\t\t\t\twindow[callback](comboID, row.dataset.key, cells);\n\t\t\t\t}\n\t\t\t}\n\t\t\t// tableComboKeydown moves through the results with the arrows, selects with Enter and\n\t\t\t// closes them with Escape.\n\t\t\tfunction tableComboKeydown(event, comboID) {\n\t\t\t\tconst rows = tableComboRows(comboID);\n\t\t\t\tlet active = rows.findIndex(r => r.classList.contains('table-combo-active'));\n\t\t\t\tif (event.key === 'Escape') {\n\t\t\t\t\ttableComboClose(comboID);\n\t\t\t\t\treturn;\n\t\t\t\t}\n\t\t\t\tif (rows.length === 0) return;\n\t\t\t\tif (event.key === 'ArrowDown' || event.key === 'ArrowUp') {\n\t\t\t\t\tevent.preventDefault();\n\t\t\t\t\tif (active >= 0) rows[active].classList.remove('table-combo-active', '!bg-blue-200');\n\t\t\t\t\tactive = event.key === 'ArrowDown' ? Math.min(active + 1, rows.length - 1) : Math.max(active - 1, 0);\n\t\t\t\t\trows[active].classList.add('table-combo-active', '!bg-blue-200');\n\t\t\t\t\trows[active].scrollIntoView({ block: 'nearest' });\n\t\t\t\t} else if (event.key === 'Enter') {\n\t\t\t\t\t// Enter selects the highlighted row, or the first one when none is highlighted\n\t\t\t\t\t// (e.g. the user typed the whole konto).\n\t\t\t\t\tevent.preventDefault();\n\t\t\t\t\ttableComboSelect(rows[active >= 0 ? active : 0]);\n\t\t\t\t} else if (event.key === 'Tab') {\n\t\t\t\t\t// Tab selects the highlighted row, or the row whose key is the typed text (e.g.\n\t\t\t\t\t// \"2040\"); the focus moves on to the next field.\n\t\t\t\t\tif (active >= 0) {\n\t\t\t\t\t\ttableComboSelect(rows[active]);\n\t\t\t\t\t} else {\n\t\t\t\t\t\ttableComboAutoSelect(comboID);\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\t\t\t// tableComboAutoSelect selects the row whose key is the typed text when nothing is selected\n\t\t\t// yet (the user typed the whole key and left the field without choosing a row).\n\t\t\tfunction tableComboAutoSelect(comboID) {\n\t\t\t\tconst input = document.getElementById(comboID + '-input');\n\t\t\t\tconst value = tableComboValueInput(comboID);\n\t\t\t\tconst text = input ? input.value.trim() : '';\n\t\t\t\tif (!value || !tableComboEmpty(input) || text === '') return;\n\t\t\t\tconst row = tableComboRows(comboID).find(r => r.dataset.key === text);\n\t\t\t\tif (row) tableComboSelect(row);\n\t\t\t}\n\t\t\t// tableComboLeave runs when the input loses the focus: the typed key is selected and the\n\t\t\t// results are closed (after the click on a row, which keeps the focus, is handled).\n\t\t\tfunction tableComboLeave(comboID) {\n\t\t\t\tsetTimeout(() => {\n\t\t\t\t\ttableComboAutoSelect(comboID);\n\t\t\t\t\ttableComboClose(comboID);\n\t\t\t\t\t// Nothing selected (the text cleared or not a key): the input shows the default value\n\t\t\t\t\t// again, the value the search uses.\n\t\t\t\t\tconst input = document.getElementById(comboID + '-input');\n\t\t\t\t\tconst value = tableComboValueInput(comboID);\n\t\t\t\t\tif (input && value && input.dataset.default && value.value === input.dataset.default) {\n\t\t\t\t\t\tinput.value = input.dataset.default;\n\t\t\t\t\t}\n\t\t\t\t}, 200);\n\t\t\t}\n\t\t\t// tableComboAfterSwap runs when the results arrive: when the user already left the field\n\t\t\t// (the results of the last characters typed arrive later), the typed key is selected and\n\t\t\t// the results are closed.\n\t\t\tfunction tableComboAfterSwap(comboID) {\n\t\t\t\tconst input = document.getElementById(comboID + '-input');\n\t\t\t\tif (input && document.activeElement !== input) {\n\t\t\t\t\ttableComboAutoSelect(comboID);\n\t\t\t\t\ttableComboClose(comboID);\n\t\t\t\t\treturn;\n\t\t\t\t}\n\t\t\t\t// The dropdown grows with its rows: when it would pass the right edge of the screen, it is\n\t\t\t\t// moved to the left so it stays visible.\n\t\t\t\tconst results = document.getElementById(comboID + '-results');\n\t\t\t\tif (results) {\n\t\t\t\t\tresults.style.left = '';\n\t\t\t\t\tconst overflow = results.getBoundingClientRect().right - (window.innerWidth - 8);\n\t\t\t\t\tif (overflow > 0) results.style.left = (-overflow) + 'px';\n\t\t\t\t}\n\t\t\t}\n\t\t\t// tableComboFocus selects the whole text of the input when it gets the focus, so the first\n\t\t\t// character typed replaces the old content; the mouseup of the click that gave the focus\n\t\t\t// would put the caret into the text again, so it is ignored once.\n\t\t\tfunction tableComboFocus(input) {\n\t\t\t\tinput.select();\n\t\t\t\tinput.dataset.focused = '1';\n\t\t\t\t// A focus by the keyboard (Tab) has no mouseup: the flag expires.\n\t\t\t\tsetTimeout(() => delete input.dataset.focused, 500);\n\t\t\t}\n\t\t\tfunction tableComboMouseUp(event, input) {\n\t\t\t\tif (input.dataset.focused === '1') {\n\t\t\t\t\tevent.preventDefault();\n\t\t\t\t\tdelete input.dataset.focused;\n\t\t\t\t}\n\t\t\t}\n\t\t\t// tableComboEmpty tells if nothing is selected in the combo of the input (the search on the\n\t\t\t// focus runs only then; with a selected row the user types to search again).\n\t\t\tfunction tableComboEmpty(input) {\n\t\t\t\tconst value = document.getElementById(input.dataset.valueid);\n\t\t\t\treturn !value || value.value === '' || value.value === (input.dataset.default || '');\n\t\t\t}\n\t\t\t// tableComboInput clears the selected key when the user types again.\n\t\t\tfunction tableComboInput(comboID) {\n\t\t\t\tconst input = document.getElementById(comboID + '-input');\n\t\t\t\tconst value = tableComboValueInput(comboID);\n\t\t\t\tconst details = document.getElementById(comboID + '-details');\n\t\t\t\tif (value) value.value = (input && input.dataset.default) || '';\n\t\t\t\tif (details) details.textContent = '';\n\t\t\t}\n\t\t</script>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<script>\n\t\t\t// tableComboRows returns the selectable rows of the results of a table combo.\n\t\t\tfunction tableComboRows(comboID) {\n\t\t\t\treturn Array.from(document.querySelectorAll('#' + comboID + '-results tr[data-key]'));\n\t\t\t}\n\t\t\t// tableComboClose empties the results of a table combo.\n\t\t\tfunction tableComboClose(comboID) {\n\t\t\t\tconst results = document.getElementById(comboID + '-results');\n\t\t\t\tif (results) results.innerHTML = '';\n\t\t\t}\n\t\t\t// tableComboValueInput returns the hidden input with the key of a table combo.\n\t\t\tfunction tableComboValueInput(comboID) {\n\t\t\t\tconst input = document.getElementById(comboID + '-input');\n\t\t\t\treturn document.getElementById((input && input.dataset.valueid) || (comboID + '-value'));\n\t\t\t}\n\t\t\t// tableComboSelect selects a row of the results: its key into the hidden input, its text\n\t\t\t// into the visible input and its details under them, then calls the OnSelect callback.\n\t\t\tfunction tableComboSelect(row) {\n\t\t\t\tconst comboID = row.dataset.combo;\n\t\t\t\tconst input = document.getElementById(comboID + '-input');\n\t\t\t\tconst value = tableComboValueInput(comboID);\n\t\t\t\tconst details = document.getElementById(comboID + '-details');\n\t\t\t\tvalue.value = row.dataset.key;\n\t\t\t\tinput.value = row.dataset.text;\n\t\t\t\tif (details) details.textContent = row.dataset.details || '';\n\t\t\t\ttableComboClose(comboID);\n\t\t\t\tvalue.dispatchEvent(new Event('change', { bubbles: true }));\n\t\t\t\tconst callback = input.dataset.onselect;\n\t\t\t\tif (callback && typeof window[callback] === 'function') {\n\t\t\t\t\tconst cells = Array.from(row.cells).map(c => c.textContent.trim());\n\t\t\t\t\twindow[callback](comboID, row.dataset.key, cells);\n\t\t\t\t}\n\t\t\t}\n\t\t\t// tableComboKeydown moves through the results with the arrows, selects with Enter and\n\t\t\t// closes them with Escape.\n\t\t\tfunction tableComboKeydown(event, comboID) {\n\t\t\t\tconst rows = tableComboRows(comboID);\n\t\t\t\tlet active = rows.findIndex(r => r.classList.contains('table-combo-active'));\n\t\t\t\tif (event.key === 'Escape') {\n\t\t\t\t\ttableComboClose(comboID);\n\t\t\t\t\treturn;\n\t\t\t\t}\n\t\t\t\tif (rows.length === 0) return;\n\t\t\t\tif (event.key === 'ArrowDown' || event.key === 'ArrowUp') {\n\t\t\t\t\tevent.preventDefault();\n\t\t\t\t\tif (active >= 0) rows[active].classList.remove('table-combo-active', '!bg-blue-200');\n\t\t\t\t\tactive = event.key === 'ArrowDown' ? Math.min(active + 1, rows.length - 1) : Math.max(active - 1, 0);\n\t\t\t\t\trows[active].classList.add('table-combo-active', '!bg-blue-200');\n\t\t\t\t\trows[active].scrollIntoView({ block: 'nearest' });\n\t\t\t\t} else if (event.key === 'Enter') {\n\t\t\t\t\t// Enter selects the highlighted row, or the first one when none is highlighted\n\t\t\t\t\t// (e.g. the user typed the whole konto); the row \"-\" of AllowEmpty only when nothing\n\t\t\t\t\t// is typed.\n\t\t\t\t\tevent.preventDefault();\n\t\t\t\t\ttableComboSelect(rows[active >= 0 ? active : tableComboFirstRow(comboID, rows)]);\n\t\t\t\t} else if (event.key === 'Tab') {\n\t\t\t\t\t// Tab selects the highlighted row, or the row whose key is the typed text (e.g.\n\t\t\t\t\t// \"2040\"); the focus moves on to the next field.\n\t\t\t\t\tif (active >= 0) {\n\t\t\t\t\t\ttableComboSelect(rows[active]);\n\t\t\t\t\t} else {\n\t\t\t\t\t\ttableComboAutoSelect(comboID);\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\t\t\t// tableComboFirstRow returns the index of the row Enter selects when none is highlighted: the\n\t\t\t// first one, but not the row \"-\" of AllowEmpty while the user typed a text to search.\n\t\t\tfunction tableComboFirstRow(comboID, rows) {\n\t\t\t\tconst input = document.getElementById(comboID + '-input');\n\t\t\t\tconst text = input ? input.value.trim() : '';\n\t\t\t\tif (text === '' || text === '-') return 0;\n\t\t\t\tconst i = rows.findIndex(r => r.dataset.key !== '');\n\t\t\t\treturn i >= 0 ? i : 0;\n\t\t\t}\n\t\t\t// tableComboAutoSelect selects the row whose key is the typed text when nothing is selected\n\t\t\t// yet (the user typed the whole key and left the field without choosing a row).\n\t\t\tfunction tableComboAutoSelect(comboID) {\n\t\t\t\tconst input = document.getElementById(comboID + '-input');\n\t\t\t\tconst value = tableComboValueInput(comboID);\n\t\t\t\tconst text = input ? input.value.trim() : '';\n\t\t\t\tif (!value || !tableComboEmpty(input) || text === '') return;\n\t\t\t\t// OnFreeText: the typed text is not a key (it goes to the callback).\n\t\t\t\tif (input.dataset.onfreetext) return;\n\t\t\t\tconst row = tableComboRows(comboID).find(r => r.dataset.key === text);\n\t\t\t\tif (row) tableComboSelect(row);\n\t\t\t}\n\t\t\t// tableComboLeave runs when the input loses the focus: the typed key is selected and the\n\t\t\t// results are closed (after the click on a row, which keeps the focus, is handled).\n\t\t\tfunction tableComboLeave(comboID) {\n\t\t\t\tsetTimeout(() => {\n\t\t\t\t\ttableComboAutoSelect(comboID);\n\t\t\t\t\ttableComboClose(comboID);\n\t\t\t\t\t// Nothing selected (the text cleared or not a key): the input shows the default value\n\t\t\t\t\t// again, the value the search uses.\n\t\t\t\t\tconst input = document.getElementById(comboID + '-input');\n\t\t\t\t\tconst value = tableComboValueInput(comboID);\n\t\t\t\t\tif (input && value && input.dataset.default && value.value === input.dataset.default) {\n\t\t\t\t\t\tinput.value = input.dataset.default;\n\t\t\t\t\t}\n\t\t\t\t\t// FreeText: no row selected takes the typed text as the value (e.g. the broj of a new\n\t\t\t\t// document); the change of the value tells the screen.\n\t\t\t\tif (input && value && input.dataset.freetext && value.value === '') {\n\t\t\t\t\tconst text = input.value.trim();\n\t\t\t\t\tif (text !== '' && text !== '-') {\n\t\t\t\t\t\tconst callback = input.dataset.onfreetext;\n\t\t\t\t\t\tif (callback && typeof window[callback] === 'function') {\n\t\t\t\t\t\t\twindow[callback](comboID, text);\n\t\t\t\t\t\t} else {\n\t\t\t\t\t\t\tvalue.value = text;\n\t\t\t\t\t\t\tvalue.dispatchEvent(new Event('change', { bubbles: true }));\n\t\t\t\t\t\t}\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t\t// AllowEmpty: no row selected shows \"-\" (the empty key).\n\t\t\t\t\tif (input && value && input.dataset.allowempty && value.value === '') {\n\t\t\t\t\t\tinput.value = '-';\n\t\t\t\t\t\tconst details = document.getElementById(comboID + '-details');\n\t\t\t\t\t\tif (details) details.textContent = '';\n\t\t\t\t\t}\n\t\t\t\t}, 200);\n\t\t\t}\n\t\t\t// tableComboAfterSwap runs when the results arrive: when the user already left the field\n\t\t\t// (the results of the last characters typed arrive later), the typed key is selected and\n\t\t\t// the results are closed.\n\t\t\tfunction tableComboAfterSwap(comboID) {\n\t\t\t\tconst input = document.getElementById(comboID + '-input');\n\t\t\t\tif (input && document.activeElement !== input) {\n\t\t\t\t\ttableComboAutoSelect(comboID);\n\t\t\t\t\ttableComboClose(comboID);\n\t\t\t\t\treturn;\n\t\t\t\t}\n\t\t\t\t// AllowEmpty: the results start with the row \"-\", which selects the empty key.\n\t\t\t\tconst results = document.getElementById(comboID + '-results');\n\t\t\t\tconst tbody = results && results.querySelector('tbody');\n\t\t\t\tif (input && input.dataset.allowempty && tbody && tbody.rows.length > 0) {\n\t\t\t\t\tconst first = tbody.rows[0];\n\t\t\t\t\tconst row = first.cloneNode(true);\n\t\t\t\t\trow.dataset.key = '';\n\t\t\t\t\trow.dataset.text = '-';\n\t\t\t\t\trow.dataset.details = '';\n\t\t\t\t\tArray.from(row.cells).forEach((cell, i) => { cell.textContent = i === 0 ? '-' : ''; });\n\t\t\t\t\ttbody.insertBefore(row, first);\n\t\t\t\t}\n\t\t\t\ttableComboPlace(comboID);\n\t\t\t}\n\t\t\t// tableComboPlace puts the results of a table combo on the screen under its input (position\n\t\t\t// fixed), so a container that scrolls or clips its content (e.g. the content of a dialog with\n\t\t\t// overflow) does not cut them off and they are in front of it. Without the room for them\n\t\t\t// under the input they open above it, they never pass the right edge of the screen, and they\n\t\t\t// follow the input when the page or a container is scrolled (tableComboPlaceOpen). An\n\t\t\t// ancestor with a transform would move a fixed element with it: then the results stay\n\t\t\t// positioned under the input as before (absolute), only moved to the left at the right edge.\n\t\t\tfunction tableComboPlace(comboID) {\n\t\t\t\tconst input = document.getElementById(comboID + '-input');\n\t\t\t\tconst results = document.getElementById(comboID + '-results');\n\t\t\t\tif (!input || !results || results.childElementCount === 0) return;\n\t\t\t\tconst r = input.getBoundingClientRect();\n\t\t\t\tconst margin = 8, gap = 2, maxHeight = 288;\n\t\t\t\tconst below = window.innerHeight - r.bottom - gap - margin;\n\t\t\t\tconst above = r.top - gap - margin;\n\t\t\t\tconst height = Math.min(results.scrollHeight, maxHeight);\n\t\t\t\tconst up = height > below && above > below;\n\t\t\t\tconst room = Math.max(96, Math.min(maxHeight, up ? above : below));\n\t\t\t\tresults.style.position = 'fixed';\n\t\t\t\tresults.style.marginTop = '0';\n\t\t\t\tresults.style.minWidth = r.width + 'px';\n\t\t\t\tresults.style.maxHeight = room + 'px';\n\t\t\t\tconst top = up ? Math.max(margin, r.top - gap - Math.min(height, room)) : r.bottom + gap;\n\t\t\t\tconst width = results.getBoundingClientRect().width;\n\t\t\t\tconst left = Math.max(margin, Math.min(r.left, window.innerWidth - margin - width));\n\t\t\t\tresults.style.top = top + 'px';\n\t\t\t\tresults.style.left = left + 'px';\n\t\t\t\tconst placed = results.getBoundingClientRect();\n\t\t\t\tif (Math.abs(placed.top - top) > 1 || Math.abs(placed.left - left) > 1) {\n\t\t\t\t\t// A transformed ancestor: the results under the input (absolute), as before.\n\t\t\t\t\t['position', 'marginTop', 'minWidth', 'maxHeight', 'top', 'left'].forEach(p => { results.style[p] = ''; });\n\t\t\t\t\tconst overflow = results.getBoundingClientRect().right - (window.innerWidth - margin);\n\t\t\t\t\tif (overflow > 0) results.style.left = (-overflow) + 'px';\n\t\t\t\t}\n\t\t\t}\n\t\t\t// tableComboPlaceOpen places the open results again when the page or a container is scrolled\n\t\t\t// or the window is resized (the listeners are installed once).\n\t\t\tfunction tableComboPlaceOpen() {\n\t\t\t\tdocument.querySelectorAll('[data-table-combo-results]').forEach(results => {\n\t\t\t\t\tif (results.childElementCount > 0 && results.style.position === 'fixed') tableComboPlace(results.dataset.tableComboResults);\n\t\t\t\t});\n\t\t\t}\n\t\t\tif (!window.tableComboPlaceListeners) {\n\t\t\t\twindow.tableComboPlaceListeners = true;\n\t\t\t\twindow.addEventListener('scroll', function (evt) {\n\t\t\t\t\t// The scroll of the results themselves does not move them.\n\t\t\t\t\tif (evt.target && evt.target.dataset && evt.target.dataset.tableComboResults) return;\n\t\t\t\t\ttableComboPlaceOpen();\n\t\t\t\t}, true);\n\t\t\t\twindow.addEventListener('resize', tableComboPlaceOpen);\n\t\t\t}\n\t\t\t// tableComboFocus selects the whole text of the input when it gets the focus, so the first\n\t\t\t// character typed replaces the old content; the mouseup of the click that gave the focus\n\t\t\t// would put the caret into the text again, so it is ignored once.\n\t\t\tfunction tableComboFocus(input) {\n\t\t\t\tinput.select();\n\t\t\t\tinput.dataset.focused = '1';\n\t\t\t\t// A focus by the keyboard (Tab) has no mouseup: the flag expires.\n\t\t\t\tsetTimeout(() => delete input.dataset.focused, 500);\n\t\t\t}\n\t\t\tfunction tableComboMouseUp(event, input) {\n\t\t\t\tif (input.dataset.focused === '1') {\n\t\t\t\t\tevent.preventDefault();\n\t\t\t\t\tdelete input.dataset.focused;\n\t\t\t\t}\n\t\t\t}\n\t\t\t// tableComboEmpty tells if nothing is selected in the combo of the input (the search on the\n\t\t\t// focus runs only then; with a selected row the user types to search again).\n\t\t\tfunction tableComboEmpty(input) {\n\t\t\t\tconst value = document.getElementById(input.dataset.valueid);\n\t\t\t\treturn !value || value.value === '' || value.value === (input.dataset.default || '');\n\t\t\t}\n\t\t\t// tableComboClear empties a table combo, e.g. the form of a new record after it was saved: no\n\t\t\t// row selected (the default value of DefaultValue, the \"-\" of AllowEmpty, else nothing), no\n\t\t\t// details and no results.\n\t\t\tfunction tableComboClear(comboID) {\n\t\t\t\tconst input = document.getElementById(comboID + '-input');\n\t\t\t\tconst value = tableComboValueInput(comboID);\n\t\t\t\tconst details = document.getElementById(comboID + '-details');\n\t\t\t\tconst def = (input && input.dataset.default) || '';\n\t\t\t\tif (value) value.value = def;\n\t\t\t\tif (input) input.value = def !== '' ? def : (input.dataset.allowempty ? '-' : '');\n\t\t\t\tif (details) details.textContent = '';\n\t\t\t\ttableComboClose(comboID);\n\t\t\t}\n\t\t\t// tableComboInput clears the selected key when the user types again.\n\t\t\tfunction tableComboInput(comboID) {\n\t\t\t\tconst input = document.getElementById(comboID + '-input');\n\t\t\t\tconst value = tableComboValueInput(comboID);\n\t\t\t\tconst details = document.getElementById(comboID + '-details');\n\t\t\t\tif (value) value.value = (input && input.dataset.default) || '';\n\t\t\t\tif (details) details.textContent = '';\n\t\t\t}\n\t\t</script>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -91,7 +92,7 @@ func TableCombo(cfg domain.TableComboConfig, translator *i18n.Service) templ.Com
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(cfg.ID + "-input")
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 172, Col: 32}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 274, Col: 32}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
@@ -117,7 +118,7 @@ func TableCombo(cfg domain.TableComboConfig, translator *i18n.Service) templ.Com
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label(cfg.LabelText))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 172, Col: 93}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 274, Col: 93}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
@@ -128,25 +129,29 @@ func TableCombo(cfg domain.TableComboConfig, translator *i18n.Service) templ.Com
 				return templ_7745c5c3_Err
 			}
 		}
-		var templ_7745c5c3_Var7 = []any{tableComboValue(cfg.ClassWrapper, "relative w-full")}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<!-- The wrapper is always relative: the dropdown is positioned and sized (min-w-full) by it. -->")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var7 = []any{"relative " + tableComboValue(cfg.ClassWrapper, "w-full")}
 		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var7...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<div id=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<div id=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var8 string
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(cfg.ID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 174, Col: 17}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 277, Col: 17}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "\" class=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "\" class=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -159,7 +164,7 @@ func TableCombo(cfg domain.TableComboConfig, translator *i18n.Service) templ.Com
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -168,132 +173,114 @@ func TableCombo(cfg domain.TableComboConfig, translator *i18n.Service) templ.Com
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templ.RenderScriptItems(ctx, templ_7745c5c3_Buffer, templ.JSFuncCall("tableComboAfterSwap", cfg.ID), templ.JSFuncCall("tableComboInput", cfg.ID), templ.JSFuncCall("tableComboKeydown", templ.JSExpression("event"), cfg.ID), templ.JSFuncCall("tableComboFocus", templ.JSExpression("this")), templ.JSFuncCall("tableComboMouseUp", templ.JSExpression("event"), templ.JSExpression("this")), templ.JSFuncCall("tableComboLeave", cfg.ID))
+		templ_7745c5c3_Err = templ.RenderScriptItems(ctx, templ_7745c5c3_Buffer, templ.JSFuncCall("tableComboInput", cfg.ID), templ.JSFuncCall("tableComboKeydown", templ.JSExpression("event"), cfg.ID), templ.JSFuncCall("tableComboFocus", templ.JSExpression("this")), templ.JSFuncCall("tableComboMouseUp", templ.JSExpression("event"), templ.JSExpression("this")), templ.JSFuncCall("tableComboLeave", cfg.ID))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<input id=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<input id=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var11 string
 		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(cfg.ID + "-input")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 176, Col: 25}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 279, Col: 25}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "\" type=\"text\" name=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "\" type=\"text\" name=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var12 string
 		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(tableComboValue(cfg.SearchParam, "q"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 178, Col: 47}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 281, Col: 47}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var13 string
-		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(tableComboValue(cfg.DisplayValue, tableComboValue(cfg.Value, cfg.DefaultValue)))
+		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(tableComboDisplay(cfg))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 179, Col: 90}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 282, Col: 33}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if cfg.DefaultValue != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, " data-default=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, " data-default=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var14 string
 			templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(cfg.DefaultValue)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 181, Col: 35}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 284, Col: 35}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		if cfg.Placeholder != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, " placeholder=\"")
+		if cfg.AllowEmpty {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, " data-allowempty=\"1\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		if cfg.FreeText {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, " data-freetext=\"1\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		if cfg.OnFreeText != "" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, " data-onfreetext=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var15 string
-			templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label(cfg.Placeholder))
+			templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(cfg.OnFreeText)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 184, Col: 51}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 293, Col: 36}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, " autocomplete=\"off\" data-valueid=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var16 string
-		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(tableComboValue(cfg.ValueID, cfg.ID+"-value"))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 187, Col: 63}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "\" class=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var17 string
-		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var10).String())
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 1, Col: 0}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		if cfg.TabIndex != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, " tabindex=\"")
+		if cfg.Placeholder != "" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, " placeholder=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var18 string
-			templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(cfg.TabIndex)
+			var templ_7745c5c3_Var16 string
+			templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label(cfg.Placeholder))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 190, Col: 27}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 296, Col: 51}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -302,102 +289,97 @@ func TableCombo(cfg domain.TableComboConfig, translator *i18n.Service) templ.Com
 				return templ_7745c5c3_Err
 			}
 		}
-		if cfg.MinLength != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, " minlength=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, " autocomplete=\"off\" data-valueid=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var17 string
+		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(tableComboValue(cfg.ValueID, cfg.ID+"-value"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 299, Col: 63}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "\" class=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var18 string
+		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var10).String())
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 1, Col: 0}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		if cfg.TabIndex != "" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, " tabindex=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var19 string
-			templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(cfg.MinLength)
+			templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(cfg.TabIndex)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 193, Col: 29}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 302, Col: 27}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		if cfg.Disabled {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, " disabled")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		}
-		if cfg.Required {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, " required")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		}
-		if cfg.OnSelect != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, " data-onselect=\"")
+		if cfg.MinLength != "" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, " minlength=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var20 string
-			templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(cfg.OnSelect)
+			templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(cfg.MinLength)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 202, Col: 32}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 305, Col: 29}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		if cfg.SearchURL != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, " hx-get=\"")
+		if cfg.Disabled {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, " disabled")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		if cfg.Required {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, " required")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		if cfg.OnSelect != "" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, " data-onselect=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var21 string
-			templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(cfg.SearchURL)
+			templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(cfg.OnSelect)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 205, Col: 26}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 314, Col: 32}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "\" hx-trigger=\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var22 string
-			templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(tableComboValue(cfg.HxTrigger, "input changed delay:300ms, focus[tableComboEmpty(this)]"))
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 206, Col: 106}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "\" hx-target=\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var23 string
-			templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs("#" + cfg.ID + "-results")
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 207, Col: 41}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "\" hx-swap=\"innerHTML\" hx-sync=\"this:replace\" hx-on::after-swap=\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var24 templ.ComponentScript = templ.JSFuncCall("tableComboAfterSwap", cfg.ID)
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var24.Call)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -405,46 +387,91 @@ func TableCombo(cfg domain.TableComboConfig, translator *i18n.Service) templ.Com
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
+		}
+		if cfg.SearchURL != "" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, " hx-get=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var22 string
+			templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(cfg.SearchURL)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 317, Col: 26}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "\" hx-trigger=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var23 string
+			templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(tableComboValue(cfg.HxTrigger, "input changed delay:300ms, focus[tableComboEmpty(this)]"))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 318, Col: 106}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "\" hx-target=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var24 string
+			templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs("#" + cfg.ID + "-results")
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 319, Col: 41}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "\" hx-swap=\"innerHTML\" hx-sync=\"this:replace\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
 			if cfg.HxVals != "" {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, " hx-vals=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, " hx-vals=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var25 string
 				templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(cfg.HxVals)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 212, Col: 25}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 323, Col: 25}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
 			if cfg.HxInclude != "" {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, " hx-include=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, " hx-include=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var26 string
 				templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(cfg.HxInclude)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 215, Col: 31}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 326, Col: 31}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, " oninput=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, " oninput=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -453,7 +480,7 @@ func TableCombo(cfg domain.TableComboConfig, translator *i18n.Service) templ.Com
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "\" onkeydown=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "\" onkeydown=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -462,7 +489,7 @@ func TableCombo(cfg domain.TableComboConfig, translator *i18n.Service) templ.Com
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "\" onfocus=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "\" onfocus=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -471,7 +498,7 @@ func TableCombo(cfg domain.TableComboConfig, translator *i18n.Service) templ.Com
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "\" onmouseup=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "\" onmouseup=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -480,7 +507,7 @@ func TableCombo(cfg domain.TableComboConfig, translator *i18n.Service) templ.Com
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "\" onblur=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "\" onblur=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -489,85 +516,125 @@ func TableCombo(cfg domain.TableComboConfig, translator *i18n.Service) templ.Com
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "\"><!-- The key of the selected row: the value the form submits. --><input type=\"hidden\" id=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "\"><!-- The key of the selected row: the value the form submits. --><input type=\"hidden\" id=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var32 string
 		templ_7745c5c3_Var32, templ_7745c5c3_Err = templ.JoinStringErrs(tableComboValue(cfg.ValueID, cfg.ID+"-value"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 225, Col: 73}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 336, Col: 73}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var32))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "\" name=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "\" name=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var33 string
 		templ_7745c5c3_Var33, templ_7745c5c3_Err = templ.JoinStringErrs(cfg.Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 225, Col: 91}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 336, Col: 91}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var33))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var34 string
 		templ_7745c5c3_Var34, templ_7745c5c3_Err = templ.JoinStringErrs(tableComboValue(cfg.Value, cfg.DefaultValue))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 225, Col: 146}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 336, Col: 146}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var34))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "\"><p id=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "\"> ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var35 string
-		templ_7745c5c3_Var35, templ_7745c5c3_Err = templ.JoinStringErrs(cfg.ID + "-details")
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 226, Col: 29}
+		if !cfg.HideDetails {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, "<p id=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var35 string
+			templ_7745c5c3_Var35, templ_7745c5c3_Err = templ.JoinStringErrs(cfg.ID + "-details")
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 338, Col: 30}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var35))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, "\" class=\"mt-0.5 text-xs text-gray-500 empty:hidden\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var36 string
+			templ_7745c5c3_Var36, templ_7745c5c3_Err = templ.JoinStringErrs(cfg.Details)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 338, Col: 96}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var36))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "</p>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var35))
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 53, "<!-- The results of the search. htmx fires htmx:afterSwap on the element that gets the content (this\n\t\t     one, not the input that sends the request), so tableComboAfterSwap is called from here. -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "\" class=\"mt-0.5 text-xs text-gray-500 empty:hidden\">")
+		templ_7745c5c3_Err = templ.RenderScriptItems(ctx, templ_7745c5c3_Buffer, templ.JSFuncCall("tableComboAfterSwap", cfg.ID))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var36 string
-		templ_7745c5c3_Var36, templ_7745c5c3_Err = templ.JoinStringErrs(cfg.Details)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 226, Col: 95}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var36))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "</p><div id=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 54, "<div id=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var37 string
 		templ_7745c5c3_Var37, templ_7745c5c3_Err = templ.JoinStringErrs(cfg.ID + "-results")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 228, Col: 27}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 343, Col: 27}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var37))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "\" class=\"absolute z-50 mt-1 min-w-full w-max max-w-[90vw] max-h-72 overflow-auto rounded-md border border-blue-400 bg-white shadow-lg empty:hidden\"></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 55, "\" data-table-combo-results=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var38 string
+		templ_7745c5c3_Var38, templ_7745c5c3_Err = templ.JoinStringErrs(cfg.ID)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 344, Col: 36}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var38))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 56, "\" hx-on::after-swap=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var39 templ.ComponentScript = templ.JSFuncCall("tableComboAfterSwap", cfg.ID)
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var39.Call)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 57, "\" class=\"absolute z-50 mt-1 min-w-full w-max max-w-[90vw] max-h-72 overflow-auto rounded-md border border-blue-400 bg-white shadow-lg empty:hidden\"></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -594,198 +661,198 @@ func TableComboResults(res domain.TableComboResults, translator *i18n.Service) t
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var38 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var38 == nil {
-			templ_7745c5c3_Var38 = templ.NopComponent
+		templ_7745c5c3_Var40 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var40 == nil {
+			templ_7745c5c3_Var40 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
 		if len(res.Table.Rows) == 0 {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "<p class=\"px-3 py-4 text-center text-sm text-gray-400\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 58, "<p class=\"px-3 py-4 text-center text-sm text-gray-400\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var39 string
-			templ_7745c5c3_Var39, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label(tableComboValue(res.EmptyText, "Nema rezultata")))
+			var templ_7745c5c3_Var41 string
+			templ_7745c5c3_Var41, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label(tableComboValue(res.EmptyText, "Nema rezultata")))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 239, Col: 125}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 356, Col: 125}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var39))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var41))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, "</p>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 59, "</p>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		} else {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, "<table class=\"min-w-full text-sm\"><thead class=\"sticky top-0 z-10 bg-blue-900 text-white\"><tr>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 60, "<table class=\"min-w-full text-sm\"><thead class=\"sticky top-0 z-10 bg-blue-900 text-white\"><tr>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			for _, h := range res.Table.Headers {
-				var templ_7745c5c3_Var40 = []any{"px-2 py-1 text-xs font-medium whitespace-nowrap " + tableComboAlign(h.TextAlign)}
-				templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var40...)
+				var templ_7745c5c3_Var42 = []any{"px-2 py-1 text-xs font-medium whitespace-nowrap " + tableComboAlign(h.TextAlign)}
+				templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var42...)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "<th class=\"")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var41 string
-				templ_7745c5c3_Var41, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var40).String())
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 1, Col: 0}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var41))
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 53, "\"")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				if h.Width != "" {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 54, " style=\"")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					var templ_7745c5c3_Var42 string
-					templ_7745c5c3_Var42, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues("width: " + h.Width)
-					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 248, Col: 35}
-					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var42))
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 55, "\"")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 56, ">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 61, "<th class=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var43 string
-				templ_7745c5c3_Var43, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label(h.Label))
+				templ_7745c5c3_Var43, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var42).String())
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 250, Col: 34}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 1, Col: 0}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var43))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 57, "</th>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 62, "\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 58, "</tr></thead> <tbody>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			for _, row := range res.Table.Rows {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 59, "<tr class=\"cursor-pointer odd:bg-white even:bg-blue-50 hover:!bg-blue-100\" data-combo=\"")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
+				if h.Width != "" {
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 63, " style=\"")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var44 string
+					templ_7745c5c3_Var44, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues("width: " + h.Width)
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 365, Col: 35}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var44))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 64, "\"")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
 				}
-				var templ_7745c5c3_Var44 string
-				templ_7745c5c3_Var44, templ_7745c5c3_Err = templ.JoinStringErrs(res.ComboID)
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 258, Col: 30}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var44))
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 60, "\" data-key=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 65, ">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var45 string
-				templ_7745c5c3_Var45, templ_7745c5c3_Err = templ.JoinStringErrs(row.ID)
+				templ_7745c5c3_Var45, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label(h.Label))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 259, Col: 23}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 367, Col: 34}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var45))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 61, "\" data-text=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 66, "</th>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 67, "</tr></thead> <tbody>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			for _, row := range res.Table.Rows {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 68, "<tr class=\"cursor-pointer odd:bg-white even:bg-blue-50 hover:!bg-blue-100\" data-combo=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var46 string
-				templ_7745c5c3_Var46, templ_7745c5c3_Err = templ.JoinStringErrs(tableComboText(row.Fields, res.TextColumns, []int{0, 1}, " - "))
+				templ_7745c5c3_Var46, templ_7745c5c3_Err = templ.JoinStringErrs(res.ComboID)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 260, Col: 81}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 375, Col: 30}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var46))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 62, "\" data-details=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 69, "\" data-key=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var47 string
-				templ_7745c5c3_Var47, templ_7745c5c3_Err = templ.JoinStringErrs(tableComboText(row.Fields, res.DetailColumns, nil, ", "))
+				templ_7745c5c3_Var47, templ_7745c5c3_Err = templ.JoinStringErrs(row.ID)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 261, Col: 77}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 376, Col: 23}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var47))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 63, "\" onmousedown=\"event.preventDefault(); tableComboSelect(this)\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 70, "\" data-text=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var48 string
+				templ_7745c5c3_Var48, templ_7745c5c3_Err = templ.JoinStringErrs(tableComboText(row.Fields, res.TextColumns, []int{0, 1}, " - "))
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 377, Col: 81}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var48))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 71, "\" data-details=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var49 string
+				templ_7745c5c3_Var49, templ_7745c5c3_Err = templ.JoinStringErrs(tableComboText(row.Fields, res.DetailColumns, nil, ", "))
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 378, Col: 77}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var49))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 72, "\" onmousedown=\"event.preventDefault(); tableComboSelect(this)\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				for i, cell := range row.Fields {
-					var templ_7745c5c3_Var48 = []any{"px-2 py-1 " + tableComboCellWrap(cell) + " " + tableComboAlign(tableComboHeaderAlign(res.Table.Headers, i))}
-					templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var48...)
+					var templ_7745c5c3_Var50 = []any{"px-2 py-1 " + tableComboCellWrap(cell) + " " + tableComboAlign(tableComboHeaderAlign(res.Table.Headers, i))}
+					templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var50...)
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 64, "<td class=\"")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 73, "<td class=\"")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					var templ_7745c5c3_Var49 string
-					templ_7745c5c3_Var49, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var48).String())
+					var templ_7745c5c3_Var51 string
+					templ_7745c5c3_Var51, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var50).String())
 					if templ_7745c5c3_Err != nil {
 						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 1, Col: 0}
 					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var49))
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var51))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 65, "\">")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 74, "\">")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					var templ_7745c5c3_Var50 string
-					templ_7745c5c3_Var50, templ_7745c5c3_Err = templ.JoinStringErrs(cell)
+					var templ_7745c5c3_Var52 string
+					templ_7745c5c3_Var52, templ_7745c5c3_Err = templ.JoinStringErrs(cell)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 265, Col: 136}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table_combo.templ`, Line: 382, Col: 136}
 					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var50))
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var52))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 66, "</td>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 75, "</td>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 67, "</tr>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 76, "</tr>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 68, "</tbody></table>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 77, "</tbody></table>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -795,6 +862,16 @@ func TableComboResults(res domain.TableComboResults, translator *i18n.Service) t
 }
 
 var tableComboScript = templ.NewOnceHandle()
+
+// tableComboDisplay returns the text of the input of a combo: the text of the selected row, else its
+// key or the default value, else "-" for a combo that allows no selection (AllowEmpty).
+func tableComboDisplay(cfg domain.TableComboConfig) string {
+	text := tableComboValue(cfg.DisplayValue, tableComboValue(cfg.Value, cfg.DefaultValue))
+	if text == "" && cfg.AllowEmpty {
+		return "-"
+	}
+	return text
+}
 
 // tableComboValue returns value, def when value is empty.
 func tableComboValue(value, def string) string {

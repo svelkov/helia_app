@@ -2,8 +2,8 @@ package templates
 
 import (
 	"fmt"
-	"helia/internal/domain"
 	"helia/i18n"
+	"helia/internal/domain"
 )
 
 // Reusable tab navigation component
@@ -93,6 +93,9 @@ templ TabKeyboardNavigationScript() {
 				const active = document.activeElement;
 				const scope = active && active.closest('[data-tab-navigation-scope="true"]');
 				if (!scope) return;
+				// A form with its own navigation (EnterNavigationScript, e.g. a dialog of a robni dokument
+				// opened inside the tab) moves through its fields itself.
+				if (active.closest('[data-enter-nav]')) return;
 
 				const controls = getControls(scope);
 				const currentIndex = controls.indexOf(active);

@@ -39,6 +39,12 @@ templ Dialog(id, csrfToken string, content templ.Component, dialog domain.Dialog
 					@components.CancelButton(btnCancel, translator)
 				</div>
 			</form>
+			<!-- Message Display Area at Bottom (showMessage, e.g. the answer of the save), like DialogConfirm.
+			     showMessage gives the message w-full, so the side spacing is on the wrapper (a margin on the
+			     message would make it wider than the dialog); the wrapper has no height while it is hidden. -->
+			<div>
+				<div id="dialog-form-message" class="hidden rounded text-sm text-left"></div>
+			</div>
 		</div>
 	</div>
 	@CloseDialogScript()
@@ -141,9 +147,16 @@ templ DialogOk(message string, dialog domain.Dialog, btnClose, btnOk domain.Butt
 			<!-- Content -->
 			<div class="px-1 py-1 col-span-2 max-h-[60vh] overflow-y-auto">
 				<p class="mt-3 mb-3 ml-3 text-xl flex items-center gap-2">
-					<svg class="w-[40px] h-[40px] text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-						<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.529 9.988a2.502 2.502 0 1 1 5 .191A2.441 2.441 0 0 1 12 12.582V14m-.01 3.008H12M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
-					</svg>
+					if dialog.IsError {
+						<!-- Error: a red circle with a cross -->
+						<svg class="w-[40px] h-[40px] flex-shrink-0 text-red-600" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+							<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 9-6 6m0-6 6 6m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+						</svg>
+					} else {
+						<svg class="w-[40px] h-[40px] text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+							<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.529 9.988a2.502 2.502 0 1 1 5 .191A2.441 2.441 0 0 1 12 12.582V14m-.01 3.008H12M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+						</svg>
+					}
 					{ message }
 				</p>
 			</div>

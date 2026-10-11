@@ -45,22 +45,22 @@ func NewKrajPoslovneGodineHandler(service robnosvc.KrajPoslovneGodineService, cf
 }
 
 func (h *KrajPoslovneGodineHandler) Main(c *gin.Context) {
-	common.SetActiveTab(h.tabs, 0)
-	common.SetActiveTab(h.subtabs, 0)
+	tabs := common.SetActiveTab(h.tabs, 0)
+	subtabs := common.SetActiveTab(h.subtabs, 0)
 	mag, err := h.service.GetMagacini(c.Request.Context())
 	if err != nil {
 		common.WriteJSONResponse(c, 500, false, nil, err.Error())
 		return
 	}
 	tbl := h.table("Popisne liste", h.service.GetType1Fields())
-	if err := tmpl_robno.KrajPoslovneGodineMain(h.tabs, h.subtabs, tbl, mag, h.translator).Render(c, c.Writer); err != nil {
+	if err := tmpl_robno.KrajPoslovneGodineMain(tabs, subtabs, tbl, mag, h.translator).Render(c, c.Writer); err != nil {
 		common.WriteJSONResponse(c, 500, false, nil, common.ErrMsgRenderTemplate)
 	}
 }
 
 func (h *KrajPoslovneGodineHandler) PopisPoSifri(c *gin.Context) {
-	common.SetActiveTab(h.tabs, 0)
-	common.SetActiveTab(h.subtabs, 0)
+	tabs := common.SetActiveTab(h.tabs, 0)
+	subtabs := common.SetActiveTab(h.subtabs, 0)
 	data, err := h.service.GetPopis(c.Request.Context(), h.params(c))
 	if err != nil {
 		common.WriteJSONResponse(c, 500, false, nil, err.Error())
@@ -72,7 +72,7 @@ func (h *KrajPoslovneGodineHandler) PopisPoSifri(c *gin.Context) {
 		return
 	}
 	mag, _ := h.service.GetMagacini(c.Request.Context())
-	if err := tmpl_robno.KrajPoslovneGodinePopis(h.tabs, h.subtabs, tbl, mag, h.translator).Render(c, c.Writer); err != nil {
+	if err := tmpl_robno.KrajPoslovneGodinePopis(tabs, subtabs, tbl, mag, h.translator).Render(c, c.Writer); err != nil {
 		common.WriteJSONResponse(c, 500, false, nil, common.ErrMsgRenderTemplate)
 	}
 }
@@ -88,7 +88,7 @@ func (h *KrajPoslovneGodineHandler) PopisPoGrupiNazivu(c *gin.Context) {
 }
 
 func (h *KrajPoslovneGodineHandler) Obrada(c *gin.Context) {
-	common.SetActiveTab(h.tabs, 1)
+	tabs := common.SetActiveTab(h.tabs, 1)
 	var rows []domain.KrajVisakManjakRow
 	if c.Request.Header.Get("X-Request-Source") == "btnobrada" {
 		var err error
@@ -104,12 +104,12 @@ func (h *KrajPoslovneGodineHandler) Obrada(c *gin.Context) {
 		}
 	}
 	mag, _ := h.service.GetMagacini(c.Request.Context())
-	if err := tmpl_robno.KrajPoslovneGodineObrada(h.tabs, h.tableVisakRows("Obrada viškova i manjkova", rows), mag, h.translator).Render(c, c.Writer); err != nil {
+	if err := tmpl_robno.KrajPoslovneGodineObrada(tabs, h.tableVisakRows("Obrada viškova i manjkova", rows), mag, h.translator).Render(c, c.Writer); err != nil {
 		common.WriteJSONResponse(c, 500, false, nil, common.ErrMsgRenderTemplate)
 	}
 }
 func (h *KrajPoslovneGodineHandler) Prepis(c *gin.Context) {
-	common.SetActiveTab(h.tabs, 2)
+	tabs := common.SetActiveTab(h.tabs, 2)
 	if c.Request.Header.Get("X-Request-Source") == "btnprepis" {
 		year, _ := strconv.Atoi(c.Query("novagod"))
 		p := h.params(c)
@@ -124,15 +124,16 @@ func (h *KrajPoslovneGodineHandler) Prepis(c *gin.Context) {
 		}
 	}
 	mag, _ := h.service.GetMagacini(c.Request.Context())
-	if err := tmpl_robno.KrajPoslovneGodinePrepis(h.tabs, h.table("Prepis stanja", h.service.GetType1Fields()), mag, h.translator).Render(c, c.Writer); err != nil {
+	if err := tmpl_robno.KrajPoslovneGodinePrepis(tabs, h.table("Prepis stanja", h.service.GetType1Fields()), mag, h.translator).Render(c, c.Writer); err != nil {
 		common.WriteJSONResponse(c, 500, false, nil, common.ErrMsgRenderTemplate)
 	}
 }
 
 func (h *KrajPoslovneGodineHandler) renderRows(c *gin.Context, tab int, print bool) {
-	common.SetActiveTab(h.tabs, tab)
+	tabs := common.SetActiveTab(h.tabs, tab)
+	subtabs := domain.TabData{}
 	if tab == 0 {
-		common.SetActiveTab(h.subtabs, h.subtabIndex(c.Query("tip")))
+		subtabs = common.SetActiveTab(h.subtabs, h.subtabIndex(c.Query("tip")))
 	}
 	data, err := h.service.GetPopis(c.Request.Context(), h.params(c))
 	if err != nil {
@@ -149,7 +150,7 @@ func (h *KrajPoslovneGodineHandler) renderRows(c *gin.Context, tab int, print bo
 		return
 	}
 	mag, _ := h.service.GetMagacini(c.Request.Context())
-	if err := tmpl_robno.KrajPoslovneGodinePopis(h.tabs, h.subtabs, tbl, mag, h.translator).Render(c, c.Writer); err != nil {
+	if err := tmpl_robno.KrajPoslovneGodinePopis(tabs, subtabs, tbl, mag, h.translator).Render(c, c.Writer); err != nil {
 		common.WriteJSONResponse(c, 500, false, nil, common.ErrMsgRenderTemplate)
 	}
 }

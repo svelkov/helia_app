@@ -146,11 +146,18 @@ func RenderDialogContent(c *gin.Context, dialog domain.Dialog, fields []domain.F
 
 	return component.Render(c.Request.Context(), c.Writer)
 }
-func RenderDialogOK(c *gin.Context, id, message string) {
+
+// RenderDialogOK renders the info dialog of the message (DialogOk); isError (optional) shows the error
+// icon and the title "Greška" instead of the info icon and "Info".
+func RenderDialogOK(c *gin.Context, id, message string, isError ...bool) {
 	translator := i18n.GetInstance()
 	dialog := domain.Dialog{
-		Id:    id,
-		Title: "Info",
+		Id:      id,
+		Title:   "Info",
+		IsError: len(isError) > 0 && isError[0],
+	}
+	if dialog.IsError {
+		dialog.Title = "Greška"
 	}
 	btnClose := domain.Button{
 		Id:        "btn-close",

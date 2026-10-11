@@ -39,6 +39,8 @@ type Dialog struct {
 	HxSwap        string
 	HxOn          string
 	HxRequestType string
+	// IsError shows the error icon in DialogOk (else the info icon).
+	IsError bool
 }
 
 // SearchPopupConfig holds configuration for the search popup

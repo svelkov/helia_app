@@ -124,7 +124,7 @@ templ RobnoKompodaciPregledRealizacijePoKupcimaArtiklima(tabs domain.TabData, tb
 							</div>
 							<div class="flex items-center gap-1">
 								@components.LabelField(domain.LabelFieldConfig{ID: "odsifreartikla", LabelText: translator.Label("Od šifre artikla"), ClassLabel: common.ClassLabel + " w-32"})
-								@components.TextInputField(domain.InputFieldConfig{ID: "odsifreartikla", Name: "odsifreartikla", FieldType: "text", Value: "0",  OnInput: "clearFieldError", OnFocus: "clearFieldError", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "3"})
+								@components.TextInputField(domain.InputFieldConfig{ID: "odsifreartikla", Name: "odsifreartikla", FieldType: "text", Value: "0", OnInput: "clearFieldError", OnFocus: "clearFieldError", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "3"})
 								@components.SearchButton(domain.SearchButtonConfig{ID: "search-odsifreartikla", Name: "search-odsifreartikla", HxUrl: "/api/promet/searchbutton", HxTarget: "#search-dropdown", HxSwap: "innerHTML", HxVals: `js:{"destfield": "odsifreartikla"}`, ClassButton: common.ClassButton})
 								@components.TextInputField(domain.InputFieldConfig{ID: "odsifranaziv", Name: "odsifranaziv", FieldType: "text", Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1"})
 							</div>
@@ -137,7 +137,7 @@ templ RobnoKompodaciPregledRealizacijePoKupcimaArtiklima(tabs domain.TabData, tb
 							<div class="flex items-center justify-between gap-1">
 								<div class="flex items-center gap-1">
 									@components.LabelField(domain.LabelFieldConfig{ID: "oddatuma", LabelText: translator.Label("Od datuma"), ClassLabel: common.ClassLabel + " w-32"})
-									@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date",  OnInput: "clearFieldError", OnFocus: "clearFieldError", Value: time.Date(gnGod, time.Now().Month(), 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "3"})
+									@components.TextInputField(domain.InputFieldConfig{ID: "oddatuma", Name: "oddatuma", FieldType: "date", OnInput: "clearFieldError", OnFocus: "clearFieldError", Value: time.Date(gnGod, time.Now().Month(), 1, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "3"})
 									@components.LabelField(domain.LabelFieldConfig{ID: "dodatuma", LabelText: translator.Label("Do datuma"), ClassLabel: common.ClassLabel + " w-32"})
 									@components.TextInputField(domain.InputFieldConfig{ID: "dodatuma", Name: "dodatuma", FieldType: "date", OnInput: "clearFieldError", OnFocus: "clearFieldError", Value: time.Date(gnGod, time.Now().Month()+1, 0, 0, 0, 0, 0, time.UTC).Format(common.HtmlLayout), ClassInput: common.ClassInputTextEnabled + " w-32", TabIndex: "4"})
 								</div>
@@ -206,7 +206,7 @@ templ RobnoKompodaciPregledRealizacijePoArtiklima(tabs domain.TabData, tbl domai
 							</div>
 							<div class="flex items-center gap-1">
 								@components.LabelField(domain.LabelFieldConfig{ID: "odsifreartikla", LabelText: translator.Label("Od šifre artikla"), ClassLabel: common.ClassLabel + " w-32"})
-								@components.TextInputField(domain.InputFieldConfig{ID: "odsifreartikla", Name: "odsifreartikla", FieldType: "text", Value: "0",  OnInput: "clearFieldError", OnFocus: "clearFieldError", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "3"})
+								@components.TextInputField(domain.InputFieldConfig{ID: "odsifreartikla", Name: "odsifreartikla", FieldType: "text", Value: "0", OnInput: "clearFieldError", OnFocus: "clearFieldError", ClassInput: common.ClassInputTextEnabled + " w-24", TabIndex: "3"})
 								@components.SearchButton(domain.SearchButtonConfig{ID: "search-odsifreartikla", Name: "search-odsifreartikla", HxUrl: "/api/promet/searchbutton", HxTarget: "#search-dropdown", HxSwap: "innerHTML", HxVals: `js:{"destfield": "odsifreartikla"}`, ClassButton: common.ClassButton})
 								@components.TextInputField(domain.InputFieldConfig{ID: "odsifranaziv", Name: "odsifranaziv", FieldType: "text", Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1"})
 							</div>

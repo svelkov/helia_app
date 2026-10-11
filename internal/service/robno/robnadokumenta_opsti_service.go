@@ -1,0 +1,927 @@
+package robno
+
+import (
+	"context"
+	"database/sql"
+	"fmt"
+	"math"
+	"regexp"
+	"strconv"
+	"strings"
+
+	"helia/internal/common"
+	"helia/internal/domain"
+)
+
+// ---------------------------------------------------------------------------------------------------
+// Opšti dokumenti (the groups OPD, POP and POT, the legacy rob_opsti_dokumenti_opd): a robni dokument with
+// the protivstav konto and the org. jedinice and mesta troška of the document and of the robe; the document
+// of the vrsta, its stavke are added and deleted (the legacy has no change of a stavka)
+// ---------------------------------------------------------------------------------------------------
+
+// robOpstiServis tells whether the opis of a nalog has the word "servis" (the legacy bServis: the cena of a
+// stavka of a magacin of the nabavna cena is entered).
+var robOpstiServis = regexp.MustCompile(`(?i)\bservis\b`)
+
+// robOpstiTipArtikla are the tipovi of the artikli of a magacin by its tip (the legacy tipART of
+// rob_opsti_dokumenti_opd) with the opis of the magacin (sMAGOP).
+func robOpstiTipArtikla(tipmag string) (tipovi []string, opis string) {
+	switch strings.ToUpper(strings.TrimSpace(tipmag)) {
+	case "V":
+		return []string{"R"}, "magacinu veleprodaje"
+	case "L":
+		return []string{"L"}, "magacinu poluproizvoda"
+	case "S":
+		return []string{"S", "A"}, "magacinu sirovina"
+	case "G":
+		return []string{"P"}, "magacinu gotovih proizvoda"
+	case "M":
+		return []string{"R"}, "magacinu maloprodaje"
+	case "D":
+		return []string{"D"}, "magacinu rezervnih delova"
+	}
+	return nil, ""
+}
+
+// robOpstiCenaNaziv is the label of the cena of the stavke by the tip of the magacin (the legacy caption of
+// EDT_CENA): the magacini of the poluproizvodi, the sirovine, the gotovi proizvodi and the rezervni delovi
+// have the magacinska cena, the others the veleprodajna one.
+func robOpstiCenaNaziv(tipmag string) string {
+	switch strings.ToUpper(strings.TrimSpace(tipmag)) {
+	case "L", "S", "G", "D":
+		return "Magacinska cena"
+	}
+	return "Veleprodajna cena"
+}
+
+// GetRobOpstiDokument returns the document of the "Opšti dokumenti" screen with the broj the user selected or
+// typed, like the legacy exit of EDT_DOKUM of rob_opsti_dokumenti_opd: the document of the faktura
+// (GetRobFaktureDokument: an existing one of the nalog that can be changed, else a new one with the message
+// why; a new one with the datum of the nalog) with the protivstav konto and šifra with its naziv, the org.
+// jedinica and the mesto troška where the roba goes and the opis of the vrsta; a new document has the first
+// org. jedinica with its first mesto troška for both (the legacy PuniCOMBO) and no datum izvornog dokumenta.
+// The entry of a stavka has the first konto of the magacin, its tip zaliha and the label and the state of
+// the cena.
+func (s *RobnoDokumentaResource) GetRobOpstiDokument(ctx context.Context, params domain.RobnoFaktureDokumentParams) (domain.RobnoOpstiDokument, error) {
+	res := domain.RobnoOpstiDokument{}
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		return res, fmt.Errorf("no user session found")
+	}
+	dok, err := s.GetRobFaktureDokument(ctx, params)
+	if err != nil {
+		return res, err
+	}
+	res.Header.RobnoFaktureHeaderView, res.Poruka = dok.Header, dok.Poruka
+	h := &res.Header
+	vrd := common.StringToInt(h.Vrd)
+	grupa, err := s.robInterniGrupa(ctx, vrd)
+	if err != nil {
+		return res, err
+	}
+	h.Fin, res.Stavka.Fin = grupa == "FIN", grupa == "FIN"
+	if rows, err := s.unos.Tekst.GetAllCustom(ctx, `select coalesce(opis, '') as key from dokvrsta where god = $1 and kar = $2 and vrd = $3 limit 1`,
+		"", []any{userSession.SelectedGod, userSession.SelectedKar, vrd}, "", ""); err == nil && rows != nil && len(*rows) > 0 {
+		h.OpisVrste = strings.TrimSpace((*rows)[0].Key)
+	}
+
+	if h.RdokID > 0 {
+		rows, err := s.unos.Tekst.GetAllCustom(ctx, `select coalesce(trim(r.tkonto), '') as key, coalesce(trim(r.tsifra), '') as c1,
+				coalesce(r.idorgjed1::text, '') as c2, coalesce(concat_ws(' - ', nullif(o.ojozn, ''), nullif(o.naziv, '')), '') as c3,
+				coalesce(r.mestotrid1::text, '') as c4, coalesce(concat_ws(' - ', nullif(m.mtroska, ''), nullif(m.opis, '')), '') as c5
+			from rdok r left join orgjed o on o.idorgjed = r.idorgjed1 left join mestotr m on m.mestotrid = r.mestotrid1
+			where r.rdokid = $1`, "", []any{h.RdokID}, "", "")
+		if err != nil {
+			return res, err
+		}
+		if rows != nil && len(*rows) > 0 {
+			r := (*rows)[0]
+			h.Tkonto, h.Tsifra = r.Key, r.C1
+			h.Orgjed1, h.Orgjed1Text = robNullID(r.C2), r.C3
+			h.MestoTroska1, h.MestoTroska1Text = robNullID(r.C4), r.C5
+		}
+		if h.Tkonto != "" {
+			if h.TkontoNaziv, err = s.robOpstiNazivKonta(ctx, h.Tkonto, h.Tsifra); err != nil {
+				return res, err
+			}
+		}
+	} else {
+		// A new document has no datum izvornog dokumenta (the legacy NoviDOK).
+		h.IzvorniDokDatum = robNullTime(sql.NullTime{})
+		// The first org. jedinica with its first mesto troška, for the document and for the roba.
+		rows, err := s.unos.Tekst.GetAllCustom(ctx, `select o.idorgjed::text as key, coalesce(concat_ws(' - ', nullif(o.ojozn, ''), nullif(o.naziv, '')), '') as c1,
+				coalesce(m.mestotrid::text, '') as c2, coalesce(concat_ws(' - ', nullif(m.mtroska, ''), nullif(m.opis, '')), '') as c3
+			from orgjed o left join lateral (select x.mestotrid, x.mtroska, x.opis from mestotr x where x.idorgjed = o.idorgjed
+				order by x.mtroska, x.mestotrid limit 1) m on true
+			where o.god = $1 and o.kar = $2 order by o.ojozn, o.idorgjed limit 1`, "", []any{userSession.SelectedGod, userSession.SelectedKar}, "", "")
+		if err == nil && rows != nil && len(*rows) > 0 {
+			r := (*rows)[0]
+			if !h.Orgejed.Valid {
+				h.Orgejed, h.OrgjedText, h.MestoTroska, h.MestoTroskaText = robNullID(r.Key), r.C1, robNullID(r.C2), r.C3
+			}
+			h.Orgjed1, h.Orgjed1Text, h.MestoTroska1, h.MestoTroska1Text = robNullID(r.Key), r.C1, robNullID(r.C2), r.C3
+		}
+	}
+
+	// The entry of a stavka: the first konto of the magacin, the tip zaliha, the cena.
+	st := &res.Stavka
+	st.RdokID = h.RdokID
+	if st.Konto, err = s.robUslugeKontoMagacina(ctx, h.MagaciniID); err != nil {
+		return res, err
+	}
+	rows, err := s.unos.Tekst.GetAllCustom(ctx, `select coalesce(m.tipzal, 0)::text as key, coalesce(m.nacvodzal, 0)::text as c1,
+			coalesce(m.tipmag, '') as c2, coalesce((select n.opis from rnal n where n.rnalid = $2), '') as c3
+		from magacini m where m.magaciniid = $1`, "", []any{h.MagaciniID, h.RnalID}, "", "")
+	if err != nil {
+		return res, err
+	}
+	if rows != nil && len(*rows) > 0 {
+		r := (*rows)[0]
+		st.Tipzal = common.StringToInt(r.Key)
+		st.NabCena = common.StringToInt(r.C1) == 3
+		st.CenaZakljucana = st.NabCena && !robOpstiServis.MatchString(r.C3)
+		st.CenaNaziv = robOpstiCenaNaziv(r.C2)
+	}
+	return res, nil
+}
+
+// robOpstiNazivKonta is the naziv of the protivstav konto (the konto of the kontni plan, fkpl.vkonta 2) or of
+// its analitička šifra (vkonta 1), "Nepostojeći konto!" without it (the legacy exit of EDT_TKONTO and
+// EDT_TSIFRA).
+func (s *RobnoDokumentaResource) robOpstiNazivKonta(ctx context.Context, konto, sifra string) (string, error) {
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		return "", fmt.Errorf("no user session found")
+	}
+	query, args := `select coalesce(naziv, '') as key from fkpl where god = $1 and kar = $2 and konto = $3 and vkonta = 2 limit 1`,
+		[]any{userSession.SelectedGod, userSession.SelectedKar, strings.TrimSpace(konto)}
+	if strings.TrimSpace(sifra) != "" {
+		query = `select coalesce(naziv, '') as key from fkpl where god = $1 and kar = $2 and konto = $3 and sifra = $4 limit 1`
+		args = append(args, strings.TrimSpace(sifra))
+	}
+	rows, err := s.unos.Tekst.GetAllCustom(ctx, query, "", args, "", "")
+	if err != nil {
+		return "", err
+	}
+	if rows == nil || len(*rows) == 0 {
+		return "Nepostojeći konto!", nil
+	}
+	return (*rows)[0].Key, nil
+}
+
+// ValidateRobOpsti validates the header of an opšti dokument before it is saved, like the legacy
+// ValidacijaRDOK of rob_opsti_dokumenti_opd: the datum dokumenta is required and not after the datum naloga;
+// the org. jedinica and the mesto troška of the document and of the roba are required and exist; a given
+// protivstav konto exists in the kontni plan (fkpl.vkonta 2); the broj dokumenta is a whole number.
+func (s *RobnoDokumentaResource) ValidateRobOpsti(ctx context.Context, params domain.RobnoOpstiParams) []domain.FieldError {
+	fieldErrors := []domain.FieldError{}
+	add := func(field, message string) {
+		fieldErrors = append(fieldErrors, domain.FieldError{Field: field, ErrorMessage: message})
+	}
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		add("brdok", common.ErrMsgSessionNotFound)
+		return fieldErrors
+	}
+	if dadok, ok := robnoUnosDatum(params.DatumDokum); !ok {
+		add("datumfakturisanja", robnoUnosDatumMsg(params.DatumDokum))
+	} else if rnal, found, err := s.robnoUnosNalog(ctx, params.RnalID); err != nil {
+		add("datumfakturisanja", common.ErrMsgReadData)
+	} else if found && rnal.Danal.Valid && dadok.After(rnal.Danal.Time) {
+		add("datumfakturisanja", "Posle datuma naloga.")
+	}
+	s.robnoUnosObavezanID(ctx, params.Orgjed, "idorgjed", "select count(*) from orgjed where idorgjed = $1", add)
+	if s.robOpstiFin(ctx, params.Vrd) {
+		// A finansijski opšti dokument (the legacy ValidacijaRDOK of rob_opsti_dokumenti_FIN): the org. jedinica
+		// only; a given mesto troška exists.
+		if id, given, ok := robnoUnosID(params.MestoTroska); !ok {
+			add("mestotrid", robnoUnosMsgNePostoji)
+		} else if given {
+			if exists, err := s.robnoUnosPostoji(ctx, "select count(*) from mestotr where mestotrid = $1", id); err != nil {
+				add("mestotrid", common.ErrMsgReadData)
+			} else if !exists {
+				add("mestotrid", robnoUnosMsgNePostoji)
+			}
+		}
+		s.robOpstiBrojDokumenta(params.BrojDokum, add)
+		return fieldErrors
+	}
+	s.robnoUnosObavezanID(ctx, params.MestoTroska, "mestotrid", "select count(*) from mestotr where mestotrid = $1", add)
+	s.robnoUnosObavezanID(ctx, params.Orgjed1, "idorgjed1", "select count(*) from orgjed where idorgjed = $1", add)
+	s.robnoUnosObavezanID(ctx, params.MestoTroska1, "mestotrid1", "select count(*) from mestotr where mestotrid = $1", add)
+	if tkonto := strings.TrimSpace(params.Tkonto); tkonto != "" {
+		if exists, err := s.robnoUnosPostoji(ctx, `select count(*) from fkpl where god = $1 and kar = $2 and konto = $3 and vkonta = 2`,
+			userSession.SelectedGod, userSession.SelectedKar, tkonto); err != nil {
+			add("tkonto", common.ErrMsgReadData)
+		} else if !exists {
+			add("tkonto", robnoUnosMsgNePostoji)
+		}
+	}
+	s.robOpstiBrojDokumenta(params.BrojDokum, add)
+	return fieldErrors
+}
+
+// robOpstiBrojDokumenta checks the broj of an opšti dokument: required, a whole number.
+func (s *RobnoDokumentaResource) robOpstiBrojDokumenta(brojDokum string, add func(field, message string)) {
+	switch broj := strings.TrimSpace(brojDokum); {
+	case broj == "":
+		add("brdok", common.ErrMsgObavezanPodatak)
+	default:
+		if _, err := strconv.Atoi(broj); err != nil {
+			add("brdok", robnoUnosMsgCeoBroj)
+		}
+	}
+}
+
+// robOpstiFin tells whether the vrsta is one of a finansijski opšti dokument (the group FIN, the legacy
+// rob_opsti_dokumenti_FIN).
+func (s *RobnoDokumentaResource) robOpstiFin(ctx context.Context, vrd string) bool {
+	grupa, err := s.robInterniGrupa(ctx, common.StringToInt(vrd))
+	return err == nil && grupa == "FIN"
+}
+
+// SaveRobOpsti saves the header of an opšti dokument (the legacy SnimiRDOK of rob_opsti_dokumenti_opd): a new
+// document of the nalog (SaveRobniDokument: with the columns of the nalog, counted in it) or the existing one
+// of the vrsta and broj, with the datum, the opis, the izvorni dokument, the protivstav konto and šifra and the
+// org. jedinice and mesta troška of the document and of the roba; a new one has no rok, kupac or napomena o
+// poreskom oslobođenju. It returns the rdokid of the document.
+func (s *RobnoDokumentaResource) SaveRobOpsti(ctx context.Context, params domain.RobnoOpstiParams) (int64, error) {
+	id := func(value string) int64 {
+		v, _, _ := robnoUnosID(value)
+		return v
+	}
+	dok := domain.RobniDokumentSnimanje{
+		RnalID:     params.RnalID,
+		MagaciniID: params.MagaciniID,
+		Vrd:        common.StringToInt(params.Vrd),
+		Dokum:      common.StringToInt(params.BrojDokum),
+		Polja: []domain.Fields{
+			robPoljeDatum("dadok", params.DatumDokum),
+			robPoljeText("opis", params.Opis),
+			robPoljeDatum("datiz", params.IzvorniDokDatum),
+			robPoljeText("dokiz", params.IzvorniDokum),
+			{Name: "rok", Value: "0"},
+			{Name: "fkto", Value: ""},
+			{Name: "fana", Value: ""},
+			{Name: "pornapomena", Value: ""},
+			robPoljeID("idorgjed", id(params.Orgjed)),
+			robPoljeID("mestotrid", id(params.MestoTroska)),
+			robPoljeID("idorgjed1", id(params.Orgjed1)),
+			robPoljeID("mestotrid1", id(params.MestoTroska1)),
+			robPoljeText("tkonto", params.Tkonto),
+			robPoljeText("tsifra", params.Tsifra),
+		},
+	}
+	// A finansijski opšti dokument (the legacy SnimiRDOK of rob_opsti_dokumenti_FIN) has the org. jedinica and
+	// the mesto troška of the document only.
+	if s.robOpstiFin(ctx, params.Vrd) {
+		polja := dok.Polja[:0]
+		for _, p := range dok.Polja {
+			if !robSadrzi([]string{"idorgjed1", "mestotrid1", "tkonto", "tsifra"}, p.Name) {
+				polja = append(polja, p)
+			}
+		}
+		dok.Polja = polja
+	}
+	return s.SaveRobniDokument(ctx, dok)
+}
+
+// robOpstiRsta are the stanje and the cene of an artikal in a konto of the magacin (rsta).
+type robOpstiRsta struct {
+	found                                      bool
+	ulaz, izlaz, dug, pot, cena, ncena, prosnc float64
+}
+
+// robOpstiStanje reads the stanje and the cene of the artikal in the konto of the magacin (rsta).
+func (s *RobnoDokumentaResource) robOpstiStanje(ctx context.Context, magaciniID int, konto string, sifra int) (robOpstiRsta, error) {
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		return robOpstiRsta{}, fmt.Errorf("no user session found")
+	}
+	rows, err := s.unos.Tekst.GetAllCustom(ctx, `select coalesce(ulaz, 0)::float8::text as key, coalesce(izlaz, 0)::float8::text as c1,
+			coalesce(dug, 0)::float8::text as c2, coalesce(pot, 0)::float8::text as c3, coalesce(cena, 0)::float8::text as c4,
+			coalesce(ncena, 0)::float8::text as c5, coalesce(prosnc, 0)::float8::text as c6
+		from rsta where god = $1 and kar = $2 and magaciniid = $3 and konto = $4 and sifra = $5 order by rstaid limit 1`, "",
+		[]any{userSession.SelectedGod, userSession.SelectedKar, magaciniID, strings.TrimSpace(konto), sifra}, "", "")
+	if err != nil || rows == nil || len(*rows) == 0 {
+		return robOpstiRsta{}, err
+	}
+	r := (*rows)[0]
+	f := common.StringToFloat64
+	return robOpstiRsta{found: true, ulaz: f(r.Key), izlaz: f(r.C1), dug: f(r.C2), pot: f(r.C3), cena: f(r.C4), ncena: f(r.C5), prosnc: f(r.C6)}, nil
+}
+
+// cene are the cena and the nabavna cena of a stavka of an opšti dokument from the stanje (the legacy exit of
+// EDT_SIFRA): in a magacin of the nabavna cena both the prosečna nabavna cena; else, for a vrsta of the
+// prosečne cene (its opis has "PROS"), the vrednost of the stanje by its količina (when both are positive),
+// else the cena of the stanje, and the nabavna cena of the stanje.
+func (r robOpstiRsta) cene(nabavnaCena, prosecna bool) (cena, ncena float64) {
+	if !r.found {
+		return 0, 0
+	}
+	if nabavnaCena {
+		return r.prosnc, r.prosnc
+	}
+	cena = r.cena
+	if prosecna && r.ulaz-r.izlaz > 0 && r.dug-r.pot > 0 {
+		cena = robZaokruzi((r.dug-r.pot)/(r.ulaz-r.izlaz), 2)
+	}
+	return cena, r.ncena
+}
+
+// robOpstiDrsta reads the stanje of the artikal by lot (drsta: the konto, the šifra, the magacin, the OTK broj,
+// the serija and the rok); found is false without it.
+func (s *RobnoDokumentaResource) robOpstiDrsta(ctx context.Context, mag int, konto string, sifra int, otk, serija string, roktr int64) (float64, bool, error) {
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		return 0, false, fmt.Errorf("no user session found")
+	}
+	rows, err := s.unos.Tekst.GetAllCustom(ctx, `select (coalesce(ulaz, 0) - coalesce(izlaz, 0))::float8::text as key from drsta
+		where god = $1 and kar = $2 and konto = $3 and sifra = $4 and mag = $5 and otk = $6 and serija = $7 and roktr = $8
+		order by rstaid limit 1`, "", []any{userSession.SelectedGod, userSession.SelectedKar, strings.TrimSpace(konto), sifra, mag,
+		strings.TrimSpace(otk), strings.TrimSpace(serija), roktr}, "", "")
+	if err != nil || rows == nil || len(*rows) == 0 {
+		return 0, false, err
+	}
+	return common.StringToFloat64((*rows)[0].Key), true, nil
+}
+
+// robOpstiProsecna tells whether the vrsta of the document is one of the prosečne cene (the legacy ProsSTA: its
+// opis has "PROS").
+func (s *RobnoDokumentaResource) robOpstiProsecna(ctx context.Context, vrd int) bool {
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		return false
+	}
+	ok, err := s.robnoUnosPostoji(ctx, `select count(*) from dokvrsta where god = $1 and kar = $2 and vrd = $3 and opis like '%PROS%'`,
+		userSession.SelectedGod, userSession.SelectedKar, vrd)
+	return err == nil && ok
+}
+
+// GetRobOpstiArtikal returns the artikal of a stavka of an opšti dokument with what the form of the stavke
+// shows of it, like the legacy exit of EDT_SIFRA of rob_opsti_dokumenti_opd: the artikal by its šifra, or by
+// its barkod for a value longer than 6 characters, with its naziv, JM and konto (the konto of the artikal,
+// else the konto of the form); its cene (see cene) and its stanje in the konto. In a magacin of the tip zaliha
+// 2 the artikal must exist and be of a tip of the magacin (else Poruka), and its stanje is the one of the lot
+// of the form (the OTK broj, the serija and the rok), without it the cene are 0. found is false for the šifra
+// 0 and an artikal that does not exist.
+func (s *RobnoDokumentaResource) GetRobOpstiArtikal(ctx context.Context, rdokID int64, sifraIliBarkod, konto, otk, serija, rok string) (domain.RobOpstiArtikal, bool, error) {
+	a := domain.RobOpstiArtikal{}
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		return a, false, fmt.Errorf("no user session found")
+	}
+	k, found, err := s.GetRobStavkeKontekst(ctx, rdokID)
+	if err != nil || !found {
+		return a, false, err
+	}
+	vrednost := strings.TrimSpace(sifraIliBarkod)
+	if vrednost == "" || vrednost == "0" {
+		return a, false, nil
+	}
+	kolona := "a.sifra::text"
+	if len(vrednost) > 6 {
+		kolona = "a.barkod"
+	}
+	rows, err := s.unos.Tekst.GetAllCustom(ctx, fmt.Sprintf(`select a.sifra::text as key, coalesce(a.naziv, '') as c1, coalesce(a.jm, '') as c2,
+			trim(coalesce(a.konto, '')) as c3, upper(trim(coalesce(a.tip, ''))) as c4
+		from rsif a where a.god = $1 and a.kar = $2 and %s = $3 limit 1`, kolona), "",
+		[]any{userSession.SelectedGod, userSession.SelectedKar, vrednost}, "", "")
+	if err != nil {
+		return a, false, err
+	}
+	if rows == nil || len(*rows) == 0 {
+		if k.Tipzal == 2 {
+			a.Poruka = "Artikal sa izabranom šifrom ne postoji."
+		}
+		return a, false, nil
+	}
+	r := (*rows)[0]
+	if grupa, _ := s.robInterniGrupa(ctx, k.Vrd); grupa == "FIN" {
+		a.Sifra, a.Naziv, a.Jm, a.Konto = common.StringToInt(r.Key), r.C1, r.C2, strings.TrimSpace(konto)
+		st, err := s.robOpstiStanje(ctx, k.MagaciniID, a.Konto, a.Sifra)
+		if err != nil {
+			return a, true, err
+		}
+		a.Stanje = st.ulaz - st.izlaz
+		return a, true, nil
+	}
+	if k.Tipzal == 2 {
+		tipovi, opis := robOpstiTipArtikla(k.Tipmag)
+		if !robSadrzi(tipovi, r.C4) {
+			a.Poruka = "Izabrani tip artikla ne pripada " + opis + "."
+			return a, false, nil
+		}
+	}
+	a.Sifra, a.Naziv, a.Jm = common.StringToInt(r.Key), r.C1, r.C2
+	a.Konto = strings.TrimSpace(konto)
+	if r.C3 != "" {
+		a.Konto = r.C3
+	}
+	st, err := s.robOpstiStanje(ctx, k.MagaciniID, a.Konto, a.Sifra)
+	if err != nil {
+		return a, true, err
+	}
+	switch k.Tipzal {
+	case 2:
+		datum, _ := robnoUnosDatum(rok)
+		stanje, lot, err := s.robOpstiDrsta(ctx, k.Mag, a.Konto, a.Sifra, otk, serija, RobWinDevDatum(datum))
+		if err != nil {
+			return a, true, err
+		}
+		if lot {
+			a.Cena, a.Ncena = st.cene(k.NabavnaCena(), s.robOpstiProsecna(ctx, k.Vrd))
+			a.Stanje = stanje
+		}
+	default:
+		a.Cena, a.Ncena = st.cene(k.NabavnaCena(), s.robOpstiProsecna(ctx, k.Vrd))
+		a.Stanje = st.ulaz - st.izlaz
+	}
+	return a, true, nil
+}
+
+// ValidateRobOpstiStavka validates a stavka of an opšti dokument before it is saved, like the legacy Validacija
+// of rob_opsti_dokumenti_opd: the konto is required and a konto of the magacin; the šifra is required and the
+// artikal exists; the količina and the cena are greater than 0; a document posted on the potražuje (an izlaz)
+// that is not a storno has the količina in the stanje (of the lot in a magacin of the tip zaliha 2): the
+// legacy question "Nema dovoljno zaliha. Da li ste sigurni da izdajete robu?" is the error of the field. The
+// question of the OTK broj ("Unos bez OTK broja?") is not asked.
+func (s *RobnoDokumentaResource) ValidateRobOpstiStavka(ctx context.Context, params domain.RobOpstiStavkaParams) []domain.FieldError {
+	var fieldErrors []domain.FieldError
+	add := func(field, message string) {
+		fieldErrors = append(fieldErrors, domain.FieldError{Field: field, ErrorMessage: message})
+	}
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		add("sifraartikla", common.ErrMsgSessionNotFound)
+		return fieldErrors
+	}
+	k, found, err := s.GetRobStavkeKontekst(ctx, params.RdokID)
+	if err != nil || !found {
+		add("sifraartikla", common.ErrMsgReadData)
+		return fieldErrors
+	}
+	konto := strings.ReplaceAll(strings.TrimSpace(params.Konto), " ", "")
+	if konto == "" {
+		add("kontostavke", common.ErrMsgObavezanPodatak)
+	} else if konta, err := s.GetRobKontaMagacina(ctx, k.MagaciniID); err != nil {
+		add("kontostavke", common.ErrMsgReadData)
+	} else if !robSadrzi(konta, konto) {
+		add("kontostavke", "Nije konto magacina.")
+	}
+	sifra, sifraOK := 0, false
+	if sifraText := strings.TrimSpace(params.Sifra); sifraText == "" {
+		add("sifraartikla", common.ErrMsgObavezanPodatak)
+	} else if sifra, err = strconv.Atoi(sifraText); err != nil {
+		add("sifraartikla", robnoUnosMsgNePostoji)
+	} else if exists, err := s.robnoUnosPostoji(ctx, `select count(*) from rsif where god = $1 and kar = $2 and sifra = $3`,
+		userSession.SelectedGod, userSession.SelectedKar, sifra); err != nil {
+		add("sifraartikla", common.ErrMsgReadData)
+	} else if !exists {
+		add("sifraartikla", robnoUnosMsgNePostoji)
+	} else {
+		sifraOK = true
+	}
+	// A finansijski opšti dokument (the legacy Validacija of rob_opsti_dokumenti_FIN): the iznos is greater than 0.
+	if grupa, _ := s.robInterniGrupa(ctx, k.Vrd); grupa == "FIN" {
+		if common.StringToFloat64(params.Iznos) <= 0 {
+			add("iznosfin", robInterniMsgVeceOdNule)
+		}
+		return fieldErrors
+	}
+	kolicina := common.StringToFloat64(params.Kolic)
+	if strings.TrimSpace(params.Kolic) == "" {
+		add("kolicina", common.ErrMsgObavezanPodatak)
+	} else if kolicina <= 0 {
+		add("kolicina", robInterniMsgVeceOdNule)
+	}
+	if common.StringToFloat64(params.Cena) <= 0 {
+		add("cenaopd", robInterniMsgVeceOdNule)
+	}
+	// The zalihe of an izlaz.
+	if k.Potrazno() && !k.Storno() && sifraOK && konto != "" && kolicina > 0 {
+		var stanje float64
+		if k.Tipzal == 2 {
+			datum, _ := robnoUnosDatum(params.Rok)
+			if stanje, _, err = s.robOpstiDrsta(ctx, k.Mag, konto, sifra, params.Otk, params.Serija, RobWinDevDatum(datum)); err != nil {
+				add("kolicina", common.ErrMsgReadData)
+				return fieldErrors
+			}
+		} else {
+			st, err := s.robOpstiStanje(ctx, k.MagaciniID, konto, sifra)
+			if err != nil {
+				add("kolicina", common.ErrMsgReadData)
+				return fieldErrors
+			}
+			stanje = st.ulaz - st.izlaz
+		}
+		if stanje <= 0 || robZaokruzi(stanje-kolicina, 3) < 0 {
+			add("kolicina", "Nema dovoljno zaliha.")
+		}
+	}
+	return fieldErrors
+}
+
+// SaveRobOpstiStavka adds a stavka to an opšti dokument (the legacy CreateRpro of rob_opsti_dokumenti_opd) in
+// one transaction:
+//   - the iznos is the količina by the cena, rounded to 2 decimals, negative (with the količina) for a storno;
+//   - the stavka has the columns of its document (nalog, vrsta, broj, datum, magacin, kupac and prodavnica),
+//     the artikal (šifra, naziv, tarifa, rsifid), the konto, the cena, the nabavna cena, the OTK broj, the serija
+//     and the rok, the prosečna nabavna cena of the stanje (konprosnc), the next redni broj; rab and mma 0;
+//   - a new artikal of the cene (rcene) gets the cena and the nabavna cena of the stavka;
+//   - the nalog, the stanje of the artikal and the zalihe by lot get the iznos and the količina (AzurirajRNAL,
+//     AzurirajRSTA and AzurirajDRSTA with the cena of the stavka; the SR, RSAL and RSIN are not updated);
+//   - a document posted on the duguje (an ulaz) gives the stanje its new prosečna nabavna cena (the one of the
+//     stanje before and of the stavke by their količine), also the zalihe by lot of the artikal in the magacin;
+//   - the document gets the prodajna and the nabavna vrednost, the porez of the stavka (by the stopa of its
+//     tarifa on the datum of the document), its iznos and a stavka more.
+func (s *RobnoDokumentaResource) SaveRobOpstiStavka(ctx context.Context, params domain.RobOpstiStavkaParams) (rproID int64, err error) {
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		return 0, fmt.Errorf("no user session found")
+	}
+	k, found, err := s.GetRobStavkeKontekst(ctx, params.RdokID)
+	if err != nil {
+		return 0, err
+	}
+	if !found {
+		return 0, fmt.Errorf("dokument koji obrađujete ne postoji")
+	}
+	if grupa, err := s.robInterniGrupa(ctx, k.Vrd); err != nil {
+		return 0, err
+	} else if grupa == "FIN" {
+		return s.robOpstiFinStavka(ctx, k, params)
+	}
+	sifra := common.StringToInt(params.Sifra)
+	konto := strings.ReplaceAll(strings.TrimSpace(params.Konto), " ", "")
+	kolicinaForme := common.StringToFloat64(params.Kolic)
+	cena, ncena := common.StringToFloat64(params.Cena), common.StringToFloat64(params.Ncena)
+	kolicina, iznos := math.Abs(kolicinaForme), math.Abs(robZaokruzi(kolicinaForme*cena, 2))
+	if k.Storno() {
+		kolicina, iznos = -kolicina, -iznos
+	}
+	rok, _ := robnoUnosDatum(params.Rok)
+	st, err := s.robOpstiStanje(ctx, k.MagaciniID, konto, sifra)
+	if err != nil {
+		return 0, err
+	}
+
+	tx, err := s.unos.Rpro.BeginTx()
+	if err != nil {
+		return 0, err
+	}
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback()
+		}
+	}()
+	var rsifID int64
+	var po int
+	var naziv string
+	if err = tx.QueryRowContext(ctx, `select rsifid, coalesce(po, 0), coalesce(naziv, '') from rsif where god = $1 and kar = $2 and sifra = $3 limit 1`,
+		userSession.SelectedGod, userSession.SelectedKar, sifra).Scan(&rsifID, &po, &naziv); err != nil {
+		return 0, err
+	}
+	var pkto, pana string
+	var pdvpct float64
+	if err = tx.QueryRowContext(ctx, `select coalesce(pkto, ''), coalesce(pana, ''), `+fmt.Sprintf(robPoreskaStopaSQL, "$2", "dadok")+`
+		from rdok where rdokid = $1`, params.RdokID, po).Scan(&pkto, &pana, &pdvpct); err != nil {
+		return 0, err
+	}
+	var rbr int
+	if err = tx.QueryRowContext(ctx, `select coalesce(max(rbr), 0) + 1 from rpro where rnalid = $1 and rdokid = $2`, k.RnalID, params.RdokID).
+		Scan(&rbr); err != nil {
+		return 0, err
+	}
+	konprosnc := 0.0
+	if st.found {
+		konprosnc = st.prosnc
+	}
+	if rproID, err = s.unos.Rpro.CreateWithTx(ctx, tx, &domain.RobRproDto{}, "rproid", []domain.Fields{
+		{Name: "rnalid", Value: strconv.FormatInt(k.RnalID, 10)},
+		{Name: "nalog", Value: strconv.Itoa(k.Nalog)},
+		{Name: "rdokid", Value: strconv.FormatInt(k.RdokID, 10)},
+		{Name: "vrd", Value: strconv.Itoa(k.Vrd)},
+		{Name: "dokum", Value: strconv.Itoa(k.Dokum)},
+		robPoljeNullTime("dadok", k.Dadok),
+		{Name: "sifra", Value: strconv.Itoa(sifra)},
+		{Name: "naz1", Value: naziv},
+		{Name: "konto", Value: konto},
+		robPoljeFloat("cena", cena),
+		robPoljeFloat("kolic", kolicina),
+		robPoljeFloat("iznos", iznos),
+		{Name: "fkto", Value: k.Fkto},
+		robPoljeText("pkto", pkto),
+		robPoljeText("pana", pana),
+		robPoljeFloat("ncena", ncena),
+		{Name: "rab", Value: "0"},
+		{Name: "po", Value: strconv.Itoa(po)},
+		{Name: "fana", Value: k.Fana},
+		{Name: "mma", Value: "0"},
+		{Name: "mag", Value: strconv.Itoa(k.Mag)},
+		{Name: "magaciniid", Value: strconv.Itoa(k.MagaciniID)},
+		{Name: "brst", Value: strconv.Itoa(rbr)},
+		{Name: "rbr", Value: strconv.Itoa(rbr)},
+		{Name: "rsifid", Value: strconv.FormatInt(rsifID, 10)},
+		robPoljeText("otk", params.Otk),
+		robPoljeText("serija", params.Serija),
+		{Name: "roktr", Value: strconv.FormatInt(RobWinDevDatum(rok), 10)},
+		robPoljeFloat("konprosnc", konprosnc),
+		// NOT NULL without a default.
+		{Name: "sifartkup", Value: ""},
+	}); err != nil {
+		return 0, err
+	}
+
+	// A new artikal of the cene.
+	var cene int
+	if err = tx.QueryRowContext(ctx, `select count(*) from rcene where god = $1 and kar = $2 and sifra = $3`,
+		userSession.SelectedGod, userSession.SelectedKar, sifra).Scan(&cene); err != nil {
+		return 0, err
+	}
+	if cene == 0 {
+		if _, err = s.unos.Rcene.CreateWithTx(ctx, tx, &domain.RobRceneDto{}, "rceneid", []domain.Fields{
+			{Name: "rsifid", Value: strconv.FormatInt(rsifID, 10)},
+			{Name: "sifra", Value: strconv.Itoa(sifra)},
+			{Name: "mma", Value: "0"}, {Name: "vra", Value: "0"}, {Name: "mra", Value: "0"}, {Name: "ztro", Value: "0"},
+			robPoljeFloat("cena", cena), {Name: "fcena", Value: "0"}, {Name: "mcena", Value: "0"}, {Name: "mcenap", Value: "0"},
+			robPoljeFloat("ncena", ncena), {Name: "ztrin", Value: "0"}, {Name: "rab", Value: "0"}, {Name: "tz", Value: ""}, {Name: "tzi", Value: ""},
+		}); err != nil {
+			return 0, err
+		}
+	}
+
+	// The nalog, the stanje and the zalihe by lot.
+	if err = s.AzurirajRNAL(ctx, tx, k.RnalID, k.Dugovno(), k.Potrazno(), iznos); err != nil {
+		return 0, err
+	}
+	if err = s.robAzurirajStanjeStavke(ctx, tx, k, domain.RobPromenaStanja{MagaciniID: k.MagaciniID, Konto: konto, Sifra: sifra,
+		Kolicina: kolicina, Iznos: iznos, Cena: cena, Danal: k.Danal.Time, DokvrstaID: k.DokvrstaID, Tipdok: k.Tipdok, Tz: "-", Tzi: "-",
+		Otk: strings.TrimSpace(params.Otk), Serija: strings.TrimSpace(params.Serija), Roktr: RobWinDevDatum(rok), Brst: 1}); err != nil {
+		return 0, err
+	}
+	// An ulaz: the prosečna nabavna cena of the stanje (and of the zalihe by lot of the artikal in the magacin).
+	if k.Dugovno() {
+		stanje := st.ulaz - st.izlaz
+		prosnc := ncena
+		if kolicina+stanje != 0 {
+			prosnc = robZaokruzi((kolicina*ncena+stanje*st.prosnc)/(kolicina+stanje), 2)
+		}
+		if err = s.unos.Rpro.CreateUpdateCustomWithTx(ctx, tx, `update rsta set prosnc = $6
+			where god = $1 and kar = $2 and magaciniid = $3 and konto = $4 and sifra = $5`,
+			userSession.SelectedGod, userSession.SelectedKar, k.MagaciniID, konto, sifra, prosnc); err != nil {
+			return 0, err
+		}
+		if err = s.unos.Rpro.CreateUpdateCustomWithTx(ctx, tx, `update drsta set prosnc = $5
+			where god = $1 and kar = $2 and mag = $3 and rsifid = $4`,
+			userSession.SelectedGod, userSession.SelectedKar, k.Mag, rsifID, prosnc); err != nil {
+			return 0, err
+		}
+	}
+
+	// The document: the prodajna and the nabavna vrednost, the porez, the iznos, a stavka more.
+	if err = s.unos.Rpro.CreateUpdateCustomWithTx(ctx, tx, `update rdok set
+			prodvred = coalesce(prodvred, 0) + $2, nabvred = coalesce(nabvred, 0) + $3, vporez = coalesce(vporez, 0) + $4,
+			iznos = round((coalesce(iznos, 0) + $5)::numeric, 2), brst = coalesce(brst, 0) + 1
+		where rdokid = $1`, params.RdokID, kolicinaForme*cena, kolicinaForme*ncena, kolicina*cena*pdvpct/100, iznos); err != nil {
+		return 0, err
+	}
+	if err = tx.Commit(); err != nil {
+		return 0, err
+	}
+	return rproID, nil
+}
+
+// DeleteRobOpstiStavka deletes a stavka of an opšti dokument (the legacy BrisiRPRO of rob_opsti_dokumenti_opd)
+// in one transaction and returns its document: the stavka is taken back from its nalog, from the stanje and
+// from the zalihe by lot, it is deleted, the document loses its iznos and a stavka, and the zalihe by lot of
+// the stavka without the stanje and without another stavka are deleted. The redni brojevi of the other stavke
+// stay (the legacy does not number them again). The legacy recalculation of the prosečna nabavna cena of an
+// ulaz (GlobalProcROBNO.IzracunajNCENA) is not done: its code is not part of the legacy given.
+func (s *RobnoDokumentaResource) DeleteRobOpstiStavka(ctx context.Context, rproID int64) (rdokID int64, err error) {
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		return 0, fmt.Errorf("no user session found")
+	}
+	tx, err := s.unos.Rpro.BeginTx()
+	if err != nil {
+		return 0, err
+	}
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback()
+		}
+	}()
+	var sifra int
+	var konto, otk, serija string
+	var kolicina, iznos, roktr float64
+	if err = tx.QueryRowContext(ctx, `select coalesce(rdokid, 0)::bigint, coalesce(sifra, 0), coalesce(konto, ''), coalesce(kolic, 0)::float8,
+			coalesce(iznos, 0)::float8, coalesce(otk, ''), coalesce(serija, ''), coalesce(roktr, 0)::float8
+		from rpro where rproid = $1 for update`, rproID).Scan(&rdokID, &sifra, &konto, &kolicina, &iznos, &otk, &serija, &roktr); err != nil {
+		if err == sql.ErrNoRows {
+			err = fmt.Errorf("stavka ne postoji")
+		}
+		return 0, err
+	}
+	k, found, err := s.GetRobStavkeKontekst(ctx, rdokID)
+	if err != nil {
+		return 0, err
+	}
+	if !found {
+		return 0, fmt.Errorf("dokument ne postoji")
+	}
+	grupa, err := s.robInterniGrupa(ctx, k.Vrd)
+	if err != nil {
+		return 0, err
+	}
+	fin := grupa == "FIN"
+	if err = s.AzurirajRNAL(ctx, tx, k.RnalID, k.Dugovno(), k.Potrazno(), -iznos); err != nil {
+		return 0, err
+	}
+	promena := domain.RobPromenaStanja{MagaciniID: k.MagaciniID, Konto: konto, Sifra: sifra,
+		Kolicina: -kolicina, Iznos: -iznos, Danal: k.Danal.Time, DokvrstaID: k.DokvrstaID, Tipdok: k.Tipdok, Tz: "-", Tzi: "-",
+		Otk: strings.TrimSpace(otk), Serija: strings.TrimSpace(serija), Roktr: int64(roktr), Brst: -1}
+	if fin {
+		// A finansijski opšti dokument (the legacy BrisiRPRO of rob_opsti_dokumenti_FIN): the stanje only.
+		err = s.AzurirajRSTA(ctx, tx, promena)
+	} else {
+		err = s.robAzurirajStanjeStavke(ctx, tx, k, promena)
+	}
+	if err != nil {
+		return 0, err
+	}
+	if err = s.unos.Rpro.DeleteWithTx(ctx, tx, "rproid", rproID); err != nil {
+		return 0, err
+	}
+	if err = s.unos.Rpro.CreateUpdateCustomWithTx(ctx, tx, `update rdok set iznos = round((coalesce(iznos, 0) - $2)::numeric, 2),
+		brst = greatest(coalesce(brst, 0) - 1, 0) where rdokid = $1`, rdokID, iznos); err != nil {
+		return 0, err
+	}
+	if fin {
+		if err = tx.Commit(); err != nil {
+			return 0, err
+		}
+		return rdokID, nil
+	}
+	// The zalihe by lot without the stanje and without another stavka.
+	if err = s.unos.Rpro.CreateUpdateCustomWithTx(ctx, tx, `delete from drsta d
+		where d.god = $1 and d.kar = $2 and d.konto = $3 and d.sifra = $4 and d.mag = $5 and d.otk = $6 and d.serija = $7 and d.roktr = $8
+			and coalesce(d.ulaz, 0) - coalesce(d.izlaz, 0) = 0 and coalesce(d.dug, 0) - coalesce(d.pot, 0) = 0
+			and not exists (select 1 from rpro p where p.god = d.god and p.kar = d.kar and p.konto = d.konto and p.sifra = d.sifra
+				and p.mag = d.mag and coalesce(p.otk, '') = d.otk and coalesce(p.serija, '') = d.serija and coalesce(p.roktr, 0) = d.roktr)`,
+		userSession.SelectedGod, userSession.SelectedKar, strings.TrimSpace(konto), sifra, k.Mag, strings.TrimSpace(otk), strings.TrimSpace(serija),
+		int64(roktr)); err != nil {
+		return 0, err
+	}
+	if err = tx.Commit(); err != nil {
+		return 0, err
+	}
+	// An ulaz: the stanje of the artikal and its zalihe by lot in the magacin get the prosečna nabavna cena again
+	// (the legacy IzracunajNCENA on the datum of the nalog and of the document; after the deletion of the stavka).
+	if k.Dugovno() {
+		if err = s.robOpstiProsecnaCenaPonovo(ctx, k, konto, sifra); err != nil {
+			return rdokID, err
+		}
+	}
+	return rdokID, nil
+}
+
+// robOpstiProsecnaCenaPonovo gives the stanje of the artikal in the konto of the magacin (rsta.prosnc, rounded
+// to 2 decimals) and its zalihe by lot in the magacin (drsta.prosnc) the prosečna nabavna cena computed again
+// (IzracunajNCENA on the datum of the nalog and of the document of the kontekst).
+func (s *RobnoDokumentaResource) robOpstiProsecnaCenaPonovo(ctx context.Context, k domain.RobStavkeKontekst, konto string, sifra int) error {
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		return fmt.Errorf("no user session found")
+	}
+	ncena, err := s.IzracunajNCENA(ctx, robNullTime(k.Danal), robNullTime(k.Dadok), k.MagaciniID, sifra)
+	if err != nil {
+		return err
+	}
+	if err := s.unos.Rpro.CreateUpdateCustom(ctx, `update rsta set prosnc = $6
+		where god = $1 and kar = $2 and magaciniid = $3 and konto = $4 and sifra = $5`,
+		userSession.SelectedGod, userSession.SelectedKar, k.MagaciniID, strings.TrimSpace(konto), sifra, robZaokruzi(ncena, 2)); err != nil {
+		return err
+	}
+	return s.unos.Rpro.CreateUpdateCustom(ctx, `update drsta set prosnc = $5
+		where god = $1 and kar = $2 and mag = $3 and rsifid = (select a.rsifid from rsif a where a.god = $1 and a.kar = $2 and a.sifra = $4 limit 1)`,
+		userSession.SelectedGod, userSession.SelectedKar, k.Mag, sifra, ncena)
+}
+
+// robOpstiFinStavka adds a stavka to a finansijski opšti dokument (the legacy CreateRpro of
+// rob_opsti_dokumenti_FIN) in one transaction: the stavka has the iznos (negative for a storno) without the
+// količina and the cena, the columns of its document, the artikal, the konto and the next redni broj; the
+// nalog and the stanje of the artikal get the iznos (AzurirajRNAL, AzurirajRSTA; no zalihe by lot), the
+// document gets the iznos and a stavka more.
+func (s *RobnoDokumentaResource) robOpstiFinStavka(ctx context.Context, k domain.RobStavkeKontekst, params domain.RobOpstiStavkaParams) (rproID int64, err error) {
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		return 0, fmt.Errorf("no user session found")
+	}
+	sifra := common.StringToInt(params.Sifra)
+	konto := strings.ReplaceAll(strings.TrimSpace(params.Konto), " ", "")
+	iznos := math.Abs(common.StringToFloat64(params.Iznos))
+	if k.Storno() {
+		iznos = -iznos
+	}
+	tx, err := s.unos.Rpro.BeginTx()
+	if err != nil {
+		return 0, err
+	}
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback()
+		}
+	}()
+	var rsifID int64
+	var po int
+	if err = tx.QueryRowContext(ctx, `select rsifid, coalesce(po, 0) from rsif where god = $1 and kar = $2 and sifra = $3 limit 1`,
+		userSession.SelectedGod, userSession.SelectedKar, sifra).Scan(&rsifID, &po); err != nil {
+		return 0, err
+	}
+	var pkto, pana string
+	if err = tx.QueryRowContext(ctx, `select coalesce(pkto, ''), coalesce(pana, '') from rdok where rdokid = $1`, params.RdokID).
+		Scan(&pkto, &pana); err != nil {
+		return 0, err
+	}
+	var rbr int
+	if err = tx.QueryRowContext(ctx, `select coalesce(max(rbr), 0) + 1 from rpro where rdokid = $1`, params.RdokID).Scan(&rbr); err != nil {
+		return 0, err
+	}
+	if rproID, err = s.unos.Rpro.CreateWithTx(ctx, tx, &domain.RobRproDto{}, "rproid", []domain.Fields{
+		{Name: "rnalid", Value: strconv.FormatInt(k.RnalID, 10)},
+		{Name: "nalog", Value: strconv.Itoa(k.Nalog)},
+		{Name: "rdokid", Value: strconv.FormatInt(k.RdokID, 10)},
+		{Name: "vrd", Value: strconv.Itoa(k.Vrd)},
+		{Name: "dokum", Value: strconv.Itoa(k.Dokum)},
+		robPoljeNullTime("dadok", k.Dadok),
+		{Name: "sifra", Value: strconv.Itoa(sifra)},
+		{Name: "konto", Value: konto},
+		{Name: "cena", Value: "0"},
+		{Name: "kolic", Value: "0"},
+		robPoljeFloat("iznos", iznos),
+		{Name: "fkto", Value: k.Fkto},
+		robPoljeText("pkto", pkto),
+		robPoljeText("pana", pana),
+		{Name: "rab", Value: "0"},
+		{Name: "po", Value: strconv.Itoa(po)},
+		{Name: "fana", Value: k.Fana},
+		{Name: "mma", Value: "0"},
+		{Name: "mag", Value: strconv.Itoa(k.Mag)},
+		{Name: "magaciniid", Value: strconv.Itoa(k.MagaciniID)},
+		{Name: "brst", Value: strconv.Itoa(rbr)},
+		{Name: "rbr", Value: strconv.Itoa(rbr)},
+		{Name: "rsifid", Value: strconv.FormatInt(rsifID, 10)},
+		// NOT NULL without a default.
+		{Name: "sifartkup", Value: ""},
+	}); err != nil {
+		return 0, err
+	}
+	if err = s.AzurirajRNAL(ctx, tx, k.RnalID, k.Dugovno(), k.Potrazno(), iznos); err != nil {
+		return 0, err
+	}
+	if err = s.AzurirajRSTA(ctx, tx, domain.RobPromenaStanja{MagaciniID: k.MagaciniID, Konto: konto, Sifra: sifra, Iznos: iznos,
+		Danal: k.Danal.Time, DokvrstaID: k.DokvrstaID, Tipdok: k.Tipdok, Tz: "-", Tzi: "-", Brst: 1}); err != nil {
+		return 0, err
+	}
+	if err = s.unos.Rpro.CreateUpdateCustomWithTx(ctx, tx, `update rdok set iznos = round((coalesce(iznos, 0) + $2)::numeric, 2),
+		brst = coalesce(brst, 0) + 1 where rdokid = $1`, params.RdokID, iznos); err != nil {
+		return 0, err
+	}
+	if err = tx.Commit(); err != nil {
+		return 0, err
+	}
+	return rproID, nil
+}
+
+// RobOpstiFinStavkeTableRows returns the stavke of a finansijski opšti dokument as the rows of the grid of the
+// stavke (the columns of GetOpstiFinStavkeTableFields: redni broj, konto, šifra, naziv, JM, iznos).
+func RobOpstiFinStavkeTableRows(stavke []domain.RobStavkaRow) []domain.TableRow {
+	rows := make([]domain.TableRow, 0, len(stavke))
+	for _, st := range stavke {
+		rows = append(rows, domain.TableRow{
+			ID:     strconv.FormatInt(st.RproID, 10),
+			Fields: []string{strconv.Itoa(st.Rbr), st.Konto, strconv.Itoa(st.Sifra), st.Naziv, st.Jm, robFormatIznos(st.Iznos)},
+		})
+	}
+	return rows
+}
+
+// RobOpstiStavkeTableRows returns the stavke of an opšti dokument as the rows of the grid of the stavke of the
+// screen (the columns of GetOpstiStavkeTableFields: redni broj, konto, šifra, naziv, JM, količina, cena,
+// iznos, OTK broj, serija, rok).
+func RobOpstiStavkeTableRows(stavke []domain.RobStavkaRow) []domain.TableRow {
+	rows := make([]domain.TableRow, 0, len(stavke))
+	for _, st := range stavke {
+		rok := ""
+		if st.Roktr > 0 {
+			rok = robnoStampaWinDevDatumFormat(int64(st.Roktr), common.DateLayout)
+		}
+		rows = append(rows, domain.TableRow{
+			ID: strconv.FormatInt(st.RproID, 10),
+			Fields: []string{strconv.Itoa(st.Rbr), st.Konto, strconv.Itoa(st.Sifra), st.Naziv, st.Jm,
+				common.FormatNumberWithSystemLocale(st.Kolic, 3), robFormatIznos(st.Cena), robFormatIznos(st.Iznos), st.Otk, st.Serija, rok},
+		})
+	}
+	return rows
+}

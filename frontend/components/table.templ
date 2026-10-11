@@ -293,73 +293,82 @@ templ TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service
 	}
 }
 
+// TableScript selects the rows of a table: a click selects the row (a click of the selected row deselects
+// it), the arrows move the selection and Enter clicks the selected row. The selection is read from the
+// page (the row with data-selected of the tbody of the row), not kept in a variable of the script: every
+// table installs this script and a table that is reloaded (e.g. the stavke of the selected document)
+// installs it again, so the functions of the page (handleRowClick) are always the ones of the last table,
+// and a variable would lose the selected row of the other tables (more than one selected row). The keys
+// act on the table of the last click only and never when a field or a button has the focus; the keyboard
+// listener of a table is installed once.
 templ TableScript(tableID string) {
 	<span data-tbody-id={ fmt.Sprintf("%s-body", tableID) } style="display:none"></span>
 	<script>
 	(function() {
 		const _tbodyId = document.currentScript.previousElementSibling.dataset.tbodyId;
-		const _tbody   = document.getElementById(_tbodyId);
-		let _selected  = null;  // Per-table selection
 
-		function getRows() {
-			return _tbody ? Array.from(_tbody.querySelectorAll('tr')) : [];
-		}
-
-		function selectRow(row) {
-			// Clear previously selected row in THIS table only
-			if (_selected) {
-				_selected.classList.remove('!bg-green-200');
-				_selected.removeAttribute('data-selected');
-			}
-			
-			// Toggle selection: if clicking same row, deselect it
-			_selected = (row !== _selected) ? row : null;
-			
-			if (_selected) {
-				_selected.classList.add('!bg-green-200');
-				_selected.setAttribute('data-selected', 'true');
-				
-				// Only update global selectedRecord for master table
-				if (_tbodyId && _tbodyId.includes('master')) {
-					const rowId = _selected.getAttribute('data-row-id');
-					window.selectedRecord = { idfizvzag: rowId };
+		// tableSelectRow selects the row in its table (and deselects the row selected before).
+		if (!window.tableSelectRow) {
+			window.tableSelectRow = function(row) {
+				const tbody = row && row.closest('tbody');
+				if (!tbody) return;
+				const previous = tbody.querySelector('tr[data-selected]');
+				if (previous) {
+					previous.classList.remove('!bg-green-200');
+					previous.removeAttribute('data-selected');
 				}
-			} else {
-				// Only clear global selectedRecord for master table
-				if (_tbodyId && _tbodyId.includes('master')) {
-					window.selectedRecord = null;
+				window.tableActiveTbodyId = tbody.id;
+				// The click of the selected row deselects it.
+				const selected = previous !== row ? row : null;
+				if (selected) {
+					selected.classList.add('!bg-green-200');
+					selected.setAttribute('data-selected', 'true');
 				}
-			}
+				// Only the master table keeps the global selectedRecord.
+				if (tbody.id && tbody.id.includes('master')) {
+					window.selectedRecord = selected ? { idfizvzag: selected.getAttribute('data-row-id') } : null;
+				}
+			};
 		}
 
 		// Exposed globally for hx-on:click="handleRowClick(this)"
-		window.handleRowClick = function(row) { selectRow(row); };
+		window.handleRowClick = function(row) { window.tableSelectRow(row); };
 
 		window.handleRowDoubleClick = function(row) {
-			selectRow(row);
+			// The double click keeps the row selected (its first click selected it).
+			if (!row.hasAttribute('data-selected')) window.tableSelectRow(row);
 			const rowData = Array.from(row.querySelectorAll('td')).map(c => c.textContent.trim());
 			document.dispatchEvent(new CustomEvent('rowDblSelected', { detail: rowData }));
 		};
 
+		window.tableKeyListeners = window.tableKeyListeners || {};
+		if (!_tbodyId || window.tableKeyListeners[_tbodyId]) return;
+		window.tableKeyListeners[_tbodyId] = true;
 		document.addEventListener('keydown', function(e) {
-			const tag = document.activeElement?.tagName;
-			if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
 			if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown' && e.key !== 'Enter') return;
-
-			const rows = getRows();
+			const tag = document.activeElement?.tagName;
+			if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || tag === 'BUTTON' || tag === 'A') return;
+			// The table of the last click (any table while none was clicked yet).
+			if (window.tableActiveTbodyId && window.tableActiveTbodyId !== _tbodyId) return;
+			const tbody = document.getElementById(_tbodyId);
+			if (!tbody || tbody.getClientRects().length === 0) return;
+			const rows = Array.from(tbody.querySelectorAll('tr'));
 			if (!rows.length) return;
 			e.preventDefault();
 
-			if (e.key === 'Enter' && _selected) { _selected.click(); return; }
-
-			const idx = _selected ? rows.indexOf(_selected) : -1;
+			const selected = tbody.querySelector('tr[data-selected]');
+			if (e.key === 'Enter') {
+				if (selected) selected.click();
+				return;
+			}
+			const idx = selected ? rows.indexOf(selected) : -1;
 			let newIdx;
 			if (e.key === 'ArrowUp') {
 				newIdx = idx > 0 ? idx - 1 : idx === -1 ? rows.length - 1 : 0;
 			} else {
 				newIdx = idx < rows.length - 1 ? idx + 1 : idx === -1 ? 0 : rows.length - 1;
 			}
-			selectRow(rows[newIdx]);
+			window.tableSelectRow(rows[newIdx]);
 			rows[newIdx].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 		});
 	})();

@@ -10,7 +10,8 @@ import (
 // TableCombo renders a searchable table combo (partneri, konta, artikli, ...): a text input that
 // calls cfg.SearchURL while the user types and shows the answer (TableComboResults) in a dropdown
 // table under the input. Selecting a row (click, or arrows and Enter) puts its key into the hidden
-// input cfg.Name and its text into the visible input; typing again clears the selected key. Pass
+// input cfg.Name and its text into the visible input; typing again clears the selected key. With
+// cfg.AllowEmpty the results start with the row "-" that selects no row (an empty key). Pass
 // cfg.Value / cfg.DisplayValue / cfg.Details to render a row already selected (e.g. when editing an
 // existing document). A disabled combo keeps its search attributes, so a screen can enable it later
 // (a disabled input fires no events, so it does not search while disabled).
@@ -80,9 +81,10 @@ templ TableCombo(cfg domain.TableComboConfig, translator *i18n.Service) {
 					rows[active].scrollIntoView({ block: 'nearest' });
 				} else if (event.key === 'Enter') {
 					// Enter selects the highlighted row, or the first one when none is highlighted
-					// (e.g. the user typed the whole konto).
+					// (e.g. the user typed the whole konto); the row "-" of AllowEmpty only when nothing
+					// is typed.
 					event.preventDefault();
-					tableComboSelect(rows[active >= 0 ? active : 0]);
+					tableComboSelect(rows[active >= 0 ? active : tableComboFirstRow(comboID, rows)]);
 				} else if (event.key === 'Tab') {
 					// Tab selects the highlighted row, or the row whose key is the typed text (e.g.
 					// "2040"); the focus moves on to the next field.
@@ -93,6 +95,15 @@ templ TableCombo(cfg domain.TableComboConfig, translator *i18n.Service) {
 					}
 				}
 			}
+			// tableComboFirstRow returns the index of the row Enter selects when none is highlighted: the
+			// first one, but not the row "-" of AllowEmpty while the user typed a text to search.
+			function tableComboFirstRow(comboID, rows) {
+				const input = document.getElementById(comboID + '-input');
+				const text = input ? input.value.trim() : '';
+				if (text === '' || text === '-') return 0;
+				const i = rows.findIndex(r => r.dataset.key !== '');
+				return i >= 0 ? i : 0;
+			}
 			// tableComboAutoSelect selects the row whose key is the typed text when nothing is selected
 			// yet (the user typed the whole key and left the field without choosing a row).
 			function tableComboAutoSelect(comboID) {
@@ -100,6 +111,8 @@ templ TableCombo(cfg domain.TableComboConfig, translator *i18n.Service) {
 				const value = tableComboValueInput(comboID);
 				const text = input ? input.value.trim() : '';
 				if (!value || !tableComboEmpty(input) || text === '') return;
+				// OnFreeText: the typed text is not a key (it goes to the callback).
+				if (input.dataset.onfreetext) return;
 				const row = tableComboRows(comboID).find(r => r.dataset.key === text);
 				if (row) tableComboSelect(row);
 			}
@@ -116,6 +129,26 @@ templ TableCombo(cfg domain.TableComboConfig, translator *i18n.Service) {
 					if (input && value && input.dataset.default && value.value === input.dataset.default) {
 						input.value = input.dataset.default;
 					}
+					// FreeText: no row selected takes the typed text as the value (e.g. the broj of a new
+				// document); the change of the value tells the screen.
+				if (input && value && input.dataset.freetext && value.value === '') {
+					const text = input.value.trim();
+					if (text !== '' && text !== '-') {
+						const callback = input.dataset.onfreetext;
+						if (callback && typeof window[callback] === 'function') {
+							window[callback](comboID, text);
+						} else {
+							value.value = text;
+							value.dispatchEvent(new Event('change', { bubbles: true }));
+						}
+					}
+				}
+				// AllowEmpty: no row selected shows "-" (the empty key).
+					if (input && value && input.dataset.allowempty && value.value === '') {
+						input.value = '-';
+						const details = document.getElementById(comboID + '-details');
+						if (details) details.textContent = '';
+					}
 				}, 200);
 			}
 			// tableComboAfterSwap runs when the results arrive: when the user already left the field
@@ -128,14 +161,70 @@ templ TableCombo(cfg domain.TableComboConfig, translator *i18n.Service) {
 					tableComboClose(comboID);
 					return;
 				}
-				// The dropdown grows with its rows: when it would pass the right edge of the screen, it is
-				// moved to the left so it stays visible.
+				// AllowEmpty: the results start with the row "-", which selects the empty key.
 				const results = document.getElementById(comboID + '-results');
-				if (results) {
-					results.style.left = '';
-					const overflow = results.getBoundingClientRect().right - (window.innerWidth - 8);
+				const tbody = results && results.querySelector('tbody');
+				if (input && input.dataset.allowempty && tbody && tbody.rows.length > 0) {
+					const first = tbody.rows[0];
+					const row = first.cloneNode(true);
+					row.dataset.key = '';
+					row.dataset.text = '-';
+					row.dataset.details = '';
+					Array.from(row.cells).forEach((cell, i) => { cell.textContent = i === 0 ? '-' : ''; });
+					tbody.insertBefore(row, first);
+				}
+				tableComboPlace(comboID);
+			}
+			// tableComboPlace puts the results of a table combo on the screen under its input (position
+			// fixed), so a container that scrolls or clips its content (e.g. the content of a dialog with
+			// overflow) does not cut them off and they are in front of it. Without the room for them
+			// under the input they open above it, they never pass the right edge of the screen, and they
+			// follow the input when the page or a container is scrolled (tableComboPlaceOpen). An
+			// ancestor with a transform would move a fixed element with it: then the results stay
+			// positioned under the input as before (absolute), only moved to the left at the right edge.
+			function tableComboPlace(comboID) {
+				const input = document.getElementById(comboID + '-input');
+				const results = document.getElementById(comboID + '-results');
+				if (!input || !results || results.childElementCount === 0) return;
+				const r = input.getBoundingClientRect();
+				const margin = 8, gap = 2, maxHeight = 288;
+				const below = window.innerHeight - r.bottom - gap - margin;
+				const above = r.top - gap - margin;
+				const height = Math.min(results.scrollHeight, maxHeight);
+				const up = height > below && above > below;
+				const room = Math.max(96, Math.min(maxHeight, up ? above : below));
+				results.style.position = 'fixed';
+				results.style.marginTop = '0';
+				results.style.minWidth = r.width + 'px';
+				results.style.maxHeight = room + 'px';
+				const top = up ? Math.max(margin, r.top - gap - Math.min(height, room)) : r.bottom + gap;
+				const width = results.getBoundingClientRect().width;
+				const left = Math.max(margin, Math.min(r.left, window.innerWidth - margin - width));
+				results.style.top = top + 'px';
+				results.style.left = left + 'px';
+				const placed = results.getBoundingClientRect();
+				if (Math.abs(placed.top - top) > 1 || Math.abs(placed.left - left) > 1) {
+					// A transformed ancestor: the results under the input (absolute), as before.
+					['position', 'marginTop', 'minWidth', 'maxHeight', 'top', 'left'].forEach(p => { results.style[p] = ''; });
+					const overflow = results.getBoundingClientRect().right - (window.innerWidth - margin);
 					if (overflow > 0) results.style.left = (-overflow) + 'px';
 				}
+			}
+			// tableComboPlaceOpen places the open results again when the page or a container is scrolled
+			// or the window is resized (the listeners are installed once).
+			function tableComboPlaceOpen() {
+				document.querySelectorAll('[data-table-combo-results]').forEach(results => {
+					if (results.childElementCount > 0 && results.style.position === 'fixed') tableComboPlace(results.dataset.tableComboResults);
+				});
+			}
+			if (!window.tableComboPlaceListeners) {
+				window.tableComboPlaceListeners = true;
+				window.addEventListener('scroll', function (evt) {
+					// The scroll of the results themselves does not move them.
+					if (evt.target && evt.target.dataset && evt.target.dataset.tableComboResults) return;
+					tableComboPlaceOpen();
+				}, true);
+				window.addEventListener('resize', tableComboPlaceOpen);
 			}
 			// tableComboFocus selects the whole text of the input when it gets the focus, so the first
 			// character typed replaces the old content; the mouseup of the click that gave the focus
@@ -158,6 +247,19 @@ templ TableCombo(cfg domain.TableComboConfig, translator *i18n.Service) {
 				const value = document.getElementById(input.dataset.valueid);
 				return !value || value.value === '' || value.value === (input.dataset.default || '');
 			}
+			// tableComboClear empties a table combo, e.g. the form of a new record after it was saved: no
+			// row selected (the default value of DefaultValue, the "-" of AllowEmpty, else nothing), no
+			// details and no results.
+			function tableComboClear(comboID) {
+				const input = document.getElementById(comboID + '-input');
+				const value = tableComboValueInput(comboID);
+				const details = document.getElementById(comboID + '-details');
+				const def = (input && input.dataset.default) || '';
+				if (value) value.value = def;
+				if (input) input.value = def !== '' ? def : (input.dataset.allowempty ? '-' : '');
+				if (details) details.textContent = '';
+				tableComboClose(comboID);
+			}
 			// tableComboInput clears the selected key when the user types again.
 			function tableComboInput(comboID) {
 				const input = document.getElementById(comboID + '-input');
@@ -171,14 +273,24 @@ templ TableCombo(cfg domain.TableComboConfig, translator *i18n.Service) {
 	if cfg.HasLabel {
 		<label for={ cfg.ID + "-input" } class={ cfg.ClassLabel }>{ translator.Label(cfg.LabelText) }</label>
 	}
-	<div id={ cfg.ID } class={ tableComboValue(cfg.ClassWrapper, "relative w-full") }>
+	<!-- The wrapper is always relative: the dropdown is positioned and sized (min-w-full) by it. -->
+	<div id={ cfg.ID } class={ "relative " + tableComboValue(cfg.ClassWrapper, "w-full") }>
 		<input
 			id={ cfg.ID + "-input" }
 			type="text"
 			name={ tableComboValue(cfg.SearchParam, "q") }
-			value={ tableComboValue(cfg.DisplayValue, tableComboValue(cfg.Value, cfg.DefaultValue)) }
+			value={ tableComboDisplay(cfg) }
 			if cfg.DefaultValue != "" {
 				data-default={ cfg.DefaultValue }
+			}
+			if cfg.AllowEmpty {
+				data-allowempty="1"
+			}
+			if cfg.FreeText {
+				data-freetext="1"
+			}
+			if cfg.OnFreeText != "" {
+				data-onfreetext={ cfg.OnFreeText }
 			}
 			if cfg.Placeholder != "" {
 				placeholder={ translator.Label(cfg.Placeholder) }
@@ -207,7 +319,6 @@ templ TableCombo(cfg domain.TableComboConfig, translator *i18n.Service) {
 				hx-target={ "#" + cfg.ID + "-results" }
 				hx-swap="innerHTML"
 				hx-sync="this:replace"
-				hx-on::after-swap={ templ.JSFuncCall("tableComboAfterSwap", cfg.ID) }
 				if cfg.HxVals != "" {
 					hx-vals={ cfg.HxVals }
 				}
@@ -223,9 +334,15 @@ templ TableCombo(cfg domain.TableComboConfig, translator *i18n.Service) {
 		/>
 		<!-- The key of the selected row: the value the form submits. -->
 		<input type="hidden" id={ tableComboValue(cfg.ValueID, cfg.ID+"-value") } name={ cfg.Name } value={ tableComboValue(cfg.Value, cfg.DefaultValue) }/>
-		<p id={ cfg.ID + "-details" } class="mt-0.5 text-xs text-gray-500 empty:hidden">{ cfg.Details }</p>
+		if !cfg.HideDetails {
+			<p id={ cfg.ID + "-details" } class="mt-0.5 text-xs text-gray-500 empty:hidden">{ cfg.Details }</p>
+		}
+		<!-- The results of the search. htmx fires htmx:afterSwap on the element that gets the content (this
+		     one, not the input that sends the request), so tableComboAfterSwap is called from here. -->
 		<div
 			id={ cfg.ID + "-results" }
+			data-table-combo-results={ cfg.ID }
+			hx-on::after-swap={ templ.JSFuncCall("tableComboAfterSwap", cfg.ID) }
 			class="absolute z-50 mt-1 min-w-full w-max max-w-[90vw] max-h-72 overflow-auto rounded-md border border-blue-400 bg-white shadow-lg empty:hidden"
 		></div>
 	</div>
@@ -272,6 +389,16 @@ templ TableComboResults(res domain.TableComboResults, translator *i18n.Service) 
 }
 
 var tableComboScript = templ.NewOnceHandle()
+
+// tableComboDisplay returns the text of the input of a combo: the text of the selected row, else its
+// key or the default value, else "-" for a combo that allows no selection (AllowEmpty).
+func tableComboDisplay(cfg domain.TableComboConfig) string {
+	text := tableComboValue(cfg.DisplayValue, tableComboValue(cfg.Value, cfg.DefaultValue))
+	if text == "" && cfg.AllowEmpty {
+		return "-"
+	}
+	return text
+}
 
 // tableComboValue returns value, def when value is empty.
 func tableComboValue(value, def string) string {

@@ -10,6 +10,7 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import (
 	"helia/frontend/components"
+	tmpl "helia/frontend/templates"
 	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
@@ -62,7 +63,7 @@ func Rob_FaktureUsluga(ui domain.RobnoFaktureUI, naslov string, header domain.Ro
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(ui.InfoID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 28, Col: 20}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 29, Col: 20}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
@@ -73,6 +74,14 @@ func Rob_FaktureUsluga(ui domain.RobnoFaktureUI, naslov string, header domain.Ro
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = RobnoFaktureScript().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<!-- restrictNumericInput / cleanNumberInput of the numbers of the stavke (FieldType \"number\") -->")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = tmpl.RestrictNumericInputScript().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -127,85 +136,85 @@ func RobUslugeBody(ui domain.RobnoFaktureUI, header domain.RobnoFaktureHeaderVie
 			templ_7745c5c3_Var4 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div id=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<div id=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(ui.BodyID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 41, Col: 16}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 44, Col: 16}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "\" data-stavke-aktivne=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\" data-stavke-aktivne=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(robnoFaktureState(header.Snimljen))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 42, Col: 58}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 45, Col: 58}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\" data-dokument-url=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "\" data-dokument-url=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var7 string
 		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(ui.DokumentURL)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 43, Col: 36}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 46, Col: 36}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "\" data-novi-url=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "\" data-novi-url=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var8 string
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(ui.NoviURL)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 44, Col: 28}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 47, Col: 28}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "\" data-rnalid=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "\" data-rnalid=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.FormatInt(header.RnalID, 10))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 45, Col: 52}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 48, Col: 52}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "\" data-vrd=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "\" data-vrd=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(header.Vrd)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 46, Col: 23}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 49, Col: 23}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "\" class=\"bg-blue-100 p-1 flex flex-col gap-1 h-full min-h-0\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "\" class=\"bg-blue-100 p-1 flex flex-col gap-1 h-full min-h-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -228,20 +237,20 @@ func RobUslugeBody(ui domain.RobnoFaktureUI, header domain.RobnoFaktureHeaderVie
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<!-- The dialogs of the stavke (an error of the save, the confirmation of the deletion) --><div id=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<!-- The dialogs of the stavke (an error of the save, the confirmation of the deletion) --><div id=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var11 string
 		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(ui.StavkaInfoID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 57, Col: 27}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 60, Col: 27}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "\" class=\"contents\"></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "\" class=\"contents\"></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -271,7 +280,7 @@ func RobUslugeDokumentBar(header domain.RobnoFaktureHeaderView, btnPrint, btnBac
 			templ_7745c5c3_Var12 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<div class=\"flex items-center justify-end gap-2 border border-blue-400 bg-blue-100 rounded-lg px-1 py-0.5\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "<div class=\"flex items-center justify-end gap-2 border border-blue-400 bg-blue-100 rounded-lg px-1 py-0.5\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -286,7 +295,7 @@ func RobUslugeDokumentBar(header domain.RobnoFaktureHeaderView, btnPrint, btnBac
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "<span class=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<span class=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -299,20 +308,20 @@ func RobUslugeDokumentBar(header domain.RobnoFaktureHeaderView, btnPrint, btnBac
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "\" title=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "\" title=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var15 string
 			templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Message("Dokument nije sačuvan"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 67, Col: 124}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 70, Col: 124}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -323,13 +332,13 @@ func RobUslugeDokumentBar(header domain.RobnoFaktureHeaderView, btnPrint, btnBac
 			var templ_7745c5c3_Var16 string
 			templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(btnPrint.LabelText)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 69, Col: 24}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 72, Col: 24}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "</span>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</span>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -338,7 +347,7 @@ func RobUslugeDokumentBar(header domain.RobnoFaktureHeaderView, btnPrint, btnBac
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -373,20 +382,20 @@ func RobUslugeStavkeFields(ui domain.RobnoFaktureUI, stavka domain.RobnoUslugeSt
 			templ_7745c5c3_Var17 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "<div class=\"grid grid-cols-[auto_minmax(0,1fr)] gap-1\"><fieldset class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg\"><legend class=\"px-1 font-semibold text-sm text-blue-900\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<div class=\"grid grid-cols-[auto_minmax(0,1fr)] gap-1\"><fieldset class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg\"><legend class=\"px-1 font-semibold text-sm text-blue-900\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var18 string
 		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Konto magacina"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 85, Col: 96}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 88, Col: 96}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</legend>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</legend>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -403,20 +412,20 @@ func RobUslugeStavkeFields(ui domain.RobnoFaktureUI, stavka domain.RobnoUslugeSt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</fieldset><fieldset class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg\"><legend class=\"px-1 font-semibold text-sm text-blue-900\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</fieldset><fieldset class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg\"><legend class=\"px-1 font-semibold text-sm text-blue-900\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var19 string
 		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Podaci o dokumentu"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 98, Col: 100}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 101, Col: 100}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</legend><div class=\"flex flex-wrap items-center gap-2 min-w-0\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</legend><div class=\"flex flex-wrap items-center gap-2 min-w-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -437,7 +446,7 @@ func RobUslugeStavkeFields(ui domain.RobnoFaktureUI, stavka domain.RobnoUslugeSt
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, " ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, " ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -446,150 +455,150 @@ func RobUslugeStavkeFields(ui domain.RobnoFaktureUI, stavka domain.RobnoUslugeSt
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "</div></fieldset></div><fieldset id=\"robno-usluge-stavka\" class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg\" data-artikal-url=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "</div></fieldset></div><fieldset id=\"robno-usluge-stavka\" class=\"border border-blue-400 bg-blue-100 p-1 rounded-lg\" data-artikal-url=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var20 string
 		templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(ui.ArtikalURL)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 113, Col: 34}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 116, Col: 34}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "\" data-stopa-url=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "\" data-stopa-url=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var21 string
 		templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(ui.ArtikalURL + "/stopa")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 114, Col: 43}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 117, Col: 43}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "\" data-grupa=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "\" data-grupa=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var22 string
 		templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(stavka.Grupa)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 115, Col: 27}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 118, Col: 27}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "\" data-tipzal=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "\" data-tipzal=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var23 string
 		templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(stavka.Tipzal))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 116, Col: 43}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 119, Col: 43}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "\" data-vpcena=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "\" data-vpcena=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var24 string
 		templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(robnoFaktureState(stavka.VpCena))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 117, Col: 48}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 120, Col: 48}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "\" data-nabcena=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "\" data-nabcena=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var25 string
 		templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(robnoFaktureState(stavka.NabCena))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 118, Col: 50}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 121, Col: 50}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "\" data-kurs=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "\" data-kurs=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var26 string
 		templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.FormatFloat(stavka.Kurs, 'f', -1, 64))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 119, Col: 59}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 122, Col: 59}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "\" data-vaziza=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "\" data-vaziza=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var27 string
 		templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.FormatFloat(stavka.VaziZa, 'f', -1, 64))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 120, Col: 63}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 123, Col: 63}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "\" data-valuta-poruka=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "\" data-valuta-poruka=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var28 string
 		templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(stavka.ValutaPoruka)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 121, Col: 42}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 124, Col: 42}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "\"><input type=\"hidden\" id=\"stavkardokid\" name=\"rdokid\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "\"><input type=\"hidden\" id=\"stavkardokid\" name=\"rdokid\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var29 string
 		templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.FormatInt(stavka.RdokID, 10))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 123, Col: 99}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 126, Col: 99}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "\"> <input type=\"hidden\" id=\"stavkarproid\" name=\"rproid\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "\"> <input type=\"hidden\" id=\"stavkarproid\" name=\"rproid\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var30 string
 		templ_7745c5c3_Var30, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.FormatInt(stavka.RproID, 10))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 124, Col: 99}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 127, Col: 99}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var30))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "\"><!-- The cena as it was typed (in the valuta of the document) --><input type=\"hidden\" id=\"cenaval\" name=\"cenaval\" value=\"\"><div class=\"grid grid-cols-[minmax(0,26rem)_minmax(0,1fr)] gap-x-3\"><!-- First column: the šifra, the količina, the cena, the rabat, the porez, the zalihe --><div class=\"flex flex-col min-w-0\"><div class=\"flex items-center gap-1 mb-1 min-w-0\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "\"><!-- The cena as it was typed (in the valuta of the document) --><input type=\"hidden\" id=\"cenaval\" name=\"cenaval\" value=\"\"><div class=\"grid grid-cols-[minmax(0,26rem)_minmax(0,1fr)] gap-x-3\"><!-- First column: the šifra, the količina, the cena, the rabat, the porez, the zalihe --><div class=\"flex flex-col min-w-0\"><div class=\"flex items-center gap-1 mb-1 min-w-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -598,7 +607,7 @@ func RobUslugeStavkeFields(ui domain.RobnoFaktureUI, stavka domain.RobnoUslugeSt
 			return templ_7745c5c3_Err
 		}
 		if stavka.Grupa == "KPF" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "<!-- The knjižno pismo finansijsko has the šifra 0 only --> <input type=\"hidden\" id=\"sifraartikla\" name=\"sifraartikla\" value=\"0\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "<!-- The knjižno pismo finansijsko has the šifra 0 only --> <input type=\"hidden\" id=\"sifraartikla\" name=\"sifraartikla\" value=\"0\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -630,31 +639,31 @@ func RobUslugeStavkeFields(ui domain.RobnoFaktureUI, stavka domain.RobnoUslugeSt
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = robUslugeBroj("kolicina", translator.Label("Količina"), stavka.Kolicina, "15", "3", false).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = robUslugeBroj("kolicina", translator.Label("Količina"), stavka.Kolicina, "15", "3", 3, false).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = robUslugeBroj("cenausluge", translator.Label("Cena"), stavka.ProdajnaCena, "18", "4", false).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = robUslugeBroj("cenausluge", translator.Label("Cena"), stavka.ProdajnaCena, "18", "4", 2, false).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = robUslugeBroj("iznosusluge", translator.Label("Iznos"), stavka.Iznos, "18", "", true).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = robUslugeBroj("iznosusluge", translator.Label("Iznos"), stavka.Iznos, "18", "", 2, true).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = robUslugeBroj("rabatusluge", translator.Label("Rabat"), stavka.Rabat, "6", "5", false).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = robUslugeBroj("rabatusluge", translator.Label("Rabat"), stavka.Rabat, "6", "5", 2, false).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = robUslugeBroj("iznosrabatausluge", translator.Label("Iznos rabata"), stavka.IznosRabata, "18", "", true).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = robUslugeBroj("iznosrabatausluge", translator.Label("Iznos rabata"), stavka.IznosRabata, "18", "", 2, true).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "<!-- The tarifa with its stopa, the poreska kategorija and, for S10 and S20, its osnov oslobođenja --><div class=\"flex items-center gap-1 mb-1 min-w-0\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "<!-- The tarifa with its stopa, the poreska kategorija and, for S10 and S20, its osnov oslobođenja --><div class=\"flex items-center gap-1 mb-1 min-w-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -684,7 +693,7 @@ func RobUslugeStavkeFields(ui domain.RobnoFaktureUI, stavka domain.RobnoUslugeSt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "<span class=\"text-sm\">%</span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "<span class=\"text-sm\">%</span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -703,7 +712,7 @@ func RobUslugeStavkeFields(ui domain.RobnoFaktureUI, stavka domain.RobnoUslugeSt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "<span id=\"robno-usluge-taxexem\" class=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "<span id=\"robno-usluge-taxexem\" class=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -716,7 +725,7 @@ func RobUslugeStavkeFields(ui domain.RobnoFaktureUI, stavka domain.RobnoUslugeSt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -730,7 +739,7 @@ func RobUslugeStavkeFields(ui domain.RobnoFaktureUI, stavka domain.RobnoUslugeSt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "</span></div><!-- The zalihe by lot (a magacin of the tip zaliha 2): the OTK broj, the serija and the rok -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "</span></div><!-- The zalihe by lot (a magacin of the tip zaliha 2): the OTK broj, the serija and the rok -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -739,7 +748,7 @@ func RobUslugeStavkeFields(ui domain.RobnoFaktureUI, stavka domain.RobnoUslugeSt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "<div id=\"robno-usluge-zalihe\" class=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "<div id=\"robno-usluge-zalihe\" class=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -752,7 +761,7 @@ func RobUslugeStavkeFields(ui domain.RobnoFaktureUI, stavka domain.RobnoUslugeSt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -764,7 +773,7 @@ func RobUslugeStavkeFields(ui domain.RobnoFaktureUI, stavka domain.RobnoUslugeSt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "<div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "<div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -782,7 +791,7 @@ func RobUslugeStavkeFields(ui domain.RobnoFaktureUI, stavka domain.RobnoUslugeSt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "</div></div><!-- The cene and the stanje of an artikal of the zalihe (not a usluga) --><div id=\"robno-usluge-zalcene\" class=\"hidden\"><div class=\"flex items-center gap-1 mb-1 min-w-0\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "</div></div><!-- The cene and the stanje of an artikal of the zalihe (not a usluga) --><div id=\"robno-usluge-zalcene\" class=\"hidden\"><div class=\"flex items-center gap-1 mb-1 min-w-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -791,7 +800,7 @@ func RobUslugeStavkeFields(ui domain.RobnoFaktureUI, stavka domain.RobnoUslugeSt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "<span id=\"robno-usluge-magcena\" class=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "<span id=\"robno-usluge-magcena\" class=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -804,15 +813,19 @@ func RobUslugeStavkeFields(ui domain.RobnoFaktureUI, stavka domain.RobnoUslugeSt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = RobnoFaktureStavkaInfo("magcenausluge", translator.Label("Magacinska cena"), stavka.MagacinskaCena, "!w-28 text-right").Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "magcenausluge", LabelText: translator.Label("Magacinska cena"), ClassLabel: common.ClassLabel + " whitespace-nowrap"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "</span> ")
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "magcenausluge", FieldType: "number", Value: stavka.MagacinskaCena, DecimalPlaces: 2, Disabled: true, ClassInput: common.ClassInputTextDisabled + " !w-28 text-right"}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "</span> ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -821,7 +834,7 @@ func RobUslugeStavkeFields(ui domain.RobnoFaktureUI, stavka domain.RobnoUslugeSt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "<span id=\"robno-usluge-ncena\" class=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, "<span id=\"robno-usluge-ncena\" class=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -834,7 +847,7 @@ func RobUslugeStavkeFields(ui domain.RobnoFaktureUI, stavka domain.RobnoUslugeSt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, "\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, "\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -842,46 +855,23 @@ func RobUslugeStavkeFields(ui domain.RobnoFaktureUI, stavka domain.RobnoUslugeSt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var39 = []any{common.ClassInputTextDisabled + " !w-28 text-right"}
-		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var39...)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "nabavnacena", Name: "nabavnacena", FieldType: "number", Value: stavka.NabavnaCena, DecimalPlaces: 2, ReadOnly: true, ClassInput: common.ClassInputTextDisabled + " !w-28 text-right"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, "<input type=\"text\" id=\"nabavnacena\" name=\"nabavnacena\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "</span> <span class=\"flex items-center gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var40 string
-		templ_7745c5c3_Var40, templ_7745c5c3_Err = templ.JoinStringErrs(stavka.NabavnaCena)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 227, Col: 34}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var40))
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "stanjeusluge", LabelText: translator.Label("Stanje"), ClassLabel: common.ClassLabel + " whitespace-nowrap"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "\" readonly class=\"")
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{ID: "stanjeusluge", FieldType: "number", Value: stavka.Stanje, DecimalPlaces: 3, Disabled: true, ClassInput: common.ClassInputTextDisabled + " !w-28 text-right"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var41 string
-		templ_7745c5c3_Var41, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var39).String())
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 1, Col: 0}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var41))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 53, "\"></span>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = RobnoFaktureStavkaInfo("stanjeusluge", translator.Label("Stanje"), stavka.Stanje, "!w-28 text-right").Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 54, "</div></div></div><!-- Second column: the JM, the opis usluge (a stavka of the šifra 0) and the dodatni opis usluge --><div class=\"flex flex-col min-w-0 gap-1\"><div class=\"flex items-center gap-1 min-w-0\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 53, "</span></div></div></div><!-- Second column: the JM, the opis usluge (a stavka of the šifra 0) and the dodatni opis usluge --><div class=\"flex flex-col min-w-0 gap-1\"><div class=\"flex items-center gap-1 min-w-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -889,48 +879,19 @@ func RobUslugeStavkeFields(ui domain.RobnoFaktureUI, stavka domain.RobnoUslugeSt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var42 = []any{common.ClassInputTextEnabled + " !w-20"}
-		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var42...)
+		templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
+			ID:         "jmusluge",
+			Name:       "jmusluge",
+			FieldType:  "text",
+			Value:      stavka.JM,
+			MaxLength:  "6",
+			TabIndex:   "12",
+			ReadOnly:   !robUslugeSifraNula(stavka),
+			ClassInput: common.ClassInputTextEnabled + " !w-20"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 55, "<input type=\"text\" id=\"jmusluge\" name=\"jmusluge\" value=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var43 string
-		templ_7745c5c3_Var43, templ_7745c5c3_Err = templ.JoinStringErrs(stavka.JM)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 244, Col: 23}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var43))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 56, "\" maxlength=\"6\" tabindex=\"12\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		if !robUslugeSifraNula(stavka) {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 57, " readonly")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 58, " class=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var44 string
-		templ_7745c5c3_Var44, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var42).String())
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 1, Col: 0}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var44))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 59, "\"></div><div class=\"flex items-start gap-1 min-w-0\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 54, "</div><div class=\"flex items-start gap-1 min-w-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -938,48 +899,20 @@ func RobUslugeStavkeFields(ui domain.RobnoFaktureUI, stavka domain.RobnoUslugeSt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var45 = []any{common.ClassInputTextEnabled + " flex-1 min-w-0 !h-auto"}
-		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var45...)
+		templ_7745c5c3_Err = components.TextAreaField(domain.InputFieldConfig{
+			ID:         "opisusluge",
+			Name:       "opisusluge",
+			Value:      stavka.OpisUsluge,
+			Rows:       "4",
+			MaxLength:  "1000",
+			TabIndex:   "13",
+			ReadOnly:   !robUslugeSifraNula(stavka),
+			OnInput:    "clearFieldError",
+			ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0 !h-auto"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 60, "<textarea id=\"opisusluge\" name=\"opisusluge\" rows=\"4\" maxlength=\"1000\" tabindex=\"13\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		if !robUslugeSifraNula(stavka) {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 61, " readonly")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 62, " oninput=\"clearFieldError(&#39;opisusluge&#39;)\" class=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var46 string
-		templ_7745c5c3_Var46, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var45).String())
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 1, Col: 0}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var46))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 63, "\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var47 string
-		templ_7745c5c3_Var47, templ_7745c5c3_Err = templ.JoinStringErrs(stavka.OpisUsluge)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 262, Col: 25}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var47))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 64, "</textarea></div><div class=\"flex items-start gap-1 min-w-0\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 55, "</div><div class=\"flex items-start gap-1 min-w-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -987,38 +920,17 @@ func RobUslugeStavkeFields(ui domain.RobnoFaktureUI, stavka domain.RobnoUslugeSt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var48 = []any{common.ClassInputTextEnabled + " flex-1 min-w-0 !h-auto"}
-		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var48...)
+		templ_7745c5c3_Err = components.TextAreaField(domain.InputFieldConfig{
+			ID:         "opisdet",
+			Name:       "opisdet",
+			Value:      stavka.OpisDet,
+			Rows:       "3",
+			TabIndex:   "14",
+			ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0 !h-auto"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 65, "<textarea id=\"opisdet\" name=\"opisdet\" rows=\"3\" tabindex=\"14\" class=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var49 string
-		templ_7745c5c3_Var49, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var48).String())
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 1, Col: 0}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var49))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 66, "\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var50 string
-		templ_7745c5c3_Var50, templ_7745c5c3_Err = templ.JoinStringErrs(stavka.OpisDet)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 272, Col: 22}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var50))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 67, "</textarea></div></div></div></fieldset><div class=\"flex items-center justify-end gap-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 56, "</div></div></div></fieldset><div class=\"flex items-center justify-end gap-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1026,12 +938,12 @@ func RobUslugeStavkeFields(ui domain.RobnoFaktureUI, stavka domain.RobnoUslugeSt
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 68, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 57, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if tbl.TableID != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 69, "<div id=\"robno-usluge-stavke-grid\" class=\"flex-1 min-h-0 overflow-auto\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 58, "<div id=\"robno-usluge-stavke-grid\" class=\"flex-1 min-h-0 overflow-auto\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1039,7 +951,7 @@ func RobUslugeStavkeFields(ui domain.RobnoFaktureUI, stavka domain.RobnoUslugeSt
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 70, "</div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 59, "</div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1048,8 +960,8 @@ func RobUslugeStavkeFields(ui domain.RobnoFaktureUI, stavka domain.RobnoUslugeSt
 	})
 }
 
-// robUslugeBroj renders a number of the stavka (editable, or read only: the iznosi).
-func robUslugeBroj(id, label, value, maxLength, tabIndex string, readOnly bool) templ.Component {
+// robUslugeBroj renders a number of the stavka with its decimals (editable, or read only: the iznosi).
+func robUslugeBroj(id, label, value, maxLength, tabIndex string, decimale int, readOnly bool) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -1065,12 +977,12 @@ func robUslugeBroj(id, label, value, maxLength, tabIndex string, readOnly bool) 
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var51 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var51 == nil {
-			templ_7745c5c3_Var51 = templ.NopComponent
+		templ_7745c5c3_Var39 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var39 == nil {
+			templ_7745c5c3_Var39 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 71, "<div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 60, "<div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1080,30 +992,32 @@ func robUslugeBroj(id, label, value, maxLength, tabIndex string, readOnly bool) 
 		}
 		if readOnly {
 			templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
-				ID:         id,
-				FieldType:  "text",
-				Value:      value,
-				Disabled:   true,
-				ClassInput: common.ClassInputTextDisabled + " !w-36 text-right"}).Render(ctx, templ_7745c5c3_Buffer)
+				ID:            id,
+				FieldType:     "number",
+				Value:         value,
+				DecimalPlaces: decimale,
+				Disabled:      true,
+				ClassInput:    common.ClassInputTextDisabled + " !w-36 text-right"}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		} else {
 			templ_7745c5c3_Err = components.TextInputField(domain.InputFieldConfig{
-				ID:         id,
-				Name:       id,
-				FieldType:  "text",
-				Value:      value,
-				ClassInput: common.ClassInputTextEnabled + " !w-36 text-right",
-				MaxLength:  maxLength,
-				TabIndex:   tabIndex,
-				OnInput:    "clearFieldError",
-				OnFocus:    "clearFieldError"}).Render(ctx, templ_7745c5c3_Buffer)
+				ID:            id,
+				Name:          id,
+				FieldType:     "number",
+				SelectOnFocus: true,
+				Value:         value,
+				DecimalPlaces: decimale,
+				ClassInput:    common.ClassInputTextEnabled + " !w-36 text-right",
+				MaxLength:     maxLength,
+				TabIndex:      tabIndex,
+				OnFocus:       "clearFieldError"}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 72, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 61, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1128,12 +1042,12 @@ func robUslugeTekst(id, label, value, maxLength, tabIndex string) templ.Componen
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var52 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var52 == nil {
-			templ_7745c5c3_Var52 = templ.NopComponent
+		templ_7745c5c3_Var40 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var40 == nil {
+			templ_7745c5c3_Var40 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 73, "<div class=\"flex items-center gap-1 mb-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 62, "<div class=\"flex items-center gap-1 mb-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1152,7 +1066,7 @@ func robUslugeTekst(id, label, value, maxLength, tabIndex string) templ.Componen
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 74, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 63, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1209,12 +1123,12 @@ func robUslugeScriptBody() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var53 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var53 == nil {
-			templ_7745c5c3_Var53 = templ.NopComponent
+		templ_7745c5c3_Var41 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var41 == nil {
+			templ_7745c5c3_Var41 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 75, "<script>\n\t\t// The form of the stavke keeps the group of the document, the tip zaliha and how the magacin keeps its\n\t\t// zalihe, the kurs of the document (data-*).\n\t\tfunction robUslugeForma() {\n\t\t\treturn document.getElementById('robno-usluge-stavka');\n\t\t}\n\t\tfunction robUslugeSakrij(id, sakrij) {\n\t\t\tconst el = document.getElementById(id);\n\t\t\tif (el) el.classList.toggle('hidden', sakrij);\n\t\t}\n\t\tfunction robUslugeReadOnly(id, readOnly) {\n\t\t\tconst el = document.getElementById(id);\n\t\t\tif (el) el.readOnly = readOnly;\n\t\t}\n\n\t\t// The iznos of the stavke (the exits of EDT_KOLIC and EDT_CENA: the cena for the količina 0) and the iznos\n\t\t// of the rabat (the exit of EDT_RAB).\n\t\tfunction robUslugeIznosi() {\n\t\t\tconst kolicina = robnoBroj('kolicina'), cena = robnoBroj('cenausluge'), rabat = robnoBroj('rabatusluge');\n\t\t\trobnoUpisi('iznosusluge', (kolicina === 0 ? cena : robnoZaokruzi(kolicina * cena, 2)).toFixed(2));\n\t\t\tconst rabatJedinice = robnoZaokruzi(cena * rabat / 100, 2);\n\t\t\trobnoUpisi('iznosrabatausluge', (kolicina === 0 ? rabatJedinice : rabatJedinice * kolicina).toFixed(2));\n\t\t}\n\n\t\t// The osnov oslobođenja is shown for the poreske kategorije S10 and S20 (else \"-\").\n\t\tfunction robUslugeTaxcat() {\n\t\t\tconst taxcat = document.getElementById('taxcat');\n\t\t\tif (!taxcat) return;\n\t\t\tconst vidljiv = taxcat.value === 'S10' || taxcat.value === 'S20';\n\t\t\trobUslugeSakrij('robno-usluge-taxexem', !vidljiv);\n\t\t\trobnoUpisi('taxexreco', '-');\n\t\t}\n\t\tfunction robUslugeSetTaxcat(taxcat) {\n\t\t\tconst el = document.getElementById('taxcat');\n\t\t\tif (!taxcat || !el || !Array.from(el.options).some(o => o.value === taxcat)) return;\n\t\t\tel.value = taxcat;\n\t\t\trobUslugeTaxcat();\n\t\t}\n\n\t\t// A stavka of the šifra 0 has its own opis usluge, JM and tarifa (the tarifa not for a KPF); an artikal\n\t\t// has the ones of the šifarnik.\n\t\tfunction robUslugeSifraNula(nula) {\n\t\t\tconst forma = robUslugeForma();\n\t\t\trobUslugeReadOnly('opisusluge', !nula);\n\t\t\trobUslugeReadOnly('jmusluge', !nula);\n\t\t\trobUslugeReadOnly('tarifa', !!forma && forma.dataset.grupa === 'KPF');\n\t\t}\n\n\t\t// The parts of the form of an artikal of the zalihe (not the šifra 0, not of the tip U): the cene and the\n\t\t// stanje, the zalihe by lot of a magacin of the tip zaliha 2.\n\t\tfunction robUslugeZalihe(artikalZaliha) {\n\t\t\tconst forma = robUslugeForma();\n\t\t\tif (!forma) return;\n\t\t\trobUslugeSakrij('robno-usluge-zalcene', !artikalZaliha);\n\t\t\trobUslugeSakrij('robno-usluge-zalihe', !(artikalZaliha && forma.dataset.tipzal === '2'));\n\t\t\trobUslugeSakrij('robno-usluge-ncena', forma.dataset.vpcena === 'true');\n\t\t\trobUslugeSakrij('robno-usluge-magcena', forma.dataset.nabcena === 'true');\n\t\t}\n\n\t\t// The artikal of the stavka (the legacy exit of EDT_SIFRA): the entry of the šifra clears the cena, the\n\t\t// rabat and their iznosi; the šifra 0 takes the konto of its artikal and opens the opis usluge; an artikal\n\t\t// gives its opis, JM, tarifa with its stopa and poreska kategorija, its konto, its cene and stanje.\n\t\tfunction robUslugeArtikal() {\n\t\t\tconst forma = robUslugeForma();\n\t\t\tconst sifra = document.getElementById('sifraartikla');\n\t\t\tconst konto = document.getElementById('kontostavke');\n\t\t\tif (!forma || !sifra || !konto) return;\n\t\t\t['cenausluge', 'rabatusluge', 'iznosusluge', 'iznosrabatausluge'].forEach(id => robnoUpisi(id, '0'));\n\t\t\tconst vrednost = sifra.value.trim();\n\t\t\tconst nula = vrednost === '0';\n\t\t\t// The legacy exit of EDT_SIFRA reads an artikal only with the konto; the šifra 0 without it too.\n\t\t\tif (vrednost === '' || (!nula && konto.value.trim() === '')) return;\n\t\t\tfetch(forma.dataset.artikalUrl + '?' + new URLSearchParams({ rdokid: document.getElementById('stavkardokid').value, sifra: vrednost }),\n\t\t\t\t{ headers: { 'Accept': 'application/json' } })\n\t\t\t\t.then(r => r.json())\n\t\t\t\t.then(odgovor => {\n\t\t\t\t\tif (nula) {\n\t\t\t\t\t\tif (odgovor.found && odgovor.artikal.konto) konto.value = odgovor.artikal.konto;\n\t\t\t\t\t\trobUslugeSifraNula(true);\n\t\t\t\t\t\trobUslugeZalihe(false);\n\t\t\t\t\t\tconst opis = document.getElementById('opisusluge');\n\t\t\t\t\t\tif (opis) opis.focus();\n\t\t\t\t\t\treturn;\n\t\t\t\t\t}\n\t\t\t\t\trobUslugeSifraNula(false);\n\t\t\t\t\tif (!odgovor.found) {\n\t\t\t\t\t\t['opisusluge', 'jmusluge', 'otk', 'serija', 'rokstavke'].forEach(id => robnoUpisi(id, ''));\n\t\t\t\t\t\t['tarifa', 'stopastavke', 'stanjeusluge', 'nabavnacena', 'cenausluge', 'magcenausluge', 'iznosusluge'].forEach(id => robnoUpisi(id, '0'));\n\t\t\t\t\t\trobUslugeZalihe(false);\n\t\t\t\t\t\treturn;\n\t\t\t\t\t}\n\t\t\t\t\tconst a = odgovor.artikal;\n\t\t\t\t\tsifra.value = String(a.sifra);\n\t\t\t\t\trobnoUpisi('sifraartikla-combo-input', a.sifra + ' - ' + a.naziv);\n\t\t\t\t\trobnoUpisi('opisusluge', a.naziv);\n\t\t\t\t\trobnoUpisi('jmusluge', a.jm);\n\t\t\t\t\trobnoUpisi('tarifa', String(a.tarifa));\n\t\t\t\t\trobnoUpisi('stopastavke', String(a.stopa));\n\t\t\t\t\trobUslugeSetTaxcat(a.taxcat);\n\t\t\t\t\tif (a.konto) konto.value = a.konto;\n\t\t\t\t\trobnoUpisi('nabavnacena', String(a.ncena));\n\t\t\t\t\trobnoUpisi('cenausluge', String(a.cena));\n\t\t\t\t\trobnoUpisi('magcenausluge', String(a.magcena));\n\t\t\t\t\trobnoUpisi('stanjeusluge', String(a.stanje));\n\t\t\t\t\trobUslugeZalihe(a.tip !== 'U');\n\t\t\t\t\trobUslugeIznosi();\n\t\t\t\t\tconst kolicina = document.getElementById('kolicina');\n\t\t\t\t\tif (kolicina) kolicina.focus();\n\t\t\t\t});\n\t\t}\n\n\t\t// The stopa of the tarifa and its poreska kategorija (the legacy exit of EDT_po).\n\t\tfunction robUslugeStopa() {\n\t\t\tconst forma = robUslugeForma();\n\t\t\tconst tarifa = document.getElementById('tarifa');\n\t\t\tif (!forma || !tarifa || tarifa.value.trim() === '') return;\n\t\t\tfetch(forma.dataset.stopaUrl + '?' + new URLSearchParams({ rdokid: document.getElementById('stavkardokid').value, tarifa: tarifa.value.trim() }),\n\t\t\t\t{ headers: { 'Accept': 'application/json' } })\n\t\t\t\t.then(r => r.json())\n\t\t\t\t.then(s => {\n\t\t\t\t\trobnoUpisi('stopastavke', String(s.stopa));\n\t\t\t\t\trobUslugeSetTaxcat(s.taxcat);\n\t\t\t\t});\n\t\t}\n\n\t\t// The cena is typed in the valuta of the document and converted by its kurs (the legacy exit of EDT_CENA;\n\t\t// the cena as typed is kept for the stavka, cenaval).\n\t\tfunction robUslugeCena() {\n\t\t\tconst forma = robUslugeForma();\n\t\t\tif (!forma) return;\n\t\t\tconst cena = robnoBroj('cenausluge');\n\t\t\trobnoUpisi('cenaval', String(cena));\n\t\t\tconst kurs = parseFloat(forma.dataset.kurs) || 0, vaziza = parseFloat(forma.dataset.vaziza) || 0;\n\t\t\tif (kurs !== 0 && vaziza > 0) robnoUpisi('cenausluge', String(robnoZaokruzi(cena * kurs / vaziza, 4)));\n\t\t\trobUslugeIznosi();\n\t\t}\n\n\t\t// \"Izmeni\" of a row of the grid of the stavke (the legacy \"Izmene\"): the stavka of the answer (JSON) in the\n\t\t// form; it is saved as a change.\n\t\tfunction robUslugeStavkaUcitaj(evt) {\n\t\t\tlet odgovor;\n\t\t\ttry {\n\t\t\t\todgovor = JSON.parse(evt.detail.xhr.responseText);\n\t\t\t} catch (e) {\n\t\t\t\treturn;\n\t\t\t}\n\t\t\tif (!odgovor.found) {\n\t\t\t\talert(odgovor.message || 'Stavka ne postoji.');\n\t\t\t\treturn;\n\t\t\t}\n\t\t\tconst st = odgovor.stavka;\n\t\t\trobnoUpisi('stavkarproid', String(st.rproid));\n\t\t\trobnoUpisi('kontostavke', st.konto);\n\t\t\trobnoUpisi('sifraartikla', String(st.sifra));\n\t\t\trobnoUpisi('sifraartikla-combo-input', st.sifra + ' - ' + st.naziv);\n\t\t\trobnoUpisi('opisusluge', st.naziv);\n\t\t\trobnoUpisi('jmusluge', st.jm);\n\t\t\trobnoUpisi('kolicina', String(st.kolicina));\n\t\t\trobnoUpisi('cenausluge', String(st.cena));\n\t\t\trobnoUpisi('cenaval', '');\n\t\t\trobnoUpisi('rabatusluge', String(st.rabat));\n\t\t\trobnoUpisi('tarifa', String(st.tarifa));\n\t\t\trobnoUpisi('stopastavke', String(st.stopa));\n\t\t\trobnoUpisi('nabavnacena', String(st.ncena));\n\t\t\trobnoUpisi('otk', st.otk);\n\t\t\trobnoUpisi('serija', st.serija);\n\t\t\trobnoUpisi('rokstavke', st.rok);\n\t\t\trobnoUpisi('opisdet', st.opisdet);\n\t\t\tconst taxcat = document.getElementById('taxcat');\n\t\t\tif (taxcat && st.taxcat) taxcat.value = st.taxcat;\n\t\t\trobUslugeSakrij('robno-usluge-taxexem', !(taxcat && (taxcat.value === 'S10' || taxcat.value === 'S20')));\n\t\t\tif (st.taxexreco) robnoUpisi('taxexreco', st.taxexreco);\n\t\t\trobUslugeSifraNula(st.sifra === 0);\n\t\t\trobUslugeSakrij('robno-usluge-zalcene', true);\n\t\t\trobUslugeIznosi();\n\t\t\trobUslugeStavkeGridEnabled(false);\n\t\t\trobUslugeOdustaniEnabled(true);\n\t\t\tconst fokus = document.getElementById(st.sifra === 0 ? 'opisusluge' : 'kolicina');\n\t\t\tif (fokus) fokus.focus();\n\t\t}\n\n\t\t// \"Odustani\" of the change of a stavka: the grid of the stavke is unlocked again and \"Odustani\" is\n\t\t// disabled; the form is no more the stavka of the row (a next \"Sačuvaj\" adds a stavka).\n\t\tfunction robUslugeStavkaOdustani() {\n\t\t\trobnoUpisi('stavkarproid', '0');\n\t\t\trobUslugeStavkeGridEnabled(true);\n\t\t\trobUslugeOdustaniEnabled(false);\n\t\t}\n\t\tfunction robUslugeOdustaniEnabled(enabled) {\n\t\t\tconst btn = document.getElementById('robno-usluge-stavka-odustani');\n\t\t\tif (!btn) return;\n\t\t\tbtn.disabled = !enabled;\n\t\t\tbtn.classList.toggle('opacity-50', !enabled);\n\t\t\tbtn.classList.toggle('cursor-not-allowed', !enabled);\n\t\t}\n\t\tfunction robUslugeStavkeGridEnabled(enabled) {\n\t\t\tconst grid = document.getElementById('robno-usluge-stavke-grid');\n\t\t\tif (!grid) return;\n\t\t\tgrid.inert = !enabled;\n\t\t\tgrid.classList.toggle('opacity-50', !enabled);\n\t\t\tgrid.classList.toggle('pointer-events-none', !enabled);\n\t\t\tgrid.querySelectorAll('input, select, button').forEach(el => { el.disabled = !enabled; });\n\t\t}\n\n\t\t// \"Za period\" of the knjižno pismo finansijsko enables its datumi.\n\t\tfunction robUslugeZaPeriod() {\n\t\t\tconst cbx = document.getElementById('zaperiod');\n\t\t\tif (!cbx) return;\n\t\t\t['periodod', 'perioddo'].forEach(id => {\n\t\t\t\tconst el = document.getElementById(id);\n\t\t\t\tif (!el) return;\n\t\t\t\tel.disabled = !cbx.checked;\n\t\t\t\tif (!cbx.checked) el.value = '';\n\t\t\t});\n\t\t}\n\n\t\t// The events of the form (delegated: the form comes back with the content of the tab).\n\t\tif (!window.robUslugeListener) {\n\t\t\twindow.robUslugeListener = true;\n\t\t\tconst uFormi = evt => evt.target && evt.target.id && robUslugeForma() && evt.target.closest('#robno-usluge-stavke-panel');\n\t\t\tdocument.addEventListener('input', function (evt) {\n\t\t\t\tif (uFormi(evt) && evt.target.id === 'rabatusluge') robUslugeIznosi();\n\t\t\t});\n\t\t\tdocument.addEventListener('change', function (evt) {\n\t\t\t\tif (evt.target && evt.target.id === 'zaperiod' && robUslugeForma()) {\n\t\t\t\t\trobUslugeZaPeriod();\n\t\t\t\t\treturn;\n\t\t\t\t}\n\t\t\t\tif (!uFormi(evt)) return;\n\t\t\t\tswitch (evt.target.id) {\n\t\t\t\t\tcase 'sifraartikla': robUslugeArtikal(); break;\n\t\t\t\t\tcase 'kontostavke': evt.target.value = evt.target.value.replace(/\\s/g, ''); break;\n\t\t\t\t\tcase 'kolicina':\n\t\t\t\t\tcase 'rabatusluge': robUslugeIznosi(); break;\n\t\t\t\t\tcase 'cenausluge': robUslugeCena(); break;\n\t\t\t\t\tcase 'tarifa': robUslugeStopa(); break;\n\t\t\t\t\tcase 'taxcat': robUslugeTaxcat(); break;\n\t\t\t\t}\n\t\t\t});\n\t\t\t// The cena of a document in a foreign valuta is typed in its valuta (the legacy entry of EDT_CENA).\n\t\t\tdocument.addEventListener('focusin', function (evt) {\n\t\t\t\tconst forma = robUslugeForma();\n\t\t\t\tif (!forma || !evt.target || evt.target.id !== 'cenausluge' || !forma.dataset.valutaPoruka) return;\n\t\t\t\tevt.target.title = forma.dataset.valutaPoruka;\n\t\t\t});\n\t\t}\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 64, "<script>\n\t\t// The form of the stavke keeps the group of the document, the tip zaliha and how the magacin keeps its\n\t\t// zalihe, the kurs of the document (data-*).\n\t\tfunction robUslugeForma() {\n\t\t\treturn document.getElementById('robno-usluge-stavka');\n\t\t}\n\t\tfunction robUslugeSakrij(id, sakrij) {\n\t\t\tconst el = document.getElementById(id);\n\t\t\tif (el) el.classList.toggle('hidden', sakrij);\n\t\t}\n\t\tfunction robUslugeReadOnly(id, readOnly) {\n\t\t\tconst el = document.getElementById(id);\n\t\t\tif (el) el.readOnly = readOnly;\n\t\t}\n\n\t\t// The iznos of the stavke (the exits of EDT_KOLIC and EDT_CENA: the cena for the količina 0) and the iznos\n\t\t// of the rabat (the exit of EDT_RAB).\n\t\tfunction robUslugeIznosi() {\n\t\t\tconst kolicina = robnoBroj('kolicina'), cena = robnoBroj('cenausluge'), rabat = robnoBroj('rabatusluge');\n\t\t\trobnoUpisiBroj('iznosusluge', kolicina === 0 ? cena : robnoZaokruzi(kolicina * cena, 2));\n\t\t\tconst rabatJedinice = robnoZaokruzi(cena * rabat / 100, 2);\n\t\t\trobnoUpisi('iznosrabatausluge', (kolicina === 0 ? rabatJedinice : rabatJedinice * kolicina).toFixed(2));\n\t\t}\n\n\t\t// The osnov oslobođenja is shown for the poreske kategorije S10 and S20 (else \"-\").\n\t\tfunction robUslugeTaxcat() {\n\t\t\tconst taxcat = document.getElementById('taxcat');\n\t\t\tif (!taxcat) return;\n\t\t\tconst vidljiv = taxcat.value === 'S10' || taxcat.value === 'S20';\n\t\t\trobUslugeSakrij('robno-usluge-taxexem', !vidljiv);\n\t\t\trobnoUpisi('taxexreco', '-');\n\t\t}\n\t\tfunction robUslugeSetTaxcat(taxcat) {\n\t\t\tconst el = document.getElementById('taxcat');\n\t\t\tif (!taxcat || !el || !Array.from(el.options).some(o => o.value === taxcat)) return;\n\t\t\tel.value = taxcat;\n\t\t\trobUslugeTaxcat();\n\t\t}\n\n\t\t// A stavka of the šifra 0 has its own opis usluge, JM and tarifa (the tarifa not for a KPF); an artikal\n\t\t// has the ones of the šifarnik.\n\t\tfunction robUslugeSifraNula(nula) {\n\t\t\tconst forma = robUslugeForma();\n\t\t\trobUslugeReadOnly('opisusluge', !nula);\n\t\t\trobUslugeReadOnly('jmusluge', !nula);\n\t\t\trobUslugeReadOnly('tarifa', !!forma && forma.dataset.grupa === 'KPF');\n\t\t}\n\n\t\t// The parts of the form of an artikal of the zalihe (not the šifra 0, not of the tip U): the cene and the\n\t\t// stanje, the zalihe by lot of a magacin of the tip zaliha 2.\n\t\tfunction robUslugeZalihe(artikalZaliha) {\n\t\t\tconst forma = robUslugeForma();\n\t\t\tif (!forma) return;\n\t\t\trobUslugeSakrij('robno-usluge-zalcene', !artikalZaliha);\n\t\t\trobUslugeSakrij('robno-usluge-zalihe', !(artikalZaliha && forma.dataset.tipzal === '2'));\n\t\t\trobUslugeSakrij('robno-usluge-ncena', forma.dataset.vpcena === 'true');\n\t\t\trobUslugeSakrij('robno-usluge-magcena', forma.dataset.nabcena === 'true');\n\t\t}\n\n\t\t// The artikal of the stavka (the legacy exit of EDT_SIFRA): the entry of the šifra clears the cena, the\n\t\t// rabat and their iznosi; the šifra 0 takes the konto of its artikal and opens the opis usluge; an artikal\n\t\t// gives its opis, JM, tarifa with its stopa and poreska kategorija, its konto, its cene and stanje.\n\t\tfunction robUslugeArtikal() {\n\t\t\tconst forma = robUslugeForma();\n\t\t\tconst sifra = document.getElementById('sifraartikla');\n\t\t\tconst konto = document.getElementById('kontostavke');\n\t\t\tif (!forma || !sifra || !konto) return;\n\t\t\t['cenausluge', 'rabatusluge', 'iznosusluge', 'iznosrabatausluge'].forEach(id => robnoUpisiBroj(id, 0));\n\t\t\tconst vrednost = sifra.value.trim();\n\t\t\tconst nula = vrednost === '0';\n\t\t\t// The legacy exit of EDT_SIFRA reads an artikal only with the konto; the šifra 0 without it too.\n\t\t\tif (vrednost === '' || (!nula && konto.value.trim() === '')) return;\n\t\t\tfetch(forma.dataset.artikalUrl + '?' + new URLSearchParams({ rdokid: document.getElementById('stavkardokid').value, sifra: vrednost }),\n\t\t\t\t{ headers: { 'Accept': 'application/json' } })\n\t\t\t\t.then(r => r.json())\n\t\t\t\t.then(odgovor => {\n\t\t\t\t\tif (nula) {\n\t\t\t\t\t\tif (odgovor.found && odgovor.artikal.konto) konto.value = odgovor.artikal.konto;\n\t\t\t\t\t\trobUslugeSifraNula(true);\n\t\t\t\t\t\trobUslugeZalihe(false);\n\t\t\t\t\t\tconst opis = document.getElementById('opisusluge');\n\t\t\t\t\t\tif (opis) opis.focus();\n\t\t\t\t\t\treturn;\n\t\t\t\t\t}\n\t\t\t\t\trobUslugeSifraNula(false);\n\t\t\t\t\tif (!odgovor.found) {\n\t\t\t\t\t\t['opisusluge', 'jmusluge', 'otk', 'serija', 'rokstavke'].forEach(id => robnoUpisi(id, ''));\n\t\t\t\t\t\t['tarifa', 'stopastavke', 'stanjeusluge', 'nabavnacena', 'cenausluge', 'magcenausluge', 'iznosusluge'].forEach(id => robnoUpisiBroj(id, 0));\n\t\t\t\t\t\trobUslugeZalihe(false);\n\t\t\t\t\t\treturn;\n\t\t\t\t\t}\n\t\t\t\t\tconst a = odgovor.artikal;\n\t\t\t\t\tsifra.value = String(a.sifra);\n\t\t\t\t\trobnoUpisi('sifraartikla-combo-input', a.sifra + ' - ' + a.naziv);\n\t\t\t\t\trobnoUpisi('opisusluge', a.naziv);\n\t\t\t\t\trobnoUpisi('jmusluge', a.jm);\n\t\t\t\t\trobnoUpisi('tarifa', String(a.tarifa));\n\t\t\t\t\trobnoUpisi('stopastavke', String(a.stopa));\n\t\t\t\t\trobUslugeSetTaxcat(a.taxcat);\n\t\t\t\t\tif (a.konto) konto.value = a.konto;\n\t\t\t\t\trobnoUpisiBroj('nabavnacena', a.ncena);\n\t\t\t\t\trobnoUpisiBroj('cenausluge', a.cena);\n\t\t\t\t\trobnoUpisiBroj('magcenausluge', a.magcena);\n\t\t\t\t\trobnoUpisiBroj('stanjeusluge', a.stanje);\n\t\t\t\t\trobUslugeZalihe(a.tip !== 'U');\n\t\t\t\t\trobUslugeIznosi();\n\t\t\t\t\tconst kolicina = document.getElementById('kolicina');\n\t\t\t\t\tif (kolicina) kolicina.focus();\n\t\t\t\t});\n\t\t}\n\n\t\t// The stopa of the tarifa and its poreska kategorija (the legacy exit of EDT_po).\n\t\tfunction robUslugeStopa() {\n\t\t\tconst forma = robUslugeForma();\n\t\t\tconst tarifa = document.getElementById('tarifa');\n\t\t\tif (!forma || !tarifa || tarifa.value.trim() === '') return;\n\t\t\tfetch(forma.dataset.stopaUrl + '?' + new URLSearchParams({ rdokid: document.getElementById('stavkardokid').value, tarifa: tarifa.value.trim() }),\n\t\t\t\t{ headers: { 'Accept': 'application/json' } })\n\t\t\t\t.then(r => r.json())\n\t\t\t\t.then(s => {\n\t\t\t\t\trobnoUpisi('stopastavke', String(s.stopa));\n\t\t\t\t\trobUslugeSetTaxcat(s.taxcat);\n\t\t\t\t});\n\t\t}\n\n\t\t// The cena is typed in the valuta of the document and converted by its kurs (the legacy exit of EDT_CENA;\n\t\t// the cena as typed is kept for the stavka, cenaval).\n\t\tfunction robUslugeCena() {\n\t\t\tconst forma = robUslugeForma();\n\t\t\tif (!forma) return;\n\t\t\tconst cena = robnoBroj('cenausluge');\n\t\t\trobnoUpisi('cenaval', String(cena));\n\t\t\tconst kurs = parseFloat(forma.dataset.kurs) || 0, vaziza = parseFloat(forma.dataset.vaziza) || 0;\n\t\t\tif (kurs !== 0 && vaziza > 0) robnoUpisiBroj('cenausluge', robnoZaokruzi(cena * kurs / vaziza, 4));\n\t\t\trobUslugeIznosi();\n\t\t}\n\n\t\t// \"Izmeni\" of a row of the grid of the stavke (the legacy \"Izmene\"): the stavka of the answer (JSON) in the\n\t\t// form; it is saved as a change.\n\t\tfunction robUslugeStavkaUcitaj(evt) {\n\t\t\tlet odgovor;\n\t\t\ttry {\n\t\t\t\todgovor = JSON.parse(evt.detail.xhr.responseText);\n\t\t\t} catch (e) {\n\t\t\t\treturn;\n\t\t\t}\n\t\t\tif (!odgovor.found) {\n\t\t\t\talert(odgovor.message || 'Stavka ne postoji.');\n\t\t\t\treturn;\n\t\t\t}\n\t\t\tconst st = odgovor.stavka;\n\t\t\trobnoUpisi('stavkarproid', String(st.rproid));\n\t\t\trobnoUpisi('kontostavke', st.konto);\n\t\t\trobnoUpisi('sifraartikla', String(st.sifra));\n\t\t\trobnoUpisi('sifraartikla-combo-input', st.sifra + ' - ' + st.naziv);\n\t\t\trobnoUpisi('opisusluge', st.naziv);\n\t\t\trobnoUpisi('jmusluge', st.jm);\n\t\t\trobnoUpisiBroj('kolicina', st.kolicina);\n\t\t\trobnoUpisiBroj('cenausluge', st.cena);\n\t\t\trobnoUpisi('cenaval', '');\n\t\t\trobnoUpisiBroj('rabatusluge', st.rabat);\n\t\t\trobnoUpisi('tarifa', String(st.tarifa));\n\t\t\trobnoUpisi('stopastavke', String(st.stopa));\n\t\t\trobnoUpisiBroj('nabavnacena', st.ncena);\n\t\t\trobnoUpisi('otk', st.otk);\n\t\t\trobnoUpisi('serija', st.serija);\n\t\t\trobnoUpisi('rokstavke', st.rok);\n\t\t\trobnoUpisi('opisdet', st.opisdet);\n\t\t\tconst taxcat = document.getElementById('taxcat');\n\t\t\tif (taxcat && st.taxcat) taxcat.value = st.taxcat;\n\t\t\trobUslugeSakrij('robno-usluge-taxexem', !(taxcat && (taxcat.value === 'S10' || taxcat.value === 'S20')));\n\t\t\tif (st.taxexreco) robnoUpisi('taxexreco', st.taxexreco);\n\t\t\trobUslugeSifraNula(st.sifra === 0);\n\t\t\trobUslugeSakrij('robno-usluge-zalcene', true);\n\t\t\trobUslugeIznosi();\n\t\t\trobUslugeStavkeGridEnabled(false);\n\t\t\trobUslugeOdustaniEnabled(true);\n\t\t\tconst fokus = document.getElementById(st.sifra === 0 ? 'opisusluge' : 'kolicina');\n\t\t\tif (fokus) fokus.focus();\n\t\t}\n\n\t\t// \"Odustani\" of the change of a stavka: the grid of the stavke is unlocked again and \"Odustani\" is\n\t\t// disabled; the form is no more the stavka of the row (a next \"Sačuvaj\" adds a stavka).\n\t\tfunction robUslugeStavkaOdustani() {\n\t\t\trobnoUpisi('stavkarproid', '0');\n\t\t\trobUslugeStavkeGridEnabled(true);\n\t\t\trobUslugeOdustaniEnabled(false);\n\t\t}\n\t\tfunction robUslugeOdustaniEnabled(enabled) {\n\t\t\tconst btn = document.getElementById('robno-usluge-stavka-odustani');\n\t\t\tif (!btn) return;\n\t\t\tbtn.disabled = !enabled;\n\t\t\tbtn.classList.toggle('opacity-50', !enabled);\n\t\t\tbtn.classList.toggle('cursor-not-allowed', !enabled);\n\t\t}\n\t\tfunction robUslugeStavkeGridEnabled(enabled) {\n\t\t\tconst grid = document.getElementById('robno-usluge-stavke-grid');\n\t\t\tif (!grid) return;\n\t\t\tgrid.inert = !enabled;\n\t\t\tgrid.classList.toggle('opacity-50', !enabled);\n\t\t\tgrid.classList.toggle('pointer-events-none', !enabled);\n\t\t\tgrid.querySelectorAll('input, select, button').forEach(el => { el.disabled = !enabled; });\n\t\t}\n\n\t\t// \"Za period\" of the knjižno pismo finansijsko enables its datumi.\n\t\tfunction robUslugeZaPeriod() {\n\t\t\tconst cbx = document.getElementById('zaperiod');\n\t\t\tif (!cbx) return;\n\t\t\t['periodod', 'perioddo'].forEach(id => {\n\t\t\t\tconst el = document.getElementById(id);\n\t\t\t\tif (!el) return;\n\t\t\t\tel.disabled = !cbx.checked;\n\t\t\t\tif (!cbx.checked) el.value = '';\n\t\t\t});\n\t\t}\n\n\t\t// The events of the form (delegated: the form comes back with the content of the tab).\n\t\tif (!window.robUslugeListener) {\n\t\t\twindow.robUslugeListener = true;\n\t\t\tconst uFormi = evt => evt.target && evt.target.id && robUslugeForma() && evt.target.closest('#robno-usluge-stavke-panel');\n\t\t\tdocument.addEventListener('input', function (evt) {\n\t\t\t\tif (uFormi(evt) && evt.target.id === 'rabatusluge') robUslugeIznosi();\n\t\t\t});\n\t\t\tdocument.addEventListener('change', function (evt) {\n\t\t\t\tif (evt.target && evt.target.id === 'zaperiod' && robUslugeForma()) {\n\t\t\t\t\trobUslugeZaPeriod();\n\t\t\t\t\treturn;\n\t\t\t\t}\n\t\t\t\tif (!uFormi(evt)) return;\n\t\t\t\tswitch (evt.target.id) {\n\t\t\t\t\tcase 'sifraartikla': robUslugeArtikal(); break;\n\t\t\t\t\tcase 'kontostavke': evt.target.value = evt.target.value.replace(/\\s/g, ''); break;\n\t\t\t\t\tcase 'kolicina':\n\t\t\t\t\tcase 'rabatusluge': robUslugeIznosi(); break;\n\t\t\t\t\tcase 'cenausluge': robUslugeCena(); break;\n\t\t\t\t\tcase 'tarifa': robUslugeStopa(); break;\n\t\t\t\t\tcase 'taxcat': robUslugeTaxcat(); break;\n\t\t\t\t}\n\t\t\t});\n\t\t\t// The cena of a document in a foreign valuta is typed in its valuta (the legacy entry of EDT_CENA).\n\t\t\tdocument.addEventListener('focusin', function (evt) {\n\t\t\t\tconst forma = robUslugeForma();\n\t\t\t\tif (!forma || !evt.target || evt.target.id !== 'cenausluge' || !forma.dataset.valutaPoruka) return;\n\t\t\t\tevt.target.title = forma.dataset.valutaPoruka;\n\t\t\t});\n\t\t}\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

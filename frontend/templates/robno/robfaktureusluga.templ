@@ -2,6 +2,7 @@ package robno
 
 import (
 	"helia/frontend/components"
+	tmpl "helia/frontend/templates"
 	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
@@ -27,6 +28,8 @@ templ Rob_FaktureUsluga(ui domain.RobnoFaktureUI, naslov string, header domain.R
 	<!-- The messages of the screen -->
 	<div id={ ui.InfoID }></div>
 	@RobnoFaktureScript()
+	<!-- restrictNumericInput / cleanNumberInput of the numbers of the stavke (FieldType "number") -->
+	@tmpl.RestrictNumericInputScript()
 	@robUslugeScript.Once() {
 		@robUslugeScriptBody()
 	}
@@ -155,11 +158,11 @@ templ RobUslugeStavkeFields(ui domain.RobnoFaktureUI, stavka domain.RobnoUslugeS
 						}, translator)
 					}
 				</div>
-				@robUslugeBroj("kolicina", translator.Label("Količina"), stavka.Kolicina, "15", "3", false)
-				@robUslugeBroj("cenausluge", translator.Label("Cena"), stavka.ProdajnaCena, "18", "4", false)
-				@robUslugeBroj("iznosusluge", translator.Label("Iznos"), stavka.Iznos, "18", "", true)
-				@robUslugeBroj("rabatusluge", translator.Label("Rabat"), stavka.Rabat, "6", "5", false)
-				@robUslugeBroj("iznosrabatausluge", translator.Label("Iznos rabata"), stavka.IznosRabata, "18", "", true)
+				@robUslugeBroj("kolicina", translator.Label("Količina"), stavka.Kolicina, "15", "3", 3, false)
+				@robUslugeBroj("cenausluge", translator.Label("Cena"), stavka.ProdajnaCena, "18", "4", 2, false)
+				@robUslugeBroj("iznosusluge", translator.Label("Iznos"), stavka.Iznos, "18", "", 2, true)
+				@robUslugeBroj("rabatusluge", translator.Label("Rabat"), stavka.Rabat, "6", "5", 2, false)
+				@robUslugeBroj("iznosrabatausluge", translator.Label("Iznos rabata"), stavka.IznosRabata, "18", "", 2, true)
 				<!-- The tarifa with its stopa, the poreska kategorija and, for S10 and S20, its osnov oslobođenja -->
 				<div class="flex items-center gap-1 mb-1 min-w-0">
 					@components.LabelField(domain.LabelFieldConfig{ID: "tarifa", LabelText: translator.Label("Šifra poreske tarife"), ClassLabel: common.ClassLabel + " w-36"})
@@ -216,20 +219,17 @@ templ RobUslugeStavkeFields(ui domain.RobnoFaktureUI, stavka domain.RobnoUslugeS
 				<div id="robno-usluge-zalcene" class="hidden">
 					<div class="flex items-center gap-1 mb-1 min-w-0">
 						<span id="robno-usluge-magcena" class={ "flex items-center gap-1" + robUslugeSkriveno(stavka.NabCena) }>
-							@RobnoFaktureStavkaInfo("magcenausluge", translator.Label("Magacinska cena"), stavka.MagacinskaCena, "!w-28 text-right")
+							@components.LabelField(domain.LabelFieldConfig{ID: "magcenausluge", LabelText: translator.Label("Magacinska cena"), ClassLabel: common.ClassLabel + " whitespace-nowrap"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "magcenausluge", FieldType: "number", Value: stavka.MagacinskaCena, DecimalPlaces: 2, Disabled: true, ClassInput: common.ClassInputTextDisabled + " !w-28 text-right"})
 						</span>
 						<span id="robno-usluge-ncena" class={ "flex items-center gap-1" + robUslugeSkriveno(stavka.VpCena) }>
 							@components.LabelField(domain.LabelFieldConfig{ID: "nabavnacena", LabelText: translator.Label("Nabavna cena"), ClassLabel: common.ClassLabel + " whitespace-nowrap"})
-							<input
-								type="text"
-								id="nabavnacena"
-								name="nabavnacena"
-								value={ stavka.NabavnaCena }
-								readonly
-								class={ common.ClassInputTextDisabled + " !w-28 text-right" }
-							/>
+							@components.TextInputField(domain.InputFieldConfig{ID: "nabavnacena", Name: "nabavnacena", FieldType: "number", Value: stavka.NabavnaCena, DecimalPlaces: 2, ReadOnly: true, ClassInput: common.ClassInputTextDisabled + " !w-28 text-right"})
 						</span>
-						@RobnoFaktureStavkaInfo("stanjeusluge", translator.Label("Stanje"), stavka.Stanje, "!w-28 text-right")
+						<span class="flex items-center gap-1">
+							@components.LabelField(domain.LabelFieldConfig{ID: "stanjeusluge", LabelText: translator.Label("Stanje"), ClassLabel: common.ClassLabel + " whitespace-nowrap"})
+							@components.TextInputField(domain.InputFieldConfig{ID: "stanjeusluge", FieldType: "number", Value: stavka.Stanje, DecimalPlaces: 3, Disabled: true, ClassInput: common.ClassInputTextDisabled + " !w-28 text-right"})
+						</span>
 					</div>
 				</div>
 			</div>
@@ -237,39 +237,38 @@ templ RobUslugeStavkeFields(ui domain.RobnoFaktureUI, stavka domain.RobnoUslugeS
 			<div class="flex flex-col min-w-0 gap-1">
 				<div class="flex items-center gap-1 min-w-0">
 					@components.LabelField(domain.LabelFieldConfig{ID: "jmusluge", LabelText: translator.Label("JM"), ClassLabel: common.ClassLabel + " w-28"})
-					<input
-						type="text"
-						id="jmusluge"
-						name="jmusluge"
-						value={ stavka.JM }
-						maxlength="6"
-						tabindex="12"
-						readonly?={ !robUslugeSifraNula(stavka) }
-						class={ common.ClassInputTextEnabled + " !w-20" }
-					/>
+					@components.TextInputField(domain.InputFieldConfig{
+						ID:         "jmusluge",
+						Name:       "jmusluge",
+						FieldType:  "text",
+						Value:      stavka.JM,
+						MaxLength:  "6",
+						TabIndex:   "12",
+						ReadOnly:   !robUslugeSifraNula(stavka),
+						ClassInput: common.ClassInputTextEnabled + " !w-20"})
 				</div>
 				<div class="flex items-start gap-1 min-w-0">
 					@components.LabelField(domain.LabelFieldConfig{ID: "opisusluge", LabelText: translator.Label("Opis usluge"), ClassLabel: common.ClassLabel + " w-28"})
-					<textarea
-						id="opisusluge"
-						name="opisusluge"
-						rows="4"
-						maxlength="1000"
-						tabindex="13"
-						readonly?={ !robUslugeSifraNula(stavka) }
-						oninput="clearFieldError('opisusluge')"
-						class={ common.ClassInputTextEnabled + " flex-1 min-w-0 !h-auto" }
-					>{ stavka.OpisUsluge }</textarea>
+					@components.TextAreaField(domain.InputFieldConfig{
+						ID:         "opisusluge",
+						Name:       "opisusluge",
+						Value:      stavka.OpisUsluge,
+						Rows:       "4",
+						MaxLength:  "1000",
+						TabIndex:   "13",
+						ReadOnly:   !robUslugeSifraNula(stavka),
+						OnInput:    "clearFieldError",
+						ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0 !h-auto"})
 				</div>
 				<div class="flex items-start gap-1 min-w-0">
 					@components.LabelField(domain.LabelFieldConfig{ID: "opisdet", LabelText: translator.Label("Dod. opis usluge"), ClassLabel: common.ClassLabel + " w-28"})
-					<textarea
-						id="opisdet"
-						name="opisdet"
-						rows="3"
-						tabindex="14"
-						class={ common.ClassInputTextEnabled + " flex-1 min-w-0 !h-auto" }
-					>{ stavka.OpisDet }</textarea>
+					@components.TextAreaField(domain.InputFieldConfig{
+						ID:         "opisdet",
+						Name:       "opisdet",
+						Value:      stavka.OpisDet,
+						Rows:       "3",
+						TabIndex:   "14",
+						ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0 !h-auto"})
 				</div>
 			</div>
 		</div>
@@ -284,28 +283,30 @@ templ RobUslugeStavkeFields(ui domain.RobnoFaktureUI, stavka domain.RobnoUslugeS
 	}
 }
 
-// robUslugeBroj renders a number of the stavka (editable, or read only: the iznosi).
-templ robUslugeBroj(id, label, value, maxLength, tabIndex string, readOnly bool) {
+// robUslugeBroj renders a number of the stavka with its decimals (editable, or read only: the iznosi).
+templ robUslugeBroj(id, label, value, maxLength, tabIndex string, decimale int, readOnly bool) {
 	<div class="flex items-center gap-1 mb-1">
 		@components.LabelField(domain.LabelFieldConfig{ID: id, LabelText: label, ClassLabel: common.ClassLabel + " w-36"})
 		if readOnly {
 			@components.TextInputField(domain.InputFieldConfig{
-				ID:         id,
-				FieldType:  "text",
-				Value:      value,
-				Disabled:   true,
-				ClassInput: common.ClassInputTextDisabled + " !w-36 text-right"})
+				ID:            id,
+				FieldType:     "number",
+				Value:         value,
+				DecimalPlaces: decimale,
+				Disabled:      true,
+				ClassInput:    common.ClassInputTextDisabled + " !w-36 text-right"})
 		} else {
 			@components.TextInputField(domain.InputFieldConfig{
-				ID:         id,
-				Name:       id,
-				FieldType:  "text",
-				Value:      value,
-				ClassInput: common.ClassInputTextEnabled + " !w-36 text-right",
-				MaxLength:  maxLength,
-				TabIndex:   tabIndex,
-				OnInput:    "clearFieldError",
-				OnFocus:    "clearFieldError"})
+				ID:            id,
+				Name:          id,
+				FieldType:     "number",
+				SelectOnFocus: true,
+				Value:         value,
+				DecimalPlaces: decimale,
+				ClassInput:    common.ClassInputTextEnabled + " !w-36 text-right",
+				MaxLength:     maxLength,
+				TabIndex:      tabIndex,
+				OnFocus:       "clearFieldError"})
 		}
 	</div>
 }
@@ -378,7 +379,7 @@ templ robUslugeScriptBody() {
 		// of the rabat (the exit of EDT_RAB).
 		function robUslugeIznosi() {
 			const kolicina = robnoBroj('kolicina'), cena = robnoBroj('cenausluge'), rabat = robnoBroj('rabatusluge');
-			robnoUpisi('iznosusluge', (kolicina === 0 ? cena : robnoZaokruzi(kolicina * cena, 2)).toFixed(2));
+			robnoUpisiBroj('iznosusluge', kolicina === 0 ? cena : robnoZaokruzi(kolicina * cena, 2));
 			const rabatJedinice = robnoZaokruzi(cena * rabat / 100, 2);
 			robnoUpisi('iznosrabatausluge', (kolicina === 0 ? rabatJedinice : rabatJedinice * kolicina).toFixed(2));
 		}
@@ -426,7 +427,7 @@ templ robUslugeScriptBody() {
 			const sifra = document.getElementById('sifraartikla');
 			const konto = document.getElementById('kontostavke');
 			if (!forma || !sifra || !konto) return;
-			['cenausluge', 'rabatusluge', 'iznosusluge', 'iznosrabatausluge'].forEach(id => robnoUpisi(id, '0'));
+			['cenausluge', 'rabatusluge', 'iznosusluge', 'iznosrabatausluge'].forEach(id => robnoUpisiBroj(id, 0));
 			const vrednost = sifra.value.trim();
 			const nula = vrednost === '0';
 			// The legacy exit of EDT_SIFRA reads an artikal only with the konto; the šifra 0 without it too.
@@ -446,7 +447,7 @@ templ robUslugeScriptBody() {
 					robUslugeSifraNula(false);
 					if (!odgovor.found) {
 						['opisusluge', 'jmusluge', 'otk', 'serija', 'rokstavke'].forEach(id => robnoUpisi(id, ''));
-						['tarifa', 'stopastavke', 'stanjeusluge', 'nabavnacena', 'cenausluge', 'magcenausluge', 'iznosusluge'].forEach(id => robnoUpisi(id, '0'));
+						['tarifa', 'stopastavke', 'stanjeusluge', 'nabavnacena', 'cenausluge', 'magcenausluge', 'iznosusluge'].forEach(id => robnoUpisiBroj(id, 0));
 						robUslugeZalihe(false);
 						return;
 					}
@@ -459,10 +460,10 @@ templ robUslugeScriptBody() {
 					robnoUpisi('stopastavke', String(a.stopa));
 					robUslugeSetTaxcat(a.taxcat);
 					if (a.konto) konto.value = a.konto;
-					robnoUpisi('nabavnacena', String(a.ncena));
-					robnoUpisi('cenausluge', String(a.cena));
-					robnoUpisi('magcenausluge', String(a.magcena));
-					robnoUpisi('stanjeusluge', String(a.stanje));
+					robnoUpisiBroj('nabavnacena', a.ncena);
+					robnoUpisiBroj('cenausluge', a.cena);
+					robnoUpisiBroj('magcenausluge', a.magcena);
+					robnoUpisiBroj('stanjeusluge', a.stanje);
 					robUslugeZalihe(a.tip !== 'U');
 					robUslugeIznosi();
 					const kolicina = document.getElementById('kolicina');
@@ -492,7 +493,7 @@ templ robUslugeScriptBody() {
 			const cena = robnoBroj('cenausluge');
 			robnoUpisi('cenaval', String(cena));
 			const kurs = parseFloat(forma.dataset.kurs) || 0, vaziza = parseFloat(forma.dataset.vaziza) || 0;
-			if (kurs !== 0 && vaziza > 0) robnoUpisi('cenausluge', String(robnoZaokruzi(cena * kurs / vaziza, 4)));
+			if (kurs !== 0 && vaziza > 0) robnoUpisiBroj('cenausluge', robnoZaokruzi(cena * kurs / vaziza, 4));
 			robUslugeIznosi();
 		}
 
@@ -516,13 +517,13 @@ templ robUslugeScriptBody() {
 			robnoUpisi('sifraartikla-combo-input', st.sifra + ' - ' + st.naziv);
 			robnoUpisi('opisusluge', st.naziv);
 			robnoUpisi('jmusluge', st.jm);
-			robnoUpisi('kolicina', String(st.kolicina));
-			robnoUpisi('cenausluge', String(st.cena));
+			robnoUpisiBroj('kolicina', st.kolicina);
+			robnoUpisiBroj('cenausluge', st.cena);
 			robnoUpisi('cenaval', '');
-			robnoUpisi('rabatusluge', String(st.rabat));
+			robnoUpisiBroj('rabatusluge', st.rabat);
 			robnoUpisi('tarifa', String(st.tarifa));
 			robnoUpisi('stopastavke', String(st.stopa));
-			robnoUpisi('nabavnacena', String(st.ncena));
+			robnoUpisiBroj('nabavnacena', st.ncena);
 			robnoUpisi('otk', st.otk);
 			robnoUpisi('serija', st.serija);
 			robnoUpisi('rokstavke', st.rok);

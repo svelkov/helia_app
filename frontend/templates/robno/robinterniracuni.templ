@@ -343,7 +343,7 @@ templ RobInterniDokumentBar(header domain.RobnoInterniHeaderView, btnPrint, btnB
 				ClassCheckbox:     common.ClassCheckbox,
 				ClassCheckboxSpan: "text-sm",
 				IsChecked:         header.StampajRacun,
-				TabIndex:          "0"}, translator)
+				TabIndex:          "-1"}, translator)
 		</div>
 		<!-- "Štampaj" of the document of the form: only a saved document (a new one has nothing to print) -->
 		if header.RdokID > 0 {
@@ -530,13 +530,13 @@ templ RobInterniHeaderFields(header domain.RobnoInterniHeaderView, sistemPdvValu
 					</div>
 					<div class="flex items-start gap-1">
 						@components.LabelField(domain.LabelFieldConfig{ID: "foot", LabelText: translator.Label("Tekst"), ClassLabel: common.ClassLabel + " w-40"})
-						<textarea
-							id="foot"
-							name="foot"
-							rows="2"
-							tabindex="11"
-							class={ common.ClassInputTextEnabled + " flex-1 min-w-0 !h-auto" }
-						>{ header.Tekst }</textarea>
+						@components.TextAreaField(domain.InputFieldConfig{
+							ID:         "foot",
+							Name:       "foot",
+							Value:      header.Tekst,
+							Rows:       "2",
+							TabIndex:   "11",
+							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0 !h-auto"})
 					</div>
 				</div>
 			</fieldset>
@@ -679,13 +679,13 @@ templ RobInterniHeaderFields(header domain.RobnoInterniHeaderView, sistemPdvValu
 						SelectedValue: header.SistemPdv}, translator)
 				</div>
 				<!-- The text of the kupac (read only, the box under the data of the kupac of the legacy window) -->
-				<textarea
-					id="kupacinfo"
-					name="kupacinfo"
-					rows="2"
-					disabled
-					class={ common.ClassInputTextDisabled + " w-full !h-auto resize-none" }
-				>{ header.KupacInfo }</textarea>
+				@components.TextAreaField(domain.InputFieldConfig{
+					ID:         "kupacinfo",
+					Name:       "kupacinfo",
+					Value:      header.KupacInfo,
+					Rows:       "2",
+					Disabled:   true,
+					ClassInput: common.ClassInputTextDisabled + " w-full !h-auto resize-none"})
 			</div>
 		</fieldset>
 	</div>

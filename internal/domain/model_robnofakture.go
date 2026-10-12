@@ -29,6 +29,11 @@ type RobnoFaktureHeader struct {
 	// KPF: "Za period" and, for a storno, the datum smanjenja).
 	Usluge  bool
 	Knjizno bool
+	// Avansni: the header of an avansni račun (the groups ARA and ARU, the legacy rob_AvansniRacuni: no
+	// valuta, rate, rok, mesto isporuke, vozač, javna nabavka and avansi; the profaktura instead of the
+	// narudžbenica). Profaktura is its profaktura (rdok.profak).
+	Avansni    bool
+	Profaktura string
 
 	// The nalog, the magacin and the document the header belongs to (RdokID 0 for a new document);
 	// they are sent with the header (hidden fields) and limit the search of the broj dokumenta to the
@@ -1865,6 +1870,9 @@ type RobnoFaktureParams struct {
 	BrojUgovora     string `form:"brojugovora"`
 	NastanakPDV     string `form:"nastanakpdv"`
 	BankaIzvoz      string `form:"bnkizvid"`
+	// Avansni is set by the service for the header of an avansni račun (the groups ARA and ARU): the checks
+	// of the faktura the legacy rob_AvansniRacuni has not are left out.
+	Avansni bool `form:"-"`
 	// The knjižno pismo finansijsko (KPF): "Za period" with its datumi, the datum smanjenja of a storno.
 	ZaPeriod       string `form:"zaperiod"`
 	PeriodOd       string `form:"periodod"`

@@ -49,7 +49,7 @@ func Rob_FaktureUsluga(ui domain.RobnoFaktureUI, naslov string, header domain.Ro
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = RobnoDokumentDialog(ui.DialogID, translator.Label(naslov), translator.Label(naslov), translator.Label("Pregled faktura"), btnClose, csrfToken,
+		templ_7745c5c3_Err = RobnoDokumentDialog(ui.DialogID, translator.Label(robAvansniNaslov(header, naslov, 0)), translator.Label(robAvansniNaslov(header, naslov, 1)), translator.Label(robAvansniNaslov(header, naslov, 2)), btnClose, csrfToken,
 			RobUslugeBody(ui, header, stavka, tbl, avansiTbl, vrstaDokumentaValues, sistemPdvValues, ziroRacuni, btns, translator),
 			RobnoFakturePrikaz(ui, dokumentaTbl, dokumentStavkeTbl, domain.InputControl{}, translator)).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
@@ -213,13 +213,20 @@ func RobUslugeBody(ui domain.RobnoFaktureUI, header domain.RobnoFaktureHeaderVie
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = RobnoFakturePanel(ui.HeaderPanelID, translator.Label("Podaci o fakturi"), robnoFaktureHeaderStateText(header.Snimljen, translator), !header.Snimljen, !header.Snimljen, false, btns.Save.Id, RobnoFaktureIzmeniZaglavlje(btns.Modify, header.Snimljen), RobnoFaktureHeaderFields(ui, header, avansiTbl, vrstaDokumentaValues, nil, sistemPdvValues, ziroRacuni, translator), RobnoFaktureHeaderButtons(btns)).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = RobnoFakturePanel(ui.HeaderPanelID, translator.Label(robAvansniHeaderNaslov(header)), robnoFaktureHeaderStateText(header.Snimljen, translator), !header.Snimljen, !header.Snimljen, false, btns.Save.Id, RobnoFaktureIzmeniZaglavlje(btns.Modify, header.Snimljen), RobnoFaktureHeaderFields(ui, header, avansiTbl, vrstaDokumentaValues, nil, sistemPdvValues, ziroRacuni, translator), RobnoFaktureHeaderButtons(btns)).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = RobnoFakturePanel(ui.StavkePanelID, translator.Label(stavka.Naslov), robUslugeStavkeStateText(header.Snimljen, translator), header.Snimljen, header.Snimljen, true, btns.SaveStavka.Id, templ.NopComponent, RobUslugeStavkeFields(ui, stavka, tbl, btns, translator), templ.NopComponent).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
+		if stavka.Avansni {
+			templ_7745c5c3_Err = RobnoFakturePanel(ui.StavkePanelID, translator.Label(stavka.Naslov), robUslugeStavkeStateText(header.Snimljen, translator), header.Snimljen, header.Snimljen, true, btns.SaveStavka.Id, templ.NopComponent, RobAvansniStavkeFields(ui, stavka, tbl, btns, translator), templ.NopComponent).Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		} else {
+			templ_7745c5c3_Err = RobnoFakturePanel(ui.StavkePanelID, translator.Label(stavka.Naslov), robUslugeStavkeStateText(header.Snimljen, translator), header.Snimljen, header.Snimljen, true, btns.SaveStavka.Id, templ.NopComponent, RobUslugeStavkeFields(ui, stavka, tbl, btns, translator), templ.NopComponent).Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
 		}
 		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<!-- The dialogs of the stavke (an error of the save, the confirmation of the deletion) --><div id=\"")
 		if templ_7745c5c3_Err != nil {
@@ -228,7 +235,7 @@ func RobUslugeBody(ui domain.RobnoFaktureUI, header domain.RobnoFaktureHeaderVie
 		var templ_7745c5c3_Var11 string
 		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(ui.StavkaInfoID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 53, Col: 27}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 57, Col: 27}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {
@@ -299,7 +306,7 @@ func RobUslugeDokumentBar(header domain.RobnoFaktureHeaderView, btnPrint, btnBac
 			var templ_7745c5c3_Var15 string
 			templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Message("Dokument nije sačuvan"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 63, Col: 124}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 67, Col: 124}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 			if templ_7745c5c3_Err != nil {
@@ -316,7 +323,7 @@ func RobUslugeDokumentBar(header domain.RobnoFaktureHeaderView, btnPrint, btnBac
 			var templ_7745c5c3_Var16 string
 			templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(btnPrint.LabelText)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 65, Col: 24}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 69, Col: 24}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 			if templ_7745c5c3_Err != nil {
@@ -373,7 +380,7 @@ func RobUslugeStavkeFields(ui domain.RobnoFaktureUI, stavka domain.RobnoUslugeSt
 		var templ_7745c5c3_Var18 string
 		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Konto magacina"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 81, Col: 96}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 85, Col: 96}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
@@ -403,7 +410,7 @@ func RobUslugeStavkeFields(ui domain.RobnoFaktureUI, stavka domain.RobnoUslugeSt
 		var templ_7745c5c3_Var19 string
 		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Label("Podaci o dokumentu"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 94, Col: 100}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 98, Col: 100}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 		if templ_7745c5c3_Err != nil {
@@ -446,7 +453,7 @@ func RobUslugeStavkeFields(ui domain.RobnoFaktureUI, stavka domain.RobnoUslugeSt
 		var templ_7745c5c3_Var20 string
 		templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(ui.ArtikalURL)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 109, Col: 34}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 113, Col: 34}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 		if templ_7745c5c3_Err != nil {
@@ -459,7 +466,7 @@ func RobUslugeStavkeFields(ui domain.RobnoFaktureUI, stavka domain.RobnoUslugeSt
 		var templ_7745c5c3_Var21 string
 		templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(ui.ArtikalURL + "/stopa")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 110, Col: 43}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 114, Col: 43}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 		if templ_7745c5c3_Err != nil {
@@ -472,7 +479,7 @@ func RobUslugeStavkeFields(ui domain.RobnoFaktureUI, stavka domain.RobnoUslugeSt
 		var templ_7745c5c3_Var22 string
 		templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(stavka.Grupa)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 111, Col: 27}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 115, Col: 27}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
 		if templ_7745c5c3_Err != nil {
@@ -485,7 +492,7 @@ func RobUslugeStavkeFields(ui domain.RobnoFaktureUI, stavka domain.RobnoUslugeSt
 		var templ_7745c5c3_Var23 string
 		templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(stavka.Tipzal))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 112, Col: 43}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 116, Col: 43}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 		if templ_7745c5c3_Err != nil {
@@ -498,7 +505,7 @@ func RobUslugeStavkeFields(ui domain.RobnoFaktureUI, stavka domain.RobnoUslugeSt
 		var templ_7745c5c3_Var24 string
 		templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(robnoFaktureState(stavka.VpCena))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 113, Col: 48}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 117, Col: 48}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 		if templ_7745c5c3_Err != nil {
@@ -511,7 +518,7 @@ func RobUslugeStavkeFields(ui domain.RobnoFaktureUI, stavka domain.RobnoUslugeSt
 		var templ_7745c5c3_Var25 string
 		templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(robnoFaktureState(stavka.NabCena))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 114, Col: 50}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 118, Col: 50}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
 		if templ_7745c5c3_Err != nil {
@@ -524,7 +531,7 @@ func RobUslugeStavkeFields(ui domain.RobnoFaktureUI, stavka domain.RobnoUslugeSt
 		var templ_7745c5c3_Var26 string
 		templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.FormatFloat(stavka.Kurs, 'f', -1, 64))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 115, Col: 59}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 119, Col: 59}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
 		if templ_7745c5c3_Err != nil {
@@ -537,7 +544,7 @@ func RobUslugeStavkeFields(ui domain.RobnoFaktureUI, stavka domain.RobnoUslugeSt
 		var templ_7745c5c3_Var27 string
 		templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.FormatFloat(stavka.VaziZa, 'f', -1, 64))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 116, Col: 63}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 120, Col: 63}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
 		if templ_7745c5c3_Err != nil {
@@ -550,7 +557,7 @@ func RobUslugeStavkeFields(ui domain.RobnoFaktureUI, stavka domain.RobnoUslugeSt
 		var templ_7745c5c3_Var28 string
 		templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(stavka.ValutaPoruka)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 117, Col: 42}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 121, Col: 42}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
 		if templ_7745c5c3_Err != nil {
@@ -563,7 +570,7 @@ func RobUslugeStavkeFields(ui domain.RobnoFaktureUI, stavka domain.RobnoUslugeSt
 		var templ_7745c5c3_Var29 string
 		templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.FormatInt(stavka.RdokID, 10))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 119, Col: 99}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 123, Col: 99}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
 		if templ_7745c5c3_Err != nil {
@@ -576,7 +583,7 @@ func RobUslugeStavkeFields(ui domain.RobnoFaktureUI, stavka domain.RobnoUslugeSt
 		var templ_7745c5c3_Var30 string
 		templ_7745c5c3_Var30, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.FormatInt(stavka.RproID, 10))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 120, Col: 99}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 124, Col: 99}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var30))
 		if templ_7745c5c3_Err != nil {
@@ -847,7 +854,7 @@ func RobUslugeStavkeFields(ui domain.RobnoFaktureUI, stavka domain.RobnoUslugeSt
 		var templ_7745c5c3_Var40 string
 		templ_7745c5c3_Var40, templ_7745c5c3_Err = templ.JoinStringErrs(stavka.NabavnaCena)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 223, Col: 34}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 227, Col: 34}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var40))
 		if templ_7745c5c3_Err != nil {
@@ -894,7 +901,7 @@ func RobUslugeStavkeFields(ui domain.RobnoFaktureUI, stavka domain.RobnoUslugeSt
 		var templ_7745c5c3_Var43 string
 		templ_7745c5c3_Var43, templ_7745c5c3_Err = templ.JoinStringErrs(stavka.JM)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 240, Col: 23}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 244, Col: 23}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var43))
 		if templ_7745c5c3_Err != nil {
@@ -966,7 +973,7 @@ func RobUslugeStavkeFields(ui domain.RobnoFaktureUI, stavka domain.RobnoUslugeSt
 		var templ_7745c5c3_Var47 string
 		templ_7745c5c3_Var47, templ_7745c5c3_Err = templ.JoinStringErrs(stavka.OpisUsluge)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 258, Col: 25}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 262, Col: 25}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var47))
 		if templ_7745c5c3_Err != nil {
@@ -1005,7 +1012,7 @@ func RobUslugeStavkeFields(ui domain.RobnoFaktureUI, stavka domain.RobnoUslugeSt
 		var templ_7745c5c3_Var50 string
 		templ_7745c5c3_Var50, templ_7745c5c3_Err = templ.JoinStringErrs(stavka.OpisDet)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 268, Col: 22}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robfaktureusluga.templ`, Line: 272, Col: 22}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var50))
 		if templ_7745c5c3_Err != nil {

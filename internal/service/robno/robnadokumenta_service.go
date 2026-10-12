@@ -169,6 +169,7 @@ type RobnoDokumentaService interface {
 	DeleteRobUslugaStavka(ctx context.Context, rproID int64) (int64, error)
 	GetRobUslugaStavkaForma(ctx context.Context, rdokID, rproID int64) (domain.RobUslugaStavkaForma, bool, error)
 	GetUslugeStavkeTableFields() []domain.Fields
+	GetAvansniStavkeTableFields() []domain.Fields
 	GetVrsteGrupeDokumenta(ctx context.Context, vrd, vrdOd, vrdDo int) ([]int, error)
 	// Opšti dokumenti (the legacy rob_opsti_dokumenti_opd).
 	GetRobOpstiDokument(ctx context.Context, params domain.RobnoFaktureDokumentParams) (domain.RobnoOpstiDokument, error)
@@ -180,6 +181,9 @@ type RobnoDokumentaService interface {
 	DeleteRobOpstiStavka(ctx context.Context, rproID int64) (int64, error)
 	GetOpstiStavkeTableFields() []domain.Fields
 	GetOpstiFinStavkeTableFields() []domain.Fields
+	GetOpstiKolStavkeTableFields() []domain.Fields
+	GetOpstiMnvStavkeTableFields() []domain.Fields
+	GetOpstiNivStavkeTableFields(lot bool) []domain.Fields
 	GetRobInterniArtikal(ctx context.Context, rdokID int64, sifraIliBarkod, konto string) (domain.RobInterniArtikal, bool, error)
 	ValidateRobInterniStavka(ctx context.Context, params domain.RobInterniStavkaParams) []domain.FieldError
 	SaveRobInterniStavka(ctx context.Context, params domain.RobInterniStavkaParams) (int64, error)
@@ -240,6 +244,10 @@ type RobnoDokumentaResource struct {
 	uslugeStavkeTableFields                []domain.Fields
 	opstiStavkeTableFields                 []domain.Fields
 	opstiFinStavkeTableFields              []domain.Fields
+	opstiKolStavkeTableFields              []domain.Fields
+	opstiMnvStavkeTableFields              []domain.Fields
+	opstiNivStavkeTableFields              []domain.Fields
+	avansniStavkeTableFields               []domain.Fields
 	faktureAvansiTableFields               []domain.Fields
 	faktureDokumentaTableFields            []domain.Fields
 	faktureDokumentStavkeTableFields       []domain.Fields
@@ -2026,9 +2034,34 @@ func (s *RobnoDokumentaResource) GetOpstiFinStavkeTableFields() []domain.Fields 
 	return s.opstiFinStavkeTableFields
 }
 
+// GetOpstiKolStavkeTableFields returns the columns of the grid of the stavke of the količinski opšti dokumenti.
+func (s *RobnoDokumentaResource) GetOpstiKolStavkeTableFields() []domain.Fields {
+	return s.opstiKolStavkeTableFields
+}
+
+// GetOpstiMnvStavkeTableFields returns the columns of the grid of the stavke of the nivelacije (the group MNV).
+func (s *RobnoDokumentaResource) GetOpstiMnvStavkeTableFields() []domain.Fields {
+	return s.opstiMnvStavkeTableFields
+}
+
+// GetOpstiNivStavkeTableFields returns the columns of the grid of the stavke of the nivelacije veleprodaje (the
+// group NIV); without lot the OTK broj, the serija and the rok are left out (the legacy columns of a magacin
+// that is not of the tip zaliha 2).
+func (s *RobnoDokumentaResource) GetOpstiNivStavkeTableFields(lot bool) []domain.Fields {
+	if lot {
+		return s.opstiNivStavkeTableFields
+	}
+	return s.opstiNivStavkeTableFields[:len(s.opstiNivStavkeTableFields)-3]
+}
+
 // GetOpstiStavkeTableFields returns the columns of the grid of the stavke of the opšti dokumenti.
 func (s *RobnoDokumentaResource) GetOpstiStavkeTableFields() []domain.Fields {
 	return s.opstiStavkeTableFields
+}
+
+// GetAvansniStavkeTableFields returns the columns of the grid of the stavke of the avansni računi.
+func (s *RobnoDokumentaResource) GetAvansniStavkeTableFields() []domain.Fields {
+	return s.avansniStavkeTableFields
 }
 
 // GetUslugeStavkeTableFields returns the columns of the grid of the stavke of the fakture usluga.
@@ -2296,6 +2329,42 @@ func (s *RobnoDokumentaResource) setTableFields() {
 		{Name: "jm", Label: "Jedinica mere", Width: "8", TextAlign: "center"},
 		{Name: "iznos", Label: "Iznos", Width: "12", TextAlign: "right", IncludeInTotals: true},
 	}
+	// The columns of the legacy TABLE_rpro of rob_opsti_dokumenti_KOL (with the lot of the stavka).
+	s.opstiKolStavkeTableFields = []domain.Fields{
+		{Name: "rbr", Label: "Red. broj", Width: "5", TextAlign: "right", SkipInSearch: true},
+		{Name: "konto", Label: "Konto", Width: "7", SkipInSearch: true},
+		{Name: "sifra", Label: "Šifra artikla", Width: "8", SkipInSearch: true},
+		{Name: "naziv", Label: "Naziv artikla", Width: "32"},
+		{Name: "jm", Label: "Jedinica mere", Width: "8", TextAlign: "center"},
+		{Name: "kolicina", Label: "Količina", Width: "10", TextAlign: "right"},
+		{Name: "otk", Label: "OTK broj", Width: "8"},
+		{Name: "serija", Label: "Serija", Width: "8"},
+		{Name: "rok", Label: "Rok", Width: "8", TextAlign: "center"},
+	}
+	// The columns of the legacy TABLE_rpro of rob_opsti_dokumenti_MNV.
+	s.opstiMnvStavkeTableFields = []domain.Fields{
+		{Name: "rbr", Label: "Red. broj", Width: "5", TextAlign: "right", SkipInSearch: true},
+		{Name: "naziv", Label: "Naziv artikla", Width: "40"},
+		{Name: "kolicina", Label: "Količina", Width: "10", TextAlign: "right"},
+		{Name: "staracena", Label: "Stara cena", Width: "10", TextAlign: "right"},
+		{Name: "novacena", Label: "Nova cena", Width: "10", TextAlign: "right"},
+		{Name: "iznos", Label: "Iznos", Width: "12", TextAlign: "right", IncludeInTotals: true},
+	}
+	// The columns of the legacy TABLE_RPRO of rob_Nivelacije_Veleprodaja (the last three of the lot).
+	s.opstiNivStavkeTableFields = []domain.Fields{
+		{Name: "rbr", Label: "Red. broj", Width: "5", TextAlign: "right", SkipInSearch: true},
+		{Name: "sifra", Label: "Šifra artikla", Width: "7", SkipInSearch: true},
+		{Name: "naziv", Label: "Opis artikla", Width: "26"},
+		{Name: "jm", Label: "JM", Width: "4", TextAlign: "center"},
+		{Name: "kolicina", Label: "Količina", Width: "8", TextAlign: "right"},
+		{Name: "staracena", Label: "Stara cena", Width: "8", TextAlign: "right"},
+		{Name: "procenat", Label: "Procenat", Width: "6", TextAlign: "right"},
+		{Name: "novacena", Label: "Nova cena", Width: "8", TextAlign: "right"},
+		{Name: "razlika", Label: "Razlika", Width: "9", TextAlign: "right", IncludeInTotals: true},
+		{Name: "otk", Label: "OTK", Width: "7"},
+		{Name: "serija", Label: "Serija", Width: "7"},
+		{Name: "rok", Label: "Rok trajanja", Width: "7", TextAlign: "center"},
+	}
 	// The columns of the legacy TABLE_rpro of rob_opsti_dokumenti_opd.
 	s.opstiStavkeTableFields = []domain.Fields{
 		{Name: "rbr", Label: "Red. broj", Width: "5", TextAlign: "right", SkipInSearch: true},
@@ -2311,6 +2380,17 @@ func (s *RobnoDokumentaResource) setTableFields() {
 		{Name: "rok", Label: "Rok", Width: "8", TextAlign: "center"},
 	}
 	// The columns of the legacy TABLE_rpro of rob_FAKTURE_Usluga_DET2 (the stopa is the porez of the tarifa).
+	// The columns of the legacy TABLE_rpro of rob_AvansniRacuni_DET.
+	s.avansniStavkeTableFields = []domain.Fields{
+		{Name: "rbr", Label: "Red. broj", Width: "5", TextAlign: "right", SkipInSearch: true},
+		{Name: "naziv", Label: "Opis robe ili usluge", Width: "40"},
+		{Name: "kolicina", Label: "Količina", Width: "8", TextAlign: "right"},
+		{Name: "cena", Label: "Cena", Width: "10", TextAlign: "right"},
+		{Name: "iznos", Label: "Iznos", Width: "10", TextAlign: "right", IncludeInTotals: true},
+		{Name: "po", Label: "Tarifa", Width: "5", TextAlign: "right"},
+		{Name: "taxcat", Label: "Por. kat.", Width: "6", TextAlign: "center"},
+		{Name: "taxexreco", Label: "Osnov osl.", Width: "8"},
+	}
 	s.uslugeStavkeTableFields = []domain.Fields{
 		{Name: "rbr", Label: "Red. broj", Width: "5", TextAlign: "right", SkipInSearch: true},
 		{Name: "konto", Label: "Konto usluge", Width: "7", SkipInSearch: true},

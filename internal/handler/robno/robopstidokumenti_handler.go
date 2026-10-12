@@ -80,8 +80,8 @@ func robnoOpstiUI() domain.RobnoFaktureUI {
 }
 
 // robnoOpstiPrikazOpis is the tab "Pregled": the documents of the vrsta of the screen in the magacin of the
-// nalog (the legacy QRY_RDOK_GRPDOK; a finansijski opšti dokument: the vrste of the group FIN from 1 to 199) and
-// the stavke of the selected one.
+// nalog (the legacy QRY_RDOK_GRPDOK; a finansijski or a količinski opšti dokument and a nivelacija: the vrste of
+// its group, FIN, KOL or MNV, from 1 to 199) and the stavke of the selected one.
 func (h *RobnoDokumentaUnosHandler) robnoOpstiPrikazOpis(c *gin.Context) robnoPrikaz {
 	return robnoPrikaz{
 		ui:               robnoOpstiUI(),
@@ -98,7 +98,8 @@ func (h *RobnoDokumentaUnosHandler) robnoOpstiPrikazOpis(c *gin.Context) robnoPr
 		searchID:         robnoOpstiPrikazSearchID,
 		vrste: func(vrd int) []int {
 			ctx := c.Request.Context()
-			if grupa, err := h.service.GetGrupaDokumenta(ctx, vrd); err == nil && strings.EqualFold(strings.TrimSpace(grupa), "FIN") {
+			grupa, err := h.service.GetGrupaDokumenta(ctx, vrd)
+			if grupa = strings.ToUpper(strings.TrimSpace(grupa)); err == nil && (grupa == "FIN" || grupa == "KOL" || grupa == "MNV") {
 				if vrste, err := h.service.GetVrsteGrupeDokumenta(ctx, vrd, 1, 199); err == nil && len(vrste) > 0 {
 					return vrste
 				}
@@ -219,10 +220,19 @@ func (h *RobnoDokumentaUnosHandler) robnoOpstiEkran(c *gin.Context, dok robnoDok
 		vrd = v
 	}
 	// The grid of the stavke: "Obriši" of a row asks to confirm its deletion.
-	// A finansijski opšti dokument has the iznos of the stavke only.
+	// A finansijski opšti dokument has the iznos of the stavke only, a količinski one the količina and the lot.
 	fields, rows := h.service.GetOpstiStavkeTableFields(), robnosvc.RobOpstiStavkeTableRows
-	if ekran.header.Fin {
+	switch {
+	case ekran.header.Fin:
 		fields, rows = h.service.GetOpstiFinStavkeTableFields(), robnosvc.RobOpstiFinStavkeTableRows
+	case ekran.header.Kol:
+		fields, rows = h.service.GetOpstiKolStavkeTableFields(), robnosvc.RobOpstiKolStavkeTableRows
+	case ekran.header.Mnv:
+		fields, rows = h.service.GetOpstiMnvStavkeTableFields(), robnosvc.RobOpstiMnvStavkeTableRows
+	case ekran.header.Niv:
+		// The OTK broj, the serija and the rok of a magacin of the tip zaliha 2 only.
+		lot := ekran.stavka.Tipzal == 2
+		fields, rows = h.service.GetOpstiNivStavkeTableFields(lot), robnosvc.RobNivStavkeTableRows(lot)
 	}
 	ekran.tbl = h.robnoFaktureTable("Stavke dokumenta", robnoOpstiStavkeTableID, fields)
 	stavke, err := h.service.GetRobStavkeDokumenta(ctx, ekran.header.RdokID)
@@ -291,6 +301,16 @@ func (h *RobnoDokumentaUnosHandler) otvoriOpstiDokument(c *gin.Context, dok robn
 	if err := tmpl_robno.Rob_OpstiDokumenti(robnoOpstiUI(), ekran.header, ekran.stavka, ekran.tbl, dokumentaTbl, dokumentStavkeTbl, ekran.btns, btnClose,
 		h.translator, common.GetCsrfTokenFromSession(c)).Render(ctx, c.Writer); err != nil {
 		utils.RenderDialogOK(c, robnoDokumentaDokumentInfoDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()), true)
+		return
+	}
+	// The message of the screen (e.g. the magacin of a nivelacija veleprodaje whose zalihe are not kept at the
+	// prodajna cena, the legacy Info of PodaciZAGLAVLJE) over the opened screen.
+	if ekran.poruka != "" {
+		dialog := domain.Dialog{Id: robnoOpstiInfoDialogID, Title: "Info"}
+		btnClose := domain.Button{Id: "robno-opsti-info-close", IsVisible: true, IdDialog: dialog.Id, BtnClass: common.ClassDialogCloseButton}
+		btnOk := domain.Button{Id: "robno-opsti-info-ok", LabelText: "OK", IsVisible: true, IdDialog: dialog.Id, BtnClass: common.ClassSaveButton,
+			HxOnClick: "closeDialog", HxOnClickArg: []any{dialog.Id}}
+		_ = tmpl.DialogOk(ekran.poruka, dialog, btnClose, btnOk, h.translator).Render(ctx, c.Writer)
 	}
 }
 
@@ -398,8 +418,15 @@ func (h *RobnoDokumentaUnosHandler) SaveRobOpstiStavka(c *gin.Context) {
 }
 
 // PotvrdaBrisanjaOpstiStavke asks to confirm the deletion of a stavka ("Obriši" of its row, GET rdokid and id, the
-// legacy YesNo of BrisiRPRO): "Da" deletes it (DeleteRobOpstiStavka).
+// legacy YesNo of BrisiRPRO; a nivelacija veleprodaje first warns that the cena stays, the legacy YesNo of
+// BTN_Brisanje): "Da" deletes it (DeleteRobOpstiStavka).
 func (h *RobnoDokumentaUnosHandler) PotvrdaBrisanjaOpstiStavke(c *gin.Context) {
+	poruke := []string{h.translator.Message(robnoOpstiMsgBrisanjeStavke)}
+	if k, found, err := h.service.GetRobStavkeKontekst(c.Request.Context(), int64(common.StringToInt(c.Query("rdokid")))); err == nil && found {
+		if grupa, err := h.service.GetGrupaDokumenta(c.Request.Context(), k.Vrd); err == nil && strings.EqualFold(strings.TrimSpace(grupa), "NIV") {
+			poruke = append([]string{robnosvc.RobNivMsgBrisanje()}, poruke...)
+		}
+	}
 	dialog := domain.Dialog{Id: robnoOpstiStavkaPotvrdaDlg, Title: "Brisanje"}
 	btnClose := domain.Button{Id: "robno-opsti-stavka-brisanje-close", IsVisible: true, IdDialog: dialog.Id, BtnClass: common.ClassDialogCloseButton}
 	btnDa := domain.Button{
@@ -416,7 +443,7 @@ func (h *RobnoDokumentaUnosHandler) PotvrdaBrisanjaOpstiStavke(c *gin.Context) {
 		HxOnAfterRequestArgs: []any{dialog.Id},
 	}
 	btnNe := domain.Button{Id: "robno-opsti-stavka-brisanje-ne", IsVisible: true, LabelText: "Ne", IdDialog: dialog.Id, BtnClass: common.ClassOdustaniButton}
-	_ = tmpl.DialogConfirm([]string{h.translator.Message(robnoOpstiMsgBrisanjeStavke)}, dialog, btnClose, btnDa, btnNe, h.translator,
+	_ = tmpl.DialogConfirm(poruke, dialog, btnClose, btnDa, btnNe, h.translator,
 		common.GetCsrfTokenFromSession(c)).Render(c.Request.Context(), c.Writer)
 }
 

@@ -17,8 +17,9 @@ import (
 )
 
 // The "Fakture usluga" screen (the legacy rob_Fakture_Usluga and rob_FAKTURE_Usluga_DET2, the vrste dokumenata
-// of the groups PRE, FUR, FCO, RCO and KPF): its urls and the ids of its elements (the templates get them by
-// robnoUslugeUI). The header and the second tab are the ones of the faktura.
+// of the groups PRE, FUR, FCO, RCO and KPF; also the avansni računi, ARA and ARU, the legacy rob_AvansniRacuni and
+// rob_AvansniRacuni_DET): its urls and the ids of its elements (the templates get them by robnoUslugeUI). The
+// header and the second tab are the ones of the faktura.
 const (
 	robnoUslugeURL = robnoDokumentaURLPrefix + "/usluge"
 	// robnoUslugeDokumentURL + "/:id" reloads the content of the screen with an existing document (the
@@ -106,8 +107,8 @@ func robnoUslugeUI() domain.RobnoFaktureUI {
 }
 
 // robnoUslugePrikazOpis is the tab "Pregled faktura": the documents of the vrste of the group of the vrsta of
-// the screen between 100 and 299 (the legacy QRY_RDOK_TIP) in the magacin of the nalog and the stavke of the
-// selected one.
+// the screen between 100 and 299 (the legacy QRY_RDOK_TIP; an avansni račun: of its vrsta, the legacy QRY_RDOK)
+// in the magacin of the nalog and the stavke of the selected one.
 func (h *RobnoDokumentaUnosHandler) robnoUslugePrikazOpis(c *gin.Context) robnoPrikaz {
 	return robnoPrikaz{
 		ui:               robnoUslugeUI(),
@@ -123,6 +124,9 @@ func (h *RobnoDokumentaUnosHandler) robnoUslugePrikazOpis(c *gin.Context) robnoP
 		stavkeURL:        robnoUslugePrikazStavkeURL,
 		searchID:         robnoUslugePrikazSearchID,
 		vrste: func(vrd int) []int {
+			if grupa, err := h.service.GetGrupaDokumenta(c.Request.Context(), vrd); err == nil && robSadrziGrupu(robnosvc.RobAvansniGrupe, grupa) {
+				return []int{vrd}
+			}
 			vrste, err := h.service.GetVrsteGrupeDokumenta(c.Request.Context(), vrd, robnoUslugePrikazVrdOd, robnoUslugePrikazVrdDo)
 			if err != nil || len(vrste) == 0 {
 				return []int{vrd}
@@ -285,20 +289,28 @@ func (h *RobnoDokumentaUnosHandler) robnoUslugeEkran(c *gin.Context, dok robnoDo
 
 	// The grids: the stavke (the buttons of every row: "Izmeni" puts the stavka in the form, "Obriši" asks to
 	// confirm its deletion; both send the document with the id of the row) and the avansi of the document.
-	ekran.tbl = h.robnoFaktureTable(robnoUslugeStavkeNaslovGrida, robnoUslugeStavkeTableID, h.service.GetUslugeStavkeTableFields())
+	// An avansni račun has its own columns of the stavke.
+	fields, rows := h.service.GetUslugeStavkeTableFields(), robnosvc.RobUslugeStavkeTableRows
+	if ekran.stavka.Avansni {
+		fields, rows = h.service.GetAvansniStavkeTableFields(), robnosvc.RobAvansniStavkeTableRows
+	}
+	ekran.tbl = h.robnoFaktureTable(robnoUslugeStavkeNaslovGrida, robnoUslugeStavkeTableID, fields)
 	stavke, err := h.service.GetRobStavkeDokumenta(ctx, ekran.header.RdokID)
 	if err != nil {
 		return ekran, err
 	}
-	ekran.tbl.Rows = robnosvc.RobUslugeStavkeTableRows(stavke)
+	ekran.tbl.Rows = rows(stavke)
 	ekran.tbl.ShowActions = len(stavke) > 0
 	ekran.tbl.HxVals = fmt.Sprintf(`{"rdokid": "%d"}`, ekran.header.RdokID)
 	ekran.tbl.BtnUpdate = domain.Button{LabelText: "Izmeni", IsVisible: true, HxRequestType: "GET", HxActionURL: robnoUslugeStavkaURL,
 		HxTarget: "this", HxSwap: "none", HxOnAfterRequest: "robUslugeStavkaUcitaj(event)"}
 	ekran.tbl.BtnDelete = domain.Button{LabelText: "Obriši", IsVisible: true, HxActionURL: robnoUslugeStavkaPotvrdaURL,
 		HxTarget: "#" + robnoUslugeStavkaInfoID, HxSwap: "innerHTML"}
-	ekran.avansiTbl = h.robnoFaktureTable(robnoUslugeAvansiNaslovGrida, robnoUslugeAvansiTableID, h.service.GetFaktureAvansiTableFields())
-	ekran.avansiTbl.Rows = dokument.Avansi
+	// The avansi closed with the document (not of an avansni račun).
+	if !ekran.stavka.Avansni {
+		ekran.avansiTbl = h.robnoFaktureTable(robnoUslugeAvansiNaslovGrida, robnoUslugeAvansiTableID, h.service.GetFaktureAvansiTableFields())
+		ekran.avansiTbl.Rows = dokument.Avansi
+	}
 	ekran.btns = robnoUslugeButtons(dok.RnalID, ekran.header.RdokID, vrd)
 	return ekran, nil
 }
@@ -607,7 +619,18 @@ func (h *RobnoDokumentaUnosHandler) robnoUslugeStavkeOdgovor(c *gin.Context, rdo
 	h.robnoUslugeBody(c, ekran)
 }
 
-// robnoUslugeRoutes registers the routes of the "Fakture usluga" screen.
+// robSadrziGrupu tells whether the group (dokvrsta.grpdok) is one of the groups.
+func robSadrziGrupu(grupe []string, grupa string) bool {
+	grupa = strings.ToUpper(strings.TrimSpace(grupa))
+	for _, g := range grupe {
+		if g == grupa {
+			return true
+		}
+	}
+	return false
+}
+
+// robnoUslugeRoutes registers the routes of the "Fakture usluga" screen (also of the avansni računi).
 func (h *RobnoDokumentaUnosHandler) robnoUslugeRoutes(r *gin.Engine) {
 	r.GET("/api/robno-dokumenta/usluge/dokument/:id", h.UslugeDokument)
 	r.GET("/api/robno-dokumenta/usluge/novi", h.UslugeNovi)

@@ -1925,7 +1925,8 @@ func (s *RobnoDokumentaResource) GetStampaPrenosnica(ctx context.Context, params
 }
 
 // GetStampaOpstiDokument returns the opšti dokumenti of the selection (the groups OPD, POT, KOL and FIN
-// of the vrste dokumenta, the legacy RPT_OPDSTAMPA with its query ROB_QRY_OPDSTAMPA), ready to print:
+// of the vrste dokumenta, the legacy RPT_OPDSTAMPA with its query ROB_QRY_OPDSTAMPA, and the nivelacije of
+// the group MNV, RPT_MNVSTAMPA: the stara cena is rpro.fcena, the nova rpro.cena), ready to print:
 // one view per robni dokument with its stavke in the order they were entered (rpro.rproid), the totals
 // of the nabavna vrednost, of the iznos and of the količina, and the izdavalac (fvr) of the print. The
 // template prints the stavke by the group of the document (Grupa).
@@ -2111,6 +2112,7 @@ func (s *RobnoDokumentaResource) stampaOpstiDokumenti(ctx context.Context, param
 			NabavnaVrednost: common.FormatNumberWithSystemLocale(nabavnaVrednost, 2),
 			Cena:            common.FormatNumberWithSystemLocale(r.Cena, 2),
 			Iznos:           common.FormatNumberWithSystemLocale(r.Iznos, 2),
+			StaraCena:       common.FormatNumberWithSystemLocale(r.Fcena, 2),
 		})
 	}
 	zatvori()

@@ -18,6 +18,9 @@ type RobnoUslugeStavka struct {
 	Naslov          string
 	OpisUsluge      string
 	OpisDet         string
+	// Avansni: the stavke of an avansni račun (the legacy rob_AvansniRacuni_DET: the šifra 0 with the opis,
+	// the količina 1, the tarifa with its poreska kategorija, the cena and the iznos).
+	Avansni bool
 }
 
 // RobnoUslugeDokument is the document of the "Fakture usluga" screen: the header, the entry of a stavka,

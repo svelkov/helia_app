@@ -452,7 +452,7 @@ templ RobnoFaktureHeaderFields(ui domain.RobnoFaktureUI, header domain.RobnoFakt
 						<div class="flex items-center gap-1 flex-1">
 							@components.LabelField(domain.LabelFieldConfig{
 								ID:         "datumfakturisanja",
-								LabelText:  translator.Label("Datum fakturisanja"),
+								LabelText:  translator.Label(robAvansniLegenda(header, "Datum fakturisanja", "Datum dokumenta")),
 								ClassLabel: common.ClassLabel + " w-36",
 							})
 							@components.TextInputField(domain.InputFieldConfig{
@@ -514,59 +514,59 @@ templ RobnoFaktureHeaderFields(ui domain.RobnoFaktureUI, header domain.RobnoFakt
 					<!-- Row 4: the checkbox "Za period od / do" with its two dates, then the datum smanjenja (the fakture
 					     usluga: only the knjižno pismo finansijsko, the datum smanjenja of its storno) -->
 					if !header.Usluge || header.Knjizno {
-					<div class="flex flex-wrap items-center gap-1">
-						@components.CheckboxField(domain.CheckboxFieldConfig{
-							ID:                "zaperiod",
-							Name:              "zaperiod",
-							LabelText:         translator.Label("Za period"),
-							ClassLabel:        common.ClassLabel + " w-28",
-							ClassCheckbox:     common.ClassCheckbox,
-							ClassCheckboxSpan: "text-sm",
-							IsChecked:         header.ZaPeriod,
-							TabIndex:          "6"}, translator)
-						@components.LabelField(domain.LabelFieldConfig{
-							ID:         "periodod",
-							LabelText:  translator.Label("Od"),
-							ClassLabel: common.ClassLabel + " w-7",
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "periodod",
-							Name:       "periodod",
-							FieldType:  "date",
-							Value:      robnoFaktureDate(header.PeriodOd),
-							Disabled:   !header.ZaPeriod,
-							ClassInput: common.ClassInputTextEnabled + " w-32",
-							TabIndex:   "7"})
-						@components.LabelField(domain.LabelFieldConfig{
-							ID:         "perioddo",
-							LabelText:  translator.Label("Do"),
-							ClassLabel: common.ClassLabel + " w-10",
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "perioddo",
-							Name:       "perioddo",
-							FieldType:  "date",
-							Value:      robnoFaktureDate(header.PeriodDo),
-							Disabled:   !header.ZaPeriod,
-							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-[6rem]",
-							TabIndex:   "8"})
-						if !header.Usluge || header.Storno {
-						<div class="flex items-center gap-1">
+						<div class="flex flex-wrap items-center gap-1">
+							@components.CheckboxField(domain.CheckboxFieldConfig{
+								ID:                "zaperiod",
+								Name:              "zaperiod",
+								LabelText:         translator.Label("Za period"),
+								ClassLabel:        common.ClassLabel + " w-28",
+								ClassCheckbox:     common.ClassCheckbox,
+								ClassCheckboxSpan: "text-sm",
+								IsChecked:         header.ZaPeriod,
+								TabIndex:          "6"}, translator)
 							@components.LabelField(domain.LabelFieldConfig{
-								ID:         "datumsmanjenja",
-								LabelText:  translator.Label("Datum smanjenja"),
-								ClassLabel: common.ClassLabel + " w-36",
+								ID:         "periodod",
+								LabelText:  translator.Label("Od"),
+								ClassLabel: common.ClassLabel + " w-7",
 							})
 							@components.TextInputField(domain.InputFieldConfig{
-								ID:         "datumsmanjenja",
-								Name:       "datumsmanjenja",
+								ID:         "periodod",
+								Name:       "periodod",
 								FieldType:  "date",
-								Value:      robnoFaktureDate(header.DatumSmanjenja),
-								ClassInput: common.ClassInputTextEnabled + " !w-32",
-								TabIndex:   "9"})
+								Value:      robnoFaktureDate(header.PeriodOd),
+								Disabled:   !header.ZaPeriod,
+								ClassInput: common.ClassInputTextEnabled + " w-32",
+								TabIndex:   "7"})
+							@components.LabelField(domain.LabelFieldConfig{
+								ID:         "perioddo",
+								LabelText:  translator.Label("Do"),
+								ClassLabel: common.ClassLabel + " w-10",
+							})
+							@components.TextInputField(domain.InputFieldConfig{
+								ID:         "perioddo",
+								Name:       "perioddo",
+								FieldType:  "date",
+								Value:      robnoFaktureDate(header.PeriodDo),
+								Disabled:   !header.ZaPeriod,
+								ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-[6rem]",
+								TabIndex:   "8"})
+							if !header.Usluge || header.Storno {
+								<div class="flex items-center gap-1">
+									@components.LabelField(domain.LabelFieldConfig{
+										ID:         "datumsmanjenja",
+										LabelText:  translator.Label("Datum smanjenja"),
+										ClassLabel: common.ClassLabel + " w-36",
+									})
+									@components.TextInputField(domain.InputFieldConfig{
+										ID:         "datumsmanjenja",
+										Name:       "datumsmanjenja",
+										FieldType:  "date",
+										Value:      robnoFaktureDate(header.DatumSmanjenja),
+										ClassInput: common.ClassInputTextEnabled + " !w-32",
+										TabIndex:   "9"})
+								</div>
+							}
 						</div>
-						}
-					</div>
 					}
 				</div>
 			</fieldset>
@@ -737,127 +737,130 @@ templ RobnoFaktureHeaderFields(ui domain.RobnoFaktureUI, header domain.RobnoFakt
 			     to fill the space the right column leaves free at the bottom (both columns end on the same
 			     line) -->
 			<fieldset class="flex-1 border border-blue-400 bg-blue-100 p-1 rounded-lg">
-				<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Podaci o načinu otpreme, rokovima, valuti...") }</legend>
+				<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label(robAvansniLegenda(header, "Podaci o načinu otpreme, rokovima, valuti...", "Uslovi prodaje")) }</legend>
 				<!-- The rows of the panel, one line of the legacy box per row (the same layout as the panel
 				     "Podaci o kupcu"): the fields of a line stay together in the row (the first row holds the
 				     valuta with its kurs and the "važi za", the rows of a single field keep the field over the
 				     whole row). Every label has the same width (w-36), so the controls of all the rows start at
 				     the same x. -->
 				<div class="grid grid-cols-4 gap-x-2 gap-y-1">
-					<!-- The šifra valute with its combo over 1/2 of the row and the other two controls (the
+					<!-- The valuta and the rate (not of an avansni račun) -->
+					if !header.Avansni {
+						<!-- The šifra valute with its combo over 1/2 of the row and the other two controls (the
 					     "važi za" and the kurs) over the other 1/2, 1/4 of the row each -->
-					<div class="col-span-4 flex items-center gap-1 min-w-0">
-						<div class="flex-1 flex items-center gap-1 min-w-0">
+						<div class="col-span-4 flex items-center gap-1 min-w-0">
+							<div class="flex-1 flex items-center gap-1 min-w-0">
+								@components.LabelField(domain.LabelFieldConfig{
+									ID:         "idvalute",
+									LabelText:  translator.Label("Šifra valute"),
+									ClassLabel: common.ClassLabel + " w-36",
+								})
+								@components.TableCombo(domain.TableComboConfig{
+									ID:           "idvalute-combo",
+									Name:         "idvalute",
+									ValueID:      "idvalute",
+									Value:        robnoFaktureNullID(header.IDValute),
+									DisplayValue: header.ValutaText,
+									Placeholder:  "Pretraži po šifri ili nazivu",
+									ClassWrapper: "relative flex-1 min-w-0",
+									ClassInput:   common.ClassInputTextEnabled + " w-full",
+									SearchURL:    "/api/search/valute",
+									// No value ("-") is saved as NULL.
+									AllowEmpty: true,
+									TabIndex:   "18",
+								}, translator)
+							</div>
+							<div class="flex-1 flex items-center gap-1 min-w-0">
+								<div class="flex-1 flex items-center gap-1 min-w-0">
+									@components.LabelField(domain.LabelFieldConfig{
+										ID:         "vaziza",
+										LabelText:  translator.Label("Važi za (1,100)"),
+										ClassLabel: common.ClassLabel + " w-36 pl-2",
+									})
+									@components.TextInputField(domain.InputFieldConfig{
+										ID:         "vaziza",
+										Name:       "vaziza",
+										FieldType:  "text",
+										Value:      robnoFaktureInt(header.VaziZa),
+										ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
+										MaxLength:  "3",
+										TabIndex:   "19"})
+								</div>
+								<div class="flex-1 flex items-center gap-1 min-w-0">
+									@components.LabelField(domain.LabelFieldConfig{
+										ID:         "kurs",
+										LabelText:  translator.Label("Kurs"),
+										ClassLabel: common.ClassLabel + " w-16 pl-2",
+									})
+									@components.TextInputField(domain.InputFieldConfig{
+										ID:         "kurs",
+										Name:       "kurs",
+										FieldType:  "text",
+										Value:      robnoFaktureDecimal(header.Kurs, 2),
+										ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0 text-right",
+										MaxLength:  "15",
+										TabIndex:   "20"})
+								</div>
+							</div>
+						</div>
+						<!-- BrojRata, DatumPrveRate -->
+						<div class="col-span-4 flex items-center gap-1 min-w-0">
 							@components.LabelField(domain.LabelFieldConfig{
-								ID:         "idvalute",
-								LabelText:  translator.Label("Šifra valute"),
+								ID:         "brojrata",
+								LabelText:  translator.Label("Broj rata"),
 								ClassLabel: common.ClassLabel + " w-36",
 							})
-							@components.TableCombo(domain.TableComboConfig{
-								ID:           "idvalute-combo",
-								Name:         "idvalute",
-								ValueID:      "idvalute",
-								Value:        robnoFaktureNullID(header.IDValute),
-								DisplayValue: header.ValutaText,
-								Placeholder:  "Pretraži po šifri ili nazivu",
-								ClassWrapper: "relative flex-1 min-w-0",
-								ClassInput:   common.ClassInputTextEnabled + " w-full",
-								SearchURL:    "/api/search/valute",
-								// No value ("-") is saved as NULL.
-								AllowEmpty: true,
-								TabIndex:   "18",
-							}, translator)
+							@components.TextInputField(domain.InputFieldConfig{
+								ID:         "brojrata",
+								Name:       "brojrata",
+								FieldType:  "text",
+								Value:      robnoFaktureInt(header.BrojRata),
+								ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0 text-right",
+								MaxLength:  "3",
+								TabIndex:   "21"})
+							@components.LabelField(domain.LabelFieldConfig{
+								ID:         "datumprverate",
+								LabelText:  translator.Label("Dat. dosp. prve rate"),
+								ClassLabel: common.ClassLabel + " w-36 pl-2",
+							})
+							@components.TextInputField(domain.InputFieldConfig{
+								ID:         "datumprverate",
+								Name:       "datumprverate",
+								FieldType:  "date",
+								Value:      robnoFaktureDate(header.DatumPrveRate),
+								ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
+								TabIndex:   "22"})
 						</div>
-						<div class="flex-1 flex items-center gap-1 min-w-0">
-							<div class="flex-1 flex items-center gap-1 min-w-0">
-								@components.LabelField(domain.LabelFieldConfig{
-									ID:         "vaziza",
-									LabelText:  translator.Label("Važi za (1,100)"),
-									ClassLabel: common.ClassLabel + " w-36 pl-2",
-								})
-								@components.TextInputField(domain.InputFieldConfig{
-									ID:         "vaziza",
-									Name:       "vaziza",
-									FieldType:  "text",
-									Value:      robnoFaktureInt(header.VaziZa),
-									ClassInput: common.ClassInputTextEnabled + " w-12 text-right",
-									MaxLength:  "3",
-									TabIndex:   "19"})
-							</div>
-							<div class="flex-1 flex items-center gap-1 min-w-0">
-								@components.LabelField(domain.LabelFieldConfig{
-									ID:         "kurs",
-									LabelText:  translator.Label("Kurs"),
-									ClassLabel: common.ClassLabel + " w-16 pl-2",
-								})
-								@components.TextInputField(domain.InputFieldConfig{
-									ID:         "kurs",
-									Name:       "kurs",
-									FieldType:  "text",
-									Value:      robnoFaktureDecimal(header.Kurs, 2),
-									ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0 text-right",
-									MaxLength:  "15",
-									TabIndex:   "20"})
-							</div>
+						<!-- IznosFakture, IznosPrveRate -->
+						<div class="col-span-4 flex items-center gap-1 min-w-0">
+							@components.LabelField(domain.LabelFieldConfig{
+								ID:         "iznosfakture",
+								LabelText:  translator.Label("Iznos fakture"),
+								ClassLabel: common.ClassLabel + " w-36",
+							})
+							@components.TextInputField(domain.InputFieldConfig{
+								ID:         "iznosfakture",
+								Name:       "iznosfakture",
+								FieldType:  "text",
+								Value:      robnoFaktureDecimal(header.IznosFakture, 2),
+								ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0 text-right",
+								MaxLength:  "15",
+								TabIndex:   "23"})
+							@components.LabelField(domain.LabelFieldConfig{
+								ID:         "iznosprverate",
+								LabelText:  translator.Label("Iznos prve rate"),
+								ClassLabel: common.ClassLabel + " w-36 pl-2",
+							})
+							@components.TextInputField(domain.InputFieldConfig{
+								ID:         "iznosprverate",
+								Name:       "iznosprverate",
+								FieldType:  "text",
+								Value:      robnoFaktureDecimal(header.IznosPrveRate, 2),
+								ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0 text-right",
+								MaxLength:  "15",
+								TabIndex:   "24"})
 						</div>
-					</div>
-					<!-- BrojRata, DatumPrveRate -->
-					<div class="col-span-4 flex items-center gap-1 min-w-0">
-						@components.LabelField(domain.LabelFieldConfig{
-							ID:         "brojrata",
-							LabelText:  translator.Label("Broj rata"),
-							ClassLabel: common.ClassLabel + " w-36",
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "brojrata",
-							Name:       "brojrata",
-							FieldType:  "text",
-							Value:      robnoFaktureInt(header.BrojRata),
-							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0 text-right",
-							MaxLength:  "3",
-							TabIndex:   "21"})
-						@components.LabelField(domain.LabelFieldConfig{
-							ID:         "datumprverate",
-							LabelText:  translator.Label("Dat. dosp. prve rate"),
-							ClassLabel: common.ClassLabel + " w-36 pl-2",
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "datumprverate",
-							Name:       "datumprverate",
-							FieldType:  "date",
-							Value:      robnoFaktureDate(header.DatumPrveRate),
-							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
-							TabIndex:   "22"})
-					</div>
-					<!-- IznosFakture, IznosPrveRate -->
-					<div class="col-span-4 flex items-center gap-1 min-w-0">
-						@components.LabelField(domain.LabelFieldConfig{
-							ID:         "iznosfakture",
-							LabelText:  translator.Label("Iznos fakture"),
-							ClassLabel: common.ClassLabel + " w-36",
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "iznosfakture",
-							Name:       "iznosfakture",
-							FieldType:  "text",
-							Value:      robnoFaktureDecimal(header.IznosFakture, 2),
-							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0 text-right",
-							MaxLength:  "15",
-							TabIndex:   "23"})
-						@components.LabelField(domain.LabelFieldConfig{
-							ID:         "iznosprverate",
-							LabelText:  translator.Label("Iznos prve rate"),
-							ClassLabel: common.ClassLabel + " w-36 pl-2",
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "iznosprverate",
-							Name:       "iznosprverate",
-							FieldType:  "text",
-							Value:      robnoFaktureDecimal(header.IznosPrveRate, 2),
-							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0 text-right",
-							MaxLength:  "15",
-							TabIndex:   "24"})
-					</div>
+					}
 					<!-- UsloviPlacanja, UsloviKamate -->
 					<div class="col-span-4 flex items-center gap-1 min-w-0">
 						@components.LabelField(domain.LabelFieldConfig{
@@ -873,48 +876,53 @@ templ RobnoFaktureHeaderFields(ui domain.RobnoFaktureUI, header domain.RobnoFakt
 							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
 							MaxLength:  "20",
 							TabIndex:   "25"})
-						@components.LabelField(domain.LabelFieldConfig{
-							ID:         "uslovikamate",
-							LabelText:  translator.Label("Uslovi kamate"),
-							ClassLabel: common.ClassLabel + " w-36 pl-2",
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "uslovikamate",
-							Name:       "uslovikamate",
-							FieldType:  "text",
-							Value:      header.UsloviKamate,
-							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
-							MaxLength:  "20",
-							TabIndex:   "26"})
+						if !header.Avansni {
+							@components.LabelField(domain.LabelFieldConfig{
+								ID:         "uslovikamate",
+								LabelText:  translator.Label("Uslovi kamate"),
+								ClassLabel: common.ClassLabel + " w-36 pl-2",
+							})
+							@components.TextInputField(domain.InputFieldConfig{
+								ID:         "uslovikamate",
+								Name:       "uslovikamate",
+								FieldType:  "text",
+								Value:      header.UsloviKamate,
+								ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
+								MaxLength:  "20",
+								TabIndex:   "26"})
+						}
 					</div>
-					<!-- Rok, Dospeva -->
-					<div class="col-span-4 flex items-center gap-1 min-w-0">
-						@components.LabelField(domain.LabelFieldConfig{
-							ID:         "rok",
-							LabelText:  translator.Label("Rok"),
-							ClassLabel: common.ClassLabel + " w-36",
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "rok",
-							Name:       "rok",
-							FieldType:  "text",
-							Value:      robnoFaktureInt(header.Rok),
-							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0 text-right",
-							MaxLength:  "3",
-							TabIndex:   "27"})
-						@components.LabelField(domain.LabelFieldConfig{
-							ID:         "dospeva",
-							LabelText:  translator.Label("Dospeva"),
-							ClassLabel: common.ClassLabel + " w-36 pl-2",
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "dospeva",
-							Name:       "dospeva",
-							FieldType:  "date",
-							Value:      robnoFaktureDate(header.Dospeva),
-							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
-							TabIndex:   "28"})
-					</div>
+					<!-- The rok (not of an avansni račun) -->
+					if !header.Avansni {
+						<!-- Rok, Dospeva -->
+						<div class="col-span-4 flex items-center gap-1 min-w-0">
+							@components.LabelField(domain.LabelFieldConfig{
+								ID:         "rok",
+								LabelText:  translator.Label("Rok"),
+								ClassLabel: common.ClassLabel + " w-36",
+							})
+							@components.TextInputField(domain.InputFieldConfig{
+								ID:         "rok",
+								Name:       "rok",
+								FieldType:  "text",
+								Value:      robnoFaktureInt(header.Rok),
+								ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0 text-right",
+								MaxLength:  "3",
+								TabIndex:   "27"})
+							@components.LabelField(domain.LabelFieldConfig{
+								ID:         "dospeva",
+								LabelText:  translator.Label("Dospeva"),
+								ClassLabel: common.ClassLabel + " w-36 pl-2",
+							})
+							@components.TextInputField(domain.InputFieldConfig{
+								ID:         "dospeva",
+								Name:       "dospeva",
+								FieldType:  "date",
+								Value:      robnoFaktureDate(header.Dospeva),
+								ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
+								TabIndex:   "28"})
+						</div>
+					}
 					<!-- ZiroRacun -->
 					<div class="col-span-4 flex items-center gap-1 min-w-0">
 						@components.LabelField(domain.LabelFieldConfig{
@@ -959,72 +967,88 @@ templ RobnoFaktureHeaderFields(ui domain.RobnoFaktureUI, header domain.RobnoFakt
 							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
 							MaxLength:  "20",
 							TabIndex:   "31"})
-						@components.LabelField(domain.LabelFieldConfig{
-							ID:         "narudzbenica",
-							LabelText:  translator.Label("Narudžbenica"),
-							ClassLabel: common.ClassLabel + " w-36 pl-2",
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "narudzbenica",
-							Name:       "narudzbenica",
-							FieldType:  "text",
-							Value:      header.Narudzbenica,
-							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
-							MaxLength:  "20",
-							TabIndex:   "32"})
+						if !header.Avansni {
+							@components.LabelField(domain.LabelFieldConfig{
+								ID:         "narudzbenica",
+								LabelText:  translator.Label("Narudžbenica"),
+								ClassLabel: common.ClassLabel + " w-36 pl-2",
+							})
+							@components.TextInputField(domain.InputFieldConfig{
+								ID:         "narudzbenica",
+								Name:       "narudzbenica",
+								FieldType:  "text",
+								Value:      header.Narudzbenica,
+								ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
+								MaxLength:  "20",
+								TabIndex:   "32"})
+						} else {
+							@components.LabelField(domain.LabelFieldConfig{
+								ID:         "profak",
+								LabelText:  translator.Label("Profaktura"),
+								ClassLabel: common.ClassLabel + " w-36 pl-2",
+							})
+							@components.TextInputField(domain.InputFieldConfig{
+								ID:         "profak",
+								Name:       "profak",
+								FieldType:  "text",
+								Value:      header.Profaktura,
+								ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
+								MaxLength:  "20",
+								TabIndex:   "32"})
+						}
 					</div>
 					<!-- Paritet, IzvozIzjava and the banka za uplatu - izvoz (not of the fakture usluga) -->
 					if !header.Usluge {
-					<div class="col-span-4 flex items-center gap-1 min-w-0">
-						@components.LabelField(domain.LabelFieldConfig{
-							ID:         "paritet",
-							LabelText:  translator.Label("Paritet"),
-							ClassLabel: common.ClassLabel + " w-36",
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "paritet",
-							Name:       "paritet",
-							FieldType:  "text",
-							Value:      header.Paritet,
-							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
-							MaxLength:  "20",
-							TabIndex:   "33"})
-						@components.LabelField(domain.LabelFieldConfig{
-							ID:         "izvozizjava",
-							LabelText:  translator.Label("Izvoz. izjava"),
-							ClassLabel: common.ClassLabel + " w-36 pl-2",
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "izvozizjava",
-							Name:       "izvozizjava",
-							FieldType:  "text",
-							Value:      header.IzvozIzjava,
-							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
-							MaxLength:  "20",
-							TabIndex:   "34"})
-					</div>
-					<!-- BankaUplatu -->
-					<div class="col-span-4 flex items-center gap-1 min-w-0">
-						@components.LabelField(domain.LabelFieldConfig{
-							ID:         "bnkizvid",
-							LabelText:  translator.Label("Banka za uplatu - izvoz"),
-							ClassLabel: common.ClassLabel + " w-36",
-						})
-						@components.TableCombo(domain.TableComboConfig{
-							ID:           "bnkizvid-combo",
-							Name:         "bnkizvid",
-							ValueID:      "bnkizvid",
-							Value:        robnoFaktureNullID(header.IDBankaIzvoz),
-							DisplayValue: header.BankaIzvozText,
-							Placeholder:  "Pretraži po šifri ili nazivu",
-							ClassWrapper: "relative flex-1 min-w-0",
-							ClassInput:   common.ClassInputTextEnabled + " w-full",
-							SearchURL:    "/api/search/banke-izvoz",
-							// No value ("-") is saved as NULL.
-							AllowEmpty: true,
-							TabIndex:   "35",
-						}, translator)
-					</div>
+						<div class="col-span-4 flex items-center gap-1 min-w-0">
+							@components.LabelField(domain.LabelFieldConfig{
+								ID:         "paritet",
+								LabelText:  translator.Label("Paritet"),
+								ClassLabel: common.ClassLabel + " w-36",
+							})
+							@components.TextInputField(domain.InputFieldConfig{
+								ID:         "paritet",
+								Name:       "paritet",
+								FieldType:  "text",
+								Value:      header.Paritet,
+								ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
+								MaxLength:  "20",
+								TabIndex:   "33"})
+							@components.LabelField(domain.LabelFieldConfig{
+								ID:         "izvozizjava",
+								LabelText:  translator.Label("Izvoz. izjava"),
+								ClassLabel: common.ClassLabel + " w-36 pl-2",
+							})
+							@components.TextInputField(domain.InputFieldConfig{
+								ID:         "izvozizjava",
+								Name:       "izvozizjava",
+								FieldType:  "text",
+								Value:      header.IzvozIzjava,
+								ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
+								MaxLength:  "20",
+								TabIndex:   "34"})
+						</div>
+						<!-- BankaUplatu -->
+						<div class="col-span-4 flex items-center gap-1 min-w-0">
+							@components.LabelField(domain.LabelFieldConfig{
+								ID:         "bnkizvid",
+								LabelText:  translator.Label("Banka za uplatu - izvoz"),
+								ClassLabel: common.ClassLabel + " w-36",
+							})
+							@components.TableCombo(domain.TableComboConfig{
+								ID:           "bnkizvid-combo",
+								Name:         "bnkizvid",
+								ValueID:      "bnkizvid",
+								Value:        robnoFaktureNullID(header.IDBankaIzvoz),
+								DisplayValue: header.BankaIzvozText,
+								Placeholder:  "Pretraži po šifri ili nazivu",
+								ClassWrapper: "relative flex-1 min-w-0",
+								ClassInput:   common.ClassInputTextEnabled + " w-full",
+								SearchURL:    "/api/search/banke-izvoz",
+								// No value ("-") is saved as NULL.
+								AllowEmpty: true,
+								TabIndex:   "35",
+							}, translator)
+						</div>
 					}
 					<!-- Popdv -->
 					<div class="col-span-4 flex items-center gap-1 min-w-0">
@@ -1196,7 +1220,7 @@ templ RobnoFaktureHeaderFields(ui domain.RobnoFaktureUI, header domain.RobnoFakt
 			</fieldset>
 			<!-- Mesto isporuke, komercijalista, tender, napomena... (the second panel of the legacy box) -->
 			<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg">
-				<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Mesto isporuke, komercijalista, tender, napomena...") }</legend>
+				<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label(robAvansniLegenda(header, "Mesto isporuke, komercijalista, tender, napomena...", "Komercijalista, tekst")) }</legend>
 				<!-- The rows of the panel, one line of the legacy box per row: the mesto isporuke and the
 				     komercijalista over the whole row, then the IF broj with the checkbox "Javna nabavka",
 				     the BJKOS nosioca with the broj tendera and the KST and, in the last rows, the pairs of
@@ -1204,59 +1228,62 @@ templ RobnoFaktureHeaderFields(ui domain.RobnoFaktureUI, header domain.RobnoFakt
 				     težina, broj kutija / broj paleta). Every label has the width of the labels of the panel
 				     above (w-44), so the controls of all the rows start at the same x. -->
 				<div class="grid grid-cols-4 gap-x-2 gap-y-1">
-					<!-- Mesto isporuke -->
-					<div class="col-span-4 flex items-center gap-1 min-w-0">
-						@components.LabelField(domain.LabelFieldConfig{
-							ID:         "fispid",
-							LabelText:  translator.Label("Mesto isporuke"),
-							ClassLabel: common.ClassLabel + " w-40",
-						})
-						@components.TableCombo(domain.TableComboConfig{
-							ID:           "fispid-combo",
-							Name:         "fispid",
-							ValueID:      "fispid",
-							Value:        robnoFaktureNullID(header.MestoIsporuke),
-							DisplayValue: header.MestoIsporukeText,
-							Placeholder:  "Pretraži po šifri ili nazivu",
-							ClassWrapper: "relative flex-1 min-w-0",
-							ClassInput:   common.ClassInputTextEnabled + " w-full",
-							SearchURL:    "/api/search/mesta-isporuke-id",
-							// No value ("-") is saved as NULL.
-							AllowEmpty: true,
-							// The mesta isporuke of the kupac of the faktura.
-							HxInclude: "#kupackonto, #kupacsifra",
-							HxTrigger: "input changed delay:300ms, focus[tableComboEmpty(this)], change[document.activeElement === this] from:#kupacsifra",
-							Disabled:  false,
-							TabIndex:  "43",
-						}, translator)
-					</div>
-					<!-- The poštanski broj and the mesto of the mesto isporuke (read only) -->
-					<div class="col-span-4 flex items-center gap-1 min-w-0">
-						@components.LabelField(domain.LabelFieldConfig{
-							ID:         "misppostanskibroj",
-							LabelText:  translator.Label("Poštanski broj"),
-							ClassLabel: common.ClassLabel + " w-40",
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "misppostanskibroj",
-							Name:       "misppostanskibroj",
-							FieldType:  "text",
-							Value:      header.MispPostanskiBroj,
-							Disabled:   true,
-							ClassInput: common.ClassInputTextDisabled + " w-24"})
-						@components.LabelField(domain.LabelFieldConfig{
-							ID:         "mispmesto",
-							LabelText:  translator.Label("Mesto"),
-							ClassLabel: common.ClassLabel + " pl-2",
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "mispmesto",
-							Name:       "mispmesto",
-							FieldType:  "text",
-							Value:      header.MispMesto,
-							Disabled:   true,
-							ClassInput: common.ClassInputTextDisabled + " flex-1 min-w-0"})
-					</div>
+					<!-- The mesto isporuke (not of an avansni račun) -->
+					if !header.Avansni {
+						<!-- Mesto isporuke -->
+						<div class="col-span-4 flex items-center gap-1 min-w-0">
+							@components.LabelField(domain.LabelFieldConfig{
+								ID:         "fispid",
+								LabelText:  translator.Label("Mesto isporuke"),
+								ClassLabel: common.ClassLabel + " w-40",
+							})
+							@components.TableCombo(domain.TableComboConfig{
+								ID:           "fispid-combo",
+								Name:         "fispid",
+								ValueID:      "fispid",
+								Value:        robnoFaktureNullID(header.MestoIsporuke),
+								DisplayValue: header.MestoIsporukeText,
+								Placeholder:  "Pretraži po šifri ili nazivu",
+								ClassWrapper: "relative flex-1 min-w-0",
+								ClassInput:   common.ClassInputTextEnabled + " w-full",
+								SearchURL:    "/api/search/mesta-isporuke-id",
+								// No value ("-") is saved as NULL.
+								AllowEmpty: true,
+								// The mesta isporuke of the kupac of the faktura.
+								HxInclude: "#kupackonto, #kupacsifra",
+								HxTrigger: "input changed delay:300ms, focus[tableComboEmpty(this)], change[document.activeElement === this] from:#kupacsifra",
+								Disabled:  false,
+								TabIndex:  "43",
+							}, translator)
+						</div>
+						<!-- The poštanski broj and the mesto of the mesto isporuke (read only) -->
+						<div class="col-span-4 flex items-center gap-1 min-w-0">
+							@components.LabelField(domain.LabelFieldConfig{
+								ID:         "misppostanskibroj",
+								LabelText:  translator.Label("Poštanski broj"),
+								ClassLabel: common.ClassLabel + " w-40",
+							})
+							@components.TextInputField(domain.InputFieldConfig{
+								ID:         "misppostanskibroj",
+								Name:       "misppostanskibroj",
+								FieldType:  "text",
+								Value:      header.MispPostanskiBroj,
+								Disabled:   true,
+								ClassInput: common.ClassInputTextDisabled + " w-24"})
+							@components.LabelField(domain.LabelFieldConfig{
+								ID:         "mispmesto",
+								LabelText:  translator.Label("Mesto"),
+								ClassLabel: common.ClassLabel + " pl-2",
+							})
+							@components.TextInputField(domain.InputFieldConfig{
+								ID:         "mispmesto",
+								Name:       "mispmesto",
+								FieldType:  "text",
+								Value:      header.MispMesto,
+								Disabled:   true,
+								ClassInput: common.ClassInputTextDisabled + " flex-1 min-w-0"})
+						</div>
+					}
 					<!-- Komercijalista -->
 					<div class="col-span-4 flex items-center gap-1 min-w-0">
 						@components.LabelField(domain.LabelFieldConfig{
@@ -1280,133 +1307,139 @@ templ RobnoFaktureHeaderFields(ui domain.RobnoFaktureUI, header domain.RobnoFakt
 							TabIndex:   "44",
 						}, translator)
 					</div>
-					<!-- Vozač, Reg. br. -->
-					<div class="col-span-4 flex items-center gap-1 min-w-0">
-						@components.LabelField(domain.LabelFieldConfig{
-							ID:         "vozac",
-							LabelText:  translator.Label("Vozač"),
-							ClassLabel: common.ClassLabel + " w-40",
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "vozac",
-							Name:       "vozac",
-							FieldType:  "text",
-							Value:      header.Vozac,
-							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
-							MaxLength:  "40",
-							TabIndex:   "45"})
-						@components.LabelField(domain.LabelFieldConfig{
-							ID:         "regbr",
-							LabelText:  translator.Label("Reg. br."),
-							ClassLabel: common.ClassLabel + " w-40",
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "regbr",
-							Name:       "regbr",
-							FieldType:  "text",
-							Value:      header.RegBr,
-							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
-							MaxLength:  "20",
-							TabIndex:   "46"})
-					</div>
+					<!-- The vozač (not of an avansni račun) -->
+					if !header.Avansni {
+						<!-- Vozač, Reg. br. -->
+						<div class="col-span-4 flex items-center gap-1 min-w-0">
+							@components.LabelField(domain.LabelFieldConfig{
+								ID:         "vozac",
+								LabelText:  translator.Label("Vozač"),
+								ClassLabel: common.ClassLabel + " w-40",
+							})
+							@components.TextInputField(domain.InputFieldConfig{
+								ID:         "vozac",
+								Name:       "vozac",
+								FieldType:  "text",
+								Value:      header.Vozac,
+								ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
+								MaxLength:  "40",
+								TabIndex:   "45"})
+							@components.LabelField(domain.LabelFieldConfig{
+								ID:         "regbr",
+								LabelText:  translator.Label("Reg. br."),
+								ClassLabel: common.ClassLabel + " w-40",
+							})
+							@components.TextInputField(domain.InputFieldConfig{
+								ID:         "regbr",
+								Name:       "regbr",
+								FieldType:  "text",
+								Value:      header.RegBr,
+								ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
+								MaxLength:  "20",
+								TabIndex:   "46"})
+						</div>
+					}
 					<!-- Bruto težina, Neto težina, broj kutija, broj paleta (not of the fakture usluga) -->
 					if !header.Usluge {
-					<div class="col-span-4 flex items-center gap-1 min-w-0">
-						@components.LabelField(domain.LabelFieldConfig{
-							ID:         "brutotezina",
-							LabelText:  translator.Label("Bruto težina"),
-							ClassLabel: common.ClassLabel + " w-40",
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "brutotezina",
-							Name:       "brutotezina",
-							FieldType:  "text",
-							Value:      robnoFaktureDecimal(header.BrutoTezina, 2),
-							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0 text-right",
-							MaxLength:  "15",
-							TabIndex:   "47"})
-						@components.LabelField(domain.LabelFieldConfig{
-							ID:         "netotezina",
-							LabelText:  translator.Label("Neto težina"),
-							ClassLabel: common.ClassLabel + " w-40",
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "netotezina",
-							Name:       "netotezina",
-							FieldType:  "text",
-							Value:      robnoFaktureDecimal(header.NetoTezina, 2),
-							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0 text-right",
-							MaxLength:  "15",
-							TabIndex:   "48"})
-					</div>
-					<!-- Broj kutija, Broj paleta -->
-					<div class="col-span-4 flex items-center gap-1 min-w-0">
-						@components.LabelField(domain.LabelFieldConfig{
-							ID:         "brojkutija",
-							LabelText:  translator.Label("Broj kutija"),
-							ClassLabel: common.ClassLabel + " w-40",
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "brojkutija",
-							Name:       "brojkutija",
-							FieldType:  "text",
-							Value:      robnoFaktureInt(header.BrojKutija),
-							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0 text-right",
-							MaxLength:  "6",
-							TabIndex:   "49"})
-						@components.LabelField(domain.LabelFieldConfig{
-							ID:         "brojpaleta",
-							LabelText:  translator.Label("Broj paleta"),
-							ClassLabel: common.ClassLabel + " w-40",
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "brojpaleta",
-							Name:       "brojpaleta",
-							FieldType:  "text",
-							Value:      robnoFaktureInt(header.BrojPaleta),
-							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0 text-right",
-							MaxLength:  "6",
-							TabIndex:   "50"})
-					</div>
+						<div class="col-span-4 flex items-center gap-1 min-w-0">
+							@components.LabelField(domain.LabelFieldConfig{
+								ID:         "brutotezina",
+								LabelText:  translator.Label("Bruto težina"),
+								ClassLabel: common.ClassLabel + " w-40",
+							})
+							@components.TextInputField(domain.InputFieldConfig{
+								ID:         "brutotezina",
+								Name:       "brutotezina",
+								FieldType:  "text",
+								Value:      robnoFaktureDecimal(header.BrutoTezina, 2),
+								ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0 text-right",
+								MaxLength:  "15",
+								TabIndex:   "47"})
+							@components.LabelField(domain.LabelFieldConfig{
+								ID:         "netotezina",
+								LabelText:  translator.Label("Neto težina"),
+								ClassLabel: common.ClassLabel + " w-40",
+							})
+							@components.TextInputField(domain.InputFieldConfig{
+								ID:         "netotezina",
+								Name:       "netotezina",
+								FieldType:  "text",
+								Value:      robnoFaktureDecimal(header.NetoTezina, 2),
+								ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0 text-right",
+								MaxLength:  "15",
+								TabIndex:   "48"})
+						</div>
+						<!-- Broj kutija, Broj paleta -->
+						<div class="col-span-4 flex items-center gap-1 min-w-0">
+							@components.LabelField(domain.LabelFieldConfig{
+								ID:         "brojkutija",
+								LabelText:  translator.Label("Broj kutija"),
+								ClassLabel: common.ClassLabel + " w-40",
+							})
+							@components.TextInputField(domain.InputFieldConfig{
+								ID:         "brojkutija",
+								Name:       "brojkutija",
+								FieldType:  "text",
+								Value:      robnoFaktureInt(header.BrojKutija),
+								ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0 text-right",
+								MaxLength:  "6",
+								TabIndex:   "49"})
+							@components.LabelField(domain.LabelFieldConfig{
+								ID:         "brojpaleta",
+								LabelText:  translator.Label("Broj paleta"),
+								ClassLabel: common.ClassLabel + " w-40",
+							})
+							@components.TextInputField(domain.InputFieldConfig{
+								ID:         "brojpaleta",
+								Name:       "brojpaleta",
+								FieldType:  "text",
+								Value:      robnoFaktureInt(header.BrojPaleta),
+								ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0 text-right",
+								MaxLength:  "6",
+								TabIndex:   "50"})
+						</div>
 					}
-					<!-- checkbox "Javna nabavka",  -->
-					<div class="col-span-4 flex items-center gap-1 min-w-0">
-						@components.CheckboxField(domain.CheckboxFieldConfig{
-							ID:                "javnanabavka",
-							Name:              "javnanabavka",
-							LabelText:         translator.Label("Javna nabavka"),
-							ClassLabel:        common.ClassLabel,
-							ClassCheckbox:     common.ClassCheckbox,
-							ClassCheckboxSpan: "text-sm",
-							IsChecked:         header.JavnaNabavka,
-							TabIndex:          "51"}, translator)
-						@components.LabelField(domain.LabelFieldConfig{
-							ID:         "jbkjsnosilac",
-							LabelText:  translator.Label("JBKJS nosioca"),
-							ClassLabel: common.ClassLabel + " w-32 pl-2",
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "jbkjsnosilac",
-							Name:       "jbkjsnosilac",
-							FieldType:  "text",
-							Value:      header.JBKJNosioc,
-							ClassInput: common.ClassInputTextEnabled + " w-28",
-							MaxLength:  "20",
-							TabIndex:   "52"})
-						@components.LabelField(domain.LabelFieldConfig{
-							ID:         "brojtendera",
-							LabelText:  translator.Label("Broj tendera"),
-							ClassLabel: common.ClassLabel + " w-40",
-						})
-						@components.TextInputField(domain.InputFieldConfig{
-							ID:         "brojtendera",
-							Name:       "brojtendera",
-							FieldType:  "text",
-							Value:      header.BrojTendera,
-							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
-							MaxLength:  "20",
-							TabIndex:   "53"})
-					</div>
+					<!-- The javna nabavka (not of an avansni račun) -->
+					if !header.Avansni {
+						<!-- checkbox "Javna nabavka",  -->
+						<div class="col-span-4 flex items-center gap-1 min-w-0">
+							@components.CheckboxField(domain.CheckboxFieldConfig{
+								ID:                "javnanabavka",
+								Name:              "javnanabavka",
+								LabelText:         translator.Label("Javna nabavka"),
+								ClassLabel:        common.ClassLabel,
+								ClassCheckbox:     common.ClassCheckbox,
+								ClassCheckboxSpan: "text-sm",
+								IsChecked:         header.JavnaNabavka,
+								TabIndex:          "51"}, translator)
+							@components.LabelField(domain.LabelFieldConfig{
+								ID:         "jbkjsnosilac",
+								LabelText:  translator.Label("JBKJS nosioca"),
+								ClassLabel: common.ClassLabel + " w-32 pl-2",
+							})
+							@components.TextInputField(domain.InputFieldConfig{
+								ID:         "jbkjsnosilac",
+								Name:       "jbkjsnosilac",
+								FieldType:  "text",
+								Value:      header.JBKJNosioc,
+								ClassInput: common.ClassInputTextEnabled + " w-28",
+								MaxLength:  "20",
+								TabIndex:   "52"})
+							@components.LabelField(domain.LabelFieldConfig{
+								ID:         "brojtendera",
+								LabelText:  translator.Label("Broj tendera"),
+								ClassLabel: common.ClassLabel + " w-40",
+							})
+							@components.TextInputField(domain.InputFieldConfig{
+								ID:         "brojtendera",
+								Name:       "brojtendera",
+								FieldType:  "text",
+								Value:      header.BrojTendera,
+								ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
+								MaxLength:  "20",
+								TabIndex:   "53"})
+						</div>
+					}
 					<!-- The tekst of the document (rdok.foot) -->
 					<div class="col-span-4 flex items-start gap-1 min-w-0">
 						@components.LabelField(domain.LabelFieldConfig{
@@ -1456,8 +1489,8 @@ templ RobnoFaktureHeaderFields(ui domain.RobnoFaktureUI, header domain.RobnoFakt
 }
 
 // RobnoFaktureAvansi renders the editable grid of the avansi closed on the faktura (like the tekući
-// računi of the partneri): "+ Dodaj avans" adds an empty row (the template row of the grid), "Obriši"
-// removes its row. The user enters the broj of the avansni račun and the iznos closed on the faktura;
+// računi of the partneri): "Obriši" removes its row (the avansi are selected in the popup of the legacy
+// search of the avansi, which comes later). The user enters the broj of the avansni račun and the iznos closed on the faktura;
 // the other columns (the avans, its datum, iznos and ostatak) are read only, filled by the server. The
 // grid is inside the fields of the header, so its rows are sent with the header as the parallel lists
 // avansid (the key of a saved row, empty for a new one), avansbrdok and avanszatvoreno.
@@ -1465,13 +1498,6 @@ templ RobnoFaktureAvansi(avansiTbl domain.TableData, translator *i18n.Service) {
 	<div id={ avansiTbl.TableID } class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col h-40 min-h-0 overflow-hidden">
 		<div class="flex items-center justify-between px-1 mb-1">
 			<h4 class="text-sm font-semibold text-blue-700">{ translator.Label("Avansi") }</h4>
-			<button
-				type="button"
-				onclick={ templ.JSFuncCall("robnoFaktureAvansDodaj", avansiTbl.TableID) }
-				class={ common.ClassAddButton }
-			>
-				+ { translator.Button("Dodaj avans") }
-			</button>
 		</div>
 		<div class="flex-1 min-h-0 overflow-auto border border-gray-300 rounded bg-white">
 			<table class="w-full border-collapse text-sm">
@@ -1492,10 +1518,6 @@ templ RobnoFaktureAvansi(avansiTbl domain.TableData, translator *i18n.Service) {
 				</tbody>
 			</table>
 		</div>
-		<!-- The empty row "+ Dodaj avans" adds -->
-		<template data-robno-avansi-novi>
-			@RobnoFaktureAvansRed(avansiTbl.Headers, domain.TableRow{}, translator)
-		</template>
 	</div>
 }
 
@@ -2578,19 +2600,6 @@ templ RobnoFaktureScript() {
 					robnoFaktureStavkaObracunaj();
 				}
 			});
-		}
-
-		// "+ Dodaj avans": a new empty row (a copy of the template row) at the end of the grid of the
-		// avansi, with the focus in its broj of the avansni račun.
-		function robnoFaktureAvansDodaj(gridID) {
-			const grid = document.getElementById(gridID);
-			const body = grid && grid.querySelector('[data-robno-avansi]');
-			const tpl = grid && grid.querySelector('template[data-robno-avansi-novi]');
-			if (!body || !tpl || !tpl.content.firstElementChild) return;
-			const row = tpl.content.firstElementChild.cloneNode(true);
-			body.appendChild(row);
-			const input = row.querySelector('input[name="avansbrdok"]');
-			if (input) input.focus();
 		}
 
 		// "Traži" of a row of the avansi: the search of the avansni računi of the kupac, which fills the

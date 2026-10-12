@@ -21,7 +21,7 @@ import (
 // the documents of the group with the stavke of the selected one and "Štampaj" of the selected document
 // (RobnoFakturePrikaz, filled when the tab is shown).
 templ Rob_FaktureUsluga(ui domain.RobnoFaktureUI, naslov string, header domain.RobnoFaktureHeaderView, stavka domain.RobnoUslugeStavka, tbl, avansiTbl, dokumentaTbl, dokumentStavkeTbl domain.TableData, vrstaDokumentaValues, sistemPdvValues, ziroRacuni []domain.ComboItem, btns domain.RobnoFaktureButtons, btnClose domain.Button, translator *i18n.Service, csrfToken string) {
-	@RobnoDokumentDialog(ui.DialogID, translator.Label(naslov), translator.Label(naslov), translator.Label("Pregled faktura"), btnClose, csrfToken,
+	@RobnoDokumentDialog(ui.DialogID, translator.Label(robAvansniNaslov(header, naslov, 0)), translator.Label(robAvansniNaslov(header, naslov, 1)), translator.Label(robAvansniNaslov(header, naslov, 2)), btnClose, csrfToken,
 		RobUslugeBody(ui, header, stavka, tbl, avansiTbl, vrstaDokumentaValues, sistemPdvValues, ziroRacuni, btns, translator),
 		RobnoFakturePrikaz(ui, dokumentaTbl, dokumentStavkeTbl, domain.InputControl{}, translator))
 	<!-- The messages of the screen -->
@@ -47,8 +47,12 @@ templ RobUslugeBody(ui domain.RobnoFaktureUI, header domain.RobnoFaktureHeaderVi
 		class="bg-blue-100 p-1 flex flex-col gap-1 h-full min-h-0"
 	>
 		@RobUslugeDokumentBar(header, btns.Print, btns.Back, translator)
-		@RobnoFakturePanel(ui.HeaderPanelID, translator.Label("Podaci o fakturi"), robnoFaktureHeaderStateText(header.Snimljen, translator), !header.Snimljen, !header.Snimljen, false, btns.Save.Id, RobnoFaktureIzmeniZaglavlje(btns.Modify, header.Snimljen), RobnoFaktureHeaderFields(ui, header, avansiTbl, vrstaDokumentaValues, nil, sistemPdvValues, ziroRacuni, translator), RobnoFaktureHeaderButtons(btns))
-		@RobnoFakturePanel(ui.StavkePanelID, translator.Label(stavka.Naslov), robUslugeStavkeStateText(header.Snimljen, translator), header.Snimljen, header.Snimljen, true, btns.SaveStavka.Id, templ.NopComponent, RobUslugeStavkeFields(ui, stavka, tbl, btns, translator), templ.NopComponent)
+		@RobnoFakturePanel(ui.HeaderPanelID, translator.Label(robAvansniHeaderNaslov(header)), robnoFaktureHeaderStateText(header.Snimljen, translator), !header.Snimljen, !header.Snimljen, false, btns.Save.Id, RobnoFaktureIzmeniZaglavlje(btns.Modify, header.Snimljen), RobnoFaktureHeaderFields(ui, header, avansiTbl, vrstaDokumentaValues, nil, sistemPdvValues, ziroRacuni, translator), RobnoFaktureHeaderButtons(btns))
+		if stavka.Avansni {
+			@RobnoFakturePanel(ui.StavkePanelID, translator.Label(stavka.Naslov), robUslugeStavkeStateText(header.Snimljen, translator), header.Snimljen, header.Snimljen, true, btns.SaveStavka.Id, templ.NopComponent, RobAvansniStavkeFields(ui, stavka, tbl, btns, translator), templ.NopComponent)
+		} else {
+			@RobnoFakturePanel(ui.StavkePanelID, translator.Label(stavka.Naslov), robUslugeStavkeStateText(header.Snimljen, translator), header.Snimljen, header.Snimljen, true, btns.SaveStavka.Id, templ.NopComponent, RobUslugeStavkeFields(ui, stavka, tbl, btns, translator), templ.NopComponent)
+		}
 		<!-- The dialogs of the stavke (an error of the save, the confirmation of the deletion) -->
 		<div id={ ui.StavkaInfoID } class="contents"></div>
 	</div>

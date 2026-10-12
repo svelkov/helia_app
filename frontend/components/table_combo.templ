@@ -164,7 +164,8 @@ templ TableCombo(cfg domain.TableComboConfig, translator *i18n.Service) {
 				// AllowEmpty: the results start with the row "-", which selects the empty key.
 				const results = document.getElementById(comboID + '-results');
 				const tbody = results && results.querySelector('tbody');
-				if (input && input.dataset.allowempty && tbody && tbody.rows.length > 0) {
+				// (not when the search gives the row "-" itself: a required filter without a value)
+				if (input && input.dataset.allowempty && tbody && tbody.rows.length > 0 && tbody.rows[0].dataset.key !== '') {
 					const first = tbody.rows[0];
 					const row = first.cloneNode(true);
 					row.dataset.key = '';

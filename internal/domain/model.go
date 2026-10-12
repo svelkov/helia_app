@@ -211,6 +211,9 @@ type InputFieldConfig struct {
 	Value            string
 	FieldType        string
 	Disabled         bool
+	ReadOnly         bool   // readonly: not entered, but submitted with the form (unlike Disabled)
+	Rows             string // rows of a TextAreaField
+	SelectOnFocus    bool   // a TextInputField selects its content on focus: what the user types replaces it
 	ClassInput       string
 	BlurEndpoint     string
 	HxTarget         string
@@ -281,9 +284,11 @@ type CheckboxFieldConfig struct {
 	TabIndex          string
 	Value             string
 	Checked           bool
+	OnChangeJS        TrustedJS // JavaScript of the onchange attribute, emitted verbatim (e.g. controlToggle(this, [...]))
 }
 type RadioFieldConfig struct {
 	ID               string
+	ClassWrapper     string // class of the label around the radio and its text (default "flex items-center gap-2")
 	Name             string
 	LabelText        string
 	ClassLabel       string

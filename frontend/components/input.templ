@@ -22,6 +22,9 @@ templ TextInputField(config domain.InputFieldConfig) {
 		if config.Disabled {
 			disabled
 		}
+		if config.ReadOnly {
+			readonly
+		}
 		if config.MinLength != "" {
 			minlength={ config.MinLength }
 		}
@@ -37,8 +40,12 @@ templ TextInputField(config domain.InputFieldConfig) {
 		if config.HxVals != "" {
 			hx-vals={ config.HxVals }
 		}
-		if config.OnFocus != "" {
-			onfocus={ templ.JSFuncCall(fmt.Sprintf("%s", config.OnFocus), config.ID) }
+		if config.OnFocus != "" || config.SelectOnFocus {
+			onfocus={ inputOnFocus(config) }
+		}
+		if config.SelectOnFocus {
+			onmousedown="if (document.activeElement !== this) this.dataset.selectedOnFocus = '1';"
+			onmouseup="if (this.dataset.selectedOnFocus) { event.preventDefault(); delete this.dataset.selectedOnFocus; }"
 		}
 		if config.BlurEndpoint != "" {
 			hx-trigger="blur"
@@ -101,13 +108,22 @@ templ TextInputField(config domain.InputFieldConfig) {
 		if config.OnInput != "" {
 			oninput={ templ.JSFuncCall(fmt.Sprintf("%s", config.OnInput), config.ID) }
 		}
-		if config.OnFocus != "" {
-			onfocus={ templ.JSFuncCall(fmt.Sprintf("%s", config.OnFocus), config.ID) }
-		}
 		if config.Placeholder != "" {
 			placeholder={ config.Placeholder }
 		}
 	/>
 }
 
-
+// inputOnFocus is the onfocus of a TextInputField: the OnFocus function of the field (called with its id) and,
+// with SelectOnFocus, the selection of its content (what the user types replaces it; when a click focuses the
+// field, its onmousedown marks it and the onmouseup keeps the selection, which the mouseup would clear).
+func inputOnFocus(config domain.InputFieldConfig) templ.ComponentScript {
+	js := ""
+	if config.OnFocus != "" {
+		js = templ.JSFuncCall(config.OnFocus, config.ID).CallInline + ";"
+	}
+	if config.SelectOnFocus {
+		js += "this.select();"
+	}
+	return templ.JSUnsafeFuncCall(js)
+}

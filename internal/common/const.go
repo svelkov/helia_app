@@ -143,6 +143,9 @@ const (
 	ClassTextAreaEnabled = "px-2 sm:px-1.5 md:px-1 py-2 text-xs sm:text-sm rounded border border-blue-400 focus:bg-green-50 focus:border-green-500 focus:ring-green-500 text-left w-full resize-none"
 	// Label
 	ClassLabel = "h-8 sm:h-7 md:h-6 text-xs sm:text-sm text-black whitespace-nowrap flex-shrink-0 flex items-center"
+	// Label of the second field of a row (e.g. the šifra artikla, the JM of the stavke of the opšti dokumenti): one
+	// width, so the fields after the labels of the rows start at the same x.
+	ClassLabelDrugoPolje = ClassLabel + " w-36 pl-2"
 
 	// Select/Dropdown
 	ClassSelect         = "h-8 sm:h-7 md:h-6 px-2 sm:px-1.5 md:px-1 text-xs sm:text-sm text-black rounded border border-blue-400 focus:border-blue-500 focus:ring-blue-500 w-full"

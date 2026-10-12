@@ -5,7 +5,13 @@ import (
 	"helia/i18n"
 )
 templ RadioButtonField(cfg domain.RadioFieldConfig, translator *i18n.Service) {
-	<label class="flex items-center gap-2">
+	<label
+		if cfg.ClassWrapper != "" {
+			class={ cfg.ClassWrapper }
+		} else {
+			class="flex items-center gap-2"
+		}
+	>
 		<input
 			type="radio"
 			name={ cfg.Name }
@@ -17,6 +23,9 @@ templ RadioButtonField(cfg domain.RadioFieldConfig, translator *i18n.Service) {
 			}
 			if cfg.IsSelected {
 				checked="checked"
+			}
+			if cfg.Disabled {
+				disabled
 			}
 		/>
 		if cfg.ClassLabel != "" {

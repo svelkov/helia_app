@@ -1514,20 +1514,16 @@ templ RobnoDokumentaParametriNalogaBody(tbl domain.TableData, magValues, tipdokV
 // fields of a filter (the same pattern as "Prikaz kartice artikla": controlToggle switches the
 // disabled state of the fields listed in the JSON array of the onchange handler).
 templ RobnoDokumentaCheckBox(id, labelText, fields string, isChecked bool, tabIndex string, translator *i18n.Service) {
-	<label class={ common.ClassCheckboxLabel + " w-44 flex-shrink-0 h-8 sm:h-7 md:h-6" }>
-		<input
-			type="checkbox"
-			id={ id }
-			name={ id }
-			class={ common.ClassCheckbox }
-			tabindex={ tabIndex }
-			if isChecked {
-				checked="checked"
-			}
-			onchange={ templ.JSFuncCall("controlToggle", templ.JSExpression("this"), templ.JSExpression(fields)) }
-		/>
-		<span class={ common.ClassCheckboxSpan }>{ translator.Label(labelText) }</span>
-	</label>
+	@components.CheckboxField(domain.CheckboxFieldConfig{
+		ID:                id,
+		Name:              id,
+		LabelText:         labelText,
+		ClassLabel:        common.ClassCheckboxLabel + " w-44 flex-shrink-0 h-8 sm:h-7 md:h-6",
+		ClassCheckbox:     common.ClassCheckbox,
+		ClassCheckboxSpan: common.ClassCheckboxSpan,
+		IsChecked:         isChecked,
+		TabIndex:          tabIndex,
+		OnChangeJS:        "controlToggle(this, " + fields + ")"}, translator)
 }
 
 // Tab 8 - Prikaz dokumenata u nalogu

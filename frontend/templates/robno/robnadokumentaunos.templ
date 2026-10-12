@@ -70,10 +70,12 @@ templ RobnoDokumentDialog(dialogID, title, tabUnos, tabPrikaz string, btnClose d
 				<h2 class="text-lg font-semibold ml-4">{ title }</h2>
 				@components.CloseButton(btnClose)
 			</div>
-			<!-- The two tabs (styled like the tabs of the other screens, templates.TabNav) -->
+			<!-- The two tabs (styled like the tabs of the other screens, templates.TabNav; no tab stops: Tab moves
+			     between the fields) -->
 			<nav class="py-1 px-1 h-8 text-sm font-medium text-gray-700 flex items-center gap-1 whitespace-nowrap flex-shrink-0" aria-label="Tabs">
 				<button
 					type="button"
+					tabindex="-1"
 					data-robno-tab="0"
 					data-active-class={ common.ClassDialogTabActive }
 					data-inactive-class={ common.ClassDialogTabInactive }
@@ -83,6 +85,7 @@ templ RobnoDokumentDialog(dialogID, title, tabUnos, tabPrikaz string, btnClose d
 				>{ tabUnos }</button>
 				<button
 					type="button"
+					tabindex="-1"
 					data-robno-tab="1"
 					data-active-class={ common.ClassDialogTabActive }
 					data-inactive-class={ common.ClassDialogTabInactive }
@@ -117,8 +120,27 @@ templ RobnoDokumentDialog(dialogID, title, tabUnos, tabPrikaz string, btnClose d
 				const hook = panel && panel.querySelector('[data-on-show]');
 				if (hook && typeof window[hook.dataset.onShow] === 'function') window[hook.dataset.onShow](hook);
 			}
+			// The focus in the first field of the entry tab when the dialog of a robni dokument opens: the first
+			// by the tab order (the lowest tabindex, then the order of the page) that is entered (not a radio, a
+			// checkbox or a button, not disabled, read only, hidden or in a disabled control). Not when a field
+			// of the dialog already has it (e.g. the šifra artikla of the stavke of a saved document).
+			function robnoDokumentFokus(dialogID) {
+				setTimeout(() => {
+					const dialog = document.getElementById(dialogID);
+					if (!dialog || dialog.contains(document.activeElement)) return;
+					const panel = dialog.querySelector('[data-robno-panel="0"]');
+					if (!panel) return;
+					const polja = Array.from(panel.querySelectorAll('input, select, textarea')).filter(e =>
+						!['hidden', 'radio', 'checkbox', 'button', 'submit'].includes(e.type) && !e.disabled && !e.readOnly &&
+						e.tabIndex >= 0 && !e.closest('[inert]') && e.getClientRects().length > 0);
+					const redosled = e => e.tabIndex > 0 ? e.tabIndex : Number.MAX_SAFE_INTEGER;
+					polja.sort((a, b) => redosled(a) - redosled(b));
+					if (polja.length > 0) polja[0].focus();
+				}, 0);
+			}
 		</script>
 	}
+	<script data-dialog={ dialogID }>robnoDokumentFokus(document.currentScript.dataset.dialog);</script>
 	<!-- The scripts of the search popups, of the inline validation errors and of Enter that moves to the
 	     next field of the forms with data-enter-nav (the dialog is rendered on its own, so it installs
 	     them itself; every screen of the robni dokumenti uses this dialog) -->
@@ -285,6 +307,7 @@ templ RobnoFakturePanel(id, title, stateText string, open, enabled, fill bool, s
 		class={ "group w-full rounded-lg border border-blue-400 bg-blue-100" + robnoFakturePanelFill(fill, " robno-fill open:flex-1 open:min-h-0 open:flex open:flex-col") }
 	>
 		<summary
+			tabindex="-1"
 			onclick="return robnoFaktureCanToggle(this)"
 			class="px-2 py-1 cursor-pointer select-none flex flex-shrink-0 items-center gap-1 bg-blue-200 rounded-t-lg font-semibold text-sm text-blue-900"
 		>
@@ -324,30 +347,28 @@ templ RobnoFakturePanel(id, title, stateText string, open, enabled, fill bool, s
 // header), the checkbox too.
 templ RobnoFaktureDokumentBar(header domain.RobnoFaktureHeaderView, btnPrint, btnBack domain.Button, translator *i18n.Service) {
 	<div class="flex items-center gap-2 border border-blue-400 bg-blue-100 rounded-lg px-1 py-0.5">
-		<label class="flex items-center gap-1">
-			<input
-				type="radio"
-				name="vrstafakture"
-				id="otpremnica"
-				value="O"
-				class={ common.ClassCheckbox }
-				checked?={ header.Otpremnica }
-				disabled?={ header.Snimljen }
-			/>
-			<span class={ common.ClassLabel + " w-24" }>{ translator.Label("Otpremnica") }</span>
-		</label>
-		<label class="flex items-center gap-1">
-			<input
-				type="radio"
-				name="vrstafakture"
-				id="racun"
-				value="R"
-				class={ common.ClassCheckbox }
-				checked?={ !header.Otpremnica }
-				disabled?={ header.Snimljen }
-			/>
-			<span class={ common.ClassLabel + " w-16" }>{ translator.Label("Račun") }</span>
-		</label>
+		@components.RadioButtonField(domain.RadioFieldConfig{
+			ID:           "otpremnica",
+			Name:         "vrstafakture",
+			Value:        "O",
+			LabelText:    "Otpremnica",
+			ClassWrapper: "flex items-center gap-1",
+			ClassSelect:  common.ClassCheckbox,
+			ClassLabel:   common.ClassLabel + " w-24",
+			TabIndex:     "-1",
+			IsSelected:   header.Otpremnica,
+			Disabled:     header.Snimljen}, translator)
+		@components.RadioButtonField(domain.RadioFieldConfig{
+			ID:           "racun",
+			Name:         "vrstafakture",
+			Value:        "R",
+			LabelText:    "Račun",
+			ClassWrapper: "flex items-center gap-1",
+			ClassSelect:  common.ClassCheckbox,
+			ClassLabel:   common.ClassLabel + " w-16",
+			TabIndex:     "-1",
+			IsSelected:   !header.Otpremnica,
+			Disabled:     header.Snimljen}, translator)
 		<div class="flex-1 flex justify-center">
 			@components.CheckboxField(domain.CheckboxFieldConfig{
 				ID:                "stampajdetalje",
@@ -358,7 +379,7 @@ templ RobnoFaktureDokumentBar(header domain.RobnoFaktureHeaderView, btnPrint, bt
 				ClassCheckboxSpan: "text-sm",
 				IsChecked:         header.StampajDetalje,
 				Disabled:          header.Snimljen,
-				TabIndex:          "0"}, translator)
+				TabIndex:          "-1"}, translator)
 		</div>
 		<!-- "Štampaj" of the document of the form: only a saved document (a new one has nothing to print) -->
 		if header.RdokID > 0 {
@@ -523,7 +544,7 @@ templ RobnoFaktureHeaderFields(ui domain.RobnoFaktureUI, header domain.RobnoFakt
 								ClassCheckbox:     common.ClassCheckbox,
 								ClassCheckboxSpan: "text-sm",
 								IsChecked:         header.ZaPeriod,
-								TabIndex:          "6"}, translator)
+								TabIndex:          "-1"}, translator)
 							@components.LabelField(domain.LabelFieldConfig{
 								ID:         "periodod",
 								LabelText:  translator.Label("Od"),
@@ -723,13 +744,13 @@ templ RobnoFaktureHeaderFields(ui domain.RobnoFaktureUI, header domain.RobnoFakt
 					<!-- The text of the kupac (read only, the box under the data of the kupac of the legacy
 					     window) -->
 					<div class="col-span-4 flex min-w-0">
-						<textarea
-							id="kupacinfo"
-							name="kupacinfo"
-							rows="2"
-							disabled
-							class={ common.ClassInputTextDisabled + " w-full !h-auto resize-none" }
-						>{ header.KupacInfo }</textarea>
+						@components.TextAreaField(domain.InputFieldConfig{
+							ID:         "kupacinfo",
+							Name:       "kupacinfo",
+							Value:      header.KupacInfo,
+							Rows:       "2",
+							Disabled:   true,
+							ClassInput: common.ClassInputTextDisabled + " w-full !h-auto resize-none"})
 					</div>
 				</div>
 			</fieldset>
@@ -1411,7 +1432,7 @@ templ RobnoFaktureHeaderFields(ui domain.RobnoFaktureUI, header domain.RobnoFakt
 								ClassCheckbox:     common.ClassCheckbox,
 								ClassCheckboxSpan: "text-sm",
 								IsChecked:         header.JavnaNabavka,
-								TabIndex:          "51"}, translator)
+								TabIndex:          "-1"}, translator)
 							@components.LabelField(domain.LabelFieldConfig{
 								ID:         "jbkjsnosilac",
 								LabelText:  translator.Label("JBKJS nosioca"),
@@ -1447,13 +1468,13 @@ templ RobnoFaktureHeaderFields(ui domain.RobnoFaktureUI, header domain.RobnoFakt
 							LabelText:  translator.Label("Tekst"),
 							ClassLabel: common.ClassLabel + " w-40",
 						})
-						<textarea
-							id="foot"
-							name="foot"
-							rows="2"
-							tabindex="54"
-							class={ common.ClassInputTextEnabled + " flex-1 min-w-0 !h-auto" }
-						>{ header.Tekst }</textarea>
+						@components.TextAreaField(domain.InputFieldConfig{
+							ID:         "foot",
+							Name:       "foot",
+							Value:      header.Tekst,
+							Rows:       "2",
+							TabIndex:   "54",
+							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0 !h-auto"})
 					</div>
 				</div>
 			</fieldset>
@@ -1543,7 +1564,7 @@ templ RobnoFaktureAvansRed(headers []domain.Fields, row domain.TableRow, transla
 								</svg>
 							</button>
 						case "bravans":
-							<input type="text" name="avansbrdok" value={ robnoFaktureAvansCell(row, i) } class={ common.ClassInputTextEnabled + " w-full text-right" }/>
+							@components.TextInputField(domain.InputFieldConfig{Name: "avansbrdok", FieldType: "text", Value: robnoFaktureAvansCell(row, i), ClassInput: common.ClassInputTextEnabled + " w-full text-right"})
 						case "iznfakt":
 							<!-- Computed by the obračun of the faktura (read only) -->
 							{ robnoFaktureAvansCell(row, i) }
@@ -1660,14 +1681,13 @@ templ RobnoFaktureReadOnlyStrip(fields []domain.RobnoFaktureStripField) {
 			<tr>
 				for _, f := range fields {
 					<td class="border border-blue-400 bg-blue-100 px-0.5 py-0.5 align-middle">
-						<input
-							id={ f.ID }
-							name={ f.ID }
-							type="text"
-							value={ f.Value }
-							disabled
-							class={ common.ClassInputTextDisabled + " " + f.AlignClass }
-						/>
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         f.ID,
+							Name:       f.ID,
+							FieldType:  "text",
+							Value:      f.Value,
+							Disabled:   true,
+							ClassInput: common.ClassInputTextDisabled + " " + f.AlignClass})
 					</td>
 				}
 			</tr>
@@ -2031,7 +2051,7 @@ templ RobnoFaktureStavkeFields(ui domain.RobnoFaktureUI, tbl domain.TableData, s
 							ClassCheckbox:     common.ClassCheckbox,
 							ClassCheckboxSpan: "text-xs",
 							IsChecked:         stavka.KoristiPoslednjiRabat,
-							TabIndex:          "14"}, translator)
+							TabIndex:          "-1"}, translator)
 					</div>
 				</fieldset>
 				<div class="flex items-center gap-1 mb-1">
@@ -2396,6 +2416,13 @@ templ RobnoFaktureScript() {
 		function robnoUpisi(id, value) {
 			const el = document.getElementById(id);
 			if (el) el.value = value;
+		}
+		// A number written in a field: with the decimals of a field of the type number (data-decimals).
+		function robnoUpisiBroj(id, n) {
+			const el = document.getElementById(id);
+			if (!el) return;
+			const decimale = parseInt(el.dataset.decimals);
+			el.value = isNaN(decimale) ? String(n) : (Number(n) || 0).toFixed(decimale);
 		}
 		function robnoZaokruzi(n, decimale) {
 			const f = Math.pow(10, decimale);

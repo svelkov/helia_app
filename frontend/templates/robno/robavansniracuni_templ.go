@@ -183,15 +183,15 @@ func RobAvansniStavkeFields(ui domain.RobnoFaktureUI, stavka domain.RobnoUslugeS
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = robUslugeBroj("kolicina", translator.Label("Količina"), stavka.Kolicina, "15", "", true).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = robUslugeBroj("kolicina", translator.Label("Količina"), stavka.Kolicina, "15", "", 3, true).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = robUslugeBroj("cenausluge", translator.Label("Cena"), stavka.ProdajnaCena, "18", "4", false).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = robUslugeBroj("cenausluge", translator.Label("Cena"), stavka.ProdajnaCena, "18", "4", 2, false).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = robUslugeBroj("iznosusluge", translator.Label("Iznos"), stavka.Iznos, "18", "", true).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = robUslugeBroj("iznosusluge", translator.Label("Iznos"), stavka.Iznos, "18", "", 2, true).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

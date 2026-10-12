@@ -24,6 +24,12 @@ templ CheckboxField(cfg domain.CheckboxFieldConfig, translator *i18n.Service) {
 			if cfg.IsChecked || cfg.Checked {
 				checked="checked"
 			}
+			if cfg.Disabled {
+				disabled
+			}
+			if cfg.OnChangeJS != "" {
+				onchange={ templ.JSUnsafeFuncCall(cfg.OnChangeJS) }
+			}
 			if cfg.OnChangeEndpoint != "" {
 				hx-get={ cfg.OnChangeEndpoint }
 				hx-trigger="change"

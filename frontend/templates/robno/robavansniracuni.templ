@@ -61,9 +61,9 @@ templ RobAvansniStavkeFields(ui domain.RobnoFaktureUI, stavka domain.RobnoUsluge
 		<div class="grid grid-cols-[minmax(0,26rem)_minmax(0,1fr)] gap-x-3">
 			<div class="flex flex-col min-w-0">
 				<!-- The količina of a stavka of the avansni račun is 1 (read only, like the legacy) -->
-				@robUslugeBroj("kolicina", translator.Label("Količina"), stavka.Kolicina, "15", "", true)
-				@robUslugeBroj("cenausluge", translator.Label("Cena"), stavka.ProdajnaCena, "18", "4", false)
-				@robUslugeBroj("iznosusluge", translator.Label("Iznos"), stavka.Iznos, "18", "", true)
+				@robUslugeBroj("kolicina", translator.Label("Količina"), stavka.Kolicina, "15", "", 3, true)
+				@robUslugeBroj("cenausluge", translator.Label("Cena"), stavka.ProdajnaCena, "18", "4", 2, false)
+				@robUslugeBroj("iznosusluge", translator.Label("Iznos"), stavka.Iznos, "18", "", 2, true)
 			</div>
 			<div class="flex flex-col min-w-0">
 				<!-- The tarifa with its stopa, the poreska kategorija and, for S10 and S20, its osnov oslobođenja -->

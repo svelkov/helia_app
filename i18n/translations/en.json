@@ -2128,5 +2128,19 @@
   "label.protivstav_konto": "Contra account",
   "label.protivstav_an._sifra": "Contra analytic code",
   "label.m._troska_gde_ide_roba": "Cost center of the goods",
-  "label.unos_stavki": "Items entry"
+  "label.unos_stavki": "Items entry",
+  "label.stavke": "Items",
+  "label.efekat_nivelacije": "Revaluation effect",
+  "label.nivelacija_prodaja": "Sales price revaluation",
+  "label.nivelacije_veleprodaja": "Wholesale price revaluations",
+  "label.pregled_nivelacija": "Revaluations overview",
+  "label.opis_artikla": "Item description",
+  "label.opis_robe_ili_usluge": "Goods or service description",
+  "label.podaci_o_avansnom_racunu": "Advance invoice data",
+  "label.avansni_racuni": "Advance invoices",
+  "label.avansni_racun": "Advance invoice",
+  "label.pregled_avansnih_racuna": "Advance invoices overview",
+  "label.profaktura": "Pro forma invoice",
+  "label.avansni_racuni_stavke": "Advance invoices - items",
+  "label.komercijalista_tekst": "Sales representative, text"
 }

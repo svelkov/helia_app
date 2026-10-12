@@ -55,7 +55,11 @@ type searchDefinition struct {
 	// is not empty is used), e.g. "f.konto": {"konto", "fkto", "pkto"}: the screens send the konto of
 	// the partner as konto, fkto (the kupac/dobavljač of the document) or pkto (the prodavnica).
 	filters map[string][]string
-	orderBy string
+	// requiredFilters are the columns of filters that must have a value (not empty and not "-", the text of
+	// a combo without a selected row): without it the search gives only the row "-" (no selection), e.g. the
+	// mesta troška without the org. jedinica.
+	requiredFilters []string
+	orderBy         string
 	// textColumns and detailColumns: see domain.TableComboResults.
 	textColumns, detailColumns []int
 }
@@ -271,12 +275,14 @@ var searchDefinitions = map[string]searchDefinition{
 			{Label: "Šifra", Width: "20%"},
 			{Label: "Naziv"},
 		},
-		query:       `select m.mestotrid::text as key, coalesce(m.mtroska, '') as c1, coalesce(m.opis, '') as c2 from mestotr m`,
-		period:      "m",
-		searchIn:    []string{"m.mtroska", "m.opis"},
-		filters:     map[string][]string{"m.idorgjed::text": {"idorgjed", "idorgjed1"}},
-		orderBy:     "m.mtroska",
-		textColumns: []int{0, 1},
+		query:    `select m.mestotrid::text as key, coalesce(m.mtroska, '') as c1, coalesce(m.opis, '') as c2 from mestotr m`,
+		period:   "m",
+		searchIn: []string{"m.mtroska", "m.opis"},
+		filters:  map[string][]string{"m.idorgjed::text": {"idorgjed", "idorgjed1"}},
+		// Without the org. jedinica only "-" (the mesta troška of the selected org. jedinica, like the faktura).
+		requiredFilters: []string{"m.idorgjed::text"},
+		orderBy:         "m.mtroska",
+		textColumns:     []int{0, 1},
 	},
 	// Mesta isporuke by fisp.fispid (the search "mesta-isporuke" is keyed by the MI); the konto and
 	// the šifra of the partner limit them to the ones of the kupac.
@@ -426,12 +432,28 @@ func (s *SearchResource) Search(ctx context.Context, entity, text string, filter
 		columns = append(columns, column)
 	}
 	sort.Strings(columns)
+	zadato := map[string]bool{}
 	for _, column := range columns {
 		for _, name := range def.filters[column] {
-			if value := strings.TrimSpace(filters[name]); value != "" {
+			if value := strings.TrimSpace(filters[name]); value != "" && value != "-" {
 				qb.AddEqual(column, value)
+				zadato[column] = true
 				break
 			}
+		}
+	}
+	// A required filter without a value: only the row "-" (the empty key).
+	for _, column := range def.requiredFilters {
+		if !zadato[column] {
+			prazan := make([]string, len(def.headers))
+			if len(prazan) > 0 {
+				prazan[0] = "-"
+			}
+			return domain.TableComboResults{
+				Table:         domain.TableData{Headers: def.headers, Rows: []domain.TableRow{{ID: "", Fields: prazan}}},
+				TextColumns:   def.textColumns,
+				DetailColumns: def.detailColumns,
+			}, nil
 		}
 	}
 	// "-" is the text of a combo without a selected row (TableComboConfig.AllowEmpty): no text.

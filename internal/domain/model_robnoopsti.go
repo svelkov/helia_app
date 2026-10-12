@@ -23,6 +23,22 @@ type RobnoOpstiHeaderView struct {
 	// Fin: a finansijski opšti dokument (the group FIN, the legacy rob_opsti_dokumenti_FIN): the header has the
 	// org. jedinica and the mesto troška of the document only, the stavke have the iznos only.
 	Fin bool
+	// Kol: a količinski opšti dokument (the group KOL, the legacy rob_opsti_dokumenti_KOL): the header of the
+	// FIN, the stavke have the količina only (with the lot in a magacin of the tip zaliha 2).
+	Kol bool
+	// Mnv: a nivelacija (the group MNV, the legacy rob_opsti_dokumenti_MNV): the header without the org.
+	// jedinica and the mesto troška, the stavke by the naziv (no artikal) with the stara and the nova cena.
+	Mnv bool
+	// Niv: a nivelacija veleprodaje (the group NIV, the legacy rob_Nivelacije_Veleprodaja): the header with the
+	// org. jedinica and the mesto troška of the document, the stavke with the stara and the nova veleprodajna
+	// cena of the artikal.
+	Niv bool
+}
+
+// BezProtivstava tells whether the header has no protivstav konto and no org. jedinica and mesto troška of
+// the roba: a FIN, a KOL, an MNV or a NIV.
+func (h RobnoOpstiHeaderView) BezProtivstava() bool {
+	return h.Fin || h.Kol || h.Mnv || h.Niv
 }
 
 // RobnoOpstiStavka is the entry of a stavka of an opšti dokument: the document, the konto (by default the
@@ -39,6 +55,13 @@ type RobnoOpstiStavka struct {
 	CenaNaziv      string
 	// Fin: the stavke of a finansijski opšti dokument (the konto, the artikal and the iznos).
 	Fin bool
+	// Kol: the stavke of a količinski opšti dokument (the konto, the artikal, the količina and the lot).
+	Kol bool
+	// Mnv: the stavke of a nivelacija (the naziv, the količina, the stara and the nova cena).
+	Mnv bool
+	// Niv: the stavke of a nivelacija veleprodaje (the artikal, the konto, the količina, the procenat, the stara
+	// and the nova cena; the lot in a magacin of the tip zaliha 2).
+	Niv bool
 }
 
 // RobnoOpstiDokument is the document of the "Opšti dokumenti" screen: the header, the entry of a stavka and
@@ -81,6 +104,10 @@ type RobOpstiArtikal struct {
 	Ncena  float64 `json:"ncena"`
 	Stanje float64 `json:"stanje"`
 	Poruka string  `json:"poruka"`
+	// Kolicina and StaraCena are the količina and the stara (veleprodajna) cena of the stanje of the artikal of a
+	// nivelacija veleprodaje (the group NIV).
+	Kolicina  float64 `json:"kolicina"`
+	StaraCena float64 `json:"staracena"`
 }
 
 // RobOpstiStavkaParams are the values of the form of a stavka of an opšti dokument by the names of the fields
@@ -98,4 +125,11 @@ type RobOpstiStavkaParams struct {
 	Rok    string `form:"rokstavke"`
 	// Iznos is the iznos of a stavka of a finansijski opšti dokument (the group FIN).
 	Iznos string `form:"iznosfin"`
+	// Naziv, StaraCena and NovaCena are the naziv of the artikal and the cene of a stavka of a nivelacija (the
+	// group MNV).
+	Naziv     string `form:"nazivmnv"`
+	StaraCena string `form:"staracena"`
+	NovaCena  string `form:"novacena"`
+	// Procenat is the procenat of the nivelacija veleprodaje (the group NIV; with StaraCena and NovaCena).
+	Procenat string `form:"procenatniv"`
 }

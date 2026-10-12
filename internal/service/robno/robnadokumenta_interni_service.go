@@ -268,6 +268,13 @@ func (s *RobnoDokumentaResource) DeleteRobFaktura(ctx context.Context, rdokID in
 // DeleteRobFakturaUsluge deletes a faktura usluga with its stavke (the legacy "Briši" of rob_Fakture_Usluga):
 // like DeleteRobFaktura, with the dodatni opis usluge of the document (dokusldet).
 func (s *RobnoDokumentaResource) DeleteRobFakturaUsluge(ctx context.Context, rdokID int64) (string, error) {
+	// An avansni račun (the legacy "Briši" of rob_AvansniRacuni).
+	if rows, err := s.unos.Tekst.GetAllCustom(ctx, `select coalesce(vrd, 0)::text as key from rdok where rdokid = $1`, "", []any{rdokID}, "", ""); err == nil &&
+		rows != nil && len(*rows) > 0 {
+		if grupa, _ := s.robInterniGrupa(ctx, common.StringToInt((*rows)[0].Key)); robAvansni(grupa) {
+			return s.DeleteRobAvansni(ctx, rdokID)
+		}
+	}
 	return s.robBrisiDokument(ctx, rdokID, true, `delete from dokusldet where rdokid = $1`)
 }
 
@@ -729,7 +736,7 @@ func (s *RobnoDokumentaResource) SaveRobInterniStavka(ctx context.Context, param
 			domain.Fields{Name: "rbr", Value: strconv.Itoa(rbr)},
 			domain.Fields{Name: "brst", Value: strconv.Itoa(rbr)},
 			// NOT NULL without a default.
-			domain.Fields{Name: "sifartkup", Value: ""},
+			domain.Fields{Name: "sifartkup", Value: ""}, domain.Fields{Name: "taxcat", Value: ""}, domain.Fields{Name: "taxexreco", Value: ""},
 		)
 		if rproID, err = s.unos.Rpro.CreateWithTx(ctx, tx, &domain.RobRproDto{}, "rproid", polja); err != nil {
 			return 0, err

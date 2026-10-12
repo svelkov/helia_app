@@ -69,6 +69,12 @@ func (s *RobnoDokumentaResource) GetRobUslugeDokument(ctx context.Context, param
 	if grupa == "KPF" {
 		st.SifraArtikla = "0"
 	}
+	// An avansni račun (the legacy rob_AvansniRacuni) on the screen of the fakture usluga.
+	if robAvansni(grupa) {
+		if err := s.robAvansniDokument(ctx, &res); err != nil {
+			return res, err
+		}
+	}
 	// The magacin: its tip zaliha (the OTK broj, the serija and the rok), how it keeps its zalihe.
 	if magacin, err := s.unos.Tekst.GetAllCustom(ctx, `select coalesce(tipzal, 0)::text as key, coalesce(nacvodzal, 0)::text as c1
 		from magacini where magaciniid = $1`, "", []any{h.MagaciniID}, "", ""); err == nil && magacin != nil && len(*magacin) > 0 {
@@ -151,6 +157,9 @@ func (s *RobnoDokumentaResource) robUslugeIzvorni(ctx context.Context, dokiz str
 //     izvorni dokument (GOD-MAG-VRD-DOKUM, ProveriDOKIZ); a knjižno odobrenje (a storno) has the datum
 //     smanjenja, not after the datum dokumenta.
 func (s *RobnoDokumentaResource) ValidateRobUsluge(ctx context.Context, params domain.RobnoFaktureParams) []domain.FieldError {
+	if dokvrsta, found, err := s.robnoUnosDokvrsta(ctx, common.StringToInt(params.Vrd)); err == nil && found && robAvansni(dokvrsta.GrpDok) {
+		return s.ValidateRobAvansni(ctx, params)
+	}
 	fieldErrors := s.ValidateRobFakture(ctx, params)
 	add := func(field, message string) {
 		fieldErrors = append(fieldErrors, domain.FieldError{Field: field, ErrorMessage: message})
@@ -222,6 +231,9 @@ func (s *RobnoDokumentaResource) SaveRobUsluge(ctx context.Context, params domai
 	dokvrsta, _, err := s.robnoUnosDokvrsta(ctx, common.StringToInt(params.Vrd))
 	if err != nil {
 		return 0, err
+	}
+	if robAvansni(dokvrsta.GrpDok) {
+		return s.SaveRobAvansni(ctx, params)
 	}
 	knjizno := strings.EqualFold(strings.TrimSpace(dokvrsta.GrpDok), "KPF")
 	if knjizno && strings.TrimSpace(params.IzvorniDokum) != "" {
@@ -412,6 +424,9 @@ func (s *RobnoDokumentaResource) ValidateRobUslugaStavka(ctx context.Context, pa
 		add("sifraartikla", common.ErrMsgReadData)
 		return fieldErrors
 	}
+	if robAvansni(grupa) {
+		return s.ValidateRobAvansniStavka(params)
+	}
 	sifraText := strings.TrimSpace(params.Sifra)
 	sifra, sifraErr := strconv.Atoi(sifraText)
 	tip, stanje, artikalOK := "", 0.0, false
@@ -480,6 +495,11 @@ func (s *RobnoDokumentaResource) SaveRobUslugaStavka(ctx context.Context, params
 	}
 	if !found {
 		return 0, fmt.Errorf("dokument koji obrađujete ne postoji")
+	}
+	if grupa, err := s.robInterniGrupa(ctx, k.Vrd); err != nil {
+		return 0, err
+	} else if robAvansni(grupa) {
+		return s.SaveRobAvansniStavka(ctx, params)
 	}
 	tx, err := s.unos.Rpro.BeginTx()
 	if err != nil {
@@ -669,6 +689,10 @@ func (s *RobnoDokumentaResource) robUslugaAzurirajStanje(ctx context.Context, tx
 // document loses its iznos, the stavka is deleted and the stavke after it get the redni brojevi again (rbr).
 // Then the rate and the obračun of the document (PreracunRATA, ObracunFAKT of the stavke).
 func (s *RobnoDokumentaResource) DeleteRobUslugaStavka(ctx context.Context, rproID int64) (rdokID int64, err error) {
+	// A stavka of an avansni račun (the legacy BrisiRPRO of rob_AvansniRacuni_DET).
+	if robAvansni(s.robGrupaStavke(ctx, rproID)) {
+		return s.DeleteRobAvansniStavka(ctx, rproID)
+	}
 	tx, err := s.unos.Rpro.BeginTx()
 	if err != nil {
 		return 0, err
@@ -764,6 +788,17 @@ func (s *RobnoDokumentaResource) GetRobUslugaStavkaForma(ctx context.Context, rd
 	}
 	f.OpisDet = common.RtfToText(r.C7)
 	return f, true, nil
+}
+
+// robGrupaStavke is the group of the vrsta of the document of a stavka ("" when it cannot be read).
+func (s *RobnoDokumentaResource) robGrupaStavke(ctx context.Context, rproID int64) string {
+	rows, err := s.unos.Tekst.GetAllCustom(ctx, `select coalesce(vrd, 0)::text as key from rdok where rdokid = (select rdokid from rpro where rproid = $1)`,
+		"", []any{rproID}, "", "")
+	if err != nil || rows == nil || len(*rows) == 0 {
+		return ""
+	}
+	grupa, _ := s.robInterniGrupa(ctx, common.StringToInt((*rows)[0].Key))
+	return grupa
 }
 
 // RobUslugeStavkeTableRows returns the stavke of a faktura usluga as the rows of the grid of the stavke of the

@@ -2126,5 +2126,19 @@
   "label.protivstav_konto": "Protivstav konto",
   "label.protivstav_an._sifra": "Protivstav an. šifra",
   "label.m._troska_gde_ide_roba": "M. troška gde ide roba",
-  "label.unos_stavki": "Unos stavki"
+  "label.unos_stavki": "Unos stavki",
+  "label.stavke": "Stavke",
+  "label.efekat_nivelacije": "Efekat nivelacije",
+  "label.nivelacija_prodaja": "Nivelacija prodaja",
+  "label.nivelacije_veleprodaja": "Nivelacije veleprodaja",
+  "label.pregled_nivelacija": "Pregled nivelacija",
+  "label.opis_artikla": "Opis artikla",
+  "label.opis_robe_ili_usluge": "Opis robe ili usluge",
+  "label.podaci_o_avansnom_racunu": "Podaci o avansnom računu",
+  "label.avansni_racuni": "Avansni računi",
+  "label.avansni_racun": "Avansni račun",
+  "label.pregled_avansnih_racuna": "Pregled avansnih računa",
+  "label.profaktura": "Profaktura",
+  "label.avansni_racuni_stavke": "Avansni računi - stavke",
+  "label.komercijalista_tekst": "Komercijalista, tekst"
 }

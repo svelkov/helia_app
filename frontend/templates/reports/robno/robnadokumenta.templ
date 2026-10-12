@@ -1792,10 +1792,13 @@ templ RobnoStampaPopisZaglavlje(repParams domain.ReportParameters, pop domain.Ro
 			@robnoStampaPopisPolje(translator.Label("Vrsta dokum."), pop.VrstaDokumenta)
 			@robnoStampaPopisPolje(translator.Label("Vrsta/Broj naloga"), pop.Nalog)
 			@robnoStampaPopisPolje(translator.Label("Magacin"), pop.Magacin)
-			@robnoStampaPopisPolje(translator.Label("OJ"), pop.Oj)
-			@robnoStampaPopisPolje(translator.Label("OJ gde ide roba"), pop.OjPrijem)
-			@robnoStampaPopisPolje(translator.Label("Mesto troška"), pop.MestoTroska)
-			@robnoStampaPopisPolje(translator.Label("Mesto troška gde ide roba"), pop.MestoTroskaPrijem)
+			<!-- A nivelacija (MNV) has no org. jedinica and no mesto troška. -->
+			if pop.Grupa != "MNV" {
+				@robnoStampaPopisPolje(translator.Label("OJ"), pop.Oj)
+				@robnoStampaPopisPolje(translator.Label("OJ gde ide roba"), pop.OjPrijem)
+				@robnoStampaPopisPolje(translator.Label("Mesto troška"), pop.MestoTroska)
+				@robnoStampaPopisPolje(translator.Label("Mesto troška gde ide roba"), pop.MestoTroskaPrijem)
+			}
 		</div>
 	</div>
 }
@@ -2951,6 +2954,8 @@ templ RobnoStampaOpstiDokumentContent(repParams domain.ReportParameters, dok dom
 				@robnoStampaOpstiDokumentJednaVrednost(repParams, dok, translator.Label("Iznos"), true, translator)
 			case "KOL":
 				@robnoStampaOpstiDokumentJednaVrednost(repParams, dok, translator.Label("Količina"), false, translator)
+			case "MNV":
+				@robnoStampaOpstiDokumentNivelacija(repParams, dok, translator)
 			default:
 				@robnoStampaPopisTabela(repParams, dok, translator)
 		}
@@ -3017,6 +3022,56 @@ templ robnoStampaOpstiDokumentJednaVrednost(repParams domain.ReportParameters, d
 		</tfoot>
 	</table>
 }
+
+// robnoStampaOpstiDokumentNivelacija renders the stavke of a nivelacija (the group MNV, the legacy
+// RPT_MNVSTAMPA): rbr, naziv, količina, stara cena, nova cena and the efekat of the nivelacija (the iznos of
+// the stavka), with its total ("UKUPNO ZA DOKUMENT").
+templ robnoStampaOpstiDokumentNivelacija(repParams domain.ReportParameters, dok domain.RobnoStampaPopisView, translator *i18n.Service) {
+	<table class="w-full border-collapse" style="table-layout: fixed;">
+		<colgroup>
+			for _, width := range robnoStampaOpstiDokumentNivelacijaColumnWidths {
+				<col style={ "width: " + width }/>
+			}
+		</colgroup>
+		<thead>
+			<tr>
+				<td colspan={ fmt.Sprintf("%d", len(robnoStampaOpstiDokumentNivelacijaColumnWidths)) } class="pb-2">
+					@RobnoStampaPopisZaglavlje(repParams, dok, translator)
+				</td>
+			</tr>
+			<tr class="bg-gray-200 print:bg-gray-200">
+				<th class={ robnoStampaThClass }>{ translator.Label("RBR.") }</th>
+				<th class={ robnoStampaThClass }>{ translator.Label("Naziv artikla") }</th>
+				<th class={ robnoStampaThClass }>{ translator.Label("Količina") }</th>
+				<th class={ robnoStampaThClass }>{ translator.Label("Stara cena") }</th>
+				<th class={ robnoStampaThClass }>{ translator.Label("Nova cena") }</th>
+				<th class={ robnoStampaThClass }>{ translator.Label("Efekat nivelacije") }</th>
+			</tr>
+		</thead>
+		<tbody>
+			for _, st := range dok.Stavke {
+				<tr class="print:page-break-inside-avoid">
+					<td class={ robnoStampaTdClass + " text-right" }>{ st.Rbr }</td>
+					<td class={ robnoStampaTdClass + " break-words" }>{ st.Naziv }</td>
+					<td class={ robnoStampaTdClass + " text-right" }>{ st.Kolicina }</td>
+					<td class={ robnoStampaTdClass + " text-right" }>{ st.StaraCena }</td>
+					<td class={ robnoStampaTdClass + " text-right" }>{ st.Cena }</td>
+					<td class={ robnoStampaTdClass + " text-right" }>{ st.Iznos }</td>
+				</tr>
+			}
+		</tbody>
+		<tfoot>
+			<tr class="font-bold print:page-break-inside-avoid">
+				<td colspan="5" class="border border-gray-500 px-1 py-0.5 text-right uppercase">{ translator.Label("Ukupno za dokument") }:</td>
+				<td class="border border-gray-500 px-1 py-0.5 text-right">{ dok.UkupnoIznos }</td>
+			</tr>
+		</tfoot>
+	</table>
+}
+
+// robnoStampaOpstiDokumentNivelacijaColumnWidths are the widths of the columns of the stavke of a nivelacija:
+// rbr, naziv, količina, stara cena, nova cena and the efekat of the nivelacija.
+var robnoStampaOpstiDokumentNivelacijaColumnWidths = []string{"6%", "40%", "12%", "14%", "14%", "14%"}
 
 // RobnoStampaOpstiDokumentPotpisi renders the signatures of an opšti dokument (FINKOLFOOTER): who issued
 // and who received the goods on the left, who approved the document on the right.

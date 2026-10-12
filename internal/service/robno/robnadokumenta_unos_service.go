@@ -187,8 +187,9 @@ func (s *RobnoDokumentaResource) ValidateRobFakture(ctx context.Context, params 
 		}
 	}
 
-	// The avansni računi (vrsta 172) of the faktura must be of the kupac.
-	if profak := strings.TrimSpace(params.Profaktura); profak != "" {
+	// The avansni računi (vrsta 172) of the faktura must be of the kupac (an avansni račun has its profaktura
+	// there).
+	if profak := strings.TrimSpace(params.Profaktura); profak != "" && !params.Avansni {
 		brojevi, ok := robnoUnosBrojevi(profak)
 		if !ok {
 			add("profak", "Brojevi odvojeni zarezom.")
@@ -234,8 +235,9 @@ func (s *RobnoDokumentaResource) ValidateRobFakture(ctx context.Context, params 
 		}
 	}
 
-	// The kupac: the broj ugovora of a budžetski kupac, the kredit limiti (the legacy SaldoKUPCA).
-	if kupacOK {
+	// The kupac: the broj ugovora of a budžetski kupac, the kredit limiti (the legacy SaldoKUPCA; not of an
+	// avansni račun).
+	if kupacOK && !params.Avansni {
 		kupac, _, err := s.GetRobKupac(ctx, konto, sifra)
 		if err != nil {
 			add("kupacsifra", common.ErrMsgReadData)
@@ -261,7 +263,7 @@ func (s *RobnoDokumentaResource) ValidateRobFakture(ctx context.Context, params 
 	if nastanak := strings.TrimSpace(params.NastanakPDV); nastanak == "" || nastanak == "-1" || nastanak == RobNastanakNeIzabran {
 		add("nastanakpdv", common.ErrMsgObavezanPodatak)
 	}
-	if porkatGiven && strings.TrimSpace(params.NapomenaPoresko) == "" {
+	if porkatGiven && strings.TrimSpace(params.NapomenaPoresko) == "" && !params.Avansni {
 		add("napomporeskoosl", common.ErrMsgObavezanPodatak)
 	}
 
@@ -551,13 +553,21 @@ const (
 // and its default value, like the legacy rob_Fakture fills COMBO_NASTANAK:
 //   - a storno: only "Ne nastaje obaveza obračuna PDV" (0);
 //   - a PDV obveznik: "-" (999, not chosen) and the moments of the obaveza, by default the datum
-//     prometa (35); the knjižna odobrenja and zaduženja (the groups KPK and KPF) have their own ones;
+//     prometa (35); the knjižna odobrenja and zaduženja (the groups KPK and KPF) and the avansni računi
+//     (ARA and ARU: the datum avansa, 432) have their own ones;
 //   - a firm out of the PDV: only "Ne nastaje obaveza obračuna PDV" (0).
 func RobFaktureNastanakPDV(storno, pdvObveznik bool, grpdok string) ([]domain.ComboItem, string) {
 	neNastaje := domain.ComboItem{Key: RobNastanakNeNastaje, Value: robNastanakTextNeNastaje}
 	switch {
 	case storno || !pdvObveznik:
 		return []domain.ComboItem{neNastaje}, RobNastanakNeNastaje
+	case strings.EqualFold(strings.TrimSpace(grpdok), "ARA"), strings.EqualFold(strings.TrimSpace(grpdok), "ARU"):
+		// An avansni račun (the legacy PuniCOMBOS of rob_AvansniRacuni): by default the datum avansa.
+		return []domain.ComboItem{
+			{Key: RobNastanakNeIzabran, Value: robNastanakTextNeIzabran},
+			{Key: RobNastanakClan36a, Value: "Datum avansa"},
+			neNastaje,
+		}, RobNastanakClan36a
 	case strings.EqualFold(strings.TrimSpace(grpdok), "KPK"), strings.EqualFold(strings.TrimSpace(grpdok), "KPF"):
 		return []domain.ComboItem{
 			{Key: RobNastanakNeIzabran, Value: robNastanakTextNeIzabran},
@@ -1857,7 +1867,7 @@ func (s *RobnoDokumentaResource) GetRobStavkeDokumenta(ctx context.Context, rdok
 	}
 	entities, err := s.unos.StavkeGrid.GetAllCustom(ctx, `select r.rproid, coalesce(r.rdokid, 0)::bigint as rdokid,
 			coalesce(r.rbr, 0) as rbr, coalesce(r.sifra, 0) as sifra, coalesce(r.konto, '') as konto,
-			coalesce(nullif(r.naz1, ''), s.naziv, '') as naziv, coalesce(r.naz1, '') as naz1, coalesce(r.jm, '') as jm,
+			coalesce(nullif(r.naz1, ''), s.naziv, '') as naziv, coalesce(r.naz1, '') as naz1, coalesce(nullif(r.jm, ''), s.jm, '') as jm,
 			coalesce(r.kolic, 0)::float8 as kolic, coalesce(r.cena, 0)::float8 as cena, coalesce(r.fcena, 0)::float8 as fcena,
 			coalesce(r.mcena, 0)::float8 as mcena, coalesce(r.mcenap, 0)::float8 as mcenap, coalesce(r.ncena, 0)::float8 as ncena,
 			coalesce(r.rab, 0)::float8 as rab, coalesce(r.po, 0) as po, coalesce(r.dani, 0) as dani, coalesce(r.mag, 0) as mag,

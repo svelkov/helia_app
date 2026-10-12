@@ -1656,6 +1656,8 @@ func (h *RobnoDokumentaHandler) robnoDokumentaStampe() map[string]robnoDokumenta
 		"POT": opsti,
 		"KOL": opsti,
 		"FIN": opsti,
+		// Nivelacija (the legacy RPT_MNVSTAMPA).
+		"MNV": opsti,
 		// Nivelacije veleprodaje.
 		"NIV": func(c *gin.Context, _ domain.RobnoStampaDokumentDto) { h.StampaNivelacija(c) },
 		// Avansni računi.

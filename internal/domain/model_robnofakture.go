@@ -269,6 +269,9 @@ type RobniDokumentSnimanje struct {
 	Vrd        int
 	Dokum      int
 	Polja      []Fields
+	// NoviPolja are the columns written only to a new document (e.g. the opis "Porudzbenica br: N" of the
+	// porudžbenica); an existing one keeps them.
+	NoviPolja  []Fields
 	SaAvansima bool
 	Avansi     []int64
 }

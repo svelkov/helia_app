@@ -188,7 +188,8 @@ var searchDefinitions = map[string]searchDefinition{
 		period:          "k",
 		conditions:      []string{"coalesce(trim(k.konto), '') <> ''"},
 		searchIn:        []string{"k.konto"},
-		filters:         map[string][]string{"k.magaciniid::text": {"magacin1"}},
+		// magacin1: the magacin of a prenosnica, magaciniid: the magacin of a document (the porudžbenica).
+		filters:         map[string][]string{"k.magaciniid::text": {"magacin1", "magaciniid"}},
 		requiredFilters: []string{"k.magaciniid::text"},
 		orderBy:         "k.magkontoid",
 		textColumns:     []int{0, 1},

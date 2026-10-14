@@ -10,6 +10,7 @@ import (
 
 	"helia/internal/common"
 	"helia/internal/domain"
+	"helia/internal/infrastructure/db"
 )
 
 // ---------------------------------------------------------------------------------------------------
@@ -294,6 +295,13 @@ func (s *RobnoDokumentaResource) DeleteRobInterni(ctx context.Context, rdokID in
 // deletion of the stavke). The queries of dodatno (with the rdokid as $1) delete the other data of the
 // document before it.
 func (s *RobnoDokumentaResource) robBrisiDokument(ctx context.Context, rdokID int64, faktura bool, dodatno ...string) (poruka string, err error) {
+	return s.robBrisiDokumentSa(ctx, rdokID, faktura, s.DeleteRobStavkaTx, dodatno...)
+}
+
+// robBrisiDokumentSa is robBrisiDokument with the deletion of a stavka of the window (brisiStavku, in the
+// transaction: e.g. the porudžbenica takes its stavke back from the stanje only, without the zalihe by lot).
+func (s *RobnoDokumentaResource) robBrisiDokumentSa(ctx context.Context, rdokID int64, faktura bool,
+	brisiStavku func(ctx context.Context, tx db.Transaction, rproID int64) (int64, error), dodatno ...string) (poruka string, err error) {
 	tx, err := s.unos.Dokument.BeginTx()
 	if err != nil {
 		return "", err
@@ -341,7 +349,7 @@ func (s *RobnoDokumentaResource) robBrisiDokument(ctx context.Context, rdokID in
 		}
 	}
 	for _, rproID := range stavke {
-		if _, err = s.DeleteRobStavkaTx(ctx, tx, rproID); err != nil {
+		if _, err = brisiStavku(ctx, tx, rproID); err != nil {
 			return "", err
 		}
 	}

@@ -870,7 +870,7 @@ func (s *RobnoDokumentaResource) robDodajDokument(ctx context.Context, tx db.Tra
 	if err != nil {
 		return 0, err
 	}
-	polja := append([]domain.Fields{}, dok.Polja...)
+	polja := append(append([]domain.Fields{}, dok.Polja...), dok.NoviPolja...)
 	polja = append(polja,
 		domain.Fields{Name: "rnalid", Value: strconv.FormatInt(dok.RnalID, 10)},
 		domain.Fields{Name: "tipdok", Value: tipdok},
@@ -1729,7 +1729,7 @@ func (s *RobnoDokumentaResource) robnoUnosDokvrsta(ctx context.Context, vrd int)
 	if userSession == nil {
 		return domain.Dokvrsta{}, false, fmt.Errorf("no user session found")
 	}
-	qb := common.NewQueryBuilder(`select vrd, coalesce(grpdok, '') as grpdok, coalesce(predznak, '') as predznak,
+	qb := common.NewQueryBuilder(`select vrd, coalesce(opis, '') as opis, coalesce(grpdok, '') as grpdok, coalesce(predznak, '') as predznak,
 		coalesce(flgpopdv, false) as flgpopdv, coalesce(polje, '') as polje from dokvrsta`, true)
 	qb.AddEqual("god", userSession.SelectedGod)
 	qb.AddEqual("kar", userSession.SelectedKar)

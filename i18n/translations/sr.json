@@ -2157,5 +2157,16 @@
   "label.pregled_avansnih_racuna": "Pregled avansnih računa",
   "label.profaktura": "Profaktura",
   "label.avansni_racuni_stavke": "Avansni računi - stavke",
-  "label.komercijalista_tekst": "Komercijalista, tekst"
+  "label.komercijalista_tekst": "Komercijalista, tekst",
+  "label.porudzbenica": "Porudžbenica",
+  "label.pregled_porudzbenica": "Pregled porudžbenica",
+  "label.podaci_o_porudzbenici": "Podaci o porudžbenici",
+  "label.stavke_porudzbenice": "Stavke porudžbenice",
+  "label.uslovi_nabavke_robe": "Uslovi nabavke robe",
+  "label.oj_mesto_troska_komercijalista": "OJ, mesto troška, komercijalista",
+  "label.podaci_o_dobavljacu": "Podaci o dobavljaču",
+  "label.prvo_izaberite_konto_dobavljaca": "Prvo izaberite konto dobavljača",
+  "label.sifra_pores._tarife": "Šifra pores. tarife",
+  "label.podaci_o_porudzbenici_nisu_sacuvani": "Podaci o porudžbenici nisu sačuvani",
+  "label.sacuvajte_podatke_o_porudzbenici_da_bi_ste_mogli_da_radite_sa_stavkama": "Sačuvajte podatke o porudžbenici da bi ste mogli da radite sa stavkama"
 }

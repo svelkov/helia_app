@@ -194,6 +194,17 @@ type RobnoDokumentaService interface {
 	SaveRobInterniStavka(ctx context.Context, params domain.RobInterniStavkaParams) (int64, error)
 	DeleteRobInterniStavka(ctx context.Context, rproID int64) (int64, error)
 	GetRobInterniStavkaForma(ctx context.Context, rdokID, rproID int64) (domain.RobInterniStavkaForma, bool, error)
+	// The porudžbenice (the group POR, the legacy rob_Porudzbenica and rob_PORUDZBENICE_DET).
+	GetRobPorDokument(ctx context.Context, params domain.RobnoFaktureDokumentParams) (domain.RobnoPorDokument, error)
+	ValidateRobPor(ctx context.Context, params domain.RobnoPorParams) []domain.FieldError
+	SaveRobPor(ctx context.Context, params domain.RobnoPorParams) (int64, error)
+	DeleteRobPor(ctx context.Context, rdokID int64) (string, error)
+	GetRobPorArtikal(ctx context.Context, rdokID int64, sifraIliBarkod, konto string) (domain.RobPorArtikal, bool, error)
+	ValidateRobPorStavka(ctx context.Context, params domain.RobPorStavkaParams) []domain.FieldError
+	SaveRobPorStavka(ctx context.Context, params domain.RobPorStavkaParams) (int64, error)
+	DeleteRobPorStavka(ctx context.Context, rproID int64) (int64, error)
+	GetRobPorStavkaForma(ctx context.Context, rdokID, rproID int64) (domain.RobPorStavkaForma, bool, error)
+	GetPorStavkeTableFields() []domain.Fields
 	GetInterniDokumentaTableFields() []domain.Fields
 	GetInterniDokumentStavkeTableFields() []domain.Fields
 }
@@ -262,6 +273,7 @@ type RobnoDokumentaResource struct {
 	interniStavkeTableFields               []domain.Fields
 	interniDokumentaTableFields            []domain.Fields
 	interniDokumentStavkeTableFields       []domain.Fields
+	porStavkeTableFields                   []domain.Fields
 }
 
 // NewRobnoDokumentaService creates the service of the "Robna dokumenta" option.
@@ -2131,6 +2143,12 @@ func (s *RobnoDokumentaResource) GetInterniDokumentStavkeTableFields() []domain.
 	return s.interniDokumentStavkeTableFields
 }
 
+// GetPorStavkeTableFields returns the columns of the grid of the stavke of the "Porudžbenice" screen (also of
+// the stavke of the selected document of the "Pregled porudžbenica" tab).
+func (s *RobnoDokumentaResource) GetPorStavkeTableFields() []domain.Fields {
+	return s.porStavkeTableFields
+}
+
 // setTableFields defines the grid columns of every tab of the "Robna dokumenta" option.
 func (s *RobnoDokumentaResource) setTableFields() {
 	// Tab 1 - "Unos dokumenta": one row per robni nalog (rnal), the same columns as the legacy grid.
@@ -2511,6 +2529,17 @@ func (s *RobnoDokumentaResource) setTableFields() {
 		{Name: "fana", Label: "Analitička šifra", Width: "6"},
 		{Name: "naziv", Label: "Naziv partnera", Width: "20"},
 		{Name: "opis", Label: "Opis", Width: "12"},
+	}
+	// The "Porudžbenice" screen (the legacy rob_Porudzbenica): the columns of the legacy grid of the stavke.
+	s.porStavkeTableFields = []domain.Fields{
+		{Name: "rbr", Label: "Red. broj", Width: "5", TextAlign: "right", SkipInSearch: true},
+		{Name: "konto", Label: "Konto", Width: "8", SkipInSearch: true},
+		{Name: "sifra", Label: "Šifra artikla", Width: "8", TextAlign: "right"},
+		{Name: "naziv", Label: "Naziv artikla", Width: "35"},
+		{Name: "jm", Label: "JM", Width: "6", TextAlign: "center", SkipInSearch: true},
+		{Name: "kolic", Label: "Količina", Width: "9", TextAlign: "right", SkipInSearch: true},
+		{Name: "ncena", Label: "Nabavna cena", Width: "10", TextAlign: "right", SkipInSearch: true},
+		{Name: "iznos", Label: "Iznos", Width: "10", TextAlign: "right", SkipInSearch: true, IncludeInTotals: true},
 	}
 	s.interniDokumentStavkeTableFields = []domain.Fields{
 		{Name: "konto", Label: "Konto", Width: "7", SkipInSearch: true},

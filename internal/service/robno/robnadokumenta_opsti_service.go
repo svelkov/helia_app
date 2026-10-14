@@ -87,6 +87,15 @@ func (s *RobnoDokumentaResource) GetRobOpstiDokument(ctx context.Context, params
 	h.Kol, res.Stavka.Kol = grupa == "KOL", grupa == "KOL"
 	h.Mnv, res.Stavka.Mnv = grupa == "MNV", grupa == "MNV"
 	h.Niv, res.Stavka.Niv = grupa == "NIV", grupa == "NIV"
+	// A prenosnica (the group PRI, the legacy rob_Prenosnice); its kontra dokument (PRU) is only viewed.
+	h.Pre, res.Stavka.Pre = grupa == "PRI", grupa == "PRI"
+	h.SamoPregled = grupa == "PRU"
+	// A zaduženje gradilišta (the group GRD, the legacy rob_ZadauzGRADILISTA).
+	// A trebovanje (the group OTR, the legacy rob_Trebovanja) is a zaduženje gradilišta with the konto of the trošak.
+	h.Grd, res.Stavka.Grd = grupa == "GRD" || grupa == "OTR", grupa == "GRD" || grupa == "OTR"
+	h.Otr, res.Stavka.Otr = grupa == "OTR", grupa == "OTR"
+	// A popis u toku godine (the group PTG, the legacy rob_opsti_dokPOPIS).
+	h.Ptg, res.Stavka.Ptg = grupa == "PTG", grupa == "PTG"
 	if rows, err := s.unos.Tekst.GetAllCustom(ctx, `select coalesce(opis, '') as key from dokvrsta where god = $1 and kar = $2 and vrd = $3 limit 1`,
 		"", []any{userSession.SelectedGod, userSession.SelectedKar, vrd}, "", ""); err == nil && rows != nil && len(*rows) > 0 {
 		h.OpisVrste = strings.TrimSpace((*rows)[0].Key)
@@ -153,6 +162,21 @@ func (s *RobnoDokumentaResource) GetRobOpstiDokument(ctx context.Context, params
 			res.Poruka = strings.TrimSpace(res.Poruka + " " + robNivMsgProdajnaCena)
 		}
 	}
+	if h.Pre {
+		if err := s.robPreDokument(ctx, &res); err != nil {
+			return res, err
+		}
+	}
+	if h.Grd {
+		if err := s.robGrdDokument(ctx, &res); err != nil {
+			return res, err
+		}
+	}
+	if h.Ptg {
+		if err := s.robPtgDokument(ctx, &res); err != nil {
+			return res, err
+		}
+	}
 	return res, nil
 }
 
@@ -198,6 +222,12 @@ func (s *RobnoDokumentaResource) ValidateRobOpsti(ctx context.Context, params do
 	grupa := s.robOpstiGrupa(ctx, params.Vrd)
 	if grupa == "NIV" {
 		return s.robNivValidate(ctx, params)
+	}
+	if grupa == "PRI" || grupa == "PRU" {
+		return s.robPreValidate(ctx, params, grupa)
+	}
+	if grupa == "GRD" || grupa == "OTR" {
+		return s.robGrdValidate(ctx, params)
 	}
 	if dadok, ok := robnoUnosDatum(params.DatumDokum); !ok {
 		add("datumfakturisanja", robnoUnosDatumMsg(params.DatumDokum))
@@ -296,8 +326,17 @@ func (s *RobnoDokumentaResource) robOpstiGrupa(ctx context.Context, vrd string) 
 // org. jedinice and mesta troška of the document and of the roba; a new one has no rok, kupac or napomena o
 // poreskom oslobođenju. It returns the rdokid of the document.
 func (s *RobnoDokumentaResource) SaveRobOpsti(ctx context.Context, params domain.RobnoOpstiParams) (int64, error) {
-	if s.robOpstiGrupa(ctx, params.Vrd) == "NIV" {
+	switch s.robOpstiGrupa(ctx, params.Vrd) {
+	case "NIV":
 		return s.robNivSaveHeader(ctx, params)
+	case "PRI":
+		return s.robPreSaveHeader(ctx, params)
+	case "GRD", "OTR":
+		return s.robGrdSaveHeader(ctx, params, s.robOpstiGrupa(ctx, params.Vrd) == "OTR")
+	case "PTG":
+		// A popis u toku godine (the legacy SnimiRDOK of rob_opsti_dokPOPIS): the header of the trebovanje (a saved
+		// one gets all its fields) with the radnik as the konto and the šifra.
+		return s.robGrdSaveHeader(ctx, params, true)
 	}
 	id := func(value string) int64 {
 		v, _, _ := robnoUnosID(value)
@@ -441,8 +480,18 @@ func (s *RobnoDokumentaResource) GetRobOpstiArtikal(ctx context.Context, rdokID 
 		return a, false, nil
 	}
 	// A nivelacija veleprodaje (the legacy exit of EDT_SIFRA of rob_Nivelacije_Veleprodaja).
-	if grupa, _ := s.robInterniGrupa(ctx, k.Vrd); grupa == "NIV" {
+	switch grupa, _ := s.robInterniGrupa(ctx, k.Vrd); grupa {
+	case "NIV":
 		return s.robNivArtikal(ctx, k, vrednost, konto)
+	case "PRI":
+		// A prenosnica (the legacy exit of EDT_SIFRA of rob_Prenosnice).
+		return s.robPreArtikal(ctx, k, vrednost, konto, otk, serija, rok)
+	case "GRD", "OTR":
+		// A zaduženje gradilišta, a trebovanje (the legacy exits of EDT_SIFRA of rob_ZadauzGRADILISTA and rob_Trebovanja).
+		return s.robGrdArtikal(ctx, k, vrednost, konto)
+	case "PTG":
+		// A popis u toku godine (the legacy exit of EDT_SIFRA of rob_opsti_dokPOPIS).
+		return s.robPtgArtikal(ctx, k, vrednost, konto, otk, serija, rok)
 	}
 	kolona := "a.sifra::text"
 	if len(vrednost) > 6 {
@@ -532,6 +581,15 @@ func (s *RobnoDokumentaResource) ValidateRobOpstiStavka(ctx context.Context, par
 	grupa, _ := s.robInterniGrupa(ctx, k.Vrd)
 	if grupa == "NIV" {
 		return s.robNivValidateStavka(ctx, k, params)
+	}
+	if grupa == "PRI" {
+		return s.robPreValidateStavka(ctx, k, params)
+	}
+	if grupa == "GRD" || grupa == "OTR" {
+		return s.robGrdValidateStavka(ctx, k, params, grupa == "OTR")
+	}
+	if grupa == "PTG" {
+		return s.robPtgValidateStavka(ctx, k, params)
 	}
 	if grupa == "MNV" {
 		if strings.TrimSpace(params.Naziv) == "" {
@@ -648,6 +706,12 @@ func (s *RobnoDokumentaResource) SaveRobOpstiStavka(ctx context.Context, params 
 		return s.robOpstiMnvStavka(ctx, k, params)
 	} else if grupa == "NIV" {
 		return s.robNivStavka(ctx, k, params)
+	} else if grupa == "PRI" {
+		return s.robPreStavka(ctx, k, params)
+	} else if grupa == "GRD" || grupa == "OTR" {
+		return s.robGrdStavka(ctx, k, params, grupa == "OTR")
+	} else if grupa == "PTG" {
+		return s.robPtgStavka(ctx, k, params)
 	}
 	sifra := common.StringToInt(params.Sifra)
 	konto := strings.ReplaceAll(strings.TrimSpace(params.Konto), " ", "")
@@ -842,8 +906,25 @@ func (s *RobnoDokumentaResource) DeleteRobOpstiStavka(ctx context.Context, rproI
 		}
 		return rdokID, nil
 	}
+	if grupa == "PRI" || grupa == "GRD" || grupa == "OTR" || grupa == "PTG" {
+		switch grupa {
+		case "PRI":
+			err = s.robPreBrisi(ctx, tx, k, rproID)
+		case "PTG":
+			err = s.robPtgBrisi(ctx, tx, k, rproID)
+		default:
+			err = s.robGrdBrisi(ctx, tx, k, rproID, grupa == "OTR")
+		}
+		if err != nil {
+			return 0, err
+		}
+		if err = tx.Commit(); err != nil {
+			return 0, err
+		}
+		return rdokID, nil
+	}
 	if grupa == "MNV" {
-		if err = s.robOpstiMnvBrisi(ctx, tx, k, rproID, iznos); err != nil {
+		if err = s.robOpstiMnvBrisi(ctx, tx, k, rproID, kolicina, iznos); err != nil {
 			return 0, err
 		}
 		if err = tx.Commit(); err != nil {
@@ -1123,8 +1204,8 @@ func robOpstiMnvPredznak(k domain.RobStavkeKontekst, iznos float64) float64 {
 // robOpstiMnvStavka adds a stavka to a nivelacija (the legacy CreateRpro of rob_opsti_dokumenti_MNV) in one
 // transaction: the stavka without the artikal (the šifra 0, no konto) with the naziv, the količina, the stara
 // cena (fcena), the nova cena (cena) and the efekat of the nivelacija (iznos) as entered, the columns of its
-// document and the next redni broj; rab and mma 0. Its posting (the legacy GlobalProcROBNO.AZurirajStanja with
-// the količina and the iznos negative for a storno) is robOpstiMnvKnjizi.
+// document and the next redni broj; rab and mma 0. It is posted by AzurirajStanja (the legacy
+// GlobalProcROBNO.AZurirajStanja) with the šifra 0, no konto and the količina and the iznos negative for a storno.
 func (s *RobnoDokumentaResource) robOpstiMnvStavka(ctx context.Context, k domain.RobStavkeKontekst, params domain.RobOpstiStavkaParams) (rproID int64, err error) {
 	kolicina := common.StringToFloat64(params.Kolic)
 	staraCena, novaCena := common.StringToFloat64(params.StaraCena), common.StringToFloat64(params.NovaCena)
@@ -1175,7 +1256,7 @@ func (s *RobnoDokumentaResource) robOpstiMnvStavka(ctx context.Context, k domain
 	}); err != nil {
 		return 0, err
 	}
-	if err = s.robOpstiMnvKnjizi(ctx, tx, k, robOpstiMnvPredznak(k, iznos), 1); err != nil {
+	if err = s.AzurirajStanja(ctx, tx, k.RnalID, k.RdokID, rproID, 0, "", robOpstiMnvPredznak(k, kolicina), robOpstiMnvPredznak(k, iznos)); err != nil {
 		return 0, err
 	}
 	if err = tx.Commit(); err != nil {
@@ -1184,27 +1265,14 @@ func (s *RobnoDokumentaResource) robOpstiMnvStavka(ctx context.Context, k domain
 	return rproID, nil
 }
 
-// robOpstiMnvKnjizi posts the iznos of a stavka of a nivelacija (negative for a storno) to its nalog and its
-// document, with brst (1: a stavka more, -1: a stavka less): the nalog gets the iznos on its duguje and / or
-// potražuje and counts its stavke (AzurirajRNAL), the document gets the iznos and brst. It stands for the
-// legacy GlobalProcROBNO.AZurirajStanja and BrisiStanja, whose code is not part of the legacy given: the
-// stavka has no artikal (the šifra 0, no konto), so no stanje is changed.
-func (s *RobnoDokumentaResource) robOpstiMnvKnjizi(ctx context.Context, tx db.Transaction, k domain.RobStavkeKontekst, iznos float64, brst int) error {
-	if err := s.AzurirajRNAL(ctx, tx, k.RnalID, k.Dugovno(), k.Potrazno(), iznos); err != nil {
-		return err
-	}
-	return s.unos.Rpro.CreateUpdateCustomWithTx(ctx, tx, `update rdok set iznos = round((coalesce(iznos, 0) + $2)::numeric, 2),
-		brst = greatest(coalesce(brst, 0) + $3, 0) where rdokid = $1`, k.RdokID, iznos, brst)
-}
-
 // robOpstiMnvBrisi deletes a stavka of a nivelacija (the legacy BrisiRPRO of rob_opsti_dokumenti_MNV) in the
-// transaction tx: the stavka is deleted and its iznos (as posted: negative for a storno) is taken back from the
-// nalog and the document (robOpstiMnvKnjizi, the legacy GlobalProcROBNO.BrisiStanja).
-func (s *RobnoDokumentaResource) robOpstiMnvBrisi(ctx context.Context, tx db.Transaction, k domain.RobStavkeKontekst, rproID int64, iznos float64) error {
-	if err := s.unos.Rpro.DeleteWithTx(ctx, tx, "rproid", rproID); err != nil {
+// transaction tx: its količina and iznos (as posted: negative for a storno) are taken back (BrisiStanja, the
+// legacy GlobalProcROBNO.BrisiStanja), then the stavka is deleted.
+func (s *RobnoDokumentaResource) robOpstiMnvBrisi(ctx context.Context, tx db.Transaction, k domain.RobStavkeKontekst, rproID int64, kolicina, iznos float64) error {
+	if err := s.BrisiStanja(ctx, tx, k.RnalID, k.RdokID, rproID, 0, "", robOpstiMnvPredznak(k, kolicina), robOpstiMnvPredznak(k, iznos)); err != nil {
 		return err
 	}
-	return s.robOpstiMnvKnjizi(ctx, tx, k, -robOpstiMnvPredznak(k, iznos), -1)
+	return s.unos.Rpro.DeleteWithTx(ctx, tx, "rproid", rproID)
 }
 
 // RobOpstiMnvStavkeTableRows returns the stavke of a nivelacija as the rows of the grid of the stavke (the

@@ -33,7 +33,10 @@ const (
 	// The stavke: robnoOpstiArtikalURL returns the artikal of the stavka (GET rdokid, sifra, konto, otk, serija,
 	// rok), robnoOpstiStavkaSaveURL adds the stavka (POST), robnoOpstiStavkaPotvrdaURL asks to confirm the
 	// deletion of a stavka (GET rdokid, id: "Obriši" of its row) and robnoOpstiStavkaBrisiURL + "/:id" deletes it.
-	robnoOpstiArtikalURL        = robnoOpstiURL + "/artikal"
+	robnoOpstiArtikalURL = robnoOpstiURL + "/artikal"
+	// robnoOpstiKontoMagacinaURL returns the first konto of a magacin (GET magaciniid: the konto zaliha where
+	// the roba of a prenosnica goes when its magacin is selected).
+	robnoOpstiKontoMagacinaURL  = robnoOpstiURL + "/konto-magacina"
 	robnoOpstiStavkaSaveURL     = robnoOpstiURL + "/stavka/save"
 	robnoOpstiStavkaPotvrdaURL  = robnoOpstiURL + "/stavka/potvrda"
 	robnoOpstiStavkaBrisiURL    = robnoOpstiURL + "/stavka/brisi"
@@ -67,6 +70,7 @@ func robnoOpstiUI() domain.RobnoFaktureUI {
 		DokumentURL:        robnoOpstiDokumentURL,
 		NoviURL:            robnoOpstiNoviURL,
 		ArtikalURL:         robnoOpstiArtikalURL,
+		KontoMagacinaURL:   robnoOpstiKontoMagacinaURL,
 		BodyID:             robnoOpstiBodyID,
 		InfoID:             robnoOpstiInfoID,
 		StavkaInfoID:       robnoOpstiStavkaInfoID,
@@ -173,8 +177,9 @@ func robnoOpstiButtons(rnalID int64, vrd int) domain.RobnoFaktureButtons {
 			HxOnAfterRequest:     "closeDialog",
 			HxOnAfterRequestArgs: []any{robnoOpstiDialogID},
 		},
+		// The prenosnica prints by its checkboxes (naziv artikla, komercijalni opis).
 		Print: common.SetPrintButton("robno-opsti-stampa", "Štampaj", "stampa", robnoDokumentaURLPregledStampaPrint, "GET", true,
-			common.ClassPrintButton, "stavkardokid"),
+			common.ClassPrintButton, "stavkardokid,nazivustampi,komercopis"),
 		SaveStavka: domain.Button{
 			Id:                   "robno-opsti-stavka-sacuvaj",
 			LabelText:            "Sačuvaj",
@@ -233,6 +238,15 @@ func (h *RobnoDokumentaUnosHandler) robnoOpstiEkran(c *gin.Context, dok robnoDok
 		// The OTK broj, the serija and the rok of a magacin of the tip zaliha 2 only.
 		lot := ekran.stavka.Tipzal == 2
 		fields, rows = h.service.GetOpstiNivStavkeTableFields(lot), robnosvc.RobNivStavkeTableRows(lot)
+	case ekran.header.Pre:
+		// A prenosnica: the nabavna cena of the stavke too.
+		fields, rows = h.service.GetOpstiPreStavkeTableFields(), robnosvc.RobPreStavkeTableRows
+	case ekran.header.Otr:
+		// A trebovanje: the stavke with the lot (the vrednost of the stavka).
+		fields, rows = h.service.GetOpstiOtrStavkeTableFields(), robnosvc.RobOpstiStavkeTableRows
+	case ekran.header.Grd:
+		// A zaduženje gradilišta: the stavke without the lot (the vrednost of the stavka).
+		fields, rows = h.service.GetOpstiGrdStavkeTableFields(), robnosvc.RobGrdStavkeTableRows
 	}
 	ekran.tbl = h.robnoFaktureTable("Stavke dokumenta", robnoOpstiStavkeTableID, fields)
 	stavke, err := h.service.GetRobStavkeDokumenta(ctx, ekran.header.RdokID)
@@ -395,6 +409,18 @@ func (h *RobnoDokumentaUnosHandler) OpstiArtikal(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"found": found, "artikal": artikal})
 }
 
+// OpstiKontoMagacina returns the first konto of the magacin with its naziv as JSON (GET magaciniid): the konto
+// zaliha where the roba of a prenosnica goes when its magacin is selected (the legacy ListSelectPlus of
+// Combo_MAGKONTO).
+func (h *RobnoDokumentaUnosHandler) OpstiKontoMagacina(c *gin.Context) {
+	konto, naziv, err := h.service.RobPreKontoMagacina(c.Request.Context(), common.StringToInt(c.Query("magaciniid")))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"konto": konto, "naziv": naziv})
+}
+
 // SaveRobOpstiStavka adds a stavka to the opšti dokument (POST of the fields of the stavke, the legacy "Sačuvaj" of
 // the stavke): the validation (ValidateRobOpstiStavka, the legacy Validacija), the save (SaveRobOpstiStavka,
 // CreateRpro) and the first tab with the document (the stavke enabled; the konto stays for the next stavka). A
@@ -486,6 +512,7 @@ func (h *RobnoDokumentaUnosHandler) robnoOpstiRoutes(r *gin.Engine) {
 	r.GET("/api/robno-dokumenta/opsti/novi", h.OpstiNovi)
 	r.POST("/api/robno-dokumenta/opsti/save", h.SaveRobOpsti)
 	r.GET("/api/robno-dokumenta/opsti/artikal", h.OpstiArtikal)
+	r.GET("/api/robno-dokumenta/opsti/konto-magacina", h.OpstiKontoMagacina)
 	r.POST("/api/robno-dokumenta/opsti/stavka/save", h.SaveRobOpstiStavka)
 	r.GET("/api/robno-dokumenta/opsti/stavka/potvrda", h.PotvrdaBrisanjaOpstiStavke)
 	r.DELETE("/api/robno-dokumenta/opsti/stavka/brisi/:id", h.DeleteRobOpstiStavka)

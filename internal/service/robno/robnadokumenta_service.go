@@ -124,6 +124,7 @@ type RobnoDokumentaService interface {
 	GetStampaPopisTekGod(ctx context.Context, params domain.RobnoStampaFakturaParams) ([]domain.RobnoStampaPopisView, domain.RobnoStampaFakturaFirmaDto, error)
 	GetStampaZaduzenjeSI(ctx context.Context, params domain.RobnoStampaFakturaParams) ([]domain.RobnoStampaPopisView, domain.RobnoStampaFakturaFirmaDto, error)
 	GetStampaZaduzenjeGradilista(ctx context.Context, params domain.RobnoStampaFakturaParams) ([]domain.RobnoStampaPopisView, domain.RobnoStampaFakturaFirmaDto, error)
+	GetStampaTrebovanje(ctx context.Context, params domain.RobnoStampaFakturaParams) ([]domain.RobnoStampaPopisView, domain.RobnoStampaFakturaFirmaDto, error)
 	GetStampaNivelacija(ctx context.Context, params domain.RobnoStampaFakturaParams) ([]domain.RobnoStampaPopisView, domain.RobnoStampaFakturaFirmaDto, error)
 	GetStampaInterniPrenosProizvodnje(ctx context.Context, params domain.RobnoStampaFakturaParams) ([]domain.RobnoStampaInterniPrenosView, domain.RobnoStampaFakturaFirmaDto, error)
 	GetStampaInternaZakljucnica(ctx context.Context, params domain.RobnoStampaFakturaParams) ([]domain.RobnoStampaInterniPrenosView, domain.RobnoStampaFakturaFirmaDto, error)
@@ -176,6 +177,7 @@ type RobnoDokumentaService interface {
 	ValidateRobOpsti(ctx context.Context, params domain.RobnoOpstiParams) []domain.FieldError
 	SaveRobOpsti(ctx context.Context, params domain.RobnoOpstiParams) (int64, error)
 	GetRobOpstiArtikal(ctx context.Context, rdokID int64, sifraIliBarkod, konto, otk, serija, rok string) (domain.RobOpstiArtikal, bool, error)
+	RobPreKontoMagacina(ctx context.Context, magaciniID int) (konto, naziv string, err error)
 	ValidateRobOpstiStavka(ctx context.Context, params domain.RobOpstiStavkaParams) []domain.FieldError
 	SaveRobOpstiStavka(ctx context.Context, params domain.RobOpstiStavkaParams) (int64, error)
 	DeleteRobOpstiStavka(ctx context.Context, rproID int64) (int64, error)
@@ -184,6 +186,9 @@ type RobnoDokumentaService interface {
 	GetOpstiKolStavkeTableFields() []domain.Fields
 	GetOpstiMnvStavkeTableFields() []domain.Fields
 	GetOpstiNivStavkeTableFields(lot bool) []domain.Fields
+	GetOpstiPreStavkeTableFields() []domain.Fields
+	GetOpstiGrdStavkeTableFields() []domain.Fields
+	GetOpstiOtrStavkeTableFields() []domain.Fields
 	GetRobInterniArtikal(ctx context.Context, rdokID int64, sifraIliBarkod, konto string) (domain.RobInterniArtikal, bool, error)
 	ValidateRobInterniStavka(ctx context.Context, params domain.RobInterniStavkaParams) []domain.FieldError
 	SaveRobInterniStavka(ctx context.Context, params domain.RobInterniStavkaParams) (int64, error)
@@ -247,6 +252,9 @@ type RobnoDokumentaResource struct {
 	opstiKolStavkeTableFields              []domain.Fields
 	opstiMnvStavkeTableFields              []domain.Fields
 	opstiNivStavkeTableFields              []domain.Fields
+	opstiPreStavkeTableFields              []domain.Fields
+	opstiGrdStavkeTableFields              []domain.Fields
+	opstiOtrStavkeTableFields              []domain.Fields
 	avansniStavkeTableFields               []domain.Fields
 	faktureAvansiTableFields               []domain.Fields
 	faktureDokumentaTableFields            []domain.Fields
@@ -2059,6 +2067,24 @@ func (s *RobnoDokumentaResource) GetOpstiStavkeTableFields() []domain.Fields {
 	return s.opstiStavkeTableFields
 }
 
+// GetOpstiPreStavkeTableFields returns the columns of the grid of the stavke of a prenosnica (the legacy TABLE_rpro
+// of rob_Prenosnice: the ones of the opšti dokument with the nabavna cena after the iznos).
+func (s *RobnoDokumentaResource) GetOpstiPreStavkeTableFields() []domain.Fields {
+	return s.opstiPreStavkeTableFields
+}
+
+// GetOpstiGrdStavkeTableFields returns the columns of the grid of the stavke of a zaduženje gradilišta (the legacy
+// TABLE_rpro of rob_ZadauzGRADILISTA: redni broj, konto, šifra, naziv, JM, količina, cena, vrednost).
+func (s *RobnoDokumentaResource) GetOpstiGrdStavkeTableFields() []domain.Fields {
+	return s.opstiGrdStavkeTableFields
+}
+
+// GetOpstiOtrStavkeTableFields returns the columns of the grid of the stavke of a trebovanje (the legacy TABLE_rpro
+// of rob_Trebovanja: the ones of the opšti dokument with the vrednost).
+func (s *RobnoDokumentaResource) GetOpstiOtrStavkeTableFields() []domain.Fields {
+	return s.opstiOtrStavkeTableFields
+}
+
 // GetAvansniStavkeTableFields returns the columns of the grid of the stavke of the avansni računi.
 func (s *RobnoDokumentaResource) GetAvansniStavkeTableFields() []domain.Fields {
 	return s.avansniStavkeTableFields
@@ -2379,6 +2405,12 @@ func (s *RobnoDokumentaResource) setTableFields() {
 		{Name: "serija", Label: "Serija", Width: "8"},
 		{Name: "rok", Label: "Rok", Width: "8", TextAlign: "center"},
 	}
+	s.opstiGrdStavkeTableFields = append([]domain.Fields{}, s.opstiStavkeTableFields[:8]...)
+	s.opstiGrdStavkeTableFields[7].Label = "Vrednost"
+	s.opstiOtrStavkeTableFields = append([]domain.Fields{}, s.opstiStavkeTableFields...)
+	s.opstiOtrStavkeTableFields[7].Label = "Vrednost"
+	s.opstiPreStavkeTableFields = append(append(append([]domain.Fields{}, s.opstiStavkeTableFields[:8]...),
+		domain.Fields{Name: "nabavnacena", Label: "Nabavna cena", Width: "9", TextAlign: "right"}), s.opstiStavkeTableFields[8:]...)
 	// The columns of the legacy TABLE_rpro of rob_FAKTURE_Usluga_DET2 (the stopa is the porez of the tarifa).
 	// The columns of the legacy TABLE_rpro of rob_AvansniRacuni_DET.
 	s.avansniStavkeTableFields = []domain.Fields{

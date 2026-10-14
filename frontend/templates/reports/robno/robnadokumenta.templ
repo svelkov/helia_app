@@ -3521,6 +3521,68 @@ templ RobnoStampaZaduzenjeGradilistaZaglavlje(repParams domain.ReportParameters,
 }
 
 //
+// Štampa trebovanja: the report RobnoStampaTrebovanje (the group OTR of the vrste dokumenta, the legacy
+// RPT_ROB_TREBOVANJA)
+//
+
+// RobnoStampaTrebovanje renders the printed trebovanja of the selection, every document from a new page, like
+// the zaduženje gradilišta with the trošak in the header.
+templ RobnoStampaTrebovanje(repParams domain.ReportParameters, dokumenti []domain.RobnoStampaPopisView, translator *i18n.Service) {
+	@rep.Report(repParams, domain.TableData{}, translator, nil, nil, RobnoStampaDokumenti(robnoStampaTrebovanjeDokumenti(repParams, dokumenti, translator), translator))
+}
+
+// robnoStampaTrebovanjeDokumenti returns the printed trebovanja for RobnoStampaDokumenti.
+func robnoStampaTrebovanjeDokumenti(repParams domain.ReportParameters, dokumenti []domain.RobnoStampaPopisView, translator *i18n.Service) []templ.Component {
+	out := make([]templ.Component, 0, len(dokumenti))
+	for _, dok := range dokumenti {
+		out = append(out, robnoStampaZaduzenjeContent(dok, RobnoStampaTrebovanjeZaglavlje(repParams, dok, translator), translator))
+	}
+	return out
+}
+
+// RobnoStampaTrebovanjeZaglavlje renders the page header of the trebovanje: the firm on the left and the broj
+// (nalog-vrsta-broj) and the date of the document in the middle; under them the konto and the šifra of the trošak
+// with its naziv, the organizaciona jedinica and the mesto troška on the left, the nalog, the vrsta dokumenta and
+// the magacin on the right.
+templ RobnoStampaTrebovanjeZaglavlje(repParams domain.ReportParameters, dok domain.RobnoStampaPopisView, translator *i18n.Service) {
+	<div class="text-left font-normal">
+		<div class="grid grid-cols-[1fr_2fr_1fr] items-start">
+			<div class="text-[10px]">
+				<div class="font-bold text-sm print:leading-tight">{ repParams.CompanyName }</div>
+				<div class="print:leading-tight">
+					{ repParams.Adress }, { repParams.Postcode } { repParams.City } - { fmt.Sprintf("%d", robnoStampaGodina(repParams)) }. { translator.Label("godina") }
+				</div>
+			</div>
+			<div class="grid grid-cols-[auto_auto] justify-center gap-x-2 text-[15px] print:text-[13pt] leading-snug">
+				<span class="font-bold text-right">{ translator.Label("Broj dokumenta") }:</span>
+				<span>{ dok.BrojDokumenta }</span>
+				<span class="font-bold text-right">{ translator.Label("Datum dokumenta") }:</span>
+				<span>{ dok.DatumDokumenta }</span>
+			</div>
+			<div></div>
+		</div>
+		<div class="mt-2 grid grid-cols-2 gap-x-6 items-start">
+			<div class="space-y-1">
+				<div class="grid grid-cols-[auto_1fr] gap-x-2">
+					<span class="text-right">{ translator.Label("Konto troška") }:</span>
+					<div>
+						<div class="font-bold">{ dok.Gradiliste }</div>
+						<div>{ dok.GradilisteNaziv }</div>
+					</div>
+				</div>
+				@robnoStampaPopisPolje(translator.Label("OJ"), dok.Oj)
+				@robnoStampaPopisPolje(translator.Label("Mesto troška"), dok.MestoTroska)
+			</div>
+			<div class="space-y-1">
+				@robnoStampaPopisPolje(translator.Label("Vrsta/Broj naloga"), dok.Nalog)
+				@robnoStampaPopisPolje(translator.Label("Vrsta dokumenta"), dok.VrstaDokumenta)
+				@robnoStampaPopisPolje(translator.Label("Magacin"), dok.Magacin)
+			</div>
+		</div>
+	</div>
+}
+
+//
 // Štampa nivelacije cena: the report RobnoStampaNivelacija (the group NIV of the vrste dokumenta, the
 // legacy RPT_ROB_NIVELACIJA)
 //

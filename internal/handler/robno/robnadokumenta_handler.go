@@ -154,6 +154,8 @@ const (
 	// RPT_ROB_ZADGRADILISTA).
 	robnoDokumentaStampaZaduzenjeGradilistaTitle = "Zaduženje gradilišta"
 	robnoDokumentaURLStampaZaduzenjeGradilista   = robnoDokumentaURLPrefix + "/zaduzenje-gradilista/stampa"
+	// Štampa trebovanja (the report RobnoStampaTrebovanje, the group OTR, the legacy RPT_ROB_TREBOVANJA).
+	robnoDokumentaStampaTrebovanjeTitle = "Trebovanje"
 
 	// Štampa nivelacije cena (the report RobnoStampaNivelacija, the group NIV, the legacy
 	// RPT_ROB_NIVELACIJA).
@@ -1088,7 +1090,8 @@ func (h *RobnoDokumentaHandler) stampaPrenosnica(c *gin.Context, ulaz bool) {
 		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, common.ErrMsgSessionNotFound)
 		return
 	}
-	opcije := robnosvc.RobnoStampaPrenosnicaOpcije{Naziv: true, KomercOpis: c.Query("komercopis") == "true", Ulaz: ulaz}
+	// The checkboxes of the screen of the prenosnice (the legacy CBOX_NAZIV, default checked, and CBOX_KOMERCOPIS).
+	opcije := robnosvc.RobnoStampaPrenosnicaOpcije{Naziv: c.Query("naziv") != "false", KomercOpis: c.Query("komercopis") == "true", Ulaz: ulaz}
 	dokumenti, firma, err := h.service.GetStampaPrenosnica(ctx, robnoDokumentaStampaParams(c), opcije)
 	if err != nil {
 		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
@@ -1158,6 +1161,26 @@ func (h *RobnoDokumentaHandler) StampaZaduzenjeGradilista(c *gin.Context) {
 	}
 	repParams := robnoDokumentaStampaReportParams(firma, userSession, robnoDokumentaStampaZaduzenjeGradilistaTitle)
 	if err := tmpl_rep_rob.RobnoStampaZaduzenjeGradilista(repParams, dokumenti, h.translator).Render(ctx, c.Writer); err != nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+	}
+}
+
+// StampaTrebovanje prints the trebovanja of the selection (the report RobnoStampaTrebovanje, the legacy
+// RPT_ROB_TREBOVANJA), one document per page. The selection is read by robnoDokumentaStampaParams.
+func (h *RobnoDokumentaHandler) StampaTrebovanje(c *gin.Context) {
+	ctx := c.Request.Context()
+	userSession := domain.GetSessionFromStdContext(ctx)
+	if userSession == nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, common.ErrMsgSessionNotFound)
+		return
+	}
+	dokumenti, firma, err := h.service.GetStampaTrebovanje(ctx, robnoDokumentaStampaParams(c))
+	if err != nil {
+		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+		return
+	}
+	repParams := robnoDokumentaStampaReportParams(firma, userSession, robnoDokumentaStampaTrebovanjeTitle)
+	if err := tmpl_rep_rob.RobnoStampaTrebovanje(repParams, dokumenti, h.translator).Render(ctx, c.Writer); err != nil {
 		utils.RenderDialogOK(c, robnoDokumentaInfoMessageDialogID, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
 	}
 }
@@ -1670,6 +1693,7 @@ func (h *RobnoDokumentaHandler) robnoDokumentaStampe() map[string]robnoDokumenta
 		"PRU": func(c *gin.Context, _ domain.RobnoStampaDokumentDto) { h.StampaPrenosnicaUlaz(c) },
 		// Zaduženje gradilišta.
 		"GRD": func(c *gin.Context, _ domain.RobnoStampaDokumentDto) { h.StampaZaduzenjeGradilista(c) },
+		"OTR": func(c *gin.Context, _ domain.RobnoStampaDokumentDto) { h.StampaTrebovanje(c) },
 		// Profakture.
 		"PRO": h.stampaProfaktura,
 		// Popis tekuće godine (the selected document).
@@ -2889,6 +2913,7 @@ func (h *RobnoDokumentaHandler) AddRoutes(r *gin.Engine) {
 	r.GET("/api/robno-dokumenta/stampa/popis-tekuca-godina", h.StampaPopisTekGod)
 	r.GET("/api/robno-dokumenta/stampa/zaduzenje-SI", h.StampaZaduzenjeSI)
 	r.GET("/api/robno-dokumenta/stampa/zaduzenje-gradilista", h.StampaZaduzenjeGradilista)
+	r.GET("/api/robno-dokumenta/stampa/trebovanje", h.StampaTrebovanje)
 	r.GET("/api/robno-dokumenta/stampa/nivelacija", h.StampaNivelacija)
 	r.GET("/api/robno-dokumenta/stampa/interni-prenos", h.StampaInterniPrenosProizvodnje)
 	r.GET("/api/robno-dokumenta/stampa/interna-zakljucnica", h.StampaInternaZakljucnica)

@@ -2,8 +2,8 @@ package service
 
 import (
 	"context"
-	"helia/internal/common"
 	"helia/internal/domain"
+	"helia/internal/infrastructure/db/querybuilder"
 	"helia/internal/repository"
 	"helia/internal/validation"
 )
@@ -32,13 +32,12 @@ func NewUserService(userRepo *repository.BaseRepository[domain.User], validator 
 
 // GetUserByUsername retrieves a user by username using custom query
 func (s *userResource) GetUserByUsername(ctx context.Context, username string) (*domain.User, error) {
-	// Query to find user by username
-	qb := common.NewQueryBuilder(`SELECT id, username, email, name, password_hash, two_fa_enabled, two_fa_secret, backup_codes 
-	         FROM appusers`, true)
-	qb.AddEqual("username", username)
-
-	sqlQuery, args := qb.Build()
-	users, err := s.userRepo.GetAllCustom(ctx, sqlQuery, "", args, " LIMIT 1 ", "")
+	// Query to find user by username. Where (not AddEqual): an empty username must find nobody.
+	b := querybuilder.New(`SELECT id, username, email, name, password_hash, two_fa_enabled, two_fa_secret, backup_codes
+	         FROM appusers`).
+		Where("username = ?", username).
+		Limit(1)
+	users, err := s.userRepo.Select(ctx, b)
 	if err != nil {
 		return nil, err
 	}
@@ -52,46 +51,15 @@ func (s *userResource) GetUserByUsername(ctx context.Context, username string) (
 
 // CreateUser saves a new user to the database using raw SQL
 func (s *userResource) CreateUser(ctx context.Context, user *domain.User) error {
-	// Use raw SQL insert via the database abstraction
-	userID := int64(0)
-	qb := common.NewQueryBuilder(`INSERT INTO appusers (username, email, name, password_hash, two_fa_enabled, two_fa_secret, backup_codes) 
-	         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`, false)
-	tx, err := s.userRepo.BeginTx()
-	if err != nil {
-		return err
-	}
-	sqlQuery, args := qb.Build()
-	args = append(args, user.Username, user.Email, user.Name, user.PasswordHash, user.TwoFAEnabled, user.TwoFASecret, user.BackupCodes)
-	// Execute the insert and get the generated ID
-	err = tx.QueryRowContext(ctx, sqlQuery, args...).Scan(&userID)
-	if err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	return tx.Commit()
+	// One INSERT ... RETURNING (atomic on its own; the old explicit transaction around it added nothing).
+	_, err := repository.InsertUser(ctx, s.userRepo, user)
+	return err
 }
 
 // UpdateUser updates an existing user
 func (s *userResource) UpdateUser(ctx context.Context, user *domain.User) error {
-	qb := common.NewQueryBuilder(`UPDATE appusers 
-	         SET username = $1, email = $2, name = $3, password_hash = $4, 
-	             two_fa_enabled = $5, two_fa_secret = $6, backup_codes = $7`, false)
-
-	qb.AddArgs(user.Username, user.Email, user.Name, user.PasswordHash, user.TwoFAEnabled, user.TwoFASecret, user.BackupCodes, user.Id)
-	qb.AddEqual("id", user.Id)
-	sqlQuery, args := qb.Build()
-
-	tx, err := s.userRepo.BeginTx()
-	if err != nil {
-		return err
-	}
-	_, err = tx.ExecContext(ctx, sqlQuery, args...)
-	if err != nil {
-		tx.Rollback()
-		return err
-	}
-	return tx.Commit()
+	// repository.ErrNotFound when the id matches no user.
+	return repository.UpdateUser(ctx, s.userRepo, user)
 }
 
 // UserExists checks if a user exists by username

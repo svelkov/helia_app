@@ -8,6 +8,7 @@ import (
 	"helia/config"
 	"helia/internal/common"
 	"helia/internal/domain"
+	"helia/internal/infrastructure/db/querybuilder"
 	"helia/internal/repository"
 	"helia/internal/service"
 	"reflect"
@@ -31,6 +32,7 @@ type MagacinKontoResource struct {
 	magacinKontoRepo        *repository.BaseRepository[domain.Magkonto]
 	magacinKontoViewRepo    *repository.BaseRepository[domain.MagkontoView]
 	fvrRepo                 *repository.BaseRepository[domain.Fvr]
+	robno                   *repository.RobnoRepository
 	magacinKontoTableFields []domain.Fields
 	cfg                     config.Config
 }
@@ -41,6 +43,7 @@ func NewMagacinKontoResource(service *service.BaseService[domain.Magkonto], maga
 		magacinKontoRepo:     magacinKontoRepo,
 		magacinKontoViewRepo: magacinKontoViewRepo,
 		fvrRepo:              fvrRepo,
+		robno:                repository.NewRobnoRepository(magacinKontoRepo.DB),
 		cfg:                  cfg,
 	}
 	rs.setMagacinKontoTableFields()
@@ -75,42 +78,11 @@ func (s *MagacinKontoResource) Create(ctx context.Context, entity *domain.Magkon
 	if userSession == nil {
 		return nil, 0, errors.New(common.ErrMsgUserSessionNotFound)
 	}
-	config := common.RepositoryConfig{
-		TableName:     "magkonto",
-		EntityType:    reflect.TypeOf(entity).Elem(),
-		TableFields:   s.GetMagacinKontoTableFields(),
-		IncludeGodKar: true,
-	}
-
-	qb := common.NewRepositoryQueryBuilder(config)
-	hasGod, hasKar := qb.CheckGodKarFields()
-	if hasGod || hasKar {
-		qb.AddGodKarConditions(hasGod, hasKar, userSession.SelectedGod, userSession.SelectedKar)
-	}
-
-	sqlQuery, args := qb.BuildInsert(ctx, fields, idField)
-
-	tx, err := s.magacinKontoRepo.BeginTx()
-	if err != nil {
-		return nil, 0, fmt.Errorf("error beginning transaction: %w", err)
-	}
-
-	defer func() {
-		if err != nil {
-			tx.Rollback()
-		}
-	}()
-
-	var id int64
-	err = tx.QueryRowContext(ctx, sqlQuery, args...).Scan(&id)
+	// The repository fills god/kar from the session and the audit columns, in its own transaction.
+	id, err := s.magacinKontoRepo.Create(ctx, entity, idField, fields)
 	if err != nil {
 		return nil, 0, fmt.Errorf("insert magkonto failed: %w", err)
 	}
-	err = tx.Commit()
-	if err != nil {
-		return nil, 0, fmt.Errorf("error committing transaction: %w", err)
-	}
-
 	return nil, id, nil
 }
 
@@ -119,41 +91,10 @@ func (s *MagacinKontoResource) Update(ctx context.Context, entity *domain.Magkon
 	if userSession == nil {
 		return nil, errors.New(common.ErrMsgUserSessionNotFound)
 	}
-	config := common.RepositoryConfig{
-		TableName:     "magkonto",
-		EntityType:    reflect.TypeOf(entity).Elem(),
-		TableFields:   fields,
-		IncludeGodKar: true,
-	}
-
-	qb := common.NewRepositoryQueryBuilder(config)
-	hasGod, hasKar := qb.CheckGodKarFields()
-	if hasGod || hasKar {
-		qb.AddGodKarConditions(hasGod, hasKar, userSession.SelectedGod, userSession.SelectedKar)
-	}
-
-	sqlQuery, args := qb.BuildUpdate(ctx, fields, idField, idFieldValue)
-
-	tx, err := s.magacinKontoRepo.BeginTx()
-	if err != nil {
-		return nil, fmt.Errorf("error beginning transaction: %w", err)
-	}
-
-	defer func() {
-		if err != nil {
-			tx.Rollback()
-		}
-	}()
-
-	err = tx.QueryRowContext(ctx, sqlQuery, args...).Err()
-	if err != nil {
+	// Restricted to the tenant of the session; ErrNotFound when the konto zaliha is not there.
+	if err := s.magacinKontoRepo.Update(ctx, entity, idField, idFieldValue, fields); err != nil {
 		return nil, fmt.Errorf("update magkonto failed: %w", err)
 	}
-	err = tx.Commit()
-	if err != nil {
-		return nil, fmt.Errorf("error committing transaction: %w", err)
-	}
-
 	return nil, nil
 }
 
@@ -165,20 +106,12 @@ func (s *MagacinKontoResource) GetAll(ctx context.Context, page int, pageSize in
 	return s.service.GetAll(ctx, page, pageSize, tableFields, idField, searchText, sortBy, sortOrder)
 }
 
-func (s *MagacinKontoResource) GetAllCustom(ctx context.Context, queryText string, whereText string, args []interface{}, limitOffset string, orderBy string) (*[]domain.Magkonto, error) {
-	return s.service.GetAllCustom(ctx, queryText, whereText, args, limitOffset, orderBy)
-}
-
 func (s *MagacinKontoResource) GetByID(ctx context.Context, idField string, idFieldValue int64) (*domain.Magkonto, error) {
 	return s.service.GetByID(ctx, idField, idFieldValue)
 }
 
 func (s *MagacinKontoResource) GetTotalRecords(ctx context.Context, tableFields []domain.Fields, searchText string) (int, error) {
 	return s.service.GetTotalRecords(ctx, tableFields, searchText)
-}
-
-func (s *MagacinKontoResource) GetTotalRecordsCustom(ctx context.Context, queryText string, whereText string, args []interface{}, limitOffset string, orderBy string) (int, error) {
-	return s.service.GetTotalRecordsCustom(ctx, queryText, whereText, args, limitOffset, orderBy)
 }
 
 func (s *MagacinKontoResource) MapEntityToValues(entity *domain.Magkonto, tableFields []domain.Fields) []domain.Fields {
@@ -225,19 +158,15 @@ func (s *MagacinKontoResource) GetAllMagacinKonto(ctx context.Context, tbl *doma
 	if userSession == nil {
 		return errors.New(common.ErrMsgUserSessionNotFound)
 	}
-	filter := func(qb *common.QueryBuilder) {
-		qb.AddEqual("m.god", userSession.SelectedGod)
-		qb.AddEqual("m.kar", userSession.SelectedKar)
-		if searchText != "" && printType == common.TipStampePreview {
-			qb.AddCustomSearchCondition([]string{"m.mag", "m.konto", "f.naziv", "mg.opis", "m.kontoprih", "m.kontotroska", "m.kontoruc"}, searchText)
-		}
+	b := querybuilder.New(magacinKontoViewSelect).
+		Where("m.god = ?", userSession.SelectedGod).
+		Where("m.kar = ?", userSession.SelectedKar)
+	if printType == common.TipStampePreview {
+		b.AddSearch([]string{"m.mag", "m.konto", "f.naziv", "mg.opis", "m.kontoprih", "m.kontotroska", "m.kontoruc"}, searchText)
 	}
 
 	if getTotalRecords && printType == common.TipStampePreview {
-		qb := common.NewQueryBuilder(`select count(*)`+magacinKontoViewFrom, true)
-		filter(qb)
-		sqlQuery, args := qb.Build()
-		total, err := s.magacinKontoViewRepo.GetTotalRecordsCustom(ctx, sqlQuery, "", args, "", "")
+		total, err := s.magacinKontoViewRepo.Count(ctx, b)
 		if err != nil {
 			return err
 		}
@@ -245,23 +174,15 @@ func (s *MagacinKontoResource) GetAllMagacinKonto(ctx context.Context, tbl *doma
 		return nil
 	}
 
-	qb := common.NewQueryBuilder(magacinKontoViewSelect, true)
-	filter(qb)
-	order := "asc"
-	if strings.EqualFold(sortOrder, "DESC") {
-		order = "desc"
-	}
-	if column, ok := magacinKontoSort[sortBy]; ok {
-		qb.AddOrderBy(fmt.Sprintf("%s %s, m.magkontoid", column, order))
+	if _, ok := magacinKontoSort[sortBy]; ok {
+		b.OrderByKey(sortBy, sortOrder, magacinKontoSort).OrderBy("m.magkontoid")
 	} else {
-		qb.AddOrderBy("m.mag, m.konto, m.magkontoid")
+		b.OrderBy("m.mag, m.konto, m.magkontoid")
 	}
 	if printType == common.TipStampePreview {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
+		b.Limit(pageSize).Offset((currentPage - 1) * pageSize)
 	}
-	sqlQuery, args := qb.Build()
-	entities, err := s.magacinKontoViewRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.magacinKontoViewRepo.Select(ctx, b)
 	if err != nil {
 		return err
 	}
@@ -289,12 +210,11 @@ func (s *MagacinKontoResource) GetMagacinKontoView(ctx context.Context, magkonto
 	if userSession == nil {
 		return domain.MagkontoView{}, false, errors.New(common.ErrMsgUserSessionNotFound)
 	}
-	qb := common.NewQueryBuilder(magacinKontoViewSelect, true)
-	qb.AddEqual("m.god", userSession.SelectedGod)
-	qb.AddEqual("m.kar", userSession.SelectedKar)
-	qb.AddEqual("m.magkontoid", magkontoID)
-	sqlQuery, args := qb.Build()
-	entities, err := s.magacinKontoViewRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	b := querybuilder.New(magacinKontoViewSelect).
+		Where("m.god = ?", userSession.SelectedGod).
+		Where("m.kar = ?", userSession.SelectedKar).
+		Where("m.magkontoid = ?", magkontoID)
+	entities, err := s.magacinKontoViewRepo.Select(ctx, b)
 	if err != nil {
 		return domain.MagkontoView{}, false, err
 	}
@@ -319,38 +239,35 @@ func (s *MagacinKontoResource) ValidateEntity(ctx context.Context, entity *domai
 		add("magaciniid", common.ErrMsgUserSessionNotFound)
 		return fieldErrors
 	}
-	db := s.magacinKontoRepo.DB
-	god, kar := userSession.SelectedGod, userSession.SelectedKar
-
 	// The magacin.
 	if entity.MagaciniID <= 0 {
 		add("magaciniid", common.ErrMsgObavezanPodatak)
-	} else if err := db.QueryRowContext(ctx, `select mag from magacini where magaciniid = $1 and god = $2 and kar = $3`,
-		entity.MagaciniID, god, kar).Scan(&entity.Mag); err != nil {
+	} else if mag, err := s.robno.MagacinMag(ctx, entity.MagaciniID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			add("magaciniid", robnoUnosMsgNePostoji)
 		} else {
 			add("magaciniid", common.ErrMsgReadData)
 		}
+	} else {
+		entity.Mag = mag
 	}
 
 	// The konto zaliha: a konto or an analitika of the kontni plan.
 	if entity.IDFkpl <= 0 {
 		add("idfkpl", common.ErrMsgObavezanPodatak)
-	} else if err := db.QueryRowContext(ctx, `select trim(konto), vkonta from fkpl where idfkpl = $1 and god = $2 and kar = $3
-		and vkonta in (1, 2)`, entity.IDFkpl, god, kar).Scan(&entity.Konto, &entity.VKonta); err != nil {
+	} else if konto, vkonta, err := s.robno.KontoZaliha(ctx, entity.IDFkpl); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			add("idfkpl", robnoUnosMsgNePostoji)
 		} else {
 			add("idfkpl", common.ErrMsgReadData)
 		}
+	} else {
+		entity.Konto, entity.VKonta = konto, vkonta
 	}
 
 	// The magacin has the konto zaliha only once.
 	if len(fieldErrors) == 0 {
-		var count int
-		if err := db.QueryRowContext(ctx, `select count(*) from magkonto where god = $1 and kar = $2 and magaciniid = $3
-			and idfkpl = $4 and magkontoid <> $5`, god, kar, entity.MagaciniID, entity.IDFkpl, entity.MagkontoID).Scan(&count); err != nil {
+		if count, err := s.robno.MagkontoDrugi(ctx, entity.MagaciniID, entity.IDFkpl, entity.MagkontoID); err != nil {
 			add("idfkpl", common.ErrMsgReadData)
 		} else if count > 0 {
 			add("idfkpl", "Magacin već ima ovaj konto.")
@@ -366,9 +283,7 @@ func (s *MagacinKontoResource) ValidateEntity(ctx context.Context, entity *domai
 		if *k.value == "" {
 			continue
 		}
-		var count int
-		if err := db.QueryRowContext(ctx, `select count(*) from fkpl where god = $1 and kar = $2 and vkonta = 2 and konto = $3`,
-			god, kar, *k.value).Scan(&count); err != nil {
+		if count, err := s.robno.SintetickiKontoPostoji(ctx, *k.value); err != nil {
 			add(k.field, common.ErrMsgReadData)
 		} else if count == 0 {
 			add(k.field, robnoUnosMsgNePostoji)
@@ -381,5 +296,5 @@ func (s *MagacinKontoResource) GetFvrData(ctx context.Context) (domain.Fvr, erro
 	if s.fvrRepo == nil {
 		return domain.Fvr{}, fmt.Errorf("fvrRepo not initialized")
 	}
-	return common.GetFvrData(ctx, s.fvrRepo)
+	return repository.GetFvrData(ctx, s.fvrRepo)
 }

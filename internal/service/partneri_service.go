@@ -3,9 +3,11 @@ package service
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"helia/internal/common"
 	"helia/internal/domain"
+	"helia/internal/infrastructure/db/querybuilder"
 	"helia/internal/repository"
 	commonsvc "helia/internal/service/common"
 	"helia/internal/validation"
@@ -70,7 +72,7 @@ func (s *PartneriResource) GetFvrData(ctx context.Context) (domain.Fvr, error) {
 	if s.fvrRepo == nil {
 		return domain.Fvr{}, fmt.Errorf("fvrRepo not initialized")
 	}
-	return common.GetFvrData(ctx, s.fvrRepo)
+	return repository.GetFvrData(ctx, s.fvrRepo)
 }
 func (s *PartneriResource) GetTekuciRacuniTableFields() []domain.Fields {
 	return s.tekuciRacuniTableFields
@@ -81,22 +83,29 @@ func (s *PartneriResource) GetPartneriTableFields() []domain.Fields {
 func (s *PartneriResource) GetPartneriStampaFields() []domain.Fields {
 	return s.partneriStampaFields
 }
+
+// partneriSortColumns maps the sortBy keys of the partneri table (field names) to columns.
+var partneriSortColumns = map[string]string{
+	"sifra": "sifra", "naziv": "naziv", "adresa": "adresa", "pobro": "pobro", "mesto": "mesto",
+	"pib": "pib", "jmbg": "jmbg", "bpg": "bpg", "index": "index", "gln": "gln", "jib": "jib",
+	"ziro": "ziro", "matbr": "matbr", "konta": "konta", "tippdv": "tippdv", "email": "email",
+	"telefon": "telefon", "kontaktosb": "kontaktosb", "budzetski": "budzetski", "jbkjs": "jbkjs",
+	"napomena": "napomena", "idpartneri": "idpartneri",
+}
+
+// partneriUniqueFields are the columns ExistsByField may check.
+var partneriUniqueFields = map[string]bool{"sifra": true, "pib": true, "bpg": true, "jmbg": true, "index": true}
+
 func (s *PartneriResource) GetLastPartneriID(ctx context.Context) (int64, error) {
 	session := domain.GetSessionFromStdContext(ctx)
 	if session == nil {
 		return 0, fmt.Errorf("user session not found")
 	}
-	qb := common.NewQueryBuilder(" SELECT MAX(partneri.sifra::numeric) as sifra FROM partneri", true)
-	hasGod, hasKar := s.partneriRepo.GetHasGodHasKar()
-
-	if hasGod {
-		qb.AddCondition("partneri.god", session.SelectedGod, "=")
+	b := querybuilder.New("SELECT MAX(partneri.sifra::numeric) as sifra FROM partneri")
+	if err := s.partneriRepo.ApplyFilters(ctx, b, "partneri", nil, ""); err != nil {
+		return 0, err
 	}
-	if hasKar {
-		qb.AddCondition("partneri.kar", session.SelectedKar, "=")
-	}
-	sqlQuery, args := qb.Build()
-	entities, err := s.partneriRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.partneriRepo.Select(ctx, b)
 	if err != nil {
 		return 0, err
 	}
@@ -126,49 +135,48 @@ func (s *PartneriResource) GetAll(ctx context.Context, page int, offset int, tab
 }
 
 // GetAllCustom implements NalogService.
-func (s *PartneriResource) GetAllCustom(ctx context.Context, queryText string, whereText string, args []interface{}, limitOffset string, orderBy string) (*[]domain.Partneri, error) {
-	return s.service.GetAllCustom(ctx, queryText, whereText, args, limitOffset, orderBy)
-}
-
-// GetAllCustom implements NalogService.
 func (s *PartneriResource) GetAllPartneri(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage int, pageSize int, searchText string, sortBy string, sortOrder string) error {
 	userSession := domain.GetSessionFromStdContext(ctx)
 	if userSession == nil {
 		return fmt.Errorf("user session not found")
 	}
 	common.SetupTablePagination(tbl, currentPage, pageSize)
-	hasGod, hasKar := s.partneriRepo.GetHasGodHasKar()
-	qb := common.NewQueryBuilder(`SELECT  sifra,
-		naziv, adresa, pobro, mesto, pib, 
+	b := querybuilder.New(`SELECT sifra,
+		naziv, adresa, pobro, mesto, pib,
 		jmbg, bpg, index, gln, jib, coalesce(ziro, '') as ziro, matbr,
 		konta, tippdv, email, telefon, kontaktosb, budzetski, jbkjs,
-		napomena, idpartneri FROM partneri`, true)
-
-	if hasGod {
-		qb.AddEqual("partneri.god", userSession.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("partneri.kar", userSession.SelectedKar)
+		napomena, idpartneri FROM partneri`)
+	if err := s.partneriRepo.ApplyFilters(ctx, b, "partneri", nil, ""); err != nil {
+		return err
 	}
 	if searchText != "" {
-		qb.AddCustomCondition(`(LOWER(partneri.sifra) LIKE LOWER($3) OR LOWER(partneri.naziv) LIKE LOWER($3) OR LOWER(partneri.adresa)
-			 LIKE LOWER($3) OR LOWER(partneri.pobro) LIKE LOWER($3) OR LOWER(partneri.mesto) LIKE LOWER($3) OR LOWER(partneri.pib)
-			 LIKE LOWER($3) OR LOWER(partneri.jmbg) LIKE LOWER($3) OR LOWER(partneri.bpg) LIKE LOWER($3) OR LOWER(partneri.index)) `, searchText)
-	}
-	if !getTotalRecords {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
-	}
-
-	sqlQuery, args := qb.Build()
-	entities, err := s.partneriRepo.GetAllCustom(ctx, sqlQuery, "", args, sortBy, sortOrder)
-	if err != nil {
-		return err
+		b.WhereAny(
+			querybuilder.C("LOWER(partneri.sifra) LIKE LOWER(?)", searchText),
+			querybuilder.C("LOWER(partneri.naziv) LIKE LOWER(?)", searchText),
+			querybuilder.C("LOWER(partneri.adresa) LIKE LOWER(?)", searchText),
+			querybuilder.C("LOWER(partneri.pobro::text) LIKE LOWER(?)", searchText),
+			querybuilder.C("LOWER(partneri.mesto) LIKE LOWER(?)", searchText),
+			querybuilder.C("LOWER(partneri.pib) LIKE LOWER(?)", searchText),
+			querybuilder.C("LOWER(partneri.jmbg) LIKE LOWER(?)", searchText),
+			querybuilder.C("LOWER(partneri.bpg) LIKE LOWER(?)", searchText),
+			querybuilder.C("LOWER(partneri.index) LIKE LOWER(?)", searchText),
+		)
 	}
 	// Set total records and pagination
 	if getTotalRecords {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
+		total, err := s.partneriRepo.Count(ctx, b)
+		if err != nil {
+			return err
+		}
+		common.SetTableTotalRecords(tbl, total, pageSize)
 		return nil
+	}
+	b.OrderByKey(strings.ToLower(sortBy), sortOrder, partneriSortColumns).
+		Limit(pageSize).
+		Offset((currentPage - 1) * pageSize)
+	entities, err := s.partneriRepo.Select(ctx, b)
+	if err != nil {
+		return err
 	}
 	for _, entity := range *entities {
 		fields := []string{
@@ -205,45 +213,28 @@ func (s *PartneriResource) GetAllStampa(ctx context.Context, tbl *domain.TableDa
 	if userSession == nil {
 		return fmt.Errorf("user session not found")
 	}
-	hasgod, hasKar := s.partneriRepo.GetHasGodHasKar()
-	qb := common.NewQueryBuilder(`SELECT idpartneri, sifra, naziv, mesto, pib, jib, 
-	pobro, coalesce(adresa, '') as adresa, coalesce(ziro, '') as ziro, coalesce(telefon, '') as telefon, 
-	coalesce(kontaktosb, '') as kontaktosb FROM partneri`, true)
-	if hasgod {
-		qb.AddEqual("partneri.god", userSession.SelectedGod)
+	b := querybuilder.New(`SELECT idpartneri, sifra, naziv, mesto, pib, jib,
+	pobro, coalesce(adresa, '') as adresa, coalesce(ziro, '') as ziro, coalesce(telefon, '') as telefon,
+	coalesce(kontaktosb, '') as kontaktosb FROM partneri`)
+	if err := s.partneriRepo.ApplyFilters(ctx, b, "partneri", nil, ""); err != nil {
+		return err
 	}
-	if hasKar {
-		qb.AddEqual("partneri.kar", userSession.SelectedKar)
-	}
-	if partneriParam.OdSifre != "" {
-		qb.AddCondition("partneri.sifra", partneriParam.OdSifre, ">=")
-	}
-	if partneriParam.DoSifre != "" {
-		qb.AddCondition("partneri.sifra", partneriParam.DoSifre, "<=")
-	}
-	if partneriParam.PartnerNaziv != "" {
-		qb.AddLike("naziv", partneriParam.PartnerNaziv)
-	}
-	if partneriParam.OdMesta != "" {
-		qb.AddCondition("mesto", partneriParam.OdMesta, ">=")
-	}
-	if partneriParam.DoMesta != "" {
-		qb.AddCondition("mesto", partneriParam.DoMesta, "<=")
-	}
-	if partneriParam.SortirajStampu != "" {
-		switch partneriParam.SortirajStampu {
-		case "analitickasifra":
-			qb.AddOrderBy("sifra").AddSortOrder(" ASC ")
-		case "nazivpartnera":
-			qb.AddOrderBy("naziv").AddSortOrder(" ASC ")
-		case "sediste":
-			qb.AddOrderBy("mesto").AddSortOrder(" ASC ")
-		default:
-		}
+	// The optional filters skip empty values by themselves.
+	b.AddCondition("partneri.sifra", partneriParam.OdSifre, ">=").
+		AddCondition("partneri.sifra", partneriParam.DoSifre, "<=").
+		AddLike("naziv", partneriParam.PartnerNaziv).
+		AddCondition("mesto", partneriParam.OdMesta, ">=").
+		AddCondition("mesto", partneriParam.DoMesta, "<=")
+	switch partneriParam.SortirajStampu {
+	case "analitickasifra":
+		b.OrderBy("sifra ASC")
+	case "nazivpartnera":
+		b.OrderBy("naziv ASC")
+	case "sediste":
+		b.OrderBy("mesto ASC")
 	}
 
-	sqlQuery, args := qb.Build()
-	entities, err := s.partneriRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.partneriRepo.Select(ctx, b)
 	if err != nil {
 		return fmt.Errorf("failed to get all custom: %w", err)
 	}
@@ -274,12 +265,13 @@ func (s *PartneriResource) GetByID(ctx context.Context, idField string, idValue 
 
 func (s *PartneriResource) GetTekuciRacuni(ctx context.Context, id int64, tbl *domain.TableData) error {
 
-	qb := common.NewQueryBuilder("SELECT t.tekrac, b.banka FROM tekracuni as t", true)
-	qb.AddJoin(" left join banke as b on b.idbanke = t.idbanke")
-	qb.AddCondition("t.idpartneri", id, "=")
-
-	sqlQuery, args := qb.Build()
-	entities, err := s.tekracuniRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	b := querybuilder.New("SELECT t.tekrac, b.banka FROM tekracuni as t").
+		AddJoin("left join banke as b on b.idbanke = t.idbanke").
+		Where("t.idpartneri = ?", id)
+	if err := s.tekracuniRepo.ApplyFilters(ctx, b, "t", nil, ""); err != nil {
+		return err
+	}
+	entities, err := s.tekracuniRepo.Select(ctx, b)
 	if err != nil {
 		return err
 	}
@@ -310,11 +302,6 @@ func (s *PartneriResource) GetTotalRecords(ctx context.Context, tableFields []do
 	return s.service.GetTotalRecords(ctx, tableFields, searchText)
 }
 
-// GetTotalRecordsCustom implements NalogService.
-func (s *PartneriResource) GetTotalRecordsCustom(ctx context.Context, queryText string, whereText string, args []interface{}, limitOffset string, orderBy string) (int, error) {
-	return s.service.GetTotalRecordsCustom(ctx, queryText, whereText, args, limitOffset, orderBy)
-}
-
 // MapEntityToValues implements NalogService.
 func (s *PartneriResource) MapEntityToValues(entity *domain.Partneri, tableFields []domain.Fields) []domain.Fields {
 	return s.service.MapEntityToValues(entity, tableFields)
@@ -328,11 +315,11 @@ func (s *PartneriResource) Update(ctx context.Context, entity *domain.Partneri, 
 // DeleteTekRacuniForPartner deletes all tekracuni for a partner (used when updating)
 func (s *PartneriResource) DeleteTekRacuniForPartner(ctx context.Context, partneriID int64) error {
 	// Get all tekracuni for this partner
-	qb := common.NewQueryBuilder("SELECT * FROM tekracuni", true)
-	qb.AddCondition("idpartneri", partneriID, "=")
-
-	sqlQuery, args := qb.Build()
-	entities, err := s.tekracuniRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	b := querybuilder.New("SELECT * FROM tekracuni").Where("idpartneri = ?", partneriID)
+	if err := s.tekracuniRepo.ApplyFilters(ctx, b, "", nil, ""); err != nil {
+		return err
+	}
+	entities, err := s.tekracuniRepo.Select(ctx, b)
 	if err != nil {
 		return fmt.Errorf("error fetching tekracuni for deletion: %w", err)
 	}
@@ -423,11 +410,11 @@ func (s *PartneriResource) UpdateWithTekRacuni(ctx context.Context, partner *dom
 		return fmt.Errorf("error updating partner: %w", err)
 	}
 
-	// Delete each tekracuni within the transaction
+	// Delete the partner's tekracuni within the transaction. A partner without accounts has
+	// nothing to delete, so ErrNotFound is not an error here.
 	err = s.tekracuniRepo.DeleteWithTx(ctx, tx, common.IDpartneri, int64(id))
-	if err != nil {
+	if err != nil && !errors.Is(err, repository.ErrNotFound) {
 		return fmt.Errorf("error deleting tekracuni: %w", err)
-
 	}
 	// Save new tekracuni within the transaction
 	if len(tekRacuniList) > 0 {
@@ -641,19 +628,17 @@ func (s *PartneriResource) ExistsByField(ctx context.Context, filedName string, 
 	if session == nil {
 		return false, fmt.Errorf("neautorizovan pristup")
 	}
-	qb := common.NewQueryBuilder("SELECT sifra FROM partneri", true)
-	hasGod, hasKar := s.partneriRepo.GetHasGodHasKar()
-	if hasGod {
-		qb.AddCondition("partneri.god", session.SelectedGod, "=")
+	if !partneriUniqueFields[filedName] {
+		return false, fmt.Errorf("partneri: unsupported field %q", filedName)
 	}
-	if hasKar {
-		qb.AddCondition("partneri.kar", session.SelectedKar, "=")
+	// Where (not AddEqual): an empty value must not match every partner.
+	b := querybuilder.New("SELECT sifra FROM partneri").
+		Where("partneri."+filedName+" = ?", filedValue).
+		Limit(1)
+	if err := s.partneriRepo.ApplyFilters(ctx, b, "partneri", nil, ""); err != nil {
+		return false, err
 	}
-	qb.AddCondition(fmt.Sprintf("partneri.%s", filedName), filedValue, "=")
-
-	sqlQuery, args := qb.Build()
-
-	entites, err := s.partneriRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entites, err := s.partneriRepo.Select(ctx, b)
 	if err != nil {
 		return false, err
 	}

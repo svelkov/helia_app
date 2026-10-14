@@ -91,7 +91,11 @@ func (h *GenericHandler[T]) GetAllPrint(c *gin.Context) {
 		h.hconfig.IDField,
 		h.cfg)
 
-	fvrData := h.getFvrData(c.Request.Context())
+	fvrData, err := h.getFvrData(c.Request.Context())
+	if err != nil {
+		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, err.Error())
+		return
+	}
 	reportParams := domain.ReportParameters{
 		ReportName:  h.hconfig.ContentTitle,
 		CompanyName: userSession.Firma,
@@ -140,9 +144,8 @@ func (h *GenericHandler[T]) confirmUpdateHandler(c *gin.Context) {
 	utils.ConfirmUpdateHelper(c, h.service, h.fields, h.hconfig.IDField)
 }
 
-func (h *GenericHandler[T]) getFvrData(ctx context.Context) domain.Fvr {
-	fvr, _ := common.GetFvrData(ctx, h.fvrRepo)
-	return fvr
+func (h *GenericHandler[T]) getFvrData(ctx context.Context) (domain.Fvr, error) {
+	return repository.GetFvrData(ctx, h.fvrRepo)
 }
 
 func (h *GenericHandler[T]) RegisterRoutes(r *gin.Engine) {

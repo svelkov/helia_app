@@ -1,0 +1,93 @@
+### avansfakt add
+insert into avansfakt (god, kar, avansid, osnfakt1, pdv1fakt, osnfakt2, pdv2fakt, osnfakt3, osnavans1, pdv1avans, osnavans2, pdv2avans, osnavans3, xopunos, xdatunosa) select $1, $2, $3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, $4, now() WHERE (not exists (select 1 from avansfakt where avansid = $5))
+[]interface {}{2026, 7, 41, "ana", 41}
+in transaction: false
+
+### avansfakt add iznosi
+UPDATE "avansfakt" SET osnavans1 = coalesce(osnavans1, 0) + $1, pdv1avans = coalesce(pdv1avans, 0) + $2, osnavans2 = coalesce(osnavans2, 0) + $3, pdv2avans = coalesce(pdv2avans, 0) + $4, osnavans3 = coalesce(osnavans3, 0) + $5 WHERE (avansfaktid = (select min(a.avansfaktid) from avansfakt a where a.avansid = $6)) AND (god = $7) AND (kar = $8)
+[]interface {}{100, 20, 50, 5, 10, 41, 2026, 7}
+in transaction: true
+
+### avansfakt delete
+delete from avansfakt WHERE (avansid = $1) AND (god = $2) AND (kar = $3)
+[]interface {}{41, 2026, 7}
+in transaction: true
+
+### fvknjrac konta of the kupac
+select coalesce((select f.konta from fvknjrac f where f.god = $1 and f.kar = $2 and f.vktip = 'I' and f.vkrbr = 3 order by f.vkrbr limit 1), ''), coalesce((select p.idpartneri::text from fkpl p where p.god = $3 and p.kar = $4 and p.konto = $5 and p.sifra = $6 limit 1), '')
+[]interface {}{2026, 7, 2026, 7, "2040", "15"}
+in transaction: false
+
+### rdok profak
+select coalesce(profak, '') from rdok WHERE (rdokid = $1) AND (god = $2) AND (kar = $3)
+[]interface {}{41, 2026, 7}
+in transaction: false
+
+### rdok stopa and napomena
+select coalesce((select x.pp from rpor x where x.po = $1 and x.datum <= dadok order by x.datum desc limit 1), 0)::float8, coalesce(pornapomena, '') from rdok WHERE (rdokid = $2) AND (god = $3) AND (kar = $4)
+[]interface {}{3, 41, 2026, 7}
+in transaction: true
+
+### rpro saved stavka for update
+select coalesce(rdokid, 0)::bigint, coalesce(konto, ''), coalesce(taxcat, ''), coalesce(kolic, 0)::float8, coalesce(iznos, 0)::float8, coalesce(po, 0), coalesce(rbr, 0) from rpro WHERE (rproid = $1) AND (god = $2) AND (kar = $3) FOR UPDATE
+[]interface {}{77, 2026, 7}
+in transaction: true
+
+### rpro renumber
+UPDATE "rpro" SET rbr = x.n FROM (select rproid, ($1 - 1 + row_number() over (order by rbr, rproid))::int as n from rpro where rdokid = $2 and rbr > $3 and god = $4 and kar = $5) x WHERE (rpro.rproid = x.rproid)
+[]interface {}{2, 41, 2, 2026, 7}
+in transaction: true
+
+### rsif of the šifra 0
+select rsifid, coalesce(jm, '') from rsif WHERE (god = $1) AND (kar = $2) AND (sifra = 0) ORDER BY rsifid LIMIT 1
+[]interface {}{2026, 7}
+in transaction: true
+
+### rcene of the šifra 0
+select count(*) from rcene WHERE (god = $1) AND (kar = $2) AND (sifra = 0)
+[]interface {}{2026, 7}
+in transaction: true
+
+### rsif create the šifra 0
+select c.column_name as key, c.data_type as c1, c.is_nullable as c2, coalesce((select f.confrelid::regclass::text || '.' || r.attname from pg_constraint f join pg_attribute a on a.attrelid = f.conrelid and a.attnum = f.conkey[1] join pg_attribute r on r.attrelid = f.confrelid and r.attnum = f.confkey[1] where f.conrelid = 'rsif'::regclass and f.contype = 'f' and a.attname = c.column_name limit 1), '') as c3, (c.column_default is not null)::text as c4 from information_schema.columns c WHERE (c.table_schema = current_schema()) AND (c.table_name = 'rsif') AND (c.is_identity = 'NO') ORDER BY c.ordinal_position
+[]interface {}{}
+in transaction: false
+insert into rsif ("god", "kar", "sifra", "naziv", "tip", "grupa", "opis", "aktivan", "datum", "napomena", "po", "xopunos", "xdatunosa") select $1, $2, 0, $3, 'U', coalesce((select x."idgrupe" from "grupe" x where x."idgrupe" = rsif."grupa" limit 1), (select min(x."idgrupe") from "grupe" x)), '', false, rsif."datum", null, 0, $4, now() from rsif WHERE (rsif.god = $5) AND (rsif.kar = $6) ORDER BY rsif.rsifid LIMIT 1 RETURNING rsifid
+[]interface {}{2026, 7, "Avans", "ana", 2026, 7}
+in transaction: true
+
+### rdok to delete for update
+select coalesce(rnalid, 0)::bigint, coalesce(knjige_1, ''), coalesce(knjige_4, ''), coalesce(salesinvoiceid, 0)::float8, coalesce(status_salinv, ''), coalesce(individualvatid, 0)::float8 from rdok WHERE (rdokid = $1) AND (god = $2) AND (kar = $3) FOR UPDATE
+[]interface {}{41, 2026, 7}
+in transaction: true
+
+### rpro ids of the document
+select rproid from rpro WHERE (rdokid = $1) AND (god = $2) AND (kar = $3) ORDER BY rproid
+[]interface {}{41, 2026, 7}
+in transaction: false
+
+### avansfakt of the faktura delete
+delete from avansfakt WHERE (rdokid = $1) AND (god = $2) AND (kar = $3)
+[]interface {}{41, 2026, 7}
+in transaction: true
+
+### faktrate delete
+delete from faktrate WHERE (rdokid = $1) AND (god = $2) AND (kar = $3)
+[]interface {}{41, 2026, 7}
+in transaction: true
+
+### dokusldet delete
+delete from dokusldet WHERE (rdokid = $1) AND (god = $2) AND (kar = $3)
+[]interface {}{41, 2026, 7}
+in transaction: true
+
+### rnal one document less
+UPDATE "rnal" SET brdo = greatest(coalesce(brdo, 0) - 1, 0) WHERE (rnalid = $1) AND (god = $2) AND (kar = $3)
+[]interface {}{9, 2026, 7}
+in transaction: true
+
+### rnal of another period
+UPDATE "rnal" SET brdo = greatest(coalesce(brdo, 0) - 1, 0) WHERE (rnalid = $1) AND (god = $2) AND (kar = $3)
+[]interface {}{9, 2026, 7}
+in transaction: true
+

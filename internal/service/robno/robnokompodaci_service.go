@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"reflect"
+	"strings"
 
 	"helia/internal/common"
 	"helia/internal/domain"
+	"helia/internal/infrastructure/db/querybuilder"
 	"helia/internal/repository"
 	commonsvc "helia/internal/service/common"
 
@@ -74,20 +75,18 @@ func (s *RobnoKompodaciResource) GetPregledRealizacijePoKupcimaArtiklima(ctx con
 	}
 	customerSelect := "concat(rdok.fkto, ' ', rdok.fana) as kupac"
 	customerNameSelect := "max(coalesce(p.naziv, '')) as nazivkupca"
-	groupBy := "rdok.fkto, rdok.fana, rsif.sifra"
-	orderBy := "rdok.fkto, rdok.fana, rsif.sifra"
+	groupBy := []string{"rdok.fkto", "rdok.fana", "rsif.sifra"}
 	if params.TipIzvestaja == "1" {
 		// ObradaPOARTIKLU aggregates aaFAKT by article, not by customer.
 		customerSelect = "'' as kupac"
 		customerNameSelect = "'' as nazivkupca"
-		groupBy = "rsif.sifra"
-		orderBy = "rsif.sifra"
+		groupBy = []string{"rsif.sifra"}
 	}
 
-	qb := common.NewQueryBuilder(`
+	b := querybuilder.New(`
 		select
-			`+customerSelect+`,
-			`+customerNameSelect+`,
+			` + customerSelect + `,
+			` + customerNameSelect + `,
 			rsif.sifra,
 			max(rsif.naziv) as naziv,
 			max(rsif.jm) as jm,
@@ -99,20 +98,20 @@ func (s *RobnoKompodaciResource) GetPregledRealizacijePoKupcimaArtiklima(ctx con
 			,sum(round(case when rpro.ncena > 0 then rpro.kolic * rpro.ncena else rpro.kolic * rpro.cena end, 2)) as nabiznos
 		from rdok
 		inner join rpro on rdok.rdokid = rpro.rdokid
-		inner join rsif on rsif.rsifid = rpro.rsifid`, true)
-	qb.AddJoin("left join fkpl on fkpl.vkonta = 1 and fkpl.konto = rdok.fkto and fkpl.sifra = rdok.fana" + fkplGodKar)
-	qb.AddJoin("left join partneri p on p.idpartneri = fkpl.idpartneri")
+		inner join rsif on rsif.rsifid = rpro.rsifid`).
+		AddJoin("left join fkpl on fkpl.vkonta = 1 and fkpl.konto = rdok.fkto and fkpl.sifra = rdok.fana" + fkplGodKar).
+		AddJoin("left join partneri p on p.idpartneri = fkpl.idpartneri")
 	if hasGod {
-		qb.AddEqual("rpro.god", userSession.SelectedGod)
+		b.Where("rpro.god = ?", userSession.SelectedGod)
 	}
 	if hasKar {
-		qb.AddEqual("rpro.kar", userSession.SelectedKar)
+		b.Where("rpro.kar = ?", userSession.SelectedKar)
 	}
-	qb.AddIn("rdok.vrd", vrdParam)
-	qb.AddCondition("rsif.sifra", params.OdArtikla, ">=")
-	qb.AddCondition("rsif.sifra", params.DoArtikla, "<=")
-	qb.AddCondition("rdok.dadok", params.OdDatuma, ">=")
-	qb.AddCondition("rdok.dadok", params.DoDatuma, "<=")
+	b.AddIn("rdok.vrd", vrdParam).
+		AddCondition("rsif.sifra", params.OdArtikla, ">=").
+		AddCondition("rsif.sifra", params.DoArtikla, "<=").
+		AddCondition("rdok.dadok", params.OdDatuma, ">=").
+		AddCondition("rdok.dadok", params.DoDatuma, "<=")
 
 	if params.OdGrupe == "-" {
 		params.OdGrupe = "0"
@@ -120,36 +119,43 @@ func (s *RobnoKompodaciResource) GetPregledRealizacijePoKupcimaArtiklima(ctx con
 	if params.DoGrupe == "-" {
 		params.DoGrupe = "99999"
 	}
-	qb.AddCondition("rsif.gru", params.OdGrupe, ">=")
-	qb.AddCondition("rsif.gru", params.DoGrupe, "<=")
+	b.AddCondition("rsif.gru", params.OdGrupe, ">=").
+		AddCondition("rsif.gru", params.DoGrupe, "<=")
 	switch params.Trziste {
 	case "1":
-		qb.AddCustomCondition("coalesce(rdok.sifval, 0) = 0")
+		b.Where("coalesce(rdok.sifval, 0) = 0")
 	case "2":
-		qb.AddCustomCondition("coalesce(rdok.sifval, 0) > 0")
+		b.Where("coalesce(rdok.sifval, 0) > 0")
 	}
-	if tipStampe == common.TipStampePreview && params.SearchText != "" {
-		qb.SetEntityType(reflect.TypeOf(domain.RobnoKomPodaciDto{}))
-		qb.AddSearchConditions(s.GetPregledRealizacijePoKupcimaArtiklimaTableFields(), params.SearchText)
+	if tipStampe == common.TipStampePreview {
+		// RobnoKomPodaciDto has no god/kar, so ApplyFilters only adds the search.
+		if err := s.komPodaciRepo.ApplyFilters(ctx, b, "", s.GetPregledRealizacijePoKupcimaArtiklimaTableFields(), params.SearchText); err != nil {
+			return err
+		}
 	}
+	b.GroupBy(groupBy...)
 
-	qb.AddGroupBy(groupBy)
-	qb.AddOrderBy(orderBy)
-	if tipStampe == common.TipStampePreview && !totalRecords {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((page - 1) * pageSize)
+	if tipStampe == common.TipStampePreview && totalRecords {
+		total, err := s.komPodaciRepo.Count(ctx, b)
+		if err != nil {
+			return err
+		}
+		if total == 0 {
+			return errors.New("no data found")
+		}
+		common.SetTableTotalRecords(tbl, total, pageSize)
+		return nil
 	}
-	sqlQuery, args := qb.Build()
-	entities, err := s.komPodaciRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	b.OrderBy(strings.Join(groupBy, ", "))
+	if tipStampe == common.TipStampePreview && !totalRecords {
+		b.Limit(pageSize).Offset((page - 1) * pageSize)
+	}
+	entities, err := s.komPodaciRepo.Select(ctx, b)
 	if err != nil {
 		return err
 	}
 	if entities == nil || len(*entities) == 0 {
 		return errors.New("no data found")
-	}
-	if tipStampe == common.TipStampePreview && totalRecords {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
-		return nil
 	}
 
 	for _, entity := range *entities {
@@ -193,8 +199,8 @@ func (s *RobnoKompodaciResource) GetPregledRealizacijePoArtiklima(ctx context.Co
 		fispGodKar += " and fisp.kar = rdok.kar"
 	}
 
-	qb := common.NewQueryBuilder(`
-		select 
+	b := querybuilder.New(`
+		select
 			rsif.sifra,
 			max(rsif.naziv) as naziv,
 			max(rsif.jm) as jm,
@@ -225,21 +231,21 @@ func (s *RobnoKompodaciResource) GetPregledRealizacijePoArtiklima(ctx context.Co
 			)) as xkasa
 		from rdok
 		inner join rpro on rdok.rdokid = rpro.rdokid
-		inner join rsif on rsif.rsifid = rpro.rsifid`, true)
-	qb.AddJoin("left join fkpl on fkpl.vkonta = 1 and fkpl.konto = rdok.fkto and fkpl.sifra = rdok.fana" + fkplGodKar)
-	qb.AddJoin("left join partneri p on p.idpartneri = fkpl.idpartneri")
-	qb.AddJoin("left join fisp on fisp.konto = rdok.fkto and fisp.sifra = rdok.fana and fisp.mi = rdok.mi" + fispGodKar)
+		inner join rsif on rsif.rsifid = rpro.rsifid`).
+		AddJoin("left join fkpl on fkpl.vkonta = 1 and fkpl.konto = rdok.fkto and fkpl.sifra = rdok.fana" + fkplGodKar).
+		AddJoin("left join partneri p on p.idpartneri = fkpl.idpartneri").
+		AddJoin("left join fisp on fisp.konto = rdok.fkto and fisp.sifra = rdok.fana and fisp.mi = rdok.mi" + fispGodKar)
 	if hasGod {
-		qb.AddEqual("rpro.god", userSession.SelectedGod)
+		b.Where("rpro.god = ?", userSession.SelectedGod)
 	}
 	if hasKar {
-		qb.AddEqual("rpro.kar", userSession.SelectedKar)
+		b.Where("rpro.kar = ?", userSession.SelectedKar)
 	}
-	qb.AddIn("rdok.vrd", vrdParam)
-	qb.AddCondition("rsif.sifra", params.OdArtikla, ">=")
-	qb.AddCondition("rsif.sifra", params.DoArtikla, "<=")
-	qb.AddCondition("rdok.dadok", params.OdDatuma, ">=")
-	qb.AddCondition("rdok.dadok", params.DoDatuma, "<=")
+	b.AddIn("rdok.vrd", vrdParam).
+		AddCondition("rsif.sifra", params.OdArtikla, ">=").
+		AddCondition("rsif.sifra", params.DoArtikla, "<=").
+		AddCondition("rdok.dadok", params.OdDatuma, ">=").
+		AddCondition("rdok.dadok", params.DoDatuma, "<=")
 
 	if params.OdGrupe == "-" {
 		params.OdGrupe = "0"
@@ -247,30 +253,30 @@ func (s *RobnoKompodaciResource) GetPregledRealizacijePoArtiklima(ctx context.Co
 	if params.DoGrupe == "-" {
 		params.DoGrupe = "99999"
 	}
-	qb.AddCondition("rsif.gru", params.OdGrupe, ">=")
-	qb.AddCondition("rsif.gru", params.DoGrupe, "<=")
+	b.AddCondition("rsif.gru", params.OdGrupe, ">=").
+		AddCondition("rsif.gru", params.DoGrupe, "<=")
 
 	// RADIO_TRZISTE: domaće = bez devizne valute, izvoz = sa deviznom valutom
 	switch params.Trziste {
 	case "1":
-		qb.AddCustomCondition("(coalesce(rdok.sifval, 0) = 0)")
+		b.Where("coalesce(rdok.sifval, 0) = 0")
 	case "2":
-		qb.AddCustomCondition("(coalesce(rdok.sifval, 0) > 0)")
+		b.Where("coalesce(rdok.sifval, 0) > 0")
 	}
 
-	// Add search conditions if search text is provided
-	if tipStampe == common.TipStampePreview && params.SearchText != "" {
-		qb.SetEntityType(reflect.TypeOf(domain.RobnoKomPodaciDto{}))
-		qb.AddSearchConditions(s.GetPregledRealizacijePoArtiklimaTableFields(), params.SearchText)
+	// Add search conditions if search text is provided (RobnoKomPodaciDto has no god/kar, so
+	// ApplyFilters only adds the search).
+	if tipStampe == common.TipStampePreview {
+		if err := s.komPodaciRepo.ApplyFilters(ctx, b, "", s.GetPregledRealizacijePoArtiklimaTableFields(), params.SearchText); err != nil {
+			return err
+		}
 	}
-	qb.AddGroupBy("rsif.sifra, rdok.fkto, rdok.fana, coalesce(rdok.mi, 0)")
-	qb.AddOrderBy("rsif.sifra, rdok.fkto, rdok.fana, coalesce(rdok.mi, 0)")
+	b.GroupBy("rsif.sifra", "rdok.fkto", "rdok.fana").GroupByExpr("coalesce(rdok.mi, 0)").
+		OrderBy("rsif.sifra, rdok.fkto, rdok.fana").OrderByExpr("coalesce(rdok.mi, 0)")
 	if tipStampe == common.TipStampePreview && !getTotalRecords {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
+		b.Limit(pageSize).Offset((currentPage - 1) * pageSize)
 	}
-	sqlQuery, args := qb.Build()
-	entities, err := s.komPodaciRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.komPodaciRepo.Select(ctx, b)
 	if err != nil {
 		return err
 	}
@@ -357,30 +363,28 @@ func (s *RobnoKompodaciResource) GetPregledUcescaArtikla(ctx context.Context, tb
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 	hasGod, hasKar := s.rproRepo.GetHasGodHasKar()
 	// Build and execute the total net value query to calculate the total for percentage calculations.
-	qbTotal := common.NewQueryBuilder(`select 
-	    coalesce(round(sum(round(rpro.kolic * rpro.fcena, 2) 
+	bTotal := querybuilder.New(`select
+	    coalesce(round(sum(round(rpro.kolic * rpro.fcena, 2)
         - round(rpro.kolic * rpro.fcena * rpro.rab / 100, 2)
         - round((round(rpro.kolic * rpro.fcena, 2) - round(rpro.kolic * rpro.fcena * rpro.rab / 100, 2)) * rdok.ugrabat / 100, 2)
         - round((round(rpro.kolic * rpro.fcena, 2) - round(rpro.kolic * rpro.fcena * rpro.rab / 100, 2)
         - round((round(rpro.kolic * rpro.fcena, 2) - round(rpro.kolic * rpro.fcena * rpro.rab / 100, 2)) * rdok.ugrabat / 100, 2)) * rdok.pkase / 100, 2)), 2), 0) as total_netvalue
-    from rpro `, true)
-	qbTotal.AddJoin(` inner join rdok on rdok.rdokid = rpro.rdokid`)
-	qbTotal.AddJoin(` inner join rsif on rsif.rsifid = rpro.rsifid`)
+    from rpro`).
+		AddJoin("inner join rdok on rdok.rdokid = rpro.rdokid").
+		AddJoin("inner join rsif on rsif.rsifid = rpro.rsifid")
 	if hasGod {
-		qbTotal.AddEqual("rpro.god", userSession.SelectedGod)
+		bTotal.Where("rpro.god = ?", userSession.SelectedGod)
 	}
 	if hasKar {
-		qbTotal.AddEqual("rpro.kar", userSession.SelectedKar)
+		bTotal.Where("rpro.kar = ?", userSession.SelectedKar)
 	}
+	bTotal.AddIn("rdok.vrd", vrdParam).
+		AddCondition("rsif.sifra", params.OdArtikla, ">=").
+		AddCondition("rsif.sifra", params.DoArtikla, "<=").
+		AddCondition("rdok.dadok", params.OdDatuma, ">=").
+		AddCondition("rdok.dadok", params.DoDatuma, "<=")
 
-	qbTotal.AddIn("rdok.vrd", vrdParam)
-	qbTotal.AddCondition("rsif.sifra", params.OdArtikla, ">=")
-	qbTotal.AddCondition("rsif.sifra", params.DoArtikla, "<=")
-	qbTotal.AddCondition("rdok.dadok", params.OdDatuma, ">=")
-	qbTotal.AddCondition("rdok.dadok", params.DoDatuma, "<=")
-
-	sqlQuery, args := qbTotal.Build()
-	entities, err := s.komPodaciRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.komPodaciRepo.Select(ctx, bTotal)
 	if err != nil {
 		return err
 	}
@@ -388,8 +392,8 @@ func (s *RobnoKompodaciResource) GetPregledUcescaArtikla(ctx context.Context, tb
 		total = (*entities)[0].TotalNetvalue
 	}
 
-	qb := common.NewQueryBuilder(`
-		select 
+	b := querybuilder.New(`
+		select
 			rsif.sifra,
 			max(rsif.naziv) as naziv,
 			max(rsif.jm) as jm,
@@ -413,31 +417,31 @@ func (s *RobnoKompodaciResource) GetPregledUcescaArtikla(ctx context.Context, tb
 			)) as xkasa
 		from rdok
 		inner join rpro on rdok.rdokid = rpro.rdokid
-		inner join rsif on rsif.rsifid = rpro.rsifid`, true)
+		inner join rsif on rsif.rsifid = rpro.rsifid`)
 	if hasGod {
-		qb.AddEqual("rpro.god", userSession.SelectedGod)
+		b.Where("rpro.god = ?", userSession.SelectedGod)
 	}
 	if hasKar {
-		qb.AddEqual("rpro.kar", userSession.SelectedKar)
+		b.Where("rpro.kar = ?", userSession.SelectedKar)
 	}
-	qb.AddIn("rdok.vrd", vrdParam)
-	qb.AddCondition("rsif.sifra", params.OdArtikla, ">=")
-	qb.AddCondition("rsif.sifra", params.DoArtikla, "<=")
-	qb.AddCondition("rdok.dadok", params.OdDatuma, ">=")
-	qb.AddCondition("rdok.dadok", params.DoDatuma, "<=")
+	b.AddIn("rdok.vrd", vrdParam).
+		AddCondition("rsif.sifra", params.OdArtikla, ">=").
+		AddCondition("rsif.sifra", params.DoArtikla, "<=").
+		AddCondition("rdok.dadok", params.OdDatuma, ">=").
+		AddCondition("rdok.dadok", params.DoDatuma, "<=")
 
-	// Add search conditions if search text is provided
-	if tipStampe == common.TipStampePreview && params.SearchText != "" {
-		qb.SetEntityType(reflect.TypeOf(domain.RobnoKomPodaciDto{}))
-		qb.AddSearchConditions(s.GetPregledUcescaArtiklaTableFields(), params.SearchText)
+	// Add search conditions if search text is provided (RobnoKomPodaciDto has no god/kar, so
+	// ApplyFilters only adds the search).
+	if tipStampe == common.TipStampePreview {
+		if err := s.komPodaciRepo.ApplyFilters(ctx, b, "", s.GetPregledUcescaArtiklaTableFields(), params.SearchText); err != nil {
+			return err
+		}
 	}
-	qb.AddGroupBy("rsif.sifra")
+	b.GroupBy("rsif.sifra")
 	if tipStampe == common.TipStampePreview && !getTotalRecords {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
+		b.Limit(pageSize).Offset((currentPage - 1) * pageSize)
 	}
-	sqlQuery, args = qb.Build()
-	entities, err = s.komPodaciRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err = s.komPodaciRepo.Select(ctx, b)
 	if err != nil {
 		return err
 	}
@@ -479,21 +483,21 @@ func (s *RobnoKompodaciResource) GetPregledUcescaGrupeArtikala(ctx context.Conte
 	if userSession == nil {
 		return fmt.Errorf("no user session found")
 	}
-	qbTotal := common.NewQueryBuilder(`select 
-    round(sum(round(rpro.kolic * rpro.fcena, 2) 
+	bTotal := querybuilder.New(`select
+    round(sum(round(rpro.kolic * rpro.fcena, 2)
         - round(rpro.kolic * rpro.fcena * rpro.rab / 100, 2)
         - round((round(rpro.kolic * rpro.fcena, 2) - round(rpro.kolic * rpro.fcena * rpro.rab / 100, 2)) * rdok.ugrabat / 100, 2)
         - round((round(rpro.kolic * rpro.fcena, 2) - round(rpro.kolic * rpro.fcena * rpro.rab / 100, 2)
         - round((round(rpro.kolic * rpro.fcena, 2) - round(rpro.kolic * rpro.fcena * rpro.rab / 100, 2)) * rdok.ugrabat / 100, 2)) * rdok.pkase / 100, 2)), 2) as total_netvalue
-    from rpro `, true)
-	qbTotal.AddJoin(` inner join rdok on rdok.rdokid = rpro.rdokid`)
-	qbTotal.AddJoin(` inner join rsif on rsif.rsifid = rpro.rsifid`)
+    from rpro`).
+		AddJoin("inner join rdok on rdok.rdokid = rpro.rdokid").
+		AddJoin("inner join rsif on rsif.rsifid = rpro.rsifid")
 	hasGod, hasKar := s.rproRepo.GetHasGodHasKar()
 	if hasGod {
-		qbTotal.AddEqual("rpro.god", userSession.SelectedGod)
+		bTotal.Where("rpro.god = ?", userSession.SelectedGod)
 	}
 	if hasKar {
-		qbTotal.AddEqual("rpro.kar", userSession.SelectedKar)
+		bTotal.Where("rpro.kar = ?", userSession.SelectedKar)
 	}
 	if params.OdGrupe == "-" {
 		params.OdGrupe = "0"
@@ -501,20 +505,18 @@ func (s *RobnoKompodaciResource) GetPregledUcescaGrupeArtikala(ctx context.Conte
 	if params.DoGrupe == "-" {
 		params.DoGrupe = "99999"
 	}
-	qbTotal.AddIn("rdok.vrd", vrdParam)
-	qbTotal.AddCondition("rsif.gru", params.OdGrupe, ">=")
-	qbTotal.AddCondition("rsif.gru", params.DoGrupe, "<=")
+	bTotal.AddIn("rdok.vrd", vrdParam).
+		AddCondition("rsif.gru", params.OdGrupe, ">=").
+		AddCondition("rsif.gru", params.DoGrupe, "<=")
 
-	sqlQuery, args := qbTotal.Build()
-	entities, err := s.komPodaciRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.komPodaciRepo.Select(ctx, bTotal)
 	if err != nil {
 		return err
 	}
 	if len(*entities) > 0 {
 		total = (*entities)[0].TotalNetvalue
 	}
-	sqlQuery, args = s.BuildRobnoKomPodaciQueryWithCTE(params, userSession, getTotalRecords, pageSize, page, tipStampe)
-	entities, err = s.komPodaciRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err = s.komPodaciRepo.Select(ctx, s.BuildRobnoKomPodaciQueryWithCTE(params, userSession, getTotalRecords, pageSize, page, tipStampe))
 	if err != nil {
 		return err
 	}
@@ -543,7 +545,7 @@ func (s *RobnoKompodaciResource) GetPregledUcescaGrupeArtikala(ctx context.Conte
 }
 
 // BuildRobnoKomPodaciQueryWithCTE builds a complex CTE query for robno kompodaci reports
-func (s *RobnoKompodaciResource) BuildRobnoKomPodaciQueryWithCTE(params domain.RobnoKomPodaciParams, userSession *domain.UserSession, getTotalRecords bool, pageSize, currentPage int, tipStampe string) (string, []any) {
+func (s *RobnoKompodaciResource) BuildRobnoKomPodaciQueryWithCTE(params domain.RobnoKomPodaciParams, userSession *domain.UserSession, getTotalRecords bool, pageSize, currentPage int, tipStampe string) *querybuilder.Builder {
 	// Build the CTE query with explicit INNER JOINs
 	cteQuery := `
 		select 
@@ -571,41 +573,33 @@ func (s *RobnoKompodaciResource) BuildRobnoKomPodaciQueryWithCTE(params domain.R
 		inner join rpro on rdok.rdokid = rpro.rdokid
 		inner join rsif on rsif.rsifid = rpro.rsifid
 		left join rgru on rgru.rgruid = rsif.rgruid
-		where 
-			rdok.god = $1
-			and rdok.kar = $2
-			and rdok.dadok between $3 and $4
-			and rdok.vrd = any($5)
-			and rsif.gru >= $6
-			and rsif.gru <= $7`
+		where
+			rdok.god = ?
+			and rdok.kar = ?
+			and rdok.dadok between ? and ?
+			and rdok.vrd = any(?)
+			and rsif.gru >= ?
+			and rsif.gru <= ?`
 
-	// Create query builder for the main SELECT from CTE
-	qb := common.NewQueryBuilder("select gru, nazivgrupe, sum(kolic) as totkolic, round(sum(xiznos - xrab - xugrabat - xkasa), 2) as total_netvalue from row_calculations", false)
-
-	// Add CTE to query builder
-	qb.WithCTE("row_calculations", cteQuery)
-
-	// Set the parameters for the CTE
 	vrdArray := []int{130, 131, 188, 189} // Default VRD values
 
-	qb.AddArgs(
-		userSession.SelectedGod, // $1
-		userSession.SelectedKar, // $2
-		params.OdDatuma,         // $3
-		params.DoDatuma,         // $4
-		pq.Array(vrdArray),      // $5
-		params.OdGrupe,          // $6
-		params.DoGrupe,          // $7
-	)
-	// Add GROUP BY and ORDER BY
-	qb.AddGroupBy("gru, nazivgrupe")
-	qb.AddOrderBy("gru")
+	// The main SELECT from the CTE; the arguments of the CTE are numbered first.
+	b := querybuilder.New("select gru, nazivgrupe, sum(kolic) as totkolic, round(sum(xiznos - xrab - xugrabat - xkasa), 2) as total_netvalue from row_calculations").
+		WithCTE("row_calculations", cteQuery,
+			userSession.SelectedGod,
+			userSession.SelectedKar,
+			params.OdDatuma,
+			params.DoDatuma,
+			pq.Array(vrdArray),
+			params.OdGrupe,
+			params.DoGrupe,
+		).
+		GroupBy("gru", "nazivgrupe").
+		OrderBy("gru")
 	if tipStampe == common.TipStampePreview && !getTotalRecords {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
+		b.Limit(pageSize).Offset((currentPage - 1) * pageSize)
 	}
-
-	return qb.Build()
+	return b
 }
 
 // Table fields getters for various reports
@@ -702,5 +696,5 @@ func (s *RobnoKompodaciResource) setTableFields() {
 
 // GetFvrData retrieves company (fvr) data for the current session.
 func (s *RobnoKompodaciResource) GetFvrData(ctx context.Context) (domain.Fvr, error) {
-	return common.GetFvrData(ctx, s.fvrRepo)
+	return repository.GetFvrData(ctx, s.fvrRepo)
 }

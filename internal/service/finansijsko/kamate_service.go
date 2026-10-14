@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"helia/internal/common"
 	"helia/internal/domain"
+	"helia/internal/infrastructure/db/querybuilder"
 	"helia/internal/repository"
-	"reflect"
 	"time"
 )
 
@@ -87,11 +87,14 @@ func (s *KamateResource) GetObracunTableFields() []domain.Fields {
 
 func (s *KamateResource) GetKamatneStopeByID(ctx context.Context, id int64) (*domain.Tkam, error) {
 
-	qb := common.NewQueryBuilder(`SELECT tkam.idtkam, tkam.tipkam, tkam.odd, tkam.dod, tkam.kst, kam.opis, kam.model FROM tkam `, true)
-	qb.AddJoin(" LEFT JOIN kam on kam.idkam = tkam.idkam ")
-	qb.AddEqual("idtkam", id)
-	sqlQuery, args := qb.Build()
-	entities, err := s.tkamRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	b := querybuilder.New(`SELECT tkam.idtkam, tkam.tipkam, tkam.odd, tkam.dod, tkam.kst, kam.opis, kam.model FROM tkam`).
+		AddJoin("LEFT JOIN kam on kam.idkam = tkam.idkam").
+		Where("tkam.idtkam = ?", id)
+	// The id comes from the request: the stopa must also be of the period of the session.
+	if err := s.tkamRepo.ApplyFilters(ctx, b, "tkam", nil, ""); err != nil {
+		return nil, err
+	}
+	entities, err := s.tkamRepo.Select(ctx, b)
 	if err != nil {
 		return nil, err
 	}
@@ -108,40 +111,32 @@ func (s *KamateResource) GetKamatneStope(ctx context.Context, tbl *domain.TableD
 		return fmt.Errorf("user session not found")
 	}
 	common.SetupTablePagination(tbl, currentPage, pageSize)
-	hasGod, hasKar := s.tkamRepo.GetHasGodHasKar()
 
 	// Build query for Kamatne stope
-	qb := common.NewQueryBuilder(`SELECT tkam.idtkam, tkam.tipkam, tkam.odd, tkam.dod, tkam.kst, kam.opis, kam.model FROM tkam `, true)
-	qb.AddJoin(" LEFT JOIN kam on tkam.idkam = kam.idkam")
-	if hasGod {
-		qb.AddEqual("tkam.god", session.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("tkam.kar", session.SelectedKar)
-	}
-	if searchText != "" {
-		qb.SetEntityType(reflect.TypeOf(domain.Tkam{}))
-		qb.AddSearchConditions(s.GetKamatneStopeTableFields(), searchText)
-	}
-
-	qb.AddOrderBy("tipkam")
-
-	if !getTotalRecords {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
-	}
-
-	// Execute query and populate table
-	sqlQuery, args := qb.Build()
-	entities, err := s.tkamRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
+	b := querybuilder.New(`SELECT tkam.idtkam, tkam.tipkam, tkam.odd, tkam.dod, tkam.kst, kam.opis, kam.model FROM tkam`).
+		AddJoin("LEFT JOIN kam on tkam.idkam = kam.idkam")
+	// The period of the session (tkam.god/kar) and the search over the columns of the grid.
+	if err := s.tkamRepo.ApplyFilters(ctx, b, "tkam", s.GetKamatneStopeTableFields(), searchText); err != nil {
 		return err
 	}
 
 	// Set total records and pagination
 	if getTotalRecords {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
+		total, err := s.tkamRepo.Count(ctx, b)
+		if err != nil {
+			return err
+		}
+		common.SetTableTotalRecords(tbl, total, pageSize)
 		return nil
+	}
+	b.OrderBy("tipkam").
+		Limit(pageSize).
+		Offset((currentPage - 1) * pageSize)
+
+	// Execute query and populate table
+	entities, err := s.tkamRepo.Select(ctx, b)
+	if err != nil {
+		return err
 	}
 
 	// Populate table rows
@@ -205,35 +200,25 @@ func (s *KamateResource) SaveKamatneStope(ctx context.Context, tkam *domain.Tkam
 
 	if cAction == common.ActionAdd {
 		// Create new record
-		qb := common.NewQueryBuilder(`INSERT INTO tkam (god, kar, tipkam, odd, dod, kst, xopunos, xdatunosa) 
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING idtkam `, false)
-		qb.AddArgs(userSession.SelectedGod, userSession.SelectedKar, tkam.Tipkam, tkam.Odd, tkam.Dod, tkam.Kst, userSession.UserName, time.Now())
-		sqlQuery, args := qb.Build()
-
-		err := s.tkamRepo.CreateUpdateCustom(ctx, sqlQuery, args...)
-		if err != nil {
+		b := querybuilder.New(`INSERT INTO tkam (god, kar, tipkam, odd, dod, kst, xopunos, xdatunosa)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING idtkam`,
+			userSession.SelectedGod, userSession.SelectedKar, tkam.Tipkam, tkam.Odd, tkam.Dod, tkam.Kst, userSession.UserName, time.Now())
+		if err := s.tkamRepo.Exec(ctx, b); err != nil {
 			return fmt.Errorf("error creating kamatne stope record: %w", err)
 		}
 	}
 	if cAction == common.ActionUpdate {
-		// Update existing record
-		qb := common.NewQueryBuilder(`UPDATE tkam SET idkam = $1, tipkam = $2, odd = $3, 
-		dod = $4, kst = $5, xopizmene = $6, xdatizmene = $7`, true)
-		qb.AddArgs(tkam.Idkam, tkam.Tipkam, tkam.Odd, tkam.Dod, tkam.Kst, userSession.UserName, time.Now())
-		qb.AddEqual("idtkam", idValue)
-		sqlQuery, args := qb.Build()
-		tx, err := s.tkamRepo.BeginTx()
-		if err != nil {
-			return fmt.Errorf("error starting transaction: %w", err)
+		// Update existing record; the id comes from the request, so it must also be of the period of
+		// the session.
+		b := querybuilder.NewUpdate("tkam").
+			Set("idkam = ?, tipkam = ?, odd = ?", tkam.Idkam, tkam.Tipkam, tkam.Odd).
+			Set("dod = ?, kst = ?, xopizmene = ?, xdatizmene = ?", tkam.Dod, tkam.Kst, userSession.UserName, time.Now()).
+			Where("idtkam = ?", idValue)
+		if err := s.tkamRepo.ApplyFilters(ctx, b, "", nil, ""); err != nil {
+			return err
 		}
-		_, err = tx.ExecContext(ctx, sqlQuery, args...)
-		if err != nil {
-			tx.Rollback()
+		if err := s.tkamRepo.Exec(ctx, b); err != nil {
 			return fmt.Errorf("error updating kamatne stope record: %w", err)
-		}
-		err = tx.Commit()
-		if err != nil {
-			return fmt.Errorf("error committing transaction: %w", err)
 		}
 	}
 
@@ -256,19 +241,13 @@ func (s *KamateResource) GetTipKamateOptions(ctx context.Context, model *domain.
 	if userSession == nil {
 		return fmt.Errorf("user session not found")
 	}
-	// Build query for Kamatne stope
-	hasGod, hasKar := s.kamRepo.GetHasGodHasKar()
-	qb := common.NewQueryBuilder(`SELECT idkam, tipkam, opis, model FROM kam `, true)
-	if hasGod {
-		qb.AddEqual("kam.god", userSession.SelectedGod)
+	// Build query for the tipovi kamate of the period
+	b := querybuilder.New(`SELECT idkam, tipkam, opis, model FROM kam`).OrderBy("tipkam")
+	if err := s.kamRepo.ApplyFilters(ctx, b, "kam", nil, ""); err != nil {
+		return err
 	}
-	if hasKar {
-		qb.AddEqual("kam.kar", userSession.SelectedKar)
-	}
-	qb.AddOrderBy("tipkam")
 	// Execute query and populate table
-	sqlQuery, args := qb.Build()
-	entities, err := s.kamRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.kamRepo.Select(ctx, b)
 	if err != nil {
 		return err
 	}
@@ -291,39 +270,31 @@ func (s *KamateResource) GetTipoviKamate(ctx context.Context, tbl *domain.TableD
 		return fmt.Errorf("user session not found")
 	}
 	common.SetupTablePagination(tbl, currentPage, pageSize)
-	hasGod, hasKar := s.kamRepo.GetHasGodHasKar()
 
-	// Build query for Kamatne stope
-	qb := common.NewQueryBuilder(`SELECT idkam, tipkam, opis, model FROM kam `, true)
-	if hasGod {
-		qb.AddEqual("kam.god", session.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("kam.kar", session.SelectedKar)
-	}
-	if searchText != "" {
-		qb.SetEntityType(reflect.TypeOf(domain.Kam{}))
-		qb.AddSearchConditions(s.GetKamatneStopeTableFields(), searchText)
-	}
-
-	qb.AddOrderBy("tipkam")
-
-	if !getTotalRecords {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
-	}
-
-	// Execute query and populate table
-	sqlQuery, args := qb.Build()
-	entities, err := s.kamRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
+	// Build query for the tipovi kamate: the period of the session and the search over the columns of
+	// the grid (of the Kam entity, like before).
+	b := querybuilder.New(`SELECT idkam, tipkam, opis, model FROM kam`)
+	if err := s.kamRepo.ApplyFilters(ctx, b, "kam", s.GetKamatneStopeTableFields(), searchText); err != nil {
 		return err
 	}
 
 	// Set total records and pagination
 	if getTotalRecords {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
+		total, err := s.kamRepo.Count(ctx, b)
+		if err != nil {
+			return err
+		}
+		common.SetTableTotalRecords(tbl, total, pageSize)
 		return nil
+	}
+	b.OrderBy("tipkam").
+		Limit(pageSize).
+		Offset((currentPage - 1) * pageSize)
+
+	// Execute query and populate table
+	entities, err := s.kamRepo.Select(ctx, b)
+	if err != nil {
+		return err
 	}
 
 	// Populate table rows
@@ -373,36 +344,25 @@ func (s *KamateResource) SaveTipoviKamate(ctx context.Context, kam *domain.Kam, 
 	}
 	if cAction == common.ActionAdd {
 		// Create new record
-		qb := common.NewQueryBuilder(`INSERT INTO kam (god, kar, tipkam, opis, model, xopunos, xdatunosa) 
-		VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING idkam `, false)
-		qb.AddArgs(userSession.SelectedGod, userSession.SelectedKar, kam.Tipkam, kam.Opis, kam.Model, userSession.UserName, time.Now())
-		sqlQuery, args := qb.Build()
-
-		err := s.kamRepo.CreateUpdateCustom(ctx, sqlQuery, args...)
-		if err != nil {
+		b := querybuilder.New(`INSERT INTO kam (god, kar, tipkam, opis, model, xopunos, xdatunosa)
+		VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING idkam`,
+			userSession.SelectedGod, userSession.SelectedKar, kam.Tipkam, kam.Opis, kam.Model, userSession.UserName, time.Now())
+		if err := s.kamRepo.Exec(ctx, b); err != nil {
 			return fmt.Errorf("error creating tipovi kamate record: %w", err)
 		}
 	}
 	if cAction == common.ActionUpdate {
-		// Update existing record
-		qb := common.NewQueryBuilder(`UPDATE kam SET tipkam = $1, opis = $2, 
-		model = $3, xopizmene = $4, xdatizmene = $5`, true)
-		qb.AddArgs(kam.Tipkam, kam.Opis, kam.Model, userSession.UserName, time.Now())
-		qb.AddEqual("idkam", idValue)
-
-		sqlQuery, args := qb.Build()
-		tx, err := s.kamRepo.BeginTx()
-		if err != nil {
-			return fmt.Errorf("error starting transaction: %w", err)
+		// Update existing record; the id comes from the request, so it must also be of the period of
+		// the session.
+		b := querybuilder.NewUpdate("kam").
+			Set("tipkam = ?, opis = ?, model = ?", kam.Tipkam, kam.Opis, kam.Model).
+			Set("xopizmene = ?, xdatizmene = ?", userSession.UserName, time.Now()).
+			Where("idkam = ?", idValue)
+		if err := s.kamRepo.ApplyFilters(ctx, b, "", nil, ""); err != nil {
+			return err
 		}
-		_, err = tx.ExecContext(ctx, sqlQuery, args...)
-		if err != nil {
-			tx.Rollback()
+		if err := s.kamRepo.Exec(ctx, b); err != nil {
 			return fmt.Errorf("error updating tipovi kamate record: %w", err)
-		}
-		err = tx.Commit()
-		if err != nil {
-			return fmt.Errorf("error committing transaction: %w", err)
 		}
 	}
 	return nil
@@ -428,54 +388,40 @@ func (s *KamateResource) GetFormiranjeKamatnihListova(ctx context.Context, tblPa
 
 	common.SetupTablePagination(tblPartneri, currentPage, pageSize)
 	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
-	qb := common.NewQueryBuilder(`SELECT f.konto, f.sifra, p.naziv, p.adresa, p.mesto
-		FROM partneri p `, true)
-	qb.AddJoin(" LEFT JOIN fpro f ON f.idpartneri = p.idpartneri ")
+	b := querybuilder.New(`SELECT f.konto, f.sifra, p.naziv, p.adresa, p.mesto
+		FROM partneri p`).
+		AddJoin("LEFT JOIN fpro f ON f.idpartneri = p.idpartneri")
 	if hasGod {
-		qb.AddEqual("f.god", session.SelectedGod)
+		b.Where("f.god = ?", session.SelectedGod)
 	}
 	if hasKar {
-		qb.AddEqual("f.kar", session.SelectedKar)
+		b.Where("f.kar = ?", session.SelectedKar)
 	}
-	qb.AddIn("f.vrd", []any{"10", "30"})
-	qb.AddEqual("f.konto", params.Konto)
-	nbrArgs := qb.GetArgsCount()
-	qb.AddCustomCondition(` (
-        f.dadok IS NULL 
-        OR f.rok IS NULL 
-        OR (f.dadok + f.rok)::date >= $` + fmt.Sprintf("%d", nbrArgs+1) + `::date
-    )
-    AND (
-        f.dadok IS NULL 
-        OR f.rok IS NULL 
-        OR (f.dadok + f.rok)::date <= $` + fmt.Sprintf("%d", nbrArgs+2) + `::date
-    ) `)
-	qb.AddCustomCondition(` (
-        f.sifra ~ '^[0-9]+\.?[0-9]*$' 
-        AND f.sifra::numeric BETWEEN $` + fmt.Sprintf("%d", nbrArgs+3) + ` AND $` + fmt.Sprintf("%d", nbrArgs+4) + `	
-    )`)
-	qb.AddArgs(params.OdDatuma, params.DoDatuma, params.OdSifre, params.DoSifre)
-	if searchText != "" {
-		qb.AddCustomSearchCondition([]string{"p.naziv", "p.mesto", "p.adresa"}, searchText)
-	}
-	qb.AddOrderBy("f.konto, f.sifra")
-	qb.AddGroupBy("f.konto, f.sifra, p.naziv, p.adresa, p.mesto")
-	if !getTotalRecords {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
-	}
-
-	// Execute query and populate table
-	sqlQuery, args := qb.Build()
-	entities, err := s.fproRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
-		return err
-	}
+	b.AddIn("f.vrd", []any{"10", "30"}).
+		AddEqual("f.konto", params.Konto). // optional: an empty konto selects every konto
+		Where(`f.dadok IS NULL OR f.rok IS NULL OR (f.dadok + f.rok)::date >= ?::date`, params.OdDatuma).
+		Where(`f.dadok IS NULL OR f.rok IS NULL OR (f.dadok + f.rok)::date <= ?::date`, params.DoDatuma).
+		Where(`f.sifra ~ '^[0-9]+\.?[0-9]*$' AND f.sifra::numeric BETWEEN ? AND ?`, params.OdSifre, params.DoSifre).
+		AddSearch([]string{"p.naziv", "p.mesto", "p.adresa"}, searchText).
+		GroupBy("f.konto", "f.sifra", "p.naziv", "p.adresa", "p.mesto")
 
 	// Set total records and pagination
 	if getTotalRecords {
-		common.SetTableTotalRecords(tblPartneri, len(*entities), pageSize)
+		total, err := s.fproRepo.Count(ctx, b)
+		if err != nil {
+			return err
+		}
+		common.SetTableTotalRecords(tblPartneri, total, pageSize)
 		return nil
+	}
+	b.OrderBy("f.konto, f.sifra").
+		Limit(pageSize).
+		Offset((currentPage - 1) * pageSize)
+
+	// Execute query and populate table
+	entities, err := s.fproRepo.Select(ctx, b)
+	if err != nil {
+		return err
 	}
 	// Set table headers
 	tblPartneri.Headers = s.GetFormiranjeListovaPartneriTableFields()
@@ -489,7 +435,6 @@ func (s *KamateResource) GetFormiranjeKamatnihListova(ctx context.Context, tblPa
 				entity.Naziv,
 				entity.Adresa,
 				entity.Mesto,
-				
 			}
 			tblRow := domain.TableRow{Fields: fields, HasUpdate: false, HasDelete: false}
 			tblPartneri.Rows = append(tblPartneri.Rows, tblRow)
@@ -509,11 +454,10 @@ func (s *KamateResource) GetObracunKamate(ctx context.Context, tbl *domain.Table
 	common.SetTableConfig(tbl, "Obracun kamate", "", false, false, false)
 	tbl.SearchEnabled = true
 	common.SetupTablePagination(tbl, currentPage, pageSize)
-	hasGod, hasKar := s.fkplRepo.GetHasGodHasKar()
 
 	// Build query for Obracun kamate
-	qb := common.NewQueryBuilder(`
-		SELECT 
+	b := querybuilder.New(`
+		SELECT
 			fkpl.idfkpl, fkpl.konto, fkpl.sifra, fkpl.naziv,
 			fkpl.god, fkpl.kar,
 			0 as br_kam_lista,
@@ -532,40 +476,34 @@ func (s *KamateResource) GetObracunKamate(ctx context.Context, tbl *domain.Table
 			0 as iznos_dana,
 			0 as broj,
 			0 as iznos
-		FROM fkpl `, true)
-
-	if hasGod {
-		qb.AddEqual("fkpl.god", session.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("fkpl.kar", session.SelectedKar)
-	}
-	if searchText != "" {
-		qb.SetEntityType(reflect.TypeOf(domain.Fkpl{}))
-		qb.AddSearchConditions(s.GetObracunTableFields(), searchText)
-	}
-	qb.AddCondition("br_kam_lista", odBrojaListe, ">=")
-	qb.AddCondition("br_kam_lista", doBrojaListe, "<=")
-	qb.AddCondition("datum_dokuma", podDatumom, "<=")
-
-	qb.AddOrderBy("fkpl.konto ASC")
-
-	if !getTotalRecords {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
-	}
-
-	// Execute query and populate table
-	sqlQuery, args := qb.Build()
-	entities, err := s.fkplRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
+		FROM fkpl`)
+	// The period of the session (fkpl.god/kar) and the search over the columns of the grid.
+	if err := s.fkplRepo.ApplyFilters(ctx, b, "fkpl", s.GetObracunTableFields(), searchText); err != nil {
 		return err
 	}
+	// Unchanged from the old query: these filters name aliases of the select list, which PostgreSQL
+	// does not accept in WHERE, so a filled filter fails (an existing problem, see the migration notes).
+	b.AddCondition("br_kam_lista", odBrojaListe, ">=").
+		AddCondition("br_kam_lista", doBrojaListe, "<=").
+		AddCondition("datum_dokuma", podDatumom, "<=")
 
 	// Set total records and pagination
 	if getTotalRecords {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
+		total, err := s.fkplRepo.Count(ctx, b)
+		if err != nil {
+			return err
+		}
+		common.SetTableTotalRecords(tbl, total, pageSize)
 		return nil
+	}
+	b.OrderBy("fkpl.konto ASC").
+		Limit(pageSize).
+		Offset((currentPage - 1) * pageSize)
+
+	// Execute query and populate table
+	entities, err := s.fkplRepo.Select(ctx, b)
+	if err != nil {
+		return err
 	}
 
 	// Populate table rows

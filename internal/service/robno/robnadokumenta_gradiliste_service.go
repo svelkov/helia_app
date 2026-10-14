@@ -3,6 +3,7 @@ package robno
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"math"
 	"strconv"
@@ -30,13 +31,9 @@ import (
 func (s *RobnoDokumentaResource) robGrdDokument(ctx context.Context, res *domain.RobnoOpstiDokument) error {
 	h := &res.Header
 	if h.RdokID > 0 {
-		rows, err := s.unos.Tekst.GetAllCustom(ctx, `select coalesce(trim(pkto), '') as key, coalesce(trim(pana), '') as c1 from rdok where rdokid = $1`,
-			"", []any{h.RdokID}, "", "")
-		if err != nil {
+		var err error
+		if h.Pkto, h.Pana, err = s.robno.RdokPktoPana(ctx, h.RdokID); err != nil {
 			return err
-		}
-		if rows != nil && len(*rows) > 0 {
-			h.Pkto, h.Pana = (*rows)[0].Key, (*rows)[0].C1
 		}
 		if h.Pkto != "" {
 			if h.GradilisteNaziv, err = s.robOpstiNazivKonta(ctx, h.Pkto, h.Pana); err != nil {
@@ -76,8 +73,7 @@ func (s *RobnoDokumentaResource) robGrdValidate(ctx context.Context, params doma
 	}
 	if pkto := strings.TrimSpace(params.Pkto); pkto == "" || pkto == "-" {
 		add("pkto", common.ErrMsgObavezanPodatak)
-	} else if exists, err := s.robnoUnosPostoji(ctx, `select count(*) from fkpl where god = $1 and kar = $2 and trim(konto) = $3
-			and coalesce(trim(sifra), '') = $4`, userSession.SelectedGod, userSession.SelectedKar, pkto, robGrdSifra(params.Pana)); err != nil {
+	} else if exists, err := s.robno.FkplAnalitikaTrimPostoji(ctx, pkto, robGrdSifra(params.Pana)); err != nil {
 		add("pkto", common.ErrMsgReadData)
 	} else if !exists {
 		add("pana", "Ne postoji u kontnom planu.")
@@ -111,8 +107,7 @@ func (s *RobnoDokumentaResource) robGrdSaveHeader(ctx context.Context, params do
 		return v
 	}
 	vrd, dokum := common.StringToInt(params.Vrd), common.StringToInt(params.BrojDokum)
-	postoji, err := s.robnoUnosPostoji(ctx, `select count(*) from rdok where god = $1 and kar = $2 and magaciniid = $3 and vrd = $4 and dokum = $5`,
-		userSession.SelectedGod, userSession.SelectedKar, params.MagaciniID, vrd, dokum)
+	postoji, err := s.robno.RdokBrojPostoji(ctx, params.MagaciniID, vrd, dokum)
 	if err != nil {
 		return 0, err
 	}
@@ -153,15 +148,7 @@ func (s *RobnoDokumentaResource) robGrdZadnjiUlaz(ctx context.Context, sifra int
 	if userSession == nil {
 		return 0, 0, fmt.Errorf("no user session found")
 	}
-	rows, err := s.unos.Tekst.GetAllCustom(ctx, `select coalesce(p.cena, 0)::float8::text as key, coalesce(p.ncena, 0)::float8::text as c1
-		from rpro p join rdok r on r.rdokid = p.rdokid
-		where r.god = $1 and r.kar = $2 and r.vrd = $3 and p.sifra = $4
-		order by r.dadok desc nulls last, p.rproid desc limit 1`, "",
-		[]any{userSession.SelectedGod, userSession.SelectedKar, robPreKontraVrd, sifra}, "", "")
-	if err != nil || rows == nil || len(*rows) == 0 {
-		return 0, 0, err
-	}
-	return common.StringToFloat64((*rows)[0].Key), common.StringToFloat64((*rows)[0].C1), nil
+	return s.robno.RproZadnjiUlaz(ctx, robPreKontraVrd, sifra)
 }
 
 // robGrdArtikal returns the artikal of a stavka of a zaduženje gradilišta (the legacy exit of EDT_SIFRA of
@@ -174,14 +161,11 @@ func (s *RobnoDokumentaResource) robGrdArtikal(ctx context.Context, k domain.Rob
 	if userSession == nil {
 		return a, false, fmt.Errorf("no user session found")
 	}
-	rows, err := s.unos.Tekst.GetAllCustom(ctx, `select a.sifra::text as key, coalesce(a.naziv, '') as c1, coalesce(a.jm, '') as c2
-		from rsif a where a.god = $1 and a.kar = $2 and a.sifra::text = $3 limit 1`, "",
-		[]any{userSession.SelectedGod, userSession.SelectedKar, strings.TrimSpace(sifra)}, "", "")
-	if err != nil || rows == nil || len(*rows) == 0 {
+	sif, naziv, jm, found, err := s.robno.RsifArtikalPoTekstu(ctx, sifra)
+	if err != nil || !found {
 		return a, false, err
 	}
-	r := (*rows)[0]
-	a.Sifra, a.Naziv, a.Jm, a.Konto = common.StringToInt(r.Key), r.C1, r.C2, strings.TrimSpace(konto)
+	a.Sifra, a.Naziv, a.Jm, a.Konto = sif, naziv, jm, strings.TrimSpace(konto)
 	st, err := s.robOpstiStanje(ctx, k.MagaciniID, a.Konto, a.Sifra)
 	if err != nil {
 		return a, true, err
@@ -224,8 +208,7 @@ func (s *RobnoDokumentaResource) robGrdValidateStavka(ctx context.Context, k dom
 		add("sifraartikla", common.ErrMsgObavezanPodatak)
 	} else if v, err := strconv.Atoi(sifraText); err != nil {
 		add("sifraartikla", robnoUnosMsgNePostoji)
-	} else if exists, err := s.robnoUnosPostoji(ctx, `select count(*) from rsif where god = $1 and kar = $2 and sifra = $3`,
-		userSession.SelectedGod, userSession.SelectedKar, v); err != nil {
+	} else if exists, err := s.robno.RsifPostoji(ctx, v); err != nil {
 		add("sifraartikla", common.ErrMsgReadData)
 	} else if !exists {
 		add("sifraartikla", robnoUnosMsgNePostoji)
@@ -307,19 +290,19 @@ func (s *RobnoDokumentaResource) robGrdDodajStavku(ctx context.Context, tx db.Tr
 	if k.Storno() {
 		kolicina, iznos = -kolicina, -iznos
 	}
-	var rsifID int64
-	var po int
-	if err := tx.QueryRowContext(ctx, `select rsifid, coalesce(po, 0) from rsif where god = $1 and kar = $2 and sifra = $3 limit 1`,
-		userSession.SelectedGod, userSession.SelectedKar, sifra).Scan(&rsifID, &po); err != nil {
+	rsifID, po, found, err := s.robno.RsifIDPo(ctx, tx, sifra)
+	if err != nil {
 		return 0, err
 	}
-	var pkto, pana string
-	if err := tx.QueryRowContext(ctx, `select coalesce(pkto, ''), coalesce(pana, '') from rdok where rdokid = $1`, k.RdokID).Scan(&pkto, &pana); err != nil {
+	if !found {
+		return 0, fmt.Errorf("artikal ne postoji")
+	}
+	pkto, pana, err := s.robno.RdokPktoPanaTx(ctx, tx, k.RdokID)
+	if err != nil {
 		return 0, err
 	}
-	var rbr int
-	if err := tx.QueryRowContext(ctx, `select coalesce(max(rbr), 0) + 1 from rpro where rnalid = $1 and rdokid = $2`, k.RnalID, k.RdokID).
-		Scan(&rbr); err != nil {
+	rbr, err := s.robno.RproSledeciRbrNaloga(ctx, tx, k.RnalID, k.RdokID)
+	if err != nil {
 		return 0, err
 	}
 	polja := []domain.Fields{
@@ -376,8 +359,7 @@ func (s *RobnoDokumentaResource) robGrdDodajStavku(ctx context.Context, tx db.Tr
 			return 0, err
 		}
 	}
-	if err = s.unos.Rpro.CreateUpdateCustomWithTx(ctx, tx, `update rdok set iznos = round((coalesce(iznos, 0) + $2)::numeric, 2),
-		brst = coalesce(brst, 0) + 1 where rdokid = $1`, k.RdokID, iznos); err != nil {
+	if err = s.robno.RdokDodajIznos(ctx, tx, k.RdokID, iznos, 1); err != nil {
 		return 0, err
 	}
 	return rproID, nil
@@ -389,12 +371,8 @@ func (s *RobnoDokumentaResource) robGrdDodajStavku(ctx context.Context, tx db.Tr
 // its nalog (AzurirajRNAL, after the deletion), it is deleted and the stavke after it get the redni broj less by
 // one.
 func (s *RobnoDokumentaResource) robGrdBrisi(ctx context.Context, tx db.Transaction, k domain.RobStavkeKontekst, rproID int64, otr bool) error {
-	var sifra, rbr int
-	var konto string
-	var kolicina, iznos float64
-	err := tx.QueryRowContext(ctx, `select coalesce(sifra, 0), coalesce(rbr, 0), coalesce(konto, ''), coalesce(kolic, 0)::float8, coalesce(iznos, 0)::float8
-		from rpro where rproid = $1 for update`, rproID).Scan(&sifra, &rbr, &konto, &kolicina, &iznos)
-	if err == sql.ErrNoRows {
+	sifra, rbr, konto, kolicina, iznos, err := s.robno.RproStavkaBrisanje(ctx, tx, rproID)
+	if errors.Is(err, sql.ErrNoRows) {
 		return fmt.Errorf("stavka ne postoji")
 	}
 	if err != nil {
@@ -410,8 +388,7 @@ func (s *RobnoDokumentaResource) robGrdBrisi(ctx context.Context, tx db.Transact
 			return err
 		}
 	}
-	if err = s.unos.Rpro.CreateUpdateCustomWithTx(ctx, tx, `update rdok set iznos = round((coalesce(iznos, 0) - $2)::numeric, 2),
-		brst = greatest(coalesce(brst, 0) - 1, 0) where rdokid = $1`, k.RdokID, iznos); err != nil {
+	if err = s.robno.RdokOduzmiStavku(ctx, tx, k.RdokID, iznos); err != nil {
 		return err
 	}
 	if err = s.unos.Rpro.DeleteWithTx(ctx, tx, "rproid", rproID); err != nil {
@@ -420,7 +397,7 @@ func (s *RobnoDokumentaResource) robGrdBrisi(ctx context.Context, tx db.Transact
 	if err = s.AzurirajRNAL(ctx, tx, k.RnalID, k.Dugovno(), k.Potrazno(), -iznos); err != nil {
 		return err
 	}
-	return s.unos.Rpro.CreateUpdateCustomWithTx(ctx, tx, `update rpro set rbr = rbr - 1 where rdokid = $1 and rbr > $2`, k.RdokID, rbr)
+	return s.robno.RproSmanjiRbr(ctx, tx, k.RdokID, rbr)
 }
 
 // RobGrdStavkeTableRows returns the stavke of a zaduženje gradilišta as the rows of the grid of the stavke (the

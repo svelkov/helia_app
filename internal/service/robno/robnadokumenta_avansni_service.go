@@ -3,6 +3,7 @@ package robno
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"math"
 	"strconv"
@@ -11,6 +12,7 @@ import (
 	"helia/internal/common"
 	"helia/internal/domain"
 	"helia/internal/infrastructure/db"
+	"helia/internal/repository"
 )
 
 // ---------------------------------------------------------------------------------------------------
@@ -48,13 +50,11 @@ func (s *RobnoDokumentaResource) robAvansniDokument(ctx context.Context, res *do
 	st.SifraArtikla, st.Kolicina = "0", "1"
 	res.Avansi = nil
 	if h.RdokID > 0 {
-		rows, err := s.unos.Tekst.GetAllCustom(ctx, `select coalesce(profak, '') as key from rdok where rdokid = $1`, "", []any{h.RdokID}, "", "")
+		profak, err := s.robno.RdokProfak(ctx, h.RdokID)
 		if err != nil {
 			return err
 		}
-		if rows != nil && len(*rows) > 0 {
-			h.Profaktura = strings.TrimSpace((*rows)[0].Key)
-		}
+		h.Profaktura = strings.TrimSpace(profak)
 	} else if strings.TrimSpace(h.UsloviPlacanja) == "" {
 		h.UsloviPlacanja = "AVANS"
 	}
@@ -84,24 +84,20 @@ func (s *RobnoDokumentaResource) ValidateRobAvansni(ctx context.Context, params 
 	if konto == "" || sifra == "" {
 		return fieldErrors
 	}
-	rows, err := s.unos.Tekst.GetAllCustom(ctx, `select coalesce((select f.konta from fvknjrac f where f.god = $1 and f.kar = $2 and f.vktip = 'I'
-			and f.vkrbr = 3 order by f.vkrbr limit 1), '') as key,
-			coalesce((select p.idpartneri::text from fkpl p where p.god = $1 and p.kar = $2 and p.konto = $3 and p.sifra = $4 limit 1), '') as c1`, "",
-		[]any{userSession.SelectedGod, userSession.SelectedKar, konto, sifra}, "", "")
+	konta, idpartneri, err := s.robno.FvknjracKontaKupca(ctx, konto, sifra)
 	if err != nil {
 		add("kupacsifra", common.ErrMsgReadData)
 		return fieldErrors
 	}
-	if rows == nil || len(*rows) == 0 || (*rows)[0].C1 == "" {
+	if idpartneri == "" {
 		return fieldErrors
 	}
 	var nema []string
-	for _, k := range strings.Split((*rows)[0].Key, ",") {
+	for _, k := range strings.Split(konta, ",") {
 		if k = strings.TrimSpace(k); k == "" {
 			continue
 		}
-		postoji, err := s.robnoUnosPostoji(ctx, `select count(*) from fkpl where god = $1 and kar = $2 and konto = $3 and idpartneri = $4 and vkonta = 1`,
-			userSession.SelectedGod, userSession.SelectedKar, k, common.StringToInt((*rows)[0].C1))
+		postoji, err := s.robno.FkplKontoPartneraPostoji(ctx, k, common.StringToInt(idpartneri))
 		if err != nil {
 			add("kupacsifra", common.ErrMsgReadData)
 			return fieldErrors
@@ -145,24 +141,21 @@ func (s *RobnoDokumentaResource) SaveRobAvansni(ctx context.Context, params doma
 		return 0, err
 	}
 	// The avans of the document (avansfakt.rdokid, the faktura that closes it, is a key of rdok: NULL for none).
-	return rdokID, s.unos.Rpro.CreateUpdateCustom(ctx, `insert into avansfakt (god, kar, avansid, osnfakt1, pdv1fakt, osnfakt2, pdv2fakt, osnfakt3,
-			osnavans1, pdv1avans, osnavans2, pdv2avans, osnavans3, xopunos, xdatunosa)
-		select $1, $2, $3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, $4, now() where not exists (select 1 from avansfakt where avansid = $3)`,
-		userSession.SelectedGod, userSession.SelectedKar, rdokID, userSession.UserName)
+	return rdokID, s.robno.AvansfaktDodaj(ctx, rdokID)
 }
 
 // DeleteRobAvansni deletes an avansni račun with its stavke (the legacy "Briši" of rob_AvansniRacuni) like a
 // faktura (robBrisiDokument: the SEF, the fiskalni printer and the posting are checked), with its avans; an
 // avans closed by a faktura is not deleted (poruka says why).
 func (s *RobnoDokumentaResource) DeleteRobAvansni(ctx context.Context, rdokID int64) (string, error) {
-	zatvoren, err := s.robnoUnosPostoji(ctx, `select count(*) from avansfakt where avansid = $1 and coalesce(rdokid, 0) <> 0`, rdokID)
+	zatvoren, err := s.robno.AvansZatvoren(ctx, rdokID)
 	if err != nil {
 		return "", err
 	}
 	if zatvoren {
 		return "Avans je zatvoren fakturom, brisanje nije dozvoljeno.", nil
 	}
-	return s.robBrisiDokument(ctx, rdokID, true, `delete from avansfakt where avansid = $1`)
+	return s.robBrisiDokument(ctx, rdokID, true, s.robno.AvansfaktBrisi)
 }
 
 // ValidateRobAvansniStavka validates a stavka of an avansni račun (the legacy Validacija of
@@ -190,20 +183,12 @@ func (s *RobnoDokumentaResource) ValidateRobAvansniStavka(params domain.RobUslug
 }
 
 // robAvansniStara is a saved stavka of an avansni račun (before its change or deletion).
-type robAvansniStara struct {
-	rdokID          int64
-	konto, taxcat   string
-	kolicina, iznos float64
-	po, rbr         int
-}
+type robAvansniStara = repository.RproStara
 
 // robAvansniStavkaStara reads a saved stavka of an avansni račun in the transaction tx (locked).
-func robAvansniStavkaStara(ctx context.Context, tx db.Transaction, rproID int64) (robAvansniStara, error) {
-	st := robAvansniStara{}
-	err := tx.QueryRowContext(ctx, `select coalesce(rdokid, 0)::bigint, coalesce(konto, ''), coalesce(taxcat, ''), coalesce(kolic, 0)::float8,
-			coalesce(iznos, 0)::float8, coalesce(po, 0), coalesce(rbr, 0)
-		from rpro where rproid = $1 for update`, rproID).Scan(&st.rdokID, &st.konto, &st.taxcat, &st.kolicina, &st.iznos, &st.po, &st.rbr)
-	if err == sql.ErrNoRows {
+func (s *RobnoDokumentaResource) robAvansniStavkaStara(ctx context.Context, tx db.Transaction, rproID int64) (robAvansniStara, error) {
+	st, err := s.robno.RproStaraStavka(ctx, tx, rproID)
+	if errors.Is(err, sql.ErrNoRows) {
 		err = fmt.Errorf("stavka ne postoji")
 	}
 	return st, err
@@ -246,11 +231,8 @@ func (s *RobnoDokumentaResource) SaveRobAvansniStavka(ctx context.Context, param
 	}()
 
 	// The artikal of the šifra 0.
-	var rsifID int64
-	var jm string
-	err = tx.QueryRowContext(ctx, `select rsifid, coalesce(jm, '') from rsif where god = $1 and kar = $2 and sifra = 0 order by rsifid limit 1`,
-		userSession.SelectedGod, userSession.SelectedKar).Scan(&rsifID, &jm)
-	if err == sql.ErrNoRows {
+	rsifID, jm, err := s.robno.RsifNula(ctx, tx)
+	if errors.Is(err, sql.ErrNoRows) {
 		if rsifID, err = s.robKreirajRsifNula(ctx, tx, naziv); err != nil {
 			err = fmt.Errorf("artikal šifre 0 ne postoji i ne može se kreirati (proverite šifarnike artikala): %w", err)
 		}
@@ -259,17 +241,17 @@ func (s *RobnoDokumentaResource) SaveRobAvansniStavka(ctx context.Context, param
 		return 0, err
 	}
 
-	stara := robAvansniStara{konto: strings.ReplaceAll(strings.TrimSpace(params.Konto), " ", "")}
+	stara := robAvansniStara{Konto: strings.ReplaceAll(strings.TrimSpace(params.Konto), " ", "")}
 	kolicina := 1.0
 	if params.RproID > 0 {
-		if stara, err = robAvansniStavkaStara(ctx, tx, params.RproID); err != nil {
+		if stara, err = s.robAvansniStavkaStara(ctx, tx, params.RproID); err != nil {
 			return 0, err
 		}
-		if stara.rdokID != params.RdokID {
+		if stara.RdokID != params.RdokID {
 			return 0, fmt.Errorf("stavka ne pripada dokumentu")
 		}
-		if stara.kolicina != 0 {
-			kolicina = math.Abs(stara.kolicina)
+		if stara.Kolicina != 0 {
+			kolicina = math.Abs(stara.Kolicina)
 		}
 	}
 	iznos := robZaokruzi(math.Abs(kolicina*cena), 2)
@@ -293,7 +275,7 @@ func (s *RobnoDokumentaResource) SaveRobAvansniStavka(ctx context.Context, param
 		}
 	} else {
 		var rbr int
-		if err = tx.QueryRowContext(ctx, `select coalesce(max(rbr), 0) + 1 from rpro where rdokid = $1`, params.RdokID).Scan(&rbr); err != nil {
+		if rbr, err = s.robno.RproSledeciRbr(ctx, tx, params.RdokID); err != nil {
 			return 0, err
 		}
 		polja = append(polja,
@@ -304,7 +286,7 @@ func (s *RobnoDokumentaResource) SaveRobAvansniStavka(ctx context.Context, param
 			domain.Fields{Name: "dokum", Value: strconv.Itoa(k.Dokum)},
 			robPoljeNullTime("dadok", k.Dadok),
 			domain.Fields{Name: "sifra", Value: "0"},
-			domain.Fields{Name: "konto", Value: stara.konto},
+			domain.Fields{Name: "konto", Value: stara.Konto},
 			robPoljeText("jm", jm),
 			domain.Fields{Name: "ncena", Value: "0"},
 			domain.Fields{Name: "fkto", Value: k.Fkto},
@@ -323,12 +305,11 @@ func (s *RobnoDokumentaResource) SaveRobAvansniStavka(ctx context.Context, param
 			return 0, err
 		}
 		// The cena of the artikal of the šifra 0.
-		var cene int
-		if err = tx.QueryRowContext(ctx, `select count(*) from rcene where god = $1 and kar = $2 and sifra = 0`,
-			userSession.SelectedGod, userSession.SelectedKar).Scan(&cene); err != nil {
+		var cene bool
+		if cene, err = s.robno.RceneNulaPostoji(ctx, tx); err != nil {
 			return 0, err
 		}
-		if cene == 0 {
+		if !cene {
 			if _, err = s.unos.Rcene.CreateWithTx(ctx, tx, &domain.RobRceneDto{}, "rceneid", []domain.Fields{
 				{Name: "rsifid", Value: strconv.FormatInt(rsifID, 10)}, {Name: "sifra", Value: "0"},
 				{Name: "mma", Value: "0"}, {Name: "vra", Value: "0"}, {Name: "mra", Value: "0"}, {Name: "ztro", Value: "0"},
@@ -345,20 +326,19 @@ func (s *RobnoDokumentaResource) SaveRobAvansniStavka(ctx context.Context, param
 	if params.RproID == 0 {
 		brst = 1
 	}
-	if err = s.AzurirajRSTA(ctx, tx, domain.RobPromenaStanja{MagaciniID: k.MagaciniID, Konto: stara.konto, Sifra: 0, Kolicina: kolicina - stara.kolicina,
-		Iznos: iznos - stara.iznos, Danal: k.Danal.Time, DokvrstaID: k.DokvrstaID, Tipdok: k.Tipdok, Tz: "-", Tzi: "-", Brst: brst}); err != nil {
+	if err = s.AzurirajRSTA(ctx, tx, domain.RobPromenaStanja{MagaciniID: k.MagaciniID, Konto: stara.Konto, Sifra: 0, Kolicina: kolicina - stara.Kolicina,
+		Iznos: iznos - stara.Iznos, Danal: k.Danal.Time, DokvrstaID: k.DokvrstaID, Tipdok: k.Tipdok, Tz: "-", Tzi: "-", Brst: brst}); err != nil {
 		return 0, err
 	}
-	if err = s.unos.Rpro.CreateUpdateCustomWithTx(ctx, tx, `update rdok set iznos = round((coalesce(iznos, 0) + $2)::numeric, 2),
-		brst = coalesce(brst, 0) + $3 where rdokid = $1`, params.RdokID, iznos-stara.iznos, brst); err != nil {
+	if err = s.robno.RdokDodajIznos(ctx, tx, params.RdokID, iznos-stara.Iznos, brst); err != nil {
 		return 0, err
 	}
-	if err = s.AzurirajRNAL(ctx, tx, k.RnalID, k.Dugovno(), k.Potrazno(), iznos-stara.iznos); err != nil {
+	if err = s.AzurirajRNAL(ctx, tx, k.RnalID, k.Dugovno(), k.Potrazno(), iznos-stara.Iznos); err != nil {
 		return 0, err
 	}
 	// The avans: the old stavka taken back, the new one added.
 	if params.RproID > 0 {
-		if err = s.robAvansniAvansfakt(ctx, tx, params.RdokID, stara.po, stara.taxcat, -stara.iznos); err != nil {
+		if err = s.robAvansniAvansfakt(ctx, tx, params.RdokID, stara.Po, stara.Taxcat, -stara.Iznos); err != nil {
 			return 0, err
 		}
 	}
@@ -385,11 +365,11 @@ func (s *RobnoDokumentaResource) DeleteRobAvansniStavka(ctx context.Context, rpr
 			_ = tx.Rollback()
 		}
 	}()
-	stara, err := robAvansniStavkaStara(ctx, tx, rproID)
+	stara, err := s.robAvansniStavkaStara(ctx, tx, rproID)
 	if err != nil {
 		return 0, err
 	}
-	rdokID = stara.rdokID
+	rdokID = stara.RdokID
 	k, found, err := s.GetRobStavkeKontekst(ctx, rdokID)
 	if err != nil {
 		return 0, err
@@ -397,26 +377,23 @@ func (s *RobnoDokumentaResource) DeleteRobAvansniStavka(ctx context.Context, rpr
 	if !found {
 		return 0, fmt.Errorf("dokument ne postoji")
 	}
-	if err = s.AzurirajRSTA(ctx, tx, domain.RobPromenaStanja{MagaciniID: k.MagaciniID, Konto: stara.konto, Sifra: 0, Kolicina: -stara.kolicina,
-		Iznos: -stara.iznos, Danal: k.Danal.Time, DokvrstaID: k.DokvrstaID, Tipdok: k.Tipdok, Tz: "-", Tzi: "-", Brst: -1}); err != nil {
+	if err = s.AzurirajRSTA(ctx, tx, domain.RobPromenaStanja{MagaciniID: k.MagaciniID, Konto: stara.Konto, Sifra: 0, Kolicina: -stara.Kolicina,
+		Iznos: -stara.Iznos, Danal: k.Danal.Time, DokvrstaID: k.DokvrstaID, Tipdok: k.Tipdok, Tz: "-", Tzi: "-", Brst: -1}); err != nil {
 		return 0, err
 	}
-	if err = s.unos.Rpro.CreateUpdateCustomWithTx(ctx, tx, `update rdok set iznos = round((coalesce(iznos, 0) - $2)::numeric, 2),
-		brst = greatest(coalesce(brst, 0) - 1, 0) where rdokid = $1`, rdokID, stara.iznos); err != nil {
+	if err = s.robno.RdokOduzmiStavku(ctx, tx, rdokID, stara.Iznos); err != nil {
 		return 0, err
 	}
-	if err = s.robAvansniAvansfakt(ctx, tx, rdokID, stara.po, stara.taxcat, -stara.iznos); err != nil {
+	if err = s.robAvansniAvansfakt(ctx, tx, rdokID, stara.Po, stara.Taxcat, -stara.Iznos); err != nil {
 		return 0, err
 	}
 	if err = s.unos.Rpro.DeleteWithTx(ctx, tx, "rproid", rproID); err != nil {
 		return 0, err
 	}
-	if err = s.AzurirajRNAL(ctx, tx, k.RnalID, k.Dugovno(), k.Potrazno(), -stara.iznos); err != nil {
+	if err = s.AzurirajRNAL(ctx, tx, k.RnalID, k.Dugovno(), k.Potrazno(), -stara.Iznos); err != nil {
 		return 0, err
 	}
-	if err = s.unos.Rpro.CreateUpdateCustomWithTx(ctx, tx, `update rpro p set rbr = x.n
-		from (select rproid, ($2 - 1 + row_number() over (order by rbr, rproid))::int as n from rpro where rdokid = $1 and rbr > $2) x
-		where p.rproid = x.rproid`, rdokID, stara.rbr); err != nil {
+	if err = s.robno.RproPrenumerisi(ctx, tx, rdokID, stara.Rbr); err != nil {
 		return 0, err
 	}
 	if err = tx.Commit(); err != nil {
@@ -431,10 +408,8 @@ func (s *RobnoDokumentaResource) DeleteRobAvansniStavka(ctx context.Context, rpr
 // the PDV 2, the stopa 0 the osnovica 3; with the napomena o poreskom oslobođenju a stavka of a poreska
 // kategorija other than S10 and S20 (and "", "-") is without the PDV (in the osnovica 3: for the SEF).
 func (s *RobnoDokumentaResource) robAvansniAvansfakt(ctx context.Context, tx db.Transaction, rdokID int64, tarifa int, taxcat string, iznos float64) error {
-	var stopa float64
-	var napomena string
-	if err := tx.QueryRowContext(ctx, `select `+fmt.Sprintf(robPoreskaStopaSQL, "$2", "dadok")+`, coalesce(pornapomena, '') from rdok where rdokid = $1`,
-		rdokID, tarifa).Scan(&stopa, &napomena); err != nil {
+	stopa, napomena, err := s.robno.RdokStopaNapomena(ctx, tx, rdokID, tarifa)
+	if err != nil {
 		return err
 	}
 	oslobodjeno := strings.TrimSpace(napomena) != "" && !robSadrzi([]string{"", "-", "S10", "S20"}, strings.TrimSpace(taxcat))
@@ -458,9 +433,7 @@ func (s *RobnoDokumentaResource) robAvansniAvansfakt(ctx context.Context, tx db.
 	if stopa == 0 {
 		osn3 = robZaokruzi(iznos, 2)
 	}
-	return s.unos.Rpro.CreateUpdateCustomWithTx(ctx, tx, `update avansfakt set osnavans1 = coalesce(osnavans1, 0) + $2, pdv1avans = coalesce(pdv1avans, 0) + $3,
-			osnavans2 = coalesce(osnavans2, 0) + $4, pdv2avans = coalesce(pdv2avans, 0) + $5, osnavans3 = coalesce(osnavans3, 0) + $6
-		where avansfaktid = (select min(a.avansfaktid) from avansfakt a where a.avansid = $1)`, rdokID, osn1, pdv1, osn2, pdv2, osn3)
+	return s.robno.AvansfaktDodajIznose(ctx, tx, rdokID, osn1, pdv1, osn2, pdv2, osn3)
 }
 
 // robKreirajRsifNula creates the artikal of the šifra 0 (a usluga, tip U, with the naziv; the legacy
@@ -468,78 +441,8 @@ func (s *RobnoDokumentaResource) robAvansniAvansfakt(ctx context.Context, tx db.
 // artikal copies the keys of the šifarnici (the foreign keys: grupa, podgrupa...) of the first artikal of the
 // godina and the kartica, its other columns have their default or are empty ("", 0, false; NULL when allowed).
 func (s *RobnoDokumentaResource) robKreirajRsifNula(ctx context.Context, tx db.Transaction, naziv string) (int64, error) {
-	userSession := domain.GetSessionFromStdContext(ctx)
-	if userSession == nil {
-		return 0, fmt.Errorf("no user session found")
-	}
-	kolone, err := s.unos.Tekst.GetAllCustom(ctx, `select c.column_name as key, c.data_type as c1, c.is_nullable as c2,
-			coalesce((select f.confrelid::regclass::text || '.' || r.attname from pg_constraint f
-				join pg_attribute a on a.attrelid = f.conrelid and a.attnum = f.conkey[1]
-				join pg_attribute r on r.attrelid = f.confrelid and r.attnum = f.confkey[1]
-				where f.conrelid = 'rsif'::regclass and f.contype = 'f' and a.attname = c.column_name limit 1), '') as c3,
-			(c.column_default is not null)::text as c4
-		from information_schema.columns c
-		where c.table_schema = current_schema() and c.table_name = 'rsif' and c.is_identity = 'NO'
-		order by c.ordinal_position`, "", nil, "", "")
-	if err != nil {
-		return 0, err
-	}
-	if kolone == nil {
-		return 0, fmt.Errorf("rsif nema kolone")
-	}
-	names, izrazi := []string{}, []string{}
-	for _, k := range *kolone {
-		izraz := ""
-		switch k.Key {
-		case "rsifid":
-			continue
-		case "god":
-			izraz = "$1"
-		case "kar":
-			izraz = "$2"
-		case "sifra":
-			izraz = "0"
-		case "tip":
-			izraz = "'U'"
-		case "naziv":
-			izraz = "$3"
-		case "xopunos":
-			izraz = "$4"
-		case "xdatunosa":
-			izraz = "now()"
-		default:
-			switch {
-			case k.C3 != "":
-				// A key of a šifarnik (also with a default: its default may not exist).
-				izraz = k.Key
-			case k.C4 == "true":
-				// The default of the column.
-				continue
-			case k.C2 == "YES":
-				izraz = "null"
-			case strings.Contains(k.C1, "char") || k.C1 == "text":
-				izraz = "''"
-			case k.C1 == "boolean":
-				izraz = "false"
-			case strings.Contains(k.C1, "date") || strings.Contains(k.C1, "time"):
-				izraz = k.Key
-			default:
-				izraz = "0"
-			}
-		}
-		// A key of a šifarnik: the one of the copied artikal when it exists in the šifarnik, else the first one
-		// of the šifarnik (the keys of the old artikli are not always checked).
-		if ref := strings.SplitN(k.C3, ".", 2); k.C3 != "" && len(ref) == 2 {
-			izraz = fmt.Sprintf("coalesce((select x.%[3]s from %[2]s x where x.%[3]s = rsif.%[1]s limit 1), (select min(x.%[3]s) from %[2]s x))",
-				k.Key, ref[0], ref[1])
-		}
-		names, izrazi = append(names, k.Key), append(izrazi, izraz)
-	}
-	var rsifID int64
-	err = tx.QueryRowContext(ctx, `insert into rsif (`+strings.Join(names, ", ")+`) select `+strings.Join(izrazi, ", ")+`
-		from rsif where rsif.god = $1 and rsif.kar = $2 order by rsif.rsifid limit 1 returning rsifid`,
-		userSession.SelectedGod, userSession.SelectedKar, naziv, userSession.UserName).Scan(&rsifID)
-	if err == sql.ErrNoRows {
+	rsifID, err := s.robno.RsifKreirajNulu(ctx, tx, naziv)
+	if errors.Is(err, sql.ErrNoRows) {
 		return 0, fmt.Errorf("nema artikala za šifru 0")
 	}
 	return rsifID, err

@@ -1,0 +1,145 @@
+### konto of the magacin or of the stavke
+select coalesce( (select m.konto from magkonto m where m.god = $1 and m.kar = $2 and m.magaciniid = $3 and coalesce(m.konto, '') <> '' order by m.magkontoid limit 1), (select p.konto from rpro p where p.rdokid = $4 and p.god = $5 and p.kar = $6 and coalesce(p.konto, '') <> '' order by p.rproid desc limit 1), '')
+[]interface {}{2026, 7, 3, 41, 2026, 7}
+in transaction: false
+
+### šifre of the šifarnici
+select coalesce((select f.mi from fisp f where f.fispid = $1 and f.god = $2 and f.kar = $3), 0)::bigint::text as key, coalesce((select k.sifkom from komercijalisti k where k.komid = $4 and k.god = $5 and k.kar = $6), 0)::text as c1, coalesce((select v.sifval from valute v where v.idvalute = $7), 0)::text as c2, coalesce((select b.sifbank from bnkizv b where b.bnkizvid = $8 and b.god = $9 and b.kar = $10), 0)::text as c3, coalesce((select p.keykat from porkat p where p.porkatid = $11), '') as c4, coalesce((select p.category from porkat p where p.porkatid = $12), '') as c5
+[]interface {}{4, 2026, 7, 6, 2026, 7, 2, 8, 2026, 7, 3, 3}
+in transaction: false
+
+### avans by broj
+select coalesce((select r.rdokid from rdok r where r.god = $1 and r.kar = $2 and r.vrd = 172 and r.dokum = $3 and r.fkto = $4 and r.fana = $5 and exists (select 1 from avansfakt af where af.avansid = r.rdokid) order by r.rdokid limit 1), 0)::bigint
+[]interface {}{2026, 7, 4, "2040", "15"}
+in transaction: false
+
+### rdok by broj with fana for update
+select rdokid, coalesce(fana, '') from rdok WHERE (god = $1) AND (kar = $2) AND (magaciniid = $3) AND (vrd = $4) AND (dokum = $5) FOR UPDATE
+[]interface {}{2026, 7, 3, 10, 12}
+in transaction: true
+
+### rpro set the partner
+UPDATE "rpro" SET "pkto" = $1 WHERE (rdokid = $2) AND (god = $3) AND (kar = $4)
+[]interface {}{"2040", 41, 2026, 7}
+in transaction: true
+
+### rnal of a new document for update
+select coalesce(tipdok, ''), coalesce(nalog, 0), danal, datob, coalesce(mag, 0), coalesce(magaciniid, 0), coalesce(brdo, 0) from rnal WHERE (rnalid = $1) AND (god = $2) AND (kar = $3) FOR UPDATE
+[]interface {}{9, 2026, 7}
+in transaction: true
+
+### avansfakt delete the others
+delete from avansfakt WHERE (rdokid = $1) AND (avansid not in ($2, $3)) AND (god = $4) AND (kar = $5)
+[]interface {}{41, 38, 39, 2026, 7}
+in transaction: true
+
+### avansfakt delete all
+delete from avansfakt WHERE (rdokid = $1) AND (god = $2) AND (kar = $3)
+[]interface {}{41, 2026, 7}
+in transaction: true
+
+### avansfakt of the faktura
+select count(*) from avansfakt WHERE (avansid = $1) AND (rdokid = $2) AND (god = $3) AND (kar = $4)
+[]interface {}{38, 41, 2026, 7}
+in transaction: true
+
+### avansfakt iznosi
+select coalesce(osnavans1, 0)::float8, coalesce(osnavans2, 0)::float8, coalesce(osnavans3, 0)::float8, coalesce(pdv1avans, 0)::float8, coalesce(pdv2avans, 0)::float8 from avansfakt WHERE (avansid = $1) AND (god = $2) AND (kar = $3) ORDER BY avansfaktid LIMIT 1
+[]interface {}{38, 2026, 7}
+in transaction: true
+
+### avansi of the obračun
+select af.avansfaktid as avansid, coalesce(af.osnavans1, 0)::float8 as osnavans1, coalesce(af.osnavans2, 0)::float8 as osnavans2, coalesce(af.osnavans3, 0)::float8 as osnavans3, coalesce(af.pdv1avans, 0)::float8 as pdv1avans, coalesce(af.pdv2avans, 0)::float8 as pdv2avans, coalesce(o.osnfakt1, 0)::float8 as osnfakt1, coalesce(o.osnfakt2, 0)::float8 as osnfakt2, coalesce(o.osnfakt3, 0)::float8 as osnfakt3, coalesce(o.pdv1fakt, 0)::float8 as pdv1fakt, coalesce(o.pdv2fakt, 0)::float8 as pdv2fakt from avansfakt af left join rdok a on a.rdokid = af.avansid left join lateral (select sum(x.osnfakt1) as osnfakt1, sum(x.osnfakt2) as osnfakt2, sum(x.osnfakt3) as osnfakt3, sum(x.pdv1fakt) as pdv1fakt, sum(x.pdv2fakt) as pdv2fakt from avansfakt x where x.avansid = af.avansid and x.rdokid <> af.rdokid and x.rdokid <> 0) o on true WHERE (af.rdokid = $1) AND (af.god = $2) AND (af.kar = $3) ORDER BY a.dadok nulls last, af.avansfaktid
+[]interface {}{41, 2026, 7}
+in transaction: false
+
+### faktrate of the document
+select faktrateid, coalesce(rbrrate, 0) as rbrrate, coalesce(osnovica, 0)::float8 as osnovica, coalesce(procenat, 0)::float8 as procenat from faktrate WHERE (rdokid = $1) AND (god = $2) AND (kar = $3) ORDER BY rbrrate, faktrateid
+[]interface {}{41, 2026, 7}
+in transaction: false
+
+### stavke of the obračun
+select coalesce(r.ugrabat, 0)::float8 as ugrabat, coalesce(r.pkase, 0)::float8 as pkase, coalesce(r.pornapomena, '') as pornapomena, coalesce(st.kolic, 0)::float8 as kolic, coalesce(st.fcena, 0)::float8 as fcena, coalesce(st.cena, 0)::float8 as cena, coalesce(st.rab, 0)::float8 as rab, coalesce(st.taxcat, '') as taxcat, coalesce(ps.pp, 0)::float8 as stopa from rdok r left join rpro st on st.rdokid = r.rdokid left join lateral (select x.pp from rpor x where x.po = st.po and x.datum <= r.dadok order by x.datum desc limit 1) ps on true WHERE (r.rdokid = $1) AND (r.god = $2) AND (r.kar = $3)
+[]interface {}{41, 2026, 7}
+in transaction: false
+
+### saldo of the kupac
+WITH fin AS (select coalesce(sum(case when kat in (1, 2) then iznos end), 0) as fakture, coalesce(sum(case when kat in (1, 2) and dadok + coalesce(rok, 0) <= $1 then iznos end), 0) as dospelo, coalesce(sum(case when kat in (1, 2) and (dadok is null or dadok + coalesce(rok, 0) > $2) then iznos end), 0) as nedospelo, coalesce(sum(case when kat in (3, 4) then iznos end), 0) as uplate from fpro where god = $3 and kar = $4 and konto = $5 and sifra = $6 and vrd in (10, 30, 80, 90)), dok AS (select r.rdokid, r.dadok, coalesce(r.rok, 0) as rok, coalesce(r.ugrabat, 0) as ugrabat, coalesce(r.pkase, 0) as pkase, round(coalesce(sum(st.kolic * st.fcena), 0), 2) as iznos, round(coalesce(sum(st.kolic * st.fcena * coalesce(st.rab, 0) / 100), 0), 2) as rab, coalesce(sum(round(st.kolic * st.fcena * coalesce(ps.pp, 0) / 100, 2)), 0) as porez from rdok r left join rpro st on st.rdokid = r.rdokid left join lateral (select x.pp from rpor x where x.po = st.po and x.datum <= st.dadok order by x.datum desc limit 1) ps on true where r.god = $7 and r.kar = $8 and r.fkto = $9 and r.fana = $10 and coalesce(r.knjige_1, '') <> 'D' and r.vrd in (select d.vrd from dokvrsta d where d.god = $11 and d.kar = $12 and d.dokozn in ('FAK', 'FPR', 'FRP', 'KPK')) group by r.rdokid, r.dadok, r.rok, r.ugrabat, r.pkase), rob AS (select dadok, rok, iznos - rab - u - round((iznos - rab - u) * pkase / 100, 2) + porez as iznfakt from (select dok.*, round((iznos - rab) * ugrabat / 100, 2) as u from dok) d) select fin.fakture::float8 as fakture, fin.dospelo::float8 as dospelo, fin.nedospelo::float8 as nedospelo, fin.uplate::float8 as uplate, coalesce((select sum(iznfakt) from rob where dadok + rok <= $13), 0)::float8 as dospelorob, coalesce((select sum(iznfakt) from rob where dadok is null or dadok + rok > $14), 0)::float8 as nedospelorob from fin
+[]interface {}{time.Date(2026, time.March, 1, 0, 0, 0, 0, time.UTC), time.Date(2026, time.March, 1, 0, 0, 0, 0, time.UTC), 2026, 7, "2040", "15", 2026, 7, "2040", "15", 2026, 7, time.Date(2026, time.March, 1, 0, 0, 0, 0, time.UTC), time.Date(2026, time.March, 1, 0, 0, 0, 0, time.UTC)}
+in transaction: false
+
+### avansi of the document
+select af.avansid::bigint as avansid, coalesce(a.dokum, 0) as dokum, a.dadok, (coalesce(af.osnavans1, 0) + coalesce(af.osnavans2, 0) + coalesce(af.osnavans3, 0) + coalesce(af.pdv1avans, 0) + coalesce(af.pdv2avans, 0))::float8 as iznos, (coalesce(af.osnavans1, 0) + coalesce(af.osnavans2, 0) + coalesce(af.osnavans3, 0) + coalesce(af.pdv1avans, 0) + coalesce(af.pdv2avans, 0) - coalesce((select sum(coalesce(x.osnfakt1, 0) + coalesce(x.osnfakt2, 0) + coalesce(x.osnfakt3, 0) + coalesce(x.pdv1fakt, 0) + coalesce(x.pdv2fakt, 0)) from avansfakt x where x.avansid = af.avansid), 0))::float8 as ostatak, (coalesce(af.osnfakt1, 0) + coalesce(af.osnfakt2, 0) + coalesce(af.osnfakt3, 0) + coalesce(af.pdv1fakt, 0) + coalesce(af.pdv2fakt, 0))::float8 as zatvoreno from avansfakt af left join rdok a on a.rdokid = af.avansid WHERE (af.rdokid = $1) AND (af.god = $2) AND (af.kar = $3) ORDER BY af.avansfaktid
+[]interface {}{41, 2026, 7}
+in transaction: false
+
+### banke žiro računi
+select coalesce(brrac, '') || ' ' || coalesce(banka, '') from banke WHERE (god = $1) AND (kar = $2) AND (not coalesce(nafakne, false)) ORDER BY idbanke
+[]interface {}{2026, 7}
+in transaction: false
+
+### defaults of a new document
+select coalesce(f.sifval, 0)::text as key, coalesce(v.idvalute::text, '') as c1, coalesce(concat_ws(' - ', v.sifval::text, nullif(v.naziv, '')), '') as c2, coalesce(rv.fkup, '') as c3 from fvr f left join lateral (select x.idvalute, x.sifval, x.naziv from valute x where x.sifval = f.sifval order by x.idvalute limit 1) v on true left join rvr rv on rv.god = f.god and rv.kar = f.kar WHERE (f.god = $1) AND (f.kar = $2) AND (f.naziv = $3) LIMIT 1
+[]interface {}{2026, 7, "Firma d.o.o."}
+in transaction: false
+
+### rpro stavke of the document
+select r.rproid, coalesce(r.rdokid, 0)::bigint as rdokid, coalesce(r.rbr, 0) as rbr, coalesce(r.sifra, 0) as sifra, coalesce(r.konto, '') as konto, coalesce(nullif(r.naz1, ''), s.naziv, '') as naziv, coalesce(r.naz1, '') as naz1, coalesce(nullif(r.jm, ''), s.jm, '') as jm, coalesce(r.kolic, 0)::float8 as kolic, coalesce(r.cena, 0)::float8 as cena, coalesce(r.fcena, 0)::float8 as fcena, coalesce(r.mcena, 0)::float8 as mcena, coalesce(r.mcenap, 0)::float8 as mcenap, coalesce(r.ncena, 0)::float8 as ncena, coalesce(r.rab, 0)::float8 as rab, coalesce(r.po, 0) as po, coalesce(r.dani, 0) as dani, coalesce(r.mag, 0) as mag, coalesce(r.iznos, 0)::float8 as iznos, (coalesce(r.kolic, 0) * coalesce(r.fcena, 0))::float8 as iznosfakpr, coalesce(r.cenaval, 0)::float8 as cenaval, round(coalesce(r.kolic, 0) * coalesce(r.cenaval, 0), 2)::float8 as iznval, coalesce(r.taxcat, '') as taxcat, coalesce(r.taxexreco, '') as taxexreco, coalesce(r.otk, '') as otk, coalesce(r.serija, '') as serija, coalesce(r.roktr, 0)::float8 as roktr, coalesce(r.rsifid, 0)::bigint as rsifid, coalesce(r.rproid1, 0)::bigint as rproid1, coalesce(r.vma, 0)::float8 as vma, coalesce(r.mma, 0)::float8 as mma, coalesce(r.vra, 0)::float8 as vra, coalesce(r.mra, 0)::float8 as mra, coalesce(r.pcena, 0)::float8 as pcena, coalesce(r.itaksa, 0)::float8 as itaksa, coalesce((select x.pp from rpor x where x.po = r.po and x.datum <= r.dadok order by x.datum desc limit 1), 0)::float8 as stopa, coalesce(r.ptaksa, 0)::float8 as ptaksa, coalesce(r.ztrof, 0)::float8 as ztrof, coalesce(r.ztrin, 0)::float8 as ztrin, coalesce(r.ztro, 0)::float8 as ztro, coalesce(r.tz, '') as tz, coalesce(r.tzi, '') as tzi from rpro r left join rsif s on s.god = r.god and s.kar = r.kar and s.sifra = r.sifra WHERE (r.rdokid = $1) AND (r.god = $2) AND (r.kar = $3) ORDER BY r.rbr desc
+[]interface {}{41, 2026, 7}
+in transaction: false
+
+### rdok kontekst
+select d.rdokid, coalesce(d.rnalid, 0)::bigint as rnalid, coalesce(d.tipdok, '') as tipdok, coalesce(d.nalog, 0) as nalog, d.danal, coalesce(d.vrd, 0) as vrd, coalesce(v.dokvrstaid, 0)::bigint as dokvrstaid, coalesce(d.dokum, 0) as dokum, d.dadok, coalesce(d.fkto, '') as fkto, coalesce(d.fana, '') as fana, coalesce(d.kurs, 0)::float8 as kurs, coalesce(d.vaziza, 0)::float8 as vaziza, coalesce(d.magaciniid, 0) as magaciniid, coalesce(d.mag, 0) as mag, coalesce(m.tipzal, 0) as tipzal, coalesce(v.predznak, '') as predznak, coalesce(v.kodknj, '') as kodknj, coalesce(m.nacvodzal, 0) as nacvodzal, coalesce(m.tipmag, '') as tipmag, coalesce(m.tipart, '') as tipart, coalesce(d.sifval, 0) as sifval, coalesce(f.sifval, 0) as domacavaluta, coalesce(val.oznval, '') as valuta from rdok d left join magacini m on m.magaciniid = d.magaciniid left join dokvrsta v on v.god = d.god and v.kar = d.kar and v.vrd = d.vrd left join lateral (select x.sifval from fvr x where x.god = d.god and x.kar = d.kar limit 1) f on true left join lateral (select x.oznval from valute x where x.sifval = d.sifval order by x.idvalute limit 1) val on true WHERE (d.rdokid = $1) AND (d.god = $2) AND (d.kar = $3)
+[]interface {}{41, 2026, 7}
+in transaction: false
+
+### rsif artikal with its stanje
+select a.rsifid, a.sifra, coalesce(a.naziv, '') as naziv, coalesce(a.jm, '') as jm, coalesce(a.tip, '') as tip, coalesce(a.po, 0) as po, coalesce(st.stanje, 0)::float8 as stanje, coalesce(st.vpcena, 0)::float8 as vpcena from rsif a left join lateral (select sum(coalesce(r.ulaz, 0) - coalesce(r.izlaz, 0)) as stanje, max(r.vpcena) as vpcena from rsta r where r.god = a.god and r.kar = a.kar and r.magaciniid = $1 and r.konto = $2 and r.sifra = a.sifra) st on true WHERE (a.god = $3) AND (a.kar = $4) AND (a.sifra = $5) LIMIT 1
+[]interface {}{3, "1320", 2026, 7, 15}
+in transaction: false
+
+### magkonto konta
+select distinct trim(konto) from magkonto WHERE (god = $1) AND (kar = $2) AND (magaciniid = $3) AND (coalesce(trim(konto), '') <> '') ORDER BY 1
+[]interface {}{2026, 7, 3}
+in transaction: false
+
+### rpro last cena to the kupac
+select coalesce(r.fcena, 0)::float8 as fcena, coalesce(r.rab, 0)::float8 as rab, r.dadok from rdok d join rpro r on r.god = d.god and r.kar = d.kar and r.fkto = d.fkto and r.fana = d.fana and r.vrd = d.vrd and r.dadok <= d.dadok WHERE (d.rdokid = $1) AND (r.sifra = $2) AND (d.god = $3) AND (d.kar = $4) ORDER BY r.dadok desc, r.rdokid desc, r.rproid desc LIMIT 1
+[]interface {}{41, 15, 2026, 7}
+in transaction: false
+
+### rsif id, jm and dani for update
+select rsifid, coalesce(jm, ''), coalesce(dani, 0) from rsif WHERE (god = $1) AND (kar = $2) AND (sifra = $3) FOR UPDATE
+[]interface {}{2026, 7, 15}
+in transaction: true
+
+### rpro count of the nalog
+select count(*) from rpro WHERE (rnalid = $1) AND (god = $2) AND (kar = $3)
+[]interface {}{9, 2026, 7}
+in transaction: true
+
+### rnal dug and pot for update
+select coalesce(dug, 0)::float8, coalesce(pot, 0)::float8 from rnal WHERE (rnalid = $1) AND (god = $2) AND (kar = $3) FOR UPDATE
+[]interface {}{9, 2026, 7}
+in transaction: true
+
+### rsif artikal of a stavka by barkod
+select a.sifra::text as key, coalesce(a.naziv, '') as c1, coalesce(a.jm, '') as c2, coalesce(a.po, 0)::text as c3, coalesce(a.dani, 0)::text as c4, coalesce(nullif(trim(a.konto), ''), $1) as c5, coalesce(a.tip, '') as c6, coalesce((select x.pp from rpor x where x.po = a.po and x.datum <= $2::date order by x.datum desc limit 1), 0)::float8::text as c7, coalesce((select c.pcena from rcene c where c.god = a.god and c.kar = a.kar and c.sifra = a.sifra limit 1), 0)::float8::text as c8 from rsif a WHERE (a.god = $3) AND (a.kar = $4) AND (a.barkod = $5) LIMIT 1
+[]interface {}{"1320", time.Date(2026, time.March, 1, 0, 0, 0, 0, time.UTC), 2026, 7, "8600123456789"}
+in transaction: false
+
+### rsta stanje of a stavka
+select (coalesce(ulaz, 0) - coalesce(izlaz, 0))::float8, coalesce(vpcena, 0)::float8, coalesce(cena, 0)::float8, coalesce(ncena, 0)::float8, coalesce(prosnc, 0)::float8 from rsta WHERE (god = $1) AND (kar = $2) AND (magaciniid = $3) AND (konto = $4) AND (sifra = $5) ORDER BY rstaid LIMIT 1
+[]interface {}{2026, 7, 3, "1320", 15}
+in transaction: false
+
+### rpro form of a stavka
+select r.rproid::text as key, coalesce(r.sifra, 0)::text as c1, coalesce(nullif(r.naz1, ''), a.naziv, '') as c2, coalesce(r.konto, '') as c3, coalesce(r.jm, '') as c4, concat_ws('|', coalesce(r.kolic, 0)::float8, coalesce(r.fcena, 0)::float8, coalesce(r.rab, 0)::float8, coalesce(r.po, 0), coalesce(r.dani, 0), coalesce(r.ncena, 0)::float8, coalesce(r.cena, 0)::float8, coalesce(r.roktr, 0)::bigint, coalesce((select x.pp from rpor x where x.po = r.po and x.datum <= r.dadok order by x.datum desc limit 1), 0)::float8, coalesce((select sum(coalesce(t.ulaz, 0) - coalesce(t.izlaz, 0)) from rsta t where t.god = r.god and t.kar = r.kar and t.magaciniid = r.magaciniid and t.konto = r.konto and t.sifra = r.sifra), 0)::float8) as c5, coalesce(r.otk, '') as c6, coalesce(r.serija, '') as c7, coalesce(r.taxcat, '') as c8 from rpro r left join rsif a on a.god = r.god and a.kar = r.kar and a.sifra = r.sifra WHERE (r.rproid = $1) AND (r.rdokid = $2) AND (r.god = $3) AND (r.kar = $4)
+[]interface {}{77, 41, 2026, 7}
+in transaction: false
+
+### rpro taxexreco
+select coalesce(taxexreco, '') from rpro WHERE (rproid = $1) AND (god = $2) AND (kar = $3)
+[]interface {}{77, 2026, 7}
+in transaction: false
+

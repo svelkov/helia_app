@@ -1,0 +1,100 @@
+### rvr fprod
+select coalesce(fprod, '') from rvr WHERE (god = $1) AND (kar = $2) LIMIT 1
+[]interface {}{2026, 7}
+in transaction: false
+
+### rdok vrd
+select coalesce(vrd, 0) from rdok WHERE (rdokid = $1) AND (god = $2) AND (kar = $3)
+[]interface {}{41, 2026, 7}
+in transaction: false
+
+### rdok iznos and brst for update
+select coalesce(iznos, 0)::float8, coalesce(brst, 0) from rdok WHERE (rdokid = $1) AND (god = $2) AND (kar = $3) FOR UPDATE
+[]interface {}{41, 2026, 7}
+in transaction: true
+
+### rsta stanje and cene
+select (coalesce(ulaz, 0) - coalesce(izlaz, 0))::float8, coalesce(cena, 0)::float8, coalesce(prosnc, 0)::float8, coalesce(vma, 0)::float8, coalesce(mma, 0)::float8, coalesce(mcena, 0)::float8, coalesce(mcenap, 0)::float8 from rsta WHERE (god = $1) AND (kar = $2) AND (magaciniid = $3) AND (konto = $4) AND (sifra = $5) ORDER BY rstaid LIMIT 1
+[]interface {}{2026, 7, 3, "1320", 15}
+in transaction: false
+
+### rsif artikal with stopa by šifra
+select a.sifra::text as key, coalesce(a.naziv, '') as c1, coalesce(a.jm, '') as c2, coalesce(a.po, 0)::text as c3, coalesce(a.model, '') as c4, coalesce((select x.pp from rpor x where x.po = a.po and x.datum <= $1::date order by x.datum desc limit 1), 0)::float8::text as c5, coalesce((select c.itaksa from rcene c where c.god = a.god and c.kar = a.kar and c.sifra = a.sifra limit 1), 0)::float8::text as c6 from rsif a WHERE (a.god = $2) AND (a.kar = $3) AND (a.sifra::text = $4) LIMIT 1
+[]interface {}{time.Date(2026, time.March, 1, 0, 0, 0, 0, time.UTC), 2026, 7, "15"}
+in transaction: false
+
+### rsif artikal with stopa by barkod
+select a.sifra::text as key, coalesce(a.naziv, '') as c1, coalesce(a.jm, '') as c2, coalesce(a.po, 0)::text as c3, coalesce(a.model, '') as c4, coalesce((select x.pp from rpor x where x.po = a.po and x.datum <= $1::date order by x.datum desc limit 1), 0)::float8::text as c5, coalesce((select c.itaksa from rcene c where c.god = a.god and c.kar = a.kar and c.sifra = a.sifra limit 1), 0)::float8::text as c6 from rsif a WHERE (a.god = $2) AND (a.kar = $3) AND (a.barkod = $4) LIMIT 1
+[]interface {}{interface {}(nil), 2026, 7, "8600123456789"}
+in transaction: false
+
+### rsif id, naziv and jm
+select rsifid, coalesce(naziv, ''), coalesce(jm, '') from rsif WHERE (god = $1) AND (kar = $2) AND (sifra = $3)
+[]interface {}{2026, 7, 15}
+in transaction: true
+
+### rcene of the artikal
+select count(*) from rcene WHERE (god = $1) AND (kar = $2) AND (sifra = $3)
+[]interface {}{2026, 7, 15}
+in transaction: true
+
+### rpro količina of the stavka
+select coalesce(kolic, 0)::float8 from rpro WHERE (rproid = $1) AND (sifra = $2) AND (trim(konto) = $3) AND (god = $4) AND (kar = $5)
+[]interface {}{77, 15, "1320", 2026, 7}
+in transaction: false
+
+### rpro old promena for update
+select coalesce(sifra, 0), coalesce(konto, ''), coalesce(kolic, 0)::float8, coalesce(iznos, 0)::float8, coalesce(otk, ''), coalesce(serija, ''), coalesce(roktr, 0)::float8 from rpro WHERE (rproid = $1) AND (rdokid = $2) AND (god = $3) AND (kar = $4) FOR UPDATE
+[]interface {}{77, 41, 2026, 7}
+in transaction: true
+
+### rpro rbr
+select coalesce(rbr, 0) from rpro WHERE (rproid = $1) AND (god = $2) AND (kar = $3)
+[]interface {}{77, 2026, 7}
+in transaction: true
+
+### rpro renumber with brst
+UPDATE "rpro" SET rbr = x.n, brst = x.n FROM (select rproid, ($1 - 1 + row_number() over (order by rbr, rproid))::int as n from rpro where rdokid = $2 and rbr > $3 and god = $4 and kar = $5) x WHERE (rpro.rproid = x.rproid)
+[]interface {}{2, 41, 2, 2026, 7}
+in transaction: true
+
+### rpro last cena of the prodavnica
+select coalesce(r.mcena, 0)::float8::text as key, coalesce(r.vra, 0)::float8::text as c1, coalesce(r.mcenap, 0)::float8::text as c2, coalesce(r.mma, 0)::float8::text as c3, coalesce(to_char(r.dadok, 'DD.MM.YYYY'), '') as c4 from rdok d join rpro r on r.god = d.god and r.kar = d.kar and r.pkto = d.pkto and r.pana = d.pana and r.vrd = d.vrd and r.dadok <= d.dadok WHERE (d.rdokid = $1) AND (r.sifra = $2) AND (d.god = $3) AND (d.kar = $4) ORDER BY r.dadok desc, r.rdokid desc, r.rproid desc LIMIT 1
+[]interface {}{41, 15, 2026, 7}
+in transaction: false
+
+### rpro form of an interni stavka
+select r.sifra::text as key, coalesce(r.konto, '') as c1, coalesce(r.kolic, 0)::float8::text as c2, coalesce(r.cena, 0)::float8::text as c3, coalesce(r.vra, 0)::float8::text as c4, coalesce(nullif(r.ncena, 0), r.pcena, 0)::float8::text as c5, coalesce(r.mma, 0)::float8::text as c6, (coalesce(r.mcena, 0)::float8::text || '|' || coalesce(r.mcenap, 0)::float8::text || '|' || coalesce(r.roktr, 0)::bigint::text) as c7, (coalesce(r.otk, '') || '|' || coalesce(r.serija, '')) as c8 from rpro r WHERE (r.rproid = $1) AND (r.rdokid = $2) AND (r.god = $3) AND (r.kar = $4)
+[]interface {}{77, 41, 2026, 7}
+in transaction: false
+
+### komercijalista sifkom
+select coalesce(sifkom, 0)::text from komercijalisti WHERE (komid = $1) AND (god = $2) AND (kar = $3)
+[]interface {}{6, 2026, 7}
+in transaction: false
+
+### rsta stanje and ncena
+select (coalesce(ulaz, 0) - coalesce(izlaz, 0))::float8, coalesce(ncena, 0)::float8 from rsta WHERE (god = $1) AND (kar = $2) AND (magaciniid = $3) AND (konto = $4) AND (sifra = $5) ORDER BY rstaid LIMIT 1
+[]interface {}{2026, 7, 3, "1320", 15}
+in transaction: false
+
+### rsif artikal with ncena by barkod
+select a.sifra::text as key, coalesce(a.naziv, '') as c1, coalesce(a.jm, '') as c2, coalesce(a.po, 0)::text as c3, coalesce((select x.pp from rpor x where x.po = a.po and x.datum <= $1::date order by x.datum desc limit 1), 0)::float8::text as c4, coalesce((select c.ncena from rcene c where c.god = a.god and c.kar = a.kar and c.sifra = a.sifra limit 1), 0)::float8::text as c5 from rsif a WHERE (a.god = $2) AND (a.kar = $3) AND (a.barkod = $4) LIMIT 1
+[]interface {}{interface {}(nil), 2026, 7, "8600123456789"}
+in transaction: false
+
+### rpro old količina for update
+select coalesce(sifra, 0), coalesce(konto, ''), coalesce(kolic, 0)::float8, coalesce(iznos, 0)::float8 from rpro WHERE (rproid = $1) AND (rdokid = $2) AND (god = $3) AND (kar = $4) FOR UPDATE
+[]interface {}{77, 41, 2026, 7}
+in transaction: true
+
+### rpro rdokid
+select coalesce(rdokid, 0)::bigint from rpro WHERE (rproid = $1) AND (god = $2) AND (kar = $3)
+[]interface {}{77, 2026, 7}
+in transaction: true
+
+### rpro form of a porudžbenica stavka
+select r.sifra::text as key, coalesce(r.konto, '') as c1, coalesce(r.kolic, 0)::float8::text as c2, coalesce(r.ncena, 0)::float8::text as c3, coalesce(r.po, 0)::text as c4, coalesce((select x.pp from rpor x where x.po = r.po and x.datum <= r.dadok order by x.datum desc limit 1), 0)::float8::text as c5 from rpro r WHERE (r.rproid = $1) AND (r.rdokid = $2) AND (r.god = $3) AND (r.kar = $4)
+[]interface {}{77, 41, 2026, 7}
+in transaction: false
+

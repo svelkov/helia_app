@@ -21,7 +21,7 @@ func TestDuzSinForFirma(t *testing.T) {
 	}
 
 	for _, tc := range []struct {
-		firma     string
+		firma      string
 		wantDuzSin int
 	}{
 		{"ALEXANDAR", 3},

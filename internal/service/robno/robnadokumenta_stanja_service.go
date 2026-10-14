@@ -3,14 +3,15 @@ package robno
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"math"
-	"strings"
 	"time"
 
 	"helia/internal/common"
 	"helia/internal/domain"
 	"helia/internal/infrastructure/db"
+	"helia/internal/repository"
 )
 
 // AzurirajStanja posts a stavka of a robni dokument (the legacy GlobalProcROBNO.AZurirajStanja), in the
@@ -59,47 +60,41 @@ type robStanjaStavka struct {
 //
 // The legacy SR, RSAL and RSIN are not kept.
 func (s *RobnoDokumentaResource) robStanja(ctx context.Context, tx db.Transaction, rnalID, rdokID, rproID int64, sifra int, konto string, kol, dokIznos float64, znak int) error {
-	userSession := domain.GetSessionFromStdContext(ctx)
-	if userSession == nil {
+	if domain.GetSessionFromStdContext(ctx) == nil {
 		return fmt.Errorf("no user session found")
 	}
-	god, kar := userSession.SelectedGod, userSession.SelectedKar
 	st := robStanjaStavka{}
-	err := tx.QueryRowContext(ctx, `select coalesce(cena, 0)::float8, coalesce(mcenap, 0)::float8, coalesce(pcena, 0)::float8,
-			coalesce(fcena, 0)::float8, coalesce(ncena, 0)::float8, coalesce(mcena, 0)::float8, coalesce(rab, 0)::float8,
-			coalesce(vra, 0)::float8, coalesce(mra, 0)::float8, coalesce(vma, 0)::float8, coalesce(mma, 0)::float8, coalesce(po, 0)
-		from rpro where rproid = $1`, rproID).Scan(&st.cena, &st.mcenap, &st.pcena, &st.fcena, &st.ncena, &st.mcena, &st.rab,
-		&st.vra, &st.mra, &st.vma, &st.mma, &st.po)
-	if err != nil && err != sql.ErrNoRows {
+	c, err := s.robno.RproCeneStavke(ctx, tx, rproID)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return err
 	}
-	if err = tx.QueryRowContext(ctx, `select coalesce(vrd, 0), dadok from rdok where rdokid = $1`, rdokID).Scan(&st.vrd, &st.dadok); err != nil {
+	st.cena, st.mcenap, st.pcena, st.fcena, st.ncena, st.mcena = c.Cena, c.Mcenap, c.Pcena, c.Fcena, c.Ncena, c.Mcena
+	st.rab, st.vra, st.mra, st.vma, st.mma, st.po = c.Rab, c.Vra, c.Mra, c.Vma, c.Mma, c.Po
+	if st.vrd, st.dadok, err = s.robno.RdokVrdDadok(ctx, tx, rdokID); err != nil {
 		return err
 	}
-	if err = tx.QueryRowContext(ctx, `select coalesce(magaciniid, 0), coalesce(mag, 0), coalesce(tipdok, ''), danal from rnal where rnalid = $1`,
-		rnalID).Scan(&st.magaciniID, &st.mag, &st.tipdok, &st.danal); err != nil {
+	n, err := s.robno.RnalMagacinNaloga(ctx, tx, rnalID)
+	if err != nil {
 		return err
 	}
-	var k robKnjizenje
-	err = tx.QueryRowContext(ctx, `select upper(trim(coalesce(kodknj, ''))), upper(trim(coalesce(grpdok, ''))), trim(coalesce(predznak, ''))
-		from dokvrsta where god = $1 and kar = $2 and vrd = $3 order by dokvrstaid limit 1`, god, kar, st.vrd).Scan(&k.kodknj, &k.grpdok, &k.predznak)
-	if err == sql.ErrNoRows {
+	st.magaciniID, st.mag, st.tipdok, st.danal = n.MagaciniID, n.Mag, n.Tipdok, n.Danal
+	kv, err := s.robno.DokvrstaKnjizenjeVrste(ctx, tx, st.vrd)
+	if errors.Is(err, sql.ErrNoRows) {
 		return fmt.Errorf("vrsta dokumenta %d ne postoji", st.vrd)
 	}
 	if err != nil {
 		return err
 	}
+	k := robKnjizenje{kodknj: kv.Kodknj, grpdok: kv.Grpdok, predznak: kv.Predznak}
 	dugovno, potrazno := k.kodknj == "D", k.kodknj == "P"
 	niv := k.grpdok == "NIV"
 	iznos := float64(znak) * dokIznos
 
 	// The cene of the artikal.
 	if robSadrzi([]string{"PLS", "PLT", "PLM", "NIV", "POP", "PRE"}, k.grpdok) {
-		set := []string{"cena = $4"}
-		args := []any{god, kar, sifra, st.cena}
+		cene := []repository.Izmena{{Kolona: "cena", Vrednost: st.cena}}
 		dodaj := func(kolona string, vrednost float64) {
-			args = append(args, vrednost)
-			set = append(set, fmt.Sprintf("%s = $%d", kolona, len(args)))
+			cene = append(cene, repository.Izmena{Kolona: kolona, Vrednost: vrednost})
 		}
 		if znak > 0 {
 			dodaj("mcenap", st.mcenap)
@@ -115,17 +110,13 @@ func (s *RobnoDokumentaResource) robStanja(ctx context.Context, tx db.Transactio
 			dodaj("vma", st.vma)
 			dodaj("mma", st.mma)
 		}
-		if _, err = tx.ExecContext(ctx, `update rcene set `+strings.Join(set, ", ")+`
-			where god = $1 and kar = $2 and sifra = $3 and exists (select 1 from rsif where god = $1 and kar = $2 and sifra = $3)`,
-			args...); err != nil {
+		if err = s.robno.RcenePostaviCene(ctx, tx, sifra, cene); err != nil {
 			return err
 		}
 	}
 
 	// The nalog.
-	if _, err = tx.ExecContext(ctx, `update rnal set brst = coalesce(brst, 0) + $2,
-			dug = round((coalesce(dug, 0) + $3)::numeric, 2), pot = round((coalesce(pot, 0) + $4)::numeric, 2)
-		where rnalid = $1`, rnalID, znak, robStanjaIznos(dugovno, iznos), robStanjaIznos(potrazno, iznos)); err != nil {
+	if err = s.robno.RnalKnjizi(ctx, tx, rnalID, znak, robStanjaIznos(dugovno, iznos), robStanjaIznos(potrazno, iznos)); err != nil {
 		return err
 	}
 
@@ -133,18 +124,13 @@ func (s *RobnoDokumentaResource) robStanja(ctx context.Context, tx db.Transactio
 	if znak > 0 {
 		stopa := 0.0
 		if st.dadok.Valid {
-			if err = tx.QueryRowContext(ctx, `select `+fmt.Sprintf(robPoreskaStopaSQL, "$1", "$2"), st.po, st.dadok.Time).Scan(&stopa); err != nil {
+			if stopa, err = s.robno.RporStopa(ctx, tx, st.po, st.dadok.Time); err != nil {
 				return err
 			}
 		}
-		_, err = tx.ExecContext(ctx, `update rdok set rbr = coalesce(rbr, 0) + 1, brst = coalesce(brst, 0) + 1,
-				iznos = round((coalesce(iznos, 0) + $2)::numeric, 2), prodvred = round((coalesce(prodvred, 0) + $2)::numeric, 2),
-				vporez = round((coalesce(vporez, 0) + $3)::numeric, 2)
-			where rdokid = $1`, rdokID, iznos, iznos*stopa/100)
+		err = s.robno.RdokKnjiziStavku(ctx, tx, rdokID, iznos, iznos*stopa/100)
 	} else {
-		_, err = tx.ExecContext(ctx, `update rdok set rbr = coalesce(rbr, 0) - 1, brst = coalesce(brst, 0) - 1,
-				iznos = round((coalesce(iznos, 0) + $2)::numeric, 2)
-			where rdokid = $1`, rdokID, iznos)
+		err = s.robno.RdokVratiStavku(ctx, tx, rdokID, iznos)
 	}
 	if err != nil {
 		return err
@@ -159,20 +145,16 @@ func (s *RobnoDokumentaResource) robStanja(ctx context.Context, tx db.Transactio
 		p.Kolicina = 0
 	}
 	m := robStanjeMesec(robStanjaDatum(st.dadok))
-	var rstaID int64
-	err = tx.QueryRowContext(ctx, `select rstaid from rsta where god = $1 and kar = $2 and magaciniid = $3 and konto = $4 and sifra = $5
-		order by rstaid limit 1 for update`, god, kar, st.magaciniID, konto, sifra).Scan(&rstaID)
-	if err == sql.ErrNoRows {
-		var rsifID int64
-		if err = tx.QueryRowContext(ctx, `select coalesce((select rsifid from rsif where god = $1 and kar = $2 and sifra = $3 limit 1), 0)`,
-			god, kar, sifra).Scan(&rsifID); err != nil {
+	rstaID, err := s.robno.RstaIDZaIzmenu(ctx, tx, st.magaciniID, konto, sifra)
+	if errors.Is(err, sql.ErrNoRows) {
+		rsifID, err := s.robno.RsifIDIliNula(ctx, tx, sifra)
+		if err != nil {
 			return err
 		}
 		if rsifID == 0 {
 			return nil
 		}
 		kolone := robStanjeKolone(p, k, m)
-		kolone["god"], kolone["kar"] = god, kar
 		kolone["rsifid"], kolone["sifra"], kolone["konto"] = rsifID, sifra, konto
 		kolone["mag"], kolone["magaciniid"] = st.mag, st.magaciniID
 		if st.danal.Valid {
@@ -180,19 +162,17 @@ func (s *RobnoDokumentaResource) robStanja(ctx context.Context, tx db.Transactio
 		}
 		kolone["cena"], kolone["brst"] = st.cena, 1
 		kolone["tz"], kolone["tzi"] = "", ""
-		return robInsertStanja(ctx, tx, "rsta", kolone)
+		return s.robno.StanjeDodaj(ctx, tx, repository.TabelaRsta, kolone)
 	}
 	if err != nil {
 		return err
 	}
-	set, args := robStanjeKretanje(p, k, m, 1)
+	izmene := robStanjeKretanje(p, k, m)
 	if robSadrzi([]string{"PLS", "PLT", "PLM", "NIV"}, k.grpdok) {
-		args = append(args, st.cena)
-		set = append(set, fmt.Sprintf("cena = $%d", len(args)))
+		izmene = append(izmene, repository.Izmena{Kolona: "cena", Vrednost: st.cena})
 	}
-	args = append(args, znak)
-	set = append(set, fmt.Sprintf("brst = coalesce(brst, 0) + $%d", len(args)))
-	return robUpdateStanja(ctx, tx, "rsta", rstaID, set, args)
+	izmene = append(izmene, repository.Izmena{Kolona: "brst", Dodaj: true, Vrednost: znak})
+	return s.robno.StanjeIzmeni(ctx, tx, repository.TabelaRsta, rstaID, izmene)
 }
 
 // robStanjaIznos is the iznos posted on a side of the nalog (its duguje or potražuje): the iznos for the

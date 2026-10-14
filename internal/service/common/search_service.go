@@ -7,9 +7,8 @@ import (
 	"strings"
 
 	"helia/internal/domain"
+	"helia/internal/infrastructure/db/querybuilder"
 	"helia/internal/repository"
-
-	helcommon "helia/internal/common"
 )
 
 // SearchService collects the searches that are used by more than one screen (partneri, konta,
@@ -185,10 +184,11 @@ var searchDefinitions = map[string]searchDefinition{
 		},
 		query: `select trim(k.konto) as key, trim(k.konto) as c1, coalesce((select f.naziv from fkpl f where f.idfkpl = k.idfkpl), '') as c2
 			from magkonto k`,
-		period:          "k",
-		conditions:      []string{"coalesce(trim(k.konto), '') <> ''"},
-		searchIn:        []string{"k.konto"},
-		filters:         map[string][]string{"k.magaciniid::text": {"magacin1"}},
+		period:     "k",
+		conditions: []string{"coalesce(trim(k.konto), '') <> ''"},
+		searchIn:   []string{"k.konto"},
+		// magacin1: the magacin of a prenosnica, magaciniid: the magacin of a document (the porudžbenica).
+		filters:         map[string][]string{"k.magaciniid::text": {"magacin1", "magaciniid"}},
 		requiredFilters: []string{"k.magaciniid::text"},
 		orderBy:         "k.magkontoid",
 		textColumns:     []int{0, 1},
@@ -449,13 +449,15 @@ func (s *SearchResource) Search(ctx context.Context, entity, text string, filter
 	if err != nil {
 		return domain.TableComboResults{}, err
 	}
-	qb := helcommon.NewQueryBuilder(def.query, true)
+	// def.query, def.period, def.conditions, the filter columns and def.searchIn are static SQL
+	// from searchDefinitions; only values from the request become arguments.
+	b := querybuilder.New(def.query)
 	if def.period != "" {
-		qb.AddEqual(def.period+".god", session.SelectedGod)
-		qb.AddEqual(def.period+".kar", session.SelectedKar)
+		b.Where(def.period+".god = ?", session.SelectedGod).
+			Where(def.period+".kar = ?", session.SelectedKar)
 	}
 	for _, condition := range def.conditions {
-		qb.AddCustomCondition(condition)
+		b.Where(condition)
 	}
 	// The filters in a fixed order (of the column), so the same request builds the same query; the
 	// value of a column is the first of its parameters that is not empty.
@@ -468,7 +470,7 @@ func (s *SearchResource) Search(ctx context.Context, entity, text string, filter
 	for _, column := range columns {
 		for _, name := range def.filters[column] {
 			if value := strings.TrimSpace(filters[name]); value != "" && value != "-" {
-				qb.AddEqual(column, value)
+				b.Where(column+" = ?", value)
 				zadato[column] = true
 				break
 			}
@@ -493,18 +495,14 @@ func (s *SearchResource) Search(ctx context.Context, entity, text string, filter
 		text = ""
 	}
 	if text != "" && len(def.searchIn) > 0 {
-		n := qb.GetArgsCount() + 1
-		parts := make([]string, 0, len(def.searchIn))
+		conds := make([]querybuilder.Cond, 0, len(def.searchIn))
 		for _, column := range def.searchIn {
-			parts = append(parts, fmt.Sprintf("%s ILIKE '%%' || $%d || '%%'", column, n))
+			conds = append(conds, querybuilder.C(column+" ILIKE '%' || ? || '%'", text))
 		}
-		qb.AddCustomCondition("(" + strings.Join(parts, " OR ") + ")")
-		qb.AddArgs(text)
+		b.WhereAny(conds...)
 	}
-	qb.AddOrderBy(def.orderBy)
-	qb.SetLimit(searchLimit)
-	query, args := qb.Build()
-	rows, err := s.repo.GetAllCustom(ctx, query, "", args, "", "")
+	b.OrderBy(def.orderBy).Limit(searchLimit)
+	rows, err := s.repo.Select(ctx, b)
 	if err != nil {
 		return domain.TableComboResults{}, err
 	}

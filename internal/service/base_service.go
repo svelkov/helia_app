@@ -28,8 +28,6 @@ type Service[T any] interface {
 	Create(ctx context.Context, entity *T, idField string, tableFields []domain.Fields) ([]domain.FieldError, int64, error)
 	GetByID(ctx context.Context, idField string, idValue int64) (*T, error)
 	GetAll(ctx context.Context, page int, offset int, tableFields []domain.Fields, idField string, searchText, sortBy, sortOrder string) (*[]T, error)
-	GetAllCustom(ctx context.Context, queryText, whereText string, args []interface{}, limitOffset, orderBy string) (*[]T, error)
-	GetTotalRecordsCustom(ctx context.Context, queryText, whereText string, args []interface{}, limitOffset, orderBy string) (int, error)
 	GetTotalRecords(ctx context.Context, tableFields []domain.Fields, searchText string) (int, error)
 	Update(ctx context.Context, entity *T, idField string, idValue interface{}, tableFields []domain.Fields) ([]domain.FieldError, error)
 	Delete(ctx context.Context, idField string, id int64) error
@@ -78,14 +76,6 @@ func (s *BaseService[T]) GetByID(ctx context.Context, idField string, idValue in
 
 func (s *BaseService[T]) GetAll(ctx context.Context, page int, offset int, tableFields []domain.Fields, idField string, searchText, sortBy, sortOrder string) (*[]T, error) {
 	return s.Repo.GetAll(ctx, page, offset, tableFields, idField, searchText, sortBy, sortOrder)
-}
-
-func (s *BaseService[T]) GetAllCustom(ctx context.Context, queryText, whereText string, args []interface{}, limitOffset, orderBy string) (*[]T, error) {
-	return s.Repo.GetAllCustom(ctx, queryText, whereText, args, limitOffset, orderBy)
-}
-
-func (s *BaseService[T]) GetTotalRecordsCustom(ctx context.Context, queryText, whereText string, args []interface{}, limitOffset, orderBy string) (int, error) {
-	return s.Repo.GetTotalRecordsCustom(ctx, queryText, whereText, args, limitOffset, orderBy)
 }
 
 func (s *BaseService[T]) GetTotalRecords(ctx context.Context, tableFields []domain.Fields, searchText string) (int, error) {

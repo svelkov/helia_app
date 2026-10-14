@@ -6,9 +6,9 @@ import (
 	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
+	"helia/internal/infrastructure/db/querybuilder"
 	"helia/internal/repository"
 	"helia/internal/service"
-	"reflect"
 )
 
 // DnevnikService defines the interface for operations related to Dnevnik knjizenja.
@@ -40,7 +40,7 @@ func NewDnevnikService(service *service.BaseService[domain.DnevnikDto],
 	return rs
 }
 func (s *DnevnikResource) GetFvrData(ctx context.Context) (domain.Fvr, error) {
-	return common.GetFvrData(ctx, s.fvrRepo)
+	return repository.GetFvrData(ctx, s.fvrRepo)
 }
 
 // GetDnevnikTableFields returns the table fields for dnevnik knjizenja
@@ -64,8 +64,8 @@ func (s *DnevnikResource) GetDnevnikKnjizenja(ctx context.Context, tbl *domain.T
 	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
 
 	// Build query
-	qb := common.NewQueryBuilder(`
-		select 
+	b := querybuilder.New(`
+		select
 			row_number() over (order by fpro.danal, fpro.nalog) as redbr,
 			fpro.rbr,
 			fpro.danal,
@@ -85,48 +85,41 @@ func (s *DnevnikResource) GetDnevnikKnjizenja(ctx context.Context, tbl *domain.T
 			concat(coalesce(v.sifval::text,''), '-', coalesce(v.oznval,'')) as sifval,
 			case when fpro.kat in (1, 2) then fpro.deviznos else 0 end as devdug,
 			case when fpro.kat in (3, 4) then fpro.deviznos else 0 end as devpot
-		from fpro`, true)
-
-	// Add JOIN for fkpl
-	qb.AddJoin("left join fkpl on fkpl.idfkpl = fpro.idfkpl")
-	qb.AddJoin("left join partneri p on p.sifra = fpro.sifra and p.tipanalitikeid = fkpl.tipanalitikeid")
-	qb.AddJoin("left join orgjed o on o.idorgjed = fpro.idorgjed")
-	qb.AddJoin("left join valute v on v.sifval = fpro.sifval")
+		from fpro`).
+		AddJoin("left join fkpl on fkpl.idfkpl = fpro.idfkpl").
+		// The partner of the period of the stavka (partneri is joined by its šifra, not by idpartneri).
+		AddJoin("left join partneri p on p.sifra = fpro.sifra and p.tipanalitikeid = fkpl.tipanalitikeid and p.god = fpro.god and p.kar = fpro.kar").
+		AddJoin("left join orgjed o on o.idorgjed = fpro.idorgjed").
+		AddJoin("left join valute v on v.sifval = fpro.sifval")
 
 	// Add WHERE conditions
 	if hasGod {
-		qb.AddEqual("fpro.god", userSession.SelectedGod)
+		b.Where("fpro.god = ?", userSession.SelectedGod)
 	}
 	if hasKar {
-		qb.AddEqual("fpro.kar", userSession.SelectedKar)
+		b.Where("fpro.kar = ?", userSession.SelectedKar)
 	}
 
-	// Date range filter
-	if odDatuma != "" {
-		qb.AddCondition("fpro.danal", odDatuma, ">=")
-	}
-	if doDatuma != "" {
-		qb.AddCondition("fpro.danal", doDatuma, "<=")
-	}
-	// if search text is not epmty, add search conditions
-	if searchText != "" {
-		qb.SetEntityType(reflect.TypeOf(domain.DnevnikDto{}))
-		qb.AddSearchConditions(s.GetDnevnikTableFields(), searchText)
+	// Date range filter (skipped for an empty date)
+	b.AddCondition("fpro.danal", odDatuma, ">=").
+		AddCondition("fpro.danal", doDatuma, "<=")
+	// The search over the columns of the grid. DnevnikDto has no god/kar, so ApplyFilters only adds
+	// the search.
+	if err := s.service.Repo.ApplyFilters(ctx, b, "", s.GetDnevnikTableFields(), searchText); err != nil {
+		return err
 	}
 
 	// Order by
-	qb.AddOrderBy("fpro.danal, fpro.nalog, fpro.rbr")
+	b.OrderBy("fpro.danal, fpro.nalog, fpro.rbr")
 
 	if !getTotalRecords && printType == common.TipStampePreview {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
+		b.Limit(pageSize).Offset((currentPage - 1) * pageSize)
 	}
 
-	// Build and execute query
-	sqlQuery, args := qb.Build()
-	entities, err := s.service.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	// Execute the query
+	entities, err := s.service.Repo.Select(ctx, b)
 	if err != nil {
-		return fmt.Errorf("failed to query fpro: %s", err.Error())
+		return fmt.Errorf("failed to query fpro: %w", err)
 	}
 	// set totals for duguje, potrazuje, saldo, devdug, devpot
 	var totalDuguje, totalPotrazuje, totalSaldo, totalDevDug, totalDevPot float64

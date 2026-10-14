@@ -7,6 +7,7 @@ import (
 	"helia/config"
 	"helia/internal/common"
 	"helia/internal/domain"
+	"helia/internal/infrastructure/db/querybuilder"
 	"helia/internal/repository"
 	"helia/internal/service"
 	"reflect"
@@ -56,27 +57,9 @@ func (s *FispResource) Create(ctx context.Context, e *domain.Fisp, id string, fi
 		return nil, 0, err
 	}
 	fields = replaceField(fields, "idpartneri", fmt.Sprint(e.IDPartneri))
-	q := common.NewRepositoryQueryBuilder(common.RepositoryConfig{TableName: "fisp", EntityType: reflect.TypeOf(e).Elem(), TableFields: s.fields, IncludeGodKar: true})
-	hasGod, hasKar := q.CheckGodKarFields()
-	if hasGod || hasKar {
-		u := domain.GetSessionFromStdContext(ctx)
-		q.AddGodKarConditions(hasGod, hasKar, u.SelectedGod, u.SelectedKar)
-	}
-	sqlQuery, args := q.BuildInsert(ctx, fields, id)
-	tx, err := s.fispRepo.BeginTx()
-	if err != nil {
-		return nil, 0, fmt.Errorf("error beginning transaction: %w", err)
-	}
-	defer func() {
-		if err != nil {
-			_ = tx.Rollback()
-		}
-	}()
-	if err = tx.QueryRowContext(ctx, sqlQuery, args...).Err(); err != nil {
+	// The repository fills god/kar from the session and the audit columns, in its own transaction.
+	if _, err := s.fispRepo.Create(ctx, e, id, fields); err != nil {
 		return nil, 0, fmt.Errorf("insert fisp failed: %w", err)
-	}
-	if err = tx.Commit(); err != nil {
-		return nil, 0, fmt.Errorf("error committing transaction: %w", err)
 	}
 	return nil, 0, nil
 }
@@ -88,27 +71,9 @@ func (s *FispResource) Update(ctx context.Context, e *domain.Fisp, id string, id
 		return nil, err
 	}
 	fields = replaceField(fields, "idpartneri", fmt.Sprint(e.IDPartneri))
-	q := common.NewRepositoryQueryBuilder(common.RepositoryConfig{TableName: "fisp", EntityType: reflect.TypeOf(e).Elem(), TableFields: fields, IncludeGodKar: true})
-	hasGod, hasKar := q.CheckGodKarFields()
-	if hasGod || hasKar {
-		u := domain.GetSessionFromStdContext(ctx)
-		q.AddGodKarConditions(hasGod, hasKar, u.SelectedGod, u.SelectedKar)
-	}
-	sqlQuery, args := q.BuildUpdate(ctx, fields, id, idValue)
-	tx, err := s.fispRepo.BeginTx()
-	if err != nil {
-		return nil, fmt.Errorf("error beginning transaction: %w", err)
-	}
-	defer func() {
-		if err != nil {
-			_ = tx.Rollback()
-		}
-	}()
-	if err = tx.QueryRowContext(ctx, sqlQuery, args...).Err(); err != nil {
+	// Restricted to the tenant of the session; ErrNotFound when the mesto isporuke is not there.
+	if err := s.fispRepo.Update(ctx, e, id, idValue, fields); err != nil {
 		return nil, fmt.Errorf("update fisp failed: %w", err)
-	}
-	if err = tx.Commit(); err != nil {
-		return nil, fmt.Errorf("error committing transaction: %w", err)
 	}
 	return nil, nil
 }
@@ -118,17 +83,11 @@ func (s *FispResource) Delete(ctx context.Context, id string, value int64) error
 func (s *FispResource) GetAll(ctx context.Context, p, size int, f []domain.Fields, id, search, sort, order string) (*[]domain.Fisp, error) {
 	return s.service.GetAll(ctx, p, size, f, id, search, sort, order)
 }
-func (s *FispResource) GetAllCustom(ctx context.Context, q, w string, a []interface{}, l, o string) (*[]domain.Fisp, error) {
-	return s.service.GetAllCustom(ctx, q, w, a, l, o)
-}
 func (s *FispResource) GetByID(ctx context.Context, id string, value int64) (*domain.Fisp, error) {
 	return s.service.GetByID(ctx, id, value)
 }
 func (s *FispResource) GetTotalRecords(ctx context.Context, f []domain.Fields, search string) (int, error) {
 	return s.service.GetTotalRecords(ctx, f, search)
-}
-func (s *FispResource) GetTotalRecordsCustom(ctx context.Context, q, w string, a []interface{}, l, o string) (int, error) {
-	return s.service.GetTotalRecordsCustom(ctx, q, w, a, l, o)
 }
 func (s *FispResource) MapEntityToValues(e *domain.Fisp, f []domain.Fields) []domain.Fields {
 	return s.service.MapEntityToValues(e, f)
@@ -147,7 +106,7 @@ func (s *FispResource) ValidateEntity(ctx context.Context, e *domain.Fisp) []dom
 	return r
 }
 func (s *FispResource) GetFvrData(ctx context.Context) (domain.Fvr, error) {
-	return common.GetFvrData(ctx, s.fvrRepo)
+	return repository.GetFvrData(ctx, s.fvrRepo)
 }
 
 func replaceField(fields []domain.Fields, name, value string) []domain.Fields {
@@ -164,12 +123,15 @@ func (s *FispResource) setPartnerID(ctx context.Context, e *domain.Fisp) error {
 	if s.partneriRepo == nil {
 		return errors.New("partneri repository is not initialized")
 	}
-	qb := common.NewQueryBuilder("SELECT idpartneri, sifra FROM partneri", true)
-	qb.AddEqual("sifra", e.Sifra)
-	qb.AddOrderBy("idpartneri")
-	qb.SetLimit(1)
-	sqlQuery, args := qb.Build()
-	partners, err := s.partneriRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	// The partner of the šifra in the period of the session (sifra is the key: Where, not AddEqual).
+	b := querybuilder.New("SELECT idpartneri, sifra FROM partneri").
+		Where("sifra = ?", e.Sifra).
+		OrderBy("idpartneri").
+		Limit(1)
+	if err := s.partneriRepo.ApplyFilters(ctx, b, "", nil, ""); err != nil {
+		return err
+	}
+	partners, err := s.partneriRepo.Select(ctx, b)
 	if err != nil {
 		return fmt.Errorf("find partner by code failed: %w", err)
 	}
@@ -185,42 +147,32 @@ func (s *FispResource) GetAllFisp(ctx context.Context, tbl *domain.TableData, pa
 	if userSession == nil {
 		return errors.New(common.ErrMsgUserSessionNotFound)
 	}
-	qb := common.NewQueryBuilder(`SELECT fisp.fispid, fisp.idpartneri, fisp.god, fisp.kar, fisp.konto, fisp.sifra, fisp.mi, fisp.naziv, fisp.adresa, fisp.mesto, fisp.pobro, fisp.pib, fisp.kontaktosb, fisp.gln, fisp.email, COALESCE(p.naziv, '') AS partnernaziv FROM fisp`, true)
-	qb.AddJoin("LEFT JOIN partneri p ON p.idpartneri = fisp.idpartneri")
-	hasGod, hasKar := s.fispRepo.GetHasGodHasKar()
-	if hasGod {
-		qb.AddEqual("fisp.god", userSession.SelectedGod)
+	b := querybuilder.New(`SELECT fisp.fispid, fisp.idpartneri, fisp.god, fisp.kar, fisp.konto, fisp.sifra, fisp.mi, fisp.naziv, fisp.adresa, fisp.mesto, fisp.pobro, fisp.pib, fisp.kontaktosb, fisp.gln, fisp.email, COALESCE(p.naziv, '') AS partnernaziv FROM fisp`).
+		AddJoin("LEFT JOIN partneri p ON p.idpartneri = fisp.idpartneri")
+	if err := s.fispRepo.ApplyFilters(ctx, b, "fisp", nil, ""); err != nil {
+		return err
 	}
-	if hasKar {
-		qb.AddEqual("fisp.kar", userSession.SelectedKar)
+	if printType == common.TipStampePreview {
+		b.AddSearch([]string{"fisp.konto", "fisp.sifra", "p.naziv", "fisp.naziv", "fisp.adresa"}, search)
 	}
-	if search != "" && printType == common.TipStampePreview {
-		qb.SetEntityType(reflect.TypeOf(domain.Fisp{}))
-		qb.AddCustomSearchCondition([]string{"fisp.konto", "fisp.sifra", "p.naziv", "fisp.naziv", "fisp.adresa"}, search)
+	if total && printType == common.TipStampePreview {
+		count, err := s.fispRepo.Count(ctx, b)
+		if err != nil {
+			return err
+		}
+		common.SetTableTotalRecords(tbl, count, size)
+		return nil
 	}
 	if !total {
 		sortMap := map[string]string{"konto": "fisp.konto", "sifra": "fisp.sifra", "partnernaziv": "p.naziv", "mi": "fisp.mi", "naziv": "fisp.naziv", "adresa": "fisp.adresa"}
-		if v, ok := sortMap[sort]; ok {
-			qb.AddOrderBy(v)
-			if order == "DESC" {
-				qb.AddSortOrder("DESC")
-			} else {
-				qb.AddSortOrder("ASC")
-			}
-		}
+		b.OrderByKey(sort, order, sortMap)
 		if printType == common.TipStampePreview {
-			qb.SetLimit(size)
-			qb.SetOffset((page - 1) * size)
+			b.Limit(size).Offset((page - 1) * size)
 		}
 	}
-	sqlQuery, args := qb.Build()
-	rows, err := s.fispRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	rows, err := s.fispRepo.Select(ctx, b)
 	if err != nil {
 		return err
-	}
-	if total && printType == common.TipStampePreview {
-		common.SetTableTotalRecords(tbl, len(*rows), size)
-		return nil
 	}
 	for _, e := range *rows {
 		tbl.Rows = append(tbl.Rows, domain.TableRow{ID: fmt.Sprint(e.FispID), Fields: []string{e.Konto, e.Sifra, e.PartnerNaziv, fmt.Sprint(e.MI), e.Naziv, e.Adresa}, HasUpdate: true, HasDelete: true})

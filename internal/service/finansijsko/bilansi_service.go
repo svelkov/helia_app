@@ -7,6 +7,7 @@ import (
 	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
+	"helia/internal/infrastructure/db/querybuilder"
 	"helia/internal/repository"
 	"helia/internal/service"
 	"math"
@@ -92,7 +93,7 @@ func NewBilansiService(
 }
 
 func (s *BilansiResource) GetFvrData(ctx context.Context) (domain.Fvr, error) {
-	return common.GetFvrData(ctx, s.fvrRepo)
+	return repository.GetFvrData(ctx, s.fvrRepo)
 }
 
 func (s *BilansiResource) GetByID(ctx context.Context, idField string, idValue int64) (*domain.Bils, error) {
@@ -148,21 +149,22 @@ func (s *BilansiResource) GetZakljucniListAnalitika(ctx context.Context, tbl *do
 	if session == nil {
 		return fmt.Errorf("user session not found")
 	}
-	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
-
-	sqlQuery, queryArgs := s.buildZakljucniListAnalitikaQuery(session, hasGod, hasKar, params, common.TipStampePreview)
+	b, err := s.buildZakljucniListAnalitikaQuery(ctx, session, params, common.TipStampePreview)
+	if err != nil {
+		return err
+	}
 	// Everything up to the end of the requested page is fetched (the totals pass fetches the whole
 	// hierarchy without LIMIT): the pagination counters are the number of hierarchy rows - detail
 	// rows and subtotals - and the rows before the page are the ones that continue the redni broj of
 	// the accounts across the pages.
 	if !getTotalRecords {
-		sqlQuery = fmt.Sprintf("%s LIMIT %d", sqlQuery, currentPage*pageSize)
+		b.Limit(currentPage * pageSize)
 	}
 
 	tbl.Headers = s.GetZakljucniTableFields()
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 
-	entities, err := s.fproRepo.GetAllCustom(ctx, sqlQuery, "", queryArgs, "", "")
+	entities, err := s.fproRepo.Select(ctx, b)
 	if err != nil {
 		return err
 	}
@@ -401,56 +403,35 @@ func zakljucniPrintMarker(nivo, finestNivo, rowNum int) string {
 // Nothing is hardcoded: the period comes from params, god/kar from the session (only when the
 // ledger carries them) and the sintetika prefix length from the configuration. The search text
 // matches the hierarchy key (konto and sifra).
-func (s *BilansiResource) buildZakljucniListAnalitikaQuery(session *domain.UserSession, hasGod, hasKar bool, params domain.ZakljucniParams, printType string) (string, []any) {
-	filterQb := common.NewQueryBuilder(`SELECT konto, sifra, fnal.tipdok, kat, iznos FROM fpro`, true)
-	filterQb.AddJoin(" inner join fnal on fnal.idfnal = fpro.idfnal ")
-	if hasGod {
-		filterQb.AddEqual("fpro.god", session.SelectedGod)
-	}
-	if hasKar {
-		filterQb.AddEqual("fpro.kar", session.SelectedKar)
-	}
-	// Both kinds of booking lines belong to this list: vkonta 1 = konto iz kontnog plana and
-	// vkonta 2 = konto analitike/partnera (the filter the flattened zakljucniInnerQuery used for the
-	// analitika and subsintetika lists). With only vkonta = 1 the list stopped at konto 4654,
-	// although the bookings of the period go up to 8941.
-	filterQb.AddIn("fpro.vkonta", []interface{}{"1"})
+func (s *BilansiResource) buildZakljucniListAnalitikaQuery(ctx context.Context, session *domain.UserSession, params domain.ZakljucniParams, printType string) (*querybuilder.Builder, error) {
+	duzSin := session.GetDuzSin(s.cfg.NDuzSint)
+	filter := querybuilder.New(`SELECT konto, sifra, fnal.tipdok, kat, iznos FROM fpro`).
+		AddJoin("inner join fnal on fnal.idfnal = fpro.idfnal").
+		// Both kinds of booking lines belong to this list: vkonta 1 = konto iz kontnog plana and
+		// vkonta 2 = konto analitike/partnera (the filter the flattened zakljucniInnerQuery used for the
+		// analitika and subsintetika lists). With only vkonta = 1 the list stopped at konto 4654,
+		// although the bookings of the period go up to 8941.
+		AddIn("fpro.vkonta", []any{"1"})
 	// The range of the konta is compared on the sintetika prefix (like the other two lists of the
 	// report and like the legacy query did).
-	if params.OdKonta != "" {
-		filterQb.AddCondition(fmt.Sprintf("left(fpro.konto, %d)", session.GetDuzSin(s.cfg.NDuzSint)), params.OdKonta, ">=")
-	}
-	if params.DoKonta != "" {
-		filterQb.AddCondition(fmt.Sprintf("left(fpro.konto, %d)", session.GetDuzSin(s.cfg.NDuzSint)), params.DoKonta, "<=")
-	}
-	filterQb.AddCondition("fnal.danal", params.OdDatuma, ">=")
-	filterQb.AddCondition("fnal.danal", params.DoDatuma, "<=")
+	whereRange(filter, fmt.Sprintf("left(fpro.konto, %d)", duzSin), params.OdKonta, params.DoKonta)
+	filter.AddCondition("fnal.danal", params.OdDatuma, ">=").
+		AddCondition("fnal.danal", params.DoDatuma, "<=")
 	// The range of the sifre applies to this list only (it books konto + sifra).
-	if params.OdSifre != "" {
-		filterQb.AddCondition("COALESCE(NULLIF(fpro.sifra, '')::numeric, 0)", params.OdSifre, ">=")
-	}
-	if params.DoSifre != "" {
-		filterQb.AddCondition("COALESCE(NULLIF(fpro.sifra, '')::numeric, 0)", params.DoSifre, "<=")
-	}
+	whereRange(filter, "COALESCE(NULLIF(fpro.sifra, '')::numeric, 0)", params.OdSifre, params.DoSifre)
 	// Klasa 9 accounts are excluded for printing only, exactly like the flattened
 	// zakljucniInnerQuery does it.
 	if printType == common.TipStampePrint && params.Klasa9 == "false" {
-		filterQb.AddCustomCondition("fpro.konto NOT LIKE '9%'")
+		filter.Where("fpro.konto NOT LIKE '9%'")
 	}
-	filterSql, filterArgs := filterQb.Build()
 
-	// The sintetika prefix length is a parameter as well, so its placeholder has to continue
-	// the numbering of the placeholders already used by the "filtered" CTE above.
-	sintParam := len(filterArgs) + 1
 	nivoOrderCase := fmt.Sprintf("CASE WHEN k4 IS NOT NULL THEN %d WHEN k3 IS NOT NULL THEN %d WHEN k2 IS NOT NULL THEN %d ELSE %d END AS nivo_order",
 		zakljucniNivoAnalitika, zakljucniNivoSintetika, zakljucniNivoGrupa, zakljucniNivoKlasa)
-
-	baseSql := fmt.Sprintf(`WITH filtered AS (%s),
-	agg AS (
+	agg := fmt.Sprintf(`
 		SELECT
 			LEFT(konto, 1) AS k1,
 			LEFT(konto, 2) AS k2,
-			LEFT(konto, $%d) AS k3,
+			LEFT(konto, %d) AS k3,
 			konto AS k4,
 			sifra AS s4,
 			SUM(CASE WHEN tipdok = '00' AND kat IN (1,2) THEN iznos ELSE 0 END) AS pocstanjedug,
@@ -460,12 +441,12 @@ func (s *BilansiResource) buildZakljucniListAnalitikaQuery(session *domain.UserS
 		FROM filtered
 		GROUP BY GROUPING SETS (
 			(konto, sifra),
-			(LEFT(konto, $%d)),
+			(LEFT(konto, %d)),
 			(LEFT(konto, 2)),
 			(LEFT(konto, 1))
 		)
-	)
-	SELECT
+	`, duzSin, duzSin)
+	b, err := s.zakljucniHierarchy(ctx, filter, agg, fmt.Sprintf(`SELECT
 		nivo_order,
 		konto_grp AS konto,
 		sifra_grp AS sifra,
@@ -478,19 +459,15 @@ func (s *BilansiResource) buildZakljucniListAnalitikaQuery(session *domain.UserS
 			RPAD(COALESCE(k4, k3, k2, k1), 6, '~') AS sort_key,
 			pocstanjedug, pocstanjepot, prometdug, prometpot
 		FROM agg
-	) sub`, filterSql, sintParam, sintParam, nivoOrderCase)
-
-	qb := common.NewQueryBuilder(baseSql, false)
-	qb.AddArgs(filterArgs...)                     // $1..$n : the "filtered" CTE
-	qb.AddArgs(session.GetDuzSin(s.cfg.NDuzSint)) // $n+1   : the sintetika prefix length
-
-	// The search placeholder follows the CTE arguments and the prefix length.
-	if params.SearchText != "" {
-		qb.Where(zakljucniSearchCondition(len(filterArgs)+2, "sub.konto", "sub.sifra"), params.SearchText)
+	) sub`, nivoOrderCase))
+	if err != nil {
+		return nil, err
 	}
-	qb.AddOrderBy(`sort_key COLLATE "C", sifra_grp COLLATE "C" NULLS LAST`)
 
-	return qb.Build()
+	// The search text matches the hierarchy key (konto and sifra).
+	whereZakljucniSearch(b, params.SearchText, "sub.konto", "sub.sifra")
+	b.OrderByExpr(`sort_key COLLATE "C", sifra_grp COLLATE "C" NULLS LAST`)
+	return b, nil
 }
 
 // GetZakljucniListSintetika retrieves the sintetika Zakljucni list (tipLista "3") in a single
@@ -509,21 +486,22 @@ func (s *BilansiResource) GetZakljucniListSintetika(ctx context.Context, tbl *do
 	if session == nil {
 		return fmt.Errorf("user session not found")
 	}
-	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
-
-	sqlQuery, queryArgs := s.buildZakljucniListSintetikaQuery(session, hasGod, hasKar, params, common.TipStampePreview)
+	b, err := s.buildZakljucniListSintetikaQuery(ctx, session, params, common.TipStampePreview)
+	if err != nil {
+		return err
+	}
 	// Everything up to the end of the requested page is fetched (the totals pass fetches the whole
 	// hierarchy without LIMIT): the pagination counters are the number of hierarchy rows - detail
 	// rows and subtotals - and the rows before the page are the ones that continue the redni broj of
 	// the accounts across the pages.
 	if !getTotalRecords {
-		sqlQuery = fmt.Sprintf("%s LIMIT %d", sqlQuery, currentPage*pageSize)
+		b.Limit(currentPage * pageSize)
 	}
 
 	tbl.Headers = s.GetZakljucniTableFields()
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 
-	entities, err := s.fproRepo.GetAllCustom(ctx, sqlQuery, "", queryArgs, "", "")
+	entities, err := s.fproRepo.Select(ctx, b)
 	if err != nil {
 		return err
 	}
@@ -602,50 +580,38 @@ func (s *BilansiResource) GetZakljucniListSintetika(ctx context.Context, tbl *do
 // Nothing is hardcoded: the period comes from params, god/kar from the session (only when the
 // ledger carries them) and the sintetika prefix length from the configuration. The search text
 // matches the hierarchy key (konto).
-func (s *BilansiResource) buildZakljucniListSintetikaQuery(session *domain.UserSession, hasGod, hasKar bool, params domain.ZakljucniParams, printType string) (string, []any) {
-	filterQb := common.NewQueryBuilder(`SELECT konto, fnal.tipdok, kat, iznos FROM fpro`, true)
-	filterQb.AddJoin(" inner join fnal on fnal.idfnal = fpro.idfnal ")
-	if hasGod {
-		filterQb.AddEqual("fpro.god", session.SelectedGod)
-	}
-	if hasKar {
-		filterQb.AddEqual("fpro.kar", session.SelectedKar)
-	}
-	filterQb.AddCondition(fmt.Sprintf("left(fpro.konto, %d)", session.GetDuzSin(s.cfg.NDuzSint)), params.OdKonta, ">=")
-	filterQb.AddCondition(fmt.Sprintf("left(fpro.konto, %d)", session.GetDuzSin(s.cfg.NDuzSint)), params.DoKonta, "<=")
-	filterQb.AddCondition("fnal.danal", params.OdDatuma, ">=")
-	filterQb.AddCondition("fnal.danal", params.DoDatuma, "<=")
+func (s *BilansiResource) buildZakljucniListSintetikaQuery(ctx context.Context, session *domain.UserSession, params domain.ZakljucniParams, printType string) (*querybuilder.Builder, error) {
+	duzSin := session.GetDuzSin(s.cfg.NDuzSint)
+	filter := querybuilder.New(`SELECT konto, fnal.tipdok, kat, iznos FROM fpro`).
+		AddJoin("inner join fnal on fnal.idfnal = fpro.idfnal")
+	whereRange(filter, fmt.Sprintf("left(fpro.konto, %d)", duzSin), params.OdKonta, params.DoKonta)
+	filter.AddCondition("fnal.danal", params.OdDatuma, ">=").
+		AddCondition("fnal.danal", params.DoDatuma, "<=")
 	// Klasa 9 accounts are excluded for printing only, exactly like the flattened
 	// zakljucniInnerQuery does it.
 	if printType == common.TipStampePrint && params.Klasa9 == "false" {
-		filterQb.AddCustomCondition("fpro.konto NOT LIKE '9%'")
+		filter.Where("fpro.konto NOT LIKE '9%'")
 	}
-	filterSql, filterArgs := filterQb.Build()
 
-	// The sintetika prefix length is a parameter as well, so its placeholder has to continue
-	// the numbering of the placeholders already used by the "filtered" CTE above.
-	sintParam := len(filterArgs) + 1
 	nivoOrderCase := fmt.Sprintf("CASE WHEN k3 IS NOT NULL THEN %d WHEN k2 IS NOT NULL THEN %d ELSE %d END AS nivo_order",
 		zakljucniNivoSintetika, zakljucniNivoGrupa, zakljucniNivoKlasa)
-
-	baseSql := fmt.Sprintf(`WITH filtered AS (%s),
-	agg AS (
+	agg := fmt.Sprintf(`
 		SELECT
 			LEFT(konto, 1) AS k1,
 			LEFT(konto, 2) AS k2,
-			LEFT(konto, $%d) AS k3,
+			LEFT(konto, %d) AS k3,
 			SUM(CASE WHEN tipdok = '00' AND kat IN (1,2) THEN iznos ELSE 0 END) AS pocstanjedug,
 			SUM(CASE WHEN tipdok = '00' AND kat IN (3,4) THEN iznos ELSE 0 END) AS pocstanjepot,
 			SUM(CASE WHEN tipdok <> '00' AND kat IN (1,2) THEN iznos ELSE 0 END) AS prometdug,
 			SUM(CASE WHEN tipdok <> '00' AND kat IN (3,4) THEN iznos ELSE 0 END) AS prometpot
 		FROM filtered
 		GROUP BY GROUPING SETS (
-			(LEFT(konto, $%d)),
+			(LEFT(konto, %d)),
 			(LEFT(konto, 2)),
 			(LEFT(konto, 1))
 		)
-	)
-	SELECT
+	`, duzSin, duzSin)
+	b, err := s.zakljucniHierarchy(ctx, filter, agg, fmt.Sprintf(`SELECT
 		nivo_order,
 		konto_grp AS konto,
 		pocstanjedug, pocstanjepot, prometdug, prometpot
@@ -656,19 +622,15 @@ func (s *BilansiResource) buildZakljucniListSintetikaQuery(session *domain.UserS
 			RPAD(COALESCE(k3, k2, k1), 6, '~') AS sort_key,
 			pocstanjedug, pocstanjepot, prometdug, prometpot
 		FROM agg
-	) sub`, filterSql, sintParam, sintParam, nivoOrderCase)
-
-	qb := common.NewQueryBuilder(baseSql, false)
-	qb.AddArgs(filterArgs...)                     // $1..$n : the "filtered" CTE
-	qb.AddArgs(session.GetDuzSin(s.cfg.NDuzSint)) // $n+1   : the sintetika prefix length
-
-	// The search placeholder follows the CTE arguments and the prefix length.
-	if params.SearchText != "" {
-		qb.Where(zakljucniSearchCondition(len(filterArgs)+2, "sub.konto"), params.SearchText)
+	) sub`, nivoOrderCase))
+	if err != nil {
+		return nil, err
 	}
-	qb.AddOrderBy(`sort_key COLLATE "C" NULLS LAST`)
 
-	return qb.Build()
+	// The search text matches the hierarchy key (konto).
+	whereZakljucniSearch(b, params.SearchText, "sub.konto")
+	b.OrderByExpr(`sort_key COLLATE "C" NULLS LAST`)
+	return b, nil
 }
 
 // GetZakljucniListSubsintetika retrieves the subsintetika Zakljucni list (tipLista "2") in a
@@ -688,20 +650,21 @@ func (s *BilansiResource) GetZakljucniListSubsintetika(ctx context.Context, tbl 
 	if session == nil {
 		return fmt.Errorf("user session not found")
 	}
-	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
-
-	sqlQuery, queryArgs := s.buildZakljucniListSubsintetikaQuery(session, hasGod, hasKar, params, common.TipStampePreview)
+	b, err := s.buildZakljucniListSubsintetikaQuery(ctx, session, params, common.TipStampePreview)
+	if err != nil {
+		return err
+	}
 	// Everything up to the end of the requested page is fetched (the totals pass fetches the whole
 	// hierarchy without LIMIT): the pagination counters are the number of hierarchy rows - detail
 	// rows and subtotals - and the rows before the page are the ones that continue the redni broj of
 	// the accounts across the pages.
 	if !getTotalRecords {
-		sqlQuery = fmt.Sprintf("%s LIMIT %d", sqlQuery, currentPage*pageSize)
+		b.Limit(currentPage * pageSize)
 	}
 	tbl.Headers = s.GetZakljucniTableFields()
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 
-	entities, err := s.fproRepo.GetAllCustom(ctx, sqlQuery, "", queryArgs, "", "")
+	entities, err := s.fproRepo.Select(ctx, b)
 	if err != nil {
 		return err
 	}
@@ -781,38 +744,27 @@ func (s *BilansiResource) GetZakljucniListSubsintetika(ctx context.Context, tbl 
 // Nothing is hardcoded: the period and the konta range come from params, god/kar from the
 // session (only when the ledger carries them) and the sintetika prefix length from the
 // configuration. The search text matches the hierarchy key (konto).
-func (s *BilansiResource) buildZakljucniListSubsintetikaQuery(session *domain.UserSession, hasGod, hasKar bool, params domain.ZakljucniParams, printType string) (string, []any) {
-	filterQb := common.NewQueryBuilder(`SELECT fpro.konto, fnal.tipdok, fpro.kat, fpro.iznos FROM fpro`, true)
-	filterQb.AddJoin(" inner join fnal on fnal.idfnal = fpro.idfnal ")
-	if hasGod {
-		filterQb.AddEqual("fpro.god", session.SelectedGod)
-	}
-	if hasKar {
-		filterQb.AddEqual("fpro.kar", session.SelectedKar)
-	}
-	filterQb.AddCondition("fpro.konto", params.OdKonta, ">=")
-	filterQb.AddCondition("fpro.konto", params.DoKonta, "<=")
-	filterQb.AddCondition("fnal.danal", params.OdDatuma, ">=")
-	filterQb.AddCondition("fnal.danal", params.DoDatuma, "<=")
+func (s *BilansiResource) buildZakljucniListSubsintetikaQuery(ctx context.Context, session *domain.UserSession, params domain.ZakljucniParams, printType string) (*querybuilder.Builder, error) {
+	duzSin := session.GetDuzSin(s.cfg.NDuzSint)
+	filter := querybuilder.New(`SELECT fpro.konto, fnal.tipdok, fpro.kat, fpro.iznos FROM fpro`).
+		AddJoin("inner join fnal on fnal.idfnal = fpro.idfnal").
+		AddCondition("fpro.konto", params.OdKonta, ">=").
+		AddCondition("fpro.konto", params.DoKonta, "<=").
+		AddCondition("fnal.danal", params.OdDatuma, ">=").
+		AddCondition("fnal.danal", params.DoDatuma, "<=")
 	// Klasa 9 accounts are excluded for printing only, exactly like the flattened
 	// zakljucniInnerQuery does it.
 	if printType == common.TipStampePrint && params.Klasa9 == "false" {
-		filterQb.AddCustomCondition("fpro.konto NOT LIKE '9%'")
+		filter.Where("fpro.konto NOT LIKE '9%'")
 	}
-	filterSql, filterArgs := filterQb.Build()
 
-	// The sintetika prefix length is a parameter as well, so its placeholder has to continue
-	// the numbering of the placeholders already used by the "filtered" CTE above.
-	sintParam := len(filterArgs) + 1
 	nivoOrderCase := fmt.Sprintf("CASE WHEN k4 IS NOT NULL THEN %d WHEN k3 IS NOT NULL THEN %d WHEN k2 IS NOT NULL THEN %d ELSE %d END AS nivo_order",
 		zakljucniNivoAnalitika, zakljucniNivoSintetika, zakljucniNivoGrupa, zakljucniNivoKlasa)
-
-	baseSql := fmt.Sprintf(`WITH filtered AS (%s),
-	agg AS (
+	agg := fmt.Sprintf(`
 		SELECT
 			LEFT(konto, 1) AS k1,
 			LEFT(konto, 2) AS k2,
-			LEFT(konto, $%d) AS k3,
+			LEFT(konto, %d) AS k3,
 			konto AS k4,
 			SUM(CASE WHEN tipdok = '00' AND kat IN (1,2) THEN iznos ELSE 0 END) AS pocstanjedug,
 			SUM(CASE WHEN tipdok = '00' AND kat IN (3,4) THEN iznos ELSE 0 END) AS pocstanjepot,
@@ -821,12 +773,12 @@ func (s *BilansiResource) buildZakljucniListSubsintetikaQuery(session *domain.Us
 		FROM filtered
 		GROUP BY GROUPING SETS (
 			(konto),
-			(LEFT(konto, $%d)),
+			(LEFT(konto, %d)),
 			(LEFT(konto, 2)),
 			(LEFT(konto, 1))
 		)
-	)
-	SELECT
+	`, duzSin, duzSin)
+	b, err := s.zakljucniHierarchy(ctx, filter, agg, fmt.Sprintf(`SELECT
 		nivo_order,
 		konto_grp AS konto,
 		pocstanjedug, pocstanjepot, prometdug, prometpot
@@ -837,19 +789,15 @@ func (s *BilansiResource) buildZakljucniListSubsintetikaQuery(session *domain.Us
 			RPAD(COALESCE(k4, k3, k2, k1), 6, '~') AS sort_key,
 			pocstanjedug, pocstanjepot, prometdug, prometpot
 		FROM agg
-	) sub`, filterSql, sintParam, sintParam, nivoOrderCase)
-
-	qb := common.NewQueryBuilder(baseSql, false)
-	qb.AddArgs(filterArgs...)                     // $1..$n : the "filtered" CTE
-	qb.AddArgs(session.GetDuzSin(s.cfg.NDuzSint)) // $n+1   : the sintetika prefix length
-
-	// The search placeholder follows the CTE arguments and the prefix length.
-	if params.SearchText != "" {
-		qb.Where(zakljucniSearchCondition(len(filterArgs)+2, "sub.konto"), params.SearchText)
+	) sub`, nivoOrderCase))
+	if err != nil {
+		return nil, err
 	}
-	qb.AddOrderBy(`sort_key COLLATE "C" NULLS LAST`)
 
-	return qb.Build()
+	// The search text matches the hierarchy key (konto).
+	whereZakljucniSearch(b, params.SearchText, "sub.konto")
+	b.OrderByExpr(`sort_key COLLATE "C" NULLS LAST`)
+	return b, nil
 }
 
 // GetZakljucniListZaStampu returns all zakljucni list rows for printing, with the hierarchy
@@ -867,7 +815,6 @@ func (s *BilansiResource) GetZakljucniListZaStampu(ctx context.Context, tbl, tbl
 	if session == nil {
 		return fmt.Errorf("user session not found")
 	}
-	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
 	// nDuzSint (the prefix length the handler resolved for this request) is passed in for explicitness;
 	// the hierarchy queries below resolve the same value from the request session
 	// (common.NDuzSintFromContext).
@@ -875,20 +822,23 @@ func (s *BilansiResource) GetZakljucniListZaStampu(ctx context.Context, tbl, tbl
 	// detailNivo is the level printed as numbered detail rows; every level above it is printed
 	// as a G<n> subtotal, exactly like the preview shows them.
 	detailNivo := zakljucniDetailNivo(params.TipLista)
-	var sqlQuery string
-	var queryArgs []any
+	var b *querybuilder.Builder
+	var err error
 	switch params.TipLista {
 	case "1":
-		sqlQuery, queryArgs = s.buildZakljucniListAnalitikaQuery(session, hasGod, hasKar, params, common.TipStampePrint)
+		b, err = s.buildZakljucniListAnalitikaQuery(ctx, session, params, common.TipStampePrint)
 	case "2":
-		sqlQuery, queryArgs = s.buildZakljucniListSubsintetikaQuery(session, hasGod, hasKar, params, common.TipStampePrint)
+		b, err = s.buildZakljucniListSubsintetikaQuery(ctx, session, params, common.TipStampePrint)
 	case "3":
-		sqlQuery, queryArgs = s.buildZakljucniListSintetikaQuery(session, hasGod, hasKar, params, common.TipStampePrint)
+		b, err = s.buildZakljucniListSintetikaQuery(ctx, session, params, common.TipStampePrint)
 	default:
 		return fmt.Errorf("invalid tip_lista: %s", params.TipLista)
 	}
+	if err != nil {
+		return err
+	}
 
-	entities, err := s.fproRepo.GetAllCustom(ctx, sqlQuery, "", queryArgs, "", "")
+	entities, err := s.fproRepo.Select(ctx, b)
 	if err != nil {
 		return err
 	}
@@ -983,265 +933,31 @@ func netirajSaldo(dug, pot float64) (float64, float64) {
 	}
 }
 
-// zakljucniSearchCondition builds the OR-ed ILIKE filter of the Zakljucni list search box.
-// Every field reuses the same placeholder, so the search term is passed only once.
-func zakljucniSearchCondition(placeholder int, fields ...string) string {
-	parts := make([]string, 0, len(fields))
+// zakljucniHierarchy builds the single-pass hierarchy query of the Zakljucni list:
+// WITH filtered AS (filter, restricted to the period of the session), agg AS (agg) outer.
+// agg and outer are static SQL; the sintetika prefix length is written into them as an int
+// (the GROUPING SETS must repeat the very same expression as the SELECT, and two placeholders
+// would not be the same expression).
+func (s *BilansiResource) zakljucniHierarchy(ctx context.Context, filter *querybuilder.Builder, agg, outer string) (*querybuilder.Builder, error) {
+	if err := s.fproRepo.ApplyFilters(ctx, filter, "fpro", nil, ""); err != nil {
+		return nil, err
+	}
+	return querybuilder.New(outer).
+		WithCTEFrom("filtered", filter).
+		WithCTE("agg", agg), nil
+}
+
+// whereZakljucniSearch adds the OR-ed ILIKE filter of the Zakljucni list search box: one of
+// the fields contains the text (nothing when the text is empty).
+func whereZakljucniSearch(b *querybuilder.Builder, text string, fields ...string) {
+	if text == "" {
+		return
+	}
+	conds := make([]querybuilder.Cond, 0, len(fields))
 	for _, f := range fields {
-		parts = append(parts, fmt.Sprintf("%s ILIKE '%%' || $%d || '%%'", f, placeholder))
+		conds = append(conds, querybuilder.C(f+" ILIKE '%' || ? || '%'", text))
 	}
-	return " ( " + strings.Join(parts, " OR ") + " ) "
-}
-
-// ---- Zakljucni list queries -------------------------------------------------
-//
-// One query per tipLista, because the aggregation grain and the way the account name is
-// resolved differ:
-//
-//	tipLista 1 (analitika)    one row per konto+sifra, name via fkpl.idfkpl of the row
-//	tipLista 2 (subsintetika) one row per konto,        name = newest fkpl row of that konto
-//	tipLista 3 (sintetika)    one row per konto prefix, name = newest fkpl row of that prefix
-//
-// Everything the three share (period/konta/sifra filters, search, ordering, pagination and
-// the totals pass) lives in the helpers below.
-
-// zakljucniQueryOptions carries the call parameters plus the per-variant SQL bits.
-type zakljucniQueryOptions struct {
-	params          domain.ZakljucniParams
-	printType       string
-	getTotalRecords bool
-	pageSize        int
-	currentPage     int
-
-	// filled in by the tipLista query that is running:
-	orderByCols string // ORDER BY of the outer query (agg.* aliases)
-	nameExpr    string // expression with the account name (SELECT + search filter)
-	withSifra   bool   // tipLista 1 aggregates and searches by sifra as well
-}
-
-// getZakljucniQuery builds and executes the query for the requested tipLista of the
-// Zakljucni list (1 = analitika, 2 = subsintetika, 3 = sintetika).
-func (s *BilansiResource) getZakljucniQuery(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, params domain.ZakljucniParams, printType string, pageSize, currentPage int) (*[]domain.FproDto, error) {
-	o := zakljucniQueryOptions{
-		params:          params,
-		printType:       printType,
-		getTotalRecords: getTotalRecords,
-		pageSize:        pageSize,
-		currentPage:     currentPage,
-	}
-	switch params.TipLista {
-	case "1":
-		return s.getZakljucniAnalitikaQuery(ctx, tbl, o)
-	case "2":
-		return s.getZakljucniSubsintetikaQuery(ctx, tbl, o)
-	case "3":
-		return s.getZakljucniSintetikaQuery(ctx, tbl, o)
-	default:
-		return nil, fmt.Errorf("invalid tip_lista: %s", params.TipLista)
-	}
-}
-
-// getZakljucniAnalitikaQuery (tipLista "1"): one row per konto + sifra. The name comes from
-// the fkpl row the transaction itself points to (fkpl.idfkpl), so it joins directly.
-func (s *BilansiResource) getZakljucniAnalitikaQuery(ctx context.Context, tbl *domain.TableData, o zakljucniQueryOptions) (*[]domain.FproDto, error) {
-	innerSql, innerArgs, err := s.zakljucniInnerQuery(ctx, o.params, o.printType,
-		"fpro.konto, COALESCE(fpro.sifra, '') as sifra, fpro.idfkpl,",
-		"fpro.konto, fpro.sifra, fpro.idfkpl", true, true)
-	if err != nil {
-		return nil, err
-	}
-
-	o.orderByCols = "COALESCE(NULLIF(agg.konto, '')::numeric, 0) ASC, COALESCE(NULLIF(agg.sifra, '')::numeric, 0) ASC"
-	o.nameExpr = "fkpl.naziv"
-	o.withSifra = true
-
-	needName := zakljucniNeedsName(o.getTotalRecords, o.params.SearchText)
-	qb := zakljucniOuterQueryBuilder(innerSql, "left join fkpl on fkpl.idfkpl = agg.idfkpl", o.nameExpr, innerArgs, needName)
-	return s.executeZakljucniQuery(ctx, tbl, qb, innerArgs, o)
-}
-
-// getZakljucniSubsintetikaQuery (tipLista "2"): one row per konto. The name is the naziv of
-// the newest fkpl row of that konto (DISTINCT ON lookup, joined on konto).
-func (s *BilansiResource) getZakljucniSubsintetikaQuery(ctx context.Context, tbl *domain.TableData, o zakljucniQueryOptions) (*[]domain.FproDto, error) {
-	innerSql, innerArgs, err := s.zakljucniInnerQuery(ctx, o.params, o.printType,
-		"fpro.konto,", "fpro.konto", false, true)
-	if err != nil {
-		return nil, err
-	}
-
-	o.orderByCols = "COALESCE(NULLIF(agg.konto, '')::numeric, 0) ASC"
-	o.nameExpr = "fkpl_data.naziv"
-
-	needName := zakljucniNeedsName(o.getTotalRecords, o.params.SearchText)
-	nameJoin, args := "", innerArgs
-	if needName {
-		nameJoin, args = zakljucniNameLookupJoin("konto", 2, innerArgs)
-	}
-	qb := zakljucniOuterQueryBuilder(innerSql, nameJoin, o.nameExpr, args, needName)
-	return s.executeZakljucniQuery(ctx, tbl, qb, args, o)
-}
-
-// getZakljucniSintetikaQuery (tipLista "3"): one row per konto prefix
-// (LEFT(konto, NDuzSint)). The name is the naziv of the newest fkpl row of that prefix.
-func (s *BilansiResource) getZakljucniSintetikaQuery(ctx context.Context, tbl *domain.TableData, o zakljucniQueryOptions) (*[]domain.FproDto, error) {
-	innerSql, innerArgs, err := s.zakljucniInnerQuery(ctx, o.params, o.printType,
-		fmt.Sprintf("LEFT(fpro.konto, %d) as konto,", common.NDuzSintFromContext(ctx, s.cfg)),
-		fmt.Sprintf("LEFT(fpro.konto, %d)", common.NDuzSintFromContext(ctx, s.cfg)), false, false)
-	if err != nil {
-		return nil, err
-	}
-
-	o.orderByCols = "COALESCE(NULLIF(agg.konto, '')::numeric, 0) ASC"
-	o.nameExpr = "fkpl_data.naziv"
-
-	needName := zakljucniNeedsName(o.getTotalRecords, o.params.SearchText)
-	nameJoin, args := "", innerArgs
-	if needName {
-		nameJoin, args = zakljucniNameLookupJoin(fmt.Sprintf("LEFT(konto, %d)", common.NDuzSintFromContext(ctx, s.cfg)), 3, innerArgs)
-	}
-	qb := zakljucniOuterQueryBuilder(innerSql, nameJoin, o.nameExpr, args, needName)
-	return s.executeZakljucniQuery(ctx, tbl, qb, args, o)
-}
-
-// zakljucniInnerQuery builds the INNER aggregation of the Zakljucni list - one row per
-// tipLista grain - with all the report filters: period, konta (and sifra) range, klasa 9,
-// vkonta and samosaprometom.
-//
-//	selectCols   the grouping columns (must end with a comma)
-//	groupByCols  the matching GROUP BY expression
-//	filterSifra  apply OdSifre/DoSifre (analitika only)
-//	filterVkonta only vkonta 1 and 2 (analitika and subsintetika)
-func (s *BilansiResource) zakljucniInnerQuery(ctx context.Context, params domain.ZakljucniParams, printType, selectCols, groupByCols string, filterSifra, filterVkonta bool) (string, []any, error) {
-	session := domain.GetSessionFromStdContext(ctx)
-	if session == nil {
-		return "", nil, fmt.Errorf("user session not found")
-	}
-	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
-
-	aggregationSQL := fmt.Sprintf(`%s
-		COALESCE(SUM(CASE WHEN fnal.tipdok = '00' AND (fpro.kat = 1 OR fpro.kat = 2) THEN fpro.iznos ELSE 0 END), 0) as pocstanjedug,
-		COALESCE(SUM(CASE WHEN fnal.tipdok = '00' AND fpro.kat NOT IN (1,2) THEN fpro.iznos ELSE 0 END), 0) as pocstanjepot,
-		COALESCE(SUM(CASE WHEN fnal.tipdok != '00' AND (fpro.kat = 1 OR fpro.kat = 2) THEN fpro.iznos ELSE 0 END), 0) as prometdug,
-		COALESCE(SUM(CASE WHEN fnal.tipdok != '00' AND fpro.kat NOT IN (1,2) THEN fpro.iznos ELSE 0 END), 0) as prometpot
-		FROM fpro
-		inner join fnal on fnal.idfnal = fpro.idfnal `, "SELECT "+selectCols)
-
-	innerQb := common.NewQueryBuilder(aggregationSQL, true)
-	if hasGod {
-		innerQb.AddEqual("fpro.god", session.SelectedGod)
-	}
-	if hasKar {
-		innerQb.AddEqual("fpro.kar", session.SelectedKar)
-	}
-	innerQb.AddCondition("fnal.danal", params.OdDatuma, ">=")
-	innerQb.AddCondition("fnal.danal", params.DoDatuma, "<=")
-	if params.OdKonta != "" {
-		innerQb.AddCondition(fmt.Sprintf(" left(fpro.konto, %d)", common.NDuzSintFromContext(ctx, s.cfg)), params.OdKonta, ">=")
-	}
-	if params.DoKonta != "" {
-		innerQb.AddCondition(fmt.Sprintf(" left(fpro.konto, %d)", common.NDuzSintFromContext(ctx, s.cfg)), params.DoKonta, "<=")
-	}
-	// Apply Klasa 9 filter only for printing, not for data retrieval for processing
-	if printType == common.TipStampePrint {
-		if params.Klasa9 == "false" {
-			innerQb.AddCustomCondition("fpro.konto NOT LIKE '9%'")
-		}
-	}
-	if filterSifra {
-		if params.OdSifre != "" {
-			innerQb.AddCondition("COALESCE(NULLIF(fpro.sifra, '')::numeric, 0)", params.OdSifre, ">=")
-		}
-		if params.DoSifre != "" {
-			innerQb.AddCondition("COALESCE(NULLIF(fpro.sifra, '')::numeric, 0)", params.DoSifre, "<=")
-		}
-	}
-	if filterVkonta {
-		innerQb.AddIn("fpro.vkonta", []interface{}{"1", "2"})
-	}
-	// Filter by samosaprometom if needed (exclude zero saldo rows)
-	if params.SamosaPrometom == "true" {
-		innerQb.AddHaving("((COALESCE(SUM(CASE WHEN fnal.tipdok = '00' AND (fpro.kat = 1 OR fpro.kat = 2) THEN fpro.iznos ELSE 0 END), 0) + COALESCE(SUM(CASE WHEN fnal.tipdok != '00' AND (fpro.kat = 1 OR fpro.kat = 2) THEN fpro.iznos ELSE 0 END), 0)) != 0 OR (COALESCE(SUM(CASE WHEN fnal.tipdok = '00' AND fpro.kat NOT IN (1,2) THEN fpro.iznos ELSE 0 END), 0) + COALESCE(SUM(CASE WHEN fnal.tipdok != '00' AND fpro.kat NOT IN (1,2) THEN fpro.iznos ELSE 0 END), 0)) != 0)")
-	}
-
-	innerQb.AddGroupBy(groupByCols)
-	innerSql, innerArgs := innerQb.Build()
-	return innerSql, innerArgs, nil
-}
-
-// zakljucniNeedsName reports whether the account name (join / lookup subquery) is needed:
-// always for the data and print pass, and on the totals pass only when the search matches
-// on the name.
-func zakljucniNeedsName(getTotalRecords bool, searchText string) bool {
-	return !getTotalRecords || searchText != ""
-}
-
-// zakljucniNameLookupJoin builds the DISTINCT ON subquery that resolves a konto (or konto
-// prefix) to the naziv of the newest fkpl row, wrapped in the join clause of the outer query.
-//
-// The subquery is embedded AFTER the inner query, so its $n placeholders must continue after
-// the inner ones: innerArgs seed the builder, and the returned args are therefore
-// innerArgs + the subquery's own values - in SQL text order.
-func zakljucniNameLookupJoin(nameKey string, vkonta int, innerArgs []any) (string, []any) {
-	subQb := common.NewQueryBuilder(fmt.Sprintf(`SELECT DISTINCT ON (%s) %s as konto_key, naziv FROM fkpl`, nameKey, nameKey), true)
-	subQb.AddArgs(innerArgs...)
-	subQb.AddEqual("vkonta", vkonta)
-	subQb.AddOrderBy(fmt.Sprintf("%s, god DESC, kar DESC", nameKey))
-	subSql, args := subQb.Build()
-	return fmt.Sprintf(`left join (%s) fkpl_data on fkpl_data.konto_key = agg.konto`, subSql), args
-}
-
-// zakljucniOuterQueryBuilder wraps the inner aggregation in the OUTER query that adds the
-// account name. Without a join the name stays empty (”), which is fine for the totals pass -
-// those rows are only counted and summed.
-func zakljucniOuterQueryBuilder(innerSql, nameJoin, nameExpr string, args []any, needName bool) *common.QueryBuilder {
-	outerSelect := "agg.*, '' as naziv"
-	if needName {
-		outerSelect = fmt.Sprintf("agg.*, COALESCE(%s, '') as naziv", nameExpr)
-	} else {
-		nameJoin = ""
-	}
-
-	qb := common.NewQueryBuilder(fmt.Sprintf(`SELECT %s FROM (%s) agg`, outerSelect, innerSql), true)
-	if nameJoin != "" {
-		qb.AddJoin(nameJoin)
-	}
-	qb.AddArgs(args...) // keeps the $n numbering aligned with the embedded inner SQL
-	return qb
-}
-
-// executeZakljucniQuery adds the search filter, ordering and pagination to the outer query,
-// runs it and - on the totals pass - fills the pagination counters and the totals row.
-func (s *BilansiResource) executeZakljucniQuery(ctx context.Context, tbl *domain.TableData, qb *common.QueryBuilder, args []any, o zakljucniQueryOptions) (*[]domain.FproDto, error) {
-	// Add search filter if provided (all fields share one placeholder)
-	if o.params.SearchText != "" {
-		searchFields := []string{o.nameExpr, "agg.konto"}
-		if o.withSifra {
-			searchFields = append(searchFields, "agg.sifra")
-		}
-		qb.AddCustomCondition(zakljucniSearchCondition(len(args)+1, searchFields...), o.params.SearchText)
-	}
-
-	// The totals pass needs neither ORDER BY nor LIMIT/OFFSET (rows are only summed).
-	if !o.getTotalRecords {
-		qb.AddOrderBy(o.orderByCols)
-		if o.printType == common.TipStampePreview { // printing/processing fetches the whole report
-			qb.SetLimit(o.pageSize)
-			qb.SetOffset((o.currentPage - 1) * o.pageSize)
-		}
-	}
-
-	outerSql, queryArgs := qb.Build()
-	entities, err := s.fproRepo.GetAllCustom(ctx, outerSql, "", queryArgs, "", "")
-	if err != nil {
-		return nil, err
-	}
-
-	// Count filtered items if needed for total records. The rows were fetched by the totals
-	// pass (no ORDER BY / name lookup), so they are only counted and summed.
-	if o.printType == common.TipStampePreview && o.getTotalRecords {
-		setZakljucniTotals(tbl, *entities, o.pageSize, len(*entities))
-	}
-	return entities, nil
+	b.WhereAny(conds...)
 }
 
 // setZakljucniTotals fills the pagination counters and the totals row (columns 4..9) of the
@@ -1285,38 +1001,32 @@ func (s *BilansiResource) GetBilansStanja(ctx context.Context, tbl *domain.Table
 	if session == nil {
 		return fmt.Errorf("user session not found")
 	}
-	hasGod, hasKar := s.bilsRepo.GetHasGodHasKar()
-
 	// Get Totals for table
-	qbTotals := common.NewQueryBuilder(`SELECT
+	bTotals := querybuilder.New(`SELECT
 			COALESCE(SUM(bils.tgod), 0) as tgod,
 			COALESCE(SUM(bils.tgodh), 0) as tgodh,
 			COALESCE(SUM(bils.pgod), 0) as pgod,
 			COALESCE(SUM(bils.pgodh), 0) as pgodh,
 			COALESCE(SUM(bils.pgodps), 0) as pgodps,
 			COALESCE(SUM(bils.pgodhps), 0) as pgodhps
-			FROM bils`, true)
+			FROM bils`)
 
-	qb := common.NewQueryBuilder(`SELECT 
-			bils.bilsid, bils.rbr, bils.grac, bils.nazp, bils.aop, 
+	b := querybuilder.New(`SELECT
+			bils.bilsid, bils.rbr, bils.grac, bils.nazp, bils.aop,
 			bils.konta, bils.tgod, bils.pgod,
 			bils.nipo, bils.tgodh, bils.pgodh,
-			bils.pozic_1, bils.pozic_2, bils.pozic_3, bils.pozic_4, 
+			bils.pozic_1, bils.pozic_2, bils.pozic_3, bils.pozic_4,
 			bils.pozic_5, bils.pozic_6, bils.pozic_7, bils.pozic_8,
-			bils.pozic_9, bils.pozic_10, bils.pozic_11, bils.pozic_12, bils.skraceni FROM bils`, true)
+			bils.pozic_9, bils.pozic_10, bils.pozic_11, bils.pozic_12, bils.skraceni FROM bils`)
 
 	// Add same filters to both queries
-	if hasGod {
-		qb.AddEqual("bils.god", session.SelectedGod)
-		qbTotals.AddEqual("bils.god", session.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("bils.kar", session.SelectedKar)
-		qbTotals.AddEqual("bils.kar", session.SelectedKar)
+	for _, x := range []*querybuilder.Builder{b, bTotals} {
+		if err := s.bilsRepo.ApplyFilters(ctx, x, "bils", nil, ""); err != nil {
+			return err
+		}
 	}
 
-	qbTotalQry, qbTotalArgs := qbTotals.Build()
-	totalsResult, err := s.bilsRepo.GetAllCustom(ctx, qbTotalQry, "", qbTotalArgs, "", "")
+	totalsResult, err := s.bilsRepo.Select(ctx, bTotals)
 	if err != nil {
 		return err
 	}
@@ -1329,19 +1039,11 @@ func (s *BilansiResource) GetBilansStanja(ctx context.Context, tbl *domain.Table
 		totals.PocStanjeH = common.FormatNumberWithSystemLocale((*totalsResult)[0].PGodHPS, 0)
 	}
 
-	// Add search filter if provided
-	if searchText != "" {
-		nbrParam := len(qb.GetArgs()) + 1
-		customCondition := fmt.Sprintf(`bilu.nazp ilike '%%' || $%d || '%%'" 
-		OR bilu.grac ilike '%%' || $%d || '%%'"
-		OR bilu.konta ilike '%%' || $%d || '%%'"
-		OR bilu.aop ilike '%%' || $%d || '%%'`, nbrParam, nbrParam, nbrParam, nbrParam)
-		qb.AddCustomCondition(customCondition, searchText)
-		qbTotals.AddCustomCondition(customCondition, searchText)
-	}
+	// Add search filter if provided (also to the totals of the grid below)
+	whereBilansSearch(b, "bils", searchText)
+	whereBilansSearch(bTotals, "bils", searchText)
 
-	sqlQuery, args := qb.Build()
-	entities, err := s.bilsRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.bilsRepo.Select(ctx, b)
 	if err != nil {
 		return err
 	}
@@ -1391,8 +1093,7 @@ func (s *BilansiResource) GetBilansStanja(ctx context.Context, tbl *domain.Table
 		}
 	}
 	// Execute query and get entities
-	sqlQuery, args = qbTotals.Build()
-	entitiesTotal, err := s.bilsRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entitiesTotal, err := s.bilsRepo.Select(ctx, bTotals)
 	if err != nil {
 		return err
 	}
@@ -1412,6 +1113,45 @@ func (s *BilansiResource) GetBilansStanja(ctx context.Context, tbl *domain.Table
 	}
 
 	return nil
+}
+
+// whereGodKar restricts the query to the given period when the table carries god/kar. The
+// bilansi obrada passes the period explicitly (it also reads the previous year), so this is
+// not always the period of the session. prefix is "" or an alias with a dot ("fpro.").
+func whereGodKar(b *querybuilder.Builder, prefix string, hasGod, hasKar bool, god, kar int) {
+	if hasGod {
+		b.Where(prefix+"god = ?", god)
+	}
+	if hasKar {
+		b.Where(prefix+"kar = ?", kar)
+	}
+}
+
+// whereMesecOdDo restricts danal to the months od-do (each bound only when > 0).
+func whereMesecOdDo(b *querybuilder.Builder, odMes, doMes int) {
+	if odMes > 0 {
+		b.Where("extract(month from danal)::int >= ?", odMes)
+	}
+	if doMes > 0 {
+		b.Where("extract(month from danal)::int <= ?", doMes)
+	}
+}
+
+// whereBilansSearch adds the search of the bilans grids: naziv pozicije, grupa racuna, konta or
+// AOP contains the text (table is "bils" or "bilu"; nothing when the text is empty). The old
+// condition was invalid SQL (it used the bilu alias on bils, stray quotes and ILIKE on the
+// integer aop), so a search always failed.
+func whereBilansSearch(b *querybuilder.Builder, table, text string) {
+	if text == "" {
+		return
+	}
+	pattern := "%" + text + "%"
+	b.WhereAny(
+		querybuilder.C(table+".nazp ILIKE ?", pattern),
+		querybuilder.C(table+".grac ILIKE ?", pattern),
+		querybuilder.C(table+".konta ILIKE ?", pattern),
+		querybuilder.C(table+".aop::text ILIKE ?", pattern),
+	)
 }
 
 // GetBilansStanjaObrada processes and retrieves Bilans stanja (balance sheet) data.
@@ -1448,58 +1188,34 @@ func (s *BilansiResource) GetBilansStanjaObrada(ctx context.Context, tbl *domain
 
 	// ── STEP 1: Reset totals ────────────────────────────────────────────────────
 	// All rows: tgod=0, tgodh=0
-	resetAllQb := common.NewQueryBuilder("update bils set tgod = 0, tgodh = 0", true)
-	if hasGod {
-		resetAllQb.AddEqual("god", god)
-	}
-	if hasKar {
-		resetAllQb.AddEqual("kar", kar)
-	}
-	resetAllSql, resetAllArgs := resetAllQb.Build()
-	if _, err := s.bilsRepo.DB.ExecContext(ctx, resetAllSql, resetAllArgs...); err != nil {
+	resetAll := querybuilder.NewUpdate("bils").Set("tgod = 0, tgodh = 0")
+	whereGodKar(resetAll, "", hasGod, hasKar, god, kar)
+	if err := s.bilsRepo.Exec(ctx, resetAll); err != nil {
 		return err
 	}
 
 	// Summary rows (konta=''): also reset pgod, pgodh, pgodps, pgodhps
-	resetSummaryQb := common.NewQueryBuilder("update bils set pgod = 0, pgodh = 0, pgodps = 0, pgodhps = 0", true)
-	if hasGod {
-		resetSummaryQb.AddEqual("god", god)
-	}
-	if hasKar {
-		resetSummaryQb.AddEqual("kar", kar)
-	}
-	resetSummaryQb.AddCustomCondition("konta = ''")
-	resetSummarySql, resetSummaryArgs := resetSummaryQb.Build()
-	if _, err := s.bilsRepo.DB.ExecContext(ctx, resetSummarySql, resetSummaryArgs...); err != nil {
+	resetSummary := querybuilder.NewUpdate("bils").Set("pgod = 0, pgodh = 0, pgodps = 0, pgodhps = 0")
+	whereGodKar(resetSummary, "", hasGod, hasKar, god, kar)
+	resetSummary.Where("konta = ''")
+	if err := s.bilsRepo.Exec(ctx, resetSummary); err != nil {
 		return err
 	}
 
 	// Leaf rows + lPGODizPS=true: also reset pgod, pgodh
 	if lPGODizPS {
-		resetLeafQb := common.NewQueryBuilder("update bils set pgod = 0, pgodh = 0", true)
-		if hasGod {
-			resetLeafQb.AddEqual("god", god)
-		}
-		if hasKar {
-			resetLeafQb.AddEqual("kar", kar)
-		}
-		resetLeafQb.AddCustomCondition("konta != ''")
-		resetLeafSql, resetLeafArgs := resetLeafQb.Build()
-		if _, err := s.bilsRepo.DB.ExecContext(ctx, resetLeafSql, resetLeafArgs...); err != nil {
+		resetLeaf := querybuilder.NewUpdate("bils").Set("pgod = 0, pgodh = 0")
+		whereGodKar(resetLeaf, "", hasGod, hasKar, god, kar)
+		resetLeaf.Where("konta != ''")
+		if err := s.bilsRepo.Exec(ctx, resetLeaf); err != nil {
 			return err
 		}
 	}
 
 	// ── STEP 2: Get max NIPO ────────────────────────────────────────────────────
-	maxNipoQb := common.NewQueryBuilder(`select coalesce(max(nipo), 1) as nipo from bils`, true)
-	if hasGod {
-		maxNipoQb.AddEqual("god", god)
-	}
-	if hasKar {
-		maxNipoQb.AddEqual("kar", kar)
-	}
-	maxNipoSql, maxNipoArgs := maxNipoQb.Build()
-	maxNipoRecords, err := s.bilsRepo.GetAllCustom(ctx, maxNipoSql, "", maxNipoArgs, "", "")
+	maxNipoB := querybuilder.New(`select coalesce(max(nipo), 1) as nipo from bils`)
+	whereGodKar(maxNipoB, "", hasGod, hasKar, god, kar)
+	maxNipoRecords, err := s.bilsRepo.Select(ctx, maxNipoB)
 	if err != nil {
 		return err
 	}
@@ -1509,17 +1225,11 @@ func (s *BilansiResource) GetBilansStanjaObrada(ctx context.Context, tbl *domain
 	}
 
 	// ── STEP 3: Load ALL bils rows into memory once, keyed by AOP ──────────────
-	allBilsQb := common.NewQueryBuilder(`select bilsid, aop, konta, tgod, pgod, pgodps, tgodh, pgodh, pgodhps, nipo, skraceni,
+	allBilsB := querybuilder.New(`select bilsid, aop, konta, tgod, pgod, pgodps, tgodh, pgodh, pgodhps, nipo, skraceni,
 		pozic_1, pozic_2, pozic_3, pozic_4, pozic_5, pozic_6,
-		pozic_7, pozic_8, pozic_9, pozic_10, pozic_11, pozic_12 from bils`, true)
-	if hasGod {
-		allBilsQb.AddEqual("god", god)
-	}
-	if hasKar {
-		allBilsQb.AddEqual("kar", kar)
-	}
-	allBilsSql, allBilsArgs := allBilsQb.Build()
-	allBilsRecords, err := s.bilsRepo.GetAllCustom(ctx, allBilsSql, "", allBilsArgs, "", "")
+		pozic_7, pozic_8, pozic_9, pozic_10, pozic_11, pozic_12 from bils`)
+	whereGodKar(allBilsB, "", hasGod, hasKar, god, kar)
+	allBilsRecords, err := s.bilsRepo.Select(ctx, allBilsB)
 	if err != nil {
 		return err
 	}
@@ -1535,13 +1245,23 @@ func (s *BilansiResource) GetBilansStanjaObrada(ctx context.Context, tbl *domain
 	// for rows sharing the same account prefix.
 	type fsalAggResult struct{ pDug, pPot, mDug, mPot float64 }
 	fsalCache := make(map[string]fsalAggResult)
+	// The first failed aggregate; the rows are not written once it is set (see STEP 4).
+	var aggErr error
+	// The aggregates read fpro, so they are scoped by fpro's own god/kar columns (not by bils').
+	fproGod, fproKar := s.fproRepo.GetHasGodHasKar()
 
 	cachedFsalAggregate := func(g, k, od, do int, sKonto string) (float64, float64, float64, float64) {
 		key := fmt.Sprintf("%s:%d:%d:%d:%d", sKonto, g, k, od, do)
 		if v, ok := fsalCache[key]; ok {
 			return v.pDug, v.pPot, v.mDug, v.mPot
 		}
-		pDug, pPot, mDug, mPot := s.queryFproBilsAggregate(ctx, hasGod, hasKar, g, k, od, do, sKonto)
+		pDug, pPot, mDug, mPot, err := s.queryFproBilsAggregate(ctx, fproGod, fproKar, g, k, od, do, sKonto)
+		if err != nil {
+			if aggErr == nil {
+				aggErr = err
+			}
+			return 0, 0, 0, 0
+		}
 		fsalCache[key] = fsalAggResult{pDug, pPot, mDug, mPot}
 		return pDug, pPot, mDug, mPot
 	}
@@ -1631,6 +1351,9 @@ func (s *BilansiResource) GetBilansStanjaObrada(ctx context.Context, tbl *domain
 				{Name: "pgodps", Value: fmt.Sprintf("%v", bils.PGodPS)},
 				{Name: "pgodhps", Value: fmt.Sprintf("%v", bils.PGodHPS)},
 			}
+			if aggErr != nil {
+				return fmt.Errorf("obrada bilansa stanja: %w", aggErr)
+			}
 			if err := s.bilsRepo.Update(ctx, bils, "bilsid", bils.BilsID, fields); err != nil {
 				return err
 			}
@@ -1638,21 +1361,15 @@ func (s *BilansiResource) GetBilansStanjaObrada(ctx context.Context, tbl *domain
 	}
 
 	// ── STEP 5: Fetch final results and populate table ──────────────────────────
-	finalQb := common.NewQueryBuilder(`select bilsid, rbr, grac, nazp, aop, konta, napomena,
-		tgod, pgod, pgodps, tgodh, pgodh, pgodhps, nipo, skraceni from bils`, true)
-	if hasGod {
-		finalQb.AddEqual("god", god)
-	}
-	if hasKar {
-		finalQb.AddEqual("kar", kar)
-	}
+	finalB := querybuilder.New(`select bilsid, rbr, grac, nazp, aop, konta, napomena,
+		tgod, pgod, pgodps, tgodh, pgodh, pgodhps, nipo, skraceni from bils`)
+	whereGodKar(finalB, "", hasGod, hasKar, god, kar)
 	if skraceni {
-		finalQb.AddEqual("skraceni", 1)
+		finalB.AddEqual("skraceni", 1)
 	}
-	finalQb.AddOrderBy("aop asc")
-	finalSql, finalArgs := finalQb.Build()
+	finalB.OrderBy("aop asc")
 
-	finalRecords, err := s.bilsRepo.GetAllCustom(ctx, finalSql, "", finalArgs, "", "")
+	finalRecords, err := s.bilsRepo.Select(ctx, finalB)
 	if err != nil {
 		return err
 	}
@@ -1780,53 +1497,44 @@ func (s *BilansiResource) obradaKontaBilsCached(
 //	Monthly movements = tipdok != '00', month-filtered by [odMes..doMes]; odMes=0 → full year.
 //
 // This is the BILS equivalent of queryFproAggregate (which only fetches movements for BILU).
-func (s *BilansiResource) queryFproBilsAggregate(ctx context.Context, hasGod, hasKar bool, god, kar, odMes, doMes int, sKonto string) (pDug, pPot, mDug, mPot float64) {
+func (s *BilansiResource) queryFproBilsAggregate(ctx context.Context, hasGod, hasKar bool, god, kar, odMes, doMes int, sKonto string) (pDug, pPot, mDug, mPot float64, err error) {
+	// The tipdok and the konto are the columns of fpro itself (like the salda reports read them).
+	// The old opening-balance query read fnal.* without fnal in FROM, failed, and the error was
+	// ignored, so the opening balance was always 0.
+
 	// Opening balance (tipdok = '00')
-	qbP := common.NewQueryBuilder(`select
+	bP := querybuilder.New(`select
 		coalesce(sum(case when kat in (1,2) then iznos else 0 end), 0) as dug,
 		coalesce(sum(case when kat in (3,4) then iznos else 0 end), 0) as pot
-		from fpro`, true)
-	if hasGod {
-		qbP.AddEqual("god", god)
+		from fpro`)
+	whereGodKar(bP, "fpro.", hasGod, hasKar, god, kar)
+	bP.Where("fpro.tipdok = '00'").AddLikeBegin("fpro.konto", sKonto)
+	rowsP, err := s.fproRepo.Select(ctx, bP)
+	if err != nil {
+		return 0, 0, 0, 0, fmt.Errorf("pocetno stanje konta %s: %w", sKonto, err)
 	}
-	if hasKar {
-		qbP.AddEqual("kar", kar)
-	}
-	qbP.AddCustomCondition("fnal.tipdok = '00'")
-	qbP.AddLikeBegin("fnal.konto", sKonto)
-	sqlP, argsP := qbP.Build()
-	rowsP, err := s.fproRepo.GetAllCustom(ctx, sqlP, "", argsP, "", "")
-	if err == nil && rowsP != nil && len(*rowsP) > 0 {
+	if len(*rowsP) > 0 {
 		pDug = (*rowsP)[0].Dug.Float64
 		pPot = (*rowsP)[0].Pot.Float64
 	}
 
 	// Monthly movements (tipdok != '00', month range)
-	qbM := common.NewQueryBuilder(`select
+	bM := querybuilder.New(`select
 		coalesce(sum(case when kat in (1,2) then iznos else 0 end), 0) as dug,
 		coalesce(sum(case when kat in (3,4) then iznos else 0 end), 0) as pot
-		from fpro fnal`, true)
-	if hasGod {
-		qbM.AddEqual("god", god)
+		from fpro`)
+	whereGodKar(bM, "fpro.", hasGod, hasKar, god, kar)
+	bM.Where("fpro.tipdok != '00'").AddLikeBegin("fpro.konto", sKonto)
+	whereMesecOdDo(bM, odMes, doMes)
+	rowsM, err := s.fproRepo.Select(ctx, bM)
+	if err != nil {
+		return 0, 0, 0, 0, fmt.Errorf("promet konta %s: %w", sKonto, err)
 	}
-	if hasKar {
-		qbM.AddEqual("kar", kar)
-	}
-	qbM.AddCustomCondition("fnal.tipdok != '00'")
-	qbM.AddLikeBegin("fnal.konto", sKonto)
-	if odMes > 0 {
-		qbM.AddCondition("extract(month from danal)::int", odMes, ">=")
-	}
-	if doMes > 0 {
-		qbM.AddCondition("extract(month from danal)::int", doMes, "<=")
-	}
-	sqlM, argsM := qbM.Build()
-	rowsM, err := s.fproRepo.GetAllCustom(ctx, sqlM, "", argsM, "", "")
-	if err == nil && rowsM != nil && len(*rowsM) > 0 {
+	if len(*rowsM) > 0 {
 		mDug = (*rowsM)[0].Dug.Float64
 		mPot = (*rowsM)[0].Pot.Float64
 	}
-	return
+	return pDug, pPot, mDug, mPot, nil
 }
 
 // GetBilansStanjaZaStampu retrieves data for Bilans stanja (balance sheet) for printing
@@ -1835,38 +1543,32 @@ func (s *BilansiResource) GetBilansStanjaZaStampu(ctx context.Context, tbl *doma
 	if session == nil {
 		return fmt.Errorf("user session not found")
 	}
-	hasGod, hasKar := s.bilsRepo.GetHasGodHasKar()
 	// Get Totals for table
-	qbTotals := common.NewQueryBuilder(`SELECT
+	bTotals := querybuilder.New(`SELECT
 			COALESCE(SUM(bils.tgod), 0) as tgod,
 			COALESCE(SUM(bils.tgodh), 0) as tgodh,
 			COALESCE(SUM(bils.pgod), 0) as pgod,
 			COALESCE(SUM(bils.pgodh), 0) as pgodh,
 			COALESCE(SUM(bils.pgodps), 0) as pgodps,
 			COALESCE(SUM(bils.pgodhps), 0) as pgodhps
-			FROM bils`, true)
+			FROM bils`)
 
-	qb := common.NewQueryBuilder(`SELECT 
-			bils.bilsid, bils.rbr, bils.grac, bils.nazp, bils.aop, 
+	b := querybuilder.New(`SELECT
+			bils.bilsid, bils.rbr, bils.grac, bils.nazp, bils.aop,
 			bils.napomena, bils.tgodh, bils.pgodh, bils.pgodhps,
-			bils.tgod, bils.pgod, bils.pgodps, bils.nipo, bils.skraceni FROM bils`, true)
+			bils.tgod, bils.pgod, bils.pgodps, bils.nipo, bils.skraceni FROM bils`)
 
 	// Add same filters to both queries
-	if hasGod {
-		qb.AddEqual("bils.god", session.SelectedGod)
-		qbTotals.AddEqual("bils.god", session.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("bils.kar", session.SelectedKar)
-		qbTotals.AddEqual("bils.kar", session.SelectedKar)
-	}
-	if skraceni {
-		qb.AddEqual("bils.skraceni", 1)
-		qbTotals.AddEqual("bils.skraceni", 1)
+	for _, x := range []*querybuilder.Builder{b, bTotals} {
+		if err := s.bilsRepo.ApplyFilters(ctx, x, "bils", nil, ""); err != nil {
+			return err
+		}
+		if skraceni {
+			x.AddEqual("bils.skraceni", 1)
+		}
 	}
 
-	qbTotalQry, qbTotalArgs := qbTotals.Build()
-	totalsResult, err := s.bilsRepo.GetAllCustom(ctx, qbTotalQry, "", qbTotalArgs, "", "")
+	totalsResult, err := s.bilsRepo.Select(ctx, bTotals)
 	if err != nil {
 		return err
 	}
@@ -1881,8 +1583,7 @@ func (s *BilansiResource) GetBilansStanjaZaStampu(ctx context.Context, tbl *doma
 		tbl.Totals[10] = common.FormatNumberWithSystemLocale((*totalsResult)[0].PGodH, 2)
 		tbl.Totals[11] = common.FormatNumberWithSystemLocale((*totalsResult)[0].PGodHPS, 2)
 	}
-	sqlQuery, args := qb.Build()
-	entities, err := s.bilsRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.bilsRepo.Select(ctx, b)
 	if err != nil {
 		return err
 	}
@@ -1941,40 +1642,33 @@ func (s *BilansiResource) GetBilansUspeha(ctx context.Context, tbl *domain.Table
 	if session == nil {
 		return fmt.Errorf("user session not found")
 	}
-	hasGod, hasKar := s.bilsRepo.GetHasGodHasKar()
-
 	// If only totals are needed, we can sum directly in SQL without fetching all records
-	qbTotals := common.NewQueryBuilder(`SELECT
+	bTotals := querybuilder.New(`SELECT
 			COALESCE(SUM(bilu.tgod), 0) as tgod,
 			COALESCE(SUM(bilu.tgodh), 0) as tgodh,
 			COALESCE(SUM(bilu.pgod), 0) as pgod,
 			COALESCE(SUM(bilu.pgodh), 0) as pgodh
-			FROM bilu`, true)
+			FROM bilu`)
 
-	qb := common.NewQueryBuilder(`SELECT 
-			bilu.biluid, bilu.rbr, bilu.grac, bilu.nazp, bilu.aop, 
+	b := querybuilder.New(`SELECT
+			bilu.biluid, bilu.rbr, bilu.grac, bilu.nazp, bilu.aop,
 			bilu.konta, bilu.tgod, bilu.pgod,
 			bilu.nipo, bilu.tgodh, bilu.pgodh,
-			bilu.pozic_1, bilu.pozic_2, bilu.pozic_3, bilu.pozic_4, 
+			bilu.pozic_1, bilu.pozic_2, bilu.pozic_3, bilu.pozic_4,
 			bilu.pozic_5, bilu.pozic_6, bilu.pozic_7, bilu.pozic_8,
-			bilu.pozic_9, bilu.pozic_10, bilu.pozic_11, bilu.pozic_12, bilu.skraceni FROM bilu`, true)
+			bilu.pozic_9, bilu.pozic_10, bilu.pozic_11, bilu.pozic_12, bilu.skraceni FROM bilu`)
 
 	// Add filters directly in query
-	if hasGod {
-		qb.AddEqual("bilu.god", session.SelectedGod)
-		qbTotals.AddEqual("bilu.god", session.SelectedGod)
+	for _, x := range []*querybuilder.Builder{b, bTotals} {
+		if err := s.biluRepo.ApplyFilters(ctx, x, "bilu", nil, ""); err != nil {
+			return err
+		}
+		// Filter by skraceni flag if set
+		if skraceni {
+			x.AddEqual("bilu.skraceni", 1)
+		}
 	}
-	if hasKar {
-		qb.AddEqual("bilu.kar", session.SelectedKar)
-		qbTotals.AddEqual("bilu.kar", session.SelectedKar)
-	}
-	// Filter by skraceni flag if set
-	if skraceni {
-		qb.AddEqual("bilu.skraceni", 1)
-		qbTotals.AddEqual("bilu.skraceni", 1)
-	}
-	qbTotalQry, qbTotalArgs := qbTotals.Build()
-	totalsResult, err := s.biluRepo.GetAllCustom(ctx, qbTotalQry, "", qbTotalArgs, "", "")
+	totalsResult, err := s.biluRepo.Select(ctx, bTotals)
 	if err != nil {
 		return err
 	}
@@ -1985,22 +1679,14 @@ func (s *BilansiResource) GetBilansUspeha(ctx context.Context, tbl *domain.Table
 		totals.PrethGodH = common.FormatNumberWithSystemLocale((*totalsResult)[0].PGodH, 0)
 	}
 
-	// Add search filter if provided
-	if searchText != "" {
-		nbrParam := len(qb.GetArgs()) + 1
-		customCondition := fmt.Sprintf(`bilu.nazp ilike '%%' || $%d || '%%'" 
-		OR bilu.grac ilike '%%' || $%d || '%%'"
-		OR bilu.konta ilike '%%' || $%d || '%%'"
-		OR bilu.aop ilike '%%' || $%d || '%%'`, nbrParam, nbrParam, nbrParam, nbrParam)
-		qb.AddCustomCondition(customCondition, searchText)
-		qbTotals.AddCustomCondition(customCondition, searchText)
-	}
+	// Add search filter if provided (also to the totals of the grid below)
+	whereBilansSearch(b, "bilu", searchText)
+	whereBilansSearch(bTotals, "bilu", searchText)
 
-	qb.AddOrderBy("bilu.rbr ASC")
+	b.OrderBy("bilu.rbr ASC")
 
 	// Execute query and get entities
-	sqlQuery, args := qb.Build()
-	entities, err := s.biluRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.biluRepo.Select(ctx, b)
 	if err != nil {
 		return err
 	}
@@ -2044,8 +1730,7 @@ func (s *BilansiResource) GetBilansUspeha(ctx context.Context, tbl *domain.Table
 		}
 	}
 	// Execute query and get entities
-	sqlQuery, args = qbTotals.Build()
-	entitiesTotal, err := s.bilsRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entitiesTotal, err := s.bilsRepo.Select(ctx, bTotals)
 	if err != nil {
 		return err
 	}
@@ -2092,41 +1777,23 @@ func (s *BilansiResource) GetBilansUspehaObrada(ctx context.Context, tbl *domain
 	kar := userSession.SelectedKar
 
 	// STEP 1: Reset TGOD, TGODH for all BILU records; also reset PGOD, PGODH for summary rows.
-	resetAllQb := common.NewQueryBuilder("update bilu set tgod = 0, tgodh = 0", true)
-	if hasGod {
-		resetAllQb.AddEqual("god", god)
-	}
-	if hasKar {
-		resetAllQb.AddEqual("kar", kar)
-	}
-	resetAllSql, resetAllArgs := resetAllQb.Build()
-	if _, err := s.biluRepo.DB.ExecContext(ctx, resetAllSql, resetAllArgs...); err != nil {
+	resetAll := querybuilder.NewUpdate("bilu").Set("tgod = 0, tgodh = 0")
+	whereGodKar(resetAll, "", hasGod, hasKar, god, kar)
+	if err := s.biluRepo.Exec(ctx, resetAll); err != nil {
 		return err
 	}
 
-	resetSummaryQb := common.NewQueryBuilder("update bilu set pgod = 0, pgodh = 0", true)
-	if hasGod {
-		resetSummaryQb.AddEqual("god", god)
-	}
-	if hasKar {
-		resetSummaryQb.AddEqual("kar", kar)
-	}
-	resetSummaryQb.AddCustomCondition("konta = ''")
-	resetSummarySql, resetSummaryArgs := resetSummaryQb.Build()
-	if _, err := s.biluRepo.DB.ExecContext(ctx, resetSummarySql, resetSummaryArgs...); err != nil {
+	resetSummary := querybuilder.NewUpdate("bilu").Set("pgod = 0, pgodh = 0")
+	whereGodKar(resetSummary, "", hasGod, hasKar, god, kar)
+	resetSummary.Where("konta = ''")
+	if err := s.biluRepo.Exec(ctx, resetSummary); err != nil {
 		return err
 	}
 
 	// STEP 2: Get max NIPO value
-	maxNipoQb := common.NewQueryBuilder(`select coalesce(max(nipo), 1) as nipo from bilu`, true)
-	if hasGod {
-		maxNipoQb.AddEqual("god", god)
-	}
-	if hasKar {
-		maxNipoQb.AddEqual("kar", kar)
-	}
-	maxNipoSql, maxNipoArgs := maxNipoQb.Build()
-	maxNipoRecords, err := s.biluRepo.GetAllCustom(ctx, maxNipoSql, "", maxNipoArgs, "", "")
+	maxNipoB := querybuilder.New(`select coalesce(max(nipo), 1) as nipo from bilu`)
+	whereGodKar(maxNipoB, "", hasGod, hasKar, god, kar)
+	maxNipoRecords, err := s.biluRepo.Select(ctx, maxNipoB)
 	if err != nil {
 		return err
 	}
@@ -2137,17 +1804,11 @@ func (s *BilansiResource) GetBilansUspehaObrada(ctx context.Context, tbl *domain
 
 	// STEP 3: Load ALL bilu rows into memory once, keyed by AOP.
 	// This eliminates up to N×12 per-row DB lookups during summary aggregation.
-	allBiluQb := common.NewQueryBuilder(`select biluid, aop, konta, tgod, pgod, tgodh, pgodh, nipo, skraceni,
+	allBiluB := querybuilder.New(`select biluid, aop, konta, tgod, pgod, tgodh, pgodh, nipo, skraceni,
 			pozic_1, pozic_2, pozic_3, pozic_4, pozic_5, pozic_6,
-			pozic_7, pozic_8, pozic_9, pozic_10, pozic_11, pozic_12 from bilu`, true)
-	if hasGod {
-		allBiluQb.AddEqual("god", god)
-	}
-	if hasKar {
-		allBiluQb.AddEqual("kar", kar)
-	}
-	allBiluSql, allBiluArgs := allBiluQb.Build()
-	allBiluRecords, err := s.biluRepo.GetAllCustom(ctx, allBiluSql, "", allBiluArgs, "", "")
+			pozic_7, pozic_8, pozic_9, pozic_10, pozic_11, pozic_12 from bilu`)
+	whereGodKar(allBiluB, "", hasGod, hasKar, god, kar)
+	allBiluRecords, err := s.biluRepo.Select(ctx, allBiluB)
 	if err != nil {
 		return err
 	}
@@ -2162,13 +1823,23 @@ func (s *BilansiResource) GetBilansUspehaObrada(ctx context.Context, tbl *domain
 	// fpro aggregate cache: key = "konta:god:kar:odMes:doMes"
 	// Avoids re-querying the same konto prefix if multiple BILU rows share it.
 	fproCache := make(map[string][2]float64)
+	// The first failed aggregate; the rows are not written once it is set (see STEP 4).
+	var aggErr error
+	// The aggregates read fpro, so they are scoped by fpro's own god/kar columns (not by bilu's).
+	fproGod, fproKar := s.fproRepo.GetHasGodHasKar()
 
 	cachedFproAggregate := func(k, r, od, do int, sKonto string) (float64, float64) {
 		key := fmt.Sprintf("%s:%d:%d:%d:%d", sKonto, k, r, od, do)
 		if v, ok := fproCache[key]; ok {
 			return v[0], v[1]
 		}
-		dug, pot := s.queryFproAggregate(ctx, hasGod, hasKar, k, r, od, do, sKonto)
+		dug, pot, err := s.queryFproAggregate(ctx, fproGod, fproKar, k, r, od, do, sKonto)
+		if err != nil {
+			if aggErr == nil {
+				aggErr = err
+			}
+			return 0, 0
+		}
 		fproCache[key] = [2]float64{dug, pot}
 		return dug, pot
 	}
@@ -2245,6 +1916,9 @@ func (s *BilansiResource) GetBilansUspehaObrada(ctx context.Context, tbl *domain
 				{Name: "pgod", Value: fmt.Sprintf("%v", bilu.PGod)},
 				{Name: "pgodh", Value: fmt.Sprintf("%v", bilu.PGodH)},
 			}
+			if aggErr != nil {
+				return fmt.Errorf("obrada bilansa uspeha: %w", aggErr)
+			}
 			if err := s.biluRepo.Update(ctx, bilu, "biluid", bilu.BiluID, fields); err != nil {
 				return err
 			}
@@ -2252,20 +1926,14 @@ func (s *BilansiResource) GetBilansUspehaObrada(ctx context.Context, tbl *domain
 	}
 
 	// STEP 5: Fetch final results and populate table
-	finalQb := common.NewQueryBuilder(`select biluid, rbr, grac, nazp, aop, konta, tgod, pgod, tgodh, pgodh, nipo, skraceni from bilu`, true)
-	if hasGod {
-		finalQb.AddEqual("god", god)
-	}
-	if hasKar {
-		finalQb.AddEqual("kar", kar)
-	}
+	finalB := querybuilder.New(`select biluid, rbr, grac, nazp, aop, konta, tgod, pgod, tgodh, pgodh, nipo, skraceni from bilu`)
+	whereGodKar(finalB, "", hasGod, hasKar, god, kar)
 	if skraceni {
-		finalQb.AddEqual("skraceni", 1)
+		finalB.AddEqual("skraceni", 1)
 	}
-	finalQb.AddOrderBy("aop asc")
-	finalSql, finalArgs := finalQb.Build()
+	finalB.OrderBy("aop asc")
 
-	finalRecords, err := s.biluRepo.GetAllCustom(ctx, finalSql, "", finalArgs, "", "")
+	finalRecords, err := s.biluRepo.Select(ctx, finalB)
 	if err != nil {
 		return err
 	}
@@ -2316,31 +1984,30 @@ func (s *BilansiResource) GetBilansUspehaZaStampu(ctx context.Context, tbl *doma
 	if session == nil {
 		return fmt.Errorf("user session not found")
 	}
-	hasGod, hasKar := s.bilsRepo.GetHasGodHasKar()
-	var qb *common.QueryBuilder
+	var b *querybuilder.Builder
 	if tipStampe == common.TipStampePrint {
-		qb = common.NewQueryBuilder(`SELECT 
-			bilu.grac, bilu.nazp, bilu.aop, 
-			bilu.napomena, bilu.tgodh, bilu.pgodh FROM bilu`, true)
+		b = querybuilder.New(`SELECT
+			bilu.grac, bilu.nazp, bilu.aop,
+			bilu.napomena, bilu.tgodh, bilu.pgodh FROM bilu`)
 	}
 	if tipStampe == common.TipStampePreview {
-		qb = common.NewQueryBuilder(`SELECT 
-			bilu.grac, bilu.nazp, bilu.aop,   
-			bilu.napomena, bilu.tgodh, bilu.pgodh, bilu.tgod, bilu.pgod, bilu.nipo, bilu.skraceni FROM bilu`, true)
+		b = querybuilder.New(`SELECT
+			bilu.grac, bilu.nazp, bilu.aop,
+			bilu.napomena, bilu.tgodh, bilu.pgodh, bilu.tgod, bilu.pgod, bilu.nipo, bilu.skraceni FROM bilu`)
+	}
+	if b == nil {
+		// (The old code dereferenced a nil builder here and panicked.)
+		return fmt.Errorf("invalid tip stampe: %s", tipStampe)
 	}
 	// Add filters directly in query
-	if hasGod {
-		qb.AddEqual("bilu.god", session.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("bilu.kar", session.SelectedKar)
+	if err := s.biluRepo.ApplyFilters(ctx, b, "bilu", nil, ""); err != nil {
+		return err
 	}
 
-	qb.AddOrderBy("bilu.rbr ASC")
+	b.OrderBy("bilu.rbr ASC")
 
 	// Execute query and get entities
-	sqlQuery, args := qb.Build()
-	entities, err := s.biluRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.biluRepo.Select(ctx, b)
 	if err != nil {
 		return err
 	}
@@ -2562,9 +2229,9 @@ func (s *BilansiResource) obradaKontaCached(konta string, god, kar, odMes, doMes
 //
 // odMes/doMes: month range for current-year aggregation (1–12).
 // lPGODizPG:   when true, also calculates the previous-year saldo (god-1, full year).
-func (s *BilansiResource) obradaKonta(ctx context.Context, konta string, god, kar, odMes, doMes int, lPGODizPG bool) (float64, float64) {
+func (s *BilansiResource) obradaKonta(ctx context.Context, konta string, god, kar, odMes, doMes int, lPGODizPG bool) (float64, float64, error) {
 	if konta == "" {
-		return 0, 0
+		return 0, 0, nil
 	}
 	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
 
@@ -2588,7 +2255,10 @@ func (s *BilansiResource) obradaKonta(ctx context.Context, konta string, god, ka
 		}
 
 		// Current year: sum fpro movements for the given month range
-		dug, pot := s.queryFproAggregate(ctx, hasGod, hasKar, god, kar, odMes, doMes, sKonto)
+		dug, pot, err := s.queryFproAggregate(ctx, hasGod, hasKar, god, kar, odMes, doMes, sKonto)
+		if err != nil {
+			return 0, 0, err
+		}
 		diff := (dug - pot) * nPlusMinus
 		if sKonto == "59" {
 			xTrosak += diff
@@ -2600,7 +2270,10 @@ func (s *BilansiResource) obradaKonta(ctx context.Context, konta string, god, ka
 
 		// Previous year: same query on god-1, full year (no month filter)
 		if lPGODizPG {
-			dugPG, potPG := s.queryFproAggregate(ctx, hasGod, hasKar, god-1, kar, 0, 0, sKonto)
+			dugPG, potPG, err := s.queryFproAggregate(ctx, hasGod, hasKar, god-1, kar, 0, 0, sKonto)
+			if err != nil {
+				return 0, 0, err
+			}
 			diffPG := (dugPG - potPG) * nPlusMinus
 			if sKonto == "59" {
 				xTrosakPG += diffPG
@@ -2645,7 +2318,7 @@ func (s *BilansiResource) obradaKonta(ctx context.Context, konta string, god, ka
 		}
 	}
 
-	return xMSaldo, xPSaldo
+	return xMSaldo, xPSaldo, nil
 }
 
 // queryFproAggregate returns (dug, pot) totals from fpro for the given account prefix/code.
@@ -2654,68 +2327,54 @@ func (s *BilansiResource) obradaKonta(ctx context.Context, konta string, god, ka
 // Here we replicate that by using prefix matching directly on fpro, so a query for
 // sKonto="204" matches fpro rows with konto "2042", "20420", etc.
 // odMes/doMes = 0 means full-year (no month filter).
-func (s *BilansiResource) queryFproAggregate(ctx context.Context, hasGod, hasKar bool, god, kar, odMes, doMes int, sKonto string) (float64, float64) {
-	qb := common.NewQueryBuilder(`select
+func (s *BilansiResource) queryFproAggregate(ctx context.Context, hasGod, hasKar bool, god, kar, odMes, doMes int, sKonto string) (float64, float64, error) {
+	// The tipdok is the column of fpro itself. The old query read fnal.tipdok without fnal in
+	// FROM, failed, and the error was ignored, so the result was always 0, 0.
+	b := querybuilder.New(`select
 			coalesce(sum(case when kat in (1,2) then iznos else 0 end), 0) as dug,
 			coalesce(sum(case when kat in (3,4) then iznos else 0 end), 0) as pot
-			from fpro`, true)
-	if hasGod {
-		qb.AddEqual("god", god)
-	}
-	if hasKar {
-		qb.AddEqual("kar", kar)
-	}
+			from fpro`)
+	whereGodKar(b, "fpro.", hasGod, hasKar, god, kar)
 
 	// Only movements, not opening balance postings
-	qb.AddCustomCondition("fnal.tipdok != '00'")
+	b.Where("fpro.tipdok != '00'")
 
 	// Prefix match covers all sub-accounts at every depth:
 	// sKonto="20"  matches fpro konto "20","204","2042","20420", ...
 	// sKonto="204" matches fpro konto "204","2042","20420", ...
 	// sKonto="2042" matches fpro konto "2042","20420", ...
 	// No vkonta filter — fpro transactions exist at the actual booking level only,
-	qb.AddLikeBegin("konto", sKonto)
+	b.AddLikeBegin("fpro.konto", sKonto)
 
 	// Exclude closing/transfer accounts at all levels
-	qb.AddCustomCondition("konto != '599'")
-	qb.AddCustomCondition("konto != '699'")
-	qb.AddCustomCondition("left(konto, 4) != '5999'")
-	qb.AddCustomCondition("left(konto, 4) != '6999'")
+	b.Where("fpro.konto != '599'").
+		Where("fpro.konto != '699'").
+		Where("left(fpro.konto, 4) != '5999'").
+		Where("left(fpro.konto, 4) != '6999'")
 
 	// Month filter: omitted when odMes == 0 (full-year query)
-	if odMes > 0 {
-		qb.AddCondition("extract(month from danal)::int", odMes, ">=")
-	}
-	if doMes > 0 {
-		qb.AddCondition("extract(month from danal)::int", doMes, "<=")
-	}
+	whereMesecOdDo(b, odMes, doMes)
 
-	sql, args := qb.Build()
-	rows, err := s.fproRepo.GetAllCustom(ctx, sql, "", args, "", "")
-	if err != nil || rows == nil || len(*rows) == 0 {
-		return 0, 0
+	rows, err := s.fproRepo.Select(ctx, b)
+	if err != nil {
+		return 0, 0, fmt.Errorf("promet konta %s: %w", sKonto, err)
+	}
+	if len(*rows) == 0 {
+		return 0, 0, nil
 	}
 	row := (*rows)[0]
-	return row.Dug.Float64, row.Pot.Float64
+	return row.Dug.Float64, row.Pot.Float64, nil
 }
 
 func (s *BilansiResource) getKontoNaziv(ctx context.Context, konto string) string {
-	userSesion := domain.GetSessionFromStdContext(ctx)
-	if userSesion == nil {
+	// The konto is the key of the lookup; the kontni plan of the period of the session.
+	b := querybuilder.New("select naziv from fkpl").
+		Where("konto = ?", konto).
+		Where("vkonta > ?", 1)
+	if err := s.fkplRepo.ApplyFilters(ctx, b, "", nil, ""); err != nil {
 		return ""
 	}
-	qb := common.NewQueryBuilder("select naziv from fkpl", true)
-	hasGod, hasKar := s.fkplRepo.GetHasGodHasKar()
-	if hasGod {
-		qb.AddEqual("god", userSesion.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("kar", userSesion.SelectedKar)
-	}
-	qb.AddEqual("konto", konto)
-	qb.AddCondition("vkonta", 1, ">")
-	sql, args := qb.Build()
-	rows, err := s.fkplRepo.GetAllCustom(ctx, sql, "", args, "", "")
+	rows, err := s.fkplRepo.Select(ctx, b)
 	if err != nil || rows == nil || len(*rows) == 0 {
 		return ""
 	}

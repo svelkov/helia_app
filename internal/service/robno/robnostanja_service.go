@@ -8,6 +8,7 @@ import (
 	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
+	"helia/internal/infrastructure/db/querybuilder"
 	"helia/internal/repository"
 	commonsvc "helia/internal/service/common"
 )
@@ -75,43 +76,45 @@ func (s *RobnoStanjaResource) GetStanjePojedinacnogArtikla(ctx context.Context, 
 	tbl.Headers = s.pojedinacniArtikalTableFields
 
 	hasGod, hasKar := s.drstaRepo.GetHasGodHasKar()
-	qb := common.NewQueryBuilder(`select rsif.sifra, rsif.jm, drsta.cena,
+	b := querybuilder.New(`select rsif.sifra, rsif.jm, drsta.cena,
 		mdug_1, mdug_2, mdug_3, mdug_4, mdug_5, mdug_6, mdug_7, mdug_8, mdug_9, mdug_10, mdug_11, mdug_12,
-		mpot_1, mpot_2, mpot_3, mpot_4, mpot_5, mpot_6, mpot_7, mpot_8, mpot_9, mpot_10, mpot_11, mpot_12, 
-		mul_1, mul_2, mul_3, mul_4, mul_5, mul_6, mul_7, mul_8, mul_9, mul_10, mul_11, mul_12, 
-		miz_1, miz_2, miz_3, miz_4, miz_5, miz_6, miz_7, miz_8, miz_9, miz_10, miz_11, miz_12 from drsta`, true)
-	qb.AddJoin(" inner join rsif on rsif.rsifid = drsta.rsifid")
+		mpot_1, mpot_2, mpot_3, mpot_4, mpot_5, mpot_6, mpot_7, mpot_8, mpot_9, mpot_10, mpot_11, mpot_12,
+		mul_1, mul_2, mul_3, mul_4, mul_5, mul_6, mul_7, mul_8, mul_9, mul_10, mul_11, mul_12,
+		miz_1, miz_2, miz_3, miz_4, miz_5, miz_6, miz_7, miz_8, miz_9, miz_10, miz_11, miz_12 from drsta`).
+		AddJoin("inner join rsif on rsif.rsifid = drsta.rsifid")
 	if hasGod {
-		qb.AddEqual("drsta.god", userSession.SelectedGod)
+		b.Where("drsta.god = ?", userSession.SelectedGod)
 	}
 	if hasKar {
-		qb.AddEqual("drsta.kar", userSession.SelectedKar)
+		b.Where("drsta.kar = ?", userSession.SelectedKar)
 	}
 	if params.Magacin != 0 {
-		qb.AddEqual("drsta.magaciniid", params.MagaciniID)
+		b.Where("drsta.magaciniid = ?", params.MagaciniID)
 	}
 	if params.Konto != "" {
-		qb.AddEqual("drsta.konto", params.Konto)
+		b.Where("drsta.konto = ?", params.Konto)
 	}
 	if params.SifraArtikla != "" {
-		qb.AddEqual("rsif.sifra", params.SifraArtikla)
-	}
-	qb.AddOrderBy("rsif.sifra")
-	if !getTotalRecords && printType == common.TipStampePreview {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
-	}
-
-	sqlQuery, args := qb.Build()
-	entities, err := s.robnostanjeRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
-		return err
+		b.Where("rsif.sifra = ?", params.SifraArtikla)
 	}
 	months := common.GetMontshName()
 	rowsPerArticle := len(months)
 	if getTotalRecords && printType == common.TipStampePreview {
-		common.SetTableTotalRecords(tbl, len(*entities)*rowsPerArticle, pageSize)
+		count, err := s.robnostanjeRepo.Count(ctx, b)
+		if err != nil {
+			return err
+		}
+		common.SetTableTotalRecords(tbl, count*rowsPerArticle, pageSize)
 		return nil
+	}
+	b.OrderBy("rsif.sifra")
+	if !getTotalRecords && printType == common.TipStampePreview {
+		b.Limit(pageSize).Offset((currentPage - 1) * pageSize)
+	}
+
+	entities, err := s.robnostanjeRepo.Select(ctx, b)
+	if err != nil {
+		return err
 	}
 	tbl.Rows = []domain.TableRow{}
 	for _, entity := range *entities {
@@ -142,32 +145,31 @@ func (s *RobnoStanjaResource) GetUkupnaObrada(ctx context.Context, total *domain
 	}
 
 	hasGod, hasKar := s.rproRepo.GetHasGodHasKar()
-	qb := common.NewQueryBuilder(`select drsta.ulaz, drsta.izlaz, drsta.dug as duguje, drsta.pot as potrazuje,
+	b := querybuilder.New(`select drsta.ulaz, drsta.izlaz, drsta.dug as duguje, drsta.pot as potrazuje,
 		rsif.sifra, coalesce(rsif.naziv, '') as naziv_artikla, coalesce(rsif.jm, '') as jm,
 		coalesce(drsta.cena, 0) as cena, coalesce(fkpl.naziv, '') as kontonaziv, coalesce(magacini.opis, '') as magacinnaziv
-		from drsta`, true)
-	qb.AddJoin("inner join rsif on rsif.rsifid = drsta.rsifid")
-	qb.AddJoin("left join magacini on magacini.magaciniid = drsta.magaciniid")
-	qb.AddJoin("left join fkpl on fkpl.god = drsta.god and fkpl.kar = drsta.kar and fkpl.vkonta = 2 and fkpl.konto = drsta.konto")
+		from drsta`).
+		AddJoin("inner join rsif on rsif.rsifid = drsta.rsifid").
+		AddJoin("left join magacini on magacini.magaciniid = drsta.magaciniid").
+		AddJoin("left join fkpl on fkpl.god = drsta.god and fkpl.kar = drsta.kar and fkpl.vkonta = 2 and fkpl.konto = drsta.konto")
 	if hasGod {
-		qb.AddEqual("drsta.god", userSession.SelectedGod)
+		b.Where("drsta.god = ?", userSession.SelectedGod)
 	}
 	if hasKar {
-		qb.AddEqual("drsta.kar", userSession.SelectedKar)
+		b.Where("drsta.kar = ?", userSession.SelectedKar)
 	}
 	if params.MagaciniID != 0 {
-		qb.AddEqual("drsta.magaciniid", params.MagaciniID)
+		b.Where("drsta.magaciniid = ?", params.MagaciniID)
 	}
 	if params.Konto != "" {
-		qb.AddEqual("drsta.konto", params.Konto)
+		b.Where("drsta.konto = ?", params.Konto)
 	}
 	if params.SifraArtikla != "" {
-		qb.AddEqual("rsif.sifra", params.SifraArtikla)
+		b.Where("rsif.sifra = ?", params.SifraArtikla)
 	}
-	qb.AddOrderBy("rsif.sifra")
-	sqlQuery, args := qb.Build()
+	b.OrderBy("rsif.sifra")
 	// Execute the query and populate the total object
-	entities, err := s.robnostanjeRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.robnostanjeRepo.Select(ctx, b)
 	if err != nil {
 		return err
 	}
@@ -204,58 +206,55 @@ func (s *RobnoStanjaResource) GetStanjaSubsintetickogKonta(ctx context.Context, 
 	// First query: the opening balance (documents with tipdok = '00') summed into ONE row with
 	// mesec = 0, so the report shows it as the single "Početno stanje" line. There is no GROUP BY,
 	// the aggregate collapses the whole year into a single row.
-	qb1 := common.NewQueryBuilder(`SELECT 0 as mesec,
+	b1 := querybuilder.New(`SELECT 0 as mesec,
 			COALESCE(SUM(CASE WHEN upper(dokvrsta.kodknj) = 'D' THEN
 				CASE WHEN dokvrsta.grpdok = 'NIV' THEN rpro.kolic * (rpro.cena - rpro.fcena) ELSE rpro.iznos END
 			ELSE 0 END), 0) AS duguje,
 			COALESCE(SUM(CASE WHEN upper(dokvrsta.kodknj) = 'P' THEN
 				CASE WHEN dokvrsta.grpdok = 'NIV' THEN rpro.kolic * (rpro.cena - rpro.fcena) ELSE rpro.iznos END
 			ELSE 0 END), 0) AS potrazuje
-    FROM rpro `, true)
-	qb1.AddJoin(" inner join rnal on rnal.rnalid = rpro.rnalid")
-	qb1.AddJoin(" inner join dokvrsta on dokvrsta.god = rpro.god and dokvrsta.kar = rpro.kar and dokvrsta.vrd = rpro.vrd")
-	// Add conditions to first query
-	hasGod, hasKar := s.robnostanjeRepo.GetHasGodHasKar()
+    FROM rpro`).
+		AddJoin("inner join rnal on rnal.rnalid = rpro.rnalid").
+		AddJoin("inner join dokvrsta on dokvrsta.god = rpro.god and dokvrsta.kar = rpro.kar and dokvrsta.vrd = rpro.vrd")
+	// Add conditions to first query. The tenant columns are those of rpro (RobnoStanjeDto, the
+	// repository of the result, has no god/kar, so asking it left the report without a tenant filter).
+	hasGod, hasKar := s.rproRepo.GetHasGodHasKar()
 	if hasGod {
-		qb1.AddEqual("rpro.god", userSession.SelectedGod)
+		b1.Where("rpro.god = ?", userSession.SelectedGod)
 	}
 	if hasKar {
-		qb1.AddEqual("rpro.kar", userSession.SelectedKar)
+		b1.Where("rpro.kar = ?", userSession.SelectedKar)
 	}
-	qb1.AddEqual("rnal.tipdok", "00")
-	qb1.AddLike("rpro.konto", params.Konto)
-	qb1.AddEqual("rnal.magaciniid", params.MagaciniID)
+	b1.Where("rnal.tipdok = ?", "00").
+		AddLike("rpro.konto", params.Konto).
+		Where("rnal.magaciniid = ?", params.MagaciniID)
 	// Second query: the monthly data (tipdok != '00') summed per month - one row per month with
 	// duguje/potrazuje, which SUM() together with the GROUP BY collapses the documents of that month.
-	qb2 := common.NewQueryBuilder(`SELECT EXTRACT(MONTH FROM rnal.danal) as mesec,
+	b2 := querybuilder.New(`SELECT EXTRACT(MONTH FROM rnal.danal) as mesec,
 			COALESCE(SUM(CASE WHEN upper(dokvrsta.kodknj) = 'D' THEN
 				CASE WHEN dokvrsta.grpdok = 'NIV' THEN rpro.kolic * (rpro.cena - rpro.fcena) ELSE rpro.iznos END
 			ELSE 0 END), 0) AS duguje,
 			COALESCE(SUM(CASE WHEN upper(dokvrsta.kodknj) = 'P' THEN
 				CASE WHEN dokvrsta.grpdok = 'NIV' THEN rpro.kolic * (rpro.cena - rpro.fcena) ELSE rpro.iznos END
 			ELSE 0 END), 0) AS potrazuje
-    FROM rpro `, true)
-	qb2.AddJoin(" inner join rnal on rnal.rnalid = rpro.rnalid")
-	qb2.AddJoin(" inner join dokvrsta on dokvrsta.god = rpro.god and dokvrsta.kar = rpro.kar and dokvrsta.vrd = rpro.vrd")
+    FROM rpro`).
+		AddJoin("inner join rnal on rnal.rnalid = rpro.rnalid").
+		AddJoin("inner join dokvrsta on dokvrsta.god = rpro.god and dokvrsta.kar = rpro.kar and dokvrsta.vrd = rpro.vrd")
 	// Add same base conditions
 	if hasGod {
-		qb2.AddEqual("rpro.god", userSession.SelectedGod)
+		b2.Where("rpro.god = ?", userSession.SelectedGod)
 	}
 	if hasKar {
-		qb2.AddEqual("rpro.kar", userSession.SelectedKar)
+		b2.Where("rpro.kar = ?", userSession.SelectedKar)
 	}
-	qb2.AddEqual("rnal.magaciniid", params.MagaciniID)
-	qb2.AddEqual("rpro.konto", params.Konto)
-	qb2.AddCondition("rnal.tipdok", "00", "!=")
-	qb2.AddGroupBy("EXTRACT(MONTH FROM rnal.danal)")
+	b2.Where("rnal.magaciniid = ?", params.MagaciniID).
+		AddEqual("rpro.konto", params.Konto).
+		AddCondition("rnal.tipdok", "00", "!=").
+		GroupByExpr("EXTRACT(MONTH FROM rnal.danal)")
 	// Create UNION
-	uqb := common.NewUnionQueryBuilder("UNION ALL")
-	uqb.AddQuery(qb1)
-	uqb.AddQuery(qb2)
-	uqb.AddOrderBy("mesec")
+	u := querybuilder.NewUnionAll().Add(b1).Add(b2).OrderBy("mesec")
 
-	sqlQuery, args := uqb.Build()
-	entities, err := s.robnostanjeRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.robnostanjeRepo.Select(ctx, u)
 	if err != nil {
 		return err
 	}
@@ -381,21 +380,15 @@ func cenaArtikla(ent domain.RobnoStanjeDto, nabavnaCena bool, ulaz, izlaz, dug, 
 
 // magacinJeNabavnaCena reports whether the selected magazine keeps stock at purchase price
 // (MAGACINI.NACVODZAL = 3). The legacy code seeks MAGACINI before running the report.
-func (s *RobnoStanjaResource) magacinJeNabavnaCena(ctx context.Context, session *domain.UserSession, magaciniID int) bool {
+func (s *RobnoStanjaResource) magacinJeNabavnaCena(ctx context.Context, magaciniID int) bool {
 	if magaciniID == 0 {
 		return false
 	}
-	hasGod, hasKar := s.magRepo.GetHasGodHasKar()
-	qb := common.NewQueryBuilder(" select nacvodzal from magacini", true)
-	qb.AddEqual("magaciniid", magaciniID)
-	if hasGod {
-		qb.AddEqual("god", session.SelectedGod)
+	b := querybuilder.New("select nacvodzal from magacini").Where("magaciniid = ?", magaciniID)
+	if err := s.magRepo.ApplyFilters(ctx, b, "", nil, ""); err != nil {
+		return false
 	}
-	if hasKar {
-		qb.AddEqual("kar", session.SelectedKar)
-	}
-	sqlQuery, args := qb.Build()
-	entities, err := s.magRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.magRepo.Select(ctx, b)
 	if err != nil || entities == nil || len(*entities) == 0 {
 		return false
 	}
@@ -404,7 +397,7 @@ func (s *RobnoStanjaResource) magacinJeNabavnaCena(ctx context.Context, session 
 
 // samoSaPrometom reports whether the report must hide articles without any movement.
 func (s *RobnoStanjaResource) samoSaPrometom(ctx context.Context) bool {
-	fvr, err := common.GetFvrData(ctx, &s.fvrRepo)
+	fvr, err := repository.GetFvrData(ctx, &s.fvrRepo)
 	if err != nil {
 		return false
 	}
@@ -555,51 +548,53 @@ func (s *RobnoStanjaResource) GetStanjaViseArtikalaSifra(ctx context.Context, tb
 		tbl.Headers = s.viseArtikalaStampaTableFields
 	}
 
-	nabavnaCena := s.magacinJeNabavnaCena(ctx, userSession, params.Magacin)
+	nabavnaCena := s.magacinJeNabavnaCena(ctx, params.Magacin)
 	odMesec, doMesec := mesecRange(params.OdMeseca, params.DoMeseca)
 
 	hasGod, hasKar := s.drstaRepo.GetHasGodHasKar()
-	qb := common.NewQueryBuilder(robnoStanjeArtikliBaseQuery, true)
-	qb.AddJoin(" inner join rsif on rsif.rsifid = drsta.rsifid")
+	b := querybuilder.New(robnoStanjeArtikliBaseQuery).
+		AddJoin("inner join rsif on rsif.rsifid = drsta.rsifid")
 	if hasGod {
-		qb.AddEqual("drsta.god", userSession.SelectedGod)
+		b.Where("drsta.god = ?", userSession.SelectedGod)
 	}
 	if hasKar {
-		qb.AddEqual("drsta.kar", userSession.SelectedKar)
+		b.Where("drsta.kar = ?", userSession.SelectedKar)
 	}
-	qb.AddEqual("drsta.magaciniid", params.Magacin)
-	qb.AddCondition("drsta.konto", params.OdKonta, ">=")
-	qb.AddCondition("drsta.konto", params.DoKonta, "<=")
-	qb.AddCondition("drsta.sifra", params.OdSifre, ">=")
-	qb.AddCondition("drsta.sifra", params.DoSifre, "<=")
+	b.Where("drsta.magaciniid = ?", params.Magacin).
+		AddCondition("drsta.konto", params.OdKonta, ">=").
+		AddCondition("drsta.konto", params.DoKonta, "<=").
+		AddCondition("drsta.sifra", params.OdSifre, ">=").
+		AddCondition("drsta.sifra", params.DoSifre, "<=")
 	// "Za dobavljaca": only articles linked to a supplier (legacy: RSIF.KDOB = <sifra dobavljaca>).
 	if params.ZaDobavljaca {
-		qb.AddCustomCondition("COALESCE(rsif.kdob, '') <> ''")
+		b.Where("COALESCE(rsif.kdob, '') <> ''")
 	}
 	// "Artikli sa stanjem" / "Artikli bez stanja" (legacy: RSTA.ULAZ - RSTA.IZLAZ).
 	if params.ArtikliSaStanjem && !params.ArtikliBezStanja {
-		qb.AddCustomCondition("COALESCE(drsta.ulaz, 0) - COALESCE(drsta.izlaz, 0) <> 0")
+		b.Where("COALESCE(drsta.ulaz, 0) - COALESCE(drsta.izlaz, 0) <> 0")
 	}
 	if !params.ArtikliSaStanjem && params.ArtikliBezStanja {
-		qb.AddCustomCondition("COALESCE(drsta.ulaz, 0) - COALESCE(drsta.izlaz, 0) = 0")
+		b.Where("COALESCE(drsta.ulaz, 0) - COALESCE(drsta.izlaz, 0) = 0")
 	}
 	// Legacy: for one company (PIB) the report listed only articles with a movement.
 	if s.samoSaPrometom(ctx) {
-		qb.AddCustomCondition(legacyArticleMovementCondition)
-	}
-	qb.AddOrderBy("drsta.sifra")
-	if !total && !stampa && size > 0 {
-		qb.SetLimit(size)
-		qb.SetOffset((page - 1) * size)
-	}
-	sqlQuery, args := qb.Build()
-	entities, err := s.robnostanjeRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
-		return err
+		b.Where(legacyArticleMovementCondition)
 	}
 	if total && !stampa {
-		common.SetTableTotalRecords(tbl, len(*entities), size)
+		count, err := s.robnostanjeRepo.Count(ctx, b)
+		if err != nil {
+			return err
+		}
+		common.SetTableTotalRecords(tbl, count, size)
 		return nil
+	}
+	b.OrderBy("drsta.sifra")
+	if !total && !stampa && size > 0 {
+		b.Limit(size).Offset((page - 1) * size)
+	}
+	entities, err := s.robnostanjeRepo.Select(ctx, b)
+	if err != nil {
+		return err
 	}
 
 	tbl.Rows = []domain.TableRow{}
@@ -661,39 +656,41 @@ func (s *RobnoStanjaResource) GetStanjaViseArtikalaGrupa(ctx context.Context, tb
 		tbl.Headers = s.viseArtikalaStampaTableFields
 	}
 
-	nabavnaCena := s.magacinJeNabavnaCena(ctx, userSession, params.Magacin)
+	nabavnaCena := s.magacinJeNabavnaCena(ctx, params.Magacin)
 	odMesec, doMesec := mesecRange(params.OdMeseca, params.DoMeseca)
 
 	hasGod, hasKar := s.drstaRepo.GetHasGodHasKar()
-	qb := common.NewQueryBuilder(robnoStanjeArtikliBaseQuery, true)
-	qb.AddJoin(" inner join rsif on rsif.rsifid = drsta.rsifid")
+	b := querybuilder.New(robnoStanjeArtikliBaseQuery).
+		AddJoin("inner join rsif on rsif.rsifid = drsta.rsifid")
 	if hasGod {
-		qb.AddEqual("drsta.god", userSession.SelectedGod)
+		b.Where("drsta.god = ?", userSession.SelectedGod)
 	}
 	if hasKar {
-		qb.AddEqual("drsta.kar", userSession.SelectedKar)
+		b.Where("drsta.kar = ?", userSession.SelectedKar)
 	}
-	qb.AddEqual("drsta.magaciniid", params.Magacin)
-	// Parameters of the legacy query: the group range and the article-code range.
-	qb.AddCondition("rsif.gru", params.OdGrupe, ">=")
-	qb.AddCondition("rsif.gru", params.DoGrupe, "<=")
-	qb.AddCondition("rsif.sifra", params.OdSifre, ">=")
-	qb.AddCondition("rsif.sifra", params.DoSifre, "<=")
-	// The legacy query returned only articles with a stock record that has a movement.
-	qb.AddCustomCondition(legacyArticleMovementCondition)
-	qb.AddOrderBy("rsif.gru, rsif.sifra")
+	b.Where("drsta.magaciniid = ?", params.Magacin).
+		// Parameters of the legacy query: the group range and the article-code range.
+		AddCondition("rsif.gru", params.OdGrupe, ">=").
+		AddCondition("rsif.gru", params.DoGrupe, "<=").
+		AddCondition("rsif.sifra", params.OdSifre, ">=").
+		AddCondition("rsif.sifra", params.DoSifre, "<=").
+		// The legacy query returned only articles with a stock record that has a movement.
+		Where(legacyArticleMovementCondition)
+	if total && !stampa {
+		count, err := s.robnostanjeRepo.Count(ctx, b)
+		if err != nil {
+			return err
+		}
+		common.SetTableTotalRecords(tbl, count, size)
+		return nil
+	}
+	b.OrderBy("rsif.gru, rsif.sifra")
 	if !total && !stampa && size > 0 {
-		qb.SetLimit(size)
-		qb.SetOffset((page - 1) * size)
+		b.Limit(size).Offset((page - 1) * size)
 	}
-	sqlQuery, args := qb.Build()
-	entities, err := s.robnostanjeRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.robnostanjeRepo.Select(ctx, b)
 	if err != nil {
 		return err
-	}
-	if total && !stampa {
-		common.SetTableTotalRecords(tbl, len(*entities), size)
-		return nil
 	}
 
 	// The group form has no "prosečna cena" options, so cenaArtikla returns CENA/PROSNC here.
@@ -781,7 +778,7 @@ func (s *RobnoStanjaResource) GetSvodjenjeZalihaTableFields() []domain.Fields {
 
 // GetFvrData retrieves company (fvr) data for the current session.
 func (s *RobnoStanjaResource) GetFvrData(ctx context.Context) (domain.Fvr, error) {
-	return common.GetFvrData(ctx, &s.fvrRepo)
+	return repository.GetFvrData(ctx, &s.fvrRepo)
 }
 
 func (s *RobnoStanjaResource) SetDefaultTableData(tbl *domain.TableData) {

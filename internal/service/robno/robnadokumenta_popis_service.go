@@ -27,13 +27,9 @@ import (
 func (s *RobnoDokumentaResource) robPtgDokument(ctx context.Context, res *domain.RobnoOpstiDokument) error {
 	h := &res.Header
 	if h.RdokID > 0 {
-		rows, err := s.unos.Tekst.GetAllCustom(ctx, `select coalesce(trim(pkto), '') as key, coalesce(trim(pana), '') as c1 from rdok where rdokid = $1`,
-			"", []any{h.RdokID}, "", "")
-		if err != nil {
+		var err error
+		if h.Pkto, h.Pana, err = s.robno.RdokPktoPana(ctx, h.RdokID); err != nil {
 			return err
-		}
-		if rows != nil && len(*rows) > 0 {
-			h.Pkto, h.Pana = (*rows)[0].Key, (*rows)[0].C1
 		}
 		if h.Pkto != "" {
 			if h.PktoNaziv, err = s.robOpstiNazivKonta(ctx, h.Pkto, ""); err != nil {
@@ -48,12 +44,11 @@ func (s *RobnoDokumentaResource) robPtgDokument(ctx context.Context, res *domain
 	}
 	st := &res.Stavka
 	st.CenaNaziv, st.CenaZakljucana, st.NabCena = "Magacinska cena", false, false
-	rows, err := s.unos.Tekst.GetAllCustom(ctx, `select upper(trim(coalesce(tipmag, ''))) as key from magacini where magaciniid = $1`, "",
-		[]any{h.MagaciniID}, "", "")
+	tipmag, err := s.robno.MagacinTipmag(ctx, h.MagaciniID)
 	if err != nil {
 		return err
 	}
-	if rows != nil && len(*rows) > 0 && (*rows)[0].Key == "V" {
+	if tipmag == "V" {
 		st.CenaNaziv = "Veleprodajna cena"
 	}
 	return nil
@@ -71,12 +66,7 @@ func (s *RobnoDokumentaResource) robPtgArtikal(ctx context.Context, k domain.Rob
 	if userSession == nil {
 		return a, false, fmt.Errorf("no user session found")
 	}
-	rows, err := s.unos.Tekst.GetAllCustom(ctx, `select a.sifra::text as key, coalesce(a.naziv, '') as c1, coalesce(a.jm, '') as c2,
-			upper(trim(coalesce(a.tip, ''))) as c3,
-			coalesce((select c.cena from rcene c where c.god = a.god and c.kar = a.kar and c.sifra = a.sifra order by c.rceneid limit 1), 0)::float8::text as c4,
-			coalesce((select c.ncena from rcene c where c.god = a.god and c.kar = a.kar and c.sifra = a.sifra order by c.rceneid limit 1), 0)::float8::text as c5
-		from rsif a where a.god = $1 and a.kar = $2 and a.sifra::text = $3 limit 1`, "",
-		[]any{userSession.SelectedGod, userSession.SelectedKar, strings.TrimSpace(sifra)}, "", "")
+	rows, err := s.robno.RsifArtikalSaCenama(ctx, sifra)
 	if err != nil {
 		return a, false, err
 	}
@@ -141,8 +131,7 @@ func (s *RobnoDokumentaResource) robPtgValidateStavka(ctx context.Context, k dom
 		add("sifraartikla", common.ErrMsgObavezanPodatak)
 	} else if v, err := strconv.Atoi(sifraText); err != nil {
 		add("sifraartikla", robnoUnosMsgNePostoji)
-	} else if exists, err := s.robnoUnosPostoji(ctx, `select count(*) from rsif where god = $1 and kar = $2 and sifra = $3`,
-		userSession.SelectedGod, userSession.SelectedKar, v); err != nil {
+	} else if exists, err := s.robno.RsifPostoji(ctx, v); err != nil {
 		add("sifraartikla", common.ErrMsgReadData)
 	} else if !exists {
 		add("sifraartikla", robnoUnosMsgNePostoji)
@@ -201,19 +190,19 @@ func (s *RobnoDokumentaResource) robPtgDodajStavku(ctx context.Context, tx db.Tr
 	rok, _ := robnoUnosDatum(params.Rok)
 	var rsifID int64
 	var po int
-	if err := tx.QueryRowContext(ctx, `select rsifid, coalesce(po, 0) from rsif where god = $1 and kar = $2 and sifra = $3 limit 1`,
-		userSession.SelectedGod, userSession.SelectedKar, sifra).Scan(&rsifID, &po); err != nil {
+	rsifID, po, found, err := s.robno.RsifIDPo(ctx, tx, sifra)
+	if err != nil {
 		return 0, err
 	}
-	var pkto, pana string
-	var pdvpct float64
-	if err := tx.QueryRowContext(ctx, `select coalesce(pkto, ''), coalesce(pana, ''), `+fmt.Sprintf(robPoreskaStopaSQL, "$2", "dadok")+`
-		from rdok where rdokid = $1`, k.RdokID, po).Scan(&pkto, &pana, &pdvpct); err != nil {
+	if !found {
+		return 0, fmt.Errorf("artikal ne postoji")
+	}
+	pkto, pana, pdvpct, err := s.robno.RdokPktoPanaStopa(ctx, tx, k.RdokID, po)
+	if err != nil {
 		return 0, err
 	}
-	var rbr int
-	if err := tx.QueryRowContext(ctx, `select coalesce(max(rbr), 0) + 1 from rpro where rnalid = $1 and rdokid = $2`, k.RnalID, k.RdokID).
-		Scan(&rbr); err != nil {
+	rbr, err := s.robno.RproSledeciRbrNaloga(ctx, tx, k.RnalID, k.RdokID)
+	if err != nil {
 		return 0, err
 	}
 	rproID, err := s.unos.Rpro.CreateWithTx(ctx, tx, &domain.RobRproDto{}, "rproid", []domain.Fields{
@@ -253,10 +242,7 @@ func (s *RobnoDokumentaResource) robPtgDodajStavku(ctx context.Context, tx db.Tr
 	if err = s.AzurirajRNAL(ctx, tx, k.RnalID, k.Dugovno(), k.Potrazno(), iznos); err != nil {
 		return 0, err
 	}
-	if err = s.unos.Rpro.CreateUpdateCustomWithTx(ctx, tx, `update rdok set
-			prodvred = coalesce(prodvred, 0) + $2, nabvred = coalesce(nabvred, 0) + $3, vporez = coalesce(vporez, 0) + $4,
-			iznos = round((coalesce(iznos, 0) + $5)::numeric, 2), brst = coalesce(brst, 0) + 1
-		where rdokid = $1`, k.RdokID, kolicinaForme*cena, kolicinaForme*ncena, kolicina*cena*pdvpct/100, iznos); err != nil {
+	if err = s.robno.RdokDodajVrednosti(ctx, tx, k.RdokID, kolicinaForme*cena, kolicinaForme*ncena, kolicina*cena*pdvpct/100, iznos); err != nil {
 		return 0, err
 	}
 	return rproID, nil
@@ -268,23 +254,16 @@ func (s *RobnoDokumentaResource) robPtgDodajStavku(ctx context.Context, tx db.Tr
 // the stavke of the nalog, its AzurirajRNAL is commented out). The stanje is not changed; the redni brojevi of the
 // other stavke stay (the legacy does not number them again).
 func (s *RobnoDokumentaResource) robPtgBrisi(ctx context.Context, tx db.Transaction, k domain.RobStavkeKontekst, rproID int64) error {
-	var kolicina, cena, ncena, iznos float64
-	var po int
-	if err := tx.QueryRowContext(ctx, `select coalesce(kolic, 0)::float8, coalesce(cena, 0)::float8, coalesce(ncena, 0)::float8, coalesce(iznos, 0)::float8,
-			coalesce(po, 0)
-		from rpro where rproid = $1 for update`, rproID).Scan(&kolicina, &cena, &ncena, &iznos, &po); err != nil {
+	kolicina, cena, ncena, iznos, po, err := s.robno.RproPopisStavka(ctx, tx, rproID)
+	if err != nil {
 		return err
 	}
-	var pdvpct float64
-	if err := tx.QueryRowContext(ctx, `select `+fmt.Sprintf(robPoreskaStopaSQL, "$2", "dadok")+` from rdok where rdokid = $1`, k.RdokID, po).
-		Scan(&pdvpct); err != nil {
+	pdvpct, err := s.robno.RdokStopa(ctx, tx, k.RdokID, po)
+	if err != nil {
 		return err
 	}
 	kolicinaForme := math.Abs(kolicina)
-	if err := s.unos.Rpro.CreateUpdateCustomWithTx(ctx, tx, `update rdok set
-			prodvred = coalesce(prodvred, 0) - $2, nabvred = coalesce(nabvred, 0) - $3, vporez = coalesce(vporez, 0) - $4,
-			iznos = round((coalesce(iznos, 0) - $5)::numeric, 2), brst = greatest(coalesce(brst, 0) - 1, 0)
-		where rdokid = $1`, k.RdokID, kolicinaForme*cena, kolicinaForme*ncena, kolicina*cena*pdvpct/100, iznos); err != nil {
+	if err := s.robno.RdokOduzmiVrednosti(ctx, tx, k.RdokID, kolicinaForme*cena, kolicinaForme*ncena, kolicina*cena*pdvpct/100, iznos); err != nil {
 		return err
 	}
 	if err := s.unos.Rpro.DeleteWithTx(ctx, tx, "rproid", rproID); err != nil {

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"helia/internal/common"
 	"helia/internal/domain"
+	"helia/internal/infrastructure/db/querybuilder"
 	"helia/internal/repository"
 	"helia/internal/service"
 	"reflect"
@@ -72,10 +73,8 @@ func (s *PopdvResource) GetPolja(ctx context.Context, tbl *domain.TableData, get
 	tbl.SearchEnabled = true
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 
-	hasGod, hasKar := s.popdvRepo.GetHasGodHasKar()
-
 	// Build query for Polja
-	qb := common.NewQueryBuilder(`SELECT
+	b := querybuilder.New(`SELECT
 				popdv.popdvid, popdv.god, popdv.kar, popdv.tip,
 				popdv.deo, popdv.polje, popdv.opis, popdv.naknada,
 				popdv.osn1, popdv.pdv1, popdv.osn2, popdv.pdv2,
@@ -99,37 +98,30 @@ func (s *PopdvResource) GetPolja(ctx context.Context, tbl *domain.TableData, get
 				popdv.labela_aktosn1, popdv.labela_aktpdv1,
 				popdv.labela_aktosn2, popdv.labela_aktpdv2,
 				popdv.povpolje1, popdv.povpolje2
-			FROM 
-				popdv`, true)
-
-	if hasGod {
-		qb.AddEqual("popdv.god", session.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("popdv.kar", session.SelectedKar)
-	}
-	if searchText != "" {
-		qb.SetEntityType(reflect.TypeOf(domain.Fsepp{}))
-		qb.AddSearchConditions(s.GetPoljaTableFields(), searchText)
-	}
-	qb.AddOrderBy(` ORDER BY deo ASC, popdvid ASC`)
-
-	if !getTotalRecords {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
-	}
-
-	// Execute query and populate table
-	sqlQuery, args := qb.Build()
-	entities, err := s.popdvRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
+			FROM
+				popdv`)
+	// The period of the session and the search over the columns of the grid (of the Popdv entity).
+	if err := s.popdvRepo.ApplyFilters(ctx, b, "popdv", s.GetPoljaTableFields(), searchText); err != nil {
 		return err
 	}
 
 	// Set total records and pagination
 	if getTotalRecords {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
+		total, err := s.popdvRepo.Count(ctx, b)
+		if err != nil {
+			return err
+		}
+		common.SetTableTotalRecords(tbl, total, pageSize)
 		return nil
+	}
+	b.OrderBy("deo ASC, popdvid ASC").
+		Limit(pageSize).
+		Offset((currentPage - 1) * pageSize)
+
+	// Execute query and populate table
+	entities, err := s.popdvRepo.Select(ctx, b)
+	if err != nil {
+		return err
 	}
 
 	// Populate table rows
@@ -172,47 +164,32 @@ func (s *PopdvResource) GetPrijava(ctx context.Context, tbl *domain.TableData, g
 	tbl.SearchEnabled = true
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 
-	hasGod, hasKar := s.popdvRepo.GetHasGodHasKar()
-
 	// Build query for Prijava
-	qb := common.NewQueryBuilder(`select popdv.popdvid, popdv.deo, popdv.tip, popdv.polje, popdv.opis, 
-		popdv.osn1, popdv.pdv1, popdv.osn2, popdv.pdv2, popdv.poljvred, popdv.poljpdv, popdv.nipo, 
-		popdv.oddat, popdv.dodat from popdv`, true)
-
-	if hasGod {
-		qb.AddEqual("popdv.god", session.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("popdv.kar", session.SelectedKar)
-	}
-
-	// Add date range filters if provided
-	if odDatuma != "" {
-		qb.AddCondition("popdv.oddat", odDatuma, ">=")
-	}
-	if doDatuma != "" {
-		qb.AddCondition("popdv.dodat", doDatuma, "<=")
-	}
-
-	if searchText != "" {
-		qb.SetEntityType(reflect.TypeOf(domain.Fsepp{}))
-		qb.AddSearchConditions(s.GetPrijavaTableFields(), searchText)
-	}
-	if !getTotalRecords {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
-	}
-	// Execute query and populate table
-	sqlQuery, args := qb.Build()
-	entities, err := s.popdvRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
+	b := querybuilder.New(`select popdv.popdvid, popdv.deo, popdv.tip, popdv.polje, popdv.opis,
+		popdv.osn1, popdv.pdv1, popdv.osn2, popdv.pdv2, popdv.poljvred, popdv.poljpdv, popdv.nipo,
+		popdv.oddat, popdv.dodat from popdv`).
+		// Date range filters (skipped for an empty date)
+		AddCondition("popdv.oddat", odDatuma, ">=").
+		AddCondition("popdv.dodat", doDatuma, "<=")
+	// The period of the session and the search over the columns of the grid (of the Popdv entity).
+	if err := s.popdvRepo.ApplyFilters(ctx, b, "popdv", s.GetPrijavaTableFields(), searchText); err != nil {
 		return err
 	}
 
 	// Set total records and pagination
 	if getTotalRecords {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
+		total, err := s.popdvRepo.Count(ctx, b)
+		if err != nil {
+			return err
+		}
+		common.SetTableTotalRecords(tbl, total, pageSize)
 		return nil
+	}
+	b.Limit(pageSize).Offset((currentPage - 1) * pageSize)
+	// Execute query and populate table
+	entities, err := s.popdvRepo.Select(ctx, b)
+	if err != nil {
+		return err
 	}
 
 	// Populate table rows
@@ -250,39 +227,29 @@ func (s *PopdvResource) GetStampa(ctx context.Context, tbl *domain.TableData, ge
 	tbl.SearchEnabled = true
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 
-	hasGod, hasKar := s.popdvRepo.GetHasGodHasKar()
-
 	// Build query for Stampa
-	qb := common.NewQueryBuilder(`select popdv.popdvid, popdv.deo, popdv.tip, popdv.polje, popdv.opis, 
-		popdv.osn1, popdv.pdv1, popdv.osn2, popdv.pdv2, popdv.naknada, popdv.nipo, popdv.oddat, popdv.dodat, 
-		popdv.aktosn1, popdv.aktpdv1, popdv.aktosn2, popdv.aktpdv2 from popdv`, true)
-
-	if hasGod {
-		qb.AddEqual("popdv.god", session.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("popdv.kar", session.SelectedKar)
-	}
-
-	if searchText != "" {
-		qb.SetEntityType(reflect.TypeOf(domain.Fsepp{}))
-		qb.AddSearchConditions(s.GetPoljaTableFields(), searchText)
-	}
-	if !getTotalRecords {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
-	}
-	// Execute query and populate table
-	sqlQuery, args := qb.Build()
-	entities, err := s.popdvRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
+	b := querybuilder.New(`select popdv.popdvid, popdv.deo, popdv.tip, popdv.polje, popdv.opis,
+		popdv.osn1, popdv.pdv1, popdv.osn2, popdv.pdv2, popdv.naknada, popdv.nipo, popdv.oddat, popdv.dodat,
+		popdv.aktosn1, popdv.aktpdv1, popdv.aktosn2, popdv.aktpdv2 from popdv`)
+	// The period of the session and the search over the columns of the grid (of the Popdv entity).
+	if err := s.popdvRepo.ApplyFilters(ctx, b, "popdv", s.GetPoljaTableFields(), searchText); err != nil {
 		return err
 	}
 
 	// Set total records and pagination
 	if getTotalRecords {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
+		total, err := s.popdvRepo.Count(ctx, b)
+		if err != nil {
+			return err
+		}
+		common.SetTableTotalRecords(tbl, total, pageSize)
 		return nil
+	}
+	b.Limit(pageSize).Offset((currentPage - 1) * pageSize)
+	// Execute query and populate table
+	entities, err := s.popdvRepo.Select(ctx, b)
+	if err != nil {
+		return err
 	}
 
 	// Populate table rows

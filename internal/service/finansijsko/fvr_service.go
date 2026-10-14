@@ -36,23 +36,16 @@ func NewFvrService(fvrRepo *repository.BaseRepository[domain.Fvr]) *FvrResource 
 }
 
 func (s *FvrResource) GetAllFvr(ctx context.Context) (*domain.Firma, error) {
-	args := []interface{}{}
 	firma := &domain.Firma{}
-
-	// knjigovod (the bookkeeping type of the firma) is selected as well: the handlers derive the
-	// length of the synthetic account prefix (nDuzSIN) from it.
-	selectQuery := `SELECT DISTINCT ON (naziv) naziv, knjigovod FROM fvr
-					WHERE god > 0
-					order by fvr.naziv`
-
-	entities, err := s.fvrRepo.GetAllCustom(ctx, selectQuery, "", args, "", "")
+	// The firme of every period: the list of the choice of the period (repository.FvrFirme).
+	entities, err := repository.FvrFirme(ctx, s.fvrRepo)
 	if err != nil {
 		return firma, err
 	}
-	if len(*entities) == 0 {
+	if len(entities) == 0 {
 		return nil, errors.New("no available config data")
 	}
-	for _, item := range *entities {
+	for _, item := range entities {
 		poslGodina, err := s.GetAllGod(ctx, item.Naziv)
 		if err != nil {
 			return nil, errors.New("no available config data")
@@ -80,39 +73,17 @@ func (s *FvrResource) GetAllFvr(ctx context.Context) (*domain.Firma, error) {
 }
 
 func (s *FvrResource) GetAllGod(ctx context.Context, nazivFirme string) ([]int, error) {
-	args := []interface{}{}
-	args = append(args, nazivFirme)
-	result := []int{}
-	selectQuery := `SELECT DISTINCT ON (god) god FROM fvr
-					WHERE fvr.naziv = $1
-					order by fvr.god desc`
-
-	entities, err := s.fvrRepo.GetAllCustom(ctx, selectQuery, "", args, "", "")
+	godine, err := repository.FvrGodine(ctx, s.fvrRepo, nazivFirme)
 	if err != nil {
 		return []int{}, err
 	}
-	for _, item := range *entities {
-		result = append(result, item.God)
-	}
-
-	return result, nil
+	return godine, nil
 }
 
 func (s *FvrResource) GetAllKar(ctx context.Context, nazivFirme string, god int) ([]int, error) {
-	args := []interface{}{}
-	args = append(args, nazivFirme, god)
-	result := []int{}
-	selectQuery := `SELECT kar FROM fvr
-					WHERE fvr.naziv = $1 AND god = $2
-					order by fvr.kar`
-
-	entities, err := s.fvrRepo.GetAllCustom(ctx, selectQuery, "", args, "", "")
+	karovi, err := repository.FvrKarovi(ctx, s.fvrRepo, nazivFirme, god)
 	if err != nil {
 		return []int{}, err
 	}
-	for _, item := range *entities {
-		result = append(result, item.Kar)
-	}
-
-	return result, nil
+	return karovi, nil
 }

@@ -7,6 +7,7 @@ import (
 	"helia/internal/common"
 	"helia/internal/domain"
 	"helia/internal/infrastructure/db"
+	"helia/internal/infrastructure/db/querybuilder"
 	"helia/internal/repository"
 	"helia/internal/service"
 	"log"
@@ -81,10 +82,9 @@ func (s *FseppResource) GetSekcijeIzvori(ctx context.Context, tbl *domain.TableD
 	tbl.SearchEnabled = true
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 
-	hasGod, hasKar := s.fseppRepo.GetHasGodHasKar()
 	// Build query for Sekcije i izvori
-	qb := common.NewQueryBuilder(`
-    SELECT 
+	b := querybuilder.New(`
+    SELECT
         -- Row 1: Basic info
         fsepp.fseppid, fsepp.god, fsepp.kar, fsepp.tip, fsepp.deo, 
         fsepp.sekcija, fsepp.izvor, fsepp.polje, fsepp.opis,
@@ -101,37 +101,29 @@ func (s *FseppResource) GetSekcijeIzvori(ctx context.Context, tbl *domain.TableD
         fsepp.kpr_polje2o, fsepp.kpr_polje2p, 
         -- Row 6: Document and dates
         fsepp.grpdok, fsepp.autosef, fsepp.oddat, fsepp.dodat
-    FROM fsepp`, true)
-
-	if hasGod {
-		qb.AddEqual("fsepp.god", session.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("fsepp.kar", session.SelectedKar)
-	}
-	if searchText != "" {
-		qb.SetEntityType(reflect.TypeOf(domain.Fsepp{}))
-		qb.AddSearchConditions(s.GetSekcijeIzvoriTableFields(), searchText)
-	}
-
-	qb.AddOrderBy("fsepp.nipo ASC, fsepp.sekcija ASC")
-
-	if !getTotalRecords {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
-	}
-
-	// Execute query and populate table
-	sqlQuery, args := qb.Build()
-	entities, err := s.fseppRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
+    FROM fsepp`)
+	// The period of the session (fsepp.god/kar) and the search over the columns of the grid.
+	if err := s.fseppRepo.ApplyFilters(ctx, b, "fsepp", s.GetSekcijeIzvoriTableFields(), searchText); err != nil {
 		return err
 	}
 
 	// Set total records and pagination
 	if getTotalRecords {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
+		total, err := s.fseppRepo.Count(ctx, b)
+		if err != nil {
+			return err
+		}
+		common.SetTableTotalRecords(tbl, total, pageSize)
 		return nil
+	}
+	b.OrderBy("fsepp.nipo ASC, fsepp.sekcija ASC").
+		Limit(pageSize).
+		Offset((currentPage - 1) * pageSize)
+
+	// Execute query and populate table
+	entities, err := s.fseppRepo.Select(ctx, b)
+	if err != nil {
+		return err
 	}
 
 	// Populate table rows
@@ -182,19 +174,13 @@ func (s *FseppResource) GetEvidencija(ctx context.Context, tbl *domain.TableData
 	tbl.SearchEnabled = true
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 
-	hasGod, hasKar := s.fseppRepo.GetHasGodHasKar()
 	// Step 2: Get MAX of nipo
-	qbMaxNipo := common.NewQueryBuilder(`SELECT MAX(nipo) as nipo FROM fsepp`, true)
-	if hasGod {
-		qbMaxNipo.AddEqual("god", userSession.SelectedGod)
+	bMaxNipo := querybuilder.New(`SELECT MAX(nipo) as nipo FROM fsepp`)
+	if err := s.fseppRepo.ApplyFilters(ctx, bMaxNipo, "", nil, ""); err != nil {
+		return err
 	}
-	if hasKar {
-		qbMaxNipo.AddEqual("kar", userSession.SelectedKar)
-	}
-
-	maxNipoQuery, maxNipoArgs := qbMaxNipo.Build()
 	var maxNipo int
-	fseppRecords, err := s.fseppRepo.GetAllCustom(ctx, maxNipoQuery, "", maxNipoArgs, "", "")
+	fseppRecords, err := s.fseppRepo.Select(ctx, bMaxNipo)
 	if err != nil {
 		return fmt.Errorf("error fetching max nipo: %w", err)
 	}
@@ -203,52 +189,36 @@ func (s *FseppResource) GetEvidencija(ctx context.Context, tbl *domain.TableData
 	}
 
 	// Step 3: Update FSEPP records based on KPR data
-	qbKpr := common.NewQueryBuilder(`SELECT kpr.fseppid, kpr.god, kpr.kar, kpr.dknjiz,
+	bKpr := querybuilder.New(`SELECT kpr.fseppid, kpr.god, kpr.kar, kpr.dknjiz,
 									kpr.nisuobvpdv, kpr.uvozbezpdv, kpr.prethpdv, kpr.pretpdv1, kpr.pretpdv2,
 					kpr.uvozpdv, kpr.poljvred, kpr.poljpdv, kpr.uvozosnpdv, kpr.osnbezpdv, kpr.osnovicavt, kpr.osnovicant, kpr.prethpdvvt, kpr.prethpdvnt,
-					kpr.pretpdv1vt, kpr.pretpdv1nt, kpr.pretpdv2vt, kpr.pretpdv2nt, kpr.epp_polje FROM kpr`, true)
-	hasGod, hasKar = s.kprRepo.GetHasGodHasKar()
-	if hasGod {
-		qbKpr.AddEqual("kpr.god", userSession.SelectedGod)
+					kpr.pretpdv1vt, kpr.pretpdv1nt, kpr.pretpdv2vt, kpr.pretpdv2nt, kpr.epp_polje FROM kpr`).
+		AddCondition("kpr.dknjiz", odDatuma, ">=").
+		AddCondition("kpr.dknjiz", doDatuma, "<=").
+		Where("kpr.fseppid > ?", 0)
+	if err := s.kprRepo.ApplyFilters(ctx, bKpr, "kpr", nil, ""); err != nil {
+		return err
 	}
-	if hasKar {
-		qbKpr.AddEqual("kpr.kar", userSession.SelectedKar)
-	}
-	qbKpr.AddCondition("kpr.dknjiz", odDatuma, ">=")
-	qbKpr.AddCondition("kpr.dknjiz", doDatuma, "<=")
-	qbKpr.AddCondition("kpr.fseppid", 0, ">")
-
-	sqlQuery, args := qbKpr.Build()
-	kprRecords, err := s.kprRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	kprRecords, err := s.kprRepo.Select(ctx, bKpr)
 	if err != nil {
 		return fmt.Errorf("error fetching kpr records: %w", err)
 	}
 
-	hasGod, hasKar = s.fseppRepo.GetHasGodHasKar()
 	// Step 1: Reset all FSEPP records for given god and kar
-	qbUpdate := common.NewQueryBuilder(`
-		UPDATE fsepp 
-		SET osn1 = 0, pdv1 = 0, osn2 = 0, pdv2 = 0, oddat = $1, dodat = $2`, true)
-	qbUpdate.AddArgs(odDatuma, doDatuma)
-	if hasGod {
-		qbUpdate.AddEqual("god", userSession.SelectedGod)
+	bReset := querybuilder.NewUpdate("fsepp").
+		Set("osn1 = 0, pdv1 = 0, osn2 = 0, pdv2 = 0, oddat = ?, dodat = ?", odDatuma, doDatuma)
+	if err := s.fseppRepo.ApplyFilters(ctx, bReset, "", nil, ""); err != nil {
+		return err
 	}
-	if hasKar {
-		qbUpdate.AddEqual("kar", userSession.SelectedKar)
-	}
-	updateQuery, updateArgs := qbUpdate.Build()
 	// Start a transaction
 	tx, err := s.fseppRepo.BeginTx()
 	if err != nil {
 		return fmt.Errorf("error starting transaction: %w", err)
 	}
-	// Defer rollback in case of error
-	defer func() {
-		if err != nil {
-			tx.Rollback()
-		}
-	}()
-	err = s.fseppRepo.CreateUpdateCustomWithTx(ctx, tx, updateQuery, updateArgs...)
+	// Roll back on every early return (also the ones that return a shadowed err); after the
+	// Commit below the rollback does nothing.
+	defer func() { _ = tx.Rollback() }()
+	err = s.fseppRepo.ExecWithTx(ctx, tx, bReset)
 	if err != nil {
 		return fmt.Errorf("error updating fsepp records: %w", err)
 	}
@@ -274,30 +244,21 @@ func (s *FseppResource) GetEvidencija(ctx context.Context, tbl *domain.TableData
 			if fsepp.AktPdv2 && fsepp.KprPolje2P != "" {
 				fsepp.Pdv2 += common.AnyToFloat64(GetFieldValue(kpr, fsepp.KprPolje2P))
 			}
-			qbUpdate := common.NewQueryBuilder(`UPDATE fsepp SET osn1 = $1, pdv1 = $2, osn2 = $3, pdv2 = $4`, true)
-			qbUpdate.AddArgs(fsepp.Osn1, fsepp.Pdv1, fsepp.Osn2, fsepp.Pdv2)
-			qbUpdate.AddEqual("fseppid", fsepp.FseppID)
-			sqlQuery, args := qbUpdate.Build()
-			err = s.fseppRepo.CreateUpdateCustomWithTx(ctx, tx, sqlQuery, args...)
-			if err != nil {
-				log.Printf("error updating fsepp record: %v", err)
+			if err := s.updateFseppIznosi(ctx, tx, fsepp); err != nil {
+				return fmt.Errorf("error updating fsepp record %d: %w", fsepp.FseppID, err)
 			}
 			sPoljeDA = fsepp.PoljePdvDa
 			sPoljeNE = fsepp.PoljePdvNe
 			if sPoljeDA != "" {
-				qbFsepp := common.NewQueryBuilder(`SELECT 
-					fsepp.polje, fsepp.opis, fsepp.osn1, fsepp.pdv1, fsepp.osn2, fsepp.pdv2, fsepp.nipo,
-					fsepp.oddat, fsepp.dodat, fsepp.kpr_polje1o, fsepp.kpr_polje1p, fsepp.kpr_polje2o, fsepp.kpr_polje2p FROM fsepp`, true)
-				hasGod, hasKar := s.fseppRepo.GetHasGodHasKar()
-				if hasGod {
-					qbFsepp.AddEqual("fsepp.god", userSession.SelectedGod)
+				// fseppid is read so that updateFseppIznosi changes this row (it matched fseppid 0 before).
+				bFsepp := querybuilder.New(`SELECT
+					fsepp.fseppid, fsepp.polje, fsepp.opis, fsepp.osn1, fsepp.pdv1, fsepp.osn2, fsepp.pdv2, fsepp.nipo,
+					fsepp.oddat, fsepp.dodat, fsepp.kpr_polje1o, fsepp.kpr_polje1p, fsepp.kpr_polje2o, fsepp.kpr_polje2p FROM fsepp`).
+					Where("fsepp.polje_pdv_da = ?", sPoljeDA)
+				if err := s.fseppRepo.ApplyFilters(ctx, bFsepp, "fsepp", nil, ""); err != nil {
+					return err
 				}
-				if hasKar {
-					qbFsepp.AddEqual("fsepp.kar", userSession.SelectedKar)
-				}
-				qbFsepp.AddEqual("fsepp.polje_pdv_da", sPoljeDA)
-				sqlQuery, args := qbFsepp.Build()
-				entites, err := s.fseppRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+				entites, err := s.fseppRepo.Select(ctx, bFsepp)
 				if err != nil {
 					log.Printf("error fetching fsepp record for polje_pdv_da: %v", err)
 					continue
@@ -316,30 +277,20 @@ func (s *FseppResource) GetEvidencija(ctx context.Context, tbl *domain.TableData
 					if fsepp.AktPdv2 && fsepp.KprPolje2P != "" {
 						fsepp.Pdv2 += common.AnyToFloat64(GetFieldValue(kpr, fsepp.KprPolje2P))
 					}
-					qbUpdate := common.NewQueryBuilder(`UPDATE fsepp SET osn1 = $1, pdv1 = $2, osn2 = $3, pdv2 = $4`, true)
-					qbUpdate.AddArgs(fsepp.Osn1, fsepp.Pdv1, fsepp.Osn2, fsepp.Pdv2)
-					qbUpdate.AddEqual("fseppid", fsepp.FseppID)
-					sqlQuery, args := qbUpdate.Build()
-					err = s.fseppRepo.CreateUpdateCustomWithTx(ctx, tx, sqlQuery, args...)
-					if err != nil {
-						log.Printf("error updating fsepp record: %v", err)
+					if err := s.updateFseppIznosi(ctx, tx, fsepp); err != nil {
+						return fmt.Errorf("error updating fsepp record %d: %w", fsepp.FseppID, err)
 					}
 				}
 			}
 			if sPoljeNE != "" {
-				qbFsepp := common.NewQueryBuilder(`SELECT 
+				bFsepp := querybuilder.New(`SELECT
 					fsepp.fseppid, fsepp.polje, fsepp.opis, fsepp.osn1, fsepp.pdv1, fsepp.osn2, fsepp.pdv2, fsepp.nipo,
-					fsepp.oddat, fsepp.dodat, fsepp.kpr_polje1o, fsepp.kpr_polje1p, fsepp.kpr_polje2o, fsepp.kpr_polje2p FROM fsepp`, true)
-				hasGod, hasKar := s.fseppRepo.GetHasGodHasKar()
-				if hasGod {
-					qbFsepp.AddEqual("fsepp.god", userSession.SelectedGod)
+					fsepp.oddat, fsepp.dodat, fsepp.kpr_polje1o, fsepp.kpr_polje1p, fsepp.kpr_polje2o, fsepp.kpr_polje2p FROM fsepp`).
+					Where("fsepp.polje_pdv_ne = ?", sPoljeNE)
+				if err := s.fseppRepo.ApplyFilters(ctx, bFsepp, "fsepp", nil, ""); err != nil {
+					return err
 				}
-				if hasKar {
-					qbFsepp.AddEqual("fsepp.kar", userSession.SelectedKar)
-				}
-				qbFsepp.AddEqual("fsepp.polje_pdv_ne", sPoljeNE)
-				sqlQuery, args := qbFsepp.Build()
-				entites, err := s.fseppRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+				entites, err := s.fseppRepo.Select(ctx, bFsepp)
 				if err != nil {
 					log.Printf("error fetching fsepp record for polje_pdv_ne: %v", err)
 					continue
@@ -358,13 +309,8 @@ func (s *FseppResource) GetEvidencija(ctx context.Context, tbl *domain.TableData
 					if fsepp.AktPdv2 && fsepp.KprPolje2P != "" {
 						fsepp.Pdv2 += common.AnyToFloat64(GetFieldValue(kpr, fsepp.KprPolje2P))
 					}
-					qbUpdate := common.NewQueryBuilder(`UPDATE fsepp SET osn1 = $1, pdv1 = $2, osn2 = $3, pdv2 = $4`, true)
-					qbUpdate.AddArgs(fsepp.Osn1, fsepp.Pdv1, fsepp.Osn2, fsepp.Pdv2)
-					qbUpdate.AddEqual("fseppid", fsepp.FseppID)
-					sqlQuery, args := qbUpdate.Build()
-					err = s.fseppRepo.CreateUpdateCustomWithTx(ctx, tx, sqlQuery, args...)
-					if err != nil {
-						log.Printf("error updating fsepp record: %v", err)
+					if err := s.updateFseppIznosi(ctx, tx, fsepp); err != nil {
+						return fmt.Errorf("error updating fsepp record %d: %w", fsepp.FseppID, err)
 					}
 				}
 			}
@@ -372,29 +318,24 @@ func (s *FseppResource) GetEvidencija(ctx context.Context, tbl *domain.TableData
 	}
 
 	// Step 4: do the calculation for the positions
-	hasGod, hasKar = s.fseppRepo.GetHasGodHasKar()
 	for k := 2; k <= maxNipo; k++ {
-		qbFsepp := common.NewQueryBuilder(`SELECT pozic_0, pozic_1, pozic_2, pozic_3, pozic_4, pozic_5 FROM fsepp`, true)
-		if hasGod {
-			qbFsepp.AddEqual("fsepp.god", userSession.SelectedGod)
+		bFsepp := querybuilder.New(`SELECT pozic_0, pozic_1, pozic_2, pozic_3, pozic_4, pozic_5 FROM fsepp`).
+			Where("fsepp.nipo = ?", k)
+		if err := s.fseppRepo.ApplyFilters(ctx, bFsepp, "fsepp", nil, ""); err != nil {
+			return err
 		}
-		if hasKar {
-			qbFsepp.AddEqual("fsepp.kar", userSession.SelectedKar)
-		}
-		qbFsepp.AddEqual("fsepp.nipo", k)
-		sqlQuery, args := qbFsepp.Build()
-		entities, err := s.fseppRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+		entities, err := s.fseppRepo.Select(ctx, bFsepp)
 		if err != nil {
 			log.Printf("error fetching fsepp records for nipo %d: %v", k, err)
 			continue
 		}
 		if entities != nil && len(*entities) > 0 {
 			fsepp := &(*entities)[0]
-			s.ObradaPozicije(ctx, fsepp, fsepp.Pozic1)
-			s.ObradaPozicije(ctx, fsepp, fsepp.Pozic2)
-			s.ObradaPozicije(ctx, fsepp, fsepp.Pozic3)
-			s.ObradaPozicije(ctx, fsepp, fsepp.Pozic4)
-			s.ObradaPozicije(ctx, fsepp, fsepp.Pozic5)
+			for _, pozicija := range []string{fsepp.Pozic1, fsepp.Pozic2, fsepp.Pozic3, fsepp.Pozic4, fsepp.Pozic5} {
+				if err := s.ObradaPozicije(ctx, fsepp, pozicija); err != nil {
+					return fmt.Errorf("pozicija %q of fsepp %d: %w", pozicija, fsepp.FseppID, err)
+				}
+			}
 			err = s.UpdateFsepp(ctx, tx, fsepp) // Update the FSEPP record after processing positions
 			if err != nil {
 				log.Printf("error updating fsepp record: %v", err)
@@ -409,47 +350,35 @@ func (s *FseppResource) GetEvidencija(ctx context.Context, tbl *domain.TableData
 	}
 	// Step 3: get updated data for Evidencija PP
 	// Build query for Evidencija PP
-	qb := common.NewQueryBuilder(`
-    SELECT 
+	b := querybuilder.New(`
+    SELECT
          fsepp.polje, fsepp.opis, fsepp.osn1, fsepp.pdv1, fsepp.osn2, fsepp.pdv2, fsepp.nipo,
          fsepp.oddat, fsepp.dodat
-    FROM fsepp`, true)
-
-	if hasGod {
-		qb.AddEqual("fsepp.god", userSession.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("fsepp.kar", userSession.SelectedKar)
-	}
-	if odDatuma != "" {
-		qb.AddCondition("fsepp.oddat", odDatuma, ">=")
-	}
-	if doDatuma != "" {
-		qb.AddCondition("fsepp.dodat", doDatuma, "<=")
-	}
-	if searchText != "" {
-		qb.SetEntityType(reflect.TypeOf(domain.Fsepp{}))
-		qb.AddSearchConditions(s.GetEvidencijaTableFields(), searchText)
-	}
-
-	qb.AddOrderBy("fsepp.nipo ASC, fsepp.sekcija ASC")
-
-	if !getTotalRecords {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
-	}
-
-	// Execute query and populate table
-	sqlQuery, args = qb.Build()
-	entities, err := s.fseppRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
+    FROM fsepp`).
+		AddCondition("fsepp.oddat", odDatuma, ">=").
+		AddCondition("fsepp.dodat", doDatuma, "<=")
+	// The period of the session (fsepp.god/kar) and the search over the columns of the grid.
+	if err := s.fseppRepo.ApplyFilters(ctx, b, "fsepp", s.GetEvidencijaTableFields(), searchText); err != nil {
 		return err
 	}
 
 	// Set total records and pagination
 	if getTotalRecords {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
+		total, err := s.fseppRepo.Count(ctx, b)
+		if err != nil {
+			return err
+		}
+		common.SetTableTotalRecords(tbl, total, pageSize)
 		return nil
+	}
+	b.OrderBy("fsepp.nipo ASC, fsepp.sekcija ASC").
+		Limit(pageSize).
+		Offset((currentPage - 1) * pageSize)
+
+	// Execute query and populate table
+	entities, err := s.fseppRepo.Select(ctx, b)
+	if err != nil {
+		return err
 	}
 
 	tbl.Headers = s.GetEvidencijaTableFields()
@@ -475,16 +404,20 @@ func (s *FseppResource) GetEvidencija(ctx context.Context, tbl *domain.TableData
 }
 
 func (s *FseppResource) UpdateFsepp(ctx context.Context, tx db.Transaction, fsepp *domain.Fsepp) error {
-	// Implement the update logic here
-	qbUpdate := common.NewQueryBuilder(`UPDATE fsepp SET osn1 = $1, pdv1 = $2, osn2 = $3, pdv2 = $4`, true)
-	qbUpdate.AddArgs(fsepp.Osn1, fsepp.Pdv1, fsepp.Osn2, fsepp.Pdv2, fsepp.FseppID)
-	qbUpdate.AddEqual("fseppid", fsepp.FseppID)
-	sqlQuery, args := qbUpdate.Build()
-	err := s.fseppRepo.CreateUpdateCustomWithTx(ctx, tx, sqlQuery, args...)
+	err := s.updateFseppIznosi(ctx, tx, fsepp)
 	if err != nil {
 		log.Printf("error updating fsepp record: %v", err)
 	}
 	return err
+}
+
+// updateFseppIznosi writes the osnovice and the PDV of a fsepp row (by its fseppid, which comes from
+// a row of the period read before).
+func (s *FseppResource) updateFseppIznosi(ctx context.Context, tx db.Transaction, fsepp *domain.Fsepp) error {
+	b := querybuilder.NewUpdate("fsepp").
+		Set("osn1 = ?, pdv1 = ?, osn2 = ?, pdv2 = ?", fsepp.Osn1, fsepp.Pdv1, fsepp.Osn2, fsepp.Pdv2).
+		Where("fseppid = ?", fsepp.FseppID)
+	return s.fseppRepo.ExecWithTx(ctx, tx, b)
 }
 
 func (s *FseppResource) ObradaPozicije(ctx context.Context, fsepp *domain.Fsepp, pozicija string) error {
@@ -514,18 +447,12 @@ func (s *FseppResource) ObradaPozicije(ctx context.Context, fsepp *domain.Fsepp,
 	sPozic = ""
 	//sOppozic = ""
 	bMinus = false
-	hasGod, hasKar := s.fseppRepo.GetHasGodHasKar()
 	if sPozic != "" {
-		qbPozic := common.NewQueryBuilder(`SELECT * FROM fsepp`, true)
-		if hasGod {
-			qbPozic.AddEqual("fsepp.god", userSession.SelectedGod)
+		bPozic := querybuilder.New(`SELECT * FROM fsepp`).Where("fsepp.polje = ?", sPozic)
+		if err := s.fseppRepo.ApplyFilters(ctx, bPozic, "fsepp", nil, ""); err != nil {
+			return err
 		}
-		if hasKar {
-			qbPozic.AddEqual("fsepp.kar", userSession.SelectedKar)
-		}
-		qbPozic.AddEqual("fsepp.polje", sPozic)
-		sqlQueryPozic, argsPozic := qbPozic.Build()
-		entitiesPozic, err := s.fseppRepo.GetAllCustom(ctx, sqlQueryPozic, "", argsPozic, "", "")
+		entitiesPozic, err := s.fseppRepo.Select(ctx, bPozic)
 		if err != nil {
 			log.Printf("error fetching fsepp records for polje %s: %v", sPozic, err)
 			return err
@@ -617,52 +544,38 @@ func (s *FseppResource) GetSefKpr(ctx context.Context, tbl *domain.TableData, ge
 	tbl.SearchEnabled = true
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 
-	hasGod, hasKar := s.fseppSefKprRepo.GetHasGodHasKar()
-
 	// Build query for SEF-KPR
-	qb := common.NewQueryBuilder(`
-		SELECT 
+	b := querybuilder.New(`
+		SELECT
 			feppsef.redbroj, feppsef.dokumenttip, feppsef.brdokumenta,
 			feppsef.datumdokumenta, feppsef.datumlicnog, feppsef.iznos,
 			feppsef.pdv, feppsef.konto, feppsef.status,
 			feppsef.idfeppsef
-		FROM feppsef`, true)
-
-	if hasGod {
-		qb.AddEqual("feppsef.god", session.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("feppsef.kar", session.SelectedKar)
-	}
-	if odDatuma != "" {
-		qb.AddCondition("feppsef.datumdokumenta", odDatuma, ">=")
-	}
-	if doDatuma != "" {
-		qb.AddCondition("feppsef.datumdokumenta", doDatuma, "<=")
-	}
-	if searchText != "" {
-		qb.SetEntityType(reflect.TypeOf(domain.FseppSefKpr{}))
-		qb.AddSearchConditions(s.GetSefKprTableFields(), searchText)
-	}
-
-	qb.AddOrderBy("feppsef.redbroj ASC")
-
-	if !getTotalRecords {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
-	}
-
-	// Execute query and populate table
-	sqlQuery, args := qb.Build()
-	entities, err := s.fseppSefKprRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
+		FROM feppsef`).
+		AddCondition("feppsef.datumdokumenta", odDatuma, ">=").
+		AddCondition("feppsef.datumdokumenta", doDatuma, "<=")
+	// The period of the session (feppsef.god/kar) and the search over the columns of the grid.
+	if err := s.fseppSefKprRepo.ApplyFilters(ctx, b, "feppsef", s.GetSefKprTableFields(), searchText); err != nil {
 		return err
 	}
 
 	// Set total records and pagination
 	if getTotalRecords {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
+		total, err := s.fseppSefKprRepo.Count(ctx, b)
+		if err != nil {
+			return err
+		}
+		common.SetTableTotalRecords(tbl, total, pageSize)
 		return nil
+	}
+	b.OrderBy("feppsef.redbroj ASC").
+		Limit(pageSize).
+		Offset((currentPage - 1) * pageSize)
+
+	// Execute query and populate table
+	entities, err := s.fseppSefKprRepo.Select(ctx, b)
+	if err != nil {
+		return err
 	}
 
 	// Populate table rows
@@ -814,20 +727,14 @@ func (s *FseppResource) GetKprDataForSefData(ctx context.Context, aaEpp *map[str
 	if userSession == nil {
 		return fmt.Errorf("user session not found")
 	}
-	hasGod, hasKar := s.kprRepo.GetHasGodHasKar()
-	qb := common.NewQueryBuilder(`select dokum, pib, epp_polje, osnovicavt, pretpdv1vt, pretpdv2vt, osnovicant, pretpdv1nt, pretpdv2nt
-	    	from kpr `, true)
-	if hasGod {
-		qb.AddEqual("GOD", userSession.SelectedGod)
+	b := querybuilder.New(`select dokum, pib, epp_polje, osnovicavt, pretpdv1vt, pretpdv2vt, osnovicant, pretpdv1nt, pretpdv2nt
+	    	from kpr`).
+		AddCondition("dknjiz", odDatuma, ">=").
+		AddCondition("dknjiz", doDatuma, "<=")
+	if err := s.kprRepo.ApplyFilters(ctx, b, "", nil, ""); err != nil {
+		return err
 	}
-	if hasKar {
-		qb.AddEqual("KAR", userSession.SelectedKar)
-	}
-	qb.AddCondition("DKNJIZ", odDatuma, ">=")
-	qb.AddCondition("DKNJIZ", doDatuma, "<=")
-
-	sqlQuery, args := qb.Build()
-	entities, err := s.kprRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.kprRepo.Select(ctx, b)
 	if err != nil {
 		return err
 	}

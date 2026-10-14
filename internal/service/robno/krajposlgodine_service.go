@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"helia/internal/common"
 	"helia/internal/domain"
+	"helia/internal/infrastructure/db/querybuilder"
 	"helia/internal/repository"
 	commonsvc "helia/internal/service/common"
 )
@@ -27,13 +27,15 @@ type KrajPoslovneGodineResource struct {
 	magRepo     *repository.BaseRepository[domain.Magacini]
 	drstaRepo   *repository.BaseRepository[domain.Drsta]
 	commonSvc   commonsvc.CommonService
+	robno       *repository.RobnoRepository
 	type1Fields []domain.Fields
 	type2Fields []domain.Fields
 	visakFields []domain.Fields
 }
 
 func NewKrajPoslovneGodineService(magRepo *repository.BaseRepository[domain.Magacini], drstaRepo *repository.BaseRepository[domain.Drsta], commonSvc commonsvc.CommonService) *KrajPoslovneGodineResource {
-	s := &KrajPoslovneGodineResource{magRepo: magRepo, drstaRepo: drstaRepo, commonSvc: commonSvc}
+	s := &KrajPoslovneGodineResource{magRepo: magRepo, drstaRepo: drstaRepo, commonSvc: commonSvc,
+		robno: repository.NewRobnoRepository(drstaRepo.DB)}
 	s.setTableFields()
 	return s
 }
@@ -97,17 +99,11 @@ func (s *KrajPoslovneGodineResource) GetPopis(ctx context.Context, params domain
 		return domain.KrajPopisData{}, fmt.Errorf("no user session found")
 	}
 	if params.TipZal == 0 {
-		qb := common.NewQueryBuilder(`SELECT tipzal FROM magacini `, true)
-		hasGod, hasKar := s.magRepo.GetHasGodHasKar()
-		if hasGod {
-			qb.AddEqual("god", userSession.SelectedGod)
+		b := querybuilder.New(`SELECT tipzal FROM magacini`).Where("mag = ?", params.Magacin)
+		if err := s.magRepo.ApplyFilters(ctx, b, "", nil, ""); err != nil {
+			return domain.KrajPopisData{}, err
 		}
-		if hasKar {
-			qb.AddEqual("kar", userSession.SelectedKar)
-		}
-		qb.AddEqual("mag", params.Magacin)
-		sqlQuery, args := qb.Build()
-		entities, err := s.magRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+		entities, err := s.magRepo.Select(ctx, b)
 		if err != nil {
 			return domain.KrajPopisData{}, fmt.Errorf("get TIPZAL: %w", err)
 		}
@@ -117,66 +113,28 @@ func (s *KrajPoslovneGodineResource) GetPopis(ctx context.Context, params domain
 		popisData.TipZal = (*entities)[0].Tipzal
 	}
 	if params.TipZal == 1 {
-		return s.getPopisType1(ctx, params, userSession.SelectedGod, userSession.SelectedKar)
+		return s.getPopisType1(ctx, params)
 	}
 	if params.TipZal == 2 {
-		return s.getPopisType2(ctx, params, userSession.SelectedGod, userSession.SelectedKar)
+		return s.getPopisType2(ctx, params)
 	}
 	return domain.KrajPopisData{}, fmt.Errorf("unsupported TIPZAL %d; expected 1 or 2", params.TipZal)
 }
 
-func (s *KrajPoslovneGodineResource) getPopisType1(ctx context.Context, p domain.KrajPoslovneGodineParams, god, kar int) (domain.KrajPopisData, error) {
+func (s *KrajPoslovneGodineResource) getPopisType1(ctx context.Context, p domain.KrajPoslovneGodineParams) (domain.KrajPopisData, error) {
 	if err := s.requireTables(ctx, "rsta", "rcene", "rsif", "rgru"); err != nil {
 		return domain.KrajPopisData{}, err
 	}
-	order, err := popisOrder(p.Tip)
-	if err != nil {
-		return domain.KrajPopisData{}, err
-	}
-	query := fmt.Sprintf(`SELECT row_number() over (ORDER BY %s)::int redbr,s.konto,s.sifra,coalesce(a.naziv,'') naziv,coalesce(a.jm,'') jm,coalesce(a.gru,0) grupa,coalesce(g.naziv,'') nazivgrupe,
-	 CASE WHEN coalesce(m.nacvodzal,0)=3 THEN coalesce(max(s.prosnc),0) ELSE coalesce(max(c.cena),0) END cena,
-	 0::numeric kolicina1,0::numeric kolicina2,0::numeric kolicina3,0::numeric ukupnakolicina,
-	 coalesce(sum(s.ulaz-s.izlaz),0) stanjezaliha
-	 FROM rsta s LEFT JOIN rcene c ON c.sifra=s.sifra AND c.mag=s.mag AND c.god=s.god AND c.kar=s.kar
- LEFT JOIN rsif a ON a.sifra=s.sifra AND a.god=s.god AND a.kar=s.kar LEFT JOIN rgru g ON g.gru=a.gru AND g.god=s.god AND g.kar=s.kar
- LEFT JOIN magacini m ON m.mag=s.mag AND m.god=s.god AND m.kar=s.kar WHERE s.god=$1 AND s.kar=$2 AND ($3=0 OR s.mag=$3) AND ($4='' OR s.konto>=$4) AND ($5='' OR s.konto<=$5) AND ($6=0 OR s.sifra>=$6) AND ($7=0 OR s.sifra<=$7)
-	 GROUP BY s.konto,s.sifra,a.naziv,a.jm,a.gru,g.naziv,m.nacvodzal HAVING ($8 OR sum(s.ulaz-s.izlaz)<>0) ORDER BY %s`, order, order)
-	var rows []domain.KrajPopisType1Row
-	err = s.drstaRepo.DB.SelectContext(ctx, &rows, query, god, kar, p.Magacin, p.OdKonta, p.DoKonta, p.OdSifre, p.DoSifre, p.ObradiNule)
+	rows, err := s.robno.PopisZaliha1(ctx, p)
 	return domain.KrajPopisData{TipZal: 1, Type1: rows}, err
 }
 
-func (s *KrajPoslovneGodineResource) getPopisType2(ctx context.Context, p domain.KrajPoslovneGodineParams, god, kar int) (domain.KrajPopisData, error) {
+func (s *KrajPoslovneGodineResource) getPopisType2(ctx context.Context, p domain.KrajPoslovneGodineParams) (domain.KrajPopisData, error) {
 	if err := s.requireTables(ctx, "drsta", "rsta", "rsif", "rgru"); err != nil {
 		return domain.KrajPopisData{}, err
 	}
-	order, err := popisOrder(p.Tip)
-	if err != nil {
-		return domain.KrajPopisData{}, err
-	}
-	order = strings.ReplaceAll(order, "s.", "d.")
-	query := fmt.Sprintf(`SELECT row_number() over (ORDER BY %s)::int redbr,d.konto,d.sifra,coalesce(a.naziv,'') naziv,coalesce(a.jm,'') jm,coalesce(a.gru,0) grupa,coalesce(g.naziv,'') nazivgrupe,
-	 coalesce(d.otk,'') otk,coalesce(d.serija,'') serija,coalesce(d.roktr,'') rok,0::numeric kolicina1,0::numeric kolicina2,0::numeric kolicina3,0::numeric ukupnakolicina,
-	 coalesce((SELECT sum(s.ulaz-s.izlaz) FROM rsta s WHERE s.god=$1 AND s.kar=$2 AND s.mag=d.mag AND s.sifra=d.sifra AND s.konto=d.konto),0) stanjezaliha
- FROM drsta d LEFT JOIN rsif a ON a.sifra=d.sifra AND a.god=d.god AND a.kar=d.kar LEFT JOIN rgru g ON g.gru=a.gru AND g.god=d.god AND g.kar=d.kar WHERE d.god=$1 AND d.kar=$2 AND ($3=0 OR d.mag=$3) AND ($4='' OR d.konto>=$4) AND ($5='' OR d.konto<=$5) AND ($6=0 OR d.sifra>=$6) AND ($7=0 OR d.sifra<=$7) ORDER BY %s`, order, order)
-	var rows []domain.KrajPopisType2Row
-	err = s.drstaRepo.DB.SelectContext(ctx, &rows, query, god, kar, p.Magacin, p.OdKonta, p.DoKonta, p.OdSifre, p.DoSifre)
+	rows, err := s.robno.PopisZaliha2(ctx, p)
 	return domain.KrajPopisData{TipZal: 2, Type2: rows}, err
-}
-
-func popisOrder(tip string) (string, error) {
-	switch tip {
-	case "", "sifra":
-		return "s.sifra", nil
-	case "naziv":
-		return "coalesce(a.naziv,''),s.sifra", nil
-	case "grupa":
-		return "coalesce(a.gru,0),s.sifra", nil
-	case "grupa-naziv":
-		return "coalesce(a.gru,0),coalesce(a.naziv,''),s.sifra", nil
-	default:
-		return "", fmt.Errorf("unknown popis sort %q", tip)
-	}
 }
 
 func (s *KrajPoslovneGodineResource) GetVisakManjak(ctx context.Context, p domain.KrajPoslovneGodineParams) ([]domain.KrajVisakManjakRow, error) {
@@ -187,10 +145,7 @@ func (s *KrajPoslovneGodineResource) GetVisakManjak(ctx context.Context, p domai
 	if err := s.requireTables(ctx, "rsta", "rpro", "rdok", "rsif", "rgru"); err != nil {
 		return nil, err
 	}
-	query := `WITH book AS (SELECT s.konto,s.sifra,sum(s.ulaz-s.izlaz) stanje,sum(s.dug-s.pot) iznos,max(s.cena) cena FROM rsta s WHERE s.god=$1 AND s.kar=$2 AND ($7=0 OR s.mag=$7) GROUP BY s.konto,s.sifra), popis AS (SELECT p.konto,p.sifra,sum(p.kolic) kolicina,sum(p.iznos) iznos FROM rpro p JOIN rdok d ON d.rdokid=p.rdokid WHERE p.god=$3 AND p.kar=$2 AND p.nalog=$4 AND p.dokum=$5 AND p.vrd=$6 AND ($7=0 OR p.mag=$7) GROUP BY p.konto,p.sifra), data_rows AS (SELECT b.konto,b.sifra,coalesce(a.naziv,'') naziv,coalesce(a.jm,'') jm,b.cena,b.iznos,b.stanje,coalesce(p.kolicina,0) kolicina,coalesce(p.iznos,0) popis_iznos,coalesce(p.kolicina,0)-b.stanje razlika FROM book b LEFT JOIN popis p ON p.konto=b.konto AND p.sifra=b.sifra LEFT JOIN rsif a ON a.sifra=b.sifra AND a.god=$1 AND a.kar=$2) SELECT row_number() over (ORDER BY sifra)::int redbr,sifra,konto,naziv,jm,cena,kolicina kolicinapopisa,popis_iznos iznospopisa,stanje stanjeknjigovodstveno,iznos iznosknjigovodstveno,case when razlika>0 then razlika else 0 end visak,case when razlika>0 then (popis_iznos-iznos) else 0 end iznosviska,case when razlika<0 then -razlika else 0 end manjak,case when razlika<0 then (iznos-popis_iznos) else 0 end iznosmanjka,case when razlika>0 and popis_iznos-iznos>0 then popis_iznos-iznos else 0 end finansijskivisak,case when razlika<0 and iznos-popis_iznos>0 then iznos-popis_iznos else 0 end finansijskimanjak FROM data_rows WHERE razlika<>0 ORDER BY sifra`
-	var rows []domain.KrajVisakManjakRow
-	err := s.drstaRepo.DB.SelectContext(ctx, &rows, query, user.SelectedGod, user.SelectedKar, p.NovaGod, p.Nalog, p.Dokum, p.Vrd, p.Magacin)
-	return rows, err
+	return s.robno.VisakManjak(ctx, p)
 }
 
 func (s *KrajPoslovneGodineResource) PrepisStanja(ctx context.Context, p domain.KrajPoslovneGodineParams, targetYear int) error {
@@ -201,14 +156,14 @@ func (s *KrajPoslovneGodineResource) PrepisStanja(ctx context.Context, p domain.
 	if err != nil {
 		return err
 	}
-	tx, err := s.drstaRepo.DB.Beginx()
+	tx, err := s.robno.BeginTx()
 	if err != nil {
 		return fmt.Errorf("begin prepis transaction: %w", err)
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 	for _, table := range []string{"rsta", "drsta", "rcene", "rdok", "rnal", "sr", "rpro", "rsal", "rsin", "dokvrsta"} {
-		var exists bool
-		if err := tx.QueryRowContext(ctx, `SELECT to_regclass($1) IS NOT NULL`, table).Scan(&exists); err != nil {
+		exists, err := s.robno.TableExists(ctx, tx, table)
+		if err != nil {
 			return fmt.Errorf("verify prepis table %s: %w", table, err)
 		}
 		if !exists {
@@ -233,8 +188,8 @@ func prepisPriceColumn(choice int) (string, error) {
 }
 func (s *KrajPoslovneGodineResource) requireTables(ctx context.Context, tables ...string) error {
 	for _, table := range tables {
-		var exists bool
-		if err := s.drstaRepo.DB.GetContext(ctx, &exists, `SELECT to_regclass($1) IS NOT NULL`, table); err != nil {
+		exists, err := s.robno.TableExists(ctx, nil, table)
+		if err != nil {
 			return fmt.Errorf("verify %s schema: %w", strings.ToUpper(table), err)
 		}
 		if !exists {

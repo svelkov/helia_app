@@ -7,9 +7,9 @@ import (
 	"testing"
 
 	"helia/config"
+	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
-	"helia/i18n"
 )
 
 func TestRenderDiagStanjaTable(t *testing.T) {
@@ -42,4 +42,3 @@ func TestRenderDiagStanjaTable(t *testing.T) {
 	t.Log("has Mesec:", strings.Contains(out, "Mesec"))
 	t.Log("has Početno:", strings.Contains(out, "Početno"))
 }
-

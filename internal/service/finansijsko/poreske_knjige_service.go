@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"helia/internal/common"
 	"helia/internal/domain"
+	"helia/internal/infrastructure/db/querybuilder"
 	"helia/internal/repository"
 	"helia/internal/service"
 	commonsvc "helia/internal/service/common"
@@ -68,7 +69,7 @@ func NewPoreskeKnjigeService(kirService *service.BaseService[domain.Kir], kprSer
 }
 
 func (s *PoreskeKnjigeResource) GetFvrData(ctx context.Context) (domain.Fvr, error) {
-	return common.GetFvrData(ctx, s.fvrRepo)
+	return repository.GetFvrData(ctx, s.fvrRepo)
 }
 
 // GetTableFields returns the table field definitions for Poreske Knjige (KIR - Issued Invoices by default)
@@ -128,7 +129,6 @@ func (s *PoreskeKnjigeResource) GetKnjigaIzdatihRacuna(ctx context.Context, tbl 
 		return fmt.Errorf("user session not found")
 	}
 	common.SetupTablePagination(tbl, currentPage, pageSize)
-	hasGod, hasKar := s.kirRepo.GetHasGodHasKar()
 	odKnjige := ""
 	doKnjige := ""
 	// Get parameters from query
@@ -141,8 +141,8 @@ func (s *PoreskeKnjigeResource) GetKnjigaIzdatihRacuna(ctx context.Context, tbl 
 		doKnjige = params.Knjiga
 	}
 	// Build query for Knjiga izdatih racuna
-	qb := common.NewQueryBuilder(`
-		SELECT 
+	b := querybuilder.New(`
+		SELECT
 		   -- ROW_NUMBER() OVER (ORDER BY kir.dknjiz ASC, kir.vrd ASC, kir.numdok ASC, kir.dokum ASC, kir.idkir ASC) AS krbr,
 			kir.krbr, kir.dknjiz, kir.dokum, kir.dizd, kir.naziv,
 			kir.pib, kir.iznsapdv, kir.oslobcl24, kir.oslobcl25,
@@ -154,50 +154,31 @@ func (s *PoreskeKnjigeResource) GetKnjigaIzdatihRacuna(ctx context.Context, tbl 
 			coalesce(partneri.mesto, '') AS mesto_pa,
 			coalesce(partneri.pib, '') AS pib,
 			coalesce(partneri.adresa, '') AS adresa_pa
-		FROM kir `, true)
-
-	qb.AddJoin(`LEFT JOIN partneri ON partneri.idpartneri = kir.idpartneri`)
-	if hasGod {
-		qb.AddEqual("kir.god", session.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("kir.kar", session.SelectedKar)
-	}
-	if odKnjige == doKnjige {
-		qb.AddCondition("kir.vkrbr", common.StringToInt(odKnjige), "=")
-	} else {
-		qb.AddCondition("kir.vkrbr", common.StringToInt(odKnjige), ">=")
-		qb.AddCondition("kir.vkrbr", common.StringToInt(doKnjige), "<=")
-	}
-	if params.OdDatuma != "" {
-		qb.AddCondition("kir.dknjiz", params.OdDatuma, ">=")
-	}
-	if params.DoDatuma != "" {
-		qb.AddCondition("kir.dknjiz", params.DoDatuma, "<=")
-	}
-	if params.SearchText != "" {
-		qb.SetEntityType(reflect.TypeOf(domain.Kir{}))
-		qb.AddSearchConditions(s.GetKirTableFields(), params.SearchText)
-	}
-
-	qb.AddOrderBy("kir.krbr ASC")
-
-	if !getTotalRecords {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
-	}
-
-	// Execute query and populate table
-	sqlQuery, args := qb.Build()
-	entities, err := s.kirRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
+		FROM kir`).
+		AddJoin(`LEFT JOIN partneri ON partneri.idpartneri = kir.idpartneri`)
+	kirKnjigaUslovi(b, "kir", odKnjige, doKnjige, params.OdDatuma, params.DoDatuma)
+	// The period of the session and the search over the columns of the grid (of the Kir entity).
+	if err := s.kirRepo.ApplyFilters(ctx, b, "kir", s.GetKirTableFields(), params.SearchText); err != nil {
 		return err
 	}
 
 	// Set total records and pagination
 	if getTotalRecords {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
+		total, err := s.kirRepo.Count(ctx, b)
+		if err != nil {
+			return err
+		}
+		common.SetTableTotalRecords(tbl, total, pageSize)
 		return nil
+	}
+	b.OrderBy("kir.krbr ASC").
+		Limit(pageSize).
+		Offset((currentPage - 1) * pageSize)
+
+	// Execute query and populate table
+	entities, err := s.kirRepo.Select(ctx, b)
+	if err != nil {
+		return err
 	}
 
 	// Populate table rows
@@ -232,13 +213,26 @@ func (s *PoreskeKnjigeResource) GetKnjigaIzdatihRacuna(ctx context.Context, tbl 
 	return nil
 }
 
+// kirKnjigaUslovi adds the selection of the knjiga (one vrsta knjige, or every knjiga 1-999 for "999")
+// and the range of the datum knjiženja to a query of the poreske knjige (t is kir or kpr).
+func kirKnjigaUslovi(b *querybuilder.Builder, t, odKnjige, doKnjige, odDatuma, doDatuma string) {
+	if odKnjige == doKnjige {
+		b.Where(t+".vkrbr = ?", common.StringToInt(odKnjige))
+	} else {
+		b.Where(t+".vkrbr >= ?", common.StringToInt(odKnjige)).
+			Where(t+".vkrbr <= ?", common.StringToInt(doKnjige))
+	}
+	// The dates are optional (skipped when empty).
+	b.AddCondition(t+".dknjiz", odDatuma, ">=").
+		AddCondition(t+".dknjiz", doDatuma, "<=")
+}
+
 // GetKnjigaIzdatihRacunaStampa fetches all KIR records (no pagination) and computes totals for printing.
 func (s *PoreskeKnjigeResource) GetKnjigaIzdatihRacunaStampa(ctx context.Context, tbl *domain.TableData, params domain.KnjigeParameters) error {
 	session := domain.GetSessionFromStdContext(ctx)
 	if session == nil {
 		return fmt.Errorf("user session not found")
 	}
-	hasGod, hasKar := s.kirRepo.GetHasGodHasKar()
 	odKnjige := ""
 	doKnjige := ""
 	vKnjige := params.Knjiga
@@ -250,7 +244,7 @@ func (s *PoreskeKnjigeResource) GetKnjigaIzdatihRacunaStampa(ctx context.Context
 		doKnjige = params.Knjiga
 	}
 
-	qb := common.NewQueryBuilder(`
+	b := querybuilder.New(`
 		SELECT
 			kir.krbr, kir.nalog, kir.dknjiz, kir.dokum, kir.dizd,
 			kir.tipdok,
@@ -258,35 +252,20 @@ func (s *PoreskeKnjigeResource) GetKnjigaIzdatihRacunaStampa(ctx context.Context
 			coalesce(partneri.pib, kir.pib, '') AS pib,
 			kir.iznsapdv, kir.oslobcl24, kir.oslobcl25,
 			kir.izvozsapr, kir.izvozbezpr, kir.osn1, kir.pdv1, kir.osn2, kir.pdv2
-		FROM kir`, true)
-	qb.AddJoin(`LEFT JOIN partneri ON partneri.idpartneri = kir.idpartneri`)
-	if hasGod {
-		qb.AddEqual("kir.god", session.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("kir.kar", session.SelectedKar)
-	}
-	if odKnjige == doKnjige {
-		qb.AddCondition("kir.vkrbr", common.StringToInt(odKnjige), "=")
-	} else {
-		qb.AddCondition("kir.vkrbr", common.StringToInt(odKnjige), ">=")
-		qb.AddCondition("kir.vkrbr", common.StringToInt(doKnjige), "<=")
-	}
-	if params.OdDatuma != "" {
-		qb.AddCondition("kir.dknjiz", params.OdDatuma, ">=")
-	}
-	if params.DoDatuma != "" {
-		qb.AddCondition("kir.dknjiz", params.DoDatuma, "<=")
+		FROM kir`).
+		AddJoin(`LEFT JOIN partneri ON partneri.idpartneri = kir.idpartneri`)
+	kirKnjigaUslovi(b, "kir", odKnjige, doKnjige, params.OdDatuma, params.DoDatuma)
+	if err := s.kirRepo.ApplyFilters(ctx, b, "kir", nil, ""); err != nil {
+		return err
 	}
 	groupByNalog := params.StampajPoNalozima || params.StampajPoNalozimaZbirno
 	summaryByNalog := params.StampajPoNalozimaZbirno
 	if groupByNalog {
-		qb.AddOrderBy("kir.tipdok ASC, kir.nalog ASC, kir.krbr ASC")
+		b.OrderBy("kir.tipdok ASC, kir.nalog ASC, kir.krbr ASC")
 	} else {
-		qb.AddOrderBy("kir.krbr ASC")
+		b.OrderBy("kir.krbr ASC")
 	}
-	sqlQuery, args := qb.Build()
-	entities, err := s.kirRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.kirRepo.Select(ctx, b)
 	if err != nil {
 		return err
 	}
@@ -507,7 +486,6 @@ func (s *PoreskeKnjigeResource) GetKnjigaPrimljenihRacunaStampa(ctx context.Cont
 	if session == nil {
 		return fmt.Errorf("user session not found")
 	}
-	hasGod, hasKar := s.kprRepo.GetHasGodHasKar()
 	odKnjige := ""
 	doKnjige := ""
 	vKnjige := params.Knjiga
@@ -519,43 +497,28 @@ func (s *PoreskeKnjigeResource) GetKnjigaPrimljenihRacunaStampa(ctx context.Cont
 		doKnjige = params.Knjiga
 	}
 
-	qb := common.NewQueryBuilder(`
+	b := querybuilder.New(`
 		SELECT
 			kpr.drbr, kpr.nalog, kpr.tipdok, kpr.dknjiz, kpr.duvoz, kpr.dokum, kpr.dizd,
 			coalesce(partneri.naziv, kpr.naziv, '') AS naziv,
 			coalesce(partneri.pib, kpr.pib, '') AS pib,
 			kpr.iznsapdv, kpr.prethpdv, kpr.iznoslob, kpr.nisuobvpdv, kpr.uvozbezpdv,
 			kpr.prethpdv, kpr.pretpdv1, kpr.pretpdv2, kpr.uvozpdv, kpr.poljvred, kpr.poljpdv
-		FROM kpr`, true)
-	qb.AddJoin(`LEFT JOIN partneri ON partneri.idpartneri = kpr.idpartneri`)
-	if hasGod {
-		qb.AddEqual("kpr.god", session.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("kpr.kar", session.SelectedKar)
-	}
-	if odKnjige == doKnjige {
-		qb.AddCondition("kpr.vkrbr", common.StringToInt(odKnjige), "=")
-	} else {
-		qb.AddCondition("kpr.vkrbr", common.StringToInt(odKnjige), ">=")
-		qb.AddCondition("kpr.vkrbr", common.StringToInt(doKnjige), "<=")
-	}
-	if params.OdDatuma != "" {
-		qb.AddCondition("kpr.dknjiz", params.OdDatuma, ">=")
-	}
-	if params.DoDatuma != "" {
-		qb.AddCondition("kpr.dknjiz", params.DoDatuma, "<=")
+		FROM kpr`).
+		AddJoin(`LEFT JOIN partneri ON partneri.idpartneri = kpr.idpartneri`)
+	kirKnjigaUslovi(b, "kpr", odKnjige, doKnjige, params.OdDatuma, params.DoDatuma)
+	if err := s.kprRepo.ApplyFilters(ctx, b, "kpr", nil, ""); err != nil {
+		return err
 	}
 
 	groupByNalog := params.StampajPoNalozima || params.StampajPoNalozimaZbirno
 	summaryByNalog := params.StampajPoNalozimaZbirno
 	if groupByNalog {
-		qb.AddOrderBy("kpr.tipdok ASC, kpr.nalog ASC, kpr.drbr ASC")
+		b.OrderBy("kpr.tipdok ASC, kpr.nalog ASC, kpr.drbr ASC")
 	} else {
-		qb.AddOrderBy("kpr.drbr ASC")
+		b.OrderBy("kpr.drbr ASC")
 	}
-	sqlQuery, args := qb.Build()
-	entities, err := s.kprRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.kprRepo.Select(ctx, b)
 	if err != nil {
 		return err
 	}
@@ -703,7 +666,6 @@ func (s *PoreskeKnjigeResource) GetKnjigaPrimljenihRacuna(ctx context.Context, t
 	}
 
 	common.SetupTablePagination(tbl, currentPage, pageSize)
-	hasGod, hasKar := s.kprRepo.GetHasGodHasKar()
 	odKnjige := ""
 	doKnjige := ""
 
@@ -724,8 +686,8 @@ func (s *PoreskeKnjigeResource) GetKnjigaPrimljenihRacuna(ctx context.Context, t
 	searchText := params.SearchText
 	// Build query for Knjiga ulaznih racuna - similar to GetKnjigaIzdatih
 	// but querying incoming invoices from suppliers
-	qb := common.NewQueryBuilder(`
-		SELECT 
+	b := querybuilder.New(`
+		SELECT
 			kpr.drbr, kpr.dknjiz, kpr.dizd, kpr.duvoz,
 			kpr.dokum, kpr.iznsapdv,
 			kpr.iznoslob, kpr.nisuobvpdv, kpr.uvozbezpdv, kpr.prethpdv,
@@ -734,48 +696,30 @@ func (s *PoreskeKnjigeResource) GetKnjigaPrimljenihRacuna(ctx context.Context, t
 			coalesce(partneri.mesto, '') AS mesto_pa,
 			coalesce(partneri.pib, '') AS pib,
 			coalesce(partneri.adresa, '') AS adresa_pa
-		FROM kpr`, true)
-	qb.AddJoin(`LEFT JOIN partneri ON partneri.idpartneri = kpr.idpartneri`)
-	if hasGod {
-		qb.AddEqual("kpr.god", session.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("kpr.kar", session.SelectedKar)
-	}
-	if odKnjige == doKnjige {
-		qb.AddCondition("kpr.vkrbr", common.StringToInt(odKnjige), "=")
-	} else {
-		qb.AddCondition("kpr.vkrbr", common.StringToInt(odKnjige), ">=")
-		qb.AddCondition("kpr.vkrbr", common.StringToInt(doKnjige), "<=")
-	}
-	if odDatuma != "" {
-		qb.AddCondition("kpr.dknjiz", odDatuma, ">=")
-	}
-	if doDatuma != "" {
-		qb.AddCondition("kpr.dknjiz", doDatuma, "<=")
-	}
-	if searchText != "" {
-		qb.SetEntityType(reflect.TypeOf(domain.Kpr{}))
-		qb.AddSearchConditions(s.GetKprTableFields(), searchText)
-	}
-
-	qb.AddOrderBy("kpr.drbr ASC")
-
-	if !getTotalRecords {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
-	}
-
-	// Execute query and populate table
-	sqlQuery, args := qb.Build()
-	entities, err := s.kprRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
+		FROM kpr`).
+		AddJoin(`LEFT JOIN partneri ON partneri.idpartneri = kpr.idpartneri`)
+	kirKnjigaUslovi(b, "kpr", odKnjige, doKnjige, odDatuma, doDatuma)
+	// The period of the session and the search over the columns of the grid (of the Kpr entity).
+	if err := s.kprRepo.ApplyFilters(ctx, b, "kpr", s.GetKprTableFields(), searchText); err != nil {
 		return err
 	}
 
 	if getTotalRecords {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
+		total, err := s.kprRepo.Count(ctx, b)
+		if err != nil {
+			return err
+		}
+		common.SetTableTotalRecords(tbl, total, pageSize)
 		return nil
+	}
+	b.OrderBy("kpr.drbr ASC").
+		Limit(pageSize).
+		Offset((currentPage - 1) * pageSize)
+
+	// Execute query and populate table
+	entities, err := s.kprRepo.Select(ctx, b)
+	if err != nil {
+		return err
 	}
 	if entities != nil && len(*entities) > 0 {
 		for _, entity := range *entities {
@@ -823,26 +767,20 @@ func (s *PoreskeKnjigeResource) GetPoreskaPrijava(ctx context.Context, poreskaPr
 	odDatuma := ctx.Value("oddatuma").(string)
 	doDatuma := ctx.Value("dodatuma").(string)
 
-	hasGod, hasKar := s.kirRepo.GetHasGodHasKar()
 	// Build query for KIR records - fetch all records, not aggregates
-	kirQB := common.NewQueryBuilder(`
+	kirQB := querybuilder.New(`
 		SELECT 	kir.dknjiz, kir.vkrbr, kir.izvozsapr, kir.oslobcl24,
 			kir.izvozbezpr, kir.oslobcl25, kir.osn1, kir.osn2,
 			kir.pdv1, kir.pdv2, kir.idkir
-		FROM kir`, true)
-
-	if hasGod {
-		kirQB.AddEqual("kir.god", session.SelectedGod)
+		FROM kir`).
+		AddCondition("kir.dknjiz", odDatuma, ">=").
+		AddCondition("kir.dknjiz", doDatuma, "<=")
+	if err := s.kirRepo.ApplyFilters(ctx, kirQB, "kir", nil, ""); err != nil {
+		return err
 	}
-	if hasKar {
-		kirQB.AddEqual("kir.kar", session.SelectedKar)
-	}
-	kirQB.AddCondition("kir.dknjiz", odDatuma, ">=")
-	kirQB.AddCondition("kir.dknjiz", doDatuma, "<=")
 
 	// Execute query and process KIR records
-	sqlKir, argsKir := kirQB.Build()
-	kirEntities, err := s.kirRepo.GetAllCustom(ctx, sqlKir, "", argsKir, "", "")
+	kirEntities, err := s.kirRepo.Select(ctx, kirQB)
 	if err != nil {
 		return err
 	}
@@ -862,24 +800,19 @@ func (s *PoreskeKnjigeResource) GetPoreskaPrijava(ctx context.Context, poreskaPr
 	}
 
 	// Build query for KPR aggregates
-	kprQB := common.NewQueryBuilder(`
-		SELECT 
+	kprQB := querybuilder.New(`
+		SELECT
 			uvozosnpdv, uvozpdv, poljvred, poljpdv, osnbezpdv, iznoslob,
 			nisuobvpdv, uvozbezpdv, osnbezpod, pretpdv1
-		FROM kpr`, true)
-	hasGod, hasKar = s.kprRepo.GetHasGodHasKar()
-	if hasGod {
-		kprQB.AddEqual("kpr.god", session.SelectedGod)
+		FROM kpr`).
+		AddCondition("kpr.dknjiz", odDatuma, ">=").
+		AddCondition("kpr.dknjiz", doDatuma, "<=")
+	if err := s.kprRepo.ApplyFilters(ctx, kprQB, "kpr", nil, ""); err != nil {
+		return err
 	}
-	if hasKar {
-		kprQB.AddEqual("kpr.kar", session.SelectedKar)
-	}
-	kprQB.AddCondition("kpr.dknjiz", odDatuma, ">=")
-	kprQB.AddCondition("kpr.dknjiz", doDatuma, "<=")
 
 	// Execute query and process KPR records
-	sqlKpr, argsKpr := kprQB.Build()
-	kprEntities, err := s.kprRepo.GetAllCustom(ctx, sqlKpr, "", argsKpr, "", "")
+	kprEntities, err := s.kprRepo.Select(ctx, kprQB)
 	if err != nil {
 		return err
 	}

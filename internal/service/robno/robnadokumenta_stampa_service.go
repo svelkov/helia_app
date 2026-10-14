@@ -1852,6 +1852,14 @@ func (s *RobnoDokumentaResource) GetStampaZaduzenjeGradilista(ctx context.Contex
 	return s.stampaOpstiDokumenti(ctx, params, "rdok.rdokid, rpro.rproid", robnoStampaOpstiDokumentOpcije{zaduzenjeSI: true, gradiliste: true})
 }
 
+// GetStampaTrebovanje returns the trebovanja of the selection (the group OTR of the vrste dokumenta, the legacy
+// RPT_ROB_TREBOVANJA with the query of the opšti dokumenti), ready to print: like the zaduženje gradilišta (see
+// GetStampaZaduzenjeGradilista), with the konto and the šifra of the trošak (rdok.pkto rdok.pana and its naziv)
+// in the header.
+func (s *RobnoDokumentaResource) GetStampaTrebovanje(ctx context.Context, params domain.RobnoStampaFakturaParams) ([]domain.RobnoStampaPopisView, domain.RobnoStampaFakturaFirmaDto, error) {
+	return s.GetStampaZaduzenjeGradilista(ctx, params)
+}
+
 // GetStampaNivelacija returns the nivelacije cena of the selection (the group NIV of the vrste
 // dokumenta, the legacy RPT_ROB_NIVELACIJA; its query QRY_ROB_NIV is covered by the query of the opšti
 // dokumenti), ready to print, in the order of the nalozi, of the documents and of the stavke as entered:
@@ -2016,7 +2024,8 @@ func (s *RobnoDokumentaResource) stampaOpstiDokumenti(ctx context.Context, param
 		where f.god = rdok.god and f.kar = rdok.kar and f.konto = rdok.pkto and f.sifra = rdok.pana
 		order by f.vkonta desc, f.idfkpl limit 1) grd on true`)
 	// The magacin the goods go to (the prenosnica) and the decimals of the jedinica mere of the artikal.
-	qb.AddJoin(" left join magacini mg1 on mg1.god = rdok.god and mg1.kar = rdok.kar and mg1.mag = rdok.magid1 and coalesce(rdok.magid1, 0) <> 0")
+	// The magacin the goods go to is rdok.magid1, its magaciniid (the legacy Combo_MAGACIN of rob_Prenosnice).
+	qb.AddJoin(" left join magacini mg1 on mg1.magaciniid = rdok.magid1 and coalesce(rdok.magid1, 0) <> 0")
 	qb.AddJoin(` left join lateral (select j.brdecimala from jedmere j
 		where j.god = rpro.god and j.kar = rpro.kar and j.jm = coalesce(nullif(rsif.jm, ''), rpro.jm)
 		order by j.jedmereid limit 1) jm on true`)

@@ -161,6 +161,38 @@ var searchDefinitions = map[string]searchDefinition{
 		orderBy:     "m.mag",
 		textColumns: []int{0, 1},
 	},
+	// Magacini where the roba of a prenosnica goes (key the magaciniid): the magacini of the gotovi proizvodi,
+	// the veleprodaja, the rezervni delovi, the sirovine and the poluproizvodi (the legacy ROB_QRY_MAG with
+	// "G;V;D;S;L" of rob_Prenosnice).
+	"magacini-prenosa": {
+		headers: []domain.Fields{
+			{Label: "Magacin", Width: "15%", TextAlign: "right"},
+			{Label: "Opis"},
+		},
+		query:       `select m.magaciniid::text as key, m.mag::text as c1, coalesce(m.opis, '') as c2 from magacini m`,
+		period:      "m",
+		conditions:  []string{"upper(trim(coalesce(m.tipmag, ''))) in ('G', 'V', 'D', 'S', 'L')"},
+		searchIn:    []string{"m.mag::text", "m.opis"},
+		orderBy:     "m.mag",
+		textColumns: []int{0, 1},
+	},
+	// Konta of a magacin (magkonto, key the konto) with the naziv of the konto; the filter "magacin1" (the
+	// magaciniid) is required: without the magacin only "-" (the konto zaliha where the roba of a prenosnica goes).
+	"konta-magacina": {
+		headers: []domain.Fields{
+			{Label: "Konto", Width: "25%"},
+			{Label: "Naziv"},
+		},
+		query: `select trim(k.konto) as key, trim(k.konto) as c1, coalesce((select f.naziv from fkpl f where f.idfkpl = k.idfkpl), '') as c2
+			from magkonto k`,
+		period:          "k",
+		conditions:      []string{"coalesce(trim(k.konto), '') <> ''"},
+		searchIn:        []string{"k.konto"},
+		filters:         map[string][]string{"k.magaciniid::text": {"magacin1"}},
+		requiredFilters: []string{"k.magaciniid::text"},
+		orderBy:         "k.magkontoid",
+		textColumns:     []int{0, 1},
+	},
 	// Kontni plan: the konta of the kontni plan of the kind the screen sends as "vkonta" (2 the konta,
 	// 3 the sintetička konta; without it all the konta, not the analitika).
 	"kontni-plan": {

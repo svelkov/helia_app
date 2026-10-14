@@ -797,6 +797,9 @@ type RobnoFaktureUI struct {
 
 	// ArtikalURL returns the artikal of a stavka (GET; see FaktureArtikal of the handler).
 	ArtikalURL string
+	// KontoMagacinaURL returns the first konto of a magacin (GET magaciniid: the konto zaliha where the roba of
+	// a prenosnica goes when its magacin is selected).
+	KontoMagacinaURL string
 }
 
 // RobnoStampaFakturaView is the printed invoice of the "Fakture veleprodaje" screen (the legacy

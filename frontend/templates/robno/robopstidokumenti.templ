@@ -28,6 +28,22 @@ templ Rob_OpstiDokumenti(ui domain.RobnoFaktureUI, header domain.RobnoOpstiHeade
 	<!-- The messages of the screen -->
 	<div id={ ui.InfoID }></div>
 	@RobnoFaktureScript()
+	if header.SamoPregled {
+		<!-- The kontra dokument of the prenosnica (the legacy vrsta 113): it is made by the prenosnica izlaz, so
+		     the tab of the entry is disabled and "Pregled" is shown (the legacy TAB_tAB1[1]..State = Grayed) -->
+		<script data-dialog={ ui.DialogID }>
+			(function (dialogID) {
+				const dialog = document.getElementById(dialogID);
+				if (!dialog) return;
+				const unos = dialog.querySelector('[data-robno-tab="0"]');
+				if (unos) {
+					unos.disabled = true;
+					unos.classList.add('opacity-50', 'cursor-not-allowed');
+				}
+				robnoDokumentTab(dialogID, 1);
+			})(document.currentScript.dataset.dialog);
+		</script>
+	}
 	<!-- restrictNumericInput / cleanNumberInput of the numbers of the stavke (FieldType "number") -->
 	@tmpl.RestrictNumericInputScript()
 	@robOpstiScript.Once() {
@@ -44,6 +60,22 @@ func robOpstiNaslov(header domain.RobnoOpstiHeaderView, i int) string {
 	if header.Niv {
 		naslovi = []string{"Nivelacija prodaja", "Nivelacije veleprodaja", "Pregled nivelacija"}
 	}
+	// The prenosnice (rob_Prenosnice): the izlaz and its kontra dokument, the ulaz.
+	if header.Pre || header.SamoPregled {
+		naslovi = []string{"Prenosnice", "Prenosnice", "Pregled prenosnica"}
+	}
+	// The zaduženja gradilišta (rob_ZadauzGRADILISTA).
+	if header.Grd {
+		naslovi = []string{"Zaduženja gradilišta", "Zaduženja gradilišta", "Pregled zaduženja"}
+	}
+	// The trebovanja (rob_Trebovanja).
+	if header.Otr {
+		naslovi = []string{"Trebovanja", "Trebovanja", "Pregled trebovanja"}
+	}
+	// The popis u toku godine (rob_opsti_dokPOPIS).
+	if header.Ptg {
+		naslovi = []string{"Popis u toku godine", "Popis u toku godine", "Pregled popisa"}
+	}
 	return naslovi[i]
 }
 
@@ -57,6 +89,7 @@ templ RobOpstiBody(ui domain.RobnoFaktureUI, header domain.RobnoOpstiHeaderView,
 		data-stavke-aktivne={ robnoFaktureState(header.Snimljen) }
 		data-dokument-url={ ui.DokumentURL }
 		data-novi-url={ ui.NoviURL }
+		data-konto-magacina-url={ ui.KontoMagacinaURL }
 		data-rnalid={ strconv.FormatInt(header.RnalID, 10) }
 		data-vrd={ header.Vrd }
 		data-header-panel={ ui.HeaderPanelID }
@@ -70,7 +103,7 @@ templ RobOpstiBody(ui domain.RobnoFaktureUI, header domain.RobnoOpstiHeaderView,
 		<fieldset class="border border-blue-400 bg-blue-100">
 			@RobnoFaktureReadOnlyStrip(robnoFaktureNalogStripFields(header.RobnoFaktureHeaderView, translator))
 		</fieldset>
-		@robOpstiDeo(ui.HeaderPanelID, translator.Label("Podaci o dokumentu"), !header.Snimljen, false, btns.Save.Id, RobOpstiHeaderFields(header, translator), RobOpstiHeaderButtons(header, btns))
+		@robOpstiDeo(ui.HeaderPanelID, translator.Label("Podaci o dokumentu"), !header.Snimljen, false, btns.Save.Id, RobOpstiHeaderFields(header, translator), RobOpstiHeaderButtons(header, btns, translator))
 		@robOpstiDeo(ui.StavkePanelID, translator.Label(robOpstiStavkeNaslov(header)), header.Snimljen, true, btns.SaveStavka.Id, RobOpstiStavkeFields(ui, header, stavka, tbl, btns, translator), templ.NopComponent)
 		<!-- The dialogs of the stavke (an error of the save, the confirmation of the deletion) -->
 		<div id={ ui.StavkaInfoID } class="contents"></div>
@@ -188,6 +221,10 @@ templ RobOpstiHeaderFields(header domain.RobnoOpstiHeaderView, translator *i18n.
 					MaxLength:  "120",
 					TabIndex:   "5"})
 			</div>
+			<!-- A prenosnica: the org. jedinica and the mesto troška of the document under the opis -->
+			if header.Pre {
+				@robOpstiOrgjed("idorgjed", "mestotrid", translator.Label("OJ"), translator.Label("Mesto troška"), header.Orgejed, header.OrgjedText, header.MestoTroska, header.MestoTroskaText, "6", common.ClassLabel+" w-40", translator)
+			}
 			<!-- The protivstav konto (fkpl.vkonta 2) with its naziv, and its analitička šifra (not of a FIN or a KOL) -->
 			if !header.BezProtivstava() {
 				<div class="flex items-center gap-1 min-w-0">
@@ -234,9 +271,19 @@ templ RobOpstiHeaderFields(header domain.RobnoOpstiHeaderView, translator *i18n.
 		<!-- The org. jedinica and the mesto troška of the document and of the roba (where the roba goes; not of a
 		     FIN or a KOL); a nivelacija (MNV) has none -->
 		<div class={ "flex flex-col gap-1 min-w-0 " + robUslugeVidljivo(!header.Mnv) }>
-			@robOpstiOrgjed("idorgjed", "mestotrid", translator.Label("OJ"), translator.Label("Mesto troška"), header.Orgejed, header.OrgjedText, header.MestoTroska, header.MestoTroskaText, "8", translator)
-			if !header.BezProtivstava() {
-				@robOpstiOrgjed("idorgjed1", "mestotrid1", translator.Label("OJ gde ide roba"), translator.Label("M. troška gde ide roba"), header.Orgjed1, header.Orgjed1Text, header.MestoTroska1, header.MestoTroska1Text, "10", translator)
+			if header.Pre {
+				@robOpstiPrenos(header, translator)
+			} else {
+				@robOpstiOrgjed("idorgjed", "mestotrid", translator.Label("OJ"), translator.Label("Mesto troška"), header.Orgejed, header.OrgjedText, header.MestoTroska, header.MestoTroskaText, "8", common.ClassLabel+" w-44", translator)
+				if !header.BezProtivstava() {
+					@robOpstiOrgjed("idorgjed1", "mestotrid1", translator.Label("OJ gde ide roba"), translator.Label("M. troška gde ide roba"), header.Orgjed1, header.Orgjed1Text, header.MestoTroska1, header.MestoTroska1Text, "10", common.ClassLabel+" w-44", translator)
+				}
+				if header.Grd {
+					@robOpstiGradiliste(header, translator)
+				}
+				if header.Ptg {
+					@robOpstiRadnik(header, translator)
+				}
 			}
 		</div>
 	</div>
@@ -244,9 +291,9 @@ templ RobOpstiHeaderFields(header domain.RobnoOpstiHeaderView, translator *i18n.
 
 // robOpstiOrgjed renders an org. jedinica and its mesto troška (the search of the mesta troška of the selected
 // org. jedinica).
-templ robOpstiOrgjed(ojID, mtID, ojLabel, mtLabel string, oj sql.NullInt64, ojText string, mt sql.NullInt64, mtText string, tabIndex string, translator *i18n.Service) {
+templ robOpstiOrgjed(ojID, mtID, ojLabel, mtLabel string, oj sql.NullInt64, ojText string, mt sql.NullInt64, mtText string, tabIndex, classLabel string, translator *i18n.Service) {
 	<div class="flex items-center gap-1 min-w-0">
-		@components.LabelField(domain.LabelFieldConfig{ID: ojID, LabelText: ojLabel, ClassLabel: common.ClassLabel + " w-44"})
+		@components.LabelField(domain.LabelFieldConfig{ID: ojID, LabelText: ojLabel, ClassLabel: classLabel})
 		@components.TableCombo(domain.TableComboConfig{
 			ID:           ojID + "-combo",
 			Name:         ojID,
@@ -263,7 +310,7 @@ templ robOpstiOrgjed(ojID, mtID, ojLabel, mtLabel string, oj sql.NullInt64, ojTe
 		}, translator)
 	</div>
 	<div class="flex items-center gap-1 min-w-0">
-		@components.LabelField(domain.LabelFieldConfig{ID: mtID, LabelText: mtLabel, ClassLabel: common.ClassLabel + " w-44"})
+		@components.LabelField(domain.LabelFieldConfig{ID: mtID, LabelText: mtLabel, ClassLabel: classLabel})
 		@components.TableCombo(domain.TableComboConfig{
 			ID:           mtID + "-combo",
 			Name:         mtID,
@@ -284,9 +331,167 @@ templ robOpstiOrgjed(ojID, mtID, ojLabel, mtLabel string, oj sql.NullInt64, ojTe
 	</div>
 }
 
+// robOpstiPrenos renders where the roba of a prenosnica goes (the right column of the header of the legacy
+// rob_Prenosnice): the magacin (not changed on a saved document), its konto zaliha (the konta of the selected
+// magacin; a new magacin gives its first konto) and the org. jedinica and the mesto troška.
+templ robOpstiPrenos(header domain.RobnoOpstiHeaderView, translator *i18n.Service) {
+	<div class="flex items-center gap-1 min-w-0">
+		@components.LabelField(domain.LabelFieldConfig{ID: "magacin1", LabelText: translator.Label("Magacin gde ide roba"), ClassLabel: common.ClassLabel + " w-48"})
+		@components.TableCombo(domain.TableComboConfig{
+			ID:           "magacin1-combo",
+			Name:         "magacin1",
+			ValueID:      "magacin1",
+			Value:        robnoFaktureNullID(header.Magacin1),
+			DisplayValue: header.Magacin1Text,
+			Placeholder:  "Pretraži po šifri ili nazivu",
+			ClassWrapper: "relative flex-1 min-w-0",
+			ClassInput:   common.ClassInputTextEnabled + " w-full",
+			SearchURL:    "/api/search/magacini-prenosa",
+			HideDetails:  true,
+			Disabled:     header.Magacin1Zakljucan,
+			OnSelect:     "robOpstiMagacin1Izabran",
+			TabIndex:     "8",
+		}, translator)
+	</div>
+	<div class="flex items-center gap-1 min-w-0">
+		@components.LabelField(domain.LabelFieldConfig{ID: "konto1", LabelText: translator.Label("Konto zaliha gde ide roba"), ClassLabel: common.ClassLabel + " w-48"})
+		@components.TableCombo(domain.TableComboConfig{
+			ID:           "konto1-combo",
+			Name:         "konto1",
+			ValueID:      "konto1",
+			Value:        header.Konto1,
+			DisplayValue: header.Konto1Text,
+			Placeholder:  "Pretraži po kontu",
+			ClassWrapper: "relative flex-1 min-w-0",
+			ClassInput:   common.ClassInputTextEnabled + " w-full",
+			// The konta of the selected magacin.
+			SearchURL:   "/api/search/konta-magacina",
+			HxInclude:   "#magacin1",
+			HideDetails: true,
+			TabIndex:    "9",
+		}, translator)
+	</div>
+	@robOpstiOrgjed("idorgjed1", "mestotrid1", translator.Label("OJ gde ide roba"), translator.Label("Mesto troška gde ide roba"), header.Orgjed1, header.Orgjed1Text, header.MestoTroska1, header.MestoTroska1Text, "10", common.ClassLabel+" w-48", translator)
+}
+
+// robOpstiGradiliste renders the gradilište of a zaduženje gradilišta (the legacy EDT_PKTO, EDT_PANA and
+// EDT_nazProd of rob_ZadauzGRADILISTA): the konto of the kontni plan, its analitička šifra (the šifre of the
+// konto) and the naziv of the gradilište; of a trebovanje the konto, the analitička šifra and the naziv of the
+// trošak (rob_Trebovanja).
+templ robOpstiGradiliste(header domain.RobnoOpstiHeaderView, translator *i18n.Service) {
+	<div class="flex items-center gap-1 min-w-0">
+		@components.LabelField(domain.LabelFieldConfig{ID: "pkto", LabelText: translator.Label(robOpstiGradilisteLabela(header, 0)), ClassLabel: common.ClassLabel + " w-44"})
+		@components.TableCombo(domain.TableComboConfig{
+			ID:           "pkto-combo",
+			Name:         "pkto",
+			ValueID:      "pkto",
+			Value:        header.Pkto,
+			DisplayValue: header.Pkto,
+			Placeholder:  "Pretraži po kontu ili nazivu",
+			ClassInput:   common.ClassInputTextEnabled + " w-full",
+			ClassWrapper: "!w-32 shrink-0",
+			SearchURL:    "/api/search/konta",
+			AllowEmpty:   true,
+			HideDetails:  true,
+			OnSelect:     "robOpstiPktoIzabran",
+			TabIndex:     "10",
+		}, translator)
+		@components.LabelField(domain.LabelFieldConfig{ID: "pana", LabelText: translator.Label(robOpstiGradilisteLabela(header, 1)), ClassLabel: common.ClassLabel + " pl-2"})
+		@components.TableCombo(domain.TableComboConfig{
+			ID:           "pana-combo",
+			Name:         "pana",
+			ValueID:      "pana",
+			Value:        header.Pana,
+			DisplayValue: header.Pana,
+			Placeholder:  "Pretraži po šifri ili nazivu",
+			ClassInput:   common.ClassInputTextEnabled + " w-full",
+			ClassWrapper: "relative flex-1 min-w-0",
+			// The šifre of the konto of the gradilište (the parameter pkto of the search).
+			SearchURL:   "/api/search/analitika",
+			HxInclude:   "#pkto",
+			AllowEmpty:  true,
+			HideDetails: true,
+			OnSelect:    "robOpstiPanaIzabrana",
+			TabIndex:    "11",
+		}, translator)
+	</div>
+	<div class="flex items-center gap-1 min-w-0">
+		@components.LabelField(domain.LabelFieldConfig{ID: "gradilistenaziv", LabelText: translator.Label(robOpstiGradilisteLabela(header, 2)), ClassLabel: common.ClassLabel + " w-44"})
+		@components.TextInputField(domain.InputFieldConfig{ID: "gradilistenaziv", FieldType: "text", Value: header.GradilisteNaziv, Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1 min-w-0"})
+	</div>
+}
+
+// robOpstiRadnik renders the radnik of a popis u toku godine (the legacy EDT_PKTO with EDT_NAZKONTO and EDT_PANA
+// with EDT_NAZSIFRE of rob_opsti_dokPOPIS): the konto of the kontni plan with its naziv, its analitička šifra (the
+// šifre of the konto) with its naziv.
+templ robOpstiRadnik(header domain.RobnoOpstiHeaderView, translator *i18n.Service) {
+	<div class="flex items-center gap-1 min-w-0">
+		@components.LabelField(domain.LabelFieldConfig{ID: "pkto", LabelText: translator.Label("Konto radnika"), ClassLabel: common.ClassLabel + " w-44"})
+		@components.TableCombo(domain.TableComboConfig{
+			ID:           "pkto-combo",
+			Name:         "pkto",
+			ValueID:      "pkto",
+			Value:        header.Pkto,
+			DisplayValue: header.Pkto,
+			Placeholder:  "Pretraži po kontu ili nazivu",
+			ClassInput:   common.ClassInputTextEnabled + " w-full",
+			ClassWrapper: "!w-32 shrink-0",
+			SearchURL:    "/api/search/konta",
+			AllowEmpty:   true,
+			HideDetails:  true,
+			OnSelect:     "robOpstiRadnikKonto",
+			TabIndex:     "10",
+		}, translator)
+		@components.TextInputField(domain.InputFieldConfig{ID: "nazivkonta", FieldType: "text", Value: header.PktoNaziv, Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1 min-w-0"})
+	</div>
+	<div class="flex items-center gap-1 min-w-0">
+		@components.LabelField(domain.LabelFieldConfig{ID: "pana", LabelText: translator.Label("Šifra radnika"), ClassLabel: common.ClassLabel + " w-44"})
+		@components.TableCombo(domain.TableComboConfig{
+			ID:           "pana-combo",
+			Name:         "pana",
+			ValueID:      "pana",
+			Value:        header.Pana,
+			DisplayValue: header.Pana,
+			Placeholder:  "Pretraži po šifri ili nazivu",
+			ClassInput:   common.ClassInputTextEnabled + " w-full",
+			ClassWrapper: "!w-32 shrink-0",
+			// The šifre of the konto of the radnik (the parameter pkto of the search).
+			SearchURL:   "/api/search/analitika",
+			HxInclude:   "#pkto",
+			AllowEmpty:  true,
+			HideDetails: true,
+			OnSelect:    "robOpstiRadnikSifra",
+			TabIndex:    "11",
+		}, translator)
+		@components.TextInputField(domain.InputFieldConfig{ID: "nazivsifre", FieldType: "text", Value: header.GradilisteNaziv, Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1 min-w-0"})
+	</div>
+}
+
 // RobOpstiHeaderButtons renders the buttons of the header: "Sačuvaj" (the header processed), "Izmeni" (the
 // stavke processed: back to the header), "Novi dok.", "Štampaj" of a saved document and "Nazad".
-templ RobOpstiHeaderButtons(header domain.RobnoOpstiHeaderView, btns domain.RobnoFaktureButtons) {
+templ RobOpstiHeaderButtons(header domain.RobnoOpstiHeaderView, btns domain.RobnoFaktureButtons, translator *i18n.Service) {
+	if header.Pre {
+		<!-- What the print of the prenosnica shows (the legacy CBOX_NAZIV and CBOX_KOMERCOPIS) -->
+		<div class="mr-auto flex items-center gap-3">
+			@components.CheckboxField(domain.CheckboxFieldConfig{
+				ID:                "nazivustampi",
+				Name:              "naziv",
+				LabelText:         "Naziv artikla u štampi",
+				ClassLabel:        common.ClassCheckboxLabel,
+				ClassCheckbox:     common.ClassCheckbox,
+				ClassCheckboxSpan: common.ClassCheckboxSpan,
+				IsChecked:         true,
+				TabIndex:          "-1"}, translator)
+			@components.CheckboxField(domain.CheckboxFieldConfig{
+				ID:                "komercopis",
+				Name:              "komercopis",
+				LabelText:         "Komercijalni opis u štampi",
+				ClassLabel:        common.ClassCheckboxLabel,
+				ClassCheckbox:     common.ClassCheckbox,
+				ClassCheckboxSpan: common.ClassCheckboxSpan,
+				TabIndex:          "-1"}, translator)
+		</div>
+	}
 	@components.Button(robOpstiDugme(btns.Save, !header.Snimljen))
 	@components.Button(robOpstiDugme(btns.Modify, header.Snimljen))
 	@components.Button(robOpstiDugme(btns.New, !header.Snimljen))
@@ -660,7 +865,16 @@ func robOpstiStavkeNaslov(header domain.RobnoOpstiHeaderView) string {
 }
 
 templ robOpstiStavkeFields(ui domain.RobnoFaktureUI, header domain.RobnoOpstiHeaderView, stavka domain.RobnoOpstiStavka, tbl domain.TableData, btns domain.RobnoFaktureButtons, translator *i18n.Service) {
-	<div id="robno-opsti-stavka" class="flex flex-col" data-artikal-url={ ui.ArtikalURL } data-tipzal={ strconv.Itoa(stavka.Tipzal) } data-nabcena={ robnoFaktureState(stavka.NabCena) }>
+	<div
+		id="robno-opsti-stavka"
+		class="flex flex-col"
+		data-artikal-url={ ui.ArtikalURL }
+		data-tipzal={ strconv.Itoa(stavka.Tipzal) }
+		data-nabcena={ robnoFaktureState(stavka.NabCena) }
+		if stavka.Pre {
+			data-dozmenjaj={ robnoFaktureState(stavka.DozMenjajCenu) }
+		}
+	>
 		<input type="hidden" id="stavkardokid" name="rdokid" value={ strconv.FormatInt(stavka.RdokID, 10) }/>
 		<div class="flex items-center gap-1 min-w-0 mb-1">
 			@components.LabelField(domain.LabelFieldConfig{ID: "kontostavke", LabelText: translator.Label("Konto"), ClassLabel: common.ClassLabel + " w-36"})
@@ -714,19 +928,22 @@ templ robOpstiStavkeFields(ui domain.RobnoFaktureUI, header domain.RobnoOpstiHea
 			</div>
 		</div>
 		<div class="flex items-center gap-1 min-w-0 mb-1">
-			@components.LabelField(domain.LabelFieldConfig{ID: "nabavnacena", LabelText: translator.Label("Nabavna cena"), ClassLabel: common.ClassLabel + " w-36"})
-			@components.TextInputField(domain.InputFieldConfig{
-				ID:            "nabavnacena",
-				Name:          "nabavnacena",
-				FieldType:     "number",
-				SelectOnFocus: true,
-				Value:         "0",
-				DecimalPlaces: 2,
-				ClassInput:    common.ClassInputTextEnabled + " !w-36 shrink-0 text-right",
-				MaxLength:     "18",
-				OnFocus:       "clearFieldError",
-				TabIndex:      "4"})
-			@components.LabelField(domain.LabelFieldConfig{ID: "cenaopd", LabelText: translator.Label(stavka.CenaNaziv), ClassLabel: common.ClassLabelDrugoPolje})
+			<!-- A zaduženje gradilišta has no nabavna cena (its cena is the first field of the row) -->
+			if !stavka.Grd {
+				@components.LabelField(domain.LabelFieldConfig{ID: "nabavnacena", LabelText: translator.Label("Nabavna cena"), ClassLabel: common.ClassLabel + " w-36"})
+				@components.TextInputField(domain.InputFieldConfig{
+					ID:            "nabavnacena",
+					Name:          "nabavnacena",
+					FieldType:     "number",
+					SelectOnFocus: true,
+					Value:         "0",
+					DecimalPlaces: 2,
+					ClassInput:    common.ClassInputTextEnabled + " !w-36 shrink-0 text-right",
+					MaxLength:     "18",
+					OnFocus:       "clearFieldError",
+					TabIndex:      "4"})
+			}
+			@components.LabelField(domain.LabelFieldConfig{ID: "cenaopd", LabelText: translator.Label(stavka.CenaNaziv), ClassLabel: robOpstiCenaLabela(stavka)})
 			@components.TextInputField(domain.InputFieldConfig{
 				ID:            "cenaopd",
 				Name:          "cenaopd",
@@ -740,7 +957,12 @@ templ robOpstiStavkeFields(ui domain.RobnoFaktureUI, header domain.RobnoOpstiHea
 				OnFocus:       "clearFieldError",
 				TabIndex:      "5"})
 		</div>
-		@robOpstiZalihe(stavka.Tipzal != 1, false, "mb-1", "6", translator)
+		if !stavka.Grd {
+			@robOpstiZalihe(stavka.Tipzal != 1, false, "mb-1", "6", translator)
+		} else if stavka.Otr {
+			<!-- A trebovanje: the lot in a magacin of the tip zaliha 2 (the legacy GR_ZALIHE of rob_Trebovanja) -->
+			@robOpstiZalihe(stavka.Tipzal == 2, false, "mb-1", "6", translator)
+		}
 	</div>
 	<!-- "Sačuvaj" of the stavka, between the form and the grid -->
 	<div class="flex items-center justify-end gap-1">
@@ -786,6 +1008,24 @@ templ robOpstiZalihe(vidljivo, readOnly bool, klasa, tabIndex string, translator
 	</div>
 }
 
+// robOpstiGradilisteLabela is the label of the konto (i 0), of the šifra (1) and of the naziv (2) of the gradilište
+// of a zaduženje gradilišta, of the trošak of a trebovanje.
+func robOpstiGradilisteLabela(header domain.RobnoOpstiHeaderView, i int) string {
+	if header.Otr {
+		return []string{"Konto troška", "Analit. šif.", "Naziv troška"}[i]
+	}
+	return []string{"Konto gradilišta", "Šifra gradilišta", "Naziv gradilišta"}[i]
+}
+
+// robOpstiCenaLabela is the class of the label of the cena of the stavke: the second field of its row, the first
+// one of a zaduženje gradilišta (no nabavna cena).
+func robOpstiCenaLabela(stavka domain.RobnoOpstiStavka) string {
+	if stavka.Grd {
+		return common.ClassLabel + " w-36"
+	}
+	return common.ClassLabelDrugoPolje
+}
+
 // robOpstiKlasaUnosa is the class of an input of the stavke: disabled when read only (the zalihe of a nivelacija
 // veleprodaje, the cena of a magacin of the nabavna cena).
 func robOpstiKlasaUnosa(readOnly bool) string {
@@ -825,6 +1065,21 @@ templ robOpstiScriptBody() {
 		function robOpstiBody() {
 			return document.querySelector('[data-opsti-body]');
 		}
+		// The magacin where the roba of a prenosnica goes (OnSelect of its combo): its first konto is the konto
+		// zaliha (the legacy select of Combo_MAGACIN, ListSelectPlus of Combo_MAGKONTO).
+		function robOpstiMagacin1Izabran(comboID, magaciniid) {
+			const body = robOpstiBody();
+			if (typeof tableComboClear === 'function') tableComboClear('konto1-combo');
+			if (!body || !magaciniid) return;
+			fetch(body.dataset.kontoMagacinaUrl + '?' + new URLSearchParams({ magaciniid: magaciniid }), { headers: { 'Accept': 'application/json' } })
+				.then(r => r.json())
+				.then(k => {
+					if (!k || !k.konto) return;
+					robnoUpisi('konto1', k.konto);
+					robnoUpisi('konto1-combo-input', [k.konto, k.naziv].filter(Boolean).join(' - '));
+				})
+				.catch(() => {});
+		}
 		function robOpstiDugme(id, enabled) {
 			const btn = document.getElementById(id);
 			if (!btn) return;
@@ -861,6 +1116,25 @@ templ robOpstiScriptBody() {
 		}
 		function robOpstiTsifraIzabrana(comboID, key, cells) {
 			robnoUpisi('tkontonaziv', cells[2] || '');
+		}
+		// The gradilište of a zaduženje gradilišta: the naziv of its konto, of its šifra (the legacy exits of EDT_PKTO
+		// and EDT_PANA); another konto clears the šifra.
+		function robOpstiPktoIzabran(comboID, key, cells) {
+			robnoUpisi('gradilistenaziv', cells[1] || '');
+			if (typeof tableComboClear === 'function') tableComboClear('pana-combo');
+		}
+		function robOpstiPanaIzabrana(comboID, key, cells) {
+			robnoUpisi('gradilistenaziv', cells[2] || '');
+		}
+		// The radnik of a popis u toku godine: the naziv of its konto and of its šifra (the legacy BTN_Sifra3 and
+		// BTN_Sifra5); another konto clears the šifra.
+		function robOpstiRadnikKonto(comboID, key, cells) {
+			robnoUpisi('nazivkonta', cells[1] || '');
+			robnoUpisi('nazivsifre', '');
+			if (typeof tableComboClear === 'function') tableComboClear('pana-combo');
+		}
+		function robOpstiRadnikSifra(comboID, key, cells) {
+			robnoUpisi('nazivsifre', cells[2] || '');
 		}
 
 		// The iznos of the stavke (the exits of EDT_KOLIC and EDT_CENA); of a nivelacija the efekat: the količina by
@@ -946,6 +1220,12 @@ templ robOpstiScriptBody() {
 					robnoUpisiBroj('cenaopd', a.cena);
 					robnoUpisiBroj('nabavnacena', a.ncena);
 					robnoUpisiBroj('stanjeopd', a.stanje);
+					// A prenosnica: the cena of the stanje is not changed when initable DOZMENJAJCENU says "NE" (the
+					// legacy DozMenjajCenu).
+					if (forma.dataset.dozmenjaj === 'false') {
+						const cena = document.getElementById('cenaopd');
+						if (cena) cena.readOnly = Number(a.cena) > 0;
+					}
 					robOpstiIznos();
 					const kolicina = document.getElementById('kolicina');
 					if (kolicina) kolicina.focus();
@@ -970,6 +1250,11 @@ templ robOpstiScriptBody() {
 				// A new protivstav konto (typed): its šifra and naziv cleared.
 				if (evt.target.id === 'tkonto') {
 					if (typeof tableComboClear === 'function') tableComboClear('tsifra-combo');
+					return;
+				}
+				// A new konto of the gradilište (typed): its šifra cleared.
+				if (evt.target.id === 'pkto') {
+					if (typeof tableComboClear === 'function') tableComboClear('pana-combo');
 					return;
 				}
 				// Another org. jedinica: its mesto troška is chosen again (the search gives the mesta troška of the

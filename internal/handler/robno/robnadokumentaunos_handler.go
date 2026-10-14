@@ -311,7 +311,7 @@ var robnoDokumentaUnosEkrani = map[string]robnoDokumentaUnosEkran{
 	"PRI": {legacy: "rob_Prenosnice", open: (*RobnoDokumentaUnosHandler).otvoriOpstiDokument},
 	"PRU": {legacy: "rob_Prenosnice", open: (*RobnoDokumentaUnosHandler).otvoriOpstiDokument},
 	"GRD": {legacy: "rob_ZadauzGRADILISTA", open: (*RobnoDokumentaUnosHandler).otvoriOpstiDokument},
-	"PRO": {legacy: "rob_ProFakture"},
+	"PRO": {legacy: "rob_ProFakture", open: (*RobnoDokumentaUnosHandler).otvoriProfakturu},
 	"POR": {legacy: "rob_Porudzbenica", open: (*RobnoDokumentaUnosHandler).otvoriPorudzbenicu},
 	"OTR": {legacy: "rob_Trebovanja", open: (*RobnoDokumentaUnosHandler).otvoriOpstiDokument},
 	"KNO": {legacy: "rob_KnjiznoPismoFIN"},
@@ -992,6 +992,8 @@ func (h *RobnoDokumentaUnosHandler) AddRoutes(r *gin.Engine) {
 	// The interni prenosi - dostavnice.
 	h.robnoInterniRoutes(r)
 	h.robnoPorRoutes(r)
+	// The profakture.
+	h.robnoProRoutes(r)
 	// The fakture usluga.
 	h.robnoUslugeRoutes(r)
 	// The opšti dokumenti.

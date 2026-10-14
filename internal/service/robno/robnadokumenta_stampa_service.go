@@ -15,6 +15,7 @@ import (
 	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
+	"helia/internal/infrastructure/db/querybuilder"
 )
 
 //
@@ -139,22 +140,21 @@ func (s *RobnoDokumentaResource) GetStampaRazduzenjeCO(ctx context.Context, para
 		return razduzenja, firma, err
 	}
 	userSession := domain.GetSessionFromStdContext(ctx)
-	qb := common.NewQueryBuilder(`select
-			coalesce(fpro.konto, '') as kupackonto,
-			coalesce(fpro.sifra, '') as kupacsifra,
-			coalesce(sum(case when fpro.kat in (1, 2) then fpro.iznos end), 0) as stanjefakture,
-			coalesce(sum(case when fpro.kat in (3, 4) then fpro.iznos end), 0) as stanjeuplate
-		from fpro`, true)
-	qb.AddEqual("fpro.god", userSession.SelectedGod)
-	qb.AddEqual("fpro.kar", userSession.SelectedKar)
 	var konta []any
 	for _, r := range razduzenja {
 		konta = append(konta, r.KupacKonto)
 	}
-	qb.AddIn("fpro.konto", konta)
-	qb.AddGroupBy("fpro.konto, fpro.sifra")
-	sqlQuery, args := qb.Build()
-	stanja, err := s.stampaFakturaRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	b := querybuilder.New(`select
+			coalesce(fpro.konto, '') as kupackonto,
+			coalesce(fpro.sifra, '') as kupacsifra,
+			coalesce(sum(case when fpro.kat in (1, 2) then fpro.iznos end), 0) as stanjefakture,
+			coalesce(sum(case when fpro.kat in (3, 4) then fpro.iznos end), 0) as stanjeuplate
+		from fpro`).
+		Where("fpro.god = ?", userSession.SelectedGod).
+		Where("fpro.kar = ?", userSession.SelectedKar).
+		AddIn("fpro.konto", konta).
+		GroupBy("fpro.konto", "fpro.sifra")
+	stanja, err := s.stampaFakturaRepo.Select(ctx, b)
 	if err != nil {
 		return nil, firma, err
 	}
@@ -337,7 +337,7 @@ func (s *RobnoDokumentaResource) stampaFakture(ctx context.Context, params domai
 // of the print. The price of a stavka is its fakturna (VP) cena, rpro.fcena (rpro.cena is the
 // nabavna cena and rpro.iznos the nabavna value), and its iznos the količina times that cena.
 func (s *RobnoDokumentaResource) stampaFakturaRows(ctx context.Context, userSession *domain.UserSession, params domain.RobnoStampaFakturaParams) ([]domain.RobnoStampaFakturaRowDto, error) {
-	qb := common.NewQueryBuilder(`
+	b := querybuilder.New(`
 		select
 			rdok.rdokid,
 			coalesce(rdok.tipdok, '') as tipdok,
@@ -413,39 +413,38 @@ func (s *RobnoDokumentaResource) stampaFakturaRows(ctx context.Context, userSess
 			coalesce(rpro.fkto, '') as stavkafkto,
 			coalesce(rpro.fana, '') as stavkafana,
 			coalesce(rsif.naziv, '') as rsifnaziv
-		from rpro`, true)
-	qb.AddJoin("inner join rdok on rdok.rdokid = rpro.rdokid")
-	qb.AddJoin("inner join dokvrsta on dokvrsta.god = rpro.god and dokvrsta.kar = rpro.kar and dokvrsta.vrd = rpro.vrd")
-	qb.AddJoin("left join fkpl on fkpl.god = rdok.god and fkpl.kar = rdok.kar and fkpl.vkonta = 1 and fkpl.konto = rdok.fkto and fkpl.sifra = rdok.fana")
-	qb.AddJoin("left join partneri p on p.idpartneri = fkpl.idpartneri")
-	// The naziv and the jedinica mere of the artikal when the stavka has none of its own (rpro.naz1 is
-	// filled only for the stavke whose naziv was changed on the document).
-	qb.AddJoin("left join rsif on rsif.rsifid = rpro.rsifid")
-	qb.AddJoin("left join komercijalisti kom on kom.komid = rdok.komid")
-	// The cene of the artikal (the taksa, the akciza and the marža of the profaktura) and the decimals of
-	// the jedinica mere of the stavka.
-	qb.AddJoin(`left join lateral (select c.itaksa, c.pakc, c.iakc, c.vma from rcene c
-		where c.rsifid = rpro.rsifid order by c.rceneid limit 1) rc on true`)
-	qb.AddJoin(`left join lateral (select j.brdecimala from jedmere j
+		from rpro`).
+		AddJoin("inner join rdok on rdok.rdokid = rpro.rdokid").
+		AddJoin("inner join dokvrsta on dokvrsta.god = rpro.god and dokvrsta.kar = rpro.kar and dokvrsta.vrd = rpro.vrd").
+		AddJoin("left join fkpl on fkpl.god = rdok.god and fkpl.kar = rdok.kar and fkpl.vkonta = 1 and fkpl.konto = rdok.fkto and fkpl.sifra = rdok.fana").
+		AddJoin("left join partneri p on p.idpartneri = fkpl.idpartneri").
+		// The naziv and the jedinica mere of the artikal when the stavka has none of its own (rpro.naz1 is
+		// filled only for the stavke whose naziv was changed on the document).
+		AddJoin("left join rsif on rsif.rsifid = rpro.rsifid").
+		AddJoin("left join komercijalisti kom on kom.komid = rdok.komid").
+		// The cene of the artikal (the taksa, the akciza and the marža of the profaktura) and the decimals of
+		// the jedinica mere of the stavka.
+		AddJoin(`left join lateral (select c.itaksa, c.pakc, c.iakc, c.vma from rcene c
+		where c.rsifid = rpro.rsifid order by c.rceneid limit 1) rc on true`).
+		AddJoin(`left join lateral (select j.brdecimala from jedmere j
 		where j.god = rpro.god and j.kar = rpro.kar and j.jm = coalesce(nullif(rpro.jm, ''), rsif.jm)
-		order by j.jedmereid limit 1) jm on true`)
-	// The mesto isporuke of the document: the fisp of the kupac (konto and šifra) and of rdok.mi, like
-	// the legacy HReadSeekFirst(FISP, GODKARKONTOSIFRASIFRAMI, ...).
-	qb.AddJoin(`left join lateral (select f.naziv, f.adresa, f.pobro, f.mesto, f.gln from fisp f
+		order by j.jedmereid limit 1) jm on true`).
+		// The mesto isporuke of the document: the fisp of the kupac (konto and šifra) and of rdok.mi, like
+		// the legacy HReadSeekFirst(FISP, GODKARKONTOSIFRASIFRAMI, ...).
+		AddJoin(`left join lateral (select f.naziv, f.adresa, f.pobro, f.mesto, f.gln from fisp f
 		where f.god = rdok.god and f.kar = rdok.kar and f.konto = rdok.fkto and f.sifra = rdok.fana
 			and f.mi = coalesce(rdok.mi, 0)
-		order by f.fispid limit 1) misp on true`)
-	qb.AddJoin("left join banke on banke.god = rdok.god and banke.kar = rdok.kar and banke.sifra = rdok.sifbank::text and coalesce(rdok.sifbank, 0) <> 0")
-	qb.AddJoin("left join porkat on porkat.keykat = rdok.keykat and coalesce(rdok.keykat, '') <> ''")
-	qb.AddJoin(robnoStampaFakturaStopaJoin)
-	robnoStampaDokumentaUslovi(qb, userSession, params)
-	qb.AddIn("dokvrsta.grpdok", grupeDokumenata(params.GrupeDokumenata))
-	// The legacy NOT WL.NumToString(RPRO.SIFRA,'06d') LIKE '99____': the ambalaža (990000-999999) is
-	// printed in its own block.
-	qb.AddCustomCondition("not " + robnoStampaFakturaAmbalazaCondition)
-	qb.AddOrderBy("rdok.rdokid, rpro.rbr")
-	sqlQuery, args := qb.Build()
-	entities, err := s.stampaFakturaRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+		order by f.fispid limit 1) misp on true`).
+		AddJoin("left join banke on banke.god = rdok.god and banke.kar = rdok.kar and banke.sifra = rdok.sifbank::text and coalesce(rdok.sifbank, 0) <> 0").
+		AddJoin("left join porkat on porkat.keykat = rdok.keykat and coalesce(rdok.keykat, '') <> ''").
+		AddJoin(robnoStampaFakturaStopaJoin)
+	robnoStampaDokumentaUslovi(b, userSession, params)
+	b.AddIn("dokvrsta.grpdok", grupeDokumenata(params.GrupeDokumenata)).
+		// The legacy NOT WL.NumToString(RPRO.SIFRA,'06d') LIKE '99____': the ambalaža (990000-999999) is
+		// printed in its own block.
+		Where("not " + robnoStampaFakturaAmbalazaCondition).
+		OrderBy("rdok.rdokid, rpro.rbr")
+	entities, err := s.stampaFakturaRepo.Select(ctx, b)
 	if err != nil {
 		return nil, err
 	}
@@ -467,7 +466,11 @@ const robnoStampaFakturaAmbalazaCondition = "coalesce(rpro.sifra, 0) between 990
 // šifra 99xxxx, the legacy query of the ambalaža), keyed by the rdokid of the faktura and ordered by
 // the šifra.
 func (s *RobnoDokumentaResource) stampaFakturaAmbalaza(ctx context.Context, userSession *domain.UserSession, rdokIDs []any) (map[int64][]domain.RobnoStampaFakturaRowDto, error) {
-	qb := common.NewQueryBuilder(`
+	// AddIn skips an empty list, so without documents there is nothing to read.
+	if len(rdokIDs) == 0 {
+		return map[int64][]domain.RobnoStampaFakturaRowDto{}, nil
+	}
+	b := querybuilder.New(`
 		select
 			rpro.rdokid,
 			coalesce(rpro.rbr, 0) as rbr,
@@ -480,16 +483,15 @@ func (s *RobnoDokumentaResource) stampaFakturaAmbalaza(ctx context.Context, user
 			coalesce(rpro.rab, 0) as rab,
 			coalesce(rpro.iznos, 0) as iznos,
 			coalesce(ps.pp, rpro.pdvpct, 0) as stopa
-		from rpro`, true)
-	qb.AddJoin("left join rsif on rsif.rsifid = rpro.rsifid")
-	qb.AddJoin(robnoStampaFakturaStopaJoin)
-	qb.AddEqual("rpro.god", userSession.SelectedGod)
-	qb.AddEqual("rpro.kar", userSession.SelectedKar)
-	qb.AddIn("rpro.rdokid", rdokIDs)
-	qb.AddCustomCondition(robnoStampaFakturaAmbalazaCondition)
-	qb.AddOrderBy("rpro.rdokid, rpro.sifra")
-	sqlQuery, args := qb.Build()
-	entities, err := s.stampaFakturaRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+		from rpro`).
+		AddJoin("left join rsif on rsif.rsifid = rpro.rsifid").
+		AddJoin(robnoStampaFakturaStopaJoin).
+		Where("rpro.god = ?", userSession.SelectedGod).
+		Where("rpro.kar = ?", userSession.SelectedKar).
+		AddIn("rpro.rdokid", rdokIDs).
+		Where(robnoStampaFakturaAmbalazaCondition).
+		OrderBy("rpro.rdokid, rpro.sifra")
+	entities, err := s.stampaFakturaRepo.Select(ctx, b)
 	if err != nil {
 		return nil, err
 	}
@@ -510,21 +512,20 @@ func (s *RobnoDokumentaResource) stampaFakturaAvansi(ctx context.Context, userSe
 	for broj := range brojevi {
 		dokumenti = append(dokumenti, broj)
 	}
-	qb := common.NewQueryBuilder(`
+	b := querybuilder.New(`
 		select
 			coalesce(rpro.dokum, 0) as dokum,
 			rpro.dadok,
 			coalesce(rpro.iznos, 0) as iznos,
 			coalesce(ps.pp, rpro.pdvpct, 0) as stopa
-		from rpro`, true)
-	qb.AddJoin(robnoStampaFakturaStopaJoin)
-	qb.AddEqual("rpro.god", userSession.SelectedGod)
-	qb.AddEqual("rpro.kar", userSession.SelectedKar)
-	qb.AddEqual("rpro.vrd", robnoStampaFakturaVrdAvans)
-	qb.AddIn("rpro.dokum", dokumenti)
-	qb.AddOrderBy("rpro.dokum, rpro.rbr")
-	sqlQuery, args := qb.Build()
-	entities, err := s.stampaFakturaAvansRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+		from rpro`).
+		AddJoin(robnoStampaFakturaStopaJoin).
+		Where("rpro.god = ?", userSession.SelectedGod).
+		Where("rpro.kar = ?", userSession.SelectedKar).
+		Where("rpro.vrd = ?", robnoStampaFakturaVrdAvans).
+		AddIn("rpro.dokum", dokumenti).
+		OrderBy("rpro.dokum, rpro.rbr")
+	entities, err := s.stampaFakturaAvansRepo.Select(ctx, b)
 	if err != nil {
 		return nil, err
 	}
@@ -534,7 +535,11 @@ func (s *RobnoDokumentaResource) stampaFakturaAvansi(ctx context.Context, userSe
 // stampaFakturaRate returns the rate of the fakture of the print (faktrate), keyed by the rdokid of
 // the faktura.
 func (s *RobnoDokumentaResource) stampaFakturaRate(ctx context.Context, userSession *domain.UserSession, rdokIDs []any) (map[int64][]domain.RobnoStampaFakturaRataDto, error) {
-	qb := common.NewQueryBuilder(`
+	// AddIn skips an empty list, so without documents there is nothing to read.
+	if len(rdokIDs) == 0 {
+		return map[int64][]domain.RobnoStampaFakturaRataDto{}, nil
+	}
+	b := querybuilder.New(`
 		select
 			fr.rdokid,
 			coalesce(fr.rbrrate, 0) as rbrrate,
@@ -542,13 +547,12 @@ func (s *RobnoDokumentaResource) stampaFakturaRate(ctx context.Context, userSess
 			coalesce(fr.procenat, 0) as procenat,
 			coalesce(fr.osnovica, 0) as osnovica,
 			coalesce(fr.pdv, 0) as pdv
-		from faktrate fr`, true)
-	qb.AddEqual("fr.god", userSession.SelectedGod)
-	qb.AddEqual("fr.kar", userSession.SelectedKar)
-	qb.AddIn("fr.rdokid", rdokIDs)
-	qb.AddOrderBy("fr.rdokid, fr.rbrrate")
-	sqlQuery, args := qb.Build()
-	entities, err := s.stampaFakturaRateRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+		from faktrate fr`).
+		Where("fr.god = ?", userSession.SelectedGod).
+		Where("fr.kar = ?", userSession.SelectedKar).
+		AddIn("fr.rdokid", rdokIDs).
+		OrderBy("fr.rdokid, fr.rbrrate")
+	entities, err := s.stampaFakturaRateRepo.Select(ctx, b)
 	if err != nil {
 		return nil, err
 	}
@@ -563,7 +567,7 @@ func (s *RobnoDokumentaResource) stampaFakturaRate(ctx context.Context, userSess
 // vrsta dokumenta): the firm (fvr) of the session with its tekući računi (the banke not flagged
 // nafakne) and its logo.
 func (s *RobnoDokumentaResource) stampaFirma(ctx context.Context, userSession *domain.UserSession) (domain.RobnoStampaFakturaFirmaDto, error) {
-	qb := common.NewQueryBuilder(`
+	b := querybuilder.New(`
 		select
 			coalesce(fvr.naziv, '') as naziv,
 			coalesce(fvr.adresa, '') as adresa,
@@ -590,12 +594,11 @@ func (s *RobnoDokumentaResource) stampaFirma(ctx context.Context, userSession *d
 				from banke b
 				where b.god = fvr.god and b.kar = fvr.kar and not coalesce(b.nafakne, false)), '') as bankenazivi,
 			fvr.logofirme as logo
-		from fvr`, true)
-	qb.AddEqual("fvr.god", userSession.SelectedGod)
-	qb.AddEqual("fvr.kar", userSession.SelectedKar)
-	qb.AddEqual("fvr.naziv", userSession.Firma)
-	sqlQuery, args := qb.Build()
-	entities, err := s.stampaFakturaFirmaRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+		from fvr`).
+		Where("fvr.god = ?", userSession.SelectedGod).
+		Where("fvr.kar = ?", userSession.SelectedKar).
+		Where("fvr.naziv = ?", userSession.Firma) // the key of the firm: never skipped
+	entities, err := s.stampaFakturaFirmaRepo.Select(ctx, b)
 	if err != nil {
 		return domain.RobnoStampaFakturaFirmaDto{}, err
 	}
@@ -610,13 +613,12 @@ func (s *RobnoDokumentaResource) stampaFakturaMagacin(ctx context.Context, userS
 	if magaciniID == 0 {
 		return robnoStampaFakturaMagacin{}, nil
 	}
-	qb := common.NewQueryBuilder(`select magaciniid, mag, coalesce(mesto, '') as mesto, coalesce(adresa, '') as adresa,
-		coalesce(opis, '') as opis, coalesce(tel, '') as tel, coalesce(email, '') as email from magacini`, true)
-	qb.AddEqual("god", userSession.SelectedGod)
-	qb.AddEqual("kar", userSession.SelectedKar)
-	qb.AddEqual("magaciniid", magaciniID)
-	sqlQuery, args := qb.Build()
-	entities, err := s.magRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	b := querybuilder.New(`select magaciniid, mag, coalesce(mesto, '') as mesto, coalesce(adresa, '') as adresa,
+		coalesce(opis, '') as opis, coalesce(tel, '') as tel, coalesce(email, '') as email from magacini`).
+		Where("god = ?", userSession.SelectedGod).
+		Where("kar = ?", userSession.SelectedKar).
+		Where("magaciniid = ?", magaciniID)
+	entities, err := s.magRepo.Select(ctx, b)
 	if err != nil {
 		return robnoStampaFakturaMagacin{}, err
 	}
@@ -644,12 +646,11 @@ func (s *RobnoDokumentaResource) stampaFakturaGrupa(ctx context.Context, userSes
 	if err != nil {
 		return "", nil
 	}
-	qb := common.NewQueryBuilder("select coalesce(grpdok, '') as grpdok from dokvrsta", true)
-	qb.AddEqual("god", userSession.SelectedGod)
-	qb.AddEqual("kar", userSession.SelectedKar)
-	qb.AddEqual("vrd", vrd)
-	sqlQuery, args := qb.Build()
-	entities, err := s.dokvrstaRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	b := querybuilder.New("select coalesce(grpdok, '') as grpdok from dokvrsta").
+		Where("god = ?", userSession.SelectedGod).
+		Where("kar = ?", userSession.SelectedKar).
+		Where("vrd = ?", vrd)
+	entities, err := s.dokvrstaRepo.Select(ctx, b)
 	if err != nil {
 		return "", err
 	}
@@ -1301,7 +1302,7 @@ func (s *RobnoDokumentaResource) stampaFakturaIzvoz(ctx context.Context, params 
 	if err != nil {
 		return nil, firma, err
 	}
-	qb := common.NewQueryBuilder(`
+	b := querybuilder.New(`
 		select
 			rdok.rdokid,
 			coalesce(rdok.vrd, 0) as vrd,
@@ -1361,35 +1362,34 @@ func (s *RobnoDokumentaResource) stampaFakturaIzvoz(ctx context.Context, params 
 			coalesce(rpro.kolic, 0) as kolic,
 			coalesce(rpro.cenaval, 0) as cenaval,
 			coalesce(rpro.rab, 0) as rab
-		from rpro`, true)
-	qb.AddJoin("inner join rdok on rdok.rdokid = rpro.rdokid")
-	qb.AddJoin("left join rsif on rsif.rsifid = rpro.rsifid")
-	qb.AddJoin("left join valute on valute.sifval = rdok.sifval")
-	qb.AddJoin("left join komercijalisti kom on kom.komid = rdok.komid")
-	// The kupac: the partner of the first fkpl of the konto and šifra of the document.
-	qb.AddJoin(`left join lateral (select f.idpartneri from fkpl f
+		from rpro`).
+		AddJoin("inner join rdok on rdok.rdokid = rpro.rdokid").
+		AddJoin("left join rsif on rsif.rsifid = rpro.rsifid").
+		AddJoin("left join valute on valute.sifval = rdok.sifval").
+		AddJoin("left join komercijalisti kom on kom.komid = rdok.komid").
+		// The kupac: the partner of the first fkpl of the konto and šifra of the document.
+		AddJoin(`left join lateral (select f.idpartneri from fkpl f
 		where f.god = rdok.god and f.kar = rdok.kar and f.konto = rdok.fkto and f.sifra = rdok.fana
-		order by f.vkonta desc, f.idfkpl limit 1) kup on true`)
-	qb.AddJoin("left join partneri p on p.idpartneri = kup.idpartneri")
-	// The destination: the fisp of the kupac and of rdok.mi.
-	qb.AddJoin(`left join lateral (select f.naziv, f.adresa, f.pobro, f.mesto, f.gln from fisp f
+		order by f.vkonta desc, f.idfkpl limit 1) kup on true`).
+		AddJoin("left join partneri p on p.idpartneri = kup.idpartneri").
+		// The destination: the fisp of the kupac and of rdok.mi.
+		AddJoin(`left join lateral (select f.naziv, f.adresa, f.pobro, f.mesto, f.gln from fisp f
 		where f.god = rdok.god and f.kar = rdok.kar and f.konto = rdok.fkto and f.sifra = rdok.fana
 			and f.mi = coalesce(rdok.mi, 0)
-		order by f.fispid limit 1) misp on true`)
-	// The bank instructions of the document (bnkizv of rdok.sifbank).
-	qb.AddJoin(`left join lateral (select b.bnkdes, b.swiftadr, b.brojrac, b.beneficiary, b.corrbank from bnkizv b
+		order by f.fispid limit 1) misp on true`).
+		// The bank instructions of the document (bnkizv of rdok.sifbank).
+		AddJoin(`left join lateral (select b.bnkdes, b.swiftadr, b.brojrac, b.beneficiary, b.corrbank from bnkizv b
 		where b.god = rdok.god and b.kar = rdok.kar and b.sifbank = rdok.sifbank
 		order by b.bnkizvid limit 1) bnk on true`)
-	robnoStampaDokumentaUslovi(qb, userSession, params)
+	robnoStampaDokumentaUslovi(b, userSession, params)
 	// The izvozna faktura without the ambalaža (the profaktura prints every stavka, by rproid).
 	if proforma {
-		qb.AddOrderBy("rdok.rdokid, rpro.rproid")
+		b.OrderBy("rdok.rdokid, rpro.rproid")
 	} else {
-		qb.AddCustomCondition("coalesce(rpro.sifra, 0) < 990000")
-		qb.AddOrderBy("rdok.rdokid, rpro.rbr")
+		b.Where("coalesce(rpro.sifra, 0) < 990000").
+			OrderBy("rdok.rdokid, rpro.rbr")
 	}
-	sqlQuery, args := qb.Build()
-	rows, err := s.stampaFakturaIzvozRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	rows, err := s.stampaFakturaIzvozRepo.Select(ctx, b)
 	if err != nil {
 		return nil, firma, err
 	}
@@ -1723,32 +1723,32 @@ func robnoStampaWinDevDatumFormat(days int64, layout string) string {
 // selection common to the prints of every vrsta dokumenta: the period of the session, the vrsta naloga,
 // the ranges of the broj naloga, of the broj dokumenta and of the vrsta dokumenta, the magacin, the
 // selected document (RdokID), the vrsta dokumenta (Vrd) and the range of the datum naloga.
-func robnoStampaDokumentaUslovi(qb *common.QueryBuilder, userSession *domain.UserSession, params domain.RobnoStampaFakturaParams) {
-	robnoStampaDokumentaUsloviTabele(qb, userSession, params, "rpro")
+func robnoStampaDokumentaUslovi(b *querybuilder.Builder, userSession *domain.UserSession, params domain.RobnoStampaFakturaParams) {
+	robnoStampaDokumentaUsloviTabele(b, userSession, params, "rpro")
 }
 
 // robnoStampaDokumentaUsloviTabele adds the common selection of the prints (see
 // robnoStampaDokumentaUslovi) on the columns of the table t: rpro for the prints of the stavke, rdok for
 // the prints of the documents without stavke.
-func robnoStampaDokumentaUsloviTabele(qb *common.QueryBuilder, userSession *domain.UserSession, params domain.RobnoStampaFakturaParams, t string) {
-	qb.AddEqual(t+".god", userSession.SelectedGod)
-	qb.AddEqual(t+".kar", userSession.SelectedKar)
-	qb.AddEqual("rdok.tipdok", params.Tipdok)
-	addNumberCondition(qb, t+".nalog", params.OdNaloga, ">=")
-	addNumberCondition(qb, t+".nalog", params.DoNaloga, "<=")
-	addNumberCondition(qb, t+".dokum", params.OdDokum, ">=")
-	addNumberCondition(qb, t+".dokum", params.DoDokum, "<=")
-	addNumberCondition(qb, t+".vrd", params.OdVrd, ">=")
-	addNumberCondition(qb, t+".vrd", params.DoVrd, "<=")
+func robnoStampaDokumentaUsloviTabele(b *querybuilder.Builder, userSession *domain.UserSession, params domain.RobnoStampaFakturaParams, t string) {
+	b.Where(t+".god = ?", userSession.SelectedGod).
+		Where(t+".kar = ?", userSession.SelectedKar).
+		AddEqual("rdok.tipdok", params.Tipdok) // optional: an empty vrsta naloga selects every vrsta
+	addNumberCondition(b, t+".nalog", params.OdNaloga, ">=")
+	addNumberCondition(b, t+".nalog", params.DoNaloga, "<=")
+	addNumberCondition(b, t+".dokum", params.OdDokum, ">=")
+	addNumberCondition(b, t+".dokum", params.DoDokum, "<=")
+	addNumberCondition(b, t+".vrd", params.OdVrd, ">=")
+	addNumberCondition(b, t+".vrd", params.DoVrd, "<=")
 	if params.MagaciniID != 0 {
-		qb.AddEqual(t+".magaciniid", params.MagaciniID)
+		b.Where(t+".magaciniid = ?", params.MagaciniID)
 	}
 	if params.RdokID != 0 {
-		qb.AddEqual("rdok.rdokid", params.RdokID)
+		b.Where("rdok.rdokid = ?", params.RdokID)
 	}
-	addNumberCondition(qb, t+".vrd", params.Vrd, "=")
-	qb.AddCondition("rdok.danal", params.OdDanal, ">=")
-	qb.AddCondition("rdok.danal", params.DoDanal, "<=")
+	addNumberCondition(b, t+".vrd", params.Vrd, "=")
+	b.AddCondition("rdok.danal", params.OdDanal, ">=").
+		AddCondition("rdok.danal", params.DoDanal, "<=")
 }
 
 // GetStampaDokument returns what the print of the "Štampa" sub-tab needs to choose the print of a robni
@@ -1760,9 +1760,9 @@ func (s *RobnoDokumentaResource) GetStampaDokument(ctx context.Context, rdokID i
 	if userSession == nil {
 		return domain.RobnoStampaDokumentDto{}, fmt.Errorf("no user session found")
 	}
-	var qb *common.QueryBuilder
+	var b *querybuilder.Builder
 	if rdokID != 0 {
-		qb = common.NewQueryBuilder(`
+		b = querybuilder.New(`
 			select
 				rdok.rdokid,
 				coalesce(rdok.vrd, 0) as vrd,
@@ -1774,17 +1774,17 @@ func (s *RobnoDokumentaResource) GetStampaDokument(ctx context.Context, rdokID i
 					limit 1), 0) as domacavaluta,
 				coalesce(rdok.knjige_1, '') as knjige,
 				exists (select 1 from rpro where rpro.rdokid = rdok.rdokid) as imastavke
-			from rdok`, true)
-		qb.AddJoin("left join dokvrsta on dokvrsta.god = rdok.god and dokvrsta.kar = rdok.kar and dokvrsta.vrd = rdok.vrd")
-		qb.AddEqual("rdok.god", userSession.SelectedGod)
-		qb.AddEqual("rdok.kar", userSession.SelectedKar)
-		qb.AddEqual("rdok.rdokid", rdokID)
+			from rdok`).
+			AddJoin("left join dokvrsta on dokvrsta.god = rdok.god and dokvrsta.kar = rdok.kar and dokvrsta.vrd = rdok.vrd").
+			Where("rdok.god = ?", userSession.SelectedGod).
+			Where("rdok.kar = ?", userSession.SelectedKar).
+			Where("rdok.rdokid = ?", rdokID)
 	} else {
 		vrsta, err := strconv.Atoi(strings.TrimSpace(vrd))
 		if err != nil {
 			return domain.RobnoStampaDokumentDto{}, nil
 		}
-		qb = common.NewQueryBuilder(`
+		b = querybuilder.New(`
 			select
 				0::bigint as rdokid,
 				coalesce(dokvrsta.vrd, 0) as vrd,
@@ -1795,13 +1795,12 @@ func (s *RobnoDokumentaResource) GetStampaDokument(ctx context.Context, rdokID i
 				0::bigint as domacavaluta,
 				'' as knjige,
 				false as imastavke
-			from dokvrsta`, true)
-		qb.AddEqual("dokvrsta.god", userSession.SelectedGod)
-		qb.AddEqual("dokvrsta.kar", userSession.SelectedKar)
-		qb.AddEqual("dokvrsta.vrd", vrsta)
+			from dokvrsta`).
+			Where("dokvrsta.god = ?", userSession.SelectedGod).
+			Where("dokvrsta.kar = ?", userSession.SelectedKar).
+			Where("dokvrsta.vrd = ?", vrsta)
 	}
-	sqlQuery, args := qb.Build()
-	entities, err := s.stampaDokumentRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.stampaDokumentRepo.Select(ctx, b)
 	if err != nil {
 		return domain.RobnoStampaDokumentDto{}, err
 	}
@@ -1957,7 +1956,7 @@ func (s *RobnoDokumentaResource) stampaOpstiDokumenti(ctx context.Context, param
 	if err != nil {
 		return nil, firma, err
 	}
-	qb := common.NewQueryBuilder(`select
+	b := querybuilder.New(`select
 			rdok.rdokid,
 			coalesce(rdok.tipdok, '') as tipdok,
 			coalesce(rdok.nalog, 0) as nalog,
@@ -2002,37 +2001,36 @@ func (s *RobnoDokumentaResource) stampaOpstiDokumenti(ctx context.Context, param
 			coalesce(rpro.ncena, 0) as ncena,
 			coalesce(rpro.cena, 0) as cena,
 			coalesce(rpro.iznos, 0) as iznos
-		from rpro`, true)
-	qb.AddJoin(" inner join rdok on rdok.rdokid = rpro.rdokid")
-	qb.AddJoin(" left join dokvrsta on dokvrsta.god = rdok.god and dokvrsta.kar = rdok.kar and dokvrsta.vrd = rdok.vrd")
-	qb.AddJoin(" left join rsif on rsif.rsifid = rpro.rsifid")
-	qb.AddJoin(" left join magacini mg on mg.god = rdok.god and mg.kar = rdok.kar and mg.mag = rdok.mag")
-	qb.AddJoin(" left join orgjed oj on oj.idorgjed = rdok.idorgjed")
-	qb.AddJoin(" left join mestotr mt on mt.mestotrid = rdok.mestotrid")
-	qb.AddJoin(" left join orgjed oj1 on oj1.idorgjed = rdok.idorgjed1")
-	qb.AddJoin(" left join mestotr mt1 on mt1.mestotrid = rdok.mestotrid1")
-	// The radnik of the zaduženje sitnog inventara: the sintetički konto (vkonta 2) of rdok.pkto and the
-	// analitički konto (vkonta 1) of rdok.pkto and rdok.pana.
-	qb.AddJoin(` left join lateral (select f.naziv from fkpl f
+		from rpro`).
+		AddJoin("inner join rdok on rdok.rdokid = rpro.rdokid").
+		AddJoin("left join dokvrsta on dokvrsta.god = rdok.god and dokvrsta.kar = rdok.kar and dokvrsta.vrd = rdok.vrd").
+		AddJoin("left join rsif on rsif.rsifid = rpro.rsifid").
+		AddJoin("left join magacini mg on mg.god = rdok.god and mg.kar = rdok.kar and mg.mag = rdok.mag").
+		AddJoin("left join orgjed oj on oj.idorgjed = rdok.idorgjed").
+		AddJoin("left join mestotr mt on mt.mestotrid = rdok.mestotrid").
+		AddJoin("left join orgjed oj1 on oj1.idorgjed = rdok.idorgjed1").
+		AddJoin("left join mestotr mt1 on mt1.mestotrid = rdok.mestotrid1").
+		// The radnik of the zaduženje sitnog inventara: the sintetički konto (vkonta 2) of rdok.pkto and the
+		// analitički konto (vkonta 1) of rdok.pkto and rdok.pana.
+		AddJoin(`left join lateral (select f.naziv from fkpl f
 		where f.god = rdok.god and f.kar = rdok.kar and f.konto = rdok.pkto and f.vkonta = 2
-		order by f.idfkpl limit 1) ktr on true`)
-	qb.AddJoin(` left join lateral (select f.naziv from fkpl f
+		order by f.idfkpl limit 1) ktr on true`).
+		AddJoin(`left join lateral (select f.naziv from fkpl f
 		where f.god = rdok.god and f.kar = rdok.kar and f.vkonta = 1 and f.konto = rdok.pkto and f.sifra = rdok.pana
-		order by f.idfkpl limit 1) rad on true`)
-	// The gradilište of the zaduženje gradilišta: the fkpl of rdok.pkto and rdok.pana.
-	qb.AddJoin(` left join lateral (select f.naziv from fkpl f
+		order by f.idfkpl limit 1) rad on true`).
+		// The gradilište of the zaduženje gradilišta: the fkpl of rdok.pkto and rdok.pana.
+		AddJoin(`left join lateral (select f.naziv from fkpl f
 		where f.god = rdok.god and f.kar = rdok.kar and f.konto = rdok.pkto and f.sifra = rdok.pana
-		order by f.vkonta desc, f.idfkpl limit 1) grd on true`)
-	// The magacin the goods go to (the prenosnica) and the decimals of the jedinica mere of the artikal.
-	// The magacin the goods go to is rdok.magid1, its magaciniid (the legacy Combo_MAGACIN of rob_Prenosnice).
-	qb.AddJoin(" left join magacini mg1 on mg1.magaciniid = rdok.magid1 and coalesce(rdok.magid1, 0) <> 0")
-	qb.AddJoin(` left join lateral (select j.brdecimala from jedmere j
+		order by f.vkonta desc, f.idfkpl limit 1) grd on true`).
+		// The magacin the goods go to (the prenosnica) and the decimals of the jedinica mere of the artikal.
+		// The magacin the goods go to is rdok.magid1, its magaciniid (the legacy Combo_MAGACIN of rob_Prenosnice).
+		AddJoin("left join magacini mg1 on mg1.magaciniid = rdok.magid1 and coalesce(rdok.magid1, 0) <> 0").
+		AddJoin(`left join lateral (select j.brdecimala from jedmere j
 		where j.god = rpro.god and j.kar = rpro.kar and j.jm = coalesce(nullif(rsif.jm, ''), rpro.jm)
 		order by j.jedmereid limit 1) jm on true`)
-	robnoStampaDokumentaUslovi(qb, userSession, params)
-	qb.AddOrderBy(orderBy)
-	sqlQuery, args := qb.Build()
-	rows, err := s.stampaPopisRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	robnoStampaDokumentaUslovi(b, userSession, params)
+	b.OrderBy(orderBy) // a constant list of columns of the callers
+	rows, err := s.stampaPopisRepo.Select(ctx, b)
 	if err != nil {
 		return nil, firma, err
 	}
@@ -2172,7 +2170,7 @@ func (s *RobnoDokumentaResource) stampaKalkulacije(ctx context.Context, params d
 	if err != nil {
 		return nil, firma, err
 	}
-	qb := common.NewQueryBuilder(`select
+	b := querybuilder.New(`select
 			rdok.rdokid,
 			coalesce(rdok.tipdok, '') as tipdok,
 			coalesce(rdok.nalog, 0) as nalog,
@@ -2219,34 +2217,33 @@ func (s *RobnoDokumentaResource) stampaKalkulacije(ctx context.Context, params d
 			coalesce(rdok.pana, '') as pana,
 			coalesce(prod.naziv, '') as prodavnicanaziv,
 			prod.naziv is not null as prodavnicanadjena
-		from rpro`, true)
-	qb.AddJoin(" inner join rdok on rdok.rdokid = rpro.rdokid")
-	qb.AddJoin(" left join rsif on rsif.rsifid = rpro.rsifid")
-	qb.AddJoin(" left join magacini mg on mg.god = rdok.god and mg.kar = rdok.kar and mg.mag = rdok.mag")
-	// The dobavljač: the first fkpl of the konto and šifra of the document (the analitički konto first),
-	// so that a konto and šifra with more fkpl rows does not repeat the stavke.
-	qb.AddJoin(` left join lateral (select f.naziv, f.idpartneri from fkpl f
+		from rpro`).
+		AddJoin("inner join rdok on rdok.rdokid = rpro.rdokid").
+		AddJoin("left join rsif on rsif.rsifid = rpro.rsifid").
+		AddJoin("left join magacini mg on mg.god = rdok.god and mg.kar = rdok.kar and mg.mag = rdok.mag").
+		// The dobavljač: the first fkpl of the konto and šifra of the document (the analitički konto first),
+		// so that a konto and šifra with more fkpl rows does not repeat the stavke.
+		AddJoin(`left join lateral (select f.naziv, f.idpartneri from fkpl f
 		where f.god = rdok.god and f.kar = rdok.kar and f.konto = rdok.fkto and f.sifra = rdok.fana
-		order by f.vkonta desc, f.idfkpl limit 1) dob on true`)
-	qb.AddJoin(" left join partneri p on p.idpartneri = dob.idpartneri")
-	qb.AddJoin(" left join valute on valute.sifval = rdok.sifval")
-	// The poreska tarifa (rpor.pt) and stopa (rpor.pp) of the poreska oznaka of the stavka in force on
-	// the date of the stavka.
-	qb.AddJoin(` left join lateral (select r.pt, r.pp from rpor r
+		order by f.vkonta desc, f.idfkpl limit 1) dob on true`).
+		AddJoin("left join partneri p on p.idpartneri = dob.idpartneri").
+		AddJoin("left join valute on valute.sifval = rdok.sifval").
+		// The poreska tarifa (rpor.pt) and stopa (rpor.pp) of the poreska oznaka of the stavka in force on
+		// the date of the stavka.
+		AddJoin(`left join lateral (select r.pt, r.pp from rpor r
 		where r.po = rpro.po and r.datum <= rpro.dadok
-		order by r.datum desc limit 1) tar on true`)
-	// The prodavnica of the kalkulacija maloprodaje: the fkpl of rdok.pkto and rdok.pana.
-	qb.AddJoin(` left join lateral (select f.naziv from fkpl f
+		order by r.datum desc limit 1) tar on true`).
+		// The prodavnica of the kalkulacija maloprodaje: the fkpl of rdok.pkto and rdok.pana.
+		AddJoin(`left join lateral (select f.naziv from fkpl f
 		where f.god = rdok.god and f.kar = rdok.kar and f.konto = rdok.pkto and f.sifra = rdok.pana
 		order by f.vkonta desc, f.idfkpl limit 1) prod on true`)
-	robnoStampaDokumentaUslovi(qb, userSession, params)
+	robnoStampaDokumentaUslovi(b, userSession, params)
 	if maloprodaja {
-		qb.AddOrderBy("rdok.rdokid, rpro.rproid")
+		b.OrderBy("rdok.rdokid, rpro.rproid")
 	} else {
-		qb.AddOrderBy("rdok.rdokid, rpro.rbr")
+		b.OrderBy("rdok.rdokid, rpro.rbr")
 	}
-	sqlQuery, args := qb.Build()
-	rows, err := s.stampaKalkulacijaRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	rows, err := s.stampaKalkulacijaRepo.Select(ctx, b)
 	if err != nil {
 		return nil, firma, err
 	}
@@ -2259,18 +2256,18 @@ func (s *RobnoDokumentaResource) stampaKalkulacije(ctx context.Context, params d
 				rdokIDs = append(rdokIDs, r.RdokID)
 			}
 		}
-		pq := common.NewQueryBuilder(`select
+		// The rdokids are those of the documents of the session read above.
+		pq := querybuilder.New(`select
 				rppo.rdokid,
 				coalesce(rppo.po, 0) as po,
 				coalesce(sum(rppo.osn), 0) as osn,
 				coalesce(sum(rppo.ppor), 0) as ppor,
 				coalesce(min(rppo.pdv), 0) as pdv
-			from rppo`, true)
-		pq.AddIn("rppo.rdokid", rdokIDs)
-		pq.AddGroupBy("rppo.rdokid, rppo.po")
-		pq.AddOrderBy("rppo.rdokid, rppo.po")
-		pSQL, pArgs := pq.Build()
-		porezi, err := s.stampaKalkulacijaRepo.GetAllCustom(ctx, pSQL, "", pArgs, "", "")
+			from rppo`).
+			AddIn("rppo.rdokid", rdokIDs).
+			GroupBy("rppo.rdokid", "rppo.po").
+			OrderBy("rppo.rdokid, rppo.po")
+		porezi, err := s.stampaKalkulacijaRepo.Select(ctx, pq)
 		if err != nil {
 			return nil, firma, err
 		}
@@ -2608,7 +2605,7 @@ func (s *RobnoDokumentaResource) GetStampaKnjiznoPismo(ctx context.Context, para
 	if err != nil {
 		return nil, firma, err
 	}
-	qb := common.NewQueryBuilder(`
+	b := querybuilder.New(`
 		select
 			rdok.rdokid,
 			coalesce(rdok.tipdok, '') as tipdok,
@@ -2660,30 +2657,29 @@ func (s *RobnoDokumentaResource) GetStampaKnjiznoPismo(ctx context.Context, para
 			coalesce(isp.kolic, 0) as ispravkakolic,
 			coalesce(isp.fcena, 0) as ispravkafcena,
 			coalesce(isp.rab, 0) as ispravkarab
-		from rpro`, true)
-	qb.AddJoin("inner join rdok on rdok.rdokid = rpro.rdokid")
-	qb.AddJoin("left join rsif on rsif.rsifid = rpro.rsifid")
-	qb.AddJoin("left join komercijalisti kom on kom.god = rdok.god and kom.kar = rdok.kar and kom.sifkom = rdok.kom")
-	qb.AddJoin("left join tipknpisma tkp on tkp.tipknjid = rdok.tipknjid")
-	qb.AddJoin("left join rdok vez on vez.rdokid = rdok.vrdokid and coalesce(rdok.vrdokid, 0) <> 0")
-	qb.AddJoin("left join magacini mg on mg.god = rdok.god and mg.kar = rdok.kar and mg.mag = rdok.mag")
-	// The kupac: the partner of the analitički konto (vkonta 1) of the konto and šifra of the document.
-	qb.AddJoin(`left join lateral (select f.idpartneri from fkpl f
+		from rpro`).
+		AddJoin("inner join rdok on rdok.rdokid = rpro.rdokid").
+		AddJoin("left join rsif on rsif.rsifid = rpro.rsifid").
+		AddJoin("left join komercijalisti kom on kom.god = rdok.god and kom.kar = rdok.kar and kom.sifkom = rdok.kom").
+		AddJoin("left join tipknpisma tkp on tkp.tipknjid = rdok.tipknjid").
+		AddJoin("left join rdok vez on vez.rdokid = rdok.vrdokid and coalesce(rdok.vrdokid, 0) <> 0").
+		AddJoin("left join magacini mg on mg.god = rdok.god and mg.kar = rdok.kar and mg.mag = rdok.mag").
+		// The kupac: the partner of the analitički konto (vkonta 1) of the konto and šifra of the document.
+		AddJoin(`left join lateral (select f.idpartneri from fkpl f
 		where f.god = rdok.god and f.kar = rdok.kar and f.vkonta = 1 and f.konto = rdok.fkto and f.sifra = rdok.fana
-		order by f.idfkpl limit 1) kup on true`)
-	qb.AddJoin("left join partneri p on p.idpartneri = kup.idpartneri")
-	qb.AddJoin(`left join lateral (select f.naziv, f.adresa, f.pobro, f.mesto, f.gln from fisp f
+		order by f.idfkpl limit 1) kup on true`).
+		AddJoin("left join partneri p on p.idpartneri = kup.idpartneri").
+		AddJoin(`left join lateral (select f.naziv, f.adresa, f.pobro, f.mesto, f.gln from fisp f
 		where f.god = rdok.god and f.kar = rdok.kar and f.konto = rdok.fkto and f.sifra = rdok.fana
 			and f.mi = coalesce(rdok.mi, 0)
-		order by f.fispid limit 1) misp on true`)
-	// The stavka that corrects this stavka (the legacy HReadSeekFirst(RPRO, RPROID1, ...)).
-	qb.AddJoin(`left join lateral (select r.rproid, r.kolic, r.fcena, r.rab from rpro r
-		where r.rproid1 = rpro.rproid order by r.rproid limit 1) isp on true`)
-	qb.AddJoin(robnoStampaFakturaStopaJoin)
-	robnoStampaDokumentaUslovi(qb, userSession, params)
-	qb.AddOrderBy("rdok.rdokid, rpro.rbr")
-	sqlQuery, args := qb.Build()
-	rows, err := s.stampaKnjiznoPismoRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+		order by f.fispid limit 1) misp on true`).
+		// The stavka that corrects this stavka (the legacy HReadSeekFirst(RPRO, RPROID1, ...)).
+		AddJoin(`left join lateral (select r.rproid, r.kolic, r.fcena, r.rab from rpro r
+		where r.rproid1 = rpro.rproid order by r.rproid limit 1) isp on true`).
+		AddJoin(robnoStampaFakturaStopaJoin)
+	robnoStampaDokumentaUslovi(b, userSession, params)
+	b.OrderBy("rdok.rdokid, rpro.rbr")
+	rows, err := s.stampaKnjiznoPismoRepo.Select(ctx, b)
 	if err != nil {
 		return nil, firma, err
 	}
@@ -2702,7 +2698,9 @@ func (s *RobnoDokumentaResource) GetStampaKnjiznoPismo(ctx context.Context, para
 	}
 	fakturaOf := map[int64][]domain.RobnoStampaKnjiznoPismoFakturaDto{}
 	if len(fakturaIDs) > 0 {
-		fq := common.NewQueryBuilder(`
+		// No god/kar filter: the ids are the vezani dokumenti of the pisma read above, and a knjižno
+		// pismo may correct a faktura of an earlier year.
+		fq := querybuilder.New(`
 			select
 				rdok.rdokid,
 				coalesce(rpro.kolic, 0) as kolic,
@@ -2711,13 +2709,12 @@ func (s *RobnoDokumentaResource) GetStampaKnjiznoPismo(ctx context.Context, para
 				coalesce(ps.pp, rpro.pdvpct, 0) as stopa,
 				coalesce(rdok.ugrabat, 0) as ugrabat,
 				coalesce(rdok.pkase, 0) as pkase
-			from rpro`, true)
-		fq.AddJoin("inner join rdok on rdok.rdokid = rpro.rdokid")
-		fq.AddJoin(robnoStampaFakturaStopaJoin)
-		fq.AddIn("rdok.rdokid", fakturaIDs)
-		fq.AddOrderBy("rpro.rproid")
-		fSQL, fArgs := fq.Build()
-		stavke, err := s.stampaKnjiznoPismoFakturaRepo.GetAllCustom(ctx, fSQL, "", fArgs, "", "")
+			from rpro`).
+			AddJoin("inner join rdok on rdok.rdokid = rpro.rdokid").
+			AddJoin(robnoStampaFakturaStopaJoin).
+			AddIn("rdok.rdokid", fakturaIDs).
+			OrderBy("rpro.rproid")
+		stavke, err := s.stampaKnjiznoPismoFakturaRepo.Select(ctx, fq)
 		if err != nil {
 			return nil, firma, err
 		}
@@ -2976,7 +2973,7 @@ func (s *RobnoDokumentaResource) GetStampaKnjiznoPismoFin(ctx context.Context, p
 	if err != nil {
 		return nil, firma, err
 	}
-	qb := common.NewQueryBuilder(`
+	b := querybuilder.New(`
 		select
 			rdok.rdokid,
 			coalesce(rdok.tipdok, '') as tipdok,
@@ -3015,23 +3012,22 @@ func (s *RobnoDokumentaResource) GetStampaKnjiznoPismoFin(ctx context.Context, p
 			coalesce(misp.pobro, 0) as misppobro,
 			coalesce(misp.mesto, '') as mispmesto,
 			coalesce(nullif(misp.gln, 0)::text, '') as mispgln
-		from rdok`, true)
-	qb.AddJoin("left join dokvrsta on dokvrsta.god = rdok.god and dokvrsta.kar = rdok.kar and dokvrsta.vrd = rdok.vrd")
-	qb.AddJoin("left join komercijalisti kom on kom.god = rdok.god and kom.kar = rdok.kar and kom.sifkom = rdok.kom")
-	qb.AddJoin("left join tipknpisma tkp on tkp.tipknjid = rdok.tipknjid")
-	qb.AddJoin("left join magacini mg on mg.god = rdok.god and mg.kar = rdok.kar and mg.mag = rdok.mag")
-	qb.AddJoin(`left join lateral (select f.idpartneri from fkpl f
+		from rdok`).
+		AddJoin("left join dokvrsta on dokvrsta.god = rdok.god and dokvrsta.kar = rdok.kar and dokvrsta.vrd = rdok.vrd").
+		AddJoin("left join komercijalisti kom on kom.god = rdok.god and kom.kar = rdok.kar and kom.sifkom = rdok.kom").
+		AddJoin("left join tipknpisma tkp on tkp.tipknjid = rdok.tipknjid").
+		AddJoin("left join magacini mg on mg.god = rdok.god and mg.kar = rdok.kar and mg.mag = rdok.mag").
+		AddJoin(`left join lateral (select f.idpartneri from fkpl f
 		where f.god = rdok.god and f.kar = rdok.kar and f.vkonta = 1 and f.konto = rdok.fkto and f.sifra = rdok.fana
-		order by f.idfkpl limit 1) kup on true`)
-	qb.AddJoin("left join partneri p on p.idpartneri = kup.idpartneri")
-	qb.AddJoin(`left join lateral (select f.naziv, f.adresa, f.pobro, f.mesto, f.gln from fisp f
+		order by f.idfkpl limit 1) kup on true`).
+		AddJoin("left join partneri p on p.idpartneri = kup.idpartneri").
+		AddJoin(`left join lateral (select f.naziv, f.adresa, f.pobro, f.mesto, f.gln from fisp f
 		where f.god = rdok.god and f.kar = rdok.kar and f.konto = rdok.fkto and f.sifra = rdok.fana
 			and f.mi = coalesce(rdok.mi, 0)
 		order by f.fispid limit 1) misp on true`)
-	robnoStampaDokumentaUsloviTabele(qb, userSession, params, "rdok")
-	qb.AddOrderBy("rdok.rdokid")
-	sqlQuery, args := qb.Build()
-	rows, err := s.stampaKnjiznoPismoRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	robnoStampaDokumentaUsloviTabele(b, userSession, params, "rdok")
+	b.OrderBy("rdok.rdokid")
+	rows, err := s.stampaKnjiznoPismoRepo.Select(ctx, b)
 	if err != nil {
 		return nil, firma, err
 	}
@@ -3116,8 +3112,9 @@ func (s *RobnoDokumentaResource) GetStampaInternaZakljucnicaRacun(ctx context.Co
 		rdokIDs = append(rdokIDs, p.RdokID)
 	}
 	// The header of the račun: the document, the kupac (the partner of the analitički konto of rdok.fkto
-	// and rdok.fana), the mesto isporuke (fisp of rdok.mi) and the magacin.
-	qb := common.NewQueryBuilder(`
+	// and rdok.fana), the mesto isporuke (fisp of rdok.mi) and the magacin. The ids are those of the
+	// prenosi read above for the period of the session.
+	b := querybuilder.New(`
 		select
 			rdok.rdokid,
 			coalesce(rdok.tipdok, '') as tipdok,
@@ -3150,19 +3147,25 @@ func (s *RobnoDokumentaResource) GetStampaInternaZakljucnicaRacun(ctx context.Co
 			coalesce(misp.adresa, '') as mispadresa,
 			coalesce(misp.pobro, 0) as misppobro,
 			coalesce(misp.mesto, '') as mispmesto
-		from rdok`, true)
-	qb.AddJoin("left join magacini mg on mg.god = rdok.god and mg.kar = rdok.kar and mg.mag = rdok.mag")
-	qb.AddJoin(`left join lateral (select f.idpartneri from fkpl f
+		from rdok`).
+		AddJoin("left join magacini mg on mg.god = rdok.god and mg.kar = rdok.kar and mg.mag = rdok.mag").
+		AddJoin(`left join lateral (select f.idpartneri from fkpl f
 		where f.god = rdok.god and f.kar = rdok.kar and f.vkonta = 1 and f.konto = rdok.fkto and f.sifra = rdok.fana
-		order by f.idfkpl limit 1) kup on true`)
-	qb.AddJoin("left join partneri p on p.idpartneri = kup.idpartneri")
-	qb.AddJoin(`left join lateral (select f.naziv, f.adresa, f.pobro, f.mesto from fisp f
+		order by f.idfkpl limit 1) kup on true`).
+		AddJoin("left join partneri p on p.idpartneri = kup.idpartneri").
+		AddJoin(`left join lateral (select f.naziv, f.adresa, f.pobro, f.mesto from fisp f
 		where f.god = rdok.god and f.kar = rdok.kar and f.konto = rdok.fkto and f.sifra = rdok.fana
 			and f.mi = coalesce(rdok.mi, 0)
-		order by f.fispid limit 1) misp on true`)
-	qb.AddIn("rdok.rdokid", rdokIDs)
-	sqlQuery, args := qb.Build()
-	rows, err := s.stampaKnjiznoPismoRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+		order by f.fispid limit 1) misp on true`).
+		AddIn("rdok.rdokid", rdokIDs)
+	// The ids come from the session's own prenosi; the period is added as well, so the query can
+	// not read another tenant's documents even if the list were empty (AddIn skips it then).
+	session := domain.GetSessionFromStdContext(ctx)
+	if session == nil {
+		return nil, firma, fmt.Errorf("user session not found")
+	}
+	b.Where("rdok.god = ?", session.SelectedGod).Where("rdok.kar = ?", session.SelectedKar)
+	rows, err := s.stampaKnjiznoPismoRepo.Select(ctx, b)
 	if err != nil {
 		return nil, firma, err
 	}
@@ -3237,7 +3240,7 @@ func (s *RobnoDokumentaResource) stampaInterniPrenosi(ctx context.Context, param
 	if err != nil {
 		return nil, firma, err
 	}
-	qb := common.NewQueryBuilder(`
+	b := querybuilder.New(`
 		select
 			rdok.rdokid,
 			coalesce(rdok.vrd, 0) as vrd,
@@ -3277,29 +3280,28 @@ func (s *RobnoDokumentaResource) stampaInterniPrenosi(ctx context.Context, param
 			coalesce(rvr.otklbl, '') as otklbl,
 			coalesce(rvr.serijalbl, '') as serijalbl,
 			coalesce(rvr.roklbl, '') as roklbl
-		from rpro`, true)
-	qb.AddJoin("inner join rdok on rdok.rdokid = rpro.rdokid")
-	qb.AddJoin("left join dokvrsta on dokvrsta.god = rdok.god and dokvrsta.kar = rdok.kar and dokvrsta.vrd = rdok.vrd")
-	qb.AddJoin("left join rsif on rsif.god = rpro.god and rsif.kar = rpro.kar and rsif.sifra = rpro.sifra")
-	qb.AddJoin(`left join lateral (select c.itaksa, c.pakc, c.iakc, c.vma, c.mma from rcene c
-		where c.rsifid = rsif.rsifid order by c.rceneid limit 1) rc on true`)
-	qb.AddJoin("left join magacini mg on mg.god = rdok.god and mg.kar = rdok.kar and mg.mag = rdok.mag")
-	// The captions of the otk, the serija and the rok trajanja of the firm.
-	qb.AddJoin(`left join lateral (select v.otklbl, v.serijalbl, v.roklbl from rvr v
-		where v.god = rdok.god and v.kar = rdok.kar limit 1) rvr on true`)
-	// The objekat the goods go to: the fkpl of rdok.pkto and rdok.pana; a konto starting with 9 is in
-	// the karton of the pogonsko knjigovodstvo of the firm (fvrcmp.kar1).
-	qb.AddJoin(`left join lateral (select f.naziv from fkpl f
+		from rpro`).
+		AddJoin("inner join rdok on rdok.rdokid = rpro.rdokid").
+		AddJoin("left join dokvrsta on dokvrsta.god = rdok.god and dokvrsta.kar = rdok.kar and dokvrsta.vrd = rdok.vrd").
+		AddJoin("left join rsif on rsif.god = rpro.god and rsif.kar = rpro.kar and rsif.sifra = rpro.sifra").
+		AddJoin(`left join lateral (select c.itaksa, c.pakc, c.iakc, c.vma, c.mma from rcene c
+		where c.rsifid = rsif.rsifid order by c.rceneid limit 1) rc on true`).
+		AddJoin("left join magacini mg on mg.god = rdok.god and mg.kar = rdok.kar and mg.mag = rdok.mag").
+		// The captions of the otk, the serija and the rok trajanja of the firm.
+		AddJoin(`left join lateral (select v.otklbl, v.serijalbl, v.roklbl from rvr v
+		where v.god = rdok.god and v.kar = rdok.kar limit 1) rvr on true`).
+		// The objekat the goods go to: the fkpl of rdok.pkto and rdok.pana; a konto starting with 9 is in
+		// the karton of the pogonsko knjigovodstvo of the firm (fvrcmp.kar1).
+		AddJoin(`left join lateral (select f.naziv from fkpl f
 		where f.god = rdok.god and f.konto = rdok.pkto and f.sifra = rdok.pana
 			and f.kar = case when left(coalesce(rdok.pkto, ''), 1) = '9' then coalesce((select c.kar1::int from fvrcmp c
 				where c.god = rdok.god and c.kar = rdok.kar and c.knjigovod = 'Pogonsko' and c.kar1 ~ '^[0-9]+$' limit 1), rdok.kar)
 				else rdok.kar end
 		order by f.vkonta desc, f.idfkpl limit 1) prijem on true`)
-	robnoStampaDokumentaUsloviTabele(qb, userSession, params, "rdok")
-	qb.AddCustomCondition("coalesce(rpro.sifra, 0) < 990000")
-	qb.AddOrderBy("rdok.rdokid, rpro.rbr")
-	sqlQuery, args := qb.Build()
-	rows, err := s.stampaInterniPrenosRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	robnoStampaDokumentaUsloviTabele(b, userSession, params, "rdok")
+	b.Where("coalesce(rpro.sifra, 0) < 990000").
+		OrderBy("rdok.rdokid, rpro.rbr")
+	rows, err := s.stampaInterniPrenosRepo.Select(ctx, b)
 	if err != nil {
 		return nil, firma, err
 	}
@@ -3340,12 +3342,11 @@ func (s *RobnoDokumentaResource) stampaPoreskeStope(ctx context.Context, oznake 
 			in = append(in, po)
 		}
 	}
-	pq := common.NewQueryBuilder(`select coalesce(po, 0) as po, coalesce(tip, 0) as tip, coalesce(pt, '') as pt,
-		coalesce(pp, 0) as pp, datum from rpor`, true)
-	pq.AddIn("po", in)
-	pq.AddOrderBy("po, tip, datum")
-	pSQL, pArgs := pq.Build()
-	stope, err := s.stampaPoreskaStopaRepo.GetAllCustom(ctx, pSQL, "", pArgs, "", "")
+	pq := querybuilder.New(`select coalesce(po, 0) as po, coalesce(tip, 0) as tip, coalesce(pt, '') as pt,
+		coalesce(pp, 0) as pp, datum from rpor`).
+		AddIn("po", in).
+		OrderBy("po, tip, datum")
+	stope, err := s.stampaPoreskaStopaRepo.Select(ctx, pq)
 	if err != nil {
 		return nil, err
 	}
@@ -3656,7 +3657,7 @@ func (s *RobnoDokumentaResource) GetStampaNivelacijaMaloprodaje(ctx context.Cont
 	if err != nil {
 		return nil, firma, err
 	}
-	qb := common.NewQueryBuilder(`
+	b := querybuilder.New(`
 		select
 			rdok.rdokid,
 			coalesce(rdok.vrd, 0) as vrd,
@@ -3673,16 +3674,15 @@ func (s *RobnoDokumentaResource) GetStampaNivelacijaMaloprodaje(ctx context.Cont
 			coalesce(rpro.mcenap, 0) as mcenap,
 			coalesce(rpro.po, 0) as po,
 			coalesce(rpro.dani, 0) as dani
-		from rpro`, true)
-	qb.AddJoin("inner join rdok on rdok.rdokid = rpro.rdokid")
-	qb.AddJoin("left join rsif on rsif.rsifid = rpro.rsifid")
-	qb.AddJoin(`left join lateral (select f.naziv from fkpl f
+		from rpro`).
+		AddJoin("inner join rdok on rdok.rdokid = rpro.rdokid").
+		AddJoin("left join rsif on rsif.rsifid = rpro.rsifid").
+		AddJoin(`left join lateral (select f.naziv from fkpl f
 		where f.god = rdok.god and f.kar = rdok.kar and f.konto = rdok.pkto and f.sifra = rdok.pana
 		order by f.vkonta desc, f.idfkpl limit 1) prod on true`)
-	robnoStampaDokumentaUsloviTabele(qb, userSession, params, "rdok")
-	qb.AddOrderBy("rdok.rnalid, rdok.rdokid, rpro.rbr")
-	sqlQuery, args := qb.Build()
-	rows, err := s.stampaInterniPrenosRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	robnoStampaDokumentaUsloviTabele(b, userSession, params, "rdok")
+	b.OrderBy("rdok.rnalid, rdok.rdokid, rpro.rbr")
+	rows, err := s.stampaInterniPrenosRepo.Select(ctx, b)
 	if err != nil {
 		return nil, firma, err
 	}

@@ -40,11 +40,7 @@ func TestZzPorTmp(t *testing.T) {
 		repository.BaseRepository[domain.RobnoStampaKnjiznoPismoFakturaDto]{}, repository.BaseRepository[domain.RobnoStampaInterniPrenosRowDto]{}, repository.BaseRepository[domain.RobnoStampaPoreskaStopaDto]{},
 		RobnoDokumentaUnosRepos{
 			Dokument: *repository.NewBaseRepository[domain.RobniDokumentRow](d, "rdok"), Kupac: *repository.NewBaseRepository[domain.RobKupacDto](d, "fkpl"),
-			Avansi: *repository.NewBaseRepository[domain.RobAvansDto](d, "avansfakt"), Saldo: *repository.NewBaseRepository[domain.RobSaldoKupcaDto](d, "fpro"),
-			Tekst: *repository.NewBaseRepository[domain.SearchRowDto](d, "rdok"), Stavke: *repository.NewBaseRepository[domain.RobObracunStavkaDto](d, "rpro"),
-			Obracun: *repository.NewBaseRepository[domain.RobObracunAvansDto](d, "avansfakt"), Rate: *repository.NewBaseRepository[domain.RobRataDto](d, "faktrate"),
-			StavkeGrid: *repository.NewBaseRepository[domain.RobStavkaRow](d, "rpro"), Kontekst: *repository.NewBaseRepository[domain.RobStavkeKontekst](d, "rdok"),
-			Artikal: *repository.NewBaseRepository[domain.RobArtikalStanjeDto](d, "rsif"), ZadnjaCena: *repository.NewBaseRepository[domain.RobZadnjaCenaDto](d, "rpro"),
+			Avansi: *repository.NewBaseRepository[domain.RobAvansDto](d, "avansfakt"), Rate: *repository.NewBaseRepository[domain.RobRataDto](d, "faktrate"),
 			Rpro: *repository.NewBaseRepository[domain.RobRproDto](d, "rpro"), Rcene: *repository.NewBaseRepository[domain.RobRceneDto](d, "rcene"),
 			Rsif: *repository.NewBaseRepository[domain.RobRsifDto](d, "rsif"), Prikaz: *repository.NewBaseRepository[domain.RobDokumentPrikazRow](d, "rdok"),
 		})

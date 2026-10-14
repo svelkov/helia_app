@@ -690,7 +690,7 @@ func (h *BilansiHandler) CreateBilansUspeha(c *gin.Context) {
 		return
 	}
 	mappedTableFields := h.service.MapEntityToValuesBilu(entity, tableFields)
-	_, err = h.service.AddBilu(c, entity, common.IDbilu, mappedTableFields)
+	_, err = h.service.AddBilu(c.Request.Context(), entity, common.IDbilu, mappedTableFields)
 	if err != nil {
 		common.WriteJSONResponse(c, http.StatusInternalServerError, false, nil, common.ErrMsgSaveData)
 		return

@@ -3,6 +3,7 @@ package robno
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"math"
 	"strconv"
@@ -114,8 +115,7 @@ func (s *RobnoDokumentaResource) ValidateRobPor(ctx context.Context, params doma
 	case sifra == "":
 		add("kupacsifra", common.ErrMsgObavezanPodatak)
 	default:
-		if exists, err := s.robnoUnosPostoji(ctx, `select count(*) from fkpl where god = $1 and kar = $2 and konto = $3 and sifra = $4`,
-			userSession.SelectedGod, userSession.SelectedKar, konto, sifra); err != nil {
+		if exists, err := s.robno.FkplAnalitikaPostoji(ctx, konto, sifra); err != nil {
 			add("kupacsifra", common.ErrMsgReadData)
 		} else if !exists {
 			add("kupacsifra", robnoUnosMsgNePostoji)
@@ -123,11 +123,11 @@ func (s *RobnoDokumentaResource) ValidateRobPor(ctx context.Context, params doma
 	}
 
 	// The org. jedinica (required), the komercijalista (when given).
-	s.robnoUnosObavezanID(ctx, params.Orgjed, "idorgjed", "select count(*) from orgjed where idorgjed = $1", add)
+	s.robnoUnosObavezanID(ctx, params.Orgjed, "idorgjed", s.robno.OrgjedPostoji, add)
 	if id, given, ok := robnoUnosID(params.Komercijalista); !ok {
 		add("komid", robnoUnosMsgNePostoji)
 	} else if given {
-		if exists, err := s.robnoUnosPostoji(ctx, "select count(*) from komercijalisti where komid = $1", id); err != nil {
+		if exists, err := s.robno.KomercijalistaPostoji(ctx, id); err != nil {
 			add("komid", common.ErrMsgReadData)
 		} else if !exists {
 			add("komid", robnoUnosMsgNePostoji)
@@ -148,13 +148,9 @@ func (s *RobnoDokumentaResource) SaveRobPor(ctx context.Context, params domain.R
 	komID := id(params.Komercijalista)
 	kom := ""
 	if komID > 0 {
-		rows, err := s.unos.Tekst.GetAllCustom(ctx, `select coalesce(sifkom, 0)::text as key from komercijalisti where komid = $1`, "",
-			[]any{komID}, "", "")
-		if err != nil {
+		var err error
+		if kom, err = s.robno.KomercijalistaSifra(ctx, komID); err != nil {
 			return 0, err
-		}
-		if rows != nil && len(*rows) > 0 {
-			kom = (*rows)[0].Key
 		}
 	}
 	dokum := common.StringToInt(params.BrojDokum)
@@ -194,18 +190,7 @@ func (s *RobnoDokumentaResource) DeleteRobPor(ctx context.Context, rdokID int64)
 // robPorStanje reads the stanje (ulaz - izlaz) and the nabavna cena of the artikal in the konto of the
 // magacin (rsta); found is false without it.
 func (s *RobnoDokumentaResource) robPorStanje(ctx context.Context, magaciniID int, konto string, sifra int) (stanje, ncena float64, found bool, err error) {
-	userSession := domain.GetSessionFromStdContext(ctx)
-	if userSession == nil {
-		return 0, 0, false, fmt.Errorf("no user session found")
-	}
-	rows, err := s.unos.Tekst.GetAllCustom(ctx, `select (coalesce(ulaz, 0) - coalesce(izlaz, 0))::float8::text as key,
-			coalesce(ncena, 0)::float8::text as c1
-		from rsta where god = $1 and kar = $2 and magaciniid = $3 and konto = $4 and sifra = $5
-		order by rstaid limit 1`, "", []any{userSession.SelectedGod, userSession.SelectedKar, magaciniID, strings.TrimSpace(konto), sifra}, "", "")
-	if err != nil || rows == nil || len(*rows) == 0 {
-		return 0, 0, false, err
-	}
-	return common.StringToFloat64((*rows)[0].Key), common.StringToFloat64((*rows)[0].C1), true, nil
+	return s.robno.RstaStanjeNcena(ctx, magaciniID, konto, sifra)
 }
 
 // GetRobPorArtikal returns the artikal of a stavka of a porudžbenica with what the form of the stavke shows of
@@ -225,16 +210,7 @@ func (s *RobnoDokumentaResource) GetRobPorArtikal(ctx context.Context, rdokID in
 		return a, false, err
 	}
 	vrednost := strings.TrimSpace(sifraIliBarkod)
-	kolona := "a.sifra::text"
-	if len(vrednost) > 6 {
-		kolona = "a.barkod"
-	}
-	rows, err := s.unos.Tekst.GetAllCustom(ctx, fmt.Sprintf(`select a.sifra::text as key, coalesce(a.naziv, '') as c1,
-			coalesce(a.jm, '') as c2, coalesce(a.po, 0)::text as c3,
-			`+fmt.Sprintf(robPoreskaStopaSQL, "a.po", "$4::date")+`::text as c4,
-			coalesce((select c.ncena from rcene c where c.god = a.god and c.kar = a.kar and c.sifra = a.sifra limit 1), 0)::float8::text as c5
-		from rsif a where a.god = $1 and a.kar = $2 and %s = $3 limit 1`, kolona), "",
-		[]any{userSession.SelectedGod, userSession.SelectedKar, vrednost, robNullTime(k.Dadok)}, "", "")
+	rows, err := s.robno.RsifArtikalSaNcenom(ctx, len(vrednost) > 6, vrednost, robNullTime(k.Dadok))
 	if err != nil || rows == nil || len(*rows) == 0 {
 		return a, false, err
 	}
@@ -273,11 +249,9 @@ func (s *RobnoDokumentaResource) ValidateRobPorStavka(ctx context.Context, param
 		add("sifraartikla", "Dokument ne postoji.")
 		return fieldErrors
 	}
-	god, kar := userSession.SelectedGod, userSession.SelectedKar
 	if konto := strings.TrimSpace(params.Konto); konto == "" {
 		add("kontostavke", common.ErrMsgObavezanPodatak)
-	} else if exists, err := s.robnoUnosPostoji(ctx, `select count(*) from magkonto where god = $1 and kar = $2 and magaciniid = $3 and trim(konto) = $4`,
-		god, kar, k.MagaciniID, konto); err != nil {
+	} else if exists, err := s.robno.MagkontoPostoji(ctx, k.MagaciniID, konto); err != nil {
 		add("kontostavke", common.ErrMsgReadData)
 	} else if !exists {
 		add("kontostavke", "Konto nije otvoren za magacin.")
@@ -286,7 +260,7 @@ func (s *RobnoDokumentaResource) ValidateRobPorStavka(ctx context.Context, param
 		add("sifraartikla", common.ErrMsgObavezanPodatak)
 	} else if sifra, err := strconv.Atoi(sifraText); err != nil {
 		add("sifraartikla", robnoUnosMsgNePostoji)
-	} else if exists, err := s.robnoUnosPostoji(ctx, `select count(*) from rsif where god = $1 and kar = $2 and sifra = $3`, god, kar, sifra); err != nil {
+	} else if exists, err := s.robno.RsifPostoji(ctx, sifra); err != nil {
 		add("sifraartikla", common.ErrMsgReadData)
 	} else if !exists {
 		add("sifraartikla", robnoUnosMsgNePostoji)
@@ -346,19 +320,15 @@ func (s *RobnoDokumentaResource) robPorSnimiStavku(ctx context.Context, tx db.Tr
 	if k.Storno() {
 		iznos, kolicina = -iznos, -kolicina
 	}
-	var rsifID int64
-	var naziv, jm string
-	if err := tx.QueryRowContext(ctx, `select rsifid, coalesce(naziv, ''), coalesce(jm, '') from rsif where god = $1 and kar = $2 and sifra = $3 limit 1`,
-		userSession.SelectedGod, userSession.SelectedKar, sifra).Scan(&rsifID, &naziv, &jm); err != nil {
+	rsifID, naziv, jm, err := s.robno.RsifIDNazivJm(ctx, tx, sifra)
+	if err != nil {
 		return 0, err
 	}
 
 	// A changed stavka: its old values are taken back from the stanje.
 	stara := domain.RobPromenaStanja{}
 	if params.RproID > 0 {
-		if err := tx.QueryRowContext(ctx, `select coalesce(sifra, 0), coalesce(konto, ''), coalesce(kolic, 0)::float8, coalesce(iznos, 0)::float8
-			from rpro where rproid = $1 and rdokid = $2 for update`, params.RproID, k.RdokID).
-			Scan(&stara.Sifra, &stara.Konto, &stara.Kolicina, &stara.Iznos); err != nil {
+		if stara.Sifra, stara.Konto, stara.Kolicina, stara.Iznos, err = s.robno.RproStaraKolicina(ctx, tx, params.RproID, k.RdokID); err != nil {
 			return 0, err
 		}
 	}
@@ -379,9 +349,9 @@ func (s *RobnoDokumentaResource) robPorSnimiStavku(ctx context.Context, tx db.Tr
 			return 0, err
 		}
 	} else {
-		var rbr int
-		if err := tx.QueryRowContext(ctx, `select coalesce(max(rbr), 0) + 1 from rpro where rdokid = $1`, k.RdokID).Scan(&rbr); err != nil {
-			return 0, err
+		rbr, rbrErr := s.robno.RproSledeciRbr(ctx, tx, k.RdokID)
+		if rbrErr != nil {
+			return 0, rbrErr
 		}
 		polja = append(polja,
 			domain.Fields{Name: "rnalid", Value: strconv.FormatInt(k.RnalID, 10)},
@@ -430,8 +400,7 @@ func (s *RobnoDokumentaResource) robPorSnimiStavku(ctx context.Context, tx db.Tr
 	if params.RproID == 0 {
 		noviBrst = 1
 	}
-	if err := s.unos.Rpro.CreateUpdateCustomWithTx(ctx, tx, `update rdok set iznos = round((coalesce(iznos, 0) + $2)::numeric, 2),
-			brst = coalesce(brst, 0) + $3 where rdokid = $1`, k.RdokID, razlikaIznosa, noviBrst); err != nil {
+	if err := s.robno.RdokDodajIznos(ctx, tx, k.RdokID, razlikaIznosa, noviBrst); err != nil {
 		return 0, err
 	}
 	return rproID, nil
@@ -450,9 +419,9 @@ func (s *RobnoDokumentaResource) DeleteRobPorStavka(ctx context.Context, rproID 
 			_ = tx.Rollback()
 		}
 	}()
-	var rbr int
-	if err = tx.QueryRowContext(ctx, `select coalesce(rbr, 0) from rpro where rproid = $1`, rproID).Scan(&rbr); err != nil {
-		if err == sql.ErrNoRows {
+	rbr, err := s.robno.RproRbr(ctx, tx, rproID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
 			err = fmt.Errorf("stavka ne postoji")
 		}
 		return 0, err
@@ -460,9 +429,7 @@ func (s *RobnoDokumentaResource) DeleteRobPorStavka(ctx context.Context, rproID 
 	if rdokID, err = s.robPorBrisiStavkuTx(ctx, tx, rproID); err != nil {
 		return 0, err
 	}
-	if err = s.unos.Rpro.CreateUpdateCustomWithTx(ctx, tx, `update rpro p set rbr = x.n, brst = x.n
-		from (select rproid, ($2 - 1 + row_number() over (order by rbr, rproid))::int as n from rpro where rdokid = $1 and rbr > $2) x
-		where p.rproid = x.rproid`, rdokID, rbr); err != nil {
+	if err = s.robno.RproPrenumerisiSaBrst(ctx, tx, rdokID, rbr); err != nil {
 		return 0, err
 	}
 	if err = tx.Commit(); err != nil {
@@ -477,9 +444,9 @@ func (s *RobnoDokumentaResource) DeleteRobPorStavka(ctx context.Context, rproID 
 // količina and iznos from the stanje (AzurirajRSTA; the legacy does not update the zalihe by lot), and the
 // document loses its iznos and counts one stavka less.
 func (s *RobnoDokumentaResource) robPorBrisiStavkuTx(ctx context.Context, tx db.Transaction, rproID int64) (int64, error) {
-	var rdokID int64
-	if err := tx.QueryRowContext(ctx, `select coalesce(rdokid, 0)::bigint from rpro where rproid = $1`, rproID).Scan(&rdokID); err != nil {
-		if err == sql.ErrNoRows {
+	rdokID, err := s.robno.RproRdokID(ctx, tx, rproID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
 			return 0, fmt.Errorf("stavka ne postoji")
 		}
 		return 0, err
@@ -496,11 +463,8 @@ func (s *RobnoDokumentaResource) robPorBrisiStavkuTx(ctx context.Context, tx db.
 
 // robPorBrisiStavku deletes the stavka of the document of k in the transaction (see robPorBrisiStavkuTx).
 func (s *RobnoDokumentaResource) robPorBrisiStavku(ctx context.Context, tx db.Transaction, k domain.RobStavkeKontekst, rproID int64) error {
-	var sifra int
-	var konto string
-	var kolicina, iznos float64
-	if err := tx.QueryRowContext(ctx, `select coalesce(sifra, 0), coalesce(konto, ''), coalesce(kolic, 0)::float8, coalesce(iznos, 0)::float8
-		from rpro where rproid = $1 and rdokid = $2 for update`, rproID, k.RdokID).Scan(&sifra, &konto, &kolicina, &iznos); err != nil {
+	sifra, konto, kolicina, iznos, err := s.robno.RproStaraKolicina(ctx, tx, rproID, k.RdokID)
+	if err != nil {
 		return err
 	}
 	if err := s.unos.Rpro.DeleteWithTx(ctx, tx, "rproid", rproID); err != nil {
@@ -514,8 +478,7 @@ func (s *RobnoDokumentaResource) robPorBrisiStavku(ctx context.Context, tx db.Tr
 		Brst: -1}); err != nil {
 		return err
 	}
-	return s.unos.Rpro.CreateUpdateCustomWithTx(ctx, tx, `update rdok set iznos = round((coalesce(iznos, 0) - $2)::numeric, 2),
-			brst = greatest(coalesce(brst, 0) - 1, 0) where rdokid = $1`, k.RdokID, iznos)
+	return s.robno.RdokOduzmiStavku(ctx, tx, k.RdokID, iznos)
 }
 
 // GetRobPorStavkaForma returns a saved stavka of a porudžbenica for the form of the stavke (the legacy
@@ -523,10 +486,7 @@ func (s *RobnoDokumentaResource) robPorBrisiStavku(ctx context.Context, tx db.Tr
 // its stopa on the datum of the document and its stanje. found is false without it.
 func (s *RobnoDokumentaResource) GetRobPorStavkaForma(ctx context.Context, rdokID, rproID int64) (domain.RobPorStavkaForma, bool, error) {
 	f := domain.RobPorStavkaForma{}
-	rows, err := s.unos.Tekst.GetAllCustom(ctx, `select r.sifra::text as key, coalesce(r.konto, '') as c1,
-			coalesce(r.kolic, 0)::float8::text as c2, coalesce(r.ncena, 0)::float8::text as c3, coalesce(r.po, 0)::text as c4,
-			`+fmt.Sprintf(robPoreskaStopaSQL, "r.po", "r.dadok")+`::text as c5
-		from rpro r where r.rproid = $1 and r.rdokid = $2`, "", []any{rproID, rdokID}, "", "")
+	rows, err := s.robno.RproPorudzbenicaForma(ctx, rproID, rdokID)
 	if err != nil || rows == nil || len(*rows) == 0 {
 		return f, false, err
 	}

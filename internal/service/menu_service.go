@@ -3,8 +3,8 @@ package service
 import (
 	"context"
 	"errors"
-	"helia/internal/common"
 	"helia/internal/domain"
+	"helia/internal/infrastructure/db/querybuilder"
 	"helia/internal/repository"
 )
 
@@ -32,11 +32,9 @@ func (s *MenuResource) GetMenuData(ctx context.Context) ([]domain.MenuItem, erro
 	if userSesssion == nil {
 		return nil, errors.New("user session not found in context")
 	}
-	qb := common.NewQueryBuilder(` SELECT id, menuname, coalesce(displayname, '') as displayname, coalesce(icon, '') as icon, coalesce(sortorder, 0) as sortorder FROM menuitems`, true)
-	qb.AddOrderBy("sortorder")
-
-	sqlQuery, args := qb.Build()
-	menuItems, err := s.menuRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	b := querybuilder.New(`SELECT id, menuname, coalesce(displayname, '') as displayname, coalesce(icon, '') as icon, coalesce(sortorder, 0) as sortorder FROM menuitems`).
+		OrderBy("sortorder")
+	menuItems, err := s.menuRepo.Select(ctx, b)
 	if err != nil {
 		return nil, err
 	}
@@ -49,13 +47,11 @@ func (s *MenuResource) GetSubmenuData(ctx context.Context, menuName string) ([]d
 	if userSesssion == nil {
 		return nil, errors.New("user session not found in context")
 	}
-	qb := common.NewQueryBuilder(` SELECT sb.id, sb.menuid, sb.submenuname, sb.urlmenu, coalesce(sb.icon, '') as icon, coalesce(sb.sortorder, 0) as sortorder FROM menuitems m`, true)
-	qb.AddJoin(`inner join submenuitems sb on sb.menuid = m.id`)
-	qb.AddEqual("m.menuname", menuName)
-	qb.AddOrderBy("sortorder")
-
-	sqlQuery, args := qb.Build()
-	subMenuItems, err := s.subMenuRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	b := querybuilder.New(`SELECT sb.id, sb.menuid, sb.submenuname, sb.urlmenu, coalesce(sb.icon, '') as icon, coalesce(sb.sortorder, 0) as sortorder FROM menuitems m`).
+		AddJoin(`inner join submenuitems sb on sb.menuid = m.id`).
+		Where("m.menuname = ?", menuName). // a key: an empty name must not list every submenu
+		OrderBy("sortorder")
+	subMenuItems, err := s.subMenuRepo.Select(ctx, b)
 	if err != nil {
 		return nil,
 			err

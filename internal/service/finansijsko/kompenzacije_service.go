@@ -6,9 +6,10 @@ import (
 	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
+	"helia/internal/infrastructure/db/querybuilder"
 	"helia/internal/repository"
 	"helia/internal/service"
-	"reflect"
+	"strings"
 )
 
 // KompenzacijeService defines the interface for operations related to Kompenzacije.
@@ -65,6 +66,16 @@ func (s *KompenzacijeResource) GetDokumentaTableFields() []domain.Fields {
 	return s.kompenzacijeDetTableFields
 }
 
+// kompenzacijePeriodaJoin joins the totals of the open kompenzacije (stsdok <= 10) of the period, for
+// the dužnici (konto 204) and the poverioci (konto 435). Its arguments are god and kar.
+const kompenzacijePeriodaJoin = `left join (
+				select
+					sum(case when kompenzh.konto like '204%' then iznosdok else 0 end) as total_kompd,
+					sum(case when kompenzh.konto like '435%' then iznosdok else 0 end) as total_kompp
+				from kompenzh
+				where god = ? and kar = ? and stsdok <= 10
+			) komp on 1=1`
+
 func (s *KompenzacijeResource) ObradaPredlogKompenzacije(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage, pageSize int, searchText string) error {
 	// UserSession is now retrieved from context.Context
 	userSession := domain.GetSessionFromStdContext(ctx)
@@ -75,8 +86,8 @@ func (s *KompenzacijeResource) ObradaPredlogKompenzacije(ctx context.Context, tb
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
 	// Build single optimized query - group by partner only, one row per partner with both debtor/creditor data
-	qb := common.NewQueryBuilder(`
-			select 
+	b := querybuilder.New(`
+			select
 				coalesce(max(case when fpro.konto like '204%' then fpro.konto else null end), '') as konto_duznika,
 				coalesce(max(case when fpro.konto like '204%' then fpro.sifra else null end), '') as sifra_duznika,
 				coalesce(max(case when fpro.konto like '435%' then fpro.konto else null end), '') as konto_poverioca,
@@ -91,71 +102,51 @@ func (s *KompenzacijeResource) ObradaPredlogKompenzacije(ctx context.Context, tb
 				p.adresa,
 				coalesce(komp.total_kompd, 0) as kompenzacije_duznik, 
 				coalesce(komp.total_kompp, 0) as kompenzacije_poverilac
-			from fpro`, true)
+			from fpro`)
 	// query totals
-	qbTotals := common.NewQueryBuilder(`
-	select	
+	bTotals := querybuilder.New(`
+	select
 	sum(case when fpro.konto like '204%' and fpro.vrd in (10, 20) then fpro.iznos else 0 end) -
 	sum(case when fpro.konto like '204%' and fpro.vrd in (30, 40) then fpro.iznos else 0 end) as iznos_dokum_duznika,
 	sum(case when fpro.konto like '435%' and fpro.vrd in (10, 20) then fpro.iznos else 0 end) -
 	sum(case when fpro.konto like '435%' and fpro.vrd in (30, 40) then fpro.iznos else 0 end) as iznos_dokum_poverioca,
-	sum(coalesce(komp.total_kompd, 0)) as kompenzacije_duznik, 
+	sum(coalesce(komp.total_kompd, 0)) as kompenzacije_duznik,
 	sum(coalesce(komp.total_kompp, 0)) as kompenzacije_poverilac
-	from fpro`, true)
+	from fpro`)
 
-	qb.AddJoin(` left join fkpl on fpro.idfkpl = fkpl.idfkpl `)
-	qb.AddJoin(` left join partneri p on p.idpartneri = fkpl.idpartneri`)
-	qb.AddJoin(fmt.Sprintf(` left join (
-				select 
-					sum(case when kompenzh.konto like '204%%' then iznosdok else 0 end) as total_kompd,
-					sum(case when kompenzh.konto like '435%%' then iznosdok else 0 end) as total_kompp
-				from kompenzh
-				where god = %d and kar = %d and stsdok <= 10
-			) komp on 1=1`, userSession.SelectedGod, userSession.SelectedKar))
-	qbTotals.AddJoin(` left join fkpl on fpro.idfkpl = fkpl.idfkpl `)
-	qbTotals.AddJoin(` left join partneri p on p.idpartneri = fkpl.idpartneri`)
-	qbTotals.AddJoin(fmt.Sprintf(` left join (
-				select
-					sum(case when kompenzh.konto like '204%%' then iznosdok else 0 end) as total_kompd,
-					sum(case when kompenzh.konto like '435%%' then iznosdok else 0 end) as total_kompp
-				from kompenzh
-				where god = %d and kar = %d and stsdok <= 10
-			) komp on 1=1`, userSession.SelectedGod, userSession.SelectedKar))
+	// The two queries share the joins, the period, the konta and the search.
+	for _, q := range []*querybuilder.Builder{b, bTotals} {
+		q.AddJoin("left join fkpl on fpro.idfkpl = fkpl.idfkpl").
+			AddJoin("left join partneri p on p.idpartneri = fkpl.idpartneri").
+			AddJoin(kompenzacijePeriodaJoin, userSession.SelectedGod, userSession.SelectedKar)
+		if hasGod {
+			q.Where("fpro.god = ?", userSession.SelectedGod)
+		}
+		if hasKar {
+			q.Where("fpro.kar = ?", userSession.SelectedKar)
+		}
+		q.Where("fpro.konto like '204%' OR fpro.konto like '435%'").
+			Having("max(case when fpro.konto like '204%' then fpro.konto end) IS NOT NULL AND max(case when fpro.konto like '435%' then fpro.konto end) IS NOT NULL").
+			AddSearch(s.searchFiledsTab1, searchText)
+	}
+	b.GroupBy("p.idpartneri", "p.naziv", "p.mesto", "p.adresa", "total_kompd", "total_kompp")
 
-	if hasGod {
-		qb.AddEqual("fpro.god", userSession.SelectedGod)
-		qbTotals.AddEqual("fpro.god", userSession.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("fpro.kar", userSession.SelectedKar)
-		qbTotals.AddEqual("fpro.kar", userSession.SelectedKar)
-	}
-	qb.AddCustomCondition("(fpro.konto like '204%' OR fpro.konto like '435%')")
-	qb.AddGroupBy("p.idpartneri, p.naziv, p.mesto, p.adresa, total_kompd, total_kompp")
-	qb.AddHaving("max(case when fpro.konto like '204%' then fpro.konto end) IS NOT NULL AND max(case when fpro.konto like '435%' then fpro.konto end) IS NOT NULL")
-	qb.AddOrderBy("p.naziv")
-
-	qbTotals.AddCustomCondition("(fpro.konto like '204%' OR fpro.konto like '435%')")
-	qbTotals.AddHaving("max(case when fpro.konto like '204%' then fpro.konto end) IS NOT NULL AND max(case when fpro.konto like '435%' then fpro.konto end) IS NOT NULL")
-
-	if !getTotalRecords {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
-	}
-	if searchText != "" {
-		qb.AddCustomSearchCondition(s.searchFiledsTab1, searchText)
-		qbTotals.AddCustomSearchCondition(s.searchFiledsTab1, searchText)
-	}
-	// Build and execute query
-	sqlQuery, args := qb.Build()
-	entities, err := s.service.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
-		return fmt.Errorf("failed to query fpro: %s", err.Error())
-	}
 	// Set total records and pagination
 	if getTotalRecords {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
+		total, err := s.service.Repo.Count(ctx, b)
+		if err != nil {
+			return fmt.Errorf("failed to count fpro: %w", err)
+		}
+		common.SetTableTotalRecords(tbl, total, pageSize)
 		return nil
+	}
+	b.OrderBy("p.naziv").
+		Limit(pageSize).
+		Offset((currentPage - 1) * pageSize)
+	// Execute query
+	entities, err := s.service.Repo.Select(ctx, b)
+	if err != nil {
+		return fmt.Errorf("failed to query fpro: %w", err)
 	}
 	// Set table rows - one row per partner with both debtor and creditor data
 	if entities != nil && len(*entities) > 0 {
@@ -178,10 +169,9 @@ func (s *KompenzacijeResource) ObradaPredlogKompenzacije(ctx context.Context, tb
 		}
 	}
 	// Get totals and set in table footer
-	sqlTotalsQuery, totalsArgs := qbTotals.Build()
-	totalsEntities, err := s.service.GetAllCustom(ctx, sqlTotalsQuery, "", totalsArgs, "", "")
+	totalsEntities, err := s.service.Repo.Select(ctx, bTotals)
 	if err != nil {
-		return fmt.Errorf("failed to query totals: %s", err.Error())
+		return fmt.Errorf("failed to query totals: %w", err)
 	}
 	var totDuznik, totPoverilac, totKompDuznik, totKompPoverilac float64
 	for _, tot := range *totalsEntities {
@@ -222,9 +212,29 @@ func (s *KompenzacijeResource) FormiranjeKompenzacije(ctx context.Context, tbl *
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
 
-	// Build inner query builder for WITH clause
-	innerQb := common.NewQueryBuilder(`
-		select 
+	// The inner query (the WITH clause): the stavke of the analitika (konto, sifra) of the period with
+	// the open kompenzacije of every stavka. Its conditions are static fragments; every value is an
+	// argument (stanjeNaDan comes from the request).
+	conds := []string{"fpro.vkonta = ?", "fpro.konto = ?", "fpro.sifra = ?"}
+	args := []any{1, konto, sifra}
+	if hasGod {
+		conds = append(conds, "fpro.god = ?")
+		args = append(args, userSession.SelectedGod)
+	}
+	if hasKar {
+		conds = append(conds, "fpro.kar = ?")
+		args = append(args, userSession.SelectedKar)
+	}
+	if checkDospece && stanjeNaDan != "" {
+		conds = append(conds, "fpro.dadok + (fpro.rok || ' days')::interval <= ?::date")
+		args = append(args, stanjeNaDan)
+	}
+	if stanjeNaDan != "" {
+		conds = append(conds, "fpro.dadok <= ?::date")
+		args = append(args, stanjeNaDan)
+	}
+	inner := `
+		select
 			fpro.konto,
 			fpro.sifra,
 			fpro.ojozn,
@@ -250,33 +260,11 @@ func (s *KompenzacijeResource) FormiranjeKompenzacije(ctx context.Context, tbl *
 			)
 			group by idfpro
 		) kompd on fpro.idfpro = kompd.idfpro
-	`, true)
+		where ` + strings.Join(conds, " and ")
 
-	// Add WHERE conditions to inner query builder
-	innerQb.AddEqual("fpro.vkonta", 1)
-	innerQb.AddEqual("fpro.konto", konto)
-	innerQb.AddEqual("fpro.sifra", sifra)
-
-	if hasGod {
-		innerQb.AddEqual("fpro.god", userSession.SelectedGod)
-	}
-	if hasKar {
-		innerQb.AddEqual("fpro.kar", userSession.SelectedKar)
-	}
-
-	if checkDospece && stanjeNaDan != "" {
-		innerQb.AddCustomCondition(fmt.Sprintf("fpro.dadok + (fpro.rok || ' days')::interval <= '%s'::date", stanjeNaDan))
-	}
-	if stanjeNaDan != "" {
-		innerQb.AddCustomCondition(fmt.Sprintf("fpro.dadok <= '%s'::date", stanjeNaDan))
-	}
-	// Build inner query and get SQL + args
-	innerSQL, innerArgs := innerQb.Build()
-
-	// Build outer query using WITH clause
-	qb := common.NewQueryBuilder(fmt.Sprintf(`
-		with inner_data as (%s)
-		select 
+	// The outer query aggregates the stavke of the WITH clause per document.
+	b := querybuilder.New(`
+		select
 			t.konto as konto_duznika,
 			t.sifra as sifra_duznika,
 			t.norm_dokum as dokum,
@@ -295,30 +283,27 @@ func (s *KompenzacijeResource) FormiranjeKompenzacije(ctx context.Context, tbl *
 			sum(case when t.vrd in (30,40) then t.iznos else 0 end) as saldo,
 			max(t.opis) as opis,
 			coalesce(max(t.total_komp), 0) as kompenzacije_duznik
-		from inner_data t
-	`, innerSQL), true)
+		from inner_data t`).
+		WithCTE("inner_data", inner, args...).
+		GroupBy("t.konto", "t.sifra", "t.ojozn", "t.norm_tra", "t.norm_dokum").
+		Having("sum(case when t.vrd in (10,20) then t.iznos else 0 end) - sum(case when t.vrd in (30,40) then t.iznos else 0 end) > 0")
 
-	// Add inner query parameters and configure outer aggregation
-	qb.AddArgs(innerArgs...)
-	qb.AddGroupBy("t.konto, t.sifra, t.ojozn, t.norm_tra, t.norm_dokum")
-	qb.AddHaving("sum(case when t.vrd in (10,20) then t.iznos else 0 end) - sum(case when t.vrd in (30,40) then t.iznos else 0 end) > 0")
-	qb.AddOrderBy("t.norm_dokum")
-
-	if !getTotalRecords {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
-	}
-
-	// Build and execute query
-	sqlQuery, args := qb.Build()
-	fmt.Println(sqlQuery, args)
-	entities, err := s.service.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
-		return fmt.Errorf("failed to query fpro: %s", err.Error())
-	}
 	if getTotalRecords {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
+		total, err := s.service.Repo.Count(ctx, b)
+		if err != nil {
+			return fmt.Errorf("failed to count fpro: %w", err)
+		}
+		common.SetTableTotalRecords(tbl, total, pageSize)
 		return nil
+	}
+	b.OrderBy("t.norm_dokum").
+		Limit(pageSize).
+		Offset((currentPage - 1) * pageSize)
+
+	// Execute query
+	entities, err := s.service.Repo.Select(ctx, b)
+	if err != nil {
+		return fmt.Errorf("failed to query fpro: %w", err)
 	}
 	// Set table rows - one row per partner with both debtor and creditor data
 	if entities != nil && len(*entities) > 0 {
@@ -384,11 +369,10 @@ func (s *KompenzacijeResource) PregledKompenzacije(ctx context.Context, tblHdr, 
 	}
 
 	common.SetupTablePagination(tblHdr, currentPage, pageSize)
-	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
 
 	// Build query
-	qb := common.NewQueryBuilder(`
-		select 
+	b := querybuilder.New(`
+		select
 			kompenzh.god,
 			kompenzh.kar,
 			kompenzh.konto as konto_poverioca,
@@ -403,17 +387,12 @@ func (s *KompenzacijeResource) PregledKompenzacije(ctx context.Context, tblHdr, 
 			fkpl.naziv,
 			kompenzh.kompenzhid,
 			kompenzh.iznosdok as iznos
-		from kompenzh`, true)
+		from kompenzh`).
+		AddJoin("inner join fkpl on fkpl.idfkpl = kompenzh.idfkpl")
 
-	// Add JOIN
-	qb.AddJoin("inner join fkpl on fkpl.idfkpl = kompenzh.idfkpl")
-
-	// Add WHERE conditions
-	if hasGod {
-		qb.AddEqual("kompenzh.god", userSession.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("kompenzh.kar", userSession.SelectedKar)
+	// The period of the session (kompenzh.god/kar) and the search over the columns of the grid.
+	if err := s.service.Repo.ApplyFilters(ctx, b, "kompenzh", s.GetPregledPartneraTableFields(), searchText); err != nil {
+		return err
 	}
 
 	// Status filter
@@ -429,29 +408,25 @@ func (s *KompenzacijeResource) PregledKompenzacije(ctx context.Context, tblHdr, 
 		default:
 			statusValue = 0
 		}
-		qb.AddEqual("kompenzh.stsdok", statusValue)
-	}
-	// if search text is not epmty, add search conditions
-	if searchText != "" {
-		qb.SetEntityType(reflect.TypeOf(domain.KompenzacijeDto{}))
-		qb.AddSearchConditions(s.GetPregledPartneraTableFields(), searchText)
-	}
-	// Order by
-	qb.AddOrderBy("kompenzh.dokum asc")
-	if !getTotalRecords {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
-	}
-	// Build and execute query
-	sqlQuery, args := qb.Build()
-	entities, err := s.service.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
-		return fmt.Errorf("failed to query kompenzh: %s", err.Error())
+		b.Where("kompenzh.stsdok = ?", statusValue)
 	}
 	// Set total records and pagination
 	if getTotalRecords {
-		common.SetTableTotalRecords(tblHdr, len(*entities), pageSize)
+		total, err := s.service.Repo.Count(ctx, b)
+		if err != nil {
+			return fmt.Errorf("failed to count kompenzh: %w", err)
+		}
+		common.SetTableTotalRecords(tblHdr, total, pageSize)
 		return nil
+	}
+	// Order by
+	b.OrderBy("kompenzh.dokum asc").
+		Limit(pageSize).
+		Offset((currentPage - 1) * pageSize)
+	// Execute query
+	entities, err := s.service.Repo.Select(ctx, b)
+	if err != nil {
+		return fmt.Errorf("failed to query kompenzh: %w", err)
 	}
 	// Process results
 	for _, entity := range *entities {

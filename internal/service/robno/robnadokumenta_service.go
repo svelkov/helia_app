@@ -12,6 +12,7 @@ import (
 	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
+	"helia/internal/infrastructure/db/querybuilder"
 	"helia/internal/repository"
 	commonsvc "helia/internal/service/common"
 )
@@ -205,6 +206,16 @@ type RobnoDokumentaService interface {
 	DeleteRobPorStavka(ctx context.Context, rproID int64) (int64, error)
 	GetRobPorStavkaForma(ctx context.Context, rdokID, rproID int64) (domain.RobPorStavkaForma, bool, error)
 	GetPorStavkeTableFields() []domain.Fields
+	// The profakture (the group PRO, the legacy rob_ProFakture and rob_PROFAKTURE_DET).
+	GetRobProDokument(ctx context.Context, params domain.RobnoFaktureDokumentParams) (domain.RobnoProDokument, error)
+	ValidateRobPro(ctx context.Context, params domain.RobnoProParams) []domain.FieldError
+	SaveRobPro(ctx context.Context, params domain.RobnoProParams) (int64, error)
+	DeleteRobPro(ctx context.Context, rdokID int64) (string, error)
+	GetRobProArtikal(ctx context.Context, rdokID int64, sifraIliBarkod, konto string) (domain.RobStavkaArtikal, bool, error)
+	ValidateRobProStavka(ctx context.Context, params domain.RobProStavkaParams) []domain.FieldError
+	SaveRobProStavka(ctx context.Context, params domain.RobProStavkaParams) (int64, error)
+	DeleteRobProStavka(ctx context.Context, rproID int64) (int64, error)
+	GetProStavkeTableFields() []domain.Fields
 	GetInterniDokumentaTableFields() []domain.Fields
 	GetInterniDokumentStavkeTableFields() []domain.Fields
 }
@@ -237,6 +248,8 @@ type RobnoDokumentaResource struct {
 
 	// The queries of the entry of the documents (robnadokumenta_unos_service.go).
 	unos RobnoDokumentaUnosRepos
+	// The statements of the robno module that are not plain CRUD (repository/robno_*_repository.go).
+	robno *repository.RobnoRepository
 
 	// TODO: add the repositories needed by the remaining tabs (rdok - robni dokument,
 	// rpro - robni promet, rsif - artikli, fkpl, ...). All the grids of the option share the row type
@@ -274,6 +287,7 @@ type RobnoDokumentaResource struct {
 	interniDokumentaTableFields            []domain.Fields
 	interniDokumentStavkeTableFields       []domain.Fields
 	porStavkeTableFields                   []domain.Fields
+	proStavkeTableFields                   []domain.Fields
 }
 
 // NewRobnoDokumentaService creates the service of the "Robna dokumenta" option.
@@ -324,6 +338,7 @@ func NewRobnoDokumentaService(
 		stampaInterniPrenosRepo:       stampaInterniPrenosRepo,
 		stampaPoreskaStopaRepo:        stampaPoreskaStopaRepo,
 		unos:                          unos,
+		robno:                         repository.NewRobnoRepository(dokvrstaRepo.DB),
 	}
 	s.setTableFields()
 	return s
@@ -331,7 +346,7 @@ func NewRobnoDokumentaService(
 
 // GetFvrData retrieves company (fvr) data of the current session (report headers).
 func (s *RobnoDokumentaResource) GetFvrData(ctx context.Context) (domain.Fvr, error) {
-	return common.GetFvrData(ctx, &s.fvrRepo)
+	return repository.GetFvrData(ctx, &s.fvrRepo)
 }
 
 // GetMagacinComboValues returns the magacini of the current period keyed by magaciniid, filtered by the
@@ -402,17 +417,7 @@ func (s *RobnoDokumentaResource) robnoDokumentaVrdGrpnal(ctx context.Context, ti
 	if userSession == nil {
 		return nil, fmt.Errorf("no user session found")
 	}
-	entities, err := s.dokvrstaRepo.GetAllCustom(ctx, `select vrd from dokvrsta d where d.god = $1 and d.kar = $2
-		and exists (select 1 from regexp_split_to_table(coalesce(d.grpnal, ''), '[,;]') g where trim(g) = $3)
-		order by vrd`, "", []any{userSession.SelectedGod, userSession.SelectedKar, strings.TrimSpace(tipdok)}, "", "")
-	if err != nil || entities == nil {
-		return nil, err
-	}
-	vrd := make([]int, 0, len(*entities))
-	for _, d := range *entities {
-		vrd = append(vrd, d.Vrd)
-	}
-	return vrd, nil
+	return s.robno.VrdGrupeNaloga(ctx, tipdok)
 }
 
 // robnoDokumentaLista returns the numbers of a comma separated list of a vrsta naloga (tipdok.grpvrd,
@@ -437,34 +442,32 @@ func (s *RobnoDokumentaResource) GetUnosDokumenta(ctx context.Context, tbl *doma
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 	tbl.Headers = s.unosDokumentaTableFields
 
-	qb := common.NewQueryBuilder(`select rnalid, tipdok, nalog, magaciniid, mag, danal, opis, datob, brdo, brst, dug, pot from rnal`, true)
-	qb.AddEqual("rnal.god", userSession.SelectedGod)
-	qb.AddEqual("rnal.kar", userSession.SelectedKar)
-	qb.AddCondition("rnal.tipdok", params.Tipdok, "=")
+	b := querybuilder.New(`select rnalid, tipdok, nalog, magaciniid, mag, danal, opis, datob, brdo, brst, dug, pot from rnal`).
+		Where("rnal.god = ?", userSession.SelectedGod).
+		Where("rnal.kar = ?", userSession.SelectedKar).
+		AddCondition("rnal.tipdok", params.Tipdok, "=") // optional: an empty vrsta naloga lists every vrsta
 	if params.MagaciniID != 0 {
-		qb.AddEqual("rnal.magaciniid", params.MagaciniID)
+		b.Where("rnal.magaciniid = ?", params.MagaciniID)
 	}
-	if params.SearchText != "" {
-		qb.AddCustomSearchCondition([]string{"rnal.tipdok", "rnal.nalog", "rnal.opis", "rnal.oper"}, params.SearchText)
-	}
-	// The selected vrsta dokumenta: the nalozi that have a document of it (the last condition: it is
-	// numbered from the arguments so far).
+	b.AddSearch([]string{"rnal.tipdok", "rnal.nalog", "rnal.opis", "rnal.oper"}, params.SearchText)
+	// The selected vrsta dokumenta: the nalozi that have a document of it.
 	if vrd, err := strconv.Atoi(strings.TrimSpace(params.Vrd)); err == nil && vrd > 0 {
-		qb.AddCustomCondition(fmt.Sprintf("exists (select 1 from rdok d where d.rnalid = rnal.rnalid and d.vrd = $%d)", qb.GetArgsCount()+1), vrd)
-	}
-	qb.AddOrderBy("rnal.nalog desc")
-	if !getTotalRecords {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
-	}
-	sqlQuery, args := qb.Build()
-	entities, err := s.robnaDokRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
-		return err
+		b.Where("exists (select 1 from rdok d where d.rnalid = rnal.rnalid and d.vrd = ?)", vrd)
 	}
 	if getTotalRecords {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
+		total, err := s.robnaDokRepo.Count(ctx, b)
+		if err != nil {
+			return err
+		}
+		common.SetTableTotalRecords(tbl, total, pageSize)
 		return nil
+	}
+	b.OrderBy("rnal.nalog desc").
+		Limit(pageSize).
+		Offset((currentPage - 1) * pageSize)
+	entities, err := s.robnaDokRepo.Select(ctx, b)
+	if err != nil {
+		return err
 	}
 	tbl.Rows = []domain.TableRow{}
 	for _, entity := range *entities {
@@ -494,16 +497,15 @@ func (s *RobnoDokumentaResource) GetUnosDokumentaTotal(ctx context.Context, tota
 	if userSession == nil {
 		return fmt.Errorf("no user session found")
 	}
-	qb := common.NewQueryBuilder(`select count(*) as uknaloga,
+	b := querybuilder.New(`select count(*) as uknaloga,
 		coalesce(sum(brdo), 0)::int as ukdokumenata,
 		coalesce(sum(brst), 0)::int as ukstavki,
 		coalesce(sum(dug), 0) as ukduguje,
 		coalesce(sum(pot), 0) as ukpotrazuje
-		from rnal`, true)
-	qb.AddEqual("rnal.god", userSession.SelectedGod)
-	qb.AddEqual("rnal.kar", userSession.SelectedKar)
-	sqlQuery, args := qb.Build()
-	entities, err := s.rnalTotalsRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+		from rnal`).
+		Where("rnal.god = ?", userSession.SelectedGod).
+		Where("rnal.kar = ?", userSession.SelectedKar)
+	entities, err := s.rnalTotalsRepo.Select(ctx, b)
 	if err != nil {
 		return err
 	}
@@ -545,14 +547,15 @@ func (s *RobnoDokumentaResource) GetByTipdokNalogMagacin(ctx context.Context, ti
 	if err != nil {
 		return domain.Rnal{}, domain.Magacini{}, nil
 	}
-	qb := common.NewQueryBuilder(`select rnalid, tipdok, idtipdok, nalog, danal, datob, opis, magaciniid, mag, dug, pot, brdo, brst, oper from rnal`, true)
-	qb.AddEqual("rnal.god", userSession.SelectedGod)
-	qb.AddEqual("rnal.kar", userSession.SelectedKar)
-	qb.AddCondition("rnal.tipdok", strings.TrimSpace(tipdok), "=")
-	qb.AddEqual("rnal.nalog", nalog)
-	qb.AddEqual("rnal.magaciniid", magacin.MagaciniID)
-	sqlQuery, args := qb.Build()
-	entities, err := s.rnalHeaderRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	// tipdok, nalog and the magacin are the key of the nalog (Where, not AddCondition: an empty tipdok
+	// must not find the nalog of another vrsta).
+	b := querybuilder.New(`select rnalid, tipdok, idtipdok, nalog, danal, datob, opis, magaciniid, mag, dug, pot, brdo, brst, oper from rnal`).
+		Where("rnal.god = ?", userSession.SelectedGod).
+		Where("rnal.kar = ?", userSession.SelectedKar).
+		Where("rnal.tipdok = ?", strings.TrimSpace(tipdok)).
+		Where("rnal.nalog = ?", nalog).
+		Where("rnal.magaciniid = ?", magacin.MagaciniID)
+	entities, err := s.rnalHeaderRepo.Select(ctx, b)
 	if err != nil {
 		return domain.Rnal{}, magacin, err
 	}
@@ -568,13 +571,13 @@ func (s *RobnoDokumentaResource) GetByTipdokNalog(ctx context.Context, tipdok st
 	if userSession == nil {
 		return domain.Rnal{}, fmt.Errorf("no user session found")
 	}
-	qb := common.NewQueryBuilder(`select rnalid, tipdok, idtipdok, nalog, danal, datob, opis, magaciniid, mag, dug, pot, brdo, brst, oper from rnal`, true)
-	qb.AddEqual("rnal.god", userSession.SelectedGod)
-	qb.AddEqual("rnal.kar", userSession.SelectedKar)
-	qb.AddCondition("rnal.tipdok", tipdok, "=")
-	qb.AddEqual("rnal.nalog", nalog)
-	sqlQuery, args := qb.Build()
-	entities, err := s.rnalHeaderRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	// tipdok and nalog are the key of the nalog (Where: an empty tipdok must not match another vrsta).
+	b := querybuilder.New(`select rnalid, tipdok, idtipdok, nalog, danal, datob, opis, magaciniid, mag, dug, pot, brdo, brst, oper from rnal`).
+		Where("rnal.god = ?", userSession.SelectedGod).
+		Where("rnal.kar = ?", userSession.SelectedKar).
+		Where("rnal.tipdok = ?", tipdok).
+		Where("rnal.nalog = ?", nalog)
+	entities, err := s.rnalHeaderRepo.Select(ctx, b)
 	if err != nil {
 		return domain.Rnal{}, err
 	}
@@ -720,12 +723,11 @@ func (s *RobnoDokumentaResource) periodKnjizenja(ctx context.Context) (domain.Fv
 	if userSession == nil {
 		return domain.Fvr{}, false, fmt.Errorf("no user session found")
 	}
-	qb := common.NewQueryBuilder("select god, kar, naziv, coalesce(godzatv, false) as godzatv from fvr", true)
-	qb.AddEqual("god", userSession.SelectedGod)
-	qb.AddEqual("kar", userSession.SelectedKar)
-	qb.AddEqual("naziv", userSession.Firma)
-	sqlQuery, args := qb.Build()
-	entities, err := s.fvrRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	b := querybuilder.New("select god, kar, naziv, coalesce(godzatv, false) as godzatv from fvr").
+		Where("god = ?", userSession.SelectedGod).
+		Where("kar = ?", userSession.SelectedKar).
+		Where("naziv = ?", userSession.Firma) // the key of the firm: never skipped
+	entities, err := s.fvrRepo.Select(ctx, b)
 	if err != nil {
 		return domain.Fvr{}, false, err
 	}
@@ -742,13 +744,12 @@ func (s *RobnoDokumentaResource) rnalNalozi(ctx context.Context, tipdok string, 
 	if userSession == nil {
 		return nil, fmt.Errorf("no user session found")
 	}
-	qb := common.NewQueryBuilder(`select rnalid, tipdok, nalog, danal, magaciniid, mag from rnal`, true)
-	qb.AddEqual("rnal.god", userSession.SelectedGod)
-	qb.AddEqual("rnal.kar", userSession.SelectedKar)
-	qb.AddEqual("rnal.tipdok", tipdok)
-	qb.AddEqual("rnal.nalog", nalog)
-	sqlQuery, args := qb.Build()
-	entities, err := s.rnalHeaderRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	b := querybuilder.New(`select rnalid, tipdok, nalog, danal, magaciniid, mag from rnal`).
+		Where("rnal.god = ?", userSession.SelectedGod).
+		Where("rnal.kar = ?", userSession.SelectedKar).
+		Where("rnal.tipdok = ?", tipdok). // the key of the nalog: never skipped
+		Where("rnal.nalog = ?", nalog)
+	entities, err := s.rnalHeaderRepo.Select(ctx, b)
 	if err != nil {
 		return nil, err
 	}
@@ -841,12 +842,12 @@ func (s *RobnoDokumentaResource) magacinByID(ctx context.Context, magaciniID int
 	if userSession == nil {
 		return domain.Magacini{}, fmt.Errorf("no user session found")
 	}
-	hasGod, hasKar := s.magRepo.GetHasGodHasKar()
-	qb := common.NewQueryBuilder("select magaciniid, mag, opis, coalesce(tipmag, '') as tipmag from magacini", true)
-	qb.AddGodKarConditions(hasGod, hasKar, userSession.SelectedGod, userSession.SelectedKar)
-	qb.AddEqual("magaciniid", magaciniID)
-	sqlQuery, args := qb.Build()
-	entities, err := s.magRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	b := querybuilder.New("select magaciniid, mag, opis, coalesce(tipmag, '') as tipmag from magacini").
+		Where("magaciniid = ?", magaciniID)
+	if err := s.magRepo.ApplyFilters(ctx, b, "", nil, ""); err != nil {
+		return domain.Magacini{}, err
+	}
+	entities, err := s.magRepo.Select(ctx, b)
 	if err != nil {
 		return domain.Magacini{}, err
 	}
@@ -877,7 +878,7 @@ func (s *RobnoDokumentaResource) GetDokumentaPreview(ctx context.Context, tbl *d
 	tbl.Headers = s.pregledStampaTableFields
 	hasGod, hasKar := s.robnaDokRepo.GetHasGodHasKar()
 
-	qb := common.NewQueryBuilder(`
+	b := querybuilder.New(`
 		select
 			rdok.rdokid,
 			rdok.tipdok,
@@ -909,53 +910,48 @@ func (s *RobnoDokumentaResource) GetDokumentaPreview(ctx context.Context, tbl *d
 				else rdok.sifval || '-' || coalesce(valute.naziv, '') end as valuta,
 			coalesce(rdok.kurs, 0) as kurs,
 			coalesce(rdok.tkonto, '') as tkonto
-		from rdok`, true)
-	// The naziv of the kupac (fkto, fana) and of the second konto (pkto, pana): the first fkpl of the
-	// konto and šifra, so that a konto and šifra with more fkpl rows does not repeat the document.
-	qb.AddJoin(`left join lateral (select f.naziv, f.idpartneri from fkpl f
+		from rdok`).
+		// The naziv of the kupac (fkto, fana) and of the second konto (pkto, pana): the first fkpl of the
+		// konto and šifra, so that a konto and šifra with more fkpl rows does not repeat the document.
+		AddJoin(`left join lateral (select f.naziv, f.idpartneri from fkpl f
 		where f.god = rdok.god and f.kar = rdok.kar and f.konto = rdok.fkto and f.sifra = rdok.fana
 			and coalesce(rdok.fkto, '') <> '' and coalesce(rdok.fana, '') <> ''
-		order by f.idfkpl limit 1) kupac on true`)
-	qb.AddJoin("left join partneri p on p.idpartneri = kupac.idpartneri")
-	qb.AddJoin(`left join lateral (select f.naziv from fkpl f
+		order by f.idfkpl limit 1) kupac on true`).
+		AddJoin("left join partneri p on p.idpartneri = kupac.idpartneri").
+		AddJoin(`left join lateral (select f.naziv from fkpl f
 		where f.god = rdok.god and f.kar = rdok.kar and f.konto = rdok.pkto and f.sifra = rdok.pana
 			and coalesce(rdok.pkto, '') <> '' and coalesce(rdok.pana, '') <> ''
-		order by f.idfkpl limit 1) drugi on true`)
-	qb.AddJoin("left join valute on valute.sifval = rdok.sifval")
+		order by f.idfkpl limit 1) drugi on true`).
+		AddJoin("left join valute on valute.sifval = rdok.sifval")
 	if hasGod {
-		qb.AddEqual("rdok.god", userSession.SelectedGod)
+		b.Where("rdok.god = ?", userSession.SelectedGod)
 	}
 	if hasKar {
-		qb.AddEqual("rdok.kar", userSession.SelectedKar)
+		b.Where("rdok.kar = ?", userSession.SelectedKar)
 	}
-	if params.Vrd != "" {
-		qb.AddCondition("rdok.vrd", params.Vrd, "=")
-	}
+	// The optional filters skip empty values by themselves.
+	b.AddCondition("rdok.vrd", params.Vrd, "=")
 	if params.MagaciniID != 0 {
-		qb.AddEqual("rdok.magaciniid", params.MagaciniID)
+		b.Where("rdok.magaciniid = ?", params.MagaciniID)
 	}
-	if params.OdDanal != "" {
-		qb.AddCondition("rdok.danal", params.OdDanal, ">=")
+	b.AddCondition("rdok.danal", params.OdDanal, ">=").
+		AddCondition("rdok.danal", params.DoDanal, "<=").
+		AddSearch([]string{"rdok.dokum", "rdok.dokiz", "rdok.fkto", "rdok.fana", "kupac.naziv", "p.pib", "p.mesto"}, params.SearchText)
+	if getTotalRecords && printType != common.TipStampePrint {
+		total, err := s.robnaDokRepo.Count(ctx, b)
+		if err != nil {
+			return err
+		}
+		common.SetTableTotalRecords(tbl, total, pageSize)
+		return nil
 	}
-	if params.DoDanal != "" {
-		qb.AddCondition("rdok.danal", params.DoDanal, "<=")
-	}
-	if params.SearchText != "" {
-		qb.AddCustomSearchCondition([]string{"rdok.dokum", "rdok.dokiz", "rdok.fkto", "rdok.fana", "kupac.naziv", "p.pib", "p.mesto"}, params.SearchText)
-	}
-	qb.AddOrderBy("rdok.danal desc, rdok.tipdok desc, rdok.nalog desc, rdok.dadok desc, rdok.dokum desc")
+	b.OrderBy("rdok.danal desc, rdok.tipdok desc, rdok.nalog desc, rdok.dadok desc, rdok.dokum desc")
 	if !getTotalRecords && printType != common.TipStampePrint {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
+		b.Limit(pageSize).Offset((currentPage - 1) * pageSize)
 	}
-	sqlQuery, args := qb.Build()
-	entities, err := s.robnaDokRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.robnaDokRepo.Select(ctx, b)
 	if err != nil {
 		return err
-	}
-	if getTotalRecords && printType != common.TipStampePrint {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
-		return nil
 	}
 	tbl.Rows = []domain.TableRow{}
 	for _, entity := range *entities {
@@ -1007,7 +1003,7 @@ func (s *RobnoDokumentaResource) GetSpecifikacijeDokumenta(ctx context.Context, 
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 	tbl.Headers = s.specifikacijeDokumentaTableFields
 	hasGod, hasKar := s.robnaDokRepo.GetHasGodHasKar()
-	qb := common.NewQueryBuilder(`
+	b := querybuilder.New(`
 		select
 			rdok.tipdok,
 			rdok.nalog,
@@ -1027,64 +1023,55 @@ func (s *RobnoDokumentaResource) GetSpecifikacijeDokumenta(ctx context.Context, 
 				* coalesce(ps.pp, 0) / 100, 2) as porez,
 			coalesce(ps.pp, 0) as stopa,
 			rdok.rnalid
-		from rdok`, true)
-	qb.AddJoin("inner join rpro on rpro.rdokid = rdok.rdokid")
-	qb.AddJoin("inner join dokvrsta on dokvrsta.god = rdok.god and dokvrsta.kar = rdok.kar and dokvrsta.vrd = rdok.vrd")
-	qb.AddJoin("left join fkpl on fkpl.god = rdok.god and fkpl.kar = rdok.kar and fkpl.vkonta = 1 and fkpl.konto = rpro.fkto and fkpl.sifra = rpro.fana")
-	qb.AddJoin("left join valute on valute.sifval = rdok.sifval")
-	// The poreska stopa of the stavka (rpor.pp): the stopa of its "po" that was in force on the
-	// datum of the document, like the other robno reports read it.
-	qb.AddJoin(`left join lateral (select r.pp from rpor r
+		from rdok`).
+		AddJoin("inner join rpro on rpro.rdokid = rdok.rdokid").
+		AddJoin("inner join dokvrsta on dokvrsta.god = rdok.god and dokvrsta.kar = rdok.kar and dokvrsta.vrd = rdok.vrd").
+		AddJoin("left join fkpl on fkpl.god = rdok.god and fkpl.kar = rdok.kar and fkpl.vkonta = 1 and fkpl.konto = rpro.fkto and fkpl.sifra = rpro.fana").
+		AddJoin("left join valute on valute.sifval = rdok.sifval").
+		// The poreska stopa of the stavka (rpor.pp): the stopa of its "po" that was in force on the
+		// datum of the document, like the other robno reports read it.
+		AddJoin(`left join lateral (select r.pp from rpor r
 		where r.po = rpro.po and r.datum <= rdok.dadok
-		order by r.datum desc limit 1) ps on true`)
-	// The groups of the vrste dokumenta the report covers (the legacy FAK, PRE, DIR, ARU and FZR).
-	qb.AddIn("dokvrsta.grpdok", []any{"FAK", "PRE", "DIR", "ARU", "FZR"})
+		order by r.datum desc limit 1) ps on true`).
+		// The groups of the vrste dokumenta the report covers (the legacy FAK, PRE, DIR, ARU and FZR).
+		AddIn("dokvrsta.grpdok", []any{"FAK", "PRE", "DIR", "ARU", "FZR"})
 	if hasGod {
-		qb.AddEqual("rdok.god", userSession.SelectedGod)
+		b.Where("rdok.god = ?", userSession.SelectedGod)
 	}
 	if hasKar {
-		qb.AddEqual("rdok.kar", userSession.SelectedKar)
+		b.Where("rdok.kar = ?", userSession.SelectedKar)
 	}
 	if params.MagaciniID != 0 {
-		qb.AddEqual("rdok.magaciniid", params.MagaciniID)
+		b.Where("rdok.magaciniid = ?", params.MagaciniID)
 	}
-	if params.Vrd != "" {
-		qb.AddCondition("rpro.vrd", params.Vrd, "=")
-	}
-	if params.OdVrd != "" {
-		qb.AddCondition("rdok.tipdok", params.OdVrd, ">=")
-	}
-	if params.DoVrd != "" {
-		qb.AddCondition("rdok.tipdok", params.DoVrd, "<=")
-	}
-	if params.OdDanal != "" {
-		qb.AddCondition("rdok.dadok", params.OdDanal, ">=")
-	}
-	if params.DoDanal != "" {
-		qb.AddCondition("rdok.dadok", params.DoDanal, "<=")
-	}
-	addNumberCondition(qb, "rdok.nalog", params.OdNaloga, ">=")
-	addNumberCondition(qb, "rdok.nalog", params.DoNaloga, "<=")
-	addNumberCondition(qb, "rdok.dokum", params.OdDokum, ">=")
-	addNumberCondition(qb, "rdok.dokum", params.DoDokum, "<=")
-	if params.SearchText != "" {
-		qb.AddCustomSearchCondition([]string{"rdok.dokum", "rpro.fkto", "rpro.fana", "fkpl.naziv"}, params.SearchText)
+	// The optional filters skip empty values by themselves.
+	b.AddCondition("rpro.vrd", params.Vrd, "=").
+		AddCondition("rdok.tipdok", params.OdVrd, ">=").
+		AddCondition("rdok.tipdok", params.DoVrd, "<=").
+		AddCondition("rdok.dadok", params.OdDanal, ">=").
+		AddCondition("rdok.dadok", params.DoDanal, "<=")
+	addNumberCondition(b, "rdok.nalog", params.OdNaloga, ">=")
+	addNumberCondition(b, "rdok.nalog", params.DoNaloga, "<=")
+	addNumberCondition(b, "rdok.dokum", params.OdDokum, ">=")
+	addNumberCondition(b, "rdok.dokum", params.DoDokum, "<=")
+	b.AddSearch([]string{"rdok.dokum", "rpro.fkto", "rpro.fana", "fkpl.naziv"}, params.SearchText)
+	if getTotalRecords && !isPrint {
+		total, err := s.robnaDokRepo.Count(ctx, b)
+		if err != nil {
+			return err
+		}
+		common.SetTableTotalRecords(tbl, total, pageSize)
+		return nil
 	}
 	// The rows of a nalog and of a document stay together (the bands of the report are the nalog and
 	// the document), like the legacy ORDER BY RNALID, RDOKID.
-	qb.AddOrderBy("rdok.rnalid, rdok.rdokid, rpro.rproid")
+	b.OrderBy("rdok.rnalid, rdok.rdokid, rpro.rproid")
 	if !getTotalRecords && !isPrint {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
+		b.Limit(pageSize).Offset((currentPage - 1) * pageSize)
 	}
-	sqlQuery, args := qb.Build()
-	entities, err := s.robnaDokRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.robnaDokRepo.Select(ctx, b)
 	if err != nil {
 		return err
-	}
-	if getTotalRecords && !isPrint {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
-		return nil
 	}
 
 	// The columns of the amounts of the report: the label of the bands is printed over the columns
@@ -1227,7 +1214,7 @@ func (s *RobnoDokumentaResource) GetPregledEFaktura(ctx context.Context, tbl *do
 	tbl.Headers = s.pregledEFakturaTableFields
 	hasGod, hasKar := s.robnaDokRepo.GetHasGodHasKar()
 
-	qb := common.NewQueryBuilder(`
+	b := querybuilder.New(`
 		select
 			coalesce(rdok.status_salinv, '') as statussalinv,
 			rdok.datum_stat_salinv as datumstatsalinv,
@@ -1251,46 +1238,40 @@ func (s *RobnoDokumentaResource) GetPregledEFaktura(ctx context.Context, tbl *do
 			coalesce(rdok.kurs, 0) as kurs,
 			rdok.rdokid,
 			rdok.salesinvoiceid
-		from rnal`, true)
-	qb.AddJoin("inner join rdok on rdok.rnalid = rnal.rnalid")
-	qb.AddJoin("inner join dokvrsta on dokvrsta.god = rdok.god and dokvrsta.kar = rdok.kar and dokvrsta.vrd = rdok.vrd")
-	qb.AddJoin("left join fkpl on fkpl.god = rdok.god and fkpl.kar = rdok.kar and fkpl.vkonta = 1 and fkpl.konto = rdok.fkto and fkpl.sifra = rdok.fana")
-	qb.AddJoin("left join partneri p on p.idpartneri = fkpl.idpartneri")
-	qb.AddJoin("left join valute on valute.sifval = rdok.sifval")
+		from rnal`).
+		AddJoin("inner join rdok on rdok.rnalid = rnal.rnalid").
+		AddJoin("inner join dokvrsta on dokvrsta.god = rdok.god and dokvrsta.kar = rdok.kar and dokvrsta.vrd = rdok.vrd").
+		AddJoin("left join fkpl on fkpl.god = rdok.god and fkpl.kar = rdok.kar and fkpl.vkonta = 1 and fkpl.konto = rdok.fkto and fkpl.sifra = rdok.fana").
+		AddJoin("left join partneri p on p.idpartneri = fkpl.idpartneri").
+		AddJoin("left join valute on valute.sifval = rdok.sifval")
 	if hasGod {
-		qb.AddEqual("rnal.god", userSession.SelectedGod)
+		b.Where("rnal.god = ?", userSession.SelectedGod)
 	}
 	if hasKar {
-		qb.AddEqual("rnal.kar", userSession.SelectedKar)
+		b.Where("rnal.kar = ?", userSession.SelectedKar)
 	}
 	if params.MagaciniID != 0 {
-		qb.AddEqual("rdok.magaciniid", params.MagaciniID)
+		b.Where("rdok.magaciniid = ?", params.MagaciniID)
 	}
-	if groups := grupeDokumenata(params.GrupeDokumenata); len(groups) > 0 {
-		qb.AddIn("dokvrsta.grpdok", groups)
+	// The optional filters skip empty values by themselves.
+	b.AddIn("dokvrsta.grpdok", grupeDokumenata(params.GrupeDokumenata)).
+		AddCondition("rdok.dadok", params.OdDanal, ">=").
+		AddCondition("rdok.dadok", params.DoDanal, "<=").
+		AddSearch([]string{"rdok.dokum", "rdok.dokiz", "rdok.fkto", "rdok.fana", "fkpl.naziv", "rdok.status_salinv", "rdok.cirinvoiceid"}, params.SearchText)
+	if getTotalRecords {
+		total, err := s.robnaDokRepo.Count(ctx, b)
+		if err != nil {
+			return err
+		}
+		common.SetTableTotalRecords(tbl, total, pageSize)
+		return nil
 	}
-	if params.OdDanal != "" {
-		qb.AddCondition("rdok.dadok", params.OdDanal, ">=")
-	}
-	if params.DoDanal != "" {
-		qb.AddCondition("rdok.dadok", params.DoDanal, "<=")
-	}
-	if params.SearchText != "" {
-		qb.AddCustomSearchCondition([]string{"rdok.dokum", "rdok.dokiz", "rdok.fkto", "rdok.fana", "fkpl.naziv", "rdok.status_salinv", "rdok.cirinvoiceid"}, params.SearchText)
-	}
-	qb.AddOrderBy("rnal.nalog desc, rdok.dokum desc")
-	if !getTotalRecords {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
-	}
-	sqlQuery, args := qb.Build()
-	entities, err := s.robnaDokRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	b.OrderBy("rnal.nalog desc, rdok.dokum desc").
+		Limit(pageSize).
+		Offset((currentPage - 1) * pageSize)
+	entities, err := s.robnaDokRepo.Select(ctx, b)
 	if err != nil {
 		return err
-	}
-	if getTotalRecords {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
-		return nil
 	}
 	tbl.Rows = []domain.TableRow{}
 	for _, entity := range *entities {
@@ -1340,15 +1321,13 @@ func (s *RobnoDokumentaResource) GetKontiranjeKnjizenje(ctx context.Context, tbl
 	tbl.Headers = s.kontiranjeKnjizenjeTableFields
 	hasGod, hasKar := s.robnaDokRepo.GetHasGodHasKar()
 
-	qb := common.NewQueryBuilder(kontiranjeSelectQuery, true)
-	addKontiranjeConditions(qb, params, hasGod, hasKar, userSession.SelectedGod, userSession.SelectedKar)
-	qb.AddOrderBy("rdok.nalog, rdok.dokum")
+	b := querybuilder.New(kontiranjeSelectQuery)
+	addKontiranjeConditions(b, params, hasGod, hasKar, userSession.SelectedGod, userSession.SelectedKar)
+	b.OrderBy("rdok.nalog, rdok.dokum")
 	if !getTotalRecords {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
+		b.Limit(pageSize).Offset((currentPage - 1) * pageSize)
 	}
-	sqlQuery, args := qb.Build()
-	entities, err := s.robnaDokRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.robnaDokRepo.Select(ctx, b)
 	if err != nil {
 		return err
 	}
@@ -1376,16 +1355,14 @@ func (s *RobnoDokumentaResource) getKontiranjePregledList(ctx context.Context, t
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 	hasGod, hasKar := s.robnaDokRepo.GetHasGodHasKar()
 
-	qb := common.NewQueryBuilder(kontiranjeSelectQuery, true)
-	addKontiranjeConditions(qb, params, hasGod, hasKar, userSession.SelectedGod, userSession.SelectedKar)
-	addKontiranjeStatusCondition(qb, params.Proknjizen)
-	qb.AddOrderBy(orderBy)
+	b := querybuilder.New(kontiranjeSelectQuery)
+	addKontiranjeConditions(b, params, hasGod, hasKar, userSession.SelectedGod, userSession.SelectedKar)
+	addKontiranjeStatusCondition(b, params.Proknjizen)
+	b.OrderBy(orderBy) // a constant list of columns of the two callers
 	if !getTotalRecords {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
+		b.Limit(pageSize).Offset((currentPage - 1) * pageSize)
 	}
-	sqlQuery, args := qb.Build()
-	entities, err := s.robnaDokRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.robnaDokRepo.Select(ctx, b)
 	if err != nil {
 		return err
 	}
@@ -1416,55 +1393,46 @@ const kontiranjeSelectQuery = `
 	from rdok`
 
 // addKontiranjeConditions adds the filters of the "Kontiranje dokumenata" tab.
-func addKontiranjeConditions(qb *common.QueryBuilder, params domain.RobnoDokumentaParams, hasGod, hasKar bool, god, kar int) {
+func addKontiranjeConditions(b *querybuilder.Builder, params domain.RobnoDokumentaParams, hasGod, hasKar bool, god, kar int) {
 	if hasGod {
-		qb.AddEqual("rdok.god", god)
+		b.Where("rdok.god = ?", god)
 	}
 	if hasKar {
-		qb.AddEqual("rdok.kar", kar)
+		b.Where("rdok.kar = ?", kar)
 	}
 	if params.MagaciniID != 0 {
-		qb.AddEqual("rdok.magaciniid", params.MagaciniID)
+		b.Where("rdok.magaciniid = ?", params.MagaciniID)
 	}
-	if params.Tipdok != "" {
-		qb.AddEqual("rdok.tipdok", params.Tipdok)
-	}
-	if params.Vrd != "" {
-		qb.AddCondition("rdok.vrd", params.Vrd, "=")
-	}
-	addNumberCondition(qb, "rdok.nalog", params.OdNaloga, ">=")
-	addNumberCondition(qb, "rdok.nalog", params.DoNaloga, "<=")
-	addNumberCondition(qb, "rdok.dokum", params.OdDokum, ">=")
-	addNumberCondition(qb, "rdok.dokum", params.DoDokum, "<=")
-	if params.OdDanal != "" {
-		qb.AddCondition("rdok.danal", params.OdDanal, ">=")
-	}
-	if params.DoDanal != "" {
-		qb.AddCondition("rdok.danal", params.DoDanal, "<=")
-	}
-	if params.SearchText != "" {
-		qb.AddCustomSearchCondition([]string{"rdok.tipdok", "rdok.dokum", "rdok.opis", "rdok.dokiz", "rdok.fkto", "rdok.fana"}, params.SearchText)
-	}
+	// The optional filters skip empty values by themselves.
+	b.AddEqual("rdok.tipdok", params.Tipdok).
+		AddCondition("rdok.vrd", params.Vrd, "=")
+	addNumberCondition(b, "rdok.nalog", params.OdNaloga, ">=")
+	addNumberCondition(b, "rdok.nalog", params.DoNaloga, "<=")
+	addNumberCondition(b, "rdok.dokum", params.OdDokum, ">=")
+	addNumberCondition(b, "rdok.dokum", params.DoDokum, "<=")
+	b.AddCondition("rdok.danal", params.OdDanal, ">=").
+		AddCondition("rdok.danal", params.DoDanal, "<=").
+		AddSearch([]string{"rdok.tipdok", "rdok.dokum", "rdok.opis", "rdok.dokiz", "rdok.fkto", "rdok.fana"}, params.SearchText)
 }
 
 // addKontiranjeStatusCondition adds the state of the posting (rdok.knjige_1).
-func addKontiranjeStatusCondition(qb *common.QueryBuilder, proknjizen string) {
+func addKontiranjeStatusCondition(b *querybuilder.Builder, proknjizen string) {
 	if proknjizen == knjigeProknjizen {
-		qb.AddCustomCondition("rdok.knjige_1 = 'D'")
+		b.Where("rdok.knjige_1 = 'D'")
 		return
 	}
-	qb.AddCustomCondition("coalesce(rdok.knjige_1, '') <> 'D'")
+	b.Where("coalesce(rdok.knjige_1, '') <> 'D'")
 }
 
 // addNumberCondition adds a condition of a whole number (validated ranges only).
-func addNumberCondition(qb *common.QueryBuilder, field, value, operator string) {
+func addNumberCondition(b *querybuilder.Builder, field, value, operator string) {
 	if value == "" {
 		return
 	}
 	if _, err := strconv.Atoi(strings.TrimSpace(value)); err != nil {
 		return
 	}
-	qb.AddCondition(field, value, operator)
+	b.AddCondition(field, value, operator)
 }
 
 // setKontiranjeRows sets the total records or the rows of the page of the tab.
@@ -1569,7 +1537,7 @@ func (s *RobnoDokumentaResource) GetPrikazUkupneObrade(ctx context.Context, tbl 
 	}
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 	tbl.Headers = s.prikazUkupneObradeTableFields
-	qb := common.NewQueryBuilder(`SELECT
+	b := querybuilder.New(`SELECT
 			m.mag,
 				COALESCE(m.opis, '') AS opis,
 				COALESCE(m.mesto, '') AS mesto,
@@ -1610,16 +1578,14 @@ func (s *RobnoDokumentaResource) GetPrikazUkupneObrade(ctx context.Context, tbl 
 					ON p.rdokid = d.rdokid
 				GROUP BY r.magaciniid
 			) s
-				ON s.magaciniid = m.magaciniid `, true)
-	qb.AddEqual("m.god", userSession.SelectedGod)
-	qb.AddEqual("m.kar", userSession.SelectedKar)
+				ON s.magaciniid = m.magaciniid`).
+		Where("m.god = ?", userSession.SelectedGod).
+		Where("m.kar = ?", userSession.SelectedKar).
+		OrderBy("m.mag")
 	if !getTotRecords {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
+		b.Limit(pageSize).Offset((currentPage - 1) * pageSize)
 	}
-	qb.AddOrderBy("m.mag")
-	sqlQuery, args := qb.Build()
-	entities, err := s.prikazUkupneObradeRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.prikazUkupneObradeRepo.Select(ctx, b)
 	if err != nil {
 		return err
 	}
@@ -1687,7 +1653,7 @@ func (s *RobnoDokumentaResource) GetPrikazNaloga(ctx context.Context, tbl *domai
 	}
 	hasGod, hasKar := s.robnaDokRepo.GetHasGodHasKar()
 
-	qb := common.NewQueryBuilder(`
+	b := querybuilder.New(`
 		select
 			rnal.rnalid,
 			rnal.tipdok,
@@ -1700,60 +1666,49 @@ func (s *RobnoDokumentaResource) GetPrikazNaloga(ctx context.Context, tbl *domai
 			coalesce(rnal.pot, 0) as pot,
 			coalesce(rnal.xopunos, '') as oper,
 			rnal.magaciniid
-		from rnal`, true)
+		from rnal`)
 	if hasGod {
-		qb.AddEqual("rnal.god", userSession.SelectedGod)
+		b.Where("rnal.god = ?", userSession.SelectedGod)
 	}
 	if hasKar {
-		qb.AddEqual("rnal.kar", userSession.SelectedKar)
+		b.Where("rnal.kar = ?", userSession.SelectedKar)
 	}
 	if params.MagaciniID != 0 {
-		qb.AddEqual("rnal.magaciniid", params.MagaciniID)
+		b.Where("rnal.magaciniid = ?", params.MagaciniID)
 	}
-	if params.OdVrd != "" {
-		qb.AddCondition("rnal.tipdok", params.OdVrd, ">=")
-	}
-	if params.DoVrd != "" {
-		qb.AddCondition("rnal.tipdok", params.DoVrd, "<=")
-	}
-	addNumberCondition(qb, "rnal.nalog", params.OdNaloga, ">=")
-	addNumberCondition(qb, "rnal.nalog", params.DoNaloga, "<=")
+	// The optional filters skip empty values by themselves.
+	b.AddCondition("rnal.tipdok", params.OdVrd, ">=").
+		AddCondition("rnal.tipdok", params.DoVrd, "<=")
+	addNumberCondition(b, "rnal.nalog", params.OdNaloga, ">=")
+	addNumberCondition(b, "rnal.nalog", params.DoNaloga, "<=")
 	// The three optional filters of the tab, each one applied only when its checkbox is on.
 	if params.ChkDatumNaloga {
-		if params.OdDanal != "" {
-			qb.AddCondition("rnal.danal", params.OdDanal, ">=")
-		}
-		if params.DoDanal != "" {
-			qb.AddCondition("rnal.danal", params.DoDanal, "<=")
-		}
+		b.AddCondition("rnal.danal", params.OdDanal, ">=").
+			AddCondition("rnal.danal", params.DoDanal, "<=")
 	}
 	if params.ChkDatumObrade {
-		if params.OdDatob != "" {
-			qb.AddCondition("rnal.datob", params.OdDatob, ">=")
+		b.AddCondition("rnal.datob", params.OdDatob, ">=").
+			AddCondition("rnal.datob", params.DoDatob, "<=")
+	}
+	if params.ChkOperator {
+		b.AddSearch([]string{"rnal.xopunos", "rnal.xopizmene"}, params.Oper)
+	}
+	b.AddSearch([]string{"rnal.tipdok", "rnal.nalog", "rnal.xopunos", "rnal.opis"}, params.SearchText)
+	if getTotalRecords && printType != common.TipStampePrint {
+		total, err := s.robnaDokRepo.Count(ctx, b)
+		if err != nil {
+			return err
 		}
-		if params.DoDatob != "" {
-			qb.AddCondition("rnal.datob", params.DoDatob, "<=")
-		}
+		common.SetTableTotalRecords(tbl, total, pageSize)
+		return nil
 	}
-	if params.ChkOperator && params.Oper != "" {
-		qb.AddCustomSearchCondition([]string{"rnal.xopunos", "rnal.xopizmene"}, params.Oper)
-	}
-	if params.SearchText != "" {
-		qb.AddCustomSearchCondition([]string{"rnal.tipdok", "rnal.nalog", "rnal.xopunos", "rnal.opis"}, params.SearchText)
-	}
-	qb.AddOrderBy("rnal.tipdok, rnal.nalog desc")
+	b.OrderBy("rnal.tipdok, rnal.nalog desc")
 	if !getTotalRecords && printType != common.TipStampePrint {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
+		b.Limit(pageSize).Offset((currentPage - 1) * pageSize)
 	}
-	sqlQuery, args := qb.Build()
-	entities, err := s.robnaDokRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.robnaDokRepo.Select(ctx, b)
 	if err != nil {
 		return err
-	}
-	if getTotalRecords && printType != common.TipStampePrint {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
-		return nil
 	}
 	tbl.Rows = []domain.TableRow{}
 	for i, entity := range *entities {
@@ -1804,7 +1759,7 @@ func (s *RobnoDokumentaResource) GetPrikazDokumenataUNalogu(ctx context.Context,
 	tbl.Headers = s.prikazDokumenataUNaloguTableFields
 	hasGod, hasKar := s.robnaDokRepo.GetHasGodHasKar()
 
-	qb := common.NewQueryBuilder(`
+	b := querybuilder.New(`
 		select
 			rdok.tipdok,
 			rdok.nalog,
@@ -1817,61 +1772,50 @@ func (s *RobnoDokumentaResource) GetPrikazDokumenataUNalogu(ctx context.Context,
 			rdok.datob,
 			coalesce(nullif(rdok.xopunos, ''), rdok.xopunos, '') as oper,
 			rdok.magaciniid
-		from rdok`, true)
+		from rdok`)
 	if hasGod {
-		qb.AddEqual("rdok.god", userSession.SelectedGod)
+		b.Where("rdok.god = ?", userSession.SelectedGod)
 	}
 	if hasKar {
-		qb.AddEqual("rdok.kar", userSession.SelectedKar)
+		b.Where("rdok.kar = ?", userSession.SelectedKar)
 	}
 	if params.MagaciniID != 0 {
-		qb.AddEqual("rdok.magaciniid", params.MagaciniID)
+		b.Where("rdok.magaciniid = ?", params.MagaciniID)
 	}
-	if params.OdVrd != "" {
-		qb.AddCondition("rdok.tipdok", params.OdVrd, ">=")
-	}
-	if params.DoVrd != "" {
-		qb.AddCondition("rdok.tipdok", params.DoVrd, "<=")
-	}
-	addNumberCondition(qb, "rdok.nalog", params.OdNaloga, ">=")
-	addNumberCondition(qb, "rdok.nalog", params.DoNaloga, "<=")
+	// The optional filters skip empty values by themselves.
+	b.AddCondition("rdok.tipdok", params.OdVrd, ">=").
+		AddCondition("rdok.tipdok", params.DoVrd, "<=")
+	addNumberCondition(b, "rdok.nalog", params.OdNaloga, ">=")
+	addNumberCondition(b, "rdok.nalog", params.DoNaloga, "<=")
 	if params.ChkDatumNaloga {
-		if params.OdDanal != "" {
-			qb.AddCondition("rdok.danal", params.OdDanal, ">=")
-		}
-		if params.DoDanal != "" {
-			qb.AddCondition("rdok.danal", params.DoDanal, "<=")
-		}
+		b.AddCondition("rdok.danal", params.OdDanal, ">=").
+			AddCondition("rdok.danal", params.DoDanal, "<=")
 	}
 	if params.ChkDatumObrade {
-		if params.OdDatob != "" {
-			qb.AddCondition("rdok.datob", params.OdDatob, ">=")
-		}
-		if params.DoDatob != "" {
-			qb.AddCondition("rdok.datob", params.DoDatob, "<=")
-		}
+		b.AddCondition("rdok.datob", params.OdDatob, ">=").
+			AddCondition("rdok.datob", params.DoDatob, "<=")
 	}
 	// The operater filter of the legacy screen looks in both the user of the insert (xopunos) and
 	// the user of the last change (xopizmene) of the document.
-	if params.ChkOperator && params.Oper != "" {
-		qb.AddCustomSearchCondition([]string{"rdok.xopunos", "rdok.xopizmene"}, params.Oper)
+	if params.ChkOperator {
+		b.AddSearch([]string{"rdok.xopunos", "rdok.xopizmene"}, params.Oper)
 	}
-	if params.SearchText != "" {
-		qb.AddCustomSearchCondition([]string{"rdok.tipdok", "rdok.nalog", "rdok.dokum", "rdok.opis", "rdok.xopunos", "rdok.xopizmene"}, params.SearchText)
+	b.AddSearch([]string{"rdok.tipdok", "rdok.nalog", "rdok.dokum", "rdok.opis", "rdok.xopunos", "rdok.xopizmene"}, params.SearchText)
+	if getTotalRecords && printType != common.TipStampePrint {
+		total, err := s.robnaDokRepo.Count(ctx, b)
+		if err != nil {
+			return err
+		}
+		common.SetTableTotalRecords(tbl, total, pageSize)
+		return nil
 	}
-	qb.AddOrderBy("rdok.nalog, rdok.vrd, rdok.dokum")
+	b.OrderBy("rdok.nalog, rdok.vrd, rdok.dokum")
 	if !getTotalRecords && printType != common.TipStampePrint {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
+		b.Limit(pageSize).Offset((currentPage - 1) * pageSize)
 	}
-	sqlQuery, args := qb.Build()
-	entities, err := s.robnaDokRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.robnaDokRepo.Select(ctx, b)
 	if err != nil {
 		return err
-	}
-	if getTotalRecords && printType != common.TipStampePrint {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
-		return nil
 	}
 	tbl.Rows = []domain.TableRow{}
 	for i, entity := range *entities {
@@ -1910,7 +1854,7 @@ func (s *RobnoDokumentaResource) GetPrikazDokumenataPoOperateru(ctx context.Cont
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 	tbl.Headers = s.prikazDokumenataPooperateruTableFields
 
-	qb := common.NewQueryBuilder(`
+	b := querybuilder.New(`
 		select
 			coalesce(nullif(rdok.xopunos, ''), rdok.xopunos, '') as oper,
 			count(*)::int as brdo,
@@ -1918,48 +1862,42 @@ func (s *RobnoDokumentaResource) GetPrikazDokumenataPoOperateru(ctx context.Cont
 			coalesce(sum(case when upper(coalesce(dokvrsta.kodknj, '')) = 'D' then coalesce(rdok.iznos, 0) else 0 end), 0) as dug,
 			coalesce(sum(case when upper(coalesce(dokvrsta.kodknj, '')) = 'P' then coalesce(rdok.iznos, 0) else 0 end), 0) as pot
 		from rdok
-		left join dokvrsta on dokvrsta.god = rdok.god and dokvrsta.kar = rdok.kar and dokvrsta.vrd = rdok.vrd`, true)
-	// The period of the session must scope the documents. The row type of this option has no
-	// god/kar db tags (GetHasGodHasKar reports false), so the two conditions are added explicitly.
-	qb.AddEqual("rdok.god", userSession.SelectedGod)
-	qb.AddEqual("rdok.kar", userSession.SelectedKar)
-	addNumberCondition(qb, "rdok.nalog", params.OdNaloga, ">=")
-	addNumberCondition(qb, "rdok.nalog", params.DoNaloga, "<=")
+		left join dokvrsta on dokvrsta.god = rdok.god and dokvrsta.kar = rdok.kar and dokvrsta.vrd = rdok.vrd`).
+		// The period of the session must scope the documents. The row type of this option has no
+		// god/kar db tags (GetHasGodHasKar reports false), so the two conditions are added explicitly.
+		Where("rdok.god = ?", userSession.SelectedGod).
+		Where("rdok.kar = ?", userSession.SelectedKar)
+	addNumberCondition(b, "rdok.nalog", params.OdNaloga, ">=")
+	addNumberCondition(b, "rdok.nalog", params.DoNaloga, "<=")
 	if params.ChkDatumNaloga {
-		if params.OdDanal != "" {
-			qb.AddCondition("rdok.danal", params.OdDanal, ">=")
-		}
-		if params.DoDanal != "" {
-			qb.AddCondition("rdok.danal", params.DoDanal, "<=")
-		}
+		b.AddCondition("rdok.danal", params.OdDanal, ">=").
+			AddCondition("rdok.danal", params.DoDanal, "<=")
 	}
 	if params.ChkDatumObrade {
-		if params.OdDatob != "" {
-			qb.AddCondition("rdok.datob", params.OdDatob, ">=")
-		}
-		if params.DoDatob != "" {
-			qb.AddCondition("rdok.datob", params.DoDatob, "<=")
-		}
+		b.AddCondition("rdok.datob", params.OdDatob, ">=").
+			AddCondition("rdok.datob", params.DoDatob, "<=")
 	}
 	// The operater filter of the legacy screen looks in both the user of the insert (xopunos) and
 	// the user of the last change (xopizmene) of the document.
-	if params.ChkOperator && params.Oper != "" {
-		qb.AddCustomSearchCondition([]string{"rdok.xopunos", "rdok.xopizmene"}, params.Oper)
+	if params.ChkOperator {
+		b.AddSearch([]string{"rdok.xopunos", "rdok.xopizmene"}, params.Oper)
 	}
-	qb.AddGroupBy("coalesce(nullif(rdok.xopunos, ''), rdok.xopunos, '')")
-	qb.AddOrderBy("oper")
+	b.GroupByExpr("coalesce(nullif(rdok.xopunos, ''), rdok.xopunos, '')")
+	if getTotalRecords && printType != common.TipStampePrint {
+		total, err := s.robnaDokRepo.Count(ctx, b)
+		if err != nil {
+			return err
+		}
+		common.SetTableTotalRecords(tbl, total, pageSize)
+		return nil
+	}
+	b.OrderBy("oper")
 	if !getTotalRecords && printType != common.TipStampePrint {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
+		b.Limit(pageSize).Offset((currentPage - 1) * pageSize)
 	}
-	sqlQuery, args := qb.Build()
-	entities, err := s.robnaDokRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.robnaDokRepo.Select(ctx, b)
 	if err != nil {
 		return err
-	}
-	if getTotalRecords && printType != common.TipStampePrint {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
-		return nil
 	}
 	tbl.Rows = []domain.TableRow{}
 	for _, entity := range *entities {
@@ -2147,6 +2085,12 @@ func (s *RobnoDokumentaResource) GetInterniDokumentStavkeTableFields() []domain.
 // the stavke of the selected document of the "Pregled porudžbenica" tab).
 func (s *RobnoDokumentaResource) GetPorStavkeTableFields() []domain.Fields {
 	return s.porStavkeTableFields
+}
+
+// GetProStavkeTableFields returns the columns of the grid of the stavke of the "Profakture" screen (also of the
+// stavke of the selected document of the "Prikaz profaktura" tab).
+func (s *RobnoDokumentaResource) GetProStavkeTableFields() []domain.Fields {
+	return s.proStavkeTableFields
 }
 
 // setTableFields defines the grid columns of every tab of the "Robna dokumenta" option.
@@ -2539,6 +2483,19 @@ func (s *RobnoDokumentaResource) setTableFields() {
 		{Name: "jm", Label: "JM", Width: "6", TextAlign: "center", SkipInSearch: true},
 		{Name: "kolic", Label: "Količina", Width: "9", TextAlign: "right", SkipInSearch: true},
 		{Name: "ncena", Label: "Nabavna cena", Width: "10", TextAlign: "right", SkipInSearch: true},
+		{Name: "iznos", Label: "Iznos", Width: "10", TextAlign: "right", SkipInSearch: true, IncludeInTotals: true},
+	}
+	// The "Profakture" screen (the legacy rob_ProFakture): the columns of the legacy grid of the stavke
+	// (QRY_RRPO_DET).
+	s.proStavkeTableFields = []domain.Fields{
+		{Name: "rbr", Label: "Red. broj", Width: "5", TextAlign: "right", SkipInSearch: true},
+		{Name: "konto", Label: "Konto", Width: "8", SkipInSearch: true},
+		{Name: "sifra", Label: "Šifra artikla", Width: "8", TextAlign: "right"},
+		{Name: "naziv", Label: "Naziv artikla", Width: "30"},
+		{Name: "jm", Label: "JM", Width: "5", TextAlign: "center", SkipInSearch: true},
+		{Name: "kolic", Label: "Količina", Width: "9", TextAlign: "right", SkipInSearch: true},
+		{Name: "cena", Label: "Cena", Width: "10", TextAlign: "right", SkipInSearch: true},
+		{Name: "rab", Label: "Rabat", Width: "6", TextAlign: "right", SkipInSearch: true},
 		{Name: "iznos", Label: "Iznos", Width: "10", TextAlign: "right", SkipInSearch: true, IncludeInTotals: true},
 	}
 	s.interniDokumentStavkeTableFields = []domain.Fields{

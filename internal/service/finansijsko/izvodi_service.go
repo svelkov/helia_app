@@ -8,6 +8,7 @@ import (
 	"helia/config"
 	"helia/internal/common"
 	"helia/internal/domain"
+	"helia/internal/infrastructure/db/querybuilder"
 	"helia/internal/repository"
 	"helia/internal/service"
 	commonsvc "helia/internal/service/common"
@@ -36,6 +37,7 @@ type IzvodiService interface {
 // IzvodiResource implements the IzvodiService interface.
 type IzvodiResource struct {
 	service                 *service.BaseService[domain.Fizvzag]
+	fin                     *repository.FinansijskoRepository
 	izvhdrRepo              *repository.BaseRepository[domain.Fizvzag]
 	izvdetRepo              *repository.BaseRepository[domain.Fizvdet]
 	bankeRepo               *repository.BaseRepository[domain.Banke]
@@ -55,6 +57,7 @@ type IzvodiResource struct {
 func NewIzvodiResource(izvhdrRepo *repository.BaseRepository[domain.Fizvzag], izvdetRepo *repository.BaseRepository[domain.Fizvdet],
 	bankeRepo *repository.BaseRepository[domain.Banke], tipdokRepo *repository.BaseRepository[domain.Tipdok], fnalRepo *repository.BaseRepository[domain.Fnal], partneriRepo *repository.BaseRepository[domain.Partneri], tekracuniRepo *repository.BaseRepository[domain.TekRacuni], sifplizvRepo *repository.BaseRepository[domain.Sifplizv], fkplRepo *repository.BaseRepository[domain.Fkpl], fvrRepo *repository.BaseRepository[domain.Fvr], cfg config.Config, commonSvc commonsvc.CommonService) *IzvodiResource {
 	rs := &IzvodiResource{
+		fin:           repository.NewFinansijskoRepository(izvhdrRepo.DB),
 		izvhdrRepo:    izvhdrRepo,
 		izvdetRepo:    izvdetRepo,
 		bankeRepo:     bankeRepo,
@@ -81,76 +84,51 @@ func (s *IzvodiResource) GetIzvodiHeader(ctx context.Context, tbl *domain.TableD
 	// Get parameters from form
 
 	common.SetupTablePagination(tbl, currentPage, pageSize)
-	hasGod, hasKar := s.izvhdrRepo.GetHasGodHasKar()
 
 	// Build query with QueryBuilder matching WinDev SQL structure
-	qb := common.NewQueryBuilder(`
-		SELECT 
+	b := querybuilder.New(`
+		SELECT
 			i.idfizvzag, i.god, i.kar, i.brrac,
 			i.izvbr, i.datizv, i.konto, i.sifra, i.prstanje,
 			i.ukdug, i.ukpot, i.nstanje, i.ukbrst,
-			i.nalog, coalesce(i.tipdok,'') as tipdok, i.izvsts, 
+			i.nalog, coalesce(i.tipdok,'') as tipdok, i.izvsts,
 			i.idbanke, coalesce(b.banka,'') as banka, coalesce(b.brrac,'') as brrac,
 			i.konto, i.sifra
-		FROM fizvzag i`, true)
-
-	if hasGod {
-		qb.AddEqual("i.god", session.SelectedGod)
+		FROM fizvzag i`).
+		AddJoin(`LEFT JOIN banke b ON b.idbanke = i.idbanke`)
+	if params.IDbanke != "0" {
+		b.AddEqual("i.idbanke", params.IDbanke)
 	}
-	if hasKar {
-		qb.AddEqual("i.kar", session.SelectedKar)
-	}
-	qb.AddJoin(` LEFT JOIN banke b ON b.idbanke = i.idbanke `)
-	if params.IDbanke != "" && params.IDbanke != "0" {
-		qb.AddEqual("i.idbanke", params.IDbanke)
-	}
-
-	if params.BrojRacuna != "" {
-		qb.AddEqual("i.brrac", params.BrojRacuna)
-	}
-
-	if params.OdBrojaIzvoda != "" {
-		qb.AddCondition("i.izvbr", params.OdBrojaIzvoda, ">=")
-	}
-
-	if params.DoBrojaIzvoda != "" {
-		qb.AddCondition("i.izvbr", params.DoBrojaIzvoda, "<=")
-	}
-
-	if params.OdDatumaIzvoda != "" {
-		qb.AddCondition("i.datizv", params.OdDatumaIzvoda, ">=")
-	}
-
-	if params.DoDatumaIzvoda != "" {
-		qb.AddCondition("i.datizv", params.DoDatumaIzvoda, "<=")
-	}
-
-	if params.StatusIzvoda != "" {
-		qb.AddEqual("i.izvsts", params.StatusIzvoda)
-	}
-
-	// Add search conditions if search text is provided
-	if params.SearchText != "" {
-		qb.AddSearchConditions(s.GetMasterTableFields(), params.SearchText)
-	}
-
-	qb.AddOrderBy("i.datizv DESC, i.izvbr DESC")
-
-	if !getTotalRecords {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
-	}
-
-	sqlQuery, args := qb.Build()
-	entities, err := s.izvhdrRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
+	// The optional filters of the form skip empty values by themselves.
+	b.AddEqual("i.brrac", params.BrojRacuna).
+		AddCondition("i.izvbr", params.OdBrojaIzvoda, ">=").
+		AddCondition("i.izvbr", params.DoBrojaIzvoda, "<=").
+		AddCondition("i.datizv", params.OdDatumaIzvoda, ">=").
+		AddCondition("i.datizv", params.DoDatumaIzvoda, "<=").
+		AddEqual("i.izvsts", params.StatusIzvoda)
+	// The period of the session (i.god/kar) and the search over the columns of the grid (all
+	// qualified, because the joined banke has konto/sifra/brrac too). The old builder had no
+	// entity type here, so its search never filtered.
+	if err := s.izvhdrRepo.ApplyFilters(ctx, b, "i", s.GetMasterTableFields(), params.SearchText); err != nil {
 		return err
 	}
 
 	// Set total records and pagination
 	if getTotalRecords {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
+		total, err := s.izvhdrRepo.Count(ctx, b)
+		if err != nil {
+			return err
+		}
+		common.SetTableTotalRecords(tbl, total, pageSize)
 		return nil
+	}
+	b.OrderBy("i.datizv DESC, i.izvbr DESC").
+		Limit(pageSize).
+		Offset((currentPage - 1) * pageSize)
+
+	entities, err := s.izvhdrRepo.Select(ctx, b)
+	if err != nil {
+		return err
 	}
 
 	// Populate table rows
@@ -188,39 +166,38 @@ func (s *IzvodiResource) GetIzvodiDetail(ctx context.Context, tbl *domain.TableD
 	}
 
 	common.SetupTablePagination(tbl, currentPage, pageSize)
-	qb := common.NewQueryBuilder(`
-		SELECT 
+	// The header id comes from the request: a key (Where), restricted to the period of the session,
+	// plus the search over the columns of the grid (the old builder had no entity type here, so
+	// its search never filtered).
+	b := querybuilder.New(`
+		SELECT
 			d.idfizvdet, d.rbr, d.konto, d.sifra, d.kat,
 			d.vrd, coalesce(d.konto1, '') as konto1, coalesce(d.sifra1, '') as sifra1, d.iznos, d.duguje,
 			d.potrazuje, d.nsedprim, d.brracup, d.osnplac,
 			coalesce(d.sdozn, '') as sdozn, coalesce(d.sdozn1, '') as sdozn1, coalesce(d.modelzad, '') as modelzad, coalesce(d.pnabrzad, '') as pnabrzad,
 			coalesce(d.mododob, '') as mododob, coalesce(d.pnabrodob, '') as pnabrodob, coalesce(d.prekl, '') as prekl
-		FROM fizvdet d`, true)
-
-	qb.AddEqual("d.idfizvzag", params.IDfizvzag)
-
-	// Add search conditions if search text is provided
-	if params.SearchText != "" {
-		qb.AddSearchConditions(s.GetDetailTableFields(), params.SearchText)
-	}
-
-	qb.AddOrderBy("d.rbr")
-
-	if !getTotalRecords {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
-	}
-
-	sqlQuery, args := qb.Build()
-	entities, err := s.izvdetRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
+		FROM fizvdet d`).
+		Where("d.idfizvzag = ?", params.IDfizvzag)
+	if err := s.izvdetRepo.ApplyFilters(ctx, b, "d", s.GetDetailTableFields(), params.SearchText); err != nil {
 		return err
 	}
 
 	// Set total records and pagination
 	if getTotalRecords {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
+		total, err := s.izvdetRepo.Count(ctx, b)
+		if err != nil {
+			return err
+		}
+		common.SetTableTotalRecords(tbl, total, pageSize)
 		return nil
+	}
+	b.OrderBy("d.rbr").
+		Limit(pageSize).
+		Offset((currentPage - 1) * pageSize)
+
+	entities, err := s.izvdetRepo.Select(ctx, b)
+	if err != nil {
+		return err
 	}
 
 	// Populate table rows
@@ -306,183 +283,170 @@ func (s *IzvodiResource) AzuriranjeKonta(ctx context.Context, fizvhdrID int64, p
 	if userSession == nil {
 		return fmt.Errorf("user session not found")
 	}
-	qb := common.NewQueryBuilder(`SELECT idfizvdet, rbr, konto, sifra, kat, vrd, iznos, duguje, potrazuje FROM fizvdet `, true)
-	qb.AddEqual("idfizvzag", fizvhdrID)
-	sqlQuery, args := qb.Build()
-	entities, err := s.izvdetRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	// The header id comes from the request: a key (Where), restricted to the period of the session.
+	// osnplac, brracup and pnabrodob are the inputs of the lookups below.
+	b := querybuilder.New(`SELECT idfizvdet, rbr, konto, sifra, kat, vrd, iznos, duguje, potrazuje,
+		osnplac, brracup, pnabrodob FROM fizvdet`).
+		Where("idfizvzag = ?", fizvhdrID)
+	if err := s.izvdetRepo.ApplyFilters(ctx, b, "", nil, ""); err != nil {
+		return err
+	}
+	entities, err := s.izvdetRepo.Select(ctx, b)
 	if err != nil {
 		return fmt.Errorf("failed to get Fizvdet entities: %w", err)
 	}
 
-	qbOsnPlacanja := common.NewQueryBuilder(`SELECT sifplac, konto, sifra FROM sifplizv `, true)
-	tekRacuni := common.NewQueryBuilder(`SELECT idpartneri, brrac FROM tekracuni `, true)
-	hasGod, hasKar := s.tekracuniRepo.GetHasGodHasKar()
-	if hasGod {
-		tekRacuni.AddEqual("god", userSession.SelectedGod)
+	// setKontoSifra applies a found konto/sifra: always when azurirajKonta, otherwise only the
+	// empty ones.
+	setKontoSifra := func(fizvdet *domain.Fizvdet, konto, sifra string) {
+		if azurirajKonta || fizvdet.Konto == "" {
+			fizvdet.Konto = konto
+		}
+		if azurirajKonta || fizvdet.Sifra == "" {
+			fizvdet.Sifra = sifra
+		}
 	}
-	if hasKar {
-		tekRacuni.AddEqual("kar", userSession.SelectedKar)
-	}
-	qbPartneri := common.NewQueryBuilder(`SELECT idpartneri, god, kar, jmbg FROM partneri `, true)
-	hasGod, hasKar = s.partneriRepo.GetHasGodHasKar()
-	if hasGod {
-		qbPartneri.AddEqual("god", userSession.SelectedGod)
-	}
-	if hasKar {
-		qbPartneri.AddEqual("kar", userSession.SelectedKar)
-	}
-	qbFkpl := common.NewQueryBuilder(`SELECT idfkpl, god, kar, vrd, konto, sifra, idpartneri FROM fkpl `, true)
-	hasGod, hasKar = s.fkplRepo.GetHasGodHasKar()
-	if hasGod {
-		qbFkpl.AddEqual("god", userSession.SelectedGod)
-	}
-	if hasKar {
-		qbFkpl.AddEqual("kar", userSession.SelectedKar)
-	}
+
+	// Every lookup is built for its own row.
 	for _, fizvdet := range *entities {
 		// Step 1: Look up SIFPLIZV by OSNPLAC
-		qbOsnPlacanja.AddEqual("sifplac", fizvdet.Osnplac)
-		qryOsnPlacanja, argsOsnPlacanja := qbOsnPlacanja.Build()
-		sifplEntites, err := s.sifplizvRepo.GetAllCustom(ctx, qryOsnPlacanja, "", argsOsnPlacanja, "", "")
-		if err == nil && sifplEntites != nil && len(*sifplEntites) > 0 {
-			sifplizv := (*sifplEntites)[0]
-			// Update KONTO and SIFRA based on checkbox condition
-			if azurirajKonta {
-				fizvdet.Konto = sifplizv.Konto
-				fizvdet.Sifra = sifplizv.Sifra
-			} else {
-				if fizvdet.Konto == "" {
-					fizvdet.Konto = sifplizv.Konto
-				}
-				if fizvdet.Sifra == "" {
-					fizvdet.Sifra = sifplizv.Sifra
-				}
+		if osnplac := strings.TrimSpace(fizvdet.Osnplac); osnplac != "" {
+			bOsn := querybuilder.New(`SELECT sifplac, konto, sifra FROM sifplizv`).Where("sifplac = ?", osnplac)
+			sifplEntites, err := s.sifplizvRepo.Select(ctx, bOsn)
+			if err != nil {
+				return fmt.Errorf("osnov placanja %s: %w", osnplac, err)
+			}
+			if len(*sifplEntites) > 0 {
+				setKontoSifra(&fizvdet, (*sifplEntites)[0].Konto, (*sifplEntites)[0].Sifra)
 			}
 		}
 
 		// Step 2: Determine partner ID based on JMBG or account number
-		var nIDPARTNERI int64 = 0
-
-		if povezivanjeJMBG {
-			// Extract JMBG from PNABRODOB field
-			pnabrodob := strings.TrimSpace(fizvdet.Pnabrodob)
-			var sJMBG string
-
-			if len(pnabrodob) <= 13 {
-				sJMBG = pnabrodob
-			} else {
-				// Split by "-" and take first part as JMBG
-				parts := strings.Split(pnabrodob, "-")
-				if len(parts) >= 1 {
-					sJMBG = strings.TrimSpace(parts[0])
-				}
-				// Note: parts[1] would be sCode (payment code 01 or 02)
-			}
-
-			// Look up partner by JMBG
-			if sJMBG != "" {
-				qbPartneri.AddEqual("jmbg", sJMBG)
-				qryPartneri, argsPartneri := qbPartneri.Build()
-				partneri, err := s.partneriRepo.GetAllCustom(ctx, qryPartneri, "", argsPartneri, "", "")
-				if err == nil && partneri != nil && len(*partneri) > 0 {
-					nIDPARTNERI = int64((*partneri)[0].IDPartneri)
-				}
-			}
-		} else {
-			// Look up by account number from TEKRACUNI
-			if fizvdet.Brracup != "" {
-				tekRacuni.AddEqual("brrac", fizvdet.Brracup)
-				qryTekRacuni, argsTekRacuni := tekRacuni.Build()
-				tekracuni, err := s.tekracuniRepo.GetAllCustom(ctx, qryTekRacuni, "", argsTekRacuni, "", "")
-				if err == nil && tekracuni != nil && len(*tekracuni) > 0 {
-					nIDPARTNERI = int64((*tekracuni)[0].IDPartneri)
-				}
-			}
+		nIDPARTNERI, err := s.azuriranjePartnerID(ctx, fizvdet, povezivanjeJMBG)
+		if err != nil {
+			return err
 		}
 
-		// Step 3: Update FKPL based on DUGUJE (debit) amount
+		// Step 3: konto dobavljaca for DUGUJE, Step 4: konto kupca for POTRAZUJE - the analiticki
+		// konto of that partner in the kontni plan.
 		if nIDPARTNERI > 0 && fizvdet.Duguje != 0 {
-			qbFkpl.AddEqual("konto", s.cfg.Konta.KontoDobavljaca)
-			fkplQuery, fkplArgs := qbFkpl.Build()
-			fkplEntities, err := s.fkplRepo.GetAllCustom(ctx, fkplQuery, "", fkplArgs, "", "")
-			if err == nil && fkplEntities != nil && len(*fkplEntities) > 0 {
-				fkpl := (*fkplEntities)[0]
-				if azurirajKonta {
-					fizvdet.Konto = fkpl.Konto
-					fizvdet.Sifra = fkpl.Sifra
-				} else {
-					if fizvdet.Konto == "" {
-						fizvdet.Konto = fkpl.Konto
-					}
-					if fizvdet.Sifra == "" {
-						fizvdet.Sifra = fkpl.Sifra
-					}
-				}
+			fkpl, err := s.azuriranjeFkplPartnera(ctx, s.cfg.Konta.KontoDobavljaca, nIDPARTNERI)
+			if err != nil {
+				return err
+			}
+			if fkpl != nil {
+				setKontoSifra(&fizvdet, fkpl.Konto, fkpl.Sifra)
 				fizvdet.Vrd = 40
 				fizvdet.Kat = 1
 			}
 		}
-
-		// Step 4: Update FKPL based on POTRAZUJE (credit) amount
 		if nIDPARTNERI > 0 && fizvdet.Potrazuje != 0 {
-			qbFkpl.AddEqual("konto", s.cfg.Konta.KontoKupca)
-			fkplQuery, fkplArgs := qbFkpl.Build()
-			fkplEntities, err := s.fkplRepo.GetAllCustom(ctx, fkplQuery, "", fkplArgs, "", "")
-			if err == nil && fkplEntities != nil && len(*fkplEntities) > 0 {
-				fkpl := (*fkplEntities)[0]
-				if azurirajKonta {
-					fizvdet.Konto = fkpl.Konto
-					fizvdet.Sifra = fkpl.Sifra
-				} else {
-					if fizvdet.Konto == "" {
-						fizvdet.Konto = fkpl.Konto
-					}
-					if fizvdet.Sifra == "" {
-						fizvdet.Sifra = fkpl.Sifra
-					}
-				}
+			fkpl, err := s.azuriranjeFkplPartnera(ctx, s.cfg.Konta.KontoKupca, nIDPARTNERI)
+			if err != nil {
+				return err
+			}
+			if fkpl != nil {
+				setKontoSifra(&fizvdet, fkpl.Konto, fkpl.Sifra)
 				fizvdet.Vrd = 30
 				fizvdet.Kat = 3
 			}
 		}
 		// At the end of loop update fizvdet record in the database
-		qbUpdate := common.NewQueryBuilder(`UPDATE fizvdet SET konto = $1, sifra = $2, kat = $3, vrd = $4 `, true)
-		qbUpdate.AddArgs(fizvdet.Konto, fizvdet.Sifra, fizvdet.Kat, fizvdet.Vrd)
-		qbUpdate.AddEqual("idfizvdet", fizvdet.IDFizvdet)
-		sqlUpdate, argsUpdate := qbUpdate.Build()
-		tx, err := s.izvdetRepo.BeginTx()
-		if err != nil {
-			return fmt.Errorf("failed to begin transaction: %w", err)
-		}
-		_, err = tx.ExecContext(ctx, sqlUpdate, argsUpdate...)
-		if err != nil {
-			tx.Rollback()
+		// The idfizvdet comes from the rows of the period read above.
+		bUpdate := querybuilder.NewUpdate("fizvdet").
+			Set("konto = ?, sifra = ?, kat = ?, vrd = ?", fizvdet.Konto, fizvdet.Sifra, fizvdet.Kat, fizvdet.Vrd).
+			Where("idfizvdet = ?", fizvdet.IDFizvdet)
+		if err := s.izvdetRepo.Exec(ctx, bUpdate); err != nil {
 			return fmt.Errorf("failed to update Fizvdet: %w", err)
-		}
-		err = tx.Commit()
-		if err != nil {
-			return fmt.Errorf("failed to commit transaction: %w", err)
 		}
 	}
 
 	return nil
 }
 
+// azuriranjePartnerID finds the partner of a stavka izvoda in the tenant: by the JMBG in the
+// poziv na broj odobrenja, or by the account number of the uplatilac. 0 when not found.
+func (s *IzvodiResource) azuriranjePartnerID(ctx context.Context, fizvdet domain.Fizvdet, povezivanjeJMBG bool) (int64, error) {
+	if povezivanjeJMBG {
+		// Extract JMBG from PNABRODOB field: up to 13 characters as is, otherwise the part before
+		// the first "-" (the part after it is the payment code 01 or 02).
+		pnabrodob := strings.TrimSpace(fizvdet.Pnabrodob)
+		sJMBG := pnabrodob
+		if len(pnabrodob) > 13 {
+			sJMBG = strings.TrimSpace(strings.Split(pnabrodob, "-")[0])
+		}
+		if sJMBG == "" {
+			return 0, nil
+		}
+		b := querybuilder.New(`SELECT idpartneri, god, kar, jmbg FROM partneri`).Where("jmbg = ?", sJMBG)
+		if err := s.partneriRepo.ApplyFilters(ctx, b, "", nil, ""); err != nil {
+			return 0, err
+		}
+		partneri, err := s.partneriRepo.Select(ctx, b)
+		if err != nil {
+			return 0, fmt.Errorf("partner po JMBG: %w", err)
+		}
+		if len(*partneri) > 0 {
+			return int64((*partneri)[0].IDPartneri), nil
+		}
+		return 0, nil
+	}
+	// Look up by account number from TEKRACUNI
+	if fizvdet.Brracup == "" {
+		return 0, nil
+	}
+	// (The account column of tekracuni is tekrac; the old lookup used brrac, which is not a column of
+	// tekracuni, so it always failed and the error was ignored.)
+	b := querybuilder.New(`SELECT idpartneri, tekrac FROM tekracuni`).Where("tekrac = ?", fizvdet.Brracup)
+	if err := s.tekracuniRepo.ApplyFilters(ctx, b, "", nil, ""); err != nil {
+		return 0, err
+	}
+	tekracuni, err := s.tekracuniRepo.Select(ctx, b)
+	if err != nil {
+		return 0, fmt.Errorf("partner po tekucem racunu %s: %w", fizvdet.Brracup, err)
+	}
+	if len(*tekracuni) > 0 {
+		return int64((*tekracuni)[0].IDPartneri), nil
+	}
+	return 0, nil
+}
+
+// azuriranjeFkplPartnera returns the analiticki konto of the partner on the given konto in the
+// kontni plan of the period (nil when there is none).
+func (s *IzvodiResource) azuriranjeFkplPartnera(ctx context.Context, konto string, idPartneri int64) (*domain.Fkpl, error) {
+	// (vrd is not a column of domain.Fkpl; selecting it made the old lookup fail.)
+	b := querybuilder.New(`SELECT idfkpl, god, kar, konto, sifra, idpartneri FROM fkpl`).
+		Where("konto = ?", konto).
+		Where("idpartneri = ?", idPartneri)
+	if err := s.fkplRepo.ApplyFilters(ctx, b, "", nil, ""); err != nil {
+		return nil, err
+	}
+	fkplEntities, err := s.fkplRepo.Select(ctx, b)
+	if err != nil {
+		return nil, fmt.Errorf("konto %s partnera %d: %w", konto, idPartneri, err)
+	}
+	if len(*fkplEntities) == 0 {
+		return nil, nil
+	}
+	return &(*fkplEntities)[0], nil
+}
+
 // UpisIzvoda inserts the header and detail records into the database.
 func (s *IzvodiResource) UpisIzvoda(ctx context.Context, izvHdr *domain.Fizvzag, izvDet []domain.Fizvdet) error {
 	//check ig the izvod exist and is already booked, if so return error
+	// The period of the header being imported (izvHdr.God/Kar); the bank account and the number
+	// of the izvod are keys.
 	hasGod, hasKar := s.izvhdrRepo.GetHasGodHasKar()
-	qb := common.NewQueryBuilder(`SELECT idfizvzag, izvsts FROM fizvzag `, true)
+	b := querybuilder.New(`SELECT idfizvzag, izvsts FROM fizvzag`).
+		Where("brrac = ?", izvHdr.Brrac).
+		Where("izvbr = ?", izvHdr.Izvbr)
 	if hasGod {
-		qb.AddEqual("god", izvHdr.God)
+		b.Where("god = ?", izvHdr.God)
 	}
 	if hasKar {
-		qb.AddEqual("kar", izvHdr.Kar)
+		b.Where("kar = ?", izvHdr.Kar)
 	}
-	qb.AddEqual("brrac", izvHdr.Brrac)
-	qb.AddEqual("izvbr", izvHdr.Izvbr)
-	sqlQuery, args := qb.Build()
-	entities, err := s.izvhdrRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.izvhdrRepo.Select(ctx, b)
 	IdFizvzag := int64(0)
 	if err != nil {
 		return fmt.Errorf("failed to get Fizvzag entities: %w", err)
@@ -500,43 +464,33 @@ func (s *IzvodiResource) UpisIzvoda(ctx context.Context, izvHdr *domain.Fizvzag,
 	}
 	// Izvod postoji uradi update, inace insert
 	if IdFizvzag > 0 {
-		qbUpdate := common.NewQueryBuilder(`UPDATE fizvzag SET 
-		datizv = $1, konto = $2, sifra = $3, prstanje = $4, ukdug = $5, 
-		ukpot = $6, nstanje = $7, ukbrst = $8, nalog = $9, tipdok = $10, izvsts = $11,
-		 idbanke = $12, xdatizmene = NOW(), xopizmene = $13 WHERE idfizvzag = $14`, false)
-		sqlUpdate, argsUpdate := qbUpdate.Build()
-		argsUpdate = append(argsUpdate, izvHdr.Datizv, izvHdr.Konto, izvHdr.Sifra,
-			izvHdr.Prstanje, izvHdr.Ukdug, izvHdr.Ukpot, izvHdr.Nstanje,
-			izvHdr.Ukbrst, izvHdr.Nalog, izvHdr.Tipdok, izvHdr.Izvsts, izvHdr.IDbanke, izvHdr.Xopunos, IdFizvzag)
-		_, err = tx.ExecContext(ctx, sqlUpdate, argsUpdate...)
+		// The idfizvzag was found above in the period of the header.
+		bUpdate := querybuilder.NewUpdate("fizvzag").
+			Set(`datizv = ?, konto = ?, sifra = ?, prstanje = ?, ukdug = ?,
+		ukpot = ?, nstanje = ?, ukbrst = ?, nalog = ?, tipdok = ?, izvsts = ?,
+		 idbanke = ?, xdatizmene = NOW(), xopizmene = ?`, izvHdr.Datizv, izvHdr.Konto, izvHdr.Sifra,
+				izvHdr.Prstanje, izvHdr.Ukdug, izvHdr.Ukpot, izvHdr.Nstanje,
+				izvHdr.Ukbrst, izvHdr.Nalog, izvHdr.Tipdok, izvHdr.Izvsts, izvHdr.IDbanke, izvHdr.Xopunos).
+			Where("idfizvzag = ?", IdFizvzag)
+		err = s.izvhdrRepo.ExecWithTx(ctx, tx, bUpdate)
 		if err != nil {
 			tx.Rollback()
 			return fmt.Errorf("failed to update Fizvzag: %w", err)
 		}
 	} else {
-		qbInsert := common.NewQueryBuilder(`INSERT INTO fizvzag (god, kar, brrac, izvbr, datizv, konto, sifra, 
-		prstanje, ukdug, ukpot, nstanje, ukbrst, nalog, tipdok, izvsts, idbanke, xdatunosa, xopunos) 
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18) RETURNING idfizvzag`, false)
-		sqlInsert, argsInsert := qbInsert.Build()
-		argsInsert = append(argsInsert, izvHdr.God, izvHdr.Kar, izvHdr.Brrac, izvHdr.Izvbr,
-			izvHdr.Datizv, izvHdr.Konto, izvHdr.Sifra, izvHdr.Prstanje, izvHdr.Ukdug,
-			izvHdr.Ukpot, izvHdr.Nstanje, izvHdr.Ukbrst, izvHdr.Nalog,
-			izvHdr.Tipdok, izvHdr.Izvsts, izvHdr.IDbanke, izvHdr.Xdatunosa, izvHdr.Xopunos)
-		err := tx.QueryRowContext(ctx, sqlInsert, argsInsert...).Scan(&IdFizvzag)
+		IdFizvzag, err = s.fin.FizvzagDodaj(ctx, tx, izvHdr)
 		if err != nil {
 			tx.Rollback()
 			return fmt.Errorf("failed to insert Fizvzag: %w", err)
 		}
 	}
-	// Delete existing detail records for the header before inserting new ones
-	sqlDelete := `DELETE FROM fizvdet WHERE idfizvzag = $1`
-	_, err = tx.ExecContext(ctx, sqlDelete, IdFizvzag)
+	// Delete existing detail records for the header (in its period) before inserting new ones
+	err = s.fin.FizvdetBrisi(ctx, tx, IdFizvzag, izvHdr.God, izvHdr.Kar)
 	if err != nil {
 		tx.Rollback()
 		return fmt.Errorf("failed to delete existing detail records: %w", err)
 	}
-	sqlQuery, args = s.createBulkInsertDetailQuery(ctx, izvDet, IdFizvzag)
-	_, err = tx.ExecContext(ctx, sqlQuery, args...)
+	err = s.fin.FizvdetDodaj(ctx, tx, izvDet, IdFizvzag)
 	if err != nil {
 		tx.Rollback()
 		return fmt.Errorf("failed to insert detail records: %w", err)
@@ -933,30 +887,6 @@ func (s *IzvodiResource) MapIntesaToDomain(ctx context.Context, izvodIntesa doma
 	return izvodHdr, izvDet, nil
 }
 
-// getIzvodHeader retrieves the ID of the Izvod header based on the provided parameters.
-func (s *IzvodiResource) getIzvodHeader(ctx context.Context, god, kar int, brRacuna string, brIzvoda string, datumObrade time.Time) (int64, error) {
-	qb := common.NewQueryBuilder(`SELECT fizvzagid FROM fizvzag `, true)
-	if god > 0 {
-		qb.AddEqual("god", god)
-	}
-	if kar > 0 {
-		qb.AddEqual("kar", kar)
-	}
-	qb.AddEqual("brrac", brRacuna)
-	qb.AddEqual("izvbr", brIzvoda)
-	qb.AddEqual("datizv", datumObrade)
-
-	sqlQuery, args := qb.Build()
-	entities, err := s.izvhdrRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
-		return 0, fmt.Errorf("failed to query izvod header: %w", err)
-	}
-	if entities != nil && len(*entities) > 0 {
-		return int64((*entities)[0].IDFizvzag), nil
-	}
-	return 0, nil
-}
-
 // ParseIzvodHalcomLine parses a single line and returns IzvodHalcom
 func ParseIzvodHalcomLine(line string) (*domain.IzvodHalcom, error) {
 	fields := strings.Split(line, "#")
@@ -1089,49 +1019,6 @@ func ParseIzvodHalcomLine(line string) (*domain.IzvodHalcom, error) {
 // 	return int64(existingHeader.IDFizvzag), false, nil
 // }
 
-func (s *IzvodiResource) createBulkInsertDetailQuery(ctx context.Context, izvDet []domain.Fizvdet, idFizvzag int64) (string, []interface{}) {
-	if len(izvDet) == 0 {
-		return "", nil
-	}
-
-	// Column list - excluding auto-generated idfizvdet
-	columns := []string{
-		"god", "kar", "brrac", "izvbr", "datizv", "rbr",
-		"konto", "sifra", "iznos", "kat", "vrd", "nsedprim",
-		"brracup", "osnplac", "sdozn", "duguje", "potrazuje",
-		"modelzad", "pnabrzad", "mododob", "pnabrodob", "prekl",
-		"xdatunosa", "xopunos", "idfizvzag",
-	}
-
-	// Build query with your exact column list
-	sqlQuery := "INSERT INTO fizvdet (" + strings.Join(columns, ", ") + ") VALUES "
-
-	var args []interface{}
-	paramCount := 1
-	i := 0
-	for _, row := range izvDet {
-		if i > 0 {
-			sqlQuery += ", "
-		}
-
-		placeholders := make([]string, len(columns))
-		for j := range columns {
-			placeholders[j] = fmt.Sprintf("$%d", paramCount)
-			paramCount++
-		}
-		sqlQuery += "(" + strings.Join(placeholders, ", ") + ")"
-		i++
-
-		args = append(args, row.God, row.Kar, row.Brrac, row.Izvbr, row.Datizv, row.Rbr, row.Konto, row.Sifra,
-			row.Iznos, row.Kat, row.Vrd, row.Nsedprim, row.Brracup,
-			row.Osnplac, row.Sdozn, row.Duguje, row.Potrazuje, row.Modelzad, row.Pnabrzad,
-			row.Mododob, row.Pnabrodob, row.Prekl, row.Xdatunosa, row.Xopunos, idFizvzag)
-	}
-
-	sqlQuery = strings.TrimSuffix(sqlQuery, ", \n") // Remove the trailing comma and newline
-	return sqlQuery, args
-}
-
 // formatAccountNumber formats account number: xxx-xxxxxxxxxxxxx-xx
 func formatAccountNumber(account string) string {
 	// Remove existing dashes
@@ -1150,7 +1037,13 @@ func (s *IzvodiResource) getPartneriID(ctx context.Context, searchJbmg bool, jmb
 	// Get partner ID based on JMBG and account number
 	if searchJbmg {
 		// Search by JMBG
-		partner, err := s.partneriRepo.GetAllCustom(ctx, "SELECT IDpartneri FROM partneri WHERE jmbg = $1", "", []interface{}{jmbg}, "", "")
+		// The partner of the period of the session (the JMBG is not unique across periods).
+		b := querybuilder.New(`SELECT idpartneri FROM partneri`).Where("jmbg = ?", jmbg)
+		if err := s.partneriRepo.ApplyFilters(ctx, b, "", nil, ""); err != nil {
+			log.Printf("Error fetching partner by JMBG %s: %v", jmbg, err)
+			return 0
+		}
+		partner, err := s.partneriRepo.Select(ctx, b)
 		if err != nil {
 			log.Printf("Error fetching partner by JMBG %s: %v", jmbg, err)
 			return 0
@@ -1160,17 +1053,13 @@ func (s *IzvodiResource) getPartneriID(ctx context.Context, searchJbmg bool, jmb
 		}
 	} else {
 		// Search by account number
-		qb := common.NewQueryBuilder(`SELECT IDpartneri FROM tekracuni`, true)
-		hasGod, hasKar := s.tekracuniRepo.GetHasGodHasKar()
-		if hasGod {
-			qb.AddEqual("god", domain.GetSessionFromStdContext(ctx).SelectedGod)
+		// The account number is a key: an empty one no longer matches the first tekuci racun.
+		b := querybuilder.New(`SELECT IDpartneri FROM tekracuni`).Where("tekrac = ?", brrac)
+		if err := s.tekracuniRepo.ApplyFilters(ctx, b, "", nil, ""); err != nil {
+			log.Printf("Error fetching partner by account number %s: %v", brrac, err)
+			return 0
 		}
-		if hasKar {
-			qb.AddEqual("kar", domain.GetSessionFromStdContext(ctx).SelectedKar)
-		}
-		qb.AddEqual("tekrac", brrac)
-		sqlQuery, args := qb.Build()
-		tekracuni, err := s.tekracuniRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+		tekracuni, err := s.tekracuniRepo.Select(ctx, b)
 		if err != nil {
 			log.Printf("Error fetching partner by account number %s: %v", brrac, err)
 			return 0
@@ -1190,10 +1079,13 @@ func (s *IzvodiResource) getPartnerKontoSifra(ctx context.Context, partnerID int
 		return "", ""
 	}
 	konto, sifra := "", ""
-	qb := common.NewQueryBuilder(`SELECT sifra FROM partneri `, true)
-	qb.AddEqual("idpartneri", partnerID)
-	sqlQuery, args := qb.Build()
-	partnerEntities, err := s.partneriRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	// The partner id is a key, restricted to the tenant of the session.
+	b := querybuilder.New(`SELECT sifra FROM partneri`).Where("idpartneri = ?", partnerID)
+	if err := s.partneriRepo.ApplyFilters(ctx, b, "", nil, ""); err != nil {
+		log.Printf("Error fetching partner konto and sifra for partnerID %d: %v", partnerID, err)
+		return "", ""
+	}
+	partnerEntities, err := s.partneriRepo.Select(ctx, b)
 	if err != nil {
 		log.Printf("Error fetching partner konto and sifra for partnerID %d: %v", partnerID, err)
 		return "", ""
@@ -1201,29 +1093,23 @@ func (s *IzvodiResource) getPartnerKontoSifra(ctx context.Context, partnerID int
 	if partnerEntities != nil && len(*partnerEntities) > 0 {
 		sifra = (*partnerEntities)[0].Sifra
 	}
-	qb = common.NewQueryBuilder(`SELECT konto FROM fkpl `, true)
-	hasGod, hasKar := s.fkplRepo.GetHasGodHasKar()
-	if hasGod {
-		qb.AddEqual("god", userSession.SelectedGod) // Replace with actual god value if needed
+	bFkpl := querybuilder.New(`SELECT konto FROM fkpl`).Where("vkonta = ?", 2)
+	if err := s.fkplRepo.ApplyFilters(ctx, bFkpl, "", nil, ""); err != nil {
+		log.Printf("Error fetching fkpl konto for duguje: %v", err)
+		return "", ""
 	}
-	if hasKar {
-		qb.AddEqual("kar", userSession.SelectedKar) // Replace with actual kar value if needed
-	}
-	qb.AddEqual("vkonta", 2)
-	fvrData, err := common.GetFvrData(ctx, s.fvrRepo)
+	fvrData, err := repository.GetFvrData(ctx, s.fvrRepo)
 	if err != nil {
 		log.Printf("Error fetching FVR data: %v", err)
 		return "", ""
 	}
 	if duguje > 0 {
-		qb.AddLikeBegin("konto", fvrData.KontaDob1)
+		bFkpl.AddLikeBegin("konto", fvrData.KontaDob1)
 	}
 	if potrazuje > 0 {
-		qb.AddLikeBegin("konto", fvrData.KontaKup1)
-
+		bFkpl.AddLikeBegin("konto", fvrData.KontaKup1)
 	}
-	sqlQuery, args = qb.Build()
-	fkplEntities, err := s.fkplRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	fkplEntities, err := s.fkplRepo.Select(ctx, bFkpl)
 	if err != nil {
 		log.Printf("Error fetching fkpl konto for duguje: %v", err)
 		return "", ""
@@ -1237,17 +1123,17 @@ func (s *IzvodiResource) getPartnerKontoSifra(ctx context.Context, partnerID int
 
 func (s *IzvodiResource) getBankInfo(ctx context.Context, god, kar int, brRac string) (*domain.Banke, error) {
 	// Get bank info
-	qbBank := common.NewQueryBuilder(`SELECT idbanke, banka, brrac, konto, sifra FROM banke`, true)
+	// The period comes from the caller (the header being imported); the account number is a key.
 	hasGod, hasKar := s.bankeRepo.GetHasGodHasKar()
+	bBank := querybuilder.New(`SELECT idbanke, banka, brrac, konto, sifra FROM banke`).
+		Where("brrac = ?", brRac)
 	if hasGod {
-		qbBank.AddEqual("god", god)
+		bBank.Where("god = ?", god)
 	}
 	if hasKar {
-		qbBank.AddEqual("kar", kar)
+		bBank.Where("kar = ?", kar)
 	}
-	qbBank.AddEqual("brrac", brRac)
-	sqlQueryBank, argsBank := qbBank.Build()
-	bankEntities, err := s.bankeRepo.GetAllCustom(ctx, sqlQueryBank, "", argsBank, "", "")
+	bankEntities, err := s.bankeRepo.Select(ctx, bBank)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query bank info: %w", err)
 	}
@@ -1258,11 +1144,9 @@ func (s *IzvodiResource) getBankInfo(ctx context.Context, god, kar int, brRac st
 }
 func (s *IzvodiResource) getSifplIzvodiInfo(ctx context.Context, sifPlacanja int) (string, string, error) {
 	// Get bank info
-	qb := common.NewQueryBuilder(`SELECT sifplac, opis, konto, sifra FROM sifplizv`, true)
-
-	qb.AddEqual("sifplac", sifPlacanja)
-	sqlQuery, args := qb.Build()
-	entities, err := s.sifplizvRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	b := querybuilder.New(`SELECT sifplac, opis, konto, sifra FROM sifplizv`).
+		Where("sifplac = ?", sifPlacanja)
+	entities, err := s.sifplizvRepo.Select(ctx, b)
 	if err != nil {
 		return "", "", fmt.Errorf("failed to query bank info: %w", err)
 	}
@@ -1279,9 +1163,17 @@ func (s *IzvodiResource) AzurirajKonta(ctx context.Context, izvodID string) erro
 }
 
 func (s *IzvodiResource) BrisiIzvod(ctx context.Context, fizvzagID string) error {
+	// The id comes from the request: a key (Where, so an empty id can not delete every row), and
+	// both deletes are restricted to the period of the session.
+	bDet := querybuilder.New(`DELETE FROM fizvdet`).Where("idfizvzag = ?", fizvzagID)
+	if err := s.izvdetRepo.ApplyFilters(ctx, bDet, "", nil, ""); err != nil {
+		return err
+	}
+	bHdr := querybuilder.New(`DELETE FROM fizvzag`).Where("idfizvzag = ?", fizvzagID)
+	if err := s.izvhdrRepo.ApplyFilters(ctx, bHdr, "", nil, ""); err != nil {
+		return err
+	}
 	// - Delete from izvodi_detalji first
-	qb := common.NewQueryBuilder(`DELETE FROM fizvdet `, true)
-	qb.AddEqual("idfizvzag", fizvzagID)
 	tx, err := s.izvhdrRepo.BeginTx()
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
@@ -1296,17 +1188,13 @@ func (s *IzvodiResource) BrisiIzvod(ctx context.Context, fizvzagID string) error
 			err = tx.Commit()
 		}
 	}()
-	sqlQuery, args := qb.Build()
-	_, err = tx.ExecContext(ctx, sqlQuery, args...)
+	err = s.izvdetRepo.ExecWithTx(ctx, tx, bDet)
 	if err != nil {
 		return fmt.Errorf("failed to delete detail records: %w", err)
 	}
 
 	// - Delete from izvodi header
-	qb = common.NewQueryBuilder(`DELETE FROM fizvzag `, true)
-	qb.AddEqual("idfizvzag", fizvzagID)
-	sqlQuery, args = qb.Build()
-	_, err = tx.ExecContext(ctx, sqlQuery, args...)
+	err = s.izvhdrRepo.ExecWithTx(ctx, tx, bHdr)
 	if err != nil {
 		return fmt.Errorf("failed to delete header record: %w", err)
 	}

@@ -10,6 +10,7 @@ import (
 
 	"helia/internal/common"
 	"helia/internal/domain"
+	"helia/internal/infrastructure/db/querybuilder"
 	"helia/internal/repository"
 	commonsvc "helia/internal/service/common"
 )
@@ -55,7 +56,7 @@ func NewRobnoKarticaService(robnoKarticaRepo *repository.BaseRepository[domain.R
 }
 
 func (s *RobnoKarticaResource) GetFvrData(ctx context.Context) (domain.Fvr, error) {
-	return common.GetFvrData(ctx, s.fvrRepo)
+	return repository.GetFvrData(ctx, s.fvrRepo)
 }
 func (s *RobnoKarticaResource) GetKarticaArtikla(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.RobnoKarticaParams, printType string) error {
 	userSession := domain.GetSessionFromStdContext(ctx)
@@ -74,7 +75,7 @@ func (s *RobnoKarticaResource) GetKarticaArtikla(ctx context.Context, tbl *domai
 	}
 	hasGod, hasKar := s.rproRepo.GetHasGodHasKar()
 
-	qb := common.NewQueryBuilder(`
+	b := querybuilder.New(`
 		SELECT
 			rnal.tipdok,
 			rnal.nalog,
@@ -107,22 +108,22 @@ func (s *RobnoKarticaResource) GetKarticaArtikla(ctx context.Context, tbl *domai
 			rpro.otk,
 			rpro.serija,
 			rpro.roktr
-		FROM rnal`, true)
-	qb.AddJoin("inner join rdok ON rdok.rnalid = rnal.rnalid")
-	qb.AddJoin("inner join rpro ON rpro.rdokid = rdok.rdokid")
-	qb.AddJoin("inner join rsif ON rsif.rsifid = rpro.rsifid")
-	qb.AddJoin("inner join dokvrsta ON rdok.god = dokvrsta.god AND rdok.kar = dokvrsta.kar AND rdok.vrd = dokvrsta.vrd")
-	qb.AddJoin("left join fkpl ON fkpl.god = rdok.god AND fkpl.kar = rdok.kar AND fkpl.vkonta = 1 AND fkpl.konto = rpro.fkto AND fkpl.sifra = rpro.fana")
-	qb.AddJoin("left join valute ON valute.sifval = rdok.sifval")
+		FROM rnal`).
+		AddJoin("inner join rdok ON rdok.rnalid = rnal.rnalid").
+		AddJoin("inner join rpro ON rpro.rdokid = rdok.rdokid").
+		AddJoin("inner join rsif ON rsif.rsifid = rpro.rsifid").
+		AddJoin("inner join dokvrsta ON rdok.god = dokvrsta.god AND rdok.kar = dokvrsta.kar AND rdok.vrd = dokvrsta.vrd").
+		AddJoin("left join fkpl ON fkpl.god = rdok.god AND fkpl.kar = rdok.kar AND fkpl.vkonta = 1 AND fkpl.konto = rpro.fkto AND fkpl.sifra = rpro.fana").
+		AddJoin("left join valute ON valute.sifval = rdok.sifval")
 	if hasGod {
-		qb.AddEqual("rnal.god", userSession.SelectedGod)
+		b.Where("rnal.god = ?", userSession.SelectedGod)
 	}
 	if hasKar {
-		qb.AddEqual("rnal.kar", userSession.SelectedKar)
+		b.Where("rnal.kar = ?", userSession.SelectedKar)
 	}
-	qb.AddEqual("rnal.magaciniid", params.Magacin)
-	qb.AddCondition("rpro.sifra", params.OdSifre, ">=")
-	qb.AddCondition("rpro.sifra", params.DoSifre, "<=")
+	b.Where("rnal.magaciniid = ?", params.Magacin).
+		AddCondition("rpro.sifra", params.OdSifre, ">=").
+		AddCondition("rpro.sifra", params.DoSifre, "<=")
 	if params.CbxBrojNaloga {
 		values := make([]any, 0)
 		for _, part := range strings.Split(params.Nalozi, ",") {
@@ -132,11 +133,11 @@ func (s *RobnoKarticaResource) GetKarticaArtikla(ctx context.Context, tbl *domai
 			}
 			values = append(values, nalog)
 		}
-		qb.AddIn("rnal.nalog", values)
+		b.AddIn("rnal.nalog", values)
 	}
 	if params.CbxDatumNaloga {
-		qb.AddCondition("rnal.danal", params.OdDanal, ">=")
-		qb.AddCondition("rnal.danal", params.DoDanal, "<=")
+		b.AddCondition("rnal.danal", params.OdDanal, ">=").
+			AddCondition("rnal.danal", params.DoDanal, "<=")
 	}
 	if params.CbxVrstaDokumenta {
 		values := make([]any, 0)
@@ -147,7 +148,7 @@ func (s *RobnoKarticaResource) GetKarticaArtikla(ctx context.Context, tbl *domai
 			}
 			values = append(values, vrd)
 		}
-		qb.AddIn("rdok.vrd", values)
+		b.AddIn("rdok.vrd", values)
 	}
 	if params.CbxBrojDokumenta {
 		values := make([]any, 0)
@@ -158,40 +159,42 @@ func (s *RobnoKarticaResource) GetKarticaArtikla(ctx context.Context, tbl *domai
 			}
 			values = append(values, dokum)
 		}
-		qb.AddIn("rpro.dokum", values)
+		b.AddIn("rpro.dokum", values)
 	}
 	if params.CbxDatumDokumenta {
-		qb.AddCondition("rdok.dadok", params.OdDatumaDok, ">=")
-		qb.AddCondition("rdok.dadok", params.DoDatumaDok, "<=")
+		b.AddCondition("rdok.dadok", params.OdDatumaDok, ">=").
+			AddCondition("rdok.dadok", params.DoDatumaDok, "<=")
 	}
 	if params.CbxIznos {
-		qb.AddCondition("ABS(rpro.iznos)", params.OdIznosa, ">=")
-		qb.AddCondition("ABS(rpro.iznos)", params.DoIznosa, "<=")
+		b.Where("ABS(rpro.iznos) >= ?", params.OdIznosa).
+			Where("ABS(rpro.iznos) <= ?", params.DoIznosa)
+	}
+	if getTotalRecords && printType == common.TipStampePreview {
+		total, err := s.robnoKarticaRepo.Count(ctx, b)
+		if err != nil {
+			return err
+		}
+		common.SetTableTotalRecords(tbl, total, pageSize)
+		return nil
 	}
 	orderPrefix := "rpro.konto, rpro.sifra"
 	if printType == common.TipStampePrint {
 		orderPrefix = "rpro.sifra, rpro.konto"
 	}
 	if params.CbxRPROID {
-		qb.AddOrderBy(orderPrefix + ", rpro.rproid")
+		b.OrderBy(orderPrefix + ", rpro.rproid")
 	} else if params.Sortiranje == "dokument" {
-		qb.AddOrderBy(orderPrefix + ", rpro.dadok, rpro.rproid")
+		b.OrderBy(orderPrefix + ", rpro.dadok, rpro.rproid")
 	} else {
-		qb.AddOrderBy(orderPrefix + ", rnal.danal, rpro.rproid")
+		b.OrderBy(orderPrefix + ", rnal.danal, rpro.rproid")
 	}
 
 	if !getTotalRecords && printType == common.TipStampePreview {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
+		b.Limit(pageSize).Offset((currentPage - 1) * pageSize)
 	}
-	sqlQuery, args := qb.Build()
-	entities, err := s.robnoKarticaRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.robnoKarticaRepo.Select(ctx, b)
 	if err != nil {
 		return err
-	}
-	if getTotalRecords && printType == common.TipStampePreview {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
-		return nil
 	}
 
 	lastSifra := ""
@@ -343,7 +346,7 @@ func (s *RobnoKarticaResource) GetKarticaSubsintetickogKonta(ctx context.Context
 	hasGod, hasKar := s.rproRepo.GetHasGodHasKar()
 
 	tbl.Headers = s.subsintetickaKarticaKontaTableFields
-	qb := common.NewQueryBuilder(`
+	b := querybuilder.New(`
 		SELECT
 			rnal.tipdok,
 			rnal.nalog,
@@ -366,18 +369,18 @@ func (s *RobnoKarticaResource) GetKarticaSubsintetickogKonta(ctx context.Context
 					end
 				else 0
 				end) as potrazuje
-		FROM rnal`, true)
-	qb.AddJoin(" inner join rdok on rdok.rnalid = rnal.rnalid")
-	qb.AddJoin(" inner join rpro on rdok.rdokid = rpro.rdokid")
-	qb.AddJoin(" inner join dokvrsta on rdok.god = dokvrsta.god and rdok.kar = dokvrsta.kar and rdok.vrd = dokvrsta.vrd")
+		FROM rnal`).
+		AddJoin("inner join rdok on rdok.rnalid = rnal.rnalid").
+		AddJoin("inner join rpro on rdok.rdokid = rpro.rdokid").
+		AddJoin("inner join dokvrsta on rdok.god = dokvrsta.god and rdok.kar = dokvrsta.kar and rdok.vrd = dokvrsta.vrd")
 	if hasGod {
-		qb.AddEqual("rnal.god", userSession.SelectedGod)
+		b.Where("rnal.god = ?", userSession.SelectedGod)
 	}
 	if hasKar {
-		qb.AddEqual("rnal.kar", userSession.SelectedKar)
+		b.Where("rnal.kar = ?", userSession.SelectedKar)
 	}
-	qb.AddEqual("rpro.konto", params.Konto)
-	qb.AddEqual("rnal.magaciniid", params.Magacin)
+	b.AddEqual("rpro.konto", params.Konto) // optional: an empty konto shows every konto
+	b.Where("rnal.magaciniid = ?", params.Magacin)
 	if params.CbxBrojNaloga {
 		values := make([]any, 0)
 		for _, part := range strings.Split(params.Nalozi, ",") {
@@ -387,31 +390,31 @@ func (s *RobnoKarticaResource) GetKarticaSubsintetickogKonta(ctx context.Context
 			}
 			values = append(values, nalog)
 		}
-		qb.AddIn("rnal.nalog", values)
+		b.AddIn("rnal.nalog", values)
 	}
 	if params.CbxDatumNaloga {
-		qb.AddCondition("rnal.danal", params.OdDanal, ">=")
-		qb.AddCondition("rnal.danal", params.DoDanal, "<=")
+		b.AddCondition("rnal.danal", params.OdDanal, ">=").
+			AddCondition("rnal.danal", params.DoDanal, "<=")
 	}
 	if params.CbxIznos {
-		start := qb.GetArgsCount() + 1
-		qb.AddCustomCondition(fmt.Sprintf("ABS(rpro.iznos) BETWEEN $%d AND $%d", start, start+1))
-		qb.AddArgs(params.OdIznosa, params.DoIznosa)
+		b.Where("ABS(rpro.iznos) BETWEEN ? AND ?", params.OdIznosa, params.DoIznosa)
 	}
-	qb.AddGroupBy("rnal.tipdok, rnal.nalog, rnal.danal, rnal.opis, rpro.konto")
-	qb.AddOrderBy("rpro.konto, rnal.danal, rnal.nalog")
+	b.GroupBy("rnal.tipdok", "rnal.nalog", "rnal.danal", "rnal.opis", "rpro.konto")
+	if getTotalRecords && printType == common.TipStampePreview {
+		total, err := s.robnoKarticaRepo.Count(ctx, b)
+		if err != nil {
+			return fmt.Errorf("count subsintetic card records: %w", err)
+		}
+		common.SetTableTotalRecords(tbl, total, pageSize)
+		return nil
+	}
+	b.OrderBy("rpro.konto, rnal.danal, rnal.nalog")
 	if !getTotalRecords && printType == common.TipStampePreview {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
+		b.Limit(pageSize).Offset((currentPage - 1) * pageSize)
 	}
-	sqlQuery, args := qb.Build()
-	entities, err := s.robnoKarticaRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.robnoKarticaRepo.Select(ctx, b)
 	if err != nil {
 		return fmt.Errorf("load subsintetic card records: %w", err)
-	}
-	if getTotalRecords && printType == common.TipStampePreview {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
-		return nil
 	}
 	tbl.Rows = make([]domain.TableRow, 0, len(*entities))
 	for _, entity := range *entities {

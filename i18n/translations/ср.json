@@ -2169,5 +2169,18 @@
   "label.prvo_izaberite_konto_dobavljaca": "Прво изаберите конто добављача",
   "label.sifra_pores._tarife": "Шифра порес. тарифе",
   "label.podaci_o_porudzbenici_nisu_sacuvani": "Подаци о поруџбеници нису сачувани",
-  "label.sacuvajte_podatke_o_porudzbenici_da_bi_ste_mogli_da_radite_sa_stavkama": "Сачувајте податке о поруџбеници да би сте могли да радите са ставкама"
+  "label.sacuvajte_podatke_o_porudzbenici_da_bi_ste_mogli_da_radite_sa_stavkama": "Сачувајте податке о поруџбеници да би сте могли да радите са ставкама",
+  "label.profakture": "Профактуре",
+  "label.prikaz_profaktura": "Приказ профактура",
+  "label.podaci_o_profakturi": "Подаци о профактури",
+  "label.podaci_o_profakturi_nisu_sacuvani": "Подаци о профактури нису сачувани",
+  "label.stavke_profakture": "Ставке профактуре",
+  "label.sacuvajte_podatke_o_profakturi_da_bi_ste_mogli_da_radite_sa_stavkama": "Сачувајте податке о профактури да би сте могли да радите са ставкама",
+  "label.broj_fisk._isecka": "Број фиск. исечка",
+  "label.napomena_broj_rata": "Напомена, број рата",
+  "label.valuta_kurs_uslovi_prodaje": "Валута, курс, услови продаје",
+  "label.reg._br._vozila": "Рег. бр. возила",
+  "label.dani": "Дани",
+  "label.neto_cena": "Нето цена",
+  "label.sif._pores._tarife": "Шиф. порес. тарифе"
 }

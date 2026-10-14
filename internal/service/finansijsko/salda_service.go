@@ -7,6 +7,7 @@ import (
 	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
+	"helia/internal/infrastructure/db/querybuilder"
 	"helia/internal/repository"
 	"helia/internal/service"
 	"reflect"
@@ -134,28 +135,17 @@ func (s *SaldaResource) CheckSaldaParameters(ctx context.Context, requiredFields
 	if len(fieldsError) > 0 {
 		return
 	}
-	// Build query dynamically
-	qb := common.NewQueryBuilder(`SELECT f.konto, f.sifra FROM fkpl as f`, true)
-
+	// Build query dynamically; the user conditions (konto is required above, sifra optional).
+	b := querybuilder.New(`SELECT f.konto, f.sifra FROM fkpl as f`).
+		AddEqual("f.konto", konto).
+		AddEqual("f.sifra", sifra).
+		AddEqual("f.vkonta", tipkonta)
 	// Add system conditions
-	hasGod, hasKAr := s.fkplRepo.GetHasGodHasKar()
-	if hasGod {
-		qb.AddEqual("f.god", userSession.SelectedGod)
+	var entities *[]domain.Fkpl
+	err := s.fkplRepo.ApplyFilters(ctx, b, "f", nil, "")
+	if err == nil {
+		entities, err = s.fkplRepo.Select(ctx, b)
 	}
-	if hasKAr {
-		qb.AddEqual("f.kar", userSession.SelectedKar)
-	}
-
-	// Add user conditions
-	qb.AddEqual("f.konto", konto)
-	if sifra != "" {
-		qb.AddEqual("f.sifra", sifra)
-	}
-	qb.AddEqual("f.vkonta", tipkonta)
-
-	sqlQuery, args := qb.Build()
-
-	entities, err := s.fkplRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
 	if err != nil {
 		return []domain.FieldError{{Field: "konto", ErrorMessage: common.ErrMsgGetData}}
 	}
@@ -215,80 +205,52 @@ func (s *SaldaResource) GetSaldaPojedinacnihKonta(ctx context.Context, tbl *doma
 		return fmt.Errorf("user session not found")
 	}
 
+	// The conditions of the konto, the same in both parts of the union.
+	kontoUslovi := func(b *querybuilder.Builder) {
+		if tipkonta != "3" {
+			// The konto is required (an empty one must not sum the whole period); an empty sifra is
+			// skipped (the saldo of the whole konto).
+			b.Where("f.konto = ?", konto).AddEqual("f.sifra", sifra)
+		}
+		// Add tipkonta conditions.
+		switch tipkonta {
+		case "1":
+			b.AddEqual("f.vkonta", tipkonta)
+		case "2":
+			b.AddIn("f.vkonta", []any{"1", "2"})
+		case "3":
+			b.AddLike("f.konto", konto)
+		}
+	}
+
 	// Create first query (opening balance - tipdok = '00')
-	qb1 := common.NewQueryBuilder(`SELECT 0 as mesec,
+	b1 := querybuilder.New(`SELECT 0 as mesec,
     COALESCE(SUM(CASE WHEN kat = '1' OR kat = '2' THEN iznos ELSE 0 END), 0) as dug,
     COALESCE(SUM(CASE WHEN kat = '3' OR kat = '4' THEN iznos ELSE 0 END), 0) as pot
-    FROM fpro f`, true)
+    FROM fpro f`)
+	kontoUslovi(b1)
+	b1.Where("f.tipdok = ?", "00")
+	if err := s.fproRepo.ApplyFilters(ctx, b1, "f", nil, ""); err != nil {
+		return err
+	}
+	b1.GroupByExpr("EXTRACT(MONTH FROM danal)").OrderBy("mesec ASC")
 
-	// Add conditions to first query
-	hasGod, hasKAr := s.fproRepo.GetHasGodHasKar()
-	if hasGod {
-		qb1.AddEqual("f.god", userSession.SelectedGod)
-	}
-	if hasKAr {
-		qb1.AddEqual("f.kar", userSession.SelectedKar)
-	}
-	if tipkonta != "3" {
-		qb1.AddEqual("f.konto", konto)
-		if sifra != "" {
-			qb1.AddEqual("f.sifra", sifra)
-		}
-	}
-	qb1.AddEqual("f.tipdok", "00")
-
-	// Add tipkonta conditions.
-	switch tipkonta {
-	case "1":
-		qb1.AddEqual("f.vkonta", tipkonta)
-	case "2":
-		qb1.AddIn("f.vkonta", []interface{}{"1", "2"})
-	case "3":
-		qb1.AddLike("f.konto", konto)
-	}
-
-	qb1.AddGroupBy("EXTRACT(MONTH FROM danal)")
-	qb1.AddOrderBy("mesec ASC")
 	// Create second query (monthly data - tipdok != '00')
-	qb2 := common.NewQueryBuilder(`SELECT EXTRACT(MONTH FROM danal) as mesec,
+	b2 := querybuilder.New(`SELECT EXTRACT(MONTH FROM danal) as mesec,
     COALESCE(SUM(CASE WHEN kat = '1' OR kat = '2' THEN iznos ELSE 0 END), 0) as dug,
     COALESCE(SUM(CASE WHEN kat = '3' OR kat = '4' THEN iznos ELSE 0 END), 0) as pot
-    FROM fpro f`, true)
+    FROM fpro f`)
+	kontoUslovi(b2)
+	b2.Where("f.tipdok <> ?", "00")
+	if err := s.fproRepo.ApplyFilters(ctx, b2, "f", nil, ""); err != nil {
+		return err
+	}
+	b2.GroupByExpr("EXTRACT(MONTH FROM danal)")
 
-	// Add same base conditions
-	if hasGod {
-		qb2.AddEqual("f.god", userSession.SelectedGod)
-	}
-	if hasKAr {
-		qb2.AddEqual("f.kar", userSession.SelectedKar)
-	}
-	if tipkonta != "3" {
-		qb2.AddEqual("f.konto", konto)
-		if sifra != "" {
-			qb2.AddEqual("f.sifra", sifra)
-		}
-	}
-	// Add tipkonta conditions.
-	switch tipkonta {
-	case "1":
-		qb2.AddEqual("f.vkonta", tipkonta)
-	case "2":
-		qb2.AddIn("f.vkonta", []interface{}{"1", "2"})
-	case "3":
-		qb2.AddLike("f.konto", konto)
-	}
-
-	qb2.AddCondition("f.tipdok", "00", "!=")
-	qb2.AddGroupBy("EXTRACT(MONTH FROM danal)")
 	// Create UNION
-	uqb := common.NewUnionQueryBuilder("UNION ALL")
-	uqb.AddQuery(qb1)
-	uqb.AddQuery(qb2)
-	uqb.AddOrderBy("mesec")
+	u := querybuilder.NewUnionAll().Add(b1).Add(b2).OrderBy("mesec")
 
-	sqlQuery, args := uqb.Build()
-
-	entities, err := s.fproRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.fproRepo.Select(ctx, u)
 	if err != nil {
 		return err
 	}
@@ -329,6 +291,10 @@ func (s *SaldaResource) GetSaldaGrupeKonta(ctx context.Context, tbl *domain.Tabl
 
 	// Parse filter parameters
 	const saldoExpr = "(SUM(CASE WHEN fpro.kat IN ('1','2') THEN fpro.iznos ELSE 0 END) - SUM(CASE WHEN fpro.kat IN ('3','4') THEN fpro.iznos ELSE 0 END))"
+	// The sintetika groups by the first duzSintetika characters of the konto. The length is an
+	// int written into the SQL (not an argument): PostgreSQL matches the SELECT and GROUP BY
+	// expressions by their text, and two placeholders would not be the same expression.
+	sintetikaKonto := fmt.Sprintf("left(fpro.konto, %d)", duzSintetika)
 
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 
@@ -336,7 +302,7 @@ func (s *SaldaResource) GetSaldaGrupeKonta(ctx context.Context, tbl *domain.Tabl
 	selectFields := ``
 	if params.CbxTipIzvestaja == "analitika" {
 		selectFields = `fpro.konto,
-			COALESCE(fpro.sifra, '') as sifra, 
+			COALESCE(fpro.sifra, '') as sifra,
 			COALESCE(MIN(p.naziv), '') as kontonaziv,
 			COALESCE(MIN(p.adresa), '') as adresa,
 			COALESCE(MIN(p.mesto), '') as mesto,
@@ -351,111 +317,100 @@ func (s *SaldaResource) GetSaldaGrupeKonta(ctx context.Context, tbl *domain.Tabl
 		'' as pib,`
 	}
 	if params.CbxTipIzvestaja == "sintetika" {
-		selectFields = fmt.Sprintf(` left(fpro.konto, %d) as konto,
+		selectFields = sintetikaKonto + ` as konto,
 		'' as sifra,
 		COALESCE(MIN(grp_fkpl.naziv), '') as kontonaziv,
 		'' as adresa,
 		'' as mesto,
-		'' as pib,`, duzSintetika)
+		'' as pib,`
 	}
 
-	qb := common.NewQueryBuilder(fmt.Sprintf(`
+	b := querybuilder.New(`
 		SELECT
-			%s
+			` + selectFields + `
 			COALESCE(SUM(CASE WHEN fpro.tipdok = '00' AND fpro.kat IN ('1', '2') THEN fpro.iznos ELSE 0 END), 0) as pstdug,
 			COALESCE(SUM(CASE WHEN fpro.tipdok = '00' AND fpro.kat IN ('3', '4') THEN fpro.iznos ELSE 0 END), 0) as pstpot,
 			COALESCE(SUM(CASE WHEN fpro.tipdok != '00' AND fpro.kat IN ('1', '2') THEN fpro.iznos ELSE 0 END), 0) as dug,
 			COALESCE(SUM(CASE WHEN fpro.tipdok != '00' AND fpro.kat IN ('3', '4') THEN fpro.iznos ELSE 0 END), 0) as pot
-		FROM fpro`, selectFields), true)
+		FROM fpro`)
 
 	if params.CbxTipIzvestaja == "analitika" {
-		qb.AddJoin("LEFT JOIN fkpl ON fkpl.idfkpl = fpro.idfkpl")
-		qb.AddJoin("LEFT JOIN tipanalitike ta ON ta.tipanalitikeid = fkpl.tipanalitikeid")
-		qb.AddJoin("LEFT JOIN partneri p ON p.tipanalitikeid = ta.tipanalitikeid AND p.sifra = fpro.sifra")
+		b.AddJoin("LEFT JOIN fkpl ON fkpl.idfkpl = fpro.idfkpl").
+			AddJoin("LEFT JOIN tipanalitike ta ON ta.tipanalitikeid = fkpl.tipanalitikeid").
+			// The partner of the period of the stavka.
+			AddJoin("LEFT JOIN partneri p ON p.tipanalitikeid = ta.tipanalitikeid AND p.sifra = fpro.sifra AND p.god = fpro.god AND p.kar = fpro.kar")
 	}
-	if params.CbxTipIzvestaja == "subsintetika" {
+	if params.CbxTipIzvestaja == "subsintetika" || params.CbxTipIzvestaja == "sintetika" {
+		// The naziv of the grupa konta from the kontni plan of the same period (values as arguments).
 		joinStr := "LEFT JOIN fkpl grp_fkpl ON grp_fkpl.konto = fpro.konto AND grp_fkpl.vkonta = 2"
+		if params.CbxTipIzvestaja == "sintetika" {
+			joinStr = "LEFT JOIN fkpl grp_fkpl ON grp_fkpl.konto = " + sintetikaKonto + " AND grp_fkpl.vkonta = 3"
+		}
+		var joinArgs []any
 		if hasGod {
-			joinStr += fmt.Sprintf(" AND grp_fkpl.god = %d", gnGod)
+			joinStr += " AND grp_fkpl.god = ?"
+			joinArgs = append(joinArgs, gnGod)
 		}
 		if hasKar {
-			joinStr += fmt.Sprintf(" AND grp_fkpl.kar = %d", gnKar)
+			joinStr += " AND grp_fkpl.kar = ?"
+			joinArgs = append(joinArgs, gnKar)
 		}
-		qb.AddJoin(joinStr)
+		b.AddJoin(joinStr, joinArgs...)
 	}
-	if params.CbxTipIzvestaja == "sintetika" {
-		joinStr := fmt.Sprintf("LEFT JOIN fkpl grp_fkpl ON grp_fkpl.konto = left(fpro.konto, %d) AND grp_fkpl.vkonta = 3", duzSintetika)
-		if hasGod {
-			joinStr += fmt.Sprintf(" AND grp_fkpl.god = %d", gnGod)
-		}
-		if hasKar {
-			joinStr += fmt.Sprintf(" AND grp_fkpl.kar = %d", gnKar)
-		}
-		qb.AddJoin(joinStr)
+	if err := s.fproRepo.ApplyFilters(ctx, b, "fpro", nil, ""); err != nil {
+		return err
 	}
-	if hasGod {
-		qb.AddEqual("fpro.god", gnGod)
+	switch params.CbxTipIzvestaja {
+	case "analitika":
+		whereRange(b, "fpro.konto::numeric", params.OdKonta, params.DoKonta)
+		whereRange(b, "COALESCE(NULLIF(fpro.sifra, '')::numeric, 0)", params.OdSifre, params.DoSifre)
+	case "subsintetika":
+		whereRange(b, "fpro.konto::numeric", params.OdKonta, params.DoKonta)
+	case "sintetika":
+		whereRange(b, sintetikaKonto+"::numeric", params.OdKonta, params.DoKonta)
 	}
-	if hasKar {
-		qb.AddEqual("fpro.kar", gnKar)
-	}
-	if params.CbxTipIzvestaja == "analitika" {
-		qb.AddCondition("fpro.konto::numeric", params.OdKonta, ">=")
-		qb.AddCondition("fpro.konto::numeric", params.DoKonta, "<=")
-		qb.AddCondition("COALESCE(NULLIF(fpro.sifra, '')::numeric, 0)", params.OdSifre, ">=")
-		qb.AddCondition("COALESCE(NULLIF(fpro.sifra, '')::numeric, 0)", params.DoSifre, "<=")
-	}
-	if params.CbxTipIzvestaja == "subsintetika" {
-		qb.AddCondition("fpro.konto::numeric", params.OdKonta, ">=")
-		qb.AddCondition("fpro.konto::numeric", params.DoKonta, "<=")
-	}
-	if params.CbxTipIzvestaja == "sintetika" {
-		qb.AddCondition(fmt.Sprintf("left(fpro.konto, %d)::numeric", duzSintetika), params.OdKonta, ">=")
-		qb.AddCondition(fmt.Sprintf("left(fpro.konto, %d)::numeric", duzSintetika), params.DoKonta, "<=")
-	}
-	qb.AddCondition("EXTRACT(MONTH FROM fpro.danal)", params.CbxOdMeseca, ">=")
-	qb.AddCondition("EXTRACT(MONTH FROM fpro.danal)", params.CbxDoMeseca, "<=")
+	whereRange(b, "EXTRACT(MONTH FROM fpro.danal)", params.CbxOdMeseca, params.CbxDoMeseca)
 
 	if params.CbxTipIzvestaja == "klasa_sifra" {
+		// The old AddLike(klasa+"%") matched '%klasa%%', i.e. the konto contains the klasa; the
+		// new AddLike escapes a % in the value, so the klasa is passed alone (same match).
 		klasaKonta := s.extractGrupa(params.OdKonta, 2)
-		qb.AddLike("fpro.konto", klasaKonta+"%")
+		b.AddLike("fpro.konto", klasaKonta)
 	}
 
 	switch params.CbxTipIzvestaja {
 	case "analitika":
-		qb.AddGroupBy("fpro.konto, fpro.sifra")
-		qb.AddOrderBy("fpro.konto::numeric, COALESCE(NULLIF(fpro.sifra, '')::numeric, 0)")
+		b.GroupBy("fpro.konto", "fpro.sifra").
+			OrderByExpr("fpro.konto::numeric, COALESCE(NULLIF(fpro.sifra, '')::numeric, 0)")
 	case "subsintetika":
-		qb.AddGroupBy("fpro.konto")
-		qb.AddOrderBy("fpro.konto::numeric")
+		b.GroupBy("fpro.konto").OrderByExpr("fpro.konto::numeric")
 	case "sintetika":
-		qb.AddGroupBy(fmt.Sprintf("left(fpro.konto, %d)", duzSintetika))
-		qb.AddOrderBy(fmt.Sprintf("left(fpro.konto, %d)::numeric", duzSintetika))
+		b.GroupByExpr(sintetikaKonto).OrderByExpr(sintetikaKonto + "::numeric")
 	}
 	switch params.SaldoFilter {
 	case "razl_nula":
-		qb.AddHaving(saldoExpr + " <> 0")
+		b.Having(saldoExpr + " <> 0")
 	case "vece_nula":
-		qb.AddHaving(saldoExpr + " > 0")
+		b.Having(saldoExpr + " > 0")
 	case "manje_nula":
-		qb.AddHaving(saldoExpr + " < 0")
+		b.Having(saldoExpr + " < 0")
 	case "nula":
-		qb.AddHaving(saldoExpr + " = 0")
-	}
-	if !getTotalRecords {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
-	}
-	sqlQuery, args := qb.Build()
-	entities, err := s.saldaPartneriRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
-		return err
+		b.Having(saldoExpr + " = 0")
 	}
 
 	// Set total records and pagination
 	if getTotalRecords {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
+		total, err := s.saldaPartneriRepo.Count(ctx, b)
+		if err != nil {
+			return err
+		}
+		common.SetTableTotalRecords(tbl, total, pageSize)
 		return nil
+	}
+	b.Limit(pageSize).Offset((currentPage - 1) * pageSize)
+	entities, err := s.saldaPartneriRepo.Select(ctx, b)
+	if err != nil {
+		return err
 	}
 
 	if entities != nil {
@@ -492,41 +447,99 @@ func (s *SaldaResource) GetSaldaPartneriList(ctx context.Context, tblPartneri *d
 		return fmt.Errorf("user session not found")
 	}
 	common.SetupTablePagination(tblPartneri, currentPage, pageSize)
-	// Add system conditions using userSession instead of globals
-	hasGod, hasKar := s.fkplRepo.GetHasGodHasKar()
-	qb := common.NewQueryBuilder(`SELECT p.idpartneri, p.sifra, p.naziv, p.pib, p.pobro, p.adresa, p.mesto FROM partneri p`, true)
-	qb.AddCustomCondition("EXISTS (SELECT 1 FROM fkpl f INNER JOIN fpro fp ON fp.idfkpl = f.idfkpl WHERE f.idpartneri = p.idpartneri)")
-	// Add system conditions
-	if hasGod {
-		qb.AddEqual("p.god", userSession.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("p.kar", userSession.SelectedKar)
-	}
-	if searchText != "" {
-		qb.SetEntityType(reflect.TypeOf(domain.Partneri{}))
-		qb.AddSearchConditions(s.GetSaldaPartneriTableFields(), searchText)
-	}
-	qb.AddOrderBy("p.sifra::NUMERIC ASC")
-
-	if !getTotalRecords {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
-	}
-
-	sqlQuery, args := qb.Build()
-	entities, err := s.partneriRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
+	b := querybuilder.New(`SELECT p.idpartneri, p.sifra, p.naziv, p.pib, p.pobro, p.adresa, p.mesto FROM partneri p`).
+		Where("EXISTS (SELECT 1 FROM fkpl f INNER JOIN fpro fp ON fp.idfkpl = f.idfkpl WHERE f.idpartneri = p.idpartneri)")
+	// Add system conditions (p.god/kar) and the search text, if provided.
+	if err := s.partneriRepo.ApplyFilters(ctx, b, "p", s.GetSaldaPartneriTableFields(), searchText); err != nil {
 		return err
 	}
+
 	// Set total records and pagination
 	if getTotalRecords {
-		common.SetTableTotalRecords(tblPartneri, len(*entities), pageSize)
+		total, err := s.partneriRepo.Count(ctx, b)
+		if err != nil {
+			return err
+		}
+		common.SetTableTotalRecords(tblPartneri, total, pageSize)
 		return nil
+	}
+	b.OrderByExpr("p.sifra::NUMERIC ASC").
+		Limit(pageSize).
+		Offset((currentPage - 1) * pageSize)
+
+	entities, err := s.partneriRepo.Select(ctx, b)
+	if err != nil {
+		return err
 	}
 	common.SetTableRows(tblPartneri, *entities, s.GetSaldaPartneriTableFields(), "idpartneri", "", s.partneriRepo.GetFieldCache())
 	return nil
 }
+
+// saldaPrelomljenoSelect is the "prelomljeno" saldo of a partner: kupac, dobavljac, primljeni
+// and dati avansi. The print also selects the address of the partner.
+func saldaPrelomljenoSelect(saAdresom bool) string {
+	partner := `
+            partneri.sifra,
+            partneri.naziv,
+            partneri.pib,`
+	if saAdresom {
+		partner = `
+            partneri.sifra,
+            partneri.naziv,
+            partneri.adresa,
+            partneri.pobro,
+            partneri.mesto,
+            partneri.pib,`
+	}
+	return `
+        select` + partner + `
+            coalesce(sum(case when fpro.konto like '200%' or fpro.konto like '201%' or fpro.konto like '202%' or
+                fpro.konto like '203%' or fpro.konto like '204%' or fpro.konto like '205%' or fpro.konto like '206%'
+                then fpro.iznos else 0 end), 0) as kupac,
+            coalesce(sum(case when fpro.konto like '431%' or fpro.konto like '432%' or fpro.konto like '433%' or
+                fpro.konto like '434%' or fpro.konto like '435%' or fpro.konto like '436%'
+                then fpro.iznos else 0 end), 0) as dobavljac,
+            coalesce(sum(case when fpro.konto like '430%' then fpro.iznos else 0 end), 0) as primljenavans,
+            coalesce(sum(case when fpro.konto like '150%' or fpro.konto like '151%' or fpro.konto like '152%' or
+                fpro.konto like '153%' or fpro.konto like '154%' or fpro.konto like '155%'
+                then fpro.iznos else 0 end), 0) as datavans
+        from fpro`
+}
+
+// whereKomercijalistaSearch adds the search of the komercijalisti grids (sifra or ime i prezime
+// contains the text). The old condition hard-coded $1/$2, which pointed at the god/kar arguments,
+// so the search did not work.
+func whereKomercijalistaSearch(b *querybuilder.Builder, text string) {
+	if text == "" {
+		return
+	}
+	pattern := "%" + text + "%"
+	b.WhereAny(
+		querybuilder.C("kom.sifkom::TEXT ILIKE ?", pattern),
+		querybuilder.C("kom.imeprezime::TEXT ILIKE ?", pattern),
+	)
+}
+
+// whereKlasa5i6 restricts f.konto to the klasa 5, the klasa 6, or both (any other value).
+func whereKlasa5i6(b *querybuilder.Builder, klasa string) {
+	switch klasa {
+	case "5":
+		b.Where("f.konto like '5%'")
+	case "6":
+		b.Where("f.konto like '6%'")
+	default:
+		b.Where("(f.konto like '5%' OR f.konto like '6%')")
+	}
+}
+
+// whereKlase5i6Uslovi adds the filters of the salda klase 5 i 6: the sifra range (numeric), the
+// period od-do datuma and the klasa.
+func whereKlase5i6Uslovi(b *querybuilder.Builder, p domain.SaldaParam) {
+	whereRange(b, "COALESCE(NULLIF(COALESCE(f.sifra, ''), '')::numeric, 0)", p.OdSifre, p.DoSifre)
+	whereRange(b, "f.danal::date", p.OdDatuma, p.DoDatuma)
+	whereKlasa5i6(b, p.Klasa)
+}
+
 func (s *SaldaResource) GetSaldaPartneriPrelomljeno(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, currentPage, pageSize int, searchText, sortBy, sortOrder string) error {
 	// Get user session from context
 	userSession := domain.GetSessionFromStdContext(ctx)
@@ -535,57 +548,38 @@ func (s *SaldaResource) GetSaldaPartneriPrelomljeno(ctx context.Context, tbl *do
 	}
 
 	common.SetupTablePagination(tbl, currentPage, pageSize)
-	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
 
 	// Build partner balance query
-	qb := common.NewQueryBuilder(`
-        select 
-            partneri.sifra,
-            partneri.naziv,
-            partneri.pib,
-            coalesce(sum(case when fpro.konto like '200%' or fpro.konto like '201%' or fpro.konto like '202%' or 
-                fpro.konto like '203%' or fpro.konto like '204%' or fpro.konto like '205%' or fpro.konto like '206%' 
-                then fpro.iznos else 0 end), 0) as kupac,
-            coalesce(sum(case when fpro.konto like '431%' or fpro.konto like '432%' or fpro.konto like '433%' or 
-                fpro.konto like '434%' or fpro.konto like '435%' or fpro.konto like '436%' 
-                then fpro.iznos else 0 end), 0) as dobavljac,
-            coalesce(sum(case when fpro.konto like '430%' then fpro.iznos else 0 end), 0) as primljenavans,
-            coalesce(sum(case when fpro.konto like '150%' or fpro.konto like '151%' or fpro.konto like '152%' or 
-                fpro.konto like '153%' or fpro.konto like '154%' or fpro.konto like '155%' 
-                then fpro.iznos else 0 end), 0) as datavans
-        from fpro`, true)
-
-	qb.AddJoin("inner join fkpl on fkpl.idfkpl = fpro.idfkpl")
-	qb.AddJoin("inner join partneri on partneri.idpartneri = fkpl.idpartneri")
-	if hasGod {
-		qb.AddEqual("fpro.god", userSession.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("fpro.kar", userSession.SelectedKar)
-	}
-	qb.AddEqual("fpro.vkonta", 1)
-	qb.AddCustomCondition("(fpro.konto ilike '15%' OR fpro.konto ilike '20%' OR fpro.konto ilike '43%')")
-	// if search text is not epmty, add search conditions
-	if searchText != "" {
-		qb.SetEntityType(reflect.TypeOf(domain.SaldaPartnerDto{}))
-		qb.AddSearchConditions(s.GetSaldaPartneriPrelomljenoTableFields(), searchText)
-	}
-
-	qb.AddGroupBy("fkpl.idpartneri, partneri.sifra, partneri.naziv, partneri.pib")
-	qb.AddOrderBy("partneri.sifra::numeric asc")
-	if !getTotalRecords {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
-	}
-	sqlQuery, args := qb.Build()
-	entities, err := s.saldaPartneriRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
+	b := querybuilder.New(saldaPrelomljenoSelect(false)).
+		AddJoin("inner join fkpl on fkpl.idfkpl = fpro.idfkpl").
+		AddJoin("inner join partneri on partneri.idpartneri = fkpl.idpartneri").
+		AddEqual("fpro.vkonta", 1).
+		Where("(fpro.konto ilike '15%' OR fpro.konto ilike '20%' OR fpro.konto ilike '43%')")
+	// The period of the session (fpro.god/kar).
+	if err := s.fproRepo.ApplyFilters(ctx, b, "fpro", nil, ""); err != nil {
 		return err
 	}
+	// The search over the columns of the grid (SaldaPartnerDto has no god/kar, so only the search).
+	if err := s.saldaPartneriRepo.ApplyFilters(ctx, b, "", s.GetSaldaPartneriPrelomljenoTableFields(), searchText); err != nil {
+		return err
+	}
+	b.GroupBy("fkpl.idpartneri", "partneri.sifra", "partneri.naziv", "partneri.pib")
+
 	// Set total records and pagination
 	if getTotalRecords {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
+		total, err := s.saldaPartneriRepo.Count(ctx, b)
+		if err != nil {
+			return err
+		}
+		common.SetTableTotalRecords(tbl, total, pageSize)
 		return nil
+	}
+	b.OrderByExpr("partneri.sifra::numeric asc").
+		Limit(pageSize).
+		Offset((currentPage - 1) * pageSize)
+	entities, err := s.saldaPartneriRepo.Select(ctx, b)
+	if err != nil {
+		return err
 	}
 
 	// Populate table rows
@@ -625,44 +619,20 @@ func (s *SaldaResource) GetSaldaPartneriPrelomljenoStampa(ctx context.Context, t
 		return fmt.Errorf("user session not found")
 	}
 
-	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
-
-	qb := common.NewQueryBuilder(`
-        select
-            partneri.sifra,
-            partneri.naziv,
-            partneri.adresa,
-            partneri.pobro,
-            partneri.mesto,
-            partneri.pib,
-            coalesce(sum(case when fpro.konto like '200%' or fpro.konto like '201%' or fpro.konto like '202%' or
-                fpro.konto like '203%' or fpro.konto like '204%' or fpro.konto like '205%' or fpro.konto like '206%'
-                then fpro.iznos else 0 end), 0) as kupac,
-            coalesce(sum(case when fpro.konto like '431%' or fpro.konto like '432%' or fpro.konto like '433%' or
-                fpro.konto like '434%' or fpro.konto like '435%' or fpro.konto like '436%'
-                then fpro.iznos else 0 end), 0) as dobavljac,
-            coalesce(sum(case when fpro.konto like '430%' then fpro.iznos else 0 end), 0) as primljenavans,
-            coalesce(sum(case when fpro.konto like '150%' or fpro.konto like '151%' or fpro.konto like '152%' or
-                fpro.konto like '153%' or fpro.konto like '154%' or fpro.konto like '155%'
-                then fpro.iznos else 0 end), 0) as datavans
-        from fpro`, true)
-	qb.AddJoin("inner join fkpl on fkpl.idfkpl = fpro.idfkpl")
-	qb.AddJoin("inner join partneri on partneri.idpartneri = fkpl.idpartneri")
-	if hasGod {
-		qb.AddEqual("fpro.god", userSession.SelectedGod)
+	b := querybuilder.New(saldaPrelomljenoSelect(true)).
+		AddJoin("inner join fkpl on fkpl.idfkpl = fpro.idfkpl").
+		AddJoin("inner join partneri on partneri.idpartneri = fkpl.idpartneri").
+		AddEqual("fpro.vkonta", 1).
+		Where("(fpro.konto ilike '15%' OR fpro.konto ilike '20%' OR fpro.konto ilike '43%')").
+		AddCondition("partneri.sifra", sifrOd, ">=").
+		AddCondition("partneri.sifra", sifraDo, "<=").
+		GroupBy("fkpl.idpartneri", "partneri.sifra", "partneri.naziv", "partneri.adresa", "partneri.pobro", "partneri.mesto", "partneri.pib").
+		OrderByExpr("partneri.sifra::numeric asc")
+	if err := s.fproRepo.ApplyFilters(ctx, b, "fpro", nil, ""); err != nil {
+		return err
 	}
-	if hasKar {
-		qb.AddEqual("fpro.kar", userSession.SelectedKar)
-	}
-	qb.AddEqual("fpro.vkonta", 1)
-	qb.AddCustomCondition("(fpro.konto ilike '15%' OR fpro.konto ilike '20%' OR fpro.konto ilike '43%')")
-	qb.AddCondition("partneri.sifra", sifrOd, ">=")
-	qb.AddCondition("partneri.sifra", sifraDo, "<=")
-	qb.AddGroupBy("fkpl.idpartneri, partneri.sifra, partneri.naziv, partneri.adresa, partneri.pobro, partneri.mesto, partneri.pib")
-	qb.AddOrderBy("partneri.sifra::numeric asc")
 
-	sqlQuery, args := qb.Build()
-	entities, err := s.saldaPartneriRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.saldaPartneriRepo.Select(ctx, b)
 	if err != nil {
 		return err
 	}
@@ -717,11 +687,10 @@ func (s *SaldaResource) GetSaldaPartneraPoKontimaStampa(ctx context.Context, tbl
 	if userSession == nil {
 		return fmt.Errorf("user session not found")
 	}
-	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
 	translator := i18n.GetInstance()
 
 	// Query 1: konta aggregates per partner per konto
-	qb := common.NewQueryBuilder(`
+	b := querybuilder.New(`
 		SELECT
 			p.idpartneri,
 			p.sifra as sifra,
@@ -734,23 +703,19 @@ func (s *SaldaResource) GetSaldaPartneraPoKontimaStampa(ctx context.Context, tbl
 			fkpl.naziv as kontonaziv,
 			COALESCE(SUM(CASE WHEN fpro.kat IN (1,2) THEN fpro.iznos ELSE 0 END), 0) as dug,
 			COALESCE(SUM(CASE WHEN fpro.kat IN (3,4) THEN fpro.iznos ELSE 0 END), 0) as pot
-		FROM fpro`, true)
-	qb.AddJoin("JOIN fkpl ON fkpl.idfkpl = fpro.idfkpl")
-	qb.AddJoin("JOIN partneri p ON p.idpartneri = fkpl.idpartneri")
-	if hasGod {
-		qb.AddEqual("fpro.god", userSession.SelectedGod)
+		FROM fpro`).
+		AddJoin("JOIN fkpl ON fkpl.idfkpl = fpro.idfkpl").
+		AddJoin("JOIN partneri p ON p.idpartneri = fkpl.idpartneri").
+		AddEqual("fpro.vkonta", 1).
+		AddCondition("p.sifra", sifrOd, ">=").
+		AddCondition("p.sifra", sifraDo, "<=").
+		GroupBy("p.idpartneri", "p.sifra", "p.naziv", "p.adresa", "p.pobro", "p.pib", "p.mesto", "fkpl.konto", "fkpl.naziv").
+		OrderByExpr("p.sifra::numeric, fkpl.konto")
+	if err := s.fproRepo.ApplyFilters(ctx, b, "fpro", nil, ""); err != nil {
+		return err
 	}
-	if hasKar {
-		qb.AddEqual("fpro.kar", userSession.SelectedKar)
-	}
-	qb.AddEqual("fpro.vkonta", 1)
-	qb.AddCondition("p.sifra", sifrOd, ">=")
-	qb.AddCondition("p.sifra", sifraDo, "<=")
-	qb.AddGroupBy("p.idpartneri, p.sifra, p.naziv, p.adresa, p.pobro, p.pib, p.mesto, fkpl.konto, fkpl.naziv")
-	qb.AddOrderBy("p.sifra::numeric, fkpl.konto")
 
-	sqlQuery, args := qb.Build()
-	kontaEntities, err := s.saldaPartneriRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	kontaEntities, err := s.saldaPartneriRepo.Select(ctx, b)
 	if err != nil {
 		return err
 	}
@@ -762,26 +727,22 @@ func (s *SaldaResource) GetSaldaPartneraPoKontimaStampa(ctx context.Context, tbl
 	}
 	detaljiMap := map[detailKey][]domain.Fpro{}
 	if stampajDetalje && kontaEntities != nil && len(*kontaEntities) > 0 {
-		qbDet := common.NewQueryBuilder(`
+		bDet := querybuilder.New(`
 			SELECT
 				fkpl.idpartneri as idfkpl,
 				fp.konto, fp.vrd, fp.kat, fp.tipdok, fp.nalog, fp.danal, fp.dokum, fp.dadok, fp.tra, fp.iznos, fp.god
-			FROM fpro fp`, true)
-		qbDet.AddJoin("JOIN fkpl ON fkpl.idfkpl = fp.idfkpl")
-		qbDet.AddJoin("JOIN partneri p ON p.idpartneri = fkpl.idpartneri")
-		if hasGod {
-			qbDet.AddEqual("fp.god", userSession.SelectedGod)
+			FROM fpro fp`).
+			AddJoin("JOIN fkpl ON fkpl.idfkpl = fp.idfkpl").
+			AddJoin("JOIN partneri p ON p.idpartneri = fkpl.idpartneri").
+			AddEqual("fp.vkonta", 1).
+			AddCondition("p.sifra", sifrOd, ">=").
+			AddCondition("p.sifra", sifraDo, "<=").
+			OrderByExpr("p.sifra::numeric, fp.konto, fp.danal")
+		if err := s.fproRepo.ApplyFilters(ctx, bDet, "fp", nil, ""); err != nil {
+			return err
 		}
-		if hasKar {
-			qbDet.AddEqual("fp.kar", userSession.SelectedKar)
-		}
-		qbDet.AddEqual("fp.vkonta", 1)
-		qbDet.AddCondition("p.sifra", sifrOd, ">=")
-		qbDet.AddCondition("p.sifra", sifraDo, "<=")
-		qbDet.AddOrderBy("p.sifra::numeric, fp.konto, fp.danal")
 
-		sqlDet, argsDet := qbDet.Build()
-		detEntities, derr := s.fproRepo.GetAllCustom(ctx, sqlDet, "", argsDet, "", "")
+		detEntities, derr := s.fproRepo.Select(ctx, bDet)
 		if derr != nil {
 			return derr
 		}
@@ -964,46 +925,28 @@ func (s *SaldaResource) GetSaldaKlase5i6Analitika(ctx context.Context, tbl *doma
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 
 	// Create first query (opening balance - tipdok = '00')
-	qb := common.NewQueryBuilder(`SELECT f.konto, coalesce(f.sifra, '') as sifra, fkpl.naziv,
+	b := querybuilder.New(`SELECT f.konto, coalesce(f.sifra, '') as sifra, fkpl.naziv,
     COALESCE(SUM(CASE WHEN f.kat = '1' OR f.kat = '2' THEN f.iznos ELSE 0 END), 0) as dug,
     COALESCE(SUM(CASE WHEN f.kat = '3' OR f.kat = '4' THEN f.iznos ELSE 0 END), 0) as pot
-    FROM fpro f`, true)
-	qb.AddJoin(" left join fkpl on fkpl.idfkpl = f.idfkpl")
-	// Add conditions to first query
-	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
-	if hasGod {
-		qb.AddEqual("f.god", userSession.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("f.kar", userSession.SelectedKar)
-	}
-	qb.AddCondition("COALESCE(NULLIF(COALESCE(f.sifra, ''), '')::numeric, 0)", saldaParam.OdSifre, ">=")
-	qb.AddCondition("COALESCE(NULLIF(COALESCE(f.sifra, ''), '')::numeric, 0)", saldaParam.DoSifre, "<=")
-	qb.AddCondition("f.danal::date", saldaParam.OdDatuma, ">=")
-	qb.AddCondition("f.danal::date", saldaParam.DoDatuma, "<=")
-	// Check account range between 5 and 6 (class 5 and 6)
-	switch saldaParam.Klasa {
-	case "5":
-		qb.AddCustomCondition("f.konto like '5%'")
-	case "6":
-		qb.AddCustomCondition("f.konto like '6%'")
-	default:
-		qb.AddCustomCondition("(f.konto like '5%' OR f.konto like '6%')")
-	}
-
-	qb.AddGroupBy("f.konto, coalesce(f.sifra, ''), fkpl.naziv")
-	if !getTotalRecords {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
-	}
-	sqlQuery, args := qb.Build()
-	entities, err := s.fproRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
+    FROM fpro f`).
+		AddJoin("left join fkpl on fkpl.idfkpl = f.idfkpl")
+	whereKlase5i6Uslovi(b, saldaParam)
+	if err := s.fproRepo.ApplyFilters(ctx, b, "f", nil, ""); err != nil {
 		return err
 	}
+	b.GroupBy("f.konto").GroupByExpr("coalesce(f.sifra, '')").GroupBy("fkpl.naziv")
 	if getTotalRecords {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
+		total, err := s.fproRepo.Count(ctx, b)
+		if err != nil {
+			return err
+		}
+		common.SetTableTotalRecords(tbl, total, pageSize)
 		return nil
+	}
+	b.Limit(pageSize).Offset((currentPage - 1) * pageSize)
+	entities, err := s.fproRepo.Select(ctx, b)
+	if err != nil {
+		return err
 	}
 	if entities != nil {
 		for _, entity := range *entities {
@@ -1029,44 +972,24 @@ func (s *SaldaResource) GetSaldaKlase5i6AnalitikaStampa(ctx context.Context, tbl
 	if userSession == nil {
 		return fmt.Errorf("user session not found")
 	}
-	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
-
-	qb := common.NewQueryBuilder(`
+	b := querybuilder.New(`
 		SELECT f.konto, COALESCE(f.sifra, '') as sifra, fkpl.naziv,
 			COALESCE(oj.naziv, '') as ojozn,
 			COALESCE(m.opis, '') as mtroska,
 			COALESCE(SUM(CASE WHEN f.kat IN (1,2) THEN f.iznos ELSE 0 END), 0) as dug,
 			COALESCE(SUM(CASE WHEN f.kat IN (3,4) THEN f.iznos ELSE 0 END), 0) as pot
-		FROM fpro f`, true)
-	qb.AddJoin("LEFT JOIN fkpl ON fkpl.idfkpl = f.idfkpl")
-	qb.AddJoin("LEFT JOIN orgjed oj ON oj.idorgjed = f.idorgjed")
-	qb.AddJoin("LEFT JOIN mestotr m ON m.mestotrid = f.mestotrid")
-
-	if hasGod {
-		qb.AddEqual("f.god", userSession.SelectedGod)
+		FROM fpro f`).
+		AddJoin("LEFT JOIN fkpl ON fkpl.idfkpl = f.idfkpl").
+		AddJoin("LEFT JOIN orgjed oj ON oj.idorgjed = f.idorgjed").
+		AddJoin("LEFT JOIN mestotr m ON m.mestotrid = f.mestotrid")
+	whereKlase5i6Uslovi(b, saldaParam)
+	if err := s.fproRepo.ApplyFilters(ctx, b, "f", nil, ""); err != nil {
+		return err
 	}
-	if hasKar {
-		qb.AddEqual("f.kar", userSession.SelectedKar)
-	}
-	switch saldaParam.Klasa {
-	case "5":
-		qb.AddCustomCondition("f.konto like '5%'")
-	case "6":
-		qb.AddCustomCondition("f.konto like '6%'")
-	default:
-		qb.AddCustomCondition("(f.konto like '5%' OR f.konto like '6%')")
-	}
+	b.GroupByExpr("f.konto, COALESCE(f.sifra, ''), fkpl.naziv, COALESCE(oj.naziv, ''), COALESCE(m.opis, '')").
+		OrderByExpr("COALESCE(f.sifra, ''), COALESCE(oj.naziv, ''), f.konto")
 
-	qb.AddCondition("COALESCE(NULLIF(COALESCE(f.sifra, ''), '')::numeric, 0)", saldaParam.OdSifre, ">=")
-	qb.AddCondition("COALESCE(NULLIF(COALESCE(f.sifra, ''), '')::numeric, 0)", saldaParam.DoSifre, "<=")
-	qb.AddCondition("f.danal::date", saldaParam.OdDatuma, ">=")
-	qb.AddCondition("f.danal::date", saldaParam.DoDatuma, "<=")
-
-	qb.AddGroupBy("f.konto, COALESCE(f.sifra, ''), fkpl.naziv, COALESCE(oj.naziv, ''), COALESCE(m.opis, '')")
-	qb.AddOrderBy("COALESCE(f.sifra, ''), COALESCE(oj.naziv, ''), f.konto")
-
-	sqlQuery, args := qb.Build()
-	entities, err := s.fproRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.fproRepo.Select(ctx, b)
 	if err != nil {
 		return err
 	}
@@ -1184,46 +1107,29 @@ func (s *SaldaResource) SaldaKlase5i6MT(ctx context.Context, tbl *domain.TableDa
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 
 	// Create first query (opening balance - tipdok = '00')
-	qb := common.NewQueryBuilder(`SELECT f.konto, fkpl.naziv, max(coalesce(m.opis, '')) as mtroska,
+	b := querybuilder.New(`SELECT f.konto, fkpl.naziv, max(coalesce(m.opis, '')) as mtroska,
     COALESCE(SUM(CASE WHEN f.kat = '1' OR f.kat = '2' THEN f.iznos ELSE 0 END), 0) as dug,
     COALESCE(SUM(CASE WHEN f.kat = '3' OR f.kat = '4' THEN f.iznos ELSE 0 END), 0) as pot
-    FROM fpro f`, true)
-	qb.AddJoin(" left join fkpl on fkpl.idfkpl = f.idfkpl")
-	qb.AddJoin(" left join mestotr m on m.mestotrid = f.mestotrid")
-	// Add conditions to first query
-	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
-	if hasGod {
-		qb.AddEqual("f.god", userSession.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("f.kar", userSession.SelectedKar)
-	}
-	qb.AddCondition("COALESCE(NULLIF(COALESCE(f.sifra, ''), '')::numeric, 0)", saldaParam.OdSifre, ">=")
-	qb.AddCondition("COALESCE(NULLIF(COALESCE(f.sifra, ''), '')::numeric, 0)", saldaParam.DoSifre, "<=")
-	qb.AddCondition("f.danal::date", saldaParam.OdDatuma, ">=")
-	qb.AddCondition("f.danal::date", saldaParam.DoDatuma, "<=")
-	// Check account range between 5 and 6 (class 5 and 6)
-	switch saldaParam.Klasa {
-	case "5":
-		qb.AddCustomCondition("f.konto like '5%'")
-	case "6":
-		qb.AddCustomCondition("f.konto like '6%'")
-	default:
-		qb.AddCustomCondition("(f.konto like '5%' OR f.konto like '6%')")
-	}
-	qb.AddGroupBy("f.konto, f.sifra, fkpl.naziv, m.mtroska")
-	if !getTotalRecords {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
-	}
-	sqlQuery, args := qb.Build()
-	entities, err := s.fproRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
+    FROM fpro f`).
+		AddJoin("left join fkpl on fkpl.idfkpl = f.idfkpl").
+		AddJoin("left join mestotr m on m.mestotrid = f.mestotrid")
+	whereKlase5i6Uslovi(b, saldaParam)
+	if err := s.fproRepo.ApplyFilters(ctx, b, "f", nil, ""); err != nil {
 		return err
 	}
+	b.GroupBy("f.konto", "f.sifra", "fkpl.naziv", "m.mtroska")
 	if getTotalRecords {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
+		total, err := s.fproRepo.Count(ctx, b)
+		if err != nil {
+			return err
+		}
+		common.SetTableTotalRecords(tbl, total, pageSize)
 		return nil
+	}
+	b.Limit(pageSize).Offset((currentPage - 1) * pageSize)
+	entities, err := s.fproRepo.Select(ctx, b)
+	if err != nil {
+		return err
 	}
 	if entities != nil {
 		for _, entity := range *entities {
@@ -1249,43 +1155,25 @@ func (s *SaldaResource) GetSaldaKlase5i6MTStampa(ctx context.Context, tbl *domai
 	if userSession == nil {
 		return fmt.Errorf("user session not found")
 	}
-	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
-
-	qb := common.NewQueryBuilder(`
+	b := querybuilder.New(`
 		SELECT f.konto, fkpl.naziv,
 			COALESCE(m.mtroska, '') as mtroska,
 			COALESCE(SUM(CASE WHEN f.kat IN ('1','2') THEN f.iznos ELSE 0 END), 0) as dug,
 			COALESCE(SUM(CASE WHEN f.kat IN ('3','4') THEN f.iznos ELSE 0 END), 0) as pot
-		FROM fpro f`, true)
-	qb.AddJoin("LEFT JOIN fkpl ON fkpl.idfkpl = f.idfkpl")
-	qb.AddJoin("LEFT JOIN mestotr m ON m.mestotrid = f.mestotrid")
-
-	if hasGod {
-		qb.AddEqual("f.god", userSession.SelectedGod)
+		FROM fpro f`).
+		AddJoin("LEFT JOIN fkpl ON fkpl.idfkpl = f.idfkpl").
+		AddJoin("LEFT JOIN mestotr m ON m.mestotrid = f.mestotrid")
+	whereKlasa5i6(b, saldaParam.Klasa)
+	b.AddCondition("f.konto", saldaParam.OdKonta, ">=").
+		AddCondition("f.konto", saldaParam.DoKonta, "<=")
+	whereRange(b, "f.danal::date", saldaParam.OdDatuma, saldaParam.DoDatuma)
+	if err := s.fproRepo.ApplyFilters(ctx, b, "f", nil, ""); err != nil {
+		return err
 	}
-	if hasKar {
-		qb.AddEqual("f.kar", userSession.SelectedKar)
-	}
+	b.GroupByExpr("COALESCE(m.mtroska, ''), f.konto, fkpl.naziv").
+		OrderByExpr("COALESCE(m.mtroska, ''), f.konto")
 
-	switch saldaParam.Klasa {
-	case "5":
-		qb.AddCustomCondition("f.konto like '5%'")
-	case "6":
-		qb.AddCustomCondition("f.konto like '6%'")
-	default:
-		qb.AddCustomCondition("(f.konto like '5%' OR f.konto like '6%')")
-	}
-
-	qb.AddCondition("f.konto", saldaParam.OdKonta, ">=")
-	qb.AddCondition("f.konto", saldaParam.DoKonta, "<=")
-	qb.AddCondition("f.danal::date", saldaParam.OdDatuma, ">=")
-	qb.AddCondition("f.danal::date", saldaParam.DoDatuma, "<=")
-
-	qb.AddGroupBy("COALESCE(m.mtroska, ''), f.konto, fkpl.naziv")
-	qb.AddOrderBy("COALESCE(m.mtroska, ''), f.konto")
-
-	sqlQuery, args := qb.Build()
-	entities, err := s.fproRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.fproRepo.Select(ctx, b)
 	if err != nil {
 		return err
 	}
@@ -1365,48 +1253,40 @@ func (s *SaldaResource) SaldaPoKomercijalistima(ctx context.Context, tbl *domain
 	}
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 
-	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
-
 	// Build commercialist balance query
-	qb := common.NewQueryBuilder(`select 
+	b := querybuilder.New(`select
             coalesce(fpro.komid, 0) as komid,
             coalesce(kom.sifkom, 0) as sifkom,
             coalesce(kom.imeprezime, '') as imeprezime,
             coalesce(sum(case when fpro.kat in (1,2) then fpro.iznos else 0 end), 0) as dug,
     		coalesce(sum(case when fpro.kat in (3,4) then fpro.iznos else 0 end), 0) as pot,
-    		coalesce(sum(case when fpro.kat in (1,2) then fpro.iznos 
-                    when fpro.kat in (3,4) then 0-fpro.iznos 
+    		coalesce(sum(case when fpro.kat in (1,2) then fpro.iznos
+                    when fpro.kat in (3,4) then 0-fpro.iznos
                                  else 0 end), 0) as dospelo
-        from fpro`, true)
-
-	qb.AddJoin("left join komercijalisti as kom on kom.komid = fpro.komid")
-	if hasGod {
-		qb.AddEqual("fpro.god", userSession.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("fpro.kar", userSession.SelectedKar)
-	}
-	qb.AddEqual("fpro.vkonta", 1)
-	qb.AddCustomCondition("(fpro.vrd = 10 OR fpro.vrd = 30)")
-	// if search text is not empty, add search conditions for commercialist fields
-	if searchText != "" {
-		likePattern := fmt.Sprintf("%%%s%%", searchText)
-		qb.AddCustomCondition("(kom.sifkom::TEXT ILIKE $1 OR kom.imeprezime::TEXT ILIKE $2)", likePattern, likePattern)
-	}
-	qb.AddGroupBy("fpro.komid, kom.sifkom, kom.imeprezime")
-	qb.AddOrderBy("kom.sifkom asc")
-	if !getTotalRecords {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
-	}
-	sqlQuery, args := qb.Build()
-	entities, err := s.saldaKomRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
+        from fpro`).
+		AddJoin("left join komercijalisti as kom on kom.komid = fpro.komid").
+		AddEqual("fpro.vkonta", 1).
+		Where("(fpro.vrd = 10 OR fpro.vrd = 30)")
+	if err := s.fproRepo.ApplyFilters(ctx, b, "fpro", nil, ""); err != nil {
 		return err
 	}
+	// if search text is not empty, add search conditions for commercialist fields
+	whereKomercijalistaSearch(b, searchText)
+	b.GroupBy("fpro.komid", "kom.sifkom", "kom.imeprezime")
 	if getTotalRecords {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
+		total, err := s.saldaKomRepo.Count(ctx, b)
+		if err != nil {
+			return err
+		}
+		common.SetTableTotalRecords(tbl, total, pageSize)
 		return nil
+	}
+	b.OrderBy("kom.sifkom asc").
+		Limit(pageSize).
+		Offset((currentPage - 1) * pageSize)
+	entities, err := s.saldaKomRepo.Select(ctx, b)
+	if err != nil {
+		return err
 	}
 	// Populate table rows and filter by sifra range
 	if entities != nil && len(*entities) > 0 {
@@ -1434,50 +1314,41 @@ func (s *SaldaResource) RealizacijaKomercijalisti(ctx context.Context, tbl *doma
 	}
 	common.SetupTablePagination(tbl, currentPage, pageSize)
 
-	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
-
 	// Build commercialist balance query
-	qb := common.NewQueryBuilder(`select 
+	b := querybuilder.New(`select
             coalesce(fpro.komid, 0) as komid,
             coalesce(kom.sifkom, 0) as sifkom,
             coalesce(kom.imeprezime, '') as imeprezime,
             coalesce(sum(case when fpro.kat in (1,2) then fpro.iznos else 0 end), 0) as dug,
     		coalesce(sum(case when fpro.kat in (3,4) then fpro.iznos else 0 end), 0) as pot,
     		coalesce(sum(case when (fpro.dadok::date + (fpro.rok || ' days')::interval)::date <= fpro.danal::date
-           	then case when fpro.kat in (3,4) then fpro.iznos 
+           	then case when fpro.kat in (3,4) then fpro.iznos
                                  else 0 end
                   else 0 end), 0) as vanperioda
-        from fpro`, true)
-
-	qb.AddJoin("left join komercijalisti as kom on kom.komid = fpro.komid")
-	if hasGod {
-		qb.AddEqual("fpro.god", userSession.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("fpro.kar", userSession.SelectedKar)
-	}
-	qb.AddEqual("fpro.vkonta", 1)
-	qb.AddCustomCondition("(fpro.vrd = 10 OR fpro.vrd = 30)")
-	// if search text is not empty, add search conditions for commercialist fields
-	if searchText != "" {
-		likePattern := fmt.Sprintf("%%%s%%", searchText)
-		qb.AddCustomCondition("(kom.sifkom::TEXT ILIKE $1 OR kom.imeprezime::TEXT ILIKE $2)", likePattern, likePattern)
-	}
-	qb.AddGroupBy("fpro.komid, kom.sifkom, kom.imeprezime")
-	qb.AddOrderBy("kom.sifkom::NUMERIC asc")
-	if !getTotalRecords {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
-	}
-
-	sqlQuery, args := qb.Build()
-	entities, err := s.saldaKomRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
+        from fpro`).
+		AddJoin("left join komercijalisti as kom on kom.komid = fpro.komid").
+		AddEqual("fpro.vkonta", 1).
+		Where("(fpro.vrd = 10 OR fpro.vrd = 30)")
+	if err := s.fproRepo.ApplyFilters(ctx, b, "fpro", nil, ""); err != nil {
 		return err
 	}
+	// if search text is not empty, add search conditions for commercialist fields
+	whereKomercijalistaSearch(b, searchText)
+	b.GroupBy("fpro.komid", "kom.sifkom", "kom.imeprezime")
 	if getTotalRecords {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
+		total, err := s.saldaKomRepo.Count(ctx, b)
+		if err != nil {
+			return err
+		}
+		common.SetTableTotalRecords(tbl, total, pageSize)
 		return nil
+	}
+	b.OrderByExpr("kom.sifkom::NUMERIC asc").
+		Limit(pageSize).
+		Offset((currentPage - 1) * pageSize)
+	entities, err := s.saldaKomRepo.Select(ctx, b)
+	if err != nil {
+		return err
 	}
 	// Populate table rows and filter by sifra range
 	if entities != nil && len(*entities) > 0 {
@@ -1592,33 +1463,27 @@ func (s *SaldaResource) GetSaldaTotalValues(ctx context.Context, konto, sifra, t
 	if userSession == nil {
 		return totals, fmt.Errorf("user session not found")
 	}
-	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
-	qb := common.NewQueryBuilder(`
-		SELECT 
+	b := querybuilder.New(`
+		SELECT
 			COALESCE(SUM(CASE WHEN fpro.tipdok = '00' AND fpro.kat IN ('1', '2') THEN fpro.iznos ELSE 0 END), 0) as pstdug,
 			COALESCE(SUM(CASE WHEN fpro.tipdok = '00' AND fpro.kat IN ('3', '4') THEN fpro.iznos ELSE 0 END), 0) as pstpot,
 			COALESCE(SUM(CASE WHEN fpro.tipdok != '00' AND fpro.kat IN ('1', '2') THEN fpro.iznos ELSE 0 END), 0) as dug,
 			COALESCE(SUM(CASE WHEN fpro.tipdok != '00' AND fpro.kat IN ('3', '4') THEN fpro.iznos ELSE 0 END), 0) as pot
-			FROM fpro`, true)
-	if hasGod {
-		qb.AddEqual("fpro.god", userSession.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("fpro.kar", userSession.SelectedKar)
-	}
+			FROM fpro`)
 	if tipKonta == "3" {
-		qb.AddLikeBegin("fpro.konto", konto)
+		b.AddLikeBegin("fpro.konto", konto)
 	}
 	if tipKonta == "2" {
-		qb.AddEqual("fpro.konto", konto)
+		b.AddEqual("fpro.konto", konto)
 	}
 	if tipKonta == "1" {
-		qb.AddEqual("fpro.konto", konto)
-		qb.AddEqual("fpro.sifra", sifra)
+		b.AddEqual("fpro.konto", konto).AddEqual("fpro.sifra", sifra)
+	}
+	if err := s.fproRepo.ApplyFilters(ctx, b, "fpro", nil, ""); err != nil {
+		return totals, err
 	}
 
-	sqlQuery, args := qb.Build()
-	entities, err := s.fproRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.fproRepo.Select(ctx, b)
 	if err != nil {
 		return totals, err
 	}
@@ -1646,57 +1511,31 @@ func (s *SaldaResource) GetSaldaKlase5i6TotalValues(ctx context.Context, saldaPa
 		return totals, fmt.Errorf("user session not found")
 	}
 
-	// Create first query (opening balance - tipdok = '00')
-	qbPst := common.NewQueryBuilder(`SELECT 
+	// Create first query (opening balance - tipdok = '00') and the tekuci promet (tipdok <> '00')
+	const klase5i6Sum = `SELECT
     COALESCE(SUM(CASE WHEN f.kat = '1' OR f.kat = '2' THEN f.iznos ELSE 0 END), 0) as dug,
     COALESCE(SUM(CASE WHEN f.kat = '3' OR f.kat = '4' THEN f.iznos ELSE 0 END), 0) as pot
-    FROM fpro f`, true)
-	qb := common.NewQueryBuilder(`SELECT 
-    COALESCE(SUM(CASE WHEN f.kat = '1' OR f.kat = '2' THEN f.iznos ELSE 0 END), 0) as dug,
-    COALESCE(SUM(CASE WHEN f.kat = '3' OR f.kat = '4' THEN f.iznos ELSE 0 END), 0) as pot
-    FROM fpro f`, true)
-	// Add conditions to first query
-	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
-	if hasGod {
-		qb.AddEqual("f.god", userSession.SelectedGod)
-		qbPst.AddEqual("f.god", userSession.SelectedGod)
+    FROM fpro f`
+	bPst := querybuilder.New(klase5i6Sum)
+	b := querybuilder.New(klase5i6Sum)
+	for _, x := range []*querybuilder.Builder{b, bPst} {
+		// Each bound of the sifra and konto ranges applies when the form sent it (not empty and
+		// not "undefined"). The old condition applied the ranges only when "do" was "undefined",
+		// and then compared "undefined" as the upper bound.
+		whereRange(x, "COALESCE(NULLIF(COALESCE(f.sifra, ''), '')::numeric, 0)", formValue(saldaParam.OdSifre), formValue(saldaParam.DoSifre))
+		whereRange(x, "COALESCE(NULLIF(COALESCE(f.konto, ''), '')::numeric, 0)", formValue(saldaParam.OdKonta), formValue(saldaParam.DoKonta))
+		// Klasa 5, 6, or both, the same as the grids (without a klasa the old totals summed
+		// every konto).
+		whereKlasa5i6(x, saldaParam.Klasa)
+		if err := s.fproRepo.ApplyFilters(ctx, x, "f", nil, ""); err != nil {
+			return totals, err
+		}
 	}
-	if hasKar {
-		qb.AddEqual("f.kar", userSession.SelectedKar)
-		qbPst.AddEqual("f.kar", userSession.SelectedKar)
-	}
-	if saldaParam.OdSifre != "undefined" && saldaParam.DoSifre == "undefined" {
-		qb.AddCondition("COALESCE(NULLIF(COALESCE(f.sifra, ''), '')::numeric, 0)", saldaParam.OdSifre, ">=")
-		qb.AddCondition("COALESCE(NULLIF(COALESCE(f.sifra, ''), '')::numeric, 0)", saldaParam.DoSifre, "<=")
-		qbPst.AddCondition("COALESCE(NULLIF(COALESCE(f.sifra, ''), '')::numeric, 0)", saldaParam.OdSifre, ">=")
-		qbPst.AddCondition("COALESCE(NULLIF(COALESCE(f.sifra, ''), '')::numeric, 0)", saldaParam.DoSifre, "<=")
-	}
-	if saldaParam.OdKonta != "undefined" && saldaParam.DoKonta == "undefined" {
-		qb.AddCondition("COALESCE(NULLIF(COALESCE(f.konto, ''), '')::numeric, 0)", saldaParam.OdKonta, ">=")
-		qb.AddCondition("COALESCE(NULLIF(COALESCE(f.konto, ''), '')::numeric, 0)", saldaParam.DoKonta, "<=")
-		qbPst.AddCondition("COALESCE(NULLIF(COALESCE(f.konto, ''), '')::numeric, 0)", saldaParam.OdKonta, ">=")
-		qbPst.AddCondition("COALESCE(NULLIF(COALESCE(f.konto, ''), '')::numeric, 0)", saldaParam.DoKonta, "<=")
-	}
+	whereRange(b, "f.danal::date", saldaParam.OdDatuma, saldaParam.DoDatuma)
+	b.Where("f.tipdok <> ?", "00")
+	bPst.Where("f.tipdok = ?", "00")
 
-	qb.AddCondition("f.danal::date", saldaParam.OdDatuma, ">=")
-	qb.AddCondition("f.danal::date", saldaParam.DoDatuma, "<=")
-	qb.AddCondition("f.tipdok", "00", "<>")
-
-	qbPst.AddEqual("f.tipdok", "00")
-	// Check account range between 5 and 6 (class 5 and 6)
-	switch saldaParam.Klasa {
-	case "5":
-		qb.AddCustomCondition("f.konto like '5%'")
-		qbPst.AddCustomCondition("f.konto like '5%'")
-	case "6":
-		qb.AddCustomCondition("f.konto like '6%'")
-		qbPst.AddCustomCondition("f.konto like '6%'")
-	default:
-
-	}
-	sqlQuery, args := qb.Build()
-	sqlQueryPst, argsPst := qbPst.Build()
-	entities, err := s.fproRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.fproRepo.Select(ctx, b)
 	if err != nil {
 		return totals, err
 	}
@@ -1705,7 +1544,7 @@ func (s *SaldaResource) GetSaldaKlase5i6TotalValues(ctx context.Context, saldaPa
 		totals.TekuciPromPot = (*entities)[0].Pot.Float64
 		totals.TekuciPromSaldo = (*entities)[0].Dug.Float64 - (*entities)[0].Pot.Float64
 	}
-	entitiesPst, err := s.fproRepo.GetAllCustom(ctx, sqlQueryPst, "", argsPst, "", "")
+	entitiesPst, err := s.fproRepo.Select(ctx, bPst)
 	if err != nil {
 		return totals, err
 	}
@@ -1749,17 +1588,12 @@ func (s *SaldaResource) ProcessSaldaPartneriDetails(ctx context.Context, idPartn
 
 	bBudzetsko := false
 
-	hasGod, hasKar := s.partneriRepo.GetHasGodHasKar()
-	qb := common.NewQueryBuilder(`SELECT budzetski FROM partneri`, true)
-	if hasGod {
-		qb.AddEqual("god", userSession.SelectedGod)
+	// The partner id is a key, restricted to the tenant of the session.
+	b := querybuilder.New(`SELECT budzetski FROM partneri`).Where("idpartneri = ?", idPartneri)
+	if err := s.partneriRepo.ApplyFilters(ctx, b, "", nil, ""); err != nil {
+		return err
 	}
-	if hasKar {
-		qb.AddEqual("kar", userSession.SelectedKar)
-	}
-	qb.AddEqual("idpartneri", idPartneri)
-	sqlQuery, args := qb.Build()
-	partneriEntities, err := s.partneriRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	partneriEntities, err := s.partneriRepo.Select(ctx, b)
 	if err != nil {
 		return err
 	}
@@ -1767,33 +1601,25 @@ func (s *SaldaResource) ProcessSaldaPartneriDetails(ctx context.Context, idPartn
 		bBudzetsko = (*partneriEntities)[0].Budzetski == true //budzetski
 	}
 
-	gnGod := userSession.SelectedGod
-	gnKar := userSession.SelectedKar
-
 	// Query 1: Get aggregated Konta/Salda data per FKPL
-	qbKonta := common.NewQueryBuilder(`
-        SELECT 
+	bKonta := querybuilder.New(`
+        SELECT
             f.konto,
             f.sifra,
             f.naziv,
             COALESCE(SUM(CASE WHEN fp.kat = 1 OR fp.kat = 2 THEN fp.iznos ELSE 0 END), 0) as dug,
             COALESCE(SUM(CASE WHEN fp.kat = 3 OR fp.kat = 4 THEN fp.iznos ELSE 0 END), 0) as pot
-        FROM fpro fp `, true)
-	hasGod, hasKar = s.fproRepo.GetHasGodHasKar()
-	qbKonta.AddJoin("LEFT JOIN fkpl f ON f.idfkpl = fp.idfkpl")
-	if hasGod {
-		qbKonta.AddEqual("fp.god", gnGod)
+        FROM fpro fp`).
+		AddJoin("LEFT JOIN fkpl f ON f.idfkpl = fp.idfkpl").
+		AddEqual("fp.vkonta", 1).
+		Where("f.idpartneri = ?", idPartneri).
+		GroupBy("f.konto", "f.sifra", "f.naziv").
+		OrderBy("f.konto")
+	if err := s.fproRepo.ApplyFilters(ctx, bKonta, "fp", nil, ""); err != nil {
+		return err
 	}
-	if hasKar {
-		qbKonta.AddEqual("fp.kar", gnKar)
-	}
-	qbKonta.AddEqual("fp.vkonta", 1)
-	qbKonta.AddEqual("f.idpartneri", idPartneri)
-	qbKonta.AddGroupBy("f.konto, f.sifra, f.naziv")
-	qbKonta.AddOrderBy("f.konto")
 
-	sqlQueryKonta, argsKonta := qbKonta.Build()
-	kontaEntities, err := s.fproRepo.GetAllCustom(ctx, sqlQueryKonta, "", argsKonta, "", "")
+	kontaEntities, err := s.fproRepo.Select(ctx, bKonta)
 	if err != nil {
 		return err
 	}
@@ -1813,24 +1639,20 @@ func (s *SaldaResource) ProcessSaldaPartneriDetails(ctx context.Context, idPartn
 	}
 
 	// Query 2: Get all detail transactions
-	qbDetalji := common.NewQueryBuilder(`
+	bDetalji := querybuilder.New(`
         SELECT fp.konto, fp.sifra, fp.vrd, fp.kat,
             fp.tipdok, fp.nalog, fp.danal, fp.dokum,
             fp.dadok, fp.tra, fp.iznos
-        FROM fpro fp `, true)
-	qbDetalji.AddJoin(" JOIN fkpl f ON fp.idfkpl = f.idfkpl ")
-	qbDetalji.AddEqual("f.idpartneri", idPartneri)
-	qbDetalji.AddEqual("fp.vkonta", 1)
-	if hasGod {
-		qbDetalji.AddEqual("fp.god", gnGod)
+        FROM fpro fp`).
+		AddJoin("JOIN fkpl f ON fp.idfkpl = f.idfkpl").
+		Where("f.idpartneri = ?", idPartneri).
+		AddEqual("fp.vkonta", 1).
+		OrderBy("fp.danal ASC")
+	if err := s.fproRepo.ApplyFilters(ctx, bDetalji, "fp", nil, ""); err != nil {
+		return err
 	}
-	if hasKar {
-		qbDetalji.AddEqual("fp.kar", gnKar)
-	}
-	qbDetalji.AddOrderBy("fp.danal ASC")
 
-	sqlQueryDetalji, argsDetalji := qbDetalji.Build()
-	detaljiEntities, err := s.fproRepo.GetAllCustom(ctx, sqlQueryDetalji, "", argsDetalji, "", "")
+	detaljiEntities, err := s.fproRepo.Select(ctx, bDetalji)
 	if err != nil {
 		return err
 	}
@@ -1959,7 +1781,7 @@ func (s *SaldaResource) GetSaldaPartneraPoKontimaStampaFields() []domain.Fields 
 }
 
 func (s *SaldaResource) GetFvrData(ctx context.Context) (domain.Fvr, error) {
-	return common.GetFvrData(ctx, s.fvrRepo)
+	return repository.GetFvrData(ctx, s.fvrRepo)
 }
 
 func (s *SaldaResource) setServiceFieldValues() {

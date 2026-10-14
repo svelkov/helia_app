@@ -2168,5 +2168,18 @@
   "label.prvo_izaberite_konto_dobavljaca": "Prvo izaberite konto dobavljača",
   "label.sifra_pores._tarife": "Šifra pores. tarife",
   "label.podaci_o_porudzbenici_nisu_sacuvani": "Podaci o porudžbenici nisu sačuvani",
-  "label.sacuvajte_podatke_o_porudzbenici_da_bi_ste_mogli_da_radite_sa_stavkama": "Sačuvajte podatke o porudžbenici da bi ste mogli da radite sa stavkama"
+  "label.sacuvajte_podatke_o_porudzbenici_da_bi_ste_mogli_da_radite_sa_stavkama": "Sačuvajte podatke o porudžbenici da bi ste mogli da radite sa stavkama",
+  "label.profakture": "Profakture",
+  "label.prikaz_profaktura": "Prikaz profaktura",
+  "label.podaci_o_profakturi": "Podaci o profakturi",
+  "label.podaci_o_profakturi_nisu_sacuvani": "Podaci o profakturi nisu sačuvani",
+  "label.stavke_profakture": "Stavke profakture",
+  "label.sacuvajte_podatke_o_profakturi_da_bi_ste_mogli_da_radite_sa_stavkama": "Sačuvajte podatke o profakturi da bi ste mogli da radite sa stavkama",
+  "label.broj_fisk._isecka": "Broj fisk. isečka",
+  "label.napomena_broj_rata": "Napomena, broj rata",
+  "label.valuta_kurs_uslovi_prodaje": "Valuta, kurs, uslovi prodaje",
+  "label.reg._br._vozila": "Reg. br. vozila",
+  "label.dani": "Dani",
+  "label.neto_cena": "Neto cena",
+  "label.sif._pores._tarife": "Šif. pores. tarife"
 }

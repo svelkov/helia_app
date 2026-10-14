@@ -31,7 +31,7 @@ func RobNivMsgBrisanje() string {
 
 // robNivProdajnaCena tells whether the zalihe of the magacin are kept at the prodajna cena (magacini.nacvodzal 1).
 func (s *RobnoDokumentaResource) robNivProdajnaCena(ctx context.Context, magaciniID int) (bool, error) {
-	return s.robnoUnosPostoji(ctx, `select count(*) from magacini where magaciniid = $1 and coalesce(nacvodzal, 0) = 1`, magaciniID)
+	return s.robno.MagacinPoNabavnoj(ctx, magaciniID)
 }
 
 // robNivValidate validates the header of a nivelacija veleprodaje (the legacy ValidacijaRDOK of
@@ -83,14 +83,11 @@ func (s *RobnoDokumentaResource) robNivSaveHeader(ctx context.Context, params do
 		return v
 	}
 	vrd, dokum := common.StringToInt(params.Vrd), common.StringToInt(params.BrojDokum)
-	rows, err := s.unos.Tekst.GetAllCustom(ctx, `select r.rdokid::text as key, (select count(*) from rpro p where p.rdokid = r.rdokid)::text as c1
-		from rdok r where r.god = $1 and r.kar = $2 and r.magaciniid = $3 and r.vrd = $4 and r.dokum = $5 limit 1`, "",
-		[]any{userSession.SelectedGod, userSession.SelectedKar, params.MagaciniID, vrd, dokum}, "", "")
+	_, brojStavki, postoji, err := s.robno.RdokPoBroju(ctx, params.MagaciniID, vrd, dokum)
 	if err != nil {
 		return 0, err
 	}
-	postoji := rows != nil && len(*rows) > 0
-	saStavkama := postoji && common.StringToInt((*rows)[0].C1) > 0
+	saStavkama := postoji && brojStavki > 0
 	polja := []domain.Fields{
 		robPoljeText("opis", params.Opis),
 		robPoljeDatum("datiz", params.IzvorniDokDatum),
@@ -121,13 +118,7 @@ func (s *RobnoDokumentaResource) robNivRsta(ctx context.Context, magaciniID int,
 	if userSession == nil {
 		return 0, 0, false, fmt.Errorf("no user session found")
 	}
-	rows, err := s.unos.Tekst.GetAllCustom(ctx, `select (coalesce(ulaz, 0) - coalesce(izlaz, 0))::float8::text as key, coalesce(vpcena, 0)::float8::text as c1
-		from rsta where god = $1 and kar = $2 and magaciniid = $3 and konto = $4 and sifra = $5 order by rstaid limit 1`, "",
-		[]any{userSession.SelectedGod, userSession.SelectedKar, magaciniID, strings.TrimSpace(konto), sifra}, "", "")
-	if err != nil || rows == nil || len(*rows) == 0 {
-		return 0, 0, false, err
-	}
-	return common.StringToFloat64((*rows)[0].Key), common.StringToFloat64((*rows)[0].C1), true, nil
+	return s.robno.RstaStanjeVpcena(ctx, magaciniID, konto, sifra)
 }
 
 // robNivArtikal returns the artikal of a stavka of a nivelacija veleprodaje (the legacy exit of EDT_SIFRA of
@@ -146,13 +137,11 @@ func (s *RobnoDokumentaResource) robNivArtikal(ctx context.Context, k domain.Rob
 	if err != nil {
 		return a, false, nil
 	}
-	rows, err := s.unos.Tekst.GetAllCustom(ctx, `select a.rsifid::text as key, coalesce(a.naziv, '') as c1, coalesce(a.jm, '') as c2
-		from rsif a where a.god = $1 and a.kar = $2 and a.sifra = $3 limit 1`, "", []any{userSession.SelectedGod, userSession.SelectedKar, sifra}, "", "")
-	if err != nil || rows == nil || len(*rows) == 0 {
+	rsifID, naziv, jm, found, err := s.robno.RsifArtikal(ctx, sifra)
+	if err != nil || !found {
 		return a, false, err
 	}
-	r := (*rows)[0]
-	a.Sifra, a.Naziv, a.Jm = sifra, r.C1, r.C2
+	a.Sifra, a.Naziv, a.Jm = sifra, naziv, jm
 	stanje, vpcena, found, err := s.robNivRsta(ctx, k.MagaciniID, a.Konto, sifra)
 	if err != nil {
 		return a, true, err
@@ -164,14 +153,9 @@ func (s *RobnoDokumentaResource) robNivArtikal(ctx context.Context, k domain.Rob
 		}
 	case 2:
 		// The zalihe by lot of the artikal (the legacy FOR EACH DRSTA by its rsifid).
-		lotovi, err := s.unos.Tekst.GetAllCustom(ctx, `select coalesce(sum(coalesce(ulaz, 0) - coalesce(izlaz, 0)), 0)::float8::text as key
-			from drsta where rsifid = $1 and coalesce(ulaz, 0) - coalesce(izlaz, 0) > 0`, "", []any{common.StringToInt(r.Key)}, "", "")
+		dstanje, err := s.robno.DrstaStanjeArtikla(ctx, rsifID)
 		if err != nil {
 			return a, true, err
-		}
-		dstanje := 0.0
-		if lotovi != nil && len(*lotovi) > 0 {
-			dstanje = common.StringToFloat64((*lotovi)[0].Key)
 		}
 		if found {
 			if robZaokruzi(stanje-dstanje, 3) == 0 {
@@ -200,8 +184,7 @@ func (s *RobnoDokumentaResource) robNivValidateStavka(ctx context.Context, k dom
 	sifra, err := strconv.Atoi(strings.TrimSpace(params.Sifra))
 	if err != nil {
 		add("sifraartikla", robnoUnosMsgNePostoji)
-	} else if exists, err := s.robnoUnosPostoji(ctx, `select count(*) from rsif where god = $1 and kar = $2 and sifra = $3`,
-		userSession.SelectedGod, userSession.SelectedKar, sifra); err != nil {
+	} else if exists, err := s.robno.RsifPostoji(ctx, sifra); err != nil {
 		add("sifraartikla", common.ErrMsgReadData)
 	} else if !exists {
 		add("sifraartikla", robnoUnosMsgNePostoji)
@@ -242,23 +225,18 @@ func (s *RobnoDokumentaResource) robNivStavka(ctx context.Context, k domain.RobS
 		return 0, fmt.Errorf("no user session found")
 	}
 	sifra := common.StringToInt(params.Sifra)
-	rows, err := s.unos.Tekst.GetAllCustom(ctx, `select rsifid::text as key, coalesce(po, 0)::text as c1 from rsif where god = $1 and kar = $2 and sifra = $3 limit 1`,
-		"", []any{userSession.SelectedGod, userSession.SelectedKar, sifra}, "", "")
+	rsifID, po, found, err := s.robno.RsifIDPo(ctx, nil, sifra)
 	if err != nil {
 		return 0, err
 	}
-	if rows == nil || len(*rows) == 0 {
+	if !found {
 		return 0, fmt.Errorf("artikal ne postoji")
 	}
-	rsifID, po := int64(common.StringToInt((*rows)[0].Key)), common.StringToInt((*rows)[0].C1)
 	rok, _ := robnoUnosDatum(params.Rok)
 	lotovi := []robNivLot{{kolicina: common.StringToFloat64(params.Kolic), otk: strings.TrimSpace(params.Otk), serija: strings.TrimSpace(params.Serija),
 		roktr: RobWinDevDatum(rok)}}
 	if k.Tipzal == 2 {
-		dr, err := s.unos.Tekst.GetAllCustom(ctx, `select (coalesce(ulaz, 0) - coalesce(izlaz, 0))::float8::text as key, coalesce(otk, '') as c1,
-				coalesce(serija, '') as c2, coalesce(roktr, 0)::bigint::text as c3
-			from drsta where god = $1 and kar = $2 and mag = $3 and rsifid = $4 and coalesce(ulaz, 0) - coalesce(izlaz, 0) >= 0 order by rstaid`, "",
-			[]any{userSession.SelectedGod, userSession.SelectedKar, k.Mag, rsifID}, "", "")
+		dr, err := s.robno.DrstaLotovi(ctx, k.Mag, rsifID)
 		if err != nil {
 			return 0, err
 		}
@@ -327,7 +305,7 @@ func (s *RobnoDokumentaResource) robNivSlog(ctx context.Context, tx db.Transacti
 			iznos = -iznos
 		}
 		var rbr int
-		if err = tx.QueryRowContext(ctx, `select coalesce(max(rbr), 0) + 1 from rpro where rdokid = $1`, k.RdokID).Scan(&rbr); err != nil {
+		if rbr, err = s.robno.RproSledeciRbr(ctx, tx, k.RdokID); err != nil {
 			return 0, err
 		}
 		if rproID, err = s.unos.Rpro.CreateWithTx(ctx, tx, &domain.RobRproDto{}, "rproid", []domain.Fields{
@@ -369,19 +347,14 @@ func (s *RobnoDokumentaResource) robNivSlog(ctx context.Context, tx db.Transacti
 		if err = s.AzurirajDRSTA(ctx, tx, promena); err != nil {
 			return 0, err
 		}
-		if err = s.unos.Rpro.CreateUpdateCustomWithTx(ctx, tx, `update rsta set vpcena = $6
-			where god = $1 and kar = $2 and magaciniid = $3 and konto = $4 and sifra = $5`,
-			userSession.SelectedGod, userSession.SelectedKar, k.MagaciniID, p.konto, p.sifra, p.novaCena); err != nil {
+		if err = s.robno.RstaPostaviVpcena(ctx, tx, k.MagaciniID, p.konto, p.sifra, p.novaCena); err != nil {
 			return 0, err
 		}
-		if err = s.unos.Rpro.CreateUpdateCustomWithTx(ctx, tx, `update rdok set iznos = round((coalesce(iznos, 0) + $2)::numeric, 2),
-			brst = coalesce(brst, 0) + 1 where rdokid = $1`, k.RdokID, iznos); err != nil {
+		if err = s.robno.RdokDodajIznos(ctx, tx, k.RdokID, iznos, 1); err != nil {
 			return 0, err
 		}
 	}
-	err = s.unos.Rpro.CreateUpdateCustomWithTx(ctx, tx, `update drsta set cena = $5, vpcena = $5
-		where god = $1 and kar = $2 and magaciniid = $3 and sifra = $4`,
-		userSession.SelectedGod, userSession.SelectedKar, k.MagaciniID, p.sifra, p.novaCena)
+	err = s.robno.DrstaPostaviCene(ctx, tx, k.MagaciniID, p.sifra, p.novaCena)
 	return rproID, err
 }
 
@@ -401,8 +374,7 @@ func (s *RobnoDokumentaResource) robNivBrisi(ctx context.Context, tx db.Transact
 	if err := s.AzurirajDRSTA(ctx, tx, promena); err != nil {
 		return err
 	}
-	if err := s.unos.Rpro.CreateUpdateCustomWithTx(ctx, tx, `update rdok set iznos = round((coalesce(iznos, 0) - $2)::numeric, 2),
-		brst = greatest(coalesce(brst, 0) - 1, 0) where rdokid = $1`, k.RdokID, iznos); err != nil {
+	if err := s.robno.RdokOduzmiStavku(ctx, tx, k.RdokID, iznos); err != nil {
 		return err
 	}
 	if err := s.unos.Rpro.DeleteWithTx(ctx, tx, "rproid", rproID); err != nil {

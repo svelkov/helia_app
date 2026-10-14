@@ -6,9 +6,9 @@
   },
   "name": "helia_app",
   "scripts": {
-    "build-css": "tailwindcss -i ./frontend/src/input.css -o ./frontend/static/css/output.css",
-    "watch-css": "tailwindcss -i ./frontend/src/input.css -o ./frontend/static/css/output.css --watch",
-    "build-css-prod": "tailwindcss -i ./frontend/src/input.css -o ./frontend/static/css/output.css --minify"
+    "build-css": ".\\tailwindcss.exe -i ./frontend/static/src/input.css -o ./frontend/static/css/output.css",
+    "watch-css": ".\\tailwindcss.exe -i ./frontend/static/src/input.css -o ./frontend/static/css/output.css --watch",
+    "build-css-prod": ".\\tailwindcss.exe -i ./frontend/static/src/input.css -o ./frontend/static/css/output.css --minify"
   },
   "version": "1.0.0",
   "main": "tailwind.config.js",

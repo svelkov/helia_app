@@ -7,10 +7,12 @@ import (
 	"helia/config"
 	"helia/internal/common"
 	"helia/internal/domain"
+	"helia/internal/infrastructure/db/querybuilder"
 	"helia/internal/repository"
 	"helia/internal/service"
 	commonsvc "helia/internal/service/common"
 	"reflect"
+	"strings"
 )
 
 // FkplService defines the interface for operations related to Fkpl.
@@ -55,7 +57,7 @@ func (s *FkplResource) GetFvrData(ctx context.Context) (domain.Fvr, error) {
 	if s.fvrRepo == nil {
 		return domain.Fvr{}, fmt.Errorf("fvrRepo not initialized")
 	}
-	return common.GetFvrData(ctx, s.fvrRepo)
+	return repository.GetFvrData(ctx, s.fvrRepo)
 }
 
 // GetAnalitikaForSelect returns the tipovi analitike that can be selected for a konto
@@ -79,83 +81,57 @@ func (s *FkplResource) Create(ctx context.Context, entity *domain.Fkpl, idFkpl s
 	if userSession == nil {
 		return nil, 0, errors.New(common.ErrMsgUserSessionNotFound)
 	}
-	config := common.RepositoryConfig{
-		TableName:     "fkpl",
-		EntityType:    reflect.TypeOf(entity).Elem(),
-		TableFields:   s.GetFkplTableFields(),
-		IncludeGodKar: true,
-	}
-
-	qb := common.NewRepositoryQueryBuilder(config)
-	hasGod, hasKar := qb.CheckGodKarFields()
-	if hasGod || hasKar {
-		qb.AddGodKarConditions(hasGod, hasKar, userSession.SelectedGod, userSession.SelectedKar)
-	}
-
-	sqlQuery, args := qb.BuildInsert(ctx, fields, common.IDfkpl)
-	// Start a transaction
-	tx, err := s.fkplRepo.BeginTx()
-	if err != nil {
-		return nil, 0, fmt.Errorf("error beginning transaction: %w", err)
-	}
-	// Defer rollback in case of error
-	defer func() {
-		if err != nil {
-			tx.Rollback()
-		}
-	}()
-	err = tx.QueryRowContext(ctx, sqlQuery, args...).Err()
+	// The repository fills god/kar from the session and the audit columns, in its own transaction.
+	// The handler sends only the column names, so the values come from the entity (before, the
+	// fields went in without values and the konto was inserted empty).
+	id, err := s.fkplRepo.Create(ctx, entity, common.IDfkpl, fkplFieldValues(entity, fields))
 	if err != nil {
 		return nil, 0, fmt.Errorf("insert fkpl failed: %w", err)
 	}
-	err = tx.Commit()
-	if err != nil {
-		return nil, 0, fmt.Errorf("error committing transaction: %w", err)
-	}
+	return nil, id, nil
+}
 
-	return nil, 0, nil
+// fkplFieldValues sets the Value (or IsNull) of every field from the matching column of the konto.
+// An unknown column is an error of the caller and keeps its value.
+func fkplFieldValues(entity *domain.Fkpl, fields []domain.Fields) []domain.Fields {
+	out := make([]domain.Fields, len(fields))
+	copy(out, fields)
+	for i := range out {
+		switch strings.ToLower(out[i].Name) {
+		case "konto":
+			out[i].Value = entity.Konto
+		case "sifra":
+			out[i].Value = entity.Sifra
+		case "naziv":
+			out[i].Value = entity.Naziv
+		case "vkonta":
+			out[i].Value = fmt.Sprintf("%d", entity.Vkonta)
+		case "devizni":
+			out[i].Value = fmt.Sprintf("%t", entity.Devizni)
+		case "kolicinski":
+			out[i].Value = fmt.Sprintf("%t", entity.Kolicinski)
+		case "kursirati":
+			out[i].Value = fmt.Sprintf("%t", entity.Kursirati)
+		case "tipanalitikeid":
+			if entity.TipanalitikeID == nil {
+				out[i].IsNull = true
+			} else {
+				out[i].Value = fmt.Sprintf("%d", *entity.TipanalitikeID)
+			}
+		}
+	}
+	return out
 }
 func (s *FkplResource) Update(ctx context.Context, entity *domain.Fkpl, idField string, idFiledValue interface{}, fields []domain.Fields) ([]domain.FieldError, error) {
 	userSession := domain.GetSessionFromStdContext(ctx)
 	if userSession == nil {
 		return nil, errors.New(common.ErrMsgUserSessionNotFound)
 	}
-	config := common.RepositoryConfig{
-		TableName:     "fkpl",
-		EntityType:    reflect.TypeOf(entity).Elem(),
-		TableFields:   fields,
-		IncludeGodKar: true,
+	// Restricted to the tenant of the session; ErrNotFound when the konto is not there.
+	if err := s.fkplRepo.Update(ctx, entity, idField, idFiledValue, fields); err != nil {
+		return nil, fmt.Errorf("update fkpl failed: %w", err)
 	}
-
-	qb := common.NewRepositoryQueryBuilder(config)
-	hasGod, hasKar := qb.CheckGodKarFields()
-	if hasGod || hasKar {
-		qb.AddGodKarConditions(hasGod, hasKar, userSession.SelectedGod, userSession.SelectedKar)
-	}
-
-	sqlQuery, args := qb.BuildUpdate(ctx, fields, idField, idFiledValue)
-	// Start a transaction
-	tx, err := s.fkplRepo.BeginTx()
-	if err != nil {
-		return nil, fmt.Errorf("error beginning transaction: %w", err)
-	}
-	// Defer rollback in case of error
-	defer func() {
-		if err != nil {
-			tx.Rollback()
-		}
-	}()
-	err = tx.QueryRowContext(ctx, sqlQuery, args...).Err()
-	if err != nil {
-		return nil, fmt.Errorf("insert fkpl failed: %w", err)
-	}
-	err = tx.Commit()
-	if err != nil {
-		return nil, fmt.Errorf("error committing transaction: %w", err)
-	}
-
 	return nil, nil
-
 }
 func (s *FkplResource) Delete(ctx context.Context, idField string, idFieldValue int64) error {
 	return s.service.Delete(ctx, idField, idFieldValue)
@@ -164,53 +140,45 @@ func (s *FkplResource) GetAll(ctx context.Context, page int, pageSize int, table
 	return s.service.GetAll(ctx, page, pageSize, tableFields, idField, searchText, sortBy, sortOrder)
 }
 
-// GetAllCustom implements FkplService.
-func (s *FkplResource) GetAllCustom(ctx context.Context, queryText string, whereText string, args []interface{}, limitOffset string, orderBy string) (*[]domain.Fkpl, error) {
-	return s.service.GetAllCustom(ctx, queryText, whereText, args, limitOffset, orderBy)
+// fkplSortColumns maps the sortBy keys of the kontni plan table (the column names) to columns.
+var fkplSortColumns = map[string]string{
+	"idfkpl": "fkpl.idfkpl", "konto": "fkpl.konto", "naziv": "fkpl.naziv", "devizni": "fkpl.devizni",
+	"kursirati": "fkpl.kursirati", "vkonta": "fkpl.vkonta", "kolicinski": "fkpl.kolicinski",
 }
+
 func (s *FkplResource) GetAllByVkonta(ctx context.Context, vkonta string, tbl *domain.TableData, currentPage, pageSize int, getTotalRecords bool, sortBy, sortOrder, searchText, printType string) error {
 	userSession := domain.GetSessionFromStdContext(ctx)
 	if userSession == nil {
 		return errors.New(common.ErrMsgUserSessionNotFound)
 	}
 
-	hasGod, hasKar := s.fkplRepo.GetHasGodHasKar()
-	qb := common.NewQueryBuilder("SELECT idfkpl, konto, coalesce(a.naziv, '') as annaziv, fkpl.naziv, devizni, kursirati, vkonta, kolicinski FROM fkpl", true)
-	qb.AddJoin(" left join tipanalitike a on a.tipanalitikeid = fkpl.tipanalitikeid")
-	if hasGod {
-		qb.AddEqual("fkpl.god", userSession.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("fkpl.kar", userSession.SelectedKar)
-	}
-	if vkonta != "" {
-		qb.AddEqual("fkpl.vkonta", vkonta)
-	}
-	if searchText != "" && printType == common.TipStampePreview {
-		qb.AddCustomSearchCondition([]string{"konto", "a.naziv", "fkpl.naziv"}, searchText)
-	}
-	if !getTotalRecords {
-		if sortBy != "" {
-			qb.AddOrderBy(fmt.Sprintf("fkpl.%s", sortBy))
-		}
-		if sortOrder != "" && (sortOrder == "ASC" || sortOrder == "DESC") {
-			qb.AddSortOrder(sortOrder)
-		}
-		if printType == common.TipStampePreview {
-			qb.SetLimit(pageSize)
-			qb.SetOffset((currentPage - 1) * pageSize)
-		}
-	}
-
-	sqlQuery, args := qb.Build()
-	entities, err := s.fkplRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
+	b := querybuilder.New("SELECT idfkpl, konto, coalesce(a.naziv, '') as annaziv, fkpl.naziv, devizni, kursirati, vkonta, kolicinski FROM fkpl").
+		AddJoin("left join tipanalitike a on a.tipanalitikeid = fkpl.tipanalitikeid").
+		AddEqual("fkpl.vkonta", vkonta) // optional: an empty vrsta konta lists every konto
+	if err := s.fkplRepo.ApplyFilters(ctx, b, "fkpl", nil, ""); err != nil {
 		return err
 	}
-
+	if printType == common.TipStampePreview {
+		b.AddSearch([]string{"konto", "a.naziv", "fkpl.naziv"}, searchText)
+	}
 	if getTotalRecords && printType == common.TipStampePreview {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
+		total, err := s.fkplRepo.Count(ctx, b)
+		if err != nil {
+			return err
+		}
+		common.SetTableTotalRecords(tbl, total, pageSize)
 		return nil
+	}
+	if !getTotalRecords {
+		b.OrderByKey(strings.ToLower(sortBy), sortOrder, fkplSortColumns)
+		if printType == common.TipStampePreview {
+			b.Limit(pageSize).Offset((currentPage - 1) * pageSize)
+		}
+	}
+
+	entities, err := s.fkplRepo.Select(ctx, b)
+	if err != nil {
+		return err
 	}
 	for _, entity := range *entities {
 		fields := []string{
@@ -235,19 +203,18 @@ func (s *FkplResource) GetByID(ctx context.Context, idField string, idValue int6
 	if userSession == nil {
 		return nil, errors.New(common.ErrMsgUserSessionNotFound)
 	}
-	hasGod, hasKar := s.fkplRepo.GetHasGodHasKar()
-	qb := common.NewQueryBuilder("SELECT idfkpl, konto, coalesce(a.naziv, '') as annaziv, fkpl.naziv, devizni, kolicinski, vkonta, fkpl.tipanalitikeid FROM fkpl", true)
-	qb.AddJoin(" left join tipanalitike a on a.tipanalitikeid = fkpl.tipanalitikeid")
-	if hasGod {
-		qb.AddEqual("god", userSession.SelectedGod)
+	if !querybuilder.IsIdent(idField) || strings.Contains(idField, ".") {
+		return nil, fmt.Errorf("invalid id column %q", idField)
 	}
-	if hasKar {
-		qb.AddEqual("kar", userSession.SelectedKar)
+	// The id is a key: Where, never skipped. The period is qualified with fkpl, because the joined
+	// tipanalitike has its own god/kar.
+	b := querybuilder.New("SELECT idfkpl, konto, coalesce(a.naziv, '') as annaziv, fkpl.naziv, devizni, kolicinski, vkonta, fkpl.tipanalitikeid FROM fkpl").
+		AddJoin("left join tipanalitike a on a.tipanalitikeid = fkpl.tipanalitikeid").
+		Where("fkpl."+idField+" = ?", idValue)
+	if err := s.fkplRepo.ApplyFilters(ctx, b, "fkpl", nil, ""); err != nil {
+		return nil, err
 	}
-	qb.AddEqual(idField, idValue)
-
-	sqlQuery, args := qb.Build()
-	entities, err := s.fkplRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.fkplRepo.Select(ctx, b)
 	if err != nil {
 		return nil, err
 	}
@@ -260,11 +227,6 @@ func (s *FkplResource) GetByID(ctx context.Context, idField string, idValue int6
 // GetTotalRecords implements FkplService.
 func (s *FkplResource) GetTotalRecords(ctx context.Context, tableFields []domain.Fields, searchText string) (int, error) {
 	return s.service.GetTotalRecords(ctx, tableFields, searchText)
-}
-
-// GetTotalRecordsCustom implements FkplService.
-func (s *FkplResource) GetTotalRecordsCustom(ctx context.Context, queryText string, whereText string, args []interface{}, limitOffset string, orderBy string) (int, error) {
-	return s.service.GetTotalRecordsCustom(ctx, queryText, whereText, args, limitOffset, orderBy)
 }
 
 // MapEntityToValues implements FkplService.
@@ -302,15 +264,22 @@ func (s *FkplResource) ValidateEntity(ctx context.Context, entity *domain.Fkpl) 
 	if entity.Vkonta == 5 && len(entity.Konto) != 1 {
 		fieldErrors = append(fieldErrors, domain.FieldError{Field: "konto", ErrorMessage: "Klasa konto mora imati tačno 1 karakter"})
 	}
-	qb := common.NewQueryBuilder("SELECT idfkpl FROM fkpl", true)
-	hasGod, hasKar := qb.CheckGodKarFields()
-	if hasGod || hasKar {
-		qb.AddGodKarConditions(hasGod, hasKar, userSession.SelectedGod, userSession.SelectedKar)
+	// The konto must be unique in the period of the session. (The old builder had no entity type
+	// here, so it found no god/kar and checked every period.)
+	// The pair konto + vrsta analitike is the key; a konto without analitika is compared with the
+	// konta without analitika (IS NULL - "= NULL" would never match).
+	b := querybuilder.New("SELECT idfkpl FROM fkpl").
+		Where("konto = ?", entity.Konto)
+	if entity.TipanalitikeID == nil {
+		b.Where("tipanalitikeid IS NULL")
+	} else {
+		b.Where("tipanalitikeid = ?", *entity.TipanalitikeID)
 	}
-	qb.AddEqual("konto", entity.Konto)
-	qb.AddEqual("tipanalitikeid", entity.TipanalitikeID)
-	sqlQuery, args := qb.Build()
-	existingEntity, err := s.fkplRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	var existingEntity *[]domain.Fkpl
+	err := s.fkplRepo.ApplyFilters(ctx, b, "", nil, "")
+	if err == nil {
+		existingEntity, err = s.fkplRepo.Select(ctx, b)
+	}
 	if err != nil {
 		fieldErrors = append(fieldErrors, domain.FieldError{Field: "konto", ErrorMessage: "Greška prilikom provere jedinstvenosti konta"})
 	} else if len(*existingEntity) > 0 {
@@ -324,40 +293,40 @@ func (s *FkplResource) TraziKonto(ctx context.Context, konto, sifra, vkonta stri
 	if session == nil {
 		return nil, errors.New(common.ErrMsgUserSessionNotFound)
 	}
-	var qb *common.QueryBuilder
-	hasGod, hasKar := s.fkplRepo.GetHasGodHasKar()
+	var b *querybuilder.Builder
 	// if vkonta == "1"  then search ibn table partneri for the tipanalitke for that konto and use that tipanalitikeid to search in fkpl, if vkonta == "2" then search directly in fkpl with vkonta = 2 and konto
 	if vkonta == "1" {
-		qb = common.NewQueryBuilder(`SELECT ta.tipanalitikeid, p.naziv as naziv, p.sifra as sifra FROM partneri as p `, true)
-		qb.AddJoin("inner join tipanalitike ta on ta.tipanalitikeid = p.tipanalitikeid ")
-		qb.AddJoin(" inner join fkpl f on f.tipanalitikeid = ta.tipanalitikeid ")
+		b = querybuilder.New(`SELECT ta.tipanalitikeid, p.naziv as naziv, p.sifra as sifra FROM partneri as p`).
+			AddJoin("inner join tipanalitike ta on ta.tipanalitikeid = p.tipanalitikeid").
+			AddJoin("inner join fkpl f on f.tipanalitikeid = ta.tipanalitikeid")
 	}
 	if vkonta == "2" {
-		qb = common.NewQueryBuilder(`SELECT f.idfkpl, f.konto, f.sifra, f.naziv FROM fkpl as f`, true)
+		b = querybuilder.New(`SELECT f.idfkpl, f.konto, f.sifra, f.naziv FROM fkpl as f`)
 	}
-	if qb == nil {
+	if b == nil {
 		return nil, errors.New("Invalid vkonta value")
 	}
-	if hasGod {
-		qb.AddEqual("f.god", session.SelectedGod)
+	if err := s.fkplRepo.ApplyFilters(ctx, b, "f", nil, ""); err != nil {
+		return nil, err
 	}
-	if hasKar {
-		qb.AddEqual("f.kar", session.SelectedKar)
+	if vkonta == "1" {
+		// The partneri of the period too (like KontoSearchForTable).
+		if err := s.partneriRepo.ApplyFilters(ctx, b, "p", nil, ""); err != nil {
+			return nil, err
+		}
 	}
 
-	if konto != "" {
-		qb.AddEqual("f.konto", konto)
-	}
+	// The optional filters skip empty values by themselves.
+	b.AddEqual("f.konto", konto)
 	// only search in fkpl if vkonta is 2, if vkonta is 1 then search in partneri and join with fkpl through tipanalitikeid
 	if vkonta == "2" {
-		qb.AddEqual("f.vkonta", vkonta)
+		b.Where("f.vkonta = ?", vkonta)
 	}
-	if vkonta == "1" && sifra != "" {
-		qb.AddEqual("p.sifra", sifra)
+	if vkonta == "1" {
+		b.AddEqual("p.sifra", sifra)
 	}
 
-	sqlQuery, args := qb.Build()
-	entities, err = s.fkplRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err = s.fkplRepo.Select(ctx, b)
 	if err != nil {
 		return nil, errors.New(common.ErrMsgSearchKonto)
 	}
@@ -371,62 +340,63 @@ func (s *FkplResource) KontoSearchForTable(ctx context.Context, tbl *domain.Tabl
 	if session == nil {
 		return errors.New(common.ErrMsgUserSessionNotFound)
 	}
-	var qb *common.QueryBuilder
+	var b *querybuilder.Builder
 
 	// if vkonta == "1"  then search ibn table partneri for the tipanalitke for that konto and use that tipanalitikeid to search in fkpl, if vkonta == "2" then search directly in fkpl with vkonta = 2 and konto
 	if vkonta == "1" {
-		qb = common.NewQueryBuilder(`SELECT distinct ta.tipanalitikeid, p.naziv as naziv, p.sifra as sifra, f.konto FROM partneri as p `, true)
-		qb.AddJoin("left join tipanalitike ta on ta.tipanalitikeid = p.tipanalitikeid ")
-
+		// The join of the fkpl of the period (and of the search text): static fragments, every value
+		// is an argument.
 		hasGod, hasKar := s.fkplRepo.GetHasGodHasKar()
-		fkplJoin := " left join fkpl f on f.tipanalitikeid = ta.tipanalitikeid "
+		fkplJoin := "left join fkpl f on f.tipanalitikeid = ta.tipanalitikeid"
+		var joinArgs []any
 		if hasGod {
-			fkplJoin += fmt.Sprintf(" and f.god = %d ", session.SelectedGod)
+			fkplJoin += " and f.god = ?"
+			joinArgs = append(joinArgs, session.SelectedGod)
 		}
 		if hasKar {
-			fkplJoin += fmt.Sprintf(" and f.kar = %d ", session.SelectedKar)
+			fkplJoin += " and f.kar = ?"
+			joinArgs = append(joinArgs, session.SelectedKar)
 		}
 		if searchValue != "" {
-			fkplJoin += fmt.Sprintf(" and (f.sifra ILIKE '%%' || $%d || '%%' OR f.naziv ILIKE '%%' || $%d || '%%')", 1, 1)
-			qb.AddArgs(searchValue)
+			fkplJoin += " and (f.sifra ILIKE '%' || ? || '%' OR f.naziv ILIKE '%' || ? || '%')"
+			joinArgs = append(joinArgs, searchValue, searchValue)
 		}
-		qb.AddJoin(fkplJoin)
-		hasGod, hasKar = s.partneriRepo.GetHasGodHasKar()
-		if hasGod {
-			qb.AddEqual("p.god", session.SelectedGod)
-		}
-		if hasKar {
-			qb.AddEqual("p.kar", session.SelectedKar)
+		b = querybuilder.New(`SELECT distinct ta.tipanalitikeid, p.naziv as naziv, p.sifra as sifra, f.konto FROM partneri as p`).
+			AddJoin("left join tipanalitike ta on ta.tipanalitikeid = p.tipanalitikeid").
+			AddJoin(fkplJoin, joinArgs...)
+		if err := s.partneriRepo.ApplyFilters(ctx, b, "p", nil, ""); err != nil {
+			return err
 		}
 		if searchValue != "" {
-			nbrArgs := qb.GetArgsCount()
-			qb.AddCustomCondition(fmt.Sprintf(`(p.sifra ILIKE '%%' || $%d || '%%' OR p.naziv ILIKE '%%' || $%d || '%%')`, nbrArgs+1, nbrArgs+1))
-			qb.AddArgs(searchValue)
+			b.WhereAny(
+				querybuilder.C("p.sifra ILIKE '%' || ? || '%'", searchValue),
+				querybuilder.C("p.naziv ILIKE '%' || ? || '%'", searchValue),
+			)
 		}
-		qb.AddOrderBy("p.sifra")
+		b.OrderBy("p.sifra")
 	}
 	if vkonta == "2" {
-		hasGod, hasKar := s.fkplRepo.GetHasGodHasKar()
-		qb = common.NewQueryBuilder(`SELECT f.idfkpl, f.konto, f.sifra, f.naziv FROM fkpl as f`, true)
-		if hasGod {
-			qb.AddEqual("f.god", session.SelectedGod)
+		b = querybuilder.New(`SELECT f.idfkpl, f.konto, f.sifra, f.naziv FROM fkpl as f`).
+			Where("f.vkonta = ?", "2")
+		if err := s.fkplRepo.ApplyFilters(ctx, b, "f", nil, ""); err != nil {
+			return err
 		}
-		if hasKar {
-			qb.AddEqual("f.kar", session.SelectedKar)
-		}
-		qb.AddEqual("f.vkonta", "2")
 		if searchValue != "" {
-			nbrArgs := qb.GetArgsCount()
-			qb.AddCustomCondition(fmt.Sprintf(`(f.konto ILIKE '%%' || $%d || '%%' OR f.sifra ILIKE '%%' || $%d || '%%' OR f.naziv ILIKE '%%' || $%d || '%%')`, nbrArgs+1, nbrArgs+1, nbrArgs+1))
-			qb.AddArgs(searchValue)
+			b.WhereAny(
+				querybuilder.C("f.konto ILIKE '%' || ? || '%'", searchValue),
+				querybuilder.C("f.sifra ILIKE '%' || ? || '%'", searchValue),
+				querybuilder.C("f.naziv ILIKE '%' || ? || '%'", searchValue),
+			)
 		}
-		qb.AddOrderBy("f.konto")
+		b.OrderBy("f.konto")
+	}
+	if b == nil {
+		return errors.New("Invalid vkonta value")
 	}
 
-	qb.SetLimit(20)
+	b.Limit(20)
 
-	sqlQuery, args := qb.Build()
-	entities, err := s.fkplRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.fkplRepo.Select(ctx, b)
 	if err != nil {
 		return errors.New(common.ErrMsgReadData)
 	}

@@ -6,6 +6,7 @@ import (
 	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
+	"helia/internal/infrastructure/db/querybuilder"
 	"helia/internal/repository"
 	"helia/internal/service"
 	"reflect"
@@ -85,6 +86,79 @@ func NewPrometService(service *service.BaseService[domain.PrometDto], prometRepo
 	rs.setServiceFieldValues()
 	return rs
 }
+
+// prometTotalsSelect sums the duguje and potrazuje of fpro.
+const prometTotalsSelect = `
+		select
+			coalesce(sum(case when kat = 1 or kat = 2 then iznos else 0 end), 0) as duguje,
+			coalesce(sum(case when kat = 3 or kat = 4 then iznos else 0 end), 0) as potrazuje
+		from fpro`
+
+// prometKarticaSelect is the stavke of the analiticka kartica (and its devizna variant).
+const prometKarticaSelect = `SELECT danal, tipdok, concat(tipdok,'-',nalog) as nalog, idfpro, kat, iznos, kolic,
+		       	vrd, dokum, dadok, rok, tra, coalesce(ojozn, '') as oj, coalesce(opis, '') as opis, coalesce(sifval, 0) as sifval, kurs,
+		       	deviznos, cena, konto, idfnal, idfkpl,
+				coalesce(dokumv, '') as dokumv, dadokv, coalesce(travez, 0) as travez,
+			   	CASE WHEN kat = 1 OR kat = 2 THEN iznos ELSE 0 END as duguje,
+			   	CASE WHEN kat = 3 OR kat = 4 THEN iznos ELSE 0 END as potrazuje,
+				CASE WHEN kat = 1 OR kat = 2 THEN kolic ELSE 0 END as kolduguje,
+				CASE WHEN kat = 3 OR kat = 4 THEN kolic ELSE 0 END as kolpotrazuje
+		FROM fpro`
+
+// wherePrometAnKonto adds the filters of the analiticka kartica: the analiticki konto (konto,
+// sifra, vkonta 1) and the period od-do datuma.
+func wherePrometAnKonto(b *querybuilder.Builder, params domain.PrometParam) {
+	b.AddEqual("konto", params.Konto).
+		AddEqual("sifra", params.Sifra).
+		AddEqual("vkonta", 1).
+		AddCondition("danal", params.OdDatuma, ">=").
+		AddCondition("danal", params.DoDatuma, "<=")
+}
+
+// whereRange adds "expr >= od" and "expr <= do" for a static expression such as
+// "sifra::numeric" or "left(fpro.konto, 3)"; each is skipped when empty, like the old
+// AddCondition.
+func whereRange(b *querybuilder.Builder, expr, od, do string) {
+	if od != "" {
+		b.Where(expr+" >= ?", od)
+	}
+	if do != "" {
+		b.Where(expr+" <= ?", do)
+	}
+}
+
+// prometTotalsUslovi adds the filters of the report tip to the totals query: with period the
+// promet od-do datuma, without it the promet before odDatuma ("promet do").
+func prometTotalsUslovi(b *querybuilder.Builder, reportTip string, params domain.PrometParam, period bool) {
+	datum := func() {
+		if period {
+			b.AddCondition("danal", params.OdDatuma, ">=").AddCondition("danal", params.DoDatuma, "<=")
+		} else {
+			b.AddCondition("danal", params.OdDatuma, "<")
+		}
+	}
+	switch reportTip {
+	case "prometankonta", "deviznihanalitickihkonta": // Analiticka Konta, Devizna Analiticka Konta
+		b.AddEqual("konto", params.Konto).AddEqual("sifra", params.Sifra).AddEqual("vkonta", 1)
+		datum()
+	case "prometankontami": // Analiticka Konta po MI
+		b.AddEqual("konto", params.Konto).AddEqual("sifra", params.Sifra).AddEqual("vkonta", 1)
+		datum()
+		b.AddCondition("mi", params.OdMI, ">=").AddCondition("mi", params.DoMI, "<=")
+	case "subsintetickakonta": // Subsinteticka Konta
+		b.AddCondition("konto", params.OdKonta, ">=").AddCondition("konto", params.DoKonta, "<=")
+		datum()
+	case "sintetickakonta", "karticasintetickihkonta", "subsintetickakontapovrd": // Sinteticka Konta
+		b.AddLikeBegin("konto", params.Konto)
+		datum()
+	case "kontaanaliticki": // Konta Analiticki
+		b.AddEqual("konto", params.Konto)
+		whereRange(b, "sifra::numeric", params.OdSifre, params.DoSifre)
+		datum()
+		b.AddEqual("vkonta", 1)
+	}
+}
+
 func (s *PrometResource) GetPrometTotals(ctx context.Context, params domain.PrometParam) (domain.PrometResponse, error) {
 	var response domain.PrometResponse
 	reportTip := params.ReportTip
@@ -122,58 +196,13 @@ func (s *PrometResource) GetPrometTotals(ctx context.Context, params domain.Prom
 		return response, fmt.Errorf("user session not found")
 	}
 
-	hasGod, hasKar := s.prometRepo.GetHasGodHasKar()
-
 	// Get "promet do" totals (up to start date)
-	qbDo := common.NewQueryBuilder(`
-		select 
-			coalesce(sum(case when kat = 1 or kat = 2 then iznos else 0 end), 0) as duguje,
-			coalesce(sum(case when kat = 3 or kat = 4 then iznos else 0 end), 0) as potrazuje
-		from fpro`, true)
-
-	if hasGod {
-		qbDo.AddEqual("god", userSession.SelectedGod)
+	bDo := querybuilder.New(prometTotalsSelect)
+	prometTotalsUslovi(bDo, reportTip, params, false)
+	if err := s.prometRepo.ApplyFilters(ctx, bDo, "", nil, ""); err != nil {
+		return response, err
 	}
-	if hasKar {
-		qbDo.AddEqual("kar", userSession.SelectedKar)
-	}
-	switch reportTip {
-	case "prometankonta": // Analiticka Konta
-		qbDo.AddEqual("konto", params.Konto)
-		qbDo.AddEqual("sifra", params.Sifra)
-		qbDo.AddEqual("vkonta", 1)
-		qbDo.AddCondition("danal", params.OdDatuma, "<")
-	case "prometankontami": // Analiticka Konta po MI
-		qbDo.AddEqual("konto", params.Konto)
-		qbDo.AddEqual("sifra", params.Sifra)
-		qbDo.AddEqual("vkonta", 1)
-		qbDo.AddCondition("danal", params.OdDatuma, "<")
-		qbDo.AddCondition("mi", params.OdMI, ">=")
-		qbDo.AddCondition("mi", params.DoMI, "<=")
-	case "deviznihanalitickihkonta": // Devizna Analiticka Konta
-		qbDo.AddEqual("konto", params.Konto)
-		qbDo.AddEqual("sifra", params.Sifra)
-		qbDo.AddEqual("vkonta", 1)
-		qbDo.AddCondition("danal", params.OdDatuma, "<")
-	case "subsintetickakonta": // Subsinteticka Konta
-		qbDo.AddCondition("konto", params.OdKonta, ">=")
-		qbDo.AddCondition("konto", params.DoKonta, "<=")
-		qbDo.AddCondition("danal", params.OdDatuma, "<")
-
-	case "sintetickakonta", "karticasintetickihkonta", "subsintetickakontapovrd": // Sinteticka Konta
-		qbDo.AddLikeBegin("konto", params.Konto)
-		qbDo.AddCondition("danal", params.OdDatuma, "<")
-	case "kontaanaliticki": // Konta Analiticki
-		qbDo.AddEqual("konto", params.Konto)
-		qbDo.AddCondition("sifra::numeric", params.OdSifre, ">=")
-		qbDo.AddCondition("sifra::numeric", params.DoSifre, "<=")
-		qbDo.AddCondition("danal", params.OdDatuma, "<")
-		qbDo.AddEqual("vkonta", 1)
-	default:
-	}
-
-	prometDoQuery, prometDoArgs := qbDo.Build()
-	prometDoResults, err := s.prometRepo.GetAllCustom(ctx, prometDoQuery, "", prometDoArgs, "", "")
+	prometDoResults, err := s.prometRepo.Select(ctx, bDo)
 	if err != nil {
 		return response, fmt.Errorf("error getting promet do totals: %v", err)
 	}
@@ -191,60 +220,12 @@ func (s *PrometResource) GetPrometTotals(ctx context.Context, params domain.Prom
 	}
 
 	// Get "promet za period" totals (for the specified period)
-	qbPeriod := common.NewQueryBuilder(`
-		select 
-			coalesce(sum(case when kat = 1 or kat = 2 then iznos else 0 end), 0) as duguje,
-			coalesce(sum(case when kat = 3 or kat = 4 then iznos else 0 end), 0) as potrazuje
-		from fpro`, true)
-
-	if hasGod {
-		qbPeriod.AddEqual("god", userSession.SelectedGod)
+	bPeriod := querybuilder.New(prometTotalsSelect)
+	prometTotalsUslovi(bPeriod, reportTip, params, true)
+	if err := s.prometRepo.ApplyFilters(ctx, bPeriod, "", nil, ""); err != nil {
+		return response, err
 	}
-	if hasKar {
-		qbPeriod.AddEqual("kar", userSession.SelectedKar)
-	}
-	switch reportTip {
-	case "prometankonta": // Analiticka Konta
-		qbPeriod.AddEqual("konto", params.Konto)
-		qbPeriod.AddEqual("sifra", params.Sifra)
-		qbPeriod.AddEqual("vkonta", 1)
-		qbPeriod.AddCondition("danal", params.OdDatuma, ">=")
-		qbPeriod.AddCondition("danal", params.DoDatuma, "<=")
-	case "prometankontami": // Analiticka Konta po MI
-		qbPeriod.AddEqual("konto", params.Konto)
-		qbPeriod.AddEqual("sifra", params.Sifra)
-		qbPeriod.AddEqual("vkonta", 1)
-		qbPeriod.AddCondition("danal", params.OdDatuma, ">=")
-		qbPeriod.AddCondition("danal", params.DoDatuma, "<=")
-		qbPeriod.AddCondition("mi", params.OdMI, ">=")
-		qbPeriod.AddCondition("mi", params.DoMI, "<=")
-	case "deviznihanalitickihkonta": // Devizna Analiticka Konta
-		qbPeriod.AddEqual("konto", params.Konto)
-		qbPeriod.AddEqual("sifra", params.Sifra)
-		qbPeriod.AddEqual("vkonta", 1)
-		qbPeriod.AddCondition("danal", params.OdDatuma, ">=")
-		qbPeriod.AddCondition("danal", params.DoDatuma, "<=")
-	case "subsintetickakonta": // Subsinteticka Konta
-		qbPeriod.AddCondition("konto", params.OdKonta, ">=")
-		qbPeriod.AddCondition("konto", params.DoKonta, "<=")
-		qbPeriod.AddCondition("danal", params.OdDatuma, ">=")
-		qbPeriod.AddCondition("danal", params.DoDatuma, "<=")
-	case "sintetickakonta", "karticasintetickihkonta", "subsintetickakontapovrd": // Sinteticka Konta
-		qbPeriod.AddLikeBegin("konto", params.Konto)
-		qbPeriod.AddCondition("danal", params.OdDatuma, ">=")
-		qbPeriod.AddCondition("danal", params.DoDatuma, "<=")
-	case "kontaanaliticki": // Konta Analiticki
-		qbPeriod.AddEqual("konto", params.Konto)
-		qbPeriod.AddCondition("sifra::numeric", params.OdSifre, ">=")
-		qbPeriod.AddCondition("sifra::numeric", params.DoSifre, "<=")
-		qbPeriod.AddCondition("danal", params.OdDatuma, ">=")
-		qbPeriod.AddCondition("danal", params.DoDatuma, "<=")
-		qbPeriod.AddEqual("vkonta", 1)
-	default:
-	}
-
-	prometPeriodQuery, prometPeriodArgs := qbPeriod.Build()
-	prometPeriodResults, err := s.prometRepo.GetAllCustom(ctx, prometPeriodQuery, "", prometPeriodArgs, "", "")
+	prometPeriodResults, err := s.prometRepo.Select(ctx, bPeriod)
 	if err != nil {
 		return response, fmt.Errorf("error getting promet period totals: %v", err)
 	}
@@ -265,31 +246,22 @@ func (s *PrometResource) GetPrometTotals(ctx context.Context, params domain.Prom
 }
 
 func (s *PrometResource) CheckPrometParameters(ctx context.Context, requiredFields []string, params domain.PrometParam) (fieldsError []domain.FieldError) {
-	// Build query dynamically
-	qb := common.NewQueryBuilder(`SELECT f.konto, f.sifra FROM baza.fkpl as f`, true)
-
 	session := domain.GetSessionFromStdContext(ctx)
 	if session == nil {
 		return []domain.FieldError{{Field: "session", ErrorMessage: "User session not found"}}
 	}
 
+	// Build query dynamically; the user conditions are optional (skipped when empty), as before.
+	b := querybuilder.New(`SELECT f.konto, f.sifra FROM baza.fkpl as f`).
+		AddEqual("f.konto", params.Konto).
+		AddEqual("f.sifra", params.Sifra).
+		AddEqual("f.vkonta", params.Vkonta)
 	// Add system conditions
-	hasGod, hasKAr := s.service.Repo.GetHasGodHasKar()
-	if hasGod {
-		qb.AddEqual("f.god", session.SelectedGod)
+	var entities *[]domain.PrometDto
+	err := s.service.Repo.ApplyFilters(ctx, b, "f", nil, "")
+	if err == nil {
+		entities, err = s.service.Repo.Select(ctx, b)
 	}
-	if hasKAr {
-		qb.AddEqual("f.kar", session.SelectedKar)
-	}
-
-	// Add user conditions
-	qb.AddEqual("f.konto", params.Konto)
-	qb.AddEqual("f.sifra", params.Sifra)
-	qb.AddEqual("f.vkonta", params.Vkonta)
-
-	sqlQuery, args := qb.Build()
-
-	entities, err := s.service.GetAllCustom(ctx, sqlQuery, "", args, "", "")
 	if err != nil {
 		return []domain.FieldError{{Field: "konto", ErrorMessage: common.ErrMsgGetData}}
 	}
@@ -307,80 +279,40 @@ func (s *PrometResource) GetPrometAnalitickihKonta(ctx context.Context, tbl *dom
 	}
 
 	common.SetupTablePagination(tbl, currentPage, pageSize)
-	hasGod, hasKar := s.prometRepo.GetHasGodHasKar()
 
 	//if we need to get only total records we check the bool gettotalrecords
 	//Get data for the table
-	qb := common.NewQueryBuilder(`SELECT danal, tipdok, concat(tipdok,'-',nalog) as nalog, idfpro, kat, iznos, kolic, 
-		       	vrd, dokum, dadok, rok, tra, coalesce(ojozn, '') as oj, coalesce(opis, '') as opis, coalesce(sifval, 0) as sifval, kurs, 
-		       	deviznos, cena, konto, idfnal, idfkpl, 
-				coalesce(dokumv, '') as dokumv, dadokv, coalesce(travez, 0) as travez,
-			   	CASE WHEN kat = 1 OR kat = 2 THEN iznos ELSE 0 END as duguje,
-			   	CASE WHEN kat = 3 OR kat = 4 THEN iznos ELSE 0 END as potrazuje,
-				CASE WHEN kat = 1 OR kat = 2 THEN kolic ELSE 0 END as kolduguje,
-				CASE WHEN kat = 3 OR kat = 4 THEN kolic ELSE 0 END as kolpotrazuje	
-		FROM fpro`, true)
-	qbTotal := common.NewQueryBuilder(`SELECT 
-			   	coalesce(sum(case when kat = 1 or kat = 2 then iznos else 0 end), 0) as duguje,
-			   	coalesce(sum(case when kat = 3 or kat = 4 then iznos else 0 end), 0) as potrazuje,
-				coalesce(sum(case when kat = 1 or kat = 2 then kolic else 0 end), 0) as kolduguje,
-				coalesce(sum(case when kat = 3 or kat = 4 then kolic else 0 end), 0) as kolpotrazuje,	
-				coalesce(sum(deviznos), 0) as deviznos
-		FROM fpro`, true)
-	if hasGod {
-		qb.AddEqual("god", userSession.SelectedGod)
-		qbTotal.AddEqual("god", userSession.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("kar", userSession.SelectedKar)
-		qbTotal.AddEqual("kar", userSession.SelectedKar)
-	}
-	qb.AddEqual("konto", params.Konto)
-	qb.AddEqual("sifra", params.Sifra)
-	qb.AddEqual("vkonta", 1)
-	qb.AddCondition("danal", params.OdDatuma, ">=")
-	qb.AddCondition("danal", params.DoDatuma, "<=")
-
-	qbTotal.AddEqual("konto", params.Konto)
-	qbTotal.AddEqual("sifra", params.Sifra)
-	qbTotal.AddEqual("vkonta", 1)
-	qbTotal.AddCondition("danal", params.OdDatuma, ">=")
-	qbTotal.AddCondition("danal", params.DoDatuma, "<=")
+	// (The old code also built a totals query here that was never executed; it is dropped.)
+	b := querybuilder.New(prometKarticaSelect)
+	wherePrometAnKonto(b, params)
 	if isMI {
-		qb.AddCondition("mi", params.OdMI, ">=")
-		qb.AddCondition("mi", params.DoMI, "<=")
-		qbTotal.AddCondition("mi", params.OdMI, ">=")
-		qbTotal.AddCondition("mi", params.DoMI, "<=")
+		b.AddCondition("mi", params.OdMI, ">=").AddCondition("mi", params.DoMI, "<=")
 	}
-	// Add search conditions if search text is provided
-	if params.SearchText != "" {
-		qb.SetEntityType(reflect.TypeOf(domain.PrometDto{}))
-		//qbTotal.SetEntityType(reflect.TypeOf(domain.PrometDto{}))
-		if isMI {
-			qb.AddSearchConditions(s.GetAnKontaMiTableFields(), params.SearchText)
-			//qbTotal.AddSearchConditions(s.GetAnKontaMiTableFields(), params.SearchText)
-		} else {
-			qb.AddSearchConditions(s.GetAnkontaTableFields(), params.SearchText)
-			//qbTotal.AddSearchConditions(s.GetAnkontaTableFields(), params.SearchText)
-		}
+	// The period of the session and the search text, if provided.
+	fields := s.GetAnkontaTableFields()
+	if isMI {
+		fields = s.GetAnKontaMiTableFields()
 	}
-
-	qb.AddOrderBy("god, kar, danal, tipdok, nalog, idfpro")
-
-	if !getTotalRecords {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
-	}
-
-	sqlQuery, args := qb.Build()
-	entities, err := s.prometRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
+	if err := s.prometRepo.ApplyFilters(ctx, b, "", fields, params.SearchText); err != nil {
 		return err
 	}
+
 	// Set total records and pagination
 	if getTotalRecords {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
+		total, err := s.prometRepo.Count(ctx, b)
+		if err != nil {
+			return err
+		}
+		common.SetTableTotalRecords(tbl, total, pageSize)
 		return nil
+	}
+	b.OrderBy("god, kar, danal, tipdok, nalog, idfpro").
+		Limit(pageSize).
+		Offset((currentPage - 1) * pageSize)
+
+	entities, err := s.prometRepo.Select(ctx, b)
+	if err != nil {
+		return err
 	}
 	var totDug, totPot, totKolDug, totKolPot, totDevIznos float64
 	// Populate table rows
@@ -461,71 +393,45 @@ func (s *PrometResource) GetPrometDeviznaAnalitickaKonta(ctx context.Context, tb
 	}
 
 	common.SetupTablePagination(tbl, currentPage, pageSize)
-	hasGod, hasKar := s.prometRepo.GetHasGodHasKar()
 
 	//if we need to get only total records we check the bool gettotalrecords
 	//Get data for the table
-	qb := common.NewQueryBuilder(`SELECT danal, tipdok, concat(tipdok,'-',nalog) as nalog, idfpro, kat, iznos, kolic, 
-		       	vrd, dokum, dadok, rok, tra, coalesce(ojozn, '') as oj, coalesce(opis, '') as opis, coalesce(sifval, 0) as sifval, kurs, 
-		       	deviznos, cena, konto, idfnal, idfkpl, 
-				coalesce(dokumv, '') as dokumv, dadokv, coalesce(travez, 0) as travez,
-			   	CASE WHEN kat = 1 OR kat = 2 THEN iznos ELSE 0 END as duguje,
-			   	CASE WHEN kat = 3 OR kat = 4 THEN iznos ELSE 0 END as potrazuje,
-				CASE WHEN kat = 1 OR kat = 2 THEN kolic ELSE 0 END as kolduguje,
-				CASE WHEN kat = 3 OR kat = 4 THEN kolic ELSE 0 END as kolpotrazuje	
-		FROM fpro`, true)
-	qbTotal := common.NewQueryBuilder(`SELECT 
+	b := querybuilder.New(prometKarticaSelect)
+	wherePrometAnKonto(b, params)
+	bTotal := querybuilder.New(`SELECT
 			   	coalesce(sifval, 0) as sifval,
 			   	coalesce(sum(case when kat = 1 or kat = 2 then iznos else 0 end), 0) as duguje,
 			   	coalesce(sum(case when kat = 3 or kat = 4 then iznos else 0 end), 0) as potrazuje,
 				coalesce(sum(case when kat = 1 or kat = 2 then iznos * kurs else 0 end), 0) as devduguje,
 			   	coalesce(sum(case when kat = 3 or kat = 4 then iznos * kurs else 0 end), 0) as devpotrazuje,
 				coalesce(sum(deviznos), 0) as deviznos
-		FROM fpro`, true)
-	if hasGod {
-		qb.AddEqual("god", userSession.SelectedGod)
-		qbTotal.AddEqual("god", userSession.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("kar", userSession.SelectedKar)
-		qbTotal.AddEqual("kar", userSession.SelectedKar)
-	}
-	qb.AddEqual("konto", params.Konto)
-	qb.AddEqual("sifra", params.Sifra)
-	qb.AddEqual("vkonta", 1)
-	qb.AddCondition("danal", params.OdDatuma, ">=")
-	qb.AddCondition("danal", params.DoDatuma, "<=")
-
-	qbTotal.AddEqual("konto", params.Konto)
-	qbTotal.AddEqual("sifra", params.Sifra)
-	qbTotal.AddEqual("vkonta", 1)
-	qbTotal.AddCondition("danal", params.OdDatuma, ">=")
-	qbTotal.AddCondition("danal", params.DoDatuma, "<=")
-	qbTotal.AddGroupBy("sifval")
-
-	// Add search conditions if search text is provided
-	if params.SearchText != "" {
-		qb.SetEntityType(reflect.TypeOf(domain.PrometDto{}))
-		qb.AddSearchConditions(s.GetAnkontaTableFields(), params.SearchText)
-		//qbTotal.AddSearchConditions(s.GetAnkontaTableFields(), params.SearchText)
-	}
-
-	qb.AddOrderBy("god, kar, danal, tipdok, nalog")
-
-	if !getTotalRecords {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
-	}
-
-	sqlQuery, args := qb.Build()
-	entities, err := s.prometRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
+		FROM fpro`)
+	wherePrometAnKonto(bTotal, params)
+	// The period of the session; the search text only on the stavke (not on the totals), as before.
+	if err := s.prometRepo.ApplyFilters(ctx, b, "", s.GetAnkontaTableFields(), params.SearchText); err != nil {
 		return err
 	}
+	if err := s.prometRepo.ApplyFilters(ctx, bTotal, "", nil, ""); err != nil {
+		return err
+	}
+	bTotal.GroupBy("sifval")
+
 	// Set total records and pagination
 	if getTotalRecords {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
+		total, err := s.prometRepo.Count(ctx, b)
+		if err != nil {
+			return err
+		}
+		common.SetTableTotalRecords(tbl, total, pageSize)
 		return nil
+	}
+	b.OrderBy("god, kar, danal, tipdok, nalog").
+		Limit(pageSize).
+		Offset((currentPage - 1) * pageSize)
+
+	entities, err := s.prometRepo.Select(ctx, b)
+	if err != nil {
+		return err
 	}
 	var totDug, totPot, totKolDug, totKolPot, totDevIznos float64
 	// Populate table rows
@@ -579,8 +485,7 @@ func (s *PrometResource) GetPrometDeviznaAnalitickaKonta(ctx context.Context, tb
 			tbl.Totals[i] = common.FormatNumberWithSystemLocale(totDevIznos, 2)
 		}
 	}
-	sqlQueryTotal, argsTotal := qbTotal.Build()
-	entitiesDevizni, err := s.prometRepo.GetAllCustom(ctx, sqlQueryTotal, "", argsTotal, "", "")
+	entitiesDevizni, err := s.prometRepo.Select(ctx, bTotal)
 	if err != nil {
 		return err
 	}
@@ -610,9 +515,7 @@ func (s *PrometResource) GetPrometAnalitickaKarticaStampa(ctx context.Context, t
 		return fmt.Errorf("user session not found")
 	}
 	translator := i18n.GetInstance()
-	hasGod, hasKar := s.prometRepo.GetHasGodHasKar()
-
-	qb := common.NewQueryBuilder(`SELECT
+	b := querybuilder.New(`SELECT
 		f.tipdok, f.nalog, f.danal, f.vrd,
 		COALESCE(f.opis, '') as opis,
 		COALESCE(f.ojozn, '') as oj,
@@ -626,26 +529,20 @@ func (s *PrometResource) GetPrometAnalitickaKarticaStampa(ctx context.Context, t
 		f.konto,
 		COALESCE(f.sifra, '') as sifra,
 		COALESCE(fk.naziv, '') as naziv
-	FROM fpro f`, true)
-	qb.AddJoin("LEFT JOIN fkpl fk ON fk.idfkpl = f.idfkpl")
-
-	if hasGod {
-		qb.AddEqual("f.god", userSession.SelectedGod)
+	FROM fpro f`).
+		AddJoin("LEFT JOIN fkpl fk ON fk.idfkpl = f.idfkpl").
+		AddEqual("f.vkonta", 1).
+		AddCondition("f.konto", params.OdKonta, ">=").
+		AddCondition("f.konto", params.DoKonta, "<=")
+	whereRange(b, "f.sifra::numeric", params.OdSifre, params.DoSifre)
+	b.AddCondition("f.danal", params.OdDatuma, ">=").
+		AddCondition("f.danal", params.DoDatuma, "<=").
+		OrderByExpr("f.konto, f.sifra::numeric, f.danal, f.nalog::numeric, f.brst")
+	if err := s.prometRepo.ApplyFilters(ctx, b, "f", nil, ""); err != nil {
+		return err
 	}
-	if hasKar {
-		qb.AddEqual("f.kar", userSession.SelectedKar)
-	}
-	qb.AddEqual("f.vkonta", 1)
-	qb.AddCondition("f.konto", params.OdKonta, ">=")
-	qb.AddCondition("f.konto", params.DoKonta, "<=")
-	qb.AddCondition("f.sifra::numeric", params.OdSifre, ">=")
-	qb.AddCondition("f.sifra::numeric", params.DoSifre, "<=")
-	qb.AddCondition("f.danal", params.OdDatuma, ">=")
-	qb.AddCondition("f.danal", params.DoDatuma, "<=")
-	qb.AddOrderBy("f.konto, f.sifra::numeric, f.danal, f.nalog::numeric, f.brst")
 
-	sqlQuery, args := qb.Build()
-	entities, err := s.prometRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.prometRepo.Select(ctx, b)
 	if err != nil {
 		return err
 	}
@@ -749,47 +646,38 @@ func (s *PrometResource) GetPrometSubsintetickihKonta(ctx context.Context, tbl *
 		return fmt.Errorf("user session not found")
 	}
 	common.SetupTablePagination(tbl, currentPage, pageSize)
-	hasGod, hasKar := s.prometRepo.GetHasGodHasKar()
 
 	//if we need to get only total records we check the bool gettotalrecords
 	//Get data for the table
-	qb := common.NewQueryBuilder(`SELECT  konto, tipdok, nalog, danal, coalesce(opis, '') as opis, 
+	b := querybuilder.New(`SELECT  konto, tipdok, nalog, danal, coalesce(opis, '') as opis,
 			   	CASE WHEN kat = 1 OR kat = 2 THEN iznos ELSE 0 END as duguje,
 			   	CASE WHEN kat = 3 OR kat = 4 THEN iznos ELSE 0 END as potrazuje,
 				idfpro
-		FROM fpro`, true)
-	if hasGod {
-		qb.AddEqual("god", userSession.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("kar", userSession.SelectedKar)
-
-	}
-	qb.AddCondition("konto::numeric", params.OdKonta, ">=")
-	qb.AddCondition("konto::numeric", params.DoKonta, "<=")
-	qb.AddCondition("danal", params.OdDatuma, ">=")
-	qb.AddCondition("danal", params.DoDatuma, "<=")
-
-	// Add search conditions if search text is provided
-	if params.SearchText != "" {
-		qb.SetEntityType(reflect.TypeOf(domain.PrometDto{}))
-		qb.AddSearchConditions(s.GetSubsintetickihKontaTableFields(), params.SearchText)
-	}
-	qb.AddOrderBy("konto, danal, tipdok, nalog")
-	if !getTotalRecords {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
-	}
-
-	sqlQuery, args := qb.Build()
-	entities, err := s.prometRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
+		FROM fpro`)
+	whereRange(b, "konto::numeric", params.OdKonta, params.DoKonta)
+	b.AddCondition("danal", params.OdDatuma, ">=").
+		AddCondition("danal", params.DoDatuma, "<=")
+	// The period of the session and the search text, if provided.
+	if err := s.prometRepo.ApplyFilters(ctx, b, "", s.GetSubsintetickihKontaTableFields(), params.SearchText); err != nil {
 		return err
 	}
+
 	// Set total records and pagination
 	if getTotalRecords {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
+		total, err := s.prometRepo.Count(ctx, b)
+		if err != nil {
+			return err
+		}
+		common.SetTableTotalRecords(tbl, total, pageSize)
 		return nil
+	}
+	b.OrderBy("konto, danal, tipdok, nalog").
+		Limit(pageSize).
+		Offset((currentPage - 1) * pageSize)
+
+	entities, err := s.prometRepo.Select(ctx, b)
+	if err != nil {
+		return err
 	}
 	var totDug, totPot float64
 	// Populate table rows
@@ -834,48 +722,40 @@ func (s *PrometResource) GetPrometSintetickihKonta(ctx context.Context, tbl *dom
 		return fmt.Errorf("user session not found")
 	}
 	common.SetupTablePagination(tbl, currentPage, pageSize)
-	hasGod, hasKar := s.prometRepo.GetHasGodHasKar()
 
 	//if we need to get only total records we check the bool gettotalrecords
 	//Get data for the table
-	qb := common.NewQueryBuilder(`SELECT LEFT(konto, 3) as konto, tipdok, nalog, 
-			   	MAX(danal) as danal, 
+	b := querybuilder.New(`SELECT LEFT(konto, 3) as konto, tipdok, nalog,
+			   	MAX(danal) as danal,
 			   	MAX(coalesce(opis, '')) as opis,
 			   	SUM(CASE WHEN kat = 1 OR kat = 2 THEN iznos ELSE 0 END) as duguje,
 			   	SUM(CASE WHEN kat = 3 OR kat = 4 THEN iznos ELSE 0 END) as potrazuje
-		FROM fpro`, true)
-
-	if hasGod {
-		qb.AddEqual("god", userSession.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("kar", userSession.SelectedKar)
-	}
-	qb.AddLikeBegin("konto", params.OdKonta)
-	qb.AddCondition("danal", params.OdDatuma, ">=")
-	qb.AddCondition("danal", params.DoDatuma, "<=")
-
-	// Add search conditions if search text is provided
-	if params.SearchText != "" {
-		qb.SetEntityType(reflect.TypeOf(domain.PrometDto{}))
-		qb.AddSearchConditions(s.GetSintetickihKontaTableFields(), params.SearchText)
-	}
-	qb.AddGroupBy("LEFT(konto, 3), tipdok, nalog")
-	qb.AddOrderBy("tipdok, nalog")
-	if !getTotalRecords {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
-	}
-
-	sqlQuery, args := qb.Build()
-	entities, err := s.prometRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
+		FROM fpro`).
+		AddLikeBegin("konto", params.OdKonta).
+		AddCondition("danal", params.OdDatuma, ">=").
+		AddCondition("danal", params.DoDatuma, "<=")
+	// The period of the session and the search text, if provided.
+	if err := s.prometRepo.ApplyFilters(ctx, b, "", s.GetSintetickihKontaTableFields(), params.SearchText); err != nil {
 		return err
 	}
+	b.GroupByExpr("LEFT(konto, 3)").GroupBy("tipdok", "nalog")
+
 	// Set total records and pagination
 	if getTotalRecords {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
+		total, err := s.prometRepo.Count(ctx, b)
+		if err != nil {
+			return err
+		}
+		common.SetTableTotalRecords(tbl, total, pageSize)
 		return nil
+	}
+	b.OrderBy("tipdok, nalog").
+		Limit(pageSize).
+		Offset((currentPage - 1) * pageSize)
+
+	entities, err := s.prometRepo.Select(ctx, b)
+	if err != nil {
+		return err
 	}
 	var totDug, totPot float64
 	// Populate table rows
@@ -918,12 +798,11 @@ func (s *PrometResource) GetPrometKarticaSintetickihKonta(ctx context.Context, t
 		return fmt.Errorf("user session not found")
 	}
 	common.SetupTablePagination(tbl, currentPage, pageSize)
-	hasGod, hasKar := s.prometRepo.GetHasGodHasKar()
 
 	//if we need to get only total records we check the bool gettotalrecords
 	//Get data for the table
 	sqlText := ""
-	groupByClause := ""
+	var groupBy []string
 	if params.Analitika == "true" {
 		sqlText = `SELECT fpro.konto, fpro.sifra,
 			   	MAX(COALESCE(fkpl.naziv, '')) as opis,
@@ -931,50 +810,43 @@ func (s *PrometResource) GetPrometKarticaSintetickihKonta(ctx context.Context, t
 			   	SUM(CASE WHEN fpro.kat = 3 OR fpro.kat = 4 THEN fpro.iznos ELSE 0 END) as potrazuje
 				FROM fpro
 				LEFT JOIN fkpl ON fkpl.konto = fpro.konto AND fkpl.sifra = fpro.sifra AND fkpl.god = fpro.god AND fkpl.kar = fpro.kar`
-		groupByClause = "fpro.konto, fpro.sifra"
+		groupBy = []string{"fpro.konto", "fpro.sifra"}
 	} else {
-		sqlText = `SELECT fpro.konto, 
+		sqlText = `SELECT fpro.konto,
 			   	MAX(COALESCE(fkpl.naziv, '')) as opis,
 			   	SUM(CASE WHEN fpro.kat = 1 OR fpro.kat = 2 THEN fpro.iznos ELSE 0 END) as duguje,
 			   	SUM(CASE WHEN fpro.kat = 3 OR fpro.kat = 4 THEN fpro.iznos ELSE 0 END) as potrazuje
 				FROM fpro
 				LEFT JOIN fkpl ON fkpl.konto = fpro.konto AND fkpl.god = fpro.god AND fkpl.kar = fpro.kar AND fkpl.vkonta = 2`
-		groupByClause = "fpro.konto"
+		groupBy = []string{"fpro.konto"}
 	}
 
-	qb := common.NewQueryBuilder(sqlText, true)
-	if hasGod {
-		qb.AddEqual("fpro.god", userSession.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("fpro.kar", userSession.SelectedKar)
-	}
-	qb.AddLikeBegin("fpro.konto", params.OdKonta)
-	qb.AddCondition("danal", params.OdDatuma, ">=")
-	qb.AddCondition("danal", params.DoDatuma, "<=")
-
-	// Add search conditions if search text is provided
-	if params.SearchText != "" {
-		qb.SetEntityType(reflect.TypeOf(domain.PrometDto{}))
-
-		qb.AddSearchConditions(s.GetKarticaSintetikaTableFields(), params.SearchText)
-	}
-	qb.AddGroupBy(groupByClause)
-	qb.AddOrderBy("fpro.konto::numeric")
-	if !getTotalRecords {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
-	}
-
-	sqlQuery, args := qb.Build()
-	entities, err := s.prometRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
+	b := querybuilder.New(sqlText).
+		AddLikeBegin("fpro.konto", params.OdKonta).
+		AddCondition("danal", params.OdDatuma, ">=").
+		AddCondition("danal", params.DoDatuma, "<=")
+	// The period of the session (fpro.god/kar) and the search text, if provided.
+	if err := s.prometRepo.ApplyFilters(ctx, b, "fpro", s.GetKarticaSintetikaTableFields(), params.SearchText); err != nil {
 		return err
 	}
+	b.GroupBy(groupBy...)
+
 	// Set total records and pagination
 	if getTotalRecords {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
+		total, err := s.prometRepo.Count(ctx, b)
+		if err != nil {
+			return err
+		}
+		common.SetTableTotalRecords(tbl, total, pageSize)
 		return nil
+	}
+	b.OrderByExpr("fpro.konto::numeric").
+		Limit(pageSize).
+		Offset((currentPage - 1) * pageSize)
+
+	entities, err := s.prometRepo.Select(ctx, b)
+	if err != nil {
+		return err
 	}
 	var totDug, totPot float64
 	// Populate table rows
@@ -1020,29 +892,24 @@ func (s *PrometResource) GetPrometSubsintetikaVrd(ctx context.Context, tbl *doma
 	}
 
 	common.SetupTablePagination(tbl, currentPage, pageSize)
-	hasGod, hasKar := s.prometRepo.GetHasGodHasKar()
 
-	// Look up konto name from fkpl
+	// Look up konto name from fkpl (the konto is a key of the lookup)
 	if tipStampe == common.TipStampePrint {
-		qbFkpl := common.NewQueryBuilder("SELECT konto, naziv FROM fkpl", true)
-		if hasGod {
-			if hasGod {
-				qbFkpl.AddEqual("god", userSession.SelectedGod)
-			}
-			if hasKar {
-				qbFkpl.AddEqual("kar", userSession.SelectedKar)
-			}
+		bFkpl := querybuilder.New("SELECT konto, naziv FROM fkpl").
+			Where("konto = ?", params.OdKonta).
+			Where("vkonta = ?", "2")
+		if err := s.fkplRepo.ApplyFilters(ctx, bFkpl, "", nil, ""); err != nil {
+			return err
 		}
-		qbFkpl.AddEqual("konto", params.OdKonta)
-		qbFkpl.AddEqual("vkonta", "2")
-		sqlFkpl, argsFkpl := qbFkpl.Build()
-
-		fkplEntities, _ := s.fkplRepo.GetAllCustom(ctx, sqlFkpl, "", argsFkpl, "", "")
+		fkplEntities, err := s.fkplRepo.Select(ctx, bFkpl)
+		if err != nil {
+			return fmt.Errorf("naziv konta: %w", err)
+		}
 		if fkplEntities != nil && len(*fkplEntities) > 0 {
 			tbl.ContentTitle = (*fkplEntities)[0].Naziv
 		}
 	}
-	qb := common.NewQueryBuilder(`SELECT 
+	b := querybuilder.New(`SELECT
 				CASE fpro.vkonta
 				WHEN '1' THEN 'Analitika'
 				WHEN '2' THEN 'Subsintetika'
@@ -1051,40 +918,37 @@ func (s *PrometResource) GetPrometSubsintetikaVrd(ctx context.Context, tbl *doma
 				fpro.vrd,
 				SUM(CASE WHEN fpro.kat = 1 OR fpro.kat = 2 THEN fpro.iznos ELSE 0 END) as duguje,
 			   	SUM(CASE WHEN fpro.kat = 3 OR fpro.kat = 4 THEN fpro.iznos ELSE 0 END) as potrazuje
-				FROM fpro`, true)
+				FROM fpro`).
+		AddLikeBegin("fpro.konto", params.Konto).
+		AddCondition("danal", params.OdDatuma, ">=").
+		AddCondition("danal", params.DoDatuma, "<=")
 
-	if hasGod {
-		qb.AddEqual("fpro.god", userSession.SelectedGod)
+	// The period of the session (fpro.god/kar) and, in the preview, the search text.
+	search := ""
+	if tipStampe == common.TipStampePreview {
+		search = params.SearchText
 	}
-	if hasKar {
-		qb.AddEqual("fpro.kar", userSession.SelectedKar)
-	}
-	qb.AddLikeBegin("fpro.konto", params.Konto)
-	qb.AddCondition("danal", params.OdDatuma, ">=")
-	qb.AddCondition("danal", params.DoDatuma, "<=")
-
-	// Add search conditions if search text is provided
-
-	if tipStampe == common.TipStampePreview && params.SearchText != "" {
-		qb.SetEntityType(reflect.TypeOf(domain.PrometDto{}))
-		qb.AddSearchConditions(s.GetSubsintetikaVrdTableFields(), params.SearchText)
-	}
-	qb.AddGroupBy(`fpro.vrd, fpro.vkonta`)
-	if tipStampe == common.TipStampePreview && !getTotalRecords {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
-	}
-
-	sqlQuery, args := qb.Build()
-	// fmt.Println(sqlQuery, args)
-	entities, err := s.prometRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
+	if err := s.prometRepo.ApplyFilters(ctx, b, "fpro", s.GetSubsintetikaVrdTableFields(), search); err != nil {
 		return err
 	}
+	b.GroupBy("fpro.vrd", "fpro.vkonta")
+
 	// Set total records and pagination
 	if tipStampe == common.TipStampePreview && getTotalRecords {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
+		total, err := s.prometRepo.Count(ctx, b)
+		if err != nil {
+			return err
+		}
+		common.SetTableTotalRecords(tbl, total, pageSize)
 		return nil
+	}
+	if tipStampe == common.TipStampePreview && !getTotalRecords {
+		b.Limit(pageSize).Offset((currentPage - 1) * pageSize)
+	}
+
+	entities, err := s.prometRepo.Select(ctx, b)
+	if err != nil {
+		return err
 	}
 	var totDug, totPot float64
 	// Populate table rows
@@ -1128,59 +992,47 @@ func (s *PrometResource) GetPrometKontaAnaliticki(ctx context.Context, tbl *doma
 	}
 
 	common.SetupTablePagination(tbl, currentPage, pageSize)
-	hasGod, hasKar := s.prometRepo.GetHasGodHasKar()
 
 	//if we need to get only total records we check the bool gettotalrecords
 	//Get data for the table
-	qb := common.NewQueryBuilder(`SELECT f.danal, f.tipdok, concat(f.tipdok,'-',nalog) as nalog, f.idfpro, f.kat, f.iznos, f.kolic, 
-		       	f.vrd, coalesce(f.dokum, '') as dokum, f.dadok, 
-				coalesce(f.ojozn,'') as oj, coalesce(f.opis,'') as opis, 
+	b := querybuilder.New(`SELECT f.danal, f.tipdok, concat(f.tipdok,'-',nalog) as nalog, f.idfpro, f.kat, f.iznos, f.kolic,
+		       	f.vrd, coalesce(f.dokum, '') as dokum, f.dadok,
+				coalesce(f.ojozn,'') as oj, coalesce(f.opis,'') as opis,
 				f.rok, f.tra, f.sifval, f.kurs,
-		       	f.deviznos, f.cena, f.konto, f.sifra, fk.naziv, f.idfkpl, 
+		       	f.deviznos, f.cena, f.konto, f.sifra, fk.naziv, f.idfkpl,
 				coalesce(f.dokumv, '') as dokumv, f.dadokv, f.travez, coalesce(f.rdokid, 0) as rdokid,
 			   	CASE WHEN f.kat = 1 OR f.kat = 2 THEN f.iznos ELSE 0 END as duguje,
 			   	CASE WHEN f.kat = 3 OR f.kat = 4 THEN f.iznos ELSE 0 END as potrazuje,
 				CASE WHEN f.kat = 1 OR f.kat = 2 THEN f.kolic ELSE 0 END as kolduguje,
-				CASE WHEN f.kat = 3 OR f.kat = 4 THEN f.kolic ELSE 0 END as kolpotrazuje	
-		FROM fpro as f`, true)
-	qb.AddJoin(` LEFT JOIN fkpl fk on fk.idfkpl = f.idfkpl`)
-
-	if hasGod {
-		qb.AddEqual("f.god", userSession.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("f.kar", userSession.SelectedKar)
-	}
-	qb.AddEqual("f.konto", params.Konto)
-	qb.AddCondition("f.sifra::numeric", params.OdSifre, ">=")
-	qb.AddCondition("f.sifra::numeric", params.DoSifre, "<=")
-	qb.AddEqual("f.vkonta", 1)
-	qb.AddCondition("f.danal", params.OdDatuma, ">=")
-	qb.AddCondition("f.danal", params.DoDatuma, "<=")
-
-	// Add search conditions if search text is provided
-	if params.SearchText != "" {
-		qb.SetEntityType(reflect.TypeOf(domain.PrometDto{}))
-		qb.AddSearchConditions(s.GetKontaAnalitickiTableFields(), params.SearchText)
-
-	}
-
-	qb.AddOrderBy("f.sifra::numeric, f.danal, f.tipdok, f.nalog")
-
-	if !getTotalRecords {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
-	}
-
-	sqlQuery, args := qb.Build()
-	entities, err := s.prometRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
+				CASE WHEN f.kat = 3 OR f.kat = 4 THEN f.kolic ELSE 0 END as kolpotrazuje
+		FROM fpro as f`).
+		AddJoin(`LEFT JOIN fkpl fk on fk.idfkpl = f.idfkpl`).
+		AddEqual("f.konto", params.Konto)
+	whereRange(b, "f.sifra::numeric", params.OdSifre, params.DoSifre)
+	b.AddEqual("f.vkonta", 1).
+		AddCondition("f.danal", params.OdDatuma, ">=").
+		AddCondition("f.danal", params.DoDatuma, "<=")
+	// The period of the session (f.god/kar) and the search text, if provided.
+	if err := s.prometRepo.ApplyFilters(ctx, b, "f", s.GetKontaAnalitickiTableFields(), params.SearchText); err != nil {
 		return err
 	}
+
 	// Set total records and pagination
 	if getTotalRecords {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
+		total, err := s.prometRepo.Count(ctx, b)
+		if err != nil {
+			return err
+		}
+		common.SetTableTotalRecords(tbl, total, pageSize)
 		return nil
+	}
+	b.OrderByExpr("f.sifra::numeric, f.danal, f.tipdok, f.nalog").
+		Limit(pageSize).
+		Offset((currentPage - 1) * pageSize)
+
+	entities, err := s.prometRepo.Select(ctx, b)
+	if err != nil {
+		return err
 	}
 	var totDug, totPot, totKolDug, totKolPot float64
 	// Populate table rows
@@ -1246,9 +1098,8 @@ func (s *PrometResource) GetPrometAnalitickaKarticaPoMIStampa(ctx context.Contex
 		return fmt.Errorf("user session not found")
 	}
 	translator := i18n.GetInstance()
-	hasGod, hasKar := s.prometRepo.GetHasGodHasKar()
 
-	qb := common.NewQueryBuilder(`SELECT
+	b := querybuilder.New(`SELECT
 		f.tipdok, f.nalog, f.danal, f.vrd,
 		COALESCE(f.opis, '') as opis,
 		COALESCE(f.ojozn, '') as oj,
@@ -1263,31 +1114,21 @@ func (s *PrometResource) GetPrometAnalitickaKarticaPoMIStampa(ctx context.Contex
 		COALESCE(f.sifra, '') as sifra,
 		COALESCE(fk.naziv, '') as naziv,
 		COALESCE(f.mi::text, '0') as mi
-	FROM fpro f`, true)
-	qb.AddJoin("LEFT JOIN fkpl fk ON fk.idfkpl = f.idfkpl")
-	if hasGod {
-		qb.AddEqual("f.god", userSession.SelectedGod)
+	FROM fpro f`).
+		AddJoin("LEFT JOIN fkpl fk ON fk.idfkpl = f.idfkpl").
+		AddEqual("f.vkonta", 1).
+		AddCondition("f.konto", params.OdKonta, ">=").
+		AddCondition("f.konto", params.DoKonta, "<=")
+	whereRange(b, "f.sifra::numeric", params.OdSifre, params.DoSifre)
+	b.AddCondition("f.danal", params.OdDatuma, ">=").
+		AddCondition("f.danal", params.DoDatuma, "<=")
+	whereRange(b, "f.mi::numeric", params.OdMI, params.DoMI)
+	b.OrderByExpr("f.konto, f.sifra::numeric, f.mi::numeric, f.danal, f.nalog::numeric, f.brst")
+	if err := s.prometRepo.ApplyFilters(ctx, b, "f", nil, ""); err != nil {
+		return err
 	}
-	if hasKar {
-		qb.AddEqual("f.kar", userSession.SelectedKar)
-	}
-	qb.AddEqual("f.vkonta", 1)
-	qb.AddCondition("f.konto", params.OdKonta, ">=")
-	qb.AddCondition("f.konto", params.DoKonta, "<=")
-	qb.AddCondition("f.sifra::numeric", params.OdSifre, ">=")
-	qb.AddCondition("f.sifra::numeric", params.DoSifre, "<=")
-	qb.AddCondition("f.danal", params.OdDatuma, ">=")
-	qb.AddCondition("f.danal", params.DoDatuma, "<=")
-	if params.OdMI != "" {
-		qb.AddCondition("f.mi::numeric", params.OdMI, ">=")
-	}
-	if params.DoMI != "" {
-		qb.AddCondition("f.mi::numeric", params.DoMI, "<=")
-	}
-	qb.AddOrderBy("f.konto, f.sifra::numeric, f.mi::numeric, f.danal, f.nalog::numeric, f.brst")
 
-	sqlQuery, args := qb.Build()
-	entities, err := s.prometRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.prometRepo.Select(ctx, b)
 	if err != nil {
 		return err
 	}
@@ -1477,73 +1318,54 @@ func (s *PrometResource) GetPrometKarticaSintKontaStampa(ctx context.Context, tb
 		return fmt.Errorf("user session not found")
 	}
 	translator := i18n.GetInstance()
-	hasGod, hasKar := s.prometRepo.GetHasGodHasKar()
 
-	// Look up konto name from fkpl (sintetički konto vkonta=3)
-	fkplQb := common.NewQueryBuilder(`SELECT konto, naziv FROM fkpl`, true)
-	if hasGod {
-		fkplQb.AddEqual("god", userSession.SelectedGod)
+	// Look up konto name from fkpl (sintetički konto vkonta=3; the konto is a key of the lookup)
+	bFkpl := querybuilder.New(`SELECT konto, naziv FROM fkpl`).
+		Where("konto = ?", params.OdKonta).
+		Where("vkonta = ?", 3)
+	if err := s.fkplRepo.ApplyFilters(ctx, bFkpl, "", nil, ""); err != nil {
+		return err
 	}
-	if hasKar {
-		fkplQb.AddEqual("kar", userSession.SelectedKar)
+	fkplEntities, err := s.fkplRepo.Select(ctx, bFkpl)
+	if err != nil {
+		return fmt.Errorf("naziv konta: %w", err)
 	}
-	fkplQb.AddEqual("konto", params.OdKonta)
-	fkplQb.AddEqual("vkonta", 3)
-	fkplSql, fkplArgs := fkplQb.Build()
-	fkplEntities, _ := s.fkplRepo.GetAllCustom(ctx, fkplSql, "", fkplArgs, "", "")
 	if fkplEntities != nil && len(*fkplEntities) > 0 {
 		tbl.ContentTitle = (*fkplEntities)[0].Naziv
 	}
 
-	var sqlQuery string
-	var args []interface{}
-
+	var b *querybuilder.Builder
 	if !params.Analitika {
 		// AGGREGATED MODE: one row per konto+sifra combination
-		qb := common.NewQueryBuilder(`SELECT
+		b = querybuilder.New(`SELECT
 			f.konto,
 			COALESCE(f.sifra, '') as sifra,
 			COALESCE(MAX(fk.naziv), '') as opis,
 			SUM(CASE WHEN f.kat = 1 OR f.kat = 2 THEN f.iznos ELSE 0 END) as duguje,
 			SUM(CASE WHEN f.kat = 3 OR f.kat = 4 THEN f.iznos ELSE 0 END) as potrazuje
-		FROM fpro f`, true)
-		qb.AddJoin("LEFT JOIN fkpl fk ON fk.idfkpl = f.idfkpl")
-		if hasGod {
-			qb.AddEqual("f.god", userSession.SelectedGod)
-		}
-		if hasKar {
-			qb.AddEqual("f.kar", userSession.SelectedKar)
-		}
-		qb.AddLikeBegin("f.konto", params.OdKonta)
-		qb.AddCondition("f.danal", params.OdDatuma, ">=")
-		qb.AddCondition("f.danal", params.DoDatuma, "<=")
-		qb.AddGroupBy("f.konto, f.sifra")
-		qb.AddOrderBy("f.konto, coalesce(NULLIF(f.sifra, ''), '0')::numeric")
-		sqlQuery, args = qb.Build()
+		FROM fpro f`).
+			GroupBy("f.konto", "f.sifra").
+			OrderByExpr("f.konto, coalesce(NULLIF(f.sifra, ''), '0')::numeric")
 	} else {
 		// DETAILED MODE: individual journal entries
-		qb := common.NewQueryBuilder(`SELECT
+		b = querybuilder.New(`SELECT
 			f.konto,
 			COALESCE(f.sifra, '') as sifra,
 			COALESCE(fk.naziv, '') as opis,
 			CASE WHEN f.kat = 1 OR f.kat = 2 THEN f.iznos ELSE 0 END as duguje,
 			CASE WHEN f.kat = 3 OR f.kat = 4 THEN f.iznos ELSE 0 END as potrazuje
-		FROM fpro f`, true)
-		qb.AddJoin("LEFT JOIN fkpl fk ON fk.idfkpl = f.idfkpl")
-		if hasGod {
-			qb.AddEqual("f.god", userSession.SelectedGod)
-		}
-		if hasKar {
-			qb.AddEqual("f.kar", userSession.SelectedKar)
-		}
-		qb.AddLikeBegin("f.konto", params.OdKonta)
-		qb.AddCondition("f.danal", params.OdDatuma, ">=")
-		qb.AddCondition("f.danal", params.DoDatuma, "<=")
-		qb.AddOrderBy("f.konto, COALESCE(NULLIF(f.sifra, ''), '0')::numeric, f.danal, f.nalog::numeric")
-		sqlQuery, args = qb.Build()
+		FROM fpro f`).
+			OrderByExpr("f.konto, COALESCE(NULLIF(f.sifra, ''), '0')::numeric, f.danal, f.nalog::numeric")
+	}
+	b.AddJoin("LEFT JOIN fkpl fk ON fk.idfkpl = f.idfkpl").
+		AddLikeBegin("f.konto", params.OdKonta).
+		AddCondition("f.danal", params.OdDatuma, ">=").
+		AddCondition("f.danal", params.DoDatuma, "<=")
+	if err := s.prometRepo.ApplyFilters(ctx, b, "f", nil, ""); err != nil {
+		return err
 	}
 
-	entities, err := s.prometRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.prometRepo.Select(ctx, b)
 	if err != nil {
 		return err
 	}
@@ -1597,31 +1419,25 @@ func (s *PrometResource) GetPrometSintetickihKontaStampa(ctx context.Context, tb
 		return fmt.Errorf("user session not found")
 	}
 	translator := i18n.GetInstance()
-	hasGod, hasKar := s.prometRepo.GetHasGodHasKar()
 
-	qb := common.NewQueryBuilder(`SELECT
+	b := querybuilder.New(`SELECT
 		f.tipdok, f.nalog, f.danal,
 		COALESCE(f.opis, '') as opis,
 		CASE WHEN f.kat = 1 OR f.kat = 2 THEN f.iznos ELSE 0 END as duguje,
 		CASE WHEN f.kat = 3 OR f.kat = 4 THEN f.iznos ELSE 0 END as potrazuje,
 		f.konto,
 		COALESCE(fkpl.naziv, '') as naziv
-	FROM fpro f`, true)
-	qb.AddJoin("LEFT JOIN fkpl ON fkpl.idfkpl = f.idfkpl")
-
-	if hasGod {
-		qb.AddEqual("f.god", userSession.SelectedGod)
+	FROM fpro f`).
+		AddJoin("LEFT JOIN fkpl ON fkpl.idfkpl = f.idfkpl").
+		AddLikeBegin("f.konto", params.OdKonta).
+		AddCondition("f.danal", params.OdDatuma, ">=").
+		AddCondition("f.danal", params.DoDatuma, "<=").
+		OrderByExpr("f.konto, f.danal, f.tipdok, f.nalog::numeric")
+	if err := s.prometRepo.ApplyFilters(ctx, b, "f", nil, ""); err != nil {
+		return err
 	}
-	if hasKar {
-		qb.AddEqual("f.kar", userSession.SelectedKar)
-	}
-	qb.AddLikeBegin("f.konto", params.OdKonta)
-	qb.AddCondition("f.danal", params.OdDatuma, ">=")
-	qb.AddCondition("f.danal", params.DoDatuma, "<=")
-	qb.AddOrderBy("f.konto, f.danal, f.tipdok, f.nalog::numeric")
 
-	sqlQuery, args := qb.Build()
-	entities, err := s.prometRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.prometRepo.Select(ctx, b)
 	if err != nil {
 		return err
 	}
@@ -1764,32 +1580,25 @@ func (s *PrometResource) GetPrometSubsintetickihKontaStampa(ctx context.Context,
 		return fmt.Errorf("user session not found")
 	}
 	translator := i18n.GetInstance()
-	hasGod, hasKar := s.prometRepo.GetHasGodHasKar()
 
-	qb := common.NewQueryBuilder(`SELECT
+	b := querybuilder.New(`SELECT
 		f.tipdok, f.nalog, f.danal,
 		COALESCE(f.opis, '') as opis,
 		CASE WHEN f.kat = 1 OR f.kat = 2 THEN f.iznos ELSE 0 END as duguje,
 		CASE WHEN f.kat = 3 OR f.kat = 4 THEN f.iznos ELSE 0 END as potrazuje,
 		f.konto,
 		COALESCE(fkpl.naziv, '') as naziv
-	FROM fpro f`, true)
-	qb.AddJoin("LEFT JOIN fkpl ON fkpl.idfkpl = f.idfkpl")
-
-	if hasGod {
-		qb.AddEqual("f.god", userSession.SelectedGod)
+	FROM fpro f`).
+		AddJoin("LEFT JOIN fkpl ON fkpl.idfkpl = f.idfkpl")
+	whereRange(b, "f.konto::numeric", params.OdKonta, params.DoKonta)
+	b.AddCondition("f.danal", params.OdDatuma, ">=").
+		AddCondition("f.danal", params.DoDatuma, "<=").
+		OrderByExpr("f.konto, f.danal, f.tipdok, f.nalog::numeric")
+	if err := s.prometRepo.ApplyFilters(ctx, b, "f", nil, ""); err != nil {
+		return err
 	}
-	if hasKar {
-		qb.AddEqual("f.kar", userSession.SelectedKar)
-	}
-	qb.AddCondition("f.konto::numeric", params.OdKonta, ">=")
-	qb.AddCondition("f.konto::numeric", params.DoKonta, "<=")
-	qb.AddCondition("f.danal", params.OdDatuma, ">=")
-	qb.AddCondition("f.danal", params.DoDatuma, "<=")
-	qb.AddOrderBy("f.konto, f.danal, f.tipdok, f.nalog::numeric")
 
-	sqlQuery, args := qb.Build()
-	entities, err := s.prometRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.prometRepo.Select(ctx, b)
 	if err != nil {
 		return err
 	}
@@ -1964,7 +1773,7 @@ func (s *PrometResource) GetKontaAnalitickiTableFields() []domain.Fields {
 }
 
 func (s *PrometResource) GetFvrData(ctx context.Context) (domain.Fvr, error) {
-	return common.GetFvrData(ctx, s.fvrRepo)
+	return repository.GetFvrData(ctx, s.fvrRepo)
 }
 
 func (s *PrometResource) GetPrometAnalitickaKarticaStampaTableFields() []domain.Fields {

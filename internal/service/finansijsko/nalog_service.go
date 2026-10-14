@@ -9,6 +9,7 @@ import (
 	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
+	"helia/internal/infrastructure/db/querybuilder"
 	"helia/internal/repository"
 	"helia/internal/service"
 	commonsvc "helia/internal/service/common"
@@ -76,6 +77,7 @@ type NalogService interface {
 // NalogResource implements the NalogService interface.
 type NalogResource struct {
 	service                       *service.BaseService[domain.Fnal]
+	fin                           *repository.FinansijskoRepository
 	fproService                   FproService
 	validator                     *finval.FnalValidator
 	fnalRepo                      repository.BaseRepository[domain.Fnal]
@@ -114,6 +116,7 @@ func NewNalogService(
 ) *NalogResource {
 	rs := &NalogResource{
 		service:          service,
+		fin:              repository.NewFinansijskoRepository(fnalRepo.DB),
 		fproService:      fproService,
 		fnalRepo:         fnalRepo,
 		tipdokRepo:       tipdokRepo,
@@ -146,17 +149,11 @@ func (s *NalogResource) checkGodinaZatvorena(ctx context.Context) (bool, error) 
 	if userSession == nil {
 		return true, fmt.Errorf("user session not found")
 	}
-	hasGod, hasKar := s.fnalRepo.GetHasGodHasKar()
-
-	qb := common.NewQueryBuilder(`SELECT godzatv FROM fvr `, true)
-	if hasGod {
-		qb.AddEqual("fvr.god", userSession.SelectedGod)
+	b := querybuilder.New(`SELECT godzatv FROM fvr`)
+	if err := s.fvrRepo.ApplyFilters(ctx, b, "fvr", nil, ""); err != nil {
+		return true, err
 	}
-	if hasKar {
-		qb.AddEqual("fvr.kar", userSession.SelectedKar)
-	}
-	sqlQuery, args := qb.Build()
-	entities, err := s.fvrRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.fvrRepo.Select(ctx, b)
 	if err != nil {
 		return true, fmt.Errorf("failed to get Fvr entities: %w", err)
 	}
@@ -166,12 +163,45 @@ func (s *NalogResource) checkGodinaZatvorena(ctx context.Context) (bool, error) 
 	return false, nil
 }
 
+// fnalSortColumns maps the sortBy keys of the nalog lists to the fnal columns.
+var fnalSortColumns = map[string]string{
+	"tipdok": "fnal.tipdok", "nalog": "fnal.nalog", "danal": "fnal.danal", "opis": "fnal.opis",
+	"dug": "fnal.dug", "pot": "fnal.pot", "datob": "fnal.datob", "brst": "fnal.brst", "nalsts": "fnal.nalsts",
+}
+
+// fproStampaSortColumns maps the sortBy keys of the stavke of the nalog print preview.
+var fproStampaSortColumns = map[string]string{
+	"rbr": "fpro.rbr", "konto": "fpro.konto", "sifra": "fpro.sifra", "naziv": "fkpl.naziv",
+	"vrd": "fpro.vrd", "opis": "fpro.opis", "dug": "dug", "pot": "pot", "dokum": "fpro.dokum",
+	"dadok": "fpro.dadok", "vkonta": "fpro.vkonta",
+}
+
+// The columns that the search text of the nalog lists is compared with (static SQL).
+var (
+	// fnalSearchColumns: the nalog list and the prepis.
+	fnalSearchColumns = []string{"tipdok", "nalog::TEXT", "opis", "dug::TEXT", "pot::TEXT", "datob::TEXT", "brst::TEXT", "nalsts"}
+	// fnalListSearchColumns: the storniranje and the stampanje lists.
+	fnalListSearchColumns = []string{"tipdok::text", "nalog::text", "opis", "datob::text", "dug::text", "pot::text", "nalsts::text"}
+	// fproStampaSearchColumns: the stavke of the nalog print preview.
+	fproStampaSearchColumns = []string{"fpro.rbr::text", "fpro.konto::text", "fpro.sifra::text", "fkpl.naziv::text", "fpro.vrd::text",
+		"fpro.opis::text", "fpro.iznos::text", "fpro.dokum::text", "fpro.dadok::text", "fpro.vkonta::text"}
+)
+
+// whereFnalSearch adds (col1 ILIKE pattern OR col2 ILIKE pattern ...) as one grouped condition.
+func whereFnalSearch(b *querybuilder.Builder, columns []string, pattern string) {
+	conds := make([]querybuilder.Cond, len(columns))
+	for i, col := range columns {
+		conds[i] = querybuilder.C(col+" ILIKE ?", pattern)
+	}
+	b.WhereAny(conds...)
+}
+
 // GetFvrData retrieves company (fvr) data for the current session.
 func (s *NalogResource) GetFvrData(ctx context.Context) (domain.Fvr, error) {
 	if s.fvrRepo == nil {
 		return domain.Fvr{}, fmt.Errorf("fvrRepo not initialized")
 	}
-	return common.GetFvrData(ctx, s.fvrRepo)
+	return repository.GetFvrData(ctx, s.fvrRepo)
 }
 
 // NalogValidation checks if the given Fnal entity is valid for creation or update.
@@ -243,11 +273,6 @@ func (s *NalogResource) GetAll(ctx context.Context, page int, offset int, tableF
 	return s.service.GetAll(ctx, page, offset, tableFields, idField, searchText, sortBy, sortOrder)
 }
 
-// GetAllCustom implements NalogService.
-func (s *NalogResource) GetAllCustom(ctx context.Context, queryText string, whereText string, args []interface{}, limitOffset string, orderBy string) (*[]domain.Fnal, error) {
-	return s.service.GetAllCustom(ctx, queryText, whereText, args, limitOffset, orderBy)
-}
-
 // GetByID implements NalogService.
 func (s *NalogResource) GetByID(ctx context.Context, idField string, idValue int64) (*domain.Fnal, error) {
 	return s.service.GetByID(ctx, idField, idValue)
@@ -256,11 +281,6 @@ func (s *NalogResource) GetByID(ctx context.Context, idField string, idValue int
 // GetTotalRecords implements NalogService.
 func (s *NalogResource) GetTotalRecords(ctx context.Context, tableFields []domain.Fields, searchText string) (int, error) {
 	return s.service.GetTotalRecords(ctx, tableFields, searchText)
-}
-
-// GetTotalRecordsCustom implements NalogService.
-func (s *NalogResource) GetTotalRecordsCustom(ctx context.Context, queryText string, whereText string, args []interface{}, limitOffset string, orderBy string) (int, error) {
-	return s.service.GetTotalRecordsCustom(ctx, queryText, whereText, args, limitOffset, orderBy)
 }
 
 // MapEntityToValues implements NalogService.
@@ -362,13 +382,14 @@ func (s *NalogResource) GetByTipdokNalog(ctx context.Context, tipdok string, nal
 	}
 
 	entity := domain.Fnal{}
-	hasGod, hasKar := s.fnalRepo.GetHasGodHasKar()
-	qb := common.NewQueryBuilder(` SELECT idfnal, tipdok, nalog, danal, opis, dug, pot, datob, brst, nalsts FROM fnal`, true)
-	qb.AddGodKarConditions(hasGod, hasKar, userSession.SelectedGod, userSession.SelectedKar)
-	qb.AddEqual("tipdok", tipdok)
-	qb.AddEqual("nalog", nalog)
-	sqlQuery, args := qb.Build()
-	entities, err := s.fnalRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	// tipdok and nalog are the key of the nalog: Where, never skipped.
+	b := querybuilder.New(`SELECT idfnal, tipdok, nalog, danal, opis, dug, pot, datob, brst, nalsts FROM fnal`).
+		Where("tipdok = ?", tipdok).
+		Where("nalog = ?", nalog)
+	if err := s.fnalRepo.ApplyFilters(ctx, b, "", nil, ""); err != nil {
+		return entity, err
+	}
+	entities, err := s.fnalRepo.Select(ctx, b)
 	if err != nil {
 		return entity, fmt.Errorf("failed to get Fnal entities: %w", err)
 	}
@@ -419,18 +440,20 @@ func (s *NalogResource) GetNalogViewData(ctx context.Context, tbl *domain.TableD
 	noviNalogBr, _ := s.GetNextNalog(ctx, viewData.DefaultTipdok)
 	viewData.NextNalog = fmt.Sprintf("%d", noviNalogBr)
 
-	hasGod, hasKar := s.fnalRepo.GetHasGodHasKar()
-	// Get total records
-	qbCount := common.NewQueryBuilder(` SELECT count(*) FROM fnal`, true)
-	qbCount.AddGodKarConditions(hasGod, hasKar, userSession.SelectedGod, userSession.SelectedKar)
-	qbCount.AddEqual("tipdok", viewData.DefaultTipdok)
+	// The selected vrsta naloga is an optional filter (AddEqual skips an empty one).
+	b := querybuilder.New(`SELECT idfnal, tipdok, nalog, danal, opis, dug, pot, datob, brst, nalsts FROM fnal`).
+		AddEqual("tipdok", tipdok)
+	if err := s.fnalRepo.ApplyFilters(ctx, b, "", nil, ""); err != nil {
+		return viewData, err
+	}
 	if searchQuery != "" {
-		nbrArgs := len(qbCount.GetArgs())
-		qbCount.AddCustomCondition(fmt.Sprintf("(tipdok ILIKE $%d OR nalog::TEXT ILIKE $%d OR opis ILIKE $%d OR dug::TEXT ILIKE $%d OR pot::TEXT ILIKE $%d OR datob::TEXT ILIKE $%d OR brst::TEXT ILIKE $%d OR nalsts ILIKE $%d)", nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1), searchQuery)
+		// Contains, like the other nalog lists (the old condition compared the text without
+		// wildcards, so it matched only whole values).
+		whereFnalSearch(b, fnalSearchColumns, "%"+searchQuery+"%")
 	}
 
-	sqlQuery, args := qbCount.Build()
-	totRecords, err := s.fnalRepo.GetTotalRecordsCustom(ctx, sqlQuery, "", args, "", "")
+	// Get total records
+	totRecords, err := s.fnalRepo.Count(ctx, b)
 	if err != nil {
 		return viewData, fmt.Errorf("failed to get total records for Fnal: %w", err)
 	}
@@ -438,23 +461,10 @@ func (s *NalogResource) GetNalogViewData(ctx context.Context, tbl *domain.TableD
 	// Calculate pagination details
 	common.SetTableTotalRecords(tbl, totRecords, pageSize)
 
-	qb := common.NewQueryBuilder(` SELECT idfnal, tipdok, nalog, danal, opis, dug, pot, datob, brst, nalsts FROM fnal`, true)
-	qb.AddGodKarConditions(hasGod, hasKar, userSession.SelectedGod, userSession.SelectedKar)
-	qb.AddEqual("tipdok", tipdok)
-	if searchQuery != "" {
-		nbrArgs := len(qb.GetArgs())
-		qb.AddCustomCondition(fmt.Sprintf("(tipdok ILIKE $%d OR nalog::TEXT ILIKE $%d OR opis ILIKE $%d OR dug::TEXT ILIKE $%d OR pot::TEXT ILIKE $%d OR datob::TEXT ILIKE $%d OR brst::TEXT ILIKE $%d OR nalsts ILIKE $%d)", nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1), searchQuery)
-	}
-	if sortBy != "" {
-		qb.AddOrderBy(fmt.Sprintf("fnal.%s", sortBy))
-	}
-	if sortOrder != "" && (sortOrder == "ASC" || sortOrder == "DESC") {
-		qb.AddSortOrder(sortOrder)
-	}
-	qb.SetLimit(pageSize)
-	qb.SetOffset((currentPage - 1) * pageSize)
-	sqlQuery, args = qb.Build()
-	entities, err := s.fnalRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	b.OrderByKey(sortBy, sortOrder, fnalSortColumns).
+		Limit(pageSize).
+		Offset((currentPage - 1) * pageSize)
+	entities, err := s.fnalRepo.Select(ctx, b)
 	if err != nil {
 		return viewData, fmt.Errorf("failed to get Fnal entities: %w", err)
 	}
@@ -493,50 +503,24 @@ func (s *NalogResource) GetNalogPrepisData(ctx context.Context, tbl *domain.Tabl
 	}
 
 	common.SetupTablePagination(tbl, currentPage, pageSize)
-	hasGod, hasKar := s.fnalRepo.GetHasGodHasKar()
 
-	qbCount := common.NewQueryBuilder(`SELECT count(*) FROM fnal`, true)
-	if hasGod {
-		qbCount.AddEqual("god", userSession.SelectedGod)
-	}
-	if hasKar {
-		qbCount.AddEqual("kar", userSession.SelectedKar)
+	b := querybuilder.New(`SELECT idfnal, tipdok, nalog, danal, opis, dug, pot, datob, brst, nalsts, idtipdok FROM fnal`)
+	if err := s.fnalRepo.ApplyFilters(ctx, b, "", nil, ""); err != nil {
+		return err
 	}
 	if searchText != "" {
-		likePattern := fmt.Sprintf("%%%s%%", searchText)
-		argsNbr := len(qbCount.GetArgs())
-		qbCount.AddCustomCondition(fmt.Sprintf("(tipdok ILIKE $%d OR nalog::TEXT ILIKE $%d OR opis ILIKE $%d OR dug::TEXT ILIKE $%d OR pot::TEXT ILIKE $%d OR datob::TEXT ILIKE $%d OR brst::TEXT ILIKE $%d OR nalsts ILIKE $%d)", argsNbr+1, argsNbr+1, argsNbr+1, argsNbr+1, argsNbr+1, argsNbr+1, argsNbr+1, argsNbr+1), likePattern)
+		whereFnalSearch(b, fnalSearchColumns, "%"+searchText+"%")
 	}
-	sqlQuery, args := qbCount.Build()
-	totRecords, err := s.fnalRepo.GetTotalRecordsCustom(ctx, sqlQuery, "", args, "", "")
+	totRecords, err := s.fnalRepo.Count(ctx, b)
 	if err != nil {
 		return fmt.Errorf("failed to get total records for Fnal: %w", err)
 	}
 	common.SetTableTotalRecords(tbl, totRecords, pageSize)
 
-	qb := common.NewQueryBuilder(`SELECT idfnal, tipdok, nalog, danal, opis, dug, pot, datob, brst, nalsts, idtipdok FROM fnal`, true)
-	if hasGod {
-		qb.AddEqual("god", userSession.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("kar", userSession.SelectedKar)
-	}
-	if searchText != "" {
-		likePattern := fmt.Sprintf("%%%s%%", searchText)
-		argsNbr := len(qb.GetArgs())
-		qb.AddCustomCondition(fmt.Sprintf("(tipdok ILIKE $%d OR nalog::TEXT ILIKE $%d OR opis ILIKE $%d OR dug::TEXT ILIKE $%d OR pot::TEXT ILIKE $%d OR datob::TEXT ILIKE $%d OR brst::TEXT ILIKE $%d OR nalsts ILIKE $%d)", argsNbr+1, argsNbr+1, argsNbr+1, argsNbr+1, argsNbr+1, argsNbr+1, argsNbr+1, argsNbr+1), likePattern)
-	}
-	if sortBy != "" {
-		qb.AddOrderBy(fmt.Sprintf("fnal.%s", sortBy))
-	}
-	if sortOrder != "" && (sortOrder == "ASC" || sortOrder == "DESC") {
-		qb.AddSortOrder(sortOrder)
-	}
-	qb.SetLimit(pageSize)
-	qb.SetOffset((currentPage - 1) * pageSize)
-
-	sqlQuery, args = qb.Build()
-	entities, err := s.fnalRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	b.OrderByKey(sortBy, sortOrder, fnalSortColumns).
+		Limit(pageSize).
+		Offset((currentPage - 1) * pageSize)
+	entities, err := s.fnalRepo.Select(ctx, b)
 	if err != nil {
 		return fmt.Errorf("failed to get Fnal entities: %w", err)
 	}
@@ -602,10 +586,7 @@ func (s *NalogResource) KopirajNalog(ctx context.Context, idFnal int64, entity d
 	}
 	username := userSession.UserName
 
-	var copyFnExists bool
-	err := s.fnalRepo.DB.QueryRowContext(ctx,
-		`SELECT to_regprocedure('fn_kopiraj_nalog_sa_stavkama(bigint,bigint,text,date,date,text,integer,integer,integer,text)') IS NOT NULL`,
-	).Scan(&copyFnExists)
+	copyFnExists, err := s.fin.FunkcijaPostoji(ctx, "fn_kopiraj_nalog_sa_stavkama(bigint,bigint,text,date,date,text,integer,integer,integer,text)")
 	if err != nil {
 		return fmt.Errorf("failed to verify copy function existence: %w", err)
 	}
@@ -618,20 +599,10 @@ func (s *NalogResource) KopirajNalog(ctx context.Context, idFnal int64, entity d
 		return fmt.Errorf("failed to get tipdok ID: %w", err)
 	}
 
-	var newFnalID int64
-	err = s.fnalRepo.DB.QueryRowContext(ctx,
-		`SELECT fn_kopiraj_nalog_sa_stavkama($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
-		idFnal,
-		entity.Nalog,
-		entity.Tipdok,
-		entity.Danal.Format(common.HtmlLayout),
-		entity.Datob.Format(common.HtmlLayout),
-		entity.Opis,
-		newIdTipdok,
-		userSession.SelectedGod,
-		userSession.SelectedKar,
-		username,
-	).Scan(&newFnalID)
+	// The ids are passed to the function as they are (the user's decision: it works on primary keys).
+	_, err = s.fin.FnKopirajNalog(ctx, idFnal, repository.KopijaNaloga{Nalog: entity.Nalog, Tipdok: entity.Tipdok,
+		Danal: entity.Danal.Format(common.HtmlLayout), Datob: entity.Datob.Format(common.HtmlLayout), Opis: entity.Opis,
+		God: userSession.SelectedGod, Kar: userSession.SelectedKar, Operater: username}, newIdTipdok)
 	if err != nil {
 		return fmt.Errorf("Greska prilikom kopiranja naloga preko DB funkcije: %w", err)
 	}
@@ -649,10 +620,7 @@ func (s *NalogResource) KopirajNalogToExisting(ctx context.Context, req domain.F
 	username := userSession.UserName
 	// Username is retrieved from user session in context
 
-	var copyFnExists bool
-	err := s.fnalRepo.DB.QueryRowContext(ctx,
-		`SELECT to_regprocedure('fn_kopiraj_stavke_u_postojeci_nalog(bigint,bigint,text)') IS NOT NULL`,
-	).Scan(&copyFnExists)
+	copyFnExists, err := s.fin.FunkcijaPostoji(ctx, "fn_kopiraj_stavke_u_postojeci_nalog(bigint,bigint,text)")
 	if err != nil {
 		return fmt.Errorf("failed to verify copy function existence: %w", err)
 	}
@@ -665,13 +633,7 @@ func (s *NalogResource) KopirajNalogToExisting(ctx context.Context, req domain.F
 	if source_IdFnal == 0 {
 		return fmt.Errorf("invalid source idfnal: %s", req.IDFnal)
 	}
-	var fnResult sql.NullString
-	err = s.fnalRepo.DB.QueryRowContext(ctx,
-		`SELECT fn_kopiraj_stavke_u_postojeci_nalog($1,$2,$3)`,
-		source_IdFnal,
-		target_IdFnal,
-		username,
-	).Scan(&fnResult)
+	_, err = s.fin.FnKopirajStavke(ctx, source_IdFnal, target_IdFnal, username)
 	if err != nil {
 		return fmt.Errorf("Greska prilikom kopiranja naloga preko DB funkcije: %w", err)
 	}
@@ -691,47 +653,24 @@ func (s *NalogResource) GetNalogStornirajData(ctx context.Context, tbl *domain.T
 	}
 
 	common.SetupTablePagination(tbl, currentPage, pageSize)
-	hasGod, hasKar := s.fnalRepo.GetHasGodHasKar()
-	qbCount := common.NewQueryBuilder(`SELECT count(*) FROM fnal`, true)
-	if hasGod {
-		qbCount.AddEqual("god", userSession.SelectedGod)
-	}
-	if hasKar {
-		qbCount.AddEqual("kar", userSession.SelectedKar)
+	b := querybuilder.New(`SELECT idfnal, tipdok, nalog, danal, opis, dug, pot, datob, brst, nalsts, idtipdok FROM fnal`)
+	if err := s.fnalRepo.ApplyFilters(ctx, b, "", nil, ""); err != nil {
+		return viewData, err
 	}
 	if searchText != "" {
-		nbrArgs := len(qbCount.GetArgs())
-		qbCount.AddCustomCondition(fmt.Sprintf("(tipdok::TEXT ILIKE '%%' || $%d || '%%' OR nalog::TEXT ILIKE '%%' || $%d || '%%' OR opis ILIKE '%%' || $%d || '%%' OR dug::TEXT ILIKE '%%' || $%d || '%%' OR pot::TEXT ILIKE '%%' || $%d || '%%' OR datob::TEXT ILIKE '%%' || $%d || '%%' OR brst::TEXT ILIKE '%%' || $%d || '%%' OR nalsts ILIKE '%%' || $%d || '%%')", nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1), searchText)
+		// The count now uses the same columns as the list (the old count also searched brst).
+		whereFnalSearch(b, fnalListSearchColumns, "%"+searchText+"%")
 	}
-
-	sqlQuery, args := qbCount.Build()
-	totRecords, err := s.fnalRepo.GetTotalRecordsCustom(ctx, sqlQuery, "", args, "", "")
+	totRecords, err := s.fnalRepo.Count(ctx, b)
 	if err != nil {
 		return viewData, fmt.Errorf("failed to get total records for Fnal: %w", err)
 	}
 	common.SetTableTotalRecords(tbl, totRecords, pageSize)
-	qb := common.NewQueryBuilder(`SELECT idfnal, tipdok, nalog, danal, opis, dug, pot, datob, brst, nalsts, idtipdok FROM fnal`, true)
-	if hasGod {
-		qb.AddEqual("god", userSession.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("kar", userSession.SelectedKar)
-	}
-	if searchText != "" {
-		nbrArgs := len(qb.GetArgs())
-		qb.AddCustomCondition(fmt.Sprintf("(tipdok::text ilike '%%' || $%d || '%%' OR nalog::text ilike '%%' || $%d || '%%' OR opis ilike '%%' || $%d || '%%' OR datob::text ilike '%%' || $%d || '%%' OR dug::text ilike '%%' || $%d || '%%' OR pot::text ilike '%%' || $%d || '%%' OR nalsts::text ilike '%%' || $%d || '%%')", nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1), searchText)
-	}
-	if sortBy != "" {
-		qb.AddOrderBy(fmt.Sprintf("fnal.%s", sortBy))
-	}
-	if sortOrder != "" && (sortOrder == "ASC" || sortOrder == "DESC") {
-		qb.AddSortOrder(sortOrder)
-	}
-	qb.SetLimit(pageSize)
-	qb.SetOffset((currentPage - 1) * pageSize)
 
-	sqlQuery, args = qb.Build()
-	entities, err := s.fnalRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	b.OrderByKey(sortBy, sortOrder, fnalSortColumns).
+		Limit(pageSize).
+		Offset((currentPage - 1) * pageSize)
+	entities, err := s.fnalRepo.Select(ctx, b)
 	if err != nil {
 		return viewData, fmt.Errorf("failed to get Fnal entities: %w", err)
 	}
@@ -798,29 +737,16 @@ func (s *NalogResource) StornirajNalog(ctx context.Context, idFnal int64, entity
 
 	username := userSession.UserName
 
-	var copyFnExists bool
-	err := s.fnalRepo.DB.QueryRowContext(ctx,
-		`SELECT to_regprocedure('fn_storniraj_nalog_sa_stavkama(bigint,bigint,text,date,date,text,integer,integer,text)') IS NOT NULL`,
-	).Scan(&copyFnExists)
+	copyFnExists, err := s.fin.FunkcijaPostoji(ctx, "fn_storniraj_nalog_sa_stavkama(bigint,bigint,text,date,date,text,integer,integer,text)")
 	if err != nil {
 		return fmt.Errorf("failed to verify storniraj function existence: %w", err)
 	}
 	if !copyFnExists {
 		return fmt.Errorf("required database function fn_storniraj_nalog_sa_stavkama is missing")
 	}
-	var newFnalID int64
-	err = s.fnalRepo.DB.QueryRowContext(ctx,
-		`SELECT fn_storniraj_nalog_sa_stavkama($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
-		idFnal,
-		entity.Nalog,
-		entity.Tipdok,
-		entity.Danal.Format(common.HtmlLayout),
-		entity.Datob.Format(common.HtmlLayout),
-		entity.Opis,
-		userSession.SelectedGod,
-		userSession.SelectedKar,
-		username,
-	).Scan(&newFnalID)
+	_, err = s.fin.FnStornirajNalog(ctx, idFnal, repository.KopijaNaloga{Nalog: entity.Nalog, Tipdok: entity.Tipdok,
+		Danal: entity.Danal.Format(common.HtmlLayout), Datob: entity.Datob.Format(common.HtmlLayout), Opis: entity.Opis,
+		God: userSession.SelectedGod, Kar: userSession.SelectedKar, Operater: username})
 	if err != nil {
 		return fmt.Errorf("Greska prilikom storniranja naloga preko DB funkcije: %w", err)
 	}
@@ -836,36 +762,27 @@ func (s *NalogResource) GetNalogStampanjeData(ctx context.Context, tbl *domain.T
 
 	common.SetupTablePagination(tbl, page, pageSize)
 
-	qb := common.NewQueryBuilder(`SELECT idfnal, tipdok, nalog, danal, opis, dug, pot, datob, brst, nalsts, idtipdok FROM fnal`, true)
-	hasGod, hasKar := s.fnalRepo.GetHasGodHasKar()
-	if hasGod {
-		qb.AddEqual("god", userSession.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("kar", userSession.SelectedKar)
+	b := querybuilder.New(`SELECT idfnal, tipdok, nalog, danal, opis, dug, pot, datob, brst, nalsts, idtipdok FROM fnal`)
+	if err := s.fnalRepo.ApplyFilters(ctx, b, "", nil, ""); err != nil {
+		return err
 	}
 	if searchText != "" {
-		args := qb.GetArgs()
-		qb.AddCustomCondition(fmt.Sprintf("(tipdok::text ilike '%%' || $%d || '%%' OR nalog::text ilike '%%' || $%d || '%%' OR opis ilike '%%' || $%d || '%%' OR datob::text ilike '%%' || $%d || '%%' OR dug::text ilike '%%' || $%d || '%%' OR pot::text ilike '%%' || $%d || '%%' OR nalsts::text ilike '%%' || $%d || '%%')", len(args)+1, len(args)+1, len(args)+1, len(args)+1, len(args)+1, len(args)+1, len(args)+1), searchText)
-	}
-	if !getTotalRecords {
-		if sortBy != "" {
-			qb.AddOrderBy(fmt.Sprintf("fnal.%s", sortBy))
-		}
-		if sortOrder != "" && (sortOrder == "ASC" || sortOrder == "DESC") {
-			qb.AddSortOrder(sortOrder)
-		}
-		qb.SetLimit(pageSize)
-		qb.SetOffset((page - 1) * pageSize)
-	}
-	sqlQuery, args := qb.Build()
-	entities, err := s.fnalRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
-		return fmt.Errorf("failed to get Fnal entities: %w", err)
+		whereFnalSearch(b, fnalListSearchColumns, "%"+searchText+"%")
 	}
 	if getTotalRecords {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
+		total, err := s.fnalRepo.Count(ctx, b)
+		if err != nil {
+			return fmt.Errorf("failed to get Fnal entities: %w", err)
+		}
+		common.SetTableTotalRecords(tbl, total, pageSize)
 		return nil // Return early if we only needed to get total records
+	}
+	b.OrderByKey(sortBy, sortOrder, fnalSortColumns).
+		Limit(pageSize).
+		Offset((page - 1) * pageSize)
+	entities, err := s.fnalRepo.Select(ctx, b)
+	if err != nil {
+		return fmt.Errorf("failed to get Fnal entities: %w", err)
 	}
 
 	// Populate table rows
@@ -901,35 +818,33 @@ func (s *NalogResource) GetNalogStampanjeDataDetalji(ctx context.Context, tbl *d
 
 	common.SetupTablePagination(tbl, page, pageSize)
 
-	qb := common.NewQueryBuilder(`SELECT fpro.rbr, fpro.konto, fpro.sifra, fkpl.naziv, fpro.vrd, fpro.opis, 
+	// The nalog id comes from the request: a key (Where), restricted to the period of the session.
+	b := querybuilder.New(`SELECT fpro.rbr, fpro.konto, fpro.sifra, fkpl.naziv, fpro.vrd, fpro.opis,
 	case when fpro.kat in (1, 2) then fpro.iznos else 0 end as dug,
 	case when fpro.kat in (3, 4) then fpro.iznos else 0 end as pot,
-	fpro.dokum, fpro.dadok, fpro.vkonta FROM fpro`, true)
-	qb.AddJoin("left join  fkpl ON fpro.idfkpl = fkpl.idfkpl")
-
-	qb.AddEqual("idfnal", idFnal)
+	fpro.dokum, fpro.dadok, fpro.vkonta FROM fpro`).
+		AddJoin("left join  fkpl ON fpro.idfkpl = fkpl.idfkpl").
+		Where("fpro.idfnal = ?", idFnal)
+	if err := s.fproRepo.ApplyFilters(ctx, b, "fpro", nil, ""); err != nil {
+		return err
+	}
 	if searchText != "" {
-		nbrArgs := len(qb.GetArgs())
-		qb.AddCustomCondition(fmt.Sprintf("(fpro.rbr::text ilike '%%' || $%d || '%%' OR fpro.konto::text ilike '%%' || $%d || '%%' OR fpro.sifra::text ilike '%%' || $%d || '%%' OR fkpl.naziv::text ilike '%%' || $%d || '%%' OR fpro.vrd::text ilike '%%' || $%d || '%%' OR fpro.opis::text ilike '%%' || $%d || '%%' OR fpro.iznos::text ilike '%%' || $%d || '%%' OR fpro.dokum::text ilike '%%' || $%d || '%%' OR fpro.dadok::text ilike '%%' || $%d || '%%' OR fpro.vkonta::text ilike '%%' || $%d || '%%')", nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1, nbrArgs+1), searchText)
-	}
-	if !getTotalRecords {
-		if sortBy != "" {
-			qb.AddOrderBy(fmt.Sprintf("%s", sortBy))
-		}
-		if sortOrder != "" && (sortOrder == "ASC" || sortOrder == "DESC") {
-			qb.AddSortOrder(sortOrder)
-		}
-		qb.SetLimit(pageSize)
-		qb.SetOffset((page - 1) * pageSize)
-	}
-	sqlQuery, args := qb.Build()
-	entities, err := s.fproRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
-		return fmt.Errorf("failed to get Fpro entities: %w", err)
+		whereFnalSearch(b, fproStampaSearchColumns, "%"+searchText+"%")
 	}
 	if getTotalRecords {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
+		total, err := s.fproRepo.Count(ctx, b)
+		if err != nil {
+			return fmt.Errorf("failed to get Fpro entities: %w", err)
+		}
+		common.SetTableTotalRecords(tbl, total, pageSize)
 		return nil // Return early if we only needed to get total records
+	}
+	b.OrderByKey(sortBy, sortOrder, fproStampaSortColumns).
+		Limit(pageSize).
+		Offset((page - 1) * pageSize)
+	entities, err := s.fproRepo.Select(ctx, b)
+	if err != nil {
+		return fmt.Errorf("failed to get Fpro entities: %w", err)
 	}
 
 	// Populate table rows
@@ -967,22 +882,17 @@ func (s *NalogResource) GetNaloziTotals(ctx context.Context, tipdok string) (dom
 		return domain.UkupnaObrada{}, fmt.Errorf("user session not found")
 	}
 
-	qb := common.NewQueryBuilder(`SELECT COALESCE(SUM(dug), 0) as dug, 
+	b := querybuilder.New(`SELECT COALESCE(SUM(dug), 0) as dug,
 				COALESCE(SUM(pot), 0) as pot,
-				COALESCE(SUM(brst), 0) as brst, 
-				COALESCE(count(*), 0) as brna FROM fnal`, true)
-	hasGod, hasKar := s.fnalRepo.GetHasGodHasKar()
-	if hasGod {
-		qb.AddEqual("god", userSession.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("kar", userSession.SelectedKar)
+				COALESCE(SUM(brst), 0) as brst,
+				COALESCE(count(*), 0) as brna FROM fnal`)
+	if err := s.fnalRepo.ApplyFilters(ctx, b, "", nil, ""); err != nil {
+		return domain.UkupnaObrada{}, err
 	}
 	// if tipdok != "" {
-	// 	qb.AddEqual("tipdok", tipdok)
+	// 	b.AddEqual("tipdok", tipdok)
 	// }
-	sqlQuery, args := qb.Build()
-	totalsFnal, err := s.fnalRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "") // Assuming a GetCustom method for single row
+	totalsFnal, err := s.fnalRepo.Select(ctx, b) // single row
 	if err != nil {
 		return domain.UkupnaObrada{}, fmt.Errorf("failed to get Fnal totals: %w", err)
 	}
@@ -1012,31 +922,40 @@ func (s *NalogResource) GetNalogStampaData(ctx context.Context, idFnal int64, cf
 	}
 
 	// Fetch fnal header
-	fnals, err := s.fnalRepo.GetAllCustom(ctx, `SELECT idfnal, god, kar, nalog, tipdok, danal, opis, dug, pot, brst FROM fnal WHERE idfnal = $1`, "", []interface{}{idFnal}, "", "")
+	// The id comes from the request: the nalog must be of the period of the session.
+	hb := querybuilder.New(`SELECT idfnal, god, kar, nalog, tipdok, danal, opis, dug, pot, brst FROM fnal`).Where("idfnal = ?", idFnal)
+	if err := s.fnalRepo.ApplyFilters(ctx, hb, "", nil, ""); err != nil {
+		return domain.Fnal{}, domain.TableData{}, domain.TableData{}, err
+	}
+	fnals, err := s.fnalRepo.Select(ctx, hb)
 	if err != nil || fnals == nil || len(*fnals) == 0 {
 		return domain.Fnal{}, domain.TableData{}, domain.TableData{}, fmt.Errorf("nalog not found: %w", err)
 	}
 	fnal := (*fnals)[0]
 
 	// Fetch stavke with ojozn
-	qb := common.NewQueryBuilder(`SELECT fpro.rbr, fpro.konto, coalesce(fpro.sifra, '') as sifra,
-		case fpro.sifra 
+	b := querybuilder.New(`SELECT fpro.rbr, fpro.konto, coalesce(fpro.sifra, '') as sifra,
+		case fpro.sifra
 			when '' then concat(coalesce(fkpl.naziv, ''), chr(10), '|', coalesce(fpro.opis, ''), '|', coalesce(o.ojozn, ''), '|', coalesce(fpro.dokum::text, ''))
-			else  concat(coalesce(p.naziv, ''), chr(10), '|', coalesce(fpro.opis, ''), coalesce(o.ojozn, ''), '|', coalesce(fpro.dokum::text, '')) 
+			else  concat(coalesce(p.naziv, ''), chr(10), '|', coalesce(fpro.opis, ''), coalesce(o.ojozn, ''), '|', coalesce(fpro.dokum::text, ''))
 		end as naziv,
 		case when fpro.kat in (1,2) then fpro.iznos else 0 end as dug,
 		case when fpro.kat in (3,4) then fpro.iznos else 0 end as pot,
 		coalesce(o.ojozn, '') as ojozn
-		FROM fpro `, true)
-	qb.AddJoin(` left join fkpl ON fpro.idfkpl = fkpl.idfkpl`)
-	qb.AddJoin(` left join lateral (SELECT naziv FROM partneri WHERE sifra = fpro.sifra AND tipanalitikeid = fkpl.tipanalitikeid LIMIT 1) p ON true`)
-	qb.AddJoin(` left join orgjed o ON o.idorgjed = fpro.idorgjed`)
-	qb.AddEqual("fpro.idfnal", idFnal)
-	qb.AddOrderBy("fpro.rbr")
-	qb.AddSortOrder(" ASC ")
-	sqlStavke, argsStavke := qb.Build()
+		FROM fpro`).
+		AddJoin(`left join fkpl ON fpro.idfkpl = fkpl.idfkpl`).
+		// The partner of the period of the stavka (joined by its šifra, not by idpartneri).
+		AddJoin(`left join lateral (SELECT naziv FROM partneri WHERE sifra = fpro.sifra AND tipanalitikeid = fkpl.tipanalitikeid
+			AND god = fpro.god AND kar = fpro.kar LIMIT 1) p ON true`).
+		AddJoin(`left join orgjed o ON o.idorgjed = fpro.idorgjed`).
+		Where("fpro.idfnal = ?", idFnal).
+		OrderBy("fpro.rbr ASC")
+	// The stavke of the nalog, restricted to the period of the session.
+	if err := s.fproRepo.ApplyFilters(ctx, b, "fpro", nil, ""); err != nil {
+		return fnal, domain.TableData{}, domain.TableData{}, err
+	}
 
-	fproEntities, err := s.fproRepo.GetAllCustom(ctx, sqlStavke, "", argsStavke, "", "")
+	fproEntities, err := s.fproRepo.Select(ctx, b)
 	if err != nil {
 		return fnal, domain.TableData{}, domain.TableData{}, fmt.Errorf("failed to get stavke: %w", err)
 	}
@@ -1149,8 +1068,6 @@ func (s *NalogResource) GetGrupeNaloziStampaData(ctx context.Context, tipdok str
 		return nil, domain.TableData{}, fmt.Errorf("user session not found")
 	}
 
-	hasGod, hasKar := s.fnalRepo.GetHasGodHasKar()
-
 	type kontoAgg struct {
 		BrStavki int
 		Duguje   float64
@@ -1161,7 +1078,7 @@ func (s *NalogResource) GetGrupeNaloziStampaData(ctx context.Context, tipdok str
 	grandKontoMap := map[string]*kontoAgg{}
 	var items []domain.NalogStampaItem
 
-	qb := common.NewQueryBuilder(`SELECT
+	b := querybuilder.New(`SELECT
 			fnal.nalog, fnal.tipdok, fnal.danal, fnal.opis,
 			fpro.rbr, fpro.konto, coalesce(fpro.sifra, '') as sifra,
 			case when fpro.sifra = '' then coalesce(fkpl.naziv, '') else coalesce(p.naziv, '') end as naziv,
@@ -1173,25 +1090,22 @@ func (s *NalogResource) GetGrupeNaloziStampaData(ctx context.Context, tipdok str
 			fpro.vkonta,
 			case when fpro.kat in (1,2) then fpro.iznos else 0 end as dug,
 			case when fpro.kat in (3,4) then fpro.iznos else 0 end as pot
-			FROM fnal`, true)
-	qb.AddJoin(`left join fpro ON fnal.idfnal = fpro.idfnal`)
-	qb.AddJoin(`left join fkpl ON fpro.idfkpl = fkpl.idfkpl`)
-	qb.AddJoin(`left join lateral (SELECT naziv FROM partneri WHERE sifra = fpro.sifra AND tipanalitikeid = fkpl.tipanalitikeid LIMIT 1) p ON true`)
-	qb.AddJoin(`left join orgjed o ON o.idorgjed = fpro.idorgjed`)
-	if hasGod {
-		qb.AddEqual("fnal.god", userSession.SelectedGod)
+			FROM fnal`).
+		AddJoin(`left join fpro ON fnal.idfnal = fpro.idfnal`).
+		AddJoin(`left join fkpl ON fpro.idfkpl = fkpl.idfkpl`).
+		// The partner of the period of the stavka (joined by its šifra, not by idpartneri).
+		AddJoin(`left join lateral (SELECT naziv FROM partneri WHERE sifra = fpro.sifra AND tipanalitikeid = fkpl.tipanalitikeid
+			AND god = fpro.god AND kar = fpro.kar LIMIT 1) p ON true`).
+		AddJoin(`left join orgjed o ON o.idorgjed = fpro.idorgjed`).
+		AddEqual("fnal.tipdok", tipdok).
+		Where("fnal.nalog >= ?", odBroja).
+		Where("fnal.nalog <= ?", doBroja).
+		OrderBy("fnal.nalog ASC, fpro.rbr ASC")
+	if err := s.fnalRepo.ApplyFilters(ctx, b, "fnal", nil, ""); err != nil {
+		return nil, domain.TableData{}, err
 	}
-	if hasKar {
-		qb.AddEqual("fnal.kar", userSession.SelectedKar)
-	}
-	qb.AddEqual("fnal.tipdok", tipdok)
-	qb.AddCondition("fnal.nalog", odBroja, ">=")
-	qb.AddCondition("fnal.nalog", doBroja, "<=")
-	qb.AddOrderBy("fnal.nalog, fpro.rbr")
-	qb.AddSortOrder("ASC")
 
-	sqlQuery, args := qb.Build()
-	entities, err := s.fproRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.fproRepo.Select(ctx, b)
 	if err != nil {
 		return nil, domain.TableData{}, fmt.Errorf("failed to get stavke: %w", err)
 	}
@@ -1441,18 +1355,13 @@ func (s *NalogResource) CheckNalogExistForCopy(ctx context.Context, entity domai
 		return false, 0, fmt.Errorf("user session not found")
 	}
 
-	hasGod, hasKar := s.fnalRepo.GetHasGodHasKar()
-	qb := common.NewQueryBuilder(`SELECT idfnal FROM fnal`, true)
-	if hasGod {
-		qb.AddEqual("god", userSession.SelectedGod)
+	b := querybuilder.New(`SELECT idfnal FROM fnal`).
+		Where("tipdok = ?", entity.Tipdok).
+		Where("nalog = ?", entity.Nalog)
+	if err := s.fnalRepo.ApplyFilters(ctx, b, "", nil, ""); err != nil {
+		return false, 0, err
 	}
-	if hasKar {
-		qb.AddEqual("kar", userSession.SelectedKar)
-	}
-	qb.AddEqual("tipdok", entity.Tipdok)
-	qb.AddEqual("nalog", entity.Nalog)
-	sqlQuery, args := qb.Build()
-	entities, err := s.fnalRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.fnalRepo.Select(ctx, b)
 	if err != nil {
 		return false, 0, err
 	}

@@ -139,6 +139,9 @@ const (
 	ClassInputTextEnabled = "h-8 sm:h-7 md:h-6 px-2 sm:px-1.5 md:px-1 text-xs sm:text-sm rounded border border-blue-400 focus:bg-green-50 focus:border-green-500 focus:ring-green-500 text-left w-full"
 	// Input - Text (Disabled)
 	ClassInputTextDisabled = "h-8 sm:h-7 md:h-6 px-2 sm:px-1.5 md:px-1 text-xs sm:text-sm min-w-0 text-left rounded border border-blue-400 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-300 disabled:text-gray-600 disabled:cursor-not-allowed w-full"
+	// Input - Text that is read only or entered by the state of the form (e.g. the naziv and the JM of a stavka of
+	// the profaktura, entered only for the šifra 0): grey while it is read only, still sent with the form.
+	ClassInputTextReadOnly = ClassInputTextEnabled + " read-only:bg-gray-300 read-only:text-gray-600"
 	// TextArea (Enabled)
 	ClassTextAreaEnabled = "px-2 sm:px-1.5 md:px-1 py-2 text-xs sm:text-sm rounded border border-blue-400 focus:bg-green-50 focus:border-green-500 focus:ring-green-500 text-left w-full resize-none"
 	// Label

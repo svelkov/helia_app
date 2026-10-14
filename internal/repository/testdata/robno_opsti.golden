@@ -1,0 +1,65 @@
+### dokvrsta opis
+select coalesce(opis, '') from dokvrsta WHERE (god = $1) AND (kar = $2) AND (vrd = $3) LIMIT 1
+[]interface {}{2026, 7, 89}
+in transaction: false
+
+### rdok protivstav
+select coalesce(trim(r.tkonto), '') as key, coalesce(trim(r.tsifra), '') as c1, coalesce(r.idorgjed1::text, '') as c2, coalesce(concat_ws(' - ', nullif(o.ojozn, ''), nullif(o.naziv, '')), '') as c3, coalesce(r.mestotrid1::text, '') as c4, coalesce(concat_ws(' - ', nullif(m.mtroska, ''), nullif(m.opis, '')), '') as c5 from rdok r left join orgjed o on o.idorgjed = r.idorgjed1 left join mestotr m on m.mestotrid = r.mestotrid1 WHERE (r.rdokid = $1) AND (r.god = $2) AND (r.kar = $3)
+[]interface {}{41, 2026, 7}
+in transaction: false
+
+### orgjed first with its mesto troška
+select o.idorgjed::text as key, coalesce(concat_ws(' - ', nullif(o.ojozn, ''), nullif(o.naziv, '')), '') as c1, coalesce(m.mestotrid::text, '') as c2, coalesce(concat_ws(' - ', nullif(m.mtroska, ''), nullif(m.opis, '')), '') as c3 from orgjed o left join lateral (select x.mestotrid, x.mtroska, x.opis from mestotr x where x.idorgjed = o.idorgjed order by x.mtroska, x.mestotrid limit 1) m on true WHERE (o.god = $1) AND (o.kar = $2) ORDER BY o.ojozn, o.idorgjed LIMIT 1
+[]interface {}{2026, 7}
+in transaction: false
+
+### magacin with the opis of the nalog
+select coalesce(m.tipzal, 0)::text as key, coalesce(m.nacvodzal, 0)::text as c1, coalesce(m.tipmag, '') as c2, coalesce((select n.opis from rnal n where n.rnalid = $1 and n.god = m.god and n.kar = m.kar), '') as c3 from magacini m WHERE (m.magaciniid = $2) AND (m.god = $3) AND (m.kar = $4)
+[]interface {}{9, 3, 2026, 7}
+in transaction: false
+
+### fkpl naziv of a sintetički konto
+select coalesce(naziv, '') from fkpl WHERE (god = $1) AND (kar = $2) AND (konto = $3) AND (vkonta = 2) LIMIT 1
+[]interface {}{2026, 7, "1320"}
+in transaction: false
+
+### fkpl naziv of an analitika
+select coalesce(naziv, '') from fkpl WHERE (god = $1) AND (kar = $2) AND (konto = $3) AND (sifra = $4) LIMIT 1
+[]interface {}{2026, 7, "2040", "15"}
+in transaction: false
+
+### rsta stanje of an opšti dokument
+select coalesce(ulaz, 0)::float8, coalesce(izlaz, 0)::float8, coalesce(dug, 0)::float8, coalesce(pot, 0)::float8, coalesce(cena, 0)::float8, coalesce(ncena, 0)::float8, coalesce(prosnc, 0)::float8 from rsta WHERE (god = $1) AND (kar = $2) AND (magaciniid = $3) AND (konto = $4) AND (sifra = $5) ORDER BY rstaid LIMIT 1
+[]interface {}{2026, 7, 3, "1320", 15}
+in transaction: false
+
+### drsta količina of a lot
+select (coalesce(ulaz, 0) - coalesce(izlaz, 0))::float8 from drsta WHERE (god = $1) AND (kar = $2) AND (konto = $3) AND (sifra = $4) AND (mag = $5) AND (otk = $6) AND (serija = $7) AND (roktr = $8) ORDER BY rstaid LIMIT 1
+[]interface {}{2026, 7, "1320", 15, 1, "A1", "S1", 81234}
+in transaction: false
+
+### rsif artikal of an opšti dokument
+select a.sifra::text as key, coalesce(a.naziv, '') as c1, coalesce(a.jm, '') as c2, trim(coalesce(a.konto, '')) as c3, upper(trim(coalesce(a.tip, ''))) as c4 from rsif a WHERE (a.god = $1) AND (a.kar = $2) AND (a.sifra::text = $3) LIMIT 1
+[]interface {}{2026, 7, "15"}
+in transaction: false
+
+### rsif id, po and naziv
+select rsifid, coalesce(po, 0), coalesce(naziv, '') from rsif WHERE (god = $1) AND (kar = $2) AND (sifra = $3) LIMIT 1
+[]interface {}{2026, 7, 15}
+in transaction: true
+
+### drsta delete an empty lot
+delete from drsta d WHERE (d.god = $1) AND (d.kar = $2) AND (d.konto = $3) AND (d.sifra = $4) AND (d.mag = $5) AND (d.otk = $6) AND (d.serija = $7) AND (d.roktr = $8) AND (coalesce(d.ulaz, 0) - coalesce(d.izlaz, 0) = 0) AND (coalesce(d.dug, 0) - coalesce(d.pot, 0) = 0) AND (not exists (select 1 from rpro p where p.god = d.god and p.kar = d.kar and p.konto = d.konto and p.sifra = d.sifra and p.mag = d.mag and coalesce(p.otk, '') = d.otk and coalesce(p.serija, '') = d.serija and coalesce(p.roktr, 0) = d.roktr))
+[]interface {}{2026, 7, "1320", 15, 1, "A1", "S1", 81234}
+in transaction: true
+
+### drsta set prosnc of the šifra
+UPDATE "drsta" SET prosnc = $1 WHERE (god = $2) AND (kar = $3) AND (mag = $4) AND (rsifid = (select a.rsifid from rsif a where a.god = $5 and a.kar = $6 and a.sifra = $7 limit 1))
+[]interface {}{8.25, 2026, 7, 1, 2026, 7, 15}
+in transaction: false
+
+### rdok one stavka more
+UPDATE "rdok" SET brst = coalesce(brst, 0) + 1 WHERE (rdokid = $1) AND (god = $2) AND (kar = $3)
+[]interface {}{41, 2026, 7}
+in transaction: true
+

@@ -6,10 +6,11 @@ import (
 	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
+	"helia/internal/infrastructure/db/querybuilder"
 	"helia/internal/repository"
-	"reflect"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -85,6 +86,122 @@ func NewOtvoreneStavkeService(repo repository.BaseRepository[domain.Fpro], fvrRe
 }
 
 // GetOtvoreneStavkePartneri retrieves open items data for partners
+// fproPartnerKontaExists restricts fpro to the stavke of one partner on one analiticki konto
+// (fkpl.idfkpl = ?, the id of the row of the partner grid).
+const fproPartnerKontaExists = `EXISTS (
+				SELECT 1
+				FROM fkpl
+				JOIN partneri p
+					ON fkpl.tipanalitikeid = p.tipanalitikeid
+				WHERE fkpl.idfkpl = fpro.idfkpl
+					AND p.sifra = fpro.sifra
+					AND p.god = fpro.god AND p.kar = fpro.kar
+					AND fkpl.idfkpl = ?
+			)`
+
+// formValue returns a value sent by the form, "" when the client sent none or the JavaScript
+// "undefined" (an unset field).
+func formValue(text string) string {
+	if text == "undefined" {
+		return ""
+	}
+	return text
+}
+
+// whereDospelaUslovi adds the filters of the dospela potrazivanja: the sifra range (numeric), the
+// valuta (dadok + rok) up to the date of the form and the window of brojDana days. The optional
+// ones are skipped when empty, like the old AddCondition.
+func whereDospelaUslovi(b *querybuilder.Builder, params domain.OtvStavkeParam, brojDana int) {
+	if params.OdSifre != "" {
+		b.Where("fpro.sifra::numeric >= ?", params.OdSifre)
+	}
+	if params.DoSifre != "" {
+		b.Where("fpro.sifra::numeric <= ?", params.DoSifre)
+	}
+	if params.PodDatumom != "" {
+		b.Where("fpro.dadok + fpro.rok <= ?", params.PodDatumom)
+	}
+	if params.TipPotrazivanja == "D" {
+		b.Where("fpro.dadok + fpro.rok <= ?", time.Now().AddDate(0, 0, brojDana).Format(common.HtmlLayout))
+	}
+	if params.TipPregleda == "P" {
+		b.Where("fpro.dadok + fpro.rok >= ?", time.Now().AddDate(0, 0, -brojDana).Format(common.HtmlLayout))
+	}
+}
+
+// dospeceBuckets are the aliases of the age buckets, in the order of the dospece parameters.
+var dospeceBuckets = [5]string{"dospece15", "dospece30", "dospece60", "dospece90", "dospece120"}
+
+var dospeceDaniRe = regexp.MustCompile(`^\d+$`)
+
+// dospeceDani validates and parses the five dospece parameters (number of days).
+func dospeceDani(p domain.OtvStavkeParam) ([5]int, error) {
+	var dani [5]int
+	for i, v := range [5]string{p.Dospece15, p.Dospece30, p.Dospece60, p.Dospece90, p.Dospece120} {
+		if !dospeceDaniRe.MatchString(v) {
+			return dani, fmt.Errorf("invalid %s parameter: must be numeric", dospeceBuckets[i])
+		}
+		n, err := strconv.Atoi(v)
+		if err != nil {
+			return dani, fmt.Errorf("invalid %s parameter: %w", dospeceBuckets[i], err)
+		}
+		dani[i] = n
+	}
+	return dani, nil
+}
+
+// dospeceKolone builds the columns of the pregled potrazivanja/dugovanja by age: realizacija
+// (vrd in fakture), placeno (vrd in placanja), dospelarealizacija (dospeloExpr <= stanjeNaDan)
+// and the buckets dospece15 .. dospece120plus by the valuta (dadok + rok) counted in days from
+// stanjeNaDan. With sum every column is SUM(...). The SQL is static; every value is an argument
+// (date + integer days in PostgreSQL is the same date as the old date + INTERVAL 'N days').
+func dospeceKolone(sum bool, fakture, placanja []any, dospeloExpr, stanjeNaDan string, dani [5]int) (string, []any) {
+	var cols []string
+	var args []any
+	add := func(expr, alias string, a ...any) {
+		if sum {
+			expr = "SUM(" + expr + ")"
+		}
+		cols = append(cols, expr+" as "+alias)
+		args = append(args, a...)
+	}
+	in := func(n int) string { return strings.TrimSuffix(strings.Repeat("?, ", n), ", ") }
+	inFakture := "fpro.vrd IN (" + in(len(fakture)) + ")"
+	withFakture := func(a ...any) []any { return append(append([]any{}, fakture...), a...) }
+	const valuta = "(fpro.dadok + fpro.rok)::date"
+
+	add("CASE WHEN "+inFakture+" THEN fpro.iznos ELSE 0 END", "realizacija", fakture...)
+	add("CASE WHEN fpro.vrd IN ("+in(len(placanja))+") THEN fpro.iznos ELSE 0 END", "placeno", placanja...)
+	add("CASE WHEN "+inFakture+" AND fpro.dadok IS NOT NULL AND "+dospeloExpr+" <= ?::date THEN fpro.iznos ELSE 0 END",
+		"dospelarealizacija", withFakture(stanjeNaDan)...)
+	od := 0
+	for i, alias := range dospeceBuckets {
+		add("CASE WHEN "+inFakture+" AND "+valuta+" > (?::date + ?::int) AND "+valuta+" <= (?::date + ?::int) THEN fpro.iznos ELSE 0 END",
+			alias, withFakture(stanjeNaDan, od, stanjeNaDan, dani[i])...)
+		od = dani[i]
+	}
+	add("CASE WHEN "+inFakture+" AND "+valuta+" > (?::date + ?::int) THEN fpro.iznos ELSE 0 END",
+		"dospece120plus", withFakture(stanjeNaDan, od)...)
+	return strings.Join(cols, ",\n\t\t\t"), args
+}
+
+// wherePregledKontaSifre adds the konto and sifra ranges of the pregled potrazivanja (numeric
+// comparison; each is skipped when empty, like the old AddCondition).
+func wherePregledKontaSifre(b *querybuilder.Builder, p domain.OtvStavkeParam) {
+	if p.OdKonta != "" {
+		b.Where("fpro.konto::numeric >= ?", p.OdKonta)
+	}
+	if p.DoKonta != "" {
+		b.Where("fpro.konto::numeric <= ?", p.DoKonta)
+	}
+	if p.OdSifre != "" {
+		b.Where("NULLIF(fpro.sifra, '')::numeric >= ?", p.OdSifre)
+	}
+	if p.DoSifre != "" {
+		b.Where("NULLIF(fpro.sifra, '')::numeric <= ?", p.DoSifre)
+	}
+}
+
 func (s *OtvoreneStavkeResource) GetOtvoreneStavkePartneri(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.OtvStavkeParam) error {
 	session := domain.GetSessionFromStdContext(ctx)
 	if session == nil {
@@ -92,45 +209,37 @@ func (s *OtvoreneStavkeResource) GetOtvoreneStavkePartneri(ctx context.Context, 
 	}
 
 	common.SetupTablePagination(tbl, currentPage, pageSize)
-	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
 
 	//if we need to get only total records we check the bool gettotalrecords
 	//Get data for the table
-	qb := common.NewQueryBuilder(`SELECT fkpl.idfkpl,fpro.konto, fpro.sifra, fkpl.naziv as nazivanalitike, 
+	b := querybuilder.New(`SELECT fkpl.idfkpl,fpro.konto, fpro.sifra, fkpl.naziv as nazivanalitike,
 			   	SUM(CASE WHEN fpro.kat = 1 OR fpro.kat = 2 THEN fpro.iznos ELSE 0 END) as dug,
 				SUM(CASE WHEN fpro.kat = 3 OR fpro.kat = 4 THEN fpro.iznos ELSE 0 END) as pot
-		FROM fpro`, true)
-	qb.AddJoin("left join fkpl on fkpl.idfkpl = fpro.idfkpl")
-
-	if hasGod {
-		qb.AddEqual("fpro.god", session.SelectedGod)
+		FROM fpro`).
+		AddJoin("left join fkpl on fkpl.idfkpl = fpro.idfkpl").
+		AddEqual("fpro.konto", params.Konto).
+		AddCondition("fpro.sifra", params.OdSifre, ">=").
+		AddCondition("fpro.sifra", params.DoSifre, "<=")
+	if params.PodDatumom != "" {
+		b.Where("fpro.dadok + fpro.rok <= ?", params.PodDatumom)
 	}
-	if hasKar {
-		qb.AddEqual("fpro.kar", session.SelectedKar)
-	}
-	qb.AddEqual("fpro.konto", params.Konto)
-	qb.AddCondition("fpro.sifra", params.OdSifre, ">=")
-	qb.AddCondition("fpro.sifra", params.DoSifre, "<=")
-	qb.AddCondition("fpro.dadok + fpro.rok", params.PodDatumom, "<=")
-	//qb.AddCondition("fpro.otvstavkedana", otvstavkedana, "<=")
-	// Add search conditions if search text is provided
-	if params.SearchText != "" && params.SearchText != "undefined" && len(params.SearchText) >= 1 {
-		qb.SetEntityType(reflect.TypeOf(domain.Fpro{}))
-		qb.AddSearchConditions(s.GetPartneriFields(), params.SearchText)
+	//b.AddCondition("fpro.otvstavkedana", otvstavkedana, "<=")
+	// The period of the session (fpro.god/kar) and the search text, if provided.
+	if err := s.fproRepo.ApplyFilters(ctx, b, "fpro", s.GetPartneriFields(), formValue(params.SearchText)); err != nil {
+		return err
 	}
 	// Add GROUP BY
-	qb.AddGroupBy("fkpl.idfkpl, fpro.konto, fpro.sifra, fkpl.naziv")
-	// Add HAVING clause to filter only partners with both debtor and creditor accounts
-	qb.AddHaving(` 
+	b.GroupBy("fkpl.idfkpl", "fpro.konto", "fpro.sifra", "fkpl.naziv").
+		// Add HAVING clause to filter only partners with both debtor and creditor accounts
+		Having(`
        	SUM(CASE WHEN fpro.kat = 1 OR fpro.kat = 2 THEN fpro.iznos ELSE 0 END) -
-		SUM(CASE WHEN fpro.kat = 3 OR fpro.kat = 4 THEN fpro.iznos ELSE 0 END) <> 0`)
+		SUM(CASE WHEN fpro.kat = 3 OR fpro.kat = 4 THEN fpro.iznos ELSE 0 END) <> 0`).
+		OrderBy("fpro.sifra")
 	if !getTotalRecords {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
+		b.Limit(pageSize).Offset((currentPage - 1) * pageSize)
 	}
-	qb.AddOrderBy("fpro.sifra")
-	sqlQuery, args := qb.Build()
-	entities, err := s.fproRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	// The total-records call reads every row: the totals of the grid are summed from them.
+	entities, err := s.fproRepo.Select(ctx, b)
 	if err != nil {
 		return err
 	}
@@ -180,54 +289,42 @@ func (s *OtvoreneStavkeResource) GetOtvoreneStavkeDetalji(ctx context.Context, i
 	}
 
 	common.SetupTablePagination(tbl, currentPage, pageSize)
-	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
 
 	//if we need to get only total records we check the bool gettotalrecords
 	//Get data for the table
-	qb := common.NewQueryBuilder(`SELECT coalesce(case when fpro.vrd = 10 or fpro.vrd = 20 then 'F' 
+	b := querybuilder.New(`SELECT coalesce(case when fpro.vrd = 10 or fpro.vrd = 20 then 'F'
 								  			  when fpro.vrd = 30 or fpro.vrd = 40 then 'U' end, '') as doctype,
 								coalesce(fpro.dokum, '') as dokum, fpro.tra, coalesce(fpro.ojozn, '') as ojozn, fpro.nalog, fpro.danal, fpro.dadok, fpro.rok,
 								case when fpro.kat = 1 or fpro.kat = 2 then fpro.iznos else 0 end as dug,
 								case when fpro.kat = 3 or fpro.kat = 4 then fpro.iznos else 0 end as pot,
 								coalesce(fpro.opis, '') as opis, fpro.vrd,
 								fpro.konto, coalesce(fpro.sifra, '') as sifra
-								FROM fpro`, true)
-	if hasGod {
-		qb.AddEqual("fpro.god", session.SelectedGod)
+								FROM fpro`).
+		Where(fproPartnerKontaExists, id)
+	search := ""
+	if tipStampe != common.TipStampePrint {
+		search = formValue(searchText)
 	}
-	if hasKar {
-		qb.AddEqual("fpro.kar", session.SelectedKar)
-	}
-	qb.AddCustomCondition(` EXISTS (
-				SELECT 1
-				FROM fkpl
-				JOIN partneri p
-					ON fkpl.tipanalitikeid = p.tipanalitikeid
-				WHERE fkpl.idfkpl = fpro.idfkpl
-					AND p.sifra = fpro.sifra
-					AND fkpl.idfkpl = $3
-			)`)
-	qb.AddArgs(id)
-	// Add search conditions if search text is provided
-	if searchText != "" && searchText != "undefined" && len(searchText) >= 1 && tipStampe != common.TipStampePrint {
-		qb.SetEntityType(reflect.TypeOf(domain.Fpro{}))
-		qb.AddSearchConditions(s.GetOtvoreneStavkeDetaljiFields(), searchText)
-	}
-	if !getTotalRecords && tipStampe != common.TipStampePrint {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
-	}
-	qb.AddOrderBy("fpro.dokum, fpro.dadok")
-	sqlQuery, args := qb.Build()
-	entities, err := s.fproRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
+	if err := s.fproRepo.ApplyFilters(ctx, b, "fpro", s.GetOtvoreneStavkeDetaljiFields(), search); err != nil {
 		return err
 	}
 
 	// Set total records and pagination
 	if getTotalRecords && tipStampe != common.TipStampePrint {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
+		total, err := s.fproRepo.Count(ctx, b)
+		if err != nil {
+			return err
+		}
+		common.SetTableTotalRecords(tbl, total, pageSize)
 		return nil
+	}
+	b.OrderBy("fpro.dokum, fpro.dadok")
+	if tipStampe != common.TipStampePrint {
+		b.Limit(pageSize).Offset((currentPage - 1) * pageSize)
+	}
+	entities, err := s.fproRepo.Select(ctx, b)
+	if err != nil {
+		return err
 	}
 	if tipStampe == common.TipStampePrint {
 		translator := i18n.GetInstance()
@@ -324,54 +421,46 @@ func (s *OtvoreneStavkeResource) GetZatvoreneStavkePartneri(ctx context.Context,
 		return fmt.Errorf("user session not found")
 	}
 	common.SetupTablePagination(tbl, currentPage, pageSize)
-	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
 
 	//if we need to get only total records we check the bool gettotalrecords
 	//Get data for the table
-	qb := common.NewQueryBuilder(`SELECT fkpl.idfkpl,fpro.konto, fpro.sifra, fkpl.naziv as nazivanalitike, 
+	b := querybuilder.New(`SELECT fkpl.idfkpl,fpro.konto, fpro.sifra, fkpl.naziv as nazivanalitike,
 			   	SUM(CASE WHEN fpro.kat = 1 OR fpro.kat = 2 THEN fpro.iznos ELSE 0 END) as dug,
 				SUM(CASE WHEN fpro.kat = 3 OR fpro.kat = 4 THEN fpro.iznos ELSE 0 END) as pot
-		FROM fpro`, true)
-	qb.AddJoin("left join fkpl on fkpl.idfkpl = fpro.idfkpl")
-
-	if hasGod {
-		qb.AddEqual("fpro.god", session.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("fpro.kar", session.SelectedKar)
-	}
-	qb.AddIn("fpro.vrd", []interface{}{10, 20, 30, 40})
-	qb.AddEqual("fpro.vkonta", "1")
-	qb.AddEqual("fpro.konto", params.Konto)
-	qb.AddCondition("fpro.sifra", params.OdSifre, ">=")
-	qb.AddCondition("fpro.sifra", params.DoSifre, "<=")
-	qb.AddCondition("fpro.dadok", params.OdDatuma, ">=")
-	qb.AddCondition("fpro.dadok", params.DoDatuma, "<=")
-	// Add search conditions if search text is provided
-	if params.SearchText != "" && params.SearchText != "undefined" && len(params.SearchText) >= 1 {
-		qb.SetEntityType(reflect.TypeOf(domain.Fpro{}))
-		qb.AddSearchConditions(s.GetPartneriFields(), params.SearchText)
-	}
-	// Add GROUP BY
-	qb.AddGroupBy("fkpl.idfkpl, fpro.konto, fpro.sifra, fkpl.naziv")
-	// Add HAVING clause to filter only partners with both debtor and creditor accounts
-	qb.AddHaving(` 
-       	SUM(CASE WHEN fpro.kat = 1 OR fpro.kat = 2 THEN fpro.iznos ELSE 0 END) -
-		SUM(CASE WHEN fpro.kat = 3 OR fpro.kat = 4 THEN fpro.iznos ELSE 0 END) = 0`)
-	if !getTotalRecords {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
-	}
-	qb.AddOrderBy("fpro.sifra")
-	sqlQuery, args := qb.Build()
-	entities, err := s.fproRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
+		FROM fpro`).
+		AddJoin("left join fkpl on fkpl.idfkpl = fpro.idfkpl").
+		AddIn("fpro.vrd", []any{10, 20, 30, 40}).
+		Where("fpro.vkonta = ?", "1").
+		AddEqual("fpro.konto", params.Konto).
+		AddCondition("fpro.sifra", params.OdSifre, ">=").
+		AddCondition("fpro.sifra", params.DoSifre, "<=").
+		AddCondition("fpro.dadok", params.OdDatuma, ">=").
+		AddCondition("fpro.dadok", params.DoDatuma, "<=")
+	// The period of the session (fpro.god/kar) and the search text, if provided.
+	if err := s.fproRepo.ApplyFilters(ctx, b, "fpro", s.GetPartneriFields(), formValue(params.SearchText)); err != nil {
 		return err
 	}
+	// Add GROUP BY
+	b.GroupBy("fkpl.idfkpl", "fpro.konto", "fpro.sifra", "fkpl.naziv").
+		// Add HAVING clause to filter only partners with both debtor and creditor accounts
+		Having(`
+       	SUM(CASE WHEN fpro.kat = 1 OR fpro.kat = 2 THEN fpro.iznos ELSE 0 END) -
+		SUM(CASE WHEN fpro.kat = 3 OR fpro.kat = 4 THEN fpro.iznos ELSE 0 END) = 0`)
 	// Set total records and pagination
 	if getTotalRecords {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
+		total, err := s.fproRepo.Count(ctx, b)
+		if err != nil {
+			return err
+		}
+		common.SetTableTotalRecords(tbl, total, pageSize)
 		return nil
+	}
+	b.OrderBy("fpro.sifra").
+		Limit(pageSize).
+		Offset((currentPage - 1) * pageSize)
+	entities, err := s.fproRepo.Select(ctx, b)
+	if err != nil {
+		return err
 	}
 	// Populate table rows
 	if entities != nil && len(*entities) > 0 {
@@ -402,52 +491,36 @@ func (s *OtvoreneStavkeResource) GetZatvoreneStavkeDetalji(ctx context.Context, 
 	}
 
 	common.SetupTablePagination(tbl, currentPage, pageSize)
-	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
 
 	//if we need to get only total records we check the bool gettotalrecords
 	//Get data for the table
-	qb := common.NewQueryBuilder(`SELECT
-								fpro.rbr, fpro.konto, coalesce(fpro.sifra, '') as sifra, fpro.dokum, fpro.tra, fpro.ojozn, fpro.tipdok, fpro.nalog, fpro.danal, 
-								fpro.dadok, fpro.rok, 
+	b := querybuilder.New(`SELECT
+								fpro.rbr, fpro.konto, coalesce(fpro.sifra, '') as sifra, fpro.dokum, fpro.tra, fpro.ojozn, fpro.tipdok, fpro.nalog, fpro.danal,
+								fpro.dadok, fpro.rok,
 								case when fpro.kat = 1 or fpro.kat = 2 then fpro.iznos else 0 end as dug,
 								case when fpro.kat = 3 or fpro.kat = 4 then fpro.iznos else 0 end as pot,
 								fpro.opis, fpro.vrd, fpro.vkonta, fpro.kat
-								FROM fpro`, true)
-	if hasGod {
-		qb.AddEqual("fpro.god", session.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("fpro.kar", session.SelectedKar)
-	}
-	qb.AddCustomCondition(` EXISTS (
-			SELECT 1
-				FROM fkpl
-				JOIN partneri p
-					ON fkpl.tipanalitikeid = p.tipanalitikeid
-				WHERE fkpl.idfkpl = fpro.idfkpl
-					AND p.sifra = fpro.sifra
-					AND fkpl.idfkpl = $3
-			)`)
-	qb.AddArgs(id)
-	// Add search conditions if search text is provided
-	if searchText != "" && searchText != "undefined" && len(searchText) >= 1 {
-		qb.SetEntityType(reflect.TypeOf(domain.Fpro{}))
-		qb.AddSearchConditions(s.GetPartneriFields(), searchText)
-	}
-	if !getTotalRecords && tipStampe != common.TipStampePrint {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
-	}
-	qb.AddOrderBy("fpro.dokum, fpro.dadok")
-	sqlQuery, args := qb.Build()
-	entities, err := s.fproRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
+								FROM fpro`).
+		Where(fproPartnerKontaExists, id)
+	if err := s.fproRepo.ApplyFilters(ctx, b, "fpro", s.GetPartneriFields(), formValue(searchText)); err != nil {
 		return err
 	}
 	// Set total records and pagination
 	if getTotalRecords {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
+		total, err := s.fproRepo.Count(ctx, b)
+		if err != nil {
+			return err
+		}
+		common.SetTableTotalRecords(tbl, total, pageSize)
 		return nil
+	}
+	b.OrderBy("fpro.dokum, fpro.dadok")
+	if tipStampe != common.TipStampePrint {
+		b.Limit(pageSize).Offset((currentPage - 1) * pageSize)
+	}
+	entities, err := s.fproRepo.Select(ctx, b)
+	if err != nil {
+		return err
 	}
 	if tipStampe == common.TipStampePrint {
 		partner, err := s.getPartneriData(ctx, id)
@@ -532,7 +605,7 @@ func (s *OtvoreneStavkeResource) getPartneriData(ctx context.Context, id int64) 
 		return partner, fmt.Errorf("user session not found")
 	}
 	// query for getting partner data for report parameters
-	partnerQuery := common.NewQueryBuilder(`SELECT coalesce(p.naziv, '') as naziv,
+	b := querybuilder.New(`SELECT coalesce(p.naziv, '') as naziv,
 								coalesce(p.sifra, '') as sifra,
 								coalesce(p.adresa, '') as adresa,
 								coalesce(p.mesto, '') as mesto,
@@ -540,26 +613,22 @@ func (s *OtvoreneStavkeResource) getPartneriData(ctx context.Context, id int64) 
 								coalesce(p.matbr, '') as matbr,
 								coalesce(p.pobro, 0) as pobro,
 								coalesce(p.telefon, '') as telefon
-								FROM partneri p`, true)
-	hasGod, hasKar := s.partneriRepo.GetHasGodHasKar()
-	if hasGod {
-		partnerQuery.AddEqual("p.god", userSession.SelectedGod)
-	}
-	if hasKar {
-		partnerQuery.AddEqual("p.kar", userSession.SelectedKar)
-	}
-	partnerQuery.AddCustomCondition(` EXISTS (
+								FROM partneri p`).
+		Where(` EXISTS (
 				SELECT 1
 				FROM fkpl
 				JOIN fpro
 					ON fpro.idfkpl = fkpl.idfkpl
 				WHERE fkpl.tipanalitikeid = p.tipanalitikeid
 					AND p.sifra = fpro.sifra
-					AND fkpl.idfkpl = $3
-			)`)
-	partnerQuery.AddArgs(id)
-	partnerSQL, partnerArgs := partnerQuery.Build()
-	partnerEntity, err := s.partneriRepo.GetAllCustom(ctx, partnerSQL, "", partnerArgs, "", "")
+					AND fpro.god = p.god AND fpro.kar = p.kar
+					AND fkpl.god = p.god AND fkpl.kar = p.kar
+					AND fkpl.idfkpl = ?
+			)`, id)
+	if err := s.partneriRepo.ApplyFilters(ctx, b, "p", nil, ""); err != nil {
+		return partner, err
+	}
+	partnerEntity, err := s.partneriRepo.Select(ctx, b)
 	if err != nil {
 		return partner, err
 	}
@@ -578,52 +647,49 @@ func (s *OtvoreneStavkeResource) GetIOSPartneri(ctx context.Context, tbl *domain
 	}
 
 	common.SetupTablePagination(tbl, currentPage, pageSize)
-	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
 
 	//if we need to get only total records we check the bool gettotalrecords
 	//Get data for the table
-	qb := common.NewQueryBuilder(`SELECT fkpl.idfkpl, fpro.konto, fpro.sifra, fkpl.naziv as nazivanalitike, 
+	b := querybuilder.New(`SELECT fkpl.idfkpl, fpro.konto, fpro.sifra, fkpl.naziv as nazivanalitike,
 			   	SUM(CASE WHEN fpro.kat = 1 OR fpro.kat = 2 THEN fpro.iznos ELSE 0 END) as dug,
 				SUM(CASE WHEN fpro.kat = 3 OR fpro.kat = 4 THEN fpro.iznos ELSE 0 END) as pot
-		FROM fpro`, true)
-	qb.AddJoin("left join fkpl on fkpl.idfkpl = fpro.idfkpl")
-
-	if hasGod {
-		qb.AddEqual("fpro.god", session.SelectedGod)
+		FROM fpro`).
+		AddJoin("left join fkpl on fkpl.idfkpl = fpro.idfkpl").
+		AddEqual("fpro.konto", params.Konto)
+	// The sifra range compares the numeric value of the sifra (optional, like the other filters).
+	if params.OdSifre != "" {
+		b.Where("COALESCE(NULLIF(fpro.sifra, '')::numeric, 0) >= ?", params.OdSifre)
 	}
-	if hasKar {
-		qb.AddEqual("fpro.kar", session.SelectedKar)
+	if params.DoSifre != "" {
+		b.Where("COALESCE(NULLIF(fpro.sifra, '')::numeric, 0) <= ?", params.DoSifre)
 	}
-	qb.AddEqual("fpro.konto", params.Konto)
-	qb.AddCondition("COALESCE(NULLIF(fpro.sifra, '')::numeric, 0)", params.OdSifre, ">=")
-	qb.AddCondition("COALESCE(NULLIF(fpro.sifra, '')::numeric, 0)", params.DoSifre, "<=")
-	qb.AddCondition("fpro.dadok", params.PodDatumom, "<=")
-	//qb.AddCondition("fpro.otvstavkedana", params.otvstavkedana, "<=")
-	// Add search conditions if search text is provided
-	if params.SearchText != "" && params.SearchText != "undefined" && len(params.SearchText) >= 1 {
-		qb.SetEntityType(reflect.TypeOf(domain.Fpro{}))
-		qb.AddSearchConditions(s.GetPartneriFields(), params.SearchText)
-	}
-	// Add GROUP BY
-	qb.AddGroupBy("fkpl.idfkpl, fpro.konto, fpro.sifra, fkpl.naziv")
-	// Add HAVING clause to filter only partners with both debtor and creditor accounts
-	qb.AddHaving(` 
-       	SUM(CASE WHEN fpro.kat = 1 OR fpro.kat = 2 THEN fpro.iznos ELSE 0 END) -
-		SUM(CASE WHEN fpro.kat = 3 OR fpro.kat = 4 THEN fpro.iznos ELSE 0 END) <> 0`)
-	if !getTotalRecords {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
-	}
-	qb.AddOrderBy("COALESCE(NULLIF(fpro.sifra, '')::numeric, 0)")
-	sqlQuery, args := qb.Build()
-	entities, err := s.fproRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
+	b.AddCondition("fpro.dadok", params.PodDatumom, "<=")
+	//b.AddCondition("fpro.otvstavkedana", params.otvstavkedana, "<=")
+	// The period of the session (fpro.god/kar) and the search text, if provided.
+	if err := s.fproRepo.ApplyFilters(ctx, b, "fpro", s.GetPartneriFields(), formValue(params.SearchText)); err != nil {
 		return err
 	}
+	// Add GROUP BY
+	b.GroupBy("fkpl.idfkpl", "fpro.konto", "fpro.sifra", "fkpl.naziv").
+		// Add HAVING clause to filter only partners with both debtor and creditor accounts
+		Having(`
+       	SUM(CASE WHEN fpro.kat = 1 OR fpro.kat = 2 THEN fpro.iznos ELSE 0 END) -
+		SUM(CASE WHEN fpro.kat = 3 OR fpro.kat = 4 THEN fpro.iznos ELSE 0 END) <> 0`)
 	// Set total records and pagination
 	if getTotalRecords {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
+		total, err := s.fproRepo.Count(ctx, b)
+		if err != nil {
+			return err
+		}
+		common.SetTableTotalRecords(tbl, total, pageSize)
 		return nil
+	}
+	b.OrderByExpr("COALESCE(NULLIF(fpro.sifra, '')::numeric, 0)").
+		Limit(pageSize).
+		Offset((currentPage - 1) * pageSize)
+	entities, err := s.fproRepo.Select(ctx, b)
+	if err != nil {
+		return err
 	}
 	// Populate table rows
 	if entities != nil && len(*entities) > 0 {
@@ -654,44 +720,41 @@ func (s *OtvoreneStavkeResource) GetIOSDetalji(ctx context.Context, id int64, tb
 	}
 
 	common.SetupTablePagination(tbl, currentPage, pageSize)
-	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
 
 	//if we need to get only total records we check the bool gettotalrecords
 	//Get data for the table
-	qb := common.NewQueryBuilder(`SELECT coalesce(case when fpro.vrd = 10 or fpro.vrd = 20 then 'F' 
+	b := querybuilder.New(`SELECT coalesce(case when fpro.vrd = 10 or fpro.vrd = 20 then 'F'
 								  			  when fpro.vrd = 30 or fpro.vrd = 40 then 'U' end, '') as doctype,
 								fpro.dokum, fpro.tra, fpro.ojozn, fpro.nalog, fpro.danal, fpro.dadok, fpro.rok,
 								case when fpro.kat = 1 or fpro.kat = 2 then fpro.iznos else 0 end as dug,
 								case when fpro.kat = 3 or fpro.kat = 4 then fpro.iznos else 0 end as pot,
 								coalesce(fpro.opis, '') as opis,
 								fpro.vrd
-								FROM fpro`, true)
-	if hasGod {
-		qb.AddEqual("fpro.god", session.SelectedGod)
+								FROM fpro`).
+		Where("fpro.idfkpl = ?", id)
+	search := ""
+	if tipStampe != common.TipStampePrint {
+		search = formValue(searchText)
 	}
-	if hasKar {
-		qb.AddEqual("fpro.kar", session.SelectedKar)
-	}
-	qb.AddEqual("fpro.idfkpl", id)
-	// Add search conditions if search text is provided
-	if searchText != "" && searchText != "undefined" && len(searchText) >= 1 && tipStampe != common.TipStampePrint {
-		qb.SetEntityType(reflect.TypeOf(domain.Fpro{}))
-		qb.AddSearchConditions(s.GetOtvoreneStavkeDetaljiFields(), searchText)
-	}
-	if !getTotalRecords && tipStampe != common.TipStampePrint {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
-	}
-	qb.AddOrderBy("fpro.dokum, fpro.dadok")
-	sqlQuery, args := qb.Build()
-	entities, err := s.fproRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
+	if err := s.fproRepo.ApplyFilters(ctx, b, "fpro", s.GetOtvoreneStavkeDetaljiFields(), search); err != nil {
 		return err
 	}
 	// Set total records and pagination
 	if getTotalRecords {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
+		total, err := s.fproRepo.Count(ctx, b)
+		if err != nil {
+			return err
+		}
+		common.SetTableTotalRecords(tbl, total, pageSize)
 		return nil
+	}
+	b.OrderBy("fpro.dokum, fpro.dadok")
+	if tipStampe != common.TipStampePrint {
+		b.Limit(pageSize).Offset((currentPage - 1) * pageSize)
+	}
+	entities, err := s.fproRepo.Select(ctx, b)
+	if err != nil {
+		return err
 	}
 	if tipStampe == common.TipStampePrint {
 		partner, err := s.getPartneriData(ctx, id)
@@ -787,58 +850,41 @@ func (s *OtvoreneStavkeResource) GetDospelaPotrazivanjaPartneri(ctx context.Cont
 		return fmt.Errorf("invalid BrojDana value: %v", err)
 	}
 	common.SetupTablePagination(tbl, currentPage, pageSize)
-	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
 
 	//if we need to get only total records we check the bool gettotalrecords
 	//Get data for the table
-	qb := common.NewQueryBuilder(`SELECT fkpl.idfkpl,fpro.konto, fpro.sifra, fkpl.naziv as nazivanalitike, 
+	b := querybuilder.New(`SELECT fkpl.idfkpl,fpro.konto, fpro.sifra, fkpl.naziv as nazivanalitike,
 			   	SUM(CASE WHEN fpro.kat = 1 OR fpro.kat = 2 THEN fpro.iznos ELSE 0 END) as dug,
 				SUM(CASE WHEN fpro.kat = 3 OR fpro.kat = 4 THEN fpro.iznos ELSE 0 END) as pot
-		FROM fpro`, true)
-	qb.AddJoin("left join fkpl on fkpl.idfkpl = fpro.idfkpl")
-
-	if hasGod {
-		qb.AddEqual("fpro.god", session.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("fpro.kar", session.SelectedKar)
-	}
-	qb.AddEqual("fpro.konto", params.Konto)
-	qb.AddCondition("fpro.sifra::numeric", params.OdSifre, ">=")
-	qb.AddCondition("fpro.sifra::numeric", params.DoSifre, "<=")
-	qb.AddCondition("fpro.dadok + fpro.rok", params.PodDatumom, "<=")
-	if params.TipPotrazivanja == "D" {
-		qb.AddCondition("fpro.dadok + fpro.rok", time.Now().AddDate(0, 0, brojDanaInt).Format(common.HtmlLayout), "<=")
-	}
-	if params.TipPregleda == "P" {
-		qb.AddCondition("fpro.dadok + fpro.rok", time.Now().AddDate(0, 0, -brojDanaInt).Format(common.HtmlLayout), ">=")
-	}
-
-	// Add search conditions if search text is provided
-	if params.SearchText != "" && params.SearchText != "undefined" && len(params.SearchText) >= 1 {
-		qb.SetEntityType(reflect.TypeOf(domain.Fpro{}))
-		qb.AddSearchConditions(s.GetPartneriFields(), params.SearchText)
-	}
-	// Add GROUP BY
-	qb.AddGroupBy("fkpl.idfkpl, fpro.konto, fpro.sifra, fkpl.naziv")
-	// Add HAVING clause to filter only partners with both debtor and creditor accounts
-	qb.AddHaving(` 
-       	SUM(CASE WHEN fpro.kat = 1 OR fpro.kat = 2 THEN fpro.iznos ELSE 0 END) -
-		SUM(CASE WHEN fpro.kat = 3 OR fpro.kat = 4 THEN fpro.iznos ELSE 0 END) <> 0`)
-	if !getTotalRecords {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
-	}
-	qb.AddOrderBy("fpro.sifra::numeric")
-	sqlQuery, args := qb.Build()
-	entities, err := s.fproRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
+		FROM fpro`).
+		AddJoin("left join fkpl on fkpl.idfkpl = fpro.idfkpl").
+		AddEqual("fpro.konto", params.Konto)
+	whereDospelaUslovi(b, params, brojDanaInt)
+	// The period of the session (fpro.god/kar) and the search text, if provided.
+	if err := s.fproRepo.ApplyFilters(ctx, b, "fpro", s.GetPartneriFields(), formValue(params.SearchText)); err != nil {
 		return err
 	}
+	// Add GROUP BY
+	b.GroupBy("fkpl.idfkpl", "fpro.konto", "fpro.sifra", "fkpl.naziv").
+		// Add HAVING clause to filter only partners with both debtor and creditor accounts
+		Having(`
+       	SUM(CASE WHEN fpro.kat = 1 OR fpro.kat = 2 THEN fpro.iznos ELSE 0 END) -
+		SUM(CASE WHEN fpro.kat = 3 OR fpro.kat = 4 THEN fpro.iznos ELSE 0 END) <> 0`)
 	// Set total records and pagination
 	if getTotalRecords {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
+		total, err := s.fproRepo.Count(ctx, b)
+		if err != nil {
+			return err
+		}
+		common.SetTableTotalRecords(tbl, total, pageSize)
 		return nil
+	}
+	b.OrderByExpr("fpro.sifra::numeric").
+		Limit(pageSize).
+		Offset((currentPage - 1) * pageSize)
+	entities, err := s.fproRepo.Select(ctx, b)
+	if err != nil {
+		return err
 	}
 	// Populate table rows
 	if entities != nil && len(*entities) > 0 {
@@ -879,43 +925,35 @@ func (s *OtvoreneStavkeResource) GetDospelaPotrazivanjaDetalji(ctx context.Conte
 	}
 
 	common.SetupTablePagination(tbl, currentPage, pageSize)
-	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
 
 	//if we need to get only total records we check the bool gettotalrecords
 	//Get data for the table
-	qb := common.NewQueryBuilder(`SELECT coalesce(case when fpro.vrd = 10 or fpro.vrd = 20 then 'F' 
+	b := querybuilder.New(`SELECT coalesce(case when fpro.vrd = 10 or fpro.vrd = 20 then 'F'
 								  			  when fpro.vrd = 30 or fpro.vrd = 40 then 'U' end, '') as doctype,
 								coalesce(fpro.dokum, '') as dokum, fpro.tra, fpro.ojozn, fpro.nalog, fpro.danal, fpro.dadok, fpro.rok,
 								case when fpro.kat = 1 or fpro.kat = 2 then fpro.iznos else 0 end as dug,
 								case when fpro.kat = 3 or fpro.kat = 4 then fpro.iznos else 0 end as pot,
 								coalesce(fpro.opis, '') as opis, fpro.vrd
-								FROM fpro`, true)
-	if hasGod {
-		qb.AddEqual("fpro.god", session.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("fpro.kar", session.SelectedKar)
-	}
-	qb.AddEqual("fpro.idfkpl", id)
-	// Add search conditions if search text is provided
-	if searchText != "" && searchText != "undefined" && len(searchText) >= 1 {
-		qb.SetEntityType(reflect.TypeOf(domain.Fpro{}))
-		qb.AddSearchConditions(s.GetOtvoreneStavkeDetaljiFields(), searchText)
-	}
-	if !getTotalRecords {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
-	}
-	qb.AddOrderBy("fpro.dokum, fpro.dadok")
-	sqlQuery, args := qb.Build()
-	entities, err := s.fproRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
+								FROM fpro`).
+		Where("fpro.idfkpl = ?", id)
+	if err := s.fproRepo.ApplyFilters(ctx, b, "fpro", s.GetOtvoreneStavkeDetaljiFields(), formValue(searchText)); err != nil {
 		return err
 	}
 	// Set total records and pagination
 	if getTotalRecords {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
+		total, err := s.fproRepo.Count(ctx, b)
+		if err != nil {
+			return err
+		}
+		common.SetTableTotalRecords(tbl, total, pageSize)
 		return nil
+	}
+	b.OrderBy("fpro.dokum, fpro.dadok").
+		Limit(pageSize).
+		Offset((currentPage - 1) * pageSize)
+	entities, err := s.fproRepo.Select(ctx, b)
+	if err != nil {
+		return err
 	}
 	// Populate table rows
 	if entities != nil && len(*entities) > 0 {
@@ -949,37 +987,24 @@ func (s *OtvoreneStavkeResource) GetDospelaPotrazivanjaStampa(ctx context.Contex
 	}
 
 	brojDanaInt, _ := strconv.Atoi(params.BrojDana)
-	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
 
 	// Fetch all partners with due items (no pagination) – same filter as GetDospelaPotrazivanjaPartneri
-	qbP := common.NewQueryBuilder(`SELECT fkpl.idfkpl, fpro.konto, coalesce(fpro.sifra, '') as sifra, fkpl.naziv as nazivanalitike,
+	bP := querybuilder.New(`SELECT fkpl.idfkpl, fpro.konto, coalesce(fpro.sifra, '') as sifra, fkpl.naziv as nazivanalitike,
 		SUM(CASE WHEN fpro.kat = 1 OR fpro.kat = 2 THEN fpro.iznos ELSE 0 END) as dug,
 		SUM(CASE WHEN fpro.kat = 3 OR fpro.kat = 4 THEN fpro.iznos ELSE 0 END) as pot
-		FROM fpro`, true)
-	qbP.AddJoin("left join fkpl on fkpl.idfkpl = fpro.idfkpl")
-	if hasGod {
-		qbP.AddEqual("fpro.god", session.SelectedGod)
+		FROM fpro`).
+		AddJoin("left join fkpl on fkpl.idfkpl = fpro.idfkpl").
+		AddEqual("fpro.konto", params.Konto)
+	whereDospelaUslovi(bP, params, brojDanaInt)
+	if err := s.fproRepo.ApplyFilters(ctx, bP, "fpro", nil, ""); err != nil {
+		return nil, err
 	}
-	if hasKar {
-		qbP.AddEqual("fpro.kar", session.SelectedKar)
-	}
-	qbP.AddEqual("fpro.konto", params.Konto)
-	qbP.AddCondition("fpro.sifra::numeric", params.OdSifre, ">=")
-	qbP.AddCondition("fpro.sifra::numeric", params.DoSifre, "<=")
-	qbP.AddCondition("fpro.dadok + fpro.rok", params.PodDatumom, "<=")
-	if params.TipPotrazivanja == "D" {
-		qbP.AddCondition("fpro.dadok + fpro.rok", time.Now().AddDate(0, 0, brojDanaInt).Format(common.HtmlLayout), "<=")
-	}
-	if params.TipPregleda == "P" {
-		qbP.AddCondition("fpro.dadok + fpro.rok", time.Now().AddDate(0, 0, -brojDanaInt).Format(common.HtmlLayout), ">=")
-	}
-	qbP.AddGroupBy("fkpl.idfkpl, fpro.konto, fpro.sifra, fkpl.naziv")
-	qbP.AddHaving(`SUM(CASE WHEN fpro.kat = 1 OR fpro.kat = 2 THEN fpro.iznos ELSE 0 END) -
-		SUM(CASE WHEN fpro.kat = 3 OR fpro.kat = 4 THEN fpro.iznos ELSE 0 END) <> 0`)
-	qbP.AddOrderBy("fpro.sifra::numeric")
-	sqlP, argsP := qbP.Build()
+	bP.GroupBy("fkpl.idfkpl", "fpro.konto", "fpro.sifra", "fkpl.naziv").
+		Having(`SUM(CASE WHEN fpro.kat = 1 OR fpro.kat = 2 THEN fpro.iznos ELSE 0 END) -
+		SUM(CASE WHEN fpro.kat = 3 OR fpro.kat = 4 THEN fpro.iznos ELSE 0 END) <> 0`).
+		OrderByExpr("fpro.sifra::numeric")
 
-	partneriRows, err := s.fproRepo.GetAllCustom(ctx, sqlP, "", argsP, "", "")
+	partneriRows, err := s.fproRepo.Select(ctx, bP)
 	if err != nil {
 		return nil, err
 	}
@@ -993,25 +1018,23 @@ func (s *OtvoreneStavkeResource) GetDospelaPotrazivanjaStampa(ctx context.Contex
 		}
 
 		// Fetch detail rows for this partner filtered by dospece <= PodDatumom
-		qbD := common.NewQueryBuilder(`SELECT coalesce(case when fpro.vrd = 10 or fpro.vrd = 20 then 'F'
+		bD := querybuilder.New(`SELECT coalesce(case when fpro.vrd = 10 or fpro.vrd = 20 then 'F'
 			when fpro.vrd = 30 or fpro.vrd = 40 then 'U' end, '') as doctype,
 			fpro.dokum, fpro.nalog, fpro.danal, fpro.dadok, fpro.rok,
 			case when fpro.kat = 1 or fpro.kat = 2 then fpro.iznos else 0 end as dug,
 			case when fpro.kat = 3 or fpro.kat = 4 then fpro.iznos else 0 end as pot,
 			fpro.vrd
-			FROM fpro`, true)
-		if hasGod {
-			qbD.AddEqual("fpro.god", session.SelectedGod)
+			FROM fpro`).
+			Where("fpro.idfkpl = ?", pr.IDFkpl)
+		if params.PodDatumom != "" {
+			bD.Where("fpro.dadok + fpro.rok <= ?", params.PodDatumom)
 		}
-		if hasKar {
-			qbD.AddEqual("fpro.kar", session.SelectedKar)
+		if err := s.fproRepo.ApplyFilters(ctx, bD, "fpro", nil, ""); err != nil {
+			return nil, err
 		}
-		qbD.AddEqual("fpro.idfkpl", pr.IDFkpl)
-		qbD.AddCondition("fpro.dadok + fpro.rok", params.PodDatumom, "<=")
-		qbD.AddOrderBy("fpro.nalog, fpro.dadok")
-		sqlD, argsD := qbD.Build()
+		bD.OrderBy("fpro.nalog, fpro.dadok")
 
-		detalji, err := s.fproRepo.GetAllCustom(ctx, sqlD, "", argsD, "", "")
+		detalji, err := s.fproRepo.Select(ctx, bD)
 		if err != nil {
 			return nil, err
 		}
@@ -1051,30 +1074,12 @@ func (s *OtvoreneStavkeResource) GetPregledPotrazivanjaObaveze(ctx context.Conte
 		return fmt.Errorf("user session not found")
 	}
 
-	// Validate interval parameters - must be numeric only to prevent SQL injection
-	intervals := map[string]string{
-		"dospece15":  params.Dospece15,
-		"dospece30":  params.Dospece30,
-		"dospece60":  params.Dospece60,
-		"dospece90":  params.Dospece90,
-		"dospece120": params.Dospece120,
-	}
-
-	for name, value := range intervals {
-		if !regexp.MustCompile(`^\d+$`).MatchString(value) {
-			return fmt.Errorf("invalid %s parameter: must be numeric", name)
-		}
+	dani, err := dospeceDani(params)
+	if err != nil {
+		return err
 	}
 
 	common.SetupTablePagination(tbl, currentPage, pageSize)
-	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
-
-	// Build age bucket intervals
-	interval15 := params.Dospece15 + " days"
-	interval30 := params.Dospece30 + " days"
-	interval60 := params.Dospece60 + " days"
-	interval90 := params.Dospece90 + " days"
-	interval120 := params.Dospece120 + " days"
 
 	// Determine vkonta based on tipPregleda (K=kupci, D=dobavljaci)
 	vrd1 := ""
@@ -1089,94 +1094,36 @@ func (s *OtvoreneStavkeResource) GetPregledPotrazivanjaObaveze(ctx context.Conte
 	}
 
 	// Get data for the table with age bucket categorization
-	qb := common.NewQueryBuilder(fmt.Sprintf(`
-		SELECT
-			fpro.konto, 
-			coalesce(fpro.sifra, '') as sifra, 
-			fkpl.naziv as nazivanalitike,
-			-- Total realized amount (invoices only)
-			SUM(CASE WHEN fpro.vrd IN ($1) THEN fpro.iznos ELSE 0 END) as realizacija,
-			-- Total payments
-			SUM(CASE WHEN fpro.vrd IN ($2) THEN fpro.iznos ELSE 0 END) as placeno,
-			-- Already due (past state date)
-			SUM(CASE WHEN fpro.vrd IN ($1) AND fpro.dadok IS NOT NULL AND (fpro.dadok + fpro.rok)::date <= '%s'::date
-					THEN fpro.iznos ELSE 0 END) as dospelarealizacija,
-			-- Due 0-N days from state date (using dospece15)
-			SUM(CASE WHEN fpro.vrd IN ($1) 
-					AND (fpro.dadok + fpro.rok)::date > '%s'::date 
-					AND (fpro.dadok + fpro.rok)::date <= ('%s'::date + INTERVAL '`+interval15+`')::date
-					THEN fpro.iznos ELSE 0 END) as dospece15,
-			-- Due (dospece15+1)-N days from state date (using dospece30)
-			SUM(CASE WHEN fpro.vrd IN ($1) 
-			 		AND (fpro.dadok + fpro.rok)::date > ('%s'::date + INTERVAL '`+interval15+`')::date 
-			 		AND (fpro.dadok + fpro.rok)::date <= ('%s'::date + INTERVAL '`+interval30+`')::date
-			 		THEN fpro.iznos ELSE 0 END) as dospece30,
-			-- Due (dospece30+1)-N days from state date (using dospece60)
-			SUM(CASE WHEN fpro.vrd IN ($1) 
-			 		AND (fpro.dadok + fpro.rok)::date > ('%s'::date + INTERVAL '`+interval30+`')::date 
-			 		AND (fpro.dadok + fpro.rok)::date <= ('%s'::date + INTERVAL '`+interval60+`')::date
-			 		THEN fpro.iznos ELSE 0 END) as dospece60,
-			-- Due (dospece60+1)-N days from state date (using dospece90)
-			SUM(CASE WHEN fpro.vrd IN ($1) 
-			 		AND (fpro.dadok + fpro.rok)::date > ('%s'::date + INTERVAL '`+interval60+`')::date 
-			 		AND (fpro.dadok + fpro.rok)::date <= ('%s'::date + INTERVAL '`+interval90+`')::date
-			 		THEN fpro.iznos ELSE 0 END) as dospece90,
-			-- Due (dospece90+1)-N days from state date (using dospece120)
-			SUM(CASE WHEN fpro.vrd IN ($1) 
-			 		AND (fpro.dadok + fpro.rok)::date > ('%s'::date + INTERVAL '`+interval90+`')::date 
-			 		AND (fpro.dadok + fpro.rok)::date <= ('%s'::date + INTERVAL '`+interval120+`')::date
-			 		THEN fpro.iznos ELSE 0 END) as dospece120,
-			-- Due more than dospece120 days from state date
-			SUM(CASE WHEN fpro.vrd IN ($1) 
-			 		AND (fpro.dadok + fpro.rok)::date > ('%s'::date + INTERVAL '`+interval120+`')::date
-			 		THEN fpro.iznos ELSE 0 END) as dospece120plus
-		FROM fpro
-	`, params.StanjeNaDan, params.StanjeNaDan, params.StanjeNaDan, params.StanjeNaDan,
-		params.StanjeNaDan, params.StanjeNaDan, params.StanjeNaDan, params.StanjeNaDan,
-		params.StanjeNaDan, params.StanjeNaDan, params.StanjeNaDan, params.StanjeNaDan), true)
-	qb.AddJoin("left join fkpl on fkpl.idfkpl = fpro.idfkpl")
-
-	qb.AddArgs(vrd1, vrd2)
-	if hasGod {
-		qb.AddEqual("fpro.god", session.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("fpro.kar", session.SelectedKar)
-	}
-
-	qb.AddCondition("fpro.konto::numeric", params.OdKonta, ">=")
-	qb.AddCondition("fpro.konto::numeric", params.DoKonta, "<=")
-	qb.AddCondition("NULLIF(fpro.sifra, '')::numeric", params.OdSifre, ">=")
-	qb.AddCondition("NULLIF(fpro.sifra, '')::numeric", params.DoSifre, "<=")
-	qb.AddCondition("fpro.dadok", params.StanjeNaDan, "<=")
-	qb.AddIn("fpro.vrd", []interface{}{vrd1, vrd2})
-
-	// Add search conditions if search text is provided
-	if params.SearchText != "" && params.SearchText != "undefined" && len(params.SearchText) >= 1 {
-		qb.SetEntityType(reflect.TypeOf(domain.Fpro{}))
-		qb.AddSearchConditions(s.GetPartneriFields(), params.SearchText)
-	}
-
-	// Add GROUP BY
-	qb.AddGroupBy("fpro.konto, fpro.sifra, fkpl.naziv")
-
-	if !getTotalRecords {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
-	}
-	qb.AddOrderBy("NULLIF(fpro.sifra, '')::numeric")
-
-	sqlQuery, args := qb.Build()
-
-	entities, err := s.fproRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
+	kolone, koloneArgs := dospeceKolone(true, []any{vrd1}, []any{vrd2}, "(fpro.dadok + fpro.rok)::date", params.StanjeNaDan, dani)
+	b := querybuilder.New(`SELECT fpro.konto, coalesce(fpro.sifra, '') as sifra, fkpl.naziv as nazivanalitike,
+			`+kolone+`
+		FROM fpro`, koloneArgs...).
+		AddJoin("left join fkpl on fkpl.idfkpl = fpro.idfkpl")
+	wherePregledKontaSifre(b, params)
+	b.AddCondition("fpro.dadok", params.StanjeNaDan, "<=").
+		AddIn("fpro.vrd", []any{vrd1, vrd2})
+	// The period of the session (fpro.god/kar) and the search text, if provided.
+	if err := s.fproRepo.ApplyFilters(ctx, b, "fpro", s.GetPartneriFields(), formValue(params.SearchText)); err != nil {
 		return err
 	}
+	// Add GROUP BY
+	b.GroupBy("fpro.konto", "fpro.sifra", "fkpl.naziv")
 
 	// Set total records and pagination
 	if getTotalRecords {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
+		total, err := s.fproRepo.Count(ctx, b)
+		if err != nil {
+			return err
+		}
+		common.SetTableTotalRecords(tbl, total, pageSize)
 		return nil
+	}
+	b.OrderByExpr("NULLIF(fpro.sifra, '')::numeric").
+		Limit(pageSize).
+		Offset((currentPage - 1) * pageSize)
+	entities, err := s.fproRepo.Select(ctx, b)
+	if err != nil {
+		return err
 	}
 
 	// Populate table rows
@@ -1214,24 +1161,10 @@ func (s *OtvoreneStavkeResource) GetPregledPotrazivanjaObavezeStampa(ctx context
 		return nil, fmt.Errorf("user session not found")
 	}
 
-	// Validate interval parameters - must be numeric only to prevent SQL injection
-	for name, value := range map[string]string{
-		"dospece15": params.Dospece15, "dospece30": params.Dospece30,
-		"dospece60": params.Dospece60, "dospece90": params.Dospece90,
-		"dospece120": params.Dospece120,
-	} {
-		if !regexp.MustCompile(`^\d+$`).MatchString(value) {
-			return nil, fmt.Errorf("invalid %s parameter: must be numeric", name)
-		}
+	dani, err := dospeceDani(params)
+	if err != nil {
+		return nil, err
 	}
-
-	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
-	sd := params.StanjeNaDan
-	i15 := params.Dospece15 + " days"
-	i30 := params.Dospece30 + " days"
-	i60 := params.Dospece60 + " days"
-	i90 := params.Dospece90 + " days"
-	i120 := params.Dospece120 + " days"
 
 	vrd1, vrd2 := "", ""
 	switch params.TipPregleda {
@@ -1241,60 +1174,24 @@ func (s *OtvoreneStavkeResource) GetPregledPotrazivanjaObavezeStampa(ctx context
 		vrd1, vrd2 = "20", "40"
 	}
 
-	qbP := common.NewQueryBuilder(fmt.Sprintf(`
-		SELECT fpro.konto, coalesce(fpro.sifra, '') as sifra, fkpl.idfkpl,
+	kolone, koloneArgs := dospeceKolone(true, []any{vrd1}, []any{vrd2}, "(fpro.dadok + fpro.rok)::date", params.StanjeNaDan, dani)
+	bP := querybuilder.New(`SELECT fpro.konto, coalesce(fpro.sifra, '') as sifra, fkpl.idfkpl,
 			fkpl.naziv as nazivanalitike,
 			COALESCE(p.mesto, '') as mesto,
-			SUM(CASE WHEN fpro.vrd IN ($1) THEN fpro.iznos ELSE 0 END) as realizacija,
-			SUM(CASE WHEN fpro.vrd IN ($2) THEN fpro.iznos ELSE 0 END) as placeno,
-			SUM(CASE WHEN fpro.vrd IN ($1) AND fpro.dadok IS NOT NULL
-				AND (fpro.dadok + fpro.rok)::date <= '%s'::date
-				THEN fpro.iznos ELSE 0 END) as dospelarealizacija,
-			SUM(CASE WHEN fpro.vrd IN ($1)
-				AND (fpro.dadok + fpro.rok)::date > '%s'::date
-				AND (fpro.dadok + fpro.rok)::date <= ('%s'::date + INTERVAL '`+i15+`')::date
-				THEN fpro.iznos ELSE 0 END) as dospece15,
-			SUM(CASE WHEN fpro.vrd IN ($1)
-				AND (fpro.dadok + fpro.rok)::date > ('%s'::date + INTERVAL '`+i15+`')::date
-				AND (fpro.dadok + fpro.rok)::date <= ('%s'::date + INTERVAL '`+i30+`')::date
-				THEN fpro.iznos ELSE 0 END) as dospece30,
-			SUM(CASE WHEN fpro.vrd IN ($1)
-				AND (fpro.dadok + fpro.rok)::date > ('%s'::date + INTERVAL '`+i30+`')::date
-				AND (fpro.dadok + fpro.rok)::date <= ('%s'::date + INTERVAL '`+i60+`')::date
-				THEN fpro.iznos ELSE 0 END) as dospece60,
-			SUM(CASE WHEN fpro.vrd IN ($1)
-				AND (fpro.dadok + fpro.rok)::date > ('%s'::date + INTERVAL '`+i60+`')::date
-				AND (fpro.dadok + fpro.rok)::date <= ('%s'::date + INTERVAL '`+i90+`')::date
-				THEN fpro.iznos ELSE 0 END) as dospece90,
-			SUM(CASE WHEN fpro.vrd IN ($1)
-				AND (fpro.dadok + fpro.rok)::date > ('%s'::date + INTERVAL '`+i90+`')::date
-				AND (fpro.dadok + fpro.rok)::date <= ('%s'::date + INTERVAL '`+i120+`')::date
-				THEN fpro.iznos ELSE 0 END) as dospece120,
-			SUM(CASE WHEN fpro.vrd IN ($1)
-				AND (fpro.dadok + fpro.rok)::date > ('%s'::date + INTERVAL '`+i120+`')::date
-				THEN fpro.iznos ELSE 0 END) as dospece120plus
-		FROM fpro`,
-		sd, sd, sd, sd, sd, sd, sd, sd, sd, sd, sd, sd), true)
-	qbP.AddJoin("LEFT JOIN fkpl ON fkpl.idfkpl = fpro.idfkpl")
-	qbP.AddJoin("LEFT JOIN partneri p ON p.idpartneri = fkpl.idpartneri")
-	qbP.AddArgs(vrd1, vrd2)
-	if hasGod {
-		qbP.AddEqual("fpro.god", session.SelectedGod)
+			`+kolone+`
+		FROM fpro`, koloneArgs...).
+		AddJoin("LEFT JOIN fkpl ON fkpl.idfkpl = fpro.idfkpl").
+		AddJoin("LEFT JOIN partneri p ON p.idpartneri = fkpl.idpartneri")
+	wherePregledKontaSifre(bP, params)
+	bP.AddCondition("fpro.dadok", params.StanjeNaDan, "<=").
+		AddIn("fpro.vrd", []any{vrd1, vrd2})
+	if err := s.fproRepo.ApplyFilters(ctx, bP, "fpro", nil, ""); err != nil {
+		return nil, err
 	}
-	if hasKar {
-		qbP.AddEqual("fpro.kar", session.SelectedKar)
-	}
-	qbP.AddCondition("fpro.konto::numeric", params.OdKonta, ">=")
-	qbP.AddCondition("fpro.konto::numeric", params.DoKonta, "<=")
-	qbP.AddCondition("NULLIF(fpro.sifra, '')::numeric", params.OdSifre, ">=")
-	qbP.AddCondition("NULLIF(fpro.sifra, '')::numeric", params.DoSifre, "<=")
-	qbP.AddCondition("fpro.dadok", params.StanjeNaDan, "<=")
-	qbP.AddIn("fpro.vrd", []interface{}{vrd1, vrd2})
-	qbP.AddGroupBy("fpro.konto, fpro.sifra, fkpl.idfkpl, fkpl.naziv, p.mesto")
-	qbP.AddOrderBy("NULLIF(fpro.sifra, '')::numeric")
-	sqlP, argsP := qbP.Build()
+	bP.GroupBy("fpro.konto", "fpro.sifra", "fkpl.idfkpl", "fkpl.naziv", "p.mesto").
+		OrderByExpr("NULLIF(fpro.sifra, '')::numeric")
 
-	partneriRows, err := s.fproRepo.GetAllCustom(ctx, sqlP, "", argsP, "", "")
+	partneriRows, err := s.fproRepo.Select(ctx, bP)
 	if err != nil {
 		return nil, err
 	}
@@ -1319,52 +1216,19 @@ func (s *OtvoreneStavkeResource) GetPregledPotrazivanjaObavezeStampa(ctx context
 		}
 
 		// Detail rows per document for this partner
-		qbD := common.NewQueryBuilder(fmt.Sprintf(`
-			SELECT fpro.dokum, fpro.dadok, fpro.rok,
-				CASE WHEN fpro.vrd IN ($1) THEN fpro.iznos ELSE 0 END as realizacija,
-				CASE WHEN fpro.vrd IN ($2) THEN fpro.iznos ELSE 0 END as placeno,
-				CASE WHEN fpro.vrd IN ($1) AND fpro.dadok IS NOT NULL
-					AND (fpro.dadok + fpro.rok)::date <= '%s'::date
-					THEN fpro.iznos ELSE 0 END as dospelarealizacija,
-				CASE WHEN fpro.vrd IN ($1)
-					AND (fpro.dadok + fpro.rok)::date > '%s'::date
-					AND (fpro.dadok + fpro.rok)::date <= ('%s'::date + INTERVAL '`+i15+`')::date
-					THEN fpro.iznos ELSE 0 END as dospece15,
-				CASE WHEN fpro.vrd IN ($1)
-					AND (fpro.dadok + fpro.rok)::date > ('%s'::date + INTERVAL '`+i15+`')::date
-					AND (fpro.dadok + fpro.rok)::date <= ('%s'::date + INTERVAL '`+i30+`')::date
-					THEN fpro.iznos ELSE 0 END as dospece30,
-				CASE WHEN fpro.vrd IN ($1)
-					AND (fpro.dadok + fpro.rok)::date > ('%s'::date + INTERVAL '`+i30+`')::date
-					AND (fpro.dadok + fpro.rok)::date <= ('%s'::date + INTERVAL '`+i60+`')::date
-					THEN fpro.iznos ELSE 0 END as dospece60,
-				CASE WHEN fpro.vrd IN ($1)
-					AND (fpro.dadok + fpro.rok)::date > ('%s'::date + INTERVAL '`+i60+`')::date
-					AND (fpro.dadok + fpro.rok)::date <= ('%s'::date + INTERVAL '`+i90+`')::date
-					THEN fpro.iznos ELSE 0 END as dospece90,
-				CASE WHEN fpro.vrd IN ($1)
-					AND (fpro.dadok + fpro.rok)::date > ('%s'::date + INTERVAL '`+i90+`')::date
-					AND (fpro.dadok + fpro.rok)::date <= ('%s'::date + INTERVAL '`+i120+`')::date
-					THEN fpro.iznos ELSE 0 END as dospece120,
-				CASE WHEN fpro.vrd IN ($1)
-					AND (fpro.dadok + fpro.rok)::date > ('%s'::date + INTERVAL '`+i120+`')::date
-					THEN fpro.iznos ELSE 0 END as dospece120plus
-			FROM fpro`,
-			sd, sd, sd, sd, sd, sd, sd, sd, sd, sd, sd, sd), true)
-		qbD.AddArgs(vrd1, vrd2)
-		if hasGod {
-			qbD.AddEqual("fpro.god", session.SelectedGod)
+		koloneD, koloneDArgs := dospeceKolone(false, []any{vrd1}, []any{vrd2}, "(fpro.dadok + fpro.rok)::date", params.StanjeNaDan, dani)
+		bD := querybuilder.New(`SELECT fpro.dokum, fpro.dadok, fpro.rok,
+				`+koloneD+`
+			FROM fpro`, koloneDArgs...).
+			Where("fpro.idfkpl = ?", pr.IDFkpl).
+			AddCondition("fpro.dadok", params.StanjeNaDan, "<=").
+			AddIn("fpro.vrd", []any{vrd1, vrd2})
+		if err := s.fproRepo.ApplyFilters(ctx, bD, "fpro", nil, ""); err != nil {
+			return nil, err
 		}
-		if hasKar {
-			qbD.AddEqual("fpro.kar", session.SelectedKar)
-		}
-		qbD.AddEqual("fpro.idfkpl", pr.IDFkpl)
-		qbD.AddCondition("fpro.dadok", params.StanjeNaDan, "<=")
-		qbD.AddIn("fpro.vrd", []interface{}{vrd1, vrd2})
-		qbD.AddOrderBy("fpro.dadok, fpro.dokum")
-		sqlD, argsD := qbD.Build()
+		bD.OrderBy("fpro.dadok, fpro.dokum")
 
-		detalji, err := s.fproRepo.GetAllCustom(ctx, sqlD, "", argsD, "", "")
+		detalji, err := s.fproRepo.Select(ctx, bD)
 		if err != nil {
 			return nil, err
 		}
@@ -1399,127 +1263,50 @@ func (s *OtvoreneStavkeResource) GetPregledDugovanjaPoStarosti(ctx context.Conte
 		return fmt.Errorf("user session not found")
 	}
 
-	// Validate interval parameters - must be numeric only to prevent SQL injection
-	intervals := map[string]string{
-		"dospece15":  params.Dospece15,
-		"dospece30":  params.Dospece30,
-		"dospece60":  params.Dospece60,
-		"dospece90":  params.Dospece90,
-		"dospece120": params.Dospece120,
-	}
-
-	for name, value := range intervals {
-		if !regexp.MustCompile(`^\d+$`).MatchString(value) {
-			return fmt.Errorf("invalid %s parameter: must be numeric", name)
-		}
-	}
-
-	common.SetupTablePagination(tbl, currentPage, pageSize)
-	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
-
-	// Build age bucket intervals
-	interval15 := params.Dospece15 + " days"
-	interval30 := params.Dospece30 + " days"
-	interval60 := params.Dospece60 + " days"
-	interval90 := params.Dospece90 + " days"
-	interval120 := params.Dospece120 + " days"
-
-	// Get data for the table with age bucket categorization
-	qb := common.NewQueryBuilder(fmt.Sprintf(`
-		SELECT
-			fpro.konto, 
-			fpro.sifra, 
-			fkpl.naziv as nazivanalitike,
-			-- Total realized amount (invoices only)
-			SUM(CASE WHEN fpro.vrd IN (10, 20) THEN fpro.iznos ELSE 0 END) as realizacija,
-			-- Total payments
-			SUM(CASE WHEN fpro.vrd IN (30, 40) THEN fpro.iznos ELSE 0 END) as placeno,
-			-- Already due (past state date)
-			SUM(CASE WHEN fpro.vrd IN (10, 20) AND fpro.dadok IS NOT NULL AND fpro.dadok::date <= '%s'::date
-					THEN fpro.iznos ELSE 0 END) as dospelarealizacija,
-			-- Due 0-N days from state date (using dospece15)
-			SUM(CASE WHEN fpro.vrd IN (10, 20) 
-					AND (fpro.dadok + fpro.rok)::date > '%s'::date 
-					AND (fpro.dadok + fpro.rok)::date <= ('%s'::date + INTERVAL '`+interval15+`')::date
-					THEN fpro.iznos ELSE 0 END) as dospece15,
-			-- Due (dospece15+1)-N days from state date (using dospece30)
-			SUM(CASE WHEN fpro.vrd IN (10, 20) 
-			 		AND (fpro.dadok + fpro.rok)::date > ('%s'::date + INTERVAL '`+interval15+`')::date 
-			 		AND (fpro.dadok + fpro.rok)::date <= ('%s'::date + INTERVAL '`+interval30+`')::date
-			 		THEN fpro.iznos ELSE 0 END) as dospece30,
-			-- Due (dospece30+1)-N days from state date (using dospece60)
-			SUM(CASE WHEN fpro.vrd IN (10, 20) 
-			 		AND (fpro.dadok + fpro.rok)::date > ('%s'::date + INTERVAL '`+interval30+`')::date 
-			 		AND (fpro.dadok + fpro.rok)::date <= ('%s'::date + INTERVAL '`+interval60+`')::date
-			 		THEN fpro.iznos ELSE 0 END) as dospece60,
-			-- Due (dospece60+1)-N days from state date (using dospece90)
-			SUM(CASE WHEN fpro.vrd IN (10, 20) 
-			 		AND (fpro.dadok + fpro.rok)::date > ('%s'::date + INTERVAL '`+interval60+`')::date 
-			 		AND (fpro.dadok + fpro.rok)::date <= ('%s'::date + INTERVAL '`+interval90+`')::date
-			 		THEN fpro.iznos ELSE 0 END) as dospece90,
-			-- Due (dospece90+1)-N days from state date (using dospece120)
-			SUM(CASE WHEN fpro.vrd IN (10, 20) 
-			 		AND (fpro.dadok + fpro.rok)::date > ('%s'::date + INTERVAL '`+interval90+`')::date 
-			 		AND (fpro.dadok + fpro.rok)::date <= ('%s'::date + INTERVAL '`+interval120+`')::date
-			 		THEN fpro.iznos ELSE 0 END) as dospece120,
-			-- Due more than dospece120 days from state date
-			SUM(CASE WHEN fpro.vrd IN (10, 20) 
-			 		AND (fpro.dadok + fpro.rok)::date > ('%s'::date + INTERVAL '`+interval120+`')::date
-			 		THEN fpro.iznos ELSE 0 END) as dospece120plus
-		FROM fpro
-	`, params.StanjeNaDan, params.StanjeNaDan, params.StanjeNaDan, params.StanjeNaDan,
-		params.StanjeNaDan, params.StanjeNaDan, params.StanjeNaDan, params.StanjeNaDan,
-		params.StanjeNaDan, params.StanjeNaDan, params.StanjeNaDan, params.StanjeNaDan), true)
-	qb.AddJoin("left join fkpl on fkpl.idfkpl = fpro.idfkpl")
-
-	if hasGod {
-		qb.AddEqual("fpro.god", session.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("fpro.kar", session.SelectedKar)
-	}
-
-	// Determine vkonta based on tipPregleda (K=kupci, D=dobavljaci)
-	if params.TipPregleda == "K" {
-		//qb.AddEqual("fpro.vkonta", "2")
-	} else if params.TipPregleda == "D" {
-		//qb.AddEqual("fpro.vkonta", "1")
-	}
-
-	qb.AddCondition("fpro.konto", params.OdKonta, ">=")
-	qb.AddCondition("fpro.konto", params.DoKonta, "<=")
-	qb.AddCondition("fpro.sifra", params.OdSifre, ">=")
-	qb.AddCondition("fpro.sifra", params.DoSifre, "<=")
-
-	// Add search conditions if search text is provided
-	if params.SearchText != "" && params.SearchText != "undefined" && len(params.SearchText) >= 1 {
-		qb.SetEntityType(reflect.TypeOf(domain.Fpro{}))
-		qb.AddSearchConditions(s.GetPartneriFields(), params.SearchText)
-	}
-
-	// Add GROUP BY
-	qb.AddGroupBy("fpro.konto, fpro.sifra, fkpl.naziv")
-
-	// Add HAVING clause to filter partners with non-zero totals
-	// qb.AddHaving(`SUM(CASE WHEN fpro.vrd IN (10, 20) THEN fpro.iznos ELSE 0 END) <> 0`)
-
-	if !getTotalRecords {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
-	}
-	qb.AddOrderBy("fpro.sifra::numeric")
-
-	sqlQuery, args := qb.Build()
-
-	entities, err := s.fproRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	dani, err := dospeceDani(params)
 	if err != nil {
 		return err
 	}
 
+	common.SetupTablePagination(tbl, currentPage, pageSize)
+
+	// Get data for the table with age bucket categorization
+	kolone, koloneArgs := dospeceKolone(true, []any{10, 20}, []any{30, 40}, "fpro.dadok::date", params.StanjeNaDan, dani)
+	b := querybuilder.New(`SELECT fpro.konto, fpro.sifra, fkpl.naziv as nazivanalitike,
+			`+kolone+`
+		FROM fpro`, koloneArgs...).
+		AddJoin("left join fkpl on fkpl.idfkpl = fpro.idfkpl").
+		// (The vkonta by tipPregleda, K=2 / D=1, is not applied: it was commented out.)
+		AddCondition("fpro.konto", params.OdKonta, ">=").
+		AddCondition("fpro.konto", params.DoKonta, "<=").
+		AddCondition("fpro.sifra", params.OdSifre, ">=").
+		AddCondition("fpro.sifra", params.DoSifre, "<=")
+	// The period of the session (fpro.god/kar) and the search text, if provided.
+	if err := s.fproRepo.ApplyFilters(ctx, b, "fpro", s.GetPartneriFields(), formValue(params.SearchText)); err != nil {
+		return err
+	}
+
+	// Add GROUP BY
+	b.GroupBy("fpro.konto", "fpro.sifra", "fkpl.naziv")
+
+	// Add HAVING clause to filter partners with non-zero totals
+	// b.Having(`SUM(CASE WHEN fpro.vrd IN (10, 20) THEN fpro.iznos ELSE 0 END) <> 0`)
+
 	// Set total records and pagination
 	if getTotalRecords {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
+		total, err := s.fproRepo.Count(ctx, b)
+		if err != nil {
+			return err
+		}
+		common.SetTableTotalRecords(tbl, total, pageSize)
 		return nil
+	}
+	b.OrderByExpr("fpro.sifra::numeric").
+		Limit(pageSize).
+		Offset((currentPage - 1) * pageSize)
+	entities, err := s.fproRepo.Select(ctx, b)
+	if err != nil {
+		return err
 	}
 
 	// Populate table rows
@@ -1557,79 +1344,30 @@ func (s *OtvoreneStavkeResource) GetPregledDugovanjaPoStarostiStampa(ctx context
 		return fmt.Errorf("user session not found")
 	}
 
-	// Validate interval parameters - must be numeric only to prevent SQL injection
-	for name, value := range map[string]string{
-		"dospece15": params.Dospece15, "dospece30": params.Dospece30,
-		"dospece60": params.Dospece60, "dospece90": params.Dospece90,
-		"dospece120": params.Dospece120,
-	} {
-		if !regexp.MustCompile(`^\d+$`).MatchString(value) {
-			return fmt.Errorf("invalid %s parameter: must be numeric", name)
-		}
+	dani, err := dospeceDani(params)
+	if err != nil {
+		return err
 	}
-	// val15, _ := strconv.Atoi(params.Dospece15)
-	// val30, _ := strconv.Atoi(params.Dospece30)
-	// val60, _ := strconv.Atoi(params.Dospece60)
-	// val90, _ := strconv.Atoi(params.Dospece90)
-	// dana := translator.Label("Dana")
-	hasGod, hasKar := s.fproRepo.GetHasGodHasKar()
-	sd := params.StanjeNaDan
-	i15 := params.Dospece15 + " days"
-	i30 := params.Dospece30 + " days"
-	i60 := params.Dospece60 + " days"
-	i90 := params.Dospece90 + " days"
-	i120 := params.Dospece120 + " days"
 
-	qb := common.NewQueryBuilder(fmt.Sprintf(`
-		SELECT fpro.konto, fpro.sifra, fkpl.idfkpl,
+	kolone, koloneArgs := dospeceKolone(true, []any{10, 20}, []any{30, 40}, "fpro.dadok::date", params.StanjeNaDan, dani)
+	b := querybuilder.New(`SELECT fpro.konto, fpro.sifra, fkpl.idfkpl,
 			fkpl.naziv as nazivanalitike,
 			COALESCE(p.mesto, '') as mesto,
-			SUM(CASE WHEN fpro.vrd IN (10, 20) THEN fpro.iznos ELSE 0 END) as realizacija,
-			SUM(CASE WHEN fpro.vrd IN (30, 40) THEN fpro.iznos ELSE 0 END) as placeno,
-			SUM(CASE WHEN fpro.vrd IN (10, 20) AND fpro.dadok IS NOT NULL AND fpro.dadok::date <= '%s'::date
-					THEN fpro.iznos ELSE 0 END) as dospelarealizacija,
-			SUM(CASE WHEN fpro.vrd IN (10, 20)
-					AND (fpro.dadok + fpro.rok)::date > '%s'::date
-					AND (fpro.dadok + fpro.rok)::date <= ('%s'::date + INTERVAL '`+i15+`')::date
-					THEN fpro.iznos ELSE 0 END) as dospece15,
-			SUM(CASE WHEN fpro.vrd IN (10, 20)
-					AND (fpro.dadok + fpro.rok)::date > ('%s'::date + INTERVAL '`+i15+`')::date
-					AND (fpro.dadok + fpro.rok)::date <= ('%s'::date + INTERVAL '`+i30+`')::date
-					THEN fpro.iznos ELSE 0 END) as dospece30,
-			SUM(CASE WHEN fpro.vrd IN (10, 20)
-					AND (fpro.dadok + fpro.rok)::date > ('%s'::date + INTERVAL '`+i30+`')::date
-					AND (fpro.dadok + fpro.rok)::date <= ('%s'::date + INTERVAL '`+i60+`')::date
-					THEN fpro.iznos ELSE 0 END) as dospece60,
-			SUM(CASE WHEN fpro.vrd IN (10, 20)
-					AND (fpro.dadok + fpro.rok)::date > ('%s'::date + INTERVAL '`+i60+`')::date
-					AND (fpro.dadok + fpro.rok)::date <= ('%s'::date + INTERVAL '`+i90+`')::date
-					THEN fpro.iznos ELSE 0 END) as dospece90,
-			SUM(CASE WHEN fpro.vrd IN (10, 20)
-					AND (fpro.dadok + fpro.rok)::date > ('%s'::date + INTERVAL '`+i90+`')::date
-					AND (fpro.dadok + fpro.rok)::date <= ('%s'::date + INTERVAL '`+i120+`')::date
-					THEN fpro.iznos ELSE 0 END) as dospece120,
-			SUM(CASE WHEN fpro.vrd IN (10, 20)
-					AND (fpro.dadok + fpro.rok)::date > ('%s'::date + INTERVAL '`+i120+`')::date
-					THEN fpro.iznos ELSE 0 END) as dospece120plus
-		FROM fpro`,
-		sd, sd, sd, sd, sd, sd, sd, sd, sd, sd, sd, sd), true)
-	qb.AddJoin("LEFT JOIN fkpl ON fkpl.idfkpl = fpro.idfkpl")
-	qb.AddJoin("LEFT JOIN partneri p ON p.idpartneri = fkpl.idpartneri")
-	if hasGod {
-		qb.AddEqual("fpro.god", session.SelectedGod)
+			`+kolone+`
+		FROM fpro`, koloneArgs...).
+		AddJoin("LEFT JOIN fkpl ON fkpl.idfkpl = fpro.idfkpl").
+		AddJoin("LEFT JOIN partneri p ON p.idpartneri = fkpl.idpartneri").
+		AddCondition("fpro.konto", params.OdKonta, ">=").
+		AddCondition("fpro.konto", params.DoKonta, "<=").
+		AddCondition("fpro.sifra", params.OdSifre, ">=").
+		AddCondition("fpro.sifra", params.DoSifre, "<=")
+	if err := s.fproRepo.ApplyFilters(ctx, b, "fpro", nil, ""); err != nil {
+		return err
 	}
-	if hasKar {
-		qb.AddEqual("fpro.kar", session.SelectedKar)
-	}
-	qb.AddCondition("fpro.konto", params.OdKonta, ">=")
-	qb.AddCondition("fpro.konto", params.DoKonta, "<=")
-	qb.AddCondition("fpro.sifra", params.OdSifre, ">=")
-	qb.AddCondition("fpro.sifra", params.DoSifre, "<=")
-	qb.AddGroupBy("fpro.konto, fpro.sifra, fkpl.idfkpl, fkpl.naziv, p.mesto")
-	qb.AddOrderBy("fpro.sifra::numeric")
-	sqlQuery, argsQuery := qb.Build()
+	b.GroupBy("fpro.konto", "fpro.sifra", "fkpl.idfkpl", "fkpl.naziv", "p.mesto").
+		OrderByExpr("fpro.sifra::numeric")
 
-	entities, err := s.fproRepo.GetAllCustom(ctx, sqlQuery, "", argsQuery, "", "")
+	entities, err := s.fproRepo.Select(ctx, b)
 	if err != nil {
 		return err
 	}
@@ -1733,7 +1471,7 @@ func (s *OtvoreneStavkeResource) GetFvrData(ctx context.Context) (domain.Fvr, er
 	if s.fvrRepo == nil {
 		return domain.Fvr{}, fmt.Errorf("fvrRepo not initialized")
 	}
-	return common.GetFvrData(ctx, s.fvrRepo)
+	return repository.GetFvrData(ctx, s.fvrRepo)
 }
 func (s *OtvoreneStavkeResource) GetPotrazivanjaDugovanjaStampaFields() []domain.Fields {
 	return s.fieldsPotrazivanjaDugovanjaStampa

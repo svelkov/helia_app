@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"helia/internal/domain"
+	"helia/internal/infrastructure/db/querybuilder"
 	"helia/internal/repository"
 
 	helcommon "helia/internal/common"
@@ -123,17 +124,8 @@ func NewCommonService(
 // GetMagacinComboValues returns "mag - opis" of every magacin of the current period, keyed by
 // magaciniid (the key most screens store in their magaciniid column).
 func (s *CommonResource) GetMagacinComboValues(ctx context.Context, opts ...ComboOption) ([]domain.ComboItem, error) {
-	session, err := sessionFrom(ctx)
-	if err != nil {
-		return nil, err
-	}
-	qb := helcommon.NewQueryBuilder("select magaciniid, mag, opis from magacini", true)
-	hasGod, hasKar := s.magaciniRepo.GetHasGodHasKar()
-	qb.AddGodKarConditions(hasGod, hasKar, session.SelectedGod, session.SelectedKar)
-	applyComboFilters(qb, opts)
-	qb.AddOrderBy("mag")
-	query, args := qb.Build()
-	items, err := comboQuery(ctx, s.magaciniRepo, query, args,
+	b := querybuilder.New("select magaciniid, mag, opis from magacini").OrderBy("mag")
+	items, err := comboQuery(ctx, &s.magaciniRepo, b, "", opts,
 		func(m domain.Magacini) string { return fmt.Sprintf("%d", m.MagaciniID) },
 		func(m domain.Magacini) string { return fmt.Sprintf("%d - %s", m.Mag, m.Opis) })
 	if err != nil {
@@ -145,17 +137,8 @@ func (s *CommonResource) GetMagacinComboValues(ctx context.Context, opts ...Comb
 // GetMagacinByMagComboValues returns "mag - opis" of every magacin of the current period, keyed by
 // mag (the screens that filter by mag, e.g. robno stanje/promet, need this flavour).
 func (s *CommonResource) GetMagacinByMagComboValues(ctx context.Context, opts ...ComboOption) ([]domain.ComboItem, error) {
-	session, err := sessionFrom(ctx)
-	if err != nil {
-		return nil, err
-	}
-	qb := helcommon.NewQueryBuilder("select mag, opis from magacini", true)
-	hasGod, hasKar := s.magaciniRepo.GetHasGodHasKar()
-	qb.AddGodKarConditions(hasGod, hasKar, session.SelectedGod, session.SelectedKar)
-	applyComboFilters(qb, opts)
-	qb.AddOrderBy("mag")
-	query, args := qb.Build()
-	items, err := comboQuery(ctx, s.magaciniRepo, query, args,
+	b := querybuilder.New("select mag, opis from magacini").OrderBy("mag")
+	items, err := comboQuery(ctx, &s.magaciniRepo, b, "", opts,
 		func(m domain.Magacini) string { return fmt.Sprintf("%d", m.Mag) },
 		func(m domain.Magacini) string { return fmt.Sprintf("%d - %s", m.Mag, m.Opis) })
 	if err != nil {
@@ -174,15 +157,12 @@ func (s *CommonResource) GetMagacinKorisnikaComboValues(ctx context.Context, opt
 	if err != nil {
 		return nil, err
 	}
-	qb := helcommon.NewQueryBuilder(`select distinct magacini.magaciniid, magacini.mag, magacini.opis
-		from magacini inner join maguser on maguser.mag = magacini.mag`, true)
-	hasGod, hasKar := s.magaciniRepo.GetHasGodHasKar()
-	qb.AddGodKarConditions(hasGod, hasKar, session.SelectedGod, session.SelectedKar)
-	qb.AddEqual("upper(maguser.iduser)", strings.ToUpper(strings.TrimSpace(session.UserName)))
-	applyComboFilters(qb, opts)
-	qb.AddOrderBy("magacini.mag")
-	query, args := qb.Build()
-	items, err := comboQuery(ctx, s.magaciniRepo, query, args,
+	// Where (not AddEqual): a session without a user name must not see every magacin.
+	b := querybuilder.New(`select distinct magacini.magaciniid, magacini.mag, magacini.opis
+		from magacini inner join maguser on maguser.mag = magacini.mag`).
+		Where("upper(maguser.iduser) = ?", strings.ToUpper(strings.TrimSpace(session.UserName))).
+		OrderBy("magacini.mag")
+	items, err := comboQuery(ctx, &s.magaciniRepo, b, "magacini", opts,
 		func(m domain.Magacini) string { return fmt.Sprintf("%d", m.MagaciniID) },
 		func(m domain.Magacini) string { return fmt.Sprintf("%d - %s", m.Mag, m.Opis) })
 	if err != nil {
@@ -198,17 +178,8 @@ func (s *CommonResource) GetMagacinKorisnikaComboValues(ctx context.Context, opt
 // GetTipdokComboValues returns "tipdok - opis" of the current period keyed by the tipdok code
 // (what documents store in their tipdok column).
 func (s *CommonResource) GetTipdokComboValues(ctx context.Context, opts ...ComboOption) ([]domain.ComboItem, error) {
-	session, err := sessionFrom(ctx)
-	if err != nil {
-		return nil, err
-	}
-	qb := helcommon.NewQueryBuilder("select tipdok, opis from tipdok", true)
-	hasGod, hasKar := s.tipdokRepo.GetHasGodHasKar()
-	qb.AddGodKarConditions(hasGod, hasKar, session.SelectedGod, session.SelectedKar)
-	applyComboFilters(qb, opts)
-	qb.AddOrderBy("tipdok::numeric")
-	query, args := qb.Build()
-	items, err := comboQuery(ctx, s.tipdokRepo, query, args,
+	b := querybuilder.New("select tipdok, opis from tipdok").OrderByExpr("tipdok::numeric")
+	items, err := comboQuery(ctx, &s.tipdokRepo, b, "", opts,
 		func(t domain.Tipdok) string { return t.TipDok },
 		func(t domain.Tipdok) string { return fmt.Sprintf("%s - %s", t.TipDok, t.Opis) })
 	if err != nil {
@@ -220,17 +191,8 @@ func (s *CommonResource) GetTipdokComboValues(ctx context.Context, opts ...Combo
 // GetTipdokIDComboValues is the same list keyed by idtipdok (used by the screens that filter by
 // the tipdok id).
 func (s *CommonResource) GetTipdokIDComboValues(ctx context.Context, opts ...ComboOption) ([]domain.ComboItem, error) {
-	session, err := sessionFrom(ctx)
-	if err != nil {
-		return nil, err
-	}
-	qb := helcommon.NewQueryBuilder("select idtipdok, tipdok, opis from tipdok", true)
-	hasGod, hasKar := s.tipdokRepo.GetHasGodHasKar()
-	qb.AddGodKarConditions(hasGod, hasKar, session.SelectedGod, session.SelectedKar)
-	applyComboFilters(qb, opts)
-	qb.AddOrderBy("tipdok::numeric")
-	query, args := qb.Build()
-	items, err := comboQuery(ctx, s.tipdokRepo, query, args,
+	b := querybuilder.New("select idtipdok, tipdok, opis from tipdok").OrderByExpr("tipdok::numeric")
+	items, err := comboQuery(ctx, &s.tipdokRepo, b, "", opts,
 		func(t domain.Tipdok) string { return fmt.Sprintf("%d", t.IDTipDok) },
 		func(t domain.Tipdok) string { return fmt.Sprintf("%s - %s", t.TipDok, t.Opis) })
 	if err != nil {
@@ -258,17 +220,14 @@ func (s *CommonResource) GetTipdokIDByCode(ctx context.Context, tipdok string) (
 // GetTipdokByCode returns the vrsta naloga of the tipdok code in the current period with its groups
 // (grpdok), the vrste dokumenata (grpvrd) and the magacini (magacin) it allows.
 func (s *CommonResource) GetTipdokByCode(ctx context.Context, tipdok string) (domain.Tipdok, error) {
-	session, err := sessionFrom(ctx)
-	if err != nil {
+	// Where (not AddEqual): an empty code must not return an arbitrary tipdok.
+	b := querybuilder.New(`select idtipdok, tipdok, opis, coalesce(grpdok, '') as grpdok,
+		coalesce(grpvrd, '') as grpvrd, coalesce(magacin, '') as magacin from tipdok`).
+		Where("tipdok = ?", tipdok)
+	if err := s.tipdokRepo.ApplyFilters(ctx, b, "", nil, ""); err != nil {
 		return domain.Tipdok{}, err
 	}
-	qb := helcommon.NewQueryBuilder(`select idtipdok, tipdok, opis, coalesce(grpdok, '') as grpdok,
-		coalesce(grpvrd, '') as grpvrd, coalesce(magacin, '') as magacin from tipdok`, true)
-	hasGod, hasKar := s.tipdokRepo.GetHasGodHasKar()
-	qb.AddGodKarConditions(hasGod, hasKar, session.SelectedGod, session.SelectedKar)
-	qb.AddEqual("tipdok", tipdok)
-	query, args := qb.Build()
-	entities, err := s.tipdokRepo.GetAllCustom(ctx, query, "", args, "", "")
+	entities, err := s.tipdokRepo.Select(ctx, b)
 	if err != nil {
 		return domain.Tipdok{}, err
 	}
@@ -284,17 +243,8 @@ func (s *CommonResource) GetTipdokByCode(ctx context.Context, tipdok string) (do
 
 // GetVrstaDokumentaComboValues returns "vrd - opis" of every vrsta dokumenta of the current period.
 func (s *CommonResource) GetVrstaDokumentaComboValues(ctx context.Context, opts ...ComboOption) ([]domain.ComboItem, error) {
-	session, err := sessionFrom(ctx)
-	if err != nil {
-		return nil, err
-	}
-	qb := helcommon.NewQueryBuilder("select vrd, opis from dokvrsta", true)
-	hasGod, hasKar := s.dokvrstaRepo.GetHasGodHasKar()
-	qb.AddGodKarConditions(hasGod, hasKar, session.SelectedGod, session.SelectedKar)
-	applyComboFilters(qb, opts)
-	qb.AddOrderBy("vrd")
-	query, args := qb.Build()
-	items, err := comboQuery(ctx, s.dokvrstaRepo, query, args,
+	b := querybuilder.New("select vrd, opis from dokvrsta").OrderBy("vrd")
+	items, err := comboQuery(ctx, &s.dokvrstaRepo, b, "", opts,
 		func(d domain.Dokvrsta) string { return fmt.Sprintf("%d", d.Vrd) },
 		func(d domain.Dokvrsta) string { return fmt.Sprintf("%d - %s", d.Vrd, d.Opis) })
 	if err != nil {
@@ -309,17 +259,8 @@ func (s *CommonResource) GetVrstaDokumentaComboValues(ctx context.Context, opts 
 
 // GetOrgJedComboValues returns "ojozn - naziv" of every organizaciona jedinica of the current period.
 func (s *CommonResource) GetOrgJedComboValues(ctx context.Context, opts ...ComboOption) ([]domain.ComboItem, error) {
-	session, err := sessionFrom(ctx)
-	if err != nil {
-		return nil, err
-	}
-	qb := helcommon.NewQueryBuilder("select idorgjed, ojozn, naziv from orgjed", true)
-	hasGod, hasKar := s.orgjedRepo.GetHasGodHasKar()
-	qb.AddGodKarConditions(hasGod, hasKar, session.SelectedGod, session.SelectedKar)
-	applyComboFilters(qb, opts)
-	qb.AddOrderBy("ojozn")
-	query, args := qb.Build()
-	items, err := comboQuery(ctx, s.orgjedRepo, query, args,
+	b := querybuilder.New("select idorgjed, ojozn, naziv from orgjed").OrderBy("ojozn")
+	items, err := comboQuery(ctx, &s.orgjedRepo, b, "", opts,
 		func(o domain.Orgjed) string { return fmt.Sprintf("%d", o.IDOrgjed) },
 		func(o domain.Orgjed) string { return fmt.Sprintf("%s - %s", o.OjOzn, o.Naziv) })
 	if err != nil {
@@ -331,20 +272,11 @@ func (s *CommonResource) GetOrgJedComboValues(ctx context.Context, opts ...Combo
 // GetMestoTroskaComboValues returns "mtroska - opis" of the mesta troška of one organizaciona
 // jedinica (idOrgjed = 0 returns the mesta troška of every organizaciona jedinica).
 func (s *CommonResource) GetMestoTroskaComboValues(ctx context.Context, idOrgjed int64, opts ...ComboOption) ([]domain.ComboItem, error) {
-	session, err := sessionFrom(ctx)
-	if err != nil {
-		return nil, err
-	}
-	qb := helcommon.NewQueryBuilder("select mestotrid, mtroska, opis from mestotr", true)
-	hasGod, hasKar := s.mestotrRepo.GetHasGodHasKar()
-	qb.AddGodKarConditions(hasGod, hasKar, session.SelectedGod, session.SelectedKar)
+	b := querybuilder.New("select mestotrid, mtroska, opis from mestotr").OrderBy("mtroska")
 	if idOrgjed != 0 {
-		qb.AddEqual("idorgjed", idOrgjed)
+		b.Where("idorgjed = ?", idOrgjed)
 	}
-	applyComboFilters(qb, opts)
-	qb.AddOrderBy("mtroska")
-	query, args := qb.Build()
-	items, err := comboQuery(ctx, s.mestotrRepo, query, args,
+	items, err := comboQuery(ctx, &s.mestotrRepo, b, "", opts,
 		func(m domain.Mestotr) string { return fmt.Sprintf("%d", m.MestoTrID) },
 		func(m domain.Mestotr) string { return fmt.Sprintf("%s - %s", m.Mtroska, m.Opis) })
 	if err != nil {
@@ -359,17 +291,8 @@ func (s *CommonResource) GetMestoTroskaComboValues(ctx context.Context, idOrgjed
 
 // GetRobneGrupeComboValues returns "gru - naziv" of every robna grupa of the current period.
 func (s *CommonResource) GetRobneGrupeComboValues(ctx context.Context, opts ...ComboOption) ([]domain.ComboItem, error) {
-	session, err := sessionFrom(ctx)
-	if err != nil {
-		return nil, err
-	}
-	qb := helcommon.NewQueryBuilder("select gru, naziv from rgru", true)
-	hasGod, hasKar := s.rgruRepo.GetHasGodHasKar()
-	qb.AddGodKarConditions(hasGod, hasKar, session.SelectedGod, session.SelectedKar)
-	applyComboFilters(qb, opts)
-	qb.AddOrderBy("gru")
-	query, args := qb.Build()
-	items, err := comboQuery(ctx, s.rgruRepo, query, args,
+	b := querybuilder.New("select gru, naziv from rgru").OrderBy("gru")
+	items, err := comboQuery(ctx, &s.rgruRepo, b, "", opts,
 		func(g domain.Rgru) string { return fmt.Sprintf("%d", g.Gru) },
 		func(g domain.Rgru) string { return fmt.Sprintf("%d - %s", g.Gru, g.Naziv) })
 	if err != nil {
@@ -381,20 +304,11 @@ func (s *CommonResource) GetRobneGrupeComboValues(ctx context.Context, opts ...C
 // GetRobnePodgrupeComboValues returns "pgru - naziv" of the robne podgrupe of one robna grupa
 // (gru = 0 returns the podgrupe of every grupa).
 func (s *CommonResource) GetRobnePodgrupeComboValues(ctx context.Context, gru int, opts ...ComboOption) ([]domain.ComboItem, error) {
-	session, err := sessionFrom(ctx)
-	if err != nil {
-		return nil, err
-	}
-	qb := helcommon.NewQueryBuilder("select gru, pgru, naziv from rpgru", true)
-	hasGod, hasKar := s.rpgruRepo.GetHasGodHasKar()
-	qb.AddGodKarConditions(hasGod, hasKar, session.SelectedGod, session.SelectedKar)
+	b := querybuilder.New("select gru, pgru, naziv from rpgru").OrderBy("gru, pgru")
 	if gru != 0 {
-		qb.AddEqual("gru", gru)
+		b.Where("gru = ?", gru)
 	}
-	applyComboFilters(qb, opts)
-	qb.AddOrderBy("gru, pgru")
-	query, args := qb.Build()
-	items, err := comboQuery(ctx, s.rpgruRepo, query, args,
+	items, err := comboQuery(ctx, &s.rpgruRepo, b, "", opts,
 		func(p domain.Rpgru) string { return fmt.Sprintf("%d", p.Pgru) },
 		func(p domain.Rpgru) string { return fmt.Sprintf("%d - %s", p.Pgru, p.Naziv) })
 	if err != nil {
@@ -409,17 +323,8 @@ func (s *CommonResource) GetRobnePodgrupeComboValues(ctx context.Context, gru in
 
 // GetValuteComboValues returns "sifval - naziv" of every valuta of the current period.
 func (s *CommonResource) GetValuteComboValues(ctx context.Context, opts ...ComboOption) ([]domain.ComboItem, error) {
-	session, err := sessionFrom(ctx)
-	if err != nil {
-		return nil, err
-	}
-	qb := helcommon.NewQueryBuilder("select idvalute, sifval, naziv from valute", true)
-	hasGod, hasKar := s.valuteRepo.GetHasGodHasKar()
-	qb.AddGodKarConditions(hasGod, hasKar, session.SelectedGod, session.SelectedKar)
-	applyComboFilters(qb, opts)
-	qb.AddOrderBy("sifval")
-	query, args := qb.Build()
-	items, err := comboQuery(ctx, s.valuteRepo, query, args,
+	b := querybuilder.New("select idvalute, sifval, naziv from valute").OrderBy("sifval")
+	items, err := comboQuery(ctx, &s.valuteRepo, b, "", opts,
 		func(v domain.Valute) string { return fmt.Sprintf("%d", v.IDValute) },
 		func(v domain.Valute) string { return fmt.Sprintf("%d - %s", v.Sifval, v.Naziv.String) })
 	if err != nil {
@@ -431,17 +336,8 @@ func (s *CommonResource) GetValuteComboValues(ctx context.Context, opts ...Combo
 // GetKomercijalistiComboValues returns "sifkom - imeprezime" of every komercijalista of the
 // current period.
 func (s *CommonResource) GetKomercijalistiComboValues(ctx context.Context, opts ...ComboOption) ([]domain.ComboItem, error) {
-	session, err := sessionFrom(ctx)
-	if err != nil {
-		return nil, err
-	}
-	qb := helcommon.NewQueryBuilder("select komid, sifkom, imeprezime from komercijalisti", true)
-	hasGod, hasKar := s.komercijalistiRepo.GetHasGodHasKar()
-	qb.AddGodKarConditions(hasGod, hasKar, session.SelectedGod, session.SelectedKar)
-	applyComboFilters(qb, opts)
-	qb.AddOrderBy("sifkom")
-	query, args := qb.Build()
-	items, err := comboQuery(ctx, s.komercijalistiRepo, query, args,
+	b := querybuilder.New("select komid, sifkom, imeprezime from komercijalisti").OrderBy("sifkom")
+	items, err := comboQuery(ctx, &s.komercijalistiRepo, b, "", opts,
 		func(k domain.Komercijalisti) string { return fmt.Sprintf("%d", k.KomID) },
 		func(k domain.Komercijalisti) string { return fmt.Sprintf("%d - %s", k.Sifkom, k.ImePrezime) })
 	if err != nil {
@@ -453,17 +349,8 @@ func (s *CommonResource) GetKomercijalistiComboValues(ctx context.Context, opts 
 // GetMestoIsporukeComboValues returns "mi - naziv" of every mesto isporuke (fisp) of the current
 // period.
 func (s *CommonResource) GetMestoIsporukeComboValues(ctx context.Context, opts ...ComboOption) ([]domain.ComboItem, error) {
-	session, err := sessionFrom(ctx)
-	if err != nil {
-		return nil, err
-	}
-	qb := helcommon.NewQueryBuilder("select fispid, mi, naziv from fisp", true)
-	hasGod, hasKar := s.fispRepo.GetHasGodHasKar()
-	qb.AddGodKarConditions(hasGod, hasKar, session.SelectedGod, session.SelectedKar)
-	applyComboFilters(qb, opts)
-	qb.AddOrderBy("mi")
-	query, args := qb.Build()
-	items, err := comboQuery(ctx, s.fispRepo, query, args,
+	b := querybuilder.New("select fispid, mi, naziv from fisp").OrderBy("mi")
+	items, err := comboQuery(ctx, &s.fispRepo, b, "", opts,
 		func(m domain.Fisp) string { return fmt.Sprintf("%d", m.FispID) },
 		func(m domain.Fisp) string { return fmt.Sprintf("%d - %s", m.MI, m.Naziv) })
 	if err != nil {
@@ -474,17 +361,8 @@ func (s *CommonResource) GetMestoIsporukeComboValues(ctx context.Context, opts .
 
 // GetBankeComboValues returns "bnkcod - banka" of every banka of the current period.
 func (s *CommonResource) GetBankeComboValues(ctx context.Context, opts ...ComboOption) ([]domain.ComboItem, error) {
-	session, err := sessionFrom(ctx)
-	if err != nil {
-		return nil, err
-	}
-	qb := helcommon.NewQueryBuilder("select idbanke, banka, bnkcod from banke", true)
-	hasGod, hasKar := s.bankeRepo.GetHasGodHasKar()
-	qb.AddGodKarConditions(hasGod, hasKar, session.SelectedGod, session.SelectedKar)
-	applyComboFilters(qb, opts)
-	qb.AddOrderBy("banka")
-	query, args := qb.Build()
-	items, err := comboQuery(ctx, s.bankeRepo, query, args,
+	b := querybuilder.New("select idbanke, banka, bnkcod from banke").OrderBy("banka")
+	items, err := comboQuery(ctx, &s.bankeRepo, b, "", opts,
 		func(b domain.Banke) string { return fmt.Sprintf("%d", b.IDBanke) },
 		func(b domain.Banke) string { return fmt.Sprintf("%s - %s", b.BnkCod, b.Banka) })
 	if err != nil {
@@ -496,15 +374,10 @@ func (s *CommonResource) GetBankeComboValues(ctx context.Context, opts ...ComboO
 // GetTipoviAnalitikeComboValues returns the tipovi analitike (partners, komercijalisti, ...) that
 // can be attached to a konto.
 func (s *CommonResource) GetTipoviAnalitikeComboValues(ctx context.Context, opts ...ComboOption) ([]domain.ComboItem, error) {
-	qb := helcommon.NewQueryBuilder("select tipanalitikeid, naziv from tipanalitike", true)
-	if session := domain.GetSessionFromStdContext(ctx); session != nil {
-		hasGod, hasKar := s.tipanalitikeRepo.GetHasGodHasKar()
-		qb.AddGodKarConditions(hasGod, hasKar, session.SelectedGod, session.SelectedKar)
-	}
-	applyComboFilters(qb, opts)
-	qb.AddOrderBy("tipanalitikeid")
-	query, args := qb.Build()
-	items, err := comboQuery(ctx, s.tipanalitikeRepo, query, args,
+	// tipanalitike has no god/kar, so the list is the same for every period and also works before
+	// login (the repository asks for the session only for tables with god/kar).
+	b := querybuilder.New("select tipanalitikeid, naziv from tipanalitike").OrderBy("tipanalitikeid")
+	items, err := comboQuery(ctx, &s.tipanalitikeRepo, b, "", opts,
 		func(t domain.Tipanalitike) string { return fmt.Sprintf("%d", t.TipanalitikeID) },
 		func(t domain.Tipanalitike) string { return t.Naziv })
 	if err != nil {
@@ -515,17 +388,8 @@ func (s *CommonResource) GetTipoviAnalitikeComboValues(ctx context.Context, opts
 
 // GetJediniceMereComboValues returns "jm - opis" of every jedinica mere of the current period.
 func (s *CommonResource) GetJediniceMereComboValues(ctx context.Context, opts ...ComboOption) ([]domain.ComboItem, error) {
-	session, err := sessionFrom(ctx)
-	if err != nil {
-		return nil, err
-	}
-	qb := helcommon.NewQueryBuilder("select jm, opis from jedmere", true)
-	hasGod, hasKar := s.jedmereRepo.GetHasGodHasKar()
-	qb.AddGodKarConditions(hasGod, hasKar, session.SelectedGod, session.SelectedKar)
-	applyComboFilters(qb, opts)
-	qb.AddOrderBy("jm")
-	query, args := qb.Build()
-	items, err := comboQuery(ctx, s.jedmereRepo, query, args,
+	b := querybuilder.New("select jm, opis from jedmere").OrderBy("jm")
+	items, err := comboQuery(ctx, &s.jedmereRepo, b, "", opts,
 		func(j domain.Jedmere) string { return j.JM },
 		func(j domain.Jedmere) string { return fmt.Sprintf("%s - %s", j.JM, j.Opis) })
 	if err != nil {
@@ -538,18 +402,10 @@ func (s *CommonResource) GetJediniceMereComboValues(ctx context.Context, opts ..
 // (fvknjrac) for the given vktip (KIR/KPR) of the current period. The caller can append its own
 // "999 - Sve knjige" option.
 func (s *CommonResource) GetTipovePoreskihKnjigaComboValues(ctx context.Context, vkTip string, opts ...ComboOption) ([]domain.ComboItem, error) {
-	session, err := sessionFrom(ctx)
-	if err != nil {
-		return nil, err
-	}
-	qb := helcommon.NewQueryBuilder("select vkrbr, opis from fvknjrac", true)
-	hasGod, hasKar := s.fvknjracRepo.GetHasGodHasKar()
-	qb.AddGodKarConditions(hasGod, hasKar, session.SelectedGod, session.SelectedKar)
-	qb.AddEqual("vktip", vkTip)
-	applyComboFilters(qb, opts)
-	qb.AddOrderBy("vktip asc, vkrbr asc")
-	query, args := qb.Build()
-	items, err := comboQuery(ctx, s.fvknjracRepo, query, args,
+	b := querybuilder.New("select vkrbr, opis from fvknjrac").
+		AddEqual("vktip", vkTip). // optional: an empty vkTip lists the knjige of every vktip
+		OrderBy("vktip asc, vkrbr asc")
+	items, err := comboQuery(ctx, &s.fvknjracRepo, b, "", opts,
 		func(f domain.Fvknjrac) string { return fmt.Sprintf("%d", f.VkRbr) },
 		func(f domain.Fvknjrac) string { return fmt.Sprintf("%d - %s", f.VkRbr, f.Opis) })
 	if err != nil {
@@ -565,23 +421,20 @@ func (s *CommonResource) GetTipovePoreskihKnjigaComboValues(ctx context.Context,
 // GetNextFnalNalog returns the next broj naloga (max(nalog) + 1) of the given vrsta naloga in the
 // current period for the financial nalozi (fnal).
 func (s *CommonResource) GetNextFnalNalog(ctx context.Context, tipdok string) (int64, error) {
-	return nextNalogQuery(ctx, s.fnalRepo, "fnal", tipdok, func(f domain.Fnal) int64 { return f.Nalog })
+	return nextNalogQuery(ctx, &s.fnalRepo, "fnal", tipdok, func(f domain.Fnal) int64 { return f.Nalog })
 }
 
 // GetFnalByTipdokNalog returns the financial nalog (fnal) of the vrsta naloga and broj naloga in the
 // current period (found false when there is none).
 func (s *CommonResource) GetFnalByTipdokNalog(ctx context.Context, tipdok string, nalog int) (domain.Fnal, bool, error) {
-	session, err := sessionFrom(ctx)
-	if err != nil {
+	// Where (not AddEqual): both are the key of the nalog; an empty tipdok must not match any nalog.
+	b := querybuilder.New("select idfnal, tipdok, nalog, danal from fnal").
+		Where("tipdok = ?", tipdok).
+		Where("nalog = ?", nalog)
+	if err := s.fnalRepo.ApplyFilters(ctx, b, "", nil, ""); err != nil {
 		return domain.Fnal{}, false, err
 	}
-	qb := helcommon.NewQueryBuilder("select idfnal, tipdok, nalog, danal from fnal", true)
-	hasGod, hasKar := s.fnalRepo.GetHasGodHasKar()
-	qb.AddGodKarConditions(hasGod, hasKar, session.SelectedGod, session.SelectedKar)
-	qb.AddEqual("tipdok", tipdok)
-	qb.AddEqual("nalog", nalog)
-	query, args := qb.Build()
-	entities, err := s.fnalRepo.GetAllCustom(ctx, query, "", args, "", "")
+	entities, err := s.fnalRepo.Select(ctx, b)
 	if err != nil {
 		return domain.Fnal{}, false, err
 	}
@@ -594,7 +447,7 @@ func (s *CommonResource) GetFnalByTipdokNalog(ctx context.Context, tipdok string
 // GetNextRnalNalog returns the next broj naloga (max(nalog) + 1) of the given vrsta naloga in the
 // current period for the robni nalozi (rnal).
 func (s *CommonResource) GetNextRnalNalog(ctx context.Context, tipdok string) (int64, error) {
-	return nextNalogQuery(ctx, s.rnalRepo, "rnal", tipdok, func(r domain.RobnoDokumentaDto) int64 { return int64(r.Nalog) })
+	return nextNalogQuery(ctx, &s.rnalRepo, "rnal", tipdok, func(r domain.RobnoDokumentaDto) int64 { return int64(r.Nalog) })
 }
 
 //
@@ -615,7 +468,7 @@ type comboConfig struct {
 	emptyKey   string
 	emptyValue string
 	// filters are added to the where of the query of the combo (with its parameters).
-	filters []func(*helcommon.QueryBuilder)
+	filters []func(*querybuilder.Builder)
 }
 
 // WithEqual keeps the rows whose column field equals value (the condition is skipped for a nil or
@@ -623,7 +476,7 @@ type comboConfig struct {
 // input); the value is passed as a parameter of the query.
 func WithEqual(field string, value any) ComboOption {
 	return func(c *comboConfig) {
-		c.filters = append(c.filters, func(qb *helcommon.QueryBuilder) { qb.AddEqual(field, value) })
+		c.filters = append(c.filters, func(b *querybuilder.Builder) { b.AddEqual(field, value) })
 	}
 }
 
@@ -635,7 +488,7 @@ func WithIn[T any](field string, values ...T) ComboOption {
 		for _, v := range values {
 			in = append(in, v)
 		}
-		c.filters = append(c.filters, func(qb *helcommon.QueryBuilder) { qb.AddIn(field, in) })
+		c.filters = append(c.filters, func(b *querybuilder.Builder) { b.AddIn(field, in) })
 	}
 }
 
@@ -646,7 +499,7 @@ func WithGrupeDokumenata(grupe ...string) ComboOption {
 }
 
 // applyComboFilters adds the filters of the options to the query of a combo.
-func applyComboFilters(qb *helcommon.QueryBuilder, opts []ComboOption) {
+func applyComboFilters(b *querybuilder.Builder, opts []ComboOption) {
 	cfg := comboConfig{}
 	for _, opt := range opts {
 		if opt != nil {
@@ -654,7 +507,7 @@ func applyComboFilters(qb *helcommon.QueryBuilder, opts []ComboOption) {
 		}
 	}
 	for _, filter := range cfg.filters {
-		filter(qb)
+		filter(b)
 	}
 }
 
@@ -693,9 +546,14 @@ func withOptions(items []domain.ComboItem, opts []ComboOption) []domain.ComboIte
 	return result
 }
 
-// comboQuery runs a combo query and maps every row to a domain.ComboItem.
-func comboQuery[T any](ctx context.Context, repo repository.BaseRepository[T], query string, args []any, key func(T) string, value func(T) string) ([]domain.ComboItem, error) {
-	entities, err := repo.GetAllCustom(ctx, query, "", args, "", "")
+// comboQuery limits the combo query b to the period of the session (columns qualified with alias,
+// "" for none), adds the filters of the options, runs it and maps every row to a domain.ComboItem.
+func comboQuery[T any](ctx context.Context, repo *repository.BaseRepository[T], b *querybuilder.Builder, alias string, opts []ComboOption, key func(T) string, value func(T) string) ([]domain.ComboItem, error) {
+	if err := repo.ApplyFilters(ctx, b, alias, nil, ""); err != nil {
+		return nil, err
+	}
+	applyComboFilters(b, opts)
+	entities, err := repo.Select(ctx, b)
 	if err != nil {
 		return nil, err
 	}
@@ -708,17 +566,14 @@ func comboQuery[T any](ctx context.Context, repo repository.BaseRepository[T], q
 
 // nextNalogQuery runs the "next broj naloga" query (max(nalog) + 1 of the given tipdok in the
 // current period) against any nalog table (fnal, rnal).
-func nextNalogQuery[T any](ctx context.Context, repo repository.BaseRepository[T], table, tipdok string, nalog func(T) int64) (int64, error) {
-	session, err := sessionFrom(ctx)
-	if err != nil {
+func nextNalogQuery[T any](ctx context.Context, repo *repository.BaseRepository[T], table, tipdok string, nalog func(T) int64) (int64, error) {
+	// Where (not AddEqual): the next broj is per vrsta naloga, also for an empty tipdok.
+	b := querybuilder.New("select coalesce(max(nalog), 0) + 1 as nalog from "+querybuilder.QuoteIdent(table)).
+		Where("tipdok = ?", tipdok)
+	if err := repo.ApplyFilters(ctx, b, "", nil, ""); err != nil {
 		return 0, err
 	}
-	qb := helcommon.NewQueryBuilder(fmt.Sprintf("select coalesce(max(nalog), 0) + 1 as nalog from %s", table), true)
-	hasGod, hasKar := repo.GetHasGodHasKar()
-	qb.AddGodKarConditions(hasGod, hasKar, session.SelectedGod, session.SelectedKar)
-	qb.AddEqual("tipdok", tipdok)
-	query, args := qb.Build()
-	entities, err := repo.GetAllCustom(ctx, query, "", args, "", "")
+	entities, err := repo.Select(ctx, b)
 	if err != nil {
 		return 0, err
 	}

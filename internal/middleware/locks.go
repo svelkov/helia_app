@@ -2,10 +2,11 @@ package middleware
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"helia/internal/common"
+	"helia/internal/domain"
 	"helia/internal/infrastructure/db"
+	"helia/internal/repository"
 	"log"
 	"net/http"
 	"strconv"
@@ -15,153 +16,90 @@ import (
 )
 
 // EntityLock represents a lock record in the database
-type EntityLock struct {
-	ID         int64     `db:"id"`
-	EntityType string    `db:"entitytype"`
-	EntityID   int64     `db:"entityid"`
-	LockedBy   string    `db:"lockedby"`
-	LockedAt   time.Time `db:"lockedat"`
-	ExpiresAt  time.Time `db:"expiresat"`
-}
+type EntityLock = domain.EntityLock
 
-// LockService handles entity locking and unlocking
+// LockService handles entity locking and unlocking; the SQL is in repository.LockRepository.
 type LockService struct {
-	db db.Database
+	repo *repository.LockRepository
 }
 
 // NewLockService creates a new lock service
 func NewLockService(dbInst db.Database) *LockService {
-	return &LockService{db: dbInst}
+	return &LockService{repo: repository.NewLockRepository(dbInst)}
 }
 
 // Lock attempts to acquire a lock on an entity
 // Returns error if lock is already held by another user
 func (s *LockService) Lock(ctx context.Context, entityType string, entityId int64, userId string) error {
 	expiresAt := time.Now().Add(10 * time.Minute)
-	tx, err := s.db.Beginx()
+	tx, err := s.repo.BeginTx()
 	if err != nil {
 		return fmt.Errorf("could not begin transaction: %w", err)
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	// Try to insert a new lock record
-	qb := common.NewQueryBuilder(`INSERT INTO entitylocks 
-	(entitytype, entityid, lockedby, expiresat) VALUES ($1, $2, $3, $4)
-	ON CONFLICT (entitytype, entityid) DO NOTHING`, false)
-
-	qb.AddArgs(entityType, entityId, userId, expiresAt)
-
-	sqlQuery, args := qb.Build()
-	result, err := tx.ExecContext(ctx, sqlQuery, args...)
+	inserted, err := s.repo.InsertTx(ctx, tx, entityType, entityId, userId, expiresAt)
 	if err != nil {
-		return fmt.Errorf("database error: %w", err)
+		return err
+	}
+	if inserted {
+		return tx.Commit()
 	}
 
-	rows, err := result.RowsAffected()
+	// Lock already exists, check who holds it
+	lockedBy, expiresBy, found, err := s.repo.HolderTx(ctx, tx, entityType, entityId, true)
 	if err != nil {
-		return fmt.Errorf("rows affected error: %w", err)
+		return err
+	}
+	if !found {
+		return fmt.Errorf("entity lock state changed, please retry")
 	}
 
-	if rows == 0 {
-		// Lock already exists, check who holds it
-		var lockedBy string
-		var expiresBy time.Time
-		err := tx.QueryRowContext(ctx,
-			`SELECT lockedby, expiresat
-			 FROM entitylocks
-			 WHERE entitytype = $1 AND entityid = $2
-			 FOR UPDATE`,
-			entityType, entityId,
-		).Scan(&lockedBy, &expiresBy)
-
-		if err != nil && err != sql.ErrNoRows {
-			return fmt.Errorf("query error: %w", err)
+	// If lock is expired, try to delete and re-lock
+	if expiresBy.Before(time.Now()) {
+		if err := s.repo.DeleteTx(ctx, tx, entityType, entityId, true); err != nil {
+			return err
 		}
-		if err == sql.ErrNoRows {
-			return fmt.Errorf("entity lock state changed, please retry")
+		if _, err := s.repo.InsertTx(ctx, tx, entityType, entityId, userId, expiresAt); err != nil {
+			return err
 		}
-
-		// If lock is expired, try to delete and re-lock
-		if expiresBy.Before(time.Now()) {
-			_, err := tx.ExecContext(ctx,
-				`DELETE FROM entitylocks
-				 WHERE entitytype = $1 AND entityid = $2 AND expiresat < NOW()`,
-				entityType, entityId,
-			)
-			if err != nil {
-				return fmt.Errorf("delete expired lock error: %w", err)
-			}
-
-			_, err = tx.ExecContext(ctx,
-				`INSERT INTO entitylocks (entitytype, entityid, lockedby, expiresat)
-				 VALUES ($1, $2, $3, $4)
-				 ON CONFLICT (entitytype, entityid) DO NOTHING`,
-				entityType, entityId, userId, expiresAt,
-			)
-			if err != nil {
-				return fmt.Errorf("re-lock error: %w", err)
-			}
-
-			return tx.Commit()
-		}
-
-		if lockedBy == userId {
-			// User owns this lock, refresh expiry
-			_, err := tx.ExecContext(ctx,
-				`UPDATE entitylocks
-				 SET expiresat = $1
-				 WHERE entitytype = $2 AND entityid = $3 AND lockedby = $4`,
-				expiresAt, entityType, entityId, userId,
-			)
-			if err != nil {
-				return err
-			}
-			return tx.Commit()
-		}
-
-		return fmt.Errorf("entity locked by another user")
+		return tx.Commit()
 	}
 
-	return tx.Commit()
+	if lockedBy == userId {
+		// User owns this lock, refresh expiry
+		if err := s.repo.RefreshTx(ctx, tx, entityType, entityId, userId, expiresAt); err != nil {
+			return err
+		}
+		return tx.Commit()
+	}
+
+	return fmt.Errorf("entity locked by another user")
 }
 
 // VerifyLock checks if the current user still holds the lock
 // Returns error if lock is not held or has expired
 func (s *LockService) VerifyLock(ctx context.Context, entityType string, entityId int64, userId string) error {
-	tx, err := s.db.Beginx()
+	tx, err := s.repo.BeginTx()
 	if err != nil {
 		return fmt.Errorf("could not begin transaction: %w", err)
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
-	var lockedBy string
-	var expiresAt time.Time
-
-	qb := common.NewQueryBuilder(`SELECT lockedby, expiresat FROM entitylocks`, true)
-	qb.AddEqual("entitytype", entityType)
-	qb.AddEqual("entityid", entityId)
-
-	sqlQuery, args := qb.Build()
-	err = tx.QueryRowContext(ctx, sqlQuery, args...).Scan(&lockedBy, &expiresAt)
-	if err == sql.ErrNoRows {
+	lockedBy, expiresAt, found, err := s.repo.HolderTx(ctx, tx, entityType, entityId, false)
+	if err != nil {
+		return err
+	}
+	if !found {
 		log.Printf("no active lock on this entity")
 		return nil
 	}
 
-	if err != nil {
-		return fmt.Errorf("database error: %w", err)
-	}
-
 	// Check if lock has expired
 	if expiresAt.Before(time.Now()) {
-		qb := common.NewQueryBuilder(`DELETE FROM entitylocks `, true)
-		qb.AddEqual("entitytype", entityType)
-		qb.AddEqual("entityid", entityId)
-
-		sqlQuery, args := qb.Build()
-		_, err := tx.ExecContext(ctx, sqlQuery, args...)
-		if err != nil {
-			return fmt.Errorf("database error: %w", err)
+		if err := s.repo.DeleteTx(ctx, tx, entityType, entityId, false); err != nil {
+			return err
 		}
 		if err := tx.Commit(); err != nil {
 			return fmt.Errorf("commit error: %w", err)
@@ -183,58 +121,21 @@ func (s *LockService) VerifyLock(ctx context.Context, entityType string, entityI
 }
 
 // Unlock releases a lock on an entity
-// Only the user who holds the lock can release it
+// Only the user who holds the lock can release it; releasing a lock that is not there (already
+// unlocked or held by someone else) is a silent success.
 func (s *LockService) Unlock(ctx context.Context, entityType string, entityId int64, userId string) error {
-	qb := common.NewQueryBuilder(`DELETE FROM entitylocks`, true)
-	qb.AddEqual("entitytype", entityType)
-	qb.AddEqual("entityid", entityId)
-	qb.AddEqual("lockedby", userId)
-
-	sqlQuery, args := qb.Build()
-	result, err := s.db.ExecContext(ctx, sqlQuery, args...)
-	if err != nil {
-		return fmt.Errorf("database error: %w", err)
-	}
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("rows affected error: %w", err)
-	}
-	if rows == 0 {
-		// No lock to release (could be already unlocked or held by someone else)
-		return nil // Silent success - idempotent
-	}
-
-	return nil
+	return s.repo.Release(ctx, entityType, entityId, userId)
 }
 
 // CleanupExpired removes all expired locks from the database
 // Should be called periodically (e.g., every 5 minutes)
 func (s *LockService) CleanupExpired(ctx context.Context) error {
-	qb := common.NewQueryBuilder(`DELETE FROM entitylocks WHERE expiresat < NOW()`, false)
-	sqlQuery, args := qb.Build()
-	_, err := s.db.ExecContext(ctx, sqlQuery, args...)
-	return err
+	return s.repo.DeleteExpired(ctx)
 }
 
 // GetLockInfo returns information about a lock, if it exists
 func (s *LockService) GetLockInfo(ctx context.Context, entityType string, entityId int64) (*EntityLock, error) {
-	lock := &EntityLock{}
-	qb := common.NewQueryBuilder(`SELECT id, entitytype, entityid, lockedby, lockedat, expiresat
-		 FROM entitylocks`, false)
-	qb.AddEqual("entitytype", entityType)
-	qb.AddEqual("entityid", entityId)
-	qb.AddCondition("expiresat", time.Now(), ">")
-
-	qb.AddArgs(entityType, entityId)
-	sqlQuery, args := qb.Build()
-	err := s.db.QueryRowContext(ctx, sqlQuery, args...).Scan(&lock.ID, &lock.EntityType, &lock.EntityID, &lock.LockedBy, &lock.LockedAt, &lock.ExpiresAt)
-	if err == sql.ErrNoRows {
-		return nil, nil
-	}
-	if err != nil {
-		return nil, fmt.Errorf("database error: %w", err)
-	}
-	return lock, nil
+	return s.repo.Active(ctx, entityType, entityId, time.Now())
 }
 
 // LockMiddleware wraps lock operations for Gin handlers

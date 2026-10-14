@@ -440,7 +440,7 @@ func (h *FnalHandler) confirmAddHandler(c *gin.Context) {
 }
 
 func (h *FnalHandler) GetIdTipdokByTipdok(c *gin.Context, tipdok string) (int64, error) {
-	return h.naloziService.GetIdTipdokByTipdok(c, tipdok)
+	return h.naloziService.GetIdTipdokByTipdok(c.Request.Context(), tipdok)
 }
 
 // --- CONSOLIDATED VIEW DATA HANDLER ---

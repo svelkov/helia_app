@@ -2170,5 +2170,18 @@
   "label.prvo_izaberite_konto_dobavljaca": "Select the supplier account first",
   "label.sifra_pores._tarife": "Tax rate code",
   "label.podaci_o_porudzbenici_nisu_sacuvani": "Purchase order data not saved",
-  "label.sacuvajte_podatke_o_porudzbenici_da_bi_ste_mogli_da_radite_sa_stavkama": "Save the purchase order data to work with its items"
+  "label.sacuvajte_podatke_o_porudzbenici_da_bi_ste_mogli_da_radite_sa_stavkama": "Save the purchase order data to work with its items",
+  "label.profakture": "Pro forma invoices",
+  "label.prikaz_profaktura": "Pro forma invoices list",
+  "label.podaci_o_profakturi": "Pro forma invoice data",
+  "label.podaci_o_profakturi_nisu_sacuvani": "Pro forma invoice data is not saved",
+  "label.stavke_profakture": "Pro forma invoice items",
+  "label.sacuvajte_podatke_o_profakturi_da_bi_ste_mogli_da_radite_sa_stavkama": "Save the pro forma invoice data to work with the items",
+  "label.broj_fisk._isecka": "Fiscal receipt no.",
+  "label.napomena_broj_rata": "Note, number of installments",
+  "label.valuta_kurs_uslovi_prodaje": "Currency, exchange rate, terms of sale",
+  "label.reg._br._vozila": "Vehicle reg. no.",
+  "label.dani": "Days",
+  "label.neto_cena": "Net price",
+  "label.sif._pores._tarife": "Tax rate code"
 }

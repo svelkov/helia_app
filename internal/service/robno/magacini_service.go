@@ -7,9 +7,11 @@ import (
 	"helia/config"
 	"helia/internal/common"
 	"helia/internal/domain"
+	"helia/internal/infrastructure/db/querybuilder"
 	"helia/internal/repository"
 	"helia/internal/service"
 	"reflect"
+	"strings"
 )
 
 // MagaciniService defines the interface for operations related to Magacini.
@@ -69,41 +71,10 @@ func (s *MagaciniResource) Create(ctx context.Context, entity *domain.Magacini, 
 	if userSession == nil {
 		return nil, 0, errors.New(common.ErrMsgUserSessionNotFound)
 	}
-	config := common.RepositoryConfig{
-		TableName:     "magacini",
-		EntityType:    reflect.TypeOf(entity).Elem(),
-		TableFields:   s.GetMagaciniTableFields(),
-		IncludeGodKar: true,
-	}
-
-	qb := common.NewRepositoryQueryBuilder(config)
-	hasGod, hasKar := qb.CheckGodKarFields()
-	if hasGod || hasKar {
-		qb.AddGodKarConditions(hasGod, hasKar, userSession.SelectedGod, userSession.SelectedKar)
-	}
-
-	sqlQuery, args := qb.BuildInsert(ctx, fields, idField)
-
-	tx, err := s.magaciniRepo.BeginTx()
-	if err != nil {
-		return nil, 0, fmt.Errorf("error beginning transaction: %w", err)
-	}
-
-	defer func() {
-		if err != nil {
-			tx.Rollback()
-		}
-	}()
-
-	err = tx.QueryRowContext(ctx, sqlQuery, args...).Err()
-	if err != nil {
+	// The repository fills god/kar from the session and the audit columns, in its own transaction.
+	if _, err := s.magaciniRepo.Create(ctx, entity, idField, fields); err != nil {
 		return nil, 0, fmt.Errorf("insert magacini failed: %w", err)
 	}
-	err = tx.Commit()
-	if err != nil {
-		return nil, 0, fmt.Errorf("error committing transaction: %w", err)
-	}
-
 	return nil, 0, nil
 }
 
@@ -112,41 +83,10 @@ func (s *MagaciniResource) Update(ctx context.Context, entity *domain.Magacini, 
 	if userSession == nil {
 		return nil, errors.New(common.ErrMsgUserSessionNotFound)
 	}
-	config := common.RepositoryConfig{
-		TableName:     "magacini",
-		EntityType:    reflect.TypeOf(entity).Elem(),
-		TableFields:   fields,
-		IncludeGodKar: true,
-	}
-
-	qb := common.NewRepositoryQueryBuilder(config)
-	hasGod, hasKar := qb.CheckGodKarFields()
-	if hasGod || hasKar {
-		qb.AddGodKarConditions(hasGod, hasKar, userSession.SelectedGod, userSession.SelectedKar)
-	}
-
-	sqlQuery, args := qb.BuildUpdate(ctx, fields, idField, idFieldValue)
-
-	tx, err := s.magaciniRepo.BeginTx()
-	if err != nil {
-		return nil, fmt.Errorf("error beginning transaction: %w", err)
-	}
-
-	defer func() {
-		if err != nil {
-			tx.Rollback()
-		}
-	}()
-
-	err = tx.QueryRowContext(ctx, sqlQuery, args...).Err()
-	if err != nil {
+	// Restricted to the tenant of the session; ErrNotFound when the magacin is not there.
+	if err := s.magaciniRepo.Update(ctx, entity, idField, idFieldValue, fields); err != nil {
 		return nil, fmt.Errorf("update magacini failed: %w", err)
 	}
-	err = tx.Commit()
-	if err != nil {
-		return nil, fmt.Errorf("error committing transaction: %w", err)
-	}
-
 	return nil, nil
 }
 
@@ -158,20 +98,12 @@ func (s *MagaciniResource) GetAll(ctx context.Context, page int, pageSize int, t
 	return s.service.GetAll(ctx, page, pageSize, tableFields, idField, searchText, sortBy, sortOrder)
 }
 
-func (s *MagaciniResource) GetAllCustom(ctx context.Context, queryText string, whereText string, args []interface{}, limitOffset string, orderBy string) (*[]domain.Magacini, error) {
-	return s.service.GetAllCustom(ctx, queryText, whereText, args, limitOffset, orderBy)
-}
-
 func (s *MagaciniResource) GetByID(ctx context.Context, idField string, idFieldValue int64) (*domain.Magacini, error) {
 	return s.service.GetByID(ctx, idField, idFieldValue)
 }
 
 func (s *MagaciniResource) GetTotalRecords(ctx context.Context, tableFields []domain.Fields, searchText string) (int, error) {
 	return s.service.GetTotalRecords(ctx, tableFields, searchText)
-}
-
-func (s *MagaciniResource) GetTotalRecordsCustom(ctx context.Context, queryText string, whereText string, args []interface{}, limitOffset string, orderBy string) (int, error) {
-	return s.service.GetTotalRecordsCustom(ctx, queryText, whereText, args, limitOffset, orderBy)
 }
 
 func (s *MagaciniResource) MapEntityToValues(entity *domain.Magacini, tableFields []domain.Fields) []domain.Fields {
@@ -182,46 +114,46 @@ func (s *MagaciniResource) SetFieldCache(cache map[string]reflect.StructField) {
 	s.service.SetFieldCache(cache)
 }
 
+// magaciniSortColumns maps the sortBy keys of the magacini table (the column names) to columns.
+var magaciniSortColumns = map[string]string{
+	"magaciniid": "magacini.magaciniid", "mag": "magacini.mag", "opis": "magacini.opis", "tipmag": "magacini.tipmag",
+	"adresa": "magacini.adresa", "pobro": "magacini.pobro", "mesto": "magacini.mesto", "nadmag": "magacini.nadmag",
+	"magosoba": "magacini.magosoba", "tel": "magacini.tel", "fax": "magacini.fax", "tipzal": "magacini.tipzal",
+	"tipcene": "magacini.tipcene", "nacvodzal": "magacini.nacvodzal", "analiza": "magacini.analiza",
+	"email": "magacini.email", "tipart": "magacini.tipart",
+}
+
 func (s *MagaciniResource) GetAllMagacini(ctx context.Context, tbl *domain.TableData, currentPage, pageSize int, getTotalRecords bool, sortBy, sortOrder, searchText string, printType string) error {
 	userSession := domain.GetSessionFromStdContext(ctx)
 	if userSession == nil {
 		return errors.New(common.ErrMsgUserSessionNotFound)
 	}
 
-	hasGod, hasKar := s.magaciniRepo.GetHasGodHasKar()
-	qb := common.NewQueryBuilder("SELECT magaciniid, mag, opis, tipmag, adresa, pobro, mesto, nadmag, magosoba, tel, fax, tipzal, tipcene, nacvodzal, analiza, email, tipart FROM magacini", true)
-
-	if hasGod {
-		qb.AddEqual("god", userSession.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("kar", userSession.SelectedKar)
-	}
-	if searchText != "" && printType == common.TipStampePreview {
-		qb.AddCustomSearchCondition([]string{"opis", "magosoba", "email"}, searchText)
-	}
-	if !getTotalRecords {
-		if sortBy != "" {
-			qb.AddOrderBy(fmt.Sprintf("magacini.%s", sortBy))
-		}
-		if sortOrder != "" && (sortOrder == "ASC" || sortOrder == "DESC") {
-			qb.AddSortOrder(sortOrder)
-		}
-		if printType == common.TipStampePreview {
-			qb.SetLimit(pageSize)
-			qb.SetOffset((currentPage - 1) * pageSize)
-		}
-	}
-
-	sqlQuery, args := qb.Build()
-	entities, err := s.magaciniRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
-	if err != nil {
+	b := querybuilder.New("SELECT magaciniid, mag, opis, tipmag, adresa, pobro, mesto, nadmag, magosoba, tel, fax, tipzal, tipcene, nacvodzal, analiza, email, tipart FROM magacini")
+	if err := s.magaciniRepo.ApplyFilters(ctx, b, "", nil, ""); err != nil {
 		return err
 	}
-
+	if printType == common.TipStampePreview {
+		b.AddSearch([]string{"opis", "magosoba", "email"}, searchText)
+	}
 	if getTotalRecords && printType == common.TipStampePreview {
-		common.SetTableTotalRecords(tbl, len(*entities), pageSize)
+		total, err := s.magaciniRepo.Count(ctx, b)
+		if err != nil {
+			return err
+		}
+		common.SetTableTotalRecords(tbl, total, pageSize)
 		return nil
+	}
+	if !getTotalRecords {
+		b.OrderByKey(strings.ToLower(sortBy), sortOrder, magaciniSortColumns)
+		if printType == common.TipStampePreview {
+			b.Limit(pageSize).Offset((currentPage - 1) * pageSize)
+		}
+	}
+
+	entities, err := s.magaciniRepo.Select(ctx, b)
+	if err != nil {
+		return err
 	}
 
 	for _, entity := range *entities {
@@ -258,5 +190,5 @@ func (s *MagaciniResource) GetFvrData(ctx context.Context) (domain.Fvr, error) {
 	if s.fvrRepo == nil {
 		return domain.Fvr{}, fmt.Errorf("fvrRepo not initialized")
 	}
-	return common.GetFvrData(ctx, s.fvrRepo)
+	return repository.GetFvrData(ctx, s.fvrRepo)
 }

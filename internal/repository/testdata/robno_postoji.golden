@@ -1,0 +1,130 @@
+### rsif
+select count(*) from rsif WHERE (sifra = $1) AND (god = $2) AND (kar = $3)
+[]interface {}{15, 2026, 7}
+in transaction: false
+
+### fkpl analitika
+select count(*) from fkpl WHERE (konto = $1) AND (sifra = $2) AND (god = $3) AND (kar = $4)
+[]interface {}{"2040", "15", 2026, 7}
+in transaction: false
+
+### fkpl analitički konto
+select count(*) from fkpl WHERE (vkonta = 1) AND (konto = $1) AND (sifra = $2) AND (god = $3) AND (kar = $4)
+[]interface {}{"2040", "15", 2026, 7}
+in transaction: false
+
+### fkpl analitika trimmed
+select count(*) from fkpl WHERE (trim(konto) = $1) AND (coalesce(trim(sifra), '') = $2) AND (god = $3) AND (kar = $4)
+[]interface {}{"2040", "", 2026, 7}
+in transaction: false
+
+### fkpl konto of the partner
+select count(*) from fkpl WHERE (konto = $1) AND (idpartneri = $2) AND (vkonta = 1) AND (god = $3) AND (kar = $4)
+[]interface {}{"2040", 31, 2026, 7}
+in transaction: false
+
+### fkpl sintetika
+select count(*) from fkpl WHERE (vkonta = 2) AND (konto = $1) AND (god = $2) AND (kar = $3)
+[]interface {}{"1320", 2026, 7}
+in transaction: false
+
+### avans closed
+select count(*) from avansfakt WHERE (avansid = $1) AND (coalesce(rdokid, 0) <> 0) AND (god = $2) AND (kar = $3)
+[]interface {}{41, 2026, 7}
+in transaction: false
+
+### rdok broj
+select count(*) from rdok WHERE (magaciniid = $1) AND (vrd = $2) AND (dokum = $3) AND (god = $4) AND (kar = $5)
+[]interface {}{3, 89, 12, 2026, 7}
+in transaction: false
+
+### rdok broj of another nalog
+select count(*) from rdok WHERE (magaciniid = $1) AND (vrd = $2) AND (dokum = $3) AND (coalesce(rnalid, 0) <> $4) AND (rdokid <> $5) AND (god = $6) AND (kar = $7)
+[]interface {}{3, 89, 12, 9, 41, 2026, 7}
+in transaction: false
+
+### rdok avansni of another kupac
+select count(*) from rdok WHERE (vrd = 172) AND (dokum in ($1, $2)) AND ((coalesce(fkto, '') <> $3 or coalesce(fana, '') <> $4)) AND (god = $5) AND (kar = $6)
+[]interface {}{4, 7, "2040", "15", 2026, 7}
+in transaction: false
+
+### orgjed
+select count(*) from orgjed WHERE (idorgjed = $1) AND (god = $2) AND (kar = $3)
+[]interface {}{2, 2026, 7}
+in transaction: false
+
+### mestotr
+select count(*) from mestotr WHERE (mestotrid = $1) AND (god = $2) AND (kar = $3)
+[]interface {}{5, 2026, 7}
+in transaction: false
+
+### mestotr of the orgjed
+select count(*) from mestotr WHERE (mestotrid = $1) AND (idorgjed = $2) AND (god = $3) AND (kar = $4)
+[]interface {}{5, 2, 2026, 7}
+in transaction: false
+
+### komercijalista
+select count(*) from komercijalisti WHERE (komid = $1) AND (god = $2) AND (kar = $3)
+[]interface {}{6, 2026, 7}
+in transaction: false
+
+### bnkizv
+select count(*) from bnkizv WHERE (bnkizvid = $1) AND (god = $2) AND (kar = $3)
+[]interface {}{8, 2026, 7}
+in transaction: false
+
+### fisp of the partner
+select count(*) from fisp WHERE (fispid = $1) AND (konto = $2) AND (sifra = $3) AND (god = $4) AND (kar = $5)
+[]interface {}{4, "2040", "15", 2026, 7}
+in transaction: false
+
+### porkat without a period
+select count(*) from porkat WHERE (porkatid = $1)
+[]interface {}{3}
+in transaction: false
+
+### magacin
+select count(*) from magacini WHERE (magaciniid = $1) AND (god = $2) AND (kar = $3)
+[]interface {}{3, 2026, 7}
+in transaction: false
+
+### magacin by the nabavna cena
+select count(*) from magacini WHERE (magaciniid = $1) AND (coalesce(nacvodzal, 0) = 1) AND (god = $2) AND (kar = $3)
+[]interface {}{3, 2026, 7}
+in transaction: false
+
+### magkonto
+select count(*) from magkonto WHERE (magaciniid = $1) AND (trim(konto) = $2) AND (god = $3) AND (kar = $4)
+[]interface {}{3, "1320", 2026, 7}
+in transaction: false
+
+### dokvrsta prosečna
+select count(*) from dokvrsta WHERE (vrd = $1) AND (opis like '%PROS%') AND (god = $2) AND (kar = $3)
+[]interface {}{89, 2026, 7}
+in transaction: false
+
+### dokvrsta avansna of another year
+select count(*) from dokvrsta WHERE (god = $1) AND (kar = $2) AND (vrd = $3) AND (upper(trim(coalesce(grpdok, ''))) in ('ARA', 'ARU'))
+[]interface {}{2025, 7, 172}
+in transaction: false
+
+### fvr obveznik PDV
+select count(*) from fvr WHERE (naziv = $1) AND (coalesce(obv, false)) AND (god = $2) AND (kar = $3)
+[]interface {}{"Firma d.o.o.", 2026, 7}
+in transaction: false
+
+### popdv polje
+select count(*) from popdv WHERE (polje = $1) AND (god = $2) AND (kar = $3)
+[]interface {}{"3.2", 2026, 7}
+in transaction: false
+
+### popdv polje not of the izlazni računi
+select count(*) from popdv p left join fvepdv e on e.fvepdvid = p.fvepdvid WHERE (p.god = $1) AND (p.kar = $2) AND (p.polje = $3) AND ((coalesce(p.tip, 0) <> 3 or (e.fvepdvid is not null and coalesce(e.vktip, '') <> 'I')))
+[]interface {}{2026, 7, "3.2"}
+in transaction: false
+
+### valuta strana
+select count(*) from valute v WHERE (v.idvalute = $1) AND (coalesce(v.sifval, 0) <> coalesce((select f.sifval from fvr f where f.god = $2 and f.kar = $3 limit 1), 0))
+[]interface {}{2, 2026, 7}
+in transaction: false
+

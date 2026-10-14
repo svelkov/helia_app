@@ -9,6 +9,7 @@ import (
 
 	"helia/internal/common"
 	"helia/internal/domain"
+	"helia/internal/infrastructure/db/querybuilder"
 	"helia/internal/repository"
 	commonsvc "helia/internal/service/common"
 )
@@ -44,6 +45,7 @@ type RobnoPrometResource struct {
 	grupaRepo                        *repository.BaseRepository[domain.Rgru]
 	fvrRepo                          *repository.BaseRepository[domain.Fvr]
 	robnoPrometRepo                  *repository.BaseRepository[domain.RobnoPrometDto]
+	robno                            *repository.RobnoRepository
 	commonSvc                        commonsvc.CommonService
 	prometGrupeArtikalaTableFields   []domain.Fields
 	prometKupciTableFields           []domain.Fields
@@ -64,6 +66,7 @@ func NewRobnoPrometService(rproRepo *repository.BaseRepository[domain.Rpro], mag
 		grupaRepo:                        grupaRepo,
 		fvrRepo:                          fvrRepo,
 		robnoPrometRepo:                  robnoPrometRepo,
+		robno:                            repository.NewRobnoRepository(robnoPrometRepo.DB),
 		commonSvc:                        commonSvc,
 		prometGrupeArtikalaTableFields:   []domain.Fields{},
 		prometKupciTableFields:           []domain.Fields{},
@@ -92,7 +95,7 @@ func (s *RobnoPrometResource) GetPrometArtikala(ctx context.Context, tbl *domain
 	tbl.HasTotals = true
 
 	hasGod, hasKar := s.rproRepo.GetHasGodHasKar()
-	qb := common.NewQueryBuilder(`select rpro.sifra as sifra_art,
+	b := querybuilder.New(`select rpro.sifra as sifra_art,
 		coalesce(min(rsif.gru), 0) as gru,
 		coalesce(min(rpro.konto), '') as konto,
 		coalesce(min(rsif.naziv), '') as naziv,
@@ -101,32 +104,30 @@ func (s *RobnoPrometResource) GetPrometArtikala(ctx context.Context, tbl *domain
 		coalesce(sum(case when upper(dokvrsta.kodknj) = 'P' and coalesce(dokvrsta.grpdok, '') <> 'NIV' then rpro.kolic else 0 end), 0) as izlaz,
 		coalesce(sum(case when upper(dokvrsta.kodknj) = 'D' then case when dokvrsta.grpdok = 'NIV' then rpro.kolic * (rpro.fcena - rpro.ncena) else rpro.kolic * rpro.cena end else 0 end), 0) as finulaz,
 		coalesce(sum(case when upper(dokvrsta.kodknj) = 'P' then case when dokvrsta.grpdok = 'NIV' then rpro.kolic * (rpro.fcena - rpro.ncena) else rpro.kolic * rpro.cena end else 0 end), 0) as finizlaz
-	from rdok`, true)
-	qb.AddJoin(" inner join rpro on rpro.rdokid = rdok.rdokid")
-	qb.AddJoin(" inner join rsif on rsif.rsifid = rpro.rsifid")
-	qb.AddJoin(" left join dokvrsta on dokvrsta.god = rdok.god and dokvrsta.kar = rdok.kar and dokvrsta.vrd = rdok.vrd")
+	from rdok`).
+		AddJoin("inner join rpro on rpro.rdokid = rdok.rdokid").
+		AddJoin("inner join rsif on rsif.rsifid = rpro.rsifid").
+		AddJoin("left join dokvrsta on dokvrsta.god = rdok.god and dokvrsta.kar = rdok.kar and dokvrsta.vrd = rdok.vrd")
 	if hasGod {
-		qb.AddEqual("rdok.god", userSession.SelectedGod)
+		b.Where("rdok.god = ?", userSession.SelectedGod)
 	}
 	if hasKar {
-		qb.AddEqual("rdok.kar", userSession.SelectedKar)
+		b.Where("rdok.kar = ?", userSession.SelectedKar)
 	}
-	qb.AddCondition("rdok.mag", params.OdMagacina, ">=")
-	qb.AddCondition("rdok.mag", params.DoMagacina, "<=")
-	qb.AddCondition("rpro.sifra", params.OdSifreArtikla, ">=")
-	qb.AddCondition("rpro.sifra", params.DoSifreArtikla, "<=")
-	qb.AddCondition("rdok.dadok", params.OdDatuma, ">=")
-	qb.AddCondition("rdok.dadok", params.DoDatuma, "<=")
-	qb.AddCondition("rsif.gru", params.OdGrupe, ">=")
-	qb.AddCondition("rsif.gru", params.DoGrupe, "<=")
-	qb.AddGroupBy("rpro.sifra")
-	qb.AddOrderBy("rpro.sifra")
+	b.AddCondition("rdok.mag", params.OdMagacina, ">=").
+		AddCondition("rdok.mag", params.DoMagacina, "<=").
+		AddCondition("rpro.sifra", params.OdSifreArtikla, ">=").
+		AddCondition("rpro.sifra", params.DoSifreArtikla, "<=").
+		AddCondition("rdok.dadok", params.OdDatuma, ">=").
+		AddCondition("rdok.dadok", params.DoDatuma, "<=").
+		AddCondition("rsif.gru", params.OdGrupe, ">=").
+		AddCondition("rsif.gru", params.DoGrupe, "<=").
+		GroupBy("rpro.sifra").
+		OrderBy("rpro.sifra")
 	if !getTotalRecords && !isPrint && pageSize > 0 {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
+		b.Limit(pageSize).Offset((currentPage - 1) * pageSize)
 	}
-	sqlQuery, args := qb.Build()
-	entities, err := s.robnoPrometRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.robnoPrometRepo.Select(ctx, b)
 	if err != nil {
 		return err
 	}
@@ -196,7 +197,7 @@ func (s *RobnoPrometResource) GetPrometPoKupcima(ctx context.Context, tbl *domai
 	tbl.HasTotals = true
 
 	hasGod, hasKar := s.rproRepo.GetHasGodHasKar()
-	qb := common.NewQueryBuilder(`with xiz as (
+	b := querybuilder.New(`with xiz as (
 		select rdok.fkto as konto, rdok.fana as sifra,
 			coalesce(cp.naziv, 'NEPOZNAT PARTNER!') as naziv,
 			coalesce(cp.adresa, '') as adresa,
@@ -237,29 +238,14 @@ func (s *RobnoPrometResource) GetPrometPoKupcima(ctx context.Context, tbl *domai
 		sum(vrkasa) as kasa,
 		sum(netbezpdv) as netrezpdv,
 		sum(netbezpdv + round(netbezpdv * pstopa / 100, 2)) as neto
-	from net`, true)
-	if hasGod {
-		qb.AddEqual("god", userSession.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("kar", userSession.SelectedKar)
-	}
-	qb.AddCondition("mag", params.OdMagacina, ">=")
-	qb.AddCondition("mag", params.DoMagacina, "<=")
-	qb.AddCondition("sifra_art", params.OdSifreArtikla, ">=")
-	qb.AddCondition("sifra_art", params.DoSifreArtikla, "<=")
-	qb.AddCondition("dadok", params.OdDatuma, ">=")
-	qb.AddCondition("dadok", params.DoDatuma, "<=")
-	qb.AddCondition("gru", params.OdGrupe, ">=")
-	qb.AddCondition("gru", params.DoGrupe, "<=")
-	qb.AddGroupBy("konto, sifra, naziv, adresa, mesto")
-	qb.AddOrderBy("konto, sifra")
+	from net`)
+	robnoPrometNetFilters(b, hasGod, hasKar, userSession, params)
+	b.GroupBy("konto", "sifra", "naziv", "adresa", "mesto").
+		OrderBy("konto, sifra")
 	if !getTotalRecords && !isPrint && pageSize > 0 {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
+		b.Limit(pageSize).Offset((currentPage - 1) * pageSize)
 	}
-	sqlQuery, args := qb.Build()
-	entities, err := s.robnoPrometRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.robnoPrometRepo.Select(ctx, b)
 	if err != nil {
 		return err
 	}
@@ -322,6 +308,25 @@ func (s *RobnoPrometResource) GetPrometPoKupcima(ctx context.Context, tbl *domai
 	return nil
 }
 
+// robnoPrometNetFilters adds the period and the filters of the form to the outer query of the
+// promet reports built on a CTE (their select exposes god, kar, mag, sifra_art, dadok and gru).
+func robnoPrometNetFilters(b *querybuilder.Builder, hasGod, hasKar bool, session *domain.UserSession, params domain.RobnoPrometParams) {
+	if hasGod {
+		b.Where("god = ?", session.SelectedGod)
+	}
+	if hasKar {
+		b.Where("kar = ?", session.SelectedKar)
+	}
+	b.AddCondition("mag", params.OdMagacina, ">=").
+		AddCondition("mag", params.DoMagacina, "<=").
+		AddCondition("sifra_art", params.OdSifreArtikla, ">=").
+		AddCondition("sifra_art", params.DoSifreArtikla, "<=").
+		AddCondition("dadok", params.OdDatuma, ">=").
+		AddCondition("dadok", params.DoDatuma, "<=").
+		AddCondition("gru", params.OdGrupe, ">=").
+		AddCondition("gru", params.DoGrupe, "<=")
+}
+
 // GetNabavkeOdDobavljaca renders "Nabavka po dobavljačima" (robno promet, tab 3):
 func (s *RobnoPrometResource) GetNabavkeOdDobavljaca(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.RobnoPrometParams, printType string) error {
 	userSession := domain.GetSessionFromStdContext(ctx)
@@ -334,7 +339,7 @@ func (s *RobnoPrometResource) GetNabavkeOdDobavljaca(ctx context.Context, tbl *d
 	tbl.HasTotals = true
 
 	hasGod, hasKar := s.rproRepo.GetHasGodHasKar()
-	qb := common.NewQueryBuilder(`with xiz as (
+	b := querybuilder.New(`with xiz as (
 		select rdok.fkto as konto, rdok.fana as sifra,
 			coalesce(cp.naziv, 'NEPOZNAT PARTNER!') as naziv,
 			coalesce(cp.adresa, '') as adresa,
@@ -367,29 +372,14 @@ func (s *RobnoPrometResource) GetNabavkeOdDobavljaca(ctx context.Context, tbl *d
 		sum(vpvred - nabvred) as ruc,
 		case when sum(nabvred) <> 0 then round(sum(vpvred - nabvred) / sum(nabvred) * 100, 2) else 0 end as procruc,
 		sum(vpvred) as vpvred
-	from rab`, true)
-	if hasGod {
-		qb.AddEqual("god", userSession.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("kar", userSession.SelectedKar)
-	}
-	qb.AddCondition("mag", params.OdMagacina, ">=")
-	qb.AddCondition("mag", params.DoMagacina, "<=")
-	qb.AddCondition("sifra_art", params.OdSifreArtikla, ">=")
-	qb.AddCondition("sifra_art", params.DoSifreArtikla, "<=")
-	qb.AddCondition("dadok", params.OdDatuma, ">=")
-	qb.AddCondition("dadok", params.DoDatuma, "<=")
-	qb.AddCondition("gru", params.OdGrupe, ">=")
-	qb.AddCondition("gru", params.DoGrupe, "<=")
-	qb.AddGroupBy("konto, sifra, naziv, adresa, mesto")
-	qb.AddOrderBy("konto, sifra")
+	from rab`)
+	robnoPrometNetFilters(b, hasGod, hasKar, userSession, params)
+	b.GroupBy("konto", "sifra", "naziv", "adresa", "mesto").
+		OrderBy("konto, sifra")
 	if !getTotalRecords && !isPrint && pageSize > 0 {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
+		b.Limit(pageSize).Offset((currentPage - 1) * pageSize)
 	}
-	sqlQuery, args := qb.Build()
-	entities, err := s.robnoPrometRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.robnoPrometRepo.Select(ctx, b)
 	if err != nil {
 		return err
 	}
@@ -469,7 +459,7 @@ func (s *RobnoPrometResource) GetPrometGradilista(ctx context.Context, tbl *doma
 	tbl.HasTotals = true
 
 	hasGod, hasKar := s.rproRepo.GetHasGodHasKar()
-	qb := common.NewQueryBuilder(`with xiz as (
+	b := querybuilder.New(`with xiz as (
 		select coalesce(rdok.pkto, '') as konto, coalesce(rdok.pana, '') as sifra,
 			coalesce(cp.naziv, '') as naziv,
 			coalesce(rpro.iznos, 0) as iznos,
@@ -486,29 +476,14 @@ func (s *RobnoPrometResource) GetPrometGradilista(ctx context.Context, tbl *doma
 			on cp.god = rdok.god and cp.kar = rdok.kar and cp.konto = rdok.pkto and cp.sifra = rdok.pana
 	)
 	select konto, sifra, naziv, sum(iznos) as iznos
-	from xiz`, true)
-	if hasGod {
-		qb.AddEqual("god", userSession.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("kar", userSession.SelectedKar)
-	}
-	qb.AddCondition("mag", params.OdMagacina, ">=")
-	qb.AddCondition("mag", params.DoMagacina, "<=")
-	qb.AddCondition("sifra_art", params.OdSifreArtikla, ">=")
-	qb.AddCondition("sifra_art", params.DoSifreArtikla, "<=")
-	qb.AddCondition("dadok", params.OdDatuma, ">=")
-	qb.AddCondition("dadok", params.DoDatuma, "<=")
-	qb.AddCondition("gru", params.OdGrupe, ">=")
-	qb.AddCondition("gru", params.DoGrupe, "<=")
-	qb.AddGroupBy("konto, sifra, naziv")
-	qb.AddOrderBy("konto, sifra")
+	from xiz`)
+	robnoPrometNetFilters(b, hasGod, hasKar, userSession, params)
+	b.GroupBy("konto", "sifra", "naziv").
+		OrderBy("konto, sifra")
 	if !getTotalRecords && !isPrint && pageSize > 0 {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
+		b.Limit(pageSize).Offset((currentPage - 1) * pageSize)
 	}
-	sqlQuery, args := qb.Build()
-	entities, err := s.robnoPrometRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.robnoPrometRepo.Select(ctx, b)
 	if err != nil {
 		return err
 	}
@@ -566,7 +541,7 @@ func (s *RobnoPrometResource) GetPrometGradilisteVpcNc(ctx context.Context, tbl 
 	tbl.HasTotals = true
 
 	hasGod, hasKar := s.rproRepo.GetHasGodHasKar()
-	qb := common.NewQueryBuilder(`with xiz as (
+	b := querybuilder.New(`with xiz as (
 		select coalesce(rdok.pkto, '') as konto, coalesce(rdok.pana, '') as sifra,
 			coalesce(cp.naziv, '') as naziv,
 			coalesce(rpro.kolic, 0) * coalesce(rpro.cena, 0) as vpiznos,
@@ -587,29 +562,14 @@ func (s *RobnoPrometResource) GetPrometGradilisteVpcNc(ctx context.Context, tbl 
 		sum(vpiznos) as vpiznos,
 		sum(nciznos) as nciznos,
 		sum(vpiznos) - sum(nciznos) as razlika
-	from xiz`, true)
-	if hasGod {
-		qb.AddEqual("god", userSession.SelectedGod)
-	}
-	if hasKar {
-		qb.AddEqual("kar", userSession.SelectedKar)
-	}
-	qb.AddCondition("mag", params.OdMagacina, ">=")
-	qb.AddCondition("mag", params.DoMagacina, "<=")
-	qb.AddCondition("sifra_art", params.OdSifreArtikla, ">=")
-	qb.AddCondition("sifra_art", params.DoSifreArtikla, "<=")
-	qb.AddCondition("dadok", params.OdDatuma, ">=")
-	qb.AddCondition("dadok", params.DoDatuma, "<=")
-	qb.AddCondition("gru", params.OdGrupe, ">=")
-	qb.AddCondition("gru", params.DoGrupe, "<=")
-	qb.AddGroupBy("konto, sifra, naziv")
-	qb.AddOrderBy("konto, sifra")
+	from xiz`)
+	robnoPrometNetFilters(b, hasGod, hasKar, userSession, params)
+	b.GroupBy("konto", "sifra", "naziv").
+		OrderBy("konto, sifra")
 	if !getTotalRecords && !isPrint && pageSize > 0 {
-		qb.SetLimit(pageSize)
-		qb.SetOffset((currentPage - 1) * pageSize)
+		b.Limit(pageSize).Offset((currentPage - 1) * pageSize)
 	}
-	sqlQuery, args := qb.Build()
-	entities, err := s.robnoPrometRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	entities, err := s.robnoPrometRepo.Select(ctx, b)
 	if err != nil {
 		return err
 	}
@@ -817,7 +777,7 @@ func (s *RobnoPrometResource) GetPrometRucLagerLista(ctx context.Context, tbl *d
 	}
 
 	// The stavke of the articles up to the date of the stanje (the legacy ROB_QRY_LAGER).
-	qb := common.NewQueryBuilder(`select
+	b := querybuilder.New(`select
 			coalesce(rpro.mag, 0) as mag,
 			coalesce(rpro.sifra, 0) as sifra_art,
 			coalesce(rdok.magaciniid, 0) as magaciniid,
@@ -834,31 +794,30 @@ func (s *RobnoPrometResource) GetPrometRucLagerLista(ctx context.Context, tbl *d
 			coalesce(rpro.kolic, 0) as kolic,
 			coalesce(rpro.fcena, 0) as fcena,
 			coalesce(rpro.ncena, 0) as ncena
-		from rdok`, true)
-	qb.AddJoin(" inner join rpro on rpro.rdokid = rdok.rdokid")
-	qb.AddJoin(" inner join rsif on rsif.rsifid = rpro.rsifid")
-	qb.AddJoin(" inner join dokvrsta on dokvrsta.god = rdok.god and dokvrsta.kar = rdok.kar and dokvrsta.vrd = rdok.vrd")
-	qb.AddJoin(robnoPrometLagerNaziviJoins("rpro"))
-	qb.AddEqual("rpro.god", userSession.SelectedGod)
-	qb.AddEqual("rpro.kar", userSession.SelectedKar)
-	qb.AddCondition("rpro.mag", params.OdMagacina, ">=")
-	qb.AddCondition("rpro.mag", params.DoMagacina, "<=")
-	qb.AddCondition("rsif.gru", params.OdGrupe, ">=")
-	qb.AddCondition("rsif.gru", params.DoGrupe, "<=")
-	qb.AddCondition("rsif.pgru", odPodgrupe, ">=")
-	qb.AddCondition("rsif.pgru", doPodgrupe, "<=")
-	qb.AddCondition("rdok.danal", params.StanjeNaDan, "<=")
-	qb.AddCustomCondition("coalesce(dokvrsta.grpdok, '') <> 'NIV'")
-	qb.AddOrderBy("rpro.mag, rpro.sifra, rdok.danal, rdok.rdokid")
-	sqlQuery, args := qb.Build()
-	stavke, err := s.robnoPrometRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+		from rdok`).
+		AddJoin("inner join rpro on rpro.rdokid = rdok.rdokid").
+		AddJoin("inner join rsif on rsif.rsifid = rpro.rsifid").
+		AddJoin("inner join dokvrsta on dokvrsta.god = rdok.god and dokvrsta.kar = rdok.kar and dokvrsta.vrd = rdok.vrd").
+		AddJoin(robnoPrometLagerNaziviJoins("rpro")).
+		Where("rpro.god = ?", userSession.SelectedGod).
+		Where("rpro.kar = ?", userSession.SelectedKar).
+		AddCondition("rpro.mag", params.OdMagacina, ">=").
+		AddCondition("rpro.mag", params.DoMagacina, "<=").
+		AddCondition("rsif.gru", params.OdGrupe, ">=").
+		AddCondition("rsif.gru", params.DoGrupe, "<=").
+		AddCondition("rsif.pgru", odPodgrupe, ">=").
+		AddCondition("rsif.pgru", doPodgrupe, "<=").
+		AddCondition("rdok.danal", params.StanjeNaDan, "<=").
+		Where("coalesce(dokvrsta.grpdok, '') <> 'NIV'").
+		OrderBy("rpro.mag, rpro.sifra, rdok.danal, rdok.rdokid")
+	stavke, err := s.robnoPrometRepo.Select(ctx, b)
 	if err != nil {
 		return err
 	}
 
 	// The stanje of the articles of the magacini (rsta): the articles without a stavka and, for the
 	// prodajna cena, the cena of every article in its magacin.
-	qb = common.NewQueryBuilder(`select
+	b = querybuilder.New(`select
 			coalesce(rsta.mag, 0) as mag,
 			coalesce(rsta.sifra, 0) as sifra_art,
 			coalesce(rsta.magaciniid, 0) as magaciniid,
@@ -873,20 +832,19 @@ func (s *RobnoPrometResource) GetPrometRucLagerLista(ctx context.Context, tbl *d
 			coalesce(rsta.ulaz, 0) as ulaz,
 			coalesce(rsta.izlaz, 0) as izlaz,
 			coalesce(rsta.cena, 0) as cena
-		from rsta`, true)
-	qb.AddJoin(" inner join rsif on rsif.rsifid = rsta.rsifid")
-	qb.AddJoin(robnoPrometLagerNaziviJoins("rsta"))
-	qb.AddEqual("rsta.god", userSession.SelectedGod)
-	qb.AddEqual("rsta.kar", userSession.SelectedKar)
-	qb.AddCondition("rsta.mag", params.OdMagacina, ">=")
-	qb.AddCondition("rsta.mag", params.DoMagacina, "<=")
-	qb.AddCondition("rsif.gru", params.OdGrupe, ">=")
-	qb.AddCondition("rsif.gru", params.DoGrupe, "<=")
-	qb.AddCondition("rsif.pgru", odPodgrupe, ">=")
-	qb.AddCondition("rsif.pgru", doPodgrupe, "<=")
-	qb.AddOrderBy("rsta.mag, rsta.sifra")
-	sqlQuery, args = qb.Build()
-	stanja, err := s.robnoPrometRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+		from rsta`).
+		AddJoin("inner join rsif on rsif.rsifid = rsta.rsifid").
+		AddJoin(robnoPrometLagerNaziviJoins("rsta")).
+		Where("rsta.god = ?", userSession.SelectedGod).
+		Where("rsta.kar = ?", userSession.SelectedKar).
+		AddCondition("rsta.mag", params.OdMagacina, ">=").
+		AddCondition("rsta.mag", params.DoMagacina, "<=").
+		AddCondition("rsif.gru", params.OdGrupe, ">=").
+		AddCondition("rsif.gru", params.DoGrupe, "<=").
+		AddCondition("rsif.pgru", odPodgrupe, ">=").
+		AddCondition("rsif.pgru", doPodgrupe, "<=").
+		OrderBy("rsta.mag, rsta.sifra")
+	stanja, err := s.robnoPrometRepo.Select(ctx, b)
 	if err != nil {
 		return err
 	}
@@ -1079,7 +1037,7 @@ func (s *RobnoPrometResource) GetPrometRucMagacini(ctx context.Context, tbl *dom
 	tbl.HasTotals = true
 
 	// The stavke of the fakture of the period, ordered by magacin and article (the legacy dsDATA).
-	qb := common.NewQueryBuilder(`select
+	b := querybuilder.New(`select
 			coalesce(rpro.mag, 0) as mag,
 			coalesce(rpro.sifra, 0) as sifra_art,
 			rsif.rsifid,
@@ -1092,22 +1050,21 @@ func (s *RobnoPrometResource) GetPrometRucMagacini(ctx context.Context, tbl *dom
 			coalesce(rpro.ncena, 0) as ncena,
 			coalesce(rpro.fcena, 0) as fcena,
 			coalesce(rpro.rab, 0) as rab
-		from rdok`, true)
-	qb.AddJoin(" inner join rpro on rpro.rdokid = rdok.rdokid")
-	qb.AddJoin(" inner join rsif on rsif.rsifid = rpro.rsifid")
-	qb.AddJoin(" inner join dokvrsta on dokvrsta.god = rdok.god and dokvrsta.kar = rdok.kar and dokvrsta.vrd = rdok.vrd")
-	qb.AddJoin(" left join magacini mg on mg.god = rpro.god and mg.kar = rpro.kar and mg.mag = rpro.mag")
-	qb.AddEqual("rdok.god", userSession.SelectedGod)
-	qb.AddEqual("rdok.kar", userSession.SelectedKar)
-	qb.AddCondition("rdok.mag", params.OdMagacina, ">=")
-	qb.AddCondition("rdok.mag", params.DoMagacina, "<=")
-	qb.AddCondition("rdok.danal", params.OdDatuma, ">=")
-	qb.AddCondition("rdok.danal", params.DoDatuma, "<=")
-	qb.AddCustomCondition("upper(coalesce(dokvrsta.grpdok, '')) = 'FAK'")
-	qb.AddCustomCondition("rpro.sifra > 0")
-	qb.AddOrderBy("rpro.mag, rpro.sifra, rdok.danal, rdok.rdokid, rpro.rproid")
-	sqlQuery, args := qb.Build()
-	stavke, err := s.robnoPrometRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+		from rdok`).
+		AddJoin("inner join rpro on rpro.rdokid = rdok.rdokid").
+		AddJoin("inner join rsif on rsif.rsifid = rpro.rsifid").
+		AddJoin("inner join dokvrsta on dokvrsta.god = rdok.god and dokvrsta.kar = rdok.kar and dokvrsta.vrd = rdok.vrd").
+		AddJoin("left join magacini mg on mg.god = rpro.god and mg.kar = rpro.kar and mg.mag = rpro.mag").
+		Where("rdok.god = ?", userSession.SelectedGod).
+		Where("rdok.kar = ?", userSession.SelectedKar).
+		AddCondition("rdok.mag", params.OdMagacina, ">=").
+		AddCondition("rdok.mag", params.DoMagacina, "<=").
+		AddCondition("rdok.danal", params.OdDatuma, ">=").
+		AddCondition("rdok.danal", params.DoDatuma, "<=").
+		Where("upper(coalesce(dokvrsta.grpdok, '')) = 'FAK'").
+		Where("rpro.sifra > 0").
+		OrderBy("rpro.mag, rpro.sifra, rdok.danal, rdok.rdokid, rpro.rproid")
+	stavke, err := s.robnoPrometRepo.Select(ctx, b)
 	if err != nil {
 		return err
 	}
@@ -1279,7 +1236,7 @@ func robnoPrometHiddenFields(fields []domain.Fields, names ...string) []domain.F
 	return headers
 }
 
-// GetPrometRucFakture renders the "Izlazne fakture" (robno promet, tab 4, sub-tab 4): 
+// GetPrometRucFakture renders the "Izlazne fakture" (robno promet, tab 4, sub-tab 4):
 func (s *RobnoPrometResource) GetPrometRucFakture(ctx context.Context, tbl *domain.TableData, getTotalRecords bool, pageSize, currentPage int, params domain.RobnoPrometParams, printType string) error {
 	userSession := domain.GetSessionFromStdContext(ctx)
 	if userSession == nil {
@@ -1294,7 +1251,7 @@ func (s *RobnoPrometResource) GetPrometRucFakture(ctx context.Context, tbl *doma
 	tbl.HasTotals = true
 
 	// The stavke of the fakture of the period (the legacy dsDATA).
-	qb := common.NewQueryBuilder(`select
+	b := querybuilder.New(`select
 			rdok.rdokid,
 			coalesce(rdok.mag, 0) as mag,
 			coalesce(mg.opis, '') as magnaziv,
@@ -1316,29 +1273,28 @@ func (s *RobnoPrometResource) GetPrometRucFakture(ctx context.Context, tbl *doma
 			coalesce(rpro.ncena, 0) as ncena,
 			coalesce(rpro.fcena, 0) as fcena,
 			coalesce(rpro.rab, 0) as rab
-		from rdok`, true)
-	qb.AddJoin(" inner join rpro on rpro.rdokid = rdok.rdokid")
-	qb.AddJoin(" inner join rsif on rsif.rsifid = rpro.rsifid")
-	qb.AddJoin(" inner join dokvrsta on dokvrsta.god = rdok.god and dokvrsta.kar = rdok.kar and dokvrsta.vrd = rdok.vrd")
-	qb.AddJoin(" left join magacini mg on mg.god = rdok.god and mg.kar = rdok.kar and mg.mag = rdok.mag")
-	qb.AddJoin(` left join (select distinct on (f.god, f.kar, f.konto, f.sifra) f.god, f.kar, f.konto, f.sifra, f.naziv
+		from rdok`).
+		AddJoin("inner join rpro on rpro.rdokid = rdok.rdokid").
+		AddJoin("inner join rsif on rsif.rsifid = rpro.rsifid").
+		AddJoin("inner join dokvrsta on dokvrsta.god = rdok.god and dokvrsta.kar = rdok.kar and dokvrsta.vrd = rdok.vrd").
+		AddJoin("left join magacini mg on mg.god = rdok.god and mg.kar = rdok.kar and mg.mag = rdok.mag").
+		AddJoin(`left join (select distinct on (f.god, f.kar, f.konto, f.sifra) f.god, f.kar, f.konto, f.sifra, f.naziv
 			from fkpl f
 			order by f.god, f.kar, f.konto, f.sifra, f.idfkpl) cp
-			on cp.god = rdok.god and cp.kar = rdok.kar and cp.konto = rdok.fkto and cp.sifra = rdok.fana`)
-	qb.AddJoin(" left join komercijalisti kom on kom.god = rdok.god and kom.kar = rdok.kar and kom.sifkom = rdok.kom")
-	qb.AddEqual("rdok.god", userSession.SelectedGod)
-	qb.AddEqual("rdok.kar", userSession.SelectedKar)
-	qb.AddCondition("rdok.mag", params.OdMagacina, ">=")
-	qb.AddCondition("rdok.mag", params.DoMagacina, "<=")
-	qb.AddCondition("rdok.danal", params.OdDatuma, ">=")
-	qb.AddCondition("rdok.danal", params.DoDatuma, "<=")
-	qb.AddCustomCondition("upper(coalesce(dokvrsta.grpdok, '')) = 'FAK'")
+			on cp.god = rdok.god and cp.kar = rdok.kar and cp.konto = rdok.fkto and cp.sifra = rdok.fana`).
+		AddJoin("left join komercijalisti kom on kom.god = rdok.god and kom.kar = rdok.kar and kom.sifkom = rdok.kom").
+		Where("rdok.god = ?", userSession.SelectedGod).
+		Where("rdok.kar = ?", userSession.SelectedKar).
+		AddCondition("rdok.mag", params.OdMagacina, ">=").
+		AddCondition("rdok.mag", params.DoMagacina, "<=").
+		AddCondition("rdok.danal", params.OdDatuma, ">=").
+		AddCondition("rdok.danal", params.DoDatuma, "<=").
+		Where("upper(coalesce(dokvrsta.grpdok, '')) = 'FAK'")
 	if !params.UkljuceneUsluge {
-		qb.AddCustomCondition("upper(coalesce(rsif.tip, '')) <> 'U'")
+		b.Where("upper(coalesce(rsif.tip, '')) <> 'U'")
 	}
-	qb.AddOrderBy("rdok.mag, rdok.danal, rdok.tipdok, rdok.nalog, rdok.vrd, rdok.dokum, rdok.dadok, rdok.rdokid, rpro.rproid")
-	sqlQuery, args := qb.Build()
-	stavke, err := s.robnoPrometRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	b.OrderBy("rdok.mag, rdok.danal, rdok.tipdok, rdok.nalog, rdok.vrd, rdok.dokum, rdok.dadok, rdok.rdokid, rpro.rproid")
+	stavke, err := s.robnoPrometRepo.Select(ctx, b)
 	if err != nil {
 		return err
 	}
@@ -1511,77 +1467,9 @@ func (s *RobnoPrometResource) GetPrometRucUlazIzlaz(ctx context.Context, tbl *do
 	tbl.Headers = robnoPrometUlazIzlazHeaders(s.prometRucUlazIzlazTableFields, params.UlazIzlaz, isPrint)
 	tbl.HasTotals = true
 
-	// The kodknj of the stavke of the chosen promet and the sign of their količina and magacinska
-	// vrednost: for the ulaz i izlaz the izlazi subtract; the fakturna vrednost and the rabat are summed
-	// only for the ulaz or the izlaz.
-	kodknj, sign, fakturna := "('D', 'P')", "case when upper(dokvrsta.kodknj) = 'P' then -1 else 1 end", "0"
-	switch params.UlazIzlaz {
-	case robnoPrometUlaz:
-		kodknj, sign, fakturna = "('D')", "1", "1"
-	case robnoPrometIzlaz:
-		kodknj, sign, fakturna = "('P')", "1", "1"
-	}
-	// The key of the rows: the magacin and the article, or the article for the sum of the magacini.
-	key, magacin, magaciniID, stanje := "s.mag, s.sifra", "s.mag", "min(s.magaciniid)",
-		`(select coalesce(sum(coalesce(r.ulaz, 0) - coalesce(r.izlaz, 0)), 0) from rsta r
-			where r.god = $1 and r.kar = $2 and r.magaciniid = agg.magaciniid and r.sifra = agg.sifra_art)`
-	if params.ZbirMagacina {
-		key, magacin, magaciniID = "s.sifra", "0", "0"
-		stanje = `(select coalesce(sum(coalesce(r.ulaz, 0) - coalesce(r.izlaz, 0)), 0) from rsta r
-			where r.god = $1 and r.kar = $2 and r.sifra = agg.sifra_art and r.mag >= $3 and r.mag <= $4)`
-	}
-	// $5 is the first day of the year, $6 OdDatuma (the first day of the period), $7 DoDatuma: the
-	// stavke before the period and the stavke of the period.
-	before, period := "s.danal < $6", "s.danal >= $6"
-	sqlQuery := fmt.Sprintf(`with stavke as (
-			select rdok.mag, rdok.magaciniid, rdok.danal, rpro.sifra,
-				rsif.naziv, rsif.jm, rsif.pro, rsif.proizsifra, rsif.komercopis,
-				upper(dokvrsta.kodknj) as kodknj,
-				%[1]s as znak,
-				coalesce(rpro.kolic, 0) as kolic,
-				round(coalesce(rpro.kolic, 0) * coalesce(rpro.cena, 0), 2) as magvred,
-				%[2]s * round(coalesce(rpro.kolic, 0) * coalesce(rpro.fcena, 0), 2) as fakvred,
-				%[2]s * round(coalesce(rpro.kolic, 0) * coalesce(rpro.fcena, 0) * coalesce(rpro.rab, 0) / 100, 2) as rabat
-			from rdok
-			inner join rpro on rpro.rdokid = rdok.rdokid
-			inner join rsif on rsif.rsifid = rpro.rsifid
-			inner join dokvrsta on dokvrsta.god = rdok.god and dokvrsta.kar = rdok.kar and dokvrsta.vrd = rdok.vrd
-			where rpro.god = $1 and rpro.kar = $2
-				and rdok.mag >= $3 and rdok.mag <= $4
-				and rdok.danal >= $5 and rdok.danal <= $7
-				and upper(dokvrsta.kodknj) in %[3]s
-				and rpro.sifra > 0
-		), agg as (
-			select %[4]s as mag, %[5]s as magaciniid, s.sifra as sifra_art,
-				coalesce(min(s.naziv), '') as naziv,
-				coalesce(min(s.jm), '') as jm,
-				coalesce(min(s.pro), '') as pro,
-				coalesce(min(s.proizsifra), '') as proizsifra,
-				coalesce(min(s.komercopis), '') as komercopis,
-				coalesce(sum(case when %[6]s then s.znak * s.kolic end), 0) as koldodat,
-				coalesce(sum(case when %[7]s and s.kodknj = 'D' then s.kolic end), 0) as ulaz,
-				coalesce(sum(case when %[7]s and s.kodknj = 'P' then s.kolic end), 0) as izlaz,
-				coalesce(sum(s.znak * s.kolic), 0) as kolnadan,
-				coalesce(sum(case when %[6]s then s.fakvred end), 0) as fakvreddo,
-				coalesce(sum(case when %[6]s then s.rabat end), 0) as rabatdo,
-				coalesce(sum(case when %[6]s then s.znak * s.magvred end), 0) as magvreddo,
-				coalesce(sum(case when %[7]s then s.fakvred end), 0) as fakvrednost,
-				coalesce(sum(case when %[7]s then s.rabat end), 0) as rabat,
-				coalesce(sum(case when %[7]s then s.znak * s.magvred end), 0) as magvrednost,
-				coalesce(sum(s.fakvred), 0) as fakvrednostnadan,
-				coalesce(sum(s.rabat), 0) as rabatnadan,
-				coalesce(sum(s.znak * s.magvred), 0) as magvrednostnadan
-			from stavke s
-			group by %[8]s
-		)
-		select agg.*, %[9]s as stanje
-		from agg
-		order by agg.sifra_art, agg.mag`,
-		sign, fakturna, kodknj, magacin, magaciniID, before, period, key, stanje)
-	odDatuma, doDatuma := params.OdDatuma, params.DoDatuma
-	args := []any{userSession.SelectedGod, userSession.SelectedKar, params.OdMagacina, params.DoMagacina,
-		fmt.Sprintf("%d-01-01", userSession.SelectedGod), odDatuma, doDatuma}
-	entities, err := s.robnoPrometRepo.GetAllCustom(ctx, sqlQuery, "", args, "", "")
+	// The promet of the chosen ulaz/izlaz before and in the period, and the stanje, per magacin and
+	// artikal (or per artikal for the sum of the magacini).
+	entities, err := s.robno.PrometUlazIzlaz(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -1903,7 +1791,7 @@ func robnoPrometRowFields(isPrint bool, cells ...string) []string {
 }
 
 func (s *RobnoPrometResource) GetFvrData(ctx context.Context) (domain.Fvr, error) {
-	return common.GetFvrData(ctx, s.fvrRepo)
+	return repository.GetFvrData(ctx, s.fvrRepo)
 }
 
 func (s *RobnoPrometResource) GetPrometArtiklaTableFields() []domain.Fields {
